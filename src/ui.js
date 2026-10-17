@@ -765,10 +765,9 @@ function nightResult(it) {
   return { cls: 'best', txt: best ? 'Best: ' + pullLabel(best.b) + ' (pull ' + best.b.pull + ')' : 'No kill yet', big: best ? 'Best: ' + pullLabel(best.b) : 'No kill yet', left: best ? best.v : null, pull: best ? best.b.pull : null };
 }
 // the tabs' icons (drawn here, no game art)
-const TAB_IC = { teams: 'trophy', live: 'clock', overview: 'list', audit: 'target', perf: 'bars', night: 'chart', player: 'users' };
+const TAB_IC = { live: 'clock', overview: 'list', audit: 'target', perf: 'bars', night: 'chart', player: 'users' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
-  teams: 'Your teams and your character: every boss and night of the tier, with your rankings.',
   live: 'The pull that just ended, at a glance: what went wrong and what to fix before the next pull. Follows live logging.',
   overview: 'Your NSRT note against this pull: soaks, externals, orbs, kicks, mind control CC, curses and healing cooldowns, and who missed theirs.',
   audit: 'Every boss mechanic in this pull, phase by phase: what went wrong, who was involved, with maps. Deaths and survival too.',
@@ -937,12 +936,12 @@ function renderMain() {
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
   $('#bossHead').innerHTML = headerHtml(r, allMode) + meBar(r); // (and, when this log isn't known yet, "Is this your raid?")
   $('#main').innerHTML =
-    // Teams first (your teams' progress, every boss and night), then the Latest pull recap (with a red dot while live
-    // logging is on) and the rest
-    '<div class="tabbar"><nav class="tabs" role="tablist">' + [['teams', 'Teams'], ['live', 'Latest pull']].concat(TABS).map(([k, l]) => '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + '" data-t="' + k + '" role="tab" data-tt="' + esc(TAB_TIP[k] || '') + '" aria-description="' + esc(TAB_TIP[k] || '') + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+    // the Latest pull recap first (with a red dot while live logging is on), then the rest; every tab is about this raid
+    // (your teams are under Your teams in the top bar, on every page)
+    '<div class="tabbar"><nav class="tabs" role="tablist">' + [['live', 'Latest pull']].concat(TABS).map(([k, l]) => '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + '" data-t="' + k + '" role="tab" data-tt="' + esc(TAB_TIP[k] || '') + '" aria-description="' + esc(TAB_TIP[k] || '') + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
       (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>').join('') + '</nav>' + tbPull(r, allMode) + '</div>' +
     '<section id="view"></section>';
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.dataset.t === 'teams') { progressPage(); window.scrollTo(0, 0); return; } S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { S.tab = b.dataset.t; renderMain(); }));
   { const tp = $('#main .tb-pull'); if (tp) tp.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }); }
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   $('#main').querySelectorAll('.tbp-n').forEach((b) => (b.onclick = () => { const same = S.index.bosses.filter((x) => x.id === it.id && x.diffId === it.diffId), to = same[same.indexOf(it) + +b.dataset.d]; if (to) select(to); }));
@@ -6317,7 +6316,7 @@ const TOUR = [
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
   { t: 'Performance', p: 'Damage, healing, damage taken, utility and survivability, like Warcraft Logs but with the why: deaths, cooldowns, mana and defensives. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
-  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs: every raid night, boss by boss, with your rankings. New nights come in by themselves.',
+  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs: every raid night, boss by boss, with your rankings. New nights come in by themselves. "Your teams", at the top of every page, takes you there.',
     art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
 ];
 function startTour(at) {
@@ -6349,7 +6348,8 @@ const PAGE_TIPS = {
     { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its colour shows how far it got, and orange is a kill.' },
     { sel: '#bossHead header.fight', t: 'The pull at a glance', p: 'Its result, how it compares to the pull before, and your team\'s progress: click the team to see every boss and night.' },
     { sel: '#view .wr-wrap', t: 'What went well, and what to fix', p: 'What the raid did well comes first. Under it, what went wrong (the worst first), and beside that, the one thing to fix before you pull again.' },
-    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'Teams, on the left, is your raid\'s progress, every boss and night. The other tabs dig into this pull: every mechanic, your assignments, the meters, the whole night and every player.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig into this pull: every mechanic, your assignments, the meters, the whole night and every player.' },
+    { sel: '#tbProgBtn', t: 'Your teams', p: 'On every page: your teams and your character, every boss and night. Switch between them or add one here.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
     { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your NSRT note once. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns.' },
@@ -6366,13 +6366,13 @@ const PAGE_TIPS = {
     { sel: '#view .plmv', t: 'MVPs of the night', p: 'The best tank, healers and DPS by execution, survival and readiness.' },
     { sel: '#view .plr-list', t: 'Every player', p: 'Gear, consumables, survival and what stands out. Click a player for their full sheet.' }],
   hub: [
-    { sel: '.pg-hub .ht-card', t: 'Your teams', p: 'Each team or character, with its kills on each difficulty. Click one for every boss and night.' },
+    { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each team or character: the boss it\'s on now, a square per boss (orange once killed) and its kills on each difficulty. Click one for every boss and night.' },
     { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
   team: [
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
     { sel: '#pgRank', t: 'Rankings', p: 'Your Warcraft Logs rankings this tier.' },
     { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Its result and totals. Click a boss for the chart of every pull and its nights.' },
-    { sel: '#pgSw', t: 'Switch team', p: 'Jump to another of your teams or your character, or add a new one.' },
+    { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams, at the top: jump to another team or your character, see them all, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
 const TIPS_KEY = (k) => 'wla-tips-' + k;
@@ -6588,6 +6588,38 @@ function teamCard(g, all, order, big) {
     '<span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g) + (g.faction ? ' · ' + esc(g.faction) : '')) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
     '<span class="ht-d">' + (diffs || '<span>not imported yet</span>') + '</span><span class="ht-l">' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : g ? 'open to import its nights' : 'nothing saved yet') + '</span></span></button>';
 }
+// A team's card on the teams page: the art of the boss it's on now (or its last kill) faded in behind, its banner, name
+// and rank (a character: guild and parses); "Now on" that boss with its best; a strip of one square per boss on the
+// hardest difficulty it pulled (orange once killed, else the colour of its best pull); its kills on every difficulty;
+// and its nights. (i: its place in the row, for the cards coming in one after another)
+function hubCard(g, all, order, i) {
+  const mine = all.filter(groupFilter(g)), cls = g.kind === 'char' && g.cls && E.CLASSES[g.cls], fac = g.kind !== 'char' && FACTION[g.faction];
+  const col = cls ? cls[1] : fac ? fac[0] : 'var(--gold)', d = DIFF_ORDER.find(([x]) => mine.some((v) => v.diffId === x));
+  const bestOf = (l) => l.filter((v) => v.left != null).reduce((m, v) => (!m || v.left < m.left ? v : m), null);
+  let strip = '', now = '', kills = 0, artBoss = null;
+  if (d) {
+    const on = mine.filter((v) => v.diffId === d[0]);
+    strip = order.map((b, j) => { const l = on.filter((v) => v.boss === b), k = l.some((v) => v.kill), bst = !k && bestOf(l), c = k ? '#ff8000' : bst ? (PULL_Q.find(([lo]) => 100 - bst.left >= lo) || [0, '#9d9d9d'])[1] : '';
+      return '<i style="--d:' + (j * 0.05).toFixed(2) + 's' + (c ? ';background:' + c : '') + '" title="' + esc(b + ': ' + (k ? 'killed' : bst ? 'best ' + bst.label : l.length ? 'pulled' : 'not pulled yet')) + '"></i>'; }).join('');
+    kills = order.filter((b) => on.some((v) => v.boss === b && v.kill)).length;
+    const open = on.filter((v) => !on.some((x) => x.boss === v.boss && x.kill)).sort((a, b) => b.at - a.at)[0], nb = open && bestOf(on.filter((v) => v.boss === open.boss));
+    const lastKill = on.filter((v) => v.kill).sort((a, b) => b.at - a.at)[0];
+    artBoss = open ? open.boss : lastKill ? lastKill.boss : null;
+    now = open ? '<span class="hc-now"><span class="hc-nl">Now on</span><b>' + esc(open.boss) + '</b><span>' + esc(d[1] + (nb ? ' · best ' + nb.label : '')) + '</span></span>'
+      : kills === order.length ? '<span class="hc-now done"><span class="hc-nl">' + esc(d[1]) + '</span><b>Every boss killed</b><span>' + esc('last kill: ' + lastKill.boss) + '</span></span>' : '';
+  }
+  const last = mine.reduce((m, v) => Math.max(m, v.at), 0), nights = new Set(mine.map((v) => nightOf(v.at))).size;
+  const diffs = DIFF_ORDER.filter(([x]) => mine.some((v) => v.diffId === x)).map(([x, nm]) => { const k = order.filter((b) => mine.some((v) => v.diffId === x && v.boss === b && v.kill)).length;
+    return '<span' + (k === order.length ? ' class="full"' : '') + '><b>' + k + '/' + order.length + '</b>' + nm + '</span>'; }).join('');
+  const sub = cls ? charAff(g) : g.rank && (g.rank.w || g.rank.r) ? '<span class="ht-g ht-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '';
+  const kind = cls ? cls[0] + (g.parse ? ' · ' + g.parse.spec + ' ' + Math.floor(g.parse.best) + ' best average' : '') : gKind(g) + (g.faction ? ' · ' + g.faction : '');
+  const art = artBoss && BOSS_HERO[artBoss] ? '<img class="hc-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[artBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[artBoss][1] + '% 25%" onerror="this.remove()">' : '';
+  return '<button class="hc-card" type="button" data-g="' + esc(g.gid) + '" style="--bc:' + col + ';--i:' + (i || 0) + '">' + art +
+    '<span class="hc-top">' + banner(g) + '<span class="hc-id"><span class="hc-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(gName(g)) + '</span>' + sub + '<span class="hc-k">' + esc(kind + (g.server ? ' · ' + g.server : '')) + '</span></span></span>' +
+    now + (strip ? '<span class="hc-sw"><span class="hc-sl"><span>' + esc(d[1]) + '</span><b>' + kills + ' of ' + order.length + ' killed</b></span><span class="hc-strip" aria-hidden="true">' + strip + '</span></span>' : '') +
+    (diffs ? '<span class="hc-diffs">' + diffs + '</span>' : '') +
+    '<span class="hc-f"><span>' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : 'Its nights are being brought in') + '</span><span class="hc-go">Open ›</span></span></button>';
+}
 // (a character added before its class was kept: looked up once, then its card is drawn again)
 async function groupsBackfill() {
   // (clsV 3: class read with Warcraft Logs' class numbers the right way, and their guild; facV 1: a team's faction, for its
@@ -6604,18 +6636,31 @@ function renderProgHub(msg, msgErr, asHome) {
   if (asHome == null) asHome = !!S.hubHome; S.hubHome = asHome;
   const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
   const back = !asHome && PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
-  // (the add card says exactly which link to paste: a team's or guild's page, or a character's, with what each looks like)
-  const add = '<div class="ht-card ht-add big pg-addc"><span class="ht-n">Add a team or character</span><span class="ht-k">Paste the address of a page on Warcraft Logs: your team or guild brings in its raid nights; your own character brings in every raid you were in, with any group.</span>' +
+  // (the add card says exactly which link to paste: a team's or guild's page, or a character's, with what each looks like;
+  // folded away behind "Which link?" once you have a team, open for someone adding their first)
+  const add = '<section class="pg-addc"><div class="pa-h"><span class="pa-plus" aria-hidden="true">+</span><div><b>Add a team or character</b><span class="sub">Paste a page from Warcraft Logs: a team or guild brings in its raid nights; your character brings in every raid you were in, with any group.</span></div></div>' +
     '<div class="fp-in"><input id="pgTeam" placeholder="Paste a team, guild or character page link" autocomplete="off"><button class="btn' + (gl.length ? '' : ' primary') + '" id="pgTeamGo" type="button">Add</button></div><div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>' +
-    '<div class="pg-which"><b>Which link?</b><ol>' +
+    '<button class="linkbtn pa-which" id="pgWhich" type="button" aria-expanded="' + !gl.length + '" aria-controls="pgWhichBox">Which link? ' + CHEV + '</button>' +
+    '<div class="pg-which" id="pgWhichBox"' + (gl.length ? ' hidden' : '') + '><ol>' +
       '<li><b>Your team or guild:</b> on <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/id/772787</code> or <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.</li>' +
       '<li><b>Your character:</b> search your character\'s name there, open it, and copy that address. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.</li>' +
-      '<li><b>Not a report:</b> a link with <code>/reports/</code> in it is one night. Paste those in the box at the top of the home page instead.</li></ol></div></div>';
-  $('#main').innerHTML = '<div class="home prog' + (asHome ? ' th-home' : '') + '">' + (asHome ? teamsBar() : back) + '<div class="pg-top"><div><h1>Your teams</h1><div class="sub">Pick a team or your character: every boss and night of The Venomous Abyss.</div></div></div>' +
-    '<div class="pg-hub">' + gl.map((g) => teamCard(g, all, order, true)).join('') + add + '</div></div>';
+      '<li><b>Not a report:</b> a link with <code>/reports/</code> in it is one night. Paste those in the box at the top of the home page instead.</li></ol></div></section>';
+  // the top: the raid's art behind the title, and three totals over your whole list (the furthest anyone on it got, the
+  // nights saved, the last raid)
+  const mineAll = all.filter((v) => gl.some((g) => groupFilter(g)(v)));
+  const best = gl.map((g) => { const m = all.filter(groupFilter(g)), d = DIFF_ORDER.find(([x]) => m.some((v) => v.diffId === x)); if (!d) return null;
+    return { g, rank: DIFF_ORDER.length - DIFF_ORDER.indexOf(d), d: d[1], k: order.filter((b) => m.some((v) => v.diffId === d[0] && v.boss === b && v.kill)).length }; }).filter(Boolean).sort((a, b) => b.rank - a.rank || b.k - a.k)[0];
+  const lastAt = mineAll.reduce((m, v) => Math.max(m, v.at), 0), nightsAll = new Set(mineAll.map((v) => nightOf(v.at))).size;
+  const stats = best || lastAt ? '<div class="pg-hstats">' + (best ? '<div class="pg-hs"><b>' + best.k + '/' + order.length + ' ' + esc(best.d) + '</b><span>' + esc(gl.length > 1 ? 'furthest: ' + gName(best.g) : 'so far') + '</span></div>' : '') +
+    (nightsAll ? '<div class="pg-hs"><b>' + nightsAll + '</b><span>' + (nightsAll === 1 ? 'raid night' : 'raid nights') + ' saved</span></div>' : '') + (lastAt ? '<div class="pg-hs"><b>' + esc(nightLabel(lastAt)) + '</b><span>last raid</span></div>' : '') + '</div>' : '';
+  const hero = '<section class="pg-hero"><img class="pg-hero-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO["Kith'ix"][0] + '.jpg" alt="" onerror="this.remove()">' +
+    '<div class="pg-ht"><span class="pg-kick">The Venomous Abyss</span><h1>Your teams</h1><p class="sub">' + (gl.length ? 'Pick a team or your character: every boss and night, with your rankings.' : 'Add your team, guild or your own character from Warcraft Logs: every raid night, boss by boss.') + '</p></div>' + stats + '</section>';
+  $('#main').innerHTML = '<div class="home prog pg-hubp' + (asHome ? ' th-home' : '') + '">' + (asHome ? teamsBar() : back) + hero +
+    '<div class="pg-hub">' + (gl.length ? '<div class="hc-grid">' + gl.map((g, i) => hubCard(g, all, order, i)).join('') + '</div>' : '') + add + '</div></div>';
   progLit(!asHome);
   if (asHome) bindTeamsBar(); else pageTips('hub');
-  $$('#main .pg-hub button.ht-card').forEach((b) => (b.onclick = () => { S.progView = b.dataset.g; S.pgRename = S.pgDel = S.pgEdit = false; if (b.dataset.g !== '*') store.set(GROUP_CUR, b.dataset.g); renderProgress(); window.scrollTo(0, 0); }));
+  $('#pgWhich').onclick = () => { const bx = $('#pgWhichBox'); bx.hidden = !bx.hidden; $('#pgWhich').setAttribute('aria-expanded', String(!bx.hidden)); };
+  $$('#main .pg-hub button.hc-card').forEach((b) => (b.onclick = () => { S.progView = b.dataset.g; S.pgRename = S.pgDel = S.pgEdit = false; if (b.dataset.g !== '*') store.set(GROUP_CUR, b.dataset.g); renderProgress(); window.scrollTo(0, 0); }));
   const say = (t, err) => { const m = $('#pgMsg'); if (m) { m.textContent = t; m.classList.toggle('err', !!err); } };
   $('#pgTeamGo').onclick = async () => {
     try { say('Finding it on Warcraft Logs…'); const { g: ng, already } = await groupAdd($('#pgTeam').value);
@@ -6788,30 +6833,12 @@ function renderProgress(msg, msgErr) {
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
   const legend = pullLegend();
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
-  // (Switch team, beside the name: a menu of your other teams and your character, and Add, so changing teams is one click)
-  const swm = '<span class="pg-sww"><button class="pg-swb" id="pgSw" type="button" aria-haspopup="menu" aria-expanded="false">Switch team ▾</button><span class="pg-swm" id="pgSwM" role="menu" hidden>' +
-    gl.map((x) => { const xc = x.kind === 'char' && x.cls && E.CLASSES[x.cls], on = g && g.gid === x.gid;
-      return '<button class="pg-swi' + (on ? ' on' : '') + '" type="button" role="menuitem" data-sw="' + esc(x.gid) + '"' + (on ? ' aria-current="true"' : '') + '>' + banner(x) + '<span class="pg-swt"><b' + (xc ? ' style="color:' + xc[1] + '"' : '') + '>' + esc(gName(x)) + '</b><span class="sub">' + (xc ? xc[0] : gKind(x)) + (x.server ? ' · ' + esc(x.server) : '') + '</span></span>' + (on ? '<span class="pg-swk" aria-hidden="true">✓</span>' : '') + '</button>'; }).join('') +
-    '<button class="pg-swi pg-swa" type="button" role="menuitem" data-sw="+">+ Add a team or character</button></span></span>';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '<span class="pg-hbtns">' + swm + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</span></h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
+    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
   $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
-  // (the menu opens under the button, nudged left if it would run off a phone's edge; a click elsewhere or Escape closes it)
-  { const sb = $('#pgSw'), sm = $('#pgSwM');
-    const away = (e) => { if (!document.body.contains(sm) || !e.target.closest('.pg-sww')) close(); };
-    const onKey = (e) => { if (e.key === 'Escape' && !sm.hidden) { e.preventDefault(); close(); sb.focus(); } };
-    const close = () => { sm.hidden = true; sb.setAttribute('aria-expanded', 'false'); document.removeEventListener('click', away, true); document.removeEventListener('keydown', onKey, true); };
-    sb.onclick = () => { if (!sm.hidden) { close(); return; }
-      // (the screen's width is read before the menu shows: a phone's page widens while anything sticks out past its edge)
-      const vw = document.documentElement.clientWidth, x0 = sb.getBoundingClientRect().left;
-      sm.style.left = '0px'; sm.hidden = false; sb.setAttribute('aria-expanded', 'true'); const w = sm.offsetWidth;
-      sm.style.left = Math.round(Math.max(12 - x0, Math.min(0, vw - 12 - (x0 + w)))) + 'px';
-      document.addEventListener('click', away, true); document.addEventListener('keydown', onKey, true); const f = sm.querySelector('.pg-swi:not(.on)') || sm.querySelector('.pg-swi'); if (f) f.focus(); };
-    sm.querySelectorAll('[data-sw]').forEach((b) => (b.onclick = () => { close(); const v = b.dataset.sw; S.pgRename = S.pgDel = S.pgEdit = false;
-      if (v === '+') { S.pgFocusAdd = true; S.progView = null; } else { S.progView = v; store.set(GROUP_CUR, v); } renderProgress(); window.scrollTo(0, 0); })); }
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
@@ -6850,8 +6877,34 @@ function renderProgress(msg, msgErr) {
   });
 }
 $('#brandHome').onclick = () => home();
-if ($('#tbProg')) $('#tbProg').onclick = () => progressPage();
-if ($('#tbProgBtn')) $('#tbProgBtn').onclick = () => progressPage();
+// Your teams, in the top bar on every page: a menu of your teams and your character (each with how far it is; the one
+// whose page is up is ticked), then All teams and Add. With none added yet, it goes straight to the teams page, ready to
+// paste a link. It opens under the button, kept on screen on a phone; a click elsewhere or Escape closes it.
+{
+  const b = $('#tbProgBtn'), pop = $('#tbTeamsPop');
+  // (how far a team is: bosses killed on the hardest difficulty it has pulled, "7/10 Mythic")
+  const where = (g, all, order) => { const mine = all.filter(groupFilter(g)), d = DIFF_ORDER.find(([x]) => mine.some((v) => v.diffId === x));
+    return d ? order.filter((bo) => mine.some((v) => v.diffId === d[0] && v.boss === bo && v.kill)).length + '/' + order.length + ' ' + d[1] : ''; };
+  const draw = () => { const order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss)), here = $('#main .home.prog') ? S.progView : null;
+    pop.innerHTML = groups().map((g) => { const c = g.kind === 'char' && g.cls && E.CLASSES[g.cls], on = here === g.gid, w = where(g, all, order);
+      return '<button class="tbt-i' + (on ? ' on' : '') + '" type="button" role="menuitem" data-go="' + esc(g.gid) + '"' + (on ? ' aria-current="page"' : '') + '>' + banner(g) +
+        '<span class="tbt-t"><b' + (c ? ' style="color:' + c[1] + '"' : '') + '>' + esc(gName(g)) + '</b><span>' + esc([c ? c[0] : gKind(g), w].filter(Boolean).join(' · ')) + '</span></span>' + (on ? '<span class="tbt-k" aria-hidden="true">✓</span>' : '') + '</button>'; }).join('') +
+      '<div class="tbt-f"><button class="tbt-a" type="button" role="menuitem" data-go="*">All teams</button><button class="tbt-a add" type="button" role="menuitem" data-go="+">+ Add a team or character</button></div>'; };
+  const close = () => { pop.hidden = true; b.setAttribute('aria-expanded', 'false'); };
+  const show = () => { draw(); pop.style.right = ''; pop.hidden = false; b.setAttribute('aria-expanded', 'true');
+    const r = pop.getBoundingClientRect(); if (r.left < 12) pop.style.right = Math.round(r.left - 12) + 'px';
+    const f = pop.querySelector('.tbt-i:not(.on)') || pop.querySelector('.tbt-a'); if (f) f.focus(); };
+  if (b && pop) {
+    b.onclick = (e) => { e.stopPropagation(); if (!pop.hidden) { close(); return; }
+      const m = $('#tbMenuPop'); if (m && !m.hidden) { m.hidden = true; $('#tbMenu').setAttribute('aria-expanded', 'false'); }
+      if (!groups().length) { S.pgFocusAdd = true; progressPage(); window.scrollTo(0, 0); return; }
+      if (HIST.mem.size) show(); else HIST.load().then(show); };
+    pop.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (!t) return; close(); const v = t.dataset.go;
+      S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' || v === '*' ? null : v); window.scrollTo(0, 0); });
+    document.addEventListener('click', (e) => { if (!pop.hidden && !e.target.closest('.tbteams')) close(); }, true);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { close(); b.focus(); } });
+  }
+}
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
 if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)

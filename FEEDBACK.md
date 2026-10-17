@@ -49,6 +49,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 121: Your teams in the top bar, a better-looking teams page
+- [x] **Your teams button** (your idea, instead of the Teams tab): a gold "Your teams ▾" button in the top bar, on every
+  page. It opens a short menu: each team and your character with how far it is ("7/10 Mythic"; the one whose page you're on
+  is ticked), then All teams and "+ Add a team or character". With nothing added yet it goes straight to the teams page.
+  It's lit while you're on the teams pages.
+- [x] **The Teams tab is gone**: every tab in a pull is about that pull again, starting with Latest pull. "Your teams" left
+  the ☰ menu too, and the Switch team button beside a team's name (round 120) is gone, since the top button does both.
+- [x] **The tour and tips point at it**: the tour's last step says where it is; Latest pull and a team's page tips show it.
+- [x] **The teams page, more to look at** (your note): the raid's art behind the title, with three totals (the furthest
+  anyone on your list got, raid nights saved, last raid). Each team's card has the boss it's on now faded in behind it,
+  "Now on" that boss with its best pull, a strip of one square per boss (orange once killed), its kills on each difficulty,
+  and its nights. The cards slide in one after another. The Add card is smaller, with "Which link?" folded away (open for
+  someone adding their first team).
+
 ## 2026-10-17, round 120: Switch team
 - [x] **Switch team** (your idea, instead of putting the team page inside the tab): the team page stays as it is, with a gold
   "Switch team ▾" button beside the name. It opens a menu of your teams and your character (the one you're on is ticked) and

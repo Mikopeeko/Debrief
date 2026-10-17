@@ -934,11 +934,27 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .ht-n { font: 600 17px var(--head); color: #f3f5f9; } .ht-k { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
 .ht-d { display: flex; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--muted); } .ht-d b { font: 700 16px var(--head); color: #f6dc9a; }
 .ht-l { font-size: 12px; color: var(--faint); } .ht-card.ht-add { border-left-color: var(--line2); border-style: dashed; }
-/* the top bar's Progress button: always one click away (just the trophy on a phone) */
-.tb-prog { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px 0 10px; border-radius: 9px; font-weight: 600; }
-.tb-prog svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.tb-prog.on { border-color: var(--gold); color: #f6dc9a; }
-@media (max-width: 760px) { .tb-prog { width: 36px; padding: 0; justify-content: center; } .tb-prog span { display: none; } }
+/* the top bar's Your teams: on every page, in gold so it's easy to spot, with its word even on a phone; lit on the teams
+   pages. Its menu: a row per team or character (banner, name, how far it is; the one whose page is up is ticked), then
+   All teams and Add. */
+.tbteams { position: relative; }
+.tb-prog { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 9px 0 10px; border-radius: 9px; font-weight: 600; color: #f6dc9a; background: rgba(230, 180, 80, .08); border-color: rgba(230, 180, 80, .5); white-space: nowrap; }
+.tb-prog:hover, .tb-prog[aria-expanded="true"] { background: rgba(230, 180, 80, .15); border-color: var(--gold); }
+.tb-prog svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .tb-prog .chev { width: 15px; height: 15px; margin-left: -2px; }
+.tb-prog.on { background: rgba(230, 180, 80, .2); border-color: var(--gold); color: #ffe7ad; }
+.tbt-pop { position: absolute; z-index: 40; top: calc(100% + 8px); right: 0; width: max-content; min-width: 260px; max-width: min(340px, calc(100vw - 24px)); display: flex; flex-direction: column; gap: 2px; padding: 6px;
+  background: #1a1e28; border: 1px solid var(--line2); border-radius: 12px; box-shadow: 0 14px 36px rgba(0, 0, 0, .55); animation: tbtIn .14s ease-out; }
+.tbt-pop[hidden] { display: none; }
+@keyframes tbtIn { from { opacity: 0; transform: translateY(-4px); } }
+.tbt-i { display: flex; align-items: center; gap: 11px; min-height: 46px; padding: 6px 10px; font: inherit; color: var(--text); text-align: left; background: none; border: 0; border-radius: 8px; cursor: pointer; }
+.tbt-i:hover, .tbt-i:focus-visible, .tbt-a:hover, .tbt-a:focus-visible { background: var(--raised); outline: none; } .tbt-i.on { background: rgba(230, 180, 80, .08); }
+.tbt-i .ht-ban { width: 26px; height: 32px; margin: 0; } .tbt-i .hb-t { font-size: 11px; margin-top: -4px; } .tbt-i .hb-i { width: 16px; height: 16px; margin-top: -4px; }
+.tbt-t { display: flex; flex-direction: column; min-width: 0; } .tbt-t b { font: 600 15px var(--head); color: #f3f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .tbt-t span { font-size: 12px; color: var(--faint); }
+.tbt-k { margin-left: auto; padding-left: 12px; color: var(--gold); font-weight: 700; }
+.tbt-f { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
+.tbt-a { min-height: 38px; padding: 6px 10px; font: 600 14px var(--body); color: var(--text); text-align: left; background: none; border: 0; border-radius: 8px; cursor: pointer; } .tbt-a.add { color: var(--gold); }
+@media (max-width: 560px) { .topbar .brand p { display: none; } }
+@media (prefers-reduced-motion: reduce) { .tbt-pop { animation: none; } }
 /* the wipe filter, made to stand out: a blue control with a flag, always labeled (grey when it's off) */
 #cutSide { margin: 0; gap: 8px; padding: 4px 6px 4px 11px; border: 1px solid rgba(106,168,255,.6); background: rgba(106,168,255,.11); box-shadow: 0 0 0 3px rgba(106,168,255,.07); }
 #cutSide .cs-l { color: #b9d3ff; } #cutSide .cs-l b { color: #eef4ff; }
@@ -1085,11 +1101,53 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .btn.danger { background: #b8413a; border-color: #b8413a; color: #fff; } .btn.danger:hover { background: #cc4a42; }
 .btn.danger-o { color: #ff9a93; } .btn.danger-o:hover { border-color: #e5534b; }
 .pg-man .pg-add { padding-top: 12px; }
-/* the teams page: a big card per team or character, one for everything saved, and one to add a team */
-.pg-hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-.ht-card.big { padding: 18px 20px; gap: 5px; min-height: 150px; } .ht-card.big .ht-n { font-size: 21px; } .ht-card.big .ht-d { gap: 16px; } .ht-card.big .ht-d b { font-size: 19px; }
-.pg-addc { cursor: default; } .pg-addc:hover { background: var(--panel); border-color: var(--line); }
-.pg-addc .fp-in { margin-top: 8px; width: 100%; } .pg-addc .pg-msg { font-size: 12.5px; }
+/* the teams page: the raid's art behind the title with three totals; a card per team or character (the boss it's on
+   now behind it, its strip of bosses, its kills on each difficulty), coming in one after another; then Add */
+.home.prog.pg-hubp { gap: 18px; }
+.pg-hero { position: relative; overflow: hidden; isolation: isolate; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 28px; min-height: 200px; padding: 30px 30px 26px; background: #12151c; border: 1px solid var(--line); border-radius: 16px; }
+.pg-hero-art { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; object-position: 60% 45%; opacity: .6; animation: pgHeroIn 1.2s ease-out both; }
+.pg-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(15, 17, 23, .96) 0%, rgba(15, 17, 23, .78) 42%, rgba(15, 17, 23, .2) 100%), linear-gradient(0deg, rgba(15, 17, 23, .85), transparent 65%); }
+.pg-ht { max-width: 560px; } .pg-kick { font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.pg-hero h1 { margin: 6px 0 6px; font: 700 42px/1.05 var(--head); color: #fff; text-shadow: 0 2px 18px rgba(0, 0, 0, .5); } .pg-hero .sub { margin: 0; font-size: 14.5px; color: #c9ced8; }
+.pg-hstats { display: flex; flex-wrap: wrap; gap: 10px; }
+.pg-hs { min-width: 128px; padding: 11px 15px; background: rgba(15, 17, 23, .62); border: 1px solid rgba(255, 255, 255, .08); border-radius: 11px; backdrop-filter: blur(6px); animation: hcIn .45s ease-out both; }
+.pg-hs:nth-child(2) { animation-delay: .08s; } .pg-hs:nth-child(3) { animation-delay: .16s; }
+.pg-hs b { display: block; font: 700 21px/1.15 var(--head); color: #f6dc9a; white-space: nowrap; } .pg-hs span { font-size: 12px; color: var(--muted); }
+.pg-hub { display: flex; flex-direction: column; gap: 16px; }
+.hc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; } .hc-grid:has(> :only-child) { grid-template-columns: minmax(0, 640px); }
+.hc-card { position: relative; overflow: hidden; isolation: isolate; display: flex; flex-direction: column; gap: 14px; min-width: 0; padding: 20px 22px 16px; text-align: left; font: inherit; color: var(--text);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--bc) 10%, var(--panel)), var(--panel) 55%); border: 1px solid var(--line); border-radius: 15px; box-shadow: inset 0 3px 0 var(--bc);
+  cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; animation: hcIn .45s ease-out both; animation-delay: calc(var(--i, 0) * 80ms); }
+.hc-card:hover { border-color: var(--line2); transform: translateY(-3px); box-shadow: inset 0 3px 0 var(--bc), 0 14px 30px rgba(0, 0, 0, .35); }
+.hc-art { position: absolute; z-index: -1; top: 0; right: 0; width: 72%; height: 100%; object-fit: cover; opacity: .34; transition: opacity .25s, transform .5s;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 55%); mask-image: linear-gradient(90deg, transparent, #000 55%); }
+.hc-card:hover .hc-art { opacity: .48; transform: scale(1.04); }
+.hc-card::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, transparent 35%, rgba(19, 22, 30, .9)); }
+.hc-top { display: flex; align-items: flex-start; gap: 14px; } .hc-card .ht-ban { width: 54px; height: 66px; } .hc-card .hb-t { font-size: 20px; } .hc-card .hb-i { width: 30px; height: 30px; }
+.hc-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .hc-n { font: 700 24px/1.1 var(--head); color: #f3f5f9; text-shadow: 0 1px 10px rgba(0, 0, 0, .5); } .hc-k { font-size: 12.5px; color: var(--muted); }
+.hc-now { align-self: flex-start; max-width: 100%; display: flex; flex-direction: column; gap: 1px; padding: 9px 13px; background: rgba(15, 17, 23, .6); border: 1px solid rgba(255, 255, 255, .07); border-radius: 10px; backdrop-filter: blur(4px); }
+.hc-nl { font: 700 10.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); } .hc-now b { font: 600 17px var(--head); color: #fff; } .hc-now > span:last-child { font-size: 12.5px; color: #c9ced8; }
+.hc-now.done b { color: #ff9a3c; }
+.hc-sw { display: flex; flex-direction: column; gap: 6px; } .hc-sl { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--muted); } .hc-sl b { font: 700 13.5px var(--head); color: #f6dc9a; }
+.hc-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; } .hc-strip i { height: 9px; border-radius: 3px; background: #252a35; transform-origin: left; animation: hcPop .35s ease-out both; animation-delay: calc(.2s + var(--d, 0s)); }
+.hc-diffs { display: flex; flex-wrap: wrap; gap: 6px; } .hc-diffs span { padding: 3px 10px; font-size: 12px; color: var(--muted); background: rgba(255, 255, 255, .035); border: 1px solid var(--line); border-radius: 999px; }
+.hc-diffs b { margin-right: 5px; font-weight: 700; color: var(--text); } .hc-diffs .full { border-color: rgba(255, 128, 0, .35); } .hc-diffs .full b { color: #ff9a3c; }
+.hc-f { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 11px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--faint); }
+.hc-go { color: var(--gold); font-weight: 600; font-size: 13px; transition: transform .15s; } .hc-card:hover .hc-go { color: #ffe7ad; transform: translateX(3px); }
+@keyframes hcIn { from { opacity: 0; transform: translateY(10px); } }
+@keyframes hcPop { from { opacity: 0; transform: scaleX(.2); } }
+@keyframes pgHeroIn { from { opacity: 0; transform: scale(1.04); } }
+.pg-addc { display: flex; flex-direction: column; gap: 10px; padding: 18px 22px; background: var(--panel); border: 1px dashed var(--line2); border-radius: 15px; }
+.pa-h { display: flex; align-items: center; gap: 14px; } .pa-h b { display: block; font: 600 18px var(--head); color: #f3f5f9; } .pa-h .sub { font-size: 13px; }
+.pa-plus { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font: 600 24px/1 var(--head); color: var(--gold); background: rgba(230, 180, 80, .06); border: 1px solid rgba(230, 180, 80, .5); }
+.pg-addc .fp-in { width: 100%; max-width: 760px; } .pg-addc .pg-msg { font-size: 12.5px; }
+.pa-which { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; } .pa-which .chev { transition: transform .15s; } .pa-which[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.pg-addc .pg-which { margin-top: 0; }
+@media (max-width: 640px) {
+  .pg-hero { min-height: 0; padding: 22px 18px 18px; } .pg-hero h1 { font-size: 32px; } .pg-hs { min-width: 0; flex: 1 1 90px; padding: 9px 11px; } .pg-hs b { font-size: 17px; }
+  .hc-grid { grid-template-columns: minmax(0, 1fr); } .hc-card { padding: 16px 16px 14px; } .hc-n { font-size: 21px; } .hc-art { width: 100%; opacity: .26; } .pg-addc { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .hc-card, .hc-strip i, .pg-hs, .pg-hero-art { animation: none; } }
 .pg-links { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-bottom: -10px; } .pg-links .pg-back { margin: 0; }
 .pg-gbar .pg-mn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .pg-which { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); line-height: 1.5; } .pg-which > b { color: var(--text); font-weight: 600; }
@@ -1104,7 +1162,6 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .hb-i { position: relative; width: 26px; height: 26px; margin-top: -6px; border-radius: 50%; box-shadow: 0 0 0 2px var(--bc); } .ht-card.big .hb-i { width: 32px; height: 32px; }
 .ht-card.hb:hover { border-left-color: var(--bc, var(--gold)); }
 .pg-top .ht-ban { margin-right: 14px; } .pg-top > .pg-ttl { display: flex; align-items: center; } .pg-top .pg-tt { display: flex; flex-direction: column; }
-@media (min-width: 980px) { .pg-hub .pg-addc { grid-column: span 2; } }
 /* a character's page: their Warcraft Logs rankings (spec and damage/healing switches, the summary, a line on each boss card) */
 .ht-g { font: 600 13px var(--head); color: #c9ced8; letter-spacing: .2px; } .pg-tt .ht-g { font-size: 15px; margin: 2px 0 1px; }
 .pg-rank { padding: 14px 18px; margin: 0; } .pg-rank .sub { font-size: 12.5px; }
@@ -1139,22 +1196,6 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pg-info { margin-top: 3px; font-size: 12.5px; color: var(--faint); }
 .pg-editb { margin-left: 12px; vertical-align: 6px; padding: 3px 10px; font: 600 12px var(--body); color: var(--muted); background: transparent; border: 1px solid var(--line2); border-radius: 999px; cursor: pointer; }
 .pg-editb:hover, .pg-editb[aria-expanded="true"] { color: var(--text); border-color: var(--faint); }
-/* (Switch team: a gold pill beside the name, and its menu of your teams and characters, then Add) */
-.pg-hbtns { display: inline-flex; align-items: center; gap: 8px; margin-left: 14px; vertical-align: 6px; white-space: nowrap; } .pg-hbtns .pg-editb { margin: 0; vertical-align: 0; }
-.pg-sww { position: relative; display: flex; }
-.pg-swb { padding: 3px 11px; font: 600 12px var(--body); color: #f6dc9a; background: rgba(230, 180, 80, .08); border: 1px solid rgba(230, 180, 80, .45); border-radius: 999px; cursor: pointer; white-space: nowrap; }
-.pg-swb:hover, .pg-swb[aria-expanded="true"] { background: rgba(230, 180, 80, .16); border-color: var(--gold); }
-.pg-swm { position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; width: max-content; min-width: 250px; max-width: min(340px, calc(100vw - 24px)); display: flex; flex-direction: column; gap: 2px; padding: 6px;
-  font: 400 14px/1.3 var(--body); color: var(--text); text-align: left; background: #1b1f29; border: 1px solid var(--line2); border-radius: 12px; box-shadow: 0 14px 36px rgba(0, 0, 0, .55); animation: pgSwIn .14s ease-out; }
-.pg-swm[hidden] { display: none; }
-@keyframes pgSwIn { from { opacity: 0; transform: translateY(-4px); } }
-.pg-swi { display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 6px 10px; font: inherit; color: inherit; text-align: left; background: none; border: 0; border-radius: 8px; cursor: pointer; }
-.pg-swi:hover, .pg-swi:focus-visible { background: var(--raised); outline: none; } .pg-swi.on { background: rgba(230, 180, 80, .07); }
-.pg-swi .ht-ban, .pg-top .pg-swi .ht-ban { width: 26px; height: 32px; margin: 0; } .pg-swi .hb-t { font-size: 11px; margin-top: -4px; } .pg-swi .hb-i { width: 16px; height: 16px; margin-top: -4px; }
-.pg-swt { display: flex; flex-direction: column; min-width: 0; } .pg-swt b { font: 600 15px var(--head); color: #f3f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pg-swt .sub { font-size: 12px; }
-.pg-swk { margin-left: auto; padding-left: 10px; color: var(--gold); font-weight: 700; }
-.pg-swi.pg-swa { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 8px 8px; color: var(--gold); font-weight: 600; }
-@media (prefers-reduced-motion: reduce) { .pg-swm { animation: none; } }
 .pg-team.pg-edit { padding: 10px 14px; } .pg-edit .pg-ma { gap: 8px; } .pg-edit .pg-ma > .sub { font-size: 13px; margin-right: 4px; }
 .home.prog > .pg-msg { margin-top: -10px; }
 .trv { font-variant-numeric: tabular-nums; } .trv.q1 { color: #a3a7b0; } .trv.q2 { color: #52d65a; } .trv.q3 { color: #4f9dff; } .trv.q4 { color: #b981f5; } .trv.q5 { color: #ff9a3c; } .trv.q6 { color: #f07ab8; } .trv.q7 { color: #e8d18e; }
@@ -1849,8 +1890,9 @@ details.pf-dc > summary .sst { margin-left: auto; }
     <span class="tb-sp"></span>
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 30 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
+    <div class="tbteams"><button class="btn tb-prog" id="tbProgBtn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your teams and your character: switch, see them all, or add one"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Your teams</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button><div class="tbt-pop" id="tbTeamsPop" role="menu" aria-label="Your teams" hidden></div></div>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Your teams<span>every boss and night, your teams' reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button><button class="tbm-i" id="tbTips" type="button">Tips for this page<span>where everything on this page is</span></button><button class="tbm-i" id="tbTour" type="button">Take the tour<span>a quick look at what Debrief does</span></button></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button><button class="tbm-i" id="tbTips" type="button">Tips for this page<span>where everything on this page is</span></button><button class="tbm-i" id="tbTour" type="button">Take the tour<span>a quick look at what Debrief does</span></button></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>
