@@ -1161,6 +1161,31 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
         [], 'Who popped each cyst, from positions.', tbl, 'as-szpop', icoWh('spell_nature_acid_01'));
     }
 
+    // ---- Nek'zali: the Soulcoil Well groups (their turns for each Drowned Echo) and the Hungering Pyre soak list
+    const NZ = B.nz;
+    if (NZ && NZ.well && NZ.well.rows.length) {
+      const Wl = NZ.well, shortR = Wl.rows.filter((x) => x.short), nw = Wl.issues.length + shortR.length;
+      const iss = Wl.issues.map((x) => issue('warn', nm(x.who), 'went into the well on the other group\'s turn <span class="sub">(Echo ' + list(x.echoes) + ') · ' + esc(x.group) + '</span>', ''))
+        .concat(shortR.map((x) => issue('warn', '<b>Echo ' + x.i + '</b>', esc(x.group) + ' was ' + x.missed.length + ' short: ' + x.missed.map(nm).join(', '), esc(x.ph) + ' · ' + T(x.t))));
+      const tbl = '<table class="tbl"><thead><tr><th>Drowned Echo</th><th>Whose turn</th><th>In the well</th><th>Other group in it</th><th>Not in it</th></tr></thead><tbody>' +
+        Wl.rows.map((x) => '<tr' + (x.wrong.length || x.short ? ' class="rwarn"' : '') + '><td><b>' + x.i + '</b><div class="sub">' + esc(x.ph) + ' · ' + T(x.t) + '</div></td><td>' + esc(x.group) + '</td><td class="tc">' + (x.empty ? '<span class="sub">nobody</span>' : '<span class="' + (x.short ? 'warnv' : '') + '">' + x.n + ' of ' + x.of + '</span>' + (x.extra.length ? '<div class="sub">+ ' + x.extra.map(esc).join(', ') + '</div>' : '')) + '</td>' +
+          '<td class="fwho">' + (x.wrong.length ? x.wrong.map(nm).join(', ') : '<span class="sub">—</span>') + '</td><td class="fwho' + (x.short ? '' : ' sub') + '">' + (x.missed.length ? x.missed.map(nm).join(', ') : '—') + '</td></tr>').join('') + '</tbody></table>';
+      vpanel('Well groups', nw ? pill('warn', [Wl.issues.length ? plural(Wl.issues.length, 'player') + ' in on the other group\'s turn' : '', shortR.length ? plural(shortR.length, 'short-handed Echo') : ''].filter(Boolean).join(' · ')) : pill('ok', 'no mistakes'),
+        'From the note\'s Soulcoil Well groups (' + Wl.groups.map((g) => esc(g.label) + ': ' + g.names.length).join(', ') + '): they take turns going into the well for each Drowned Echo, in the order of the note\'s "go in" reminders. Who was in the well comes from Immortal Coil, which only hits players inside. Amber: someone from the other group in it (they\'ll have Soul Exhaustion for their own turn), or ' + Wl.short + ' or more of the group missing. One or two out is fine.',
+        iss, 'Every Drowned Echo was taken by its group, with at most ' + (Wl.short - 1) + ' missing.', tbl, 'as-nzwell', spellIcon(0, 'Grasping Depths', true));
+    }
+    if (NZ && NZ.pyre && NZ.pyre.rows.length) {
+      const Py = NZ.pyre, shortR = Py.rows.filter((x) => x.short), nw = Py.issues.length + shortR.length;
+      const iss = Py.issues.map((x) => issue('warn', nm(x.who), 'soaked the Pyre <span class="sub">(Pyre ' + list(x.pyres) + ') · on the don\'t-soak list</span>', ''))
+        .concat(shortR.map((x) => issue('warn', '<b>Pyre ' + x.i + '</b>', 'was ' + x.missed.length + ' short of the soak list: ' + x.missed.map(nm).join(', '), T(x.t))));
+      const tbl = '<table class="tbl"><thead><tr><th>Hungering Pyre</th><th>From the soak list</th><th>Don\'t-soak list in it</th><th>Not in it</th></tr></thead><tbody>' +
+        Py.rows.map((x) => '<tr' + (x.wrong.length || x.short ? ' class="rwarn"' : '') + '><td><b>' + x.i + '</b><div class="sub">' + T(x.t) + '</div></td><td class="tc"><span class="' + (x.short ? 'warnv' : '') + '">' + x.n + ' of ' + x.of + '</span>' + (x.extra.length ? '<div class="sub">+ ' + x.extra.map(esc).join(', ') + '</div>' : '') + '</td>' +
+          '<td class="fwho">' + (x.wrong.length ? x.wrong.map(nm).join(', ') : '<span class="sub">—</span>') + '</td><td class="fwho' + (x.short ? '' : ' sub') + '">' + (x.missed.length ? x.missed.map(nm).join(', ') : '—') + '</td></tr>').join('') + '</tbody></table>';
+      vpanel('Pyre soak', nw ? pill('warn', [Py.issues.length ? plural(Py.issues.length, 'player') + ' from the don\'t-soak list in it' : '', shortR.length ? plural(shortR.length, 'short-handed Pyre') : ''].filter(Boolean).join(' · ')) : pill('ok', 'no mistakes'),
+        'From the note\'s Hungering Pyre lists: the soak list (' + Py.soak.length + ') goes into every Pyre; the don\'t-soak list (' + Py.out.length + ') stays out, because their Slithering Flame burns the corpses. Amber: someone from the don\'t-soak list in it, or ' + Py.short + ' or more of the soak list missing (anyone dead, or in the well then, isn\'t counted). Deaths to a Pyre are in Mechanics.',
+        iss, 'Every Pyre was soaked by its list, with at most ' + (Py.short - 1) + ' missing.', tbl, 'as-nzpyre', spellIcon(0, 'Hungering Pyre', true));
+    }
+
     // ---- Coiled Altar: the CC order on Dreadmarch's mind controls (one row per phase), the add curses, the ghost soaks
     const nmC = (n) => who(n).replace(/^<span class="chipn">|<\/span>$/g, ''), colOf = (n) => { const p = pmap.get(n); return p ? p.color : 'inherit'; };
     const pn = (n) => '<span class="nm" style="color:' + colOf(n) + '">' + esc(n) + '</span>';
@@ -1386,7 +1411,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // the box on top: everything that went wrong this pull, worst first (or one green line when nothing did)
   let box = '';
   if (!only && a && !a.error) {
-    const any = a.soaks.length || a.orbs.length || a.kicks.length || B.feast || B.kicks || (B.ca && !B.ca.none) || B.orbcc || B.sides || (B.sz && (B.sz.mut || B.sz.timer)) || a.mcCC || a.curses || (a.ghosts && a.ghosts.reached); // (mechanical assignments; healing cooldowns have their own panel)
+    const any = a.soaks.length || a.orbs.length || a.kicks.length || B.feast || B.kicks || (B.ca && !B.ca.none) || B.orbcc || B.sides || (B.sz && (B.sz.mut || B.sz.timer)) || (B.nz && (B.nz.well || B.nz.pyre)) || a.mcCC || a.curses || (a.ghosts && a.ghosts.reached); // (mechanical assignments; healing cooldowns have their own panel)
     // (the same "What went wrong / What went right" pair as Latest pull and Mechanics; right: every assignment that was clean)
     const right = tiles.filter((t) => t.st === 'ok').map((t) => '<b>' + esc(t.label) + ':</b> ' + esc(t.txt));
     if (probs.length || any) box = wrongRight(probs, right, { sub: isFinite(ct) ? 'up to the wipe filter (' + T(ct) + ')' : '', none: 'Every assignment in the note that came up this pull was done.', noneRight: 'Nothing fully clean this pull.', moreWhere: 'in the rows below' });
@@ -2502,6 +2527,20 @@ function nsrtChecks(r) {
     if (x.popT == null || !ok(x.popT)) { put('Fury timer', 'f' + x.i, 'Fury ' + x.i + ' (' + T(x.t) + ')', 'na', x.popT == null ? 'Not popped' : 'After the wipe filter', x.i); continue; }
     put('Fury timer', 'f' + x.i, 'Fury ' + x.i + ' (' + T(x.t) + ')', x.st, 'Popped ' + (x.d >= 0 ? '+' : '') + x.d.toFixed(1) + ' s off the timer', x.i, []);
   }
+  // Nek'zali: the note's well groups, one check per Drowned Echo, and the Pyre soak list, one check per Pyre (someone from
+  // the wrong list, or 3+ of the right one missing, could be better)
+  const NW = a.boss && a.boss.nz && a.boss.nz.well;
+  if (NW) for (const x of NW.rows) {
+    const label = 'Drowned Echo ' + x.i + ' (' + x.group + ')';
+    if (!ok(x.t) || x.empty) { put('Well groups', 'w' + x.i, label, 'na', x.empty ? 'Nobody went in' : 'After the wipe filter', x.i); continue; }
+    put('Well groups', 'w' + x.i, label, x.wrong.length || x.short ? 'warn' : 'ok', [x.n + ' of ' + x.of + ' in', x.wrong.length ? 'other group in it: ' + x.wrong.join(', ') : '', x.short ? 'not in it: ' + x.missed.join(', ') : ''].filter(Boolean).join(' · '), x.i, x.wrong.concat(x.short ? x.missed : []));
+  }
+  const NP = a.boss && a.boss.nz && a.boss.nz.pyre;
+  if (NP) for (const x of NP.rows) {
+    const label = 'Hungering Pyre ' + x.i;
+    if (!ok(x.t)) { put('Pyre soak', 'p' + x.i, label, 'na', 'After the wipe filter', x.i); continue; }
+    put('Pyre soak', 'p' + x.i, label, x.wrong.length || x.short ? 'warn' : 'ok', [x.n + ' of ' + x.of + ' from the soak list', x.wrong.length ? 'don\'t-soak list in it: ' + x.wrong.join(', ') : '', x.short ? 'not in it: ' + x.missed.join(', ') : ''].filter(Boolean).join(' · '), x.i, x.wrong.concat(x.short ? x.missed : []));
+  }
   // (cooldown reminders below always carry their player, so the Night summary can count each player's presses)
   for (const k of a.kicks) {
     const missed = (r.missedKicks || []).filter((m) => (!k.mark || m.marker === k.mark) && ok(m.t)).length;
@@ -2800,11 +2839,13 @@ const ASG_META = {
   'Soulcoiler kicks': { pic: () => icoW('ability_kick'), tip: '', sec: 'as-ca', how: 'The kick rotation on each Spiteful Soulcoiler set. A cast that got through on someone\'s turn is a miss; a kick out of turn could be better.' },
   'Mutilate groups': { pic: () => icoW('ability_rogue_mutilate'), tip: '', sec: 'as-szmut', how: 'The note\'s two Mutilate soak groups: each Mutilate is soaked by one group and the next by the other. Someone from the other group in it, or three or more of its own group missing, could be better; one or two out is fine.' },
   'Fury timer': { pic: () => icoW('ability_hunter_pet_raptor'), tip: '', sec: 'as-szfury', how: 'Each Serpent\'s Fury pop against the note\'s timer. The pop before an intermission more than 1.5 s early, or any pop more than 3 s late, could be better.' },
+  'Well groups': { pic: () => spellIcon(0, 'Grasping Depths', true), tip: 'Grasping Depths', sec: 'as-nzwell', how: 'The note\'s two Soulcoil Well groups take turns going into the well for each Drowned Echo. Someone from the other group in the well, or three or more of the group whose turn it is missing, could be better; one or two out is fine.' },
+  'Pyre soak': { pic: () => spellIcon(0, 'Hungering Pyre', true), tip: 'Hungering Pyre', sec: 'as-nzpyre', how: 'The note\'s Hungering Pyre soak list goes into every Pyre; its don\'t-soak list stays out (their Slithering Flame burns the corpses). Someone from the don\'t-soak list in it, or three or more of the soak list missing (not counting anyone dead or in the well), could be better.' },
   'Sides': { pic: () => icoW('ability_creature_poison_05'), tip: '', sec: 'as-sides', how: 'The note\'s Blood and Breath groups: each starts on its own boss and swaps to the other after every intermission. A player on the other boss in a cycle could be better (the note may just be out of date).' },
   'Kick teams': { pic: () => icoW('ability_kick'), tip: '', sec: 'as-kt', how: 'Each raid marker\'s kickers from the note. A cast from that marker\'s add that got through is a miss.' },
   'Assigned cooldowns': { pic: () => icoW('spell_holy_divinehymn'), tip: '', sec: 'as-hcd', how: 'The cooldown reminders in the note: pressed within 3 seconds is on time, later or earlier is late or early, not pressed is missed.' },
 };
-const ASG_ORDER = ['Sides', 'Mutilate groups', 'Fury timer', 'Guillotine', 'Purple orbs', 'Mind control CC', 'Soulcoiler kicks', 'Add curses', 'Ghost soaks', 'Kick teams', 'Assigned cooldowns'];
+const ASG_ORDER = ['Well groups', 'Pyre soak', 'Sides', 'Mutilate groups', 'Fury timer', 'Guillotine', 'Purple orbs', 'Mind control CC', 'Soulcoiler kicks', 'Add curses', 'Ghost soaks', 'Kick teams', 'Assigned cooldowns'];
 function assignAcross(reps) {
   const rows = new Map();
   const phOf = (c) => (c.cat === 'Ghost soaks' ? 'Intermission' : (c.label.match(/\bP(\d)\b/) || [])[1] ? 'P' + c.label.match(/\bP(\d)\b/)[1] : '');

@@ -6,7 +6,13 @@ $src = $PSScriptRoot; $root = Split-Path $src
 $read = { param($f) [IO.File]::ReadAllText((Join-Path $src $f)) }
 $utf8 = New-Object Text.UTF8Encoding $false
 $wcl = & $read 'wcl.js'
-$html = (& $read 'shell.html').Replace('/*ENGINE*/', (& $read 'engine.js')).Replace('/*WCL*/', $wcl).Replace('/*UI*/', (& $read 'ui.js')).Replace("`r`n", "`n")
+# (a syntax error would break the page for everyone with it open: check each script first, when Node is on this PC, and
+# stop without writing anything)
+$node = 'C:\Program Files\nodejs\node.exe'
+if (Test-Path $node) { foreach ($f in 'engine.js', 'wcl.js', 'ui.js', 'worker_template.js') {
+  $p = Join-Path $src $f; if ($f -eq 'worker_template.js') { $tmp = Join-Path $env:TEMP 'debrief-worker-check.mjs'; [IO.File]::WriteAllText($tmp, ([IO.File]::ReadAllText($p) -replace '__[A-Z_]+__', '""'), $utf8); $p = $tmp }
+  & $node --check $p; if ($LASTEXITCODE) { throw "$f has a syntax error: nothing was built" } } }
+$html =(& $read 'shell.html').Replace('/*ENGINE*/', (& $read 'engine.js')).Replace('/*WCL*/', $wcl).Replace('/*UI*/', (& $read 'ui.js')).Replace("`r`n", "`n")
 [IO.File]::WriteAllText((Join-Path $root 'WoW-Log-Analyzer.html'), $html, $utf8)
 
 # the Worker: every query the site may run (const NAME_Q = `...`; in wcl.js), then the hosted page itself

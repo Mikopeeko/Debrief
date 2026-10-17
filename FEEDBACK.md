@@ -14,6 +14,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 111: Nek'zali's NSRT note
+- [x] **Well groups** (Assignments tab): your note's two Soulcoil Well groups take turns going into the well for each Drowned Echo, in
+  the order of the note's "Group 1 / Group 2 go in" reminders. Who was in the well comes from Immortal Coil, which only hits players
+  inside. Amber: someone from the other group in the well, or 3+ of the group whose turn it is missing (one or two out is fine).
+  On the Sep 23 kill: no mistakes, the groups alternated exactly as the note says.
+- [x] **Pyre soak**: the soak list goes into every Hungering Pyre, and the don't-soak list stays out (their Slithering Flame burns
+  corpses). Amber: someone from the don't-soak list in it, or 3+ of the soak list missing, not counting anyone dead or in the well.
+  On the Sep 23 kill, 3 of the 4 Pyres were short-handed.
+- [x] The build now checks every script for a syntax error before writing anything, so a broken build can't reach your open tab or
+  the website again (one slipped through for a minute tonight).
+
 ## 2026-10-17, round 110: Raid cooldowns, reworked
 - [x] The old one-row-per-player timeline is replaced by one **Raid cooldowns** panel (Mechanics tab, Survival group, and the Healing view):
   - the raid's damage over the pull, with each **big hit** pinned and numbered: green covered, amber nothing used but something was

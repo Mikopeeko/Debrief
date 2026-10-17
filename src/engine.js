@@ -1768,6 +1768,8 @@ function buildNekzali(ev, r, h) {
   const dur = r.duration, mythic = r.item.diff === 'Mythic', burnOn = mythic || r.item.diff === 'Heroic', pname = (g) => h.name(g), T = h.fmtT;
   const fmtM = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
   const mistakes = [], sections = [], marks = [];
+  // (_nz: what the NSRT note check needs: who was in the well for each Drowned Echo, who soaked each Hungering Pyre)
+  const _nz = { depths: [], pyres: [] };
   const M = (t, player, mech, severity, detail, fix, map) => mistakes.push({ t, player, mechanic: mech, id: 0, severity, detail, fix, ...(map ? { map } : {}) });
   const has = (e, ids) => [].concat(ids).includes(e.id);
   const dmgId = (ids) => ev.filter((e) => e.k === 'dmg' && has(e, ids) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
@@ -1882,6 +1884,7 @@ function buildNekzali(ev, r, h) {
     const coil = dmgId(NZ.coil), spir = dmgId(NZ.spirit), cuSt = starts(NZ.curse), cuOk = castOk(NZ.curse);
     const dpGroups = wins.map((w, i) => {
       const t1 = w.t1 ?? dur, team = [...new Set(coil.filter((e) => e.t >= w.t0 && e.t <= t1 + 1).map((e) => e.dst))];
+      _nz.depths.push({ i: i + 1, t0: w.t0, t1, team: team.map(pname), ph: phOf(w.t0) });
       const rows = [];
       for (const [k, cs] of cuSt.filter((t) => t >= w.t0 - 0.5 && t <= t1 + 0.5).entries()) {
         const kick = r.interrupts.find((x) => x.id === NZ.curse && x.t >= cs - 0.2 && x.t <= cs + 4.5), off = !kick && cuOk.find((t) => t >= cs && t <= cs + 5);
@@ -1958,6 +1961,7 @@ function buildNekzali(ev, r, h) {
     // (Hungering Pyre: the soak lands 7.5 s after its cast starts; its hit splits between everyone within 10 yards)
     const pyH = dmgId(NZ.pyre).filter((e) => e.t >= ritT && e.t <= iEnd + 5), pys = []; for (const e of pyH) { const p = pys[pys.length - 1]; if (p && e.t - p.t < 1) p.who.add(e.dst); else pys.push({ t: e.t, who: new Set([e.dst]) }); }
     pys.forEach((p, k) => {
+      _nz.pyres.push({ i: k + 1, t: p.t, who: [...p.who].map(pname) });
       const died = r.deaths.filter((d) => d.t >= p.t - 0.2 && d.t <= p.t + 1 && /hungering pyre/i.test(d.ability || ''));
       if (died.length) M(p.t, 'Raid', 'Hungering Pyre', 'High', 'Hungering Pyre was soaked by ' + pl(p.who.size, 'player') + ' and ' + pl(died.length, 'player') + ' died.', 'Send the melee into every Hungering Pyre so its damage is split.');
       rows.push([{ txt: 'Hungering Pyre ' + (k + 1) }, { t: p.t }, { txt: pl(p.who.size, 'soaker'), warn: p.who.size < 4 && !died.length, bad: !!died.length, sub: [...p.who].map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
@@ -2020,7 +2024,7 @@ function buildNekzali(ev, r, h) {
     for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
     return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
   });
-  return { diag, title: r.item.diff + " audit: Nek'zali the Soulcoiler", reached: phases[phases.length - 1].name, phases, marks, sections, mistakes,
+  return { _nz, diag, title: r.item.diff + " audit: Nek'zali the Soulcoiler", reached: phases[phases.length - 1].name, phases, marks, sections, mistakes,
     note: mythic ? '' : 'Mythic-only checks (Grasping Depths, Invoke) are hidden on this difficulty.' };
 }
 
@@ -4067,6 +4071,7 @@ function checkAssignments(r, noteText) {
   try { if (r.item.boss === 'The Twin Fangs' && r.module && r.module._feasts) twinFangsAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Twin Fangs assignments: ' + e.message); }
   try { if (r.item.boss === 'Entombed Sentinels' && r.module && r.module._sides) sentinelsAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Entombed Sentinels assignments: ' + e.message); }
   try { if (r.item.boss === 'Sszorak' && r.module && r.module._sz) sszorakAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Sszorak assignments: ' + e.message); }
+  try { if (r.item.boss === "Nek'zali the Soulcoiler" && r.module && r.module._nz) nekzaliAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Nek\'zali assignments: ' + e.message); }
   try { if (r.item.boss === 'The Coiled Altar') coiledAltarAssign(r, note, res, isName, P, realPh); } catch (e) { res.warnings.push('Couldn\'t check the Coiled Altar assignments: ' + e.message); }
   try { if (r.item.boss === 'The Coiled Altar') coiledAltarNote(r, note, res, isName, P, phaseOf); } catch (e) { res.warnings.push('Couldn\'t check the Coiled Altar CC and curse assignments: ' + e.message); }
   res.unknownNames = [...res.unknownNames].slice(0, 20);
@@ -4353,6 +4358,65 @@ function sszorakAssign(r, note, res, isName, P) {
     out.timer = { rows, triggers: tr && tr.lines.length ? tr.lines[0].names : [] };
   }
   res.boss = Object.assign(res.boss || {}, { sz: out });
+}
+
+// Nek'zali NSRT assignments: the Soulcoil Well groups (they take turns going into the well for each Drowned Echo, in the
+// order of the note's "go in" reminders, or one after the other), and the Hungering Pyre soak list and its "don't soak"
+// list (those players take a Slithering Flame to burn corpses instead). The fight module says who was in the well for each
+// Echo (Immortal Coil hits only them) and who each Pyre hit. Like the other soak checks: one or two of a group missing is
+// fine, three or more is short-handed; someone from the other group, or from the don't-soak list, could be better.
+function nekzaliAssign(r, note, res, isName, P) {
+  const Z = r.module._nz, SHORT = 3;
+  const secs = []; let cur = null;
+  for (const ln of note.lines) {
+    const names = ln.words.filter(isName).map((n) => P(n).name);
+    if (!names.length) { cur = { head: ln.raw, lines: [] }; secs.push(cur); continue; }
+    if (!cur) { cur = { head: '', lines: [] }; secs.push(cur); }
+    cur.lines.push({ label: ln.label, names });
+  }
+  const take = (re) => { const s = secs.find((x) => re.test(x.head)) || secs.find((x) => x.lines.some((l) => re.test(l.label))); if (s) for (const l of s.lines) res.other = res.other.filter((o) => o.label !== l.label); return s; };
+  const wg = take(/well|realm|depths|echo/i), py = take(/pyre|soak circle/i);
+  const deadAt = (n, t) => r.deaths.some((d) => d.player === n && d.t <= t + 0.2);
+  const out = { well: null, pyre: null };
+  // the well groups: which group's turn each Echo is (the reminders that name a group, by phase then time; else they alternate)
+  const groups = wg ? wg.lines.filter((l) => l.names.length).slice(0, 2).map((l) => ({ label: l.label.replace(/^realm\s*/i, ''), names: l.names })) : [];
+  if (groups.length === 2 && Z.depths.length) {
+    const gi = (txt) => { const m = /group\s*(\d)/i.exec(txt || ''); return m ? +m[1] - 1 : null; };
+    const order = note.reminders.filter((x) => gi(x.text) != null && gi(x.text) < 2).sort((a, b) => a.ph - b.ph || a.time - b.time).map((x) => gi(x.text));
+    const gOf = new Map(); groups.forEach((g, k) => g.names.forEach((n) => gOf.set(n, k)));
+    const by = new Map();
+    const rows = Z.depths.map((d, i) => {
+      const k = order.length > i ? order[i] : i % 2, g = groups[k], wrong = d.team.filter((n) => gOf.has(n) && gOf.get(n) !== k);
+      const missed = g.names.filter((n) => !d.team.includes(n) && !deadAt(n, d.t0)), extra = d.team.filter((n) => !gOf.has(n));
+      for (const n of wrong) { let o = by.get(n); if (!o) by.set(n, o = { who: n, group: groups[gOf.get(n)].label, echoes: [] }); o.echoes.push(d.i); }
+      return { i: d.i, t: d.t0, ph: d.ph, group: g.label, k, n: d.team.filter((n) => gOf.get(n) === k).length, of: g.names.filter((n) => !deadAt(n, d.t0)).length, wrong, missed, extra, short: d.team.length > 0 && missed.length >= SHORT, empty: !d.team.length };
+    });
+    const issues = [...by.values()];
+    for (const x of issues) res.mistakes.push({ t: (Z.depths.find((d) => d.i === x.echoes[0]) || { t0: 0 }).t0, player: x.who, mechanic: 'Well group', id: 0, severity: 'Low', fromNote: true,
+      detail: 'Went into the well on the other group\'s turn (Drowned Echo ' + x.echoes.join(', ') + '): the note puts them in ' + x.group + '.', fix: 'Go in only on your group\'s Echo; leaving the well gives you Soul Exhaustion for the next one.' });
+    for (const x of rows.filter((q) => q.short)) res.mistakes.push({ t: x.t, player: 'Raid', mechanic: 'Well group', id: 0, severity: 'Low', fromNote: true,
+      detail: 'Drowned Echo ' + x.i + ' (' + x.group + '\'s turn) was ' + x.missed.length + ' short: ' + x.missed.join(', ') + '.', fix: 'The whole group goes in for its Echo, so it dies fast and every Curse gets kicked.' });
+    out.well = { groups, rows, issues, short: SHORT };
+  }
+  // the Pyre soak list: someone from the don't-soak list in a Pyre, or three or more of the soak list missing (not counting
+  // anyone dead or in the well then)
+  const lists = py ? py.lines.filter((l) => l.names.length) : [], soakL = lists.find((l) => !/don'?t|not|stay out|no soak/i.test(l.label)), outL = lists.find((l) => /don'?t|not|stay out|no soak/i.test(l.label));
+  if (soakL && Z.pyres.length) {
+    const inWell = (n, t) => Z.depths.some((d) => t >= d.t0 - 1 && t <= d.t1 + 1 && d.team.includes(n));
+    const by = new Map();
+    const rows = Z.pyres.map((p) => {
+      const wrong = outL ? p.who.filter((n) => outL.names.includes(n)) : [], missed = soakL.names.filter((n) => !p.who.includes(n) && !deadAt(n, p.t) && !inWell(n, p.t));
+      for (const n of wrong) { let o = by.get(n); if (!o) by.set(n, o = { who: n, pyres: [] }); o.pyres.push(p.i); }
+      return { i: p.i, t: p.t, n: p.who.filter((n) => soakL.names.includes(n)).length, of: soakL.names.filter((n) => !deadAt(n, p.t) && !inWell(n, p.t)).length, wrong, missed, extra: p.who.filter((n) => !soakL.names.includes(n) && !(outL && outL.names.includes(n))), short: missed.length >= SHORT };
+    });
+    const issues = [...by.values()];
+    for (const x of issues) res.mistakes.push({ t: (Z.pyres.find((p) => p.i === x.pyres[0]) || { t: 0 }).t, player: x.who, mechanic: 'Pyre soak', id: 0, severity: 'Low', fromNote: true,
+      detail: 'Soaked Hungering Pyre ' + x.pyres.join(', ') + ', but the note has them out of it (their Slithering Flame burns the corpses).', fix: 'Stay out of the Pyre and use your Slithering Flame on the corpses.' });
+    for (const x of rows.filter((q) => q.short)) res.mistakes.push({ t: x.t, player: 'Raid', mechanic: 'Pyre soak', id: 0, severity: 'Low', fromNote: true,
+      detail: 'Hungering Pyre ' + x.i + ' was ' + x.missed.length + ' short of the soak list: ' + x.missed.join(', ') + '.', fix: 'Everyone on the soak list goes into every Pyre so its damage is split.' });
+    out.pyre = { soak: soakL.names, out: outL ? outL.names : [], rows, issues, short: SHORT };
+  }
+  res.boss = Object.assign(res.boss || {}, { nz: out });
 }
 
 // Twin Fangs NSRT assignments: Ravenous Feast soak groups (in order), Broodling kick order by area, and which group
