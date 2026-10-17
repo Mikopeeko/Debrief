@@ -3,13 +3,18 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
-- [ ] **High priority: set up GitHub before anything else.**
+- [x] **High priority: set up GitHub before anything else** (round 102: private repo Mikopeeko/Debrief, a checkpoint pushed after every round).
 - [x] Entombed Sentinels module (round 95).
 - [x] Sszorak module (round 99).
 - [ ] Then the next fight modules, in this order: Nek'zali the Soulcoiler, The Lost Explorers. Strategy from the guides and videos; Wolfthorn's pulls are raw data.
 - [ ] Open (your call): a few of the Sentinels and Sszorak thresholds are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [ ] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knows 8 bosses (no rule pack, banner art or raid tag for them; Nymrissa is in your Oct 1 log).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-16, round 102: GitHub
+- [x] Git installed (Git for Windows 2.55), the folder is a git project, and checkpoint 1 is on GitHub: the private repo Mikopeeko/Debrief, branch `main`.
+- [x] You signed in once in the browser; Windows remembers it, so every round from now on ends with a checkpoint pushed, with no sign-in.
+- [x] Left off GitHub (`.gitignore`): the installers in `files\`, the `backups\` folder and `*.raid-backup.*` copies (git history replaces them; they stay on your PC), and local tool settings. Your Warcraft Logs login was never in the folder.
 
 ## 2026-10-16, round 101: Progress cards
 - [x] Each boss card's background is now that boss's banner art (the same as the pull banner), across the top and fading down into the card. Nothing else on the card changed. Bosses without banner art keep the model render. Checked on desktop and phone.

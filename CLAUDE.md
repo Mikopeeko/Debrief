@@ -19,6 +19,12 @@ in the style of Warcraft Logs + WoWAnalyzer + Wipefest. Built for Mythic raid pr
 ## Workflow
 Edit files in src/, run `python build.py` inside src/, refresh the browser tab opened by start.bat.
 
+## Version control
+- Private GitHub repo: https://github.com/Mikopeeko/Debrief (branch `main`). Git is at `C:\Program Files\Git\cmd\git.exe`.
+- After each round of work (each FEEDBACK.md entry), commit the source and the built HTML as a checkpoint with a short message, then push.
+  The push uses the Windows-saved GitHub sign-in (Git Credential Manager); set `GCM_INTERACTIVE=never` so it never waits on a prompt.
+- `.gitignore` keeps installers, `backups/`, `*.raid-backup.*`, `.claude/` and raw combat logs off GitHub. The Warcraft Logs login is stored outside the project (LOCALAPPDATA), never in the repo.
+
 ## Conventions
 - Never bundle Blizzard art; icons load at runtime (Wowhead/Blizzard) with built-in SVG fallbacks.
 - Mechanic rules are only as good as their spell names/IDs: unverified ones are flagged. The Fight audit "Data check" panel shows which tracked spells a real pull contained.
