@@ -240,7 +240,8 @@ const PACKS = [
 const DIFF = { 1: 'Normal', 2: 'Heroic', 8: 'Mythic+', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 23: 'Mythic' };
 const WANTED = new Set(['COMBATANT_INFO', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'RANGE_DAMAGE', 'SWING_DAMAGE',
   'ENVIRONMENTAL_DAMAGE', 'SPELL_HEAL', 'SPELL_PERIODIC_HEAL', 'SPELL_ABSORBED', 'SPELL_HEAL_ABSORBED', 'SPELL_CAST_SUCCESS',
-  'SPELL_INTERRUPT', 'SPELL_DISPEL', 'SPELL_SUMMON', 'UNIT_DIED', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_AURA_REMOVED_DOSE', 'SPELL_AURA_REMOVED', 'SPELL_CAST_START']);
+  'SPELL_INTERRUPT', 'SPELL_DISPEL', 'SPELL_SUMMON', 'UNIT_DIED', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_AURA_REMOVED_DOSE', 'SPELL_AURA_REMOVED', 'SPELL_CAST_START',
+  'SPELL_ENERGIZE', 'SPELL_PERIODIC_ENERGIZE']);
 
 // Spell school per spell ID, learned from the log (used for icon colors).
 const SCHOOL = new Map();
@@ -4791,6 +4792,9 @@ function newPlayer(guid) {
     // (their power other than mana, by type, for wasted resources (resAt); every cast they started, { t, id, spell, done },
     // done the time it went off, for casts that didn't finish)
     res: new Map(), starts: [],
+    // (the Resources view: every power they gained, { t, ty, spell, id, amt, over } (over: what came while they were already
+    // full), and every power a cast cost them, { t, ty, spell, id, amt }; ty is the log's power type, 0 for mana)
+    gainL: [], spendL: [],
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
 }
 function addAb(m, name, id, amt, over, crit) {
@@ -4826,6 +4830,7 @@ function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.s
 // (and the cast's mana cost, written after the power: { t, spell, id, cost } as a share of their mana, for "what their mana
 // went on")
 function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|'), k = ty.indexOf('0'); if (k < 0) return; const cur = +String(f[a + 11]).split('|')[k], mx = +String(f[a + 12]).split('|')[k]; if (!(mx > 0) || cur !== cur) return;
+  p.manaMax = mx; // (their whole bar, for the Resources view's "bars of mana")
   const cost = +String(f[a + 13]).split('|')[k]; if (cost > 0 && spell) p.manaUse.push({ t, spell, id, cost: cost / mx });
   const l = p.mana[p.mana.length - 1]; if (l && t - l[0] < 2) { l[1] = Math.min(l[1], cur / mx); return; } p.mana.push([t, Math.max(0, Math.min(1, cur / mx))]); }
 // a player's other power (rage, energy, combo points, Holy Power, runes and so on; not mana or Arcane Charges, where sitting
@@ -5066,6 +5071,16 @@ function analyze(item, text, opts) {
           const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }
         break;
+      // a player gaining power (rage from a hit, Holy Power from Holy Shock, mana from a potion…): how much, and how much of it
+      // came while they were already full (the last four fields: amount, over, power type, max)
+      case 'SPELL_ENERGIZE': case 'SPELL_PERIODIC_ENERGIZE': {
+        if (f.length < 14 || !isPlayer(dg)) break;
+        const n = f.length, amt = num(f[n - 4]), over = Math.max(0, num(f[n - 3])), ty = String(f[n - 2]);
+        if (!(amt > 0) || !/^\d+$/.test(ty)) break;
+        const pg = P(dg, dn); if (pg.gainL.length < 8000) pg.gainL.push({ t, ty, spell: f[9], id: num(f[8]), amt, over: Math.min(amt, over) });
+        if (f.length >= 11 + ADV + 4 && f[11] === dg) resAt(pg, f, 11, t);
+        break;
+      }
       case 'SPELL_CAST_START':
         if (f.length >= 10) noteId(num(f[8]), f[9]);
         // (a player starting a cast: matched to its cast going off, for casts that didn't finish)
@@ -5098,7 +5113,9 @@ function analyze(item, text, opts) {
             modEv.push({ k: 'cast', t, src: sg, srcName: sn, spell, id, ...pw, ...(me ? { x: -(+f[12 + PX]), y: +f[11 + PX], face: fc === fc ? fc : null } : {}) }); } } break; }
         const p = P(sg, sn);
         p.casts++;
-        if (f.length >= 11 + ADV && f[11] === sg) { manaAt(p, f, 11, t, spell, id); resAt(p, f, 11, t); }
+        if (f.length >= 11 + ADV && f[11] === sg) { manaAt(p, f, 11, t, spell, id); resAt(p, f, 11, t);
+          // (what the cast cost, in each power it used)
+          const tys = String(f[21]).split('|'), cos = String(f[24]).split('|'); for (let k = 0; k < tys.length; k++) { const c = +cos[k]; if (c > 0 && tys[k] !== '' && p.spendL.length < 6000) p.spendL.push({ t, ty: tys[k], spell, id, amt: c }); } }
         // (the cast it finishes, if it had a cast bar: its latest start of the same spell in the last 15 s)
         for (let i = p.starts.length - 1; i >= 0 && i >= p.starts.length - 4; i--) { const s0 = p.starts[i]; if (s0.done == null && s0.id === id && t - s0.t <= 15) { s0.done = t; break; } }
         if (W(spell)) modEv.push({ k: 'pcast', t, src: sg, spell, id, dst: dg });

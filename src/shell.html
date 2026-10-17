@@ -1331,12 +1331,12 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pfv .pf-top { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .pf-top .seg { margin: 0; padding: 2px; } .pf-top .seg button { padding: 5px 12px; font-size: 13.5px; } .pf-top .pfph button { padding: 5px 11px; }
 .pf-top .cutbar { margin: 0 0 0 auto; flex: 0 1 auto; min-width: 0; }
-.pfk { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 0 0 10px; }
+.pfk { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 0 0 10px; }
 .pfk-b { --kc: var(--gold); position: relative; display: flex; align-items: center; gap: 11px; min-width: 0; padding: 11px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color .12s, background .12s; }
 .pfk-b:hover { border-color: var(--line2); background: #1a1d26; }
 .pfk-b.on { background: var(--raised); border-color: var(--line2); box-shadow: inset 0 -2px 0 var(--kc); }
 .pfk-b:not(.on) .pfk-l { font-size: 14px; } /* (a view you're not on is just its name) */
-.pfk-b.k-dmg { --kc: #6aa8ff; } .pfk-b.k-heal { --kc: #45c15c; } .pfk-b.k-taken { --kc: #e5534b; } .pfk-b.k-util { --kc: #b07cf0; } .pfk-b.k-surv { --kc: #e6b450; }
+.pfk-b.k-dmg { --kc: #6aa8ff; } .pfk-b.k-heal { --kc: #45c15c; } .pfk-b.k-taken { --kc: #e5534b; } .pfk-b.k-res { --kc: #4fb6e8; } .pfk-b.k-util { --kc: #b07cf0; } .pfk-b.k-surv { --kc: #e6b450; }
 .pfu-miss { margin: 12px 0 0; line-height: 1.5; } .pfu-miss b { color: var(--muted); font-weight: 600; }
 .pfk-i { width: 30px; height: 30px; border-radius: 7px; flex: none; box-shadow: 0 0 0 1px #000, 0 0 0 2px var(--line2); opacity: .5; filter: saturate(.5); transition: opacity .12s, filter .12s; }
 .pfk-b.on .pfk-i, .pfk-b:hover .pfk-i { opacity: 1; filter: none; }
@@ -1630,6 +1630,29 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .hm-ur > span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hm-ur > span:last-child { display: flex; align-items: center; gap: 6px; } .hm-ur i { display: block; height: 6px; border-radius: 3px; opacity: .8; } .hm-ur > span:last-child b { margin-left: auto; }
 .hm-un { margin-top: 6px; font-size: 11.5px; line-height: 1.4; }
+/* Performance, Resources: the power switch, a player's four numbers, what they gained and spent, their time at full */
+.rs-sw { display: inline-flex; flex-wrap: wrap; margin: 0 0 12px; } .rs-sw button { padding: 6px 13px; }
+.mp-full { fill: rgba(229,83,75,.16); }
+.rs-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 2px 0 12px; }
+.rs-n { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 8px 10px; background: var(--raised); border-radius: 8px; }
+.rs-n > span { font-size: 11.5px; color: var(--faint); } .rs-n b { font: 700 17px/1.25 var(--head); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .rs-n small { font-size: 11.5px; color: var(--muted); }
+@media (max-width: 560px) { .rs-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rs-ut { margin-top: 2px; } .rs-ut .hm-ur > span:first-child .icw { width: 16px; height: 16px; vertical-align: -3px; }
+.rs-ut .hm-uh, .rs-ut .hm-ur { grid-template-columns: minmax(120px, 1fr) 52px 56px minmax(70px, 150px); }
+@media (max-width: 560px) { .rs-ut .hm-uh, .rs-ut .hm-ur { grid-template-columns: minmax(0, 1fr) 44px 50px 40px; gap: 8px; } .rs-ut .hm-ur > span:last-child i { display: none; } }
+.rs-w { color: #ff8f87; } .rs-un { color: var(--text); font-style: italic; }
+.rs-pl .hm-ur > span:last-child { justify-content: flex-end; }
+.rs-v { margin: 2px 0 12px; font-size: 13.5px; line-height: 1.45; color: #c9ced8; }
+.rs-full { display: flex; flex-wrap: wrap; gap: 6px; }
+.rs-fc { padding: 3px 10px; border-radius: 999px; background: rgba(229,83,75,.12); font-size: 12.5px; font-variant-numeric: tabular-nums; } .rs-fc b { color: #ff8f87; margin-left: 3px; }
+.rs-vl { display: flex; flex-direction: column; margin-top: 4px; }
+.rs-vr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; align-items: center; padding: 9px 6px; background: none; border: 0; border-bottom: 1px solid rgba(53,59,73,.55); border-radius: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.rs-vr:hover { background: rgba(255,255,255,.03); } .rs-vr:last-child { border-bottom: 0; } .rs-vr .nm { font-weight: 600; margin-right: 6px; }
+.rs-vr .rs-vt { grid-column: 2; font-size: 13px; color: #c9ced8; line-height: 1.4; }
+.rs-det .pfu-l { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(28px, auto); gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.rs-det .pf-st + .pfu-l { border-top: 0; } .rs-det .pfu-l > b { text-align: right; font-variant-numeric: tabular-nums; } .rs-det .pfu-l .icw { width: 16px; height: 16px; vertical-align: -3px; margin-right: 5px; }
+.rs-det .pfu-l > .sub { font-size: 12px; text-align: right; } .rs-det h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .rs-det h3 small { color: var(--faint); font-size: 12px; } .rs-det h3 .btn { margin-left: auto; }
+.rs-bars .cb-in .hm-p { margin: 0 0 0 6px; padding: 1px 7px; font-size: 10.5px; }
 /* the picked player's casts under the timeline, on its time axis */
 .cs { margin: 6px 0 2px; padding-top: 7px; border-top: 1px solid var(--line); }
 .cs-h { font: 600 12.5px var(--head); margin: 0 0 4px; } .cs-h .sub { font: 400 12px var(--body); color: var(--faint); margin-left: 6px; }

@@ -69,6 +69,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 129: Resources (healer mana moved in)
+- [x] **A new Performance view, Resources** (your idea): one power at a time (a switch on top: Mana, Rage, Energy, Focus,
+  Holy Power, Astral Power, Runic Power, Fury, Essence and the rest), with the raid's tiles (wasted, time at full, built
+  and spent), a chart of everyone's power as a share of full, and a bar per player (all they built, the wasted part in
+  red, their time at full). Pick a player for everything: built, spent, wasted, at full; **Gained from** (each spell that
+  gave it, and how much of it came while they were already full); **Spent on** (each spell, casts, how much); and **Sat at
+  full** (each stretch, and on their chart in red). All pulls adds it up over the night, with a pull-by-pull list.
+- [x] **Healer mana moved into Resources → Mana** (your call): the same checks (ran low, spent fast, mana to spare, potions,
+  the boss's health line), now with what each healer's mana came from (Innervate, Mana Tea, Source of Magic, their own
+  regeneration) and went on. Mana is counted in full bars (1 bar = their whole mana). The Healing view's "Healer mana"
+  button is gone. Arcane Mages show too, but aren't judged against the boss (they burn and refill on purpose).
+- [x] The log names the power that comes from a spell; what it doesn't (energy and mana coming back on their own, rage
+  from auto attacks and hits) is worked out from what they spent and what they started and ended with, and labelled.
+  Warcraft Logs reports now bring every power gain too, so combo points can be judged from a report after all.
+- [x] The Report card's "See it in" buttons include Resources (it opens on that player's power).
+
 ## 2026-10-17, round 128: wasted resources, casts that didn't finish, gaps standing still or moving
 - [x] **Wasted resources** (your pick): each player's power other than mana (Energy, Rage, Focus, Runic Power, runes, Holy
   Power, Soul Shards, Fury, Astral Power, Maelstrom, Insanity, Chi, Essence…) followed through the pull; time sitting at

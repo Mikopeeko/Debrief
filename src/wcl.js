@@ -406,6 +406,11 @@ function translate(item, events) {
       case 'begincast':
         add(e, 'SPELL_CAST_START,' + src(e) + ',' + dst(e) + ',' + spell(ab));
         break;
+      // a unit gaining power, as WoW writes it: the amount (what came while they were full included), what came while they
+      // were full, the power type and its max (for the Resources view)
+      case 'resourcechange':
+        add(e, (e.tick ? 'SPELL_PERIODIC_ENERGIZE,' : 'SPELL_ENERGIZE,') + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + adv(e, e.resourceActor || 2) + ',' + [e.resourceChange || 0, e.waste || 0, e.resourceChangeType || 0, e.maxResourceAmount || 0].join(','));
+        break;
       case 'applybuff': case 'applydebuff':
         add(e, 'SPELL_AURA_APPLIED,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + (e.type === 'applybuff' ? 'BUFF' : 'DEBUFF'));
         break;

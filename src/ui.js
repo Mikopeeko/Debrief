@@ -4044,7 +4044,7 @@ function kicks() {
 // picked player's) with the phases shaded and the boss mechanics, Bloodlust and deaths marked, then a bar per player.
 // A click on a player draws their line and shows what their damage went into (targets and abilities). Everything counts
 // up to the wipe filter; "while alive" divides by the time until a player's first death.
-const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['util', 'Utility'], ['surv', 'Survivability']];
+const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (the views that count presses or grade, not output over time: no phase picker and no chart)
 const PERF_COUNTS = new Set(['card', 'util', 'surv']);
 // Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds: checked
@@ -4115,7 +4115,7 @@ const BRES_N = ['rebirth', 'raise ally', 'intercession', 'soulstone'];
 const EXT_N = ['pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue'];
 // the four views, as switches that carry their headline number (over what's counted: up to the wipe filter, in the
 // picked phase)
-const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', util: 'ability_kick', surv: 'warlock_-healthstone' };
+const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', util: 'ability_kick', surv: 'warlock_-healthstone' };
 const PERF_COL = { dmg: '#6aa8ff', heal: '#45c15c', taken: '#e5534b' };
 // (only the view you're on carries its numbers: the others are just their name, so the tiles under it read first)
 function perfTabs(kind, vals) {
@@ -4160,13 +4160,15 @@ function perf() {
   const sumOf = (rows) => rows.reduce((s, x) => s + x.tot, 0);
   const R3 = { dmg: rowsOf('dmg'), heal: rowsOf('heal'), taken: rowsOf('taken') }, inPh = ph ? ' in ' + esc(pfPhK(ph)) : ' in total';
   const ucats = utilCats([r]), scats = survCats([r]), oh = (() => { const h2 = ps.reduce((s, p) => s + p.healing, 0), o2 = ps.reduce((s, p) => s + p.overheal, 0); return h2 + o2 ? o2 / (h2 + o2) : 0; })();
+  const RV = kind === 'res' ? resView([{ r, w0, w1, end }], true) : null;
   const vals = { card: kind === 'card' ? rcHead([r]) : {}, dmg: { v: C(sumOf(R3.dmg) / wl) + '<span>/s</span>', s: C(sumOf(R3.dmg)) + inPh }, heal: { v: C(sumOf(R3.heal) / wl) + '<span>/s</span>', s: C(sumOf(R3.heal)) + inPh + ' · ' + Math.round(100 * oh) + '% overheal' },
-    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, util: utilHead(ucats), surv: survHead(scats) };
+    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutLine = '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (ph && !counts ? '<b>' + esc(ph.name) + '</b>, ' + T(w0) + '–' + T(w1) + (cut && w1 >= end - 0.5 ? ' (the wipe filter)' : '') : cut ? 'Counted up to <b>' + T(ct) + '</b>, the wipe filter' : r.item.kill ? '<b>Kill</b>: the whole pull counts' : 'The whole pull counts') + '</span></div>';
   // (one row on top: the kinds, then the pull / phase switches and the wipe filter line)
   let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + '</div></div>';
   if (counts) { view(h + (kind === 'card' ? reportCard([r], false) : kind === 'surv' ? utilCards(scats, true, 'surv') : utilCards(ucats, true)) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
+  if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
   const rowsAll = R3[kind], total = sumOf(rowsAll), key = KEY[kind];
   const raidS = []; for (const x of rowsAll) (x.p[key] || []).forEach((v, i) => { if (i < end) raidS[i] = (raidS[i] || 0) + v; });
   if (!S.perfSel || !rowsAll.some((x) => x.p.name === S.perfSel)) S.perfSel = null;
@@ -4223,11 +4225,11 @@ function perf() {
   const wins = kind === 'dmg' ? perfWins(r, end).filter((w) => !ph || (w.t0 < w1 && w.t1 > w0)) : [];
   const cdsH = kind === 'heal' ? healCds(r, w0, w1) : '', hitsH = kind === 'heal' ? healAfterHits(r, w0, w1) : '';
   // (no Phases view: the phase buttons at the top already cut every view by phase; no Heatmap either, by request)
-  const lenses = PERF_LENS.filter(([k]) => k === 'players' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'healers' && kind === 'heal') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
+  const lenses = PERF_LENS.filter(([k]) => k === 'players' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
   const lens = lenses.some(([k]) => k === S.perfLens) ? S.perfLens : 'players';
   if (lenses.length > 1) h += lensBar(lenses, lens);
   if (lens !== 'players') {
-    h += lens === 'phases' ? perfPhases(r, kind, ps, end, phs, ph ? pfPhK(ph) : null) : lens === 'windows' ? perfWindows(r, ps, end, wins) : lens === 'targets' ? perfTargets(r, ps, w0, w1, bossN) : lens === 'healers' ? perfHealers(r, ps, w0, w1, end)
+    h += lens === 'phases' ? perfPhases(r, kind, ps, end, phs, ph ? pfPhK(ph) : null) : lens === 'windows' ? perfWindows(r, ps, end, wins) : lens === 'targets' ? perfTargets(r, ps, w0, w1, bossN)
       : lens === 'cds' ? cdsH : hitsH;
     view(h + '</div>'); bindPerf(); refreshIcons(); return;
   }
@@ -4688,11 +4690,14 @@ async function perfNight(r0, kind, scopeSw) {
   const raidPs = (w, k) => { let s = 0; for (const p of w.r.players.values()) if (pm.has(p.name)) s += sumW(p[KEY[k]] || [], w); return s / w.wl; };
   const avgK = (k) => (used.length ? used.reduce((s, w) => s + raidPs(w, k), 0) / used.length : 0), ucats = utilCats(reps), scats = survCats(reps);
   const avgS = 'average over ' + plural(used.length, 'pull') + (phSel ? ' · ' + esc(phSel) : '');
-  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, util: utilHead(ucats), surv: survHead(scats) };
+  // (Resources: each pull's numbers up to its wipe filter, in the picked phase, added up)
+  const RV = kind === 'res' ? resView(used.map((w) => ({ r: w.r, w0: w.w0, w1: w.w1, end: Math.max(1, Math.min(w.r.duration, cutT(w.r))) })), false) : null;
+  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
   let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div></div></div>';
   if (counts) { view(h + (kind === 'card' ? reportCard(reps, true) : kind === 'surv' ? utilCards(scats, false, 'surv') : utilCards(ucats, false)) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
+  if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
   // per pull: the raid's output per second, and each player's total and time alive
   const key = KEY[kind], pulls = [], acc = new Map();
   for (const w of used) {
@@ -4757,7 +4762,8 @@ function cbRow(o) {
 const cbHead = (v, s, end, cls) => '<div class="pf-row cb nb cb-h' + (cls || '') + '"><span class="pf-k">#</span><span class="cb-hn">Player</span><span class="cb-v">' + v + '</span><span class="cb-s">' + s + '</span>' + (end ? '<span class="cb-r">' + end + '</span>' : '') + '</div>';
 // ---- Performance: the views under the timeline. Players (the bars and the picked player), then the same pull cut other
 // ways: by phase, by damage window, by target, healers only, and as a heatmap ----
-const PERF_LENS = [['players', 'Players'], ['cds', 'Cooldowns'], ['hits', 'Big hits'], ['healers', 'Healer mana'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
+// (healers' mana moved to its own view, Resources)
+const PERF_LENS = [['players', 'Players'], ['cds', 'Cooldowns'], ['hits', 'Big hits'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
 const KEY_OF = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
 const sumIn = (arr, a, b) => { let s = 0; for (let i = Math.max(0, Math.floor(a)); i < Math.min(arr.length, Math.ceil(b)); i++) s += arr[i] || 0; return s; };
 // a player's rate while alive between a and b (null when they were dead for all of it)
@@ -4976,9 +4982,8 @@ function tgtChart(r, w0, w1, cat) {
     '<div class="pfx" data-hx="' + esc(JSON.stringify({ L, iw, W, w0, span, ser })) + '">' + s + '<div class="pfc-tip" hidden></div></div>';
 }
 
-// Healers: each healer's mana over the pull beside the boss's health, and one plain line per healer. A healer's mana should
-// come down about as fast as the boss's health and end as low as it can: running low early means they'll run out, ending
-// a kill with a lot left means they could have healed harder. Then their healing per second and overhealing.
+// (Resources, mana: a healer's mana should come down about as fast as the boss's health and end as low as it can: running
+// low early means they'll run out, ending a kill with a lot left means they could have healed harder)
 // (the boss's health over the pull, from advanced logging: the boss units, averaged when there are two, every 2 seconds)
 function bossHpLine(r, end) {
   const names = new Set(r.bossUnits || []), U = [...(r.hpUnits || new Map()).values()].filter((u) => names.has(u.name) && u.samples.length > 3);
@@ -4988,70 +4993,227 @@ function bossHpLine(r, end) {
   const out = []; for (let t = 0; t <= end + 1; t += 2) out.push([t, main.reduce((s, u) => s + at(u, t), 0) / main.length]);
   return out;
 }
-function perfHealers(r, ps, w0, w1, end) {
-  const hs = ps.filter((p) => p.role === 'healer' && (p.healing > 0 || p.casts));
-  if (!hs.length) return '<div class="panel pf-lp"><p class="muted">No healers found in this pull.</p></div>';
-  const pc = perfContext(r), manaOk = hs.some((p) => (p.mana || []).length >= 4), boss = bossHpLine(r, end), kill = r.item.kill && w1 >= end - 0.5;
+// ---------- Performance: Resources ----------
+// Every power a player builds and spends (mana, rage, energy, Holy Power, Astral Power…), one power at a time: how much
+// they built and from what, what they spent it on, how much went to waste (built while already full) and how long they
+// sat at full. Mana keeps what the old Healer mana view checked (its pace against the boss's health, running low, potions).
+// The log names the gains that come from a spell (Holy Shock's Holy Power, Shield Slam's rage, Innervate's mana) and gives
+// every cast's cost; what it doesn't name (mana and energy coming back on their own, rage from auto attacks and hits) is
+// worked out: what they spent, plus what they ended with, less what they started with and what the named gains gave.
+const RES_DIV = { 1: 10, 6: 10, 7: 10, 8: 10 }; // (the log keeps these in tenths in costs and levels; its gains are whole points)
+const RES_UNNAMED = { 0: 'Mana regeneration', 1: 'Auto attacks and hits taken', 2: 'Natural regeneration', 3: 'Natural regeneration', 5: 'Rune regeneration', 19: 'Natural regeneration' };
+const resName = (ty) => (ty === '0' ? 'Mana' : RES_N[ty] || 'Power ' + ty);
+// (whose mana is worth a look: healers', and Arcane Mages', whose damage runs on it)
+const manaUser = (p) => p.role === 'healer' || p.specId === 62;
+// (an amount as shown: mana in full bars of it, the rest in points)
+const resAmt = (ty, v) => (ty === '0' ? (v >= 10 ? String(Math.round(v)) : v >= 0.095 ? v.toFixed(1) : v > 0.004 ? '<0.1' : '0') : v >= 10000 ? C(v) : Math.round(v).toLocaleString('en-US'));
+const resUnit = (ty, v) => { const a = resAmt(ty, v); return a + (ty === '0' ? (a === '1.0' ? ' bar' : ' bars') : ''); };
+const secsS = (s) => (s >= 90 ? T(s) : Math.round(s) + ' s');
+const resPc = (v) => (v > 0 && v < 0.01 ? '<1' : Math.round(100 * v)) + '%';
+// who uses a power in a pull
+function resUsers(r, ps, ty) {
+  if (ty === '0') return ps.filter((p) => manaUser(p) && p.manaMax > 0 && (p.mana || []).length >= 4);
+  // (the rest: a power they spent at least 3 times, so a Balance Druid's moment in Bear Form doesn't count as rage)
+  return ps.filter((p) => { let n = 0; for (const c of p.spendL || []) if (c.ty === ty && ++n >= 3) return true; return false; });
+}
+// a power's time sitting at full between a and b, from its samples [t, current, max, spend]: between two samples both at
+// full, up to 4 s each, the first not one where they were paying it (that number is from just before spending: they
+// weren't sitting on it); not while dead, mind controlled or while the raid was waiting. { capped, runs: [{ s, e }], longest }
+function fullRuns(r, p, pts, a, b) {
+  const C0 = perfContext(r), x = C0.per.get(p.name), ds = x ? x.ds : [], mcw = C0.mc.get(p.name) || [], idle = rcIdle(r, p);
+  const off = (t) => ds.some(([u, v]) => t >= u && t <= v) || mcw.some(([u, v]) => t >= u && t <= v) || idle.some(([u, v]) => t >= u && t <= v);
+  let capped = 0, run = null, longest = null; const runs = [];
+  for (let i = 0; i < pts.length - 1; i++) { const [t0, c0, m0, sp0] = pts[i], [t1, c1, m1] = pts[i + 1];
+    if (t0 < a || t0 > b || sp0 || !(c0 >= m0 * 0.98 && c1 >= m1 * 0.98) || off(t0)) { run = null; continue; }
+    const dt = Math.min(4, t1 - t0); capped += dt;
+    if (!run) runs.push(run = { s: t0, e: t0 + dt }); else run.e = t0 + dt;
+    if (!longest || run.e - run.s > longest.e - longest.s) longest = run; }
+  return { capped, runs, longest };
+}
+// one player's power ty between w0 and w1 (up to when they stopped for good), in shown units (mana in full bars)
+function resOf(r, p, ty, w0, w1) {
+  const C0 = perfContext(r), x = C0.per.get(p.name), t1 = Math.min(w1, x ? x.until : w1), mana = ty === '0', div = mana ? p.manaMax || 1 : RES_DIV[ty] || 1;
+  const inW = (t) => t >= w0 - 0.05 && t <= t1 + 0.05, gain = new Map(), spend = new Map();
+  let gA = 0, gO = 0, sA = 0, nS = 0;
+  for (const g of p.gainL || []) { if (g.ty !== ty || !inW(g.t)) continue; const a = mana ? g.amt / div : g.amt, ov = mana ? g.over / div : g.over, o = gain.get(g.spell) || { spell: g.spell, id: g.id, amt: 0, over: 0, n: 0 };
+    o.amt += a; o.over += ov; o.n++; gain.set(g.spell, o); gA += a; gO += ov; }
+  for (const c of p.spendL || []) { if (c.ty !== ty || !inW(c.t)) continue; const v = c.amt / div, o = spend.get(c.spell) || { spell: c.spell, id: c.id, amt: 0, n: 0 }; o.amt += v; o.n++; spend.set(c.spell, o); sA += v; nS++; }
+  const pts = (mana ? (p.mana || []).map(([t, f]) => [t, f, 1, 0]) : ((p.res && p.res.get(ty)) || { pts: [] }).pts.map(([t, c, m, sp]) => [t, c / div, m / div, sp])).filter(([t]) => t >= w0 - 2 && t <= t1 + 0.5);
+  const max = mana ? 1 : pts.length ? Math.max(...pts.map((q) => q[2])) : 0, lv0 = pts.length ? pts[0][1] : null, lv1 = pts.length ? pts[pts.length - 1][1] : null;
+  // (what the log didn't name, worked out; under 2% of what they spent is just the log's rounding)
+  const named = gA - gO, un0 = lv0 != null ? sA + lv1 - lv0 - named : 0, unnamed = un0 > Math.max(0.02 * sA, mana ? 0.01 : 0.5) ? un0 : 0;
+  const fr = fullRuns(r, p, pts, w0, t1), al = Math.max(1, aliveSecs(r, p, w0, t1));
+  // (and about what that would have given while they sat at full: lost too)
+  const lost = unnamed > 0 && fr.capped > 0 ? unnamed / Math.max(1, al - fr.capped) * fr.capped : 0;
+  const built = named + unnamed, wasted = gO + lost, byA = (u, v) => v.amt - u.amt;
+  return { p, ty, t1, max, lv0, lv1, pts, gain: [...gain.values()].sort(byA), spend: [...spend.values()].sort(byA), gA, gO, named, unnamed, built, sA, nS, fr, al, lost, wasted,
+    share: wasted / Math.max(1e-9, built + wasted), pots: (p.cons && p.cons.manapot ? p.cons.manapot : []).filter((u) => u.t >= w0 && u.t <= w1) };
+}
+// a player's mana against the boss's health (the old Healer mana view's checks): its pill and line
+function manaPace(r, q, w0, w1, end, boss) {
+  const kill = r.item.kill && w1 >= end - 0.5, pct = (v) => Math.round(100 * v) + '%', dur = (s) => (s < 60 ? Math.round(s) + 's' : T(s)), harder = q.p.role === 'healer' ? 'heal harder' : 'spend more';
   const bAt = (t) => { if (!boss) return null; let v = boss[0][1]; for (const [s, x] of boss) { if (s > t) break; v = x; } return v; };
-  const pct = (v) => Math.round(100 * v) + '%', dur = (s) => (s < 60 ? Math.round(s) + 's' : T(s));
-  const rows = hs.map((p) => { const x = pc.per.get(p.name), t1 = Math.min(w1, x ? x.until : end);
-    const ms = (p.mana || []).filter(([t]) => t >= w0 - 2 && t <= t1 + 0.5), last = ms.length ? ms[ms.length - 1] : null;
-    // (time under 25% and when it started; time well ahead of the boss: under 40% with the boss 25 points higher)
-    let low = 0, lowAt = null, fast = 0, fastAt = null;
-    for (let i = 1; i < ms.length; i++) { const dt = ms[i][0] - ms[i - 1][0], v = ms[i - 1][1], b = bAt(ms[i - 1][0]); if (v < 0.25) { low += dt; if (lowAt == null) lowAt = ms[i - 1][0]; } if (b != null && v < 0.4 && b - v > 0.25) { fast += dt; if (!fastAt) fastAt = [ms[i - 1][0], v, b]; } }
-    return { p, hps: rateIn(r, p, p.healS || [], w0, w1) || 0, over: p.overheal / Math.max(1, p.healing + p.overheal), last, low, lowAt, fast, fastAt, bEnd: last ? bAt(last[0]) : null, gone: t1 < w1 - 0.05, t1, pots: p.cons.manapot.filter((u) => u.t >= w0 && u.t <= w1), ms };
-  }).sort((a, b) => b.hps - a.hps);
-  // (a second healer of the same class gets a dashed line, so two druids can be told apart)
-  { const seen = new Map(); for (const x of rows) { const n = seen.get(x.p.cls) || 0; x.dash = n > 0; seen.set(x.p.cls, n + 1); } }
-  const verdict = (x) => {
-    if (!x.last) return { st: 'na', pill: 'No mana', txt: 'No mana in this pull.' };
-    const pot = x.pots.length ? ' Mana potion at ' + x.pots.map((u) => T(u.t)).join(', ') + '.' : '', died = x.gone ? ' Died at ' + T(x.t1) + ' with ' + pct(x.last[1]) + '.' : '';
-    if (x.low >= 8) return { st: 'warn', pill: x.low >= 30 ? 'Ran low' : 'Dipped low', txt: 'Under 25% for ' + dur(x.low) + ', from ' + T(x.lowAt) + '.' + (pot || ' No mana potion.') + died, low: true };
-    if (x.fast >= 20) return { st: 'warn', pill: 'Spent fast', txt: 'Mana ran ahead of the boss: ' + pct(x.fastAt[1]) + ' with the boss at ' + pct(x.fastAt[2]) + ', at ' + T(x.fastAt[0]) + '.' + pot + died, fast: true };
-    // (dying in the wipe's last seconds still counts: that's mana the raid died with)
-    if (!(x.gone && x.t1 < w1 - 15) && x.bEnd != null && x.last[1] - x.bEnd > 0.3) return { st: 'warn', pill: 'Mana to spare', txt: (kill ? 'Ended the kill with ' + pct(x.last[1]) + ' mana' : (x.gone ? 'Died at ' + T(x.t1) + ' with ' : 'Had ') + pct(x.last[1]) + ' mana, the boss at ' + pct(x.bEnd)) + ': room to heal harder.' + pot, spare: true };
-    return { st: 'ok', pill: 'On pace', txt: (x.bEnd != null ? 'Mana came down with the boss\'s health' : 'Never under 25%') + (x.gone ? '.' + died : '; ended with ' + pct(x.last[1]) + '.') + pot };
-  };
-  for (const x of rows) x.v = verdict(x);
-  // (the list: whoever has something to look at first, then by healing)
-  const listed = rows.slice().sort((a, b) => (a.v.st === 'warn' ? 0 : 1) - (b.v.st === 'warn' ? 0 : 1) || b.hps - a.hps);
-  // the pull in one line
-  const nLow = rows.filter((x) => x.v.low), nNoPot = nLow.filter((x) => !x.pots.length).length, nSpare = rows.filter((x) => x.v.spare).length, nFast = rows.filter((x) => x.v.fast).length;
-  const parts = [];
-  if (nLow.length) parts.push(plural(nLow.length, 'healer') + ' ran low on mana' + (nNoPot === nLow.length ? (nLow.length === 1 ? ', with no mana potion' : nLow.length === 2 ? ', and neither used a mana potion' : ', and none used a mana potion') : nNoPot ? ', ' + nNoPot + ' without a mana potion' : ''));
-  if (nFast) parts.push(plural(nFast, 'healer') + ' spent mana faster than the boss lost health');
-  if (nSpare) parts.push(plural(nSpare, 'healer') + (kill ? ' ended the kill with mana to spare' : ' had mana to spare'));
-  const sum = !manaOk ? '' : parts.length ? parts.join('; ') + '.' : boss ? 'Every healer\'s mana kept pace with the boss\'s health.' : 'No healer ran low on mana.';
-  const sumH = sum ? '<p class="hm-sum ' + (nLow.length || nFast || nSpare ? 'warn' : 'ok') + '">' + (nLow.length || nFast || nSpare ? '! ' : '✓ ') + esc(sum) + '</p>' : '';
-  // (what their mana went on, from each cast's cost: the top spells as a share of all they spent, the whole list on open)
-  const useOf = (x) => { const m = new Map(); let tot = 0; for (const u of x.p.manaUse || []) { if (u.t < w0 - 0.5 || u.t > x.t1 + 0.5) continue; const o = m.get(u.spell) || { spell: u.spell, id: u.id, c: 0, n: 0 }; o.c += u.cost; o.n++; m.set(u.spell, o); tot += u.cost; } return { tot, list: [...m.values()].sort((a, b) => b.c - a.c) }; };
-  const useH = (x) => { const u = useOf(x); if (!u.tot) return ''; const sh = (o) => Math.round(100 * o.c / u.tot) + '%';
-    return '<details class="hm-use"><summary><span class="sub">Mana went on</span> ' + u.list.slice(0, 3).map((o) => spell(o.id, o.spell) + ' <b>' + sh(o) + '</b>').join('<span class="sub"> · </span>') + (u.list.length > 3 ? ' <span class="sub">· ' + (u.list.length - 3) + ' more</span>' : '') + '</summary>' +
-      '<div class="hm-ut"><div class="hm-uh"><span>Spell</span><span>Casts</span><span>Each</span><span>Share</span></div>' + u.list.map((o) => '<div class="hm-ur"><span>' + spell(o.id, o.spell) + '</span><span>' + o.n + '</span><span title="mana per cast, of their whole mana bar">' + (100 * o.c / o.n).toFixed(1) + '%</span><span><i style="width:' + Math.round(100 * o.c / u.list[0].c) + '%;background:' + x.p.color + '"></i><b>' + sh(o) + '</b></span></div>').join('') +
-      '<div class="sub hm-un">In all they spent ' + (u.tot).toFixed(1) + ' full bars of mana (it comes back as they regenerate, and from potions). "Each" is one cast\'s cost, as a share of their whole bar.</div></div></details>'; };
-  const list = '<div class="hm-rows">' + listed.map((x) => '<div class="hm-r"><div class="hm-w">' + avatar(x.p) + '<span class="hm-wn"><span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span><span class="sub">' + esc(x.p.specName || '') + '</span></span></div>' +
-    '<div class="hm-t">' + (manaOk ? '<span class="hm-p ' + x.v.st + '">' + x.v.pill + '</span>' + esc(x.v.txt) : '') + useH(x) + '</div><div class="hm-n"><b>' + C(x.hps) + '</b> healing/s<br><span class="sub">' + pct(x.over) + ' overheal</span></div></div>').join('') + '</div>';
-  return '<div class="panel pf-chart pf-mana">' + (manaOk ? manaChart(r, rows, w0, w1, boss) + sumH : '<h3 class="nh"><span class="pfc-ttl">Healer mana</span></h3><p class="muted">' + (r.item.wcl ? 'No mana came with this pull.' : 'No mana was logged for this pull (turn on advanced combat logging).') + '</p>') + list +
-    '<details class="howit"><summary>How it works</summary><div>Mana comes from each healer\'s casts, every 2 seconds at most, up to the wipe filter. The aim is for mana to come down about as fast as the boss\'s health (the grey line) and end as low as it can. <b>Ran low</b>: under 25% for 8 seconds or more. <b>Spent fast</b>: under 40% while the boss still had 25 points more health. <b>Mana to spare</b>: 30 points more mana than the boss had health at the end, so there was room to heal harder. Overhealing is shown, never counted.</div></details></div>';
+  const ms = q.pts, last = ms.length ? ms[ms.length - 1] : null, gone = q.t1 < w1 - 0.05;
+  if (!last) return { st: 'na', pill: 'No mana', txt: 'No mana in this pull.' };
+  // (an Arcane Mage burns mana and fills it back up on purpose: shown, not judged)
+  if (q.p.role !== 'healer') { const lo = Math.min(...ms.map((m) => m[1])); return { st: 'na', pill: 'Not judged', txt: 'Arcane spends its mana in bursts on purpose, so it isn\'t held against the boss\'s health. Lowest ' + pct(lo) + ', ended with ' + pct(last[1]) + '.' }; }
+  // (time under 25% and when it started; time well ahead of the boss: under 40% with the boss 25 points higher)
+  let low = 0, lowAt = null, fast = 0, fastAt = null;
+  for (let i = 1; i < ms.length; i++) { const dt = ms[i][0] - ms[i - 1][0], v = ms[i - 1][1], b = bAt(ms[i - 1][0]); if (v < 0.25) { low += dt; if (lowAt == null) lowAt = ms[i - 1][0]; } if (b != null && v < 0.4 && b - v > 0.25) { fast += dt; if (!fastAt) fastAt = [ms[i - 1][0], v, b]; } }
+  const bEnd = bAt(last[0]), pot = q.pots.length ? ' Mana potion at ' + q.pots.map((u) => T(u.t)).join(', ') + '.' : '', died = gone ? ' Died at ' + T(q.t1) + ' with ' + pct(last[1]) + '.' : '';
+  if (low >= 8) return { st: 'warn', pill: low >= 30 ? 'Ran low' : 'Dipped low', txt: 'Under 25% for ' + dur(low) + ', from ' + T(lowAt) + '.' + (pot || ' No mana potion.') + died, low: true };
+  if (fast >= 20) return { st: 'warn', pill: 'Spent fast', txt: 'Mana ran ahead of the boss: ' + pct(fastAt[1]) + ' with the boss at ' + pct(fastAt[2]) + ', at ' + T(fastAt[0]) + '.' + pot + died, fast: true };
+  // (dying in the wipe's last seconds still counts: that's mana the raid died with)
+  if (!(gone && q.t1 < w1 - 15) && bEnd != null && last[1] - bEnd > 0.3) return { st: 'warn', pill: 'Mana to spare', txt: (kill ? 'Ended the kill with ' + pct(last[1]) + ' mana' : (gone ? 'Died at ' + T(q.t1) + ' with ' : 'Had ') + pct(last[1]) + ' mana, the boss at ' + pct(bEnd)) + ': room to ' + harder + '.' + pot, spare: true };
+  return { st: 'ok', pill: 'On pace', txt: (bEnd != null ? 'Mana came down with the boss\'s health' : 'Never under 25%') + (gone ? '.' + died : '; ended with ' + pct(last[1]) + '.') + pot };
+}
+// The Resources view: a switch for the power, then (one pull) its chart beside the raid's tiles, a bar per player and the
+// picked player's breakdown; over the night, the same numbers added up over the pulls. list: [{ r, w0, w1, end }].
+// Returns { html, head } (head: the view's switch at the top).
+function resView(list, one) {
+  const psOf = (r) => [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name));
+  const ALL = ['0', ...Object.keys(RES_N)], TY = new Map();
+  for (const w of list) { const ps = psOf(w.r); for (const ty of ALL) for (const p of resUsers(w.r, ps, ty)) { if (!TY.has(ty)) TY.set(ty, new Set()); TY.get(ty).add(p.name); } }
+  if (!TY.size) return { head: {}, html: '<div class="panel"><p class="muted">No resources came with ' + (one ? 'this pull' : 'these pulls') + (list[0] && list[0].r.item.wcl ? '.' : ' (turn on advanced combat logging).') + '</p></div>' };
+  const order = [...TY.keys()].sort((a, b) => (a === '0' ? -1 : b === '0' ? 1 : TY.get(b).size - TY.get(a).size || +a - +b));
+  // (the power picked last; coming from a player's report card, their first one)
+  const ty = TY.has(S.resTy) ? S.resTy : (S.resSel && order.find((k) => TY.get(k).has(S.resSel))) || order[0], mana = ty === '0', nm = resName(ty);
+  const sw = '<div class="seg rs-sw" role="tablist" aria-label="Resource">' + order.map((k) => '<button type="button" role="tab" data-ty="' + k + '" aria-selected="' + (k === ty) + '"' + (k === ty ? ' class="on"' : '') + '>' + esc(resName(k)) + ' <span class="sub">' + TY.get(k).size + '</span></button>').join('') + '</div>';
+  // each player's numbers (over the night, added up over the pulls they were in)
+  const acc = new Map(), add = (m, o) => { const x = m.get(o.spell) || { spell: o.spell, id: o.id, amt: 0, over: 0, n: 0 }; x.amt += o.amt; x.over += o.over || 0; x.n += o.n; m.set(o.spell, x); };
+  for (const w of list) { const boss = mana ? bossHpLine(w.r, w.end) : null;
+    for (const p of resUsers(w.r, psOf(w.r), ty)) { const q = resOf(w.r, p, ty, w.w0, w.w1); if (!q.pts.length && !q.sA) continue; if (mana) q.v = manaPace(w.r, q, w.w0, w.w1, w.end, boss);
+      let a = acc.get(p.name); if (!a) acc.set(p.name, a = { p, per: [], gain: new Map(), spend: new Map(), built: 0, wasted: 0, gO: 0, lost: 0, unnamed: 0, sA: 0, nS: 0, capped: 0, al: 0, runs: [], pots: 0 });
+      a.per.push({ w, q }); for (const k of ['built', 'wasted', 'gO', 'lost', 'unnamed', 'sA', 'nS', 'al']) a[k] += q[k]; a.capped += q.fr.capped; a.pots += q.pots.length;
+      for (const g of q.gain) add(a.gain, g); for (const c of q.spend) add(a.spend, c);
+      for (const u of q.fr.runs) a.runs.push({ s: u.s, e: u.e, pull: w.r.item.pull }); } }
+  const rows = [...acc.values()];
+  for (const a of rows) { a.share = a.wasted / Math.max(1e-9, a.built + a.wasted); a.atFull = a.capped / Math.max(1, a.al); a.gainL = [...a.gain.values()].sort((x, y) => y.amt - x.amt); a.spendL = [...a.spend.values()].sort((x, y) => y.amt - x.amt);
+    if (mana) { const ends = a.per.map(({ q }) => q.lv1).filter((v) => v != null); a.end = ends.length ? ends.reduce((s, v) => s + v, 0) / ends.length : null; a.warn = a.per.filter(({ q }) => q.v.st === 'warn').length; a.lowN = a.per.filter(({ q }) => q.v.low).length; } }
+  // (mana: whoever has something to look at first; the rest: the most wasted first)
+  if (mana) rows.sort((a, b) => b.warn - a.warn || (b.end || 0) - (a.end || 0)); else rows.sort((a, b) => b.share - a.share || b.atFull - a.atFull);
+  { const seen = new Map(); for (const x of rows) { const n = seen.get(x.p.cls) || 0; x.dash = n > 0; seen.set(x.p.cls, n + 1); } } // (a second line of the same class is dashed)
+  if (S.resSel && !rows.some((x) => x.p.name === S.resSel)) S.resSel = null;
+  const sel = S.resSel ? rows.find((x) => x.p.name === S.resSel) : null;
+  // ---- the raid at a glance ----
+  const sum = (k) => rows.reduce((s, x) => s + x[k], 0), stW = (v) => (v <= 0.03 ? 'ok' : v <= 0.08 ? 'warn' : 'bad'), stF = (v) => (v <= 0.03 ? 'ok' : v <= 0.1 ? 'warn' : 'bad');
+  let tiles, head;
+  if (mana) {
+    const runs = rows.flatMap((x) => x.per), low = runs.filter(({ q }) => q.v.low), lowP = [...new Set(low.map(({ w }) => w.r.item.pull))], pots = sum('pots'), ends0 = rows.filter((x) => x.end != null), ends = ends0.some((x) => x.p.role === 'healer') ? ends0.filter((x) => x.p.role === 'healer') : ends0;
+    const avgEnd = ends.length ? ends.reduce((s, x) => s + x.end, 0) / ends.length : null, potBy = rows.filter((x) => x.pots).map((x) => x.p.name);
+    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Ran low', String(one ? low.length : lowP.length), low.length ? 'warn' : 'ok', low.length ? (one ? 'under 25% for 8 s or more: ' + low.map(({ q }) => q.p.name).join(', ') : 'pulls where someone did: ' + lowP.join(', ')) : 'nobody stayed under 25%'),
+      plTile(plIco('inv_potion_76'), 'Mana potions', String(pots), 'na', pots ? 'by ' + potBy.slice(0, 3).join(', ') + (potBy.length > 3 ? ' and ' + (potBy.length - 3) + ' more' : '') : 'none used', true),
+      plTile(plIco('inv_misc_pocketwatch_01'), 'Mana left', avgEnd == null ? '—' : resPc(avgEnd), 'na', one ? (list[0].r.item.kill ? 'on average at the kill: the lower the better' : 'on average at the end of the pull') : 'on average at the end of each pull', true)];
+    head = { v: avgEnd == null ? '—' : resPc(avgEnd) + '<span> mana left</span>', s: plural(rows.length, 'player') + (low.length ? ' · ' + low.length + ' ran low' : '') };
+  } else {
+    const tB = sum('built'), tW = sum('wasted'), tS = sum('sA'), tC = sum('capped'), tAl = sum('al'), worst = rows[0], lg = rows.flatMap((x) => x.runs.map((u) => ({ ...u, p: x.p }))).sort((a, b) => (b.e - b.s) - (a.e - a.s))[0];
+    const wf = tW / Math.max(1e-9, tB + tW), ff = tC / Math.max(1, tAl);
+    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Wasted', resPc(wf), stW(wf), resUnit(ty, tW) + ' ' + nm + ' built while already full' + (worst && worst.share >= 0.03 ? ' · most: ' + worst.p.name + ', ' + resPc(worst.share) : '')),
+      plTile(plIco('inv_misc_pocketwatch_01'), 'Sat at full', resPc(ff), stF(ff), lg && lg.e - lg.s >= 2 ? 'of the time alive · longest: ' + lg.p.name + ', ' + Math.round(lg.e - lg.s) + ' s from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.s) : 'of the time alive, never for long'),
+      plTile(plIco('inv_misc_coin_02'), 'Built · spent', resAmt(ty, tB) + '<span> · </span>' + resAmt(ty, tS), 'na', 'by ' + plural(rows.length, 'player') + (one ? '' : ' over ' + plural(list.length, 'pull')), true)];
+    head = { v: resPc(wf) + '<span> wasted</span>', s: nm + ' · ' + resPc(ff) + ' at full' };
+  }
+  const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
+  // ---- the chart (one pull): everyone's line as a share of full, or the picked player's with their time at full shaded ----
+  let top;
+  if (one) { const w = list[0], boss = mana ? bossHpLine(w.r, w.end) : null, shown = sel ? [sel] : rows;
+    const cr = shown.map((x) => { const q = x.per[0].q; return { p: x.p, dash: x.dash && !sel, mx: mana ? 0 : q.max, pots: mana ? q.pots : [], ms: q.pts.map(([t, c, m]) => [t, m > 0 ? Math.max(0, Math.min(1, c / m)) : 0]) }; });
+    const sub = (mana ? (boss ? 'beside the boss\'s health (grey) · ' : '') + '○ mana potion · ✕ death · shaded: under 25%' : 'as a share of full' + (sel ? ' · shaded red: sitting at full' : '')) + ' · hover for numbers' + (sel ? '' : ', click a name to hide it');
+    top = '<div class="pf-chartrow"><div class="panel pf-chart pf-mana">' + manaChart(w.r, cr, w.w0, w.w1, boss, { side: true, low: mana, full: sel ? sel.per[0].q.fr.runs : null, aria: (sel ? sel.p.name + '\'s ' : 'The raid\'s ') + nm,
+      ttl: (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' : '') + esc(nm), sub }) + '</div>' + tilesH + '</div>';
+  } else top = '<div class="pts n3">' + tiles.join('') + '</div>';
+  // ---- a bar per player: all they built, the wasted part in red (mana: what they had left at the end) ----
+  const bars = rows.map((x, i) => { const on = sel === x; let segs, v, sub, chips = '';
+    if (mana) { const e = x.end || 0; segs = [[Math.max(1, 100 * e), 'm']]; v = x.end == null ? '—' : resPc(e); sub = resAmt(ty, x.sA);
+      chips = one ? ' <span class="hm-p ' + x.per[0].q.v.st + '">' + esc(x.per[0].q.v.pill) + '</span>' : x.lowN ? ' <span class="hm-p warn">low in ' + x.lowN + ' of ' + x.per.length + '</span>' : ''; }
+    else { segs = [[100 * (1 - x.share), 'm'], [100 * x.share, 'ad']]; v = resPc(x.share); sub = secsS(x.capped); }
+    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' rs-r', attrs: ' type="button" data-rn="' + esc(x.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: x.p, segs, v, sub, chips }); }).join('');
+  const left = '<div class="panel pf-bars rs-bars"><h3 class="nh"><span>' + esc(nm) + ' by player</span><small>' + (mana ? 'the bar: mana left at the end' + (one ? '' : ', on average') + ' · spent: in full bars' : 'the bar: all they built · red: built while already full') + (one ? '' : ' · over ' + plural(list.length, 'pull')) + '</small></h3>' +
+    (mana ? cbHead('Left', 'Spent') : cbHead('Wasted', 'At full')) + bars + '</div>';
+  const how = '<details class="howit"><summary>How it works</summary><div>' + (mana
+    ? 'Mana comes from each player\'s casts, every 2 seconds at most, up to the wipe filter, and is counted in full bars (1 bar is their whole mana). The aim is for mana to come down about as fast as the boss\'s health (the grey line) and end as low as it can. <b>Ran low</b>: under 25% for 8 seconds or more. <b>Spent fast</b>: under 40% while the boss still had 25 points more health. <b>Mana to spare</b>: 30 points more mana than the boss had health at the end, so there was room to heal harder. <b>Gained from</b>: what the log names (Innervate, Mana Tea, Source of Magic, potions…); their own regeneration is worked out from what they spent and what they started and ended with.'
+    : 'Everything comes from the log: what each cast cost, every spell that gave ' + esc(nm) + ', and their ' + esc(nm) + ' on their casts and hits, up to the wipe filter and to when they died for good. <b>Wasted</b>: what a spell gave while they were already full, plus about what their natural regeneration (for rage: auto attacks and hits) would have given while they sat at full. <b>At full</b>: time spent at the top, between two readings both at full (up to 4 s each), not while paying it, dead, mind controlled or while the whole raid was waiting. What the log doesn\'t name is worked out: what they spent, plus what they ended with, less what they started with and what the named gains gave.') + '</div></details>';
+  return { head, html: sw + top + '<div class="pf-cols">' + left + '<div class="panel pf-det rs-det">' + (sel ? resDetail(sel, ty, one) : resRaid(rows, ty, one)) + '</div></div>' + how };
+}
+// (over the night: in how many pulls each mana problem came up)
+function paceNight(x) {
+  if (x.p.role !== 'healer') return { st: 'na', pill: 'Not judged', txt: 'Arcane spends its mana in bursts on purpose, so it isn\'t held against the boss\'s health.' };
+  const n = (k) => x.per.filter(({ q }) => q.v[k]).length, parts = [['low', 'ran low'], ['fast', 'spent fast'], ['spare', 'had mana to spare']].filter(([k]) => n(k)).map(([k, l]) => l + ' in ' + n(k));
+  return parts.length ? { st: 'warn', pill: x.warn + ' of ' + x.per.length + ' pulls', txt: capS(parts.join(', ')) + ' of ' + plural(x.per.length, 'pull') + '.' } : { st: 'ok', pill: 'On pace', txt: 'Kept pace with the boss in all ' + plural(x.per.length, 'pull') + '.' };
+}
+const rsSec = (t, n, b) => '<div class="pf-sec"><div class="pf-st"><b>' + t + '</b>' + (n ? '<span>' + n + '</span>' : '') + '</div>' + b + '</div>';
+// the picked player: their numbers, what they gained it from, what they spent it on, and when they sat at full
+function resDetail(x, ty, one) {
+  const nm = resName(ty), mana = ty === '0';
+  let h = '<h3 class="nh">' + avatar(x.p, true) + ' <span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span><small>' + esc(x.p.specName || '') + ' · ' + esc(nm) + (one ? '' : ' · ' + plural(x.per.length, 'pull')) + '</small><button class="btn sm" id="rsClose" type="button">Show the raid</button></h3>';
+  if (mana && one) { const v = x.per[0].q.v; h += '<p class="rs-v"><span class="hm-p ' + v.st + '">' + esc(v.pill) + '</span>' + esc(v.txt) + '</p>'; }
+  else if (mana) { const pn = paceNight(x); h += '<p class="rs-v"><span class="hm-p ' + pn.st + '">' + esc(pn.pill) + '</span>' + esc(pn.txt) + '</p>'; }
+  h += '<div class="rs-nums">' + [['Built', resUnit(ty, x.built), ''], ['Spent', resUnit(ty, x.sA), x.nS ? 'on ' + plural(x.nS, 'cast') : ''], ['Wasted', resUnit(ty, x.wasted), resPc(x.share) + ' of it'], ['At full', secsS(x.capped), resPc(x.atFull) + ' of the time']]
+    .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + v + '</b>' + (s ? '<small>' + s + '</small>' : '') + '</div>').join('') + '</div>';
+  // gained from: each spell that gave it (what counted, and what came while they were full), then what the log doesn't name
+  const gl = x.gainL.map((g) => ({ html: spell(g.id, g.spell), a: g.amt - g.over, o: g.over }));
+  if (x.unnamed > 0) gl.push({ html: '<span class="rs-un" title="Not in the log by name: worked out from what they spent, and what they started and ended with">' + esc(RES_UNNAMED[ty] || 'Not named in the log') + '</span>', a: x.unnamed, o: x.lost, un: true });
+  gl.sort((a, b) => b.a - a.a);
+  const gmx = Math.max(1e-9, ...gl.map((g) => g.a)), bar = (v, mx) => '<i style="width:' + Math.max(1, Math.round(100 * v / mx)) + '%;background:' + x.p.color + '"></i>';
+  const gT = gl.length ? '<div class="hm-ut rs-ut"><div class="hm-uh"><span>From</span><span>Gained</span><span>Wasted</span><span>Share</span></div>' + gl.map((g) => '<div class="hm-ur"><span>' + g.html + '</span><span>' + resAmt(ty, g.a) + '</span><span' + (g.o > 0.004 ? ' class="rs-w"' : '') + (g.un && g.o > 0 ? ' title="About: what it would have given while they sat at full"' : '') + '>' + (g.o > 0.004 ? (g.un ? '≈' : '') + resAmt(ty, g.o) : '—') + '</span><span>' + bar(g.a, gmx) + '<b>' + resPc(g.a / Math.max(1e-9, x.built)) + '</b></span></div>').join('') + '</div>' : '<p class="muted">Nothing gained in the log.</p>';
+  const smx = Math.max(1e-9, ...x.spendL.map((c) => c.amt));
+  const sT = x.spendL.length ? '<div class="hm-ut rs-ut"><div class="hm-uh"><span>On</span><span>Casts</span><span>Spent</span><span>Share</span></div>' + x.spendL.map((c) => '<div class="hm-ur"><span>' + spell(c.id, c.spell) + '</span><span>' + c.n + '</span><span title="' + esc(resUnit(ty, c.amt / c.n) + ' a cast') + '">' + resAmt(ty, c.amt) + '</span><span>' + bar(c.amt, smx) + '<b>' + resPc(c.amt / Math.max(1e-9, x.sA)) + '</b></span></div>').join('') + '</div>' : '<p class="muted">No casts that cost ' + esc(nm) + '.</p>';
+  // sat at full: the longest stretches, in time order
+  const long = x.runs.filter((u) => u.e - u.s >= 1.5).sort((a, b) => (b.e - b.s) - (a.e - a.s)).slice(0, 8).sort((a, b) => a.pull - b.pull || a.s - b.s);
+  const fT = long.length ? '<div class="rs-full">' + long.map((u) => '<span class="rs-fc">' + (one ? '' : '<span class="sub">pull ' + u.pull + '</span> ') + T(u.s) + ' <b>' + Math.round(u.e - u.s) + ' s</b></span>').join('') + '</div>' : '<p class="sub" style="margin:0">Never sat at full for long.</p>';
+  const pT = one ? '' : '<div class="hm-ut rs-ut rs-pl"><div class="hm-uh"><span>Pull</span><span>' + (mana ? 'Left' : 'Wasted') + '</span><span>At full</span><span>' + (mana ? 'Pace' : 'Built') + '</span></div>' + x.per.map(({ w, q }) => '<div class="hm-ur"><span>Pull ' + w.r.item.pull + ' <span class="sub">' + esc(pullLabel(w.r.item)) + '</span></span><span>' + (mana ? (q.lv1 == null ? '—' : resPc(q.lv1)) : resPc(q.share)) + '</span><span>' + secsS(q.fr.capped) + '</span><span>' + (mana ? '<span class="hm-p ' + q.v.st + '">' + esc(q.v.pill) + '</span>' : '<b>' + resAmt(ty, q.built) + '</b>') + '</span></div>').join('') + '</div>';
+  h += rsSec('Gained from', mana ? 'in full bars of mana' : esc(nm) + ', and what came while they were full', gT) + rsSec('Spent on', (mana ? 'in full bars of mana' : esc(nm)) + (x.nS ? ' · hover a number for one cast\'s cost' : ''), sT) +
+    rsSec('Sat at full', secsS(x.capped) + ' in all' + (x.runs.length ? ', ' + plural(x.runs.length, 'time') : '') + (long.length ? ' · the longest' : ''), fT) + (pT ? rsSec('Pull by pull', '', pT) : '');
+  return h + '<p class="sub" style="margin:10px 0 0">Click their bar again for the whole raid.</p>';
+}
+// no one picked: mana, each player's pace; the rest, where the waste came from and the longest stretches at full
+function resRaid(rows, ty, one) {
+  const nm = resName(ty), mana = ty === '0', who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>';
+  let h = '<h3 class="nh"><span>The raid</span><small>' + esc(nm) + (one ? '' : ', over the pulls') + '</small></h3>';
+  if (mana) {
+    const vs = one ? rows.map((x) => [x, x.per[0].q.v]) : [];
+    const nLow = vs.filter(([, v]) => v.low), nNoPot = nLow.filter(([x]) => !x.pots).length, nSpare = vs.filter(([, v]) => v.spare).length, nFast = vs.filter(([, v]) => v.fast).length, parts = [];
+    if (nLow.length) parts.push(plural(nLow.length, 'player') + ' ran low on mana' + (nNoPot === nLow.length ? (nLow.length === 1 ? ', with no mana potion' : ', and none used a mana potion') : nNoPot ? ', ' + nNoPot + ' without a mana potion' : ''));
+    if (nFast) parts.push(plural(nFast, 'player') + ' spent mana faster than the boss lost health');
+    if (nSpare) parts.push(plural(nSpare, 'player') + ' had mana to spare');
+    if (one) h += '<p class="hm-sum ' + (parts.length ? 'warn' : 'ok') + '">' + (parts.length ? '! ' : '✓ ') + esc(parts.length ? parts.join('; ') + '.' : 'Everyone\'s mana kept pace with the boss\'s health.') + '</p>';
+    h += '<div class="rs-vl">' + rows.map((x) => { const v = one ? x.per[0].q.v : paceNight(x);
+      return '<button type="button" class="rs-vr" data-rn="' + esc(x.p.name) + '">' + avatar(x.p, true) + '<span>' + who(x.p) + ' <span class="hm-p ' + v.st + '">' + esc(v.pill) + '</span></span><span class="rs-vt">' + esc(v.txt) + '</span></button>'; }).join('') + '</div>';
+  } else {
+    // where the waste came from: each spell that gave it while they were full, and who; then regeneration while full
+    const by = new Map();
+    for (const x of rows) { for (const g of x.gainL) if (g.over > 0) { const o = by.get(g.spell) || { html: spell(g.id, g.spell), v: 0, who: [] }; o.v += g.over; o.who.push([x.p, g.over]); by.set(g.spell, o); }
+      if (x.lost > 0) { const o = by.get('\u0000') || { html: esc(RES_UNNAMED[ty] || 'Not named in the log') + ' <span class="sub">while at full, about</span>', v: 0, who: [] }; o.v += x.lost; o.who.push([x.p, x.lost]); by.set('\u0000', o); } }
+    const wl = [...by.values()].filter((o) => o.v >= 0.5).sort((a, b) => b.v - a.v).slice(0, 8);
+    const line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
+    h += rsSec('Where the waste came from', esc(nm) + ' built while already full', wl.length ? wl.map((o) => line(o.html + ' <span class="sub">by</span> ' + o.who.sort((a, b) => b[1] - a[1]).slice(0, 3).map(([p, v]) => who(p) + (o.who.length > 1 ? ' <span class="sub">' + resAmt(ty, v) + '</span>' : '')).join(', ') + (o.who.length > 3 ? ' <span class="sub">and ' + (o.who.length - 3) + ' more</span>' : ''), '', resAmt(ty, o.v))).join('') : '<p class="sub" style="margin:0">Nothing went to waste.</p>');
+    const lg = rows.flatMap((x) => x.runs.map((u) => ({ ...u, p: x.p }))).filter((u) => u.e - u.s >= 2).sort((a, b) => (b.e - b.s) - (a.e - a.s)).slice(0, 6);
+    h += rsSec('Longest at full', 'the time they could have spent it', lg.length ? lg.map((u) => line(who(u.p), (one ? '' : 'pull ' + u.pull + ' · ') + 'from ' + T(u.s), Math.round(u.e - u.s) + ' s')).join('') : '<p class="sub" style="margin:0">Nobody sat at full for long.</p>');
+  }
+  return h + '<p class="sub" style="margin:10px 0 0">Pick a player for everything they gained and spent.</p>';
 }
 // every healer's mana over the window, one line each in their class colour (dashed for a second healer of the same class),
 // the boss's health in grey, names at the right end of each line, a circle where they drank a mana potion and a cross
 // where they died; the band under 25% is shaded
-function manaChart(r, rows, w0, w1, boss) {
-  const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : Math.max(760, Math.min(1500, Math.round(chartPx(false)))), H = narrow ? 210 : 190, L = narrow ? 34 : 44, R = narrow ? 70 : 96, Tp = 12, Bm = 20, iw = W - L - R, ih = H - Tp - Bm, span = Math.max(1, w1 - w0);
+// (o, for the Resources view's other powers: ttl and sub for the heading, low: false for no "under 25%" band, full: the
+// picked player's stretches at full, shaded; a row's mx turns its hover number into "3 of 5")
+function manaChart(r, rows, w0, w1, boss, o) {
+  o = o || {}; const low = o.low !== false;
+  const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : Math.max(760, Math.min(1500, Math.round(chartPx(!!o.side)))), H = narrow ? 210 : 190, L = narrow ? 34 : 44, R = narrow ? 70 : 96, Tp = 12, Bm = 20, iw = W - L - R, ih = H - Tp - Bm, span = Math.max(1, w1 - w0);
   const X = (t) => L + ((Math.min(w1, Math.max(w0, t)) - w0) / span) * iw, Y = (v) => Tp + ih - v * ih;
-  let s = '<svg class="pfc" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Healer mana and the boss\'s health">';
+  let s = '<svg class="pfc" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.aria || 'Healer mana and the boss\'s health') + '">';
   const phs = (r.module && !r.module.error && r.module.phases) || [];
   phs.forEach((q, i) => { if (q.start >= w1 || (isFinite(q.end) && q.end <= w0)) return; const x0 = X(Math.max(w0, q.start)), x1 = X(Math.min(w1, isFinite(q.end) ? q.end : w1)); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(0, x1 - x0).toFixed(1) + '" height="' + ih + '" class="pfc-ph p' + (i % 2) + '"/><text x="' + (x0 + 4).toFixed(1) + '" y="' + (Tp + 10) + '" class="pfc-pl">' + esc(phLab(q, (x1 - x0) * onScreen(W))) + '</text>'; });
-  s += '<rect x="' + L + '" y="' + Y(0.25).toFixed(1) + '" width="' + iw + '" height="' + (Y(0) - Y(0.25)).toFixed(1) + '" class="mp-lo"/>';
-  for (const f of [0.25, 0.5, 1]) s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + Y(f).toFixed(1) + '" y2="' + Y(f).toFixed(1) + '" class="pfc-g' + (f === 0.25 ? ' lo' : '') + '"/><text x="' + (L - 5) + '" y="' + (Y(f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + Math.round(100 * f) + '%</text>';
+  if (low) s += '<rect x="' + L + '" y="' + Y(0.25).toFixed(1) + '" width="' + iw + '" height="' + (Y(0) - Y(0.25)).toFixed(1) + '" class="mp-lo"/>';
+  for (const u of o.full || []) { if (u.e < w0 || u.s > w1) continue; const x0 = X(u.s), x1 = X(u.e); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(1.5, x1 - x0).toFixed(1) + '" height="' + ih + '" class="mp-full"><title>' + esc('At full from ' + T(u.s) + ' for ' + Math.max(1, Math.round(u.e - u.s)) + ' s') + '</title></rect>'; }
+  for (const f of [0.25, 0.5, 1]) s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + Y(f).toFixed(1) + '" y2="' + Y(f).toFixed(1) + '" class="pfc-g' + (f === 0.25 && low ? ' lo' : '') + '"/><text x="' + (L - 5) + '" y="' + (Y(f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + Math.round(100 * f) + '%</text>';
   s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + (Tp + ih) + '" y2="' + (Tp + ih) + '" class="pfc-ax"/>';
   // (each line is its own group: clicking a name at the right hides or shows it; the hover readout reads `ser`)
   const tags = [], ser = [], off = (n) => (S.manaHide && S.manaHide.has(n) ? ' off' : '');
   if (boss) { const bp = boss.filter(([t]) => t >= w0 && t <= w1); if (bp.length >= 2) { s += '<g class="mp-s' + off('__boss') + '" data-n="__boss"><polyline points="' + bp.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="mp-boss"/></g>'; tags.push({ y: Y(bp[bp.length - 1][1]), html: 'Boss', cls: 'mp-bt', n: '__boss' }); ser.push({ n: '__boss', l: 'Boss health', c: '#8b93a3', p: bp.map(([t, v]) => [t, +v.toFixed(3)]) }); } }
   for (const x of rows) { const pts = x.ms.filter(([t]) => t >= w0 && t <= w1); if (pts.length < 2) continue;
     s += '<g class="mp-s' + off(x.p.name) + '" data-n="' + esc(x.p.name) + '"><polyline points="' + pts.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="pfc-l" style="stroke:' + x.p.color + (x.dash ? ';stroke-dasharray:6 4' : '') + '"/>';
-    tags.push({ y: Y(pts[pts.length - 1][1]), html: esc(x.p.name), col: x.p.color, n: x.p.name }); ser.push({ n: x.p.name, l: x.p.name, c: x.p.color, p: pts.map(([t, v]) => [t, +v.toFixed(3)]) });
+    tags.push({ y: Y(pts[pts.length - 1][1]), html: esc(x.p.name), col: x.p.color, n: x.p.name }); ser.push({ n: x.p.name, l: x.p.name, c: x.p.color, mx: x.mx || 0, p: pts.map(([t, v]) => [t, +v.toFixed(3)]) });
     for (const u of x.pots) { const near = pts.reduce((m, y) => (Math.abs(y[0] - u.t) < Math.abs(m[0] - u.t) ? y : m)); s += '<circle cx="' + X(u.t).toFixed(1) + '" cy="' + Y(near[1]).toFixed(1) + '" r="3.5" class="mp-pot" style="stroke:' + x.p.color + '"><title>' + esc(x.p.name + ': mana potion at ' + T(u.t)) + '</title></circle>'; }
     for (const d of r.deaths) if (d.guid === x.p.guid && d.t >= w0 && d.t <= w1) { const v = (pts.filter(([t]) => t <= d.t).pop() || pts[0])[1]; s += '<text x="' + X(d.t).toFixed(1) + '" y="' + (Y(v) + 4).toFixed(1) + '" class="mp-d" text-anchor="middle" style="fill:' + x.p.color + '">✕<title>' + esc(x.p.name + ' died at ' + T(d.t)) + '</title></text>'; }
     s += '</g>'; }
@@ -5062,7 +5224,7 @@ function manaChart(r, rows, w0, w1, boss) {
   for (const g of tags) s += '<text x="' + (L + iw + 6) + '" y="' + (g.y + 4).toFixed(1) + '" class="mp-nm mp-tg' + (g.cls ? ' ' + g.cls : '') + off(g.n) + '" data-n="' + esc(g.n) + '"' + (g.col ? ' style="fill:' + g.col + '"' : '') + '><title>Click to hide or show this line</title>' + g.html + '</text>';
   const step = span > 400 || narrow ? 60 : 30; for (let t = Math.ceil(w0 / step) * step; t <= w1; t += step) s += '<text x="' + X(t).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x" text-anchor="middle">' + T(t) + '</text>';
   s += '<line class="pfx-hv" x1="0" x2="0" y1="' + Tp + '" y2="' + (Tp + ih) + '" style="display:none"/></svg>';
-  return '<h3 class="nh"><span class="pfc-ttl">Healer mana</span><small>' + (boss ? 'beside the boss\'s health (grey) · ' : '') + '○ mana potion · ✕ death · shaded: under 25% · hover for numbers, click a name to hide it</small></h3>' +
+  return '<h3 class="nh"><span class="pfc-ttl">' + (o.ttl || 'Healer mana') + '</span><small>' + (o.sub != null ? o.sub : (boss ? 'beside the boss\'s health (grey) · ' : '') + '○ mana potion · ✕ death · shaded: under 25% · hover for numbers, click a name to hide it') + '</small></h3>' +
     '<div class="pfx" data-hx="' + esc(JSON.stringify({ L, iw, W, w0, span, ser, pct: true })) + '">' + s + '<div class="pfc-tip" hidden></div></div>';
 }
 // A chart's hover readout (the mana and target charts): a line at the pointer, and in a box the time and every shown
@@ -5071,7 +5233,7 @@ function bindHoverCharts() {
   $$('.pfx[data-hx]').forEach((w) => {
     const o = JSON.parse(w.dataset.hx), svg = w.querySelector('svg'), tip = w.querySelector('.pfc-tip'), hv = svg.querySelector('.pfx-hv');
     const at = (p, t) => { let v = null; for (const q of p) { if (q[0] > t + 1) break; v = q[1]; } return v; };
-    const fmt = (v) => (o.pct ? Math.round(100 * v) + '%' : C(v) + '/s');
+    const fmt = (v, q) => (q && q.mx ? Math.round(v * q.mx) + ' of ' + Math.round(q.mx) : o.pct ? Math.round(100 * v) + '%' : C(v) + '/s');
     const clear = () => { tip.hidden = true; if (hv) hv.style.display = 'none'; };
     const show = (e) => { const b = svg.getBoundingClientRect(), x = (e.clientX - b.left) * (o.W / b.width), t = o.w0 + ((x - o.L) / o.iw) * o.span;
       if (x < o.L || x > o.L + o.iw) { clear(); return; }
@@ -5079,7 +5241,7 @@ function bindHoverCharts() {
       const vals = o.ser.filter((q) => !hid.has(q.n)).map((q) => [q, at(q.p, t)]).filter(([, v]) => v != null && (o.pct || v > 0)).sort((a, b) => b[1] - a[1]);
       if (!vals.length) { clear(); return; }
       if (hv) { hv.setAttribute('x1', x); hv.setAttribute('x2', x); hv.style.display = ''; }
-      tip.innerHTML = '<div><b>' + T(Math.max(0, t)) + '</b></div>' + vals.map(([q, v]) => '<div><i class="lg-sq" style="background:' + q.c + '"></i> ' + esc(q.l) + ' <b>' + fmt(v) + '</b></div>').join('');
+      tip.innerHTML = '<div><b>' + T(Math.max(0, t)) + '</b></div>' + vals.map(([q, v]) => '<div><i class="lg-sq" style="background:' + q.c + '"></i> ' + esc(q.l) + ' <b>' + fmt(v, q) + '</b></div>').join('');
       tip.hidden = false; const px = e.clientX - b.left; tip.style.left = Math.max(0, Math.min(b.width - tip.offsetWidth, px + (px > b.width - 220 ? -tip.offsetWidth - 12 : 12))) + 'px'; };
     svg.onpointermove = show; svg.onpointerdown = show; svg.onpointerleave = (e) => { if (e.pointerType === 'mouse') clear(); };
     // (a name or legend entry hides or shows its line, remembered while you look around)
@@ -5135,7 +5297,11 @@ function bindPerf() {
   const stOf = (b) => { const w = b.closest('[data-st]'); return w ? w.dataset.st : 'util'; };
   $$('.pfu-cat button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; const st = stOf(b); S[st + 'Cat'] = b.dataset.c; S[st + 'Sel'] = null; renderMain(); refreshIcons(); }));
   $$('.pfu-bars .pf-row:not(.nb)').forEach((b) => (b.onclick = () => { const st = stOf(b); S[st + 'Sel'] = S[st + 'Sel'] === b.dataset.un ? null : b.dataset.un; renderMain(); refreshIcons(); }));
-  $$('.pf-row:not(.nb)').forEach((b) => { if (!b.closest('.pfu-bars')) b.onclick = () => { S.perfSel = S.perfSel === b.dataset.n ? null : b.dataset.n; perf(); }; });
+  $$('.pf-row:not(.nb)').forEach((b) => { if (!b.closest('.pfu-bars') && !b.closest('.rs-bars')) b.onclick = () => { S.perfSel = S.perfSel === b.dataset.n ? null : b.dataset.n; perf(); }; });
+  // (Resources: the power switch, and a player's bar or line picks them; again, or Show the raid, for everyone)
+  $$('.rs-sw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.resTy = b.dataset.ty; perf(); }));
+  $$('.pfv [data-rn]').forEach((b) => (b.onclick = () => { S.resSel = S.resSel === b.dataset.rn ? null : b.dataset.rn; perf(); }));
+  { const b = $('#rsClose'); if (b) b.onclick = () => { S.resSel = null; perf(); }; }
   for (const id of ['#pfRaid', '#pfClose']) { const b = $(id); if (b) b.onclick = () => { S.perfSel = null; perf(); }; }
   { const b = $('#pfCasts'); if (b) b.onclick = () => { S.perfCasts = !S.perfCasts; perf(); }; }
   $$('.pf-all').forEach((b) => (b.onclick = () => { S.perfMore = S.perfMore || {}; S.perfMore[b.dataset.k] = !S.perfMore[b.dataset.k]; perf(); }));
@@ -5542,13 +5708,9 @@ function cardOf(r, p) {
   // ---- wasted resources: time sitting at the top of a power that keeps building (energy, rage, Holy Power, runes…) ----
   // (between two of their samples both at full, up to 4 s each, the first not one where they were paying it (that number
   // is from just before spending: they weren't sitting on it); not while dead, mind controlled or the raid was waiting)
-  { const mcw0 = C0.mc.get(p.name) || [], idle0 = rcIdle(r, p), off = (t) => x.ds.some(([a, b]) => t >= a && t <= b) || mcw0.some(([a, b]) => t >= a && t <= b) || idle0.some(([a, b]) => t >= a && t <= b);
-    const aliveT = Math.max(1, aliveSecs(r, p, 0, until) - idle0.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, until) - a), 0)), rows = [];
+  { const idle0 = rcIdle(r, p), aliveT = Math.max(1, aliveSecs(r, p, 0, until) - idle0.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, until) - a), 0)), rows = [];
     for (const [ty, rs] of p.res || []) { const nm = RES_N[ty]; if (!nm) continue; const pts = rs.pts.filter(([t]) => t <= until); if (pts.length < 12 || !pts.some(([, c, m]) => c < m * 0.98)) continue;
-      let capped = 0, runs = 0, run = null, longest = null;
-      for (let i = 0; i < pts.length - 1; i++) { const [t0, c0, m0, sp0] = pts[i], [t1, c1, m1] = pts[i + 1], full = !sp0 && c0 >= m0 * 0.98 && c1 >= m1 * 0.98 && !off(t0);
-        if (full) { capped += Math.min(4, t1 - t0); if (!run) { run = { s: t0, e: t1 }; runs++; } else run.e = t1; if (!longest || run.e - run.s > longest.e - longest.s) longest = { ...run }; } else run = null; }
-      rows.push({ nm, capped, runs, pct: 100 * capped / aliveT, longest }); }
+      const fr = fullRuns(r, p, pts, 0, until); rows.push({ nm, capped: fr.capped, runs: fr.runs.length, pct: 100 * fr.capped / aliveT, longest: fr.longest }); }
     if (rows.length) {
       const worst = rows.slice().sort((a, b) => b.pct - a.pct)[0], sc = worst.pct <= 3 ? 100 : worst.pct >= 20 ? 20 : 100 - (worst.pct - 3) * 80 / 17;
       add('btn', { k: 'res', label: 'Wasted resources', sc, w: role === 'tank' ? 12 : 25, num: worst.pct, unit: '% of the time at full',
@@ -5730,12 +5892,12 @@ function rcDetail(x, night) {
     return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub"> · worst: pull ' + ck.worst[1] + '</span>' : '')); };
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
     return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span></header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
-  const go = '<div class="rk-go"><span class="sub">See it in</span>' + [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage'], ['surv', 'Survivability'], ['util', 'Utility']].map(([k, l]) => '<button class="btn" type="button" data-rcgo="' + k + '" data-rcn="' + esc(x.p.name) + '">' + l + '</button>').join('') + '</div>';
+  const go = '<div class="rk-go"><span class="sub">See it in</span>' + [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage'], ['res', 'Resources'], ['surv', 'Survivability'], ['util', 'Utility']].map(([k, l]) => '<button class="btn" type="button" data-rcgo="' + k + '" data-rcn="' + esc(x.p.name) + '">' + l + '</button>').join('') + '</div>';
   return '<div class="rk-d">' + work + secs + go + '</div>';
 }
 function bindReportCard() {
   $$('.rk-r[data-rc]').forEach((b) => (b.onclick = () => { S.rcSel = S.rcSel === b.dataset.rc ? null : b.dataset.rc; perf(); const el = document.querySelector('.rk-r.on'); if (el && el.getBoundingClientRect().top < 60) el.scrollIntoView({ block: 'start' }); }));
-  $$('[data-rcgo]').forEach((b) => (b.onclick = () => { const k = b.dataset.rcgo, n = b.dataset.rcn; S.perfKind = k; if (k === 'surv') S.survSel = n; else if (k === 'util') S.utilSel = n; else { S.perfSel = n; S.perfLens = 'players'; } perf(); window.scrollTo({ top: 0 }); }));
+  $$('[data-rcgo]').forEach((b) => (b.onclick = () => { const k = b.dataset.rcgo, n = b.dataset.rcn; S.perfKind = k; if (k === 'surv') S.survSel = n; else if (k === 'util') S.utilSel = n; else if (k === 'res') { S.resSel = n; S.resTy = null; } else { S.perfSel = n; S.perfLens = 'players'; } perf(); window.scrollTo({ top: 0 }); }));
 }
 function charSheet(x, embed) { // (embed: inside the Player audit, titled "Gear and consumables", no Close button)
   const g = x.c.gear, st = x.c.stats || {};
