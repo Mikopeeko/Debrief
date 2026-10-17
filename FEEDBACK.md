@@ -80,6 +80,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Team rankings, tidier** (your note): the same tiles as a character's (World, US, server, Speed).
 - [x] **Horde or Alliance** (your note): a team's banner shows its faction's emblem, in red or blue.
 - [x] **"Everything saved" removed** (your note).
+- [x] **The team bar** (your note: not sure about its place and look): gone. The details are one quiet line under the name,
+  and Rename and Remove sit behind a small Edit button beside it.
 - [x] **New nights come in by themselves** (your note): every team and your character are checked when the app opens, and a
   team's page checks again when you open it, if not in the last 10 minutes. The button is gone.
 - [x] **Kith'ix** (your note): it's on Progress on every difficulty (Wolfthorn's Heroic kill shows; Mythic, Normal and LFR list

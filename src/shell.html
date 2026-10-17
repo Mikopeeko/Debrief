@@ -1127,6 +1127,12 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .tr-l { font: 600 15px var(--head); color: #f3f5f9; } .tr-v { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; } .tr-v > span { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
 .prs.tr-n { font-size: 15px; line-height: 22px; padding: 0 8px; } .tr-s { text-align: right; }
 .ht-rk { color: #f6dc9a; }
+/* a team page's header: the details in one quiet line, and Edit beside the name (Rename, Remove only once it's clicked) */
+.pg-info { margin-top: 3px; font-size: 12.5px; color: var(--faint); }
+.pg-editb { margin-left: 12px; vertical-align: 6px; padding: 3px 10px; font: 600 12px var(--body); color: var(--muted); background: transparent; border: 1px solid var(--line2); border-radius: 999px; cursor: pointer; }
+.pg-editb:hover, .pg-editb[aria-expanded="true"] { color: var(--text); border-color: var(--faint); }
+.pg-team.pg-edit { padding: 10px 14px; } .pg-edit .pg-ma { gap: 8px; } .pg-edit .pg-ma > .sub { font-size: 13px; margin-right: 4px; }
+.home.prog > .pg-msg { margin-top: -10px; }
 .trv { font-variant-numeric: tabular-nums; } .trv.q1 { color: #a3a7b0; } .trv.q2 { color: #52d65a; } .trv.q3 { color: #4f9dff; } .trv.q4 { color: #b981f5; } .trv.q5 { color: #ff9a3c; } .trv.q6 { color: #f07ab8; } .trv.q7 { color: #e8d18e; }
 @media (max-width: 640px) { .tr-r { grid-template-columns: 1fr; } .tr-s { text-align: left; } }
 .pg-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
