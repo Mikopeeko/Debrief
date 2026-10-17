@@ -15,6 +15,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   (Players).
 - [ ] **Stats** (your idea, a tab in Performance; you want guidance first): each player's average main and secondary stats
   over the pull, and how much came from gear procs ("cantrips"), flasks, food, enchants, and other players' buffs.
+- [ ] **Latest pull, an update and polish pass** (your note, Oct 17): it hasn't caught up with everything added since (the
+  Report card, Casts, Resources, Power Infusion, trends). Review it first and show you what to change.
 - [x] **Power Infusion** (your idea): built in round 137.
 - [x] **Trend arrows elsewhere** (your question): built in round 138 (Report card, Casts, Summary, and "Since last raid" on your team's page).
 - [x] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
@@ -88,6 +90,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Since last raid** on your team's Progress page: each player's grade on your last raid night against the last
   night before it on the same boss (a new, harder boss would make everyone look worse). Grades are saved with each pull
   from now on, so it fills in after your next raid on a boss you've pulled here before.
+- [x] **Report card trend in its own column** (your note: the arrow under the grade looked off): a small "Trend" column
+  beside Buttons, Alive and Toolkit, so the arrows line up down the list.
 - [x] **Casts: no charts** (your note): the "Every cast" chart and the per-pull chart are gone; the tiles, the bars and
   the details stay.
 

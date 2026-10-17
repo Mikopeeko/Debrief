@@ -6481,8 +6481,8 @@ function reportCard(reps, night) {
   const row = (x) => { const f = x.fixes[0], on = x.p.name === sel;
     return '<button class="rk-r' + (on ? ' on' : '') + '" type="button" data-rc="' + esc(x.p.name) + '" aria-expanded="' + on + '">' + avatar(x.p, true) +
       '<span class="rk-n"><b style="color:' + (x.p.color || 'inherit') + '">' + esc(x.p.name) + '</b><span class="sub">' + esc(x.p.specName || '') + '</span></span>' +
-      '<span class="rk-o">' + rcG(x.overall) + (night && x.trend != null ? plTr(x.trend) : '') + '</span>' +
-      '<span class="rk-ms">' + RC_SEC.map(([k, l]) => '<span class="rk-m" title="' + esc(l) + (x.secs[k] != null ? ': ' + Math.round(x.secs[k]) + '/100' : '') + '"><i>' + esc(l.split(' ')[0] === 'Using' ? 'Toolkit' : l.split(' ')[0] === 'Pressing' ? 'Buttons' : 'Alive') + '</i>' + rcG(x.secs[k]) + '</span>').join('') + '</span>' +
+      '<span class="rk-o">' + rcG(x.overall) + '</span>' +
+      '<span class="rk-ms">' + RC_SEC.map(([k, l]) => '<span class="rk-m" title="' + esc(l) + (x.secs[k] != null ? ': ' + Math.round(x.secs[k]) + '/100' : '') + '"><i>' + esc(l.split(' ')[0] === 'Using' ? 'Toolkit' : l.split(' ')[0] === 'Pressing' ? 'Buttons' : 'Alive') + '</i>' + rcG(x.secs[k]) + '</span>').join('') + (night ? '<span class="rk-m rk-mt" title="Their later pulls against the first"><i>Trend</i>' + (x.trend != null ? plTr(x.trend) : '<span class="dl lv">—</span>') + '</span>' : '') + '</span>' +
       '<span class="rk-f">' + (f && f.gain >= 1 ? '<b>' + esc(f.t) + '</b>' + (night && f.n > 1 ? '<span class="sub"> · ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + (night ? rcFt(f) : '') : '<span class="ok-t">✓ Nothing big to fix</span>') + '</span>' +
       '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night) : ''); };
   return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade over the pulls they were in, by their time alive · ▲▼ their later pulls against the first' : 'This pull, up to the wipe filter') + ' · most to gain first · click a player for their card</span>' + roleChips(has, 'all') + '</div>' +

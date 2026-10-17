@@ -1938,7 +1938,7 @@ body.bh-off .tabbar .tb-id { display: inline-flex; }
 .rk-s .ck { font-size: 13.5px; } .rk-sub { margin: 4px 0 0 2px; font-size: 13px; color: #c4c9d2; } .rk-sub.bad { color: #ffb3ad; } .rk-sub.warn { color: #f3d68a; } .rk-sub.na { color: var(--muted); }
 .rk-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .rk-go .btn { padding: 6px 12px; font-size: 13px; }
 .rk-how { margin: 2px 2px 0; font-size: 12.5px; }
-.rk-o { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 40px; } .rk-o .dl { margin: 0; font-size: 11px; } .rk-s header .dl { margin: 0; font-size: 11.5px; }
+.rk-mt { min-width: 44px; } .rk-mt .dl { display: flex; align-items: center; justify-content: center; height: 24px; margin: 0; font-size: 13px; } .rk-s header .dl { margin: 0; font-size: 11.5px; }
 .rk-ft { margin-left: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; } .rk-ft.up { color: #7ee08f; } .rk-ft.dn { color: #f3a06a; }
 .pg-since { margin-top: 14px; } .ps-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 22px; } .ps-h { margin-bottom: 4px; font: 600 13px var(--head); }
 .ps-l { display: grid; grid-template-columns: minmax(0, 1fr) auto 52px; gap: 10px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13.5px; } .ps-h + .ps-l { border-top: 0; }
@@ -14832,8 +14832,8 @@ function reportCard(reps, night) {
   const row = (x) => { const f = x.fixes[0], on = x.p.name === sel;
     return '<button class="rk-r' + (on ? ' on' : '') + '" type="button" data-rc="' + esc(x.p.name) + '" aria-expanded="' + on + '">' + avatar(x.p, true) +
       '<span class="rk-n"><b style="color:' + (x.p.color || 'inherit') + '">' + esc(x.p.name) + '</b><span class="sub">' + esc(x.p.specName || '') + '</span></span>' +
-      '<span class="rk-o">' + rcG(x.overall) + (night && x.trend != null ? plTr(x.trend) : '') + '</span>' +
-      '<span class="rk-ms">' + RC_SEC.map(([k, l]) => '<span class="rk-m" title="' + esc(l) + (x.secs[k] != null ? ': ' + Math.round(x.secs[k]) + '/100' : '') + '"><i>' + esc(l.split(' ')[0] === 'Using' ? 'Toolkit' : l.split(' ')[0] === 'Pressing' ? 'Buttons' : 'Alive') + '</i>' + rcG(x.secs[k]) + '</span>').join('') + '</span>' +
+      '<span class="rk-o">' + rcG(x.overall) + '</span>' +
+      '<span class="rk-ms">' + RC_SEC.map(([k, l]) => '<span class="rk-m" title="' + esc(l) + (x.secs[k] != null ? ': ' + Math.round(x.secs[k]) + '/100' : '') + '"><i>' + esc(l.split(' ')[0] === 'Using' ? 'Toolkit' : l.split(' ')[0] === 'Pressing' ? 'Buttons' : 'Alive') + '</i>' + rcG(x.secs[k]) + '</span>').join('') + (night ? '<span class="rk-m rk-mt" title="Their later pulls against the first"><i>Trend</i>' + (x.trend != null ? plTr(x.trend) : '<span class="dl lv">—</span>') + '</span>' : '') + '</span>' +
       '<span class="rk-f">' + (f && f.gain >= 1 ? '<b>' + esc(f.t) + '</b>' + (night && f.n > 1 ? '<span class="sub"> · ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + (night ? rcFt(f) : '') : '<span class="ok-t">✓ Nothing big to fix</span>') + '</span>' +
       '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night) : ''); };
   return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade over the pulls they were in, by their time alive · ▲▼ their later pulls against the first' : 'This pull, up to the wipe filter') + ' · most to gain first · click a player for their card</span>' + roleChips(has, 'all') + '</div>' +
