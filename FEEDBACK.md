@@ -28,6 +28,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Spec icons everywhere** (your note): every player badge and map marker shows their spec's icon, not their class's. The new
   Devourer Demon Hunter has no spec icon on Wowhead yet, so it shows Void Metamorphosis.
 - [x] Beast Mastery Hunters: Bestial Wrath now counts as a big cooldown (it was missing, so they showed none).
+- [x] **Healing tiles** (your note): Lost to deaths (what the healers would have healed while dead) and Big cooldowns for healers.
 
 ## 2026-10-17, round 113: Ula'tek's heart in the damage amps
 - [x] **Damage amps: Rage of the Shackled** (Mechanics, every difficulty): each amp now opens to a bar per player for their damage

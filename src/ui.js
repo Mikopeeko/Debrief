@@ -3939,24 +3939,23 @@ function perf() {
   const tgt = S.perfTgt === 'adds' && canAdds ? 'adds' : S.perfTgt === 'boss' && canBoss ? 'boss' : 'all', addsOn = tgt === 'adds', bossOn = tgt === 'boss';
   const onBossW = bossN.size > 1 ? 'on the bosses' : 'on the boss';
   // ---- the raid at a glance (in the window) ----
-  let tiles;
-  if (kind === 'dmg') {
-    // damage lost to deaths: what each player would have done at their own rate, for the time they were dead here
-    const lost = rowsAll.reduce((s, x) => s + (x.al > 0 ? x.alive * Math.max(0, wl - x.al) : 0), 0), lf = lost / Math.max(1, total + lost);
-    // big cooldowns: the DPS's uses against their possible uses, each up to their death or the wipe filter (the share on
-    // the boss and the active time were dropped: the target switch shows the first, and a raid average said little)
-    const pc = perfContext(r), low = []; let used = 0, poss = 0;
-    for (const x of rowsAll) { if ((x.p.role || 'dps') !== 'dps') continue; const xp = pc.per.get(x.p.name), cds = bigCds(r, x.p, xp ? Math.min(xp.until, pc.end) : pc.end, pc.lust);
+  // (Damage and Healing: what the dead would have done, and one role's big cooldown uses; the share on the boss, active
+  // time and Healing's old tiles were dropped: the target switch shows the first, and the rest said little)
+  // lost to deaths: what each player of the role would have done at their own rate, for the time they were dead here
+  const lostTile = (role, what) => { const rs = role ? rowsAll.filter((x) => (x.p.role || 'dps') === role) : rowsAll, tot = rs.reduce((s, x) => s + x.tot, 0);
+    const lost = rs.reduce((s, x) => s + (x.al > 0 ? x.alive * Math.max(0, wl - x.al) : 0), 0), lf = lost / Math.max(1, tot + lost);
+    return plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !tot ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' ' + what : 'nobody was dead here'); };
+  // big cooldowns: the role's uses against their possible uses, each up to their death or the wipe filter
+  const cdTile = (role, who) => { const pc = perfContext(r), low = []; let used = 0, poss = 0;
+    for (const x of rowsAll) { if ((x.p.role || 'dps') !== role) continue; const xp = pc.per.get(x.p.name), cds = bigCds(r, x.p, xp ? Math.min(xp.until, pc.end) : pc.end, pc.lust);
       const u = cds.reduce((s, c) => s + c.used, 0), q = cds.reduce((s, c) => s + c.poss, 0); used += u; poss += q; if (q && u / q < 0.8) low.push(x.p.name); }
     const cu = poss ? used / poss : null;
-    tiles = [plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !total ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' the dead would have done' : 'nobody was dead here'),
-      plTile(plIco('spell_holy_borrowedtime'), 'Big cooldowns', cu == null ? '—' : Math.round(100 * cu) + '<span>% of possible uses</span>', cu == null ? 'na' : cu >= 0.85 && !low.length ? 'ok' : cu >= 0.7 ? 'warn' : 'bad',
-        cu == null ? 'none listed for these specs yet' : (low.length ? 'under 80%: ' + low.slice(0, 3).join(', ') + (low.length > 3 ? ' and ' + (low.length - 3) + ' more' : '') : 'every DPS at 80% or more') + (ph ? ' · whole pull' : ''))];
-  } else if (kind === 'heal') {
-    // (no tiles on Healing: overhealing is on the Healing switch itself, and the share from healers, absorbs and active
-    // time weren't worth the room; absorbs still count in Healing done)
-    tiles = [];
-  } else {
+    return plTile(plIco('spell_holy_borrowedtime'), 'Big cooldowns', cu == null ? '—' : Math.round(100 * cu) + '<span>% of possible uses</span>', cu == null ? 'na' : cu >= 0.85 && !low.length ? 'ok' : cu >= 0.7 ? 'warn' : 'bad',
+      cu == null ? 'none listed for these specs yet' : (low.length ? 'under 80%: ' + low.slice(0, 3).join(', ') + (low.length > 3 ? ' and ' + (low.length - 3) + ' more' : '') : 'every ' + who + ' at 80% or more') + (ph ? ' · whole pull' : '')); };
+  let tiles;
+  if (kind === 'dmg') tiles = [lostTile(null, 'the dead would have done'), cdTile('dps', 'DPS')];
+  else if (kind === 'heal') tiles = [lostTile('healer', 'healing the dead healers would have done'), cdTile('healer', 'healer')];
+  else {
     const avoid = ps.reduce((s, p) => s + p.avoidable, 0), allTaken = ps.reduce((s, p) => s + p.taken, 0), ds = keptDeaths(r).filter((d) => inWin(d.t)).length;
     const calls = ps.flatMap((p) => (p.closeCalls || []).filter((c) => inWin(c.tl))), open = calls.filter((c) => !c.def && !c.stone && !c.pot).length;
     tiles = [plTile(plIco('ability_rogue_feint'), 'Avoidable', allTaken ? Math.round(100 * avoid / allTaken) + '<span>%</span>' : '—', avoid / Math.max(1, allTaken) > 0.1 ? 'bad' : avoid ? 'warn' : 'ok', avoid ? C(avoid) + ' from the fight\'s avoidable rules · whole pull' : 'nothing avoidable logged'),
