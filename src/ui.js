@@ -4784,7 +4784,7 @@ const PERF_HOW = {
   heal: '<details class="howit"><summary>How it works</summary><div>Each bar is a player\'s healing per second over the pull, or the phase picked, up to the wipe filter. The faded end is overhealing, which doesn\'t count, and the small column says how much of it was. Click a row for their heals; the chart then shows their line.</div></details>',
   taken: '<details class="howit"><summary>How it works</summary><div>Each bar is the damage a player took per second, up to the wipe filter. The striped red part is avoidable damage, from the fight\'s own rules, and the small column is its share. Damage sources lists what did it. Click a row for their biggest hits; their defensives and close calls are on Survivability.</div></details>',
   cds: '<details class="howit"><summary>How it works</summary><div><b>Uses</b>: each bar is the share of a player\'s possible uses of their big cooldowns, damage and healing alike, each counted up to their death or the wipe filter. A cooldown counts once they\'ve cast it on this boss, so one they don\'t have talented never shows. Raid cooldowns (Tranquility, Aura Mastery, Rallying Cry and the like) wait for the big damage, so half their possible uses is full marks. Click a row for each cooldown on the pull: when it was pressed, when it sat ready, and Bloodlust. <b>Raid cooldowns</b>: a bar per healing or raid cooldown and player, as long as what it did: what it healed (overhealing not counted), the damage it took off (an estimate from the reduction: the log only has what was left), what Darkness made players avoid, or the health Rallying Cry added. Click one for each press. Cooldowns that make a healer stronger, like Avenging Wrath, are on the right: what the healer healed while they were up.</div></details>',
-  aura: '<details class="howit"><summary>How it works</summary><div>Each bar is how long a buff (or debuff) was up, as a share of the time the players who had it were alive, up to the wipe filter. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted at the bottom; Sated and Exhaustion are left out. Click one for who had it; pick a player on the right to see only theirs.</div></details>',
+  aura: '<details class="howit"><summary>How it works</summary><div>Each bar is a player, with how many different buffs (or debuffs) they had, up to the wipe filter. Click a name for their own list: each one\'s uptime (a share of the time they were alive), how many times it went on, and who gave it. Pick a buff on the right, or search for one, to see each player\'s uptime of it. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted; Sated and Exhaustion are left out.</div></details>',
 };
 const PERF_LENS = [['players', 'Players'], ['sources', 'Damage sources'], ['hits', 'Big hits'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
 const KEY_OF = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
@@ -4804,7 +4804,7 @@ const viewSw = (key, list, cur) => pfViewSw('<div class="seg pf-vsw" role="tabli
 // (open another Performance view on one player: their cooldowns, buffs or defensives)
 function pfGo(k, n, quiet) {
   S.perfKind = k === 'debuffs' ? 'aura' : k;
-  if (k === 'cds') { S.cdView = 'use'; S.cdsSel = n; } else if (k === 'aura' || k === 'debuffs') { S.auraView = k === 'debuffs' ? 'debuffs' : 'buffs'; S.auraWho = n; S.auraSel = null; } else if (k === 'surv') { S.survCat = 'def'; S.survSel = n; } else if (k === 'util') S.utilSel = n;
+  if (k === 'cds') { S.cdView = 'use'; S.cdsSel = n; } else if (k === 'aura' || k === 'debuffs') { S.auraView = k === 'debuffs' ? 'debuffs' : 'buffs'; S.auraQ = ''; S.auraSel = n; } else if (k === 'surv') { S.survCat = 'def'; S.survSel = n; } else if (k === 'util') S.utilSel = n;
   else if (k === 'res') { S.resSel = n; S.resPw = null; S.resMode = null; } else if (k === 'cast') S.castSel = n; else { S.perfSel = n; S.perfLens = 'players'; }
   if (quiet) return; perf(); window.scrollTo({ top: 0 });
 }
@@ -4919,10 +4919,10 @@ function cdView(reps, one) {
   return sw + '<div class="pf-cols" data-st="cds">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.cds;
 }
 // ---- Performance: Buffs & debuffs ----
-// Every buff (or debuff) the raid's players had, up to each one's death or the wipe filter: a bar per aura with its
-// average uptime on the players who had it, opening in place to each player's; the right side lists the players, and
-// picking one shows only theirs. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted at the
-// bottom; Bloodlust's Sated and Exhaustion are left out.
+// Every buff (or debuff) the raid's players had, up to each one's death or the wipe filter: a bar per player (how many
+// different ones they had), opening under their name to their own list with each one's uptime; the right side is the
+// raid's most common ones, and picking one (or searching) turns the bars into each player's uptime of it. Buffs up the
+// whole time (raid buffs, flasks, food, passives) are only counted; Bloodlust's Sated and Exhaustion are left out.
 const AURA_SKIP = new Set(['sated', 'exhaustion', 'temporal displacement', 'fatigued', 'insanity']);
 // (the raid buffs and paladin auras: counted at the bottom when they were up most of the time; and a buff that heals or
 // shields, like Renew or Power Word: Shield, is a heal, on Healing, not a buff)
@@ -4943,42 +4943,42 @@ function auraRows(reps, deb) {
 }
 const auraAlways = (n, f) => f >= 0.98 || (f >= 0.8 && RAID_BUFF_N.has(String(n).toLowerCase()));
 const auraFrom = (m) => { const l = [...m].sort((a, b) => b[1] - a[1]).slice(0, 3); return l.length ? 'from ' + l.map(([g]) => esc(g)).join(', ') : ''; };
-function auraDetail(x, who, deb) {
-  const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%';
-  if (who) { const w = x.me;
-    return '<div class="pf-srcst"><span><b>' + pc(w.f) + '</b>uptime</span><span><b>' + w.n + '</b>' + (w.n === 1 ? 'time' : 'times') + ' applied</span>' + (deb ? '<span><b>' + w.mx + '</b>most stacks</span>' : '') + '<span><b>' + (x.who.length - 1) + '</b>others had it</span></div>' +
-      (w.from.size ? '<div class="pf-srck">' + auraFrom(w.from) + '</div>' : ''); }
-  const top = x.who.length ? x.who[0].f : 1;
-  return '<div class="pf-sec"><div class="pf-st"><b>Who had it</b><span>uptime, most first' + (x.from.size ? ' · ' + auraFrom(x.from) : '') + '</span></div>' + x.who.map((w) => '<div class="pf-sw" data-aw="' + esc(w.p.name) + '" role="button" tabindex="0" title="Only their ' + (deb ? 'debuffs' : 'buffs') + '">' + pfName(w.p) +
-    '<span class="pf-bar"><i style="width:' + Math.max(2, 100 * w.f / Math.max(0.01, top)).toFixed(1) + '%;background:' + w.p.color + '"></i></span><b>' + pc(w.f) + '</b><span class="pf-swd">' + (w.n === 1 ? 'applied once' : 'applied ' + w.n + ' times') + (deb && w.mx > 1 ? ' · up to ' + w.mx + ' stacks' : '') + '</span></div>').join('') + '</div>';
+// a player's own list, opened under their name: every buff (or debuff) they had, its uptime, how many times it went on,
+// most stacks and who gave it; the ones up the whole time only counted (filtered: only the ones searched for or picked)
+function auraMine(a, deb, filtered) {
+  const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%', all = a.l.filter((y) => filtered || !y.always).sort((x, z) => z.w.f - x.w.f || z.w.n - x.w.n), alw = filtered ? [] : a.l.filter((y) => y.always);
+  const LIM = 12, more = !filtered && S.auraMore, shown = more || filtered ? all : all.slice(0, LIM);
+  return '<div class="pf-sec"><div class="pf-st"><b>' + (deb ? 'Their debuffs' : 'Their buffs') + '</b><span>uptime, most first</span></div>' +
+    (shown.length ? shown.map((y) => '<div class="pf-sw pf-asw"><span class="pf-an2">' + spellIcon(y.x.id, y.x.name) + '<span>' + esc(y.x.name) + '</span></span><span class="pf-bar"><i style="width:' + Math.max(2, 100 * y.w.f).toFixed(1) + '%;background:' + a.p.color + '"></i></span><b>' + pc(y.w.f) + '</b>' +
+      '<span class="pf-swd">' + (y.w.n === 1 ? 'applied once' : 'applied ' + y.w.n + ' times') + (deb && y.w.mx > 1 ? ' · up to ' + y.w.mx + ' stacks' : '') + (y.w.from.size ? ' · ' + auraFrom(y.w.from) : '') + '</span></div>').join('') : '<p class="sub" style="margin:0">None.</p>') +
+    (!filtered && all.length > LIM ? '<button class="btn sm pf-srmore" id="pfAuraMore" type="button">' + (more ? 'Show fewer' : 'Show all ' + all.length) + '</button>' : '') +
+    (alw.length ? '<p class="sub pf-more" title="' + esc(alw.map((y) => y.x.name).join(', ')) + '">+' + alw.length + ' up the whole time (raid buffs, flasks, food, passives)</p>' : '') + '</div>';
 }
-const auraHead = (reps) => { const b = auraRows(reps, false).rows.filter((x) => !x.always).length, d = auraRows(reps, true).rows.length; return { v: b + '<span> buffs</span> ' + d + '<span> debuffs</span>', s: 'uptime on the raid' }; };
+const auraHead = (reps) => { const b = auraRows(reps, false).rows.filter((x) => !x.always).length, d = auraRows(reps, true).rows.length; return { v: b + '<span> buffs</span> ' + d + '<span> debuffs</span>', s: 'on the raid' }; };
 function auraView(reps, one) {
-  const deb = S.auraView === 'debuffs', { rows, players } = auraRows(reps, deb), sw = viewSw('auraView', [['buffs', 'Buffs'], ['debuffs', 'Debuffs']], deb ? 'debuffs' : 'buffs');
-  if (S.auraWho && !players.some((m) => m.p.name === S.auraWho)) S.auraWho = null;
-  const who = S.auraWho, wp = who ? players.find((m) => m.p.name === who).p : null, mine = (x) => x.who.find((w) => w.p.name === who);
-  let list = who ? rows.filter((x) => mine(x)).map((x) => ({ ...x, me: mine(x) })) : rows;
-  const fOf = (x) => (who ? x.me.f : x.f), always = deb ? [] : list.filter((x) => (who ? auraAlways(x.name, x.me.f) : x.always));
-  // (a search shows every match, the ones up the whole time too)
-  const q = String(S.auraQ || '').trim().toLowerCase();
-  list = list.filter((x) => (q ? x.name.toLowerCase().includes(q) : !always.includes(x))).sort((a, b) => (who ? b.me.f - a.me.f : b.cov - a.cov) || b.apps - a.apps);
-  if (S.auraSel && !list.some((x) => x.name === S.auraSel)) S.auraSel = null;
-  const LIM = 15, shown = S.auraMore || q ? list : list.filter((x, i) => i < LIM || x.name === S.auraSel), col = wp ? wp.color : deb ? PERF_COL.taken : PERF_COL.heal;
+  const deb = S.auraView === 'debuffs', what = deb ? 'debuffs' : 'buffs', { rows, players } = auraRows(reps, deb), sw = viewSw('auraView', [['buffs', 'Buffs'], ['debuffs', 'Debuffs']], deb ? 'debuffs' : 'buffs');
   const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%';
-  const bars = shown.map((x) => { const i = list.indexOf(x), on = S.auraSel === x.name;
-    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pf-arow', attrs: ' type="button" data-au="' + esc(x.name) + '" aria-pressed="' + on + '"', k: i + 1, icon: spellIcon(x.id, x.name), name: esc(x.name), color: col,
-      segs: [[Math.max(1, 100 * fOf(x)), 'm']], v: pc(fOf(x)), sub: String(who ? x.me.n : x.who.length) }) + (on ? '<div class="pf-inl">' + auraDetail(x, who, deb) + '</div>' : ''); }).join('');
-  const what = deb ? 'debuffs' : 'buffs';
-  const alwaysL = !q && always.length ? '<p class="sub pf-more" title="' + esc(always.map((x) => x.name).join(', ')) + '">+' + always.length + ' up the whole time (raid buffs, flasks, food, passives): ' + esc(always.slice(0, 4).map((x) => x.name).join(', ')) + (always.length > 4 ? '…' : '') + '</p>' : '';
-  const left = '<div class="panel pf-bars pf-auras"><h3 class="nh"><span>' + (wp ? '<span class="nm" style="color:' + wp.color + '">' + esc(wp.name) + '</span>\'s ' + what : deb ? 'Debuffs on the raid' : 'Buffs on the raid') + '</span><small>' + (wp ? 'uptime' : 'average uptime on the players who had it') + (one ? '' : ' over the night') + '</small>' +
-    '<input class="pf-q" id="pfAuraQ" type="search" placeholder="Find a ' + (deb ? 'debuff' : 'buff') + '" aria-label="Find a ' + (deb ? 'debuff' : 'buff') + '" value="' + esc(S.auraQ || '') + '" autocomplete="off" spellcheck="false">' +
-    (wp ? '<button class="btn sm" id="pfAuraAll" type="button">Everyone</button>' : '') + '</h3>' +
-    (bars ? cbHead('Uptime', wp ? 'Times' : 'Players', '', ' pf-arow', deb ? 'Debuff' : 'Buff') + bars : '<p class="muted" style="margin:10px 0 0">' + (q ? 'No ' + what + ' match "' + esc(S.auraQ.trim()) + '".' : 'No ' + what + ' recorded.') + '</p>') +
-    (!q && list.length > LIM ? '<button class="btn sm pf-srmore" id="pfAuraMore" type="button">' + (S.auraMore ? 'Show fewer' : 'Show ' + (list.length - LIM) + ' more') + '</button>' : '') + alwaysL + '</div>';
-  // ---- the right: every player, with how many they had; a click shows only theirs ----
-  const cnt = new Map(); for (const x of rows) if (!x.always) for (const w of x.who) cnt.set(w.p.name, (cnt.get(w.p.name) || 0) + 1);
-  const RO = { tank: 0, healer: 1, dps: 2 }, ps = players.map((m) => m.p).sort((a, b) => (RO[a.role || 'dps'] - RO[b.role || 'dps']) || a.name.localeCompare(b.name));
-  const right = '<h3 class="nh"><span>By player</span><small>pick one for only theirs</small></h3>' + ps.map((p) => '<div class="pf-sl pf-aw' + (p.name === who ? ' on' : '') + '" data-aw="' + esc(p.name) + '" role="button" tabindex="0" aria-pressed="' + (p.name === who) + '"><span>' + pfName(p) + '</span><span class="sub">' + (cnt.get(p.name) || 0) + ' ' + what + '</span></div>').join('');
+  // (a search or a pick on the right: an exact name first, else every name with it in)
+  const q = plainL(String(S.auraQ || '').trim()), exact = q ? rows.filter((x) => plainL(x.name) === q) : [], match = q ? (exact.length ? exact : rows.filter((x) => plainL(x.name).includes(q))) : null;
+  const mine = new Map(players.map((m) => [m.p.name, []])); for (const x of rows) for (const w of x.who) { const l = mine.get(w.p.name); if (l) l.push({ x, w, always: !deb && auraAlways(x.name, w.f) }); }
+  const per = players.map((m) => { const l = mine.get(m.p.name) || [];
+    if (match) { const ms = l.filter((y) => match.includes(y.x)).sort((a, b) => b.w.f - a.w.f); return ms.length ? { p: m.p, l: ms, v: ms[0].w.f, best: ms[0] } : null; }
+    const shown = l.filter((y) => !y.always); return { p: m.p, l, n: shown.length, apps: shown.reduce((s, y) => s + y.w.n, 0) }; }).filter(Boolean)
+    .sort((a, b) => (match ? b.v - a.v : b.n - a.n || b.apps - a.apps));
+  if (S.auraSel && !per.some((a) => a.p.name === S.auraSel)) S.auraSel = null;
+  const mx = match ? 1 : Math.max(1, ...per.map((a) => a.n)), one1 = match && match.length === 1 ? match[0] : null;
+  const bars = per.map((a, i) => { const on = S.auraSel === a.p.name;
+    return cbRow({ tag: 'button', cls: on ? ' on' : '', attrs: ' type="button" data-un="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * (match ? a.v : a.n / mx)), 'm']],
+      v: match ? pc(a.v) : String(a.n), sub: match ? String(a.best.w.n) : String(a.apps), chips: match && !one1 ? '<span class="pf-cdw">' + esc(a.best.x.name) + '</span>' : '' }) + (on ? '<div class="pf-inl pf-srcd">' + auraMine(a, deb, !!match) + '</div>' : ''); }).join('');
+  const ttl = one1 ? spellIcon(one1.id, one1.name) + ' ' + esc(one1.name) : match ? capS(what) + ' with "' + esc(S.auraQ.trim()) + '"' : deb ? 'Debuffs by player' : 'Buffs by player';
+  const left = '<div class="panel pf-bars pfu-bars pf-auras"><h3 class="nh"><span>' + ttl + '</span><small>' + (match ? 'uptime on each player who had it' : 'how many different ' + what + ' each player had') + (one ? '' : ' over the night') + '</small>' +
+    '<input class="pf-q" id="pfAuraQ" type="search" placeholder="Find a ' + (deb ? 'debuff' : 'buff') + '" aria-label="Find a ' + (deb ? 'debuff' : 'buff') + '" value="' + esc(S.auraQ || '') + '" autocomplete="off" spellcheck="false"></h3>' +
+    (bars ? cbHead(match ? 'Uptime' : capS(what), match ? 'Times' : 'Applied') + bars : '<p class="muted" style="margin:10px 0 0">' + (match ? 'No ' + what + ' match "' + esc(S.auraQ.trim()) + '".' : 'No ' + what + ' recorded.') + '</p>') + '</div>';
+  // ---- the right: the raid's most common ones; picking one shows each player's uptime of it ----
+  const common = rows.filter((x) => !x.always).sort((a, b) => b.cov - a.cov || b.apps - a.apps).slice(0, 12), alw = rows.filter((x) => x.always);
+  const right = '<h3 class="nh"><span>The raid</span><small>most common first · pick one to compare players</small></h3>' +
+    common.map((x) => '<div class="pf-sl pf-aw' + (one1 === x ? ' on' : '') + '" data-aq="' + esc(x.name) + '" role="button" tabindex="0" aria-pressed="' + (one1 === x) + '"><span class="pf-an2">' + spellIcon(x.id, x.name) + '<span>' + esc(x.name) + '</span></span><span><b>' + pc(x.f) + '</b> <span class="sub">' + plural(x.who.length, 'player') + '</span></span></div>').join('') +
+    (alw.length ? '<p class="sub pf-more" title="' + esc(alw.map((x) => x.name).join(', ')) + '">+' + alw.length + ' up the whole time on everyone who had them (raid buffs, flasks, food, passives)</p>' : '');
   return sw + '<div class="pf-cols" data-st="aura">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.aura;
 }
 // ---- Performance: one search over every view ----
@@ -4998,7 +4998,7 @@ function pfFindIndex(r) {
   for (const x of agg((p) => [...p.healAb.values()].map((a) => [strip(a.name), a.id, a.total]))) { healN.add(x.n); if (x.v > 0) out.push({ g: 'heal', ...x, d: C(x.v) + ' · ' + by(x), go: () => pfGo('heal', x.top.name, true) }); }
   for (const x of agg((p) => [...p.takenAb.values()].map((a) => [a.name, a.id, a.total]))) if (x.v > 0) out.push({ g: 'taken', ...x, d: C(x.v) + ' · hit ' + plural(x.who.size, 'player'), go: () => { S.perfKind = 'taken'; S.perfLens = 'sources'; S.srcSel = x.n; S.srcMore = true; } });
   for (const deb of [false, true]) for (const x of agg((p) => [...(deb ? p.debuffs : p.buffs).values()].filter((b) => !AURA_SKIP.has(String(b.name).toLowerCase()) && (deb || !healN.has(b.name))).map((b) => [b.name, b.id, b.sp.length])))
-    out.push({ g: deb ? 'debuff' : 'buff', ...x, d: 'on ' + plural(x.who.size, 'player'), go: () => { S.perfKind = 'aura'; S.auraView = deb ? 'debuffs' : 'buffs'; S.auraWho = null; S.auraQ = x.n; S.auraSel = x.n; } });
+    out.push({ g: deb ? 'debuff' : 'buff', ...x, d: 'on ' + plural(x.who.size, 'player'), go: () => { S.perfKind = 'aura'; S.auraView = deb ? 'debuffs' : 'buffs'; S.auraQ = x.n; S.auraSel = null; } });
   // (casts: a big cooldown goes to Cooldowns, a kick, dispel, external, battle res or CC to Utility, a defensive or
   // self-heal to Survivability, anything else to Casts)
   const cdN = new Set(), survK = new Map();
@@ -6217,16 +6217,15 @@ function bindPerf() {
   $$('.pf-lens button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfLens = b.dataset.l; perf(); }));
   $$('.pf-row.pf-srow[data-src], .pf-sl[data-src]').forEach((b) => (b.onclick = () => { S.srcSel = S.srcSel === b.dataset.src ? null : b.dataset.src; perf(); pfKeep(); }));
   // (a view's own switch; a link to another view for one player)
-  $$('.pf-vsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S[b.closest('.pf-vsw').dataset.vk] = b.dataset.v; S.auraSel = null; perf(); }));
+  $$('.pf-vsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; const vk = b.closest('.pf-vsw').dataset.vk; S[vk] = b.dataset.v; S.auraSel = null; if (vk === 'auraView') S.auraQ = ''; perf(); }));
   $$('[data-pgo]').forEach((b) => (b.onclick = () => pfGo(b.dataset.pgo, b.dataset.pgn)));
-  // (Buffs & debuffs: a row opens who had it; a player shows only theirs, again for everyone; Cooldowns: a long wait opens theirs)
+  // (Buffs & debuffs: a buff on the right shows each player's uptime of it, again for all; Cooldowns: a long wait opens theirs)
   $$('.pf-row.pf-hrow[data-hc]').forEach((b) => (b.onclick = () => { S.hcdSel = S.hcdSel === b.dataset.hc ? null : b.dataset.hc; perf(); pfKeep(); }));
-  $$('.pf-row.pf-arow[data-au]').forEach((b) => (b.onclick = () => { S.auraSel = S.auraSel === b.dataset.au ? null : b.dataset.au; perf(); pfKeep(); }));
-  $$('[data-aw]').forEach((el) => { const go = () => { S.auraWho = S.auraWho === el.dataset.aw ? null : el.dataset.aw; S.auraSel = null; perf(); }; el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
+  $$('[data-aq]').forEach((el) => { const go = () => { S.auraQ = plainL(String(S.auraQ || '').trim()) === plainL(el.dataset.aq) ? '' : el.dataset.aq; S.auraSel = null; perf(); }; el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
   // (the search: the list narrows as you type, and the box keeps its place)
   { const q = $('#pfAuraQ'); if (q) { let tm; q.oninput = () => { clearTimeout(tm); tm = setTimeout(() => { S.auraQ = q.value; S.auraSel = null; S._qAt = q.selectionStart; perf(); }, 200); };
     if (S._qAt != null) { const at = S._qAt; S._qAt = null; q.focus(); try { q.setSelectionRange(at, at); } catch (e) {} } } }
-  if ($('#pfAuraAll')) $('#pfAuraAll').onclick = () => { S.auraWho = null; perf(); }; if ($('#pfAuraMore')) $('#pfAuraMore').onclick = () => { S.auraMore = !S.auraMore; perf(); };
+  if ($('#pfAuraMore')) $('#pfAuraMore').onclick = () => { S.auraMore = !S.auraMore; perf(); };
   $$('[data-cdn]').forEach((el) => { const go = () => { S.cdsSel = el.dataset.cdn; perf(); pfKeep(); }; el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
   if ($('#pfSrcMore')) $('#pfSrcMore').onclick = () => { S.srcMore = !S.srcMore; perf(); };
   if ($('#pfSrcClose')) $('#pfSrcClose').onclick = () => { S.srcSel = null; perf(); }; if ($('#pfSrcAll')) $('#pfSrcAll').onclick = () => { S.srcSel = null; perf(); };

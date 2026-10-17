@@ -87,6 +87,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 147: Buffs & debuffs by player
+- [x] **Your ask: the character names in the graph, the rest in a drop-down.** Each bar is a player now, with how many
+  different buffs (or debuffs) they had; click a name for their own list under it (each one's uptime, how many times it went
+  on, who gave it, most stacks). The right side is the raid's most common ones: pick one, or search, and the bars become each
+  player's uptime of it (who had Power Infusion, and for how long). Switching Buffs and Debuffs clears the search.
+- **Your direction (noted): Performance is each player's own spec play, "a mixture of Warcraft Logs with WoWAnalyzer",
+  leaning WoWAnalyzer**: rotation, button presses, casting, miscasts, cancelled casts, stopping casting. Not a second
+  mechanics audit. Next (proposed): move the mechanics parts out (Damage checks, avoidable damage and damage sources, boss
+  debuffs, kick orders, the Deaths grade), then cast efficiency per spell.
+
 ## 2026-10-17, round 146: Performance cleanup (raw data, kept light)
 - [x] **Your call: Performance stays raw data graphs for now.** A cleanup to match:
   1. **The two odd numbers are right.** Visage really is on 19 players (Dragooned's Evoker gives it), and raid cooldowns

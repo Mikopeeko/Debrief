@@ -869,6 +869,9 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pfm-i:hover, .pfm-i:focus { background: rgba(255,255,255,.06); outline: none; } .pfm-i.on { background: rgba(230,180,80,.12); } .pfm-it { display: flex; flex-direction: column; min-width: 0; } .pfm-it b { font: 600 14px var(--head); } .pfm-it .sub { font-size: 11.5px; }
 @media (max-width: 900px) { .pfm-p { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pfm { flex: 1 1 100%; } .pfm-b { width: 100%; min-width: 0; } .pfm-p { grid-template-columns: minmax(0, 1fr); width: 100%; max-height: 70vh; overflow-y: auto; } }
+.pf-asw { grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) 58px; cursor: default; } .pf-asw:hover { background: none; }
+.pf-an2 { grid-area: p; display: flex; align-items: center; gap: 7px; min-width: 0; font-weight: 600; } .pf-an2 > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pf-an2 .icw { flex: none; }
+@media (max-width: 640px) { .pf-asw { grid-template-columns: minmax(0, 1fr) 56px; } }
 /* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
    left; what went well and the boxes for between pulls on the right ---- */
 @media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
