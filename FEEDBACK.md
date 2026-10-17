@@ -83,6 +83,34 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 143: Performance, one cohesive look
+- [x] **Your goal (noted): simplicity and clarity, never overwhelming.** All seven cleanups:
+  1. **Same order on every view**: the view buttons, the switches, the boxes, the chart, the list. A view's own switch
+
+
+     (Players / Targets, Healer mana / Everyone's power) sits right above the list.
+  2. **A row opens in place** (your ask): click any bar (a player, a damage source, a cast row, a resource row, a
+
+
+     Utility row) and its details open right under it; click again to close. The right side is the raid's summary;
+
+
+     Healing has none, so its list is full width. The "Pick a player…" hints are gone.
+  3. **Charts fold away**: click a chart's title (the ▾); it stays folded on that view until you open it again.
+  4. **The view switch** looks like every other switch, named "View".
+  5. **Survivability is part of Utility**: "For the raid" (interrupts, dispels, battle resses, externals, mind control CC)
+
+
+     and "Staying alive" (Healthstones, potions, self-heals, defensives). The Report card's "Survival" button lands there.
+  6. **The buttons in three groups**: How they played (Report card, Casts, Resources), Output (Damage, Healing, Damage
+
+
+     taken), Raid tools (Power Infusion, Utility). On a phone: one row that scrolls, instead of a 400 px grid.
+  7. **Matching details**: a short "How it works" under Damage, Healing, Damage taken and Utility like the others; a wide
+
+
+     table inside opened details scrolls in its own box, so a phone never scrolls sideways.
+
 ## 2026-10-17, round 142: Damage taken by source
 - [x] **Damage sources** (your idea): Damage taken has a "Players | Damage sources" switch. Damage sources lists every
   ability that hit the raid, most first, as a bar (red stripes for the avoidable part), with its share of all the damage
