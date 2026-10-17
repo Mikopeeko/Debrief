@@ -119,9 +119,15 @@ function hydrateIcons() {
 // (these win over a spell of the same name in the log: "Death" would otherwise borrow whatever spell a log calls that,
 // so the Deaths heading changed from log to log)
 const NAMED_ICON = { 'avoidable damage': 'ability_rogue_feint', death: 'inv_misc_bone_humanskull_01' };
+// (a bit of the app's own HTML as plain text: tags dropped, "Zul&#39;jan" back to "Zul'jan")
+const plainOf = (h) => { const t = document.createElement('textarea'); t.innerHTML = String(h == null ? '' : h).replace(/<[^>]+>/g, ''); return t.value; };
+// (a spell named only by text: the ID the log used for that name, else a boss ability's from the built-in list. Never for
+// a word that names a kind of thing: "Death" would otherwise find a Death Knight spell called Death)
+const GENERIC_SEC = /^(deaths?|kicks?|interrupts?|shield wall|melee|avoidable damage|healing cooldowns|raid cooldowns|big cooldowns|cooldowns|defensives|survivability|survival kit|potions and healthstones|assignment misses|assigned cooldowns|dispels)$/i;
+const sidOf = (n) => { const k = String(n || '').toLowerCase().trim(); if (!k || GENERIC_SEC.test(k)) return 0; return E.SPELLID.get(k) || E.BOSS_SPELL.get(k) || 0; };
 function spellIcon(id, name, big) {
   const named = !id && name && NAMED_ICON[String(name).toLowerCase()];
-  if (!id && name && !named) id = E.SPELLID.get(String(name).toLowerCase()) || 0; // named only: use the ID the log used for it
+  if (!id && name && !named) id = sidOf(name); // named only: use the ID the log used for it
   return '<span class="icw' + (big ? ' big' : '') + '">' + svgIcon(id, name, big) + (id ? '<img class="oi" data-sid="' + id + '" alt="">' : named ? '<img class="oi" data-icon="' + named + '" alt="">' : '') + '</span>';
 }
 function svgIcon(id, name, big) {
@@ -130,7 +136,7 @@ function svgIcon(id, name, big) {
     '<rect x="0.5" y="0.5" width="23" height="23" rx="4.5" fill="url(#icoShade)"/><g transform="translate(4 4) scale(.6667)" class="gl">' + G[glyph] + '</g></svg>';
 }
 // A mechanic name as text with the spell tooltip on hover (the ID comes from the log when only the name is known)
-function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || E.SPELLID.get(n.toLowerCase()) || 0; if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
+function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
 // A status on the right of a heading or bar, in the same words and marks on every tab: ✕ a problem, ! could be better, ✓ fine
 const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕ ', warn: '! ', ok: '✓ ' }[st] || '') + esc(txt) + '</span>';
 // "all 3 done", but just "done" for one (never "all 1 done")
@@ -156,12 +162,14 @@ function wrongRight(wrong, right, o) {
 const lcLead = (d) => (/^(Their|They|Was|Were|Had|Took|Got|Gained|Died|Stood|Used|Soaked|Kicked|Picked|Cursed|Didn't|Never|Ran|Walked|Moved|Left|Missed|Is)\b/.test(d) ? d.charAt(0).toLowerCase() + d.slice(1) : d);
 // A Fight audit section header: icon and title with the mechanic's spell tooltip, plus the section's summary of this pull
 function secHead(s) {
-  // (generic icons like Death, Kick and Shield Wall aren't the mechanic, so those headers show only the summary)
-  const name = s.spell && s.spell[1] || s.title, generic = /^(death|kick|shield wall)$/i.test(name), id = generic ? 0 : (s.spell && s.spell[0]) || E.SPELLID.get(String(name).toLowerCase()) || 0;
+  // (a heading for a kind of thing, not one spell, like Avoidable damage or Deaths: its own icon and our explanation, never
+  // a spell's tooltip, even when the module gave it one boss ability's icon)
+  const generic = GENERIC_SEC.test(s.title) || GENERIC_SEC.test((s.spell && s.spell[1]) || ''), name = generic ? s.title : (s.spell && s.spell[1]) || s.title, id = generic ? 0 : (s.spell && s.spell[0]) || sidOf(name);
+  if (!id && !s.summary) return '<span class="sechd">' + spellIcon(id, name, true) + '<b>' + esc(s.title) + '</b></span>';
   return '<span class="sp sechd" data-sid="' + id + '" data-sn="' + esc(name) + '" data-ex="' + esc(s.summary || '') + '">' + spellIcon(id, name, true) + '<b>' + esc(s.title) + '</b></span>';
 }
 function spell(id, name, big) {
-  if (!id && name) id = E.SPELLID.get(String(name).toLowerCase()) || 0;
+  if (!id && name) id = sidOf(name);
   const inner = spellIcon(id, name, big) + esc(name);
   return id ? '<a class="sp" data-sid="' + id + '" data-sn="' + esc(name) + '" href="https://www.wowhead.com/spell=' + id + '" target="_blank" rel="noopener">' + inner + '</a>'
     : '<span class="sp" data-sn="' + esc(name) + '">' + inner + '</span>';
@@ -195,7 +203,7 @@ document.addEventListener('mouseover', (e) => {
   if (!el || el === spCur) return;
   spCur = el; clearTimeout(spTimer);
   spTimer = setTimeout(async () => {
-    const name = el.dataset.sn || el.textContent, id = +el.dataset.sid || E.SPELLID.get(String(name).toLowerCase()) || 0;
+    const name = el.dataset.sn || el.textContent, id = +el.dataset.sid || sidOf(name);
     const school = E.SCHOOL.get(id), schools = ['Physical', 'Holy', 'Fire', 'Nature', 'Frost', 'Shadow', 'Arcane'].filter((_, i) => school & (1 << i));
     const head = '<div class="spt-h">' + spellIcon(id, name, true) + '<div><b>' + esc(name) + '</b>' + (schools.length ? '<div class="spt-s">' + schools.join(', ') + '</div>' : '') + '</div></div>' + (el.dataset.ex ? '<div class="spt-x">' + esc(el.dataset.ex) + '</div>' : '');
     spTip.innerHTML = head + (id ? '<div class="spt-b muted">Loading description…</div>' : el.dataset.ex ? '' : '<div class="spt-b muted">No spell ID in the log for this one.</div>');
@@ -255,7 +263,46 @@ document.addEventListener('click', (e) => {
 function who(p, sub) {
   return '<span class="who">' + avatar(p) + '<span style="min-width:0"><div class="nm" style="color:' + p.color + '">' + esc(p.name) + '</div><div class="sub">' + esc(sub == null ? p.specName : sub) + '</div></span></span>';
 }
-function refreshIcons() { hydrateIcons(); }
+function refreshIcons() { hydrateIcons(); linkBossText(); }
+// Boss abilities named in plain text (a rule's tip, a check's line, a summary, "fix first", a death's killing blow) get the
+// same spell tooltip as the headings, on every tab of a pull: every ability this boss's rules and fight module know, by its
+// name in the log or on Wowhead, when it's written with a capital (so "bounce" in a sentence stays a word). Text that's
+// already a spell, links, form fields and charts are left alone. On Performance and Player audit, which are about players'
+// own spells, a boss ability with the same name as a player spell in this log (a rogue's Mutilate on Sszorak) isn't linked.
+const PLAYER_TABS = { perf: 1, player: 1 }, BOSS_RX = new Map();
+const ENEMY_STOP = new Set(['berserk', 'enraged', 'frenzied', 'charging', 'shields', 'attacks', 'strikes', 'summons', 'teleport', 'ritual', 'emerge', 'emerges', 'feeding', 'invisible', 'stunned', 'channel', 'dismount', 'despawn', 'cosmetic', 'permanent', 'stealth', 'submerge', 'transform', 'triggers', 'trigger', 'warning', 'interrupt', 'immunity', 'immune', 'evading', 'phasing', 'standing', 'kneeling', 'sleeping', 'dancing']);
+function bossRx(strict) {
+  const enc = S.item && S.item.boss, key = enc + '|' + E.SPELLID.size + '|' + E.ENEMY_SPELL.size + '|' + !!strict; if (BOSS_RX.has(key)) return BOSS_RX.get(key);
+  const ids = E.BOSS_IDS[enc], names = new Map();
+  if (ids) {
+    for (const id of ids) { const n = E.BOSS_NAMES[id]; if (n && !names.has(n.toLowerCase())) names.set(n.toLowerCase(), id); }
+    for (const [k, id] of E.SPELLID) if (ids.has(id)) names.set(k, id); // (the log's own ID for a name wins: the same spell as the headings)
+  }
+  // (and every spell an enemy used in the logs opened here, for an ability the rules and modules only know by name; a
+  // one-word name only when it's long and not an everyday word that a sentence might start with)
+  for (const [k, id] of E.ENEMY_SPELL) if (!names.has(k) && (k.includes(' ') ? k.length >= 6 : k.length >= 7 && !ENEMY_STOP.has(k))) names.set(k, id);
+  if (strict) for (const k of [...names.keys()]) { const own = E.SPELLID.get(k), id = names.get(k); if (own && own !== id && !(ids && ids.has(own))) names.delete(k); }
+  const list = [...names.keys()].filter((n) => n.length >= 4).sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const v = list.length ? { rx: new RegExp('(?<![\\p{L}\\p{N}])(' + list.join('|') + ')(?![\\p{L}\\p{N}])', 'giu'), names } : null;
+  if (BOSS_RX.size > 40) BOSS_RX.clear(); BOSS_RX.set(key, v); return v;
+}
+function linkBossText() {
+  if (!S.rep || !S.item) return; const b = bossRx(!!PLAYER_TABS[S.tab]); if (!b) return;
+  // (a jump link, like a Mechanics chip, still gets them; a spell's own link is already one)
+  const skip = '.sp, svg, script, style, textarea, select, option, input, code, [contenteditable]', hits = [];
+  // (the tab, and the banner over it)
+  for (const box of [$('#view'), $('#bossHead')]) { if (!box) continue;
+    const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, { acceptNode: (t) => (t.nodeValue.length < 4 || !t.parentElement || t.parentElement.closest(skip) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+    for (let t = w.nextNode(); t; t = w.nextNode()) { b.rx.lastIndex = 0; if (b.rx.test(t.nodeValue)) hits.push(t); } }
+  for (const t of hits) {
+    const s = t.nodeValue, f = document.createDocumentFragment(); let at = 0; b.rx.lastIndex = 0;
+    for (let m; (m = b.rx.exec(s)); ) {
+      const word = m[1]; if (word[0] === word[0].toLowerCase()) continue; // (only a name written with a capital)
+      f.append(s.slice(at, m.index)); const sp = document.createElement('span'); sp.className = 'sp mt'; sp.dataset.sid = b.names.get(word.toLowerCase()); sp.dataset.sn = word; sp.textContent = word; f.append(sp); at = m.index + word.length;
+    }
+    if (at) { f.append(s.slice(at)); t.replaceWith(f); }
+  }
+}
 
 // ---------- loading ----------
 $('#openBtn').onclick = () => $('#fileIn').click();
@@ -919,6 +966,9 @@ function headerHtml(r, allMode) {
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
 const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
+// (on the website, Performance is greyed out while it's reworked: "Under development" on hover or tap, and it doesn't
+// open; on this PC it works as usual)
+const PERF_OFF = () => !!WCL.HOSTED;
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
@@ -931,6 +981,7 @@ function renderMain() {
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
   if (S.tab === 'raid') S.tab = 'player'; // (the Raid audit is part of the Player audit now)
   if (OLD_ALL[S.tab]) S.tab = 'night';
+  if (S.tab === 'perf' && PERF_OFF()) S.tab = 'live';
   if (!VIEWS[S.tab]) S.tab = 'overview';
   // Summary is all pulls; Latest pull, Assignments and Mechanics are one pull; the Player audit keeps its own switch.
   // (a Mythic+ key has no all-pulls view)
@@ -943,10 +994,11 @@ function renderMain() {
   $('#main').innerHTML =
     // the Latest pull recap first (with a red dot while live logging is on), then the rest; every tab is about this raid
     // (your teams are under Your teams in the top bar, on every page)
-    '<div class="tabbar"><nav class="tabs" role="tablist">' + [['live', 'Latest pull']].concat(TABS).map(([k, l]) => '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + '" data-t="' + k + '" role="tab" data-tt="' + esc(TAB_TIP[k] || '') + '" aria-description="' + esc(TAB_TIP[k] || '') + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
-      (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>').join('') + '</nav>' + tbPull(r, allMode) + '</div>' +
+    '<div class="tabbar"><nav class="tabs" role="tablist">' + [['live', 'Latest pull']].concat(TABS).map(([k, l]) => { const off = k === 'perf' && PERF_OFF(), tt = off ? 'Under development' : TAB_TIP[k] || '';
+      return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+      (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>'; }).join('') + '</nav>' + tbPull(r, allMode) + '</div>' +
     '<section id="view"></section>';
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
   { const tp = $('#main .tb-pull'); if (tp) tp.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }); }
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   $('#main').querySelectorAll('.tbp-n').forEach((b) => (b.onclick = () => { const same = S.index.bosses.filter((x) => x.id === it.id && x.diffId === it.diffId), to = same[same.indexOf(it) + +b.dataset.d]; if (to) select(to); }));
@@ -1556,7 +1608,9 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // then healing cooldowns; each a fold-out row (icon, title, a short summary, its status), closed until clicked
   const stH = (st, html) => '<span class="sst ' + st + '">' + ({ bad: '✕ ', warn: '! ', ok: '✓ ' }[st] || '') + html + '</span>';
   // (the icon and title carry the same hover tooltip as on Mechanics: the spell's description when there's one, plus how it's checked)
-  const tipOf = (o) => { const n = o.tip || String(o.title).replace(/<[^>]+>/g, ''), sid = o.tip ? E.SPELLID.get(o.tip.toLowerCase()) || 0 : 0, ex = String(o.how || '').replace(/<[^>]+>/g, '');
+  // (a heading with neither a spell nor an explanation gets no tooltip, rather than an empty one)
+  const tipOf = (o) => { const gen = GENERIC_SEC.test(plainOf(o.title)), n = gen ? plainOf(o.title) : o.tip || plainOf(o.title), sid = gen ? 0 : sidOf(n), ex = plainOf(o.how || '');
+    if (!sid && !ex) return ' class="sechd"';
     return ' class="sp sechd" data-sid="' + sid + '" data-sn="' + esc(n) + '" data-ex="' + esc(ex.length > 240 ? ex.slice(0, 237) + '…' : ex) + '"'; };
   const secRow = (o) => '<details class="panel secd st-' + o.st + '" id="' + o.id + '" data-k="' + o.id + '"' + (S.openSecs.has(o.id) ? ' open' : '') + '><summary><span' + tipOf(o) + '>' + o.icon + '<b>' + o.title + '</b></span>' + (o.sub ? ' <span class="sub">' + o.sub + '</span>' : '') + (o.txtHtml != null ? stH(o.st, o.txtHtml) : hst(o.st, o.txt)) + '</summary>' +
     '<div class="secbody">' + (o.how ? '<details class="howit"><summary>How it works</summary><div>' + o.how + '</div></details>' : '') + o.body + '</div></details>';
@@ -1688,7 +1742,7 @@ function audit() {
     // its section; the clean ones in one chip at the end. (It replaced a grid of tiles, and "What went wrong / right"
     // is on Latest pull only, so the first mechanic is on the first screen.)
     const ord = secs.filter((x) => !x.kick && firstAt.has(x.s.id)).sort((a, b) => tierT(a.s) - tierT(b.s) || ixT(a.s) - ixT(b.s)).map(({ s }) => s);
-    const icon = (s) => (s.spell[0] || E.SPELLID.get(String(s.spell[1]).toLowerCase()) ? '<span class="sp" data-sid="' + (s.spell[0] || 0) + '" data-sn="' + esc(s.spell[1]) + '">' + spellIcon(s.spell[0], s.spell[1]) + '</span>' : spellIcon(s.spell[0], s.spell[1]));
+    const icon = (s) => (s.spell[0] || sidOf(s.spell[1]) ? '<span class="sp" data-sid="' + (s.spell[0] || 0) + '" data-sn="' + esc(s.spell[1]) + '">' + spellIcon(s.spell[0], s.spell[1]) + '</span>' : spellIcon(s.spell[0], s.spell[1]));
     const href = (s) => '#sec-' + s.id + '-' + firstAt.get(s.id);
     const chips = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), cls = b ? 'bad' : 'warn';
       return '<a class="msc tlink ' + cls + '" href="' + href(s) + '" title="' + esc(s.summary) + '">' + icon(s) + '<span class="msc-n">' + esc(s.title.split(': ')[0]) + '</span><span class="msc-s ' + cls + '">' + (b ? '✕ ' + b : '! ' + w) + (b && w ? ' <i>! ' + w + '</i>' : '') + '</span></a>'; });
@@ -1995,9 +2049,9 @@ function audit() {
       const bars = rs.map((x, i) => { const p = pmap.get(x.p) || { name: x.p, color: '#9aa0ac' };
         return cbRow({ tag: 'div', cls: ' nb', attrs: x.ticks ? ' title="' + esc(x.ticks) + '"' : '', k: i + 1, p, segs: [[Math.max(2, 100 * x.hits / mx), 'm']], v: '<span class="' + (x.bad ? 'hotv' : x.warn ? 'warnv' : '') + '">' + x.hits + '</span>', sub: x.amt ? kfmt(x.amt) : '—',
           chips: (x.died ? '<span class="pf-d">✕ died to it</span>' : '') + (x.tank ? '<span class="sub">tank, not judged</span>' : '') }); }).join('');
-      return { label: g.title, st: g.bad ? 'bad' : g.warn ? 'warn' : 'ok', body: '<div class="md-h"><b>' + esc(g.title) + '</b></div><div class="sub" style="margin-bottom:8px">' + esc(g.sub || '') + '</div>' + cbHead('Hits', 'Damage') + bars }; });
+      return { label: g.title, g, st: g.bad ? 'bad' : g.warn ? 'warn' : 'ok', body: '<div class="md-h"><b>' + srcTitle(g) + '</b></div><div class="sub" style="margin-bottom:8px">' + esc(g.sub || '') + '</div>' + cbHead('Hits', 'Damage') + bars }; });
     const iBad = items.findIndex((x) => x.st === 'bad'), iWarn = items.findIndex((x) => x.st === 'warn'), sel = iBad >= 0 ? iBad : iWarn >= 0 ? iWarn : 0;
-    return '<div class="md"><div class="md-list">' + items.map((x, i) => '<button class="md-i ' + x.st + (i === sel ? ' on' : '') + '" data-i="' + i + '"><span class="md-dot"></span><span class="md-l">' + esc(x.label) + '</span></button>').join('') + '</div>' +
+    return '<div class="md"><div class="md-list">' + items.map((x, i) => '<button class="md-i ' + x.st + (i === sel ? ' on' : '') + '" data-i="' + i + '"><span class="md-dot"></span><span class="md-l">' + srcTitle(x.g) + '</span></button>').join('') + '</div>' +
       '<div class="md-pane">' + items.map((x, i) => '<div class="md-d" data-i="' + i + '"' + (i === sel ? '' : ' hidden') + '>' + x.body + '</div>').join('') + '</div></div>';
   };
   // Ula'tek's damage amps, the windows shown (the rows left after the phase and wipe filters): one entry per window, plus
@@ -2946,23 +3000,32 @@ function mechAcross(reps) {
 }
 // avoidable damage across the pulls, by source: a bar per source (damage, coloured by how harmful it is), open one for
 // every player it hit
+// (an avoidable source's name with its spell's tooltip: "Mutagenic Venom (near a purple carrier)" shows Mutagenic Venom's,
+// "Tank frontals on non-tanks" Sever's)
+// (a source known only by name gets its spell from the log, or from its own title)
+const srcTitle = (x) => { if (!x) return ''; const sp = x.spell, id = (sp && (sp[0] || sidOf(sp[1]))) || sidOf(x.title);
+  return id ? '<span class="sp mt" data-sid="' + id + '" data-sn="' + esc(sp && sp[1] ? sp[1] : x.title) + '">' + esc(x.title) + '</span>' : esc(x.title || ''); };
+const HARM_COL = { High: '#e5534b', Medium: '#e8a23a', Low: '#8b93a3' };
 function avoidChart(reps, whoT) {
   const src = new Map();
   for (const r of reps) {
     const ct = cutT(r), s = r.module && !r.module.error && r.module.sections && cutModule(r.module, ct).m.sections.find((q) => q.id === 'avoid'); if (!s) continue;
     for (const g of s.groups || []) {
       if (g.t != null && g.t > ct + 0.05) continue;
-      let x = src.get(g.title); if (!x) src.set(g.title, x = { title: g.title, harm: g.harm, amt: 0, hits: 0, by: new Map() });
-      x.amt += g.amt || 0; x.hits += g.nT || 0;
+      // (a set that doesn't say how harmful it is, or its totals, gets them from its rows: Harmful, each row's hits and damage)
+      let x = src.get(g.title); if (!x) src.set(g.title, x = { title: g.title, harm: HARM_COL[g.harm] ? g.harm : 'Medium', spell: g.spell, amt: 0, hits: 0, by: new Map() });
+      x.amt += g.amt != null ? g.amt : g.rows.reduce((s, row) => s + ((row[2] && row[2].n) || 0), 0);
+      x.hits += g.nT != null ? g.nT : g.rows.reduce((s, row) => s + (parseInt(row[1] && row[1].txt, 10) || 0), 0);
       for (const row of g.rows) { const p = row[0].p; let y = x.by.get(p); if (!y) x.by.set(p, y = { hits: 0, amt: 0, pulls: new Set(), tank: /tank/.test(row[0].sub || ''), died: 0 }); y.hits += parseInt(row[1].txt, 10) || 0; y.amt += (row[2] && row[2].n) || 0; y.pulls.add(r.item.pull); if (row[3] && row[3].bad) y.died++; }
     }
   }
   if (!src.size) return '';
-  const rk = { High: 0, Medium: 1, Low: 2 }, list = [...src.values()].sort((a, b) => rk[a.harm] - rk[b.harm] || b.amt - a.amt), max = Math.max(1, ...list.map((x) => x.amt));
-  const col = { High: '#e5534b', Medium: '#e8a23a', Low: '#8b93a3' }, lab = { High: 'Dangerous', Medium: 'Harmful', Low: 'Minor' };
+  // (bars by damage; a source that only counts steps, no damage, like Stir the Depths water, by hits)
+  const rk = { High: 0, Medium: 1, Low: 2 }, list = [...src.values()].sort((a, b) => rk[a.harm] - rk[b.harm] || b.amt - a.amt || b.hits - a.hits), max = Math.max(1, ...list.map((x) => x.amt)), hmax = Math.max(1, ...list.map((x) => x.hits));
+  const col = HARM_COL, lab = { High: 'Dangerous', Medium: 'Harmful', Low: 'Minor' };
   return '<div class="av-chart">' + list.map((x) => { const ps = [...x.by].sort((a, b) => a[1].tank - b[1].tank || b[1].hits - a[1].hits || b[1].amt - a[1].amt), pmax = Math.max(1, ...ps.map(([, y]) => y.hits));
-    return '<details class="av-src"><summary class="av-row"><span class="av-l"><b>' + esc(x.title) + '</b><span class="av-h" style="color:' + col[x.harm] + '">' + lab[x.harm] + '</span></span>' +
-      '<span class="av-bar"><i style="width:' + Math.max(2, 100 * x.amt / max).toFixed(1) + '%;background:' + col[x.harm] + '"></i><span>' + C(x.amt) + ' · ' + x.hits + ' hits · ' + ps.length + ' players</span></span><span class="av-c" aria-hidden="true">▸</span></summary>' +
+    return '<details class="av-src"><summary class="av-row"><span class="av-l"><b>' + srcTitle(x) + '</b><span class="av-h" style="color:' + col[x.harm] + '">' + lab[x.harm] + '</span></span>' +
+      '<span class="av-bar"><i style="width:' + Math.max(2, x.amt ? 100 * x.amt / max : 100 * x.hits / hmax).toFixed(1) + '%;background:' + col[x.harm] + '"></i><span>' + (x.amt ? C(x.amt) + ' · ' : '') + plural(x.hits, 'hit') + ' · ' + plural(ps.length, 'player') + '</span></span><span class="av-c" aria-hidden="true">▸</span></summary>' +
       '<div class="av-ps">' + ps.map(([p, y]) => '<div class="av-p"><span>' + whoT(p) + (y.tank ? ' <span class="sub">tank</span>' : '') + '</span><span class="av-pb"><i style="width:' + (100 * y.hits / pmax).toFixed(1) + '%;background:' + col[x.harm] + '"></i></span><b>' + y.hits + (y.hits === 1 ? ' hit' : ' hits') + '</b><span class="sub">' + C(y.amt) + ' · ' + y.pulls.size + (y.pulls.size === 1 ? ' pull' : ' pulls') + (y.died ? ' · <span class="hotv">died ' + y.died + '×</span>' : '') + '</span></div>').join('') + '</div></details>'; }).join('') +
     '</div><p class="sub" style="margin-top:8px">Bar length is damage taken up to each wipe filter; a hit is one time walking into it.</p>';
 }
@@ -3062,7 +3125,8 @@ async function night() {
     const trend = real ? (l < e ? 'better later on (' + e + ' → ' + l + ')' : 'worse later on (' + e + ' → ' + l + ')') : '';
     return { st, txt, worst, trend, real, better: l < e, j: j.length, half, e, l };
   };
-  const tipAttr = (tip, title, how) => { const sid = tip ? E.SPELLID.get(tip.toLowerCase()) || 0 : 0, ex = String(how || '').replace(/<[^>]+>/g, ''); return ' class="sp sechd" data-sid="' + sid + '" data-sn="' + esc(tip || title) + '" data-ex="' + esc(ex.length > 240 ? ex.slice(0, 237) + '…' : ex) + '"'; };
+  const tipAttr = (tip, title, how) => { const gen = GENERIC_SEC.test(plainOf(title)), n = gen ? plainOf(title) : tip || plainOf(title), sid = gen ? 0 : sidOf(n), ex = plainOf(how || ''); if (!sid && !ex) return ' class="sechd"';
+    return ' class="sp sechd" data-sid="' + sid + '" data-sn="' + esc(n) + '" data-ex="' + esc(ex.length > 240 ? ex.slice(0, 237) + '…' : ex) + '"'; };
   // a row's grade over the night: the average of its pulls' scores (the pulls it came up in, each up to the wipe filter),
   // on the report card scale, with an arrow when the last third of those pulls was clearly better or worse than before
   const gradeOf = (per) => {
@@ -3105,7 +3169,7 @@ async function night() {
     // (a section that only shows something, like the floor maps, says so instead of "didn't come up")
     const info = x.info && v.st === 'na' && x.per.size > 0;
     const body = info ? '<div class="pdesc">Not judged: open a pull\'s Mechanics tab to see it.</div>' : x.id === 'avoid' ? trendLine(v) + avoidChart(reps, whoT) : bodyOf(x.per, v, 'audit', 'sec-' + x.id, 'this mechanic');
-    return { id: 'sm-' + x.id, ph, ord: ixOf(x.id), st: v.st, txt: info ? x.info : v.txt + (v.worst ? ' · worst: pull ' + v.worst : '') + (v.trend ? ' · ' + v.trend : ''), tip: x.spell && x.spell[1], title: x.title, how: x.how, icon: spellIcon(x.spell ? x.spell[0] : 0, x.spell ? x.spell[1] : '', true), dots: dotsOf(x.per, 'audit', 'sec-' + x.id), gr: gradeOf(x.per), body };
+    return { id: 'sm-' + x.id, ph, ord: ixOf(x.id), st: v.st, txt: info ? x.info : v.txt + (v.worst ? ' · worst: pull ' + v.worst : '') + (v.trend ? ' · ' + v.trend : ''), tip: x.spell && x.spell[1], title: x.title, how: x.how, icon: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, x.spell ? x.spell[1] : '', true), dots: dotsOf(x.per, 'audit', 'sec-' + x.id), gr: gradeOf(x.per), body };
   });
   let mHtml = '';
   // (a module that groups its mechanics by boss instead of by phase, like Entombed Sentinels, gets the same groups here)
@@ -6172,9 +6236,8 @@ function home() {
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
   $('.brand p').textContent = WCL.HOSTED ? 'Paste a Warcraft Logs link or drop your own log' : 'Retail combat logs, read on your PC'; // (not the last report's name)
-  // (with a team added, home is your teams; "More ways in" shows the welcome page once)
-  const full = S.homeFull; S.homeFull = false;
-  if (!full && groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderTeamsHome(); groupsBackfill(); }); return; }
+  // (with a team added, home is your teams; someone new gets the welcome page)
+  if (groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderTeamsHome(); groupsBackfill(); }); return; }
   if (WCL.HOSTED && !window.WLA_DESKTOP) { homeHosted(); return; }
   // the front page (what people see first): the ways in beside a clickable preview of the app, and the four main views
   // underneath as buttons that switch it. The live button comes first; the other ways to follow a log and the help are
@@ -6250,8 +6313,7 @@ function home() {
 // their last night), each opening its Progress; with none yet, one card that invites adding your team
 // ---- the home page once you have a team: your teams, with a slim bar for logs on top ----
 // The bar has the everyday ways in: follow my combat log (on this PC), open a combat log, and any Warcraft Logs link (a
-// report still being logged goes live by itself); "More ways in" opens the full welcome page once. Someone with no team
-// yet gets the welcome page as before.
+// report still being logged goes live by itself), and the tour. Someone with no team yet gets the welcome page as before.
 async function openReportLink(raw, msg) {
   const link = WCL.parseLink(raw);
   if (!link) { msg.style.color = ''; msg.textContent = 'That doesn\'t look like a Warcraft Logs report link. (A team or character page goes in the Add card below.)'; return; }
@@ -6275,7 +6337,7 @@ function teamsBar() {
   return '<section class="th-hero"><h1>Every pull, explained.</h1><p class="th-lead">Open tonight\'s raid, or pick up where your team left off.</p>' +
     '<div class="th-box">' + TH_ICO.link + '<input id="thWcl" placeholder="' + (local ? 'Paste any Warcraft Logs report link' : 'Paste your raid\'s live log, or any Warcraft Logs report') + '" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="thWclGo" type="button">Open</button></div>' +
     '<div class="th-links">' + (local ? '<button type="button" id="thLive">' + TH_ICO.play + 'Follow my combat log</button>' : '') + '<button type="button" id="thFile">' + TH_ICO.file + 'Open a log file</button>' +
-      '<button type="button" id="thTour">' + TH_ICO.tour + 'Take the tour</button><button type="button" id="thMore">' + TH_ICO.more + 'More ways in</button></div>' +
+      '<button type="button" id="thTour">' + TH_ICO.tour + 'Take the tour</button></div>' +
     '<div class="th-msg"><span class="sub" id="thFound"></span><span class="fp-msg" id="thMsg"></span></div></section>';
 }
 // A team's tile on the home page: its banner, name, and rank or guild; a strip of one square per boss on the hardest
@@ -6447,10 +6509,9 @@ function bindTeamsBar() {
   $('#thWcl').onkeydown = (e) => { if (e.key === 'Enter') openReportLink($('#thWcl').value, msg); };
   $('#thWcl').onpaste = () => setTimeout(() => { if (WCL.parseLink($('#thWcl').value)) openReportLink($('#thWcl').value, msg); }, 50); // (a pasted link opens at once)
   $('#thFile').onclick = () => $('#fileIn').click();
-  $('#thMore').onclick = () => { S.homeFull = true; home(); window.scrollTo(0, 0); };
   if ($('#thTour')) $('#thTour').onclick = () => startTour(0);
   if ($('#thLive')) { $('#thLive').onclick = () => startFileLive(HELPER_LOG);
-    helperInfo().then((j) => { const el = $('#thFound'); if (!el) return; el.textContent = j.error === 'nodir' ? 'WoW Logs folder not found: see More ways in.' : j.error ? 'No combat log yet: type /combatlog in game.' : 'Your combat log: ' + j.name.replace(/\.txt$/i, '') + ', updated ' + wallClock(j.mtime); }).catch(() => { /* (the helper isn't running: the button says why when clicked) */ }); }
+    helperInfo().then((j) => { const el = $('#thFound'); if (!el) return; el.textContent = j.error === 'nodir' ? 'WoW Logs folder not found: put where it is in a logs-path.txt file next to start.bat.' : j.error ? 'No combat log yet: type /combatlog in game.' : 'Your combat log: ' + j.name.replace(/\.txt$/i, '') + ', updated ' + wallClock(j.mtime); }).catch(() => { /* (the helper isn't running: the button says why when clicked) */ }); }
 }
 function homeTeams() {
   const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));

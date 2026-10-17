@@ -1707,6 +1707,10 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 html { scrollbar-gutter: stable; }
 /* (no pop-up descriptions on the tab names: they covered the page, and the names explain themselves) */
 .tabbar .tab::after { display: none !important; }
+/* (except a greyed-out tab's note, "Under development", on hover, or on a tap on a phone) */
+.tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
+.tabbar .tab.tab-off[data-tt]::after { display: block !important; font-weight: 600; color: #f6dc9a; }
+.tabbar .tab.tab-off:hover::after, .tabbar .tab.tab-off:focus::after { opacity: 1; visibility: visible; transform: none; transition: opacity .12s, transform .12s, visibility 0s; }
 /* one gap between panels (14px), and a bigger one (24px) before a phase heading */
 .wr-cols, .mtiles, .nsa .panel, .nsa .probbox { margin-bottom: 14px; }
 details.phase > summary { margin-top: 24px; }

@@ -22,6 +22,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   https://claude.ai/artifact/ELNR2Ci3BXvb2Wq1FAF1wU (copy in notes/Desktop layout review.html). All 12 changes built in round 117,
   on a separate copy (branch desktop-layout): the live site is unchanged until you say it's good.
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
+- [ ] **Heal absorbs: who healed them off** (your note): every mechanic that puts a heal absorb on players gets a chart of
+  the healers who helped remove it, and how much each one healed into it. Example: Twin Fangs' Tainted Blood founts,
+  where players stand in the fount to soak it and the soakers get a healing absorb.
+  Noticed in your screenshot of it: it says clean while every Feast shows 0 players absorbed and no heal absorbs
+  cleared. Check whether that's right, or the check isn't seeing the soakers.
+- [ ] **Loading screens, nicer to look at** (your note): the "Downloading Nymrissa Wavecaller pull 1 from Warcraft Logs:
+  290,179 events…" screen is a line of grey text on an empty page. Make the in-between screens more appealing.
+- [ ] **Survivability in the Mechanics tab, simpler** (your note): its drop-down needs to be simpler and easier to read.
+- [ ] **Weights of the mechanical execution grades** (your note): look again at how much each mechanic counts toward a
+  player's or the raid's execution grade (what's weighted heavier, what lighter), and whether that's fair.
 - [ ] **Performance: a Compare option** (your note): put two things side by side somewhere in the Performance tab (for example
   two players, a player against their own best pull, or this pull against an earlier one). Where it goes: part of the
   Performance talk.
@@ -48,6 +58,27 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 123: boss ability tooltips everywhere, Performance greyed out on the website
+- [x] **Every boss ability has its tooltip** (your raid lead's note, and yours: anywhere a boss mechanic, ability, spell or
+  debuff is named). Ability names written in plain text (a check's line, a rule's tip, "fix first", a death's killing
+  blow, the drop-down rows) now get the same Wowhead tooltip as the headings, on every tab: Latest pull, Assignments,
+  Mechanics, Performance, Summary and Player audit, and the pull banner.
+- [x] How it knows them: every ability the rules and fight modules track (264, names from Wowhead, so it works even in a
+  pull where the ability didn't happen), plus every spell enemies used in the logs you open. On Performance and Player
+  audit, a boss ability that shares its name with a player spell in that log (a rogue's Mutilate on Sszorak) is left
+  alone.
+- [x] **Category headings don't borrow a spell** (your note): Avoidable damage, Deaths, Kicks, Interrupts and the cooldown
+  sections show only their own explanation (Deaths was showing a Death Knight spell called "Death"; Twin Fangs' Avoidable
+  damage showed Sanguine Storm's icon and tooltip). A heading that is a boss ability keeps its tooltip.
+- [x] Checked on a real pull of all 10 bosses, every tab. The one gap found, Tainted Burst on Twin Fangs, is fixed.
+- [x] Fixed on the way: Twin Fangs' Avoidable damage on Summary showed "undefined" and "0 · 0 hits" (it now says Harmful,
+  with the real hits and damage; Stir the Depths water, which only counts steps, shows its hits); "Zul&#39;jan" in an
+  Assignments tooltip; a heading with no spell and no explanation popping up an empty box.
+- [x] **Performance greyed out on the website** (your note): the tab is grey and says "Under development" on hover (or a
+  tap on a phone), and doesn't open. On your PC it works as usual, so we can keep building it.
+- [x] **"More ways in" removed** from the home page (your note: it led to the old start page). The note that pointed there
+  (WoW Logs folder not found) now says what to do.
 
 ## 2026-10-17, round 122: your character's Armory picture
 - [x] **Characters show their Armory model** (your idea): Blizzard's full-body picture of the character (their current look)

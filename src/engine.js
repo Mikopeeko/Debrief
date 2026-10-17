@@ -245,6 +245,11 @@ const SCHOOL = new Map();
 // spell name -> ID as seen in the log, so a mechanic named only by text still gets its game icon and tooltip
 const SPELLID = new Map();
 const noteId = (id, name) => { if (id && name && id !== 6603) { const k = String(name).toLowerCase(); if (!SPELLID.has(k)) SPELLID.set(k, id); } };
+// spell name -> ID for what enemies cast, hit players with or put on them, as seen in the log: a boss ability named
+// anywhere in the app gets its tooltip, even one the rules and fight modules only know by name
+const ENEMY_SPELL = new Map();
+const ENEMY_EV = new Set(['SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'SPELL_MISSED', 'SPELL_PERIODIC_MISSED', 'SPELL_CAST_START', 'SPELL_CAST_SUCCESS', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_SUMMON']);
+const noteEnemy = (id, name) => { if (id && name && id !== 6603) { const k = String(name).toLowerCase(); if (!ENEMY_SPELL.has(k)) ENEMY_SPELL.set(k, id); } };
 const noteSchool = (id, hex) => { if (id && hex && !SCHOOL.has(id)) { const v = parseInt(hex, 16); if (v) SCHOOL.set(id, v); } };
 
 // ---------- helpers ----------
@@ -626,6 +631,83 @@ const MODULES = [{
   useful: ['Blightscale Wretch'],
   build: buildUlatek,
 }];
+// Every boss ability the rules and fight modules know, by encounter (spell IDs): each gets its spell tooltip wherever the
+// app names it, in a heading or in plain text (a rule's tip, a check's line), even when this log doesn't have it (its
+// name then comes from BOSS_NAMES, read from Wowhead).
+const BOSS_IDS = {};
+for (const p of PACKS) BOSS_IDS[p.encounter] = new Set(p.rules.flatMap((r) => r.spellIds || []));
+for (const m of MODULES) { const s = BOSS_IDS[m.encounter] || (BOSS_IDS[m.encounter] = new Set()); for (const id of (m.ids || []).flat()) s.add(+id); }
+for (const id of Object.values(CA_IDS).flat()) BOSS_IDS['The Coiled Altar'].add(id);
+// (each one's name on Wowhead, Oct 2026, for an ability this log doesn't have: then the app still knows which spell it is)
+const BOSS_NAMES = {
+  1258677:'Swirling Whirlpools', 1265425:'Wild Bite', 1271380:'Pulsing Tides', 1277002:'Ravage', 1277027:'Mutilate',
+  1277051:'Mutilated Gash', 1277101:'Ravage', 1277105:'Ravage', 1280934:'Dripping Fangs', 1280935:'Dripping Fangs',
+  1281910:'Plague Froth', 1281913:'Plague Froth', 1281925:'Plague Froth', 1282288:'Volatile Venom', 1282403:'Coalesced Venom',
+  1282487:'Fangs of the Coiled Altar', 1282516:'Malignant Catalyst', 1282525:'Malignant Catalyst', 1282602:'Catalytic Bile',
+  1282616:'Catalytic Bile', 1283489:'Guillotine', 1283832:'Axegrinder', 1284034:'Uncoiled Rage', 1284103:'Possession Barrage',
+  1284109:'Hollowing Strikes', 1284207:'Living Venom', 1284208:'Blood Venom', 1284209:'Living Venom', 1284210:'Blood Venom',
+  1284251:'Venom Coagulation', 1284258:'Contaminate', 1284434:'Toxic Droplets', 1284451:'Toxic Droplets', 1284452:'Noxious Blast',
+  1284458:'Empowering Slam', 1284471:'Blighted Blood', 1284483:'Blighted Blood', 1284487:'Bloodvenom Injection',
+  1284491:'Bloodvenom Injection', 1284500:'Mark of Acid', 1284506:'Mark of Blood', 1284561:'Toxic Vapor',
+  1284588:'Vitriolic Stasis', 1284590:'Helical Toxins', 1284606:'Vitriolic Stasis', 1284635:'Vitriolic Stasis', 1284663:'Imbibe',
+  1284813:'Helical Toxins', 1284941:'Cultivated Burst', 1284947:'Cultivated Burst', 1284948:'Cultivated Burst',
+  1285017:'Axegrinder', 1285419:'Raging Crosswinds', 1285425:'Raging Crosswinds', 1285447:'Turbulent Gusts',
+  1285453:'Raging Crosswinds', 1285616:'Raging Crosswinds', 1285643:'Dreadmarch', 1285681:'Soulcoil Ignition',
+  1285979:'Caustic Surge', 1285999:'Mutilate', 1286033:'Dig In', 1286399:'Wail of Terror', 1286441:'Spiritcackle',
+  1286620:'Soul Sever', 1286737:'Umbral Ejection', 1286860:'Rage of the Shackled', 1286885:'Falling Debris',
+  1286912:'Veil of Twilight', 1286918:'Eternal Nightfall', 1286922:'Icebound Flames', 1287072:'Tempest', 1287083:'Tempest',
+  1287205:'Viscous Cyst', 1287265:'Spectral Coils', 1287427:'Essence Rend', 1287434:'Essence Rend', 1287533:'Gravebound Advance',
+  1287718:'Reclaim Essence', 1287722:'Spirit Erasure', 1288232:'Unstable Miasma', 1288260:'Unstable Miasma',
+  1288282:'Unstable Miasma', 1288297:'Clinging Murk', 1288538:'Stone Breaker', 1288554:'Latent Cultist', 1288772:'Soulcoil Rite',
+  1288879:"Serpent's Bite", 1289092:'Stone Breaker', 1289153:'Stone Breaker', 1289154:'Stone Breaker', 1289201:'Caustic Globule',
+  1289683:'Ritual of Awakening', 1289855:'Hungering Pyre', 1289902:'Soul Transfer', 1290003:'Uncoiling', 1290338:'Caustic Globule',
+  1290361:'Soulcoiled', 1290662:'Ravenous Feast', 1290779:'Malice', 1290814:'Coiling Ichor', 1290878:'Coiling Ichor',
+  1290991:'Malice', 1291918:'Shell Spin', 1291929:'Steady Strikes', 1291933:'Throw Junk', 1292034:'Possession Barrage',
+  1292211:'Caustic Waves', 1292248:'Soul Transfer', 1292403:'Caustic Waves', 1292490:'Disgusting Fish', 1292764:'Evil Eyes',
+  1292779:'Final Ascension', 1292780:'Final Ascension', 1292784:'Iku Transform', 1292785:'Nama Transform',
+  1292786:'Transform Gebbo', 1293211:'Soul Transfer', 1293212:'Grasping Depths', 1293295:'Corrosive Spit',
+  1293664:'Soulcoil Ignition', 1293979:'Corrosive Spit', 1294334:'Blink Nova', 1294729:'Corpse Blight', 1294846:'Anguished Echoes',
+  1294867:'Unending Tides', 1294933:'Slithering Flame', 1294994:'Stygian Infection', 1295086:'Unending Tides',
+  1295124:'Ritual of Awakening', 1295173:'Exploding Infection', 1295209:'Caustic Explosion', 1295360:'Malignant Shell',
+  1295798:'Plague Wave', 1295858:'Shredding Shards', 1295891:'Frostfire Volley', 1295905:"Serpent's Bite",
+  1295928:'Burning Flames', 1295954:'Piercing Frost', 1296025:'Blink Nova', 1296133:'Mighty Thud', 1296301:'Mephitic Thrash',
+  1296667:'Caustic Residue', 1296878:'Shifting Protovenom', 1296880:'Shifting Protovenom', 1296882:'Shifting Protovenom',
+  1296898:'Unbound Ferocity', 1296962:'Protovenom Eruption', 1297096:'Raging Crosswinds', 1297111:'Raging Crosswinds',
+  1297624:'Ritual Burn', 1297625:'Explosive Surprise', 1297630:'Vessel of Awakening', 1297631:'Vessel of Awakening',
+  1297646:'United Defense', 1297707:'Virulence', 1298367:"Mother's Wrath", 1298369:"Mother's Wrath",
+  1298381:'Defilement of the Coiled Altar', 1298417:'Stone Venom', 1298570:'Caustic Waves', 1298583:'Gloom Expulsion',
+  1298587:'Conflagrating Expulsion', 1299010:'Spectral Coils', 1299206:'Rattler Slam', 1299267:'Grim Guillotine', 1299673:'Invoke',
+  1299680:'Sever', 1299722:'Invoke', 1299759:'Toxic Incubation', 1299764:"Mother's Boon", 1299838:'Venom Rupture',
+  1299854:'Bounce', 1299899:'Virulence', 1299919:'Toxic Incubation', 1299960:'Toxic Deluge', 1300089:'Virulence',
+  1300235:'Soul Exhaustion', 1300237:'Mighty Thud', 1300238:"Soulcoiler's Curse", 1300239:'Swirling Spirit',
+  1300685:'Soul Constrictor', 1300751:'Call of the Serpent', 1301007:'Unchecked Rage', 1301117:'Grasping Fangs',
+  1302489:'Stygian Burst', 1302842:'Toxic Burn', 1302950:'Writhing Gestation', 1302982:'Virulent Spit', 1303097:'Clinging Murk',
+  1303257:'Suffocation', 1303378:'Barbed Bulwark', 1303620:'Toxic Womb', 1303685:'Twisted Appendage',
+  1304012:'Call of the Serpent', 1304032:'Soulbinding', 1304459:'Malignance', 1305621:"Serpent's Fury", 1305650:'Anguished Cry',
+  1305709:'Desperate Thrash', 1305878:'Volatile Purge', 1305902:'Burning Presence', 1305959:'Venomous Surge',
+  1305963:'Venomous Surge', 1305998:'Caustic Claws', 1306119:'Calcified Corpse', 1306820:'Malignant Totem',
+  1306858:"Warden's Protection", 1306862:'Hatching Doom', 1306906:'Venomfang', 1307279:'Blighted Sever', 1307363:'Barbed Bulwark',
+  1307538:'Barbed Bulwark', 1307612:'Noxious Shell', 1307635:'Noxious Splash', 1307939:'Corpse Blight', 1307941:'Revenge',
+  1308227:'Immortal Coil', 1308711:'Uncoiled Wrath', 1308881:'Nullshards', 1309105:'Spirit Shield', 1310028:'Relic Rupture',
+  1310096:'Feasted', 1310102:'Tainted Blood', 1310371:'Stone Breaker', 1310498:'Mutagenic Venom', 1310500:'Aftershock',
+  1310544:'Virulent Mutation', 1310732:'Malevolent Resonance', 1310763:'Fester Burst', 1310764:'Vicious Echoes',
+  1310882:'Gloombomb', 1311609:'Blight Vein', 1311611:'Grasping Fangs', 1311807:'Caustic Waves', 1312150:'Rancid Yolk',
+  1312366:'Miasmic Coating', 1312853:'Splinters', 1312967:'Volatile Purge', 1313456:'Shatter', 1313531:'Acidic Expulsion',
+  1315341:'Circling Prey', 1315342:'Boiling Venom', 1315541:'Call of the Serpent', 1318329:'Calcified Corpse',
+  1319282:'Caustic Waves'
+};
+// (and the boss abilities the fight modules know only by name, with their spell on Wowhead (its NPC abilities, Oct
+// 2026): they get a tooltip too, even in a pull where they didn't happen)
+const BOSS_EXTRA = {
+  'The Coiled Altar': { 1283290: 'Noxious Ground', 1298591: 'Defiled Ground', 1288624: 'Dreadful Presence' },
+  'The Twin Fangs': { 1290336: 'Eternal Venom', 1292806: 'Stir the Depths', 1306872: 'Sanguine Storm', 1308122: 'Venomous Emergence', 1310105: 'Tainted Burst' },
+  'The Lost Explorers': { 1291390: 'Cataclysmic Invocation', 1295952: 'Elemental Explosion', 1296227: 'Relentless Escalation', 1296252: 'Smashing Shovel', 1305618: 'Fungal Burst' },
+  'Vashnik the Malignant': { 1280189: 'Malignant Burst', 1293968: 'Shadow Infusion', 1293969: 'Blood Infusion', 1293971: 'Flame Infusion', 1314837: 'Hardened Venom' },
+};
+for (const [enc, o] of Object.entries(BOSS_EXTRA)) for (const [id, n] of Object.entries(o)) { (BOSS_IDS[enc] || (BOSS_IDS[enc] = new Set())).add(+id); BOSS_NAMES[id] = n; }
+// (by name: the spell to show for a boss ability named only by text, when the log has no spell of that name)
+const BOSS_SPELL = new Map();
+for (const [id, n] of Object.entries(BOSS_NAMES)) { const k = n.toLowerCase(); if (!BOSS_SPELL.has(k)) BOSS_SPELL.set(k, +id); }
 
 // Channeled cooldowns (Tranquility, Divine Hymn, ...) can log a cast per tick; keep only the first cast
 // of each player's spell within 12s. Sorted by time.
@@ -1113,11 +1195,13 @@ function buildTwinFangs(ev, r, h) {
   const avRows = [...av].sort((a, b) => (b[1].stir + b[1].storm) - (a[1].stir + a[1].storm) || b[1].amt - a[1].amt);
   const hits = (a) => a.stir + a.storm;
   // (one set per source, like every other boss's Avoidable damage, so it draws as bars: players, hits, damage, died)
-  const avSet = (title, sub, key, amtOf) => { const rs = avRows.filter(([, a]) => a[key] > 0).sort((a, b) => b[1][key] - a[1][key]);
+  // (with how harmful it is, its hits and damage in total, and its spell, like avoidPanel's: the Summary's chart reads those)
+  const avSet = (title, sub, key, amtOf, sp) => { const rs = avRows.filter(([, a]) => a[key] > 0).sort((a, b) => b[1][key] - a[1][key]);
     if (!rs.length) return null; const rows = rs.map(([g, a]) => [{ p: pname(g) }, { txt: a[key] + (a[key] === 1 ? ' hit' : ' hits'), bad: a[key] >= 3, warn: a[key] > 0 }, { n: amtOf(a) }, { txt: '—', dim: true }]);
-    return { title, t: null, sub: sub + ' · ' + pl(rs.reduce((n, [, a]) => n + a[key], 0), 'hit') + ' on ' + pl(rs.length, 'player'), bad: rows.some((x) => x[1].bad), warn: true, rows }; };
-  const avGroups = [avSet('Stir the Depths water', 'Harmful: stepping into the churned water it leaves (each step is a hit)', 'stir', () => 0),
-    avSet('Sanguine Storm', 'Harmful: each hit', 'storm', (a) => a.amt)].filter(Boolean);
+    const nT = rs.reduce((n, [, a]) => n + a[key], 0), amt = rs.reduce((n, [, a]) => n + amtOf(a), 0), spl = S(sp);
+    return { title, t: null, harm: 'Medium', nT, amt, spell: spl, sub: sub + ' · ' + pl(nT, 'hit') + ' on ' + pl(rs.length, 'player'), bad: rows.some((x) => x[1].bad), warn: true, rows }; };
+  const avGroups = [avSet('Stir the Depths water', 'Harmful: stepping into the churned water it leaves (each step is a hit)', 'stir', () => 0, 'stir the depths'),
+    avSet('Sanguine Storm', 'Harmful: each hit', 'storm', (a) => a.amt, 'sanguine storm')].filter(Boolean);
   sections.push({ id: 'avoid', title: 'Avoidable damage', spell: S('sanguine storm'),
     verdict: avRows.some(([, a]) => a.storm >= 3 || a.stir >= 3) ? 'bad' : avRows.some(([, a]) => hits(a)) ? 'warn' : 'good',
     summary: avRows.length ? pl(avRows.length, 'player') + ' stepped into Stir the Depths water or got hit by Sanguine Storm.' : 'Nobody stepped into Stir the Depths water or got hit by Sanguine Storm.',
@@ -2599,7 +2683,11 @@ function avoidPanel(ev, r, h, list) {
       return [{ p: h.name(x.g), sub: tank ? 'tank (not judged)' : '' }, { txt: x.touches + (x.touches === 1 ? ' hit' : ' hits'), bad, warn, sub: x.ticks > x.touches ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
     });
     const nT = [...per.values()].reduce((s, x) => s + x.touches, 0), amt = [...per.values()].reduce((s, x) => s + x.amt, 0);
-    return { title: src.label, t: null, harm: src.harm, sub: HARM[src.harm] + ': ' + src.why + ' · ' + pl2e(nT, 'hit') + ' on ' + pl2e(per.size, 'player') + ', ' + compact(amt) + ' damage',
+    // (the spell, for its icon and tooltip: the source's own, else what hit players most often under it, with its name)
+    const byId = new Map(); for (const e of hits) if (e.id) { const c = byId.get(e.id) || { n: 0, name: e.spell }; c.n++; byId.set(e.id, c); }
+    const top = [...byId].sort((a, b) => b[1].n - a[1].n)[0], sid = src.id || (top && top[0]) || 0;
+    const sname = (sid && byId.has(sid) && byId.get(sid).name) || (top && top[1].name) || src.label;
+    return { title: src.label, t: null, harm: src.harm, spell: sid ? [sid, sname] : null, sub: HARM[src.harm] + ': ' + src.why + ' · ' + pl2e(nT, 'hit') + ' on ' + pl2e(per.size, 'player') + ', ' + compact(amt) + ' damage',
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows, nT, amt, label: src.label,
       // for the Night summary report card: each player's touch times, so it can stop at the wipe filter
       names: src.n, wA, bA, judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !!(src.tankOk && h.role(x.g) === 'tank'), ts: x.ts, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
@@ -4828,6 +4916,8 @@ function analyze(item, text, opts) {
     if (f.length < 8) continue;
     const sg = f[0], sn = f[1], dg = f[4], dn = f[5];
     seen(sg, t, sn); seen(dg, t, dn); mark(sg, f[3], t); mark(dg, f[7], t);
+    // (an enemy's spell: from a hostile unit that isn't a player's or their pet's)
+    if (f.length > 9 && ENEMY_EV.has(ev) && !isPlayer(sg) && !pets.has(sg) && (parseInt(f[2], 16) & 0x40)) noteEnemy(num(f[8]), f[9]);
 
     if (ev === 'SPELL_SUMMON') { if (isPlayer(sg)) pets.set(dg, sg); continue; }
     if (ev === 'UNIT_DIED') {
@@ -5617,7 +5707,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind };
+const api = { liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
