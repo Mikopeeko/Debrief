@@ -138,9 +138,9 @@ function svgIcon(id, name, big) {
 // A mechanic name as text with the spell tooltip on hover (the ID comes from the log when only the name is known)
 function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
 // A status on the right of a heading or bar, in the same words and marks on every tab: ✕ a problem, ! could be better, ✓ fine
-const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕ ', warn: '! ', ok: '✓ ' }[st] || '') + esc(txt) + '</span>';
+const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</span>'; // (the mark stays with its first word)
 // "all 3 done", but just "done" for one (never "all 1 done")
-const allOf = (n, one, many) => (n === 1 ? one : 'all ' + n + ' ' + many);
+const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all ' + n + ' ' + many);
 // "What went well" first, then "What went wrong", the same on Latest pull and Summary: what the raid did well leads (a strip
 // across the top, the wins in two columns), and what to improve follows, with Latest pull's "Fix first" beside it (o.rightTop).
 // One line per item (the worst wrong first; at most five, the rest counted), its time on the right, the whole line on hover.
@@ -993,7 +993,7 @@ function headerHtml(r, allMode) {
     const yet = !it.kill && now != null && everBest != null && now < everBest && (!bestO || now < bestO.v); // (further than every saved night too)
     // (a kill says how long it took tonight; "Boss down" only repeated the pill)
     const wipes = same.slice(0, Math.max(0, k)).filter((x) => !x.kill).length;
-    side = (it.kill ? '<span class="nc-res ok">' + (wipes ? '✓ Down after ' + plural(wipes, 'wipe') + ' tonight' : k > 0 ? '✓ Down again' : '✓ Down on the first pull') + '</span>' : yet ? '<span class="nc-res ok">✓ Best pull yet</span>' : bestO && now != null && now < bestO.v ? '<span class="nc-res ok">✓ Best pull tonight</span>' : bestO ? '<span class="sub">Best tonight: ' + esc(pullLabel(bestO.x)) + '</span>' : '') +
+    side = (it.kill ? '<span class="nc-res ok">' + (wipes ? '✓\u00a0Down after ' + plural(wipes, 'wipe') + ' tonight' : k > 0 ? '✓\u00a0Down again' : '✓\u00a0Down on the first pull') + '</span>' : yet ? '<span class="nc-res ok">✓ Best pull yet</span>' : bestO && now != null && now < bestO.v ? '<span class="nc-res ok">✓ Best pull tonight</span>' : bestO ? '<span class="sub">Best tonight: ' + esc(pullLabel(bestO.x)) + '</span>' : '') +
       (delta != null && !it.kill ? '<span class="' + (delta > 0 ? 'okv' : delta < 0 ? 'hotv' : 'sub') + '">' + (usesPh ? (delta > 0 ? '▲ further than last pull (' : delta < 0 ? '▼ not as far as last pull (' : 'same as last pull (') + esc(pullLabel(prevItem)) + ')' : delta > 0 ? '▲ ' + delta.toFixed(1) + '% further than last pull' : delta < 0 ? '▼ ' + (-delta).toFixed(1) + '% short of last pull' : 'same as last pull') + '</span>'
         : !prevItem && !it.run && !it.kill ? '<span class="sub">First pull on this boss tonight</span>' : '');
   }
@@ -1251,7 +1251,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const phOf = (n) => { const k = PHS.findIndex((p) => new RegExp('^P' + n + '\\b').test(p.name)); return k >= 0 ? k : 'w'; };
   const secs = [], addSec = (o) => secs.push(o);
   const icoWh = (n) => '<span class="icw big"><img class="wh-i" src="' + whIcon(n) + '" alt="" onerror="this.style.visibility=\'hidden\'"></span>';
-  const pst = (st, html) => '<div class="pst ' + st + '">' + ({ ok: '✓ ', bad: '✕ ', warn: '! ' }[st] || '') + html + '</div>';
+  const pst = (st, html) => '<div class="pst ' + st + '">' + ({ ok: '✓\u00a0', bad: '✕\u00a0', warn: '!\u00a0' }[st] || '') + html + '</div>';
   const qline = (title, right, cls) => '<div class="qrow"><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></div>';
   const qfold = (title, right, cls, body) => '<details class="qrow"><summary><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></summary><div class="q-b">' + body + '</div></details>';
   if (editing) top += '<div class="panel"><h3>NSRT note for ' + esc(boss) + ' <small>' + (text ? 'saved on this PC, used for every pull of this boss' : 'paste your Northern Sky Raid Tools note to check assignments') + '</small></h3>' +
@@ -1591,7 +1591,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     };
     const zeroOf = (o) => o.assigned.filter((n) => { const g = gOf(o, n); return o.waves != null && g.of > 0 && g.n === 0; });
     const oTxt = (o) => { const z = zeroOf(o), part = o.assigned.filter((n) => { const g = gOf(o, n); return g.of > 0 && g.n > 0 && g.n < g.of; });
-      return z.length ? esc(andList(z)) + ' picked up none' : o.kind === 'purple' && o.outside.size ? (o.outside.size === 1 ? 'someone else took one' : o.outside.size + ' others took one') : esc(andList(part)) + ' missed some waves'; };
+      return z.length ? esc(andList(z)) + ' picked up none' : o.kind === 'purple' && o.outside.size ? (o.outside.size === 1 ? 'someone else took one' : o.outside.size + ' others took one') : esc(andList(part)) + ' missed some sets'; };
     for (const o of orbsNow) {
       if (o.kind === 'helper') continue;
       const z = zeroOf(o), ex = [...o.outside], at = '<b>' + esc(o.label) + '</b>: ', took = esc(andList(ex.map(([n, x]) => n + (x.n > 1 ? ' (' + x.n + ')' : '')))) + ' took ' + (ex.length === 1 && ex[0][1].n === 1 ? 'one' : 'orbs') + ' without being assigned';
@@ -1613,13 +1613,13 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const oStAll = !oSts.length ? 'na' : onb ? 'bad' : onw ? 'warn' : 'ok', oTxtAll = onb ? onb + ' of ' + oSts.length + ' orb groups failed' : onw ? onw + ' of ' + oSts.length + ' orb groups not clean' : 'everyone took theirs';
     if (shown.length) addTile('as-orbs', spellIcon(0, 'Mutagenic Venom', true), 'Orb carriers', oSts.length ? oSts.length - onb - onw + '<span> / ' + oSts.length + ' clean</span>' : '—', oStAll, oTxtAll);
     // one row per orb group (purple, green), under its phase
-    const ORB_HOW = { purple: 'Purple orbs are hard-assigned: each listed carrier picks one up every wave. A carrier who picked up none is a miss; missing some waves, or someone else taking one, could be better.',
+    const ORB_HOW = { purple: 'Purple orbs are hard-assigned: each listed carrier picks one up every set. A carrier who picked up none is a miss; missing some sets, or someone else taking one, could be better.',
       green: 'Green orbs are listed, not hard-assigned: an assigned carrier who picked up none could be better. Backups are shown but not judged.' };
     shown.forEach((o, oi) => {
       const st = oSt(o), purple = o.kind === 'purple', green = o.kind === 'green';
       addSec({ id: 'as-orbs-' + oi, ph: phOf(o.ph), ord: purple ? 2 : 3, tip: purple ? 'Mutagenic Venom' : green ? 'Volatile Venom' : '', icon: spellIcon(0, purple ? 'Mutagenic Venom' : 'Volatile Venom', true), title: purple ? 'Purple orbs' : green ? 'Green orbs' : esc(o.label),
         sub: esc(o.note || '') + ' · ' + plural(o.assigned.length, 'carrier'), st, txtHtml: st === 'bad' || st === 'warn' ? oTxt(o) : st === 'ok' ? 'everyone took theirs' : 'not judged', how: ORB_HOW[o.kind] || 'Backups, shown for reference and not judged.',
-        body: '<div class="scroll"><table class="tbl nsx otl"><colgroup><col style="width:17%"><col style="width:48%"><col style="width:35%"></colgroup><thead><tr><th>Orbs</th><th>Assigned (waves picked up)</th><th>Others</th></tr></thead><tbody>' +
+        body: '<div class="scroll"><table class="tbl nsx otl"><colgroup><col style="width:17%"><col style="width:48%"><col style="width:35%"></colgroup><thead><tr><th>Orbs</th><th>Assigned (sets picked up)</th><th>Others</th></tr></thead><tbody>' +
           '<tr class="' + (st === 'na' ? '' : 'r' + st) + '"><td><b>' + esc(o.label.replace(/^P\d\s*·\s*/, '')) + '</b><div class="sub">' + esc(o.note) + '</div></td><td><span class="chips">' + o.assigned.map((n) => orbChip(o, n)).join('') + '</span></td><td>' + others(o) + '</td></tr></tbody></table></div>' });
     });
 
@@ -1664,7 +1664,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // and the note itself and other reference lines at the bottom
   // the sections, as on Mechanics: under their phase in fight order (Guillotine, orbs, kicks), then the whole-fight ones,
   // then healing cooldowns; each a fold-out row (icon, title, a short summary, its status), closed until clicked
-  const stH = (st, html) => '<span class="sst ' + st + '">' + ({ bad: '✕ ', warn: '! ', ok: '✓ ' }[st] || '') + html + '</span>';
+  const stH = (st, html) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + html + '</span>';
   // (the icon and title carry the same hover tooltip as on Mechanics: the spell's description when there's one, plus how it's checked)
   // (a heading with neither a spell nor an explanation gets no tooltip, rather than an empty one)
   const tipOf = (o) => { const gen = GENERIC_SEC.test(plainOf(o.title)), n = gen ? plainOf(o.title) : o.tip || plainOf(o.title), sid = gen ? 0 : sidOf(n), ex = plainOf(o.how || '');
@@ -1756,7 +1756,7 @@ function audit() {
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts. The Coiled Altar and The Twin Fangs have full mechanic checks.</div>';
   // the wipe filter as one quiet line: where this pull's audit stops (the setting itself is on the tab bar, just above)
-  h += '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (r.allPulls ? (deathCutN() ? 'Each wipe counts up to its <b>' + ordinal(deathCutN()) + ' death</b>; kills count in full' : '<b>Wipe filter off</b>: every pull counts in full') : cut ? '<b>Audited up to ' + T(cut.t) + '</b>, the ' + ordinal(cut.n) + ' death (' + esc(cut.who) + '); ' + pl2(hidden + hiddenMk, 'result') + ' after it ' + (hidden + hiddenMk === 1 ? 'is' : 'are') + ' hidden'
+  h += '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (r.allPulls ? (deathCutN() ? 'Each wipe counts up to its <b>' + ordinal(deathCutN()) + ' death</b>; kills count in full' : '<b>Wipe filter off</b>: every pull counts in full') : cut ? '<b>Counted up to ' + T(cut.t) + '</b>, the ' + ordinal(cut.n) + ' death (' + esc(cut.who) + ') · ' + pl2(hidden + hiddenMk, 'thing') + ' after it ' + (hidden + hiddenMk === 1 ? 'is' : 'are') + ' left out'
       : r.item.kill ? '<b>Kill</b>: the whole pull is audited' : deathCutN() ? 'Fewer than ' + deathCutN() + ' deaths: the whole pull is audited' : 'Wipe filter off: the whole pull is audited') + '</span></div>';  // Highest-priority fixes first: problems, then some mistakes, then clean; within each, the most flagged rows first.
   // Interrupts (shown here instead of their own tab) are ranked the same way.
   const rank = { bad: 0, warn: 1, good: 2 };
@@ -1803,7 +1803,7 @@ function audit() {
     const icon = (s) => (s.spell[0] || sidOf(s.spell[1]) ? '<span class="sp" data-sid="' + (s.spell[0] || 0) + '" data-sn="' + esc(s.spell[1]) + '">' + spellIcon(s.spell[0], s.spell[1]) + '</span>' : spellIcon(s.spell[0], s.spell[1]));
     const href = (s) => '#sec-' + s.id + '-' + firstAt.get(s.id);
     const chips = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), cls = b ? 'bad' : 'warn';
-      return '<a class="msc tlink ' + cls + '" href="' + href(s) + '" title="' + esc(s.summary) + '">' + icon(s) + '<span class="msc-n">' + esc(s.title.split(': ')[0]) + '</span><span class="msc-s ' + cls + '">' + (b ? '✕ ' + b : '! ' + w) + (b && w ? ' <i>! ' + w + '</i>' : '') + '</span></a>'; });
+      return '<a class="msc tlink ' + cls + '" href="' + href(s) + '" title="' + esc(s.summary) + '">' + icon(s) + '<span class="msc-n">' + esc(s.title.split(': ')[0]) + '</span><span class="msc-s ' + cls + '">' + (b ? '✕\u00a0' + b : '! ' + w) + (b && w ? ' <i>! ' + w + '</i>' : '') + '</span></a>'; });
     const clean = ord.filter((s) => tierT(s) >= 2);
     if (clean.length) chips.push('<a class="msc tlink ok" href="' + href(clean[0]) + '" title="' + esc(clean.map((s) => s.title.split(': ')[0] + (s.info ? ' (' + s.info + ')' : '')).join(', ')) + '"><span class="msc-n">' + (chips.length ? '+' + clean.length + ' clean' : 'All ' + clean.length + ' clean') + '</span><span class="msc-s ok">✓</span></a>');
     if (chips.length) h += '<div class="mscore">' + chips.join('') + '</div>';
@@ -2096,7 +2096,7 @@ function audit() {
         const names = many ? '<div class="dd-all"><span class="sub">' + g.length + ' died to it: </span>' + g.map((y) => '<span class="nm" style="color:' + ((pmap.get(y.d.player) || {}).color || 'inherit') + '">' + esc(y.d.player) + '</span>').join(', ') + '</div>' : '';
         return '<button class="md-i dd-r ' + x.st + (gi === 0 ? ' on' : '') + '" type="button" data-i="' + gi + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '" data-dgs="' + esc(g.map((y) => y.d.guid + '@' + y.d.t.toFixed(2)).join(' ')) + '" aria-expanded="' + (gi === 0) + '">' +
           '<span class="dd-t">' + T(x.d.t) + '</span><span class="dd-w">' + who(x.d.player) + (many ? '<span class="dd-n">and ' + (g.length - 1) + ' more</span>' : '') + '</span><span class="dd-c"><b>' + esc(x.cause) + '</b>' + (x.how ? ' <span class="sub">' + esc(x.how) + '</span>' : '') + '</span>' +
-          '<span class="dd-h ' + x.h0.st + '">' + (x.h0.st === 'bad' ? '✕ ' : x.h0.st === 'warn' ? '! ' : '') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
+          '<span class="dd-h ' + x.h0.st + '">' + (x.h0.st === 'bad' ? '✕\u00a0' : x.h0.st === 'warn' ? '! ' : '') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
           '<div class="md-d dd-b" data-i="' + gi + '"' + (gi === 0 ? '' : ' hidden') + '>' + names + x.body + '</div>'; }).join('') +
       (after ? '<div class="dmore">' + plural(after, 'more death') + ' after the wipe filter</div>' : '') + '</div>';
   };
@@ -2144,7 +2144,7 @@ function audit() {
     // "How it works" is folded away at the top of the opened section
     const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok';
     let b = '<details class="panel secd st-' + stc + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad ? '✕ ' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '! ' + nWarn + ' could be better' : s.info ? esc(s.info) : '✓ clean') + '</span></summary><div class="secbody">' +
+      '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(s.info) : '✓\u00a0clean') + '</span></summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -2212,13 +2212,13 @@ function audit() {
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
     h += '<details class="phase" open><summary><b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
-      '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕ ' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓ clean') + '</span></summary>' + list.map((x) => secBlock(x, i)).join('') + '</details>';
+      '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕\u00a0' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓\u00a0clean') + '</span></summary>' + list.map((x) => secBlock(x, i)).join('') + '</details>';
   });
   if (whole.length) h += '<details class="phase" open><summary><b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span></summary>' + whole.map((x) => secBlock(x, 'w')).join('') + '</details>';
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
-    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">defensives, Healthstones and potions up to the wipe filter; raid cooldowns for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕ ' + pl2(nd, 'problem') : '✓ clean') + '</span></summary>' +
+    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">defensives, Healthstones and potions up to the wipe filter; raid cooldowns for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕\u00a0' + pl2(nd, 'problem') : '✓\u00a0clean') + '</span></summary>' +
       secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
       (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })() + '</details>'; }
   if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean /, 'Clean · ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
@@ -2728,7 +2728,7 @@ function nsrtChecks(r) {
     if (o.kind !== 'purple') continue; // (purple orbs are hard-assigned; green and backups are only listed in the pull's own audit)
     if (o.note === 'Phase not reached') { put('Purple orbs', o.label, o.label, 'na', 'Phase not reached'); continue; }
     const extra = [...o.outside].filter(([, x]) => ok(x.t)), got = o.assigned.map((n) => { const g = o.got.get(n) || { n: 0, of: 0 }; return n + ' ' + (o.waves != null ? (g.of ? g.n + '/' + g.of : '—') : g.n); });
-    put('Purple orbs', o.label, o.label, extra.length ? 'warn' : o.waves === 0 ? 'na' : 'ok', (extra.length ? 'Picked up without being assigned: ' + extra.map(([n, x]) => n + (x.n > 1 ? ' (' + x.n + ')' : '')).join(', ') + ' · ' : '') + 'Assigned (waves picked up): ' + got.join(', '), 0, extra.map(([n]) => n));
+    put('Purple orbs', o.label, o.label, extra.length ? 'warn' : o.waves === 0 ? 'na' : 'ok', (extra.length ? 'Picked up without being assigned: ' + extra.map(([n, x]) => n + (x.n > 1 ? ' (' + x.n + ')' : '')).join(', ') + ' · ' : '') + 'Assigned (sets picked up): ' + got.join(', '), 0, extra.map(([n]) => n));
   }
   // Coiled Altar: the kick rotation on each Soulcoiler set, the CC on each Dreadmarch, the curses on each add set, each ghost soaker
   const CA = a.boss && a.boss.ca;
@@ -3095,7 +3095,7 @@ function avoidChart(reps, whoT) {
 // by phase too
 const ASG_META = {
   'Guillotine': { pic: () => spellIcon(0, 'Guillotine', true), tip: 'Guillotine', sec: 'as-guil', how: 'Each drop has a soak team, an external on the axe\'s target and a Zephyr from the note. A soaker who wasn\'t in it, or an external or Zephyr that didn\'t go out, is a miss; someone soaking who wasn\'t assigned could be better.' },
-  'Purple orbs': { pic: () => spellIcon(0, 'Mutagenic Venom', true), tip: 'Mutagenic Venom', sec: 'as-orbs', how: 'Purple orbs are hard-assigned: each listed carrier picks one up every wave. Someone else taking one could be better; a carrier who picked up none is a miss.' },
+  'Purple orbs': { pic: () => spellIcon(0, 'Mutagenic Venom', true), tip: 'Mutagenic Venom', sec: 'as-orbs', how: 'Purple orbs are hard-assigned: each listed carrier picks one up every set. Someone else taking one could be better; a carrier who picked up none is a miss.' },
   'Mind control CC': { pic: () => spellIcon(0, 'Dreadmarch', true), tip: 'Dreadmarch', sec: 'as-mc', how: 'The CC order on Dreadmarch\'s mind controls. No CC on a mind control that lasted is a miss; someone lower on the order going first, or CC only from players not on it, could be better.' },
   'Add curses': { pic: () => spellIcon(0, 'Curse of Tongues', true), tip: 'Curse of Tongues', sec: 'as-curse', how: 'Each Spiteful Soulcoiler should carry its assigned warlock\'s curse (Curse of Tongues or Curse of the Satyr). No curse is a miss; someone else\'s curse instead could be better.' },
   'Ghost soaks': { pic: () => spellIcon(0, 'Spirit Erasure', true), tip: 'Spirit Erasure', sec: 'as-ghost', how: 'One soaker per marker in the intermission: alive, on a spot of their own. The log doesn\'t say who blocked which fragment, so this is as far as it can check.' },
@@ -3179,7 +3179,7 @@ async function night() {
   const verdictOf = (per) => {
     const j = pullNs.filter((n) => per.has(n) && per.get(n).st !== 'na'), b = j.filter((n) => per.get(n).st === 'bad'), w = j.filter((n) => per.get(n).st === 'warn');
     const st = !j.length ? 'na' : b.length && (b.length >= 3 || b.length / j.length >= 0.34) ? 'bad' : b.length || w.length ? 'warn' : 'ok';
-    const txt = !j.length ? 'didn\'t come up' : b.length ? 'went wrong in ' + b.length + ' of ' + j.length + ' pulls' + (w.length ? ' · ' + w.length + ' could be better' : '') : w.length ? 'could be better in ' + w.length + ' of ' + j.length : 'clean in all ' + j.length;
+    const txt = !j.length ? 'didn\'t come up' : b.length ? 'went wrong in ' + b.length + ' of ' + j.length + ' pulls' + (w.length ? ' · ' + w.length + ' could be better' : '') : w.length ? 'could be better in ' + w.length + ' of ' + j.length : j.length === 2 ? 'clean in both' : 'clean in all ' + j.length;
     const worst = b.length ? b.reduce((m, n) => (per.get(n).nb > per.get(m).nb ? n : m)) : null;
     const half = Math.floor(j.length / 2), e = j.slice(0, half).filter((n) => per.get(n).st !== 'ok').length, l = j.slice(j.length - half).filter((n) => per.get(n).st !== 'ok').length;
     // (a trend only when it's a real change: at least 2 pulls and a quarter apart)
@@ -3350,13 +3350,15 @@ async function night() {
 // Each player's own NSRT assignments in one pull, up to the wipe filter: how many they had and how many they did (late or
 // partly done counts half). Doing an assignment counts for the MVPs, so a player with many assignments isn't just someone
 // with more chances to lose points. Counted: Guillotine soaks, externals and Zephyrs, orb pickups, cooldown reminders,
-// Soulcoiler kick turns, mind control CC (when CC was needed and they could give it), curses and ghost soaks.
+// Soulcoiler kick turns, mind control CC (when CC was needed and they could give it), curses and ghost soaks. Weighed by
+// how much hangs on them: an assigned external or Zephyr counts double (your call: critical), a healing cooldown reminder
+// half (they're timed around raid damage that doesn't land on the exact second), everything else once.
 function assignCredit(r) {
   const a = r.assign, out = new Map(); if (!a || a.error) return out;
   const ct = cutT(r), ok = (t) => t == null || t <= ct + 0.05, died = (n, t) => r.deaths.some((d) => d.player === n && d.t < t);
   const add = (n, did, of) => { if (!n) return; const x = out.get(n) || { did: 0, of: 0 }; x.did += did; x.of += of == null ? 1 : of; out.set(n, x); };
-  for (const s of a.soaks || []) { if (!s.soak || !ok(s.soak.t)) continue; for (const n of s.assigned || []) if (!died(n, s.soak.t)) add(n, (s.missing || []).includes(n) ? 0 : 1); }
-  for (const c of a.cds || []) { if (c.expected == null || c.expected > r.duration || !ok(c.expected)) continue; const v = { 'on time': 1, late: 0.5, early: 0.5, missed: 0 }[c.status]; if (v != null) add(c.player, v); }
+  for (const s of a.soaks || []) { if (!s.soak || !ok(s.soak.t)) continue; const w = s.kind === 'external' || s.kind === 'zephyr' ? 2 : 1; for (const n of s.assigned || []) if (!died(n, s.soak.t)) add(n, (s.missing || []).includes(n) ? 0 : w, w); }
+  for (const c of a.cds || []) { if (c.expected == null || c.expected > r.duration || !ok(c.expected)) continue; const v = { 'on time': 1, late: 0.5, early: 0.5, missed: 0 }[c.status]; if (v != null) add(c.player, v / 2, 0.5); }
   for (const o of a.orbs || []) { if (o.kind === 'helper' || o.waves == null) continue; for (const [n, g] of o.got || []) if (g.of) add(n, g.n, g.of); }
   const CA = a.boss && a.boss.ca;
   if (CA && CA.sets) for (const s of CA.sets) { if (!ok(s.t)) continue; for (const x of s.adds) { for (const k of x.kicks) if (k.listed || k.ok) add(k.who, k.ok ? 1 : 0.5); for (const g of x.gotOff) if (g.want && !g.dead) add(g.want, 0); } }
@@ -4213,7 +4215,7 @@ function perf() {
   // lost to deaths: what each player of the role would have done at their own rate, for the time they were dead here
   const lostTile = (role, what) => { const rs = role ? rowsAll.filter((x) => (x.p.role || 'dps') === role) : rowsAll, tot = rs.reduce((s, x) => s + x.tot, 0);
     const lost = rs.reduce((s, x) => s + (x.al > 0 ? x.alive * Math.max(0, wl - x.al) : 0), 0), lf = lost / Math.max(1, tot + lost);
-    return plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !tot ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' ' + what : 'nobody was dead here'); };
+    return plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !tot ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' ' + what : 'nothing lost to deaths'); };
   // big cooldowns: the role's uses against their possible uses, each up to their death or the wipe filter
   const cdTile = (role, who) => { const pc = perfContext(r), low = []; let used = 0, poss = 0;
     for (const x of rowsAll) { if ((x.p.role || 'dps') !== role) continue; const xp = pc.per.get(x.p.name), cds = bigCds(r, x.p, xp ? Math.min(xp.until, pc.end) : pc.end, pc.lust);
@@ -4236,7 +4238,7 @@ function perf() {
   // ---- the fight's damage checks (Damage, whole pull): one line that opens to the list ----
   if (kind === 'dmg' && !ph) { const dc = damageChecks(r); if (dc.length) { const b = dc.filter((x) => x.st === 'bad').length, w = dc.filter((x) => x.st === 'warn').length, dst = b ? 'bad' : w ? 'warn' : 'ok';
     S.perfDcOpen = S.perfDcOpen || false;
-    h += '<details class="panel probbox ' + dst + ' pf-dc"' + (S.perfDcOpen ? ' open' : '') + '><summary class="nh">Damage checks <small>the fight\'s shields and adds, up to the wipe filter</small>' + hst(dst, b ? plural(b, 'failed') : w ? w + ' close or late' : 'all ' + dc.length + ' passed') + '</summary>' +
+    h += '<details class="panel probbox ' + dst + ' pf-dc"' + (S.perfDcOpen ? ' open' : '') + '><summary class="nh">Damage checks <small>the fight\'s shields and adds, up to the wipe filter</small>' + hst(dst, b ? plural(b, 'failed') : w ? w + ' close or late' : dc.length === 1 ? 'passed' : dc.length === 2 ? 'both passed' : 'all ' + dc.length + ' passed') + '</summary>' +
       dc.map((x) => '<div class="pb-r ' + x.st + '"><span class="pb-i">' + { bad: '✕', warn: '!', ok: '✓' }[x.st] + '</span><span class="pb-t">' + x.html + '</span><span class="pb-w">' + x.when + '</span></div>').join('') + '</details>'; } }
   // ---- the timeline: the raid's line, or the picked player's (the picked phase stands out) ----
   const series = addsOn ? AD.series(sel ? sel.p : null, end) : bossOn ? BD.series(sel ? sel.p : null, end) : sel ? (sel.p[key] || []).slice(0, Math.ceil(end)) : raidS;
@@ -4316,7 +4318,7 @@ function healAfterHits(r, w0, w1) {
       '<div class="hah-c">' + by.map(([p, v]) => '<span class="hah-p"><span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span> <b>' + C(v) + '</b> <span class="sub">' + Math.round(100 * v / Math.max(1, tot)) + '%</span></span>').join('') + '</div></div>' +
       '<div class="hah-n"><span><b>' + C(s) + '</b> taken in 3s</span><span><b>' + C(tot) + '</b> healed in the next 11s</span></div></div>';
   });
-  return '<div class="panel pf-hah"><h3 class="nh"><span>Healing after the big hits</span><small>the five biggest moments of raid damage, and the 11 seconds after</small></h3>' + rowsH.join('') + '<details class="howit"><summary>How it works</summary><div>The five 3-second stretches with the most damage on the raid here (at least 10 seconds apart), the two spells that did most of it, and what each healer healed from the start of the hit to 8 seconds after it, as a bar in their colours. Overhealing isn\'t counted.</div></details></div>';
+  return '<div class="panel pf-hah"><h3 class="nh"><span>Healing after the big hits</span><small>the five biggest moments of raid damage, and the 11 seconds after</small></h3>' + rowsH.join('') + '<details class="howit"><summary>How it works</summary><div>The five 3-second stretches with the most damage on the raid here (at least 10 seconds apart), the two spells that did most of it, and what each healer healed from the start of the hit to 8 seconds after it, as a bar in their class colors. Overhealing isn\'t counted.</div></details></div>';
 }
 // Healing and raid cooldowns: every press of a major cooldown in the window (up to the wipe filter, or the picked phase),
 // grouped by who pressed it (or in time order), with what it did:
@@ -5350,7 +5352,7 @@ function resRaid(rows, ty, one) {
     if (nLow.length) parts.push(plural(nLow.length, 'healer') + ' ran low on mana' + (nNoPot === nLow.length ? (nLow.length === 1 ? ', with no mana potion' : ', and none used a mana potion') : nNoPot ? ', ' + nNoPot + ' without a mana potion' : ''));
     if (nFast) parts.push(plural(nFast, 'healer') + ' spent mana faster than the boss lost health');
     if (nSpare) parts.push(plural(nSpare, 'healer') + ' had mana to spare');
-    if (one) h += '<p class="hm-sum ' + (parts.length ? 'warn' : 'ok') + '">' + (parts.length ? '! ' : '✓ ') + esc(parts.length ? parts.join('; ') + '.' : 'Every healer\'s mana kept pace with the boss\'s health.') + '</p>';
+    if (one) h += '<p class="hm-sum ' + (parts.length ? 'warn' : 'ok') + '">' + (parts.length ? '! ' : '✓\u00a0') + esc(parts.length ? parts.join('; ') + '.' : 'Every healer\'s mana kept pace with the boss\'s health.') + '</p>';
     h += '<div class="rs-vl">' + rows.map((x) => { const v = one ? x.per[0].q.v : paceNight(x);
       return '<button type="button" class="rs-vr" data-rn="' + esc(x.p.name) + '">' + avatar(x.p, true) + '<span>' + who(x.p) + ' <span class="hm-p ' + v.st + '">' + esc(v.pill) + '</span></span><span class="rs-vt">' + esc(v.txt) + '</span></button>'; }).join('') + '</div>';
   } else {
@@ -6701,7 +6703,7 @@ function plPage(data, reps, one) {
   const sortSw = '<div class="seg pl-sort" role="tablist" aria-label="Order"><button type="button" data-o="best"' + (worstFirst ? '' : ' class="on"') + '>Best first</button><button type="button" data-o="gain"' + (worstFirst ? ' class="on"' : '') + '>Most to gain first</button></div>';
   const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>half mechanics, half Report card · prep only takes points off' + (one ? ' · on the right: mechanics · Report card' : ' · ▲▼ through the night') + '</small>' + roleChips(has) + '</h3>' + sortSw +
     (bars ? cbHead('Grade', one ? 'Mech · Card' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
-  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious and 4 for each medium mistake of their own (a tank also loses 2 for a minor slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half). <b>Report card</b>: Performance\'s Report card as it is: casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive, potions, kicks, externals. <b>The grade</b> is half each (a player with no Report card, alive under 20 s, is graded on mechanics). <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade; a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
+  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious and 4 for each medium mistake of their own (a tank also loses 2 for a minor slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half; an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Report card</b>: Performance\'s Report card as it is: casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive, potions, kicks, externals. <b>The grade</b> is half each (a player with no Report card, alive under 20 s, is graded on mechanics). <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade; a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
   return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + (sel ? plPlayer(sel, one, reps, mvp.get(sel.p.name), data) : plRaid(data, one, mvp, imp)) + '</div></div>' + how;
 }
 // A player's gear, laid out clean for the Players page (and anyone looking at what others wear): their item level against
@@ -6794,7 +6796,7 @@ const capS = (t) => String(t).charAt(0).toUpperCase() + String(t).slice(1);
 const gBucket = (v) => (v == null ? 'na' : v >= 88 ? 'ok' : v >= 65 ? 'warn' : 'bad');
 // a stat tile at the top of either view: a picture (grade or icon), the label, a big value and one status line
 // (quiet: the line under the value is a detail, not a verdict: grey, with no mark; the edge still shows the status)
-const plTile = (pic, label, v, st, txt, quiet, grade) => '<div class="pt ' + st + (grade ? ' q-' + grade : '') + '">' + (pic || '') + '<div class="pt-t"><div class="pt-l">' + esc(label) + '</div><div class="pt-v">' + v + '</div><div class="pt-s ' + (quiet ? 'na' : st) + '" title="' + esc(txt) + '">' + (quiet ? '' : { bad: '✕ ', warn: '! ', ok: '✓ ' }[st] || '') + esc(txt) + '</div></div></div>';
+const plTile = (pic, label, v, st, txt, quiet, grade) => '<div class="pt ' + st + (grade ? ' q-' + grade : '') + '">' + (pic || '') + '<div class="pt-t"><div class="pt-l">' + esc(label) + '</div><div class="pt-v">' + v + '</div><div class="pt-s ' + (quiet ? 'na' : st) + '" title="' + esc(txt) + '">' + (quiet ? '' : { bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</div></div></div>';
 // one buff or kit icon in a player row: the ring shows how it went (ok, warn, bad; none = nothing to judge), greyed when missing
 // (aura: the buff itself, when known: then the icon gets the spell's tooltip, with the line under it as the extra text)
 const pli = (icon, st, off, title, n, aura) => '<span class="pli ' + st + (off ? ' off' : '') + (aura && aura.ability ? ' sp" data-sid="' + aura.ability + '" data-sn="' + esc(aura.name || title) + '" data-ex="' + esc(title) + '"' : '" title="' + esc(title) + '"') + '><img src="' + whIcon(icon) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (n ? '<b>' + n + '</b>' : '') + '</span>';
@@ -7586,20 +7588,20 @@ function fpParts() {
   const q = (d) => (PULL_Q.find(([lo]) => d >= lo) || [0, '#9d9d9d'])[1];
   const live = '<div class="fp-head"><div class="fp-hl"><small>Pull 18 · The Coiled Altar · Mythic</small><b>Wipe in P2 · Malacrass 34%</b><span class="up">▲ further than last pull (P2 · Malacrass 52%)</span></div>' +
       '<div class="fp-segs">' + seg('33 1 0', 100, 'P1') + seg('23 1 0', 66, 'P2') + seg('0 0 24px', 0, 'Int') + seg('44 1 0', 0, 'P3') + '</div></div>' +
-    '<div class="fp-grid2">' + pnl(h4('What went wrong', 'bad', '✕ 2 things') + r('bad', '<b>First death:</b> Brann at 1:42 to Grim Guillotine') + r('bad', '<b>Eternal Nightfall:</b> shield broke with 0.6s to spare') + r('warn', '<b>Mutagenic Venom ×2:</b> clipped by a carrier')) +
-      pnl(h4('What went well', 'ok', '✓ 3 things') + r('ok', '<b>Orbs and frontals</b> clean this time') + r('ok', '<b>Every Wail of Terror</b> kicked') + r('ok', '<b>No deaths</b> until 1:42')) + '</div>' +
+    '<div class="fp-grid2">' + pnl(h4('What went wrong', 'bad', '✕\u00a02 things') + r('bad', '<b>First death:</b> Brann at 1:42 to Grim Guillotine') + r('bad', '<b>Eternal Nightfall:</b> shield broke with 0.6s to spare') + r('warn', '<b>Mutagenic Venom ×2:</b> clipped by a carrier')) +
+      pnl(h4('What went well', 'ok', '✓\u00a03 things') + r('ok', '<b>Orbs and frontals</b> clean this time') + r('ok', '<b>Every Wail of Terror</b> kicked') + r('ok', '<b>No deaths</b> until 1:42')) + '</div>' +
     pnl(h4('Fix first on the next pull') + '<ol class="fp-ol"><li><b>Grim Guillotine:</b> at least 5 in the circle</li><li><b>Eternal Nightfall:</b> save cooldowns for the shield</li></ol>');
   const tile = (k, t, s) => '<div class="fp-tile ' + k + '"><b>' + t + '</b><span>' + mark[k] + ' ' + s + '</span></div>';
   const mech = '<div class="fp-tiles">' + tile('bad', 'Deaths', '3 problems') + tile('bad', 'Guillotine soaks', '1 problem') + tile('warn', 'Venom orbs', '2 could be better') + tile('ok', 'Spiritcackle adds', 'clean') + '</div>' +
-    pnl(h4('Guillotine soaks', 'bad', '✕ 1 problem') + r('ok', '<b>0:43</b> Guillotine · 7 in the circle') + r('ok', '<b>1:51</b> Guillotine · 5 in, 2 immunities') + r('bad', '<b>2:31</b> Grim Guillotine · 4 in, needs 5', 'Map')) +
-    pnl(h4('Tank frontals', 'warn', '! could be better') + r('warn', '<b>1:12</b> Sever clipped Ilyra behind the tank', 'Ilyra') + r('ok', '<b>2:05</b> Sever · tanks only'));
+    pnl(h4('Guillotine soaks', 'bad', '✕\u00a01 problem') + r('ok', '<b>0:43</b> Guillotine · 7 in the circle') + r('ok', '<b>1:51</b> Guillotine · 5 in, 2 immunities') + r('bad', '<b>2:31</b> Grim Guillotine · 4 in, needs 5', 'Map')) +
+    pnl(h4('Tank frontals', 'warn', '!\u00a0could be better') + r('warn', '<b>1:12</b> Sever clipped Ilyra behind the tank', 'Ilyra') + r('ok', '<b>2:05</b> Sever · tanks only'));
   const assign = '<div class="fp-row">' + pnl(h4('Your NSRT note') + '<pre class="fp-code">intstart\nKaelis Brann Ilyra\nThessa Vosk Doran\nintend\n\nsoak1 Morwyn Kaelis Vosk\nsoak2 Brann Ilyra Thessa</pre>') +
     pnl(h4('Assignments vs what happened') + r('ok', '<b>Kicks, set 1</b> · in order: Kaelis, Brann, Ilyra') + r('bad', '<b>Kicks, set 2</b> · Vosk kicked in Thessa\'s turn', 'Vosk') + r('ok', '<b>Soak 1</b> · all 3 assigned players soaked') +
       r('bad', '<b>Soak 2</b> · Ilyra wasn\'t there', 'Ilyra') + r('ok', '<b>CC</b> · every globule set crowd controlled'), 'wide') + '</div>';
   const pulls = [['P1 · 62%', 12], ['P1 · 20%', 27], ['P2 · 80%', 37], ['P2 · 40%', 47], ['Int', 56], ['P3 · 70%', 69], ['P3 · 40%', 82], ['P3 · 15%', 93], ['Kill', 100]];
   const ends = [['Tank frontal on a non-tank', 6, '#e5534b'], ['Purple orb collision', 4, '#e5534b'], ['Guillotine under-soaked', 2, '#e8a23a']];
   const summary = pnl(h4('How far each pull got', 'kill', 'Killed on pull 9') + '<div class="fp-pulls">' + pulls.map(([t, d], i) => '<div class="fp-pc"><b>Pull ' + (i + 1) + '</b>' + t + '<i style="width:' + Math.max(6, d) + '%;background:' + (d >= 100 ? '#ff8000' : q(d)) + '"></i></div>').join('') + '</div>' +
-      '<div class="fp-small">Coloured like item quality by how much of the whole encounter was done; a kill is orange.</div>') +
+      '<div class="fp-small">Colored like item quality by how much of the whole encounter was done; a kill is orange.</div>') +
     '<div class="fp-row">' + pnl(h4('What ended the pulls') + '<div class="fp-ends">' + ends.map(([n, k, c]) => '<span>' + n + '</span><span class="fp-bar"><i style="width:' + Math.round(100 * k / 6) + '%;background:' + c + '"></i></span><span>' + k + ' pulls</span>').join('') + '</div>', 'wide') +
       pnl(h4('Focus for the next pulls') + '<ol class="fp-ol"><li><b>Tank frontals:</b> only tanks in front</li><li><b>Orbs:</b> carriers path around other orbs</li></ol>') + '</div>';
   return { scenes: { live, mech, assign, summary } };
@@ -7813,7 +7815,7 @@ function startTour(at) {
 // "Tips for this page" in the menu plays them again.
 const PAGE_TIPS = {
   live: [
-    { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its colour shows how far it got, and orange is a kill.' },
+    { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its color shows how far it got, and orange is a kill.' },
     { sel: '#bossHead header.fight', t: 'The pull at a glance', p: 'Its result, how it compares to the pull before, and your team\'s progress: click the team to see every boss and night.' },
     { sel: '#view .wr-wrap', t: 'What went well, and what to fix', p: 'What the raid did well comes first. Under it, what went wrong (the worst first), and beside that, the one thing to fix before you pull again.' },
     { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig into this pull: every mechanic, your assignments, the meters, the whole night and every player.' },

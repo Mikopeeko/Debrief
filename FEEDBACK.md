@@ -13,7 +13,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   and tonight first or the whole tier (the tier needs each pull's scores saved as it's read, from then on).
   **Update (your note, Oct 17):** the Player audit should be completely revamped into something else. Done in round 135
   (Players).
-- [ ] **Stats** (your idea, a tab in Performance; you want guidance first): each player's average main and secondary stats
+- [x] **Stats** (skipped, your call): each player's average main and secondary stats
   over the pull, and how much came from gear procs ("cantrips"), flasks, food, enchants, and other players' buffs.
 - [x] **Latest pull, an update and polish pass** (your note, Oct 17): built in round 139.
 - [x] **Power Infusion** (your idea): built in round 137.
@@ -32,14 +32,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Damage windows, clearer** and **Big cooldowns, simpler**: mockup shown; you'd rather keep the Performance tab as it is now.
 - [x] **Polish Twin Fangs, The Coiled Altar and Ula'tek** on Mythic and Heroic (round 116).
 - [x] **Teams**: remove a team, and a menu for more than one (round 119).
-- [ ] **Remove the Healers view?** (asked; waiting on your yes or no).
+- [x] **Remove the Healers view?** Settled: healer mana moved into Resources (round 129).
 - [x] **Big review of the whole app** for launch (your note): done, with 7 mockups. Read it at
   https://claude.ai/artifact/CyCxbDM5Mj9KyTWc2aMjFE (a copy is in notes/Launch review.html). Nothing in it is built yet: pick what you want.
 - [x] **Second pass, desktop only** (your note): layout measured at 1920×1080 and 1440×900, with to-scale page maps. Read it at
   https://claude.ai/artifact/ELNR2Ci3BXvb2Wq1FAF1wU (copy in notes/Desktop layout review.html). All 12 changes built in round 117,
   on a separate copy (branch desktop-layout): the live site is unchanged until you say it's good.
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
-- [ ] **Heal absorbs: who healed them off** (your note): every mechanic that puts a heal absorb on players gets a chart of
+- [x] **Heal absorbs: who healed them off** (your note; the wrong "clean" fixed in round 140): every mechanic that puts a heal absorb on players gets a chart of
   the healers who helped remove it, and how much each one healed into it. Example: Twin Fangs' Tainted Blood founts,
   where players stand in the fount to soak it and the soakers get a healing absorb.
   Noticed in your screenshot of it: it says clean while every Feast shows 0 players absorbed and no heal absorbs
@@ -47,7 +47,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Loading screens, nicer to look at** (your note): the "Downloading Nymrissa Wavecaller pull 1 from Warcraft Logs:
   290,179 events…" screen is a line of grey text on an empty page. Make the in-between screens more appealing.
 - [ ] **Survivability in the Mechanics tab, simpler** (your note): its drop-down needs to be simpler and easier to read.
-- [ ] **Weights of the mechanical execution grades** (your note): look again at how much each mechanic counts toward a
+- [x] **Weights of the mechanical execution grades** (your note; a fairness pass in round 140): look again at how much each mechanic counts toward a
   player's or the raid's execution grade (what's weighted heavier, what lighter), and whether that's fair.
 - [ ] **Performance: a Compare option** (your note): put two things side by side somewhere in the Performance tab (for example
   two players, a player against their own best pull, or this pull against an earlier one). Where it goes: part of the
@@ -74,7 +74,29 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   everything works.
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
-- [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+- [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 140: Twin Fangs checks, fairer grades, a polish pass
+- [x] **Twin Fangs Feast check said clean on Heroic** (my #2): Heroic has no Tainted Blood founts at all (Warcraft Logs lists
+  no Tainted Blood or Tainted Burst anywhere in a Heroic night), so it graded something that never happened. It only shows
+  when a pull had founts now (Mythic); on Mythic it was right all along (19 or 20 players absorbing each Feast).
+- [x] **Twin Fangs soaks, checked against the guides** (your question): two different soaks.
+  - Ravenous Feast: three strikes, one per group (right, left, melee), 4+ each, Feasted after one. Already checked right.
+  - Caustic Globules (Mythic): Method says 10 a set, 10 players each, the other 10 the next set. Your pulls have 15 a set
+    for 20 players, so about half the raid has to soak two sets in a row. That stays shown; it's now flagged when it's
+    taken at high venom (the stack budget or above), since the raid leader keeps high-stack players out.
+  - Lethal stacks: the guides disagree (Method 10, Mythic Trap 9 on Mythic). Your pulls had players living at 9: it stays 10.
+  - Barbed Bulwark: "broken after 6 s" stays. Mythic Trap says globules explode after 10 s, so that leaves under 4 s to soak.
+- [x] **Fairer mechanics grades** (my #4), after adding up every mistake on the Coiled Altar night:
+  - An assigned external or Zephyr counts double in the share of assignments done; a healing cooldown reminder counts half
+    (they're timed around raid damage that doesn't land on the exact second, and healers have 5 or 6 a pull).
+  - Mutagenic Venom: brushing past a purple carrier once is minor (no points); hit twice or more, it's medium.
+  - Looked at and kept: Axegrinder (5+ separate walk-ins is medium), Sever on a non-tank (serious), dying in a Guillotine soak.
+  - Your grade on the night: 82 → 88; Huservoker, who missed their assigned Guillotine external most pulls, went down.
+- [x] **Polish pass** (your #5): orb pickups say "sets", not "waves"; "both" instead of "all 2"; US spelling; the wipe
+  filter line reads the same on every tab. Phones: Assignments' boxes were squeezed into 6 columns (now 2), "What went
+  wrong" lines wrap instead of being cut off, a row's description goes under its title, and a ✓ or ✕ no longer sits on
+  its own line. Desktop: headers like "Overheal" and the Summary's grade boxes are no longer cut off.
 
 ## 2026-10-17, round 139: Latest pull brought up to date
 - [x] **New boxes for between pulls** (your go-ahead on all of it):

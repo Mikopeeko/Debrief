@@ -897,7 +897,9 @@ function buildTwinFangs(ev, r, h) {
   // a fount nobody absorbed erupts on the whole raid: serious
   { const seen = []; for (const e of bursts.slice().sort((a, b) => a.t - b.t)) { if (seen.some((t) => Math.abs(t - e.t) < 2)) continue; seen.push(e.t);
     M(e.t, 'Raid', 'tainted burst', 'High', 'A Tainted Blood fount nobody absorbed erupted as Tainted Burst on the raid (' + pl(new Set(bursts.filter((x) => Math.abs(x.t - e.t) < 2).map((x) => x.dst)).size, 'player') + ' hit).', 'Every fount needs its soakers inside it before it erupts; the group that didn\'t get knocked back takes them.'); } }
-  sections.push({ id: 'founts', title: 'Tainted Blood founts: absorbed in time', spell: S('tainted blood'),
+  // (only when the pull had founts: Heroic has none (no Tainted Blood or Tainted Burst anywhere in a Heroic night on
+  // Warcraft Logs), and grading it there called every Feast clean with nobody absorbing)
+  if (taint.length || bursts.length || habs.length) sections.push({ id: 'founts', title: 'Tainted Blood founts: absorbed in time', spell: S('tainted blood'),
     verdict: bursts.length ? 'bad' : 'good',
     summary: (bursts.length ? 'Tainted Burst went off ' + pl(new Set(bursts.map((e) => Math.round(e.t))).size, 'time') + '.' : 'No Tainted Burst: every fount was absorbed.') +
       (clearAll.heal.length ? ' Heal absorbs cleared: ' + clearAll.heal.map(([g, a]) => pname(g) + ' ' + fmtM(a)).join(', ') + (clearAll.other ? ', everyone else ' + fmtM(clearAll.other) : '') + '.' : ''),
@@ -970,39 +972,47 @@ function buildTwinFangs(ev, r, h) {
       if (o.hiStacks < budget) continue;
       M(o.t, pname(g), 'caustic globule', 'Medium', 'Soaked ' + o.n + ' Caustic Globules in set ' + (s.i + 1) + ', taking the extra one at ' + o.hiStacks + ' Eternal Venom stacks.', 'Leave extra globules to players with fewer stacks.', map([g], 'soaked more than one', o.t));
     }
+    // a second set in a row taken at the stack budget or above (not already flagged for an extra globule): Method's Mythic
+    // guide rotates the sets between the two halves of the raid, with the raid leader keeping high-stack players out. A
+    // set has 15 globules on Wolfthorn's pulls for 20 players, so about half the raid must go twice in a row: at low
+    // venom that's only shown
+    s.backHi = [];
+    for (const g of s.back) { const o = s.by.get(g), st = stackAt(g, o.t - 0.05); if (st < budget || (o.n > 1 && o.hiStacks >= budget)) continue; s.backHi.push(g); o.backSt = st;
+      M(o.t, pname(g), 'caustic globule', 'Medium', 'Soaked Caustic Globule set ' + (s.i + 1) + ' right after set ' + s.i + ', at ' + st + ' Eternal Venom stacks.', 'Sit out the next set when your stacks are high, so someone lower takes it.', map([g], 'second set in a row at high venom', o.t)); }
     // (Barbed Bulwark hits are flagged in their own section, 5a)
     for (const d of s.died) M(d.t, d.player, 'caustic globule', 'High', 'Died soaking a Caustic Globule.', 'Use a personal defensive for the soak, or let someone with fewer venom stacks take it.', map([d.guid], 'died after soaking', d.t));
     s.snapT = snapT; prevSoakers.clear(); for (const g of s.by.keys()) prevSoakers.add(g);
   }
-  // (sets on a real Mythic kill had ~15 globules for 20 players, so most players soak every set: back-to-back soaks are shown, not flagged)
-  // red: a death, or an extra globule taken at high venom; amber: a Barbed Bulwark hit (an extra globule at low venom
-  // is only shown)
+  // (sets on Wolfthorn's Mythic pulls had 15 globules for 20 players, so many soak two sets in a row: that's shown, and
+  // flagged only at high venom)
+  // red: a death, or an extra globule taken at high venom; amber: a Barbed Bulwark hit, or a second set in a row at high
+  // venom (an extra globule at low venom is only shown)
   const setBad = (s) => s.died.length > 0 || [...s.by.values()].some((o) => o.n > 1 && o.hiStacks >= budget);
-  const setWarn = (s) => s.bul.size > 0;
+  const setWarn = (s) => s.bul.size > 0 || s.backHi.length > 0;
   sections.push({ id: 'soaks', title: 'Caustic Globule soaks', spell: S('caustic globule'),
     verdict: globExplode.length || gSets.some(setBad) ? 'bad' : gSets.some(setWarn) ? 'warn' : 'good',
-    summary: pl(gSets.length, 'set') + ', ' + pl(globs.length, 'globule') + ' soaked' + (globExplode.length ? ', ' + pl(globExplode.length, 'globule') + ' exploded on the raid unsoaked' : '') + '. One globule per player per set, and no touching a globule while its Barbed Bulwark is up.',
-    cols: ['Soaker', 'When', 'Globules', 'Venom at extra soak', 'Barbed Bulwark hits', 'Died', ''],
+    summary: pl(gSets.length, 'set') + ', ' + pl(globs.length, 'globule') + ' soaked' + (globExplode.length ? ', ' + pl(globExplode.length, 'globule') + ' exploded on the raid unsoaked' : '') + '. One globule per player per set, sets taken in turns (high-venom players sit one out), and no touching a globule while its Barbed Bulwark is up.',
+    cols: ['Soaker', 'When', 'Globules', 'Venom at a risky soak', 'Barbed Bulwark hits', 'Died', ''],
     groups: gSets.map((s, si) => {
       // globules nobody soaked that exploded on the raid, listed in the set they came from (the last set that spawned before it)
       const ex = globExplode.filter((c) => c.t >= s.t - 1 && (gSets[si + 1] == null || c.t < gSets[si + 1].t - 1));
       const who = [...new Set([...s.by.keys(), ...s.bul.keys()])].sort((a, b) => ((s.by.get(a) || s.bul.get(a)).t - (s.by.get(b) || s.bul.get(b)).t));
       const rep = [...s.by.values()].filter((o) => o.n > 1).length;
       return { title: 'Set ' + (s.i + 1), t: s.t, bad: !!setBad(s) || ex.length > 0, warn: !!setWarn(s),
-        sub: pl(s.hits.length, 'globule') + ', ' + pl(s.by.size, 'soaker') + (rep ? ', ' + rep + ' took more than one' : '') + (s.back.length ? ', ' + s.back.length + ' also soaked the last set' : '') + (s.bul.size ? ', ' + pl(s.bul.size, 'Bulwark hit') : '') + (s.died.length ? ', ' + pl(s.died.length, 'death') : '') + (ex.length ? ', ' + pl(ex.length, 'globule') + ' exploded unsoaked' : ''),
+        sub: pl(s.hits.length, 'globule') + ', ' + pl(s.by.size, 'soaker') + (rep ? ', ' + rep + ' took more than one' : '') + (s.back.length ? ', ' + s.back.length + ' also soaked the last set' + (s.backHi.length ? ' (' + s.backHi.length + ' at high venom)' : '') : '') + (s.bul.size ? ', ' + pl(s.bul.size, 'Bulwark hit') : '') + (s.died.length ? ', ' + pl(s.died.length, 'death') : '') + (ex.length ? ', ' + pl(ex.length, 'globule') + ' exploded unsoaked' : ''),
         // (the wipe filter re-counts the explosions up to its cut, so the line matches the rows shown)
-        cutSub: (ct) => { const n = ex.filter((c) => c.t <= ct + 0.05).length; return pl(s.hits.length, 'globule') + ', ' + pl(s.by.size, 'soaker') + (rep ? ', ' + rep + ' took more than one' : '') + (s.back.length ? ', ' + s.back.length + ' also soaked the last set' : '') + (s.bul.size ? ', ' + pl(s.bul.size, 'Bulwark hit') : '') + (s.died.length ? ', ' + pl(s.died.length, 'death') : '') + (n ? ', ' + pl(n, 'globule') + ' exploded unsoaked' : ''); },
+        cutSub: (ct) => { const n = ex.filter((c) => c.t <= ct + 0.05).length; return pl(s.hits.length, 'globule') + ', ' + pl(s.by.size, 'soaker') + (rep ? ', ' + rep + ' took more than one' : '') + (s.back.length ? ', ' + s.back.length + ' also soaked the last set' + (s.backHi.length ? ' (' + s.backHi.length + ' at high venom)' : '') : '') + (s.bul.size ? ', ' + pl(s.bul.size, 'Bulwark hit') : '') + (s.died.length ? ', ' + pl(s.died.length, 'death') : '') + (n ? ', ' + pl(n, 'globule') + ' exploded unsoaked' : ''); },
         // one map for the whole set: every soaker on it (green = clean soak, red = a problem), animated from just before
         // the globules land to just after the last soak or explosion; the rows below list everyone without a map each
         rows: [(() => {
-          const probs = who.filter((g) => { const o = s.by.get(g); return (o && o.n > 1 && o.hiStacks >= budget) || s.bul.has(g) || s.died.some((x) => x.guid === g); });
+          const probs = who.filter((g) => { const o = s.by.get(g); return (o && o.n > 1 && o.hiStacks >= budget) || s.backHi.includes(g) || s.bul.has(g) || s.died.some((x) => x.guid === g); });
           const t1 = Math.max(s.end, ...ex.map((c) => c.t)) + 1.5;
           return [{ txt: 'Whole set', sub: 'everyone who soaked, on one map' }, { t: s.t }, { txt: String(s.hits.length) }, { txt: '' }, { txt: '' }, { txt: '' },
-            { map: { t: s.snapT, good: who.filter((g) => !probs.includes(g)), goodLabel: 'soaked', bad: probs, badLabel: 'soak problem (extra globule at high venom, Bulwark hit or died)', title: 'Caustic Globule set ' + (s.i + 1) + ': ' + pl(s.by.size, 'soaker') + (ex.length ? ', ' + pl(ex.length, 'globule') + ' exploded unsoaked' : ''), pts: h.snap(s.snapT), frames: h.frames(Math.max(0, s.t - 3), Math.min(dur, t1), 0.25) } }];
+            { map: { t: s.snapT, good: who.filter((g) => !probs.includes(g)), goodLabel: 'soaked', bad: probs, badLabel: 'soak problem (extra globule or second set in a row at high venom, Bulwark hit or died)', title: 'Caustic Globule set ' + (s.i + 1) + ': ' + pl(s.by.size, 'soaker') + (ex.length ? ', ' + pl(ex.length, 'globule') + ' exploded unsoaked' : ''), pts: h.snap(s.snapT), frames: h.frames(Math.max(0, s.t - 3), Math.min(dur, t1), 0.25) } }];
         })()].concat(ex.map((c) => [{ txt: 'Exploded unsoaked', bad: true }, { t: c.t }, { txt: '—', dim: true }, { txt: c.who.size + ' players hit, +1 Eternal Venom each', bad: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '' }])).concat(who.map((g) => {
           const o = s.by.get(g), b = s.bul.get(g), d = s.died.find((x) => x.guid === g), t = (o || b).t;
-          const bad = (o && o.n > 1) || b || d, risky = o && o.n > 1 && o.hiStacks >= budget;
-          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!risky }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack'), bad: risky } : { txt: '—', dim: true }, b ? { txt: b.n + 'x', warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
+          const bad = (o && o.n > 1) || b || d, risky = o && o.n > 1 && o.hiStacks >= budget, again = o && s.backHi.includes(g);
+          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!risky }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack') + ', extra globule', bad: risky } : again ? { txt: pl(o.backSt, 'stack') + ', second set in a row', warn: true } : { txt: '—', dim: true }, b ? { txt: b.n + 'x', warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
             { txt: '' }];
         })) };
     }), rows: [] });
@@ -2788,7 +2798,8 @@ function buildCoiledAltar(ev, r, h) {
     if (last && e.t - last.end <= 2.5) { last.end = e.t; last.n++; last.amt += e.amt; for (const w of who) if (!last.who.includes(w)) last.who.push(w); continue; }
     const c = { ...e, who, end: e.t, n: 1 }; clipped.push(c); clipBy.set(e.dst, c);
   }
-  for (const c of clipped) { M(c.t, pname(c.dst), 'mutagenic venom', 'Medium', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
+  // (one brush is minor: carriers walk through the raid too; hit two times or more, it's a medium mistake)
+  for (const c of clipped) { M(c.t, pname(c.dst), 'mutagenic venom', c.n > 1 ? 'Medium' : 'Low', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
   // mass Venom Rupture: a player jumping 8+ stacks within 2s means a purple orb touched other orbs
   const vr = auras('venom rupture').filter((e) => h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
   const lastSt = new Map(), hist = new Map(), bursts = [];
@@ -3583,7 +3594,7 @@ function buildCoiledAltar(ev, r, h) {
               // one map per bomb at the moment it explodes; every circle in the wave looks the same (mint, 15 yd)
               { map: { t: boom(x.c), gloom: true, hl: [x.c], hlLabel: pname(x.c) + '\'s Gloombomb', good: res.filter((y) => y.a && tag(y.a).mine).map((y) => y.c), goodLabel: 'bomb landed on this set\'s add', bad: res.filter((y) => !y.a || !tag(y.a).mine).map((y) => y.c), badLabel: 'bomb missed, or hit a leftover add',
                 extraPts: alive.map((a) => { const p = posOf(a.g, te); return p ? { guid: a.g, name: 'Spiteful Soulcoiler', x: p[1], y: p[2], kind: 'add' } : null; }).filter(Boolean),
-                title: pname(x.c) + '\'s Gloombomb at ' + h.fmtT(boom(x.c)) + ' (set ' + (k + 1) + '): the 15 yd explosion circles of this wave' } }]);
+                title: pname(x.c) + '\'s Gloombomb at ' + h.fmtT(boom(x.c)) + ' (set ' + (k + 1) + '): the 15 yd explosion circles of this set' } }]);
           }
           const onMine = res.filter((y) => y.a && tag(y.a).mine).length;
           g.gb = (g.gb || []).concat([{ on: onMine, n: res.length, stacks }]);
@@ -4233,14 +4244,14 @@ function checkAssignments(r, noteText) {
           const mine = e.kind === 'purple' ? purpleNames : greenNames;
           for (const nm of got) if (!mine.has(nm)) { if (e.kind === 'green' && purpleNames.has(nm)) continue; const o = row.outside.get(nm) || { n: 0, t: x }; o.n++; row.outside.set(nm, o); }
         }
-        row.waves = n; row.note = n ? n + (n === 1 ? ' wave' : ' waves') + ' checked' : 'No orb waves in this phase';
+        row.waves = n; row.note = n ? n + (n === 1 ? ' set' : ' sets') + ' checked' : 'No orb sets in this phase';
       }
       res.orbs.push(row);
       if (e.kind !== 'purple') continue;
       // mistakes: someone else picked up a purple orb (Low), and an assigned carrier whose orb was taken by someone else (Low)
       const what = (row.ph != null ? ' in P' + row.ph : '');
       for (const [nm, o] of row.outside) res.mistakes.push({ t: o.t, player: nm, mechanic: 'Orb assignment', id: 0, severity: 'Low', detail: 'Picked up ' + (o.n === 1 ? 'a purple orb' : o.n + ' purple orbs') + what + ' without being on the purple orb list.', fix: 'Purple orbs are for the assigned carriers only; everyone else moves green orbs out of their way.' });
-      if (row.ph != null && row.outside.size) for (const [nm, g] of row.got) if (g.of && g.n === 0) res.mistakes.push({ t: px0(row), player: nm, mechanic: 'Orb assignment', id: 0, severity: 'Low', detail: 'Was assigned a purple orb' + what + ' but picked none up' + (g.of > 1 ? ' in ' + g.of + ' waves' : '') + '; someone who wasn\'t assigned took them.', fix: 'Be at the orb when it lands: your carrier spot is planned around you.' });
+      if (row.ph != null && row.outside.size) for (const [nm, g] of row.got) if (g.of && g.n === 0) res.mistakes.push({ t: px0(row), player: nm, mechanic: 'Orb assignment', id: 0, severity: 'Low', detail: 'Was assigned a purple orb' + what + ' but picked none up' + (g.of > 1 ? ' in ' + g.of + ' sets' : '') + '; someone who wasn\'t assigned took them.', fix: 'Be at the orb when it lands: your carrier spot is planned around you.' });
     }
     function px0(row) { const px = phaseOf(row.ph); return px ? px.start : 0; }
   }
