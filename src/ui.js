@@ -1620,6 +1620,9 @@ function audit() {
     // (Nek'zali)
     amani: { Result: 'Amani reaching the well', '!Shield': 'shields never broken' }, ignition: { Result: 'players hit by two circles', '!Result': 'circle hits or Ritual Burn going in', Died: 'deaths in Ignition' },
     depths: { Result: 'Curses that got off or deaths in the well', '!Result': 'Swirling Spirit hits', '!Who': 'going in with Soul Exhaustion' }, rend: { Removed: 'deaths with Essence Rend', '!Puddle': 'puddles in the way' },
+    // (Vashnik)
+    venoms: { Result: 'venoms reaching the middle', '!Result': 'adds living over a minute', '!Notes': 'fire adds dying together' }, totems: { Result: 'Imbibes with two or more totems up', '!Result': 'a totem left up' },
+    froth: { Result: 'deaths to Plague Wave', '!Result': 'Plague Wave hits' }, bile: { Result: 'biles that landed on nobody' }, infect: { Notes: 'deaths to Caustic Explosion', '!Notes': 'infections removed together', '!Result': 'Stygian Burst hits' }, imbibe: { Died: 'deaths at Imbibe' }, fangs: { Result: 'tanks taking two Dripping Fangs in a row' },
     barrage: { '!Distance': 'Barrages with the tank too close' }, ritual: { Result: 'corpses back at once, Pyre deaths or Soul Transfer hits', '!Result': 'two corpses at once or thin Pyre soaks', Who: 'Soul Transfer hits' }, invoke: { '!Result': 'players interrupted by Invoke' }, energy: { Energy: 'enrages' },
     bulwark: { 'Broken by': 'barriers nobody broke', '!Barrier up': 'slow breaks', 'Ran into it': 'deaths running into a live barrier', '!Ran into it': 'players running into a live barrier' },
     soaks: { Globules: 'players taking an extra globule', 'Venom at extra soak': 'extra globules taken at high venom', 'Barbed Bulwark hits': 'touching shielded globules', Died: 'deaths after soaking' },
@@ -1638,7 +1641,7 @@ function audit() {
   };
   // (row labels that don't read as a plural noun on their own)
   const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets' };
-  const SNOUN = { amani: 'Amani', ignition: 'results', depths: 'well results', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission results', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'add and kick results', dmghost: 'Dreadmarch results', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'egg results', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangs: 'tether results', doomscale: 'Doomscale results', bite: 'bite results', shriek: 'adds' };
+  const SNOUN = { venoms: 'adds', fangs: 'Dripping Fangs', totems: 'totem results', froth: 'players', bile: 'Catalysts', infect: 'infections', imbibe: 'Imbibes', amani: 'Amani', ignition: 'results', depths: 'well results', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission results', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'add and kick results', dmghost: 'Dreadmarch results', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'egg results', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangs: 'tether results', doomscale: 'Doomscale results', bite: 'bite results', shriek: 'adds' };
   const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
   const synopsis = (s, rows, groups) => {
     const all = []; for (const g of groups) for (const row of g.rows) all.push({ row, g }); for (const row of rows) all.push({ row, g: null });
@@ -1974,6 +1977,8 @@ const IMPORTANCE = {
   // (the two biggest wipe causes are failed Fury pops and Tempest; then the winds, the Crosswinds, the soaks)
   Sszorak: ['fury', 'tempest', 'winds', 'crosswinds', 'mutilate', 'virulence', 'cysts', 'ravage', 'avoid'],
   // (the Mythic wipes: corpses back at once in the intermission, Amani in the well, a Curse in the well, the enrage)
+  // (Mythic: totems left at Imbibe and venoms in the middle wipe; Plague Wave lines kill the most players)
+  'Vashnik the Malignant': ['totems', 'venoms', 'froth', 'bile', 'infect', 'imbibe', 'fangs', 'avoid'],
   "Nek'zali the Soulcoiler": ['ritual', 'amani', 'depths', 'energy', 'ignition', 'rend', 'barrage', 'invoke', 'avoid'],
   "Ula'tek": ['eggs', 'coils', 'waves', 'tank', 'incub', 'wretch', 'amps', 'fangs', 'doomscale', 'kicks', 'bite', 'shriek', 'avoid'],
 };

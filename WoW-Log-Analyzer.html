@@ -1613,8 +1613,13 @@ const PACKS = [
   // (Cultivated Burst, a Helical Toxins not solved, is flagged by the fight module with who and when)
   { type: 'avoidable', spellIds: [1296962], name: 'Protovenom Eruption', severity: 'Medium', difficulties: ['Mythic'], tip: 'Only touch another player who also has Shifting Protovenom. Touching an unmarked player erupts and knocks you both back.' },
 ]},
-{ encounter: 'Vashnik the Malignant', sources: SRC, rules: [
+// (Vashnik: spell IDs checked against real Mythic pulls, 2026-10; Malignant Burst and Malignance weren't in them, so they
+// match by name. The fight module covers the adds, totems, soaks, dispels and tank swaps.)
+{ encounter: 'Vashnik the Malignant', sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
   { type: 'raidFail', name: 'Malignant Burst', severity: 'High', tip: 'A living venom reached the Malignant Cavity. Kill or control every venom add before it gets to the middle; more than one usually wipes.' },
+  { type: 'raidFail', spellIds: [1282616], name: 'Catalytic Bile', severity: 'High', tip: 'A Catalytic Bile landed with nobody under it and hit the whole raid. Spread so every impact has someone within 6 yards.' },
+  { type: 'avoidable', spellIds: [1295798], name: 'Plague Wave', severity: 'High', tip: 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.' },
+  { type: 'avoidable', spellIds: [1286737], name: 'Umbral Ejection', severity: 'Medium', tip: 'Step out of the circles a Shrouded Venom leaves when it dies.' },
 ]},
 { encounter: 'The Lost Explorers', sources: SRC, rules: [
   { type: 'avoidable', name: 'Aftershock', severity: 'Medium', tip: 'Avoid the Aftershock craters.' },
@@ -1894,6 +1899,18 @@ const NZ = {
   soulcoiled: 1290361, rage: 1284034, // Soulcoiled, Uncoiled Rage (the enrage at 100 energy)
 };
 const NZ_IDS = Object.values(NZ).flat();
+// Vashnik the Malignant spell IDs, read from real Mythic pulls on Warcraft Logs (Sep to Oct 2026). Matched by ID
+// (MODULES entry `ids`); the infusions and the rarer failures by name.
+const VS = {
+  imbibe: 1284663, vapor: 1284561, expulsion: [1298587, 1298583], // Imbibe (at 100 energy: drains the two nearest fountains), Toxic Vapor (its stacking raid damage), the fountains' raid hits at Imbibe (Conflagrating, Gloom)
+  catalyst: 1282516, catalystHit: 1282525, bile: 1282602, bileRaid: 1282616, // Malignant Catalyst: the cast, its raid hit, a bile soaked (split within 6 yd), a bile nobody soaked (the whole raid)
+  froth: 1281913, frothMark: 1281910, frothTick: 1281925, wave: 1295798, // Plague Froth: the 6 s debuff on a target (the wave goes when it ends), a marker aura that ends at once, its ticks on everyone within 5 yd, Plague Wave (four lines)
+  exploding: 1295173, explosion: 1295209, stygian: 1294994, stygBurst: 1302489, // Adaptive Infection: Exploding (fire; a raid hit when it's removed), Stygian (shadow; bursts on players within 6 yd)
+  fangs: 1280935, fangsDeb: 1280934, // Dripping Fangs (tank: 100% more physical damage taken for 32 s)
+  presence: 1305902, surge: 1285979, coating: 1312366, ejection: 1286737, // adds: Burning Presence (a Burning Venom's aura), Caustic Surge (its death burst), Miasmic Coating (a Shrouded Venom's shield), Umbral Ejection (its burst circles)
+  totem: 1306820, malignance: 1304459, // Mythic: Malignant Totem (summoned at each Imbibe), Malignance (each totem's cast: it goes off at the next Imbibe)
+};
+const VS_IDS = Object.values(VS).flat();
 // Latent Cultist puddles closer than this to the well's centre (yards) are in the way (the guides: get dispelled at the
 // side of the room). My call, from where Wolfthorn's Mythic kills dropped them.
 const NZ_EDGE = 25;
@@ -1992,6 +2009,14 @@ const MODULES = [{
   focus: new Set(["Nek'zali the Soulcoiler", "Nek'zali, the Soulcoiler"]),
   priority: ['Restless Amani', 'Drowned Echo', 'Echo of Jawae'],
   build: buildNekzali,
+}, {
+  encounter: 'Vashnik the Malignant',
+  units: ['Burning Venom', 'Shrouded Venom', 'Clotting Venom', 'Malignant Totem'], // drawn on maps
+  spells: ['flame infusion', 'shadow infusion', 'blood infusion', 'hardened venom', 'malignant burst', 'exploding infection', 'malignance'], // (by name: the infusions, dispels and failures not seen in a log yet)
+  ids: VS_IDS,
+  focus: new Set(['Vashnik', 'Vashnik the Malignant']),
+  priority: ['Burning Venom', 'Shrouded Venom', 'Clotting Venom'],
+  build: buildVashnik,
 }, {
   encounter: 'Sszorak',
   units: [],
@@ -3447,6 +3472,214 @@ function buildNekzali(ev, r, h) {
     note: mythic ? '' : 'Mythic-only checks (Grasping Depths, Invoke) are hidden on this difficulty.' };
 }
 
+function buildVashnik(ev, r, h) {
+  const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const dur = r.duration, mythic = r.item.diff === 'Mythic', pname = (g) => h.name(g), T = h.fmtT;
+  const fmtM = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
+  const mistakes = [], sections = [], marks = [];
+  const M = (t, player, mech, severity, detail, fix, map) => mistakes.push({ t, player, mechanic: mech, id: 0, severity, detail, fix, ...(map ? { map } : {}) });
+  const L = (x) => String(x || '').toLowerCase();
+  const has = (e, ids) => [].concat(ids).includes(e.id);
+  const dmgId = (ids) => ev.filter((e) => e.k === 'dmg' && has(e, ids) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
+  const dmgName = (n) => ev.filter((e) => e.k === 'dmg' && L(e.spell) === n && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
+  const AUR = new Map(), aur = (id) => { const k = String(id); if (!AUR.has(k)) AUR.set(k, ev.filter((e) => e.k === 'aura' && has(e, id)).sort((a, b) => a.t - b.t)); return AUR.get(k); };
+  const gap1 = (l) => l.sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 1);
+  const castOk = (ids) => gap1(ev.filter((e) => e.k === 'cast' && has(e, ids)).map((e) => e.t));
+  const frames = (t0, t1) => h.frames(Math.max(0, t0), Math.min(dur, t1), 0.25);
+  const posPts = (t) => (h.frames(t, t, 0.2)[0] || { pts: h.snap(t) }).pts;
+  const posOf = (g, t) => posPts(t).find((q) => q.guid === g);
+  const diedNear = (g, t, w) => r.deaths.find((d) => d.guid === g && d.t >= t - 0.2 && d.t <= t + w);
+  const clusters = (list, gap) => { const out = []; for (const e of list) { const c = out[out.length - 1]; if (c && e.t - c.t1 < gap) { c.t1 = e.t; c.list.push(e); } else out.push({ t: e.t, t1: e.t, list: [e] }); } return out; };
+
+  // ---- the loop: Imbibe at 100 energy, about every 84 seconds ----
+  const imb = castOk(VS.imbibe), bossG = (ev.find((e) => e.k === 'cast' && e.id === VS.imbibe) || {}).src;
+  imb.forEach((t, i) => marks.push({ t, label: 'Imbibe ' + (i + 1), id: VS.imbibe, kind: 'phase' }));
+  const cycOf = (t) => imb.filter((x) => x <= t + 0.5).length; // (0: before the first Imbibe)
+  const cyName = (k) => (k ? 'Imbibe ' + k : 'Before Imbibe 1');
+
+  // ---- 1. Imbibe: the two nearest fountains drained (infusions on him), the raid hit, adds ----
+  {
+    const inf = ev.filter((e) => e.k === 'aura' && (e.op === 'apply' || e.op === 'dose') && /infusion$/i.test(e.spell || '') && /^(flame|shadow|blood)/i.test(e.spell || '') && (!bossG || e.dst === bossG));
+    const exp = ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && /expulsion$/i.test(e.spell || ''));
+    const rows = imb.map((t, i) => {
+      const got = [...new Set(inf.filter((e) => e.t >= t - 0.5 && e.t <= t + 2).map((e) => e.spell.split(' ')[0]))];
+      const died = r.deaths.filter((d) => d.t >= t - 0.3 && d.t <= t + 3 && /expulsion|imbibe/i.test(d.ability || '') && h.isPlayer(d.guid));
+      const hit = exp.filter((e) => e.t >= t - 0.3 && e.t <= t + 2), each = hit.length ? hit.reduce((s, e) => s + (e.raw || e.amt), 0) / new Set(hit.map((e) => e.dst)).size : 0;
+      const quick = i && t - imb[i - 1] < 40;
+      if (died.length) M(t, 'Raid', 'Imbibe', 'High', pl(died.length, 'player') + ' died to the fountains\' raid hit at Imbibe ' + (i + 1) + '.', 'Stack for healing cooldowns and defensives on every Imbibe; the hits grow with each infusion and Toxic Vapor stack.');
+      return [{ txt: 'Imbibe ' + (i + 1), sub: quick ? 'only ' + Math.round(t - imb[i - 1]) + ' s after the last one' : '' }, { t }, got.length ? { txt: got.join(' and ') + ' fountains' } : { txt: '—', dim: true },
+        died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, { txt: each ? fmtM(each) + ' each' : '', dim: true }];
+    });
+    if (rows.length) sections.push({ id: 'imbibe', title: 'Imbibe: the fountains and the raid hit', spell: [VS.imbibe, 'Imbibe'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good', info: !rows.some((x) => x[3].bad),
+      summary: pl(rows.length, 'Imbibe') + '. Which two fountains he drained each time, what the raid took, and deaths to it. Each one adds a Toxic Vapor stack: the longer the fight, the harder it gets.', cols: ['Imbibe', 'When', 'Drained', 'Died', 'Raid hit'], rows });
+  }
+
+  // ---- 2. the adds: Burning Venoms (kill one at a time, before they reach the middle) and Shrouded Venoms ----
+  {
+    const born = new Map();
+    const seen = (g, t, kind) => { if (!born.has(g)) born.set(g, { g, t, kind, died: null }); };
+    for (const e of aur(VS.presence)) if (e.op === 'apply' && !h.isPlayer(e.dst)) seen(e.dst, e.t, 'burning');
+    for (const e of aur(VS.coating)) if (e.op === 'apply' && !h.isPlayer(e.dst)) seen(e.dst, e.t, 'shrouded');
+    for (const e of ev) if (e.k === 'die' && born.has(e.guid)) { const a = born.get(e.guid); if (a.died == null) a.died = e.t; }
+    const surgeT = castOk(VS.surge), hard = ev.filter((e) => e.k === 'aura' && e.op === 'apply' && L(e.spell) === 'hardened venom' && !h.isPlayer(e.dst));
+    const burst = dmgName('malignant burst'), bursts = clusters(burst, 2);
+    for (const b of bursts) M(b.t, 'Raid', 'Malignant Burst', 'High', 'A Living Venom reached the Malignant Cavity: Malignant Burst hit the whole raid and left a stacking damage over time.', 'Kill or crowd control every venom before it gets to the middle; the Burning Venoms first.');
+    const groups = [...new Set([...born.values()].map((a) => cycOf(a.t)))].sort((a, b) => a - b).map((k) => {
+      const list = [...born.values()].filter((a) => cycOf(a.t) === k).sort((a, b) => a.t - b.t), burning = list.filter((a) => a.kind === 'burning'), shr = list.filter((a) => a.kind === 'shrouded');
+      const end = k < imb.length ? imb[k] : dur, rows = [];
+      burning.forEach((a, j) => {
+        const together = a.died != null && burning.some((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3);
+        const old = (a.died ?? Math.min(dur, end)) - a.t > 60 || hard.some((e) => e.dst === a.g);
+        if (together && burning.indexOf(a) < burning.findIndex((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3)) M(a.died, 'Raid', 'Burning Venom', 'Medium', 'Two Burning Venoms died within 3 seconds: their Caustic Surges hit the raid together.', 'Kill the fire adds one at a time (crowd control or banish the others), never together.');
+        rows.push([{ txt: 'Burning Venom ' + (j + 1) }, { t: a.t }, a.died != null ? { txt: 'killed after ' + Math.round(a.died - a.t) + ' s', warn: old } : { txt: 'alive', dim: a.t > dur - 60, warn: !r.item.kill && old }, together ? { txt: 'died with another', warn: true, sub: 'two Caustic Surges at once' } : old ? { txt: 'hardened (over 60 s)', warn: true } : { txt: '—', dim: true }, { txt: '' }]);
+      });
+      if (shr.length) {
+        const last = shr.every((a) => a.died != null) ? Math.max(...shr.map((a) => a.died)) : null, old = shr.filter((a) => (a.died ?? Math.min(dur, end)) - a.t > 60);
+        rows.push([{ txt: 'Shrouded Venoms', sub: pl(shr.length, 'add') }, { t: shr[0].t }, last != null ? { txt: 'all dead after ' + Math.round(last - shr[0].t) + ' s' } : { txt: shr.filter((a) => a.died == null).length + ' still up', dim: true }, old.length ? { txt: old.length + ' over 60 s', warn: true } : { txt: '—', dim: true }, { txt: '' }]);
+      }
+      const bb = bursts.filter((b) => cycOf(b.t) === k);
+      if (bb.length) rows.push([{ txt: 'Malignant Burst' }, { t: bb[0].t }, { txt: pl(bb.length, 'venom') + ' reached the middle', bad: true }, { txt: '—', dim: true }, { txt: '' }]);
+      return { title: cyName(k) + ' adds', t: list[0].t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(burning.length, 'Burning Venom') + (shr.length ? ', ' + pl(shr.length, 'Shrouded Venom') : '') + (bb.length ? ', ' + pl(bb.length, 'Malignant Burst') : ''), rows };
+    }).filter((g) => g.rows.length);
+    if (groups.length) sections.push({ id: 'venoms', title: 'Living Venoms: killed one at a time', spell: [VS.surge, 'Caustic Surge'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: 'The adds from each Imbibe. Each Burning Venom\'s time alive and whether two died together; how long the Shrouded Venoms lived; any venom that reached the middle.' + (surgeT.length ? ' ' + pl(surgeT.length, 'Caustic Surge') + ' this pull.' : ''), cols: ['Add', 'Spawned', 'Result', 'Notes', ''], groups, rows: [] });
+  }
+
+  // ---- 3. Mythic: Malignant Totems; Plague Waves must clear every one before the next Imbibe ----
+  const froA = aur(VS.froth).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), froR = aur(VS.froth).filter((e) => e.op === 'remove' && h.isPlayer(e.dst));
+  const froths = clusters(froA, 1.5).map((c) => { const who = [...new Set(c.list.map((e) => e.dst))]; return { t: c.t, who, ends: who.map((g) => { const rm = froR.find((x) => x.dst === g && x.t > c.t + 0.5 && x.t < c.t + 12); return { g, t: rm ? rm.t : Math.min(dur, c.t + 6) }; }) }; });
+  froths.forEach((f) => (f.end = Math.max(...f.ends.map((x) => x.t))));
+  if (mythic) {
+    const tot = new Map();
+    for (const e of ev) if (e.k === 'start' && e.id === VS.malignance && !tot.has(e.src)) tot.set(e.src, { g: e.src, t: e.t, died: null });
+    for (const e of ev) if (e.k === 'die' && tot.has(e.guid)) { const o = tot.get(e.guid); if (o.died == null) o.died = e.t; }
+    const groups = imb.map((t, i) => {
+      const next = imb[i + 1] ?? null, mine = [...tot.values()].filter((o) => o.t >= t - 1 && o.t <= t + 8);
+      if (!mine.length) return null;
+      const rows = [[{ txt: 'Totems up' }, { t: mine[0].t }, { txt: pl(mine.length, 'totem') }, { txt: '' }, { txt: '' }]];
+      froths.filter((f) => f.t > t && (next == null || f.t < next)).forEach((f) => {
+        const n = mine.filter((o) => o.died != null && o.died >= f.end - 0.6 && o.died <= f.end + 8).length;
+        rows.push([{ txt: 'Plague Froth at ' + T(f.t) }, { t: f.end }, { txt: n ? pl(n, 'totem') + ' cleared' : 'none cleared', dim: !n }, { txt: '' }, { txt: '' }]);
+      });
+      if (next != null) {
+        const left = mine.filter((o) => o.died == null || o.died > next + 0.2);
+        if (left.length) M(next, 'Raid', 'Malignance', left.length >= 2 ? 'High' : 'Medium', pl(left.length, 'Malignant Totem') + ' still up at Imbibe ' + (i + 2) + ': Malignance hit the raid' + (left.length >= 2 ? ' once for each (two usually wipe).' : '.'), 'Aim the Plague Waves at the totems: walk to your marker with Plague Froth so its four lines run through them.');
+        rows.push([{ txt: 'At Imbibe ' + (i + 2) }, { t: next }, left.length ? { txt: pl(left.length, 'totem') + ' still up', bad: left.length >= 2, warn: left.length === 1, sub: 'Malignance' } : { txt: 'all cleared' }, { txt: '' },
+          { map: { t: next - 0.5, title: 'Totems left at Imbibe ' + (i + 2), pts: h.snap(next - 0.5) } }]);
+      } else rows.push([{ txt: r.item.kill ? 'He died' : 'The pull ended' }, { t: dur }, { txt: mine.filter((o) => o.died == null).length + ' still up', dim: true }, { txt: '' }, { txt: '' }]);
+      return { title: 'Totems from Imbibe ' + (i + 1), t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(mine.length, 'totem') + (next != null ? ', ' + mine.filter((o) => o.died == null || o.died > next + 0.2).length + ' left at the next Imbibe' : ''), rows };
+    }).filter(Boolean);
+    if (groups.length) sections.push({ id: 'totems', title: 'Malignant Totems: all cleared by the next Imbibe', spell: [VS.malignance, 'Malignance'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: 'Every set of totems: how many each Plague Froth\'s waves cleared, and any still up when the next Imbibe went off (each one casts Malignance on the raid).', cols: ['What', 'When', 'Result', '', ''], groups, rows: [] });
+  }
+
+  // ---- 4. Plague Froth: four Plague Wave lines from each target when it ends; nobody else on them ----
+  {
+    const waves = dmgId(VS.wave);
+    const groups = froths.map((f, i) => {
+      // (each target's waves go when its Froth ends, early if they die with it)
+      const hits = waves.filter((e) => f.ends.some((x) => e.t >= x.t - 1 && e.t <= x.t + 3)), by = new Map();
+      for (const e of hits) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, n: 0, amt: 0, from: null }); o.n++; o.amt += e.raw || e.amt; }
+      // (whose line it was: the target lined up with the player north-south or east-west when it went off)
+      for (const o of by.values()) { const me = posOf(o.g, o.t); if (!me) continue; let best = null; for (const x of f.ends) { if (x.g === o.g) continue; const p = posOf(x.g, x.t); if (!p) continue; const off = Math.min(Math.abs(p.x - me.x), Math.abs(p.y - me.y)); if (off < 4 && (!best || off < best.off)) best = { off, g: x.g }; } if (best) o.from = best.g; }
+      const rows = [...by.values()].sort((a, b) => a.t - b.t).map((o) => {
+        const d = diedNear(o.g, o.t, 1.5);
+        M(o.t, pname(o.g), 'Plague Wave', d ? 'High' : 'Medium', 'Hit by a Plague Wave' + (o.from ? ' from ' + pname(o.from) + '\'s Plague Froth' : '') + ' (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.');
+        return [{ p: pname(o.g), sub: f.who.includes(o.g) ? 'had Plague Froth too' : '' }, { t: o.t }, d ? { txt: 'died', bad: true } : { txt: 'hit for ' + fmtM(o.amt), warn: true }, o.from ? { p: pname(o.from) } : { txt: '—', dim: true }, { txt: '' }];
+      });
+      const arrows = f.ends.flatMap((x) => [0, 90, 180, 270].map((a) => ({ g: x.g, ang: a * Math.PI / 180, len: 30, color: '#9be36b', t0: x.t - 1.5, t1: x.t + 1 })));
+      const whole = [{ txt: 'Whole cast', sub: 'the targets and their lines, on one map', dim: true }, { t: f.end }, { txt: '' }, { txt: '' },
+        { map: { t: f.end, hl: f.who, hlLabel: 'had Plague Froth', bad: [...by.keys()], badLabel: 'hit by a Plague Wave', badAt: [...by.values()].map((o) => [o.g, o.t]), arrows, title: 'Plague Froth ' + (i + 1) + ' at ' + T(f.t), pts: h.snap(f.end), frames: frames(f.end - 3, f.end + 2) } }];
+      return { title: 'Plague Froth ' + (i + 1) + ' (' + cyName(cycOf(f.t)) + ')', t: f.t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(f.who.length, 'target') + ', ' + (by.size ? pl(by.size, 'player') + ' hit by a wave' : 'nobody hit by a wave'), rows: [whole].concat(rows) };
+    });
+    if (groups.length) sections.push({ id: 'froth', title: 'Plague Froth: nobody on the lines', spell: [VS.froth, 'Plague Froth'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'Plague Froth') + '. Who a Plague Wave hit, and whose line it was (the target lined up with them).', cols: ['Player', 'When', 'Result', 'Whose line', ''], groups, rows: [] });
+  }
+
+  // ---- 5. Malignant Catalyst: every Catalytic Bile needs someone under it ----
+  {
+    const soak = dmgId(VS.bile), raid = dmgId(VS.bileRaid);
+    const rows = castOk(VS.catalyst).map((t, i) => {
+      const w = (e) => e.t >= t + 3 && e.t <= t + 11, sk = soak.filter(w), un = clusters(raid.filter(w), 1);
+      const who = [...new Set(sk.map((e) => e.dst))], biles = clusters(sk, 0.3).length;
+      if (un.length) M(un[0].t, 'Raid', 'Catalytic Bile', 'High', pl(un.length, 'Catalytic Bile') + ' landed with nobody under it and hit the whole raid.', 'Spread out before the bile lands so every impact has someone within 6 yards.');
+      const tm = (sk[0] || un[0] || { t: t + 7 }).t;
+      return [{ txt: 'Malignant Catalyst ' + (i + 1) }, { t: tm }, un.length ? { txt: pl(un.length, 'bile') + ' unsoaked', bad: true, sub: 'the whole raid took it' } : { txt: biles ? 'every bile soaked' : '—', dim: !biles }, { txt: who.length ? pl(who.length, 'soaker') : '—', dim: !who.length, sub: who.map(pname).join(', ') },
+        { map: { t: tm, good: who, goodLabel: 'soaked a bile', goodAt: sk.map((e) => [e.dst, e.t]), title: 'Malignant Catalyst ' + (i + 1) + ' at ' + T(t), pts: h.snap(tm), frames: frames(tm - 3, tm + 1) } }];
+    });
+    if (rows.length) sections.push({ id: 'bile', title: 'Catalytic Bile: every impact soaked', spell: [VS.catalyst, 'Malignant Catalyst'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good',
+      summary: pl(rows.length, 'Malignant Catalyst') + '. Who stood under the biles, and any bile that landed on nobody.', cols: ['Cast', 'When', 'Result', 'Soakers', ''], rows });
+  }
+
+  // ---- 6. Adaptive Infection: Exploding (dispel one at a time), Stygian (spread) ----
+  {
+    const exA = aur(VS.exploding).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), exR = aur(VS.exploding).filter((e) => e.op === 'remove' && h.isPlayer(e.dst));
+    const sgA = aur(VS.stygian).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), burst = dmgId(VS.stygBurst);
+    const disp = ev.filter((e) => e.k === 'dispel' && /exploding infection/i.test(e.spell || ''));
+    const groups = clusters(exA.concat(sgA).sort((a, b) => a.t - b.t), 3).map((c, i) => {
+      const rows = [], t1 = c.t + 25;
+      const ex = c.list.filter((e) => e.id === VS.exploding).map((e) => { const rm = exR.find((x) => x.dst === e.dst && x.t > e.t); return { g: e.dst, t: e.t, rm: rm ? rm.t : null, by: rm && disp.find((x) => x.dst === e.dst && Math.abs(x.t - rm.t) < 0.4) }; });
+      for (const o of ex) {
+        const with2 = o.rm != null ? ex.filter((q) => q !== o && q.rm != null && Math.abs(q.rm - o.rm) < 1.5) : [];
+        const dead = o.rm != null ? r.deaths.filter((d) => d.t >= o.rm - 0.2 && d.t <= o.rm + 1.2 && /caustic explosion|exploding infection/i.test(d.ability || '')) : [];
+        if (with2.length && ex.indexOf(o) < ex.indexOf(with2[0])) M(o.rm, 'Raid', 'Exploding Infection', 'Medium', 'Two Exploding Infections were removed within ' + Math.abs(with2[0].rm - o.rm).toFixed(1) + ' s: two Caustic Explosions on the raid at once.', 'Dispel the fire infection one player at a time, once the raid is topped up.');
+        if (dead.length && ex.indexOf(o) === ex.findIndex((q) => q.rm != null && Math.abs(q.rm - o.rm) < 1.5)) M(o.rm, 'Raid', 'Caustic Explosion', 'High', pl(dead.length, 'player') + ' died to a Caustic Explosion as an Exploding Infection came off.', 'Hold the dispel until the raid is healed up, and never two at once.');
+        rows.push([{ p: pname(o.g), sub: 'Exploding Infection' }, { t: o.rm ?? o.t }, o.rm == null ? { txt: 'still on', dim: true } : o.by ? { txt: 'dispelled after ' + (o.rm - o.t).toFixed(1) + ' s', sub: 'by ' + o.by.src } : { txt: 'came off after ' + (o.rm - o.t).toFixed(1) + ' s' },
+          dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : with2.length ? { txt: 'with ' + with2.map((q) => pname(q.g)).join(', '), warn: true, sub: 'removed together' } : { txt: '—', dim: true }, { txt: '' }]);
+      }
+      const sg = c.list.filter((e) => e.id === VS.stygian).map((e) => e.dst), bh = burst.filter((e) => e.t >= c.t && e.t <= t1 && !sg.includes(e.dst));
+      const by = new Map(); for (const e of bh) { const o = by.get(e.dst) || { g: e.dst, t: e.t, n: 0 }; o.n++; by.set(e.dst, o); }
+      for (const o of by.values()) { M(o.t, pname(o.g), 'Stygian Burst', 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Stygian Bursts' : 'a Stygian Burst') + ' from a player with Stygian Infection.', 'Stay 6 yards away from players with Stygian Infection; they should spread too.');
+        rows.push([{ p: pname(o.g) }, { t: o.t }, { txt: 'hit by a Stygian Burst', warn: true, sub: o.n > 1 ? o.n + ' hits' : '' }, { txt: '—', dim: true }, { txt: '' }]); }
+      if (sg.length) rows.push([{ txt: 'Stygian Infection', sub: sg.map(pname).join(', ') }, { t: c.t }, { txt: by.size ? '' : 'nobody else hit', dim: !by.size }, { txt: '' }, { txt: '' }]);
+      rows.sort((a, b) => a[1].t - b[1].t);
+      return { title: 'Adaptive Infection ' + (i + 1) + ' (' + cyName(cycOf(c.t)) + ')', t: c.t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: [ex.length ? pl(ex.length, 'Exploding') : '', sg.length ? pl(sg.length, 'Stygian') : ''].filter(Boolean).join(', '), rows };
+    });
+    if (groups.length) sections.push({ id: 'infect', title: 'Adaptive Infection: one dispel at a time, spread', spell: [VS.exploding, 'Exploding Infection'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'Adaptive Infection') + '. Each Exploding Infection\'s dispel (two together is two raid hits at once), and anyone a Stygian Burst hit.', cols: ['Player', 'When', 'Result', 'Notes', ''], groups, rows: [] });
+  }
+
+  // ---- 7. tanks: swap on every Dripping Fangs (100% more physical damage taken for 32 s) ----
+  {
+    const fa = aur(VS.fangsDeb).filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
+    const rows = castOk(VS.fangs).map((t, i) => {
+      const on = fa.find((e) => Math.abs(e.t - t) < 0.6), prev = on && fa.filter((e) => e.t < t - 1).pop(), again = on && prev && prev.dst === on.dst && t - prev.t < 32;
+      if (again) M(t, pname(on.dst), 'Dripping Fangs', 'High', 'Took a second Dripping Fangs with the first one\'s debuff still up (100% more physical damage).', 'Taunt-swap on every Dripping Fangs.');
+      return [{ p: on ? pname(on.dst) : '?' }, { t }, again ? { txt: 'took two in a row', bad: true } : { txt: i ? 'swapped' : 'first' }, { txt: diedNear(on && on.dst, t, 5) ? 'died' : '—', bad: !!(on && diedNear(on.dst, t, 5)), dim: !(on && diedNear(on.dst, t, 5)) }];
+    });
+    if (rows.length) sections.push({ id: 'fangs', title: 'Dripping Fangs: a swap every time', spell: [VS.fangs, 'Dripping Fangs'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : 'good',
+      summary: pl(rows.length, 'Dripping Fangs') + '. Which tank took each one.', cols: ['Tank', 'When', 'Result', 'Died'], rows });
+  }
+
+  // ---- 8. avoidable damage ----
+  const frothOn = (g, t) => froths.some((f) => f.ends.some((x) => x.g === g && t >= f.t - 0.2 && t <= x.t + 0.2));
+  const av = avoidPanel(ev, r, h, [
+    { n: ['plague wave'], label: 'Plague Wave', harm: 'High', why: 'the four lines from a Plague Froth target as it ends' },
+    { n: ['umbral ejection'], label: 'Umbral Ejection', harm: 'Medium', why: 'the circles a Shrouded Venom leaves when it dies' },
+    { n: ['stygian burst'], label: 'Stygian Burst', harm: 'Medium', why: 'standing within 6 yards of a player with Stygian Infection', skip: (e) => aur(VS.stygian).some((x) => x.dst === e.dst && x.op === 'apply' && e.t >= x.t - 0.2 && e.t <= x.t + 20) },
+    { n: ['plague froth'], label: 'Plague Froth (nearby)', harm: 'Low', warnAt: 6, badAt: 12, why: 'standing within 5 yards of a Plague Froth target', skip: (e) => frothOn(e.dst, e.t) },
+  ]);
+  if (av) sections.push(av);
+
+  const diag = [['Imbibe', VS.imbibe], ['Toxic Vapor', VS.vapor], ['Malignant Catalyst', VS.catalyst], ['Catalytic Bile', VS.bile], ['Catalytic Bile (unsoaked)', VS.bileRaid], ['Plague Froth', VS.froth], ['Plague Wave', VS.wave],
+    ['Exploding Infection', VS.exploding], ['Caustic Explosion', VS.explosion], ['Stygian Infection', VS.stygian], ['Stygian Burst', VS.stygBurst], ['Dripping Fangs', VS.fangs], ['Burning Presence', VS.presence], ['Caustic Surge', VS.surge],
+    ['Miasmic Coating', VS.coating], ['Umbral Ejection', VS.ejection], ['Malignance', VS.malignance]].map(([name, id]) => {
+    const c = { cast: 0, dmg: 0, aura: 0, other: 0 };
+    for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
+    return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
+  });
+  const sectionGroups = [
+    { name: 'Imbibe and adds', sub: 'the fountains, the venoms', ids: ['imbibe', 'venoms'] },
+    { name: 'Plague Froth', sub: mythic ? 'the waves and the totems they clear' : 'the waves', ids: ['froth', 'totems'] },
+    { name: 'Malignant Catalyst', sub: 'the bile soaks', ids: ['bile'] },
+    { name: 'Adaptive Infection', sub: 'dispels and spreading', ids: ['infect'] },
+    { name: 'Tanks', sub: '', ids: ['fangs'] },
+    { name: 'Deaths and avoidable damage', sub: '', ids: ['deaths', 'avoid', 'kicks'], rest: true },
+  ];
+  return { diag, title: r.item.diff + ' audit: Vashnik the Malignant', reached: imb.length ? 'Imbibe ' + imb.length : 'Before the first Imbibe', phases: [], sectionGroups, marks, sections, mistakes,
+    legend: 'Grouped by mechanic: Imbibe and the adds, Plague Froth' + (mythic ? ' and the totems' : '') + ', the Catalyst soaks, the infections, the tanks, then deaths and avoidable damage.', note: mythic ? '' : 'Mythic-only checks (Malignant Totems) are hidden on this difficulty.' };
+}
+
 // "How it works": a short plain-language summary of each mechanic and its strategy, shown at the top of its
 // section in the Fight audit. Keep these neutral and short; they match what the checks look for.
 const HOW = {
@@ -3475,6 +3708,16 @@ const HOW = {
     balance: 'Keep the bosses 40+ yards apart (closer, they take 99% less damage) and at even health: Vitriolic Stasis heals the lower one up to the other, so any lead is wasted. Balance by moving players between sides, not by stopping damage. Amber: 5+ points apart going into an intermission; red: within 40 yards for 3+ seconds outside the intermissions.',
     tanks: 'One tank on each boss: Empowering Slam on the Breath ramps on the same tank, Bloodvenom Injection on the Blood stacks a damage over time. They trade bosses at every intermission so the stacks drop, and the tank leaving the Blood drops a big pool when Injection ends: into old blood. Red: no swap after an intermission.',
     avoid: 'Every source of damage positioning can avoid, most harmful first. Dangerous: Protovenom Eruption (a circle touching a player without one). Harmful: Living Venom (a droplet\'s venom flying back to the boss, 375k a hit) and standing in a blood pool. Raid-wide damage (the Marks, Contaminate, Noxious Blast, the Helical Toxins ticks) isn\'t listed, and neither is Clinging Murk: it lands on every Unstable Miasma soaker.',
+  },
+  'Vashnik the Malignant': {
+    imbibe: 'At 100 energy Vashnik casts Imbibe: it hits the raid, adds a stack of Toxic Vapor (raid damage that never goes away: the longer the fight, the harder), and drains the two fountains nearest to him. Each drained fountain gives him an infusion and sends out its venoms, so where the tank holds him decides the next stretch of the fight; many raids keep him between the Shadow and Fire fountains the whole time. Stack for healing cooldowns and defensives on every Imbibe. Each row is one Imbibe: the fountains, the raid hit, deaths. Red: a death to it.',
+    venoms: 'Each drained fountain sends venoms crawling toward the Malignant Cavity in the middle: if one gets there, Malignant Burst hits the raid hard and stacks. Burning Venoms (fire; three on Mythic) pulse fire damage while alive and burst (Caustic Surge) when they die: kill them first, one at a time, with crowd control or a banish on the others. Shrouded Venoms (shadow) have a full-health shield, so they need killing twice. Anything alive for 60 seconds hardens (immune to crowd control, faster). Red: a venom reached the middle; amber: two fire adds died within 3 seconds, or an add lived over 60 seconds.',
+    totems: 'Mythic: each Imbibe also raises Malignant Totems across the raid\'s half of the room. Only Plague Waves remove them; any totem still up at the next Imbibe casts Malignance (a heavy raid hit and a stacking damage over time). One is survivable, two usually wipe. Players with Plague Froth walk to markers so their lines run through the totems; a totem glows when a wave is aimed at it. Red: two or more left at an Imbibe; amber: one.',
+    froth: 'Plague Froth coats a few players in venom that hurts anyone within 5 yards; after 8 seconds Plague Wave erupts from each of them in four lines: north, south, east and west. Targets move away from the raid (on Mythic, to their totem markers), and everyone else stays off those lines. The map draws the four lines from each target. Red: a death to a wave; amber: hit by one.',
+    bile: 'Malignant Catalyst hits the raid and launches Catalytic Bile across the room; each one splashes everyone within 6 yards when it lands, and one that lands on nobody hits the whole raid much harder. Spread out so every impact has someone under it. Red: a bile landed on nobody.',
+    infect: 'Adaptive Infection hits a few players with an infection that matches the current infusions. Exploding Infection (fire) ticks until it\'s removed, and removing it sets off Caustic Explosion on the whole raid: healers dispel one at a time, with the raid topped up. Stygian Infection (shadow) bursts on everyone within 6 yards: the infected spread out. Red: a death to Caustic Explosion; amber: two removed within 1.5 seconds, or hit by someone\'s Stygian Burst.',
+    fangs: 'Dripping Fangs hits the tank hard and doubles the physical damage they take for 32 seconds, so the tanks swap on every cast. Red: one tank taking two in a row.',
+    avoid: 'Every source of damage positioning can avoid, most harmful first: Plague Wave lines, Umbral Ejection circles from Shrouded Venoms, Stygian Bursts from infected players, and standing next to a Plague Froth target. Raid-wide damage (Imbibe, Toxic Vapor, the expulsions, Burning Presence, Caustic Surge, Malignant Catalyst) isn\'t listed.',
   },
   "Nek'zali the Soulcoiler": {
     amani: 'Restless Amani rise from the coffins at the sides and walk to the Soulcoil Well in the middle, protected by a magic-only shield (Gravebound Advance) worth a quarter of their health: break it with magic damage, then kill them before they reach the water. Each one that gets in gives Nek\'zali 5 energy and hits the raid with a Soulcoil Rite (on Heroic and Mythic, plus a Ritual Burn stack). A dead Amani bursts (Corpse Blight) and, on Heroic and Mythic, leaves a corpse that comes back in the intermission. Red: one reached the well.',
@@ -8462,6 +8705,9 @@ function audit() {
     // (Nek'zali)
     amani: { Result: 'Amani reaching the well', '!Shield': 'shields never broken' }, ignition: { Result: 'players hit by two circles', '!Result': 'circle hits or Ritual Burn going in', Died: 'deaths in Ignition' },
     depths: { Result: 'Curses that got off or deaths in the well', '!Result': 'Swirling Spirit hits', '!Who': 'going in with Soul Exhaustion' }, rend: { Removed: 'deaths with Essence Rend', '!Puddle': 'puddles in the way' },
+    // (Vashnik)
+    venoms: { Result: 'venoms reaching the middle', '!Result': 'adds living over a minute', '!Notes': 'fire adds dying together' }, totems: { Result: 'Imbibes with two or more totems up', '!Result': 'a totem left up' },
+    froth: { Result: 'deaths to Plague Wave', '!Result': 'Plague Wave hits' }, bile: { Result: 'biles that landed on nobody' }, infect: { Notes: 'deaths to Caustic Explosion', '!Notes': 'infections removed together', '!Result': 'Stygian Burst hits' }, imbibe: { Died: 'deaths at Imbibe' }, fangs: { Result: 'tanks taking two Dripping Fangs in a row' },
     barrage: { '!Distance': 'Barrages with the tank too close' }, ritual: { Result: 'corpses back at once, Pyre deaths or Soul Transfer hits', '!Result': 'two corpses at once or thin Pyre soaks', Who: 'Soul Transfer hits' }, invoke: { '!Result': 'players interrupted by Invoke' }, energy: { Energy: 'enrages' },
     bulwark: { 'Broken by': 'barriers nobody broke', '!Barrier up': 'slow breaks', 'Ran into it': 'deaths running into a live barrier', '!Ran into it': 'players running into a live barrier' },
     soaks: { Globules: 'players taking an extra globule', 'Venom at extra soak': 'extra globules taken at high venom', 'Barbed Bulwark hits': 'touching shielded globules', Died: 'deaths after soaking' },
@@ -8480,7 +8726,7 @@ function audit() {
   };
   // (row labels that don't read as a plural noun on their own)
   const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets' };
-  const SNOUN = { amani: 'Amani', ignition: 'results', depths: 'well results', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission results', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'add and kick results', dmghost: 'Dreadmarch results', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'egg results', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangs: 'tether results', doomscale: 'Doomscale results', bite: 'bite results', shriek: 'adds' };
+  const SNOUN = { venoms: 'adds', fangs: 'Dripping Fangs', totems: 'totem results', froth: 'players', bile: 'Catalysts', infect: 'infections', imbibe: 'Imbibes', amani: 'Amani', ignition: 'results', depths: 'well results', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission results', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'add and kick results', dmghost: 'Dreadmarch results', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'egg results', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangs: 'tether results', doomscale: 'Doomscale results', bite: 'bite results', shriek: 'adds' };
   const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
   const synopsis = (s, rows, groups) => {
     const all = []; for (const g of groups) for (const row of g.rows) all.push({ row, g }); for (const row of rows) all.push({ row, g: null });
@@ -8816,6 +9062,8 @@ const IMPORTANCE = {
   // (the two biggest wipe causes are failed Fury pops and Tempest; then the winds, the Crosswinds, the soaks)
   Sszorak: ['fury', 'tempest', 'winds', 'crosswinds', 'mutilate', 'virulence', 'cysts', 'ravage', 'avoid'],
   // (the Mythic wipes: corpses back at once in the intermission, Amani in the well, a Curse in the well, the enrage)
+  // (Mythic: totems left at Imbibe and venoms in the middle wipe; Plague Wave lines kill the most players)
+  'Vashnik the Malignant': ['totems', 'venoms', 'froth', 'bile', 'infect', 'imbibe', 'fangs', 'avoid'],
   "Nek'zali the Soulcoiler": ['ritual', 'amani', 'depths', 'energy', 'ignition', 'rend', 'barrage', 'invoke', 'avoid'],
   "Ula'tek": ['eggs', 'coils', 'waves', 'tank', 'incub', 'wretch', 'amps', 'fangs', 'doomscale', 'kicks', 'bite', 'shriek', 'avoid'],
 };
