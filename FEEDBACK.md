@@ -14,6 +14,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 110: Raid cooldowns, reworked
+- [x] The old one-row-per-player timeline is replaced by one **Raid cooldowns** panel (Mechanics tab, Survival group, and the Healing view):
+  - the raid's damage over the pull, with each **big hit** pinned and numbered: green covered, amber nothing used but something was
+    ready, red not covered and players died, grey nothing was ready;
+  - the raid cooldowns underneath on the same time line, each bar as long as it lasted, packed into a few lanes, with Bloodlust on top;
+  - a list: each big hit, the spell that did most of it, the raid damage in 3 s, and which cooldowns covered it. If none did, it
+    says what was ready ("Ready: Rallying Cry (Vandagos), Rewind (Urgdragon)") and who died. Click a hit to find it on the chart.
+- The big hits are the 3-second stretches with the most raid damage (at least 10 s apart, well above the pull's usual), up to the
+  wipe filter, so it works on every boss.
+- "Ready" counts a raid cooldown its player used this pull, or a healer's own spec cooldown, off cooldown by its base cooldown.
+  Talents can shorten some, so it errs toward leaving one out.
+- [x] Checked on a Nek'zali pull (7 of 10 covered) and a Vashnik kill (5 of 10), on desktop and phone width.
+- [x] Also checked: the Vashnik and Lost Explorers modules run on Heroic kills too (Mythic-only parts are hidden there).
+
 ## 2026-10-17, round 109: "Failed to fetch" on the website
 - [x] Your report: on another browser, opening a pull on the website said "Couldn't analyze this pull: Failed to fetch". A browser
   with nothing saved downloads many parts of a pull at once, and the website was unpacking each one in memory until it ran out and

@@ -1912,7 +1912,7 @@ function audit() {
     const nd = ds.rows.filter(isBadRow).length;
     h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">defensives, Healthstones and potions up to the wipe filter; raid cooldowns for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕ ' + pl2(nd, 'problem') : '✓ clean') + '</span></summary>' +
       secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
-      info('sv-cds', 'Raid cooldowns timeline', 'Rallying Cry', 'boss mechanics, deaths and raid cooldowns on one scrollable timeline', raidCdPanel(r).replace(/^<div class="panel"/, '<div')) + '</details>'; }
+      (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })() + '</details>'; }
   if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean /, 'Clean · ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
   if (m.diag) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
@@ -4689,53 +4689,6 @@ function meter(kind) {
 // Raid cooldowns and Lust, once per cast (channeled ones log a cast per tick), with nearby boss mechanics.
 const RAID_CDS = ['bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'tranquility', 'revival', 'divine hymn', 'rewind',
   'spirit link totem', 'healing tide totem', 'aura mastery', 'power word: barrier', 'vampiric embrace', 'convoke the spirits', 'dream flight', 'darkness', 'anti-magic zone', 'rallying cry'];
-// Raid cooldowns as a scrollable timeline: phases, one lane per boss mechanic, deaths, and one lane per player's
-// raid cooldown (a bar for how long it lasts). Zoom is saved on this PC. Icons have the spell tooltip on hover.
-const CD_DUR = { darkness: 8, 'spirit link totem': 6, 'anti-magic zone': 8, 'rallying cry': 10, 'power word: barrier': 10, 'aura mastery': 8, tranquility: 6, revival: 1, rewind: 1, 'divine hymn': 5, 'vampiric embrace': 12, bloodlust: 40, heroism: 40, 'time warp': 40, 'fury of the aspects': 40, 'primal rage': 40, "harrier's cry": 40 };
-const tlPx = () => { const v = +store.get('wla-tl-px'); return v >= 2 && v <= 16 ? v : 5; };
-function raidTimeline(r) {
-  const PX = tlPx(), dur = r.duration, W = Math.ceil(dur * PX) + 40, X = (t) => (t * PX).toFixed(1) + 'px';
-  const cut = cutT(r), marks = ((r.module && r.module.marks) || []).slice().sort((a, b) => a.t - b.t), phases = (r.module && r.module.phases) || [];
-  const abil = (n) => { for (const p of r.players.values()) for (const a of p.castAb.values()) if (a.name.toLowerCase() === n) return a; return { id: E.SPELLID.get(n) || 0, name: n.replace(/\b\w/g, (c) => c.toUpperCase()) }; };
-  const ic = (id, name, t, cls, ex, lab) => '<span class="tl-ev sp' + (cls ? ' ' + cls : '') + '" style="left:' + X(t) + '" data-sid="' + (id || 0) + '" data-sn="' + esc(name) + '"' + (ex ? ' data-ex="' + esc(ex) + '"' : '') + '>' + spellIcon(id, name) + (lab ? '<span class="tl-tt">' + esc(lab) + '</span>' : '') + '</span>';
-  const lane = (label, inner, cls) => '<div class="tl-row' + (cls ? ' ' + cls : '') + '"><div class="tl-lab">' + label + '</div><div class="tl-track" style="width:' + W + 'px">' + inner + '</div></div>';
-  const head = (txt) => '<div class="tl-row tl-head"><div class="tl-lab">' + txt + '</div><div class="tl-track" style="width:' + W + 'px"></div></div>';
-  let ruler = ''; const step = PX >= 8 ? 15 : PX >= 4 ? 30 : 60; for (let t = 0; t <= dur; t += step) ruler += '<span class="tl-tick" style="left:' + X(t) + '">' + T(t) + '</span>';
-  let h = lane('', ruler, 'tl-ruler');
-  if (phases.length > 1) h += lane('Phases', phases.map((p, i) => '<span class="tl-ph p' + (i % 4) + '" style="left:' + X(p.start) + ';width:' + ((p.end - p.start) * PX).toFixed(1) + 'px">' + esc(p.name) + '</span>').join(''));
-  // raid damage taken, per second (3s average): where the big hits are, so cooldown coverage is easy to read
-  const ts = r.takenS || [], sm = ts.map((_, i) => ((ts[i - 1] || 0) + ts[i] + (ts[i + 1] || 0)) / 3), mx = Math.max(1, ...sm), HH = 38;
-  if (sm.length) h += lane('Raid damage taken', '<svg class="tl-dmg" width="' + W + '" height="' + HH + '" viewBox="0 0 ' + W + ' ' + HH + '" preserveAspectRatio="none"><path d="M0,' + HH + ' ' + sm.map((v, i) => 'L' + (i * PX).toFixed(1) + ',' + (HH - 2 - (v / mx) * (HH - 4)).toFixed(1)).join(' ') + ' L' + ((sm.length - 1) * PX).toFixed(1) + ',' + HH + ' Z"/></svg>', 'tl-dmgrow');
-  // boss mechanics: one lane per spell, in the order they first happen; a bar from cast start to when it lands
-  h += head('Boss mechanics');
-  const byLabel = new Map(); for (const m of marks) { if (!byLabel.has(m.label)) byLabel.set(m.label, []); byLabel.get(m.label).push(m); }
-  for (const [label, ms] of byLabel) h += lane(spellIcon(ms[0].id, label) + ' ' + esc(label), ms.map((m, k) => {
-    const land = m.land != null ? m.land : m.t, castBar = land - m.t > 0.4 ? '<span class="tl-cast" style="left:' + X(m.t) + ';width:' + ((land - m.t) * PX).toFixed(1) + 'px"></span>' : '';
-    const ex = label + ' #' + (k + 1) + ': cast ' + T(m.t) + (land - m.t > 0.4 ? ', lands ' + T(land) : '') + (m.raid ? ' · raid-wide (' + m.hits + ' hit)' : m.who && m.who.length ? ' · on ' + m.who.join(', ') : '');
-    const lab = T(land) + (PX >= 8 && m.who && m.who.length && m.who.length <= 2 ? ' ' + m.who.join(', ') : '');
-    return castBar + ic(m.id, label, land, 'boss', ex, PX >= 4 ? lab : '');
-  }).join(''), 'tl-boss');
-  // deaths (after the wipe filter dimmed)
-  const ds = r.deaths.slice().sort((a, b) => a.t - b.t);
-  if (ds.length) h += lane('Deaths', ds.map((d) => '<span class="tl-death' + (d.t > cut + 0.05 ? ' cut' : '') + '" style="left:' + X(d.t) + '" title="' + esc(d.player + ' died at ' + T(d.t) + (d.ability ? ' to ' + d.ability : '')) + '">✕</span>').join(''), 'tl-deaths');
-  // raid cooldowns: one lane per player and cooldown
-  const cds = [];
-  for (const p of r.players.values()) for (const n of [...new Set(RAID_CDS.concat(['bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry"]))]) {
-    const tt = []; let last = -1e9; for (const t of (p.byName.get(n) || []).slice().sort((a, b) => a - b)) { if (t - last >= 12) tt.push(t); last = t; }
-    if (tt.length) cds.push({ p, n, ts: tt, a: abil(n) });
-  }
-  cds.sort((a, b) => a.ts[0] - b.ts[0]);
-  if (cds.length) h += head('Raid cooldowns');
-  for (const c of cds) h += lane('<span class="nm" style="color:' + c.p.color + '">' + esc(c.p.name) + '</span> <span class="sub">' + esc(c.a.name) + '</span>',
-    c.ts.map((t) => { const len = CD_DUR[c.n] || 6, near = marks.filter((m) => { const l = m.land != null ? m.land : m.t; return l >= t - 1 && l <= t + len + 1; }).map((m) => m.label);
-      return '<span class="tl-bar" style="left:' + X(t) + ';width:' + Math.max(6, len * PX).toFixed(1) + 'px;background:' + c.p.color + '"></span>' + ic(c.a.id, c.a.name, t, 'cd', c.p.name + ' at ' + T(t) + ', lasts about ' + len + 's' + (near.length ? ' · covered ' + [...new Set(near)].join(', ') : ' · no boss mechanic landed in it'), PX >= 5 ? T(t) : ''); }).join(''), 'tl-cd');
-  // guide lines from the big boss casts, and a cursor line with the time (drawn by the mousemove handler)
-  const guides = marks.filter((m) => /soak|front|raid|ghost|shield|phase/.test(m.kind)).map((m) => '<span class="tl-g" style="left:calc(190px + ' + X(m.land != null ? m.land : m.t) + ')"></span>').join('');
-  return '<div class="panel" id="rcdTl"><h3>Raid cooldowns timeline <small>scroll sideways; hover an icon for when it was cast, when it landed and who it hit</small>' +
-    '<span class="tl-zoom"><button class="btn" data-z="-1" title="Zoom out">−</button><button class="btn" data-z="1" title="Zoom in">+</button></span></h3>' +
-    (cds.length || marks.length ? '<div class="tl-wrap"><div class="tl-inner" data-px="' + PX + '">' + guides + '<span class="tl-cur" hidden><i></i></span>' + h + '</div></div>' : '<p class="muted" style="margin:0">No raid cooldowns or boss mechanics to show for this pull.</p>') +
-    (cds.length ? '' : '<p class="muted" style="margin:6px 0 0">No raid cooldowns were used this pull.</p>') + '</div>';
-}
 // Option B set lines: click to show or hide that set's rows (remembered while the app is open)
 document.addEventListener('click', (e) => {
   const tr = e.target.closest && e.target.closest('tr.gline'); if (!tr || e.target.closest('a, button')) return;
@@ -4744,38 +4697,97 @@ document.addEventListener('click', (e) => {
   document.querySelectorAll('tr[data-gp="' + k + '"]').forEach((x) => { x.hidden = !open; });
   if (open) refreshIcons();
 });
-document.addEventListener('mousemove', (e) => {
-  const inner = e.target.closest && e.target.closest('.tl-inner'); const cur = inner && inner.querySelector('.tl-cur');
-  document.querySelectorAll('.tl-cur').forEach((c) => { if (c !== cur) c.hidden = true; });
-  if (!inner || !cur) return;
-  const x = e.clientX - inner.getBoundingClientRect().left, t = (x - 190) / (+inner.dataset.px || 5);
-  if (t < 0) { cur.hidden = true; return; }
-  cur.hidden = false; cur.style.left = x + 'px'; cur.querySelector('i').textContent = T(t);
-});document.addEventListener('click', (e) => {
-  const b = e.target.closest && e.target.closest('.tl-zoom button'); if (!b || !S.rep) return;
-  const steps = [2, 3, 5, 8, 12, 16], i = steps.indexOf(tlPx()), ni = Math.max(0, Math.min(steps.length - 1, (i < 0 ? 2 : i) + (+b.dataset.z)));
-  const wrap = $('#rcdTl .tl-wrap'), frac = wrap ? (wrap.scrollLeft + wrap.clientWidth / 2) / Math.max(1, wrap.scrollWidth) : 0;
-  store.set('wla-tl-px', String(steps[ni])); $('#rcdTl').outerHTML = raidTimeline(S.rep); refreshIcons();
-  const w2 = $('#rcdTl .tl-wrap'); if (w2) w2.scrollLeft = frac * w2.scrollWidth - w2.clientWidth / 2;
-});
-function raidCdPanel(r) {
-  return raidTimeline(r);
-  // (the old table, kept below for reference)
-  const rows = [];
-  for (const p of r.players.values()) for (const n of RAID_CDS) {
-    let last = -1e9;
-    for (const t of (p.byName.get(n) || []).slice().sort((a, b) => a - b)) { if (t - last >= 12) rows.push({ t, p, n }); last = t; }
+// Raid cooldowns: the pull's big hits (its moments of most raid damage, up to the wipe filter) and what covered each one,
+// over the raid's damage on one time line, with the raid cooldowns in lanes underneath. A hit nothing covered says what was
+// ready then. Replaces the old one-row-per-player timeline.
+// (base cooldowns in seconds, for "was it ready": talents can shorten some, so this errs toward "not ready")
+const RCD_CD = { Tranquility: 180, Revival: 180, Restoral: 180, 'Divine Hymn': 180, Rewind: 240, 'Spirit Link Totem': 180, 'Healing Tide Totem': 180, 'Aura Mastery': 180, 'Power Word: Barrier': 180,
+  'Vampiric Embrace': 120, Darkness: 300, 'Anti-Magic Zone': 120, 'Rallying Cry': 180, 'Dream Flight': 120, 'Celestial Conduit': 90, "Invoke Yu'lon, the Jade Serpent": 120, 'Emerald Communion': 180, 'Holy Word: Salvation': 360 };
+// (each healer's own raid cooldown, counted as theirs even if never pressed this pull)
+const RCD_SPEC = { 'Restoration Druid': ['Tranquility'], 'Holy Priest': ['Divine Hymn'], 'Mistweaver Monk': ['Revival'], 'Preservation Evoker': ['Rewind'], 'Restoration Shaman': ['Spirit Link Totem'], 'Holy Paladin': ['Aura Mastery'], 'Discipline Priest': ['Power Word: Barrier'] };
+const LUSTS = ['bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry"];
+function rcdData(r) {
+  const dur = r.duration, ct = Math.min(dur, cutT(r)), ts = r.takenS || [];
+  const byG = new Map([...r.players.values()].map((p) => [p.guid, p])), named = (p) => p && p.name && !/^Player-/.test(p.name);
+  // the raid cooldowns pressed, each as long as it lasted (the same list the Healing tab's cooldown panel uses)
+  const uses = [];
+  for (const u of r.cdUse || []) {
+    const p = byG.get(u.g); if (!named(p)) continue;
+    if ((CD_KIND[u.cd] || 'heal') === 'heal' && !u.heal && !u.over && u.late) continue;
+    uses.push({ p, name: u.cd, id: u.id || E.SPELLID.get(String(u.cd).toLowerCase()) || 0, t: u.t, len: u.end != null ? Math.max(1, u.end - u.t) : CD_LEN[u.cd] || 6 });
   }
-  rows.sort((a, b) => a.t - b.t);
-  const marks = (r.module && r.module.marks) || [];
-  const name = (n) => { for (const p of r.players.values()) for (const a of p.castAb.values()) if (a.name.toLowerCase() === n) return a; return { id: 0, name: n }; };
-  return '<div class="panel"><h3>Raid cooldowns <small>each cast once, with the boss mechanics within 5 seconds</small></h3>' + (rows.length
-    ? '<table class="tbl"><thead><tr><th>When</th><th>Cooldown</th><th>Player</th><th>Near</th></tr></thead><tbody>' + rows.map((x) => {
-      const a = name(x.n), near = [...new Set(marks.filter((m) => Math.abs(m.t - x.t) <= 5).map((m) => m.label))];
-      return '<tr><td class="tc">' + T(x.t) + '</td><td>' + spell(a.id, a.name) + '</td><td><span class="who sm">' + avatar(x.p, true) + '<span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span></span></td><td class="sub">' + esc(near.join(', ') || '—') + '</td></tr>';
-    }).join('') + '</tbody></table>'
-    : '<p class="muted" style="margin:0">No raid cooldowns were used this pull.</p>') + '</div>';
+  const lust = [];
+  for (const p of r.players.values()) if (named(p)) for (const n of LUSTS) { let last = -1e9; for (const t of (p.byName.get(n) || []).slice().sort((a, b) => a - b)) { if (t - last >= 12) lust.push({ p, name: n.replace(/\b\w/g, (c) => c.toUpperCase()), id: E.SPELLID.get(n) || 0, t, len: 40 }); last = t; } }
+  uses.sort((a, b) => a.t - b.t); lust.sort((a, b) => a.t - b.t);
+  // (two players lusting at once is one Bloodlust: the first)
+  for (let i = lust.length - 1; i > 0; i--) if (lust[i].t - lust[i - 1].t < 30) lust.splice(i, 1);
+  // the big hits: the 3-second stretches with the most raid damage, at least 10 s apart, well above the pull's usual
+  const W3 = 3, sums = [];
+  for (let i = 0; i + W3 <= Math.min(ts.length, Math.ceil(ct)); i++) { let s = 0; for (let j = 0; j < W3; j++) s += ts[i + j] || 0; sums.push([i, s]); }
+  const sorted = sums.map((x) => x[1]).sort((a, b) => a - b), med = sorted[Math.floor(sorted.length / 2)] || 0, top = sorted[sorted.length - 1] || 0;
+  const thr = Math.max(med * 2, top * 0.4), picks = [];
+  for (const x of sums.slice().sort((a, b) => b[1] - a[1])) { if (x[1] <= 0 || x[1] < thr || picks.length >= 10) break; if (picks.some(([j]) => Math.abs(j - x[0]) < 10)) continue; picks.push(x); }
+  picks.sort((a, b) => a[0] - b[0]);
+  const hitBy = (i) => { const m = new Map(); for (let k = i; k < i + W3; k++) { const o = (r.takenAbS || [])[k]; if (o) for (const n in o) { const x = m.get(n) || [o[n][0], 0]; x[1] += o[n][1]; m.set(n, x); } } return [...m].sort((a, b) => b[1][1] - a[1][1]); };
+  const alive = (p, t) => { const d = r.deaths.filter((x) => x.guid === p.guid && x.t <= t).pop(); if (!d) return true; return [...p.castTimes.values()].some((l) => l.some((x) => x > d.t + 1 && x <= t)); };
+  const hits = picks.map(([i, s], k) => {
+    const t0 = i, t1 = i + W3, by = hitBy(i), cov = uses.filter((u) => u.t <= t1 && u.t + u.len >= t0 - 0.3);
+    const died = r.deaths.filter((d) => d.t >= t0 && d.t <= t1 + 3 && byG.has(d.guid));
+    // (what was ready: a raid cooldown its player had this pull, or their spec's own, alive and off cooldown then)
+    const ready = [];
+    if (!cov.length) for (const p of r.players.values()) {
+      if (!named(p) || !alive(p, t0)) continue;
+      const mine = new Set(uses.filter((u) => u.p === p).map((u) => u.name).concat(RCD_SPEC[p.specName] || []));
+      for (const n of mine) { const cd = RCD_CD[n]; if (!cd) continue; const last = uses.filter((u) => u.p === p && u.name === n && u.t < t0).pop(); if (!last || t0 - last.t >= cd) ready.push({ p, name: n }); }
+    }
+    const st = cov.length ? 'ok' : died.length ? 'bad' : ready.length ? 'warn' : 'na';
+    return { k: k + 1, t: t0 + 1.5, t0, t1, dmg: s, name: by.length ? by[0][0] : 'Raid damage', id: by.length ? by[0][1][0] : 0, also: by.slice(1, 3).map(([n]) => n), cov, ready, died, st };
+  });
+  return { dur, ct, ts, uses, lust, hits };
 }
+function raidCdPanel(r) {
+  const d = rcdData(r), dur = Math.max(1, d.dur), P = (t) => (100 * Math.max(0, Math.min(dur, t)) / dur).toFixed(3) + '%';
+  if (!d.hits.length && !d.uses.length) return '<div class="panel"><h3>Raid cooldowns</h3><p class="muted" style="margin:0">No big hits or raid cooldowns to show for this pull.</p></div>';
+  const ST = { ok: ['✓', 'covered'], warn: ['!', 'nothing used, something was ready'], bad: ['✕', 'not covered, and players died'], na: ['·', 'nothing used, nothing was ready'] };
+  // the raid's damage per second (a 3 s average), drawn as an area
+  const sm = d.ts.map((_, i) => ((d.ts[i - 1] || 0) + d.ts[i] + (d.ts[i + 1] || 0)) / 3), mx = Math.max(1, ...sm);
+  const area = sm.length ? 'M0,100 ' + sm.map((v, i) => 'L' + (1000 * i / dur).toFixed(1) + ',' + (100 - 92 * v / mx).toFixed(1)).join(' ') + ' L' + (1000 * (sm.length - 1) / dur).toFixed(1) + ',100 Z' : '';
+  const phases = ((r.module && !r.module.error && r.module.phases) || []).filter((p, i) => i > 0 && p.start > 1);
+  let chart = '<div class="rc-chart"><svg class="rc-area" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + area + '"/></svg>';
+  chart += phases.map((p) => '<span class="rc-ph" style="left:' + P(p.start) + '"><i>' + esc(p.name) + '</i></span>').join('');
+  if (d.ct < dur - 0.5) chart += '<span class="rc-cut" style="left:' + P(d.ct) + ';width:' + P(dur - d.ct) + '" title="After the wipe filter"></span>';
+  chart += d.hits.map((h, i) => '<span class="rc-band ' + h.st + '" data-rch="' + i + '" style="left:' + P(h.t0) + ';width:' + P(h.t1 - h.t0) + '"></span><button type="button" class="rc-pin ' + h.st + '" data-rch="' + i + '" style="left:' + P(h.t) + '" title="' + esc(h.k + '. ' + h.name + ' at ' + T(h.t0) + ': ' + C(h.dmg) + ' in 3 s, ' + ST[h.st][1]) + '">' + h.k + '</button>').join('');
+  chart += keptDeaths(r).filter((x) => r.players.has(x.guid)).map((x) => '<span class="rc-death" style="left:' + P(x.t) + '" title="' + esc(x.player + ' died at ' + T(x.t) + (x.ability ? ' to ' + x.ability : '')) + '">✕</span>').join('') + '</div>';
+  // the raid cooldowns in as few lanes as fit (each bar as long as it lasted, its name after it); Bloodlust on its own lane
+  const lanes = [], gap = (u) => Math.max(u.len, (26 + 6.5 * u.name.length) / 900 * dur);
+  for (const u of d.uses) { let L = lanes.find((l) => l.end <= u.t); if (!L) lanes.push(L = { end: 0, items: [] }); L.items.push(u); L.end = u.t + gap(u); }
+  // (the bar as long as it lasted, in the player's colour, with its icon and name on top from where it started)
+  const bar = (u, cls) => '<span class="rc-bar' + (cls ? ' ' + cls : '') + '" style="left:' + P(u.t) + ';width:' + P(u.len) + ';background:' + u.p.color + '"></span><span class="rc-cd" style="left:' + P(u.t) + '" title="' + esc(u.name + ', ' + u.p.name + ', at ' + T(u.t) + ', about ' + Math.round(u.len) + ' s') + '">' + spellIcon(u.id, u.name) + '<em>' + esc(CD_SHORT[u.name] || u.name) + '</em></span>';
+  let lanesH = d.lust.length ? '<div class="rc-lane lust">' + d.lust.map((u) => bar(u, 'lust')).join('') + '</div>' : '';
+  lanesH += lanes.map((l) => '<div class="rc-lane">' + l.items.map((u) => bar(u)).join('') + '</div>').join('');
+  let axis = '<div class="rc-axis">'; const step = dur > 420 ? 120 : dur > 200 ? 60 : 30; for (let t = 0; t <= dur; t += step) axis += '<span style="left:' + P(t) + '">' + T(t) + '</span>'; axis += '</div>';
+  // the list: each big hit, what it was, what covered it, or what was ready
+  const cdName = (u) => '<span class="rc-chip"><span class="nm" style="color:' + u.p.color + '">' + esc(u.p.name) + '</span> ' + esc(CD_SHORT[u.name] || u.name) + '</span>';
+  const rows = d.hits.map((h, i) => {
+    const cov = h.cov.length ? h.cov.map(cdName).join('') : '<span class="' + (h.st === 'bad' ? 'hotv' : h.st === 'warn' ? 'rc-wn' : 'sub') + '">nothing used</span>';
+    const ready = h.ready.length ? '<div class="sub">Ready: ' + h.ready.slice(0, 4).map((x) => esc(x.name) + ' (' + esc(x.p.name) + ')').join(', ') + (h.ready.length > 4 ? ' and ' + (h.ready.length - 4) + ' more' : '') + '</div>' : !h.cov.length ? '<div class="sub">No raid cooldown was ready.</div>' : '';
+    const died = h.died.length ? '<div class="hotv">' + esc(h.died.map((x) => x.player).join(', ')) + ' died</div>' : '';
+    return '<div class="rc-row ' + h.st + '" data-rch="' + i + '"><i class="rc-st">' + ST[h.st][0] + '</i><span class="rc-k">' + h.k + '</span><span class="tc">' + T(h.t0) + '</span>' +
+      '<span class="rc-what">' + spell(h.id, h.name) + (h.also.length ? '<div class="sub">also ' + esc(h.also.join(', ')) + '</div>' : '') + '</span><span class="rc-dmg">' + C(h.dmg) + '<div class="sub">in 3 s</div></span><span class="rc-cov">' + cov + ready + died + '</span></div>';
+  }).join('');
+  const nc = d.hits.filter((h) => h.st === 'ok').length, nb = d.hits.filter((h) => h.st === 'bad').length;
+  const pill = d.hits.length ? '<span class="rc-pill ' + (nb ? 'bad' : nc === d.hits.length ? 'ok' : 'warn') + '">' + nc + ' of ' + plural(d.hits.length, 'big hit') + ' covered</span>' : '';
+  return '<div class="panel rc" id="rcdTl"><h3 class="nh"><span>Raid cooldowns</span><small>the big hits this pull' + (d.ct < d.dur - 0.5 ? ' (up to the wipe filter)' : '') + ', and what covered them</small>' + pill + '</h3>' +
+    chart + (lanesH ? '<div class="rc-lanes">' + lanesH + '</div>' : '<p class="muted" style="margin:6px 0">No raid cooldowns were used this pull.</p>') + axis +
+    (rows ? '<div class="rc-list">' + rows + '</div>' : '') +
+    '<details class="howit"><summary>How it works</summary><div>The big hits are the 3-second stretches with the most damage on the raid this pull (at least 10 seconds apart and well above its usual damage), up to the wipe filter, each named by the spell that did most of it. A hit is covered when a raid cooldown (healing, damage reduction, Rallying Cry, Darkness and so on) was up during it. When nothing was, it lists the raid cooldowns that were ready: ones their player used this pull, or a healer\'s own spec cooldown, off cooldown by their base cooldown (talents can shorten some, so a few may be missing). Bloodlust is shown, not counted as cover. Click a hit to find it on the chart.</div></details></div>';
+}
+document.addEventListener('click', (e) => {
+  const el = e.target.closest && e.target.closest('[data-rch]'); if (!el) return; const box = el.closest('.rc'); if (!box) return;
+  const k = el.dataset.rch, on = !el.classList.contains('sel') || !box.querySelector('.rc-row.sel[data-rch="' + k + '"]');
+  box.querySelectorAll('[data-rch]').forEach((x) => x.classList.toggle('sel', on && x.dataset.rch === k));
+  if (el.classList.contains('rc-pin') && on) { const row = box.querySelector('.rc-row[data-rch="' + k + '"]'); if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+});
 function abilities(kind) {
   const p = S.mPlayer, el = $('#abil'); if (!p) { el.innerHTML = '<p class="muted">Pick a player.</p>'; return; }
   const m = kind === 'damage' ? p.dmgAb : kind === 'healing' ? p.healAb : p.takenAb;
