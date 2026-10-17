@@ -80,6 +80,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Team rankings, tidier** (your note): the same tiles as a character's (World, US, server, Speed).
 - [x] **Horde or Alliance** (your note): a team's banner shows its faction's emblem, in red or blue.
 - [x] **"Everything saved" removed** (your note).
+- [x] **Your teams are the home page** (your choice): once you've added a team, Debrief opens on your teams, with a slim bar
+  on top: Follow my combat log, a box for any Warcraft Logs link, Open a combat log, and "More ways in" for the full welcome
+  page. Someone new still gets the welcome page.
+- [x] **The team on the pull banner** (your choice): "Wolfthorn · 7/10 Mythic ›" opens the team's page, with a way back to
+  the pull.
 - [x] **The team bar** (your note: not sure about its place and look): gone. The details are one quiet line under the name,
   and Rename and Remove sit behind a small Edit button beside it.
 - [x] **New nights come in by themselves** (your note): every team and your character are checked when the app opens, and a

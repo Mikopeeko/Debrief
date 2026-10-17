@@ -548,7 +548,7 @@ function groupFilter(g) {
 const groupLink = (s) => { const c = WCL.parseCharLink(s); if (c) return { kind: 'char', link: c }; const t = WCL.parseTeamLink(s); return t ? { kind: 'team', link: t } : null; };
 async function groupAdd(raw) {
   const gl = groupLink(raw);
-  if (!gl && WCL.parseLink(raw)) throw new Error('That\'s a report link: one night. Here, paste the page of your team, guild or character (see "Which link?" below). A single report opens from the start screen.');
+  if (!gl && WCL.parseLink(raw)) throw new Error('That\'s a report link: one night. Here, paste the page of your team, guild or character (see "Which link?" below). A single report opens from the box at the top of the home page.');
   if (!gl) throw new Error('That doesn\'t look like a Warcraft Logs team, guild or character link (see "Which link?" below).');
   const creds = await wclCreds(), info = gl.kind === 'char' ? await WCL.charInfo(creds, gl.link) : await WCL.teamInfo(creds, gl.link);
   const gid = (gl.kind === 'char' ? 'c' : 'g') + info.id;
@@ -852,6 +852,18 @@ const BH_IC = { clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   skull: '<path d="M12 3c-4.4 0-8 3.2-8 7.5 0 2.6 1.3 4.5 3 5.6V19h10v-2.9c1.7-1.1 3-3 3-5.6C20 6.2 16.4 3 12 3Z"/><circle cx="9" cy="11" r="1.5"/><circle cx="15" cy="11" r="1.5"/>',
   pulls: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/>' };
 const bhIc = (k) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + BH_IC[k] + '</svg>';
+// The team a pull is from (one of yours: at least half its players are on it), with how many of the tier's bosses that team
+// has killed on the pull's difficulty: the banner's link to the team's Progress. Kept on the pull until more is saved.
+function pullTeam(r, it) {
+  if (!r || !r.players || !it || it.kind !== 'boss') return null;
+  if (r._team && r._team.n === HIST.mem.size && r._team.d === it.diffId) return r._team.v;
+  const v = { players: [...r.players.values()].map((p) => p.name).filter(Boolean) }, g = groups().find((x) => x.kind !== 'char' && groupFilter(x)(v)) || null;
+  let out = null;
+  if (g) { const order = E.PACKS.map((p) => p.encounter), inG = groupFilter(g), mine = [...HIST.mem.values()].filter((x) => x.diffId === it.diffId && x.kill && inG(x));
+    out = { gid: g.gid, name: gName(g), k: order.filter((b) => mine.some((x) => x.boss === b)).length, of: order.length, diff: it.diff }; }
+  r._team = { n: HIST.mem.size, d: it.diffId, v: out }; return out;
+}
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-team]'); if (b) { e.preventDefault(); progressPage(undefined, b.dataset.team); window.scrollTo(0, 0); } });
 function headerHtml(r, allMode) {
   const it = S.item, same = S.index && S.index.bosses ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [], isKey = it.kind === 'run';
   let cls, kick, big, stats, side = '', left = null;
@@ -894,8 +906,10 @@ function headerHtml(r, allMode) {
   const qcol = isKey ? null : cls === 'good' ? '#ff8000' : left != null ? (PULL_Q.find(([lo]) => 100 - left >= lo) || [0, '#9d9d9d'])[1] : null;
   // (two lines, the same height on every tab: the boss, its result and the phase bar; then the pull, difficulty and raid,
   // how it compares, and when, how long, who and deaths)
+  // (the team this raid is, linking to its Progress: "Wolfthorn · 7/10 Mythic ›")
+  const tm = !isKey ? pullTeam(r || S.rep, it) : null, tmL = tm ? '<button class="bh-team" type="button" data-team="' + esc(tm.gid) + '" title="' + esc(tm.name) + '\'s progress, every boss and night">' + esc(tm.name) + ' · ' + tm.k + '/' + tm.of + ' ' + esc(tm.diff || '') + ' ›</button>' : '';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
-    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + '</div>' +
+    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
     '<div class="bh-l2"><span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
     '<span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span></div></div></header>';
 }
@@ -6150,6 +6164,9 @@ function home() {
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
+  // (with a team added, home is your teams; "More ways in" shows the welcome page once)
+  const full = S.homeFull; S.homeFull = false;
+  if (!full && groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderProgHub(null, false, true); groupsBackfill(); }); return; }
   if (WCL.HOSTED && !window.WLA_DESKTOP) { homeHosted(); return; }
   // the front page (what people see first): the ways in beside a clickable preview of the app, and the four main views
   // underneath as buttons that switch it. The live button comes first; the other ways to follow a log and the help are
@@ -6223,6 +6240,38 @@ function home() {
 // plain file pick isn't blocked).
 // The start screen's "Your progress": a card per team or character (bosses killed on each difficulty they pulled, and
 // their last night), each opening its Progress; with none yet, one card that invites adding your team
+// ---- the home page once you have a team: your teams, with a slim bar for logs on top ----
+// The bar has the everyday ways in: follow my combat log (on this PC), open a combat log, and any Warcraft Logs link (a
+// report still being logged goes live by itself); "More ways in" opens the full welcome page once. Someone with no team
+// yet gets the welcome page as before.
+async function openReportLink(raw, msg) {
+  const link = WCL.parseLink(raw);
+  if (!link) { msg.style.color = ''; msg.textContent = 'That doesn\'t look like a Warcraft Logs report link. (A team or character page goes in the Add card below.)'; return; }
+  msg.style.color = 'var(--muted)'; msg.textContent = 'Opening the report…';
+  try {
+    let creds = null;
+    if (!WCL.HOSTED) { const j = await fetch('/wcl/login').then((r) => r.json()).catch(() => ({})); if (!j.saved) { wclPanel('Connect Warcraft Logs once, then click Load report.', raw); return; } creds = { id: j.id, secret: '' }; }
+    try { sessionStorage.setItem('wla-live', ''); } catch (e) { /* ignore */ }
+    await openWcl(link, creds, false);
+  } catch (err) { msg.style.color = ''; msg.textContent = err.message; }
+}
+function teamsBar() {
+  const local = !(WCL.HOSTED && !window.WLA_DESKTOP);
+  return '<section class="th-bar">' + (local ? '<button class="btn primary" id="thLive" type="button">Follow my combat log</button>' : '') +
+    '<div class="fp-in th-in"><input id="thWcl" placeholder="' + (local ? 'Paste a Warcraft Logs report link' : 'Paste your raid\'s live log, or any Warcraft Logs report') + '" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn' + (local ? '' : ' primary') + '" id="thWclGo" type="button">Open</button></div>' +
+    '<button class="btn" id="thFile" type="button">Open a combat log</button><button class="linkbtn th-more" id="thMore" type="button">More ways in</button>' +
+    '<div class="th-msg"><span class="sub" id="thFound"></span><span class="fp-msg" id="thMsg"></span></div></section>';
+}
+function bindTeamsBar() {
+  const msg = $('#thMsg');
+  $('#thWclGo').onclick = () => openReportLink($('#thWcl').value, msg);
+  $('#thWcl').onkeydown = (e) => { if (e.key === 'Enter') openReportLink($('#thWcl').value, msg); };
+  $('#thWcl').onpaste = () => setTimeout(() => { if (WCL.parseLink($('#thWcl').value)) openReportLink($('#thWcl').value, msg); }, 50); // (a pasted link opens at once)
+  $('#thFile').onclick = () => $('#fileIn').click();
+  $('#thMore').onclick = () => { S.homeFull = true; home(); window.scrollTo(0, 0); };
+  if ($('#thLive')) { $('#thLive').onclick = () => startFileLive(HELPER_LOG);
+    helperInfo().then((j) => { const el = $('#thFound'); if (!el) return; el.textContent = j.error === 'nodir' ? 'WoW Logs folder not found: see More ways in.' : j.error ? 'No combat log yet: type /combatlog in game.' : 'Your combat log: ' + j.name.replace(/\.txt$/i, '') + ', updated ' + wallClock(j.mtime); }).catch(() => { /* (the helper isn't running: the button says why when clicked) */ }); }
+}
 function homeTeams() {
   const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
   // (an Add card always ends the row: the way to bring in a team, a guild or your own character)
@@ -6286,7 +6335,7 @@ const DIFF_ORDER = [[16, 'Mythic'], [15, 'Heroic'], [14, 'Normal'], [17, 'LFR']]
 let PROG_BACK = null;
 // (view: a team's gid to open its page, '*' for everything saved; left out, the teams page)
 function progressPage(msg, view) {
-  progLit(true); S.progView = view == null ? null : view; S.pgRename = S.pgDel = S.pgEdit = false;
+  progLit(true); S.progView = view == null ? null : view; S.pgRename = S.pgDel = S.pgEdit = false; S.hubHome = false;
   if (S.item) PROG_BACK = S.item;
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
@@ -6375,18 +6424,22 @@ async function groupsBackfill() {
     if (g.kind === 'char') { x.cls = info.cls; x.guild = info.guild; x.clsV = 3; } else { x.faction = info.faction || x.faction || null; x.facV = 1; } groupPut(x); }
   if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } else if ($('#main .pg-hub')) renderProgHub(); else if ($('#main .home.prog')) renderProgress();
 }
-function renderProgHub(msg, msgErr) {
+// (asHome: the home page: the slim bar for logs on top, titled "Your teams")
+function renderProgHub(msg, msgErr, asHome) {
+  if (asHome == null) asHome = !!S.hubHome; S.hubHome = asHome;
   const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
-  const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
+  const back = !asHome && PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
   // (the add card says exactly which link to paste: a team's or guild's page, or a character's, with what each looks like)
   const add = '<div class="ht-card ht-add big pg-addc"><span class="ht-n">Add a team or character</span><span class="ht-k">Paste the address of a page on Warcraft Logs: your team or guild brings in its raid nights; your own character brings in every raid you were in, with any group.</span>' +
     '<div class="fp-in"><input id="pgTeam" placeholder="Paste a team, guild or character page link" autocomplete="off"><button class="btn' + (gl.length ? '' : ' primary') + '" id="pgTeamGo" type="button">Add</button></div><div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>' +
     '<div class="pg-which"><b>Which link?</b><ol>' +
       '<li><b>Your team or guild:</b> on <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/id/772787</code> or <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.</li>' +
       '<li><b>Your character:</b> search your character\'s name there, open it, and copy that address. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.</li>' +
-      '<li><b>Not a report:</b> a link with <code>/reports/</code> in it is one night. Open those from the start screen instead.</li></ol></div></div>';
-  $('#main').innerHTML = '<div class="home prog">' + back + '<div class="pg-top"><div><h1>Progress</h1><div class="sub">Pick a team or your character: every boss and night of The Venomous Abyss.</div></div></div>' +
+      '<li><b>Not a report:</b> a link with <code>/reports/</code> in it is one night. Paste those in the box at the top of the home page instead.</li></ol></div></div>';
+  $('#main').innerHTML = '<div class="home prog' + (asHome ? ' th-home' : '') + '">' + (asHome ? teamsBar() : back) + '<div class="pg-top"><div><h1>' + (asHome ? 'Your teams' : 'Progress') + '</h1><div class="sub">Pick a team or your character: every boss and night of The Venomous Abyss.</div></div></div>' +
     '<div class="pg-hub">' + gl.map((g) => teamCard(g, all, order, true)).join('') + add + '</div></div>';
+  progLit(!asHome);
+  if (asHome) bindTeamsBar();
   $$('#main .pg-hub button.ht-card').forEach((b) => (b.onclick = () => { S.progView = b.dataset.g; S.pgRename = S.pgDel = S.pgEdit = false; if (b.dataset.g !== '*') store.set(GROUP_CUR, b.dataset.g); renderProgress(); window.scrollTo(0, 0); }));
   const say = (t, err) => { const m = $('#pgMsg'); if (m) { m.textContent = t; m.classList.toggle('err', !!err); } };
   $('#pgTeamGo').onclick = async () => {
