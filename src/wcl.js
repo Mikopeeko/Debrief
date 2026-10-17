@@ -33,7 +33,8 @@ async function api(path) {
     if (r.ok && !j.error) return j;
     last = new Error(j.error || ('The server answered ' + r.status));
     if (!(r.status >= 500 || r.status === 429)) throw last;
-    await wait(i);
+    // (too many requests at once: the site counts a minute at a time, so a quick retry would only be refused again)
+    await (r.status === 429 ? new Promise((res) => setTimeout(res, 10000 * (i + 1))) : wait(i));
   }
   throw last;
 }

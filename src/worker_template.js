@@ -67,7 +67,9 @@ const json = (obj, status, maxAge) => new Response(JSON.stringify(obj), {
 
 // Fair use: each visitor (by IP) gets up to FAIR requests a minute that aren't already cached. Kept per server
 // instance, so it's a soft limit, enough to stop one person (or a script) using up the hourly allowance for everyone.
-const FAIR = 90, seen = new Map();
+// (180: a Mythic night is ~500 page downloads, so at 90 the first person to open one waited 6 minutes or more; cached ones
+// don't count, so everyone after them is quick either way)
+const FAIR = 180, seen = new Map();
 function fair(ip) {
   const now = Date.now(), w = seen.get(ip);
   if (!w || now - w.t > 60000) { seen.set(ip, { t: now, n: 1 }); if (seen.size > 5000) seen.clear(); return true; }
