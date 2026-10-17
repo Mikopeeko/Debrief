@@ -551,7 +551,7 @@ async function groupAdd(raw) {
   const creds = await wclCreds(), info = gl.kind === 'char' ? await WCL.charInfo(creds, gl.link) : await WCL.teamInfo(creds, gl.link);
   const gid = (gl.kind === 'char' ? 'c' : 'g') + info.id;
   if (groups().some((g) => g.gid === gid)) { store.set(GROUP_CUR, gid); return { g: groups().find((g) => g.gid === gid), already: true }; }
-  const g = { gid, kind: gl.kind === 'char' ? 'char' : info.team ? 'team' : 'guild', id: info.id, name: info.name, server: info.server, done: {}, ...(gl.kind === 'char' ? { cls: info.cls, clsV: 2 } : {}) };
+  const g = { gid, kind: gl.kind === 'char' ? 'char' : info.team ? 'team' : 'guild', id: info.id, name: info.name, server: info.server, done: {}, ...(gl.kind === 'char' ? { cls: info.cls, guild: info.guild, clsV: 3 } : {}) };
   groupPut(g); store.set(GROUP_CUR, gid); return { g, already: false };
 }
 // Removing a team: it leaves the list, and so does every pull only it brought in (a pull from a log opened on this PC,
@@ -6155,7 +6155,9 @@ function home() {
   const fp = fpParts(), liveLab = 'Follow my combat log';
   const lock = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const MODS = { live: 'Between pulls: what went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with arena maps of who stood where.', assign: 'Your NSRT note against what actually happened.', summary: 'How far each pull got, and what ended them.' };
-  $('#main').innerHTML = '<div class="home fp">' +
+  // (your teams first once you have one: the way back into your progress; for someone new, the invite sits under the start box)
+  const teamsTop = groups().length > 0;
+  $('#main').innerHTML = '<div class="home fp">' + (teamsTop ? homeTeams() : '') +
     '<div class="fp-top">' +
     '<section class="fp-hero" id="fpStart"><div class="fp-intro"><div><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1><p class="fp-lead">Debrief checks every mechanic, assignment and death in your combat log, and tells you what to fix before the next pull.</p></div>' +
       '<div class="fp-start">' +
@@ -6178,7 +6180,7 @@ function home() {
         '<div class="fp-tabs">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '" aria-pressed="' + (i ? 'false' : 'true') + '"' + (i ? '' : ' class="on"') + '>' + t + '</button>').join('') + '</div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
         '<div class="fp-note">Example data. Click a tab to look around.</div></div></section></div>' +
-    homeTeams() +
+    (teamsTop ? '' : homeTeams()) +
     '<section class="fp-ways"><h2>Four ways to look at a night</h2><div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div></section>' +
     '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
   bindHomeTeams(); homeTeamsSoon();
@@ -6233,7 +6235,8 @@ const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); 
 function homeHosted() {
   const fp = fpParts();
   const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
-  $('#main').innerHTML = '<div class="home fp fph">' +
+  const teamsTop = groups().length > 0; // (your teams first once you have one; for someone new, the invite under the start box)
+  $('#main').innerHTML = '<div class="home fp fph">' + (teamsTop ? homeTeams() : '') +
     '<section class="fph-hero" id="fpStart"><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       '<div class="fph-main"><div class="fph-h">' + HICO.live + '<b>Live logging</b><span>during raid</span></div>' +
@@ -6247,7 +6250,7 @@ function homeHosted() {
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
-    homeTeams() +
+    (teamsTop ? '' : homeTeams()) +
     '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
   bindHomeTeams(); homeTeamsSoon();
   // (either box takes any report link: the live one follows it from the start, the other turns live on by itself if the
@@ -6337,20 +6340,27 @@ function banner(g) {
   const inner = cls ? '<img class="hb-i" src="' + whIcon('classicon_' + cls[2]) + '" alt="" onerror="this.remove()">' : g ? '<span class="hb-t">' + esc(ini) + '</span>' : '<span class="hb-t">∑</span>';
   return '<span class="ht-ban" style="--bc:' + col + '" aria-hidden="true"><svg viewBox="0 0 52 64"><path d="' + shape + '"/></svg>' + inner + '</span>';
 }
+// a character's guild (from Warcraft Logs, ‹in brackets› the way WoW shows it) and the teams on your list they raid with
+function charAff(g) {
+  if (!g || g.kind !== 'char') return '';
+  const teams = groups().filter((t) => t.kind !== 'char' && [...HIST.mem.values()].some((v) => pullGroups(v).includes(t.gid) && (v.players || []).includes(g.name))).map((t) => gName(t));
+  const parts = (g.guild ? ['‹' + g.guild + '›'] : []).concat(teams.filter((n) => n !== g.guild));
+  return parts.length ? '<span class="ht-g">' + esc(parts.join(' · ')) + '</span>' : '';
+}
 // a team's card (the start screen and the teams page): bosses killed on each difficulty it pulled, its last night
 function teamCard(g, all, order, big) {
   const mine = all.filter(groupFilter(g)), last = mine.reduce((m, v) => Math.max(m, v.at), 0), nights = new Set(mine.map((v) => nightOf(v.at))).size;
   const diffs = DIFF_ORDER.filter(([d]) => mine.some((v) => v.diffId === d)).slice(0, big ? 4 : 2).map(([d, nm]) => '<span><b>' + order.filter((b) => mine.some((v) => v.diffId === d && v.boss === b && v.kill)).length + '/' + order.length + '</b> ' + nm + '</span>').join('');
   const cls = g && g.kind === 'char' && g.cls && E.CLASSES[g.cls];
-  return '<button class="ht-card hb' + (big ? ' big' : '') + '" type="button" data-g="' + esc(g ? g.gid : '*') + '">' + banner(g) + '<span class="ht-b"><span class="ht-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</span><span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
+  return '<button class="ht-card hb' + (big ? ' big' : '') + '" type="button" data-g="' + esc(g ? g.gid : '*') + '">' + banner(g) + '<span class="ht-b"><span class="ht-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</span>' + charAff(g) + '<span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
     '<span class="ht-d">' + (diffs || '<span>not imported yet</span>') + '</span><span class="ht-l">' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : g ? 'open to import its nights' : 'nothing saved yet') + '</span></span></button>';
 }
 // (a character added before its class was kept: looked up once, then its card is drawn again)
 async function groupsBackfill() {
-  // (clsV 2: looked up with Warcraft Logs' class numbers read the right way; an older lookup is done again)
-  const need = groups().filter((g) => g.kind === 'char' && g.clsV !== 2); if (!need.length) return;
+  // (clsV 3: class read with Warcraft Logs' class numbers the right way, and their guild; an older lookup is done again)
+  const need = groups().filter((g) => g.kind === 'char' && g.clsV !== 3); if (!need.length) return;
   let creds = null; try { creds = await wclCreds(); } catch (e) { return; }
-  for (const g of need) { let cls = null; try { cls = (await WCL.charInfo(creds, { id: g.id })).cls; } catch (e) { /* (tried again next visit) */ continue; } const x = groups().find((q) => q.gid === g.gid); if (x) { x.cls = cls; x.clsV = 2; groupPut(x); } }
+  for (const g of need) { let info = null; try { info = await WCL.charInfo(creds, { id: g.id }); } catch (e) { /* (tried again next visit) */ continue; } const x = groups().find((q) => q.gid === g.gid); if (x) { x.cls = info.cls; x.guild = info.guild; x.clsV = 3; groupPut(x); } }
   if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } else if ($('#main .pg-hub')) renderProgHub(); else if ($('#main .home.prog')) renderProgress();
 }
 function renderProgHub(msg, msgErr) {
@@ -6385,6 +6395,51 @@ async function progRun(g) {
   try { const res = await teamImport(g, say); done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : gName(g) + ' is up to date: no new reports.') +
     (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy): they\'ll be tried again next time.' : '')); }
   catch (e) { done(e.message, true); }
+}
+// ---- a character's page: their Warcraft Logs rankings this tier ----
+// Their most played spec first (the spec most of their best parses are on), healing for a healer spec and damage
+// otherwise; switches for each spec of their class and for damage or healing; on the page's difficulty. The summary on top
+// (best and median average, all-stars points), and each boss card gets a line with their best and median parse there.
+// Hidden with one click (remembered on this PC).
+const HEAL_SPECS = new Set([65, 105, 256, 257, 264, 270, 1468]), RANK_CACHE = new Map(), RANK_OFF = 'wla-rank-off';
+const WCL_DIFF_OF = { 16: 5, 15: 4, 14: 3, 17: 1 };
+async function charRankPanel(g, diffId) {
+  const box = $('#pgRank'); if (!box || !g.cls) return;
+  const still = () => S.progView === g.gid && $('#pgRank') === box && document.body.contains(box);
+  if (store.get(RANK_OFF) === '1') { box.innerHTML = '<div class="pr-off"><span class="sub">Your Warcraft Logs rankings are hidden.</span> <button class="linkbtn" id="prShow" type="button">Show them</button></div>';
+    $('#prShow').onclick = () => { store.set(RANK_OFF, '0'); charRankPanel(g, diffId); }; return; }
+  const d = WCL_DIFF_OF[diffId] || 5, specs = Object.entries(E.SPECS).filter(([, [, c]]) => c === g.cls).map(([id, [n]]) => ({ id: +id, n, heal: HEAL_SPECS.has(+id) }));
+  box.innerHTML = '<div class="sub">Reading your rankings from Warcraft Logs…</div>';
+  let creds = null; try { creds = await wclCreds(); } catch (e) { box.innerHTML = '<div class="sub">' + esc(e.message) + '</div>'; return; }
+  const get = async (m, s) => { const k = g.id + '|' + d + '|' + m + '|' + (s || ''); if (!RANK_CACHE.has(k)) RANK_CACHE.set(k, WCL.charRankings(creds, g.id, d, m, s).catch((e) => { RANK_CACHE.delete(k); throw e; })); return RANK_CACHE.get(k); };
+  try {
+    // (their most played spec: the one most of their best parses are on, kept once found)
+    if (!g.mainSpec) { const z0 = await get('dps', null), cnt = new Map(); for (const x of (z0 && z0.rankings) || []) if (x.spec && x.totalKills) cnt.set(x.spec, (cnt.get(x.spec) || 0) + x.totalKills);
+      const top = [...cnt].sort((a, b) => b[1] - a[1])[0]; if (top) { const x = groups().find((q) => q.gid === g.gid); if (x) { x.mainSpec = top[0]; groupPut(x); } g.mainSpec = top[0]; } }
+    const spec = specs.find((x) => x.n === S.rankSpec) ? S.rankSpec : g.mainSpec || specs[0].n, sp = specs.find((x) => x.n === spec) || specs[0];
+    const metric = S.rankMetric === 'hps' || S.rankMetric === 'dps' ? S.rankMetric : sp.heal ? 'hps' : 'dps';
+    const z = await get(metric, spec); if (!still()) return;
+    const rows = ((z && z.rankings) || []).filter((x) => x.encounter), ranked = rows.filter((x) => x.rankPercent != null);
+    const as = ((z && z.allStars) || []).slice().sort((a, b) => (b.points || 0) - (a.points || 0))[0];
+    const chip = (v) => (v == null ? '<span class="sub">—</span>' : prsChip({ pct: v }));
+    const sw = '<div class="pr-sw"><div class="seg" role="group" aria-label="Spec">' + specs.map((x) => '<button type="button" data-rs="' + esc(x.n) + '"' + (x.n === spec ? ' class="on"' : '') + '>' + esc(x.n) + (x.n === g.mainSpec ? ' <span class="sub">most played</span>' : '') + '</button>').join('') + '</div>' +
+      '<div class="seg" role="group" aria-label="Damage or healing"><button type="button" data-rm="dps"' + (metric === 'dps' ? ' class="on"' : '') + '>Damage</button>' + (specs.some((x) => x.heal) ? '<button type="button" data-rm="hps"' + (metric === 'hps' ? ' class="on"' : '') + '>Healing</button>' : '') + '</div></div>';
+    const diffN = (DIFF_ORDER.find(([x]) => x === diffId) || [0, ''])[1];
+    box.innerHTML = '<div class="pr-h"><div><b>Your rankings on Warcraft Logs</b><div class="sub">' + esc(diffN) + ' · ' + esc(spec) + ' · ' + (metric === 'hps' ? 'healing' : 'damage') + ' · against the same spec, this tier</div></div>' + sw + '<button class="linkbtn pr-hide" id="prHide" type="button">Hide</button></div>' +
+      (ranked.length ? '<div class="pts pr-sum n3">' +
+        plTile(chip(z.bestPerformanceAverage), 'Best average', Math.floor(z.bestPerformanceAverage || 0) + '', 'na', 'your best parse on each boss, averaged', true) +
+        plTile(chip(z.medianPerformanceAverage), 'Median average', Math.floor(z.medianPerformanceAverage || 0) + '', 'na', 'your typical parse on each boss, averaged', true) +
+        plTile(icoW('achievement_dungeon_icecrown_frostmourne'), 'All-stars', as ? Math.round(as.points) + '<span> pts</span>' : '—', 'na', as && as.rank && as.rank !== '-' ? 'rank ' + Number(as.rank).toLocaleString('en-US') + ' of ' + Number(as.total || 0).toLocaleString('en-US') + (as.rankPercent != null && as.rankPercent !== '-' ? ' · top ' + Math.max(1, Math.round(100 - as.rankPercent)) + '%' : '') : 'not ranked yet', true) + '</div>' +
+        '<div class="sub pr-n">Each boss card below shows your best and median parse there.</div>'
+        : '<p class="muted" style="margin:6px 0 0">No ranked kills as ' + esc(spec) + ' on ' + esc(diffN) + ' yet. Warcraft Logs only ranks kills.</p>');
+    // each boss card: their parse there
+    $$('#main .pc-card[data-boss]').forEach((c) => { const x = rows.find((q) => q.encounter.name === c.dataset.boss); const old = c.querySelector('.pc-rank'); if (old) old.remove();
+      const html = '<div class="pc-rank"><span class="pr-l">Your parse</span>' + (x && x.rankPercent != null ? chip(x.rankPercent) + ' <span class="sub">best</span> ' + chip(x.medianPercent) + ' <span class="sub">median · ' + plural(x.totalKills || 0, 'kill') + (x.bestAmount ? ' · best ' + C(x.bestAmount) + '/s' : '') + '</span>' : '<span class="sub">no ranked kill as ' + esc(spec) + '</span>') + '</div>';
+      const st = c.querySelector('.pc-stats'); if (st) st.insertAdjacentHTML('afterend', html); });
+    box.querySelectorAll('[data-rs]').forEach((b) => (b.onclick = () => { S.rankSpec = b.dataset.rs; S.rankMetric = null; charRankPanel(g, diffId); }));
+    box.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => { S.rankMetric = b.dataset.rm; charRankPanel(g, diffId); }));
+    $('#prHide').onclick = () => { store.set(RANK_OFF, '1'); $$('#main .pc-rank').forEach((x) => x.remove()); charRankPanel(g, diffId); };
+  } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read your rankings: ' + esc(e.message) + '</div>'; }
 }
 function renderProgress(msg, msgErr) {
   // (the teams page, unless a team (or everything saved) is picked)
@@ -6445,11 +6500,12 @@ function renderProgress(msg, msgErr) {
   const legend = pullLegend();
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</h1><div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div></div>' + sw + '</div>' + team + (g ? '' : pgMsg) +
+    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div></div>' + sw + '</div>' + team + (g ? '' : pgMsg) + (g && g.kind === 'char' && g.cls ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet: click ' + (g.last ? 'Check for new nights' : 'Import every night') + ' above.' : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
   $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = false; renderProgress(); window.scrollTo(0, 0); };
+  if (g && g.kind === 'char') charRankPanel(g, cur);
   if ($('#pgImport')) $('#pgImport').onclick = () => progRun(g);
   // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)
   if ($('#pgRen')) $('#pgRen').onclick = () => { S.pgRename = true; S.pgDel = false; renderProgress(); const i = $('#pgRenIn'); if (i) { i.focus(); i.select(); } };

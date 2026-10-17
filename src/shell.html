@@ -926,7 +926,8 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .tbmenu { position: relative; } .tbm-b { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; padding: 0; border-radius: 9px; }
 .tbm-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 /* the start screen's "Your progress": a card per team or character */
-.home-teams { margin: 26px 0 0; } .ht-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; } .ht-h h2 { margin: 0; font: 600 20px var(--head); color: #f3f5f9; }
+.home-teams { margin: 26px 0 0; } .home > .home-teams:first-child { margin: 24px 0 0; } .home > .home-teams:first-child .ht-h h2 { font-size: 22px; }
+.home > .home-teams:first-child + .fp-top .fp-hero { padding-top: 0; } .home > .home-teams:first-child + .fph-hero { padding-top: 6px; } .ht-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; } .ht-h h2 { margin: 0; font: 600 20px var(--head); color: #f3f5f9; }
 .ht-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
 .ht-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px 16px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; cursor: pointer; transition: border-color .12s, background .12s; }
 .ht-card:hover { background: var(--raised); border-color: var(--line2); border-left-color: var(--gold); }
@@ -1104,6 +1105,15 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .ht-card.hb:hover { border-left-color: var(--bc, var(--gold)); }
 .pg-top .ht-ban { margin-right: 14px; } .pg-top > .pg-ttl { display: flex; align-items: center; } .pg-top .pg-tt { display: flex; flex-direction: column; }
 @media (min-width: 980px) { .pg-hub .pg-addc { grid-column: span 2; } }
+/* a character's page: their Warcraft Logs rankings (spec and damage/healing switches, the summary, a line on each boss card) */
+.ht-g { font: 600 13px var(--head); color: #c9ced8; letter-spacing: .2px; } .pg-tt .ht-g { font-size: 15px; margin: 2px 0 1px; }
+.pg-rank { padding: 14px 18px; margin: 0; } .pg-rank .sub { font-size: 12.5px; }
+.pr-h { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; } .pr-h > div:first-child { flex: 1 1 260px; } .pr-h b { font: 600 17px var(--head); color: #f3f5f9; }
+.pr-sw { display: flex; flex-wrap: wrap; gap: 8px; } .pr-sw .seg button .sub { font-size: 11px; margin-left: 3px; }
+.pr-sum { margin: 12px 0 0; } .pr-sum .pt { background: var(--raised); } .pr-sum .prs { font-size: 13px; line-height: 20px; min-width: 30px; }
+.pr-n { margin-top: 8px; } .pr-off { display: flex; align-items: center; gap: 8px; }
+.pc-rank { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 8px; font-size: 13px; }
+.pc-rank .pr-l { font-weight: 600; color: #c9ced8; margin-right: 2px; }
 .pg-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
 .pc-diffs { display: flex; gap: 4px; max-width: 100%; padding: 4px; overflow-x: auto; scrollbar-width: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; } .pc-diffs::-webkit-scrollbar { display: none; }
 .pc-diffs button { flex: none; white-space: nowrap; }

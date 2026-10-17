@@ -33,6 +33,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   teams (a "Compare" option: how many pulls and nights a top guild needed per boss, next to yours). Design to show you first.
 - [x] **Healer mana, more**: what each healer spent the most mana on (round 119).
 - [x] **Performance charts you can explore**: hover readouts and click-to-hide (round 119). More charts can follow.
+- [ ] **Debrief's own ranking system** (your note): a score of our own, from all the performance data together (damage or
+  healing, survivability, mechanical execution and so on), not just output like Warcraft Logs parses.
 - [ ] **Customize your Progress page** (your note): let people pick their own background banner, character avatar and so on.
 - [ ] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
   to the game's name, so people know which mechanic it is.
@@ -65,6 +67,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   colour with the class icon, and your name in that colour.
 - [x] **Which link?** (your note): the Add card says step by step which Warcraft Logs page to copy, with examples; a report
   link pasted there says it's one night and where to open it.
+- [x] **Your rankings on your character page** (your note): your Warcraft Logs rankings this tier on the page's difficulty,
+  starting on your most played spec (healing for a healer spec), with switches for each spec and for damage or healing: best
+  and median average, all-stars points and rank, and your best and median parse on every boss card. "Hide" turns it off.
+- [x] **Guild and team on your character** (your note): under your name, ‹your guild› from Warcraft Logs and the teams on
+  your list you raid with (‹Adequate› · Wolfthorn).
+- [x] **Homepage** (your note): once you've added a team or your character, "Your progress" is the first thing on it.
 
 ## 2026-10-18, round 118: Survivability, healer mana, parses
 - [x] **The desktop layout is live** (your OK): round 117 merged and on the website.

@@ -158,7 +158,7 @@ async function teamReports(creds, id) {
 // ---------- a character's reports: your own progress, every raid you were in (any team, guild or group) ----------
 // A Warcraft Logs character link ("…/character/us/zuljin/name" or "…/character/id/83269381") names the character; its
 // reports are listed 100 a page, newest first. (Hosted: the site has a route for each.)
-const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID server{name slug region{slug}}}}}`;
+const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID guilds{id name} server{name slug region{slug}}}}}`;
 const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{name}}}}}}`;
 function parseCharLink(s) {
   s = String(s || '').trim();
@@ -174,7 +174,17 @@ async function charInfo(creds, link) {
   // (classID: Warcraft Logs' own class number, alphabetical: 1 Death Knight, 2 Druid … 11 Warrior, then 12 Demon Hunter and
   // 13 Evoker; for the card's colour and icon)
   const CLS = [null, 'DEATHKNIGHT', 'DRUID', 'HUNTER', 'MAGE', 'MONK', 'PALADIN', 'PRIEST', 'ROGUE', 'SHAMAN', 'WARLOCK', 'WARRIOR', 'DEMONHUNTER', 'EVOKER'];
-  return { id: c.id, name: c.name, cls: CLS[c.classID] || null, server: c.server ? c.server.name + (c.server.region ? ' (' + c.server.region.slug.toUpperCase() + ')' : '') : '' };
+  return { id: c.id, name: c.name, cls: CLS[c.classID] || null, guild: (c.guilds && c.guilds[0] && c.guilds[0].name) || null, server: c.server ? c.server.name + (c.server.region ? ' (' + c.server.region.slug.toUpperCase() + ')' : '') : '' };
+}
+// a character's rankings this tier on one difficulty (Warcraft Logs numbers: 1 LFR, 3 Normal, 4 Heroic, 5 Mythic), for
+// damage ('dps') or healing ('hps'), on one spec or their best: { bestPerformanceAverage, medianPerformanceAverage, allStars,
+// rankings: [{ encounter: { name }, rankPercent, medianPercent, totalKills, spec, bestAmount, fastestKill }] }
+const CHAR_RANK_Q = `query($id:Int!,$d:Int,$m:CharacterPageRankingMetricType,$s:String){characterData{character(id:$id){zoneRankings(difficulty:$d,metric:$m,specName:$s)}}}`;
+async function charRankings(creds, id, diff, metric, spec) {
+  let j;
+  if (HOSTED) j = await api('/api/charrank?id=' + id + '&d=' + diff + '&m=' + metric + (spec ? '&s=' + enc(spec) : ''));
+  else { const d = await gql(creds, CHAR_RANK_Q, { id, d: diff, m: metric, s: spec || null }); j = d && d.characterData && d.characterData.character && d.characterData.character.zoneRankings; }
+  return (typeof j === 'string' ? JSON.parse(j) : j) || null;
 }
 // (newest first: paging stops once a whole page is older than `since`, or after 5 pages, as far back as Warcraft Logs
 // lists a character's reports)
@@ -405,6 +415,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
+root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

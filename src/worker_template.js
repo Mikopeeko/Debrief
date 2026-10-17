@@ -14,6 +14,7 @@ const NIGHT_Q = __NIGHT_Q__;
 const DEATHS_Q = __DEATHS_Q__;
 const CHAR_INFO_Q = __CHAR_INFO_Q__;
 const CHAR_REPORTS_Q = __CHAR_REPORTS_Q__;
+const CHAR_RANK_Q = __CHAR_RANK_Q__;
 const APP_HTML = __HTML__;
 
 let token = null;
@@ -99,6 +100,10 @@ const ROUTES = {
   '/api/charreports': { q: () => CHAR_REPORTS_Q, age: 600,
     v: (p) => { const id = parseInt(p.get('id'), 10), page = parseInt(p.get('page'), 10) || 1; return id > 0 && page >= 1 && page <= 5 ? { id, page } : null; },
     out: (d) => (d && d.characterData && d.characterData.character && d.characterData.character.recentReports) || { error: 'Warcraft Logs has no character with that number.', status: 404 } },
+  // a character's rankings on one difficulty, damage or healing, one spec or their best (the character page's "Your rankings")
+  '/api/charrank': { q: () => CHAR_RANK_Q, age: 1800,
+    v: (p) => { const id = parseInt(p.get('id'), 10), d = parseInt(p.get('d'), 10), s = p.get('s'); return id > 0 && [1, 3, 4, 5].includes(d) && (!s || /^[A-Za-z ]{3,20}$/.test(s)) ? { id, d, m: p.get('m') === 'hps' ? 'hps' : 'dps', s: s || null } : null; },
+    out: (d) => { const z = d && d.characterData && d.characterData.character && d.characterData.character.zoneRankings; return (typeof z === 'string' ? JSON.parse(z) : z) || { error: 'No rankings for that character.', status: 404 }; } },
   '/api/night': { q: () => NIGHT_Q, age: 600, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null),
     out: (d, v) => (d && d.reportData && d.reportData.report) || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 } },
   '/api/deaths': { q: () => DEATHS_Q, age: 600, raw: true,
