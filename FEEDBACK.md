@@ -16,6 +16,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Remove the Healers view?** (asked; waiting on your yes or no).
 - [x] **Big review of the whole app** for launch (your note): done, with 7 mockups. Read it at
   https://claude.ai/artifact/CyCxbDM5Mj9KyTWc2aMjFE (a copy is in notes/Launch review.html). Nothing in it is built yet: pick what you want.
+- [x] **Second pass, desktop only** (your note): layout measured at 1920×1080 and 1440×900, with to-scale page maps. Read it at
+  https://claude.ai/artifact/ELNR2Ci3BXvb2Wq1FAF1wU (copy in notes/Desktop layout review.html). Nothing built yet.
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).

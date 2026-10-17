@@ -1,0 +1,267 @@
+<title>Debrief Desktop Layout</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one reading column with to-scale "page maps" (each block drawn at 30% of its real height on a 1920x1080
+   screen, with the bottom of the screen marked). Drawn in the app's own colours so the maps read like the app. */
+:root {
+  --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49;
+  --text: #ece8df; --muted: #98a0ad; --faint: #6c7381;
+  --gold: #e6b450; --gold-ink: #1b1406; --good: #45c15c; --warn: #e8a23a; --bad: #e5534b; --blue: #6aa8ff; --orange: #ff8000;
+  --head: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font: 700 42px/1.05 var(--head); margin: 6px 0 10px; text-wrap: balance; }
+h2 { font: 700 27px/1.15 var(--head); margin: 52px 0 6px; text-wrap: balance; }
+h3 { font: 600 19px/1.25 var(--head); margin: 26px 0 4px; }
+p, li { max-width: 70ch; }
+p { margin: 8px 0; }
+.eyebrow { font: 600 12px var(--head); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.lede { font-size: 18px; color: #d9d4c9; }
+.muted { color: var(--muted); } .sub { color: var(--muted); font-size: 14px; }
+.big3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.big3 > div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.big3 b { display: block; font: 700 30px/1 var(--head); color: var(--gold); margin-bottom: 6px; }
+.big3 span { font-size: 14.5px; color: #d9d4c9; }
+.p { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 14px 0; }
+.p > .pt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.p > .pt b { font: 600 19px/1.25 var(--head); }
+.k { font: 700 13px var(--head); color: var(--gold); letter-spacing: .06em; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 600 11.5px var(--head); letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 5px; border: 1px solid var(--line2); color: var(--muted); }
+.tag.s { color: var(--good); border-color: rgba(69,193,92,.45); } .tag.m { color: var(--warn); border-color: rgba(232,162,58,.45); } .tag.l { color: var(--bad); border-color: rgba(229,83,75,.45); }
+.p p { font-size: 15.5px; }
+.nums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.nums span { font-size: 13.5px; background: var(--raised); border: 1px solid var(--line2); border-radius: 6px; padding: 2px 8px; font-variant-numeric: tabular-nums; }
+.nums .was { color: var(--muted); } .nums .now { color: var(--good); }
+/* page maps */
+.maps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 14px 0 4px; }
+.map { min-width: 0; }
+.map .lab { font: 600 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+.map .lab.new { color: var(--gold); }
+.page { position: relative; background: #0b0d12; border: 1px solid var(--line2); border-radius: 10px; overflow: hidden; }
+.blk { position: absolute; left: 8%; right: 8%; border-radius: 4px; background: var(--raised); border: 1px solid var(--line2); color: #d9d4c9; font: 500 11.5px/1.2 var(--body); padding: 2px 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.blk.hd { left: 0; right: 0; border-radius: 0; background: var(--panel); }
+.blk.key { background: rgba(230,180,80,.16); border-color: rgba(230,180,80,.6); color: var(--text); }
+.blk.split { background: transparent; border: 0; padding: 0; display: grid; grid-template-columns: 1.45fr 1fr; gap: 4px; }
+.blk.split > i { display: block; font-style: normal; border-radius: 4px; background: var(--raised); border: 1px solid var(--line2); padding: 2px 6px; overflow: hidden; text-overflow: ellipsis; }
+.blk.split.key > i { background: rgba(230,180,80,.16); border-color: rgba(230,180,80,.6); }
+.fold { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--bad); }
+.fold span { position: absolute; right: 6px; top: 2px; font: 600 11px var(--head); color: #ff9a93; letter-spacing: .04em; background: #0b0d12; padding: 0 4px; }
+.cap { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; }
+/* the width picture */
+.screen { position: relative; height: 150px; background: #0b0d12; border: 2px solid var(--line2); border-radius: 10px; overflow: hidden; }
+.screen .col { position: absolute; top: 14px; bottom: 14px; background: var(--raised); border: 1px solid var(--line2); border-radius: 6px; display: grid; place-items: center; font: 600 13px var(--head); color: #d9d4c9; }
+.screen .col.key { background: rgba(230,180,80,.14); border-color: rgba(230,180,80,.6); }
+.screen .gap { position: absolute; top: 50%; transform: translateY(-50%); font: 600 12px var(--head); color: var(--faint); }
+/* small mockups */
+.scr { background: var(--bg); border: 1px solid var(--line2); border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.45; overflow: hidden; margin-top: 12px; }
+.mp { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line2); font: 600 12px var(--head); white-space: nowrap; }
+.chip.gold { background: rgba(230,180,80,.15); border-color: rgba(230,180,80,.5); color: var(--gold); }
+.chip.win { background: var(--good); color: #0c1a0f; border: 0; }
+.h1m { font: 700 22px/1.1 var(--head); }
+.tabs { display: flex; gap: 16px; font: 600 13px var(--head); color: var(--muted); white-space: nowrap; overflow: hidden; }
+.tabs .on { color: var(--text); box-shadow: 0 7px 0 -5px var(--gold); }
+.phb { display: flex; height: 10px; width: 150px; border-radius: 3px; overflow: hidden; border: 1px solid var(--line2); } .phb i { flex: 1; } .phb i + i { border-left: 1px solid var(--bg); }
+.two { display: grid; grid-template-columns: 1.45fr 1fr; gap: 10px; margin-top: 10px; }
+.stack { display: grid; gap: 10px; align-content: start; }
+.line { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line); }
+.line:first-of-type { border-top: 0; }
+.ok { color: var(--good); } .wa { color: var(--warn); } .ba { color: var(--bad); } .gd { color: var(--gold); } .fa { color: var(--faint); }
+.h2m { font: 600 15px/1.2 var(--head); margin-bottom: 4px; }
+.order { counter-reset: o; list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; }
+.order li { counter-increment: o; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; max-width: none; }
+.order li::before { content: counter(o); font: 700 18px/1.4 var(--head); color: var(--gold); }
+footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13.5px; }
+@media (max-width: 760px) { .big3, .maps, .two { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 34px; } }
+</style>
+
+<div class="wrap">
+<div class="eyebrow">Second pass · desktop only · Sunday, Oct 18</div>
+<h1>Debrief on a big screen</h1>
+<p class="lede">I went through every screen at 1920×1080 (your monitor, judging by your screenshots) and at 1440×900 (a laptop), and measured where everything sits. The app is tidy and lines up well on its edges. The problems are about space: a narrow column on a wide screen, a tall top, and side-by-side panels that don't match in height.</p>
+<p class="muted">Nothing here is built yet. The page maps are drawn to scale; the red dashed line is the bottom of a 1920×1080 screen, so anything under it needs scrolling.</p>
+
+<div class="big3">
+  <div><b>64%</b><span>of your screen's width is used. The app is a 1240px column, so on 1920 about 330px stays empty on each side.</span></div>
+  <div><b>386px</b><span>of every report goes to the top (header, banner, pull strip, tabs) before any results: more than a third of the screen.</span></div>
+  <div><b>1065px</b><span>is where Performance's player bars start, just past the bottom of a 1080 screen. That's the main thing on that tab.</span></div>
+</div>
+
+<h2>The width</h2>
+<div class="screen" aria-label="A 1920 pixel screen with the app's 1240 pixel column in the middle">
+  <div class="col" style="left:17.3%;right:17.3%">Debrief today: 1240px</div>
+  <div class="gap" style="left:2%">330px empty</div>
+  <div class="gap" style="right:2%">330px empty</div>
+</div>
+<div class="screen" style="margin-top:10px" aria-label="The same screen with a 1480 pixel column">
+  <div class="col key" style="left:11.5%;right:11.5%">Proposed on big screens: 1480px</div>
+  <div class="gap" style="left:1%">220px</div>
+  <div class="gap" style="right:1%">220px</div>
+</div>
+<p class="cap">On screens 1680px and wider, let the column grow to 1480px. Text inside panels keeps its comfortable line length; the extra room goes to charts, bar lists and side-by-side panels. Laptops (1440) look the same as today.</p>
+
+<h2>The top of every report</h2>
+
+<div class="p">
+  <div class="pt"><span class="k">1</span><b>A compact banner</b><div class="tags"><span class="tag m">Medium</span></div></div>
+  <p>The banner is 189px tall: a small eyebrow line, the boss name, the result pill and phase bar, a "best pull / further than last" line, then the time, length, players and deaths. Putting the result and phase bar on the name's line, and the rest on one line under it, keeps everything at about 112px. The boss art stays on the right.</p>
+  <div class="scr">
+    <div class="mp" style="background:linear-gradient(90deg,var(--panel) 55%,rgba(23,26,34,.4)),var(--panel);border-color:rgba(69,193,92,.4)">
+      <div class="row"><span class="h1m">The Coiled Altar</span><span class="chip win">Wipe in P2 · Malacrass 66%</span><span class="phb"><i style="background:var(--good)"></i><i style="background:var(--good)"></i><i style="background:var(--raised)"></i><i style="background:var(--raised)"></i></span><span class="chip">Pull 21 · Mythic</span></div>
+      <div class="row sub" style="margin-top:4px"><span class="ok">✓ Best pull tonight</span><span>▲ further than last pull</span><span>9:08 PM · 4:33 · 20 players · 20 deaths</span></div>
+    </div>
+  </div>
+  <div class="nums"><span class="was">banner 189px</span><span class="now">about 112px</span></div>
+</div>
+
+<div class="p">
+  <div class="pt"><span class="k">2</span><b>One bar that stays with you</b><div class="tags"><span class="tag m">Medium</span></div></div>
+  <p>The tab bar already stays at the top while you scroll, which is good. But the boss picker, Live and the menu scroll away, so changing boss or pull from deep in Mechanics means scrolling back up. The tab bar's right end also repeats the banner ("Pull 21 · wipe in P2 · Malacrass 66% · 9:08 PM").</p>
+  <p>Proposal: once you scroll past the banner, the pinned bar also shows the boss, the pull with ‹ › arrows, and the menu, and the repeated pill goes.</p>
+  <div class="scr"><div class="mp row" style="justify-content:space-between">
+    <span class="row"><b>The Coiled Altar</b><span class="chip">‹ Pull 21 ›</span><span class="ba" style="font-size:12px">wipe · 66%</span></span>
+    <span class="tabs"><span>Latest pull</span><span>Assignments</span><span class="on">Mechanics</span><span>Performance</span><span>Summary</span><span>Player audit</span></span>
+    <span class="row"><span class="chip">Live: off</span><span class="chip">☰</span></span>
+  </div></div>
+  <p class="cap">Pinned while scrolling: everything you need to move around, in 49px.</p>
+</div>
+
+<h2>Each tab, before and after</h2>
+
+<h3>Latest pull: put "Fix first" beside "What went wrong"</h3>
+<p>"What went wrong" (248px) and "What went right" (76px) sit side by side, which leaves a large empty box under "What went right". "Fix first on the next pull" then sits below both and runs past the bottom of the screen. Moving "Fix first" into the right column, above "What went right", balances the two columns and puts the most useful panel on the first screen.</p>
+<div class="maps" data-map="latest"></div>
+<div class="scr">
+  <div class="two">
+    <div class="mp"><div class="h2m">What went wrong <span class="ba" style="float:right;font-size:12px">✕ 7 things</span></div>
+      <div class="line"><span class="ba">✕</span><span>First death: Shockabunga at 1:00 to Sever</span><span class="chip">Map</span></div>
+      <div class="line"><span class="ba">✕</span><span>Eternal Nightfall finished casting</span><span class="chip">Map</span></div>
+      <div class="line"><span class="ba">✕</span><span>Dreadmarch ×16: died from falling in P2</span><span class="chip">Map</span></div>
+      <div class="line"><span class="ba">✕</span><span>Wall of Terror: a Spiteful Soulcoiler got it off</span><span class="chip">Map</span></div></div>
+    <div class="stack">
+      <div class="mp" style="border-color:rgba(230,180,80,.5)"><div class="h2m gd">Fix first on the next pull</div><div class="sub">1. Keep Shockabunga alive: only the tank in front of the boss · 2. Eternal Nightfall: save cooldowns for every shield · 3. Dreadmarch: a stun plus a grip or ring for every one</div></div>
+      <div class="mp"><div class="h2m">What went right <span class="ok" style="float:right;font-size:12px">✓ 3 things</span></div><div class="sub">Best pull of the night so far · Tank frontals clean · Guillotine soaks</div></div>
+    </div>
+  </div>
+  <p class="cap">Mockup with pull 21's real results from your Oct 15 Coiled Altar night; the "Fix first" advice is shortened for the drawing.</p>
+</div>
+
+<h3>Mechanics: the first mechanic on the first screen</h3>
+<p>Before the first mechanic there are 163px of tiles and a 248px copy of "What went wrong / right" from Latest pull, so the list of mechanics starts at 892px. A one-line scoreboard instead of the tiles, without the copy, brings the list up to about 420px.</p>
+<div class="maps" data-map="mech"></div>
+
+<h3>Performance: the player bars on the first screen</h3>
+<p>On top of the bars sit the four kind buttons (80px), two tiles (83px), Damage checks (125px), the chart (230px) and the view buttons. Three changes bring the bars up by about 400px:</p>
+<ul>
+  <li>the kind buttons and the phase chips share one row;</li>
+  <li>Damage checks fold into one line (for example "Damage checks: ✕ 1 failed ▸") that opens on a click;</li>
+  <li>the chart is a little shorter (180px).</li>
+</ul>
+<div class="maps" data-map="perf"></div>
+<div class="p">
+  <div class="pt"><span class="k">+</span><b>Keep the player's details in view</b><div class="tags"><span class="tag s">Small</span></div></div>
+  <p>Click a player near the bottom of the bars and their breakdown opens at the top of the right column, out of sight. The bars column is 645px tall and the details 279px. Pinning the details panel as you scroll keeps it next to whoever you clicked.</p>
+</div>
+
+<h3>Assignments: fill the tile row</h3>
+<p>Six tiles sit in a row made for five, so "Healing cooldowns" ends up alone on a second row. Use six columns, or three by two. The same "What went wrong / right" imbalance shows up here, with 4 items next to 1, and the same fix applies.</p>
+<div class="tags"><span class="tag s">Small</span></div>
+
+<h3>Summary: two columns instead of one long page</h3>
+<p>Summary is 3,255px tall, all in one column. That's the report card, the night's chart, what ended pulls, then a Mechanics part and an Assignments part, each with its own report card and phase lists. On a big screen, the report cards and a "jump to" list could sit in a column on the right that stays in view, with the chart and the lists on the left. That roughly halves the length and keeps the grades visible while you read.</p>
+<div class="scr">
+  <div class="two">
+    <div class="stack">
+      <div class="mp"><div class="h2m">How far the night got</div><div class="sub">32 pulls · the chart of every pull</div><div style="height:46px;margin-top:6px;border-radius:6px;background:linear-gradient(180deg,rgba(106,168,255,.18),rgba(106,168,255,0))"></div></div>
+      <div class="mp"><div class="h2m">What ended the pulls</div><div class="sub">Tank frontal on a non-tank · Purple orb collision · Guillotine under-soaked</div></div>
+      <div class="mp"><div class="h2m">Mechanics, by phase</div><div class="sub">P1 Zul'jan · P2 Malacrass · Intermission · P3</div></div>
+    </div>
+    <div class="stack">
+      <div class="mp" style="border-color:rgba(230,180,80,.5)"><div class="h2m">The night's grades</div><div class="sub">Report card 60 · Mechanics 61 · Assignments 58</div></div>
+      <div class="mp"><div class="h2m">Jump to</div><div class="sub">What ended pulls · Mechanics · Assignments</div></div>
+      <div class="sub fa" style="padding:0 4px">(stays in view while scrolling)</div>
+    </div>
+  </div>
+  <p class="cap">The grades shown are this night's real ones, rounded.</p>
+</div>
+
+<h3>Player audit: MVP cards in one row</h3>
+<p>The MVP cards come in three rows by role. The tank row has one card and empty space for two more. On a wide screen, all six fit in one row (1 tank, 2 healers, 3 DPS), with the role over each card. That saves about 300px and reads like a podium.</p>
+<div class="tags"><span class="tag s">Small</span></div>
+
+<h3>Progress: three columns and a way back</h3>
+<p>The boss cards sit two to a row (613px each), so ten bosses make a 2,277px page. At 1600px and wider, three columns fit, and the page gets about a third shorter. Progress also has no tab bar, so the only way back to the report is the menu. A "‹ Back to the report" link at the top fixes that.</p>
+<div class="tags"><span class="tag s">Small</span></div>
+
+<h2>Small polish</h2>
+<div class="p">
+  <ul style="margin:0;padding-left:20px">
+    <li><b>Content jumps between tabs.</b> Most tabs start their content at 404px, but Summary and Player audit start at 397px, so switching tabs nudges everything. Start all tabs at the same height.</li>
+    <li><b>Gaps between panels vary</b> from 8px to 23px. Use one gap (14px) between panels, and a bigger one (24px) before a phase heading.</li>
+    <li><b>The start page sits 8px off</b> the header's left edge (340px vs 332px for the logo).</li>
+    <li><b>The pull strip's first card is clipped</b> under the ‹ arrow ("…17 …0%"). Keep the arrows outside the cards, or fade the edge.</li>
+    <li><b>Tooltips on tab names</b> pop up over the page when the mouse rests on a tab. The names explain themselves, so drop them.</li>
+    <li><b>Mechanics tiles:</b> 11 tiles in rows of 6 leave one empty slot. This goes away with the scoreboard line in the Mechanics proposal.</li>
+  </ul>
+</div>
+
+<h2>Suggested order</h2>
+<ol class="order">
+  <li><span><b>Quick, for Monday:</b> the small polish list, "Fix first" beside "What went wrong" (Latest pull and Assignments), the pinned Performance details, the Assignments tile row, and Progress's back link and three columns.</span></li>
+  <li><span><b>Next:</b> the compact banner, the pinned bar with ‹ › pulls, and the Mechanics and Performance reshuffles. These are the ones that move results onto the first screen.</span></li>
+  <li><span><b>After launch:</b> the wider column on big screens, the two-column Summary and the one-row MVP cards. These are bigger, and worth seeing on your own screen first.</span></li>
+</ol>
+
+<footer>Measured in the app on this PC with your team's Coiled Altar Mythic night (Oct 15) and Twin Fangs Mythic kill (Oct 14), at 1920×1080 and 1440×900. Page maps are drawn at 30% scale.</footer>
+</div>
+
+<script>
+// page maps: [top, height, label, kind] in real pixels on a 1920x1080 screen; drawn at 30%
+(function () {
+  var S = 0.3, FOLD = 1080;
+  var HEAD = [[0, 55, 'Top bar', 'hd'], [67, 189, 'Banner'], [266, 61, 'Pull strip + wipe filter'], [337, 49, 'Tabs', 'hd']];
+  var HEAD2 = [[0, 55, 'Top bar', 'hd'], [63, 112, 'Banner (compact)'], [183, 56, 'Pull strip'], [247, 49, 'Tabs (pinned, with ‹ › pulls)', 'hd']];
+  var MAPS = {
+    latest: { len: 1300,
+      now: HEAD.concat([[404, 53, 'Not the latest pull'], [471, 83, 'Tiles'], [568, 295, 'What went wrong|What went right', 'split'], [875, 212, 'Fix first on the next pull', 'key']]),
+      new: HEAD2.concat([[308, 40, 'Not the latest pull'], [360, 83, 'Tiles'], [455, 300, 'What went wrong|Fix first + What went right', 'split key']]) },
+    mech: { len: 1300,
+      now: HEAD.concat([[404, 30, 'Wipe filter line'], [448, 163, '12 mechanic tiles'], [623, 248, 'Wrong / right (copy of Latest pull)'], [892, 378, 'First mechanics (P1)', 'key'], [1293, 378, 'P2 mechanics']]),
+      new: HEAD2.concat([[308, 30, 'Wipe filter line'], [350, 56, 'Scoreboard, one line'], [418, 378, 'Mechanics, most important first', 'key'], [808, 378, 'More mechanics']]) },
+    perf: { len: 1300,
+      now: HEAD.concat([[404, 36, 'Pull / phase chips'], [449, 80, 'Damage · Healing · Taken · Utility'], [540, 83, 'Tiles'], [637, 125, 'Damage checks'], [776, 230, 'Chart'], [1020, 33, 'Views'], [1065, 645, 'Player bars|Details', 'split key']]),
+      new: HEAD2.concat([[308, 60, 'Kinds + phase chips, one row'], [380, 40, 'Damage checks, one line ▸'], [432, 180, 'Chart'], [624, 33, 'Views'], [669, 645, 'Player bars|Details (pinned)', 'split key']]) }
+  };
+  var draw = function (blocks, len) {
+    var page = document.createElement('div'); page.className = 'page'; page.style.height = Math.round(len * S) + 'px';
+    blocks.forEach(function (b) {
+      var d = document.createElement('div'), kinds = (b[3] || '').split(' ');
+      d.className = 'blk' + kinds.map(function (k) { return k ? ' ' + k : ''; }).join('');
+      d.style.top = Math.round(b[0] * S) + 'px'; d.style.height = Math.max(6, Math.round(b[1] * S) - 2) + 'px';
+      if (kinds.indexOf('split') >= 0) { b[2].split('|').forEach(function (t) { var i = document.createElement('i'); i.textContent = t; d.appendChild(i); }); }
+      else if (b[1] * S >= 13) d.textContent = b[2];
+      d.title = b[2] + ' (' + b[1] + 'px)';
+      page.appendChild(d);
+    });
+    var f = document.createElement('div'); f.className = 'fold'; f.style.top = Math.round(FOLD * S) + 'px';
+    var s = document.createElement('span'); s.textContent = 'bottom of a 1080 screen'; f.appendChild(s); page.appendChild(f);
+    return page;
+  };
+  document.querySelectorAll('[data-map]').forEach(function (host) {
+    var m = MAPS[host.getAttribute('data-map')]; if (!m) return;
+    [['Now', m.now, ''], ['Proposed', m.new, ' new']].forEach(function (x) {
+      var w = document.createElement('div'); w.className = 'map';
+      var l = document.createElement('div'); l.className = 'lab' + x[2]; l.textContent = x[0]; w.appendChild(l);
+      w.appendChild(draw(x[1], m.len)); host.appendChild(w);
+    });
+  });
+})();
+</script>
