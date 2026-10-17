@@ -11,6 +11,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 107: live logging leads the website
+- [x] The website's start page leads with **Live logging**: one big box for your raid's Warcraft Logs live log ("Go live"). Each pull shows up about a minute after it ends. "How to live log" opens three short steps (the uploader's Live Log, copy its link, paste it).
+- [x] Under it, the second box: **Looking at a finished night?** Paste any report link, or open a combat log from this PC.
+- [x] A live log opened before the raid's first boss pull now shows "Live: waiting for the first pull" and keeps checking, instead of "That report has no boss pulls". The first pull opens by itself.
+- How it works: the Warcraft Logs uploader watches the logger's combat log and sends each pull to Warcraft Logs; Debrief asks Warcraft Logs every 30 seconds for anything new.
+- [x] Checked on the live site: desktop and phone width, How to live log, Go live on a report (live on, opens Latest pull), and the waiting screen.
+
 ## 2026-10-17, round 106: auto-live, a simpler website start page, a new slogan
 - [x] **Auto-live**: open any Warcraft Logs report that's still being logged (its last event under 10 minutes old), and Debrief turns live on by itself. "This report is still being logged…" pops up, and new pulls appear as they end. It works on the website and on your PC.
 - [x] Following a report live turns itself off after 45 minutes with no change ("Live is off… turn it back on at the top"), so a tab left open overnight doesn't keep asking.

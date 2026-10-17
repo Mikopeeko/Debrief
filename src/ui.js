@@ -5476,24 +5476,31 @@ if (!WCL.HOSTED && location.protocol === 'http:' && location.hostname === 'local
   }
 }
 
-async function openWcl(link, creds) {
-  const rep = await WCL.loadReport(creds, link.code);
+// live: opened as a live log (Go live), so it's followed even before its first boss pull
+async function openWcl(link, creds, live) {
+  const rep = await WCL.loadReport(creds, link.code, live);
   if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); } // (opening a report stops watching the local log)
   S.file = null; S.wclCreds = creds; S.wclCode = link.code; CACHE.clear();
   S.index = { bosses: rep.bosses, runs: [] };
   $('.brand p').textContent = 'Warcraft Logs: ' + (rep.title || link.code);
   renderList();
-  if (!rep.bosses.length) throw new Error(rep.dungeons ? 'That report only has dungeon runs, and this site is for raids.' : 'That report has no boss pulls.');
-  const pick = (link.fight && rep.bosses.find((b) => b.wcl.fight === link.fight)) || rep.bosses[rep.bosses.length - 1];
-  LIVE.seen.clear(); liveUi();
   // live mode survives the auto-reload after an app update
   let wasLive = false; try { wasLive = sessionStorage.getItem('wla-live') === '1'; } catch (e) { /* ignore */ }
   // a report someone is still live logging (its last event only minutes old) is followed live without being asked
-  const still = rep.endMs && Date.now() - rep.endMs < LIVE_FRESH;
-  LIVE.endMs = rep.endMs;
-  if ((wasLive || still) && !LIVE.on) {
+  const still = rep.endMs && Date.now() - rep.endMs < LIVE_FRESH, follow = live || wasLive || still;
+  LIVE.seen.clear(); LIVE.endMs = rep.endMs; liveUi();
+  if (!rep.bosses.length) {
+    if (rep.dungeons || !follow) throw new Error(rep.dungeons ? 'That report only has dungeon runs, and this site is for raids.' : 'That report has no boss pulls.');
+    // (a live log before the raid's first boss pull: wait for it instead of an error; the first pull opens by itself)
+    S.item = null; S.rep = null; $('#bossHead').innerHTML = '';
+    $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>Live: waiting for the first pull</h2><p class="muted">Following <b>' + esc(rep.title || link.code) + '</b>. Each boss pull shows up here about a minute after it ends. Keep this tab open during raid.</p></div></div>';
+    if (!LIVE.on) setLive(true);
+    return;
+  }
+  const pick = (link.fight && rep.bosses.find((b) => b.wcl.fight === link.fight)) || rep.bosses[rep.bosses.length - 1];
+  if (follow && !LIVE.on) {
     setLive(true);
-    if (still && !wasLive) toast('<span><b>Live</b> This report is still being logged, so new pulls show up here as they end.</span>', 9000);
+    if (still && !live && !wasLive) toast('<span><b>Live</b> This report is still being logged, so new pulls show up here as they end.</span>', 9000);
   }
   select(pick);
 }
@@ -5815,8 +5822,7 @@ function home() {
       let creds = null;
       if (!WCL.HOSTED) { const j = await fetch('/wcl/login').then((r) => r.json()).catch(() => ({})); if (!j.saved) { try { sessionStorage.setItem('wla-live', live ? '1' : ''); } catch (e) { /* ignore */ } wclPanel('Connect Warcraft Logs once, then click Load report.', raw); return; } creds = { id: j.id, secret: '' }; }
       try { sessionStorage.setItem('wla-live', live ? '1' : ''); } catch (e) { /* ignore */ }
-      await openWcl(link, creds);
-      if (live && !LIVE.on) setLive(true);
+      await openWcl(link, creds, live);
     } catch (err) { msg.style.color = ''; msg.textContent = err.message; }
   };
   $('#hLiveGo').onclick = () => go('hLive', 'hLiveMsg', true);
@@ -5847,24 +5853,33 @@ function homeHosted() {
   const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
   $('#main').innerHTML = '<div class="home fp fph">' +
     '<section class="fph-hero" id="fpStart"><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1>' +
-      '<p class="fp-lead">Paste a Warcraft Logs link. Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
-      '<div class="fph-box"><input id="hWcl" placeholder="Paste a Warcraft Logs link" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
-      '<div class="fph-live">' + HICO.live + '<span><b>Raiding right now?</b> Paste the live log link. New pulls show up here as they end.</span></div>' +
-      '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or drop it anywhere on this page.</div></section>' +
+      '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
+      '<div class="fph-main"><div class="fph-h">' + HICO.live + '<b>Live logging</b><span>during raid</span></div>' +
+        '<div class="fph-box"><input id="hLive" placeholder="Paste your raid\'s live log link" autocomplete="off" aria-label="Warcraft Logs live log link"><button class="btn primary" id="hLiveGo">Go live</button></div><div class="fp-msg" id="hLiveMsg"></div>' +
+        '<div class="fph-note">Each pull shows up here about a minute after it ends. <button class="linkbtn" id="hHow" type="button" aria-expanded="false">How to live log</button></div>' +
+        '<ol class="fph-how" id="hHowList" hidden><li>Whoever logs for the raid opens the Warcraft Logs uploader and starts <b>Live Log</b>.</li><li>Copy the live log\'s link (it\'s on warcraftlogs.com too, under your guild\'s reports).</li><li>Paste it above and keep this tab open during raid.</li></ol></div>' +
+      '<div class="fph-sec"><div class="fph-sl">Looking at a finished night?</div>' +
+        '<div class="fph-box sm"><input id="hWcl" placeholder="Paste any Warcraft Logs report link" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
+        '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or drop it anywhere on this page.</div></div></section>' +
     '<section class="fph-prev"><h2>What you get</h2>' +
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
     '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
-  const go = async () => {
-    const link = WCL.parseLink($('#hWcl').value), msg = $('#hWclMsg');
-    if (!link) { msg.style.color = ''; msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; }
-    msg.style.color = 'var(--muted)'; msg.textContent = 'Opening the report…'; $('#hWclGo').disabled = true;
-    try { await openWcl(link, null); } catch (err) { if ($('#hWclGo')) { $('#hWclGo').disabled = false; msg.style.color = ''; msg.textContent = err.message; } }
+  // (either box takes any report link: the live one follows it from the start, the other turns live on by itself if the
+  // report is still being logged)
+  const go = async (k, live) => {
+    const inp = $('#h' + k), btn = $('#h' + k + 'Go'), msg = $('#h' + k + 'Msg'), link = WCL.parseLink(inp.value);
+    if (!link) { msg.style.color = ''; msg.textContent = 'That doesn\'t look like a Warcraft Logs link.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = live ? 'Opening the live log…' : 'Opening the report…'; btn.disabled = true;
+    try { await openWcl(link, null, live); } catch (err) { if (document.body.contains(btn)) { btn.disabled = false; msg.style.color = ''; msg.textContent = err.message; } }
   };
-  $('#hWclGo').onclick = go;
-  $('#hWcl').onkeydown = (e) => { if (e.key === 'Enter') go(); };
-  $('#hWcl').onpaste = () => setTimeout(() => { if (WCL.parseLink($('#hWcl').value)) go(); }, 50); // (a pasted link opens at once)
+  for (const [k, live] of [['Live', true], ['Wcl', false]]) {
+    $('#h' + k + 'Go').onclick = () => go(k, live);
+    $('#h' + k).onkeydown = (e) => { if (e.key === 'Enter') go(k, live); };
+    $('#h' + k).onpaste = () => setTimeout(() => { if (WCL.parseLink($('#h' + k).value)) go(k, live); }, 50); // (a pasted link opens at once)
+  }
+  $('#hHow').onclick = () => { const l = $('#hHowList'); l.hidden = !l.hidden; $('#hHow').setAttribute('aria-expanded', String(!l.hidden)); };
   $('#hFileGo').onclick = () => $('#fileIn').click();
   bindFront(true);
 }
