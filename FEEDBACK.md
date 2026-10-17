@@ -91,6 +91,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   show what hit only that role (tanks, say), and it follows the phase buttons and the wipe filter.
 - [x] Beside it, "What to look at": the avoidable sources (and who took the most of each) and what killed people.
 - [x] On the Players view, the right side's "What hit the raid hardest" rows now open that source in Damage sources.
+- [x] **Drawn like the Players bars** (your note): the same big bars, ranked, each in its damage school's colour (striped
+  red for the avoidable part), with per second and the avoidable share. Pick one, like picking a player: who took it shows
+  on the right (players hit, hits, biggest hit, avoidable, deaths) and the chart shows that ability's own line. The top 20
+  show; the small ones are behind "Show more".
 
 ## 2026-10-17, round 141: launch prep (Performance on the website, loading screens, tips, the website tested)
 - [x] **Performance is on for the website** (it was greyed out): the Players grades are half the Report card, so raiders
