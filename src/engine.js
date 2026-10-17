@@ -149,10 +149,16 @@ const PACKS = [
   { type: 'avoidable', spellIds: [1295798], name: 'Plague Wave', severity: 'High', tip: 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.' },
   { type: 'avoidable', spellIds: [1286737], name: 'Umbral Ejection', severity: 'Medium', tip: 'Step out of the circles a Shrouded Venom leaves when it dies.' },
 ]},
-{ encounter: 'The Lost Explorers', sources: SRC, rules: [
-  { type: 'avoidable', name: 'Aftershock', severity: 'Medium', tip: 'Avoid the Aftershock craters.' },
-  { type: 'bossBuff', name: 'United Defense', severity: 'High', tip: 'All three explorers were within 30 yards of each other. Keep at most two of them together.' },
-  { type: 'raidFail', name: 'Relic Rupture', severity: 'High', difficulties: ['Mythic'], tip: 'A box glowed green and ruptured on the raid. Your box popper needs to keep popping on the 2-stacks rhythm.' },
+// (Lost Explorers: spell IDs checked against real Mythic pulls, 2026-10; the fight module covers boxes, United Defense,
+// Final Ascension, Frostfire, Blink Nova, Mighty Thud, the bomb and tank stacks)
+{ encounter: 'The Lost Explorers', sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
+  { type: 'avoidable', spellIds: [1310500], name: 'Aftershock', severity: 'Medium', tip: 'Step out of the Aftershock craters Mighty Thud leaves; they last 30 seconds.' },
+  { type: 'avoidable', spellIds: [1292764], name: 'Evil Eyes', severity: 'Medium', tip: 'Stay out of the flame puddles the statues leave.' },
+  { type: 'bossBuff', spellIds: [1297646], name: 'United Defense', severity: 'High', tip: 'All three explorers were within 30 yards of each other. Keep at most two of them together.' },
+  { type: 'raidFail', name: 'Relic Rupture', severity: 'High', tip: 'A box glowed green and ruptured on the raid. Your box popper needs to keep popping on the 2-stacks rhythm.' },
+  { type: 'raidFail', spellIds: [1292780], name: 'Final Ascension', severity: 'High', tip: 'Final Ascension went off before a fish stopped it. Feed the Disgusting Fish with about 4 seconds left on the cast.' },
+  { type: 'interrupt', spellIds: [1286922], name: 'Icebound Flames', severity: 'Medium', tip: "Interrupt Iku's Icebound Flames; dispel it if a kick is missed." },
+  { type: 'debuff', spellIds: [1291918], name: 'Shell Spin', severity: 'Low', tip: "Stunned by Shell Spin: don't stand in front of Nama; melee bait it toward the room's edge." },
 ]},
 // (Sszorak: spell IDs checked against real Mythic pulls, 2026-10. A Tempest touch and its stacking DoT share an ID, so it
 // counts touches, not ticks. Unbound Ferocity, the Serpent's Fury enrage, is flagged by the fight module with why.)
@@ -439,6 +445,17 @@ const VS = {
   totem: 1306820, malignance: 1304459, // Mythic: Malignant Totem (summoned at each Imbibe), Malignance (each totem's cast: it goes off at the next Imbibe)
 };
 const VS_IDS = Object.values(VS).flat();
+// The Lost Explorers spell IDs, read from real Mythic pulls on Warcraft Logs (Sep to Oct 2026). Matched by ID (MODULES
+// entry `ids`); Blast Wave, Elemental Explosion and the death enrages (not in those pulls) by name.
+const LE = {
+  transform: { 1292786: 'Gebbo', 1292784: 'Iku', 1292785: 'Nama' }, // Mor'zahi taking over an explorer (its aura): that explorer's turn
+  fish: 1292490, ascension: 1292779, ascensionHit: 1292780, united: 1297646, // a Disgusting Fish fed, Final Ascension (the cast; its raid damage), United Defense (all three within 30 yd)
+  junk: 1291933, rupture: 1310028, splinters: 1312853, // Throw Junk (the boxes), Relic Rupture (a box left too long), Splinters (Mythic: the raid's bleed at every box pop)
+  bomb: 1297625, bounce: 1299854, // Gebbo: Explosive Surprise (the bomb on a player), Bounce (launched by a mushroom, over the Blast Wave)
+  volley: 1295891, flames: 1295928, frost: 1295954, blink: 1296025, blinkHit: 1294334, kick: 1286922, shards: 1295858, // Iku: Frostfire Volley, Burning Flames, Piercing Frost, Blink Nova (the target; the raid hit), Icebound Flames, Shredding Shards (tank)
+  thud: 1296133, thudHit: 1300237, aftershock: 1310500, spin: 1291918, steady: 1291929, // Nama: Mighty Thud (each leap; its split hit), Aftershock, Shell Spin (the stun), Steady Strikes (tank)
+};
+const LE_IDS = Object.keys(LE.transform).map(Number).concat(Object.values(LE).filter((v) => typeof v !== 'object' || Array.isArray(v)).flat());
 // Latent Cultist puddles closer than this to the well's centre (yards) are in the way (the guides: get dispelled at the
 // side of the room). My call, from where Wolfthorn's Mythic kills dropped them.
 const NZ_EDGE = 25;
@@ -537,6 +554,13 @@ const MODULES = [{
   focus: new Set(["Nek'zali the Soulcoiler", "Nek'zali, the Soulcoiler"]),
   priority: ['Restless Amani', 'Drowned Echo', 'Echo of Jawae'],
   build: buildNekzali,
+}, {
+  encounter: 'The Lost Explorers',
+  units: ['Useless Junk', 'Bouncy Mushroom', 'Explosive Bomb', 'Disgusting Fish'], // drawn on maps
+  spells: ['blast wave', 'elemental explosion', 'fungal burst', 'smashing shovel', 'cataclysmic invocation', 'relentless escalation'], // (by name: not in the pulls the IDs came from)
+  ids: LE_IDS,
+  focus: new Set(['Scrollsage Iku', 'Trader Gebbo', 'First Mate Nama', "Mor'zahi"]),
+  build: buildLostExplorers,
 }, {
   encounter: 'Vashnik the Malignant',
   units: ['Burning Venom', 'Shrouded Venom', 'Clotting Venom', 'Malignant Totem'], // drawn on maps
@@ -2208,6 +2232,183 @@ function buildVashnik(ev, r, h) {
     legend: 'Grouped by mechanic: Imbibe and the adds, Plague Froth' + (mythic ? ' and the totems' : '') + ', the Catalyst soaks, the infections, the tanks, then deaths and avoidable damage.', note: mythic ? '' : 'Mythic-only checks (Malignant Totems) are hidden on this difficulty.' };
 }
 
+function buildLostExplorers(ev, r, h) {
+  const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const dur = r.duration, mythic = r.item.diff === 'Mythic', pname = (g) => h.name(g), T = h.fmtT;
+  const fmtM = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
+  const mistakes = [], sections = [], marks = [];
+  const M = (t, player, mech, severity, detail, fix, map) => mistakes.push({ t, player, mechanic: mech, id: 0, severity, detail, fix, ...(map ? { map } : {}) });
+  const L = (x) => String(x || '').toLowerCase();
+  const has = (e, ids) => [].concat(ids).includes(e.id);
+  const dmgId = (ids) => ev.filter((e) => e.k === 'dmg' && has(e, ids) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
+  const dmgName = (n) => ev.filter((e) => e.k === 'dmg' && L(e.spell) === n && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
+  const AUR = new Map(), aur = (id) => { const k = String(id); if (!AUR.has(k)) AUR.set(k, ev.filter((e) => e.k === 'aura' && has(e, id)).sort((a, b) => a.t - b.t)); return AUR.get(k); };
+  const gap1 = (l) => l.sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 1);
+  const castOk = (ids) => gap1(ev.filter((e) => e.k === 'cast' && has(e, ids)).map((e) => e.t));
+  const starts = (ids) => gap1(ev.filter((e) => e.k === 'start' && has(e, ids)).map((e) => e.t));
+  const frames = (t0, t1) => h.frames(Math.max(0, t0), Math.min(dur, t1), 0.25);
+  const clusters = (list, gap) => { const out = []; for (const e of list) { const c = out[out.length - 1]; if (c && e.t - c.t1 < gap) { c.t1 = e.t; c.list.push(e); } else out.push({ t: e.t, t1: e.t, list: [e] }); } return out; };
+  const deadBy = (re, t0, t1) => r.deaths.filter((d) => d.t >= t0 && d.t <= t1 && h.isPlayer(d.guid) && re.test(d.ability || ''));
+
+  // ---- the turns: Mor'zahi takes over one explorer at a time (its empowered moves); a fish ends the turn ----
+  const tr = ev.filter((e) => e.k === 'aura' && e.op === 'apply' && LE.transform[e.id]).sort((a, b) => a.t - b.t).filter((e, i, a) => !i || e.t - a[i - 1].t > 5);
+  const phases = [{ name: 'The pull', start: 0, end: tr.length ? tr[0].t : dur }];
+  tr.forEach((e, i) => { phases.push({ name: LE.transform[e.id] + '\'s turn', start: e.t, end: tr[i + 1] ? tr[i + 1].t : dur }); marks.push({ t: e.t, label: LE.transform[e.id] + '\'s turn', id: e.id, kind: 'phase' }); });
+  const phOf = (t) => [...phases].reverse().find((p) => t >= p.start - 0.5).name;
+
+  // ---- 1. boxes: every box popped before it glows (Relic Rupture); on Mythic each pop bleeds the raid (Splinters) ----
+  {
+    const born = new Map(), spl = aur(LE.splinters).filter((e) => (e.op === 'apply' || e.op === 'dose') && h.isPlayer(e.dst));
+    // (a box is a Useless Junk unit; its life runs from the first event that names it to its death, or its rupture)
+    for (const e of ev) {
+      if (e.k === 'cast' && e.id === LE.rupture && !born.has(e.src)) born.set(e.src, { g: e.src, t: e.t - 16, died: null, rupt: e.t });
+      if (e.k === 'cast' && e.id === LE.rupture && born.has(e.src)) born.get(e.src).rupt = e.t;
+    }
+    for (const e of ev) if (e.k === 'die' && /useless junk/i.test(e.name || '')) { if (!born.has(e.guid)) born.set(e.guid, { g: e.guid, t: null, died: e.t, rupt: null }); else if (born.get(e.guid).died == null) born.get(e.guid).died = e.t; }
+    // (when it landed: about 3 s after the Throw Junk that threw it, the last throw before it was popped)
+    const throws = castOk(LE.junk);
+    for (const b of born.values()) { const end = b.rupt ?? b.died, th = throws.filter((x) => x <= end - 0.5 && end - x < 40).pop(); b.t = th != null ? th + 3 : null; }
+    const boxes = [...born.values()].filter((b) => b.died != null || b.rupt != null).sort((a, b) => (a.rupt ?? a.died) - (b.rupt ?? b.died));
+    const stackAt = (t) => { let mx = 0; for (const e of spl) { if (e.t < t - 0.2) continue; if (e.t > t + 0.8) break; mx = Math.max(mx, e.stacks || 1); } return mx; };
+    const rupDead = deadBy(/relic rupture/i, 0, dur), splDead = deadBy(/splinters/i, 0, dur);
+    for (const b of boxes.filter((x) => x.rupt != null)) { const d = rupDead.filter((x) => x.t >= b.rupt - 0.2 && x.t <= b.rupt + 3);
+      M(b.rupt, 'Raid', 'Relic Rupture', 'High', 'A box was left until it glowed and ruptured on the raid' + (d.length ? ': ' + pl(d.length, 'player') + ' died.' : '.'), 'Pop every box before it glows green (a dedicated popper, on a steady rhythm).'); }
+    const groups = phases.map((p) => {
+      const list = boxes.filter((b) => { const t = b.rupt ?? b.died; return t >= p.start - 0.5 && t < p.end - 0.5 || (p === phases[phases.length - 1] && t >= p.start - 0.5); });
+      if (!list.length) return null;
+      const rows = list.map((b, j) => {
+        const popped = b.rupt == null && b.died != null, st = popped && mythic ? stackAt(b.died) : 0, d = popped ? splDead.filter((x) => x.t >= b.died && x.t <= b.died + 6) : [];
+        if (st >= 4) M(b.died, 'Raid', 'Splinters', d.length ? 'High' : 'Medium', 'A box was popped with the raid going to ' + st + ' Splinters stacks' + (d.length ? ': ' + d.map((x) => x.player).join(', ') + ' died to the bleed.' : '.'), 'Pop on a rhythm: two stacks, let them drop, two more.');
+        return [{ txt: 'Box ' + (j + 1) }, { t: b.rupt ?? b.died }, b.rupt != null ? { txt: 'ruptured', bad: true, sub: 'left until it glowed' } : { txt: b.t != null ? 'popped after ' + Math.max(0, Math.round(b.died - b.t)) + ' s' : 'popped' },
+          mythic && popped ? (d.length ? { txt: st + ' Splinters stacks', bad: true, sub: d.map((x) => x.player).join(', ') + ' died' } : { txt: st ? st + ' Splinters stack' + (st > 1 ? 's' : '') : '—', warn: st >= 4, dim: !st }) : { txt: '—', dim: true }, { txt: '' }];
+      });
+      return { title: 'Boxes, ' + p.name, t: list[0].rupt ?? list[0].died, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[3].warn), sub: pl(list.length, 'box') .replace('boxs', 'boxes') + (list.some((b) => b.rupt != null) ? ', ' + list.filter((b) => b.rupt != null).length + ' ruptured' : ', none ruptured'), rows };
+    }).filter(Boolean);
+    if (groups.length) sections.push({ id: 'boxes', title: 'Boxes: popped before they glow', spell: [LE.rupture, 'Relic Rupture'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(boxes.length, 'box').replace('boxs', 'boxes') + '. Each one popped or left to rupture' + (mythic ? ', and the raid\'s Splinters stacks right after each pop (two at a time is the rhythm).' : '.'), cols: ['Box', 'When', 'Result', mythic ? 'Splinters' : '', ''], groups, rows: [] });
+  }
+
+  // ---- 2. United Defense: all three explorers within 30 yards of each other (99% less damage taken) ----
+  {
+    const ud = aur(LE.united).filter((e) => !h.isPlayer(e.dst)), on = clusters(ud.filter((e) => e.op === 'apply'), 2);
+    const rows = on.map((c) => { const off = ud.find((e) => e.op === 'remove' && e.t >= c.t); const len = (off ? off.t : dur) - c.t;
+      M(c.t, 'Raid', 'United Defense', len > 5 ? 'High' : 'Medium', 'All three explorers came within 30 yards of each other: United Defense (99% less damage taken) for ' + len.toFixed(1) + ' s.', 'Keep at most two explorers together; tanks move them apart as soon as a third gets close.');
+      return [{ txt: 'United Defense' }, { t: c.t }, { txt: 'up for ' + len.toFixed(1) + ' s', warn: len <= 5, bad: len > 5 }, { txt: phOf(c.t), dim: true },
+        { map: { t: c.t + 0.3, title: 'United Defense at ' + T(c.t), pts: h.snap(c.t + 0.3), frames: frames(c.t - 4, c.t + Math.min(len, 6) + 1) } }]; });
+    sections.push({ id: 'united', title: 'United Defense: explorers kept apart', spell: [LE.united, 'United Defense'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.length ? 'warn' : 'good',
+      summary: rows.length ? pl(rows.length, 'time') + ' all three explorers came within 30 yards of each other.' : 'All three explorers were never within 30 yards of each other.', cols: ['What', 'When', 'Result', 'Turn', ''], rows });
+  }
+
+  // ---- 3. Final Ascension: fed a fish in time, every time ----
+  {
+    const fish = castOk(LE.fish), asc = starts(LE.ascension), hits = dmgId(LE.ascensionHit);
+    const rows = fish.map((t, k) => [{ txt: 'Fish ' + (k + 1) }, { t }, { txt: 'fed' }, { txt: phOf(t + 1), dim: true }]);
+    for (const c of clusters(hits, 3)) {
+      const who = new Set(c.list.map((e) => e.dst)), died = deadBy(/final ascension/i, c.t, c.t1 + 2);
+      M(c.t, 'Raid', 'Final Ascension', 'High', 'Final Ascension went off on the raid (' + pl(who.size, 'player') + ' hit' + (died.length ? ', ' + pl(died.length, 'death') : '') + ') before a fish stopped it.', 'Feed the Disgusting Fish in time, every time (about 4 seconds left on the cast); the fourth time it can\'t be stopped.');
+      rows.push([{ txt: 'Final Ascension' }, { t: c.t }, { txt: 'went off', bad: true, sub: pl(who.size, 'player') + ' hit for ' + (c.t1 - c.t + 0.5).toFixed(1) + ' s' }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true }]);
+    }
+    asc.filter((t) => !hits.some((e) => e.t >= t && e.t <= t + 9)).forEach((t) => rows.push([{ txt: 'Final Ascension cast' }, { t }, { txt: 'stopped by the fish' }, { txt: '' }]));
+    rows.sort((a, b) => a[1].t - b[1].t);
+    if (rows.length) sections.push({ id: 'ascension', title: 'Final Ascension: a fish in time', spell: [LE.fish, 'Disgusting Fish'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good', info: !rows.some((x) => x[2].bad),
+      summary: pl(fish.length, 'fish') + ' fed. Every Final Ascension cast, and any that went off on the raid.', cols: ['What', 'When', 'Result', 'Turn'], rows });
+  }
+
+  // ---- 4. Iku: Frostfire Volley (clear Burning Flames in a frost patch, Piercing Frost in a fire patch) and Blink Nova ----
+  {
+    const vol = castOk(LE.volley), fl = aur([LE.flames, LE.frost]).filter((e) => h.isPlayer(e.dst)), boom = dmgName('elemental explosion');
+    const groups = vol.map((t, i) => {
+      const next = vol[i + 1] ?? Infinity, got = fl.filter((e) => e.op === 'apply' && e.t >= t && e.t <= t + 4);
+      const rows = got.map((e) => {
+        const rm = fl.find((x) => x.op === 'remove' && x.dst === e.dst && x.id === e.id && x.t > e.t), tE = rm ? rm.t : dur, d = r.deaths.find((x) => x.guid === e.dst && x.t >= e.t && x.t <= tE + 0.3);
+        const late = !d && tE > next - 0.2, type = e.id === LE.flames ? 'Burning Flames' : 'Piercing Frost';
+        if (late) M(next, pname(e.dst), type, 'High', 'Still had ' + type + ' when the next Frostfire Volley landed (an Elemental Explosion risk).', 'Clear it before the next volley: stand in the other element\'s patch (frost patch for Burning Flames, fire patch for Piercing Frost).');
+        if (d) M(d.t, pname(e.dst), type, 'High', 'Died with ' + type + ' still on.', 'Clear it right away in the other element\'s patch.');
+        return [{ p: pname(e.dst), sub: type }, { t: tE }, d ? { txt: 'died with it', bad: true } : late ? { txt: 'still on at the next volley', bad: true } : { txt: 'cleared after ' + (tE - e.t).toFixed(1) + ' s', warn: tE - e.t > 8 }, { txt: '' }];
+      });
+      const bb = boom.filter((e) => e.t >= t && e.t < next);
+      if (bb.length) { M(bb[0].t, 'Raid', 'Elemental Explosion', 'High', 'Elemental Explosion went off on the raid: a volley hit someone still carrying the other element.', 'Clear Burning Flames and Piercing Frost before the next volley, every time.'); rows.push([{ txt: 'Elemental Explosion' }, { t: bb[0].t }, { txt: 'went off', bad: true }, { txt: '' }]); }
+      return { title: 'Frostfire Volley ' + (i + 1), t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(got.length, 'player') + ' hit' + (rows.some((x) => x[2].bad) ? '' : ', all cleared'), rows };
+    }).filter((g) => g.rows.length);
+    if (groups.length) sections.push({ id: 'frostfire', title: 'Frostfire Volley: cleared before the next', spell: [LE.volley, 'Frostfire Volley'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'volley') + '. When each player cleared their Burning Flames or Piercing Frost, and any still on at the next volley.', cols: ['Player', 'Cleared', 'Result', ''], groups, rows: [] });
+
+    const bA = aur(LE.blink).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bH = dmgId(LE.blinkHit);
+    const rows = bA.map((e) => {
+      const hits = bH.filter((x) => x.t >= e.t + 5 && x.t <= e.t + 9), tm = hits.length ? hits[0].t : e.t + 7, died = deadBy(/blink nova/i, tm - 0.2, tm + 2), who = new Set(hits.map((x) => x.dst));
+      for (const d of died) M(d.t, d.player, 'Blink Nova', 'High', 'Died to Blink Nova.', 'Spread out for Blink Nova; its target moves at least 20 yards from the melee and away from the raid.');
+      return [{ p: pname(e.dst) }, { t: tm }, { txt: who.size ? fmtM(hits.reduce((s, x) => s + (x.raw || x.amt), 0) / who.size) + ' each on average' : '—', dim: !who.size }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
+        { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1) } }];
+    });
+    if (rows.length) sections.push({ id: 'blink', title: 'Blink Nova: spread, target away from the raid', spell: [LE.blink, 'Blink Nova'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good',
+      summary: pl(rows.length, 'Blink Nova') + '. Its target, what it cost the raid, and deaths to it.', cols: ['Target', 'When', 'Raid damage', 'Died', ''], rows });
+  }
+
+  // ---- 5. Nama: Mighty Thud (three leaps, each split by everyone under it) ----
+  {
+    const leaps = castOk(LE.thud), hit = dmgId(LE.thudHit), groups = [];
+    for (const c of clusters(leaps.map((t) => ({ t })), 6)) {
+      const rows = c.list.map((l, k) => {
+        const who = [...new Set(hit.filter((e) => e.t >= l.t - 0.2 && e.t <= l.t + 0.8).map((e) => e.dst))], died = deadBy(/mighty thud/i, l.t - 0.2, l.t + 1.5);
+        if (!who.length) M(l.t, 'Raid', 'Mighty Thud', 'High', 'Nobody was under Mighty Thud leap ' + (k + 1) + ': the whole raid took the full hit.', 'Line up away from Nama and soak all three leaps: everyone takes the first, then gets knocked into the next.');
+        for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split; a defensive if your health is low.');
+        return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
+          { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 2, l.t + 1) } }];
+      });
+      groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: rows.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
+    }
+    if (groups.length) sections.push({ id: 'thud', title: 'Mighty Thud: every leap soaked', spell: [1296094, 'Mighty Thud'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'Mighty Thud') + '. Who was under each of the three leaps, and deaths to them.', cols: ['Leap', 'When', 'Soakers', 'Died', ''], groups, rows: [] });
+  }
+
+  // ---- 6. Gebbo: Explosive Surprise (bounce over the Blast Wave with a mushroom) ----
+  {
+    const bm = aur(LE.bomb).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bo = aur(LE.bounce).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bw = dmgName('blast wave'), fb = dmgName('fungal burst');
+    const rows = bm.map((e) => {
+      const t1 = e.t + 30, up = [...new Set(bo.filter((x) => x.t >= e.t && x.t <= t1).map((x) => x.dst))], hitW = [...new Set(bw.filter((x) => x.t >= e.t && x.t <= t1).map((x) => x.dst))], hitF = [...new Set(fb.filter((x) => x.t >= e.t - 10 && x.t <= t1).map((x) => x.dst))];
+      for (const g of hitW) M(e.t + 10, pname(g), 'Blast Wave', 'High', 'Hit by the Blast Wave from Explosive Surprise.', 'Bounce over the Blast Wave on a mushroom, or use a blink, teleport or leap.');
+      return [{ p: pname(e.dst), sub: 'had the bomb' }, { t: e.t }, hitW.length ? { txt: pl(hitW.length, 'player') + ' hit by the Blast Wave', bad: true, sub: hitW.map(pname).join(', ') } : { txt: 'nobody hit by the Blast Wave' }, { txt: pl(up.length, 'player') + ' bounced', dim: true, sub: hitF.length ? pl(hitF.length, 'Fungal Burst hit') : '' }];
+    });
+    if (rows.length) sections.push({ id: 'bomb', title: 'Explosive Surprise: over the Blast Wave', spell: [LE.bomb, 'Explosive Surprise'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good',
+      summary: pl(rows.length, 'bomb') + '. Who had it, who bounced over the wave on a mushroom, and anyone the Blast Wave hit.', cols: ['Bomb', 'When', 'Result', 'Bounced'], rows });
+  }
+
+  // ---- 7. tanks: Shredding Shards (Iku) and Steady Strikes (Nama), stacks before each swap ----
+  {
+    const rows = [];
+    for (const [id, name] of [[LE.shards, 'Shredding Shards'], [LE.steady, 'Steady Strikes']]) {
+      const a = aur(id).filter((e) => h.isPlayer(e.dst)), runs = new Map();
+      for (const e of a) { let o = runs.get(e.dst); if (e.op === 'apply') { o = { g: e.dst, t: e.t, mx: 1 }; runs.set(e.dst, o); } else if (o && (e.op === 'dose' || e.op === 'rdose')) o.mx = Math.max(o.mx, e.stacks || o.mx); else if (o && e.op === 'remove') { const d = r.deaths.find((x) => x.guid === o.g && x.t >= o.t && x.t <= e.t + 0.3);
+        rows.push([{ p: pname(o.g), sub: name }, { t: e.t }, { txt: pl(o.mx, 'stack') + ' before it dropped' }, d ? { txt: 'died', bad: true, sub: d.ability || '' } : { txt: '—', dim: true }]); runs.delete(o.g); } }
+    }
+    rows.sort((a, b) => a[1].t - b[1].t);
+    // (one mistake per tank death, even with both stacks up)
+    const said = new Set();
+    for (const x of rows.filter((q) => q[3].bad)) { const k = x[0].p + '|' + Math.round(x[1].t); if (said.has(k)) continue; said.add(k); M(x[1].t, x[0].p, x[0].sub, 'High', 'Died with ' + x[2].txt.replace(' before it dropped', '') + ' of ' + x[0].sub + '.', 'Swap tanks earlier as the stacks ramp.'); }
+    if (rows.length) sections.push({ id: 'tankstacks', title: 'Tank stacks: swapped in time', spell: [LE.shards, 'Shredding Shards'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good', info: !rows.some((x) => x[3].bad),
+      summary: 'Each tank\'s Shredding Shards (Iku) and Steady Strikes (Nama) stacks before they dropped.', cols: ['Tank', 'Dropped', 'Stacks', 'Died'], rows });
+  }
+
+  // ---- 8. avoidable damage ----
+  const av = avoidPanel(ev, r, h, [
+    { n: ['blast wave'], label: 'Blast Wave', harm: 'High', why: 'the bomb\'s shockwave (bounce over it on a mushroom)' },
+    { n: ['aftershock'], label: 'Aftershock', harm: 'Medium', why: 'the craters Mighty Thud leaves for 30 seconds' },
+    { n: ['evil eyes'], label: 'Evil Eyes', harm: 'Medium', why: 'the statues\' flame puddles' },
+    { n: ['fungal burst'], label: 'Fungal Burst', harm: 'Medium', why: 'a mushroom bursting next to you after someone bounced' },
+    { n: ['throw junk'], label: 'Throw Junk', harm: 'Medium', why: 'standing where a box lands' },
+  ]);
+  if (av) sections.push(av);
+
+  const diag = [['Disgusting Fish', LE.fish], ['Final Ascension', LE.ascension], ['Final Ascension hit', LE.ascensionHit], ['United Defense', LE.united], ['Throw Junk', LE.junk], ['Relic Rupture', LE.rupture], ['Splinters', LE.splinters],
+    ['Explosive Surprise', LE.bomb], ['Bounce', LE.bounce], ['Frostfire Volley', LE.volley], ['Burning Flames', LE.flames], ['Piercing Frost', LE.frost], ['Blink Nova', LE.blink], ['Icebound Flames', LE.kick], ['Shredding Shards', LE.shards],
+    ['Mighty Thud', LE.thud], ['Aftershock', LE.aftershock], ['Shell Spin', LE.spin], ['Steady Strikes', LE.steady]].map(([name, id]) => {
+    const c = { cast: 0, dmg: 0, aura: 0, other: 0 };
+    for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
+    return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
+  });
+  return { diag, title: r.item.diff + ' audit: The Lost Explorers', reached: phases[phases.length - 1].name, phases, marks, sections, mistakes, note: '' };
+}
+
 // "How it works": a short plain-language summary of each mechanic and its strategy, shown at the top of its
 // section in the Fight audit. Keep these neutral and short; they match what the checks look for.
 const HOW = {
@@ -2236,6 +2437,17 @@ const HOW = {
     balance: 'Keep the bosses 40+ yards apart (closer, they take 99% less damage) and at even health: Vitriolic Stasis heals the lower one up to the other, so any lead is wasted. Balance by moving players between sides, not by stopping damage. Amber: 5+ points apart going into an intermission; red: within 40 yards for 3+ seconds outside the intermissions.',
     tanks: 'One tank on each boss: Empowering Slam on the Breath ramps on the same tank, Bloodvenom Injection on the Blood stacks a damage over time. They trade bosses at every intermission so the stacks drop, and the tank leaving the Blood drops a big pool when Injection ends: into old blood. Red: no swap after an intermission.',
     avoid: 'Every source of damage positioning can avoid, most harmful first. Dangerous: Protovenom Eruption (a circle touching a player without one). Harmful: Living Venom (a droplet\'s venom flying back to the boss, 375k a hit) and standing in a blood pool. Raid-wide damage (the Marks, Contaminate, Noxious Blast, the Helical Toxins ticks) isn\'t listed, and neither is Clinging Murk: it lands on every Unstable Miasma soaker.',
+  },
+  'The Lost Explorers': {
+    boxes: 'Trader Gebbo throws boxes around the room. A box left alone glows green and ruptures on the whole raid (Relic Rupture), so one player pops every box. On Mythic every pop also hits the whole raid with a stacking bleed (Splinters), so the popper keeps a rhythm: two stacks, let them drop, two more (three if needed, never during Blink Nova or other big damage). Each row is one box: popped or ruptured, and the raid\'s stacks right after. Red: a box ruptured, or deaths to the bleed; amber: a pop that took the raid to four stacks.',
+    united: 'When all three explorers are within 30 yards of each other they take 99% less damage (United Defense). Keep at most two of them together and move them apart as soon as a third comes close. Amber: up for a moment; red: up for more than 5 seconds.',
+    ascension: 'Mor\'zahi builds energy and at 100 casts Final Ascension, which keeps hitting the raid until everyone dies. Feeding a Disgusting Fish (from the boxes) to the turtle he controls stops it and moves him to the next explorer, which then uses its empowered moves. You get three feeds; the fourth Final Ascension is the hard enrage. Feed with about 4 seconds left on the cast. Red: Final Ascension went off.',
+    frostfire: 'Iku\'s Frostfire Volley gives some players Burning Flames (fire) and others Piercing Frost (frost), each leaving a patch on the floor. Clear yours by standing in the other element\'s patch: a frost patch clears Burning Flames, a fire patch clears Piercing Frost. If the next volley hits someone still carrying the other element, Elemental Explosion can wipe the raid. Spread, and don\'t walk into a patch of your own type. Red: still on at the next volley, or a death with it; amber: cleared after more than 8 seconds.',
+    blink: 'Blink Nova: Iku blinks to a player and explodes, hitting the whole raid less the farther away they are. Spread out; the target moves at least 20 yards from the melee and away from the raid. Each row is one Blink Nova: its target, the average hit, and deaths. Red: a death to it.',
+    thud: 'Nama\'s Mighty Thud marks spots and leaps to them in turn; each landing is split between everyone within 6 yards and knocks them back, and an empty spot hits the whole raid for the full amount. Line up away from Nama: everyone soaks the first leap and gets knocked into the next, then the third. Each landing leaves Aftershock craters for 30 seconds. Red: a leap with nobody under it, or a death; amber: fewer than five soakers.',
+    bomb: 'Gebbo\'s Explosive Surprise lands a bomb on a player, then sends out a Blast Wave that kills: bounce over it on a Bouncy Mushroom (on Mythic there\'s one mushroom per bomb, so don\'t pop it early), or blink, teleport or leap over it. Drop the bomb at the edge of the room. Red: hit by the Blast Wave.',
+    tankstacks: 'Iku\'s Shredding Shards (50% more damage from them per stack) and Nama\'s Steady Strikes (4% more physical damage per stack) ramp on their tanks: swap as they climb. Each row is one stretch on a tank: the stacks before they dropped. Red: a tank death with them up.',
+    avoid: 'Every source of damage positioning can avoid, most harmful first: the Blast Wave, Aftershock craters, the statues\' Evil Eyes puddles, Fungal Burst from a used mushroom, and standing where a box lands. Raid-wide damage (Malevolent Presence, Splinters, Blink Nova, Fishy Feedback) isn\'t listed.',
   },
   'Vashnik the Malignant': {
     imbibe: 'At 100 energy Vashnik casts Imbibe: it hits the raid, adds a stack of Toxic Vapor (raid damage that never goes away: the longer the fight, the harder), and drains the two fountains nearest to him. Each drained fountain gives him an infusion and sends out its venoms, so where the tank holds him decides the next stretch of the fight; many raids keep him between the Shadow and Fire fountains the whole time. Stack for healing cooldowns and defensives on every Imbibe. Each row is one Imbibe: the fountains, the raid hit, deaths. Red: a death to it.',
