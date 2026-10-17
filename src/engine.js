@@ -4807,7 +4807,7 @@ function addAb(m, name, id, amt, over, crit) {
   a.total += amt; a.over += over; a.hits++; if (crit) a.crits++;
 }
 // battle resses and externals: who they went on (the Performance tab's Utility view)
-const HELP_CAST = new Set(['rebirth', 'raise ally', 'intercession', 'soulstone', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue']);
+const HELP_CAST = new Set(['rebirth', 'raise ally', 'intercession', 'soulstone', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue', 'power infusion']);
 // Major healing cooldowns (the Performance tab's Healing cooldowns): the heal each logs (by name, or "summon: heal" for a
 // totem or summon) -> the cooldown it belongs to; each heal is credited to its caster's latest press
 const CD_HEALS = new Map([['tranquility', 'Tranquility'], ['divine hymn', 'Divine Hymn'], ['holy word: salvation', 'Holy Word: Salvation'], ['revival', 'Revival'], ['restoral', 'Restoral'],
@@ -5131,7 +5131,7 @@ function analyze(item, text, opts) {
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
         const ln = spell.toLowerCase();
         let bl = p.byName.get(ln); if (!bl) p.byName.set(ln, bl = []); bl.push(t);
-        if (HELP_CAST.has(ln)) p.helpL.push({ t, spell, id, on: isPlayer(dg) && dg !== sg ? dn : '' });
+        if (HELP_CAST.has(ln)) p.helpL.push({ t, spell, id, on: isPlayer(dg) && dg !== sg ? dn : '', g: isPlayer(dg) ? dg : '' }); // (g: who it was on, themselves included)
         // (a major healing cooldown: a new entry, unless it's the next tick of a channel; Celestial Conduit only for Mistweaver)
         if (CD_PRESS.has(ln) && (ln !== 'celestial conduit' || p.specId === 270)) { const cd = CD_PRESS.get(ln), last = cdPress(sg, cd, t, false);
           if (!last || t - last.t > 12) r.cdUse.push({ g: sg, cd, id, t, end: null, heal: 0, over: 0, prev: 0, taken: 0, hp: 0, cov: new Set() }); else if (!last.id) last.id = id; }

@@ -10,7 +10,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'overview', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, WCL, E, gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r) };
+if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, WCL, E, gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -4056,9 +4056,9 @@ function kicks() {
 // picked player's) with the phases shaded and the boss mechanics, Bloodlust and deaths marked, then a bar per player.
 // A click on a player draws their line and shows what their damage went into (targets and abilities). Everything counts
 // up to the wipe filter; "while alive" divides by the time until a player's first death.
-const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['util', 'Utility'], ['surv', 'Survivability']];
+const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['pi', 'Power Infusion'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (the views that count presses or grade, not output over time: no phase picker and no chart)
-const PERF_COUNTS = new Set(['card', 'util', 'surv']);
+const PERF_COUNTS = new Set(['card', 'util', 'surv', 'pi']);
 // Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds: checked
 // against Wowhead's tooltips for the live patch (Oct 2026) and the presses in Wolfthorn's own pulls. A base cooldown is the
 // longest it can be (talents only shorten them), so it's the fair one to count possible uses against: a talent that
@@ -4127,7 +4127,7 @@ const BRES_N = ['rebirth', 'raise ally', 'intercession', 'soulstone'];
 const EXT_N = ['pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue'];
 // the four views, as switches that carry their headline number (over what's counted: up to the wipe filter, in the
 // picked phase)
-const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', cast: 'spell_nature_lightning', util: 'ability_kick', surv: 'warlock_-healthstone' };
+const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', cast: 'spell_nature_lightning', pi: 'spell_holy_powerinfusion', util: 'ability_kick', surv: 'warlock_-healthstone' };
 const PERF_COL = { dmg: '#6aa8ff', heal: '#45c15c', taken: '#e5534b' };
 // (only the view you're on carries its numbers: the others are just their name, so the tiles under it read first)
 function perfTabs(kind, vals) {
@@ -4174,12 +4174,12 @@ function perf() {
   const ucats = utilCats([r]), scats = survCats([r]), oh = (() => { const h2 = ps.reduce((s, p) => s + p.healing, 0), o2 = ps.reduce((s, p) => s + p.overheal, 0); return h2 + o2 ? o2 / (h2 + o2) : 0; })();
   const RV = kind === 'res' ? resView([{ r, w0, w1, end }], true) : kind === 'cast' ? castView([{ r, w0, w1, end }], true) : null;
   const vals = { card: kind === 'card' ? rcHead([r]) : {}, dmg: { v: C(sumOf(R3.dmg) / wl) + '<span>/s</span>', s: C(sumOf(R3.dmg)) + inPh }, heal: { v: C(sumOf(R3.heal) / wl) + '<span>/s</span>', s: C(sumOf(R3.heal)) + inPh + ' · ' + Math.round(100 * oh) + '% overheal' },
-    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
+    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView([r], true).head : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutLine = '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (ph && !counts ? '<b>' + esc(ph.name) + '</b>, ' + T(w0) + '–' + T(w1) + (cut && w1 >= end - 0.5 ? ' (the wipe filter)' : '') : cut ? 'Counted up to <b>' + T(ct) + '</b>, the wipe filter' : r.item.kill ? '<b>Kill</b>: the whole pull counts' : 'The whole pull counts') + '</span></div>';
   // (one row on top: the kinds, then the pull / phase switches and the wipe filter line)
   let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + '</div></div>';
-  if (counts) { view(h + (kind === 'card' ? reportCard([r], false) : kind === 'surv' ? utilCards(scats, true, 'surv') : utilCards(ucats, true)) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
+  if (counts) { view(h + (kind === 'card' ? reportCard([r], false) : kind === 'pi' ? piView([r], true).html : kind === 'surv' ? utilCards(scats, true, 'surv') : utilCards(ucats, true)) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
   const rowsAll = R3[kind], total = sumOf(rowsAll), key = KEY[kind];
   const raidS = []; for (const x of rowsAll) (x.p[key] || []).forEach((v, i) => { if (i < end) raidS[i] = (raidS[i] || 0) + v; });
@@ -4705,11 +4705,11 @@ async function perfNight(r0, kind, scopeSw) {
   // (Resources: each pull's numbers up to its wipe filter, in the picked phase, added up)
   const nl = used.map((w) => ({ r: w.r, w0: w.w0, w1: w.w1, end: Math.max(1, Math.min(w.r.duration, cutT(w.r))) }));
   const RV = kind === 'res' ? resView(nl, false) : kind === 'cast' && nl.length ? castView(nl, false) : null;
-  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
+  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView(reps, false).head : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
   let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div></div></div>';
-  if (counts) { view(h + (kind === 'card' ? reportCard(reps, true) : kind === 'surv' ? utilCards(scats, false, 'surv') : utilCards(ucats, false)) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
+  if (counts) { view(h + (kind === 'card' ? reportCard(reps, true) : kind === 'pi' ? piView(reps, false).html : kind === 'surv' ? utilCards(scats, false, 'surv') : utilCards(ucats, false)) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons();
     const byP = new Map(reps.map((r) => [r.item.pull, r.item])); $$('#view .pfn-b').forEach((g) => (g.onclick = () => { const b = byP.get(+g.dataset.pull); if (!b) return; S.scope = 'pull'; select(b); })); return; }
   // per pull: the raid's output per second, and each player's total and time alive
@@ -5418,6 +5418,172 @@ function bindHoverCharts() {
   });
 }
 
+// ---------- Performance: Power Infusion ----------
+// Each Power Infusion a priest cast, on whom and when, against the best they could have done:
+//  The target: the player the raid gains the most from. Bloodmallet's Midnight sims (Oct 14 2026, MID2 profiles) give
+//  how much damage per second each spec gains from Power Infusion every 2 minutes, on one target and on three (used when
+//  the raid was hitting 3 or more enemies in its 15 s); one cast is worth about that over the 2 minutes it covers. That's
+//  scaled by how hard the player was hitting this pull (their damage per second alive against the raid's middle DPS), so
+//  a strong player of a good spec beats a weak one. A healer gains no damage from it.
+//  The time: with the target's own big cooldown (pressed within 6 s, or its buff up), not mostly in a stretch when the raid
+//  couldn't do damage, with the target alive for all of it, and not on top of another priest's Power Infusion.
+//  The use: every 2 minutes; a stretch it sat ready gets the best moment in it (the most valuable player pressing a big
+//  cooldown) and what a cast there would have added.
+const PI_GAIN = { 'Assassination Rogue': 14187, 'Affliction Warlock': 13724, 'Elemental Shaman': 11878, 'Windwalker Monk': 11795, 'Feral Druid': 11786, 'Enhancement Shaman': 11426, 'Retribution Paladin': 11422,
+  'Marksmanship Hunter': 11388, 'Demonology Warlock': 10391, 'Fire Mage': 10291, 'Survival Hunter': 9532, 'Unholy Death Knight': 9477, 'Devourer Demon Hunter': 9090, 'Protection Paladin': 8958, 'Beast Mastery Hunter': 8747,
+  'Frost Death Knight': 8280, 'Arms Warrior': 8019, 'Arcane Mage': 6823, 'Fury Warrior': 6769, 'Outlaw Rogue': 6519, 'Shadow Priest': 6168, 'Destruction Warlock': 6093, 'Frost Mage': 6082, 'Havoc Demon Hunter': 5123,
+  'Protection Warrior': 3860, 'Subtlety Rogue': 3060, 'Blood Death Knight': 3040, 'Vengeance Demon Hunter': 2841, 'Brewmaster Monk': 678 };
+// (three targets)
+const PI_GAIN3 = { 'Demonology Warlock': 27285, 'Retribution Paladin': 24976, 'Windwalker Monk': 23406, 'Enhancement Shaman': 22893, 'Fire Mage': 19527, 'Elemental Shaman': 18311, 'Assassination Rogue': 18237,
+  'Arms Warrior': 17641, 'Marksmanship Hunter': 15975, 'Feral Druid': 15880, 'Affliction Warlock': 15362, 'Survival Hunter': 15052, 'Fury Warrior': 14988, 'Frost Death Knight': 14886, 'Unholy Death Knight': 14593,
+  'Devourer Demon Hunter': 13913, 'Protection Paladin': 13016, 'Arcane Mage': 12956, 'Destruction Warlock': 12836, 'Shadow Priest': 12336, 'Outlaw Rogue': 11764, 'Beast Mastery Hunter': 11350, 'Frost Mage': 9001,
+  'Havoc Demon Hunter': 7813, 'Subtlety Rogue': 6164, 'Vengeance Demon Hunter': 5817, 'Protection Warrior': 5740, 'Blood Death Knight': 5421, 'Brewmaster Monk': 1075 };
+const PI_LEN = 15, PI_CD = 120;
+// one pull's Power Infusions -> { casts, priests: Map name -> { p, used, poss, ts, ready: [[a, b]], miss: [...], plan }, rank, left }
+function piPull(r) {
+  if (r._pi && r._pi.ct === cutT(r)) return r._pi;
+  const C0 = perfContext(r), end = C0.end, ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), byG = new Map(ps.map((p) => [p.guid, p]));
+  const med = C0.roleMed.dps || 1, alive = (q, t) => { const x = C0.per.get(q.name); return x && !x.ds.some(([a, b]) => t >= a - 0.5 && t < b) && x.until > t + 3; };
+  // (3 or more enemies losing health in the window: an adds moment, so the 3-target sims)
+  const U = [...(r.hpUnits || new Map()).values()];
+  const aoe = (t) => U.filter((u) => { const s = u.samples.filter(([x]) => x >= t && x <= t + PI_LEN); return s.length >= 2 && s[s.length - 1][1] < s[0][1] - 0.01; }).length >= 3;
+  // (a player's worth to Power Infusion: their spec's sim gain, times how hard they hit against the raid's middle DPS)
+  const value = (q, many) => { const g = (many ? PI_GAIN3 : PI_GAIN)[q.specName], x = C0.per.get(q.name); if (!g || !x || (q.role || 'dps') === 'healer') return 0; return g * Math.max(0.3, Math.min(2, (x.ps || 0) / med)); };
+  const cdsM = new Map(), cdsOf = (q) => { if (!cdsM.has(q)) cdsM.set(q, bigCds(r, q, end, C0.lust)); return cdsM.get(q); }; // (each player's big cooldowns, once)
+  const casts = [];
+  for (const pr of ps) for (const c of pr.helpL || []) {
+    if (String(c.spell).toLowerCase() !== 'power infusion' || c.t > end + 0.05) continue;
+    const tg = (c.g && byG.get(c.g)) || (c.on ? ps.find((q) => q.name === c.on || q.name.split('-')[0] === String(c.on).split('-')[0]) : pr) || pr, t = c.t;
+    // (a talent gives the priest a copy when they cast it on someone else: that copy isn't a choice, so it's left out)
+    if (tg === pr && (pr.helpL || []).some((o) => o !== c && String(o.spell).toLowerCase() === 'power infusion' && o.g && o.g !== pr.guid && Math.abs(o.t - t) <= 1.5)) continue;
+    const many = aoe(t);
+    // the best they could have picked then: the most valuable player alive (themselves too, for a Shadow Priest)
+    const pool = ps.filter((q) => alive(q, t) && value(q, many) > 0).sort((a, b) => value(b, many) - value(a, many)), best = pool[0] || null, vT = value(tg, many), vB = best ? value(best, many) : 0, ratio = vB ? vT / vB : null;
+    const healer = (tg.role || 'dps') === 'healer', noSim = !healer && !(many ? PI_GAIN3 : PI_GAIN)[tg.specName];
+    const tgt = healer ? { st: 'warn', pill: 'Healing PI', txt: 'On a healer: no damage gained. Fine for a heavy healing window, otherwise give it to a DPS.' }
+      : noSim ? { st: 'na', pill: 'Not judged', txt: 'There\'s no sim for ' + (tg.specName || 'this spec') + ', so it can\'t be compared.' }
+      : ratio == null ? { st: 'na', pill: 'Not judged', txt: 'No sim for ' + (tg.specName || 'this spec') + '.' }
+      : ratio >= 0.85 ? { st: 'ok', pill: best === tg ? 'Best target' : 'Good target', txt: best === tg ? 'The most valuable player alive then.' : 'Close to the best (' + best.name + ').' }
+      : { st: ratio >= 0.6 ? 'warn' : 'bad', pill: 'Better: ' + best.name, txt: best.name + ' (' + (best.specName || '') + ') would have gained about ' + Math.round(100 * (vB / Math.max(1, vT) - 1)) + '% more.' };
+    // the time: their own big cooldown pressed within 6 s, or its buff up; the raid waiting; the target dying in it
+    const cds = cdsOf(tg).filter((d) => d.name !== 'Power Infusion'), win = [t, t + PI_LEN];
+    const withCd = cds.find((d) => d.ts.some((u) => Math.abs(u - t) <= 6) || ((tg.buffs && tg.buffs.get(d.name)) || { sp: [] }).sp.some(([a, b]) => a <= t && (b == null || b >= t)));
+    const idle = C0.idle.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, win[1]) - Math.max(a, win[0])), 0), died = r.deaths.find((d) => d.guid === tg.guid && d.t >= t && d.t <= t + PI_LEN);
+    const lust = C0.lust != null && t >= C0.lust - 1 && t <= C0.lust + 40;
+    const tim = died ? { st: 'bad', pill: 'Target died', txt: tg.name + ' died ' + Math.round(died.t - t) + ' s into it.' }
+      : idle >= 7 ? { st: 'bad', pill: 'Raid downtime', txt: 'Most of it came while the raid couldn\'t do damage.' }
+      : withCd ? { st: 'ok', pill: 'With ' + (CD_SHORT[withCd.name] || withCd.name), txt: 'Lined up with their ' + withCd.name + '.' }
+      : !cds.length ? { st: 'na', pill: 'No cooldown to match', txt: (tg.specName || 'Their spec') + ' has no big cooldown listed to line it up with.' }
+      : { st: 'warn', pill: 'No cooldown up', txt: 'None of their big cooldowns (' + cds.map((d) => d.name).join(', ') + ') was up.' };
+    const scT = { ok: 100, warn: healer ? 60 : 70, na: 80, bad: 100 * Math.max(0, ratio || 0) }[tgt.st], scW = { ok: 100, na: 80, warn: 60, bad: 20 }[tim.st];
+    // (what it added, about: the sim's gain a second over the 2 minutes one cast covers, scaled to the player; what the
+    // others alive then would have added, the top three; and what the target really did in those 15 s against their usual)
+    const alts = pool.filter((q) => q !== tg).slice(0, 3).map((q) => ({ p: q, dmg: value(q, many) * PI_CD }));
+    const xs = C0.per.get(tg.name), inWin = sumIn(tg.dmgS || [], t, t + PI_LEN), usual = xs && !healer ? (xs.ps || 0) * PI_LEN : null;
+    casts.push({ pr, tg, t, best, vT, vB, ratio, tgt, tim, lust, many, noSim, sc: (scT + scW) / 2, dmg: healer || noSim ? 0 : vT * PI_CD, bestDmg: noSim ? 0 : vB * PI_CD, alts, inWin, usual });
+  }
+  casts.sort((a, b) => a.t - b.t);
+  // (two priests' Power Infusions on the same player at once don't stack: the later one is mostly wasted)
+  for (const c of casts) { const o = casts.find((d) => d !== c && d.t < c.t && d.tg === c.tg && c.t - d.t < PI_LEN && d.pr !== c.pr); if (o) { c.tim = { st: 'bad', pill: 'On top of ' + o.pr.name + '\'s', txt: o.pr.name + ' had put Power Infusion on ' + c.tg.name + ' ' + Math.round(c.t - o.t) + ' s before: it doesn\'t stack.' }; c.sc = Math.min(c.sc, 40); } }
+  // each priest: use on cooldown, the stretches it sat ready (the best moment in each), and a plan for the next pull
+  const best0 = ps.filter((q) => value(q) > 0).sort((a, b) => value(b) - value(a)), priests = new Map();
+  for (const pr of ps) {
+    if (pr.cls !== 'PRIEST') continue; const x = C0.per.get(pr.name), until = x ? Math.min(x.until, end) : end, d = bigCds(r, pr, until, C0.lust).find((z) => z.name === 'Power Infusion'); if (!d) continue;
+    const ts = d.ts, ready = []; let from = 0; for (const u of ts) { if (u - from >= 3) ready.push([from, u]); from = u + PI_CD; } if (until - from >= 3) ready.push([from, until]);
+    // (in a stretch of 20 s or more: the most valuable player pressing a big cooldown in it, else the best player at its start)
+    const miss = ready.filter(([a, b]) => b - a >= 20).map(([a, b]) => { let pick = null;
+      for (const q of best0) { if (q === pr && pr.specName !== 'Shadow Priest') continue; for (const cd of cdsOf(q)) for (const u of cd.ts) if (u >= a && u <= b - 3 && alive(q, u)) { const v = value(q, aoe(u)); if (!pick || v > pick.v) pick = { q, t: u, cd: cd.name, v }; } }
+      if (!pick) { const q = best0.find((y) => alive(y, a + 1)); if (q) pick = { q, t: a, cd: null, v: value(q, aoe(a)) }; }
+      return { a, b, pick }; });
+    // (the plan: the most valuable player of the pull, with their first big cooldown and when they pressed it)
+    const top = best0.find((q) => q !== pr || pr.specName === 'Shadow Priest'), tcd = top ? cdsOf(top).filter((z) => z.name !== 'Power Infusion')[0] : null;
+    priests.set(pr.name, { p: pr, used: d.used, poss: d.poss, ts, ready, miss, plan: top ? { q: top, cd: tcd } : null });
+  }
+  const rank = best0.map((q) => ({ p: q, v: value(q), sim: PI_GAIN[q.specName], rel: (C0.per.get(q.name) || {}).ps / med }));
+  // left on the table: a better target's extra, and each stretch it sat ready long enough for a cast (its best moment)
+  const left = casts.reduce((s, c) => s + Math.max(0, c.bestDmg - c.dmg), 0) + [...priests.values()].reduce((s, x) => s + x.miss.filter((m) => m.pick && m.b - m.a >= 30).reduce((s2, m) => s2 + m.pick.v * PI_CD, 0), 0);
+  r._pi = { ct: cutT(r), casts, priests, rank, end, idle: C0.idle, lust: C0.lust, left };
+  return r._pi;
+}
+// (one Power Infusion's worth: what it added on the player who got it, what the best others alive would have added, and
+// what that player really did in its 15 s against their usual 15 s)
+function piGain(c) {
+  if (!c.dmg && !c.alts.length) return '';
+  const alt = c.alts.filter((a) => a.dmg > 0).map((a) => '<span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span> ' + C(a.dmg) + (c.dmg ? ' <span class="' + (a.dmg > c.dmg ? 'pi-up' : 'pi-dn') + '">' + (a.dmg > c.dmg ? '+' : '−') + C(Math.abs(a.dmg - c.dmg)) + '</span>' : '')).join('<span class="sub"> · </span>');
+  const real = c.usual ? '<div class="pi-g sub">In those 15 s ' + esc(c.tg.name) + ' did ' + C(c.inWin) + ' damage, against ' + C(c.usual) + ' in their usual 15 s' + (c.inWin > c.usual ? ' (' + Math.round(100 * (c.inWin / Math.max(1, c.usual) - 1)) + '% more, with whatever else was up)' : '') + '.</div>' : '';
+  return '<div class="pi-g"><b>' + (c.dmg ? 'Added about ' + C(c.dmg) + ' damage' : 'Added no damage') + '</b>' + (c.many ? ' <span class="pi-aoe" title="3 or more enemies were losing health: the 3-target sims">adds up</span>' : '') + (alt ? '<span class="sub"> · instead: </span>' + alt : '') + '</div>' + real;
+}
+// a priest's pull on one line: the raid's downtime grey, the stretches Power Infusion sat ready green, each cast gold (on a
+// good target) or red (not), Bloodlust a gold line
+function piStrip(d, x, casts) {
+  const end = Math.max(1, d.end), P = (t) => (100 * Math.max(0, Math.min(end, t)) / end).toFixed(2) + '%', W = (a, b) => (100 * Math.max(0, Math.min(end, b) - Math.max(0, a)) / end).toFixed(2) + '%';
+  let h = '<div class="pi-strip">' + (d.idle || []).map(([a, b]) => '<i class="pi-sd" style="left:' + P(a) + ';width:' + W(a, b) + '" title="' + esc('The raid couldn\'t do damage ' + T(a) + '–' + T(b)) + '"></i>').join('') +
+    x.ready.map(([a, b]) => '<i class="pi-sr" style="left:' + P(a) + ';width:' + W(a, b) + '" title="' + esc('Ready, not used: ' + T(a) + '–' + T(b) + ' (' + Math.round(b - a) + ' s)') + '"></i>').join('') +
+    (d.lust != null ? '<i class="pi-sl" style="left:' + P(d.lust) + '" title="Bloodlust at ' + T(d.lust) + '"></i>' : '') +
+    casts.map((c) => '<i class="pi-sc ' + c.tgt.st + '" style="left:' + P(c.t) + ';width:' + W(c.t, c.t + PI_LEN) + '" title="' + esc(T(c.t) + ': on ' + c.tg.name + ' · ' + c.tgt.pill + ' · ' + c.tim.pill) + '"></i>').join('') + '</div>';
+  const step = end > 400 ? 120 : 60; let ax = '<div class="pi-ax">'; for (let t = 0; t <= end; t += step) ax += '<span style="left:' + P(t) + '">' + T(t) + '</span>'; ax += '</div>';
+  return h + ax;
+}
+// (a cast's worth as bars: the player who got it, then the two best others alive then, each in their class colour)
+function piBars(c) {
+  if (c.noSim) return '<div class="pi-rn sub">No sim for ' + esc(c.tg.specName || 'this spec') + ', so no estimate.</div>';
+  const items = [{ p: c.tg, dmg: c.dmg, me: true }].concat(c.alts.filter((a) => a.dmg > 0).slice(0, 2)), mx = Math.max(1, ...items.map((i) => i.dmg));
+  return '<div class="pi-bars">' + items.map((i) => '<div class="pi-bar' + (i.me ? ' me' : '') + '"><span class="pi-bn">' + esc(i.p.name) + (i.me ? ' <span class="pi-gt">got it</span>' : '') + '</span><span class="pi-bt"><i style="width:' + Math.max(2, 100 * i.dmg / mx).toFixed(1) + '%;background:' + i.p.color + '"></i></span><b>' + (i.dmg ? C(i.dmg) : '—') + '</b></div>').join('') + '</div>';
+}
+// one cast, one pull: the time, who got it, the two pills, the bars, and one short line of why
+function piRow(c, who, pill) {
+  const why = c.tgt.st !== 'ok' ? c.tgt.txt : c.tim.txt, real = c.usual ? '15 s on them: ' + C(c.inWin) + (c.usual ? ' (' + (c.inWin >= c.usual ? '+' : '−') + Math.abs(Math.round(100 * (c.inWin / Math.max(1, c.usual) - 1))) + '% on their usual)' : '') : '';
+  return '<div class="pi-row"><div class="pi-rt"><b>' + T(c.t) + '</b>' + (c.lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</div><div class="pi-rm">' +
+    '<div class="pi-rh">' + avatar(c.tg, true) + '<span class="pi-on">' + (c.tg === c.pr ? '<span class="sub">themselves</span>' : who(c.tg)) + ' <span class="sub">' + esc(c.tg.specName || '') + '</span>' + (c.many ? ' <span class="pi-aoe" title="3 or more enemies were losing health: the 3-target sims">adds up</span>' : '') + '</span><span class="pi-pills">' + pill(c.tgt) + pill(c.tim) + '</span></div>' +
+    piBars(c) + '<div class="pi-rn sub">' + esc(why) + (real ? ' · ' + esc(real) : '') + '</div></div></div>';
+}
+// the night as a table: a line per cast (the pull, the time, who got it, the pills, what it added and the best other)
+function piTable(list, who, pill) {
+  return '<div class="pi-tab"><div class="pi-tr pi-th"><span>Pull</span><span>On</span><span>Target · timing</span><span>Added</span><span>Best other</span></div>' + list.map((c) => { const b = c.alts[0];
+    return '<div class="pi-tr"><span><b>#' + c.r.item.pull + '</b> <span class="sub">' + T(c.t) + '</span>' + (c.lust ? ' <span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-on">' + (c.tg === c.pr ? '<span class="sub">themselves</span>' : who(c.tg)) + '</span><span class="pi-pills l">' + pill(c.tgt) + pill(c.tim) + '</span>' +
+      '<span class="pi-num">' + (c.noSim ? '<span class="sub">no sim</span>' : C(c.dmg)) + '</span><span class="pi-num">' + (b && b.dmg ? who(b.p) + ' <span class="sub">' + C(b.dmg) + '</span>' : '—') + '</span></div>'; }).join('') + '</div>';
+}
+// The view: one pull (every PI graded, a line per priest, the stretches it sat ready, who gains the most, a plan for the
+// next pull) or the night (the same, added up)
+function piView(reps, one) {
+  const all = reps.map((r) => ({ r, d: piPull(r) })), casts = all.flatMap(({ r, d }) => d.casts.map((c) => ({ ...c, r })));
+  const pri = new Map(); for (const { r, d } of all) for (const [n, x] of d.priests) { const y = pri.get(n) || { p: x.p, used: 0, poss: 0, pulls: 0, miss: [], plan: null }; y.used += x.used; y.poss += x.poss; y.pulls++; for (const m of x.miss) y.miss.push({ ...m, pull: r.item.pull }); y.plan = x.plan || y.plan; y.last = { d, x }; pri.set(n, y); }
+  if (!casts.length && !pri.size) return { head: {}, html: '<div class="panel"><p class="muted" style="margin:0">No Power Infusion ' + (one ? 'this pull' : 'in these pulls') + ': no priest cast it.</p></div>' };
+  const good = casts.filter((c) => c.tgt.st === 'ok'), withCd = casts.filter((c) => c.tim.st === 'ok'), cdJudged = casts.filter((c) => c.tim.st !== 'na'), used = [...pri.values()].reduce((s, x) => s + x.used, 0), poss = [...pri.values()].reduce((s, x) => s + x.poss, 0);
+  const added = casts.reduce((s, c) => s + c.dmg, 0), left = all.reduce((s, { d }) => s + d.left, 0);
+  const st = (f) => (f == null ? 'na' : f >= 0.85 ? 'ok' : f >= 0.6 ? 'warn' : 'bad'), fr = (a, b) => (b ? a / b : null);
+  const tiles = '<div class="pts n4">' + plTile(plIco('spell_holy_powerinfusion'), 'Used', poss ? used + '<span> / ' + poss + '</span>' : '—', st(fr(used, poss)), poss ? 'of the times it was ready (every 2 minutes)' : 'no priest has it', !poss) +
+    plTile(plIco('ability_priest_flashoflight'), 'On a good target', casts.length ? good.length + '<span> / ' + casts.length + '</span>' : '—', st(fr(good.length, casts.length)), casts.length ? 'within 15% of the best player alive then' : 'none cast', !casts.length) +
+    plTile(plIco('spell_holy_borrowedtime'), 'With their cooldown', cdJudged.length ? withCd.length + '<span> / ' + cdJudged.length + '</span>' : '—', st(fr(withCd.length, cdJudged.length)), cdJudged.length ? 'lined up with the target\'s own big cooldown' : 'nothing to line up', !cdJudged.length) +
+    plTile(plIco('inv_misc_coin_02'), 'Left on the table', left >= 1 ? C(left) : '—', left < 0.15 * Math.max(1, added + left) ? 'ok' : left < 0.4 * (added + left) ? 'warn' : 'bad', 'about, against ' + C(added) + ' added: weaker targets and stretches it sat ready') + '</div>';
+  const head = { v: casts.length ? good.length + '<span>/' + casts.length + ' good</span>' : '—', s: poss ? used + ' of ' + poss + ' possible' : '' };
+  const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>';
+  const pill = (o) => '<span class="hm-p ' + o.st + '" title="' + esc(o.txt) + '">' + esc(o.pill) + '</span>';
+  // ---- each priest: their line (one pull), every cast, the stretches it sat ready, and a plan for the next pull ----
+  let list = '';
+  for (const x of [...pri.values()].sort((a, b) => b.used - a.used)) {
+    const mine = casts.filter((c) => c.pr.name === x.p.name);
+    list += '<div class="pi-pr"><div class="pi-ph">' + avatar(x.p, true) + ' ' + who(x.p) + ' <span class="sub">' + esc(x.p.specName || '') + '</span><span class="pi-use ' + st(fr(x.used, x.poss)) + '">' + x.used + ' of ' + x.poss + ' possible</span></div>' +
+      (one ? piStrip(x.last.d, x.last.x, mine) : '') +
+      (!one && mine.length ? '<div class="pi-who">' + [...mine.reduce((m, c) => { const y = m.get(c.tg.name) || { q: c.tg, k: 0 }; y.k++; return m.set(c.tg.name, y); }, new Map()).values()].sort((u, v) => v.k - u.k).map((y) => who(y.q) + ' <span class="sub">×' + y.k + '</span>').join('<span class="sub"> · </span>') + '</div>' : '') +
+      (mine.length ? (one ? mine.map((c) => piRow(c, who, pill)).join('') : piTable(mine, who, pill)) : '<p class="sub" style="margin:4px 0 0">Not cast ' + (one ? 'this pull' : 'in these pulls') + '.</p>');
+    const ms = x.miss.filter((m) => m.pick).sort((a, b) => (b.b - b.a) - (a.b - a.a)).slice(0, one ? 4 : 5);
+    if (ms.length) list += '<div class="pi-miss"><div class="pi-mh">Sat ready</div>' + ms.map((m) => '<div class="pi-m"><span class="pi-t">' + (one ? '' : '<span class="sub">#' + m.pull + '</span> ') + T(m.a) + '</span><span><b>' + Math.round(m.b - m.a) + ' s unused</b> <span class="sub">to ' + T(m.b) + '</span> · ' +
+      (m.pick.cd ? 'at ' + T(m.pick.t) + ' ' + who(m.pick.q) + ' pressed ' + esc(m.pick.cd) : who(m.pick.q) + ' was the best target') + ': a Power Infusion there would have added about <b>' + C(m.pick.v * PI_CD) + '</b></span></div>').join('') + '</div>';
+    if (x.plan) list += '<div class="pi-plan"><b>Next pull</b> · give it to ' + who(x.plan.q) + ' <span class="sub">' + esc(x.plan.q.specName || '') + '</span>' + (x.plan.cd ? ' with their ' + esc(x.plan.cd.name) + (one && x.plan.cd.ts.length ? ' <span class="sub">(they pressed it at ' + x.plan.cd.ts.slice(0, 3).map((u) => T(u)).join(', ') + ')</span>' : '') : ', on cooldown') + ', every 2 minutes.</div>';
+    list += '</div>';
+  }
+  const left0 = '<div class="panel pi-list"><h3 class="nh"><span>Every Power Infusion</span><small>' + (one ? 'this pull, up to the wipe filter' : 'over ' + plural(reps.length, 'pull')) + ' · hover for why</small></h3>' + (one ? '<div class="pi-leg"><span><i class="pi-sr"></i>ready, not used</span><span><i class="pi-sc ok"></i>a good target</span><span><i class="pi-sc warn"></i>a weaker one</span><span><i class="pi-sd"></i>raid downtime</span><span><i class="pi-sl"></i>Bloodlust</span></div>' : '') + list + '</div>';
+  // ---- who gains the most: this pull's ranking (the night: each player's average), and who got it ----
+  const rk = new Map(); for (const { d } of all) for (const q of d.rank) { const y = rk.get(q.p.name) || { p: q.p, v: 0, n: 0, sim: q.sim, got: 0 }; y.v += q.v; y.n++; rk.set(q.p.name, y); }
+  for (const c of casts) { const y = rk.get(c.tg.name); if (y) y.got++; }
+  const ranked = [...rk.values()].map((y) => ({ ...y, v: y.v / y.n })).sort((a, b) => b.v - a.v).slice(0, 8);
+  const right = '<div class="panel pf-det pi-det"><h3 class="nh"><span>Who gains the most</span><small>' + (one ? 'this pull' : 'over the night') + ', one target</small></h3>' +
+    ranked.map((y, i) => '<div class="pfu-l"><span class="pfu-w"><span class="sub">' + (i + 1) + '</span> ' + who(y.p) + ' <span class="sub">' + esc(y.p.specName || '') + '</span>' + (y.got ? ' <span class="pi-got">got it ' + (y.got === 1 ? 'once' : y.got + '×') + '</span>' : '') + '</span><span class="sub">sim ' + C(y.sim) + '/s</span><b>' + C(y.v * PI_CD) + '</b></div>').join('') +
+    '<p class="sub" style="margin:10px 0 0">About how much damage one Power Infusion on them adds: their spec\'s gain in Bloodmallet\'s Midnight sims (per second, with it every 2 minutes) over the 2 minutes one cast covers, scaled by how hard they hit ' + (one ? 'this pull' : 'each pull') + '. With adds up the order changes (3-target sims: Demonology, Retribution and Windwalker climb); each cast above uses whichever fits.</p></div>';
+  const how = '<details class="howit"><summary>How it\'s judged</summary><div><b>The target</b>: Bloodmallet\'s Midnight sims (October 14) give how much damage per second each spec gains from Power Infusion every 2 minutes, on one target and on three; one cast is worth about that over 2 minutes. The 3-target numbers are used when 3 or more enemies were losing health in its 15 seconds. That\'s scaled by how hard the player was hitting (their damage per second alive against the raid\'s middle DPS), and compared with the most valuable player alive at that moment: within 15% is a good target. A healer gains no damage from it; Balance and Evokers have no sim and aren\'t judged. <b>The time</b>: with the target\'s own big cooldown (pressed within 6 seconds, or its buff up), not mostly in a stretch the raid couldn\'t do damage, the target alive for all 15 seconds, and not on top of another priest\'s on the same player (it doesn\'t stack). Bloodlust is marked ⚡. <b>Use</b>: every 2 minutes, up to the wipe filter. A stretch of 20 seconds or more it sat ready gets its best moment: the most valuable player pressing a big cooldown in it. <b>Left on the table</b>: each cast\'s gap to the best target, plus the best moment of each stretch of 30 seconds or more it sat ready. A talent that also gives the priest a copy isn\'t counted as a cast of its own. All of these are estimates from the sims, not measured damage.</div></details>';
+  return { head, html: tiles + '<div class="pf-cols">' + left0 + right + '</div>' + how };
+}
 // ---------- Performance: Casts ----------
 // Every cast each player pressed (not the procs Warcraft Logs marks as not pressed, like Reclamation or Shattered Souls,
 // and not auto attacks): how many a minute while they could cast (alive, not mind controlled, not while the whole raid was

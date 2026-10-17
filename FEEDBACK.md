@@ -15,9 +15,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   (Players).
 - [ ] **Stats** (your idea, a tab in Performance; you want guidance first): each player's average main and secondary stats
   over the pull, and how much came from gear procs ("cantrips"), flasks, food, enchants, and other players' buffs.
-- [ ] **Power Infusion** (your idea, a tab in Performance): the priest's Power Infusion should land in the right cooldown
-  windows (the target's big cooldowns, Bloodlust), and on the right class (a spec that gains the most from it). Needs a
-  little research per spec. To talk over first.
+- [x] **Power Infusion** (your idea): built in round 137.
+- [ ] **Trend arrows elsewhere** (your question): where the ▲▼ "through the night" could go next. Ideas in the reply.
 - [x] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
   on a click (round 127).
 - **Goal (your note): the Performance tab is meant to replace Warcraft Logs** for the raid. Everything people check on Warcraft
@@ -75,6 +74,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 137: Power Infusion (a new Performance view)
+- [x] **Power Infusion** (your idea: the right target at the right time): every PI a priest cast, graded twice. The target:
+  Bloodmallet's Midnight sims (Oct 14) give how much damage each spec gains from Power Infusion, scaled by how hard that
+  player was hitting, against the most valuable player alive at that moment (3-target sims when adds were up). The
+  time: with the target's own big cooldown, not in raid downtime, the target alive, not on top of another priest's.
+- [x] **What it added** (your ask): about how much damage each PI added, next to the two best players it could have gone
+  to instead, as bars; and what the target really did in those 15 s against their usual 15 s.
+- [x] Each priest: a line through the pull (ready and unused in green, each cast, downtime, Bloodlust), the stretches it
+  sat ready with the best moment in each ("at 1:52 Zaffia pressed Deathmark: about 1.9M"), and a plan for the next pull
+  (who, with which cooldown). Tiles: used, good targets, with their cooldown, and what was left on the table.
+- [x] The talent that gives the priest a copy when casting on someone else isn't counted as a cast; a spec with no sim
+  (Balance, Evokers) is "not judged". All pulls: a line per cast in a table, and who got it how often.
 
 ## 2026-10-17, round 136: a little more room for healing cooldowns
 - [x] **Healing cooldowns from the note** (your call: they're timed around raid damage that doesn't land on the exact
