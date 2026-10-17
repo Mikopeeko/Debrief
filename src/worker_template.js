@@ -40,6 +40,19 @@ async function gql(env, query, variables) {
   if (!r.ok) throw new Error('Warcraft Logs answered ' + r.status + '.');
   return j.data;
 }
+// the same request, its reply kept as text (not parsed): an error reply is short, so only a short one is looked inside
+async function gqlText(env, query, variables) {
+  const r = await fetch('https://www.warcraftlogs.com/api/v2/client', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + (await getToken(env)), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (r.status === 429) throw new Error('Warcraft Logs is rate limiting this site right now. Try again in a few minutes.');
+  if (!r.ok) throw new Error('Warcraft Logs answered ' + r.status + '.');
+  const txt = await r.text();
+  if (txt.length < 4000 && /"errors"\s*:/.test(txt)) { let m = 'Warcraft Logs refused the request.'; try { m = JSON.parse(txt).errors.map((e) => e.message).join('; '); } catch (e) { /* keep the plain message */ } throw new Error(m); }
+  return txt;
+}
 // (the desktop app calls this site from its own window, so answers say any page may read them; they're public data)
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, OPTIONS', 'Access-Control-Max-Age': '86400' };
 const json = (obj, status, maxAge) => new Response(JSON.stringify(obj), {
@@ -63,7 +76,8 @@ const ROUTES = {
   // (short: a report being live logged keeps getting new pulls, and following one live asks every 30 seconds)
   '/api/report': { q: () => REPORT_Q, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null), age: (p) => (p.get('live') ? 20 : 120),
     out: (d, v) => { const rep = d && d.reportData && d.reportData.report; return rep || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 }; } },
-  '/api/events': { q: () => EVENTS_Q, age: 86400,
+  // (raw: the big downloads pass Warcraft Logs' reply straight through, unparsed, which keeps the Worker's CPU time tiny)
+  '/api/events': { q: () => EVENTS_Q, age: 86400, raw: true,
     v: (p) => { const code = p.get('code') || '', fight = parseInt(p.get('fight'), 10), s = num(p.get('s')), e = num(p.get('e')); return CODE.test(code) && fight >= 0 && s >= 0 && e > s ? { code, fid: [fight], s, e } : null; },
     out: (d) => { const ev = d.reportData.report.events; return { data: typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data, nextPageTimestamp: ev.nextPageTimestamp }; } },
   '/api/rankings': { q: () => RANK_Q, age: 3600, // (parses for one kill: damage or healing)
@@ -78,7 +92,7 @@ const ROUTES = {
     out: (d) => d.reportData.reports },
   '/api/night': { q: () => NIGHT_Q, age: 600, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null),
     out: (d, v) => (d && d.reportData && d.reportData.report) || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 } },
-  '/api/deaths': { q: () => DEATHS_Q, age: 600,
+  '/api/deaths': { q: () => DEATHS_Q, age: 600, raw: true,
     v: (p) => { const code = p.get('code') || '', s = num(p.get('s')), e = num(p.get('e')); return CODE.test(code) && s >= 0 && e > s ? { code, s, e } : null; },
     out: (d) => { const ev = d.reportData.report.events; return { data: typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data, nextPageTimestamp: ev.nextPageTimestamp }; } },
 };
@@ -95,9 +109,15 @@ export default {
       if (hit) return hit;
       if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
       try {
+        const age = typeof route.age === 'function' ? route.age(url.searchParams) : route.age;
+        if (route.raw) {
+          const res = new Response(await gqlText(env, route.q(), v), { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=' + age } });
+          ctx.waitUntil(cache.put(key, res.clone()));
+          return res;
+        }
         const out = route.out(await gql(env, route.q(), v), v);
         if (out && out.error) return json({ error: out.error }, out.status || 400);
-        const res = json(out, 200, typeof route.age === 'function' ? route.age(url.searchParams) : route.age);
+        const res = json(out, 200, age);
         ctx.waitUntil(cache.put(key, res.clone()));
         return res;
       } catch (err) {

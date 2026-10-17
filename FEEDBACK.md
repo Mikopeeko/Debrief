@@ -14,6 +14,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 109: "Failed to fetch" on the website
+- [x] Your report: on another browser, opening a pull on the website said "Couldn't analyze this pull: Failed to fetch". A browser
+  with nothing saved downloads many parts of a pull at once, and the website was unpacking each one in memory until it ran out and
+  dropped the connections.
+- [x] The website now passes those downloads (events, deaths) straight through without unpacking them. Eight pulls at once all came
+  through fine, and a pull the site had never seen opened in a fresh tab.
+- [x] The website's downloads now retry by themselves, up to 3 times, like your PC's version already did.
+- [x] If a pull still can't load, there's a **Try again** button instead of a dead end.
+
 ## 2026-10-17, round 108: the last three boss modules, and the survival kit merged
 - [x] **Nek'zali the Soulcoiler**, by phase (P1, the intermission, P2):
   - Restless Amani: each set, shields broken, killed or reached the well, with a map;

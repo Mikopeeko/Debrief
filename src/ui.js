@@ -636,7 +636,11 @@ async function select(item) {
   $('#main').innerHTML = '<div class="empty"><p class="muted" id="loadmsg">Analyzing ' + esc(item.boss) + '…</p></div>';
   let rep;
   try { rep = await getRep(item); }
-  catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }
+  catch (err) {
+    if (S.item !== item) return;
+    $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p><button class="btn primary" id="pullRetry" type="button">Try again</button></div>'; console.error(err);
+    $('#pullRetry').onclick = () => select(item); return;
+  }
   if (S.item !== item) return;
   try { S.rep = rep; }
   catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }

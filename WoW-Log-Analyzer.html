@@ -6957,11 +6957,28 @@ function parseLink(s) {
 // isn't served by the site, so it sets WLA_API to the site's address and asks there.
 const HOSTED = typeof window !== 'undefined' && !!window.WLA_HOSTED;
 const API_BASE = (typeof window !== 'undefined' && window.WLA_API) || '';
+// A dropped connection, a reply cut off halfway, or the site being busy (5xx, 429) is tried again, up to 3 tries.
+const wait = (i) => new Promise((res) => setTimeout(res, 1000 * (i + 1)));
 async function api(path) {
-  const r = await fetch(API_BASE + path);
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok || j.error) throw new Error(j.error || ('The server answered ' + r.status));
-  return j;
+  let last = null;
+  for (let i = 0; i < 3; i++) {
+    let r, j;
+    try { r = await fetch(API_BASE + path); j = await r.json(); }
+    catch (e) { last = r && !r.ok ? new Error('The server answered ' + r.status + ' (tried 3 times). Click the pull again in a minute.') : new Error('Couldn\'t reach the Debrief site (tried 3 times). Check your connection, then click the pull again.'); await wait(i); continue; }
+    if (r.ok && !j.error) return j;
+    last = new Error(j.error || ('The server answered ' + r.status));
+    if (!(r.status >= 500 || r.status === 429)) throw last;
+    await wait(i);
+  }
+  throw last;
+}
+// The site passes Warcraft Logs' own reply straight through for the big downloads (events, deaths); older cached answers
+// are the events alone. Either way: { data, nextPageTimestamp }.
+function evOf(j) {
+  if (j && j.errors && j.errors.length) throw new Error(j.errors.map((e) => e.message).join('; '));
+  const ev = j && j.data && j.data.reportData ? j.data.reportData.report && j.data.reportData.report.events : j;
+  if (!ev) throw new Error('That report was not found or is private.');
+  return ev;
 }
 
 let token = null, tokenP = null;
@@ -7082,7 +7099,7 @@ async function nightPulls(creds, code) {
   if (!fights.length) return { title: rep.title, pulls: [] };
   // (deaths for the whole report in one go, then split by fight: players only, in order)
   const s0 = Math.min(...fights.map((f) => f.startTime)), e0 = Math.max(...fights.map((f) => f.endTime)), deaths = [];
-  for (let s = s0; s != null && s < e0;) { const ev = HOSTED ? await api('/api/deaths?code=' + enc(code) + '&s=' + s + '&e=' + e0) : (await gql(creds, DEATHS_Q, { code, s, e: e0 })).reportData.report.events; for (const e of ev.data || []) if (e.type === 'death') deaths.push(e); s = ev.nextPageTimestamp; }
+  for (let s = s0; s != null && s < e0;) { const ev = HOSTED ? evOf(await api('/api/deaths?code=' + enc(code) + '&s=' + s + '&e=' + e0)) : (await gql(creds, DEATHS_Q, { code, s, e: e0 })).reportData.report.events; for (const e of ev.data || []) if (e.type === 'death') deaths.push(e); s = ev.nextPageTimestamp; }
   const pulls = fights.map((f) => {
     const mine = new Set(f.friendlyPlayers || []), dd = deaths.filter((e) => e.fight === f.id && mine.has(e.targetID)).sort((a, b) => a.timestamp - b.timestamp), diffId = WCL_DIFF[f.difficulty];
     return { fight: f.id, at: rep.startTime + f.startTime, boss: f.name, id: f.encounterID, diffId, diff: DIFF_NAME[diffId], dur: (f.endTime - f.startTime) / 1000, kill: !!f.kill,
@@ -7138,7 +7155,7 @@ async function fetchSlice(creds, w, s, e, last, onPage) {
   const out = [];
   while (s != null && s < e) {
     let ev;
-    if (HOSTED) ev = await api('/api/events?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e);
+    if (HOSTED) ev = evOf(await api('/api/events?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e));
     else { const d = await gql(creds, EVENTS_Q, { code: w.code, fid: [w.fight], s, e }); ev = d.reportData.report.events; }
     const data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
     // slice ends overlap by a millisecond; keep each event in exactly one slice
@@ -7933,7 +7950,11 @@ async function select(item) {
   $('#main').innerHTML = '<div class="empty"><p class="muted" id="loadmsg">Analyzing ' + esc(item.boss) + '…</p></div>';
   let rep;
   try { rep = await getRep(item); }
-  catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }
+  catch (err) {
+    if (S.item !== item) return;
+    $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p><button class="btn primary" id="pullRetry" type="button">Try again</button></div>'; console.error(err);
+    $('#pullRetry').onclick = () => select(item); return;
+  }
   if (S.item !== item) return;
   try { S.rep = rep; }
   catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }
