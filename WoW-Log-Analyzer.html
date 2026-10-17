@@ -14039,8 +14039,9 @@ function home() {
 // their last night), each opening its Progress; with none yet, one card that invites adding your team
 function homeTeams() {
   const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
-  return '<section class="home-teams" id="homeTeams"><div class="ht-h"><h2>Your progress</h2>' + (gl.length ? '<button class="linkbtn" type="button" data-g="+">Add a team or character</button>' : '') + '</div><div class="ht-row">' +
-    (gl.length ? gl.map((g) => teamCard(g, all, order, false)).join('') : '<button class="ht-card ht-add" type="button" data-g="+"><span class="ht-n">Add your team</span><span class="ht-k">Paste your team, guild or character page from Warcraft Logs: every raid night of the tier, boss by boss.</span></button>') + '</div></section>';
+  // (an Add card always ends the row: the way to bring in a team, a guild or your own character)
+  return '<section class="home-teams" id="homeTeams"><div class="ht-h"><h2>Your progress</h2></div><div class="ht-row">' + gl.map((g) => teamCard(g, all, order, false)).join('') +
+    '<button class="ht-card ht-add" type="button" data-g="+"><span class="ht-n">+ ' + (gl.length ? 'Add a team or character' : 'Add your team') + '</span><span class="ht-k">Your team, guild or character page from Warcraft Logs: every raid night of the tier, boss by boss.</span></button></div></section>';
 }
 // (a team's card opens its page; "add" opens the teams page, ready to paste a link)
 function bindHomeTeams() {
