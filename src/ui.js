@@ -4883,7 +4883,7 @@ function hcdView(reps, one) {
   const bars = rows.map((a, i) => { const on = a.key === S.hcdSel;
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pf-hrow', attrs: ' type="button" data-hc="' + esc(a.key) + '" aria-pressed="' + on + '"', k: i + 1, icon: spellIcon(a.id, a.cd), name: esc(CD_SHORT[a.cd] || a.cd), color: a.p.color,
       chips: '<span class="pf-cdw">' + esc(a.p.name) + '</span>', segs: [[Math.max(1, 100 * a.v / mx), 'm']], v: hcdPre(a.kind) + C(a.v), sub: String(a.n) }) + (on ? '<div class="pf-inl pf-srcd">' + hcdDetail(a, one) + '</div>' : ''); }).join('');
-  const left = '<div class="panel pf-bars"><h3 class="nh"><span>Raid cooldowns</span><small>what each healing or raid cooldown did' + (one ? ', up to the wipe filter' : ' over the night') + ' · click one for each press</small></h3>' +
+  const left = '<div class="panel pf-bars"><h3 class="nh"><span>Raid cooldowns</span><small>what each healing or raid cooldown did' + (one ? ', up to the wipe filter' : ' over the night') + '</small></h3>' +
     (bars ? cbHead('Amount', 'Presses', '', ' pf-hrow', 'Cooldown') + bars : '<p class="muted" style="margin:10px 0 0">No healing or raid cooldowns were pressed.</p>') + '</div>';
   // ---- the right: what they did in all, each player's, and the ones that make a healer stronger ----
   const line = (l, v) => '<div class="pf-sl"><span>' + l + '</span><span>' + v + '</span></div>';
@@ -4905,7 +4905,7 @@ function cdView(reps, one) {
   if (S.cdsSel && !rows.some((a) => a.p.name === S.cdsSel)) S.cdsSel = null;
   const bars = rows.map((a, i) => { const on = S.cdsSel === a.p.name;
     return cbRow({ tag: 'button', cls: on ? ' on' : '', attrs: ' type="button" data-un="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * a.f), 'm']], v: Math.round(100 * a.f) + '%', sub: a.used + '/' + a.poss }) + (on ? '<div class="pf-inl">' + cdDetail(a, one) + '</div>' : ''); }).join('');
-  const left = '<div class="panel pf-bars pfu-bars"><h3 class="nh"><span>Big cooldowns</span><small>share of possible uses' + (one ? ', up to their death or the wipe filter' : ' over the night') + ' · click a row for each one</small>' + roleChips(has) + '</h3>' +
+  const left = '<div class="panel pf-bars pfu-bars"><h3 class="nh"><span>Big cooldowns</span><small>share of possible uses' + (one ? ', up to their death or the wipe filter' : ' over the night') + '</small>' + roleChips(has) + '</h3>' +
     (bars ? cbHead('Used', 'Presses') + bars : '<p class="muted" style="margin:10px 0 0">No big cooldowns were cast.</p>') + '</div>';
   // ---- the right: each role's share, the longest waits, and Bloodlust ----
   const role = [['dps', 'DPS'], ['healer', 'Healers'], ['tank', 'Tanks']].map(([k, l]) => { const xs = all.filter((a) => (a.p.role || 'dps') === k); if (!xs.length) return '';
@@ -4915,7 +4915,7 @@ function cdView(reps, one) {
   const lu = all.filter((a) => a.lust[1]), luG = lu.reduce((s, a) => s + a.lust[0], 0), luN = lu.reduce((s, a) => s + a.lust[1], 0), luMiss = lu.filter((a) => a.lust[0] < a.lust[1]).sort((a, b) => a.lust[0] / a.lust[1] - b.lust[0] / b.lust[1]).slice(0, 4);
   const lust = lu.length ? '<div class="pf-sec"><div class="pf-st"><b>With Bloodlust</b><span>a long cooldown lined up with it</span></div><div class="pf-sl"><span>' + (one ? luG + ' of ' + lu.length + ' players' : Math.round(100 * luG / Math.max(1, luN)) + '% of the time') + '</span><span>' + (luMiss.length ? '<span class="sub">not:</span> ' + luMiss.map((a) => '<span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span>').join(', ') : '<span class="ok-t">everyone</span>') + '</span></div></div>' : '';
   const right = '<h3 class="nh"><span>The raid</span><small>' + (one ? 'this pull' : 'over ' + plural(reps.length, 'pull')) + '</small></h3>' + (role ? '<div class="pf-sec"><div class="pf-st"><b>By role</b></div>' + role + '</div>' : '') +
-    '<div class="pf-sec"><div class="pf-st"><b>Longest waits</b><span>ready, not pressed · click for theirs</span></div>' + waitL + '</div>' + lust;
+    '<div class="pf-sec"><div class="pf-st"><b>Longest waits</b><span>ready, not pressed</span></div>' + waitL + '</div>' + lust;
   return sw + '<div class="pf-cols" data-st="cds">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.cds;
 }
 // ---- Performance: Buffs & debuffs ----
@@ -4970,7 +4970,7 @@ function auraView(reps, one) {
       segs: [[Math.max(1, 100 * fOf(x)), 'm']], v: pc(fOf(x)), sub: String(who ? x.me.n : x.who.length) }) + (on ? '<div class="pf-inl">' + auraDetail(x, who, deb) + '</div>' : ''); }).join('');
   const what = deb ? 'debuffs' : 'buffs';
   const alwaysL = !q && always.length ? '<p class="sub pf-more" title="' + esc(always.map((x) => x.name).join(', ')) + '">+' + always.length + ' up the whole time (raid buffs, flasks, food, passives): ' + esc(always.slice(0, 4).map((x) => x.name).join(', ')) + (always.length > 4 ? '…' : '') + '</p>' : '';
-  const left = '<div class="panel pf-bars pf-auras"><h3 class="nh"><span>' + (wp ? '<span class="nm" style="color:' + wp.color + '">' + esc(wp.name) + '</span>\'s ' + what : deb ? 'Debuffs on the raid' : 'Buffs on the raid') + '</span><small>' + (wp ? 'uptime' : 'average uptime on the players who had it') + (one ? '' : ' over the night') + ' · click one for ' + (wp ? 'more' : 'who had it') + '</small>' +
+  const left = '<div class="panel pf-bars pf-auras"><h3 class="nh"><span>' + (wp ? '<span class="nm" style="color:' + wp.color + '">' + esc(wp.name) + '</span>\'s ' + what : deb ? 'Debuffs on the raid' : 'Buffs on the raid') + '</span><small>' + (wp ? 'uptime' : 'average uptime on the players who had it') + (one ? '' : ' over the night') + '</small>' +
     '<input class="pf-q" id="pfAuraQ" type="search" placeholder="Find a ' + (deb ? 'debuff' : 'buff') + '" aria-label="Find a ' + (deb ? 'debuff' : 'buff') + '" value="' + esc(S.auraQ || '') + '" autocomplete="off" spellcheck="false">' +
     (wp ? '<button class="btn sm" id="pfAuraAll" type="button">Everyone</button>' : '') + '</h3>' +
     (bars ? cbHead('Uptime', wp ? 'Times' : 'Players', '', ' pf-arow', deb ? 'Debuff' : 'Buff') + bars : '<p class="muted" style="margin:10px 0 0">' + (q ? 'No ' + what + ' match "' + esc(S.auraQ.trim()) + '".' : 'No ' + what + ' recorded.') + '</p>') +
@@ -4978,7 +4978,7 @@ function auraView(reps, one) {
   // ---- the right: every player, with how many they had; a click shows only theirs ----
   const cnt = new Map(); for (const x of rows) if (!x.always) for (const w of x.who) cnt.set(w.p.name, (cnt.get(w.p.name) || 0) + 1);
   const RO = { tank: 0, healer: 1, dps: 2 }, ps = players.map((m) => m.p).sort((a, b) => (RO[a.role || 'dps'] - RO[b.role || 'dps']) || a.name.localeCompare(b.name));
-  const right = '<h3 class="nh"><span>By player</span><small>click one to see only theirs</small></h3>' + ps.map((p) => '<div class="pf-sl pf-aw' + (p.name === who ? ' on' : '') + '" data-aw="' + esc(p.name) + '" role="button" tabindex="0" aria-pressed="' + (p.name === who) + '"><span>' + pfName(p) + '</span><span class="sub">' + (cnt.get(p.name) || 0) + ' ' + what + '</span></div>').join('');
+  const right = '<h3 class="nh"><span>By player</span><small>pick one for only theirs</small></h3>' + ps.map((p) => '<div class="pf-sl pf-aw' + (p.name === who ? ' on' : '') + '" data-aw="' + esc(p.name) + '" role="button" tabindex="0" aria-pressed="' + (p.name === who) + '"><span>' + pfName(p) + '</span><span class="sub">' + (cnt.get(p.name) || 0) + ' ' + what + '</span></div>').join('');
   return sw + '<div class="pf-cols" data-st="aura">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.aura;
 }
 // ---- Performance: one search over every view ----
@@ -5186,7 +5186,7 @@ function perfSources(r, ps, w0, w1) {
       icon: spellIcon(s.id, s.name), name: esc(s.name), color: schoolCol(s.id), segs, v: C(s.tot / wl), sub: aF >= 0.005 ? pc(aF) : '—',
       chips: ds.length ? '<span class="pf-d" title="' + esc('Killed ' + killed(ds)) + '">✕ ' + (ds.length === 1 ? esc(ds[0].player) : ds.length + ' deaths') + '</span>' : '' }) + (on ? '<!--pf-inl-->' : ''); }).join('');
   const span = w1 - w0 < (r.duration || 0) - 1 ? T(wl) : T(w1);
-  const left = '<div class="panel pf-bars pf-srcs"><h3 class="nh"><span>Damage sources</span><small>per second over ' + span + ' · avoidable in red · click one for who took it</small>' + roleChips(has) + '</h3>' +
+  const left = '<div class="panel pf-bars pf-srcs"><h3 class="nh"><span>Damage sources</span><small>per second over ' + span + ' · avoidable in red</small>' + roleChips(has) + '</h3>' +
     (bars ? cbHead('Per sec', 'Avoidable', '', ' pf-srow', 'Source') + bars : '<p class="muted">No damage taken recorded.</p>') +
     (rows.length > LIM ? '<button class="btn sm pf-srmore" id="pfSrcMore" type="button">' + (S.srcMore ? 'Show fewer' : 'Show ' + (rows.length - LIM) + ' more (the small ones)') + '</button>' : '') + '</div>';
   // ---- the right: the picked source's breakdown, or what to look at ----
@@ -5203,7 +5203,7 @@ function perfSources(r, ps, w0, w1) {
     const avTot = rows.reduce((s, x) => s + Math.min(x.av, x.tot), 0), avTop = rows.filter((x) => x.av >= 1).sort((a, b) => b.av - a.av).slice(0, 5);
     const who1 = (s) => { const w = [...s.who].sort((a, b) => b[1].av - a[1].av)[0]; return w ? '<span class="nm" style="color:' + w[0].color + '">' + esc(w[0].name) + '</span> <span class="sub">' + C(w[1].av) + '</span>' : ''; };
     const line = (l, v, src) => '<div class="pf-sl"' + (src ? ' data-src="' + esc(src) + '" role="button" tabindex="0"' : '') + '><span>' + l + '</span><span>' + v + '</span></div>';
-    right = '<h3 class="nh"><span>What to look at</span><small>' + (w1 - w0 < (r.duration || 0) - 1 ? 'this part of the pull' : 'the whole pull') + '</small></h3>' +
+    right = '<h3 class="nh"><span>The raid</span><small>' + (w1 - w0 < (r.duration || 0) - 1 ? 'this part of the pull' : 'the whole pull') + '</small></h3>' +
       '<div class="pf-sec"><div class="pf-st"><b>Avoidable</b><span>' + (tot ? pc(avTot / T0) + ' of all the damage taken' : '') + '</span></div>' + (avTop.length ? avTop.map((s) => line(spell(s.id, s.name) + ' <b>' + C(s.av) + '</b>', 'most: ' + who1(s), s.name)).join('') : '<p class="sub" style="margin:0">Nothing avoidable hit anyone.</p>') + '</div>' +
       '<div class="pf-sec"><div class="pf-st"><b>What killed people</b><span>the killing blow</span></div>' + ([...dead].length ? [...dead].sort((a, b) => b[1].length - a[1].length).map(([n, l]) => line(spell((by.get(n) || {}).id || 0, n), l.map((d) => { const p = list.find((q) => q.name === d.player); return '<span class="nm" style="color:' + (p ? p.color : 'inherit') + '">' + esc(d.player) + '</span> <span class="sub">' + T(d.t) + '</span>'; }).join(', '), by.has(n) ? n : null)).join('') : '<p class="sub" style="margin:0">Nobody died' + (w1 < (r.duration || 0) - 1 ? ' before the wipe filter' : '') + '.</p>') + '</div>' +
       '';
@@ -6829,7 +6829,7 @@ function reportCard(reps, night) {
       '<span class="rk-ms">' + RC_SEC.map(([k, l]) => '<span class="rk-m" title="' + esc(l) + (x.secs[k] != null ? ': ' + Math.round(x.secs[k]) + '/100' : '') + '"><i>' + esc(l.split(' ')[0] === 'Using' ? 'Toolkit' : l.split(' ')[0] === 'Pressing' ? 'Buttons' : 'Alive') + '</i>' + rcG(x.secs[k]) + '</span>').join('') + (night ? '<span class="rk-m rk-mt" title="Their later pulls against the first"><i>Trend</i>' + (x.trend != null ? plTr(x.trend) : '<span class="dl lv">—</span>') + '</span>' : '') + '</span>' +
       '<span class="rk-f">' + (f && f.gain >= 1 ? '<b>' + esc(f.t) + '</b>' + (night && f.n > 1 ? '<span class="sub"> · ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + (night ? rcFt(f) : '') : '<span class="ok-t">✓ Nothing big to fix</span>') + '</span>' +
       '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night) : ''); };
-  return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade over the pulls they were in, by their time alive · ▲▼ their later pulls against the first' : 'This pull, up to the wipe filter') + ' · most to gain first · click a player for their card</span>' + roleChips(has, 'all') + '</div>' +
+  return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade over the pulls they were in, by their time alive · ▲▼ their later pulls against the first' : 'This pull, up to the wipe filter') + ' · most to gain first</span>' + roleChips(has, 'all') + '</div>' +
     '<div class="rk-list">' + rows.map(row).join('') + '</div>' +
     '<p class="sub rk-how">Graded on what each player could control: casting, big cooldowns, staying alive and using their kit. The boss\'s mechanics are on Mechanics. S is 95 or more, A 88, B 78, C 65, D 50.</p></div>';
 }

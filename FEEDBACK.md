@@ -87,6 +87,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 146: Performance cleanup (raw data, kept light)
+- [x] **Your call: Performance stays raw data graphs for now.** A cleanup to match:
+  1. **The two odd numbers are right.** Visage really is on 19 players (Dragooned's Evoker gives it), and raid cooldowns
+     really are a small share of the healing: their amounts match each spell's own healing, and most of the raid's healing
+     is Soulcoil Barrier, Dream Breath, Leech and the like.
+  2. **Less small print**: the "click one for…" hints over the lists are gone (a row opens in place everywhere).
+  3. **The right side is "The raid" on every view** (Damage sources' "What to look at" too).
+  4. **Old styles removed**: the old row of view buttons, the old raid cooldowns panel and Utility's two groups.
+
 ## 2026-10-17, round 145: one view picker instead of a row of tabs
 - [x] **Your idea: a dropdown for the views.** The top of Performance is one row now: a button for the view you're on (its group,
   name and number), the pull switch, and the search. Click the button for every view in its four groups, each with a short

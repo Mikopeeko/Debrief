@@ -1436,24 +1436,8 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pfv .pf-top { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .pf-top .seg { margin: 0; padding: 2px; } .pf-top .seg button { padding: 5px 12px; font-size: 13.5px; } .pf-top .pfph button { padding: 5px 11px; }
 .pf-top .cutbar { margin: 0 0 0 auto; flex: 0 1 auto; min-width: 0; }
-.pfk { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0 0 10px; } /* (three groups, each named: how they played, output, raid tools) */
-.pfk-g { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; } /* (a group never squeezes its buttons: it wraps to the next line instead) */
-.pfk-gl { padding-left: 2px; color: var(--faint); font: 600 10.5px var(--body); letter-spacing: .07em; text-transform: uppercase; } .pfk-gb { display: flex; gap: 6px; } .pfk-gb > .pfk-b { flex: 1 1 auto; min-width: max-content; } .pfk-gb > .pfk-b.on { flex-grow: 1.5; } /* (every name stays whole; the one you're on gets room for its number; a group wraps when they don't fit) */
-.pfk-b { --kc: var(--gold); position: relative; display: flex; align-items: center; gap: 11px; min-width: 0; padding: 11px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color .12s, background .12s; }
-.pfk-b:hover { border-color: var(--line2); background: #1a1d26; }
-.pfk-b.on { background: var(--raised); border-color: var(--line2); box-shadow: inset 0 -2px 0 var(--kc); }
-.pfk-b:not(.on) .pfk-l { font-size: 14px; } /* (a view you're not on is just its name) */
-.pfk-b.k-dmg { --kc: #6aa8ff; } .pfk-b.k-heal { --kc: #45c15c; } .pfk-b.k-taken { --kc: #e5534b; } .pfk-b.k-res { --kc: #4fb6e8; } .pfk-b.k-util { --kc: #b07cf0; } .pfk-b.k-surv { --kc: #e6b450; }
 .pfu-miss { margin: 12px 0 0; line-height: 1.5; } .pfu-miss b { color: var(--muted); font-weight: 600; }
-.pfk-i { width: 30px; height: 30px; border-radius: 7px; flex: none; box-shadow: 0 0 0 1px #000, 0 0 0 2px var(--line2); opacity: .5; filter: saturate(.5); transition: opacity .12s, filter .12s; }
-.pfk-b.on .pfk-i, .pfk-b:hover .pfk-i { opacity: 1; filter: none; }
-.pfk-t { display: flex; flex-direction: column; min-width: 0; }
-.pfk-l { font-size: 12.5px; color: var(--muted); line-height: 1.2; } .pfk-b.on .pfk-l { color: var(--text); font-weight: 600; }
-.pfk-v { font: 700 21px/1.15 var(--head); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #c9ced8; } .pfk-b.on .pfk-v { color: var(--text); }
-.pfk-v span { font-size: 13px; font-weight: 600; color: var(--faint); margin-right: 6px; }
-.pfk-s { font-size: 12px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 900px) { .pfk { flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; } .pfk::-webkit-scrollbar { display: none; } .pfk-g, .pfk-gb { display: contents; } .pfk-gl { display: none; }
-  .pfk-b, .pfk-gb > .pfk-b, .pfk-gb > .pfk-b.on { flex: none; padding: 8px 11px; gap: 8px; } .pfk-i { width: 24px; height: 24px; } .pfk-b .pfk-s { display: none; } .pfk-v { font-size: 16px; } } /* (a phone: one row that scrolls, not a tall grid) */
+.pfk-i { width: 30px; height: 30px; border-radius: 7px; flex: none; box-shadow: 0 0 0 1px #000, 0 0 0 2px var(--line2); }
 .pts.n2 { --n: 2; } .pts.n3 { --n: 3; } .pts.n4 { --n: 4; } @media (max-width: 1100px) { .pts.n4 { --n: 2; } }
 @media (max-width: 640px) { .pts.n3, .pts.n4 { --n: 2; } .pts.n3 > .pt:last-child:nth-child(odd) { grid-column: 1 / -1; } .pts.n3 .pt-i, .pts.n4 .pt-i { display: none; } .pts.n3 .pt, .pts.n4 .pt { padding: 9px 11px; } .pts.n3 .pt-v, .pts.n4 .pt-v { font-size: 20px; } }
 /* the timeline */
@@ -1556,7 +1540,7 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 @media (max-width: 760px) { .rc-cd em { display: none; } .rc-row { grid-template-columns: 14px 16px 40px minmax(0, 1fr) 62px; } .rc-row .rc-cov { grid-column: 3 / -1; } .rc-chart { height: 90px; } }
 @media (max-width: 640px) {
   .pf-top .cutbar { margin-left: 0; flex-basis: 100%; }
-  .pfk-b { padding: 9px 10px; gap: 8px; } .pfk-i { width: 24px; height: 24px; } .pfk-v { font-size: 18px; }
+  .pfk-i { width: 26px; height: 26px; }
   .pfc-lg { margin-left: 0; }
   .pf-row, .pf-nr { grid-template-columns: 16px 22px minmax(0, 1fr) auto; row-gap: 3px; } .pf-row .pf-bar { grid-column: 3 / -1; grid-row: 2; } .pf-nr .pf-sp { display: none; }
   .pf-bars h3 .pf-rf { margin-left: 0; }
@@ -1640,27 +1624,7 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pfu-0 { margin: 2px 0 4px; font-size: 12.5px; } .pfu-ft { margin: 0; }
 
 /* Performance, Healing: the major healing cooldowns, a row per press (green: heals, blue: damage taken off, gold: throughput) */
-.pf-hcd h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; } .pf-hcd h3 > span { font: 600 16px var(--head); } .pf-hcd h3 small { color: var(--faint); font-size: 12px; }
-.hcd-cs { display: flex; flex-wrap: wrap; gap: 5px 8px; margin: 2px 0 10px; }
-.hcd-c { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 6px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line); font-size: 12px; white-space: nowrap; border-left: 3px solid #45c15c; }
-.hcd-c.k-dr, .hcd-c.k-both { border-left-color: #6aa8ff; } .hcd-c.k-amp { border-left-color: #8c93a3; } .hcd-c .icw { width: 15px; height: 15px; margin-right: 3px; vertical-align: -3px; } .hcd-c b { font-variant-numeric: tabular-nums; } .hcd-c .sub { font-size: 12px; } .hcd-c .nm { font-weight: 600; }
-.hcd-r { --hc: #45c15c; display: grid; grid-template-columns: 40px minmax(150px, 200px) minmax(100px, 150px) minmax(60px, 1fr) 150px minmax(150px, 1.1fr); gap: 6px 12px; align-items: center; padding: 6px 0 6px 10px; margin: 0 0 4px; border-left: 2px solid var(--hc); font-size: 12.5px; }
-.hcd-r.k-dr, .hcd-r.k-both { --hc: #6aa8ff; } .hcd-r.k-amp { --hc: #8c93a3; }
-.hcd-t { font: 700 13.5px var(--head); font-variant-numeric: tabular-nums; } .hcd-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hcd-s .icw { width: 16px; height: 16px; vertical-align: -3px; margin-right: 5px; } .hcd-s .sub { font-size: 12px; }
-.hcd-p { display: flex; align-items: center; gap: 6px; min-width: 0; } .hcd-p .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hcd-p .av.sm { width: 20px; height: 20px; }
-.hcd-b { display: flex; height: 6px; border-radius: 1.5px; background: rgba(255,255,255,.045); overflow: hidden; } .hcd-b i { display: block; height: 100%; background: var(--hc); opacity: .85; flex: none; } .hcd-b i.oh { opacity: .22; } .hcd-b.none { background: none; }
-.hcd-v { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; } .hcd-v b { font-variant-numeric: tabular-nums; font-size: 13.5px; } .hcd-v .sub { font-size: 12px; text-align: right; }
-.hcd-h { font-size: 12px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hcd-h .icw { width: 15px; height: 15px; vertical-align: -3px; margin-right: 4px; } .hcd-h .sub { font-size: 12px; }
-.pf-hcd .howit { margin: 8px 0 0; } .pf-hcd h3 .hcd-sw { margin: 0 0 0 auto; padding: 2px; } .hcd-sw button { padding: 3px 10px; font-size: 12.5px; }
-.hcd-r.k-av, .hcd-c.k-av { --hc: #6aa8ff; } .hcd-c.k-av { border-left-color: #6aa8ff; } .hcd-r.k-hp { --hc: #b07cf0; } .hcd-c.k-hp { border-left-color: #b07cf0; }
 /* (by player: a group per caster, their totals on the header, their presses under it without the name column) */
-.hcd-g { margin: 0 0 12px; } .hcd-g:last-of-type { margin-bottom: 4px; }
-.hcd-gh { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 6px 0 5px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
-.hcd-gh .av { align-self: center; } .hcd-gh .nm { font: 600 14px var(--head); } .hcd-gh > .sub { font-size: 12px; }
-.hcd-gt { margin-left: auto; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; } .hcd-gt .sub { font-weight: 400; }
-.hcd-r.np { grid-template-columns: 40px minmax(150px, 220px) minmax(60px, 1fr) 170px minmax(150px, 1.1fr); }
-@media (max-width: 900px) { .hcd-r.np { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 44%); } .hcd-v .sub { white-space: normal; } .hcd-r.np .hcd-v { grid-column: 3; grid-row: 1; } .hcd-r.np .hcd-b { grid-column: 1 / -1; grid-row: 2; } .hcd-r.np .hcd-h { grid-column: 1 / -1; grid-row: 3; } .hcd-gt { margin-left: 0; flex-basis: 100%; } .pf-hcd h3 .hcd-sw { margin-left: 0; } }
-@media (max-width: 900px) { .hcd-r { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 44%); } .hcd-p { grid-column: 2; grid-row: 2; } .hcd-b { grid-column: 1 / -1; grid-row: 3; } .hcd-v { grid-column: 3; grid-row: 1 / 3; } .hcd-h { grid-column: 1 / -1; grid-row: 4; white-space: normal; } }
 
 /* Performance: the view switch under the timeline (Players, Phases, Damage windows, Targets, Healers, Heatmap) */
 .pf-lensw { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin: 4px 0 10px; } .pf-lensl { color: var(--faint); font: 600 10.5px var(--body); letter-spacing: .07em; text-transform: uppercase; } .pf-lensw .seg { margin: 0; }
@@ -1674,7 +1638,6 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-fold > h3.nh { cursor: pointer; } .pf-fold > h3.nh > :first-child::after { content: ' ▾'; color: var(--faint); font-size: .8em; } .pf-fold.folded > h3.nh > :first-child::after { content: ' ▸'; }
 .pf-fold.folded > :not(h3) { display: none !important; } .pf-fold.folded > h3.nh { margin-bottom: 0; } .pf-chartrow:has(> .pf-fold.folded) { align-items: start; }
 /* ---- Utility's kinds in two named groups ---- */
-.pfu-cats { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 2px 0 10px; } .pfu-g { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .pfu-gl { color: var(--faint); font: 600 10.5px var(--body); letter-spacing: .07em; text-transform: uppercase; } .pfu-cats .seg { margin: 0; flex-wrap: wrap; }
 .pf-lp h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; } .pf-lp h3 > span { font: 600 16px var(--head); } .pf-lp h3 small { color: var(--faint); font-size: 12px; }
 .pf-lp h3 .pf-rf { margin: 0 0 0 auto; padding: 2px; }
 .pf-lp .howit { margin: 10px 0 0; } .pf-ft { margin: 8px 0 0; font-size: 12px; color: var(--faint); }
@@ -1718,7 +1681,7 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 /* touch screens only: rows and buttons big enough for a finger; a mouse keeps the dense layout */
 @media (pointer: coarse) {
   .pf-row.cb { padding-top: 5px; padding-bottom: 5px; } .pf-row.cb.cb-h { padding-top: 0; padding-bottom: 2px; } .cb-b { height: 30px; } .cb-in .av.sm { width: 22px; height: 22px; }
-  .pf-lens button { min-height: 40px; } .pf-rf button, .hcd-sw button, .pfph button, .plsw button { min-height: 36px; }
+  .pf-lens button { min-height: 40px; } .pf-rf button, .pfph button, .plsw button { min-height: 36px; }
   .pf-t td { padding-top: 9px; padding-bottom: 9px; } .pf-tg-r { padding-top: 8px; padding-bottom: 8px; }
   .pf-all, .pf-x, .pf-chart h3 .btn { min-height: 36px; }
 }
@@ -1793,7 +1756,6 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .gv-sl { color: var(--faint); font-size: 11.5px; } .gv-sl .csgems { margin-left: 4px; } .gv-tx .csen, .gv-tx .csbad { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 560px) { .gv-top { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gv-st { grid-template-columns: minmax(0, 1fr); } .gv-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Performance, Power Infusion: each priest's casts, graded for target and timing, and who gains the most */
-.pfk-b.k-pi { --kc: #f6dc9a; }
 .pi-pr { padding: 8px 0 10px; border-top: 1px solid var(--line); } .pi-pr:first-of-type { border-top: 0; }
 .pi-ph { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; } .pi-ph .nm { font-weight: 600; }
 .pi-use { margin-left: auto; font: 700 12.5px var(--body); font-variant-numeric: tabular-nums; } .pi-use.ok { color: #7ee08f; } .pi-use.warn { color: #f3c969; } .pi-use.bad { color: #ff8f87; }
@@ -1847,7 +1809,6 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 @media (max-width: 560px) { .pi-vd, .pi-okl, .pi-sh, .pi-none { margin-left: 0; } }
 @media (max-width: 560px) { .pi-c { grid-template-columns: 48px minmax(0, 1fr); padding-left: 0; } .pi-pills { grid-column: 1 / -1; justify-content: flex-start; } .pi-why { grid-column: 1 / -1; } .pi-hold { margin-left: 0; } }
 /* Performance, Casts: every cast on one time line (a row per player, or per spell), the pace against each spec's sim */
-.pfk-b.k-cast { --kc: #f0a35e; }
 .cst .cst-hit { fill: transparent; } .cst-l.k { cursor: pointer; } .cst-l.k:hover .cst-hit { fill: rgba(255,255,255,.04); }
 .cst-t { fill: none; stroke-width: 1.3; opacity: .9; } .cst-n { font: 500 11px var(--body); } .cst-dd { fill: rgba(229,83,75,.12); }
 .cst-f { font-weight: 700; font-variant-numeric: tabular-nums; } .cst-f.ok { color: #7ee08f; } .cst-f.warn { color: #f3c969; } .cst-f.bad { color: #ff8f87; }
@@ -2019,13 +1980,7 @@ body.bh-off .tabbar .tb-id { display: inline-flex; }
 .pf-head { margin: 0 0 10px; } .pfv .pf-head .pf-top { margin: 0; }
 @media (min-width: 1101px) {
   .pf-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin: 0 0 12px; }
-  .pf-head .pfk { display: flex; gap: 6px; margin: 0; flex: none; }
-  .pf-head .pfk-b { padding: 6px 12px 6px 7px; gap: 8px; border-radius: 9px; }
-  .pf-head .pfk-i { width: 24px; height: 24px; border-radius: 6px; }
-  .pf-head .pfk-t { flex-direction: row; align-items: baseline; gap: 8px; }
-  .pf-head .pfk-v { font-size: 17px; } .pf-head .pfk-s { display: none; }
   .pf-head .pf-top { flex: 1; min-width: 320px; } /* (with many views, the pull switch drops under them instead of squeezing) */
-  .pf-head .pfk { flex: 0 1 auto; max-width: 100%; flex-wrap: wrap; gap: 8px 16px; } .pf-head .pfk-g, .pf-head .pfk-gb > .pfk-b, .pf-head .pfk-gb > .pfk-b.on { flex: 0 0 auto; } /* (eleven views: the groups wrap whole, at their own width) */
   .pf-chartrow { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; align-items: stretch; margin: 0 0 14px; }
   .pf-chartrow.solo { grid-template-columns: minmax(0, 1fr); }
   .pf-chartrow > .panel { margin: 0; } .pf-chartrow > .pts.pf-side { --n: 1; margin: 0; grid-auto-rows: 1fr; }
