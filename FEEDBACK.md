@@ -6,10 +6,48 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **High priority: set up GitHub before anything else** (round 102: private repo Mikopeeko/Debrief, a checkpoint pushed after every round).
 - [x] Entombed Sentinels module (round 95).
 - [x] Sszorak module (round 99).
-- [ ] Then the next fight modules, in this order: Nek'zali the Soulcoiler, The Lost Explorers. Strategy from the guides and videos; Wolfthorn's pulls are raw data.
-- [ ] Open (your call): a few of the Sentinels and Sszorak thresholds are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
+- [x] Then the next fight modules: Nek'zali the Soulcoiler, Vashnik the Malignant, The Lost Explorers (round 108). Every raid boss has a module now.
+- [ ] **Simplify Deaths in the Mechanics tab** a little (your note, round 108).
+- [ ] **Rework the raid cooldowns timeline** in the Mechanics tab, fully (your note, round 108).
+- [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
+- [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 108: the last three boss modules, and the survival kit merged
+- [x] **Nek'zali the Soulcoiler**, by phase (P1, the intermission, P2):
+  - Restless Amani: each set, shields broken, killed or reached the well, with a map;
+  - Soulcoil Ignition: Ritual Burn going in, circle hits;
+  - Grasping Depths (Mythic): the well team, every Soulcoiler's Curse and who kicked it, Swirling Spirits, Soul Exhaustion;
+  - Essence Rend: who dispelled it, and how far from the well each puddle landed;
+  - Possession Barrage: how far the tank stood;
+  - the intermission: corpses back at once, Hungering Pyre soakers, Soul Transfer, the Echoes;
+  - Invoke (Mythic): who was still casting;
+  - an energy list (what fed her, and the enrage).
+- [x] **Vashnik the Malignant**, grouped by mechanic:
+  - Imbibe: fountains, the raid hit, deaths;
+  - the venoms: fire adds killed one at a time, adds over a minute, a venom reaching the middle;
+  - Malignant Totems (Mythic): cleared by the waves before the next Imbibe;
+  - Plague Froth: who a wave hit and whose line it was, with the four lines drawn on the map;
+  - Catalytic Bile soaks; Exploding Infection dispels together; Stygian Burst hits; the Dripping Fangs swap.
+- [x] **The Lost Explorers**, by turn (the pull, then Gebbo's, Iku's and Nama's turn as Mor'zahi takes each over):
+  - boxes popped or ruptured, with the raid's Splinters stacks at each pop;
+  - United Defense; Final Ascension against the fish;
+  - Frostfire Volley clears; Blink Nova; Mighty Thud leaps and soakers;
+  - the bomb's Blast Wave; tank stacks.
+- [x] Every spell ID was read from your team's Mythic kills and wipes, and each module was checked on a kill and a wipe. The wipes read
+  the way they went:
+  - Nek'zali: 5 corpses back at once killed 11 players.
+  - Vashnik: the soft enrage, two Imbibes 20 s apart.
+  - Lost Explorers: a late fish, then a box rupture that killed 12 players.
+- [x] Fixed for every boss: Warcraft Logs reuses an add's number once it dies, so different adds were merged into one. Now each one is
+  tracked on its own (it fixed Nek'zali's Amani sets, and Sszorak and Ula'tek still read the same).
+- [x] Old rules fixed: Nek'zali's Slithering Flame (everyone outside the soak gets it by design) is no longer a mistake; two wrong spell
+  IDs were corrected.
+- [x] **Survival kit merged with Potions and Healthstones**: one table. Each player's Healthstones and health potions show their times
+  under the count, and combat potions show the pre-pot and each use. The separate table is gone.
+- Notes for each boss (sources, what the logs showed, my thresholds): notes/Nekzali research.md, Vashnik research.md and
+  Lost Explorers research.md.
 
 ## 2026-10-17, round 107: live logging leads the website
 - [x] The website's start page leads with **Live logging**: one big box for your raid's Warcraft Logs live log ("Go live"). Each pull shows up about a minute after it ends. "How to live log" opens three short steps (the uploader's Live Log, copy its link, paste it).

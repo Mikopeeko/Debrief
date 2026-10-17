@@ -1906,9 +1906,8 @@ function audit() {
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
-    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">survival kit up to the wipe filter; potions and raid cooldowns for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕ ' + pl2(nd, 'problem') : '✓ clean') + '</span></summary>' +
+    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">defensives, Healthstones and potions up to the wipe filter; raid cooldowns for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕ ' + pl2(nd, 'problem') : '✓ clean') + '</span></summary>' +
       secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
-      (() => { const pt = potionTable(r, players()); return info('sv-pots', 'Potions and Healthstones', 'Healthstone', pt.status, pt.html); })() +
       info('sv-cds', 'Raid cooldowns timeline', 'Rallying Cry', 'boss mechanics, deaths and raid cooldowns on one scrollable timeline', raidCdPanel(r).replace(/^<div class="panel"/, '<div')) + '</details>'; }
   if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean /, 'Clean · ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
   if (m.diag) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
@@ -2047,8 +2046,9 @@ function defenseSection(r) {
   const list = players().filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => ({ p, s: survivalOf(r, p) })).sort((a, b) => a.s.score - b.s.score || a.p.name.localeCompare(b.p.name));
   const low = list.filter((x) => x.s.score < 65).length, mid = list.filter((x) => x.s.score >= 65 && x.s.score < 88).length;
   const defR = list.reduce((n, x) => n + x.s.defReady, 0), potN = list.filter((x) => x.s.expect).length, potOk = list.filter((x) => x.s.expect && x.s.used >= x.s.expect).length;
-  return { id: 'defensives', title: 'Survival kit', spell: [0, 'Shield Wall'], verdict: low ? 'bad' : mid ? 'warn' : 'good',
-    summary: (potN ? potOk + ' of ' + potN + ' players used their combat or mana potion; ' : '') + (defR ? plural(defR, 'death') + ' with a defensive ready.' : 'nobody died with a defensive ready.'),
+  const nStone = list.reduce((n, x) => n + x.s.stones, 0), nHp = list.reduce((n, x) => n + x.s.hpots, 0);
+  return { id: 'defensives', title: 'Survival kit: defensives, Healthstones, potions', spell: [0, 'Shield Wall'], verdict: low ? 'bad' : mid ? 'warn' : 'good',
+    summary: (potN ? potOk + ' of ' + potN + ' players used their combat or mana potion; ' : '') + (defR ? plural(defR, 'death') + ' with a defensive ready; ' : 'nobody died with a defensive ready; ') + plural(nStone, 'Healthstone') + ' and ' + plural(nHp, 'health potion') + ' used. Each use\'s time is under its count.',
     how: 'Each player\'s survival kit this pull, up to the wipe filter, scored out of 100: defensives 40 (dying with a personal defensive ready costs 50, a close call under 30% health with nothing pressed costs 20), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts; one is expected per pull, two if alive more than 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts. Defensives are matched by spell name with base cooldowns, so talented ones can be off by one.',
     cols: ['Player', 'Survival', 'Defensives', 'Healthstone and health potion', 'Combat or mana potion', 'Close calls', ''],
     rows: list.map(({ p, s }) => {
@@ -2057,8 +2057,10 @@ function defenseSection(r) {
         (p.cons.manapot.length ? crow('Mana potion', p.cons.manapot) : '') + (p.cons.utilpot.length ? crow('Utility potion', p.cons.utilpot) : '');
       return [{ p: p.name }, { g: letterOf(s.score), gs: Math.round(s.score), bad: s.score < 65, warn: s.score >= 65 && s.score < 88 },
         s.defReady ? { txt: 'died with one ready' + (s.defReady > 1 ? ' (' + s.defReady + 'x)' : ''), bad: true } : { txt: s.deaths ? 'died with nothing left' : 'fine', dim: true },
-        { txt: s.stones + ' · ' + s.hpots + (s.kitReady ? ' · died with one unused' : ''), bad: s.kitReady > 0, dim: !s.kitReady && !(s.stones + s.hpots) },
-        s.expect ? { txt: s.used + ' of ' + s.expect + (s.pre ? ' (pre-pot)' : ''), bad: !s.used, warn: s.used > 0 && s.used < s.expect } : { txt: 'not judged', dim: true },
+        // (the Potions and Healthstones table was merged in here: each use's time under its count)
+        { txt: (s.stones || s.hpots ? [s.stones ? plural(s.stones, 'Healthstone') : '', s.hpots ? plural(s.hpots, 'health potion') : ''].filter(Boolean).join(', ') : 'none used') + (s.kitReady ? ', died with one unused' : ''), bad: s.kitReady > 0, dim: !s.kitReady && !(s.stones + s.hpots),
+          sub: [p.cons.healthstone.length ? 'Healthstone ' + p.cons.healthstone.map((u) => T(u.t)).join(', ') : '', p.cons.healpot.length ? 'potion ' + p.cons.healpot.map((u) => T(u.t)).join(', ') : ''].filter(Boolean).join(' · ') },
+        s.expect ? { txt: s.used + ' of ' + s.expect, bad: !s.used, warn: s.used > 0 && s.used < s.expect, sub: [s.pre ? 'pre-pot' : ''].concat(p.cons.combatpot.concat(p.cons.manapot).filter((u) => u.t >= 3).sort((a, b) => a.t - b.t).map((u) => T(u.t))).filter(Boolean).join(', ') } : { txt: 'not judged', dim: true },
         { txt: s.calls ? s.calls + (s.silent ? ', ' + s.silent + ' with nothing pressed' : ', all answered') : 'none', warn: s.silent > 0, dim: !s.calls }, { more, label: 'Details' }];
     }) };
 }
@@ -5000,33 +5002,6 @@ function surv() {
       '</div></details>';
   });
   view(h);
-}
-// Potions and Healthstones, one row per player (the Fight audit's Survival group): combat potions against what they could
-// have used (a pre-pot counts), each use as a time, Healthstone and health potion uses, and anyone who died with one of
-// those still unused. Problems first. The counts are the survival kit's own (survivalOf), so the two always agree.
-function potionTable(r, ps) {
-  const ct = cutT(r), dds = keptDeaths(r), tm = (u, cls) => '<span class="pt-u' + (cls ? ' ' + cls : '') + (u.t > ct + 0.05 ? ' late' : '') + '" title="' + esc(u.name + ' at ' + T(u.t) + (u.t > ct + 0.05 ? ', after the wipe filter' : '')) + '">' + (cls === 'pre' ? 'pre-pot' : T(u.t)) + '</span>';
-  const rows = ps.filter((p) => p.guid && p.name).map((p) => {
-    const s = survivalOf(r, p), pots = p.cons.combatpot.concat(p.cons.manapot).sort((a, b) => a.t - b.t);
-    const ready = dds.filter((d) => d.guid === p.guid && !(d.healthy && d.window < 1.5)), hsReady = ready.find((d) => (d.available || []).includes('Healthstone')), hpReady = ready.find((d) => (d.available || []).includes('a healing potion'));
-    const short = s.expect && s.used < s.expect, st = hsReady || hpReady ? 'bad' : short ? 'warn' : s.expect ? 'ok' : 'na';
-    const res = hsReady || hpReady ? 'died at ' + T((hsReady || hpReady).t) + ' with ' + [hsReady ? 'a Healthstone' : '', hpReady ? 'a health potion' : ''].filter(Boolean).join(' and ') + ' unused'
-      : !s.expect ? 'not judged (under 20 s alive)' : short ? (s.used ? s.used + ' of ' + s.expect + ' combat potions' : 'no combat potion') : s.expect > 1 ? 'both combat potions' : 'combat potion used';
-    const potCell = (s.pre ? tm({ t: 0, name: 'a combat potion before the pull' }, 'pre') : '') + pots.map((u) => tm(u, u.t < 3 ? 'pre' : '')).join('') || '<span class="sub">none</span>';
-    const kitCell = (list, rd) => (list.length ? list.map((u) => tm(u)).join('') : '') + (rd ? '<span class="pt-u miss" title="Still had it when they died">unused, died ' + T(rd.t) + '</span>' : list.length ? '' : '<span class="sub">—</span>');
-    return { p, s, st, html: '<tr class="' + { bad: 'rbad', warn: 'rwarn', ok: '', na: '' }[st] + '"><td>' + who(p, p.specName || '') + '</td><td>' + potCell + (s.expect ? '<div class="sub">' + s.used + ' of ' + s.expect + '</div>' : '') + '</td><td>' + kitCell(p.cons.healthstone, hsReady) + '</td><td>' + kitCell(p.cons.healpot, hpReady) + '</td><td>' + hst(st, res) + '</td></tr>' };
-  });
-  const rank = { bad: 0, warn: 1, ok: 2, na: 3 }, roleR = { tank: 0, healer: 1 };
-  rows.sort((a, b) => rank[a.st] - rank[b.st] || (roleR[a.p.role] ?? 2) - (roleR[b.p.role] ?? 2) || a.p.name.localeCompare(b.p.name));
-  const judged = rows.filter((x) => x.s.expect), shortL = judged.filter((x) => x.s.used < x.s.expect), died = rows.filter((x) => x.st === 'bad');
-  const nStone = rows.reduce((n, x) => n + x.p.cons.healthstone.length, 0), nHp = rows.reduce((n, x) => n + x.p.cons.healpot.length, 0);
-  const names = (l) => l.slice(0, 5).map((x) => x.p.name).join(', ') + (l.length > 5 ? ' +' + (l.length - 5) : '');
-  const lead = '<div class="msum"><p class="' + (died.length ? 'bad' : shortL.length ? 'warn' : 'ok') + '"><b>Combat potions:</b> ' + (judged.length ? (judged.length - shortL.length) + ' of ' + judged.length + ' players used every one they could (a pre-pot counts)' + (shortL.length ? '; short: ' + esc(names(shortL)) : '') : 'not judged (the pull was too short)') + '.</p>' +
-    (died.length ? '<p class="bad"><b>Died with one unused:</b> ' + esc(names(died)) + '.</p>' : '') +
-    '<p class="ok"><b>Used:</b> ' + plural(nStone, 'Healthstone') + ', ' + plural(nHp, 'health potion') + '.</p></div>';
-  return { status: [shortL.length ? shortL.length + ' short on combat potions' : judged.length ? 'everyone potted' : '', died.length ? plural(died.length, 'death') + ' with a Healthstone or potion unused' : ''].filter(Boolean).join(' · ') || 'nothing to judge',
-    html: lead + '<div class="scroll"><table class="tbl pt-tbl"><thead><tr><th>Player</th><th>Combat potion</th><th>Healthstone</th><th>Health potion</th><th>Result</th></tr></thead><tbody>' + rows.map((x) => x.html).join('') + '</tbody></table></div>' +
-      '<p class="sub" style="margin:8px 0 0">Combat and mana potions count against what each player could have used up to the wipe filter: one, plus one more for every 5 minutes alive (the pre-pot counts). A death with a Healthstone or health potion still unused is red, unless it came out of nowhere at full health. Faded times are after the wipe filter.</p>' };
 }
 // Consumable row: lists exactly which potions were used and when, grouped by name.
 function potionPanel(ps) {
