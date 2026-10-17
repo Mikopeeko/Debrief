@@ -252,7 +252,9 @@ function loadEvents(creds, item, onPage) {
       dbPut(key, all);
       return all;
     })();
-    p.catch(() => PENDING.delete(key));
+    // (a finished download is let go once it's back: it's saved on this PC by then, and keeping every pull's events in
+    // memory (100+ MB for a long Mythic pull) crashed the tab after a few dozen pulls; the analysis keeps what it needs)
+    p.then(() => setTimeout(() => { if (PENDING.get(key) === p) PENDING.delete(key); }, 0), () => PENDING.delete(key));
     PENDING.set(key, p);
   }
   if (onPage) p.onPage = onPage;

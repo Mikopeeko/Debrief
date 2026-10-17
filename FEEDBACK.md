@@ -11,13 +11,39 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Rework the raid cooldowns timeline** in the Mechanics tab, fully (round 110).
 - [x] **Ula'tek: a damage graph on the Venomous Heart** (round 113).
 - [x] **Damage windows, clearer** and **Big cooldowns, simpler**: mockup shown; you'd rather keep the Performance tab as it is now.
-- [ ] **Polish Twin Fangs, The Coiled Altar and Ula'tek** on Mythic and Heroic (your note: fine-tuning before your group tests).
+- [x] **Polish Twin Fangs, The Coiled Altar and Ula'tek** on Mythic and Heroic (round 116).
+- [ ] **Teams**: remove a team, and a dropdown for more than one (your note). Design in the morning review.
+- [ ] **Remove the Healers view?** (asked; waiting on your yes or no).
+- [ ] **Big review of the whole app** for launch: organization, design, readability, with mockups (your note). In progress.
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 116: boss review (Twin Fangs, Coiled Altar, Ula'tek), the website in Chrome
+Checked on your team's logs (Twin Fangs Mythic Oct 14, 30 pulls; Coiled Altar Mythic Oct 15, 32 pulls; Heroic Sep 2: Twin Fangs kill,
+Coiled Altar wipe and kill, 11 Ula'tek pulls) and, for game facts only, a top Coiled Altar Mythic kill and the Ula'tek test logs. No
+errors anywhere, every phase found. Fixed:
+- [x] **The website in Chrome** (your note: "Failed to fetch" for team and Warcraft Logs pulls, fine in Edge): ad blockers block web
+  addresses ending in "/api/events", which is where the site downloaded each pull. It now downloads from "/api/fightlog". Retries
+  also skip the browser's saved copy, and the error says what went wrong (and to allow the site in an ad blocker).
+- [x] **Memory**: every Warcraft Logs pull you opened stayed in memory for the whole visit (100+ MB for a long Mythic pull), so
+  browsing a few dozen pulls crashed the tab. A pull is let go once it's saved on the PC.
+- [x] **Twin Fangs, Coiling Ichor**: ~18 small mistakes a pull (634 on 30 pulls; 50 on your kill). A hit is 50 to 75K and adds no
+  Eternal Venom (checked on your kill), and two circles overlapping counted each tick twice. Now a tick counts once, and only a
+  stand-in of 5+ ticks is a (minor) mistake: 69 on 30 pulls.
+- [x] **Twin Fangs, globule soaks**: an extra globule at low venom isn't flagged (sets had more globules than soakers: 15 for 13 on
+  your kill). One taken at the stack budget or above still is.
+- [x] **Twin Fangs, Twin balance**: shown, not judged. The Mythic plan in the guides kills one Fang first on purpose, and your kill
+  had them die 21s apart with 8 Uncoiled Wrath stacks, so it read red on a kill.
+- [x] **Twin Fangs, Avoidable damage**: drawn as bars like every other boss (Stir the Depths water, Sanguine Storm).
+- [x] **Coiled Altar on Heroic**: the orbs were judged against the Mythic plan (5 to 6 per frontal, purples) though Heroic has no
+  purples; the Heroic plan is to clear every orb, so the count is shown, not judged. A Fragment reaching Zul'jan heals 3% on Heroic
+  (10% on Mythic): amber, not red, and a row says so when nobody blocked.
+- Covered already, checked: Twin Fangs' Broodling kicks (Visceral Burst, by side); Ula'tek's egg failures (Putrid Membrane is the
+  hatch's raid damage); Toxic Fumes and Necrotic Vapors are constant raid damage (nothing to judge).
 
 ## 2026-10-17, round 115: Deaths and Avoidable damage made simple, Coiled Altar fixes
 - [x] **Deaths, rebuilt** (your note: overkill, simpler but clear). One line per death: when, who, what killed them, and the one

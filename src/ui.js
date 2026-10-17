@@ -1633,7 +1633,7 @@ function audit() {
   // globules (2)" instead of listing players (falls back to the column name).
   const THEMES = {
     // ("!Column" is the wording for an amber result when it differs from the red one)
-    twins: { 'Uncoiled Wrath': 'the bosses dying too far apart' }, venom: { 'Highest stacks': 'players getting close to lethal venom', '!Highest stacks': 'players going over the venom budget', 'Over budget at': 'going over the venom budget', 'Stacks at death': 'dying to venom' },
+    venom: { 'Highest stacks': 'players getting close to lethal venom', '!Highest stacks': 'players going over the venom budget', 'Over budget at': 'going over the venom budget', 'Stacks at death': 'dying to venom' },
     feast: { Soakers: 'under-soaked strikes', 'Already Feasted': 'players soaking a second strike', Died: 'deaths in the strike' }, founts: { 'Tainted Burst': 'founts bursting' },
     // (Entombed Sentinels)
     droplets: { Died: 'deaths after a droplet', '!Droplets': 'two droplets at once', '!Living Venom': 'hits from the venom flying back' },
@@ -1879,7 +1879,7 @@ function audit() {
     const items = groups.map((g) => { const rs = g.rows.map((row) => ({ p: row[0].p, tank: !!row[0].sub, hits: parseInt(row[1].txt, 10) || 0, bad: row[1].bad, warn: row[1].warn, ticks: row[1].sub || '', amt: row[2].n || 0, died: !!row[3].bad }));
       const mx = Math.max(1, ...rs.map((x) => x.hits));
       const bars = rs.map((x, i) => { const p = pmap.get(x.p) || { name: x.p, color: '#9aa0ac' };
-        return cbRow({ tag: 'div', cls: ' nb', attrs: x.ticks ? ' title="' + esc(x.ticks) + '"' : '', k: i + 1, p, segs: [[Math.max(2, 100 * x.hits / mx), 'm']], v: '<span class="' + (x.bad ? 'hotv' : x.warn ? 'warnv' : '') + '">' + x.hits + '</span>', sub: kfmt(x.amt),
+        return cbRow({ tag: 'div', cls: ' nb', attrs: x.ticks ? ' title="' + esc(x.ticks) + '"' : '', k: i + 1, p, segs: [[Math.max(2, 100 * x.hits / mx), 'm']], v: '<span class="' + (x.bad ? 'hotv' : x.warn ? 'warnv' : '') + '">' + x.hits + '</span>', sub: x.amt ? kfmt(x.amt) : '—',
           chips: (x.died ? '<span class="pf-d">✕ died to it</span>' : '') + (x.tank ? '<span class="sub">tank, not judged</span>' : '') }); }).join('');
       return { label: g.title, st: g.bad ? 'bad' : g.warn ? 'warn' : 'ok', body: '<div class="md-h"><b>' + esc(g.title) + '</b></div><div class="sub" style="margin-bottom:8px">' + esc(g.sub || '') + '</div>' + cbHead('Hits', 'Damage') + bars }; });
     const iBad = items.findIndex((x) => x.st === 'bad'), iWarn = items.findIndex((x) => x.st === 'warn'), sel = iBad >= 0 ? iBad : iWarn >= 0 ? iWarn : 0;

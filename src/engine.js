@@ -690,9 +690,11 @@ function buildTwinFangs(ev, r, h) {
   const wrathEv = auraId(TF.wrath).filter((e) => e.op !== 'remove');
   const wrathMax = wrathEv.reduce((m, e) => Math.max(m, e.op === 'apply' ? 1 : e.stacks || 1), 0);
   const gap = tw.length > 1 && tw.every((x) => x.died != null) ? Math.abs(tw[0].died - tw[1].died) : null;
-  const balBad = (gap != null && gap > 15) || wrathMax >= 5, balWarn = worst.gap > 10 || (gap != null && gap > 5) || wrathMax > 0;
-  sections.push({ id: 'twins', title: 'Twin balance: kill them together', spell: [0, 'The Twin Fangs'],
-    verdict: balBad ? 'bad' : balWarn ? 'warn' : 'good',
+  // (shown, not judged: the Mythic plan in the guides kills one Fang first on purpose (start on Vexhul, swap at 40%,
+  // kill Vexhul before the last Submerge), and Wolfthorn's Mythic kill had them die 21s apart with 8 Uncoiled Wrath stacks)
+  const balBad = false, balWarn = false;
+  sections.push({ id: 'twins', title: 'Twin balance: the Fangs\' health', spell: [0, 'The Twin Fangs'], info: 'shown, not judged',
+    verdict: 'good',
     summary: (tw.length ? tw.map((x) => x.name).join(' and ') : 'No boss units found') + '. ' +
       (gap != null ? 'Both died ' + gap.toFixed(1) + 's apart.' : firstDown != null ? 'One Fang died; the other ended at ' + (tw.find((x) => x.died == null) || {}).end + '%.' : 'Health at the end of the pull for each Fang.') +
       ' Biggest health gap ' + Math.round(worst.gap) + '%' + (worst.gap ? ' at ' + h.fmtT(worst.t) : '') + '.' +
@@ -703,7 +705,7 @@ function buildTwinFangs(ev, r, h) {
       sub: 'Biggest health gap ' + Math.round(worst.gap) + '%' + (wrathMax ? ', Uncoiled Wrath ' + pl(wrathMax, 'stack') : ''),
       rows: tw.map((x) => {
         const wr = wrathEv.filter((e) => e.dst === x.g), mx = wr.reduce((m, e) => Math.max(m, e.op === 'apply' ? 1 : e.stacks || 1), 0);
-        return [{ txt: x.name }, { txt: x.end != null ? x.end + '%' : '?' }, { txt: x.died != null ? h.fmtT(x.died) : 'alive', dim: x.died == null }, mx ? { txt: pl(mx, 'stack'), bad: mx >= 5, warn: mx < 5 } : { txt: 'none', dim: true }];
+        return [{ txt: x.name }, { txt: x.end != null ? x.end + '%' : '?' }, { txt: x.died != null ? h.fmtT(x.died) : 'alive', dim: x.died == null }, mx ? { txt: pl(mx, 'stack') } : { txt: 'none', dim: true }];
       }) }] : [], rows: [] });
 
   // ---- 2. Eternal Venom stacks and the stack budget ----
@@ -854,19 +856,22 @@ function buildTwinFangs(ev, r, h) {
     // (globule maps are animated, so the globules themselves show: 3s before to 1.5s after)
     const gfr = (t) => h.frames(Math.max(0, t - 3), Math.min(dur, t + 1.5), 0.25);
     const map = (bad, badLabel, t) => ({ t, good: [...s.by.keys()].filter((g) => !bad.includes(g)), goodLabel: 'soaked', bad, badLabel, title: 'Caustic Globule set ' + (s.i + 1) + ' at ' + h.fmtT(t), pts: h.snap(t), frames: gfr(t) });
+    // (an extra globule at low venom is shown, not flagged: sets often have more globules than soakers (15 for 13 on
+    // Wolfthorn's Mythic kill), so someone has to; it's a mistake when it's taken at the stack budget or above)
     for (const [g, o] of s.by) if (o.n > 1) {
       o.hiStacks = Math.max(...o.ts.slice(1).map((t) => stackAt(g, t - 0.05)));
-      const risky = o.hiStacks >= budget;
-      M(o.t, pname(g), 'caustic globule', risky ? 'Medium' : 'Low', 'Soaked ' + o.n + ' Caustic Globules in set ' + (s.i + 1) + (risky ? ', taking the extra one at ' + o.hiStacks + ' Eternal Venom stacks' : '') + '.', risky ? 'Leave extra globules to players with fewer stacks.' : 'One globule per player per set when possible; each soak adds Eternal Venom.', map([g], 'soaked more than one', o.t));
+      if (o.hiStacks < budget) continue;
+      M(o.t, pname(g), 'caustic globule', 'Medium', 'Soaked ' + o.n + ' Caustic Globules in set ' + (s.i + 1) + ', taking the extra one at ' + o.hiStacks + ' Eternal Venom stacks.', 'Leave extra globules to players with fewer stacks.', map([g], 'soaked more than one', o.t));
     }
     // (Barbed Bulwark hits are flagged in their own section, 5a)
     for (const d of s.died) M(d.t, d.player, 'caustic globule', 'High', 'Died soaking a Caustic Globule.', 'Use a personal defensive for the soak, or let someone with fewer venom stacks take it.', map([d.guid], 'died after soaking', d.t));
     s.snapT = snapT; prevSoakers.clear(); for (const g of s.by.keys()) prevSoakers.add(g);
   }
   // (sets on a real Mythic kill had ~15 globules for 20 players, so most players soak every set: back-to-back soaks are shown, not flagged)
-  // red: a death, or an extra globule taken at high venom; amber: an extra globule, or a Barbed Bulwark hit
+  // red: a death, or an extra globule taken at high venom; amber: a Barbed Bulwark hit (an extra globule at low venom
+  // is only shown)
   const setBad = (s) => s.died.length > 0 || [...s.by.values()].some((o) => o.n > 1 && o.hiStacks >= budget);
-  const setWarn = (s) => s.bul.size > 0 || [...s.by.values()].some((o) => o.n > 1);
+  const setWarn = (s) => s.bul.size > 0;
   sections.push({ id: 'soaks', title: 'Caustic Globule soaks', spell: S('caustic globule'),
     verdict: globExplode.length || gSets.some(setBad) ? 'bad' : gSets.some(setWarn) ? 'warn' : 'good',
     summary: pl(gSets.length, 'set') + ', ' + pl(globs.length, 'globule') + ' soaked' + (globExplode.length ? ', ' + pl(globExplode.length, 'globule') + ' exploded on the raid unsoaked' : '') + '. One globule per player per set, and no touching a globule while its Barbed Bulwark is up.',
@@ -883,14 +888,14 @@ function buildTwinFangs(ev, r, h) {
         // one map for the whole set: every soaker on it (green = clean soak, red = a problem), animated from just before
         // the globules land to just after the last soak or explosion; the rows below list everyone without a map each
         rows: [(() => {
-          const probs = who.filter((g) => { const o = s.by.get(g); return (o && o.n > 1) || s.bul.has(g) || s.died.some((x) => x.guid === g); });
+          const probs = who.filter((g) => { const o = s.by.get(g); return (o && o.n > 1 && o.hiStacks >= budget) || s.bul.has(g) || s.died.some((x) => x.guid === g); });
           const t1 = Math.max(s.end, ...ex.map((c) => c.t)) + 1.5;
           return [{ txt: 'Whole set', sub: 'everyone who soaked, on one map' }, { t: s.t }, { txt: String(s.hits.length) }, { txt: '' }, { txt: '' }, { txt: '' },
-            { map: { t: s.snapT, good: who.filter((g) => !probs.includes(g)), goodLabel: 'soaked', bad: probs, badLabel: 'soak problem (extra globule, Bulwark hit or died)', title: 'Caustic Globule set ' + (s.i + 1) + ': ' + pl(s.by.size, 'soaker') + (ex.length ? ', ' + pl(ex.length, 'globule') + ' exploded unsoaked' : ''), pts: h.snap(s.snapT), frames: h.frames(Math.max(0, s.t - 3), Math.min(dur, t1), 0.25) } }];
+            { map: { t: s.snapT, good: who.filter((g) => !probs.includes(g)), goodLabel: 'soaked', bad: probs, badLabel: 'soak problem (extra globule at high venom, Bulwark hit or died)', title: 'Caustic Globule set ' + (s.i + 1) + ': ' + pl(s.by.size, 'soaker') + (ex.length ? ', ' + pl(ex.length, 'globule') + ' exploded unsoaked' : ''), pts: h.snap(s.snapT), frames: h.frames(Math.max(0, s.t - 3), Math.min(dur, t1), 0.25) } }];
         })()].concat(ex.map((c) => [{ txt: 'Exploded unsoaked', bad: true }, { t: c.t }, { txt: '—', dim: true }, { txt: c.who.size + ' players hit, +1 Eternal Venom each', bad: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '' }])).concat(who.map((g) => {
           const o = s.by.get(g), b = s.bul.get(g), d = s.died.find((x) => x.guid === g), t = (o || b).t;
           const bad = (o && o.n > 1) || b || d, risky = o && o.n > 1 && o.hiStacks >= budget;
-          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!(o && o.n > 1) }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack'), bad: risky } : { txt: '—', dim: true }, b ? { txt: b.n + 'x', warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
+          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!risky }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack'), bad: risky } : { txt: '—', dim: true }, b ? { txt: b.n + 'x', warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
             { txt: '' }];
         })) };
     }), rows: [] });
@@ -1085,10 +1090,16 @@ function buildTwinFangs(ev, r, h) {
   for (const e of dmg('sanguine storm')) { const a = A(e.dst); a.storm++; a.amt += e.amt; }
   const avRows = [...av].sort((a, b) => (b[1].stir + b[1].storm) - (a[1].stir + a[1].storm) || b[1].amt - a[1].amt);
   const hits = (a) => a.stir + a.storm;
+  // (one set per source, like every other boss's Avoidable damage, so it draws as bars: players, hits, damage, died)
+  const avSet = (title, sub, key, amtOf) => { const rs = avRows.filter(([, a]) => a[key] > 0).sort((a, b) => b[1][key] - a[1][key]);
+    if (!rs.length) return null; const rows = rs.map(([g, a]) => [{ p: pname(g) }, { txt: a[key] + (a[key] === 1 ? ' hit' : ' hits'), bad: a[key] >= 3, warn: a[key] > 0 }, { n: amtOf(a) }, { txt: '—', dim: true }]);
+    return { title, t: null, sub: sub + ' · ' + pl(rs.reduce((n, [, a]) => n + a[key], 0), 'hit') + ' on ' + pl(rs.length, 'player'), bad: rows.some((x) => x[1].bad), warn: true, rows }; };
+  const avGroups = [avSet('Stir the Depths water', 'Harmful: stepping into the churned water it leaves (each step is a hit)', 'stir', () => 0),
+    avSet('Sanguine Storm', 'Harmful: each hit', 'storm', (a) => a.amt)].filter(Boolean);
   sections.push({ id: 'avoid', title: 'Avoidable damage', spell: S('sanguine storm'),
     verdict: avRows.some(([, a]) => a.storm >= 3 || a.stir >= 3) ? 'bad' : avRows.some(([, a]) => hits(a)) ? 'warn' : 'good',
     summary: avRows.length ? pl(avRows.length, 'player') + ' stepped into Stir the Depths water or got hit by Sanguine Storm.' : 'Nobody stepped into Stir the Depths water or got hit by Sanguine Storm.',
-    cols: ['Player', 'Stir the Depths steps', 'Sanguine Storm hits', 'Sanguine Storm damage'], rows: avRows.map(([g, a]) => [{ p: pname(g) }, { txt: String(a.stir), bad: a.stir >= 3, warn: a.stir > 0, dim: !a.stir }, { txt: String(a.storm), bad: a.storm >= 3, warn: a.storm > 0, dim: !a.storm }, a.amt ? { n: a.amt } : { txt: '—', dim: true }]) });
+    cols: ['Player', 'Hits', 'Damage taken', 'Died'], rows: [], groups: avGroups });
 
   // (raid cooldown usage is shown on the Healing tab)
   const diag = TF_SPELLS.map((n) => {
@@ -2508,7 +2519,7 @@ const HOW = {
     avoid: 'Every source of damage positioning can avoid. Harmful: Caustic Claws, the venom splashes that land around the boss during Venomous Surge. Minor: standing in Caustic Residue, the puddles they leave (on Mythic the floor fills up, so move the boss to clean ground). Tempest, Virulence and flying players from Raging Crosswinds have their own sections.',
   },
   'The Twin Fangs': {
-    twins:'Vexhul and Ithraz share the fight and must die close together: once one dies, the other gains Uncoiled Wrath, a stacking enrage. Keep their health even the whole fight (swap targets when one pulls ahead) and finish both within a few seconds.',
+    twins:'Once one of Vexhul and Ithraz dies, the other gains Uncoiled Wrath, a stacking enrage. The Mythic plan in the guides kills one first on purpose (start on Vexhul, swap to Ithraz at 40%, kill Vexhul before the last Submerge), then finishes the other before the Wrath stacks get too high. Shown, not judged: each Fang\'s health, when it died, the biggest health gap and the Uncoiled Wrath stacks.',
     venom: 'Most mechanics add Eternal Venom stacks, and it becomes lethal at about 11 stacks on Normal and 10 on Heroic and Mythic. The plan is a budget of about one stack per set, roughly 3 under lethal (6 on Mythic) going into the enrage. Extra stacks come from soaking more than your share, standing in someone else\'s circle and Stir the Depths.',
     feast: 'Ravenous Feast strikes three times, once per group (two ranged groups and melee). Each strike needs 4 or more soakers, and a soaker is Feasted afterward, so nobody soaks a second strike in the same Feast. Under-soaked strikes hit much harder.',
     founts: 'Ravenous Feast leaves Tainted Blood founts. Players absorb them, taking a heal absorb that healers clear; a fount nobody absorbs erupts as Tainted Burst on the raid. Each Feast row shows how much of the heal absorbs each healer cleared (their healing eaten by Tainted Blood); everyone else\'s own healing and leech is added up apart. The whole pull\'s totals are under the table.',
@@ -2799,7 +2810,8 @@ function buildCoiledAltar(ev, r, h) {
 
   // ---- 6. Intermission: fragments reaching Zul'jan, Spirit Erasure stacks ----
   const reclaim = ev.filter((e) => (e.k === 'heal' || e.k === 'cast') && L(e.spell) === 'reclaim essence').map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => i === 0 || t - a[i - 1] > 0.5);
-  for (const t of reclaim) M(t, 'Raid', 'reclaim essence', 'High', 'A Fragment of Malacrass reached Zul\'jan' + (mythic ? ' and healed him for 10%' : '') + '.', 'Spread soakers around the room (including the inner ring, where an early one spawns) so no fragment gets through.');
+  // (each one heals Zul'jan: 10% on Mythic, 3% on Heroic, from the guides)
+  for (const t of reclaim) M(t, 'Raid', 'reclaim essence', mythic ? 'High' : 'Medium', 'A Fragment of Malacrass reached Zul\'jan and healed him for ' + (mythic ? '10%' : r.item.diff === 'Heroic' ? '3%' : 'a little') + '.', 'Spread soakers around the room (including the inner ring, where an early one spawns) so no fragment gets through.');
   // Spirit Erasure is raid-wide: every blocked fragment gives the whole raid a stack at the same moment. So judge the
   // raid's stacks per soak round (a round ends when the stacks drop off), not each player.
   const cur = new Map(), rounds = []; let round = null;
@@ -2818,13 +2830,16 @@ function buildCoiledAltar(ev, r, h) {
     const cd = rcdCasts.filter((e) => e.t >= rd.t - 10 && e.t <= (rd.end ?? until)), cap = cd.length ? 10 : 5;
     const over = rd.peak > cap, way = rd.peak > cap + 2;
     if (over) M(rd.t, 'Raid', 'spirit erasure', way ? 'High' : 'Medium', 'The raid reached ' + rd.peak + ' Spirit Erasure stacks in soak round ' + (i + 1) + (cd.length ? ' (with raid cooldowns up)' : ' with no raid cooldown up') + '.', cd.length ? 'Even with cooldowns stacked, stop around 10 and let the stacks drop.' : 'Without cooldowns, stop at 3 to 5 stacks and let them drop; save higher counts for when Darkness, Anti-Magic Zone or Spirit Link is down.');
-    return [{ txt: 'Round ' + (i + 1) }, { t: rd.t }, { txt: rd.peak + ' stacks', bad: way, warn: over, sub: cd.length ? 'cooldowns: ' + [...new Set(cd.map((e) => e.spell))].join(', ') : '' }, { txt: through ? through + ' got through' : 'none got through', bad: through > 0 }];
+    return [{ txt: 'Round ' + (i + 1) }, { t: rd.t }, { txt: rd.peak + ' stacks', bad: way, warn: over, sub: cd.length ? 'cooldowns: ' + [...new Set(cd.map((e) => e.spell))].join(', ') : '' }, { txt: through ? through + ' got through' : 'none got through', bad: through > 0 && mythic, warn: through > 0 }];
   });
   // Zul'jan's health when the intermission ends: under 35% is on pace for the kill
   const zjAtP3 = (() => { if (p3 == null || !r.hpUnits) return null; const u = [...r.hpUnits].find(([, x]) => /^Zul'jan$/.test(x.name)); if (!u) return null; let v = null; for (const [t, f] of u[1].samples) { if (t > p3) break; if (t >= inter) v = f; } return v == null ? null : Math.round(100 * v); })();
   if (zjAtP3 != null) seRows.push([{ txt: 'Zul\'jan at P3' }, { t: p3 }, { txt: zjAtP3 + '% health', warn: zjAtP3 > 35, sub: 'under 35% is on pace for the kill' }, { txt: '' }]);
+  // (fragments that got through with no soak round at all still get a row, so the panel says what happened)
+  const notSoaked = reclaim.filter((t) => !rounds.some((rd, i) => t >= rd.t - 1 && t < (rounds[i + 1] ? rounds[i + 1].t : (p3 ?? dur))));
+  if (notSoaked.length) seRows.unshift([{ txt: 'Not blocked' }, { t: notSoaked[0] }, { txt: 'no Spirit Erasure', dim: true, sub: 'nobody stood in the way' }, { txt: notSoaked.length + ' got through', sub: 'each healed Zul\'jan ' + (mythic ? '10%' : r.item.diff === 'Heroic' ? '3%' : 'a little'), bad: mythic, warn: !mythic }]);
   if (inter != null) sections.push({ id: 'inter', title: 'Intermission: blocking the Fragments', spell: S('soulbinding'),
-    verdict: reclaim.length ? 'bad' : seRows.some((x) => x[2].warn || x[2].bad) ? 'warn' : 'good',
+    verdict: reclaim.length ? (mythic ? 'bad' : 'warn') : seRows.some((x) => x[2].warn || x[2].bad) ? 'warn' : 'good',
     summary: pl(rounds.length, 'soak round') + ', ' + pl(reclaim.length, 'fragment') + ' reached Zul\'jan.',
     cols: ['Soak round', 'Started', 'Raid peak (3 to 5; up to 10 with cooldowns)', 'Fragments to Zul\'jan'], rows: seRows });
 
@@ -2954,6 +2969,9 @@ function buildCoiledAltar(ev, r, h) {
   // (P1 positions count every Sever cast, including a last one cut off by the push, so "second-to-last" stays right)
   const p1All = casts('sever').map((t) => landAt('sever', t)).sort((a, b) => a - b), p3Sev = severs.filter((s) => s.n === 'blighted sever');
   const planFor = (s) => {
+    // (Heroic and Normal have no purple orbs and no count to aim for: the guides' plan is to clear every orb on the ground
+    // with each frontal, so the count is shown, not judged)
+    if (!mythic) return { txt: 'every orb on the ground', badAt: Infinity };
     if (s.n === 'sever') { const k = p1All.findIndex((t) => Math.abs(t - s.t) < 0.5), n = p1All.length, last = p2 != null && k === n - 1, second = p2 != null && k === n - 2;
       return last ? { txt: 'none (hits empty ground)', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8, lowAt: 0 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8, lowAt: 3 }; }
     return p3Sev.indexOf(s) === 0 ? { txt: 'every purple (5 to 7)', badAt: 8 } : { txt: 'the purples left (7 at most)', badAt: 8 };
@@ -3245,7 +3263,8 @@ function buildCoiledAltar(ev, r, h) {
         { map: { t: coll.t, from: d, hl: carriersAt(coll.t).map((c) => c.g), hlLabel: 'Purple orb carriers', title: 'Orb collision at ' + h.fmtT(coll.t) + ' (purple carriers ringed)' } }]);
       if (!rows.length) rows.push([{ txt: 'no frontal', dim: true }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }]);
       return { title: 'Deluge #' + (i + 1), t: d, bad: !!coll || left || detonations.some((x) => x.t >= d - 1 && x.t < end), warn: cl > 0,
-        sub: [pl(picks.length, 'purple pickup') + (picks.length ? ' (' + [...new Set(picks.map((c) => pname(c.g)))].join(', ') + ')' : ''), pl(cl, 'player') + ' clipped by carriers', coll ? 'orbs collided' : left ? 'orb left at the next Deluge' : 'clean'].join(', '), rows };
+        // (purple orbs are Mythic only: Heroic and Normal lines leave them out)
+        sub: [mythic ? pl(picks.length, 'purple pickup') + (picks.length ? ' (' + [...new Set(picks.map((c) => pname(c.g)))].join(', ') + ')' : '') : '', mythic ? pl(cl, 'player') + ' clipped by carriers' : '', coll ? 'orbs collided' : left ? 'orb left at the next Deluge' : 'clean'].filter(Boolean).join(', '), rows };
     });
     orbSec0.rows = []; orbSec0.title = 'Venom orbs into the frontals'; orbSec0.mythicOnly = false;
     orbSec0.cols = ['Frontal', 'When', 'Spell', 'Orbs popped', ''];
