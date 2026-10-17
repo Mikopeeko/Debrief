@@ -5597,13 +5597,13 @@ function castView(list, one) {
     plTile(plIco('inv_misc_pocketwatch_01'), 'Longest gap', lg ? Math.round(lg.len) + '<span> s</span>' : '—', lg && lg.len >= 8 ? 'warn' : 'na', lg ? lg.p.name + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.t) + (lg.mv === true ? ' · moving' : lg.mv === false ? ' · standing still' : '') : 'no gaps of 4 s or more', !(lg && lg.len >= 8))];
   const mid = cstMed(withSim.map((a) => a.f)), head = { v: withSim.length ? slow.length + '<span> slow</span>' : fmtCpm(cstMed(all.map((a) => a.cpm))) + '<span>/min</span>', s: withSim.length ? 'the middle player at ' + Math.round(100 * mid) + '% of their spec\'s pace' : 'casts per minute, the middle player' };
   const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
-  // ---- the chart: every cast, a row per player (one picked: a row per spell); over the night, a bar per pull ----
+  // ---- the chart: every cast, a row per player; a player picked: just the tiles (their spells are in the table below,
+  // a chart of them wasn't needed); over the night, a bar per pull ----
   let top;
-  if (one) { const w = list[0];
-    const lanes = sel ? sel.per[0].c.ab.slice(0, 14).map((s) => ({ n: s.name, c: sel.p.color, ts: s.ts, tip: s.name + ': ' + plural(s.n, 'cast') + ', ' + fmtCpm(60 * s.n / Math.max(1, sel.al)) + ' a minute' }))
-      : rows.map((a) => ({ key: a.p.name, n: a.p.name, c: a.p.color, ts: a.per[0].c.all, dead: deadSpans(w.r, a.p), tip: a.p.name + ': ' + plural(a.n, 'cast') + ', ' + fmtCpm(a.cpm) + ' a minute' + (a.sim ? ' (' + Math.round(100 * a.f) + '% of the pace)' : '') + ' · click for their spells' }));
-    top = '<div class="pf-chartrow"><div class="panel pf-chart cst-w">' + castLanes(w.r, lanes, w.w0, w.w1, { side: true, aria: sel ? sel.p.name + '\'s casts' : 'Every cast, by player',
-      ttl: sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · every cast' : 'Every cast', sub: sel ? 'a row per spell, most pressed first · a line per cast' : 'a line per cast, a row per player · dead time shaded · click a row for that player' }) + '</div>' + tilesH + '</div>';
+  if (one && sel) top = '<div class="pts n3">' + tiles.join('') + '</div>';
+  else if (one) { const w = list[0];
+    const lanes = rows.map((a) => ({ key: a.p.name, n: a.p.name, c: a.p.color, ts: a.per[0].c.all, dead: deadSpans(w.r, a.p), tip: a.p.name + ': ' + plural(a.n, 'cast') + ', ' + fmtCpm(a.cpm) + ' a minute' + (a.sim ? ' (' + Math.round(100 * a.f) + '% of the pace)' : '') + ' · click for their spells' }));
+    top = '<div class="pf-chartrow"><div class="panel pf-chart cst-w">' + castLanes(w.r, lanes, w.w0, w.w1, { side: true, aria: 'Every cast, by player', ttl: 'Every cast', sub: 'a line per cast, a row per player · dead time shaded · click a row for that player' }) + '</div>' + tilesH + '</div>';
   } else {
     const valOf = sel ? (w) => { const o = sel.per.find((y) => y.w === w); return o && o.c.al >= 10 ? o.c.cpm : null; }
       : (w) => { const v = []; for (const a of all) { if (!a.sim) continue; const o = a.per.find((y) => y.w === w); if (o && o.c.al >= 10) v.push(o.c.cpm / a.sim.v); } return v.length ? cstMed(v) : null; };
