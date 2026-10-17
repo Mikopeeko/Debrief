@@ -78,9 +78,9 @@ async function loadRankings(creds, item, metric) {
   return out;
 }
 
-async function loadReport(creds, code) {
+async function loadReport(creds, code, live) {
   let rep;
-  if (HOSTED) rep = await api('/api/report?code=' + encodeURIComponent(code));
+  if (HOSTED) rep = await api('/api/report?code=' + encodeURIComponent(code) + (live ? '&live=1' : '')); // (live: the site keeps it 20 seconds, not 2 minutes)
   else { const d = await gql(creds, REPORT_Q, { code }); rep = d && d.reportData && d.reportData.report; }
   if (!rep) throw new Error('Report ' + code + ' was not found or is private.');
   const actors = new Map(rep.masterData.actors.map((a) => [a.id, a]));

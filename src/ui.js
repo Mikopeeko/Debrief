@@ -5598,7 +5598,7 @@ async function pickLogFile(msgEl, again) {
     if (h && (await h.requestPermission({ mode: 'read' })) !== 'granted') h = null;
     if (!h) { [h] = await window.showOpenFilePicker({ id: 'wow-logs', multiple: false, types: [{ description: 'WoW combat log', accept: { 'text/plain': ['.txt'] } }] }); await fhSet(h); }
     startFileLive(h);
-  } catch (e) { if (e && e.name !== 'AbortError') msgEl.textContent = e.message; }
+  } catch (e) { if (e && e.name !== 'AbortError') msgEl.textContent = e.message; else if (WCL.HOSTED) msgEl.textContent = BLOCKED_HINT; }
 }
 async function pickLogFolder(msgEl, again) {
   if (!window.showDirectoryPicker) { msgEl.textContent = 'This browser can\'t watch a folder. Use Chrome or Edge, or follow a Warcraft Logs live report below.'; return; }
@@ -5607,7 +5607,7 @@ async function pickLogFolder(msgEl, again) {
     if (dir && (await dir.requestPermission({ mode: 'read' })) !== 'granted') dir = null;
     if (!dir) { dir = await window.showDirectoryPicker({ id: 'wow-logs', mode: 'read' }); await fhSet(dir); }
     startFileLive(dir);
-  } catch (e) { if (e && e.name !== 'AbortError') msgEl.textContent = e.message; }
+  } catch (e) { if (e && e.name !== 'AbortError') msgEl.textContent = e.message; else if (WCL.HOSTED) msgEl.textContent = BLOCKED_HINT; }
 }
 function toast(html, ms) {
   document.querySelectorAll('.toast').forEach((x) => x.remove());
@@ -5621,7 +5621,7 @@ async function liveTick() {
   if (!LIVE.on || LIVE.busy || !S.wclCode) return;
   LIVE.busy = true;
   try {
-    const rep = await WCL.loadReport(S.wclCreds, S.wclCode);
+    const rep = await WCL.loadReport(S.wclCreds, S.wclCode, true);
     const have = new Set(S.index.bosses.map((b) => b.wcl && b.wcl.fight));
     const fresh = [];
     for (const b of rep.bosses) {
@@ -5753,26 +5753,27 @@ function home() {
   // the front page (what people see first): the ways in beside a clickable preview of the app, and the four main views
   // underneath as buttons that switch it. The live button comes first; the other ways to follow a log and the help are
   // folded under the start panel.
-  const fp = fpParts(), liveLab = WCL.HOSTED ? 'Choose your combat log' : 'Follow my combat log';
+  const fp = fpParts(), liveLab = 'Follow my combat log';
   const lock = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const MODS = { live: 'Between pulls: what went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with arena maps of who stood where.', assign: 'Your NSRT note against what actually happened.', summary: 'How far each pull got, and what ended them.' };
   $('#main').innerHTML = '<div class="home fp">' +
     '<div class="fp-top">' +
     '<section class="fp-hero" id="fpStart"><div class="fp-intro"><div><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Know why every pull wiped</h1><p class="fp-lead">Debrief checks every mechanic, assignment and death in your combat log, and tells you what to fix before the next pull.</p></div>' +
       '<div class="fp-start">' +
-        (WCL.HOSTED ? '<button class="btn primary fp-big" id="hLiveFile">' + liveLab + '</button>' : '<button class="btn primary fp-big" id="hLiveAuto">' + liveLab + '</button>') +
-        '<div class="fp-sub">During raid: each pull shows up the moment it ends.</div>' + (WCL.HOSTED ? '' : '<div class="hc-found" id="hLiveFound"></div>') +
+        (WCL.HOSTED ? hostedStart() :
+        '<button class="btn primary fp-big" id="hLiveAuto">' + liveLab + '</button>' +
+        '<div class="fp-sub">During raid: each pull shows up the moment it ends.</div><div class="hc-found" id="hLiveFound"></div>' +
         '<button class="btn" id="hLiveAgain" hidden></button><div class="fp-msg" id="hLiveMsg"></div>' +
         '<div class="fp-or">or look at a finished night</div>' +
         '<button class="btn" id="hFileGo">Open a combat log</button><div class="fp-sub">You can also drop it anywhere on this page.</div>' +
         '<label class="fp-lab" for="hWcl">Warcraft Logs report, yours or any public one</label><div class="fp-in"><input id="hWcl" placeholder="Paste a report link" autocomplete="off"><button class="btn" id="hWclGo">Import</button></div><div class="fp-msg" id="hWclMsg"></div>' +
-        '<details class="fp-more"><summary>Other ways to follow a log</summary><div class="fp-mb">' + (WCL.HOSTED ? '' : '<button class="linkbtn" id="hLiveFile">Choose the file yourself</button>') + '<button class="linkbtn" id="hLiveDir">Pick the Logs folder</button>' +
+        '<details class="fp-more"><summary>Other ways to follow a log</summary><div class="fp-mb"><button class="linkbtn" id="hLiveFile">Choose the file yourself</button><button class="linkbtn" id="hLiveDir">Pick the Logs folder</button>' +
           '<div class="fp-or2">A Warcraft Logs live report</div><div class="fp-in"><input id="hLive" placeholder="Live report link" autocomplete="off"><button class="btn" id="hLiveGo">Go live</button></div></div></details>' +
         '<details class="fp-more"><summary>Help getting started</summary><div class="fp-help">' +
-          '<b>Live logging</b><ol><li>In WoW, turn on Advanced Combat Logging (Options, Network) and type <code>/combatlog</code>.</li><li>Click <b>' + liveLab + '</b>' + (WCL.HOSTED ? ' and pick the newest file in <code>World of Warcraft\\_retail_\\Logs</code>.' : ': Debrief finds the newest log in <code>World of Warcraft\\_retail_\\Logs</code> by itself and switches when WoW starts a new one. (If it can\'t find the folder, put its path in a <code>logs-path.txt</code> file next to start.bat.)') + '</li><li>Keep this tab open: pulls are checked every 10 seconds.</li><li>For a Warcraft Logs live log, start the uploader with Live Log and paste its link under Other ways.</li></ol>' +
+          '<b>Live logging</b><ol><li>In WoW, turn on Advanced Combat Logging (Options, Network) and type <code>/combatlog</code>.</li><li>Click <b>' + liveLab + '</b>: Debrief finds the newest log in <code>World of Warcraft\\_retail_\\Logs</code> by itself and switches when WoW starts a new one. (If it can\'t find the folder, put its path in a <code>logs-path.txt</code> file next to start.bat.)</li><li>Keep this tab open: pulls are checked every 10 seconds.</li><li>For a Warcraft Logs live log, start the uploader with Live Log and paste its link under Other ways.</li></ol>' +
           '<b>Finding your combat log</b><ol><li>Turn on Advanced Combat Logging and type <code>/combatlog</code> before you pull.</li><li>The file is in <code>World of Warcraft\\_retail_\\Logs</code>.</li></ol>' +
-          (WCL.HOSTED ? '' : '<b>Warcraft Logs, the first time</b><ol><li>Warcraft Logs needs a free API client the first time (client ID and secret).</li><li>Import asks for them once and remembers them on this PC.</li></ol>') +
-        '</div></details>' +
+          '<b>Warcraft Logs, the first time</b><ol><li>Warcraft Logs needs a free API client the first time (client ID and secret).</li><li>Import asks for them once and remembers them on this PC.</li></ol>' +
+        '</div></details>') +
         '<div class="fp-safe">' + lock + 'Your log is read on this PC. Nothing is uploaded.</div>' +
       '</div></div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
@@ -5800,16 +5801,35 @@ function home() {
   $('#hWcl').onkeydown = (e) => { if (e.key === 'Enter') go('hWcl', 'hWclMsg', false); };
   $('#hFileGo').onclick = () => $('#fileIn').click();
   bindFront();
-  $('#hLiveFile').onclick = () => pickLogFile($('#hLiveMsg'), false);
+  const pickMsg = () => $('#hPickMsg') || $('#hLiveMsg');
+  $('#hLiveFile').onclick = () => pickLogFile(pickMsg(), false);
   if ($('#hLiveAuto')) {
     $('#hLiveAuto').onclick = () => startFileLive(HELPER_LOG);
     // say which log it found (or why it can't), so there are no surprises
     helperInfo().then((j) => { const el = $('#hLiveFound'); if (!el) return; el.textContent = j.error === 'nodir' ? 'WoW Logs folder not found: see How to live log.' : j.error ? 'No combat log yet: type /combatlog in game.' : 'Found ' + j.name.replace(/\.txt$/i, '') + ' (' + (j.size / 1e6).toFixed(0) + ' MB, updated ' + wallClock(j.mtime) + ')'; }).catch((e) => { const el = $('#hLiveFound'); if (el) el.textContent = 'To use this, ' + e.message.replace(/^the/, 'the') + '.'; });
   }
-  $('#hLiveDir').onclick = () => pickLogFolder($('#hLiveMsg'), false);
+  $('#hLiveDir').onclick = () => pickLogFolder(pickMsg(), false);
   // a folder chosen before: one click to watch it again (the browser asks to confirm access once per session)
-  fhGet().then((dir) => { const b = $('#hLiveAgain'); if (!dir || !b) return; b.hidden = false; b.textContent = 'Watch "' + dir.name.replace(/\.txt$/i, '') + '" again'; b.onclick = () => (dir.kind === 'file' ? pickLogFile : pickLogFolder)($('#hLiveMsg'), true); });
+  fhGet().then((dir) => { const b = $('#hLiveAgain'); if (!dir || !b) return; b.hidden = false; b.textContent = 'Watch "' + dir.name.replace(/\.txt$/i, '') + '" again'; b.onclick = () => (dir.kind === 'file' ? pickLogFile : pickLogFolder)(pickMsg(), true); });
 }
+// The website's start panel. A website can't follow the combat log where WoW is usually installed: Chrome keeps every
+// page out of Program Files ("can't open files in this folder because it contains system files"), and there's no
+// helper on the PC to read it instead. So the site leads with Warcraft Logs links (a live log for raid night), then a
+// finished log opened from the PC (a plain file pick isn't blocked), and the file pickers last, for WoW installed elsewhere.
+function hostedStart() {
+  return '<label class="fp-lab" for="hWcl">Warcraft Logs report, yours or any public one</label><div class="fp-in"><input id="hWcl" placeholder="Paste a report link" autocomplete="off"><button class="btn primary" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
+    '<label class="fp-lab" for="hLive">During raid: a Warcraft Logs live log</label><div class="fp-in"><input id="hLive" placeholder="Paste the live log link" autocomplete="off"><button class="btn" id="hLiveGo">Go live</button></div><div class="fp-sub">Each new pull shows up about a minute after it ends.</div><div class="fp-msg" id="hLiveMsg"></div>' +
+    '<div class="fp-or">or a combat log on this PC</div>' +
+    '<button class="btn" id="hFileGo">Open a combat log</button><div class="fp-sub">After raid. You can also drop the file anywhere on this page.</div>' +
+    '<details class="fp-more"><summary>Follow your combat log file live</summary><div class="fp-mb"><div class="fp-sub fp-why">Chrome doesn\'t let websites open files inside Program Files, which is where WoW is usually installed. If your WoW is somewhere else, these work.</div>' +
+      '<button class="linkbtn" id="hLiveFile">Choose your combat log</button><button class="linkbtn" id="hLiveDir">Pick the Logs folder</button><button class="btn" id="hLiveAgain" hidden></button><div class="fp-msg" id="hPickMsg"></div></div></details>' +
+    '<details class="fp-more"><summary>Help getting started</summary><div class="fp-help">' +
+      '<b>Live logging</b><ol><li>Whoever logs for the raid runs the Warcraft Logs uploader with <b>Live Log</b> on.</li><li>Paste its live log link above and click <b>Go live</b>.</li><li>Keep this tab open: new pulls are checked every 30 seconds.</li></ol>' +
+      '<b>Finding your combat log</b><ol><li>Turn on Advanced Combat Logging and type <code>/combatlog</code> before you pull.</li><li>The file is in <code>World of Warcraft\\_retail_\\Logs</code>.</li></ol>' +
+    '</div></details>';
+}
+// (said on the website when a file pick ends without a file: usually Chrome refusing the WoW folder)
+const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder: that\'s Chrome protecting Program Files, and a website can\'t get past it. Use a Warcraft Logs live log above instead.';
 // ---------- Progress: every boss of the tier, night by night, from the pulls saved on this PC ----------
 // One row per boss and difficulty, in raid order, with a coloured left edge like everywhere else: orange once killed,
 // otherwise item quality by how much of the encounter its best pull got through. A row opens its nights: pulls, kill or

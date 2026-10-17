@@ -60,7 +60,8 @@ const CODE = /^[A-Za-z0-9]{8,32}$/;
 const num = (v) => { const n = parseFloat(v); return n === n ? n : null; };
 // every route: what it needs from the address, its query and variables, how long to keep the answer, and what to return
 const ROUTES = {
-  '/api/report': { q: () => REPORT_Q, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null), age: 120, // (short: a live report keeps getting new pulls)
+  // (short: a report being live logged keeps getting new pulls, and following one live asks every 30 seconds)
+  '/api/report': { q: () => REPORT_Q, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null), age: (p) => (p.get('live') ? 20 : 120),
     out: (d, v) => { const rep = d && d.reportData && d.reportData.report; return rep || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 }; } },
   '/api/events': { q: () => EVENTS_Q, age: 86400,
     v: (p) => { const code = p.get('code') || '', fight = parseInt(p.get('fight'), 10), s = num(p.get('s')), e = num(p.get('e')); return CODE.test(code) && fight >= 0 && s >= 0 && e > s ? { code, fid: [fight], s, e } : null; },
@@ -96,7 +97,7 @@ export default {
       try {
         const out = route.out(await gql(env, route.q(), v), v);
         if (out && out.error) return json({ error: out.error }, out.status || 400);
-        const res = json(out, 200, route.age);
+        const res = json(out, 200, typeof route.age === 'function' ? route.age(url.searchParams) : route.age);
         ctx.waitUntil(cache.put(key, res.clone()));
         return res;
       } catch (err) {

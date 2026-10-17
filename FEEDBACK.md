@@ -11,6 +11,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 105: the website's start page and the live log
+- [x] Your report: on the website, following the live log gave Chrome's "can't open files in this folder because it contains system files". That's Chrome's own rule: no website may open files inside Program Files, where WoW is installed. It can't be fixed from a website (on your PC, start.bat's helper reads the log instead, so it works there).
+- [x] The website's start page now leads with what works there: a Warcraft Logs report link, then a Warcraft Logs live log for raid night, then opening a finished log from the PC (a plain file pick isn't blocked). Following the log file sits under "Follow your combat log file live", with why it may not work; cancelling Chrome's message says the same.
+- [x] A live Warcraft Logs report is now re-checked every 20 seconds on the website (it was kept 2 minutes), so new pulls show up about a minute after they end.
+- [x] Checked on the live site, desktop and phone width.
+- The real fix for following the log file live is the desktop app (it reads the file itself).
+
 ## 2026-10-17, round 104: the website is live
 - [x] **https://debrief.james-m-nemecek.workers.dev**: anyone pastes a Warcraft Logs link and it works, with no key of their own. Your website key sits in Cloudflare's locked box.
 - [x] The site now also does **team import** and the deaths list (they only worked on your PC before), and it has a fair-use guard so one person can't use up the allowance.
