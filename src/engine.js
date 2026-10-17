@@ -72,24 +72,46 @@ const TANKS = new Set([66, 73, 104, 250, 268, 581]);
 
 // Personal defensives, matched by spell name (stable across patches; English client).
 // Cooldowns are base values from general knowledge, not measured on 12.1. Talents change many.
-// [name, spellId, base cooldown, specs (null = all specs of the class), baseline?]
+// [name, spellId, base cooldown, specs (null = all specs of the class), baseline?, kind ('heal': a self-heal button)]
 // Talent defensives (baseline false) only count once the player is seen casting them,
 // so a death is never blamed on a defensive the player may not have talented.
+// Self-heals are buttons that only heal yourself (Exhilaration, Crimson Vial, Frenzied Regeneration…), never a heal cast on
+// yourself. Names and IDs checked on Midnight raid logs (Oct 2026, 26 specs); Shield of Vengeance and Renewing Blaze trigger
+// on their own there (they heal, but nobody presses them), so they stay talent-only and never count as unused.
 const DEFENSIVES = {
-  WARRIOR: [['Enraged Regeneration', 184364, 120, [72], true], ['Die by the Sword', 118038, 120, [71], true], ['Shield Wall', 871, 180, [73], true], ['Last Stand', 12975, 180, [73], false], ['Rallying Cry', 97462, 180, null, false]],
-  PALADIN: [['Divine Shield', 642, 300, null, true], ['Divine Protection', 498, 60, [65, 70], true], ['Shield of Vengeance', 184662, 90, [70], false], ['Ardent Defender', 31850, 120, [66], true], ['Guardian of Ancient Kings', 86659, 300, [66], false], ['Eye of Tyr', 387174, 60, [66], false], ['Lay on Hands', 633, 420, null, true]],
-  HUNTER: [['Aspect of the Turtle', 186265, 180, null, true], ['Survival of the Fittest', 264735, 90, null, false], ['Exhilaration', 109304, 120, null, true]],
-  ROGUE: [['Cloak of Shadows', 31224, 120, null, true], ['Evasion', 5277, 120, null, true], ['Crimson Vial', 185311, 30, null, true]],
-  PRIEST: [['Desperate Prayer', 19236, 90, null, true], ['Dispersion', 47585, 120, [258], true]],
-  DEATHKNIGHT: [['Icebound Fortitude', 48792, 180, null, true], ['Anti-Magic Shell', 48707, 60, null, true], ['Lichborne', 49039, 120, null, false], ['Vampiric Blood', 55233, 90, [250], true], ['Dancing Rune Weapon', 49028, 120, [250], false]],
-  SHAMAN: [['Astral Shift', 108271, 120, null, true]],
-  MAGE: [['Ice Block', 45438, 240, null, true], ['Alter Time', 342245, 50, null, false], ['Greater Invisibility', 110959, 120, null, false], ['Mirror Image', 55342, 120, null, false]],
-  WARLOCK: [['Unending Resolve', 104773, 180, null, true], ['Dark Pact', 108416, 60, null, false]],
-  MONK: [['Fortifying Brew', 115203, 120, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false]],
-  DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 90, [104], false]],
+  WARRIOR: [['Enraged Regeneration', 184364, 120, [72], true, 'heal'], ['Die by the Sword', 118038, 120, [71], true], ['Shield Wall', 871, 180, [73], true], ['Last Stand', 12975, 180, [73], false], ['Rallying Cry', 97462, 180, null, false], ['Bitter Immunity', 383762, 180, null, false, 'heal']],
+  PALADIN: [['Divine Shield', 642, 300, null, true], ['Divine Protection', 498, 60, [65, 70], true], ['Shield of Vengeance', 184662, 90, [70], false], ['Ardent Defender', 31850, 120, [66], true], ['Guardian of Ancient Kings', 86659, 300, [66], false], ['Eye of Tyr', 387174, 60, [66], false], ['Lay on Hands', 633, 420, null, true, 'heal']],
+  HUNTER: [['Aspect of the Turtle', 186265, 180, null, true], ['Survival of the Fittest', 264735, 90, null, false], ['Exhilaration', 109304, 120, null, true, 'heal'], ['Fortitude of the Bear', 388035, 120, null, false]],
+  ROGUE: [['Cloak of Shadows', 31224, 120, null, true], ['Evasion', 5277, 120, null, true], ['Crimson Vial', 185311, 30, null, true, 'heal']],
+  PRIEST: [['Desperate Prayer', 19236, 90, null, true, 'heal'], ['Dispersion', 47585, 120, [258], true]],
+  DEATHKNIGHT: [['Icebound Fortitude', 48792, 180, null, true], ['Anti-Magic Shell', 48707, 60, null, true], ['Lichborne', 49039, 120, null, false], ['Vampiric Blood', 55233, 90, [250], true], ['Dancing Rune Weapon', 49028, 120, [250], false], ['Death Pact', 48743, 120, null, false, 'heal']],
+  SHAMAN: [['Astral Shift', 108271, 120, null, true], ['Stone Bulwark Totem', 108270, 180, null, false]],
+  MAGE: [['Ice Block', 45438, 240, null, true], ['Ice Cold', 414658, 240, null, false], ['Alter Time', 342245, 50, null, false], ['Greater Invisibility', 110959, 120, null, false], ['Mirror Image', 55342, 120, null, false]],
+  WARLOCK: [['Unending Resolve', 104773, 180, null, true], ['Dark Pact', 108416, 60, null, false], ['Mortal Coil', 6789, 45, null, false, 'heal']],
+  MONK: [['Fortifying Brew', 115203, 120, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false], ['Touch of Karma', 122470, 90, [269], false]],
+  DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 90, [104], false],
+    ['Frenzied Regeneration', 22842, 36, [102, 103, 105], false, 'heal'], ['Renewal', 108238, 90, null, false, 'heal']],
   DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 180, [581], true], ['Darkness', 196718, 300, null, false]],
-  EVOKER: [['Obsidian Scales', 363916, 90, null, true], ['Renewing Blaze', 374348, 90, null, false]],
+  EVOKER: [['Obsidian Scales', 363916, 90, null, true], ['Renewing Blaze', 374348, 90, null, false, 'heal']],
 };
+// (racial ones, for every class: only once the player is seen using them, like a talent)
+for (const k of Object.keys(DEFENSIVES)) DEFENSIVES[k].push(['Gift of the Naaru', 59547, 180, null, false, 'heal'], ['Stoneform', 20594, 120, null, false], ['Fireblood', 265221, 120, null, false]);
+// (a talent that takes another's place: a mage with Ice Cold has no Ice Block, so Ice Block is never "ready" for them)
+const DEF_REPLACED = { 'ice block': 'ice cold' };
+// Short survival buttons: counted when pressed (the Survivability view, and a close call they answered), but never listed
+// as "ready" at a death or counted in possible uses, since they're up most of the time or have no cooldown. Bear Form counts
+// for a druid who isn't the Guardian tank (they're in it all fight); Death Strike for a Death Knight who isn't Blood.
+// [name, spellId, specs (null = all), kind]
+const SURV_MINOR = {
+  WARRIOR: [['Impending Victory', 202168, null, 'heal'], ['Victory Rush', 34428, null, 'heal'], ['Spell Reflection', 23920, null, 'dr']],
+  ROGUE: [['Feint', 1966, null, 'dr']],
+  MAGE: [['Prismatic Barrier', 235450, [62], 'dr'], ['Blazing Barrier', 235313, [63], 'dr'], ['Ice Barrier', 11426, [64], 'dr']],
+  MONK: [['Expel Harm', 322101, [269, 270], 'heal']],
+  DEATHKNIGHT: [['Death Strike', 49998, [251, 252], 'heal']],
+  DRUID: [['Bear Form', 5487, [102, 103, 105], 'dr']],
+};
+// every self-heal by name, for the heals they gave back (plus Healthstones and health potions, matched on their own)
+const SELF_HEAL = new Set([...Object.values(DEFENSIVES).flat().filter((d) => d[5] === 'heal'), ...Object.values(SURV_MINOR).flat().filter((d) => d[3] === 'heal')].map((d) => d[0].toLowerCase()));
 
 // Potions by name (the spell name logged when drinking matches the item name).
 // Midnight list from the Midnight alchemy recipe tables; The War Within potions are still usable.
@@ -4674,6 +4696,8 @@ function newPlayer(guid) {
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
     // landed on someone under half health; the buffs on them, each with its time spans)
     firstHit: new Map(), mana: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
+    // (each heal they gave themselves from a self-heal button, a Healthstone or a health potion: { t, spell, id, amt })
+    selfH: [],
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
 }
 function addAb(m, name, id, amt, over, crit) {
@@ -4876,6 +4900,8 @@ function analyze(item, text, opts) {
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
           if (ck && (ck !== 'Celestial Conduit' || p.specId === 270)) { const u = cdPress(owner, ck, t, true); u.heal += eff; u.over += over; }
           if (/healthstone/i.test(spell) && !p.cons.healthstone.some((x) => Math.abs(x.t - t) < 2)) p.cons.healthstone.push({ t, name: spell, id });
+          // (what a self-heal, Healthstone or health potion gave back: their own heal on themselves)
+          if (!pet && owner === dg) { const ln = String(spell).toLowerCase(); if (SELF_HEAL.has(ln) || ln.includes('healthstone') || potionKind(ln) === 'healpot') p.selfH.push({ t, spell, id, amt: eff }); }
         }
         if (isPlayer(dg) && eff > 0) recap(dg, { t, heal: true, amount: eff, src: shortName(sg, sn), spell, id, hp: -1 });
         if (!owner && W(spell)) modEv.push({ k: 'heal', t, src: sg, srcName: sn, dst: dg, spell, amt: amount });
@@ -5377,14 +5403,17 @@ function survivability(r) {
   let used = 0, possible = 0;
   for (const p of r.players.values()) {
     const list = (p.cls ? DEFENSIVES[p.cls] : []).filter(([n, , , specs, baseline]) =>
-      (!specs || specs.includes(p.specId)) && (baseline || p.byName.has(n.toLowerCase())));
-    p.defs = list.map(([name, id, cd]) => {
+      (!specs || specs.includes(p.specId)) && (baseline || p.byName.has(n.toLowerCase())) && !(DEF_REPLACED[n.toLowerCase()] && p.byName.has(DEF_REPLACED[n.toLowerCase()])));
+    p.defs = list.map(([name, id, cd, , , kind]) => {
       const uses = p.byName.get(name.toLowerCase()) || [];
       const ca = p.castAb.get(name);
       const poss = Math.floor(p.aliveUntil / cd) + 1;
       used += Math.min(uses.length, poss); possible += poss;
-      return { name, id: ca ? ca.id : id, cd, uses, possible: poss };
+      return { name, id: ca ? ca.id : id, cd, uses, possible: poss, kind: kind || 'dr' };
     });
+    // (the short buttons they pressed: they answer a close call, but are never "ready" at a death)
+    p.minor = (p.cls ? SURV_MINOR[p.cls] || [] : []).filter(([n, , specs]) => (!specs || specs.includes(p.specId)) && p.byName.has(n.toLowerCase()))
+      .map(([name, id, , kind]) => ({ name, id: (p.castAb.get(name) || {}).id || id, uses: p.byName.get(name.toLowerCase()), kind }));
   }
   const stonesExist = [...r.players.values()].some((p) => p.cls === 'WARLOCK' || p.cons.healthstone.length);
   for (const d of r.deaths) {
@@ -5426,7 +5455,7 @@ function survivability(r) {
     }
     close();
     p.closeCalls = calls.filter((c) => !dts.some((dt) => dt >= c.t - 1 && dt <= c.tl + 6)).map((c) => {
-      const t0 = c.tl, defUsed = (p.defs || []).some((d) => d.uses.some((u) => u >= t0 - 8 && u <= t0 + 3));
+      const t0 = c.tl, defUsed = (p.defs || []).concat(p.minor || []).some((d) => d.uses.some((u) => u >= t0 - 8 && u <= t0 + 3));
       const stone = p.cons.healthstone.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5), pot = p.cons.healpot.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5);
       return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot };
     });
@@ -5585,7 +5614,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES };
+const api = { liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

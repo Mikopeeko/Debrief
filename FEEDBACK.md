@@ -22,9 +22,37 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
+- [x] **Survivability view in Performance** (round 118).
+- [x] **Healers view, simpler**, with the boss's health beside the mana (round 118).
+- [x] **The Parse column** (round 118).
+- [ ] **Progress page** (your note): easier to find; several teams, edit and remove a team, and your own Warcraft Logs page.
+  Plan it together first.
+- [ ] **A better web address** for the site (your question).
+- [ ] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
+  to the game's name, so people know which mechanic it is.
+- [ ] **A first-time guided tour** (your note): a tutorial that walks a new user through the app, with nice animations showing how
+  everything works.
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 118: Survivability, healer mana, parses
+- [x] **The desktop layout is live** (your OK): round 117 merged and on the website.
+- [x] **Healer mana from Warcraft Logs**: the Healers view said reports don't carry mana. They do (with every cast); the app was
+  dropping it. Now the mana chart works for Warcraft Logs pulls too.
+- [x] **Survivability**, a new view in Performance next to Utility (your note): Healthstones, health potions, self-heals and
+  defensives, a bar per player, what each heal gave back, and who used none. Self-heals are buttons that only heal yourself
+  (Exhilaration, Crimson Vial, Desperate Prayer, Frenzied Regeneration, Renewal, Impending Victory, Mortal Coil, Death Pact, Lay on
+  Hands on yourself…), never a heal cast on yourself. Bear Form counts for a druid who isn't the tank. The names and spell IDs were
+  checked on Midnight raid logs (26 specs).
+- [x] **The same list everywhere else**: a death now lists a self-heal that was still ready ("died with Mortal Coil ready"), the
+  Survival kit grade counts them, and a close call counts as answered by one. Fixed on the way: a mage with Ice Cold has no Ice
+  Block, so Ice Block no longer shows as "ready" for them; and picking a player on the Utility view works again.
+- [x] **Healers view, simpler** (mockup approved): the mana chart with the boss's health in grey, names on the lines (a second
+  healer of the same class dashed), and one line per healer: Ran low, Spent fast, Mana to spare or On pace, with their mana
+  potion and healing per second. Your note: mana should come down with the boss's health and end as low as it can.
+- [x] **Parses** (your note on the design): the solid neon boxes are now coloured numbers on a faint tint, like Warcraft Logs.
+  A healer's damage parse and a DPS player's healing parse are no longer shown (they mean nothing).
 
 ## 2026-10-18, round 117: the desktop layout, all 12 changes (on a preview copy)
 Your note: "make all proposed changes so i can see them". A backup of the version before is saved (tag
