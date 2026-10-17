@@ -5077,8 +5077,11 @@ function analyze(item, text, opts) {
         if (f.length < 14 || !isPlayer(dg)) break;
         const n = f.length, amt = num(f[n - 4]), over = Math.max(0, num(f[n - 3])), ty = String(f[n - 2]);
         if (!(amt > 0) || !/^\d+$/.test(ty)) break;
-        const pg = P(dg, dn); if (pg.gainL.length < 8000) pg.gainL.push({ t, ty, spell: f[9], id: num(f[8]), amt, over: Math.min(amt, over) });
-        if (f.length >= 11 + ADV + 4 && f[11] === dg) resAt(pg, f, 11, t);
+        // (rd: the event's own block read that power too, right after the gain; Warcraft Logs only reads a player's main
+        // power there, so a gain of Holy Power or combo points has no reading of its own)
+        const own = f.length >= 11 + ADV + 4 && f[11] === dg, rd = own && String(f[21]).split('|').includes(ty) ? 1 : 0;
+        const pg = P(dg, dn); if (pg.gainL.length < 8000) pg.gainL.push({ t, ty, spell: f[9], id: num(f[8]), amt, over: Math.min(amt, over), rd });
+        if (own) resAt(pg, f, 11, t);
         break;
       }
       case 'SPELL_CAST_START':

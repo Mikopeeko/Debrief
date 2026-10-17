@@ -69,6 +69,25 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 131: Resources debug and polish, Coiled Altar boss health
+- [x] **Boss health on The Coiled Altar** (your note): the grey boss line (Resources → Mana, and the Latest pull chart)
+  averaged Zul'jan's and Malacrass's bars, so pull 21 read "boss at 35%" when the fight had about 59% left. It now uses
+  the same whole-fight measure as the pull's progress (each phase's share of the encounter), so it ends where the header
+  says. Ula'tek uses its shared health pool. The mana pace checks follow it, so a few verdicts changed.
+- [x] **Charts in each power's own numbers** (your note): Holy Power 1 to 5, combo points 1 to 7, Astral Power 0 to 100,
+  Focus up to 125 and so on (the biggest cap shown, so a player with a smaller cap tops out lower); hovering reads
+  "4 of 5". Mana stays in %, beside the boss's health. Powers that move in steps are drawn as steps, so time at full is a
+  flat top.
+- [x] **Holy Power, combo points and Soul Shards filled in**: Warcraft Logs only reads those on casts, so time at full was
+  missed between them. The level is now carried from each gain and cost in between (checked: it matched the log's own
+  readings 253 times out of 254).
+- [x] **Fairer grading for those powers**: holding 5 Holy Power wastes nothing until another Holy Shock lands, so the
+  Report card grades Holy Power, combo points, Soul Shards, Runic Power, Fury and the like by the amount wasted, and
+  energy, rage, focus, runes and Essence (they build on their own) by their time at full. The Resources tile for time at
+  full is shown, not judged, for the first group.
+- [x] All pulls has a chart of each pull's waste (or the healers' mana left), click a pull to open it; each power has its
+  game colour on the switch; "1 Soul Shard" (not "Shards"); wording tidied.
+
 ## 2026-10-17, round 130: wasted amounts on the Report card, mana for healers only
 - [x] **The Report card says how much was wasted** (your ask): "Wasted 312 Energy, 14 Combo Points · sat at full 12 s",
   each power on its own line underneath, and the fix says it too ("…and 387 Rage went to waste"). Secondary powers only,

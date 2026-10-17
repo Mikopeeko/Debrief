@@ -10,7 +10,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'overview', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, WCL, E, gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c) };
+if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, WCL, E, gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -1078,12 +1078,15 @@ function drawChart() {
     a.forEach((v, i) => (i ? g.lineTo(X(i), Y(v / mx)) : g.moveTo(X(i), Y(v / mx)))); g.stroke();
   }
   let bossLine = null;
-  if (r.bossS.length) {
+  // (a fight with phases: the whole encounter's health left, as the pull's progress counts it)
+  const encL = PROGRESS[r.item.boss] ? bossHpLine(r, r.duration, 1) : null;
+  if (encL && encL.length) { bossLine = []; for (let i = 0; i < n; i++) bossLine.push(100 * (encL[Math.min(i, encL.length - 1)] || [0, 1])[1]); }
+  else if (r.bossS.length) {
     bossLine = []; let last = 100;
     for (let i = 0; i < n; i++) { if (i < r.bossS.length && !isNaN(r.bossS[i])) last = r.bossS[i]; bossLine.push(last); }
-    g.strokeStyle = '#6aa8ff'; g.setLineDash([5, 4]); g.beginPath();
-    bossLine.forEach((v, i) => (i ? g.lineTo(X(i), Y(v / 100)) : g.moveTo(X(i), Y(v / 100)))); g.stroke(); g.setLineDash([]);
   }
+  if (bossLine) { g.strokeStyle = '#6aa8ff'; g.setLineDash([5, 4]); g.beginPath();
+    bossLine.forEach((v, i) => (i ? g.lineTo(X(i), Y(v / 100)) : g.moveTo(X(i), Y(v / 100)))); g.stroke(); g.setLineDash([]); }
   g.strokeStyle = '#ff8f87'; g.lineWidth = 1.5;
   for (const d of r.deaths) { g.beginPath(); g.moveTo(X(d.t), 6); g.lineTo(X(d.t), bottom); g.stroke(); g.fillStyle = '#ff8f87'; g.beginPath(); g.arc(X(d.t), 6, 3, 0, 7); g.fill(); }
   const tip = $('#tip');
@@ -4697,7 +4700,8 @@ async function perfNight(r0, kind, scopeSw) {
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
   let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div></div></div>';
   if (counts) { view(h + (kind === 'card' ? reportCard(reps, true) : kind === 'surv' ? utilCards(scats, false, 'surv') : utilCards(ucats, false)) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
-  if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
+  if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons();
+    const byP = new Map(reps.map((r) => [r.item.pull, r.item])); $$('#view .pfn-b').forEach((g) => (g.onclick = () => { const b = byP.get(+g.dataset.pull); if (!b) return; S.scope = 'pull'; select(b); })); return; }
   // per pull: the raid's output per second, and each player's total and time alive
   const key = KEY[kind], pulls = [], acc = new Map();
   for (const w of used) {
@@ -4984,13 +4988,34 @@ function tgtChart(r, w0, w1, cat) {
 
 // (Resources, mana: a healer's mana should come down about as fast as the boss's health and end as low as it can: running
 // low early means they'll run out, ending a kill with a lot left means they could have healed harder)
-// (the boss's health over the pull, from advanced logging: the boss units, averaged when there are two, every 2 seconds)
-function bossHpLine(r, end) {
-  const names = new Set(r.bossUnits || []), U = [...(r.hpUnits || new Map()).values()].filter((u) => names.has(u.name) && u.samples.length > 3);
+// (the boss's health over the pull, from advanced logging, every `step` seconds (2 by default) as [t, fraction left]:
+// for a fight with phases in PROGRESS (The Coiled Altar, Ula'tek), the whole encounter's health left, the same measure as
+// the pull's progress ("P2 · Malacrass 66%" is about 59% of the encounter left), not the bosses' bars averaged (Malacrass
+// sits at full through P1, and both heal back up for P3); otherwise the boss units, averaged when there are two)
+function bossHpLine(r, end, step) {
+  step = step || 2;
+  const cfg = PROGRESS[r.item.boss], ph = r.module && !r.module.error && r.module.phases, UA = [...(r.hpUnits || new Map()).values()];
+  if (cfg && ph && ph.length) {
+    // (a boss's latest health at t, since `from`: its health from an earlier phase doesn't count in this one)
+    const hpAt = (names, t, from) => { let v = null, at = -1; for (const u of UA) if (names.includes(u.name)) for (const [s, f] of u.samples) { if (s > t) break; if (s >= from - 0.5 && s > at) { at = s; v = f; } } return v; };
+    const out = []; let last = 1;
+    for (let t = 0; t <= end + step / 2; t += step) {
+      const q = ph.filter((x) => x.start <= t + 0.01).pop() || ph[0], key = q.name.split(' ')[0];
+      let v = null;
+      if (cfg.phases.includes(key)) {
+        if (cfg.pool) { const f = hpAt(cfg.pool, t, 0); if (f != null) v = encLeft(cfg, key, {}, f) / 100; }
+        else { const hp = {}; for (const n of Object.keys(cfg.hp[key] || {})) { const f = hpAt([n], t, q.start); if (f != null) hp[n] = f; } v = encLeft(cfg, key, hp) / 100; }
+      }
+      if (v == null || v !== v) v = last; v = Math.max(0, Math.min(1, v)); out.push([t, v]); last = v;
+    }
+    if (r.item.kill && out.length) out[out.length - 1][1] = 0;
+    return out;
+  }
+  const names = new Set(r.bossUnits || []), U = UA.filter((u) => names.has(u.name) && u.samples.length > 3);
   if (!U.length) return null;
   const top = Math.max(...U.map((u) => u.max)), main = U.filter((u) => u.max >= 0.5 * top); // (the boss itself, not a small add with its name)
   const at = (u, t) => { let v = null; for (const [s, p] of u.samples) { if (s > t) break; v = p; } return v == null ? 1 : v; };
-  const out = []; for (let t = 0; t <= end + 1; t += 2) out.push([t, main.reduce((s, u) => s + at(u, t), 0) / main.length]);
+  const out = []; for (let t = 0; t <= end + 1; t += step) out.push([t, main.reduce((s, u) => s + at(u, t), 0) / main.length]);
   return out;
 }
 // ---------- Performance: Resources ----------
@@ -5008,6 +5033,12 @@ const manaUser = (p) => p.role === 'healer';
 // (an amount as shown: mana in full bars of it, the rest in points)
 const resAmt = (ty, v) => (ty === '0' ? (v >= 10 ? String(Math.round(v)) : v >= 0.095 ? v.toFixed(1) : v > 0.004 ? '<0.1' : '0') : v >= 10000 ? C(v) : Math.round(v).toLocaleString('en-US'));
 const resUnit = (ty, v) => { const a = resAmt(ty, v); return a + (ty === '0' ? (a === '1.0' ? ' bar' : ' bars') : ''); };
+// (each power's colour, after the game's own power bars, brightened for a dark page)
+const RES_COL = { 0: '#3d7cff', 1: '#e5534b', 2: '#ff9a4d', 3: '#f2d94e', 4: '#ffb84d', 5: '#9aa3b2', 6: '#2fd0ff', 7: '#a070c8', 8: '#4d85e6', 9: '#f2e199', 11: '#1a80ff', 12: '#b5ffeb', 13: '#8a4dff', 17: '#c942fd', 18: '#ff9c00', 19: '#4fd1c5' };
+const resDot = (ty) => '<i class="rs-dot" style="background:' + (RES_COL[ty] || '#9aa3b2') + '"></i>';
+// (a power's name after an amount: "1 Soul Shard", "3 Soul Shards")
+const RES_ONE = { 4: 'Combo Point', 5: 'Rune', 7: 'Soul Shard' };
+const resNm = (ty, v) => (Math.round(v) === 1 && RES_ONE[ty] ? RES_ONE[ty] : resName(ty));
 const secsS = (s) => (s >= 90 ? T(s) : Math.round(s) + ' s');
 const resPc = (v) => (v > 0 && v < 0.01 ? '<1' : Math.round(100 * v)) + '%';
 // who uses a power in a pull
@@ -5030,6 +5061,28 @@ function fullRuns(r, p, pts, a, b) {
     if (!longest || run.e - run.s > longest.e - longest.s) longest = run; }
   return { capped, runs, longest };
 }
+// a power's level over the pull, [t, current, max, spend] in shown units: the log's own readings, with each gain and cost
+// in between filled in (Warcraft Logs reads a power like Holy Power or combo points only on casts), the level carried on
+// from the last reading. A gain that went over means they were full then.
+function resPts(p, ty) {
+  const memo = p._rp || (p._rp = new Map()); if (memo.has(ty)) return memo.get(ty);
+  const div = RES_DIV[ty] || 1, obs = ((p.res && p.res.get(ty)) || { pts: [] }).pts.map(([t, c, m, sp]) => [t, c / div, m / div, sp]);
+  if (!obs.length) { memo.set(ty, obs); return obs; }
+  // (at one moment: the reading first (a cast's is from before it), then what the cast cost, then what it gave)
+  const evs = obs.map((o) => [o[0], 0, o]);
+  for (const g of p.gainL || []) if (g.ty === ty) evs.push([g.t, 2, g]);
+  for (const c of p.spendL || []) if (c.ty === ty) evs.push([c.t, 1, c]);
+  evs.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const out = []; let lv = null, mx = Math.max(...obs.map((o) => o[2]));
+  for (const [t, k, o] of evs) {
+    if (k === 0) { lv = o[1]; mx = o[2]; out.push(o); continue; }
+    if (k === 1) { if (lv != null) lv = Math.max(0, lv - o.amt / div); continue; }
+    if (o.rd) { if (o.over > 0) lv = mx; continue; } // (the log read it right after: that reading is in already)
+    if (o.over > 0) lv = mx; else if (lv != null) lv = Math.min(mx, lv + o.amt); else continue;
+    out.push([t, lv, mx, 0]);
+  }
+  memo.set(ty, out); return out;
+}
 // one player's power ty between w0 and w1 (up to when they stopped for good), in shown units (mana in full bars)
 function resOf(r, p, ty, w0, w1) {
   const C0 = perfContext(r), x = C0.per.get(p.name), t1 = Math.min(w1, x ? x.until : w1), mana = ty === '0', div = mana ? p.manaMax || 1 : RES_DIV[ty] || 1;
@@ -5038,13 +5091,13 @@ function resOf(r, p, ty, w0, w1) {
   for (const g of p.gainL || []) { if (g.ty !== ty || !inW(g.t)) continue; const a = mana ? g.amt / div : g.amt, ov = mana ? g.over / div : g.over, o = gain.get(g.spell) || { spell: g.spell, id: g.id, amt: 0, over: 0, n: 0 };
     o.amt += a; o.over += ov; o.n++; gain.set(g.spell, o); gA += a; gO += ov; }
   for (const c of p.spendL || []) { if (c.ty !== ty || !inW(c.t)) continue; const v = c.amt / div, o = spend.get(c.spell) || { spell: c.spell, id: c.id, amt: 0, n: 0 }; o.amt += v; o.n++; spend.set(c.spell, o); sA += v; nS++; }
-  const pts = (mana ? (p.mana || []).map(([t, f]) => [t, f, 1, 0]) : ((p.res && p.res.get(ty)) || { pts: [] }).pts.map(([t, c, m, sp]) => [t, c / div, m / div, sp])).filter(([t]) => t >= w0 - 2 && t <= t1 + 0.5);
+  const pts = (mana ? (p.mana || []).map(([t, f]) => [t, f, 1, 0]) : resPts(p, ty)).filter(([t]) => t >= w0 - 2 && t <= t1 + 0.5);
   const max = mana ? 1 : pts.length ? Math.max(...pts.map((q) => q[2])) : 0, lv0 = pts.length ? pts[0][1] : null, lv1 = pts.length ? pts[pts.length - 1][1] : null;
   // (what the log didn't name, worked out; under 2% of what they spent is just the log's rounding)
   const named = gA - gO, un0 = lv0 != null ? sA + lv1 - lv0 - named : 0, unnamed = un0 > Math.max(0.02 * sA, mana ? 0.01 : 0.5) ? un0 : 0;
   const fr = fullRuns(r, p, pts, w0, t1), al = Math.max(1, aliveSecs(r, p, w0, t1));
-  // (and about what that would have given while they sat at full: lost too)
-  const lost = unnamed > 0 && fr.capped > 0 ? unnamed / Math.max(1, al - fr.capped) * fr.capped : 0;
+  // (and about what that would have given while they sat at full: lost too; only for a power that builds on its own)
+  const lost = ty in RES_UNNAMED && unnamed > 0 && fr.capped > 0 ? unnamed / Math.max(1, al - fr.capped) * fr.capped : 0;
   const built = named + unnamed, wasted = gO + lost, byA = (u, v) => v.amt - u.amt;
   return { p, ty, t1, max, lv0, lv1, pts, gain: [...gain.values()].sort(byA), spend: [...spend.values()].sort(byA), gA, gO, named, unnamed, built, sA, nS, fr, al, lost, wasted,
     share: wasted / Math.max(1e-9, built + wasted), pots: (p.cons && p.cons.manapot ? p.cons.manapot : []).filter((u) => u.t >= w0 && u.t <= w1) };
@@ -5076,7 +5129,7 @@ function resView(list, one) {
   const order = [...TY.keys()].sort((a, b) => (a === '0' ? -1 : b === '0' ? 1 : TY.get(b).size - TY.get(a).size || +a - +b));
   // (the power picked last; coming from a player's report card, their first one)
   const ty = TY.has(S.resTy) ? S.resTy : (S.resSel && order.find((k) => TY.get(k).has(S.resSel))) || order[0], mana = ty === '0', nm = resName(ty);
-  const sw = '<div class="seg rs-sw" role="tablist" aria-label="Resource">' + order.map((k) => '<button type="button" role="tab" data-ty="' + k + '" aria-selected="' + (k === ty) + '"' + (k === ty ? ' class="on"' : '') + '>' + esc(resName(k)) + ' <span class="sub">' + TY.get(k).size + '</span></button>').join('') + '</div>';
+  const sw = '<div class="seg rs-sw" role="tablist" aria-label="Resource">' + order.map((k) => '<button type="button" role="tab" data-ty="' + k + '" aria-selected="' + (k === ty) + '"' + (k === ty ? ' class="on"' : '') + '>' + resDot(k) + esc(resName(k)) + ' <span class="sub">' + TY.get(k).size + '</span></button>').join('') + '</div>';
   // each player's numbers (over the night, added up over the pulls they were in)
   const acc = new Map(), add = (m, o) => { const x = m.get(o.spell) || { spell: o.spell, id: o.id, amt: 0, over: 0, n: 0 }; x.amt += o.amt; x.over += o.over || 0; x.n += o.n; m.set(o.spell, x); };
   for (const w of list) { const boss = mana ? bossHpLine(w.r, w.end) : null;
@@ -5106,37 +5159,58 @@ function resView(list, one) {
   } else {
     const tB = sum('built'), tW = sum('wasted'), tS = sum('sA'), tC = sum('capped'), tAl = sum('al'), worst = rows[0], lg = rows.flatMap((x) => x.runs.map((u) => ({ ...u, p: x.p }))).sort((a, b) => (b.e - b.s) - (a.e - a.s))[0];
     const wf = tW / Math.max(1e-9, tB + tW), ff = tC / Math.max(1, tAl);
-    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Wasted', resPc(wf), stW(wf), resUnit(ty, tW) + ' ' + nm + ' built while already full' + (worst && worst.share >= 0.03 ? ' · most: ' + worst.p.name + ', ' + resPc(worst.share) : '')),
-      plTile(plIco('inv_misc_pocketwatch_01'), 'Sat at full', resPc(ff), stF(ff), lg && lg.e - lg.s >= 2 ? 'of the time alive · longest: ' + lg.p.name + ', ' + Math.round(lg.e - lg.s) + ' s from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.s) : 'of the time alive, never for long'),
+    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Wasted', resPc(wf), stW(wf), resAmt(ty, tW) + ' ' + resNm(ty, tW) + ' built while already full' + (worst && worst.share >= 0.03 ? ' · most: ' + worst.p.name + ', ' + resPc(worst.share) : '')),
+      // (a power that only builds from spells: holding it full isn't waste by itself, so this is shown, not judged)
+      ty in RES_UNNAMED ? '' : plTile(plIco('inv_misc_pocketwatch_01'), 'Sat at full', resPc(ff), 'na', 'of the time alive · holding it is fine: only gains that went over count', true),
+      !(ty in RES_UNNAMED) ? '' : plTile(plIco('inv_misc_pocketwatch_01'), 'Sat at full', resPc(ff), stF(ff), lg && lg.e - lg.s >= 2 ? 'of the time alive · longest: ' + lg.p.name + ', ' + Math.round(lg.e - lg.s) + ' s from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.s) : 'of the time alive, never for long'),
       plTile(plIco('inv_misc_coin_02'), 'Built · spent', resAmt(ty, tB) + '<span> · </span>' + resAmt(ty, tS), 'na', 'by ' + plural(rows.length, 'player') + (one ? '' : ' over ' + plural(list.length, 'pull')), true)];
     head = { v: resPc(wf) + '<span> wasted</span>', s: nm + ' · ' + resPc(ff) + ' at full' };
   }
   const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
-  // ---- the chart (one pull): everyone's line as a share of full, or the picked player's with their time at full shaded ----
+  // ---- the chart (one pull): everyone's line, or the picked player's with their time at full shaded ----
   let top;
   if (one) { const w = list[0], boss = mana ? bossHpLine(w.r, w.end) : null, shown = sel ? [sel] : rows;
-    const cr = shown.map((x) => { const q = x.per[0].q; return { p: x.p, dash: x.dash && !sel, mx: mana ? 0 : q.max, pots: mana ? q.pots : [], ms: q.pts.map(([t, c, m]) => [t, m > 0 ? Math.max(0, Math.min(1, c / m)) : 0]) }; });
-    const sub = (mana ? (boss ? 'beside the boss\'s health (grey) · ' : '') + '○ mana potion · ✕ death · shaded: under 25%' : 'as a share of full' + (sel ? ' · shaded red: sitting at full' : '')) + ' · hover for numbers' + (sel ? '' : ', click a name to hide it');
-    top = '<div class="pf-chartrow"><div class="panel pf-chart pf-mana">' + manaChart(w.r, cr, w.w0, w.w1, boss, { side: true, low: mana, full: sel ? sel.per[0].q.fr.runs : null, aria: (sel ? sel.p.name + '\'s ' : 'The raid\'s ') + nm,
+    // (mana as a share of a full bar, beside the boss's health; the rest in the power's own numbers, up to the biggest cap
+    // shown (Holy Power 0 to 5, Astral Power 0 to 100 or more), so a player with a smaller cap tops out lower)
+    const M = mana ? 0 : Math.max(1, ...shown.map((x) => x.per[0].q.max));
+    const cr = shown.map((x) => { const q = x.per[0].q; return { p: x.p, dash: x.dash && !sel, mx: M, cap: mana ? 0 : q.max, pots: mana ? q.pots : [], ms: q.pts.map(([t, c, m]) => [t, mana ? (m > 0 ? Math.max(0, Math.min(1, c / m)) : 0) : Math.max(0, Math.min(1, c / M))]) }; });
+    const sub = (mana ? (boss ? (PROGRESS[w.r.item.boss] ? 'beside the boss health left in the whole fight (grey) · ' : 'beside the boss\'s health (grey) · ') : '') + '○ mana potion · ✕ death · shaded: under 25%' : 'in ' + nm + (sel ? ' (they hold up to ' + Math.round(sel.per[0].q.max) + ') · shaded red: sitting at full' : '')) + ' · hover for numbers' + (sel ? '' : ', click a name to hide it');
+    top = '<div class="pf-chartrow"><div class="panel pf-chart pf-mana">' + manaChart(w.r, cr, w.w0, w.w1, boss, { side: true, low: mana, step: !mana, scale: M, full: sel ? sel.per[0].q.fr.runs : null, aria: (sel ? sel.p.name + '\'s ' : 'The raid\'s ') + nm,
       ttl: (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' : '') + esc(nm), sub }) + '</div>' + tilesH + '</div>';
-  } else top = '<div class="pts n3">' + tiles.join('') + '</div>';
+  } else top = '<div class="pts n3">' + tiles.join('') + '</div>' + resNightChart(list, rows, ty);
   // ---- a bar per player: all they built, the wasted part in red (mana: what they had left at the end) ----
   const bars = rows.map((x, i) => { const on = sel === x; let segs, v, sub, chips = '';
     if (mana) { const e = x.end || 0; segs = [[Math.max(1, 100 * e), 'm']]; v = x.end == null ? '—' : resPc(e); sub = resAmt(ty, x.sA);
       chips = one ? ' <span class="hm-p ' + x.per[0].q.v.st + '">' + esc(x.per[0].q.v.pill) + '</span>' : x.lowN ? ' <span class="hm-p warn">low in ' + x.lowN + ' of ' + x.per.length + '</span>' : ''; }
     else { segs = [[100 * (1 - x.share), 'm'], [100 * x.share, 'ad']]; v = resPc(x.share); sub = secsS(x.capped); }
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' rs-r', attrs: ' type="button" data-rn="' + esc(x.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: x.p, segs, v, sub, chips }); }).join('');
-  const left = '<div class="panel pf-bars rs-bars"><h3 class="nh"><span>' + esc(nm) + (mana ? ' by healer' : ' by player') + '</span><small>' + (mana ? 'the bar: mana left at the end' + (one ? '' : ', on average') + ' · spent: in full bars' : 'the bar: all they built · red: built while already full') + (one ? '' : ' · over ' + plural(list.length, 'pull')) + '</small></h3>' +
+  const left = '<div class="panel pf-bars rs-bars"><h3 class="nh"><span>' + resDot(ty) + esc(nm) + (mana ? ' by healer' : ' by player') + '</span><small>' + (mana ? 'the bar: mana left at the end' + (one ? '' : ', on average') + ' · spent: in full bars' : 'the bar: all they built · red: built while already full') + (one ? '' : ' · over ' + plural(list.length, 'pull')) + '</small></h3>' +
     (mana ? cbHead('Left', 'Spent') : cbHead('Wasted', 'At full')) + bars + '</div>';
   const how = '<details class="howit"><summary>How it works</summary><div>' + (mana
     ? 'Mana comes from each healer\'s casts, every 2 seconds at most, up to the wipe filter, and is counted in full bars (1 bar is their whole mana). The aim is for mana to come down about as fast as the boss\'s health (the grey line) and end as low as it can. <b>Ran low</b>: under 25% for 8 seconds or more. <b>Spent fast</b>: under 40% while the boss still had 25 points more health. <b>Mana to spare</b>: 30 points more mana than the boss had health at the end, so there was room to heal harder. <b>Gained from</b>: what the log names (Innervate, Mana Tea, Source of Magic, potions…); their own regeneration is worked out from what they spent and what they started and ended with.'
-    : 'Everything comes from the log: what each cast cost, every spell that gave ' + esc(nm) + ', and their ' + esc(nm) + ' on their casts and hits, up to the wipe filter and to when they died for good. <b>Wasted</b>: what a spell gave while they were already full, plus about what their natural regeneration (for rage: auto attacks and hits) would have given while they sat at full. <b>At full</b>: time spent at the top, between two readings both at full (up to 4 s each), not while paying it, dead, mind controlled or while the whole raid was waiting. What the log doesn\'t name is worked out: what they spent, plus what they ended with, less what they started with and what the named gains gave.') + '</div></details>';
+    : 'Everything comes from the log: what each cast cost, every spell that gave ' + esc(nm) + ', and their ' + esc(nm) + ' on their casts and hits, up to the wipe filter and to when they died for good. <b>Wasted</b>: what a spell gave while they were already full, plus about what their natural regeneration (for rage: auto attacks and hits) would have given while they sat at full. <b>At full</b>: time spent at the top, between two readings both at full (up to 4 s each), not while paying it, dead, mind controlled or while the whole raid was waiting. A power that only builds from spells (Holy Power, combo points, Soul Shards…) wastes nothing just by being full: only what a spell gave while it was full counts, so the Report card judges those by the amount wasted, and the others by their time at full. Warcraft Logs reads powers like Holy Power only on casts, so the level in between is filled in from each gain and cost. What the log doesn\'t name is worked out: what they spent, plus what they ended with, less what they started with and what the named gains gave.') + '</div></details>';
   return { head, html: sw + top + '<div class="pf-cols">' + left + '<div class="panel pf-det rs-det">' + (sel ? resDetail(sel, ty, one) : resRaid(rows, ty, one)) + '</div></div>' + how };
 }
 // (over the night: in how many pulls each mana problem came up)
 function paceNight(x) {
   const n = (k) => x.per.filter(({ q }) => q.v[k]).length, parts = [['low', 'ran low'], ['fast', 'spent fast'], ['spare', 'had mana to spare']].filter(([k]) => n(k)).map(([k, l]) => l + ' in ' + n(k));
   return parts.length ? { st: 'warn', pill: x.warn + ' of ' + x.per.length + ' pulls', txt: capS(parts.join(', ')) + ' of ' + plural(x.per.length, 'pull') + '.' } : { st: 'ok', pill: 'On pace', txt: 'Kept pace with the boss in all ' + plural(x.per.length, 'pull') + '.' };
+}
+// over the night: one bar per pull, the raid's share wasted (mana: what the healers had left at the end, on average);
+// a click opens that pull
+function resNightChart(list, rows, ty) {
+  const mana = ty === '0', cur = S.rep && S.rep.item.pull;
+  const pulls = list.map((w) => { let b = 0, wa = 0; const e = []; for (const x of rows) for (const o of x.per) if (o.w === w) { b += o.q.built; wa += o.q.wasted; if (o.q.lv1 != null) e.push(o.q.lv1); }
+    return { n: w.r.item.pull, kill: w.r.item.kill, label: pullLabel(w.r.item), v: mana ? (e.length ? e.reduce((s, v) => s + v, 0) / e.length : null) : b + wa > 0 ? wa / (b + wa) : null }; }).filter((x) => x.v != null);
+  if (pulls.length < 2) return '';
+  const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : 1000, H = narrow ? 180 : 130, L = narrow ? 40 : 46, Tp = 10, B = 20, ih = H - Tp - B, stepX = (W - L - 8) / pulls.length, bw = Math.max(4, Math.min(24, stepX - 6));
+  const top = mana ? 1 : Math.max(0.05, ...pulls.map((x) => x.v)), mxv = top * 1.08, cx = (i) => L + (i + 0.5) * stepX, cy = (v) => Tp + ih - (v / mxv) * ih;
+  let s = '<svg class="pfc pfn" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(resName(ty)) + ' per pull">';
+  for (const f of [0.5, 1]) s += '<line x1="' + L + '" x2="' + (W - 8) + '" y1="' + cy(top * f).toFixed(1) + '" y2="' + cy(top * f).toFixed(1) + '" class="pfc-g"/><text x="' + (L - 6) + '" y="' + (cy(top * f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + resPc(top * f) + '</text>';
+  pulls.forEach((x, i) => { const hh = Math.max(2, (x.v / mxv) * ih);
+    s += '<g class="pfn-b' + (x.kill ? ' kill' : '') + (x.n === cur ? ' cur' : '') + '" data-pull="' + x.n + '"><title>' + esc('Pull ' + x.n + ': ' + resPc(x.v) + (mana ? ' mana left on average' : ' of the ' + resName(ty) + ' built went to waste') + ' · ' + x.label) + '</title><rect class="hit" x="' + (cx(i) - stepX / 2).toFixed(1) + '" y="' + Tp + '" width="' + stepX.toFixed(1) + '" height="' + ih + '"/><rect x="' + (cx(i) - bw / 2).toFixed(1) + '" y="' + (Tp + ih - hh).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2"/></g>' +
+      ((narrow ? pulls.length <= 12 || i % 5 === 0 || i === pulls.length - 1 : pulls.length <= 30 || i % 2 === 0) ? '<text x="' + cx(i).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x' + (x.n === cur ? ' cur' : '') + '" text-anchor="middle">' + x.n + '</text>' : ''); });
+  return '<div class="panel pf-chart rs-nc"><h3 class="nh"><span class="pfc-ttl">' + resDot(ty) + (mana ? 'Healer mana left at the end, per pull' : esc(resName(ty)) + ' wasted, per pull') + '</span><small>' + (mana ? 'on average' : 'of all the raid built') + ' · click a pull to open it</small><span class="pfc-lg"><span><i class="lg-b"></i>wipe</span><span><i class="lg-k"></i>kill</span></span></h3>' + s + '</svg></div>';
 }
 const rsSec = (t, n, b) => '<div class="pf-sec"><div class="pf-st"><b>' + t + '</b>' + (n ? '<span>' + n + '</span>' : '') + '</div>' + b + '</div>';
 // the picked player: their numbers, what they gained it from, what they spent it on, and when they sat at full
@@ -5145,7 +5219,7 @@ function resDetail(x, ty, one) {
   let h = '<h3 class="nh">' + avatar(x.p, true) + ' <span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span><small>' + esc(x.p.specName || '') + ' · ' + esc(nm) + (one ? '' : ' · ' + plural(x.per.length, 'pull')) + '</small><button class="btn sm" id="rsClose" type="button">Show the raid</button></h3>';
   if (mana && one) { const v = x.per[0].q.v; h += '<p class="rs-v"><span class="hm-p ' + v.st + '">' + esc(v.pill) + '</span>' + esc(v.txt) + '</p>'; }
   else if (mana) { const pn = paceNight(x); h += '<p class="rs-v"><span class="hm-p ' + pn.st + '">' + esc(pn.pill) + '</span>' + esc(pn.txt) + '</p>'; }
-  h += '<div class="rs-nums">' + [['Built', resUnit(ty, x.built), ''], ['Spent', resUnit(ty, x.sA), x.nS ? 'on ' + plural(x.nS, 'cast') : ''], ['Wasted', resUnit(ty, x.wasted), resPc(x.share) + ' of it'], ['At full', secsS(x.capped), resPc(x.atFull) + ' of the time']]
+  h += '<div class="rs-nums">' + [['Built', resUnit(ty, x.built), ''], ['Spent', resUnit(ty, x.sA), x.nS ? 'on ' + plural(x.nS, 'cast') : ''], ['Wasted', resUnit(ty, x.wasted), resPc(x.share) + ' of it'], ['At full', secsS(x.capped), resPc(x.atFull) + ' of the time' + (mana || ty in RES_UNNAMED ? '' : ' · not waste by itself')]]
     .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + v + '</b>' + (s ? '<small>' + s + '</small>' : '') + '</div>').join('') + '</div>';
   // gained from: each spell that gave it (what counted, and what came while they were full), then what the log doesn't name
   const gl = x.gainL.map((g) => ({ html: spell(g.id, g.spell), a: g.amt - g.over, o: g.over }));
@@ -5180,7 +5254,7 @@ function resRaid(rows, ty, one) {
     // where the waste came from: each spell that gave it while they were full, and who; then regeneration while full
     const by = new Map();
     for (const x of rows) { for (const g of x.gainL) if (g.over > 0) { const o = by.get(g.spell) || { html: spell(g.id, g.spell), v: 0, who: [] }; o.v += g.over; o.who.push([x.p, g.over]); by.set(g.spell, o); }
-      if (x.lost > 0) { const o = by.get('\u0000') || { html: esc(RES_UNNAMED[ty] || 'Not named in the log') + ' <span class="sub">while at full, about</span>', v: 0, who: [] }; o.v += x.lost; o.who.push([x.p, x.lost]); by.set('\u0000', o); } }
+      if (x.lost > 0) { const o = by.get('\u0000') || { html: esc(RES_UNNAMED[ty] || 'Not named in the log') + ' <span class="sub">(about, while at full)</span>', v: 0, who: [] }; o.v += x.lost; o.who.push([x.p, x.lost]); by.set('\u0000', o); } }
     const wl = [...by.values()].filter((o) => o.v >= 0.5).sort((a, b) => b.v - a.v).slice(0, 8);
     const line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
     h += rsSec('Where the waste came from', esc(nm) + ' built while already full', wl.length ? wl.map((o) => line(o.html + ' <span class="sub">by</span> ' + o.who.sort((a, b) => b[1] - a[1]).slice(0, 3).map(([p, v]) => who(p) + (o.who.length > 1 ? ' <span class="sub">' + resAmt(ty, v) + '</span>' : '')).join(', ') + (o.who.length > 3 ? ' <span class="sub">and ' + (o.who.length - 3) + ' more</span>' : ''), '', resAmt(ty, o.v))).join('') : '<p class="sub" style="margin:0">Nothing went to waste.</p>');
@@ -5203,14 +5277,23 @@ function manaChart(r, rows, w0, w1, boss, o) {
   phs.forEach((q, i) => { if (q.start >= w1 || (isFinite(q.end) && q.end <= w0)) return; const x0 = X(Math.max(w0, q.start)), x1 = X(Math.min(w1, isFinite(q.end) ? q.end : w1)); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(0, x1 - x0).toFixed(1) + '" height="' + ih + '" class="pfc-ph p' + (i % 2) + '"/><text x="' + (x0 + 4).toFixed(1) + '" y="' + (Tp + 10) + '" class="pfc-pl">' + esc(phLab(q, (x1 - x0) * onScreen(W))) + '</text>'; });
   if (low) s += '<rect x="' + L + '" y="' + Y(0.25).toFixed(1) + '" width="' + iw + '" height="' + (Y(0) - Y(0.25)).toFixed(1) + '" class="mp-lo"/>';
   for (const u of o.full || []) { if (u.e < w0 || u.s > w1) continue; const x0 = X(u.s), x1 = X(u.e); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(1.5, x1 - x0).toFixed(1) + '" height="' + ih + '" class="mp-full"><title>' + esc('At full from ' + T(u.s) + ' for ' + Math.max(1, Math.round(u.e - u.s)) + ' s') + '</title></rect>'; }
-  for (const f of [0.25, 0.5, 1]) s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + Y(f).toFixed(1) + '" y2="' + Y(f).toFixed(1) + '" class="pfc-g' + (f === 0.25 && low ? ' lo' : '') + '"/><text x="' + (L - 5) + '" y="' + (Y(f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + Math.round(100 * f) + '%</text>';
+  // (o.scale: the axis in the power's own numbers up to that cap: a line at each point for a small one (Holy Power 1 to 5),
+  // at a quarter, a half and the top for a big one; otherwise percentages)
+  const sc = o.scale || 0, niceStep = (v) => { const e = Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 2.5, 5, 10].map((k) => k * e).find((k) => k >= v); };
+  let grid = [0.25, 0.5, 1];
+  if (sc && sc <= 10) grid = Array.from({ length: Math.round(sc) }, (_, i) => (i + 1) / Math.round(sc));
+  else if (sc) { const st = niceStep(sc / 4); grid = []; for (let v = st; v < sc * 0.92; v += st) grid.push(v / sc); grid.push(1); } // (round steps, then the cap itself)
+  for (const f of grid) s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + Y(f).toFixed(1) + '" y2="' + Y(f).toFixed(1) + '" class="pfc-g' + (f === 0.25 && low ? ' lo' : '') + '"/><text x="' + (L - 5) + '" y="' + (Y(f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + (sc ? Math.round(f * sc) : Math.round(100 * f) + '%') + '</text>';
   s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + (Tp + ih) + '" y2="' + (Tp + ih) + '" class="pfc-ax"/>';
   // (each line is its own group: clicking a name at the right hides or shows it; the hover readout reads `ser`)
   const tags = [], ser = [], off = (n) => (S.manaHide && S.manaHide.has(n) ? ' off' : '');
-  if (boss) { const bp = boss.filter(([t]) => t >= w0 && t <= w1); if (bp.length >= 2) { s += '<g class="mp-s' + off('__boss') + '" data-n="__boss"><polyline points="' + bp.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="mp-boss"/></g>'; tags.push({ y: Y(bp[bp.length - 1][1]), html: 'Boss', cls: 'mp-bt', n: '__boss' }); ser.push({ n: '__boss', l: 'Boss health', c: '#8b93a3', p: bp.map(([t, v]) => [t, +v.toFixed(3)]) }); } }
+  if (boss) { const bp = boss.filter(([t]) => t >= w0 && t <= w1); if (bp.length >= 2) { s += '<g class="mp-s' + off('__boss') + '" data-n="__boss"><polyline points="' + bp.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="mp-boss"/></g>'; tags.push({ y: Y(bp[bp.length - 1][1]), html: 'Boss', cls: 'mp-bt', n: '__boss' }); ser.push({ n: '__boss', l: PROGRESS[r.item.boss] ? 'Boss health, whole fight' : 'Boss health', c: '#8b93a3', p: bp.map(([t, v]) => [t, +v.toFixed(3)]) }); } }
   for (const x of rows) { const pts = x.ms.filter(([t]) => t >= w0 && t <= w1); if (pts.length < 2) continue;
-    s += '<g class="mp-s' + off(x.p.name) + '" data-n="' + esc(x.p.name) + '"><polyline points="' + pts.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="pfc-l" style="stroke:' + x.p.color + (x.dash ? ';stroke-dasharray:6 4' : '') + '"/>';
-    tags.push({ y: Y(pts[pts.length - 1][1]), html: esc(x.p.name), col: x.p.color, n: x.p.name }); ser.push({ n: x.p.name, l: x.p.name, c: x.p.color, mx: x.mx || 0, p: pts.map(([t, v]) => [t, +v.toFixed(3)]) });
+    // (o.step: a power that moves in steps (Holy Power, combo points) keeps its level until the next change, so time at
+    // full reads as a flat top)
+    const line = o.step ? pts.map(([t, v], i) => X(t).toFixed(1) + ',' + Y(v).toFixed(1) + (i < pts.length - 1 ? ' ' + X(pts[i + 1][0]).toFixed(1) + ',' + Y(v).toFixed(1) : '')).join(' ') : pts.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ');
+    s += '<g class="mp-s' + off(x.p.name) + '" data-n="' + esc(x.p.name) + '"><polyline points="' + line + '" class="pfc-l" style="stroke:' + x.p.color + (x.dash ? ';stroke-dasharray:6 4' : '') + '"/>';
+    tags.push({ y: Y(pts[pts.length - 1][1]), html: esc(x.p.name), col: x.p.color, n: x.p.name }); ser.push({ n: x.p.name, l: x.p.name, c: x.p.color, mx: x.mx || 0, cap: x.cap || 0, p: pts.map(([t, v]) => [t, +v.toFixed(3)]) });
     for (const u of x.pots) { const near = pts.reduce((m, y) => (Math.abs(y[0] - u.t) < Math.abs(m[0] - u.t) ? y : m)); s += '<circle cx="' + X(u.t).toFixed(1) + '" cy="' + Y(near[1]).toFixed(1) + '" r="3.5" class="mp-pot" style="stroke:' + x.p.color + '"><title>' + esc(x.p.name + ': mana potion at ' + T(u.t)) + '</title></circle>'; }
     for (const d of r.deaths) if (d.guid === x.p.guid && d.t >= w0 && d.t <= w1) { const v = (pts.filter(([t]) => t <= d.t).pop() || pts[0])[1]; s += '<text x="' + X(d.t).toFixed(1) + '" y="' + (Y(v) + 4).toFixed(1) + '" class="mp-d" text-anchor="middle" style="fill:' + x.p.color + '">✕<title>' + esc(x.p.name + ' died at ' + T(d.t)) + '</title></text>'; }
     s += '</g>'; }
@@ -5230,7 +5313,7 @@ function bindHoverCharts() {
   $$('.pfx[data-hx]').forEach((w) => {
     const o = JSON.parse(w.dataset.hx), svg = w.querySelector('svg'), tip = w.querySelector('.pfc-tip'), hv = svg.querySelector('.pfx-hv');
     const at = (p, t) => { let v = null; for (const q of p) { if (q[0] > t + 1) break; v = q[1]; } return v; };
-    const fmt = (v, q) => (q && q.mx ? Math.round(v * q.mx) + ' of ' + Math.round(q.mx) : o.pct ? Math.round(100 * v) + '%' : C(v) + '/s');
+    const fmt = (v, q) => (q && q.mx ? Math.round(v * q.mx) + ' of ' + Math.round(q.cap || q.mx) : o.pct ? Math.round(100 * v) + '%' : C(v) + '/s');
     const clear = () => { tip.hidden = true; if (hv) hv.style.display = 'none'; };
     const show = (e) => { const b = svg.getBoundingClientRect(), x = (e.clientX - b.left) * (o.W / b.width), t = o.w0 + ((x - o.L) / o.iw) * o.span;
       if (x < o.L || x > o.L + o.iw) { clear(); return; }
@@ -5702,22 +5785,29 @@ function cardOf(r, p) {
         : moving.length ? { t: 'Keep casting on the move', x: 'You were casting ' + Math.round(act) + '% of the time you were alive (aim for ' + okA + '%). Most of the gaps came while you were moving (' + plural(moving.length, 'gap') + ', ' + secs(moving) + ' s): ' + glOf(moving) + '. Use your instant casts and movement abilities to keep pressing as you run.' }
         : { t: 'Keep casting', x: 'You were casting ' + Math.round(act) + '% of the time you were alive (aim for ' + okA + '%).' + (gaps.length ? ' Your longest gaps: ' + gl + '.' : '') + ' Even while moving, there\'s usually an instant or a short cast to press.' } });
   }
-  // ---- wasted resources: time sitting at the top of a power that keeps building (energy, rage, Holy Power, runes…) ----
-  // (between two of their samples both at full, up to 4 s each, the first not one where they were paying it (that number
-  // is from just before spending: they weren't sitting on it); not while dead, mind controlled or the raid was waiting)
+  // ---- wasted resources: what a player's powers (not mana) built while they were already full ----
+  // A power that builds on its own (energy, rage, focus, runes, Essence) is judged by its time sitting at full: between two
+  // readings both at full, up to 4 s each, the first not one where they were paying it (that number is from just before
+  // spending: they weren't sitting on it), not while dead, mind controlled or the raid was waiting. One that only builds
+  // from spells (Holy Power, combo points, Soul Shards, Runic Power, Fury…) is judged by how much its spells gave while it
+  // was full: holding 5 Holy Power wastes nothing until another Holy Shock lands. 3% or less is full marks either way.
   { const idle0 = rcIdle(r, p), aliveT = Math.max(1, aliveSecs(r, p, 0, until) - idle0.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, until) - a), 0)), rows = [];
-    for (const [ty, rs] of p.res || []) { const nm = RES_N[ty]; if (!nm) continue; const pts = rs.pts.filter(([t]) => t <= until); if (pts.length < 12 || !pts.some(([, c, m]) => c < m * 0.98)) continue;
+    const scOf = (v) => (v <= 3 ? 100 : v >= 20 ? 20 : 100 - (v - 3) * 80 / 17);
+    for (const ty of (p.res || new Map()).keys()) { const nm = RES_N[ty]; if (!nm) continue; const pts = resPts(p, ty).filter(([t]) => t <= until); if (pts.length < 12 || !pts.some(([, c, m]) => c < m * 0.98)) continue;
       // (and how much of it went to waste, as the Resources view counts it: built while already full)
-      const fr = fullRuns(r, p, pts, 0, until), wst = Math.round(resOf(r, p, ty, 0, until).wasted);
-      rows.push({ ty, nm, capped: fr.capped, runs: fr.runs.length, pct: 100 * fr.capped / aliveT, longest: fr.longest, wst }); }
+      const fr = fullRuns(r, p, pts, 0, until), q = resOf(r, p, ty, 0, until), regen = ty in RES_UNNAMED, pct = 100 * fr.capped / aliveT, share = 100 * q.share;
+      rows.push({ ty, nm, regen, capped: fr.capped, runs: fr.runs.length, pct, share, longest: fr.longest, wst: Math.round(q.wasted), sc: scOf(regen ? pct : share), top: q.gain.filter((g) => g.over > 0).sort((a, b) => b.over - a.over)[0] || null }); }
     if (rows.length) {
-      const worst = rows.slice().sort((a, b) => b.pct - a.pct)[0], sc = worst.pct <= 3 ? 100 : worst.pct >= 20 ? 20 : 100 - (worst.pct - 3) * 80 / 17;
-      const wOf = (x2) => resAmt(x2.ty, x2.wst) + ' ' + x2.nm, wasted = rows.filter((x2) => x2.wst >= 1).sort((a, b) => b.pct - a.pct || b.wst - a.wst);
-      const head = (wasted.length ? 'Wasted <b>' + esc(wasted.map(wOf).join(', ')) + '</b>' : 'Wasted nothing') + (worst.capped >= 2 ? '<span class="sub"> · sat at full ' + Math.round(worst.capped) + ' s (' + Math.round(worst.pct) + '% of the time alive)</span>' : '<span class="sub"> · never sat at full</span>');
-      const subs = rows.filter((x2) => x2.capped >= 2 || x2.wst >= 1).map((x2) => rcSub(rcSt(x2.pct <= 3 ? 100 : x2.pct >= 20 ? 20 : 100 - (x2.pct - 3) * 80 / 17), esc(x2.nm) + ': <b>' + resAmt(x2.ty, x2.wst) + ' wasted</b>' + (x2.capped >= 2 ? ', at full ' + Math.round(x2.capped) + ' s, ' + plural(x2.runs, 'time') : '') + (x2.longest && x2.longest.e - x2.longest.s >= 3 ? '<span class="sub"> · the longest from ' + T(x2.longest.s) + ' (' + Math.round(x2.longest.e - x2.longest.s) + ' s)</span>' : ''))).join('');
-      add('btn', { k: 'res', label: 'Wasted resources', sc, w: role === 'tank' ? 12 : 25, num: worst.pct, unit: '% of the time at full', wst: Object.fromEntries(rows.map((x2) => [x2.nm, x2.wst])),
-        html: head + (rows.length > 1 || worst.capped >= 2 ? subs : ''),
-        fix: sc < 90 ? { t: 'Spend your ' + worst.nm + ' before it caps', x: 'Your ' + worst.nm + ' sat at full for ' + Math.round(worst.capped) + ' s (' + plural(worst.runs, 'time') + (worst.longest ? ', the longest from ' + T(worst.longest.s) : '') + ')' + (worst.wst >= 1 ? ', and ' + wOf(worst) + ' went to waste' : '') + '. Anything it would have built there was wasted: spend some before you press another builder.' } : null });
+      const worst = rows.slice().sort((a, b) => a.sc - b.sc || b.wst - a.wst)[0], sc = worst.sc, full = rows.filter((x2) => x2.regen).sort((a, b) => b.pct - a.pct)[0];
+      const wOf = (x2) => resAmt(x2.ty, x2.wst) + ' ' + resNm(x2.ty, x2.wst), wasted = rows.filter((x2) => x2.wst >= 1).sort((a, b) => a.sc - b.sc || b.wst - a.wst);
+      const head = (wasted.length ? 'Wasted <b>' + esc(wasted.map(wOf).join(', ')) + '</b>' : 'Wasted nothing') + (full && full.capped >= 2 ? '<span class="sub"> · ' + esc(full.nm) + ' sat at full ' + Math.round(full.capped) + ' s (' + Math.round(full.pct) + '% of the time alive)</span>' : '');
+      const subs = rows.filter((x2) => x2.wst >= 1 || (x2.regen && x2.capped >= 2)).map((x2) => rcSub(rcSt(x2.sc), esc(x2.nm) + ': <b>' + resAmt(x2.ty, x2.wst) + ' wasted</b>' +
+        (x2.regen ? (x2.capped >= 2 ? ', at full ' + Math.round(x2.capped) + ' s, ' + plural(x2.runs, 'time') : '') + (x2.longest && x2.longest.e - x2.longest.s >= 3 ? '<span class="sub"> · the longest from ' + T(x2.longest.s) + ' (' + Math.round(x2.longest.e - x2.longest.s) + ' s)</span>' : '')
+          : '<span class="sub"> (' + Math.round(x2.share) + '% of what you built)' + (x2.top ? ' · most from ' + esc(x2.top.spell) : '') + '</span>'))).join('');
+      add('btn', { k: 'res', label: 'Wasted resources', sc, w: role === 'tank' ? 12 : 25, num: worst.regen ? worst.pct : worst.share, unit: worst.regen ? '% of the time at full' : '% wasted', wst: Object.fromEntries(rows.map((x2) => [x2.nm, x2.wst])),
+        html: head + (rows.length > 1 || subs ? subs : ''),
+        fix: sc >= 90 ? null : worst.regen ? { t: 'Spend your ' + worst.nm + ' before it caps', x: 'Your ' + worst.nm + ' sat at full for ' + Math.round(worst.capped) + ' s (' + plural(worst.runs, 'time') + (worst.longest ? ', the longest from ' + T(worst.longest.s) : '') + ')' + (worst.wst >= 1 ? ', and ' + wOf(worst) + ' went to waste' : '') + '. Anything it would have built there was wasted: spend some before you press another builder.' }
+          : { t: 'Spend your ' + worst.nm + ' before it fills up', x: wOf(worst) + ' (' + Math.round(worst.share) + '% of what you built) came while you were already full' + (worst.top ? ', most of it from ' + worst.top.spell : '') + '. Spend some before it fills up: anything that comes in while it\'s full is lost.' } });
     }
   }
   // ---- casts that didn't finish: started (a cast bar) but never went off; not when they died or were mind controlled
@@ -5894,7 +5984,7 @@ function rcDetail(x, night) {
     const tw = ck.scs.reduce((s, [, w]) => s + w, 0), a = tw ? ck.scs.reduce((s, [v, w]) => s + v * w, 0) / tw : null, tot = ck.nums.reduce((s, v) => s + v, 0), avgN = ck.nums.length ? tot / ck.nums.length : null;
     const txt = !ck.nums.length ? '' : ck.nt === 'sum' ? (ck.word === 'battle res' ? resses(tot) : plural(tot, ck.word)) + ' over ' + plural(ck.pulls, 'pull') : ck.nt === 'frac' ? tot + ' of ' + ck.dens.reduce((s, v) => s + v, 0) + (ck.word ? ' ' + ck.word : '') + ' over ' + plural(ck.pulls, 'pull') : ck.nt === 'C' ? C(avgN) + ck.unit + ' on average' : Math.round(avgN) + ck.unit + ' on average';
     const wl = ck.wstT ? Object.entries(ck.wstT).filter(([, v]) => v >= 1).sort((u, v) => v[1] - u[1]) : [];
-    const wTxt = ck.wstT ? ' · ' + (wl.length ? 'wasted ' + wl.map(([n, v]) => Math.round(v).toLocaleString('en-US') + ' ' + n).join(', ') : 'nothing wasted') + ' in all' : '';
+    const wTxt = ck.wstT ? ' · ' + (wl.length ? 'wasted ' + wl.map(([n, v]) => Math.round(v).toLocaleString('en-US') + ' ' + (Math.round(v) === 1 ? Object.values(RES_ONE).find((o) => o + 's' === n) || n : n)).join(', ') : 'nothing wasted') + ' in all' : '';
     return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + esc(wTxt) + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub"> · worst: pull ' + ck.worst[1] + '</span>' : '')); };
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
     return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span></header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
