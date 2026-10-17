@@ -8,8 +8,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Sszorak module (round 99).
 - [ ] Then the next fight modules, in this order: Nek'zali the Soulcoiler, The Lost Explorers. Strategy from the guides and videos; Wolfthorn's pulls are raw data.
 - [ ] Open (your call): a few of the Sentinels and Sszorak thresholds are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
-- [ ] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knows 8 bosses (no rule pack, banner art or raid tag for them; Nymrissa is in your Oct 1 log).
+- [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-16, round 103: Nymrissa Wavecaller and Kith'ix
+- [x] **What they are:** neither is in The Venomous Abyss in game.
+  - Nymrissa is the boss of the Tidebound Grotto lair (12.1). She's the season's only Flex Mythic boss outside the raid and counts for the Vault's raid row.
+  - Kith'ix is a one-boss raid, The Unbinding of Kith'ix, live since 12.1.5 (Oct 13).
+  - Warcraft Logs ranks both in its Venomous Abyss zone (10 bosses), and Mythic Trap lists them there too.
+- [x] **Now full bosses in the app,** in season order (Nymrissa first, Kith'ix last):
+  - The pull banner names their own instance ("Pull 4 · Mythic · The Tidebound Grotto") and uses Wowhead's guide header as art. Kith'ix's header shows his arena, not him.
+  - Progress counts 10 bosses.
+  - Mistakes, with spell IDs from your pulls. Nymrissa: Pulsing Tides (a murloc reached the bubble), Swirling Whirlpools, Wild Bite (sharks in the water), Shatter (an orb left unsoaked) and her enrage. Kith'ix: Twisted Appendage, Suffocation (left Liadrin's Bulwark) and Nullshards.
+  - Left out on purpose: Lingering Frost (on the kill only orb soakers took it), Venom Roar and Dark Devastation (they hit the tanks by design) and Commanding Presence (it lands on adds as they spawn).
+- [x] **Import new nights** reads every report once more, to pick up their pulls from nights you'd already imported. Pulls already saved are skipped.
+- Correction: Nymrissa's Mythic pulls and kill are in the Sep 16 report, not Oct 1 (that one is all Sszorak). Kith'ix has one Heroic kill, on Oct 14.
+- [ ] Your call: count them on Progress (as now, the way Warcraft Logs does), or keep it to the raid's 8.
 
 ## 2026-10-16, round 102: GitHub
 - [x] Git installed (Git for Windows 2.55), the folder is a git project, and checkpoint 1 is on GitHub: the private repo Mikopeeko/Debrief, branch `main`.
