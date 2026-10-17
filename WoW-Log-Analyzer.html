@@ -6788,6 +6788,9 @@ function newPlayer(guid) {
     firstHit: new Map(), mana: [], manaUse: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
     // (each heal they gave themselves from a self-heal button, a Healthstone or a health potion: { t, spell, id, amt })
     selfH: [],
+    // (their power other than mana, by type, for wasted resources (resAt); every cast they started, { t, id, spell, done },
+    // done the time it went off, for casts that didn't finish)
+    res: new Map(), starts: [],
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
 }
 function addAb(m, name, id, amt, over, crit) {
@@ -6825,6 +6828,19 @@ function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.s
 function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|'), k = ty.indexOf('0'); if (k < 0) return; const cur = +String(f[a + 11]).split('|')[k], mx = +String(f[a + 12]).split('|')[k]; if (!(mx > 0) || cur !== cur) return;
   const cost = +String(f[a + 13]).split('|')[k]; if (cost > 0 && spell) p.manaUse.push({ t, spell, id, cost: cost / mx });
   const l = p.mana[p.mana.length - 1]; if (l && t - l[0] < 2) { l[1] = Math.min(l[1], cur / mx); return; } p.mana.push([t, Math.max(0, Math.min(1, cur / mx))]); }
+// a player's other power (rage, energy, combo points, Holy Power, runes and so on; not mana or Arcane Charges, where sitting
+// at the top isn't a waste), from an event's advanced block, for "wasted resources": per power type, samples
+// [t, current, max, spend] (a new one when it changed, or every 2 s). spend: 1 when the event's cast cost that power: its
+// number is from just before paying it (a finisher at 7 combo points reads 7), so it says they were spending, not
+// sitting at the top.
+const RES_SKIP = new Set(['0', '16']);
+function resAt(p, f, a, t) {
+  const ty = String(f[a + 10]).split('|'); if (!ty.length || (ty.length === 1 && RES_SKIP.has(ty[0]))) return;
+  const cu = String(f[a + 11]).split('|'), mx = String(f[a + 12]).split('|'), co = String(f[a + 13]).split('|');
+  for (let k = 0; k < ty.length; k++) { if (RES_SKIP.has(ty[k]) || ty[k] === '') continue; const m = +mx[k], c = +cu[k], sp = +co[k] > 0 ? 1 : 0; if (!(m > 0) || c !== c) continue;
+    let rs = p.res.get(ty[k]); if (!rs) p.res.set(ty[k], rs = { pts: [] }); const l = rs.pts[rs.pts.length - 1];
+    if (l && l[1] === c && l[2] === m && l[3] === sp && t - l[0] < 2) continue; if (rs.pts.length < 8000) rs.pts.push([t, c, m, sp]); }
+}
 
 function analyze(item, text, opts) {
   const packs = (opts && opts.packs) || PACKS;
@@ -6953,6 +6969,7 @@ function analyze(item, text, opts) {
         if (!swing) { noteSchool(id, f[10]); noteId(id, spell); } else SCHOOL.set(6603, 1);
         let hp = -1;
         if (hasAdv) pos(f[adv], f[adv] === dg ? dn : f[adv] === sg ? sn : '', f[adv + PX], f[adv + PX + 1], t);
+        if (hasAdv && f[adv] === sg && isPlayer(sg)) resAt(P(sg, sn), f, adv, t); // (their power, when the block is theirs)
         if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
@@ -7051,6 +7068,10 @@ function analyze(item, text, opts) {
         break;
       case 'SPELL_CAST_START':
         if (f.length >= 10) noteId(num(f[8]), f[9]);
+        // (a player starting a cast: matched to its cast going off, for casts that didn't finish)
+        // (an instant proc can log its start and its cast at the same moment, the cast first: then it's done already)
+        if (f.length >= 10 && isPlayer(sg)) { const ps = P(sg, sn), sid = num(f[8]), tl = ps.castTimes.get(sid), already = tl && tl.length && Math.abs(tl[tl.length - 1] - t) <= 0.05;
+          if (ps.starts.length < 4000) ps.starts.push({ t, id: sid, spell: f[9], done: already ? t : null }); }
         if (f.length >= 10 && !isPlayer(sg)) npcStart.set(sg + '|' + num(f[8]), t); // cast-bar spells (see kickReport)
         if (f.length >= 10 && !isPlayer(sg) && W(f[9], f[8])) modEv.push({ k: 'start', t, src: sg, srcName: sn, spell: f[9], id: num(f[8]) });
         break;
@@ -7077,7 +7098,9 @@ function analyze(item, text, opts) {
             modEv.push({ k: 'cast', t, src: sg, srcName: sn, spell, id, ...pw, ...(me ? { x: -(+f[12 + PX]), y: +f[11 + PX], face: fc === fc ? fc : null } : {}) }); } } break; }
         const p = P(sg, sn);
         p.casts++;
-        if (f.length >= 11 + ADV && f[11] === sg) manaAt(p, f, 11, t, spell, id);
+        if (f.length >= 11 + ADV && f[11] === sg) { manaAt(p, f, 11, t, spell, id); resAt(p, f, 11, t); }
+        // (the cast it finishes, if it had a cast bar: its latest start of the same spell in the last 15 s)
+        for (let i = p.starts.length - 1; i >= 0 && i >= p.starts.length - 4; i--) { const s0 = p.starts[i]; if (s0.done == null && s0.id === id && t - s0.t <= 15) { s0.done = t; break; } }
         if (W(spell)) modEv.push({ k: 'pcast', t, src: sg, spell, id, dst: dg });
         const ca = p.castAb.get(spell); if (ca) ca.n++; else p.castAb.set(spell, { name: spell, id, n: 1 });
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
@@ -13646,7 +13669,10 @@ function survivalOf(r, p) {
 // ---------- Report card (Performance): how well each player played their own character ----------
 // Not the boss's mechanics (those are on Mechanics): how they pressed their buttons, tried to stay alive and used what
 // their class gives them. Three grades, each out of 100, up to the wipe filter and the end of their time alive:
-//  Pressing buttons: casting while alive (90% for DPS, 85% for healers and tanks is full marks; 25 points under it is 0),
+//  Pressing buttons: casting while alive (90% for DPS, 85% for healers and tanks is full marks; 25 points under it is 0;
+//   each gap of 4 s or more marked standing still or moving, from their positions), wasted resources (time sitting at
+//   the top of energy, rage, Holy Power, runes and the like: 3% of the time alive or less is full marks, 20% is 20),
+//   casts that didn't finish (5% of their cast-bar casts or fewer is full marks, 25% is 20),
 //   big cooldowns used against their possible uses (85% is full marks; 15 off when none of the long ones met Bloodlust),
 //   a healer's mana at the end (20% or less is full marks). Damage or healing against their role is shown, not graded.
 //  Staying alive: deaths (60 off for one with a defensive still ready, 40 with only a Healthstone or potion, 25 with
@@ -13664,7 +13690,12 @@ const RC_EXT = { 256: [['Pain Suppression', 180]], 257: [['Guardian Spirit', 180
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 // (raid cooldowns: saved for the fight's big damage, not used whenever they're ready)
 const RAID_CD_N = new Set(['aura mastery', 'tranquility', 'divine hymn', 'revival', 'restoral', 'healing tide totem', 'spirit link totem', 'power word: barrier', 'rewind', 'dream flight', 'emerald communion', 'holy word: salvation', 'celestial conduit', 'rallying cry', 'darkness', 'anti-magic zone', 'vampiric embrace']);
-const rcSt =(sc) => (sc == null ? 'na' : sc >= 85 ? 'ok' : sc >= 60 ? 'warn' : 'bad');
+const rcSt = (sc) => (sc == null ? 'na' : sc >= 85 ? 'ok' : sc >= 60 ? 'warn' : 'bad');
+// (how far a player walked between a and b, in yards, from the positions the log gives with their casts and the hits and
+// heals they took; null when there's too little to tell)
+function pathIn(r, p, a, b) { const u = r.positions && r.positions.get(p.guid); if (!u) return null; const pts = u.pts.filter((q) => q[0] >= a - 0.6 && q[0] <= b + 0.6); if (pts.length < 2) return null; let d = 0; for (let i = 1; i < pts.length; i++) d += Math.hypot(pts[i][1] - pts[i - 1][1], pts[i][2] - pts[i - 1][2]); return d; }
+// (the powers worth not wasting, by the log's power type: everything but mana and Arcane Charges)
+const RES_N = { 1: 'Rage', 2: 'Focus', 3: 'Energy', 4: 'Combo Points', 5: 'Runes', 6: 'Runic Power', 7: 'Soul Shards', 8: 'Astral Power', 9: 'Holy Power', 11: 'Maelstrom', 12: 'Chi', 13: 'Insanity', 17: 'Fury', 18: 'Pain', 19: 'Essence' };
 const rcSub = (st, html) => '<div class="rk-sub ' + st + '">' + html + '</div>';
 function cardOf(r, p) {
   const C0 = perfContext(r), x = C0.per.get(p.name); if (!x || !p.cls) return null;
@@ -13679,10 +13710,50 @@ function cardOf(r, p) {
     const ts = [...p.castTimes.values()].flat().filter((t) => t <= until).sort((a, b) => a - b), mcw = C0.mc.get(p.name) || [], gaps = [];
     for (let i = 1; i < ts.length; i++) { const g = ts[i] - ts[i - 1]; if (g >= 4 && !mcw.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !x.ds.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !rcIdle(r, p).some(([a, b]) => ts[i - 1] < b && ts[i] > a)) gaps.push([ts[i - 1], g]); }
     gaps.sort((a, b) => b[1] - a[1]); const gl = gaps.slice(0, 3).map(([t, g]) => T(t) + ' (' + Math.round(g) + ' s)').join(', ');
+    // (each gap: standing still, or moving: 4 yards or more walked during it; unknown when the log has too few positions)
+    for (const g of gaps) { const d = pathIn(r, p, g[0], g[0] + g[1]); g.push(d == null ? null : d >= 4 ? 'move' : 'still'); }
+    const still = gaps.filter((g) => g[2] === 'still'), moving = gaps.filter((g) => g[2] === 'move'), secs = (l) => Math.round(l.reduce((s, g) => s + g[1], 0));
+    const glOf = (l) => l.slice(0, 2).map(([t, g]) => T(t) + ' (' + Math.round(g) + ' s)').join(', ');
     const waited = rcIdle(r, p).reduce((s, [a, b]) => s + Math.max(0, Math.min(b, until) - a), 0);
+    const split = still.length || moving.length ? (still.length ? rcSub(still.length >= moving.length ? 'warn' : 'na', '<b>' + plural(still.length, 'gap') + ' standing still</b> (' + secs(still) + ' s): ' + glOf(still)) : '') + (moving.length ? rcSub('na', plural(moving.length, 'gap') + ' while moving (' + secs(moving) + ' s): ' + glOf(moving)) : '') : '';
+    const stillMost = secs(still) >= secs(moving);
     add('btn', { k: 'act', label: 'Casting', sc, w: 45, num: act, unit: '% of the time alive',
-      html: 'Casting <b>' + Math.round(act) + '%</b> of the time alive' + (gaps.length ? '<span class="sub"> · ' + plural(gaps.length, 'gap') + ' of 4 s or more, the longest at ' + gl + '</span>' : '') + (waited >= 4 ? '<div class="rk-sub na">' + Math.round(waited) + ' s when the whole raid was waiting (the boss gone, a transition) left out</div>' : ''),
-      fix: { t: 'Keep casting', x: 'You were casting ' + Math.round(act) + '% of the time you were alive (aim for ' + okA + '%).' + (gaps.length ? ' Your longest gaps: ' + gl + '.' : '') + ' Even while moving, there\'s usually an instant or a short cast to press.' } });
+      html: 'Casting <b>' + Math.round(act) + '%</b> of the time alive' + (gaps.length ? '<span class="sub"> · ' + plural(gaps.length, 'gap') + ' of 4 s or more</span>' : '') + (split || (gaps.length ? '<span class="sub">, the longest at ' + gl + '</span>' : '')) + (waited >= 4 ? '<div class="rk-sub na">' + Math.round(waited) + ' s when most of the raid couldn\'t cast either (the boss gone, a transition, everyone running) left out</div>' : ''),
+      fix: still.length && stillMost ? { t: 'Keep casting while standing still', x: 'You were casting ' + Math.round(act) + '% of the time you were alive (aim for ' + okA + '%), and ' + plural(still.length, 'gap') + ' (' + secs(still) + ' s) came while you were standing still: ' + glOf(still) + '. Nothing was in the way there: always have your next button lined up.' }
+        : moving.length ? { t: 'Keep casting on the move', x: 'You were casting ' + Math.round(act) + '% of the time you were alive (aim for ' + okA + '%). Most of the gaps came while you were moving (' + plural(moving.length, 'gap') + ', ' + secs(moving) + ' s): ' + glOf(moving) + '. Use your instant casts and movement abilities to keep pressing as you run.' }
+        : { t: 'Keep casting', x: 'You were casting ' + Math.round(act) + '% of the time you were alive (aim for ' + okA + '%).' + (gaps.length ? ' Your longest gaps: ' + gl + '.' : '') + ' Even while moving, there\'s usually an instant or a short cast to press.' } });
+  }
+  // ---- wasted resources: time sitting at the top of a power that keeps building (energy, rage, Holy Power, runes…) ----
+  // (between two of their samples both at full, up to 4 s each, the first not one where they were paying it (that number
+  // is from just before spending: they weren't sitting on it); not while dead, mind controlled or the raid was waiting)
+  { const mcw0 = C0.mc.get(p.name) || [], idle0 = rcIdle(r, p), off = (t) => x.ds.some(([a, b]) => t >= a && t <= b) || mcw0.some(([a, b]) => t >= a && t <= b) || idle0.some(([a, b]) => t >= a && t <= b);
+    const aliveT = Math.max(1, aliveSecs(r, p, 0, until) - idle0.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, until) - a), 0)), rows = [];
+    for (const [ty, rs] of p.res || []) { const nm = RES_N[ty]; if (!nm) continue; const pts = rs.pts.filter(([t]) => t <= until); if (pts.length < 12 || !pts.some(([, c, m]) => c < m * 0.98)) continue;
+      let capped = 0, runs = 0, run = null, longest = null;
+      for (let i = 0; i < pts.length - 1; i++) { const [t0, c0, m0, sp0] = pts[i], [t1, c1, m1] = pts[i + 1], full = !sp0 && c0 >= m0 * 0.98 && c1 >= m1 * 0.98 && !off(t0);
+        if (full) { capped += Math.min(4, t1 - t0); if (!run) { run = { s: t0, e: t1 }; runs++; } else run.e = t1; if (!longest || run.e - run.s > longest.e - longest.s) longest = { ...run }; } else run = null; }
+      rows.push({ nm, capped, runs, pct: 100 * capped / aliveT, longest }); }
+    if (rows.length) {
+      const worst = rows.slice().sort((a, b) => b.pct - a.pct)[0], sc = worst.pct <= 3 ? 100 : worst.pct >= 20 ? 20 : 100 - (worst.pct - 3) * 80 / 17;
+      add('btn', { k: 'res', label: 'Wasted resources', sc, w: role === 'tank' ? 12 : 25, num: worst.pct, unit: '% of the time at full',
+        html: worst.capped >= 2 ? 'Sat at full <b>' + Math.round(worst.capped) + ' s</b> (' + Math.round(worst.pct) + '% of the time alive)' + rows.filter((x2) => x2.capped >= 2).map((x2) => rcSub(rcSt(x2.pct <= 3 ? 100 : x2.pct >= 20 ? 20 : 100 - (x2.pct - 3) * 80 / 17), esc(x2.nm) + ': at full ' + Math.round(x2.capped) + ' s, ' + plural(x2.runs, 'time') + (x2.longest && x2.longest.e - x2.longest.s >= 3 ? '<span class="sub"> · the longest from ' + T(x2.longest.s) + ' (' + Math.round(x2.longest.e - x2.longest.s) + ' s)</span>' : ''))).join('') : 'Never sat at full ' + esc(rows.map((x2) => x2.nm).join(' or ')),
+        fix: sc < 90 ? { t: 'Spend your ' + worst.nm + ' before it caps', x: 'Your ' + worst.nm + ' sat at full for ' + Math.round(worst.capped) + ' s (' + plural(worst.runs, 'time') + (worst.longest ? ', the longest from ' + T(worst.longest.s) : '') + '). Anything it would have built there was wasted: spend some before you press another builder.' } : null });
+    }
+  }
+  // ---- casts that didn't finish: started (a cast bar) but never went off; not when they died or were mind controlled
+  // within 3 s, or at the very end ----
+  { const mcw1 = C0.mc.get(p.name) || [], sts = (p.starts || []).filter((s) => s.t <= until - 1.5 && !x.ds.some(([a]) => a >= s.t - 0.1 && a - s.t <= 3) && !mcw1.some(([a, b]) => s.t >= a - 0.5 && s.t <= b));
+    if (sts.length >= 5) {
+      const allT = [...p.castTimes.values()].flat().concat(sts.map((s) => s.t)).sort((a, b) => a - b), nextAfter = (t) => { for (const u of allT) if (u > t + 0.05) return u; return until; };
+      // (one replaced within 0.4 s by another button isn't lost time: a queued swap, or a proc that came up)
+      const unf = sts.filter((s) => s.done == null && nextAfter(s.t) - s.t >= 0.4), lost = unf.reduce((s, u) => s + Math.min(4, Math.max(0, nextAfter(u.t) - u.t)), 0);
+      const moved = unf.filter((u) => { const d = pathIn(r, p, u.t, u.t + 1.5); return d != null && d >= 2.5; }).length, share = unf.length / sts.length;
+      const sc = share <= 0.05 ? 100 : share >= 0.25 ? 20 : 100 - (share - 0.05) * 80 / 0.2, by = new Map(); for (const u of unf) by.set(u.spell, (by.get(u.spell) || 0) + 1); const top = [...by].sort((a, b) => b[1] - a[1]);
+      // (healers count it lightly: cancelling a heal that would only overheal is good play)
+      add('btn', { k: 'unf', label: 'Casts that didn\'t finish', sc, w: role === 'healer' ? 6 : 20, num: unf.length, nt: 'sum', word: 'cast',
+        html: unf.length ? '<b>' + plural(unf.length, 'cast') + '</b> didn\'t finish, of ' + sts.length + ' with a cast bar (' + Math.round(100 * share) + '%)<span class="sub"> · about ' + Math.round(lost) + ' s lost</span>' + rcSub(rcSt(sc), top.slice(0, 3).map(([n, c]) => esc(n) + ' ×' + c).join(', ') + (moved ? '<span class="sub"> · ' + moved + ' of them while moving</span>' : '')) : 'Every one of your ' + sts.length + ' casts with a cast bar went off',
+        fix: unf.length && sc < 90 ? { t: 'Finish your casts', x: plural(unf.length, 'cast') + ' you started didn\'t go off (about ' + Math.round(lost) + ' s lost), mostly ' + top[0][0] + '. ' + (role === 'healer' ? 'Cancelling a heal that would only overheal is fine; the rest is time you could have spent healing.' : moved * 2 >= unf.length ? 'Most were while moving: start a cast only when you can stand still for it, and use your instants when you have to move.' : 'Let a cast finish before you move or start another one.') } : null });
+    }
   }
   const cds = bigCds(r, p, until, C0.lust);
   if (cds.length) {
@@ -13815,7 +13886,7 @@ function reportCard(reps, night) {
   const top = [...common].sort((a, b) => b[1] - a[1])[0];
   const tile = (sc, label, txt) => plTile(rcG(sc), label, sc == null ? '—' : Math.round(sc) + '<span>/100</span>', gBucket(sc), txt, true);
   const tiles = '<div class="pts n4 rk-tiles">' + tile(avgOf((x) => x.overall), 'Raid average', plural(all.length, 'player') + (night ? ' · ' + plural(reps.length, 'pull') : '')) +
-    RC_SEC.map(([k, l]) => tile(avgOf((x) => x.secs[k]), l, k === 'btn' ? 'casting and big cooldowns' : k === 'alive' ? 'deaths, close calls, Healthstones' : 'potion, interrupts, externals')).join('') + '</div>' +
+    RC_SEC.map(([k, l]) => tile(avgOf((x) => x.secs[k]), l, k === 'btn' ? 'casting, cooldowns, resources' : k === 'alive' ? 'deaths, close calls, Healthstones' : 'potion, interrupts, externals')).join('') + '</div>' +
     (top ? '<div class="rk-common"><span class="sub">Most common thing to work on:</span> <b>' + esc(top[0]) + '</b> <span class="sub">· ' + plural(top[1], 'player') + '</span></div>' : '');
   // ---- one row per player, most to gain first; a click opens their card ----
   const sel = S.rcSel && rows.some((x) => x.p.name === S.rcSel) ? S.rcSel : null;
@@ -14139,13 +14210,13 @@ function perfContext(r) {
   const roleMed = {}, roleAvoid = {}; for (const k in roles) { roleMed[k] = med(roles[k].filter((x) => x.tot > 0).map((x) => x.ps)); roleAvoid[k] = roles[k].reduce((s, x) => s + x.avoid, 0) / roles[k].length; }
   const dpsAdd = (roles.dps || []).filter((x) => x.addShare != null), addAvg = dpsAdd.length ? dpsAdd.reduce((s, x) => s + x.addShare, 0) / dpsAdd.length : null;
   const lust = []; for (const p of r.players.values()) for (const n of LUST_N) for (const t of p.byName.get(n) || []) lust.push(t);
-  // the raid's forced downtime: stretches of 4 s or more when three in four of the DPS and tanks alive cast nothing at all
-  // (the boss gone, a transition, everyone running): their casting isn't judged there. (Healers keep healing through
-  // those, so they don't count toward it, and their own casting is judged as usual.)
+  // the raid's forced downtime: stretches of 3 s or more when at least half of the DPS and tanks alive cast nothing at all
+  // (the boss gone, a transition, everyone running for a mechanic): their casting isn't judged there. (Healers keep
+  // healing through those, so they don't count toward it, and their own casting is judged as usual.)
   const N = Math.ceil(end) + 1, act = new Array(N).fill(0), alv = new Array(N).fill(0), idle = [];
   for (const x of per.values()) { if (x.role === 'healer') continue; const on = new Uint8Array(N); for (const ts of x.p.castTimes.values()) for (const t of ts) { if (t < 0 || t > end) continue; for (let s = Math.max(0, Math.floor(t - 1)); s <= Math.min(N - 1, Math.floor(t + 1)); s++) on[s] = 1; }
     for (let s = 0; s < N; s++) if (!x.ds.some(([a, b]) => s >= a && s < b)) { alv[s]++; if (on[s]) act[s]++; } }
-  for (let s = 0, a = -1; s <= N; s++) { const off = s < N && alv[s] >= 4 && act[s] <= 0.25 * alv[s]; if (off && a < 0) a = s; else if (!off && a >= 0) { if (s - a >= 4) idle.push([a, s]); a = -1; } }
+  for (let s = 0, a = -1; s <= N; s++) { const off = s < N && alv[s] >= 4 && act[s] <= 0.5 * alv[s]; if (off && a < 0) a = s; else if (!off && a >= 0) { if (s - a >= 3) idle.push([a, s]); a = -1; } }
   r._pc = { ct, end, per, roles, roleMed, roleAvoid, addAvg, lust: lust.length ? Math.min(...lust) : null, mc, idle };
   return r._pc;
 }

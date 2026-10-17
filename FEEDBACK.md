@@ -69,6 +69,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 128: wasted resources, casts that didn't finish, gaps standing still or moving
+- [x] **Wasted resources** (your pick): each player's power other than mana (Energy, Rage, Focus, Runic Power, runes, Holy
+  Power, Soul Shards, Fury, Astral Power, Maelstrom, Insanity, Chi, Essence…) followed through the pull; time sitting at
+  full while it kept building is wasted ("Spend your Focus before it caps: at full for 30 s, 9 times, the longest from
+  1:34"). 3% of the time alive or less is full marks. A number read as they pressed a spender is from just before paying
+  it, so spending at full never counts. (Warcraft Logs only records combo points on finishers, so those can't be judged
+  from a report; a combat log from your PC has them.)
+- [x] **Casts that didn't finish** (your pick): every cast with a cast bar that never went off ("5 casts didn't finish,
+  of 35 (14%), about 8 s lost: Frostbolt ×4 · 5 of them while moving"). Not counted: one cut off by a death, mind control
+  or the end of the pull, an instant proc that logs its start and cast together, or one replaced within 0.4 s. Healers
+  count it lightly (cancelling a heal that would only overheal is good play).
+- [x] **Casting gaps, standing still or moving** (your pick): each gap of 4 s or more is marked from the player's
+  positions, and the fix fits: "Keep casting while standing still" (nothing was in the way) or "Keep casting on the
+  move" (instants and movement abilities).
+- [x] Raid-wide downtime, wider: when at least half of the DPS and tanks are stopped for 3 s or more (everyone running
+  for a mechanic, a transition), that time isn't held against anyone.
+
 ## 2026-10-17, round 127: charts you can explore (hover for a breakdown, click to go deeper)
 - [x] **Performance's main chart**: hovering shows who did the most in that 5-second slice (the top 4 players, and on
   Damage taken the boss abilities that hit hardest); click to keep the box, then click a name to open that player. With a

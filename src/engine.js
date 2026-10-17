@@ -4788,6 +4788,9 @@ function newPlayer(guid) {
     firstHit: new Map(), mana: [], manaUse: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
     // (each heal they gave themselves from a self-heal button, a Healthstone or a health potion: { t, spell, id, amt })
     selfH: [],
+    // (their power other than mana, by type, for wasted resources (resAt); every cast they started, { t, id, spell, done },
+    // done the time it went off, for casts that didn't finish)
+    res: new Map(), starts: [],
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
 }
 function addAb(m, name, id, amt, over, crit) {
@@ -4825,6 +4828,19 @@ function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.s
 function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|'), k = ty.indexOf('0'); if (k < 0) return; const cur = +String(f[a + 11]).split('|')[k], mx = +String(f[a + 12]).split('|')[k]; if (!(mx > 0) || cur !== cur) return;
   const cost = +String(f[a + 13]).split('|')[k]; if (cost > 0 && spell) p.manaUse.push({ t, spell, id, cost: cost / mx });
   const l = p.mana[p.mana.length - 1]; if (l && t - l[0] < 2) { l[1] = Math.min(l[1], cur / mx); return; } p.mana.push([t, Math.max(0, Math.min(1, cur / mx))]); }
+// a player's other power (rage, energy, combo points, Holy Power, runes and so on; not mana or Arcane Charges, where sitting
+// at the top isn't a waste), from an event's advanced block, for "wasted resources": per power type, samples
+// [t, current, max, spend] (a new one when it changed, or every 2 s). spend: 1 when the event's cast cost that power: its
+// number is from just before paying it (a finisher at 7 combo points reads 7), so it says they were spending, not
+// sitting at the top.
+const RES_SKIP = new Set(['0', '16']);
+function resAt(p, f, a, t) {
+  const ty = String(f[a + 10]).split('|'); if (!ty.length || (ty.length === 1 && RES_SKIP.has(ty[0]))) return;
+  const cu = String(f[a + 11]).split('|'), mx = String(f[a + 12]).split('|'), co = String(f[a + 13]).split('|');
+  for (let k = 0; k < ty.length; k++) { if (RES_SKIP.has(ty[k]) || ty[k] === '') continue; const m = +mx[k], c = +cu[k], sp = +co[k] > 0 ? 1 : 0; if (!(m > 0) || c !== c) continue;
+    let rs = p.res.get(ty[k]); if (!rs) p.res.set(ty[k], rs = { pts: [] }); const l = rs.pts[rs.pts.length - 1];
+    if (l && l[1] === c && l[2] === m && l[3] === sp && t - l[0] < 2) continue; if (rs.pts.length < 8000) rs.pts.push([t, c, m, sp]); }
+}
 
 function analyze(item, text, opts) {
   const packs = (opts && opts.packs) || PACKS;
@@ -4953,6 +4969,7 @@ function analyze(item, text, opts) {
         if (!swing) { noteSchool(id, f[10]); noteId(id, spell); } else SCHOOL.set(6603, 1);
         let hp = -1;
         if (hasAdv) pos(f[adv], f[adv] === dg ? dn : f[adv] === sg ? sn : '', f[adv + PX], f[adv + PX + 1], t);
+        if (hasAdv && f[adv] === sg && isPlayer(sg)) resAt(P(sg, sn), f, adv, t); // (their power, when the block is theirs)
         if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
@@ -5051,6 +5068,10 @@ function analyze(item, text, opts) {
         break;
       case 'SPELL_CAST_START':
         if (f.length >= 10) noteId(num(f[8]), f[9]);
+        // (a player starting a cast: matched to its cast going off, for casts that didn't finish)
+        // (an instant proc can log its start and its cast at the same moment, the cast first: then it's done already)
+        if (f.length >= 10 && isPlayer(sg)) { const ps = P(sg, sn), sid = num(f[8]), tl = ps.castTimes.get(sid), already = tl && tl.length && Math.abs(tl[tl.length - 1] - t) <= 0.05;
+          if (ps.starts.length < 4000) ps.starts.push({ t, id: sid, spell: f[9], done: already ? t : null }); }
         if (f.length >= 10 && !isPlayer(sg)) npcStart.set(sg + '|' + num(f[8]), t); // cast-bar spells (see kickReport)
         if (f.length >= 10 && !isPlayer(sg) && W(f[9], f[8])) modEv.push({ k: 'start', t, src: sg, srcName: sn, spell: f[9], id: num(f[8]) });
         break;
@@ -5077,7 +5098,9 @@ function analyze(item, text, opts) {
             modEv.push({ k: 'cast', t, src: sg, srcName: sn, spell, id, ...pw, ...(me ? { x: -(+f[12 + PX]), y: +f[11 + PX], face: fc === fc ? fc : null } : {}) }); } } break; }
         const p = P(sg, sn);
         p.casts++;
-        if (f.length >= 11 + ADV && f[11] === sg) manaAt(p, f, 11, t, spell, id);
+        if (f.length >= 11 + ADV && f[11] === sg) { manaAt(p, f, 11, t, spell, id); resAt(p, f, 11, t); }
+        // (the cast it finishes, if it had a cast bar: its latest start of the same spell in the last 15 s)
+        for (let i = p.starts.length - 1; i >= 0 && i >= p.starts.length - 4; i--) { const s0 = p.starts[i]; if (s0.done == null && s0.id === id && t - s0.t <= 15) { s0.done = t; break; } }
         if (W(spell)) modEv.push({ k: 'pcast', t, src: sg, spell, id, dst: dg });
         const ca = p.castAb.get(spell); if (ca) ca.n++; else p.castAb.set(spell, { name: spell, id, n: 1 });
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
