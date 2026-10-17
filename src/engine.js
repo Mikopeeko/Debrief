@@ -4795,6 +4795,8 @@ function newPlayer(guid) {
     // (the Resources view: every power they gained, { t, ty, spell, id, amt, over } (over: what came while they were already
     // full), and every power a cast cost them, { t, ty, spell, id, amt }; ty is the log's power type, 0 for mana)
     gainL: [], spendL: [],
+    // (casts Warcraft Logs marks as not pressed, procs: lowercase name -> times, for the Casts view's presses)
+    fakeT: new Map(),
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
 }
 function addAb(m, name, id, amt, over, crit) {
@@ -5116,6 +5118,7 @@ function analyze(item, text, opts) {
             modEv.push({ k: 'cast', t, src: sg, srcName: sn, spell, id, ...pw, ...(me ? { x: -(+f[12 + PX]), y: +f[11 + PX], face: fc === fc ? fc : null } : {}) }); } } break; }
         const p = P(sg, sn);
         p.casts++;
+        if (f[f.length - 1] === 'FAKE') { const fk = spell.toLowerCase(); let fl = p.fakeT.get(fk); if (!fl) p.fakeT.set(fk, fl = []); fl.push(t); }
         if (f.length >= 11 + ADV && f[11] === sg) { manaAt(p, f, 11, t, spell, id); resAt(p, f, 11, t);
           // (what the cast cost, in each power it used)
           const tys = String(f[21]).split('|'), cos = String(f[24]).split('|'); for (let k = 0; k < tys.length; k++) { const c = +cos[k]; if (c > 0 && tys[k] !== '' && p.spendL.length < 6000) p.spendL.push({ t, ty: tys[k], spell, id, amt: c }); } }

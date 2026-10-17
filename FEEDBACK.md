@@ -12,8 +12,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   card's "Using the toolkit". Open questions: who it's for (the whole raid or the leads), the weights of the three parts,
   and tonight first or the whole tier (the tier needs each pull's scores saved as it's read, from then on).
   **Update (your note, Oct 17):** the Player audit should be completely revamped into something else. To discuss.
-- [ ] **Casting breakdown** (your idea, next in Performance): a simple chart of every cast each player made; clicking a
-  player shows a detailed breakdown. Many specs have casts per minute they should keep up. Thoughts to talk over first.
+- [ ] **Power Infusion** (your idea, a tab in Performance): the priest's Power Infusion should land in the right cooldown
+  windows (the target's big cooldowns, Bloodlust), and on the right class (a spec that gains the most from it). Needs a
+  little research per spec. To talk over first.
 - [x] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
   on a click (round 127).
 - **Goal (your note): the Performance tab is meant to replace Warcraft Logs** for the raid. Everything people check on Warcraft
@@ -71,6 +72,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 133: Casts (a new Performance view)
+- [x] **Casts** (your idea): every cast on one time line, a row per player (a line per cast, dead time shaded); a bar per
+  player with their casts per minute while they could cast, and a tick at their spec's pace; click a player for every
+  spell they pressed (casts, per minute, against their usual), their gaps, and what wasn't counted. All pulls adds it up,
+  with a chart of the pace per pull.
+- [x] **The pace per spec** (your ask, researched): nobody publishes casts-per-minute targets for Midnight, but
+  SimulationCraft's raid report (MID2, updated Oct 17) has every DPS and tank spec's actions per minute on a target dummy,
+  by hero talents (Fury Warrior 72, Havoc 66 or 87, Marksmanship 40…). On your pulls good players sit at 90-105% of it, so
+  90% or more is "On pace", 75% "A little slow", under that "Slow". Healers, Balance, Guardian, Protection Paladins and
+  Evokers aren't simmed: they're measured against their own other pulls and the same spec.
+- [x] **Presses only**: auto attacks and the casts Warcraft Logs marks as not pressed (procs like Reclamation, Shattered
+  Souls, Mutilate's second hit) are left out, so a Rogue isn't credited with 218 casts a minute.
 
 ## 2026-10-17, round 132: Resources in two views
 - [x] **Healer mana and Everyone's power** (your pick, option 1 of 3 sketches): the row of 13 power buttons is gone.

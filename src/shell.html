@@ -1639,6 +1639,13 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .rs-pw { margin-left: 8px; font-size: 11.5px; font-weight: 500; color: rgba(255,255,255,.75); white-space: nowrap; } .rs-pw .rs-dot { width: 7px; height: 7px; margin-right: 4px; }
 @media (max-width: 560px) { .rs-pw .rs-pn { display: none; } .rs-pw { margin-left: 6px; } } /* (a phone: the power's colour dot only, so the name has room) */
 .rs-nc { margin: 0 0 14px; }
+/* Performance, Casts: every cast on one time line (a row per player, or per spell), the pace against each spec's sim */
+.pfk-b.k-cast { --kc: #f0a35e; }
+.cst .cst-hit { fill: transparent; } .cst-l.k { cursor: pointer; } .cst-l.k:hover .cst-hit { fill: rgba(255,255,255,.04); }
+.cst-t { fill: none; stroke-width: 1.3; opacity: .9; } .cst-n { font: 500 11px var(--body); } .cst-dd { fill: rgba(229,83,75,.12); }
+.cst-f { font-weight: 700; font-variant-numeric: tabular-nums; } .cst-f.ok { color: #7ee08f; } .cst-f.warn { color: #f3c969; } .cst-f.bad { color: #ff8f87; }
+.cst-ut.u5 .hm-uh, .cst-ut.u5 .hm-ur { grid-template-columns: minmax(110px, 1fr) 44px 52px 48px minmax(60px, 130px); }
+@media (max-width: 560px) { .cst-ut.u5 .hm-uh, .cst-ut.u5 .hm-ur { grid-template-columns: minmax(0, 1fr) 36px 44px 40px 36px; gap: 6px; } }
 .mp-full { fill: rgba(229,83,75,.16); }
 .rs-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 2px 0 12px; }
 .rs-n { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 8px 10px; background: var(--raised); border-radius: 8px; }
@@ -1656,6 +1663,9 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .rs-vr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; align-items: center; padding: 9px 6px; background: none; border: 0; border-bottom: 1px solid rgba(53,59,73,.55); border-radius: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .rs-vr:hover { background: rgba(255,255,255,.03); } .rs-vr:last-child { border-bottom: 0; } .rs-vr .nm { font-weight: 600; margin-right: 6px; }
 .rs-vr .rs-vt { grid-column: 2; font-size: 13px; color: #c9ced8; line-height: 1.4; }
+.cst-det .pfu-l { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(28px, auto); gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.cst-det .pf-st + .pfu-l { border-top: 0; } .cst-det .pfu-l > b { text-align: right; font-variant-numeric: tabular-nums; } .cst-det .pfu-l > .sub { font-size: 12px; text-align: right; }
+.cst-det h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .cst-det h3 small { color: var(--faint); font-size: 12px; } .cst-det h3 .btn { margin-left: auto; }
 .rs-det .pfu-l { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(28px, auto); gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
 .rs-det .pf-st + .pfu-l { border-top: 0; } .rs-det .pfu-l > b { text-align: right; font-variant-numeric: tabular-nums; } .rs-det .pfu-l .icw { width: 16px; height: 16px; vertical-align: -3px; margin-right: 5px; }
 .rs-det .pfu-l > .sub { font-size: 12px; text-align: right; } .rs-det h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .rs-det h3 small { color: var(--faint); font-size: 12px; } .rs-det h3 .btn { margin-left: auto; }

@@ -4047,7 +4047,7 @@ function kicks() {
 // picked player's) with the phases shaded and the boss mechanics, Bloodlust and deaths marked, then a bar per player.
 // A click on a player draws their line and shows what their damage went into (targets and abilities). Everything counts
 // up to the wipe filter; "while alive" divides by the time until a player's first death.
-const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['util', 'Utility'], ['surv', 'Survivability']];
+const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (the views that count presses or grade, not output over time: no phase picker and no chart)
 const PERF_COUNTS = new Set(['card', 'util', 'surv']);
 // Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds: checked
@@ -4118,7 +4118,7 @@ const BRES_N = ['rebirth', 'raise ally', 'intercession', 'soulstone'];
 const EXT_N = ['pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue'];
 // the four views, as switches that carry their headline number (over what's counted: up to the wipe filter, in the
 // picked phase)
-const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', util: 'ability_kick', surv: 'warlock_-healthstone' };
+const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', cast: 'spell_nature_lightning', util: 'ability_kick', surv: 'warlock_-healthstone' };
 const PERF_COL = { dmg: '#6aa8ff', heal: '#45c15c', taken: '#e5534b' };
 // (only the view you're on carries its numbers: the others are just their name, so the tiles under it read first)
 function perfTabs(kind, vals) {
@@ -4163,9 +4163,9 @@ function perf() {
   const sumOf = (rows) => rows.reduce((s, x) => s + x.tot, 0);
   const R3 = { dmg: rowsOf('dmg'), heal: rowsOf('heal'), taken: rowsOf('taken') }, inPh = ph ? ' in ' + esc(pfPhK(ph)) : ' in total';
   const ucats = utilCats([r]), scats = survCats([r]), oh = (() => { const h2 = ps.reduce((s, p) => s + p.healing, 0), o2 = ps.reduce((s, p) => s + p.overheal, 0); return h2 + o2 ? o2 / (h2 + o2) : 0; })();
-  const RV = kind === 'res' ? resView([{ r, w0, w1, end }], true) : null;
+  const RV = kind === 'res' ? resView([{ r, w0, w1, end }], true) : kind === 'cast' ? castView([{ r, w0, w1, end }], true) : null;
   const vals = { card: kind === 'card' ? rcHead([r]) : {}, dmg: { v: C(sumOf(R3.dmg) / wl) + '<span>/s</span>', s: C(sumOf(R3.dmg)) + inPh }, heal: { v: C(sumOf(R3.heal) / wl) + '<span>/s</span>', s: C(sumOf(R3.heal)) + inPh + ' · ' + Math.round(100 * oh) + '% overheal' },
-    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
+    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutLine = '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (ph && !counts ? '<b>' + esc(ph.name) + '</b>, ' + T(w0) + '–' + T(w1) + (cut && w1 >= end - 0.5 ? ' (the wipe filter)' : '') : cut ? 'Counted up to <b>' + T(ct) + '</b>, the wipe filter' : r.item.kill ? '<b>Kill</b>: the whole pull counts' : 'The whole pull counts') + '</span></div>';
   // (one row on top: the kinds, then the pull / phase switches and the wipe filter line)
@@ -4694,8 +4694,9 @@ async function perfNight(r0, kind, scopeSw) {
   const avgK = (k) => (used.length ? used.reduce((s, w) => s + raidPs(w, k), 0) / used.length : 0), ucats = utilCats(reps), scats = survCats(reps);
   const avgS = 'average over ' + plural(used.length, 'pull') + (phSel ? ' · ' + esc(phSel) : '');
   // (Resources: each pull's numbers up to its wipe filter, in the picked phase, added up)
-  const RV = kind === 'res' ? resView(used.map((w) => ({ r: w.r, w0: w.w0, w1: w.w1, end: Math.max(1, Math.min(w.r.duration, cutT(w.r))) })), false) : null;
-  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
+  const nl = used.map((w) => ({ r: w.r, w0: w.w0, w1: w.w1, end: Math.max(1, Math.min(w.r.duration, cutT(w.r))) }));
+  const RV = kind === 'res' ? resView(nl, false) : kind === 'cast' && nl.length ? castView(nl, false) : null;
+  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
   let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div></div></div>';
@@ -5282,9 +5283,9 @@ function resNightChart(list, valOf, o) {
   const pulls = list.map((w) => ({ n: w.r.item.pull, kill: w.r.item.kill, label: pullLabel(w.r.item), v: valOf(w) })).filter((x) => x.v != null);
   if (pulls.length < 2) return '';
   const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : 1000, H = narrow ? 180 : 130, L = narrow ? 40 : 46, Tp = 10, B = 20, ih = H - Tp - B, stepX = (W - L - 8) / pulls.length, bw = Math.max(4, Math.min(24, stepX - 6));
-  const top = o.full ? 1 : Math.max(0.05, ...pulls.map((x) => x.v)), mxv = top * 1.08, cx = (i) => L + (i + 0.5) * stepX, cy = (v) => Tp + ih - (v / mxv) * ih;
+  const fmt = o.fmt || resPc, top = o.full ? 1 : Math.max(0.05, ...pulls.map((x) => x.v)), mxv = top * 1.08, cx = (i) => L + (i + 0.5) * stepX, cy = (v) => Tp + ih - (v / mxv) * ih;
   let s = '<svg class="pfc pfn" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Per pull">';
-  for (const f of [0.5, 1]) s += '<line x1="' + L + '" x2="' + (W - 8) + '" y1="' + cy(top * f).toFixed(1) + '" y2="' + cy(top * f).toFixed(1) + '" class="pfc-g"/><text x="' + (L - 6) + '" y="' + (cy(top * f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + resPc(top * f) + '</text>';
+  for (const f of [0.5, 1]) s += '<line x1="' + L + '" x2="' + (W - 8) + '" y1="' + cy(top * f).toFixed(1) + '" y2="' + cy(top * f).toFixed(1) + '" class="pfc-g"/><text x="' + (L - 6) + '" y="' + (cy(top * f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + fmt(top * f) + '</text>';
   pulls.forEach((x, i) => { const hh = Math.max(2, (x.v / mxv) * ih);
     s += '<g class="pfn-b' + (x.kill ? ' kill' : '') + (x.n === cur ? ' cur' : '') + '" data-pull="' + x.n + '"><title>' + esc('Pull ' + x.n + ': ' + o.tip(x.v) + ' · ' + x.label) + '</title><rect class="hit" x="' + (cx(i) - stepX / 2).toFixed(1) + '" y="' + Tp + '" width="' + stepX.toFixed(1) + '" height="' + ih + '"/><rect x="' + (cx(i) - bw / 2).toFixed(1) + '" y="' + (Tp + ih - hh).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2"/></g>' +
       ((narrow ? pulls.length <= 12 || i % 5 === 0 || i === pulls.length - 1 : pulls.length <= 30 || i % 2 === 0) ? '<text x="' + cx(i).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x' + (x.n === cur ? ' cur' : '') + '" text-anchor="middle">' + x.n + '</text>' : ''); });
@@ -5408,6 +5409,181 @@ function bindHoverCharts() {
   });
 }
 
+// ---------- Performance: Casts ----------
+// Every cast each player pressed (not the procs Warcraft Logs marks as not pressed, like Reclamation or Shattered Souls,
+// and not auto attacks): how many a minute while they could cast (alive, not mind controlled, not while the whole raid was
+// waiting), against the pace SimulationCraft's raid sims press at for their spec (a target dummy with no movement, so a
+// real fight runs a little under it: on Wolfthorn's pulls good players sit at 90-105% of it), their own other pulls of
+// this boss, and the same spec in the raid; which spells; and the gaps.
+// SimulationCraft's Midnight raid report (MID2, Oct 17 2026), actions per minute on a single-target dummy, by spec and hero
+// talents: [hero talents, per minute, a spell only that hero tree casts (to tell which one a player took), or null].
+// Healers, Balance, Guardian, Protection Paladins and Evokers aren't simmed there: they're compared with themselves and
+// the same spec only.
+const SIM_APM = {
+  'Blood Death Knight': [["San'layn", 67.9, 'vampiric strike'], ['Deathbringer', 59.3, null]],
+  'Frost Death Knight': [['Deathbringer', 69.8, null], ['Rider of the Apocalypse', 73.5, null]],
+  'Unholy Death Knight': [["San'layn", 65.3, 'vampiric strike'], ['Rider of the Apocalypse', 58.5, null]],
+  'Havoc Demon Hunter': [['Aldrachi Reaver', 87.1, "reaver's glaive"], ['Fel-Scarred', 65.6, null]],
+  'Vengeance Demon Hunter': [['Annihilator', 81.0, null]], 'Devourer Demon Hunter': [['Void-Scarred', 60.0, null]],
+  'Feral Druid': [['Wildstalker', 53.4, null]],
+  'Beast Mastery Hunter': [['', 51.1, null]], 'Marksmanship Hunter': [['', 39.9, null]], 'Survival Hunter': [['', 52.0, null]],
+  'Arcane Mage': [['Spellslinger', 47.3, null], ['Sunfury', 42.0, null]], 'Fire Mage': [['Frostfire', 73.6, 'frostfire bolt'], ['Sunfury', 80.1, null]],
+  'Frost Mage': [['Frostfire', 50.8, 'frostfire bolt'], ['Spellslinger', 48.8, null]],
+  'Brewmaster Monk': [['', 69.9, null]], 'Windwalker Monk': [['Conduit of the Celestials', 52.8, 'celestial conduit'], ['Shado-Pan', 49.9, null]],
+  'Retribution Paladin': [['Herald of the Sun', 59.6, null], ['Templar', 64.1, 'hammer of light']],
+  'Shadow Priest': [['Archon', 60.2, null], ['Voidweaver', 55.6, null]],
+  'Assassination Rogue': [['Deathstalker', 50.9, null]], 'Outlaw Rogue': [['', 67.2, null]], 'Subtlety Rogue': [['', 64.0, null]],
+  'Elemental Shaman': [['Farseer', 54.7, null], ['Stormbringer', 52.9, null]], 'Enhancement Shaman': [['Stormbringer', 55.9, null], ['Totemic', 58.7, 'surging totem']],
+  'Affliction Warlock': [['Hellcaller', 53.8, 'wither'], ['Soul Harvester', 41.9, null]], 'Demonology Warlock': [['Diabolist', 53.7, null], ['Soul Harvester', 53.8, null]],
+  'Destruction Warlock': [['Diabolist', 54.3, null], ['Hellcaller', 56.8, 'wither']],
+  'Arms Warrior': [['', 56.3, null]], 'Fury Warrior': [['', 71.8, null]], 'Protection Warrior': [['', 86.0, null]],
+};
+const AUTO_N = new Set(['melee', 'auto shot', 'shoot', 'auto attack']);
+// (the sim's pace for this player: the hero tree whose own spell they cast this night, else the tree that has none listed,
+// else the average) -> { v, label, low, high } or null
+function simPace(r, p) {
+  const L = SIM_APM[p.specName]; if (!L) return null;
+  const mine = L.filter(([, , s]) => s && castOnBoss(r, p, s)), rest = L.filter(([, , s]) => !s), use = mine.length ? mine : rest.length ? rest : L;
+  return { v: use.reduce((s, x) => s + x[1], 0) / use.length, label: use.length === 1 ? use[0][0] : '', low: Math.min(...L.map((x) => x[1])), high: Math.max(...L.map((x) => x[1])), n: L.length };
+}
+const fmtCpm = (v) => (v >= 100 ? String(Math.round(v)) : v.toFixed(1));
+const cstMed = (a) => { const s = a.slice().sort((x, y) => x - y), n = s.length; return n ? (n % 2 ? s[n >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2) : null; };
+// (against the sim: 90% or more is on pace (a real fight has movement the dummy doesn't), 75% a little slow, under that slow)
+const paceSt = (f) => (f == null ? 'na' : f >= 0.9 ? 'ok' : f >= 0.75 ? 'warn' : 'bad');
+const pacePill = (f) => (f == null ? 'No sim' : f >= 0.9 ? 'On pace' : f >= 0.75 ? 'A little slow' : 'Slow');
+// one player's presses between w0 and w1 (up to when they stopped for good): { al (seconds they could cast), n, cpm,
+// ab: [{ name, id, n, ts }], all: times, gaps: [{ t, len, mv }] (4 s or more, not forced), auto, procs: Map name -> n }
+function castOf(r, p, w0, w1, lite) {
+  const C0 = perfContext(r), x = C0.per.get(p.name), t1 = Math.min(w1, x ? x.until : w1);
+  const mcw = C0.mc.get(p.name) || [], idle = rcIdle(r, p), cut = (l) => l.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, t1) - Math.max(a, w0)), 0);
+  const al = Math.max(0, aliveSecs(r, p, w0, t1) - cut(mcw) - cut(idle)), inW = (t) => t >= w0 - 0.05 && t <= t1 + 0.05;
+  const ab = [], all = [], procs = new Map(); let auto = 0;
+  for (const a of p.castAb.values()) { const ln = a.name.toLowerCase(), ts0 = (p.byName.get(ln) || []).filter(inW); if (!ts0.length) continue;
+    if (AUTO_N.has(ln) || a.id === 1 || a.id === 6603 || a.id === 75) { auto += ts0.length; continue; }
+    // (the ones marked not pressed come out, one for one)
+    const fm = new Map(); for (const u of (p.fakeT && p.fakeT.get(ln)) || []) fm.set(u, (fm.get(u) || 0) + 1);
+    const ts = fm.size ? ts0.filter((t) => { const c = fm.get(t); if (c) { fm.set(t, c - 1); return false; } return true; }) : ts0;
+    if (ts.length < ts0.length) procs.set(a.name, ts0.length - ts.length);
+    if (!ts.length) continue; ab.push({ name: a.name, id: a.id, n: ts.length, ts }); for (const t of ts) all.push(t); }
+  all.sort((a, b) => a - b); ab.sort((a, b) => b.n - a.n);
+  const gaps = [];
+  if (!lite) { const ds = x ? x.ds : [], forced = (a, b) => ds.some(([u, v]) => a < v && b > u) || mcw.some(([u, v]) => a < v && b > u) || idle.some(([u, v]) => a < v && b > u);
+    for (let i = 1; i < all.length; i++) { const g = all[i] - all[i - 1]; if (g >= 4 && !forced(all[i - 1], all[i])) { const d = pathIn(r, p, all[i - 1], all[i]); gaps.push({ t: all[i - 1], len: g, mv: d == null ? null : d >= 4 }); } }
+    gaps.sort((a, b) => b.len - a.len); }
+  return { p, t1, al, n: all.length, cpm: al >= 1 ? 60 * all.length / al : 0, ab, all, gaps, auto, procs };
+}
+// a player's pace in this boss's other pulls read so far (each up to its wipe filter, 30 s or more of casting): their
+// middle pull, and each spell's middle pace (0 in a pull they didn't cast it) -> { cpm, n, ab: Map } or null (under 2)
+function castUsual(r, name) {
+  const per = [], abm = new Map();
+  for (const q of CACHE.values()) { if (!q || !q.item || q === r || q.item.boss !== r.item.boss || q.item.diffId !== r.item.diffId || !q.players) continue;
+    const p = [...q.players.values()].find((y) => y.name === name); if (!p) continue;
+    const c = castOf(q, p, 0, Math.max(1, Math.min(q.duration, cutT(q))), true); if (c.al < 30) continue;
+    per.push(c.cpm); for (const a of c.ab) { if (!abm.has(a.name)) abm.set(a.name, []); abm.get(a.name).push(60 * a.n / c.al); } }
+  if (per.length < 2) return null;
+  return { cpm: cstMed(per), n: per.length, ab: new Map([...abm].map(([k, v]) => [k, cstMed(v.concat(new Array(Math.max(0, per.length - v.length)).fill(0)))])) };
+}
+// every cast on one time line, a row each (players, or one player's spells): a tick per cast in the row's colour, time
+// dead shaded, the phases behind; a row with a key is clickable (data-cn)
+function castLanes(r, lanes, w0, w1, o) {
+  const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : Math.max(760, Math.min(1500, Math.round(chartPx(!!o.side)))), Lw = narrow ? 84 : 128, R = 8, LH = narrow ? 14 : 13, Tp = 4, B = 18;
+  const H = Tp + lanes.length * LH + B, iw = W - Lw - R, span = Math.max(1, w1 - w0), X = (t) => Lw + ((Math.min(w1, Math.max(w0, t)) - w0) / span) * iw, ih = lanes.length * LH;
+  let s = '<svg class="pfc cst" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.aria || 'Every cast') + '">';
+  ((r.module && !r.module.error && r.module.phases) || []).forEach((q, i) => { if (q.start >= w1 || (isFinite(q.end) && q.end <= w0)) return; const x0 = X(Math.max(w0, q.start)), x1 = X(Math.min(w1, isFinite(q.end) ? q.end : w1)); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(0, x1 - x0).toFixed(1) + '" height="' + ih + '" class="pfc-ph p' + (i % 2) + '"/>'; });
+  lanes.forEach((l, i) => { const y = Tp + i * LH;
+    s += '<g class="cst-l' + (l.key ? ' k' : '') + (l.on ? ' on' : '') + '"' + (l.key ? ' data-cn="' + esc(l.key) + '"' : '') + '><rect class="cst-hit" x="0" y="' + y + '" width="' + W + '" height="' + LH + '"/>';
+    for (const [a, b] of l.dead || []) { if (b < w0 || a > w1) continue; s += '<rect x="' + X(a).toFixed(1) + '" y="' + (y + 1) + '" width="' + Math.max(0, X(Math.min(b, w1)) - X(a)).toFixed(1) + '" height="' + (LH - 2) + '" class="cst-dd"/>'; }
+    s += '<text x="' + (Lw - 6) + '" y="' + (y + LH - 3.5) + '" class="cst-n" text-anchor="end" style="fill:' + l.c + '">' + esc(l.n.length > (narrow ? 11 : 18) ? l.n.slice(0, narrow ? 10 : 17) + '…' : l.n) + '</text>';
+    s += '<path d="' + l.ts.filter((t) => t >= w0 && t <= w1).map((t) => 'M' + X(t).toFixed(1) + ' ' + (y + 2) + 'v' + (LH - 4)).join('') + '" class="cst-t" style="stroke:' + l.c + '"/><title>' + esc(l.tip) + '</title></g>'; });
+  const step = span > 400 || (narrow && span > 150) ? 60 : 30; for (let t = Math.ceil(w0 / step) * step; t <= w1; t += step) s += '<text x="' + X(t).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x" text-anchor="middle">' + T(t) + '</text>';
+  return '<h3 class="nh"><span class="pfc-ttl">' + o.ttl + '</span><small>' + o.sub + '</small></h3>' + s + '</svg>';
+}
+// The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
+// player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
+function castView(list, one) {
+  const psOf = (r) => [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), acc = new Map(), r0 = list[list.length - 1].r;
+  for (const w of list) for (const p of psOf(w.r)) { const c = castOf(w.r, p, w.w0, w.w1); if (!c.n || c.al < 5) continue;
+    let a = acc.get(p.name); if (!a) acc.set(p.name, a = { p, per: [], n: 0, al: 0, ab: new Map(), gaps: [], auto: 0, procs: new Map() });
+    a.per.push({ w, c }); a.n += c.n; a.al += c.al; a.auto += c.auto; for (const [k, v] of c.procs) a.procs.set(k, (a.procs.get(k) || 0) + v);
+    for (const s of c.ab) { const o = a.ab.get(s.name) || { name: s.name, id: s.id, n: 0 }; o.n += s.n; a.ab.set(s.name, o); }
+    for (const g of c.gaps) a.gaps.push({ ...g, pull: w.r.item.pull }); }
+  const all = [...acc.values()];
+  if (!all.length) return { head: {}, html: '<div class="panel"><p class="muted">No casts in ' + (one ? 'this pull' : 'these pulls') + '.</p></div>' };
+  for (const a of all) { a.cpm = a.al >= 1 ? 60 * a.n / a.al : 0; a.abL = [...a.ab.values()].sort((x, y) => y.n - x.n); a.gaps.sort((x, y) => y.len - x.len);
+    a.sim = simPace(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null;
+    if (one) { a.us = castUsual(list[0].r, a.p.name); a.d = a.us && a.us.cpm ? (a.cpm - a.us.cpm) / a.us.cpm : null; } }
+  // (the slowest for their spec first, then those with no sim to measure against, by their pace against their usual)
+  all.sort((a, b) => (a.f == null) - (b.f == null) || (a.f != null ? a.f - b.f : (a.d ?? 0) - (b.d ?? 0) || b.cpm - a.cpm));
+  const has = new Set(all.map((a) => a.p.role || 'dps')), rc = roleCur(has), rows = all.filter((a) => rc === 'all' || (a.p.role || 'dps') === rc);
+  if (S.castSel && !acc.has(S.castSel)) S.castSel = null;
+  const sel = S.castSel ? acc.get(S.castSel) : null;
+  // ---- the raid at a glance ----
+  const slow = all.filter((a) => a.f != null && a.f < 0.75), withSim = all.filter((a) => a.f != null);
+  const below = one ? all.filter((a) => a.d != null && a.d <= -0.1) : [], withUs = one ? all.filter((a) => a.us).length : 0;
+  const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).sort((x, y) => y.len - x.len)[0], names = (l) => l.slice(0, 3).map((a) => a.p.name).join(', ') + (l.length > 3 ? ' and ' + (l.length - 3) + ' more' : '');
+  const tiles = [plTile(plIco('spell_nature_lightning'), 'Slow for their spec', withSim.length ? String(slow.length) : '—', !withSim.length ? 'na' : slow.length ? 'bad' : 'ok', !withSim.length ? 'no spec here has a sim pace' : slow.length ? names(slow) + ' · under 75% of the pace' : 'everyone at 75% of their spec\'s pace or more'),
+    one ? plTile(plIco('ability_warrior_innerrage'), 'Below their usual', withUs ? String(below.length) : '—', !withUs ? 'na' : below.length ? 'warn' : 'ok', !withUs ? 'needs 2 more pulls of this boss read' : below.length ? names(below) + ' · 10% or more under' : 'everyone at their usual pace', !withUs)
+      : plTile(plIco('inv_misc_note_01'), 'On pace', withSim.length ? Math.round(100 * withSim.filter((a) => a.f >= 0.9).length / withSim.length) + '<span>%</span>' : '—', 'na', 'of the players with a sim pace, over ' + plural(list.length, 'pull'), true),
+    plTile(plIco('inv_misc_pocketwatch_01'), 'Longest gap', lg ? Math.round(lg.len) + '<span> s</span>' : '—', lg && lg.len >= 8 ? 'warn' : 'na', lg ? lg.p.name + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.t) + (lg.mv === true ? ' · moving' : lg.mv === false ? ' · standing still' : '') : 'no gaps of 4 s or more', !(lg && lg.len >= 8))];
+  const mid = cstMed(withSim.map((a) => a.f)), head = { v: withSim.length ? slow.length + '<span> slow</span>' : fmtCpm(cstMed(all.map((a) => a.cpm))) + '<span>/min</span>', s: withSim.length ? 'the middle player at ' + Math.round(100 * mid) + '% of their spec\'s pace' : 'casts per minute, the middle player' };
+  const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
+  // ---- the chart: every cast, a row per player (one picked: a row per spell); over the night, a bar per pull ----
+  let top;
+  if (one) { const w = list[0];
+    const lanes = sel ? sel.per[0].c.ab.slice(0, 14).map((s) => ({ n: s.name, c: sel.p.color, ts: s.ts, tip: s.name + ': ' + plural(s.n, 'cast') + ', ' + fmtCpm(60 * s.n / Math.max(1, sel.al)) + ' a minute' }))
+      : rows.map((a) => ({ key: a.p.name, n: a.p.name, c: a.p.color, ts: a.per[0].c.all, dead: deadSpans(w.r, a.p), tip: a.p.name + ': ' + plural(a.n, 'cast') + ', ' + fmtCpm(a.cpm) + ' a minute' + (a.sim ? ' (' + Math.round(100 * a.f) + '% of the pace)' : '') + ' · click for their spells' }));
+    top = '<div class="pf-chartrow"><div class="panel pf-chart cst-w">' + castLanes(w.r, lanes, w.w0, w.w1, { side: true, aria: sel ? sel.p.name + '\'s casts' : 'Every cast, by player',
+      ttl: sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · every cast' : 'Every cast', sub: sel ? 'a row per spell, most pressed first · a line per cast' : 'a line per cast, a row per player · dead time shaded · click a row for that player' }) + '</div>' + tilesH + '</div>';
+  } else {
+    const valOf = sel ? (w) => { const o = sel.per.find((y) => y.w === w); return o && o.c.al >= 10 ? o.c.cpm : null; }
+      : (w) => { const v = []; for (const a of all) { if (!a.sim) continue; const o = a.per.find((y) => y.w === w); if (o && o.c.al >= 10) v.push(o.c.cpm / a.sim.v); } return v.length ? cstMed(v) : null; };
+    top = '<div class="pts n3">' + tiles.join('') + '</div>' + resNightChart(list, valOf, sel ? { ty: '0', ttl: esc(sel.p.name) + '\'s casts per minute, per pull', sub: 'while they could cast', fmt: fmtCpm, tip: (v) => fmtCpm(v) + ' casts a minute' }
+      : { ty: '0', ttl: 'Pace, per pull', sub: 'the middle player, against their spec\'s pace', tip: (v) => Math.round(100 * v) + '% of their spec\'s pace, the middle player' });
+  }
+  // ---- a bar per player: their casts per minute, a tick at their spec's sim pace ----
+  const mx = Math.max(1, ...rows.map((a) => Math.max(a.cpm, a.sim ? a.sim.v : 0))) * 1.05;
+  const bars = rows.map((a, i) => { const on = sel === a;
+    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' cst-r', attrs: ' type="button" data-cn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * a.cpm / mx), 'm']], tick: a.sim ? 100 * a.sim.v / mx : null, v: fmtCpm(a.cpm),
+      sub: a.f != null ? '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>' : '<span class="sub">—</span>', chips: one && a.d != null && Math.abs(a.d) >= 0.05 ? ' ' + dlt(a.d) : '' }); }).join('');
+  const left = '<div class="panel pf-bars cst-bars"><h3 class="nh"><span>Casts per minute</span><small>while they could cast · the tick: their spec\'s pace on a target dummy · % of it on the right' + (one ? ' · ▲▼ against their usual' : ' · over ' + plural(list.length, 'pull')) + '</small>' + roleChips(has) + '</h3>' +
+    (bars ? cbHead('Per min', 'Of pace') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
+  return { head, html: top + '<div class="pf-cols">' + left + '<div class="panel pf-det cst-det">' + (sel ? castDetail(sel, one, all) : castRaid(all, one)) + '</div></div>' + castHow };
+}
+const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute while they could cast: alive, not mind controlled, and not while most of the raid couldn\'t cast either (a transition, everyone running), up to the wipe filter. <b>The pace</b> is how fast SimulationCraft\'s Midnight raid sims press for that spec on a target dummy (its October 17 report), using the hero talents the player took when their own spell shows it. A dummy never moves, so a real fight runs a little under it: <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Healers, Balance, Guardian, Protection Paladins and Evokers have no sim, so they\'re measured against their own other pulls and the same spec in the raid. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more.</div></details>';
+// no one picked: the slowest against their spec, the biggest drops against their usual, and the longest gaps
+function castRaid(all, one) {
+  const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
+  let h = '<h3 class="nh"><span>The raid</span><small>casts' + (one ? '' : ', over the pulls') + '</small></h3>';
+  const sl = all.filter((a) => a.f != null).sort((a, b) => a.f - b.f).slice(0, 6);
+  h += rsSec('Furthest under their spec\'s pace', 'casts a minute, and the pace', sl.length ? sl.map((a) => line(who(a.p) + ' <span class="sub">' + esc(a.p.specName || '') + '</span>', fmtCpm(a.cpm) + ' of ' + fmtCpm(a.sim.v), '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>')).join('') : '<p class="sub" style="margin:0">No spec here has a sim pace.</p>');
+  if (one) { const dr = all.filter((a) => a.d != null && a.d < -0.05).sort((a, b) => a.d - b.d).slice(0, 5);
+    h += rsSec('Slower than their usual', 'against their own other pulls of this boss', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.cpm) + ', usually ' + fmtCpm(a.us.cpm), dlt(a.d))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.us) ? 'Nobody was slower than usual.' : 'Needs 2 more pulls of this boss read.') + '</p>'); }
+  const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).slice().sort((x, y) => y.len - x.len).slice(0, 6);
+  h += rsSec('Longest gaps', 'not dead, and not while the raid was waiting', lg.length ? lg.map((g) => line(who(g.p), (one ? '' : 'pull ' + g.pull + ' · ') + 'from ' + T(g.t) + (g.mv === true ? ' · moving' : g.mv === false ? ' · standing still' : ''), Math.round(g.len) + ' s')).join('') : '<p class="sub" style="margin:0">No gaps of 4 s or more.</p>');
+  return h + '<p class="sub" style="margin:10px 0 0">Pick a player for every spell they pressed.</p>';
+}
+// the picked player: their pace, each spell (casts, per minute, against their usual), their gaps, what wasn't counted
+function castDetail(a, one, all) {
+  let h = '<h3 class="nh">' + avatar(a.p, true) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span><small>' + esc(a.p.specName || '') + (one ? '' : ' · ' + plural(a.per.length, 'pull')) + '</small><button class="btn sm" id="csClose" type="button">Show the raid</button></h3>';
+  const simTxt = a.sim ? fmtCpm(a.cpm) + ' casts a minute while they could cast: ' + Math.round(100 * a.f) + '% of the pace SimulationCraft\'s ' + (a.sim.label ? a.sim.label + ' ' : '') + (a.p.specName || '') + ' presses at on a target dummy (' + fmtCpm(a.sim.v) + (a.sim.n > 1 && !a.sim.label ? ', ' + fmtCpm(a.sim.low) + ' to ' + fmtCpm(a.sim.high) + ' by hero talents' : '') + ').'
+    : fmtCpm(a.cpm) + ' casts a minute while they could cast. There\'s no sim pace for ' + (a.p.specName || 'this spec') + ', so it\'s measured against their own pulls and the same spec here.';
+  h += '<p class="rs-v"><span class="hm-p ' + paceSt(a.f) + '">' + pacePill(a.f) + '</span>' + esc(simTxt) + '</p>';
+  const peers = all.filter((b) => b !== a && b.p.specId && b.p.specId === a.p.specId).sort((x, y) => y.cpm - x.cpm);
+  h += '<div class="rs-nums">' + [['Casts', String(a.n), 'pressed'], ['Per minute', fmtCpm(a.cpm), 'while they could cast'], ['Their spec\'s pace', a.sim ? fmtCpm(a.sim.v) : '—', a.sim ? (a.sim.label || 'a target dummy') : 'no sim'], one ? ['Their usual', a.us ? fmtCpm(a.us.cpm) : '—', a.us ? 'over ' + plural(a.us.n, 'other pull') : 'needs 2 more pulls'] : ['Best pull', fmtCpm(Math.max(0, ...a.per.filter(({ c }) => c.al >= 60).map(({ c }) => c.cpm))), 'a minute alive or more']]
+    .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + v + '</b>' + (s ? '<small>' + esc(s) + '</small>' : '') + '</div>').join('') + '</div>';
+  if (peers.length) h += '<p class="sub" style="margin:-4px 0 10px">Same spec ' + (one ? 'this pull' : 'over these pulls') + ': ' + peers.map((b) => '<span class="nm" style="color:' + b.p.color + '">' + esc(b.p.name) + '</span> ' + fmtCpm(b.cpm)).join(', ') + '</p>';
+  // each spell: casts, per minute, and (one pull) their usual for it, low ones marked
+  const smx = Math.max(1, ...a.abL.map((s) => s.n)), us = one && a.us ? a.us.ab : null;
+  const tb = '<div class="hm-ut rs-ut cst-ut' + (us ? ' u5' : '') + '"><div class="hm-uh"><span>Spell</span><span>Casts</span><span>Per min</span>' + (us ? '<span>Usual</span>' : '') + '<span>Share</span></div>' + a.abL.map((s) => { const pm = 60 * s.n / Math.max(1, a.al), u = us ? us.get(s.name) : null, low = u != null && u >= 1 && pm < u * 0.85;
+    return '<div class="hm-ur"><span>' + spell(s.id, s.name) + '</span><span>' + s.n + '</span><span' + (low ? ' class="rs-w" title="Under their usual for this spell"' : '') + '>' + pm.toFixed(1) + '</span>' + (us ? '<span class="sub">' + (u != null ? u.toFixed(1) : '—') + '</span>' : '') + '<span><i style="width:' + Math.max(1, Math.round(100 * s.n / smx)) + '%;background:' + a.p.color + '"></i><b>' + resPc(s.n / Math.max(1, a.n)) + '</b></span></div>'; }).join('') + '</div>';
+  const gp = a.gaps.slice(0, 8).sort((x, y) => (x.pull || 0) - (y.pull || 0) || x.t - y.t);
+  const gT = gp.length ? '<div class="rs-full">' + gp.map((g) => '<span class="rs-fc">' + (one ? '' : '<span class="sub">pull ' + g.pull + '</span> ') + T(g.t) + ' <b>' + Math.round(g.len) + ' s</b>' + (g.mv === true ? ' <span class="sub">moving</span>' : g.mv === false ? ' <span class="sub">still</span>' : '') + '</span>').join('') + '</div>' : '<p class="sub" style="margin:0">No gaps of 4 s or more.</p>';
+  const pT = one ? '' : '<div class="hm-ut rs-ut rs-pl"><div class="hm-uh"><span>Pull</span><span>Per min</span><span>Of pace</span><span>Casts</span></div>' + a.per.map(({ w, c }) => { const f = a.sim ? c.cpm / a.sim.v : null; return '<div class="hm-ur"><span>Pull ' + w.r.item.pull + ' <span class="sub">' + esc(pullLabel(w.r.item)) + '</span></span><span>' + fmtCpm(c.cpm) + '</span><span>' + (f != null ? '<span class="cst-f ' + paceSt(f) + '">' + Math.round(100 * f) + '%</span>' : '—') + '</span><span><b>' + c.n + '</b></span></div>'; }).join('') + '</div>';
+  const pr = [...a.procs].sort((x, y) => y[1] - x[1]), notC = (a.auto ? plural(a.auto, 'auto attack') : '') + (pr.length ? (a.auto ? ', and ' : '') + plural(pr.reduce((s, [, v]) => s + v, 0), 'proc') + ' (' + pr.slice(0, 3).map(([k, v]) => k + ' ' + v).join(', ') + ')' : '');
+  h += rsSec('Every spell they pressed', 'most first' + (us ? ' · red: under their usual' : ''), tb) + rsSec('Gaps', a.gaps.length ? plural(a.gaps.length, 'gap') + ' of 4 s or more' : '', gT) + (pT ? rsSec('Pull by pull', '', pT) : '');
+  if (notC) h += '<p class="sub" style="margin:10px 0 0">Not counted: ' + esc(notC) + '.</p>';
+  return h + '<p class="sub" style="margin:6px 0 0">Click their bar again for the whole raid.</p>';
+}
 // The picked player's casts under the timeline, on the same time axis: their big cooldowns (defensives on Damage taken)
 // and their most-cast spells, a tick per cast; their key buffs (Bloodlust, Power Infusion, their cooldowns' own buffs) as
 // bars; time dead shaded
@@ -5460,6 +5636,9 @@ function bindPerf() {
   $$('.rs-pt button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.resPw = b.dataset.pw; perf(); }));
   $$('.pfv [data-rn]').forEach((b) => (b.onclick = () => { S.resSel = S.resSel === b.dataset.rn ? null : b.dataset.rn; S.resPw = null; perf(); }));
   { const b = $('#rsClose'); if (b) b.onclick = () => { S.resSel = null; perf(); }; }
+  // (Casts: a player's row or bar picks them; again, or Show the raid, for everyone)
+  $$('.pfv [data-cn]').forEach((b) => (b.onclick = () => { S.castSel = S.castSel === b.dataset.cn ? null : b.dataset.cn; perf(); }));
+  { const b = $('#csClose'); if (b) b.onclick = () => { S.castSel = null; perf(); }; }
   for (const id of ['#pfRaid', '#pfClose']) { const b = $(id); if (b) b.onclick = () => { S.perfSel = null; perf(); }; }
   { const b = $('#pfCasts'); if (b) b.onclick = () => { S.perfCasts = !S.perfCasts; perf(); }; }
   $$('.pf-all').forEach((b) => (b.onclick = () => { S.perfMore = S.perfMore || {}; S.perfMore[b.dataset.k] = !S.perfMore[b.dataset.k]; perf(); }));
@@ -6066,12 +6245,12 @@ function rcDetail(x, night) {
     return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + esc(wTxt) + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub"> · worst: pull ' + ck.worst[1] + '</span>' : '')); };
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
     return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span></header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
-  const go = '<div class="rk-go"><span class="sub">See it in</span>' + [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage'], ['res', 'Resources'], ['surv', 'Survivability'], ['util', 'Utility']].map(([k, l]) => '<button class="btn" type="button" data-rcgo="' + k + '" data-rcn="' + esc(x.p.name) + '">' + l + '</button>').join('') + '</div>';
+  const go = '<div class="rk-go"><span class="sub">See it in</span>' + [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage'], ['res', 'Resources'], ['cast', 'Casts'], ['surv', 'Survivability'], ['util', 'Utility']].map(([k, l]) => '<button class="btn" type="button" data-rcgo="' + k + '" data-rcn="' + esc(x.p.name) + '">' + l + '</button>').join('') + '</div>';
   return '<div class="rk-d">' + work + secs + go + '</div>';
 }
 function bindReportCard() {
   $$('.rk-r[data-rc]').forEach((b) => (b.onclick = () => { S.rcSel = S.rcSel === b.dataset.rc ? null : b.dataset.rc; perf(); const el = document.querySelector('.rk-r.on'); if (el && el.getBoundingClientRect().top < 60) el.scrollIntoView({ block: 'start' }); }));
-  $$('[data-rcgo]').forEach((b) => (b.onclick = () => { const k = b.dataset.rcgo, n = b.dataset.rcn; S.perfKind = k; if (k === 'surv') S.survSel = n; else if (k === 'util') S.utilSel = n; else if (k === 'res') { S.resSel = n; S.resPw = null; S.resMode = null; } else { S.perfSel = n; S.perfLens = 'players'; } perf(); window.scrollTo({ top: 0 }); }));
+  $$('[data-rcgo]').forEach((b) => (b.onclick = () => { const k = b.dataset.rcgo, n = b.dataset.rcn; S.perfKind = k; if (k === 'surv') S.survSel = n; else if (k === 'util') S.utilSel = n; else if (k === 'res') { S.resSel = n; S.resPw = null; S.resMode = null; } else if (k === 'cast') S.castSel = n; else { S.perfSel = n; S.perfLens = 'players'; } perf(); window.scrollTo({ top: 0 }); }));
 }
 function charSheet(x, embed) { // (embed: inside the Player audit, titled "Gear and consumables", no Close button)
   const g = x.c.gear, st = x.c.stats || {};

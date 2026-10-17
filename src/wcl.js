@@ -400,8 +400,10 @@ function translate(item, events) {
       case 'healabsorbed':
         add(e, 'SPELL_HEAL_ABSORBED,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + unit(e.healerID) + ',' + spell(e.extraAbilityGameID || 1) + ',' + (e.amount || 0) + ',' + (e.amount || 0));
         break;
+      // (Warcraft Logs marks a cast the player didn't press, a proc like Reclamation or Shattered Souls, as fake: a FAKE
+      // at the end of the line, so the Casts view can leave it out; auto attacks are their own spell, Melee)
       case 'cast':
-        add(e, 'SPELL_CAST_SUCCESS,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + adv(e, 1));
+        add(e, 'SPELL_CAST_SUCCESS,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + adv(e, 1) + (e.fake ? ',FAKE' : ''));
         break;
       case 'begincast':
         add(e, 'SPELL_CAST_START,' + src(e) + ',' + dst(e) + ',' + spell(ab));
