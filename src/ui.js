@@ -6423,12 +6423,15 @@ function cardOf(r, p) {
       html: mine.length ? '<b>' + plural(mine.length, 'interrupt') + '</b> landed<span class="sub"> · ' + [...by].map(([n, c]) => esc(n) + (c > 1 ? ' ×' + c : '')).join(', ') + '</span>' : got ? 'No interrupts landed, and <b>' + plural(got, 'kickable cast') + '</b> got through' : '<span class="sub">No interrupts needed from you</span>',
       fix: !mine.length && got ? { t: 'Help with interrupts', x: plural(got, 'kickable cast') + ' got off this pull and you landed no kicks. Check your raid\'s kick order, and kick what\'s next to you.' } : null });
   }
+  // externals (Pain Suppression, Blessing of Sacrifice, Time Dilation…) are held for emergencies or a mechanic on the note,
+  // so they aren't expected on cooldown: one use in a pull of 90 s or more is full marks, none is "could be better" (65), and
+  // each counts a third of a potion. One the note assigns is checked on Assignments, where missing it is serious.
   for (const [n, cd] of RC_EXT[p.specId] || []) {
-    const ts = one((p.byName.get(n.toLowerCase()) || []).filter((t) => t <= until)), poss = 1 + Math.floor(until / cd), want = Math.max(1, Math.round(poss / 2)), sc = 100 * clamp01(ts.length / want);
+    const ts = one((p.byName.get(n.toLowerCase()) || []).filter((t) => t <= until)), poss = 1 + Math.floor(until / cd), judged = until >= 90, sc = judged ? (ts.length ? 100 : 65) : null;
     const id = (p.castAb.get(n) || {}).id || sidOf(n);
-    add('kit', { k: 'ext', label: n, sc, w: 30, num: ts.length, den: poss, nt: 'frac', word: 'possible uses',
-      html: spell(id, n) + ': <b>' + ts.length + ' of ' + poss + '</b> possible uses' + (ts.length ? '<span class="sub"> · at ' + ts.map(T).join(', ') + '</span>' : ''),
-      fix: sc < 85 ? { t: 'Use ' + n + ' more', x: n + ' went out ' + plural(ts.length, 'time') + '; it was ready ' + plural(poss, 'time') + '. Save someone with it: the tank on a big hit, or anyone about to die.' } : null });
+    add('kit', { k: 'ext', label: n, sc, w: judged ? 10 : 0, num: ts.length, den: poss, nt: 'frac', word: 'possible uses',
+      html: spell(id, n) + ': <b>' + ts.length + ' of ' + poss + '</b> possible uses' + (ts.length ? '<span class="sub"> · at ' + ts.map(T).join(', ') + '</span>' : '<span class="sub"> · held all pull</span>'),
+      fix: judged && !ts.length ? { t: 'Use ' + n + ' at least once', x: n + ' never went out this pull. It\'s for emergencies and the note\'s mechanics, so it doesn\'t need to go out on cooldown, but one use a pull can save someone: the tank on a big hit, or anyone about to die.' } : null });
   }
   const disp = new Set((p.dispL || []).filter((d) => d.t <= until).map((d) => String(d.on || '') + '|' + d.t.toFixed(1))).size;
   if (disp) add('kit', { k: 'disp', label: 'Dispels', sc: null, w: 0, num: disp, nt: 'sum', word: 'dispel', html: '<b>' + plural(disp, 'dispel') + '</b><span class="sub"> · on Utility</span>' });
@@ -6472,7 +6475,7 @@ function reportCard(reps, night) {
   const has = new Set(all.map((x) => x.role)), cur = roleCur(has, 'all'), rows = all.filter((x) => cur === 'all' || x.role === cur).sort((a, b) => (a.overall ?? 101) - (b.overall ?? 101));
   // ---- the raid at a glance: the average of each grade, and the fix most players share ----
   const avgOf = (f) => { const v = all.map(f).filter((s) => s != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
-  const common = new Map(); for (const x of all) { const f = x.fixes[0]; if (f && f.gain >= 3) { const k = f.t.replace(/^Use (.+) on cooldown$/, 'Use big cooldowns on cooldown').replace(/^Keep (.+) rolling$/, 'Keep big defensives rolling').replace(/^Use (.+) more$/, 'Use externals more').replace(/^Survive .+$/, 'Survive a death'); common.set(k, (common.get(k) || 0) + 1); } }
+  const common = new Map(); for (const x of all) { const f = x.fixes[0]; if (f && f.gain >= 3) { const k = f.t.replace(/^Use (.+) on cooldown$/, 'Use big cooldowns on cooldown').replace(/^Keep (.+) rolling$/, 'Keep big defensives rolling').replace(/^Use (.+) more$/, 'Use externals more').replace(/^Use (.+) at least once$/, 'Use externals at least once').replace(/^Survive .+$/, 'Survive a death'); common.set(k, (common.get(k) || 0) + 1); } }
   const top = [...common].sort((a, b) => b[1] - a[1])[0];
   const tile = (sc, label, txt) => plTile(rcG(sc), label, sc == null ? '—' : Math.round(sc) + '<span>/100</span>', gBucket(sc), txt, true);
   const tiles = '<div class="pts n4 rk-tiles">' + tile(avgOf((x) => x.overall), 'Raid average', plural(all.length, 'player') + (night ? ' · ' + plural(reps.length, 'pull') : '')) +
@@ -6635,7 +6638,7 @@ function plGrade(r, p, x, credit) {
   const fixes = [];
   // a fix per mechanic they got wrong, with the mistake's own advice
   const by = new Map(); for (const m of mm) { const o = by.get(m.mechanic) || { n: 0, lost: 0, m, note: !!m.fromNote }; o.n++; o.lost += m.fromNote ? (c && c.of ? 100 / c.of : 0) : lostOf(m); if (m.severity === 'High') o.m = m; by.set(m.mechanic, o); }
-  for (const [nm, o] of by) { if (!o.note && !o.lost) continue; fixes.push({ key: 'm|' + nm, t: (o.note ? (nm === 'Assigned cooldown' ? 'Healing cooldown late or missed' : 'From the note: ' + nm) : nm) + (o.n > 1 ? ' ×' + o.n : ''), x: o.m.fix || o.m.detail || '', gain: mW * (o.note ? 0.3 : asS == null ? 1 : 0.7) * o.lost, go: 'audit' }); }
+  for (const [nm, o] of by) { if (!o.note && !o.lost) continue; fixes.push({ key: 'm|' + nm, t: (o.note ? (nm === 'Assigned cooldown' ? 'Healing cooldown late or missed' : 'From the note: ' + nm) : nm) + (o.n > 1 ? ' ×' + o.n : ''), x: o.m.fix || o.m.detail || '', gain: mW * (o.note ? 0.3 : asS == null ? 1 : 0.7) * o.lost, go: 'audit', crit: o.note && o.m.severity === 'High' }); }
   // the Report card's, as they are (their gain is on the card's 0 to 100; here it's half of the grade)
   for (const f of (card && card.fixes) || []) fixes.push({ key: 'c|' + f.key, t: f.t, x: f.x, gain: 0.5 * f.gain, go: PL_RC_GO[String(f.key).split('|')[0]] || 'card' });
   // pressing pace against the spec's top players: added to the Report card's casting fix when there is one, its own tip otherwise (not graded)
@@ -6645,7 +6648,8 @@ function plGrade(r, p, x, credit) {
   // prep: what was missing at the pull (a missing thing counts twice a "could be better")
   if (x && prepOff > 0) { const its = x.issues.map((t) => [t, 2]).concat(x.tighten.map((t) => [t, 1])), tw = its.reduce((s, [, w]) => s + w, 0) || 1;
     for (const [t, w] of its) fixes.push({ key: 'p|' + t, t: capS(t), x: 'At the pull. Sort it before the next one.', gain: prepOff * w / tw, go: 'prep' }); }
-  fixes.sort((a, b) => (b.gain || b.rank || 0) - (a.gain || a.rank || 0));
+  // (a serious miss of the note's assignments, like an assigned external not given, comes first: it's a job for the raid)
+  fixes.sort((a, b) => (b.crit ? 1 : 0) - (a.crit ? 1 : 0) || (b.gain || b.rank || 0) - (a.gain || a.rank || 0));
   return { r, p, mech, mist, asS, perf, prep, prepOff, score, fixes, mistakes: own.length, x, until: card ? card.until : 0 };
 }
 // every player over one pull or several: each grade and fix averaged over their pulls (by time alive), the trend through
@@ -7104,11 +7108,11 @@ function lpPrep(r, rows) {
 function lpTalk(r) {
   const credit = assignCredit(r), off = PERF_OFF(), list = [];
   for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; let g; try { g = plGrade(r, p, null, credit); } catch (e) { continue; }
-    const f = g.fixes.find((z) => (z.gain || 0) >= 3 && !/potion/i.test(z.t) && z.key !== 'm|Assigned cooldown' && (!off || /^m\|/.test(z.key))); if (f) list.push({ p, g, f }); }
+    const f = g.fixes.find((z) => (z.crit || (z.gain || 0) >= 3) && !/potion/i.test(z.t) && z.key !== 'm|Assigned cooldown' && (!off || /^m\|/.test(z.key))); if (f) list.push({ p, g, f }); }
   if (!list.length) return '';
-  list.sort((a, b) => b.f.gain - a.f.gain);
+  list.sort((a, b) => (b.f.crit ? 1 : 0) - (a.f.crit ? 1 : 0) || b.f.gain - a.f.gain);
   return '<div class="panel lp-side-p lp-talk"><h3 class="nh"><span>Talk to</span><small>each player\'s first thing to fix · click a name for their page</small></h3>' +
-    list.slice(0, 6).map(({ p, g, f }) => '<div class="lp-tk">' + avatar(p, true) + '<span class="lp-tn">' + lpWho(p) + '</span>' + (off || g.perf == null ? '' : gradeChip(letterOf(g.score))) + '<span class="lp-tf">' + (/^m\|/.test(f.key) && !/^From the note/.test(f.t) ? '<span class="sub">Mechanic:</span> ' : '') + esc(f.t) + '</span></div>').join('') +
+    list.slice(0, 6).map(({ p, g, f }) => '<div class="lp-tk">' + avatar(p, true) + '<span class="lp-tn">' + lpWho(p) + '</span>' + (off || g.perf == null ? '' : gradeChip(letterOf(g.score))) + '<span class="lp-tf' + (f.crit ? ' crit' : '') + '">' + (/^m\|/.test(f.key) && !/^From the note/.test(f.t) ? '<span class="sub">Mechanic:</span> ' : '') + esc(f.t) + '</span></div>').join('') +
     (list.length > 6 ? '<div class="sub lp-more">+' + (list.length - 6) + ' more on Players</div>' : '') + '</div>';
 }
 // the healing cooldowns from the note that weren't on time, by name: when it was due, and when it was pressed (a missed one:
