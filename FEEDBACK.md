@@ -59,6 +59,28 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 125: Performance, the trust pass (grades fair before the raid sees them)
+- [x] **Every cooldown checked**: all 203 listed cooldowns (big cooldowns, defensives, externals) against Wowhead's
+  tooltips for the live patch, then against the real presses in Wolfthorn's pulls. 34 were off, mostly Midnight changes:
+  Summon Demonic Tyrant 1 min (not 1.5), Summon Infernal 2 min, Pillar of Frost 45 s, Army of the Dead 1.5 min, Fire and
+  Storm Elemental 2 min, Doom Winds 1 min, Metamorphosis 2 min, Shadow Blades 1.5 min, Icebound Fortitude 2 min, Ardent
+  Defender 1.5 min, Guardian of Ancient Kings 3 min, Gift of the Naaru 2 min; and longer: Lay on Hands 10 min, Holy Word:
+  Salvation 12 min, Killing Spree 3 min, Fortifying Brew 6 min (talents shorten these). Your raid's presses matched the new
+  numbers (Tyrant pressed every 61 s, Pillar every 45 s, Army every 91 s). Empower Rune Weapon is out: two charges on a
+  30 s recharge now, not a big cooldown.
+- [x] Base cooldowns are the rule: talents only shorten cooldowns, so "possible uses" never asks for more than a player
+  really had, and something only counts as "still ready" at a death once even its base cooldown was back.
+- [x] **Forced downtime left out**: stretches of 4 s or more when three in four of the DPS and tanks cast nothing (the
+  boss gone, a transition) don't count against anyone's casting, and their gaps there aren't listed. Healers are judged as
+  usual. Example: the first 10 s of Ula'tek's intermission.
+- [x] **Raid cooldowns against the plan**: a cooldown your NSRT note assigns (Aura Mastery, Avenging Wrath, Revival,
+  Rewind, Darkness…) is judged by the note: on time is full marks, a few seconds off 70%, more than 8 s off 40%, missed
+  none. A raid cooldown the note doesn't assign is fine at half its possible uses (it waits for the big damage).
+  Cooldowns now weigh by the fight time they cover, so a missed 3-minute raid cooldown counts for more than one press of a
+  1-minute one.
+- [ ] Noticed: Devourer, Midnight's new Demon Hunter spec, has no big cooldowns listed yet (its log data looked odd: The
+  Hunt logging every few seconds). Needs a look at a guide first. Alter Time logs twice per use (cast and return).
+
 ## 2026-10-17, round 124: Performance, the Report card (your goal: each player's own play, not mechanics)
 - [x] **Report card**, the first view in Performance (you gave me free rein): how well each player played their own
   character, in three letter grades on the S to F scale, each from checks that already existed but were spread around:

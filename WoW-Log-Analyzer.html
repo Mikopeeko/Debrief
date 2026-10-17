@@ -2058,7 +2058,9 @@ const HEALERS = new Set([65, 105, 256, 257, 264, 270, 1468]);
 const TANKS = new Set([66, 73, 104, 250, 268, 581]);
 
 // Personal defensives, matched by spell name (stable across patches; English client).
-// Cooldowns are base values from general knowledge, not measured on 12.1. Talents change many.
+// Cooldowns are base values, checked against Wowhead's tooltips for the live patch (Oct 2026). Talents shorten many; a
+// base cooldown is the longest it can be, so "possible uses" is never more than they really had, and something counts as
+// "still ready" at a death only when even the base cooldown had come back.
 // [name, spellId, base cooldown, specs (null = all specs of the class), baseline?, kind ('heal': a self-heal button)]
 // Talent defensives (baseline false) only count once the player is seen casting them,
 // so a death is never blamed on a defensive the player may not have talented.
@@ -2067,22 +2069,22 @@ const TANKS = new Set([66, 73, 104, 250, 268, 581]);
 // on their own there (they heal, but nobody presses them), so they stay talent-only and never count as unused.
 const DEFENSIVES = {
   WARRIOR: [['Enraged Regeneration', 184364, 120, [72], true, 'heal'], ['Die by the Sword', 118038, 120, [71], true], ['Shield Wall', 871, 180, [73], true], ['Last Stand', 12975, 180, [73], false], ['Rallying Cry', 97462, 180, null, false], ['Bitter Immunity', 383762, 180, null, false, 'heal']],
-  PALADIN: [['Divine Shield', 642, 300, null, true], ['Divine Protection', 498, 60, [65, 70], true], ['Shield of Vengeance', 184662, 90, [70], false], ['Ardent Defender', 31850, 120, [66], true], ['Guardian of Ancient Kings', 86659, 300, [66], false], ['Eye of Tyr', 387174, 60, [66], false], ['Lay on Hands', 633, 420, null, true, 'heal']],
+  PALADIN: [['Divine Shield', 642, 300, null, true], ['Divine Protection', 498, 60, [65, 70], true], ['Shield of Vengeance', 184662, 90, [70], false], ['Ardent Defender', 31850, 90, [66], true], ['Guardian of Ancient Kings', 86659, 180, [66], false], ['Eye of Tyr', 387174, 60, [66], false], ['Lay on Hands', 633, 600, null, true, 'heal']],
   HUNTER: [['Aspect of the Turtle', 186265, 180, null, true], ['Survival of the Fittest', 264735, 90, null, false], ['Exhilaration', 109304, 120, null, true, 'heal'], ['Fortitude of the Bear', 388035, 120, null, false]],
   ROGUE: [['Cloak of Shadows', 31224, 120, null, true], ['Evasion', 5277, 120, null, true], ['Crimson Vial', 185311, 30, null, true, 'heal']],
   PRIEST: [['Desperate Prayer', 19236, 90, null, true, 'heal'], ['Dispersion', 47585, 120, [258], true]],
-  DEATHKNIGHT: [['Icebound Fortitude', 48792, 180, null, true], ['Anti-Magic Shell', 48707, 60, null, true], ['Lichborne', 49039, 120, null, false], ['Vampiric Blood', 55233, 90, [250], true], ['Dancing Rune Weapon', 49028, 120, [250], false], ['Death Pact', 48743, 120, null, false, 'heal']],
+  DEATHKNIGHT: [['Icebound Fortitude', 48792, 120, null, true], ['Anti-Magic Shell', 48707, 60, null, true], ['Lichborne', 49039, 120, null, false], ['Vampiric Blood', 55233, 90, [250], true], ['Dancing Rune Weapon', 49028, 120, [250], false], ['Death Pact', 48743, 120, null, false, 'heal']],
   SHAMAN: [['Astral Shift', 108271, 120, null, true], ['Stone Bulwark Totem', 108270, 180, null, false]],
-  MAGE: [['Ice Block', 45438, 240, null, true], ['Ice Cold', 414658, 240, null, false], ['Alter Time', 342245, 50, null, false], ['Greater Invisibility', 110959, 120, null, false], ['Mirror Image', 55342, 120, null, false]],
+  MAGE: [['Ice Block', 45438, 240, null, true], ['Ice Cold', 414658, 240, null, false], ['Alter Time', 342245, 60, null, false], ['Greater Invisibility', 110959, 120, null, false], ['Mirror Image', 55342, 120, null, false]],
   WARLOCK: [['Unending Resolve', 104773, 180, null, true], ['Dark Pact', 108416, 60, null, false], ['Mortal Coil', 6789, 45, null, false, 'heal']],
-  MONK: [['Fortifying Brew', 115203, 120, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false], ['Touch of Karma', 122470, 90, [269], false]],
-  DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 90, [104], false],
+  MONK: [['Fortifying Brew', 115203, 360, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false], ['Touch of Karma', 122470, 90, [269], false]],
+  DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 60, [104], false],
     ['Frenzied Regeneration', 22842, 36, [102, 103, 105], false, 'heal'], ['Renewal', 108238, 90, null, false, 'heal']],
-  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 180, [581], true], ['Darkness', 196718, 300, null, false]],
+  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 120, [581], true], ['Darkness', 196718, 300, null, false]],
   EVOKER: [['Obsidian Scales', 363916, 90, null, true], ['Renewing Blaze', 374348, 90, null, false, 'heal']],
 };
 // (racial ones, for every class: only once the player is seen using them, like a talent)
-for (const k of Object.keys(DEFENSIVES)) DEFENSIVES[k].push(['Gift of the Naaru', 59547, 180, null, false, 'heal'], ['Stoneform', 20594, 120, null, false], ['Fireblood', 265221, 120, null, false]);
+for (const k of Object.keys(DEFENSIVES)) DEFENSIVES[k].push(['Gift of the Naaru', 59547, 120, null, false, 'heal'], ['Stoneform', 20594, 120, null, false], ['Fireblood', 265221, 120, null, false]);
 // (a talent that takes another's place: a mage with Ice Cold has no Ice Block, so Ice Block is never "ready" for them)
 const DEF_REPLACED = { 'ice block': 'ice cold' };
 // Short survival buttons: counted when pressed (the Survivability view, and a close call they answered), but never listed
@@ -12146,14 +12148,16 @@ function kicks() {
 const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (the views that count presses or grade, not output over time: no phase picker and no chart)
 const PERF_COUNTS = new Set(['card', 'util', 'surv']);
-// Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds. Many were
-// read off a Midnight log (2026-10-15); the rest are the usual ones and may be off by a talent. A cooldown is only judged
-// for a player who cast it at least once that night, so an untalented one is never "never used"; cooldown-reduction
-// talents can make "possible uses" a little low (uses above it count as full).
+// Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds: checked
+// against Wowhead's tooltips for the live patch (Oct 2026) and the presses in Wolfthorn's own pulls. A base cooldown is the
+// longest it can be (talents only shorten them), so it's the fair one to count possible uses against: a talent that
+// shortens it just means more presses, and uses above the count are full marks. A cooldown is only judged for a player who
+// cast it at least once that night, so an untalented one is never "never used". (Empower Rune Weapon is gone: it has two
+// charges on a 30 s recharge now, not a big cooldown.)
 const PERF_CDS = {
-  'Blood Death Knight': [['Dancing Rune Weapon', 120]], 'Frost Death Knight': [['Pillar of Frost', 60], ['Empower Rune Weapon', 120], ["Frostwyrm's Fury", 90]],
-  'Unholy Death Knight': [['Army of the Dead', 180], ['Summon Gargoyle', 180], ['Unholy Assault', 90]],
-  'Havoc Demon Hunter': [['Metamorphosis', 180], ['The Hunt', 90]], 'Vengeance Demon Hunter': [['Metamorphosis', 180], ['Fel Devastation', 40]],
+  'Blood Death Knight': [['Dancing Rune Weapon', 120]], 'Frost Death Knight': [['Pillar of Frost', 45], ["Frostwyrm's Fury", 90]],
+  'Unholy Death Knight': [['Army of the Dead', 90], ['Summon Gargoyle', 180], ['Unholy Assault', 90]],
+  'Havoc Demon Hunter': [['Metamorphosis', 120], ['The Hunt', 90]], 'Vengeance Demon Hunter': [['Metamorphosis', 120], ['Fel Devastation', 40]],
   'Balance Druid': [['Incarnation: Chosen of Elune', 180], ['Celestial Alignment', 180], ['Convoke the Spirits', 120], ['Force of Nature', 60]],
   'Feral Druid': [['Incarnation: Avatar of Ashamane', 180], ['Berserk', 180], ['Convoke the Spirits', 120]], 'Guardian Druid': [['Incarnation: Guardian of Ursoc', 180], ['Berserk', 180]],
   'Restoration Druid': [['Tranquility', 180], ['Incarnation: Tree of Life', 180], ['Convoke the Spirits', 120], ['Flourish', 90]],
@@ -12165,13 +12169,13 @@ const PERF_CDS = {
   'Windwalker Monk': [['Storm, Earth, and Fire', 90], ['Invoke Xuen, the White Tiger', 120], ['Celestial Conduit', 90]],
   'Holy Paladin': [['Avenging Wrath', 120], ['Aura Mastery', 180], ['Divine Toll', 60]], 'Protection Paladin': [['Avenging Wrath', 120], ['Sentinel', 120]],
   'Retribution Paladin': [['Avenging Wrath', 120], ['Crusade', 120], ['Divine Toll', 60], ['Execution Sentence', 60], ['Final Reckoning', 60]],
-  'Discipline Priest': [['Power Word: Barrier', 180], ['Rapture', 90], ['Evangelism', 90], ['Power Infusion', 120]], 'Holy Priest': [['Divine Hymn', 180], ['Apotheosis', 120], ['Holy Word: Salvation', 360], ['Power Infusion', 120]],
+  'Discipline Priest': [['Power Word: Barrier', 180], ['Rapture', 90], ['Evangelism', 90], ['Power Infusion', 120]], 'Holy Priest': [['Divine Hymn', 180], ['Apotheosis', 120], ['Holy Word: Salvation', 720], ['Power Infusion', 120]],
   'Shadow Priest': [['Voidform', 120], ['Dark Ascension', 60], ['Power Infusion', 120]],
-  'Assassination Rogue': [['Deathmark', 120], ['Kingsbane', 60]], 'Outlaw Rogue': [['Adrenaline Rush', 180], ['Killing Spree', 90]], 'Subtlety Rogue': [['Shadow Blades', 120], ['Flagellation', 90]],
-  'Elemental Shaman': [['Ascendance', 180], ['Stormkeeper', 60], ['Fire Elemental', 150], ['Storm Elemental', 150]], 'Enhancement Shaman': [['Feral Spirit', 90], ['Ascendance', 180], ['Doom Winds', 90]],
+  'Assassination Rogue': [['Deathmark', 120], ['Kingsbane', 60]], 'Outlaw Rogue': [['Adrenaline Rush', 180], ['Killing Spree', 180]], 'Subtlety Rogue': [['Shadow Blades', 90], ['Flagellation', 90]],
+  'Elemental Shaman': [['Ascendance', 180], ['Stormkeeper', 60], ['Fire Elemental', 120], ['Storm Elemental', 120]], 'Enhancement Shaman': [['Feral Spirit', 90], ['Ascendance', 180], ['Doom Winds', 60]],
   'Restoration Shaman': [['Healing Tide Totem', 180], ['Spirit Link Totem', 180], ['Ascendance', 180]],
-  'Affliction Warlock': [['Summon Darkglare', 120], ['Malevolence', 60]], 'Demonology Warlock': [['Summon Demonic Tyrant', 90], ['Grimoire: Imp Lord', 120], ['Grimoire: Felguard', 120]],
-  'Destruction Warlock': [['Summon Infernal', 180], ['Malevolence', 60]],
+  'Affliction Warlock': [['Summon Darkglare', 120], ['Malevolence', 60]], 'Demonology Warlock': [['Summon Demonic Tyrant', 60], ['Grimoire: Imp Lord', 120], ['Grimoire: Felguard', 120]],
+  'Destruction Warlock': [['Summon Infernal', 120], ['Malevolence', 60]],
   'Arms Warrior': [['Avatar', 90], ['Bladestorm', 90]], 'Fury Warrior': [['Recklessness', 90], ['Avatar', 90], ['Bladestorm', 90]], 'Protection Warrior': [['Avatar', 90]],
 };
 // The big cooldowns a player has (cast at least once this night), and how each was used up to t1 (their death or the
@@ -13565,7 +13569,9 @@ const RC_SEC = [['btn', 'Pressing buttons', 'spell_holy_borrowedtime'], ['alive'
 // (each healer spec's external: its name in the log and its base cooldown)
 const RC_EXT = { 256: [['Pain Suppression', 180]], 257: [['Guardian Spirit', 180]], 105: [['Ironbark', 90]], 270: [['Life Cocoon', 120]], 65: [['Blessing of Sacrifice', 120]], 1468: [['Time Dilation', 60]] };
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
-const rcSt = (sc) => (sc == null ? 'na' : sc >= 85 ? 'ok' : sc >= 60 ? 'warn' : 'bad');
+// (raid cooldowns: saved for the fight's big damage, not used whenever they're ready)
+const RAID_CD_N = new Set(['aura mastery', 'tranquility', 'divine hymn', 'revival', 'restoral', 'healing tide totem', 'spirit link totem', 'power word: barrier', 'rewind', 'dream flight', 'emerald communion', 'holy word: salvation', 'celestial conduit', 'rallying cry', 'darkness', 'anti-magic zone', 'vampiric embrace']);
+const rcSt =(sc) => (sc == null ? 'na' : sc >= 85 ? 'ok' : sc >= 60 ? 'warn' : 'bad');
 const rcSub = (st, html) => '<div class="rk-sub ' + st + '">' + html + '</div>';
 function cardOf(r, p) {
   const C0 = perfContext(r), x = C0.per.get(p.name); if (!x || !p.cls) return null;
@@ -13578,22 +13584,42 @@ function cardOf(r, p) {
     const okA = role === 'dps' ? 90 : 85, floor = okA - 25, sc = 100 * clamp01((act - floor) / (okA - floor));
     // (gaps of 4 s or more that weren't forced: dead, or mind controlled)
     const ts = [...p.castTimes.values()].flat().filter((t) => t <= until).sort((a, b) => a - b), mcw = C0.mc.get(p.name) || [], gaps = [];
-    for (let i = 1; i < ts.length; i++) { const g = ts[i] - ts[i - 1]; if (g >= 4 && !mcw.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !x.ds.some(([a, b]) => ts[i - 1] < b && ts[i] > a)) gaps.push([ts[i - 1], g]); }
+    for (let i = 1; i < ts.length; i++) { const g = ts[i] - ts[i - 1]; if (g >= 4 && !mcw.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !x.ds.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !rcIdle(r, p).some(([a, b]) => ts[i - 1] < b && ts[i] > a)) gaps.push([ts[i - 1], g]); }
     gaps.sort((a, b) => b[1] - a[1]); const gl = gaps.slice(0, 3).map(([t, g]) => T(t) + ' (' + Math.round(g) + ' s)').join(', ');
+    const waited = rcIdle(r, p).reduce((s, [a, b]) => s + Math.max(0, Math.min(b, until) - a), 0);
     add('btn', { k: 'act', label: 'Casting', sc, w: 45, num: act, unit: '% of the time alive',
-      html: 'Casting <b>' + Math.round(act) + '%</b> of the time alive' + (gaps.length ? '<span class="sub"> · ' + plural(gaps.length, 'gap') + ' of 4 s or more, the longest at ' + gl + '</span>' : ''),
+      html: 'Casting <b>' + Math.round(act) + '%</b> of the time alive' + (gaps.length ? '<span class="sub"> · ' + plural(gaps.length, 'gap') + ' of 4 s or more, the longest at ' + gl + '</span>' : '') + (waited >= 4 ? '<div class="rk-sub na">' + Math.round(waited) + ' s when the whole raid was waiting (the boss gone, a transition) left out</div>' : ''),
       fix: { t: 'Keep casting', x: 'You were casting ' + Math.round(act) + '% of the time you were alive (aim for ' + okA + '%).' + (gaps.length ? ' Your longest gaps: ' + gl + '.' : '') + ' Even while moving, there\'s usually an instant or a short cast to press.' } });
   }
   const cds = bigCds(r, p, until, C0.lust);
   if (cds.length) {
-    const used = cds.reduce((s, c) => s + c.used, 0), poss = cds.reduce((s, c) => s + c.poss, 0), long = cds.filter((c) => c.cd >= 90);
+    // (each cooldown its own way: one the NSRT note assigns, by the note (on time is full marks, a few seconds off 70%, more
+    // than 8 s off 40%, missed none); any other raid cooldown, like Aura Mastery or Tranquility, saved for the big damage, so
+    // half its possible uses is full marks; their own big cooldowns, 85% of their possible uses)
+    const notes = ((r.assign && r.assign.cds) || []).filter((y) => y.player === p.name && y.expected != null && y.expected <= until + 0.05 && /^(on time|late|early|missed)$/.test(y.status));
+    const noteSc = (y) => (y.status === 'on time' ? 1 : y.status === 'missed' ? 0 : Math.abs(y.delta || 0) > 8 ? 0.4 : 0.7);
+    const per = cds.map((c) => { const planned = RAID_CD_N.has(c.name.toLowerCase()), mine = notes.filter((y) => (y.spellid && y.spellid === c.id) || String(y.spell || '').toLowerCase() === c.name.toLowerCase());
+      // (each weighs by the fight time it covers, uses times cooldown: a missed 3-minute raid cooldown counts for more than
+      // one press of a 1-minute one)
+      if (mine.length) return { c, how: 'note', w: mine.length * c.cd, s: mine.reduce((s, y) => s + noteSc(y), 0) / mine.length, mine };
+      return { c, how: planned ? 'raid' : 'own', w: c.poss * c.cd, s: clamp01(c.used / c.poss / (planned ? 0.5 : 0.85)) }; });
+    const long = cds.filter((c) => c.cd >= 90 && !RAID_CD_N.has(c.name.toLowerCase()));
     const lustMiss = C0.lust != null && C0.lust <= until - 5 && long.length > 0 && long.every((c) => c.withLust === false);
-    const sc = Math.max(0, 100 * clamp01(used / poss / 0.85) - (lustMiss ? 15 : 0));
-    const worst = cds.slice().sort((a, b) => a.used / a.poss - b.used / b.poss || b.idle - a.idle)[0];
-    add('btn', { k: 'cd', label: 'Big cooldowns', sc, w: 40, num: 100 * used / poss, unit: '% of possible uses',
-      html: 'Big cooldowns: <b>' + used + ' of ' + poss + '</b> possible uses' + cds.map((c) => rcSub(c.st, spell(c.id, c.name) + ' ' + c.used + ' of ' + c.poss + (c.idle >= 10 ? '<span class="sub"> · sat ready ' + T(c.idle) + ' in all' + (c.hold.len >= 20 ? ', longest from ' + T(c.hold.s) : '') + '</span>' : ''))).join('') + (lustMiss ? rcSub('warn', 'None of the long ones lined up with Bloodlust (' + T(C0.lust) + ')') : ''),
-      fix: worst.used < worst.poss ? { t: 'Use ' + worst.name + ' on cooldown', x: worst.name + ' sat ready for ' + T(worst.idle) + ' in all, and you used it ' + worst.used + ' of ' + worst.poss + ' possible times' + (worst.hold.len >= 20 ? ' (the longest wait from ' + T(worst.hold.s) + ')' : '') + '. Pressing it as soon as it\'s back gets you another use.' }
-        : lustMiss ? { t: 'Line a big cooldown up with Bloodlust', x: 'Bloodlust went out at ' + T(C0.lust) + ' and none of your long cooldowns were used with it. Hold one for it, or press it as Bloodlust goes out.' } : null });
+    const tw = per.reduce((s, x) => s + x.w, 0), sc = Math.max(0, 100 * per.reduce((s, x) => s + x.s * x.w, 0) / tw - (lustMiss ? 15 : 0));
+    const own = per.filter((x) => x.how !== 'note'), used = own.reduce((s, x) => s + x.c.used, 0), poss = own.reduce((s, x) => s + x.c.poss, 0);
+    const line = (x) => { const c = x.c;
+      if (x.how === 'note') { const on = x.mine.filter((y) => y.status === 'on time').length, off = x.mine.filter((y) => y.status !== 'on time');
+        return rcSub(rcSt(100 * x.s), spell(c.id, c.name) + ' ' + on + ' of ' + x.mine.length + ' on time for the note' + (off.length ? '<span class="sub"> · ' + off.map((y) => y.status === 'missed' ? 'missed at ' + T(y.expected) : Math.abs(y.delta).toFixed(0) + ' s ' + y.status + ' at ' + T(y.expected)).join(', ') + '</span>' : '')); }
+      return rcSub(rcSt(100 * x.s), spell(c.id, c.name) + ' ' + c.used + ' of ' + c.poss + (x.how === 'raid' ? '<span class="sub"> · a raid cooldown: half of them is enough</span>' : c.idle >= 10 ? '<span class="sub"> · sat ready ' + T(c.idle) + ' in all' + (c.hold.len >= 20 ? ', longest from ' + T(c.hold.s) : '') + '</span>' : '')); };
+    const worst = per.slice().sort((a, b) => a.s - b.s || b.w - a.w)[0], wc = worst.c;
+    const fixOf = () => { if (worst.s >= 0.95) return lustMiss ? { t: 'Line a big cooldown up with Bloodlust', x: 'Bloodlust went out at ' + T(C0.lust) + ' and none of your long cooldowns were used with it. Hold one for it, or press it as Bloodlust goes out.' } : null;
+      if (worst.how === 'note') { const off = worst.mine.filter((y) => y.status !== 'on time');
+        return { t: 'Press ' + wc.name + ' when the note says', x: 'Your NSRT note assigns ' + wc.name + ' ' + plural(worst.mine.length, 'time') + ' this pull: ' + off.map((y) => y.status === 'missed' ? 'missed at ' + T(y.expected) : Math.abs(y.delta).toFixed(0) + ' s ' + y.status + ' at ' + T(y.expected)).join(', ') + '. Press it as the reminder counts down to 0: the plan is built around it.' }; }
+      if (worst.how === 'raid') return { t: 'Use ' + wc.name + ' more', x: wc.name + ' went out ' + wc.used + ' of ' + wc.poss + ' possible times. It\'s a raid cooldown, so it waits for the big damage, but one that\'s never pressed is wasted.' };
+      return { t: 'Use ' + wc.name + ' on cooldown', x: wc.name + ' sat ready for ' + T(wc.idle) + ' in all, and you used it ' + wc.used + ' of ' + wc.poss + ' possible times' + (wc.hold.len >= 20 ? ' (the longest wait from ' + T(wc.hold.s) + ')' : '') + '. Pressing it as soon as it\'s back gets you another use.' }; };
+    add('btn', { k: 'cd', label: 'Big cooldowns', sc, w: 40, num: tw ? 100 * per.reduce((s, x) => s + x.s * x.w, 0) / tw : null, unit: '% of what was asked of them',
+      html: 'Big cooldowns' + (poss ? ': <b>' + used + ' of ' + poss + '</b> possible uses' : '') + (per.some((x) => x.how === 'note') ? '<span class="sub"> · the note\'s assignments judged by the note</span>' : '') + per.map(line).join('') + (lustMiss ? rcSub('warn', 'None of the long ones lined up with Bloodlust (' + T(C0.lust) + ')') : ''),
+      fix: fixOf() });
   } else add('btn', { k: 'cd', label: 'Big cooldowns', sc: null, w: 0, html: '<span class="sub">Big cooldowns: none tracked for ' + esc(p.specName || 'this spec') + ' yet</span>' });
   if (role === 'healer' && p.mana && p.mana.length > 3 && until >= 90) {
     const last = p.mana.filter(([t]) => t <= until + 1).pop();
@@ -13989,11 +14015,18 @@ function deadSpans(r, p) {
 function aliveSecs(r, p, a, b) { let s = Math.max(0, b - a); for (const [d0, d1] of deadSpans(r, p)) s -= Math.max(0, Math.min(b, d1) - Math.max(a, d0)); return Math.max(0, s); }
 // how much of their time alive (less any time mind controlled) a player spent casting between a and b: each gap between
 // two casts counts up to 2.5 s; null when they cast nothing. The tiles and the player's own line use this same number.
+// (the raid's forced downtime, perfContext's idle stretches, is left out the same way for DPS and tanks: time they couldn't
+// press anything)
+const rcIdle = (r, p) => { const C0 = perfContext(r), x = C0.per.get(p.name); return x && x.role === 'healer' ? [] : C0.idle; };
 function activityIn(r, p, a, b) {
   const ts = [...p.castTimes.values()].flat().filter((t) => t >= a && t <= b).sort((u, v) => u - v); if (!ts.length) return null;
-  const mcw = perfContext(r).mc.get(p.name) || [], forced = mcw.reduce((s, [x, y]) => s + Math.max(0, Math.min(y, b) - Math.max(x, a)), 0);
-  let act = Math.min(2.5, ts[0] - a); for (let i = 1; i < ts.length; i++) act += Math.min(ts[i] - ts[i - 1], 2.5);
-  return Math.min(100, 100 * act / Math.max(1, aliveSecs(r, p, a, b) - forced));
+  const C0 = perfContext(r), mcw = C0.mc.get(p.name) || [], forced = mcw.reduce((s, [x, y]) => s + Math.max(0, Math.min(y, b) - Math.max(x, a)), 0);
+  const IW = rcIdle(r, p), idleIn = (x, y) => IW.reduce((s, [i0, i1]) => { const lo = Math.max(i0, x), hi = Math.min(i1, y); return hi > lo ? s + hi - lo : s; }, 0);
+  const idle = IW.reduce((s, [x, y]) => { const lo = Math.max(x, a), hi = Math.min(y, b); return hi > lo ? s + aliveSecs(r, p, lo, hi) : s; }, 0);
+  // (each cast counts for up to 2.5 s after it, less any of that inside a stretch the whole raid was waiting)
+  const c0 = Math.min(2.5, ts[0] - a); let act = c0 - idleIn(ts[0] - c0, ts[0]);
+  for (let i = 1; i < ts.length; i++) { const c = Math.min(ts[i] - ts[i - 1], 2.5); act += c - idleIn(ts[i - 1], ts[i - 1] + c); }
+  return Math.min(100, 100 * act / Math.max(1, aliveSecs(r, p, a, b) - forced - idle));
 }
 function perfContext(r) {
   const ct = cutT(r); if (r._pc && r._pc.ct === ct) return r._pc;
@@ -14013,7 +14046,14 @@ function perfContext(r) {
   const roleMed = {}, roleAvoid = {}; for (const k in roles) { roleMed[k] = med(roles[k].filter((x) => x.tot > 0).map((x) => x.ps)); roleAvoid[k] = roles[k].reduce((s, x) => s + x.avoid, 0) / roles[k].length; }
   const dpsAdd = (roles.dps || []).filter((x) => x.addShare != null), addAvg = dpsAdd.length ? dpsAdd.reduce((s, x) => s + x.addShare, 0) / dpsAdd.length : null;
   const lust = []; for (const p of r.players.values()) for (const n of LUST_N) for (const t of p.byName.get(n) || []) lust.push(t);
-  r._pc = { ct, end, per, roles, roleMed, roleAvoid, addAvg, lust: lust.length ? Math.min(...lust) : null, mc };
+  // the raid's forced downtime: stretches of 4 s or more when three in four of the DPS and tanks alive cast nothing at all
+  // (the boss gone, a transition, everyone running): their casting isn't judged there. (Healers keep healing through
+  // those, so they don't count toward it, and their own casting is judged as usual.)
+  const N = Math.ceil(end) + 1, act = new Array(N).fill(0), alv = new Array(N).fill(0), idle = [];
+  for (const x of per.values()) { if (x.role === 'healer') continue; const on = new Uint8Array(N); for (const ts of x.p.castTimes.values()) for (const t of ts) { if (t < 0 || t > end) continue; for (let s = Math.max(0, Math.floor(t - 1)); s <= Math.min(N - 1, Math.floor(t + 1)); s++) on[s] = 1; }
+    for (let s = 0; s < N; s++) if (!x.ds.some(([a, b]) => s >= a && s < b)) { alv[s]++; if (on[s]) act[s]++; } }
+  for (let s = 0, a = -1; s <= N; s++) { const off = s < N && alv[s] >= 4 && act[s] <= 0.25 * alv[s]; if (off && a < 0) a = s; else if (!off && a >= 0) { if (s - a >= 4) idle.push([a, s]); a = -1; } }
+  r._pc = { ct, end, per, roles, roleMed, roleAvoid, addAvg, lust: lust.length ? Math.min(...lust) : null, mc, idle };
   return r._pc;
 }
 // one player's output feedback this pull: [status, html] lines, worst-to-fix first after the output line, plus the
@@ -14028,7 +14068,7 @@ function outputFeedback(r, p) {
   const ts = [...p.castTimes.values()].flat().filter((t) => t <= x.until).sort((a, b) => a - b), mcw = C0.mc.get(p.name) || [];
   const forced = mcw.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, x.until) - a), 0), actPct = ts.length ? activityIn(r, p, 0, C0.end) : 0;
   // (a gap while mind controlled or dead isn't theirs)
-  const gaps = []; for (let i = 1; i < ts.length; i++) { const g = ts[i] - ts[i - 1]; if (g >= 4 && !mcw.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !x.ds.some(([a, b]) => ts[i - 1] < b && ts[i] > a)) gaps.push([ts[i - 1], g]); }
+  const gaps = []; for (let i = 1; i < ts.length; i++) { const g = ts[i] - ts[i - 1]; if (g >= 4 && !mcw.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !x.ds.some(([a, b]) => ts[i - 1] < b && ts[i] > a) && !rcIdle(r, p).some(([a, b]) => ts[i - 1] < b && ts[i] > a)) gaps.push([ts[i - 1], g]); }
   gaps.sort((a, b) => b[1] - a[1]);
   if (ts.length) { lines.push([actPct >= 90 ? 'ok' : actPct >= 80 ? 'warn' : 'bad', 'Active ' + Math.round(actPct) + '% of the time alive' + (forced > 1 ? ' <span class="sub">(mind controlled time left out)</span>' : '') + (gaps.length ? ' · longest gaps: ' + gaps.slice(0, 2).map(([t, g]) => T(t) + ' (' + Math.round(g) + 's)').join(', ') : '')]); st.act = actPct; }
   // the combat potion with Bloodlust: drunk before the pull or within 20 s after Bloodlust started

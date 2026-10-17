@@ -71,7 +71,9 @@ const HEALERS = new Set([65, 105, 256, 257, 264, 270, 1468]);
 const TANKS = new Set([66, 73, 104, 250, 268, 581]);
 
 // Personal defensives, matched by spell name (stable across patches; English client).
-// Cooldowns are base values from general knowledge, not measured on 12.1. Talents change many.
+// Cooldowns are base values, checked against Wowhead's tooltips for the live patch (Oct 2026). Talents shorten many; a
+// base cooldown is the longest it can be, so "possible uses" is never more than they really had, and something counts as
+// "still ready" at a death only when even the base cooldown had come back.
 // [name, spellId, base cooldown, specs (null = all specs of the class), baseline?, kind ('heal': a self-heal button)]
 // Talent defensives (baseline false) only count once the player is seen casting them,
 // so a death is never blamed on a defensive the player may not have talented.
@@ -80,22 +82,22 @@ const TANKS = new Set([66, 73, 104, 250, 268, 581]);
 // on their own there (they heal, but nobody presses them), so they stay talent-only and never count as unused.
 const DEFENSIVES = {
   WARRIOR: [['Enraged Regeneration', 184364, 120, [72], true, 'heal'], ['Die by the Sword', 118038, 120, [71], true], ['Shield Wall', 871, 180, [73], true], ['Last Stand', 12975, 180, [73], false], ['Rallying Cry', 97462, 180, null, false], ['Bitter Immunity', 383762, 180, null, false, 'heal']],
-  PALADIN: [['Divine Shield', 642, 300, null, true], ['Divine Protection', 498, 60, [65, 70], true], ['Shield of Vengeance', 184662, 90, [70], false], ['Ardent Defender', 31850, 120, [66], true], ['Guardian of Ancient Kings', 86659, 300, [66], false], ['Eye of Tyr', 387174, 60, [66], false], ['Lay on Hands', 633, 420, null, true, 'heal']],
+  PALADIN: [['Divine Shield', 642, 300, null, true], ['Divine Protection', 498, 60, [65, 70], true], ['Shield of Vengeance', 184662, 90, [70], false], ['Ardent Defender', 31850, 90, [66], true], ['Guardian of Ancient Kings', 86659, 180, [66], false], ['Eye of Tyr', 387174, 60, [66], false], ['Lay on Hands', 633, 600, null, true, 'heal']],
   HUNTER: [['Aspect of the Turtle', 186265, 180, null, true], ['Survival of the Fittest', 264735, 90, null, false], ['Exhilaration', 109304, 120, null, true, 'heal'], ['Fortitude of the Bear', 388035, 120, null, false]],
   ROGUE: [['Cloak of Shadows', 31224, 120, null, true], ['Evasion', 5277, 120, null, true], ['Crimson Vial', 185311, 30, null, true, 'heal']],
   PRIEST: [['Desperate Prayer', 19236, 90, null, true, 'heal'], ['Dispersion', 47585, 120, [258], true]],
-  DEATHKNIGHT: [['Icebound Fortitude', 48792, 180, null, true], ['Anti-Magic Shell', 48707, 60, null, true], ['Lichborne', 49039, 120, null, false], ['Vampiric Blood', 55233, 90, [250], true], ['Dancing Rune Weapon', 49028, 120, [250], false], ['Death Pact', 48743, 120, null, false, 'heal']],
+  DEATHKNIGHT: [['Icebound Fortitude', 48792, 120, null, true], ['Anti-Magic Shell', 48707, 60, null, true], ['Lichborne', 49039, 120, null, false], ['Vampiric Blood', 55233, 90, [250], true], ['Dancing Rune Weapon', 49028, 120, [250], false], ['Death Pact', 48743, 120, null, false, 'heal']],
   SHAMAN: [['Astral Shift', 108271, 120, null, true], ['Stone Bulwark Totem', 108270, 180, null, false]],
-  MAGE: [['Ice Block', 45438, 240, null, true], ['Ice Cold', 414658, 240, null, false], ['Alter Time', 342245, 50, null, false], ['Greater Invisibility', 110959, 120, null, false], ['Mirror Image', 55342, 120, null, false]],
+  MAGE: [['Ice Block', 45438, 240, null, true], ['Ice Cold', 414658, 240, null, false], ['Alter Time', 342245, 60, null, false], ['Greater Invisibility', 110959, 120, null, false], ['Mirror Image', 55342, 120, null, false]],
   WARLOCK: [['Unending Resolve', 104773, 180, null, true], ['Dark Pact', 108416, 60, null, false], ['Mortal Coil', 6789, 45, null, false, 'heal']],
-  MONK: [['Fortifying Brew', 115203, 120, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false], ['Touch of Karma', 122470, 90, [269], false]],
-  DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 90, [104], false],
+  MONK: [['Fortifying Brew', 115203, 360, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false], ['Touch of Karma', 122470, 90, [269], false]],
+  DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 60, [104], false],
     ['Frenzied Regeneration', 22842, 36, [102, 103, 105], false, 'heal'], ['Renewal', 108238, 90, null, false, 'heal']],
-  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 180, [581], true], ['Darkness', 196718, 300, null, false]],
+  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 120, [581], true], ['Darkness', 196718, 300, null, false]],
   EVOKER: [['Obsidian Scales', 363916, 90, null, true], ['Renewing Blaze', 374348, 90, null, false, 'heal']],
 };
 // (racial ones, for every class: only once the player is seen using them, like a talent)
-for (const k of Object.keys(DEFENSIVES)) DEFENSIVES[k].push(['Gift of the Naaru', 59547, 180, null, false, 'heal'], ['Stoneform', 20594, 120, null, false], ['Fireblood', 265221, 120, null, false]);
+for (const k of Object.keys(DEFENSIVES)) DEFENSIVES[k].push(['Gift of the Naaru', 59547, 120, null, false, 'heal'], ['Stoneform', 20594, 120, null, false], ['Fireblood', 265221, 120, null, false]);
 // (a talent that takes another's place: a mage with Ice Cold has no Ice Block, so Ice Block is never "ready" for them)
 const DEF_REPLACED = { 'ice block': 'ice cold' };
 // Short survival buttons: counted when pressed (the Survivability view, and a close call they answered), but never listed
