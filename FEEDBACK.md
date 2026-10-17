@@ -6,8 +6,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **To talk about next (your note): Player audit vs Performance.** The Report card may have replaced the Player audit
   (both grade each player: casting, cooldowns, survival kit, a focus list). Decide what stays where: fold the Player audit's
   unique parts (gear, enchants and buffs at the pull, "ready to raid", MVPs) into Performance, or keep it as its own tab.
-- [ ] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
-  on a click. Plan to talk through first.
+  Your idea: turn the Player audit into a **Rankings** tab: a Debrief score per player from Mechanics (their own mistakes
+  and avoidable damage), Performance (the Report card) and Output (parse, or output against their spec); MVPs on top (best
+  tank, healers, DPS, most improved); a table with a trend arrow; the gear/enchants/buffs check moves into the Report
+  card's "Using the toolkit". Open questions: who it's for (the whole raid or the leads), the weights of the three parts,
+  and tonight first or the whole tier (the tier needs each pull's scores saved as it's read, from then on).
+- [x] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
+  on a click (round 127).
 - **Goal (your note): the Performance tab is meant to replace Warcraft Logs** for the raid. Everything people check on Warcraft
   Logs (damage, healing, damage taken, casts, buffs, deaths, parses) should be there and as easy to explore.
 - [x] **High priority: set up GitHub before anything else** (round 102: private repo Mikopeeko/Debrief, a checkpoint pushed after every round).
@@ -63,6 +68,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 127: charts you can explore (hover for a breakdown, click to go deeper)
+- [x] **Performance's main chart**: hovering shows who did the most in that 5-second slice (the top 4 players, and on
+  Damage taken the boss abilities that hit hardest); click to keep the box, then click a name to open that player. With a
+  player picked, it shows their share of the raid's damage (or healing) at that moment and where they ranked in their
+  role, the big hits they took on Damage taken, and "Show the whole raid".
+- [x] **Summary's "How far the night got"**: each dot has a box (pull, time, result, length, and once read, its deaths,
+  who died first and what ended it), and a click opens that pull on Latest pull. (The page tip already promised this;
+  it didn't work until now.)
+- [x] **A team's boss charts**: each dot has a box (night, pull, result, length, deaths, who died first) and a click opens
+  that pull's Warcraft Logs report at that pull.
+- [x] **Deaths on Mechanics**: each of the three biggest-hit bars has a box (how many hits and from whom, the biggest and
+  when, the killing blow) and a click opens every event.
+- [x] **Raid cooldowns timeline**: each big hit's pin and each cooldown has a box (the damage, what covered it or didn't,
+  who pressed what and how long it lasted); a pin still opens its row.
+- [x] On a phone: the first tap shows the box, the second does the click.
 
 ## 2026-10-17, round 126: tooltips on players' spells too
 - [x] **Player spells in sentences have tooltips** (your note: so people know what they do): a spell named inside text,

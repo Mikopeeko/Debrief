@@ -221,6 +221,28 @@ document.addEventListener('mouseout', (e) => {
   const el = e.target.closest && e.target.closest('.sp');
   if (el && !el.contains(e.relatedTarget)) { spCur = null; clearTimeout(spTimer); spTip.style.display = 'none'; }
 });
+// ---- chart dots you can explore: a dot with data-ct (its box: lines of HTML, the first the heading) shows that box on
+// hover, in the same box as spell tooltips; a click does its data-go ("pull:N", that pull of the log that's open; "wcl:CODE|
+// FIGHT", that night's Warcraft Logs report at that pull). On a phone the first tap shows the box, the second opens it. ----
+let ctType = 'mouse', ctCur = null;
+document.addEventListener('pointerdown', (e) => { ctType = e.pointerType || 'mouse'; }, true);
+const ctData = (lines, go) => ' data-ct="' + esc(JSON.stringify(lines)) + '"' + (go ? ' data-go="' + esc(go) + '"' : '');
+function ctShow(el, e) {
+  let lines = []; try { lines = JSON.parse(el.dataset.ct || '[]'); } catch (x) { /* (no box) */ }
+  spTip.innerHTML = '<div class="ct-b">' + lines.map((l, i) => '<div class="' + (i ? 'ct-l' : 'ct-h') + '">' + l + '</div>').join('') + (el.dataset.go ? '<div class="ct-go">' + (ctType === 'mouse' ? 'Click' : 'Tap again') + ' to open this pull</div>' : '') + '</div>';
+  spTip.style.display = 'block'; placeTip(e); ctCur = el;
+}
+document.addEventListener('mouseover', (e) => { const el = e.target.closest && e.target.closest('[data-ct]'); if (el && el !== ctCur && ctType === 'mouse') ctShow(el, e); });
+document.addEventListener('mouseout', (e) => { const el = e.target.closest && e.target.closest('[data-ct]'); if (el && !el.contains(e.relatedTarget) && ctType === 'mouse') { ctCur = null; spTip.style.display = 'none'; } });
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest && e.target.closest('[data-ct]');
+  if (!el) { if (ctCur && ctType !== 'mouse') { ctCur = null; spTip.style.display = 'none'; } return; }
+  if (ctType !== 'mouse' && ctCur !== el) { ctShow(el, e); return; } // (a phone: the first tap shows the box)
+  const go = el.dataset.go; if (!go) return; e.preventDefault(); e.stopPropagation(); ctCur = null; spTip.style.display = 'none';
+  // (from Summary, which is every pull, the pull opens on its own recap, Latest pull)
+  if (go.startsWith('pull:')) { const b = S.index && S.index.bosses[+go.slice(5)]; if (b) { if (S.tab === 'night') { S.tab = 'live'; S.scope = 'pull'; } select(b); window.scrollTo({ top: 0 }); } }
+  else if (go.startsWith('wcl:')) { const [code, f] = go.slice(4).split('|'); try { await openWcl({ code, fight: +f || null }, await wclCreds()); } catch (x) { console.warn('Open pull:', x && x.message); } }
+});
 function avatar(p, sm) {
   const col = p.color || '#9aa0ac';
   const glyph = p.name === 'Raid' ? 'group' : CLASS_GLYPH[p.cls] || 'orb';
@@ -2019,9 +2041,11 @@ function audit() {
     };
     // the three biggest hits of the last 10 seconds (a spell's smaller hits added up, "×10"), as bars
     const top3 = (d) => { const hits = (d.recap || []).filter((e) => !e.heal && e.t >= d.t - 10), last = hits[hits.length - 1], grp = new Map();
-      for (const e of hits) { const k = e.spell || 'Melee'; const g = grp.get(k) || { spell: k, id: e.id, n: 0, amt: 0, kb: false }; g.n++; g.amt += e.amount; if (e === last) g.kb = true; grp.set(k, g); }
+      for (const e of hits) { const k = e.spell || 'Melee'; const g = grp.get(k) || { spell: k, id: e.id, n: 0, amt: 0, kb: false, big: null, src: e.src }; g.n++; g.amt += e.amount; if (!g.big || e.amount > g.big.amount) g.big = e; if (e === last) g.kb = true; grp.set(k, g); }
       const list = [...grp.values()].sort((a, b) => b.amt - a.amt).slice(0, 3), mx = Math.max(1, ...list.map((x) => x.amt));
-      return list.length ? '<div class="dd-hits">' + list.map((x) => '<div class="dd-hit"><span>' + spell(x.id, x.spell) + (x.n > 1 ? ' <span class="sub">×' + x.n + '</span>' : '') + (x.kb ? ' <span class="hotv">killing blow</span>' : '') + '</span><span class="dd-bar"><i style="width:' + (100 * x.amt / mx).toFixed(1) + '%"></i></span><b>' + kfmt(x.amt) + '</b></div>').join('') + '</div>' : '<p class="muted">No hits recorded before this death.</p>'; };
+      // (each bar's box: how many hits and from whom, the biggest one and when; a click opens every event)
+      const boxOf = (x) => [esc(x.spell), plural(x.n, 'hit') + ' for ' + kfmt(x.amt) + (x.src ? ' · from ' + esc(x.src) : ''), 'Biggest: ' + kfmt(x.big.amount) + ' at ' + T(x.big.t) + (x.big.hp >= 0 ? ', leaving ' + Math.round(x.big.hp) + '% health' : ''), x.kb ? '<b class="ct-bad">The killing blow</b>' : '', '<span class="ct-hint">Click for every event</span>'].filter(Boolean);
+      return list.length ? '<div class="dd-hits">' + list.map((x) => '<div class="dd-hit dd-hx"' + ctData(boxOf(x)) + '><span>' + spell(x.id, x.spell) + (x.n > 1 ? ' <span class="sub">×' + x.n + '</span>' : '') + (x.kb ? ' <span class="hotv">killing blow</span>' : '') + '</span><span class="dd-bar"><i style="width:' + (100 * x.amt / mx).toFixed(1) + '%"></i></span><b>' + kfmt(x.amt) + '</b></div>').join('') + '</div>' : '<p class="muted">No hits recorded before this death.</p>'; };
     const items = ds.map((d, i) => { const cause = causeOf(d), h0 = helped(d);
       const how = same[i] ? 'the same hit as the death before' : d.big && d.last ? kfmt(d.big.amount) + ', then ' + d.last.spell + ' finished them' : d.last ? kfmt(d.last.amount) + (d.react === false ? ', no time to react' : '') : '';
       const hp = d.healthy && d.window > 0 ? Math.round(d.startHp) + '% to 0 ' + (d.window < 0.15 ? 'in one hit' : 'in ' + d.window.toFixed(1) + ' s') : d.startHp > 0 ? 'never above ' + Math.round(d.startHp) + '% in the last 10 s' : '';
@@ -2195,6 +2219,8 @@ function audit() {
   }));
   // Deaths: "Every event" shows their whole last 10 seconds; a linked mistake opens its mechanic's section
   $('#view').querySelectorAll('.dev-all').forEach((b) => (b.onclick = () => { const a = b.closest('.md-d').querySelector('.dall'); a.hidden = !a.hidden; b.classList.toggle('on', !a.hidden); }));
+  // (a biggest-hits bar opens that death's every event)
+  $('#view').querySelectorAll('.dd-hx').forEach((b) => (b.onclick = () => { const d = b.closest('.md-d'), a = d && d.querySelector('.dall'), btn = d && d.querySelector('.dev-all'); if (a && a.hidden) { a.hidden = false; if (btn) btn.classList.add('on'); a.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }));
   $('#view').querySelectorAll('.dchip[data-sec]').forEach((b) => (b.onclick = () => {
     const key = b.closest('details.secd').dataset.k.split('-').slice(1).join('-'), id = b.dataset.sec;
     const d = document.getElementById('sec-' + id + '-' + key) || document.querySelector('details.secd[data-k^="' + CSS.escape(id) + '-"]'); if (!d) return;
@@ -3590,6 +3616,15 @@ function fitTrends() {
     if (trendRO && el && !el.dataset.ro) { el.dataset.ro = '1'; trendRO.observe(el); }
   }
 }
+// a pull's hover box on a chart: the pull and its time, its result and length, and once it's been read, its deaths, the
+// first one, and what ended it
+function pullBox(b) {
+  const rep = CACHE.get(b), dur = b.duration || b.dur || (rep ? rep.duration : null), out = ['Pull ' + b.pull + ' · ' + esc(pullTime(b))];
+  out.push((b.kill ? '<b class="ct-k">Kill</b>' : esc(pullLabel(b))) + (dur ? ' · ' + T(dur) : ''));
+  if (rep) { const ds = keptDeaths(rep).slice().sort((a, c) => a.t - c.t); out.push(ds.length ? plural(ds.length, 'death') + ' · first: ' + esc(ds[0].player) + ' at ' + T(ds[0].t) + (ds[0].ability ? ' (' + esc(ds[0].ability) + ')' : '') : 'Nobody died');
+    if (!b.kill) { const c = causeOf(rep); if (c) out.push('Ended by ' + esc(c.label)); } }
+  return out;
+}
 function trendSvg(pulls, big, wpx, tid) {
   if (big && !tid) { tid = ++trendN; TREND_REG.set(tid, pulls); TREND_REG.delete(tid - 20); requestAnimationFrame(fitTrends); }
   const W = big ? wpx || 760 : 220, H = big ? 190 : 54, L = big ? 34 : 4, R = big ? 12 : 4, T = big ? 10 : 4, Bm = big ? 24 : 4;
@@ -3608,9 +3643,12 @@ function trendSvg(pulls, big, wpx, tid) {
     s += '<polyline class="tbest" points="' + step.join(' ') + '"/>';
   }
   // (each dot in its pull's colour, as in the pull strip and on the Progress page; a kill orange, with a ring)
+  // (on the big chart each dot has a box on hover (the pull, its time, result and length, and once it's been read, its
+  // deaths and what ended it) and opens that pull on a click, with a bigger invisible ring to make it easy to hit)
   for (const p of pts) { const cx = X(p.i).toFixed(1), cy = Y(p.v).toFixed(1);
     if (big && p.b.kill) s += '<circle cx="' + cx + '" cy="' + cy + '" r="10" class="tkh"/>';
-    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (big ? (p.b.kill ? 6 : 4) : p.b.kill ? 3.5 : 2) + '" class="' + (p.b.kill ? 'tk' : 'tw') + '"' + (p.b.kill ? '' : ' style="fill:' + (pullCol(p.b) || '#9d9d9d') + '"') + '><title>Pull ' + p.b.pull + ': ' + esc(pullLabel(p.b)) + '</title></circle>'; }
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (big ? (p.b.kill ? 6 : 4) : p.b.kill ? 3.5 : 2) + '" class="' + (p.b.kill ? 'tk' : 'tw') + '"' + (p.b.kill ? '' : ' style="fill:' + (pullCol(p.b) || '#9d9d9d') + '"') + '>' + (big ? '' : '<title>Pull ' + p.b.pull + ': ' + esc(pullLabel(p.b)) + '</title>') + '</circle>';
+    if (big) { const ix = S.index && S.index.bosses ? S.index.bosses.indexOf(p.b) : -1; s += '<circle cx="' + cx + '" cy="' + cy + '" r="11" class="thit"' + ctData(pullBox(p.b), ix >= 0 ? 'pull:' + ix : '') + '/>'; } }
   // (pull numbers along the bottom, about one every 50 px)
   if (big) { const every = Math.max(1, Math.ceil(n / Math.max(4, (W - L - R) / 50))); pulls.forEach((b, i) => { if (i % every === 0 || i === n - 1) s += '<text x="' + X(i) + '" y="' + (H - 6) + '" class="tl" text-anchor="middle">' + b.pull + '</text>'; }); }
   return s + '</svg>';
@@ -4607,7 +4645,28 @@ function perfChart(r, series, end, p, win, kind, wpx) {
   if (win) { if (win[0] > 0.5) s += '<rect x="' + L + '" y="' + Tp + '" width="' + (X(win[0]) - L).toFixed(1) + '" height="' + ih + '" class="pfc-dim"/>'; if (win[1] < end - 0.5) s += '<rect x="' + X(win[1]).toFixed(1) + '" y="' + Tp + '" width="' + (X(end) - X(win[1])).toFixed(1) + '" height="' + ih + '" class="pfc-dim"/>'; }
   if (end < dur - 0.5) s += '<rect x="' + X(end).toFixed(1) + '" y="' + Tp + '" width="' + (X(dur) - X(end)).toFixed(1) + '" height="' + ih + '" class="pfc-cut"/><text x="' + (X(end) + 6).toFixed(1) + '" y="' + (Tp + ih / 2) + '" class="pfc-ct">after the wipe filter</text>';
   s += '<line class="pfc-hv" x1="0" x2="0" y1="' + Tp + '" y2="' + (Tp + ih) + '" style="display:none"/><circle class="pfc-hd" r="3.5" cx="0" cy="0" style="display:none;fill:' + col + '"/></svg>';
-  return '<div class="pfc-w" data-s="' + esc(JSON.stringify(sm.map((v) => Math.round(v)))) + '" data-mx="' + mx + '" data-tp="' + Tp + '" data-ih="' + ih + '" data-ev="' + esc(JSON.stringify(ev)) + '" data-ph="' + esc(JSON.stringify(phs.map((q) => [q.start, q.name]))) + '">' + s + '<div class="pfc-tip" hidden></div></div>';
+  return '<div class="pfc-w" data-s="' + esc(JSON.stringify(sm.map((v) => Math.round(v)))) + '" data-mx="' + mx + '" data-tp="' + Tp + '" data-ih="' + ih + '" data-ev="' + esc(JSON.stringify(ev)) + '" data-ph="' + esc(JSON.stringify(phs.map((q) => [q.start, q.name]))) + '" data-kd="' + esc(kind || 'dmg') + '" data-bk="' + esc(JSON.stringify(chartBreakdown(r, kind, p, dur))) + '">' + s + '<div class="pfc-tip" hidden></div></div>';
+}
+// What made up each moment of the Performance chart, for its hover box, in 5-second slices: for the raid, the players
+// who did the most (and on Damage taken, the boss abilities that hit hardest); for a picked player, their share of the
+// raid's and where they ranked in their role (and on Damage taken, the hits they took).
+// [slice] = { p: [[name, colour, per second]], a: [[ability, per second]], me: [share, rank, of], h: [[ability, amount, time]] }
+const BK = 5;
+function chartBreakdown(r, kind, p, dur) {
+  const key = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' }[kind] || 'dmgS', n = Math.ceil(dur / BK), out = [];
+  const ps = [...r.players.values()].filter((q) => q.name && !/^Player-/.test(q.name)), sumIn = (arr, b) => { let v = 0; for (let i = b * BK; i < Math.min(arr.length, (b + 1) * BK); i++) v += arr[i] || 0; return v; };
+  for (let b = 0; b < n; b++) {
+    const len = Math.max(1, Math.min(BK, dur - b * BK)), vals = ps.map((q) => [q, sumIn(q[key] || [], b) / len]).filter(([, v]) => v > 0).sort((a, c) => c[1] - a[1]), o = {};
+    if (!p) o.p = vals.slice(0, 4).map(([q, v]) => [q.name, q.color || '#9aa0ac', Math.round(v)]);
+    else { const tot = vals.reduce((s2, [, v]) => s2 + v, 0), mine = vals.find(([q]) => q === p), role = (q) => (q.role || 'dps') === (p.role || 'dps'), rk = vals.filter(([q]) => role(q));
+      o.me = mine ? [tot ? Math.round(100 * mine[1] / tot) : 0, rk.findIndex(([q]) => q === p) + 1, rk.length] : null; }
+    if (kind === 'taken') {
+      if (!p) { const by = new Map(); for (let i = b * BK; i < Math.min((r.takenAbS || []).length, (b + 1) * BK); i++) for (const [nm, [, v]] of Object.entries(r.takenAbS[i] || {})) by.set(nm, (by.get(nm) || 0) + v); o.a = [...by].sort((a, c) => c[1] - a[1]).slice(0, 3).map(([nm, v]) => [nm, Math.round(v / len)]); }
+      else o.h = (p.big || []).filter((h) => h.t >= b * BK && h.t < (b + 1) * BK).slice(0, 3).map((h) => [h.spell, Math.round(h.amt), +h.t.toFixed(1)]);
+    }
+    out.push(o);
+  }
+  return out;
 }
 // ---- Performance, all pulls: the night's output pull by pull, and each player's average over the night ----
 // Each pull counts up to its own wipe filter (and, with a phase picked, only that phase in the pulls that reached it); a
@@ -5096,15 +5155,27 @@ function bindPerf() {
   // finger taps or drags along the chart, and it stays until a tap somewhere else.
   const w = $('.pfc-w'); if (!w) return;
   const svg = w.querySelector('svg'), tip = w.querySelector('.pfc-tip'), hv = svg.querySelector('.pfc-hv'), hd = svg.querySelector('.pfc-hd');
-  const sm = JSON.parse(w.dataset.s || '[]'), ev = JSON.parse(w.dataset.ev || '[]'), phs = JSON.parse(w.dataset.ph || '[]'), mx = +w.dataset.mx, tp = +w.dataset.tp, ih = +w.dataset.ih;
+  const sm = JSON.parse(w.dataset.s || '[]'), ev = JSON.parse(w.dataset.ev || '[]'), phs = JSON.parse(w.dataset.ph || '[]'), bk = JSON.parse(w.dataset.bk || '[]'), mx = +w.dataset.mx, tp = +w.dataset.tp, ih = +w.dataset.ih;
+  // (what made up that moment: chartBreakdown's 5-second slice; a pinned box's names open that player)
+  const bkHtml = (t) => { const o = bk[Math.floor(t / BK)]; if (!o) return ''; const sl = Math.floor(t / BK) * BK, head = '<div class="pfc-bh">' + T(sl) + '–' + T(sl + BK) + '</div>';
+    let h = '';
+    if (o.p && o.p.length) h += head + o.p.map(([n, c, v]) => '<div class="pfc-br"><button type="button" class="pfc-pk" data-pick="' + esc(n) + '" style="color:' + c + '">' + esc(n) + '</button><b>' + C(v) + '</b></div>').join('');
+    if (o.me) h += head + '<div class="pfc-br"><span>Share of the raid\'s ' + ({ dmg: 'damage', heal: 'healing', taken: 'damage taken' }[w.dataset.kd] || 'total') + '</span><b>' + o.me[0] + '%</b></div>' + (o.me[1] ? '<div class="pfc-br"><span>In their role</span><b>' + ordinal(o.me[1]) + ' of ' + o.me[2] + '</b></div>' : '');
+    if (o.a && o.a.length) h += '<div class="pfc-bh">Hit hardest by</div>' + o.a.map(([n, v]) => '<div class="pfc-br"><span>' + esc(n) + '</span><b>' + C(v) + '</b></div>').join('');
+    if (o.h && o.h.length) h += '<div class="pfc-bh">Big hits taken</div>' + o.h.map(([n, v, ht]) => '<div class="pfc-br"><span>' + esc(n) + ' <span class="sub">' + T(ht) + '</span></span><b>' + C(v) + '</b></div>').join('');
+    return h ? '<div class="pfc-bk">' + h + '</div>' : ''; };
   const dur = +svg.dataset.dur, L = +svg.dataset.l, iw = +svg.dataset.iw, ICO = { m: '▮', d: '✕', l: '⚡', c: '▲' };
   let pinned = false, scrub = false;
   const clear = () => { pinned = false; tip.hidden = true; tip.classList.remove('pin'); hv.style.display = 'none'; hd.style.display = 'none'; };
-  const pin = () => { pinned = true; tip.classList.add('pin'); };
+  // (pinned: the box stays, its hint goes, and its names open that player; for a picked player, a way back to the raid)
+  const pin = () => { pinned = true; tip.classList.add('pin'); const hn = tip.querySelector('.pfc-hint'); if (hn) hn.remove();
+    if (S.perfSel && !tip.querySelector('.pfc-raid')) tip.insertAdjacentHTML('beforeend', '<button type="button" class="pfc-pk pfc-raid" data-pick="">Show the whole raid</button>');
+    tip.querySelectorAll('.pfc-pk').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); S.perfSel = b.dataset.pick || null; S.perfLens = 'players'; perf(); })); };
   const show = (e) => { const b = svg.getBoundingClientRect(), x = (e.clientX - b.left) * (+svg.dataset.w / b.width), t = ((x - L) / iw) * dur; if (t < 0 || t > dur || !sm.length) { if (!pinned) clear(); return; }
     const hid = S.pfcHide || new Set(), i = Math.max(0, Math.min(sm.length - 1, Math.floor(t))), y = tp + ih - (sm[i] / mx) * ih, near = ev.filter(([u, , k]) => Math.abs(u - t) <= 2 && !hid.has(k)).slice(0, 4), phn = (phs.filter(([a]) => a <= t).pop() || [])[1];
     hv.setAttribute('x1', x); hv.setAttribute('x2', x); hv.style.display = ''; hd.setAttribute('cx', x); hd.setAttribute('cy', y); hd.style.display = i < sm.length ? '' : 'none';
-    tip.innerHTML = '<div><b>' + T(t) + '</b>' + (phn ? ' <span class="sub">' + esc(phn) + '</span>' : '') + '</div><div>' + C(sm[i]) + ' per second</div>' + near.map(([, txt, k]) => '<div class="pfc-te ' + k + '">' + ICO[k] + ' ' + esc(txt) + '</div>').join('');
+    tip.innerHTML = '<div><b>' + T(t) + '</b>' + (phn ? ' <span class="sub">' + esc(phn) + '</span>' : '') + '</div><div>' + C(sm[i]) + ' per second</div>' + near.map(([, txt, k]) => '<div class="pfc-te ' + k + '">' + ICO[k] + ' ' + esc(txt) + '</div>').join('') + bkHtml(t) +
+      '<div class="pfc-hint">' + (pinned ? '' : (S.perfSel ? 'Click to keep this' : 'Click to keep this, then pick a player')) + '</div>';
     tip.hidden = false; const px = e.clientX - b.left; tip.style.left = Math.max(0, Math.min(b.width - tip.offsetWidth, px + (px > b.width - 200 ? -tip.offsetWidth - 12 : 12))) + 'px'; };
   svg.onpointermove = (e) => { if (scrub || (e.pointerType === 'mouse' && !pinned)) show(e); };
   svg.onpointerleave = (e) => { if (e.pointerType === 'mouse' && !pinned) clear(); };
@@ -5212,13 +5283,13 @@ function raidCdPanel(r) {
   let chart = '<div class="rc-chart"><svg class="rc-area" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + area + '"/></svg>';
   chart += phases.map((p) => '<span class="rc-ph" style="left:' + P(p.start) + '"><i>' + esc(p.name) + '</i></span>').join('');
   if (d.ct < dur - 0.5) chart += '<span class="rc-cut" style="left:' + P(d.ct) + ';width:' + P(dur - d.ct) + '" title="After the wipe filter"></span>';
-  chart += d.hits.map((h, i) => '<span class="rc-band ' + h.st + '" data-rch="' + i + '" style="left:' + P(h.t0) + ';width:' + P(h.t1 - h.t0) + '"></span><button type="button" class="rc-pin ' + h.st + '" data-rch="' + i + '" style="left:' + P(h.t) + '" title="' + esc(h.k + '. ' + h.name + ' at ' + T(h.t0) + ': ' + C(h.dmg) + ' in 3 s, ' + ST[h.st][1]) + '">' + h.k + '</button>').join('');
+  chart += d.hits.map((h, i) => '<span class="rc-band ' + h.st + '" data-rch="' + i + '" style="left:' + P(h.t0) + ';width:' + P(h.t1 - h.t0) + '"></span><button type="button" class="rc-pin ' + h.st + '" data-rch="' + i + '" style="left:' + P(h.t) + '"' + ctData(['Big hit ' + h.k + ': ' + esc(h.name), T(h.t0) + ' · ' + C(h.dmg) + ' on the raid in 3 s', esc(capS(ST[h.st][1])), (h.also || []).length ? 'Also: ' + esc(h.also.join(', ')) : '', '<span class="ct-hint">Click for its row below</span>'].filter(Boolean)) + '>' + h.k + '</button>').join('');
   chart += keptDeaths(r).filter((x) => r.players.has(x.guid)).map((x) => '<span class="rc-death" style="left:' + P(x.t) + '" title="' + esc(x.player + ' died at ' + T(x.t) + (x.ability ? ' to ' + x.ability : '')) + '">✕</span>').join('') + '</div>';
   // the raid cooldowns in as few lanes as fit (each bar as long as it lasted, its name after it); Bloodlust on its own lane
   const lanes = [], gap = (u) => Math.max(u.len, (26 + 6.5 * u.name.length) / 900 * dur);
   for (const u of d.uses) { let L = lanes.find((l) => l.end <= u.t); if (!L) lanes.push(L = { end: 0, items: [] }); L.items.push(u); L.end = u.t + gap(u); }
   // (the bar as long as it lasted, in the player's colour, with its icon and name on top from where it started)
-  const bar = (u, cls) => '<span class="rc-bar' + (cls ? ' ' + cls : '') + '" style="left:' + P(u.t) + ';width:' + P(u.len) + ';background:' + u.p.color + '"></span><span class="rc-cd" style="left:' + P(u.t) + '" title="' + esc(u.name + ', ' + u.p.name + ', at ' + T(u.t) + ', about ' + Math.round(u.len) + ' s') + '">' + spellIcon(u.id, u.name) + '<em>' + esc(CD_SHORT[u.name] || u.name) + '</em></span>';
+  const bar = (u, cls) => '<span class="rc-bar' + (cls ? ' ' + cls : '') + '" style="left:' + P(u.t) + ';width:' + P(u.len) + ';background:' + u.p.color + '"></span><span class="rc-cd" style="left:' + P(u.t) + '"' + ctData([esc(u.name), '<span style="color:' + u.p.color + '">' + esc(u.p.name) + '</span> at ' + T(u.t), 'Lasts about ' + Math.round(u.len) + ' s, to ' + T(u.t + u.len)]) + '>' + spellIcon(u.id, u.name) + '<em>' + esc(CD_SHORT[u.name] || u.name) + '</em></span>';
   let lanesH = d.lust.length ? '<div class="rc-lane lust">' + d.lust.map((u) => bar(u, 'lust')).join('') + '</div>' : '';
   lanesH += lanes.map((l) => '<div class="rc-lane">' + l.items.map((u) => bar(u)).join('') + '</div>').join('');
   let axis = '<div class="rc-axis">'; const step = dur > 420 ? 120 : dur > 200 ? 60 : 30; for (let t = 0; t <= dur; t += step) axis += '<span style="left:' + P(t) + '">' + T(t) + '</span>'; axis += '</div>';
@@ -6853,7 +6924,13 @@ function progChart(list, boss) {
   }
   for (const p of pts) { const c = p.v.kill ? '#ff8000' : (PULL_Q.find(([lo]) => 100 - p.y >= lo) || [0, '#9d9d9d'])[1], cx = X(p.i).toFixed(1), cy = Y(p.y).toFixed(1);
     if (p.v.kill) s += '<circle cx="' + cx + '" cy="' + cy + '" r="8" class="pkh"/>';
-    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (p.v.kill ? 4.5 : 2.6) + '" class="' + (p.v.kill ? 'pk' : 'pd') + '" fill="' + c + '"><title>' + esc(nightLabel(p.v.at) + ' · pull ' + p.v.pull + ' · ' + (p.v.kill ? 'kill' : p.v.label)) + '</title></circle>'; }
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (p.v.kill ? 4.5 : 2.6) + '" class="' + (p.v.kill ? 'pk' : 'pd') + '" fill="' + c + '"/>';
+    // (a box on hover: the night and pull, the result and length, the deaths and who died first; a click opens that pull's
+    // report when it came from Warcraft Logs; a bigger invisible ring makes it easy to hit)
+    const v = p.v, wl = v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: v.fight || null } : null);
+    const box = [esc(nightLabel(v.at)) + ' · pull ' + v.pull, (v.kill ? '<b class="ct-k">Kill</b>' : esc(v.label || '')) + (v.dur ? ' · ' + T(v.dur) : '')];
+    if (typeof v.deaths === 'number') box.push(v.deaths ? plural(v.deaths, 'death') + (v.first ? ' · first: ' + esc(typeof v.first === 'string' ? v.first : v.first.name || '') : '') : 'Nobody died');
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="10" class="thit"' + ctData(box, wl && wl.code ? 'wcl:' + wl.code + '|' + (wl.fight != null ? wl.fight : '') : '') + '/>'; }
   return s + '</svg>';
 }
 progChart.n = 0;
