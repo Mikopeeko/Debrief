@@ -4795,7 +4795,7 @@ function newPlayer(guid) {
     casts: 0, interrupts: 0, dispels: 0, deaths: 0, active: 0, lastCast: -1,
     dmgAb: new Map(), healAb: new Map(), takenAb: new Map(), castAb: new Map(), castTimes: new Map(), byName: new Map(),
     // (per second over the pull, and damage by target name: the Performance tab's charts and boss / add split)
-    dmgS: [], healS: [], takenS: [], dmgT: new Map(),
+    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
     // (their eight biggest single hits taken, and what they dispelled)
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
@@ -4834,6 +4834,8 @@ const AM_ADD = (0.12 - 0.03) / (1 - 0.12);
 // the presses that start a cooldown's entry (Celestial Conduit only for Mistweaver: Windwalker has one too)
 const CD_PRESS = new Map([...CD_HEALS.values(), 'Aura Mastery', 'Power Word: Barrier', 'Spirit Link Totem', 'Anti-Magic Zone', 'Darkness', 'Rallying Cry'].map((n) => [n.toLowerCase(), n]));
 function bigHit(p, h) { const b = p.big; if (b.length >= 8 && h.amt <= b[b.length - 1].amt) return; b.push(h); b.sort((x, y) => y.amt - x.amt); if (b.length > 8) b.pop(); }
+// (a player's damage taken per second by what hit them: amount, hits, the biggest one (absorbs included) and how much was avoidable)
+function bumpTk(arr, t, name, id, v, av, raw) { const i = t | 0; while (arr.length <= i) arr.push(null); const m = arr[i] || (arr[i] = {}), x = m[name]; if (x) { x[1] += v; x[2]++; if (raw > x[3]) x[3] = raw; x[4] += av; } else m[name] = [id, v, 1, raw, av]; }
 function bumpAb(arr, t, name, id, v) { const i = t | 0; while (arr.length <= i) arr.push(null); const m = arr[i] || (arr[i] = {}); if (m[name]) m[name][1] += v; else m[name] = [id, v]; }
 function bump(arr, t, v) { const i = t | 0; while (arr.length <= i) arr.push(0); arr[i] += v; }
 function bumpN(arr, t, name, v) { const i = t | 0; while (arr.length <= i) arr.push(null); const m = arr[i] || (arr[i] = {}); m[name] = (m[name] || 0) + v; }
@@ -4996,7 +4998,8 @@ function analyze(item, text, opts) {
           const p = P(dg, dn);
           p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base);
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
-          p.avoidable += mech.damage(t, p.name, id, spell, base);
+          const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
+          if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
           if (base + num(f[s0 + 6]) > 0) bigHit(p, { t, amt: base + Math.max(0, num(f[s0 + 6])), spell, id, src: shortName(sg, sn), hp });
           if (!owner) hit(dg, t, spell, id);
           if (W(spell, id)) modEv.push({ k: 'dmg', t, dst: dg, spell, id, amt: base, raw: base + Math.max(0, num(f[s0 + 6])), src: sg, srcName: sn }); // (raw: the hit with what shields absorbed)
@@ -5013,7 +5016,7 @@ function analyze(item, text, opts) {
       case 'ENVIRONMENTAL_DAMAGE': {
         if (!isPlayer(dg) || f.length < 31) break;
         const base = num(f[28]), p = P(dg, dn);
-        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false); bump(r.takenS, t, base); bump(p.takenS, t, base);
+        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false); bump(r.takenS, t, base); bump(p.takenS, t, base); if (base > 0) bumpTk(p.takenAbS, t, f[27], 0, base, 0, base);
         recap(dg, { t, heal: false, amount: base, src: 'Environment', spell: f[27], id: 0, hp: -1 });
         break;
       }

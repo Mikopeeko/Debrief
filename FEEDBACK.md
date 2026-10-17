@@ -76,6 +76,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 142: Damage taken by source
+- [x] **Damage sources** (your idea): Damage taken has a "Players | Damage sources" switch. Damage sources lists every
+  ability that hit the raid, most first, as a bar (red stripes for the avoidable part), with its share of all the damage
+  taken, how many players it hit, its hits, and who it killed. Open one for who took it: how much, their share, hits,
+  their biggest hit, how much was avoidable, and if it killed them; click a name for their own view. The role chips
+  show what hit only that role (tanks, say), and it follows the phase buttons and the wipe filter.
+- [x] Beside it, "What to look at": the avoidable sources (and who took the most of each) and what killed people.
+- [x] On the Players view, the right side's "What hit the raid hardest" rows now open that source in Damage sources.
+
 ## 2026-10-17, round 141: launch prep (Performance on the website, loading screens, tips, the website tested)
 - [x] **Performance is on for the website** (it was greyed out): the Players grades are half the Report card, so raiders
   need to be able to look into it.

@@ -823,6 +823,20 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .ld-b.ind i { width: 34%; animation: ldInd 1.2s ease-in-out infinite; } @keyframes ldInd { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
 .ld-tip { margin-top: 3px; color: var(--faint); font-size: 12.5px; line-height: 1.45; } .ld-tip b { color: var(--muted); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .ld, .ld * { animation: none !important; } }
+/* ---- Damage taken by source: a row per ability (opens to who took it), and what to look at beside it ---- */
+.pf-src { border-top: 1px solid var(--line); } .pf-srcs .nh + .pf-src { border-top: 0; }
+.pf-src > summary { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) 64px 44px; grid-template-areas: "n b v s" "n h h h"; align-items: center; gap: 2px 12px; padding: 7px 4px; cursor: pointer; list-style: none; border-radius: 6px; }
+.pf-src > summary::-webkit-details-marker { display: none; } .pf-src > summary:hover { background: rgba(255,255,255,.03); } .pf-src[open] > summary { background: rgba(255,255,255,.04); }
+.pf-sn { grid-area: n; min-width: 0; font-size: 13.5px; font-weight: 600; } .pf-sn .sp { white-space: normal; } .pf-sav { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: rgba(229,83,75,.16); color: #ff8f87; font: 700 10.5px var(--body); }
+.pf-sb { grid-area: b; display: flex; height: 10px; } .pf-sb i { height: 100%; background: #c8574f; opacity: .8; } .pf-sb i:first-child { border-radius: 3px 0 0 3px; } .pf-sb i:last-child { border-radius: 0 3px 3px 0; } .pf-sb i:only-child { border-radius: 3px; }
+.pf-sb i.ad { background: repeating-linear-gradient(135deg, rgba(229,83,75,.95) 0 3px, rgba(229,83,75,.35) 3px 6px); opacity: 1; }
+.pf-sv { grid-area: v; text-align: right; font-variant-numeric: tabular-nums; } .pf-ss { grid-area: s; text-align: right; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; } .pf-sh { grid-area: h; color: var(--faint); font-size: 12px; }
+.pf-sbody { margin: 2px 0 8px 14px; padding: 4px 0 4px 12px; border-left: 2px solid var(--line2); }
+.pf-sw { display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) 62px; grid-template-areas: "p b v" "p d d"; align-items: center; gap: 0 10px; padding: 4px 4px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.pf-sw:hover { background: rgba(255,255,255,.04); } .pf-sw > .av, .pf-sw > .nm { grid-area: p; } .pf-sw > .av { justify-self: start; } .pf-sw > .nm { padding-left: 28px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-sbody .pf-sw { display: grid; } .pf-sw .pf-bar { grid-area: b; display: block; height: 8px; } /* (it's also a clickable name row, whose own style is a flex line) */ .pf-sw .pf-bar i { display: block; height: 100%; border-radius: 3px; opacity: .8; } .pf-sw > b { grid-area: v; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; } .pf-swd { grid-area: d; color: var(--faint); font-size: 11.5px; }
+.pf-srcd .pf-sl { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13px; } .pf-srcd .pf-st + .pf-sl { border-top: 0; } .pf-srcd .pf-sl > span:last-child { text-align: right; } .pf-srcd .pf-sl .nm { font-weight: 600; }
+@media (max-width: 640px) { .pf-src > summary { grid-template-columns: minmax(0, 1fr) 58px 36px; grid-template-areas: "n v s" "b b b" "h h h"; } .pf-sw { grid-template-columns: minmax(0, 1fr) 56px; grid-template-areas: "p v" "b b" "d d"; } .pf-sbody { margin-left: 4px; padding-left: 8px; } }
 /* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
    left; what went well and the boxes for between pulls on the right ---- */
 @media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
@@ -6996,7 +7010,7 @@ function newPlayer(guid) {
     casts: 0, interrupts: 0, dispels: 0, deaths: 0, active: 0, lastCast: -1,
     dmgAb: new Map(), healAb: new Map(), takenAb: new Map(), castAb: new Map(), castTimes: new Map(), byName: new Map(),
     // (per second over the pull, and damage by target name: the Performance tab's charts and boss / add split)
-    dmgS: [], healS: [], takenS: [], dmgT: new Map(),
+    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
     // (their eight biggest single hits taken, and what they dispelled)
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
@@ -7035,6 +7049,8 @@ const AM_ADD = (0.12 - 0.03) / (1 - 0.12);
 // the presses that start a cooldown's entry (Celestial Conduit only for Mistweaver: Windwalker has one too)
 const CD_PRESS = new Map([...CD_HEALS.values(), 'Aura Mastery', 'Power Word: Barrier', 'Spirit Link Totem', 'Anti-Magic Zone', 'Darkness', 'Rallying Cry'].map((n) => [n.toLowerCase(), n]));
 function bigHit(p, h) { const b = p.big; if (b.length >= 8 && h.amt <= b[b.length - 1].amt) return; b.push(h); b.sort((x, y) => y.amt - x.amt); if (b.length > 8) b.pop(); }
+// (a player's damage taken per second by what hit them: amount, hits, the biggest one (absorbs included) and how much was avoidable)
+function bumpTk(arr, t, name, id, v, av, raw) { const i = t | 0; while (arr.length <= i) arr.push(null); const m = arr[i] || (arr[i] = {}), x = m[name]; if (x) { x[1] += v; x[2]++; if (raw > x[3]) x[3] = raw; x[4] += av; } else m[name] = [id, v, 1, raw, av]; }
 function bumpAb(arr, t, name, id, v) { const i = t | 0; while (arr.length <= i) arr.push(null); const m = arr[i] || (arr[i] = {}); if (m[name]) m[name][1] += v; else m[name] = [id, v]; }
 function bump(arr, t, v) { const i = t | 0; while (arr.length <= i) arr.push(0); arr[i] += v; }
 function bumpN(arr, t, name, v) { const i = t | 0; while (arr.length <= i) arr.push(null); const m = arr[i] || (arr[i] = {}); m[name] = (m[name] || 0) + v; }
@@ -7197,7 +7213,8 @@ function analyze(item, text, opts) {
           const p = P(dg, dn);
           p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base);
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
-          p.avoidable += mech.damage(t, p.name, id, spell, base);
+          const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
+          if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
           if (base + num(f[s0 + 6]) > 0) bigHit(p, { t, amt: base + Math.max(0, num(f[s0 + 6])), spell, id, src: shortName(sg, sn), hp });
           if (!owner) hit(dg, t, spell, id);
           if (W(spell, id)) modEv.push({ k: 'dmg', t, dst: dg, spell, id, amt: base, raw: base + Math.max(0, num(f[s0 + 6])), src: sg, srcName: sn }); // (raw: the hit with what shields absorbed)
@@ -7214,7 +7231,7 @@ function analyze(item, text, opts) {
       case 'ENVIRONMENTAL_DAMAGE': {
         if (!isPlayer(dg) || f.length < 31) break;
         const base = num(f[28]), p = P(dg, dn);
-        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false); bump(r.takenS, t, base); bump(p.takenS, t, base);
+        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false); bump(r.takenS, t, base); bump(p.takenS, t, base); if (base > 0) bumpTk(p.takenAbS, t, f[27], 0, base, 0, base);
         recap(dg, { t, heal: false, amount: base, src: 'Environment', spell: f[27], id: 0, hp: -1 });
         break;
       }
@@ -12746,11 +12763,11 @@ function perf() {
   const wins = kind === 'dmg' ? perfWins(r, end).filter((w) => !ph || (w.t0 < w1 && w.t1 > w0)) : [];
   const cdsH = kind === 'heal' ? healCds(r, w0, w1) : '', hitsH = kind === 'heal' ? healAfterHits(r, w0, w1) : '';
   // (no Phases view: the phase buttons at the top already cut every view by phase; no Heatmap either, by request)
-  const lenses = PERF_LENS.filter(([k]) => k === 'players' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
+  const lenses = PERF_LENS.filter(([k]) => k === 'players' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'sources' && kind === 'taken') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
   const lens = lenses.some(([k]) => k === S.perfLens) ? S.perfLens : 'players';
   if (lenses.length > 1) h += lensBar(lenses, lens);
   if (lens !== 'players') {
-    h += lens === 'phases' ? perfPhases(r, kind, ps, end, phs, ph ? pfPhK(ph) : null) : lens === 'windows' ? perfWindows(r, ps, end, wins) : lens === 'targets' ? perfTargets(r, ps, w0, w1, bossN)
+    h += lens === 'phases' ? perfPhases(r, kind, ps, end, phs, ph ? pfPhK(ph) : null) : lens === 'windows' ? perfWindows(r, ps, end, wins) : lens === 'targets' ? perfTargets(r, ps, w0, w1, bossN) : lens === 'sources' ? perfSources(r, ps, w0, w1)
       : lens === 'cds' ? cdsH : hitsH;
     view(h + '</div>'); bindPerf(); refreshIcons(); return;
   }
@@ -12924,7 +12941,7 @@ function damageChecks(r, ref) {
 // defensives and biggest hits on Damage taken), then what their damage went into, their heals or what hit them.
 function perfDetail(r, kind, p, bossN, rowsAll) {
   const list = (m, n) => [...m.values()].sort((a, b) => b.total - a.total).slice(0, n);
-  const barList = (items, color) => { const mx = Math.max(1, ...items.map((x) => x.v)); return items.map((x) => '<div class="pf-a"><span class="pf-an">' + x.html + '</span><span class="pf-ab"><i style="width:' + (100 * x.v / mx).toFixed(1) + '%;background:' + color + '"></i></span><b>' + C(x.v) + '</b></div>').join(''); };
+  const barList = (items, color) => { const mx = Math.max(1, ...items.map((x) => x.v)); return items.map((x) => '<div class="pf-a"' + (x.attr || '') + '><span class="pf-an">' + x.html + '</span><span class="pf-ab"><i style="width:' + (100 * x.v / mx).toFixed(1) + '%;background:' + color + '"></i></span><b>' + C(x.v) + '</b></div>').join(''); };
   const sec = (title, note, body) => (body ? '<div class="pf-sec"><div class="pf-st"><b>' + title + '</b>' + (note ? '<span>' + note + '</span>' : '') + '</div>' + body + '</div>' : '');
   const abName = (a) => spell(a.id, a.name.replace(/^[^:]+: /, '')) + (/: /.test(a.name) ? ' <span class="sub">' + esc(a.name.split(': ')[0]) + '</span>' : '');
   if (!p) {
@@ -12938,7 +12955,7 @@ function perfDetail(r, kind, p, bossN, rowsAll) {
     if (kind === 'dmg') { const by = new Map(); for (const q of r.players.values()) for (const [n, v] of q.dmgT) by.set(n, (by.get(n) || 0) + v);
       body = sec('Where the damage went', 'whole pull', barList([...by].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([n, v]) => ({ html: esc(n) + (bossN.has(n) ? ' <span class="sub">boss</span>' : ''), v })), PERF_COL.dmg)); }
     else { const by = new Map(); for (const q of r.players.values()) for (const a of (kind === 'heal' ? q.healAb : q.takenAb).values()) { const x = by.get(a.name) || { name: a.name, id: a.id, total: 0 }; x.total += a.total; by.set(a.name, x); }
-      body = sec(kind === 'heal' ? 'The biggest heals' : 'What hit the raid hardest', 'whole pull', barList([...by.values()].sort((a, b) => b.total - a.total).slice(0, 10).map((a) => ({ html: spell(a.id, a.name) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : ''), v: a.total })), PERF_COL[kind])); }
+      body = sec(kind === 'heal' ? 'The biggest heals' : 'What hit the raid hardest', 'whole pull', barList([...by.values()].sort((a, b) => b.total - a.total).slice(0, 10).map((a) => ({ html: spell(a.id, a.name) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : ''), v: a.total, attr: kind === 'taken' ? ' data-src="' + esc(a.name) + '" role="button" tabindex="0" title="Who took it"' : '' })), PERF_COL[kind])); }
     // (Healing: just the hint; the role split and the biggest heals weren't useful there)
     if (kind === 'heal') return '<h3 class="nh"><span>The raid</span></h3>' + hint;
     return '<h3 class="nh"><span>The raid</span></h3>' + hint + sec('By role', '', roleBar) + body;
@@ -13286,7 +13303,7 @@ const cbHead = (v, s, end, cls) => '<div class="pf-row cb nb cb-h' + (cls || '')
 // ---- Performance: the views under the timeline. Players (the bars and the picked player), then the same pull cut other
 // ways: by phase, by damage window, by target, healers only, and as a heatmap ----
 // (healers' mana moved to its own view, Resources)
-const PERF_LENS = [['players', 'Players'], ['cds', 'Cooldowns'], ['hits', 'Big hits'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
+const PERF_LENS = [['players', 'Players'], ['sources', 'Damage sources'], ['cds', 'Cooldowns'], ['hits', 'Big hits'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
 const KEY_OF = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
 const sumIn = (arr, a, b) => { let s = 0; for (let i = Math.max(0, Math.floor(a)); i < Math.min(arr.length, Math.ceil(b)); i++) s += arr[i] || 0; return s; };
 // a player's rate while alive between a and b (null when they were dead for all of it)
@@ -13432,6 +13449,41 @@ function addsDamage(r, ps, w0, w1, bossN) {
 // else), how fast each DPS got onto those adds after the raid's first hit on them, each set of them, and the raid's
 // damage by target over time
 const TG_COL = ['#b07cf0', '#e07ab8', '#5fd3c4', '#d98c5f', '#c9ced8'];
+// Damage taken by what hit the raid: every ability, the most damage first, as a bar (striped red for the part that was
+// avoidable), with its share of all the damage taken, the players it hit, hits and deaths it caused. Open one for who
+// took it, most first: how much, their share, hits, their biggest hit, how much of it was avoidable, and if it killed
+// them. Cut by the phase picked and the wipe filter like every view; the role chips show what hit only that role (what
+// hit the tanks, say). Beside it: the avoidable sources and what killed people.
+function perfSources(r, ps, w0, w1) {
+  const { has, list } = lensRows(ps), names = new Set(list.map((p) => p.name)), by = new Map(); let tot = 0;
+  for (const p of list) { const a = p.takenAbS || [];
+    for (let i = Math.max(0, Math.floor(w0)); i < Math.min(a.length, Math.ceil(w1)); i++) { const o = a[i]; if (!o) continue;
+      for (const n in o) { const [id, v, k, mx, av] = o[n]; let s = by.get(n); if (!s) by.set(n, s = { name: n, id, tot: 0, hits: 0, av: 0, who: new Map() }); if (!s.id && id) s.id = id;
+        s.tot += v; s.hits += k; s.av += av; tot += v; const w = s.who.get(p) || { v: 0, k: 0, mx: 0, av: 0 }; w.v += v; w.k += k; w.mx = Math.max(w.mx, mx); w.av += av; s.who.set(p, w); } } }
+  // (deaths: the ability that dealt the killing blow, inside the window)
+  const dead = new Map(); for (const d of r.deaths) { if (d.t < w0 - 0.05 || d.t > w1 + 0.05 || !d.ability || !names.has(d.player)) continue; const l = dead.get(d.ability) || []; l.push(d); dead.set(d.ability, l); }
+  const rows = [...by.values()].filter((s) => s.tot >= 1).sort((a, b) => b.tot - a.tot), mx = rows.length ? rows[0].tot : 1, T0 = Math.max(1, tot);
+  const pc = (v) => (v < 0.01 ? '<1' : Math.round(100 * v)) + '%', open = S.srcOpen || new Set();
+  const row = (s) => { const ds = dead.get(s.name) || [], who = [...s.who].sort((a, b) => b[1].v - a[1].v), top = who.length ? who[0][1].v : 1, av = Math.min(s.av, s.tot);
+    return '<details class="pf-src" data-src="' + esc(s.name) + '"' + (open.has(s.name) ? ' open' : '') + '><summary><span class="pf-sn">' + spell(s.id, s.name) + (av >= 0.5 * s.tot ? ' <span class="pf-sav">avoidable</span>' : '') + '</span>' +
+      '<span class="pf-bar pf-sb"><i style="width:' + (100 * (s.tot - av) / mx).toFixed(1) + '%"></i>' + (av >= 1 ? '<i class="ad" style="width:' + (100 * av / mx).toFixed(1) + '%" title="' + esc('Avoidable: ' + C(av)) + '"></i>' : '') + '</span>' +
+      '<b class="pf-sv">' + C(s.tot) + '</b><span class="pf-ss">' + pc(s.tot / T0) + '</span>' +
+      '<span class="pf-sh">' + plural(who.length, 'player') + ' · ' + plural(s.hits, 'hit') + (ds.length ? ' · <span class="hotv">' + (ds.length === 1 ? 'killed ' + esc(ds[0].player) : plural(ds.length, 'death')) + '</span>' : '') + '</span></summary>' +
+      '<div class="pf-sbody">' + who.map(([p, w]) => '<div class="pf-sw pf-hn" data-n="' + esc(p.name) + '" role="button" tabindex="0" title="Their own view">' + pfName(p) +
+        '<span class="pf-bar"><i style="width:' + Math.max(2, 100 * w.v / top).toFixed(1) + '%;background:' + p.color + '"></i></span><b>' + (w.v >= 1 ? C(w.v) : '<span class="sub">absorbed</span>') + '</b>' +
+        '<span class="pf-swd">' + pc(w.v / s.tot) + ' of it · ' + plural(w.k, 'hit') + ' · biggest ' + C(w.mx) + (w.av >= 1 ? ' · <span class="warnv">avoidable ' + C(w.av) + '</span>' : '') + (ds.some((d) => d.player === p.name) ? ' · <span class="hotv">died to it</span>' : '') + '</span></div>').join('') + '</div></details>'; };
+  // ---- beside it: the avoidable part (the sources most of it came from, and who took the most of each), what killed people ----
+  const avTot = rows.reduce((s, x) => s + Math.min(x.av, x.tot), 0), avTop = rows.filter((x) => x.av >= 1).sort((a, b) => b.av - a.av).slice(0, 5);
+  const who1 = (s) => { const w = [...s.who].sort((a, b) => b[1].av - a[1].av)[0]; return w ? '<span class="nm" style="color:' + w[0].color + '">' + esc(w[0].name) + '</span> <span class="sub">' + C(w[1].av) + '</span>' : ''; };
+  const kills = [...dead].sort((a, b) => b[1].length - a[1].length);
+  const line = (l, v) => '<div class="pf-sl"><span>' + l + '</span><span>' + v + '</span></div>';
+  const right = '<div class="panel pf-det pf-srcd"><h3 class="nh"><span>What to look at</span><small>' + (w1 - w0 < (r.duration || 0) - 1 ? 'this part of the pull' : 'the whole pull') + '</small></h3>' +
+    '<div class="pf-sec"><div class="pf-st"><b>Avoidable</b><span>' + (tot ? pc(avTot / T0) + ' of all the damage taken' : '') + '</span></div>' + (avTop.length ? avTop.map((s) => line(spell(s.id, s.name) + ' <b>' + C(s.av) + '</b>', 'most: ' + who1(s))).join('') : '<p class="sub" style="margin:0">Nothing avoidable hit anyone.</p>') + '</div>' +
+    '<div class="pf-sec"><div class="pf-st"><b>What killed people</b><span>the killing blow</span></div>' + (kills.length ? kills.map(([n, l]) => line(spell((by.get(n) || {}).id || 0, n), l.map((d) => { const p = list.find((q) => q.name === d.player); return '<span class="nm" style="color:' + (p ? p.color : 'inherit') + '">' + esc(d.player) + '</span> <span class="sub">' + T(d.t) + '</span>'; }).join(', '))).join('') : '<p class="sub" style="margin:0">Nobody died' + (w1 < (r.duration || 0) - 1 ? ' before the wipe filter' : '') + '.</p>') + '</div>' +
+    '<div class="pf-hint">Open a source for who took it. Click a name for their own view.</div></div>';
+  return '<div class="pf-cols"><div class="panel pf-lp pf-srcs">' + lensHead('Damage sources', C(tot) + ' taken · red stripes: avoidable · open one for who took it', roleChips(has)) +
+    (rows.length ? rows.map(row).join('') : '<p class="muted">No damage taken recorded.</p>') + '</div>' + right + '</div>';
+}
 function perfTargets(r, ps, w0, w1, bossN) {
   const focus = new Set([...(r.focus || []), ...bossN]), listN = r.priority || [];
   const tgtOf = (p) => { const m = new Map(), a = p.dmgTS || []; for (let i = Math.max(0, Math.floor(w0)); i < Math.min(a.length, Math.ceil(w1)); i++) { const o = a[i]; if (o) for (const n in o) m.set(n, (m.get(n) || 0) + o[n]); } return m; };
@@ -14393,6 +14445,9 @@ function bindPerf() {
   { const b = $('#pfCasts'); if (b) b.onclick = () => { S.perfCasts = !S.perfCasts; perf(); }; }
   $$('.pf-all').forEach((b) => (b.onclick = () => { S.perfMore = S.perfMore || {}; S.perfMore[b.dataset.k] = !S.perfMore[b.dataset.k]; perf(); }));
   $$('.pf-lens button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfLens = b.dataset.l; perf(); }));
+  $$('details.pf-src[data-src]').forEach((el) => (el.ontoggle = () => { S.srcOpen = S.srcOpen || new Set(); if (el.open) S.srcOpen.add(el.dataset.src); else S.srcOpen.delete(el.dataset.src); }));
+  $$('.pf-a[data-src]').forEach((b) => (b.onclick = () => { const n = b.dataset.src; S.perfLens = 'sources'; S.perfSel = null; S.srcOpen = new Set([n]); perf();
+    setTimeout(() => { const el = [...document.querySelectorAll('details.pf-src')].find((x) => x.dataset.src === n); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 60); }));
   $$('.hcd-sw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.hcdView = b.dataset.v; perf(); }));
   // (a name in any of the other views opens that player on Players)
   $$('[data-wi]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfWin = +b.dataset.wi; perf(); }));
