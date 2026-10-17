@@ -11,6 +11,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   tank, healers, DPS, most improved); a table with a trend arrow; the gear/enchants/buffs check moves into the Report
   card's "Using the toolkit". Open questions: who it's for (the whole raid or the leads), the weights of the three parts,
   and tonight first or the whole tier (the tier needs each pull's scores saved as it's read, from then on).
+  **Update (your note, Oct 17):** the Player audit should be completely revamped into something else. To discuss.
+- [ ] **Casting breakdown** (your idea, next in Performance): a simple chart of every cast each player made; clicking a
+  player shows a detailed breakdown. Many specs have casts per minute they should keep up. Thoughts to talk over first.
 - [x] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
   on a click (round 127).
 - **Goal (your note): the Performance tab is meant to replace Warcraft Logs** for the raid. Everything people check on Warcraft
@@ -68,6 +71,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 132: Resources in two views
+- [x] **Healer mana and Everyone's power** (your pick, option 1 of 3 sketches): the row of 13 power buttons is gone.
+  Everyone's power is one list of the whole raid, each player with their own power's colour dot, the most wasted first
+  (role buttons to narrow it), with tiles for the most wasted, how many wasted 10% or more, and the longest stretch at
+  full. Pick a player for their chart in that power's numbers and the full breakdown, with a tab per power when they
+  have two (a Rogue's Energy and Combo Points). The raid side ranks where the waste came from across every power (by how
+  many full bars of it, so 8 Holy Power and 300 Energy compare fairly). Healer mana is the mana view as before.
+- [x] All pulls: the average player's waste per pull (or the picked player's), click a pull to open it. A report card's
+  "Resources" button opens the view that player is in. On a phone the power names shrink to their colour dots.
 
 ## 2026-10-17, round 131: Resources debug and polish, Coiled Altar boss health
 - [x] **Boss health on The Coiled Altar** (your note): the grey boss line (Resources → Mana, and the Latest pull chart)

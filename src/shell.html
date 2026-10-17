@@ -1634,6 +1634,10 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .rs-sw { display: inline-flex; flex-wrap: wrap; margin: 0 0 12px; } .rs-sw button { padding: 6px 13px; }
 .rs-dot { display: inline-block; width: 8px; height: 8px; margin: 0 6px 1px 0; border-radius: 50%; vertical-align: middle; box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
 .rs-sw button:not(.on) .rs-dot { opacity: .6; }
+.rs-dots { display: inline-flex; margin-right: 6px; vertical-align: middle; } .rs-dots .rs-dot { margin: 0 0 0 -3px; } .rs-dots .rs-dot:first-child { margin-left: 0; }
+.rs-pt { display: inline-flex; flex-wrap: wrap; margin: 2px 0 12px; } .rs-pt button { padding: 5px 12px; }
+.rs-pw { margin-left: 8px; font-size: 11.5px; font-weight: 500; color: rgba(255,255,255,.75); white-space: nowrap; } .rs-pw .rs-dot { width: 7px; height: 7px; margin-right: 4px; }
+@media (max-width: 560px) { .rs-pw .rs-pn { display: none; } .rs-pw { margin-left: 6px; } } /* (a phone: the power's colour dot only, so the name has room) */
 .rs-nc { margin: 0 0 14px; }
 .mp-full { fill: rgba(229,83,75,.16); }
 .rs-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 2px 0 12px; }
