@@ -83,6 +83,30 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 144: Performance, one tab per thing
+- [x] **Your vision (noted): Warcraft Logs, but it judges the data instead of only showing it.** One tab per category,
+  nothing repeated, every list the same bar chart.
+  1. **New tabs**: Cooldowns, Buffs & debuffs, and Survivability on its own again. The buttons are in four groups: How they
+     played (Report card, Casts, Resources), Output (Damage, Healing, Damage taken), Cooldowns and buffs (Cooldowns, Power
+     Infusion, Buffs & debuffs) and Toolkit (Utility, Survivability).
+  2. **Cooldowns**: Uses, a bar per player with the share of their big cooldowns' possible uses, damage and healing alike;
+     click one for each cooldown on a strip of the pull (pressed, sat ready, Bloodlust). Raid cooldowns, a bar per cooldown
+     and player as long as what it did; click one for each press. A raid cooldown like Tranquility counts half its uses as
+     full marks, as on the Report card.
+  3. **Buffs & debuffs**: a bar per buff or debuff with its uptime; click one for who had it; pick a player on the right for
+     only theirs; a search box in the list. Raid buffs, flasks and food are one line at the bottom; heals over time and
+     shields are on Healing.
+  4. **Utility**: interrupts, dispels, battle resses, externals and a new Crowd control (stuns, roots and knockbacks that
+     landed on enemies, and how many each hit). Mind control CC is gone from Performance: it stays on Mechanics.
+  5. **Survivability**: defensives, self-heals, health potions, Healthstones, and close calls (under 30% and lived, and what
+     they pressed).
+  6. **One home per thing**: a player's opened row on Damage and Healing keeps only their spells, targets and comparisons
+     (no "How it went", big cooldowns, buffs or mana); on Damage taken, their biggest hits and what hit them. "See it in"
+     buttons go to their Cooldowns, Casts, Buffs or Survivability. The Big cooldowns and Close calls tiles moved to their tabs.
+  7. **Sort any list** by clicking its column titles (again for the other way, # for the usual order); ability tables too.
+  8. **One search** at the top of Performance: players, spells, buffs, debuffs, cooldowns and damage sources. Each match says
+     where it is, and a click opens that tab with it picked. "flex" finds Flëxørçïst.
+
 ## 2026-10-17, round 143: Performance, one cohesive look
 - [x] **Your goal (noted): simplicity and clarity, never overwhelming.** All seven cleanups:
   1. **Same order on every view**: the view buttons, the switches, the boxes, the chart, the list. A view's own switch

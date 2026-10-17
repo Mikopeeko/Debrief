@@ -833,6 +833,30 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-srcd .pf-sl { display: flex; justify-content: space-between; gap: 10px; padding: 5px 4px; border-top: 1px solid var(--line); border-radius: 4px; font-size: 13px; } .pf-srcd .pf-st + .pf-sl { border-top: 0; } .pf-srcd .pf-sl > span:last-child { text-align: right; } .pf-srcd .pf-sl .nm { font-weight: 600; }
 .pf-srcd .pf-sl[data-src] { cursor: pointer; } .pf-srcd .pf-sl[data-src]:hover { background: rgba(255,255,255,.04); }
 @media (max-width: 640px) { .pf-srcst { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pf-sw { grid-template-columns: minmax(0, 1fr) 56px; grid-template-areas: "p v" "b b" "d d"; } }
+/* ---- Cooldowns: each cooldown's presses on the pull; Buffs & debuffs: the player list; links between views ---- */
+.cd-l { padding: 7px 4px; border-top: 1px solid var(--line); } .pf-ph + .cd-l { border-top: 0; }
+.cd-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; } .cd-h b { font-variant-numeric: tabular-nums; white-space: nowrap; } .cd-h b.ok { color: var(--good); } .cd-h b.warn { color: var(--warn); } .cd-h b.bad { color: var(--bad); }
+.cd-st { position: relative; height: 12px; margin: 6px 0 4px; border-radius: 4px; background: rgba(255,255,255,.05); overflow: hidden; } .cd-st i { position: absolute; top: 0; bottom: 0; }
+.cd-st .rd { background: rgba(255,255,255,.13); } .cd-st .pr { width: 4px; margin-left: -2px; border-radius: 2px; background: var(--c); z-index: 2; } .cd-st .lu { width: 2px; margin-left: -1px; background: var(--gold); z-index: 1; }
+.cd-st .gone { right: 0; background: repeating-linear-gradient(135deg, rgba(229,83,75,.28) 0 3px, transparent 3px 7px); } .cd-x { color: var(--faint); font-size: 11.5px; }
+.cd-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 4px 2px; color: var(--faint); font-size: 11.5px; } .cd-lg span { display: inline-flex; align-items: center; gap: 5px; } .cd-lg i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; }
+.cd-lg .rd { background: rgba(255,255,255,.13); } .cd-lg .lu { width: 2px; height: 11px; background: var(--gold); } .cd-lg .pr { width: 4px; height: 11px; }
+.pf-go { margin: 10px 0 2px; } .pf-go .btn { padding: 4px 10px; font-size: 12.5px; } .pf-srcd [data-cdn], .pf-aw { cursor: pointer; } .pf-srcd [data-cdn]:hover, .pf-aw:hover { background: rgba(255,255,255,.04); } .pf-aw.on { background: rgba(230,180,80,.12); }
+.pf-srcd .pf-sl .nm + .icw, .pf-srcd .pf-sl .nm + .sp { margin-left: 4px; } .pf-auras .pf-more { margin: 10px 0 0; } .pf-arow .cb-in .icw { flex: none; }
+/* ---- Performance lists and ability tables sort by their column names ---- */
+.cb-h > [role="button"], .pfv th[data-sc] { cursor: pointer; user-select: none; } .cb-h > [role="button"]:hover, .pfv th[data-sc]:hover { color: var(--text); }
+.cb-h > .srt, .pfv th.srt { color: var(--gold); } .cb-h > .srt::after, .pfv th.srt::after { content: " \25BE"; } .cb-h > .srt.up::after, .pfv th.srt.up::after { content: " \25B4"; }
+.pf-q { margin-left: auto; width: 180px; min-width: 0; padding: 5px 10px; border: 1px solid var(--line2); border-radius: 7px; background: rgba(255,255,255,.04); color: var(--text); font: 13px var(--body); } .pf-q:focus { outline: none; border-color: var(--gold); }
+@media (max-width: 640px) { .pf-q { width: 100%; margin-left: 0; } }
+/* ---- Performance: one search over every view, its matches in a list under it ---- */
+.pf-find { position: relative; margin-left: auto; } .pf-find .pf-q { width: 240px; margin: 0; }
+.pf-fr { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; width: min(460px, calc(100vw - 32px)); max-height: min(62vh, 560px); overflow-y: auto; padding: 6px; background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
+.pf-fg { padding: 8px 8px 3px; color: var(--faint); font: 600 10.5px var(--body); letter-spacing: .07em; text-transform: uppercase; } .pf-fg .sub { letter-spacing: 0; }
+.pf-fi { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 6px 8px; border: 0; border-radius: 7px; background: none; color: var(--text); font: 13px var(--body); text-align: left; cursor: pointer; }
+.pf-fi:hover, .pf-fi:focus { background: rgba(255,255,255,.06); outline: none; } .pf-fn { display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-weight: 600; } .pf-fn > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-fi > .sub { flex: none; max-width: 55%; text-align: right; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pf-fnone { margin: 8px; }
+@media (max-width: 640px) { .pf-find { flex: 1 1 100%; margin-left: 0; } .pf-find .pf-q { width: 100%; } .pf-fr { left: 0; right: auto; width: 100%; } }
+.pf-cdw { margin-left: 8px; color: #c9ced8; font-size: 12px; font-weight: 600; opacity: .85; } .pf-hrow .cb-in .icw { flex: none; }
 /* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
    left; what went well and the boxes for between pulls on the right ---- */
 @media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
@@ -1989,6 +2013,7 @@ body.bh-off .tabbar .tb-id { display: inline-flex; }
   .pf-head .pfk-t { flex-direction: row; align-items: baseline; gap: 8px; }
   .pf-head .pfk-v { font-size: 17px; } .pf-head .pfk-s { display: none; }
   .pf-head .pf-top { flex: 1; min-width: 320px; } /* (with many views, the pull switch drops under them instead of squeezing) */
+  .pf-head .pfk { flex: 0 1 auto; max-width: 100%; flex-wrap: wrap; gap: 8px 16px; } .pf-head .pfk-g, .pf-head .pfk-gb > .pfk-b, .pf-head .pfk-gb > .pfk-b.on { flex: 0 0 auto; } /* (eleven views: the groups wrap whole, at their own width) */
   .pf-chartrow { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; align-items: stretch; margin: 0 0 14px; }
   .pf-chartrow.solo { grid-template-columns: minmax(0, 1fr); }
   .pf-chartrow > .panel { margin: 0; } .pf-chartrow > .pts.pf-side { --n: 1; margin: 0; grid-auto-rows: 1fr; }

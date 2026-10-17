@@ -564,6 +564,11 @@ const CA_CC = ['ring of peace', 'leg sweep', 'shockwave', "ursol's vortex", 'cha
 const TF_BREAK = CA_CC.concat(['void nova', 'solar beam', 'silence', 'sigil of silence', 'strangulate']);
 // Crowd control that leaves nothing on the target in the log (Ring of Peace knocks back whoever walks in): counted when cast
 const CA_ZONE = ['ring of peace'];
+// Crowd control a player landed on an enemy, for Performance's Utility: the list above by the aura it leaves, less the ones
+// that are mainly damage or a self-heal (Deep Breath, Abomination Limb, Mortal Coil) and passives, plus a few racials; and
+// the ones that leave nothing on their targets, counted when cast (Ring of Peace, Gorefiend's Grasp)
+const PERF_CC = new Set(CA_CC.filter((n) => !['deep breath', 'abomination limb', 'mortal coil', 'grip of the dead', 'ring of peace', "gorefiend's grasp"].includes(n)).concat(['blinding sleet', 'war stomp', 'bull rush', 'haymaker', 'quaking palm']));
+const PERF_CC_CAST = new Set(['ring of peace', "gorefiend's grasp"]);
 // Curses that slow a Spiteful Soulcoiler's casts (Curse of the Satyr replaces Curse of Tongues for some warlocks)
 const CA_CURSE = ['curse of tongues', 'curse of the satyr'];
 // Personal defensives by name (from DEFENSIVES, minus raid-wide ones), for soak checks.
@@ -4800,7 +4805,7 @@ function newPlayer(guid) {
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
     // landed on someone under half health; the buffs on them, each with its time spans)
-    firstHit: new Map(), mana: [], manaUse: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
+    firstHit: new Map(), mana: [], manaUse: [], lowHeal: 0, buffs: new Map(), debuffs: new Map(), ccL: [], dmgTS: [], absS: [],
     // (each heal they gave themselves from a self-heal button, a Healthstone or a health potion: { t, spell, id, amt })
     selfH: [],
     // (their power other than mana, by type, for wasted resources (resAt); every cast they started, { t, id, spell, done },
@@ -4842,6 +4847,9 @@ function bumpN(arr, t, name, v) { const i = t | 0; while (arr.length <= i) arr.p
 // a buff on a player going up or down: spans of [from, to] (to stays null while it's up; a buff removed without being put
 // on in the log was up from the pull)
 function buffUp(p, id, name, t, by) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [], by: new Map() }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) return; if (b.sp.length < 400) b.sp.push([t, null]); if (by) b.by.set(by, (b.by.get(by) || 0) + 1); }
+// (debuffs on players the same way: when each went on and off, from whom, and the most stacks it reached)
+function debuffUp(p, id, name, t, by) { let b = p.debuffs.get(name); if (!b) p.debuffs.set(name, b = { name, id, sp: [], by: new Map(), mx: 1 }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) return; if (b.sp.length < 400) b.sp.push([t, null]); if (by) b.by.set(by, (b.by.get(by) || 0) + 1); }
+function debuffDown(p, id, name, t) { const b = p.debuffs.get(name); if (!b) { p.debuffs.set(name, { name, id, sp: [[0, t]], by: new Map(), mx: 1 }); return; } const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; }
 function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [], by: new Map() }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; else if (!b.sp.length) b.sp.push([0, t]); }
 // a player's mana from a cast's advanced block (the power lists are pipe-separated: "9|0" with "5|274744" is Holy Power 5
 // and mana 274744): [t, fraction], at most one every 2 seconds
@@ -5082,6 +5090,9 @@ function analyze(item, text, opts) {
           const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.add(dg);
           else if (CD_DR.has(ln)) { let by = owner; if (!by) { for (let i = r.cdUse.length - 1; i >= 0 && t - r.cdUse[i].t <= 15; i--) if (r.cdUse[i].cd === CD_DR.get(ln)[0] && isPlayer(r.cdUse[i].g)) { by = r.cdUse[i].g; break; } } drOn.set(dg + '|' + ln, by || sg); }
           else if (ln === 'rallying cry' && (owner || isPlayer(sg))) { const u = cdPress(owner || sg, 'Rallying Cry', t, true); if (!u.cov.has(dg)) { u.cov.add(dg); u.hp += 0.1 * (pMax.get(dg) || 0); } } }
+        // (crowd control a player, their pet or their totem landed on an enemy)
+        if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF' && (parseInt(f[6], 16) & 0x40) && PERF_CC.has(f[9].toLowerCase())) { const q = P(owner, pet ? null : sn); if (q.ccL.length < 600) q.ccL.push({ t, spell: f[9], id: num(f[8]), on: dn }); }
+        if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
         break;
       }
       case 'SPELL_AURA_REMOVED':
@@ -5089,6 +5100,7 @@ function analyze(item, text, opts) {
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t);
           const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }
+        if (f.length >= 12 && f[11] === 'DEBUFF' && isPlayer(dg)) debuffDown(P(dg, dn), num(f[8]), f[9], t);
         break;
       // a player gaining power (rage from a hit, Holy Power from Holy Shock, mana from a potion…): how much, and how much of it
       // came while they were already full (the last four fields: amount, over, power type, max)
@@ -5142,6 +5154,7 @@ function analyze(item, text, opts) {
         // (the cast it finishes, if it had a cast bar: its latest start of the same spell in the last 15 s)
         for (let i = p.starts.length - 1; i >= 0 && i >= p.starts.length - 4; i--) { const s0 = p.starts[i]; if (s0.done == null && s0.id === id && t - s0.t <= 15) { s0.done = t; break; } }
         if (W(spell)) modEv.push({ k: 'pcast', t, src: sg, spell, id, dst: dg });
+        if (PERF_CC_CAST.has(spell.toLowerCase()) && p.ccL.length < 600) p.ccL.push({ t, spell, id, on: '' });
         const ca = p.castAb.get(spell); if (ca) ca.n++; else p.castAb.set(spell, { name: spell, id, n: 1 });
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
         const ln = spell.toLowerCase();
@@ -5200,6 +5213,7 @@ function analyze(item, text, opts) {
     const firstDeath = r.deaths.filter((d) => d.guid === g).map((d) => d.t);
     p.aliveUntil = Math.max(1, firstDeath.length ? Math.min(...firstDeath) : r.duration);
     for (const b of p.buffs.values()) for (const s of b.sp) if (s[1] == null) s[1] = r.duration;
+    for (const b of p.debuffs.values()) for (const s of b.sp) if (s[1] == null) s[1] = r.duration;
   }
   for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
 
