@@ -327,7 +327,8 @@ function renderList() {
   // the boss picker: a menu when there's more than one boss tonight, else just the name
   const gName = (g) => (g.kind === 'run' ? g.run.zone + ' +' + g.run.level : g.list[0].boss + ' · ' + g.list[0].diff);
   const gLast = (g) => (g.kind === 'run' ? g.run : g.list[g.list.length - 1]);
-  if (pick) pick.innerHTML = groups.length > 1 ? '<button class="bp-b" type="button" aria-haspopup="true" aria-expanded="false">' + esc(gName(cur)) + CHEV + '</button><div class="bp-pop" hidden>' +
+  // (a log with more than one boss: the switch says how many, in gold, so it's easy to spot)
+  if (pick) pick.innerHTML = groups.length > 1 ? '<button class="bp-b multi" type="button" aria-haspopup="true" aria-expanded="false" title="This log has ' + groups.length + ' bosses: pick one"><span class="bp-n">' + groups.length + ' bosses</span>' + esc(gName(cur)) + CHEV + '</button><div class="bp-pop" hidden>' +
     groups.map((g) => '<button class="bp-i' + (g === cur ? ' on' : '') + '" type="button" data-last="' + add(gLast(g)) + '"><b>' + esc(gName(g)) + '</b><span>' + (g.kind === 'run' ? esc(g.run.result) + ' · ' + T(g.run.duration) : plural(g.list.length, 'pull') + (g.list.some((b) => b.kill) ? ' · killed' : '')) + '</span></button>').join('') + '</div>'
     : '<span class="bp-l">' + esc(gName(cur)) + '</span>';
   let h = '';
@@ -3901,13 +3902,18 @@ function perf() {
   const raidS = []; for (const x of rowsAll) (x.p[key] || []).forEach((v, i) => { if (i < end) raidS[i] = (raidS[i] || 0) + v; });
   if (!S.perfSel || !rowsAll.some((x) => x.p.name === S.perfSel)) S.perfSel = null;
   const sel = S.perfSel ? rowsAll.find((x) => x.p.name === S.perfSel) : null;
+  // (Damage done can show only the damage on the boss (when some went elsewhere), or only the damage into the adds that
+  // have to die (when the fight has any): a switch on the bars, and the chart follows it)
+  const AD = kind === 'dmg' ? addsDamage(r, ps, w0, w1, bossN) : null, BD = kind === 'dmg' ? tgtDamage(ps, w0, w1, (n) => bossN.has(n)) : null, allT = kind === 'dmg' ? tgtDamage(ps, w0, w1, () => true).total : 0;
+  const canAdds = !!(AD && AD.prio.size), canBoss = !!(BD && BD.total > 0 && BD.total < 0.99 * allT);
+  const tgt = S.perfTgt === 'adds' && canAdds ? 'adds' : S.perfTgt === 'boss' && canBoss ? 'boss' : 'all', addsOn = tgt === 'adds', bossOn = tgt === 'boss';
+  const onBossW = bossN.size > 1 ? 'on the bosses' : 'on the boss';
   // ---- the raid at a glance (in the window) ----
   const actTile = (role, who) => { const v = rowsAll.filter((x) => (x.p.role || 'dps') === role).map((x) => activityIn(r, x.p, w0, w1)).filter((a) => a != null), a = v.length ? v.reduce((s, y) => s + y, 0) / v.length : null;
     return plTile(plIco('spell_holy_borrowedtime'), 'Active time', a == null ? '—' : Math.round(a) + '<span>% avg</span>', a == null ? 'na' : a >= 85 ? 'ok' : a >= 75 ? 'warn' : 'bad', who + ' casting while alive (mind control left out)'); };
   let tiles;
   if (kind === 'dmg') {
-    // (in the window: damage by target per second)
-    let onBoss = 0, allT = 0; for (const p of ps) { const a = p.dmgTS || []; for (let i = Math.max(0, Math.floor(w0)); i < Math.min(a.length, Math.ceil(w1)); i++) { const o = a[i]; if (o) for (const n in o) { allT += o[n]; if (bossN.has(n)) onBoss += o[n]; } } }
+    const onBoss = BD.total;
     // damage lost to deaths: what each player would have done at their own rate, for the time they were dead here
     const lost = rowsAll.reduce((s, x) => s + (x.al > 0 ? x.alive * Math.max(0, wl - x.al) : 0), 0), lf = lost / Math.max(1, total + lost);
     tiles = [plTile(plIco('achievement_boss_lichking'), 'On the boss', allT ? Math.round(100 * onBoss / allT) + '<span>%</span>' : '—', 'na', allT ? 'the rest went into adds' : 'no damage logged'),
@@ -3930,7 +3936,8 @@ function perf() {
     h += '<div class="panel probbox ' + dst + ' pf-dc"><h3 class="nh">Damage checks <small>the fight\'s shields and adds, up to the wipe filter</small>' + hst(dst, b ? plural(b, 'failed') : w ? w + ' close or late' : 'all passed') + '</h3>' +
       dc.map((x) => '<div class="pb-r ' + x.st + '"><span class="pb-i">' + { bad: '✕', warn: '!', ok: '✓' }[x.st] + '</span><span class="pb-t">' + x.html + '</span><span class="pb-w">' + x.when + '</span></div>').join('') + '</div>'; } }
   // ---- the timeline: the raid's line, or the picked player's (the picked phase stands out) ----
-  const series = sel ? (sel.p[key] || []).slice(0, Math.ceil(end)) : raidS, what = { dmg: 'damage', heal: 'healing', taken: 'damage taken' }[kind];
+  const series = addsOn ? AD.series(sel ? sel.p : null, end) : bossOn ? BD.series(sel ? sel.p : null, end) : sel ? (sel.p[key] || []).slice(0, Math.ceil(end)) : raidS;
+  const what = addsOn ? 'damage into adds' : bossOn ? 'damage ' + onBossW : { dmg: 'damage', heal: 'healing', taken: 'damage taken' }[kind];
   const lg = '<span class="pfc-lg"><span><i class="lg-m"></i>boss mechanics</span><span><i class="lg-l"></i>Bloodlust</span><span><i class="lg-d"></i>deaths</span>' + (sel ? '<span><i class="lg-c" style="background:' + sel.p.color + '"></i>' + (kind === 'taken' ? 'their defensives' : 'their big cooldowns') + '</span>' : '') + '</span>';
   h += '<div class="panel pf-chart"><h3 class="nh"><span class="pfc-ttl">' + (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' + what + ' per second' : 'Raid ' + what + ' per second') + '</span><small>5-second average</small>' + lg +
     // (a picked player's casts fold under the chart: opening them by default pushed the list down every time a name was picked)
@@ -3940,7 +3947,8 @@ function perf() {
   // its cooldowns and the healing after the raid's biggest hits) ----
   const wins = kind === 'dmg' ? perfWins(r, end).filter((w) => !ph || (w.t0 < w1 && w.t1 > w0)) : [];
   const cdsH = kind === 'heal' ? healCds(r, w0, w1) : '', hitsH = kind === 'heal' ? healAfterHits(r, w0, w1) : '';
-  const lenses = PERF_LENS.filter(([k]) => k === 'players' || k === 'heat' || (k === 'phases' && phs.length > 1) || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'healers' && kind === 'heal') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
+  // (no Phases view: the phase buttons at the top already cut every view by phase)
+  const lenses = PERF_LENS.filter(([k]) => k === 'players' || k === 'heat' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'healers' && kind === 'heal') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
   const lens = lenses.some(([k]) => k === S.perfLens) ? S.perfLens : 'players';
   h += lensBar(lenses, lens);
   if (lens !== 'players') {
@@ -3948,22 +3956,34 @@ function perf() {
       : lens === 'cds' ? cdsH : lens === 'hits' ? hitsH : perfHeat(r, kind, ps, w0, w1, phs);
     view(h + '</div>'); bindPerf(); refreshIcons(); return;
   }
+  // (the Warcraft Logs parse is the player's own for the pull, so it stays whichever targets are shown)
   const prs = parsesFor(r, kind);
-  const has = new Set(rowsAll.map((x) => x.p.role || 'dps')), rc = roleCur(has), rows = rowsAll.filter((x) => rc === 'all' || (x.p.role || 'dps') === rc), max = rows.length ? rows[0].tot : 1;
-  const bars = rows.map((x, i) => { const on = sel && sel.p === x.p, pct = total ? 100 * x.tot / total : 0;
+  const tgtB = (k, l) => '<button data-tg="' + k + '"' + (tgt === k ? ' class="on"' : '') + '>' + l + '</button>';
+  const tgtSw = canAdds || canBoss ? '<div class="seg pf-tg" role="tablist" aria-label="Targets">' + (canBoss ? tgtB('boss', bossN.size > 1 ? 'Bosses' : 'Boss') : '') + tgtB('all', 'All targets') + (canAdds ? tgtB('adds', 'On adds') : '') + '</div>' : '';
+  // (boss or adds: each player's damage into them; the adds as a total, since they're only up part of the pull)
+  const TD = addsOn ? AD : bossOn ? BD : null;
+  const rowsB = TD ? rowsAll.map((x) => ({ ...x, all: x.tot, tot: TD.per.get(x.p.name) || 0 })).filter((x) => x.tot > 0).sort((a, b) => b.tot - a.tot) : rowsAll, totB = TD ? TD.total : total;
+  const has = new Set(rowsB.map((x) => x.p.role || 'dps')), rc = roleCur(has), rows = rowsB.filter((x) => rc === 'all' || (x.p.role || 'dps') === rc), max = rows.length ? rows[0].tot : 1;
+  const pc0 = (v) => (v < 0.01 ? '<1' : Math.round(100 * v)) + '%', pc1 = (v) => (v < 0.01 ? '<1' : (100 * v).toFixed(v >= 0.1 ? 0 : 1)) + '%';
+  const rowCls = prs ? ' pf-pr' : '';
+  const bars = rows.map((x, i) => { const on = sel && sel.p === x.p;
     // (healing: overhealing is the faded end of the bar; damage taken: the avoidable part in red)
     const segs = kind === 'taken' && x.avoidShare > 0.005 ? [[Math.max(0.5, 100 * x.tot * (1 - x.avoidShare) / max), 'm'], [100 * x.tot * x.avoidShare / max, 'ad']]
       : [[Math.max(1, 100 * x.tot / max), 'm']].concat(kind === 'heal' && x.over ? [[Math.min(100, 100 * x.tot * x.over / (1 - x.over) / max), 'oh']] : []);
-    // (the small number: overhealing on Healing, the avoidable share on Damage taken, otherwise their share of the raid,
-    // or their rate while alive when they died)
-    const pc0 = (v) => (v < 0.01 ? '<1' : Math.round(100 * v)) + '%';
-    const sub = kind === 'heal' ? pc0(x.over) + ' over' : kind === 'taken' ? (x.avoidShare >= 0.005 ? pc0(x.avoidShare) + ' avoidable' : 'none avoidable') : inWin(x.died) && !x.back ? C(x.alive) + ' alive' : (pct < 1 ? '<1' : pct.toFixed(pct >= 10 ? 0 : 1)) + '%';
-    // (the Warcraft Logs parse has its own column at the right end of the row, not next to the name)
-    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + (prs ? ' pf-pr' : ''), attrs: ' type="button" data-n="' + esc(x.p.name) + '" aria-pressed="' + !!on + '"', k: i + 1, p: x.p, segs, v: C(x.tot / wl), sub,
+    // (the small column is one thing per view, named over it: overhealing on Healing, the avoidable share on Damage
+    // taken, otherwise their share of the raid's damage on those targets)
+    const sub = kind === 'heal' ? pc0(x.over) : kind === 'taken' ? (x.avoidShare >= 0.005 ? pc0(x.avoidShare) : '—')
+      : addsOn ? '<span title="' + esc(pc0(x.all ? x.tot / x.all : 0) + ' of their own damage went into adds') + '">' + pc1(totB ? x.tot / totB : 0) + '</span>' : pc1(totB ? x.tot / totB : 0);
+    // (a death: when, and their rate while alive, on hover)
+    const dTip = inWin(x.died) ? 'died at ' + T(x.died) + (x.back ? ', brought back' : '') + (!addsOn && x.al >= 1 ? ' · ' + C(x.tot / x.al) + ' per second while alive' : '') : '';
+    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + rowCls, attrs: ' type="button" data-n="' + esc(x.p.name) + '" aria-pressed="' + !!on + '"', k: i + 1, p: x.p, segs, v: addsOn ? C(x.tot) : C(x.tot / wl), sub,
       end: prs ? prsChip(prs.get(x.p.name)) : null,
-      chips: inWin(x.died) ? '<span class="pf-d" title="' + esc('died at ' + T(x.died) + (x.back ? ', brought back' : '')) + '">✕ ' + T(x.died) + (x.back ? ' ↻' : '') + '</span>' : '' }); }).join('');
-  h += '<div class="pf-cols"><div class="panel pf-bars"><h3 class="nh"><span>' + { dmg: 'Damage done', heal: 'Healing done', taken: 'Damage taken' }[kind] + '</span><small>per second over ' + (ph ? esc(pfPhK(ph)) + ' (' + T(wl) + ')' : T(end)) + (kind === 'taken' ? ' · avoidable in red' : kind === 'heal' ? ' · overhealing faded' : '') + '</small>' + roleChips(has) + '</h3>' + (bars || '<p class="muted">Nothing recorded.</p>') + '</div>' +
-    '<div class="panel pf-det">' + perfDetail(r, kind, sel ? sel.p : null, bossN, rowsAll) + '</div></div>';
+      chips: dTip ? '<span class="pf-d" title="' + esc(dTip) + '">✕ ' + T(x.died) + (x.back ? ' ↻' : '') + '</span>' : '' }); }).join('');
+  const span = ph ? esc(pfPhK(ph)) + ' (' + T(wl) + ')' : T(end);
+  const head = cbHead(addsOn ? 'Damage' : { dmg: 'DPS', heal: 'HPS', taken: 'Per sec' }[kind], { heal: 'Overheal', taken: 'Avoidable' }[kind] || 'Share', prs ? 'Parse' : '', rowCls);
+  const ttl = addsOn ? 'Damage into adds' : bossOn ? 'Damage ' + onBossW : { dmg: 'Damage done', heal: 'Healing done', taken: 'Damage taken' }[kind];
+  h += '<div class="pf-cols"><div class="panel pf-bars"><h3 class="nh"><span>' + ttl + '</span><small>' + (addsOn ? 'total over ' + span + ' · ' + esc(AD.label) : 'per second over ' + span) + (kind === 'taken' ? ' · avoidable in red' : kind === 'heal' ? ' · overhealing faded' : '') + '</small>' + tgtSw + roleChips(has) + '</h3>' + (bars ? head + bars : '<p class="muted">Nothing recorded.</p>') + '</div>' +
+    '<div class="panel pf-det">' + (addsOn && !sel ? AD.panel() : perfDetail(r, kind, sel ? sel.p : null, bossN, rowsAll)) + '</div></div>';
   view(h + '</div>');
   bindPerf();
   refreshIcons();
@@ -4254,7 +4274,7 @@ function utilCards(cats, one) {
   const sw = '<div class="seg pfu-cat" role="tablist" aria-label="Kind">' + shown.map((x) => '<button type="button" data-c="' + x.key + '"' + (x === c ? ' class="on"' : '') + '>' + esc(x.title) + ' <span class="sub">' + x.rows.reduce((s, y) => s + y.n, 0) + '</span></button>').join('') + '</div>';
   const bars = c.rows.map((x, i) => cbRow({ tag: 'button', cls: sel === x ? ' on' : '', attrs: ' type="button" data-un="' + esc(x.p.name) + '" aria-pressed="' + (sel === x) + '"', k: i + 1, p: x.p,
     segs: [[Math.max(1, 100 * x.n / mx), 'm']], v: String(x.n), sub: tot ? Math.round(100 * x.n / tot) + '%' : '' })).join('');
-  const left = '<div class="panel pf-bars pfu-bars"><h3 class="nh"><span>' + esc(c.title) + '</span><small' + (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' + esc(c.sub) + ' · ' + tot + ' in all' + (one ? '' : ' over the night') + '</small></h3>' + sw +
+  const left = '<div class="panel pf-bars pfu-bars"><h3 class="nh"><span>' + esc(c.title) + '</span><small' + (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' + esc(c.sub) + ' · ' + tot + ' in all' + (one ? '' : ' over the night') + '</small></h3>' + sw + (bars ? cbHead('Casts', 'Share') : '') +
     (bars || '<p class="muted" style="margin:10px 0 0">' + esc(c.none) + '</p>') + '</div>';
   const line = (d, who) => '<div class="pfu-l"><span class="pfu-w">' + d.html + (who ? ' <span class="sub">by</span> ' + who : '') + '</span><span class="sub">' + (one ? d.ts.map((t) => T(t)).join(', ') : '') + '</span><b>' + d.n + '</b></div>';
   let right;
@@ -4362,10 +4382,10 @@ async function perfNight(r0, kind, scopeSw) {
   // a bar per player: their average while alive over the night, their pull-by-pull line, and their best pull
   const maxN = Math.max(1, ...[...acc.values()].map((a) => a.per.length)), all = [...acc.values()].sort((a, b) => b.tot / b.alive - a.tot / a.alive);
   const has = new Set(all.map((x) => x.p.role || 'dps')), rc = roleCur(has), rows = all.filter((x) => rc === 'all' || (x.p.role || 'dps') === rc), top = rows.length ? rows[0].tot / rows[0].alive : 1;
-  h += '<div class="panel pf-bars"><h3 class="nh"><span>' + capS(what) + ' by player</span><small>per second while alive' + (phSel ? ' in ' + esc(phSel) : '') + ', averaged over the pulls they were in</small>' + roleChips(has) + '</h3>' +
+  h += '<div class="panel pf-bars"><h3 class="nh"><span>' + capS(what) + ' by player</span><small>per second while alive' + (phSel ? ' in ' + esc(phSel) : '') + ', averaged over the pulls they were in</small>' + roleChips(has) + '</h3>' + (rows.length ? cbHead('Per sec', 'Their best', '', ' pf-nr') : '') +
     rows.map((x, i) => cbRow({ tag: 'div', cls: ' nb pf-nr', k: i + 1, p: x.p, segs: [[Math.max(1, 100 * (x.tot / x.alive) / top), 'm']], v: C(x.tot / x.alive),
       chips: x.per.length < maxN ? '<span class="sub">' + x.per.length + ' of ' + maxN + '</span>' : '',
-      sub: x.bestPull != null && x.best >= x.tot / x.alive ? 'best ' + C(x.best) + ' · pull ' + x.bestPull : '' })).join('') + '</div>';
+      sub: x.bestPull != null && x.best >= x.tot / x.alive ? C(x.best) + ' · pull ' + x.bestPull : '' })).join('') + '</div>';
   view(h + '</div>');
   bindPerf(); refreshIcons();
   const byPull = new Map(reps.map((r) => [r.item.pull, r.item]));
@@ -4378,8 +4398,11 @@ async function perfNight(r0, kind, scopeSw) {
 function cbRow(o) {
   const fill = o.segs.filter(([w]) => w > 0).map(([w, k]) => '<i class="' + k + '" style="width:' + Math.min(100, w).toFixed(1) + '%"></i>').join('');
   return '<' + o.tag + ' class="pf-row cb' + (o.cls || '') + '"' + (o.attrs || '') + '><span class="pf-k">' + o.k + '</span><span class="cb-b" style="--c:' + o.p.color + '"><span class="cb-f">' + fill + '</span>' +
+    (o.tick != null ? '<span class="cb-tk" style="left:' + Math.max(0, Math.min(100, o.tick)).toFixed(1) + '%"></span>' : '') +
     '<span class="cb-in">' + avatar(o.p, true) + '<span class="pf-nm"><span class="nm">' + esc(o.p.name) + '</span>' + (o.chips || '') + '</span></span></span><b class="cb-v">' + o.v + '</b>' + (o.extra || '') + '<span class="cb-s">' + (o.sub || '') + '</span>' + (o.end != null ? '<span class="cb-r">' + o.end + '</span>' : '') + '</' + o.tag + '>';
 }
+// the column names over a list of bars (cls: the rows' own column classes, so the names line up)
+const cbHead = (v, s, end, cls) => '<div class="pf-row cb nb cb-h' + (cls || '') + '"><span class="pf-k">#</span><span class="cb-hn">Player</span><span class="cb-v">' + v + '</span><span class="cb-s">' + s + '</span>' + (end ? '<span class="cb-r">' + end + '</span>' : '') + '</div>';
 // ---- Performance: the views under the timeline. Players (the bars and the picked player), then the same pull cut other
 // ways: by phase, by damage window, by target, healers only, and as a heatmap ----
 const PERF_LENS = [['players', 'Players'], ['cds', 'Cooldowns'], ['hits', 'Big hits'], ['healers', 'Healers'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets'], ['heat', 'Heatmap']];
@@ -4455,29 +4478,75 @@ function perfPhases(r, kind, ps, end, phs, pk) {
     '<details class="howit"><summary>How it works</summary><div>Each cell is the player\'s rate while alive in that phase, up to the wipe filter, shaded by where it ranks in its column; a phase they were dead for reads dead. ' + (cmp ? (showB ? 'It\'s compared with the ' + plural(nPulls, 'pull') + ' of this boss read so far: ▲▼ against their own best pull of the night in that phase (only pulls they lived most of the phase in), ★ when this pull is it. ' : 'Open All pulls once and each cell is compared with their best pull of the night in that phase. ') : '') + 'Click a name for their breakdown.</div></details></div>';
 }
 
-// Damage windows: a row per player, a column per window (Bloodlust and the fight's own): their damage per second while
-// alive in it (damage a boss shield soaked counts), against their own rate over the pull, and the big cooldowns and combat
-// potion they had going for it (a potion drunk up to 25 seconds before still counts)
+// Damage windows: one window at a time, picked on a switch (Bloodlust and the fight's own). A bar per player for their
+// damage per second while alive in it (damage a boss shield soaked counts), a tick at their own rate over the pull, the
+// badge for how far past it they went, and the big cooldowns and combat potion they had going for it (a potion drunk up
+// to 25 seconds before still counts). On the right, the raid in that window and every window side by side.
 function perfWindows(r, ps, end, wins) {
   const lust = perfContext(r).lust, ser = (p) => { const a = p.dmgS || [], b = p.absS || [], n = Math.max(a.length, b.length), o = new Array(n); for (let i = 0; i < n; i++) o[i] = (a[i] || 0) + (b[i] || 0); return o; };
+  const wi = Math.max(0, Math.min(wins.length - 1, S.perfWin | 0)), w = wins[wi];
   const { has, list } = lensRows(ps, null, 'dps');
-  const rows = list.map((p) => { const s = ser(p), avg = rateIn(r, p, s, 0, end), cds = bigCds(r, p, end, lust);
-    return { p, tot: sumIn(s, 0, end), cells: wins.map((w) => { const v = rateIn(r, p, s, w.t0, w.t1);
-      return { v, x: v != null && avg ? v / avg : null, used: cds.filter((c) => c.ts.some((t) => t >= w.t0 - 3 && t <= w.t1)), pot: p.cons.combatpot.some((u) => u.t >= w.t0 - 25 && u.t <= w.t1) }; }) }; })
-    .filter((x) => x.tot > 0).sort((a, b) => b.tot - a.tot);
-  if (!rows.length) return '<div class="panel pf-lp">' + lensHead('Damage windows', '', roleChips(has, 'dps')) + '<p class="muted">No damage recorded.</p></div>';
+  // (the picked window, per player: their rate in it and over the pull, the cooldowns they pressed for it, a potion)
+  const rows = list.map((p) => { const s = ser(p), avg = rateIn(r, p, s, 0, end), v = rateIn(r, p, s, w.t0, w.t1), cds = bigCds(r, p, end, lust);
+    return { p, tot: sumIn(s, 0, end), avg, v, x: v != null && avg ? v / avg : null, cds, used: cds.filter((c) => c.ts.some((t) => t >= w.t0 - 3 && t <= w.t1)), pot: p.cons.combatpot.some((u) => u.t >= w.t0 - 25 && u.t <= w.t1) }; })
+    .filter((x) => x.tot > 0).sort((a, b) => (b.v == null ? -1 : b.v) - (a.v == null ? -1 : a.v));
+  const sw = wins.length > 1 ? '<div class="seg pf-ws" role="tablist" aria-label="Window">' + wins.map((q, i) => '<button type="button" data-wi="' + i + '"' + (i === wi ? ' class="on"' : '') + '>' + esc(q.short || q.label) + '<span class="n">' + T(q.t0) + '</span></button>').join('') + '</div>' : '';
+  const head = lensHead('Damage windows', esc(w.label) + ', ' + T(w.t0) + '–' + T(w.t1) + ' · per second while alive · the white tick is their usual', roleChips(has, 'dps')) + sw;
+  if (!rows.length) return '<div class="panel pf-bars">' + head + '<p class="muted">No damage recorded.</p></div>';
   const allS = (() => { const o = []; for (const p of ps) ser(p).forEach((v, i) => { o[i] = (o[i] || 0) + v; }); return o; })(), raidAvg = sumIn(allS, 0, end) / end;
+  const raidIn = (q) => sumIn(allS, q.t0, q.t1) / Math.max(1, q.t1 - q.t0);
   const xb = (x) => (x == null ? '' : '<span class="dl ' + (x >= 1.12 ? 'up' : x < 0.95 ? 'dn' : 'lv') + '">×' + x.toFixed(2) + '</span>');
-  const th = wins.map((w) => '<th class="pf-c">' + esc(w.short || w.label) + '<span>' + T(w.t0) + ' · ' + Math.round(w.t1 - w.t0) + 's</span></th>').join('');
-  const raid = wins.map((w) => { const v = sumIn(allS, w.t0, w.t1) / Math.max(1, w.t1 - w.t0), pots = rows.filter((x) => x.cells[wins.indexOf(w)].pot).length, cdN = rows.filter((x) => x.cells[wins.indexOf(w)].used.length).length;
-    return '<td class="pf-c"><b>' + C(v) + '</b>' + xb(raidAvg ? v / raidAvg : null) + '<span class="pf-fl">' + plural(cdN, 'cooldown') + ' · ' + plural(pots, 'potion') + (w.lust ? '' : lust != null && lust >= w.t0 - 10 && lust <= w.t1 ? ' · with Bloodlust' : '') + '</span></td>'; }).join('');
-  const body = rows.map((x) => '<tr data-n="' + esc(x.p.name) + '" tabindex="0"><td class="pf-pc">' + pfName(x.p) + '</td>' + x.cells.map((c) => (c.v == null ? '<td class="pf-c na"><span class="sub">dead</span></td>'
-    : '<td class="pf-c' + (c.x != null && c.x < 0.95 ? ' lo' : '') + '"><b>' + C(c.v) + '</b>' + xb(c.x) + (c.used.length || c.pot ? '<span class="pf-fl">' + (c.used.length ? '<span class="cdm" title="' + esc(c.used.map((u) => u.name).join(', ')) + '">▲ ' + esc(c.used.length > 1 ? c.used.length + ' cooldowns' : c.used[0].name) + '</span>' : '') + (c.pot ? '<span class="ptm">pot</span>' : '') + '</span>' : '') + '</td>')).join('') + '</tr>').join('');
-  return '<div class="panel pf-lp">' + lensHead('Damage windows', 'per second while alive in each window', roleChips(has, 'dps')) +
-    '<div class="pf-tw"><table class="pf-t k-dmg pf-wt"><thead><tr><th class="pf-pc">Player</th>' + th + '</tr></thead><tbody><tr class="raid"><td class="pf-pc"><span class="nm">Raid</span></td>' + raid + '</tr>' + body + '</tbody></table></div>' +
-    '<details class="howit"><summary>How it works</summary><div>Each window is a stretch where damage counts double: Bloodlust\'s 40 seconds, and the fight\'s own (a damage amp, a shield to break, an intermission). The number is their damage per second while alive in it, damage soaked by a boss shield included. ×1.40 means 40% more than their own rate over the pull; under ×0.95 is marked, since a window should be above it. ▲ is a big cooldown pressed for it (up to 3 seconds before), "pot" a combat potion (up to 25 seconds before).</div></details></div>';
+  // (a bar per player: their rate in the window, a tick at their own rate over the pull; by the name, what they pressed)
+  const mx = Math.max(1, ...rows.map((x) => Math.max(x.v || 0, x.avg || 0)));
+  // (on a phone the chip is just ▲ and how many, so the name keeps its room)
+  const cdChip = (u) => '<span class="pfw-c" title="' + esc(u.map((c) => c.name).join(', ')) + '">▲<span class="pfw-ct"> ' + esc(u.length > 1 ? u.length + ' cooldowns' : u[0].name) + '</span>' + (u.length > 1 ? '<span class="pfw-cn">' + u.length + '</span>' : '') + '</span>';
+  const bars = rows.map((x, i) => cbRow({ tag: 'button', cls: ' pf-wr', attrs: ' type="button" data-n="' + esc(x.p.name) + '" title="' + esc('their usual: ' + C(x.avg || 0) + ' per second over the pull') + '"', k: i + 1, p: x.p,
+    segs: [[x.v ? Math.max(1, 100 * x.v / mx) : 0, 'm']], tick: x.avg ? 100 * x.avg / mx : null, v: x.v == null ? '—' : C(x.v), sub: x.v == null ? '<span class="sub">dead</span>' : xb(x.x),
+    chips: (x.used.length ? cdChip(x.used) : '') + (x.pot ? '<span class="pfw-p" title="combat potion">pot</span>' : '') })).join('');
+  // (the right side: the raid in the window, who had nothing going for it, and every window side by side)
+  const rv = raidIn(w), withLust = !w.lust && lust != null && lust >= w.t0 - 10 && lust <= w.t1;
+  const alive = rows.filter((x) => x.v != null), withCds = alive.filter((x) => x.cds.length), cdUsed = withCds.filter((x) => x.used.length), pots = alive.filter((x) => x.pot);
+  const none = alive.filter((x) => !x.used.length && !x.pot), below = alive.filter((x) => x.x != null && x.x < 0.95);
+  const stat = (v, l) => '<div class="pfw-s"><b>' + v + '</b><span>' + l + '</span></div>';
+  const who = (arr) => arr.map((x) => '<span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span>').join(', ');
+  const wmx = Math.max(1, ...wins.map(raidIn));
+  const side = '<h3 class="nh"><span>The raid in ' + esc(w.short || w.label) + '</span><small>' + T(w.t0) + '–' + T(w.t1) + ' (' + Math.round(w.t1 - w.t0) + 's)' + (withLust ? ' · with Bloodlust' : '') + '</small></h3>' +
+    '<div class="pfw-sts">' + stat(C(rv) + xb(raidAvg ? rv / raidAvg : null), 'raid damage per second') + stat(cdUsed.length + '<span> of ' + withCds.length + '</span>', 'pressed a big cooldown') + stat(pots.length + '<span> of ' + alive.length + '</span>', 'drank a potion') + '</div>' +
+    (none.length ? '<p class="pfw-l"><span class="sub">No cooldown or potion: </span>' + who(none) + '</p>' : '') +
+    (below.length ? '<p class="pfw-l"><span class="sub">Below their usual: </span>' + who(below) + '</p>' : '') +
+    (wins.length > 1 ? '<h3 class="nh pfw-h"><span>Every window</span><small>the raid\'s damage per second in each, against its usual</small></h3>' + wins.map((q, i) => { const v = raidIn(q);
+      return '<button type="button" class="pfw-w' + (i === wi ? ' on' : '') + '" data-wi="' + i + '"><span class="pfw-wn">' + esc(q.short || q.label) + ' <span class="sub">' + T(q.t0) + '</span></span><span class="pf-ab"><i style="width:' + (100 * v / wmx).toFixed(1) + '%;background:' + PERF_COL.dmg + '"></i></span><b>' + C(v) + '</b>' + xb(raidAvg ? v / raidAvg : null) + '</button>'; }).join('') : '');
+  return '<div class="pf-cols"><div class="panel pf-bars">' + head + cbHead('DPS', 'vs usual', '', ' pf-wr') + bars +
+    '<details class="howit"><summary>How it works</summary><div>A window is a stretch where damage counts most: Bloodlust\'s 40 seconds, and the fight\'s own (a damage amp, a shield to break, an intermission). Each bar is the player\'s damage per second while alive in it, damage soaked by a boss shield included; the white tick is their own rate over the whole pull, so a bar past its tick means they pushed. ×1.40 means 40% more than their usual; under ×0.95 is orange, since a window should be above it. ▲ is a big cooldown pressed for it (up to 3 seconds before), "pot" a combat potion (up to 25 seconds before). Click a name for their breakdown.</div></details></div>' +
+    '<div class="panel pf-det">' + side + '</div></div>';
 }
 
+// Damage into the targets pick() takes (by name), in the window: per player, the raid's total, and per second for the chart
+function tgtDamage(ps, w0, w1, pick) {
+  const i0 = Math.max(0, Math.floor(w0)), per = new Map(); let total = 0;
+  for (const p of ps) { const a = p.dmgTS || []; let s = 0; for (let i = i0; i < Math.min(a.length, Math.ceil(w1)); i++) { const o = a[i]; if (o) for (const n in o) if (pick(n)) s += o[n]; } if (s) { per.set(p.name, s); total += s; } }
+  const series = (p, end) => { const out = []; for (const q of p ? [p] : ps) (q.dmgTS || []).forEach((o, i) => { if (i >= end || !o) return; let s = 0; for (const n in o) if (pick(n)) s += o[n]; out[i] = (out[i] || 0) + s; }); for (let i = 0; i < Math.ceil(end); i++) out[i] = out[i] || 0; return out; };
+  return { per, total, series };
+}
+// Damage into the adds that have to die (the boss module's list, plus adds that die on a timer; or, for a boss with no
+// list, any other target that took 3% of the raid's damage), in the window: per player, per add, and per second for the
+// chart. panel(): with nobody picked, each add and who hit it most.
+function addsDamage(r, ps, w0, w1, bossN) {
+  const focus = new Set([...(r.focus || []), ...bossN]), listN = (r.priority || []).concat(r.useful || []), i0 = Math.max(0, Math.floor(w0));
+  const all = new Map(); for (const p of ps) { const a = p.dmgTS || []; for (let i = i0; i < Math.min(a.length, Math.ceil(w1)); i++) { const o = a[i]; if (o) for (const n in o) all.set(n, (all.get(n) || 0) + o[n]); } }
+  const tot = [...all.values()].reduce((s, v) => s + v, 0) || 1;
+  const prio = new Set(listN.length ? listN.filter((n) => all.has(n)) : [...all].filter(([n, v]) => !focus.has(n) && v >= 0.03 * tot).map(([n]) => n));
+  const per = new Map(), byAdd = new Map();
+  for (const p of ps) { const a = p.dmgTS || []; let s = 0; for (let i = i0; i < Math.min(a.length, Math.ceil(w1)); i++) { const o = a[i]; if (o) for (const n in o) if (prio.has(n)) { s += o[n]; let m = byAdd.get(n); if (!m) byAdd.set(n, m = new Map()); m.set(p, (m.get(p) || 0) + o[n]); } } if (s) per.set(p.name, s); }
+  const total = [...per.values()].reduce((s, v) => s + v, 0), label = (r.priority || []).length ? 'the adds that have to die' : 'the adds';
+  const barList = (items, color) => { const mx = Math.max(1, ...items.map((x) => x.v)); return items.map((x) => '<div class="pf-a"><span class="pf-an">' + x.html + '</span><span class="pf-ab"><i style="width:' + (100 * x.v / mx).toFixed(1) + '%;background:' + color + '"></i></span><b>' + C(x.v) + '</b></div>').join(''); };
+  const series = (p, end) => { const out = [], list = p ? [p] : ps; for (const q of list) (q.dmgTS || []).forEach((o, i) => { if (i >= end || !o) return; let s = 0; for (const n in o) if (prio.has(n)) s += o[n]; out[i] = (out[i] || 0) + s; }); for (let i = 0; i < Math.ceil(end); i++) out[i] = out[i] || 0; return out; };
+  const panel = () => '<h3 class="nh"><span>Each add</span><small>' + esc(label) + ', and who hit it most</small></h3>' +
+    barList([...byAdd].map(([n, m]) => ({ n, v: [...m.values()].reduce((s, x) => s + x, 0), top: [...m].sort((a, b) => b[1] - a[1]).slice(0, 3) })).sort((a, b) => b.v - a.v)
+      .map((x) => ({ html: esc(x.n) + '<div class="sub">' + x.top.map(([p, v]) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span> ' + Math.round(100 * v / Math.max(1, x.v)) + '%').join(', ') + '</div>', v: x.v })), PERF_COL.dmg) +
+    '<p class="sub" style="margin:10px 0 0">Pick a player for their own targets. ' + ((r.priority || []).length ? '' : 'No list of adds for this boss yet: every add that took 3% of the raid\'s damage counts.') + '</p>';
+  return { prio, per, byAdd, total, label, series, panel };
+}
 // Targets: where each player's damage went (the boss and what shares its health; the adds that have to die; everything
 // else), how fast each DPS got onto those adds after the raid's first hit on them, each set of them, and the raid's
 // damage by target over time
@@ -4664,9 +4733,10 @@ function bindPerf() {
   $$('.pfv .plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   $$('.pfph button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfPh = b.dataset.ph || null; perf(); }));
   $$('.pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; perf(); }));
+  $$('.pf-tg button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfTgt = b.dataset.tg; perf(); }));
   // (Utility: the kind switch, and a player's bar picks them; clicking it again shows the whole raid)
   $$('.pfu-cat button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.utilCat = b.dataset.c; S.utilSel = null; renderMain(); refreshIcons(); }));
-  $$('.pfu-bars .pf-row').forEach((b) => (b.onclick = () => { S.utilSel = S.utilSel === b.dataset.un ? null : b.dataset.un; renderMain(); refreshIcons(); }));
+  $$('.pfu-bars .pf-row:not(.nb)').forEach((b) => (b.onclick = () => { S.utilSel = S.utilSel === b.dataset.un ? null : b.dataset.un; renderMain(); refreshIcons(); }));
   $$('.pf-row:not(.nb)').forEach((b) => (b.onclick = () => { S.perfSel = S.perfSel === b.dataset.n ? null : b.dataset.n; perf(); }));
   for (const id of ['#pfRaid', '#pfClose']) { const b = $(id); if (b) b.onclick = () => { S.perfSel = null; perf(); }; }
   { const b = $('#pfCasts'); if (b) b.onclick = () => { S.perfCasts = !S.perfCasts; perf(); }; }
@@ -4674,7 +4744,8 @@ function bindPerf() {
   $$('.pf-lens button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfLens = b.dataset.l; perf(); }));
   $$('.hcd-sw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.hcdView = b.dataset.v; perf(); }));
   // (a name in any of the other views opens that player on Players)
-  $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+  $$('[data-wi]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfWin = +b.dataset.wi; perf(); }));
+  $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n], .pf-row.pf-wr[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
     el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
   bindHeatTip();
   // the chart's readout: a line and a dot at the pointer, with the time, the value, the phase and what happened within 2

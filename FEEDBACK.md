@@ -8,11 +8,28 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Sszorak module (round 99).
 - [x] Then the next fight modules: Nek'zali the Soulcoiler, Vashnik the Malignant, The Lost Explorers (round 108). Every raid boss has a module now.
 - [ ] **Simplify Deaths in the Mechanics tab** a little (your note, round 108).
-- [ ] **Rework the raid cooldowns timeline** in the Mechanics tab, fully (your note, round 108).
+- [x] **Rework the raid cooldowns timeline** in the Mechanics tab, fully (round 110).
+- [ ] **Ula'tek: a damage graph on the Venomous Heart** (damage and DPS into it), on every difficulty (your note).
+- [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
+- [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 112: Performance tab, cleaner bars
+- [x] **Damage done: Boss / All targets / On adds** (your note). Boss is damage on the boss only (shown when some went elsewhere);
+  On adds is damage into the adds that have to die, with each add and who hit it most on the right. The chart above follows the switch.
+- [x] **Tidier columns** (your note): every bar list now has its column names over it (DPS, Share, Parse; HPS, Overheal; Casts,
+  Share), the small column is narrower, and the parse is centred in its own column. The small column always means one thing now; a
+  player who died shows their rate while alive when you hover the ✕.
+- [x] **Damage windows, reworked** (your note: "not clear what this is telling the viewer"). Pick a window (Bloodlust, or the fight's
+  own: Rage of the Shackled, a Nightfall shield, the intermission). Each player's bar is their damage per second in it; the white tick
+  is their usual over the pull, so a bar past its tick means they pushed, and ×2.4 says by how much. ▲ cooldowns and potions sit by
+  the name. On the right: the raid in that window (damage, how many pressed a cooldown, how many drank a potion, who had neither, who
+  was below their usual) and every window side by side.
+- [x] **Damage by phase removed** (your note: the phase buttons at the top already do it).
+- [x] **Boss picker easier to find** (your note): a log with several bosses shows a gold "7 bosses" badge on the picker.
 
 ## 2026-10-17, round 111: Nek'zali's NSRT note
 - [x] **Well groups** (Assignments tab): your note's two Soulcoil Well groups take turns going into the well for each Drowned Echo, in
