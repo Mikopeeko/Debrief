@@ -44,7 +44,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   where players stand in the fount to soak it and the soakers get a healing absorb.
   Noticed in your screenshot of it: it says clean while every Feast shows 0 players absorbed and no heal absorbs
   cleared. Check whether that's right, or the check isn't seeing the soakers.
-- [ ] **Loading screens, nicer to look at** (your note): the "Downloading Nymrissa Wavecaller pull 1 from Warcraft Logs:
+- [x] **Loading screens, nicer to look at** (your note; round 141, with dancing WoW creatures): the "Downloading Nymrissa Wavecaller pull 1 from Warcraft Logs:
   290,179 events…" screen is a line of grey text on an empty page. Make the in-between screens more appealing.
 - [ ] **Survivability in the Mechanics tab, simpler** (your note): its drop-down needs to be simpler and easier to read.
 - [x] **Weights of the mechanical execution grades** (your note; a fairness pass in round 140): look again at how much each mechanic counts toward a
@@ -70,11 +70,32 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Customize your Progress page** (your note): let people pick their own background banner, character avatar and so on.
 - [ ] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
   to the game's name, so people know which mechanic it is.
-- [ ] **A first-time guided tour** (your note): a tutorial that walks a new user through the app, with nice animations showing how
+- [x] **A first-time guided tour** (your note; there is one, and page tips: brought up to date in round 141): a tutorial that walks a new user through the app, with nice animations showing how
   everything works.
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 141: launch prep (Performance on the website, loading screens, tips, the website tested)
+- [x] **Performance is on for the website** (it was greyed out): the Players grades are half the Report card, so raiders
+  need to be able to look into it.
+- [x] **Loading screens** (your note): a card with a little WoW creature dancing (your idea): a murloc, a moonkin, a
+  kobold miner ("You no take candle!"), a voidwalker or a baby serpent of the Abyss, a new one each time, drawn in the
+  app's own style (not game art). Under it: what's happening ("Downloading … 200,979 events"), a bar that fills with
+  the count, and a short tip.
+- [x] **First-time tips**: the tour and the page tips already existed; the Latest pull and Performance ones described the
+  old layouts. Brought up to date, and they show once more.
+- [x] **Background downloads** (your idea): on a Warcraft Logs report, once a pull is open, the boss's other pulls in it
+  download quietly, one at a time, so Summary and All pulls only read them. Tested on the website: a 30-pull night in
+  about 5 minutes, without a click.
+- [x] **Found while testing the website**: it refused downloads ("too many requests"): the site allowed each visitor 90
+  a minute and the app retried a refusal after 1 to 4 seconds. Now 180 a minute, refusals wait 10, 20, 30 s, and
+  background downloads keep to about half the share and wait while a loading screen is up. This is also why the first
+  full night on the website was slow.
+- [ ] **Open (your call): the NSRT note on the website.** It's saved only in the browser where it was pasted, so your
+  raiders see "no NSRT note" on Assignments and their grades leave the assignments out. Options: a shared note saved on
+  the website for your team (needs a small free storage space on your Cloudflare account; my pick), each raider pasting
+  it themselves, or your notes built into the site with each update.
 
 ## 2026-10-17, round 140: Twin Fangs checks, fairer grades, a polish pass
 - [x] **Twin Fangs Feast check said clean on Heroic** (my #2): Heroic has no Tainted Blood founts at all (Warcraft Logs lists

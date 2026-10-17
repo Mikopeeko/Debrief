@@ -902,11 +902,11 @@ function bgFetch(item) {
   const tok = ++BG_TOK, idx = S.index, next = idx.bosses[idx.bosses.indexOf(item) + 1];
   const list = idx.bosses.filter((b) => b.wcl && b !== item && b.id === item.id && b.diffId === item.diffId && !CACHE.has(b));
   list.sort((a, b) => (b === next) - (a === next) || idx.bosses.indexOf(b) - idx.bosses.indexOf(a));
-  // (paced to about 40 requests a minute, well under the site's fair share of 180, so what you ask for never waits on it;
+  // (paced to about 85 requests a minute, under half the site's fair share of 180, so what you ask for never waits on it;
   // and it holds off while a loading screen is up: that's you waiting on something)
   (async () => { for (const b of list) { if (tok !== BG_TOK || S.index !== idx) return;
     while (document.querySelector('#main .ld') && tok === BG_TOK) await new Promise((r) => setTimeout(r, 1500));
-    try { if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(2000, pages * 1500))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; return; } } })();
+    try { if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(1500, pages * 700))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; return; } } })();
 }
 
 // ---------- main frame ----------
