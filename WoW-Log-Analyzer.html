@@ -14743,8 +14743,7 @@ function hpalTimeline(x, o) {
   return '<div class="spc-tl">' + h + '<div class="tl-ax"><div>' + ax.join('') + '</div></div><div class="tl-lg"><span><i class="aw"></i>' + esc(o.wingN) + ' up</span>' + (o.virtue ? '<span><i class="bv"></i>Beacon of Virtue (9s)</span>' : '') + '<span><i class="ok"></i>' + (o.virtue ? 'inside a Beacon' : 'pressed') + '</span>' + (o.virtue ? '<span><i class="warn"></i>outside one</span>' : '') + '<span><i class="io"></i>Infusion of Light up</span><span><i class="red"></i>a whole use wasted, or Holy Shock capped</span>' + (t1 < end - 0.5 ? '<span><i class="dd"></i>dead</span>' : '') + '</div></div>';
 }
 const SPEC_CHECKS = { 'Holy Paladin': hpalChecks };
-// The view: a bar per player whose spec has checks (how many of them are in good shape), their checks under their name;
-// the right side says which specs have checks so far
+// The view: a bar per player whose spec has checks (how many of them are in good shape), their checks under their name
 function specRows(reps, one) {
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name)) pm.set(p.name, p);
   return [...pm.values()].filter((p) => SPEC_CHECKS[p.specName]).map((p) => ({ p, x: SPEC_CHECKS[p.specName](reps, p.name, one) })).filter((a) => a.x)
@@ -14760,11 +14759,7 @@ function specView(reps, one) {
   const left = '<div class="panel pf-bars pfu-bars"><h3 class="nh"><span>Spec checks</span><small>how each player played their own spec, from the guides · checks in good shape' + (one ? '' : ', over the night') + '</small></h3>' +
     (bars ? cbHead('Good', 'Share') + bars : '<p class="muted" style="margin:10px 0 0">None of these players\' specs has checks yet: ' + esc(Object.keys(SPEC_CHECKS).join(', ')) + ' so far, the rest one spec at a time.</p>') +
     (rows.some((a) => a.x.wait) ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') + '</div>';
-  const specs = new Map(); for (const p of pm.values()) if (p.specName) specs.set(p.specName, (specs.get(p.specName) || 0) + 1);
-  const done = [...specs].filter(([sp]) => SPEC_CHECKS[sp]), rest = [...specs].filter(([sp]) => !SPEC_CHECKS[sp]);
-  const right = '<h3 class="nh"><span>The raid</span><small>specs with checks so far</small></h3>' + done.map(([sp, n]) => '<div class="pf-sl"><span>' + esc(sp) + ' <span class="sub">' + plural(n, 'player') + '</span></span><span class="ok-t">✓ checks</span></div>').join('') +
-    (rest.length ? '<p class="sub" style="margin:8px 0 0">' + plural(rest.length, 'other spec') + ' in this raid: coming, one spec at a time.</p>' : '');
-  return '<div class="pf-cols" data-st="spec">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.spec;
+  return '<div class="pf-cols solo" data-st="spec">' + left + '</div>' + PERF_HOW.spec; // (full width: no side panel)
 }
 // The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
 // player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
