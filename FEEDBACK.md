@@ -87,6 +87,26 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 150: Spec checks, Holy Paladin first
+- [x] **A new Performance view, Spec checks** (How they played group): the WoWAnalyzer side, one spec at a time. A bar per
+  player whose spec has checks (how many are in good shape); click for their checklist and the detail.
+- [x] **Holy Paladin**, from Wowhead's and Icy Veins' Midnight 12.1.5 guides and Wowhead's talent descriptions:
+  1. **Talents read from the log**: Herald of the Sun or Lightsmith, Beacon of Virtue or Faith, Avenging Wrath or Crusader,
+     2 Holy Shock charges (Light's Conviction), Ringing of the Heavens (Aura Mastery firing a Divine Toll), Divine Purpose,
+     Infusion of Light carrying 2 uses (Inflorescence of the Sunwell), Hand of Divinity.
+  2. **Cast efficiency**: Holy Shock and Beacon of Virtue, casts against possible casts (talented charges count; a press
+     sooner than the cooldown allows counts as one Imbued Infusions or Glorious Dawn gave), with the time at full charges.
+  3. **Procs**: Infusion of Light, Divine Purpose, Dawnlight, Hand of Divinity: uses, wasted (ran out, or lost to a new one),
+     and what they were spent on (Flash of Light vs Judgment).
+  4. **Windows**: Divine Toll inside Beacon of Virtue; with Ringing of the Heavens, Aura Mastery inside it too; each
+     Avenging Wrath: casts a minute inside against outside, and what you pressed most.
+  5. **Holy Power wasted** (Divine Toll on 1 or 2 is fine).
+  Your pull 21: Holy Shock 83% (54 s at full charges), Beacon of Virtue 82%, every proc used, all 7 Divine Tolls and your
+  Aura Mastery inside Beacon of Virtue, 6% Holy Power wasted.
+- [x] Cast efficiency moved here from Casts; the Cooldowns tab now uses a talent's shorter cooldown seen in your own presses
+  (Divine Toll at 30 s, not 60). Overwritten buffs and buff stacks are read from the log now (Warcraft Logs and local logs).
+- [ ] Next: your raid's other specs, one at a time (healers first: Mistweaver, Holy Priest, Preservation), same sources.
+
 ## 2026-10-17, round 149: cast efficiency, the engine (shown per spec once researched)
 - [x] **Cast efficiency per spell** (your plan): built the counting (each spell's cooldown and charges from Wowhead, its
   charges through the pull, casts against what was possible, time sat at full charges, time dead or waiting left out).

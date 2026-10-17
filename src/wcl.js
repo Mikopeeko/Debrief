@@ -417,6 +417,9 @@ function translate(item, events) {
       case 'applybuff': case 'applydebuff':
         add(e, 'SPELL_AURA_APPLIED,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + (e.type === 'applybuff' ? 'BUFF' : 'DEBUFF'));
         break;
+      case 'refreshbuff': case 'refreshdebuff':
+        add(e, 'SPELL_AURA_REFRESH,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + (e.type === 'refreshbuff' ? 'BUFF' : 'DEBUFF'));
+        break;
       case 'applybuffstack': case 'applydebuffstack':
         add(e, 'SPELL_AURA_APPLIED_DOSE,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + (e.type === 'applybuffstack' ? 'BUFF' : 'DEBUFF') + ',' + (e.stack || 0));
         break;

@@ -4145,12 +4145,12 @@ function kicks() {
 // picked player's) with the phases shaded and the boss mechanics, Bloodlust and deaths marked, then a bar per player.
 // A click on a player draws their line and shows what their damage went into (targets and abilities). Everything counts
 // up to the wipe filter; "while alive" divides by the time until a player's first death.
-const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
+const PERF_KINDS = [['card', 'Report card'], ['spec', 'Spec checks'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (the buttons in four groups: how each player played, the meters, cooldowns and buffs, and their toolkit; one thing per
 // tab, each in one place)
-const PERF_GROUPS = [['How they played', ['card', 'cast', 'res']], ['Output', ['dmg', 'heal', 'taken']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
+const PERF_GROUPS = [['How they played', ['card', 'spec', 'cast', 'res']], ['Output', ['dmg', 'heal', 'taken']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
 // (the views that count presses or grade, not output over time: no phase picker and no chart)
-const PERF_COUNTS = new Set(['card', 'util', 'surv', 'pi', 'cds', 'aura']);
+const PERF_COUNTS = new Set(['card', 'spec', 'util', 'surv', 'pi', 'cds', 'aura']);
 // Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds: checked
 // against Wowhead's tooltips for the live patch (Oct 2026) and the presses in Wolfthorn's own pulls. A base cooldown is the
 // longest it can be (talents only shorten them), so it's the fair one to count possible uses against: a talent that
@@ -4199,8 +4199,9 @@ function bigDefs(r, p, t1) {
 function bigCds(r, p, t1, lust) {
   const list = PERF_CDS[p.specName] || [], out = [];
   const seen = (n) => castOnBoss(r, p, n);
-  for (const [name, cd] of list) {
+  for (const [name, cd0] of list) {
     if (!seen(name)) continue;
+    const cd = Math.min(cd0, seenCd(r, p, name, cd0) || cd0); // (a talent's shorter cooldown, seen in their own presses)
     const ts = (p.byName.get(name.toLowerCase()) || []).filter((t) => t <= t1 + 0.05).sort((a, b) => a - b).filter((t, i, a) => i === 0 || t - a[i - 1] > 2); // (one press, even if the log has a cast per tick)
     // (more presses than the listed cooldown allows means talents shortened it: then every press was possible)
     const poss = Math.max(ts.length, 1 + Math.floor(Math.max(0, t1 - 1) / cd)), used = Math.min(ts.length, poss);
@@ -4219,11 +4220,11 @@ const BRES_N = ['rebirth', 'raise ally', 'intercession', 'soulstone'];
 const EXT_N = ['pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue'];
 // the four views, as switches that carry their headline number (over what's counted: up to the wipe filter, in the
 // picked phase)
-const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', cast: 'spell_nature_lightning', pi: 'spell_holy_powerinfusion', cds: 'spell_holy_borrowedtime', aura: 'spell_holy_wordfortitude', util: 'ability_kick', surv: 'warlock_-healthstone' };
+const PERF_ICON = { card: 'inv_misc_note_01', spec: 'inv_misc_book_11', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', cast: 'spell_nature_lightning', pi: 'spell_holy_powerinfusion', cds: 'spell_holy_borrowedtime', aura: 'spell_holy_wordfortitude', util: 'ability_kick', surv: 'warlock_-healthstone' };
 const PERF_COL = { dmg: '#6aa8ff', heal: '#45c15c', taken: '#e5534b' };
 // (one button for the view you're on, with its group and its number; a click opens every view, in their four groups, each
 // with a short hint. It closes when one is picked, on Escape, or with a click anywhere else.)
-const PERF_HINT = { card: 'grades and what to fix', cast: 'pace and gaps', res: 'mana and waste', dmg: 'who did what', heal: 'heals and overhealing', taken: 'what hit the raid', cds: 'big and raid cooldowns', pi: 'for priests', aura: 'uptime of their buffs', util: 'dispels, externals and CC', surv: 'defensives and close calls' };
+const PERF_HINT = { card: 'grades and what to fix', spec: 'your spec, the guides\' way', cast: 'pace and gaps', res: 'mana and waste', dmg: 'who did what', heal: 'heals and overhealing', taken: 'what hit the raid', cds: 'big and raid cooldowns', pi: 'for priests', aura: 'uptime of their buffs', util: 'dispels, externals and CC', surv: 'defensives and close calls' };
 function perfTabs(kind, vals) {
   const LB = new Map(PERF_KINDS), v = vals[kind] || {}, g = PERF_GROUPS.find(([, ks]) => ks.includes(kind));
   const ico = (k) => '<img class="pfk-i" src="' + whIcon(PERF_ICON[k]) + '" alt="" onerror="this.style.visibility=\'hidden\'">';
@@ -4273,7 +4274,7 @@ function perf() {
   const ucats = utilCats([r]), scats = survCats([r]), oh = (() => { const h2 = ps.reduce((s, p) => s + p.healing, 0), o2 = ps.reduce((s, p) => s + p.overheal, 0); return h2 + o2 ? o2 / (h2 + o2) : 0; })();
   const RV = kind === 'res' ? resView([{ r, w0, w1, end }], true) : kind === 'cast' ? castView([{ r, w0, w1, end }], true) : null;
   const vals = { card: kind === 'card' ? rcHead([r]) : {}, dmg: { v: C(sumOf(R3.dmg) / wl) + '<span>/s</span>', s: C(sumOf(R3.dmg)) + inPh }, heal: { v: C(sumOf(R3.heal) / wl) + '<span>/s</span>', s: C(sumOf(R3.heal)) + inPh + ' · ' + Math.round(100 * oh) + '% overheal' },
-    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView([r], true).head : {}, cds: kind === 'cds' ? cdHead([r]) : {}, aura: kind === 'aura' ? auraHead([r]) : {}, util: utilHead(ucats), surv: survHead(scats) };
+    taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView([r], true).head : {}, cds: kind === 'cds' ? cdHead([r]) : {}, spec: kind === 'spec' ? specHead([r]) : {}, aura: kind === 'aura' ? auraHead([r]) : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutLine = '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (ph && !counts ? '<b>' + esc(ph.name) + '</b>, ' + T(w0) + '–' + T(w1) + (cut && w1 >= end - 0.5 ? ' (the wipe filter)' : '') : cut ? 'Counted up to <b>' + T(ct) + '</b>, the wipe filter' : r.item.kill ? '<b>Kill</b>: the whole pull counts' : 'The whole pull counts') + '</span></div>';
   // (one row on top: the kinds, then the pull / phase switches and the wipe filter line)
@@ -4704,7 +4705,7 @@ async function perfNight(r0, kind, scopeSw) {
   // (Resources: each pull's numbers up to its wipe filter, in the picked phase, added up)
   const nl = used.map((w) => ({ r: w.r, w0: w.w0, w1: w.w1, end: Math.max(1, Math.min(w.r.duration, cutT(w.r))) }));
   const RV = kind === 'res' ? resView(nl, false) : kind === 'cast' && nl.length ? castView(nl, false) : null;
-  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView(reps, false).head : {}, cds: kind === 'cds' ? cdHead(reps) : {}, aura: kind === 'aura' ? auraHead(reps) : {}, util: utilHead(ucats), surv: survHead(scats) };
+  const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView(reps, false).head : {}, cds: kind === 'cds' ? cdHead(reps) : {}, spec: kind === 'spec' ? specHead(reps) : {}, aura: kind === 'aura' ? auraHead(reps) : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
   let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div>' + pfFindBox() + '</div></div>';
@@ -4770,6 +4771,7 @@ const PERF_HOW = {
   dmg: '<details class="howit"><summary>How it works</summary><div>Each bar is a player\'s damage per second over the pull, or the phase picked, up to the wipe filter. Time spent dead counts against them, so a death shows as a shorter bar (the ✕ says when). The small column is their share of the raid\'s damage. Bosses, All targets and On adds pick which targets count. Click a row for their spells and targets; the chart then shows their line.</div></details>',
   heal: '<details class="howit"><summary>How it works</summary><div>Each bar is a player\'s healing per second over the pull, or the phase picked, up to the wipe filter. The faded end is overhealing, which doesn\'t count, and the small column says how much of it was. Click a row for their heals; the chart then shows their line.</div></details>',
   taken: '<details class="howit"><summary>How it works</summary><div>Each bar is the damage a player took per second, up to the wipe filter, and the small column is their share of the raid\'s. Click a row for their biggest hits; their defensives and close calls are on Survivability. What hit the raid, who took it and avoidable damage are on Mechanics.</div></details>',
+  spec: '<details class="howit"><summary>How it works</summary><div>Checks for each spec, from Wowhead\'s and Icy Veins\' guides for the live patch and the talents each player took (read from what their log shows: the procs, buffs and spells that only some talents give). One spec at a time: Holy Paladin first. Each bar is how many of a player\'s checks are in good shape; click it for the checklist, cast efficiency (each spell their spec should press on cooldown, against how many times it could have gone out: a talent\'s extra charge or shorter cooldown counts, and time dead or waiting doesn\'t), their procs (gained, wasted by running out or by a new one replacing them, and what they were spent on), and their spec\'s cooldown windows. Up to the wipe filter.</div></details>',
   cds: '<details class="howit"><summary>How it works</summary><div><b>Uses</b>: each bar is the share of a player\'s possible uses of their big cooldowns, damage and healing alike, each counted up to their death or the wipe filter. A cooldown counts once they\'ve cast it on this boss, so one they don\'t have talented never shows. Raid cooldowns (Tranquility, Aura Mastery, Rallying Cry and the like) wait for the big damage, so half their possible uses is full marks. Click a row for each cooldown on the pull: when it was pressed, when it sat ready, and Bloodlust. <b>Raid cooldowns</b>: a bar per healing or raid cooldown and player, as long as what it did: what it healed (overhealing not counted), the damage it took off (an estimate from the reduction: the log only has what was left), what Darkness made players avoid, or the health Rallying Cry added. Click one for each press. Cooldowns that make a healer stronger, like Avenging Wrath, are on the right: what the healer healed while they were up.</div></details>',
   aura: '<details class="howit"><summary>How it works</summary><div>Each bar is a player, with how many different buffs they had, up to the wipe filter. Click a name for their own list: each one\'s uptime (a share of the time they were alive), how many times it went on, and who gave it. Pick a buff on the right, or search for one, to see each player\'s uptime of it. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted; Sated and Exhaustion are left out. The boss\'s debuffs on the raid are on Mechanics.</div></details>',
 };
@@ -4791,7 +4793,7 @@ const viewSw = (key, list, cur) => pfViewSw('<div class="seg pf-vsw" role="tabli
 // (open another Performance view on one player: their cooldowns, buffs or defensives)
 function pfGo(k, n, quiet) {
   S.perfKind = k === 'debuffs' ? 'aura' : k;
-  if (k === 'cds') { S.cdView = 'use'; S.cdsSel = n; } else if (k === 'aura' || k === 'debuffs') { S.auraView = k === 'debuffs' ? 'debuffs' : 'buffs'; S.auraQ = ''; S.auraSel = n; } else if (k === 'surv') { S.survCat = 'def'; S.survSel = n; } else if (k === 'util') S.utilSel = n;
+  if (k === 'spec') S.specSel = n; else if (k === 'cds') { S.cdView = 'use'; S.cdsSel = n; } else if (k === 'aura' || k === 'debuffs') { S.auraView = k === 'debuffs' ? 'debuffs' : 'buffs'; S.auraQ = ''; S.auraSel = n; } else if (k === 'surv') { S.survCat = 'def'; S.survSel = n; } else if (k === 'util') S.utilSel = n;
   else if (k === 'res') { S.resSel = n; S.resPw = null; S.resMode = null; } else if (k === 'cast') S.castSel = n; else { S.perfSel = n; S.perfLens = 'players'; }
   if (quiet) return; perf(); window.scrollTo({ top: 0 });
 }
@@ -5011,7 +5013,7 @@ function pfFindRun(r, q) {
 }
 const pfFindBox = () => '<div class="pf-find"><input class="pf-q" id="pfFind" type="search" placeholder="Search players, spells, buffs…" aria-label="Search Performance" autocomplete="off" spellcheck="false"><div class="pf-fr" id="pfFindR" hidden></div></div>';
 // (the views that count presses or uptime rather than output over time)
-const countView = (kind, reps, one, ucats, scats) => (kind === 'card' ? reportCard(reps, !one) : kind === 'pi' ? piView(reps, one).html : kind === 'cds' ? cdView(reps, one) : kind === 'aura' ? auraView(reps, one) : utilCards(kind === 'surv' ? scats : ucats, one, kind));
+const countView = (kind, reps, one, ucats, scats) => (kind === 'card' ? reportCard(reps, !one) : kind === 'pi' ? piView(reps, one).html : kind === 'cds' ? cdView(reps, one) : kind === 'spec' ? specView(reps, one) : kind === 'aura' ? auraView(reps, one) : utilCards(kind === 'surv' ? scats : ucats, one, kind));
 // one phase of a pull (or the whole pull, with no key), up to its wipe filter: { w0, w1, wl }, or null if it never got there
 function perfWin(r, k) {
   const end = Math.max(1, Math.min(r.duration, cutT(r)));
@@ -6028,7 +6030,7 @@ function castUsual(r, name) {
 // Which spells each spec should press on cooldown, researched one spec at a time (a generic list judged Execute, Charge and
 // spot heals as if they were meant to go out on cooldown, and couldn't judge hasted spells like Holy Shock). Until a spec
 // has its list, Casts doesn't show cast efficiency for it. spec -> { spell name (lower case): {} }
-const SPEC_EFF = {};
+const SPEC_EFF = { 'Holy Paladin': { 'holy shock': {}, 'beacon of virtue': {} } };
 const CDI = new Map(), cdiQ = []; let cdiBusy = 0, cdiWait = null;
 function cdInfo(id) {
   if (!id) return null; if (CDI.has(id)) return CDI.get(id);
@@ -6036,7 +6038,7 @@ function cdInfo(id) {
   CDI.set(id, undefined); cdiQ.push(id); cdiPump(); return undefined;
 }
 // (when the last one is read, the Casts view draws again, unless someone's typing in a box)
-function cdiRedraw() { clearTimeout(cdiWait); cdiWait = setTimeout(() => { const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) { cdiRedraw(); return; } if (S.tab === 'perf' && S.perfKind === 'cast') perf(); }, 120); }
+function cdiRedraw() { clearTimeout(cdiWait); cdiWait = setTimeout(() => { const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) { cdiRedraw(); return; } if (S.tab === 'perf' && (S.perfKind === 'cast' || S.perfKind === 'spec')) perf(); }, 120); }
 function cdiPump() {
   while (cdiBusy < 4 && cdiQ.length) { const id = cdiQ.shift(); cdiBusy++;
     tipData(id).then((j) => { const t = j ? String(j.tooltip || '').replace(/<[^>]+>/g, ' ') : '', m = t.match(/(\d+(?:\.\d+)?)\s*(sec|min)\s*(?:cooldown|recharge)/i), k = t.match(/(\d+)\s*Charges/i);
@@ -6064,12 +6066,15 @@ function castForced(r, p) {
 function castEff(a) {
   const allow = SPEC_EFF[a.p.specName]; if (!allow) return null;
   const big = new Set((PERF_CDS[a.p.specName] || []).map(([n]) => n.toLowerCase())), out = new Map(); let wait = 0;
-  for (const { w, c } of a.per) { const pp = c.p, did = new Set([...pp.dmgAb.values(), ...pp.healAb.values()].map((x) => String(x.name).replace(/^[^:]+: /, '').toLowerCase())), forced = castForced(w.r, pp);
-    for (const s of c.ab) { const ln = s.name.toLowerCase(); if (!allow[ln] || big.has(ln) || !did.has(ln)) continue;
+  for (const { w, c } of a.per) { const pp = c.p, forced = castForced(w.r, pp);
+    for (const s of c.ab) { const ln = s.name.toLowerCase(); if (!allow[ln] || big.has(ln)) continue;
       const ci = cdInfo(s.id); if (ci === undefined) { wait++; continue; } if (!ci || ci.cd < 4 || ci.cd > 300) continue;
-      const sim = cdSim(s.ts, ci.cd, ci.ch, w.w0, c.t1, forced); let o = out.get(s.name);
-      if (!o) out.set(s.name, o = { name: s.name, id: s.id, cd: ci.cd, ch: ci.ch, n: 0, poss: 0, cap: 0, early: 0 }); o.n += s.n; o.poss += sim.poss; o.cap += sim.cap; o.early += sim.early; } }
-  const list = [...out.values()].map((o) => ({ ...o, judged: o.early <= Math.max(1, 0.1 * o.n), f: o.poss ? Math.min(1, o.n / o.poss) : null })).sort((x, y) => y.cd - x.cd || y.n - x.n);
+      // (a second charge a talent gives: pressed twice well inside the cooldown; a cooldown a talent shortens: seenCd)
+      const ts = s.ts.slice().sort((x, y) => x - y), ch = Math.max(ci.ch, ts.some((t, i) => i && t - ts[i - 1] < 0.6 * ci.cd) ? 2 : 1), cd = ch > 1 ? ci.cd : seenCd(w.r, pp, s.name, ci.cd) || ci.cd;
+      const sim = cdSim(s.ts, cd, ch, w.w0, c.t1, forced); let o = out.get(s.name);
+      if (!o) out.set(s.name, o = { name: s.name, id: s.id, cd, ch, n: 0, poss: 0, cap: 0, early: 0 }); o.ch = Math.max(o.ch, ch); o.cd = Math.min(o.cd, cd); o.n += s.n; o.poss += sim.poss; o.cap += sim.cap; o.early += sim.early; } }
+  // (a press sooner than the cooldown allows is a charge a talent or a reset gave: it counts as possible too)
+  const list = [...out.values()].map((o) => ({ ...o, judged: true, f: o.poss + o.early ? Math.min(1, o.n / (o.poss + o.early)) : null })).sort((x, y) => y.cd - x.cd || y.n - x.n);
   return { list, wait };
 }
 const effLen = (s) => (s >= 60 ? (s % 60 ? (s / 60).toFixed(1) : s / 60) + ' min' : (s % 1 ? s.toFixed(1) : s) + 's');
@@ -6078,9 +6083,146 @@ function effTable(a, one) {
   const e = a.eff; if (!e) return '';
   if (!e.list.length) return '<p class="sub" style="margin:0">' + (e.wait ? 'Reading the spells\' cooldowns…' : 'None of the spells they pressed has a cooldown that does damage or healing (big cooldowns are on Cooldowns).') + '</p>';
   return '<div class="hm-ut rs-ut cst-ef"><div class="hm-uh"><span>Spell</span><span>Casts</span><span>Could have</span><span>Efficiency</span><span>' + (one ? 'Ready, unused' : 'Unused, in all') + '</span></div>' + e.list.map((o) => { const st = paceSt(o.f);
-    return '<div class="hm-ur"><span>' + spell(o.id, o.name) + ' <span class="sub">' + effLen(o.cd) + (o.ch > 1 ? ' · ' + o.ch + ' charges' : '') + '</span></span><span>' + o.n + '</span><span>' + (o.judged ? o.poss : '<span class="sub">—</span>') + '</span>' +
+    return '<div class="hm-ur"><span>' + spell(o.id, o.name) + ' <span class="sub">' + effLen(o.cd) + (o.ch > 1 ? ' · ' + o.ch + ' charges' : '') + '</span></span><span>' + o.n + '</span><span>' + (o.poss + o.early) + '</span>' +
       (o.judged ? '<span class="ef-b"><span class="ef-t"><i class="' + st + '" style="width:' + Math.round(100 * o.f) + '%"></i></span><b class="cst-f ' + st + '">' + Math.round(100 * o.f) + '%</b></span>' : '<span class="sub" title="Pressed sooner than its listed cooldown allows (haste, a talent or a reset), so it isn\'t judged">not judged</span>') +
       '<span>' + (o.judged && o.cap >= 1 ? Math.round(o.cap) + 's' : '<span class="sub">—</span>') + '</span></div>'; }).join('') + '</div>' + (e.wait ? '<p class="sub" style="margin:6px 0 0">Reading ' + plural(e.wait, 'more spell') + '\' cooldowns…</p>' : '');
+}
+// ---- Performance: Spec checks (the WoWAnalyzer side: how each player played their own spec, one spec at a time) ----
+// A cooldown a talent shortens: the shortest gap between two presses that came up at least twice (within 6%) in this
+// boss's pulls read so far, when it's under the listed one (e.g. Divine Toll at 30 s, not 60). Only for spells with one
+// charge, and never under 40% of the listed cooldown (a reset isn't a shorter cooldown). -> seconds, or null
+const SEEN_CD = new Map();
+function seenCd(r, p, name, base) {
+  const k = r.item.boss + '|' + r.item.diffId + '|' + p.name + '|' + name + '|' + CACHE.size; if (SEEN_CD.has(k)) return SEEN_CD.get(k);
+  const gaps = [], ln = name.toLowerCase(), reps = [r]; for (const q of CACHE.values()) if (q && q !== r && q.item && q.item.boss === r.item.boss && q.item.diffId === r.item.diffId && q.players) reps.push(q);
+  for (const q of reps) { const x = [...q.players.values()].find((y) => y.name === p.name); if (!x) continue; const ts = (x.byName.get(ln) || []).slice().sort((a, b) => a - b); for (let i = 1; i < ts.length; i++) gaps.push(ts[i] - ts[i - 1]); }
+  gaps.sort((a, b) => a - b); let v = null;
+  for (let i = 0; i + 1 < gaps.length; i++) { const g = gaps[i]; if (g < 0.4 * base) continue; if (g >= 0.95 * base) break; if (gaps[i + 1] <= g * 1.06) { v = Math.floor(g * 2) / 2; break; } }
+  SEEN_CD.set(k, v); return v;
+}
+// a proc buff over one pull, up to t1, counted in uses: a proc can carry more than one (Infusion of Light carries 2 with
+// Inflorescence of the Sunwell, each use taking one). Used: each one spent with a cast (and which); wasted: the uses left
+// when it ran out, and a proc lost to a new one while it was still up. A proc cut by the wipe filter or a death isn't judged.
+// def: { n, use: [spell names, lower case] }
+function procUse(r, p, t1, def) {
+  const b = p.buffs.get(def.n); if (!b) return null;
+  const casts = def.use.map((n) => [n, p.byName.get(n) || []]), dts = deadSpans(r, p).map(([a]) => a), by = new Map(), rds = (b.rd || []).filter((t) => t <= t1);
+  const per = (b.mx || 1) >= 2 || rds.length ? Math.max(2, b.mx || 1) : 1, spentOn = (t) => { const c = casts.find(([, ts]) => ts.some((x) => Math.abs(x - t) <= 0.35)); return c ? c[0] : null; };
+  let used = 0, wasted = 0, ran = 0;
+  for (const t of rds) { const k = spentOn(t); used++; if (k) by.set(k, (by.get(k) || 0) + 1); }
+  for (const [a, c] of b.sp) { if (a > t1 || c > t1 + 0.05 || dts.some((d) => Math.abs(d - c) < 1.5)) continue;
+    const k = spentOn(c); if (k) { used++; by.set(k, (by.get(k) || 0) + 1); } else { ran++; wasted += rds.some((t) => t > a && t < c) ? 1 : per; } }
+  const lost = (b.ref || []).filter((t) => t <= t1).length; wasted += lost;
+  return { n: def.n, id: b.id, gained: used + wasted, used, ran, lost, wasted, by, stacks: per };
+}
+const procSt = (x) => (!x || !x.gained ? 'na' : x.wasted / x.gained <= 0.03 ? 'ok' : x.wasted / x.gained <= 0.1 ? 'warn' : 'bad'); // (one in a long night is fine)
+const shareSt = (f, ok, warn) => (f == null ? 'na' : f <= ok ? 'ok' : f <= warn ? 'warn' : 'bad');
+// From Wowhead's and Icy Veins' Holy Paladin guides for Midnight 12.1.5 (rotation, cooldowns and talent pages, read Oct 17
+// 2026) and Wowhead's talent descriptions:
+//  - Holy Shock as much as possible: 2 charges with Light's Conviction; Imbued Infusions (1 s off per Infusion of Light
+//    spent) and Glorious Dawn (12% to refund a charge) give some back, so a press the cooldown couldn't explain counts as
+//    one those gave; time at full charges is lost. Beacon of Virtue close to on cooldown (15 s, 9 s long). Divine Toll on
+//    cooldown (that's on Cooldowns, with its talented cooldown).
+//  - Infusion of Light spent, best on Flash of Light (Judgment when no healing is needed); 2 stacks with Inflorescence of
+//    the Sunwell, and a new one at the top is lost. Divine Purpose and Dawnlight (Herald of the Sun: the next 2 spenders
+//    after Divine Toll) spent before they run out. Hand of Divinity's instant Holy Lights used within 20 s.
+//  - Raid, with Beacon of Virtue: Divine Toll (and Aura Mastery, with Ringing of the Heavens) inside the Beacon window.
+//  - Avenging Wrath: the normal rotation, just more healing (30 s with Sanctified Wrath; Call of the Righteous: 90 s).
+//  - Never a generator at 5 Holy Power (Divine Toll on 1 or 2 is fine, so a little is expected).
+// Talents are read from what the log shows: Dawnlight (Herald of the Sun), Holy Bulwark (Lightsmith), Beacon of Virtue or
+// Beacon of Faith, Avenging Crusader, Holy Shock pressed twice within its cooldown (2 charges), Infusion of Light at 2 stacks.
+const HPAL_PROCS = [
+  { n: 'Infusion of Light', use: ['flash of light', 'judgment', 'holy light'], tip: 'Best on Flash of Light; Judgment when nobody needs healing' },
+  { n: 'Divine Purpose', use: ['eternal flame', 'light of dawn', 'word of glory', 'shield of the righteous'], tip: 'A free Holy Power spender' },
+  { n: 'Dawnlight', use: ['eternal flame', 'light of dawn', 'word of glory', 'shield of the righteous'], tip: 'Herald of the Sun: your next 2 spenders after Divine Toll' },
+  { n: 'Hand of Divinity', use: ['holy light'], tip: 'Instant Holy Lights from Avenging Wrath, within 20 s' }];
+function hpalChecks(reps, name, one) {
+  const per = [];
+  for (const r of reps) { const p = [...r.players.values()].find((y) => y.name === name); if (!p) continue; const C0 = perfContext(r), x0 = C0.per.get(name), end = C0.end, t1 = x0 ? Math.min(x0.until, end) : end; if (t1 < 20) continue;
+    per.push({ r, p, end, t1, c: castOf(r, p, 0, end) }); }
+  if (!per.length) return null;
+  const P0 = per[per.length - 1].p, has = (n) => per.some(({ p }) => p.buffs.has(n) || (p.byName.get(n.toLowerCase()) || []).length || [...p.healAb.values()].some((a) => a.name === n));
+  // ---- the talents the log shows ----
+  const hs2 = per.some(({ p }) => { const ts = (p.byName.get('holy shock') || []).slice().sort((a, b) => a - b); return ts.some((t, i) => i && t - ts[i - 1] < 3.5); });
+  const virtue = has('Beacon of Virtue'), herald = has('Dawnlight'), smith = has('Holy Bulwark') || has('Sacred Weapon'), crusader = has('Avenging Crusader');
+  const ioStack = per.some(({ p }) => (p.buffs.get('Infusion of Light') || {}).mx >= 2);
+  // (Ringing of the Heavens: Aura Mastery also casts a Divine Toll, seen as Holy Shock's Holy Power landing on several allies at once with no Divine Toll pressed)
+  const roth = per.some(({ p }) => (p.byName.get('aura mastery') || []).some((t) => (p.gainL || []).filter((g) => g.ty === '9' && g.spell === 'Holy Shock' && g.t >= t - 0.1 && g.t <= t + 0.8).length >= 3 && !(p.byName.get('divine toll') || []).some((x) => Math.abs(x - t) < 1)));
+  const talents = [herald ? 'Herald of the Sun' : smith ? 'Lightsmith' : '', virtue ? 'Beacon of Virtue' : has('Beacon of Faith') ? 'Beacon of Faith' : '', crusader ? 'Avenging Crusader' : 'Avenging Wrath', hs2 ? '2 Holy Shock charges' : '',
+    roth ? 'Ringing of the Heavens' : '', has('Divine Purpose') ? 'Divine Purpose' : '', ioStack ? 'Infusion of Light stacks to 2' : '', has('Hand of Divinity') ? 'Hand of Divinity' : ''].filter(Boolean);
+  // ---- cast efficiency: Holy Shock and Beacon of Virtue (castEff, with this spec's list) ----
+  const eff = castEff({ p: P0, per: per.map(({ r, end, c }) => ({ w: { r, w0: 0, w1: end }, c })) });
+  const ef = (n) => eff && eff.list.find((o) => o.name.toLowerCase() === n);
+  // ---- procs ----
+  const procs = HPAL_PROCS.map((d) => { const xs = per.map(({ r, p, t1 }) => procUse(r, p, t1, d)).filter(Boolean); if (!xs.length) return null;
+    const by = new Map(); for (const x of xs) for (const [k, v] of x.by) by.set(k, (by.get(k) || 0) + v);
+    return { ...d, id: xs[0].id, gained: xs.reduce((s, x) => s + x.gained, 0), ran: xs.reduce((s, x) => s + x.ran, 0), lost: xs.reduce((s, x) => s + x.lost, 0), wasted: xs.reduce((s, x) => s + x.wasted, 0), by, stacks: Math.max(...xs.map((x) => x.stacks)) }; }).filter((x) => x && x.gained);
+  // ---- Avenging Wrath (or Crusader): their casting pace in it against the rest of the pull ----
+  const wingN = crusader ? 'Avenging Crusader' : 'Avenging Wrath', wins = [];
+  for (const { r, p, t1, c } of per) { const b = p.buffs.get(wingN), press = p.byName.get(wingN.toLowerCase()) || [], forced = castForced(r, p), ov = (a, e) => forced.reduce((s, [u, v]) => s + Math.max(0, Math.min(e, v) - Math.max(a, u)), 0); if (!b) continue;
+    for (const [a, e0] of b.sp) { if (a > t1 || !press.some((t) => Math.abs(t - a) <= 1.5)) continue; const e = Math.min(e0, t1), len = Math.max(1, e - a - ov(a, e)), inN = c.all.filter((t) => t >= a && t <= e).length;
+      const outLen = Math.max(1, c.al - len), outN = c.n - inN, top = c.ab.map((s) => [s, s.ts.filter((t) => t >= a && t <= e).length]).filter(([, n]) => n).sort((x, y) => y[1] - x[1]).slice(0, 5);
+      wins.push({ pull: r.item.pull, a, e, len, inN, cpm: 60 * inN / len, out: 60 * outN / outLen, top }); } }
+  // ---- Beacon of Virtue windows: Divine Toll and Aura Mastery inside, and the Infused Flash of Lights ----
+  const bov = [], dtAll = [];
+  if (virtue) for (const { r, p, t1 } of per) { const bt = (p.byName.get('beacon of virtue') || []).filter((t) => t <= t1), dt = (p.byName.get('divine toll') || []).filter((t) => t <= t1), am = (p.byName.get('aura mastery') || []).filter((t) => t <= t1);
+    const io = p.buffs.get('Infusion of Light'), fol = p.byName.get('flash of light') || [], ioEnds = io ? io.sp.map(([, c]) => c).concat(io.rd || []) : [], infused = fol.filter((t) => ioEnds.some((x) => Math.abs(x - t) <= 0.35));
+    const inB = (t) => bt.some((b) => t >= b - 0.6 && t <= b + 9);
+    for (const t of dt) dtAll.push({ pull: r.item.pull, t, inB: inB(t) });
+    for (const b of bt) bov.push({ pull: r.item.pull, t: b, dt: dt.some((x) => x >= b - 0.6 && x <= b + 9), am: am.some((x) => x >= b - 0.6 && x <= b + 9), fol: infused.filter((x) => x >= b && x <= b + 9).length }); }
+  // ---- Holy Power: gained while already at 5 ----
+  let hpG = 0, hpW = 0; const hpBy = new Map(); for (const { p, t1 } of per) for (const g of p.gainL || []) if (g.ty === '9' && g.t <= t1) { hpG += g.amt; hpW += g.over; if (g.over) hpBy.set(g.spell, (hpBy.get(g.spell) || 0) + g.over); }
+  // ---- the checklist ----
+  const pct = (f) => Math.round(100 * f) + '%', time = per.reduce((s, x) => s + x.c.al, 0), checks = [];
+  const hs = ef('holy shock'); if (hs) checks.push({ st: paceSt(hs.f), html: '<b>Holy Shock</b> ' + hs.n + ' of ' + (hs.poss + hs.early) + ' possible casts (' + pct(hs.f) + ')<span class="sub"> · ' + (hs.cap >= 1 ? Math.round(hs.cap) + 's at full charges' : 'never at full charges') + (hs.ch > 1 ? ' · ' + hs.ch + ' charges' : '') + '</span>' });
+  const bv = ef('beacon of virtue'); if (bv) checks.push({ st: paceSt(bv.f), html: '<b>Beacon of Virtue</b> ' + bv.n + ' of ' + (bv.poss + bv.early) + ' possible casts (' + pct(bv.f) + ')<span class="sub"> · ' + (bv.cap >= 1 ? Math.round(bv.cap) + 's ready, unused · ' : '') + 'close to on cooldown, with the damage</span>' });
+  for (const x of procs) checks.push({ st: procSt(x), html: '<b>' + esc(x.n) + '</b> ' + (x.wasted ? x.wasted + ' of ' + x.gained + ' uses wasted' + '<span class="sub"> · ' + [x.ran ? (x.ran === 1 ? 'one ran out' : x.ran + ' ran out') : '', x.lost ? x.lost + ' lost to a new one' : ''].filter(Boolean).join(', ') + '</span>' : 'all ' + x.gained + ' uses spent') + (x.stacks > 1 ? '<span class="sub"> · ' + x.stacks + ' a proc</span>' : '') });
+  if (virtue && dtAll.length) { const n = dtAll.filter((x) => x.inB).length, f = n / dtAll.length; checks.push({ st: f >= 0.99 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', html: '<b>Divine Toll inside Beacon of Virtue</b> ' + n + ' of ' + dtAll.length + '<span class="sub"> · your biggest burst, transferred through every Beacon</span>' }); }
+  // (with Ringing of the Heavens, Aura Mastery is a Divine Toll at 200% too: pair it with Beacon of Virtue, unless an assignment says otherwise)
+  if (virtue && roth) { const am = []; for (const { p, t1 } of per) { const bt = (p.byName.get('beacon of virtue') || []).filter((t) => t <= t1); for (const t of (p.byName.get('aura mastery') || []).filter((x) => x <= t1)) am.push(bt.some((b) => t >= b - 0.6 && t <= b + 9)); }
+    if (am.length) { const n = am.filter(Boolean).length; checks.push({ st: n === am.length ? 'ok' : 'warn', html: '<b>Aura Mastery inside Beacon of Virtue</b> ' + n + ' of ' + am.length + '<span class="sub"> · Ringing of the Heavens makes it a Divine Toll at 200% too (unless your note times it)</span>' }); } }
+  if (wins.length) { const inN = wins.reduce((s, w) => s + w.inN, 0), inL = wins.reduce((s, w) => s + w.len, 0), outC = wins.reduce((s, w) => s + w.out * w.len, 0) / Math.max(1, inL), f = (60 * inN / inL) / Math.max(1, outC);
+    checks.push({ st: f >= 0.95 ? 'ok' : f >= 0.85 ? 'warn' : 'bad', html: '<b>' + wingN + '</b> ' + fmtCpm(60 * inN / inL) + ' casts a minute inside it, ' + fmtCpm(outC) + ' outside<span class="sub"> · keep pressing through it: it only adds healing</span>' }); }
+  if (hpG) { const f = hpW / hpG, top = [...hpBy].sort((a, b) => b[1] - a[1])[0]; checks.push({ st: shareSt(f, 0.05, 0.1), html: '<b>Holy Power wasted</b> ' + hpW + ' of ' + hpG + ' (' + pct(f) + ')' + (top ? '<span class="sub"> · most from ' + esc(top[0]) + '; Divine Toll on 1 or 2 is fine</span>' : '') }); }
+  // ---- the detail sections ----
+  const propN = (k) => [...P0.castAb.keys()].find((x) => x.toLowerCase() === k) || capS(k); // (a spell's own name, as the log has it)
+  const sec = (t, s, b) => (b ? '<div class="pf-sec"><div class="pf-st"><b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') + '</div>' + b + '</div>' : '');
+  const procT = procs.length ? '<div class="hm-ut rs-ut cst-pr"><div class="hm-uh"><span>Proc</span><span>Uses</span><span>Wasted</span><span>Spent on</span></div>' + procs.map((x) => '<div class="hm-ur"><span>' + spell(x.id, x.n) + (x.stacks > 1 ? ' <span class="sub">' + x.stacks + ' a proc</span>' : '') + '</span><span>' + x.gained + '</span><span class="cst-f ' + procSt(x) + '">' + x.wasted + '</span><span class="sub">' + ([...x.by].sort((a, b) => b[1] - a[1]).map(([k, v]) => esc(propN(k)) + ' ' + v).join(', ') || '—') + '</span></div>').join('') + '</div>' : '';
+  const winT = wins.length ? (one ? wins.map((w) => '<div class="pf-sl"><span><b>' + T(w.a) + '–' + T(w.e) + '</b> <span class="sub">' + w.inN + ' casts, ' + fmtCpm(w.cpm) + ' a minute (' + fmtCpm(w.out) + ' outside)</span></span><span class="sub">' + w.top.map(([s, n]) => esc(s.name) + ' ' + n).join(' · ') + '</span></div>').join('')
+    : '<div class="pf-sl"><span>' + presses(wins.length) + ' over ' + plural(per.length, 'pull') + '</span><span class="sub">' + fmtCpm(wins.reduce((s, w) => s + w.cpm, 0) / wins.length) + ' casts a minute inside, on average</span></div>') : '';
+  const bovT = bov.length ? (one ? bov.map((b) => '<div class="pf-sl"><span><b>' + T(b.t) + '</b> <span class="sub">Beacon of Virtue</span></span><span>' + [b.dt ? '<span class="ok-t">Divine Toll</span>' : '', b.am ? '<span class="ok-t">Aura Mastery</span>' : '', b.fol ? plural(b.fol, 'Infused Flash of Light') : ''].filter(Boolean).join(' · ') + '</span></div>').join('')
+    : '<div class="pf-sl"><span>' + bov.length + ' Beacons of Virtue over ' + plural(per.length, 'pull') + '</span><span class="sub">' + bov.filter((b) => b.dt).length + ' with Divine Toll · ' + bov.reduce((s, b) => s + b.fol, 0) + ' Infused Flash of Lights inside</span></div>') : '';
+  const sections = '<p class="sub spc-tal">Read from ' + (one ? 'this pull' : 'these pulls') + ': ' + esc(talents.join(' · ')) + '</p>' +
+    sec('Checklist', 'from Wowhead\'s and Icy Veins\' Holy Paladin guides', checks.map((c) => ckLine(c.st, c.html)).join('')) +
+    (eff ? sec('Cast efficiency', 'Divine Toll and your big cooldowns are on Cooldowns', effTable({ eff }, one)) : '') +
+    sec('Procs', 'spend them before they run out or a new one replaces them', procT) +
+    sec(wingN, one ? 'each press: your casting in it, and what you pressed most' : '', winT) +
+    sec('Beacon of Virtue', one ? 'each one: Divine Toll and Aura Mastery inside, and your Infused Flash of Lights' : '', bovT);
+  return { checks, talents, html: sections, wait: eff ? eff.wait : 0 };
+}
+const SPEC_CHECKS = { 'Holy Paladin': hpalChecks };
+// The view: a bar per player whose spec has checks (how many of them are in good shape), their checks under their name;
+// the right side says which specs have checks so far
+function specRows(reps, one) {
+  const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name)) pm.set(p.name, p);
+  return [...pm.values()].filter((p) => SPEC_CHECKS[p.specName]).map((p) => ({ p, x: SPEC_CHECKS[p.specName](reps, p.name, one) })).filter((a) => a.x)
+    .map((a) => { const j = a.x.checks.filter((c) => c.st !== 'na'), good = j.filter((c) => c.st === 'ok').length; return { ...a, good, tot: j.length, f: j.length ? good / j.length : 0 }; });
+}
+const specHead = (reps) => { const rows = specRows(reps, reps.length === 1); return { v: rows.length + '<span> ' + (rows.length === 1 ? 'player' : 'players') + '</span>', s: Object.keys(SPEC_CHECKS).join(', ') + ' so far' }; };
+function specView(reps, one) {
+  const rows = specRows(reps, one).sort((a, b) => a.f - b.f), pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name)) pm.set(p.name, p);
+  if (S.specSel && !rows.some((a) => a.p.name === S.specSel)) S.specSel = null;
+  const bars = rows.map((a, i) => { const on = S.specSel === a.p.name;
+    return cbRow({ tag: 'button', cls: on ? ' on' : '', attrs: ' type="button" data-un="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * a.f), 'm']], v: a.good + '/' + a.tot, sub: Math.round(100 * a.f) + '%' }) +
+      (on ? '<div class="pf-inl pf-srcd">' + a.x.html + '</div>' : ''); }).join('');
+  const left = '<div class="panel pf-bars pfu-bars"><h3 class="nh"><span>Spec checks</span><small>how each player played their own spec, from the guides · checks in good shape' + (one ? '' : ', over the night') + '</small></h3>' +
+    (bars ? cbHead('Good', 'Share') + bars : '<p class="muted" style="margin:10px 0 0">None of these players\' specs has checks yet: ' + esc(Object.keys(SPEC_CHECKS).join(', ')) + ' so far, the rest one spec at a time.</p>') +
+    (rows.some((a) => a.x.wait) ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') + '</div>';
+  const specs = new Map(); for (const p of pm.values()) if (p.specName) specs.set(p.specName, (specs.get(p.specName) || 0) + 1);
+  const done = [...specs].filter(([sp]) => SPEC_CHECKS[sp]), rest = [...specs].filter(([sp]) => !SPEC_CHECKS[sp]);
+  const right = '<h3 class="nh"><span>The raid</span><small>specs with checks so far</small></h3>' + done.map(([sp, n]) => '<div class="pf-sl"><span>' + esc(sp) + ' <span class="sub">' + plural(n, 'player') + '</span></span><span class="ok-t">✓ checks</span></div>').join('') +
+    (rest.length ? '<p class="sub" style="margin:8px 0 0">' + plural(rest.length, 'other spec') + ' in this raid: coming, one spec at a time.</p>' : '');
+  return '<div class="pf-cols" data-st="spec">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.spec;
 }
 // The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
 // player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
@@ -6094,7 +6236,7 @@ function castView(list, one) {
   const all = [...acc.values()];
   if (!all.length) return { head: {}, html: '<div class="panel"><p class="muted">No casts in ' + (one ? 'this pull' : 'these pulls') + '.</p></div>' };
   for (const a of all) { a.cpm = a.al >= 1 ? 60 * a.n / a.al : 0; a.abL = [...a.ab.values()].sort((x, y) => y.n - x.n); a.gaps.sort((x, y) => y.len - x.len);
-    a.sim = paceOf(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null; a.eff = castEff(a);
+    a.sim = paceOf(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null;
     if (one) { a.us = castUsual(list[0].r, a.p.name); a.d = a.us && a.us.cpm ? (a.cpm - a.us.cpm) / a.us.cpm : null; }
     // (through the night, with 4 pulls or more of 10 s casting: the later half's pace against the first half's)
     else { const v = a.per.filter((o) => o.c.al >= 10).map((o) => o.c.cpm), h = v.length >> 1, m = (l) => l.reduce((s, y) => s + y, 0) / l.length;
@@ -6124,7 +6266,7 @@ function castView(list, one) {
     (bars ? cbHead('Per min', 'Of pace') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
   return { head, html: top + '<div class="pf-cols">' + left + '<div class="panel pf-det cst-det">' + castRaid(all, one) + '</div></div>' + castHow };
 }
-const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Cast efficiency</b> (for the specs researched so far): each spell their spec should press on cooldown, how many times it went out against how many times it could have (its cooldown and charges are Wowhead\'s for the live patch, from a full charge at the pull, not counting time dead, mind controlled or while the raid was waiting). "Ready, unused" is the time it sat at full charges. Talents and haste only shorten cooldowns, so a player who beat it gets full marks; one pressed sooner than its listed cooldown allows (a talent or a reset) isn\'t judged. Big cooldowns are on Cooldowns. 90% or more is green, 75% gold. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more. <b>▲▼ over All pulls</b>: each player\'s later half of pulls against their first half; later pulls often get further into the fight, which can change the pace a little.</div></details>';
+const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more. <b>▲▼ over All pulls</b>: each player\'s later half of pulls against their first half; later pulls often get further into the fight, which can change the pace a little.</div></details>';
 // no one picked: the slowest against their spec, the biggest drops against their usual, and the longest gaps
 function castRaid(all, one) {
   const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
@@ -6882,7 +7024,7 @@ function rcDetail(x, night) {
     return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + esc(wTxt) + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub"> · worst: pull ' + ck.worst[1] + '</span>' : '')); };
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
     return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span>' + (night && x.secTr && x.secTr[k] != null ? plTr(x.secTr[k]) : '') + '</header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
-  const go = pfGoRow(x.p.name, [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage'], ['cast', 'Casts'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['surv', 'Survivability'], ['util', 'Utility']]);
+  const go = pfGoRow(x.p.name, [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage']].concat(SPEC_CHECKS[x.p.specName] ? [['spec', 'Spec checks']] : [], [['cast', 'Casts'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['surv', 'Survivability'], ['util', 'Utility']]));
   return '<div class="rk-d">' + work + secs + go + '</div>';
 }
 function bindReportCard() {

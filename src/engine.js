@@ -5092,9 +5092,15 @@ function analyze(item, text, opts) {
           else if (ln === 'rallying cry' && (owner || isPlayer(sg))) { const u = cdPress(owner || sg, 'Rallying Cry', t, true); if (!u.cov.has(dg)) { u.cov.add(dg); u.hp += 0.1 * (pMax.get(dg) || 0); } } }
         // (crowd control a player, their pet or their totem landed on an enemy)
         if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF' && (parseInt(f[6], 16) & 0x40) && PERF_CC.has(f[9].toLowerCase())) { const q = P(owner, pet ? null : sn); if (q.ccL.length < 600) q.ccL.push({ t, spell: f[9], id: num(f[8]), on: dn }); }
+        // (a buff's extra stack is a proc too, and its top stack: e.g. Infusion of Light at 2 with Inflorescence of the Sunwell)
+        if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = P(dg, dn).buffs.get(f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); } }
         if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
         break;
       }
+      // a buff renewed while it was still up (a proc at its top stack is lost this way)
+      case 'SPELL_AURA_REFRESH':
+        if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { const b = P(dg, dn).buffs.get(f[9]); if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); } }
+        break;
       case 'SPELL_AURA_REMOVED':
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t);
@@ -5127,6 +5133,7 @@ function analyze(item, text, opts) {
       case 'SPELL_AURA_REMOVED_DOSE': {
         if (f.length >= 13 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'rdose', t, dst: dg, spell: f[9], id: num(f[8]), stacks: num(f[12]), src: sg });
         if (f.length < 13 || !isPlayer(dg)) break;
+        if (f[11] === 'BUFF') { const b = P(dg, dn).buffs.get(f[9]); if (b) { if (!b.rd) b.rd = []; if (b.rd.length < 600) b.rd.push(t); } } // (a stack spent)
         const sr = mech.get('stacks', num(f[8]), f[9]);
         if (sr) stackEv.push({ t, guid: dg, rule: sr, stacks: num(f[12]), up: false, id: num(f[8]) });
         break;
