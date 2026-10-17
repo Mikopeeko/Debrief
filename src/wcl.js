@@ -17,14 +17,19 @@ function parseLink(s) {
 // isn't served by the site, so it sets WLA_API to the site's address and asks there.
 const HOSTED = typeof window !== 'undefined' && !!window.WLA_HOSTED;
 const API_BASE = (typeof window !== 'undefined' && window.WLA_API) || '';
-// A dropped connection, a reply cut off halfway, or the site being busy (5xx, 429) is tried again, up to 3 tries.
-const wait = (i) => new Promise((res) => setTimeout(res, 1000 * (i + 1)));
+// A dropped connection, a reply cut off halfway, or the site being busy (5xx, 429) is tried again, up to 4 tries. The
+// retries skip the browser's own saved copy (cache: 'reload'): a broken copy kept by one browser (it happened in Chrome
+// while Edge was fine) would otherwise fail the same way every time. The message keeps the browser's own reason.
+const TRIES = 4, wait = (i) => new Promise((res) => setTimeout(res, 1000 * (i + 1)));
 async function api(path) {
   let last = null;
-  for (let i = 0; i < 3; i++) {
-    let r, j;
-    try { r = await fetch(API_BASE + path); j = await r.json(); }
-    catch (e) { last = r && !r.ok ? new Error('The server answered ' + r.status + ' (tried 3 times). Click the pull again in a minute.') : new Error('Couldn\'t reach the Debrief site (tried 3 times). Check your connection, then click the pull again.'); await wait(i); continue; }
+  for (let i = 0; i < TRIES; i++) {
+    let r = null, j, read = false;
+    try { r = await fetch(API_BASE + path, i ? { cache: 'reload' } : undefined); read = true; j = await r.json(); }
+    catch (e) { const why = String((e && e.message) || e).slice(0, 80);
+      last = r && !r.ok ? new Error('The server answered ' + r.status + ' (tried ' + TRIES + ' times). Click the pull again in a minute.')
+        : new Error((read ? 'The download from the Debrief site was cut off' : 'Couldn\'t reach the Debrief site') + ' (tried ' + TRIES + ' times: ' + why + '). Check your connection, then click the pull again.');
+      await wait(i); continue; }
     if (r.ok && !j.error) return j;
     last = new Error(j.error || ('The server answered ' + r.status));
     if (!(r.status >= 500 || r.status === 429)) throw last;
