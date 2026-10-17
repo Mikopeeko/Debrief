@@ -920,6 +920,8 @@ const setHeadRes = refreshHead;
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
+  // (opened from a shared pull link on a first visit: the pull first, then the tour)
+  if (S.tourAfterPull) { S.tourAfterPull = false; setTimeout(() => { if (!tourDone()) startTour(0); }, 1500); }
   if (S.nightRep && S.rep === S.nightRep) S.rep = S.realRep; // (leave the all-pulls report: back to the real pull)
   const r = S.rep, it = r.item, single = it.kind === 'run' || !!it.run;
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
@@ -6164,9 +6166,10 @@ function home() {
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
+  $('.brand p').textContent = WCL.HOSTED ? 'Paste a Warcraft Logs link or drop your own log' : 'Retail combat logs, read on your PC'; // (not the last report's name)
   // (with a team added, home is your teams; "More ways in" shows the welcome page once)
   const full = S.homeFull; S.homeFull = false;
-  if (!full && groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderProgHub(null, false, true); groupsBackfill(); }); return; }
+  if (!full && groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderTeamsHome(); groupsBackfill(); }); return; }
   if (WCL.HOSTED && !window.WLA_DESKTOP) { homeHosted(); return; }
   // the front page (what people see first): the ways in beside a clickable preview of the app, and the four main views
   // underneath as buttons that switch it. The live button comes first; the other ways to follow a log and the help are
@@ -6255,12 +6258,97 @@ async function openReportLink(raw, msg) {
     await openWcl(link, creds, false);
   } catch (err) { msg.style.color = ''; msg.textContent = err.message; }
 }
+// (the hero: the headline, one rounded box for any live log or report, and the other ways in as small links under it)
+const TH_ICO = {
+  link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z"/></svg>',
+  file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>',
+  tour: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg>',
+  more: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' };
 function teamsBar() {
   const local = !(WCL.HOSTED && !window.WLA_DESKTOP);
-  return '<section class="th-bar">' + (local ? '<button class="btn primary" id="thLive" type="button">Follow my combat log</button>' : '') +
-    '<div class="fp-in th-in"><input id="thWcl" placeholder="' + (local ? 'Paste a Warcraft Logs report link' : 'Paste your raid\'s live log, or any Warcraft Logs report') + '" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn' + (local ? '' : ' primary') + '" id="thWclGo" type="button">Open</button></div>' +
-    '<button class="btn" id="thFile" type="button">Open a combat log</button><button class="linkbtn th-more" id="thMore" type="button">More ways in</button>' +
+  return '<section class="th-hero"><h1>Every pull, explained.</h1><p class="th-lead">Open tonight\'s raid, or pick up where your team left off.</p>' +
+    '<div class="th-box">' + TH_ICO.link + '<input id="thWcl" placeholder="' + (local ? 'Paste any Warcraft Logs report link' : 'Paste your raid\'s live log, or any Warcraft Logs report') + '" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="thWclGo" type="button">Open</button></div>' +
+    '<div class="th-links">' + (local ? '<button type="button" id="thLive">' + TH_ICO.play + 'Follow my combat log</button>' : '') + '<button type="button" id="thFile">' + TH_ICO.file + 'Open a log file</button>' +
+      '<button type="button" id="thTour">' + TH_ICO.tour + 'Take the tour</button><button type="button" id="thMore">' + TH_ICO.more + 'More ways in</button></div>' +
     '<div class="th-msg"><span class="sub" id="thFound"></span><span class="fp-msg" id="thMsg"></span></div></section>';
+}
+// A team's tile on the home page: its banner, name, and rank or guild; a strip of one square per boss on the hardest
+// difficulty it pulled (orange once killed, otherwise the colour of its best pull, dark when not pulled yet); and where it
+// is now: the boss it pulled most recently without a kill, and its best there. A character also shows their parses once
+// their page has read them.
+function teamTile(g, all, order) {
+  const mine = all.filter(groupFilter(g)), d = DIFF_ORDER.find(([x]) => mine.some((v) => v.diffId === x)), cls = g.kind === 'char' && g.cls && E.CLASSES[g.cls];
+  let strip = '', line = 'not imported yet';
+  if (d) {
+    const on = mine.filter((v) => v.diffId === d[0]), bestOf = (l) => l.filter((v) => v.left != null).reduce((m, v) => (!m || v.left < m.left ? v : m), null);
+    strip = order.map((b) => { const l = on.filter((v) => v.boss === b), k = l.some((v) => v.kill), bst = !k && bestOf(l), col = k ? '#ff8000' : bst ? (PULL_Q.find(([lo]) => 100 - bst.left >= lo) || [0, '#9d9d9d'])[1] : '';
+      return '<i' + (col ? ' style="background:' + col + '"' : '') + ' title="' + esc(b + ': ' + (k ? 'killed' : bst ? 'best ' + bst.label : l.length ? 'pulled' : 'not pulled yet')) + '"></i>'; }).join('');
+    const kills = order.filter((b) => on.some((v) => v.boss === b && v.kill)).length;
+    const open = on.filter((v) => !on.some((x) => x.boss === v.boss && x.kill)).sort((a, b) => b.at - a.at)[0], nb = open && bestOf(on.filter((v) => v.boss === open.boss));
+    line = kills + '/' + order.length + ' ' + d[1] + (open ? ' · now on ' + esc(open.boss) + (nb ? ', best ' + esc(nb.label) : '') : kills === order.length ? ' · all killed' : '');
+  }
+  const sub = cls ? charAff(g).replace('class="ht-g"', 'class="tt-g"') || '<span class="tt-g">' + esc(cls[0]) + '</span>' : g.rank && (g.rank.w || g.rank.r) ? '<span class="tt-g tt-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '<span class="tt-g">' + esc(gKind(g) + (g.server ? ' · ' + g.server : '')) + '</span>';
+  const parse = cls && g.parse ? '<span class="tt-p">' + esc(g.parse.spec) + ' · ' + Math.floor(g.parse.best) + ' best average · ' + Math.floor(g.parse.med) + ' median</span>' : '';
+  return '<button class="tt-card" type="button" data-g="' + esc(g.gid) + '">' + banner(g) + '<span class="tt-b"><span class="tt-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(gName(g)) + '</span>' + sub +
+    (strip ? '<span class="tt-strip" aria-hidden="true">' + strip + '</span>' : '') + '<span class="tt-l">' + line + '</span>' + parse + '</span></button>';
+}
+// "What Debrief does": four small previews that play a short animation, each opening the tour at its step
+function homePreviews() {
+  const card = (k, t, body) => '<button class="tp-card" type="button" data-tour="' + k + '"><span class="tp-t">' + t + '</span><span class="tp-art">' + body + '</span></button>';
+  return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
+    card(1, 'Latest pull', '<span class="tp-l bad">✕ First death: Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l ok">✓ Every kick landed</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
+    card(2, 'Mechanics', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
+    card(3, 'Performance', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
+    card(4, 'Progress', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
+}
+// ---- the tour: five short steps on a first visit, required once (no close button), remembered in this browser ----
+// Each step has a small picture that animates in (the logo drawing itself, a pull card building line by line, a player
+// walking into a soak, meter bars growing, a progress strip filling). Someone who opens a shared pull link sees that pull
+// first, and the tour right after. "Take the tour" (home page, menu) plays it again.
+const TOUR_KEY = 'wla-tour-done', tourDone = () => store.get(TOUR_KEY) === '1';
+const TOUR = [
+  { t: 'Welcome to Debrief', p: 'Debrief reads your raid\'s combat logs and Warcraft Logs reports, and turns every pull into a short list: what went wrong, what went right, and what to fix next. Here\'s a quick look around.',
+    art: () => '<svg class="tr-logo" viewBox="0 0 64 64" aria-hidden="true"><path class="s1" d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z"/><path class="s2" d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z"/><path class="s3" d="m27 32.5 4 4 8.5-9.5"/></svg>' },
+  { t: 'Every pull, explained', p: 'The moment a pull ends, its card shows what went wrong, what went right, and the one thing to fix before you pull again. Click a pull at the top to see any of them.',
+    art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l bad">✕ First death: Brann at 1:42, Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
+  { t: 'Mechanics and assignments', p: 'Every mechanic is checked for every player, with a map of who stood where. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it.',
+    art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
+  { t: 'Performance', p: 'Damage, healing, damage taken, utility and survivability, like Warcraft Logs but with the why: deaths, cooldowns, mana and defensives. Hover any chart for its numbers.',
+    art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
+  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs: every raid night, boss by boss, with your rankings. New nights come in by themselves.',
+    art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
+];
+function startTour(at) {
+  if ($('#tour')) return;
+  let i = Math.max(0, Math.min(TOUR.length - 1, at || 0));
+  const el = document.createElement('div'); el.id = 'tour'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'A quick tour of Debrief');
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const finish = (go) => { store.set(TOUR_KEY, '1'); document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260);
+    if (go === 'add') { S.pgFocusAdd = true; progressPage(); } else if (go === 'teams') home(); };
+  const draw = () => { const s = TOUR[i], last = i === TOUR.length - 1, has = groups().length > 0;
+    el.innerHTML = '<div class="tr-card" key="' + i + '"><div class="tr-bar">' + TOUR.map((_, j) => '<i' + (j <= i ? ' class="on"' : '') + '></i>').join('') + '</div>' +
+      '<div class="tr-art">' + s.art() + '</div><h2>' + esc(s.t) + '</h2><p>' + esc(s.p) + '</p>' +
+      '<div class="tr-nav"><span class="sub">' + (i + 1) + ' of ' + TOUR.length + '</span><div>' + (i ? '<button class="btn" data-tr="back" type="button">Back</button>' : '') +
+      (!last ? '<button class="btn primary" data-tr="next" type="button">' + (i ? 'Next' : 'Show me') + '</button>' : has ? '<button class="btn primary" data-tr="teams" type="button">Take me in</button>' : '<button class="btn" data-tr="in" type="button">Take me in</button><button class="btn primary" data-tr="add" type="button">Add my team</button>') + '</div></div></div>';
+    el.querySelectorAll('[data-tr]').forEach((b) => (b.onclick = () => { const a = b.dataset.tr; if (a === 'next') { i++; draw(); } else if (a === 'back') { i--; draw(); } else finish(a); }));
+    const f = el.querySelector('.btn.primary'); if (f) f.focus(); };
+  // (Enter or → for next, ← for back; Escape doesn't close it: the tour is a must once)
+  const key = (e) => { if (!document.body.contains(el)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < TOUR.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
+  document.addEventListener('keydown', key, true);
+  draw();
+}
+// the home page itself, once you have a team
+function renderTeamsHome() {
+  const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
+  const last = gl.reduce((m, g) => Math.max(m, g.last || 0), 0), ago = last ? Math.max(0, Math.round((Date.now() - last) / 60000)) : null;
+  $('#main').innerHTML = '<div class="home th-home2">' + teamsBar() +
+    '<section class="th-teams"><div class="th-h"><h2>Your teams</h2>' + (ago != null ? '<span class="sub">' + (S.progBusy ? 'checking for new nights…' : 'checked ' + (ago < 1 ? 'just now' : ago < 60 ? plural(ago, 'minute') + ' ago' : ago < 1440 ? plural(Math.round(ago / 60), 'hour') + ' ago' : 'on ' + esc(nightLabel(last + 6 * 3600e3)))) + '</span>' : '') + '</div>' +
+      '<div class="tt-row">' + gl.map((g) => teamTile(g, all, order)).join('') + '<button class="tt-card tt-add" type="button" data-g="+"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a team</span><span class="tt-l">or your character</span></button></div></section>' +
+    homePreviews() + '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+  progLit(false); bindTeamsBar();
+  $$('#main .tt-card').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); window.scrollTo(0, 0); }));
+  $$('#main .tp-card').forEach((b) => (b.onclick = () => startTour(+b.dataset.tour)));
 }
 function bindTeamsBar() {
   const msg = $('#thMsg');
@@ -6269,6 +6357,7 @@ function bindTeamsBar() {
   $('#thWcl').onpaste = () => setTimeout(() => { if (WCL.parseLink($('#thWcl').value)) openReportLink($('#thWcl').value, msg); }, 50); // (a pasted link opens at once)
   $('#thFile').onclick = () => $('#fileIn').click();
   $('#thMore').onclick = () => { S.homeFull = true; home(); window.scrollTo(0, 0); };
+  if ($('#thTour')) $('#thTour').onclick = () => startTour(0);
   if ($('#thLive')) { $('#thLive').onclick = () => startFileLive(HELPER_LOG);
     helperInfo().then((j) => { const el = $('#thFound'); if (!el) return; el.textContent = j.error === 'nodir' ? 'WoW Logs folder not found: see More ways in.' : j.error ? 'No combat log yet: type /combatlog in game.' : 'Your combat log: ' + j.name.replace(/\.txt$/i, '') + ', updated ' + wallClock(j.mtime); }).catch(() => { /* (the helper isn't running: the button says why when clicked) */ }); }
 }
@@ -6456,7 +6545,7 @@ function renderProgHub(msg, msgErr, asHome) {
 // (quiet: the automatic check: no message when nothing is new, and none if another tab is already checking)
 async function progRun(g, quiet) {
   const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
-  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
+  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
   S.progBusy = g.gid; say(g.last ? 'Checking for new nights…' : 'Bringing in every night of the tier…');
   try { const res = await teamImport(g, say); S.progBusy = null; done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date: no new reports.') +
     (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy): they\'ll be tried again next time.' : '')); }
@@ -6498,6 +6587,8 @@ async function charRankPanel(g, diffId) {
     const z = await get(metric, spec); if (!still()) return;
     const rows = ((z && z.rankings) || []).filter((x) => x.encounter), ranked = rows.filter((x) => x.rankPercent != null);
     const as = ((z && z.allStars) || []).slice().sort((a, b) => (b.points || 0) - (a.points || 0))[0];
+    // (their most played spec's averages, kept for their tile on the home page)
+    if (spec === g.mainSpec && ranked.length && z.bestPerformanceAverage != null) { const x = groups().find((q) => q.gid === g.gid); if (x) { x.parse = { spec, best: z.bestPerformanceAverage, med: z.medianPerformanceAverage || 0, d }; groupPut(x); } }
     const chip = (v) => (v == null ? '<span class="sub">—</span>' : prsChip({ pct: v }));
     const sw = '<div class="pr-sw"><div class="seg" role="group" aria-label="Spec">' + specs.map((x) => '<button type="button" data-rs="' + esc(x.n) + '"' + (x.n === spec ? ' class="on"' : '') + '>' + esc(x.n) + (x.n === g.mainSpec ? ' <span class="sub">most played</span>' : '') + '</button>').join('') + '</div>' +
       '<div class="seg" role="group" aria-label="Damage or healing"><button type="button" data-rm="dps"' + (metric === 'dps' ? ' class="on"' : '') + '>Damage</button>' + (specs.some((x) => x.heal) ? '<button type="button" data-rm="hps"' + (metric === 'hps' ? ' class="on"' : '') + '>Healing</button>' : '') + '</div></div>';
@@ -6657,6 +6748,10 @@ $('#brandHome').onclick = () => home();
 if ($('#tbProg')) $('#tbProg').onclick = () => progressPage();
 if ($('#tbProgBtn')) $('#tbProgBtn').onclick = () => progressPage();
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
+if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
+// (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
+const sharedLink = WCL.HOSTED && !!new URLSearchParams(location.search).get('report');
+if (!tourDone() && sharedLink) S.tourAfterPull = true;
 if (WCL.HOSTED) {
   $('#wclBtn').textContent = 'Paste a link';
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
@@ -6664,4 +6759,5 @@ if (WCL.HOSTED) {
   if (qp.get('report')) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
+if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
 })();

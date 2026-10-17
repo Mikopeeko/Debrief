@@ -80,6 +80,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Team rankings, tidier** (your note): the same tiles as a character's (World, US, server, Speed).
 - [x] **Horde or Alliance** (your note): a team's banner shows its faction's emblem, in red or blue.
 - [x] **"Everything saved" removed** (your note).
+- [x] **A new home page** (your note: it looked a mess): the headline, one rounded box for any live log or report, the other
+  ways in as small links under it; your teams as tiles with a strip of one square per boss (orange once killed) and where
+  each team is now; a small Add tile; and "What Debrief does": four small animated previews, each opening the tour there.
+- [x] **The tour** (your note; your choice: required, a shared link first): five steps on a first visit, each with a small
+  animation (the logo drawing itself, a pull card building, a player walking into a soak, meter bars growing, a progress
+  strip filling). No close button; Back, Next, and the arrow keys. Opened from a shared pull link, the pull comes first and
+  the tour right after. "Take the tour" on the home page and in the menu plays it again.
+- [ ] **Performance tab, refined** (your note): talk it through first, no changes yet.
 - [x] **Your teams are the home page** (your choice): once you've added a team, Debrief opens on your teams, with a slim bar
   on top: Follow my combat log, a box for any Warcraft Logs link, Open a combat log, and "More ways in" for the full welcome
   page. Someone new still gets the welcome page.

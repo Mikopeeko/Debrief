@@ -1729,6 +1729,82 @@ details.pf-dc > summary .sst { margin-left: auto; }
   .plmv-row .mvc-s, .plmv-row .mvc.m1 .mvc-s { font-size: 25px; }
   .plmv-row .mvc-bars { margin-top: 6px; } .plmv-row .mvc .nb-bar { grid-template-columns: 54px 1fr 20px; gap: 5px; font-size: 11.5px; }
 }
+/* =================================================================================================================
+   The home page once you have a team: the hero (headline, one rounded link box, small links), your team tiles with a
+   strip of one square per boss, and four small previews that play a short animation
+   ================================================================================================================= */
+.home.th-home2 { max-width: 1120px; margin: 0 auto; padding: 34px var(--gut) 48px; display: flex; flex-direction: column; gap: 34px; }
+.th-hero { display: flex; flex-direction: column; align-items: center; text-align: center; animation: th-up .5s ease-out both; }
+.th-hero h1 { margin: 0; font: 700 46px/1.05 var(--head); letter-spacing: .3px; color: #f6f7fa; }
+.th-lead { margin: 10px 0 0; font-size: 16px; color: var(--muted); }
+.th-box { display: flex; align-items: center; gap: 8px; width: min(640px, 100%); margin-top: 22px; padding: 6px 6px 6px 16px; background: var(--panel); border: 1px solid var(--line2); border-radius: 999px; transition: border-color .15s, box-shadow .15s; }
+.th-box:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(230, 180, 80, .15); }
+.th-box svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--faint); stroke-width: 1.8; stroke-linecap: round; }
+.th-box input { flex: 1; min-width: 0; padding: 9px 4px; font: inherit; font-size: 15px; color: var(--text); background: transparent; border: 0; outline: none; }
+.th-box .btn { padding: 9px 22px; border-radius: 999px; font-weight: 600; }
+.th-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: 14px; }
+.th-links button { display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px; font: 500 13.5px var(--body); color: var(--muted); background: none; border: 0; cursor: pointer; transition: color .12s; }
+.th-links button:hover { color: var(--text); } .th-links svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.th-links #thLive { color: #f6dc9a; } .th-links #thLive:hover { color: #fff; }
+.th-hero .th-msg { justify-content: center; margin-top: 8px; }
+.th-teams, .th-what { animation: th-up .5s .08s ease-out both; } .th-what { animation-delay: .16s; }
+.th-h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; } .th-h h2, .th-what h2 { margin: 0; font: 600 20px var(--head); color: #f3f5f9; } .th-what h2 { margin-bottom: 12px; }
+.tt-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.tt-card { display: flex; align-items: flex-start; gap: 14px; min-width: 0; padding: 16px 18px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
+.tt-card:hover { border-color: var(--line2); background: var(--raised); transform: translateY(-2px); }
+.tt-b { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.tt-n { font: 600 19px/1.15 var(--head); color: #f3f5f9; } .tt-g { font: 600 12.5px var(--head); color: #c9ced8; } .tt-rk { color: #f6dc9a; }
+.tt-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; margin: 8px 0 2px; } .tt-strip i { height: 7px; border-radius: 2px; background: #252a35; }
+.tt-l { font-size: 12.5px; color: var(--muted); line-height: 1.4; } .tt-p { font-size: 12px; color: #c9ced8; }
+.tt-card .ht-ban { width: 46px; height: 57px; }
+.tt-add { flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; border-style: dashed; background: transparent; min-height: 120px; }
+.tt-add .tt-plus { display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 6px; border-radius: 50%; font: 600 22px/1 var(--head); color: var(--gold); border: 1px solid rgba(230, 180, 80, .5); }
+.tt-add .tt-n { font-size: 16px; }
+@media (min-width: 900px) { .tt-row:has(> .tt-card:nth-child(3):last-child) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 220px; } .tt-row:has(> .tt-card:nth-child(2):last-child) { grid-template-columns: minmax(0, 1fr) 220px; } }
+.tp-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tp-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px 16px 16px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s, transform .15s; }
+.tp-card:hover { border-color: var(--line2); transform: translateY(-2px); } .tp-t { font: 600 15px var(--head); color: #f3f5f9; }
+.tp-art { display: flex; flex-direction: column; gap: 5px; min-height: 70px; justify-content: center; }
+.tp-l { font-size: 12.5px; line-height: 1.3; opacity: 0; animation: th-up .45s ease-out forwards; } .tp-l.bad { color: #ff8f87; } .tp-l.warn { color: #f3c969; animation-delay: .25s; } .tp-l.ok { color: #7ee08f; animation-delay: .5s; } .tp-l.fix { color: #f6dc9a; animation-delay: .75s; } .tp-l.bad { animation-delay: 0s; }
+.tp-chips { display: flex; flex-wrap: wrap; gap: 5px; } .tp-chips > span { padding: 3px 8px; font-size: 12px; border-radius: 6px; background: var(--raised); border-left: 3px solid; opacity: 0; animation: tp-pop .4s ease-out forwards; }
+.tp-chips .bad { border-color: #e5534b; } .tp-chips .warn { border-color: #e6b450; animation-delay: .2s; } .tp-chips .ok { border-color: #45c15c; animation-delay: .4s; }
+.tp-map, .tr-mech svg { width: 100%; height: auto; } .tp-zone { fill: rgba(230, 180, 80, .12); stroke: rgba(230, 180, 80, .7); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tp-dot { fill: #F48CBA; animation: tp-walk 2.4s 0.6s ease-in-out infinite; } .tp-dot2 { fill: #3FC7EB; opacity: .9; }
+.tp-bars { display: grid; gap: 6px; } .tp-bars i { display: block; height: 8px; width: 0; border-radius: 3px; background: var(--c); animation: tp-grow .9s ease-out forwards; }
+.tp-bars i:nth-child(2) { animation-delay: .12s; } .tp-bars i:nth-child(3) { animation-delay: .24s; } .tp-bars i:nth-child(4) { animation-delay: .36s; } .tp-bars i:nth-child(5) { animation-delay: .48s; }
+.tp-line { width: 100%; height: auto; } .tp-line polyline { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-dasharray: 220; stroke-dashoffset: 220; animation: tp-draw 1.6s ease-out forwards; }
+.tp-line .a { stroke: #6aa8ff; } .tp-line .b { stroke: #45c15c; stroke-dasharray: 220; animation-delay: .4s; opacity: .85; }
+@keyframes th-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes tp-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes tp-grow { to { width: var(--w); } }
+@keyframes tp-draw { to { stroke-dashoffset: 0; } }
+@keyframes tp-walk { 0%, 15% { transform: translateX(0); } 55%, 80% { transform: translateX(118px); } 100% { transform: translateX(0); } }
+.tp-map .tp-dot { animation-name: tp-walk-s; } @keyframes tp-walk-s { 0%, 15% { transform: translateX(0); } 55%, 80% { transform: translateX(64px); } 100% { transform: translateX(0); } }
+@media (max-width: 900px) { .tp-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .home.th-home2 { padding-top: 22px; gap: 26px; } .th-hero h1 { font-size: 34px; } .th-box .btn { padding: 9px 16px; } .tt-row { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .th-hero, .th-teams, .th-what, .tp-l, .tp-chips > span, .tp-bars i, .tp-line polyline, .tp-dot, .tr-card, .tr-card * { animation: none !important; opacity: 1 !important; } .tp-bars i { width: var(--w); } .tp-line polyline { stroke-dashoffset: 0; } }
+/* =================================================================================================================
+   The tour: a card over the dimmed page, a step bar, a small animated picture, Back and Next (no close: it's a must once)
+   ================================================================================================================= */
+.tour { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 20px; background: rgba(6, 8, 12, .78); backdrop-filter: blur(3px); animation: tr-fade .3s ease-out both; }
+.tour.out { animation: tr-fade-out .25s ease-in forwards; } body.touring { overflow: hidden; }
+.tr-card { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 22px 24px 20px; background: var(--panel); border: 1px solid var(--line2); border-radius: 18px; box-shadow: 0 24px 70px rgba(0, 0, 0, .55); animation: tr-in .38s cubic-bezier(.2, .8, .2, 1) both; }
+.tr-bar { display: flex; gap: 6px; margin-bottom: 16px; } .tr-bar i { flex: 1; height: 4px; border-radius: 2px; background: var(--line2); transition: background .3s; } .tr-bar i.on { background: var(--gold); }
+.tr-art { display: grid; place-items: center; min-height: 150px; margin-bottom: 16px; padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.tr-card h2 { margin: 0; font: 700 25px/1.15 var(--head); color: #f6f7fa; } .tr-card p { margin: 8px 0 0; font-size: 15px; line-height: 1.55; color: #c4c9d2; }
+.tr-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 20px; } .tr-nav > div { display: flex; gap: 8px; } .tr-nav .btn { padding: 9px 18px; font-weight: 600; }
+.tr-logo { width: 92px; height: 92px; } .tr-logo path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; animation: tp-draw 1.1s ease-out forwards; }
+.tr-logo .s1 { stroke: #e6b450; stroke-width: 3; fill: #1b1f29; fill-opacity: 0; animation: tp-draw 1.1s ease-out forwards, tr-fill .5s .9s forwards; } .tr-logo .s2 { stroke: #e6b450; stroke-width: 4; animation-delay: .5s; } .tr-logo .s3 { stroke: #7ee08f; stroke-width: 4; animation-delay: 1s; }
+.tr-pull { display: flex; flex-direction: column; gap: 6px; width: 100%; } .tr-pull .k { font-size: 12px; color: var(--faint); } .tr-pull b { font: 700 20px var(--head); color: #f3f5f9; margin-bottom: 4px; }
+.tr-pull .l { font-size: 13.5px; opacity: 0; animation: th-up .45s ease-out forwards; } .tr-pull .bad { color: #ff8f87; animation-delay: .25s; } .tr-pull .warn { color: #f3c969; animation-delay: .55s; } .tr-pull .ok { color: #7ee08f; animation-delay: .85s; } .tr-pull .fix { color: #f6dc9a; font-weight: 600; animation-delay: 1.15s; }
+.tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
+.tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
+.tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
+.tr-strip i.k { animation: tr-kill .35s ease-out var(--d) forwards; } .tr-pl { font-size: 14px; color: #c9ced8; text-align: center; opacity: 0; animation: th-up .4s 1.1s ease-out forwards; }
+@keyframes tr-fade { from { opacity: 0; } to { opacity: 1; } } @keyframes tr-fade-out { to { opacity: 0; } }
+@keyframes tr-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes tr-fill { to { fill-opacity: 1; } } @keyframes tr-kill { to { background: #ff8000; } }
+@media (max-width: 640px) { .tr-card { padding: 18px 18px 16px; } .tr-card h2 { font-size: 22px; } .tr-art { min-height: 120px; } }
 </style>
 </head>
 <body>
@@ -1742,7 +1818,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
     <div class="cutside" id="cutSide"></div>
     <button class="btn tb-prog" id="tbProgBtn" type="button" title="Every boss and night, for your teams"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Progress</span></button>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Progress<span>every boss and night, your team's reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Progress<span>every boss and night, your team's reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button><button class="tbm-i" id="tbTour" type="button">Take the tour<span>a quick look at what Debrief does</span></button></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>
@@ -8742,6 +8818,8 @@ const setHeadRes = refreshHead;
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
+  // (opened from a shared pull link on a first visit: the pull first, then the tour)
+  if (S.tourAfterPull) { S.tourAfterPull = false; setTimeout(() => { if (!tourDone()) startTour(0); }, 1500); }
   if (S.nightRep && S.rep === S.nightRep) S.rep = S.realRep; // (leave the all-pulls report: back to the real pull)
   const r = S.rep, it = r.item, single = it.kind === 'run' || !!it.run;
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
@@ -13986,9 +14064,10 @@ function home() {
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
+  $('.brand p').textContent = WCL.HOSTED ? 'Paste a Warcraft Logs link or drop your own log' : 'Retail combat logs, read on your PC'; // (not the last report's name)
   // (with a team added, home is your teams; "More ways in" shows the welcome page once)
   const full = S.homeFull; S.homeFull = false;
-  if (!full && groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderProgHub(null, false, true); groupsBackfill(); }); return; }
+  if (!full && groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderTeamsHome(); groupsBackfill(); }); return; }
   if (WCL.HOSTED && !window.WLA_DESKTOP) { homeHosted(); return; }
   // the front page (what people see first): the ways in beside a clickable preview of the app, and the four main views
   // underneath as buttons that switch it. The live button comes first; the other ways to follow a log and the help are
@@ -14077,12 +14156,97 @@ async function openReportLink(raw, msg) {
     await openWcl(link, creds, false);
   } catch (err) { msg.style.color = ''; msg.textContent = err.message; }
 }
+// (the hero: the headline, one rounded box for any live log or report, and the other ways in as small links under it)
+const TH_ICO = {
+  link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z"/></svg>',
+  file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>',
+  tour: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg>',
+  more: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' };
 function teamsBar() {
   const local = !(WCL.HOSTED && !window.WLA_DESKTOP);
-  return '<section class="th-bar">' + (local ? '<button class="btn primary" id="thLive" type="button">Follow my combat log</button>' : '') +
-    '<div class="fp-in th-in"><input id="thWcl" placeholder="' + (local ? 'Paste a Warcraft Logs report link' : 'Paste your raid\'s live log, or any Warcraft Logs report') + '" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn' + (local ? '' : ' primary') + '" id="thWclGo" type="button">Open</button></div>' +
-    '<button class="btn" id="thFile" type="button">Open a combat log</button><button class="linkbtn th-more" id="thMore" type="button">More ways in</button>' +
+  return '<section class="th-hero"><h1>Every pull, explained.</h1><p class="th-lead">Open tonight\'s raid, or pick up where your team left off.</p>' +
+    '<div class="th-box">' + TH_ICO.link + '<input id="thWcl" placeholder="' + (local ? 'Paste any Warcraft Logs report link' : 'Paste your raid\'s live log, or any Warcraft Logs report') + '" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="thWclGo" type="button">Open</button></div>' +
+    '<div class="th-links">' + (local ? '<button type="button" id="thLive">' + TH_ICO.play + 'Follow my combat log</button>' : '') + '<button type="button" id="thFile">' + TH_ICO.file + 'Open a log file</button>' +
+      '<button type="button" id="thTour">' + TH_ICO.tour + 'Take the tour</button><button type="button" id="thMore">' + TH_ICO.more + 'More ways in</button></div>' +
     '<div class="th-msg"><span class="sub" id="thFound"></span><span class="fp-msg" id="thMsg"></span></div></section>';
+}
+// A team's tile on the home page: its banner, name, and rank or guild; a strip of one square per boss on the hardest
+// difficulty it pulled (orange once killed, otherwise the colour of its best pull, dark when not pulled yet); and where it
+// is now: the boss it pulled most recently without a kill, and its best there. A character also shows their parses once
+// their page has read them.
+function teamTile(g, all, order) {
+  const mine = all.filter(groupFilter(g)), d = DIFF_ORDER.find(([x]) => mine.some((v) => v.diffId === x)), cls = g.kind === 'char' && g.cls && E.CLASSES[g.cls];
+  let strip = '', line = 'not imported yet';
+  if (d) {
+    const on = mine.filter((v) => v.diffId === d[0]), bestOf = (l) => l.filter((v) => v.left != null).reduce((m, v) => (!m || v.left < m.left ? v : m), null);
+    strip = order.map((b) => { const l = on.filter((v) => v.boss === b), k = l.some((v) => v.kill), bst = !k && bestOf(l), col = k ? '#ff8000' : bst ? (PULL_Q.find(([lo]) => 100 - bst.left >= lo) || [0, '#9d9d9d'])[1] : '';
+      return '<i' + (col ? ' style="background:' + col + '"' : '') + ' title="' + esc(b + ': ' + (k ? 'killed' : bst ? 'best ' + bst.label : l.length ? 'pulled' : 'not pulled yet')) + '"></i>'; }).join('');
+    const kills = order.filter((b) => on.some((v) => v.boss === b && v.kill)).length;
+    const open = on.filter((v) => !on.some((x) => x.boss === v.boss && x.kill)).sort((a, b) => b.at - a.at)[0], nb = open && bestOf(on.filter((v) => v.boss === open.boss));
+    line = kills + '/' + order.length + ' ' + d[1] + (open ? ' · now on ' + esc(open.boss) + (nb ? ', best ' + esc(nb.label) : '') : kills === order.length ? ' · all killed' : '');
+  }
+  const sub = cls ? charAff(g).replace('class="ht-g"', 'class="tt-g"') || '<span class="tt-g">' + esc(cls[0]) + '</span>' : g.rank && (g.rank.w || g.rank.r) ? '<span class="tt-g tt-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '<span class="tt-g">' + esc(gKind(g) + (g.server ? ' · ' + g.server : '')) + '</span>';
+  const parse = cls && g.parse ? '<span class="tt-p">' + esc(g.parse.spec) + ' · ' + Math.floor(g.parse.best) + ' best average · ' + Math.floor(g.parse.med) + ' median</span>' : '';
+  return '<button class="tt-card" type="button" data-g="' + esc(g.gid) + '">' + banner(g) + '<span class="tt-b"><span class="tt-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(gName(g)) + '</span>' + sub +
+    (strip ? '<span class="tt-strip" aria-hidden="true">' + strip + '</span>' : '') + '<span class="tt-l">' + line + '</span>' + parse + '</span></button>';
+}
+// "What Debrief does": four small previews that play a short animation, each opening the tour at its step
+function homePreviews() {
+  const card = (k, t, body) => '<button class="tp-card" type="button" data-tour="' + k + '"><span class="tp-t">' + t + '</span><span class="tp-art">' + body + '</span></button>';
+  return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
+    card(1, 'Latest pull', '<span class="tp-l bad">✕ First death: Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l ok">✓ Every kick landed</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
+    card(2, 'Mechanics', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
+    card(3, 'Performance', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
+    card(4, 'Progress', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
+}
+// ---- the tour: five short steps on a first visit, required once (no close button), remembered in this browser ----
+// Each step has a small picture that animates in (the logo drawing itself, a pull card building line by line, a player
+// walking into a soak, meter bars growing, a progress strip filling). Someone who opens a shared pull link sees that pull
+// first, and the tour right after. "Take the tour" (home page, menu) plays it again.
+const TOUR_KEY = 'wla-tour-done', tourDone = () => store.get(TOUR_KEY) === '1';
+const TOUR = [
+  { t: 'Welcome to Debrief', p: 'Debrief reads your raid\'s combat logs and Warcraft Logs reports, and turns every pull into a short list: what went wrong, what went right, and what to fix next. Here\'s a quick look around.',
+    art: () => '<svg class="tr-logo" viewBox="0 0 64 64" aria-hidden="true"><path class="s1" d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z"/><path class="s2" d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z"/><path class="s3" d="m27 32.5 4 4 8.5-9.5"/></svg>' },
+  { t: 'Every pull, explained', p: 'The moment a pull ends, its card shows what went wrong, what went right, and the one thing to fix before you pull again. Click a pull at the top to see any of them.',
+    art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l bad">✕ First death: Brann at 1:42, Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
+  { t: 'Mechanics and assignments', p: 'Every mechanic is checked for every player, with a map of who stood where. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it.',
+    art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
+  { t: 'Performance', p: 'Damage, healing, damage taken, utility and survivability, like Warcraft Logs but with the why: deaths, cooldowns, mana and defensives. Hover any chart for its numbers.',
+    art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
+  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs: every raid night, boss by boss, with your rankings. New nights come in by themselves.',
+    art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
+];
+function startTour(at) {
+  if ($('#tour')) return;
+  let i = Math.max(0, Math.min(TOUR.length - 1, at || 0));
+  const el = document.createElement('div'); el.id = 'tour'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'A quick tour of Debrief');
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const finish = (go) => { store.set(TOUR_KEY, '1'); document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260);
+    if (go === 'add') { S.pgFocusAdd = true; progressPage(); } else if (go === 'teams') home(); };
+  const draw = () => { const s = TOUR[i], last = i === TOUR.length - 1, has = groups().length > 0;
+    el.innerHTML = '<div class="tr-card" key="' + i + '"><div class="tr-bar">' + TOUR.map((_, j) => '<i' + (j <= i ? ' class="on"' : '') + '></i>').join('') + '</div>' +
+      '<div class="tr-art">' + s.art() + '</div><h2>' + esc(s.t) + '</h2><p>' + esc(s.p) + '</p>' +
+      '<div class="tr-nav"><span class="sub">' + (i + 1) + ' of ' + TOUR.length + '</span><div>' + (i ? '<button class="btn" data-tr="back" type="button">Back</button>' : '') +
+      (!last ? '<button class="btn primary" data-tr="next" type="button">' + (i ? 'Next' : 'Show me') + '</button>' : has ? '<button class="btn primary" data-tr="teams" type="button">Take me in</button>' : '<button class="btn" data-tr="in" type="button">Take me in</button><button class="btn primary" data-tr="add" type="button">Add my team</button>') + '</div></div></div>';
+    el.querySelectorAll('[data-tr]').forEach((b) => (b.onclick = () => { const a = b.dataset.tr; if (a === 'next') { i++; draw(); } else if (a === 'back') { i--; draw(); } else finish(a); }));
+    const f = el.querySelector('.btn.primary'); if (f) f.focus(); };
+  // (Enter or → for next, ← for back; Escape doesn't close it: the tour is a must once)
+  const key = (e) => { if (!document.body.contains(el)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < TOUR.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
+  document.addEventListener('keydown', key, true);
+  draw();
+}
+// the home page itself, once you have a team
+function renderTeamsHome() {
+  const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
+  const last = gl.reduce((m, g) => Math.max(m, g.last || 0), 0), ago = last ? Math.max(0, Math.round((Date.now() - last) / 60000)) : null;
+  $('#main').innerHTML = '<div class="home th-home2">' + teamsBar() +
+    '<section class="th-teams"><div class="th-h"><h2>Your teams</h2>' + (ago != null ? '<span class="sub">' + (S.progBusy ? 'checking for new nights…' : 'checked ' + (ago < 1 ? 'just now' : ago < 60 ? plural(ago, 'minute') + ' ago' : ago < 1440 ? plural(Math.round(ago / 60), 'hour') + ' ago' : 'on ' + esc(nightLabel(last + 6 * 3600e3)))) + '</span>' : '') + '</div>' +
+      '<div class="tt-row">' + gl.map((g) => teamTile(g, all, order)).join('') + '<button class="tt-card tt-add" type="button" data-g="+"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a team</span><span class="tt-l">or your character</span></button></div></section>' +
+    homePreviews() + '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+  progLit(false); bindTeamsBar();
+  $$('#main .tt-card').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); window.scrollTo(0, 0); }));
+  $$('#main .tp-card').forEach((b) => (b.onclick = () => startTour(+b.dataset.tour)));
 }
 function bindTeamsBar() {
   const msg = $('#thMsg');
@@ -14091,6 +14255,7 @@ function bindTeamsBar() {
   $('#thWcl').onpaste = () => setTimeout(() => { if (WCL.parseLink($('#thWcl').value)) openReportLink($('#thWcl').value, msg); }, 50); // (a pasted link opens at once)
   $('#thFile').onclick = () => $('#fileIn').click();
   $('#thMore').onclick = () => { S.homeFull = true; home(); window.scrollTo(0, 0); };
+  if ($('#thTour')) $('#thTour').onclick = () => startTour(0);
   if ($('#thLive')) { $('#thLive').onclick = () => startFileLive(HELPER_LOG);
     helperInfo().then((j) => { const el = $('#thFound'); if (!el) return; el.textContent = j.error === 'nodir' ? 'WoW Logs folder not found: see More ways in.' : j.error ? 'No combat log yet: type /combatlog in game.' : 'Your combat log: ' + j.name.replace(/\.txt$/i, '') + ', updated ' + wallClock(j.mtime); }).catch(() => { /* (the helper isn't running: the button says why when clicked) */ }); }
 }
@@ -14278,7 +14443,7 @@ function renderProgHub(msg, msgErr, asHome) {
 // (quiet: the automatic check: no message when nothing is new, and none if another tab is already checking)
 async function progRun(g, quiet) {
   const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
-  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
+  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
   S.progBusy = g.gid; say(g.last ? 'Checking for new nights…' : 'Bringing in every night of the tier…');
   try { const res = await teamImport(g, say); S.progBusy = null; done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date: no new reports.') +
     (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy): they\'ll be tried again next time.' : '')); }
@@ -14320,6 +14485,8 @@ async function charRankPanel(g, diffId) {
     const z = await get(metric, spec); if (!still()) return;
     const rows = ((z && z.rankings) || []).filter((x) => x.encounter), ranked = rows.filter((x) => x.rankPercent != null);
     const as = ((z && z.allStars) || []).slice().sort((a, b) => (b.points || 0) - (a.points || 0))[0];
+    // (their most played spec's averages, kept for their tile on the home page)
+    if (spec === g.mainSpec && ranked.length && z.bestPerformanceAverage != null) { const x = groups().find((q) => q.gid === g.gid); if (x) { x.parse = { spec, best: z.bestPerformanceAverage, med: z.medianPerformanceAverage || 0, d }; groupPut(x); } }
     const chip = (v) => (v == null ? '<span class="sub">—</span>' : prsChip({ pct: v }));
     const sw = '<div class="pr-sw"><div class="seg" role="group" aria-label="Spec">' + specs.map((x) => '<button type="button" data-rs="' + esc(x.n) + '"' + (x.n === spec ? ' class="on"' : '') + '>' + esc(x.n) + (x.n === g.mainSpec ? ' <span class="sub">most played</span>' : '') + '</button>').join('') + '</div>' +
       '<div class="seg" role="group" aria-label="Damage or healing"><button type="button" data-rm="dps"' + (metric === 'dps' ? ' class="on"' : '') + '>Damage</button>' + (specs.some((x) => x.heal) ? '<button type="button" data-rm="hps"' + (metric === 'hps' ? ' class="on"' : '') + '>Healing</button>' : '') + '</div></div>';
@@ -14479,6 +14646,10 @@ $('#brandHome').onclick = () => home();
 if ($('#tbProg')) $('#tbProg').onclick = () => progressPage();
 if ($('#tbProgBtn')) $('#tbProgBtn').onclick = () => progressPage();
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
+if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
+// (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
+const sharedLink = WCL.HOSTED && !!new URLSearchParams(location.search).get('report');
+if (!tourDone() && sharedLink) S.tourAfterPull = true;
 if (WCL.HOSTED) {
   $('#wclBtn').textContent = 'Paste a link';
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
@@ -14486,6 +14657,7 @@ if (WCL.HOSTED) {
   if (qp.get('report')) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
+if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
 })();
 
 </script>

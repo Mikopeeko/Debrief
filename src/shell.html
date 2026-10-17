@@ -1729,6 +1729,82 @@ details.pf-dc > summary .sst { margin-left: auto; }
   .plmv-row .mvc-s, .plmv-row .mvc.m1 .mvc-s { font-size: 25px; }
   .plmv-row .mvc-bars { margin-top: 6px; } .plmv-row .mvc .nb-bar { grid-template-columns: 54px 1fr 20px; gap: 5px; font-size: 11.5px; }
 }
+/* =================================================================================================================
+   The home page once you have a team: the hero (headline, one rounded link box, small links), your team tiles with a
+   strip of one square per boss, and four small previews that play a short animation
+   ================================================================================================================= */
+.home.th-home2 { max-width: 1120px; margin: 0 auto; padding: 34px var(--gut) 48px; display: flex; flex-direction: column; gap: 34px; }
+.th-hero { display: flex; flex-direction: column; align-items: center; text-align: center; animation: th-up .5s ease-out both; }
+.th-hero h1 { margin: 0; font: 700 46px/1.05 var(--head); letter-spacing: .3px; color: #f6f7fa; }
+.th-lead { margin: 10px 0 0; font-size: 16px; color: var(--muted); }
+.th-box { display: flex; align-items: center; gap: 8px; width: min(640px, 100%); margin-top: 22px; padding: 6px 6px 6px 16px; background: var(--panel); border: 1px solid var(--line2); border-radius: 999px; transition: border-color .15s, box-shadow .15s; }
+.th-box:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(230, 180, 80, .15); }
+.th-box svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--faint); stroke-width: 1.8; stroke-linecap: round; }
+.th-box input { flex: 1; min-width: 0; padding: 9px 4px; font: inherit; font-size: 15px; color: var(--text); background: transparent; border: 0; outline: none; }
+.th-box .btn { padding: 9px 22px; border-radius: 999px; font-weight: 600; }
+.th-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: 14px; }
+.th-links button { display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px; font: 500 13.5px var(--body); color: var(--muted); background: none; border: 0; cursor: pointer; transition: color .12s; }
+.th-links button:hover { color: var(--text); } .th-links svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.th-links #thLive { color: #f6dc9a; } .th-links #thLive:hover { color: #fff; }
+.th-hero .th-msg { justify-content: center; margin-top: 8px; }
+.th-teams, .th-what { animation: th-up .5s .08s ease-out both; } .th-what { animation-delay: .16s; }
+.th-h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; } .th-h h2, .th-what h2 { margin: 0; font: 600 20px var(--head); color: #f3f5f9; } .th-what h2 { margin-bottom: 12px; }
+.tt-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.tt-card { display: flex; align-items: flex-start; gap: 14px; min-width: 0; padding: 16px 18px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
+.tt-card:hover { border-color: var(--line2); background: var(--raised); transform: translateY(-2px); }
+.tt-b { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.tt-n { font: 600 19px/1.15 var(--head); color: #f3f5f9; } .tt-g { font: 600 12.5px var(--head); color: #c9ced8; } .tt-rk { color: #f6dc9a; }
+.tt-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; margin: 8px 0 2px; } .tt-strip i { height: 7px; border-radius: 2px; background: #252a35; }
+.tt-l { font-size: 12.5px; color: var(--muted); line-height: 1.4; } .tt-p { font-size: 12px; color: #c9ced8; }
+.tt-card .ht-ban { width: 46px; height: 57px; }
+.tt-add { flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; border-style: dashed; background: transparent; min-height: 120px; }
+.tt-add .tt-plus { display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 6px; border-radius: 50%; font: 600 22px/1 var(--head); color: var(--gold); border: 1px solid rgba(230, 180, 80, .5); }
+.tt-add .tt-n { font-size: 16px; }
+@media (min-width: 900px) { .tt-row:has(> .tt-card:nth-child(3):last-child) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 220px; } .tt-row:has(> .tt-card:nth-child(2):last-child) { grid-template-columns: minmax(0, 1fr) 220px; } }
+.tp-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tp-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px 16px 16px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s, transform .15s; }
+.tp-card:hover { border-color: var(--line2); transform: translateY(-2px); } .tp-t { font: 600 15px var(--head); color: #f3f5f9; }
+.tp-art { display: flex; flex-direction: column; gap: 5px; min-height: 70px; justify-content: center; }
+.tp-l { font-size: 12.5px; line-height: 1.3; opacity: 0; animation: th-up .45s ease-out forwards; } .tp-l.bad { color: #ff8f87; } .tp-l.warn { color: #f3c969; animation-delay: .25s; } .tp-l.ok { color: #7ee08f; animation-delay: .5s; } .tp-l.fix { color: #f6dc9a; animation-delay: .75s; } .tp-l.bad { animation-delay: 0s; }
+.tp-chips { display: flex; flex-wrap: wrap; gap: 5px; } .tp-chips > span { padding: 3px 8px; font-size: 12px; border-radius: 6px; background: var(--raised); border-left: 3px solid; opacity: 0; animation: tp-pop .4s ease-out forwards; }
+.tp-chips .bad { border-color: #e5534b; } .tp-chips .warn { border-color: #e6b450; animation-delay: .2s; } .tp-chips .ok { border-color: #45c15c; animation-delay: .4s; }
+.tp-map, .tr-mech svg { width: 100%; height: auto; } .tp-zone { fill: rgba(230, 180, 80, .12); stroke: rgba(230, 180, 80, .7); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tp-dot { fill: #F48CBA; animation: tp-walk 2.4s 0.6s ease-in-out infinite; } .tp-dot2 { fill: #3FC7EB; opacity: .9; }
+.tp-bars { display: grid; gap: 6px; } .tp-bars i { display: block; height: 8px; width: 0; border-radius: 3px; background: var(--c); animation: tp-grow .9s ease-out forwards; }
+.tp-bars i:nth-child(2) { animation-delay: .12s; } .tp-bars i:nth-child(3) { animation-delay: .24s; } .tp-bars i:nth-child(4) { animation-delay: .36s; } .tp-bars i:nth-child(5) { animation-delay: .48s; }
+.tp-line { width: 100%; height: auto; } .tp-line polyline { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-dasharray: 220; stroke-dashoffset: 220; animation: tp-draw 1.6s ease-out forwards; }
+.tp-line .a { stroke: #6aa8ff; } .tp-line .b { stroke: #45c15c; stroke-dasharray: 220; animation-delay: .4s; opacity: .85; }
+@keyframes th-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes tp-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes tp-grow { to { width: var(--w); } }
+@keyframes tp-draw { to { stroke-dashoffset: 0; } }
+@keyframes tp-walk { 0%, 15% { transform: translateX(0); } 55%, 80% { transform: translateX(118px); } 100% { transform: translateX(0); } }
+.tp-map .tp-dot { animation-name: tp-walk-s; } @keyframes tp-walk-s { 0%, 15% { transform: translateX(0); } 55%, 80% { transform: translateX(64px); } 100% { transform: translateX(0); } }
+@media (max-width: 900px) { .tp-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .home.th-home2 { padding-top: 22px; gap: 26px; } .th-hero h1 { font-size: 34px; } .th-box .btn { padding: 9px 16px; } .tt-row { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .th-hero, .th-teams, .th-what, .tp-l, .tp-chips > span, .tp-bars i, .tp-line polyline, .tp-dot, .tr-card, .tr-card * { animation: none !important; opacity: 1 !important; } .tp-bars i { width: var(--w); } .tp-line polyline { stroke-dashoffset: 0; } }
+/* =================================================================================================================
+   The tour: a card over the dimmed page, a step bar, a small animated picture, Back and Next (no close: it's a must once)
+   ================================================================================================================= */
+.tour { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 20px; background: rgba(6, 8, 12, .78); backdrop-filter: blur(3px); animation: tr-fade .3s ease-out both; }
+.tour.out { animation: tr-fade-out .25s ease-in forwards; } body.touring { overflow: hidden; }
+.tr-card { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 22px 24px 20px; background: var(--panel); border: 1px solid var(--line2); border-radius: 18px; box-shadow: 0 24px 70px rgba(0, 0, 0, .55); animation: tr-in .38s cubic-bezier(.2, .8, .2, 1) both; }
+.tr-bar { display: flex; gap: 6px; margin-bottom: 16px; } .tr-bar i { flex: 1; height: 4px; border-radius: 2px; background: var(--line2); transition: background .3s; } .tr-bar i.on { background: var(--gold); }
+.tr-art { display: grid; place-items: center; min-height: 150px; margin-bottom: 16px; padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.tr-card h2 { margin: 0; font: 700 25px/1.15 var(--head); color: #f6f7fa; } .tr-card p { margin: 8px 0 0; font-size: 15px; line-height: 1.55; color: #c4c9d2; }
+.tr-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 20px; } .tr-nav > div { display: flex; gap: 8px; } .tr-nav .btn { padding: 9px 18px; font-weight: 600; }
+.tr-logo { width: 92px; height: 92px; } .tr-logo path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; animation: tp-draw 1.1s ease-out forwards; }
+.tr-logo .s1 { stroke: #e6b450; stroke-width: 3; fill: #1b1f29; fill-opacity: 0; animation: tp-draw 1.1s ease-out forwards, tr-fill .5s .9s forwards; } .tr-logo .s2 { stroke: #e6b450; stroke-width: 4; animation-delay: .5s; } .tr-logo .s3 { stroke: #7ee08f; stroke-width: 4; animation-delay: 1s; }
+.tr-pull { display: flex; flex-direction: column; gap: 6px; width: 100%; } .tr-pull .k { font-size: 12px; color: var(--faint); } .tr-pull b { font: 700 20px var(--head); color: #f3f5f9; margin-bottom: 4px; }
+.tr-pull .l { font-size: 13.5px; opacity: 0; animation: th-up .45s ease-out forwards; } .tr-pull .bad { color: #ff8f87; animation-delay: .25s; } .tr-pull .warn { color: #f3c969; animation-delay: .55s; } .tr-pull .ok { color: #7ee08f; animation-delay: .85s; } .tr-pull .fix { color: #f6dc9a; font-weight: 600; animation-delay: 1.15s; }
+.tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
+.tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
+.tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
+.tr-strip i.k { animation: tr-kill .35s ease-out var(--d) forwards; } .tr-pl { font-size: 14px; color: #c9ced8; text-align: center; opacity: 0; animation: th-up .4s 1.1s ease-out forwards; }
+@keyframes tr-fade { from { opacity: 0; } to { opacity: 1; } } @keyframes tr-fade-out { to { opacity: 0; } }
+@keyframes tr-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes tr-fill { to { fill-opacity: 1; } } @keyframes tr-kill { to { background: #ff8000; } }
+@media (max-width: 640px) { .tr-card { padding: 18px 18px 16px; } .tr-card h2 { font-size: 22px; } .tr-art { min-height: 120px; } }
 </style>
 </head>
 <body>
@@ -1742,7 +1818,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
     <div class="cutside" id="cutSide"></div>
     <button class="btn tb-prog" id="tbProgBtn" type="button" title="Every boss and night, for your teams"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Progress</span></button>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Progress<span>every boss and night, your team's reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Progress<span>every boss and night, your team's reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button><button class="tbm-i" id="tbTour" type="button">Take the tour<span>a quick look at what Debrief does</span></button></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>
