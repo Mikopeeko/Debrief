@@ -553,7 +553,7 @@ async function groupAdd(raw) {
   const creds = await wclCreds(), info = gl.kind === 'char' ? await WCL.charInfo(creds, gl.link) : await WCL.teamInfo(creds, gl.link);
   const gid = (gl.kind === 'char' ? 'c' : 'g') + info.id;
   if (groups().some((g) => g.gid === gid)) { store.set(GROUP_CUR, gid); return { g: groups().find((g) => g.gid === gid), already: true }; }
-  const g = { gid, kind: gl.kind === 'char' ? 'char' : info.team ? 'team' : 'guild', id: info.id, name: info.name, server: info.server, done: {}, ...(gl.kind === 'char' ? { cls: info.cls, guild: info.guild, clsV: 3 } : {}) };
+  const g = { gid, kind: gl.kind === 'char' ? 'char' : info.team ? 'team' : 'guild', id: info.id, name: info.name, server: info.server, done: {}, ...(gl.kind === 'char' ? { cls: info.cls, guild: info.guild, clsV: 3 } : { faction: info.faction, facV: 1 }) };
   groupPut(g); store.set(GROUP_CUR, gid); return { g, already: false };
 }
 // Removing a team: it leaves the list, and so does every pull only it brought in (a pull from a log opened on this PC,
@@ -6329,17 +6329,20 @@ function progChart(list, boss) {
   return s + '</svg>';
 }
 progChart.n = 0;
-// Progress opens on a page of your teams: a card each (and your character), one for everything saved on this PC, and one to
-// add a team; picking one opens its own page (S.progView: its gid, '*' for everything, null for the teams page)
+// Progress opens on a page of your teams: a card each (and your character), and one to add a team; picking one opens its
+// own page (S.progView: its gid, null for the teams page; '*', every saved pull, is no longer offered)
 const lastTxt = (x) => (x.last ? 'checked ' + esc(nightLabel(x.last + 6 * 3600e3)) + ', ' + new Date(x.last).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' · ' + plural(x.reports || 0, 'report') + ' this tier' : 'not imported yet');
 // a team's banner: a crest with its initials, in a colour that's always the same for that team; a character's: a banner in
 // their class colour with the class icon; everything saved: a plain one
 const CREST_COL = ['#b8413a', '#2f73c9', '#2e9b5a', '#8a4fc4', '#c56a1c', '#1f9589', '#a88a1e', '#b8336f'];
+// (a team on one side: the Horde's or the Alliance's emblem, in red or blue; one whose faction isn't known: its initials)
+const FACTION = { Horde: ['#b8413a', 'pvpcurrency-honor-horde'], Alliance: ['#2f73c9', 'pvpcurrency-honor-alliance'] };
 function banner(g) {
-  const cls = g && g.kind === 'char' && g.cls && E.CLASSES[g.cls], col = !g ? '#5c6373' : cls ? cls[1] : CREST_COL[[...g.name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % CREST_COL.length];
+  const cls = g && g.kind === 'char' && g.cls && E.CLASSES[g.cls], fac = g && g.kind !== 'char' && FACTION[g.faction];
+  const col = !g ? '#5c6373' : cls ? cls[1] : fac ? fac[0] : CREST_COL[[...g.name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % CREST_COL.length];
   const shape = g && g.kind === 'char' ? 'M5 2h42v50l-21 10-21-10Z' : 'M4 3h44v26c0 16-10 26-22 32C14 55 4 45 4 29Z';
   const ini = g ? gName(g).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => [...w][0].toUpperCase()).join('') : '';
-  const inner = cls ? '<img class="hb-i" src="' + whIcon('classicon_' + cls[2]) + '" alt="" onerror="this.remove()">' : g ? '<span class="hb-t">' + esc(ini) + '</span>' : '<span class="hb-t">∑</span>';
+  const inner = cls ? '<img class="hb-i" src="' + whIcon('classicon_' + cls[2]) + '" alt="" onerror="this.remove()">' : fac ? '<img class="hb-i" src="' + whIcon(fac[1]) + '" alt="' + esc(g.faction) + '" onerror="this.remove()">' : g ? '<span class="hb-t">' + esc(ini) + '</span>' : '<span class="hb-t">∑</span>';
   return '<span class="ht-ban" style="--bc:' + col + '" aria-hidden="true"><svg viewBox="0 0 52 64"><path d="' + shape + '"/></svg>' + inner + '</span>';
 }
 // a character's guild (from Warcraft Logs, ‹in brackets› the way WoW shows it) and the teams on your list they raid with
@@ -6362,10 +6365,13 @@ function teamCard(g, all, order, big) {
 }
 // (a character added before its class was kept: looked up once, then its card is drawn again)
 async function groupsBackfill() {
-  // (clsV 3: class read with Warcraft Logs' class numbers the right way, and their guild; an older lookup is done again)
-  const need = groups().filter((g) => g.kind === 'char' && g.clsV !== 3); if (!need.length) return;
+  // (clsV 3: class read with Warcraft Logs' class numbers the right way, and their guild; facV 1: a team's faction, for its
+  // Horde or Alliance banner; an older lookup is done again)
+  const need = groups().filter((g) => (g.kind === 'char' ? g.clsV !== 3 : g.facV !== 1)); if (!need.length) return;
   let creds = null; try { creds = await wclCreds(); } catch (e) { return; }
-  for (const g of need) { let info = null; try { info = await WCL.charInfo(creds, { id: g.id }); } catch (e) { /* (tried again next visit) */ continue; } const x = groups().find((q) => q.gid === g.gid); if (x) { x.cls = info.cls; x.guild = info.guild; x.clsV = 3; groupPut(x); } }
+  for (const g of need) { let info = null; try { info = g.kind === 'char' ? await WCL.charInfo(creds, { id: g.id }) : await WCL.teamInfo(creds, { id: g.id }); } catch (e) { /* (tried again next visit) */ continue; }
+    const x = groups().find((q) => q.gid === g.gid); if (!x) continue;
+    if (g.kind === 'char') { x.cls = info.cls; x.guild = info.guild; x.clsV = 3; } else { x.faction = info.faction || x.faction || null; x.facV = 1; } groupPut(x); }
   if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } else if ($('#main .pg-hub')) renderProgHub(); else if ($('#main .home.prog')) renderProgress();
 }
 function renderProgHub(msg, msgErr) {
@@ -6379,7 +6385,7 @@ function renderProgHub(msg, msgErr) {
       '<li><b>Your character:</b> search your character\'s name there, open it, and copy that address. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.</li>' +
       '<li><b>Not a report:</b> a link with <code>/reports/</code> in it is one night. Open those from the start screen instead.</li></ol></div></div>';
   $('#main').innerHTML = '<div class="home prog">' + back + '<div class="pg-top"><div><h1>Progress</h1><div class="sub">Pick a team or your character: every boss and night of The Venomous Abyss.</div></div></div>' +
-    '<div class="pg-hub">' + gl.map((g) => teamCard(g, all, order, true)).join('') + (all.length ? teamCard(null, all, order, true) : '') + add + '</div></div>';
+    '<div class="pg-hub">' + gl.map((g) => teamCard(g, all, order, true)).join('') + add + '</div></div>';
   $$('#main .pg-hub button.ht-card').forEach((b) => (b.onclick = () => { S.progView = b.dataset.g; if (b.dataset.g !== '*') store.set(GROUP_CUR, b.dataset.g); renderProgress(); window.scrollTo(0, 0); }));
   const say = (t, err) => { const m = $('#pgMsg'); if (m) { m.textContent = t; m.classList.toggle('err', !!err); } };
   $('#pgTeamGo').onclick = async () => {
@@ -6393,14 +6399,26 @@ function renderProgHub(msg, msgErr) {
 }
 // bringing in a team's nights: the steps show on its page; when it ends, the page you're on is redrawn only if it's that
 // team's page or the teams page (an import keeps going if you leave)
-async function progRun(g) {
+// (quiet: the automatic check: no message when nothing is new, and none if another tab is already checking)
+async function progRun(g, quiet) {
   const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
-  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); };
-  $$('#pgImport').forEach((b) => { b.disabled = true; });
-  try { const res = await teamImport(g, say); done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : gName(g) + ' is up to date: no new reports.') +
+  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
+  S.progBusy = g.gid; say(g.last ? 'Checking for new nights…' : 'Bringing in every night of the tier…');
+  try { const res = await teamImport(g, say); S.progBusy = null; done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date: no new reports.') +
     (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy): they\'ll be tried again next time.' : '')); }
-  catch (e) { done(e.message, true); }
+  catch (e) { S.progBusy = null; if (quiet && /already running|Connect Warcraft Logs/.test(e.message)) { done(''); return; } done(e.message, true); }
 }
+// New nights come in by themselves: each team (and your character) is checked when the app opens, and its page checks
+// again when you open it, if it hasn't been checked in the last 10 minutes. One at a time, quietly.
+const AUTO_AGE = 10 * 60e3;
+// (tried at most once every 10 minutes per team, so a check that fails doesn't keep trying)
+async function autoCheck(g) {
+  if (!g || S.progBusy || (g.last && Date.now() - g.last < AUTO_AGE)) return;
+  S.autoTried = S.autoTried || new Map(); if (Date.now() - (S.autoTried.get(g.gid) || 0) < AUTO_AGE) return; S.autoTried.set(g.gid, Date.now());
+  await progRun(g, true);
+}
+async function autoCheckAll() { for (const g0 of groups()) { const g = groups().find((x) => x.gid === g0.gid); if (g) await autoCheck(g); } }
+HIST.load().then(() => setTimeout(autoCheckAll, 4000));
 // ---- a character's page: their Warcraft Logs rankings this tier ----
 // Their most played spec first (the spec most of their best parses are on), healing for a healer spec and damage
 // otherwise; switches for each spec of their class and for damage or healing; on the page's difficulty. The summary on top
@@ -6460,12 +6478,20 @@ async function teamRankPanel(g) {
     const k = 'team|' + g.id; if (!RANK_CACHE.has(k)) RANK_CACHE.set(k, WCL.teamRankings(creds, g.id, TIER_ZONE).catch((e) => { RANK_CACHE.delete(k); throw e; }));
     const t = await RANK_CACHE.get(k); if (!still()) return;
     const zr = (t && t.zoneRanking) || {}, pr = zr.progress || {}, sp = zr.speed || {}, reg = /\(([A-Z]{2})\)/.exec(g.server || ''), regN = reg ? reg[1] : 'Region', srv = (g.server || '').replace(/\s*\([A-Z]{2}\)$/, '') || 'Server';
-    const num = (x) => (x && x.number ? '<b class="prs ' + (RANK_COL[x.color] || 'q1') + ' tr-n">#' + x.number.toLocaleString('en-US') + '</b>' : '<span class="sub">—</span>');
-    const row = (lab, x, sub) => '<div class="tr-r"><span class="tr-l">' + lab + '</span><span class="tr-v">' + '<span><span class="sub">World</span> ' + num(x.worldRank) + '</span><span><span class="sub">' + esc(regN) + '</span> ' + num(x.regionRank) + '</span><span><span class="sub">' + esc(srv) + '</span> ' + num(x.serverRank) + '</span></span><span class="sub tr-s">' + sub + '</span></div>';
+    // (a rank in Warcraft Logs' colour for it: grey, green, blue, purple, orange, pink, gold)
+    const num = (x) => (x && x.number ? '<span class="trv ' + (RANK_COL[x.color] || 'q1') + '">#' + x.number.toLocaleString('en-US') + '</span>' : '—');
+    const n2 = (x) => (x && x.number ? '#' + x.number.toLocaleString('en-US') : '—');
     const fac = t && t.faction && t.faction.name;
     if (pr.worldRank || pr.regionRank) { const x = groups().find((q) => q.gid === g.gid); if (x) { x.rank = { w: pr.worldRank && pr.worldRank.number, r: pr.regionRank && pr.regionRank.number, rn: regN, at: Date.now() }; if (fac) x.faction = fac; groupPut(x); } }
-    box.innerHTML = '<div class="pr-h"><div><b>' + esc(gName(g)) + '\'s rankings on Warcraft Logs</b><div class="sub">Mythic, The Venomous Abyss' + (fac ? ' · ' + esc(fac) : '') + '</div></div></div>' +
-      (pr.worldRank || pr.regionRank || sp.worldRank ? '<div class="tr-rows">' + row('Progress', pr, 'how far, and how soon') + row('Speed', sp, 'kill times added up') + '</div>'
+    // the same look as a character's rankings: a tile each for the world, the region and the server (progress: how far the
+    // team got, and how soon), and one for speed (its kill times added up)
+    box.innerHTML = '<div class="pr-h"><div><b>' + esc(gName(g)) + '\'s rankings on Warcraft Logs</b><div class="sub">Mythic · The Venomous Abyss' + (fac ? ' · ' + esc(fac) : '') + ' · progress is how far the team got, and how soon</div></div></div>' +
+      (pr.worldRank || pr.regionRank || sp.worldRank ? '<div class="pts pr-sum n4">' +
+        plTile(icoW('inv_misc_map02'), 'World', num(pr.worldRank), 'na', 'progress, every team', true) +
+        // (plTile escapes the label and the line under it itself)
+        plTile(icoW('achievement_zone_easternkingdoms_01'), regN, num(pr.regionRank), 'na', 'progress, teams in the ' + regN, true) +
+        plTile(icoW(fac === 'Horde' ? 'inv_bannerpvp_01' : 'inv_bannerpvp_02'), srv, num(pr.serverRank), 'na', 'progress, teams on ' + srv, true) +
+        plTile(icoW('spell_holy_borrowedtime'), 'Speed', num(sp.worldRank), 'na', 'world · ' + regN + ' ' + n2(sp.regionRank) + ' · ' + srv + ' ' + n2(sp.serverRank) + ' · kill times added up', true) + '</div>'
         : '<p class="muted" style="margin:6px 0 0">Not ranked on Mythic yet: Warcraft Logs ranks a team once it has a Mythic kill this tier.</p>');
   } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read the rankings: ' + esc(e.message) + '</div>'; }
 }
@@ -6523,7 +6549,7 @@ function renderProgress(msg, msgErr) {
       (S.pgRename ? '<div class="pg-mn"><input class="pg-ren" id="pgRenIn" value="' + esc(gName(g)) + '" aria-label="Name" maxlength="40"><button class="btn" id="pgRenOk" type="button">Save</button><button class="linkbtn" id="pgRenNo" type="button">Cancel</button></div>'
         : '<div class="sub">' + (g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][0] + ' · your character' : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') + (g.label && g.label !== g.name ? ' · ' + esc(g.name) + ' on Warcraft Logs' : '') + '</div><div class="sub">' + lastTxt(g) + '</div>') + '</div>' +
       (S.pgDel ? '<div class="pg-ma del"><span>Remove ' + esc(gName(g)) + (only ? ' and the ' + plural(only, 'pull') + ' only it brought in' : '') + '? This can\'t be undone.</span><button class="btn danger" id="pgDelOk" type="button">Remove</button><button class="linkbtn" id="pgDelNo" type="button">Keep</button></div>'
-        : '<div class="pg-gact"><button class="btn primary" id="pgImport" type="button">' + (g.last ? 'Check for new nights' : 'Import every night') + '</button><button class="btn" id="pgRen" type="button">Rename</button><button class="btn danger-o" id="pgDel" type="button">Remove</button></div>') +
+        : '<div class="pg-gact"><button class="btn" id="pgRen" type="button">Rename</button><button class="btn danger-o" id="pgDel" type="button">Remove</button></div>') +
       pgMsg + '</section>';
   const sw = diffs.length > 1 ? '<div class="pc-diffs" role="group" aria-label="Difficulty">' + diffs.map(([d, nm]) => '<button type="button" data-d="' + d + '" aria-pressed="' + (d === cur) + '"' + (d === cur ? ' class="on"' : '') + '>' + nm + '<span>' + killedOn(d) + '/' + order.length + '</span></button>').join('') + '</div>' : '';
   // (bosses not pulled on this difficulty yet: one small row under the cards, not empty cards)
@@ -6534,10 +6560,11 @@ function renderProgress(msg, msgErr) {
     '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div></div>' + sw + '</div>' + team + (g ? '' : pgMsg) + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
-      : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet: click ' + (g.last ? 'Check for new nights' : 'Import every night') + ' above.' : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
+      : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
   $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = false; renderProgress(); window.scrollTo(0, 0); };
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
-  if ($('#pgImport')) $('#pgImport').onclick = () => progRun(g);
+  // (new nights: checked by themselves when the page opens, if not in the last 10 minutes; while a check runs, it says so)
+  if (g && S.progBusy === g.gid) { const m = $('#pgMsg'); if (m && !m.textContent) m.textContent = 'Checking for new nights…'; } else if (g) autoCheck(g);
   // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)
   if ($('#pgRen')) $('#pgRen').onclick = () => { S.pgRename = true; S.pgDel = false; renderProgress(); const i = $('#pgRenIn'); if (i) { i.focus(); i.select(); } };
   if ($('#pgRenOk')) $('#pgRenOk').onclick = () => { const nv = $('#pgRenIn').value.trim(); g.label = nv && nv !== g.name ? nv : undefined; groupPut(g); S.pgRename = false; renderProgress(); };

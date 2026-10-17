@@ -129,7 +129,7 @@ async function loadReport(creds, code, live) {
 // A Warcraft Logs team or guild page link ("…/guild/id/772787" or "…/guild/us/zuljin/Wolfthorn") names the team; its
 // reports are listed 100 a page; a night's pulls come from its fight list (result, how far, length, roster) plus one
 // deaths query for the whole report. (Hosted: the site has a route for each of these queries.)
-const TEAM_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){guildData{guild(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name type server{name slug region{slug}}}}}`;
+const TEAM_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){guildData{guild(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name type faction{name} server{name slug region{slug}}}}}`;
 const TEAM_REPORTS_Q = `query($id:Int!,$page:Int!){reportData{reports(guildID:$id,limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guildTag{name}}}}}`;
 const NIGHT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime
   fights(killType:Encounters){id encounterID name difficulty kill startTime endTime size fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
@@ -148,7 +148,7 @@ async function teamInfo(creds, link) {
   if (HOSTED) g = await api('/api/team?' + (link.id ? 'id=' + link.id : 'name=' + enc(link.name) + '&srv=' + enc(link.srv) + '&reg=' + enc(link.reg)));
   else { const d = await gql(creds, TEAM_INFO_Q, link.id ? { id: link.id } : { name: link.name, srv: link.srv, reg: link.reg }); g = d && d.guildData && d.guildData.guild; }
   if (!g) throw new Error('Warcraft Logs has no team or guild at that link.');
-  return { id: g.id, name: g.name, team: g.type === 1, server: g.server ? g.server.name + (g.server.region ? ' (' + g.server.region.slug.toUpperCase() + ')' : '') : '' };
+  return { id: g.id, name: g.name, team: g.type === 1, faction: (g.faction && g.faction.name) || null, server: g.server ? g.server.name + (g.server.region ? ' (' + g.server.region.slug.toUpperCase() + ')' : '') : '' };
 }
 async function teamReports(creds, id) {
   let out = [], page = 1, last = 1;

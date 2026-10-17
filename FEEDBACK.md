@@ -77,6 +77,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Homepage** (your note): once you've added a team or your character, "Your progress" is the first thing on it.
 - [x] **Team rankings** (your note: US and world): a team's page shows its Warcraft Logs rankings this tier (Mythic):
   progress and speed, World, US and server, each in Warcraft Logs' colour, and its faction; its cards show World and US too.
+- [x] **Team rankings, tidier** (your note): the same tiles as a character's (World, US, server, Speed).
+- [x] **Horde or Alliance** (your note): a team's banner shows its faction's emblem, in red or blue.
+- [x] **"Everything saved" removed** (your note).
+- [x] **New nights come in by themselves** (your note): every team and your character are checked when the app opens, and a
+  team's page checks again when you open it, if not in the last 10 minutes. The button is gone.
+- [x] **Kith'ix** (your note): it's on Progress on every difficulty (Wolfthorn's Heroic kill shows; Mythic, Normal and LFR list
+  it as not pulled yet). Its full fight module waits for your go.
 - [x] **Short boss cards** (your note): each boss is a short card (result, one line of totals, your parse); a click opens the
   chart, the totals and its nights, and "Show less" closes it.
 
