@@ -1765,7 +1765,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .tp-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px 16px 16px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s, transform .15s; }
 .tp-card:hover { border-color: var(--line2); transform: translateY(-2px); } .tp-t { font: 600 15px var(--head); color: #f3f5f9; }
 .tp-art { display: flex; flex-direction: column; gap: 5px; min-height: 70px; justify-content: center; }
-.tp-l { font-size: 12.5px; line-height: 1.3; opacity: 0; animation: th-up .45s ease-out forwards; } .tp-l.bad { color: #ff8f87; } .tp-l.warn { color: #f3c969; animation-delay: .25s; } .tp-l.ok { color: #7ee08f; animation-delay: .5s; } .tp-l.fix { color: #f6dc9a; animation-delay: .75s; } .tp-l.bad { animation-delay: 0s; }
+.tp-l { font-size: 12.5px; line-height: 1.3; opacity: 0; animation: th-up .45s ease-out forwards; } .tp-l.ok { color: #7ee08f; animation-delay: 0s; } .tp-l.bad { color: #ff8f87; animation-delay: .25s; } .tp-l.warn { color: #f3c969; animation-delay: .5s; } .tp-l.fix { color: #f6dc9a; animation-delay: .75s; }
 .tp-chips { display: flex; flex-wrap: wrap; gap: 5px; } .tp-chips > span { padding: 3px 8px; font-size: 12px; border-radius: 6px; background: var(--raised); border-left: 3px solid; opacity: 0; animation: tp-pop .4s ease-out forwards; }
 .tp-chips .bad { border-color: #e5534b; } .tp-chips .warn { border-color: #e6b450; animation-delay: .2s; } .tp-chips .ok { border-color: #45c15c; animation-delay: .4s; }
 .tp-map, .tr-mech svg { width: 100%; height: auto; } .tp-zone { fill: rgba(230, 180, 80, .12); stroke: rgba(230, 180, 80, .7); stroke-width: 1.5; stroke-dasharray: 4 3; }
@@ -1796,7 +1796,11 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .tr-logo { width: 92px; height: 92px; } .tr-logo path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; animation: tp-draw 1.1s ease-out forwards; }
 .tr-logo .s1 { stroke: #e6b450; stroke-width: 3; fill: #1b1f29; fill-opacity: 0; animation: tp-draw 1.1s ease-out forwards, tr-fill .5s .9s forwards; } .tr-logo .s2 { stroke: #e6b450; stroke-width: 4; animation-delay: .5s; } .tr-logo .s3 { stroke: #7ee08f; stroke-width: 4; animation-delay: 1s; }
 .tr-pull { display: flex; flex-direction: column; gap: 6px; width: 100%; } .tr-pull .k { font-size: 12px; color: var(--faint); } .tr-pull b { font: 700 20px var(--head); color: #f3f5f9; margin-bottom: 4px; }
-.tr-pull .l { font-size: 13.5px; opacity: 0; animation: th-up .45s ease-out forwards; } .tr-pull .bad { color: #ff8f87; animation-delay: .25s; } .tr-pull .warn { color: #f3c969; animation-delay: .55s; } .tr-pull .ok { color: #7ee08f; animation-delay: .85s; } .tr-pull .fix { color: #f6dc9a; font-weight: 600; animation-delay: 1.15s; }
+.tr-pull .l { font-size: 13.5px; opacity: 0; animation: th-up .45s ease-out forwards; } .tr-pull .ok { color: #7ee08f; animation-delay: .25s; } .tr-pull .bad { color: #ff8f87; animation-delay: .55s; } .tr-pull .warn { color: #f3c969; animation-delay: .85s; } .tr-pull .fix { color: #f6dc9a; font-weight: 600; animation-delay: 1.15s; }
+/* what went well first: a strip across the top (its wins in two columns), then what went wrong with Fix first beside it */
+.wr-wrap { display: flex; flex-direction: column; gap: 12px; margin: 0 0 14px; } .wr-wrap > .panel, .wr-wrap > .wr-cols { margin: 0; }
+.wr-good { border-color: rgba(69, 193, 92, .32); background: linear-gradient(180deg, rgba(69, 193, 92, .06), transparent 70%), var(--panel); }
+.wr-good .wr-gl { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 22px; }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
@@ -1805,6 +1809,19 @@ details.pf-dc > summary .sst { margin-left: auto; }
 @keyframes tr-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes tr-fill { to { fill-opacity: 1; } } @keyframes tr-kill { to { background: #ff8000; } }
 @media (max-width: 640px) { .tr-card { padding: 18px 18px 16px; } .tr-card h2 { font-size: 22px; } .tr-art { min-height: 120px; } }
+/* page tips: the page dimmed except a bright window around one spot (a gold ring that breathes), and a bubble beside it */
+.ptip { position: fixed; inset: 0; z-index: 8900; animation: tr-fade .25s ease-out both; } .ptip.out { animation: tr-fade-out .2s ease-in forwards; }
+.pt-hole { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(6, 8, 12, .74); outline: 2px solid var(--gold); outline-offset: 0; pointer-events: none; transition: left .3s cubic-bezier(.2, .8, .2, 1), top .3s cubic-bezier(.2, .8, .2, 1), width .3s cubic-bezier(.2, .8, .2, 1), height .3s cubic-bezier(.2, .8, .2, 1); animation: pt-ring 1.8s ease-in-out infinite; }
+.pt-bub { position: fixed; padding: 14px 16px 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; box-shadow: 0 16px 44px rgba(0, 0, 0, .55); transition: top .3s cubic-bezier(.2, .8, .2, 1), left .3s cubic-bezier(.2, .8, .2, 1); }
+.pt-bub.in { animation: pt-in .3s ease-out both; }
+.pt-bub::before { content: ''; position: absolute; left: var(--ax, 24px); width: 12px; height: 12px; margin-left: -6px; background: var(--panel); border: 1px solid var(--line2); transform: rotate(45deg); }
+.pt-bub[data-side="b"]::before { top: -7px; border-right: 0; border-bottom: 0; } .pt-bub[data-side="t"]::before { bottom: -7px; border-left: 0; border-top: 0; } .pt-bub[data-side="n"]::before { display: none; }
+.pt-k { font-size: 11.5px; font-weight: 600; letter-spacing: .4px; color: var(--gold); text-transform: uppercase; }
+.pt-bub > b { display: block; margin-top: 3px; font: 700 18px/1.2 var(--head); color: #f6f7fa; } .pt-bub p { margin: 5px 0 0; font-size: 14px; line-height: 1.5; color: #c4c9d2; }
+.pt-nav { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; } .pt-nav .btn { padding: 7px 16px; font-weight: 600; }
+@keyframes pt-ring { 0%, 100% { outline-color: rgba(230, 180, 80, .95); } 50% { outline-color: rgba(230, 180, 80, .35); } }
+@keyframes pt-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pt-hole, .pt-bub, .pt-bub.in { animation: none; transition: none; } }
 </style>
 </head>
 <body>
@@ -1816,9 +1833,8 @@ details.pf-dc > summary .sst { margin-left: auto; }
     <span class="tb-sp"></span>
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 30 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
-    <button class="btn tb-prog" id="tbProgBtn" type="button" title="Every boss and night, for your teams"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Progress</span></button>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Progress<span>every boss and night, your team's reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button><button class="tbm-i" id="tbTour" type="button">Take the tour<span>a quick look at what Debrief does</span></button></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Your teams<span>every boss and night, your teams' reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button><button class="tbm-i" id="tbTips" type="button">Tips for this page<span>where everything on this page is</span></button><button class="tbm-i" id="tbTour" type="button">Take the tour<span>a quick look at what Debrief does</span></button></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>
@@ -8033,12 +8049,10 @@ function mech(name, id) { const n = String(name || ''); if (!n) return ''; const
 const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕ ', warn: '! ', ok: '✓ ' }[st] || '') + esc(txt) + '</span>';
 // "all 3 done", but just "done" for one (never "all 1 done")
 const allOf = (n, one, many) => (n === 1 ? one : 'all ' + n + ' ' + many);
-// "What went wrong" and "What went right", side by side, the same on Latest pull, Assignments and Mechanics: one line per
-// item (the worst first; at most five wrong, the rest counted), its time on the right, the whole line on hover.
+// "What went well" first, then "What went wrong", the same on Latest pull and Summary: what the raid did well leads (a strip
+// across the top, the wins in two columns), and what to improve follows, with Latest pull's "Fix first" beside it (o.rightTop).
+// One line per item (the worst wrong first; at most five, the rest counted), its time on the right, the whole line on hover.
 // wrong: [{ sev: 'bad' | 'warn', html, when?, extra? }]; right: [html or { html }]
-// o.rightTop: a panel for the top of the right column (Latest pull's "Fix first"), so the two columns come out even.
-// Without one, a short "What went right" (two things or fewer) next to a long "What went wrong" becomes one line under
-// it instead of a mostly empty box beside it.
 function wrongRight(wrong, right, o) {
   o = o || {};
   const MK = { bad: '✕', warn: '!', ok: '✓' }, max = o.max || 5, plain = (x) => String(x).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
@@ -8047,12 +8061,10 @@ function wrongRight(wrong, right, o) {
   const wPanel = '<div class="panel probbox wr ' + wSt + '"><h3 class="nh">What went wrong' + (o.sub ? ' <small>' + o.sub + '</small>' : '') + hst(wSt, ws.length ? plural(ws.length, 'thing') : 'nothing') + '</h3>' +
     (shown.length ? shown.map((x) => line(x, x.sev)).join('') : line({ html: o.none || 'Nothing went wrong.' }, 'ok')) +
     (ws.length > shown.length ? '<div class="wr-more sub">+' + (ws.length - shown.length) + ' more ' + (o.moreWhere || 'below') + '</div>' : '') + '</div>';
-  const rPanel = '<div class="panel probbox wr ok"><h3 class="nh">What went right' + (right.length ? hst('ok', plural(right.length, 'thing')) : '') + '</h3>' +
-    (right.length ? right.map((x) => line(typeof x === 'string' ? { html: x } : x, 'ok')).join('') : '<p class="muted" style="margin:4px 0 0">' + esc(o.noneRight || 'Nothing to call out yet.') + '</p>') + '</div>';
-  if (o.rightTop) return '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + rPanel + '</div></div>';
-  if (right.length <= 2 && shown.length >= 3) return '<div class="wr-one">' + wPanel + '<div class="panel probbox wr ok wr-line"><b class="ok">✓ What went right</b>' +
-    (right.length ? right.map((x) => '<span class="wr-li">' + (typeof x === 'string' ? x : x.html) + '</span>').join('') : '<span class="muted">' + esc(o.noneRight || 'Nothing to call out yet.') + '</span>') + '</div></div>';
-  return '<div class="wr-cols">' + wPanel + rPanel + '</div>';
+  // (what went well: a strip across the top, its lines in two columns; left out when there's nothing to call out)
+  const gPanel = right.length ? '<div class="panel probbox wr ok wr-good"><h3 class="nh">What went well' + hst('ok', plural(right.length, 'thing')) + '</h3><div class="wr-gl">' +
+    right.map((x) => line(typeof x === 'string' ? { html: x } : x, 'ok')).join('') + '</div></div>' : '';
+  return '<div class="wr-wrap">' + gPanel + (o.rightTop ? '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + '</div></div>' : wPanel) + '</div>';
 }
 // (a mistake's sentence after a player's name reads on: "Kargaryen: their ghost touched another ghost")
 const lcLead = (d) => (/^(Their|They|Was|Were|Had|Took|Got|Gained|Died|Stood|Used|Soaked|Kicked|Picked|Cursed|Didn't|Never|Ran|Walked|Moved|Left|Missed|Is)\b/.test(d) ? d.charAt(0).toLowerCase() + d.slice(1) : d);
@@ -8667,9 +8679,10 @@ function nightResult(it) {
   return { cls: 'best', txt: best ? 'Best: ' + pullLabel(best.b) + ' (pull ' + best.b.pull + ')' : 'No kill yet', big: best ? 'Best: ' + pullLabel(best.b) : 'No kill yet', left: best ? best.v : null, pull: best ? best.b.pull : null };
 }
 // the tabs' icons (drawn here, no game art)
-const TAB_IC = { live: 'clock', overview: 'list', audit: 'target', perf: 'bars', night: 'chart', player: 'users' };
+const TAB_IC = { teams: 'trophy', live: 'clock', overview: 'list', audit: 'target', perf: 'bars', night: 'chart', player: 'users' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
+  teams: 'Your teams and your character: every boss and night of the tier, with your rankings.',
   live: 'The pull that just ended, at a glance: what went wrong and what to fix before the next pull. Follows live logging.',
   overview: 'Your NSRT note against this pull: soaks, externals, orbs, kicks, mind control CC, curses and healing cooldowns, and who missed theirs.',
   audit: 'Every boss mechanic in this pull, phase by phase: what went wrong, who was involved, with maps. Deaths and survival too.',
@@ -8680,6 +8693,7 @@ const TAB_TIP = {
 const TICO = { clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
   target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>', chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
   bars: '<path d="M4 20h16"/><path d="M6.5 17v-5M11 17V7M15.5 17v-8M20 17v-3"/>',
+  trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>',
   users: '<circle cx="9" cy="8" r="3.3"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><path d="M15.5 4.8a3.3 3.3 0 0 1 0 6.4M17.5 14c2.1.7 3.5 2.8 3.5 5.5"/>' };
 const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true">' + (TICO[TAB_IC[k]] || '') + '</svg>';
 // ---- the boss banner on top of every tab ----
@@ -8820,6 +8834,8 @@ function renderMain() {
   progLit(false);
   // (opened from a shared pull link on a first visit: the pull first, then the tour)
   if (S.tourAfterPull) { S.tourAfterPull = false; setTimeout(() => { if (!tourDone()) startTour(0); }, 1500); }
+  // (a tab's tips the first time it's opened; they wait for it to fill in)
+  setTimeout(() => pageTips(tipsPage()), 0);
   if (S.nightRep && S.rep === S.nightRep) S.rep = S.realRep; // (leave the all-pulls report: back to the real pull)
   const r = S.rep, it = r.item, single = it.kind === 'run' || !!it.run;
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
@@ -8835,11 +8851,12 @@ function renderMain() {
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
   $('#bossHead').innerHTML = headerHtml(r, allMode) + meBar(r); // (and, when this log isn't known yet, "Is this your raid?")
   $('#main').innerHTML =
-    // the Latest pull recap is always the first tab (with a red dot while live logging is on)
-    '<div class="tabbar"><nav class="tabs" role="tablist">' + [['live', 'Latest pull']].concat(TABS).map(([k, l]) => '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + '" data-t="' + k + '" role="tab" data-tt="' + esc(TAB_TIP[k] || '') + '" aria-description="' + esc(TAB_TIP[k] || '') + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+    // Teams first (your teams' progress, every boss and night), then the Latest pull recap (with a red dot while live
+    // logging is on) and the rest
+    '<div class="tabbar"><nav class="tabs" role="tablist">' + [['teams', 'Teams'], ['live', 'Latest pull']].concat(TABS).map(([k, l]) => '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + '" data-t="' + k + '" role="tab" data-tt="' + esc(TAB_TIP[k] || '') + '" aria-description="' + esc(TAB_TIP[k] || '') + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
       (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>').join('') + '</nav>' + tbPull(r, allMode) + '</div>' +
     '<section id="view"></section>';
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.dataset.t === 'teams') { progressPage(); window.scrollTo(0, 0); return; } S.tab = b.dataset.t; renderMain(); }));
   { const tp = $('#main .tb-pull'); if (tp) tp.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }); }
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   $('#main').querySelectorAll('.tbp-n').forEach((b) => (b.onclick = () => { const same = S.index.bosses.filter((x) => x.id === it.id && x.diffId === it.diffId), to = same[same.indexOf(it) + +b.dataset.d]; if (to) select(to); }));
@@ -14195,7 +14212,7 @@ function teamTile(g, all, order) {
 function homePreviews() {
   const card = (k, t, body) => '<button class="tp-card" type="button" data-tour="' + k + '"><span class="tp-t">' + t + '</span><span class="tp-art">' + body + '</span></button>';
   return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
-    card(1, 'Latest pull', '<span class="tp-l bad">✕ First death: Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l ok">✓ Every kick landed</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
+    card(1, 'Latest pull', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ First death: Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
     card(2, 'Mechanics', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
     card(3, 'Performance', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
     card(4, 'Progress', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
@@ -14208,8 +14225,8 @@ const TOUR_KEY = 'wla-tour-done', tourDone = () => store.get(TOUR_KEY) === '1';
 const TOUR = [
   { t: 'Welcome to Debrief', p: 'Debrief reads your raid\'s combat logs and Warcraft Logs reports, and turns every pull into a short list: what went wrong, what went right, and what to fix next. Here\'s a quick look around.',
     art: () => '<svg class="tr-logo" viewBox="0 0 64 64" aria-hidden="true"><path class="s1" d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z"/><path class="s2" d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z"/><path class="s3" d="m27 32.5 4 4 8.5-9.5"/></svg>' },
-  { t: 'Every pull, explained', p: 'The moment a pull ends, its card shows what went wrong, what went right, and the one thing to fix before you pull again. Click a pull at the top to see any of them.',
-    art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l bad">✕ First death: Brann at 1:42, Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
+  { t: 'Every pull, explained', p: 'The moment a pull ends, its card shows what went well, what went wrong, and the one thing to fix before you pull again. Click a pull at the top to see any of them.',
+    art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ First death: Brann at 1:42, Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
   { t: 'Mechanics and assignments', p: 'Every mechanic is checked for every player, with a map of who stood where. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
   { t: 'Performance', p: 'Damage, healing, damage taken, utility and survivability, like Warcraft Logs but with the why: deaths, cooldowns, mana and defensives. Hover any chart for its numbers.',
@@ -14234,6 +14251,90 @@ function startTour(at) {
   // (Enter or → for next, ← for back; Escape doesn't close it: the tour is a must once)
   const key = (e) => { if (!document.body.contains(el)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < TOUR.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
   document.addEventListener('keydown', key, true);
+  draw();
+}
+// ---- page tips: the first time you open a page, its main parts are pointed out one at a time ----
+// The page dims except for one spot, with a bubble beside it (what it is, what to do with it), Back and Next, then
+// "Got it". Required once per page in this browser, like the tour (no close; Escape doesn't skip it); a part that isn't
+// on the page (no note yet, say) is skipped. They wait until the home tour is done, and for the page to fill in.
+// "Tips for this page" in the menu plays them again. (Performance gets its tips once it's reworked.)
+const PAGE_TIPS = {
+  live: [
+    { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its colour shows how far it got, and orange is a kill.' },
+    { sel: '#bossHead header.fight', t: 'The pull at a glance', p: 'Its result, how it compares to the pull before, and your team\'s progress: click the team to see every boss and night.' },
+    { sel: '#view .wr-wrap', t: 'What went well, and what to fix', p: 'What the raid did well comes first. Under it, what went wrong (the worst first), and beside that, the one thing to fix before you pull again.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'Teams, on the left, is your raid\'s progress, every boss and night. The other tabs dig into this pull: every mechanic, your assignments, the meters, the whole night and every player.' },
+    { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
+  overview: [
+    { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your NSRT note once. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns.' },
+    { sel: '#view .as-tiles', t: 'Each assignment at a glance', p: 'Red went wrong, green was done. Click one to jump straight to it.' }],
+  audit: [
+    { sel: '#view .mscore', t: 'Every mechanic in one line', p: 'Red and amber chips went wrong. Click one to jump straight to it.' },
+    { sel: '#view details.secd', t: 'Open a mechanic', p: 'Each one shows who got it wrong, when, and on many, a map of where everyone stood.' }],
+  night: [
+    { sel: '#sum-prog', t: 'How far the night got', p: 'Every pull of the night on one chart: lower is further. Click a dot to open that pull.' },
+    { sel: '#view .sum-rc', t: 'The night\'s grades', p: 'Mechanics and assignments, graded over every pull of the night.' },
+    { sel: '#view .sumv details.secd', t: 'Each mechanic, pull by pull', p: 'A square per pull: green clean, amber could be better, red went wrong. Click a square to open that pull.' }],
+  player: [
+    { sel: '#view .plsw', t: 'The whole night, or one pull', p: 'Look at every pull of the night together, or just the pull you\'re on.' },
+    { sel: '#view .plmv', t: 'MVPs of the night', p: 'The best tank, healers and DPS by execution, survival and readiness.' },
+    { sel: '#view .plr-list', t: 'Every player', p: 'Gear, consumables, survival and what stands out. Click a player for their full sheet.' }],
+  hub: [
+    { sel: '.pg-hub .ht-card', t: 'Your teams', p: 'Each team or character, with its kills on each difficulty. Click one for every boss and night.' },
+    { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
+  team: [
+    { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
+    { sel: '#pgRank', t: 'Rankings', p: 'Your Warcraft Logs rankings this tier.' },
+    { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Its result and totals. Click a boss for the chart of every pull and its nights.' },
+    { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
+};
+const TIPS_KEY = (k) => 'wla-tips-' + k;
+// (which page is up: a pull's tab, the teams page, or a team's page)
+const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
+const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4) return e; } return null; };
+let TIPS_WAIT = null;
+function pageTips(k, force) {
+  if (!k || !PAGE_TIPS[k] || $('#tour') || $('#ptip') || (!force && (store.get(TIPS_KEY(k)) === '1' || !tourDone()))) return;
+  if (TIPS_WAIT === k && !force) return; TIPS_WAIT = k;
+  // (pages that fill in bit by bit, like Summary and Player audit: once the first part is up, the rest get a few more
+  // seconds to appear before the tips start)
+  const t0 = Date.now(); let first = 0;
+  const wait = () => {
+    if (tipsPage() !== k) { TIPS_WAIT = null; return; } // (you've moved on: the tips wait for your next visit)
+    const steps = PAGE_TIPS[k].filter((s) => tipVis(s.sel)), now = Date.now();
+    if (steps.length && !first) first = now;
+    const allUp = steps.length === PAGE_TIPS[k].length, firstUp = !!tipVis(PAGE_TIPS[k][0].sel);
+    if (!allUp && now - t0 < 10000 && (!firstUp || now - first < 3000)) { setTimeout(wait, 300); return; }
+    TIPS_WAIT = null; if (steps.length) runTips(k, steps);
+  };
+  setTimeout(wait, 600);
+}
+function runTips(k, steps) {
+  if ($('#ptip') || $('#tour')) return;
+  let i = 0, raf = 0;
+  const ov = document.createElement('div'); ov.id = 'ptip'; ov.className = 'ptip';
+  ov.innerHTML = '<div class="pt-hole"></div><div class="pt-bub" role="dialog" aria-modal="true" aria-label="Tips for this page"></div>';
+  document.body.appendChild(ov);
+  const hole = ov.querySelector('.pt-hole'), bub = ov.querySelector('.pt-bub');
+  // (the window around the spot, and the bubble below it, or above when there's no room; both follow a scroll)
+  const place = () => { const e = tipVis(steps[i].sel); if (!e) return; const b = e.getBoundingClientRect(), pad = 6, h = Math.min(b.height + 2 * pad, innerHeight - 24);
+    hole.style.left = (b.left - pad) + 'px'; hole.style.top = (b.top - pad) + 'px'; hole.style.width = (b.width + 2 * pad) + 'px'; hole.style.height = h + 'px';
+    const bw = Math.min(360, innerWidth - 24); bub.style.width = bw + 'px'; const bh = bub.offsetHeight;
+    let top = b.top - pad + h + 14, side = 'b'; if (top + bh > innerHeight - 10) { top = b.top - pad - bh - 14; side = 't'; } if (top < 10) { top = Math.max(10, Math.min(innerHeight - bh - 10, b.top + 12)); side = 'n'; }
+    const left = Math.max(12, Math.min(innerWidth - bw - 12, b.left + Math.min(24, b.width / 2) - 24));
+    bub.style.top = top + 'px'; bub.style.left = left + 'px'; bub.dataset.side = side; bub.style.setProperty('--ax', Math.max(18, Math.min(bw - 18, b.left + Math.min(b.width / 2, 60) - left)) + 'px'); };
+  const follow = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(place); };
+  const finish = () => { store.set(TIPS_KEY(k), '1'); removeEventListener('scroll', follow, true); removeEventListener('resize', follow); document.removeEventListener('keydown', key, true); ov.classList.add('out'); setTimeout(() => ov.remove(), 220); };
+  const draw = () => { const s = steps[i], last = i === steps.length - 1, e = tipVis(s.sel);
+    bub.innerHTML = '<div class="pt-k">' + (i + 1) + ' of ' + steps.length + '</div><b>' + esc(s.t) + '</b><p>' + esc(s.p) + '</p><div class="pt-nav">' + (i ? '<button class="btn" data-p="back" type="button">Back</button>' : '') +
+      '<button class="btn primary" data-p="' + (last ? 'done' : 'next') + '" type="button">' + (last ? 'Got it' : 'Next') + '</button></div>';
+    bub.querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => { const a = b.dataset.p; if (a === 'next') { i++; draw(); } else if (a === 'back') { i--; draw(); } else finish(); }));
+    bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in');
+    if (e) { const b = e.getBoundingClientRect(); if (b.top < 70 || b.bottom > innerHeight - 40) e.scrollIntoView({ block: 'center' }); }
+    place(); const f = bub.querySelector('.btn.primary'); if (f) f.focus(); };
+  // (Enter or → for next, ← for back; Escape doesn't skip it)
+  const key = (e) => { if (!document.body.contains(ov)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < steps.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
+  addEventListener('scroll', follow, true); addEventListener('resize', follow); document.addEventListener('keydown', key, true);
   draw();
 }
 // the home page itself, once you have a team
@@ -14423,10 +14524,10 @@ function renderProgHub(msg, msgErr, asHome) {
       '<li><b>Your team or guild:</b> on <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/id/772787</code> or <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.</li>' +
       '<li><b>Your character:</b> search your character\'s name there, open it, and copy that address. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.</li>' +
       '<li><b>Not a report:</b> a link with <code>/reports/</code> in it is one night. Paste those in the box at the top of the home page instead.</li></ol></div></div>';
-  $('#main').innerHTML = '<div class="home prog' + (asHome ? ' th-home' : '') + '">' + (asHome ? teamsBar() : back) + '<div class="pg-top"><div><h1>' + (asHome ? 'Your teams' : 'Progress') + '</h1><div class="sub">Pick a team or your character: every boss and night of The Venomous Abyss.</div></div></div>' +
+  $('#main').innerHTML = '<div class="home prog' + (asHome ? ' th-home' : '') + '">' + (asHome ? teamsBar() : back) + '<div class="pg-top"><div><h1>Your teams</h1><div class="sub">Pick a team or your character: every boss and night of The Venomous Abyss.</div></div></div>' +
     '<div class="pg-hub">' + gl.map((g) => teamCard(g, all, order, true)).join('') + add + '</div></div>';
   progLit(!asHome);
-  if (asHome) bindTeamsBar();
+  if (asHome) bindTeamsBar(); else pageTips('hub');
   $$('#main .pg-hub button.ht-card').forEach((b) => (b.onclick = () => { S.progView = b.dataset.g; S.pgRename = S.pgDel = S.pgEdit = false; if (b.dataset.g !== '*') store.set(GROUP_CUR, b.dataset.g); renderProgress(); window.scrollTo(0, 0); }));
   const say = (t, err) => { const m = $('#pgMsg'); if (m) { m.textContent = t; m.classList.toggle('err', !!err); } };
   $('#pgTeamGo').onclick = async () => {
@@ -14609,6 +14710,7 @@ function renderProgress(msg, msgErr) {
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
+  pageTips('team');
   // (new nights: checked by themselves when the page opens, if not in the last 10 minutes; the line under the name says when)
   if (g && S.progBusy !== g.gid) autoCheck(g);
   // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)
@@ -14647,6 +14749,8 @@ if ($('#tbProg')) $('#tbProg').onclick = () => progressPage();
 if ($('#tbProgBtn')) $('#tbProgBtn').onclick = () => progressPage();
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
 if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
+// ("Tips for this page": the page's tips again; on a page without its own, the tour)
+if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };
 // (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
 const sharedLink = WCL.HOSTED && !!new URLSearchParams(location.search).get('report');
 if (!tourDone() && sharedLink) S.tourAfterPull = true;

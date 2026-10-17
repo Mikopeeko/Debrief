@@ -87,6 +87,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   animation (the logo drawing itself, a pull card building, a player walking into a soak, meter bars growing, a progress
   strip filling). No close button; Back, Next, and the arrow keys. Opened from a shared pull link, the pull comes first and
   the tour right after. "Take the tour" on the home page and in the menu plays it again.
+- [x] **Page tips** (your note): the first time someone opens a page, its main parts are pointed out one at a time (the page
+  dims except for one spot, a bubble says what it is, Back, Next, Got it). Latest pull, Assignments, Mechanics, Summary,
+  Player audit, the teams page and a team's page; required once each, like the tour. "Tips for this page" in the menu plays
+  them again. Performance gets its tips after its rework.
+- [x] **A Teams tab** (your note): first in the tab row, before Latest pull; the Progress button in the corner is gone, and
+  the page is called "Your teams".
+- [x] **What went well first** (your note: reward first, still about improving): on Latest pull, Assignments and Summary,
+  "What went well" is a strip across the top, then "What went wrong" with "Fix first" beside it.
 - [ ] **Performance tab, refined** (your note): talk it through first, no changes yet.
 - [x] **Your teams are the home page** (your choice): once you've added a team, Debrief opens on your teams, with a slim bar
   on top: Follow my combat log, a box for any Warcraft Logs link, Open a combat log, and "More ways in" for the full welcome
