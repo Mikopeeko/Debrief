@@ -6050,11 +6050,12 @@ function cdiPump() {
 function cdSim(ts0, cd, ch, t0, t1, forced) {
   const ts = ts0.filter((t) => t >= t0 - 0.05 && t <= t1 + 0.05).sort((a, b) => a - b);
   const ov = (a, b) => forced.reduce((s, [u, v]) => s + Math.max(0, Math.min(b, v) - Math.max(a, u)), 0);
-  let c = ch, rs = null, capAt = t0, cap = 0, early = 0;
+  let c = ch, rs = null, capAt = t0, cap = 0, early = 0; const capL = [];
   const adv = (t) => { while (c < ch && rs != null && rs + cd <= t + 0.05) { const done = rs + cd; c++; rs = c < ch ? done : null; if (c === ch) capAt = done; } };
-  for (const t of ts) { adv(t); if (c === ch) cap += Math.max(0, t - capAt - ov(capAt, t)); if (c > 0) { c--; if (rs == null) rs = t; } else early++; }
-  adv(t1); if (c === ch) cap += Math.max(0, t1 - capAt - ov(capAt, t1));
-  return { poss: ch + Math.floor(Math.max(0, t1 - t0 - ov(t0, t1) - 1) / cd), cap, early };
+  const full = (t) => { const g = Math.max(0, t - capAt - ov(capAt, t)); cap += g; if (g >= 0.5) capL.push([capAt, t]); };
+  for (const t of ts) { adv(t); if (c === ch) full(t); if (c > 0) { c--; if (rs == null) rs = t; } else early++; }
+  adv(t1); if (c === ch) full(t1);
+  return { poss: ch + Math.floor(Math.max(0, t1 - t0 - ov(t0, t1) - 1) / cd), cap, early, capL };
 }
 // (time they couldn't press anything: dead, mind controlled, the whole raid waiting; overlaps merged)
 function castForced(r, p) {
@@ -6129,10 +6130,13 @@ const shareSt = (f, ok, warn) => (f == null ? 'na' : f <= ok ? 'ok' : f <= warn 
 //  - Raid, with Beacon of Virtue: Divine Toll (and Aura Mastery, with Ringing of the Heavens) inside the Beacon window.
 //  - Avenging Wrath: the normal rotation, just more healing (30 s with Sanctified Wrath; Call of the Righteous: 90 s).
 //  - Never a generator at 5 Holy Power (Divine Toll on 1 or 2 is fine, so a little is expected).
+// And WoWAnalyzer's Holy Paladin module for Midnight 12.0 (github.com/WoWAnalyzer/WoWAnalyzer, the midnight branch): only
+// Flash of Light and Judgment spend Infusion of Light; never hard cast Flash of Light (without a proc); a cooldown graph with
+// the time a whole extra use fit marked red.
 // Talents are read from what the log shows: Dawnlight (Herald of the Sun), Holy Bulwark (Lightsmith), Beacon of Virtue or
 // Beacon of Faith, Avenging Crusader, Holy Shock pressed twice within its cooldown (2 charges), Infusion of Light at 2 stacks.
 const HPAL_PROCS = [
-  { n: 'Infusion of Light', use: ['flash of light', 'judgment', 'holy light'], tip: 'Best on Flash of Light; Judgment when nobody needs healing' },
+  { n: 'Infusion of Light', use: ['flash of light', 'judgment'], tip: 'Best on Flash of Light; Judgment when nobody needs healing' },
   { n: 'Divine Purpose', use: ['eternal flame', 'light of dawn', 'word of glory', 'shield of the righteous'], tip: 'A free Holy Power spender' },
   { n: 'Dawnlight', use: ['eternal flame', 'light of dawn', 'word of glory', 'shield of the righteous'], tip: 'Herald of the Sun: your next 2 spenders after Divine Toll' },
   { n: 'Hand of Divinity', use: ['holy light'], tip: 'Instant Holy Lights from Avenging Wrath, within 20 s' }];
@@ -6172,33 +6176,68 @@ function hpalChecks(reps, name, one) {
     for (const b of bt) bov.push({ pull: r.item.pull, t: b, dt: dt.some((x) => x >= b - 0.6 && x <= b + 9), am: am.some((x) => x >= b - 0.6 && x <= b + 9), fol: infused.filter((x) => x >= b && x <= b + 9).length }); }
   // ---- Holy Power: gained while already at 5 ----
   let hpG = 0, hpW = 0; const hpBy = new Map(); for (const { p, t1 } of per) for (const g of p.gainL || []) if (g.ty === '9' && g.t <= t1) { hpG += g.amt; hpW += g.over; if (g.over) hpBy.set(g.spell, (hpBy.get(g.spell) || 0) + g.over); }
-  // ---- the checklist ----
-  const pct = (f) => Math.round(100 * f) + '%', time = per.reduce((s, x) => s + x.c.al, 0), checks = [];
-  const hs = ef('holy shock'); if (hs) checks.push({ st: paceSt(hs.f), html: '<b>Holy Shock</b> ' + hs.n + ' of ' + (hs.poss + hs.early) + ' possible casts (' + pct(hs.f) + ')<span class="sub"> · ' + (hs.cap >= 1 ? Math.round(hs.cap) + 's at full charges' : 'never at full charges') + (hs.ch > 1 ? ' · ' + hs.ch + ' charges' : '') + '</span>' });
-  const bv = ef('beacon of virtue'); if (bv) checks.push({ st: paceSt(bv.f), html: '<b>Beacon of Virtue</b> ' + bv.n + ' of ' + (bv.poss + bv.early) + ' possible casts (' + pct(bv.f) + ')<span class="sub"> · ' + (bv.cap >= 1 ? Math.round(bv.cap) + 's ready, unused · ' : '') + 'close to on cooldown, with the damage</span>' });
-  for (const x of procs) checks.push({ st: procSt(x), html: '<b>' + esc(x.n) + '</b> ' + (x.wasted ? x.wasted + ' of ' + x.gained + ' uses wasted' + '<span class="sub"> · ' + [x.ran ? (x.ran === 1 ? 'one ran out' : x.ran + ' ran out') : '', x.lost ? x.lost + ' lost to a new one' : ''].filter(Boolean).join(', ') + '</span>' : 'all ' + x.gained + ' uses spent') + (x.stacks > 1 ? '<span class="sub"> · ' + x.stacks + ' a proc</span>' : '') });
-  if (virtue && dtAll.length) { const n = dtAll.filter((x) => x.inB).length, f = n / dtAll.length; checks.push({ st: f >= 0.99 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', html: '<b>Divine Toll inside Beacon of Virtue</b> ' + n + ' of ' + dtAll.length + '<span class="sub"> · your biggest burst, transferred through every Beacon</span>' }); }
+  // ---- Flash of Light without Infusion of Light: WoWAnalyzer's "never hard cast Flash of Light" ----
+  let folN = 0, folHard = 0; for (const { p, t1 } of per) { const io = p.buffs.get('Infusion of Light'), ends = io ? io.sp.map(([, c]) => c).concat(io.rd || []) : []; for (const t of (p.byName.get('flash of light') || []).filter((x) => x <= t1)) { folN++; if (!ends.some((x) => Math.abs(x - t) <= 0.35)) folHard++; } }
+  // ---- the checks: each one a tile (its spell's icon, the number, a short line) ----
+  const pct = (f) => Math.round(100 * f) + '%', checks = [], add = (st, ic, label, v, sub) => checks.push({ st, ic, label, v, sub });
+  const hs = ef('holy shock'); if (hs) add(paceSt(hs.f), 'Holy Shock', 'Holy Shock', pct(hs.f), hs.n + ' of ' + (hs.poss + hs.early) + ' casts' + (hs.cap >= 1 ? ' · ' + Math.round(hs.cap) + 's at full charges' : ''));
+  const bv = ef('beacon of virtue'); if (bv) add(paceSt(bv.f), 'Beacon of Virtue', 'Beacon of Virtue', pct(bv.f), bv.n + ' of ' + (bv.poss + bv.early) + ' casts' + (bv.cap >= 1 ? ' · ' + Math.round(bv.cap) + 's ready, unused' : ''));
+  for (const x of procs) add(procSt(x), x.n, x.n, x.wasted ? x.wasted + '<span> wasted</span>' : 'All<span> spent</span>', x.gained + ' uses' + (x.stacks > 1 ? ' (' + x.stacks + ' a proc)' : '') + (x.ran ? ' · ' + (x.ran === 1 ? 'one ran out' : x.ran + ' ran out') : '') + (x.lost ? ' · ' + x.lost + ' lost to a new one' : ''));
+  if (folN && procs.some((x) => x.n === 'Infusion of Light')) { const f = folHard / folN; add(f <= 0.05 ? 'ok' : f <= 0.15 ? 'warn' : 'bad', 'Flash of Light', 'Flash of Light without Infusion', String(folHard), 'of ' + folN + ' Flash of Lights · cast it with a proc'); }
+  if (virtue && dtAll.length) { const n = dtAll.filter((x) => x.inB).length, f = n / dtAll.length; add(f >= 0.99 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', 'Divine Toll', 'Divine Toll in Beacon of Virtue', n + '<span>/' + dtAll.length + '</span>', 'your biggest burst, through every Beacon'); }
   // (with Ringing of the Heavens, Aura Mastery is a Divine Toll at 200% too: pair it with Beacon of Virtue, unless an assignment says otherwise)
   if (virtue && roth) { const am = []; for (const { p, t1 } of per) { const bt = (p.byName.get('beacon of virtue') || []).filter((t) => t <= t1); for (const t of (p.byName.get('aura mastery') || []).filter((x) => x <= t1)) am.push(bt.some((b) => t >= b - 0.6 && t <= b + 9)); }
-    if (am.length) { const n = am.filter(Boolean).length; checks.push({ st: n === am.length ? 'ok' : 'warn', html: '<b>Aura Mastery inside Beacon of Virtue</b> ' + n + ' of ' + am.length + '<span class="sub"> · Ringing of the Heavens makes it a Divine Toll at 200% too (unless your note times it)</span>' }); } }
-  if (wins.length) { const inN = wins.reduce((s, w) => s + w.inN, 0), inL = wins.reduce((s, w) => s + w.len, 0), outC = wins.reduce((s, w) => s + w.out * w.len, 0) / Math.max(1, inL), f = (60 * inN / inL) / Math.max(1, outC);
-    checks.push({ st: f >= 0.95 ? 'ok' : f >= 0.85 ? 'warn' : 'bad', html: '<b>' + wingN + '</b> ' + fmtCpm(60 * inN / inL) + ' casts a minute inside it, ' + fmtCpm(outC) + ' outside<span class="sub"> · keep pressing through it: it only adds healing</span>' }); }
-  if (hpG) { const f = hpW / hpG, top = [...hpBy].sort((a, b) => b[1] - a[1])[0]; checks.push({ st: shareSt(f, 0.05, 0.1), html: '<b>Holy Power wasted</b> ' + hpW + ' of ' + hpG + ' (' + pct(f) + ')' + (top ? '<span class="sub"> · most from ' + esc(top[0]) + '; Divine Toll on 1 or 2 is fine</span>' : '') }); }
-  // ---- the detail sections ----
+    if (am.length) { const n = am.filter(Boolean).length; add(n === am.length ? 'ok' : 'warn', 'Aura Mastery', 'Aura Mastery in Beacon of Virtue', n + '<span>/' + am.length + '</span>', 'a Divine Toll at 200% with Ringing of the Heavens'); } }
+  if (wins.length) { const inN = wins.reduce((s, w) => s + w.inN, 0), inL = wins.reduce((s, w) => s + w.len, 0), outC = wins.reduce((s, w) => s + w.out * w.len, 0) / Math.max(1, inL), inC = 60 * inN / inL, f = inC / Math.max(1, outC);
+    add(f >= 0.95 ? 'ok' : f >= 0.85 ? 'warn' : 'bad', wingN, wingN, fmtCpm(inC) + '<span> a min</span>', 'casts inside it · ' + fmtCpm(outC) + ' outside: keep pressing'); }
+  if (hpG) { const f = hpW / hpG, top = [...hpBy].sort((a, b) => b[1] - a[1])[0]; add(shareSt(f, 0.05, 0.1), 'Holy Power', 'Holy Power wasted', pct(f), hpW + ' of ' + hpG + (top ? ' · most from ' + top[0] : '') + ' (Divine Toll on 1-2 is fine)'); }
+  // ---- the detail ----
   const propN = (k) => [...P0.castAb.keys()].find((x) => x.toLowerCase() === k) || capS(k); // (a spell's own name, as the log has it)
   const sec = (t, s, b) => (b ? '<div class="pf-sec"><div class="pf-st"><b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') + '</div>' + b + '</div>' : '');
-  const procT = procs.length ? '<div class="hm-ut rs-ut cst-pr"><div class="hm-uh"><span>Proc</span><span>Uses</span><span>Wasted</span><span>Spent on</span></div>' + procs.map((x) => '<div class="hm-ur"><span>' + spell(x.id, x.n) + (x.stacks > 1 ? ' <span class="sub">' + x.stacks + ' a proc</span>' : '') + '</span><span>' + x.gained + '</span><span class="cst-f ' + procSt(x) + '">' + x.wasted + '</span><span class="sub">' + ([...x.by].sort((a, b) => b[1] - a[1]).map(([k, v]) => esc(propN(k)) + ' ' + v).join(', ') || '—') + '</span></div>').join('') + '</div>' : '';
-  const winT = wins.length ? (one ? wins.map((w) => '<div class="pf-sl"><span><b>' + T(w.a) + '–' + T(w.e) + '</b> <span class="sub">' + w.inN + ' casts, ' + fmtCpm(w.cpm) + ' a minute (' + fmtCpm(w.out) + ' outside)</span></span><span class="sub">' + w.top.map(([s, n]) => esc(s.name) + ' ' + n).join(' · ') + '</span></div>').join('')
+  const ic = (n) => '<span class="pt-i spc-ic">' + spellIcon(0, n, true) + '</span>';
+  const TAL_IC = { 'Herald of the Sun': 'Dawnlight', Lightsmith: 'Holy Bulwark', '2 Holy Shock charges': 'Holy Shock', 'Ringing of the Heavens': 'Aura Mastery', 'Infusion of Light stacks to 2': 'Infusion of Light' };
+  const chips = '<div class="spc-tals"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span>' + talents.map((t) => '<span class="spc-t">' + spellIcon(0, TAL_IC[t] || t) + esc(t) + '</span>').join('') + '</div>';
+  const tiles = '<div class="pts spc-pts">' + checks.map((c) => plTile(ic(c.ic), c.label, c.v, c.st, c.sub)).join('') + '</div>';
+  // (procs: one bar each, split by what spent them, wasted in red)
+  const PC = ['#e6b450', '#6aa8ff', '#b07cf0', '#45c15c'];
+  const procT = procs.map((x) => { const sp = [...x.by].sort((a, b) => b[1] - a[1]), tot = Math.max(1, x.gained);
+    return '<div class="spc-pr"><span class="spc-pn">' + spellIcon(x.id, x.n) + '<b>' + esc(x.n) + '</b></span><span class="spc-pb">' + sp.map(([, v], i) => '<i style="width:' + (100 * v / tot).toFixed(1) + '%;background:' + PC[i % PC.length] + '"></i>').join('') + (x.wasted ? '<i class="w" style="width:' + (100 * x.wasted / tot).toFixed(1) + '%"></i>' : '') + '</span><span class="spc-pv">' + x.gained + ' uses</span>' +
+      '<span class="spc-pl">' + sp.map(([k, v], i) => '<span><i style="background:' + PC[i % PC.length] + '"></i>' + esc(propN(k)) + ' ' + v + '</span>').join('') + (x.wasted ? '<span><i class="w"></i>wasted ' + x.wasted + '</span>' : '') + '</span></div>'; }).join('');
+  // (Avenging Wrath: a card per press, with what was pressed in it)
+  const winT = wins.length ? (one ? '<div class="spc-ws">' + wins.map((w) => { const st = w.cpm >= 0.95 * w.out ? 'ok' : w.cpm >= 0.85 * w.out ? 'warn' : 'bad';
+    return '<div class="spc-w ' + st + '"><div class="spc-wh"><b>' + T(w.a) + '–' + T(w.e) + '</b><span class="sub">' + w.inN + ' casts</span></div><div class="spc-wv">' + fmtCpm(w.cpm) + '<span> a minute · ' + fmtCpm(w.out) + ' outside</span></div><div class="spc-wc">' + w.top.map(([s, n]) => '<span title="' + esc(s.name) + '">' + spellIcon(s.id, s.name) + '<b>' + n + '</b></span>').join('') + '</div></div>'; }).join('') + '</div>'
     : '<div class="pf-sl"><span>' + presses(wins.length) + ' over ' + plural(per.length, 'pull') + '</span><span class="sub">' + fmtCpm(wins.reduce((s, w) => s + w.cpm, 0) / wins.length) + ' casts a minute inside, on average</span></div>') : '';
-  const bovT = bov.length ? (one ? bov.map((b) => '<div class="pf-sl"><span><b>' + T(b.t) + '</b> <span class="sub">Beacon of Virtue</span></span><span>' + [b.dt ? '<span class="ok-t">Divine Toll</span>' : '', b.am ? '<span class="ok-t">Aura Mastery</span>' : '', b.fol ? plural(b.fol, 'Infused Flash of Light') : ''].filter(Boolean).join(' · ') + '</span></div>').join('')
-    : '<div class="pf-sl"><span>' + bov.length + ' Beacons of Virtue over ' + plural(per.length, 'pull') + '</span><span class="sub">' + bov.filter((b) => b.dt).length + ' with Divine Toll · ' + bov.reduce((s, b) => s + b.fol, 0) + ' Infused Flash of Lights inside</span></div>') : '';
-  const sections = '<p class="sub spc-tal">Read from ' + (one ? 'this pull' : 'these pulls') + ': ' + esc(talents.join(' · ')) + '</p>' +
-    sec('Checklist', 'from Wowhead\'s and Icy Veins\' Holy Paladin guides', checks.map((c) => ckLine(c.st, c.html)).join('')) +
+  const bovT = bov.length ? '<div class="pf-sl"><span>' + plural(bov.length, 'Beacon of Virtue', 'x').replace(/Beacon of Virtues$/, 'Beacons of Virtue') + (one ? '' : ' over ' + plural(per.length, 'pull')) + '</span><span class="sub">' + bov.filter((b) => b.dt).length + ' with Divine Toll · ' + bov.filter((b) => b.am).length + ' with Aura Mastery · ' + plural(bov.reduce((s, b) => s + b.fol, 0), 'Infused Flash of Light') + ' inside</span></div>' : '';
+  // (one pull: the cooldowns on the pull's time line)
+  const tl = one && per.length === 1 ? hpalTimeline(per[0], { hs, virtue, wingN }) : '';
+  const sections = chips + tiles + (tl ? sec('Your cooldowns over the pull', 'red: ready long enough for a whole extra use, or Holy Shock at full charges', tl) : '') +
     (eff ? sec('Cast efficiency', 'Divine Toll and your big cooldowns are on Cooldowns', effTable({ eff }, one)) : '') +
-    sec('Procs', 'spend them before they run out or a new one replaces them', procT) +
-    sec(wingN, one ? 'each press: your casting in it, and what you pressed most' : '', winT) +
-    sec('Beacon of Virtue', one ? 'each one: Divine Toll and Aura Mastery inside, and your Infused Flash of Lights' : '', bovT);
+    sec('Procs', 'what spent them, and any wasted', procT) + sec(wingN, one ? 'each press: your casting in it, and what you pressed most' : '', winT) + sec('Beacon of Virtue', '', bovT) +
+    '<p class="sub spc-src">From Wowhead\'s, Icy Veins\' and WoWAnalyzer\'s Holy Paladin guides for Midnight.</p>';
   return { checks, talents, html: sections, wait: eff ? eff.wait : 0 };
+}
+// one pull's cooldowns on its time line: Avenging Wrath and Beacon of Virtue as bars, Divine Toll and Aura Mastery as ticks,
+// Holy Shock's presses with the time at full charges in red, Infusion of Light as bars; time ready long enough for a whole
+// extra use in red (WoWAnalyzer's cooldown graph), time dead greyed
+function hpalTimeline(x, o) {
+  const { r, p, t1, end } = x, dur = Math.max(1, end), cut = (l) => l.filter((t) => t <= t1);
+  const dd = deadSpans(r, p).map(([a, b]) => '<rect x="' + a.toFixed(1) + '" y="0" width="' + Math.max(0, Math.min(dur, b) - a).toFixed(1) + '" height="10" class="tl-dd"/>').join('');
+  const bars = (sp, cls) => sp.filter(([a]) => a <= t1).map(([a, c]) => '<rect x="' + a.toFixed(1) + '" y="2" width="' + Math.max(0.6, Math.min(c, t1) - a).toFixed(1) + '" height="6" rx=".6" class="' + cls + '"/>').join('');
+  const ticks = (ts, cls) => ts.map((t) => '<line x1="' + t.toFixed(2) + '" x2="' + t.toFixed(2) + '" y1="0.5" y2="9.5" class="tl-t' + (cls ? ' ' + cls : '') + '"/>').join('');
+  // (a one-charge cooldown sat ready: from coming back to the next press, red when a whole use fit in it)
+  const ready = (ts, cd) => { const l = ts.slice().sort((a, b) => a - b), out = []; let from = 0; for (const t of l.concat([t1])) { const g = t - from; if (g >= 3) out.push('<rect x="' + from.toFixed(1) + '" y="0" width="' + g.toFixed(1) + '" height="10" class="tl-rd' + (g >= cd ? ' red' : '') + '"/>'); from = t + cd; } return out.join(''); };
+  const row = (name, body, sub) => '<div class="tl-r"><span class="tl-n">' + spellIcon(0, name) + '<span>' + esc(name) + '</span>' + (sub ? '<span class="sub">' + sub + '</span>' : '') + '</span><svg viewBox="0 0 ' + dur + ' 10" preserveAspectRatio="none" aria-hidden="true">' + body + dd + '</svg></div>';
+  const by = (n) => cut(p.byName.get(n.toLowerCase()) || []);
+  let h = '';
+  const wing = p.buffs.get(o.wingN), wcd = seenCd(r, p, o.wingN, 120) || 120; if (wing || by(o.wingN).length) h += row(o.wingN, ready(by(o.wingN), wcd) + bars(wing ? wing.sp : [], 'tl-aw') + ticks(by(o.wingN)));
+  if (o.virtue) h += row('Beacon of Virtue', by('Beacon of Virtue').map((t) => '<rect x="' + t.toFixed(1) + '" y="2" width="9" height="6" rx=".6" class="tl-bv"/>').join('') + ticks(by('Beacon of Virtue')));
+  const bt = by('Beacon of Virtue'), inB = (t) => bt.some((b) => t >= b - 0.6 && t <= b + 9), dts = by('Divine Toll'), dcd = seenCd(r, p, 'Divine Toll', 60) || 60;
+  if (dts.length) h += row('Divine Toll', ready(dts, dcd) + ticks(dts.filter((t) => !o.virtue || inB(t)), 'ok') + ticks(dts.filter((t) => o.virtue && !inB(t)), 'warn'));
+  const ams = by('Aura Mastery'); if (ams.length) h += row('Aura Mastery', ready(ams, seenCd(r, p, 'Aura Mastery', 180) || 180) + ticks(ams.filter((t) => !o.virtue || inB(t)), 'ok') + ticks(ams.filter((t) => o.virtue && !inB(t)), 'warn'));
+  const hsT = by('Holy Shock'); if (hsT.length && o.hs) { const sim = cdSim(hsT, o.hs.cd, o.hs.ch, 0, t1, castForced(r, p)); h += row('Holy Shock', (sim.capL || []).map(([a, b]) => '<rect x="' + a.toFixed(1) + '" y="0" width="' + Math.max(0.5, b - a).toFixed(1) + '" height="10" class="tl-cap"/>').join('') + ticks(hsT, 'thin')); }
+  const io = p.buffs.get('Infusion of Light'); if (io) h += row('Infusion of Light', bars(io.sp, 'tl-io'));
+  const step = dur > 400 || (document.documentElement.clientWidth || 1000) < 700 ? 60 : 30, ax = []; for (let t = 0; t <= dur; t += step) ax.push('<span style="left:' + (100 * t / dur).toFixed(2) + '%">' + T(t) + '</span>');
+  return '<div class="spc-tl">' + h + '<div class="tl-ax"><div>' + ax.join('') + '</div></div><div class="tl-lg"><span><i class="aw"></i>' + esc(o.wingN) + ' up</span>' + (o.virtue ? '<span><i class="bv"></i>Beacon of Virtue (9s)</span>' : '') + '<span><i class="ok"></i>' + (o.virtue ? 'inside a Beacon' : 'pressed') + '</span>' + (o.virtue ? '<span><i class="warn"></i>outside one</span>' : '') + '<span><i class="io"></i>Infusion of Light up</span><span><i class="red"></i>a whole use wasted, or Holy Shock capped</span>' + (t1 < end - 0.5 ? '<span><i class="dd"></i>dead</span>' : '') + '</div></div>';
 }
 const SPEC_CHECKS = { 'Holy Paladin': hpalChecks };
 // The view: a bar per player whose spec has checks (how many of them are in good shape), their checks under their name;

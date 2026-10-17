@@ -87,6 +87,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 151: Spec checks, a nicer look (and WoWAnalyzer read)
+- [x] **Your ask: better graphics.** Talents as chips; a tile per check (its spell's icon, the number, a short line);
+  **your cooldowns over the pull** on one time line (Avenging Wrath and Beacon of Virtue as bars, Divine Toll and Aura
+  Mastery green inside a Beacon and gold outside, Holy Shock with its time at full charges in red, Infusion of Light up,
+  red where a whole extra use fit, like WoWAnalyzer's cooldown graph); procs as bars split by what spent them; a card per
+  Avenging Wrath with what you pressed in it.
+- [x] **WoWAnalyzer read** (your question; it's maintained for Midnight 12.0, Holy Paladin marked partial): only Flash of
+  Light and Judgment spend Infusion of Light now (Holy Light doesn't), and a new check from it: **Flash of Light without
+  Infusion** (its "never hard cast Flash of Light"). Wowhead, Icy Veins and WoWAnalyzer together from now on.
+
 ## 2026-10-17, round 150: Spec checks, Holy Paladin first
 - [x] **A new Performance view, Spec checks** (How they played group): the WoWAnalyzer side, one spec at a time. A bar per
   player whose spec has checks (how many are in good shape); click for their checklist and the detail.
