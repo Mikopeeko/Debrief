@@ -1591,17 +1591,17 @@ const PACKS = [
   { type: 'debuff', spellIds: [1265425], name: 'Wild Bite', severity: 'Medium', tip: "You stayed in the water and the sharks bit you. Get out fast, and don't stand where Pop!'s knockback pushes you in." },
   { type: 'raidFail', spellIds: [1294867, 1295086], name: 'Unending Tides', severity: 'High', tip: 'Nymrissa reached her enrage and flooded the raid. More damage on the boss.' },
 ]},
-{ encounter: "Nek'zali the Soulcoiler", sources: SRC, rules: [
-  { type: 'avoidable', spellIds: [1294846], name: 'Anguished Echoes', severity: 'Medium', tip: 'Dodge the spirits that burst out of the well during Soulcoil Ignition.' },
-  { type: 'avoidable', spellIds: [1287198], name: 'Latent Cultist', severity: 'Medium', tip: 'Move out of cultist pools, and be away from the raid when Essence Rend expires so the cultist spawns out of the way.' },
-  { type: 'avoidable', spellIds: [1284032], name: 'Soulcoil Well', severity: 'High', tip: 'Stay out of the well. Dying inside it Soulcoils you and feeds the boss energy.' },
-  { type: 'avoidable', spellIds: [1292248], name: 'Soul Transfer', severity: 'Medium', tip: "Step out of the Echo of Jawae's line blast." },
-  { type: 'avoidable', spellIds: [1300239], name: 'Swirling Spirit', severity: 'Medium', difficulties: ['Mythic'], tip: 'Avoid the swirling spirits while inside the well.' },
-  { type: 'debuff', spellIds: [1294933], name: 'Slithering Flame', severity: 'Medium', difficulties: ['Heroic', 'Mythic'], tip: 'You missed the Hungering Pyre soak. Stand within 10 yards of the Echo of Jawae when it erupts.' },
+// (Nek'zali: spell IDs checked against real Mythic pulls, 2026-10. Slithering Flame isn't a rule: every player outside
+// the Hungering Pyre soak gets it by design. Amani in the well, the corpses, Ignition and Invoke are the fight module's.)
+{ encounter: "Nek'zali the Soulcoiler", sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
+  { type: 'avoidable', spellIds: [1294846], name: 'Anguished Echoes', severity: 'Medium', tip: 'Dodge the circles that rain out of the well during Soulcoil Ignition.' },
+  { type: 'avoidable', spellIds: [1288554], name: 'Latent Cultist', severity: 'Medium', tip: 'Stay out of the cultist puddles (they move around the well in P2), and walk to the side of the room before Essence Rend is dispelled so the cultist spawns out of the way.' },
+  { type: 'avoidable', spellIds: [1292248, 1289902], name: 'Soul Transfer', severity: 'High', tip: "Step out of the Echo of Jawae's line toward Nek'zali before its 15-second channel ends." },
+  { type: 'avoidable', spellIds: [1300239], name: 'Swirling Spirit', severity: 'Low', difficulties: ['Mythic'], tip: 'Avoid the spirits circling inside the well during Grasping Depths; their damage stacks.' },
   { type: 'debuff', spellIds: [1290361], name: 'Soulcoiled', severity: 'High', tip: "Your soul was dragged to the well. Don't die in the well, and make sure Soulcoiler's Curse gets interrupted on Mythic." },
-  { type: 'interrupt', spellIds: [1300238], name: "Soulcoiler's Curse", severity: 'High', difficulties: ['Mythic'], tip: 'Assign a kick on the Drowned Echo. If it lands, everyone in the well is Soulcoiled.' },
-  { type: 'bossBuff', spellIds: [1284034], name: 'Uncoiled Rage', severity: 'High', tip: "Nek'zali hit full energy. Stop Restless Amani before they reach the well, and Bloodlust when she becomes active in phase 2." },
-  { type: 'stacks', spellIds: [1284110], name: 'Hollowing Strikes', severity: 'Low', threshold: 6, tip: 'Tank swap sooner. Each stack cuts healing received by 5%. The 6-stack swap point is an estimate.' },
+  { type: 'interrupt', spellIds: [1300238], name: "Soulcoiler's Curse", severity: 'High', difficulties: ['Mythic'], tip: 'Kick every Soulcoiler\'s Curse from the Drowned Echo. If it lands, everyone in the well is thrown out and Soulcoiled.' },
+  { type: 'bossBuff', spellIds: [1284034], name: 'Uncoiled Rage', severity: 'High', tip: "Nek'zali hit full energy. Keep Restless Amani out of the well, reach the intermission before the fourth Soulcoil Ignition, and Bloodlust in P2." },
+  { type: 'stacks', spellIds: [1284109], name: 'Hollowing Strikes', severity: 'Low', threshold: 8, tip: 'Tank swap sooner: each stack cuts healing and absorbs on the tank by 5%. Guides swap at 30 to 40%, 6 to 8 stacks.' },
 ]},
 { encounter: 'Entombed Sentinels', sources: SRC, rules: [
   { type: 'raidFail', spellIds: [1284452], name: 'Noxious Blast', severity: 'High', tip: 'A Toxic Droplet was left alone and exploded on the whole raid. Step on every droplet before it erupts.' },
@@ -1878,6 +1878,25 @@ const SZ_IDS = Object.values(SZ).flat();
 // was measured from players who drifted on Mythic pulls (Oct 2026): fixed for the room, two opposite pairs at right
 // angles, about 17 degrees off the compass. [degrees in map space, east = 0, counterclockwise; the nearest compass word]
 const SZ_CW = { 1285425: [73, 'north'], 1297111: [163, 'west'], 1285453: [253, 'south'], 1297096: [343, 'east'] };
+// Nek'zali the Soulcoiler spell IDs, read from real Mythic pulls on Warcraft Logs (Sep to Oct 2026). Matched by ID
+// (MODULES entry `ids`).
+const NZ = {
+  ignition: 1293664, ignitionCh: 1285681, echoes: 1294846, // Soulcoil Ignition: the cast, its channel (her aura), Anguished Echoes (the circles out of the well)
+  rite: 1288772, burn: 1297624, // Soulcoil Rite (every feed of the well: a raid hit and a stacking damage over time), Ritual Burn (Heroic and Mythic: +15% from the next Rites per stack, 60 s)
+  barrage: 1284103, barrageHit: 1292034, hollow: 1284109, // Possession Barrage (the cast and the tank's debuff; the spirits' raid damage), Hollowing Strikes (tank stacks)
+  rend: 1287434, rendPull: 1287427, cultist: 1288554, // Essence Rend: the dispellable damage over time (a Latent Cultist spawns where it ends), its pull, a cultist's hit
+  shield: 1287533, blight: [1307939, 1294729], // Restless Amani: Gravebound Advance (the magic shield each spawns with), Corpse Blight (a dead Amani's burst and damage over time)
+  vessel: 1297631, vesselHit: 1297630, // Vessel of Awakening: a corpse coming back (its aura), the revived Amani's pulse on the raid
+  ritual: 1295124, ritualAura: 1289683, // the intermission: Ritual of Awakening (the cast, her aura)
+  transfer: [1292248, 1289902, 1293211], pyre: 1289855, flame: 1294933, // Echo of Jawae: Soul Transfer (the 15 s channel and line blast), Hungering Pyre (the soak), Slithering Flame (on the non-soakers)
+  uncoil: 1290003, invoke: 1299673, invokeDeb: 1299722, // P2: Uncoiling (her aura as it starts), Invoke (the cast; Mythic: the debuff on players it interrupted)
+  depths: 1293212, coil: 1308227, curse: 1300238, spirit: 1300239, exhaust: 1300235, // Mythic Grasping Depths: the well's aura while a Drowned Echo lives, Immortal Coil (on the players in the well), Soulcoiler's Curse, Swirling Spirit, Soul Exhaustion
+  soulcoiled: 1290361, rage: 1284034, // Soulcoiled, Uncoiled Rage (the enrage at 100 energy)
+};
+const NZ_IDS = Object.values(NZ).flat();
+// Latent Cultist puddles closer than this to the well's centre (yards) are in the way (the guides: get dispelled at the
+// side of the room). My call, from where Wolfthorn's Mythic kills dropped them.
+const NZ_EDGE = 25;
 // Ula'tek spell IDs, read from real Heroic and Mythic pulls (Warcraft Logs, Aug to Oct 2026). Matched by ID (MODULES
 // entry `ids`): several share names with player spells or with each other.
 const UL = {
@@ -1965,6 +1984,14 @@ const MODULES = [{
   focus: new Set(["Breath of Ula'tek", "Blood of Ula'tek"]),
   priority: ['Venom Coagulation'],
   build: buildEntombedSentinels,
+}, {
+  encounter: "Nek'zali the Soulcoiler",
+  units: ['Restless Amani', 'Drowned Echo', 'Echo of Jawae'], // drawn on maps
+  spells: ['essence rend'], // (dispels reach the module by name; the rest by ID)
+  ids: NZ_IDS,
+  focus: new Set(["Nek'zali the Soulcoiler", "Nek'zali, the Soulcoiler"]),
+  priority: ['Restless Amani', 'Drowned Echo', 'Echo of Jawae'],
+  build: buildNekzali,
 }, {
   encounter: 'Sszorak',
   units: [],
@@ -3159,6 +3186,267 @@ function buildSszorak(ev, r, h) {
     legend: 'Grouped the way the fight loops: the tank combo, the Venomous Surge cysts, Raging Crosswinds, Serpent\'s Fury (Mythic), the intermission, then deaths and avoidable damage.', note: '' };
 }
 
+function buildNekzali(ev, r, h) {
+  const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const dur = r.duration, mythic = r.item.diff === 'Mythic', burnOn = mythic || r.item.diff === 'Heroic', pname = (g) => h.name(g), T = h.fmtT;
+  const fmtM = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
+  const mistakes = [], sections = [], marks = [];
+  const M = (t, player, mech, severity, detail, fix, map) => mistakes.push({ t, player, mechanic: mech, id: 0, severity, detail, fix, ...(map ? { map } : {}) });
+  const has = (e, ids) => [].concat(ids).includes(e.id);
+  const dmgId = (ids) => ev.filter((e) => e.k === 'dmg' && has(e, ids) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
+  const AUR = new Map(), aur = (id) => { const k = String(id); if (!AUR.has(k)) AUR.set(k, ev.filter((e) => e.k === 'aura' && has(e, id)).sort((a, b) => a.t - b.t)); return AUR.get(k); };
+  const gap1 = (l) => l.sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 1);
+  const castOk = (ids) => gap1(ev.filter((e) => e.k === 'cast' && has(e, ids)).map((e) => e.t));
+  const starts = (ids) => gap1(ev.filter((e) => e.k === 'start' && has(e, ids)).map((e) => e.t));
+  const frames = (t0, t1) => h.frames(Math.max(0, t0), Math.min(dur, t1), 0.25);
+  const isTank = (g) => h.role(g) === 'tank';
+  const posPts = (t) => (h.frames(t, t, 0.2)[0] || { pts: h.snap(t) }).pts;
+  const posOf = (g, t) => posPts(t).find((q) => q.guid === g);
+  const lastPos = (g) => { const u = r.positions.get(g); return u && u.pts.length ? u.pts[u.pts.length - 1] : null; };
+  // (an aura on a player at t: applied, or a stack added, and not removed since)
+  const upAt = (id, g, t) => { let on = false; for (const e of aur(id)) { if (e.dst !== g || e.t >= t - 0.05) continue; on = e.op !== 'remove'; } return on; };
+  const stacksAt = (id, g, t) => { let n = 0; for (const e of aur(id)) { if (e.dst !== g || e.t >= t - 0.05) continue; n = e.op === 'remove' ? 0 : e.op === 'apply' ? Math.max(1, e.stacks || 1) : Math.max(n, e.stacks || n + 1); } return n; };
+  const BOSS = "Nek'zali the Soulcoiler", players = [...r.players.values()].map((p) => p.guid).filter((g) => h.isPlayer(g));
+  // the well's centre: where she stands to channel Soulcoil Ignition (she teleports into it)
+  const ignAt = ev.find((e) => e.k === 'cast' && has(e, [NZ.ignition, NZ.ignitionCh]) && e.x != null);
+  const W0 = ignAt ? { x: ignAt.x, y: ignAt.y } : { x: 0, y: 206.5 };
+  const wellD = (p) => (p ? Math.hypot(p.x - W0.x, p.y - W0.y) : null);
+  const wellRing = { x: W0.x, y: W0.y, r: 15, color: '#9b7be0', fill: 'rgba(155,123,224,.12)', label: '', cn: 'Purple circle', legend: 'the Soulcoil Well (about 15 yd)' };
+  const spot = (x, y, color, legend, cn) => ({ x, y, r: 3, color, fill: color + '66', label: '', cn, legend });
+
+  // ---- phases: P1, the intermission (Ritual of Awakening at 50%), P2 (Uncoiling) ----
+  const ritT = (ev.find((e) => (e.k === 'start' || e.k === 'cast') && e.id === NZ.ritual) || ev.find((e) => e.k === 'aura' && e.id === NZ.ritualAura && e.op === 'apply') || {}).t ?? null;
+  const p2T = (ev.find((e) => e.k === 'aura' && e.id === NZ.uncoil && e.op === 'apply') || {}).t ?? null;
+  const phases = [{ name: 'P1', start: 0, end: ritT ?? dur }];
+  if (ritT != null) { phases.push({ name: 'Intermission', start: ritT, end: p2T ?? dur }); marks.push({ t: ritT, label: 'Intermission', id: NZ.ritual, kind: 'phase' }); }
+  if (p2T != null) { phases.push({ name: 'P2', start: p2T, end: dur }); marks.push({ t: p2T, label: 'P2', id: NZ.uncoil, kind: 'phase' }); }
+  const phOf = (t) => (p2T != null && t >= p2T - 0.5 ? 'P2' : ritT != null && t >= ritT - 0.5 ? 'the intermission' : 'P1');
+  // her energy, from her casts (Soulcoil Ignition gives 25, each feed of the well 5; P2 starts from empty)
+  const en = ev.filter((e) => e.k === 'cast' && e.pw != null && e.pwMax === 100 && e.srcName === BOSS).map((e) => ({ t: e.t, v: e.pw })).sort((a, b) => a.t - b.t);
+  const energyAt = (t) => { let v = null; for (const s of en) { if (s.t > t + 0.05) break; v = s.v; } return v; };
+  const enr = aur(NZ.rage).find((e) => e.op === 'apply' && !h.isPlayer(e.dst));
+
+  // ---- the well's feeds: every Soulcoil Rite on the raid that isn't from Ignition or Invoke ----
+  const riteA = aur(NZ.rite).filter((e) => (e.op === 'apply' || e.op === 'dose') && h.isPlayer(e.dst));
+  const batches = []; for (const e of riteA) { const b = batches[batches.length - 1]; if (b && e.t - b.t1 < 0.5) { b.t1 = e.t; b.who.add(e.dst); } else batches.push({ t: e.t, t1: e.t, who: new Set([e.dst]) }); }
+  const ignSt = starts(NZ.ignition), invC = castOk(NZ.invoke);
+  const ignOf = (t) => ignSt.find((s) => t >= s - 0.5 && t <= s + 14);
+  const feeds = batches.filter((b) => b.who.size >= 5 && !ignOf(b.t) && !invC.some((c) => Math.abs(b.t - c) < 1.5)).map((b) => ({ t: b.t, by: null, died: null }));
+
+  // ---- 1. Restless Amani: sets of adds walking to the well; break the magic shield, kill them before the water ----
+  const vesA = aur(NZ.vessel).filter((e) => e.op === 'apply' && !h.isPlayer(e.dst));
+  const amani = new Map();
+  for (const e of aur(NZ.shield)) {
+    if (h.isPlayer(e.dst)) continue;
+    if (e.op === 'apply' && !amani.has(e.dst)) amani.set(e.dst, { g: e.dst, t: e.t, off: null, died: null, fed: null, seen: e.t });
+    const a = amani.get(e.dst); if (a && e.op === 'remove' && a.off == null) a.off = e.t;
+  }
+  // (a corpse coming back is a new Amani that spawns the moment its corpse's Vessel of Awakening starts, read from Mythic
+  // pulls; in a real log it can keep the corpse's own GUID: either way it's left out of the sets)
+  const revived = new Set(vesA.map((e) => e.dst)), revOf = new Map();
+  for (const v of vesA) { if (revOf.has(v.dst)) continue; const c = [...amani.values()].filter((a) => !revived.has(a.g) && Math.abs(a.t - v.t) < 0.4).sort((x, y) => Math.abs(x.t - v.t) - Math.abs(y.t - v.t))[0]; if (c) { revived.add(c.g); revOf.set(v.dst, c.g); } }
+  for (const g of revived) amani.delete(g);
+  for (const e of ev) {
+    if (e.k === 'die' && amani.has(e.guid)) { const a = amani.get(e.guid); if (a.died == null) a.died = e.t; }
+    for (const g of [e.src, e.dst]) if (g && amani.has(g)) { const a = amani.get(g); a.seen = Math.max(a.seen, e.t); }
+  }
+  for (const a of amani.values()) { const p = lastPos(a.g); if (p) a.seen = Math.max(a.seen, p[0]); }
+  // (an Amani that reached the well vanishes as the raid takes the Rite (its shield drops at the water): the one last seen
+  // closest to it; a player dying in the well feeds it too)
+  for (const f of feeds) {
+    const cand = [...amani.values()].filter((a) => a.fed == null && a.died == null && a.t < f.t && a.seen >= f.t - 3 && a.seen <= f.t + 1.5).sort((x, y) => Math.abs(x.seen - f.t) - Math.abs(y.seen - f.t));
+    if (cand.length) { cand[0].fed = f.t; f.by = cand[0]; continue; }
+    f.died = r.deaths.find((d) => d.t >= f.t - 2 && d.t <= f.t + 0.5 && h.isPlayer(d.guid)) || null;
+  }
+  const amSets = []; for (const a of [...amani.values()].sort((x, y) => x.t - y.t)) { const s = amSets[amSets.length - 1]; if (s && a.t - s.t < 6) s.list.push(a); else amSets.push({ t: a.t, list: [a] }); }
+  const amGroups = amSets.map((s, i) => {
+    const rows = s.list.map((a, j) => {
+      const lp = lastPos(a.g), at = a.died != null ? posPts(a.died).find((q) => q.guid === a.g) || (lp ? { x: lp[1], y: lp[2] } : null) : lp ? { x: lp[1], y: lp[2] } : null, d = wellD(at);
+      const res = a.fed != null ? { txt: 'reached the well', bad: true, sub: '+5 energy, a Soulcoil Rite on the raid' }
+        : a.died != null ? { txt: 'killed after ' + Math.round(a.died - a.t) + ' s', sub: d != null ? Math.round(d) + ' yd from the well\'s centre' : '' }
+        : lp && lp[0] >= dur - 3 ? { txt: 'alive when the pull ended', dim: true } : { txt: 'gone (no kill seen)', dim: true, sub: 'burned, or out of the log' };
+      return { a, at, row: [{ txt: 'Amani ' + (j + 1) }, { t: a.t }, a.off != null ? { txt: 'broken after ' + Math.round(a.off - a.t) + ' s' } : { txt: a.died != null ? '—' : 'never broken', dim: a.died != null, warn: a.died == null && a.fed != null }, res, { txt: '' }] };
+    });
+    const tEnd = Math.min(dur, Math.max(...s.list.map((a) => a.fed ?? a.died ?? s.t + 20)) + 0.5);
+    const fed = s.list.filter((a) => a.fed != null);
+    for (const a of fed) M(a.fed, 'Raid', 'Restless Amani', 'High', 'A Restless Amani reached the Soulcoil Well: Nek\'zali gained 5 energy and the raid took a Soulcoil Rite' + (burnOn ? ' and a Ritual Burn stack.' : '.'), 'Break each Amani\'s magic shield (Gravebound Advance) with magic damage, then kill it before it reaches the water.');
+    const rings = [wellRing].concat(rows.filter((x) => x.at).map((x) => x.a.fed != null ? spot(x.at.x, x.at.y, '#ff5a4f', 'an Amani that reached the well', 'Red dot') : spot(x.at.x, x.at.y, '#2fd15a', 'where an Amani died', 'Green dot')));
+    const whole = [{ txt: 'Whole set', sub: 'where each one died, on one map', dim: true }, { t: s.t }, { txt: '' }, { txt: '' },
+      { map: { t: tEnd, title: 'Restless Amani set ' + (i + 1) + ' at ' + T(s.t), pts: h.snap(tEnd), rings, frames: frames(s.t, tEnd) } }];
+    return { title: 'Set ' + (i + 1) + ' (' + phOf(s.t) + ')', t: s.t, bad: fed.length > 0, warn: false, sub: pl(s.list.length, 'Amani') + (fed.length ? ', ' + fed.length + ' reached the well' : ', none reached the well'), rows: [whole].concat(rows.map((x) => x.row)) };
+  });
+  if (amGroups.length) sections.push({ id: 'amani', title: 'Restless Amani: none reach the well', spell: [NZ.shield, 'Restless Amani'], verdict: amGroups.some((g) => g.bad) ? 'bad' : 'good',
+    summary: pl(amani.size, 'Restless Amani') + ' in ' + pl(amGroups.length, 'set') + '. When each one\'s shield broke, and whether it died or reached the well.', cols: ['Add', 'Spawned', 'Shield', 'Result', ''], groups: amGroups, rows: [] });
+
+  // ---- 2. Soulcoil Ignition: five Rites on the raid while Anguished Echoes rain out of the well ----
+  const echoHits = dmgId(NZ.echoes);
+  const igGroups = ignSt.map((s, i) => {
+    // (the circles keep landing for a few seconds after the channel: read from Mythic pulls, up to about 17 s after it starts)
+    const cut = ritT != null && s < ritT && ritT < s + 12, t1 = Math.min(dur, s + 18);
+    const burned = burnOn ? players.filter((g) => !r.deaths.some((d) => d.guid === g && d.t <= s) && stacksAt(NZ.burn, g, s) > 0) : [];
+    const src = feeds.filter((f) => f.t < s && f.t > s - 60).map((f) => f.by ? 'an Amani at ' + T(f.t) : 'the well fed at ' + T(f.t));
+    const by = new Map(); for (const e of echoHits.filter((e) => e.t >= s && e.t <= t1)) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, n: 0, last: -9, amt: 0 }); if (e.t - o.last > 1) o.n++; o.last = e.t; o.amt += e.raw || e.amt; }
+    const died = r.deaths.filter((d) => d.t >= s && d.t <= t1 && h.isPlayer(d.guid));
+    if (burned.length) M(s, 'Raid', 'Soulcoil Ignition', 'Medium', pl(burned.length, 'player') + ' went into Soulcoil Ignition with Ritual Burn up' + (src.length ? ' (from ' + src.join(', ') + ')' : '') + ', so every Rite hit them harder.', 'Go into Ignition with no Ritual Burn: no Amani in the well in the minute before.');
+    for (const o of by.values()) { const d = died.find((x) => x.guid === o.g); M(o.t, pname(o.g), 'Anguished Echoes', d || o.n >= 2 ? 'High' : 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Anguished Echoes circles' : 'an Anguished Echoes circle') + ' during Soulcoil Ignition' + (d ? ', and died.' : '.'), 'Watch for the circles raining from the well during Ignition and step out before they land.'); }
+    const e0 = energyAt(s - 0.1), e1 = energyAt(t1);
+    const rows = [[{ txt: 'Going in' }, { t: s }, burnOn ? (burned.length ? { txt: pl(burned.length, 'player') + ' with Ritual Burn', warn: true, sub: src.length ? 'from ' + src.join(', ') : '' } : { txt: 'no Ritual Burn' }) : { txt: '—', dim: true },
+      died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, { txt: e0 != null && e1 != null ? 'energy ' + e0 + ' to ' + e1 : '', dim: true }]]
+      .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: o.n === 1 && !d, bad: o.n >= 2 || !!d, sub: fmtM(o.amt) }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
+    return { title: 'Soulcoil Ignition ' + (i + 1) + (cut ? ' (cut short by the intermission)' : ''), t: s, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: (by.size ? pl(by.size, 'player') + ' hit by the circles' : 'nobody hit by the circles') + (burned.length ? ', ' + burned.length + ' with Ritual Burn' : ''), rows };
+  });
+  if (igGroups.length) sections.push({ id: 'ignition', title: 'Soulcoil Ignition: no Ritual Burn, circles dodged', spell: [NZ.ignition, 'Soulcoil Ignition'], verdict: igGroups.some((g) => g.bad) ? 'bad' : igGroups.some((g) => g.warn) ? 'warn' : 'good',
+    summary: pl(igGroups.length, 'Soulcoil Ignition') + '. Ritual Burn going in' + (burnOn ? '' : ' (Heroic and Mythic only)') + ', who the Anguished Echoes circles hit, and her energy before and after.', cols: ['Who', 'When', 'Result', 'Died', ''], groups: igGroups, rows: [] });
+
+  // ---- 3. Mythic: Grasping Depths, a Drowned Echo in the well twice a phase; a team goes in, kicks every Curse ----
+  if (mythic) {
+    const gd = aur(NZ.depths).filter((e) => !h.isPlayer(e.dst)), wins = [];
+    for (const e of gd) { if (e.op === 'apply') wins.push({ t0: e.t, t1: null }); else if (e.op === 'remove' && wins.length && wins[wins.length - 1].t1 == null) wins[wins.length - 1].t1 = e.t; }
+    const coil = dmgId(NZ.coil), spir = dmgId(NZ.spirit), cuSt = starts(NZ.curse), cuOk = castOk(NZ.curse);
+    const dpGroups = wins.map((w, i) => {
+      const t1 = w.t1 ?? dur, team = [...new Set(coil.filter((e) => e.t >= w.t0 && e.t <= t1 + 1).map((e) => e.dst))];
+      const rows = [];
+      for (const [k, cs] of cuSt.filter((t) => t >= w.t0 - 0.5 && t <= t1 + 0.5).entries()) {
+        const kick = r.interrupts.find((x) => x.id === NZ.curse && x.t >= cs - 0.2 && x.t <= cs + 4.5), off = !kick && cuOk.find((t) => t >= cs && t <= cs + 5);
+        if (off) M(off, 'Raid', "Soulcoiler's Curse", 'High', "Soulcoiler's Curse got off: everyone in the well was thrown out and Soulcoiled.", 'Kick every Soulcoiler\'s Curse; give the well team two kickers in turn.');
+        rows.push([{ txt: "Soulcoiler's Curse " + (k + 1) }, { t: cs }, kick ? { txt: 'kicked' } : off ? { txt: 'got off', bad: true, sub: 'the well team was thrown out' } : { txt: 'cast stopped', dim: true }, kick ? { p: kick.player } : { txt: '—', dim: true }, { txt: '' }]);
+      }
+      for (const g of team) {
+        const first = coil.find((e) => e.dst === g && e.t >= w.t0), ex = first && upAt(NZ.exhaust, g, first.t);
+        const hits = spir.filter((e) => e.dst === g && e.t >= w.t0 && e.t <= t1 + 1); let n = 0, last = -9; for (const e of hits) { if (e.t - last > 1.5) n++; last = e.t; }
+        const d = r.deaths.find((x) => x.guid === g && x.t >= w.t0 && x.t <= t1 + 1);
+        if (!ex && !n && !d) continue;
+        // (a single Swirling Spirit touch is common even on kills: shown, not judged; two or more in one Echo are)
+        if (ex) M(first.t, pname(g), 'Grasping Depths', 'Low', 'Went into the well with Soul Exhaustion still on (300% more damage from the well).', 'Keep the two well teams apart: the team that just left sits out the next Drowned Echo.');
+        if (n >= 2 || (n && d)) M(hits[0].t, pname(g), 'Swirling Spirit', d ? 'High' : 'Medium', 'Hit by ' + (n === 1 ? 'a Swirling Spirit' : n + ' Swirling Spirits') + ' in the well' + (d ? ', and died.' : '.'), 'Watch the spirits circling inside the well and step around them; their damage stacks.');
+        rows.push([{ p: pname(g) }, { t: first ? first.t : w.t0 }, d ? { txt: 'died in the well', bad: true, sub: d.ability || '' } : n ? { txt: pl(n, 'Swirling Spirit hit'), warn: n >= 2, dim: n < 2 } : { txt: 'in with Soul Exhaustion', warn: true }, ex && (n || d) ? { txt: 'went in with Soul Exhaustion', warn: true } : { txt: '—', dim: true }, { txt: '' }]);
+      }
+      // (nobody going in for the last Echo of a kill is the raid burning the boss: shown, not judged)
+      const burn = w.t1 == null && r.item.kill;
+      const head = [{ txt: 'Drowned Echo' }, { t: w.t0 }, w.t1 != null ? { txt: 'dead after ' + Math.round(w.t1 - w.t0) + ' s' } : { txt: 'alive when the pull ended', dim: true }, team.length ? { ps: team.map(pname) } : burn ? { txt: 'nobody went in', dim: true, sub: 'left for the burn' } : { txt: 'nobody went in', warn: true }, { txt: '' }];
+      rows.sort((a, b) => a[1].t - b[1].t);
+      return { title: 'Grasping Depths ' + (i + 1) + ' (' + phOf(w.t0) + ')', t: w.t0, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn || x[3].warn) || !!head[3].warn, sub: (team.length ? pl(team.length, 'player') + ' in the well' : 'nobody in the well') + (w.t1 != null ? ', Echo dead in ' + Math.round(w.t1 - w.t0) + ' s' : ''), rows: [head].concat(rows) };
+    });
+    if (dpGroups.length) sections.push({ id: 'depths', title: 'Grasping Depths: the well team', spell: [NZ.curse, "Soulcoiler's Curse"], verdict: dpGroups.some((g) => g.bad) ? 'bad' : dpGroups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(dpGroups.length, 'Drowned Echo') + '. Who went into the well, every Soulcoiler\'s Curse and its kick, and Swirling Spirit hits or Soul Exhaustion in the team.', cols: ['What', 'When', 'Result', 'Who', ''], groups: dpGroups, rows: [] });
+  }
+
+  // ---- 4. Essence Rend: a dispellable damage over time; a Latent Cultist puddle spawns where it ends ----
+  const rdA = aur(NZ.rend).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), rdR = aur(NZ.rend).filter((e) => e.op === 'remove' && h.isPlayer(e.dst));
+  const disp = ev.filter((e) => e.k === 'dispel' && /essence rend/i.test(e.spell || ''));
+  const rdSets = []; for (const e of rdA) { const s = rdSets[rdSets.length - 1]; if (s && e.t - s.t < 1.5) s.list.push(e); else rdSets.push({ t: e.t, list: [e] }); }
+  const rdGroups = rdSets.map((s, i) => {
+    const info = s.list.map((e) => {
+      const rm = rdR.find((x) => x.dst === e.dst && x.t >= e.t), tE = rm ? rm.t : Math.min(dur, e.t + 15), by = rm && disp.find((x) => x.dst === e.dst && Math.abs(x.t - rm.t) < 0.4);
+      const p = posOf(e.dst, tE), d = wellD(p), died = r.deaths.find((x) => x.guid === e.dst && x.t >= e.t && x.t <= tE + 0.3);
+      return { g: e.dst, t: e.t, tE, by, p, d, died, near: !died && d != null && d < NZ_EDGE };
+    });
+    for (const o of info.filter((x) => x.near)) M(o.tE, pname(o.g), 'Essence Rend', 'Low', 'Essence Rend ended ' + Math.round(o.d) + ' yards from the well\'s centre, so the Latent Cultist puddle landed in the way.', 'Walk to the side of the room with Essence Rend and get dispelled there; the puddles stay for the whole fight and move in P2.');
+    const rows = info.map((o) => [{ p: pname(o.g) }, { t: o.tE }, o.died ? { txt: 'died with it', bad: true } : o.by ? { txt: 'dispelled after ' + (o.tE - o.t).toFixed(1) + ' s', sub: 'by ' + o.by.src } : { txt: o.tE - o.t >= 14 ? 'ran out' : 'ended after ' + (o.tE - o.t).toFixed(1) + ' s' },
+      o.d != null ? { txt: Math.round(o.d) + ' yd from the well', warn: o.near } : { txt: '—', dim: true }, { txt: '' }]);
+    const tm = Math.max(...info.map((o) => o.tE)) + 0.3;
+    const rings = [wellRing].concat(info.filter((o) => o.p).map((o) => spot(o.p.x, o.p.y, o.near ? '#e6b450' : '#a6acb8', o.near ? 'a Latent Cultist puddle in the way' : 'where a Latent Cultist puddle landed', o.near ? 'Amber dot' : 'Grey dot')));
+    const whole = [{ txt: 'Whole cast', sub: 'where each puddle landed, on one map', dim: true }, { t: s.t }, { txt: '' }, { txt: '' }, { map: { t: tm, title: 'Essence Rend ' + (i + 1) + ' at ' + T(s.t), pts: h.snap(tm), rings, hl: info.map((o) => o.g), hlLabel: 'had Essence Rend', frames: frames(s.t, tm + 0.5) } }];
+    return { title: 'Essence Rend ' + (i + 1) + ' (' + phOf(s.t) + ')', t: s.t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[3].warn), sub: pl(info.length, 'player') + (info.some((o) => o.near) ? ', ' + info.filter((o) => o.near).length + ' puddle' + (info.filter((o) => o.near).length > 1 ? 's' : '') + ' in the way' : ', every puddle at the side'), rows: [whole].concat(rows) };
+  });
+  if (rdGroups.length) sections.push({ id: 'rend', title: 'Essence Rend: puddles at the side', spell: [NZ.rend, 'Essence Rend'], verdict: rdGroups.some((g) => g.bad) ? 'bad' : rdGroups.some((g) => g.warn) ? 'warn' : 'good',
+    summary: pl(rdA.length, 'Essence Rend') + '. Who dispelled each one, and how far from the well its Latent Cultist puddle landed.', cols: ['Player', 'Ended', 'Removed', 'Puddle', ''], groups: rdGroups, rows: [] });
+
+  // ---- 5. Possession Barrage: spirits at the tank, raid damage that falls off with the tank's distance ----
+  const pbHits = dmgId(NZ.barrageHit), pbAura = aur(NZ.barrage).filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
+  const pbRows = ev.filter((e) => e.k === 'cast' && e.id === NZ.barrage).sort((a, b) => a.t - b.t).filter((e, i, a) => !i || e.t - a[i - 1].t > 1).map((c) => {
+    const tk = pbAura.find((e) => Math.abs(e.t - c.t) < 0.6), tp = tk && posOf(tk.dst, c.t), d = tp && c.x != null ? Math.hypot(tp.x - c.x, tp.y - c.y) : null;
+    const hits = pbHits.filter((e) => e.t >= c.t && e.t <= c.t + 4), tot = hits.reduce((s, e) => s + (e.raw || e.amt), 0), who = new Set(hits.map((e) => e.dst));
+    const close = d != null && d < 25;
+    if (close) M(c.t, pname(tk.dst), 'Possession Barrage', 'Low', 'Took Possession Barrage ' + Math.round(d) + ' yards from Nek\'zali, so the spirits hit the raid harder.', 'Step 30 or more yards away from the boss for Possession Barrage, away from the raid.');
+    return [{ p: tk ? pname(tk.dst) : '?' }, { t: c.t }, d != null ? { txt: Math.round(d) + ' yd from the boss', warn: close } : { txt: '—', dim: true }, { txt: who.size ? fmtM(tot / who.size) + ' each on average' : '—', sub: who.size ? pl(who.size, 'player') + ' hit' : '', dim: !who.size }, { txt: '' }];
+  });
+  if (pbRows.length) sections.push({ id: 'barrage', title: 'Possession Barrage: tank far from the boss', spell: [NZ.barrage, 'Possession Barrage'], verdict: pbRows.some((x) => x[2].warn) ? 'warn' : 'good',
+    summary: pl(pbRows.length, 'Possession Barrage') + '. How far the tank stood from Nek\'zali when it went out, and what it cost the raid.', cols: ['Tank', 'When', 'Distance', 'Raid damage', ''], rows: pbRows });
+
+  // ---- 6. the intermission: corpses coming back, the Hungering Pyre soaks, Soul Transfer, the Echoes of Jawae ----
+  if (ritT != null) {
+    const iEnd = p2T ?? dur, rows = [];
+    const vA = aur(NZ.vessel).filter((e) => e.op === 'apply' && !h.isPlayer(e.dst)), waves = [];
+    for (const e of vA) { const w = waves[waves.length - 1]; if (w && e.t - w.t1 < 3) { w.t1 = e.t; w.g.add(e.dst); } else waves.push({ t: e.t, t1: e.t, g: new Set([e.dst]) }); }
+    for (const w of waves) {
+      const n = w.g.size, died = r.deaths.filter((d) => d.t >= w.t && d.t <= w.t1 + 8 && /vessel of awakening/i.test(d.ability || ''));
+      if (n >= 3 || died.length) M(w.t, 'Raid', 'Vessel of Awakening', 'High', pl(n, 'Amani corpse') + ' came back at once' + (died.length ? ': ' + pl(died.length, 'player') + ' died to them.' : '.'), 'Burn the corpses during the intermission with the Hungering Pyre soak and the Slithering Flames, so at most one comes back at a time.');
+      else if (n === 2) M(w.t, 'Raid', 'Vessel of Awakening', 'Medium', '2 Amani corpses came back at once.', 'Burn more corpses during the intermission; one coming back at a time is the goal.');
+      // (where each came back: the corpse's position, or the new Amani's first one)
+      const at = [...w.g].map((g) => { for (const x of [g, revOf.get(g)]) { const u = x && r.positions.get(x); if (u && u.pts.length) { const p = u.pts.find((q) => q[0] >= w.t - 1) || u.pts[u.pts.length - 1]; return { x: p[1], y: p[2] }; } } return null; }).filter(Boolean);
+      rows.push([{ txt: 'Corpses back' }, { t: w.t }, { txt: n + ' at once', bad: n >= 3, warn: n === 2 }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true },
+        at.length ? { map: { t: w.t1 + 0.3, title: 'Corpses coming back at ' + T(w.t), pts: h.snap(w.t1 + 0.3), rings: [wellRing].concat(at.map((p) => spot(p.x, p.y, '#ff5a4f', 'a corpse coming back', 'Red dot'))), frames: frames(w.t - 2, w.t1 + 4) } } : { txt: '' }]);
+    }
+    // (Hungering Pyre: the soak lands 7.5 s after its cast starts; its hit splits between everyone within 10 yards)
+    const pyH = dmgId(NZ.pyre).filter((e) => e.t >= ritT && e.t <= iEnd + 5), pys = []; for (const e of pyH) { const p = pys[pys.length - 1]; if (p && e.t - p.t < 1) p.who.add(e.dst); else pys.push({ t: e.t, who: new Set([e.dst]) }); }
+    pys.forEach((p, k) => {
+      const died = r.deaths.filter((d) => d.t >= p.t - 0.2 && d.t <= p.t + 1 && /hungering pyre/i.test(d.ability || ''));
+      if (died.length) M(p.t, 'Raid', 'Hungering Pyre', 'High', 'Hungering Pyre was soaked by ' + pl(p.who.size, 'player') + ' and ' + pl(died.length, 'player') + ' died.', 'Send the melee into every Hungering Pyre so its damage is split.');
+      rows.push([{ txt: 'Hungering Pyre ' + (k + 1) }, { t: p.t }, { txt: pl(p.who.size, 'soaker'), warn: p.who.size < 4 && !died.length, bad: !!died.length, sub: [...p.who].map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
+        { map: { t: p.t, good: [...p.who], goodLabel: 'soaked', title: 'Hungering Pyre ' + (k + 1) + ' at ' + T(p.t), pts: h.snap(p.t), frames: frames(p.t - 4, p.t + 1) } }]);
+    });
+    const stHits = dmgId(NZ.transfer);
+    castOk(NZ.transfer[0]).filter((t) => t >= ritT - 1 && t <= iEnd + 1).forEach((t, k) => {
+      const hit = [...new Set(stHits.filter((e) => e.t >= t - 0.3 && e.t <= t + 2).map((e) => e.dst))];
+      rows.push([{ txt: 'Soul Transfer ' + (k + 1) }, { t }, hit.length ? { txt: pl(hit.length, 'player') + ' hit', bad: true } : { txt: 'nobody hit' }, hit.length ? { ps: hit.map(pname), bad: true } : { txt: '—', dim: true }, { txt: '' }]);
+    });
+    const jaw = ev.filter((e) => e.k === 'die' && /echo of jawae/i.test(e.name || '')).map((e) => e.t).sort((a, b) => a - b);
+    if (jaw.length) rows.push([{ txt: 'Echoes of Jawae' }, { t: jaw[jaw.length - 1] }, { txt: jaw.length >= 2 ? 'both dead, ' + Math.round(jaw[jaw.length - 1] - ritT) + ' s in' : 'one dead', dim: jaw.length < 2 }, { txt: jaw.map(T).join(', '), dim: true }, { txt: '' }]);
+    rows.sort((a, b) => a[1].t - b[1].t);
+    if (rows.length) sections.push({ id: 'ritual', title: 'Intermission: corpses, Pyres and the Echoes', spell: [NZ.vessel, 'Vessel of Awakening'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
+      summary: 'The intermission, ' + T(ritT) + ' to ' + T(iEnd) + ': corpses that came back and how many at once, every Hungering Pyre soak, Soul Transfer hits, and when the Echoes of Jawae died.', cols: ['What', 'When', 'Result', 'Who', ''],
+      groups: [{ title: 'Intermission', t: ritT, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: pl(waves.reduce((s, w) => s + w.g.size, 0), 'corpse') + ' came back, ' + pl(pys.length, 'Pyre'), rows }], rows: [] });
+  }
+
+  // ---- 7. Mythic P2: Invoke interrupts and silences anyone casting as it finishes ----
+  if (mythic && invC.length) {
+    const inv = aur(NZ.invokeDeb).filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
+    const ivRows = invC.map((t, k) => {
+      const who = [...new Set(inv.filter((e) => Math.abs(e.t - t) < 0.6).map((e) => e.dst))];
+      for (const g of who) M(t, pname(g), 'Invoke', 'Low', 'Was casting when Invoke finished: interrupted and silenced for 3 seconds.', 'Stop casting just before Invoke finishes (it has a 5-second cast bar).');
+      return [{ txt: 'Invoke ' + (k + 1) }, { t }, who.length ? { txt: pl(who.length, 'player') + ' interrupted', warn: true } : { txt: 'nobody interrupted' }, who.length ? { ps: who.map(pname) } : { txt: '—', dim: true }, { txt: '' }];
+    });
+    sections.push({ id: 'invoke', title: 'Invoke: casts stopped in time', spell: [NZ.invoke, 'Invoke'], verdict: ivRows.some((x) => x[2].warn) ? 'warn' : 'good',
+      summary: pl(ivRows.length, 'Invoke') + '. Who was still casting when it finished (interrupted and silenced for 3 seconds).', cols: ['Cast', 'When', 'Result', 'Who', ''], rows: ivRows });
+  }
+
+  // ---- 8. her energy: what fed it; 100 is the enrage ----
+  {
+    const rows = ignSt.map((s, i) => [{ txt: 'Soulcoil Ignition ' + (i + 1) }, { t: s }, { txt: ritT != null && s < ritT && ritT < s + 12 ? 'cut short' : '+25' }, { txt: energyAt(s + 13) != null ? 'energy ' + energyAt(s + 13) : '', dim: true }]);
+    // (an Amani in the well is judged under Restless Amani: listed here, not flagged twice)
+    for (const f of feeds) rows.push([{ txt: f.by ? 'An Amani reached the well' : f.died ? f.died.player + ' died in the well' : 'The well was fed' }, { t: f.t }, { txt: '+5' }, { txt: f.by ? 'see Restless Amani' : f.died ? 'dying in the well feeds it' : 'an add or a player in the water', dim: true }]);
+    if (p2T != null) { const e2 = energyAt(p2T + 15); rows.push([{ txt: 'P2 starts' }, { t: p2T }, { txt: e2 != null ? 'energy ' + e2 + ' soon after' : '—', dim: true }, { txt: 'Uncoiling: it climbs on its own from here', dim: true }]); }
+    const endE = energyAt(dur);
+    if (enr) {
+      const why = feeds.filter((f) => f.by).length;
+      M(enr.t, 'Raid', 'Uncoiled Rage', 'High', 'Nek\'zali reached 100 energy and enraged (Uncoiled Rage)' + (why ? ': ' + pl(why, 'Amani') + ' reached the well before that.' : '.'), p2T != null && enr.t > p2T ? 'P2 is a damage race: save Bloodlust and damage cooldowns for it, and keep Amani out of the well.' : 'Reach the intermission (50%) before the fourth Soulcoil Ignition, and keep every Amani out of the well.');
+      rows.push([{ txt: 'Uncoiled Rage' }, { t: enr.t }, { txt: 'she enraged', bad: true }, { txt: 'at 100 energy', dim: true }]);
+    } else if (endE != null) rows.push([{ txt: r.item.kill ? 'She died' : 'The pull ended' }, { t: dur }, { txt: 'energy ' + endE, dim: true }, { txt: '' }]);
+    rows.sort((a, b) => a[1].t - b[1].t);
+    if (rows.length) sections.push({ id: 'energy', title: 'Energy: what fed her', spell: [NZ.rage, 'Uncoiled Rage'], verdict: enr ? 'bad' : 'good', info: !enr,
+      summary: 'Everything that gave Nek\'zali energy this pull' + (endE != null ? ' (' + endE + ' at the end)' : '') + '. 100 is the enrage.', cols: ['What', 'When', 'Energy', ''], rows });
+  }
+
+  // ---- 9. avoidable damage ----
+  const av = avoidPanel(ev, r, h, [
+    { n: ['soul transfer'], label: 'Soul Transfer', harm: 'High', why: 'the Echo of Jawae\'s line blast toward Nek\'zali at the end of its 15-second channel' },
+    { n: ['anguished echoes'], label: 'Anguished Echoes', harm: 'Medium', why: 'the circles that rain from the well during Soulcoil Ignition' },
+    { n: ['latent cultist'], label: 'Latent Cultist', harm: 'Medium', why: 'touching a cultist puddle (they move around the well in P2)' },
+  ].concat(mythic ? [{ n: ['swirling spirit'], label: 'Swirling Spirit', harm: 'Low', warnAt: 2, badAt: 4, why: 'the spirits inside the well during Grasping Depths (the well team)' }] : []));
+  if (av) sections.push(av);
+
+  const diag = [['Soulcoil Ignition', NZ.ignition], ['Anguished Echoes', NZ.echoes], ['Soulcoil Rite', NZ.rite], ['Ritual Burn', NZ.burn], ['Possession Barrage', NZ.barrage], ['Possession Barrage hit', NZ.barrageHit], ['Hollowing Strikes', NZ.hollow],
+    ['Essence Rend', NZ.rend], ['Latent Cultist', NZ.cultist], ['Gravebound Advance', NZ.shield], ['Corpse Blight', NZ.blight[0]], ['Vessel of Awakening', NZ.vessel], ['Ritual of Awakening', NZ.ritual], ['Soul Transfer', NZ.transfer[0]],
+    ['Hungering Pyre', NZ.pyre], ['Slithering Flame', NZ.flame], ['Uncoiling', NZ.uncoil], ['Invoke', NZ.invoke], ['Grasping Depths', NZ.depths], ['Immortal Coil', NZ.coil], ["Soulcoiler's Curse", NZ.curse], ['Swirling Spirit', NZ.spirit], ['Soul Exhaustion', NZ.exhaust], ['Uncoiled Rage', NZ.rage]].map(([name, id]) => {
+    const c = { cast: 0, dmg: 0, aura: 0, other: 0 };
+    for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
+    return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
+  });
+  return { diag, title: r.item.diff + " audit: Nek'zali the Soulcoiler", reached: phases[phases.length - 1].name, phases, marks, sections, mistakes,
+    note: mythic ? '' : 'Mythic-only checks (Grasping Depths, Invoke) are hidden on this difficulty.' };
+}
+
 // "How it works": a short plain-language summary of each mechanic and its strategy, shown at the top of its
 // section in the Fight audit. Keep these neutral and short; they match what the checks look for.
 const HOW = {
@@ -3187,6 +3475,17 @@ const HOW = {
     balance: 'Keep the bosses 40+ yards apart (closer, they take 99% less damage) and at even health: Vitriolic Stasis heals the lower one up to the other, so any lead is wasted. Balance by moving players between sides, not by stopping damage. Amber: 5+ points apart going into an intermission; red: within 40 yards for 3+ seconds outside the intermissions.',
     tanks: 'One tank on each boss: Empowering Slam on the Breath ramps on the same tank, Bloodvenom Injection on the Blood stacks a damage over time. They trade bosses at every intermission so the stacks drop, and the tank leaving the Blood drops a big pool when Injection ends: into old blood. Red: no swap after an intermission.',
     avoid: 'Every source of damage positioning can avoid, most harmful first. Dangerous: Protovenom Eruption (a circle touching a player without one). Harmful: Living Venom (a droplet\'s venom flying back to the boss, 375k a hit) and standing in a blood pool. Raid-wide damage (the Marks, Contaminate, Noxious Blast, the Helical Toxins ticks) isn\'t listed, and neither is Clinging Murk: it lands on every Unstable Miasma soaker.',
+  },
+  "Nek'zali the Soulcoiler": {
+    amani: 'Restless Amani rise from the coffins at the sides and walk to the Soulcoil Well in the middle, protected by a magic-only shield (Gravebound Advance) worth a quarter of their health: break it with magic damage, then kill them before they reach the water. Each one that gets in gives Nek\'zali 5 energy and hits the raid with a Soulcoil Rite (on Heroic and Mythic, plus a Ritual Burn stack). A dead Amani bursts (Corpse Blight) and, on Heroic and Mythic, leaves a corpse that comes back in the intermission. Red: one reached the well.',
+    ignition: 'Nek\'zali teleports into the well and channels Soulcoil Ignition: five Soulcoil Rites on the raid and 25 energy, while Anguished Echoes rain out of the well as circles that hit hard and knock back. Use healing cooldowns and dodge the circles. On Heroic and Mythic, Ritual Burn makes each Rite hit 15% harder per stack for 60 seconds, so go in with none: an Amani reaching the well in the minute before leaves the raid with a stack. Amber: hit by a circle, or going in with Ritual Burn; red: hit by two, or died.',
+    depths: 'Mythic: twice per phase a Drowned Echo wakes in the well (Grasping Depths). While it lives the whole raid is pulled toward the middle and takes damage, so a team of about three damage dealers and a healer goes into the well to kill it, and two teams take turns. Kick every Soulcoiler\'s Curse: one that gets off throws everyone out of the well and Soulcoils them. Dodge the Swirling Spirits inside. Anyone who leaves the well gets Soul Exhaustion (300% more damage from the well), so the team that just left sits out the next one. Each group is one Echo: the team, every Curse and who kicked it. Red: a Curse got off, or a death in the well; amber: Swirling Spirit hits, or going in with Soul Exhaustion.',
+    rend: 'Essence Rend pulls a few players in, knocks them back and leaves a damage over time that healers dispel. Where it ends, a Latent Cultist spawns: a slowing puddle that stays for the whole fight and moves around the well in P2. Walk to the side of the room and get dispelled there, so the puddles stay out of the way. Each row is one debuff: who dispelled it and how far from the well its puddle landed. Amber: a puddle closer than 25 yards to the well\'s centre.',
+    barrage: 'Possession Barrage sends spirits at the current tank: they hit the whole raid, harder the closer the tank stands to Nek\'zali. The tank steps 30 or more yards away from her, and nobody stands in the line between them. Amber: the tank closer than 25 yards when it went out.',
+    ritual: 'At 50% Nek\'zali retreats into the well and two Echoes of Jawae protect her: kill both to end it. Each Echo channels Soul Transfer for 15 seconds, then blasts in a line toward her: step out of it. Hungering Pyre is a soak split between everyone within 10 yards (the melee take it); everyone else gets a Slithering Flame, and the Pyre and the flames burn corpses. On Mythic every Amani corpse left on the floor comes back during the intermission, and more than one at a time hits the raid very hard, so burn them first. Red: three or more corpses back at once, deaths to them or to a Pyre, or a Soul Transfer hit; amber: two at once, or a Pyre with fewer than four soakers.',
+    invoke: 'Mythic: in P2 Nek\'zali casts Invoke (a 5-second cast): a Soulcoil Rite on the raid, the cultist puddles move around the well, and anyone casting as it finishes is interrupted and silenced for 3 seconds. Stop casting just before it ends. Amber: interrupted by it.',
+    energy: 'Nek\'zali enrages at 100 energy (Uncoiled Rage). In P1 each Soulcoil Ignition gives her 25 and each Amani that reaches the well 5, so the fourth Ignition fills her: reach the intermission at 50% before it. In P2 her energy climbs on its own (Uncoiling), so P2 is a damage race: Bloodlust there. This lists what gave her energy. Red: she enraged.',
+    avoid: 'Every source of damage positioning can avoid, most harmful first: the Soul Transfer line blast, the Anguished Echoes circles, the Latent Cultist puddles, and on Mythic the Swirling Spirits in the well. Raid-wide damage (Soulcoil Rite, Corpse Blight, Possession Barrage, Uncoiling, Grasping Depths) isn\'t listed.',
   },
   Sszorak: {
     ravage: 'Ravage is the tank frontal in Sszorak\'s Apex Predator combo (five casts in random order: two Ravage, two Mutilate, one Tempest). It hits the tank very hard and leaves a debuff that makes the next Ravage hit far harder for 25 seconds, so the tanks taunt between the two Ravages of each combo and take them at the edge, away from the raid. Red: a tank taking a second Ravage with the debuff up, or anyone else in the cone.',
@@ -6432,12 +6731,17 @@ const q = (s) => '"' + String(s).replace(/"/g, "'") + '"';
 
 function translate(item, events) {
   const w = item.wcl, actors = w.actors, abil = w.abilities, out = [];
+  // Warcraft Logs numbers the copies of an add 1, 2, 3... and gives a new copy the number of one that has died, so two
+  // adds can share a number (read on Nek'zali's Restless Amani). A number starts a new life with its first event over a
+  // second after its death, so every add keeps a GUID of its own, as in a real log (a corpse brought back is a new life).
+  const life = new Map(), dead = new Map(); let curT = 0;
+  const lifeOf = (id, inst) => { const k = id + ':' + (inst || 1), d = dead.get(k); if (d != null && curT > d + 1000) { life.set(k, (life.get(k) || 0) + 1); dead.delete(k); } return life.get(k) || 0; };
   const guid = (id, inst) => {
     const a = actors.get(id);
     if (!a || id == null || id < 0) return '0000000000000000';
     if (a.type === 'Player') return 'Player-0-' + id;
     if (a.type === 'Pet') return 'Pet-0-0-0-0-' + (a.gameID || 0) + '-' + id;
-    return 'Creature-0-0-0-0-' + (a.gameID || 0) + '-' + id + '-' + (inst || 1);
+    return 'Creature-0-0-0-0-' + (a.gameID || 0) + '-' + id + '-' + ((inst || 1) + 1000 * lifeOf(id, inst));
   };
   const nm = (id) => { const a = actors.get(id); if (!a) return 'nil'; return q(a.type === 'Player' && a.server ? a.name + '-' + a.server : a.name); };
   const flags = (id) => { const a = actors.get(id); return !a ? '0x80000000' : a.type === 'Player' ? '0x512' : a.type === 'Pet' ? '0x1112' : '0xa48'; };
@@ -6468,7 +6772,7 @@ function translate(item, events) {
   for (const a of actors.values()) if (a.type === 'Pet' && a.petOwner != null)
     out.push(stamp(w.start) + 'SPELL_SUMMON,' + unit(a.petOwner) + ',' + unit(a.id) + ',0,"Summon",0x1');
   for (const e of events) {
-    const ab = e.abilityGameID;
+    const ab = e.abilityGameID; curT = e.timestamp;
     switch (e.type) {
       case 'combatantinfo': {
         const ones = new Array(23).fill(1).join(',');
@@ -6519,9 +6823,11 @@ function translate(item, events) {
       case 'dispel':
         add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + ',DEBUFF');
         break;
-      case 'death':
+      case 'death': {
         add(e, 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + dst(e) + ',0');
-        break;
+        const a = actors.get(e.targetID), k = e.targetID + ':' + (e.targetInstance || 1);
+        if (a && a.type !== 'Player' && a.type !== 'Pet' && !dead.has(k)) dead.set(k, e.timestamp); // (its number's next life starts after this)
+        break; }
     }
   }
   out.push(stamp(w.end) + 'ENCOUNTER_END,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',' + (item.kill ? 1 : 0) + ',' + Math.round((w.end - w.start)));
@@ -8153,6 +8459,10 @@ function audit() {
     crosswinds: { Result: 'deaths after the launch', '!Result': 'drifts or players hit by a flying player' },
     fury: { Result: 'enrages', '!Result': 'Furies popped as Dig In ended' }, virulence: { Result: 'deaths to a Virulence clip', '!Result': 'Virulence clips' },
     winds: { Cyst: 'winds with no cyst popped', Died: 'deaths in the winds', '!Cyst': 'a spare cyst left up' },
+    // (Nek'zali)
+    amani: { Result: 'Amani reaching the well', '!Shield': 'shields never broken' }, ignition: { Result: 'players hit by two circles', '!Result': 'circle hits or Ritual Burn going in', Died: 'deaths in Ignition' },
+    depths: { Result: 'Curses that got off or deaths in the well', '!Result': 'Swirling Spirit hits', '!Who': 'going in with Soul Exhaustion' }, rend: { Removed: 'deaths with Essence Rend', '!Puddle': 'puddles in the way' },
+    barrage: { '!Distance': 'Barrages with the tank too close' }, ritual: { Result: 'corpses back at once, Pyre deaths or Soul Transfer hits', '!Result': 'two corpses at once or thin Pyre soaks', Who: 'Soul Transfer hits' }, invoke: { '!Result': 'players interrupted by Invoke' }, energy: { Energy: 'enrages' },
     bulwark: { 'Broken by': 'barriers nobody broke', '!Barrier up': 'slow breaks', 'Ran into it': 'deaths running into a live barrier', '!Ran into it': 'players running into a live barrier' },
     soaks: { Globules: 'players taking an extra globule', 'Venom at extra soak': 'extra globules taken at high venom', 'Barbed Bulwark hits': 'touching shielded globules', Died: 'deaths after soaking' },
     spit: { Result: 'adds living long enough for a third spit', '!Result': 'adds getting a second spit off', 'Hit without being targeted': 'players standing in someone else\'s spit line' },
@@ -8170,7 +8480,7 @@ function audit() {
   };
   // (row labels that don't read as a plural noun on their own)
   const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets' };
-  const SNOUN = { ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'add and kick results', dmghost: 'Dreadmarch results', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'egg results', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangs: 'tether results', doomscale: 'Doomscale results', bite: 'bite results', shriek: 'adds' };
+  const SNOUN = { amani: 'Amani', ignition: 'results', depths: 'well results', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission results', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'add and kick results', dmghost: 'Dreadmarch results', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'egg results', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangs: 'tether results', doomscale: 'Doomscale results', bite: 'bite results', shriek: 'adds' };
   const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
   const synopsis = (s, rows, groups) => {
     const all = []; for (const g of groups) for (const row of g.rows) all.push({ row, g }); for (const row of rows) all.push({ row, g: null });
@@ -8505,6 +8815,8 @@ const IMPORTANCE = {
   'Entombed Sentinels': ['helix', 'protovenom', 'miasma', 'droplets', 'coag', 'balance', 'blighted', 'marks', 'tanks', 'avoid', 'pools'],
   // (the two biggest wipe causes are failed Fury pops and Tempest; then the winds, the Crosswinds, the soaks)
   Sszorak: ['fury', 'tempest', 'winds', 'crosswinds', 'mutilate', 'virulence', 'cysts', 'ravage', 'avoid'],
+  // (the Mythic wipes: corpses back at once in the intermission, Amani in the well, a Curse in the well, the enrage)
+  "Nek'zali the Soulcoiler": ['ritual', 'amani', 'depths', 'energy', 'ignition', 'rend', 'barrage', 'invoke', 'avoid'],
   "Ula'tek": ['eggs', 'coils', 'waves', 'tank', 'incub', 'wretch', 'amps', 'fangs', 'doomscale', 'kicks', 'bite', 'shriek', 'avoid'],
 };
 let AUDITMAPS = [], AUDITHTML = [];

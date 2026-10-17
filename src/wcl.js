@@ -246,12 +246,17 @@ const q = (s) => '"' + String(s).replace(/"/g, "'") + '"';
 
 function translate(item, events) {
   const w = item.wcl, actors = w.actors, abil = w.abilities, out = [];
+  // Warcraft Logs numbers the copies of an add 1, 2, 3... and gives a new copy the number of one that has died, so two
+  // adds can share a number (read on Nek'zali's Restless Amani). A number starts a new life with its first event over a
+  // second after its death, so every add keeps a GUID of its own, as in a real log (a corpse brought back is a new life).
+  const life = new Map(), dead = new Map(); let curT = 0;
+  const lifeOf = (id, inst) => { const k = id + ':' + (inst || 1), d = dead.get(k); if (d != null && curT > d + 1000) { life.set(k, (life.get(k) || 0) + 1); dead.delete(k); } return life.get(k) || 0; };
   const guid = (id, inst) => {
     const a = actors.get(id);
     if (!a || id == null || id < 0) return '0000000000000000';
     if (a.type === 'Player') return 'Player-0-' + id;
     if (a.type === 'Pet') return 'Pet-0-0-0-0-' + (a.gameID || 0) + '-' + id;
-    return 'Creature-0-0-0-0-' + (a.gameID || 0) + '-' + id + '-' + (inst || 1);
+    return 'Creature-0-0-0-0-' + (a.gameID || 0) + '-' + id + '-' + ((inst || 1) + 1000 * lifeOf(id, inst));
   };
   const nm = (id) => { const a = actors.get(id); if (!a) return 'nil'; return q(a.type === 'Player' && a.server ? a.name + '-' + a.server : a.name); };
   const flags = (id) => { const a = actors.get(id); return !a ? '0x80000000' : a.type === 'Player' ? '0x512' : a.type === 'Pet' ? '0x1112' : '0xa48'; };
@@ -282,7 +287,7 @@ function translate(item, events) {
   for (const a of actors.values()) if (a.type === 'Pet' && a.petOwner != null)
     out.push(stamp(w.start) + 'SPELL_SUMMON,' + unit(a.petOwner) + ',' + unit(a.id) + ',0,"Summon",0x1');
   for (const e of events) {
-    const ab = e.abilityGameID;
+    const ab = e.abilityGameID; curT = e.timestamp;
     switch (e.type) {
       case 'combatantinfo': {
         const ones = new Array(23).fill(1).join(',');
@@ -333,9 +338,11 @@ function translate(item, events) {
       case 'dispel':
         add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + ',DEBUFF');
         break;
-      case 'death':
+      case 'death': {
         add(e, 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + dst(e) + ',0');
-        break;
+        const a = actors.get(e.targetID), k = e.targetID + ':' + (e.targetInstance || 1);
+        if (a && a.type !== 'Player' && a.type !== 'Pet' && !dead.has(k)) dead.set(k, e.timestamp); // (its number's next life starts after this)
+        break; }
     }
   }
   out.push(stamp(w.end) + 'ENCOUNTER_END,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',' + (item.kill ? 1 : 0) + ',' + Math.round((w.end - w.start)));
