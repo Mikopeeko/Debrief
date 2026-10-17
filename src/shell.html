@@ -804,8 +804,10 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .ld-body { transform-box: view-box; transform-origin: 40px 82px; animation: ldBob .6s ease-in-out infinite; }
 .ld-al, .ld-ar { transform-box: view-box; animation: ldArmL .6s ease-in-out infinite; } .ld-ar { animation-name: ldArmR; }
 .ld-fl { transform-box: fill-box; transform-origin: center bottom; animation: ldFl .3s ease-in-out infinite alternate; }
-.ld-ghost .ld-body { animation: ldFloat 1.2s ease-in-out infinite; } .ld-ghost .ld-sh { animation-duration: 1.2s; }
-.ld-ooze .ld-body { animation: ldWob .6s ease-in-out infinite; } .ld-frog .ld-body { animation: ldHop .6s ease-in-out infinite; }
+.ld-void .ld-body { animation: ldFloat 1.2s ease-in-out infinite; } .ld-void .ld-sh { animation-duration: 1.2s; }
+.ld-murloc .ld-body { animation: ldHop .6s ease-in-out infinite; } .ld-snake .ld-body { animation: ldSway 1s ease-in-out infinite; } .ld-tg { animation: ldTg .5s steps(2) infinite; }
+@keyframes ldSway { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } } @keyframes ldTg { 50% { opacity: 0; } }
+.ld-cap { margin-top: -5px; color: var(--faint); font-size: 11.5px; font-style: italic; }
 @keyframes ldBob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-7px) rotate(6deg); } }
 @keyframes ldHop { 0%, 100% { transform: translateY(0) scaleY(1); } 30% { transform: translateY(1px) scaleY(.9); } 60% { transform: translateY(-10px) scaleY(1.05); } }
 @keyframes ldWob { 0%, 100% { transform: scale(1.06, .94) rotate(-4deg); } 50% { transform: scale(.94, 1.06) rotate(4deg); } }

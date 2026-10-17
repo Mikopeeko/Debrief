@@ -804,8 +804,10 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .ld-body { transform-box: view-box; transform-origin: 40px 82px; animation: ldBob .6s ease-in-out infinite; }
 .ld-al, .ld-ar { transform-box: view-box; animation: ldArmL .6s ease-in-out infinite; } .ld-ar { animation-name: ldArmR; }
 .ld-fl { transform-box: fill-box; transform-origin: center bottom; animation: ldFl .3s ease-in-out infinite alternate; }
-.ld-ghost .ld-body { animation: ldFloat 1.2s ease-in-out infinite; } .ld-ghost .ld-sh { animation-duration: 1.2s; }
-.ld-ooze .ld-body { animation: ldWob .6s ease-in-out infinite; } .ld-frog .ld-body { animation: ldHop .6s ease-in-out infinite; }
+.ld-void .ld-body { animation: ldFloat 1.2s ease-in-out infinite; } .ld-void .ld-sh { animation-duration: 1.2s; }
+.ld-murloc .ld-body { animation: ldHop .6s ease-in-out infinite; } .ld-snake .ld-body { animation: ldSway 1s ease-in-out infinite; } .ld-tg { animation: ldTg .5s steps(2) infinite; }
+@keyframes ldSway { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } } @keyframes ldTg { 50% { opacity: 0; } }
+.ld-cap { margin-top: -5px; color: var(--faint); font-size: 11.5px; font-style: italic; }
 @keyframes ldBob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-7px) rotate(6deg); } }
 @keyframes ldHop { 0%, 100% { transform: translateY(0) scaleY(1); } 30% { transform: translateY(1px) scaleY(.9); } 60% { transform: translateY(-10px) scaleY(1.05); } }
 @keyframes ldWob { 0%, 100% { transform: scale(1.06, .94) rotate(-4deg); } 50% { transform: scale(.94, 1.06) rotate(4deg); } }
@@ -9219,32 +9221,37 @@ document.addEventListener('click', (e) => {
 });
 
 // ---------- loading screens ----------
-// While a pull downloads or a night is read: a card with a little character dancing (one of five, drawn here in the
-// app's own style rather than game art, a new one picked each time), what's happening, a bar that fills with the count (or
-// sweeps while there's no count yet), and a short tip. loadSet updates the line and the bar in place.
-const LD_ARM = (x, y, d, col, w) => '<g class="ld-a' + d + '" style="transform-origin:' + x + 'px ' + y + 'px"><path d="M' + x + ' ' + y + 'l' + (d === 'l' ? -13 : 13) + ' 10" stroke="' + col + '" stroke-width="' + (w || 5) + '" stroke-linecap="round"/></g>';
-const LD_LEGS = (col) => '<path d="M34 70v10M46 70v10" stroke="' + col + '" stroke-width="5" stroke-linecap="round"/>';
+// While a pull downloads or a night is read: a card with a little WoW creature dancing (a murloc, a moonkin, a kobold
+// miner, a voidwalker or a baby serpent of the Abyss; drawn here in the app's own style, not game art, a new one each
+// time), what's happening, a bar that fills with the count (or sweeps while there's no count yet), and a short tip.
+// loadSet updates the line and the bar in place.
+const LD_ARM = (x, y, d, col, w, extra) => '<g class="ld-a' + d + '" style="transform-origin:' + x + 'px ' + y + 'px"><path d="M' + x + ' ' + y + 'l' + (d === 'l' ? -13 : 13) + ' 10" stroke="' + col + '" stroke-width="' + (w || 5) + '" stroke-linecap="round"/>' + (extra || '') + '</g>';
 const DANCERS = [
-  // a kobold miner: candle on the helmet, flame flickering
-  () => LD_LEGS('#7a5436') + LD_ARM(28, 50, 'l', '#a0714a') + LD_ARM(52, 50, 'r', '#a0714a') + '<ellipse cx="40" cy="57" rx="14" ry="15" fill="#a0714a"/><path d="M27 26l-9-9 4 14zM53 26l9-9-4 14z" fill="#b88457"/>' +
+  // a murloc: fin crest, bulging eyes, a mouth full of teeth
+  ['murloc', 'Mrrglglgl!', () => '<path d="M33 72v9M47 72v9" stroke="#3d8a72" stroke-width="5" stroke-linecap="round"/>' + LD_ARM(25, 52, 'l', '#4fa58a') + LD_ARM(55, 52, 'r', '#4fa58a') +
+    '<path d="M22 40l-7-4 6 10zM58 40l7-4-6 10z" fill="#d06a4a"/><path d="M40 24c16 0 20 16 18 32-2 14-8 20-18 20s-16-6-18-20c-2-16 2-32 18-32z" fill="#4fa58a"/><ellipse cx="40" cy="61" rx="10" ry="12" fill="#b7d98b"/>' +
+    '<path d="M30 27l3-13 4 10 4-13 4 12 5-8 1 12z" fill="#d06a4a"/><circle cx="31" cy="35" r="5.2" fill="#f4f0c8"/><circle cx="49" cy="35" r="5.2" fill="#f4f0c8"/><circle cx="32" cy="36" r="2.3" fill="#1b1b1b"/><circle cx="48" cy="36" r="2.3" fill="#1b1b1b"/>' +
+    '<path d="M29 45q11 12 22 0q-11 5-22 0z" fill="#7a2430"/><path d="M32.5 46l2 3 1.5-3zM38.5 47.5l1.5 3.2 1.5-3.2zM44 46.5l1.5 3 1.5-3z" fill="#fff"/>'],
+  // a moonkin: antlers, a beak, big round eyes and a feathery belly
+  ['moonkin', 'Moonkin dance break', () => '<ellipse cx="33" cy="80" rx="5.5" ry="2.6" fill="#e8b04a"/><ellipse cx="47" cy="80" rx="5.5" ry="2.6" fill="#e8b04a"/>' + LD_ARM(23, 50, 'l', '#7d6aa0', 8) + LD_ARM(57, 50, 'r', '#7d6aa0', 8) +
+    '<path d="M31 34c-4-6-6-12-8-18M26 25l-5-3M29 30l-6 0M49 34c4-6 6-12 8-18M54 25l5-3M51 30l6 0" stroke="#c9a571" stroke-width="3" stroke-linecap="round" fill="none"/>' +
+    '<ellipse cx="40" cy="56" rx="18" ry="23" fill="#7d6aa0"/><ellipse cx="40" cy="63" rx="11" ry="13" fill="#c9b7e0"/><path d="M34 60q2 2 4 0M40 64q2 2 4 0M35 68q2 2 4 0" stroke="#a894c4" stroke-width="1.4" fill="none"/>' +
+    '<circle cx="33" cy="42" r="6.2" fill="#fff"/><circle cx="47" cy="42" r="6.2" fill="#fff"/><circle cx="33.6" cy="42.6" r="2.9" fill="#1d1730"/><circle cx="46.4" cy="42.6" r="2.9" fill="#1d1730"/><path d="M36.5 47h7l-3.5 6z" fill="#e8b04a"/>'],
+  // a kobold miner: you no take candle
+  ['kobold', 'You no take candle!', () => '<path d="M34 70v10M46 70v10" stroke="#7a5436" stroke-width="5" stroke-linecap="round"/>' + LD_ARM(28, 50, 'l', '#a0714a') + LD_ARM(52, 50, 'r', '#a0714a') + '<ellipse cx="40" cy="57" rx="14" ry="15" fill="#a0714a"/><path d="M27 26l-9-9 4 14zM53 26l9-9-4 14z" fill="#b88457"/>' +
     '<circle cx="40" cy="33" r="13" fill="#b88457"/><ellipse cx="40" cy="39" rx="7" ry="5" fill="#d1a676"/><circle cx="40" cy="37" r="1.6" fill="#3a2a1c"/><circle cx="35" cy="31" r="2.2" fill="#1d1712"/><circle cx="45" cy="31" r="2.2" fill="#1d1712"/><circle cx="35.6" cy="30.4" r=".7" fill="#fff"/><circle cx="45.6" cy="30.4" r=".7" fill="#fff"/>' +
-    '<path d="M27 28a13 12 0 0 1 26 0z" fill="#6b6f78"/><rect x="37" y="11" width="6" height="9" rx="1.5" fill="#efe3c2"/><path class="ld-fl" d="M40 3c3 4 3 6 0 8-3-2-3-4 0-8z" fill="#ffcf4a"/>',
-  // a skeleton
-  () => LD_LEGS('#ddd6c3') + LD_ARM(30, 47, 'l', '#ddd6c3', 3.5) + LD_ARM(50, 47, 'r', '#ddd6c3', 3.5) + '<path d="M40 44v26" stroke="#ddd6c3" stroke-width="3.5" stroke-linecap="round"/>' +
-    '<path d="M31 50h18M32 56h16M33 62h14" stroke="#ddd6c3" stroke-width="3" stroke-linecap="round"/><circle cx="40" cy="30" r="13" fill="#ece6d4"/><ellipse cx="35" cy="29" rx="3.4" ry="4" fill="#1d1a16"/><ellipse cx="45" cy="29" rx="3.4" ry="4" fill="#1d1a16"/>' +
-    '<path d="M38.5 35l1.5-2.6 1.5 2.6z" fill="#1d1a16"/><path d="M34 39h12M36 37v4M40 37v4M44 37v4" stroke="#8a826f" stroke-width="1.2"/>',
-  // a frog
-  () => '<path d="M30 74l-6 6M50 74l6 6" stroke="#4a8f43" stroke-width="5" stroke-linecap="round"/>' + LD_ARM(27, 54, 'l', '#5fae55') + LD_ARM(53, 54, 'r', '#5fae55') +
-    '<ellipse cx="40" cy="58" rx="17" ry="16" fill="#5fae55"/><ellipse cx="40" cy="62" rx="10" ry="9" fill="#a9d98a"/><circle cx="31" cy="38" r="7" fill="#5fae55"/><circle cx="49" cy="38" r="7" fill="#5fae55"/>' +
-    '<circle cx="31" cy="37" r="4.5" fill="#fff"/><circle cx="49" cy="37" r="4.5" fill="#fff"/><circle cx="32" cy="38" r="2.3" fill="#1b2a18"/><circle cx="48" cy="38" r="2.3" fill="#1b2a18"/><path d="M32 49q8 6 16 0" stroke="#2f5e2a" stroke-width="2" fill="none" stroke-linecap="round"/>',
-  // a ghost, floating
-  () => LD_ARM(25, 48, 'l', 'rgba(232,236,255,.92)', 6) + LD_ARM(55, 48, 'r', 'rgba(232,236,255,.92)', 6) +
-    '<path d="M24 76V38a16 16 0 0 1 32 0v38l-5.3-5-5.4 5-5.3-5-5.3 5-5.4-5z" fill="rgba(232,236,255,.92)"/><ellipse cx="34" cy="38" rx="3" ry="4.2" fill="#2a2f45"/><ellipse cx="46" cy="38" rx="3" ry="4.2" fill="#2a2f45"/><ellipse cx="40" cy="48" rx="3" ry="3.6" fill="#2a2f45"/>',
-  // an ooze, wobbling
-  () => LD_ARM(25, 58, 'l', '#9b6fe0', 6) + LD_ARM(55, 58, 'r', '#9b6fe0', 6) +
-    '<path d="M18 78c0-22 9-40 22-40s22 18 22 40z" fill="#9b6fe0"/><ellipse cx="33" cy="48" rx="4" ry="3" fill="rgba(255,255,255,.35)"/><circle cx="35" cy="58" r="3.2" fill="#24163c"/><circle cx="46" cy="58" r="3.2" fill="#24163c"/><path d="M36 66q5 4 10 0" stroke="#24163c" stroke-width="2" fill="none" stroke-linecap="round"/>',
+    '<path d="M27 28a13 12 0 0 1 26 0z" fill="#6b6f78"/><rect x="37" y="11" width="6" height="9" rx="1.5" fill="#efe3c2"/><path class="ld-fl" d="M40 3c3 4 3 6 0 8-3-2-3-4 0-8z" fill="#ffcf4a"/>'],
+  // a voidwalker: a smoky tail, glowing eyes, gold bracers, floating
+  ['void', 'Your voidwalker will wait', () => '<path d="M33 60c-3 12 3 20 11 26-4-8 0-14 4-22z" fill="#3b2d6b"/>' +
+    LD_ARM(25, 45, 'l', '#4a3a8a', 7, '<path d="M19.5 49.2l-3.2 2.5" stroke="#c9a54a" stroke-width="8"/>') + LD_ARM(55, 45, 'r', '#4a3a8a', 7, '<path d="M60.5 49.2l3.2 2.5" stroke="#c9a54a" stroke-width="8"/>') +
+    '<path d="M24 40c0-14 8-20 16-20s16 6 16 20-6 24-16 26c-10-2-16-12-16-26z" fill="#4a3a8a"/><ellipse cx="40" cy="50" rx="8" ry="9" fill="rgba(150,120,255,.32)"/>' +
+    '<circle cx="34" cy="36" r="5" fill="rgba(160,240,255,.18)"/><circle cx="46" cy="36" r="5" fill="rgba(160,240,255,.18)"/><ellipse cx="34" cy="36" rx="3.4" ry="1.9" fill="#a8f2ff"/><ellipse cx="46" cy="36" rx="3.4" ry="1.9" fill="#a8f2ff"/>'],
+  // a baby serpent of the Abyss: coiled up, swaying, tongue out
+  ['snake', 'Hssss…', () => '<ellipse cx="40" cy="75" rx="21" ry="7" fill="#357a5c"/><ellipse cx="40" cy="67" rx="16" ry="6" fill="#43926c"/><ellipse cx="41" cy="60" rx="11" ry="5" fill="#4fa47a"/>' +
+    '<path d="M24 75q16 4 32 0M28 67q12 3 24 0" stroke="#7cc79b" stroke-width="1.3" fill="none" opacity=".7"/><path d="M45 59c6-8 2-17-5-23" stroke="#4fa47a" stroke-width="9" stroke-linecap="round" fill="none"/>' +
+    '<ellipse cx="37" cy="31" rx="9.5" ry="7" fill="#5bb586"/><ellipse cx="34" cy="29" rx="2.2" ry="2.8" fill="#f3d34a"/><ellipse cx="41" cy="29" rx="2.2" ry="2.8" fill="#f3d34a"/><rect x="33.6" y="27.2" width=".9" height="3.6" rx=".4" fill="#14231a"/><rect x="40.6" y="27.2" width=".9" height="3.6" rx=".4" fill="#14231a"/>' +
+    '<path class="ld-tg" d="M29 34l-6 2.4M29 34l-5.6-1.6" stroke="#e0465a" stroke-width="1.5" stroke-linecap="round"/>'],
 ];
-const DANCE_K = ['kobold', 'skel', 'frog', 'ghost', 'ooze'];
 const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments: soaks, kicks, orbs and cooldowns get checked on every pull.',
   'On Latest pull, every box opens the tab with its details.', 'Summary shows the whole night: how far each pull got, and what kept going wrong.', 'Players gives everyone one grade: half mechanics, half the Report card.'];
@@ -9252,7 +9259,7 @@ let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
   const tip = LOAD_TIPS[Math.floor(Math.random() * LOAD_TIPS.length)];
-  return '<div class="ld" role="status" aria-live="polite"><svg class="ld-d ld-' + DANCE_K[k] + '" viewBox="0 0 80 90" aria-hidden="true"><ellipse class="ld-sh" cx="40" cy="84" rx="17" ry="3.5"/><g class="ld-body">' + DANCERS[k]() + '</g></svg>' +
+  return '<div class="ld" role="status" aria-live="polite"><svg class="ld-d ld-' + DANCERS[k][0] + '" viewBox="0 0 80 90" aria-hidden="true"><ellipse class="ld-sh" cx="40" cy="84" rx="17" ry="3.5"/><g class="ld-body">' + DANCERS[k][2]() + '</g></svg><div class="ld-cap">' + esc(DANCERS[k][1]) + '</div>' +
     '<div class="ld-t">' + esc(title) + '</div><div class="ld-l"' + (id ? ' id="' + id + '"' : '') + '>' + esc(line || '') + '</div>' +
     '<div class="ld-b' + (frac == null ? ' ind' : '') + '"><i' + (frac == null ? '' : ' style="width:' + (100 * frac).toFixed(1) + '%"') + '></i></div><div class="ld-tip"><b>Tip</b> · ' + esc(tip) + '</div></div>';
 }
@@ -9312,11 +9319,20 @@ async function select(item) {
   try { S.rep = rep; }
   catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }
   renderMain();
-  // pre-load the next pull's download in the background so it's ready when clicked
-  if (item.wcl && S.index) {
-    const next = S.index.bosses[S.index.bosses.indexOf(item) + 1];
-    if (next && next.wcl && !CACHE.has(next)) WCL.loadEvents(S.wclCreds, next).catch(() => {});
-  }
+  bgFetch(item); // (the next pull, then the rest of this boss's pulls, download in the background)
+}
+// Warcraft Logs reports: once a pull is up, this boss's other pulls in the report download quietly, the next pull first,
+// then newest first, one at a time with a pause, into this browser's saved pulls. Summary, All pulls and the next click
+// then only read them, without the wait for Warcraft Logs. It moves on to a new boss when you do; a refusal (too many
+// requests at once) stops it until the next pull you open.
+let BG_TOK = 0, BG_KEY = null;
+function bgFetch(item) {
+  if (!item.wcl || !S.index) return; const key = item.wcl.code + '|' + item.id + '|' + item.diffId; if (BG_KEY === key) return; BG_KEY = key;
+  const tok = ++BG_TOK, idx = S.index, next = idx.bosses[idx.bosses.indexOf(item) + 1];
+  const list = idx.bosses.filter((b) => b.wcl && b !== item && b.id === item.id && b.diffId === item.diffId && !CACHE.has(b));
+  list.sort((a, b) => (b === next) - (a === next) || idx.bosses.indexOf(b) - idx.bosses.indexOf(a));
+  (async () => { for (const b of list) { if (tok !== BG_TOK || S.index !== idx) return;
+    try { if (!(await WCL.isSaved(b))) { await WCL.loadEvents(S.wclCreds, b); await new Promise((r) => setTimeout(r, 800)); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; return; } } })();
 }
 
 // ---------- main frame ----------
