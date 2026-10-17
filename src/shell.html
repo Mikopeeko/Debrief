@@ -1114,6 +1114,20 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pr-n { margin-top: 8px; } .pr-off { display: flex; align-items: center; gap: 8px; }
 .pc-rank { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 8px; font-size: 13px; }
 .pc-rank .pr-l { font-weight: 600; color: #c9ced8; margin-right: 2px; }
+/* boss cards: short by default (the boss, its result, one line of totals and your parse), the chart and nights on a click */
+.pc-grid { align-items: start; }
+.pc-mini { display: none; align-items: center; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: #c4c9d2; } .pc-more { margin-left: auto; color: var(--gold); font-weight: 600; font-size: 12.5px; }
+.pc-card.mini { cursor: pointer; gap: 8px; padding-bottom: 12px; } .pc-card.mini .pc-mini { display: flex; }
+.pc-card.mini .pc-stats, .pc-card.mini .pc-chart, .pc-card.mini .pc-pick, .pc-card.mini .pc-msg { display: none; }
+.pc-card.mini .pc-art.pc-hero { height: 130px; } .pc-card:not(.mini) .pc-mini { display: flex; } .pc-card:not(.mini) .pc-mini { font-size: 0; } .pc-card:not(.mini) .pc-mini .pc-more { font-size: 12.5px; cursor: pointer; }
+.pc-card .pc-h[role="button"] { cursor: pointer; } .pc-card.mini:hover { border-color: var(--faint); }
+/* a team's rankings: progress and speed, world, region and server */
+.tr-rows { margin-top: 10px; display: grid; gap: 8px; }
+.tr-r { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 8px 14px; align-items: center; padding: 10px 12px; background: var(--raised); border-radius: 9px; }
+.tr-l { font: 600 15px var(--head); color: #f3f5f9; } .tr-v { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; } .tr-v > span { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
+.prs.tr-n { font-size: 15px; line-height: 22px; padding: 0 8px; } .tr-s { text-align: right; }
+.ht-rk { color: #f6dc9a; }
+@media (max-width: 640px) { .tr-r { grid-template-columns: 1fr; } .tr-s { text-align: left; } }
 .pg-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
 .pc-diffs { display: flex; gap: 4px; max-width: 100%; padding: 4px; overflow-x: auto; scrollbar-width: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; } .pc-diffs::-webkit-scrollbar { display: none; }
 .pc-diffs button { flex: none; white-space: nowrap; }

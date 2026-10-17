@@ -33,6 +33,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   teams (a "Compare" option: how many pulls and nights a top guild needed per boss, next to yours). Design to show you first.
 - [x] **Healer mana, more**: what each healer spent the most mana on (round 119).
 - [x] **Performance charts you can explore**: hover readouts and click-to-hide (round 119). More charts can follow.
+- [ ] **The new 12.1.5 boss** (your note): make sure every version of it is in the project (each difficulty: its checks, its
+  fight module, Progress).
 - [ ] **Debrief's own ranking system** (your note): a score of our own, from all the performance data together (damage or
   healing, survivability, mechanical execution and so on), not just output like Warcraft Logs parses.
 - [ ] **Customize your Progress page** (your note): let people pick their own background banner, character avatar and so on.
@@ -73,6 +75,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Guild and team on your character** (your note): under your name, ‹your guild› from Warcraft Logs and the teams on
   your list you raid with (‹Adequate› · Wolfthorn).
 - [x] **Homepage** (your note): once you've added a team or your character, "Your progress" is the first thing on it.
+- [x] **Team rankings** (your note: US and world): a team's page shows its Warcraft Logs rankings this tier (Mythic):
+  progress and speed, World, US and server, each in Warcraft Logs' colour, and its faction; its cards show World and US too.
+- [x] **Short boss cards** (your note): each boss is a short card (result, one line of totals, your parse); a click opens the
+  chart, the totals and its nights, and "Show less" closes it.
 
 ## 2026-10-18, round 118: Survivability, healer mana, parses
 - [x] **The desktop layout is live** (your OK): round 117 merged and on the website.

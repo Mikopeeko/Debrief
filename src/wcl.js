@@ -186,6 +186,13 @@ async function charRankings(creds, id, diff, metric, spec) {
   else { const d = await gql(creds, CHAR_RANK_Q, { id, d: diff, m: metric, s: spec || null }); j = d && d.characterData && d.characterData.character && d.characterData.character.zoneRankings; }
   return (typeof j === 'string' ? JSON.parse(j) : j) || null;
 }
+// a team's or guild's rankings this tier (Mythic, 20 players): progress (how far, how soon) and speed, each world, region and
+// server, with Warcraft Logs' colour for it; and its faction. zone: the tier's zone (53, The Venomous Abyss)
+const TEAM_RANK_Q = `query($id:Int!,$z:Int){guildData{guild(id:$id){faction{name} zoneRanking(zoneId:$z){progress(size:20){worldRank{number color} regionRank{number color} serverRank{number color}} speed(size:20){worldRank{number color} regionRank{number color} serverRank{number color}}}}}}`;
+async function teamRankings(creds, id, zone) {
+  if (HOSTED) return api('/api/teamrank?id=' + id + '&z=' + zone);
+  const d = await gql(creds, TEAM_RANK_Q, { id, z: zone }); return (d && d.guildData && d.guildData.guild) || null;
+}
 // (newest first: paging stops once a whole page is older than `since`, or after 5 pages, as far back as Warcraft Logs
 // lists a character's reports)
 async function charReports(creds, id, since) {
@@ -415,6 +422,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
+root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

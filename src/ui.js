@@ -6352,7 +6352,10 @@ function teamCard(g, all, order, big) {
   const mine = all.filter(groupFilter(g)), last = mine.reduce((m, v) => Math.max(m, v.at), 0), nights = new Set(mine.map((v) => nightOf(v.at))).size;
   const diffs = DIFF_ORDER.filter(([d]) => mine.some((v) => v.diffId === d)).slice(0, big ? 4 : 2).map(([d, nm]) => '<span><b>' + order.filter((b) => mine.some((v) => v.diffId === d && v.boss === b && v.kill)).length + '/' + order.length + '</b> ' + nm + '</span>').join('');
   const cls = g && g.kind === 'char' && g.cls && E.CLASSES[g.cls];
-  return '<button class="ht-card hb' + (big ? ' big' : '') + '" type="button" data-g="' + esc(g ? g.gid : '*') + '">' + banner(g) + '<span class="ht-b"><span class="ht-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</span>' + charAff(g) + '<span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
+  return '<button class="ht-card hb' + (big ? ' big' : '') + '" type="button" data-g="' + esc(g ? g.gid : '*') + '">' + banner(g) + '<span class="ht-b"><span class="ht-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</span>' + charAff(g) +
+    // (a team's World and US rank, once its page has read them)
+    (g && g.rank && (g.rank.w || g.rank.r) ? '<span class="ht-g ht-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '') +
+    '<span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g) + (g.faction ? ' · ' + esc(g.faction) : '')) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
     '<span class="ht-d">' + (diffs || '<span>not imported yet</span>') + '</span><span class="ht-l">' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : g ? 'open to import its nights' : 'nothing saved yet') + '</span></span></button>';
 }
 // (a character added before its class was kept: looked up once, then its card is drawn again)
@@ -6441,6 +6444,29 @@ async function charRankPanel(g, diffId) {
     $('#prHide').onclick = () => { store.set(RANK_OFF, '1'); $$('#main .pc-rank').forEach((x) => x.remove()); charRankPanel(g, diffId); };
   } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read your rankings: ' + esc(e.message) + '</div>'; }
 }
+// ---- a team's page: its Warcraft Logs rankings this tier (Mythic) ----
+// Progress (how far it got, and how soon) world, in its region (US) and on its server, then speed; each number in Warcraft
+// Logs' colour for it; and the team's faction. Kept on the team, so its cards can show World and US too.
+const TIER_ZONE = 53; // (Warcraft Logs' zone for The Venomous Abyss)
+const RANK_COL = { common: 'q1', uncommon: 'q2', rare: 'q3', epic: 'q4', legendary: 'q5', astounding: 'q6', artifact: 'q7' };
+async function teamRankPanel(g) {
+  const box = $('#pgRank'); if (!box) return;
+  const still = () => S.progView === g.gid && document.body.contains(box);
+  box.innerHTML = '<div class="sub">Reading ' + esc(gName(g)) + '\'s rankings from Warcraft Logs…</div>';
+  let creds = null; try { creds = await wclCreds(); } catch (e) { box.innerHTML = '<div class="sub">' + esc(e.message) + '</div>'; return; }
+  try {
+    const k = 'team|' + g.id; if (!RANK_CACHE.has(k)) RANK_CACHE.set(k, WCL.teamRankings(creds, g.id, TIER_ZONE).catch((e) => { RANK_CACHE.delete(k); throw e; }));
+    const t = await RANK_CACHE.get(k); if (!still()) return;
+    const zr = (t && t.zoneRanking) || {}, pr = zr.progress || {}, sp = zr.speed || {}, reg = /\(([A-Z]{2})\)/.exec(g.server || ''), regN = reg ? reg[1] : 'Region', srv = (g.server || '').replace(/\s*\([A-Z]{2}\)$/, '') || 'Server';
+    const num = (x) => (x && x.number ? '<b class="prs ' + (RANK_COL[x.color] || 'q1') + ' tr-n">#' + x.number.toLocaleString('en-US') + '</b>' : '<span class="sub">—</span>');
+    const row = (lab, x, sub) => '<div class="tr-r"><span class="tr-l">' + lab + '</span><span class="tr-v">' + '<span><span class="sub">World</span> ' + num(x.worldRank) + '</span><span><span class="sub">' + esc(regN) + '</span> ' + num(x.regionRank) + '</span><span><span class="sub">' + esc(srv) + '</span> ' + num(x.serverRank) + '</span></span><span class="sub tr-s">' + sub + '</span></div>';
+    const fac = t && t.faction && t.faction.name;
+    if (pr.worldRank || pr.regionRank) { const x = groups().find((q) => q.gid === g.gid); if (x) { x.rank = { w: pr.worldRank && pr.worldRank.number, r: pr.regionRank && pr.regionRank.number, rn: regN, at: Date.now() }; if (fac) x.faction = fac; groupPut(x); } }
+    box.innerHTML = '<div class="pr-h"><div><b>' + esc(gName(g)) + '\'s rankings on Warcraft Logs</b><div class="sub">Mythic, The Venomous Abyss' + (fac ? ' · ' + esc(fac) : '') + '</div></div></div>' +
+      (pr.worldRank || pr.regionRank || sp.worldRank ? '<div class="tr-rows">' + row('Progress', pr, 'how far, and how soon') + row('Speed', sp, 'kill times added up') + '</div>'
+        : '<p class="muted" style="margin:6px 0 0">Not ranked on Mythic yet: Warcraft Logs ranks a team once it has a Mythic kill this tier.</p>');
+  } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read the rankings: ' + esc(e.message) + '</div>'; }
+}
 function renderProgress(msg, msgErr) {
   // (the teams page, unless a team (or everything saved) is picked)
   const gl = groups(), g = S.progView && S.progView !== '*' ? gl.find((x) => x.gid === S.progView) : null;
@@ -6476,8 +6502,11 @@ function renderProgress(msg, msgErr) {
       const sel = kills.length && nightOf(l[0].at) === nightOf(kills[0].at) ? ' selected' : '';
       return '<option value="' + (code ? code + '|' + (at && at.fight != null ? at.fight : '') : '') + '"' + sel + '>' + esc(nightLabel(l[0].at) + ' · ' + plural(l.length, 'pull') + ' · ' + res + (code ? '' : ' · your log only')) + '</option>';
     }).join('');
-    return '<article class="pc-card" style="--ec:' + (b ? qc(b) : 'var(--line2)') + '" data-boss="' + esc(boss) + '">' + art(boss) + '<header class="pc-h"><div><h3>' + esc(boss) + '</h3><div class="pc-st">' + st + '</div></div>' +
+    // (short by default: the boss, its result and one line of totals; a click opens the chart, the totals and its nights)
+    const open = S.pcOpen && S.pcOpen.has(boss);
+    return '<article class="pc-card' + (open ? '' : ' mini') + '" style="--ec:' + (b ? qc(b) : 'var(--line2)') + '" data-boss="' + esc(boss) + '">' + art(boss) + '<header class="pc-h" role="button" tabindex="0" aria-expanded="' + !!open + '"><div><h3>' + esc(boss) + '</h3><div class="pc-st">' + st + '</div></div>' +
       '<div class="pc-big" style="color:' + (b ? qc(b) : 'var(--muted)') + '">' + (kills.length ? 'Killed' : b ? Math.floor(done) + '%' : '—') + '<span>' + (kills.length ? '' : 'of the encounter') + '</span></div></header>' +
+      '<div class="pc-mini">' + plural(prog.length, 'pull') + (kills.length ? ' to the kill' : '') + ' · ' + plural(nights.size, 'night') + ' · ' + durH(time) + (kills.length ? ' to the kill' : ' on the boss') + ' · last ' + esc(new Date(last - 6 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '<span class="pc-more">' + (open ? 'Show less ▴' : 'Chart and nights ▾') + '</span></div>' +
       '<div class="pc-stats"><div><b>' + prog.length + '</b>' + (kills.length ? 'pulls to the kill' : 'pulls') + '</div><div><b>' + nights.size + '</b>' + (nights.size === 1 ? 'night' : 'nights') + '</div><div><b>' + durH(time) + '</b>' + (kills.length ? 'to the kill' : 'on the boss') + '</div>' +
         '<div' + (after ? ' title="' + plural(after, 'pull') + ' since the first kill"' : '') + '><b>' + esc(new Date(last - 6 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</b>last pulled</div></div>' +
       progChart(prog, boss) +
@@ -6500,12 +6529,12 @@ function renderProgress(msg, msgErr) {
   const legend = pullLegend();
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div></div>' + sw + '</div>' + team + (g ? '' : pgMsg) + (g && g.kind === 'char' && g.cls ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
+    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div></div>' + sw + '</div>' + team + (g ? '' : pgMsg) + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet: click ' + (g.last ? 'Check for new nights' : 'Import every night') + ' above.' : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
   $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = false; renderProgress(); window.scrollTo(0, 0); };
-  if (g && g.kind === 'char') charRankPanel(g, cur);
+  if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
   if ($('#pgImport')) $('#pgImport').onclick = () => progRun(g);
   // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)
   if ($('#pgRen')) $('#pgRen').onclick = () => { S.pgRename = true; S.pgDel = false; renderProgress(); const i = $('#pgRenIn'); if (i) { i.focus(); i.select(); } };
@@ -6517,6 +6546,11 @@ function renderProgress(msg, msgErr) {
   if ($('#pgDelOk')) $('#pgDelOk').onclick = async (ev) => { ev.currentTarget.disabled = true; const n = await groupRemove(g); S.pgDel = false; S.progView = null; renderProgress('Removed ' + gName(g) + (n ? ' and ' + plural(n, 'saved pull') : '') + '.'); };
   if ($('#pgBack')) $('#pgBack').onclick = () => select(PROG_BACK);
   $('#main').querySelectorAll('.pc-diffs button').forEach((b) => { b.onclick = () => { store.set(PROG_DIFF_KEY, b.dataset.d); renderProgress(); }; });
+  // (a short card opens with a click anywhere on it; an open one closes from its top or its "Show less")
+  $('#main').querySelectorAll('.pc-card[data-boss]').forEach((c) => { const boss = c.dataset.boss, h = c.querySelector('.pc-h'), more = c.querySelector('.pc-more');
+    const set = (on) => { S.pcOpen = S.pcOpen || new Set(); if (on) S.pcOpen.add(boss); else S.pcOpen.delete(boss); c.classList.toggle('mini', !on); h.setAttribute('aria-expanded', String(on)); if (more) more.textContent = on ? 'Show less ▴' : 'Chart and nights ▾'; };
+    c.addEventListener('click', (e) => { if (c.classList.contains('mini')) set(true); else if (e.target.closest('.pc-h, .pc-more')) set(false); });
+    h.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set(c.classList.contains('mini')); } }; });
   // a card's night menu: open that night's report at the boss, or save every pull of the boss that night on this PC
   $('#main').querySelectorAll('.pc-card[data-boss]').forEach((c) => {
     const sel = c.querySelector('.pc-sel'), msgEl = c.querySelector('.pc-msg'), boss = c.dataset.boss, acts = c.querySelectorAll('[data-act]');
