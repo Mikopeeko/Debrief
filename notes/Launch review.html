@@ -1,0 +1,381 @@
+<title>Debrief Launch Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: a long review in the app's own world (dark, gold); a contents rail on wide screens, one column on phones.
+   Mockups are drawn with the app's real colours so they read like the screens they replace. */
+:root {
+  --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49;
+  --text: #ece8df; --muted: #98a0ad; --faint: #6c7381;
+  --gold: #e6b450; --gold-ink: #1b1406; --good: #45c15c; --warn: #e8a23a; --bad: #e5534b; --blue: #6aa8ff; --purple: #a335ee; --orange: #ff8000;
+  --good-bg: #17301e; --warn-bg: #3a2c16; --bad-bg: #3a1d1d;
+  --head: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start; font-size: 14px; }
+nav.toc b { display: block; font: 600 12px var(--head); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 4px 0 4px 10px; border-left: 2px solid var(--line); }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--text); border-left-color: var(--gold); outline: none; }
+main { min-width: 0; }
+h1 { font: 700 44px/1.05 var(--head); margin: 6px 0 10px; text-wrap: balance; }
+h2 { font: 700 28px/1.15 var(--head); margin: 56px 0 6px; text-wrap: balance; scroll-margin-top: 20px; }
+h3 { font: 600 19px/1.25 var(--head); margin: 28px 0 6px; text-wrap: balance; }
+p, li { max-width: 68ch; }
+p { margin: 8px 0; }
+.eyebrow { font: 600 12px var(--head); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.lede { font-size: 18px; color: #d9d4c9; }
+.muted { color: var(--muted); }
+.sub { color: var(--muted); font-size: 14px; }
+a { color: #f0c873; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 14px 0; }
+.done { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.done li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; font-size: 15px; }
+.done li::before { content: '✓'; color: var(--good); font-weight: 600; }
+/* the ranked fixes */
+ol.fix { counter-reset: f; list-style: none; padding: 0; margin: 14px 0; display: grid; gap: 10px; }
+ol.fix > li { counter-increment: f; max-width: none; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+ol.fix > li::before { content: counter(f); font: 700 22px/1 var(--head); color: var(--gold); padding-top: 2px; }
+ol.fix b.t { font: 600 18px/1.3 var(--head); display: block; }
+ol.fix p { margin: 4px 0 0; font-size: 15px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag { font: 600 11.5px var(--head); letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 5px; border: 1px solid var(--line2); color: var(--muted); }
+.tag.hi { color: var(--gold); border-color: rgba(230,180,80,.5); }
+.tag.s { color: var(--good); border-color: rgba(69,193,92,.45); }
+.tag.m { color: var(--warn); border-color: rgba(232,162,58,.45); }
+.tag.mock { color: var(--blue); border-color: rgba(106,168,255,.45); }
+/* tables */
+.tw { overflow-x: auto; margin: 12px 0; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 560px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12.5px var(--head); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); background: var(--panel); }
+tr:last-child td { border-bottom: 0; }
+td code, p code, li code { font: 13.5px ui-monospace, Consolas, monospace; background: var(--raised); padding: 1px 5px; border-radius: 4px; color: #e9dcc0; }
+/* mockups */
+.mock { margin: 16px 0 6px; }
+.mock-cap { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.pair > div { min-width: 0; }
+.lab { font: 600 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+.lab.new { color: var(--gold); }
+.scr { background: var(--bg); border: 1px solid var(--line2); border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.45; overflow: hidden; }
+.phone { max-width: 300px; margin: 0 auto; border-radius: 24px; padding: 14px 12px; border-width: 2px; }
+.mp { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.mp + .mp { margin-top: 8px; }
+.row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.row > .grow { flex: 1; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line2); font: 600 12px var(--head); white-space: nowrap; }
+.chip.gold { background: rgba(230,180,80,.15); border-color: rgba(230,180,80,.5); color: var(--gold); }
+.st { font: 600 12.5px var(--head); white-space: nowrap; }
+.ok { color: var(--good); } .wa { color: var(--warn); } .ba { color: var(--bad); } .gd { color: var(--gold); } .fa { color: var(--faint); }
+.h1m { font: 700 20px/1.1 var(--head); }
+.h2m { font: 600 15px/1.2 var(--head); }
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; } .bar i { display: block; height: 100%; background: var(--orange); }
+.strip { display: flex; gap: 6px; overflow: hidden; }
+.strip span { flex: none; padding: 4px 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font: 600 11.5px var(--head); }
+.strip span.on { border-color: var(--text); }
+.tabs { display: flex; gap: 14px; border-bottom: 1px solid var(--line); font: 600 13px var(--head); color: var(--muted); padding-bottom: 6px; overflow: hidden; white-space: nowrap; }
+.tabs .on { color: var(--text); box-shadow: 0 7px 0 -5px var(--gold); }
+.line { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.line:first-child { border-top: 0; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.ok { background: var(--good); } .dot.wa { background: var(--warn); } .dot.ba { background: var(--bad); }
+.btnm { display: inline-block; padding: 5px 12px; border-radius: 8px; font: 600 13px var(--head); background: var(--gold); color: var(--gold-ink); }
+.btnm.ghost { background: transparent; color: var(--text); border: 1px solid var(--line2); }
+.mono { font: 12px ui-monospace, Consolas, monospace; color: #cfc6b2; background: var(--raised); border-radius: 8px; padding: 8px 10px; white-space: pre; overflow-x: auto; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.steps .mp b { display: block; font: 700 22px/1 var(--head); color: var(--gold); margin-bottom: 4px; }
+.score { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.score .mp { padding: 7px 9px; }
+.prow { display: grid; grid-template-columns: minmax(0, 1.4fr) 80px minmax(0, 1fr) 70px; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); }
+.prow:first-child { border-top: 0; }
+.menu { width: 250px; background: var(--raised); border: 1px solid var(--line2); border-radius: 10px; padding: 6px; box-shadow: 0 10px 24px rgba(0,0,0,.4); }
+.menu .it { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 7px; }
+.menu .it.on { background: var(--panel); }
+.menu .x { margin-left: auto; color: var(--faint); font-size: 12px; }
+.menu .sep { height: 1px; background: var(--line); margin: 5px 4px; }
+.kill { background: linear-gradient(90deg, rgba(255,128,0,.16), rgba(255,128,0,0) 70%), var(--panel); border-color: rgba(255,128,0,.45); }
+.quote { border-left: 3px solid var(--line2); padding-left: 12px; color: var(--muted); }
+footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13.5px; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; } nav.toc { display: none; } }
+@media (max-width: 640px) { h1 { font-size: 34px; } h2 { font-size: 24px; } .pair { grid-template-columns: minmax(0, 1fr); } .steps { grid-template-columns: minmax(0, 1fr); } .prow { grid-template-columns: minmax(0, 1fr) 64px 56px; } .prow .hide-s { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <b>Contents</b>
+  <a href="#overnight">Done overnight</a>
+  <a href="#monday">Fix before Monday</a>
+  <a href="#organize">Organization</a>
+  <a href="#design">Design consistency</a>
+  <a href="#words">Wording</a>
+  <a href="#speed">Speed and reliability</a>
+  <a href="#checklist">Launch checklist</a>
+  <a href="#waiting">Waiting on you</a>
+</nav>
+
+<main>
+<div class="eyebrow">Launch review · Sunday, Oct 18</div>
+<h1>Debrief, ready for Monday</h1>
+<p class="lede">The fight audits are the strongest part of Debrief: all ten bosses are covered, and tonight's checks found them reading your logs correctly. What stands between Debrief and a launch is the first five minutes for a raider who has never seen it. There is too much on screen at once, four different ways of grading, a tall header on phones, and a few empty or behind-the-scenes panels showing.</p>
+<p class="muted">Nothing below has been changed yet. Each idea says how big a change it is, and the mockups show the bigger ones. Pick what you want and I'll build it.</p>
+
+<h2 id="overnight">Done overnight</h2>
+<div class="box">
+  <ul class="done">
+    <li><span><b>The website in Chrome.</b> The "Failed to fetch" error came from ad blockers. They block any web address ending in "/api/events" as tracking, and that's where the site downloaded each pull. It now uses a different address, and the error message says to allow the site if a blocker is still in the way.</span></li>
+    <li><span><b>A crash after browsing many pulls.</b> Every Warcraft Logs pull stayed in memory for the whole visit, more than 100 MB for a long Mythic pull. A pull is now let go once it's saved on the PC. Before, 14 pulls crashed my test tab; now it stays steady.</span></li>
+    <li><span><b>Twin Fangs, Coiled Altar and Ula'tek, checked on Mythic and Heroic</b> with your team's logs (and other guilds' logs for game facts only). There were no errors, and every phase was found. I fixed eight wrong or noisy flags, all listed in FEEDBACK.md (round 116). The biggest: Coiling Ichor went from 634 small mistakes on 30 pulls to 69, and Heroic Coiled Altar is no longer graded against the Mythic orb plan.</span></li>
+  </ul>
+</div>
+
+<h2 id="monday">Fix before Monday</h2>
+<p>These are ranked by what a new raider would notice first. Small changes take an evening or less; medium ones take a day.</p>
+<ol class="fix">
+  <li><div><b class="t">Open shared links on Latest pull</b>
+    <p>A link to a pull opens on whatever tab you used last, so a raider clicking your link landed on an empty Assignments page. A shared link should always open on Latest pull. Your own tab memory can stay for reopening the app.</p>
+    <div class="tags"><span class="tag hi">High impact</span><span class="tag s">Small</span></div></div></li>
+  <li><div><b class="t">A shorter header on phones</b>
+    <p>On a phone, the brand, boss picker, Live button, banner, pull strip, wipe filter and tabs fill about 60% of the first screen before any results appear. One slim bar and a smaller banner bring the results up to the first screen.</p>
+    <div class="tags"><span class="tag hi">High impact</span><span class="tag m">Medium</span><span class="tag mock">Mockup A</span></div></div></li>
+  <li><div><b class="t">A kill should feel like a kill</b>
+    <p>Your Twin Fangs kill shows "Fix first on the next pull", and the night's report card gives a D (62/100). On a kill, lead with the kill, then say what to tidy up "next time". Grade the progression nights, but celebrate the kill night.</p>
+    <div class="tags"><span class="tag hi">High impact</span><span class="tag s">Small</span><span class="tag mock">Mockup B</span></div></div></li>
+  <li><div><b class="t">One way to show good and bad</b>
+    <p>Debrief grades in four ways: ✓ ! ✕ in green, amber and red; letter grades (S, A, B, C, D) with a score; Warcraft Logs parse colours; and pull colours by how far a pull got. Use ✓ ! ✕ everywhere for "how it went". Keep parse colours (raiders know them) and pull colours (with their legend). Keep letter grades only for the night's report card, or drop them; the Survival kit table and the Player audit tiles would switch to ✓ ! ✕.</p>
+    <div class="tags"><span class="tag hi">High impact</span><span class="tag m">Medium</span></div></div></li>
+  <li><div><b class="t">Better empty states</b>
+    <p>Without an NSRT note, Latest pull shows two tiles that just say "— no NSRT note for this boss", and the Assignments tab is a blank page with one button. Hide those tiles. Turn the empty Assignments page into a short explanation with an example of what it checks.</p>
+    <div class="tags"><span class="tag s">Small</span><span class="tag mock">Mockup C</span></div></div></li>
+  <li><div><b class="t">Hide the Data check from raiders</b>
+    <p>The "Data check" panel at the bottom of Mechanics lists spell IDs and event counts. It's there so I can confirm a module reads the log, and to a raider it looks like an error report. Hide it behind a small "Show the data check" link at the very bottom, or show it only on your own PC.</p>
+    <div class="tags"><span class="tag s">Small</span></div></div></li>
+  <li><div><b class="t">Load the whole night by itself on the website</b>
+    <p>Summary and Player audit say "Showing 2 of 30 pulls" until someone clicks Load all pulls, which then downloads every pull one after another. Start that download in the background as soon as a night is opened, with a small progress bar ("12 of 30 pulls"), so those tabs fill in on their own.</p>
+    <div class="tags"><span class="tag hi">High impact</span><span class="tag m">Medium</span></div></div></li>
+  <li><div><b class="t">The website's start page: what, how, and is it safe</b>
+    <p>The "What you get" preview shows 4 of the 6 tabs, in a different order from the real ones. There's also no "how it works" and no line about privacy. Add three short steps, a privacy line, and preview all six tabs in their real order.</p>
+    <div class="tags"><span class="tag s">Small</span><span class="tag mock">Mockup D</span></div></div></li>
+</ol>
+
+<h3>Mockup A · the header on a phone</h3>
+<div class="mock pair">
+  <div><div class="lab">Now</div>
+    <div class="scr phone">
+      <div class="row"><span class="chip">D</span><div class="grow"><b>Debrief</b><div class="sub" style="font-size:11px">Warcraft Logs: Twin fangs and shi…</div></div></div>
+      <div style="margin-top:8px"><span class="chip gold">2 bosses</span> <b>The Twin Fangs · Mythic</b> ▾</div>
+      <div class="row" style="margin-top:8px"><span class="chip">Live: off</span><span class="chip">☰</span></div>
+      <div class="mp kill" style="margin-top:8px"><div class="sub" style="font-size:10px">PULL 30 · MYTHIC · THE VENOMOUS ABYSS</div><div class="h1m">The Twin Fangs</div><span class="chip" style="background:var(--orange);color:#1b1406;border:0">✓ Kill</span><div class="bar" style="margin:6px 0"><i style="width:100%"></i></div><div class="ok" style="font-size:12px">✓ Down after 29 wipes tonight</div><div class="sub" style="font-size:11px">9:38 PM · 6:43 · 20 players · 3 deaths</div></div>
+      <div class="row" style="margin-top:8px"><span class="chip">‹</span><span class="chip">Pull 30 Kill</span><span class="chip">⚑ Wipe filter 2</span></div>
+      <div class="tabs" style="margin-top:10px"><span class="on">Latest pull</span><span>Assignments</span><span>Mechan…</span></div>
+      <div class="row" style="margin-top:8px"><span class="chip">● Pull 30 kill · 9:38 PM</span></div>
+      <div class="fa" style="margin-top:10px;font-size:12px">↓ results start here</div>
+    </div></div>
+  <div><div class="lab new">Proposed</div>
+    <div class="scr phone">
+      <div class="row"><span class="chip">D</span><div class="grow"><b>Twin Fangs · Mythic</b> <span class="gd">▾</span></div><span class="chip">☰</span></div>
+      <div class="mp kill" style="margin-top:8px;padding:8px 10px"><div class="row"><div class="grow"><div class="h2m">Pull 30 · Kill</div><div class="ok" style="font-size:12px">Down after 29 wipes · 6:43</div></div><span class="chip">‹ 29</span></div></div>
+      <div class="tabs" style="margin-top:10px"><span class="on">Latest</span><span>Mechanics</span><span>Notes</span><span>Perf.</span><span>Night</span></div>
+      <div class="mp" style="margin-top:8px"><div class="h2m ok">The boss died 🎉</div><div class="sub">3 things to tidy up next time</div></div>
+      <div class="mp"><div class="line"><span class="dot ba"></span><span>Hobbz died to Stone Breaker</span><span class="fa">0:27</span></div><div class="line"><span class="dot wa"></span><span>11 players reached 7 Eternal Venom</span><span class="fa">5:46</span></div></div>
+    </div></div>
+</div>
+<p class="mock-cap">One slim bar for the boss picker and menu, with the banner shrunk to one line. The tab names are short enough to fit, and the wipe filter and Live move into the menu on phones. Results now start on the first screen.</p>
+
+<h3>Mockup B · Latest pull on a kill</h3>
+<div class="mock pair">
+  <div><div class="lab">Now</div>
+    <div class="scr">
+      <div class="mp"><div class="row"><b class="grow">What went wrong</b><span class="st ba">✕ 3 things</span></div>
+        <div class="line"><span class="ba">✕</span><span>First death: Hobbz at 0:27 to Stone Breaker</span><span class="chip">Map</span></div>
+        <div class="line"><span class="wa">!</span><span>Eternal Venom ×11: reached 7 stacks</span><span class="chip">Map</span></div></div>
+      <div class="mp"><b>Fix first on the next pull</b><div class="sub">1. Keep Hobbz alive · 2. Eternal Venom: … lethal at 11 on Normal and 10 on Heroic and Mythic.</div></div>
+      <div class="mp"><div class="row"><span class="chip" style="color:var(--bad)">D</span><b class="grow">Report card · 62/100</b></div></div>
+    </div></div>
+  <div><div class="lab new">Proposed</div>
+    <div class="scr">
+      <div class="mp kill"><div class="h1m" style="color:var(--orange)">Killed on pull 30</div><div class="sub">After 29 wipes tonight · 100 pulls over 3 nights</div><div class="row" style="margin-top:6px;gap:6px"><span class="chip">✓ 50 of 50 kicks</span><span class="chip">✓ every Feast soaked</span><span class="chip">3 deaths</span></div></div>
+      <div class="mp"><b>Next time, tidy up</b>
+        <div class="line"><span class="dot ba"></span><span>Hobbz died to Stone Breaker: Divine Shield was ready</span><span class="fa">0:27</span></div>
+        <div class="line"><span class="dot wa"></span><span>11 players reached 7 Eternal Venom (aim: 6 or under)</span><span class="fa">5:46</span></div>
+        <div class="line"><span class="dot wa"></span><span>Corrosive Spit hit 3 players who weren't its target</span><span class="fa">3 times</span></div></div>
+    </div></div>
+</div>
+<p class="mock-cap">The kill comes first, with what went well as small chips. "Fix first" becomes "Next time, tidy up", the advice only mentions this difficulty, and the night's grade stays off the kill screen.</p>
+
+<h3>Mockup C · Assignments without a note</h3>
+<div class="mock">
+  <div class="scr" style="max-width:720px">
+    <div class="mp"><div class="h2m">Check your raid against its NSRT note</div>
+      <p class="sub" style="margin:4px 0 10px">Paste the note your raid uses in NSRT (Northern Sky Raid Tools). Debrief compares every assignment with what really happened, pull by pull.</p>
+      <div class="pair" style="gap:10px">
+        <div><div class="lab">Your note</div><div class="mono">soak1 Morwyn Kaelis Vosk
+soak2 Brann Ilyra Thessa
+kick1 Kaelis Brann Ilyra</div></div>
+        <div><div class="lab">What Debrief checks</div>
+          <div class="line"><span class="ok">✓</span><span>Soak 1 · all 3 were in it</span><span></span></div>
+          <div class="line"><span class="ba">✕</span><span>Soak 2 · Ilyra wasn't there</span><span class="chip">Ilyra</span></div>
+          <div class="line"><span class="ok">✓</span><span>Kicks · in order</span><span></span></div></div>
+      </div>
+      <div class="row" style="margin-top:10px"><span class="btnm">Add NSRT note</span><span class="sub">Example names. Your note stays on this PC.</span></div>
+    </div>
+  </div>
+  <p class="mock-cap">The same space now explains what the tab is for and shows an example. The tab also gets a plainer name, "Notes", where space is tight.</p>
+</div>
+
+<h3>Mockup D · the website's start page</h3>
+<div class="mock">
+  <div class="scr" style="max-width:820px">
+    <div class="steps">
+      <div class="mp"><b>1</b><div class="h2m">Paste a link</div><div class="sub">Your raid's Warcraft Logs report, or its live log during raid.</div></div>
+      <div class="mp"><b>2</b><div class="h2m">Pick a pull</div><div class="sub">Every mechanic, death and assignment is checked in seconds.</div></div>
+      <div class="mp"><b>3</b><div class="h2m">Fix one thing</div><div class="sub">Latest pull says what to fix before the next pull.</div></div>
+    </div>
+    <p class="sub" style="margin:10px 2px 0">🔒 Debrief only reads public Warcraft Logs reports. No accounts, no personal data; the pulls you open are saved in your own browser.</p>
+  </div>
+  <p class="mock-cap">Placed under the two link boxes, above "What you get". The preview tabs then follow in the real order: Latest pull, Assignments, Mechanics, Performance, Summary, Player audit.</p>
+</div>
+
+<h2 id="organize">Organization</h2>
+
+<h3>Mechanics: one list instead of three</h3>
+<p>The Mechanics tab shows the same mechanics three times: as a grid of 12 tiles, then as "What went wrong / What went right" (a copy of Latest pull), then as the list of sections. The list repeats per phase too, so Barbed Bulwark, Caustic Globule and Stone Breaker each appear twice on a Twin Fangs kill. My suggestion: a slim scoreboard strip that jumps to each mechanic, then one list, most important first, with each mechanic once and its phases as small chips.</p>
+<div class="tags"><span class="tag hi">High impact</span><span class="tag m">Medium</span><span class="tag mock">Mockup E</span></div>
+<div class="mock">
+  <div class="lab new">Mockup E · proposed</div>
+  <div class="scr" style="max-width:820px">
+    <div class="score">
+      <div class="mp"><div class="h2m">Deaths</div><span class="st ba">✕ 3</span></div>
+      <div class="mp"><div class="h2m">Corrosive Spit</div><span class="st ba">✕ 2</span></div>
+      <div class="mp"><div class="h2m">Eternal Venom</div><span class="st wa">! 3</span></div>
+      <div class="mp"><div class="h2m">Coiling Ichor</div><span class="st wa">! 2</span></div>
+      <div class="mp"><div class="h2m">Interrupts</div><span class="st ok">✓</span></div>
+      <div class="mp"><div class="h2m">+6 more</div><span class="st ok">✓ clean</span></div>
+    </div>
+    <div class="mp" style="margin-top:10px">
+      <div class="line"><span class="dot ba"></span><span><b>Deaths</b> <span class="sub">Hobbz at 0:27, and 2 more</span></span><span class="st ba">✕ 3</span></div>
+      <div class="line"><span class="dot ba"></span><span><b>Corrosive Spit</b> <span class="chip">Both Fangs</span> <span class="sub">3 players hit off target</span></span><span class="st ba">✕ 2</span></div>
+      <div class="line"><span class="dot wa"></span><span><b>Eternal Venom</b> <span class="sub">3 players over the budget</span></span><span class="st wa">! 3</span></div>
+      <div class="line"><span class="dot ok"></span><span><b>Stone Breaker</b> <span class="chip">Both Fangs</span> <span class="chip">One Fang left</span></span><span class="st ok">✓ clean</span></div>
+      <div class="line"><span class="dot ok"></span><span><b>Barbed Bulwark</b> <span class="chip">Both Fangs</span> <span class="chip">One Fang left</span></span><span class="st ok">✓ clean</span></div>
+    </div>
+  </div>
+  <p class="mock-cap">Every mechanic appears once. A phase chip filters its details to that phase, and "What went wrong / right" stays on Latest pull only.</p>
+</div>
+
+<h3>Tab names and the "All pulls" switch</h3>
+<ul>
+  <li><b>Shorter, plainer tab names:</b> Latest pull · Mechanics · Notes (for Assignments) · Performance · Night (for Summary) · Players (for Player audit). They fit on a phone, and "Night" says what the Summary is about.</li>
+  <li><b>One place for "this pull / all pulls":</b> it's now a pill to the right of the tabs and a switch inside Performance, Summary and Player audit. Keep only the in-page switch.</li>
+  <li><b>Tab tooltips:</b> hovering a tab name pops up a description over the page, and it stays while the mouse rests there. The names explain themselves, so drop the tooltips.</li>
+</ul>
+
+<h3>The menu</h3>
+<p>The menu mixes ways in ("Open combat log", "Paste a link", "Start screen") with your raid's pages ("Progress", "Saved progress"), and "Progress" next to "Saved progress" reads like the same thing twice. Group it in two parts, and rename "Saved progress" to say what it is.</p>
+<div class="mock">
+  <div class="lab new">Mockup F · menu and teams, proposed</div>
+  <div class="scr" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <div class="menu">
+      <div class="lab" style="margin:4px 8px">Open</div>
+      <div class="it">Paste a Warcraft Logs link</div>
+      <div class="it">Open a combat log</div>
+      <div class="it">Follow a live log</div>
+      <div class="sep"></div>
+      <div class="lab" style="margin:4px 8px">Your raid</div>
+      <div class="it on">Progress <span class="x">every boss, every night</span></div>
+      <div class="it">Your raid on this PC <span class="x">saved pulls</span></div>
+    </div>
+    <div class="menu">
+      <div class="lab" style="margin:4px 8px">Team</div>
+      <div class="it on"><b>Wolfthorn</b> <span class="sub">Zul'jin</span><span class="x">✓</span></div>
+      <div class="it">Second team <span class="sub">example</span><span class="x">Remove</span></div>
+      <div class="sep"></div>
+      <div class="it gd">+ Add a team</div>
+    </div>
+  </div>
+  <p class="mock-cap">Right: the team dropdown you asked for, sitting at the top of the Progress page. Each team keeps its own imported nights, and Remove asks whether to keep or delete that team's nights. Today Debrief holds one team, so this means saving each night with its team. It's a medium change.</p>
+</div>
+
+<h3>Progress: big cards only where there's a story</h3>
+<p>On Heroic and Normal, several bosses died in one or two pulls, but each still gets a big card with a large, empty chart. Bosses killed quickly could be one compact line each, saving the big cards for bosses that took a while.</p>
+<div class="tags"><span class="tag s">Small</span><span class="tag mock">Mockup G</span></div>
+<div class="mock">
+  <div class="lab new">Mockup G · compact rows, proposed</div>
+  <div class="scr" style="max-width:820px">
+    <div class="mp">
+      <div class="prow"><span><b>Nymrissa Wavecaller</b></span><span class="st" style="color:var(--orange)">Killed</span><span class="sub hide-s">pull 1 · Wed, Aug 19</span><span class="sub">7:07</span></div>
+      <div class="prow"><span><b>Nek'zali the Soulcoiler</b></span><span class="st" style="color:var(--orange)">Killed</span><span class="sub hide-s">pull 1 · Thu, Aug 20</span><span class="sub">7:16</span></div>
+      <div class="prow"><span><b>Entombed Sentinels</b></span><span class="st" style="color:var(--orange)">Killed</span><span class="sub hide-s">pull 5 · Thu, Aug 20</span><span class="sub">27:50</span></div>
+      <div class="prow"><span><b>Vashnik the Malignant</b></span><span class="st" style="color:var(--orange)">Killed</span><span class="sub hide-s">pull 3 · Thu, Aug 20</span><span class="sub">19:28</span></div>
+    </div>
+  </div>
+  <p class="mock-cap">Your Heroic kills, from the Progress page. A row opens into today's full card with its chart, and bosses still in progress (like Mythic Coiled Altar) keep the full card open.</p>
+</div>
+
+<h2 id="design">Design consistency</h2>
+<div class="tw"><table>
+  <thead><tr><th>What</th><th>Now</th><th>Suggestion</th></tr></thead>
+  <tbody>
+    <tr><td>Big numbers</td><td>Two styles side by side: Deaths and Mechanics write <code>957k</code>, Performance writes <code>957.1K</code>.</td><td>One style everywhere: <code>957K</code>, <code>1.2M</code>.</td></tr>
+    <tr><td>Section titles</td><td>Mixed: "Corrosive Spit: standing in the line", "Interrupts", "Twin balance: the Fangs' health".</td><td>Always the mechanic's name first, then what's checked: "Interrupts: every cast kicked".</td></tr>
+    <tr><td>Tables vs bars</td><td>Performance, Deaths and Avoidable damage are bars now. Survival kit (7 columns, letter grades), Guillotine soaks and Tank frontals are still wide tables.</td><td>Survival kit next: one line per player with ✓ ! ✕ for defensives, Healthstone and potion.</td></tr>
+    <tr><td>Grades</td><td>✓ ! ✕, letter grades, parse colours and pull colours.</td><td>See "One way to show good and bad" above.</td></tr>
+    <tr><td>Long pages</td><td>Mechanics on a Mythic kill is about 30 rows long.</td><td>Mockup E: each mechanic once, problems first.</td></tr>
+    <tr><td>Header on the start page</td><td>The subtitle is cut off ("Paste a Warcraft Logs link or drop yo…"), and the menu scrolls away.</td><td>A short subtitle, and keep the bar at the top while scrolling.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="words">Wording</h2>
+<div class="tw"><table>
+  <thead><tr><th>Where</th><th>Now</th><th>Plainer</th></tr></thead>
+  <tbody>
+    <tr><td>Pull strip</td><td>Wipe filter · stop at 2 deaths</td><td>Count until death 2 <span class="muted">(the ? stays for the reason)</span></td></tr>
+    <tr><td>Progress card</td><td>Save in full</td><td>Download this night</td></tr>
+    <tr><td>Menu</td><td>Saved progress</td><td>Your raid on this PC</td></tr>
+    <tr><td>Latest pull on a kill</td><td>Fix first on the next pull</td><td>Next time, tidy up</td></tr>
+    <tr><td>Advice text</td><td>"Stacks become lethal at 11 on Normal and 10 on Heroic and Mythic."</td><td>"Lethal at 10 stacks." <span class="muted">(only the difficulty you're looking at)</span></td></tr>
+    <tr><td>Assignments</td><td>NSRT note</td><td>Keep "NSRT note", and explain it once on the empty page (Mockup C).</td></tr>
+    <tr><td>Mechanics</td><td>Data check</td><td>Hidden (see Fix before Monday, #6).</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="speed">Speed and reliability</h2>
+<ul>
+  <li><b>Opening a long Mythic pull on the website took about 5 seconds</b> in my test, and it's instant after that (it's saved in the browser). That's fine, but the loading line could show a moving bar instead of text.</li>
+  <li><b>Raid night load:</b> when 20 raiders open the same pull right after it ends, only the first person's download asks Warcraft Logs; everyone else gets the site's saved copy.</li>
+  <li><b>A limit to raise before #7:</b> each visitor may make 90 fresh downloads a minute, to protect your Warcraft Logs allowance. A long Mythic pull is a few dozen downloads, so loading a whole 30-pull night that nobody has opened yet would hit that limit and crawl. The background load (#7) should go newest pull first and get a higher allowance.</li>
+  <li><b>Browsers to try before Monday:</b> Chrome with uBlock Origin, Edge, Firefox, Safari on an iPhone, and Chrome on Android. The ad-blocker bug only showed up in one browser.</li>
+  <li><b>An error should be easy to send you:</b> add a "Copy details" button on error screens that copies the message, the report link and the browser, so raiders can paste it into Discord.</li>
+</ul>
+
+<h2 id="checklist">Launch checklist</h2>
+<div class="tw"><table>
+  <thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Fight audits for all 10 bosses</td><td class="ok">Done</td><td>Mythic and Heroic checked on real pulls.</td></tr>
+    <tr><td>Website works in Chrome, Edge</td><td class="ok">Done tonight</td><td>Ad blocker fix live.</td></tr>
+    <tr><td>Shared links open on Latest pull</td><td class="wa">To do</td><td>Fix #1.</td></tr>
+    <tr><td>A web address raiders remember</td><td class="wa">Your call</td><td>debrief.james-m-nemecek.workers.dev works, but a short name of your own (for example debrief.gg) is easier to share. Cloudflare can attach one in a few minutes once you own it.</td></tr>
+    <tr><td>Name</td><td class="wa">Your call</td><td>The app says "Debrief", while the project folder and FEEDBACK.md say "Adequate Audits". Pick one for the launch post.</td></tr>
+    <tr><td>Where raiders send feedback</td><td class="wa">To do</td><td>A "Send feedback" link in the menu (a Discord channel, for example), so notes come to you instead of getting lost.</td></tr>
+    <tr><td>Link preview</td><td class="wa">To do</td><td>When the link is pasted in Discord, show a title, a one-line description and an image instead of a bare link.</td></tr>
+    <tr><td>Privacy line</td><td class="wa">To do</td><td>Mockup D.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="waiting">Waiting on you</h2>
+<ul>
+  <li><b>Remove the Healers view?</b> (Healing, then Healers.) I suggested removing it because it repeats the Players bars. Yes or no?</li>
+  <li><b>Teams:</b> do you want the team dropdown and Remove (Mockup F)?</li>
+  <li><b>The character page idea</b> (one player's own page from their Warcraft Logs character link): I still owe you a full answer. Short version: worth it after launch, as a "your own to-do list for this boss" page.</li>
+  <li><b>The desktop app (.exe) with auto-update:</b> planned in notes/Desktop app plan.md and not started. I held it until you've seen this review, since some of these changes would land in it too.</li>
+</ul>
+
+<footer>Written for Wolfthorn's launch of Debrief. Every finding comes from going through the live site and the app on this PC on Oct 17–18, 2026, with your team's Twin Fangs, Coiled Altar and Ula'tek logs.</footer>
+</main>
+</div>

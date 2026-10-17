@@ -14,7 +14,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Polish Twin Fangs, The Coiled Altar and Ula'tek** on Mythic and Heroic (round 116).
 - [ ] **Teams**: remove a team, and a dropdown for more than one (your note). Design in the morning review.
 - [ ] **Remove the Healers view?** (asked; waiting on your yes or no).
-- [ ] **Big review of the whole app** for launch: organization, design, readability, with mockups (your note). In progress.
+- [x] **Big review of the whole app** for launch (your note): done, with 7 mockups. Read it at
+  https://claude.ai/artifact/CyCxbDM5Mj9KyTWc2aMjFE (a copy is in notes/Launch review.html). Nothing in it is built yet: pick what you want.
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
