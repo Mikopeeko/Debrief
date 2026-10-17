@@ -15431,9 +15431,9 @@ function pullDetail(r, a) {
 
 // ---------- Last pull (live logging only) ----------
 // A one-screen recap of the pull that just ended, for between pulls: the tiles (each against the last pull; a click opens
-// its tab), then what to fix first and what went wrong; beside them what went well, the pace against the best pull, what to sort
-// before the next pull (potions, flasks, food, the Power Infusion plan), who to talk to, and the healing cooldowns that
-// weren't on time, under what went well. Everything respects the wipe filter.
+// its tab), then what went well first (your note: the positives before the negatives), what to fix first and what went
+// wrong; beside them the pace against the best pull, what to sort before the next pull (potions, flasks, food, the Power
+// Infusion plan), who to talk to, and the healing cooldowns that weren't on time. Everything respects the wipe filter.
 const shortT = (t) => String(t).split(':')[0]; // a section's mechanic name without what it checks, for lists
 function pullSections(r) {
   if (!r || !r.module || r.module.error || !r.module.sections) return new Map();
@@ -15594,9 +15594,9 @@ async function lastPull() {
   const needNames = cs.some((c) => c.auras.some((a) => !a.name && a.ability));
   if (cs.length && !needNames) rows = prepRows();
   const side = lpPace(r, bestR, bestO && bestO.x.pull) + lpPrep(r, cs.length ? rows : false) + lpTalk(r) + lpCds(r, cdRows);
-  // (what went well: at the top of the right side, beside what to fix, so it's on the first screen)
+  // (what went well: first, above what to fix and what went wrong)
   const wellP = well.length ? '<div class="panel lp-side-p lp-well"><h3 class="nh"><span>What went well</span>' + hst('ok', plural(well.length, 'thing')) + '</h3>' + well.map((x) => '<div class="lp-wl"><span class="lp-wk">✓</span><span>' + x + '</span></div>').join('') + '</div>' : '';
-  h += tiles + '<div class="lp-cols"><div class="lp-main">' + fixP + wP + '</div><div class="lp-side">' + wellP + side + '</div></div>';
+  h += tiles + '<div class="lp-cols"><div class="lp-main">' + wellP + fixP + wP + '</div><div class="lp-side">' + side + '</div></div>';
   view('<div class="lpv">' + h + '</div>'); refreshIcons();
   if ($('#lpLatest')) $('#lpLatest').onclick = () => select(same[same.length - 1]);
   // (a tile or a line's ›: that tab, scrolled to its section)

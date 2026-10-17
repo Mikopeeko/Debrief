@@ -90,6 +90,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   (Your question: the positives weren't gone. I'd first put them in a strip at the very bottom, too easy to miss.)
 - [x] **Fixes:** the pinned bar ran off a phone screen (its menu button was cut off); box text was cut off on a phone;
   lines in "What went well" were cut off. A section opened from a link now scrolls into view once it fills in.
+- [x] **Positives before negatives** (your note): "What went well" now comes first, above "Fix first" and "What went wrong".
 - [x] **Externals, graded fairly** (your note: healers hold them for emergencies or a mechanic): the Report card no longer
   expects them on cooldown. One use in a pull is full marks, none is "could be better", and each counts a third of a
   potion. (Your Toolkit on pull 21: D before, A now.)
