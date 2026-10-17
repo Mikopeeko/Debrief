@@ -1639,6 +1639,41 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .rs-pw { margin-left: 8px; font-size: 11.5px; font-weight: 500; color: rgba(255,255,255,.75); white-space: nowrap; } .rs-pw .rs-dot { width: 7px; height: 7px; margin-right: 4px; }
 @media (max-width: 560px) { .rs-pw .rs-pn { display: none; } .rs-pw { margin-left: 6px; } } /* (a phone: the power's colour dot only, so the name has room) */
 .rs-nc { margin: 0 0 14px; }
+/* Players (was the Player audit): a grade per player, and the picked player's page */
+.pl-sort { margin: 0 0 10px; } .pl-sort button { padding: 5px 12px; }
+.pf-row.cb.pl-r, .pf-row.cb.pl-hr { grid-template-columns: 20px minmax(0, 1fr) 70px 76px; }
+@media (max-width: 760px) { .pf-row.cb.pl-r, .pf-row.cb.pl-hr { grid-template-columns: 16px minmax(0, 1fr) 62px 64px; } }
+/* (the grade badge and its number in fixed places, so every row's badge sits in one column) */
+.pl-g { display: inline-grid; grid-template-columns: auto 26px; gap: 6px; align-items: center; } .pl-g b { text-align: right; } .pl-g .grade { transform: scale(.9); }
+.pl-mvp { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: rgba(230,180,80,.16); color: #f3c969; font: 700 10.5px var(--body); white-space: nowrap; }
+.pl-det h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .pl-det h3 small { color: var(--faint); font-size: 12px; } .pl-det h3 .btn { margin-left: 8px; }
+.pl-big { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; } .pl-big b { font: 700 20px var(--head); font-variant-numeric: tabular-nums; }
+.pl-det .rs-n b .grade { margin-right: 2px; vertical-align: 2px; }
+.pl-work { margin: 0 0 6px; } .pl-work .pl-go { margin-top: 6px; } .rk-gain.tip { background: rgba(255,255,255,.06); color: var(--muted); }
+.pl-more > summary { cursor: pointer; margin: 6px 0 2px; font-size: 13px; color: var(--muted); }
+.pl-pulls { display: flex; flex-wrap: wrap; gap: 4px; } .pl-pulls .nm-cell { width: 18px; height: 18px; border: 0; cursor: pointer; padding: 0; }
+.pl-det .pfu-l { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(28px, auto); gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.pl-det .pf-st + .pfu-l { border-top: 0; } .pl-det .pfu-l > b { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .pl-det .pfu-l > .sub { font-size: 12px; text-align: right; }
+.pl-det .plgear { margin-top: 8px; }
+.pl-view { margin: 0 0 12px; } .pl-view button { padding: 5px 12px; } .pl-gearb { margin-top: 8px; }
+/* the gear layout: a summary strip, stats as bars, every item in two columns */
+.gv-top { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 10px; }
+.gv-k { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 8px 10px; background: var(--raised); border-radius: 8px; }
+.gv-k > span { font-size: 11.5px; color: var(--faint); } .gv-k b { font: 700 18px/1.25 var(--head); font-variant-numeric: tabular-nums; } .gv-k small { font-size: 11.5px; color: var(--muted); }
+.gv-cons > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; } .gv-con img { width: 26px; height: 26px; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 0 0 2px var(--line2); display: block; }
+.gv-con.off img { opacity: .25; filter: grayscale(1); box-shadow: 0 0 0 1px #000, 0 0 0 2px rgba(229,83,75,.6); }
+.gv-st { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 16px; align-items: start; margin: 0 0 12px; padding: 10px 12px; background: var(--raised); border-radius: 8px; }
+.gv-main { display: flex; flex-direction: column; gap: 6px; } .gv-main > div { display: flex; flex-direction: column; } .gv-main span { font-size: 11.5px; color: var(--faint); } .gv-main b { font: 700 17px var(--head); font-variant-numeric: tabular-nums; }
+.gv-sec { display: flex; flex-direction: column; gap: 6px; } .gv-b { display: grid; grid-template-columns: 104px minmax(0, 1fr) 54px; gap: 8px; align-items: center; font-size: 12.5px; } .gv-b b { text-align: right; font-variant-numeric: tabular-nums; } .gv-b .csbar { margin: 0; }
+.gv-minor { grid-column: 1 / -1; font-size: 12px; }
+.gv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
+.gv-it { display: flex; gap: 10px; align-items: flex-start; min-width: 0; padding: 6px 4px; border-bottom: 1px solid rgba(53,59,73,.55); }
+.gv-ic { position: relative; flex: none; width: 38px; height: 38px; border: 1px solid; border-radius: 6px; overflow: hidden; background: #000; } .gv-ic img { width: 100%; height: 100%; display: block; }
+.gv-ic .csil { position: absolute; right: 1px; bottom: 0; padding: 0 2px; font: 700 10px var(--body); color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; }
+.gv-it.empty .gv-ic { border-color: var(--line2); }
+.gv-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; font-size: 12.5px; } .gv-tx .csn { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
+.gv-sl { color: var(--faint); font-size: 11.5px; } .gv-sl .csgems { margin-left: 4px; } .gv-tx .csen, .gv-tx .csbad { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 560px) { .gv-top { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gv-st { grid-template-columns: minmax(0, 1fr); } .gv-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Performance, Casts: every cast on one time line (a row per player, or per spell), the pace against each spec's sim */
 .pfk-b.k-cast { --kc: #f0a35e; }
 .cst .cst-hit { fill: transparent; } .cst-l.k { cursor: pointer; } .cst-l.k:hover .cst-hit { fill: rgba(255,255,255,.04); }
@@ -8533,7 +8568,7 @@ document.addEventListener('click', (e) => {
   const nm = e.target.closest && e.target.closest('.who .nm'); if (!nm || nm.closest('.plrow, .mvc, a, button, #list')) return;
   const name = nm.textContent.trim(); if (!name || !S.rep || ![...S.rep.players.values()].some((p) => p.name === name)) return;
   e.preventDefault(); e.stopPropagation();
-  if (S.scope === 'all' && S.tab !== 'live') S.plOpenN = name; else { S.plOpenP = name; if (S.tab === 'live') setScope('pull'); }
+  S.plSel = name; if (S.tab === 'live') setScope('pull');
   S.plScroll = true; S.tab = 'player'; renderMain();
 }, true);
 function who(p, sub) {
@@ -9093,7 +9128,7 @@ async function select(item) {
 // Tabs: Latest pull (the live recap, always one pull), Assignments (the NSRT audit), Mechanics (the fight audit),
 // Summary (the night, always all pulls) and Player audit (gear, consumables and survival kit). Damage, Healing and
 // Damage taken are hidden for now (to be redone); meter() stays for that.
-const TABS = [['overview', 'Assignments'], ['audit', 'Mechanics'], ['perf', 'Performance'], ['night', 'Summary'], ['player', 'Player audit']];
+const TABS = [['overview', 'Assignments'], ['audit', 'Mechanics'], ['perf', 'Performance'], ['night', 'Summary'], ['player', 'Players']];
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
 // report cards); Latest pull, Assignments and Mechanics are always one pull; the Player audit has both, switched on its
 // own page. The pull cards pick it: a pull, or All pulls (which opens Summary, or the Player audit's all-pulls view).
@@ -9119,7 +9154,7 @@ const TAB_TIP = {
   audit: 'Every boss mechanic in this pull, phase by phase: what went wrong, who was involved, with maps. Deaths and survival too.',
   perf: 'Damage, healing and damage taken in this pull, player by player and over time, with the phases, boss mechanics, Bloodlust and deaths marked. Plus utility: interrupts, dispels, battle resses and externals.',
   night: 'Every pull of this boss together: report cards, how far you got, what to fix before next raid, and each mechanic and assignment pull by pull.',
-  player: 'Each player\'s gear, flask, food and survival kit (defensives, Healthstones, potions), for this pull or all pulls.',
+  player: 'Each player\'s page: one grade from their mechanics and Report card, what they should fix first across everything, and their prep. For this pull or all pulls.',
 };
 const TICO = { clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
   target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>', chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
@@ -14678,6 +14713,171 @@ function deaths() {
   $('#view').querySelectorAll('.mrowp').forEach((b) => (b.onclick = () => { S.death = +b.dataset.i; deaths(); refreshIcons(); }));
 }
 
+// ---------- Players (was the Player audit) ----------
+// One page per person, for the raid's leads and for each player looking at themselves: a grade for every player from
+// their mechanics (their own mistakes, and the NSRT note's assignments they did) and their Report card (casting,
+// cooldowns, resources, staying alive, their kit), half each, with their prep (gear, enchants and consumables at the
+// pull) only able to take points off; what they should fix first across all of it, each with a link to the tab that shows
+// it in full; and over the night, how they did pull by pull, their best pull, the MVPs and who improved most. What the
+// other tabs already show in full (the survival kit, output) isn't repeated here.
+const PL_GO = { audit: 'Mechanics', card: 'Report card', cast: 'Casts', res: 'Resources', prep: 'Their prep' };
+const PL_RC_GO = { act: 'cast', unf: 'cast', res: 'res' }; // (a Report card fix that has its own view)
+// one player's pull -> { mech, perf, prep, score, fixes: [{ key, t, x, gain, go }], mistakes, x }
+function plGrade(r, p, x, credit) {
+  const mm = keptMistakes(r).filter((m) => m.player === p.name && m.mechanic !== 'Death'), tank = p.role === 'tank';
+  const own = mm.filter((m) => !m.fromNote), lostOf = (m) => (m.severity === 'High' ? 14 : m.severity === 'Medium' ? 4 : tank && TANK_MECH.has(m.mechanic) ? 2 : 0);
+  // mechanics: 14 off per serious mistake, 4 per medium (and 2 per minor slip on a tank's own frontals); with NSRT
+  // assignments, 70% that and 30% the share of their assignments they did
+  const mist = Math.max(0, 100 - own.reduce((s, m) => s + lostOf(m), 0)), c = credit.get(p.name), asS = c && c.of ? 100 * c.did / c.of : null, mech = asS == null ? mist : 0.7 * mist + 0.3 * asS;
+  const card = cardOf(r, p), perf = card && card.overall != null ? card.overall : null, prep = x ? readyScore(x) : null;
+  const mW = perf == null ? 1 : 0.5, base = perf == null ? mech : 0.5 * mech + 0.5 * perf, prepOff = prep != null ? Math.max(0, 90 - prep) / 4 : 0, score = Math.max(0, base - prepOff);
+  const fixes = [];
+  // a fix per mechanic they got wrong, with the mistake's own advice
+  const by = new Map(); for (const m of mm) { const o = by.get(m.mechanic) || { n: 0, lost: 0, m, note: !!m.fromNote }; o.n++; o.lost += m.fromNote ? (c && c.of ? 100 / c.of : 0) : lostOf(m); if (m.severity === 'High') o.m = m; by.set(m.mechanic, o); }
+  for (const [nm, o] of by) { if (!o.note && !o.lost) continue; fixes.push({ key: 'm|' + nm, t: (o.note ? (nm === 'Assigned cooldown' ? 'Healing cooldown late or missed' : 'From the note: ' + nm) : nm) + (o.n > 1 ? ' ×' + o.n : ''), x: o.m.fix || o.m.detail || '', gain: mW * (o.note ? 0.3 : asS == null ? 1 : 0.7) * o.lost, go: 'audit' }); }
+  // the Report card's, as they are (their gain is on the card's 0 to 100; here it's half of the grade)
+  for (const f of (card && card.fixes) || []) fixes.push({ key: 'c|' + f.key, t: f.t, x: f.x, gain: 0.5 * f.gain, go: PL_RC_GO[String(f.key).split('|')[0]] || 'card' });
+  // pressing pace against the spec's top players: added to the Report card's casting fix when there is one, its own tip otherwise (not graded)
+  { const pc = paceOf(r, p), cs = pc ? castOf(r, p, 0, Math.max(1, Math.min(r.duration, cutT(r))), true) : null, f = pc && cs && cs.al >= 30 ? cs.cpm / pc.v : null;
+    if (f != null && f < 0.85) { const line = fmtCpm(cs.cpm) + ' casts a minute: ' + Math.round(100 * f) + '% of what the top ' + (p.specName || 'players') + ' press on this boss (' + fmtCpm(pc.v) + ').', act = fixes.find((z) => /^c\|act\|/.test(z.key));
+      if (act) act.x += ' ' + line; else fixes.push({ key: 'pace', t: 'Press more often', x: line, gain: 0, rank: (0.9 - f) * 20, go: 'cast' }); } }
+  // prep: what was missing at the pull (a missing thing counts twice a "could be better")
+  if (x && prepOff > 0) { const its = x.issues.map((t) => [t, 2]).concat(x.tighten.map((t) => [t, 1])), tw = its.reduce((s, [, w]) => s + w, 0) || 1;
+    for (const [t, w] of its) fixes.push({ key: 'p|' + t, t: capS(t), x: 'At the pull. Sort it before the next one.', gain: prepOff * w / tw, go: 'prep' }); }
+  fixes.sort((a, b) => (b.gain || b.rank || 0) - (a.gain || a.rank || 0));
+  return { r, p, mech, mist, asS, perf, prep, prepOff, score, fixes, mistakes: own.length, x, until: card ? card.until : 0 };
+}
+// every player over one pull or several: each grade and fix averaged over their pulls (by time alive), the trend through
+// the night, their best pull. Gear and buffs need their names looked up first.
+async function plData(reps, still) {
+  { const all = reps.flatMap((r) => r.combatants || []); if (all.length) { if (needsLookup(all)) { await resolveCombatants(all); if (!still()) return null; } await resolveSockets(all); if (!still()) return null; } }
+  const acc = new Map(), named = new Map();
+  for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name)) named.set(p.guid, p);
+  for (const r of reps) {
+    const rows = []; for (const c of r.combatants || []) { const p = [...r.players.values()].find((y) => y.name === c.name || (c.name && y.name.split('-')[0] === c.name.split('-')[0])); if (p) rows.push(auditChar(c, p)); }
+    markLowIlvl(rows); const prep = new Map(rows.map((x) => [x.p.guid, x])), credit = assignCredit(r);
+    for (const p of r.players.values()) { const who = named.get(p.guid) || p; if (!who.name || /^Player-/.test(who.name)) continue;
+      const g = plGrade(r, p, prep.get(p.guid) || null, credit); if (g.perf == null && !g.mistakes && g.prep == null) continue;
+      let a = acc.get(p.guid); if (!a) acc.set(p.guid, a = { p: who, per: [] }); a.per.push(g); } }
+  const wAvg = (l, f) => { let s = 0, w = 0; for (const g of l) { const v = f(g); if (v == null) continue; const k = Math.max(20, g.until || 20); s += v * k; w += k; } return w ? s / w : null; };
+  const half = Math.max(1, Math.ceil(reps.length / 2));
+  return [...acc.values()].map((a) => {
+    const n = a.per.length, fx = new Map();
+    for (const g of a.per) for (const f of g.fixes) { const y = fx.get(f.key) || { ...f, gain: 0, rank: 0, k: 0 }; y.gain += (f.gain || 0) / n; y.rank += (f.rank || 0) / n; y.k++; y.t = f.t; y.x = f.x; fx.set(f.key, y); }
+    const fixes = [...fx.values()].sort((u, v) => (v.gain || v.rank) - (u.gain || u.rank));
+    const sc = a.per.map((g) => g.score), h2 = Math.floor(n / 2), mean = (l) => l.reduce((s, v) => s + v, 0) / l.length;
+    const best = a.per.filter((g) => g.until >= 60).reduce((m, g) => (!m || g.score > m.score ? g : m), null);
+    return { ...a, n, score: wAvg(a.per, (g) => g.score), mech: wAvg(a.per, (g) => g.mech), perf: wAvg(a.per, (g) => g.perf), prep: wAvg(a.per, (g) => g.prep), mistakes: a.per.reduce((s, g) => s + g.mistakes, 0),
+      fixes, trend: n >= 4 ? mean(sc.slice(n - h2)) - mean(sc.slice(0, h2)) : null, best, ranked: n >= half, last: a.per[n - 1] };
+  }).filter((a) => a.score != null);
+}
+const plGr = (v) => (v == null ? '<span class="grade g-na">–</span>' : gradeChip(letterOf(v)));
+const plTr = (d) => (d == null ? '' : Math.abs(d) < 2 ? '<span class="dl lv">level</span>' : '<span class="dl ' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + ' ' + Math.round(Math.abs(d)) + '</span>');
+// the page: the raid's tiles, a row per player, and the picked player's page (or the raid's MVPs and common fixes)
+function plPage(data, reps, one) {
+  // (the MVPs by role: the best tank, the top two healers, the top three DPS; most improved: the biggest rise, 3 or more)
+  const ranked = data.filter((a) => a.ranked), mvp = new Map();
+  for (const [role, n, lab] of [['tank', 1, 'Top tank'], ['healer', 2, 'healer'], ['dps', 3, 'DPS']]) ranked.filter((a) => (a.p.role || 'dps') === role).sort((u, v) => v.score - u.score).slice(0, n).forEach((a, k) => mvp.set(a.p.name, n === 1 ? lab : ['1st', '2nd', '3rd'][k] + ' ' + lab));
+  const imp = one ? [] : data.filter((a) => a.trend != null && a.trend >= 3).sort((u, v) => v.trend - u.trend).slice(0, 3);
+  const has = new Set(data.map((a) => a.p.role || 'dps')), rc = roleCur(has), worstFirst = S.plSort === 'gain';
+  const rows = data.filter((a) => rc === 'all' || (a.p.role || 'dps') === rc).sort((u, v) => (worstFirst ? u.score - v.score : v.score - u.score) || u.p.name.localeCompare(v.p.name));
+  if (S.plSel && !data.some((a) => a.p.name === S.plSel)) S.plSel = null;
+  const sel = S.plSel ? data.find((a) => a.p.name === S.plSel) : null, avg = (f) => { const v = data.map(f).filter((x) => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+  // ---- the raid at a glance ----
+  const lastX = data.map((a) => a.last.x).filter(Boolean), fullPrep = lastX.filter((x) => !x.issues.length).length, mist = data.reduce((s, a) => s + a.mistakes, 0);
+  const tile = (v, label, txt) => plTile(plGr(v), label, v == null ? '—' : Math.round(v) + '<span>/100</span>', gBucket(v), txt, true);
+  const tiles = '<div class="pts n4">' + tile(avg((a) => a.score), 'Raid grade', plural(data.length, 'player') + (one ? '' : ' · ' + plural(reps.length, 'pull'))) + tile(avg((a) => a.mech), 'Mechanics', mist ? plural(mist, 'mistake') + ' that cost points' : 'no mistakes that cost points') +
+    tile(avg((a) => a.perf), 'Report card', 'casting, cooldowns, resources, staying alive, their kit') +
+    plTile(plIco(PL_ICON.ench), 'Prep', lastX.length ? fullPrep + '<span> / ' + lastX.length + '</span>' : '—', !lastX.length ? 'na' : fullPrep === lastX.length ? 'ok' : 'warn', !lastX.length ? 'no gear logged' : fullPrep === lastX.length ? 'everyone fully set up' + (one ? '' : ' at the last pull') : (lastX.length - fullPrep) + ' missing something' + (one ? '' : ' at the last pull'), true) + '</div>';
+  // ---- a row per player: their grade on the bar, the trend (all pulls) or their first fix's points (one pull) ----
+  const bars = rows.map((a, i) => { const on = sel === a, m = mvp.get(a.p.name);
+    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pl-r', attrs: ' type="button" data-pn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, a.score), 'm']], v: '<span class="pl-g">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span>',
+      sub: one ? '<span class="sub" title="Mechanics · Report card">' + Math.round(a.mech) + ' · ' + (a.perf == null ? '—' : Math.round(a.perf)) + '</span>' : plTr(a.trend) || '<span class="sub">—</span>', chips: m ? ' <span class="pl-mvp">' + esc(m) + '</span>' : '' }); }).join('');
+  const sortSw = '<div class="seg pl-sort" role="tablist" aria-label="Order"><button type="button" data-o="best"' + (worstFirst ? '' : ' class="on"') + '>Best first</button><button type="button" data-o="gain"' + (worstFirst ? ' class="on"' : '') + '>Most to gain first</button></div>';
+  const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>half mechanics, half Report card · prep only takes points off' + (one ? ' · on the right: mechanics · Report card' : ' · ▲▼ through the night') + '</small>' + roleChips(has) + '</h3>' + sortSw +
+    (bars ? cbHead('Grade', one ? 'Mech · Card' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
+  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious and 4 for each medium mistake of their own (a tank also loses 2 for a minor slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half). <b>Report card</b>: Performance\'s Report card as it is: casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive, potions, kicks, externals. <b>The grade</b> is half each (a player with no Report card, alive under 20 s, is graded on mechanics). <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade; a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
+  return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + (sel ? plPlayer(sel, one, reps, mvp.get(sel.p.name), data) : plRaid(data, one, mvp, imp)) + '</div></div>' + how;
+}
+// A player's gear, laid out clean for the Players page (and anyone looking at what others wear): their item level against
+// the raid, enchants and gems, consumables, stats as bars, then every item in two columns: its icon with its item level,
+// its name in its quality colour, the slot, its enchant (or "No enchant"), its gems. Hover an item for Wowhead's tooltip.
+function gearView(x) {
+  const g = x.c.gear, st = x.c.stats || {};
+  const wh = (it) => it.id + '?' + (it.bonusIDs && it.bonusIDs.length ? '&bonus=' + it.bonusIDs.join(':') : '') + (it.permanentEnchant ? '&ench=' + it.permanentEnchant : '') + (it.gems && it.gems.length ? '&gems=' + it.gems.map((q) => q.id).join(':') : '') + (it.itemLevel ? '&ilvl=' + it.itemLevel : '');
+  const order = SHEET_L.concat(SHEET_R, SHEET_W).filter(([i]) => i !== 16 || (g[16] && g[16].id));
+  const item = ([i, label]) => {
+    const it = g[i];
+    if (!it || !it.id) return '<div class="gv-it empty"><span class="gv-ic"></span><span class="gv-tx"><span class="gv-sl">' + label + '</span><span class="csbad">Empty</span></span></div>';
+    const qc = QCOL[it.quality] || '#fff', en = x.ench.has(i) ? x.ench.get(i) : undefined, q = wh(it);
+    let ln = '';
+    if (en === null) ln = '<span class="csbad">No enchant</span>';
+    else if (en) ln = '<span class="csen' + (en.rank === 1 ? ' r1' : '') + '">' + esc(en.name) + (en.rank === 1 ? ' <span class="sub">(rank 1)</span>' : '') + '</span>';
+    else if (it.permanentEnchant) ln = '<span class="csen">' + esc(enchName(it.permanentEnchant, i)) + '</span>';
+    if (i === 15) ln += x.temp ? '<span class="csen' + (x.temp[2] === 1 && x.temp[1] === 1 ? ' r1' : '') + '">' + esc(x.temp[0]) + '</span>' : '<span class="csbad">No weapon oil or stone</span>';
+    const gems = (it.gems || []).map((m) => '<a href="https://www.wowhead.com/item=' + m.id + '" target="_blank" rel="noopener" data-wq="' + m.id + '"><img class="csgem" src="' + whIcon(m.icon) + '"' + (m.icon ? '' : ' data-gid="' + m.id + '"') + ' alt=""></a>').join('');
+    return '<div class="gv-it"><a class="gv-ic" href="https://www.wowhead.com/item=' + q + '" data-wq="' + q + '" target="_blank" rel="noopener" style="border-color:' + qc + '"><img src="' + whIcon(it.icon) + '" alt=""><span class="csil">' + it.itemLevel + '</span></a>' +
+      '<span class="gv-tx"><a class="csn" href="https://www.wowhead.com/item=' + q + '" data-wq="' + q + '" target="_blank" rel="noopener" style="color:' + qc + '">' + esc(it.name || label) + '</a><span class="gv-sl">' + label + (gems ? ' <span class="csgems">' + gems + '</span>' : '') + '</span>' + ln + '</span></div>';
+  };
+  // the summary strip: item level, enchants, gems, consumables
+  const en = [...x.ench.values()], enOk = en.filter((e) => e).length, gemN = Object.values(g).reduce((s, it) => s + ((it && it.gems) || []).length, 0);
+  const con = (a, fb, label, miss) => '<span class="gv-con' + (a ? '' : ' off') + '" title="' + esc(a ? label + ': ' + (a.name || '') : miss) + '"><img src="' + whIcon(a && a.icon ? a.icon : fb) + '" alt="" onerror="this.style.visibility=\'hidden\'"></span>';
+  const top = '<div class="gv-top"><div class="gv-k"><span>Item level</span><b>' + x.ilvl.toFixed(1) + '</b><small>' + (x.raidIlvl ? (x.ilvl >= x.raidIlvl ? '+' : '') + (x.ilvl - x.raidIlvl).toFixed(1) + ' on the raid' : 'at the pull') + '</small></div>' +
+    '<div class="gv-k"><span>Enchants</span><b class="' + (enOk < en.length ? 'hotv' : '') + '">' + enOk + '<span class="sub"> / ' + en.length + '</span></b><small>' + (en.some((e) => e && e.rank === 1) ? 'some rank 1' : enOk === en.length ? 'all top rank' : 'missing some') + '</small></div>' +
+    '<div class="gv-k"><span>Gems</span><b class="' + (x.emptySockets ? 'warnv' : '') + '">' + gemN + '</b><small>' + (x.emptySockets ? plural(x.emptySockets, 'empty socket') : 'every socket filled') + '</small></div>' +
+    '<div class="gv-k gv-cons"><span>Consumables</span><div>' + con(x.flask, PL_ICON.flask, 'Flask', 'No flask') + con(x.food, PL_ICON.food, 'Food', 'No food buff') + con(x.temp ? { icon: g[15] && g[15].icon, name: x.temp[0] } : null, PL_ICON.oil, 'Weapon oil or stone', 'No weapon oil or stone') +
+      (x.rune ? con(x.rune, PL_ICON.flask, 'Augment rune') : '') + (x.vantus.length ? con(x.vantus[0], PL_ICON.flask, 'Vantus rune') : '') + '</div></div></div>';
+  // stats: the main stat and stamina, then the four secondaries as bars, biggest first
+  const main = [['Strength', st.strength], ['Agility', st.agility], ['Intellect', st.intellect]].sort((a, b) => (b[1] || 0) - (a[1] || 0))[0];
+  const sec = [['Critical Strike', st.crit], ['Haste', st.haste], ['Mastery', st.mastery], ['Versatility', st.versatility]].sort((a, b) => (b[1] || 0) - (a[1] || 0)), smax = Math.max(1, ...sec.map((s) => s[1] || 0));
+  const minor = [['Leech', st.leech], ['Avoidance', st.avoidance], ['Speed', st.speed]].filter(([, v]) => v);
+  const stats = '<div class="gv-st"><div class="gv-main"><div><span>' + main[0] + '</span><b>' + Number(main[1] || 0).toLocaleString() + '</b></div><div><span>Stamina</span><b>' + Number(st.stamina || 0).toLocaleString() + '</b></div></div>' +
+    '<div class="gv-sec">' + sec.map(([n, v]) => '<div class="gv-b"><span>' + n + '</span><span class="csbar"><i style="width:' + (100 * (v || 0) / smax).toFixed(1) + '%"></i></span><b>' + Number(v || 0).toLocaleString() + '</b></div>').join('') + '</div>' +
+    (minor.length ? '<div class="sub gv-minor">' + minor.map(([n, v]) => n + ' ' + Number(v).toLocaleString()).join(' · ') + '</div>' : '') + '</div>';
+  const iss = x.issues.length || x.tighten.length ? '<div class="cs-issues">' + x.issues.map((t) => '<span class="spill bad">' + esc(t) + '</span>').join('') + x.tighten.map((t) => '<span class="spill warn">' + esc(t) + '</span>').join('') + '</div>' : '';
+  return '<div class="gv">' + top + iss + stats + '<div class="gv-grid">' + order.map(item).join('') + '</div><p class="sub" style="margin:8px 0 0">At the pull · stats are ratings · hover an item for its tooltip</p></div>';
+}
+// the picked player's page
+function plPlayer(a, one, reps, mvpL, data) {
+  const role = (a.p.role || 'dps'), mates = data.filter((b) => (b.p.role || 'dps') === role).sort((u, v) => v.score - u.score), rank = mates.indexOf(a) + 1;
+  let h = '<h3 class="nh">' + avatar(a.p, true) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span><small>' + esc(a.p.specName || '') + (one ? '' : ' · ' + plural(a.n, 'pull')) + (mvpL ? ' · ' + esc(mvpL) : '') + '</small><span class="pl-big">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span><button class="btn sm" id="plClose" type="button">Show the raid</button></h3>';
+  // (their page, or their gear: what they're wearing, for anyone curious)
+  const x0 = a.last.x, gearOn = S.plView === 'gear' && !!x0;
+  h += '<div class="seg pl-view" role="tablist" aria-label="Show"><button type="button" data-pv="page"' + (gearOn ? '' : ' class="on"') + '>Their page</button><button type="button" data-pv="gear"' + (gearOn ? ' class="on"' : '') + (x0 ? '' : ' disabled title="No gear was logged for this player"') + '>Gear and stats</button></div>';
+  if (gearOn) return h + gearView(x0);
+  h += '<div class="rs-nums">' + [['Mechanics', a.mech, a.mistakes ? plural(a.mistakes, 'mistake') : 'no mistakes'], ['Report card', a.perf, a.perf == null ? 'alive under 20 s' : 'how they played'], ['Prep', a.prep, a.prep == null ? 'no gear logged' : 'only takes points off']]
+    .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + plGr(v) + ' ' + (v == null ? '—' : Math.round(v)) + '</b><small>' + esc(s) + '</small></div>').join('') +
+    '<div class="rs-n"><span>' + (one ? 'In their role' : 'Through the night') + '</span><b>' + (one ? ordinal(rank) + '<span class="sub"> of ' + mates.length + '</span>' : a.trend == null ? '—' : plTr(a.trend)) + '</b><small>' + esc(one ? (role === 'dps' ? 'DPS' : role === 'healer' ? 'healers' : 'tanks') + ' this pull' : a.trend == null ? 'needs 4 pulls' : 'the later pulls against the first') + '</small></div></div>';
+  // fix these first: the three biggest, then the rest folded
+  const fx = a.fixes.filter((f) => (f.gain || 0) >= 0.5 || f.rank), top = fx.slice(0, 3), more = fx.slice(3);
+  const go = (f) => '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(a.p.name) + '">' + (f.go === 'prep' ? 'Their prep ↓' : 'See it in ' + PL_GO[f.go]) + '</button>';
+  const pts = (f) => (f.gain >= 0.5 ? '<span class="rk-gain" title="About how much fixing it would add to their grade">+' + Math.max(1, Math.round(f.gain)) + ' points</span>' : '<span class="rk-gain tip">a tip</span>');
+  const fxRow = (f, i) => '<div class="rk-w"><span class="rk-wn">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b> ' + pts(f) + (!one && f.k > 1 ? ' <span class="sub">· in ' + f.k + ' of ' + a.n + ' pulls</span>' : '') + '<div class="rk-wx">' + esc(f.x) + '</div>' + go(f) + '</div></div>';
+  h += '<div class="rk-work pl-work"><div class="rk-wh">' + (top.length ? 'Fix these first <span class="sub">biggest gain first' + (one ? '' : ', over ' + plural(a.n, 'pull')) + '</span>' : 'Nothing big to fix') + '</div>' +
+    (top.length ? top.map(fxRow).join('') : '<div class="rk-wx">' + ckLine('ok', 'A clean ' + (one ? 'pull' : 'night') + ': nothing cost them points.') + '</div>') +
+    (more.length ? '<details class="pl-more"><summary>' + plural(more.length, 'more thing') + ' to look at</summary>' + more.map((f, i) => fxRow(f, i + 3)).join('') + '</details>' : '') + '</div>';
+  // the night: a square per pull, its grade; a click opens that pull here
+  if (!one) h += rsSec('Pull by pull', a.best ? 'best: pull ' + a.best.r.item.pull + ', ' + letterOf(a.best.score) + ' ' + Math.round(a.best.score) : '', '<div class="pl-pulls">' + a.per.map((g) => '<button type="button" class="nm-cell st-q-' + letterOf(g.score) + '" data-plpull="' + g.r.item.pull + '" data-pn="' + esc(a.p.name) + '" title="' + esc('Pull ' + g.r.item.pull + ' (' + pullLabel(g.r.item) + '): ' + letterOf(g.score) + ' ' + Math.round(g.score) + ' · mechanics ' + Math.round(g.mech) + (g.perf != null ? ', Report card ' + Math.round(g.perf) : '') + (g.prepOff >= 1 ? ', prep −' + Math.round(g.prepOff) : '')) + '"></button>').join('') + '</div><p class="sub" style="margin:4px 0 0">Click a square to open that pull.</p>');
+  // their prep: the latest pull's gear and buffs (and over the night, what was missed how often)
+  const x = a.last.x;
+  let prep = x ? readyLines(x) : ckLine('na', 'No gear or buffs were logged for this player.');
+  if (!one && x) { const miss = new Map(); for (const g of a.per) if (g.x) for (const t of g.x.issues.concat(g.x.tighten)) miss.set(t, (miss.get(t) || 0) + 1); const ml = [...miss].sort((u, v) => v[1] - u[1]).slice(0, 4); if (ml.length) prep += '<p class="sub" style="margin:6px 0 0">Over the night: ' + ml.map(([t, k]) => esc(t.toLowerCase()) + ' in ' + k + ' of ' + a.n).join(' · ') + '</p>'; }
+  h += '<div id="plPrep">' + rsSec('Their prep', one ? 'at the pull' : 'at the last pull', prep) + (x ? '<button type="button" class="btn sm pl-gearb" data-pv="gear">See their gear and stats</button>' : '') + '</div>';
+  return h;
+}
+// no one picked: the MVPs, who improved most, and the fixes most players share
+function plRaid(data, one, mvp, imp) {
+  const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
+  let h = '<h3 class="nh"><span>The raid</span><small>' + (one ? 'this pull' : 'over the night') + '</small></h3>';
+  const mv = data.filter((a) => mvp.has(a.p.name)).sort((u, v) => ['tank', 'healer', 'dps'].indexOf(u.p.role || 'dps') - ['tank', 'healer', 'dps'].indexOf(v.p.role || 'dps') || v.score - u.score);
+  h += rsSec(one ? 'Best this pull' : 'MVPs of the night', 'by role' + (one ? '' : ', in half the pulls or more'), mv.length ? mv.map((a) => line('<span class="pl-mvp">' + esc(mvp.get(a.p.name)) + '</span> ' + who(a.p) + ' <span class="sub">' + esc(a.p.specName || '') + '</span>', '', '<span class="pl-g">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span>')).join('') : '<p class="sub" style="margin:0">Nobody was in enough pulls yet.</p>');
+  if (!one) h += rsSec('Most improved', 'the later pulls against the first', imp.length ? imp.map((a) => line(who(a.p), letterOf(a.score) + ' ' + Math.round(a.score) + ' over the night', plTr(a.trend))).join('') : '<p class="sub" style="margin:0">Nobody rose 3 points or more yet.</p>');
+  // (each player's first three fixes, counted by what they're called)
+  const cm = new Map(); for (const a of data) for (const f of a.fixes.filter((z) => (z.gain || 0) >= 1).slice(0, 3)) { const k = f.t.replace(/ ×\d+$/, ''); const o = cm.get(k) || { t: k, n: [], go: f.go }; o.n.push(a.p); cm.set(k, o); }
+  const common = [...cm.values()].filter((o) => o.n.length >= 2).sort((u, v) => v.n.length - u.n.length).slice(0, 6);
+  h += rsSec('What most players should fix', 'among each player\'s first three', common.length ? common.map((o) => line(esc(o.t), o.n.slice(0, 3).map((p) => p.name).join(', ') + (o.n.length > 3 ? ' and ' + (o.n.length - 3) + ' more' : ''), plural(o.n.length, 'player'))).join('') : '<p class="sub" style="margin:0">No fix that two or more players share.</p>');
+  return h + '<p class="sub" style="margin:10px 0 0">Pick a player for their page: their grade, what to fix first, and their prep.</p>';
+}
 // ---------- Player audit ----------
 // Two views, picked at the top: All pulls (every pull of the boss: stat tiles, the MVPs, every player's night) and the pull
 // on screen (the raid's gear and buffs at the pull, then every player's pull). Both list players the same way: one row
@@ -14750,28 +14950,44 @@ function bindRoster(id, rows, onOpen, onBind) {
   if (open && S.plScroll) { S.plScroll = false; open.scrollIntoView({ block: 'start' }); window.scrollBy(0, -64); }
 }
 function player() {
-  // (the wipe filter is part of the key: changing it scores the night again)
-  const r = S.rep, it = r.item, isBoss = it.kind !== 'run', pulls = isBoss ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [], key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN();
-  const v = isBoss && S.scope === 'all' ? 'night' : 'pull';
+  // (the wipe filter is part of the key: changing it grades the night again)
+  const r = S.rep, it = r.item, isBoss = it.kind !== 'run', pulls = isBoss ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [];
+  const v = isBoss && S.scope === 'all' ? 'night' : 'pull', key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':' + v + ':' + (v === 'pull' ? it.pull : '');
   // the wipe filter as one quiet line, as on Mechanics: where this pull (or every pull) stops counting
   const n = deathCutN(), cut = cutInfo(r);
   const cutLine = '<div class="cutbar' + (cut && v === 'pull' ? ' on' : '') + '"><span class="cutnow">' + (v === 'night' ? (n ? 'Each wipe counts up to its <b>' + ordinal(n) + ' death</b>; kills count in full' : '<b>Wipe filter off</b>: every pull counts in full')
-      : cut ? 'Survival and focus tips count up to <b>' + T(cut.t) + '</b>, the ' + ordinal(cut.n) + ' death (' + esc(cut.who) + ')' : it.kill ? '<b>Kill</b>: the whole pull counts' : n ? 'Fewer than ' + n + ' deaths: the whole pull counts' : '<b>Wipe filter off</b>: the whole pull counts') + '</span></div>';
-  const cached = S.nightPl && S.nightPl.key === key ? S.nightPl : null;
-  // (the Player audit is the one tab with both views: its switch sits on top of the page, next to the wipe filter's line)
+      : cut ? 'Grades count up to <b>' + T(cut.t) + '</b>, the ' + ordinal(cut.n) + ' death (' + esc(cut.who) + ')' : it.kill ? '<b>Kill</b>: the whole pull counts' : n ? 'Fewer than ' + n + ' deaths: the whole pull counts' : '<b>Wipe filter off</b>: the whole pull counts') + '</span></div>';
+  // (one pull or the whole night, switched on top of the page, next to the wipe filter's line)
   const sw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (v === 'night' ? ' class="on"' : '') + '>All pulls<span class="n">' + pulls.length + '</span></button><button data-v="pull"' + (v === 'pull' ? ' class="on"' : '') + '>Pull #' + it.pull + '<span class="n">' + (it.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
-  view('<div class="plv"><div class="plhd">' + sw + cutLine + '</div>' + (v === 'night' ? '<div id="nightPl">' + (cached ? cached.load + cached.np.render() : '<p class="muted">Reading tonight\'s pulls…</p>') + '</div>' : '<div id="plPull"><p class="muted">Looking up gear and buffs…</p></div>') + '</div>');
+  const cached = S.plData && S.plData.key === key ? S.plData : null;
+  view('<div class="plv"><div class="plhd">' + sw + cutLine + '</div><div id="plBody">' + (cached ? '' : '<p class="muted">' + (v === 'night' ? 'Reading tonight\'s pulls…' : 'Grading the players…') + '</p>') + '</div></div>');
   $$('.plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
-  if (v === 'pull') { playerPull(r); return; }
-  const bindAll = (c) => { c.np.bind(); if ($('#plAll')) $('#plAll').onclick = () => { NIGHT_ALL = true; S.nightPl = null; player(); }; };
-  if (cached) { bindAll(cached); refreshIcons(); return; }
-  const still = () => S.tab === 'player' && S.rep && S.rep.item === it && $('#nightPl');
-  bossReps(it, still, (n, of) => { const el = $('#nightPl'); if (el) el.innerHTML = '<p class="muted">Reading tonight\'s pulls… ' + n + ' of ' + of + '</p>'; }).then(async (got) => {
-    if (!got || !still()) return;
-    const np = await nightPlayers(got.reps, still); if (!np || !still()) return;
-    S.nightPl = { key, np, load: loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll') };
-    $('#nightPl').innerHTML = S.nightPl.load + np.render(); bindAll(S.nightPl); refreshIcons(); setHeadRes();
-  });
+  const still = () => S.tab === 'player' && S.rep && S.rep.item === it && $('#plBody');
+  const draw = (c) => { const el = $('#plBody'); if (!el) return; el.innerHTML = (c.load || '') + plPage(c.data, c.reps, v === 'pull'); bindPlayers(c); refreshIcons(); fillItemNames(el);
+    if (S.plScroll) { S.plScroll = false; const d = $('.pl-det'); if (d) { d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -64); } } };
+  if (cached) { draw(cached); return; }
+  const grade = (reps, load) => plData(reps, still).then((data) => { if (!data || !still()) return; S.plData = { key, reps, data, load }; draw(S.plData); if (v === 'night') setHeadRes(); });
+  if (v === 'pull') { grade([r], ''); return; }
+  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (el) el.innerHTML = '<p class="muted">Reading tonight\'s pulls… ' + k + ' of ' + of + '</p>'; })
+    .then((got) => { if (!got || !still()) return; grade(got.reps, loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll')); });
+}
+// Players: a row picks a player (again, or Show the raid, for everyone); the order and role switches; a fix's link opens
+// the tab that shows it with that player; a pull's square opens that pull here
+function bindPlayers(c) {
+  const again = () => player();
+  $$('#plBody .pl-r[data-pn]').forEach((b) => (b.onclick = () => { S.plSel = S.plSel === b.dataset.pn ? null : b.dataset.pn; again(); }));
+  { const b = $('#plClose'); if (b) b.onclick = () => { S.plSel = null; again(); }; }
+  $$('#plBody .pl-sort button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.plSort = b.dataset.o; again(); }));
+  $$('#plBody [data-pv]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.plView = b.dataset.pv; again(); const d = $('.pl-det'); if (d && d.getBoundingClientRect().top < 60) { d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -64); } }));
+  $$('#plBody .pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; again(); }));
+  $$('#plBody [data-plgo]').forEach((b) => (b.onclick = () => { const nm = b.dataset.pn, g = b.dataset.plgo;
+    if (g === 'prep') { const el = $('#plPrep'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (g === 'audit') S.tab = 'audit';
+    else { S.tab = 'perf'; S.perfKind = g === 'cast' ? 'cast' : g === 'res' ? 'res' : 'card'; if (g === 'cast') S.castSel = nm; else if (g === 'res') { S.resSel = nm; S.resPw = null; S.resMode = null; } else S.rcSel = nm; }
+    renderMain(); window.scrollTo({ top: 0 }); }));
+  const byPull = new Map(c.reps.map((q) => [q.item.pull, q.item]));
+  $$('#plBody [data-plpull]').forEach((b) => (b.onclick = () => { const it = byPull.get(+b.dataset.plpull); if (!it) return; S.plSel = b.dataset.pn; S.tab = 'player'; setScope('pull'); select(it); }));
+  { const b = $('#plAll'); if (b) b.onclick = () => { NIGHT_ALL = true; S.plData = null; again(); }; }
 }
 // What stands out in one pull, worst first: [severity, text, 'ready' or 'surv']
 function pullNotes(x, s) {
@@ -15621,8 +15837,8 @@ const PAGE_TIPS = {
     { sel: '#view .sumv details.secd', t: 'Each mechanic, pull by pull', p: 'A square per pull: green clean, amber could be better, red went wrong. Click a square to open that pull.' }],
   player: [
     { sel: '#view .plsw', t: 'The whole night, or one pull', p: 'Look at every pull of the night together, or just the pull you\'re on.' },
-    { sel: '#view .plmv', t: 'MVPs of the night', p: 'The best tank, healers and DPS by execution, survival and readiness.' },
-    { sel: '#view .plr-list', t: 'Every player', p: 'Gear, consumables, survival and what stands out. Click a player for their full sheet.' }],
+    { sel: '#view .pl-bars', t: 'Every player', p: 'One grade each: half mechanics, half Report card, with prep only taking points off. Best first, or most to gain first.' },
+    { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player for what to fix first across everything, each with a link to the tab that shows it, and their prep.' }],
   perf: [
     { sel: '.pfk', t: 'What to look at', p: 'The Report card first: how each player played their own character. Then damage, healing, damage taken, utility and survivability as charts.' },
     { sel: '.rk-tiles', t: 'The raid\'s grades', p: 'Pressing buttons, staying alive and using the toolkit, averaged over the raid. S is the best, F the worst.' },

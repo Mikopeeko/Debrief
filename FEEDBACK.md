@@ -11,7 +11,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   tank, healers, DPS, most improved); a table with a trend arrow; the gear/enchants/buffs check moves into the Report
   card's "Using the toolkit". Open questions: who it's for (the whole raid or the leads), the weights of the three parts,
   and tonight first or the whole tier (the tier needs each pull's scores saved as it's read, from then on).
-  **Update (your note, Oct 17):** the Player audit should be completely revamped into something else. To discuss.
+  **Update (your note, Oct 17):** the Player audit should be completely revamped into something else. Done in round 135
+  (Players).
 - [ ] **Stats** (your idea, a tab in Performance; you want guidance first): each player's average main and secondary stats
   over the pull, and how much came from gear procs ("cantrips"), flasks, food, enchants, and other players' buffs.
 - [ ] **Power Infusion** (your idea, a tab in Performance): the priest's Power Infusion should land in the right cooldown
@@ -74,6 +75,21 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 135: Players (the Player audit, rebuilt)
+- [x] **Players** replaces the Player audit (your call: no repeats of other tabs). One grade per player: half mechanics
+  (their own mistakes, and the NSRT note's assignments they did), half the Report card, with prep (gear, enchants,
+  consumables at the pull) only taking points off. Best first or most to gain first, by role; MVPs by role; over the night
+  a trend arrow per player and who improved most.
+- [x] **A player's page**: their three numbers, "Fix these first" across everything (a mechanic they kept failing, a Report
+  card fix, a missing enchant), each with what fixing it would add and a link to the tab that shows it (Mechanics, the
+  Report card, Casts, Resources). A casting pace under 85% of their spec's top players joins the casting tip. Over the
+  night: a square per pull (click to open it), their best pull. Their prep at the bottom.
+- [x] **Gear and stats** (your ask): a clean layout on each player's page: item level against the raid, enchants, gems,
+  consumables, stats as bars, and every item with its enchant and gems (hover for the tooltip). It stays open as you
+  click through players, to see what everyone's wearing.
+- [x] The survival kit and output boxes are gone from it (Performance has them). Clicking a player's name anywhere opens
+  their page here.
 
 ## 2026-10-17, round 134: Casts measured against top logs, and auto saving
 - [x] **Top logs for every spec** (your ask): the 5 best-ranked logs for each of the 40 specs on each of the 10 bosses
