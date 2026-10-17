@@ -1491,6 +1491,51 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .scopebar { padding: 16px 28px 0; max-width: 1180px; } .scopebar .seg { margin: 0; } .scopebar + #view { padding-top: 14px; }
 .fight .res.good { background: var(--good-bg); color: #7ee08f; } .fight .res.bad { background: var(--bad-bg); color: #ff8f87; } .fight .res.best { background: rgba(230,180,80,.12); color: #f3c969; }
 @media (max-width: 900px) { .scopebar { padding-left: 16px; padding-right: 16px; } }
+/* =================================================================================================================
+   Desktop layout pass (Oct 18): a wider column on big screens, one gap scale, nothing shifting between pages
+   ================================================================================================================= */
+/* (the column grows on big screens: the extra room goes to charts, bar lists and side-by-side panels) */
+@media (min-width: 1680px) { :root { --wrap: 1480px; } }
+/* (the scrollbar's room is kept on every page, so short and long pages line up: the column moved 8px between them) */
+html { scrollbar-gutter: stable; }
+/* (no pop-up descriptions on the tab names: they covered the page, and the names explain themselves) */
+.tabbar .tab::after { display: none !important; }
+/* one gap between panels (14px), and a bigger one (24px) before a phase heading */
+.wr-cols, .mtiles, .nsa .panel, .nsa .probbox { margin-bottom: 14px; }
+details.phase > summary { margin-top: 24px; }
+/* "What went wrong" beside "Fix first" over "What went right" (Latest pull), so the two columns come out even; and a
+   short "What went right" as one line under a long "What went wrong" (Assignments) */
+.wr-l, .wr-stack { min-width: 0; } .wr-stack { display: grid; gap: 12px; align-content: start; } .wr-l > .panel, .wr-stack > .panel { margin: 0; }
+.wr-one { margin: 0 0 14px; } .wr-one > .panel { margin: 0 0 8px; } .wr-one > .panel:last-child { margin: 0; }
+.wr-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding: 9px 14px; } .wr-line > b { font: 600 13.5px var(--head); } .wr-li { font-size: 13.5px; color: #cfd3db; }
+/* Assignments' tiles: one row as wide as there are tiles (six in a row of five left one alone) */
+@media (min-width: 1101px) { .pts.as-tiles.an5 { --n: 5; } .pts.as-tiles.an6 { --n: 6; } }
+/* Performance: the picked player's details stay in view beside the bars while scrolling them */
+@media (min-width: 1001px) { .pf-cols > .pf-det { position: sticky; top: 62px; max-height: calc(100vh - 74px); overflow-y: auto; scrollbar-width: thin; } }
+/* Progress: the way back to the pull you came from (the page has no tab bar); three columns come with the wider column */
+.pg-back { align-self: flex-start; margin-bottom: -10px; font-size: 14px; text-decoration: none; } .pg-back:hover { text-decoration: underline; }
+/* the banner, compact: two lines and one height on every tab (the boss, the result pill and the phase bar; then the
+   pull and raid, how it compares, and when, how long, who and deaths), the boss art still on the right */
+.fight.bh, .fight.bh.hero { min-height: 104px; padding: 14px 22px; }
+.bh-t { max-width: min(980px, 68%); }
+.bh-l1 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.fight.bh .bh-l1 h2.bh-name { margin: 0; font-size: 29px; }
+.bh-l1 .phb { width: 230px; margin: 0; }
+.bh-l2 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 18px; margin-top: 9px; font-size: 13px; }
+.bh-l2 .bh-k { font-size: 11.5px; } .bh-l2 .bh-side { font-size: 13px; } .bh-l2 .bh-s { display: inline-flex; margin: 0; gap: 4px 16px; }
+@media (max-width: 760px) { .fight.bh, .fight.bh.hero { min-height: 0; padding: 14px 16px; } .bh-l1 .phb { width: 100%; max-width: 280px; } .fight.bh .bh-l1 h2.bh-name { font-size: 24px; } }
+/* the pinned bar's left end: the boss, ‹ pull ›, its result and the menu, once the banner has scrolled away */
+.tabbar .tb-id { display: none; align-items: center; gap: 4px; flex: none; margin: 0 0 7px auto; }
+body.bh-off .tabbar .tb-id { display: inline-flex; }
+.tabbar .tb-id .tb-pull { margin: 0; max-width: 300px; }
+.tbp-n, .tbp-menu { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 16px; line-height: 1; cursor: pointer; }
+.tbp-n:hover:not(:disabled), .tbp-menu:hover { border-color: var(--faint); background: var(--raised); } .tbp-n:disabled { opacity: .35; cursor: default; }
+.tbp-menu { margin-left: 6px; font-size: 14px; }
+/* the pull strip's arrows sit beside the cards, not over the first and last one */
+@media (min-width: 761px) {
+  .fwrap { gap: 6px; align-items: center; } .fwrap .fnav { position: static; margin: 0; flex: none; }
+  .film.fl, .film.fr, .film.fl.fr { -webkit-mask-image: none; mask-image: none; }
+}
 </style>
 </head>
 <body>

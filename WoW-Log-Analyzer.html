@@ -1491,6 +1491,51 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .scopebar { padding: 16px 28px 0; max-width: 1180px; } .scopebar .seg { margin: 0; } .scopebar + #view { padding-top: 14px; }
 .fight .res.good { background: var(--good-bg); color: #7ee08f; } .fight .res.bad { background: var(--bad-bg); color: #ff8f87; } .fight .res.best { background: rgba(230,180,80,.12); color: #f3c969; }
 @media (max-width: 900px) { .scopebar { padding-left: 16px; padding-right: 16px; } }
+/* =================================================================================================================
+   Desktop layout pass (Oct 18): a wider column on big screens, one gap scale, nothing shifting between pages
+   ================================================================================================================= */
+/* (the column grows on big screens: the extra room goes to charts, bar lists and side-by-side panels) */
+@media (min-width: 1680px) { :root { --wrap: 1480px; } }
+/* (the scrollbar's room is kept on every page, so short and long pages line up: the column moved 8px between them) */
+html { scrollbar-gutter: stable; }
+/* (no pop-up descriptions on the tab names: they covered the page, and the names explain themselves) */
+.tabbar .tab::after { display: none !important; }
+/* one gap between panels (14px), and a bigger one (24px) before a phase heading */
+.wr-cols, .mtiles, .nsa .panel, .nsa .probbox { margin-bottom: 14px; }
+details.phase > summary { margin-top: 24px; }
+/* "What went wrong" beside "Fix first" over "What went right" (Latest pull), so the two columns come out even; and a
+   short "What went right" as one line under a long "What went wrong" (Assignments) */
+.wr-l, .wr-stack { min-width: 0; } .wr-stack { display: grid; gap: 12px; align-content: start; } .wr-l > .panel, .wr-stack > .panel { margin: 0; }
+.wr-one { margin: 0 0 14px; } .wr-one > .panel { margin: 0 0 8px; } .wr-one > .panel:last-child { margin: 0; }
+.wr-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding: 9px 14px; } .wr-line > b { font: 600 13.5px var(--head); } .wr-li { font-size: 13.5px; color: #cfd3db; }
+/* Assignments' tiles: one row as wide as there are tiles (six in a row of five left one alone) */
+@media (min-width: 1101px) { .pts.as-tiles.an5 { --n: 5; } .pts.as-tiles.an6 { --n: 6; } }
+/* Performance: the picked player's details stay in view beside the bars while scrolling them */
+@media (min-width: 1001px) { .pf-cols > .pf-det { position: sticky; top: 62px; max-height: calc(100vh - 74px); overflow-y: auto; scrollbar-width: thin; } }
+/* Progress: the way back to the pull you came from (the page has no tab bar); three columns come with the wider column */
+.pg-back { align-self: flex-start; margin-bottom: -10px; font-size: 14px; text-decoration: none; } .pg-back:hover { text-decoration: underline; }
+/* the banner, compact: two lines and one height on every tab (the boss, the result pill and the phase bar; then the
+   pull and raid, how it compares, and when, how long, who and deaths), the boss art still on the right */
+.fight.bh, .fight.bh.hero { min-height: 104px; padding: 14px 22px; }
+.bh-t { max-width: min(980px, 68%); }
+.bh-l1 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.fight.bh .bh-l1 h2.bh-name { margin: 0; font-size: 29px; }
+.bh-l1 .phb { width: 230px; margin: 0; }
+.bh-l2 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 18px; margin-top: 9px; font-size: 13px; }
+.bh-l2 .bh-k { font-size: 11.5px; } .bh-l2 .bh-side { font-size: 13px; } .bh-l2 .bh-s { display: inline-flex; margin: 0; gap: 4px 16px; }
+@media (max-width: 760px) { .fight.bh, .fight.bh.hero { min-height: 0; padding: 14px 16px; } .bh-l1 .phb { width: 100%; max-width: 280px; } .fight.bh .bh-l1 h2.bh-name { font-size: 24px; } }
+/* the pinned bar's left end: the boss, ‹ pull ›, its result and the menu, once the banner has scrolled away */
+.tabbar .tb-id { display: none; align-items: center; gap: 4px; flex: none; margin: 0 0 7px auto; }
+body.bh-off .tabbar .tb-id { display: inline-flex; }
+.tabbar .tb-id .tb-pull { margin: 0; max-width: 300px; }
+.tbp-n, .tbp-menu { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 16px; line-height: 1; cursor: pointer; }
+.tbp-n:hover:not(:disabled), .tbp-menu:hover { border-color: var(--faint); background: var(--raised); } .tbp-n:disabled { opacity: .35; cursor: default; }
+.tbp-menu { margin-left: 6px; font-size: 14px; }
+/* the pull strip's arrows sit beside the cards, not over the first and last one */
+@media (min-width: 761px) {
+  .fwrap { gap: 6px; align-items: center; } .fwrap .fnav { position: static; margin: 0; flex: none; }
+  .film.fl, .film.fr, .film.fl.fr { -webkit-mask-image: none; mask-image: none; }
+}
 </style>
 </head>
 <body>
@@ -7641,16 +7686,23 @@ const allOf = (n, one, many) => (n === 1 ? one : 'all ' + n + ' ' + many);
 // "What went wrong" and "What went right", side by side, the same on Latest pull, Assignments and Mechanics: one line per
 // item (the worst first; at most five wrong, the rest counted), its time on the right, the whole line on hover.
 // wrong: [{ sev: 'bad' | 'warn', html, when?, extra? }]; right: [html or { html }]
+// o.rightTop: a panel for the top of the right column (Latest pull's "Fix first"), so the two columns come out even.
+// Without one, a short "What went right" (two things or fewer) next to a long "What went wrong" becomes one line under
+// it instead of a mostly empty box beside it.
 function wrongRight(wrong, right, o) {
   o = o || {};
   const MK = { bad: '✕', warn: '!', ok: '✓' }, max = o.max || 5, plain = (x) => String(x).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
   const line = (x, sev) => '<div class="pb-r ' + sev + '" title="' + esc(plain(x.html)) + '"><span class="pb-i">' + MK[sev] + '</span><span class="pb-t wr-t">' + x.html + '</span>' + (x.when ? '<span class="pb-w">' + esc(x.when) + '</span>' : '') + (x.extra || '') + '</div>';
   const ws = wrong.slice().sort((a, b) => (a.sev === 'bad' ? 0 : 1) - (b.sev === 'bad' ? 0 : 1)), shown = ws.slice(0, max), wSt = ws.some((x) => x.sev === 'bad') ? 'bad' : ws.length ? 'warn' : 'ok';
-  return '<div class="wr-cols"><div class="panel probbox wr ' + wSt + '"><h3 class="nh">What went wrong' + (o.sub ? ' <small>' + o.sub + '</small>' : '') + hst(wSt, ws.length ? plural(ws.length, 'thing') : 'nothing') + '</h3>' +
+  const wPanel = '<div class="panel probbox wr ' + wSt + '"><h3 class="nh">What went wrong' + (o.sub ? ' <small>' + o.sub + '</small>' : '') + hst(wSt, ws.length ? plural(ws.length, 'thing') : 'nothing') + '</h3>' +
     (shown.length ? shown.map((x) => line(x, x.sev)).join('') : line({ html: o.none || 'Nothing went wrong.' }, 'ok')) +
-    (ws.length > shown.length ? '<div class="wr-more sub">+' + (ws.length - shown.length) + ' more ' + (o.moreWhere || 'below') + '</div>' : '') + '</div>' +
-    '<div class="panel probbox wr ok"><h3 class="nh">What went right' + (right.length ? hst('ok', plural(right.length, 'thing')) : '') + '</h3>' +
-    (right.length ? right.map((x) => line(typeof x === 'string' ? { html: x } : x, 'ok')).join('') : '<p class="muted" style="margin:4px 0 0">' + esc(o.noneRight || 'Nothing to call out yet.') + '</p>') + '</div></div>';
+    (ws.length > shown.length ? '<div class="wr-more sub">+' + (ws.length - shown.length) + ' more ' + (o.moreWhere || 'below') + '</div>' : '') + '</div>';
+  const rPanel = '<div class="panel probbox wr ok"><h3 class="nh">What went right' + (right.length ? hst('ok', plural(right.length, 'thing')) : '') + '</h3>' +
+    (right.length ? right.map((x) => line(typeof x === 'string' ? { html: x } : x, 'ok')).join('') : '<p class="muted" style="margin:4px 0 0">' + esc(o.noneRight || 'Nothing to call out yet.') + '</p>') + '</div>';
+  if (o.rightTop) return '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + rPanel + '</div></div>';
+  if (right.length <= 2 && shown.length >= 3) return '<div class="wr-one">' + wPanel + '<div class="panel probbox wr ok wr-line"><b class="ok">✓ What went right</b>' +
+    (right.length ? right.map((x) => '<span class="wr-li">' + (typeof x === 'string' ? x : x.html) + '</span>').join('') : '<span class="muted">' + esc(o.noneRight || 'Nothing to call out yet.') + '</span>') + '</div></div>';
+  return '<div class="wr-cols">' + wPanel + rPanel + '</div>';
 }
 // (a mistake's sentence after a player's name reads on: "Kargaryen: their ghost touched another ghost")
 const lcLead = (d) => (/^(Their|They|Was|Were|Had|Took|Got|Gained|Died|Stood|Used|Soaked|Kicked|Picked|Cursed|Didn't|Never|Ran|Walked|Moved|Left|Missed|Is)\b/.test(d) ? d.charAt(0).toLowerCase() + d.slice(1) : d);
@@ -8231,14 +8283,23 @@ function progBar(it, left, phase, col) {
     return '<span title="' + esc(p) + '" style="flex:' + (w > 0 ? w.toFixed(1) + ' 1 0' : '0 0 26px') + '"><i style="width:' + Math.round(100 * f) + '%"></i><em>' + esc(p.replace('Intermission', 'Int')) + '</em></span>'; }).join('') + '</div>';
 }
 // which pull the tab is showing, on the right of the sticky tab bar (it stays in view while scrolling; a click goes back up)
+// The pinned bar's left end, shown once the banner has scrolled away (body.bh-off): the boss, the pull (with ‹ › to the
+// earlier and later pull of the boss) and its result, and the menu; clicking the pull goes back to the top. While the
+// banner is on screen it's hidden: the banner says the same thing.
 function tbPull(r, allMode) {
   const it = r.item, isKey = it.kind === 'run' || !!it.run;
-  if (allMode) { const n = S.index && S.index.bosses ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId).length : 0;
-    return '<button class="tb-pull all" type="button" title="Back to the top"><i class="tbp-d"></i><b>All pulls</b><span>' + plural(n, 'pull') + ' · ' + esc(it.boss) + '</span></button>'; }
-  if (isKey) return '<button class="tb-pull" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill || it.result === 'Timed' ? 'ok' : 'bad') + '"></i><b>' + esc(it.boss) + '</b><span>' + esc(it.result || '') + ' · ' + T(r.duration) + '</span></button>';
-  const pg = progressOf(r);
-  return '<button class="tb-pull" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill ? 'ok' : 'bad') + '"></i><b>Pull ' + it.pull + '</b><span>' + (it.kill ? 'kill' : 'wipe' + (pg ? (pg.phase ? ' in ' : ' at ') + esc(pg.label) : '')) + ' · ' + esc(it.wallMs ? wallClock(it.wallMs) : clock(it.startMs)) + '</span></button>';
+  const same = S.index && S.index.bosses ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [], k = same.indexOf(it);
+  const nav = (d, lab) => { const to = k >= 0 ? same[k + d] : null; return '<button class="tbp-n" type="button" data-d="' + d + '" aria-label="' + lab + '"' + (to ? '' : ' disabled') + '>' + (d < 0 ? '‹' : '›') + '</button>'; };
+  const menu = '<button class="tbp-menu" type="button" aria-label="Open the menu" title="Menu">☰</button>';
+  let pill;
+  if (allMode) pill = '<button class="tb-pull all" type="button" title="Back to the top"><b>' + esc(it.boss) + '</b><span>All pulls · ' + plural(same.length, 'pull') + '</span></button>';
+  else if (isKey) pill = '<button class="tb-pull" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill || it.result === 'Timed' ? 'ok' : 'bad') + '"></i><b>' + esc(it.boss) + '</b><span>' + esc(it.result || '') + ' · ' + T(r.duration) + '</span></button>';
+  else { const pg = progressOf(r);
+    pill = '<button class="tb-pull" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill ? 'ok' : 'bad') + '"></i><b>' + esc(it.boss) + '</b><span>Pull ' + it.pull + ' · ' + (it.kill ? 'kill' : 'wipe' + (pg ? (pg.phase ? ' in ' : ' at ') + esc(pg.label) : '')) + '</span></button>'; }
+  return '<div class="tb-id">' + (allMode || isKey ? pill : nav(-1, 'Earlier pull') + pill + nav(1, 'Later pull')) + menu + '</div>';
 }
+// (the pinned bar's left end shows once the banner is off screen)
+if (typeof IntersectionObserver !== 'undefined') { const bhObs = new IntersectionObserver((es) => { for (const e of es) document.body.classList.toggle('bh-off', !e.isIntersecting); }); const bh = document.getElementById('bossHead'); if (bh) bhObs.observe(bh); }
 const isAllMode = () => !!(S.rep && S.scope === 'all' && S.tab !== 'live' && S.item && S.item.kind !== 'run' && !S.item.run);
 // Each boss's banner art: Wowhead's guide header for the fight (the boss rendered over the raid's backdrop, 2992x1144),
 // loaded at runtime from its image server, never bundled; [image, where the boss sits across it in %, for the crop].
@@ -8296,10 +8357,12 @@ function headerHtml(r, allMode) {
   // (the edge, tint, pill and bar in the pull's colour by how far it got, as on the pull cards and the Progress chart:
   // grey, white, green, blue, purple, and orange for a kill)
   const qcol = isKey ? null : cls === 'good' ? '#ff8000' : left != null ? (PULL_Q.find(([lo]) => 100 - left >= lo) || [0, '#9d9d9d'])[1] : null;
+  // (two lines, the same height on every tab: the boss, its result and the phase bar; then the pull, difficulty and raid,
+  // how it compares, and when, how long, who and deaths)
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
-    '<div class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</div><h2 class="bh-name">' + esc(it.boss) + '</h2>' +
-    '<div class="bh-res"><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + (side ? '<span class="bh-side">' + side + '</span>' : '') + '</div>' +
-    '<div class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</div></div></header>';
+    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + '</div>' +
+    '<div class="bh-l2"><span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
+    '<span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span></div></div></header>';
 }
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
@@ -8326,6 +8389,9 @@ function renderMain() {
     '<section id="view"></section>';
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { S.tab = b.dataset.t; renderMain(); }));
   { const tp = $('#main .tb-pull'); if (tp) tp.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
+  $('#main').querySelectorAll('.tbp-n').forEach((b) => (b.onclick = () => { const same = S.index.bosses.filter((x) => x.id === it.id && x.diffId === it.diffId), to = same[same.indexOf(it) + +b.dataset.d]; if (to) select(to); }));
+  { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
   VIEWS[S.tab]();
   // (opened from a Summary row: open that mechanic's or assignment's row on this pull and bring it into view)
@@ -8943,7 +9009,8 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   { const list = secs.filter((o) => o.ph === 'hcd'); if (list.length) h += phaseBlock('Healing cooldowns', 'the cooldown reminders in the note, kept apart from the mechanics', list); }
   const ORDER = ['feast', 'bk', 'orbcc', 'guil', 'orbs', 'mc', 'ca', 'curse', 'ghost', 'kt', 'hcd'];
   tiles.sort((x, y) => ORDER.indexOf(x.id.slice(3)) - ORDER.indexOf(y.id.slice(3))); // (the tiles in fight order too)
-  const tileRow = tiles.length ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
+  // (one row as wide as the tiles there are, up to 6: six tiles in a row of five left one alone on a second row)
+  const tileRow = tiles.length ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + ' an' + Math.min(6, tiles.length) + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
   $('#assignBox').innerHTML = '<div class="nsa">' + top + tileRow + box + h + (quiet.length ? '<div class="panel quiet"><div class="q-h">About the note</div>' + quiet.join('') + '</div>' : '') + '</div>';
   // (a tile opens its section if it's folded, then scrolls to it under the sticky tabs)
   $$('#assignBox details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
@@ -12975,11 +13042,12 @@ async function lastPull() {
   // a Map button opens the animated map of that moment right under the line (one open at a time)
   const LPM = [];
   // (the same "What went wrong / What went right" pair as Mechanics and Assignments; a moment with a map gets its button)
-  h += tiles + wrongRight(wrong.map((x) => ({ sev: x.sev, html: x.html, extra: x.map ? '<button class="btn lpmb" data-i="' + (LPM.push(x.map) - 1) + '">Map</button>' : '' })), well,
-    { max: 6, none: 'Nothing medium or serious this pull.', noneRight: 'Not much to celebrate yet: check what went wrong.', moreWhere: 'on Mechanics' });
   const fx = fixes.filter((f) => f.x).sort((a, b) => a.w - b.w).filter((f, i, a) => a.findIndex((g) => g.t === f.t || g.x === f.x) === i).slice(0, 3); // (no repeated advice)
-  // (the same numbered list as the Player audit's focus for next pull)
-  if (fx.length) h += '<div class="panel lp-fix"><h3>Fix first on the next pull</h3>' + fx.map((f, i) => '<div class="plf k' + i + '"><span class="plf-n">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b><div class="sub">' + esc(f.x) + '</div></div></div>').join('') + '</div>';
+  // (the same numbered list as the Player audit's focus for next pull; it sits at the top of the right column, beside
+  // "What went wrong", so it's on the first screen)
+  const fixP = fx.length ? '<div class="panel lp-fix"><h3>Fix first on the next pull</h3>' + fx.map((f, i) => '<div class="plf k' + i + '"><span class="plf-n">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b><div class="sub">' + esc(f.x) + '</div></div></div>').join('') + '</div>' : '';
+  h += tiles + wrongRight(wrong.map((x) => ({ sev: x.sev, html: x.html, extra: x.map ? '<button class="btn lpmb" data-i="' + (LPM.push(x.map) - 1) + '">Map</button>' : '' })), well,
+    { max: 6, none: 'Nothing medium or serious this pull.', noneRight: 'Not much to celebrate yet: check what went wrong.', moreWhere: 'on Mechanics', rightTop: fixP });
   h += '<p class="muted" style="font-size:12.5px">The full details are in the Mechanics and Assignments tabs. Minor mistakes are left out of this recap.</p>';
   view(h); refreshIcons();
   if ($('#lpLatest')) $('#lpLatest').onclick = () => select(same[same.length - 1]);
@@ -13509,7 +13577,10 @@ const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder: that\'
 // that night downloaded to this PC, to open later without waiting and to re-check with newer checks). Your team's reports
 // come in from the card at the top.
 const DIFF_ORDER = [[16, 'Mythic'], [15, 'Heroic'], [14, 'Normal'], [17, 'LFR']];
+// (the pull you came from, for the page's "Back to" link: Progress has no tab bar)
+let PROG_BACK = null;
 function progressPage(msg) {
+  if (S.item) PROG_BACK = S.item;
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
   HIST.load().then(histTidy).then(() => renderProgress(msg));
@@ -13601,7 +13672,8 @@ function renderProgress(msg, msgErr) {
   // (bosses not pulled on this difficulty yet: one small row under the cards, not empty cards)
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
   const legend = pullLegend();
-  $('#main').innerHTML = '<div class="home prog"><div class="pg-top"><div><h1>Progress</h1><div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div>' + sw + '</div>' + team +
+  const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
+  $('#main').innerHTML = '<div class="home prog">' + back + '<div class="pg-top"><div><h1>Progress</h1><div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div>' + sw + '</div>' + team +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">No pulls saved yet. Import your team above, or open a log of your raid.</p>') + '</div>';
@@ -13618,6 +13690,7 @@ function renderProgress(msg, msgErr) {
   if ($('#pgTeam')) $('#pgTeam').onkeydown = (e) => { if (e.key === 'Enter') $('#pgTeamGo').click(); };
   if ($('#pgImport')) $('#pgImport').onclick = run;
   if ($('#pgTeamChange')) $('#pgTeamChange').onclick = () => { teamWSet(null); renderProgress(); };
+  if ($('#pgBack')) $('#pgBack').onclick = () => select(PROG_BACK);
   $('#main').querySelectorAll('.pc-diffs button').forEach((b) => { b.onclick = () => { store.set(PROG_DIFF_KEY, b.dataset.d); renderProgress(); }; });
   // a card's night menu: open that night's report at the boss, or save every pull of the boss that night on this PC
   $('#main').querySelectorAll('.pc-card[data-boss]').forEach((c) => {
