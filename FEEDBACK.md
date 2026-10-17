@@ -22,6 +22,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   https://claude.ai/artifact/ELNR2Ci3BXvb2Wq1FAF1wU (copy in notes/Desktop layout review.html). All 12 changes built in round 117,
   on a separate copy (branch desktop-layout): the live site is unchanged until you say it's good.
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
+- [ ] **Performance: a Compare option** (your note): put two things side by side somewhere in the Performance tab (for example
+  two players, a player against their own best pull, or this pull against an earlier one). Where it goes: part of the
+  Performance talk.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
 - [x] **Survivability view in Performance** (round 118).
@@ -45,6 +48,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 120: Switch team
+- [x] **Switch team** (your idea, instead of putting the team page inside the tab): the team page stays as it is, with a gold
+  "Switch team ▾" button beside the name. It opens a menu of your teams and your character (the one you're on is ticked) and
+  "+ Add a team or character". One click changes team. The team page's tips point it out.
+- [x] The Teams tab drawn inside a pull's page: tried, then dropped for Switch team (nothing of it is on the site).
 
 ## 2026-10-18, round 119: teams and your own page, mana spent, charts you can explore
 - [x] **Progress is easy to find** (your choice): a Progress button in the top bar on every page, and "Your progress" cards on the

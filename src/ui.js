@@ -6372,6 +6372,7 @@ const PAGE_TIPS = {
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
     { sel: '#pgRank', t: 'Rankings', p: 'Your Warcraft Logs rankings this tier.' },
     { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Its result and totals. Click a boss for the chart of every pull and its nights.' },
+    { sel: '#pgSw', t: 'Switch team', p: 'Jump to another of your teams or your character, or add a new one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
 const TIPS_KEY = (k) => 'wla-tips-' + k;
@@ -6787,12 +6788,30 @@ function renderProgress(msg, msgErr) {
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
   const legend = pullLegend();
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
+  // (Switch team, beside the name: a menu of your other teams and your character, and Add, so changing teams is one click)
+  const swm = '<span class="pg-sww"><button class="pg-swb" id="pgSw" type="button" aria-haspopup="menu" aria-expanded="false">Switch team ▾</button><span class="pg-swm" id="pgSwM" role="menu" hidden>' +
+    gl.map((x) => { const xc = x.kind === 'char' && x.cls && E.CLASSES[x.cls], on = g && g.gid === x.gid;
+      return '<button class="pg-swi' + (on ? ' on' : '') + '" type="button" role="menuitem" data-sw="' + esc(x.gid) + '"' + (on ? ' aria-current="true"' : '') + '>' + banner(x) + '<span class="pg-swt"><b' + (xc ? ' style="color:' + xc[1] + '"' : '') + '>' + esc(gName(x)) + '</b><span class="sub">' + (xc ? xc[0] : gKind(x)) + (x.server ? ' · ' + esc(x.server) : '') + '</span></span>' + (on ? '<span class="pg-swk" aria-hidden="true">✓</span>' : '') + '</button>'; }).join('') +
+    '<button class="pg-swi pg-swa" type="button" role="menuitem" data-sw="+">+ Add a team or character</button></span></span>';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
+    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '<span class="pg-hbtns">' + swm + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</span></h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
   $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
+  // (the menu opens under the button, nudged left if it would run off a phone's edge; a click elsewhere or Escape closes it)
+  { const sb = $('#pgSw'), sm = $('#pgSwM');
+    const away = (e) => { if (!document.body.contains(sm) || !e.target.closest('.pg-sww')) close(); };
+    const onKey = (e) => { if (e.key === 'Escape' && !sm.hidden) { e.preventDefault(); close(); sb.focus(); } };
+    const close = () => { sm.hidden = true; sb.setAttribute('aria-expanded', 'false'); document.removeEventListener('click', away, true); document.removeEventListener('keydown', onKey, true); };
+    sb.onclick = () => { if (!sm.hidden) { close(); return; }
+      // (the screen's width is read before the menu shows: a phone's page widens while anything sticks out past its edge)
+      const vw = document.documentElement.clientWidth, x0 = sb.getBoundingClientRect().left;
+      sm.style.left = '0px'; sm.hidden = false; sb.setAttribute('aria-expanded', 'true'); const w = sm.offsetWidth;
+      sm.style.left = Math.round(Math.max(12 - x0, Math.min(0, vw - 12 - (x0 + w)))) + 'px';
+      document.addEventListener('click', away, true); document.addEventListener('keydown', onKey, true); const f = sm.querySelector('.pg-swi:not(.on)') || sm.querySelector('.pg-swi'); if (f) f.focus(); };
+    sm.querySelectorAll('[data-sw]').forEach((b) => (b.onclick = () => { close(); const v = b.dataset.sw; S.pgRename = S.pgDel = S.pgEdit = false;
+      if (v === '+') { S.pgFocusAdd = true; S.progView = null; } else { S.progView = v; store.set(GROUP_CUR, v); } renderProgress(); window.scrollTo(0, 0); })); }
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
