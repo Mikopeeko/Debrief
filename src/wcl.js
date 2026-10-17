@@ -155,6 +155,36 @@ async function teamReports(creds, id) {
   do { const rr = HOSTED ? await api('/api/teamreports?id=' + id + '&page=' + page) : (await gql(creds, TEAM_REPORTS_Q, { id, page })).reportData.reports; out = out.concat(rr.data || []); last = rr.last_page || 1; page++; } while (page <= last && page <= 20);
   return out;
 }
+// ---------- a character's reports: your own progress, every raid you were in (any team, guild or group) ----------
+// A Warcraft Logs character link ("…/character/us/zuljin/name" or "…/character/id/83269381") names the character; its
+// reports are listed 100 a page, newest first. (Hosted: the site has a route for each.)
+const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID server{name slug region{slug}}}}}`;
+const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{name}}}}}}`;
+function parseCharLink(s) {
+  s = String(s || '').trim();
+  let m = s.match(/character\/id\/(\d+)/); if (m) return { id: +m[1] };
+  m = s.match(/character\/([a-z]{2})\/([^/?#]+)\/([^/?#]+)/i); if (m) return { reg: m[1].toUpperCase(), srv: decodeURIComponent(m[2]), name: decodeURIComponent(m[3]) };
+  return null;
+}
+async function charInfo(creds, link) {
+  let c;
+  if (HOSTED) c = await api('/api/char?' + (link.id ? 'id=' + link.id : 'name=' + enc(link.name) + '&srv=' + enc(link.srv) + '&reg=' + enc(link.reg)));
+  else { const d = await gql(creds, CHAR_INFO_Q, link.id ? { id: link.id } : { name: link.name, srv: link.srv, reg: link.reg }); c = d && d.characterData && d.characterData.character; }
+  if (!c) throw new Error('Warcraft Logs has no character at that link.');
+  // (classID: Warcraft Logs' own class number, alphabetical: 1 Death Knight, 2 Druid … 11 Warrior, then 12 Demon Hunter and
+  // 13 Evoker; for the card's colour and icon)
+  const CLS = [null, 'DEATHKNIGHT', 'DRUID', 'HUNTER', 'MAGE', 'MONK', 'PALADIN', 'PRIEST', 'ROGUE', 'SHAMAN', 'WARLOCK', 'WARRIOR', 'DEMONHUNTER', 'EVOKER'];
+  return { id: c.id, name: c.name, cls: CLS[c.classID] || null, server: c.server ? c.server.name + (c.server.region ? ' (' + c.server.region.slug.toUpperCase() + ')' : '') : '' };
+}
+// (newest first: paging stops once a whole page is older than `since`, or after 5 pages, as far back as Warcraft Logs
+// lists a character's reports)
+async function charReports(creds, id, since) {
+  let out = [], page = 1, last = 1;
+  do { const rr = HOSTED ? await api('/api/charreports?id=' + id + '&page=' + page) : (await gql(creds, CHAR_REPORTS_Q, { id, page })).characterData.character.recentReports;
+    const d = rr.data || []; out = out.concat(d); last = rr.last_page || 1; page++;
+    if (since && d.length && d.every((x) => x.endTime < since)) break; } while (page <= last && page <= 5);
+  return out;
+}
 // one night's boss pulls: { at (wall-clock ms), boss, id, diffId, diff, dur, kill, endPct, endBoss, endPhase, players, deaths, first, fight }
 async function nightPulls(creds, code) {
   const rep = HOSTED ? await api('/api/night?code=' + enc(code)) : ((d) => d && d.reportData && d.reportData.report)(await gql(creds, NIGHT_Q, { code }));
@@ -303,8 +333,9 @@ function translate(item, events) {
     // (the unit's power too, where WoW writes it: type, current and max, pipe-separated, e.g. Sszorak's rage on his casts,
     // or a healer's mana on theirs: Warcraft Logs sends it with every cast, so the healers' mana chart works for reports)
     const cr = has && Array.isArray(e.classResources) && e.classResources.length ? e.classResources : null;
-    const pw = cr ? [cr.map((c) => c.type | 0).join('|'), cr.map((c) => c.amount | 0).join('|'), cr.map((c) => c.max | 0).join('|')] : [0, 0, 0];
-    return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], 0, x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
+    // (and the cast's cost, where WoW writes it after the power: what a healer spent their mana on)
+    const pw = cr ? [cr.map((c) => c.type | 0).join('|'), cr.map((c) => c.amount | 0).join('|'), cr.map((c) => c.max | 0).join('|'), cr.map((c) => c.cost | 0).join('|')] : [0, 0, 0, 0];
+    return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], pw[3], x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
   };
   const add = (e, body) => out.push(stamp(e.timestamp) + body);
   out.push(stamp(w.start) + 'ENCOUNTER_START,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',0');
@@ -374,6 +405,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls };
+root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

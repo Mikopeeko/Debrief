@@ -925,6 +925,19 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .bp-i span, .tbm-i span { font: 400 12px var(--body); color: var(--faint); } .bp-i b { font-weight: 600; } .bp-i:hover, .tbm-i:hover { background: var(--raised); } .bp-i.on { background: rgba(230,180,80,.1); }
 .tbmenu { position: relative; } .tbm-b { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; padding: 0; border-radius: 9px; }
 .tbm-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* the start screen's "Your progress": a card per team or character */
+.home-teams { margin: 26px 0 0; } .ht-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; } .ht-h h2 { margin: 0; font: 600 20px var(--head); color: #f3f5f9; }
+.ht-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.ht-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px 16px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; cursor: pointer; transition: border-color .12s, background .12s; }
+.ht-card:hover { background: var(--raised); border-color: var(--line2); border-left-color: var(--gold); }
+.ht-n { font: 600 17px var(--head); color: #f3f5f9; } .ht-k { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.ht-d { display: flex; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--muted); } .ht-d b { font: 700 16px var(--head); color: #f6dc9a; }
+.ht-l { font-size: 12px; color: var(--faint); } .ht-card.ht-add { border-left-color: var(--line2); border-style: dashed; }
+/* the top bar's Progress button: always one click away (just the trophy on a phone) */
+.tb-prog { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px 0 10px; border-radius: 9px; font-weight: 600; }
+.tb-prog svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tb-prog.on { border-color: var(--gold); color: #f6dc9a; }
+@media (max-width: 760px) { .tb-prog { width: 36px; padding: 0; justify-content: center; } .tb-prog span { display: none; } }
 /* the wipe filter, made to stand out: a blue control with a flag, always labeled (grey when it's off) */
 #cutSide { margin: 0; gap: 8px; padding: 4px 6px 4px 11px; border: 1px solid rgba(106,168,255,.6); background: rgba(106,168,255,.11); box-shadow: 0 0 0 3px rgba(106,168,255,.07); }
 #cutSide .cs-l { color: #b9d3ff; } #cutSide .cs-l b { color: #eef4ff; }
@@ -1056,6 +1069,41 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pg-team { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
 .pg-team > div:first-child { flex: 1 1 320px; min-width: 0; } .pg-team b { font: 600 17px var(--head); color: #f3f5f9; } .pg-team .fp-in { flex: 1 1 420px; } .pg-team .btn { padding: 10px 16px; font-weight: 600; }
 .pg-msg { flex-basis: 100%; font-size: 13px; color: var(--muted); } .pg-msg:empty { display: none; } .pg-msg.err { color: #ff9a93; }
+/* the teams bar: "Progress for" a team or character, its buttons, and Manage (a row per team) */
+.pg-team .pg-add { flex: 1 1 420px; display: flex; flex-direction: column; gap: 6px; } .pg-team .pg-add .sub { font-size: 12.5px; } .pg-team .pg-add .fp-in { flex: none; }
+.pg-gbar .pg-gsel { display: flex; flex-direction: column; gap: 4px; flex: 1 1 320px; min-width: 0; } .pg-gsel .sub { font-size: 12.5px; }
+.pg-gsel select { align-self: flex-start; max-width: 100%; padding: 8px 34px 8px 12px; font: 600 17px var(--head); color: #f3f5f9; background: var(--raised) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239aa0ac' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center / 12px; border: 1px solid var(--line2); border-radius: 9px; appearance: none; cursor: pointer; }
+.pg-gsel select:hover { border-color: var(--faint); } .pg-gsel select option { background: #1b1f29; font: 400 14px var(--body); }
+.pg-gact { display: flex; flex-wrap: wrap; gap: 8px; }
+.pg-man { flex-basis: 100%; display: flex; flex-direction: column; border-top: 1px solid var(--line); padding-top: 6px; }
+.pg-mr { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid rgba(53,59,73,.55); }
+.pg-mn { min-width: 0; flex: 1 1 280px; } .pg-mn b { font: 600 15px var(--head); } .pg-mn .sub { font-size: 12.5px; }
+.pg-mn input.pg-ren { padding: 7px 10px; font: inherit; color: var(--text); background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; margin-right: 8px; width: min(260px, 100%); }
+.pg-ma { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .pg-team .pg-ma .btn, .pg-team .pg-mn .btn { padding: 6px 12px; font-weight: 500; font-size: 13px; }
+.pg-ma.del span { font-size: 13px; color: #ffb3ad; margin-right: 4px; }
+.btn.danger { background: #b8413a; border-color: #b8413a; color: #fff; } .btn.danger:hover { background: #cc4a42; }
+.btn.danger-o { color: #ff9a93; } .btn.danger-o:hover { border-color: #e5534b; }
+.pg-man .pg-add { padding-top: 12px; }
+/* the teams page: a big card per team or character, one for everything saved, and one to add a team */
+.pg-hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.ht-card.big { padding: 18px 20px; gap: 5px; min-height: 150px; } .ht-card.big .ht-n { font-size: 21px; } .ht-card.big .ht-d { gap: 16px; } .ht-card.big .ht-d b { font-size: 19px; }
+.pg-addc { cursor: default; } .pg-addc:hover { background: var(--panel); border-color: var(--line); }
+.pg-addc .fp-in { margin-top: 8px; width: 100%; } .pg-addc .pg-msg { font-size: 12.5px; }
+.pg-links { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-bottom: -10px; } .pg-links .pg-back { margin: 0; }
+.pg-gbar .pg-mn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pg-which { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); line-height: 1.5; } .pg-which > b { color: var(--text); font-weight: 600; }
+.pg-which ol { margin: 4px 0 0; padding-left: 18px; } .pg-which li { margin: 3px 0; } .pg-which li b { color: #c9ced8; font-weight: 600; }
+.pg-which code { font-size: 12px; padding: 0 4px; border-radius: 4px; background: var(--raised); color: #d6dae2; word-break: break-all; } .pg-which a { color: var(--gold); }
+/* a card's banner: a crest for a team, a class-coloured banner with the class icon for a character */
+.ht-card.hb { flex-direction: row; align-items: flex-start; gap: 14px; } .ht-b { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .ht-card.big .ht-b { gap: 5px; }
+.ht-ban { position: relative; flex: none; width: 44px; height: 54px; display: grid; place-items: center; } .ht-card.big .ht-ban { width: 56px; height: 69px; }
+.ht-ban svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ht-ban path { fill: color-mix(in srgb, var(--bc) 28%, #12151c); stroke: var(--bc); stroke-width: 2.5; stroke-linejoin: round; }
+.hb-t { position: relative; margin-top: -6px; font: 700 17px var(--head); color: #fff; letter-spacing: .5px; text-shadow: 0 1px 2px rgba(0,0,0,.6); } .ht-card.big .hb-t { font-size: 21px; }
+.hb-i { position: relative; width: 26px; height: 26px; margin-top: -6px; border-radius: 50%; box-shadow: 0 0 0 2px var(--bc); } .ht-card.big .hb-i { width: 32px; height: 32px; }
+.ht-card.hb:hover { border-left-color: var(--bc, var(--gold)); }
+.pg-top .ht-ban { margin-right: 14px; } .pg-top > .pg-ttl { display: flex; align-items: center; } .pg-top .pg-tt { display: flex; flex-direction: column; }
+@media (min-width: 980px) { .pg-hub .pg-addc { grid-column: span 2; } }
 .pg-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
 .pc-diffs { display: flex; gap: 4px; max-width: 100%; padding: 4px; overflow-x: auto; scrollbar-width: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; } .pc-diffs::-webkit-scrollbar { display: none; }
 .pc-diffs button { flex: none; white-space: nowrap; }
@@ -1400,6 +1448,14 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-tgb i + i { margin-left: 1px; }
 .pf-tg-v { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; white-space: nowrap; font-size: 12.5px; } .pf-tg-v b { font-variant-numeric: tabular-nums; } .pf-tg-v .sub { font-size: 12px; }
 .tg-a { opacity: .82; } .tg-a:hover { opacity: 1; }
+/* charts you can explore: a hover readout on the mana and target charts; legend entries and line names as switches */
+.pfx { position: relative; } .pfx svg { touch-action: pan-y; } .pfx-hv { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.pfx .pfc-tip .lg-sq { display: inline-block; vertical-align: 0; }
+.mp-s { transition: opacity .15s; } .mp-s.off { opacity: .07; } .mp-tg { cursor: pointer; } .mp-tg.off { opacity: .4; text-decoration: line-through; }
+.tg-a.off { opacity: .06; } .tg-a.off:hover { opacity: .06; }
+.pfc-lg .pf-hk, .pfc-lg .tg-lg { cursor: pointer; border-radius: 5px; padding: 1px 4px; margin: -1px -4px; transition: opacity .12s, background .12s; } .pfc-lg .pf-hk:hover, .pfc-lg .tg-lg:hover { background: rgba(255,255,255,.05); }
+.pfc-lg .pf-hk.off, .pfc-lg .tg-lg.off { opacity: .4; text-decoration: line-through; }
+.pf-main.hide-m .pfc-m, .pf-main.hide-l .pfc-lust, .pf-main.hide-l .pfc-lt, .pf-main.hide-d .pfc-dg, .pf-main.hide-c .pfc-cd { display: none; }
 .pf-sets .ck .nm { font-weight: 600; } .pf-sets .pf-hint { border-style: solid; }
 .pfc-tip.pin { border-color: var(--faint); }
 /* the chart takes a finger's sideways drag (the page still scrolls up and down) */
@@ -1427,6 +1483,16 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .hm-p.warn { background: rgba(230,180,80,.16); color: #f3c969; } .hm-p.ok { background: rgba(69,193,92,.15); color: #7ee08f; } .hm-p.na { background: rgba(255,255,255,.06); color: var(--muted); }
 .hm-n { text-align: right; font-size: 13px; line-height: 1.4; } .hm-n b { font-variant-numeric: tabular-nums; }
 @media (max-width: 760px) { .hm-r { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; } .hm-t { grid-column: 1 / -1; grid-row: 2; } }
+/* what a healer's mana went on: the top three on one line, the whole list when opened */
+.hm-use { margin-top: 6px; } .hm-use > summary { cursor: pointer; list-style: none; font-size: 12.5px; line-height: 1.6; } .hm-use > summary::-webkit-details-marker { display: none; }
+.hm-use > summary::before { content: '▸ '; color: var(--muted); font-size: 10px; } .hm-use[open] > summary::before { content: '▾ '; }
+.hm-use .icw { width: 15px; height: 15px; vertical-align: -3px; } .hm-use b { color: var(--text); font-variant-numeric: tabular-nums; }
+.hm-ut { margin: 8px 0 2px; padding: 8px 10px; background: var(--raised); border-radius: 8px; font-size: 12.5px; }
+.hm-uh, .hm-ur { display: grid; grid-template-columns: minmax(0, 1fr) 52px 56px minmax(90px, 160px); gap: 10px; align-items: center; padding: 3px 0; }
+.hm-uh { color: var(--faint); font-size: 11.5px; } .hm-uh span:not(:first-child), .hm-ur > span:nth-child(2), .hm-ur > span:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+.hm-ur > span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-ur > span:last-child { display: flex; align-items: center; gap: 6px; } .hm-ur i { display: block; height: 6px; border-radius: 3px; opacity: .8; } .hm-ur > span:last-child b { margin-left: auto; }
+.hm-un { margin-top: 6px; font-size: 11.5px; line-height: 1.4; }
 /* the picked player's casts under the timeline, on its time axis */
 .cs { margin: 6px 0 2px; padding-top: 7px; border-top: 1px solid var(--line); }
 .cs-h { font: 600 12.5px var(--head); margin: 0 0 4px; } .cs-h .sub { font: 400 12px var(--body); color: var(--faint); margin-left: 6px; }
@@ -1635,6 +1701,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
     <span class="tb-sp"></span>
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 30 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
+    <button class="btn tb-prog" id="tbProgBtn" type="button" title="Every boss and night, for your teams"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Progress</span></button>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Progress<span>every boss and night, your team's reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button></div></div>
     <div class="progress" id="prog"><div></div></div>
@@ -6355,7 +6422,7 @@ function newPlayer(guid) {
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
     // landed on someone under half health; the buffs on them, each with its time spans)
-    firstHit: new Map(), mana: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
+    firstHit: new Map(), mana: [], manaUse: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
     // (each heal they gave themselves from a self-heal button, a Healthstone or a health potion: { t, spell, id, amt })
     selfH: [],
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
@@ -6390,7 +6457,10 @@ function buffUp(p, id, name, t, by) { let b = p.buffs.get(name); if (!b) p.buffs
 function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [], by: new Map() }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; else if (!b.sp.length) b.sp.push([0, t]); }
 // a player's mana from a cast's advanced block (the power lists are pipe-separated: "9|0" with "5|274744" is Holy Power 5
 // and mana 274744): [t, fraction], at most one every 2 seconds
-function manaAt(p, f, a, t) { const ty = String(f[a + 10]).split('|'), k = ty.indexOf('0'); if (k < 0) return; const cur = +String(f[a + 11]).split('|')[k], mx = +String(f[a + 12]).split('|')[k]; if (!(mx > 0) || cur !== cur) return;
+// (and the cast's mana cost, written after the power: { t, spell, id, cost } as a share of their mana, for "what their mana
+// went on")
+function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|'), k = ty.indexOf('0'); if (k < 0) return; const cur = +String(f[a + 11]).split('|')[k], mx = +String(f[a + 12]).split('|')[k]; if (!(mx > 0) || cur !== cur) return;
+  const cost = +String(f[a + 13]).split('|')[k]; if (cost > 0 && spell) p.manaUse.push({ t, spell, id, cost: cost / mx });
   const l = p.mana[p.mana.length - 1]; if (l && t - l[0] < 2) { l[1] = Math.min(l[1], cur / mx); return; } p.mana.push([t, Math.max(0, Math.min(1, cur / mx))]); }
 
 function analyze(item, text, opts) {
@@ -6642,7 +6712,7 @@ function analyze(item, text, opts) {
             modEv.push({ k: 'cast', t, src: sg, srcName: sn, spell, id, ...pw, ...(me ? { x: -(+f[12 + PX]), y: +f[11 + PX], face: fc === fc ? fc : null } : {}) }); } } break; }
         const p = P(sg, sn);
         p.casts++;
-        if (f.length >= 11 + ADV && f[11] === sg) manaAt(p, f, 11, t);
+        if (f.length >= 11 + ADV && f[11] === sg) manaAt(p, f, 11, t, spell, id);
         if (W(spell)) modEv.push({ k: 'pcast', t, src: sg, spell, id, dst: dg });
         const ca = p.castAb.get(spell); if (ca) ca.n++; else p.castAb.set(spell, { name: spell, id, n: 1 });
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
@@ -7438,6 +7508,36 @@ async function teamReports(creds, id) {
   do { const rr = HOSTED ? await api('/api/teamreports?id=' + id + '&page=' + page) : (await gql(creds, TEAM_REPORTS_Q, { id, page })).reportData.reports; out = out.concat(rr.data || []); last = rr.last_page || 1; page++; } while (page <= last && page <= 20);
   return out;
 }
+// ---------- a character's reports: your own progress, every raid you were in (any team, guild or group) ----------
+// A Warcraft Logs character link ("…/character/us/zuljin/name" or "…/character/id/83269381") names the character; its
+// reports are listed 100 a page, newest first. (Hosted: the site has a route for each.)
+const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID server{name slug region{slug}}}}}`;
+const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{name}}}}}}`;
+function parseCharLink(s) {
+  s = String(s || '').trim();
+  let m = s.match(/character\/id\/(\d+)/); if (m) return { id: +m[1] };
+  m = s.match(/character\/([a-z]{2})\/([^/?#]+)\/([^/?#]+)/i); if (m) return { reg: m[1].toUpperCase(), srv: decodeURIComponent(m[2]), name: decodeURIComponent(m[3]) };
+  return null;
+}
+async function charInfo(creds, link) {
+  let c;
+  if (HOSTED) c = await api('/api/char?' + (link.id ? 'id=' + link.id : 'name=' + enc(link.name) + '&srv=' + enc(link.srv) + '&reg=' + enc(link.reg)));
+  else { const d = await gql(creds, CHAR_INFO_Q, link.id ? { id: link.id } : { name: link.name, srv: link.srv, reg: link.reg }); c = d && d.characterData && d.characterData.character; }
+  if (!c) throw new Error('Warcraft Logs has no character at that link.');
+  // (classID: Warcraft Logs' own class number, alphabetical: 1 Death Knight, 2 Druid … 11 Warrior, then 12 Demon Hunter and
+  // 13 Evoker; for the card's colour and icon)
+  const CLS = [null, 'DEATHKNIGHT', 'DRUID', 'HUNTER', 'MAGE', 'MONK', 'PALADIN', 'PRIEST', 'ROGUE', 'SHAMAN', 'WARLOCK', 'WARRIOR', 'DEMONHUNTER', 'EVOKER'];
+  return { id: c.id, name: c.name, cls: CLS[c.classID] || null, server: c.server ? c.server.name + (c.server.region ? ' (' + c.server.region.slug.toUpperCase() + ')' : '') : '' };
+}
+// (newest first: paging stops once a whole page is older than `since`, or after 5 pages, as far back as Warcraft Logs
+// lists a character's reports)
+async function charReports(creds, id, since) {
+  let out = [], page = 1, last = 1;
+  do { const rr = HOSTED ? await api('/api/charreports?id=' + id + '&page=' + page) : (await gql(creds, CHAR_REPORTS_Q, { id, page })).characterData.character.recentReports;
+    const d = rr.data || []; out = out.concat(d); last = rr.last_page || 1; page++;
+    if (since && d.length && d.every((x) => x.endTime < since)) break; } while (page <= last && page <= 5);
+  return out;
+}
 // one night's boss pulls: { at (wall-clock ms), boss, id, diffId, diff, dur, kill, endPct, endBoss, endPhase, players, deaths, first, fight }
 async function nightPulls(creds, code) {
   const rep = HOSTED ? await api('/api/night?code=' + enc(code)) : ((d) => d && d.reportData && d.reportData.report)(await gql(creds, NIGHT_Q, { code }));
@@ -7586,8 +7686,9 @@ function translate(item, events) {
     // (the unit's power too, where WoW writes it: type, current and max, pipe-separated, e.g. Sszorak's rage on his casts,
     // or a healer's mana on theirs: Warcraft Logs sends it with every cast, so the healers' mana chart works for reports)
     const cr = has && Array.isArray(e.classResources) && e.classResources.length ? e.classResources : null;
-    const pw = cr ? [cr.map((c) => c.type | 0).join('|'), cr.map((c) => c.amount | 0).join('|'), cr.map((c) => c.max | 0).join('|')] : [0, 0, 0];
-    return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], 0, x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
+    // (and the cast's cost, where WoW writes it after the power: what a healer spent their mana on)
+    const pw = cr ? [cr.map((c) => c.type | 0).join('|'), cr.map((c) => c.amount | 0).join('|'), cr.map((c) => c.max | 0).join('|'), cr.map((c) => c.cost | 0).join('|')] : [0, 0, 0, 0];
+    return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], pw[3], x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
   };
   const add = (e, body) => out.push(stamp(e.timestamp) + body);
   out.push(stamp(w.start) + 'ENCOUNTER_START,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',0');
@@ -7657,7 +7758,7 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls };
+root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -8181,7 +8282,56 @@ HIST.load().then(() => refreshHead());
 // boss and difficulty, starting within 15 seconds. Running it again only reads reports that are new or changed.
 const TEAMW_KEY = 'wla-team-wcl', TIER_RE = /venomous abyss/i;
 const teamW = () => { try { return JSON.parse(store.get(TEAMW_KEY) || 'null'); } catch (e) { return null; } };
-const teamWSet = (v) => store.set(TEAMW_KEY, JSON.stringify(v));
+// Your teams: any number of Warcraft Logs teams, guilds and characters (your own page: every raid you were in, with any
+// group). Each is { gid, kind: 'team' | 'guild' | 'char', id, name, label (your own name for it), server, done, last,
+// reports }. A saved pull lists the ones it came in with (groups); one from a log opened on this PC belongs to a team when
+// at least half its players are on it, and to a character when they were in it. The one team kept before Oct 18 becomes
+// the first entry (legacy: its pulls were saved before pulls listed their teams).
+const GROUPS_KEY = 'wla-groups', GROUP_CUR = 'wla-group-cur';
+function groups() {
+  let l = null; try { l = JSON.parse(store.get(GROUPS_KEY) || 'null'); } catch (e) { l = null; }
+  if (!Array.isArray(l)) { const tw = teamW(); l = tw && tw.id ? [{ ...tw, gid: 'g' + tw.id, kind: tw.team ? 'team' : 'guild', legacy: true }] : []; store.set(GROUPS_KEY, JSON.stringify(l)); }
+  return l;
+}
+const groupsSet = (l) => store.set(GROUPS_KEY, JSON.stringify(l));
+const groupPut = (g) => { const l = groups(), i = l.findIndex((x) => x.gid === g.gid); if (i < 0) l.push(g); else l[i] = g; groupsSet(l); };
+const groupCur = () => { const l = groups(), c = store.get(GROUP_CUR); return c === '*' ? null : l.find((g) => g.gid === c) || l[0] || null; };
+const gName = (g) => g.label || g.name;
+const gKind = (g) => (g.kind === 'char' ? 'character' : g.kind);
+// the teams a saved pull came in with (a pull from before Oct 18 brought in by the old single team: that team)
+const pullGroups = (v) => v.groups || (v.team ? groups().filter((g) => g.legacy).map((g) => g.gid) : []);
+// which saved pulls are a team's: brought in by it, or from a log opened here with at least half its players on it
+// (its players: everyone in the pulls it brought in); a character's: every pull they were in
+function groupFilter(g) {
+  if (!g) return () => true;
+  if (g.kind === 'char') return (v) => pullGroups(v).includes(g.gid) || (v.players || []).includes(g.name);
+  const roster = new Set(); for (const v of HIST.mem.values()) if (pullGroups(v).includes(g.gid)) for (const n of v.players || []) roster.add(n);
+  return (v) => { if (pullGroups(v).includes(g.gid)) return true; if (!/^log:/.test(v.src || '') || !roster.size) return false; const ps = v.players || []; return ps.length && ps.filter((n) => roster.has(n)).length / ps.length >= 0.5; };
+}
+// (a team's or character's Warcraft Logs link, either kind)
+const groupLink = (s) => { const c = WCL.parseCharLink(s); if (c) return { kind: 'char', link: c }; const t = WCL.parseTeamLink(s); return t ? { kind: 'team', link: t } : null; };
+async function groupAdd(raw) {
+  const gl = groupLink(raw);
+  if (!gl && WCL.parseLink(raw)) throw new Error('That\'s a report link: one night. Here, paste the page of your team, guild or character (see "Which link?" below). A single report opens from the start screen.');
+  if (!gl) throw new Error('That doesn\'t look like a Warcraft Logs team, guild or character link (see "Which link?" below).');
+  const creds = await wclCreds(), info = gl.kind === 'char' ? await WCL.charInfo(creds, gl.link) : await WCL.teamInfo(creds, gl.link);
+  const gid = (gl.kind === 'char' ? 'c' : 'g') + info.id;
+  if (groups().some((g) => g.gid === gid)) { store.set(GROUP_CUR, gid); return { g: groups().find((g) => g.gid === gid), already: true }; }
+  const g = { gid, kind: gl.kind === 'char' ? 'char' : info.team ? 'team' : 'guild', id: info.id, name: info.name, server: info.server, done: {}, ...(gl.kind === 'char' ? { cls: info.cls, clsV: 2 } : {}) };
+  groupPut(g); store.set(GROUP_CUR, gid); return { g, already: false };
+}
+// Removing a team: it leaves the list, and so does every pull only it brought in (a pull from a log opened on this PC,
+// or one another team or your character also brought in, stays). Returns how many pulls went.
+async function groupRemove(g) {
+  await HIST.load(); let n = 0;
+  for (const v of [...HIST.mem.values()]) { const gs = pullGroups(v); if (!gs.includes(g.gid)) continue; const rest = gs.filter((x) => x !== g.gid);
+    if (!rest.length && !/^log:/.test(v.src || '')) { await HIST.del(v.k); n++; } else { v.groups = rest; await HIST.put(v); } }
+  groupsSet(groups().filter((x) => x.gid !== g.gid)); if (store.get(GROUP_CUR) === g.gid) store.set(GROUP_CUR, '');
+  if (g.legacy) store.set(TEAMW_KEY, 'null');
+  histSoon(); return n;
+}
+// how many saved pulls only this team brought in (what Remove would delete)
+const groupOnly = (g) => [...HIST.mem.values()].filter((v) => { const gs = pullGroups(v); return gs.length === 1 && gs[0] === g.gid && !/^log:/.test(v.src || ''); }).length;
 async function wclCreds() {
   if (WCL.HOSTED) return null;
   const j = await fetch('/wcl/login').then((r) => r.json()).catch(() => ({}));
@@ -8190,46 +8340,65 @@ async function wclCreds() {
 }
 // (one import at a time across tabs: two tabs importing at once each only knew their own saves and kept a pull twice)
 const IMPORT_LOCK = 'wla-team-import';
-async function teamImport(onStep) {
+async function teamImport(g, onStep) {
   const lk = +(store.get(IMPORT_LOCK) || 0); if (Date.now() - lk < 90e3) throw new Error('An import is already running in another tab. Try again when it finishes.');
   store.set(IMPORT_LOCK, String(Date.now()));
-  try { return await teamImportRun(onStep); } finally { store.set(IMPORT_LOCK, '0'); }
+  try { return await teamImportRun(g, onStep); } finally { store.set(IMPORT_LOCK, '0'); }
 }
-async function teamImportRun(onStep) {
+async function teamImportRun(g0, onStep) {
   await HIST.load();
-  const tw = teamW(); if (!tw || !tw.id) throw new Error('Add your team first.');
-  const creds = await wclCreds(); tw.done = tw.done || {};
-  if (onStep) onStep('Looking for your team\'s reports…');
+  const g = g0 && groups().find((x) => x.gid === g0.gid); if (!g || !g.id) throw new Error('Add your team first.');
+  const creds = await wclCreds(), ch = g.kind === 'char'; g.done = g.done || {};
+  if (onStep) onStep('Looking for ' + gName(g) + '\'s reports…');
   // (every report since the tier's first raid, wherever Warcraft Logs filed it: a raid night that also had keys in it is
-  // filed under Mythic+, like the Oct 14 Twin Fangs kill; only this tier's bosses are kept from each)
-  const list = await WCL.teamReports(creds, tw.id), tierAt = list.filter((x) => x.zone && TIER_RE.test(x.zone.name)).map((x) => x.startTime);
+  // filed under Mythic+, like the Oct 14 Twin Fangs kill; only this tier's bosses are kept from each. A character's list
+  // is mostly keys, so for one only this tier's raid reports and nights a guild logged are read)
+  const list = ch ? await WCL.charReports(creds, g.id) : await WCL.teamReports(creds, g.id), tierAt = list.filter((x) => x.zone && TIER_RE.test(x.zone.name)).map((x) => x.startTime);
   const since = tierAt.length ? Math.min(...tierAt) - 2 * 86400e3 : Infinity, tierBoss = new Set(E.PACKS.map((p) => p.encounter));
   // (a boss new to the tier since the last import, like Nymrissa and Kith'ix: every report is read again for its pulls;
   // pulls already saved are skipped)
-  const bossKey = [...tierBoss].join('|'); if (tw.bosses !== bossKey) { tw.done = {}; tw.bosses = bossKey; }
-  const reps =list.filter((x) => x.startTime >= since && !/alt/i.test((x.guildTag || {}).name || ''));
-  const todo = reps.filter((x) => tw.done[x.code] !== x.endTime).sort((a, b) => a.startTime - b.startTime);
-  let added = 0, dup = 0, pulls = 0;
-  for (let i = 0; i < todo.length; i++) {
-    const x = todo[i]; if (onStep) onStep('Reading ' + nightLabel(x.startTime) + ' (' + (i + 1) + ' of ' + todo.length + ')…');
+  const bossKey = [...tierBoss].join('|'); if (g.bosses !== bossKey) { g.done = {}; g.bosses = bossKey; }
+  const reps = list.filter((x) => x.startTime >= since && (ch ? (x.zone && TIER_RE.test(x.zone.name)) || x.guild : !/alt/i.test((x.guildTag || {}).name || '')));
+  const todo = reps.filter((x) => g.done[x.code] !== x.endTime).sort((a, b) => a.startTime - b.startTime);
+  let added = 0, dup = 0, pulls = 0, failed = 0;
+  // (a report another of your teams already read in full isn't downloaded again: its saved pulls are this one's too, for a
+  // character the ones they were in)
+  const known = (x) => groups().some((o) => o.gid !== g.gid && o.done && o.done[x.code] === x.endTime);
+  for (const x of todo.filter(known)) {
+    for (const v of [...(await HIST.reload()).values()]) { if (!v.wcl || v.wcl.code !== x.code || (ch && !(v.players || []).includes(g.name))) continue; const gs = pullGroups(v); pulls++; dup++; if (!gs.includes(g.gid)) { v.groups = gs.concat(g.gid); await HIST.put(v); } }
+    g.done[x.code] = x.endTime;
+  }
+  groupPut(g);
+  // (the rest are read three at a time)
+  const rest = todo.filter((x) => !known(x) && g.done[x.code] !== x.endTime);
+  for (let i = 0; i < rest.length; i += 3) {
+    const batch = rest.slice(i, i + 3); if (onStep) onStep('Reading ' + nightLabel(batch[0].startTime) + ' (' + Math.min(rest.length, i + batch.length) + ' of ' + rest.length + ')…');
     store.set(IMPORT_LOCK, String(Date.now()));
-    const night = await WCL.nightPulls(creds, x.code), all = [...(await HIST.reload()).values()];
-    for (const p of night.pulls) {
-      if (!tierBoss.has(p.boss)) continue;
-      pulls++;
-      if (all.some((v) => v.boss === p.boss && v.diffId === p.diffId && Math.abs(v.at - p.at) < 15000)) { dup++; continue; }
-      const pg = !p.kill && PROGRESS[p.boss] ? wclProg({ boss: p.boss, endPhase: p.endPhase, endBoss: p.endBoss }) : null;
-      const v = { k: histKey({ boss: p.boss, diffId: p.diffId, wallMs: p.at }), v: 1, boss: p.boss, diff: p.diff, diffId: p.diffId, id: p.id, at: p.at, pull: 0, kill: p.kill, dur: p.dur,
-        left: p.kill ? 0 : pg ? pg.left : p.endPct, label: p.kill ? 'Kill' : pg ? pg.label : p.endPct != null ? p.endPct.toFixed(1) + '%' : 'Wipe',
-        deaths: p.deaths, first: p.first, players: p.players, checks: [], src: 'wcl:' + x.code, wcl: { code: x.code, fight: p.fight }, team: true, utc: true, saved: Date.now() };
-      await HIST.put(v); all.push(v); added++;
+    // (a report that won't load, like a private one, is skipped and tried again next time; the rest carry on)
+    const nights = await Promise.all(batch.map((x) => WCL.nightPulls(creds, x.code).catch((e) => { console.warn('Import: skipped ' + x.code + ':', e && e.message); return null; })));
+    for (let b = 0; b < batch.length; b++) {
+      const x = batch[b], night = nights[b]; if (!night) { failed++; continue; }
+      const all = [...(await HIST.reload()).values()];
+      for (const p of night.pulls) {
+        if (!tierBoss.has(p.boss) || (ch && !(p.players || []).includes(g.name))) continue; // (a character: only the pulls they were in)
+        pulls++;
+        // (a pull already saved: it's this team's too)
+        const have = all.find((v) => v.boss === p.boss && v.diffId === p.diffId && Math.abs(v.at - p.at) < 15000);
+        if (have) { const gs = pullGroups(have); if (!gs.includes(g.gid)) { have.groups = gs.concat(g.gid); await HIST.put(have); } dup++; continue; }
+        const pg = !p.kill && PROGRESS[p.boss] ? wclProg({ boss: p.boss, endPhase: p.endPhase, endBoss: p.endBoss }) : null;
+        const v = { k: histKey({ boss: p.boss, diffId: p.diffId, wallMs: p.at }), v: 1, boss: p.boss, diff: p.diff, diffId: p.diffId, id: p.id, at: p.at, pull: 0, kill: p.kill, dur: p.dur,
+          left: p.kill ? 0 : pg ? pg.left : p.endPct, label: p.kill ? 'Kill' : pg ? pg.label : p.endPct != null ? p.endPct.toFixed(1) + '%' : 'Wipe',
+          deaths: p.deaths, first: p.first, players: p.players, checks: [], src: 'wcl:' + x.code, wcl: { code: x.code, fight: p.fight }, team: true, groups: [g.gid], utc: true, saved: Date.now() };
+        await HIST.put(v); all.push(v); added++;
+      }
+      // (a team's players are your raid: later logs with them are saved on their own; a character's groups aren't)
+      if (!ch) listAdd(TEAM_KEY, [...new Set(night.pulls.filter((p) => tierBoss.has(p.boss)).flatMap((p) => p.players))]);
+      g.done[x.code] = x.endTime; groupPut(g);
     }
-    listAdd(TEAM_KEY, [...new Set(night.pulls.filter((p) => tierBoss.has(p.boss)).flatMap((p) => p.players))]); // (their players are your team: later logs with them are saved on their own)
-    tw.done[x.code] = x.endTime; teamWSet(tw);
   }
   await histTidy();
-  tw.last = Date.now(); tw.reports = reps.length; teamWSet(tw); histSoon();
-  return { reports: todo.length, pulls, added, dup };
+  g.last = Date.now(); g.reports = reps.length; groupPut(g); histSoon();
+  return { reports: todo.length - failed, pulls, added, dup, failed };
 }
 // Saved pulls kept tidy: the same pull twice (same boss and difficulty, starting within 15 seconds) is kept once (the one
 // from your own log, with the note's checks, over a Warcraft Logs summary), and in a night that came from Warcraft Logs every
@@ -8241,7 +8410,10 @@ async function histTidy() {
   for (const list of byB.values()) { list.sort((a, b) => a.at - b.at); let keep = list[0];
     for (let i = 1; i < list.length; i++) { const b = list[i]; if (b.at - keep.at >= 15000) { keep = b; continue; }
       const drop = score(b) > score(keep) ? keep : b, kept = drop === keep ? b : keep; gone.add(drop.k); await HIST.del(drop.k);
-      if (!kept.wcl && drop.wcl) { kept.wcl = drop.wcl; await HIST.put(kept); } // (the kept copy keeps the report link)
+      // (the kept copy keeps the report link, and the teams either copy came in with)
+      const ug = [...new Set(pullGroups(kept).concat(pullGroups(drop)))], more = ug.length > pullGroups(kept).length;
+      if (more) kept.groups = ug;
+      if ((!kept.wcl && drop.wcl) || more) { if (!kept.wcl && drop.wcl) kept.wcl = drop.wcl; await HIST.put(kept); }
       keep = kept; } }
   const byN = new Map(); for (const v of all) { if (gone.has(v.k)) continue; const k = nightOf(v.at) + '|' + v.boss + '|' + v.diffId; if (!byN.has(k)) byN.set(k, []); byN.get(k).push(v); }
   for (const list of byN.values()) { if (!list.some((v) => v.team)) continue; list.sort((a, b) => a.at - b.at); for (let i = 0; i < list.length; i++) if (list[i].pull !== i + 1) { list[i].pull = i + 1; await HIST.put(list[i]); } }
@@ -8494,7 +8666,10 @@ function headerHtml(r, allMode) {
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
 const setHeadRes = refreshHead;
+// (the top bar's Progress button is lit while the Progress page is up)
+const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
+  progLit(false);
   if (S.nightRep && S.rep === S.nightRep) S.rep = S.realRep; // (leave the all-pulls report: back to the real pull)
   const r = S.rep, it = r.item, single = it.kind === 'run' || !!it.run;
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
@@ -11666,8 +11841,10 @@ function perf() {
   // ---- the timeline: the raid's line, or the picked player's (the picked phase stands out) ----
   const series = addsOn ? AD.series(sel ? sel.p : null, end) : bossOn ? BD.series(sel ? sel.p : null, end) : sel ? (sel.p[key] || []).slice(0, Math.ceil(end)) : raidS;
   const what = addsOn ? 'damage into adds' : bossOn ? 'damage ' + onBossW : { dmg: 'damage', heal: 'healing', taken: 'damage taken' }[kind];
-  const lg = '<span class="pfc-lg"><span><i class="lg-m"></i>boss mechanics</span><span><i class="lg-l"></i>Bloodlust</span><span><i class="lg-d"></i>deaths</span>' + (sel ? '<span><i class="lg-c" style="background:' + sel.p.color + '"></i>' + (kind === 'taken' ? 'their defensives' : 'their big cooldowns') + '</span>' : '') + '</span>';
-  h += '<div class="pf-chartrow' + (tilesH ? '' : ' solo') + '"><div class="panel pf-chart"><h3 class="nh"><span class="pfc-ttl">' + (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' + what + ' per second' : 'Raid ' + what + ' per second') + '</span><small>5-second average</small>' + lg +
+  // (the legend doubles as switches: click one to hide or show those marks on the chart)
+  const hk = (k) => ' class="pf-hk' + (S.pfcHide && S.pfcHide.has(k) ? ' off' : '') + '" data-hk="' + k + '" role="button" tabindex="0" title="Click to hide or show"';
+  const lg = '<span class="pfc-lg"><span' + hk('m') + '><i class="lg-m"></i>boss mechanics</span><span' + hk('l') + '><i class="lg-l"></i>Bloodlust</span><span' + hk('d') + '><i class="lg-d"></i>deaths</span>' + (sel ? '<span' + hk('c') + '><i class="lg-c" style="background:' + sel.p.color + '"></i>' + (kind === 'taken' ? 'their defensives' : 'their big cooldowns') + '</span>' : '') + '</span>';
+  h += '<div class="pf-chartrow' + (tilesH ? '' : ' solo') + '"><div class="panel pf-chart pf-main' + [...(S.pfcHide || [])].map((k) => ' hide-' + k).join('') + '"><h3 class="nh"><span class="pfc-ttl">' + (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' + what + ' per second' : 'Raid ' + what + ' per second') + '</span><small>5-second average</small>' + lg +
     // (a picked player's casts fold under the chart: opening them by default pushed the list down every time a name was picked)
     (sel ? '<button class="btn sm' + (S.perfCasts ? ' on' : '') + '" id="pfCasts" type="button" aria-expanded="' + !!S.perfCasts + '">Their casts ' + (S.perfCasts ? '▾' : '▸') + '</button><button class="btn sm" id="pfRaid" type="button">Show the raid</button>' : '') + '</h3>' +
     perfChart(r, series, end, sel ? sel.p : null, ph ? [w0, w1] : null, kind, chartPx(!!tilesH)) + (sel && S.perfCasts ? castStrip(r, sel.p, kind) : '') + '</div>' + tilesH + '</div>';
@@ -12395,13 +12572,17 @@ function tgtChart(r, w0, w1, cat) {
   const phs = (r.module && !r.module.error && r.module.phases) || [];
   phs.forEach((q, i) => { if (q.start >= w1 || (isFinite(q.end) && q.end <= w0)) return; const x0 = X(Math.max(w0, q.start)), x1 = X(Math.min(w1, isFinite(q.end) ? q.end : w1)); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(0, x1 - x0).toFixed(1) + '" height="' + ih + '" class="pfc-ph p' + (i % 2) + '"/><text x="' + (x0 + 5).toFixed(1) + '" y="' + (Tp + 11) + '" class="pfc-pl">' + esc(phLab(q, (x1 - x0) * onScreen(W))) + '</text>'; });
   for (const f of [0.5, 1]) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(top1 * f).toFixed(1) + '" y2="' + Y(top1 * f).toFixed(1) + '" class="pfc-g"/><text x="' + (L - 6) + '" y="' + (Y(top1 * f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + C(top1 * f) + '</text>';
+  const off = (n) => (S.tgtHide && S.tgtHide.has(n) ? ' off' : '');
   for (let k = keys.length - 1; k >= 0; k--) { const up = stack.map((x, b) => xb(b).toFixed(1) + ',' + Y(x[k]).toFixed(1)), dn = stack.map((x, b) => xb(b).toFixed(1) + ',' + Y(k ? x[k - 1] : 0).toFixed(1)).reverse();
-    s += '<polygon points="' + up.concat(dn).join(' ') + '" style="fill:' + cols[k] + '" class="tg-a"><title>' + esc(keys[k] + ': ' + C(keys[k] === 'Other' ? [...sums].filter(([n]) => !top.includes(n)).reduce((q, [, v]) => q + v, 0) : sums.get(keys[k]))) + '</title></polygon>'; }
+    s += '<polygon points="' + up.concat(dn).join(' ') + '" style="fill:' + cols[k] + '" class="tg-a' + off(keys[k]) + '" data-n="' + esc(keys[k]) + '"/>'; }
   s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + (Tp + ih) + '" y2="' + (Tp + ih) + '" class="pfc-ax"/>';
   const step = span > 400 || (narrow && span > 150) ? 60 : 30; for (let t = Math.ceil(w0 / step) * step; t <= w1; t += step) s += '<text x="' + X(t).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x" text-anchor="middle">' + T(t) + '</text>';
-  s += '</svg>';
+  s += '<line class="pfx-hv" x1="0" x2="0" y1="' + Tp + '" y2="' + (Tp + ih) + '" style="display:none"/></svg>';
   const tot = [...sums.values()].reduce((q, v) => q + v, 0) || 1;
-  return '<h3 class="nh"><span class="pfc-ttl">Raid damage by target</span><small>per second, 5-second steps</small><span class="pfc-lg">' + keys.map((n, k) => '<span><i class="lg-sq" style="background:' + cols[k] + '"></i>' + esc(n) + ' <b>' + Math.round(100 * (n === 'Other' ? [...sums].filter(([m]) => !top.includes(m)).reduce((q, [, v]) => q + v, 0) : sums.get(n)) / tot) + '%</b></span>').join('') + '</span></h3>' + s;
+  // (the hover readout: each target's damage per second in that 5-second step)
+  const ser = keys.map((n, k) => ({ n, l: n, c: cols[k], p: bk[k].map((v, b) => [w0 + b * B, Math.round(v)]) }));
+  return '<h3 class="nh"><span class="pfc-ttl">Raid damage by target</span><small>per second, 5-second steps · hover for numbers, click a target to hide it</small><span class="pfc-lg">' + keys.map((n, k) => '<span class="tg-lg' + off(n) + '" data-tn="' + esc(n) + '" role="button" tabindex="0"><i class="lg-sq" style="background:' + cols[k] + '"></i>' + esc(n) + ' <b>' + Math.round(100 * (n === 'Other' ? [...sums].filter(([m]) => !top.includes(m)).reduce((q, [, v]) => q + v, 0) : sums.get(n)) / tot) + '%</b></span>').join('') + '</span></h3>' +
+    '<div class="pfx" data-hx="' + esc(JSON.stringify({ L, iw, W, w0, span, ser })) + '">' + s + '<div class="pfc-tip" hidden></div></div>';
 }
 
 // Healers: each healer's mana over the pull beside the boss's health, and one plain line per healer. A healer's mana should
@@ -12451,8 +12632,14 @@ function perfHealers(r, ps, w0, w1, end) {
   if (nSpare) parts.push(plural(nSpare, 'healer') + (kill ? ' ended the kill with mana to spare' : ' had mana to spare'));
   const sum = !manaOk ? '' : parts.length ? parts.join('; ') + '.' : boss ? 'Every healer\'s mana kept pace with the boss\'s health.' : 'No healer ran low on mana.';
   const sumH = sum ? '<p class="hm-sum ' + (nLow.length || nFast || nSpare ? 'warn' : 'ok') + '">' + (nLow.length || nFast || nSpare ? '! ' : '✓ ') + esc(sum) + '</p>' : '';
+  // (what their mana went on, from each cast's cost: the top spells as a share of all they spent, the whole list on open)
+  const useOf = (x) => { const m = new Map(); let tot = 0; for (const u of x.p.manaUse || []) { if (u.t < w0 - 0.5 || u.t > x.t1 + 0.5) continue; const o = m.get(u.spell) || { spell: u.spell, id: u.id, c: 0, n: 0 }; o.c += u.cost; o.n++; m.set(u.spell, o); tot += u.cost; } return { tot, list: [...m.values()].sort((a, b) => b.c - a.c) }; };
+  const useH = (x) => { const u = useOf(x); if (!u.tot) return ''; const sh = (o) => Math.round(100 * o.c / u.tot) + '%';
+    return '<details class="hm-use"><summary><span class="sub">Mana went on</span> ' + u.list.slice(0, 3).map((o) => spell(o.id, o.spell) + ' <b>' + sh(o) + '</b>').join('<span class="sub"> · </span>') + (u.list.length > 3 ? ' <span class="sub">· ' + (u.list.length - 3) + ' more</span>' : '') + '</summary>' +
+      '<div class="hm-ut"><div class="hm-uh"><span>Spell</span><span>Casts</span><span>Each</span><span>Share</span></div>' + u.list.map((o) => '<div class="hm-ur"><span>' + spell(o.id, o.spell) + '</span><span>' + o.n + '</span><span title="mana per cast, of their whole mana bar">' + (100 * o.c / o.n).toFixed(1) + '%</span><span><i style="width:' + Math.round(100 * o.c / u.list[0].c) + '%;background:' + x.p.color + '"></i><b>' + sh(o) + '</b></span></div>').join('') +
+      '<div class="sub hm-un">In all they spent ' + (u.tot).toFixed(1) + ' full bars of mana (it comes back as they regenerate, and from potions). "Each" is one cast\'s cost, as a share of their whole bar.</div></div></details>'; };
   const list = '<div class="hm-rows">' + listed.map((x) => '<div class="hm-r"><div class="hm-w">' + avatar(x.p) + '<span class="hm-wn"><span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span><span class="sub">' + esc(x.p.specName || '') + '</span></span></div>' +
-    '<div class="hm-t">' + (manaOk ? '<span class="hm-p ' + x.v.st + '">' + x.v.pill + '</span>' + esc(x.v.txt) : '') + '</div><div class="hm-n"><b>' + C(x.hps) + '</b> healing/s<br><span class="sub">' + pct(x.over) + ' overheal</span></div></div>').join('') + '</div>';
+    '<div class="hm-t">' + (manaOk ? '<span class="hm-p ' + x.v.st + '">' + x.v.pill + '</span>' + esc(x.v.txt) : '') + useH(x) + '</div><div class="hm-n"><b>' + C(x.hps) + '</b> healing/s<br><span class="sub">' + pct(x.over) + ' overheal</span></div></div>').join('') + '</div>';
   return '<div class="panel pf-chart pf-mana">' + (manaOk ? manaChart(r, rows, w0, w1, boss) + sumH : '<h3 class="nh"><span class="pfc-ttl">Healer mana</span></h3><p class="muted">' + (r.item.wcl ? 'No mana came with this pull.' : 'No mana was logged for this pull (turn on advanced combat logging).') + '</p>') + list +
     '<details class="howit"><summary>How it works</summary><div>Mana comes from each healer\'s casts, every 2 seconds at most, up to the wipe filter. The aim is for mana to come down about as fast as the boss\'s health (the grey line) and end as low as it can. <b>Ran low</b>: under 25% for 8 seconds or more. <b>Spent fast</b>: under 40% while the boss still had 25 points more health. <b>Mana to spare</b>: 30 points more mana than the boss had health at the end, so there was room to heal harder. Overhealing is shown, never counted.</div></details></div>';
 }
@@ -12468,21 +12655,47 @@ function manaChart(r, rows, w0, w1, boss) {
   s += '<rect x="' + L + '" y="' + Y(0.25).toFixed(1) + '" width="' + iw + '" height="' + (Y(0) - Y(0.25)).toFixed(1) + '" class="mp-lo"/>';
   for (const f of [0.25, 0.5, 1]) s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + Y(f).toFixed(1) + '" y2="' + Y(f).toFixed(1) + '" class="pfc-g' + (f === 0.25 ? ' lo' : '') + '"/><text x="' + (L - 5) + '" y="' + (Y(f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + Math.round(100 * f) + '%</text>';
   s += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + (Tp + ih) + '" y2="' + (Tp + ih) + '" class="pfc-ax"/>';
-  const tags = [];
-  if (boss) { const bp = boss.filter(([t]) => t >= w0 && t <= w1); if (bp.length >= 2) { s += '<polyline points="' + bp.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="mp-boss"><title>Boss health</title></polyline>'; tags.push({ y: Y(bp[bp.length - 1][1]), html: 'Boss', cls: 'mp-bt' }); } }
+  // (each line is its own group: clicking a name at the right hides or shows it; the hover readout reads `ser`)
+  const tags = [], ser = [], off = (n) => (S.manaHide && S.manaHide.has(n) ? ' off' : '');
+  if (boss) { const bp = boss.filter(([t]) => t >= w0 && t <= w1); if (bp.length >= 2) { s += '<g class="mp-s' + off('__boss') + '" data-n="__boss"><polyline points="' + bp.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="mp-boss"/></g>'; tags.push({ y: Y(bp[bp.length - 1][1]), html: 'Boss', cls: 'mp-bt', n: '__boss' }); ser.push({ n: '__boss', l: 'Boss health', c: '#8b93a3', p: bp.map(([t, v]) => [t, +v.toFixed(3)]) }); } }
   for (const x of rows) { const pts = x.ms.filter(([t]) => t >= w0 && t <= w1); if (pts.length < 2) continue;
-    s += '<polyline points="' + pts.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="pfc-l" style="stroke:' + x.p.color + (x.dash ? ';stroke-dasharray:6 4' : '') + '"><title>' + esc(x.p.name) + '</title></polyline>';
-    tags.push({ y: Y(pts[pts.length - 1][1]), html: esc(x.p.name), col: x.p.color });
+    s += '<g class="mp-s' + off(x.p.name) + '" data-n="' + esc(x.p.name) + '"><polyline points="' + pts.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" class="pfc-l" style="stroke:' + x.p.color + (x.dash ? ';stroke-dasharray:6 4' : '') + '"/>';
+    tags.push({ y: Y(pts[pts.length - 1][1]), html: esc(x.p.name), col: x.p.color, n: x.p.name }); ser.push({ n: x.p.name, l: x.p.name, c: x.p.color, p: pts.map(([t, v]) => [t, +v.toFixed(3)]) });
     for (const u of x.pots) { const near = pts.reduce((m, y) => (Math.abs(y[0] - u.t) < Math.abs(m[0] - u.t) ? y : m)); s += '<circle cx="' + X(u.t).toFixed(1) + '" cy="' + Y(near[1]).toFixed(1) + '" r="3.5" class="mp-pot" style="stroke:' + x.p.color + '"><title>' + esc(x.p.name + ': mana potion at ' + T(u.t)) + '</title></circle>'; }
-    for (const d of r.deaths) if (d.guid === x.p.guid && d.t >= w0 && d.t <= w1) { const v = (pts.filter(([t]) => t <= d.t).pop() || pts[0])[1]; s += '<text x="' + X(d.t).toFixed(1) + '" y="' + (Y(v) + 4).toFixed(1) + '" class="mp-d" text-anchor="middle" style="fill:' + x.p.color + '">✕<title>' + esc(x.p.name + ' died at ' + T(d.t)) + '</title></text>'; } }
-  // (the names at the right end of the lines, pushed apart so they never overlap)
+    for (const d of r.deaths) if (d.guid === x.p.guid && d.t >= w0 && d.t <= w1) { const v = (pts.filter(([t]) => t <= d.t).pop() || pts[0])[1]; s += '<text x="' + X(d.t).toFixed(1) + '" y="' + (Y(v) + 4).toFixed(1) + '" class="mp-d" text-anchor="middle" style="fill:' + x.p.color + '">✕<title>' + esc(x.p.name + ' died at ' + T(d.t)) + '</title></text>'; }
+    s += '</g>'; }
+  // (the names at the right end of the lines, pushed apart so they never overlap; each one hides or shows its line)
   const gap = narrow ? 12 : 13; tags.sort((a, b) => a.y - b.y);
   for (let i = 1; i < tags.length; i++) tags[i].y = Math.max(tags[i].y, tags[i - 1].y + gap);
   const over = tags.length ? tags[tags.length - 1].y - (Tp + ih) : 0; if (over > 0) for (const g of tags) g.y -= over;
-  for (const g of tags) s += '<text x="' + (L + iw + 6) + '" y="' + (g.y + 4).toFixed(1) + '" class="mp-nm' + (g.cls ? ' ' + g.cls : '') + '"' + (g.col ? ' style="fill:' + g.col + '"' : '') + '>' + g.html + '</text>';
+  for (const g of tags) s += '<text x="' + (L + iw + 6) + '" y="' + (g.y + 4).toFixed(1) + '" class="mp-nm mp-tg' + (g.cls ? ' ' + g.cls : '') + off(g.n) + '" data-n="' + esc(g.n) + '"' + (g.col ? ' style="fill:' + g.col + '"' : '') + '><title>Click to hide or show this line</title>' + g.html + '</text>';
   const step = span > 400 || narrow ? 60 : 30; for (let t = Math.ceil(w0 / step) * step; t <= w1; t += step) s += '<text x="' + X(t).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x" text-anchor="middle">' + T(t) + '</text>';
-  s += '</svg>';
-  return '<h3 class="nh"><span class="pfc-ttl">Healer mana</span><small>' + (boss ? 'beside the boss\'s health (grey) · ' : '') + '○ mana potion · ✕ death · shaded: under 25%</small></h3>' + s;
+  s += '<line class="pfx-hv" x1="0" x2="0" y1="' + Tp + '" y2="' + (Tp + ih) + '" style="display:none"/></svg>';
+  return '<h3 class="nh"><span class="pfc-ttl">Healer mana</span><small>' + (boss ? 'beside the boss\'s health (grey) · ' : '') + '○ mana potion · ✕ death · shaded: under 25% · hover for numbers, click a name to hide it</small></h3>' +
+    '<div class="pfx" data-hx="' + esc(JSON.stringify({ L, iw, W, w0, span, ser, pct: true })) + '">' + s + '<div class="pfc-tip" hidden></div></div>';
+}
+// A chart's hover readout (the mana and target charts): a line at the pointer, and in a box the time and every shown
+// line's value there, biggest first. A mouse shows it on hover; a finger taps or drags along the chart.
+function bindHoverCharts() {
+  $$('.pfx[data-hx]').forEach((w) => {
+    const o = JSON.parse(w.dataset.hx), svg = w.querySelector('svg'), tip = w.querySelector('.pfc-tip'), hv = svg.querySelector('.pfx-hv');
+    const at = (p, t) => { let v = null; for (const q of p) { if (q[0] > t + 1) break; v = q[1]; } return v; };
+    const fmt = (v) => (o.pct ? Math.round(100 * v) + '%' : C(v) + '/s');
+    const clear = () => { tip.hidden = true; if (hv) hv.style.display = 'none'; };
+    const show = (e) => { const b = svg.getBoundingClientRect(), x = (e.clientX - b.left) * (o.W / b.width), t = o.w0 + ((x - o.L) / o.iw) * o.span;
+      if (x < o.L || x > o.L + o.iw) { clear(); return; }
+      const hid = new Set([...w.querySelectorAll('.mp-s.off, .tg-a.off')].map((g) => g.dataset.n));
+      const vals = o.ser.filter((q) => !hid.has(q.n)).map((q) => [q, at(q.p, t)]).filter(([, v]) => v != null && (o.pct || v > 0)).sort((a, b) => b[1] - a[1]);
+      if (!vals.length) { clear(); return; }
+      if (hv) { hv.setAttribute('x1', x); hv.setAttribute('x2', x); hv.style.display = ''; }
+      tip.innerHTML = '<div><b>' + T(Math.max(0, t)) + '</b></div>' + vals.map(([q, v]) => '<div><i class="lg-sq" style="background:' + q.c + '"></i> ' + esc(q.l) + ' <b>' + fmt(v) + '</b></div>').join('');
+      tip.hidden = false; const px = e.clientX - b.left; tip.style.left = Math.max(0, Math.min(b.width - tip.offsetWidth, px + (px > b.width - 220 ? -tip.offsetWidth - 12 : 12))) + 'px'; };
+    svg.onpointermove = show; svg.onpointerdown = show; svg.onpointerleave = (e) => { if (e.pointerType === 'mouse') clear(); };
+    // (a name or legend entry hides or shows its line, remembered while you look around)
+    w.parentElement.querySelectorAll('[data-n].mp-tg, .pfc-lg [data-tn]').forEach((el) => (el.onclick = (e) => { e.stopPropagation();
+      const n = el.dataset.n || el.dataset.tn, key = o.pct ? 'manaHide' : 'tgtHide'; S[key] = S[key] || new Set(); if (S[key].has(n)) S[key].delete(n); else S[key].add(n);
+      const on = !S[key].has(n); w.parentElement.querySelectorAll('[data-n="' + CSS.escape(n) + '"], [data-tn="' + CSS.escape(n) + '"]').forEach((x) => x.classList.toggle('off', !on)); }));
+  });
 }
 
 // The picked player's casts under the timeline, on the same time axis: their big cooldowns (defensives on Damage taken)
@@ -12541,6 +12754,11 @@ function bindPerf() {
   $$('[data-wi]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfWin = +b.dataset.wi; perf(); }));
   $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n], .pf-row.pf-wr[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
     el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
+  // (the main chart's legend: each entry hides or shows its marks; the mana and target charts' readouts and switches)
+  $$('.pf-main .pf-hk').forEach((el) => { const go = () => { const k = el.dataset.hk; S.pfcHide = S.pfcHide || new Set(); if (S.pfcHide.has(k)) S.pfcHide.delete(k); else S.pfcHide.add(k);
+    el.classList.toggle('off', S.pfcHide.has(k)); el.closest('.pf-main').classList.toggle('hide-' + k, S.pfcHide.has(k)); };
+    el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
+  bindHoverCharts();
   // the chart's readout: a line and a dot at the pointer, with the time, the value, the phase and what happened within 2
   // seconds. A mouse shows it on hover, and a click keeps it there (click again to move it, anywhere else to let go); a
   // finger taps or drags along the chart, and it stays until a tap somewhere else.
@@ -12552,7 +12770,7 @@ function bindPerf() {
   const clear = () => { pinned = false; tip.hidden = true; tip.classList.remove('pin'); hv.style.display = 'none'; hd.style.display = 'none'; };
   const pin = () => { pinned = true; tip.classList.add('pin'); };
   const show = (e) => { const b = svg.getBoundingClientRect(), x = (e.clientX - b.left) * (+svg.dataset.w / b.width), t = ((x - L) / iw) * dur; if (t < 0 || t > dur || !sm.length) { if (!pinned) clear(); return; }
-    const i = Math.max(0, Math.min(sm.length - 1, Math.floor(t))), y = tp + ih - (sm[i] / mx) * ih, near = ev.filter(([u]) => Math.abs(u - t) <= 2).slice(0, 4), phn = (phs.filter(([a]) => a <= t).pop() || [])[1];
+    const hid = S.pfcHide || new Set(), i = Math.max(0, Math.min(sm.length - 1, Math.floor(t))), y = tp + ih - (sm[i] / mx) * ih, near = ev.filter(([u, , k]) => Math.abs(u - t) <= 2 && !hid.has(k)).slice(0, 4), phn = (phs.filter(([a]) => a <= t).pop() || [])[1];
     hv.setAttribute('x1', x); hv.setAttribute('x2', x); hv.style.display = ''; hd.setAttribute('cx', x); hd.setAttribute('cy', y); hd.style.display = i < sm.length ? '' : 'none';
     tip.innerHTML = '<div><b>' + T(t) + '</b>' + (phn ? ' <span class="sub">' + esc(phn) + '</span>' : '') + '</div><div>' + C(sm[i]) + ' per second</div>' + near.map(([, txt, k]) => '<div class="pfc-te ' + k + '">' + ICO[k] + ' ' + esc(txt) + '</div>').join('');
     tip.hidden = false; const px = e.clientX - b.left; tip.style.left = Math.max(0, Math.min(b.width - tip.offsetWidth, px + (px > b.width - 200 ? -tip.offsetWidth - 12 : 12))) + 'px'; };
@@ -13691,6 +13909,7 @@ const HICO = {
   file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7.5l4 4v13h-11.5z"/><path d="M14 3.5v4h4M9.5 12.5h5M9.5 16h5"/></svg>',
   wcl: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10.5M7.5 10 12 14.5l4.5-4.5M5 19.5h14"/></svg>' };
 function home() {
+  progLit(false);
   if (LIVE.on) setLive(false);
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
@@ -13725,8 +13944,10 @@ function home() {
         '<div class="fp-tabs">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '" aria-pressed="' + (i ? 'false' : 'true') + '"' + (i ? '' : ' class="on"') + '>' + t + '</button>').join('') + '</div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
         '<div class="fp-note">Example data. Click a tab to look around.</div></div></section></div>' +
+    homeTeams() +
     '<section class="fp-ways"><h2>Four ways to look at a night</h2><div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div></section>' +
     '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+  bindHomeTeams(); homeTeamsSoon();
   // open a report: with a saved login (or the hosted site) straight away; otherwise the login form, link filled in
   const go = async (inputId, msgId, live) => {
     const raw = $('#' + inputId).value, link = WCL.parseLink(raw), msg = $('#' + msgId);
@@ -13762,6 +13983,19 @@ function home() {
 // usually installed (Chrome keeps every page out of Program Files: "can't open files in this folder because it contains
 // system files"), so the site has no live-file option; a finished log can still be opened or dropped on the page (a
 // plain file pick isn't blocked).
+// The start screen's "Your progress": a card per team or character (bosses killed on each difficulty they pulled, and
+// their last night), each opening its Progress; with none yet, one card that invites adding your team
+function homeTeams() {
+  const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
+  return '<section class="home-teams" id="homeTeams"><div class="ht-h"><h2>Your progress</h2>' + (gl.length ? '<button class="linkbtn" type="button" data-g="+">Add a team or character</button>' : '') + '</div><div class="ht-row">' +
+    (gl.length ? gl.map((g) => teamCard(g, all, order, false)).join('') : '<button class="ht-card ht-add" type="button" data-g="+"><span class="ht-n">Add your team</span><span class="ht-k">Paste your team, guild or character page from Warcraft Logs: every raid night of the tier, boss by boss.</span></button>') + '</div></section>';
+}
+// (a team's card opens its page; "add" opens the teams page, ready to paste a link)
+function bindHomeTeams() {
+  $$('#homeTeams [data-g]').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); }));
+}
+// (the cards fill in once the saved pulls have loaded)
+const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); if (s) { s.outerHTML = homeTeams(); bindHomeTeams(); } groupsBackfill(); });
 function homeHosted() {
   const fp = fpParts();
   const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
@@ -13779,7 +14013,9 @@ function homeHosted() {
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
+    homeTeams() +
     '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+  bindHomeTeams(); homeTeamsSoon();
   // (either box takes any report link: the live one follows it from the start, the other turns live on by itself if the
   // report is still being logged)
   const go = async (k, live) => {
@@ -13808,11 +14044,13 @@ const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder: that\'
 const DIFF_ORDER = [[16, 'Mythic'], [15, 'Heroic'], [14, 'Normal'], [17, 'LFR']];
 // (the pull you came from, for the page's "Back to" link: Progress has no tab bar)
 let PROG_BACK = null;
-function progressPage(msg) {
+// (view: a team's gid to open its page, '*' for everything saved; left out, the teams page)
+function progressPage(msg, view) {
+  progLit(true); S.progView = view == null ? null : view; S.pgRename = S.pgDel = false;
   if (S.item) PROG_BACK = S.item;
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
-  HIST.load().then(histTidy).then(() => renderProgress(msg));
+  HIST.load().then(histTidy).then(() => { renderProgress(msg); groupsBackfill(); });
 }
 const PROG_DIFF_KEY = 'wla-prog-diff';
 const durH = (s) => (s >= 3600 ? Math.floor(s / 3600) + 'h ' + String(Math.round((s % 3600) / 60)).padStart(2, '0') + 'm' : T(s)); // (time on a boss: "2h 05m")
@@ -13852,8 +14090,73 @@ function progChart(list, boss) {
   return s + '</svg>';
 }
 progChart.n = 0;
+// Progress opens on a page of your teams: a card each (and your character), one for everything saved on this PC, and one to
+// add a team; picking one opens its own page (S.progView: its gid, '*' for everything, null for the teams page)
+const lastTxt = (x) => (x.last ? 'checked ' + esc(nightLabel(x.last + 6 * 3600e3)) + ', ' + new Date(x.last).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' · ' + plural(x.reports || 0, 'report') + ' this tier' : 'not imported yet');
+// a team's banner: a crest with its initials, in a colour that's always the same for that team; a character's: a banner in
+// their class colour with the class icon; everything saved: a plain one
+const CREST_COL = ['#b8413a', '#2f73c9', '#2e9b5a', '#8a4fc4', '#c56a1c', '#1f9589', '#a88a1e', '#b8336f'];
+function banner(g) {
+  const cls = g && g.kind === 'char' && g.cls && E.CLASSES[g.cls], col = !g ? '#5c6373' : cls ? cls[1] : CREST_COL[[...g.name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % CREST_COL.length];
+  const shape = g && g.kind === 'char' ? 'M5 2h42v50l-21 10-21-10Z' : 'M4 3h44v26c0 16-10 26-22 32C14 55 4 45 4 29Z';
+  const ini = g ? gName(g).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => [...w][0].toUpperCase()).join('') : '';
+  const inner = cls ? '<img class="hb-i" src="' + whIcon('classicon_' + cls[2]) + '" alt="" onerror="this.remove()">' : g ? '<span class="hb-t">' + esc(ini) + '</span>' : '<span class="hb-t">∑</span>';
+  return '<span class="ht-ban" style="--bc:' + col + '" aria-hidden="true"><svg viewBox="0 0 52 64"><path d="' + shape + '"/></svg>' + inner + '</span>';
+}
+// a team's card (the start screen and the teams page): bosses killed on each difficulty it pulled, its last night
+function teamCard(g, all, order, big) {
+  const mine = all.filter(groupFilter(g)), last = mine.reduce((m, v) => Math.max(m, v.at), 0), nights = new Set(mine.map((v) => nightOf(v.at))).size;
+  const diffs = DIFF_ORDER.filter(([d]) => mine.some((v) => v.diffId === d)).slice(0, big ? 4 : 2).map(([d, nm]) => '<span><b>' + order.filter((b) => mine.some((v) => v.diffId === d && v.boss === b && v.kill)).length + '/' + order.length + '</b> ' + nm + '</span>').join('');
+  const cls = g && g.kind === 'char' && g.cls && E.CLASSES[g.cls];
+  return '<button class="ht-card hb' + (big ? ' big' : '') + '" type="button" data-g="' + esc(g ? g.gid : '*') + '">' + banner(g) + '<span class="ht-b"><span class="ht-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</span><span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
+    '<span class="ht-d">' + (diffs || '<span>not imported yet</span>') + '</span><span class="ht-l">' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : g ? 'open to import its nights' : 'nothing saved yet') + '</span></span></button>';
+}
+// (a character added before its class was kept: looked up once, then its card is drawn again)
+async function groupsBackfill() {
+  // (clsV 2: looked up with Warcraft Logs' class numbers read the right way; an older lookup is done again)
+  const need = groups().filter((g) => g.kind === 'char' && g.clsV !== 2); if (!need.length) return;
+  let creds = null; try { creds = await wclCreds(); } catch (e) { return; }
+  for (const g of need) { let cls = null; try { cls = (await WCL.charInfo(creds, { id: g.id })).cls; } catch (e) { /* (tried again next visit) */ continue; } const x = groups().find((q) => q.gid === g.gid); if (x) { x.cls = cls; x.clsV = 2; groupPut(x); } }
+  if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } else if ($('#main .pg-hub')) renderProgHub(); else if ($('#main .home.prog')) renderProgress();
+}
+function renderProgHub(msg, msgErr) {
+  const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
+  const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
+  // (the add card says exactly which link to paste: a team's or guild's page, or a character's, with what each looks like)
+  const add = '<div class="ht-card ht-add big pg-addc"><span class="ht-n">Add a team or character</span><span class="ht-k">Paste the address of a page on Warcraft Logs: your team or guild brings in its raid nights; your own character brings in every raid you were in, with any group.</span>' +
+    '<div class="fp-in"><input id="pgTeam" placeholder="Paste a team, guild or character page link" autocomplete="off"><button class="btn' + (gl.length ? '' : ' primary') + '" id="pgTeamGo" type="button">Add</button></div><div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>' +
+    '<div class="pg-which"><b>Which link?</b><ol>' +
+      '<li><b>Your team or guild:</b> on <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/id/772787</code> or <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.</li>' +
+      '<li><b>Your character:</b> search your character\'s name there, open it, and copy that address. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.</li>' +
+      '<li><b>Not a report:</b> a link with <code>/reports/</code> in it is one night. Open those from the start screen instead.</li></ol></div></div>';
+  $('#main').innerHTML = '<div class="home prog">' + back + '<div class="pg-top"><div><h1>Progress</h1><div class="sub">Pick a team or your character: every boss and night of The Venomous Abyss.</div></div></div>' +
+    '<div class="pg-hub">' + gl.map((g) => teamCard(g, all, order, true)).join('') + (all.length ? teamCard(null, all, order, true) : '') + add + '</div></div>';
+  $$('#main .pg-hub button.ht-card').forEach((b) => (b.onclick = () => { S.progView = b.dataset.g; if (b.dataset.g !== '*') store.set(GROUP_CUR, b.dataset.g); renderProgress(); window.scrollTo(0, 0); }));
+  const say = (t, err) => { const m = $('#pgMsg'); if (m) { m.textContent = t; m.classList.toggle('err', !!err); } };
+  $('#pgTeamGo').onclick = async () => {
+    try { say('Finding it on Warcraft Logs…'); const { g: ng, already } = await groupAdd($('#pgTeam').value);
+      S.progView = ng.gid; if (already) { renderProgress(gName(ng) + ' is already on your list.'); return; }
+      renderProgress('Added ' + ng.name + '. Importing its nights…'); progRun(ng); } catch (e) { say(e.message, true); }
+  };
+  $('#pgTeam').onkeydown = (e) => { if (e.key === 'Enter') $('#pgTeamGo').click(); };
+  if (S.pgFocusAdd || !gl.length) { S.pgFocusAdd = false; $('#pgTeam').focus(); }
+  if ($('#pgBack')) $('#pgBack').onclick = () => select(PROG_BACK);
+}
+// bringing in a team's nights: the steps show on its page; when it ends, the page you're on is redrawn only if it's that
+// team's page or the teams page (an import keeps going if you leave)
+async function progRun(g) {
+  const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
+  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); };
+  $$('#pgImport').forEach((b) => { b.disabled = true; });
+  try { const res = await teamImport(g, say); done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : gName(g) + ' is up to date: no new reports.') +
+    (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy): they\'ll be tried again next time.' : '')); }
+  catch (e) { done(e.message, true); }
+}
 function renderProgress(msg, msgErr) {
-  const tw = teamW(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
+  // (the teams page, unless a team (or everything saved) is picked)
+  const gl = groups(), g = S.progView && S.progView !== '*' ? gl.find((x) => x.gid === S.progView) : null;
+  if (S.progView == null || (S.progView !== '*' && !g)) { S.progView = null; renderProgHub(msg, msgErr); return; }
+  const inG = groupFilter(g), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss) && inG(v));
   const diffs = DIFF_ORDER.filter(([d]) => all.some((v) => v.diffId === d));
   let cur = +(store.get(PROG_DIFF_KEY) || 0); if (!diffs.some(([d]) => d === cur)) cur = diffs.length ? diffs[0][0] : 16;
   const qc = (v) => (v.kill ? '#ff8000' : v.left != null ? (PULL_Q.find(([lo]) => 100 - v.left >= lo) || [0, '#9d9d9d'])[1] : 'var(--line2)');
@@ -13892,33 +14195,36 @@ function renderProgress(msg, msgErr) {
       '<div class="pc-pick"><label class="sub">Night<select class="pc-sel">' + opts + '</select></label><button class="btn" type="button" data-act="open">Open</button><button class="btn" type="button" data-act="save">Save in full</button></div><div class="pc-msg"></div></article>';
   };
   const diffName = (DIFF_ORDER.find(([d]) => d === cur) || [0, ''])[1], list = all.filter((v) => v.diffId === cur), nN = new Set(list.map((v) => nightOf(v.at))).size;
-  const team = !tw ? '<section class="pg-team"><div><b>Your team on Warcraft Logs</b><div class="sub">Paste its page link to bring every raid night of this tier into your progress, also nights nobody logged on this PC.</div></div>' +
-      '<div class="fp-in"><input id="pgTeam" placeholder="https://www.warcraftlogs.com/guild/id/…" autocomplete="off"><button class="btn primary" id="pgTeamGo" type="button">Add team</button></div><div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div></section>'
-    : '<section class="pg-team"><div><b>' + esc(tw.name) + '</b> <span class="sub">' + esc(tw.server || '') + ' · ' + (tw.team ? 'team' : 'guild') + ' on Warcraft Logs</span>' +
-      '<div class="sub">' + (tw.last ? 'Last checked ' + esc(nightLabel(tw.last + 6 * 3600e3)) + ', ' + new Date(tw.last).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' · ' + plural(tw.reports || 0, 'report') + ' this tier (Alt Stuff runs skipped)' : 'Not imported yet') + '</div></div>' +
-      '<button class="btn primary" id="pgImport" type="button">' + (tw.last ? 'Import new nights' : 'Import every night') + '</button><button class="linkbtn" id="pgTeamChange" type="button">Change team</button><div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div></section>';
+  // the team's bar: when it was last checked, bring in new nights, rename it, or remove it (that asks first and says how many
+  // pulls go with it)
+  const pgMsg = '<div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>';
+  const only = g ? groupOnly(g) : 0;
+  const team = !g ? '' : '<section class="pg-team pg-gbar"><div class="pg-gsel">' +
+      (S.pgRename ? '<div class="pg-mn"><input class="pg-ren" id="pgRenIn" value="' + esc(gName(g)) + '" aria-label="Name" maxlength="40"><button class="btn" id="pgRenOk" type="button">Save</button><button class="linkbtn" id="pgRenNo" type="button">Cancel</button></div>'
+        : '<div class="sub">' + (g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][0] + ' · your character' : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') + (g.label && g.label !== g.name ? ' · ' + esc(g.name) + ' on Warcraft Logs' : '') + '</div><div class="sub">' + lastTxt(g) + '</div>') + '</div>' +
+      (S.pgDel ? '<div class="pg-ma del"><span>Remove ' + esc(gName(g)) + (only ? ' and the ' + plural(only, 'pull') + ' only it brought in' : '') + '? This can\'t be undone.</span><button class="btn danger" id="pgDelOk" type="button">Remove</button><button class="linkbtn" id="pgDelNo" type="button">Keep</button></div>'
+        : '<div class="pg-gact"><button class="btn primary" id="pgImport" type="button">' + (g.last ? 'Check for new nights' : 'Import every night') + '</button><button class="btn" id="pgRen" type="button">Rename</button><button class="btn danger-o" id="pgDel" type="button">Remove</button></div>') +
+      pgMsg + '</section>';
   const sw = diffs.length > 1 ? '<div class="pc-diffs" role="group" aria-label="Difficulty">' + diffs.map(([d, nm]) => '<button type="button" data-d="' + d + '" aria-pressed="' + (d === cur) + '"' + (d === cur ? ' class="on"' : '') + '>' + nm + '<span>' + killedOn(d) + '/' + order.length + '</span></button>').join('') + '</div>' : '';
   // (bosses not pulled on this difficulty yet: one small row under the cards, not empty cards)
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
   const legend = pullLegend();
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
-  $('#main').innerHTML = '<div class="home prog">' + back + '<div class="pg-top"><div><h1>Progress</h1><div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div>' + sw + '</div>' + team +
+  $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
+    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + '</h1><div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div></div></div>' + sw + '</div>' + team + (g ? '' : pgMsg) +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
-      : '<p class="muted">No pulls saved yet. Import your team above, or open a log of your raid.</p>') + '</div>';
-  const say = (t, err) => { const m = $('#pgMsg'); if (m) { m.textContent = t; m.classList.toggle('err', !!err); } };
-  const run = async () => {
-    const b = $('#pgImport'); if (b) b.disabled = true;
-    try { const res = await teamImport((t) => say(t)); renderProgress(res.reports ? 'Imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : 'Up to date: no new reports.'); }
-    catch (e) { renderProgress(e.message, true); }
-  };
-  if ($('#pgTeamGo')) $('#pgTeamGo').onclick = async () => {
-    const link = WCL.parseTeamLink($('#pgTeam').value); if (!link) { say('That doesn\'t look like a Warcraft Logs team or guild link.', true); return; }
-    try { say('Finding the team…'); const info = await WCL.teamInfo(await wclCreds(), link); teamWSet({ ...info, done: {} }); renderProgress('Added ' + info.name + '. Importing its nights…'); run(); } catch (e) { say(e.message, true); }
-  };
-  if ($('#pgTeam')) $('#pgTeam').onkeydown = (e) => { if (e.key === 'Enter') $('#pgTeamGo').click(); };
-  if ($('#pgImport')) $('#pgImport').onclick = run;
-  if ($('#pgTeamChange')) $('#pgTeamChange').onclick = () => { teamWSet(null); renderProgress(); };
+      : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet: click ' + (g.last ? 'Check for new nights' : 'Import every night') + ' above.' : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
+  $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = false; renderProgress(); window.scrollTo(0, 0); };
+  if ($('#pgImport')) $('#pgImport').onclick = () => progRun(g);
+  // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)
+  if ($('#pgRen')) $('#pgRen').onclick = () => { S.pgRename = true; S.pgDel = false; renderProgress(); const i = $('#pgRenIn'); if (i) { i.focus(); i.select(); } };
+  if ($('#pgRenOk')) $('#pgRenOk').onclick = () => { const nv = $('#pgRenIn').value.trim(); g.label = nv && nv !== g.name ? nv : undefined; groupPut(g); S.pgRename = false; renderProgress(); };
+  if ($('#pgRenNo')) $('#pgRenNo').onclick = () => { S.pgRename = false; renderProgress(); };
+  if ($('#pgRenIn')) $('#pgRenIn').onkeydown = (e) => { if (e.key === 'Enter') $('#pgRenOk').click(); else if (e.key === 'Escape') $('#pgRenNo').click(); };
+  if ($('#pgDel')) $('#pgDel').onclick = () => { S.pgDel = true; S.pgRename = false; renderProgress(); };
+  if ($('#pgDelNo')) $('#pgDelNo').onclick = () => { S.pgDel = false; renderProgress(); };
+  if ($('#pgDelOk')) $('#pgDelOk').onclick = async (ev) => { ev.currentTarget.disabled = true; const n = await groupRemove(g); S.pgDel = false; S.progView = null; renderProgress('Removed ' + gName(g) + (n ? ' and ' + plural(n, 'saved pull') : '') + '.'); };
   if ($('#pgBack')) $('#pgBack').onclick = () => select(PROG_BACK);
   $('#main').querySelectorAll('.pc-diffs button').forEach((b) => { b.onclick = () => { store.set(PROG_DIFF_KEY, b.dataset.d); renderProgress(); }; });
   // a card's night menu: open that night's report at the boss, or save every pull of the boss that night on this PC
@@ -13939,6 +14245,7 @@ function renderProgress(msg, msgErr) {
 }
 $('#brandHome').onclick = () => home();
 if ($('#tbProg')) $('#tbProg').onclick = () => progressPage();
+if ($('#tbProgBtn')) $('#tbProgBtn').onclick = () => progressPage();
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
 if (WCL.HOSTED) {
   $('#wclBtn').textContent = 'Paste a link';

@@ -3,6 +3,8 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- **Goal (your note): the Performance tab is meant to replace Warcraft Logs** for the raid. Everything people check on Warcraft
+  Logs (damage, healing, damage taken, casts, buffs, deaths, parses) should be there and as easy to explore.
 - [x] **High priority: set up GitHub before anything else** (round 102: private repo Mikopeeko/Debrief, a checkpoint pushed after every round).
 - [x] Entombed Sentinels module (round 95).
 - [x] Sszorak module (round 99).
@@ -12,7 +14,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Ula'tek: a damage graph on the Venomous Heart** (round 113).
 - [x] **Damage windows, clearer** and **Big cooldowns, simpler**: mockup shown; you'd rather keep the Performance tab as it is now.
 - [x] **Polish Twin Fangs, The Coiled Altar and Ula'tek** on Mythic and Heroic (round 116).
-- [ ] **Teams**: remove a team, and a dropdown for more than one (your note). Design in the morning review.
+- [x] **Teams**: remove a team, and a menu for more than one (round 119).
 - [ ] **Remove the Healers view?** (asked; waiting on your yes or no).
 - [x] **Big review of the whole app** for launch (your note): done, with 7 mockups. Read it at
   https://claude.ai/artifact/CyCxbDM5Mj9KyTWc2aMjFE (a copy is in notes/Launch review.html). Nothing in it is built yet: pick what you want.
@@ -25,9 +27,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Survivability view in Performance** (round 118).
 - [x] **Healers view, simpler**, with the boss's health beside the mana (round 118).
 - [x] **The Parse column** (round 118).
-- [ ] **Progress page** (your note): easier to find; several teams, edit and remove a team, and your own Warcraft Logs page.
-  Plan it together first.
+- [x] **Progress page**: easier to find, several teams, edit and remove, your own Warcraft Logs page (round 119).
 - [ ] **A better web address** for the site (your question).
+- [ ] **Top teams from Warcraft Logs** (your note): pick from the top-ranked teams. My take: keep them apart from your own
+  teams (a "Compare" option: how many pulls and nights a top guild needed per boss, next to yours). Design to show you first.
+- [x] **Healer mana, more**: what each healer spent the most mana on (round 119).
+- [x] **Performance charts you can explore**: hover readouts and click-to-hide (round 119). More charts can follow.
+- [ ] **Customize your Progress page** (your note): let people pick their own background banner, character avatar and so on.
 - [ ] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
   to the game's name, so people know which mechanic it is.
 - [ ] **A first-time guided tour** (your note): a tutorial that walks a new user through the app, with nice animations showing how
@@ -35,6 +41,30 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 119: teams and your own page, mana spent, charts you can explore
+- [x] **Progress is easy to find** (your choice): a Progress button in the top bar on every page, and "Your progress" cards on the
+  start screen (one per team or character: bosses killed on each difficulty, last night).
+- [x] **Several teams** (your note): add any number of Warcraft Logs teams, guilds and characters. "Progress for" picks whose
+  progress you see (or everything saved). Manage teams: rename, check for new nights, remove (it asks first and says how many
+  pulls go with it; your choice: removing deletes the pulls only that team brought in).
+- [x] **Your own Warcraft Logs page**: paste your character link and it brings in every raid you were in, with any group
+  (this tier's raid reports and nights a guild logged; Warcraft Logs lists a character's 500 most recent reports). A night
+  another of your teams already brought in isn't downloaded again; reports are read three at a time; one that won't load is
+  skipped and tried again next time.
+- [x] **Healer mana: what it went on** (your note): each healer's top spells by mana spent, and the full list on open (casts,
+  cost per cast, share).
+- [x] **Charts you can explore** (your note): the mana chart and the damage-by-target chart show every line's number on hover;
+  click a healer's name or a target to hide or show it; on the main chart, click boss mechanics, Bloodlust, deaths or their
+  cooldowns in the legend to hide or show those marks.
+- [x] Fixed on the way: an import that finished while you were on another page pulled you back to Progress.
+- [x] **Progress in two steps** (your note): it opens on your teams (a card each, your character, everything saved, and Add);
+  picking one opens its own page, with Check for new nights, Rename and Remove there. The start screen cards open a team's
+  page straight away.
+- [x] **Banners and class colours** (your note): a team gets a crest with its initials; your character a banner in your class
+  colour with the class icon, and your name in that colour.
+- [x] **Which link?** (your note): the Add card says step by step which Warcraft Logs page to copy, with examples; a report
+  link pasted there says it's one night and where to open it.
 
 ## 2026-10-18, round 118: Survivability, healer mana, parses
 - [x] **The desktop layout is live** (your OK): round 117 merged and on the website.

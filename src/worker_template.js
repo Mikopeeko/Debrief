@@ -12,6 +12,8 @@ const TEAM_INFO_Q = __TEAM_INFO_Q__;
 const TEAM_REPORTS_Q = __TEAM_REPORTS_Q__;
 const NIGHT_Q = __NIGHT_Q__;
 const DEATHS_Q = __DEATHS_Q__;
+const CHAR_INFO_Q = __CHAR_INFO_Q__;
+const CHAR_REPORTS_Q = __CHAR_REPORTS_Q__;
 const APP_HTML = __HTML__;
 
 let token = null;
@@ -90,6 +92,13 @@ const ROUTES = {
   '/api/teamreports': { q: () => TEAM_REPORTS_Q, age: 600, // (new nights show up within 10 minutes)
     v: (p) => { const id = parseInt(p.get('id'), 10), page = parseInt(p.get('page'), 10) || 1; return id > 0 && page >= 1 && page <= 20 ? { id, page } : null; },
     out: (d) => d.reportData.reports },
+  // a Warcraft Logs character, and the reports they're in (the Progress page's "your own progress")
+  '/api/char': { q: () => CHAR_INFO_Q, age: 86400,
+    v: (p) => { const id = parseInt(p.get('id'), 10); if (id > 0) return { id }; const name = p.get('name'), srv = p.get('srv'), reg = p.get('reg'); return name && srv && /^[A-Za-z]{2}$/.test(reg || '') ? { name, srv, reg } : null; },
+    out: (d) => (d && d.characterData && d.characterData.character) || { error: 'Warcraft Logs has no character at that link.', status: 404 } },
+  '/api/charreports': { q: () => CHAR_REPORTS_Q, age: 600,
+    v: (p) => { const id = parseInt(p.get('id'), 10), page = parseInt(p.get('page'), 10) || 1; return id > 0 && page >= 1 && page <= 5 ? { id, page } : null; },
+    out: (d) => (d && d.characterData && d.characterData.character && d.characterData.character.recentReports) || { error: 'Warcraft Logs has no character with that number.', status: 404 } },
   '/api/night': { q: () => NIGHT_Q, age: 600, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null),
     out: (d, v) => (d && d.reportData && d.reportData.report) || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 } },
   '/api/deaths': { q: () => DEATHS_Q, age: 600, raw: true,

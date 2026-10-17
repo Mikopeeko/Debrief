@@ -4695,7 +4695,7 @@ function newPlayer(guid) {
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
     // landed on someone under half health; the buffs on them, each with its time spans)
-    firstHit: new Map(), mana: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
+    firstHit: new Map(), mana: [], manaUse: [], lowHeal: 0, buffs: new Map(), dmgTS: [], absS: [],
     // (each heal they gave themselves from a self-heal button, a Healthstone or a health potion: { t, spell, id, amt })
     selfH: [],
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
@@ -4730,7 +4730,10 @@ function buffUp(p, id, name, t, by) { let b = p.buffs.get(name); if (!b) p.buffs
 function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [], by: new Map() }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; else if (!b.sp.length) b.sp.push([0, t]); }
 // a player's mana from a cast's advanced block (the power lists are pipe-separated: "9|0" with "5|274744" is Holy Power 5
 // and mana 274744): [t, fraction], at most one every 2 seconds
-function manaAt(p, f, a, t) { const ty = String(f[a + 10]).split('|'), k = ty.indexOf('0'); if (k < 0) return; const cur = +String(f[a + 11]).split('|')[k], mx = +String(f[a + 12]).split('|')[k]; if (!(mx > 0) || cur !== cur) return;
+// (and the cast's mana cost, written after the power: { t, spell, id, cost } as a share of their mana, for "what their mana
+// went on")
+function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|'), k = ty.indexOf('0'); if (k < 0) return; const cur = +String(f[a + 11]).split('|')[k], mx = +String(f[a + 12]).split('|')[k]; if (!(mx > 0) || cur !== cur) return;
+  const cost = +String(f[a + 13]).split('|')[k]; if (cost > 0 && spell) p.manaUse.push({ t, spell, id, cost: cost / mx });
   const l = p.mana[p.mana.length - 1]; if (l && t - l[0] < 2) { l[1] = Math.min(l[1], cur / mx); return; } p.mana.push([t, Math.max(0, Math.min(1, cur / mx))]); }
 
 function analyze(item, text, opts) {
@@ -4982,7 +4985,7 @@ function analyze(item, text, opts) {
             modEv.push({ k: 'cast', t, src: sg, srcName: sn, spell, id, ...pw, ...(me ? { x: -(+f[12 + PX]), y: +f[11 + PX], face: fc === fc ? fc : null } : {}) }); } } break; }
         const p = P(sg, sn);
         p.casts++;
-        if (f.length >= 11 + ADV && f[11] === sg) manaAt(p, f, 11, t);
+        if (f.length >= 11 + ADV && f[11] === sg) manaAt(p, f, 11, t, spell, id);
         if (W(spell)) modEv.push({ k: 'pcast', t, src: sg, spell, id, dst: dg });
         const ca = p.castAb.get(spell); if (ca) ca.n++; else p.castAb.set(spell, { name: spell, id, n: 1 });
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);

@@ -925,6 +925,19 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .bp-i span, .tbm-i span { font: 400 12px var(--body); color: var(--faint); } .bp-i b { font-weight: 600; } .bp-i:hover, .tbm-i:hover { background: var(--raised); } .bp-i.on { background: rgba(230,180,80,.1); }
 .tbmenu { position: relative; } .tbm-b { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; padding: 0; border-radius: 9px; }
 .tbm-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* the start screen's "Your progress": a card per team or character */
+.home-teams { margin: 26px 0 0; } .ht-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; } .ht-h h2 { margin: 0; font: 600 20px var(--head); color: #f3f5f9; }
+.ht-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.ht-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px 16px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; cursor: pointer; transition: border-color .12s, background .12s; }
+.ht-card:hover { background: var(--raised); border-color: var(--line2); border-left-color: var(--gold); }
+.ht-n { font: 600 17px var(--head); color: #f3f5f9; } .ht-k { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.ht-d { display: flex; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--muted); } .ht-d b { font: 700 16px var(--head); color: #f6dc9a; }
+.ht-l { font-size: 12px; color: var(--faint); } .ht-card.ht-add { border-left-color: var(--line2); border-style: dashed; }
+/* the top bar's Progress button: always one click away (just the trophy on a phone) */
+.tb-prog { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px 0 10px; border-radius: 9px; font-weight: 600; }
+.tb-prog svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tb-prog.on { border-color: var(--gold); color: #f6dc9a; }
+@media (max-width: 760px) { .tb-prog { width: 36px; padding: 0; justify-content: center; } .tb-prog span { display: none; } }
 /* the wipe filter, made to stand out: a blue control with a flag, always labeled (grey when it's off) */
 #cutSide { margin: 0; gap: 8px; padding: 4px 6px 4px 11px; border: 1px solid rgba(106,168,255,.6); background: rgba(106,168,255,.11); box-shadow: 0 0 0 3px rgba(106,168,255,.07); }
 #cutSide .cs-l { color: #b9d3ff; } #cutSide .cs-l b { color: #eef4ff; }
@@ -1056,6 +1069,41 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pg-team { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
 .pg-team > div:first-child { flex: 1 1 320px; min-width: 0; } .pg-team b { font: 600 17px var(--head); color: #f3f5f9; } .pg-team .fp-in { flex: 1 1 420px; } .pg-team .btn { padding: 10px 16px; font-weight: 600; }
 .pg-msg { flex-basis: 100%; font-size: 13px; color: var(--muted); } .pg-msg:empty { display: none; } .pg-msg.err { color: #ff9a93; }
+/* the teams bar: "Progress for" a team or character, its buttons, and Manage (a row per team) */
+.pg-team .pg-add { flex: 1 1 420px; display: flex; flex-direction: column; gap: 6px; } .pg-team .pg-add .sub { font-size: 12.5px; } .pg-team .pg-add .fp-in { flex: none; }
+.pg-gbar .pg-gsel { display: flex; flex-direction: column; gap: 4px; flex: 1 1 320px; min-width: 0; } .pg-gsel .sub { font-size: 12.5px; }
+.pg-gsel select { align-self: flex-start; max-width: 100%; padding: 8px 34px 8px 12px; font: 600 17px var(--head); color: #f3f5f9; background: var(--raised) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239aa0ac' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center / 12px; border: 1px solid var(--line2); border-radius: 9px; appearance: none; cursor: pointer; }
+.pg-gsel select:hover { border-color: var(--faint); } .pg-gsel select option { background: #1b1f29; font: 400 14px var(--body); }
+.pg-gact { display: flex; flex-wrap: wrap; gap: 8px; }
+.pg-man { flex-basis: 100%; display: flex; flex-direction: column; border-top: 1px solid var(--line); padding-top: 6px; }
+.pg-mr { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid rgba(53,59,73,.55); }
+.pg-mn { min-width: 0; flex: 1 1 280px; } .pg-mn b { font: 600 15px var(--head); } .pg-mn .sub { font-size: 12.5px; }
+.pg-mn input.pg-ren { padding: 7px 10px; font: inherit; color: var(--text); background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; margin-right: 8px; width: min(260px, 100%); }
+.pg-ma { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .pg-team .pg-ma .btn, .pg-team .pg-mn .btn { padding: 6px 12px; font-weight: 500; font-size: 13px; }
+.pg-ma.del span { font-size: 13px; color: #ffb3ad; margin-right: 4px; }
+.btn.danger { background: #b8413a; border-color: #b8413a; color: #fff; } .btn.danger:hover { background: #cc4a42; }
+.btn.danger-o { color: #ff9a93; } .btn.danger-o:hover { border-color: #e5534b; }
+.pg-man .pg-add { padding-top: 12px; }
+/* the teams page: a big card per team or character, one for everything saved, and one to add a team */
+.pg-hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.ht-card.big { padding: 18px 20px; gap: 5px; min-height: 150px; } .ht-card.big .ht-n { font-size: 21px; } .ht-card.big .ht-d { gap: 16px; } .ht-card.big .ht-d b { font-size: 19px; }
+.pg-addc { cursor: default; } .pg-addc:hover { background: var(--panel); border-color: var(--line); }
+.pg-addc .fp-in { margin-top: 8px; width: 100%; } .pg-addc .pg-msg { font-size: 12.5px; }
+.pg-links { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-bottom: -10px; } .pg-links .pg-back { margin: 0; }
+.pg-gbar .pg-mn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pg-which { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); line-height: 1.5; } .pg-which > b { color: var(--text); font-weight: 600; }
+.pg-which ol { margin: 4px 0 0; padding-left: 18px; } .pg-which li { margin: 3px 0; } .pg-which li b { color: #c9ced8; font-weight: 600; }
+.pg-which code { font-size: 12px; padding: 0 4px; border-radius: 4px; background: var(--raised); color: #d6dae2; word-break: break-all; } .pg-which a { color: var(--gold); }
+/* a card's banner: a crest for a team, a class-coloured banner with the class icon for a character */
+.ht-card.hb { flex-direction: row; align-items: flex-start; gap: 14px; } .ht-b { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .ht-card.big .ht-b { gap: 5px; }
+.ht-ban { position: relative; flex: none; width: 44px; height: 54px; display: grid; place-items: center; } .ht-card.big .ht-ban { width: 56px; height: 69px; }
+.ht-ban svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ht-ban path { fill: color-mix(in srgb, var(--bc) 28%, #12151c); stroke: var(--bc); stroke-width: 2.5; stroke-linejoin: round; }
+.hb-t { position: relative; margin-top: -6px; font: 700 17px var(--head); color: #fff; letter-spacing: .5px; text-shadow: 0 1px 2px rgba(0,0,0,.6); } .ht-card.big .hb-t { font-size: 21px; }
+.hb-i { position: relative; width: 26px; height: 26px; margin-top: -6px; border-radius: 50%; box-shadow: 0 0 0 2px var(--bc); } .ht-card.big .hb-i { width: 32px; height: 32px; }
+.ht-card.hb:hover { border-left-color: var(--bc, var(--gold)); }
+.pg-top .ht-ban { margin-right: 14px; } .pg-top > .pg-ttl { display: flex; align-items: center; } .pg-top .pg-tt { display: flex; flex-direction: column; }
+@media (min-width: 980px) { .pg-hub .pg-addc { grid-column: span 2; } }
 .pg-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
 .pc-diffs { display: flex; gap: 4px; max-width: 100%; padding: 4px; overflow-x: auto; scrollbar-width: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; } .pc-diffs::-webkit-scrollbar { display: none; }
 .pc-diffs button { flex: none; white-space: nowrap; }
@@ -1400,6 +1448,14 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-tgb i + i { margin-left: 1px; }
 .pf-tg-v { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; white-space: nowrap; font-size: 12.5px; } .pf-tg-v b { font-variant-numeric: tabular-nums; } .pf-tg-v .sub { font-size: 12px; }
 .tg-a { opacity: .82; } .tg-a:hover { opacity: 1; }
+/* charts you can explore: a hover readout on the mana and target charts; legend entries and line names as switches */
+.pfx { position: relative; } .pfx svg { touch-action: pan-y; } .pfx-hv { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.pfx .pfc-tip .lg-sq { display: inline-block; vertical-align: 0; }
+.mp-s { transition: opacity .15s; } .mp-s.off { opacity: .07; } .mp-tg { cursor: pointer; } .mp-tg.off { opacity: .4; text-decoration: line-through; }
+.tg-a.off { opacity: .06; } .tg-a.off:hover { opacity: .06; }
+.pfc-lg .pf-hk, .pfc-lg .tg-lg { cursor: pointer; border-radius: 5px; padding: 1px 4px; margin: -1px -4px; transition: opacity .12s, background .12s; } .pfc-lg .pf-hk:hover, .pfc-lg .tg-lg:hover { background: rgba(255,255,255,.05); }
+.pfc-lg .pf-hk.off, .pfc-lg .tg-lg.off { opacity: .4; text-decoration: line-through; }
+.pf-main.hide-m .pfc-m, .pf-main.hide-l .pfc-lust, .pf-main.hide-l .pfc-lt, .pf-main.hide-d .pfc-dg, .pf-main.hide-c .pfc-cd { display: none; }
 .pf-sets .ck .nm { font-weight: 600; } .pf-sets .pf-hint { border-style: solid; }
 .pfc-tip.pin { border-color: var(--faint); }
 /* the chart takes a finger's sideways drag (the page still scrolls up and down) */
@@ -1427,6 +1483,16 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .hm-p.warn { background: rgba(230,180,80,.16); color: #f3c969; } .hm-p.ok { background: rgba(69,193,92,.15); color: #7ee08f; } .hm-p.na { background: rgba(255,255,255,.06); color: var(--muted); }
 .hm-n { text-align: right; font-size: 13px; line-height: 1.4; } .hm-n b { font-variant-numeric: tabular-nums; }
 @media (max-width: 760px) { .hm-r { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; } .hm-t { grid-column: 1 / -1; grid-row: 2; } }
+/* what a healer's mana went on: the top three on one line, the whole list when opened */
+.hm-use { margin-top: 6px; } .hm-use > summary { cursor: pointer; list-style: none; font-size: 12.5px; line-height: 1.6; } .hm-use > summary::-webkit-details-marker { display: none; }
+.hm-use > summary::before { content: '▸ '; color: var(--muted); font-size: 10px; } .hm-use[open] > summary::before { content: '▾ '; }
+.hm-use .icw { width: 15px; height: 15px; vertical-align: -3px; } .hm-use b { color: var(--text); font-variant-numeric: tabular-nums; }
+.hm-ut { margin: 8px 0 2px; padding: 8px 10px; background: var(--raised); border-radius: 8px; font-size: 12.5px; }
+.hm-uh, .hm-ur { display: grid; grid-template-columns: minmax(0, 1fr) 52px 56px minmax(90px, 160px); gap: 10px; align-items: center; padding: 3px 0; }
+.hm-uh { color: var(--faint); font-size: 11.5px; } .hm-uh span:not(:first-child), .hm-ur > span:nth-child(2), .hm-ur > span:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+.hm-ur > span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-ur > span:last-child { display: flex; align-items: center; gap: 6px; } .hm-ur i { display: block; height: 6px; border-radius: 3px; opacity: .8; } .hm-ur > span:last-child b { margin-left: auto; }
+.hm-un { margin-top: 6px; font-size: 11.5px; line-height: 1.4; }
 /* the picked player's casts under the timeline, on its time axis */
 .cs { margin: 6px 0 2px; padding-top: 7px; border-top: 1px solid var(--line); }
 .cs-h { font: 600 12.5px var(--head); margin: 0 0 4px; } .cs-h .sub { font: 400 12px var(--body); color: var(--faint); margin-left: 6px; }
@@ -1635,6 +1701,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
     <span class="tb-sp"></span>
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 30 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
+    <button class="btn tb-prog" id="tbProgBtn" type="button" title="Every boss and night, for your teams"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Progress</span></button>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="tbProg" type="button">Progress<span>every boss and night, your team's reports</span></button><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbHome" type="button">Start screen<span>live logging and other ways in</span></button></div></div>
     <div class="progress" id="prog"><div></div></div>
