@@ -1312,7 +1312,7 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .sumv .rc-cats { margin: 0 0 10px; }
 .sumv details.secd > summary { flex-wrap: wrap; row-gap: 6px; }
 /* Summary: a grade per mechanic and assignment row, S to F, at the left so they line up; an arrow for a clear trend */
-.sumv details.secd > summary .sgr { display: inline-flex; align-items: center; gap: 3px; width: 44px; flex: none; }
+.sumv details.secd > summary .sgr { display: inline-flex; align-items: center; gap: 3px; width: 58px; flex: none; }
 .sumv .sgr .grade { min-width: 28px; height: 26px; padding: 0 4px; font-size: 15px; border-radius: 7px; border-width: 1px; } .sumv .sgr .grade.g-na { color: var(--faint); background: none; border-color: var(--line2); }
 .sumv .gtr { font-size: 10px; line-height: 1; } .sumv .gtr.up { color: #7ee08f; } .sumv .gtr.down { color: #ff8f87; } .sumv details.secd > summary .sst { white-space: normal; text-align: right; }
 .dots { display: inline-flex; flex-wrap: wrap; gap: 2px; margin-left: 12px; max-width: 46%; }
@@ -1720,6 +1720,13 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 @media (max-width: 560px) { .pi-strip, .pi-ax, .pi-miss, .pi-plan { margin-left: 0; } .pi-m { grid-template-columns: 44px minmax(0, 1fr); } } .pi-l { color: var(--gold); } .pi-got { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: rgba(246,220,154,.14); color: #f6dc9a; font: 700 10.5px var(--body); }
 .pi-det .pfu-l { display: grid; grid-template-columns: minmax(0, 1fr) auto 36px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
 .pi-det .nh + .pfu-l { border-top: 0; } .pi-det .pfu-l > b { text-align: right; font-variant-numeric: tabular-nums; } .pi-det .pfu-l > .sub { font-size: 12px; text-align: right; }
+.pi-vd { margin: 6px 0 0 30px; font-size: 13.5px; line-height: 1.55; } .pi-vd .nm { font-weight: 600; } .pi-vh { color: var(--muted); font-size: 12.5px; }
+.pi-vb { display: inline-block; margin-right: 7px; padding: 0 7px; border-radius: 999px; background: rgba(246,220,154,.14); color: #f6dc9a; font: 700 10.5px/18px var(--body); text-transform: uppercase; letter-spacing: .04em; vertical-align: 1px; }
+.pi-gain { color: #7ee08f; font-weight: 700; font-variant-numeric: tabular-nums; } .pi-vb.t { background: rgba(120,170,255,.14); color: #a9c8ff; }
+.pi-st { width: 2px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45); z-index: 2; } .pi-leg i.pi-st { width: 2px; height: 11px; }
+.pi-rh .grade { flex: none; } .pi-rn { margin-top: 3px; } .pi-tw { display: flex; align-items: center; gap: 7px; min-width: 0; } .pi-tw > span:last-child { font-size: 12px; line-height: 1.4; color: var(--muted); } .pi-tw .grade { flex: none; }
+.pi-okl { margin: 8px 0 2px 30px; font-size: 13px; line-height: 1.6; } .pi-okl .nm { font-weight: 600; } .pi-sh { margin: 10px 0 0 30px; font: 600 12.5px var(--head); color: #f3c969; } .pi-none { margin: 6px 0 0 30px; }
+@media (max-width: 560px) { .pi-vd, .pi-okl, .pi-sh, .pi-none { margin-left: 0; } }
 @media (max-width: 560px) { .pi-c { grid-template-columns: 48px minmax(0, 1fr); padding-left: 0; } .pi-pills { grid-column: 1 / -1; justify-content: flex-start; } .pi-why { grid-column: 1 / -1; } .pi-hold { margin-left: 0; } }
 /* Performance, Casts: every cast on one time line (a row per player, or per spell), the pace against each spec's sim */
 .pfk-b.k-cast { --kc: #f0a35e; }
@@ -1931,6 +1938,12 @@ body.bh-off .tabbar .tb-id { display: inline-flex; }
 .rk-s .ck { font-size: 13.5px; } .rk-sub { margin: 4px 0 0 2px; font-size: 13px; color: #c4c9d2; } .rk-sub.bad { color: #ffb3ad; } .rk-sub.warn { color: #f3d68a; } .rk-sub.na { color: var(--muted); }
 .rk-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .rk-go .btn { padding: 6px 12px; font-size: 13px; }
 .rk-how { margin: 2px 2px 0; font-size: 12.5px; }
+.rk-o { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 40px; } .rk-o .dl { margin: 0; font-size: 11px; } .rk-s header .dl { margin: 0; font-size: 11.5px; }
+.rk-ft { margin-left: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; } .rk-ft.up { color: #7ee08f; } .rk-ft.dn { color: #f3a06a; }
+.pg-since { margin-top: 14px; } .ps-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 22px; } .ps-h { margin-bottom: 4px; font: 600 13px var(--head); }
+.ps-l { display: grid; grid-template-columns: minmax(0, 1fr) auto 52px; gap: 10px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13.5px; } .ps-h + .ps-l { border-top: 0; }
+.ps-l .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ps-g { display: inline-flex; align-items: center; gap: 5px; } .ps-g .grade { min-width: 24px; height: 22px; padding: 0 4px; font-size: 12.5px; border-radius: 6px; border-width: 1px; } .ps-l .dl { margin: 0; text-align: right; }
+@media (max-width: 640px) { .ps-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 1100px) { .rk-secs { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) {
   .rk-r { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "av n o c" "ms ms ms ms" "f f f f"; gap: 8px 10px; padding: 10px 12px; }
@@ -8917,8 +8930,21 @@ function histSave(r) {
   HIST.put({ k: histKey(it), v: 1, boss: it.boss, diff: it.diff, diffId: it.diffId, id: it.id, at: it.wallMs || it.startMs, pull: (HIST.mem.get(histKey(it)) || {}).pull || it.pull, kill: !!it.kill, dur: r.duration,
     left: it.kill ? 0 : pg ? pg.left : r.bossPct != null ? r.bossPct : null, label: it.kill ? 'Kill' : pg ? pg.label : r.bossPct != null ? r.bossPct.toFixed(1) + '%' : 'Wipe',
     deaths: r.deaths.length, first: d0 ? d0.player : null, players: [...r.players.values()].map((p) => p.name), checks, src: srcKey(), utc: !!it.wallMs, saved: Date.now(),
-    ...(it.wcl ? { wcl: { code: it.wcl.code, fight: it.wcl.fight } } : (HIST.mem.get(histKey(it)) || {}).wcl ? { wcl: HIST.mem.get(histKey(it)).wcl } : {}) });
-  histSoon();
+    ...(it.wcl ? { wcl: { code: it.wcl.code, fight: it.wcl.fight } } : (HIST.mem.get(histKey(it)) || {}).wcl ? { wcl: HIST.mem.get(histKey(it)).wcl } : {}),
+    ...((HIST.mem.get(histKey(it)) || {}).gr ? { gr: HIST.mem.get(histKey(it)).gr } : {}) });
+  histGrades(r); histSoon();
+}
+// each player's grade that pull (mechanics and Report card, as on Players, without prep: that needs their gear looked up),
+// kept with the pull so the Progress page can say who got better since the last raid: { name: [grade, seconds alive,
+// class] }. Worked out a moment later, one pull at a time, so reading a night stays quick.
+const GR_Q = []; let GR_T = null;
+function histGrades(r) { if (!GR_Q.includes(r)) GR_Q.push(r); if (!GR_T) GR_T = setTimeout(grTick, 60); }
+function grTick() {
+  GR_T = null; const r = GR_Q.shift(); if (!r) return; const v = HIST.mem.get(histKey(r.item));
+  if (v) try { const credit = assignCredit(r), gr = {};
+    for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; const g = plGrade(r, p, null, credit); if (g.perf == null) continue; gr[p.name] = [Math.round(g.score), Math.round(g.until || 0), p.cls || '']; }
+    HIST.put({ ...v, gr }); } catch (e) { /* (not graded: it's tried again the next time the pull is read) */ }
+  if (GR_Q.length) GR_T = setTimeout(grTick, 30);
 }
 // the saved nights on this boss before the night shown (a raid night is one date; tonight's pulls come from the log itself)
 function histFor(it) {
@@ -11513,12 +11539,13 @@ async function night() {
   const tipAttr = (tip, title, how) => { const gen = GENERIC_SEC.test(plainOf(title)), n = gen ? plainOf(title) : tip || plainOf(title), sid = gen ? 0 : sidOf(n), ex = plainOf(how || ''); if (!sid && !ex) return ' class="sechd"';
     return ' class="sp sechd" data-sid="' + sid + '" data-sn="' + esc(n) + '" data-ex="' + esc(ex.length > 240 ? ex.slice(0, 237) + '…' : ex) + '"'; };
   // a row's grade over the night: the average of its pulls' scores (the pulls it came up in, each up to the wipe filter),
-  // on the report card scale, with an arrow when the last third of those pulls was clearly better or worse than before
+  // on the report card scale, with an arrow and how many points when the later half of those pulls was clearly (8 points or
+  // more) better or worse than the first half
   const gradeOf = (per) => {
     const xs = pullNs.map((n) => per.get(n)).filter((p) => p && p.st !== 'na' && p.sc != null); if (!xs.length) return '<span class="sgr" title="Didn\'t come up, so no grade"><span class="grade g-na">–</span></span>';
-    const avg = (a) => a.reduce((s, p) => s + p.sc, 0) / a.length, score = avg(xs), k = Math.floor(xs.length / 3), late = k >= 2 ? avg(xs.slice(-k)) : null, d = late != null ? late - avg(xs.slice(0, xs.length - k)) : 0, l = letterOf(score);
-    const tip = 'Grade ' + l + ': ' + Math.round(score) + ' / 100 over ' + plural(xs.length, 'pull') + ' (a clean result counts fully, could be better half)' + (d >= 15 ? ' · the last ' + k + ' pulls: ' + Math.round(late) + ', better than before' : d <= -15 ? ' · the last ' + k + ' pulls: ' + Math.round(late) + ', worse than before' : '');
-    return '<span class="sgr" title="' + esc(tip) + '">' + gradeChip(l) + (d >= 15 ? '<span class="gtr up">▲</span>' : d <= -15 ? '<span class="gtr down">▼</span>' : '') + '</span>';
+    const avg = (a) => a.reduce((s, p) => s + p.sc, 0) / a.length, score = avg(xs), k = Math.floor(xs.length / 2), late = k >= 2 ? avg(xs.slice(-k)) : null, early = k >= 2 ? avg(xs.slice(0, k)) : null, d = late != null ? late - early : 0, l = letterOf(score);
+    const tip = 'Grade ' + l + ': ' + Math.round(score) + ' / 100 over ' + plural(xs.length, 'pull') + ' (a clean result counts fully, could be better half)' + (Math.abs(d) >= 8 ? ' · the later ' + k + ' pulls: ' + Math.round(late) + ', against ' + Math.round(early) + ' in the first ' + k : '');
+    return '<span class="sgr" title="' + esc(tip) + '">' + gradeChip(l) + (d >= 8 ? '<span class="gtr up">▲' + Math.round(d) + '</span>' : d <= -8 ? '<span class="gtr down">▼' + Math.round(-d) + '</span>' : '') + '</span>';
   };
   const sumRow = (o) => '<details class="panel secd st-' + o.st + '" id="' + o.id + '" data-k="' + o.id + '"' + (S.openSecs.has(o.id) ? ' open' : '') + '><summary>' + (o.gr || '<span class="sgr"></span>') + '<span' + tipAttr(o.tip, o.title, o.how) + '>' + o.icon + '<b>' + esc(o.title) + '</b></span>' + o.dots + hst(o.st, o.txt) + '</summary>' +
     '<div class="secbody">' + (o.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(o.how) + '</div></details>' : '') + o.body + '</div></details>';
@@ -11653,7 +11680,7 @@ async function night() {
     '<nav class="sum-jump" aria-label="Jump to"><span class="pt-l">Jump to</span><a class="pt-go" href="#sum-prog">How far the night got</a>' + (gm ? '<a class="pt-go" href="#sum-mech">Mechanics</a>' : '') + '<a class="pt-go" href="#sum-asg">Assignments</a></nav></aside>';
   view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + '<div class="nsa sumv sum2">' + (others.length ? '<div class="sum-others"><span class="sub">Also tonight</span>' + others.join('') + '</div>' : '') +
     '<div class="sum-main">' + progress + fix + mSec + aSec +
-    '<p class="muted" style="font-size:13px">In each row, each small square is a pull: green clean, amber could be better, red something went wrong, grey didn\'t come up or came after the wipe filter. Click one to open that pull. Players and the MVPs of the night are on the Player audit tab.</p></div>' + rail + '</div>');
+    '<p class="muted" style="font-size:13px">In each row, each small square is a pull: green clean, amber could be better, red something went wrong, grey didn\'t come up or came after the wipe filter. Click one to open that pull. Each player\'s grade and the MVPs of the night are on the Players tab.</p></div>' + rail + '</div>');
   refreshIcons(); setHeadRes(); fitTrends();
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };
@@ -13818,7 +13845,8 @@ function piPull(r) {
     // others alive then would have added, the top three; and what the target really did in those 15 s against their usual)
     const alts = pool.filter((q) => q !== tg).slice(0, 3).map((q) => ({ p: q, dmg: value(q, many) * PI_CD }));
     const xs = C0.per.get(tg.name), inWin = sumIn(tg.dmgS || [], t, t + PI_LEN), usual = xs && !healer ? (xs.ps || 0) * PI_LEN : null;
-    casts.push({ pr, tg, t, best, vT, vB, ratio, tgt, tim, lust, many, noSim, sc: (scT + scW) / 2, dmg: healer || noSim ? 0 : vT * PI_CD, bestDmg: noSim ? 0 : vB * PI_CD, alts, inWin, usual });
+    casts.push({ pr, tg, t, best, vT, vB, ratio, tgt, tim, lust, many, noSim, sc: (scT + scW) / 2, dmg: healer || noSim ? 0 : vT * PI_CD, bestDmg: noSim ? 0 : vB * PI_CD, alts, inWin, usual,
+      cdsAfter: tim.st === 'warn' ? cds.map((d) => { const u = d.ts.find((v) => v > t + 6 && v <= t + 25); return u != null ? { name: d.name, dt: u - t } : null; }).filter(Boolean) : [] });
   }
   casts.sort((a, b) => a.t - b.t);
   // (two priests' Power Infusions on the same player at once don't stack: the later one is mostly wasted)
@@ -13833,56 +13861,77 @@ function piPull(r) {
       for (const q of best0) { if (q === pr && pr.specName !== 'Shadow Priest') continue; for (const cd of cdsOf(q)) for (const u of cd.ts) if (u >= a && u <= b - 3 && alive(q, u)) { const v = value(q, aoe(u)); if (!pick || v > pick.v) pick = { q, t: u, cd: cd.name, v }; } }
       if (!pick) { const q = best0.find((y) => alive(y, a + 1)); if (q) pick = { q, t: a, cd: null, v: value(q, aoe(a)) }; }
       return { a, b, pick }; });
-    // (the plan: the most valuable player of the pull, with their first big cooldown and when they pressed it)
-    const top = best0.find((q) => q !== pr || pr.specName === 'Shadow Priest'), tcd = top ? cdsOf(top).filter((z) => z.name !== 'Power Infusion')[0] : null;
-    priests.set(pr.name, { p: pr, used: d.used, poss: d.poss, ts, ready, miss, plan: top ? { q: top, cd: tcd } : null });
+    priests.set(pr.name, { p: pr, used: d.used, poss: d.poss, ts, ready, miss, plan: null });
   }
+  // (a plan for the next pull, per priest: the most valuable player of the pull that no other priest is planned on, with their
+  // first big cooldown and when they pressed it, so two priests don't both line up on the same player)
+  { const taken = new Set(); for (const x of [...priests.values()].sort((a, b) => b.used - a.used)) { const top = best0.find((q) => !taken.has(q) && (q !== x.p || x.p.specName === 'Shadow Priest')); if (!top) continue; taken.add(top);
+    x.plan = { q: top, cd: cdsOf(top).filter((z) => z.name !== 'Power Infusion')[0] || null }; } }
   const rank = best0.map((q) => ({ p: q, v: value(q), sim: PI_GAIN[q.specName], rel: (C0.per.get(q.name) || {}).ps / med }));
   // left on the table: a better target's extra, and each stretch it sat ready long enough for a cast (its best moment)
   const left = casts.reduce((s, c) => s + Math.max(0, c.bestDmg - c.dmg), 0) + [...priests.values()].reduce((s, x) => s + x.miss.filter((m) => m.pick && m.b - m.a >= 30).reduce((s2, m) => s2 + m.pick.v * PI_CD, 0), 0);
   r._pi = { ct: cutT(r), casts, priests, rank, end, idle: C0.idle, lust: C0.lust, left };
   return r._pi;
 }
-// (one Power Infusion's worth: what it added on the player who got it, what the best others alive would have added, and
-// what that player really did in its 15 s against their usual 15 s)
-function piGain(c) {
-  if (!c.dmg && !c.alts.length) return '';
-  const alt = c.alts.filter((a) => a.dmg > 0).map((a) => '<span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span> ' + C(a.dmg) + (c.dmg ? ' <span class="' + (a.dmg > c.dmg ? 'pi-up' : 'pi-dn') + '">' + (a.dmg > c.dmg ? '+' : '−') + C(Math.abs(a.dmg - c.dmg)) + '</span>' : '')).join('<span class="sub"> · </span>');
-  const real = c.usual ? '<div class="pi-g sub">In those 15 s ' + esc(c.tg.name) + ' did ' + C(c.inWin) + ' damage, against ' + C(c.usual) + ' in their usual 15 s' + (c.inWin > c.usual ? ' (' + Math.round(100 * (c.inWin / Math.max(1, c.usual) - 1)) + '% more, with whatever else was up)' : '') + '.</div>' : '';
-  return '<div class="pi-g"><b>' + (c.dmg ? 'Added about ' + C(c.dmg) + ' damage' : 'Added no damage') + '</b>' + (c.many ? ' <span class="pi-aoe" title="3 or more enemies were losing health: the 3-target sims">adds up</span>' : '') + (alt ? '<span class="sub"> · instead: </span>' + alt : '') + '</div>' + real;
-}
-// a priest's pull on one line: the raid's downtime grey, the stretches Power Infusion sat ready green, each cast gold (on a
-// good target) or red (not), Bloodlust a gold line
+// (a cast's tier for the line and the table: good (A or better), could be better, poor)
+const piTier = (c) => (c.sc >= 88 ? 'ok' : c.sc >= 65 ? 'warn' : 'bad');
+// (a cast's one line of why: what was off (the target, then the time); otherwise what went right)
+const piLc = (s) => s.charAt(0).toLowerCase() + s.slice(1);
+const piWhy = (c) => { const p = []; if (c.tgt.st !== 'ok') p.push(c.tgt.txt); if (c.tim.st !== 'ok' && c.tim.st !== 'na') p.push(c.tim.txt); return p.length ? p.join(' ') : c.tgt.pill + ', ' + piLc(c.tim.pill) + '.'; };
+// a priest's pull on one line: the raid's downtime grey, the stretches Power Infusion sat ready green, each cast coloured by
+// its grade, Bloodlust a gold line, and white ticks where the player planned for them pressed their big cooldown (the
+// ideal moments)
 function piStrip(d, x, casts) {
-  const end = Math.max(1, d.end), P = (t) => (100 * Math.max(0, Math.min(end, t)) / end).toFixed(2) + '%', W = (a, b) => (100 * Math.max(0, Math.min(end, b) - Math.max(0, a)) / end).toFixed(2) + '%';
-  let h = '<div class="pi-strip">' + (d.idle || []).map(([a, b]) => '<i class="pi-sd" style="left:' + P(a) + ';width:' + W(a, b) + '" title="' + esc('The raid couldn\'t do damage ' + T(a) + '–' + T(b)) + '"></i>').join('') +
+  const end = Math.max(1, d.end), P = (t) => (100 * Math.max(0, Math.min(end, t)) / end).toFixed(2) + '%', W = (a, b) => (100 * Math.max(0, Math.min(end, b) - Math.max(0, a)) / end).toFixed(2) + '%', pl = x.plan;
+  const h = '<div class="pi-strip">' + (d.idle || []).map(([a, b]) => '<i class="pi-sd" style="left:' + P(a) + ';width:' + W(a, b) + '" title="' + esc('The raid couldn\'t do damage ' + T(a) + '–' + T(b)) + '"></i>').join('') +
     x.ready.map(([a, b]) => '<i class="pi-sr" style="left:' + P(a) + ';width:' + W(a, b) + '" title="' + esc('Ready, not used: ' + T(a) + '–' + T(b) + ' (' + Math.round(b - a) + ' s)') + '"></i>').join('') +
     (d.lust != null ? '<i class="pi-sl" style="left:' + P(d.lust) + '" title="Bloodlust at ' + T(d.lust) + '"></i>' : '') +
-    casts.map((c) => '<i class="pi-sc ' + c.tgt.st + '" style="left:' + P(c.t) + ';width:' + W(c.t, c.t + PI_LEN) + '" title="' + esc(T(c.t) + ': on ' + c.tg.name + ' · ' + c.tgt.pill + ' · ' + c.tim.pill) + '"></i>').join('') + '</div>';
+    casts.map((c) => '<i class="pi-sc ' + piTier(c) + '" style="left:' + P(c.t) + ';width:' + W(c.t, c.t + PI_LEN) + '" title="' + esc(T(c.t) + ': on ' + c.tg.name + ' · ' + letterOf(c.sc) + ' · ' + piWhy(c)) + '"></i>').join('') +
+    (pl && pl.cd ? pl.cd.ts.filter((u) => u <= end).map((u) => '<i class="pi-st" style="left:' + P(u) + '" title="' + esc('Ideal moment: ' + pl.q.name + ' pressed ' + pl.cd.name + ' at ' + T(u)) + '"></i>').join('') : '') + '</div>';
   const step = end > 400 ? 120 : 60; let ax = '<div class="pi-ax">'; for (let t = 0; t <= end; t += step) ax += '<span style="left:' + P(t) + '">' + T(t) + '</span>'; ax += '</div>';
   return h + ax;
 }
 // (a cast's worth as bars: the player who got it, then the two best others alive then, each in their class colour)
 function piBars(c) {
-  if (c.noSim) return '<div class="pi-rn sub">No sim for ' + esc(c.tg.specName || 'this spec') + ', so no estimate.</div>';
+  if (c.noSim) return '';
   const items = [{ p: c.tg, dmg: c.dmg, me: true }].concat(c.alts.filter((a) => a.dmg > 0).slice(0, 2)), mx = Math.max(1, ...items.map((i) => i.dmg));
   return '<div class="pi-bars">' + items.map((i) => '<div class="pi-bar' + (i.me ? ' me' : '') + '"><span class="pi-bn">' + esc(i.p.name) + (i.me ? ' <span class="pi-gt">got it</span>' : '') + '</span><span class="pi-bt"><i style="width:' + Math.max(2, 100 * i.dmg / mx).toFixed(1) + '%;background:' + i.p.color + '"></i></span><b>' + (i.dmg ? C(i.dmg) : '—') + '</b></div>').join('') + '</div>';
 }
-// one cast, one pull: the time, who got it, the two pills, the bars, and one short line of why
-function piRow(c, who, pill) {
-  const why = c.tgt.st !== 'ok' ? c.tgt.txt : c.tim.txt, real = c.usual ? '15 s on them: ' + C(c.inWin) + (c.usual ? ' (' + (c.inWin >= c.usual ? '+' : '−') + Math.abs(Math.round(100 * (c.inWin / Math.max(1, c.usual) - 1))) + '% on their usual)' : '') : '';
+// one cast, one pull: the time, who got it, one grade, one line of why, and the bars
+function piRow(c, who) {
   return '<div class="pi-row"><div class="pi-rt"><b>' + T(c.t) + '</b>' + (c.lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</div><div class="pi-rm">' +
-    '<div class="pi-rh">' + avatar(c.tg, true) + '<span class="pi-on">' + (c.tg === c.pr ? '<span class="sub">themselves</span>' : who(c.tg)) + ' <span class="sub">' + esc(c.tg.specName || '') + '</span>' + (c.many ? ' <span class="pi-aoe" title="3 or more enemies were losing health: the 3-target sims">adds up</span>' : '') + '</span><span class="pi-pills">' + pill(c.tgt) + pill(c.tim) + '</span></div>' +
-    piBars(c) + '<div class="pi-rn sub">' + esc(why) + (real ? ' · ' + esc(real) : '') + '</div></div></div>';
+    '<div class="pi-rh">' + avatar(c.tg, true) + '<span class="pi-on">' + (c.tg === c.pr ? '<span class="sub">themselves</span>' : who(c.tg)) + ' <span class="sub">' + esc(c.tg.specName || '') + '</span>' + (c.many ? ' <span class="pi-aoe" title="3 or more enemies were losing health: the 3-target sims">adds up</span>' : '') + '</span>' + gradeChip(letterOf(c.sc)) + '</div>' +
+    '<div class="pi-rn">' + esc(piWhy(c)) + '</div>' + piBars(c) + '</div></div>';
 }
-// the night as a table: a line per cast (the pull, the time, who got it, the pills, what it added and the best other)
-function piTable(list, who, pill) {
-  return '<div class="pi-tab"><div class="pi-tr pi-th"><span>Pull</span><span>On</span><span>Target · timing</span><span>Added</span><span>Best other</span></div>' + list.map((c) => { const b = c.alts[0];
-    return '<div class="pi-tr"><span><b>#' + c.r.item.pull + '</b> <span class="sub">' + T(c.t) + '</span>' + (c.lust ? ' <span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-on">' + (c.tg === c.pr ? '<span class="sub">themselves</span>' : who(c.tg)) + '</span><span class="pi-pills l">' + pill(c.tgt) + pill(c.tim) + '</span>' +
+// the night's casts to look at (graded under A), a line each: the pull and time, who got it, the grade and why, what it
+// added and the best other
+function piTable(list, who) {
+  return '<div class="pi-tab"><div class="pi-tr pi-th"><span>Pull</span><span>On</span><span>Why</span><span>Added</span><span>Best other</span></div>' + list.map((c) => { const b = c.alts[0];
+    return '<div class="pi-tr"><span><b>#' + c.r.item.pull + '</b> <span class="sub">' + T(c.t) + '</span>' + (c.lust ? ' <span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-on">' + (c.tg === c.pr ? '<span class="sub">themselves</span>' : who(c.tg)) + '</span><span class="pi-tw">' + gradeChip(letterOf(c.sc)) + '<span>' + esc(piWhy(c)) + '</span></span>' +
       '<span class="pi-num">' + (c.noSim ? '<span class="sub">no sim</span>' : C(c.dmg)) + '</span><span class="pi-num">' + (b && b.dmg ? who(b.p) + ' <span class="sub">' + C(b.dmg) + '</span>' : '—') + '</span></div>'; }).join('') + '</div>';
 }
-// The view: one pull (every PI graded, a line per priest, the stretches it sat ready, who gains the most, a plan for the
-// next pull) or the night (the same, added up)
+// a priest's verdict, the first thing in their block: how their casts went, the single biggest win (the better target, a
+// stretch it sat ready, or else holding one for the target's cooldown), and the plan for the next pull
+function piVerdict(x, mine, one, who) {
+  const good = mine.filter((c) => c.tgt.st === 'ok').length, cdJ = mine.filter((c) => c.tim.st !== 'na'), withCd = cdJ.filter((c) => c.tim.st === 'ok').length;
+  const head = [mine.length ? good + ' of ' + mine.length + ' on a good target' : 'None cast', cdJ.length ? withCd + ' of ' + cdJ.length + ' with the target\'s cooldown' : '', x.poss > x.used ? (x.poss - x.used) + ' not used' : ''].filter(Boolean).join(' · ');
+  const at = (pull, t) => (one ? 'At ' : 'Pull ' + pull + ', ') + T(t), wins = [];
+  for (const c of mine) if (c.tgt.st !== 'ok' && c.best && c.bestDmg > c.dmg) wins.push({ v: c.bestDmg - c.dmg, html: at(c.r.item.pull, c.t) + ': give it to ' + who(c.best) + ' instead of ' + (c.tg === c.pr ? 'themselves' : who(c.tg)) });
+  for (const m of x.miss) if (m.pick && m.b - m.a >= 30) wins.push({ v: m.pick.v * PI_CD, html: at(m.pull, m.pick.t) + ': use it' + (m.pick.cd ? ' with ' + who(m.pick.q) + '\'s ' + esc(m.pick.cd) : ' on ' + who(m.pick.q)) + ' (it sat ready ' + Math.round(m.b - m.a) + ' s)' });
+  // (and a timing tip, which has no number on it: a cast with no cooldown up, the target pressing one soon after)
+  // (grouped: the same player's same cooldown pressed just after, so a habit shows once, with the pulls it happened in)
+  const hg = new Map(); let hold = '';
+  for (const c of mine) if (c.tim.st === 'warn' && (c.cdsAfter || []).length) { const d = c.cdsAfter.reduce((a, b) => (b.dt < a.dt ? b : a)), k = c.tg.name + '|' + d.name, y = hg.get(k) || { q: c.tg, name: d.name, l: [] }; y.l.push({ c, dt: d.dt }); hg.set(k, y); }
+  const hb = [...hg.values()].sort((a, b) => b.l.length - a.l.length)[0];
+  if (hb) { const dts = hb.l.map((z) => z.dt).sort((a, b) => a - b), z0 = hb.l[0]; hold = hb.l.length === 1 ? at(z0.c.r.item.pull, z0.c.t) + ': hold it ' + Math.round(z0.dt) + ' s for ' + who(hb.q) + '\'s ' + esc(hb.name)
+    : 'Hold it about ' + Math.round(dts[dts.length >> 1]) + ' s for ' + who(hb.q) + '\'s ' + esc(hb.name) + ': ' + hb.l.length + ' casts came just before it <span class="sub">(pulls ' + [...new Set(hb.l.map((z) => z.c.r.item.pull))].join(', ') + ')</span>'; }
+  wins.sort((a, b) => b.v - a.v);
+  const win = wins[0] ? wins[0].html + ' <b class="pi-gain">+' + C(wins[0].v) + '</b>' : '';
+  return '<div class="pi-vd"><div class="pi-vh">' + esc(head) + '</div>' + (win ? '<div><span class="pi-vb">Biggest win</span>' + win + '</div>' : '') + (hold ? '<div><span class="pi-vb t">Timing</span>' + hold + '</div>' : '') + (win || hold ? '' : '<div class="okv">✓ Nothing big to change.</div>') + '</div>' +
+    (x.plan ? '<div class="pi-plan"><b>Next pull</b> · give it to ' + who(x.plan.q) + ' <span class="sub">' + esc(x.plan.q.specName || '') + '</span>' + (x.plan.cd ? ' with their ' + esc(x.plan.cd.name) + (one && x.plan.cd.ts.length ? ' <span class="sub">(pressed at ' + x.plan.cd.ts.slice(0, 3).map((u) => T(u)).join(', ') + ')</span>' : '') : ', on cooldown') + ', every 2 minutes.</div>' : '');
+}
+// The view: one pull (each priest's verdict and plan, their line, every cast graded, who gains the most) or the night (the
+// same added up; the good casts folded into a line, the rest listed)
 function piView(reps, one) {
   const all = reps.map((r) => ({ r, d: piPull(r) })), casts = all.flatMap(({ r, d }) => d.casts.map((c) => ({ ...c, r })));
   const pri = new Map(); for (const { r, d } of all) for (const [n, x] of d.priests) { const y = pri.get(n) || { p: x.p, used: 0, poss: 0, pulls: 0, miss: [], plan: null }; y.used += x.used; y.poss += x.poss; y.pulls++; for (const m of x.miss) y.miss.push({ ...m, pull: r.item.pull }); y.plan = x.plan || y.plan; y.last = { d, x }; pri.set(n, y); }
@@ -13896,22 +13945,26 @@ function piView(reps, one) {
     plTile(plIco('inv_misc_coin_02'), 'Left on the table', left >= 1 ? C(left) : '—', left < 0.15 * Math.max(1, added + left) ? 'ok' : left < 0.4 * (added + left) ? 'warn' : 'bad', 'about, against ' + C(added) + ' added: weaker targets and stretches it sat ready') + '</div>';
   const head = { v: casts.length ? good.length + '<span>/' + casts.length + ' good</span>' : '—', s: poss ? used + ' of ' + poss + ' possible' : '' };
   const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>';
-  const pill = (o) => '<span class="hm-p ' + o.st + '" title="' + esc(o.txt) + '">' + esc(o.pill) + '</span>';
-  // ---- each priest: their line (one pull), every cast, the stretches it sat ready, and a plan for the next pull ----
+  // ---- each priest: the verdict and plan first, their line (one pull), the casts, then the stretches it sat ready ----
   let list = '';
   for (const x of [...pri.values()].sort((a, b) => b.used - a.used)) {
     const mine = casts.filter((c) => c.pr.name === x.p.name);
-    list += '<div class="pi-pr"><div class="pi-ph">' + avatar(x.p, true) + ' ' + who(x.p) + ' <span class="sub">' + esc(x.p.specName || '') + '</span><span class="pi-use ' + st(fr(x.used, x.poss)) + '">' + x.used + ' of ' + x.poss + ' possible</span></div>' +
-      (one ? piStrip(x.last.d, x.last.x, mine) : '') +
-      (!one && mine.length ? '<div class="pi-who">' + [...mine.reduce((m, c) => { const y = m.get(c.tg.name) || { q: c.tg, k: 0 }; y.k++; return m.set(c.tg.name, y); }, new Map()).values()].sort((u, v) => v.k - u.k).map((y) => who(y.q) + ' <span class="sub">×' + y.k + '</span>').join('<span class="sub"> · </span>') + '</div>' : '') +
-      (mine.length ? (one ? mine.map((c) => piRow(c, who, pill)).join('') : piTable(mine, who, pill)) : '<p class="sub" style="margin:4px 0 0">Not cast ' + (one ? 'this pull' : 'in these pulls') + '.</p>');
+    list += '<div class="pi-pr"><div class="pi-ph">' + avatar(x.p, true) + ' ' + who(x.p) + ' <span class="sub">' + esc(x.p.specName || '') + '</span><span class="pi-use ' + st(fr(x.used, x.poss)) + '">' + x.used + ' of ' + x.poss + ' possible</span></div>' + piVerdict(x, mine, one, who) +
+      (one ? piStrip(x.last.d, x.last.x, mine) : '');
+    if (one) list += mine.length ? mine.map((c) => piRow(c, who)).join('') : '<p class="sub pi-none">Not cast this pull.</p>';
+    else if (mine.length) {
+      // (the night: the good ones (A or better) folded into a line, by who got them and with what; the rest listed)
+      const ok = mine.filter((c) => c.sc >= 88), rest = mine.filter((c) => c.sc < 88), grp = new Map();
+      for (const c of ok) { const k = c.tg.name + '|' + c.tim.pill, y = grp.get(k) || { q: c.tg, pill: c.tim.pill, k: 0 }; y.k++; grp.set(k, y); }
+      if (ok.length) list += '<div class="pi-okl"><span class="okv">✓ ' + plural(ok.length, 'good cast') + ':</span> ' + [...grp.values()].sort((a, b) => b.k - a.k).map((y) => who(y.q) + ' <span class="sub">' + esc(piLc(y.pill)) + ' ×' + y.k + '</span>').join('<span class="sub"> · </span>') + '</div>';
+      if (rest.length) list += '<div class="pi-sh">' + plural(rest.length, 'cast') + ' to look at</div>' + piTable(rest, who);
+    } else list += '<p class="sub pi-none">Not cast in these pulls.</p>';
     const ms = x.miss.filter((m) => m.pick).sort((a, b) => (b.b - b.a) - (a.b - a.a)).slice(0, one ? 4 : 5);
     if (ms.length) list += '<div class="pi-miss"><div class="pi-mh">Sat ready</div>' + ms.map((m) => '<div class="pi-m"><span class="pi-t">' + (one ? '' : '<span class="sub">#' + m.pull + '</span> ') + T(m.a) + '</span><span><b>' + Math.round(m.b - m.a) + ' s unused</b> <span class="sub">to ' + T(m.b) + '</span> · ' +
-      (m.pick.cd ? 'at ' + T(m.pick.t) + ' ' + who(m.pick.q) + ' pressed ' + esc(m.pick.cd) : who(m.pick.q) + ' was the best target') + ': a Power Infusion there would have added about <b>' + C(m.pick.v * PI_CD) + '</b></span></div>').join('') + '</div>';
-    if (x.plan) list += '<div class="pi-plan"><b>Next pull</b> · give it to ' + who(x.plan.q) + ' <span class="sub">' + esc(x.plan.q.specName || '') + '</span>' + (x.plan.cd ? ' with their ' + esc(x.plan.cd.name) + (one && x.plan.cd.ts.length ? ' <span class="sub">(they pressed it at ' + x.plan.cd.ts.slice(0, 3).map((u) => T(u)).join(', ') + ')</span>' : '') : ', on cooldown') + ', every 2 minutes.</div>';
+      (m.pick.cd ? 'at ' + T(m.pick.t) + ' ' + who(m.pick.q) + ' pressed ' + esc(m.pick.cd) : who(m.pick.q) + ' was the best target') + ': about <b>' + C(m.pick.v * PI_CD) + '</b> more</span></div>').join('') + '</div>';
     list += '</div>';
   }
-  const left0 = '<div class="panel pi-list"><h3 class="nh"><span>Every Power Infusion</span><small>' + (one ? 'this pull, up to the wipe filter' : 'over ' + plural(reps.length, 'pull')) + ' · hover for why</small></h3>' + (one ? '<div class="pi-leg"><span><i class="pi-sr"></i>ready, not used</span><span><i class="pi-sc ok"></i>a good target</span><span><i class="pi-sc warn"></i>a weaker one</span><span><i class="pi-sd"></i>raid downtime</span><span><i class="pi-sl"></i>Bloodlust</span></div>' : '') + list + '</div>';
+  const left0 = '<div class="panel pi-list"><h3 class="nh"><span>Every Power Infusion</span><small>' + (one ? 'this pull, up to the wipe filter' : 'over ' + plural(reps.length, 'pull') + ' · only the casts to look at are listed') + '</small></h3>' + (one ? '<div class="pi-leg"><span><i class="pi-sc ok"></i>good cast</span><span><i class="pi-sc warn"></i>could be better</span><span><i class="pi-sc bad"></i>poor</span><span><i class="pi-st"></i>ideal moment (the plan\'s cooldown)</span><span><i class="pi-sr"></i>ready, not used</span><span><i class="pi-sd"></i>raid downtime</span><span><i class="pi-sl"></i>Bloodlust</span></div>' : '') + list + '</div>';
   // ---- who gains the most: this pull's ranking (the night: each player's average), and who got it ----
   const rk = new Map(); for (const { d } of all) for (const q of d.rank) { const y = rk.get(q.p.name) || { p: q.p, v: 0, n: 0, sim: q.sim, got: 0 }; y.v += q.v; y.n++; rk.set(q.p.name, y); }
   for (const c of casts) { const y = rk.get(c.tg.name); if (y) y.got++; }
@@ -14057,21 +14110,6 @@ function castUsual(r, name) {
   if (per.length < 2) return null;
   return { cpm: cstMed(per), n: per.length, ab: new Map([...abm].map(([k, v]) => [k, cstMed(v.concat(new Array(Math.max(0, per.length - v.length)).fill(0)))])) };
 }
-// every cast on one time line, a row each (players, or one player's spells): a tick per cast in the row's colour, time
-// dead shaded, the phases behind; a row with a key is clickable (data-cn)
-function castLanes(r, lanes, w0, w1, o) {
-  const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : Math.max(760, Math.min(1500, Math.round(chartPx(!!o.side)))), Lw = narrow ? 84 : 128, R = 8, LH = narrow ? 14 : 13, Tp = 4, B = 18;
-  const H = Tp + lanes.length * LH + B, iw = W - Lw - R, span = Math.max(1, w1 - w0), X = (t) => Lw + ((Math.min(w1, Math.max(w0, t)) - w0) / span) * iw, ih = lanes.length * LH;
-  let s = '<svg class="pfc cst" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.aria || 'Every cast') + '">';
-  ((r.module && !r.module.error && r.module.phases) || []).forEach((q, i) => { if (q.start >= w1 || (isFinite(q.end) && q.end <= w0)) return; const x0 = X(Math.max(w0, q.start)), x1 = X(Math.min(w1, isFinite(q.end) ? q.end : w1)); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(0, x1 - x0).toFixed(1) + '" height="' + ih + '" class="pfc-ph p' + (i % 2) + '"/>'; });
-  lanes.forEach((l, i) => { const y = Tp + i * LH;
-    s += '<g class="cst-l' + (l.key ? ' k' : '') + (l.on ? ' on' : '') + '"' + (l.key ? ' data-cn="' + esc(l.key) + '"' : '') + '><rect class="cst-hit" x="0" y="' + y + '" width="' + W + '" height="' + LH + '"/>';
-    for (const [a, b] of l.dead || []) { if (b < w0 || a > w1) continue; s += '<rect x="' + X(a).toFixed(1) + '" y="' + (y + 1) + '" width="' + Math.max(0, X(Math.min(b, w1)) - X(a)).toFixed(1) + '" height="' + (LH - 2) + '" class="cst-dd"/>'; }
-    s += '<text x="' + (Lw - 6) + '" y="' + (y + LH - 3.5) + '" class="cst-n" text-anchor="end" style="fill:' + l.c + '">' + esc(l.n.length > (narrow ? 11 : 18) ? l.n.slice(0, narrow ? 10 : 17) + '…' : l.n) + '</text>';
-    s += '<path d="' + l.ts.filter((t) => t >= w0 && t <= w1).map((t) => 'M' + X(t).toFixed(1) + ' ' + (y + 2) + 'v' + (LH - 4)).join('') + '" class="cst-t" style="stroke:' + l.c + '"/><title>' + esc(l.tip) + '</title></g>'; });
-  const step = span > 400 || (narrow && span > 150) ? 60 : 30; for (let t = Math.ceil(w0 / step) * step; t <= w1; t += step) s += '<text x="' + X(t).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x" text-anchor="middle">' + T(t) + '</text>';
-  return '<h3 class="nh"><span class="pfc-ttl">' + o.ttl + '</span><small>' + o.sub + '</small></h3>' + s + '</svg>';
-}
 // The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
 // player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
 function castView(list, one) {
@@ -14085,7 +14123,10 @@ function castView(list, one) {
   if (!all.length) return { head: {}, html: '<div class="panel"><p class="muted">No casts in ' + (one ? 'this pull' : 'these pulls') + '.</p></div>' };
   for (const a of all) { a.cpm = a.al >= 1 ? 60 * a.n / a.al : 0; a.abL = [...a.ab.values()].sort((x, y) => y.n - x.n); a.gaps.sort((x, y) => y.len - x.len);
     a.sim = paceOf(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null;
-    if (one) { a.us = castUsual(list[0].r, a.p.name); a.d = a.us && a.us.cpm ? (a.cpm - a.us.cpm) / a.us.cpm : null; } }
+    if (one) { a.us = castUsual(list[0].r, a.p.name); a.d = a.us && a.us.cpm ? (a.cpm - a.us.cpm) / a.us.cpm : null; }
+    // (through the night, with 4 pulls or more of 10 s casting: the later half's pace against the first half's)
+    else { const v = a.per.filter((o) => o.c.al >= 10).map((o) => o.c.cpm), h = v.length >> 1, m = (l) => l.reduce((s, y) => s + y, 0) / l.length;
+      if (v.length >= 4) { a.trE = m(v.slice(0, h)); a.trL = m(v.slice(v.length - h)); a.tr = a.trE ? (a.trL - a.trE) / a.trE : null; } } }
   // (the slowest for their spec first, then those with no sim to measure against, by their pace against their usual)
   all.sort((a, b) => (a.f == null) - (b.f == null) || (a.f != null ? a.f - b.f : (a.d ?? 0) - (b.d ?? 0) || b.cpm - a.cpm));
   const has = new Set(all.map((a) => a.p.role || 'dps')), rc = roleCur(has), rows = all.filter((a) => rc === 'all' || (a.p.role || 'dps') === rc);
@@ -14100,30 +14141,18 @@ function castView(list, one) {
       : plTile(plIco('inv_misc_note_01'), 'On pace', withSim.length ? Math.round(100 * withSim.filter((a) => a.f >= 0.9).length / withSim.length) + '<span>%</span>' : '—', 'na', 'of the players with a pace, over ' + plural(list.length, 'pull'), true),
     plTile(plIco('inv_misc_pocketwatch_01'), 'Longest gap', lg ? Math.round(lg.len) + '<span> s</span>' : '—', lg && lg.len >= 8 ? 'warn' : 'na', lg ? lg.p.name + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.t) + (lg.mv === true ? ' · moving' : lg.mv === false ? ' · standing still' : '') : 'no gaps of 4 s or more', !(lg && lg.len >= 8))];
   const mid = cstMed(withSim.map((a) => a.f)), head = { v: withSim.length ? slow.length + '<span> slow</span>' : fmtCpm(cstMed(all.map((a) => a.cpm))) + '<span>/min</span>', s: withSim.length ? 'the middle player at ' + Math.round(100 * mid) + '% of their spec\'s pace' : 'casts per minute, the middle player' };
-  const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
-  // ---- the chart: every cast, a row per player; a player picked: just the tiles (their spells are in the table below,
-  // a chart of them wasn't needed); over the night, a bar per pull ----
-  let top;
-  if (one && sel) top = '<div class="pts n3">' + tiles.join('') + '</div>';
-  else if (one) { const w = list[0];
-    const lanes = rows.map((a) => ({ key: a.p.name, n: a.p.name, c: a.p.color, ts: a.per[0].c.all, dead: deadSpans(w.r, a.p), tip: a.p.name + ': ' + plural(a.n, 'cast') + ', ' + fmtCpm(a.cpm) + ' a minute' + (a.sim ? ' (' + Math.round(100 * a.f) + '% of the pace)' : '') + ' · click for their spells' }));
-    top = '<div class="pf-chartrow"><div class="panel pf-chart cst-w">' + castLanes(w.r, lanes, w.w0, w.w1, { side: true, aria: 'Every cast, by player', ttl: 'Every cast', sub: 'a line per cast, a row per player · dead time shaded · click a row for that player' }) + '</div>' + tilesH + '</div>';
-  } else {
-    const valOf = sel ? (w) => { const o = sel.per.find((y) => y.w === w); return o && o.c.al >= 10 ? o.c.cpm : null; }
-      : (w) => { const v = []; for (const a of all) { if (!a.sim) continue; const o = a.per.find((y) => y.w === w); if (o && o.c.al >= 10) v.push(o.c.cpm / a.sim.v); } return v.length ? cstMed(v) : null; };
-    top = '<div class="pts n3">' + tiles.join('') + '</div>' + resNightChart(list, valOf, sel ? { ty: '0', ttl: esc(sel.p.name) + '\'s casts per minute, per pull', sub: 'while alive', fmt: fmtCpm, tip: (v) => fmtCpm(v) + ' casts a minute' }
-      : { ty: '0', ttl: 'Pace, per pull', sub: 'the middle player, against their spec\'s pace', tip: (v) => Math.round(100 * v) + '% of their spec\'s pace, the middle player' });
-  }
+  // ---- the tiles (no charts here: the bars and the details say it) ----
+  const top = '<div class="pts n3">' + tiles.join('') + '</div>';
   // ---- a bar per player: their casts per minute, a tick at their spec's sim pace ----
   const mx = Math.max(1, ...rows.map((a) => Math.max(a.cpm, a.sim ? a.sim.v : 0))) * 1.05;
   const bars = rows.map((a, i) => { const on = sel === a;
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' cst-r', attrs: ' type="button" data-cn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * a.cpm / mx), 'm']], tick: a.sim ? 100 * a.sim.v / mx : null, v: fmtCpm(a.cpm),
-      sub: a.f != null ? '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>' : '<span class="sub">—</span>', chips: one && a.d != null && Math.abs(a.d) >= 0.05 ? ' ' + dlt(a.d) : '' }); }).join('');
-  const left = '<div class="panel pf-bars cst-bars"><h3 class="nh"><span>Casts per minute</span><small>while alive · the tick: their spec\'s top players\' pace · % of it on the right' + (one ? ' · ▲▼ against their usual' : ' · over ' + plural(list.length, 'pull')) + '</small>' + roleChips(has) + '</h3>' +
+      sub: a.f != null ? '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>' : '<span class="sub">—</span>', chips: one ? (a.d != null && Math.abs(a.d) >= 0.05 ? ' ' + dlt(a.d) : '') : a.tr != null && Math.abs(a.tr) >= 0.03 ? ' ' + dlt(a.tr) : '' }); }).join('');
+  const left = '<div class="panel pf-bars cst-bars"><h3 class="nh"><span>Casts per minute</span><small>while alive · the tick: their spec\'s top players\' pace · % of it on the right' + (one ? ' · ▲▼ against their usual' : ' · over ' + plural(list.length, 'pull') + ' · ▲▼ the later pulls against the first') + '</small>' + roleChips(has) + '</h3>' +
     (bars ? cbHead('Per min', 'Of pace') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
   return { head, html: top + '<div class="pf-cols">' + left + '<div class="panel pf-det cst-det">' + (sel ? castDetail(sel, one, all) : castRaid(all, one)) + '</div></div>' + castHow };
 }
-const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more.</div></details>';
+const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more. <b>▲▼ over All pulls</b>: each player\'s later half of pulls against their first half; later pulls often get further into the fight, which can change the pace a little.</div></details>';
 // no one picked: the slowest against their spec, the biggest drops against their usual, and the longest gaps
 function castRaid(all, one) {
   const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
@@ -14132,6 +14161,8 @@ function castRaid(all, one) {
   h += rsSec('Furthest under their spec\'s pace', 'casts a minute, and the pace', sl.length ? sl.map((a) => line(who(a.p) + ' <span class="sub">' + esc(a.p.specName || '') + '</span>', fmtCpm(a.cpm) + ' of ' + fmtCpm(a.sim.v), '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>')).join('') : '<p class="sub" style="margin:0">No pace for these specs yet.</p>');
   if (one) { const dr = all.filter((a) => a.d != null && a.d < -0.05).sort((a, b) => a.d - b.d).slice(0, 5);
     h += rsSec('Slower than their usual', 'against their own other pulls of this boss', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.cpm) + ', usually ' + fmtCpm(a.us.cpm), dlt(a.d))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.us) ? 'Nobody was slower than usual.' : 'Needs 2 more pulls of this boss read.') + '</p>'); }
+  if (!one) { const dr = all.filter((a) => a.tr != null && a.tr <= -0.05).sort((a, b) => a.tr - b.tr).slice(0, 5);
+    h += rsSec('Slowed down later on', 'the later pulls against the first', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.trE) + ' → ' + fmtCpm(a.trL) + ' a minute', dlt(a.tr))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.tr != null) ? 'Nobody slowed down 5% or more.' : 'Needs 4 pulls or more.') + '</p>'); }
   const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).slice().sort((x, y) => y.len - x.len).slice(0, 6);
   h += rsSec('Longest gaps', 'not dead, and not while the raid was waiting', lg.length ? lg.map((g) => line(who(g.p), (one ? '' : 'pull ' + g.pull + ' · ') + 'from ' + T(g.t) + (g.mv === true ? ' · moving' : g.mv === false ? ' · standing still' : ''), Math.round(g.len) + ' s')).join('') : '<p class="sub" style="margin:0">No gaps of 4 s or more.</p>');
   return h + '<p class="sub" style="margin:10px 0 0">Pick a player for every spell they pressed.</p>';
@@ -14767,17 +14798,21 @@ function rcCards(reps) {
   for (const r of reps) for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; const c = cardOf(r, p); if (!c) continue; let x = per.get(p.name); if (!x) per.set(p.name, x = { p, list: [] }); x.p = p; x.list.push({ r, c }); }
   return [...per.values()].map(({ p, list }) => {
     const last = list[list.length - 1].c, wt = (c) => c.until, avg = (f) => { let s = 0, w = 0; for (const { c } of list) { const v = f(c); if (v != null) { s += wt(c) * v; w += wt(c); } } return w ? s / w : null; };
+    // (through the night, with 4 pulls or more: the later half of their pulls against the first half)
+    const h2 = Math.floor(list.length / 2), mOf = (l, f) => { const v = l.map(({ c }) => f(c)).filter((y) => y != null); return v.length ? v.reduce((s, y) => s + y, 0) / v.length : null; };
+    const trOf = (f) => { if (list.length < 4) return null; const e = mOf(list.slice(0, h2), f), l = mOf(list.slice(list.length - h2), f); return e == null || l == null ? null : l - e; };
     const secs = {}; for (const [k] of RC_SEC) secs[k] = avg((c) => c.secs[k].sc);
     const fx = new Map(); for (const { r, c } of list) for (const f of c.fixes) { const y = fx.get(f.key) || { ...f, gain: 0, n: 0, pulls: [] }; y.gain += f.gain * wt(c); y.n++; y.pulls.push(r.item.pull); Object.assign(y, { t: f.t, x: f.x }); fx.set(f.key, y); }
-    const tw = list.reduce((s, { c }) => s + wt(c), 0), fixes = [...fx.values()].map((f) => ({ ...f, gain: f.gain / tw })).sort((a, b) => b.gain - a.gain);
+    const tw = list.reduce((s, { c }) => s + wt(c), 0), fixes = [...fx.values()].map((f) => ({ ...f, gain: f.gain / tw, tr: trOf((c) => { const z = c.fixes.find((q) => q.key === f.key); return z ? z.gain : 0; }) })).sort((a, b) => b.gain - a.gain);
     // (over several pulls, each check as its average: how it went, and its worst pull)
     const checks = {}; for (const [k] of RC_SEC) { const by = new Map(); for (const { r, c } of list) for (const ck of c.secs[k].checks) { const y = by.get(ck.k) || { ...ck, scs: [], nums: [], dens: [], pulls: 0, worst: null }; y.pulls++; if (ck.sc != null) { y.scs.push([ck.sc, c.until]); if (!y.worst || ck.sc < y.worst[0]) y.worst = [ck.sc, r.item.pull]; } if (ck.num != null) y.nums.push(ck.num); if (ck.den != null) y.dens.push(ck.den);
       if (ck.wst) { y.wstT = y.wstT || {}; for (const n in ck.wst) y.wstT[n] = (y.wstT[n] || 0) + ck.wst[n]; } // (wasted resources: each power's amount, added up)
       by.set(ck.k, y); } checks[k] = [...by.values()]; }
-    return { p, role: last.role, n: list.length, secs, overall: avg((c) => c.overall), fixes, last, checks };
+    return { p, role: last.role, n: list.length, secs, overall: avg((c) => c.overall), fixes, last, checks, trend: trOf((c) => c.overall), secTr: Object.fromEntries(RC_SEC.map(([k]) => [k, trOf((c) => c.secs[k].sc)])) };
   });
 }
 const rcG = (sc) => (sc == null ? '<span class="grade g-na">–</span>' : gradeChip(letterOf(sc)));
+const rcFt = (f) => (f.tr == null || Math.abs(f.tr) < 1 ? '' : f.tr < 0 ? ' <span class="rk-ft up">▲ getting better</span>' : ' <span class="rk-ft dn">▼ getting worse</span>'); // (a fix: less or more of it in the later pulls)
 // (the Report card switch's headline: the raid's average grade)
 function rcHead(reps) { const all = rcCards(reps), v = all.map((x) => x.overall).filter((s) => s != null), a = v.length ? v.reduce((s, x) => s + x, 0) / v.length : null;
   return { v: a == null ? '—' : letterOf(a) + '<span> raid average</span>', s: plural(all.length, 'player') + ' graded' }; }
@@ -14797,11 +14832,11 @@ function reportCard(reps, night) {
   const row = (x) => { const f = x.fixes[0], on = x.p.name === sel;
     return '<button class="rk-r' + (on ? ' on' : '') + '" type="button" data-rc="' + esc(x.p.name) + '" aria-expanded="' + on + '">' + avatar(x.p, true) +
       '<span class="rk-n"><b style="color:' + (x.p.color || 'inherit') + '">' + esc(x.p.name) + '</b><span class="sub">' + esc(x.p.specName || '') + '</span></span>' +
-      '<span class="rk-o">' + rcG(x.overall) + '</span>' +
+      '<span class="rk-o">' + rcG(x.overall) + (night && x.trend != null ? plTr(x.trend) : '') + '</span>' +
       '<span class="rk-ms">' + RC_SEC.map(([k, l]) => '<span class="rk-m" title="' + esc(l) + (x.secs[k] != null ? ': ' + Math.round(x.secs[k]) + '/100' : '') + '"><i>' + esc(l.split(' ')[0] === 'Using' ? 'Toolkit' : l.split(' ')[0] === 'Pressing' ? 'Buttons' : 'Alive') + '</i>' + rcG(x.secs[k]) + '</span>').join('') + '</span>' +
-      '<span class="rk-f">' + (f && f.gain >= 1 ? '<b>' + esc(f.t) + '</b>' + (night && f.n > 1 ? '<span class="sub"> · ' + f.n + ' of ' + x.n + ' pulls</span>' : '') : '<span class="ok-t">✓ Nothing big to fix</span>') + '</span>' +
+      '<span class="rk-f">' + (f && f.gain >= 1 ? '<b>' + esc(f.t) + '</b>' + (night && f.n > 1 ? '<span class="sub"> · ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + (night ? rcFt(f) : '') : '<span class="ok-t">✓ Nothing big to fix</span>') + '</span>' +
       '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night) : ''); };
-  return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade over the pulls they were in, by their time alive' : 'This pull, up to the wipe filter') + ' · most to gain first · click a player for their card</span>' + roleChips(has, 'all') + '</div>' +
+  return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade over the pulls they were in, by their time alive · ▲▼ their later pulls against the first' : 'This pull, up to the wipe filter') + ' · most to gain first · click a player for their card</span>' + roleChips(has, 'all') + '</div>' +
     '<div class="rk-list">' + rows.map(row).join('') + '</div>' +
     '<p class="sub rk-how">Graded on what each player could control: casting, big cooldowns, staying alive and using their kit. The boss\'s mechanics are on Mechanics. S is 95 or more, A 88, B 78, C 65, D 50.</p></div>';
 }
@@ -14809,7 +14844,7 @@ function reportCard(reps, night) {
 function rcDetail(x, night) {
   const fx = x.fixes.filter((f) => f.gain >= 1).slice(0, 3);
   const work = '<div class="rk-work"><div class="rk-wh">' + (fx.length ? 'Work on these first <span class="sub">biggest gain first' + (night ? ', over ' + plural(x.n, 'pull') : '') + '</span>' : 'Nothing big to work on') + '</div>' +
-    (fx.length ? fx.map((f, i) => '<div class="rk-w"><span class="rk-wn">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b> <span class="rk-gain" title="About how much fixing it would add to the overall grade">+' + Math.max(1, Math.round(f.gain)) + ' points</span>' + (night && f.n > 1 ? ' <span class="sub">· in ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + '<div class="rk-wx">' + esc(f.x) + '</div></div></div>').join('')
+    (fx.length ? fx.map((f, i) => '<div class="rk-w"><span class="rk-wn">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b> <span class="rk-gain" title="About how much fixing it would add to the overall grade">+' + Math.max(1, Math.round(f.gain)) + ' points</span>' + (night && f.n > 1 ? ' <span class="sub">· in ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + (night ? rcFt(f) : '') + '<div class="rk-wx">' + esc(f.x) + '</div></div></div>').join('')
       : '<div class="rk-wx">' + ckLine('ok', 'Every check went well' + (night ? ' over these pulls' : ' this pull') + '.') + '</div>') + '</div>';
   const lineOf = (ck) => { if (!night || x.n === 1) return ckLine(rcSt(ck.sc), ck.html);
     // (over several pulls: a share as its average, a count as its total, uses as "n of possible"; and the worst pull)
@@ -14819,7 +14854,7 @@ function rcDetail(x, night) {
     const wTxt = ck.wstT ? ' · ' + (wl.length ? 'wasted ' + wl.map(([n, v]) => Math.round(v).toLocaleString('en-US') + ' ' + (Math.round(v) === 1 ? Object.values(RES_ONE).find((o) => o + 's' === n) || n : n)).join(', ') : 'nothing wasted') + ' in all' : '';
     return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + esc(wTxt) + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub"> · worst: pull ' + ck.worst[1] + '</span>' : '')); };
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
-    return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span></header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
+    return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span>' + (night && x.secTr && x.secTr[k] != null ? plTr(x.secTr[k]) : '') + '</header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
   const go = '<div class="rk-go"><span class="sub">See it in</span>' + [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage'], ['res', 'Resources'], ['cast', 'Casts'], ['surv', 'Survivability'], ['util', 'Utility']].map(([k, l]) => '<button class="btn" type="button" data-rcgo="' + k + '" data-rcn="' + esc(x.p.name) + '">' + l + '</button>').join('') + '</div>';
   return '<div class="rk-d">' + work + secs + go + '</div>';
 }
@@ -16477,6 +16512,27 @@ async function teamRankPanel(g) {
         : '<p class="muted" style="margin:6px 0 0">Not ranked on Mythic yet: Warcraft Logs ranks a team once it has a Mythic kill this tier.</p>');
   } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read the rankings: ' + esc(e.message) + '</div>'; }
 }
+// Since last raid, on a team's page: each player's grade (mechanics and Report card, saved with each pull of your raid
+// read on this PC) on the team's last raid night against the last night before it on the same boss, on the bosses both
+// nights pulled (like with like: a new, harder boss would make everyone look worse). A player needs 2 graded pulls in each.
+function sinceLast(list) {
+  const nights = new Map(); for (const v of list) { if (!v.gr) continue; const k = nightOf(v.at); if (!nights.has(k)) nights.set(k, []); nights.get(k).push(v); }
+  const ks = [...nights.keys()].sort(), ttl = '<h3 class="nh"><span>Since last raid</span>';
+  if (ks.length < 2) return '<section class="panel pg-since">' + ttl + '</h3><p class="sub" style="margin:0">' + (ks.length ? 'Each player\'s grade is saved with every pull read here, from ' + esc(nightLabel(nights.get(ks[0])[0].at)) + ' on. After the next raid night, this shows who got better and who slipped.' : 'Each player\'s grade is saved with every pull of your raid read here. After two raid nights, this shows who got better and who slipped.') + '</p></section>';
+  const B = nights.get(ks[ks.length - 1]), inB = new Set(B.map((v) => v.boss)), kA = ks.slice(0, -1).reverse().find((k) => nights.get(k).some((v) => inB.has(v.boss)));
+  if (!kA) return '<section class="panel pg-since">' + ttl + '</h3><p class="sub" style="margin:0">Each player\'s grade is saved with every pull read here. This shows who got better once your raid has two nights on the same boss.</p></section>';
+  const A = nights.get(kA), inA = new Set(A.map((v) => v.boss)), shared = [...inB].filter((b) => inA.has(b));
+  const avgs = (l) => { const m = new Map(); for (const v of l.filter((x) => shared.includes(x.boss))) for (const [n, [sc, u, cls]] of Object.entries(v.gr)) { const w = Math.max(20, u || 0), y = m.get(n) || { s: 0, w: 0, k: 0, cls }; y.s += sc * w; y.w += w; y.k++; y.cls = cls || y.cls; m.set(n, y); }
+    return new Map([...m].filter(([, y]) => y.k >= 2).map(([n, y]) => [n, { v: y.s / y.w, cls: y.cls }])); };
+  const a = avgs(A), b = avgs(B), rows = [...b].filter(([n]) => a.has(n)).map(([n, y]) => ({ n, v: y.v, was: a.get(n).v, d: y.v - a.get(n).v, col: (E.CLASSES[y.cls] || [])[1] || 'inherit' })).sort((x, y) => y.d - x.d);
+  const sub = esc(nightLabel(A[0].at)) + ' → ' + esc(nightLabel(B[0].at)) + ' · on ' + esc(shared.join(', '));
+  if (!rows.length) return '<section class="panel pg-since">' + ttl + '<small>' + sub + '</small></h3><p class="sub" style="margin:0">Nobody had 2 graded pulls on both nights yet.</p></section>';
+  const line = (x) => '<div class="ps-l"><span class="nm" style="color:' + x.col + '">' + esc(x.n) + '</span><span class="ps-g">' + gradeChip(letterOf(x.was)) + '<span class="sub">→</span>' + gradeChip(letterOf(x.v)) + '</span>' + plTr(x.d) + '</div>';
+  const up = rows.filter((x) => x.d >= 2), dn = rows.filter((x) => x.d <= -2).reverse(), lv = rows.length - up.length - dn.length;
+  const col = (h, l, none) => '<div class="ps-c"><div class="ps-h">' + h + '</div>' + (l.length ? l.slice(0, 8).map(line).join('') + (l.length > 8 ? '<p class="sub" style="margin:4px 0 0">and ' + (l.length - 8) + ' more</p>' : '') : '<p class="sub" style="margin:0">' + none + '</p>') + '</div>';
+  return '<section class="panel pg-since">' + ttl + '<small>' + sub + '</small></h3><div class="ps-cols">' + col('<span class="okv">▲ Got better</span>', up, 'Nobody rose 2 points or more.') + col('<span class="hotv">▼ Slipped</span>', dn, 'Nobody dropped 2 points or more.') + '</div>' +
+    '<p class="sub" style="margin:8px 0 0">' + (lv ? plural(lv, 'player') + ' about the same · ' : '') + 'The grade from Players (mechanics and Report card, each night\'s pulls averaged by time alive), without prep.</p></section>';
+}
 function renderProgress(msg, msgErr) {
   // (the teams page, unless a team (or everything saved) is picked)
   const gl = groups(), g = S.progView && S.progView !== '*' ? gl.find((x) => x.gid === S.progView) : null;
@@ -16542,7 +16598,7 @@ function renderProgress(msg, msgErr) {
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';

@@ -16,7 +16,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Stats** (your idea, a tab in Performance; you want guidance first): each player's average main and secondary stats
   over the pull, and how much came from gear procs ("cantrips"), flasks, food, enchants, and other players' buffs.
 - [x] **Power Infusion** (your idea): built in round 137.
-- [ ] **Trend arrows elsewhere** (your question): where the ▲▼ "through the night" could go next. Ideas in the reply.
+- [x] **Trend arrows elsewhere** (your question): built in round 138 (Report card, Casts, Summary, and "Since last raid" on your team's page).
 - [x] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
   on a click (round 127).
 - **Goal (your note): the Performance tab is meant to replace Warcraft Logs** for the raid. Everything people check on Warcraft
@@ -74,6 +74,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 138: Power Infusion easier to read, trend arrows, no charts in Casts
+- [x] **Power Infusion, your go-ahead on all six:** each priest's block now starts with a verdict (good targets, lined up
+  with a cooldown, how many went unused), the **Biggest win** (with how much it adds) and a **Timing** tip ("hold it about
+  19 s for Zaffia's Deathmark: 4 casts came just before it"), then the plan for the next pull. One grade per cast with
+  one line of why. The pull's line has white ticks for the ideal moments (when the planned player pressed their
+  cooldown). All pulls folds the good casts into one line and lists only the ones to look at. The "15 s on them" line is
+  gone. With two priests, each gets a different player in their plan.
+- [x] **Trend arrows** (▲▼, the later half of the night's pulls against the first half): the Report card (each player's
+  grade, each part of their card, and whether their top fix is getting better or worse), Casts (each player's pace, and
+  "Slowed down later on"), and Summary (each mechanic's grade now shows by how many points it moved, for example ▲12).
+- [x] **Since last raid** on your team's Progress page: each player's grade on your last raid night against the last
+  night before it on the same boss (a new, harder boss would make everyone look worse). Grades are saved with each pull
+  from now on, so it fills in after your next raid on a boss you've pulled here before.
+- [x] **Casts: no charts** (your note): the "Every cast" chart and the per-pull chart are gone; the tiles, the bars and
+  the details stay.
 
 ## 2026-10-17, round 137: Power Infusion (a new Performance view)
 - [x] **Power Infusion** (your idea: the right target at the right time): every PI a priest cast, graded twice. The target:
