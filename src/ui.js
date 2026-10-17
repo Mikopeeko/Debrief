@@ -1626,7 +1626,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
         const d2 = list.filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected)), l2 = d2.filter((c) => c.status !== 'on time').length, m2 = d2.filter((c) => c.status === 'missed').length;
         addSec({ id: 'as-hcd-' + hi, ph: 'hcd', ord: hi++, icon: icoWh('spell_holy_divinehymn'), title: esc(capS(name)), sub: plural(list.length, 'reminder'),
           st: !d2.length ? 'na' : m2 ? 'bad' : l2 ? 'warn' : 'ok', txt: !d2.length ? (list.some((c) => c.expected != null && c.expected <= r.duration) ? AFTER : 'didn\'t come up') : l2 ? [m2 ? m2 + ' missed' : '', l2 - m2 ? (l2 - m2) + ' late or early' : ''].filter(Boolean).join(' · ') : allOf(d2.length, 'pressed on time', 'on time'),
-          how: hi === 1 ? 'The cooldown reminders in the note: pressed within 3 seconds of the reminder is on time, later or earlier than that is late or early, and not pressed at all is missed. Reminders after the wipe filter are greyed and not counted.' : '',
+          how: hi === 1 ? 'The cooldown reminders in the note: pressed within 5 seconds of the reminder is on time (healing cooldowns are timed around raid damage that doesn\'t land on the exact second), later or earlier than that is late or early, and not pressed at all is missed. Reminders after the wipe filter are greyed and not counted.' : '',
           body: '<div class="scroll"><table class="tbl nsx"><thead><tr><th>Player</th><th>Spell</th><th>Note time</th><th>Expected</th><th>Pressed</th><th>Result</th></tr></thead><tbody>' + list.map(rowH).join('') + '</tbody></table></div>' });
       }
     }
@@ -3091,7 +3091,7 @@ const ASG_META = {
   'Pyre soak': { pic: () => spellIcon(0, 'Hungering Pyre', true), tip: 'Hungering Pyre', sec: 'as-nzpyre', how: 'The note\'s Hungering Pyre soak list goes into every Pyre; its don\'t-soak list stays out (their Slithering Flame burns the corpses). Someone from the don\'t-soak list in it, or three or more of the soak list missing (not counting anyone dead or in the well), could be better.' },
   'Sides': { pic: () => icoW('ability_creature_poison_05'), tip: '', sec: 'as-sides', how: 'The note\'s Blood and Breath groups: each starts on its own boss and swaps to the other after every intermission. A player on the other boss in a cycle could be better (the note may just be out of date).' },
   'Kick teams': { pic: () => icoW('ability_kick'), tip: '', sec: 'as-kt', how: 'Each raid marker\'s kickers from the note. A cast from that marker\'s add that got through is a miss.' },
-  'Assigned cooldowns': { pic: () => icoW('spell_holy_divinehymn'), tip: '', sec: 'as-hcd', how: 'The cooldown reminders in the note: pressed within 3 seconds is on time, later or earlier is late or early, not pressed is missed.' },
+  'Assigned cooldowns': { pic: () => icoW('spell_holy_divinehymn'), tip: '', sec: 'as-hcd', how: 'The cooldown reminders in the note: pressed within 5 seconds is on time, later or earlier is late or early, not pressed is missed.' },
 };
 const ASG_ORDER = ['Well groups', 'Pyre soak', 'Sides', 'Mutilate groups', 'Fury timer', 'Guillotine', 'Purple orbs', 'Mind control CC', 'Soulcoiler kicks', 'Add curses', 'Ghost soaks', 'Kick teams', 'Assigned cooldowns'];
 function assignAcross(reps) {

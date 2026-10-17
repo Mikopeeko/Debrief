@@ -4117,8 +4117,10 @@ function checkAssignments(r, noteText) {
       if (uses.length) {
         const u = uses.reduce((a, b) => (Math.abs(b - row.expected) < Math.abs(a - row.expected) ? b : a));
         row.used = u; row.delta = u - row.expected;
-        row.status = Math.abs(row.delta) <= 3 ? 'on time' : row.delta > 0 ? 'late' : 'early';
-        if (row.status !== 'on time') res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: Math.abs(row.delta) > 8 ? 'Medium' : 'Low',
+        // (healing cooldowns are timed around raid damage that doesn't land on the exact second: within 5 s is on time, and only
+        // over 10 s off is a medium mistake)
+        row.status = Math.abs(row.delta) <= 5 ? 'on time' : row.delta > 0 ? 'late' : 'early';
+        if (row.status !== 'on time') res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: Math.abs(row.delta) > 10 ? 'Medium' : 'Low',
           detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' ' + Math.abs(row.delta).toFixed(1) + 's ' + (row.delta > 0 ? 'late' : 'early') + ' (assigned at ' + fmtT(row.expected) + ', P' + rem.ph + ' ' + fmtT(rem.time) + ').', fix: 'Press it when the NSRT reminder counts down to 0.' });
       } else if (dt != null && dt < row.expected) row.status = 'dead before it';
       else {

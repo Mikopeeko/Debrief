@@ -76,6 +76,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 136: a little more room for healing cooldowns
+- [x] **Healing cooldowns from the note** (your call: they're timed around raid damage that doesn't land on the exact
+  second): within 5 s of the reminder is on time (was 3 s), 5-10 s off is a small slip, over 10 s a medium mistake (was
+  8 s); a press over 15 s away, or none, is still missed. On pull 21 that moved 5 presses from late to on time.
+
 ## 2026-10-17, round 135: Players (the Player audit, rebuilt)
 - [x] **Players** replaces the Player audit (your call: no repeats of other tabs). One grade per player: half mechanics
   (their own mistakes, and the NSRT note's assignments they did), half the Report card, with prep (gear, enchants,
