@@ -2282,6 +2282,9 @@ function audit() {
     h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">defensives, Healthstones and potions up to the wipe filter; raid cooldowns for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕\u00a0' + pl2(nd, 'problem') : '✓\u00a0clean') + '</span></summary>' +
       secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
       (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })() + '</details>'; }
+  // Damage taken by source (moved from Performance): every ability that hit the raid as bars, and who took it
+  if (!r.allPulls && [...r.players.values()].some((p) => (p.takenAbS || []).length)) { const e0 = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration)), ps0 = players().filter((p) => p.name && !/^Player-/.test(p.name));
+    h += '<details class="phase" open><summary><b>Damage taken</b> <span class="sub">what hit the raid' + (cut ? ', up to the wipe filter' : '') + '</span></summary><details class="panel secd st-na" id="sec-dsrc" data-k="dsrc"' + (S.openSecs.has('dsrc') ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, 'Shadowfury', true) + '<b>Damage taken by source</b></span><span class="sst na">every ability, and who took it</span></summary><div class="secbody"><div class="pfv">' + perfSources(r, ps0, 0, e0) + '</div></div></details></details>'; }
   if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean /, 'Clean · ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
   if (m.diag) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
@@ -2291,6 +2294,13 @@ function audit() {
   // applies on Enter or when you leave the box; keeps the cursor in the box while you type
   if ($('#kickBox')) kicks();
   bindStackKinds();
+  // (Damage taken by source: an ability opens who took it, again to close; the role chips; a name opens their Damage taken)
+  { const box = $('#sec-dsrc'); if (box) { const go = () => { audit(); refreshIcons(); };
+    box.querySelectorAll('.pf-row.pf-srow[data-src], .pf-sl[data-src]').forEach((b) => (b.onclick = () => { S.srcSel = S.srcSel === b.dataset.src ? null : b.dataset.src; go(); }));
+    box.querySelectorAll('.pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; go(); }));
+    const mo = box.querySelector('#pfSrcMore'); if (mo) mo.onclick = () => { S.srcMore = !S.srcMore; go(); }; const cl = box.querySelector('#pfSrcClose'); if (cl) cl.onclick = () => { S.srcSel = null; go(); };
+    box.querySelectorAll('.pf-sw.pf-hn[data-n]').forEach((el) => (el.onclick = () => { S.tab = 'perf'; S.perfKind = 'taken'; S.perfSel = el.dataset.n; S.perfLens = 'players'; renderMain(); window.scrollTo({ top: 0 }); }));
+    pfSortBind(); } }
   $('#view').querySelectorAll('.pill').forEach((b) => (b.onclick = () => { S.role = b.dataset.r; audit(); refreshIcons(); }));
   const mbp = $('#sec-players'); if (mbp) mbp.ontoggle = () => { S.mbpOpen = mbp.open; };
   // remember which mechanic blocks are open; summary tiles open the block they jump to
@@ -4135,7 +4145,7 @@ function kicks() {
 // picked player's) with the phases shaded and the boss mechanics, Bloodlust and deaths marked, then a bar per player.
 // A click on a player draws their line and shows what their damage went into (targets and abilities). Everything counts
 // up to the wipe filter; "while alive" divides by the time until a player's first death.
-const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs & debuffs'], ['util', 'Utility'], ['surv', 'Survivability']];
+const PERF_KINDS = [['card', 'Report card'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (the buttons in four groups: how each player played, the meters, cooldowns and buffs, and their toolkit; one thing per
 // tab, each in one place)
 const PERF_GROUPS = [['How they played', ['card', 'cast', 'res']], ['Output', ['dmg', 'heal', 'taken']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
@@ -4213,7 +4223,7 @@ const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', 
 const PERF_COL = { dmg: '#6aa8ff', heal: '#45c15c', taken: '#e5534b' };
 // (one button for the view you're on, with its group and its number; a click opens every view, in their four groups, each
 // with a short hint. It closes when one is picked, on Escape, or with a click anywhere else.)
-const PERF_HINT = { card: 'grades and what to fix', cast: 'pace and gaps', res: 'mana and waste', dmg: 'who did what', heal: 'heals and overhealing', taken: 'what hit the raid', cds: 'big and raid cooldowns', pi: 'for priests', aura: 'uptime', util: 'kicks, dispels and CC', surv: 'defensives and close calls' };
+const PERF_HINT = { card: 'grades and what to fix', cast: 'pace and gaps', res: 'mana and waste', dmg: 'who did what', heal: 'heals and overhealing', taken: 'what hit the raid', cds: 'big and raid cooldowns', pi: 'for priests', aura: 'uptime of their buffs', util: 'dispels, externals and CC', surv: 'defensives and close calls' };
 function perfTabs(kind, vals) {
   const LB = new Map(PERF_KINDS), v = vals[kind] || {}, g = PERF_GROUPS.find(([, ks]) => ks.includes(kind));
   const ico = (k) => '<img class="pfk-i" src="' + whIcon(PERF_ICON[k]) + '" alt="" onerror="this.style.visibility=\'hidden\'">';
@@ -4237,7 +4247,7 @@ function roleChips(has, def) {
 }
 const resses = (n) => n + (n === 1 ? ' battle res' : ' battle resses');
 const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || { rows: [] }).rows.reduce((s, x) => s + x.n, 0);
-  return { v: t('kick') + '<span> kicks</span> ' + t('disp') + '<span> dispels</span>', s: plural(t('ext'), 'external') + ' · ' + resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
+  return { v: t('disp') + '<span> dispels</span> ' + t('ext') + '<span> externals</span>', s: resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
 function perf() {
   if (!S.perfKind || !PERF_KINDS.some(([x]) => x === S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = PERF_KINDS.some(([x]) => x === k) ? k : 'card'; }
   store.set('wla-pf-kind', S.perfKind);
@@ -4293,18 +4303,9 @@ function perf() {
   let tiles;
   if (kind === 'dmg') tiles = [lostTile(null, 'the dead would have done')];
   else if (kind === 'heal') tiles = [lostTile('healer', 'healing the dead healers would have done')];
-  else {
-    const avoid = ps.reduce((s, p) => s + p.avoidable, 0), allTaken = ps.reduce((s, p) => s + p.taken, 0), ds = keptDeaths(r).filter((d) => inWin(d.t)).length;
-    tiles = [plTile(plIco('ability_rogue_feint'), 'Avoidable', allTaken ? Math.round(100 * avoid / allTaken) + '<span>%</span>' : '—', avoid / Math.max(1, allTaken) > 0.1 ? 'bad' : avoid ? 'warn' : 'ok', avoid ? C(avoid) + ' from the fight\'s avoidable rules · whole pull' : 'nothing avoidable logged'),
-      plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds), ds ? 'bad' : 'ok', ds ? 'see Mechanics for each one' : 'nobody died here')];
-  }
+  else tiles = []; // (Damage taken: what hit the raid, avoidable damage and deaths are on Mechanics)
   // (the tiles sit beside the chart, below)
   const tilesH = tiles.length ? '<div class="pts pf-side n' + tiles.length + '">' + tiles.join('') + '</div>' : '';
-  // ---- the fight's damage checks (Damage, whole pull): one line that opens to the list ----
-  if (kind === 'dmg' && !ph) { const dc = damageChecks(r); if (dc.length) { const b = dc.filter((x) => x.st === 'bad').length, w = dc.filter((x) => x.st === 'warn').length, dst = b ? 'bad' : w ? 'warn' : 'ok';
-    S.perfDcOpen = S.perfDcOpen || false;
-    h += '<details class="panel probbox ' + dst + ' pf-dc"' + (S.perfDcOpen ? ' open' : '') + '><summary class="nh">Damage checks <small>the fight\'s shields and adds, up to the wipe filter</small>' + hst(dst, b ? plural(b, 'failed') : w ? w + ' close or late' : dc.length === 1 ? 'passed' : dc.length === 2 ? 'both passed' : 'all ' + dc.length + ' passed') + '</summary>' +
-      dc.map((x) => '<div class="pb-r ' + x.st + '"><span class="pb-i">' + { bad: '✕', warn: '!', ok: '✓' }[x.st] + '</span><span class="pb-t">' + x.html + '</span><span class="pb-w">' + x.when + '</span></div>').join('') + '</details>'; } }
   // ---- the timeline: the raid's line, or the picked player's (the picked phase stands out) ----
   const series = srcS ? srcS : addsOn ? AD.series(sel ? sel.p : null, end) : bossOn ? BD.series(sel ? sel.p : null, end) : chSel ? (chSel.p[key] || []).slice(0, Math.ceil(end)) : raidS;
   const what = addsOn ? 'damage into adds' : bossOn ? 'damage ' + onBossW : { dmg: 'damage', heal: 'healing', taken: 'damage taken' }[kind];
@@ -4320,7 +4321,7 @@ function perf() {
   const wins = kind === 'dmg' ? perfWins(r, end).filter((w) => !ph || (w.t0 < w1 && w.t1 > w0)) : [];
   const hitsH = kind === 'heal' ? healAfterHits(r, w0, w1) : ''; // (healing cooldowns are on Cooldowns now)
   // (no Phases view: the phase buttons at the top already cut every view by phase; no Heatmap either, by request)
-  const lenses = PERF_LENS.filter(([k]) => k === 'players' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'sources' && kind === 'taken') || (k === 'hits' && hitsH));
+  const lenses = PERF_LENS.filter(([k]) => k === 'players' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'hits' && hitsH));
   const lens = lenses.some(([k]) => k === S.perfLens) ? S.perfLens : 'players';
   if (lenses.length > 1) h += lensBar(lenses, lens);
   if (lens !== 'players') {
@@ -4340,11 +4341,10 @@ function perf() {
   const rowCls = prs ? ' pf-pr' : '';
   const bars = rows.map((x, i) => { const on = sel && sel.p === x.p;
     // (healing: overhealing is the faded end of the bar; damage taken: the avoidable part in red)
-    const segs = kind === 'taken' && x.avoidShare > 0.005 ? [[Math.max(0.5, 100 * x.tot * (1 - x.avoidShare) / max), 'm'], [100 * x.tot * x.avoidShare / max, 'ad']]
-      : [[Math.max(1, 100 * x.tot / max), 'm']].concat(kind === 'heal' && x.over ? [[Math.min(100, 100 * x.tot * x.over / (1 - x.over) / max), 'oh']] : []);
+    const segs = [[Math.max(1, 100 * x.tot / max), 'm']].concat(kind === 'heal' && x.over ? [[Math.min(100, 100 * x.tot * x.over / (1 - x.over) / max), 'oh']] : []);
     // (the small column is one thing per view, named over it: overhealing on Healing, the avoidable share on Damage
     // taken, otherwise their share of the raid's damage on those targets)
-    const sub = kind === 'heal' ? pc0(x.over) : kind === 'taken' ? (x.avoidShare >= 0.005 ? pc0(x.avoidShare) : '—')
+    const sub = kind === 'heal' ? pc0(x.over)
       : addsOn ? '<span title="' + esc(pc0(x.all ? x.tot / x.all : 0) + ' of their own damage went into adds') + '">' + pc1(totB ? x.tot / totB : 0) + '</span>' : pc1(totB ? x.tot / totB : 0);
     // (a death: when, and their rate while alive, on hover)
     const dTip = inWin(x.died) ? 'died at ' + T(x.died) + (x.back ? ', brought back' : '') + (!addsOn && x.al >= 1 ? ' · ' + C(x.tot / x.al) + ' per second while alive' : '') : '';
@@ -4353,9 +4353,9 @@ function perf() {
       end: prs ? ((kind === 'heal') === (x.p.role === 'healer') ? prsChip(prs.get(x.p.name)) : '') : null,
       chips: dTip ? '<span class="pf-d" title="' + esc(dTip) + '">✕ ' + T(x.died) + (x.back ? ' ↻' : '') + '</span>' : '' }) + (on ? '<div class="pf-inl">' + perfDetail(r, kind, x.p, bossN, rowsAll) + '</div>' : ''); }).join('');
   const span = ph ? esc(pfPhK(ph)) + ' (' + T(wl) + ')' : T(end);
-  const head = cbHead(addsOn ? 'Damage' : { dmg: 'DPS', heal: 'HPS', taken: 'Per sec' }[kind], { heal: 'Overheal', taken: 'Avoidable' }[kind] || 'Share', prs ? 'Parse' : '', rowCls);
+  const head = cbHead(addsOn ? 'Damage' : { dmg: 'DPS', heal: 'HPS', taken: 'Per sec' }[kind], { heal: 'Overheal' }[kind] || 'Share', prs ? 'Parse' : '', rowCls);
   const ttl = addsOn ? 'Damage into adds' : bossOn ? 'Damage ' + onBossW : { dmg: 'Damage done', heal: 'Healing done', taken: 'Damage taken' }[kind];
-  h += '<div class="pf-cols' + (kind === 'heal' ? ' solo' : '') + '"><div class="panel pf-bars"><h3 class="nh"><span>' + ttl + '</span><small>' + (addsOn ? 'total over ' + span + ' · ' + esc(AD.label) : 'per second over ' + span) + (kind === 'taken' ? ' · avoidable in red' : kind === 'heal' ? ' · overhealing faded' : '') + '</small>' + tgtSw + roleChips(has) + '</h3>' + (bars ? head + bars : '<p class="muted">Nothing recorded.</p>') + '</div>' +
+  h += '<div class="pf-cols' + (kind === 'heal' ? ' solo' : '') + '"><div class="panel pf-bars"><h3 class="nh"><span>' + ttl + '</span><small>' + (addsOn ? 'total over ' + span + ' · ' + esc(AD.label) : 'per second over ' + span) + (kind === 'heal' ? ' · overhealing faded' : '') + '</small>' + tgtSw + roleChips(has) + '</h3>' + (bars ? head + bars : '<p class="muted">Nothing recorded.</p>') + '</div>' +
     (kind === 'heal' ? '' : '<div class="panel pf-det">' + (addsOn ? AD.panel() : perfDetail(r, kind, null, bossN, rowsAll)) + '</div>') + '</div>' + (PERF_HOW[kind] || '');
   view(h + '</div>');
   bindPerf();
@@ -4471,15 +4471,14 @@ function perfDetail(r, kind, p, bossN, rowsAll) {
       body = sec(kind === 'heal' ? 'The biggest heals' : 'What hit the raid hardest', 'whole pull', barList([...by.values()].sort((a, b) => b.total - a.total).slice(0, 10).map((a) => ({ html: spell(a.id, a.name) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : ''), v: a.total, attr: kind === 'taken' ? ' data-src="' + esc(a.name) + '" role="button" tabindex="0" title="Who took it"' : '' })), PERF_COL[kind])); }
     // (Healing: just the hint; the role split and the biggest heals weren't useful there)
     if (kind === 'heal') return '<h3 class="nh"><span>The raid</span></h3>' + hint;
-    return '<h3 class="nh"><span>The raid</span></h3>' + hint + sec('By role', '', roleBar) + body;
+    return '<h3 class="nh"><span>The raid</span></h3>' + hint + sec('By role', '', roleBar) + (kind === 'taken' ? '' : body); // (what hit the raid is on Mechanics)
   }
   const pc = perfContext(r), x0 = pc.per.get(p.name), t1 = x0 ? Math.min(x0.until, pc.end) : pc.end, gone = t1 < pc.end - 0.05;
   const upTo = gone ? 'up to their death' : isFinite(cutT(r)) && pc.end < r.duration - 0.5 ? 'up to the wipe filter' : 'whole pull';
   const head = '<div class="pf-ph">' + avatar(p) + '<div class="pf-pn"><span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span><span class="sub">' + esc(p.specName || '') + '</span></div><button class="pf-x" id="pfClose" type="button" aria-label="Close" title="Back to the raid">×</button></div>';
   if (kind === 'taken') {
     const big = (p.big || []).filter((x) => x.t <= pc.end + 0.05).slice(0, 5);
-    return head + sec('Biggest hits', 'single hits, absorbs included', big.map((x) => '<div class="pf-hit"><span class="pf-ht">' + T(x.t) + '</span><span class="pf-hn">' + spell(x.id, x.spell) + '</span><b>' + C(x.amt) + '</b><span class="pf-hp' + (x.hp >= 0 && x.hp < 25 ? ' low' : '') + '">' + (x.hp >= 0 ? (x.hp < 0.5 ? 'killing blow' : Math.round(x.hp) + '% left') : '') + '</span></div>').join('')) +
-      sec('What hit them', 'whole pull', barList(list(p.takenAb, 8).map((a) => ({ html: abName(a), v: a.total })), PERF_COL.taken)) + pfGoRow(p.name, [['surv', 'Survivability'], ['debuffs', 'Debuffs']]);
+    return head + sec('Biggest hits', 'single hits, absorbs included', big.map((x) => '<div class="pf-hit"><span class="pf-ht">' + T(x.t) + '</span><span class="pf-hn">' + spell(x.id, x.spell) + '</span><b>' + C(x.amt) + '</b><span class="pf-hp' + (x.hp >= 0 && x.hp < 25 ? ' low' : '') + '">' + (x.hp >= 0 ? (x.hp < 0.5 ? 'killing blow' : Math.round(x.hp) + '% left') : '') + '</span></div>').join('')) + pfGoRow(p.name, [['surv', 'Survivability']]);
   }
   // (against their best pull of the night, the same spec in this raid, and their Warcraft Logs parse on a kill)
   const cmpSec = () => {
@@ -4526,7 +4525,6 @@ const FIGHT_HEAL = new Set([1307578]);
 const DISPEL_N = new Set(['cleanse', 'purify', 'purify disease', 'detox', 'nature\'s cure', 'remove corruption', 'naturalize', 'expunge', 'cauterizing flame', 'remove curse', 'cleanse spirit', 'purify spirit', 'improved purify spirit', 'cleanse toxins', 'mass dispel', 'dispel magic', 'purge', 'greater purge', 'tranquilizing shot', 'spellsteal', 'devour magic', 'consume magic', 'soothe', 'shiv', 'restoral', 'revival', 'singe magic']);
 function utilCats(reps) {
   const pm = new Map(), cats = [
-    { key: 'kick', icon: 'ability_kick', title: 'Interrupts', sub: 'what they stopped', none: 'No interrupts landed.', unit: 'interrupt' },
     { key: 'disp', icon: 'spell_holy_dispelmagic', title: 'Dispels', sub: 'what they removed', none: 'Nothing dispelled.', unit: 'dispel' },
     { key: 'bres', icon: 'spell_nature_reincarnation', title: 'Battle resses', sub: 'who they brought back', none: 'No battle resses used.', who: true },
     { key: 'ext', icon: 'spell_holy_painsupression', title: 'Externals', sub: 'who they saved', tip: 'Pain Suppression, Guardian Spirit, Ironbark, Life Cocoon, Blessings of Sacrifice, Protection and Spellwarding, Time Dilation, Rescue', none: 'No externals cast.', who: true, unit: 'external' },
@@ -4537,7 +4535,6 @@ function utilCats(reps) {
     const end = Math.max(1, Math.min(r.duration, cutT(r))), byN = new Map();
     for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name)) { byN.set(p.name, p); if (!pm.has(p.name)) pm.set(p.name, p); }
     const who = (on) => { const n = String(on || '').split('-')[0], q = byN.get(n); return n ? ' <span class="sub">on</span> <span class="nm" style="color:' + (q ? q.color : 'inherit') + '">' + esc(n) + '</span>' : ''; };
-    for (const k of r.interrupts) if (k.t <= end) add(C2.kick, byN.get(k.player), k.spell, spell(k.id, k.spell), k.t);
     for (const p of byN.values()) {
       // (dispels: one per target per cast, so a Cleanse that takes off three stacks counts once; clearing their own debuff
       // only with a real dispel, not Disengage or an immunity; purged: taken off an enemy)
@@ -4626,7 +4623,7 @@ function utilCards(cats, one, st) {
   const by = new Map(); for (const x of c.rows) for (const d of x.d.values()) { const k = d.key || d.html; let o = by.get(k); if (!o) by.set(k, o = { html: d.html, n: 0, ts: [], heal: 0, hit: 0, who: [] }); o.n += d.n; o.heal += d.heal || 0; o.hit += d.hit || 0; o.who.push([x.p, d.n]); }
   const right = '<h3 class="nh"><span>The raid</span><small>' + esc(c.sub) + ', by ' + (c.key === 'calls' ? 'what they pressed' : 'spell') + '</small></h3>' + ([...by.values()].sort((a, b) => b.n - a.n).map((o) => line({ html: o.html, n: o.n, ts: [], heal: o.heal, hit: o.hit }, o.who.sort((a, b) => b[1] - a[1]).map(([p, n]) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>' + (n > 1 ? ' ' + n : '')).join(', '))).join('') || '<p class="muted">' + esc(c.none) + '</p>') + missL;
   const how = st === 'surv' ? 'Each bar is how many times a player did it, up to the wipe filter: defensives, self-heals (buttons that only heal yourself), health potions and Healthstones, with what each one healed and who used none. <b>Close calls</b> are the times someone dropped under 30% health and lived, and what they pressed for it. Click a row for each one, with its times; the right side has the whole raid.'
-    : 'Each bar is how many times a player did it, up to the wipe filter: interrupts, dispels, battle resses, externals and crowd control. Crowd control counts once per press when it landed on an enemy, with how many it hit; the fight\'s own CC jobs, like a mind control, are on Mechanics. Click a row for each one, with its times; the right side has the whole raid by spell.';
+    : 'Each bar is how many times a player did it, up to the wipe filter: dispels, battle resses, externals and crowd control. Interrupts follow the raid\'s kick order, so they\'re on Mechanics. Crowd control counts once per press when it landed on an enemy, with how many it hit; the fight\'s own CC jobs, like a mind control, are on Mechanics. Click a row for each one, with its times; the right side has the whole raid by spell.';
   return sw + '<div class="pf-cols" data-st="' + st + '">' + left.replace('<!--pf-inl-->', det ? '<div class="pf-inl">' + det + '</div>' : '') + '<div class="panel pf-det pfu-det">' + right + '</div></div>' +
     '<details class="howit"><summary>How it works</summary><div>' + how + '</div></details>';
 }
@@ -4730,16 +4727,6 @@ async function perfNight(r0, kind, scopeSw) {
   h += '<div class="pts n3">' + plTile(plIco('achievement_boss_lichking'), 'Best pull', best ? C(best.ps) + '<span>/s</span>' : '—', 'na', best ? 'pull ' + best.n + ' · ' + best.label : '') +
     plTile(plIco('spell_holy_borrowedtime'), 'Through the night', half >= 3 ? (last >= first ? '▲ ' : '▼ ') + Math.abs(Math.round(100 * (last - first) / Math.max(1, first))) + '<span>%</span>' : '—', half >= 3 ? (kind === 'taken' ? (last <= first ? 'ok' : 'warn') : last >= first ? 'ok' : 'warn') : 'na', half >= 3 ? 'the last ' + half + ' pulls against the first ' + half + (!phSel && keys.length > 1 ? ' · pick a phase to compare like with like' : '') : 'not enough pulls yet') +
     plTile(plIco('inv_misc_pocketwatch_01'), 'Pulls', String(pulls.length), 'na', T(pulls.reduce((s, x) => s + x.wl, 0)) + ' counted') + '</div>';
-  // the night's damage checks: how often each one passed (a missed shield measured against the night's broken ones)
-  if (kind === 'dmg' && !phSel) {
-    const ref = Math.max(0, ...reps.flatMap((r) => ((r.module && !r.module.error && r.module._shields) || []).filter((s) => s.brokeAt != null).map((s) => s.dmg))) || null;
-    let shB = 0, shN = 0, adB = 0, adN = 0; const shMiss = new Set(), adMiss = new Set();
-    for (const r of reps) for (const x of damageChecks(r, ref)) { if (/Eternal Nightfall/.test(x.html)) { shN++; if (x.st !== 'bad') shB++; else shMiss.add(r.item.pull); } else { adN++; if (x.st === 'ok') adB++; else adMiss.add(r.item.pull); } }
-    const row = (st, html) => '<div class="pb-r ' + st + '"><span class="pb-i">' + { bad: '✕', warn: '!', ok: '✓' }[st] + '</span><span class="pb-t">' + html + '</span></div>';
-    const dc = (shN ? row(shB === shN ? 'ok' : 'bad', '<b>Eternal Nightfall shields</b>: broken in ' + shB + ' of ' + shN + (shMiss.size ? ' · not broken in pull ' + [...shMiss].join(', ') : '')) : '') +
-      (adN ? row(adB === adN ? 'ok' : 'warn', '<b>Spiteful Soulcoiler sets</b> killed before the next set: ' + adB + ' of ' + adN + (adMiss.size ? ' · late in pull ' + [...adMiss].join(', ') : '')) : '');
-    if (dc) { const dst = shB < shN ? 'bad' : adB < adN ? 'warn' : 'ok'; h += '<div class="panel probbox ' + dst + ' pf-dc"><h3 class="nh">Damage checks <small>across the pulls, each up to its wipe filter</small>' + hst(dst, dst === 'ok' ? 'all passed' : 'some missed') + '</h3>' + dc + '</div>'; }
-  }
   // the night as bars: one per pull, its height the raid's output per second (green: a kill, gold: the best), the line a
   // 3-pull average; a click opens that pull
   const narrow = (document.documentElement.clientWidth || 1000) < 700, mxv = Math.max(1, ...pulls.map((x) => x.ps)) * 1.08, W = narrow ? 420 : 1000, H = narrow ? 200 : 150, L = narrow ? 40 : 46, Tp = 10, B = 20, ih = H - Tp - B, stepX = (W - L - 8) / Math.max(1, pulls.length), bw = Math.max(4, Math.min(24, stepX - 6));
@@ -4782,11 +4769,11 @@ const cbHead = (v, s, end, cls, first) => '<div class="pf-row cb nb cb-h' + (cls
 const PERF_HOW = {
   dmg: '<details class="howit"><summary>How it works</summary><div>Each bar is a player\'s damage per second over the pull, or the phase picked, up to the wipe filter. Time spent dead counts against them, so a death shows as a shorter bar (the ✕ says when). The small column is their share of the raid\'s damage. Bosses, All targets and On adds pick which targets count. Click a row for their spells and targets; the chart then shows their line.</div></details>',
   heal: '<details class="howit"><summary>How it works</summary><div>Each bar is a player\'s healing per second over the pull, or the phase picked, up to the wipe filter. The faded end is overhealing, which doesn\'t count, and the small column says how much of it was. Click a row for their heals; the chart then shows their line.</div></details>',
-  taken: '<details class="howit"><summary>How it works</summary><div>Each bar is the damage a player took per second, up to the wipe filter. The striped red part is avoidable damage, from the fight\'s own rules, and the small column is its share. Damage sources lists what did it. Click a row for their biggest hits; their defensives and close calls are on Survivability.</div></details>',
+  taken: '<details class="howit"><summary>How it works</summary><div>Each bar is the damage a player took per second, up to the wipe filter, and the small column is their share of the raid\'s. Click a row for their biggest hits; their defensives and close calls are on Survivability. What hit the raid, who took it and avoidable damage are on Mechanics.</div></details>',
   cds: '<details class="howit"><summary>How it works</summary><div><b>Uses</b>: each bar is the share of a player\'s possible uses of their big cooldowns, damage and healing alike, each counted up to their death or the wipe filter. A cooldown counts once they\'ve cast it on this boss, so one they don\'t have talented never shows. Raid cooldowns (Tranquility, Aura Mastery, Rallying Cry and the like) wait for the big damage, so half their possible uses is full marks. Click a row for each cooldown on the pull: when it was pressed, when it sat ready, and Bloodlust. <b>Raid cooldowns</b>: a bar per healing or raid cooldown and player, as long as what it did: what it healed (overhealing not counted), the damage it took off (an estimate from the reduction: the log only has what was left), what Darkness made players avoid, or the health Rallying Cry added. Click one for each press. Cooldowns that make a healer stronger, like Avenging Wrath, are on the right: what the healer healed while they were up.</div></details>',
-  aura: '<details class="howit"><summary>How it works</summary><div>Each bar is a player, with how many different buffs (or debuffs) they had, up to the wipe filter. Click a name for their own list: each one\'s uptime (a share of the time they were alive), how many times it went on, and who gave it. Pick a buff on the right, or search for one, to see each player\'s uptime of it. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted; Sated and Exhaustion are left out.</div></details>',
+  aura: '<details class="howit"><summary>How it works</summary><div>Each bar is a player, with how many different buffs they had, up to the wipe filter. Click a name for their own list: each one\'s uptime (a share of the time they were alive), how many times it went on, and who gave it. Pick a buff on the right, or search for one, to see each player\'s uptime of it. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted; Sated and Exhaustion are left out. The boss\'s debuffs on the raid are on Mechanics.</div></details>',
 };
-const PERF_LENS = [['players', 'Players'], ['sources', 'Damage sources'], ['hits', 'Big hits'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
+const PERF_LENS = [['players', 'Players'], ['hits', 'Big hits'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
 const KEY_OF = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
 const sumIn = (arr, a, b) => { let s = 0; for (let i = Math.max(0, Math.floor(a)); i < Math.min(arr.length, Math.ceil(b)); i++) s += arr[i] || 0; return s; };
 // a player's rate while alive between a and b (null when they were dead for all of it)
@@ -4954,9 +4941,9 @@ function auraMine(a, deb, filtered) {
     (!filtered && all.length > LIM ? '<button class="btn sm pf-srmore" id="pfAuraMore" type="button">' + (more ? 'Show fewer' : 'Show all ' + all.length) + '</button>' : '') +
     (alw.length ? '<p class="sub pf-more" title="' + esc(alw.map((y) => y.x.name).join(', ')) + '">+' + alw.length + ' up the whole time (raid buffs, flasks, food, passives)</p>' : '') + '</div>';
 }
-const auraHead = (reps) => { const b = auraRows(reps, false).rows.filter((x) => !x.always).length, d = auraRows(reps, true).rows.length; return { v: b + '<span> buffs</span> ' + d + '<span> debuffs</span>', s: 'on the raid' }; };
+const auraHead = (reps) => { const b = auraRows(reps, false).rows.filter((x) => !x.always).length; return { v: b + '<span> buffs</span>', s: 'on the raid' }; };
 function auraView(reps, one) {
-  const deb = S.auraView === 'debuffs', what = deb ? 'debuffs' : 'buffs', { rows, players } = auraRows(reps, deb), sw = viewSw('auraView', [['buffs', 'Buffs'], ['debuffs', 'Debuffs']], deb ? 'debuffs' : 'buffs');
+  const deb = false, what = 'buffs', { rows, players } = auraRows(reps, deb), sw = ''; // (Buffs only: the boss's debuffs on the raid are mechanics)
   const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%';
   // (a search or a pick on the right: an exact name first, else every name with it in)
   const q = plainL(String(S.auraQ || '').trim()), exact = q ? rows.filter((x) => plainL(x.name) === q) : [], match = q ? (exact.length ? exact : rows.filter((x) => plainL(x.name).includes(q))) : null;
@@ -4984,7 +4971,7 @@ function auraView(reps, one) {
 // ---- Performance: one search over every view ----
 // Players, spells (damage, heals, casts), what hit the raid, buffs, debuffs, cooldowns and the toolkit, from the pull
 // open: each match says where it is, and a click opens that view with it picked
-const FIND_G = [['player', 'Players'], ['dmg', 'Damage done'], ['heal', 'Healing done'], ['taken', 'Damage taken'], ['buff', 'Buffs'], ['debuff', 'Debuffs'], ['cds', 'Cooldowns'], ['util', 'Utility'], ['surv', 'Survivability'], ['cast', 'Casts']];
+const FIND_G = [['player', 'Players'], ['dmg', 'Damage done'], ['heal', 'Healing done'], ['taken', 'Damage taken (on Mechanics)'], ['buff', 'Buffs'], ['cds', 'Cooldowns'], ['util', 'Utility'], ['surv', 'Survivability'], ['cast', 'Casts']];
 function pfFindIndex(r) {
   if (r._find) return r._find;
   const ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), out = [], strip = (n) => String(n).replace(/^[^:]+: /, '');
@@ -4996,8 +4983,8 @@ function pfFindIndex(r) {
   for (const x of agg((p) => [...p.dmgAb.values()].map((a) => [strip(a.name), a.id, a.total]))) if (x.v > 0) out.push({ g: 'dmg', ...x, d: C(x.v) + ' · ' + by(x), go: () => pfGo('dmg', x.top.name, true) });
   const healN = new Set();
   for (const x of agg((p) => [...p.healAb.values()].map((a) => [strip(a.name), a.id, a.total]))) { healN.add(x.n); if (x.v > 0) out.push({ g: 'heal', ...x, d: C(x.v) + ' · ' + by(x), go: () => pfGo('heal', x.top.name, true) }); }
-  for (const x of agg((p) => [...p.takenAb.values()].map((a) => [a.name, a.id, a.total]))) if (x.v > 0) out.push({ g: 'taken', ...x, d: C(x.v) + ' · hit ' + plural(x.who.size, 'player'), go: () => { S.perfKind = 'taken'; S.perfLens = 'sources'; S.srcSel = x.n; S.srcMore = true; } });
-  for (const deb of [false, true]) for (const x of agg((p) => [...(deb ? p.debuffs : p.buffs).values()].filter((b) => !AURA_SKIP.has(String(b.name).toLowerCase()) && (deb || !healN.has(b.name))).map((b) => [b.name, b.id, b.sp.length])))
+  for (const x of agg((p) => [...p.takenAb.values()].map((a) => [a.name, a.id, a.total]))) if (x.v > 0) out.push({ g: 'taken', ...x, d: C(x.v) + ' · hit ' + plural(x.who.size, 'player'), go: () => { S.tab = 'audit'; S.srcSel = x.n; S.srcMore = true; S.pendingSec = 'sec-dsrc'; } });
+  for (const deb of [false]) for (const x of agg((p) => [...(deb ? p.debuffs : p.buffs).values()].filter((b) => !AURA_SKIP.has(String(b.name).toLowerCase()) && (deb || !healN.has(b.name))).map((b) => [b.name, b.id, b.sp.length])))
     out.push({ g: deb ? 'debuff' : 'buff', ...x, d: 'on ' + plural(x.who.size, 'player'), go: () => { S.perfKind = 'aura'; S.auraView = deb ? 'debuffs' : 'buffs'; S.auraQ = x.n; S.auraSel = null; } });
   // (casts: a big cooldown goes to Cooldowns, a kick, dispel, external, battle res or CC to Utility, a defensive or
   // self-heal to Survivability, anything else to Casts)
@@ -5006,7 +4993,7 @@ function pfFindIndex(r) {
     for (const d of (p.cls && E.DEFENSIVES[p.cls]) || []) survK.set(d[0].toLowerCase(), d[5] === 'heal' ? 'self' : 'def'); for (const d of (p.cls && E.SURV_MINOR[p.cls]) || []) survK.set(d[0].toLowerCase(), d[3] === 'heal' ? 'self' : 'def'); }
   const kickN = new Set(r.interrupts.map((k) => String(k.spell).toLowerCase())), ccN = new Set(ps.flatMap((p) => (p.ccL || []).map((c) => String(c.spell).toLowerCase()))), done = new Set(out.filter((o) => o.g === 'dmg' || o.g === 'heal').map((o) => o.n.toLowerCase()));
   for (const x of agg((p) => [...p.castAb].map(([n, a]) => [n, a.id, a.n || 1]))) { const ln = x.n.toLowerCase(), pr = x.v === 1 ? '1 cast' : x.v + ' casts';
-    const uc = kickN.has(ln) ? 'kick' : DISPEL_N.has(ln) ? 'disp' : EXT_N.includes(ln) ? 'ext' : BRES_N.includes(ln) ? 'bres' : ccN.has(ln) ? 'cc' : null;
+    const uc = DISPEL_N.has(ln) ? 'disp' : EXT_N.includes(ln) ? 'ext' : BRES_N.includes(ln) ? 'bres' : ccN.has(ln) ? 'cc' : null;
     if (cdN.has(ln)) out.push({ g: 'cds', ...x, d: pr + ' · ' + by(x), go: () => (ln === 'power infusion' ? (S.perfKind = 'pi') : pfGo('cds', x.top.name, true)) }); // (Power Infusion has its own view)
     else if (uc) out.push({ g: 'util', ...x, d: pr + ' · ' + by(x), go: () => { S.perfKind = 'util'; S.utilCat = uc; S.utilSel = x.top.name; } });
     else if (survK.has(ln)) out.push({ g: 'surv', ...x, d: pr + ' · ' + by(x), go: () => { S.perfKind = 'surv'; S.survCat = survK.get(ln); S.survSel = x.top.name; } });
@@ -6242,7 +6229,7 @@ function bindPerf() {
   // (the search: matches as you type, by where they are; Enter opens the first, Escape clears; a click away closes it)
   { const q = $('#pfFind'), box = $('#pfFindR'); if (q && box && S.rep) { let tm, list = [];
     const show = () => { const v = q.value.trim().toLowerCase(); if (v.length < 2) { box.hidden = true; return; } const res = pfFindRun(S.rep, v); list = res.items; box.innerHTML = res.html; box.hidden = false;
-      box.querySelectorAll('[data-fi]').forEach((b) => (b.onclick = () => { const it = list[+b.dataset.fi]; box.hidden = true; it.go(); perf(); const c = $('#view .pf-cols') || $('#view .rk'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); })); refreshIcons(); };
+      box.querySelectorAll('[data-fi]').forEach((b) => (b.onclick = () => { const it = list[+b.dataset.fi]; box.hidden = true; it.go(); if (S.tab !== 'perf') { renderMain(); return; } perf(); const c = $('#view .pf-cols') || $('#view .rk'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); })); refreshIcons(); };
     q.oninput = () => { clearTimeout(tm); tm = setTimeout(show, 150); }; q.onfocus = () => { if (q.value.trim().length >= 2) show(); };
     q.onkeydown = (e) => { if (e.key === 'Escape') { q.value = ''; box.hidden = true; } else if (e.key === 'Enter') { const b = box.querySelector('[data-fi]'); if (b && !box.hidden) b.click(); } else if (e.key === 'ArrowDown') { const b = box.querySelector('[data-fi]'); if (b) { e.preventDefault(); b.focus(); } } };
     box.onkeydown = (e) => { const bs = [...box.querySelectorAll('[data-fi]')], i = bs.indexOf(document.activeElement); if (e.key === 'ArrowDown' && i < bs.length - 1) { e.preventDefault(); bs[i + 1].focus(); } else if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? bs[i - 1] : q).focus(); } else if (e.key === 'Escape') { box.hidden = true; q.focus(); } };
@@ -6718,17 +6705,7 @@ function cardOf(r, p) {
     const pz = parsesFor(r, role === 'healer' ? 'heal' : 'dmg'), px = pz && pz.get(p.name);
     add('btn', { k: 'out', label: role === 'healer' ? 'Healing' : 'Damage', sc: null, w: 0, num: x.ps, nt: 'C', unit: ' per second alive', html: (role === 'healer' ? 'Healing' : 'Damage') + ' <b>' + C(x.ps) + '</b> per second alive ' + prsChip(px) + '<span class="sub"> · ' + ordinal(rank) + ' of ' + ranked.length + ' ' + (role === 'healer' ? 'healers' : 'DPS') + ' (median ' + C(C0.roleMed[role]) + '): for reference, not graded</span>' });
   }
-  // ---- Staying alive ----
-  const dd = keptDeaths(r).filter((d) => d.guid === p.guid && d.t <= C0.end + 0.05), isOne = (d) => d.healthy && d.window < 1.5, isCons = (a) => /^(Healthstone|a healing potion)$/.test(a);
-  { let sc = 100; const lines = [];
-    for (const d of dd) { const what = d.ability ? ' to ' + esc(d.ability) : '', defs = (d.available || []).filter((a) => !isCons(a)), cons = (d.available || []).filter(isCons);
-      if (isOne(d)) { lines.push(rcSub('na', 'Died at ' + T(d.t) + what + '<span class="sub"> · healthy to dead in ' + d.window.toFixed(1) + ' s: not held against you</span>')); continue; }
-      sc -= defs.length ? 60 : cons.length ? 40 : 25;
-      lines.push(rcSub(defs.length ? 'bad' : 'warn', 'Died at ' + T(d.t) + what + (defs.length || cons.length ? ' with <b>' + esc(defs.concat(cons).join(', ')) + '</b> still ready' : '<span class="sub"> · everything was already used</span>'))); }
-    const f = dd.find((d) => !isOne(d)), fa = f ? f.available || [] : [], fd = fa.filter((a) => !isCons(a));
-    add('alive', { k: 'death', label: 'Deaths', sc: Math.max(0, sc), w: 45, num: dd.length, nt: 'sum', word: 'death', html: dd.length ? 'Died ' + plural(dd.length, 'time') + lines.join('') : 'Stayed alive',
-      fix: f ? { t: 'Survive ' + (f.ability || 'the hit that killed you'), x: 'You died at ' + T(f.t) + (f.startHp != null ? ', going from ' + Math.round(f.startHp) + '% to 0 in ' + f.window.toFixed(1) + ' s' : '') + '. ' + (fd.length ? 'You still had ' + fd.join(', ') + ' ready: press one when you see it coming.' : fa.length ? fa.join(' and ') + ' could have bought time.' : 'Everything was already used: the death recap on Mechanics shows what to avoid earlier.') } : null });
-  }
+  // ---- Staying alive: their own defensives and kit (deaths are on Mechanics) ----
   add('alive', { k: 'calls', label: 'Close calls with nothing pressed', sc: Math.max(0, 100 - 30 * sv.silent), w: 25, num: sv.silent, nt: 'sum', word: 'close call',
     html: sv.silent ? '<b>' + plural(sv.silent, 'close call') + '</b> ' + (role === 'tank' ? 'under 15%' : 'under 30%') + ' health with nothing pressed' + (sv.calls > sv.silent ? '<span class="sub"> · ' + (sv.calls - sv.silent) + ' more answered</span>' : '') : sv.calls ? plural(sv.calls, 'close call') + ' under 30% health, each one answered' : 'No close calls under 30% health',
     fix: sv.silent ? { t: 'React when you drop low', x: (sv.silent === 1 ? 'Once' : sv.silent + ' times') + ' you fell under ' + (role === 'tank' ? '15' : '30') + '% health and pressed nothing: no defensive, Healthstone or potion. Press something the moment you see your health drop.' } : null });
@@ -6751,15 +6728,6 @@ function cardOf(r, p) {
     add('kit', { k: 'pot', label: nm, sc, w: 35, num: sv.used, den: sv.expect, nt: 'frac', word: '',
       html: nm + ': <b>' + sv.used + ' of ' + sv.expect + '</b>' + (pre ? '<span class="sub"> · one before the pull</span>' : '') + (withLust === true ? '<span class="sub"> · with Bloodlust</span>' : withLust === false ? rcSub('warn', 'Not with Bloodlust (' + T(C0.lust) + ')') : ''),
       fix: sv.used < sv.expect ? { t: 'Drink your ' + nm.toLowerCase(), x: 'You drank ' + sv.used + ' of the ' + sv.expect + ' this pull had room for.' + (role === 'healer' ? ' A mana potion counts.' : ' Most specs drink one with Bloodlust and their first big cooldowns.') } : withLust === false ? { t: 'Drink your potion with Bloodlust', x: 'Your combat potion went in away from Bloodlust (' + T(C0.lust) + '). Drinking it with Bloodlust and your cooldowns makes it count most.' } : null });
-  }
-  const canKick = (E.INTERRUPTS[p.cls] || []).some(([, , specs]) => !specs || specs.includes(p.specId));
-  if (canKick && (r.kicks || []).length) {
-    const got = (r.kicks || []).reduce((s, k) => s + k.missedAt.filter((m) => m.t <= until + 0.05).length, 0), mine = r.interrupts.filter((k) => k.guid === p.guid && k.t <= until + 0.05);
-    const by = new Map(); for (const k of mine) by.set(k.spell, (by.get(k.spell) || 0) + 1);
-    const sc = mine.length ? 100 : got ? 30 : null;
-    add('kit', { k: 'kick', label: 'Interrupts', sc, w: sc == null ? 0 : 30, num: mine.length, nt: 'sum', word: 'interrupt',
-      html: mine.length ? '<b>' + plural(mine.length, 'interrupt') + '</b> landed<span class="sub"> · ' + [...by].map(([n, c]) => esc(n) + (c > 1 ? ' ×' + c : '')).join(', ') + '</span>' : got ? 'No interrupts landed, and <b>' + plural(got, 'kickable cast') + '</b> got through' : '<span class="sub">No interrupts needed from you</span>',
-      fix: !mine.length && got ? { t: 'Help with interrupts', x: plural(got, 'kickable cast') + ' got off this pull and you landed no kicks. Check your raid\'s kick order, and kick what\'s next to you.' } : null });
   }
   // externals (Pain Suppression, Blessing of Sacrifice, Time Dilation…) are held for emergencies or a mechanic on the note,
   // so they aren't expected on cooldown: one use in a pull of 90 s or more is full marks, none is "could be better" (65), and
@@ -6817,7 +6785,7 @@ function reportCard(reps, night) {
   const top = [...common].sort((a, b) => b[1] - a[1])[0];
   const tile = (sc, label, txt) => plTile(rcG(sc), label, sc == null ? '—' : Math.round(sc) + '<span>/100</span>', gBucket(sc), txt, true);
   const tiles = '<div class="pts n4 rk-tiles">' + tile(avgOf((x) => x.overall), 'Raid average', plural(all.length, 'player') + (night ? ' · ' + plural(reps.length, 'pull') : '')) +
-    RC_SEC.map(([k, l]) => tile(avgOf((x) => x.secs[k]), l, k === 'btn' ? 'casting, cooldowns, resources' : k === 'alive' ? 'deaths, close calls, Healthstones' : 'potion, interrupts, externals')).join('') + '</div>' +
+    RC_SEC.map(([k, l]) => tile(avgOf((x) => x.secs[k]), l, k === 'btn' ? 'casting, cooldowns, resources' : k === 'alive' ? 'close calls, defensives, Healthstones' : 'potion, externals, dispels')).join('') + '</div>' +
     (top ? '<div class="rk-common"><span class="sub">Most common thing to work on:</span> <b>' + esc(top[0]) + '</b> <span class="sub">· ' + plural(top[1], 'player') + '</span></div>' : '');
   // ---- one row per player, most to gain first; a click opens their card ----
   const sel = S.rcSel && rows.some((x) => x.p.name === S.rcSel) ? S.rcSel : null;
@@ -6830,7 +6798,7 @@ function reportCard(reps, night) {
       '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night) : ''); };
   return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade over the pulls they were in, by their time alive · ▲▼ their later pulls against the first' : 'This pull, up to the wipe filter') + ' · most to gain first</span>' + roleChips(has, 'all') + '</div>' +
     '<div class="rk-list">' + rows.map(row).join('') + '</div>' +
-    '<p class="sub rk-how">Graded on what each player could control: casting, big cooldowns, staying alive and using their kit. The boss\'s mechanics are on Mechanics. S is 95 or more, A 88, B 78, C 65, D 50.</p></div>';
+    '<p class="sub rk-how">Graded on how each player played their own character: casting, big cooldowns, their defensives and their kit. Deaths, interrupts and the boss\'s mechanics are on Mechanics. S is 95 or more, A 88, B 78, C 65, D 50.</p></div>';
 }
 // a player's card: what to work on first (with what each fix is worth), then the three grades and their checks
 function rcDetail(x, night) {

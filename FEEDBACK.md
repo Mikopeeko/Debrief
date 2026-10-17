@@ -87,6 +87,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 148: the mechanics parts out of Performance
+- [x] **Your call: Performance is each player's own play, not a second mechanics audit.** Moved out:
+  1. **Damage checks** (Eternal Nightfall shields, Soulcoiler sets) are gone from Damage: Mechanics already checks both.
+  2. **Damage taken is a meter now**: no avoidable split, no Avoidable or Deaths tiles, no "What hit the raid" panel. The
+     **Damage taken by source** view moved to Mechanics (its own section near the bottom, under Damage taken), and the
+     search finds a source there.
+  3. **Buffs only**: the boss's debuffs on the raid are mechanics. The view is called Buffs.
+  4. **Utility has no Interrupts** (they follow the kick order: Mechanics has them): dispels, battle resses, externals, CC.
+  5. **The Report card has no Deaths grade and no interrupts check**. "Staying alive" is your own defensives, close calls
+     and Healthstone/potion now.
+- [ ] To decide (noticed): the Report card still judges big cooldowns the NSRT note assigns "by the note", and Damage has a
+  Targets view (adds damage, how fast each DPS got onto adds). Both lean toward mechanics; say if they should move too.
+- [ ] Next (your plan): **cast efficiency per spell** (casts against possible casts for every spell with a cooldown).
+
 ## 2026-10-17, round 147: Buffs & debuffs by player
 - [x] **Your ask: the character names in the graph, the rest in a drop-down.** Each bar is a player now, with how many
   different buffs (or debuffs) they had; click a name for their own list under it (each one's uptime, how many times it went
