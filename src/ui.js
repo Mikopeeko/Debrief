@@ -528,6 +528,11 @@ const groupPut = (g) => { const l = groups(), i = l.findIndex((x) => x.gid === g
 const groupCur = () => { const l = groups(), c = store.get(GROUP_CUR); return c === '*' ? null : l.find((g) => g.gid === c) || l[0] || null; };
 const gName = (g) => g.label || g.name;
 const gKind = (g) => (g.kind === 'char' ? 'character' : g.kind);
+// (a character's pictures from Blizzard: s '-main-raw.png' for the full-body render, '-avatar.jpg' for the face portrait)
+const lookUrl = (g, s) => (g && g.kind === 'char' && g.look ? WCL.RENDER + g.look + s : '');
+// (the full-body render, standing in a box: Blizzard's picture is 4:3 with the character in its middle, from 29% to 85% of
+// its height, so it's drawn 1.78 times the box's height and lowered so their feet are on the box's bottom edge)
+const lookFig = (g, cls) => { const u = lookUrl(g, '-main-raw.png'); return u ? '<span class="' + cls + '" aria-hidden="true"><img class="lk-fig" src="' + u + '" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>' : ''; };
 // the teams a saved pull came in with (a pull from before Oct 18 brought in by the old single team: that team)
 const pullGroups = (v) => v.groups || (v.team ? groups().filter((g) => g.legacy).map((g) => g.gid) : []);
 // which saved pulls are a team's: brought in by it, or any other pull with at least half its players on it (its players:
@@ -6614,7 +6619,9 @@ function hubCard(g, all, order, i) {
   const sub = cls ? charAff(g) : g.rank && (g.rank.w || g.rank.r) ? '<span class="ht-g ht-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '';
   const kind = cls ? cls[0] + (g.parse ? ' · ' + g.parse.spec + ' ' + Math.floor(g.parse.best) + ' best average' : '') : gKind(g) + (g.faction ? ' · ' + g.faction : '');
   const art = artBoss && BOSS_HERO[artBoss] ? '<img class="hc-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[artBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[artBoss][1] + '% 25%" onerror="this.remove()">' : '';
-  return '<button class="hc-card" type="button" data-g="' + esc(g.gid) + '" style="--bc:' + col + ';--i:' + (i || 0) + '">' + art +
+  // (a character with their Armory picture: they stand on the card's right, on the line above its nights)
+  const fig = lookFig(g, 'hc-mw');
+  return '<button class="hc-card' + (fig ? ' has-fig' : '') + '" type="button" data-g="' + esc(g.gid) + '" style="--bc:' + col + ';--i:' + (i || 0) + '">' + art + fig +
     '<span class="hc-top">' + banner(g) + '<span class="hc-id"><span class="hc-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(gName(g)) + '</span>' + sub + '<span class="hc-k">' + esc(kind + (g.server ? ' · ' + g.server : '')) + '</span></span></span>' +
     now + (strip ? '<span class="hc-sw"><span class="hc-sl"><span>' + esc(d[1]) + '</span><b>' + kills + ' of ' + order.length + ' killed</b></span><span class="hc-strip" aria-hidden="true">' + strip + '</span></span>' : '') +
     (diffs ? '<span class="hc-diffs">' + diffs + '</span>' : '') +
@@ -6624,11 +6631,15 @@ function hubCard(g, all, order, i) {
 async function groupsBackfill() {
   // (clsV 3: class read with Warcraft Logs' class numbers the right way, and their guild; facV 1: a team's faction, for its
   // Horde or Alliance banner; an older lookup is done again)
-  const need = groups().filter((g) => (g.kind === 'char' ? g.clsV !== 3 : g.facV !== 1)); if (!need.length) return;
+  // (lookV 1: a character's look, the address of Blizzard's pictures of them, read once; none found is kept as none)
+  const need = groups().filter((g) => (g.kind === 'char' ? g.clsV !== 3 : g.facV !== 1)), looks = groups().filter((g) => g.kind === 'char' && g.lookV !== 1);
+  if (!need.length && !looks.length) return;
   let creds = null; try { creds = await wclCreds(); } catch (e) { return; }
   for (const g of need) { let info = null; try { info = g.kind === 'char' ? await WCL.charInfo(creds, { id: g.id }) : await WCL.teamInfo(creds, { id: g.id }); } catch (e) { /* (tried again next visit) */ continue; }
     const x = groups().find((q) => q.gid === g.gid); if (!x) continue;
     if (g.kind === 'char') { x.cls = info.cls; x.guild = info.guild; x.clsV = 3; } else { x.faction = info.faction || x.faction || null; x.facV = 1; } groupPut(x); }
+  for (const g of looks) { let look; try { look = await WCL.charLook(creds, g.id); } catch (e) { /* (tried again next visit) */ continue; }
+    const x = groups().find((q) => q.gid === g.gid); if (!x) continue; x.look = look || null; x.lookV = 1; groupPut(x); }
   if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } else if ($('#main .pg-hub')) renderProgHub(); else if ($('#main .home.prog')) renderProgress();
 }
 // (asHome: the home page: the slim bar for logs on top, titled "Your teams")
@@ -6665,7 +6676,7 @@ function renderProgHub(msg, msgErr, asHome) {
   $('#pgTeamGo').onclick = async () => {
     try { say('Finding it on Warcraft Logs…'); const { g: ng, already } = await groupAdd($('#pgTeam').value);
       S.progView = ng.gid; if (already) { renderProgress(gName(ng) + ' is already on your list.'); return; }
-      renderProgress('Added ' + ng.name + '. Importing its nights…'); progRun(ng); } catch (e) { say(e.message, true); }
+      renderProgress('Added ' + ng.name + '. Importing its nights…'); progRun(ng); groupsBackfill(); } catch (e) { say(e.message, true); }
   };
   $('#pgTeam').onkeydown = (e) => { if (e.key === 'Enter') $('#pgTeamGo').click(); };
   if (S.pgFocusAdd || !gl.length) { S.pgFocusAdd = false; $('#pgTeam').focus(); }
@@ -6833,8 +6844,10 @@ function renderProgress(msg, msgErr) {
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
   const legend = pullLegend();
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
+  // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
+  const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top"><div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
@@ -6886,8 +6899,10 @@ $('#brandHome').onclick = () => home();
   const where = (g, all, order) => { const mine = all.filter(groupFilter(g)), d = DIFF_ORDER.find(([x]) => mine.some((v) => v.diffId === x));
     return d ? order.filter((bo) => mine.some((v) => v.diffId === d[0] && v.boss === bo && v.kill)).length + '/' + order.length + ' ' + d[1] : ''; };
   const draw = () => { const order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss)), here = $('#main .home.prog') ? S.progView : null;
-    pop.innerHTML = groups().map((g) => { const c = g.kind === 'char' && g.cls && E.CLASSES[g.cls], on = here === g.gid, w = where(g, all, order);
-      return '<button class="tbt-i' + (on ? ' on' : '') + '" type="button" role="menuitem" data-go="' + esc(g.gid) + '"' + (on ? ' aria-current="page"' : '') + '>' + banner(g) +
+    pop.innerHTML = groups().map((g) => { const c = g.kind === 'char' && g.cls && E.CLASSES[g.cls], on = here === g.gid, w = where(g, all, order), av = lookUrl(g, '-avatar.jpg');
+      // (a character: their face portrait in a ring of their class colour; the banner if it doesn't load)
+      const pic = av ? '<span class="tbt-av" style="--bc:' + (c ? c[1] : 'var(--gold)') + '"><img src="' + av + '" alt="" onerror="this.parentNode.classList.add(\'nf\');this.remove()">' + banner(g) + '</span>' : banner(g);
+      return '<button class="tbt-i' + (on ? ' on' : '') + '" type="button" role="menuitem" data-go="' + esc(g.gid) + '"' + (on ? ' aria-current="page"' : '') + '>' + pic +
         '<span class="tbt-t"><b' + (c ? ' style="color:' + c[1] + '"' : '') + '>' + esc(gName(g)) + '</b><span>' + esc([c ? c[0] : gKind(g), w].filter(Boolean).join(' · ')) + '</span></span>' + (on ? '<span class="tbt-k" aria-hidden="true">✓</span>' : '') + '</button>'; }).join('') +
       '<div class="tbt-f"><button class="tbt-a" type="button" role="menuitem" data-go="*">All teams</button><button class="tbt-a add" type="button" role="menuitem" data-go="+">+ Add a team or character</button></div>'; };
   const close = () => { pop.hidden = true; b.setAttribute('aria-expanded', 'false'); };

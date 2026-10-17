@@ -49,6 +49,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 122: your character's Armory picture
+- [x] **Characters show their Armory model** (your idea): Blizzard's full-body picture of the character (their current look)
+  stands on the right of their card on the teams page, and big in a class-coloured banner at the top of their own page. In
+  the Your teams menu, a character has their face portrait in a ring of their class colour.
+- [x] How it works: no new key. Warcraft Logs keeps a copy of each character's Armory profile, which has their realm and
+  Blizzard number; Blizzard's pictures sit at an address made from those. It's looked up once per character (when added, or
+  the next time the teams page opens) and remembered. The website reads only the start of that 1 MB copy and passes on one
+  line. If a picture won't load, the card and page look the way they did before.
+
 ## 2026-10-17, round 121: Your teams in the top bar, a better-looking teams page
 - [x] **Your teams button** (your idea, instead of the Teams tab): a gold "Your teams ▾" button in the top bar, on every
   page. It opens a short menu: each team and your character with how far it is ("7/10 Mythic"; the one whose page you're on

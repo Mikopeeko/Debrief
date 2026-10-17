@@ -193,6 +193,19 @@ async function teamRankings(creds, id, zone) {
   if (HOSTED) return api('/api/teamrank?id=' + id + '&z=' + zone);
   const d = await gql(creds, TEAM_RANK_Q, { id, z: zone }); return (d && d.guildData && d.guildData.guild) || null;
 }
+// a character's look: Blizzard's own pictures of them (the full-body render from the Armory and a face portrait), at an
+// address made from their realm and Blizzard number, both in Warcraft Logs' copy of their Armory profile. Returns the
+// part that names them, "us/character/thrall/49/237905457" (RENDER + it + '-main-raw.png' or '-avatar.jpg'), or null.
+// (Hosted: the profile is about 1 MB, so the site reads only its start and sends back that one line.)
+const CHAR_LOOK_Q = `query($id:Int!){characterData{character(id:$id){gameData}}}`;
+const RENDER = 'https://render.worldofwarcraft.com/';
+async function charLook(creds, id) {
+  if (HOSTED) { const j = await api('/api/charlook?id=' + id); return (j && j.look) || null; }
+  const d = await gql(creds, CHAR_LOOK_Q, { id }), gd = d && d.characterData && d.characterData.character && d.characterData.character.gameData;
+  const g = gd && (typeof gd === 'string' ? JSON.parse(gd) : gd).global; if (!g || !g.id || !g.realm || !g.realm.slug) return null;
+  const reg = ((g._links && g._links.self && g._links.self.href) || '').match(/^https:\/\/(\w+)\.api\.blizzard/);
+  return (reg ? reg[1] : 'us') + '/character/' + g.realm.slug + '/' + (g.id % 256) + '/' + g.id;
+}
 // (newest first: paging stops once a whole page is older than `since`, or after 5 pages, as far back as Warcraft Logs
 // lists a character's reports)
 async function charReports(creds, id, since) {
@@ -422,6 +435,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
+root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

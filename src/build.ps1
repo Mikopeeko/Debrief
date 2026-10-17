@@ -21,7 +21,7 @@ $js = { param($s) [System.Web.HttpUtility]::JavaScriptStringEncode($s, $true) }
 $q = @{}
 foreach ($m in [regex]::Matches($wcl, 'const (\w+_Q) = `([^`]*)`;')) { $q[$m.Groups[1].Value] = $m.Groups[2].Value }
 $w = & $read 'worker_template.js'
-foreach ($n in 'REPORT_Q', 'EVENTS_Q', 'RANK_Q', 'TEAM_INFO_Q', 'TEAM_REPORTS_Q', 'NIGHT_Q', 'DEATHS_Q', 'CHAR_INFO_Q', 'CHAR_REPORTS_Q', 'CHAR_RANK_Q', 'TEAM_RANK_Q') {
+foreach ($n in 'REPORT_Q', 'EVENTS_Q', 'RANK_Q', 'TEAM_INFO_Q', 'TEAM_REPORTS_Q', 'NIGHT_Q', 'DEATHS_Q', 'CHAR_INFO_Q', 'CHAR_REPORTS_Q', 'CHAR_RANK_Q', 'TEAM_RANK_Q', 'CHAR_LOOK_Q') {
   if (-not $q.ContainsKey($n)) { throw "wcl.js has no $n" }
   $w = $w.Replace("__${n}__", (& $js $q[$n]))
 }
