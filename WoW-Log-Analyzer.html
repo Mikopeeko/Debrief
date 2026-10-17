@@ -6174,10 +6174,12 @@ function parseLink(s) {
   return { code: m[1], fight: f ? +f[1] : null };
 }
 
-// Hosted (the Cloudflare Worker holds the API key): plain GET endpoints, no credentials in the browser.
+// Hosted (the Cloudflare Worker holds the API key): plain GET endpoints, no credentials in the browser. The desktop app
+// isn't served by the site, so it sets WLA_API to the site's address and asks there.
 const HOSTED = typeof window !== 'undefined' && !!window.WLA_HOSTED;
+const API_BASE = (typeof window !== 'undefined' && window.WLA_API) || '';
 async function api(path) {
-  const r = await fetch(path);
+  const r = await fetch(API_BASE + path);
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.error) throw new Error(j.error || ('The server answered ' + r.status));
   return j;
@@ -6264,7 +6266,7 @@ async function loadReport(creds, code) {
 // ---------- a team's reports: every raid night as short pull summaries (saved progress), no event downloads ----------
 // A Warcraft Logs team or guild page link ("…/guild/id/772787" or "…/guild/us/zuljin/Wolfthorn") names the team; its
 // reports are listed 100 a page; a night's pulls come from its fight list (result, how far, length, roster) plus one
-// deaths query for the whole report. Local helper only: the hosted site has no route for it.
+// deaths query for the whole report. (Hosted: the site has a route for each of these queries.)
 const TEAM_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){guildData{guild(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name type server{name slug region{slug}}}}}`;
 const TEAM_REPORTS_Q = `query($id:Int!,$page:Int!){reportData{reports(guildID:$id,limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guildTag{name}}}}}`;
 const NIGHT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime
@@ -6278,26 +6280,29 @@ function parseTeamLink(s) {
   m = s.match(/guild\/([a-z]{2})\/([^/?#]+)\/([^/?#]+)/i); if (m) return { reg: m[1].toUpperCase(), srv: decodeURIComponent(m[2]), name: decodeURIComponent(m[3]) };
   return null;
 }
+const enc = encodeURIComponent;
 async function teamInfo(creds, link) {
-  if (HOSTED) throw new Error('Importing a team works with the local helper (start.bat), not the hosted site.');
-  const d = await gql(creds, TEAM_INFO_Q, link.id ? { id: link.id } : { name: link.name, srv: link.srv, reg: link.reg });
-  const g = d && d.guildData && d.guildData.guild; if (!g) throw new Error('Warcraft Logs has no team or guild at that link.');
+  let g;
+  if (HOSTED) g = await api('/api/team?' + (link.id ? 'id=' + link.id : 'name=' + enc(link.name) + '&srv=' + enc(link.srv) + '&reg=' + enc(link.reg)));
+  else { const d = await gql(creds, TEAM_INFO_Q, link.id ? { id: link.id } : { name: link.name, srv: link.srv, reg: link.reg }); g = d && d.guildData && d.guildData.guild; }
+  if (!g) throw new Error('Warcraft Logs has no team or guild at that link.');
   return { id: g.id, name: g.name, team: g.type === 1, server: g.server ? g.server.name + (g.server.region ? ' (' + g.server.region.slug.toUpperCase() + ')' : '') : '' };
 }
 async function teamReports(creds, id) {
   let out = [], page = 1, last = 1;
-  do { const d = await gql(creds, TEAM_REPORTS_Q, { id, page }); const rr = d.reportData.reports; out = out.concat(rr.data || []); last = rr.last_page || 1; page++; } while (page <= last && page <= 20);
+  do { const rr = HOSTED ? await api('/api/teamreports?id=' + id + '&page=' + page) : (await gql(creds, TEAM_REPORTS_Q, { id, page })).reportData.reports; out = out.concat(rr.data || []); last = rr.last_page || 1; page++; } while (page <= last && page <= 20);
   return out;
 }
 // one night's boss pulls: { at (wall-clock ms), boss, id, diffId, diff, dur, kill, endPct, endBoss, endPhase, players, deaths, first, fight }
 async function nightPulls(creds, code) {
-  const d = await gql(creds, NIGHT_Q, { code }); const rep = d && d.reportData && d.reportData.report; if (!rep) throw new Error('Report ' + code + ' was not found or is private.');
+  const rep = HOSTED ? await api('/api/night?code=' + enc(code)) : ((d) => d && d.reportData && d.reportData.report)(await gql(creds, NIGHT_Q, { code }));
+  if (!rep) throw new Error('Report ' + code + ' was not found or is private.');
   const names = new Map((rep.masterData.actors || []).map((a) => [a.id, a.name]));
   const fights = (rep.fights || []).filter((f) => f.encounterID > 0 && DIFF_NAME[WCL_DIFF[f.difficulty]]);
   if (!fights.length) return { title: rep.title, pulls: [] };
   // (deaths for the whole report in one go, then split by fight: players only, in order)
   const s0 = Math.min(...fights.map((f) => f.startTime)), e0 = Math.max(...fights.map((f) => f.endTime)), deaths = [];
-  for (let s = s0; s != null && s < e0;) { const x = await gql(creds, DEATHS_Q, { code, s, e: e0 }); const ev = x.reportData.report.events; for (const e of ev.data || []) if (e.type === 'death') deaths.push(e); s = ev.nextPageTimestamp; }
+  for (let s = s0; s != null && s < e0;) { const ev = HOSTED ? await api('/api/deaths?code=' + enc(code) + '&s=' + s + '&e=' + e0) : (await gql(creds, DEATHS_Q, { code, s, e: e0 })).reportData.report.events; for (const e of ev.data || []) if (e.type === 'death') deaths.push(e); s = ev.nextPageTimestamp; }
   const pulls = fights.map((f) => {
     const mine = new Set(f.friendlyPlayers || []), dd = deaths.filter((e) => e.fight === f.id && mine.has(e.targetID)).sort((a, b) => a.timestamp - b.timestamp), diffId = WCL_DIFF[f.difficulty];
     return { fight: f.id, at: rep.startTime + f.startTime, boss: f.name, id: f.encounterID, diffId, diff: DIFF_NAME[diffId], dur: (f.endTime - f.startTime) / 1000, kill: !!f.kill,
@@ -6497,7 +6502,7 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls };
+root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
 

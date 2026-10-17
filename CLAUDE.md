@@ -19,6 +19,14 @@ in the style of Warcraft Logs + WoWAnalyzer + Wipefest. Built for Mythic raid pr
 ## Workflow
 Edit files in src/, run `python build.py` inside src/, refresh the browser tab opened by start.bat.
 
+## The hosted site
+- Live at https://debrief.james-m-nemecek.workers.dev (Cloudflare Worker "debrief"; the user's Cloudflare account).
+- Build with `src/build.ps1` (PowerShell, no Python or Node needed; writes the app and `online/worker.js`), then upload with
+  `npx wrangler deploy` from the project root (Node is at `C:\Program Files\nodejs`; Wrangler is signed in). `wrangler.toml` has `keep_vars = true`.
+- The Warcraft Logs key lives only in Cloudflare: WCL_CLIENT_ID (a variable) and WCL_CLIENT_SECRET (a secret), set by the user on the
+  Worker's settings page. Never ask for, type or repeat the secret.
+- After each round: build, commit, push, and deploy, so the site always matches GitHub.
+
 ## Version control
 - Private GitHub repo: https://github.com/Mikopeeko/Debrief (branch `main`). Git is at `C:\Program Files\Git\cmd\git.exe`.
 - After each round of work (each FEEDBACK.md entry), commit the source and the built HTML as a checkpoint with a short message, then push.

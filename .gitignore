@@ -17,8 +17,10 @@ backups/
 *.log
 WoWCombatLog*.txt
 
-# the Worker built for the hosted site, with the app baked in (rebuilt from src/ by build.py)
+# the Worker built for the hosted site, with the app baked in (rebuilt from src/ by build.ps1), and the upload tool's files
 online/
+.wrangler/
+node_modules/
 
 # Windows and editor clutter
 Thumbs.db

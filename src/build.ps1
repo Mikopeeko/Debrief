@@ -1,0 +1,27 @@
+# Builds the app, from anywhere: ../WoW-Log-Analyzer.html (the app) and ../online/worker.js (the hosted site: the app
+# baked into the Cloudflare Worker, with the Warcraft Logs queries it's allowed to run, taken from wcl.js).
+# Windows PowerShell only, nothing to install. (build.py does the same where Python and Node are installed.)
+$ErrorActionPreference = 'Stop'
+$src = $PSScriptRoot; $root = Split-Path $src
+$read = { param($f) [IO.File]::ReadAllText((Join-Path $src $f)) }
+$utf8 = New-Object Text.UTF8Encoding $false
+$wcl = & $read 'wcl.js'
+$html = (& $read 'shell.html').Replace('/*ENGINE*/', (& $read 'engine.js')).Replace('/*WCL*/', $wcl).Replace('/*UI*/', (& $read 'ui.js')).Replace("`r`n", "`n")
+[IO.File]::WriteAllText((Join-Path $root 'WoW-Log-Analyzer.html'), $html, $utf8)
+
+# the Worker: every query the site may run (const NAME_Q = `...`; in wcl.js), then the hosted page itself
+Add-Type -AssemblyName System.Web
+$js = { param($s) [System.Web.HttpUtility]::JavaScriptStringEncode($s, $true) }
+$q = @{}
+foreach ($m in [regex]::Matches($wcl, 'const (\w+_Q) = `([^`]*)`;')) { $q[$m.Groups[1].Value] = $m.Groups[2].Value }
+$w = & $read 'worker_template.js'
+foreach ($n in 'REPORT_Q', 'EVENTS_Q', 'RANK_Q', 'TEAM_INFO_Q', 'TEAM_REPORTS_Q', 'NIGHT_Q', 'DEATHS_Q') {
+  if (-not $q.ContainsKey($n)) { throw "wcl.js has no $n" }
+  $w = $w.Replace("__${n}__", (& $js $q[$n]))
+}
+$hosted = ([regex]'<head>').Replace($html, "<head>`n<script>window.WLA_HOSTED = true;</script>", 1)
+$w = $w.Replace('__HTML__', (& $js $hosted)).Replace("`r`n", "`n")
+if ($w -match '__[A-Z_]+_Q__|__HTML__') { throw 'worker.js still has a placeholder' }
+New-Item -ItemType Directory -Force (Join-Path $root 'online') | Out-Null
+[IO.File]::WriteAllText((Join-Path $root 'online\worker.js'), $w, $utf8)
+"app: {0:N0} chars; worker: {1:N0} chars" -f $html.Length, $w.Length

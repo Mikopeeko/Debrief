@@ -1,0 +1,10 @@
+# The hosted site: the Cloudflare Worker "debrief" (https://debrief.james-m-nemecek.workers.dev).
+# Build first (src/build.ps1 writes online/worker.js), then upload with: npx wrangler deploy
+# The Warcraft Logs key is NOT here: it's in the Worker's secrets (WCL_CLIENT_ID, WCL_CLIENT_SECRET), set in Cloudflare.
+name = "debrief"
+main = "online/worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+preview_urls = false
+# (keep what's set on the Cloudflare settings page: an upload must never remove the Warcraft Logs client ID)
+keep_vars = true

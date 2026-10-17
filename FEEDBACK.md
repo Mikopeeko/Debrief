@@ -11,6 +11,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 104: the website is live
+- [x] **https://debrief.james-m-nemecek.workers.dev**: anyone pastes a Warcraft Logs link and it works, with no key of their own. Your website key sits in Cloudflare's locked box.
+- [x] The site now also does **team import** and the deaths list (they only worked on your PC before), and it has a fair-use guard so one person can't use up the allowance.
+- [x] Checked on the live site: your Oct 1 report, the Sszorak kill's banner and Mechanics tab (the same results as on your PC), and the Wolfthorn team lookup.
+- [x] It's ready for the desktop app: it answers requests from outside the website too.
+- Note: NSRT notes and saved pulls are kept per site, so on the website you'd paste your notes once more.
+- [ ] **For you:** on the Warcraft Logs clients page, delete the old clients you don't use: the first "Debrief Website" and the one whose secret was posted in the chat.
+
 ## 2026-10-16, round 103: Nymrissa Wavecaller and Kith'ix
 - [x] **What they are:** neither is in The Venomous Abyss in game.
   - Nymrissa is the boss of the Tidebound Grotto lair (12.1). She's the season's only Flex Mythic boss outside the raid and counts for the Vault's raid row.
