@@ -59,6 +59,28 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 124: Performance, the Report card (your goal: each player's own play, not mechanics)
+- [x] **Report card**, the first view in Performance (you gave me free rein): how well each player played their own
+  character, in three letter grades on the S to F scale, each from checks that already existed but were spread around:
+  - **Pressing buttons:** casting while alive (and their longest gaps that weren't forced), big cooldowns used against
+    how many times they were ready, how long they sat ready, and whether the long ones met Bloodlust; a healer's mana left
+    at the end. Damage or healing against their role is shown for reference, not graded.
+  - **Staying alive:** deaths with a defensive, Healthstone or potion still ready (a one-shot isn't held against them),
+    close calls under 30% health with nothing pressed, Healthstones and health potions; a tank's big defensives.
+  - **Using the toolkit:** the combat potion (a healer's mana potion counts) and whether it met Bloodlust, interrupts when
+    kickable casts got through, a healer's external (Blessing of Sacrifice, Pain Suppression, Ironbark…).
+- [x] The raid at a glance: the average of each grade, and the most common thing to work on. A row per player, the one
+  with the most to gain first, with their grades and their #1 fix; All / DPS / Healers / Tanks.
+- [x] Each player's card: "Work on these first", the three biggest fixes in plain words with what each is worth
+  ("+14 points"), then the three grades with every check, and buttons to the Damage/Healing, Survivability and
+  Utility charts for the detail. All pulls: each grade over the night, the fixes that came up in the most pulls ("in 3 of
+  3 pulls"), counts as totals.
+- [x] Performance's page tips (they were waiting for this): what each part is.
+- [x] Still greyed out on the website ("Under development") until you say it's ready; it works on your PC.
+- [ ] Next for the Report card (my suggestions): spec-specific checks, one spec at a time starting with Wolfthorn's
+  (key buffs and debuffs kept up, resources not wasted); raid cooldowns judged against the plan rather than "on cooldown"
+  (Aura Mastery, Tranquility…); the compare option (a player against their best pull, or others of their spec).
+
 ## 2026-10-17, round 123: boss ability tooltips everywhere, Performance greyed out on the website
 - [x] **Every boss ability has its tooltip** (your raid lead's note, and yours: anywhere a boss mechanic, ability, spell or
   debuff is named). Ability names written in plain text (a check's line, a rule's tip, "fix first", a death's killing
