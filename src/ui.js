@@ -508,9 +508,11 @@ function warmPulls() {
 // ---------- saved progress: your raid's pulls, across nights ----------
 // Each pull of your raid that gets analyzed is kept on this PC as a short summary (how far it got, its length, deaths, the
 // note's assignment results), so the next night on the same boss picks up the progress: the banner and Summary count the
-// earlier nights too. Which logs are your raid: the first one is confirmed once ("Is this your raid?") and its roster
-// becomes your team; after that, a log where at least half the players are on your team is yours (sitting a fight doesn't
-// matter), and one that's mostly other players asks first. A log that isn't yours is analyzed as usual but not saved.
+// earlier nights too. Which logs are your raid, decided on their own (it used to ask "Is this your raid?"): one where at
+// least half the players are on your team (the players of your saved raids, and of the teams and guilds you've added) is
+// yours, sitting a fight doesn't matter; with no team known yet, the first raid you open is, and its roster becomes your
+// team. One that's mostly other players is analyzed as usual but not saved, with a quiet "Save it" by the banner, and the
+// menu's Saved progress changes either way.
 const HIST = (() => {
   let dbp = null, ready = null;
   const open = () => dbp || (dbp = new Promise((res) => { try { const rq = indexedDB.open('wla-history', 1); rq.onupgradeneeded = () => rq.result.createObjectStore('pulls'); rq.onsuccess = () => res(rq.result); rq.onerror = () => res(null); } catch (e) { res(null); } }));
@@ -542,13 +544,23 @@ const team = () => listGet(TEAM_KEY);
 // the log or report this is (a yes or no covers all of its pulls)
 const srcKey = () => (S.wclCode ? 'wcl:' + S.wclCode : FH.dir && FH.name ? 'log:' + FH.name : S.file ? 'log:' + S.file.name : '');
 const rosterOf = (r) => [...r.players.values()].map((p) => p.name);
-// yes: confirmed, or at least half the players are on the team; no: said no; null: not known yet (ask)
+// everyone known to be on your team: your saved raids' roster, and the players of the pulls your teams and guilds brought in
+// (not a character's: their pugs aren't your raid)
+let ROSTER_C = null;
+function knownRoster() {
+  const key = HIST.mem.size + '|' + team().length + '|' + groups().length; if (ROSTER_C && ROSTER_C.key === key) return ROSTER_C.s;
+  const s = new Set(team()), gids = new Set(groups().filter((g) => g.kind !== 'char').map((g) => g.gid));
+  if (gids.size) for (const v of HIST.mem.values()) if (pullGroups(v).some((x) => gids.has(x))) for (const n of v.players || []) s.add(n);
+  ROSTER_C = { key, s }; return s;
+}
+// yes: said yes, at least half the players are on your team, or no team is known yet (the first raid you open); no: said
+// no, or mostly other players
 function raidMine(r) {
   if (!r) return null; const k = srcKey();
   if (k && listGet(ALLOW_KEY).includes(k)) return true;
   if (k && listGet(DENY_KEY).includes(k)) return false;
-  const tm = new Set(team()); if (!tm.size) return null;
-  const ns = rosterOf(r); return ns.length && ns.filter((n) => tm.has(n)).length / ns.length >= 0.5 ? true : null;
+  const tm = knownRoster(); if (!tm.size) return true;
+  const ns = rosterOf(r); return !!ns.length && ns.filter((n) => tm.has(n)).length / ns.length >= 0.5;
 }
 const isMyRaid = (r) => raidMine(r) === true;
 // (the same pull from the log and from Warcraft Logs is one record: boss, difficulty and start time to 10 seconds)
@@ -745,17 +757,14 @@ function acrossNights(b0, pulls) {
     '<div class="scroll"><table class="tbl xn"><thead><tr><th>Night</th><th class="tc">Pulls</th><th>Best</th><th class="xn-bar">How far</th><th class="tc">Time on boss</th></tr></thead><tbody>' +
     rows.map((x) => '<tr' + (x.now ? ' class="xn-now"' : '') + '><td><b>' + esc(x.label) + '</b></td><td class="tc">' + x.n + '</td><td>' + (x.kill ? '<span class="okv">✓ ' + esc(x.res) + '</span>' : esc(x.res)) + '</td><td class="xn-bar">' + progBar(b0, x.left, null, x.kill ? '#ff8000' : x.left != null ? (PULL_Q.find(([lo]) => 100 - x.left >= lo) || [0, '#9d9d9d'])[1] : null) + '</td><td class="tc">' + T(x.time) + '</td></tr>').join('') + '</tbody></table></div></div>';
 }
-// "Is this your raid?": asked above the banner for a log that isn't known yet (the first one, or one that's mostly other
-// players); the menu's Saved progress opens the same bar to change it, forget the team or clear the saved pulls
+// Saved progress (from the menu): whether this log is saved as your raid, to change it, forget the team or clear the saved
+// pulls. (It no longer asks "Is this your raid?" on its own: see raidMine.)
 function meBar(r) {
   if (!r || !r.item || r.item.kind !== 'boss') return '';
   const st = raidMine(r), tm = team(), n = HIST.mem.size;
   if (S.meOpen) return '<div class="panel mebar"><span class="mb-t"><b>Saved progress</b> <span class="sub">' + plural(n, 'pull') + ' saved on this PC · your team: ' + plural(tm.length, 'player') + ' · this log: ' + (st ? 'saved as your raid' : 'not saved') + '</span></span>' +
     (st ? '<button class="btn" id="meNo">Not my raid</button>' : '<button class="btn primary" id="meYes">Save as my raid</button>') + '<button class="btn" id="meForget"' + (tm.length ? '' : ' disabled') + '>Forget my team</button><button class="btn" id="meClear"' + (n ? '' : ' disabled') + '>Clear saved pulls</button><button class="btn" id="meDone">Done</button></div>';
-  if (st !== null || sessionStorage.getItem('wla-me-later:' + srcKey())) return '';
-  const first = !tm.length;
-  return '<div class="panel mebar"><span class="mb-t"><b>Is this your raid?</b> <span class="sub">' + (first ? 'Say yes and its pulls are saved on this PC, so the next night on a boss picks up where this one left off. Later logs with mostly the same players are saved on their own, even when someone sits.' : 'Most of these players aren\'t on your team, so nothing from this log is saved to your progress unless you say so.') + '</span></span>' +
-    '<button class="btn primary" id="meYes">Yes, save it</button><button class="btn" id="meNo">No</button><button class="btn" id="meLater">Ask later</button></div>';
+  return '';
 }
 function meSaved() { for (const rep of CACHE.values()) histSave(rep); renderMain(); }
 document.addEventListener('click', (e) => {
@@ -765,7 +774,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'meNo') { if (k) { listAdd(DENY_KEY, [k]); listDel(ALLOW_KEY, k); } renderMain(); }
   else if (t.id === 'meLater') { try { sessionStorage.setItem('wla-me-later:' + k, '1'); } catch (x) { /* ignore */ } renderMain(); }
   else if (t.id === 'meDone') { S.meOpen = false; renderMain(); }
-  else if (t.id === 'meForget') { if (confirm('Forget your team? The saved pulls stay; the next log asks again whether it\'s your raid.')) { store.set(TEAM_KEY, '[]'); renderMain(); } }
+  else if (t.id === 'meForget') { if (confirm('Forget your team? The saved pulls stay; the next raid you open becomes your team.')) { store.set(TEAM_KEY, '[]'); renderMain(); } }
   else if (t.id === 'meClear') { if (confirm('Clear every saved pull on this PC? The log that\'s open stays; earlier nights are gone.')) HIST.clear().then(() => { for (const rep of CACHE.values()) histSave(rep); renderMain(); }); }
 });
 
@@ -5438,6 +5447,55 @@ const SIM_APM = {
   'Destruction Warlock': [['Diabolist', 54.3, null], ['Hellcaller', 56.8, 'wither']],
   'Arms Warrior': [['', 56.3, null]], 'Fury Warrior': [['', 71.8, null]], 'Protection Warrior': [['', 86.0, null]],
 };
+// What each spec's top players press: casts per minute (presses only, as Warcraft Logs counts them, over the whole fight),
+// the middle of the 5 best-ranked logs per boss on Warcraft Logs, read Oct 17 2026 (2,000 logs in all: damage rankings, healing
+// for healers). Mythic (M), or Heroic (H) on a boss with under 10 Mythic logs for the spec yet; pressing pace barely changes
+// with difficulty. [the middle over all 50 logs, [a boss each, in TOP_BOSS order], difficulty per boss]
+const TOP_BOSS = ["Nek'zali the Soulcoiler", 'Entombed Sentinels', 'Vashnik the Malignant', 'The Lost Explorers', 'Sszorak', 'The Twin Fangs', 'The Coiled Altar', "Ula'tek", 'Nymrissa Wavecaller', "Kith'ix"];
+const TOP_RAW = {
+  'Affliction Warlock': [51.4, [53, 53.7, 51.4, 56.6, 49.1, 50.9, 52.7, 48.1, 49.3, 54.6], 'MMMMMMMHMH'],
+  'Arcane Mage': [46.4, [45.1, 47, 45.4, 47.1, 48.3, 47.8, 46.7, 44.1, 45.6, 45], 'MMMMMMMMMM'],
+  'Arms Warrior': [62.3, [65, 61.4, 61, 64.5, 65.2, 64.2, 61, 57.1, 64, 59.6], 'MMMMMMMMMM'],
+  'Assassination Rogue': [63.1, [63.1, 59.4, 63, 68.1, 64.1, 67.1, 59.8, 59.4, 62.7, 60.7], 'MMMMMMMMMM'],
+  'Augmentation Evoker': [54.5, [53.7, 55, 55.1, 56.8, 55.7, 53.8, 53.9, 49.2, 55.9, 54], 'MMMMMMMMMM'],
+  'Balance Druid': [54, [55, 51.2, 59.2, 53.7, 58.8, 54.2, 51.6, 53.1, 57.4, 51.5], 'MMMMMMMMMM'],
+  'Beast Mastery Hunter': [51.2, [54, 51, 50.8, 48.8, 60.5, 52, 52.8, 45.1, 44.2, 46.9], 'MMMMMMMMMM'],
+  'Blood Death Knight': [64.7, [65.3, 63, 65.3, 67.5, 66.7, 68.9, 62.8, 62.6, 61.7, 62.1], 'MMMMMMMMMM'],
+  'Brewmaster Monk': [64.7, [66.4, 63.4, 66, 67.3, 67.5, 66.5, 58.8, 59.8, 64.9, 60.8], 'MMMMMMMMMH'],
+  'Demonology Warlock': [50.1, [52.7, 50.3, 49.4, 54.1, 51, 50.3, 48.5, 47.5, 50.8, 46.5], 'MMMMMMMMMM'],
+  'Destruction Warlock': [55.7, [52.2, 56.2, 56.7, 57.9, 53.6, 54.8, 58.1, 47.5, 52.8, 55.7], 'MMMMMMHHMH'],
+  'Devastation Evoker': [48, [48.8, 48.2, 48.2, 48.9, 50.7, 47.8, 48.1, 46.3, 48.2, 47.1], 'MMMMMMMMMM'],
+  'Devourer Demon Hunter': [44.2, [51.6, 45.7, 41, 45.2, 55.5, 40.5, 49.1, 40.7, 41.1, 40], 'MMMMMMMMMM'],
+  'Discipline Priest': [60.5, [60.5, 63.1, 63.4, 64.7, 59.2, 60.8, 60.4, 54.9, 64.4, 60.3], 'MMMMMMMHMH'],
+  'Elemental Shaman': [51.2, [51, 49.9, 51.4, 53, 52.2, 53.6, 49.7, 45.9, 50.9, 50.6], 'MMMMMMMMMM'],
+  'Enhancement Shaman': [75.4, [76.5, 69.7, 70.5, 79, 76.1, 75.4, 72.5, 69, 76, 80.7], 'MMMMMMHHMH'],
+  'Feral Druid': [56.5, [56.5, 54.2, 56.3, 59, 59.1, 59.4, 53.4, 48.1, 54.3, 56.5], 'MMMMMMHHMH'],
+  'Fire Mage': [72.9, [73.6, 72, 71.6, 76.1, 74.4, 73.8, 72.5, 67.1, 74, 75.3], 'MMMMMHHHMH'],
+  'Frost Death Knight': [67.8, [70.6, 67.2, 65.6, 70.6, 71.3, 69.2, 62.8, 60.1, 70.6, 66], 'MMMMMMMMMM'],
+  'Frost Mage': [48.3, [49.4, 45.8, 49.4, 53.8, 49.9, 55.5, 47.2, 45.1, 48, 48.2], 'MMMMMMMHMH'],
+  'Fury Warrior': [78.6, [81.7, 75.5, 77.4, 80.8, 83.4, 75.7, 79.3, 65.8, 81, 77.3], 'MMMMMMHHMH'],
+  'Guardian Druid': [77.8, [78.3, 81.4, 81, 77.9, 76.7, 82.3, 66.8, 66, 78, 71.6], 'MMMMMMMHMH'],
+  'Havoc Demon Hunter': [69, [74, 69.6, 64.3, 71.3, 71.3, 72.7, 65.3, 53.2, 72.2, 55.7], 'MMMMMMMMMM'],
+  'Holy Paladin': [50.4, [52.2, 50.8, 50.5, 50.7, 50.4, 51.1, 49.9, 48.9, 49.1, 48.6], 'MMMMMMMMMM'],
+  'Holy Priest': [47.8, [49.1, 44.9, 49.7, 49.9, 46.6, 48.9, 46, 47.7, 50.2, 46.3], 'MMMMMMMMMM'],
+  'Marksmanship Hunter': [40.8, [41.5, 40.4, 40.4, 42.2, 42.5, 40.9, 40, 38.2, 40.2, 40.5], 'MMMMMMMMMM'],
+  'Mistweaver Monk': [65.3, [68.1, 61.6, 62.3, 66.1, 67.9, 67.5, 66.3, 63.6, 63.6, 63.9], 'MMMMMMMMMM'],
+  'Outlaw Rogue': [84.5, [86.8, 83.5, 81.3, 83, 91, 84.4, 84.7, 72.6, 85.6, 86.4], 'MMMMMMHHMH'],
+  'Preservation Evoker': [53.1, [53.9, 53.7, 53.2, 56, 52.1, 54.3, 53.1, 51.8, 53.2, 50.8], 'MMMMMMMMMM'],
+  'Protection Paladin': [75.3, [73.3, 73.6, 75.6, 83.9, 77.6, 79.7, 65.3, 72.8, 77.2, 75.2], 'MMMMMMMMMH'],
+  'Protection Warrior': [79.3, [80, 81.2, 78.2, 85.5, 76.6, 80.9, 70.4, 69.6, 82.3, 78.6], 'MMMMMMMHMH'],
+  'Restoration Druid': [64.1, [65.5, 67.7, 63.3, 68.4, 64.1, 63.4, 63.8, 67.2, 64.2, 54.8], 'MMMMMMMMMM'],
+  'Restoration Shaman': [48.9, [51.6, 47.5, 50.4, 49.4, 47.6, 47.3, 50.4, 48.9, 50.2, 48.3], 'MMMMMMMMMM'],
+  'Retribution Paladin': [100.4, [104.3, 101.9, 98.6, 104.5, 103.5, 103.3, 96.9, 93.4, 99, 100.4], 'MMMMMMMMMM'],
+  'Shadow Priest': [52.3, [52.4, 53.8, 50.9, 54.8, 51, 53.1, 52.2, 47.4, 51.2, 51.8], 'MMMMMMMMMM'],
+  'Subtlety Rogue': [62.5, [67.7, 61.3, 62.5, 61.9, 65.1, 62.6, 62.6, 58.9, 63.3, 62.4], 'MMMMMMMMMM'],
+  'Survival Hunter': [49.6, [51.3, 45.9, 48.9, 48.5, 51.5, 46.7, 50.9, 44.5, 49.1, 50.8], 'MMMMMMHHMH'],
+  'Unholy Death Knight': [63.3, [64.8, 63, 63.3, 66.1, 66.1, 64.2, 62, 58.4, 63.9, 62.2], 'MMMMMMMMMH'],
+  'Vengeance Demon Hunter': [63.9, [65.5, 63.7, 64, 65, 63.7, 64.4, 59.1, 57, 65.5, 68.1], 'MMMMMMMMMH'],
+  'Windwalker Monk': [55.7, [52.9, 49.9, 61.3, 65.9, 54.3, 66.7, 50.8, 57.4, 54.6, 55], 'MMMMMMMMMM'],
+};
+// (as paceOf reads it: spec -> { all, n, b: { boss: [per minute, logs, difficulty 5 or 4] } })
+const TOP_CPM = Object.fromEntries(Object.entries(TOP_RAW).map(([k, [all, v, d]]) => [k, { all, n: 50, b: Object.fromEntries(TOP_BOSS.map((b, i) => [b, [v[i], 5, d[i] === 'H' ? 4 : 5]]).filter(([, x]) => x[0] != null)) }]));
 const AUTO_N = new Set(['melee', 'auto shot', 'shoot', 'auto attack']);
 // (the sim's pace for this player: the hero tree whose own spell they cast this night, else the tree that has none listed,
 // else the average) -> { v, label, low, high } or null
@@ -5446,6 +5504,16 @@ function simPace(r, p) {
   const mine = L.filter(([, , s]) => s && castOnBoss(r, p, s)), rest = L.filter(([, , s]) => !s), use = mine.length ? mine : rest.length ? rest : L;
   return { v: use.reduce((s, x) => s + x[1], 0) / use.length, label: use.length === 1 ? use[0][0] : '', low: Math.min(...L.map((x) => x[1])), high: Math.max(...L.map((x) => x[1])), n: L.length };
 }
+// The pace to measure a player against: what the spec's top players press on this boss (the middle of its 5 best logs
+// on Warcraft Logs, Mythic where enough kills existed, else Heroic: TOP_CPM), else over the whole raid, else the sim.
+// -> { v, src: 'boss' | 'raid' | 'sim', n, diff, label, sim } or null
+function paceOf(r, p) {
+  const t = TOP_CPM[p.specName], b = t && t.b[r.item.boss], sim = simPace(r, p);
+  if (b && b[1] >= 3) return { v: b[0], src: 'boss', n: b[1], diff: b[2], label: '', sim };
+  if (t && t.n >= 5) return { v: t.all, src: 'raid', n: t.n, label: '', sim };
+  return sim ? { ...sim, src: 'sim', sim } : null;
+}
+const paceSrc = (s) => (!s ? '' : s.src === 'boss' ? 'the spec\'s top ' + (s.diff === 4 ? 'Heroic' : 'Mythic') + ' logs on this boss' : s.src === 'raid' ? 'the spec\'s top logs across the raid' : 'SimulationCraft\'s ' + (s.label ? s.label + ' ' : '') + 'sim on a target dummy');
 const fmtCpm = (v) => (v >= 100 ? String(Math.round(v)) : v.toFixed(1));
 const cstMed = (a) => { const s = a.slice().sort((x, y) => x - y), n = s.length; return n ? (n % 2 ? s[n >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2) : null; };
 // (against the sim: 90% or more is on pace (a real fight has movement the dummy doesn't), 75% a little slow, under that slow)
@@ -5456,7 +5524,9 @@ const pacePill = (f) => (f == null ? 'No sim' : f >= 0.9 ? 'On pace' : f >= 0.75
 function castOf(r, p, w0, w1, lite) {
   const C0 = perfContext(r), x = C0.per.get(p.name), t1 = Math.min(w1, x ? x.until : w1);
   const mcw = C0.mc.get(p.name) || [], idle = rcIdle(r, p), cut = (l) => l.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, t1) - Math.max(a, w0)), 0);
-  const al = Math.max(0, aliveSecs(r, p, w0, t1) - cut(mcw) - cut(idle)), inW = (t) => t >= w0 - 0.05 && t <= t1 + 0.05;
+  // (per minute alive, less any time mind controlled: the same way Warcraft Logs counts the top logs it's measured against,
+  // so the whole fight, transitions included)
+  const al = Math.max(0, aliveSecs(r, p, w0, t1) - cut(mcw)), inW = (t) => t >= w0 - 0.05 && t <= t1 + 0.05;
   const ab = [], all = [], procs = new Map(); let auto = 0;
   for (const a of p.castAb.values()) { const ln = a.name.toLowerCase(), ts0 = (p.byName.get(ln) || []).filter(inW); if (!ts0.length) continue;
     if (AUTO_N.has(ln) || a.id === 1 || a.id === 6603 || a.id === 75) { auto += ts0.length; continue; }
@@ -5510,7 +5580,7 @@ function castView(list, one) {
   const all = [...acc.values()];
   if (!all.length) return { head: {}, html: '<div class="panel"><p class="muted">No casts in ' + (one ? 'this pull' : 'these pulls') + '.</p></div>' };
   for (const a of all) { a.cpm = a.al >= 1 ? 60 * a.n / a.al : 0; a.abL = [...a.ab.values()].sort((x, y) => y.n - x.n); a.gaps.sort((x, y) => y.len - x.len);
-    a.sim = simPace(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null;
+    a.sim = paceOf(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null;
     if (one) { a.us = castUsual(list[0].r, a.p.name); a.d = a.us && a.us.cpm ? (a.cpm - a.us.cpm) / a.us.cpm : null; } }
   // (the slowest for their spec first, then those with no sim to measure against, by their pace against their usual)
   all.sort((a, b) => (a.f == null) - (b.f == null) || (a.f != null ? a.f - b.f : (a.d ?? 0) - (b.d ?? 0) || b.cpm - a.cpm));
@@ -5521,9 +5591,9 @@ function castView(list, one) {
   const slow = all.filter((a) => a.f != null && a.f < 0.75), withSim = all.filter((a) => a.f != null);
   const below = one ? all.filter((a) => a.d != null && a.d <= -0.1) : [], withUs = one ? all.filter((a) => a.us).length : 0;
   const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).sort((x, y) => y.len - x.len)[0], names = (l) => l.slice(0, 3).map((a) => a.p.name).join(', ') + (l.length > 3 ? ' and ' + (l.length - 3) + ' more' : '');
-  const tiles = [plTile(plIco('spell_nature_lightning'), 'Slow for their spec', withSim.length ? String(slow.length) : '—', !withSim.length ? 'na' : slow.length ? 'bad' : 'ok', !withSim.length ? 'no spec here has a sim pace' : slow.length ? names(slow) + ' · under 75% of the pace' : 'everyone at 75% of their spec\'s pace or more'),
+  const tiles = [plTile(plIco('spell_nature_lightning'), 'Slow for their spec', withSim.length ? String(slow.length) : '—', !withSim.length ? 'na' : slow.length ? 'bad' : 'ok', !withSim.length ? 'no pace for these specs yet' : slow.length ? names(slow) + ' · under 75% of the pace' : 'everyone at 75% of their spec\'s pace or more'),
     one ? plTile(plIco('ability_warrior_innerrage'), 'Below their usual', withUs ? String(below.length) : '—', !withUs ? 'na' : below.length ? 'warn' : 'ok', !withUs ? 'needs 2 more pulls of this boss read' : below.length ? names(below) + ' · 10% or more under' : 'everyone at their usual pace', !withUs)
-      : plTile(plIco('inv_misc_note_01'), 'On pace', withSim.length ? Math.round(100 * withSim.filter((a) => a.f >= 0.9).length / withSim.length) + '<span>%</span>' : '—', 'na', 'of the players with a sim pace, over ' + plural(list.length, 'pull'), true),
+      : plTile(plIco('inv_misc_note_01'), 'On pace', withSim.length ? Math.round(100 * withSim.filter((a) => a.f >= 0.9).length / withSim.length) + '<span>%</span>' : '—', 'na', 'of the players with a pace, over ' + plural(list.length, 'pull'), true),
     plTile(plIco('inv_misc_pocketwatch_01'), 'Longest gap', lg ? Math.round(lg.len) + '<span> s</span>' : '—', lg && lg.len >= 8 ? 'warn' : 'na', lg ? lg.p.name + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.t) + (lg.mv === true ? ' · moving' : lg.mv === false ? ' · standing still' : '') : 'no gaps of 4 s or more', !(lg && lg.len >= 8))];
   const mid = cstMed(withSim.map((a) => a.f)), head = { v: withSim.length ? slow.length + '<span> slow</span>' : fmtCpm(cstMed(all.map((a) => a.cpm))) + '<span>/min</span>', s: withSim.length ? 'the middle player at ' + Math.round(100 * mid) + '% of their spec\'s pace' : 'casts per minute, the middle player' };
   const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
@@ -5537,7 +5607,7 @@ function castView(list, one) {
   } else {
     const valOf = sel ? (w) => { const o = sel.per.find((y) => y.w === w); return o && o.c.al >= 10 ? o.c.cpm : null; }
       : (w) => { const v = []; for (const a of all) { if (!a.sim) continue; const o = a.per.find((y) => y.w === w); if (o && o.c.al >= 10) v.push(o.c.cpm / a.sim.v); } return v.length ? cstMed(v) : null; };
-    top = '<div class="pts n3">' + tiles.join('') + '</div>' + resNightChart(list, valOf, sel ? { ty: '0', ttl: esc(sel.p.name) + '\'s casts per minute, per pull', sub: 'while they could cast', fmt: fmtCpm, tip: (v) => fmtCpm(v) + ' casts a minute' }
+    top = '<div class="pts n3">' + tiles.join('') + '</div>' + resNightChart(list, valOf, sel ? { ty: '0', ttl: esc(sel.p.name) + '\'s casts per minute, per pull', sub: 'while alive', fmt: fmtCpm, tip: (v) => fmtCpm(v) + ' casts a minute' }
       : { ty: '0', ttl: 'Pace, per pull', sub: 'the middle player, against their spec\'s pace', tip: (v) => Math.round(100 * v) + '% of their spec\'s pace, the middle player' });
   }
   // ---- a bar per player: their casts per minute, a tick at their spec's sim pace ----
@@ -5545,17 +5615,17 @@ function castView(list, one) {
   const bars = rows.map((a, i) => { const on = sel === a;
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' cst-r', attrs: ' type="button" data-cn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * a.cpm / mx), 'm']], tick: a.sim ? 100 * a.sim.v / mx : null, v: fmtCpm(a.cpm),
       sub: a.f != null ? '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>' : '<span class="sub">—</span>', chips: one && a.d != null && Math.abs(a.d) >= 0.05 ? ' ' + dlt(a.d) : '' }); }).join('');
-  const left = '<div class="panel pf-bars cst-bars"><h3 class="nh"><span>Casts per minute</span><small>while they could cast · the tick: their spec\'s pace on a target dummy · % of it on the right' + (one ? ' · ▲▼ against their usual' : ' · over ' + plural(list.length, 'pull')) + '</small>' + roleChips(has) + '</h3>' +
+  const left = '<div class="panel pf-bars cst-bars"><h3 class="nh"><span>Casts per minute</span><small>while alive · the tick: their spec\'s top players\' pace · % of it on the right' + (one ? ' · ▲▼ against their usual' : ' · over ' + plural(list.length, 'pull')) + '</small>' + roleChips(has) + '</h3>' +
     (bars ? cbHead('Per min', 'Of pace') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
   return { head, html: top + '<div class="pf-cols">' + left + '<div class="panel pf-det cst-det">' + (sel ? castDetail(sel, one, all) : castRaid(all, one)) + '</div></div>' + castHow };
 }
-const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute while they could cast: alive, not mind controlled, and not while most of the raid couldn\'t cast either (a transition, everyone running), up to the wipe filter. <b>The pace</b> is how fast SimulationCraft\'s Midnight raid sims press for that spec on a target dummy (its October 17 report), using the hero talents the player took when their own spell shows it. A dummy never moves, so a real fight runs a little under it: <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Healers, Balance, Guardian, Protection Paladins and Evokers have no sim, so they\'re measured against their own other pulls and the same spec in the raid. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more.</div></details>';
+const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more.</div></details>';
 // no one picked: the slowest against their spec, the biggest drops against their usual, and the longest gaps
 function castRaid(all, one) {
   const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
   let h = '<h3 class="nh"><span>The raid</span><small>casts' + (one ? '' : ', over the pulls') + '</small></h3>';
   const sl = all.filter((a) => a.f != null).sort((a, b) => a.f - b.f).slice(0, 6);
-  h += rsSec('Furthest under their spec\'s pace', 'casts a minute, and the pace', sl.length ? sl.map((a) => line(who(a.p) + ' <span class="sub">' + esc(a.p.specName || '') + '</span>', fmtCpm(a.cpm) + ' of ' + fmtCpm(a.sim.v), '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>')).join('') : '<p class="sub" style="margin:0">No spec here has a sim pace.</p>');
+  h += rsSec('Furthest under their spec\'s pace', 'casts a minute, and the pace', sl.length ? sl.map((a) => line(who(a.p) + ' <span class="sub">' + esc(a.p.specName || '') + '</span>', fmtCpm(a.cpm) + ' of ' + fmtCpm(a.sim.v), '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>')).join('') : '<p class="sub" style="margin:0">No pace for these specs yet.</p>');
   if (one) { const dr = all.filter((a) => a.d != null && a.d < -0.05).sort((a, b) => a.d - b.d).slice(0, 5);
     h += rsSec('Slower than their usual', 'against their own other pulls of this boss', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.cpm) + ', usually ' + fmtCpm(a.us.cpm), dlt(a.d))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.us) ? 'Nobody was slower than usual.' : 'Needs 2 more pulls of this boss read.') + '</p>'); }
   const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).slice().sort((x, y) => y.len - x.len).slice(0, 6);
@@ -5565,11 +5635,12 @@ function castRaid(all, one) {
 // the picked player: their pace, each spell (casts, per minute, against their usual), their gaps, what wasn't counted
 function castDetail(a, one, all) {
   let h = '<h3 class="nh">' + avatar(a.p, true) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span><small>' + esc(a.p.specName || '') + (one ? '' : ' · ' + plural(a.per.length, 'pull')) + '</small><button class="btn sm" id="csClose" type="button">Show the raid</button></h3>';
-  const simTxt = a.sim ? fmtCpm(a.cpm) + ' casts a minute while they could cast: ' + Math.round(100 * a.f) + '% of the pace SimulationCraft\'s ' + (a.sim.label ? a.sim.label + ' ' : '') + (a.p.specName || '') + ' presses at on a target dummy (' + fmtCpm(a.sim.v) + (a.sim.n > 1 && !a.sim.label ? ', ' + fmtCpm(a.sim.low) + ' to ' + fmtCpm(a.sim.high) + ' by hero talents' : '') + ').'
-    : fmtCpm(a.cpm) + ' casts a minute while they could cast. There\'s no sim pace for ' + (a.p.specName || 'this spec') + ', so it\'s measured against their own pulls and the same spec here.';
+  const ss = a.sim && a.sim.sim, simTxt = a.sim ? fmtCpm(a.cpm) + ' casts a minute alive: ' + Math.round(100 * a.f) + '% of the pace of ' + paceSrc(a.sim) + ' (' + fmtCpm(a.sim.v) + (a.sim.src !== 'sim' ? ', the middle of ' + a.sim.n : '') + ').' +
+      (a.sim.src !== 'sim' && ss ? ' SimulationCraft\'s target dummy presses ' + fmtCpm(ss.v) + '.' : '')
+    : fmtCpm(a.cpm) + ' casts a minute alive. There\'s no pace for ' + (a.p.specName || 'this spec') + ' yet, so it\'s measured against their own pulls and the same spec here.';
   h += '<p class="rs-v"><span class="hm-p ' + paceSt(a.f) + '">' + pacePill(a.f) + '</span>' + esc(simTxt) + '</p>';
   const peers = all.filter((b) => b !== a && b.p.specId && b.p.specId === a.p.specId).sort((x, y) => y.cpm - x.cpm);
-  h += '<div class="rs-nums">' + [['Casts', String(a.n), 'pressed'], ['Per minute', fmtCpm(a.cpm), 'while they could cast'], ['Their spec\'s pace', a.sim ? fmtCpm(a.sim.v) : '—', a.sim ? (a.sim.label || 'a target dummy') : 'no sim'], one ? ['Their usual', a.us ? fmtCpm(a.us.cpm) : '—', a.us ? 'over ' + plural(a.us.n, 'other pull') : 'needs 2 more pulls'] : ['Best pull', fmtCpm(Math.max(0, ...a.per.filter(({ c }) => c.al >= 60).map(({ c }) => c.cpm))), 'a minute alive or more']]
+  h += '<div class="rs-nums">' + [['Casts', String(a.n), 'pressed'], ['Per minute', fmtCpm(a.cpm), 'while alive'], ['Their spec\'s pace', a.sim ? fmtCpm(a.sim.v) : '—', a.sim ? (a.sim.src === 'boss' ? 'top logs, this boss' : a.sim.src === 'raid' ? 'top logs, the raid' : 'the sim') : 'none yet'], one ? ['Their usual', a.us ? fmtCpm(a.us.cpm) : '—', a.us ? 'over ' + plural(a.us.n, 'other pull') : 'needs 2 more pulls'] : ['Best pull', fmtCpm(Math.max(0, ...a.per.filter(({ c }) => c.al >= 60).map(({ c }) => c.cpm))), 'a minute alive or more']]
     .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + v + '</b>' + (s ? '<small>' + esc(s) + '</small>' : '') + '</div>').join('') + '</div>';
   if (peers.length) h += '<p class="sub" style="margin:-4px 0 10px">Same spec ' + (one ? 'this pull' : 'over these pulls') + ': ' + peers.map((b) => '<span class="nm" style="color:' + b.p.color + '">' + esc(b.p.name) + '</span> ' + fmtCpm(b.cpm)).join(', ') + '</p>';
   // each spell: casts, per minute, and (one pull) their usual for it, low ones marked

@@ -12,6 +12,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   card's "Using the toolkit". Open questions: who it's for (the whole raid or the leads), the weights of the three parts,
   and tonight first or the whole tier (the tier needs each pull's scores saved as it's read, from then on).
   **Update (your note, Oct 17):** the Player audit should be completely revamped into something else. To discuss.
+- [ ] **Stats** (your idea, a tab in Performance; you want guidance first): each player's average main and secondary stats
+  over the pull, and how much came from gear procs ("cantrips"), flasks, food, enchants, and other players' buffs.
 - [ ] **Power Infusion** (your idea, a tab in Performance): the priest's Power Infusion should land in the right cooldown
   windows (the target's big cooldowns, Bloodlust), and on the right class (a spec that gains the most from it). Needs a
   little research per spec. To talk over first.
@@ -72,6 +74,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 134: Casts measured against top logs, and auto saving
+- [x] **Top logs for every spec** (your ask): the 5 best-ranked logs for each of the 40 specs on each of the 10 bosses
+  (2,000 logs, Mythic where enough guilds have killed it, Heroic on the last few bosses), their presses counted the same
+  way. Casts now measures each player against what their spec's top players press on that boss (the middle of the 5), with
+  the sim as a footnote. Every spec has a pace this way, healers too. It's fairer: on Coiled Altar the top Havoc players
+  press 65 a minute (the dummy sim says 87), so Dashtoswirly is on pace, not slow; your Preservation Evokers (71-78%) are
+  the ones to look at.
+- [x] Casts per minute are now per minute alive, the way Warcraft Logs counts the top logs.
+- [x] **"Is this your raid?" is gone** (your call): a log is saved to your progress on its own when at least half the players
+  are on your team (your saved raids, and the teams and guilds you've added), never when it's mostly other players (a quiet
+  "Save it" sits by the banner for those); the menu's Saved progress still changes it.
 
 ## 2026-10-17, round 133: Casts (a new Performance view)
 - [x] **Casts** (your idea): every cast on one time line, a row per player (a line per cast, dead time shaded); a bar per
