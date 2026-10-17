@@ -57,6 +57,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   Blizzard number; Blizzard's pictures sit at an address made from those. It's looked up once per character (when added, or
   the next time the teams page opens) and remembered. The website reads only the start of that 1 MB copy and passes on one
   line. If a picture won't load, the card and page look the way they did before.
+- [x] **No boss behind your character** (your note): a character's card shows them in a soft glow of their class colour
+  instead of the art of the boss they're on. Team cards keep their boss.
 
 ## 2026-10-17, round 121: Your teams in the top bar, a better-looking teams page
 - [x] **Your teams button** (your idea, instead of the Teams tab): a gold "Your teams ▾" button in the top bar, on every

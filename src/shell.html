@@ -1156,7 +1156,8 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .hc-mw { position: absolute; z-index: 0; top: 12px; bottom: 46px; right: 3%; width: 36%; pointer-events: none; }
 .hc-mw .lk-fig { animation: lkIn .6s ease-out both; animation-delay: calc(.15s + var(--i, 0) * 80ms); transition: transform .3s; } .hc-card:hover .hc-mw .lk-fig { transform: translateX(-51%) scale(1.03); }
 .hc-card.has-fig > :not(.hc-mw):not(.hc-art) { position: relative; z-index: 1; } .hc-card.has-fig > .hc-top, .hc-card.has-fig > .hc-now, .hc-card.has-fig > .hc-sw, .hc-card.has-fig > .hc-diffs { max-width: 62%; }
-.hc-card.has-fig .hc-art { opacity: .2; }
+.hc-card.has-fig { background: radial-gradient(ellipse 34% 80% at 82% 50%, color-mix(in srgb, var(--bc) 24%, transparent), transparent 72%), linear-gradient(160deg, color-mix(in srgb, var(--bc) 10%, var(--panel)), var(--panel) 55%); }
+@media (max-width: 640px) { .hc-card.has-fig { background: radial-gradient(ellipse 40% 30% at 82% 16%, color-mix(in srgb, var(--bc) 26%, transparent), transparent 75%), linear-gradient(160deg, color-mix(in srgb, var(--bc) 10%, var(--panel)), var(--panel) 55%); } }
 @keyframes lkIn { from { opacity: 0; transform: translate(-51%, 14px); } }
 /* (on a character's page: the top is a banner in their class colour, with them standing on its right) */
 .pg-top.pg-chero { position: relative; overflow: hidden; isolation: isolate; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 16px; min-height: 290px; padding: 26px 28px 24px;

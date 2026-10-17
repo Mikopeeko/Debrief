@@ -6619,9 +6619,10 @@ function hubCard(g, all, order, i) {
   const sub = cls ? charAff(g) : g.rank && (g.rank.w || g.rank.r) ? '<span class="ht-g ht-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '';
   const kind = cls ? cls[0] + (g.parse ? ' · ' + g.parse.spec + ' ' + Math.floor(g.parse.best) + ' best average' : '') : gKind(g) + (g.faction ? ' · ' + g.faction : '');
   const art = artBoss && BOSS_HERO[artBoss] ? '<img class="hc-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[artBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[artBoss][1] + '% 25%" onerror="this.remove()">' : '';
-  // (a character with their Armory picture: they stand on the card's right, on the line above its nights)
+  // (a character with their Armory picture: they stand on the card's right, on the line above its nights, in a glow of
+  // their class colour instead of the boss's art)
   const fig = lookFig(g, 'hc-mw');
-  return '<button class="hc-card' + (fig ? ' has-fig' : '') + '" type="button" data-g="' + esc(g.gid) + '" style="--bc:' + col + ';--i:' + (i || 0) + '">' + art + fig +
+  return '<button class="hc-card' + (fig ? ' has-fig' : '') + '" type="button" data-g="' + esc(g.gid) + '" style="--bc:' + col + ';--i:' + (i || 0) + '">' + (fig ? '' : art) + fig +
     '<span class="hc-top">' + banner(g) + '<span class="hc-id"><span class="hc-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(gName(g)) + '</span>' + sub + '<span class="hc-k">' + esc(kind + (g.server ? ' · ' + g.server : '')) + '</span></span></span>' +
     now + (strip ? '<span class="hc-sw"><span class="hc-sl"><span>' + esc(d[1]) + '</span><b>' + kills + ' of ' + order.length + ' killed</b></span><span class="hc-strip" aria-hidden="true">' + strip + '</span></span>' : '') +
     (diffs ? '<span class="hc-diffs">' + diffs + '</span>' : '') +
