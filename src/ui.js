@@ -1288,7 +1288,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const chips = (ns, cls) => ns.length ? '<span class="chips">' + ns.map((n) => who(n, cls)).join('') + '</span>' : '<span class="sub">none</span>';
   // no note yet: one line with a button instead of an empty editor taking half the page
   if (!text && !S.noteEdit) {
-    $('#assignBox').innerHTML = '<div class="panel noteempty"><div><b>Assignments</b> <span class="sub">No NSRT note for ' + esc(boss) + ' yet. Add one to check soaks, kicks, orbs and cooldown assignments.</span></div><button class="btn primary" id="noteAdd">Add NSRT note</button></div>';
+    $('#assignBox').innerHTML = '<div class="panel noteempty"><div><b>Assignments</b> <span class="sub">No NSRT note for ' + esc(boss) + ' yet. Paste the one your raid is using (from wowutils, or your raid leader) to check soaks, kicks, orbs and cooldowns. It\'s kept in this browser; paste the new one when it changes.</span></div><button class="btn primary" id="noteAdd">Add NSRT note</button></div>';
     $('#noteAdd').onclick = () => { S.noteEdit = true; assign(only); };
     return;
   }
@@ -3383,7 +3383,7 @@ async function night() {
   const mSec = gm ? secHead('sum-mech', 'Mechanics', 'every mechanic across the pulls; open one for the pulls that went wrong') + inl(mCard) +
     (mHtml || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>') : '';
   const aSec = secHead('sum-asg', 'Assignments', hasNote ? 'every assignment in the NSRT note across the pulls' : '') +
-    (!hasNote ? '<div class="panel noteempty"><div><b>No NSRT note for ' + esc(b0.boss) + ' yet.</b> <span class="sub">Add one on the Assignments tab to check soaks, kicks, orbs and cooldowns across every pull.</span></div><button class="btn" id="sumNote">Open Assignments</button></div>'
+    (!hasNote ? '<div class="panel noteempty"><div><b>No NSRT note for ' + esc(b0.boss) + ' yet.</b> <span class="sub">Paste the one your raid is using (from wowutils) on the Assignments tab to check soaks, kicks, orbs and cooldowns across every pull.</span></div><button class="btn" id="sumNote">Open Assignments</button></div>'
       : inl(aCard) + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
   // Two columns on a computer: the night on the left (how far it got, what kept going wrong, every mechanic and
   // assignment), the grades and a "jump to" list on the right, staying in view while you scroll. On a narrow screen the
@@ -7883,7 +7883,7 @@ const PAGE_TIPS = {
     { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig into this pull: your assignments, every mechanic, the meters, the whole night and every player.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
-    { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your NSRT note once. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns.' },
+    { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note (from wowutils). Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
     { sel: '#view .as-tiles', t: 'Each assignment at a glance', p: 'Red went wrong, green was done. Click one to jump straight to it.' }],
   audit: [
     { sel: '#view .mscore', t: 'Every mechanic in one line', p: 'Red and amber chips went wrong. Click one to jump straight to it.' },

@@ -92,10 +92,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   a minute and the app retried a refusal after 1 to 4 seconds. Now 180 a minute, refusals wait 10, 20, 30 s, and
   background downloads keep to about half the share and wait while a loading screen is up. This is also why the first
   full night on the website was slow.
-- [ ] **Open (your call): the NSRT note on the website.** It's saved only in the browser where it was pasted, so your
-  raiders see "no NSRT note" on Assignments and their grades leave the assignments out. Options: a shared note saved on
-  the website for your team (needs a small free storage space on your Cloudflare account; my pick), each raider pasting
-  it themselves, or your notes built into the site with each update.
+- [x] **The NSRT note on the website** (your call): each raider imports their own, the one their raid uses from wowutils
+  (it changes week to week, or night to night). The empty Assignments page now says where to get it, and to paste the new
+  one when it changes.
 
 ## 2026-10-17, round 140: Twin Fangs checks, fairer grades, a polish pass
 - [x] **Twin Fangs Feast check said clean on Heroic** (my #2): Heroic has no Tainted Blood founts at all (Warcraft Logs lists
