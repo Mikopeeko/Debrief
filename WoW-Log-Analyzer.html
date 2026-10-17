@@ -857,6 +857,18 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-fi > .sub { flex: none; max-width: 55%; text-align: right; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pf-fnone { margin: 8px; }
 @media (max-width: 640px) { .pf-find { flex: 1 1 100%; margin-left: 0; } .pf-find .pf-q { width: 100%; } .pf-fr { left: 0; right: auto; width: 100%; } }
 .pf-cdw { margin-left: 8px; color: #c9ced8; font-size: 12px; font-weight: 600; opacity: .85; } .pf-hrow .cb-in .icw { flex: none; }
+/* ---- Performance: the view picker (one button, every view in a menu under it) ---- */
+.pfm { position: relative; flex: none; --kc: var(--gold); } .pfm.k-dmg { --kc: #6aa8ff; } .pfm.k-heal { --kc: #45c15c; } .pfm.k-taken { --kc: #e5534b; } .pfm.k-res { --kc: #4fb6e8; } .pfm.k-util { --kc: #b07cf0; } .pfm.k-cast { --kc: #f0a35e; } .pfm.k-pi { --kc: #f6dc9a; }
+.pfm-b { display: flex; align-items: center; gap: 11px; min-width: 250px; padding: 8px 14px 8px 9px; background: var(--raised); border: 1px solid var(--line2); border-radius: 10px; box-shadow: inset 0 -2px 0 var(--kc); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.pfm-b:hover { background: #1f2330; } .pfm-b .pfk-i { opacity: 1; filter: none; } .pfm-t { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pfm-g { color: var(--faint); font: 600 10px var(--body); letter-spacing: .07em; text-transform: uppercase; } .pfm-l { display: flex; align-items: baseline; gap: 10px; font: 700 16px/1.25 var(--head); white-space: nowrap; }
+.pfm-v { font-size: 15px; color: #c9ced8; font-variant-numeric: tabular-nums; } .pfm-v span { font-size: 12px; font-weight: 600; color: var(--faint); margin-right: 5px; } .pfm-c { color: var(--faint); font-size: 14px; margin-left: 6px; } .pfm-b[aria-expanded="true"] .pfm-c { transform: rotate(180deg); }
+.pfm-p { position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; display: grid; grid-template-columns: repeat(4, minmax(170px, 1fr)); gap: 14px; width: min(820px, calc(100vw - 32px)); padding: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 12px; box-shadow: 0 16px 44px rgba(0,0,0,.6); }
+.pfm-p[hidden] { display: none; } .pfm-gl { padding: 2px 8px 6px; color: var(--faint); font: 600 10.5px var(--body); letter-spacing: .07em; text-transform: uppercase; }
+.pfm-i { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; } .pfm-i .pfk-i { opacity: .85; filter: none; }
+.pfm-i:hover, .pfm-i:focus { background: rgba(255,255,255,.06); outline: none; } .pfm-i.on { background: rgba(230,180,80,.12); } .pfm-it { display: flex; flex-direction: column; min-width: 0; } .pfm-it b { font: 600 14px var(--head); } .pfm-it .sub { font-size: 11.5px; }
+@media (max-width: 900px) { .pfm-p { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pfm { flex: 1 1 100%; } .pfm-b { width: 100%; min-width: 0; } .pfm-p { grid-template-columns: minmax(0, 1fr); width: 100%; max-height: 70vh; overflow-y: auto; } }
 /* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
    left; what went well and the boxes for between pulls on the right ---- */
 @media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
@@ -12705,13 +12717,16 @@ const EXT_N = ['pain suppression', 'guardian spirit', 'ironbark', 'life cocoon',
 // picked phase)
 const PERF_ICON = { card: 'inv_misc_note_01', dmg: 'ability_warrior_innerrage', heal: 'spell_holy_flashheal', taken: 'spell_shadow_shadowfury', res: 'inv_elemental_mote_mana', cast: 'spell_nature_lightning', pi: 'spell_holy_powerinfusion', cds: 'spell_holy_borrowedtime', aura: 'spell_holy_wordfortitude', util: 'ability_kick', surv: 'warlock_-healthstone' };
 const PERF_COL = { dmg: '#6aa8ff', heal: '#45c15c', taken: '#e5534b' };
-// (only the view you're on carries its numbers: the others are just their name, so the tiles under it read first)
+// (one button for the view you're on, with its group and its number; a click opens every view, in their four groups, each
+// with a short hint. It closes when one is picked, on Escape, or with a click anywhere else.)
+const PERF_HINT = { card: 'grades and what to fix', cast: 'pace and gaps', res: 'mana and waste', dmg: 'who did what', heal: 'heals and overhealing', taken: 'what hit the raid', cds: 'big and raid cooldowns', pi: 'for priests', aura: 'uptime', util: 'kicks, dispels and CC', surv: 'defensives and close calls' };
 function perfTabs(kind, vals) {
-  const LB = new Map(PERF_KINDS);
-  const btn = (k) => { const l = LB.get(k), v = vals[k] || {}, on = k === kind;
-    return '<button class="pfk-b k-' + k + (on ? ' on' : '') + '" role="tab" aria-selected="' + on + '" data-k="' + k + '" type="button"><img class="pfk-i" src="' + whIcon(PERF_ICON[k]) + '" alt="" onerror="this.style.visibility=\'hidden\'">' +
-      '<span class="pfk-t"><span class="pfk-l">' + l + '</span>' + (on ? '<span class="pfk-v">' + (v.v || '—') + '</span><span class="pfk-s">' + (v.s || '') + '</span>' : '') + '</span></button>'; };
-  return '<div class="pfk" role="tablist" aria-label="What to show">' + PERF_GROUPS.map(([g, ks]) => '<div class="pfk-g"><span class="pfk-gl">' + g + '</span><div class="pfk-gb">' + ks.map(btn).join('') + '</div></div>').join('') + '</div>';
+  const LB = new Map(PERF_KINDS), v = vals[kind] || {}, g = PERF_GROUPS.find(([, ks]) => ks.includes(kind));
+  const ico = (k) => '<img class="pfk-i" src="' + whIcon(PERF_ICON[k]) + '" alt="" onerror="this.style.visibility=\'hidden\'">';
+  const item = (k) => '<button class="pfm-i' + (k === kind ? ' on' : '') + '" type="button" role="menuitem" data-k="' + k + '"' + (k === kind ? ' aria-current="true"' : '') + '>' + ico(k) + '<span class="pfm-it"><b>' + LB.get(k) + '</b><span class="sub">' + (k === kind ? 'you\'re here' : PERF_HINT[k]) + '</span></span></button>';
+  return '<div class="pfm k-' + kind + '"><button class="pfm-b" id="pfMenuB" type="button" aria-haspopup="menu" aria-expanded="false" title="Pick what to show">' + ico(kind) +
+    '<span class="pfm-t"><span class="pfm-g">' + (g ? g[0] : 'Performance') + '</span><span class="pfm-l">' + LB.get(kind) + (v.v ? '<span class="pfm-v">' + v.v + '</span>' : '') + '</span></span><span class="pfm-c" aria-hidden="true">▾</span></button>' +
+    '<div class="pfm-p" id="pfMenu" role="menu" aria-label="What to show" hidden>' + PERF_GROUPS.map(([gl, ks]) => '<div class="pfm-gr"><div class="pfm-gl">' + gl + '</div>' + ks.map(item).join('') + '</div>').join('') + '</div></div>';
 }
 // a phase by its short name (P1, P2, Intermission, P3); the chips: the whole pull, or one phase
 const pfPhK = (q) => q.name.split(' ')[0];
@@ -12730,6 +12745,8 @@ const resses = (n) => n + (n === 1 ? ' battle res' : ' battle resses');
 const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || { rows: [] }).rows.reduce((s, x) => s + x.n, 0);
   return { v: t('kick') + '<span> kicks</span> ' + t('disp') + '<span> dispels</span>', s: plural(t('ext'), 'external') + ' · ' + resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
 function perf() {
+  if (!S.perfKind || !PERF_KINDS.some(([x]) => x === S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = PERF_KINDS.some(([x]) => x === k) ? k : 'card'; }
+  store.set('wla-pf-kind', S.perfKind);
   const r = S.rep, kind = S.perfKind || 'card', ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
   const ps = players().filter((p) => p.name && !/^Player-/.test(p.name));
   // (one pull or all pulls of the boss, switched here like on the Player audit)
@@ -14677,7 +14694,11 @@ function bindPerf() {
     $$('#view .pf-chart').forEach((pn, i) => { const h3 = pn.querySelector('h3.nh'); if (!h3) return; const key = (S.perfKind || 'card') + ':' + (S.scope || 'pull') + ':' + i, set = () => { const f = fold.has(key); pn.classList.toggle('folded', f); h3.setAttribute('aria-expanded', String(!f)); };
       pn.classList.add('pf-fold'); h3.title = 'Click to fold or open the chart'; set();
       h3.onclick = (e) => { if (e.target.closest('button, a, .pfc-lg, .seg, input, select, .pf-hk')) return; if (fold.has(key)) fold.delete(key); else fold.add(key); store.set('wla-pf-fold', JSON.stringify([...fold])); set(); }; }); }
-  $$('.pfk-b').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfKind = b.dataset.k; perf(); }));
+  { const b = $('#pfMenuB'), m = $('#pfMenu'); if (b && m) { const set = (o) => { m.hidden = !o; b.setAttribute('aria-expanded', String(o)); if (o) { const on = m.querySelector('.pfm-i.on') || m.querySelector('.pfm-i'); if (on) on.focus(); } };
+    b.onclick = () => set(m.hidden); b.onkeydown = (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); set(true); } };
+    m.querySelectorAll('[data-k]').forEach((x) => (x.onclick = () => { set(false); if (x.dataset.k !== S.perfKind) { S.perfKind = x.dataset.k; perf(); } }));
+    m.onkeydown = (e) => { const xs = [...m.querySelectorAll('[data-k]')], i = xs.indexOf(document.activeElement); if (e.key === 'Escape') { set(false); b.focus(); } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); xs[(i + 1) % xs.length].focus(); } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); xs[(i - 1 + xs.length) % xs.length].focus(); } };
+    if (!window._pfMenuDoc) { window._pfMenuDoc = 1; document.addEventListener('mousedown', (e) => { const mm = $('#pfMenu'); if (mm && !mm.hidden && !(e.target.closest && e.target.closest('.pfm'))) { mm.hidden = true; const bb = $('#pfMenuB'); if (bb) bb.setAttribute('aria-expanded', 'false'); } }); } } }
   $$('details.pf-dc').forEach((d) => d.addEventListener('toggle', () => { S.perfDcOpen = d.open; })); // (Damage checks stays open or closed as you left it)
   $$('.pfv .plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   $$('.pfph button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfPh = b.dataset.ph || null; perf(); }));
@@ -14732,7 +14753,7 @@ function bindPerf() {
     q.oninput = () => { clearTimeout(tm); tm = setTimeout(show, 150); }; q.onfocus = () => { if (q.value.trim().length >= 2) show(); };
     q.onkeydown = (e) => { if (e.key === 'Escape') { q.value = ''; box.hidden = true; } else if (e.key === 'Enter') { const b = box.querySelector('[data-fi]'); if (b && !box.hidden) b.click(); } else if (e.key === 'ArrowDown') { const b = box.querySelector('[data-fi]'); if (b) { e.preventDefault(); b.focus(); } } };
     box.onkeydown = (e) => { const bs = [...box.querySelectorAll('[data-fi]')], i = bs.indexOf(document.activeElement); if (e.key === 'ArrowDown' && i < bs.length - 1) { e.preventDefault(); bs[i + 1].focus(); } else if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? bs[i - 1] : q).focus(); } else if (e.key === 'Escape') { box.hidden = true; q.focus(); } };
-    if (!window._pfFindDoc) { window._pfFindDoc = 1; document.addEventListener('mousedown', (e) => { const b = $('#pfFindR'); if (b && !b.hidden && !e.target.closest('.pf-find')) b.hidden = true; }); } } }
+    if (!window._pfFindDoc) { window._pfFindDoc = 1; document.addEventListener('mousedown', (e) => { const b = $('#pfFindR'); if (b && !b.hidden && !(e.target.closest && e.target.closest('.pf-find'))) b.hidden = true; }); } } }
   bindHoverCharts();
   // the chart's readout: a line and a dot at the pointer, with the time, the value, the phase and what happened within 2
   // seconds. A mouse shows it on hover, and a click keeps it there (click again to move it, anywhere else to let go); a
@@ -16657,7 +16678,7 @@ const PAGE_TIPS = {
     { sel: '#view .pl-bars', t: 'Every player', p: 'One grade each: half mechanics, half Report card, with prep only taking points off. Best first, or most to gain first.' },
     { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player for what to fix first across everything, each with a link to the tab that shows it, and their prep.' }],
   perf: [
-    { sel: '.pfk', t: 'What to look at', p: 'The Report card first: how each player played their own character. Then damage, healing, damage taken, resources, casts, Power Infusion, utility and survivability.' },
+    { sel: '.pfm', t: 'What to look at', p: 'Pick a view here. The Report card first: how each player played their own character. Then damage, healing, damage taken, cooldowns, buffs, utility and survivability, each on its own.' },
     { sel: '.rk-tiles', t: 'The raid\'s grades', p: 'Pressing buttons, staying alive and using the toolkit, averaged over the raid. S is the best, F the worst.' },
     { sel: '.rk-list .rk-r', t: 'Every player', p: 'Whoever has the most to gain comes first, with the one thing that would help them most. Click a player for their full card.' },
     { sel: '.pfv .plsw', t: 'This pull or the night', p: 'Grade one pull, or every pull of this boss together.' }],

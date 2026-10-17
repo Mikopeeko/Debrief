@@ -83,6 +83,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 145: one view picker instead of a row of tabs
+- [x] **Your idea: a dropdown for the views.** The top of Performance is one row now: a button for the view you're on (its group,
+  name and number), the pull switch, and the search. Click the button for every view in its four groups, each with a short
+  hint; pick one and it closes (Escape or a click elsewhere closes it too). On a phone it opens as one list. The view you were
+  on comes back next time you open Performance.
+
 ## 2026-10-17, round 144: Performance, one tab per thing
 - [x] **Your vision (noted): Warcraft Logs, but it judges the data instead of only showing it.** One tab per category,
   nothing repeated, every list the same bar chart.

@@ -857,6 +857,18 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-fi > .sub { flex: none; max-width: 55%; text-align: right; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pf-fnone { margin: 8px; }
 @media (max-width: 640px) { .pf-find { flex: 1 1 100%; margin-left: 0; } .pf-find .pf-q { width: 100%; } .pf-fr { left: 0; right: auto; width: 100%; } }
 .pf-cdw { margin-left: 8px; color: #c9ced8; font-size: 12px; font-weight: 600; opacity: .85; } .pf-hrow .cb-in .icw { flex: none; }
+/* ---- Performance: the view picker (one button, every view in a menu under it) ---- */
+.pfm { position: relative; flex: none; --kc: var(--gold); } .pfm.k-dmg { --kc: #6aa8ff; } .pfm.k-heal { --kc: #45c15c; } .pfm.k-taken { --kc: #e5534b; } .pfm.k-res { --kc: #4fb6e8; } .pfm.k-util { --kc: #b07cf0; } .pfm.k-cast { --kc: #f0a35e; } .pfm.k-pi { --kc: #f6dc9a; }
+.pfm-b { display: flex; align-items: center; gap: 11px; min-width: 250px; padding: 8px 14px 8px 9px; background: var(--raised); border: 1px solid var(--line2); border-radius: 10px; box-shadow: inset 0 -2px 0 var(--kc); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.pfm-b:hover { background: #1f2330; } .pfm-b .pfk-i { opacity: 1; filter: none; } .pfm-t { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pfm-g { color: var(--faint); font: 600 10px var(--body); letter-spacing: .07em; text-transform: uppercase; } .pfm-l { display: flex; align-items: baseline; gap: 10px; font: 700 16px/1.25 var(--head); white-space: nowrap; }
+.pfm-v { font-size: 15px; color: #c9ced8; font-variant-numeric: tabular-nums; } .pfm-v span { font-size: 12px; font-weight: 600; color: var(--faint); margin-right: 5px; } .pfm-c { color: var(--faint); font-size: 14px; margin-left: 6px; } .pfm-b[aria-expanded="true"] .pfm-c { transform: rotate(180deg); }
+.pfm-p { position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; display: grid; grid-template-columns: repeat(4, minmax(170px, 1fr)); gap: 14px; width: min(820px, calc(100vw - 32px)); padding: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 12px; box-shadow: 0 16px 44px rgba(0,0,0,.6); }
+.pfm-p[hidden] { display: none; } .pfm-gl { padding: 2px 8px 6px; color: var(--faint); font: 600 10.5px var(--body); letter-spacing: .07em; text-transform: uppercase; }
+.pfm-i { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; } .pfm-i .pfk-i { opacity: .85; filter: none; }
+.pfm-i:hover, .pfm-i:focus { background: rgba(255,255,255,.06); outline: none; } .pfm-i.on { background: rgba(230,180,80,.12); } .pfm-it { display: flex; flex-direction: column; min-width: 0; } .pfm-it b { font: 600 14px var(--head); } .pfm-it .sub { font-size: 11.5px; }
+@media (max-width: 900px) { .pfm-p { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pfm { flex: 1 1 100%; } .pfm-b { width: 100%; min-width: 0; } .pfm-p { grid-template-columns: minmax(0, 1fr); width: 100%; max-height: 70vh; overflow-y: auto; } }
 /* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
    left; what went well and the boxes for between pulls on the right ---- */
 @media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
