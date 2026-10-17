@@ -9,13 +9,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Then the next fight modules: Nek'zali the Soulcoiler, Vashnik the Malignant, The Lost Explorers (round 108). Every raid boss has a module now.
 - [ ] **Simplify Deaths in the Mechanics tab** a little (your note, round 108).
 - [x] **Rework the raid cooldowns timeline** in the Mechanics tab, fully (round 110).
-- [ ] **Ula'tek: a damage graph on the Venomous Heart** (damage and DPS into it), on every difficulty (your note).
+- [x] **Ula'tek: a damage graph on the Venomous Heart** (round 113).
+- [ ] **Damage windows, clearer** and **Big cooldowns, simpler** (your notes): mockup shown, waiting on your yes.
+- [ ] **Polish Twin Fangs, The Coiled Altar and Ula'tek** on Mythic and Heroic (your note: fine-tuning before your group tests).
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 113: Ula'tek's heart in the damage amps
+- [x] **Damage amps: Rage of the Shackled** (Mechanics, every difficulty): each amp now opens to a bar per player for their damage
+  into the Venomous Heart (and per second). The faded end of a bar is damage that went into Ula'tek or her tail instead, which the
+  amp doesn't double. On top: the boss's health before and after (your note: what % each amp finished at), the damage into the
+  heart, per second, and how much of the raid's damage went into the heart.
+- [x] The boss's health now reads from Warcraft Logs reports too (it only worked on your own combat log before). Checked on a Mythic
+  kill: 80% → 65%, 64% → 44%, and she died in the third, matching the guide's pace of 67% and 45%. Heroic: 70% → 47%, 45% → 26%.
 
 ## 2026-10-17, round 112: Performance tab, cleaner bars
 - [x] **Damage done: Boss / All targets / On adds** (your note). Boss is damage on the boss only (shown when some went elsewhere);

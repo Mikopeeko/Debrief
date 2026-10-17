@@ -2506,7 +2506,7 @@ HOW["Ula'tek"] = {
   tank: 'One tank holds Ula\'tek and one holds her tail (Gore Rattle). Mother\'s Wrath hits the boss tank several times, knocks them back and adds Stone Venom, so swap on stacks; if its target is out of reach, the raid takes it. Nobody on the tail means Rattler Slam on the raid, and nobody in melee of Ula\'tek means Unchecked Rage. Stay in reach through swaps and when she resurfaces after submerging; misdirects go on the tank picking up the adds.',
   incub: 'Mythic: a spectral image of Ula\'tek appears and its Toxic Incubation beam fires at the Blightscale Wretch (5 impacts). The tank not on the boss stands in the beam with a defensive; every impact that reaches the Wretch gives it Mother\'s Boon (more damage dealt, less taken). The beam also sends Caustic Waves from the tank, so they stand where the waves hit no eggs. The image\'s side also shows where the next tail spawns.',
   wretch: 'Mythic: a Blightscale Wretch spawns at the pull, halfway through Stage 1 and in Stage 3. Its Fester Burst makes a 10-yard bubble around it and hits everyone outside, so the raid (egg carriers included) pre-positions to step in. It enrages after 30 seconds (more tank damage, and faster bursts, so stand closer for the second one); letting it enrage is fine, but kill it before its third bubble. The bubbles come about 36, 68 and 100 seconds after it lands, so it dies in the half minute between the second and the third: it doesn\'t need a fast switch, just steady damage.',
-  amps: 'Rage of the Shackled opens the Venomous Heart for 20 seconds, taking 100% more damage, three times a fight: at the end of Stage 1, at the end of Stage 2 and on the last platform. These are the damage windows: line up damage cooldowns and potions for them (combat potions before the pull and around 4:45 and 9:45, Bloodlust on the second once the raid gets there alive). Dodge the brown Falling Debris circles: they kill anyone. On Mythic, Ula\'tek at 67% or lower after the first window and 45% or lower after the second is on pace for a kill. Shown: damage in each window, the boss\'s health after it and the combat potions drunk for it.',
+  amps: 'Rage of the Shackled opens the Venomous Heart for 20 seconds, taking 100% more damage, three times a fight: at the end of Stage 1, at the end of Stage 2 and on the last platform. These are the damage windows: line up damage cooldowns and potions for them (combat potions before the pull and around 4:45 and 9:45, Bloodlust on the second once the raid gets there alive). Dodge the brown Falling Debris circles: they kill anyone. On Mythic, Ula\'tek at 67% or lower after the first window and 45% or lower after the second is on pace for a kill. Shown: each window\'s damage into the heart, player by player (the faded end of a bar is damage into Ula\'tek or her tail instead, which isn\'t doubled), the boss\'s health before and after it, and the combat potions drunk for it.',
   fangs: 'Stage 2: each Doomscale Warden tethers three players with Grasping Fangs; breaking a tether puts Blight Vein on the whole raid (both sides), and on Mythic it stacks. A common plan: one mobile ranged player breaks first, then the other five together on a call, all at the edge of their tether a couple of seconds early, with raid cooldowns stacked on both sides (meet where there are no eggs). A spread-out big break means extra Blight Vein ticks. Shown: who was tethered, each batch, the raid cooldowns under it and the Blight Vein peak; a death while tethered is flagged.',
   doomscale: 'Stage 2: break the egg shields, then kill the Doomscale Warden before its second gestation (its enrage). While it lives, standing on or next to its eggs hurts (Warden\'s Protection). Drop the small eggs into the cauldron first and the big Doomscale Eggs last (they don\'t have the 3-yard circle), before the big egg\'s timer runs out, or it hatches a Ravenous Doomscale. The cauldron hatches Weakened Doomscales (four on Mythic): mark them, give each a kick rotation for Anguished Cry, keep them off the raid with their frontal, and kill them together: when one dies the others gain Revenge (100% more haste and damage). Revenge is marked to look at; it\'s a problem when it costs something: an Anguished Cry gets through (about 1.1M to everyone within 60 yards and a 6-second stun under Revenge) or someone dies to that Doomscale while it has it. How long it lasts matters less than whether every Cry is kicked: it casts twice as fast.',
   bite: 'Stage 3: Serpent\'s Bite marks a melee, a healer and a ranged player. Assigned soakers stand with them to take the venom off before it turns them into a Calcified Corpse; a bitten player dying is a wipe. Taking it off gives the soaker Volatile Purge: on Mythic it hits them for about 2 million when it pops, then a long damage over time, so soakers are few (about four per cast), pick players with immunities or big defensives, and get externals after; their Purges also shoot waves, so they spread where the waves miss the raid. Shown: who cleared each bite, any Calcified Corpse, Purge holders without a defensive (Mythic) and anyone caught in a Purge they weren\'t holding.',
@@ -3740,17 +3740,27 @@ function buildUlatek(ev, r, h) {
   const rg = auraId(UL.rage).filter((e) => !h.isPlayer(e.dst)), wins = [];
   for (const e of rg) if (e.op === 'apply' && !wins.some((w) => Math.abs(w.s - e.t) < 2)) wins.push({ s: e.t, e: (rg.find((x) => x.op === 'remove' && x.t > e.t) || { t: Math.min(dur, e.t + 20) }).t });
   const lustT = (() => { const ts = []; for (const p of r.players.values()) for (const n of ['bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry"]) for (const t of p.byName.get(n) || []) ts.push(t); return ts.length ? Math.min(...ts) : null; })();
-  // (boss health only from a real combat log: a Warcraft Logs report doesn't carry it per event)
-  const bossG = r.item.wcl ? [] : [...(r.hpUnits || new Map())].filter(([, u]) => u.name === "Ula'tek").map(([g]) => g);
-  const hpAt = (t) => { let v = null; for (const g of bossG) for (const [tt, f] of r.hpUnits.get(g).samples) { if (tt > t) break; v = f; } return v; };
+  // (boss health: Ula'tek, her tail and the Venomous Heart share one pool, so the latest reading from any of them; a
+  // Warcraft Logs report carries it too, on the events it has the target's resources for)
+  const ulU = [...(r.hpUnits || new Map()).values()].find((u) => u.name === "Ula'tek");
+  const poolS = ulU ? [...r.hpUnits.values()].filter((u) => u.max >= 0.9 * ulU.max).flatMap((u) => u.samples).sort((a, b) => a[0] - b[0]) : [];
+  const hpAt = (t) => { let v = null; for (const [tt, f] of poolS) { if (tt > t) break; v = f; } return v; };
   // (Mythic: Ula'tek at 67% or lower after the first window, and 45% or lower after the second, is on pace for a kill)
   const PACE = mythic ? [0.67, 0.45] : [];
-  const ampRows = wins.map((w, i) => { const d = ev.filter((e) => e.k === 'pdmg' && e.t >= w.s && e.t <= w.e).reduce((s, e) => s + e.amt, 0), len = Math.max(1, w.e - w.s), hp = hpAt(w.e + 0.5);
-    const pots = [...r.players.values()].filter((p) => p.cons.combatpot.some((u) => u.t >= w.s - 20 && u.t <= w.e)).length, lust = lustT != null && lustT >= w.s - 10 && lustT <= w.e, slow = PACE[i] != null && hp != null && hp > PACE[i] + 0.005;
-    return [{ txt: '#' + (i + 1) }, { t: w.s }, { n: d, sub: h.compact(d / len) + ' per second' }, { txt: hp != null ? Math.round(100 * hp) + '% after' : '—', warn: slow, dim: hp == null, sub: PACE[i] != null ? 'on pace at ' + Math.round(100 * PACE[i]) + '% or lower' : '' },
-      { txt: pl(pots, 'combat potion'), dim: !pots, sub: lust ? 'with Bloodlust' : '' }]; });
+  // (each window, player by player: their damage into the heart (doubled while it's open) and elsewhere on the boss)
+  const amps = wins.map((w, i) => { const per = new Map(); let heart = 0, other = 0;
+    for (const e of ev) { if (e.k !== 'pdmg' || e.t < w.s || e.t > w.e) continue; const p = r.players.get(e.src); if (!p || !p.name) continue;
+      const x = per.get(p.name) || { p: p.name, h: 0, o: 0 }; if (e.dn === 'Venomous Heart') { x.h += e.amt; heart += e.amt; } else { x.o += e.amt; other += e.amt; } per.set(p.name, x); }
+    const pots = [...r.players.values()].filter((p) => p.cons.combatpot.some((u) => u.t >= w.s - 20 && u.t <= w.e)).length, lust = lustT != null && lustT >= w.s - 10 && lustT <= w.e;
+    return { n: i + 1, t0: w.s, t1: w.e, heart, other, hp0: hpAt(w.s), hp1: hpAt(w.e + 0.5), pace: PACE[i] != null ? PACE[i] : null, pots, lust, per: [...per.values()].filter((x) => x.h + x.o > 0).sort((a, b) => b.h - a.h || b.o - a.o) }; });
+  const pc = (v) => Math.round(100 * v) + '%';
+  const ampRows = amps.map((a) => { const len = Math.max(1, a.t1 - a.t0), hp = a.hp1, slow = a.pace != null && hp != null && hp > a.pace + 0.005, d = a.heart || a.other;
+    return [{ txt: '#' + a.n }, { t: a.t0 }, { n: d, sub: h.compact(d / len) + ' per second' + (a.heart && a.other ? ' · ' + pc(a.heart / (a.heart + a.other)) + ' of it on the heart' : '') },
+      { txt: hp != null ? (hp < 0.005 ? 'killed in it' : pc(hp) + ' after') : '—', warn: slow, dim: hp == null, sub: [a.hp0 != null && hp != null ? 'from ' + pc(a.hp0) : '', a.pace != null ? 'on pace at ' + pc(a.pace) + ' or lower' : ''].filter(Boolean).join(' · ') },
+      { txt: pl(a.pots, 'combat potion'), dim: !a.pots, sub: a.lust ? 'with Bloodlust' : '' }]; });
   if (ampRows.length) sections.push({ id: 'amps', title: 'Damage amps: Rage of the Shackled', spell: S('rage of the shackled'), verdict: ampRows.some((x) => x[3].warn) ? 'warn' : 'good',
-    summary: 'Damage into the boss in each 20-second window, the boss\'s health after it' + (mythic ? ' (on pace: 67% after the first, 45% after the second)' : '') + ' and the combat potions drunk for it' + (lustT != null ? '; Bloodlust at ' + T(lustT) : '') + '.', cols: ['Window', 'When', 'Damage', 'Boss after', 'Potions'], rows: ampRows });
+    summary: 'Damage into the Venomous Heart in each 20-second window, player by player, the boss\'s health before and after it' + (mythic ? ' (on pace: 67% after the first, 45% after the second)' : '') + ' and the combat potions drunk for it' + (lustT != null ? '; Bloodlust at ' + T(lustT) : '') + '.',
+    cols: ['Window', 'When', 'Into the heart', 'Boss health', 'Potions'], rows: ampRows, amps });
 
   // ---- 6. Stage 2: Grasping Fangs tethers (broken in planned batches, the big one together under a raid cooldown) ----
   const RAIDCD = ['anti-magic zone', 'rallying cry', 'spirit link totem', 'darkness', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'divine hymn', 'rewind', 'vampiric embrace'];
@@ -4787,7 +4797,7 @@ function analyze(item, text, opts) {
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
           const p = P(owner, pet ? null : sn);
           p.damage += dealt;
-          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
+          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
         }
         break;
@@ -4834,7 +4844,7 @@ function analyze(item, text, opts) {
         noteSchool(id, f[sp + 2]);
         if (amt <= 0 || NOT_HEALING.has(id)) break;
         // (a player's hit soaked by a boss's own shield, like Malacrass's Eternal Nightfall: still damage into the boss, for the damage checks)
-        if (mod && mod.focus && mod.focus.has(dn) && owner) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, amt, abs: true });
+        if (mod && mod.focus && mod.focus.has(dn) && owner) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt, abs: true });
         // (damage an enemy's shield soaked: the Performance tab's damage windows count it, like a Nightfall shield's)
         if (owner && amt > 0 && !isPlayer(dg) && (parseInt(f[6], 16) & 0x40)) bump(P(owner, pet ? null : sn).absS, t, amt);
         const ow = isPlayer(absorber) ? absorber : pets.get(absorber);

@@ -1670,7 +1670,7 @@ function audit() {
     inter: { 'Raid peak (3 to 5; up to 10 with cooldowns)': 'soak rounds going too high', 'Fragments to Zul\'jan': 'fragments reaching Zul\'jan' }, vf: { 'Removed after': 'slow Venomfang dispels' },
     push: { Timing: 'phase pushes off timing', 'Stacks / Lust / balance': 'transitions on too many stacks or without Lust', 'Cooldowns / damage': 'no raid cooldowns at the push' }, kicks: { Result: 'casts getting through' },
     eggs: { 'What happened': 'Vipers hatched', '!What happened': 'eggs picked up with Rancid Yolk on' }, coils: { Soakers: 'circles nobody soaked', '!Soakers': 'thin soaks', Died: 'deaths to Spectral Coils' }, tank: { Result: 'the raid punished for nobody tanking' },
-    incub: { Wretch: 'venom reaching the Wretch' }, wretch: { '!Bubbles': 'Wretches alive for a third bubble', '!Outside the bubble': 'players outside a bubble' }, amps: { '!Boss after': 'windows behind pace' }, fangs: { Result: 'deaths while tethered', '!Broke': 'tethers never broken', '!Result': 'batches spread out or without a raid cooldown' }, doomscale: { Result: 'a hatched big egg or a long Revenge', '!Result': 'a Warden reaching its second gestation, or a short Revenge' }, bite: { Result: 'bites not cleared', '!Result': 'Purges not spread or held without a defensive' }, shriek: { Killed: 'adds left alive', '!Got off': 'adds that got their casts off' },
+    incub: { Wretch: 'venom reaching the Wretch' }, wretch: { '!Bubbles': 'Wretches alive for a third bubble', '!Outside the bubble': 'players outside a bubble' }, amps: { '!Boss health': 'windows behind pace' }, fangs: { Result: 'deaths while tethered', '!Broke': 'tethers never broken', '!Result': 'batches spread out or without a raid cooldown' }, doomscale: { Result: 'a hatched big egg or a long Revenge', '!Result': 'a Warden reaching its second gestation, or a short Revenge' }, bite: { Result: 'bites not cleared', '!Result': 'Purges not spread or held without a defensive' }, shriek: { Killed: 'adds left alive', '!Got off': 'adds that got their casts off' },
   };
   // (row labels that don't read as a plural noun on their own)
   const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets' };
@@ -1858,6 +1858,27 @@ function audit() {
       (ds.length > 1 ? '<div class="dcause"><span class="sub">What killed people</span>' + [...causes].sort((a, b) => b[1] - a[1]).map(([c, n]) => '<div><span>' + esc(c) + '</span><b>' + n + '</b></div>').join('') + '</div>' : '') + '</div>' +
       '<div class="md-pane">' + items.map((x, i) => '<div class="md-d" data-i="' + i + '"' + (i === sel ? '' : ' hidden') + '>' + x.body + '</div>').join('') + '</div></div>';
   };
+  // Ula'tek's damage amps, the windows shown (the rows left after the phase and wipe filters): one entry per window, plus
+  // all of them together when there are two or more
+  const ampsMd = (s, rows) => {
+    const shown = s.amps.filter((a) => rows.some((row) => row.some((c) => c.t === a.t0)));
+    if (!shown.length) return '';
+    const pc = (v) => (v == null ? '—' : Math.round(100 * v) + '%'), slow = (a) => a.pace != null && a.hp1 != null && a.hp1 > a.pace + 0.005;
+    const items = shown.map((a) => ({ ...a, secs: Math.max(1, a.t1 - a.t0), label: 'Amp ' + a.n, sub: a.hp1 != null ? (a.hp1 < 0.005 ? 'killed in it' : 'ended at ' + pc(a.hp1)) : '', st: slow(a) ? 'warn' : 'ok' }));
+    if (shown.length > 1) { const per = new Map(); for (const a of shown) for (const x of a.per) { const y = per.get(x.p) || { p: x.p, h: 0, o: 0 }; y.h += x.h; y.o += x.o; per.set(x.p, y); }
+      items.unshift({ all: true, label: 'All ' + shown.length + ' amps', sub: 'added up', st: items.some((x) => x.st === 'warn') ? 'warn' : 'ok', heart: shown.reduce((v, a) => v + a.heart, 0), other: shown.reduce((v, a) => v + a.other, 0), secs: shown.reduce((v, a) => v + Math.max(1, a.t1 - a.t0), 0), per: [...per.values()].sort((a, b) => b.h - a.h || b.o - a.o) }); }
+    const stat = (v, l) => '<div class="pfw-s"><b>' + v + '</b><span>' + l + '</span></div>';
+    const body = (a) => { const tot = a.heart + a.other, mx = Math.max(1, ...a.per.map((x) => x.h + x.o));
+      const stats = (a.all ? '' : stat(pc(a.hp0) + '<span> → </span>' + (a.hp1 != null && a.hp1 < 0.005 ? 'dead' : pc(a.hp1)), 'boss health, before and after')) + stat(C(a.heart), 'into the heart') + stat(C(a.heart / a.secs) + '<span>/s</span>', 'per second') + stat(tot ? pc(a.heart / tot) : '—', 'of the raid\'s damage on the heart');
+      const notes = a.all ? [] : [a.pace != null && a.hp1 != null ? (slow(a) ? 'Behind pace: ' : 'On pace: ') + pc(a.pace) + ' or lower after this one' : '', plural(a.pots, 'combat potion') + ' drunk for it', a.lust ? 'with Bloodlust' : ''].filter(Boolean);
+      const bars = a.per.filter((x) => x.h + x.o >= 0.002 * mx).map((x, i) => { const p = pmap.get(x.p); if (!p) return '';
+        return cbRow({ tag: 'div', cls: ' nb', attrs: ' title="' + esc(pc(x.h / Math.max(1, x.h + x.o)) + ' of their damage went into the heart') + '"', k: i + 1, p, segs: [[x.h ? Math.max(1, 100 * x.h / mx) : 0, 'm'], [100 * x.o / mx, 'oh']], v: C(x.h), sub: C(x.h / a.secs) }); }).join('');
+      return '<div class="md-h"><b>' + esc(a.label) + '</b>' + (a.all ? ' <span class="sub">' + Math.round(a.secs) + 's in all</span>' : ' <span class="sub">' + T(a.t0) + '–' + T(a.t1) + '</span>') + '</div>' +
+        '<div class="pfw-sts n' + (a.all ? 3 : 4) + '">' + stats + '</div>' + (notes.length ? '<p class="amp-n">' + notes.map(esc).join(' · ') + '</p>' : '') +
+        (bars ? cbHead('Heart', 'Per sec') + bars + '<p class="sub amp-lg">The faded end of a bar is damage that went into Ula\'tek or her tail instead, which the amp doesn\'t double.</p>' : '<p class="muted">No damage into the heart recorded.</p>'); };
+    return '<div class="md amp"><div class="md-list">' + items.map((x, i) => '<button class="md-i ' + x.st + (i === 0 ? ' on' : '') + '" data-i="' + i + '"><span class="md-dot"></span><span class="md-l">' + esc(x.label) + '<small>' + esc(x.sub) + '</small></span><span class="md-t">' + (x.all ? '' : T(x.t0)) + '</span></button>').join('') + '</div>' +
+      '<div class="md-pane">' + items.map((x, i) => '<div class="md-d" data-i="' + i + '"' + (i === 0 ? '' : ' hidden') + '>' + body(x) + '</div>').join('') + '</div></div>';
+  };
   // One collapsible block per mechanic (closed by default; open ones stay open while you click around)
   S.openSecs = S.openSecs || new Set(); S.openSets = S.openSets || new Set();
   const secBlock = ({ s, rows, groups }, key) => {
@@ -1873,6 +1894,7 @@ function audit() {
     // (column headings live inside each opened set's card, so the list of sets stays clean)
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
     // entry's details on the right; it opens on the first problem
+    const ampH = s.id === 'amps' && s.amps && rows.length ? ampsMd(s, rows) : '';
     if (s.id === 'deaths' && rows.some((row) => row[0] && row[0].death)) b += deathsMd(rows, sid);
     // Venomfang dispels: just a bar chart of dispels per player (plus how many weren't dispelled)
     else if (s.id === 'vf') {
@@ -1882,6 +1904,9 @@ function audit() {
       b += '<div class="dsp">' + list.map(([p, n]) => '<div class="dsp-r"><span>' + who(p) + '</span><span class="dsp-b"><i style="width:' + (100 * n / mx).toFixed(1) + '%"></i></span><b>' + n + '</b></div>').join('') + '</div>' +
         '<p class="sub" style="margin:8px 0 0">' + pl2(list.reduce((s0, [, n]) => s0 + n, 0), 'dispel') + (none ? ' · ' + none + ' Venomfang' + (none === 1 ? '' : 's') + ' not dispelled' : ' · every Venomfang dispelled') + '</p>';
     }
+    // Ula'tek's damage amps: each window on the left (and all of them together), the picked one on the right: the boss's
+    // health before and after it, and a bar per player for their damage into the heart (the faded end: elsewhere)
+    else if (ampH) b += ampH;
     // (every mechanic made of sets uses it too: the sets on the left, the picked set's table on the right)
     else if ((MD_SECS.has(s.id) || groups.length) && (groups.length || rows.length)) {
       const items = groups.length
