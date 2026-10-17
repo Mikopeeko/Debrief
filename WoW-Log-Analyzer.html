@@ -2544,28 +2544,33 @@ function buildTwinFangs(ev, r, h) {
   const ichWin = windows(TF.ichorDeb, 12), ichHits = dmgId(TF.ichor);
   const ichCasts = setsOf(ichWin.map((w) => ({ ...w, t: w.t0 })), 2).map((set) => {
     const tg = [...new Set(set.map((w) => w.g))], t = set[0].t, end = Math.max(...set.map((w) => w.t1));
+    // (a tick counts once even when two circles overlap and both hit at the same moment)
     const others = new Map();
-    for (const e of ichHits) if (e.t >= t + ICHOR_GRACE && e.t <= end + 0.5 && !tg.includes(e.dst)) { let o = others.get(e.dst); if (!o) others.set(e.dst, o = { n: 0, amt: 0, t: e.t }); o.n++; o.amt += e.amt; }
+    for (const e of ichHits) if (e.t >= t + ICHOR_GRACE && e.t <= end + 0.5 && !tg.includes(e.dst)) { let o = others.get(e.dst); if (!o) others.set(e.dst, o = { n: 0, amt: 0, t: e.t, last: -9 }); if (e.t - o.last > 0.3) o.n++; o.last = e.t; o.amt += e.amt; }
     return { t, end, tg, others };
   });
+  // A hit is small (50 to 75K on Mythic) and adds no Eternal Venom stack (checked on Wolfthorn's kill), and the raid
+  // stacks for soaks, so a tick or two while stepping out is fine: only a stand-in of ICHOR_LONG ticks is a mistake
+  const ICHOR_LONG = 5;
   // the circle on each marked player: it follows them and shrinks (measured on 30 Mythic pulls: about 11 yd for the first
   // ~6s, then down to about 6 yd at 10s; the map draws it that way, ring.shrink = 'ichor')
   const ichRings = (c) => c.tg.map((g) => ({ guid: g, t0: c.t, dur: 12, shrink: 'ichor', r: 11, label: 'Coiling Ichor', color: '#7ee08f' }));
   for (const c of ichCasts) for (const [g, o] of c.others) {
-    // minor unless it's a long stand-in (damage only; the gore puddle is the carrier's to place)
-    M(o.t, pname(g), 'coiling ichor', o.n >= 5 ? 'Medium' : 'Low', 'Stood in a Coiling Ichor circle that wasn\'t theirs: hit ' + o.n + 'x (' + fmtN(o.amt) + ' damage).', 'Give marked players room: they carry the circle to the edge, so stay out of it until it expires.',
+    // (only a long stand-in, and minor: damage only; the gore puddle is the carrier's to place)
+    if (o.n < ICHOR_LONG) continue;
+    M(o.t, pname(g), 'coiling ichor', 'Low', 'Stood in a Coiling Ichor circle that wasn\'t theirs: hit ' + o.n + 'x (' + fmtN(o.amt) + ' damage).', 'Give marked players room: they carry the circle to the edge, so stay out of it until it expires.',
       { t: o.t, hl: c.tg, hlLabel: 'circle target (not at fault)', bad: [g], badLabel: 'in someone\'s circle', title: 'Coiling Ichor at ' + h.fmtT(o.t) + ': ' + pname(g) + ' in a circle', pts: h.snap(o.t), rings: ichRings(c) });
     mistakes[mistakes.length - 1].avoid = true; // (avoidable damage: graded there on the Night summary's report card)
   }
   sections.push({ id: 'ichor', title: 'Coiling Ichor: standing in a circle', spell: S('coiling ichor'),
-    verdict: ichCasts.some((c) => [...c.others.values()].some((o) => o.n >= 5)) ? 'bad' : ichCasts.some((c) => c.others.size) ? 'warn' : 'good',
-    summary: pl(ichCasts.length, 'cast') + ', ' + pl(ichCasts.reduce((n, c) => n + c.others.size, 0), 'player') + ' stood in a circle that wasn\'t theirs (hits in the first ' + ICHOR_GRACE + 's are spread time and not counted).',
+    verdict: ichCasts.some((c) => [...c.others.values()].some((o) => o.n >= ICHOR_LONG)) ? 'warn' : 'good',
+    summary: pl(ichCasts.length, 'cast') + ', ' + pl(ichCasts.reduce((n, c) => n + [...c.others.values()].filter((o) => o.n >= ICHOR_LONG).length, 0), 'player') + ' stayed in a circle that wasn\'t theirs for ' + ICHOR_LONG + '+ ticks (a tick or two while stepping out is fine; hits in the first ' + ICHOR_GRACE + 's are spread time and not counted).',
     cols: ['When', 'Circle targets', 'In someone else\'s circle', ''],
     rows: ichCasts.map((c) => {
       const hitList = [...c.others].sort((a, b) => b[1].n - a[1].n);
       const first = hitList.length ? Math.min(...hitList.map(([, o]) => o.t)) : c.t + 3;
-      // red: someone stayed in a circle for 3+ ticks; amber: a tick or two while moving out
-      return [{ t: c.t }, { ps: c.tg.map(pname) }, hitList.length ? { txt: hitList.map(([g, o]) => pname(g) + ' (' + o.n + 'x)').join(', '), bad: hitList.some(([, o]) => o.n >= 3), warn: true } : { txt: 'nobody', dim: false },
+      // amber: someone stayed in a circle for ICHOR_LONG+ ticks; a tick or two while moving out is listed, not judged
+      return [{ t: c.t }, { ps: c.tg.map(pname) }, hitList.length ? { txt: hitList.map(([g, o]) => pname(g) + ' (' + o.n + 'x)').join(', '), warn: hitList.some(([, o]) => o.n >= ICHOR_LONG) } : { txt: 'nobody', dim: false },
         { map: { t: first, hl: c.tg, hlLabel: 'circle target (not at fault)', bad: hitList.map(([g]) => g), badLabel: 'in someone\'s circle', good: hitList.length ? [] : c.tg, goodLabel: 'circle target, nobody else hit', title: 'Coiling Ichor at ' + h.fmtT(first), pts: h.snap(first), rings: ichRings(c), frames: h.frames(Math.max(0, c.t - 1), Math.min(dur, c.end + 1), 0.25) } }];
     }) });
 
@@ -4037,7 +4042,7 @@ const HOW = {
     soaks: 'Caustic Globules land in timed sets, and every globule must be soaked: one nobody soaks explodes on the whole raid and gives everyone an Eternal Venom stack (shown in red as Exploded unsoaked). Each player takes at most one globule per set, since each soak adds Eternal Venom; when there are fewer globules than players, rotate who soaks so the same players don\'t keep stacking. On Mythic every globule lands behind a Barbed Bulwark barrier, which has to be broken before it can be soaked (see its own section).',
     bulwark: 'On Mythic every Caustic Globule lands channeling Barbed Bulwark, a barrier that blocks the soak: running into the globule while it\'s up hits for about 500k and knocks you back. Anything that stops a cast breaks it at once: stuns, fears, disorients and incapacitates (and, per the spell, an interrupt). Slows do nothing. Break every barrier as the globules land, then soak; a barrier nobody breaks runs out after about 10 seconds and the globule explodes on the raid with it still up. Each row is one globule: who broke its barrier, with what, and how long it was up. Amber: broken after 6 seconds (little time left to soak) or someone ran into it; red: nobody broke it, or someone died running into it.',
     spit: 'Venomous Emergence spawns Spawn of Vexhul adds. Each marks a player for about 5 seconds and then spits a line at them. Being the target is fine; anyone else standing in the line gets hit. Kill one add right away and the rest before their second spit.',
-    ichor: 'Coiling Ichor puts a circle on a few players for about 12 seconds, damaging everyone inside it, and leaves a puddle when it expires. Targets take their circle to the edge of the room. Being a target is fine; anyone else standing in the circle is a mistake and picks up extra Eternal Venom.',
+    ichor: 'Coiling Ichor puts a circle on a few players for about 12 seconds, damaging everyone inside it, and leaves a puddle when it expires. Targets take their circle to the edge of the room. Being a target is fine. Anyone else inside takes a small hit each second (no Eternal Venom stack, from the logs): a tick or two while stepping out is fine and isn\'t judged; staying in it for 5 or more ticks is.',
     stone: 'Stone Breaker drops three circles in a row on the active tank, who must stand in each one as it lands. A circle the tank misses hits the whole raid.',
     avoid: 'Stir the Depths pulses the whole raid while it is out; that part can\'t be avoided and isn\'t counted. What can be avoided is stepping into the churned water it leaves behind, so each step counts as a hit. Sanguine Storm is avoidable too: dodge it (and the puddles it leaves on Heroic and Mythic). One hit is amber, three or more red.',
   },
@@ -7125,7 +7130,7 @@ async function api(path) {
     try { r = await fetch(API_BASE + path, i ? { cache: 'reload' } : undefined); read = true; j = await r.json(); }
     catch (e) { const why = String((e && e.message) || e).slice(0, 80);
       last = r && !r.ok ? new Error('The server answered ' + r.status + ' (tried ' + TRIES + ' times). Click the pull again in a minute.')
-        : new Error((read ? 'The download from the Debrief site was cut off' : 'Couldn\'t reach the Debrief site') + ' (tried ' + TRIES + ' times: ' + why + '). Check your connection, then click the pull again.');
+        : new Error((read ? 'The download from the Debrief site was cut off' : 'Couldn\'t reach the Debrief site') + ' (tried ' + TRIES + ' times: ' + why + '). Check your connection, then click the pull again.' + (read ? '' : ' If you use an ad blocker or privacy extension, allow this site in it.'));
       await wait(i); continue; }
     if (r.ok && !j.error) return j;
     last = new Error(j.error || ('The server answered ' + r.status));
@@ -7317,7 +7322,8 @@ async function fetchSlice(creds, w, s, e, last, onPage) {
   const out = [];
   while (s != null && s < e) {
     let ev;
-    if (HOSTED) ev = evOf(await api('/api/events?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e));
+    // (/api/fightlog, not /api/events: ad blockers block addresses ending in /api/events as tracking)
+    if (HOSTED) ev = evOf(await api('/api/fightlog?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e));
     else { const d = await gql(creds, EVENTS_Q, { code: w.code, fid: [w.fight], s, e }); ev = d.reportData.report.events; }
     const data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
     // slice ends overlap by a millisecond; keep each event in exactly one slice

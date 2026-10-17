@@ -28,7 +28,7 @@ async function api(path) {
     try { r = await fetch(API_BASE + path, i ? { cache: 'reload' } : undefined); read = true; j = await r.json(); }
     catch (e) { const why = String((e && e.message) || e).slice(0, 80);
       last = r && !r.ok ? new Error('The server answered ' + r.status + ' (tried ' + TRIES + ' times). Click the pull again in a minute.')
-        : new Error((read ? 'The download from the Debrief site was cut off' : 'Couldn\'t reach the Debrief site') + ' (tried ' + TRIES + ' times: ' + why + '). Check your connection, then click the pull again.');
+        : new Error((read ? 'The download from the Debrief site was cut off' : 'Couldn\'t reach the Debrief site') + ' (tried ' + TRIES + ' times: ' + why + '). Check your connection, then click the pull again.' + (read ? '' : ' If you use an ad blocker or privacy extension, allow this site in it.'));
       await wait(i); continue; }
     if (r.ok && !j.error) return j;
     last = new Error(j.error || ('The server answered ' + r.status));
@@ -220,7 +220,8 @@ async function fetchSlice(creds, w, s, e, last, onPage) {
   const out = [];
   while (s != null && s < e) {
     let ev;
-    if (HOSTED) ev = evOf(await api('/api/events?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e));
+    // (/api/fightlog, not /api/events: ad blockers block addresses ending in /api/events as tracking)
+    if (HOSTED) ev = evOf(await api('/api/fightlog?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e));
     else { const d = await gql(creds, EVENTS_Q, { code: w.code, fid: [w.fight], s, e }); ev = d.reportData.report.events; }
     const data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
     // slice ends overlap by a millisecond; keep each event in exactly one slice

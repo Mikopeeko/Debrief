@@ -97,6 +97,10 @@ const ROUTES = {
     out: (d) => { const ev = d.reportData.report.events; return { data: typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data, nextPageTimestamp: ev.nextPageTimestamp }; } },
 };
 
+// (the pull downloads also answer at /api/fightlog: ad blockers' tracking lists block addresses ending in "/api/events",
+// which broke the site in a browser with one; /api/events stays for pages and desktop apps still asking there)
+ROUTES['/api/fightlog'] = ROUTES['/api/events'];
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
