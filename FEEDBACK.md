@@ -17,13 +17,32 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Big review of the whole app** for launch (your note): done, with 7 mockups. Read it at
   https://claude.ai/artifact/CyCxbDM5Mj9KyTWc2aMjFE (a copy is in notes/Launch review.html). Nothing in it is built yet: pick what you want.
 - [x] **Second pass, desktop only** (your note): layout measured at 1920×1080 and 1440×900, with to-scale page maps. Read it at
-  https://claude.ai/artifact/ELNR2Ci3BXvb2Wq1FAF1wU (copy in notes/Desktop layout review.html). Nothing built yet.
+  https://claude.ai/artifact/ELNR2Ci3BXvb2Wq1FAF1wU (copy in notes/Desktop layout review.html). All 12 changes built in round 117,
+  on a separate copy (branch desktop-layout): the live site is unchanged until you say it's good.
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 117: the desktop layout, all 12 changes (on a preview copy)
+Your note: "make all proposed changes so i can see them". A backup of the version before is saved (tag
+backup-2026-10-18-before-desktop-layout). Checked at 1920×1080, 1440×900, 1100 wide and on a phone.
+- [x] **Small polish**: every tab starts at the same height; one spacing between panels; the strip's arrows sit beside the cards
+  and the cards stretch a little so the strip never shows half a card; no hover tooltips on the tabs.
+- [x] **Fix first** sits beside "What went wrong" (above "What went right") on Latest pull, so the pull fits on one screen.
+- [x] **Performance**: the player bars come up on the first screen (the tiles beside the chart, the damage checks folded into one
+  line you can open); the selected player's details stay in view while you scroll the list.
+- [x] **Assignments**: the tile row fills the width (5 or 6 tiles in one row).
+- [x] **Progress**: three columns on big screens, and a "Back to boss, pull N" link.
+- [x] **A smaller banner** (113px, two lines), the same on every tab.
+- [x] **A pinned bar**: once the banner scrolls away, the tab bar shows the boss, ‹ the pull › arrows and the menu.
+- [x] **Mechanics**: one line of chips on top (what went wrong, then "+N clean"), instead of the tiles and the wrong/right boxes.
+- [x] **A wider page** on big screens (1480px instead of 1240px from 1680px wide).
+- [x] **Summary in two columns**: the night on the left; the report cards and a "Jump to" list on the right, staying in view.
+  About 1,000px shorter. Under 1280px wide it's one column, as before.
+- [x] **Player audit**: the six MVP cards in one row (1 tank, 2 healers, 3 DPS), about 300px shorter.
 
 ## 2026-10-17, round 116: boss review (Twin Fangs, Coiled Altar, Ula'tek), the website in Chrome
 Checked on your team's logs (Twin Fangs Mythic Oct 14, 30 pulls; Coiled Altar Mythic Oct 15, 32 pulls; Heroic Sep 2: Twin Fangs kill,

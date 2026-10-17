@@ -382,6 +382,7 @@ function renderList() {
   if (film) {
     film.onwheel = (e) => { if (film.scrollWidth > film.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { film.scrollLeft += e.deltaY; e.preventDefault(); } };
     box.querySelectorAll('.fnav').forEach((b) => (b.onclick = () => film.scrollBy({ left: +b.dataset.d * Math.max(200, film.clientWidth * 0.7), behavior: 'smooth' })));
+    fitFilm();
     film.scrollLeft = sl != null ? sl : film.scrollWidth;
     if (sel) { const a = sel.offsetLeft - film.offsetLeft, w = film.clientWidth; if (a < film.scrollLeft || a + sel.offsetWidth > film.scrollLeft + w) film.scrollLeft = a - w / 2 + sel.offsetWidth / 2; }
     // (the arrows show only when there's more that way, and that edge of the cards fades out)
@@ -389,6 +390,15 @@ function renderList() {
     film.onscroll = navs; navs();
   }
 }
+// On a computer the pull cards stretch a little so a whole number of them fills the strip: it then always stops on whole
+// cards, the newest at the right edge and no half card at the left
+function fitFilm() {
+  const film = $('#strip .film:not(.keys)'); if (!film) return;
+  if (window.innerWidth < 761) { film.style.removeProperty('--fw'); return; }
+  const g = 6, cw = film.clientWidth - 2, n = Math.max(1, Math.floor((cw + g) / (114 + g)));
+  film.style.setProperty('--fw', ((cw - g * (n - 1)) / n).toFixed(2) + 'px');
+}
+{ let t = 0; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(fitFilm, 120); }); }
 // (a click anywhere else closes the boss picker)
 document.addEventListener('click', (e) => { const pop = $('#bossPick .bp-pop'); if (pop && !pop.hidden && !e.target.closest('#bossPick')) { pop.hidden = true; const b = $('#bossPick .bp-b'); if (b) b.setAttribute('aria-expanded', 'false'); } });
 // the top bar's menu: open a combat log, Warcraft Logs, the start screen
@@ -1577,32 +1587,17 @@ function audit() {
       return { b, w: all.filter((row) => !row.some((c) => c.bad) && row.some((c) => c.warn)).length }; };
     // tiles: problems first, then could be better, then clean; within each, by importance (IMPORTANCE)
     const impT = IMPORTANCE[r.item.boss] || [], ixT = (s) => (s.id === 'deaths' ? -1 : impT.indexOf(s.id) < 0 ? 99 : impT.indexOf(s.id)), tierT = (s) => { const c = cnt(s); return c.b ? 0 : c.w ? 1 : s.info ? 3 : 2; };
-    const chips = secs.filter((x) => !x.kick && firstAt.has(x.s.id)).sort((a, b) => tierT(a.s) - tierT(b.s) || ixT(a.s) - ixT(b.s)).map(({ s }) => {
-      const { b, w } = cnt(s), cls = s.info && !b && !w ? 'na' : b ? 'bad' : w ? 'warn' : 'ok';
-      // (a section that only shows something, like the floor maps, says so instead of "clean")
-      if (cls === 'na') return '<a class="mtile tlink na" href="#sec-' + s.id + '-' + firstAt.get(s.id) + '" title="' + esc(s.summary) + '"><span class="mt-h">' + spellIcon(s.spell[0], s.spell[1]) + '<span>' + esc(s.title.split(': ')[0]) + '</span></span><span class="mt-s na">' + esc(s.info) + '</span></a>';
-      return '<a class="mtile tlink ' + cls + '" href="#sec-' + s.id + '-' + firstAt.get(s.id) + '" title="' + esc(s.summary) + '"><span class="mt-h">' + (s.spell[0] || E.SPELLID.get(String(s.spell[1]).toLowerCase()) ? '<span class="sp" data-sid="' + (s.spell[0] || 0) + '" data-sn="' + esc(s.spell[1]) + '">' + spellIcon(s.spell[0], s.spell[1]) + '</span>' : spellIcon(s.spell[0], s.spell[1])) + '<span>' + esc(s.title.split(': ')[0]) + '</span></span>' + // (a tile names just the mechanic: "Eternal Nightfall", not what's checked)
-        // (status in the same words and marks as the Assignments tab: ✕ problems, ! could be better, ✓ clean)
-        '<span class="mt-s ' + cls + '">' + (b ? '✕ <b>' + b + '</b> ' + (b === 1 ? 'problem' : 'problems') : w ? '! <b>' + w + '</b> could be better' : '✓ clean') + (b && w ? '<i>+' + w + ' could be better</i>' : '') + '</span></a>';
-    });
-    // (on a wide screen the rows come out even: 10 tiles are two rows of 5, not 6 and 4)
-    if (chips.length) h += '<div class="mtiles" style="--cols:' + Math.max(4, Math.ceil(chips.length / Math.ceil(chips.length / 6))) + '">' + chips.join('') + '</div>';
-    // "What went wrong / What went right", the same pair as Latest pull and Assignments: the medium and serious mistakes,
-    // one line per mechanic (raid-wide failures ranked above single players, serious first), and what was clean
-    // (the note's assignments are on Assignments, so their misses aren't repeated here)
-    const ms = keptMistakes(r).filter((x) => x.mechanic !== 'Death' && x.severity !== 'Low' && !x.fromNote);
-    const by = new Map(); for (const x of ms) { const k = x.mechanic + '|' + (x.player === 'Raid' ? 'R' : 'P'); let g = by.get(k); if (!g) by.set(k, g = { list: [], raid: x.player === 'Raid', hi: false }); g.list.push(x); if (x.severity === 'High') g.hi = true; }
-    const wrong = [...by.values()].sort((a, b) => b.hi - a.hi || (b.raid ? 3 : 1) * b.list.length - (a.raid ? 3 : 1) * a.list.length || a.list[0].t - b.list[0].t).map((g) => {
-      const f = g.list[0], who = g.raid ? [] : [...new Set(g.list.map((x) => x.player))];
-      return { sev: g.hi ? 'bad' : 'warn', when: (g.list.length > 1 ? g.list.length + '× · from ' : '') + T(f.t),
-        html: '<b>' + mech(f.mechanic, f.id) + '</b>: ' + (who.length === 1 ? esc(who[0]) + ': ' + esc(lcLead(f.detail)) : who.length > 1 ? esc(who.slice(0, 3).join(', ') + (who.length > 3 ? ' +' + (who.length - 3) : '')) + ': ' + esc(lcLead(f.detail)) : esc(f.detail)) }; });
-    const cleanT = secs.filter((x) => !x.kick && firstAt.has(x.s.id) && x.s.id !== 'deaths' && tierT(x.s) === 2).sort((a, b) => ixT(a.s) - ixT(b.s)).map((x) => shortT(x.s.title));
-    const cutC = cutInfo(r), deathsK = keptDeaths(r), ct2 = cutT(r), gotOff = (r.missedKicks || []).filter((m) => m.t <= ct2 + 0.05).length, kicked = r.interrupts.filter((x) => x.t <= ct2 + 0.05).length;
-    const right = [];
-    if (!deathsK.length) right.push('<b>Nobody died</b>' + (r.item.kill ? '' : cutC ? ' before the wipe filter' : ' before the end'));
-    if (cleanT.length) right.push('<b>Clean:</b> ' + esc(cleanT.slice(0, 6).join(', ')) + (cleanT.length > 6 ? ' and ' + (cleanT.length - 6) + ' more' : ''));
-    if (kicked && !gotOff) right.push('<b>Every kickable cast was interrupted</b> (' + plural(kicked, 'kick') + ')');
-    h += wrongRight(wrong, right, { none: 'Nothing medium or serious this pull.', noneRight: 'Nothing fully clean this pull.', moreWhere: 'in the mechanics below' });
+    // A slim scoreboard: one chip per mechanic with a problem (✕ problems, ! could be better), worst first, each a link to
+    // its section; the clean ones in one chip at the end. (It replaced a grid of tiles, and "What went wrong / right"
+    // is on Latest pull only, so the first mechanic is on the first screen.)
+    const ord = secs.filter((x) => !x.kick && firstAt.has(x.s.id)).sort((a, b) => tierT(a.s) - tierT(b.s) || ixT(a.s) - ixT(b.s)).map(({ s }) => s);
+    const icon = (s) => (s.spell[0] || E.SPELLID.get(String(s.spell[1]).toLowerCase()) ? '<span class="sp" data-sid="' + (s.spell[0] || 0) + '" data-sn="' + esc(s.spell[1]) + '">' + spellIcon(s.spell[0], s.spell[1]) + '</span>' : spellIcon(s.spell[0], s.spell[1]));
+    const href = (s) => '#sec-' + s.id + '-' + firstAt.get(s.id);
+    const chips = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), cls = b ? 'bad' : 'warn';
+      return '<a class="msc tlink ' + cls + '" href="' + href(s) + '" title="' + esc(s.summary) + '">' + icon(s) + '<span class="msc-n">' + esc(s.title.split(': ')[0]) + '</span><span class="msc-s ' + cls + '">' + (b ? '✕ ' + b : '! ' + w) + (b && w ? ' <i>! ' + w + '</i>' : '') + '</span></a>'; });
+    const clean = ord.filter((s) => tierT(s) >= 2);
+    if (clean.length) chips.push('<a class="msc tlink ok" href="' + href(clean[0]) + '" title="' + esc(clean.map((s) => s.title.split(': ')[0] + (s.info ? ' (' + s.info + ')' : '')).join(', ')) + '"><span class="msc-n">' + (chips.length ? '+' + clean.length + ' clean' : 'All ' + clean.length + ' clean') + '</span><span class="msc-s ok">✓</span></a>');
+    if (chips.length) h += '<div class="mscore">' + chips.join('') + '</div>';
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
   // "2:08 Guillotine: In circle 5 / 6 · Target Xyron (no protection) · Died Chumfu"
@@ -3081,7 +3076,7 @@ async function night() {
       tileGo('#sum-asg', ga ? plTile(gradeChip(ga.letter), 'Assignments', Math.round(ga.overall) + '<span> / 100</span>', gst(ga.letter), weakest(ga.cats), true, ga.letter) : plTile(icoW('inv_inscription_scroll'), 'Assignments', '—', 'na', hasNote ? 'nothing from the note came up' : 'no NSRT note for this boss', true)) +
       plTile(icoW(kill ? 'achievement_boss_lichking' : 'ability_hunter_markedfordeath'), kill ? 'Kill' : 'Best pull', kill ? 'Pull ' + kill.pull : bestP ? esc(pullShort(bestP)) : '—', kill ? 'ok' : 'na', kill ? 'after ' + plural(kill.pull - 1, 'wipe') : bestP ? 'pull ' + bestP.pull + ' · ' + esc(pullLabel(bestP)) : 'no result yet', true) +
       plTile(icoW('inv_misc_pocketwatch_01'), 'Pulls', String(pulls.length), 'na', T(time) + ' on the boss' + (reps.length ? ' · ' + (reps.reduce((s, r) => s + keptDeaths(r).length, 0) / reps.length).toFixed(1) + ' deaths a pull' : ''), true) + '</div></div>' : '';
-  const progress = '<div class="panel sum-prog"><h3 class="nh">How far the night got <small>' + plural(pulls.length, 'pull') + ' · lower is better</small></h3>' + acrossNights(b0, pulls) + nightTimeline(pulls) + '</div>';
+  const progress = '<div class="panel sum-prog" id="sum-prog"><h3 class="nh">How far the night got <small>' + plural(pulls.length, 'pull') + ' · lower is better</small></h3>' + acrossNights(b0, pulls) + nightTimeline(pulls) + '</div>';
   // what went wrong and right across the night, in the same pair as Latest pull, Mechanics and Assignments: wrong is what
   // kept going wrong (and what got worse through the night), right is what got better and what was clean every pull
   const cleanM = mRows.filter((o) => o.st === 'ok').sort((a, b) => a.ord - b.ord).map((o) => shortT(o.title));
@@ -3093,17 +3088,26 @@ async function night() {
     none: 'Nothing kept going wrong.', noneRight: 'Nothing was clean every pull yet.', moreWhere: 'in Mechanics and Assignments below' });
   // each group's report card in the same framed card as the overall one: the grade and score on the left, a tile per part
   const secHead = (id, title, sub) => '<div class="sum-h" id="' + id + '"><h2>' + title + '</h2>' + (sub ? '<span class="sub">' + sub + '</span>' : '') + '</div>';
-  const rcCard = (g, what, tiles) => '<div class="panel nc-rc2 sum-rc"><div class="rc-all" title="Grades go S, A, B, C, D, F; each pull counts up to the wipe filter">' + gradeChip(g.letter, true) + '<div><div class="pt-l">Report card</div><div class="rc-sc">' + Math.round(g.overall) + '<span> / 100</span></div><div class="sub">' + what + '</div></div></div>' +
+  const rcCard = (g, what, tiles, title) => '<div class="panel nc-rc2 sum-rc"><div class="rc-all" title="Grades go S, A, B, C, D, F; each pull counts up to the wipe filter">' + gradeChip(g.letter, true) + '<div><div class="pt-l">' + (title || 'Report card') + '</div><div class="rc-sc">' + Math.round(g.overall) + '<span> / 100</span></div><div class="sub">' + what + '</div></div></div>' +
     '<div class="pts rc-cats" style="--n:' + Math.max(2, (tiles.match(/class="pt[ "]/g) || []).length) + '">' + tiles + '</div></div>';
-  const mSec = gm ? secHead('sum-mech', 'Mechanics', 'every mechanic across the pulls; open one for the pulls that went wrong') +
-    rcCard(gm, 'boss mechanics, avoidable damage, survival and interrupts', gm.cats.map((c) => plTile(gradeChip(c.letter), c.key === 'mech' ? 'Boss mechanics' : c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join('')) +
+  // (on a computer the group report cards sit in the right-hand column with the overall one; on a narrow screen each one
+  // stays under its own heading, so the card is drawn in both places and CSS shows one)
+  const mCard = gm ? rcCard(gm, 'boss mechanics, avoidable damage, survival and interrupts', gm.cats.map((c) => plTile(gradeChip(c.letter), c.key === 'mech' ? 'Boss mechanics' : c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join(''), 'Mechanics') : '';
+  const aCard = hasNote && ga ? rcCard(ga, 'mechanical assignments 70%, healing cooldowns 30%', ga.cats.map((c) => plTile(gradeChip(c.letter), c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join(''), 'Assignments') : '';
+  const inl = (card) => (card ? '<div class="sum-inl">' + card + '</div>' : '');
+  const mSec = gm ? secHead('sum-mech', 'Mechanics', 'every mechanic across the pulls; open one for the pulls that went wrong') + inl(mCard) +
     (mHtml || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>') : '';
   const aSec = secHead('sum-asg', 'Assignments', hasNote ? 'every assignment in the NSRT note across the pulls' : '') +
     (!hasNote ? '<div class="panel noteempty"><div><b>No NSRT note for ' + esc(b0.boss) + ' yet.</b> <span class="sub">Add one on the Assignments tab to check soaks, kicks, orbs and cooldowns across every pull.</span></div><button class="btn" id="sumNote">Open Assignments</button></div>'
-      : (ga ? rcCard(ga, 'mechanical assignments 70%, healing cooldowns 30%', ga.cats.map((c) => plTile(gradeChip(c.letter), c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join('')) : '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
-  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + '<div class="nsa sumv">' + (others.length ? '<div class="sum-others"><span class="sub">Also tonight</span>' + others.join('') + '</div>' : '') +
-    rcTop + progress + fix + mSec + aSec +
-    '<p class="muted" style="font-size:13px">In each row, each small square is a pull: green clean, amber could be better, red something went wrong, grey didn\'t come up or came after the wipe filter. Click one to open that pull. Players and the MVPs of the night are on the Player audit tab.</p></div>');
+      : inl(aCard) + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
+  // Two columns on a computer: the night on the left (how far it got, what kept going wrong, every mechanic and
+  // assignment), the grades and a "jump to" list on the right, staying in view while you scroll. On a narrow screen the
+  // grades come first, then the rest, as before.
+  const rail = '<aside class="sum-rail">' + rcTop + (mCard ? '<div class="sum-rc-g">' + mCard + '</div>' : '') + (aCard ? '<div class="sum-rc-g">' + aCard + '</div>' : '') +
+    '<nav class="sum-jump" aria-label="Jump to"><span class="pt-l">Jump to</span><a class="pt-go" href="#sum-prog">How far the night got</a>' + (gm ? '<a class="pt-go" href="#sum-mech">Mechanics</a>' : '') + '<a class="pt-go" href="#sum-asg">Assignments</a></nav></aside>';
+  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + '<div class="nsa sumv sum2">' + (others.length ? '<div class="sum-others"><span class="sub">Also tonight</span>' + others.join('') + '</div>' : '') +
+    '<div class="sum-main">' + progress + fix + mSec + aSec +
+    '<p class="muted" style="font-size:13px">In each row, each small square is a pull: green clean, amber could be better, red something went wrong, grey didn\'t come up or came after the wipe filter. Click one to open that pull. Players and the MVPs of the night are on the Player audit tab.</p></div>' + rail + '</div>');
   refreshIcons(); setHeadRes(); fitTrends();
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };
@@ -3226,10 +3230,12 @@ async function nightPlayers(reps, still) {
   const ranked = ps.filter((a) => a.ranked), ROLES = [['tank', 'Tank', 1], ['healer', 'Healers', 2], ['dps', 'DPS', 3]], mvpRank = new Map();
   const mvpGroups = ROLES.map(([role, label, n]) => { const list = ranked.filter((a) => (a.p.role || 'dps') === role).sort((a, b) => b.score - a.score).slice(0, n);
     list.forEach((a, k) => mvpRank.set(a.p.guid, { k: k + 1, label: n === 1 ? 'Top tank' : ['1st', '2nd', '3rd'][k] + ' ' + (role === 'healer' ? 'healer' : 'DPS') })); return { label, list }; }).filter((g) => g.list.length);
-  const mvc = (a, k) => '<div class="mvc m' + (k + 1) + '">' + avatar(a.p) + '<div class="mvc-n"><span class="mvc-p">' + esc(mvpRank.get(a.p.guid).label) + '</span><span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span><span class="sub">' + esc(a.p.specName || '') + '</span></div>' +
+  const mvc = (a, k) => '<div class="mvc m' + (k + 1) + '">' + avatar(a.p) + '<div class="mvc-n"><span class="mvc-p">' + esc(mvpRank.get(a.p.guid).label) + '</span><span class="nm" style="color:' + a.p.color + '" title="' + esc(a.p.name) + '">' + esc(a.p.name) + '</span><span class="sub">' + esc(a.p.specName || '') + '</span></div>' +
     '<div class="mvc-s">' + Math.round(a.score) + '</div><div class="mvc-bars">' + bar('Execution', a.clean) + (a.asS != null ? bar('Assigned', a.asS) : '') + bar('Survival', a.survS) + bar('Ready', a.readyS) + '</div></div>';
   const mvpH = mvpGroups.length ? '<div class="plmv"><div class="plmv-h"><span class="mvp-trophy">★</span><b>MVPs of the night</b><span class="sub">by role · execution, assignments, survival kit and readiness over ' + plural(reps.length, 'pull') + '</span></div>' +
-    mvpGroups.map((g) => '<div class="plmv-g"><div class="plmv-gh">' + g.label + '</div><div class="plmv-c">' + g.list.map(mvc).join('') + '</div></div>').join('') + '</div>' : '';
+    // (a row per role on a narrow screen; on a computer all six cards in one row, each card naming its own role)
+    '<div class="plmv-row" style="--t:' + mvpGroups.reduce((s, g) => s + g.list.length, 0) + '">' +
+    mvpGroups.map((g) => '<div class="plmv-g"><div class="plmv-gh">' + g.label + '</div><div class="plmv-c">' + g.list.map(mvc).join('') + '</div></div>').join('') + '</div></div>' : '';
   // ---- everyone: worst group first, lowest score first inside it ----
   const all = ps.slice().sort((a, b) => ((a.readyS == null ? a.survS : (a.readyS + a.survS) / 2) - (b.readyS == null ? b.survS : (b.readyS + b.survS) / 2)) || a.p.name.localeCompare(b.p.name));
   const byPull = new Map(reps.map((r) => [r.item.pull, r.item]));
@@ -3944,7 +3950,8 @@ function perf() {
   const vals = { dmg: { v: C(sumOf(R3.dmg) / wl) + '<span>/s</span>', s: C(sumOf(R3.dmg)) + inPh }, heal: { v: C(sumOf(R3.heal) / wl) + '<span>/s</span>', s: C(sumOf(R3.heal)) + inPh + ' · ' + Math.round(100 * oh) + '% overheal' },
     taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, util: utilHead(ucats) };
   const cutLine = '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (ph && kind !== 'util' ? '<b>' + esc(ph.name) + '</b>, ' + T(w0) + '–' + T(w1) + (cut && w1 >= end - 0.5 ? ' (the wipe filter)' : '') : cut ? 'Counted up to <b>' + T(ct) + '</b>, the wipe filter' : r.item.kill ? '<b>Kill</b>: the whole pull counts' : 'The whole pull counts') + '</span></div>';
-  let h = '<div class="pfv"><div class="pf-top">' + scopeSw + (kind !== 'util' ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + '</div>' + perfTabs(kind, vals);
+  // (one row on top: the four kinds, then the pull / phase switches and the wipe filter line)
+  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (kind !== 'util' ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + '</div></div>';
   if (kind === 'util') { view(h + utilCards(ucats, true) + '</div>'); bindPerf(); refreshIcons(); return; }
   const rowsAll = R3[kind], total = sumOf(rowsAll), key = KEY[kind];
   const raidS = []; for (const x of rowsAll) (x.p[key] || []).forEach((v, i) => { if (i < end) raidS[i] = (raidS[i] || 0) + v; });
@@ -3980,19 +3987,21 @@ function perf() {
       plTile(plIco('spell_holy_ardentdefender'), 'Close calls', String(calls.length), open ? 'warn' : 'ok', calls.length ? (open ? open + ' with nothing pressed' : 'each one answered') + ' · under 30% and lived' : 'nobody dropped under 30%'),
       plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds), ds ? 'bad' : 'ok', ds ? 'see Mechanics for each one' : 'nobody died here')];
   }
-  if (tiles.length) h += '<div class="pts n' + tiles.length + '">' + tiles.join('') + '</div>';
-  // ---- the fight's damage checks (Damage, whole pull) ----
+  // (the tiles sit beside the chart, below)
+  const tilesH = tiles.length ? '<div class="pts pf-side n' + tiles.length + '">' + tiles.join('') + '</div>' : '';
+  // ---- the fight's damage checks (Damage, whole pull): one line that opens to the list ----
   if (kind === 'dmg' && !ph) { const dc = damageChecks(r); if (dc.length) { const b = dc.filter((x) => x.st === 'bad').length, w = dc.filter((x) => x.st === 'warn').length, dst = b ? 'bad' : w ? 'warn' : 'ok';
-    h += '<div class="panel probbox ' + dst + ' pf-dc"><h3 class="nh">Damage checks <small>the fight\'s shields and adds, up to the wipe filter</small>' + hst(dst, b ? plural(b, 'failed') : w ? w + ' close or late' : 'all passed') + '</h3>' +
-      dc.map((x) => '<div class="pb-r ' + x.st + '"><span class="pb-i">' + { bad: '✕', warn: '!', ok: '✓' }[x.st] + '</span><span class="pb-t">' + x.html + '</span><span class="pb-w">' + x.when + '</span></div>').join('') + '</div>'; } }
+    S.perfDcOpen = S.perfDcOpen || false;
+    h += '<details class="panel probbox ' + dst + ' pf-dc"' + (S.perfDcOpen ? ' open' : '') + '><summary class="nh">Damage checks <small>the fight\'s shields and adds, up to the wipe filter</small>' + hst(dst, b ? plural(b, 'failed') : w ? w + ' close or late' : 'all ' + dc.length + ' passed') + '</summary>' +
+      dc.map((x) => '<div class="pb-r ' + x.st + '"><span class="pb-i">' + { bad: '✕', warn: '!', ok: '✓' }[x.st] + '</span><span class="pb-t">' + x.html + '</span><span class="pb-w">' + x.when + '</span></div>').join('') + '</details>'; } }
   // ---- the timeline: the raid's line, or the picked player's (the picked phase stands out) ----
   const series = addsOn ? AD.series(sel ? sel.p : null, end) : bossOn ? BD.series(sel ? sel.p : null, end) : sel ? (sel.p[key] || []).slice(0, Math.ceil(end)) : raidS;
   const what = addsOn ? 'damage into adds' : bossOn ? 'damage ' + onBossW : { dmg: 'damage', heal: 'healing', taken: 'damage taken' }[kind];
   const lg = '<span class="pfc-lg"><span><i class="lg-m"></i>boss mechanics</span><span><i class="lg-l"></i>Bloodlust</span><span><i class="lg-d"></i>deaths</span>' + (sel ? '<span><i class="lg-c" style="background:' + sel.p.color + '"></i>' + (kind === 'taken' ? 'their defensives' : 'their big cooldowns') + '</span>' : '') + '</span>';
-  h += '<div class="panel pf-chart"><h3 class="nh"><span class="pfc-ttl">' + (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' + what + ' per second' : 'Raid ' + what + ' per second') + '</span><small>5-second average</small>' + lg +
+  h += '<div class="pf-chartrow' + (tilesH ? '' : ' solo') + '"><div class="panel pf-chart"><h3 class="nh"><span class="pfc-ttl">' + (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' + what + ' per second' : 'Raid ' + what + ' per second') + '</span><small>5-second average</small>' + lg +
     // (a picked player's casts fold under the chart: opening them by default pushed the list down every time a name was picked)
     (sel ? '<button class="btn sm' + (S.perfCasts ? ' on' : '') + '" id="pfCasts" type="button" aria-expanded="' + !!S.perfCasts + '">Their casts ' + (S.perfCasts ? '▾' : '▸') + '</button><button class="btn sm" id="pfRaid" type="button">Show the raid</button>' : '') + '</h3>' +
-    perfChart(r, series, end, sel ? sel.p : null, ph ? [w0, w1] : null, kind) + (sel && S.perfCasts ? castStrip(r, sel.p, kind) : '') + '</div>';
+    perfChart(r, series, end, sel ? sel.p : null, ph ? [w0, w1] : null, kind, chartPx(!!tilesH)) + (sel && S.perfCasts ? castStrip(r, sel.p, kind) : '') + '</div>' + tilesH + '</div>';
   // ---- the views: Players (a bar per player and the picked one's breakdown), or the pull cut another way (Healing adds
   // its cooldowns and the healing after the raid's biggest hits) ----
   const wins = kind === 'dmg' ? perfWins(r, end).filter((w) => !ph || (w.t0 < w1 && w.t1 > w0)) : [];
@@ -4342,9 +4351,13 @@ function utilCards(cats, one) {
 // the timeline: a 5-second average line over a soft fill (the view's colour, or the picked player's), phases shaded and
 // named, boss mechanics as ticks on top, Bloodlust and deaths marked, what's after the wipe filter greyed and outside a
 // picked phase dimmed; hovering shows the time, the value, the phase and what happened then
-function perfChart(r, series, end, p, win, kind) {
-  // (on a phone the chart is drawn narrower and taller, so its text stays readable)
-  const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : 1000, H = narrow ? 210 : 150, L = narrow ? 40 : 46, R = 8, Tp = 18, B = 20, iw = W - L - R, ih = H - Tp - B, dur = Math.max(1, r.duration);
+// about how wide the Performance chart is on screen: the page column (1480 on big screens, 1240 otherwise), less the
+// tiles beside it (side) and the panel's padding
+const chartPx = (side) => { const cw = document.documentElement.clientWidth || 1200, col = Math.min(cw - 48, cw >= 1680 ? 1480 : 1240); return col - (side && cw > 1100 ? 282 : 0) - 34; };
+function perfChart(r, series, end, p, win, kind, wpx) {
+  // (on a phone the chart is drawn narrower and taller, so its text stays readable; on a computer it's drawn at about the
+  // width it gets on screen, so a wide screen doesn't make it taller, only wider)
+  const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : wpx ? Math.max(760, Math.min(1500, Math.round(wpx))) : 1000, H = narrow ? 210 : 150, L = narrow ? 40 : 46, R = 8, Tp = 18, B = 20, iw = W - L - R, ih = H - Tp - B, dur = Math.max(1, r.duration);
   const sm = series.map((_, i) => { let s = 0, n = 0; for (let j = i - 2; j <= i + 2; j++) if (j >= 0 && j < series.length) { s += series[j] || 0; n++; } return s / n; });
   const top = Math.max(1, ...sm), mx = top * 1.1, X = (t) => L + (t / dur) * iw, Y = (v) => Tp + ih - (v / mx) * ih, col = p ? p.color : PERF_COL[kind] || PERF_COL.dmg, ev = [];
   let s = '<svg class="pfc" viewBox="0 0 ' + W + ' ' + H + '" data-w="' + W + '" data-dur="' + dur + '" data-l="' + L + '" data-iw="' + iw + '" role="img" aria-label="Output over the pull"><defs><linearGradient id="pfcG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + col + '" stop-opacity=".30"/><stop offset="1" stop-color="' + col + '" stop-opacity="0"/></linearGradient></defs>';
@@ -4390,7 +4403,7 @@ async function perfNight(r0, kind, scopeSw) {
   const avgS = 'average over ' + plural(used.length, 'pull') + (phSel ? ' · ' + esc(phSel) : '');
   const vals = { dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, util: utilHead(ucats) };
   const cutTxt = kind === 'util' ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
-  let h = '<div class="pfv"><div class="pf-top">' + scopeSw + (kind !== 'util' ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div></div>' + perfTabs(kind, vals);
+  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (kind !== 'util' ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div></div></div>';
   if (kind === 'util') { view(h + utilCards(ucats, false) + '</div>'); bindPerf(); refreshIcons(); return; }
   // per pull: the raid's output per second, and each player's total and time alive
   const key = KEY[kind], pulls = [], acc = new Map();
@@ -4747,6 +4760,7 @@ const prsCls = (v) => (v >= 100 ? 'q7' : v >= 99 ? 'q6' : v >= 95 ? 'q5' : v >= 
 const prsChip = (x) => (x && x.pct != null ? '<span class="prs ' + prsCls(x.pct) + '" title="Warcraft Logs parse">' + Math.floor(x.pct) + '</span>' : '');
 function bindPerf() {
   $$('.pfk-b').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfKind = b.dataset.k; perf(); }));
+  $$('details.pf-dc').forEach((d) => d.addEventListener('toggle', () => { S.perfDcOpen = d.open; })); // (Damage checks stays open or closed as you left it)
   $$('.pfv .plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   $$('.pfph button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfPh = b.dataset.ph || null; perf(); }));
   $$('.pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; perf(); }));
