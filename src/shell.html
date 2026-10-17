@@ -795,6 +795,37 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .lp-hero { border-radius: var(--r); border-left-width: 4px; padding: 16px 20px; }
 .lp-k { font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--muted); }
 .lp-tiles { margin: 0 0 14px; } @media (max-width: 1100px) { .lp-tiles { --n: 3; } } @media (max-width: 640px) { .lp-tiles { --n: 2; } }
+/* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
+   left; what went well and the boxes for between pulls on the right ---- */
+@media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
+.lp-go { all: unset; display: block; min-width: 0; cursor: pointer; border-radius: 8px; } .lp-go .pt { height: 100%; box-sizing: border-box; transition: background .12s, border-color .12s; }
+.lp-go:hover .pt { background: var(--raised); border-top-color: var(--line2); border-right-color: var(--line2); border-bottom-color: var(--line2); } .lp-go:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.lp-d { display: inline-block; margin-left: 7px; font: 700 12px var(--body); white-space: nowrap; vertical-align: 3px; } .pt-v .lp-d { font-size: 12px; }
+.lp-d.up, .pt-v .lp-d.up { color: #7ee08f; } .lp-d.dn, .pt-v .lp-d.dn { color: #f3a06a; } .lp-d.lv, .pt-v .lp-d.lv { color: var(--faint); font-weight: 500; }
+.lp-cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 12px; align-items: start; margin: 0 0 12px; }
+.lp-main, .lp-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; min-width: 0; } .lp-main > *, .lp-side > .panel, .lp-main .wr-wrap { margin: 0; }
+@media (max-width: 1000px) { .lp-cols { grid-template-columns: minmax(0, 1fr); } }
+.lpv .wr .wr-t { white-space: normal; line-height: 1.4; } .lpv .wr .pb-r { align-items: flex-start; } .lpv .wr .pb-i { margin-top: 1px; }
+.lpv .wr .pb-r .btn.lp-gob { width: 26px; padding: 2px 0; font-size: 14px; line-height: 1.2; text-align: center; }
+.lp-pace.ok { border-left: 3px solid rgba(69,193,92,.8); } .lp-pace.warn { border-left: 3px solid #f3a06a; }
+.lp-ph { margin: 0 0 8px; font-size: 14px; } .lp-ph b { font-weight: 700; } .lp-pace.ok .lp-ph b { color: #7ee08f; } .lp-pace.warn .lp-ph b { color: #f3a06a; }
+.lp-pc { display: flex; flex-wrap: wrap; gap: 6px; } .lp-pc > span { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.04); border: 1px solid var(--line); font-size: 12.5px; }
+.lp-pc b { font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; } .lp-pc .lp-d { margin-left: 6px; vertical-align: 0; }
+.lp-pr { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px; line-height: 1.45; } .lp-side-p .nh + .lp-pr { border-top: 0; }
+.lp-pk { font-weight: 600; } .lp-pr.bad .lp-pk { color: #ff8f87; } .lp-pr.warn .lp-pk { color: #f3c969; } .lp-pr.pi .lp-pk { color: #f6dc9a; } .lp-pr.ok { grid-template-columns: 18px minmax(0, 1fr); } .lp-pr.ok .lp-pk { color: #7ee08f; } .lp-pr .nm { font-weight: 600; }
+.lp-tk { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px; } .lp-side-p .nh + .lp-tk { border-top: 0; }
+.lp-tk .av.sm { width: 22px; height: 22px; flex: none; } .lp-tn { flex: none; width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .lp-tn .nm { font-weight: 600; }
+.lp-tk .grade { flex: none; min-width: 24px; height: 22px; padding: 0 4px; font-size: 12.5px; border-radius: 6px; border-width: 1px; } .lp-tf { flex: 1; min-width: 0; color: #f3c969; font-weight: 600; line-height: 1.35; }
+.lp-cd { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; } .lp-side-p .nh + .lp-cd { border-top: 0; }
+.lp-ct { color: var(--muted); font-variant-numeric: tabular-nums; } .lp-cn { min-width: 0; } .lp-cn .nm { font-weight: 600; } .lp-cw { font-size: 12px; font-weight: 600; white-space: nowrap; } .lp-cd.bad .lp-cw { color: #ff8f87; } .lp-cd.warn .lp-cw { color: #f3c969; }
+.lp-more { padding-top: 6px; font-size: 12px; }
+.lp-well { border-color: rgba(69,193,92,.32); background: linear-gradient(180deg, rgba(69,193,92,.06), transparent 70%), var(--panel); }
+.lp-wl { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13.5px; line-height: 1.45; } .lp-side-p .nh + .lp-wl { border-top: 0; } .lp-wk { color: #7ee08f; font-weight: 700; } .lp-wl b { font-weight: 600; }
+@media (max-width: 640px) { .lp-tiles .pt-i, .lp-tiles .pt > .grade { display: none; } .lp-tiles .pt { padding: 9px 11px; } .lp-tiles .pt-v { font-size: 20px; } .lp-tiles .pt-l { white-space: normal; } .lp-tiles .pt-s { -webkit-line-clamp: 3; }
+  .lp-tiles > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .lp-side-p h3.nh { flex-direction: column; align-items: flex-start; gap: 2px; } .lp-side-p h3.nh small { margin-left: 0; } .lp-pr { grid-template-columns: minmax(0, 1fr); gap: 1px; } .lp-pr.ok { grid-template-columns: 18px minmax(0, 1fr); gap: 8px; } .lp-tn { width: 92px; } .lp-cd { grid-template-columns: 36px minmax(0, 1fr); } .lp-cw { grid-column: 2; white-space: normal; } }
+/* (the pinned bar's pull name on a phone: it shrinks, so the ‹ › and menu buttons stay on screen) */
+@media (max-width: 760px) { body.bh-off .tabbar .tb-id { flex: 1 1 100%; min-width: 0; margin-left: 0; } .tabbar .tb-id .tb-pull { flex: 1 1 auto; min-width: 0; max-width: none; } }
 .lp-cols .panel h3 .sst { margin-left: auto; }
 .lp-cols .nsp-list { border: 0; border-radius: 0; }
 .lp-cols .iss, .lp-cols .iss.bad, .lp-cols .iss.warn, .lp-cols .iss.good { background: none; grid-template-columns: 20px minmax(0, 1fr) auto; padding: 8px 0; border-top: 1px solid rgba(53,59,73,.55); }

@@ -15,8 +15,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   (Players).
 - [ ] **Stats** (your idea, a tab in Performance; you want guidance first): each player's average main and secondary stats
   over the pull, and how much came from gear procs ("cantrips"), flasks, food, enchants, and other players' buffs.
-- [ ] **Latest pull, an update and polish pass** (your note, Oct 17): it hasn't caught up with everything added since (the
-  Report card, Casts, Resources, Power Infusion, trends). Review it first and show you what to change.
+- [x] **Latest pull, an update and polish pass** (your note, Oct 17): built in round 139.
 - [x] **Power Infusion** (your idea): built in round 137.
 - [x] **Trend arrows elsewhere** (your question): built in round 138 (Report card, Casts, Summary, and "Since last raid" on your team's page).
 - [x] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
@@ -76,6 +75,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 139: Latest pull brought up to date
+- [x] **New boxes for between pulls** (your go-ahead on all of it):
+  - **Pace against your best:** how much of the fight was left at each minute, against your best pull so far ("At 4:00
+    you were 1% ahead"). It only uses pulls already on this PC, so it never costs a download.
+  - **Before the next pull:** who didn't drink a combat or mana potion (one before the pull counts), who had no flask,
+    food or weapon oil, and each priest's Power Infusion plan.
+  - **Talk to:** each player's first thing to fix (mechanics and their Report card), most to gain first.
+  - **Healing cooldowns by name:** the note's cooldowns that weren't on time, with when they were due and pressed.
+  - **▲▼ against the last pull** on the boxes at the top (deaths, mechanics, assignments, healing cooldowns, Report card).
+- [x] **Changes:** fixes and what went wrong come first on the left; a Report card box at the top; every box and every
+  line (the new › button) opens its tab at the right section; "What went well" sits at the top of the right side.
+  (Your question: the positives weren't gone. I'd first put them in a strip at the very bottom, too easy to miss.)
+- [x] **Fixes:** the pinned bar ran off a phone screen (its menu button was cut off); box text was cut off on a phone;
+  lines in "What went well" were cut off. A section opened from a link now scrolls into view once it fills in.
+- Where Performance is switched off (the website for now), the Report card box and the Power Infusion line stay hidden,
+  and "Talk to" uses mechanics only.
 
 ## 2026-10-17, round 138: Power Infusion easier to read, trend arrows, no charts in Casts
 - [x] **Power Infusion, your go-ahead on all six:** each priest's block now starts with a verdict (good targets, lined up

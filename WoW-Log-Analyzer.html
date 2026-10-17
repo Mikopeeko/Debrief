@@ -795,6 +795,37 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .lp-hero { border-radius: var(--r); border-left-width: 4px; padding: 16px 20px; }
 .lp-k { font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--muted); }
 .lp-tiles { margin: 0 0 14px; } @media (max-width: 1100px) { .lp-tiles { --n: 3; } } @media (max-width: 640px) { .lp-tiles { --n: 2; } }
+/* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
+   left; what went well and the boxes for between pulls on the right ---- */
+@media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
+.lp-go { all: unset; display: block; min-width: 0; cursor: pointer; border-radius: 8px; } .lp-go .pt { height: 100%; box-sizing: border-box; transition: background .12s, border-color .12s; }
+.lp-go:hover .pt { background: var(--raised); border-top-color: var(--line2); border-right-color: var(--line2); border-bottom-color: var(--line2); } .lp-go:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.lp-d { display: inline-block; margin-left: 7px; font: 700 12px var(--body); white-space: nowrap; vertical-align: 3px; } .pt-v .lp-d { font-size: 12px; }
+.lp-d.up, .pt-v .lp-d.up { color: #7ee08f; } .lp-d.dn, .pt-v .lp-d.dn { color: #f3a06a; } .lp-d.lv, .pt-v .lp-d.lv { color: var(--faint); font-weight: 500; }
+.lp-cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 12px; align-items: start; margin: 0 0 12px; }
+.lp-main, .lp-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; min-width: 0; } .lp-main > *, .lp-side > .panel, .lp-main .wr-wrap { margin: 0; }
+@media (max-width: 1000px) { .lp-cols { grid-template-columns: minmax(0, 1fr); } }
+.lpv .wr .wr-t { white-space: normal; line-height: 1.4; } .lpv .wr .pb-r { align-items: flex-start; } .lpv .wr .pb-i { margin-top: 1px; }
+.lpv .wr .pb-r .btn.lp-gob { width: 26px; padding: 2px 0; font-size: 14px; line-height: 1.2; text-align: center; }
+.lp-pace.ok { border-left: 3px solid rgba(69,193,92,.8); } .lp-pace.warn { border-left: 3px solid #f3a06a; }
+.lp-ph { margin: 0 0 8px; font-size: 14px; } .lp-ph b { font-weight: 700; } .lp-pace.ok .lp-ph b { color: #7ee08f; } .lp-pace.warn .lp-ph b { color: #f3a06a; }
+.lp-pc { display: flex; flex-wrap: wrap; gap: 6px; } .lp-pc > span { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.04); border: 1px solid var(--line); font-size: 12.5px; }
+.lp-pc b { font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; } .lp-pc .lp-d { margin-left: 6px; vertical-align: 0; }
+.lp-pr { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px; line-height: 1.45; } .lp-side-p .nh + .lp-pr { border-top: 0; }
+.lp-pk { font-weight: 600; } .lp-pr.bad .lp-pk { color: #ff8f87; } .lp-pr.warn .lp-pk { color: #f3c969; } .lp-pr.pi .lp-pk { color: #f6dc9a; } .lp-pr.ok { grid-template-columns: 18px minmax(0, 1fr); } .lp-pr.ok .lp-pk { color: #7ee08f; } .lp-pr .nm { font-weight: 600; }
+.lp-tk { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px; } .lp-side-p .nh + .lp-tk { border-top: 0; }
+.lp-tk .av.sm { width: 22px; height: 22px; flex: none; } .lp-tn { flex: none; width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .lp-tn .nm { font-weight: 600; }
+.lp-tk .grade { flex: none; min-width: 24px; height: 22px; padding: 0 4px; font-size: 12.5px; border-radius: 6px; border-width: 1px; } .lp-tf { flex: 1; min-width: 0; color: #f3c969; font-weight: 600; line-height: 1.35; }
+.lp-cd { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; } .lp-side-p .nh + .lp-cd { border-top: 0; }
+.lp-ct { color: var(--muted); font-variant-numeric: tabular-nums; } .lp-cn { min-width: 0; } .lp-cn .nm { font-weight: 600; } .lp-cw { font-size: 12px; font-weight: 600; white-space: nowrap; } .lp-cd.bad .lp-cw { color: #ff8f87; } .lp-cd.warn .lp-cw { color: #f3c969; }
+.lp-more { padding-top: 6px; font-size: 12px; }
+.lp-well { border-color: rgba(69,193,92,.32); background: linear-gradient(180deg, rgba(69,193,92,.06), transparent 70%), var(--panel); }
+.lp-wl { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13.5px; line-height: 1.45; } .lp-side-p .nh + .lp-wl { border-top: 0; } .lp-wk { color: #7ee08f; font-weight: 700; } .lp-wl b { font-weight: 600; }
+@media (max-width: 640px) { .lp-tiles .pt-i, .lp-tiles .pt > .grade { display: none; } .lp-tiles .pt { padding: 9px 11px; } .lp-tiles .pt-v { font-size: 20px; } .lp-tiles .pt-l { white-space: normal; } .lp-tiles .pt-s { -webkit-line-clamp: 3; }
+  .lp-tiles > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .lp-side-p h3.nh { flex-direction: column; align-items: flex-start; gap: 2px; } .lp-side-p h3.nh small { margin-left: 0; } .lp-pr { grid-template-columns: minmax(0, 1fr); gap: 1px; } .lp-pr.ok { grid-template-columns: 18px minmax(0, 1fr); gap: 8px; } .lp-tn { width: 92px; } .lp-cd { grid-template-columns: 36px minmax(0, 1fr); } .lp-cw { grid-column: 2; white-space: normal; } }
+/* (the pinned bar's pull name on a phone: it shrinks, so the ‹ › and menu buttons stay on screen) */
+@media (max-width: 760px) { body.bh-off .tabbar .tb-id { flex: 1 1 100%; min-width: 0; margin-left: 0; } .tabbar .tb-id .tb-pull { flex: 1 1 auto; min-width: 0; max-width: none; } }
 .lp-cols .panel h3 .sst { margin-left: auto; }
 .lp-cols .nsp-list { border: 0; border-radius: 0; }
 .lp-cols .iss, .lp-cols .iss.bad, .lp-cols .iss.warn, .lp-cols .iss.good { background: none; grid-template-columns: 20px minmax(0, 1fr) auto; padding: 8px 0; border-top: 1px solid rgba(53,59,73,.55); }
@@ -9411,7 +9442,9 @@ function renderMain() {
   VIEWS[S.tab]();
   // (opened from a Summary row: open that mechanic's or assignment's row on this pull and bring it into view)
   if (S.pendingSec) { const el = document.querySelector('#view [id^="' + CSS.escape(S.pendingSec) + '"]'); S.pendingSec = null;
-    if (el) { if (el.tagName === 'DETAILS') { el.open = true; if (el.dataset.k) S.openSecs.add(el.dataset.k); } for (let e = el.parentElement; e; e = e.parentElement) if (e.tagName === 'DETAILS') e.open = true; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); } }
+    if (el) { if (el.tagName === 'DETAILS') { el.open = true; if (el.dataset.k) S.openSecs.add(el.dataset.k); } for (let e = el.parentElement; e; e = e.parentElement) if (e.tagName === 'DETAILS') e.open = true;
+      // (again a moment later: a section that fills in when it opens makes the page longer only then)
+      const to = () => window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); to(); setTimeout(to, 80); } }
   refreshIcons();
 }
 const view = (h) => { $('#view').innerHTML = h; };
@@ -15392,8 +15425,10 @@ function pullDetail(r, a) {
 }
 
 // ---------- Last pull (live logging only) ----------
-// A one-screen recap of the pull that just ended, for between pulls: the result next to the last pull and the best of
-// the night, what went wrong and what went well, and the three things to fix first. Everything respects the wipe filter.
+// A one-screen recap of the pull that just ended, for between pulls: the tiles (each against the last pull; a click opens
+// its tab), then what to fix first and what went wrong; beside them what went well, the pace against the best pull, what to sort
+// before the next pull (potions, flasks, food, the Power Infusion plan), who to talk to, and the healing cooldowns that
+// weren't on time, under what went well. Everything respects the wipe filter.
 const shortT = (t) => String(t).split(':')[0]; // a section's mechanic name without what it checks, for lists
 function pullSections(r) {
   if (!r || !r.module || r.module.error || !r.module.sections) return new Map();
@@ -15404,6 +15439,70 @@ function pullSections(r) {
     out.set(s.id, { s, st: rows.some((row) => row.some((c) => c.bad)) ? 'bad' : rows.some((row) => row.some((c) => c.warn)) ? 'warn' : s.info ? 'na' : 'ok' });
   }
   return out;
+}
+// (the numbers the tiles show, for this pull and the one before it, so each tile says how it changed)
+function lpStats(r) {
+  const ct = cutT(r), HCD = 'Assigned cooldown', ms = keptMistakes(r).filter((m) => m.mechanic !== 'Death' && m.severity !== 'Low' && m.mechanic !== HCD);
+  const hasNote = !!(r.assign && !r.assign.error && r.assign.note), cdRows = hasNote ? (r.assign.cds || []).filter((x) => x.expected != null && x.expected <= ct + 0.05 && /^(on time|late|early|missed)$/.test(x.status)) : [];
+  const v = PERF_OFF() ? [] : rcCards([r]).map((x) => x.overall).filter((s) => s != null);
+  return { deaths: keptDeaths(r).length, probs: new Set(ms.map((m) => m.mechanic)).size, hasNote, noteMiss: ms.filter((m) => m.fromNote).length, cdRows,
+    cdPct: cdRows.length ? 100 * cdRows.filter((x) => x.status === 'on time').length / cdRows.length : null, rc: v.length ? v.reduce((s, x) => s + x, 0) / v.length : null };
+}
+// (a tile's change from the last pull: ▲ or ▼ and by how much, green when it's better; "same" when it didn't move)
+const lpDelta = (now, was, lowGood, unit) => { if (now == null || was == null) return ''; const d = Math.round(now - was); if (!d) return '<span class="lp-d lv" title="The same as last pull">same</span>';
+  return '<span class="lp-d ' + ((lowGood ? d < 0 : d > 0) ? 'up' : 'dn') + '" title="Last pull: ' + Math.round(was) + (unit || '') + '">' + (d > 0 ? '▲' : '▼') + Math.abs(d) + (unit || '') + '</span>'; };
+const lpWho = (p) => '<span class="nm" style="color:' + (p.color || 'inherit') + '">' + esc(p.name) + '</span>';
+// the pace against the best earlier pull: how much of the fight was left at each minute, this pull against that one (a
+// minute is "ahead" when less was left), up to this pull's wipe filter
+function lpPace(r, best, bestNo) {
+  if (!best || r.item.kill) return '';
+  const L1 = bossHpLine(r, r.duration, 5), L0 = bossHpLine(best, best.duration, 5); if (!L1 || !L0) return '';
+  const at = (L, t) => { let v = null; for (const [s, f] of L) { if (s > t + 0.01) break; v = f; } return v; }, top = Math.min(r.duration, cutT(r), best.duration);
+  const pts = []; for (let t = 60; t <= top + 0.01; t += 60) { const a = at(L1, t), b = at(L0, t); if (a != null && b != null) pts.push({ t, d: 100 * (b - a) }); }
+  if (!pts.length) return '';
+  const chip = (d) => (Math.abs(d) < 1 ? '<span class="lp-d lv">even</span>' : '<span class="lp-d ' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.round(Math.abs(d)) + '%</span>');
+  const last = pts[pts.length - 1], st = Math.abs(last.d) < 1 ? 'na' : last.d > 0 ? 'ok' : 'warn';
+  return '<div class="panel lp-side-p lp-pace ' + st + '"><h3 class="nh"><span>Pace against your best</span><small>pull ' + bestNo + ' · how much of the fight was left at each minute</small></h3>' +
+    '<p class="lp-ph">At ' + T(last.t) + ' you were <b>' + (Math.abs(last.d) < 1 ? 'even with it' : Math.round(Math.abs(last.d)) + '% ' + (last.d > 0 ? 'ahead' : 'behind')) + '</b>.</p>' +
+    '<div class="lp-pc">' + pts.map((p) => '<span><b>' + T(p.t) + '</b>' + chip(p.d) + '</span>').join('') + '</div></div>';
+}
+// what to sort before the next pull: who didn't drink a combat or mana potion (one drunk before the pull counts; alive 20 s
+// or more), who had no flask, food or weapon oil at the pull (rows: each player's gear and buffs, or null while their
+// names are still being looked up; false: no gear and buffs in the log), and each priest's Power Infusion plan
+function lpPrep(r, rows) {
+  const C0 = perfContext(r), ct = cutT(r), lines = [];
+  const named = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), long = (p) => { const x = C0.per.get(p.name); return x && Math.min(x.until, C0.end) >= 20; };
+  const noPot = named.filter((p) => long(p) && !p.cons.combatpot.concat(p.cons.manapot || []).some((u) => u.t <= ct + 0.05) && !prepotted(r, p));
+  const list = (ps) => ps.slice(0, 8).map(lpWho).join(', ') + (ps.length > 8 ? ' and ' + (ps.length - 8) + ' more' : '');
+  if (noPot.length) lines.push(['bad', 'No potion', list(noPot)]);
+  if (rows) for (const [k, l] of [['No flask', 'No flask'], ['No food buff', 'No food'], ['No weapon oil or stone', 'No weapon oil']]) { const ps = rows.filter((x) => x.issues.includes(k)).map((x) => x.p); if (ps.length) lines.push(['warn', l, list(ps)]); }
+  const pi = PERF_OFF() ? [] : [...piPull(r).priests.values()].filter((x) => x.plan).map((x) => ['pi', 'Power Infusion', lpWho(x.p) + ' → ' + lpWho(x.plan.q) + (x.plan.cd ? ' <span class="sub">with their ' + esc(x.plan.cd.name) + '</span>' : '')]);
+  const has = Array.isArray(rows), ok = !lines.length ? '<div class="lp-pr ok"><span class="lp-pk">✓</span><span>' + (has ? 'Everyone drank a potion and had a flask, food and weapon oil.' : 'Everyone drank a potion.') + '</span></div>' : '';
+  return '<div class="panel lp-side-p lp-prep" id="lpPrep"><h3 class="nh"><span>Before the next pull</span><small>' + (has ? 'potions this pull · flask, food and oil at the pull' : rows === null ? 'potions this pull · checking flasks and food…' : 'potions this pull') + '</small></h3>' + ok +
+    lines.concat(pi).map(([st, k, v]) => '<div class="lp-pr ' + st + '"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
+}
+// who to talk to: each player's first thing to fix this pull (from their grade on Players: mechanics, and the Report card
+// where Performance is on), most to gain first; potions and healing cooldowns have their own boxes here, so they're left out
+function lpTalk(r) {
+  const credit = assignCredit(r), off = PERF_OFF(), list = [];
+  for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; let g; try { g = plGrade(r, p, null, credit); } catch (e) { continue; }
+    const f = g.fixes.find((z) => (z.gain || 0) >= 3 && !/potion/i.test(z.t) && z.key !== 'm|Assigned cooldown' && (!off || /^m\|/.test(z.key))); if (f) list.push({ p, g, f }); }
+  if (!list.length) return '';
+  list.sort((a, b) => b.f.gain - a.f.gain);
+  return '<div class="panel lp-side-p lp-talk"><h3 class="nh"><span>Talk to</span><small>each player\'s first thing to fix · click a name for their page</small></h3>' +
+    list.slice(0, 6).map(({ p, g, f }) => '<div class="lp-tk">' + avatar(p, true) + '<span class="lp-tn">' + lpWho(p) + '</span>' + (off || g.perf == null ? '' : gradeChip(letterOf(g.score))) + '<span class="lp-tf">' + (/^m\|/.test(f.key) && !/^From the note/.test(f.t) ? '<span class="sub">Mechanic:</span> ' : '') + esc(f.t) + '</span></div>').join('') +
+    (list.length > 6 ? '<div class="sub lp-more">+' + (list.length - 6) + ' more on Players</div>' : '') + '</div>';
+}
+// the healing cooldowns from the note that weren't on time, by name: when it was due, and when it was pressed (a missed one:
+// the nearest press within 90 s, if there was one)
+function lpCds(r, cdRows) {
+  const bad = cdRows.filter((x) => x.status !== 'on time'); if (!bad.length) return '';
+  const pm = new Map([...r.players.values()].map((p) => [p.name, p]));
+  const line = (x) => { const p = pm.get(x.player), ts = p ? p.byName.get(String(x.spell).toLowerCase()) || [] : [], near = x.status === 'missed' ? ts.filter((t) => Math.abs(t - x.expected) <= 90).sort((a, b) => Math.abs(a - x.expected) - Math.abs(b - x.expected))[0] : null;
+    const what = x.status === 'missed' ? (near != null ? 'pressed at ' + T(near) : 'not pressed') : Math.round(Math.abs(x.delta || 0)) + ' s ' + x.status;
+    return '<div class="lp-cd ' + (x.status === 'missed' ? 'bad' : 'warn') + '"><span class="lp-ct">' + T(x.expected) + '</span><span class="lp-cn">' + (p ? lpWho(p) : esc(x.player)) + ' · ' + spell(x.spellid, x.spell) + '</span><span class="lp-cw">' + esc(what) + '</span></div>'; };
+  return '<div class="panel lp-side-p lp-cds"><h3 class="nh"><span>Healing cooldowns</span><small>from the note · not on time</small></h3>' + bad.slice(0, 7).map(line).join('') +
+    (bad.length > 7 ? '<div class="sub lp-more">+' + (bad.length - 7) + ' more on Assignments</div>' : '') + '</div>';
 }
 async function lastPull() {
   const r = S.rep, it = r.item, imp = IMPORTANCE[it.boss] || [], ix = (id) => { const i = imp.indexOf(id); return i < 0 ? 99 : i; };
@@ -15418,23 +15517,31 @@ async function lastPull() {
   if (S.rep !== r || S.tab !== 'live') return;
   const now = pct(it, r), was = prevItem ? pct(prevItem, prev) : null, isKey = /^\+/.test(String(it.diff || '')); // (a Mythic+ key reads as timed, not killed)
   const earlierX = same.slice(0, k).map((x) => ({ x, v: pct(x) })).filter((o) => o.v != null), bestO = earlierX.length ? earlierX.reduce((m, o) => (o.v < m.v ? o : m)) : null, best = bestO ? bestO.v : null, bestLab = bestO ? lab(bestO.x, null, bestO.v) : '';
+  // (the best earlier pull, for the pace: read again only if it's already on this PC, so it never costs a download)
+  let bestR = null;
+  if (bestO && !it.kill) { if (bestO.x === prevItem) bestR = prev; else if (CACHE.has(bestO.x) || !bestO.x.wcl || (await WCL.isSaved(bestO.x))) { try { bestR = await getRep(bestO.x); } catch (e) { /* no pace */ } } }
+  if (S.rep !== r || S.tab !== 'live') return;
   const ds = keptDeaths(r).slice().sort((a, b) => a.t - b.t), ms = keptMistakes(r).filter((m) => m.mechanic !== 'Death');
   const P = pullSections(r), Q = pullSections(prev);
   // ---- headline ----
   const delta = now != null && was != null ? was - now : null;
   const isBest = best != null && now != null && now < best;
   let h = (!latest ? '<div class="nightload"><span>This is pull ' + it.pull + ', not the latest one.</span><button class="btn primary" id="lpLatest">Show the latest pull</button></div>' : ''); // (the banner on top shows the result and how it compares)
-  // ---- what went wrong (healing cooldowns from the note are kept apart: their own tile) ----
+  // ---- what went wrong (healing cooldowns from the note are kept apart: their own box); each line opens its tab ----
   const HCD = 'Assigned cooldown', wrong = [], fixes = [];
-  if (ds.length) { const d = ds[0]; wrong.push({ sev: 'bad', w: 0, map: d.map, html: '<b>First death:</b> ' + esc(d.player) + ' at ' + T(d.t) + (d.ability ? ' to ' + mech(d.ability, d.abilityId) : '') + (ds.length > 1 ? ' <span class="sub">(' + plural(ds.length, 'death') + ' in total)</span>' : '') }); if (d.prevent && d.prevent[0]) fixes.push({ w: 0, t: 'Keep ' + d.player + ' alive', x: d.prevent[0] }); }
+  if (ds.length) { const d = ds[0]; wrong.push({ sev: 'bad', w: 0, map: d.map, go: ['audit', 'sec-deaths'], html: '<b>First death:</b> ' + esc(d.player) + ' at ' + T(d.t) + (d.ability ? ' to ' + mech(d.ability, d.abilityId) : '') + (ds.length > 1 ? ' <span class="sub">(' + plural(ds.length, 'death') + ' in total)</span>' : '') }); if (d.prevent && d.prevent[0]) fixes.push({ w: 0, t: 'Keep ' + d.player + ' alive', x: d.prevent[0] }); }
   const groups = new Map(); for (const m of ms.filter((m) => m.severity !== 'Low' && m.mechanic !== HCD)) { const g = groups.get(m.mechanic); if (g) { g.n++; if (m.player !== 'Raid') g.who.add(m.player); if (m.severity === 'High') g.hi = true; } else groups.set(m.mechanic, { m, n: 1, hi: m.severity === 'High', who: new Set(m.player !== 'Raid' ? [m.player] : []) }); }
   const secOf = (name) => { for (const [id, x] of P) if (String(x.s.spell && x.s.spell[1]).toLowerCase() === String(name).toLowerCase() || x.s.title.toLowerCase().includes(String(name).toLowerCase())) return id; return null; };
+  // (where a line's › goes: its own section, else the most important one that mentions it, Avoidable damage last)
+  const secJ = [...P].map(([id, x]) => [id, JSON.stringify([x.s.rows, x.s.groups, x.s.summary]).toLowerCase()]);
+  const secFor = (name) => secOf(name) || (secJ.filter(([, j]) => j.includes(String(name).toLowerCase())).map(([id]) => id).sort((a, b) => (a === 'avoid') - (b === 'avoid') || ix(a) - ix(b))[0] || null);
   [...groups.values()].sort((a, b) => b.hi - a.hi || ix(secOf(a.m.mechanic)) - ix(secOf(b.m.mechanic)) || b.n - a.n).slice(0, 6).forEach((g) => {
-    wrong.push({ sev: g.hi ? 'bad' : 'warn', map: g.m.map, html: '<b>' + mech(g.m.mechanic, g.m.id) + (g.n > 1 ? ' ×' + g.n : '') + ':</b> ' + esc(g.m.detail) + (g.who.size > 1 ? ' <span class="sub">(' + esc([...g.who].slice(0, 4).join(', ') + (g.who.size > 4 ? ', +' + (g.who.size - 4) : '')) + ')</span>' : '') });
+    const sid = secFor(g.m.mechanic);
+    wrong.push({ sev: g.hi ? 'bad' : 'warn', map: g.m.map, go: g.m.fromNote ? ['overview', null] : ['audit', sid ? 'sec-' + sid : null], html: '<b>' + mech(g.m.mechanic, g.m.id) + (g.n > 1 ? ' ×' + g.n : '') + ':</b> ' + esc(g.m.detail) + (g.who.size > 1 ? ' <span class="sub">(' + esc([...g.who].slice(0, 4).join(', ') + (g.who.size > 4 ? ', +' + (g.who.size - 4) : '')) + ')</span>' : '') });
     fixes.push({ w: g.hi ? 1 : 2, t: g.m.mechanic, x: g.m.fix });
   });
   const worse = [...P].filter(([id, x]) => { const q = Q.get(id); return q && x.st === 'bad' && q.st !== 'bad'; }).sort((a, b) => ix(a[0]) - ix(b[0])).map(([, x]) => shortT(x.s.title));
-  if (worse.length) wrong.push({ sev: 'warn', html: '<b>Worse than last pull:</b> ' + esc(worse.join(', ')) + '.' });
+  if (worse.length) wrong.push({ sev: 'warn', go: ['audit', null], html: '<b>Worse than last pull:</b> ' + esc(worse.join(', ')) + '.' });
   // ---- what went well ----
   const well = [];
   if (it.kill) well.push(isKey ? '<b>The key was timed.</b> Nice work.' : '<b>The boss died.</b> Nice work.');
@@ -15450,32 +15557,45 @@ async function lastPull() {
   if (kicks && !missedK) well.push('<b>Every kickable cast was interrupted</b> (' + kicks + ' kicks).');
   const noteMiss = ms.filter((m) => m.fromNote && m.severity !== 'Low' && m.mechanic !== HCD);
   if (r.assign && !r.assign.error && r.assign.note && !noteMiss.length) well.push('<b>NSRT assignments followed</b>: nothing medium or serious from the note.');
-  // ---- the pull at a glance: the same tiles as the Player audit ----
-  const hasNote = !!(r.assign && !r.assign.error && r.assign.note);
+  // ---- the pull at a glance: a tile each, against the last pull, a click opens the tab with the details ----
+  const S0 = lpStats(r), S1 = prev ? lpStats(prev) : null, off = PERF_OFF();
+  const hasNote = S0.hasNote;
   // (minor note slips, like a player on the other side, aren't misses but shouldn't read as "all followed" either)
   const noteLow = new Set(ms.filter((m) => m.fromNote && m.severity === 'Low' && m.mechanic !== HCD).map((m) => m.player)).size;
-  const cdRows = hasNote ? (r.assign.cds || []).filter((x) => x.expected != null && x.expected <= ct + 0.05 && /^(on time|late|early|missed)$/.test(x.status)) : [];
-  const cdMiss = cdRows.filter((x) => x.status === 'missed').length, cdLate = cdRows.filter((x) => x.status === 'late' || x.status === 'early').length;
+  const cdRows = S0.cdRows, cdMiss = cdRows.filter((x) => x.status === 'missed').length, cdLate = cdRows.filter((x) => x.status === 'late' || x.status === 'early').length;
   const hiN = [...groups.values()].filter((g) => g.hi).length, medN = groups.size - hiN;
-  const tiles = '<div class="pts lp-tiles">' +
-    plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length), ds.length ? 'bad' : 'ok', ds.length ? 'first: ' + ds[0].player + ' at ' + T(ds[0].t) : 'nobody died') +
-    plTile(plIco('ability_creature_cursed_02'), 'Mechanics', groups.size ? groups.size + '<span> ' + (groups.size === 1 ? 'problem' : 'problems') + '</span>' : '0', hiN ? 'bad' : medN ? 'warn' : 'ok', groups.size ? [hiN ? hiN + ' serious' : '', medN ? medN + ' medium' : ''].filter(Boolean).join(' · ') : 'nothing medium or serious') +
-    plTile(plIco('inv_inscription_scroll'), 'Assignments', hasNote ? noteMiss.length + '<span> missed</span>' : '—', !hasNote ? 'na' : noteMiss.some((m) => m.severity === 'High') ? 'bad' : noteMiss.length || noteLow ? 'warn' : 'ok', !hasNote ? 'no NSRT note for this boss' : noteMiss.length ? plural(new Set(noteMiss.map((m) => m.player)).size, 'player') : noteLow ? noteLow + ' could be better' : 'all followed') +
-    plTile(plIco('spell_holy_divinehymn'), 'Healing cooldowns', cdRows.length ? cdRows.length - cdMiss - cdLate + '<span> / ' + cdRows.length + ' on time</span>' : '—', !cdRows.length ? 'na' : cdMiss ? 'bad' : cdLate ? 'warn' : 'ok', !cdRows.length ? (hasNote ? 'none came up' : 'no NSRT note for this boss') : cdMiss || cdLate ? [cdMiss ? cdMiss + ' missed' : '', cdLate ? cdLate + ' late or early' : ''].filter(Boolean).join(' · ') : 'all on time') +
-    plTile(plIco('ability_kick'), 'Interrupts', kicks + '<span> ' + (kicks === 1 ? 'kick' : 'kicks') + '</span>', missedK ? 'bad' : kicks ? 'ok' : 'na', missedK ? plural(missedK, 'cast') + ' got through' : kicks ? 'every cast kicked' : 'nothing to kick') + '</div>';
-  // ---- layout ----
-  // a Map button opens the animated map of that moment right under the line (one open at a time)
+  const TNAME = { audit: 'Mechanics', overview: 'Assignments', perf: 'Performance' };
+  const go = (html, tab, sec, kind) => '<button class="pt-go lp-go" type="button" data-go="' + tab + '"' + (sec ? ' data-sec="' + sec + '"' : '') + (kind ? ' data-kind="' + kind + '"' : '') + ' title="Open ' + TNAME[tab] + '">' + html + '</button>';
+  const cmp = (a, b) => (S1 ? lpDelta(a, b, true) : '');
+  // (the Report card: the raid's average grade this pull and the fix most players share; only where Performance is on)
+  let rcTile = '';
+  if (!off && S0.rc != null) { const cm = new Map(); for (const x of rcCards([r])) { const f = x.fixes[0]; if (f && f.gain >= 3) cm.set(f.t, (cm.get(f.t) || 0) + 1); } const top = [...cm].sort((a, b) => b[1] - a[1])[0];
+    rcTile = go(plTile(rcG(S0.rc), 'Report card', Math.round(S0.rc) + '<span>/100</span>' + (S1 && S1.rc != null ? lpDelta(S0.rc, S1.rc, false) : ''), gBucket(S0.rc), top ? 'most common: ' + top[0] : 'the raid\'s average', true), 'perf', null, 'card'); }
+  const tiles = '<div class="pts lp-tiles' + (rcTile ? ' six' : '') + '">' +
+    go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length) + cmp(S0.deaths, S1 && S1.deaths), ds.length ? 'bad' : 'ok', ds.length ? 'first: ' + ds[0].player + ' at ' + T(ds[0].t) : 'nobody died'), 'audit', 'sec-deaths') +
+    go(plTile(plIco('ability_creature_cursed_02'), 'Mechanics', (groups.size ? groups.size + '<span> ' + (groups.size === 1 ? 'problem' : 'problems') + '</span>' : '0') + cmp(S0.probs, S1 && S1.probs), hiN ? 'bad' : medN ? 'warn' : 'ok', groups.size ? [hiN ? hiN + ' serious' : '', medN ? medN + ' medium' : ''].filter(Boolean).join(' · ') : 'nothing medium or serious'), 'audit') +
+    go(plTile(plIco('inv_inscription_scroll'), 'Assignments', hasNote ? noteMiss.length + '<span> missed</span>' + (S1 && S1.hasNote ? cmp(S0.noteMiss, S1.noteMiss) : '') : '—', !hasNote ? 'na' : noteMiss.some((m) => m.severity === 'High') ? 'bad' : noteMiss.length || noteLow ? 'warn' : 'ok', !hasNote ? 'no NSRT note for this boss' : noteMiss.length ? plural(new Set(noteMiss.map((m) => m.player)).size, 'player') : noteLow ? noteLow + ' could be better' : 'all followed'), 'overview') +
+    go(plTile(plIco('spell_holy_divinehymn'), 'Healing cooldowns', cdRows.length ? cdRows.length - cdMiss - cdLate + '<span> / ' + cdRows.length + ' on time</span>' + (S1 && S1.cdPct != null ? lpDelta(S0.cdPct, S1.cdPct, false, '%') : '') : '—', !cdRows.length ? 'na' : cdMiss ? 'bad' : cdLate ? 'warn' : 'ok', !cdRows.length ? (hasNote ? 'none came up' : 'no NSRT note for this boss') : cdMiss || cdLate ? [cdMiss ? cdMiss + ' missed' : '', cdLate ? cdLate + ' late or early' : ''].filter(Boolean).join(' · ') : 'all on time'), 'overview') +
+    go(plTile(plIco('ability_kick'), 'Interrupts', kicks + '<span> ' + (kicks === 1 ? 'kick' : 'kicks') + '</span>', missedK ? 'bad' : kicks ? 'ok' : 'na', missedK ? plural(missedK, 'cast') + ' got through' : kicks ? 'every cast kicked' : 'nothing to kick'), 'audit', 'sec-kicks') + rcTile + '</div>';
+  // ---- layout: what to fix first and what went wrong on the left, the boxes for between pulls on the right ----
+  // a Map button opens the animated map of that moment right under the line (one open at a time); › opens its tab
   const LPM = [];
-  // (the same "What went wrong / What went right" pair as Mechanics and Assignments; a moment with a map gets its button)
   const fx = fixes.filter((f) => f.x).sort((a, b) => a.w - b.w).filter((f, i, a) => a.findIndex((g) => g.t === f.t || g.x === f.x) === i).slice(0, 3); // (no repeated advice)
-  // (the same numbered list as the Player audit's focus for next pull; it sits at the top of the right column, beside
-  // "What went wrong", so it's on the first screen)
   const fixP = fx.length ? '<div class="panel lp-fix"><h3>Fix first on the next pull</h3>' + fx.map((f, i) => '<div class="plf k' + i + '"><span class="plf-n">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b><div class="sub">' + esc(f.x) + '</div></div></div>').join('') + '</div>' : '';
-  h += tiles + wrongRight(wrong.map((x) => ({ sev: x.sev, html: x.html, extra: x.map ? '<button class="btn lpmb" data-i="' + (LPM.push(x.map) - 1) + '">Map</button>' : '' })), well,
-    { max: 6, none: 'Nothing medium or serious this pull.', noneRight: 'Not much to celebrate yet: check what went wrong.', moreWhere: 'on Mechanics', rightTop: fixP });
-  h += '<p class="muted" style="font-size:12.5px">The full details are in the Mechanics and Assignments tabs. Minor mistakes are left out of this recap.</p>';
-  view(h); refreshIcons();
+  const wP = wrongRight(wrong.map((x) => ({ sev: x.sev, html: x.html, extra: (x.map ? '<button class="btn lpmb" data-i="' + (LPM.push(x.map) - 1) + '">Map</button>' : '') + (x.go ? '<button class="btn lp-gob" type="button" data-go="' + x.go[0] + '"' + (x.go[1] ? ' data-sec="' + x.go[1] + '"' : '') + ' title="Open ' + TNAME[x.go[0]] + '" aria-label="Open ' + TNAME[x.go[0]] + '">›</button>' : '') })), [],
+    { max: 6, none: 'Nothing medium or serious this pull.', moreWhere: 'on Mechanics', sub: 'minor ones left out' });
+  let rows = null; const cs = r.combatants || [];
+  const prepRows = () => { const out = []; for (const c of cs) { const p = [...r.players.values()].find((y) => y.name === c.name || (c.name && y.name.split('-')[0] === c.name.split('-')[0])); if (p) out.push(auditChar(c, p)); } return out; };
+  const needNames = cs.some((c) => c.auras.some((a) => !a.name && a.ability));
+  if (cs.length && !needNames) rows = prepRows();
+  const side = lpPace(r, bestR, bestO && bestO.x.pull) + lpPrep(r, cs.length ? rows : false) + lpTalk(r) + lpCds(r, cdRows);
+  // (what went well: at the top of the right side, beside what to fix, so it's on the first screen)
+  const wellP = well.length ? '<div class="panel lp-side-p lp-well"><h3 class="nh"><span>What went well</span>' + hst('ok', plural(well.length, 'thing')) + '</h3>' + well.map((x) => '<div class="lp-wl"><span class="lp-wk">✓</span><span>' + x + '</span></div>').join('') + '</div>' : '';
+  h += tiles + '<div class="lp-cols"><div class="lp-main">' + fixP + wP + '</div><div class="lp-side">' + wellP + side + '</div></div>';
+  view('<div class="lpv">' + h + '</div>'); refreshIcons();
   if ($('#lpLatest')) $('#lpLatest').onclick = () => select(same[same.length - 1]);
+  // (a tile or a line's ›: that tab, scrolled to its section)
+  $('#view').querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; if (b.dataset.kind) S.perfKind = b.dataset.kind; renderMain(); if (!b.dataset.sec) window.scrollTo({ top: 0 }); }));
   const pmap = new Map(players().map((p) => [p.name, p]));
   $('#view').querySelectorAll('.lpmb').forEach((b) => (b.onclick = () => {
     const row = b.closest('.pb-r'), open = row.nextElementSibling && row.nextElementSibling.classList.contains('lp-map') && row.nextElementSibling.dataset.i === b.dataset.i;
@@ -15484,6 +15604,8 @@ async function lastPull() {
     const mp = LPM[+b.dataset.i], box = document.createElement('div'); box.className = 'lp-map mm'; box.dataset.i = b.dataset.i; row.after(box); b.classList.add('on');
     box.innerHTML = miniMap(mp, pmap); bindZoom(box); bindAnim(box, mp, pmap); hydrateMapIcons(box); refreshIcons();
   }));
+  // (flasks and food: once their buffs' names are looked up, the box fills in)
+  if (cs.length && needNames) resolveCombatants(cs).then(() => { if (S.rep !== r || S.tab !== 'live') return; const el = $('#lpPrep'); if (el) { el.outerHTML = lpPrep(r, prepRows()); refreshIcons(); } }).catch(() => { /* (the potions are still shown) */ });
 }
 const VIEWS = { audit, overview, night, player, perf, live: lastPull };
 
