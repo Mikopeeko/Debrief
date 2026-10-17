@@ -3,6 +3,10 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Parked (your call, Oct 17): Performance stays raw data graphs for now**, until you have a clearer vision. The
+  Report card is the part that judges; the other views show the numbers. Ideas on the shelf for later: a short "what stood
+  out" in each view's right panel (three lines at most, replacing what's there, not added), small red/gold marks on the
+  rows that need attention, and a "Me" switch that puts your own character first everywhere.
 - [ ] **To talk about next (your note): Player audit vs Performance.** The Report card may have replaced the Player audit
   (both grade each player: casting, cooldowns, survival kit, a focus list). Decide what stays where: fold the Player audit's
   unique parts (gear, enchants and buffs at the pull, "ready to raid", MVPs) into Performance, or keep it as its own tab.
