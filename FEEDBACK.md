@@ -69,6 +69,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 130: wasted amounts on the Report card, mana for healers only
+- [x] **The Report card says how much was wasted** (your ask): "Wasted 312 Energy, 14 Combo Points · sat at full 12 s",
+  each power on its own line underneath, and the fix says it too ("…and 387 Rage went to waste"). Secondary powers only,
+  never mana. Over the night it adds them up ("wasted 1,974 Rage in all"). The grade itself is unchanged (still time at full).
+- [x] **Mana is for healers only** (your call): Arcane Mages and everyone else are off the Mana list.
+
 ## 2026-10-17, round 129: Resources (healer mana moved in)
 - [x] **A new Performance view, Resources** (your idea): one power at a time (a switch on top: Mana, Rage, Energy, Focus,
   Holy Power, Astral Power, Runic Power, Fury, Essence and the rest), with the raid's tiles (wasted, time at full, built
@@ -79,7 +85,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Healer mana moved into Resources → Mana** (your call): the same checks (ran low, spent fast, mana to spare, potions,
   the boss's health line), now with what each healer's mana came from (Innervate, Mana Tea, Source of Magic, their own
   regeneration) and went on. Mana is counted in full bars (1 bar = their whole mana). The Healing view's "Healer mana"
-  button is gone. Arcane Mages show too, but aren't judged against the boss (they burn and refill on purpose).
+  button is gone. Only healers are listed under Mana (your call, round 130).
 - [x] The log names the power that comes from a spell; what it doesn't (energy and mana coming back on their own, rage
   from auto attacks and hits) is worked out from what they spent and what they started and ended with, and labelled.
   Warcraft Logs reports now bring every power gain too, so combo points can be judged from a report after all.

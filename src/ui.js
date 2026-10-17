@@ -5003,8 +5003,8 @@ function bossHpLine(r, end) {
 const RES_DIV = { 1: 10, 6: 10, 7: 10, 8: 10 }; // (the log keeps these in tenths in costs and levels; its gains are whole points)
 const RES_UNNAMED = { 0: 'Mana regeneration', 1: 'Auto attacks and hits taken', 2: 'Natural regeneration', 3: 'Natural regeneration', 5: 'Rune regeneration', 19: 'Natural regeneration' };
 const resName = (ty) => (ty === '0' ? 'Mana' : RES_N[ty] || 'Power ' + ty);
-// (whose mana is worth a look: healers', and Arcane Mages', whose damage runs on it)
-const manaUser = (p) => p.role === 'healer' || p.specId === 62;
+// (whose mana is worth a look: healers' only, by request)
+const manaUser = (p) => p.role === 'healer';
 // (an amount as shown: mana in full bars of it, the rest in points)
 const resAmt = (ty, v) => (ty === '0' ? (v >= 10 ? String(Math.round(v)) : v >= 0.095 ? v.toFixed(1) : v > 0.004 ? '<0.1' : '0') : v >= 10000 ? C(v) : Math.round(v).toLocaleString('en-US'));
 const resUnit = (ty, v) => { const a = resAmt(ty, v); return a + (ty === '0' ? (a === '1.0' ? ' bar' : ' bars') : ''); };
@@ -5051,12 +5051,10 @@ function resOf(r, p, ty, w0, w1) {
 }
 // a player's mana against the boss's health (the old Healer mana view's checks): its pill and line
 function manaPace(r, q, w0, w1, end, boss) {
-  const kill = r.item.kill && w1 >= end - 0.5, pct = (v) => Math.round(100 * v) + '%', dur = (s) => (s < 60 ? Math.round(s) + 's' : T(s)), harder = q.p.role === 'healer' ? 'heal harder' : 'spend more';
+  const kill = r.item.kill && w1 >= end - 0.5, pct = (v) => Math.round(100 * v) + '%', dur = (s) => (s < 60 ? Math.round(s) + 's' : T(s));
   const bAt = (t) => { if (!boss) return null; let v = boss[0][1]; for (const [s, x] of boss) { if (s > t) break; v = x; } return v; };
   const ms = q.pts, last = ms.length ? ms[ms.length - 1] : null, gone = q.t1 < w1 - 0.05;
   if (!last) return { st: 'na', pill: 'No mana', txt: 'No mana in this pull.' };
-  // (an Arcane Mage burns mana and fills it back up on purpose: shown, not judged)
-  if (q.p.role !== 'healer') { const lo = Math.min(...ms.map((m) => m[1])); return { st: 'na', pill: 'Not judged', txt: 'Arcane spends its mana in bursts on purpose, so it isn\'t held against the boss\'s health. Lowest ' + pct(lo) + ', ended with ' + pct(last[1]) + '.' }; }
   // (time under 25% and when it started; time well ahead of the boss: under 40% with the boss 25 points higher)
   let low = 0, lowAt = null, fast = 0, fastAt = null;
   for (let i = 1; i < ms.length; i++) { const dt = ms[i][0] - ms[i - 1][0], v = ms[i - 1][1], b = bAt(ms[i - 1][0]); if (v < 0.25) { low += dt; if (lowAt == null) lowAt = ms[i - 1][0]; } if (b != null && v < 0.4 && b - v > 0.25) { fast += dt; if (!fastAt) fastAt = [ms[i - 1][0], v, b]; } }
@@ -5064,7 +5062,7 @@ function manaPace(r, q, w0, w1, end, boss) {
   if (low >= 8) return { st: 'warn', pill: low >= 30 ? 'Ran low' : 'Dipped low', txt: 'Under 25% for ' + dur(low) + ', from ' + T(lowAt) + '.' + (pot || ' No mana potion.') + died, low: true };
   if (fast >= 20) return { st: 'warn', pill: 'Spent fast', txt: 'Mana ran ahead of the boss: ' + pct(fastAt[1]) + ' with the boss at ' + pct(fastAt[2]) + ', at ' + T(fastAt[0]) + '.' + pot + died, fast: true };
   // (dying in the wipe's last seconds still counts: that's mana the raid died with)
-  if (!(gone && q.t1 < w1 - 15) && bEnd != null && last[1] - bEnd > 0.3) return { st: 'warn', pill: 'Mana to spare', txt: (kill ? 'Ended the kill with ' + pct(last[1]) + ' mana' : (gone ? 'Died at ' + T(q.t1) + ' with ' : 'Had ') + pct(last[1]) + ' mana, the boss at ' + pct(bEnd)) + ': room to ' + harder + '.' + pot, spare: true };
+  if (!(gone && q.t1 < w1 - 15) && bEnd != null && last[1] - bEnd > 0.3) return { st: 'warn', pill: 'Mana to spare', txt: (kill ? 'Ended the kill with ' + pct(last[1]) + ' mana' : (gone ? 'Died at ' + T(q.t1) + ' with ' : 'Had ') + pct(last[1]) + ' mana, the boss at ' + pct(bEnd)) + ': room to heal harder.' + pot, spare: true };
   return { st: 'ok', pill: 'On pace', txt: (bEnd != null ? 'Mana came down with the boss\'s health' : 'Never under 25%') + (gone ? '.' + died : '; ended with ' + pct(last[1]) + '.') + pot };
 }
 // The Resources view: a switch for the power, then (one pull) its chart beside the raid's tiles, a bar per player and the
@@ -5099,12 +5097,12 @@ function resView(list, one) {
   const sum = (k) => rows.reduce((s, x) => s + x[k], 0), stW = (v) => (v <= 0.03 ? 'ok' : v <= 0.08 ? 'warn' : 'bad'), stF = (v) => (v <= 0.03 ? 'ok' : v <= 0.1 ? 'warn' : 'bad');
   let tiles, head;
   if (mana) {
-    const runs = rows.flatMap((x) => x.per), low = runs.filter(({ q }) => q.v.low), lowP = [...new Set(low.map(({ w }) => w.r.item.pull))], pots = sum('pots'), ends0 = rows.filter((x) => x.end != null), ends = ends0.some((x) => x.p.role === 'healer') ? ends0.filter((x) => x.p.role === 'healer') : ends0;
+    const runs = rows.flatMap((x) => x.per), low = runs.filter(({ q }) => q.v.low), lowP = [...new Set(low.map(({ w }) => w.r.item.pull))], pots = sum('pots'), ends = rows.filter((x) => x.end != null);
     const avgEnd = ends.length ? ends.reduce((s, x) => s + x.end, 0) / ends.length : null, potBy = rows.filter((x) => x.pots).map((x) => x.p.name);
     tiles = [plTile(plIco('spell_shadow_manaburn'), 'Ran low', String(one ? low.length : lowP.length), low.length ? 'warn' : 'ok', low.length ? (one ? 'under 25% for 8 s or more: ' + low.map(({ q }) => q.p.name).join(', ') : 'pulls where someone did: ' + lowP.join(', ')) : 'nobody stayed under 25%'),
       plTile(plIco('inv_potion_76'), 'Mana potions', String(pots), 'na', pots ? 'by ' + potBy.slice(0, 3).join(', ') + (potBy.length > 3 ? ' and ' + (potBy.length - 3) + ' more' : '') : 'none used', true),
       plTile(plIco('inv_misc_pocketwatch_01'), 'Mana left', avgEnd == null ? '—' : resPc(avgEnd), 'na', one ? (list[0].r.item.kill ? 'on average at the kill: the lower the better' : 'on average at the end of the pull') : 'on average at the end of each pull', true)];
-    head = { v: avgEnd == null ? '—' : resPc(avgEnd) + '<span> mana left</span>', s: plural(rows.length, 'player') + (low.length ? ' · ' + low.length + ' ran low' : '') };
+    head = { v: avgEnd == null ? '—' : resPc(avgEnd) + '<span> mana left</span>', s: plural(rows.length, 'healer') + (low.length ? ' · ' + low.length + ' ran low' : '') };
   } else {
     const tB = sum('built'), tW = sum('wasted'), tS = sum('sA'), tC = sum('capped'), tAl = sum('al'), worst = rows[0], lg = rows.flatMap((x) => x.runs.map((u) => ({ ...u, p: x.p }))).sort((a, b) => (b.e - b.s) - (a.e - a.s))[0];
     const wf = tW / Math.max(1e-9, tB + tW), ff = tC / Math.max(1, tAl);
@@ -5128,16 +5126,15 @@ function resView(list, one) {
       chips = one ? ' <span class="hm-p ' + x.per[0].q.v.st + '">' + esc(x.per[0].q.v.pill) + '</span>' : x.lowN ? ' <span class="hm-p warn">low in ' + x.lowN + ' of ' + x.per.length + '</span>' : ''; }
     else { segs = [[100 * (1 - x.share), 'm'], [100 * x.share, 'ad']]; v = resPc(x.share); sub = secsS(x.capped); }
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' rs-r', attrs: ' type="button" data-rn="' + esc(x.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: x.p, segs, v, sub, chips }); }).join('');
-  const left = '<div class="panel pf-bars rs-bars"><h3 class="nh"><span>' + esc(nm) + ' by player</span><small>' + (mana ? 'the bar: mana left at the end' + (one ? '' : ', on average') + ' · spent: in full bars' : 'the bar: all they built · red: built while already full') + (one ? '' : ' · over ' + plural(list.length, 'pull')) + '</small></h3>' +
+  const left = '<div class="panel pf-bars rs-bars"><h3 class="nh"><span>' + esc(nm) + (mana ? ' by healer' : ' by player') + '</span><small>' + (mana ? 'the bar: mana left at the end' + (one ? '' : ', on average') + ' · spent: in full bars' : 'the bar: all they built · red: built while already full') + (one ? '' : ' · over ' + plural(list.length, 'pull')) + '</small></h3>' +
     (mana ? cbHead('Left', 'Spent') : cbHead('Wasted', 'At full')) + bars + '</div>';
   const how = '<details class="howit"><summary>How it works</summary><div>' + (mana
-    ? 'Mana comes from each player\'s casts, every 2 seconds at most, up to the wipe filter, and is counted in full bars (1 bar is their whole mana). The aim is for mana to come down about as fast as the boss\'s health (the grey line) and end as low as it can. <b>Ran low</b>: under 25% for 8 seconds or more. <b>Spent fast</b>: under 40% while the boss still had 25 points more health. <b>Mana to spare</b>: 30 points more mana than the boss had health at the end, so there was room to heal harder. <b>Gained from</b>: what the log names (Innervate, Mana Tea, Source of Magic, potions…); their own regeneration is worked out from what they spent and what they started and ended with.'
+    ? 'Mana comes from each healer\'s casts, every 2 seconds at most, up to the wipe filter, and is counted in full bars (1 bar is their whole mana). The aim is for mana to come down about as fast as the boss\'s health (the grey line) and end as low as it can. <b>Ran low</b>: under 25% for 8 seconds or more. <b>Spent fast</b>: under 40% while the boss still had 25 points more health. <b>Mana to spare</b>: 30 points more mana than the boss had health at the end, so there was room to heal harder. <b>Gained from</b>: what the log names (Innervate, Mana Tea, Source of Magic, potions…); their own regeneration is worked out from what they spent and what they started and ended with.'
     : 'Everything comes from the log: what each cast cost, every spell that gave ' + esc(nm) + ', and their ' + esc(nm) + ' on their casts and hits, up to the wipe filter and to when they died for good. <b>Wasted</b>: what a spell gave while they were already full, plus about what their natural regeneration (for rage: auto attacks and hits) would have given while they sat at full. <b>At full</b>: time spent at the top, between two readings both at full (up to 4 s each), not while paying it, dead, mind controlled or while the whole raid was waiting. What the log doesn\'t name is worked out: what they spent, plus what they ended with, less what they started with and what the named gains gave.') + '</div></details>';
   return { head, html: sw + top + '<div class="pf-cols">' + left + '<div class="panel pf-det rs-det">' + (sel ? resDetail(sel, ty, one) : resRaid(rows, ty, one)) + '</div></div>' + how };
 }
 // (over the night: in how many pulls each mana problem came up)
 function paceNight(x) {
-  if (x.p.role !== 'healer') return { st: 'na', pill: 'Not judged', txt: 'Arcane spends its mana in bursts on purpose, so it isn\'t held against the boss\'s health.' };
   const n = (k) => x.per.filter(({ q }) => q.v[k]).length, parts = [['low', 'ran low'], ['fast', 'spent fast'], ['spare', 'had mana to spare']].filter(([k]) => n(k)).map(([k, l]) => l + ' in ' + n(k));
   return parts.length ? { st: 'warn', pill: x.warn + ' of ' + x.per.length + ' pulls', txt: capS(parts.join(', ')) + ' of ' + plural(x.per.length, 'pull') + '.' } : { st: 'ok', pill: 'On pace', txt: 'Kept pace with the boss in all ' + plural(x.per.length, 'pull') + '.' };
 }
@@ -5173,10 +5170,10 @@ function resRaid(rows, ty, one) {
   if (mana) {
     const vs = one ? rows.map((x) => [x, x.per[0].q.v]) : [];
     const nLow = vs.filter(([, v]) => v.low), nNoPot = nLow.filter(([x]) => !x.pots).length, nSpare = vs.filter(([, v]) => v.spare).length, nFast = vs.filter(([, v]) => v.fast).length, parts = [];
-    if (nLow.length) parts.push(plural(nLow.length, 'player') + ' ran low on mana' + (nNoPot === nLow.length ? (nLow.length === 1 ? ', with no mana potion' : ', and none used a mana potion') : nNoPot ? ', ' + nNoPot + ' without a mana potion' : ''));
-    if (nFast) parts.push(plural(nFast, 'player') + ' spent mana faster than the boss lost health');
-    if (nSpare) parts.push(plural(nSpare, 'player') + ' had mana to spare');
-    if (one) h += '<p class="hm-sum ' + (parts.length ? 'warn' : 'ok') + '">' + (parts.length ? '! ' : '✓ ') + esc(parts.length ? parts.join('; ') + '.' : 'Everyone\'s mana kept pace with the boss\'s health.') + '</p>';
+    if (nLow.length) parts.push(plural(nLow.length, 'healer') + ' ran low on mana' + (nNoPot === nLow.length ? (nLow.length === 1 ? ', with no mana potion' : ', and none used a mana potion') : nNoPot ? ', ' + nNoPot + ' without a mana potion' : ''));
+    if (nFast) parts.push(plural(nFast, 'healer') + ' spent mana faster than the boss lost health');
+    if (nSpare) parts.push(plural(nSpare, 'healer') + ' had mana to spare');
+    if (one) h += '<p class="hm-sum ' + (parts.length ? 'warn' : 'ok') + '">' + (parts.length ? '! ' : '✓ ') + esc(parts.length ? parts.join('; ') + '.' : 'Every healer\'s mana kept pace with the boss\'s health.') + '</p>';
     h += '<div class="rs-vl">' + rows.map((x) => { const v = one ? x.per[0].q.v : paceNight(x);
       return '<button type="button" class="rs-vr" data-rn="' + esc(x.p.name) + '">' + avatar(x.p, true) + '<span>' + who(x.p) + ' <span class="hm-p ' + v.st + '">' + esc(v.pill) + '</span></span><span class="rs-vt">' + esc(v.txt) + '</span></button>'; }).join('') + '</div>';
   } else {
@@ -5710,12 +5707,17 @@ function cardOf(r, p) {
   // is from just before spending: they weren't sitting on it); not while dead, mind controlled or the raid was waiting)
   { const idle0 = rcIdle(r, p), aliveT = Math.max(1, aliveSecs(r, p, 0, until) - idle0.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, until) - a), 0)), rows = [];
     for (const [ty, rs] of p.res || []) { const nm = RES_N[ty]; if (!nm) continue; const pts = rs.pts.filter(([t]) => t <= until); if (pts.length < 12 || !pts.some(([, c, m]) => c < m * 0.98)) continue;
-      const fr = fullRuns(r, p, pts, 0, until); rows.push({ nm, capped: fr.capped, runs: fr.runs.length, pct: 100 * fr.capped / aliveT, longest: fr.longest }); }
+      // (and how much of it went to waste, as the Resources view counts it: built while already full)
+      const fr = fullRuns(r, p, pts, 0, until), wst = Math.round(resOf(r, p, ty, 0, until).wasted);
+      rows.push({ ty, nm, capped: fr.capped, runs: fr.runs.length, pct: 100 * fr.capped / aliveT, longest: fr.longest, wst }); }
     if (rows.length) {
       const worst = rows.slice().sort((a, b) => b.pct - a.pct)[0], sc = worst.pct <= 3 ? 100 : worst.pct >= 20 ? 20 : 100 - (worst.pct - 3) * 80 / 17;
-      add('btn', { k: 'res', label: 'Wasted resources', sc, w: role === 'tank' ? 12 : 25, num: worst.pct, unit: '% of the time at full',
-        html: worst.capped >= 2 ? 'Sat at full <b>' + Math.round(worst.capped) + ' s</b> (' + Math.round(worst.pct) + '% of the time alive)' + rows.filter((x2) => x2.capped >= 2).map((x2) => rcSub(rcSt(x2.pct <= 3 ? 100 : x2.pct >= 20 ? 20 : 100 - (x2.pct - 3) * 80 / 17), esc(x2.nm) + ': at full ' + Math.round(x2.capped) + ' s, ' + plural(x2.runs, 'time') + (x2.longest && x2.longest.e - x2.longest.s >= 3 ? '<span class="sub"> · the longest from ' + T(x2.longest.s) + ' (' + Math.round(x2.longest.e - x2.longest.s) + ' s)</span>' : ''))).join('') : 'Never sat at full ' + esc(rows.map((x2) => x2.nm).join(' or ')),
-        fix: sc < 90 ? { t: 'Spend your ' + worst.nm + ' before it caps', x: 'Your ' + worst.nm + ' sat at full for ' + Math.round(worst.capped) + ' s (' + plural(worst.runs, 'time') + (worst.longest ? ', the longest from ' + T(worst.longest.s) : '') + '). Anything it would have built there was wasted: spend some before you press another builder.' } : null });
+      const wOf = (x2) => resAmt(x2.ty, x2.wst) + ' ' + x2.nm, wasted = rows.filter((x2) => x2.wst >= 1).sort((a, b) => b.pct - a.pct || b.wst - a.wst);
+      const head = (wasted.length ? 'Wasted <b>' + esc(wasted.map(wOf).join(', ')) + '</b>' : 'Wasted nothing') + (worst.capped >= 2 ? '<span class="sub"> · sat at full ' + Math.round(worst.capped) + ' s (' + Math.round(worst.pct) + '% of the time alive)</span>' : '<span class="sub"> · never sat at full</span>');
+      const subs = rows.filter((x2) => x2.capped >= 2 || x2.wst >= 1).map((x2) => rcSub(rcSt(x2.pct <= 3 ? 100 : x2.pct >= 20 ? 20 : 100 - (x2.pct - 3) * 80 / 17), esc(x2.nm) + ': <b>' + resAmt(x2.ty, x2.wst) + ' wasted</b>' + (x2.capped >= 2 ? ', at full ' + Math.round(x2.capped) + ' s, ' + plural(x2.runs, 'time') : '') + (x2.longest && x2.longest.e - x2.longest.s >= 3 ? '<span class="sub"> · the longest from ' + T(x2.longest.s) + ' (' + Math.round(x2.longest.e - x2.longest.s) + ' s)</span>' : ''))).join('');
+      add('btn', { k: 'res', label: 'Wasted resources', sc, w: role === 'tank' ? 12 : 25, num: worst.pct, unit: '% of the time at full', wst: Object.fromEntries(rows.map((x2) => [x2.nm, x2.wst])),
+        html: head + (rows.length > 1 || worst.capped >= 2 ? subs : ''),
+        fix: sc < 90 ? { t: 'Spend your ' + worst.nm + ' before it caps', x: 'Your ' + worst.nm + ' sat at full for ' + Math.round(worst.capped) + ' s (' + plural(worst.runs, 'time') + (worst.longest ? ', the longest from ' + T(worst.longest.s) : '') + ')' + (worst.wst >= 1 ? ', and ' + wOf(worst) + ' went to waste' : '') + '. Anything it would have built there was wasted: spend some before you press another builder.' } : null });
     }
   }
   // ---- casts that didn't finish: started (a cast bar) but never went off; not when they died or were mind controlled
@@ -5847,7 +5849,9 @@ function rcCards(reps) {
     const fx = new Map(); for (const { r, c } of list) for (const f of c.fixes) { const y = fx.get(f.key) || { ...f, gain: 0, n: 0, pulls: [] }; y.gain += f.gain * wt(c); y.n++; y.pulls.push(r.item.pull); Object.assign(y, { t: f.t, x: f.x }); fx.set(f.key, y); }
     const tw = list.reduce((s, { c }) => s + wt(c), 0), fixes = [...fx.values()].map((f) => ({ ...f, gain: f.gain / tw })).sort((a, b) => b.gain - a.gain);
     // (over several pulls, each check as its average: how it went, and its worst pull)
-    const checks = {}; for (const [k] of RC_SEC) { const by = new Map(); for (const { r, c } of list) for (const ck of c.secs[k].checks) { const y = by.get(ck.k) || { ...ck, scs: [], nums: [], dens: [], pulls: 0, worst: null }; y.pulls++; if (ck.sc != null) { y.scs.push([ck.sc, c.until]); if (!y.worst || ck.sc < y.worst[0]) y.worst = [ck.sc, r.item.pull]; } if (ck.num != null) y.nums.push(ck.num); if (ck.den != null) y.dens.push(ck.den); by.set(ck.k, y); } checks[k] = [...by.values()]; }
+    const checks = {}; for (const [k] of RC_SEC) { const by = new Map(); for (const { r, c } of list) for (const ck of c.secs[k].checks) { const y = by.get(ck.k) || { ...ck, scs: [], nums: [], dens: [], pulls: 0, worst: null }; y.pulls++; if (ck.sc != null) { y.scs.push([ck.sc, c.until]); if (!y.worst || ck.sc < y.worst[0]) y.worst = [ck.sc, r.item.pull]; } if (ck.num != null) y.nums.push(ck.num); if (ck.den != null) y.dens.push(ck.den);
+      if (ck.wst) { y.wstT = y.wstT || {}; for (const n in ck.wst) y.wstT[n] = (y.wstT[n] || 0) + ck.wst[n]; } // (wasted resources: each power's amount, added up)
+      by.set(ck.k, y); } checks[k] = [...by.values()]; }
     return { p, role: last.role, n: list.length, secs, overall: avg((c) => c.overall), fixes, last, checks };
   });
 }
@@ -5889,7 +5893,9 @@ function rcDetail(x, night) {
     // (over several pulls: a share as its average, a count as its total, uses as "n of possible"; and the worst pull)
     const tw = ck.scs.reduce((s, [, w]) => s + w, 0), a = tw ? ck.scs.reduce((s, [v, w]) => s + v * w, 0) / tw : null, tot = ck.nums.reduce((s, v) => s + v, 0), avgN = ck.nums.length ? tot / ck.nums.length : null;
     const txt = !ck.nums.length ? '' : ck.nt === 'sum' ? (ck.word === 'battle res' ? resses(tot) : plural(tot, ck.word)) + ' over ' + plural(ck.pulls, 'pull') : ck.nt === 'frac' ? tot + ' of ' + ck.dens.reduce((s, v) => s + v, 0) + (ck.word ? ' ' + ck.word : '') + ' over ' + plural(ck.pulls, 'pull') : ck.nt === 'C' ? C(avgN) + ck.unit + ' on average' : Math.round(avgN) + ck.unit + ' on average';
-    return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub"> · worst: pull ' + ck.worst[1] + '</span>' : '')); };
+    const wl = ck.wstT ? Object.entries(ck.wstT).filter(([, v]) => v >= 1).sort((u, v) => v[1] - u[1]) : [];
+    const wTxt = ck.wstT ? ' · ' + (wl.length ? 'wasted ' + wl.map(([n, v]) => Math.round(v).toLocaleString('en-US') + ' ' + n).join(', ') : 'nothing wasted') + ' in all' : '';
+    return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + esc(wTxt) + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub"> · worst: pull ' + ck.worst[1] + '</span>' : '')); };
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
     return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span></header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
   const go = '<div class="rk-go"><span class="sub">See it in</span>' + [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage'], ['res', 'Resources'], ['surv', 'Survivability'], ['util', 'Utility']].map(([k, l]) => '<button class="btn" type="button" data-rcgo="' + k + '" data-rcn="' + esc(x.p.name) + '">' + l + '</button>').join('') + '</div>';
