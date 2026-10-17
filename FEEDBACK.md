@@ -19,6 +19,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 115: Deaths and Avoidable damage made simple, Coiled Altar fixes
+- [x] **Deaths, rebuilt** (your note: overkill, simpler but clear). One line per death: when, who, what killed them, and the one
+  thing that would have helped (a mistake, or a defensive that was ready). Deaths from the same hit are one line ("Schooty and
+  14 more"). Opening a line shows the last 5 seconds in a sentence, the three biggest hits as bars, and Map / Every event. The
+  health chart and the long hit table are gone.
+- [x] **Avoidable damage as bars** (your note), on every boss: each source on the left, a bar per player for how often they got
+  hit (red or amber past the limits), with the damage, "died to it" and "tank, not judged" by the name.
+- [x] **Heatmap removed** from the Performance tab (your note).
+- [x] The **Deaths heading** always shows a skull now (it borrowed whatever spell a log called "Death").
+- [x] **Coiled Altar, Guillotine soaks**: a drop whose cast never finished (on a top Mythic kill, Zul'jan started one right as P2
+  began) showed "0 in the circle, needs 5". It now reads "didn't land" and isn't judged. A drop whose cast finished still counts
+  with nobody hit, so a circle of immunities is still checked (your note).
+- [x] **Coiled Altar, the push into the intermission**: amber only when the next Dreadmarch went out before the push (it was amber
+  for any push more than 5 seconds after the last Soul Sever).
+- [x] Checked all 32 of your Mythic pulls from Oct 15 and a top guild's Mythic kill (game facts only): no errors, every phase found.
+
 ## 2026-10-17, round 114: Big cooldowns, damage tiles, spec icons
 - [x] **Big cooldowns** (your note: just whether they're maximizing usage): each line is now "used 5 of 6". No list of times, no
   Bloodlust tag; a time shows only when it sat ready a long stretch (a minute, or half its cooldown for the long ones), e.g.

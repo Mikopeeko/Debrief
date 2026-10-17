@@ -2729,7 +2729,11 @@ function buildCoiledAltar(ev, r, h) {
       const who = [...new Set(w.map((e) => e.dst).concat(deb.map((e) => e.dst)))];
       // only soakers count as "died in the soak" (others dying at the same moment died to something else)
       const died = r.deaths.filter((d) => who.includes(d.guid) && d.t >= (w[0] ? w[0].t : t) - 0.2 && d.t <= (w[0] ? w[0].t : t) + 4).map((d) => d.player);
-      soaks.push({ n, t, who, died, hit: w[0] ? w[0].t : null });
+      // (landed: false when the cast never finished (no cast success after the start, e.g. Zul'jan's cast cut off as the
+      // phase changed) and the axe hit and missed nobody: nothing to judge. A finished cast counts even with nobody hit,
+      // so a circle of immunities, which may leave no line in the log, is still checked)
+      const done = ev.some((e) => e.k === 'cast' && e.id === CA_IDS[n] && e.t > t + 0.5 && e.t <= t + 8);
+      soaks.push({ n, t, who, died, hit: w[0] ? w[0].t : null, landed: done || w.length > 0 || deb.length > 0 });
     }
   }
   soaks.sort((a, b) => a.t - b.t);
@@ -2899,11 +2903,14 @@ function buildCoiledAltar(ev, r, h) {
     const ssAll = casts('soul sever'), ss = ssAll.filter((t) => t <= pt + 1).pop();
     const delta = ss != null ? pt - ss : null;
     const gapS = ssAll.length > 1 ? ssAll[ssAll.length - 1] - ssAll[ssAll.length - 2] : null, dueS = ss != null && gapS ? ss + gapS : null;
-    if (delta != null && delta > 5) M(pt, 'Raid', 'soul sever', 'Medium', 'Malacrass was pushed ' + delta.toFixed(1) + 's after the last Soul Sever.', 'Hold damage until the frontal clears the ghosts, then push within about 5 seconds or the raid gets mind controlled.');
+    // (the push is late once the next Dreadmarch went out before it: new ghosts and mind controls on the raid. A top
+    // Mythic kill pushed 25 seconds after the last Soul Sever, still before the next Dreadmarch, with nothing going wrong)
+    const dmFirst = ss != null ? dm.filter((t) => t > ss + 0.5 && t < pt) : [], late = dmFirst.length > 0;
+    if (late) M(pt, 'Raid', 'soul sever', 'Medium', 'Malacrass was pushed ' + delta.toFixed(1) + 's after the last Soul Sever, after the next Dreadmarch had gone out.', 'Hold damage until the frontal clears the ghosts, then push before the next Dreadmarch, or the raid gets mind controlled.');
     const lust = pcasts(LUST).filter((e) => e.t >= inter - 20 && e.t <= inter + 25);
     if (!lust.length && mythic) M(inter, 'Raid', 'soulbinding', 'Low', 'No Bloodlust or Heroism during the Soulbinding intermission.', 'Use Hero/Lust on the intermission: it is the big damage window on Zul\'jan.');
     const zjDmg = ev.filter((e) => e.k === 'pdmg' && e.t >= inter && e.t <= (p3 ?? dur) && zj.includes(e.dst)).reduce((s, e) => s + e.amt, 0);
-    pushRows.push([{ txt: 'P2 → Intermission' }, { t: pt }, { txt: delta == null ? 'no Soul Sever found' : '+' + delta.toFixed(1) + 's after the last Soul Sever' + (delta > 5 && dueS ? ' (the next was due at ' + h.fmtT(dueS) + ')' : ''), bad: delta != null && dueS != null && pt > dueS, warn: delta != null && delta > 5 }, // red once the next Soul Sever was due (ghosts pile up)
+    pushRows.push([{ txt: 'P2 → Intermission' }, { t: pt }, { txt: delta == null ? 'no Soul Sever found' : '+' + delta.toFixed(1) + 's after the last Soul Sever' + (late ? ', after the next Dreadmarch (' + h.fmtT(dmFirst[0]) + ')' : ', before the next Dreadmarch'), bad: delta != null && dueS != null && pt > dueS, warn: late }, // red once the next Soul Sever was due (ghosts pile up)
       { txt: 'Lust: ' + (lust.length ? fmtList(lust) : 'none'), bad: !lust.length && mythic }, { txt: 'Damage to Zul\'jan in intermission: ' + h.compact(zjDmg) }, { txt: '' }]);
   }
   if (p3 != null) {
@@ -3084,6 +3091,8 @@ function buildCoiledAltar(ev, r, h) {
     const gi = s.n === 'grim guillotine' ? grim.indexOf(s) : p1g.indexOf(s);
     const key = s.n === 'grim guillotine' ? ['gg1', 'gg2', 'gg3'][gi] : ['g1', 'g2'][gi];
     const immunitySoak = mythic && (key === 'g2' || key === 'gg2');
+    // (a drop that never landed: shown, not judged)
+    if (!s.landed) { qRows.push([{ t: s.t }, { s: S(s.n), sub: phaseAt(s.t) + (gi >= 0 ? ' · soak ' + (gi + 1) : '') }, { txt: 'didn\'t land', sub: 'nobody was hit (the phase changed or the pull ended first)', dim: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { ps: [], none: '—' }, { txt: '' }]); continue; }
     const all = s.who.concat(tgt && !s.who.includes(tgt) ? [tgt] : []);
     // The axe lands where the target stands and hits everyone within 9 yards (soakers come from the damage hits).
     const lp = tgt && h.snap(hit).find((p) => p.guid === tgt);
@@ -3126,7 +3135,7 @@ function buildCoiledAltar(ev, r, h) {
   if (mythic && corners[0] && corners[1] && corners[0] === corners[1]) MS(grim[1].t, 'Raid', 'grim guillotine', 'Low', 'Grim Guillotine 1 and 2 were both soaked in the ' + corners[0] + ' corner. The plan soaks 1 in its own spot and 2 and 3 together in another.', 'Move to the second spot after the first Grim Guillotine.', { t: grim[1].hit ?? grim[1].t + 3, hl: grim[1].who, title: 'Grim Guillotine 2 soak (soakers ringed)' });
   sections.push({ id: 'soakq', title: 'Guillotine soaks', spell: S('guillotine'),
     verdict: soaks.some((s) => s.died.length || (s.who.length && s.who.length < need)) ? 'bad'
-      : soaks.some((s) => s.who.length < need) || mistakes.some((x) => /Guillotine/.test(x.mechanic) && /external|immunit|tank|Healer|personal|corner/.test(x.detail)) ? 'warn' : 'good',
+      : soaks.some((s) => s.landed && s.who.length < need) || mistakes.some((x) => /Guillotine/.test(x.mechanic) && /external|immunit|tank|Healer|personal|corner/.test(x.detail)) ? 'warn' : 'good',
     summary: pl(soaks.length, 'drop') + ' checked against the plan (see How it works): soakers in the ' + GUILLOTINE_R + '-yard circle (at least ' + need + '), what each had up (immunity, external or personal), target protection, and where it was soaked. Map shows the circle at the drop.',
     cols: ['When', 'Soak', 'In circle', 'Soakers', 'Target', 'Corner', 'Died', ''], rows: qRows });
 
@@ -3485,7 +3494,7 @@ function buildCoiledAltar(ev, r, h) {
     // the target protecting themselves (e.g. a paladin target's own Blessing of Protection or Divine Shield)
     const selfEv = tgt ? ev.filter((e) => e.k === 'aura' && e.op === 'apply' && e.dst === tgt && e.src === tgt && (EXTERNAL.includes(L(e.spell)) || IMMUNE.includes(L(e.spell))) && L(e.spell) !== 'zephyr' && e.t >= hit - 12 && e.t <= hit + 0.5) : [];
     const selfProt = selfEv.map((e) => e.spell), selfIds = selfEv.map((e) => e.id); // (the IDs are for spell icons)
-    return { t: s.t, hit, grim: s.n === 'grim guillotine', who: s.who.map(pname), target: tgt ? pname(tgt) : null, ext, zep, zepEarly, selfProt, selfIds };
+    return { t: s.t, hit, grim: s.n === 'grim guillotine', landed: s.landed, who: s.who.map(pname), target: tgt ? pname(tgt) : null, ext, zep, zepEarly, selfProt, selfIds };
   });
   // for the NSRT mind-control check: each Dreadmarch, who it mind controlled and for how long (the first wave lands about
   // half a second after the cast; later single re-controls before the next cast are kept apart), and the crowd control
@@ -3999,7 +4008,8 @@ function checkAssignments(r, noteText) {
     const phN = +((ln.label.match(/\bp\s*(\d)\b/i) || [])[1] || 0);
     if (/guillotine|soak/.test(lab) && !/ghost/.test(lab) && soakSec) {
       const grim = phN === 3 || (phN !== 1 && /grim/.test(lab)), list = soakSec.filter((s) => s.grim === grim);
-      const s = num ? list[num - 1] : null;
+      // (a drop that never landed, like one cut off by the phase change, isn't checked)
+      const s0 = num ? list[num - 1] : null, s = s0 && s0.landed !== false ? s0 : null;
       const row = { label: ln.label || ln.raw, assigned: names.map((n) => P(n).name), soak: s, kind: 'soak' };
       const nm = (grim ? 'Grim Guillotine ' : 'Guillotine ') + (num || '');
       // "External Guillotine Target: X" / "Zephyr Guillotine: X": X casts it for that drop; X isn't a soaker

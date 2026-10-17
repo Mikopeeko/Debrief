@@ -116,10 +116,12 @@ function hydrateIcons() {
   });
 }
 // game icons for headings that aren't one spell (loaded by icon name, like every other icon)
-const NAMED_ICON = { 'avoidable damage': 'ability_rogue_feint' };
+// (these win over a spell of the same name in the log: "Death" would otherwise borrow whatever spell a log calls that,
+// so the Deaths heading changed from log to log)
+const NAMED_ICON = { 'avoidable damage': 'ability_rogue_feint', death: 'inv_misc_bone_humanskull_01' };
 function spellIcon(id, name, big) {
-  if (!id && name) id = E.SPELLID.get(String(name).toLowerCase()) || 0; // named only: use the ID the log used for it
   const named = !id && name && NAMED_ICON[String(name).toLowerCase()];
+  if (!id && name && !named) id = E.SPELLID.get(String(name).toLowerCase()) || 0; // named only: use the ID the log used for it
   return '<span class="icw' + (big ? ' big' : '') + '">' + svgIcon(id, name, big) + (id ? '<img class="oi" data-sid="' + id + '" alt="">' : named ? '<img class="oi" data-icon="' + named + '" alt="">' : '') + '</span>';
 }
 function svgIcon(id, name, big) {
@@ -1821,43 +1823,67 @@ function audit() {
   const secOf = new Map(); for (const s of m.sections) { const n = (s.spell && s.spell[1]) || ''; if (n && !secOf.has(n.toLowerCase())) secOf.set(n.toLowerCase(), s.id); const tt = String(s.title || '').split(':')[0].toLowerCase(); if (tt && !secOf.has(tt)) secOf.set(tt, s.id); }
   const allDeaths = r.deaths.slice().sort((a, b) => a.t - b.t);
   const causeOf = (d) => (d.big ? d.big.spell : (d.last && d.last.spell) || d.ability || d.killer || 'an unknown hit');
-  // biggest hits: a hit worth 15%+ of all the damage, and the finishing one, on its own line (when, what, how much,
-  // health after); the rest of each spell added up ("Eternal Venom ×10")
-  const bigHits = (d) => {
-    const hits = (d.recap || []).filter((e) => !e.heal && e.t >= d.t - 10), tot = hits.reduce((n, e) => n + e.amount, 0), last = hits[hits.length - 1];
-    const one = hits.filter((e) => e.amount >= 0.15 * tot || e === last), grp = new Map();
-    for (const e of hits) if (!one.includes(e)) { const k = e.spell || 'Melee'; const g = grp.get(k) || { spell: k, id: e.id, n: 0, amt: 0 }; g.n++; g.amt += e.amount; grp.set(k, g); }
-    const list = one.map((e) => ({ t: e.t, spell: e.spell || 'Melee', id: e.id, n: 1, amt: e.amount, hp: e === last ? 0 : e.hp, kb: e === last })).concat([...grp.values()]).sort((a, b) => b.amt - a.amt).slice(0, 6);
-    return list.length ? '<div class="dhits">' + list.map((x) => '<div class="dhit"><span class="sub">' + (x.t != null ? (x.t - d.t).toFixed(1).replace(/^-0\.0$/, '0.0') + ' s' : '') + '</span><span>' + spell(x.id, x.spell) + (x.t == null ? ' <span class="sub">×' + x.n + '</span>' : '') + '</span><b>' + kfmt(x.amt) + '</b><span class="' + (x.kb ? 'hotv' : 'sub') + '">' + (x.kb ? 'dead' : x.hp != null && x.hp >= 0 ? Math.round(x.hp) + '%' : '') + '</span></div>').join('') + '</div>' : '<p class="muted">No hits recorded before this death.</p>';
-  };
-  const deathsMd = (rows, sid) => {
+  // Deaths, simple: one line per death (when, who, what killed them, the one thing that would have helped), the first one
+  // open; opening a death shows the last 5 seconds in one line, its linked mistakes, the three biggest hits as bars, and
+  // the Map and Every event buttons
+  const deathsList = (rows, sid) => {
     const ds = rows.map((row) => row[0].death).filter(Boolean); if (!ds.length) return '';
-    // (a death within 2 s of the one before it, from the same hit, is grouped with it)
     const same = ds.map((d, i) => { const p = ds[i - 1]; return p && d.t - p.t <= 2 && causeOf(p) === causeOf(d) ? p : null; });
-    const ready = (d) => (d.available || []).length > 0;
-    const st = (d) => (ready(d) && d.react !== false ? 'warn' : 'bad');
-    const items = ds.map((d, i) => {
-      const n = allDeaths.indexOf(d) + 1, cause = causeOf(d);
-      const head = '<div class="md-h"><b>' + who(d.player) + '</b><span class="sub">' + T(d.t) + ' · ' + (d.healthy && d.window > 0 ? Math.round(d.startHp) + '% to 0 in ' + d.window.toFixed(1) + ' s' : d.startHp > 0 ? 'never above ' + Math.round(d.startHp) + '% in the last 10 s' : '') + '</span>' +
-        (d.map ? cell({ map: d.map }, sid) : '') + '<button class="btn dev-all" type="button">Every event</button></div>';
-      const story = d.big ? esc(d.big.spell) + ' hit them for ' + kfmt(d.big.amount) + ' ' + Math.max(0, d.t - d.big.t).toFixed(1) + ' s before, then ' + esc(d.last.spell) + ' (' + kfmt(d.last.amount) + ') finished them.'
-        : esc(cause) + (d.last ? ' (' + kfmt(d.last.amount) + ')' : '') + ' finished them' + (d.react === false ? ': a burst with no time to react.' : '.');
-      const chips = (d.links || []).map((l) => { const sec = secOf.get(String(l.mechanic).toLowerCase());
-          return '<button type="button" class="dchip ' + (l.severity === 'High' ? 'bad' : 'warn') + '"' + (sec ? ' data-sec="' + esc(sec) + '"' : '') + ' title="' + esc(T(l.t) + ': ' + l.detail) + '">' + (l.raid ? 'Raid: ' : '') + esc(l.mechanic) + ' <span>' + esc(l.detail.replace(/(: |\. |, leaving ).*$/, '').replace(/\.$/, '').slice(0, 70)) + '</span></button>'; })
-        .concat((d.available || []).map((a) => '<span class="dchip ' + (d.react === false ? 'na' : 'warn') + '">' + esc(a.replace(/^a /, '').replace(/^./, (c) => c.toUpperCase())) + ' ready' + (d.react === false ? ' (too fast to use)' : '') + '</span>'))
-        .concat(d.taken5 ? ['<span class="dchip na">Took ' + kfmt(d.taken5) + ', healed ' + kfmt(d.healed5 || 0) + ' (last 5 s)</span>'] : []);
+    const cap = (s) => String(s).replace(/^a /, '').replace(/^./, (c) => c.toUpperCase());
+    // what would have helped, in one line: a linked mistake first, then a defensive that was ready, then the advice
+    const helped = (d) => { const l = (d.links || [])[0], av = d.available || [];
+      // (the mistake in a few words: its first clause, without the numbers; the mechanic's name only when it doesn't say it)
+      if (l) { const det = l.detail.replace(/( for [\d,.]+| and |: |\. |, leaving |; ).*$/, '').replace(/\.$/, '');
+        return { st: l.severity === 'High' ? 'bad' : 'warn', txt: (l.raid ? 'Raid: ' : '') + (det.toLowerCase().includes(String(l.mechanic).toLowerCase()) ? det : l.mechanic + ': ' + det) }; }
+      if (av.length && d.react !== false) return { st: 'warn', txt: cap(av[0]) + ' was ready' + (av.length > 1 ? ' (+' + (av.length - 1) + ' more)' : '') };
+      const pv = (d.prevent || []).find((x) => !/^No clear mistake/i.test(x));
+      if (pv) return { st: 'warn', txt: pv.replace(/\.$/, '') };
+      return { st: 'na', txt: d.react === false ? 'too fast to react' : 'no clear mistake' };
+    };
+    // the three biggest hits of the last 10 seconds (a spell's smaller hits added up, "×10"), as bars
+    const top3 = (d) => { const hits = (d.recap || []).filter((e) => !e.heal && e.t >= d.t - 10), last = hits[hits.length - 1], grp = new Map();
+      for (const e of hits) { const k = e.spell || 'Melee'; const g = grp.get(k) || { spell: k, id: e.id, n: 0, amt: 0, kb: false }; g.n++; g.amt += e.amount; if (e === last) g.kb = true; grp.set(k, g); }
+      const list = [...grp.values()].sort((a, b) => b.amt - a.amt).slice(0, 3), mx = Math.max(1, ...list.map((x) => x.amt));
+      return list.length ? '<div class="dd-hits">' + list.map((x) => '<div class="dd-hit"><span>' + spell(x.id, x.spell) + (x.n > 1 ? ' <span class="sub">×' + x.n + '</span>' : '') + (x.kb ? ' <span class="hotv">killing blow</span>' : '') + '</span><span class="dd-bar"><i style="width:' + (100 * x.amt / mx).toFixed(1) + '%"></i></span><b>' + kfmt(x.amt) + '</b></div>').join('') + '</div>' : '<p class="muted">No hits recorded before this death.</p>'; };
+    const items = ds.map((d, i) => { const cause = causeOf(d), h0 = helped(d);
+      const how = same[i] ? 'the same hit as the death before' : d.big && d.last ? kfmt(d.big.amount) + ', then ' + d.last.spell + ' finished them' : d.last ? kfmt(d.last.amount) + (d.react === false ? ', no time to react' : '') : '';
+      const hp = d.healthy && d.window > 0 ? Math.round(d.startHp) + '% to 0 ' + (d.window < 0.15 ? 'in one hit' : 'in ' + d.window.toFixed(1) + ' s') : d.startHp > 0 ? 'never above ' + Math.round(d.startHp) + '% in the last 10 s' : '';
+      // (the first linked mistake is on the line itself; any others as chips that open their mechanic)
+      const links = (d.links || []).slice(1).map((l) => { const sec = secOf.get(String(l.mechanic).toLowerCase());
+        return '<button type="button" class="dchip ' + (l.severity === 'High' ? 'bad' : 'warn') + '"' + (sec ? ' data-sec="' + esc(sec) + '"' : '') + ' title="' + esc(T(l.t) + ': ' + l.detail) + '">' + (l.raid ? 'Raid: ' : '') + esc(l.mechanic) + ' <span>' + esc(l.detail.replace(/(: |\. |, leaving ).*$/, '').replace(/\.$/, '').slice(0, 70)) + '</span></button>'; });
       const rc = (d.recap || []).slice(-40).map((e) => '<div class="ev"><span class="muted">' + T(e.t) + '</span><span class="' + (e.heal ? 'heal' : 'dmg') + '">' + (e.heal ? '+' : '−') + C(e.amount) + '</span><span>' + spell(e.id, e.spell) + ' <span class="sub">' + esc(e.src) + '</span></span><span class="muted">' + (e.hp >= 0 ? Math.round(e.hp) + '% hp' : '') + '</span></div>').join('');
-      const body = head + '<p class="dstory">' + story + '</p>' + (chips.length ? '<div class="dchips">' + chips.join('') + '</div>' : '') +
-        '<div class="dlbl">Health, last 10 seconds</div>' + deathChart(d) + '<div class="dlbl">Biggest hits</div>' + bigHits(d) +
-        ((d.prevent || []).length ? '<div class="dlbl">What would have helped</div><ul class="dhelp">' + d.prevent.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
+      const body = '<div class="dd-sum">' + [d.taken5 ? 'Last 5 seconds: took ' + kfmt(d.taken5) + ', healed ' + kfmt(d.healed5 || 0) : '', hp].filter(Boolean).map(esc).join(' · ') + '</div>' +
+        (links.length ? '<div class="dchips">' + links.join('') + '</div>' : '') + top3(d) +
+        '<div class="dd-act">' + (d.map ? cell({ map: d.map }, sid) : '') + '<button class="btn dev-all" type="button">Every event</button></div>' +
         '<div class="recap dall" hidden>' + (rc || '<p class="muted">No events recorded before this death.</p>') + '</div><div class="mm md-map"></div>';
-      return { d, st: st(d), label: d.player, sub: ordinal(n) + ' death · ' + (same[i] ? 'same ' + cause : cause), body };
+      return { d, i, cause, how, h0, body, st: h0.st === 'na' ? 'bad' : h0.st };
     });
-    const sel = 0, cut0 = cut ? cut.t : Infinity, hasCut = isFinite(cut0) && ds.some((d) => Math.abs(d.t - cut0) < 0.06), after = hasCut ? allDeaths.filter((d) => d.t > cut0 + 0.05).length : 0;
-    const causes = new Map(); for (const d of ds) causes.set(causeOf(d), (causes.get(causeOf(d)) || 0) + 1);
-    return '<div class="md dmd"><div class="md-list">' + items.map((x, i) => '<button class="md-i ' + x.st + (i === sel ? ' on' : '') + '" data-i="' + i + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '"><span class="md-dot"></span><span class="md-l">' + esc(x.label) + '<small>' + esc(x.sub) + '</small></span><span class="md-t">' + T(x.d.t) + '</span></button>').join('') +
-      (after ? '<div class="dmore">' + plural(after, 'more death') + ' after the wipe filter</div>' : '') +
-      (ds.length > 1 ? '<div class="dcause"><span class="sub">What killed people</span>' + [...causes].sort((a, b) => b[1] - a[1]).map(([c, n]) => '<div><span>' + esc(c) + '</span><b>' + n + '</b></div>').join('') + '</div>' : '') + '</div>' +
+    const causes = new Map(); for (const x of items) causes.set(x.cause, (causes.get(x.cause) || 0) + 1);
+    const cut0 = cut ? cut.t : Infinity, hasCut = isFinite(cut0) && ds.some((d) => Math.abs(d.t - cut0) < 0.06), after = hasCut ? allDeaths.filter((d) => d.t > cut0 + 0.05).length : 0;
+    // (deaths from the same hit, each within 2 s of the one before, are one line: "Schooty and 14 more", every name
+    // listed when it's opened, with the first one's recap)
+    const groups = []; items.forEach((x, i) => { if (same[i] && groups.length) groups[groups.length - 1].push(x); else groups.push([x]); });
+    return '<div class="md dd"><p class="dd-top">' + plural(ds.length, 'death') + ' · killed by: ' + [...causes].sort((a, b) => b[1] - a[1]).map(([c, n]) => esc(c) + ' ' + n).join(', ') + '</p>' +
+      groups.map((g, gi) => { const x = g[0], many = g.length > 1;
+        const names = many ? '<div class="dd-all"><span class="sub">' + g.length + ' died to it: </span>' + g.map((y) => '<span class="nm" style="color:' + ((pmap.get(y.d.player) || {}).color || 'inherit') + '">' + esc(y.d.player) + '</span>').join(', ') + '</div>' : '';
+        return '<button class="md-i dd-r ' + x.st + (gi === 0 ? ' on' : '') + '" type="button" data-i="' + gi + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '" data-dgs="' + esc(g.map((y) => y.d.guid + '@' + y.d.t.toFixed(2)).join(' ')) + '" aria-expanded="' + (gi === 0) + '">' +
+          '<span class="dd-t">' + T(x.d.t) + '</span><span class="dd-w">' + who(x.d.player) + (many ? '<span class="dd-n">and ' + (g.length - 1) + ' more</span>' : '') + '</span><span class="dd-c"><b>' + esc(x.cause) + '</b>' + (x.how ? ' <span class="sub">' + esc(x.how) + '</span>' : '') + '</span>' +
+          '<span class="dd-h ' + x.h0.st + '">' + (x.h0.st === 'bad' ? '✕ ' : x.h0.st === 'warn' ? '! ' : '') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
+          '<div class="md-d dd-b" data-i="' + gi + '"' + (gi === 0 ? '' : ' hidden') + '>' + names + x.body + '</div>'; }).join('') +
+      (after ? '<div class="dmore">' + plural(after, 'more death') + ' after the wipe filter</div>' : '') + '</div>';
+  };
+  // Avoidable damage as bars: each source on the left (most harmful first), the picked one's players on the right, a bar
+  // per player as long as their hits (a hit is one time walking into it), coloured by the source's limits, with the
+  // damage it did; a death to it or a tank who isn't judged is marked by the name
+  const avoidMd = (groups) => {
+    const items = groups.map((g) => { const rs = g.rows.map((row) => ({ p: row[0].p, tank: !!row[0].sub, hits: parseInt(row[1].txt, 10) || 0, bad: row[1].bad, warn: row[1].warn, ticks: row[1].sub || '', amt: row[2].n || 0, died: !!row[3].bad }));
+      const mx = Math.max(1, ...rs.map((x) => x.hits));
+      const bars = rs.map((x, i) => { const p = pmap.get(x.p) || { name: x.p, color: '#9aa0ac' };
+        return cbRow({ tag: 'div', cls: ' nb', attrs: x.ticks ? ' title="' + esc(x.ticks) + '"' : '', k: i + 1, p, segs: [[Math.max(2, 100 * x.hits / mx), 'm']], v: '<span class="' + (x.bad ? 'hotv' : x.warn ? 'warnv' : '') + '">' + x.hits + '</span>', sub: kfmt(x.amt),
+          chips: (x.died ? '<span class="pf-d">✕ died to it</span>' : '') + (x.tank ? '<span class="sub">tank, not judged</span>' : '') }); }).join('');
+      return { label: g.title, st: g.bad ? 'bad' : g.warn ? 'warn' : 'ok', body: '<div class="md-h"><b>' + esc(g.title) + '</b></div><div class="sub" style="margin-bottom:8px">' + esc(g.sub || '') + '</div>' + cbHead('Hits', 'Damage') + bars }; });
+    const iBad = items.findIndex((x) => x.st === 'bad'), iWarn = items.findIndex((x) => x.st === 'warn'), sel = iBad >= 0 ? iBad : iWarn >= 0 ? iWarn : 0;
+    return '<div class="md"><div class="md-list">' + items.map((x, i) => '<button class="md-i ' + x.st + (i === sel ? ' on' : '') + '" data-i="' + i + '"><span class="md-dot"></span><span class="md-l">' + esc(x.label) + '</span></button>').join('') + '</div>' +
       '<div class="md-pane">' + items.map((x, i) => '<div class="md-d" data-i="' + i + '"' + (i === sel ? '' : ' hidden') + '>' + x.body + '</div>').join('') + '</div></div>';
   };
   // Ula'tek's damage amps, the windows shown (the rows left after the phase and wipe filters): one entry per window, plus
@@ -1897,7 +1923,7 @@ function audit() {
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
     // entry's details on the right; it opens on the first problem
     const ampH = s.id === 'amps' && s.amps && rows.length ? ampsMd(s, rows) : '';
-    if (s.id === 'deaths' && rows.some((row) => row[0] && row[0].death)) b += deathsMd(rows, sid);
+    if (s.id === 'deaths' && rows.some((row) => row[0] && row[0].death)) b += deathsList(rows, sid);
     // Venomfang dispels: just a bar chart of dispels per player (plus how many weren't dispelled)
     else if (s.id === 'vf') {
       const by = new Map(); let none = 0;
@@ -1909,6 +1935,7 @@ function audit() {
     // Ula'tek's damage amps: each window on the left (and all of them together), the picked one on the right: the boss's
     // health before and after it, and a bar per player for their damage into the heart (the faded end: elsewhere)
     else if (ampH) b += ampH;
+    else if (s.id === 'avoid' && groups.length) b += avoidMd(groups);
     // (every mechanic made of sets uses it too: the sets on the left, the picked set's table on the right)
     else if ((MD_SECS.has(s.id) || groups.length) && (groups.length || rows.length)) {
       const items = groups.length
@@ -1989,7 +2016,6 @@ function audit() {
     row.innerHTML = '<td colspan="' + tr.children.length + '"><div class="mm">' + AUDITHTML[+b.dataset.h] + '</div></td>';
     tr.after(row); refreshIcons();
   }));
-  fitDeathCharts(); $('#view').querySelectorAll('details.secd[data-k^="deaths-"]').forEach((d) => d.addEventListener('toggle', () => { if (d.open) fitDeathCharts(); }));
   // Deaths: "Every event" shows their whole last 10 seconds; a linked mistake opens its mechanic's section
   $('#view').querySelectorAll('.dev-all').forEach((b) => (b.onclick = () => { const a = b.closest('.md-d').querySelector('.dall'); a.hidden = !a.hidden; b.classList.toggle('on', !a.hidden); }));
   $('#view').querySelectorAll('.dchip[data-sec]').forEach((b) => (b.onclick = () => {
@@ -2001,11 +2027,15 @@ function audit() {
   // a death badge elsewhere in the app opens that death's recap here (in the Deaths list, or a row's Recap button)
   // (after the rest of the page's buttons are wired up, so the click does something)
   if (S.pendingDeath) { const pd = S.pendingDeath; S.pendingDeath = null; setTimeout(() => {
-    const b = $('#view').querySelector('.md-i[data-dg="' + CSS.escape(pd) + '"]') || $('#view').querySelector('.mmb2[data-dg="' + CSS.escape(pd) + '"]');
-    if (b) { for (let e = b.parentElement; e; e = e.parentElement) if (e.tagName === 'DETAILS') e.open = true; b.click(); (b.closest('.md') || b).scrollIntoView({ block: 'center' }); }
+    const b = $('#view').querySelector('.md-i[data-dg="' + CSS.escape(pd) + '"]') || $('#view').querySelector('.dd-r[data-dgs~="' + CSS.escape(pd) + '"]') || $('#view').querySelector('.mmb2[data-dg="' + CSS.escape(pd) + '"]');
+    if (b) { for (let e = b.parentElement; e; e = e.parentElement) if (e.tagName === 'DETAILS') e.open = true; if (!(b.classList.contains('dd-r') && b.classList.contains('on'))) b.click(); (b.classList.contains('dd-r') ? b : b.closest('.md') || b).scrollIntoView({ block: 'center' }); }
   }, 0); }
   // list-and-detail panels: clicking an entry shows its details
   $('#view').querySelectorAll('.md-i').forEach((b) => (b.onclick = () => { const md = b.closest('.md'); md.querySelectorAll('.md-i').forEach((x) => x.classList.toggle('on', x === b)); md.querySelectorAll('.md-d').forEach((d) => { d.hidden = d.dataset.i !== b.dataset.i; }); }));
+  // (Deaths: each line opens its recap under it, and closes it again)
+  $('#view').querySelectorAll('.dd-r').forEach((b) => (b.onclick = () => { const md = b.closest('.md'), open = !b.classList.contains('on');
+    md.querySelectorAll('.dd-r').forEach((x) => { x.classList.toggle('on', open && x === b); x.setAttribute('aria-expanded', String(open && x === b)); });
+    md.querySelectorAll('.dd-b').forEach((d) => { d.hidden = !(open && d.dataset.i === b.dataset.i); }); }));
   $('#view').querySelectorAll('.mmb').forEach((b) => (b.onclick = () => {
     const mp = AUDITMAPS[+b.dataset.i], tr = b.closest('tr');
     if (tr) {
@@ -2045,40 +2075,6 @@ const IMPORTANCE = {
 };
 let AUDITMAPS = [], AUDITHTML = [];
 const kfmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
-// a death's last 10 seconds: their health as a line, each hit a bar as tall as its share of the biggest one (the hit that
-// did it and the finishing one stand out, with labels). Drawn at the width it gets on screen (fitDeathCharts), like the
-// Summary's chart, so its text isn't scaled up on a wide screen or down on a phone.
-const DCH = new Map(); let dchN = 0, dchRz = 0;
-function deathChart(d, wpx, id) {
-  if (!id) { id = ++dchN; DCH.set(id, d); DCH.delete(id - 60); }
-  const W = Math.max(260, Math.round(wpx || 600)), H = 132, L = 36, R = 12, T0 = 12, B = 22, t0 = d.t - 10;
-  const X = (t) => L + ((Math.max(t0, t) - t0) / 10) * (W - L - R), Y = (v) => T0 + (1 - v / 100) * (H - T0 - B);
-  const rc = (d.recap || []).filter((e) => e.t >= t0 - 0.01), hits = rc.filter((e) => !e.heal), mx = Math.max(1, ...hits.map((e) => e.amount));
-  const hp = rc.filter((e) => e.hp >= 0).map((e) => [e.t, e.hp]); hp.push([d.t, 0]);
-  let s = '<svg class="dchart" data-dc="' + id + '" data-w="' + W + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Health over the last 10 seconds, with each hit">';
-  for (const g of [100, 50, 0]) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(g) + '" y2="' + Y(g) + '" class="tg"/><text x="' + (L - 6) + '" y="' + (Y(g) + 4) + '" class="tl" text-anchor="end">' + (g ? g + '%' : '0') + '</text>';
-  s += '<text x="' + L + '" y="' + (H - 5) + '" class="tl">-10 s</text><text x="' + X(t0 + 5) + '" y="' + (H - 5) + '" class="tl" text-anchor="middle">-5 s</text><text x="' + (W - R) + '" y="' + (H - 5) + '" class="tl" text-anchor="end">death</text>';
-  const bw = W > 500 ? 4 : 3, bh = (e) => Math.max(2, (e.amount / mx) * (H - T0 - B) * 0.8);
-  const isBig = (e) => d.big && Math.abs(e.t - d.big.t) < 0.01 && e.amount === d.big.amount, lastE = hits[hits.length - 1], bigE = hits.find(isBig);
-  for (const e of hits) s += '<rect x="' + (X(e.t) - bw / 2).toFixed(1) + '" y="' + (Y(0) - bh(e)).toFixed(1) + '" width="' + bw + '" height="' + bh(e).toFixed(1) + '" class="dh' + (e === bigE ? ' big' : e === lastE ? ' kb' : '') + '"><title>' + esc(T(e.t) + ' · ' + (e.spell || 'Melee') + ' · ' + kfmt(e.amount)) + '</title></rect>';
-  if (hp.length > 1) s += '<polyline class="dhp" points="' + hp.map(([t, v]) => X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '"/>';
-  s += '<circle cx="' + X(d.t).toFixed(1) + '" cy="' + Y(0).toFixed(1) + '" r="5" class="dkill"/>';
-  // (labels on the hit that did it and the finishing one, the second moved up when they'd overlap)
-  const lab = (e, up) => { const x = X(e.t), right = x > W - 150, y = Math.max(T0 + 9, Y(0) - bh(e) - 5 - (up ? 15 : 0));
-    return '<text x="' + (right ? x - 7 : x + 7).toFixed(1) + '" y="' + y.toFixed(1) + '" class="tl dlab" text-anchor="' + (right ? 'end' : 'start') + '">' + esc((e.spell || 'Melee') + ' ' + kfmt(e.amount)) + '</text>'; };
-  if (bigE) s += lab(bigE, false);
-  if (lastE && lastE !== bigE) s += lab(lastE, bigE && Math.abs(X(bigE.t) - X(lastE.t)) < 150);
-  return s + '</svg>';
-}
-// (every chart in a deaths panel is drawn at the width of the pane on show; hidden panes share it)
-function fitDeathCharts() {
-  for (const md of document.querySelectorAll('.md.dmd')) {
-    const pane = md.querySelector('.md-pane'); if (!pane) continue;
-    const cs = getComputedStyle(pane), w = Math.round(pane.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)); if (w <= 0) continue;
-    for (const el of md.querySelectorAll('svg.dchart[data-dc]')) { const d = DCH.get(+el.dataset.dc); if (d && Math.abs(w - +el.dataset.w) > 2) el.outerHTML = deathChart(d, w, +el.dataset.dc); }
-  }
-}
-window.addEventListener('resize', () => { clearTimeout(dchRz); dchRz = setTimeout(fitDeathCharts, 150); });
 // Deaths as a Fight audit mechanic: one red row per death; amber note when they still had something to press.
 function deathSection(r) {
   const ds = r.deaths.slice().sort((a, b) => a.t - b.t);
@@ -3979,13 +3975,13 @@ function perf() {
   // its cooldowns and the healing after the raid's biggest hits) ----
   const wins = kind === 'dmg' ? perfWins(r, end).filter((w) => !ph || (w.t0 < w1 && w.t1 > w0)) : [];
   const cdsH = kind === 'heal' ? healCds(r, w0, w1) : '', hitsH = kind === 'heal' ? healAfterHits(r, w0, w1) : '';
-  // (no Phases view: the phase buttons at the top already cut every view by phase)
-  const lenses = PERF_LENS.filter(([k]) => k === 'players' || k === 'heat' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'healers' && kind === 'heal') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
+  // (no Phases view: the phase buttons at the top already cut every view by phase; no Heatmap either, by request)
+  const lenses = PERF_LENS.filter(([k]) => k === 'players' || (k === 'windows' && wins.length) || (k === 'targets' && kind === 'dmg') || (k === 'healers' && kind === 'heal') || (k === 'cds' && cdsH) || (k === 'hits' && hitsH));
   const lens = lenses.some(([k]) => k === S.perfLens) ? S.perfLens : 'players';
-  h += lensBar(lenses, lens);
+  if (lenses.length > 1) h += lensBar(lenses, lens);
   if (lens !== 'players') {
     h += lens === 'phases' ? perfPhases(r, kind, ps, end, phs, ph ? pfPhK(ph) : null) : lens === 'windows' ? perfWindows(r, ps, end, wins) : lens === 'targets' ? perfTargets(r, ps, w0, w1, bossN) : lens === 'healers' ? perfHealers(r, ps, w0, w1, end)
-      : lens === 'cds' ? cdsH : lens === 'hits' ? hitsH : perfHeat(r, kind, ps, w0, w1, phs);
+      : lens === 'cds' ? cdsH : hitsH;
     view(h + '</div>'); bindPerf(); refreshIcons(); return;
   }
   // (the Warcraft Logs parse is the player's own for the pull, so it stays whichever targets are shown)
@@ -4438,7 +4434,7 @@ function cbRow(o) {
 const cbHead = (v, s, end, cls) => '<div class="pf-row cb nb cb-h' + (cls || '') + '"><span class="pf-k">#</span><span class="cb-hn">Player</span><span class="cb-v">' + v + '</span><span class="cb-s">' + s + '</span>' + (end ? '<span class="cb-r">' + end + '</span>' : '') + '</div>';
 // ---- Performance: the views under the timeline. Players (the bars and the picked player), then the same pull cut other
 // ways: by phase, by damage window, by target, healers only, and as a heatmap ----
-const PERF_LENS = [['players', 'Players'], ['cds', 'Cooldowns'], ['hits', 'Big hits'], ['healers', 'Healers'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets'], ['heat', 'Heatmap']];
+const PERF_LENS = [['players', 'Players'], ['cds', 'Cooldowns'], ['hits', 'Big hits'], ['healers', 'Healers'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
 const KEY_OF = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
 const sumIn = (arr, a, b) => { let s = 0; for (let i = Math.max(0, Math.floor(a)); i < Math.min(arr.length, Math.ceil(b)); i++) s += arr[i] || 0; return s; };
 // a player's rate while alive between a and b (null when they were dead for all of it)
@@ -4653,40 +4649,6 @@ function tgtChart(r, w0, w1, cat) {
   return '<h3 class="nh"><span class="pfc-ttl">Raid damage by target</span><small>per second, 5-second steps</small><span class="pfc-lg">' + keys.map((n, k) => '<span><i class="lg-sq" style="background:' + cols[k] + '"></i>' + esc(n) + ' <b>' + Math.round(100 * (n === 'Other' ? [...sums].filter(([m]) => !top.includes(m)).reduce((q, [, v]) => q + v, 0) : sums.get(n)) / tot) + '%</b></span>').join('') + '</span></h3>' + s;
 }
 
-// Heatmap: a row per player, a cell per 5 seconds. Damage and Healing: each row against that player's own rate (brighter
-// above it, darker below), so the dips stand out; Damage taken: one scale for everyone. Grey: dead. White ticks: their
-// big cooldowns (defensives on Damage taken). Red: a death.
-function perfHeat(r, kind, ps, w0, w1, phs) {
-  const key = KEY_OF[kind], B = 5, nb = Math.max(1, Math.ceil((w1 - w0) / B)), lust = perfContext(r).lust, col = PERF_COL[kind];
-  const { has, list } = lensRows(ps);
-  const rows = list.map((p) => { const a = p[key] || [], v = []; for (let b = 0; b < nb; b++) { const t0 = w0 + b * B, t1 = Math.min(w1, t0 + B); v.push(sumIn(a, t0, t1) / Math.max(1, t1 - t0)); }
-    return { p, v, tot: sumIn(a, w0, w1), avg: rateIn(r, p, a, w0, w1) || 0 }; }).filter((x) => x.tot > 0).sort((a, b) => b.tot - a.tot);
-  const what = { dmg: 'Damage', heal: 'Healing', taken: 'Damage taken' }[kind];
-  if (!rows.length) return '<div class="panel pf-lp">' + lensHead(what + ' heatmap', '', roleChips(has)) + '<p class="muted">Nothing recorded.</p></div>';
-  const gmax = Math.max(1, ...rows.flatMap((x) => x.v)), pct = (t) => (100 * (t - w0) / Math.max(1, w1 - w0)).toFixed(2) + '%';
-  const strip = (x) => {
-    let s = '<svg class="pf-hs" viewBox="0 0 ' + nb + ' 10" preserveAspectRatio="none" aria-hidden="true">';
-    x.v.forEach((v, b) => { const t0 = w0 + b * B, t1 = Math.min(w1, t0 + B);
-      if (aliveSecs(r, x.p, t0, t1) < 0.5) { s += '<rect x="' + b + '" y="0" width="1" height="10" class="dead"/>'; return; }
-      const a = kind === 'taken' ? Math.sqrt(v / gmax) : x.avg ? Math.min(1, v / (2 * x.avg)) : 0;
-      s += '<rect x="' + b + '" y="0" width="1" height="10" style="fill:' + col + ';fill-opacity:' + (0.05 + 0.95 * a).toFixed(2) + '" data-t="' + esc(x.p.name + ' · ' + T(t0) + '–' + T(t1) + ' · ' + C(v) + ' per second' + (kind !== 'taken' && x.avg ? ' (' + Math.round(100 * v / x.avg) + '% of their rate)' : '')) + '"/>'; });
-    for (const q of phs) if (q.start > w0 + 1 && q.start < w1) s += '<line x1="' + ((q.start - w0) / B).toFixed(2) + '" x2="' + ((q.start - w0) / B).toFixed(2) + '" y1="0" y2="10" class="ph"/>';
-    for (const c of (kind === 'taken' ? bigDefs(r, x.p, w1) : bigCds(r, x.p, w1, lust))) for (const t of c.ts) if (t >= w0 && t <= w1) s += '<rect x="' + ((t - w0) / B - 0.09).toFixed(2) + '" y="0" width=".18" height="3.4" class="cd" data-t="' + esc(x.p.name + ': ' + c.name + ' at ' + T(t)) + '"/>';
-    for (const d of r.deaths) if (d.guid === x.p.guid && d.t >= w0 && d.t <= w1) s += '<rect x="' + ((d.t - w0) / B - 0.12).toFixed(2) + '" y="0" width=".24" height="10" class="dth" data-t="' + esc(x.p.name + ' died at ' + T(d.t)) + '"/>';
-    return s + '</svg>';
-  };
-  const hw = Math.max(200, Math.min(1180, document.documentElement.clientWidth || 1000) - 240);
-  const phL = phs.filter((q) => q.start < w1 && (!isFinite(q.end) || q.end > w0)).map((q) => '<span style="left:' + pct(Math.max(w0, q.start)) + '">' + esc(phLab(q, hw * (Math.min(w1, isFinite(q.end) ? q.end : w1) - Math.max(w0, q.start)) / Math.max(1, w1 - w0))) + '</span>').join('');
-  const nar = (document.documentElement.clientWidth || 1000) < 700, step = w1 - w0 > (nar ? 240 : 400) ? (nar ? 120 : 60) : nar ? 60 : 30, tx = []; for (let t = Math.ceil(w0 / step) * step; t <= w1 - 5; t += step) tx.push('<span style="left:' + pct(t) + '">' + T(t) + '</span>');
-  const lustM = lust != null && lust >= w0 && lust <= w1 ? '<span class="lu" style="left:' + pct(lust) + '">Bloodlust</span>' : '';
-  return '<div class="panel pf-lp pf-heat k-' + kind + '">' + lensHead(what + ' heatmap', kind === 'taken' ? 'per 5 seconds, one scale for everyone' : 'per 5 seconds, each row against that player\'s own rate', roleChips(has)) +
-    '<div class="pf-hm"><div class="pf-hr hd"><span></span><span class="pf-hx">' + phL + lustM + '</span></div>' +
-    rows.map((x) => '<div class="pf-hr"><span class="pf-hn" data-n="' + esc(x.p.name) + '" tabindex="0" role="button" title="Open their breakdown">' + pfName(x.p) + '</span>' + strip(x) + '</div>').join('') +
-    '<div class="pf-hr ft"><span></span><span class="pf-hx t">' + tx.join('') + '</span></div></div>' +
-    '<div class="pf-hlg"><span><i class="sw lo"></i><i class="sw hi"></i>' + (kind === 'taken' ? 'less → more taken' : 'below → above their own rate') + '</span><span><i class="sw dd"></i>dead</span><span><i class="sw cd"></i>' + (kind === 'taken' ? 'a defensive' : 'a big cooldown') + '</span><span><i class="sw dt"></i>death</span></div>' +
-    '<details class="howit"><summary>How it works</summary><div>A cell per 5 seconds, up to the wipe filter. ' + (kind === 'taken' ? 'Everyone is on one scale: brighter is more damage taken.' : 'Each row is against that player\'s own rate over the window, so a brighter cell is above their usual and a darker one below: dips stand out (moving, dead, out of range, waiting).') + ' Grey is time dead, a white tick ' + (kind === 'taken' ? 'a defensive' : 'a big cooldown') + ', a red line a death. Hover or tap a cell for its numbers (a click keeps them up); click a name for their breakdown.</div></details></div>';
-}
-
 // Healers: each healer's healing per second while alive, overhealing (shown, not counted), the share of their heals that
 // landed on someone under half health, and their mana (from a real combat log: Warcraft Logs reports don't carry it)
 function perfHealers(r, ps, w0, w1, end) {
@@ -4780,7 +4742,6 @@ function bindPerf() {
   $$('[data-wi]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfWin = +b.dataset.wi; perf(); }));
   $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n], .pf-row.pf-wr[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
     el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
-  bindHeatTip();
   // the chart's readout: a line and a dot at the pointer, with the time, the value, the phase and what happened within 2
   // seconds. A mouse shows it on hover, and a click keeps it there (click again to move it, anywhere else to let go); a
   // finger taps or drags along the chart, and it stays until a tap somewhere else.
@@ -4806,22 +4767,6 @@ function bindPerf() {
   svg.onpointercancel = () => { if (scrub) { scrub = false; clear(); } }; // (the page took the gesture: a scroll)
   w._clear = clear;
   if (!bindPerf.out) { bindPerf.out = true; document.addEventListener('pointerdown', (e) => { const c = $('.pfc-w'); if (c && c._clear && !c.contains(e.target)) c._clear(); }, true); }
-}
-// The heatmap's cells: their numbers in a small box, on hover with a mouse (a click keeps it), or on a tap. The name at
-// the start of each row opens that player.
-function bindHeatTip() {
-  const hm = $('.pf-hm'); if (!hm) return;
-  let tip = hm.querySelector('.pf-htip'); if (!tip) { tip = document.createElement('div'); tip.className = 'pf-htip'; tip.hidden = true; hm.appendChild(tip); }
-  let pinned = false;
-  const clear = () => { pinned = false; tip.hidden = true; tip.classList.remove('pin'); };
-  const show = (e) => { const c = e.target.closest && e.target.closest('rect[data-t]'); if (!c) { if (!pinned) clear(); return false; }
-    tip.textContent = c.dataset.t; tip.hidden = false; const b = hm.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
-    tip.style.left = Math.max(0, Math.min(b.width - tip.offsetWidth, x + (x > b.width - 220 ? -tip.offsetWidth - 12 : 12))) + 'px'; tip.style.top = Math.max(0, y - tip.offsetHeight - 10) + 'px'; return true; };
-  hm.onpointermove = (e) => { if (e.pointerType === 'mouse' && !pinned) show(e); };
-  hm.onpointerleave = (e) => { if (e.pointerType === 'mouse' && !pinned) clear(); };
-  hm.onpointerdown = (e) => { if (e.target.closest('.pf-hn')) return; pinned = false; if (show(e)) { pinned = true; tip.classList.add('pin'); } };
-  hm._clear = clear;
-  if (!bindHeatTip.out) { bindHeatTip.out = true; document.addEventListener('pointerdown', (e) => { const h = $('.pf-hm'); if (h && h._clear && !h.contains(e.target)) h._clear(); }, true); }
 }
 function meter(kind) {
   const r = S.rep, dur = r.duration;

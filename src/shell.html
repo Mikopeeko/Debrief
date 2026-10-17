@@ -508,27 +508,36 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .md-f { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: 13.5px; } .md-f dt { color: var(--muted); } .md-f dd { margin: 0; }
 .warnv { color: #f3c06a; }
 .md-map:empty { display: none; } .md-map { margin-top: 10px; }
-/* ---- Deaths: the list and the picked death (what did it, linked mistakes, health line, biggest hits) ---- */
-.dmd .md-i { align-items: flex-start; } .dmd .md-dot { margin-top: 5px; } .md-l small { display: block; margin-top: 1px; font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
-.dmore { margin-top: 4px; padding: 7px 10px; border: 1px dashed var(--line2); border-radius: 8px; font-size: 12.5px; color: var(--muted); }
-.dcause { margin-top: 10px; padding: 0 10px; font-size: 12.5px; } .dcause > div { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; } .dcause b { font-variant-numeric: tabular-nums; }
-.dmd .md-h { flex-wrap: wrap; } .dmd .md-h > .sub { margin-right: auto; font-size: 13px; } .dmd .md-h .mmb { margin-left: 0; }
+/* ---- Deaths: one line per death (when, who, what killed them, what would have helped); a line opens its recap ---- */
+.md.dd { display: block; margin-top: 4px; }
+.dd-top { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+.md.dd .md-i.dd-r { display: grid; grid-template-columns: 42px minmax(110px, 160px) minmax(0, 1fr) minmax(150px, 280px) 14px; gap: 10px; align-items: center; width: 100%; padding: 8px 10px; white-space: normal; border-top: 1px solid var(--line); border-radius: 0; }
+.md.dd .md-i.dd-r.on { border-radius: 8px 8px 0 0; }
+.dd-t { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.dd-w { min-width: 0; overflow: hidden; } .dd-w .who { min-width: 0; } .dd-n { display: block; margin: 1px 0 0 26px; font-size: 12px; color: var(--muted); }
+.dd-all { margin-bottom: 8px; font-size: 13px; line-height: 1.6; } .dd-all .nm { font-weight: 600; }
+.dd-c { min-width: 0; font-size: 13.5px; } .dd-c b { font-weight: 600; } .dd-c .sub { font-size: 12.5px; }
+.dd-h { font-size: 12.5px; color: var(--muted); } .dd-h.bad { color: #ff8f87; } .dd-h.warn { color: #f3c06a; }
+.dd-x { color: var(--faint); font-size: 11px; transition: transform .12s; } .dd-r.on .dd-x { transform: rotate(90deg); }
+.dd-b { margin: 0 0 8px; padding: 10px 14px 12px; background: var(--raised); border: 1px solid var(--line2); border-top: 0; border-radius: 0 0 8px 8px; }
+.dd-sum { margin-bottom: 8px; font-size: 13px; color: var(--muted); }
+.dd-hits { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 640px; }
+.dd-hit { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 13px; } .dd-hit b { text-align: right; font-variant-numeric: tabular-nums; }
+.dd-bar { height: 8px; border-radius: 2px; background: rgba(255,255,255,.05); overflow: hidden; } .dd-bar i { display: block; height: 100%; background: #e5534b; opacity: .85; }
+.dd-act { display: flex; gap: 8px; margin-top: 10px; }
+.dmore { margin-top: 6px; padding: 7px 10px; border: 1px dashed var(--line2); border-radius: 8px; font-size: 12.5px; color: var(--muted); }
 .dev-all { padding: 3px 10px; font-size: 12.5px; } .dev-all.on { border-color: #6aa8ff; color: #9ecbff; }
-.dstory { margin: 2px 0 10px; font-size: 14px; line-height: 1.5; }
 .dchips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
 .dchip { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: 500 12.5px var(--body); text-align: left; }
 .dchip span { font-weight: 400; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .dchip.bad { border-color: rgba(229,83,75,.45); background: rgba(229,83,75,.12); color: #ff9a93; } .dchip.warn { border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.12); color: #f3c969; }
 button.dchip { cursor: pointer; } button.dchip:hover { filter: brightness(1.15); }
-.dlbl { margin: 12px 0 4px; font-size: 12px; color: var(--muted); }
-.dchart { display: block; width: 100%; height: auto; overflow: visible; } .dchart .tg { stroke: var(--line); stroke-width: 1; } .dchart .tl { fill: var(--muted); font-size: 11px; font-family: var(--body); }
-.dchart .dh { fill: rgba(229,83,75,.4); } .dchart .dh.big { fill: #e5534b; } .dchart .dh.kb { fill: #ff8f87; } .dchart .dlab { fill: #e6e9ef; font-size: 11.5px; }
-.dchart .dhp { fill: none; stroke: #6aa8ff; stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; } .dchart .dkill { fill: #e5534b; stroke: #0f1117; stroke-width: 1.5; }
-.dhits { font-size: 13px; } .dhit { display: grid; grid-template-columns: 52px minmax(0, 1fr) 60px 44px; gap: 8px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line); } .dhit b { font-variant-numeric: tabular-nums; text-align: right; } .dhit > span:last-child { text-align: right; }
-.dhelp { margin: 0; padding-left: 18px; font-size: 13.5px; color: #c4c9d2; } .dhelp li { margin: 2px 0; }
 .dall { margin-top: 10px; }
-@media (max-width: 760px) { .dhit { grid-template-columns: 44px minmax(0, 1fr) 50px 38px; font-size: 12.5px; } .dmore { flex: none; margin-top: 0; white-space: nowrap; } .dcause { display: none; } }
-@media (max-width: 900px) { .md { grid-template-columns: 1fr; } .md-list { flex-direction: row; overflow-x: auto; max-height: none; } .md-i { white-space: nowrap; } }/* all-pulls avoidable damage chart: one row per source */
+@media (max-width: 760px) {
+  .md.dd .md-i.dd-r { grid-template-columns: 38px minmax(0, 1fr) 14px; row-gap: 3px; }
+  .dd-r .dd-c, .dd-r .dd-h { grid-column: 2 / 3; } .dd-r .dd-x { grid-column: 3; grid-row: 1; }
+  .dd-b { padding: 10px; } .dd-hit { grid-template-columns: minmax(0, 1fr) 70px 50px; font-size: 12.5px; }
+}@media (max-width: 900px) { .md { grid-template-columns: 1fr; } .md-list { flex-direction: row; overflow-x: auto; max-height: none; } .md-i { white-space: nowrap; } }/* all-pulls avoidable damage chart: one row per source */
 .av-chart { display: flex; flex-direction: column; gap: 6px; }
 .av-src { background: var(--raised); border: 1px solid var(--line); border-radius: 9px; }
 .av-src[open] { border-color: var(--line2); }
@@ -1391,14 +1400,7 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-tg-v { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; white-space: nowrap; font-size: 12.5px; } .pf-tg-v b { font-variant-numeric: tabular-nums; } .pf-tg-v .sub { font-size: 12px; }
 .tg-a { opacity: .82; } .tg-a:hover { opacity: 1; }
 .pf-sets .ck .nm { font-weight: 600; } .pf-sets .pf-hint { border-style: solid; }
-/* Heatmap: a strip per player, a cell per 5 seconds */
-.pf-hm { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
-.pf-hr { display: grid; grid-template-columns: minmax(110px, 160px) minmax(0, 1fr); gap: 10px; align-items: center; }
-.pf-hn[data-n] { cursor: pointer; border-radius: 5px; } .pf-hn[data-n]:hover .nm { text-decoration: underline; } .pf-hn[data-n]:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
-/* the heatmap's readout: a cell's numbers on hover or tap (kept up after a click or tap) */
-.pf-hm { position: relative; } .pf-hs rect[data-t] { cursor: crosshair; }
-.pf-htip { position: absolute; z-index: 3; max-width: 320px; padding: 6px 10px; border-radius: 8px; background: #0b0d12; border: 1px solid var(--line2); box-shadow: 0 6px 18px rgba(0,0,0,.45); font-size: 12.5px; line-height: 1.4; color: var(--text); white-space: nowrap; pointer-events: none; }
-.pf-htip.pin, .pfc-tip.pin { border-color: var(--faint); }
+.pfc-tip.pin { border-color: var(--faint); }
 /* the chart takes a finger's sideways drag (the page still scrolls up and down) */
 .pfc-w svg { touch-action: pan-y; }
 /* touch screens only: rows and buttons big enough for a finger; a mouse keeps the dense layout */
@@ -1406,17 +1408,9 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
   .pf-row.cb { padding-top: 5px; padding-bottom: 5px; } .pf-row.cb.cb-h { padding-top: 0; padding-bottom: 2px; } .cb-b { height: 30px; } .cb-in .av.sm { width: 22px; height: 22px; }
   .pf-lens button { min-height: 40px; } .pf-rf button, .hcd-sw button, .pfph button, .plsw button { min-height: 36px; }
   .pf-t td { padding-top: 9px; padding-bottom: 9px; } .pf-tg-r { padding-top: 8px; padding-bottom: 8px; }
-  .pf-hr { min-height: 30px; } .pf-hr .pf-hs { height: 24px; } .pf-all, .pf-x, .pf-chart h3 .btn { min-height: 36px; }
+  .pf-all, .pf-x, .pf-chart h3 .btn { min-height: 36px; }
 }
 .pf-hn { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 12.5px; } .pf-hn .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .pf-hn .av.sm { width: 20px; height: 20px; }
-.pf-hs { display: block; width: 100%; height: 17px; border-radius: 3px; background: rgba(255,255,255,.025); }
-.pf-hs rect { stroke: var(--panel); stroke-width: 1; vector-effect: non-scaling-stroke; } .pf-hs rect.dead { fill: #262a35; } .pf-hs rect.cd { fill: #fff; stroke: none; } .pf-hs rect.dth { fill: #ff5a50; stroke: none; }
-.pf-hs line.ph { stroke: rgba(255,255,255,.5); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.pf-hx { position: relative; height: 16px; font-size: 12px; color: var(--faint); } .pf-hx span { position: absolute; top: 1px; white-space: nowrap; }
-.pf-hx.t span { transform: translateX(-50%); } .pf-hr.hd .pf-hx span { color: var(--muted); font-weight: 600; padding-left: 4px; border-left: 1px solid rgba(255,255,255,.3); } .pf-hr.hd .pf-hx { height: 30px; } .pf-hr.hd .pf-hx .lu { color: #e879c6; border-left-color: #e879c6; top: 15px; font-weight: 500; }
-.pf-hlg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12px; color: var(--muted); } .pf-hlg span { display: inline-flex; align-items: center; gap: 3px; }
-.pf-hlg .sw { display: inline-block; width: 12px; height: 10px; border-radius: 2px; } .pf-hlg .sw.dd { background: #262a35; } .pf-hlg .sw.cd { width: 3px; background: #fff; } .pf-hlg .sw.dt { width: 3px; background: #ff5a50; }
-.pf-heat.k-dmg .sw.lo { background: rgb(106 168 255 / .12); } .pf-heat.k-dmg .sw.hi { background: #6aa8ff; } .pf-heat.k-heal .sw.lo { background: rgb(69 193 92 / .12); } .pf-heat.k-heal .sw.hi { background: #45c15c; } .pf-heat.k-taken .sw.lo { background: rgb(229 83 75 / .12); } .pf-heat.k-taken .sw.hi { background: #e5534b; }
 /* Healers: mana over the pull */
 .pf-mana .pfc-g.lo { stroke: rgba(229,83,75,.4); stroke-dasharray: 3 3; } .mp-pot { fill: var(--panel); stroke-width: 1.8; } .mp-d { font: 700 12px var(--body); }
 /* the picked player's casts under the timeline, on its time axis */
@@ -1444,7 +1438,6 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
   .pf-lp h3 .pf-rf { margin-left: 0; }
   .pf-t { font-size: 12px; } .pf-t .pf-pc { max-width: 118px; } .pf-t td.pf-pc .av { display: none; }
   .pf-tg-r { grid-template-columns: minmax(0, 1fr) auto; row-gap: 3px; } .pf-tg-r .pf-bar { grid-column: 1 / -1; grid-row: 2; }
-  .pf-hr { grid-template-columns: 84px minmax(0, 1fr); gap: 6px; } .pf-hn .av { display: none; } .pf-hs { height: 15px; }
   .cs-h .sub { display: block; margin: 1px 0 0; }
 }
 /* the pull on screen, at the right end of the sticky tab bar */
