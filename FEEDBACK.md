@@ -10,7 +10,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Simplify Deaths in the Mechanics tab** a little (your note, round 108).
 - [x] **Rework the raid cooldowns timeline** in the Mechanics tab, fully (round 110).
 - [x] **Ula'tek: a damage graph on the Venomous Heart** (round 113).
-- [ ] **Damage windows, clearer** and **Big cooldowns, simpler** (your notes): mockup shown, waiting on your yes.
+- [x] **Damage windows, clearer** and **Big cooldowns, simpler**: mockup shown; you'd rather keep the Performance tab as it is now.
 - [ ] **Polish Twin Fangs, The Coiled Altar and Ula'tek** on Mythic and Heroic (your note: fine-tuning before your group tests).
 - [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
@@ -18,6 +18,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 114: Big cooldowns, damage tiles, spec icons
+- [x] **Big cooldowns** (your note: just whether they're maximizing usage): each line is now "used 5 of 6". No list of times, no
+  Bloodlust tag; a time shows only when it sat ready a long stretch (a minute, or half its cooldown for the long ones), e.g.
+  "sat ready 176s from 0:00".
+- [x] **Damage tiles** (your note): kept Lost to deaths. "On the boss" is gone (the Boss / All targets / On adds switch shows it) and
+  so is Active time. New tile: **Big cooldowns**, the DPS's uses out of their possible uses, naming anyone under 80%.
+- [x] **Spec icons everywhere** (your note): every player badge and map marker shows their spec's icon, not their class's. The new
+  Devourer Demon Hunter has no spec icon on Wowhead yet, so it shows Void Metamorphosis.
+- [x] Beast Mastery Hunters: Bestial Wrath now counts as a big cooldown (it was missing, so they showed none).
 
 ## 2026-10-17, round 113: Ula'tek's heart in the damage amps
 - [x] **Damage amps: Rage of the Shackled** (Mechanics, every difficulty): each amp now opens to a bar per player for their damage

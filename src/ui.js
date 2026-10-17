@@ -212,8 +212,10 @@ function avatar(p, sm) {
   const col = p.color || '#9aa0ac';
   const glyph = p.name === 'Raid' ? 'group' : CLASS_GLYPH[p.cls] || 'orb';
   return '<span class="av' + (sm ? ' sm' : '') + '" style="border-color:' + col + ';color:' + col + '"><svg viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(4.5 4.5) scale(.625)" class="gl em">' + G[glyph] + '</g></svg>' +
-    (p.icon ? '<img class="oi" data-icon="classicon_' + p.icon + '" alt="">' : '') + '</span>';
+    (pIcon(p) ? '<img class="oi" data-icon="' + pIcon(p) + '" alt="">' : '') + '</span>';
 }
+// a player's icon: their spec's, or their class's when the spec isn't known
+const pIcon = (p) => (p && (p.specIcon || (p.icon ? 'classicon_' + p.icon : null))) || null;
 function deathChip(p) {
   if (!p.deaths || !S.rep) return '';
   const ts = keptDeaths(S.rep).filter((d) => d.guid === p.guid).map((d) => d.t).sort((a, b) => a - b);
@@ -2157,10 +2159,10 @@ function bossCrest(x, y, name, k) {
 const MAP_DEFS = '<defs><clipPath id="pclip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath>' +
   '<radialGradient id="orbG" cx=".35" cy=".32" r=".75"><stop offset="0" stop-color="#f2fff0"/><stop offset=".3" stop-color="#7cf07c"/><stop offset="1" stop-color="#0f5410"/></radialGradient>' +
   '<radialGradient id="orbP" cx=".35" cy=".32" r=".75"><stop offset="0" stop-color="#fbf0ff"/><stop offset=".3" stop-color="#c47bff"/><stop offset="1" stop-color="#3d0f66"/></radialGradient></defs>';
-// Player marker: class icon in a class-colored ring (a plain dot when the class is unknown).
+// Player marker: spec icon in a class-colored ring (a plain dot when the class is unknown).
 function playerDot(x, y, pl, r, attrs, title) {
   const col = pl ? pl.color : '#9aa0ac';
-  const icon = pl && pl.icon ? 'https://wow.zamimg.com/images/wow/icons/large/classicon_' + pl.icon + '.jpg' : null;
+  const icon = pIcon(pl) ? 'https://wow.zamimg.com/images/wow/icons/large/' + pIcon(pl) + '.jpg' : null;
   return '<g' + (attrs || '') + '><circle cx="' + x + '" cy="' + y + '" r="' + (r + 1.2) + '" fill="' + col + '" stroke="#000" stroke-width="1"/>' +
     (icon ? '<image href="' + icon + '" x="' + (x - r) + '" y="' + (y - r) + '" width="' + 2 * r + '" height="' + 2 * r + '" clip-path="url(#pclip)"/>' : '') +
     (title ? '<title>' + esc(title) + '</title>' : '') + '</g>';
@@ -3824,7 +3826,7 @@ const PERF_CDS = {
   'Restoration Druid': [['Tranquility', 180], ['Incarnation: Tree of Life', 180], ['Convoke the Spirits', 120], ['Flourish', 90]],
   'Devastation Evoker': [['Dragonrage', 120], ['Deep Breath', 120]], 'Preservation Evoker': [['Rewind', 240], ['Dream Flight', 120], ['Emerald Communion', 180], ['Tip the Scales', 120]],
   'Augmentation Evoker': [['Breath of Eons', 120], ['Tip the Scales', 120]],
-  'Beast Mastery Hunter': [['Call of the Wild', 120], ['Bloodshed', 60]], 'Marksmanship Hunter': [['Trueshot', 120], ['Volley', 45]], 'Survival Hunter': [['Coordinated Assault', 120], ['Spearhead', 90]],
+  'Beast Mastery Hunter': [['Bestial Wrath', 90], ['Call of the Wild', 120], ['Bloodshed', 60]], 'Marksmanship Hunter': [['Trueshot', 120], ['Volley', 45]], 'Survival Hunter': [['Coordinated Assault', 120], ['Spearhead', 90]],
   'Arcane Mage': [['Arcane Surge', 90], ['Touch of the Magi', 45]], 'Fire Mage': [['Combustion', 120]], 'Frost Mage': [['Icy Veins', 120], ['Frozen Orb', 60]],
   'Brewmaster Monk': [['Invoke Niuzao, the Black Ox', 120]], 'Mistweaver Monk': [['Restoral', 180], ['Revival', 180], ["Invoke Yu'lon, the Jade Serpent", 120], ['Invoke Chi-Ji, the Red Crane', 120], ['Celestial Conduit', 90]],
   'Windwalker Monk': [['Storm, Earth, and Fire', 90], ['Invoke Xuen, the White Tiger', 120], ['Celestial Conduit', 90]],
@@ -3861,10 +3863,13 @@ function bigCds(r, p, t1, lust) {
     const ts = (p.byName.get(name.toLowerCase()) || []).filter((t) => t <= t1 + 0.05).sort((a, b) => a - b).filter((t, i, a) => i === 0 || t - a[i - 1] > 2); // (one press, even if the log has a cast per tick)
     // (more presses than the listed cooldown allows means talents shortened it: then every press was possible)
     const poss = Math.max(ts.length, 1 + Math.floor(Math.max(0, t1 - 1) / cd)), used = Math.min(ts.length, poss);
-    let idle = ts.length ? ts[0] : t1; for (let i = 1; i < ts.length; i++) idle += Math.max(0, ts[i] - ts[i - 1] - cd); if (ts.length) idle += Math.max(0, t1 - ts[ts.length - 1] - cd);
+    // (how long it sat ready in all, and its longest single stretch: { s: when it came ready, len })
+    let idle = 0, hold = { s: 0, len: 0 };
+    const sat = (s, e) => { const len = Math.max(0, e - s); idle += len; if (len > hold.len) hold = { s, len }; };
+    if (!ts.length) sat(0, t1); else { sat(0, ts[0]); for (let i = 1; i < ts.length; i++) sat(ts[i - 1] + cd, ts[i]); sat(ts[ts.length - 1] + cd, t1); }
     const withLust = lust != null && lust <= t1 ? ts.some((t) => t >= lust - 3 && t <= lust + 40) : null;
     const id = (p.castAb.get(name) || {}).id || E.SPELLID.get(name.toLowerCase()) || 0;
-    out.push({ name, id, cd, ts, used, poss, idle, withLust, st: used / poss >= 0.85 ? 'ok' : used / poss >= 0.6 ? 'warn' : 'bad' });
+    out.push({ name, id, cd, ts, used, poss, idle, hold, withLust, st: used / poss >= 0.85 ? 'ok' : used / poss >= 0.6 ? 'warn' : 'bad' });
   }
   return out;
 }
@@ -3934,16 +3939,19 @@ function perf() {
   const tgt = S.perfTgt === 'adds' && canAdds ? 'adds' : S.perfTgt === 'boss' && canBoss ? 'boss' : 'all', addsOn = tgt === 'adds', bossOn = tgt === 'boss';
   const onBossW = bossN.size > 1 ? 'on the bosses' : 'on the boss';
   // ---- the raid at a glance (in the window) ----
-  const actTile = (role, who) => { const v = rowsAll.filter((x) => (x.p.role || 'dps') === role).map((x) => activityIn(r, x.p, w0, w1)).filter((a) => a != null), a = v.length ? v.reduce((s, y) => s + y, 0) / v.length : null;
-    return plTile(plIco('spell_holy_borrowedtime'), 'Active time', a == null ? '—' : Math.round(a) + '<span>% avg</span>', a == null ? 'na' : a >= 85 ? 'ok' : a >= 75 ? 'warn' : 'bad', who + ' casting while alive (mind control left out)'); };
   let tiles;
   if (kind === 'dmg') {
-    const onBoss = BD.total;
     // damage lost to deaths: what each player would have done at their own rate, for the time they were dead here
     const lost = rowsAll.reduce((s, x) => s + (x.al > 0 ? x.alive * Math.max(0, wl - x.al) : 0), 0), lf = lost / Math.max(1, total + lost);
-    tiles = [plTile(plIco('achievement_boss_lichking'), 'On the boss', allT ? Math.round(100 * onBoss / allT) + '<span>%</span>' : '—', 'na', allT ? 'the rest went into adds' : 'no damage logged'),
-      plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !total ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' the dead would have done' : 'nobody was dead here'),
-      actTile('dps', 'DPS')];
+    // big cooldowns: the DPS's uses against their possible uses, each up to their death or the wipe filter (the share on
+    // the boss and the active time were dropped: the target switch shows the first, and a raid average said little)
+    const pc = perfContext(r), low = []; let used = 0, poss = 0;
+    for (const x of rowsAll) { if ((x.p.role || 'dps') !== 'dps') continue; const xp = pc.per.get(x.p.name), cds = bigCds(r, x.p, xp ? Math.min(xp.until, pc.end) : pc.end, pc.lust);
+      const u = cds.reduce((s, c) => s + c.used, 0), q = cds.reduce((s, c) => s + c.poss, 0); used += u; poss += q; if (q && u / q < 0.8) low.push(x.p.name); }
+    const cu = poss ? used / poss : null;
+    tiles = [plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !total ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' the dead would have done' : 'nobody was dead here'),
+      plTile(plIco('spell_holy_borrowedtime'), 'Big cooldowns', cu == null ? '—' : Math.round(100 * cu) + '<span>% of possible uses</span>', cu == null ? 'na' : cu >= 0.85 && !low.length ? 'ok' : cu >= 0.7 ? 'warn' : 'bad',
+        cu == null ? 'none listed for these specs yet' : (low.length ? 'under 80%: ' + low.slice(0, 3).join(', ') + (low.length > 3 ? ' and ' + (low.length - 3) + ' more' : '') : 'every DPS at 80% or more') + (ph ? ' · whole pull' : ''))];
   } else if (kind === 'heal') {
     // (no tiles on Healing: overhealing is on the Healing switch itself, and the share from healers, absorbs and active
     // time weren't worth the room; absorbs still count in Healing done)
@@ -4180,9 +4188,10 @@ function perfDetail(r, kind, p, bossN, rowsAll) {
       sec('What hit them', 'whole pull', barList(list(p.takenAb, 8).map((a) => ({ html: abName(a), v: a.total })), PERF_COL.taken));
   }
   const cds = bigCds(r, p, t1, pc.lust);
-  // (a healing cooldown also says what it did: its healing, or the damage it took off)
-  const did = (n) => { const us = (r.cdUse || []).filter((u) => u.g === p.guid && u.cd === n && u.t <= t1 + 0.05); if (!us.length) return ''; const hv = us.reduce((s, u) => s + u.heal, 0), pv = us.reduce((s, u) => s + u.prev, 0); return pv >= 1 ? ' · ~' + C(pv) + ' taken off' : hv >= 1 ? ' · healed ' + C(hv) : ''; };
-  const cdBody = cds.length ? cds.map((c) => ckLine(c.st, spell(c.id, c.name) + ' <span class="sub">used ' + c.used + ' of ' + c.poss + (c.ts.length ? ' · at ' + c.ts.map((t) => T(t)).join(', ') : '') + did(c.name) + ' · sat ready ' + Math.round(c.idle) + 's' + (c.withLust == null ? '' : c.withLust ? ' · with Bloodlust' : ' · not with Bloodlust') + '</span>')).join('')
+  // (just whether they got every use out of it; a time only when it sat ready a long stretch: a minute, or half its
+  // cooldown for the long ones, which healers often save for a planned moment)
+  const cdBody = cds.length ? cds.map((c) => { const held = c.hold.len >= Math.max(60, c.cd / 2);
+    return ckLine(c.st, spell(c.id, c.name) + ' <span class="sub">used ' + c.used + ' of ' + c.poss + (held ? ' · sat ready ' + Math.round(c.hold.len) + 's from ' + T(c.hold.s) : '') + '</span>'); }).join('')
     : ckLine('na', PERF_CDS[p.specName] ? 'None of their big cooldowns cast on this boss yet' : 'None listed for ' + esc(p.specName || 'this spec') + ' yet');
   // (against their best pull of the night, the same spec in this raid, and their Warcraft Logs parse on a kill)
   const cmpSec = () => {

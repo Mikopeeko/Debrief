@@ -31,6 +31,23 @@ const SPECS = {
   577: ['Havoc', 'DEMONHUNTER'], 581: ['Vengeance', 'DEMONHUNTER'], 1480: ['Devourer', 'DEMONHUNTER'],
   1467: ['Devastation', 'EVOKER'], 1468: ['Preservation', 'EVOKER'], 1473: ['Augmentation', 'EVOKER'],
 };
+// Each spec's own icon (Wowhead's names, loaded at runtime; checked to exist Oct 2026). Devourer has no spec icon there
+// yet, so it uses Void Metamorphosis. A player with no known spec falls back to the class icon.
+const SPEC_ICON = {
+  62: 'spell_holy_magicalsentry', 63: 'spell_fire_firebolt02', 64: 'spell_frost_frostbolt02',
+  65: 'spell_holy_holybolt', 66: 'ability_paladin_shieldofthetemplar', 70: 'spell_holy_auraoflight',
+  71: 'ability_warrior_savageblow', 72: 'ability_warrior_innerrage', 73: 'ability_warrior_defensivestance',
+  102: 'spell_nature_starfall', 103: 'ability_druid_catform', 104: 'ability_racial_bearform', 105: 'spell_nature_healingtouch',
+  250: 'spell_deathknight_bloodpresence', 251: 'spell_deathknight_frostpresence', 252: 'spell_deathknight_unholypresence',
+  253: 'ability_hunter_bestialdiscipline', 254: 'ability_hunter_focusedaim', 255: 'ability_hunter_camouflage',
+  256: 'spell_holy_powerwordshield', 257: 'spell_holy_guardianspirit', 258: 'spell_shadow_shadowwordpain',
+  259: 'ability_rogue_deadlybrew', 260: 'ability_rogue_waylay', 261: 'ability_stealth',
+  262: 'spell_nature_lightning', 263: 'spell_shaman_improvedstormstrike', 264: 'spell_nature_magicimmunity',
+  265: 'spell_shadow_deathcoil', 266: 'spell_shadow_metamorphosis', 267: 'spell_shadow_rainoffire',
+  268: 'spell_monk_brewmaster_spec', 269: 'spell_monk_windwalker_spec', 270: 'spell_monk_mistweaver_spec',
+  577: 'ability_demonhunter_specdps', 581: 'ability_demonhunter_spectank', 1480: 'inv_112_ability_demonhunter_metamorphasisvoid',
+  1467: 'classicon_evoker_devastation', 1468: 'classicon_evoker_preservation', 1473: 'classicon_evoker_augmentation',
+};
 // Interrupts by class: [spell name, cooldown in seconds, specs (null = all specs of the class)].
 // Midnight (12.0) removed interrupts from every healer spec except Restoration Shaman, whose Wind Shear
 // is on a 30s cooldown (12s for Elemental and Enhancement). Holy and Discipline Priests never had one.
@@ -4961,11 +4978,12 @@ function analyze(item, text, opts) {
     p.role = TANKS.has(p.specId) ? 'tank' : HEALERS.has(p.specId) ? 'healer' : (p.specId ? 'dps' : (p.healing > p.damage ? 'healer' : 'dps'));
     p.color = p.cls ? CLASSES[p.cls][1] : '#9aa0ac';
     p.icon = p.cls ? CLASSES[p.cls][2] : null;
+    p.specIcon = SPEC_ICON[p.specId] || null;
     const firstDeath = r.deaths.filter((d) => d.guid === g).map((d) => d.t);
     p.aliveUntil = Math.max(1, firstDeath.length ? Math.min(...firstDeath) : r.duration);
     for (const b of p.buffs.values()) for (const s of b.sp) if (s[1] == null) s[1] = r.duration;
   }
-  for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.spec = p ? p.specName : ''; }
+  for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
 
   survivability(r);
   r.mistakes = mech.build();
