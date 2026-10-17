@@ -60,7 +60,7 @@ async function gql(creds, query, variables) {
   return j.data;
 }
 
-const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime zone{name}
+const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name}
   fights{id encounterID name difficulty kill startTime endTime size keystoneLevel fightPercentage bossPercentage lastPhase lastPhaseIsIntermission}
   masterData{actors{id name type subType server petOwner gameID} abilities{gameID name type}}}}}`;
 const EVENTS_Q = `query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){reportData{report(code:$code){
@@ -99,7 +99,8 @@ async function loadReport(creds, code, live) {
       endPhase: f.kill || !f.lastPhase ? null : f.lastPhaseIsIntermission ? 'Intermission' : 'P' + f.lastPhase, endBoss: f.kill ? 0 : f.bossPercentage != null ? f.bossPercentage : null,
       pull: pulls[k], run: null, wallMs: rep.startTime + f.startTime, wcl: { code, fight: f.id, start: f.startTime, end: f.endTime, actors, abilities, encounterID: f.encounterID, rawDiff: diffId } };
   });
-  return { title: rep.title, zone: rep.zone && rep.zone.name, bosses, runs: [], dungeons };
+  // (endMs: the time of the report's last event, which keeps moving while someone live logs it)
+  return { title: rep.title, zone: rep.zone && rep.zone.name, bosses, runs: [], dungeons, endMs: rep.endTime || null };
 }
 
 // ---------- a team's reports: every raid night as short pull summaries (saved progress), no event downloads ----------

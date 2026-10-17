@@ -5488,14 +5488,23 @@ async function openWcl(link, creds) {
   LIVE.seen.clear(); liveUi();
   // live mode survives the auto-reload after an app update
   let wasLive = false; try { wasLive = sessionStorage.getItem('wla-live') === '1'; } catch (e) { /* ignore */ }
-  if (wasLive && !LIVE.on) setLive(true);
+  // a report someone is still live logging (its last event only minutes old) is followed live without being asked
+  const still = rep.endMs && Date.now() - rep.endMs < LIVE_FRESH;
+  LIVE.endMs = rep.endMs;
+  if ((wasLive || still) && !LIVE.on) {
+    setLive(true);
+    if (still && !wasLive) toast('<span><b>Live</b> This report is still being logged, so new pulls show up here as they end.</span>', 9000);
+  }
   select(pick);
 }
 // ---------- live logging ----------
 // While the raid live-logs to Warcraft Logs, re-read the report every 30s and add pulls as they finish. A pull
 // counts as finished once its end time stops changing between two checks, so a half-uploaded pull is never
 // shown (or saved on this PC). If you're on the newest pull, the app jumps to the new one on the same tab.
-const LIVE = { on: false, timer: null, seen: new Map(), last: 0, busy: false };
+// Opening a report whose last event is under 10 minutes old turns live on by itself; following a report stops by itself
+// once it hasn't changed for 45 minutes (the raid is over), so a tab left open doesn't keep asking all night.
+const LIVE = { on: false, timer: null, seen: new Map(), last: 0, busy: false, endMs: null, changed: 0 };
+const LIVE_FRESH = 10 * 60e3, LIVE_IDLE = 45 * 60e3;
 function liveUi() {
   const bar = $('#liveBar'); if (!bar) return;
   bar.hidden = !S.wclCode && !FH.dir;
@@ -5622,6 +5631,12 @@ async function liveTick() {
   LIVE.busy = true;
   try {
     const rep = await WCL.loadReport(S.wclCreds, S.wclCode, true);
+    if (rep.endMs !== LIVE.endMs) { LIVE.endMs = rep.endMs; LIVE.changed = Date.now(); }
+    else if (Date.now() - LIVE.changed > LIVE_IDLE) {
+      LIVE.busy = false; setLive(false);
+      toast('<span><b>Live is off</b> The report hasn\'t changed in 45 minutes. Turn it back on at the top if the raid goes again.</span>');
+      return;
+    }
     const have = new Set(S.index.bosses.map((b) => b.wcl && b.wcl.fight));
     const fresh = [];
     for (const b of rep.bosses) {
@@ -5648,7 +5663,7 @@ function setLive(on) {
   // live logging opens on the Last pull recap; turning it off leaves that tab
   if (on && !was) S.tab = 'live';
   if (was !== on && S.rep && $('#view')) renderMain();
-  if (on) { LIVE.timer = setInterval(liveTick, FH.dir ? 10000 : 30000); liveTick(); }
+  if (on) { LIVE.changed = Date.now(); LIVE.timer = setInterval(liveTick, FH.dir ? 10000 : 30000); liveTick(); }
   try { sessionStorage.setItem('wla-live', on ? '1' : ''); } catch (e) { /* ignore */ }
   liveUi();
 }
@@ -5730,15 +5745,24 @@ function fpParts() {
 }
 // the front page's clicks: the preview's tabs and the four buttons under it both switch the preview (a button below the
 // fold also brings the preview back into view)
-function bindFront() {
+function bindFront(auto) {
   const box = $('.home.fp'); if (!box) return;
   const show = (k) => {
     box.querySelectorAll('.fp-tabs button').forEach((b) => { const on = b.dataset.s === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-    box.querySelectorAll('.fp-mods button').forEach((b) => b.classList.toggle('on', b.dataset.s === k));
+    box.querySelectorAll('.fp-mods button').forEach((b) => { const on = b.dataset.s === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     box.querySelectorAll('.fp-scene').forEach((s) => s.classList.toggle('on', s.dataset.s === k));
   };
-  box.querySelectorAll('.fp-tabs button').forEach((b) => { b.onclick = () => show(b.dataset.s); });
-  box.querySelectorAll('.fp-mods button').forEach((b) => { b.onclick = () => { show(b.dataset.s); const p = $('#fpPrev'), rc = p.getBoundingClientRect(); if (rc.top < 0 || rc.bottom > innerHeight) p.scrollIntoView({ behavior: 'smooth', block: 'center' }); }; });
+  let picked = false;
+  box.querySelectorAll('.fp-tabs button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); }; });
+  box.querySelectorAll('.fp-mods button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); const p = $('#fpPrev'), rc = p.getBoundingClientRect(); if (rc.top < 0 || rc.bottom > innerHeight) p.scrollIntoView({ behavior: 'smooth', block: 'center' }); }; });
+  // (the website's preview moves on to the next view every 7 seconds, paused while the mouse is on it, until a view is picked)
+  if (!auto || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const t = setInterval(() => {
+    if (!document.body.contains(box)) { clearInterval(t); return; }
+    if (picked || box.querySelector('.fph-prev:hover')) return;
+    const cur = FP_SCENES.findIndex(([k]) => box.querySelector('.fp-scene.on[data-s="' + k + '"]'));
+    show(FP_SCENES[(cur + 1) % FP_SCENES.length][0]);
+  }, 7000);
 }
 // the start screen's card icons (drawn here, no game art)
 const HICO = {
@@ -5750,6 +5774,7 @@ function home() {
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
+  if (WCL.HOSTED && !window.WLA_DESKTOP) { homeHosted(); return; }
   // the front page (what people see first): the ways in beside a clickable preview of the app, and the four main views
   // underneath as buttons that switch it. The live button comes first; the other ways to follow a log and the help are
   // folded under the start panel.
@@ -5758,9 +5783,8 @@ function home() {
   const MODS = { live: 'Between pulls: what went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with arena maps of who stood where.', assign: 'Your NSRT note against what actually happened.', summary: 'How far each pull got, and what ended them.' };
   $('#main').innerHTML = '<div class="home fp">' +
     '<div class="fp-top">' +
-    '<section class="fp-hero" id="fpStart"><div class="fp-intro"><div><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Know why every pull wiped</h1><p class="fp-lead">Debrief checks every mechanic, assignment and death in your combat log, and tells you what to fix before the next pull.</p></div>' +
+    '<section class="fp-hero" id="fpStart"><div class="fp-intro"><div><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1><p class="fp-lead">Debrief checks every mechanic, assignment and death in your combat log, and tells you what to fix before the next pull.</p></div>' +
       '<div class="fp-start">' +
-        (WCL.HOSTED ? hostedStart() :
         '<button class="btn primary fp-big" id="hLiveAuto">' + liveLab + '</button>' +
         '<div class="fp-sub">During raid: each pull shows up the moment it ends.</div><div class="hc-found" id="hLiveFound"></div>' +
         '<button class="btn" id="hLiveAgain" hidden></button><div class="fp-msg" id="hLiveMsg"></div>' +
@@ -5773,7 +5797,7 @@ function home() {
           '<b>Live logging</b><ol><li>In WoW, turn on Advanced Combat Logging (Options, Network) and type <code>/combatlog</code>.</li><li>Click <b>' + liveLab + '</b>: Debrief finds the newest log in <code>World of Warcraft\\_retail_\\Logs</code> by itself and switches when WoW starts a new one. (If it can\'t find the folder, put its path in a <code>logs-path.txt</code> file next to start.bat.)</li><li>Keep this tab open: pulls are checked every 10 seconds.</li><li>For a Warcraft Logs live log, start the uploader with Live Log and paste its link under Other ways.</li></ol>' +
           '<b>Finding your combat log</b><ol><li>Turn on Advanced Combat Logging and type <code>/combatlog</code> before you pull.</li><li>The file is in <code>World of Warcraft\\_retail_\\Logs</code>.</li></ol>' +
           '<b>Warcraft Logs, the first time</b><ol><li>Warcraft Logs needs a free API client the first time (client ID and secret).</li><li>Import asks for them once and remembers them on this PC.</li></ol>' +
-        '</div></details>') +
+        '</div></details>' +
         '<div class="fp-safe">' + lock + 'Your log is read on this PC. Nothing is uploaded.</div>' +
       '</div></div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
@@ -5812,24 +5836,40 @@ function home() {
   // a folder chosen before: one click to watch it again (the browser asks to confirm access once per session)
   fhGet().then((dir) => { const b = $('#hLiveAgain'); if (!dir || !b) return; b.hidden = false; b.textContent = 'Watch "' + dir.name.replace(/\.txt$/i, '') + '" again'; b.onclick = () => (dir.kind === 'file' ? pickLogFile : pickLogFolder)(pickMsg(), true); });
 }
-// The website's start panel. A website can't follow the combat log where WoW is usually installed: Chrome keeps every
-// page out of Program Files ("can't open files in this folder because it contains system files"), and there's no
-// helper on the PC to read it instead. So the site leads with Warcraft Logs links (a live log for raid night), then a
-// finished log opened from the PC (a plain file pick isn't blocked), and the file pickers last, for WoW installed elsewhere.
-function hostedStart() {
-  return '<label class="fp-lab" for="hWcl">Warcraft Logs report, yours or any public one</label><div class="fp-in"><input id="hWcl" placeholder="Paste a report link" autocomplete="off"><button class="btn primary" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
-    '<label class="fp-lab" for="hLive">During raid: a Warcraft Logs live log</label><div class="fp-in"><input id="hLive" placeholder="Paste the live log link" autocomplete="off"><button class="btn" id="hLiveGo">Go live</button></div><div class="fp-sub">Each new pull shows up about a minute after it ends.</div><div class="fp-msg" id="hLiveMsg"></div>' +
-    '<div class="fp-or">or a combat log on this PC</div>' +
-    '<button class="btn" id="hFileGo">Open a combat log</button><div class="fp-sub">After raid. You can also drop the file anywhere on this page.</div>' +
-    '<details class="fp-more"><summary>Follow your combat log file live</summary><div class="fp-mb"><div class="fp-sub fp-why">Chrome doesn\'t let websites open files inside Program Files, which is where WoW is usually installed. If your WoW is somewhere else, these work.</div>' +
-      '<button class="linkbtn" id="hLiveFile">Choose your combat log</button><button class="linkbtn" id="hLiveDir">Pick the Logs folder</button><button class="btn" id="hLiveAgain" hidden></button><div class="fp-msg" id="hPickMsg"></div></div></details>' +
-    '<details class="fp-more"><summary>Help getting started</summary><div class="fp-help">' +
-      '<b>Live logging</b><ol><li>Whoever logs for the raid runs the Warcraft Logs uploader with <b>Live Log</b> on.</li><li>Paste its live log link above and click <b>Go live</b>.</li><li>Keep this tab open: new pulls are checked every 30 seconds.</li></ol>' +
-      '<b>Finding your combat log</b><ol><li>Turn on Advanced Combat Logging and type <code>/combatlog</code> before you pull.</li><li>The file is in <code>World of Warcraft\\_retail_\\Logs</code>.</li></ol>' +
-    '</div></details>';
+// The website's front page: one box for any Warcraft Logs link (a report still being logged turns live on by itself, see
+// openWcl), then what you get: the four main views as cards that switch an app-like preview (made-up example data),
+// moving on by itself every few seconds until a card is clicked. A website can't follow the combat log where WoW is
+// usually installed (Chrome keeps every page out of Program Files: "can't open files in this folder because it contains
+// system files"), so the site has no live-file option; a finished log can still be opened or dropped on the page (a
+// plain file pick isn't blocked).
+function homeHosted() {
+  const fp = fpParts();
+  const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
+  $('#main').innerHTML = '<div class="home fp fph">' +
+    '<section class="fph-hero" id="fpStart"><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1>' +
+      '<p class="fp-lead">Paste a Warcraft Logs link. Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
+      '<div class="fph-box"><input id="hWcl" placeholder="Paste a Warcraft Logs link" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
+      '<div class="fph-live">' + HICO.live + '<span><b>Raiding right now?</b> Paste the live log link. New pulls show up here as they end.</span></div>' +
+      '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or drop it anywhere on this page.</div></section>' +
+    '<section class="fph-prev"><h2>What you get</h2>' +
+      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
+      '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
+        '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
+    '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+  const go = async () => {
+    const link = WCL.parseLink($('#hWcl').value), msg = $('#hWclMsg');
+    if (!link) { msg.style.color = ''; msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Opening the report…'; $('#hWclGo').disabled = true;
+    try { await openWcl(link, null); } catch (err) { if ($('#hWclGo')) { $('#hWclGo').disabled = false; msg.style.color = ''; msg.textContent = err.message; } }
+  };
+  $('#hWclGo').onclick = go;
+  $('#hWcl').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+  $('#hWcl').onpaste = () => setTimeout(() => { if (WCL.parseLink($('#hWcl').value)) go(); }, 50); // (a pasted link opens at once)
+  $('#hFileGo').onclick = () => $('#fileIn').click();
+  bindFront(true);
 }
 // (said on the website when a file pick ends without a file: usually Chrome refusing the WoW folder)
-const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder: that\'s Chrome protecting Program Files, and a website can\'t get past it. Use a Warcraft Logs live log above instead.';
+const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder: that\'s Chrome protecting Program Files, and a website can\'t get past it. Use a Warcraft Logs live log instead.';
 // ---------- Progress: every boss of the tier, night by night, from the pulls saved on this PC ----------
 // One row per boss and difficulty, in raid order, with a coloured left edge like everywhere else: orange once killed,
 // otherwise item quality by how much of the encounter its best pull got through. A row opens its nights: pulls, kill or

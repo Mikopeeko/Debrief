@@ -11,6 +11,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 106: auto-live, a simpler website start page, a new slogan
+- [x] **Auto-live**: open any Warcraft Logs report that's still being logged (its last event under 10 minutes old), and Debrief turns live on by itself. "This report is still being logged…" pops up, and new pulls appear as they end. It works on the website and on your PC.
+- [x] Following a report live turns itself off after 45 minutes with no change ("Live is off… turn it back on at the top"), so a tab left open overnight doesn't keep asking.
+- [x] **The website's start page is simpler**: one big box for any Warcraft Logs link (a pasted link opens at once), a line for live raids, and "open a combat log from this PC". Under it, **What you get** shows the four views as cards over one example preview, which moves on to the next view every 7 seconds until you click one. On a phone the cards are a 2 by 2 grid.
+- [x] The website no longer offers to follow the log file live (Chrome blocks it for most people); opening a finished log still works.
+- [x] New slogan on both start pages: **Every pull, explained.**
+- [x] Checked on the live site: desktop and phone width, the preview moving on, an old report opening without live, a report made to look fresh turning live on, and live turning itself off after 45 minutes.
+
 ## 2026-10-17, round 105: the website's start page and the live log
 - [x] Your report: on the website, following the live log gave Chrome's "can't open files in this folder because it contains system files". That's Chrome's own rule: no website may open files inside Program Files, where WoW is installed. It can't be fixed from a website (on your PC, start.bat's helper reads the log instead, so it works there).
 - [x] The website's start page now leads with what works there: a Warcraft Logs report link, then a Warcraft Logs live log for raid night, then opening a finished log from the PC (a plain file pick isn't blocked). Following the log file sits under "Follow your combat log file live", with why it may not work; cancelling Chrome's message says the same.
