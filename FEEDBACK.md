@@ -52,6 +52,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Performance: a Compare option** (your note): put two things side by side somewhere in the Performance tab (for example
   two players, a player against their own best pull, or this pull against an earlier one). Where it goes: part of the
   Performance talk.
+  **Update (your note, Oct 17):** a comparison area: your logs against other logs (a top guild's on the same boss), and
+  yourself against other people on your team. My take: start with you against a teammate of the same spec and against
+  your own best pull, then your raid against one of the top guilds above on the same boss.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
 - [x] **Survivability view in Performance** (round 118).
@@ -61,6 +64,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **A better web address** for the site (your question).
 - [ ] **Top teams from Warcraft Logs** (your note): pick from the top-ranked teams. My take: keep them apart from your own
   teams (a "Compare" option: how many pulls and nights a top guild needed per boss, next to yours). Design to show you first.
+  **Update (your note, Oct 17):** on the Your teams page, under "Add a team or character", show about four top guilds
+  already pulled up, at different ranges: around world #50, #200, #700 and #1000, so people can look and compare.
+  My take: pick them from Warcraft Logs' rankings each week (the ranks move), not fixed guilds, and show the same card
+  as your own teams plus "how many pulls and nights to kill" per boss.
 - [x] **Healer mana, more**: what each healer spent the most mana on (round 119).
 - [x] **Performance charts you can explore**: hover readouts and click-to-hide (round 119). More charts can follow.
 - [ ] **The new 12.1.5 boss** (your note): make sure every version of it is in the project (each difficulty: its checks, its
