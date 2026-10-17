@@ -8412,32 +8412,41 @@ function who(p, sub) {
   return '<span class="who">' + avatar(p) + '<span style="min-width:0"><div class="nm" style="color:' + p.color + '">' + esc(p.name) + '</div><div class="sub">' + esc(sub == null ? p.specName : sub) + '</div></span></span>';
 }
 function refreshIcons() { hydrateIcons(); linkBossText(); }
-// Boss abilities named in plain text (a rule's tip, a check's line, a summary, "fix first", a death's killing blow) get the
-// same spell tooltip as the headings, on every tab of a pull: every ability this boss's rules and fight module know, by its
-// name in the log or on Wowhead, when it's written with a capital (so "bounce" in a sentence stays a word). Text that's
-// already a spell, links, form fields and charts are left alone. On Performance and Player audit, which are about players'
-// own spells, a boss ability with the same name as a player spell in this log (a rogue's Mutilate on Sszorak) isn't linked.
+// Spells named in plain text get the same tooltip as a spell shown with its icon, on every tab of a pull: boss abilities
+// (a rule's tip, a check's line, "fix first", a death's killing blow) and players' own spells (a fix like "Use Blessing of
+// Sacrifice more", "died with Divine Shield still ready", a coaching tip). Boss abilities: every one this boss's rules and
+// fight module know, by its name in the log or on Wowhead, and every spell an enemy used. Players' spells: everything the
+// raid cast this pull (each by the ID they cast it with), plus the defensives, big cooldowns and externals the app talks
+// about even when nobody pressed them, and Healthstone. A name only counts written with a capital (so "bounce" in a
+// sentence stays a word), and a one-word name only when it's long and not an everyday word. Where a boss ability and a
+// player spell share a name (a rogue's Mutilate on Sszorak), the fight's tabs mean the boss's and Performance and Player
+// audit the player's. Text that's already a spell, form fields and charts are left alone.
 const PLAYER_TABS = { perf: 1, player: 1 }, BOSS_RX = new Map();
 const ENEMY_STOP = new Set(['berserk', 'enraged', 'frenzied', 'charging', 'shields', 'attacks', 'strikes', 'summons', 'teleport', 'ritual', 'emerge', 'emerges', 'feeding', 'invisible', 'stunned', 'channel', 'dismount', 'despawn', 'cosmetic', 'permanent', 'stealth', 'submerge', 'transform', 'triggers', 'trigger', 'warning', 'interrupt', 'immunity', 'immune', 'evading', 'phasing', 'standing', 'kneeling', 'sleeping', 'dancing']);
+const PLAYER_STOP = new Set(['charge', 'attack', 'auto attack', 'auto shot', 'shoot', 'throw', 'melee', 'stealth', 'sprint', 'prowl', 'berserk', 'revive', 'recall', 'mount', 'hearthstone', 'shadowmeld', 'cat form', 'bear form', 'travel form', 'ghost wolf', 'leech', 'avoidance', 'versatility', 'mastery', 'haste', 'critical strike']);
+let RX_N = 0;
 function bossRx(strict) {
-  const enc = S.item && S.item.boss, key = enc + '|' + E.SPELLID.size + '|' + E.ENEMY_SPELL.size + '|' + !!strict; if (BOSS_RX.has(key)) return BOSS_RX.get(key);
-  const ids = E.BOSS_IDS[enc], names = new Map();
+  const r = S.rep, enc = S.item && S.item.boss, key = enc + '|' + (r._rxId || (r._rxId = ++RX_N)) + '|' + E.SPELLID.size + '|' + E.ENEMY_SPELL.size + '|' + !!strict; if (BOSS_RX.has(key)) return BOSS_RX.get(key);
+  const ids = E.BOSS_IDS[enc], boss = new Map(), mine = new Map(), okName = (k, stop) => (k.includes(' ') ? k.length >= 6 : k.length >= 6 && !stop.has(k)) && !stop.has(k);
   if (ids) {
-    for (const id of ids) { const n = E.BOSS_NAMES[id]; if (n && !names.has(n.toLowerCase())) names.set(n.toLowerCase(), id); }
-    for (const [k, id] of E.SPELLID) if (ids.has(id)) names.set(k, id); // (the log's own ID for a name wins: the same spell as the headings)
+    for (const id of ids) { const n = E.BOSS_NAMES[id]; if (n && !boss.has(n.toLowerCase())) boss.set(n.toLowerCase(), id); }
+    for (const [k, id] of E.SPELLID) if (ids.has(id)) boss.set(k, id); // (the log's own ID for a name wins: the same spell as the headings)
   }
-  // (and every spell an enemy used in the logs opened here, for an ability the rules and modules only know by name; a
-  // one-word name only when it's long and not an everyday word that a sentence might start with)
-  for (const [k, id] of E.ENEMY_SPELL) if (!names.has(k) && (k.includes(' ') ? k.length >= 6 : k.length >= 7 && !ENEMY_STOP.has(k))) names.set(k, id);
-  if (strict) for (const k of [...names.keys()]) { const own = E.SPELLID.get(k), id = names.get(k); if (own && own !== id && !(ids && ids.has(own))) names.delete(k); }
+  for (const [k, id] of E.ENEMY_SPELL) if (!boss.has(k) && (k.includes(' ') ? k.length >= 6 : k.length >= 7 && !ENEMY_STOP.has(k))) boss.set(k, id);
+  // (the players' spells: what they cast, then the lists the app names spells from)
+  for (const p of r.players.values()) for (const [n, a] of p.castAb || []) { const k = String(n).toLowerCase(); if (a && a.id && !mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, a.id); }
+  for (const list of Object.values(E.DEFENSIVES || {})) for (const d of list) { const k = d[0].toLowerCase(); if (!mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, d[1]); }
+  for (const list of Object.values(PERF_CDS).concat(Object.values(RC_EXT))) for (const [n] of list) { const k = n.toLowerCase(), id = E.SPELLID.get(k); if (id && !mine.has(k)) mine.set(k, id); }
+  if (!mine.has('healthstone')) mine.set('healthstone', 6262);
+  const names = new Map(strict ? [...mine, ...[...boss].filter(([k]) => !mine.has(k))] : [...boss, ...[...mine].filter(([k]) => !boss.has(k))]);
   const list = [...names.keys()].filter((n) => n.length >= 4).sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const v = list.length ? { rx: new RegExp('(?<![\\p{L}\\p{N}])(' + list.join('|') + ')(?![\\p{L}\\p{N}])', 'giu'), names } : null;
   if (BOSS_RX.size > 40) BOSS_RX.clear(); BOSS_RX.set(key, v); return v;
 }
 function linkBossText() {
   if (!S.rep || !S.item) return; const b = bossRx(!!PLAYER_TABS[S.tab]); if (!b) return;
-  // (a jump link, like a Mechanics chip, still gets them; a spell's own link is already one)
-  const skip = '.sp, svg, script, style, textarea, select, option, input, code, [contenteditable]', hits = [];
+  // (a jump link, like a Mechanics chip, still gets them; a spell's own link is already one; a player's name isn't a spell)
+  const skip = '.sp, .nm, svg, script, style, textarea, select, option, input, code, [contenteditable]', hits = [];
   // (the tab, and the banner over it)
   for (const box of [$('#view'), $('#bossHead')]) { if (!box) continue;
     const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, { acceptNode: (t) => (t.nodeValue.length < 4 || !t.parentElement || t.parentElement.closest(skip) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });

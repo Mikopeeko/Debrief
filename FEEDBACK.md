@@ -3,6 +3,11 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **To talk about next (your note): Player audit vs Performance.** The Report card may have replaced the Player audit
+  (both grade each player: casting, cooldowns, survival kit, a focus list). Decide what stays where: fold the Player audit's
+  unique parts (gear, enchants and buffs at the pull, "ready to raid", MVPs) into Performance, or keep it as its own tab.
+- [ ] **Charts you can explore, everywhere** (your note): every chart shows a breakdown on hover and does something useful
+  on a click. Plan to talk through first.
 - **Goal (your note): the Performance tab is meant to replace Warcraft Logs** for the raid. Everything people check on Warcraft
   Logs (damage, healing, damage taken, casts, buffs, deaths, parses) should be there and as easy to explore.
 - [x] **High priority: set up GitHub before anything else** (round 102: private repo Mikopeeko/Debrief, a checkpoint pushed after every round).
@@ -58,6 +63,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [ ] Check (from your question): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-17, round 126: tooltips on players' spells too
+- [x] **Player spells in sentences have tooltips** (your note: so people know what they do): a spell named inside text,
+  like "Use Blessing of Sacrifice more", "died with Divine Shield still ready" or a coaching tip, now shows its Wowhead
+  description on hover, the same as boss abilities. It knows every spell the raid cast that pull (with the exact version
+  they cast), plus the defensives, big cooldowns and externals the app mentions even when nobody pressed them, and
+  Healthstone. Everyday words (Charge, Shoot, Bear Form…) are left alone. Where a boss ability and a player spell share a
+  name, the fight's tabs mean the boss's, Performance and Player audit the player's.
 
 ## 2026-10-17, round 125: Performance, the trust pass (grades fair before the raid sees them)
 - [x] **Every cooldown checked**: all 203 listed cooldowns (big cooldowns, defensives, externals) against Wowhead's
