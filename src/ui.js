@@ -3914,11 +3914,9 @@ function perf() {
       plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !total ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' the dead would have done' : 'nobody was dead here'),
       actTile('dps', 'DPS')];
   } else if (kind === 'heal') {
-    const abs = ps.reduce((s, p) => s + p.absorbs, 0), hShare = total ? sumOf(rowsAll.filter((x) => x.p.role === 'healer')) / total : 0;
-    // (overhealing is on the Healing switch itself, so it isn't a tile too)
-    tiles = [plTile(plIco('spell_holy_heal'), 'From healers', total ? Math.round(100 * hShare) + '<span>%</span>' : '—', 'na', 'the rest from tanks and DPS'),
-      plTile(plIco('spell_holy_powerwordshield'), 'Absorbs', total ? Math.round(100 * abs / Math.max(1, ps.reduce((s, p) => s + p.healing, 0))) + '<span>%</span>' : '—', 'na', 'of all healing, from shields' + (ph ? ' · whole pull' : '')),
-      actTile('healer', 'Healers')];
+    // (no tiles on Healing: overhealing is on the Healing switch itself, and the share from healers, absorbs and active
+    // time weren't worth the room; absorbs still count in Healing done)
+    tiles = [];
   } else {
     const avoid = ps.reduce((s, p) => s + p.avoidable, 0), allTaken = ps.reduce((s, p) => s + p.taken, 0), ds = keptDeaths(r).filter((d) => inWin(d.t)).length;
     const calls = ps.flatMap((p) => (p.closeCalls || []).filter((c) => inWin(c.tl))), open = calls.filter((c) => !c.def && !c.stone && !c.pot).length;
@@ -3926,7 +3924,7 @@ function perf() {
       plTile(plIco('spell_holy_ardentdefender'), 'Close calls', String(calls.length), open ? 'warn' : 'ok', calls.length ? (open ? open + ' with nothing pressed' : 'each one answered') + ' · under 30% and lived' : 'nobody dropped under 30%'),
       plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds), ds ? 'bad' : 'ok', ds ? 'see Mechanics for each one' : 'nobody died here')];
   }
-  h += '<div class="pts n' + tiles.length + '">' + tiles.join('') + '</div>';
+  if (tiles.length) h += '<div class="pts n' + tiles.length + '">' + tiles.join('') + '</div>';
   // ---- the fight's damage checks (Damage, whole pull) ----
   if (kind === 'dmg' && !ph) { const dc = damageChecks(r); if (dc.length) { const b = dc.filter((x) => x.st === 'bad').length, w = dc.filter((x) => x.st === 'warn').length, dst = b ? 'bad' : w ? 'warn' : 'ok';
     h += '<div class="panel probbox ' + dst + ' pf-dc"><h3 class="nh">Damage checks <small>the fight\'s shields and adds, up to the wipe filter</small>' + hst(dst, b ? plural(b, 'failed') : w ? w + ' close or late' : 'all passed') + '</h3>' +
@@ -3960,8 +3958,10 @@ function perf() {
     // or their rate while alive when they died)
     const pc0 = (v) => (v < 0.01 ? '<1' : Math.round(100 * v)) + '%';
     const sub = kind === 'heal' ? pc0(x.over) + ' over' : kind === 'taken' ? (x.avoidShare >= 0.005 ? pc0(x.avoidShare) + ' avoidable' : 'none avoidable') : inWin(x.died) && !x.back ? C(x.alive) + ' alive' : (pct < 1 ? '<1' : pct.toFixed(pct >= 10 ? 0 : 1)) + '%';
-    return cbRow({ tag: 'button', cls: on ? ' on' : '', attrs: ' type="button" data-n="' + esc(x.p.name) + '" aria-pressed="' + !!on + '"', k: i + 1, p: x.p, segs, v: C(x.tot / wl), sub,
-      chips: (prs ? prsChip(prs.get(x.p.name)) : '') + (inWin(x.died) ? '<span class="pf-d" title="' + esc('died at ' + T(x.died) + (x.back ? ', brought back' : '')) + '">✕ ' + T(x.died) + (x.back ? ' ↻' : '') + '</span>' : '') }); }).join('');
+    // (the Warcraft Logs parse has its own column at the right end of the row, not next to the name)
+    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + (prs ? ' pf-pr' : ''), attrs: ' type="button" data-n="' + esc(x.p.name) + '" aria-pressed="' + !!on + '"', k: i + 1, p: x.p, segs, v: C(x.tot / wl), sub,
+      end: prs ? prsChip(prs.get(x.p.name)) : null,
+      chips: inWin(x.died) ? '<span class="pf-d" title="' + esc('died at ' + T(x.died) + (x.back ? ', brought back' : '')) + '">✕ ' + T(x.died) + (x.back ? ' ↻' : '') + '</span>' : '' }); }).join('');
   h += '<div class="pf-cols"><div class="panel pf-bars"><h3 class="nh"><span>' + { dmg: 'Damage done', heal: 'Healing done', taken: 'Damage taken' }[kind] + '</span><small>per second over ' + (ph ? esc(pfPhK(ph)) + ' (' + T(wl) + ')' : T(end)) + (kind === 'taken' ? ' · avoidable in red' : kind === 'heal' ? ' · overhealing faded' : '') + '</small>' + roleChips(has) + '</h3>' + (bars || '<p class="muted">Nothing recorded.</p>') + '</div>' +
     '<div class="panel pf-det">' + perfDetail(r, kind, sel ? sel.p : null, bossN, rowsAll) + '</div></div>';
   view(h + '</div>');
@@ -4120,6 +4120,8 @@ function perfDetail(r, kind, p, bossN, rowsAll) {
       body = sec('Where the damage went', 'whole pull', barList([...by].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([n, v]) => ({ html: esc(n) + (bossN.has(n) ? ' <span class="sub">boss</span>' : ''), v })), PERF_COL.dmg)); }
     else { const by = new Map(); for (const q of r.players.values()) for (const a of (kind === 'heal' ? q.healAb : q.takenAb).values()) { const x = by.get(a.name) || { name: a.name, id: a.id, total: 0 }; x.total += a.total; by.set(a.name, x); }
       body = sec(kind === 'heal' ? 'The biggest heals' : 'What hit the raid hardest', 'whole pull', barList([...by.values()].sort((a, b) => b.total - a.total).slice(0, 10).map((a) => ({ html: spell(a.id, a.name) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : ''), v: a.total })), PERF_COL[kind])); }
+    // (Healing: just the hint; the role split and the biggest heals weren't useful there)
+    if (kind === 'heal') return '<h3 class="nh"><span>The raid</span></h3>' + hint;
     return '<h3 class="nh"><span>The raid</span></h3>' + hint + sec('By role', '', roleBar) + body;
   }
   const pc = perfContext(r), x0 = pc.per.get(p.name), t1 = x0 ? Math.min(x0.until, pc.end) : pc.end, gone = t1 < pc.end - 0.05;
@@ -4242,17 +4244,29 @@ function utilCats(reps) {
   }
   return cats.filter((c) => c.key !== 'cc' || hasCC).map((c) => ({ ...c, rows: [...c.m.values()].sort((a, b) => b.n - a.n) }));
 }
-// the cards: a class-coloured bar per player, and under it what they did (with the time on a single pull, for battle
-// resses and externals)
+// Utility as a chart, like Damage and Healing done: a switch for the kind (interrupts, dispels, externals, battle resses,
+// mind control CC), a bar per player with how many they did, and on the right what the picked player did (each one, with
+// times on a single pull), or with nobody picked what the raid did, by spell
 function utilCards(cats, one) {
-  return '<div class="pfu">' + cats.map((c) => {
-    const mx = Math.max(1, ...c.rows.map((x) => x.n)), tot = c.rows.reduce((s, x) => s + x.n, 0);
-    const chips = (x) => { const ds = [...x.d.values()].sort((a, b) => b.n - a.n), more = ds.length - 4;
-      return ds.slice(0, 4).map((d) => '<span class="pfu-ch">' + d.html + (one && c.who ? ' <span class="sub">' + d.ts.map((t) => T(t)).join(', ') + '</span>' : '') + (d.n > 1 && !(one && c.who) ? ' <b>×' + d.n + '</b>' : '') + '</span>').join('') + (more > 0 ? '<span class="pfu-ch sub">+' + more + ' more</span>' : ''); };
-    return '<div class="panel pfu-c"><h3 class="nh"><img class="pfu-i" src="' + whIcon(c.icon) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + esc(c.title) + '<span class="pfu-n">' + tot + '</span><small' + (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' + esc(c.sub) + '</small></h3>' +
-      (c.rows.length ? c.rows.map((x) => '<div class="pfu-r"><div class="pfu-t">' + avatar(x.p, true) + '<span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span><span class="pfu-b"><i style="width:' + (100 * x.n / mx).toFixed(1) + '%;background:' + x.p.color + '"></i></span><b>' + x.n + '</b></div><div class="pfu-d">' + chips(x) + '</div></div>').join('')
-        : '<p class="muted pfu-0">' + esc(c.none) + '</p>') + '</div>';
-  }).join('') + '</div>';
+  const shown = cats.filter((c) => c.rows.length || c.key !== 'cc');
+  const c = shown.find((x) => x.key === S.utilCat) || shown.find((x) => x.rows.length) || shown[0]; if (!c) return '';
+  const mx = Math.max(1, ...c.rows.map((x) => x.n)), tot = c.rows.reduce((s, x) => s + x.n, 0), sel = c.rows.find((x) => x.p.name === S.utilSel) || null;
+  const sw = '<div class="seg pfu-cat" role="tablist" aria-label="Kind">' + shown.map((x) => '<button type="button" data-c="' + x.key + '"' + (x === c ? ' class="on"' : '') + '>' + esc(x.title) + ' <span class="sub">' + x.rows.reduce((s, y) => s + y.n, 0) + '</span></button>').join('') + '</div>';
+  const bars = c.rows.map((x, i) => cbRow({ tag: 'button', cls: sel === x ? ' on' : '', attrs: ' type="button" data-un="' + esc(x.p.name) + '" aria-pressed="' + (sel === x) + '"', k: i + 1, p: x.p,
+    segs: [[Math.max(1, 100 * x.n / mx), 'm']], v: String(x.n), sub: tot ? Math.round(100 * x.n / tot) + '%' : '' })).join('');
+  const left = '<div class="panel pf-bars pfu-bars"><h3 class="nh"><span>' + esc(c.title) + '</span><small' + (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' + esc(c.sub) + ' · ' + tot + ' in all' + (one ? '' : ' over the night') + '</small></h3>' + sw +
+    (bars || '<p class="muted" style="margin:10px 0 0">' + esc(c.none) + '</p>') + '</div>';
+  const line = (d, who) => '<div class="pfu-l"><span class="pfu-w">' + d.html + (who ? ' <span class="sub">by</span> ' + who : '') + '</span><span class="sub">' + (one ? d.ts.map((t) => T(t)).join(', ') : '') + '</span><b>' + d.n + '</b></div>';
+  let right;
+  if (sel) right = '<h3 class="nh">' + avatar(sel.p, true) + ' <span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span><small>' + plural(sel.n, c.title.toLowerCase().replace(/s$/, '')) + '</small></h3>' +
+    [...sel.d.values()].sort((a, b) => b.n - a.n).map((d) => line(d)).join('') + '<p class="sub" style="margin:10px 0 0">Click their bar again for the whole raid.</p>';
+  else {
+    // (what the raid did, by spell: each one with who did it)
+    const by = new Map(); for (const x of c.rows) for (const d of x.d.values()) { let o = by.get(d.html); if (!o) by.set(d.html, o = { html: d.html, n: 0, ts: [], who: [] }); o.n += d.n; o.ts.push(...d.ts); o.who.push([x.p, d.n]); }
+    right = '<h3 class="nh"><span>The raid</span><small>' + esc(c.sub) + ', by spell</small></h3>' + ([...by.values()].sort((a, b) => b.n - a.n).map((o) => line({ html: o.html, n: o.n, ts: [] }, o.who.sort((a, b) => b[1] - a[1]).map(([p, n]) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>' + (n > 1 ? ' ' + n : '')).join(', '))).join('') || '<p class="muted">' + esc(c.none) + '</p>') +
+      '<p class="sub" style="margin:10px 0 0">Pick a player for what they did.</p>';
+  }
+  return '<div class="pf-cols">' + left + '<div class="panel pf-det pfu-det">' + right + '</div></div>';
 }
 // the timeline: a 5-second average line over a soft fill (the view's colour, or the picked player's), phases shaded and
 // named, boss mechanics as ticks on top, Bloodlust and deaths marked, what's after the wipe filter greyed and outside a
@@ -4364,7 +4378,7 @@ async function perfNight(r0, kind, scopeSw) {
 function cbRow(o) {
   const fill = o.segs.filter(([w]) => w > 0).map(([w, k]) => '<i class="' + k + '" style="width:' + Math.min(100, w).toFixed(1) + '%"></i>').join('');
   return '<' + o.tag + ' class="pf-row cb' + (o.cls || '') + '"' + (o.attrs || '') + '><span class="pf-k">' + o.k + '</span><span class="cb-b" style="--c:' + o.p.color + '"><span class="cb-f">' + fill + '</span>' +
-    '<span class="cb-in">' + avatar(o.p, true) + '<span class="pf-nm"><span class="nm">' + esc(o.p.name) + '</span>' + (o.chips || '') + '</span></span></span><b class="cb-v">' + o.v + '</b>' + (o.extra || '') + '<span class="cb-s">' + (o.sub || '') + '</span></' + o.tag + '>';
+    '<span class="cb-in">' + avatar(o.p, true) + '<span class="pf-nm"><span class="nm">' + esc(o.p.name) + '</span>' + (o.chips || '') + '</span></span></span><b class="cb-v">' + o.v + '</b>' + (o.extra || '') + '<span class="cb-s">' + (o.sub || '') + '</span>' + (o.end != null ? '<span class="cb-r">' + o.end + '</span>' : '') + '</' + o.tag + '>';
 }
 // ---- Performance: the views under the timeline. Players (the bars and the picked player), then the same pull cut other
 // ways: by phase, by damage window, by target, healers only, and as a heatmap ----
@@ -4650,6 +4664,9 @@ function bindPerf() {
   $$('.pfv .plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   $$('.pfph button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfPh = b.dataset.ph || null; perf(); }));
   $$('.pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; perf(); }));
+  // (Utility: the kind switch, and a player's bar picks them; clicking it again shows the whole raid)
+  $$('.pfu-cat button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.utilCat = b.dataset.c; S.utilSel = null; renderMain(); refreshIcons(); }));
+  $$('.pfu-bars .pf-row').forEach((b) => (b.onclick = () => { S.utilSel = S.utilSel === b.dataset.un ? null : b.dataset.un; renderMain(); refreshIcons(); }));
   $$('.pf-row:not(.nb)').forEach((b) => (b.onclick = () => { S.perfSel = S.perfSel === b.dataset.n ? null : b.dataset.n; perf(); }));
   for (const id of ['#pfRaid', '#pfClose']) { const b = $(id); if (b) b.onclick = () => { S.perfSel = null; perf(); }; }
   { const b = $('#pfCasts'); if (b) b.onclick = () => { S.perfCasts = !S.perfCasts; perf(); }; }
