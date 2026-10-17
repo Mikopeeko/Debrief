@@ -795,6 +795,32 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .lp-hero { border-radius: var(--r); border-left-width: 4px; padding: 16px 20px; }
 .lp-k { font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--muted); }
 .lp-tiles { margin: 0 0 14px; } @media (max-width: 1100px) { .lp-tiles { --n: 3; } } @media (max-width: 640px) { .lp-tiles { --n: 2; } }
+/* ---- loading screens: a card with a little dancer, what's happening, a bar and a tip ---- */
+.ld { display: flex; flex-direction: column; align-items: center; gap: 9px; width: min(440px, 100%); margin: 36px auto; padding: 22px 24px 18px; box-sizing: border-box; text-align: center;
+  background: radial-gradient(ellipse 70% 55% at 50% 0%, rgba(230,180,80,.08), transparent 70%), var(--panel); border: 1px solid var(--line); border-radius: 14px; animation: ldIn .25s ease-out; }
+@keyframes ldIn { from { opacity: 0; transform: translateY(6px); } }
+.ld-d { width: 92px; height: 104px; overflow: visible; }
+.ld-sh { fill: rgba(0,0,0,.45); transform-box: fill-box; transform-origin: center; animation: ldSh .6s ease-in-out infinite; }
+.ld-body { transform-box: view-box; transform-origin: 40px 82px; animation: ldBob .6s ease-in-out infinite; }
+.ld-al, .ld-ar { transform-box: view-box; animation: ldArmL .6s ease-in-out infinite; } .ld-ar { animation-name: ldArmR; }
+.ld-fl { transform-box: fill-box; transform-origin: center bottom; animation: ldFl .3s ease-in-out infinite alternate; }
+.ld-ghost .ld-body { animation: ldFloat 1.2s ease-in-out infinite; } .ld-ghost .ld-sh { animation-duration: 1.2s; }
+.ld-ooze .ld-body { animation: ldWob .6s ease-in-out infinite; } .ld-frog .ld-body { animation: ldHop .6s ease-in-out infinite; }
+@keyframes ldBob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-7px) rotate(6deg); } }
+@keyframes ldHop { 0%, 100% { transform: translateY(0) scaleY(1); } 30% { transform: translateY(1px) scaleY(.9); } 60% { transform: translateY(-10px) scaleY(1.05); } }
+@keyframes ldWob { 0%, 100% { transform: scale(1.06, .94) rotate(-4deg); } 50% { transform: scale(.94, 1.06) rotate(4deg); } }
+@keyframes ldFloat { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-9px) rotate(5deg); } }
+@keyframes ldArmL { 0%, 100% { transform: rotate(25deg); } 50% { transform: rotate(-120deg); } }
+@keyframes ldArmR { 0%, 100% { transform: rotate(-120deg); } 50% { transform: rotate(25deg); } }
+@keyframes ldSh { 0%, 100% { transform: scaleX(1); opacity: .55; } 50% { transform: scaleX(.78); opacity: .3; } }
+@keyframes ldFl { from { transform: scaleY(.85); } to { transform: scaleY(1.2); } }
+.ld-t { font: 600 17px var(--head); color: #f3f5f9; }
+.ld-l { min-height: 1.4em; color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.ld-b { width: 100%; height: 6px; margin-top: 2px; border-radius: 3px; background: rgba(255,255,255,.06); overflow: hidden; }
+.ld-b i { display: block; width: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #e6b450, #f6dc9a); transition: width .3s ease; }
+.ld-b.ind i { width: 34%; animation: ldInd 1.2s ease-in-out infinite; } @keyframes ldInd { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+.ld-tip { margin-top: 3px; color: var(--faint); font-size: 12.5px; line-height: 1.45; } .ld-tip b { color: var(--muted); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .ld, .ld * { animation: none !important; } }
 /* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
    left; what went well and the boxes for between pulls on the right ---- */
 @media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }

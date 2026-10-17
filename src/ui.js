@@ -791,6 +791,50 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'meClear') { if (confirm('Clear every saved pull on this PC? The log that\'s open stays; earlier nights are gone.')) HIST.clear().then(() => { for (const rep of CACHE.values()) histSave(rep); renderMain(); }); }
 });
 
+// ---------- loading screens ----------
+// While a pull downloads or a night is read: a card with a little character dancing (one of five, drawn here in the
+// app's own style rather than game art, a new one picked each time), what's happening, a bar that fills with the count (or
+// sweeps while there's no count yet), and a short tip. loadSet updates the line and the bar in place.
+const LD_ARM = (x, y, d, col, w) => '<g class="ld-a' + d + '" style="transform-origin:' + x + 'px ' + y + 'px"><path d="M' + x + ' ' + y + 'l' + (d === 'l' ? -13 : 13) + ' 10" stroke="' + col + '" stroke-width="' + (w || 5) + '" stroke-linecap="round"/></g>';
+const LD_LEGS = (col) => '<path d="M34 70v10M46 70v10" stroke="' + col + '" stroke-width="5" stroke-linecap="round"/>';
+const DANCERS = [
+  // a kobold miner: candle on the helmet, flame flickering
+  () => LD_LEGS('#7a5436') + LD_ARM(28, 50, 'l', '#a0714a') + LD_ARM(52, 50, 'r', '#a0714a') + '<ellipse cx="40" cy="57" rx="14" ry="15" fill="#a0714a"/><path d="M27 26l-9-9 4 14zM53 26l9-9-4 14z" fill="#b88457"/>' +
+    '<circle cx="40" cy="33" r="13" fill="#b88457"/><ellipse cx="40" cy="39" rx="7" ry="5" fill="#d1a676"/><circle cx="40" cy="37" r="1.6" fill="#3a2a1c"/><circle cx="35" cy="31" r="2.2" fill="#1d1712"/><circle cx="45" cy="31" r="2.2" fill="#1d1712"/><circle cx="35.6" cy="30.4" r=".7" fill="#fff"/><circle cx="45.6" cy="30.4" r=".7" fill="#fff"/>' +
+    '<path d="M27 28a13 12 0 0 1 26 0z" fill="#6b6f78"/><rect x="37" y="11" width="6" height="9" rx="1.5" fill="#efe3c2"/><path class="ld-fl" d="M40 3c3 4 3 6 0 8-3-2-3-4 0-8z" fill="#ffcf4a"/>',
+  // a skeleton
+  () => LD_LEGS('#ddd6c3') + LD_ARM(30, 47, 'l', '#ddd6c3', 3.5) + LD_ARM(50, 47, 'r', '#ddd6c3', 3.5) + '<path d="M40 44v26" stroke="#ddd6c3" stroke-width="3.5" stroke-linecap="round"/>' +
+    '<path d="M31 50h18M32 56h16M33 62h14" stroke="#ddd6c3" stroke-width="3" stroke-linecap="round"/><circle cx="40" cy="30" r="13" fill="#ece6d4"/><ellipse cx="35" cy="29" rx="3.4" ry="4" fill="#1d1a16"/><ellipse cx="45" cy="29" rx="3.4" ry="4" fill="#1d1a16"/>' +
+    '<path d="M38.5 35l1.5-2.6 1.5 2.6z" fill="#1d1a16"/><path d="M34 39h12M36 37v4M40 37v4M44 37v4" stroke="#8a826f" stroke-width="1.2"/>',
+  // a frog
+  () => '<path d="M30 74l-6 6M50 74l6 6" stroke="#4a8f43" stroke-width="5" stroke-linecap="round"/>' + LD_ARM(27, 54, 'l', '#5fae55') + LD_ARM(53, 54, 'r', '#5fae55') +
+    '<ellipse cx="40" cy="58" rx="17" ry="16" fill="#5fae55"/><ellipse cx="40" cy="62" rx="10" ry="9" fill="#a9d98a"/><circle cx="31" cy="38" r="7" fill="#5fae55"/><circle cx="49" cy="38" r="7" fill="#5fae55"/>' +
+    '<circle cx="31" cy="37" r="4.5" fill="#fff"/><circle cx="49" cy="37" r="4.5" fill="#fff"/><circle cx="32" cy="38" r="2.3" fill="#1b2a18"/><circle cx="48" cy="38" r="2.3" fill="#1b2a18"/><path d="M32 49q8 6 16 0" stroke="#2f5e2a" stroke-width="2" fill="none" stroke-linecap="round"/>',
+  // a ghost, floating
+  () => LD_ARM(25, 48, 'l', 'rgba(232,236,255,.92)', 6) + LD_ARM(55, 48, 'r', 'rgba(232,236,255,.92)', 6) +
+    '<path d="M24 76V38a16 16 0 0 1 32 0v38l-5.3-5-5.4 5-5.3-5-5.3 5-5.4-5z" fill="rgba(232,236,255,.92)"/><ellipse cx="34" cy="38" rx="3" ry="4.2" fill="#2a2f45"/><ellipse cx="46" cy="38" rx="3" ry="4.2" fill="#2a2f45"/><ellipse cx="40" cy="48" rx="3" ry="3.6" fill="#2a2f45"/>',
+  // an ooze, wobbling
+  () => LD_ARM(25, 58, 'l', '#9b6fe0', 6) + LD_ARM(55, 58, 'r', '#9b6fe0', 6) +
+    '<path d="M18 78c0-22 9-40 22-40s22 18 22 40z" fill="#9b6fe0"/><ellipse cx="33" cy="48" rx="4" ry="3" fill="rgba(255,255,255,.35)"/><circle cx="35" cy="58" r="3.2" fill="#24163c"/><circle cx="46" cy="58" r="3.2" fill="#24163c"/><path d="M36 66q5 4 10 0" stroke="#24163c" stroke-width="2" fill="none" stroke-linecap="round"/>',
+];
+const DANCE_K = ['kobold', 'skel', 'frog', 'ghost', 'ooze'];
+const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
+  'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments: soaks, kicks, orbs and cooldowns get checked on every pull.',
+  'On Latest pull, every box opens the tab with its details.', 'Summary shows the whole night: how far each pull got, and what kept going wrong.', 'Players gives everyone one grade: half mechanics, half the Report card.'];
+let LD_LAST = -1;
+function loadCard(title, line, frac, id) {
+  let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
+  const tip = LOAD_TIPS[Math.floor(Math.random() * LOAD_TIPS.length)];
+  return '<div class="ld" role="status" aria-live="polite"><svg class="ld-d ld-' + DANCE_K[k] + '" viewBox="0 0 80 90" aria-hidden="true"><ellipse class="ld-sh" cx="40" cy="84" rx="17" ry="3.5"/><g class="ld-body">' + DANCERS[k]() + '</g></svg>' +
+    '<div class="ld-t">' + esc(title) + '</div><div class="ld-l"' + (id ? ' id="' + id + '"' : '') + '>' + esc(line || '') + '</div>' +
+    '<div class="ld-b' + (frac == null ? ' ind' : '') + '"><i' + (frac == null ? '' : ' style="width:' + (100 * frac).toFixed(1) + '%"') + '></i></div><div class="ld-tip"><b>Tip</b> · ' + esc(tip) + '</div></div>';
+}
+// (the line and the bar of the loading card inside `where`, in place, so the dancer keeps dancing)
+function loadSet(where, line, frac) {
+  const el = typeof where === 'string' ? document.querySelector(where) : where, c = el && (el.classList && el.classList.contains('ld') ? el : el.querySelector('.ld')); if (!c) return;
+  const l = c.querySelector('.ld-l'); if (l) l.textContent = line;
+  const b = c.querySelector('.ld-b'); if (b && frac != null) { b.classList.remove('ind'); b.firstChild.style.width = (100 * Math.max(0, Math.min(1, frac))).toFixed(1) + '%'; }
+}
 // (a pull asked for twice at once, e.g. by the background reader and a click, is only read once)
 const INFLIGHT = new Map();
 function getRep(item) {
@@ -829,7 +873,7 @@ async function select(item) {
   S.miss = 0; syncUrl(item);
   S.item = item; S.mPlayer = null; S.pPlayer = null; S.death = 0;
   document.querySelectorAll('.pull').forEach((b) => b.classList.toggle('sel', ITEMS[+b.dataset.i] === item));
-  $('#main').innerHTML = '<div class="empty"><p class="muted" id="loadmsg">Analyzing ' + esc(item.boss) + '…</p></div>';
+  $('#main').innerHTML = '<div class="empty">' + loadCard('Opening ' + item.boss + (item.pull ? ', pull ' + item.pull : ''), 'Reading the pull…', null, 'loadmsg') + '</div>';
   let rep;
   try { rep = await getRep(item); }
   catch (err) {
@@ -1019,9 +1063,9 @@ function headerHtml(r, allMode) {
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
 const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
-// (on the website, Performance is greyed out while it's reworked: "Under development" on hover or tap, and it doesn't
-// open; on this PC it works as usual)
-const PERF_OFF = () => !!WCL.HOSTED;
+// (Performance can be greyed out on the website, "Under development" on hover or tap; it's on everywhere since the launch
+// to the raid on Oct 19: the Players grades are half the Report card, so it has to be there to look into)
+const PERF_OFF = () => false;
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
@@ -3159,8 +3203,8 @@ async function night() {
   for (const b of S.index.bosses) { if (b.run) continue; const k = b.id + ':' + b.diffId; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
   if (!groups.size) { view('<div class="panel"><p class="muted" style="margin:0">No boss pulls in this log.</p></div>'); return; }
   const key0 = groups.has(it0.id + ':' + it0.diffId) ? it0.id + ':' + it0.diffId : [...groups.keys()].pop(), pulls = groups.get(key0), b0 = pulls[0];
-  view('<p class="muted">Reading ' + plural(pulls.length, 'pull') + ' of ' + esc(b0.boss) + '…</p>');
-  const got = await bossReps(pulls[pulls.length - 1], here, (n, of) => { if ($('#view .muted')) $('#view .muted').textContent = 'Reading ' + of + ' pulls of ' + b0.boss + '… (' + n + ' of ' + of + ')'; });
+  view(loadCard('Reading the night', 'Reading ' + plural(pulls.length, 'pull') + ' of ' + b0.boss + '…', 0));
+  const got = await bossReps(pulls[pulls.length - 1], here, (n, of) => loadSet('#view', 'Reading ' + of + ' pulls of ' + b0.boss + '… (' + n + ' of ' + of + ')', of ? n / of : null));
   if (!got || !here()) return;
   const reps = got.reps, pullNs = reps.map((r) => r.item.pull), byPull = new Map(reps.map((r) => [r.item.pull, r]));
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
@@ -3687,7 +3731,7 @@ function trendSvg(pulls, big, wpx, tid) {
 async function progress(all) {
   const it = S.item, box = () => (S.item === it && S.tab === 'overview' ? $('#progBox') : null);
   const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId);
-  if (box()) box().innerHTML = '<p class="muted">Analyzing ' + pulls.length + ' pulls…</p>';
+  if (box()) box().innerHTML = loadCard('Reading every pull', 'Analyzing ' + plural(pulls.length, 'pull') + '…', null);
   const reps = [];
   let skipped = 0;
   for (const b of pulls) {
@@ -4705,8 +4749,8 @@ function chartBreakdown(r, kind, p, dur) {
 // pull counted for under 30 seconds (a reset) is left out of the numbers. "While alive" leaves out time spent dead.
 async function perfNight(r0, kind, scopeSw) {
   const it = r0.item, still = () => S.tab === 'perf' && S.scope === 'all' && S.rep === r0;
-  view('<div class="pfv"><div class="pf-top">' + scopeSw + '</div><p class="muted">Reading the pulls…</p></div>'); bindPerf();
-  const got = await bossReps(it, still, (n, of) => { const m = $('#view .muted'); if (m) m.textContent = 'Reading the pulls… ' + n + ' of ' + of; }); if (!got || !still()) return;
+  view('<div class="pfv"><div class="pf-top">' + scopeSw + '</div>' + loadCard('Reading the night', 'Reading the pulls…', 0) + '</div>'); bindPerf();
+  const got = await bossReps(it, still, (n, of) => loadSet('#view', 'Reading the pulls… ' + n + ' of ' + of, of ? n / of : null)); if (!got || !still()) return;
   const reps = got.reps, KEY = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && !pm.has(p.name)) pm.set(p.name, p);
   // (the phase picker: a phase counts in each pull that reached it, up to that pull's wipe filter)
@@ -6867,7 +6911,7 @@ function player() {
   // (one pull or the whole night, switched on top of the page, next to the wipe filter's line)
   const sw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (v === 'night' ? ' class="on"' : '') + '>All pulls<span class="n">' + pulls.length + '</span></button><button data-v="pull"' + (v === 'pull' ? ' class="on"' : '') + '>Pull #' + it.pull + '<span class="n">' + (it.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   const cached = S.plData && S.plData.key === key ? S.plData : null;
-  view('<div class="plv"><div class="plhd">' + sw + cutLine + '</div><div id="plBody">' + (cached ? '' : '<p class="muted">' + (v === 'night' ? 'Reading tonight\'s pulls…' : 'Grading the players…') + '</p>') + '</div></div>');
+  view('<div class="plv"><div class="plhd">' + sw + cutLine + '</div><div id="plBody">' + (cached ? '' : v === 'night' ? loadCard('Reading the night', 'Reading tonight\'s pulls…', 0) : loadCard('Grading the players', 'Mechanics, the Report card and prep…', null)) + '</div></div>');
   $$('.plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   const still = () => S.tab === 'player' && S.rep && S.rep.item === it && $('#plBody');
   const draw = (c) => { const el = $('#plBody'); if (!el) return; el.innerHTML = (c.load || '') + plPage(c.data, c.reps, v === 'pull'); bindPlayers(c); refreshIcons(); fillItemNames(el);
@@ -6875,7 +6919,7 @@ function player() {
   if (cached) { draw(cached); return; }
   const grade = (reps, load) => plData(reps, still).then((data) => { if (!data || !still()) return; S.plData = { key, reps, data, load }; draw(S.plData); if (v === 'night') setHeadRes(); });
   if (v === 'pull') { grade([r], ''); return; }
-  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (el) el.innerHTML = '<p class="muted">Reading tonight\'s pulls… ' + k + ' of ' + of + '</p>'; })
+  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Reading the night', line, of ? k / of : 0); })
     .then((got) => { if (!got || !still()) return; grade(got.reps, loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll')); });
 }
 // Players: a row picks a player (again, or Show the raid, for everyone); the order and role switches; a fix's link opens
@@ -7136,7 +7180,7 @@ async function lastPull() {
   const prg = (x, rep) => (x.wcl ? wclProg(x) : (rep || CACHE.has(x)) ? progressOf(rep || CACHE.get(x)) : null);
   const pct = (x, rep) => { if (x.kill) return 0; const rr = rep || (CACHE.has(x) ? CACHE.get(x) : null); if (usesPh) { const p = prg(x, rep); if (p) return p.left; } return x.endPct != null ? x.endPct : rr && rr.bossPct != null ? rr.bossPct : null; };
   const lab = (x, rep, v) => { const p = usesPh ? prg(x, rep) : null; return p ? p.label : v != null ? v.toFixed(1) + '%' : ''; };
-  view('<p class="muted">Putting the recap together…</p>');
+  view(loadCard('Putting the recap together', 'Comparing it with the last pull and your best…', null));
   let prev = null; if (prevItem) { try { prev = await getRep(prevItem); } catch (e) { /* no comparison */ } }
   if (S.rep !== r || S.tab !== 'live') return;
   const now = pct(it, r), was = prevItem ? pct(prevItem, prev) : null, isKey = /^\+/.test(String(it.diff || '')); // (a Mythic+ key reads as timed, not killed)
@@ -7784,7 +7828,7 @@ const TOUR = [
     art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ First death: Brann at 1:42, Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
   { t: 'Mechanics and assignments', p: 'Every mechanic is checked for every player, with a map of who stood where. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
-  { t: 'Performance', p: 'Damage, healing, damage taken, utility and survivability, like Warcraft Logs but with the why: deaths, cooldowns, mana and defensives. Hover any chart for its numbers.',
+  { t: 'Performance', p: 'A Report card for every player (how they played their own character), then the meters like Warcraft Logs, but with the why: casts, resources, cooldowns, Power Infusion and defensives. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
   { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs: every raid night, boss by boss, with your rankings. New nights come in by themselves. "Your teams", at the top of every page, takes you there.',
     art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
@@ -7816,10 +7860,10 @@ function startTour(at) {
 const PAGE_TIPS = {
   live: [
     { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its color shows how far it got, and orange is a kill.' },
-    { sel: '#bossHead header.fight', t: 'The pull at a glance', p: 'Its result, how it compares to the pull before, and your team\'s progress: click the team to see every boss and night.' },
-    { sel: '#view .wr-wrap', t: 'What went well, and what to fix', p: 'What the raid did well comes first. Under it, what went wrong (the worst first), and beside that, the one thing to fix before you pull again.' },
-    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig into this pull: every mechanic, your assignments, the meters, the whole night and every player.' },
-    { sel: '#tbProgBtn', t: 'Your teams', p: 'On every page: your teams and your character, every boss and night. Switch between them or add one here.' },
+    { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went fine, amber could be better, red went wrong. ▲▼ is against the last pull. Click a box for its details.' },
+    { sel: '#view .lp-main', t: 'What went well, and what to fix', p: 'What the raid did well comes first, then the three things to fix before you pull again, then everything that went wrong (› opens it).' },
+    { sel: '#view .lp-prep', t: 'Before the next pull', p: 'Who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it: who to talk to, and each player\'s one thing.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig into this pull: your assignments, every mechanic, the meters, the whole night and every player.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
     { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your NSRT note once. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns.' },
@@ -7836,7 +7880,7 @@ const PAGE_TIPS = {
     { sel: '#view .pl-bars', t: 'Every player', p: 'One grade each: half mechanics, half Report card, with prep only taking points off. Best first, or most to gain first.' },
     { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player for what to fix first across everything, each with a link to the tab that shows it, and their prep.' }],
   perf: [
-    { sel: '.pfk', t: 'What to look at', p: 'The Report card first: how each player played their own character. Then damage, healing, damage taken, utility and survivability as charts.' },
+    { sel: '.pfk', t: 'What to look at', p: 'The Report card first: how each player played their own character. Then damage, healing, damage taken, resources, casts, Power Infusion, utility and survivability.' },
     { sel: '.rk-tiles', t: 'The raid\'s grades', p: 'Pressing buttons, staying alive and using the toolkit, averaged over the raid. S is the best, F the worst.' },
     { sel: '.rk-list .rk-r', t: 'Every player', p: 'Whoever has the most to gain comes first, with the one thing that would help them most. Click a player for their full card.' },
     { sel: '.pfv .plsw', t: 'This pull or the night', p: 'Grade one pull, or every pull of this boss together.' }],
@@ -7850,7 +7894,8 @@ const PAGE_TIPS = {
     { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams, at the top: jump to another team or your character, see them all, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
-const TIPS_KEY = (k) => 'wla-tips-' + k;
+const TIPS_V = { live: 2, perf: 2 }; // (bumped when a page's tips change, so they show once more)
+const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
 const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
 const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4) return e; } return null; };
