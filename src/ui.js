@@ -4685,7 +4685,7 @@ function tgtChart(r, w0, w1, cat) {
 }
 
 // Healers: each healer's healing per second while alive, overhealing (shown, not counted), the share of their heals that
-// landed on someone under half health, and their mana (from a real combat log: Warcraft Logs reports don't carry it)
+// landed on someone under half health, and their mana (from their casts, in a combat log or a Warcraft Logs report)
 function perfHealers(r, ps, w0, w1, end) {
   const hs = ps.filter((p) => p.role === 'healer' && (p.healing > 0 || p.casts));
   if (!hs.length) return '<div class="panel pf-lp"><p class="muted">No healers found in this pull.</p></div>';
@@ -4700,7 +4700,7 @@ function perfHealers(r, ps, w0, w1, end) {
     rows.map((x) => '<tr data-n="' + esc(x.p.name) + '" tabindex="0"><td class="pf-pc">' + pfName(x.p) + '</td><td><b>' + C(x.hps) + '</b></td><td>' + mp(x.over) + '</td><td><b>' + mp(x.tri) + '</b>' + (triAll ? dlt((x.tri - triAll) / triAll).replace(/dl (up|dn)/, 'dl lv') : '') + '</td>' +
       (manaOk ? '<td class="' + mst(x.last && x.last[1]) + '"><b>' + (x.last ? mp(x.last[1]) : '—') + '</b>' + (x.gone && x.last ? '<span class="sub"> died</span>' : '') + '</td><td class="' + mst(x.low && x.low[1]) + '">' + (x.low ? mp(x.low[1]) + ' <span class="sub">at ' + T(x.low[0]) + '</span>' : '—') + '</td><td>' + (x.pots.length ? x.pots.map((u) => T(u.t)).join(', ') : '<span class="sub">none</span>') + '</td>' : '') +
       '<td>' + (x.act == null ? '—' : Math.round(x.act) + '%') + '</td></tr>').join('') + '</tbody></table></div>';
-  return '<div class="panel pf-chart pf-mana">' + (manaOk ? manaChart(r, rows, w0, w1) : '<h3 class="nh"><span class="pfc-ttl">Healer mana</span></h3><p class="muted">' + (r.item.wcl ? 'Warcraft Logs reports don\'t carry mana. Open this pull from your own combat log to see it.' : 'No mana was logged for this pull (turn on advanced combat logging).') + '</p>') + '</div>' +
+  return '<div class="panel pf-chart pf-mana">' + (manaOk ? manaChart(r, rows, w0, w1) : '<h3 class="nh"><span class="pfc-ttl">Healer mana</span></h3><p class="muted">' + (r.item.wcl ? 'No mana came with this pull.' : 'No mana was logged for this pull (turn on advanced combat logging).') + '</p>') + '</div>' +
     '<div class="panel pf-lp">' + lensHead('Healers', 'each healer, up to the wipe filter') + tbl +
     '<details class="howit"><summary>How it works</summary><div>On low health is the share of their heals (shields left out) that landed on someone under half health before the heal; ▲▼ is against the healers as a group (' + mp(triAll) + '). It\'s a read on where their healing went, not a grade: a shield or a heal-over-time healer will sit lower. Mana comes from each cast in the log, every 2 seconds at most; under 25% is marked, under 10% is a problem. Overhealing is shown and never counted.</div></details></div>';
 }

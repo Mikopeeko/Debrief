@@ -300,9 +300,9 @@ function translate(item, events) {
     // facing too: WoW's is radians from north toward west (checked on a local log: casters face their target), Warcraft
     // Logs' is hundredths of a radian, turned so that WoW's = -(WCL's) - 90° (checked against where Caustic Waves landed)
     const fc = has && e.facing != null ? (((-e.facing / 100 - Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) : 0;
-    // (an NPC's power too, where WoW writes it: type, current and max, pipe-separated, e.g. Sszorak's rage on his casts;
-    // players' stay empty as before)
-    const who2 = actors.get(side === 1 ? e.sourceID : e.targetID), cr = has && who2 && who2.type !== 'Player' && Array.isArray(e.classResources) && e.classResources.length ? e.classResources : null;
+    // (the unit's power too, where WoW writes it: type, current and max, pipe-separated, e.g. Sszorak's rage on his casts,
+    // or a healer's mana on theirs: Warcraft Logs sends it with every cast, so the healers' mana chart works for reports)
+    const cr = has && Array.isArray(e.classResources) && e.classResources.length ? e.classResources : null;
     const pw = cr ? [cr.map((c) => c.type | 0).join('|'), cr.map((c) => c.amount | 0).join('|'), cr.map((c) => c.max | 0).join('|')] : [0, 0, 0];
     return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], 0, x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
   };
