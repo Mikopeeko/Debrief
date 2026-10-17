@@ -1,0 +1,82 @@
+EncounterID:3492;Difficulty:Mythic;Name:Ula'tek
+
+time:6;ph:1;tag:NAME;text:Beam soak: defensive, aim the waves away from eggs;dur:6;DisplayType:Text;
+time:75;ph:1;tag:NAME;text:Beam soak: defensive, aim the waves away from eggs;dur:6;DisplayType:Text;
+time:40;ph:2;tag:NAME;spellid:51052;
+time:40;ph:2;tag:NAME;spellid:51052;
+time:40;ph:2;tag:NAME;spellid:97462;
+time:40;ph:2;tag:NAME;spellid:98008;
+time:111;ph:2;tag:everyone;text:Potion (damage window 2);dur:5;DisplayType:Text;
+time:118;ph:2;tag:NAME;text:Bloodlust (damage window 2);dur:5;DisplayType:Text;
+time:28;ph:2.5;tag:everyone;text:Personals: four slams back to back;dur:6;DisplayType:Text;
+time:58;ph:3;tag:NAME;spellid:51052;
+time:62;ph:3;tag:NAME;text:Beam soak: defensive, aim the waves away from the raid;dur:6;DisplayType:Text;
+time:109;ph:3;tag:NAME;spellid:51052;
+time:170;ph:3;tag:NAME;spellid:98008;
+time:208;ph:3;tag:everyone;text:Potion (damage window 3);dur:5;DisplayType:Text;
+
+Tanks
+Boss tank: NAME
+Tail and beam tank: NAME
+
+Egg Breakers
+Egg breakers (spread damage on the shells): NAME NAME
+
+Egg Carriers, first set (zones turn with the boss)
+{star} Egg zone 1: NAME
+{circle} Egg zone 2: NAME
+{diamond} Egg zone 3: NAME
+{triangle} Egg zone 4: NAME
+{moon} Egg zone 5: NAME
+{square} Egg zone 6: NAME
+{cross} Egg zone 7: NAME
+{skull} Egg zone 8: NAME
+Egg backups: NAME NAME
+
+Egg Carriers, second set (halfway through Stage 1)
+{star} Egg zone 1: NAME
+{circle} Egg zone 2: NAME
+{diamond} Egg zone 3: NAME
+{triangle} Egg zone 4: NAME
+{moon} Egg zone 5: NAME
+{square} Egg zone 6: NAME
+{cross} Egg zone 7: NAME
+{skull} Egg zone 8: NAME
+Egg backups: NAME NAME
+
+Spectral Coils, Stage 1 (the right circle slams first)
+Right coil: NAME NAME NAME NAME NAME NAME NAME NAME NAME NAME
+Left coil: NAME NAME NAME NAME NAME NAME NAME NAME NAME NAME
+Wave caller: NAME
+
+Stage 2 Sides
+Left side: NAME NAME NAME NAME NAME NAME NAME NAME NAME NAME
+Right side: NAME NAME NAME NAME NAME NAME NAME NAME NAME NAME
+Gate: NAME
+Left lane egg carriers: NAME NAME NAME
+Right lane egg carriers: NAME NAME NAME
+Big egg carriers: NAME NAME
+Far egg: NAME NAME
+Tether caller: NAME
+Tether first break: NAME NAME
+
+Doomscale Kicks
+{star} Doomscale kicks: NAME NAME NAME
+{circle} Doomscale kicks: NAME NAME NAME
+{diamond} Doomscale kicks: NAME NAME NAME
+{triangle} Doomscale kicks: NAME NAME NAME
+
+Intermission Coil Groups (group 3 soaks twice)
+Coil group 1: NAME NAME NAME NAME NAME NAME NAME
+Coil group 2: NAME NAME NAME NAME NAME NAME NAME
+Coil group 3: NAME NAME NAME NAME NAME NAME
+Coil caller: NAME
+
+Stage 3
+Clutch grips (platform to platform): NAME NAME
+Bite soakers 1: NAME NAME NAME NAME
+Bite soakers 2: NAME NAME NAME NAME
+Bite soakers 3: NAME NAME NAME NAME
+Bite backups: NAME NAME
+{star} Shrieker kicks: NAME NAME NAME
+{circle} Shrieker kicks: NAME NAME NAME

@@ -1,0 +1,83 @@
+EncounterID:3492;Difficulty:Mythic;Name:Ula'tek
+
+time:6;ph:1;tag:Tyralien;text:Beam soak: defensive, aim the waves away from eggs;dur:6;DisplayType:Text;
+time:75;ph:1;tag:Vandagos;text:Beam soak: defensive, aim the waves away from eggs;dur:6;DisplayType:Text;
+time:40;ph:2;tag:Fourinches;spellid:51052;
+time:40;ph:2;tag:Larryg;spellid:97462;
+time:40;ph:2;tag:Vandagos;spellid:97462;
+time:40;ph:2;tag:Dashtoswirly;spellid:196718;
+time:40;ph:2;tag:Flëxørçïst;spellid:31821;
+time:111;ph:2;tag:everyone;text:Potion (damage window 2);dur:5;DisplayType:Text;
+time:118;ph:2;tag:Shockabunga;text:Bloodlust (damage window 2);dur:5;DisplayType:Text;
+time:28;ph:2.5;tag:everyone;text:Personals: four slams back to back;dur:6;DisplayType:Text;
+time:58;ph:3;tag:Fourinches;spellid:51052;
+time:62;ph:3;tag:Tyralien;text:Beam soak: defensive, aim the waves away from the raid;dur:6;DisplayType:Text;
+time:109;ph:3;tag:Dashtoswirly;spellid:196718;
+time:170;ph:3;tag:Larryg;spellid:97462;
+time:208;ph:3;tag:everyone;text:Potion (damage window 3);dur:5;DisplayType:Text;
+
+Tanks
+Boss tank: Vandagos
+Tail and beam tank: Tyralien
+
+Egg Breakers
+Egg breakers (spread damage on the shells): Earthday Arsyn
+
+Egg Carriers, first set (zones turn with the boss)
+{star} Egg zone 1: Boltzzx
+{circle} Egg zone 2: Schooty
+{diamond} Egg zone 3: Arsyn
+{triangle} Egg zone 4: Shockabunga
+{moon} Egg zone 5: Komo
+{square} Egg zone 6: Earthday
+{cross} Egg zone 7: Volkovod
+{skull} Egg zone 8: Dragooned
+Egg backups: Kargaryen Zaffia
+
+Egg Carriers, second set (halfway through Stage 1)
+{star} Egg zone 1: Boltzzx
+{circle} Egg zone 2: Schooty
+{diamond} Egg zone 3: Arsyn
+{triangle} Egg zone 4: Shockabunga
+{moon} Egg zone 5: Komo
+{square} Egg zone 6: Earthday
+{cross} Egg zone 7: Volkovod
+{skull} Egg zone 8: Dragooned
+Egg backups: Kargaryen Zaffia
+
+Spectral Coils, Stage 1 (the right circle slams first)
+Right coil: Earthday Arsyn Schooty Komo Shockabunga Zaffia Huservoker Optt Ashdknight
+Left coil: Boltzzx Dragooned Volkovod Kargaryen Larryg Fourinches Dashtoswirly Flëxørçïst Urgdragon
+Wave caller: Shockabunga
+
+Stage 2 Sides
+Left side: Tyralien Huservoker Optt Arsyn Boltzzx Schooty Fourinches Larryg Zaffia Kargaryen
+Right side: Vandagos Ashdknight Flëxørçïst Urgdragon Komo Earthday Dragooned Volkovod Dashtoswirly Shockabunga
+Gate: Arsyn Komo
+Left side egg carriers: Boltzzx Schooty Kargaryen
+Right side egg carriers: Dragooned Volkovod Shockabunga
+Big egg carriers: Tyralien Boltzzx Vandagos Dragooned
+Far egg: Optt Urgdragon
+Tether caller: Flëxørçïst
+Tether first break (first tethered on this list breaks alone): Boltzzx Dragooned Schooty Volkovod Earthday
+
+Doomscale Kicks
+{star} Doomscale kicks: Tyralien Zaffia Boltzzx
+{circle} Doomscale kicks: Larryg Fourinches Schooty
+{diamond} Doomscale kicks: Vandagos Dashtoswirly Dragooned
+{triangle} Doomscale kicks: Shockabunga Volkovod
+
+Intermission Coil Groups (group 3 soaks twice)
+Coil group 1: Tyralien Zaffia Larryg Fourinches Dashtoswirly Ashdknight Flëxørçïst
+Coil group 2: Vandagos Schooty Volkovod Boltzzx Dragooned Kargaryen Shockabunga
+Coil group 3: Earthday Arsyn Komo Huservoker Optt Urgdragon
+Coil caller: Flëxørçïst
+
+Stage 3
+Clutch grips (platform to platform): Fourinches
+Bite soakers 1: Tyralien Zaffia Schooty Volkovod
+Bite soakers 2: Tyralien Vandagos Boltzzx Dragooned
+Bite soakers 3: Tyralien Vandagos Flëxørçïst Optt
+Bite backups: Dashtoswirly Larryg
+{star} Shrieker kicks: Zaffia Larryg Dashtoswirly
+{circle} Shrieker kicks: Shockabunga Volkovod Dragooned

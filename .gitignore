@@ -1,0 +1,28 @@
+# What stays on this PC and never goes to GitHub.
+# (Your saved Warcraft Logs login is already outside this folder, in your Windows profile, encrypted.)
+
+# installers and big downloads
+*.exe
+*.msi
+*.zip
+
+# manual backups: git history replaces them (they stay on this PC)
+backups/
+*.raid-backup.*
+
+# local tool settings
+.claude/
+
+# combat logs and other raw data, if any ever land here
+*.log
+WoWCombatLog*.txt
+
+# the Worker built for the hosted site, with the app baked in (rebuilt from src/ by build.py)
+online/
+
+# Windows and editor clutter
+Thumbs.db
+desktop.ini
+.vscode/
+*.tmp
+~$*

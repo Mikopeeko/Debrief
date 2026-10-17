@@ -1,0 +1,32 @@
+Put WoW Log Analyzer online (about 15 minutes, once)
+=====================================================
+After this, anyone can open your site and paste a Warcraft Logs link. They never need a key or any setup.
+
+1. Warcraft Logs API client (if you don't have one yet)
+   warcraftlogs.com > your account settings > API clients > Create client.
+   Any name. Redirect URL: put your site address later, or https://example.com for now.
+   Copy the Client ID and Client Secret.
+
+2. Free Cloudflare account
+   Sign up at https://dash.cloudflare.com (the free plan is enough).
+
+3. Create the Worker
+   Dashboard > Workers & Pages > Create > Create Worker (the "Hello World" starter).
+   Give it a name, for example: wow-log-analyzer. Click Deploy.
+   Click "Edit code". Delete everything in the editor.
+   Open worker.js (from this folder) in Notepad, select all, copy, paste into the editor.
+   Click Deploy.
+
+4. Add your key as secrets
+   Open the Worker > Settings > Variables and Secrets > Add.
+     Type: Secret   Name: WCL_CLIENT_ID       Value: your Client ID
+     Type: Secret   Name: WCL_CLIENT_SECRET   Value: your Client Secret
+   Save / Deploy.
+
+5. Open your site
+   The address is shown on the Worker's page, like https://wow-log-analyzer.yourname.workers.dev
+   Paste a report link and click Analyze.
+   Share links look like: https://wow-log-analyzer.yourname.workers.dev/?report=AbCd1234&fight=12
+
+Updating later: when you get a new worker.js, repeat step 3 (Edit code, paste, Deploy). Your secrets stay.
+Your key never reaches visitors' browsers. Reports are cached at Cloudflare, so popular pulls don't use your API limit again.
