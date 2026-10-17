@@ -534,13 +534,15 @@ const gName = (g) => g.label || g.name;
 const gKind = (g) => (g.kind === 'char' ? 'character' : g.kind);
 // the teams a saved pull came in with (a pull from before Oct 18 brought in by the old single team: that team)
 const pullGroups = (v) => v.groups || (v.team ? groups().filter((g) => g.legacy).map((g) => g.gid) : []);
-// which saved pulls are a team's: brought in by it, or from a log opened here with at least half its players on it
-// (its players: everyone in the pulls it brought in); a character's: every pull they were in
+// which saved pulls are a team's: brought in by it, or any other pull with at least half its players on it (its players:
+// everyone in the pulls it brought in). A team's nights aren't always on its own Warcraft Logs page (some get filed under a
+// guild's), so a night your character or another team brought in still counts when it's this team's raid; a pug with a
+// few of its players doesn't. A character's: every pull they were in.
 function groupFilter(g) {
   if (!g) return () => true;
   if (g.kind === 'char') return (v) => pullGroups(v).includes(g.gid) || (v.players || []).includes(g.name);
   const roster = new Set(); for (const v of HIST.mem.values()) if (pullGroups(v).includes(g.gid)) for (const n of v.players || []) roster.add(n);
-  return (v) => { if (pullGroups(v).includes(g.gid)) return true; if (!/^log:/.test(v.src || '') || !roster.size) return false; const ps = v.players || []; return ps.length && ps.filter((n) => roster.has(n)).length / ps.length >= 0.5; };
+  return (v) => { if (pullGroups(v).includes(g.gid)) return true; if (!roster.size) return false; const ps = v.players || []; return ps.length >= 5 && ps.filter((n) => roster.has(n)).length / ps.length >= 0.5; };
 }
 // (a team's or character's Warcraft Logs link, either kind)
 const groupLink = (s) => { const c = WCL.parseCharLink(s); if (c) return { kind: 'char', link: c }; const t = WCL.parseTeamLink(s); return t ? { kind: 'team', link: t } : null; };
