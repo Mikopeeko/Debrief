@@ -87,6 +87,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 149: cast efficiency, the engine (shown per spec once researched)
+- [x] **Cast efficiency per spell** (your plan): built the counting (each spell's cooldown and charges from Wowhead, its
+  charges through the pull, casts against what was possible, time sat at full charges, time dead or waiting left out).
+  **Not shown yet**: tried on every spec at once, it judged Execute, Charge, Healthstone and healers' spot heals as if they
+  should go out on cooldown, and couldn't judge hasted spells like Holy Shock and Judgment. Each spec needs its own
+  researched list (which spells, and how haste and talents change them), so it appears per spec as each one is done.
+- [ ] **Your vision (noted): WoWAnalyzer-style checks per spec**: for healers, how well you pressed your buttons for
+  healing; wasted buffs and procs; overcapped charges; the same for DPS; and spec windows (Holy Paladin: what you cast in
+  Beacon of Virtue and Avenging Wrath). Proposed: Holy Paladin first (your spec, so you can check it), then your raid's
+  other specs.
+
 ## 2026-10-17, round 148: the mechanics parts out of Performance
 - [x] **Your call: Performance is each player's own play, not a second mechanics audit.** Moved out:
   1. **Damage checks** (Eternal Nightfall shields, Soulcoiler sets) are gone from Damage: Mechanics already checks both.

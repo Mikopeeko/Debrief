@@ -6019,6 +6019,69 @@ function castUsual(r, name) {
   if (per.length < 2) return null;
   return { cpm: cstMed(per), n: per.length, ab: new Map([...abm].map(([k, v]) => [k, cstMed(v.concat(new Array(Math.max(0, per.length - v.length)).fill(0)))])) };
 }
+// ---- Casts: cast efficiency, each spell with a cooldown, how many times it went out against how many it could have ----
+// The cooldown and charges are Wowhead's for the live patch, read once per spell and kept: the base ones, which talents
+// and haste only shorten, so a player who beat it gets full marks, and a spell pressed sooner than it could have been
+// ready (haste, a talent or a reset) isn't judged. Only spells that did damage or healing count (no defensives, movement or
+// utility), and not the big cooldowns (those are on Cooldowns). Time dead, mind controlled or while the whole raid was
+// waiting doesn't count against them.
+// Which spells each spec should press on cooldown, researched one spec at a time (a generic list judged Execute, Charge and
+// spot heals as if they were meant to go out on cooldown, and couldn't judge hasted spells like Holy Shock). Until a spec
+// has its list, Casts doesn't show cast efficiency for it. spec -> { spell name (lower case): {} }
+const SPEC_EFF = {};
+const CDI = new Map(), cdiQ = []; let cdiBusy = 0, cdiWait = null;
+function cdInfo(id) {
+  if (!id) return null; if (CDI.has(id)) return CDI.get(id);
+  const c = store.get('wla-cd-' + id); if (c != null) { const [a, b] = String(c).split('|'), v = c === '-' ? null : { cd: +a, ch: +b || 1 }; CDI.set(id, v); return v; }
+  CDI.set(id, undefined); cdiQ.push(id); cdiPump(); return undefined;
+}
+// (when the last one is read, the Casts view draws again, unless someone's typing in a box)
+function cdiRedraw() { clearTimeout(cdiWait); cdiWait = setTimeout(() => { const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) { cdiRedraw(); return; } if (S.tab === 'perf' && S.perfKind === 'cast') perf(); }, 120); }
+function cdiPump() {
+  while (cdiBusy < 4 && cdiQ.length) { const id = cdiQ.shift(); cdiBusy++;
+    tipData(id).then((j) => { const t = j ? String(j.tooltip || '').replace(/<[^>]+>/g, ' ') : '', m = t.match(/(\d+(?:\.\d+)?)\s*(sec|min)\s*(?:cooldown|recharge)/i), k = t.match(/(\d+)\s*Charges/i);
+      const v = m ? { cd: +m[1] * (/min/i.test(m[2]) ? 60 : 1), ch: k ? +k[1] : 1 } : null; CDI.set(id, v); if (j) store.set('wla-cd-' + id, v ? v.cd + '|' + v.ch : '-'); })
+      .catch(() => CDI.set(id, null)).finally(() => { cdiBusy--; if (!cdiQ.length && !cdiBusy) cdiRedraw(); cdiPump(); }); }
+}
+// one spell over one pull: its charges as it went (full at the pull), how long it sat at full charges, how many casts it
+// could have had, and how many went out before it could have been ready by the listed cooldown
+function cdSim(ts0, cd, ch, t0, t1, forced) {
+  const ts = ts0.filter((t) => t >= t0 - 0.05 && t <= t1 + 0.05).sort((a, b) => a - b);
+  const ov = (a, b) => forced.reduce((s, [u, v]) => s + Math.max(0, Math.min(b, v) - Math.max(a, u)), 0);
+  let c = ch, rs = null, capAt = t0, cap = 0, early = 0;
+  const adv = (t) => { while (c < ch && rs != null && rs + cd <= t + 0.05) { const done = rs + cd; c++; rs = c < ch ? done : null; if (c === ch) capAt = done; } };
+  for (const t of ts) { adv(t); if (c === ch) cap += Math.max(0, t - capAt - ov(capAt, t)); if (c > 0) { c--; if (rs == null) rs = t; } else early++; }
+  adv(t1); if (c === ch) cap += Math.max(0, t1 - capAt - ov(capAt, t1));
+  return { poss: ch + Math.floor(Math.max(0, t1 - t0 - ov(t0, t1) - 1) / cd), cap, early };
+}
+// (time they couldn't press anything: dead, mind controlled, the whole raid waiting; overlaps merged)
+function castForced(r, p) {
+  const C0 = perfContext(r), x0 = C0.per.get(p.name), l = (x0 ? x0.ds : []).concat(C0.mc.get(p.name) || [], rcIdle(r, p)).map(([a, b]) => [a, b]).sort((a, b) => a[0] - b[0]), out = [];
+  for (const w of l) { const z = out[out.length - 1]; if (z && w[0] <= z[1]) z[1] = Math.max(z[1], w[1]); else out.push(w); }
+  return out;
+}
+// a player (castView's row: their pulls) -> { list: [{ name, id, cd, ch, n, poss, cap, early, f, judged }], wait }
+function castEff(a) {
+  const allow = SPEC_EFF[a.p.specName]; if (!allow) return null;
+  const big = new Set((PERF_CDS[a.p.specName] || []).map(([n]) => n.toLowerCase())), out = new Map(); let wait = 0;
+  for (const { w, c } of a.per) { const pp = c.p, did = new Set([...pp.dmgAb.values(), ...pp.healAb.values()].map((x) => String(x.name).replace(/^[^:]+: /, '').toLowerCase())), forced = castForced(w.r, pp);
+    for (const s of c.ab) { const ln = s.name.toLowerCase(); if (!allow[ln] || big.has(ln) || !did.has(ln)) continue;
+      const ci = cdInfo(s.id); if (ci === undefined) { wait++; continue; } if (!ci || ci.cd < 4 || ci.cd > 300) continue;
+      const sim = cdSim(s.ts, ci.cd, ci.ch, w.w0, c.t1, forced); let o = out.get(s.name);
+      if (!o) out.set(s.name, o = { name: s.name, id: s.id, cd: ci.cd, ch: ci.ch, n: 0, poss: 0, cap: 0, early: 0 }); o.n += s.n; o.poss += sim.poss; o.cap += sim.cap; o.early += sim.early; } }
+  const list = [...out.values()].map((o) => ({ ...o, judged: o.early <= Math.max(1, 0.1 * o.n), f: o.poss ? Math.min(1, o.n / o.poss) : null })).sort((x, y) => y.cd - x.cd || y.n - x.n);
+  return { list, wait };
+}
+const effLen = (s) => (s >= 60 ? (s % 60 ? (s / 60).toFixed(1) : s / 60) + ' min' : (s % 1 ? s.toFixed(1) : s) + 's');
+// the picked player's table: each spell, its casts, how many it could have had, the share, and the time it sat ready
+function effTable(a, one) {
+  const e = a.eff; if (!e) return '';
+  if (!e.list.length) return '<p class="sub" style="margin:0">' + (e.wait ? 'Reading the spells\' cooldowns…' : 'None of the spells they pressed has a cooldown that does damage or healing (big cooldowns are on Cooldowns).') + '</p>';
+  return '<div class="hm-ut rs-ut cst-ef"><div class="hm-uh"><span>Spell</span><span>Casts</span><span>Could have</span><span>Efficiency</span><span>' + (one ? 'Ready, unused' : 'Unused, in all') + '</span></div>' + e.list.map((o) => { const st = paceSt(o.f);
+    return '<div class="hm-ur"><span>' + spell(o.id, o.name) + ' <span class="sub">' + effLen(o.cd) + (o.ch > 1 ? ' · ' + o.ch + ' charges' : '') + '</span></span><span>' + o.n + '</span><span>' + (o.judged ? o.poss : '<span class="sub">—</span>') + '</span>' +
+      (o.judged ? '<span class="ef-b"><span class="ef-t"><i class="' + st + '" style="width:' + Math.round(100 * o.f) + '%"></i></span><b class="cst-f ' + st + '">' + Math.round(100 * o.f) + '%</b></span>' : '<span class="sub" title="Pressed sooner than its listed cooldown allows (haste, a talent or a reset), so it isn\'t judged">not judged</span>') +
+      '<span>' + (o.judged && o.cap >= 1 ? Math.round(o.cap) + 's' : '<span class="sub">—</span>') + '</span></div>'; }).join('') + '</div>' + (e.wait ? '<p class="sub" style="margin:6px 0 0">Reading ' + plural(e.wait, 'more spell') + '\' cooldowns…</p>' : '');
+}
 // The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
 // player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
 function castView(list, one) {
@@ -6031,7 +6094,7 @@ function castView(list, one) {
   const all = [...acc.values()];
   if (!all.length) return { head: {}, html: '<div class="panel"><p class="muted">No casts in ' + (one ? 'this pull' : 'these pulls') + '.</p></div>' };
   for (const a of all) { a.cpm = a.al >= 1 ? 60 * a.n / a.al : 0; a.abL = [...a.ab.values()].sort((x, y) => y.n - x.n); a.gaps.sort((x, y) => y.len - x.len);
-    a.sim = paceOf(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null;
+    a.sim = paceOf(r0, a.p); a.f = a.sim ? a.cpm / a.sim.v : null; a.eff = castEff(a);
     if (one) { a.us = castUsual(list[0].r, a.p.name); a.d = a.us && a.us.cpm ? (a.cpm - a.us.cpm) / a.us.cpm : null; }
     // (through the night, with 4 pulls or more of 10 s casting: the later half's pace against the first half's)
     else { const v = a.per.filter((o) => o.c.al >= 10).map((o) => o.c.cpm), h = v.length >> 1, m = (l) => l.reduce((s, y) => s + y, 0) / l.length;
@@ -6061,7 +6124,7 @@ function castView(list, one) {
     (bars ? cbHead('Per min', 'Of pace') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
   return { head, html: top + '<div class="pf-cols">' + left + '<div class="panel pf-det cst-det">' + castRaid(all, one) + '</div></div>' + castHow };
 }
-const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more. <b>▲▼ over All pulls</b>: each player\'s later half of pulls against their first half; later pulls often get further into the fight, which can change the pace a little.</div></details>';
+const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Cast efficiency</b> (for the specs researched so far): each spell their spec should press on cooldown, how many times it went out against how many times it could have (its cooldown and charges are Wowhead\'s for the live patch, from a full charge at the pull, not counting time dead, mind controlled or while the raid was waiting). "Ready, unused" is the time it sat at full charges. Talents and haste only shorten cooldowns, so a player who beat it gets full marks; one pressed sooner than its listed cooldown allows (a talent or a reset) isn\'t judged. Big cooldowns are on Cooldowns. 90% or more is green, 75% gold. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more. <b>▲▼ over All pulls</b>: each player\'s later half of pulls against their first half; later pulls often get further into the fight, which can change the pace a little.</div></details>';
 // no one picked: the slowest against their spec, the biggest drops against their usual, and the longest gaps
 function castRaid(all, one) {
   const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
@@ -6072,6 +6135,9 @@ function castRaid(all, one) {
     h += rsSec('Slower than their usual', 'against their own other pulls of this boss', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.cpm) + ', usually ' + fmtCpm(a.us.cpm), dlt(a.d))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.us) ? 'Nobody was slower than usual.' : 'Needs 2 more pulls of this boss read.') + '</p>'); }
   if (!one) { const dr = all.filter((a) => a.tr != null && a.tr <= -0.05).sort((a, b) => a.tr - b.tr).slice(0, 5);
     h += rsSec('Slowed down later on', 'the later pulls against the first', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.trE) + ' → ' + fmtCpm(a.trL) + ' a minute', dlt(a.tr))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.tr != null) ? 'Nobody slowed down 5% or more.' : 'Needs 4 pulls or more.') + '</p>'); }
+  // (the lowest cast efficiency: a spell with a cooldown that could have gone out 3 times or more)
+  const ef = all.flatMap((a) => (a.eff ? a.eff.list.filter((o) => o.judged && o.f != null && o.poss >= 3).map((o) => ({ a, o })) : [])).sort((x, y) => x.o.f - y.o.f).slice(0, 6), efWait = all.some((a) => a.eff && a.eff.wait);
+  if (all.some((a) => a.eff)) h += rsSec('Lowest cast efficiency', 'casts against what was possible', ef.length ? ef.map(({ a, o }) => line(who(a.p) + ' ' + spell(o.id, o.name), o.n + ' of ' + o.poss, '<span class="cst-f ' + paceSt(o.f) + '">' + Math.round(100 * o.f) + '%</span>')).join('') : '<p class="sub" style="margin:0">' + (efWait ? 'Reading the spells\' cooldowns…' : 'No spells with a cooldown to measure.') + '</p>');
   const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).slice().sort((x, y) => y.len - x.len).slice(0, 6);
   h += rsSec('Longest gaps', 'not dead, and not while the raid was waiting', lg.length ? lg.map((g) => line(who(g.p), (one ? '' : 'pull ' + g.pull + ' · ') + 'from ' + T(g.t) + (g.mv === true ? ' · moving' : g.mv === false ? ' · standing still' : ''), Math.round(g.len) + ' s')).join('') : '<p class="sub" style="margin:0">No gaps of 4 s or more.</p>');
   return h;
@@ -6095,6 +6161,7 @@ function castDetail(a, one, all) {
   const gT = gp.length ? '<div class="rs-full">' + gp.map((g) => '<span class="rs-fc">' + (one ? '' : '<span class="sub">pull ' + g.pull + '</span> ') + T(g.t) + ' <b>' + Math.round(g.len) + ' s</b>' + (g.mv === true ? ' <span class="sub">moving</span>' : g.mv === false ? ' <span class="sub">still</span>' : '') + '</span>').join('') + '</div>' : '<p class="sub" style="margin:0">No gaps of 4 s or more.</p>';
   const pT = one ? '' : '<div class="hm-ut rs-ut rs-pl"><div class="hm-uh"><span>Pull</span><span>Per min</span><span>Of pace</span><span>Casts</span></div>' + a.per.map(({ w, c }) => { const f = a.sim ? c.cpm / a.sim.v : null; return '<div class="hm-ur"><span>Pull ' + w.r.item.pull + ' <span class="sub">' + esc(pullLabel(w.r.item)) + '</span></span><span>' + fmtCpm(c.cpm) + '</span><span>' + (f != null ? '<span class="cst-f ' + paceSt(f) + '">' + Math.round(100 * f) + '%</span>' : '—') + '</span><span><b>' + c.n + '</b></span></div>'; }).join('') + '</div>';
   const pr = [...a.procs].sort((x, y) => y[1] - x[1]), notC = (a.auto ? plural(a.auto, 'auto attack') : '') + (pr.length ? (a.auto ? ', and ' : '') + plural(pr.reduce((s, [, v]) => s + v, 0), 'proc') + ' (' + pr.slice(0, 3).map(([k, v]) => k + ' ' + v).join(', ') + ')' : '');
+  if (a.eff) h += rsSec('Cast efficiency', 'spells with a cooldown that do damage or healing · big cooldowns are on Cooldowns', effTable(a, one));
   h += rsSec('Every spell they pressed', 'most first' + (us ? ' · red: under their usual' : ''), tb) + rsSec('Gaps', a.gaps.length ? plural(a.gaps.length, 'gap') + ' of 4 s or more' : '', gT) + (pT ? rsSec('Pull by pull', '', pT) : '');
   if (notC) h += '<p class="sub" style="margin:10px 0 0">Not counted: ' + esc(notC) + '.</p>';
   return h + '<p class="sub" style="margin:6px 0 0">Click their bar again for the whole raid.</p>';

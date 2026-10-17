@@ -872,6 +872,10 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .pf-asw { grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) 58px; cursor: default; } .pf-asw:hover { background: none; }
 .pf-an2 { grid-area: p; display: flex; align-items: center; gap: 7px; min-width: 0; font-weight: 600; } .pf-an2 > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pf-an2 .icw { flex: none; }
 @media (max-width: 640px) { .pf-asw { grid-template-columns: minmax(0, 1fr) 56px; } }
+/* ---- Casts: cast efficiency ---- */
+.cst-ef .hm-uh, .cst-ef .hm-ur { grid-template-columns: minmax(150px, 1.6fr) 46px 70px minmax(110px, 1fr) 86px; } .cst-ef .hm-ur > span:nth-child(5), .cst-ef .hm-uh > span:nth-child(5) { text-align: right; font-variant-numeric: tabular-nums; }
+.ef-b { display: flex; align-items: center; gap: 8px; } .ef-t { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,.07); overflow: hidden; } .ef-t i { display: block; height: 100%; border-radius: 3px; background: var(--good); opacity: .85; } .ef-t i.warn { background: var(--warn); } .ef-t i.bad { background: var(--bad); } .ef-b b { min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .cst-ef .hm-uh, .cst-ef .hm-ur { grid-template-columns: minmax(0, 1fr) 34px 44px 70px; gap: 6px; } .cst-ef .hm-uh > span:nth-child(5), .cst-ef .hm-ur > span:nth-child(5) { display: none; } .ef-t { display: none; } }
 /* ---- Latest pull: the tiles open their tab and show the change from the last pull; fix first and what went wrong on the
    left; what went well and the boxes for between pulls on the right ---- */
 @media (max-width: 1100px) { .lp-tiles.six { --n: 3; } } @media (max-width: 640px) { .lp-tiles.six { --n: 2; } }
