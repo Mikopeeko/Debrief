@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power Infusion Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49; --text: #ece8df; --muted: #98a0ad; --faint: #6c7381; --gold: #e6b450; --ok: #45c15c; --warn: #f3c969; --rogue: #fff468; --priest: #ffffff; --lock: #8788ee; --sham: #0070dd; --dm: #b07cf0; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Barlow, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 28px 16px 60px; }
+h1 { font-size: 26px; margin: 0 0 4px; } h3 { margin: 26px 0 8px; font-size: 16px; color: var(--muted); font-weight: 600; }
+.lead { color: var(--muted); margin: 0 0 22px; max-width: 820px; }
+.opt { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 0 0 18px; }
+.opt.pick { border-color: var(--gold); box-shadow: inset 4px 0 0 var(--gold); }
+.opt h2 { margin: 0; font-size: 19px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: var(--raised); color: var(--muted); }
+.tag.rec { background: var(--gold); color: #1b1406; }
+.sub { color: var(--muted); font-size: 14px; margin: 4px 0 14px; }
+.verdict { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--raised); font-size: 14px; } .verdict b { color: #f3c969; } .pick .verdict b { color: var(--gold); }
+.stage { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow: hidden; }
+.n-r { color: var(--rogue); font-weight: 600; } .n-p { color: var(--priest); font-weight: 600; } .n-l { color: var(--lock); font-weight: 600; } .n-s { color: var(--sham); font-weight: 600; }
+.spec { color: var(--faint); font-size: 13px; }
+/* the priest's row */
+.pr { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .pr .cnt { margin-left: auto; color: var(--muted); font-size: 14px; } .pr .cnt b { color: var(--text); }
+.plan { margin: 10px 0 12px; padding: 9px 12px; border-left: 3px solid var(--gold); background: rgba(230,180,80,.07); border-radius: 0 8px 8px 0; font-size: 14.5px; }
+.plan b { color: var(--gold); font-weight: 600; }
+/* the pull as a strip: Power Infusion in gold, the target's cooldown in purple */
+.tl { position: relative; height: 34px; margin: 4px 0 2px; border-radius: 6px; background: #151821; border: 1px solid var(--line); }
+.tl i { position: absolute; top: 6px; height: 9px; border-radius: 3px; } .tl i.pi { background: var(--gold); } .tl i.cd { top: 19px; background: var(--dm); opacity: .85; }
+.tl .tk { position: absolute; bottom: -18px; font-size: 11px; color: var(--faint); transform: translateX(-50%); }
+.lg { display: flex; gap: 14px; flex-wrap: wrap; margin: 22px 0 10px; font-size: 12.5px; color: var(--muted); } .lg span::before { content: ''; display: inline-block; width: 10px; height: 8px; border-radius: 2px; margin-right: 6px; background: var(--c); }
+.cast { display: grid; grid-template-columns: 50px 12px minmax(0, 1fr); gap: 4px 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.cast .t { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 600; } .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); align-self: center; }
+.cast .why { grid-column: 3; color: var(--muted); font-size: 13.5px; }
+.more { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); } .more b { color: var(--text); font-weight: 600; } .more .chev { color: var(--faint); margin-left: 4px; }
+.gains { margin-top: 8px; display: grid; gap: 5px; max-width: 520px; } .g { display: grid; grid-template-columns: 112px minmax(0, 1fr) 54px; gap: 10px; align-items: center; font-size: 13.5px; }
+.g .bar { height: 10px; border-radius: 3px; background: var(--line); overflow: hidden; } .g .bar b { display: block; height: 100%; background: var(--c); opacity: .75; } .g .v { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.g .got { font-size: 11px; color: var(--gold); margin-left: 6px; font-weight: 600; }
+/* option 2: plan against what happened */
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; } th { text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); font-weight: 700; padding: 0 10px 8px 0; }
+td { padding: 9px 10px 9px 0; border-top: 1px solid var(--line); vertical-align: top; } td.w { color: var(--muted); white-space: nowrap; } .ok { color: #7ee08f; } .wn { color: var(--warn); }
+/* option 3: the chart first */
+.chart { display: grid; gap: 6px; }
+.row3 { display: grid; grid-template-columns: 112px minmax(0, 1fr) 60px; gap: 10px; align-items: center; font-size: 14px; }
+.row3 .bar { height: 16px; border-radius: 4px; background: var(--line); overflow: hidden; position: relative; } .row3 .bar b { display: block; height: 100%; background: var(--c); opacity: .7; }
+.row3 .pin { position: absolute; right: 6px; top: 0; font-size: 11px; line-height: 16px; color: #1b1406; font-weight: 700; }
+.row3 .v { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.when { margin-top: 14px; font-size: 14px; color: var(--muted); }
+.phone { width: 350px; max-width: 100%; margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--bg); overflow: hidden; }
+.phone .cast { grid-template-columns: 42px 10px minmax(0, 1fr); font-size: 14px; }
+.cap { font-size: 12px; color: var(--faint); margin: 8px 2px 0; }
+.now { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .now div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--muted); } .now b { display: block; color: var(--text); font-size: 16px; }
+.now + p { margin: 10px 0 0; font-size: 12px; color: var(--faint); }
+@media (max-width: 640px) { .now { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g, .row3 { grid-template-columns: 90px minmax(0, 1fr) 50px; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Power Infusion, round 1</h1>
+<p class="lead">From your note: Power Infusion is hard to read. All three options show the same pull (pull 32 on The Coiled Altar): Optt used both Power Infusions on Zaffia. The first was lined up with Deathmark, and the second came 13 seconds before it. The coaching stays, as you asked, but in plain sentences, with no letter grades and no boxes.</p>
+
+<h3>Today, for comparison</h3>
+<div class="stage">
+  <div class="now"><div><b>2 / 2</b>✓ Used, of the times it was ready</div><div><b>2 / 2</b>✓ On a good target, within 15% of the best</div><div><b>1 / 2</b>✕ With their cooldown</div><div><b>—</b>✓ Left on the table, against 3.87M added</div></div>
+  <p>…then a block for every cast with an S or B grade and three bars, a list of 8 players with "sim 14.2K/s" numbers, a paragraph about Bloodmallet's sims, and "How it's judged". Five different kinds of thing on one page.</p>
+</div>
+
+<section class="opt pick" style="margin-top:22px">
+  <h2>A sentence for each cast <span class="tag rec">my pick</span></h2>
+  <p class="sub">The plan for the next pull on top, then the pull as a strip, then one plain sentence per Power Infusion, like the Rotation rows. Who gains the most is folded away and opens in place.</p>
+  <div class="stage">
+    <div class="pr"><span class="n-p">Optt</span><span class="spec">Holy Priest</span><span class="cnt">Used <b>2 of 2</b></span></div>
+    <div class="plan"><b>Next pull:</b> give it to <span class="n-r">Zaffia</span> with their Deathmark, at about 0:06 and 2:19.</div>
+    <div class="tl" aria-hidden="true">
+      <i class="pi" style="left:1.9%;width:7.2%"></i><i class="pi" style="left:60.6%;width:7.2%"></i>
+      <i class="cd" style="left:2.9%;width:7.7%"></i><i class="cd" style="left:66.8%;width:7.7%"></i>
+      <span class="tk" style="left:0%;transform:none">0:00</span><span class="tk" style="left:28.8%">1:00</span><span class="tk" style="left:57.7%">2:00</span><span class="tk" style="left:86.5%">3:00</span><span class="tk" style="left:100%;transform:translateX(-100%)">3:28</span>
+    </div>
+    <div class="lg"><span style="--c:var(--gold)">Power Infusion</span><span style="--c:var(--dm)">Zaffia's Deathmark</span></div>
+    <div class="cast"><span class="t">0:04</span><span class="dot" style="--c:var(--ok)"></span><span>Optt gave it to <span class="n-r">Zaffia</span>, two seconds before their Deathmark.</span><span class="why">Zaffia was the best target in the raid at that moment.</span></div>
+    <div class="cast"><span class="t">2:06</span><span class="dot" style="--c:var(--warn)"></span><span>Optt gave it to <span class="n-r">Zaffia</span>, but their Deathmark came 13 seconds later.</span><span class="why">Holding it until 2:19 would have lined the two up.</span></div>
+    <div class="more"><b>Who gains the most</b> <span class="chev">▾</span> &nbsp;<span class="n-r">Zaffia</span> 1.93M · <span class="n-l">Arsyn</span> 1.71M · <span class="n-s">Shockabunga</span> 1.51M · 5 more
+      <div class="gains">
+        <div class="g"><span class="n-r">Zaffia<span class="got">got it</span></span><span class="bar" style="--c:var(--rogue)"><b style="width:100%"></b></span><span class="v">1.93M</span></div>
+        <div class="g"><span class="n-l">Arsyn</span><span class="bar" style="--c:var(--lock)"><b style="width:88.6%"></b></span><span class="v">1.71M</span></div>
+        <div class="g"><span class="n-s">Shockabunga</span><span class="bar" style="--c:var(--sham)"><b style="width:78.2%"></b></span><span class="v">1.51M</span></div>
+      </div>
+      <p class="cap" style="margin-top:8px">About how much damage one Power Infusion on them adds this pull.</p>
+    </div>
+  </div>
+  <p class="verdict"><b>Why I'd pick it:</b> it reads top to bottom like a short review: what to do next time, then what happened, in two sentences. It uses the same wording as the Rotation rows, so the site sounds like one voice. The numbers are still one click away, but they're no longer in the way.</p>
+</section>
+
+<section class="opt">
+  <h2>The plan against what happened <span class="tag">a table</span></h2>
+  <p class="sub">Each 2-minute window of Power Infusion gets a row: the best choice for that window, and what the priest did.</p>
+  <div class="stage">
+    <div class="pr" style="margin-bottom:12px"><span class="n-p">Optt</span><span class="spec">Holy Priest</span><span class="cnt">Used <b>2 of 2</b></span></div>
+    <table>
+      <tr><th>Window</th><th>Best choice</th><th>What happened</th></tr>
+      <tr><td class="w">First, from 0:00</td><td><span class="n-r">Zaffia</span>, with Deathmark at 0:06</td><td><span class="ok">Zaffia at 0:04</span>, on time</td></tr>
+      <tr><td class="w">Second, from 2:04</td><td><span class="n-r">Zaffia</span>, with Deathmark at 2:19</td><td><span class="wn">Zaffia at 2:06</span>, 13 seconds early</td></tr>
+      <tr><td class="w">Third, from 4:06</td><td colspan="2" class="spec">The pull had ended by then.</td></tr>
+    </table>
+  </div>
+  <p class="verdict"><b>Trade-off:</b> the quickest to scan, and it makes "every window counts" obvious. But a table reads colder than sentences, it wraps badly on a phone with long names, and it doesn't show the pull's shape the way the strip does.</p>
+</section>
+
+<section class="opt">
+  <h2>The chart first <span class="tag">like the rest of Graphs</span></h2>
+  <p class="sub">Who gains the most as bars, with a gold pin on whoever got it and when. One short line under it. No advice.</p>
+  <div class="stage">
+    <div class="chart">
+      <div class="row3"><span class="n-r">Zaffia</span><span class="bar" style="--c:var(--rogue)"><b style="width:100%"></b><span class="pin" style="background:var(--gold);padding:0 5px;border-radius:3px">0:04 · 2:06</span></span><span class="v">1.93M</span></div>
+      <div class="row3"><span class="n-l">Arsyn</span><span class="bar" style="--c:var(--lock)"><b style="width:88.6%"></b></span><span class="v">1.71M</span></div>
+      <div class="row3"><span class="n-s">Shockabunga</span><span class="bar" style="--c:var(--sham)"><b style="width:78.2%"></b></span><span class="v">1.51M</span></div>
+      <div class="row3"><span style="color:#c41e3a;font-weight:600">Fourinches</span><span class="bar" style="--c:#c41e3a"><b style="width:69.9%"></b></span><span class="v">1.35M</span></div>
+    </div>
+    <p class="when"><span class="n-p">Optt</span> gave both Power Infusions to <span class="n-r">Zaffia</span>, at 0:04 and 2:06.</p>
+  </div>
+  <p class="verdict"><b>Trade-off:</b> the plainest, and it matches Graphs being raw data. But it drops the coaching you wanted to keep for now (lining it up with Deathmark), so it fits better after we decide what Rotation covers.</p>
+</section>
+
+<h3>My pick on a phone</h3>
+<div class="phone">
+  <div class="pr"><span class="n-p">Optt</span><span class="spec">Holy Priest</span><span class="cnt">Used <b>2 of 2</b></span></div>
+  <div class="plan" style="font-size:14px"><b>Next pull:</b> give it to <span class="n-r">Zaffia</span> with their Deathmark, at about 0:06 and 2:19.</div>
+  <div class="tl" aria-hidden="true"><i class="pi" style="left:1.9%;width:7.2%"></i><i class="pi" style="left:60.6%;width:7.2%"></i><i class="cd" style="left:2.9%;width:7.7%"></i><i class="cd" style="left:66.8%;width:7.7%"></i></div>
+  <div class="cast" style="margin-top:12px"><span class="t">0:04</span><span class="dot" style="--c:var(--ok)"></span><span>Optt gave it to <span class="n-r">Zaffia</span>, two seconds before their Deathmark.</span></div>
+  <div class="cast"><span class="t">2:06</span><span class="dot" style="--c:var(--warn)"></span><span>Optt gave it to <span class="n-r">Zaffia</span>, but their Deathmark came 13 seconds later.</span></div>
+  <div class="more"><b>Who gains the most</b> <span class="chev">▸</span></div>
+</div>
+<p class="cap">With two priests, each gets their own block, one under the other.</p>
+</main>
+</body>
+</html>

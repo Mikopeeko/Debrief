@@ -180,6 +180,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   on Pull recap is hidden there too, and a search for Power Infusion opens Cooldowns instead.
 - [x] Rotation is still greyed out on the website, and with it the parts that come from it: "See it in Rotation" on a
   player's page, and the spec fixes and grades in Pull recap's "Talk to" box (those used to follow the Graphs switch).
+- [ ] **Power Infusion rework:** mockups in notes, "Power Infusion options.html" (a sentence for each cast, my pick; the
+  plan against what happened, as a table; the chart first). Waiting on your pick.
 - [ ] **Go easier on tanks for standing in bad stuff (your note).** My take: strong; tanks often take hits on purpose
   (holding the boss in place) and can live through them, so flagging it is noise. My suggestion: a tank's hit from avoidable
   damage is only a small note, not a mistake, unless it's a tank mechanic, it killed them, or it was unusually big.
