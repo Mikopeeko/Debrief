@@ -87,6 +87,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 162: Renewed buffs were being thrown away (your catch)
+- [x] **Your note: "you'd know Divine Purpose was overwritten, because the player already has the buff."** Checking it found
+  a real bug: the app skipped every "buff renewed while still up" event (9,917 on your kill). Fixed, and kept apart so it
+  changes nothing else.
+- [x] **What it changes for Holy Paladin today: nothing.** Warcraft Logs sends no renewed events for Infusion of Light,
+  Divine Purpose or Dawnlight. It matters for your own combat log files and for the specs that come next.
+- [x] **Divine Purpose "All spent" is right** (my suggestion was wrong): a new one comes from spending Holy Power, and that
+  spend uses up the one you hold first. On your kill all 25 were spent within 3 seconds. The one way to get a second while
+  holding one is Aurora's Divine Toll, which the app already checks the way you described.
+
 ## 2026-10-17, round 161: Holy Shock with an Infusion waiting, fairer for other builds
 - [x] **Your question: is your casting like Clarius's?** Yes: Holy Shock, Eternal Flame and Flash of Light about 11 to 13 a
   minute each, like their two Beacon of Virtue kills. The differences: you press Judgment more (3 a minute, they 0.5 to 1),

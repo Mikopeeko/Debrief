@@ -4955,6 +4955,10 @@ function analyze(item, text, opts) {
     const t = Math.max(0, (ts.ms - item.startMs) / 1000); lastT = t;
     const c = line.indexOf(',', ts.body); if (c < 0) continue;
     const ev = line.substring(ts.body, c);
+    // (a buff renewed while it was still up, e.g. a proc landing on one you still hold: noted on that player's buff only,
+    // so it changes nothing else. Warcraft Logs sends none for Infusion of Light, Divine Purpose or Dawnlight)
+    if (ev === 'SPELL_AURA_REFRESH') { const f = split(line, c + 1), p = f.length >= 12 && f[11] === 'BUFF' && r.players.get(f[4]), b = p && p.buffs.get(f[9]);
+      if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); } continue; }
     if (!WANTED.has(ev)) continue;
     const f = split(line, c + 1);
 
@@ -5100,10 +5104,6 @@ function analyze(item, text, opts) {
         if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
         break;
       }
-      // a buff renewed while it was still up (a proc at its top stack is lost this way)
-      case 'SPELL_AURA_REFRESH':
-        if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { const b = P(dg, dn).buffs.get(f[9]); if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); } }
-        break;
       case 'SPELL_AURA_REMOVED':
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t);
