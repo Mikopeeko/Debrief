@@ -8872,6 +8872,11 @@ function spellIcon(id, name, big) {
 let TAL_ICON = null;
 function talIcon(n) { if (!TAL_ICON) { TAL_ICON = new Map(); try { for (const v of Object.values(TREE_DATA)) for (const x of Object.values(v)) if (typeof x === 'string') for (const m of x.matchAll(/~(\d+)~([a-z0-9_]+)~\d+~([^~;|]+)~/g)) if (!TAL_ICON.has(m[3].toLowerCase())) TAL_ICON.set(m[3].toLowerCase(), m[2]); } catch (e) {} }
   return TAL_ICON.get(String(n).toLowerCase()) || null; }
+let TAL_SID = null;
+function talSid(n) { if (!TAL_SID) { TAL_SID = new Map(); try { for (const v of Object.values(TREE_DATA)) for (const x of Object.values(v)) if (typeof x === 'string') for (const m of x.matchAll(/~(\d+)~([a-z0-9_]+)~\d+~([^~;|]+)~/g)) if (!TAL_SID.has(m[3].toLowerCase())) TAL_SID.set(m[3].toLowerCase(), +m[1]); } catch (e) {} }
+  return TAL_SID.get(String(n).toLowerCase()) || 0; }
+// (a spell's icon that shows the spell on hover: by the ID the log used for its name, or the talent tree's)
+const spIc = (n, big) => { const sid = n ? sidOf(n) || talSid(n) : 0; return sid ? '<span class="sp" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + spellIcon(sid, n, big) + '</span>' : spellIcon(0, n, big); };
 function svgIcon(id, name, big) {
   const { glyph, color } = pickIcon(id, name);
   return '<svg class="ico' + (big ? ' big' : '') + '" viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="4.5" fill="' + color + '"/>' +
@@ -8929,7 +8934,8 @@ function cleanTip(html) {
   doc.querySelectorAll('script,style,iframe,object,embed,img,link').forEach((n) => n.remove());
   doc.querySelectorAll('*').forEach((n) => { for (const a of [...n.attributes]) if (/^on|^href$|^src$|^style$/i.test(a.name)) n.removeAttribute(a.name); });
   doc.querySelectorAll('a').forEach((a) => a.replaceWith(...a.childNodes));
-  return doc.body.firstChild.innerHTML;
+  // (Wowhead's formulas, like "[[(315.6% of Spell Power)]][(315.6% of Spell Power)]", read once: "(315.6% of Spell Power)")
+  return doc.body.firstChild.innerHTML.replace(/\[\[([^\]]*)\]\]\[([^\]]*)\]/g, '$2');
 }
 const spTip = document.createElement('div'); spTip.id = 'sptip'; document.body.appendChild(spTip);
 let spTimer = null, spCur = null;
@@ -9053,6 +9059,8 @@ function bossRx(strict) {
   for (const p of r.players.values()) for (const [n, a] of p.castAb || []) { const k = String(n).toLowerCase(); if (a && a.id && !mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, a.id); }
   for (const list of Object.values(E.DEFENSIVES || {})) for (const d of list) { const k = d[0].toLowerCase(); if (!mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, d[1]); }
   for (const list of Object.values(PERF_CDS).concat(Object.values(RC_EXT))) for (const [n] of list) { const k = n.toLowerCase(), id = E.SPELLID.get(k); if (id && !mine.has(k)) mine.set(k, id); }
+  if (strict) { for (const p of r.players.values()) { for (const n of (p.buffs || new Map()).keys()) { const k = String(n).toLowerCase(), id = E.SPELLID.get(k); if (id && !mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, id); }
+    const tr = TREE_DATA[p.specName]; if (tr) for (const x of Object.values(tr)) if (typeof x === 'string') for (const m of x.matchAll(/~(\d+)~[a-z0-9_]+~\d+~([^~;|]+)~/g)) { const k = m[2].toLowerCase(); if (!mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, +m[1]); } } }
   if (!mine.has('healthstone')) mine.set('healthstone', 6262);
   const names = new Map(strict ? [...mine, ...[...boss].filter(([k]) => !mine.has(k))] : [...boss, ...[...mine].filter(([k]) => !boss.has(k))]);
   const list = [...names.keys()].filter((n) => n.length >= 4).sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -14819,7 +14827,7 @@ function castEff(a) {
       // (a second charge a talent gives: pressed twice well inside the cooldown; a cooldown a talent shortens: seenCd)
       const ts = s.ts.slice().sort((x, y) => x - y), ch = Math.max(ci.ch, ts.some((t, i) => i && t - ts[i - 1] < 0.6 * ci.cd) ? 2 : 1), cd = ch > 1 ? ci.cd : seenCd(w.r, pp, s.name, ci.cd) || ci.cd;
       const sim = cdSim(s.ts, cd, ch, w.w0, c.t1, forced); let o = out.get(s.name);
-      if (!o) out.set(s.name, o = { name: s.name, id: s.id, cd, ch, n: 0, poss: 0, cap: 0, early: 0 }); o.ch = Math.max(o.ch, ch); o.cd = Math.min(o.cd, cd); o.n += s.n; o.poss += sim.poss; o.cap += sim.cap; o.early += sim.early; } }
+      if (!o) out.set(s.name, o = { name: s.name, id: s.id, cd, ch, ch0: ci.ch || 1, n: 0, poss: 0, cap: 0, early: 0 }); o.ch = Math.max(o.ch, ch); o.cd = Math.min(o.cd, cd); o.n += s.n; o.poss += sim.poss; o.cap += sim.cap; o.early += sim.early; } }
   // (a press sooner than the cooldown allows is a charge a talent or a reset gave: it counts as possible too)
   const list = [...out.values()].map((o) => ({ ...o, judged: true, f: o.poss + o.early ? Math.min(1, o.n / (o.poss + o.early)) : null })).sort((x, y) => y.cd - x.cd || y.n - x.n);
   return { list, wait };
@@ -14912,18 +14920,18 @@ const SPEC_TOP = {
   'Havoc Demon Hunter': { 'The Twin Fangs|16': { 'abc': '69%', 'cd:eye beam': '100%', 'cd:blade dance': '85%', 'cd:immolation aura': '65%', 'cd:essence break': '85%', 'res': '17%', 'cd:metamorphosis': '75%', 'win': '100%' } },
   'Balance Druid': { 'The Twin Fangs|16': { 'score': '93', 'abc': '83%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '3%', 'cd:incarnation: chosen of elune': '100%', 'up:Eclipse': '71%', 'apl': '87%', 'win': '100%' } },
   'Retribution Paladin': { 'The Twin Fangs|16': { 'score': '94', 'abc': '71%', 'cd:wake of ashes': '92%', 'cd:blade of justice': '80%', 'p:Divine Purpose': '2 wasted', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'apl': '88%', 'win': '100%' } },
-  'Holy Priest': { 'The Twin Fangs|16': { 'score': '90', 'abc': '75%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'cd:apotheosis': '75%', 'cd:divine hymn': '75%', 'win': '100%' } },
+  'Holy Priest': { 'The Twin Fangs|16': { 'score': '90', 'abc': '75%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'cd:apotheosis': '75%', 'cd:divine hymn': '75%', 'win': '100%', 'apl': '99%' } },
   'Frost Death Knight': { 'The Twin Fangs|16': { 'abc': '64%', 'p:Rime': '5 wasted', 'res': '11%', 'cd:pillar of frost': '90%', 'cd:reaper\'s mark': '90%', 'cd:breath of sindragosa': '100%', 'apl': '97%', 'win': '100%' } },
   'Blood Death Knight': { 'The Twin Fangs|16': { 'score': '92', 'abc': '81%', 'cd:blood boil': '77%', 'cd:death and decay': '96%', 'res': '4%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%' } },
   'Windwalker Monk': { 'The Twin Fangs|16': { 'score': '84', 'abc': '78%', 'cd:rising sun kick': '93%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '68%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '80%', 'cd:celestial conduit': '80%', 'apl': '100%', 'rep': '1' } },
   'Arms Warrior': { 'The Twin Fangs|16': { 'score': '94', 'abc': '76%', 'p:Sudden Death': '2 wasted', 'dot:Rend': '97%', 'cd:colossus smash': '85%', 'cd:avatar': '86%', 'cd:bladestorm': '100%', 'apl': '89%', 'win': '100%' } },
   'Protection Paladin': { 'The Twin Fangs|16': { 'score': '88', 'abc': '67%', 'cd:avenger\'s shield': '74%', 'cd:judgment': '86%', 'cd:blessed hammer': '81%', 'res': '10%', 'up:Shield of the Righteous': '98%', 'cd:avenging wrath': '100%', 'cd:divine toll': '83%' } },
-  'Restoration Shaman': { 'The Twin Fangs|16': { 'score': '93', 'abc': '75%', 'cd:riptide': '96%', 'cd:healing stream totem': '95%', 'cd:surging totem': '88%', 'mana': '18%', 'cd:ascendance': '67%', 'cd:spirit link totem': '67%', 'win': '100%' } },
+  'Restoration Shaman': { 'The Twin Fangs|16': { 'score': '93', 'abc': '75%', 'cd:riptide': '96%', 'cd:healing stream totem': '95%', 'cd:surging totem': '88%', 'mana': '18%', 'cd:ascendance': '67%', 'cd:spirit link totem': '67%', 'win': '100%', 'apl': '94%' } },
   'Frost Mage': { 'The Twin Fangs|16': { 'score': '100', 'abc': '84%', 'cd:frozen orb': '100%', 'cd:ray of frost': '91%', 'p:Brain Freeze': '2 wasted', 'p:Fingers of Frost': 'All spent', 'p:Glacial Spike!': 'All spent', 'apl': '92%' } },
   'Devourer Demon Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '64%', 'cd:void ray': '98%', 'cd:soul immolation': '100%', 'win': '100%' } },
   'Devastation Evoker': { 'The Twin Fangs|16': { 'score': '89', 'abc': '66%', 'cd:fire breath': '95%', 'cd:eternity surge': '95%', 'p:Essence Burst': '1 wasted', 'cd:dragonrage': '100%', 'apl': '99%', 'win': '100%' } },
   'Elemental Shaman': { 'The Twin Fangs|16': { 'score': '87', 'abc': '83%', 'cd:stormkeeper': '78%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '99%', 'res': '7%', 'cd:ascendance': '100%', 'apl': '94%', 'win': '100%' } },
-  'Mistweaver Monk': { 'The Twin Fangs|16': { 'score': '94', 'abc': '75%', 'cd:renewing mist': '99%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '94%', 'mana': '20%', 'cd:invoke yu\'lon, the jade serpent': '75%', 'cd:celestial conduit': '80%', 'cd:life cocoon': '86%', 'cd:revival': '67%', 'win': '100%' } },
+  'Mistweaver Monk': { 'The Twin Fangs|16': { 'score': '94', 'abc': '75%', 'cd:renewing mist': '99%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '94%', 'mana': '20%', 'cd:invoke yu\'lon, the jade serpent': '75%', 'cd:celestial conduit': '80%', 'cd:life cocoon': '86%', 'cd:revival': '67%', 'win': '100%', 'apl': '87%' } },
   'Subtlety Rogue': { 'The Twin Fangs|16': { 'score': '88', 'abc': '77%', 'cd:shadow dance': '95%', 'cd:goremaw\'s bite': '89%', 'cd:shadow blades': '80%', 'win': '100%', 'lv:0': '100%' } },
   'Augmentation Evoker': { 'The Twin Fangs|16': { 'score': '100', 'abc': '80%', 'cd:upheaval': '100%', 'cd:fire breath': '94%', 'p:Essence Burst': '4 wasted', 'up:Ebon Might': '93%', 'cd:breath of eons': '80%', 'cd:time skip': '100%', 'apl': '100%' } },
   'Affliction Warlock': { 'The Twin Fangs|16': { 'score': '91', 'abc': '72%', 'cd:haunt': '85%', 'p:Nightfall': '8 wasted', 'dot:Agony': '100%', 'dot:Unstable Affliction': '93%', 'dot:Wither': '100%', 'cd:summon darkglare': '100%', 'cd:malevolence': '100%', 'cd:dark harvest': '86%', 'apl': '90%', 'win': '100%' } },
@@ -14936,7 +14944,7 @@ const SPEC_TOP = {
   'Enhancement Shaman': { 'The Twin Fangs|16': { 'abc': '73%', 'cd:stormstrike': '99%', 'cd:crash lightning': '99%', 'cd:doom winds': '100%', 'cd:ascendance': '100%', 'apl': '81%', 'win': '100%' } },
   'Protection Warrior': { 'The Twin Fangs|16': { 'score': '92', 'abc': '75%', 'cd:shield slam': '99%', 'cd:thunder clap': '95%', 'up:Shield Block': '92%', 'cd:avatar': '89%', 'cd:demoralizing shout': '94%' } },
   'Brewmaster Monk': { 'The Twin Fangs|16': { 'score': '93', 'abc': '82%', 'cd:keg smash': '99%', 'cd:blackout kick': '73%', 'cd:breath of fire': '100%', 'up:Shuffle': '100%', 'cd:invoke niuzao, the black ox': '100%', 'cd:exploding keg': '86%' } },
-  'Demonology Warlock': { 'The Twin Fangs|16': { score: '99', abc: '80%', tyh: '9.3', tyd: 'all of them', tyc: '4 in 5', tyx: '23', imp: '4.3', ssw: '0%', 'p:Demonic Core': 'All spent', dbh: '1', 'cd:summon demonic tyrant': 'all of them', 'cd:call dreadstalkers': '95%', 'cd:grimoire: imp lord': 'all of them' } }, 'Preservation Evoker': { 'The Twin Fangs|16': { score: '89', abc: '67%', ta: '76%', db: '95%', dbr: 'all of them', ess: '7%', ecu: '87%', ecl: '0', te: '82%', 'p:Essence Burst': '4 wasted', inf: '3.2', mana: '37%', ebh: '1', dbec: '2', 'p:Merithra\'s Blessing': 'All used' } }, 'Restoration Druid': { 'The Twin Fangs|16': { score: '96', mast: '2.7', abc: '82%', lb: '99%', hots: '81%', sm: '97%', ab: '98%', wg: '97%', rgb: '0', 'p:Clearcasting': '2 or 3 wasted', 'p:Soul of the Forest': 'All spent', mana: '12%', rr: '90 to 145' } }, 'Holy Paladin': { 'The Twin Fangs|16': { 'cd:divine toll': '89%', 'cd:avenging wrath': '3 or 4 of 4', 'cd:aura mastery': '2 of 3', score: '90', hlo: '53%', abc: '85%', ef: '88%', hs: '95%', lm: '88%', bv: '87%', act: '92%',  folb: '58%', hp: '2%', mana: '31%', dt: '88%', 'p:Infusion of Light': '1 wasted', fol: '3 or 4', 'p:Divine Purpose': '1 wasted', b5: '2', jhs: '1', self: '3' } } };
+  'Demonology Warlock': { 'The Twin Fangs|16': { score: '99', apl: '88%', abc: '80%', tyh: '9.3', tyd: 'all of them', tyc: '4 in 5', tyx: '23', imp: '4.3', ssw: '0%', 'p:Demonic Core': 'All spent', dbh: '1', 'cd:summon demonic tyrant': 'all of them', 'cd:call dreadstalkers': '95%', 'cd:grimoire: imp lord': 'all of them' } }, 'Preservation Evoker': { 'The Twin Fangs|16': { score: '89', apl: '86%', abc: '67%', ta: '76%', db: '95%', dbr: 'all of them', ess: '7%', ecu: '87%', ecl: '0', te: '82%', 'p:Essence Burst': '4 wasted', inf: '3.2', mana: '37%', ebh: '1', dbec: '2', 'p:Merithra\'s Blessing': 'All used' } }, 'Restoration Druid': { 'The Twin Fangs|16': { score: '96', apl: '89%', mast: '2.7', abc: '82%', lb: '99%', hots: '81%', sm: '97%', ab: '98%', wg: '97%', rgb: '0', 'p:Clearcasting': '2 or 3 wasted', 'p:Soul of the Forest': 'All spent', mana: '12%', rr: '90 to 145' } }, 'Holy Paladin': { 'The Twin Fangs|16': { apl: '93%', 'cd:divine toll': '89%', 'cd:avenging wrath': '3 or 4 of 4', 'cd:aura mastery': '2 of 3', score: '90', hlo: '53%', abc: '85%', ef: '88%', hs: '95%', lm: '88%', bv: '87%', act: '92%',  folb: '58%', hp: '2%', mana: '31%', dt: '88%', 'p:Infusion of Light': '1 wasted', fol: '3 or 4', 'p:Divine Purpose': '1 wasted', b5: '2', jhs: '1', self: '3' } } };
 const HPAL_PROCS = [
   { n: 'Infusion of Light', use: ['flash of light', 'judgment'], tip: 'Best on Flash of Light; Judgment when nobody needs healing' },
   { n: 'Divine Purpose', use: ['eternal flame', 'light of dawn', 'word of glory', 'shield of the righteous'], tip: 'A free Holy Power spender' },
@@ -15084,6 +15092,28 @@ function talentGraphHtml(r, p, key, tab) {
   const legend = '<div class="tm-lg"><span><i class="on"></i>Taken</span><span><i></i>Not taken</span><span><i class="on ch"></i>A choice</span><span><i class="on ap"></i>The apex</span><span><b>2/2</b>Ranks</span><span><u></u>Points needed below it</span><span class="sub">Hover any talent for its name and what it does.</span></div>';
   return '<div class="tm" style="grid-template-columns:' + TR.map(([, , ns]) => 'minmax(0,' + (colsOf(ns).length || 1) + 'fr)').join(' ') + '">' + TR.map(panel).join('') + '</div>' + legend;
 }
+// (Holy Paladin's own "Next time" for each line, by its key: what to do instead, with the moment when it helps)
+const HPAL_TIPS = {
+  hs: (c, K) => 'Press Holy Shock before it reaches full charges: it\'s your strongest button' + (K.long ? ', and from ' + K.long.from + ' it sat full for ' + K.long.secs + ' seconds.' : '.'),
+  bv: (c, K) => 'Press Beacon of Virtue as the damage goes out, close to every 15 seconds' + (K.long ? ': from ' + K.long.from + ', it sat ready for ' + K.long.secs + ' seconds.' : '.'),
+  jhs: () => 'When Holy Shock is full, press it first, and Judgment only while Holy Shock recharges.',
+  cm: () => 'When Judgment is ready, press it before Holy Shock: Crusader\'s Might can\'t take time off a Judgment that\'s already ready.',
+  fol: () => 'Save Flash of Light for an Infusion of Light: without one, press Holy Shock, Judgment or Holy Light instead.',
+  folb: () => 'Put your Infused Flash of Lights on someone with your Beacon: Moment of Compassion makes them heal 50% more there.',
+  hp: () => 'Spend Holy Power at 3 or 4, before your next Holy Shock or Judgment takes you past 5.',
+  ef: (c) => 'Spend Holy Power on ' + c.ic + ', and save Light of Dawn for when ' + c.ic + ' would mostly overheal.',
+  act: () => 'Keep casting through each Beacon of Virtue window: line up Holy Shock, Infused Flash of Lights and your spenders for those 9 seconds.',
+  aw: (c) => 'Keep casting through ' + c.ic + ' at least as fast as usual: plan your movement around it.',
+  hlo: () => 'Cast Holy Light on someone who is actually hurt: when nobody is, press Judgment or save the mana.',
+  'p:Infusion of Light': (c, K) => (/Holy Light/.test(c.sub) ? 'Spend each Infusion of Light on Flash of Light before you cast Holy Light, so a new one doesn\'t replace it.' : 'Spend each Infusion of Light on Flash of Light before it runs out.') + (K.first ? ' Your first wasted one was at ' + K.first + '.' : '') };
+// (Holy Paladin's priority list: WoWAnalyzer's, for a reactive healer, so it says what to press when nothing more urgent is happening. Holy Light and
+// Judgment are judged as fillers)
+const hpalApl = (ch) => ({ why: 'From WoWAnalyzer\'s Holy Paladin priority list. Healing is reactive, so a slip is a moment to look at, not always a mistake.', ok: 0.8, warn: 0.7, list: [
+  { s: 'Eternal Flame', alt: ['Word of Glory', 'Light of Dawn', 'Shield of the Righteous'], if: { res: ['9', 5] }, why: 'you were at 5 Holy Power', tip: 'At 5 Holy Power, spend it before anything that builds more.' },
+  { s: 'Flash of Light', alt: ['Holy Shock'], if: { buff: 'Infusion of Light' }, why: 'you had an Infusion of Light', tip: 'With an Infusion of Light, cast Flash of Light before Holy Shock and your other heals.' },
+  { s: 'Holy Shock', cd: 6, ch, why: 'it was ready', tip: 'Press Holy Shock whenever it\'s ready, before spending or filling.' },
+  { s: 'Eternal Flame', alt: ['Word of Glory', 'Light of Dawn', 'Shield of the Righteous'], if: { res: ['9', 3] }, why: 'you had 3 or more Holy Power', tip: 'With 3 or more Holy Power, spend it before Holy Light or Judgment.' },
+  { s: 'Holy Light', alt: ['Flash of Light', 'Judgment', 'Holy Shock', 'Eternal Flame', 'Word of Glory', 'Light of Dawn', 'Shield of the Righteous', 'Crusader Strike', 'Hammer of Wrath'] }] });
 function hpalChecks(reps, name, one) {
   const per = [];
   for (const r of reps) { const p = [...r.players.values()].find((y) => y.name === name); if (!p) continue; const C0 = perfContext(r), x0 = C0.per.get(name), end = C0.end, t1 = x0 ? Math.min(x0.until, end) : end; if (t1 < 20) continue;
@@ -15117,8 +15147,9 @@ function hpalChecks(reps, name, one) {
   const talents = [herald ? 'Herald of the Sun' : smith ? 'Lightsmith' : '', virtue ? 'Beacon of Virtue' : has('Beacon of Faith') ? 'Beacon of Faith' : '', savior ? 'Beacon of the Savior' : '', crusader ? 'Avenging Crusader' : 'Avenging Wrath', hs2 ? '2 Holy Shock charges' : '',
     roth ? 'Ringing of the Heavens' : '', moc ? 'Moment of Compassion' : '', has('Divine Purpose') ? 'Divine Purpose' : '', ioPer > 1 ? 'Infusion of Light carries 2' : '', has('Hand of Divinity') ? 'Hand of Divinity' : '', tier4 ? 'Tier set: Holy Light gives Infusion' : ''].filter(Boolean);
   // ---- each pull on its own (the night adds them up; the pull-by-pull table reads them) ----
-  const wingN = crusader ? 'Avenging Crusader' : 'Avenging Wrath', rows = [], wins = [];
+  const wingN = crusader ? 'Avenging Crusader' : 'Avenging Wrath', rows = [], wins = [], HPAL_A = hpalApl(hs2 ? 2 : 1);
   for (const x of per) { const { r, p, t1, end, c } = x, s = { pull: r.item.pull, kill: r.item.kill, len: t1, m: {}, bx: {} }, BX = (k, t, cls, tip) => (s.bx[k] = s.bx[k] || []).push([t, cls, tip]), nmL = (q) => String(q).replace(/\b\w/g, (ch) => ch.toUpperCase()).replace(/ Of /g, ' of ');
+    s.apl = aplPull(x, s, HPAL_A, per, tal, ''); // (the rotation check: each cast against the priority list)
     const e1 = castEff({ p, per: [{ w: { r, w0: 0, w1: end }, c }] }); s.wait = e1 ? e1.wait : 0; s.hs = e1 && e1.list.find((o) => o.name.toLowerCase() === 'holy shock'); s.bv = e1 && e1.list.find((o) => o.name.toLowerCase() === 'beacon of virtue');
     s.procs = HPAL_PROCS.map((d) => procUse(r, p, t1, d.n === 'Infusion of Light' && IOP ? { ...d, per: IOP } : d)).filter(Boolean); for (const y of s.procs) { s.m['p:' + y.n] = y.wt; for (const [t, k] of y.ev || []) BX('p:' + y.n, t, k == null ? 'bad' : y.n === 'Infusion of Light' && k === 'judgment' ? 'warn' : 'ok', T(t) + (k == null ? ': wasted' : ': spent on ' + nmL(k))); }
     const o = ioOf(p);
@@ -15219,6 +15250,7 @@ function hpalChecks(reps, name, one) {
     const b = p.buffs.get(wingN), press = by(p, wingN, t1), forced = castForced(r, p), ov = (a, e) => forced.reduce((v, [u, w]) => v + Math.max(0, Math.min(e, w) - Math.max(a, u)), 0);
     const w0n = wins.length; if (b) for (const [a, e0] of b.sp) { if (a > t1 || !press.some((t) => Math.abs(t - a) <= 1.5)) continue; const e = Math.min(e0, t1), len = Math.max(1, e - a - ov(a, e)), inN = c.all.filter((t) => t >= a && t <= e).length;
       wins.push({ pull: r.item.pull, a, e, len, inN, dt: dt.some((t) => t >= a - 0.5 && t <= e), io: o ? o.spent.filter((t) => t >= a && t <= e).length : 0, cpm: 60 * inN / len, out: 60 * (c.n - inN) / Math.max(1, c.al - len), top: c.ab.map((y) => [y, y.ts.filter((t) => t >= a && t <= e).length]).filter(([, n]) => n).sort((u, w) => w[1] - u[1]).slice(0, 5) }); }
+    { const hS = p.healS || [], mine = wins.slice(w0n), inH = mine.reduce((v, w) => v + sumIn(hS, w.a, w.e), 0), inL = mine.reduce((v, w) => v + (w.e - w.a), 0), oR = (sumIn(hS, 0, t1) - inH) / Math.max(1, c.al - inL); for (const w of mine) w.x = oR > 0 ? (sumIn(hS, w.a, w.e) / Math.max(1, w.e - w.a)) / oR : null; }
     // (always be casting: the share of your time alive spent on a global cooldown or a cast, from every press (a global cooldown after an instant,
     // the cast time before Holy Light and a Flash of Light without an Infusion), the global cooldown read from your own quickest presses; and the
     // longest stretches with nothing pressed, 4 s or more, not while dead or waiting, as moments. WoWAnalyzer's scale: under 20% idle is fine)
@@ -15287,6 +15319,7 @@ function hpalChecks(reps, name, one) {
   const M = (k) => rows.flatMap((s) => ((s.m && s.m[k]) || []).map((x) => (Array.isArray(x) ? { pull: s.pull, a: x[0], b: x[1] } : { pull: s.pull, a: x }))).sort((u, w) => u.pull - w.pull || u.a - w.a);
   const every = (n) => (n ? 'about one every ' + Math.round(sum((s) => s.len) / n) + ' seconds' : '');
   let bwStrip = '', bwD = null; const groups = [], grp = (t) => { const g = { t, l: [] }; groups.push(g); return g; }, add = (g, st, ic, label, v, sub, k, how) => g.l.push({ st, ic, label, v, sub, k, how, mo: M(k) });
+  const gA = grp('Your priority'), aplSl = aplAdd(rows, HPAL_A, add, gA, 'Holy Shock');
   const g1 = grp('On cooldown');
   if (hs) add(g1, hs.f == null ? 'na' : hs.f >= 0.85 ? 'ok' : hs.f >= 0.75 ? 'warn' : 'bad', 'Holy Shock', 'Holy Shock', pct(hs.f), 'You cast it ' + hs.n + ' times out of a possible ' + hs.poss + '.' + (hs.cap >= 1 ? ' It sat at full charges for ' + Math.round(hs.cap) + ' seconds.' : ''), 'hs',
     'Holy Shock has ' + (hs.ch > 1 ? hs.ch + ' charges' : 'one charge') + ' that refill every 6 seconds. Glorious Dawn and Imbued Infusions give some back, so presses they made possible count too. 85% or more is good. The moments are the times it sat at full charges for 2 seconds or more, when its recharge went to waste.');
@@ -15426,7 +15459,7 @@ function hpalChecks(reps, name, one) {
   const LANE = ({ rows: rw, X1, area, rects, lines }) => { const byX = (n) => (X1.p.byName.get(n.toLowerCase()) || []).filter((t) => t <= X1.t1);
     return { hs: () => rects(rw[0].capL || [], 'cap') + lines(byX('Holy Shock'), 'tk'), bv: () => rects(byX('Beacon of Virtue').map((t) => [t, t + 9]), 'bvw', 2, 6) + rects((rw[0].m.bv || []), 'cap'),
       hp: () => rects(rw[0].hpCapL || [], 'cap') + area(rw[0].hpL, 5, true, 'hpa'), b5: () => area(rw[0].hpL, 5, true, 'hpa dim') + lines(rw[0].m.b5 || [], 'bad'), mana: () => area(rw[0].mnL, 1, false, 'mna') }; };
-  const TOPB = (SPEC_TOP['Holy Paladin'] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId] || null, TOPP = new Set(['hs', 'lm', 'bv', 'act', 'ef', 'folb', 'hp', 'dt', 'abc', 'mana', 'hlo']);
+  const TOPB = (SPEC_TOP['Holy Paladin'] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId] || null, TOPP = new Set(['apl', 'hs', 'lm', 'bv', 'act', 'ef', 'folb', 'hp', 'dt', 'abc', 'mana', 'hlo']);
   // (each Divine Toll a box: its tooltip says what its Holy Shocks healed, inside Beacon of Virtue or not, and the Holy Power it wasted)
   const dtTip = (q) => '<div class="tt-h">' + T(q.t) + (q.ib == null ? '' : q.ib ? ' · in Beacon of Virtue' : ' · outside Beacon of Virtue') + '</div><div>' + (q.h == null ? 'Its healing is counted with Aura Mastery\'s' : '<b>' + C(q.h) + '</b> healed by its Holy Shocks') + '</div>' +
     '<div class="' + (q.lw > 2 ? 'no' : 'tt-s') + '">' + (q.lw ? q.lw + ' Holy Power wasted' + (q.lw <= 2 ? ', which is fine' : '') : 'No Holy Power wasted') + '</div>';
@@ -15438,7 +15471,7 @@ function hpalChecks(reps, name, one) {
         (q.rh != null ? '<div class="spc-wv spc-wv2">' + C(q.rh) + '<span> healed by its Divine Toll</span></div>' : '') +
         (roth ? '<div class="spc-wc spc-chk">' + (q.ib == null ? '' : '<span class="' + (q.ib ? 'ok' : 'no') + '">' + (q.ib ? '✓ In Beacon of Virtue' : '✕ Outside it') + '</span>') + '<span class="' + (q.lw > 2 ? 'no' : 'ok') + '">' + (q.lw ? q.lw + ' Holy Power wasted' : 'No Holy Power wasted') + '</span></div>' : '') + '</div>'; }).join('') + '</div>'; };
   const dtCls = (q) => (virtue ? (q.lw > 2 ? 'g0' : q.ib === false ? 'g1' : q.lw ? 'g2' : 'g3') : q.lw > 2 ? 'warn' : 'ok');
-  const VIZ = Object.assign({ dth: () => { const l = rows.flatMap((s) => s.dtC || []); if (!l.length) return ''; const n = {}; for (const q of l) n[dtCls(q)] = (n[dtCls(q)] || 0) + 1; return spcSumBar(n, virtue ? LG.dt : { ok: 'Nothing wasted, or 1 or 2', warn: '3 or more wasted' }) + dtBoxes(); } }, { devam: () => amCards(), aw: () => winT }, bwD && bwD.bws.length ? { act: () => bvBoxes() } : {});
+  const VIZ = Object.assign({ apl: () => aplViz(aplSl), dth: () => { const l = rows.flatMap((s) => s.dtC || []); if (!l.length) return ''; const n = {}; for (const q of l) n[dtCls(q)] = (n[dtCls(q)] || 0) + 1; return spcSumBar(n, virtue ? LG.dt : { ok: 'Nothing wasted, or 1 or 2', warn: '3 or more wasted' }) + dtBoxes(); } }, { devam: () => amCards(), aw: () => winT }, bwD && bwD.bws.length ? { act: () => bvBoxes() } : {});
   // (a bar made of parts, with its legend: Procs, Holy Power's sources and spenders, mana's)
   const PC = SPC_PC, barRow = spcBarRow, facts = spcFacts;
   const pctM = (v) => (!mx ? C(v) : v >= mx ? (v / mx).toFixed(1) + ' bars' : (100 * v / mx < 10 ? (100 * v / mx).toFixed(1) : Math.round(100 * v / mx)) + '%'), ofBar = (v) => pctM(v) + (mx && v < mx ? ' of a bar' : '');
@@ -15462,14 +15495,15 @@ function hpalChecks(reps, name, one) {
     gj && heal.get('Greater Judgment') ? [C(heal.get('Greater Judgment')), 'prevented by Greater Judgment'] : null, revel && mnG.get('Divine Revelations') ? [pctM(mnG.get('Divine Revelations')), 'mana back (Divine Revelations)'] : null]) +
     '' : '';
   const winT = wins.length ? (one ? '<div class="spc-ws">' + wins.map((w) => { const st = w.cpm >= 0.95 * w.out ? 'ok' : w.cpm >= 0.85 * w.out ? 'warn' : 'bad';
-    return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + w.a.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.a) + '–' + T(w.e) + '</b><span class="sub">' + w.inN + ' casts' + (w.dt ? ', with Divine Toll' : born ? ', no Divine Toll' : '') + (w.io ? ', ' + plural(w.io, 'Infusion') + ' spent' + (walk ? ' (Walk Into Light)' : '') : '') + '</span></div><div class="spc-wv">' + fmtCpm(w.cpm) + '<span> casts a minute, against ' + fmtCpm(w.out) + ' outside it</span></div><div class="spc-wc">' + w.top.map(([q, n]) => '<span title="' + esc(q.name) + '">' + spellIcon(q.id, q.name) + '<b>' + n + '</b></span>').join('') + '</div></div>'; }).join('') + '</div>' : '') : '';
+    return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + w.a.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.a) + '–' + T(w.e) + '</b><span class="sub">' + w.inN + ' casts' + (w.dt ? ', with Divine Toll' : born ? ', no Divine Toll' : '') + (w.io ? ', ' + plural(w.io, 'Infusion') + ' spent' + (walk ? ' (Walk Into Light)' : '') : '') + '</span></div>' + (w.x != null ? '<div class="spc-wv">' + w.x.toFixed(1) + '×<span> your usual healing a second</span></div>' : '') + '<div class="spc-wv' + (w.x != null ? ' spc-wv2' : '') + '">' + fmtCpm(w.cpm) + '<span> casts a minute, against ' + fmtCpm(w.out) + ' outside it</span></div><div class="spc-wc">' + w.top.map(([q, n]) => '<span title="' + esc(q.name) + '">' + spellIcon(q.id, q.name) + '<b>' + n + '</b></span>').join('') + '</div></div>'; }).join('') + '</div>' : '') : '';
   // (the night: one row per pull, the kill marked; a click opens that pull, the column names sort it)
   const cell = (v, st, n) => '<span class="cst-f ' + st + '" data-v="' + (n == null ? '' : n) + '">' + v + '</span>';
   const pullT = !one && rows.length > 1 ? '<div class="hm-ut rs-ut spc-pt" data-sk="pulls"><div class="hm-uh"><span>Pull</span><span>Holy Shock</span><span>Beacon</span><span>Holy Power wasted</span><span>Procs wasted</span><span>Eternal Flame</span><span>Casting during Beacon</span></div>' + rows.map((s) => {
     const pw = s.procs.reduce((v, y) => v + y.wasted, 0), ef = (s.efA || 0) + (s.lodA || 0) ? (s.efA + s.lodJA) / (s.efA + s.lodA) : null, ac = s.act && s.act.length ? s.act.reduce((v, y) => v + y, 0) / s.act.length : null, hf = s.hs && s.hs.poss + s.hs.early ? Math.min(1, s.hs.n / (s.hs.poss + s.hs.early)) : null, bf = s.bv && s.bv.poss + s.bv.early ? Math.min(1, s.bv.n / (s.bv.poss + s.bv.early)) : null, hw = s.hpG ? s.hpWa / s.hpG : null;
     return '<button type="button" class="hm-ur' + (s.kill ? ' spc-kill' : '') + '" data-gopull="' + s.pull + '" title="Open pull ' + s.pull + '"><span data-v="' + s.pull + '">Pull ' + s.pull + (s.kill ? ' <span class="ok-t">kill</span>' : '') + ' <span class="sub">' + T(s.len) + '</span></span><span>' + (hf != null ? cell(pct(hf), paceSt(hf), hf) : '—') + '</span><span>' + (bf != null ? cell(pct(bf), paceSt(bf), bf) : '—') + '</span><span>' + (hw != null ? cell(pct(hw), shareSt(hw, 0.03, 0.08), hw) : '—') + '</span><span>' + cell(pw, pw ? 'warn' : 'ok', pw) + '</span><span>' + (ef != null ? cell(pct(ef), ef >= 0.7 ? 'ok' : ef >= 0.5 ? 'warn' : 'bad', ef) : '—') + '</span><span>' + (ac != null ? cell(pct(ac), ac >= 0.75 ? 'ok' : 'warn', ac) : '—') + '</span></button>'; }).join('') + '</div>' : '';
   const tl = one && per.length === 1 ? hpalTimeline(per[0], { hs: rows[0].hs, virtue, wingN, capL: rows[0].capL, ioHeld: ioOf(per[0].p), hpL: rows[0].hpL, hpCapL: rows[0].hpCapL, mnL: rows[0].mnL, jio: rows[0].m.jio || [] }) : '';
-  const MERGE = { 'Holy Power': { ic: 'Eternal Flame', main: 'hp', det: hpT, lead: 'Holy Shock, Judgment, Flash of Light and Holy Light each build 1 Holy Power, and Divine Toll builds 5. Spend it on Eternal Flame, or on Light of Dawn when Eternal Flame would overheal a lot.' + (procs.some((x) => x.n === 'Divine Purpose') ? ' Divine Purpose makes your next spender free.' : '') + (herald ? ' After Divine Toll, Dawnlight makes your next 2 spenders heal over time too.' : '') },
+  const MERGE = { 'Your priority': { ic: 'Holy Shock', main: 'apl', lead: HEAL_LEAD.replace('your guides', 'WoWAnalyzer\'s Holy Paladin list') },
+    'Holy Power': { ic: 'Eternal Flame', main: 'hp', det: hpT, lead: 'Holy Shock, Judgment, Flash of Light and Holy Light each build 1 Holy Power, and Divine Toll builds 5. Spend it on Eternal Flame, or on Light of Dawn when Eternal Flame would overheal a lot.' + (procs.some((x) => x.n === 'Divine Purpose') ? ' Divine Purpose makes your next spender free.' : '') + (herald ? ' After Divine Toll, Dawnlight makes your next 2 spenders heal over time too.' : '') },
       'Infusion of Light and Flash of Light': { ic: 'Infusion of Light', main: 'p:Infusion of Light', lead: 'Holy Shock can give you an Infusion of Light, and an Infused Flash of Light is one of your strongest heals: instant, and 3 times as strong. Spend every Infusion on a Flash of Light' + (moc ? ', on someone with a Beacon when you can (Moment of Compassion)' : '') + '.' },
       Mana: { ic: 'Holy Light', main: 'mana', det: mnT, lead: 'Mana left at the kill is healing you never did. Holy Light is how you spend it: cast more of them when you have mana to spare, and fewer when you\'re running low.' },
       Casting: { ic: 'Holy Light', main: 'abc', lead: 'The more of the fight you spend pressing buttons, the more you heal. Fill the quiet moments with Holy Shock, Judgment or a Holy Light, and keep casting while you move with instant spells.' },
@@ -15477,7 +15511,7 @@ function hpalChecks(reps, name, one) {
       'Holy Shock and Judgment': { ic: 'Holy Shock', main: 'hs', det: jT2, lead: 'Your two Holy Power builders. Holy Shock is your main button: it also gives you Infusions of Light, so cast it as often as you can, spending an Infusion first. Judgment is your filler: press it when Holy Shock isn\'t ready, never while Holy Shock sits at full charges.' },
       'Aura Mastery': { ic: 'Aura Mastery', main: 'devam', lead: 'Aura Mastery raises Devotion Aura from 3% to 12% less damage taken for 8 seconds' + (roth ? ', and with Ringing of the Heavens it also casts a Divine Toll at 200%' : '') + '. Devotion Aura itself is up all fight. These numbers are estimates: they count everyone near you as in range.' },
       [wingN]: { ic: wingN, main: 'awh', lead: wingN + ' adds healing and critical strike while it lasts. Nothing changes in your rotation: keep casting through it' + (born ? ', and fit a Divine Toll into it: Born in Sunlight makes Dawnlight crit more then.' : '.') } };
-  const WT = { 'cd:divine toll': 2, 'cd:avenging wrath': 1.5, 'cd:avenging crusader': 1.5, rev: 1.5, hlo: 1.5, abc: 2, hs: 3, 'p:Infusion of Light': 3, hp: 2.5, bv: 2, act: 2, dt: 2, mana: 2, ef: 1.5, b5: 1.5, aw: 1.5, lm: 1.5, self: 0.5 };
+  const WT = { apl: 2, 'cd:divine toll': 2, 'cd:avenging wrath': 1.5, 'cd:avenging crusader': 1.5, rev: 1.5, hlo: 1.5, abc: 2, hs: 3, 'p:Infusion of Light': 3, hp: 2.5, bv: 2, act: 2, dt: 2, mana: 2, ef: 1.5, b5: 1.5, aw: 1.5, lm: 1.5, self: 0.5 };
   const heroN = herald ? 'Herald of the Sun' : smith ? 'Lightsmith' : '', keyN = new Set(KEY_T.filter((n) => TAL && TAL.names.has(n)));
   // (left out: lines that repeat another, or small talent extras. Holy Shock with an Infusion waiting (the Infusion of Light check counts the ones it
   // lost), Holy Shock with Light of the Martyr, heals on yourself (Selfless Healer), Judgment's own casts and the Infusions it spent (the Infusion bar and
@@ -15485,10 +15519,10 @@ function hpalChecks(reps, name, one) {
   // cards show it), Devotion Aura's total (on the Aura Mastery line), Divine Toll's healing (its uses are what matters), and Holy Light overhealing when
   // your tier set means it isn't graded)
   const DROP = new Set(['rev', 'lm', 'self', 'j', 'jio', 'am', 'awdt', 'dev', 'dth'].concat(tier4 ? ['hlo'] : [])); for (const g of groups) g.l = g.l.filter((c) => !DROP.has(c.k));
-  const LAYOUT = [['Rotation', [['Casting', ['abc']], ['Holy Shock and Judgment', ['hs', 'ii', 'jhs', 'p-empyrean-legacy', 'p-awakening'].concat(virtue ? [] : ['dth'])], ['Infusion of Light and Flash of Light', ['p-infusion-of-light', 'fol', 'folb']]]],
+  const LAYOUT = [['Rotation', [['Casting', ['abc']], ['Your priority', ['apl']], ['Holy Shock and Judgment', ['hs', 'ii', 'jhs', 'p-empyrean-legacy', 'p-awakening'].concat(virtue ? [] : ['dth'])], ['Infusion of Light and Flash of Light', ['p-infusion-of-light', 'fol', 'folb']]]],
     ['Resources', [['Holy Power', ['hp', 'ef', 'b5', 'p-divine-purpose', 'p-dawnlight']], ['Mana', ['mana', 'hlo', 'mnx']]]],
     ['Cooldowns', [['Beacon of Virtue', ['bv', 'act', 'cd-divine-toll', 'dth', 'am']], [wingN, ['cd-' + wingN.toLowerCase().replace(/ /g, '-'), 'aw', 'awh', 'awdt', 'p-hand-of-divinity']], ['Aura Mastery', ['devam', 'cd-aura-mastery', 'dev']]]]];
-  const pg = specPage({ per, rows, groups, one, P0, heroN, TAL, keyN, talents, talIc: TAL_IC, LAYOUT, LG, LANE, WT, MERGE, TOPB, TOPP, top: 'Holy Paladins', tl, VIZ, pullT,
+  const pg = specPage({ per, rows, groups, one, P0, heroN, TAL, keyN, talents, talIc: TAL_IC, TIPS: HPAL_TIPS, LAYOUT, LG, LANE, WT, MERGE, TOPB, TOPP, top: 'Holy Paladins', tl, VIZ, pullT,
     tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use, Holy Shock at full charges, or Holy Power sitting at 5.',
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Holy Paladin, and from what your talents do.', ringTip: 'Each check counts by how much it matters: Holy Shock and Infusion of Light count three times as much as most, heals on yourself half. Good counts in full, could be better half.',
     secIc: { 'Your pull at a glance': 'Avenging Wrath', 'Pull by pull': 'Holy Shock' } });
@@ -15543,6 +15577,16 @@ function heroAv(p) { return '<span class="spc-av">' + avatar(p) + '</span>'; }
 // ---- one spec's Spec checks page, shared: the banner (a score out of 100, the filter, what to work on first), the build, the groups (a block with a
 // line per check, or a row per check), each check's moments, boxes and strip, and the sections under them. Every spec's page uses this one.
 // o: { per, rows, groups, one, P0, heroN, bg, TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TOPP, top, tl, pullT, src, ringTip, secIc }
+// (a line's moments for its "Next time": its longest stretch and its first moment, said as "2:14" or "the start of the pull", with the pull over a night)
+const spcTipK = (c, one) => { const at = (m) => (m.a < 2 ? 'the start of ' + (one ? 'the pull' : 'pull ' + m.pull) : T(m.a) + (one ? '' : ' on pull ' + m.pull)), mo = c.mo || [], r = mo.filter((m) => m.b != null).sort((u, w) => w.b - w.a - (u.b - u.a))[0] || null;
+  return { at, long: r ? { from: at(r), secs: Math.round(r.b - r.a) } : null, first: mo.length ? at(mo[0]) : null }; };
+// (the shared "Next time" for a cooldown, a proc, casting and mana, when the page has none of its own)
+const spcAutoTip = (c, one) => { const K = spcTipK(c, one), n = c.ic || c.label;
+  if (/^cd:/.test(c.k)) return K.long ? 'Press ' + n + ' as soon as it comes back: from ' + K.long.from + ', it sat ready for ' + K.long.secs + ' seconds.' : 'Press ' + n + ' a little sooner each time it comes back.';
+  if (/^p:/.test(c.k)) return 'Spend ' + c.label + ' before it runs out, or before a new one replaces it.' + (K.first ? ' Your first wasted one was at ' + K.first + '.' : '');
+  if (c.k === 'abc') return 'Press something every global cooldown: when you have to move, use an instant instead of stopping.' + (K.long ? ' Your longest gap started at ' + K.long.from + '.' : '');
+  if (c.k === 'mana') return /ran (out|dry)/.test(c.sub) ? 'Pace your mana: you ran out before the kill, so use fewer expensive heals early in the fight.' : 'Spend more of your mana: use your stronger heals when the raid needs healing, and aim to end the kill near empty.';
+  return ''; };
 function specPage(o) {
   // (the layout every spec shares: its checks in chapters (Rotation, Resources, Cooldowns), each chapter's blocks in the spec's own order, a check
   // named by its key. One the layout doesn't name stays in a block of its own group's name, at the end: nothing is ever dropped)
@@ -15556,6 +15600,8 @@ function specPage(o) {
   const lgOf = (k) => (o.LG || {})[k] || (k.startsWith('p:') ? { ok: 'Spent', bad: 'Wasted' } : null);
   const BXL = (k) => rows.flatMap((s) => ((s.bx && s.bx[k]) || []).map(([t, cls, tip]) => ({ pull: s.pull, t, cls, tip }))).sort((u, w) => u.pull - w.pull || u.t - w.t);
   for (const c of checks) c.bx = BXL(c.k);
+  // (a "Next time" for every line that isn't good and doesn't have one: the page's own for its key, or the shared one)
+  for (const c of checks) if (!c.tip && (c.st === 'warn' || c.st === 'bad')) c.tip = ((o.TIPS || {})[c.k] ? o.TIPS[c.k](c, spcTipK(c, one)) : '') || spcAutoTip(c, one);
   const allHeal = Math.max(1, sum((s) => (s.healTot != null ? s.healTot : s.dmgTot))), UN = o.unitN || 'healing';
   for (const c of checks) { c.cost = rows.reduce((v, s) => v + ((s.cost && s.cost[c.k]) || 0), 0); if (c.cost >= 20000 && (c.st === 'warn' || c.st === 'bad')) c.sub += ' That cost about ' + C(c.cost) + ' ' + UN + ', ' + (c.cost / allHeal < 0.01 ? 'under 1%' : pct(c.cost / allHeal)) + ' of yours.'; }
   const sumBar = spcSumBar;
@@ -15575,7 +15621,7 @@ function specPage(o) {
     return one ? '<div class="spc-mos">' + mo.slice(0, n).map(tm).join('') + (mo.length > n ? '<span class="sub">and ' + (mo.length - n) + ' more</span>' : '') + '</div>'
       : '<div class="spc-mos">' + [...new Set(mo.map((m) => m.pull))].slice(0, 10).map((pl) => { const l = mo.filter((m) => m.pull === pl); return '<span class="spc-mp"><b>Pull ' + pl + '</b></span>' + l.slice(0, 5).map(tm).join('') + (l.length > 5 ? '<span class="sub">and ' + (l.length - 5) + ' more</span>' : ''); }).join('') + '</div>'; };
   const BADGE = { ok: '✓ Good', warn: '! Could be better', bad: '✕ To fix', na: 'Not graded' };
-  const icB = (n) => '<span class="spc-ri">' + spellIcon(0, n, true) + '</span>';
+  const icB = (n) => '<span class="spc-ri">' + spIc(n, true) + '</span>';
   const viz = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
     '<div class="spc-rb"><div class="spc-rd"><p class="spc-rs">' + esc(c.sub) + spcHw(c.k, c.how)[0] + '</p>' + spcHw(c.k, c.how)[1] + viz(c) + '</div></div></article>';
@@ -15622,8 +15668,8 @@ const spcHw = (k, how) => { if (!how) return ['', '']; const id = 'spc-hw-' + St
 // after the lines)
 const SPC_MK = { ok: '✓', warn: '!', bad: '✕', na: '•' };
 const spcTip = (c) => (c.tip && (c.st === 'warn' || c.st === 'bad') ? '<p class="spc-tip"><b>Next time:</b> ' + esc(c.tip) + '</p>' : '');
-const spcLine = (c, top, id, v, bic) => { const hw = spcHw(c.k, c.how); return '<div class="spc-sl ' + c.st + '" id="' + id + '"><span class="spc-si">' + SPC_MK[c.st] + '</span><div class="spc-sm"><div class="spc-sh"><span class="spc-shl">' + (c.ic && c.ic !== bic ? spellIcon(0, c.ic) : '') + '<b>' + esc(c.label) + '</b></span><span class="spc-shv">' + top + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></div>'; };
-const spcMini = (c, top, id, extra) => { const hw = spcHw(c.k, c.how); return '<div class="spc-mini ' + c.st + '" id="' + id + '"><div class="spc-mh">' + (c.ic ? spellIcon(0, c.ic) : '') + '<b>' + esc(c.label) + '</b><span class="spc-si">' + SPC_MK[c.st] + '</span></div><div class="spc-mv"><span class="cst-f ' + c.st + '">' + c.v + '</span>' + top + '</div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + (extra || '') + '</div>'; };
+const spcLine = (c, top, id, v, bic) => { const hw = spcHw(c.k, c.how); return '<div class="spc-sl ' + c.st + '" id="' + id + '"><span class="spc-si">' + SPC_MK[c.st] + '</span><div class="spc-sm"><div class="spc-sh"><span class="spc-shl">' + (c.ic && c.ic !== bic ? spIc(c.ic) : '') + '<b>' + esc(c.label) + '</b></span><span class="spc-shv">' + top + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></div>'; };
+const spcMini = (c, top, id, extra) => { const hw = spcHw(c.k, c.how); return '<div class="spc-mini ' + c.st + '" id="' + id + '"><div class="spc-mh">' + (c.ic ? spIc(c.ic) : '') + '<b>' + esc(c.label) + '</b><span class="spc-si">' + SPC_MK[c.st] + '</span></div><div class="spc-mv"><span class="cst-f ' + c.st + '">' + c.v + '</span>' + top + '</div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + (extra || '') + '</div>'; };
 const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) => /^cd:/.test(c.k) && !vz(c)), tbl = cdl.length >= 3, rest = tbl ? vis.filter((c) => !cdl.includes(c)) : vis, big = [], small = [];
   for (const c of rest) { const v = vz(c), id = 'spc-r-' + slug(c.k); if (v) big.push(spcLine(c, top(c.k), id, v, bic)); else small.push(spcMini(c, top(c.k), id, tmo ? tmo(c) : '')); }
   if (small.length === 1) return rest.map((c) => { const v = vz(c); return spcLine(c, top(c.k), 'spc-r-' + slug(c.k), v || (tmo ? tmo(c) : ''), bic); }).join('') + (tbl ? spcTable(cdl, top, slug, tmo) : ''); // (a tile alone: a line, in its own place)
@@ -15631,7 +15677,7 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
 // (three or more cooldowns in a block: a compact table, a row each, with its mark, its name, a bar of its uses, the count, what it did each time and the top
 // raids'. A row opens in place to its sentence, how it's judged, its "Next time" and its moments; the ones to fix start open)
 const spcTable = (l, top, slug, tmo) => '<div class="spc-tbl">' + l.map((c) => { const hw = spcHw(c.k, c.how), m = String(c.v).match(/^(\d+)<span>\/(\d+)<\/span>$/), f = m && +m[2] ? Math.min(1, +m[1] / +m[2]) : null;
-  return '<details class="spc-tr ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (c.st === 'bad' ? ' open' : '') + '><summary><span class="spc-si">' + SPC_MK[c.st] + '</span>' + (c.ic ? spellIcon(0, c.ic) : '') + '<b class="spc-tn">' + esc(c.label) + '</b><span class="spc-tb" aria-hidden="true">' + (f != null ? '<i style="width:' + Math.round(100 * f) + '%"></i>' : '') + '</span>' +
+  return '<details class="spc-tr ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (c.st === 'bad' ? ' open' : '') + '><summary><span class="spc-si">' + SPC_MK[c.st] + '</span>' + (c.ic ? spIc(c.ic) : '') + '<b class="spc-tn">' + esc(c.label) + '</b><span class="spc-tb" aria-hidden="true">' + (f != null ? '<i style="width:' + Math.round(100 * f) + '%"></i>' : '') + '</span>' +
     '<span class="spc-tv">' + (c.ext ? '<span class="spc-te">' + esc(c.ext) + '</span>' : '') + top(c.k) + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></summary><div class="spc-td">' + (top(c.k) ? '<div class="spc-tdt">' + top(c.k) + '</div>' : '') + '<p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + (tmo ? tmo(c) : '') + '</div></details>'; }).join('') + '</div>';
 // (a bar of the casts by colour, with its legend, and the counts behind it)
 const spcSumBar = (n, lg) => { const ks = ['g3', 'ok', 'g2', 'warn', 'g1', 'bad', 'g0'].filter((k) => n[k]); if (!ks.length) return '';
@@ -15689,6 +15735,27 @@ const RDRU_PROCS = [
   { n: "Nature's Swiftness", use: ['regrowth', 'rebirth'], tip: 'Your next Regrowth is instant and heals far more' }];
 // (a cooldown's listed length when the tooltip can't be read: Wowhead, Midnight)
 const RDRU_CD = { 'convoke the spirits': 120, 'incarnation: tree of life': 180, tranquility: 180, "nature's swiftness": 60, innervate: 180, ironbark: 90 };
+// (Restoration Druid's own "Next time" for each line, by its key)
+const RDRU_TIPS = {
+  lb: (c, K) => 'Keep Lifebloom up: recast it with 4.5 seconds or less left' + (K.long ? '. Your longest gap was ' + K.long.secs + ' seconds, from ' + K.long.from + '.' : '.'),
+  hots: () => 'Keep 2 Rejuvenations and a Regrowth on your Lifebloom target, so its blooms heal more.',
+  sm: (c, K) => 'Press Swiftmend on cooldown' + (K.long ? ': from ' + K.long.from + ', it sat ready for ' + K.long.secs + ' seconds.' : '.'),
+  ab: () => 'Keep 5 Rejuvenations out for Abundance: recast them in a batch, then fill with Regrowth.',
+  rgb: () => 'Cast Regrowth only with Abundance, Clearcasting or Nature\'s Swiftness, or on someone in danger.',
+  nss: () => 'Cast Nature\'s Swiftness on yourself, so Overgrowth refreshes the HoTs on your Lifebloom target.',
+  wg: () => 'Cast Wild Growth on someone standing with the raid, so it reaches everyone it can.',
+  tq: () => 'Ramp into Tranquility for 15 to 20 seconds: Rejuvenations, a Wild Growth and as many Regrowths as you can.',
+  cv: () => 'Have your Rejuvenations out before Convoke the Spirits, and a Wild Growth if you can.',
+  tol: () => 'Press Tree of Life 10 to 12 seconds before the damage, and spend those first seconds on Rejuvenations.',
+  ef: () => 'Keep Efflorescence under the raid: recast it as soon as it ends.',
+  inn: () => 'Cast Innervate on yourself, from about 75% mana, and never when it would fill you up.' };
+// (Restoration Druid's priority list, from the Wowhead and Icy Veins raid priority: Lifebloom on you, Swiftmend on cooldown, and your free spells spent)
+const RDRU_APL = { why: 'From the Wowhead and Icy Veins raid priority. Healing is reactive, so a slip is a moment to look at, not always a mistake.', ok: 0.75, warn: 0.65, list: [
+  { s: 'Lifebloom', tal: 'Everbloom', if: { no: 'Lifebloom' }, why: 'Lifebloom wasn\'t on you', tip: 'Keep Lifebloom on yourself: when it drops, recast it before anything else.' },
+  { s: 'Swiftmend', cdq: true, full: true, g: 3, why: 'it sat at full charges', tip: 'Press Swiftmend whenever it\'s ready: Everbloom makes your Lifebloom bloom 3 times.' },
+  { s: 'Rejuvenation', if: { buff: 'Soul of the Forest' }, why: 'you had Soul of the Forest', tip: 'After Swiftmend, spend Soul of the Forest on a Rejuvenation.' },
+  { s: 'Regrowth', if: { any: [{ buff: 'Clearcasting' }, { buff: "Nature's Swiftness" }] }, why: 'it was free or instant', tip: 'Spend Clearcasting and Nature\'s Swiftness on Regrowth before your other fillers.' },
+  { s: 'Regrowth', alt: ['Rejuvenation', 'Wild Growth', 'Wrath', 'Lifebloom', 'Swiftmend', 'Efflorescence', 'Moonfire', 'Sunfire'] }] };
 function rdruChecks(reps, name, one) {
   const per = [];
   for (const r of reps) { const p = [...r.players.values()].find((y) => y.name === name); if (!p) continue; const C0 = perfContext(r), x0 = C0.per.get(name), end = C0.end, t1 = x0 ? Math.min(x0.until, end) : end; if (t1 < 20) continue;
@@ -15785,6 +15852,8 @@ function rdruChecks(reps, name, one) {
     { const hA = (n) => (p.healAb.get(n) || [...p.healAb.values()].find((a) => a.name === n) || { total: 0 }).total || 0, hs1 = p.healS || [], av4 = 4 * sumIn(hs1, 0, t1) / Math.max(1, t1), tqA = hT('Tranquility');
       s.hv = { tq: hA('Tranquility'), tqN: tqT.length, wg: hA('Wild Growth'), wgN: wgT.length };
       for (const q of s.tq) q.h = tqA.filter((y) => y[0] >= q.t - 0.05 && y[0] <= q.end + 8).reduce((v, y) => v + y[2], 0);
+      // (each Tranquility: your healing a second while it channels, against the rest of the pull)
+      { const inH = s.tq.reduce((v, q) => v + sumIn(hs1, q.t, q.end), 0), inL = s.tq.reduce((v, q) => v + Math.max(0, q.end - q.t), 0), oR = (sumIn(hs1, 0, t1) - inH) / Math.max(1, t1 - inL); for (const q of s.tq) q.x = oR > 0 && q.end - q.t >= 2 ? (sumIn(hs1, q.t, q.end) / (q.end - q.t)) / oR : null; }
       for (const q of s.cv) q.x = Math.max(0, sumIn(hs1, q.t, q.t + 4) - av4);
       { const tb = p.buffs.get('Incarnation: Tree of Life'); let iH = 0, iL = 0; if (tb) for (const [a, e0] of tb.sp) { if (a > t1) continue; const e = Math.min(e0 == null ? t1 : e0, t1); iH += sumIn(hs1, a, e); iL += Math.max(0, e - a); } s.tolH = iH; s.tolL = iL; s.allH = sumIn(hs1, 0, t1); s.allL = t1; }
       { const nsP = s.procs.find((q) => q.n === "Nature's Swiftness"); s.nsH = nsP ? nsP.ev.filter(([, k]) => k === 'regrowth').reduce((v, [t]) => { const h = dirAt('Regrowth', t); return v + (h ? h[2] : 0); }, 0) : 0; }
@@ -15814,6 +15883,7 @@ function rdruChecks(reps, name, one) {
       const tqH1 = hA('Tranquility') / Math.max(1, tqT.length), hs1 = p.healS || [], avg4 = 4 * sumIn(hs1, 0, t1) / Math.max(1, t1), cvH = cvT.length ? cvT.reduce((v, t) => v + Math.max(0, sumIn(hs1, t, t + 4) - avg4), 0) / cvT.length : 0;
       const miss = (n) => (s.cdu[n] ? Math.max(0, s.cdu[n].poss - s.cdu[n].n) : 0); cst['cd:tranquility'] = miss('tranquility') * tqH1; cst['cd:convoke the spirits'] = miss('convoke the spirits') * cvH;
       if (s.wgMore) cst.mana = s.wgMore * (wgPerTg * (5 + (iwg ? 2 : 0))); }
+    s.apl = aplPull(x, s, RDRU_APL, per, tal, ''); // (the rotation check: each cast against the priority list)
     rows.push(s); }
   // ---- the whole (one pull, or the night added up) ----
   const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%', mins = sum((s) => s.len) / 60, times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times'), aliveT = sum((s) => s.alive);
@@ -15826,6 +15896,7 @@ function rdruChecks(reps, name, one) {
     if (x.ran) t += x.ran === 1 ? ' One ran out.' : ' ' + x.ran + ' ran out.'; if (x.lost) t += ' ' + (x.lost === 1 ? 'One was' : x.lost + ' were') + ' replaced by a new one while you still had it.'; if (!x.wasted) t += ' None were wasted.'; return t; };
   const procAdd = (g, n, how, src) => { const x = procs.find((y) => y.n === n); if (!x) return; const lo = n === 'Clearcasting', st = x.wasted <= (lo ? Math.max(3, 0.2 * x.gained) : Math.max(1, mins / 3, 0.05 * x.gained)) ? 'ok' : x.wasted <= (lo ? Math.max(6, 0.45 * x.gained) : Math.max(2, 2 * mins / 3, 0.12 * x.gained)) ? 'warn' : 'bad'; add(g, st, n, n, x.wasted ? x.wasted + '<span> wasted</span>' : 'All<span> spent</span>', procSub(x), 'p:' + n, how, src); };
   // (Casting)
+  const gA = grp('Your priority'), aplSl = aplAdd(rows, RDRU_APL, add, gA, 'Swiftmend');
   const gC = grp('Casting');
   { let al = 0, busy = 0; for (let xi = 0; xi < per.length; xi++) { const x = per[xi], c = x.c, s = rows[xi]; const gs = c.all.slice().sort((a, b) => a - b).map((u, i, l) => (i ? u - l[i - 1] : 9)).filter((g) => g > 0.5 && g < 3).sort((a, b) => a - b), gcd = gs.length ? gs[Math.floor(gs.length * 0.15)] : 1.3;
       const tol = x.p.buffs.get('Incarnation: Tree of Life'), inTol = (t) => !!tol && tol.sp.some(([a, e]) => t >= a && (e == null || t <= e)), nsAt = (t) => { const y = s.procs.find((q) => q.n === "Nature's Swiftness"); return !!y && y.ev.some(([u, k]) => k && Math.abs(u - t) <= 0.35); };
@@ -15941,7 +16012,7 @@ function rdruChecks(reps, name, one) {
     tq: { g3: 'All 3', g2: '2 of 3', g1: '1 of 3', g0: 'None' }, cv: { g3: 'Rejuvenations and a Wild Growth out', ok: 'Rejuvenations out', bad: 'Too few Rejuvenations' }, tol: { ok: 'Mostly Rejuvenation', warn: 'Some', bad: 'Little' }, inn: { ok: 'On you, not full', warn: 'Your mana filled up', bad: 'On someone else' }, ns4: { ok: 'With a cooldown', warn: 'On its own' } };
   const keyN = new Set(['Everbloom', 'Photosynthesis', 'Abundance', 'Soul of the Forest', 'Power of the Archdruid', 'Rampant Growth', 'Germination', 'Lifetreading', 'Implant', 'Improved Wild Growth', 'Flourish', "Cenarius' Guidance", 'Reforestation', 'Convoke the Spirits', 'Incarnation: Tree of Life', 'Master Shapeshifter', 'Omen of Clarity', 'Overgrowth', "Nature's Bounty", 'Grove Guardians'].filter((n) => TAL && TAL.names.has(n)));
   const heroN = ws ? 'Wildstalker' : kotg ? 'Keeper of the Grove' : '';
-  const MERGE = { Casting: { ic: 'Rejuvenation', main: 'abc', lead: 'The more of the fight you spend casting, the more you heal. Keep your HoTs rolling between the big moments' + (master ? ', and in real downtime cast Wrath: Master Shapeshifter gives you mana back for it' : '') + '.' },
+  const MERGE = { 'Your priority': { ic: 'Swiftmend', main: 'apl', lead: HEAL_LEAD }, Casting: { ic: 'Rejuvenation', main: 'abc', lead: 'The more of the fight you spend casting, the more you heal. Keep your HoTs rolling between the big moments' + (master ? ', and in real downtime cast Wrath: Master Shapeshifter gives you mana back for it' : '') + '.' },
     Lifebloom: { ic: 'Lifebloom', main: 'lb', lead: ever ? 'Your apex talent, Everbloom, is built on Lifebloom: it stacks to 3 on its own, its blooms heal up to 6 allies around it, and Swiftmend makes it bloom 3 times. So in raid, Lifebloom goes on you, with your other HoTs stacked on you too, and stays there all fight.' : 'Keep a Lifebloom out all fight: it heals steadily, blooms when it ends, and gives you free Regrowths through Omen of Clarity.' },
     Swiftmend: { ic: 'Swiftmend', main: 'sm', lead: 'Swiftmend is an instant heal on a short cooldown with a lot attached to it. Press it on cooldown' + (ever || implant ? ', on yourself' : '') + ', then follow it with a Rejuvenation' + (pota ? ', which Power of the Archdruid spreads to 2 more allies' : '') + '.' },
     'Regrowth and Abundance': { ic: 'Regrowth', main: abund ? 'ab' : 'rgb', det: procT, lead: abund ? 'The heart of the spec: keep 5 Rejuvenations out so Abundance is up, then cast Regrowth, cheap and almost always a crit. Clearcasting and Nature\'s Swiftness make Regrowth free or instant.' : 'Regrowth is your direct heal: make it free with Clearcasting, or instant and strong with Nature\'s Swiftness.' },
@@ -15952,21 +16023,21 @@ function rdruChecks(reps, name, one) {
     'Other cooldowns': { ic: "Nature's Swiftness", main: "cd:nature's swiftness", lead: 'Nature\'s Swiftness makes your next Regrowth instant and far stronger, and Ironbark takes damage off one ally. Plan them before the fight and press them often: holding them "just in case" costs healing.' },
     Mana: { ic: 'Innervate', main: 'mana', det: mnT, lead: 'Mana left at the kill is healing you never did. Regrowths that cost nothing (Abundance, Clearcasting) and Innervate on yourself are how you afford the rest.' } };
   const LANE = ({ rows: rw, X1, area, rects }) => ({ mana: () => area(rw[0].mnL, 1, false, 'mna'), lb: () => { const b = X1.p.buffs.get('Lifebloom'); return rects((rw[0].m.lb || []), 'cap') + (b ? rects(b.sp.filter(([a]) => a <= X1.t1).map(([a, e]) => [a, Math.min(e == null ? X1.t1 : e, X1.t1)]), 'okm', 3, 4) : ''); }, ab: () => { const b = X1.p.buffs.get('Abundance'); return rects((rw[0].m.ab || []), 'cap') + (b ? rects(b.sp.filter(([a]) => a <= X1.t1).map(([a, e]) => [a, Math.min(e == null ? X1.t1 : e, X1.t1)]), 'okm', 3, 4) : ''); } });
-  const WT = { abc: 2, lb: 3, hots: 2, sm: 3, sms: 1.5, 'p:Soul of the Forest': 1.5, ab: 2.5, rgb: 2, 'p:Clearcasting': 1.5, "p:Nature's Swiftness": 1, wg: 2, tq: 2, cv: 2, tol: 2, 'cd:convoke the spirits': 2, 'cd:tranquility': 1.5, mana: 2, inn: 1, 'cd:innervate': 1, 'cd:ironbark': 0.5, ns4: 0.5 };
+  const WT = { apl: 2, abc: 2, lb: 3, hots: 2, sm: 3, sms: 1.5, 'p:Soul of the Forest': 1.5, ab: 2.5, rgb: 2, 'p:Clearcasting': 1.5, "p:Nature's Swiftness": 1, wg: 2, tq: 2, cv: 2, tol: 2, 'cd:convoke the spirits': 2, 'cd:tranquility': 1.5, mana: 2, inn: 1, 'cd:innervate': 1, 'cd:ironbark': 0.5, ns4: 0.5 };
   const TOPB = ((SPEC_TOP['Restoration Druid'] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const tl = one && per.length === 1 ? rdruTimeline(per[0], rows[0], { convT, treeT, tier2 }) : '';
   const cell = (v, st, n) => '<span class="cst-f ' + st + '" data-v="' + (n == null ? '' : n) + '">' + v + '</span>';
   const pullT = !one && rows.length > 1 ? '<div class="hm-ut rs-ut spc-pt" data-sk="pulls"><div class="hm-uh"><span>Pull</span><span>Lifebloom</span><span>Abundance</span><span>Swiftmend</span><span>Procs wasted</span><span>Wild Growth full</span><span>Regrowth, no discount</span></div>' + rows.map((s) => {
     const lb = ever ? s.lbSelf : s.lbAny, sf = s.sm && s.sm.poss + s.sm.early ? Math.min(1, s.sm.n / (s.sm.poss + s.sm.early)) : null, pw = s.procs.reduce((v, y) => v + y.wasted, 0), wf = s.wgN ? s.wgFull / s.wgN : null;
     return '<button type="button" class="hm-ur' + (s.kill ? ' spc-kill' : '') + '" data-gopull="' + s.pull + '" title="Open pull ' + s.pull + '"><span data-v="' + s.pull + '">Pull ' + s.pull + (s.kill ? ' <span class="ok-t">kill</span>' : '') + ' <span class="sub">' + T(s.len) + '</span></span><span>' + cell(pct(lb), lb >= 0.95 ? 'ok' : lb >= 0.85 ? 'warn' : 'bad', lb) + '</span><span>' + (s.ab != null ? cell(pct(s.ab), s.ab >= 0.85 ? 'ok' : s.ab >= 0.7 ? 'warn' : 'bad', s.ab) : '—') + '</span><span>' + (sf != null ? cell(pct(sf), paceSt(sf), sf) : '—') + '</span><span>' + cell(pw, pw ? 'warn' : 'ok', pw) + '</span><span>' + (wf != null ? cell(pct(wf), wf >= 0.75 ? 'ok' : wf >= 0.6 ? 'warn' : 'bad', wf) : '—') + '</span><span>' + cell(s.rgBad, s.rgBad / Math.max(1, s.len / 60) <= 0.5 ? 'ok' : s.rgBad / Math.max(1, s.len / 60) <= 1.5 ? 'warn' : 'bad', s.rgBad) + '</span></button>'; }).join('') + '</div>' : '';
-  const VIZ = { tq: () => { if (!one) return ''; const l = rows.flatMap((s) => s.tq || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const n = q.wg + (q.rg >= 5) + (q.ticks >= 7);
-      return '<div class="spc-w ' + (n >= 2 ? 'ok' : n === 1 ? 'warn' : 'bad') + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '</b><span class="sub">' + n + ' of 3 set up</span></div><div class="spc-wv">' + (q.h >= 1000 ? C(q.h) : '—') + '<span> healing</span></div><div class="spc-wc spc-chk"><span class="' + (q.wg ? 'ok' : 'no') + '">' + (q.wg ? '✓' : '✕') + ' Wild Growth</span><span class="' + (q.rg >= 5 ? 'ok' : 'no') + '">' + q.rg + ' Regrowths</span><span class="' + (q.ticks >= 7 ? 'ok' : 'no') + '">' + q.ticks + ' of 7 ticks</span></div></div>'; }).join('') + '</div>'; },
+  const VIZ = { apl: () => aplViz(aplSl), tq: () => { if (!one) return ''; const l = rows.flatMap((s) => s.tq || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const n = q.wg + (q.rg >= 5) + (q.ticks >= 7);
+      return '<div class="spc-w ' + (n >= 2 ? 'ok' : n === 1 ? 'warn' : 'bad') + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '</b><span class="sub">' + n + ' of 3 set up</span></div>' + (q.x != null ? '<div class="spc-wv">' + q.x.toFixed(1) + '×<span> your usual healing a second</span></div>' : '') + '<div class="spc-wv' + (q.x != null ? ' spc-wv2' : '') + '">' + (q.h >= 1000 ? C(q.h) : '—') + '<span> healing from Tranquility</span></div><div class="spc-wc spc-chk"><span class="' + (q.wg ? 'ok' : 'no') + '">' + (q.wg ? '✓' : '✕') + ' Wild Growth</span><span class="' + (q.rg >= 5 ? 'ok' : 'no') + '">' + q.rg + ' Regrowths</span><span class="' + (q.ticks >= 7 ? 'ok' : 'no') + '">' + q.ticks + ' of 7 ticks</span></div></div>'; }).join('') + '</div>'; },
     cv: () => { if (!one) return ''; const l = rows.flatMap((s) => s.cv || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const ok = q.rj >= 5 || q.ab;
       return '<div class="spc-w ' + (ok ? 'ok' : 'bad') + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '</b><span class="sub">' + (ok && q.wg ? 'Fully set up' : ok ? 'Rejuvenations out' : 'Too few Rejuvenations') + '</span></div><div class="spc-wv">' + (q.x >= 1000 ? '+' + C(q.x) : '—') + '<span> above your usual 4 seconds</span></div><div class="spc-wc spc-chk"><span class="' + (q.rj >= 5 ? 'ok' : 'no') + '">' + q.rj + ' Rejuvenations</span><span class="' + (q.wg ? 'ok' : 'no') + '">' + (q.wg ? '✓' : '✕') + ' Wild Growth</span></div></div>'; }).join('') + '</div>'; } };
-  const LAYOUT = [['Rotation', [['Casting', ['abc', 'mast']], ['Lifebloom', ['lb', 'hots']], ['Swiftmend', ['sm', 'sms', 'p-soul-of-the-forest']], ['Regrowth and Abundance', ['ab', 'rgb', 'p-clearcasting', 'p-nature-s-swiftness', 'nss', 'rr']], ['Wild Growth', ['wg']]]],
+  const LAYOUT = [['Rotation', [['Casting', ['abc', 'mast']], ['Your priority', ['apl']], ['Lifebloom', ['lb', 'hots']], ['Swiftmend', ['sm', 'sms', 'p-soul-of-the-forest']], ['Regrowth and Abundance', ['ab', 'rgb', 'p-clearcasting', 'p-nature-s-swiftness', 'nss', 'rr']], ['Wild Growth', ['wg']]]],
     ['Resources', [['Mana', ['mana', 'inn', 'cd-innervate', 'mnx']]]],
     ['Cooldowns', [['Tranquility', ['tq', 'cd-tranquility']], ['Convoke the Spirits', ['cv', 'cd-convoke-the-spirits']], ['Tree of Life', ['tol', 'cd-incarnation-tree-of-life']], ['Other cooldowns', ['cd-nature-s-swiftness', 'ns4', 'cd-ironbark']]]]];
-  const pg = specPage({ per, rows, groups, one, P0, heroN, VIZ, TAL, keyN, talents, LAYOUT, LG, LANE, WT, MERGE, TOPB, TOPP: new Set(['mast', 'abc', 'lb', 'hots', 'sm', 'sms', 'ab', 'wg', 'tq', 'cv', 'mana']), top: 'Restoration Druids', tl, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use, or Lifebloom down.', pullT,
+  const pg = specPage({ per, rows, groups, one, P0, heroN, VIZ, TAL, keyN, talents, LAYOUT, LG, LANE, WT, MERGE, TOPB, TIPS: RDRU_TIPS, TOPP: new Set(['apl', 'mast', 'abc', 'lb', 'hots', 'sm', 'sms', 'ab', 'wg', 'tq', 'cv', 'mana']), top: 'Restoration Druids', tl, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use, or Lifebloom down.', pullT,
     src: 'Built with help from the Wowhead, Icy Veins, Questionably Epic and WoWAnalyzer guides for Restoration Druid, and from what your talents do.', ringTip: 'Each check counts by how much it matters: Lifebloom and Swiftmend count three times as much as most, Ironbark half. Good counts in full, could be better half.',
     secIc: { 'Your cooldowns over the pull': 'Tranquility', 'Pull by pull': 'Lifebloom' } });
   return { checks: pg.checks, talents, html: pg.html, wait: sum((s) => s.wait) };
@@ -16029,6 +16100,29 @@ const PEVK_CD = { stasis: 90, 'tip the scales': 120, rewind: 240, 'dream flight'
 const PEVK_ECHO_USE = ["merithra's blessing", 'reversion', 'verdant embrace', 'dream breath', 'living flame'];
 // (a player's hero tree, from the talents in the log)
 function specHero(r, p) { const tr = treeOf(p.specName), c = (r.combatants || []).find((x) => x.name === p.name); if (!tr || !c || !c.talents) return ''; const got = new Set(c.talents.map((t) => +t.id)); const n = tr.nodes.find((x) => x.t === 'H' && x.entries.some((e) => got.has(e.id))); return n ? tr.hero.get(n.sub) || '' : ''; }
+// (Preservation Evoker's own "Next time" for each line, by its key)
+const PEVK_TIPS = {
+  ta: (c, K) => 'Cast Temporal Anomaly the moment it comes back' + (K.long ? ': from ' + K.long.from + ', it sat ready for ' + K.long.secs + ' seconds.' : '.'),
+  db: (c, K) => 'Cast Dream Breath more often, and don\'t let it sit at full charges' + (K.long ? ': from ' + K.long.from + ', it sat ready for ' + K.long.secs + ' seconds.' : '.'),
+  lfa: () => 'Cast Living Flame on the boss in quiet moments, and on allies only in a real emergency.',
+  ecl: () => 'Spend your Echoes with Merithra\'s Blessing before they run out.',
+  ecu: () => 'Spend your Echoes with Merithra\'s Blessing: Dream Breath and your other spells do far less with them.',
+  dbr: () => 'Cast Dream Breath at rank 1, unless the raid needs a big heal right now.',
+  dbec: () => 'Cast Dream Breath just after your Echoes are spent, not while they\'re out.',
+  ess: () => 'Spend Essence before you\'re full, on Echo or Emerald Blossom, so it keeps coming back.',
+  'p:Essence Burst': (c, K) => 'Spend Essence Burst before the next one comes: you can hold 2.' + (K.first ? ' Your first wasted one was at ' + K.first + '.' : ''),
+  te: () => 'With an Essence Burst, cast Emerald Blossom, unless Twin Echoes already has 2 stacks: then cast Echo.',
+  ebh: () => 'Only cast Emerald Blossom with an Essence Burst, which makes it free.',
+  stc: () => 'Fill each Stasis with your strongest spells: Dream Breath and Temporal Anomaly.',
+  inf: () => 'Fit more Emerald Blossoms into each Inner Flame: save your Essence Bursts for it.',
+  som: () => 'Put Source of Magic on another healer before the pull.' };
+// (Preservation's priority list, from the Wowhead and Icy Veins raid priority (Flameshaper and Chronowarden play it the same in raid))
+const PEVK_APL = { why: 'From the Wowhead and Icy Veins raid priority. Healing is reactive, so a slip is a moment to look at, not always a mistake.', ok: 0.8, warn: 0.7, list: [
+  { s: 'Temporal Anomaly', cdq: true, full: true, g: 3, why: 'it sat ready', tip: 'Cast Temporal Anomaly the moment it comes back: it puts out Echoes and shields.' },
+  { s: 'Dream Breath', full: true, g: 3, why: 'Dream Breath sat at full charges', tip: 'Don\'t let Dream Breath sit at full charges: cast it just after your Echoes are spent.' },
+  { s: 'Emerald Blossom', alt: ['Echo'], if: { buff: 'Essence Burst', low: ['Twin Echoes', 1] }, why: 'you had an Essence Burst', tip: 'With an Essence Burst, cast Emerald Blossom before your other spells.' },
+  { s: 'Echo', if: { buff: 'Essence Burst', any: [{ buff: 'Twin Echoes', st: 2 }] }, why: 'you had an Essence Burst and 2 stacks of Twin Echoes', tip: 'With an Essence Burst and 2 stacks of Twin Echoes, cast Echo instead of Emerald Blossom.' },
+  { s: 'Living Flame', alt: ['Echo', 'Emerald Blossom', 'Reversion', 'Verdant Embrace', "Merithra's Blessing", 'Dream Breath', 'Temporal Anomaly', 'Spiritbloom', 'Fire Breath', 'Azure Strike', 'Disintegrate'] }] };
 function pevkChecks(reps, name, one) {
   const per = [];
   for (const r of reps) { const p = [...r.players.values()].find((y) => y.name === name); if (!p) continue; const C0 = perfContext(r), x0 = C0.per.get(name), end = C0.end, t1 = x0 ? Math.min(x0.until, end) : end; if (t1 < 20) continue;
@@ -16139,6 +16233,7 @@ function pevkChecks(reps, name, one) {
       const ebc = Math.max(1, s.ebC), cEB = (hA('Emerald Blossom') + hA('Fluttering Seedlings') + hA('Consume Flame')) / ebc, mbE = s.mbE.reduce((v, y) => v + y, 0), cEcho = mbE ? (hA("Merithra's Blessing") + hA('Reversion') * 0.5) / Math.max(1, mbE + s.mbE.length) : 0;
       cst['p:Essence Burst'] = (s.eb.lost + s.eb.ran) * cEB; cst.ecl = s.ecLost * cEcho; cst["p:Merithra's Blessing"] = s.mb.ran * (s.mb.used ? hA("Merithra's Blessing") / s.mb.used : 0);
       if (s.ta) cst.ta = Math.max(0, s.ta.poss + s.ta.early - s.ta.n) * hA('Temporal Anomaly') / Math.max(1, s.ta.n); if (s.db) cst.db = Math.max(0, s.db.poss + s.db.early - s.db.n) * hA('Dream Breath') / Math.max(1, s.db.n); }
+    s.apl = aplPull(x, s, PEVK_APL, per, tal, ''); // (the rotation check: each cast against the priority list)
     rows.push(s); }
   // ---- the whole (one pull, or the night added up) ----
   const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%', mins = sum((s) => s.len) / 60, times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
@@ -16147,6 +16242,7 @@ function pevkChecks(reps, name, one) {
   const effLine = (g, key, ic, label, okF, warnF, how) => { const l = rows.map((s) => s[key]).filter(Boolean), n = l.reduce((v, y) => v + y.n, 0), poss = l.reduce((v, y) => v + y.poss + y.early, 0), cap = l.reduce((v, y) => v + y.cap, 0), ch = Math.max(1, ...l.map((y) => y.ch));
     if (!poss) return; const f = Math.min(1, n / poss); add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', ic, label, pct(f), 'You cast it ' + n + ' times out of a possible ' + poss + '.' + (cap >= 1 ? ' It sat ready' + (ch > 1 ? ' at full charges' : '') + ' for ' + durW(cap) + '.' : ''), key, how); };
   // (Casting)
+  const gA = grp('Your priority'), aplSl = aplAdd(rows, PEVK_APL, add, gA, 'Echo');
   const gC = grp('Casting');
   { let al = 0, busy = 0; for (let xi = 0; xi < per.length; xi++) { const x = per[xi], c = x.c, s = rows[xi], emp = (x.p.empL || []);
       const gs = c.all.slice().sort((a, b) => a - b).map((u, i, l) => (i ? u - l[i - 1] : 9)).filter((g) => g > 0.5 && g < 3).sort((a, b) => a - b), gcd = gs.length ? gs[Math.floor(gs.length * 0.15)] : 1.3;
@@ -16239,14 +16335,14 @@ function pevkChecks(reps, name, one) {
   const LG = { te: { ok: 'The right one', warn: 'The other' }, lfa: { ok: 'On an enemy', warn: 'On an ally' }, ecl: { bad: 'Ran out' }, dbr: { ok: 'Rank 1', warn: 'Higher' }, fbr: { ok: 'Full rank', warn: 'Lower' }, ebh: { ok: 'With an Essence Burst', bad: 'Without one' }, stc: { g3: 'The guide\'s combo', ok: 'Strong spells', bad: 'A weaker spell' }, inf: { g3: '4 or more', ok: '2 or 3', warn: 'Fewer' },
     'p:Essence Burst': { ok: 'Spent', warn: 'On Disintegrate', bad: 'Wasted' }, "p:Merithra's Blessing": { ok: 'Used', bad: 'Ran out' } };
   const keyN = new Set(["Merithra's Blessing", 'Twin Echoes', 'Essence Attunement', 'Temporal Anomaly', 'Stasis', 'Dream Flight', 'Inner Flame', 'Golden Hour', 'Grace Period', 'Fluttering Seedlings', 'Field of Dreams', 'Call of Ysera', 'Leaping Flames', 'Energy Loop', 'Font of Magic', 'Tip the Scales', 'Consume Flame', 'Lifebind', 'Temporal Compression', 'Time Lord'].filter((n) => TAL && TAL.names.has(n)));
-  const MERGE = { Casting: { ic: 'Living Flame', main: 'abc', lead: 'Keep casting: between your cooldowns, Echo with your Essence, and in quiet moments Living Flame on the boss for mana and Essence Bursts.' },
+  const MERGE = { 'Your priority': { ic: 'Echo', main: 'apl', lead: HEAL_LEAD }, Casting: { ic: 'Living Flame', main: 'abc', lead: 'Keep casting: between your cooldowns, Echo with your Essence, and in quiet moments Living Flame on the boss for mana and Essence Bursts.' },
     'Echo and Temporal Anomaly': { ic: 'Echo', main: taT ? 'ta' : 'ecl', lead: 'Your core mechanic: Echo and Temporal Anomaly put Echoes on allies, and your next healing spell is copied to every one of them. Build them before the damage, then spend them all at once' + (mbT ? ' with Merithra\'s Blessing' : '') + '. Emerald Blossom doesn\'t use them up.' },
     "Dream Breath and Merithra's Blessing": { ic: 'Dream Breath', main: 'db', lead: 'Dream Breath is your strongest short cooldown: cast it often, at rank 1, just after your Echoes are spent.' + (mbT ? ' It always grants Merithra\'s Blessing, which turns your next Reversion into a big bouncing heal: the spell to spend your Echoes on.' : '') },
     'Essence and Essence Burst': { ic: 'Essence Burst', main: 'p:Essence Burst', det: ebBar, lead: 'Essence pays for Echo (2) and Emerald Blossom (3), and refills on its own. Don\'t sit at full, and spend every Essence Burst' + (twin ? ', mostly on Emerald Blossom, which Twin Echoes turns into extra Echoes' : '') + '.' },
     [stasisT ? 'Stasis and Inner Flame' : 'Dream Flight and Inner Flame']: { ic: stasisT ? 'Stasis' : 'Dream Flight', main: stasisT ? 'stc' : 'cd:dream flight', lead: stasisT ? 'Stasis stores your next 3 healing spells and casts them again when you release it, and Inner Flame after it makes your HoTs heal 50% more. Fill Stasis with your strongest spells, then spend Inner Flame on Emerald Blossoms.' : 'Dream Flight heals everyone under you, and Inner Flame after it makes your HoTs heal 50% more. Fit in as many as you can, then spend Inner Flame on Emerald Blossoms.' },
     'Other cooldowns': { ic: 'Tip the Scales', main: 'cd:tip the scales', lead: 'Plan your other cooldowns before the fight and press them often: holding them "just in case" costs healing and mana.' },
     Mana: { ic: 'Emerald Blossom', main: 'mana', det: mnT, lead: 'Preservation runs short on Essence more than on mana, but long fights still drain it: spend Essence Bursts on Emerald Blossom so it\'s free, and keep Living Flame for enemies.' } };
-  const WT = { te: 1.5, som: 1, abc: 2, lfa: 1, ta: 3, ecl: 2.5, ecu: 2, db: 3, dbr: 2, dbec: 1.5, "p:Merithra's Blessing": 1.5, ess: 2.5, 'p:Essence Burst': 3, ebh: 2, stc: 2, inf: 1.5, 'cd:stasis': 2, 'cd:dream flight': 1.5, 'cd:tip the scales': 1, 'cd:rewind': 1, mana: 2 };
+  const WT = { apl: 2, te: 1.5, som: 1, abc: 2, lfa: 1, ta: 3, ecl: 2.5, ecu: 2, db: 3, dbr: 2, dbec: 1.5, "p:Merithra's Blessing": 1.5, ess: 2.5, 'p:Essence Burst': 3, ebh: 2, stc: 2, inf: 1.5, 'cd:stasis': 2, 'cd:dream flight': 1.5, 'cd:tip the scales': 1, 'cd:rewind': 1, mana: 2 };
   const LANE = ({ rows: rw, area }) => ({ mana: () => area(rw[0].mnL, 1, false, 'mna') });
   const TOPB = ((SPEC_TOP['Preservation Evoker'] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const cell = (v, st, n) => '<span class="cst-f ' + st + '" data-v="' + (n == null ? '' : n) + '">' + v + '</span>';
@@ -16257,17 +16353,17 @@ function pevkChecks(reps, name, one) {
   const allH = sum((s) => s.allH), allL = sum((s) => s.allL), outR = (() => { const iH = sum((s) => s.infH), iL = sum((s) => s.infL); return allL - iL >= 1 ? (allH - iH) / (allL - iL) : 0; })();
   const stCombo = (q) => (flame ? q.got.filter((k) => k === 'dream breath').length >= 2 && q.got.includes('temporal anomaly') : q.got.includes('dream breath') && q.got.includes('temporal anomaly'));
   const goodSt = ['dream breath', 'temporal anomaly', 'emerald blossom', "merithra's blessing", 'echo', 'verdant embrace'];
-  const VIZ = { stc: () => { if (!one) return ''; const l = rows.flatMap((s) => s.st || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const ok = q.got.length && q.got.every((k) => goodSt.includes(k)), cb = ok && stCombo(q);
+  const VIZ = { apl: () => aplViz(aplSl), stc: () => { if (!one) return ''; const l = rows.flatMap((s) => s.st || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const ok = q.got.length && q.got.every((k) => goodSt.includes(k)), cb = ok && stCombo(q);
       return '<div class="spc-w ' + (ok ? 'ok' : 'bad') + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '</b><span class="sub">' + (cb ? 'The guide\'s combo' : ok ? 'Strong spells' : 'A weaker spell') + '</span></div><div class="spc-wv">' + (q.heal >= 1000 ? C(q.heal) : '—') + '<span> healing, about</span></div><div class="spc-wc">' + q.got.map((k) => '<span title="' + esc(spellNm(k)) + '">' + spellIcon(0, spellNm(k)) + '</span>').join('') + '</div></div>'; }).join('') + '</div>'; },
     inf: () => { if (!one) return ''; const l = rows.flatMap((s) => s.inf || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const len = Math.max(1, (q.e || q.t + 15) - q.t), hps = (q.h || 0) / len, st = q.n >= 2.5 ? 'ok' : q.n >= 1.8 ? 'warn' : 'bad';
-      return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '–' + T(q.e || q.t + 15) + '</b><span class="sub">' + plural(q.n, 'Emerald Blossom') + '</span></div><div class="spc-wv">' + C(hps) + '<span> a second, against ' + C(outR) + ' outside</span></div><div class="spc-wc">' + (q.top || []).map(([y, n]) => '<span title="' + esc(y.name) + '">' + spellIcon(y.id, y.name) + '<b>' + n + '</b></span>').join('') + '</div></div>'; }).join('') + '</div>'; } };
+      return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '–' + T(q.e || q.t + 15) + '</b><span class="sub">' + plural(q.n, 'Emerald Blossom') + '</span></div>' + (outR > 0 ? '<div class="spc-wv">' + (hps / outR).toFixed(1) + '×<span> your usual healing a second</span></div><div class="spc-wv spc-wv2">' + C(hps) + '<span> a second, against ' + C(outR) + ' outside</span></div>' : '<div class="spc-wv">' + C(hps) + '<span> healing a second</span></div>') + '<div class="spc-wc">' + (q.top || []).map(([y, n]) => '<span title="' + esc(y.name) + '">' + spellIcon(y.id, y.name) + '<b>' + n + '</b></span>').join('') + '</div></div>'; }).join('') + '</div>'; } };
   // (where the Echoes went, as a bar)
   { const by = new Map(); let lost = 0; for (const s of rows) { for (const [k, v] of s.ecBy) by.set(k, (by.get(k) || 0) + v); lost += s.ecLost; } const tot = [...by.values()].reduce((v, y) => v + y, 0) + lost; const g = groups.find((x) => x.t === 'Echo and Temporal Anomaly');
     if (tot && g) MERGE['Echo and Temporal Anomaly'].det = spcBarRow(0, 'Your Echoes', [...by].sort((a, b) => b[1] - a[1]).map(([k, v], i) => [spellNm(k), v, SPC_PC[i % SPC_PC.length]]).concat(lost ? [['ran out', lost, '', 'w']] : []), tot, plural(tot, 'Echo') .replace('Echos', 'Echoes')); }
-  const LAYOUT = [['Rotation', [['Casting', ['abc', 'lfa']], ['Echo and Temporal Anomaly', ['ta', 'ecl', 'ecu', 'ecm']], ["Dream Breath and Merithra's Blessing", ['db', 'dbr', 'dbec', 'p-merithra-s-blessing']]]],
+  const LAYOUT = [['Rotation', [['Casting', ['abc', 'lfa']], ['Your priority', ['apl']], ['Echo and Temporal Anomaly', ['ta', 'ecl', 'ecu', 'ecm']], ["Dream Breath and Merithra's Blessing", ['db', 'dbr', 'dbec', 'p-merithra-s-blessing']]]],
     ['Resources', [['Essence and Essence Burst', ['ess', 'p-essence-burst', 'te', 'ebh']], ['Mana', ['mana', 'som', 'mnx']]]],
     ['Cooldowns', [[stasisT ? 'Stasis and Inner Flame' : 'Dream Flight and Inner Flame', ['stc', 'cd-stasis', 'cd-dream-flight', 'inf']], ['Other cooldowns', ['cd-tip-the-scales', 'cd-rewind', 'fbr', 'cd-util']]]]];
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, LAYOUT, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TOPP: new Set(['abc', 'ta', 'db', 'dbr', 'ess', 'ecu', 'mana']), top: 'Preservation Evokers', pullT,
+  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, LAYOUT, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PEVK_TIPS, TOPP: new Set(['abc', 'apl', 'ta', 'db', 'dbr', 'ess', 'ecu', 'mana']), top: 'Preservation Evokers', pullT,
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Preservation Evoker, and from what your talents do.', ringTip: 'Each check counts by how much it matters: Temporal Anomaly, Dream Breath and Essence Burst count three times as much as most. Good counts in full, could be better half.', secIc: { 'Your pull at a glance': 'Stasis', 'Pull by pull': 'Echo' } });
   return { checks: pg.checks, talents, html: pg.html, wait: sum((s) => s.wait) };
 }
@@ -16317,6 +16413,24 @@ const PDEM_PROC = [{ n: 'Ruination', use: ['ruination'] }, { n: 'Infernal Bolt',
   { n: 'Demonic Art: Mother of Chaos', use: ["hand of gul'dan", 'ruination'], g: 'Demonic Art' }, { n: 'Demonic Art: Pit Lord', use: ["hand of gul'dan", 'ruination'], g: 'Demonic Art' }];
 // (the scales, eased to what the top players on Mythic do)
 const PDEM_K = { abcOk: 0.77, abcW: 0.68, hogOk: 8, hogW: 6, sswOk: 0.04, sswW: 0.1, drOk: 0.85, drW: 0.7 };
+// (Demonology's own "Next time" for each line, by its key)
+const PDEM_TIPS = {
+  tyh: () => 'Fit more Hand of Gul\'dans into each Tyrant: go in with Soul Shards and Demonic Cores ready, and spend 3 Soul Shards every time you have them.',
+  tyd: (c, K) => 'Cast Call Dreadstalkers in the 12 seconds before you summon your Tyrant' + (K.first ? ': the first Tyrant without them was at ' + K.first + '.' : '.'),
+  tyc: () => 'Save 2 Demonic Cores in the last seconds before each Tyrant, so it starts with instant Demonbolts.',
+  ssw: () => 'Spend Soul Shards before you reach 5: cast Demonbolt at 3 or fewer, and Shadow Bolt at 4 or fewer.',
+  dbh: () => 'Only cast Demonbolt with a Demonic Core: without one, cast Shadow Bolt.',
+  'p:Demonic Core': (c, K) => 'Spend Demonic Cores before you reach 4, keeping about 2 for your next Tyrant.' + (K.first ? ' Your first wasted one was at ' + K.first + '.' : '') };
+// (Demonology's priority list, from the SimulationCraft list Raidbots sims with (Diabolist and Soul Harvester) and the Wowhead guide, kept to what a log can
+// prove. Hand of Gul'dan isn't wanted in the seconds before a Tyrant you summoned, since Soul Shards are pooled for it)
+const PDEM_APL = { why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', ok: 0.8, warn: 0.7, list: [
+  { s: "Hand of Gul'dan", alt: ['Ruination'], if: { buff: 'Dominion of Argus', res: ['7', 40] }, why: 'your Tyrant was out and you had 4 or more Soul Shards', tip: "Inside your Tyrant, cast Hand of Gul'dan before Demonbolt at 4 or more Soul Shards, so none are lost: every 2 summon an extra demon." },
+  { s: 'Call Dreadstalkers', cd: 20, not: 'Reign of Tyranny', if: { res: ['7', 20] }, why: 'it was ready', tip: 'Cast Call Dreadstalkers whenever it\'s ready: it\'s your strongest spender.' },
+  { s: 'Ruination', if: { buff: 'Ruination' }, why: 'Ruination was ready', tip: 'Cast Ruination while you have it: it\'s a free, much stronger Hand of Gul\'dan.' },
+  { s: "Hand of Gul'dan", alt: ['Ruination'], if: { res: ['7', 40], soon: ['Summon Demonic Tyrant', 6] }, why: 'you had 4 or more Soul Shards', tip: "At 4 or more Soul Shards, Hand of Gul'dan comes before Demonbolt, or the Soul Shards it gives are lost." },
+  { s: 'Infernal Bolt', if: { buff: 'Infernal Bolt', res: ['7', null, 20] }, why: 'you had Infernal Bolt and 2 or fewer Soul Shards', tip: 'With 2 or fewer Soul Shards, cast Infernal Bolt before Demonbolt and Shadow Bolt.' },
+  { s: 'Demonbolt', if: { buff: 'Demonic Core', st: 3, res: ['7', null, 30] }, why: 'you had 3 or more Demonic Cores and 3 or fewer Soul Shards', tip: 'At 3 or more Demonic Cores, spend one on Demonbolt before Shadow Bolt, keeping 2 for your Tyrant.' },
+  { s: 'Shadow Bolt', alt: ["Hand of Gul'dan", 'Demonbolt', 'Infernal Bolt', 'Ruination'] }] };
 function pdemChecks(reps, name, one) {
   const per = [];
   for (const r of reps) { const p = [...r.players.values()].find((y) => y.name === name); if (!p) continue; const C0 = perfContext(r), x0 = C0.per.get(name), end = C0.end, t1 = x0 ? Math.min(x0.until, end) : end; if (t1 < 20) continue;
@@ -16367,6 +16481,8 @@ function pdemChecks(reps, name, one) {
         return { t, e, dmg, hog: hogT.filter((u) => u >= t - 0.2 && u <= e).length, dr: drT.some((u) => u <= t + 0.2 && u >= t - 12), cores: coresAt(t - 0.05), first: i === 0 && t < 20, shE: ssAt(e), dem: Math.max(0, ...dpw.filter(([u]) => u >= t - 0.5 && u <= e).map((y) => y[2])),
           gr: grT.some((u) => u <= t + 0.2 && u >= t - 20), dg: dgC.some((u) => u <= t + 0.2 && u >= t - 12) }; });
       s.tyIn = inD; s.tyInL = inL; s.allD = sumIn(p.dmgS || [], 0, t1); s.allL = t1;
+      // (each Tyrant: your damage a second in it, against the rest of the pull)
+      { const oR = (s.allD - inD) / Math.max(1, t1 - inL); for (const q of s.ty) q.x = oR > 0 ? (q.dmg / Math.max(1, q.e - q.t)) / oR : null; }
       for (const q of s.ty) BX('tyh', q.t, q.hog >= K.hogOk + 2 ? 'g3' : q.hog >= K.hogOk ? 'ok' : q.hog >= K.hogW ? 'warn' : 'bad', T(q.t) + ': ' + plural(q.hog, "Hand of Gul'dan") + ' in it');
       s.m.tyh = s.ty.filter((q) => q.hog < K.hogOk).map((q) => q.t); s.m.tyd = s.ty.filter((q) => !q.dr).map((q) => q.t); s.m.tyc = s.ty.filter((q) => !q.first && q.cores < 2).map((q) => q.t); s.m.tys = s.ty.filter((q) => q.shE >= 3).map((q) => q.e); }
     // (Implosion: how many Wild Imps each one threw, from its hits on the target it hit most)
@@ -16383,6 +16499,8 @@ function pdemChecks(reps, name, one) {
       for (const n of Object.keys(PDEM_CD)) { const a = c.ab.find((y) => y.name.toLowerCase() === n); if (!a && !need[n]) continue; const base = PDEM_CD[n], ts = a ? a.ts.filter((t) => t <= t1).slice().sort((u, w) => u - w) : [], mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i]));
         let cd = seenCd(r, p, a ? a.name : n, base) || base; if (mg >= 0.75 * base && mg < cd) cd = mg;
         const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, capL: sim.capL }; } }
+    // (the rotation check: each cast against the priority list)
+    s.apl = aplPull(x, s, PDEM_APL, per, tal, heroN);
     // (always be casting: a cast bar from its start, an instant a global cooldown, time dead or with the whole raid waiting left out)
     { const gs = c.all.slice().sort((a, b) => a - b).map((u, i, l) => (i ? u - l[i - 1] : 9)).filter((g) => g > 0.5 && g < 3).sort((a, b) => a - b), gcd = gs.length ? gs[Math.floor(gs.length * 0.15)] : 1.3;
       const l = [], bySp = new Map(); for (const y of p.starts || []) { if (y.t > t1) continue; const k = y.spell.toLowerCase(); if (!bySp.has(k)) bySp.set(k, []); bySp.get(k).push([y.t, 0]); }
@@ -16415,6 +16533,8 @@ function pdemChecks(reps, name, one) {
     if (al >= 10) { const f = busy / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
       add(gC, f >= K.abcOk ? 'ok' : f >= K.abcW ? 'warn' : 'bad', 'Shadow Bolt', 'Always be casting', pct(f), 'You were casting for ' + pct(f) + ' of the time you were alive.' + (gp ? ' Your longest stretch with nothing pressed was ' + Math.round(gp.len) + ' seconds, at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while you were moving.' : '.') : ''), 'abc',
         'The share of your time alive spent casting or on a global cooldown. Your demons only come from what you cast, so every gap is demons you never summon. When you have to move, use the instant Demonbolts your Demonic Cores give, Demonic Circle and Burning Rush. ' + Math.round(100 * K.abcOk) + '% or more is good. Time dead or while the whole raid waits isn\'t counted. The moments are the stretches of 4 seconds or more with nothing pressed.'); } }
+  // (the rotation check: the share of casts that were the list's best button then, and the slips)
+  const gA = grp('Your priority'), aplSl = aplAdd(rows, PDEM_APL, add, gA, 'Demonbolt');
   // (Demonic Tyrant)
   const gT = grp('Demonic Tyrant'), tys = rows.flatMap((s) => s.ty || []);
   { const n = sum((s) => (s.cdu['summon demonic tyrant'] || {}).n); cdLine(gT, 'summon demonic tyrant', 'Summon Demonic Tyrant', 'Demonic Tyrant on cooldown', 0.85, 0.7, 'Summon Demonic Tyrant is your big cooldown, once a minute: press it on cooldown, with your Dreadstalkers and Wild Imps out. 85% or more is good.', false, dmgS('tyr') >= 1000 && n ? ' The Tyrant itself hit for ' + each(dmgS('tyr'), n) + '.' : ''); }
@@ -16469,13 +16589,13 @@ function pdemChecks(reps, name, one) {
   const LG = { ssw: { ok: 'Nothing wasted', bad: 'Some wasted' }, tyh: { g3: (K.hogOk + 2) + ' or more', ok: K.hogOk + ' or ' + (K.hogOk + 1), warn: K.hogW + ' or ' + (K.hogW + 1), bad: 'Fewer' }, imp: { g3: '6 Wild Imps', ok: '4 or 5', g1: 'Fewer' },
     'p:Demonic Core': { ok: 'Spent', bad: 'Wasted' }, 'p:Ruination': { ok: 'Used', bad: 'Ran out' }, 'p:Infernal Bolt': { ok: 'Used', bad: 'Ran out' }, 'p:Demonic Art': { ok: 'Used', bad: 'Ran out' } };
   const keyN = new Set(['Dominion of Argus', 'Summon Demonic Tyrant', 'Reign of Tyranny', 'To Hell and Back', 'Inner Demons', 'Grimoire: Imp Lord', 'Grimoire: Fel Ravager', 'Summon Doomguard', 'Power Siphon', 'Implosion', 'Doom', 'Demonic Calling', 'Sacrificed Souls', 'Diabolic Ritual', 'Ruination', 'Infernal Bolt', 'Demonic Soul', 'Mark of Shatug', "Mark of F'harg"].filter((n) => TAL && TAL.names.has(n)));
-  const MERGE = { Casting: { ic: 'Shadow Bolt', main: 'abc', lead: 'Keep casting: every Soul Shard you build becomes a demon, so time doing nothing is demons you never summon.' },
+  const MERGE = { 'Your priority': { ic: 'Demonbolt', main: 'apl', lead: APL_LEAD }, Casting: { ic: 'Shadow Bolt', main: 'abc', lead: 'Keep casting: every Soul Shard you build becomes a demon, so time doing nothing is demons you never summon.' },
     'Demonic Tyrant': { ic: 'Summon Demonic Tyrant', main: 'tyh', lead: (doa ? 'With Dominion of Argus, Summon Demonic Tyrant gives you 25 seconds where every 2 Hand of Gul\'dans summon an extra demon. ' : 'Summon Demonic Tyrant empowers every demon you have out for 20 seconds. ') + 'Go in with your Dreadstalkers out and 2 Demonic Cores, then cast as many Hand of Gul\'dans as you can inside it.' },
     'Soul Shards': { ic: 'Soul Shard', main: 'ssw', det: ssDet, lead: 'Soul Shards are what you summon demons with: Shadow Bolt and Demonbolt build them, and Hand of Gul\'dan spends 3 for Wild Imps. Spend on Call Dreadstalkers first, then Hand of Gul\'dan, and never sit at 5.' },
     'Demonic Core': { ic: 'Demonic Core', main: 'p:Demonic Core', det: dcBar, lead: 'Demonic Core makes Demonbolt instant and worth 2 Soul Shards. Keep about 2 in hand for your Tyrant and for moving, and never let them overflow at 4.' },
     'Other demons': { ic: 'Call Dreadstalkers', main: 'cd:call dreadstalkers', lead: 'Your other demons: Call Dreadstalkers whenever it\'s ready' + (grimIL || grimFR ? ', your Grimoire' : '') + (dgT ? ' and Summon Doomguard' : '') + (grimIL || grimFR || dgT ? ' just before your Tyrant' : '') + (impT ? ', and Implosion to throw your Wild Imps' : '') + '.' },
     [heroN || 'Hero talents']: { ic: diab ? 'Ruination' : 'Summon Demonic Tyrant', main: diab ? 'p:Ruination' : '', lead: diab ? 'Diabolist: every few Hand of Gul\'dans, Diabolic Ritual summons a big demon, then gives you Ruination and Infernal Bolt. Use each one before it runs out.' : 'Your hero talents\' procs: use each one before it runs out.' } };
-  const WT = { abc: 2, 'cd:summon demonic tyrant': 3, tyh: 3, tyd: 2, tyc: 1, ssw: 2.5, 'p:Demonic Core': 2.5, dbh: 1, 'cd:call dreadstalkers': 2.5, 'cd:grimoire: imp lord': 1.5, 'cd:grimoire: fel ravager': 1.5, 'cd:summon doomguard': 1.5, 'cd:power siphon': 1, imp: 1.5, 'p:Ruination': 1.5, 'p:Infernal Bolt': 1, 'p:Demonic Art': 1.5 };
+  const WT = { abc: 2, apl: 3, 'cd:summon demonic tyrant': 3, tyh: 3, tyd: 2, tyc: 1, ssw: 2.5, 'p:Demonic Core': 2.5, dbh: 1, 'cd:call dreadstalkers': 2.5, 'cd:grimoire: imp lord': 1.5, 'cd:grimoire: fel ravager': 1.5, 'cd:summon doomguard': 1.5, 'cd:power siphon': 1, imp: 1.5, 'p:Ruination': 1.5, 'p:Infernal Bolt': 1, 'p:Demonic Art': 1.5 };
   const LANE = ({ rows: rw, area }) => ({ ssw: () => area(rw[0].ssL, 5, true, 'hpa') });
   const TOPB = ((SPEC_TOP['Demonology Warlock'] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const cell = (v, st, n) => '<span class="cst-f ' + st + '" data-v="' + (n == null ? '' : n) + '">' + v + '</span>';
@@ -16484,13 +16604,13 @@ function pdemChecks(reps, name, one) {
     return '<button type="button" class="hm-ur' + (s.kill ? ' spc-kill' : '') + '" data-gopull="' + s.pull + '" title="Open pull ' + s.pull + '"><span data-v="' + s.pull + '">Pull ' + s.pull + (s.kill ? ' <span class="ok-t">kill</span>' : '') + ' <span class="sub">' + T(s.len) + '</span></span><span>' + (tf != null ? cell(pct(tf), paceSt(tf), tf) : '—') + '</span><span>' + (hg != null ? cell(hg.toFixed(1), hg >= K.hogOk ? 'ok' : hg >= K.hogW ? 'warn' : 'bad', hg) : '—') + '</span><span>' + (sw != null ? cell(pct(sw), sw <= K.sswOk ? 'ok' : sw <= K.sswW ? 'warn' : 'bad', sw) : '—') + '</span><span>' + cell(cw, cw ? 'warn' : 'ok', cw) + '</span><span>' + (ab != null ? cell(pct(ab), ab >= K.abcOk ? 'ok' : ab >= K.abcW ? 'warn' : 'bad', ab) : '—') + '</span></button>'; }).join('') + '</div>' : '';
   const tl = one && per.length === 1 ? pdemTimeline(per[0], rows[0], doa) : '';
   // (a card per Tyrant: its window, your damage in it, and what went into it)
-  const VIZ = { tyh: () => { if (!one) return ''; const l = rows.flatMap((s) => s.ty || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const st = q.hog >= K.hogOk ? 'ok' : q.hog >= K.hogW ? 'warn' : 'bad', len = Math.max(1, q.e - q.t);
-      return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '–' + T(q.e) + '</b><span class="sub">' + plural(q.hog, "Hand of Gul'dan") + '</span></div><div class="spc-wv">' + C(q.dmg) + '<span> damage, ' + C(q.dmg / len) + ' a second</span></div>' +
+  const VIZ = { apl: () => aplViz(aplSl), tyh: () => { if (!one) return ''; const l = rows.flatMap((s) => s.ty || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const st = q.hog >= K.hogOk ? 'ok' : q.hog >= K.hogW ? 'warn' : 'bad', len = Math.max(1, q.e - q.t);
+      return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '–' + T(q.e) + '</b><span class="sub">' + plural(q.hog, "Hand of Gul'dan") + '</span></div>' + (q.x != null ? '<div class="spc-wv">' + q.x.toFixed(1) + '×<span> your usual damage a second</span></div>' : '') + '<div class="spc-wv' + (q.x != null ? ' spc-wv2' : '') + '">' + C(q.dmg) + '<span> damage, ' + C(q.dmg / len) + ' a second</span></div>' +
         '<div class="spc-wc spc-chk"><span class="' + (q.dr ? 'ok' : 'no') + '">' + (q.dr ? '✓' : '✕') + ' Dreadstalkers</span>' + (q.first ? '' : '<span class="' + (q.cores >= 2 ? 'ok' : 'no') + '">' + plural(q.cores, 'Demonic Core') + '</span>') + (q.dem ? '<span class="ok">' + q.dem + ' demons</span>' : '') + '</div></div>'; }).join('') + '</div>'; } };
-  const LAYOUT = [['Rotation', [['Casting', ['abc']], ['Demonic Core', ['p-demonic-core', 'dbh']], [heroN || 'Hero talents', ['p-ruination', 'p-infernal-bolt', 'p-demonic-art']]]],
+  const LAYOUT = [['Rotation', [['Casting', ['abc']], ['Your priority', ['apl']], ['Demonic Core', ['p-demonic-core', 'dbh']], [heroN || 'Hero talents', ['p-ruination', 'p-infernal-bolt', 'p-demonic-art']]]],
     ['Resources', [['Soul Shards', ['ssw']]]],
     ['Cooldowns', [['Demonic Tyrant', ['tyh', 'cd-summon-demonic-tyrant', 'tyd', 'tyc', 'tyx', 'pi']], ['Other demons', ['cd-call-dreadstalkers', 'cd-grimoire-imp-lord', 'cd-grimoire-fel-ravager', 'cd-summon-doomguard', 'cd-power-siphon', 'imp']]]]];
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TOPP: new Set(['abc', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
+  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PDEM_TIPS, TOPP: new Set(['abc', 'apl', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Demonology Warlock, SimulationCraft\'s priority list (the one Raidbots sims with), and from what your talents do.', ringTip: 'Each check counts by how much it matters: Demonic Tyrant and Hand of Gul\'dan in it count three times as much as most. Good counts in full, could be better half.', secIc: { 'Your pull at a glance': 'Summon Demonic Tyrant', 'Pull by pull': 'Hand of Gul\'dan' } });
   return { checks: pg.checks, talents, html: pg.html, wait: 0 };
 }
@@ -16594,11 +16714,11 @@ function genRun(spec, D, reps, name, one) {
     { const forced = castForced(r, p);
       for (const q of rot.concat(cds)) { const n = lc(q.n), nms = nmsOf(q), ab = c.ab.filter((y) => nms.includes(lc(y.name))), a = ab[0], ts = ab.flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w);
         const ci = a && !q.fix ? cdInfo(a.id) : null; if (ci === undefined) wait++; const tc = (q.cdT || []).find(([tn]) => tal(tn)), tch = (q.chT || []).find(([tn]) => tal(tn));
-        let cd = tc ? tc[1] : ci && ci.cd >= 4 ? ci.cd : q.cd, ch = Math.max(tch ? tch[1] : q.ch || 1, ci && !tch ? ci.ch || 1 : 1); if (q.h) cd /= hasteF; if (ch === 1 && ts.some((t, i) => i && t - ts[i - 1] < 0.5 * cd)) ch = 2;
+        let cd = tc ? tc[1] : ci && ci.cd >= 4 ? ci.cd : q.cd, ch = Math.max(tch ? tch[1] : q.ch || 1, ci && !tch ? ci.ch || 1 : 1); if (q.h) cd /= hasteF; const ch0 = ch; if (ch === 1 && ts.some((t, i) => i && t - ts[i - 1] < 0.5 * cd)) ch = 2;
         if (ch === 1 && a && !q.noSeen) { const sc = seenCd(r, p, a.name, cd); if (sc) cd = sc; const mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i])); if (mg >= 0.75 * cd && mg < cd) cd = mg; }
         // (what the spell itself did, by its own name: its damage and its healing)
         const own = (m) => [...(m || new Map()).values()].filter((y) => nms.includes(lc(String(y.name)))).reduce((v, y) => v + (y.total || 0), 0);
-        const sim = cdSim(ts, cd, ch, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, ch, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
+        const sim = cdSim(ts, cd, ch, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, ch, ch0, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
     // (the rotation check: each cast against the priority list)
     if (D.apl) s.apl = genAplRun(x, s, D.apl, { hasteF, pressed: (n) => per.some(({ p: pp, t1: tt }) => (pp.byName.get(lc(n)) || []).some((t) => t <= tt)), tal, heroN });
     // (procs: each one spent with the spell it's for, or wasted: run out, or replaced while still up)
@@ -16665,15 +16785,7 @@ function genRun(spec, D, reps, name, one) {
         'The share of your time alive spent casting or on a global cooldown. ' + (D.abcWhy ? D.abcWhy + ' ' : '') + okP(K.abc[0]) + ' Time dead or while the whole raid waits isn\'t counted. The moments are the stretches of 4 seconds or more with nothing pressed.');
       if (f < K.abc[0]) gC.l[gC.l.length - 1].tip = D.abcTip || 'Press something every global cooldown: when you have to move, use an instant instead of stopping.'; } }
   // (the rotation check: the share of casts that were the list's best button then, and the slips, most common first)
-  const aplN = (D.apl && D.apl.blk) || 'Rotation priority', gA = grp(aplN); let aplSl = [];
-  const slipT = (e) => e.did + ' when ' + e.want + ' was the better button' + (e.why ? ' (' + e.why + ')' : '');
-  if (D.apl) { const J = sum((s) => s.apl && s.apl.judged), OK = sum((s) => s.apl && s.apl.ok); if (J >= 10) { const f = OK / J, sl = new Map();
-      for (const s of rows) if (s.apl) for (const [kk, e] of s.apl.slips) { const z = sl.get(kk) || { ...e, ts: [], n: 0 }; z.n += e.ts.length; sl.set(kk, z); }
-      for (const s of rows) s.m.apl = s.apl ? [...s.apl.slips.values()].flatMap((e) => e.ts).sort((u, w) => u - w) : [];
-      aplSl = [...sl.values()].sort((a, b) => b.n - a.n); const okF = D.apl.ok || 0.85, warnF = D.apl.warn || 0.75, t0 = aplSl[0];
-      add(gA, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', D.apl.ic || D.ic, 'Rotation priority', pct(f), 'Of your ' + J + ' casts the priority list covers, ' + pct(f) + ' were the best button at the time.' + (t0 ? ' Your most common slip was ' + slipT(t0) + ', ' + times(t0.n) + '.' : ' You never slipped.'), 'apl',
-        (D.apl.why ? D.apl.why + ' ' : '') + 'Each cast is checked against your priority list, from the top: the first spell that was ready, with its condition met, is the one to press, and pressing a spell lower on the list is a slip. It has to have been ready a moment before you pressed, so a press queued a hair early isn\'t blamed. ' + okP(okF) + ' The moments are each slip.');
-      const cc = gA.l[gA.l.length - 1]; if (t0 && f < okF) cc.tip = t0.tip || 'Press ' + t0.want + ' before ' + t0.did + ' whenever it\'s ready.'; } }
+  const aplN = (D.apl && D.apl.blk) || 'Rotation priority', gA = grp(aplN), aplSl = D.apl ? aplAdd(rows, D.apl, add, gA, D.apl.ic || D.ic) : [];
   // (spenders at the right level, and repeated abilities)
   if (D.apl) { (D.apl.levels || []).forEach((L, i) => { const okN = sum((s) => s.apl && s.apl.levels[i] && s.apl.levels[i].ok), badL = rows.map((s) => (s.apl && s.apl.levels[i] ? s.apl.levels[i].bad : [])), bad = badL.reduce((v, l) => v + l.length, 0), N = okN + bad; if (N < 5) return; const f = okN / N, okF = L.ok || 0.9, warnF = L.warn || 0.75;
       rows.forEach((s, j) => { s.m['lv:' + i] = badL[j]; }); add(gA, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', L.ic || L.s[0], L.label, pct(f), okN + ' of your ' + N + ' ' + L.what + ' came ' + L.at + '.', 'lv:' + i, (L.why ? L.why + ' ' : '') + okP(okF) + ' The moments are the ones that didn\'t.');
@@ -16735,7 +16847,7 @@ function genRun(spec, D, reps, name, one) {
   if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch && D.upFirst) ch[1].splice(1, 0, b); else if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
   LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
   const L0 = D.lead || {}, MERGE = { Casting: { ic: D.ic, main: 'abc', lead: L0.abc || 'Keep casting: time with nothing pressed is ' + (D.unitN === 'healing' ? 'healing' : 'damage') + ' you never do.' } };
-  if (D.apl) MERGE[aplN] = { ic: D.apl.ic || D.ic, main: 'apl', lead: D.apl.lead || 'The order to press your buttons in, from your guides and the simulations: each cast is checked against it, and the slips show what to press instead.' };
+  if (D.apl) MERGE[aplN] = { ic: D.apl.ic || D.ic, main: 'apl', lead: D.apl.lead || APL_LEAD };
   if (rot.length) MERGE[rotN] = { ic: rot[0].ic || rot[0].n, main: 'cd:' + lc(rot[0].n), lead: L0.rot || 'Press these whenever they\'re ready.' };
   if (procs.length) MERGE[procN] = { ic: procs[0].ic || procs[0].n, main: 'p:' + procs[0].n, lead: L0.procs || 'Your procs: spend each one before it runs out, or before a new one replaces it.' };
   if (dots.length) MERGE[dotN] = { ic: dots[0].ic || dots[0].n, main: 'dot:' + dots[0].n, lead: L0.dots || 'Keep these on the boss all fight.' };
@@ -16756,7 +16868,7 @@ function genRun(spec, D, reps, name, one) {
     return '<button type="button" class="hm-ur' + (s.kill ? ' spc-kill' : '') + '" data-gopull="' + s.pull + '" title="Open pull ' + s.pull + '"><span data-v="' + s.pull + '">Pull ' + s.pull + (s.kill ? ' <span class="ok-t">kill</span>' : '') + ' <span class="sub">' + T(s.len) + '</span></span><span>' + (ab != null ? cell(pct(ab), ab >= K.abc[0] ? 'ok' : ab >= K.abc[1] ? 'warn' : 'bad', ab) : '—') + '</span>' +
       (c1 ? '<span>' + (qf != null ? cell(pct(qf), paceSt(qf), qf) : '—') + '</span>' : '') + (d1 ? '<span>' + (dd != null ? cell(pct(dd), dd >= (d1.ok || K.dots[0]) ? 'ok' : dd >= (d1.warn || K.dots[1]) ? 'warn' : 'bad', dd) : '—') + '</span>' : '') + (res ? '<span>' + (rw != null ? cell(pct(rw), rw <= (res.ok || K.res[0]) ? 'ok' : rw <= (res.warn || K.res[1]) ? 'warn' : 'bad', rw) : '—') + '</span>' : '') + (procs.length ? '<span>' + cell(pw, pw ? 'warn' : 'ok', pw) + '</span>' : '') + '</button>'; }).join('') + '</div>' : '';
   // (the rotation slips: what you pressed, what the list wanted, how often)
-  const VIZ = { apl: () => (!aplSl.length ? '' : '<div class="spc-slp">' + aplSl.slice(0, 6).map((e) => '<div class="spc-slr"><span class="spc-sln">' + spellIcon(0, e.did) + '<b>' + esc(e.did) + '</b><span class="sub">instead of</span>' + spellIcon(0, e.want) + '<b>' + esc(e.want) + '</b>' + (e.why ? '<span class="sub">' + esc(e.why) + '</span>' : '') + '</span><span class="spc-slc">' + times(e.n) + '</span></div>').join('') + '</div>'),
+  const VIZ = { apl: () => aplViz(aplSl),
     // (a card per window, on one pull: its time, what you did in it against your usual, and what went into it)
     win: () => { if (!one || !winL.length) return ''; const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
       return '<div class="spc-ws">' + winL.map((w) => '<div class="spc-w ' + w.st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.len) + ' seconds</span></div>' +
@@ -16805,13 +16917,14 @@ function genAplRun(x, s, A, k) {
   const { r, p, t1, c } = x, lc = (n) => String(n).toLowerCase(), G = 0.6;
   // (each spell's casts, and its charges over time: a press with no charge left counts as one a reset gave)
   const tsOf = (n) => c.ab.filter((y) => lc(y.name) === lc(n)).flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w);
-  const segs = new Map(), segOf = (q) => { const key = lc(q.s); if (segs.has(key)) return segs.get(key); const cu = s.cdu[key]; let cd = q.cd != null ? (q.h ? q.cd / k.hasteF : q.cd) : cu ? cu.cd : null, ch = q.ch || (cu ? cu.ch : 1) || 1;
+  // (charges: a rule's own, or the spell's base ones (a reset isn't a second charge) to say when it's ready, and the ones the log shows you have to say when it's full)
+  const CDU = s.cdu || {}, chOf = (q) => { const cu = CDU[lc(q.s)]; return q.ch || (cu ? (q.full ? cu.ch : cu.ch0 || cu.ch) : 1) || 1; }, segs = new Map(), segOf = (q) => { const ch = chOf(q), key = lc(q.s) + '|' + ch; if (segs.has(key)) return segs.get(key); const cu = CDU[lc(q.s)]; let cd = q.cd != null ? (q.h ? q.cd / k.hasteF : q.cd) : cu ? cu.cd : null;
     if (!cd) { segs.set(key, null); return null; } const ts = q.shareCd ? [q.s].concat(q.alt || []).flatMap((nn) => tsOf(nn)).sort((u, w) => u - w) : tsOf(q.s), seg = []; let n = ch, rech = null, last = 0; const push = (b) => { if (b > last) seg.push([last, b, n]); last = b; };
     for (const u of ts) { while (rech != null && rech <= u) { push(rech); n++; rech = n < ch ? rech + cd : null; } push(u); if (n > 0) { n--; if (rech == null) rech = u + cd; } else if (rech == null) rech = u + cd; }
     while (rech != null && rech <= t1) { push(rech); n++; rech = n < ch ? rech + cd : null; } push(t1); segs.set(key, seg); return seg; };
   // (ready since: the start of the run of time with a charge, up to t)
   const readySince = (q, t) => { const seg = segOf(q); if (!seg) return -1; let since = null; for (const [a, b, n] of seg) { if (a > t) break; if (n >= 1) { if (since == null) since = a; } else since = null; if (b > t) break; } return since == null ? Infinity : since; };
-  const fullAt = (q, t) => { const seg = segOf(q); if (!seg) return false; const ch = q.ch || (s.cdu[lc(q.s)] || {}).ch || 1, z = seg.find(([a, b]) => a <= t && b > t); return !!z && z[2] >= ch; };
+  const fullAt = (q, t) => { const seg = segOf(q); if (!seg) return false; const ch = chOf(q), z = seg.find(([a, b]) => a <= t && b > t); return !!z && z[2] >= ch; };
   // (a buff's stacks at a moment: up from its start, set by each added stack, down by each one taken)
   const bAt = (n, t) => { const b = p.buffs.get(n); if (!b) return 0; const sp = b.sp.find(([a, e]) => a <= t && (e == null || e > t)); if (!sp) return 0; let st = 1;
     const ev = (b.dose || []).filter(([u]) => u >= sp[0] && u <= t).map(([u, m]) => [u, m]).concat((b.rd || []).filter((u) => u >= sp[0] && u <= t).map((u) => [u, -1])).sort((u, w) => u[0] - w[0]);
@@ -16828,8 +16941,11 @@ function genAplRun(x, s, A, k) {
   const bosses = [...(r.hpUnits || new Map())].filter(([g]) => bossG.has(g)).map(([, u]) => u.samples || []), hpAt = (sm, t) => { const i = Math.min(sm.length - 1, Math.max(0, Math.floor(t))); return sm[i] ? sm[i][1] : 0; };
   const alive = (t) => bosses.filter((sm) => sm.length && t <= sm[sm.length - 1][0] + 1 && hpAt(sm, t) > 0).length, lowHp = (t) => Math.min(1, ...bosses.filter((sm) => hpAt(sm, t) > 0).map((sm) => hpAt(sm, t)));
   const all = c.ab.flatMap((y) => y.ts.filter((t) => t <= t1).map((t) => [t, lc(y.name), y.name])).sort((u, w) => u[0] - w[0]);
-  const ruleSp = new Set(A.list.flatMap((q) => [q.s].concat(q.alt || [])).map(lc)), judgeSp = new Set([...ruleSp].concat((A.judge || []).map(lc)));
-  const usable = A.list.filter((q) => [q.s].concat(q.alt || []).some((n) => k.pressed(n)) && (!q.tal || k.tal(q.tal)) && (!q.hero || [].concat(q.hero).includes(k.heroN)));
+  // (a rule for a spell with a cooldown (cdq) counts only when its cooldown is known, so a spell the log can't time is never wanted all the time)
+  const usable = A.list.filter((q) => [q.s].concat(q.alt || []).some((n) => k.pressed(n)) && (!q.tal || k.tal(q.tal)) && (!q.not || ![].concat(q.not).some(k.tal)) && (!q.hero || [].concat(q.hero).includes(k.heroN)) && (!q.cdq || !!segOf(q)));
+  // (only the spells of the rules that apply are judged: a spell whose rule your talents rule out, like Call Dreadstalkers held for the Tyrant with Reign of
+  // Tyranny, isn't a slip)
+  const ruleSp = new Set(usable.flatMap((q) => [q.s].concat(q.alt || [])).map(lc)), judgeSp = new Set([...ruleSp].concat((A.judge || []).map(lc)));
   const cond = (f, t, prevN) => { if (!f) return true;
     if (f.buff && bAt(f.buff, t) < (f.st || 1)) return false; if (f.buff && f.lt != null && bAt(f.buff, t) > f.lt) return false; if (f.no && bAt(f.no, t) > 0) return false;
     if (f.deb && !debRem(f.deb, t)) return false; if (f.nodeb && debRem(f.nodeb, t)) return false; if (f.drem != null && debRem(f.deb || f.dremOf, t) >= f.drem) return false;
@@ -16837,10 +16953,13 @@ function genAplRun(x, s, A, k) {
     if (f.resF) { const v = resAt(f.resF[0], t), cp = resCap(f.resF[0]); if (v == null || !cp || v < f.resF[1] * cp) return false; }
     if (f.low && bAt(f.low[0], t) > f.low[1]) return false;
     if (f.exe != null && lowHp(t) > f.exe) return false; if (f.noexe != null && lowHp(t) <= f.noexe) return false; if (f.en != null && alive(t) < f.en) return false; if (f.en1 && alive(t) > 1) return false;
-    if (f.prev && !f.prev.map(lc).includes(prevN)) return false; if (f.any) return f.any.some((g) => cond(g, t, prevN)); return true; };
+    if (f.prev && !f.prev.map(lc).includes(prevN)) return false;
+    // (soon: [spell, seconds]: not when you did press that spell within those seconds, like Soul Shards pooled for the Tyrant you summoned next)
+    if (f.soon && tsOf(f.soon[0]).some((u) => u > t && u <= t + f.soon[1] + G)) return false; if (f.any) return f.any.some((g) => cond(g, t, prevN)); return true; };
   const o = { judged: 0, ok: 0, slips: new Map() }; let prevN = '';
   for (const [t, n, nm] of all) { if (!judgeSp.has(n)) { if (!A.offGcd || !A.offGcd.map(lc).includes(n)) prevN = n; continue; } if (t < (A.from || 3)) { prevN = n; continue; }
-    let want = null, wi = -1; for (let i = 0; i < usable.length; i++) { const q = usable[i], rs = readySince(q, t); if (rs !== -1 && rs > t - G) continue; if (q.full && !fullAt(q, t - G)) continue; if (!cond(q.if, t - G, prevN) || !cond(q.if, t - 0.05, prevN)) continue; want = q; wi = i; break; }
+    // (a rule's own grace (g), for a healer: wanted only once the spell has sat ready, or at full charges, that long)
+    let want = null, wi = -1; for (let i = 0; i < usable.length; i++) { const q = usable[i], rs = readySince(q, t), gq = q.g != null ? q.g : G; if (rs !== -1 && rs > t - gq) continue; if (q.full && !fullAt(q, t - gq)) continue; if (!cond(q.if, t - G, prevN) || !cond(q.if, t - 0.05, prevN)) continue; want = q; wi = i; break; }
     if (!want) { prevN = n; continue; } o.judged++;
     const right = [want.s].concat(want.alt || []).map(lc).includes(n), mine = usable.findIndex((q) => [q.s].concat(q.alt || []).map(lc).includes(n));
     if (right || (mine >= 0 && mine <= wi)) o.ok++;
@@ -16852,6 +16971,30 @@ function genAplRun(x, s, A, k) {
   if (A.norepeat) { const set = new Set(A.norepeat.map(lc)); let last = '', nn = 0; const bad = []; for (const [t, n2] of all) { if (!set.has(n2)) continue; nn++; if (n2 === last) bad.push(t); last = n2; } o.rep = { n: nn, bad }; }
   return o;
 }
+// The same check for a hand-built spec page: one pull (x is { r, p, t1, c }), with haste read from the global cooldown the way the shared module does, and
+// each spell's cooldown and charges from the Casts view's efficiency reading when the page has none of its own
+function aplPull(x, s, A, per, tal, heroN, gcd1) {
+  const gs = x.c.all.slice().sort((a, b) => a - b).map((u, i, l) => (i ? u - l[i - 1] : 9)).filter((g) => g > 0.5 && g < 3).sort((a, b) => a - b), gMid = gs.length ? gs[Math.floor(gs.length * 0.35)] : 1.5, lc = (n) => String(n).toLowerCase();
+  const e = castEff({ p: x.p, per: [{ w: { r: x.r, w0: 0, w1: x.end || x.t1 }, c: x.c }] }), cdu = {}; for (const o of (e && e.list) || []) cdu[lc(o.name)] = { cd: o.cd, ch: o.ch, ch0: o.ch0 };
+  return genAplRun(x, { ...s, cdu: Object.assign(cdu, s.cdu || {}) }, A, { hasteF: gcd1 ? 1 : Math.max(1, Math.min(1.6, 1.5 / Math.max(0.75, gMid))), pressed: (n) => per.some(({ p, t1 }) => (p.byName.get(lc(n)) || []).some((t) => t <= t1)), tal, heroN });
+}
+// The rotation check's line, for every spec page: the share of right presses over the pulls, the most common slip and its "Next time". It returns the slips,
+// most common first, for aplViz.
+function aplAdd(rows, A, add, g, ic) {
+  const J = rows.reduce((v, s) => v + (s.apl ? s.apl.judged : 0), 0), OK = rows.reduce((v, s) => v + (s.apl ? s.apl.ok : 0), 0); if (J < 10) return [];
+  const times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times'), f = OK / J, sl = new Map();
+  for (const s of rows) if (s.apl) for (const [kk, e] of s.apl.slips) { const z = sl.get(kk) || { ...e, ts: [], n: 0 }; z.n += e.ts.length; sl.set(kk, z); }
+  for (const s of rows) s.m.apl = s.apl ? [...s.apl.slips.values()].flatMap((e) => e.ts).sort((u, w) => u - w) : [];
+  const out = [...sl.values()].sort((a, b) => b.n - a.n), okF = A.ok || 0.85, warnF = A.warn || 0.75, t0 = out[0], slipT = (e) => e.did + ' when ' + e.want + ' was the better button' + (e.why ? ' (' + e.why + ')' : '');
+  add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', ic, 'Rotation priority', Math.round(100 * f) + '%', 'Of your ' + J + ' casts the priority list covers, ' + Math.round(100 * f) + '% were the best button at the time.' + (t0 ? ' Your most common slip was ' + slipT(t0) + ', ' + times(t0.n) + '.' : ' You never slipped.'), 'apl',
+    (A.why ? A.why + ' ' : '') + 'Each cast is checked against your priority list, from the top: the first spell that was ready, with its condition met, is the one to press, and pressing a spell lower on the list is a slip. It has to have been ready a moment before you pressed, so a press queued a hair early isn\'t blamed. ' + Math.round(100 * okF) + '% or more is good. The moments are each slip.');
+  const cc = g.l[g.l.length - 1]; if (t0 && f < okF) cc.tip = t0.tip || 'Press ' + t0.want + ' before ' + t0.did + ' whenever it\'s ready.';
+  return out;
+}
+// (the slips under the line: what was pressed, what the list wanted, how often)
+const aplViz = (l) => (!l.length ? '' : '<div class="spc-slp">' + l.slice(0, 6).map((e) => '<div class="spc-slr"><span class="spc-sln">' + spIc(e.did) + '<b>' + esc(e.did) + '</b><span class="sub">instead of</span>' + spIc(e.want) + '<b>' + esc(e.want) + '</b>' + (e.why ? '<span class="sub">' + esc(e.why) + '</span>' : '') + '</span><span class="spc-slc">' + (e.n === 1 ? 'once' : e.n === 2 ? 'twice' : e.n + ' times') + '</span></div>').join('') + '</div>');
+const APL_LEAD = 'The order to press your buttons in, from your guides and the simulations: each cast is checked against it, and the slips show what to press instead.';
+const HEAL_LEAD = 'What to press when nothing more urgent is happening, from your guides: each cast is checked against it, and the slips show what to press instead.';
 
 // Each spec's list (see genRun), from Wowhead's and Icy Veins' Midnight 12.1.5 rotation guides and WoWAnalyzer's checks for the spec (the midnight
 // branch: its cooldowns and how often each should go out), read Oct 18 2026. Spell, buff and debuff names are the game's, as the log has them.
@@ -17105,6 +17248,11 @@ const GEN_SPECS = {
     cds: [{ n: 'Summon Darkglare', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Summon Darkglare with your damage over time up, as often as the fight allows.' }, { n: 'Malevolence', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Malevolence on cooldown.' }, { n: 'Dark Harvest', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Dark Harvest on cooldown.' }],
     lead: { dots: 'Keep your damage over time on the boss.', procs: 'React to Nightfall before it overflows.', cds: 'Use Summon Darkglare with everything up.' } },
   'Holy Priest': { ic: 'Holy Word: Serenity', top: 'Holy Priests',
+    apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'From the Wowhead and Icy Veins raid priority (Oracle and Archon). Healing is reactive, so a slip is a moment to look at, not always a mistake.', lead: HEAL_LEAD, list: [
+      { s: 'Holy Word: Serenity', full: true, g: 3, why: 'Holy Word: Serenity sat at full charges', tip: 'Don\'t sit on full charges of Holy Word: Serenity: it\'s your strongest heal.' },
+      { s: 'Holy Word: Sanctify', full: true, g: 3, why: 'Holy Word: Sanctify sat at full charges', tip: 'Don\'t sit on full charges of Holy Word: Sanctify.' },
+      { s: 'Prayer of Mending', cdq: true, full: true, g: 3, why: 'it sat ready', tip: 'Keep Prayer of Mending on cooldown.' },
+      { s: 'Flash Heal', alt: ['Heal', 'Smite', 'Prayer of Healing', 'Renew', 'Holy Fire', 'Halo', 'Circle of Healing', 'Holy Nova', 'Holy Word: Serenity', 'Holy Word: Sanctify', 'Prayer of Mending', 'Shadow Word: Pain', 'Shadow Word: Death'] }] },
     win: { n: 'Apotheosis', key: { names: ['Holy Word: Serenity', 'Holy Word: Sanctify'], one: 'Holy Word', many: 'Holy Words' }, dur: 20, why: 'Apotheosis brings your Holy Words back much faster: fit as many into it as you can.' }, unitN: 'healing', mana: true, manaIc: 'Flash Heal', k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Holy Word: Serenity', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Your Holy Words are your strongest spells, and your other heals bring them back faster: don\'t sit on full charges.' }, { n: 'Holy Word: Sanctify', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Holy Word: Sanctify, your group heal, as often as it\'s ready when healing is needed.' },
@@ -17113,6 +17261,12 @@ const GEN_SPECS = {
     cds: [{ n: 'Apotheosis', cd: 120, ok: 0.6, warn: 0.3, why: 'Use Apotheosis for heavy damage.' }, { n: 'Divine Hymn', info: true, cd: 180, cdT: [['Seraphic Crescendo', 120]], ok: 0.6, warn: 0.3, why: 'Use Divine Hymn when your raid note calls for it.' }],
     lead: { rot: 'Keep your Holy Words on cooldown: they\'re your most powerful spells.', procs: 'Spend Surge of Light.', cds: 'Your raid note decides the big cooldowns.' } },
   'Restoration Shaman': { ic: 'Riptide', top: 'Restoration Shamans',
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, why: 'From the Wowhead and Icy Veins raid priority (Totemic and Farseer). Healing is reactive, so a slip is a moment to look at, not always a mistake.', lead: HEAL_LEAD, list: [
+      { s: 'Riptide', full: true, g: 3, why: 'Riptide sat at full charges', tip: 'Keep Riptide rolling: don\'t let it sit at full charges.' },
+      { s: 'Unleash Life', cdq: true, full: true, g: 3, why: 'it sat ready', tip: 'Cast Unleash Life whenever it\'s ready, before your fillers.' },
+      { s: 'Surging Totem', cdq: true, full: true, g: 3, why: 'it sat ready', tip: 'Keep Surging Totem down on cooldown.' },
+      { s: 'Healing Stream Totem', full: true, g: 3, why: 'Healing Stream Totem sat at full charges', tip: 'Don\'t let Healing Stream Totem sit at full charges.' },
+      { s: 'Healing Wave', alt: ['Chain Heal', 'Riptide', 'Unleash Life', 'Surging Totem', 'Healing Stream Totem', 'Healing Rain', 'Stormstream Totem', 'Lightning Bolt', 'Chain Lightning', 'Lava Burst', 'Flame Shock'] }] },
     win: { n: 'Ascendance', dur: 15, why: 'Ascendance copies your healing: keep casting all the way through it.' }, unitN: 'healing', mana: true, manaIc: 'Chain Heal', k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Riptide', cd: 6, ch: 2, ok: 0.75, warn: 0.6, why: 'Put Riptide on people who don\'t have it yet: many of your talents want as many Riptides out as possible.' }, { n: 'Healing Stream Totem', cd: 30, ch: 2, ok: 0.75, warn: 0.6, why: 'Use Healing Stream Totem early and often.' },
@@ -17120,6 +17274,11 @@ const GEN_SPECS = {
     cds: [{ n: 'Ascendance', cd: 180, ok: 0.6, warn: 0.3, why: 'Use Ascendance for heavy damage.' }, { n: 'Spirit Link Totem', info: true, cd: 180, ok: 0.6, warn: 0.3, why: 'Use Spirit Link Totem when your raid note calls for it.' }, { n: 'Healing Tide Totem', info: true, cd: 180, ok: 0.6, warn: 0.3, why: 'Use Healing Tide Totem when your raid note calls for it.' }],
     lead: { rot: 'Your short cooldowns are worth the most when you use them early and often.', cds: 'Your raid note decides the big cooldowns.' } },
   'Mistweaver Monk': { ic: 'Renewing Mist', top: 'Mistweaver Monks',
+    apl: { blk: 'Your priority', ok: 0.75, warn: 0.65, why: 'From WoWAnalyzer\'s Mistweaver priority list, kept to what a log can prove. Healing is reactive, so a slip is a moment to look at, not always a mistake.', lead: 'What to press when nothing more urgent is happening, from WoWAnalyzer\'s Mistweaver priority list: each cast is checked against it, and the slips show what to press instead.', list: [
+      { s: 'Rushing Wind Kick', alt: ['Rising Sun Kick'], shareCd: true, cd: 12, h: true, why: 'it was ready', tip: 'Press Rushing Wind Kick whenever it\'s ready: it spreads and extends your Renewing Mists.' },
+      { s: 'Renewing Mist', full: true, g: 3, why: 'Renewing Mist sat at full charges', tip: 'Don\'t let Renewing Mist sit at full charges: press it before your fillers.' },
+      { s: 'Enveloping Mist', if: { buff: 'Spiritfont', st: 2 }, why: 'Spiritfont was at 2 stacks', tip: 'At 2 stacks of Spiritfont, spend one on Enveloping Mist before the next one overflows.' },
+      { s: 'Tiger Palm', alt: ['Blackout Kick', 'Vivify', 'Enveloping Mist', 'Renewing Mist', 'Rushing Wind Kick', 'Rising Sun Kick', 'Spinning Crane Kick'] }] },
     win: { n: "Invoke Yu'lon, the Jade Serpent", names: ["Invoke Yu'lon, the Jade Serpent", 'Invoke Chi-Ji, the Red Crane'], label: 'Celestial windows', blk: 'Your celestial', lead: 'Your celestial heals with what you cast: keep casting all the way through it.', dur: 12, why: 'Your celestial heals with what you cast: keep casting all the way through it.' }, unitN: 'healing', mana: true, manaIc: 'Vivify', gcd1: true, k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Renewing Mist', cd: 9, chT: [['Pool of Mists', 3]], ch: 2, ok: 0.8, warn: 0.65, why: 'Press Renewing Mist on cooldown: Vivify heals everyone who has it.' }, { n: 'Rushing Wind Kick', cd: 12, h: true, ok: 0.8, warn: 0.65, why: 'Press Rushing Wind Kick on cooldown.' }, { n: 'Thunder Focus Tea', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Thunder Focus Tea on cooldown.' }],

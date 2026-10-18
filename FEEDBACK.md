@@ -3,6 +3,9 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Buffs, trinkets and gear procs (your note, Oct 18):** uptime of the important buffs, and what each trinket gave (on-use
+  and random procs): its average stats and its damage or healing. The same for Venomcursed items, cantrip items, enchants,
+  weapon oil procs and the like. (This brings back the "Stats" idea skipped earlier.)
 - [ ] **Parked (your call, Oct 17): Performance stays raw data graphs for now**, until you have a clearer vision. The
   Report card is the part that judges; the other views show the numbers. Ideas on the shelf for later: a short "what stood
   out" in each view's right panel (three lines at most, replacing what's there, not added), small red/gold marks on the
@@ -86,6 +89,31 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 179: Your first four specs catch up, and every healer gets a rotation check
+- [x] **Your note: the newer format skipped Holy Paladin, Restoration Druid, Preservation and Demonology.** Confirmed, and fixed:
+  - **"Next time" on every line that isn't good**, on all four. Each page has its own tips for its own lines (Tyrant windows,
+    Beacon of Virtue, Lifebloom, Echoes...), and cooldowns, procs, casting and mana get a shared one with the real moment.
+    Yours now says "Spend each Infusion of Light on Flash of Light before you cast Holy Light, so a new one doesn't replace it."
+  - **Windows compared with your usual** on their cards: Avenging Wrath, Tyrant, Tranquility and Inner Flame show "times your
+    usual damage (or healing) a second", like the other specs' window cards.
+  - **The cooldown table** shows wherever a block has three or more cooldowns.
+- [x] **Rotation checks for Demonology and every healer (your note: healers have no sims, but they should still get one).**
+  - Demonology comes from the sim list and the guide. Komo's went from 58% (the first rules) to 90%, once the rules matched what
+    top players do: they hold 2 Demonic Cores for the Tyrant, and only Hand of Gul'dan first at 4 or more Soul Shards.
+  - Holy Paladin and Mistweaver come from WoWAnalyzer's lists. Preservation, Restoration Druid, Holy Priest and Restoration Shaman
+    come from the Wowhead and Icy Veins raid priorities.
+  - For healers, a cooldown counts as a slip only once it sat at full charges for 3 seconds, since keeping a charge banked is
+    normal. Each slip is "a moment to look at, not always a mistake".
+  - Checked against the top raids. The middle of the top players: Holy Priest 99%, Restoration Shaman 94%, Holy Paladin 93%,
+    Restoration Druid 89%, Demonology 88%, Mistweaver 87%, Preservation 86%. Yours is 92%.
+- [x] **Fixed for every spec:** a spell pressed twice close together (a reset) no longer counts as having 2 charges, which made
+  Haunt look always ready (Arsyn's Affliction went from 12% to 87%).
+- [x] **Tooltips (your note):** every icon on a spec page now shows its spell on hover (lines, blocks, slips, table rows), and
+  buffs and talents named in a sentence get the same tooltip as spells you cast (Moment of Compassion, Born in Sunlight...).
+  Wowhead's raw formula text ("[[(315.6% of Spell Power)]]...") now reads cleanly.
+- [x] **Your note: show the changes on screen.** One Debrief tab shows each page as it changes; specs not in your raid open
+  from a top raid in the same tab.
 
 ## 2026-10-18, round 178: Teaching, not just counting (your note: help people learn their mistakes and improve)
 - [x] **Rotation checks for 19 damage specs (your note: rotational errors, with the sims and WoWAnalyzer).** Each spec's
