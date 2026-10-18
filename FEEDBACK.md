@@ -109,6 +109,29 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Not testable yet: every top kill is Diabolist, so the Soul Harvester parts (and Power Siphon, Doomguard) are read through only.
 - [x] **Your note: the card and talent graphics look cheap and cartoony.** Done in round 172.
 
+## 2026-10-18, round 177: Spec checks for every raid spec (your note before bed)
+- [x] **Which specs:** every spec with a real number of Mythic raid logs. From Warcraft Logs' last two weeks of Mythic
+  Venomous Abyss logs, 30 more specs, from Arcane Mage (25,000 logs) down to Affliction (2,300), plus all 6 tanks and the 3
+  healers we didn't have. Left out for having very few: Fire Mage (210), Discipline Priest (629), Outlaw (650), Survival (738),
+  Fury (1,084) and Feral (1,232). The four we built by hand stay as they are.
+- [x] **One shared module** for the 30, so every page looks and works the same: the same chapters (Rotation, Resources,
+  Mitigation for tanks, Cooldowns), tiles, "How it's judged", the pull at a glance and the pull-by-pull table. Each spec fills
+  it in with a short list from its Wowhead and Icy Veins guides and WoWAnalyzer: the spells it presses on cooldown, its big
+  cooldowns, the procs to spend, the resource not to overflow, the damage over time to keep on the boss, a tank's active
+  mitigation, and a healer's mana at the kill. Each cooldown also says what it did, in damage or healing, in all and each time.
+- [x] **The log reader now keeps the debuffs players put on the boss** (Moonfire, Rend, Flame Shock, Vampiric Touch...), for
+  their uptime. Warcraft Logs reports already had them; they were being skipped.
+- [x] **Each spec's talent tree**, like the four before, from Raidbots' talent data.
+- [x] **The bars come from the top raids:** the 32 fastest Mythic Twin Fangs kills, plus the top-ranked players of the specs
+  those raids don't bring (Enhancement, Brewmaster and a few others), 70 kills in all. Each bar for good sits where nearly all of
+  those players pass it. Lines that even the best players in the world all "failed" were the check's fault and are gone:
+  Killing Machine, Art of War, Shining Light and Surge of Light (spent in ways the log doesn't show plainly), Mind Blast and
+  Blood Plague (they don't follow their listed timers), and a few resource-waste lines that come from effects players don't
+  control. Holy Priests end this fight with half their mana, so it isn't graded for them.
+- [x] The Casts view now judges cast efficiency for every spec too, from the same spells.
+- [ ] **For you or your raiders:** these 30 were built from guides and logs, not by someone who plays them. A raider who plays
+  one should look over its page; anything off is a one-line fix.
+
 ## 2026-10-18, round 176: Holy Paladin, one last pass against the guides and WoWAnalyzer
 - [x] **Your note: Avenging Wrath's healing tile** now shows what each one added on average (yours: about 3.59M each, 10.76M
   over your 3).

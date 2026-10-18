@@ -5109,6 +5109,8 @@ function analyze(item, text, opts) {
           else if (ln === 'rallying cry' && (owner || isPlayer(sg))) { const u = cdPress(owner || sg, 'Rallying Cry', t, true); if (!u.cov.has(dg)) { u.cov.add(dg); u.hp += 0.1 * (pMax.get(dg) || 0); } } }
         // (crowd control a player, their pet or their totem landed on an enemy)
         if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF' && (parseInt(f[6], 16) & 0x40) && PERF_CC.has(f[9].toLowerCase())) { const q = P(owner, pet ? null : sn); if (q.ccL.length < 600) q.ccL.push({ t, spell: f[9], id: num(f[8]), on: dn }); }
+        // (a debuff a player, their pet or their totem put on an enemy, e.g. a damage over time: when it went on, per target, for the spec checks' uptimes)
+        if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF') { const q = P(owner, pet ? null : sn); if (!q.dotEv) q.dotEv = []; if (q.dotEv.length < 30000) q.dotEv.push([t, 1, f[9], dg]); }
         // (a buff's extra stack is a proc too, and its top stack: e.g. Infusion of Light at 2 with Inflorescence of the Sunwell)
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); } }
         if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
@@ -5120,6 +5122,7 @@ function analyze(item, text, opts) {
           const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }
         if (f.length >= 12 && f[11] === 'DEBUFF' && isPlayer(dg)) debuffDown(P(dg, dn), num(f[8]), f[9], t);
+        else if (f.length >= 12 && f[11] === 'DEBUFF' && owner) { const q = P(owner, pet ? null : sn); if (!q.dotEv) q.dotEv = []; if (q.dotEv.length < 30000) q.dotEv.push([t, 0, f[9], dg]); }
         break;
       // a player gaining power (rage from a hit, Holy Power from Holy Shock, mana from a potion…): how much, and how much of it
       // came while they were already full (the last four fields: amount, over, power type, max)
