@@ -87,6 +87,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 170: A card for each Divine Toll, and small tiles for the simple checks
+- [x] **Your note: Divine Toll like the others.** The "Divine Toll during Beacon of Virtue" line now has a card per press, like
+  Tranquility and Stasis: when, what its Holy Shocks healed, inside Beacon of Virtue or not, and the Holy Power it wasted.
+  Without Beacon of Virtue the cards go on "Healing from Divine Toll".
+- [x] **Your note: smaller blocks with tiles.** A check that's only a number and a sentence is now a small tile, side by side
+  with the others under its block's lines (Healing from Divine Toll, Healing from Beacon of Virtue, Aura Mastery, Mana from
+  others, the cooldown "uses" lines and so on). Checks with a picture stay full width. On all three specs.
+- [x] Fixed: a check mark pill on a card could split in two when it named a spell ("✓ In" and "Beacon of Virtue").
+
 ## 2026-10-17, round 169: Spec checks, readable and clear ("nice and crisp"), the same on all three specs
 - [x] **The explanations fold away.** The column of "how it's judged" text beside every block is gone. Each block keeps its short
   intro on top, and each check has a small "How it's judged" link at the end of its sentence that opens the explanation right
