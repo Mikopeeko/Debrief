@@ -1102,6 +1102,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* (the rotation slips: what was pressed, what the list wanted, how often) */
 .spc-slp { display: flex; flex-direction: column; gap: 5px; margin: 8px 0 2px; } .spc-slr { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-left: 3px solid rgba(232,162,58,.75); border-radius: 8px; background: rgba(0,0,0,.2); }
 .spc-sln { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; min-width: 0; font-size: 13px; } .spc-sln b { font: 600 13px var(--head); } .spc-sln .icw { flex: none; width: 20px; height: 20px; margin: 0; border-radius: 4px; overflow: hidden; } .spc-slc { flex: none; font: 700 13px var(--head); color: #f3c969; white-space: nowrap; }
+/* (a slip said as one sentence: it wraps like text, and each icon stays with its spell's name) */
+.spc-sln.spc-sent { display: block; line-height: 1.75; } .spc-sent .spc-nw { white-space: nowrap; } .spc-sent .icw { display: inline-block; vertical-align: -5px; margin-right: 5px; }
 /* (the cooldown table: a row per cooldown, opening in place to its sentence, tip and moments) */
 .spc-tbl { display: flex; flex-direction: column; margin: 2px 0 14px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.2); } .spc-tr { scroll-margin-top: 90px; } .spc-tr + .spc-tr { border-top: 1px solid var(--line); } .spc-tr.flash { animation: spcFlash 1.6s ease; }
 .spc-tr > summary { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; list-style: none; } .spc-tr > summary::-webkit-details-marker { display: none; } .spc-tr > summary:hover { background: rgba(255,255,255,.03); }

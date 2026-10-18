@@ -9232,17 +9232,24 @@ function aplPull(x, s, A, per, tal, heroN, gcd1) {
 // most common first, for aplViz.
 function aplAdd(rows, A, add, g, ic) {
   const J = rows.reduce((v, s) => v + (s.apl ? s.apl.judged : 0), 0), OK = rows.reduce((v, s) => v + (s.apl ? s.apl.ok : 0), 0); if (J < 10) return [];
-  const times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times'), f = OK / J, sl = new Map();
+  const f = OK / J, sl = new Map();
   for (const s of rows) if (s.apl) for (const [kk, e] of s.apl.slips) { const z = sl.get(kk) || { ...e, ts: [], n: 0 }; z.n += e.ts.length; sl.set(kk, z); }
   for (const s of rows) s.m.apl = s.apl ? [...s.apl.slips.values()].flatMap((e) => e.ts).sort((u, w) => u - w) : [];
-  const out = [...sl.values()].sort((a, b) => b.n - a.n), okF = A.ok || 0.85, warnF = A.warn || 0.75, t0 = out[0], slipT = (e) => e.did + ' when ' + e.want + ' was the better button' + (e.why ? ' (' + e.why + ')' : '');
-  add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', ic, 'Rotation priority', Math.round(100 * f) + '%', 'Of the ' + J + ' casts the priority list covers, ' + Math.round(100 * f) + '% were the best button to press at the time.' + (t0 ? ' Your most common slip was pressing ' + slipT(t0) + ', ' + times(t0.n) + '.' : ' You never slipped.'), 'apl',
-    (A.why ? A.why + ' ' : '') + 'Each cast is checked against your priority list, read from the top. The first spell that was ready, with its condition met, was the one to press, and pressing a spell lower on the list counts as a slip. A spell has to have been ready a moment before you pressed, so a press queued a hair early isn\'t blamed. ' + Math.round(100 * okF) + '% or more is good. The times listed are each slip.');
+  const out = [...sl.values()].sort((a, b) => b.n - a.n), okF = A.ok || 0.85, warnF = A.warn || 0.75, t0 = out[0];
+  add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', ic, 'Rotation priority', Math.round(100 * f) + '%', 'Debrief checked ' + J + ' of your casts against your priority list, and ' + Math.round(100 * f) + '% of them were the best button to press at that moment.' + (t0 ? ' Your most common slips are below.' : ' Every one of them was right.'), 'apl',
+    (A.why ? A.why + ' ' : '') + 'Debrief goes through your casts one at a time. At each one, it finds the highest spell on your priority list that was ready, with its condition met. That was the button to press, and pressing one lower on the list counts as a slip. A spell has to have been ready a moment before you pressed, so a press queued a hair early isn\'t blamed. ' + Math.round(100 * okF) + '% or more is good. The times listed are each slip.');
   const cc = g.l[g.l.length - 1]; if (t0 && f < okF) cc.tip = t0.tip || 'Press ' + t0.want + ' before ' + t0.did + ' whenever it\'s ready.';
   return out;
 }
-// (the slips under the line: what was pressed, what the list wanted, how often)
-const aplViz = (l) => (!l.length ? '' : '<div class="spc-slp">' + l.slice(0, 6).map((e) => '<div class="spc-slr"><span class="spc-sln">' + spIc(e.did) + '<b>' + esc(e.did) + '</b><span class="sub">instead of</span>' + spIc(e.want) + '<b>' + esc(e.want) + '</b>' + (e.why ? '<span class="sub">' + esc(e.why) + '</span>' : '') + '</span><span class="spc-slc">' + (e.n === 1 ? 'once' : e.n === 2 ? 'twice' : e.n + ' times') + '</span></div>').join('') + '</div>');
+// (the slips under the line, each one sentence: "You pressed Frostfire Bolt while Glacial Spike was ready." A reason about the wanted spell itself
+// ("it sat at full charges", "Riptide sat at full charges") is said of it; any other ("Brain Freeze was up") is added after "was ready and")
+// (a reason that already has an "and" in it follows a comma, so the sentence doesn't stack them: "was ready, your Tyrant was out and you had...")
+const aplSlipEnd = (e) => { const w = String(e.why || '').trim().replace(/, or /g, ' or '), lw = w.toLowerCase(), self = e.want.toLowerCase() + ' ';
+  if (!w || /^it (was ready|was usable|sat ready)$/.test(lw)) return 'was ready.';
+  if (lw.startsWith(self)) return w.slice(self.length) + '.';
+  if (lw.startsWith('it ')) return w.slice(3) + '.';
+  return (/ and /.test(w) ? 'was ready, ' : 'was ready and ') + w + '.'; };
+const aplViz = (l) => (!l.length ? '' : '<div class="spc-slp">' + l.slice(0, 6).map((e) => '<div class="spc-slr"><span class="spc-sln spc-sent"><span class="sub">You pressed</span> <span class="spc-nw">' + spIc(e.did) + '<b>' + esc(e.did) + '</b></span> <span class="sub">while</span> <span class="spc-nw">' + spIc(e.want) + '<b>' + esc(e.want) + '</b></span> <span class="sub">' + esc(aplSlipEnd(e)) + '</span></span><span class="spc-slc">' + (e.n === 1 ? 'once' : e.n === 2 ? 'twice' : e.n + ' times') + '</span></div>').join('') + '</div>');
 const APL_LEAD = 'This is the order to press your buttons in, from your guides and the simulations. Each cast is checked against it, and each slip shows what to press instead.';
 const HEAL_LEAD = 'This is what to press when nothing more urgent is happening, from your guides. Each cast is checked against it, and each slip shows what to press instead.';
 

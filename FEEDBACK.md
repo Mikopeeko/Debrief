@@ -154,6 +154,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 192: The Rotation priority card, said plainly (your guildmates' feedback)
+- [x] **The summary:** "Of the 301 casts the priority list covers, 87% were the best button..." is now "Debrief checked
+  301 of your casts against your priority list, and 87% of them were the best button to press at that moment. Your most
+  common slips are below." The old second sentence repeated the first row word for word, so it's gone.
+- [x] **Each slip is one sentence:** "Frostfire Bolt instead of Glacial Spike Glacial Spike was ready" is now "You pressed
+  Frostfire Bolt while Glacial Spike was ready." A reason is added when there is one: "You pressed Frostfire Bolt while
+  Flurry was ready and Brain Freeze was up." This is one shared piece, so every spec's card changed.
+- [x] On a phone the sentence wraps like normal text, and each icon stays next to its spell's name.
+- [x] **"How it's judged"** now walks through it step by step: Debrief goes through your casts one at a time, finds the
+  highest spell on your list that was ready, and counts pressing a lower one as a slip.
+
 ## 2026-10-18, round 191: Wording pass on every spec page (your guildmates' feedback)
 - [x] **Spec checks, all 34 spec pages:** every sentence was read again, on the pages themselves, and rewritten where it
   was hard to follow. The main fix: two thoughts glued together with a colon ("Press something every global cooldown: when
