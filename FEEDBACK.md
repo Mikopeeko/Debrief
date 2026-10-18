@@ -211,7 +211,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   Zaffia's Deathmark. Hold it about 13 seconds."
 - [x] Who gains the most is folded into one line (the top three and their numbers) and opens in place as bars. "How it
   works" is rewritten in short sentences (your note: simple, readable language).
-- [ ] Your call: turn Power Infusion on for the live site (it's still greyed out there).
+- [x] Your call: turn Power Infusion on for the live site. Done after round 209 (its plan line on Pull recap is back
+  there too).
 
 ## 2026-10-18, round 207: Graphs on the live site, Power Infusion greyed out there
 - [x] **Graphs is on for everyone (your call).** My take: right for launch, it's plain numbers and charts now, nothing

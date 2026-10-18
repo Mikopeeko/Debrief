@@ -1103,9 +1103,9 @@ const setHeadRes = refreshHead;
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with the buttons that jump into it)
 const PERF_OFF = () => false;
-// (Power Infusion, one of Graphs' views, stays greyed out on the website until its rework (your call, Oct 18): its tab
-// says "Under development", and the Power Infusion plan on Pull recap is hidden there)
-const PI_OFF = () => !!window.WLA_HOSTED;
+// (Power Infusion, one of Graphs' views, was greyed out on the website until its rework; on everywhere since Oct 18
+// (your call). Set this back to () => !!window.WLA_HOSTED to grey it out there again, with its plan line on Pull recap)
+const PI_OFF = () => false;
 // (Rotation (Spec checks) is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
 const SPEC_OFF = () => !!window.WLA_HOSTED;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
