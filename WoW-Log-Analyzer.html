@@ -19928,15 +19928,17 @@ let TOPG_LIST = null, TOPG_P = null;
 const topGuildsP = () => TOPG_P || (TOPG_P = topGuilds().then((l) => (TOPG_LIST = l)).finally(() => { TOPG_P = null; }));
 async function topGuilds() {
   try { const c = JSON.parse(store.get(TOPG_KEY) || 'null'); if (c && c.list && c.list.length && Date.now() - c.at < 6 * 864e5) return c.list; } catch (e) { /* (fetch again) */ }
-  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 12000);
-  const page = async (p) => { const r = await fetch('https://raider.io/api/v1/raiding/raid-rankings?raid=' + TOPG_RAID + '&difficulty=mythic&region=world&limit=50&page=' + p, { signal: ac.signal }); if (!r.ok) throw new Error('Raider.IO ' + r.status); return (await r.json()).raidRankings || []; };
-  const [p0, p3, p13, p19] = await Promise.all([page(0), page(3), page(13), page(19)]).finally(() => clearTimeout(to));
+  // (each page gets 10 seconds and one more try; the world's best need the first page, the other ranks show when theirs come)
+  const get = async (p) => { const ac = new AbortController(), to = setTimeout(() => ac.abort(), 10000);
+    try { const r = await fetch('https://raider.io/api/v1/raiding/raid-rankings?raid=' + TOPG_RAID + '&difficulty=mythic&region=world&limit=50&page=' + p, { signal: ac.signal }); if (!r.ok) throw new Error('Raider.IO ' + r.status); return (await r.json()).raidRankings || []; } finally { clearTimeout(to); } };
+  const page = (p) => get(p).catch(() => new Promise((q) => setTimeout(q, 1500)).then(() => get(p)));
+  const [p0, p3, p13, p19] = await Promise.all([page(0), ...[3, 13, 19].map((p) => page(p).catch(() => null))]);
   const pick = (e, grp) => e && e.guild ? { grp, rank: e.rank, name: e.guild.name, realm: e.guild.realm.name, rs: e.guild.realm.slug, rg: e.guild.region.slug, kills: (e.encountersDefeated || []).length,
     last: ((e.encountersDefeated || []).slice().sort((a, b) => String(b.firstDefeated).localeCompare(String(a.firstDefeated)))[0] || {}).slug || null,
     faction: e.guild.faction ? e.guild.faction[0].toUpperCase() + e.guild.faction.slice(1) : null } : null;
-  const ok = (e) => e && e.guild && e.guild.region && e.guild.region.slug !== 'cn', near = (l) => l.slice().reverse().find(ok);
+  const ok = (e) => e && e.guild && e.guild.region && e.guild.region.slug !== 'cn', near = (l) => (l || []).slice().reverse().find(ok);
   const list = p0.filter(ok).slice(0, 6).map((e) => pick(e, 'top')).concat([near(p0), near(p3), near(p13), near(p19)].map((e) => pick(e, 'rank'))).filter(Boolean);
-  if (list.length) store.set(TOPG_KEY, JSON.stringify({ at: Date.now(), list })); return list;
+  if (list.length && p3 && p13 && p19) store.set(TOPG_KEY, JSON.stringify({ at: Date.now(), list })); return list;
 }
 const tgLink = (g) => 'https://www.warcraftlogs.com/guild/' + g.rg + '/' + g.rs + '/' + encodeURIComponent(g.name);
 function topGuildsHtml(list) {

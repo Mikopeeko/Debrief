@@ -143,6 +143,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   the world's top three. The cards stay small.
 - Chinese guilds are left out, because their logs are on a separate Warcraft Logs site and Add can't bring them in. The next
   guild takes their place.
+- Sturdier: on the website, the first visit once got no answer from Raider.IO. Each ranking page now gets one more try, and
+  the world's best still show if only the lower ranks fail.
 - Note: Raider.IO counts The Venomous Abyss as 8 bosses, with Nymrissa and Kith'ix as raids of their own. That's why a top
   guild shows "8/8" while your teams show "/10".
 - [x] **Performance greyed out on the website (your note):** it shows "Under development" on hover or tap, and the buttons
