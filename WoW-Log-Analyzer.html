@@ -13270,7 +13270,7 @@ function perf() {
   // lost to deaths: what each player of the role would have done at their own rate, for the time they were dead here
   const lostTile = (role, what) => { const rs = role ? rowsAll.filter((x) => (x.p.role || 'dps') === role) : rowsAll, tot = rs.reduce((s, x) => s + x.tot, 0);
     const lost = rs.reduce((s, x) => s + (x.al > 0 ? x.alive * Math.max(0, wl - x.al) : 0), 0), lf = lost / Math.max(1, tot + lost);
-    return plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !tot ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', lf > 0.1 ? 'bad' : lf >= 0.03 ? 'warn' : 'ok', lost >= 1 ? 'about ' + C(lost) + ' ' + what : 'nothing lost to deaths'); };
+    return plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !tot ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', 'na', lost >= 1 ? 'about ' + C(lost) + ' ' + what : 'nothing lost to deaths', true); }; // (plain data: no verdict color)
   let tiles;
   if (kind === 'dmg') tiles = [lostTile(null, 'the dead would have done')];
   else if (kind === 'heal') tiles = [lostTile('healer', 'healing the dead healers would have done')];
@@ -13326,8 +13326,8 @@ function perf() {
   const span = ph ? esc(pfPhK(ph)) + ' (' + T(wl) + ')' : T(end);
   const head = cbHead(addsOn ? 'Damage' : { dmg: 'DPS', heal: 'HPS', taken: 'Per sec' }[kind], { heal: 'Overheal' }[kind] || 'Share', prs ? 'Parse' : '', rowCls);
   const ttl = addsOn ? 'Damage into adds' : bossOn ? 'Damage ' + onBossW : { dmg: 'Damage done', heal: 'Healing done', taken: 'Damage taken' }[kind];
-  h += '<div class="pf-cols' + (kind === 'heal' ? ' solo' : '') + '"><div class="panel pf-bars"><h3 class="nh"><span>' + ttl + '</span><small>' + (addsOn ? 'total over ' + span + ' · ' + esc(AD.label) : 'per second over ' + span) + (kind === 'heal' ? ', with overhealing faded' : '') + '</small>' + tgtSw + roleChips(has) + '</h3>' + (bars ? head + bars : '<p class="muted">Nothing recorded.</p>') + '</div>' +
-    (kind === 'heal' ? '' : '<div class="panel pf-det">' + (addsOn ? AD.panel() : perfDetail(r, kind, null, bossN, rowsAll)) + '</div>') + '</div>' + (PERF_HOW[kind] || '');
+  h += '<div class="pf-cols' + (kind === 'heal' || !addsOn ? ' solo' : '') + '"><div class="panel pf-bars"><h3 class="nh"><span>' + ttl + '</span><small>' + (addsOn ? 'total over ' + span + ' · ' + esc(AD.label) : 'per second over ' + span) + (kind === 'heal' ? ', with overhealing faded' : '') + '</small>' + tgtSw + roleChips(has) + '</h3>' + (bars ? head + bars : '<p class="muted">Nothing recorded.</p>') + '</div>' +
+    (kind === 'heal' || !addsOn ? '' : '<div class="panel pf-det">' + AD.panel() + '</div>') + '</div>' + (PERF_HOW[kind] || '');
   view(h + '</div>');
   bindPerf();
   refreshIcons();
@@ -13593,9 +13593,10 @@ function utilCards(cats, one, st) {
   // (what the raid did, by spell: each one with who did it)
   const by = new Map(); for (const x of c.rows) for (const d of x.d.values()) { const k = d.key || d.html; let o = by.get(k); if (!o) by.set(k, o = { html: d.html, n: 0, ts: [], heal: 0, hit: 0, who: [] }); o.n += d.n; o.heal += d.heal || 0; o.hit += d.hit || 0; o.who.push([x.p, d.n]); }
   const right = '<h3 class="nh"><span>The raid</span><small>' + esc(c.sub) + ', by ' + (c.key === 'calls' ? 'what they pressed' : 'spell') + '</small></h3>' + ([...by.values()].sort((a, b) => b.n - a.n).map((o) => line({ html: o.html, n: o.n, ts: [], heal: o.heal, hit: o.hit }, o.who.sort((a, b) => b[1] - a[1]).map(([p, n]) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>' + (n > 1 ? ' ' + n : '')).join(', '))).join('') || '<p class="muted">' + esc(c.none) + '</p>') + missL;
-  const how = st === 'surv' ? 'Each bar is how many times a player did it, up to the wipe filter: defensives, self-heals (buttons that only heal yourself), health potions and Healthstones, with what each one healed and who used none. <b>Close calls</b> are the times someone dropped under 30% health and lived, and what they pressed for it. Click a row for each one, with its times; the right side has the whole raid.'
-    : 'Each bar is how many times a player did it, up to the wipe filter: dispels, battle resses, externals and crowd control. Interrupts follow the raid\'s kick order, so they\'re on Mechanics. Crowd control counts once per press when it landed on an enemy, with how many it hit; the fight\'s own CC jobs, like a mind control, are on Mechanics. Click a row for each one, with its times; the right side has the whole raid by spell.';
-  return sw + '<div class="pf-cols" data-st="' + st + '">' + left.replace('<!--pf-inl-->', det ? '<div class="pf-inl">' + det + '</div>' : '') + '<div class="panel pf-det pfu-det">' + right + '</div></div>' +
+  const how = st === 'surv' ? 'Each bar is how many times a player did it, up to the wipe filter: defensives, self-heals (buttons that only heal yourself), health potions and Healthstones, with what each one healed and who used none. <b>Close calls</b> are the times someone dropped under 30% health and lived, and what they pressed for it. Click a row for each one, with its times.'
+    : 'Each bar is how many times a player did it, up to the wipe filter: dispels, battle resses, externals and crowd control. Interrupts follow the raid\'s kick order, so they\'re on Mechanics. Crowd control counts once per press when it landed on an enemy, with how many it hit; the fight\'s own CC jobs, like a mind control, are on Mechanics. Click a row for each one, with its times.';
+  void right; // (no side panel (your call, Oct 18): the bars say it, and a player opens in place)
+  return sw + '<div class="pf-cols solo" data-st="' + st + '">' + left.replace('<!--pf-inl-->', det ? '<div class="pf-inl">' + det + '</div>' : '') + '</div>' +
     '<details class="howit"><summary>How it works</summary><div>' + how + '</div></details>';
 }
 // the timeline: a 5-second average line over a soft fill (the view's colour, or the picked player's), phases shaded and
@@ -13696,7 +13697,7 @@ async function perfNight(r0, kind, scopeSw) {
   const what = { dmg: 'damage', heal: 'healing', taken: 'damage taken' }[kind], best = pulls.filter((x) => x.wl >= (phSel ? MIN : 60)).reduce((m, x) => (!m || x.ps > m.ps ? x : m), null);
   const half = Math.floor(pulls.length / 2), first = half ? pulls.slice(0, half).reduce((s, x) => s + x.ps, 0) / half : 0, last = half ? pulls.slice(-half).reduce((s, x) => s + x.ps, 0) / half : 0;
   h += '<div class="pts n3">' + plTile(plIco('achievement_boss_lichking'), 'Best pull', best ? C(best.ps) + '<span>/s</span>' : '—', 'na', best ? 'pull ' + best.n + ' · ' + best.label : '') +
-    plTile(plIco('spell_holy_borrowedtime'), 'Through the night', half >= 3 ? (last >= first ? '▲ ' : '▼ ') + Math.abs(Math.round(100 * (last - first) / Math.max(1, first))) + '<span>%</span>' : '—', half >= 3 ? (kind === 'taken' ? (last <= first ? 'ok' : 'warn') : last >= first ? 'ok' : 'warn') : 'na', half >= 3 ? 'the last ' + half + ' pulls against the first ' + half + (!phSel && keys.length > 1 ? '. Pick a phase to compare like with like.' : '') : 'not enough pulls yet') +
+    plTile(plIco('spell_holy_borrowedtime'), 'Through the night', half >= 3 ? (last >= first ? '▲ ' : '▼ ') + Math.abs(Math.round(100 * (last - first) / Math.max(1, first))) + '<span>%</span>' : '—', 'na', half >= 3 ? 'the last ' + half + ' pulls against the first ' + half + (!phSel && keys.length > 1 ? '. Pick a phase to compare like with like.' : '') : 'not enough pulls yet') +
     plTile(plIco('inv_misc_pocketwatch_01'), 'Pulls', String(pulls.length), 'na', T(pulls.reduce((s, x) => s + x.wl, 0)) + ' counted') + '</div>';
   // the night as bars: one per pull, its height the raid's output per second (green: a kill, gold: the best), the line a
   // 3-pull average; a click opens that pull
@@ -13804,10 +13805,11 @@ function cdStrip(y, color) {
 }
 function cdDetail(a, one) {
   const head = '<div class="pf-ph">' + avatar(a.p) + '<div class="pf-pn"><span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span><span class="sub">' + esc(a.p.specName || '') + ' · ' + a.used + ' of ' + a.poss + ' possible uses' + (one ? '' : ' over the night') + '</span></div></div>';
-  const lines = [...a.cds.values()].sort((x, z) => z.cd - x.cd).map((y) => { const f = y.need ? y.got / y.need : 1, st = f >= 0.85 ? 'ok' : f >= 0.6 ? 'warn' : 'bad';
+  // (plain data, like Warcraft Logs (your call, Oct 18): presses against possible uses, no verdict colors)
+  const lines = [...a.cds.values()].sort((x, z) => z.cd - x.cd).map((y) => { const st = '';
     const held = y.hold && y.hold.len >= Math.max(60, y.cd / 2) ? 'sat ready ' + Math.round(y.hold.len) + 's from ' + T(y.hold.s) + (one ? '' : ' in pull ' + y.hold.pull) : '';
     const lust = y.lust[1] ? (one ? (y.lust[0] ? 'with Bloodlust' : 'not with Bloodlust') : 'with Bloodlust in ' + y.lust[0] + ' of ' + y.lust[1] + ' pulls') : '';
-    const note = [one && y.ts.length ? 'at ' + y.ts.map((t) => T(t)).join(', ') : '', lust, held, y.raid ? 'a raid cooldown, so half of them is plenty' : ''].filter(Boolean).join(' · ');
+    const note = [one && y.ts.length ? 'at ' + y.ts.map((t) => T(t)).join(', ') : '', lust, held, y.raid ? 'a raid cooldown' : ''].filter(Boolean).join(' · ');
     return '<div class="cd-l"><div class="cd-h"><span class="cd-n">' + spell(y.id, y.name) + ' <span class="sub">' + cdLen(y.cd) + '</span></span><b class="' + st + '">' + y.used + ' of ' + y.poss + '</b></div>' + (one ? cdStrip(y, a.p.color) : '') + (note ? '<div class="cd-x">' + note + '</div>' : '') + '</div>'; }).join('');
   return head + lines + (one ? '<div class="cd-lg"><span><i class="pr" style="background:' + a.p.color + '"></i>pressed</span><span><i class="rd"></i>ready, not pressed</span>' + ([...a.cds.values()].some((y) => y.lustT != null) ? '<span><i class="lu"></i>Bloodlust</span>' : '') + '</div>' : '') + pfGoRow(a.p.name, [[a.p.role === 'healer' ? 'heal' : 'dmg', a.p.role === 'healer' ? 'Healing' : 'Damage'], ['cast', 'Casts'], ['aura', 'Buffs']]);
 }
@@ -13853,7 +13855,8 @@ function hcdView(reps, one) {
   const am = [...amps.values()].map((a) => line(spell(a.id, CD_SHORT[a.cd] || a.cd) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span>', '<b>' + C(a.v) + '</b> <span class="sub">healed during ' + presses(a.n) + (a.len && a.avgW ? ' · ' + vsUsual(a.v / a.len, a.avgW / a.len) : '') + '</span>')).join('');
   const right = '<h3 class="nh"><span>The raid</span><small>' + (one ? 'this pull' : 'over ' + plural(reps.length, 'pull')) + '</small></h3>' + (kinds ? '<div class="pf-sec"><div class="pf-st"><b>In all</b></div>' + kinds + '</div>' : '') +
     (pl ? '<div class="pf-sec"><div class="pf-st"><b>By player</b></div>' + pl + '</div>' : '') + (am ? '<div class="pf-sec"><div class="pf-st"><b>Cooldowns that make a healer stronger</b><span>they don\'t heal on their own</span></div>' + am + '</div>' : '');
-  return '<div class="pf-cols" data-st="hcd">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>';
+  void right; // (no side panel (your call, Oct 18): the bars say it, and each cooldown opens in place)
+  return '<div class="pf-cols solo" data-st="hcd">' + left + '</div>';
 }
 const cdHead = (reps) => { const all = cdUseRows(reps, false), g = all.reduce((s, a) => s + a.got, 0), n = all.reduce((s, a) => s + a.need, 0);
   return { v: n ? Math.round(100 * g / n) + '<span>% of possible uses</span>' : '—', s: plural(all.length, 'player') + ' with big cooldowns' }; };
@@ -13872,10 +13875,11 @@ function cdView(reps, one) {
   const waits = all.flatMap((a) => [...a.cds.values()].filter((y) => y.hold && y.hold.len >= Math.max(60, y.cd / 2)).map((y) => ({ a, y }))).sort((x, z) => z.y.hold.len - x.y.hold.len).slice(0, 5);
   const waitL = waits.length ? waits.map(({ a, y }) => '<div class="pf-sl" data-cdn="' + esc(a.p.name) + '" role="button" tabindex="0"><span><span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span> ' + spell(y.id, y.name) + '</span><span><b>' + Math.round(y.hold.len) + 's</b> <span class="sub">from ' + T(y.hold.s) + (one ? '' : ', pull ' + y.hold.pull) + '</span></span></div>').join('') : '<p class="sub" style="margin:0">No big cooldown sat ready for long.</p>';
   const lu = all.filter((a) => a.lust[1]), luG = lu.reduce((s, a) => s + a.lust[0], 0), luN = lu.reduce((s, a) => s + a.lust[1], 0), luMiss = lu.filter((a) => a.lust[0] < a.lust[1]).sort((a, b) => a.lust[0] / a.lust[1] - b.lust[0] / b.lust[1]).slice(0, 4);
-  const lust = lu.length ? '<div class="pf-sec"><div class="pf-st"><b>With Bloodlust</b><span>a long cooldown lined up with it</span></div><div class="pf-sl"><span>' + (one ? luG + ' of ' + lu.length + ' players' : Math.round(100 * luG / Math.max(1, luN)) + '% of the time') + '</span><span>' + (luMiss.length ? '<span class="sub">not:</span> ' + luMiss.map((a) => '<span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span>').join(', ') : '<span class="ok-t">everyone</span>') + '</span></div></div>' : '';
+  const lust = lu.length ? '<div class="pf-sec"><div class="pf-st"><b>With Bloodlust</b><span>a long cooldown lined up with it</span></div><div class="pf-sl"><span>' + (one ? luG + ' of ' + lu.length + ' players' : Math.round(100 * luG / Math.max(1, luN)) + '% of the time') + '</span><span>' + (luMiss.length ? '<span class="sub">not:</span> ' + luMiss.map((a) => '<span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span>').join(', ') : 'everyone') + '</span></div></div>' : '';
   const right = '<h3 class="nh"><span>The raid</span><small>' + (one ? 'this pull' : 'over ' + plural(reps.length, 'pull')) + '</small></h3>' + (role ? '<div class="pf-sec"><div class="pf-st"><b>By role</b></div>' + role + '</div>' : '') +
     '<div class="pf-sec"><div class="pf-st"><b>Longest waits</b><span>ready, not pressed</span></div>' + waitL + '</div>' + lust;
-  return sw + '<div class="pf-cols" data-st="cds">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.cds;
+  void right; // (no side panel (your call, Oct 18): the bars say it, and a player opens in place)
+  return sw + '<div class="pf-cols solo" data-st="cds">' + left + '</div>' + PERF_HOW.cds;
 }
 // ---- Performance: Buffs & debuffs ----
 // Every buff (or debuff) the raid's players had, up to each one's death or the wipe filter: a bar per player (how many
@@ -13913,12 +13917,14 @@ function auraMine(a, deb, filtered) {
     (!filtered && all.length > LIM ? '<button class="btn sm pf-srmore" id="pfAuraMore" type="button">' + (more ? 'Show fewer' : 'Show all ' + all.length) + '</button>' : '') +
     (alw.length ? '<p class="sub pf-more" title="' + esc(alw.map((y) => y.x.name).join(', ')) + '">+' + alw.length + ' up the whole time (raid buffs, flasks, food, passives)</p>' : '') + '</div>';
 }
-const auraHead = (reps) => { const b = auraRows(reps, false).rows.filter((x) => !x.always).length; return { v: b + '<span> buffs</span>', s: 'on the raid' }; };
+const auraHead = (reps) => { const b = auraRows(reps, false).rows.filter((x) => !x.always).length; return { v: b + '<span> buffs</span>', s: 'uptime by player' }; };
 function auraView(reps, one) {
   const deb = false, what = 'buffs', { rows, players } = auraRows(reps, deb), sw = ''; // (Buffs only: the boss's debuffs on the raid are mechanics)
   const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%';
-  // (a search or a pick on the right: an exact name first, else every name with it in)
-  const q = plainL(String(S.auraQ || '').trim()), exact = q ? rows.filter((x) => plainL(x.name) === q) : [], match = q ? (exact.length ? exact : rows.filter((x) => plainL(x.name).includes(q))) : null;
+  // (a search or a pick on the right: an exact name first, else every name with it in; nothing searched: the raid's most
+  // common buff, so it opens on each player's uptime of it, like Warcraft Logs, not on a count of buffs (your call, Oct 18))
+  const common = rows.filter((x) => !x.always).sort((a, b) => b.cov - a.cov || b.apps - a.apps).slice(0, 12), alw = rows.filter((x) => x.always);
+  const q = plainL(String(S.auraQ || '').trim()), exact = q ? rows.filter((x) => plainL(x.name) === q) : [], match = q ? (exact.length ? exact : rows.filter((x) => plainL(x.name).includes(q))) : common.length ? [common[0]] : null;
   const mine = new Map(players.map((m) => [m.p.name, []])); for (const x of rows) for (const w of x.who) { const l = mine.get(w.p.name); if (l) l.push({ x, w, always: !deb && auraAlways(x.name, w.f) }); }
   const per = players.map((m) => { const l = mine.get(m.p.name) || [];
     if (match) { const ms = l.filter((y) => match.includes(y.x)).sort((a, b) => b.w.f - a.w.f); return ms.length ? { p: m.p, l: ms, v: ms[0].w.f, best: ms[0] } : null; }
@@ -13934,8 +13940,7 @@ function auraView(reps, one) {
     '<input class="pf-q" id="pfAuraQ" type="search" placeholder="Find a ' + (deb ? 'debuff' : 'buff') + '" aria-label="Find a ' + (deb ? 'debuff' : 'buff') + '" value="' + esc(S.auraQ || '') + '" autocomplete="off" spellcheck="false"></h3>' +
     (bars ? cbHead(match ? 'Uptime' : capS(what), match ? 'Times' : 'Applied') + bars : '<p class="muted" style="margin:10px 0 0">' + (match ? 'No ' + what + ' match "' + esc(S.auraQ.trim()) + '".' : 'No ' + what + ' recorded.') + '</p>') + '</div>';
   // ---- the right: the raid's most common ones; picking one shows each player's uptime of it ----
-  const common = rows.filter((x) => !x.always).sort((a, b) => b.cov - a.cov || b.apps - a.apps).slice(0, 12), alw = rows.filter((x) => x.always);
-  const right = '<h3 class="nh"><span>The raid</span><small>Most common first. Pick one to compare players.</small></h3>' +
+  const right = '<h3 class="nh"><span>The raid\'s buffs</span><small>Most common first, with the average uptime. Pick one to see every player\'s.</small></h3>' +
     common.map((x) => '<div class="pf-sl pf-aw' + (one1 === x ? ' on' : '') + '" data-aq="' + esc(x.name) + '" role="button" tabindex="0" aria-pressed="' + (one1 === x) + '"><span class="pf-an2">' + spellIcon(x.id, x.name) + '<span>' + esc(x.name) + '</span></span><span><b>' + pc(x.f) + '</b> <span class="sub">' + plural(x.who.length, 'player') + '</span></span></div>').join('') +
     (alw.length ? '<p class="sub pf-more" title="' + esc(alw.map((x) => x.name).join(', ')) + '">+' + alw.length + ' up the whole time on everyone who had them (raid buffs, flasks, food, passives)</p>' : '');
   return sw + '<div class="pf-cols" data-st="aura">' + left + '<div class="panel pf-det pf-srcd">' + right + '</div></div>' + PERF_HOW.aura;
@@ -14427,15 +14432,16 @@ function resTypeView(list, one, ty, sw) {
   if (mana) {
     const runs = rows.flatMap((x) => x.per), low = runs.filter(({ q }) => q.v.low), lowP = [...new Set(low.map(({ w }) => w.r.item.pull))], pots = sum('pots'), ends = rows.filter((x) => x.end != null);
     const avgEnd = ends.length ? ends.reduce((s, x) => s + x.end, 0) / ends.length : null, potBy = rows.filter((x) => x.pots).map((x) => x.p.name);
-    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Ran low', String(one ? low.length : lowP.length), low.length ? 'warn' : 'ok', low.length ? (one ? 'under 25% for 8 s or more: ' + low.map(({ q }) => q.p.name).join(', ') : 'pulls where someone did: ' + lowP.join(', ')) : 'nobody stayed under 25%'),
+    // (plain data, like Warcraft Logs (your call, Oct 18): no verdicts or grade colors)
+    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Under 25%', String(one ? low.length : lowP.length), 'na', low.length ? (one ? 'for 8 s or more: ' + low.map(({ q }) => q.p.name).join(', ') : 'pulls where someone was: ' + lowP.join(', ')) : 'nobody stayed under 25%', true),
       plTile(plIco('inv_potion_76'), 'Mana potions', String(pots), 'na', pots ? 'by ' + potBy.slice(0, 3).join(', ') + (potBy.length > 3 ? ' and ' + (potBy.length - 3) + ' more' : '') : 'none used', true),
-      plTile(plIco('inv_misc_pocketwatch_01'), 'Mana left', avgEnd == null ? '—' : resPc(avgEnd), 'na', one ? (list[0].r.item.kill ? 'on average at the kill, and the lower the better' : 'on average at the end of the pull') : 'on average at the end of each pull', true)];
-    head = { v: avgEnd == null ? '—' : resPc(avgEnd) + '<span> mana left</span>', s: plural(rows.length, 'healer') + (low.length ? ' · ' + low.length + ' ran low' : '') };
+      plTile(plIco('inv_misc_pocketwatch_01'), 'Mana left', avgEnd == null ? '—' : resPc(avgEnd), 'na', one ? (list[0].r.item.kill ? 'on average at the kill' : 'on average at the end of the pull') : 'on average at the end of each pull', true)];
+    head = { v: avgEnd == null ? '—' : resPc(avgEnd) + '<span> mana left</span>', s: plural(rows.length, 'healer') };
   } else {
     const tB = sum('built'), tW = sum('wasted'), tS = sum('sA'), tC = sum('capped'), tAl = sum('al'), worst = rows[0], lg = rows.flatMap((x) => x.runs.map((u) => ({ ...u, p: x.p }))).sort((a, b) => (b.e - b.s) - (a.e - a.s))[0];
     const wf = tW / Math.max(1e-9, tB + tW), ff = tC / Math.max(1, tAl);
-    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Wasted', resPc(wf), rsStW(wf), resAmt(ty, tW) + ' ' + resNm(ty, tW) + ' built while already full' + (worst && worst.share >= 0.03 ? ' · most: ' + worst.p.name + ', ' + resPc(worst.share) : '')),
-      plTile(plIco('inv_misc_pocketwatch_01'), 'Sat at full', resPc(ff), ty in RES_UNNAMED ? rsStF(ff) : 'na', ty in RES_UNNAMED ? (lg && lg.e - lg.s >= 2 ? 'of the time alive. The longest was ' + lg.p.name + ', ' + Math.round(lg.e - lg.s) + ' s from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.s) : 'of the time alive, never for long') : 'of the time alive. Holding it is fine, because only gains that went over count.', !(ty in RES_UNNAMED)),
+    tiles = [plTile(plIco('spell_shadow_manaburn'), 'Wasted', resPc(wf), 'na', resAmt(ty, tW) + ' ' + resNm(ty, tW) + ' built while already full' + (worst && worst.share >= 0.03 ? ' · most: ' + worst.p.name + ', ' + resPc(worst.share) : ''), true),
+      plTile(plIco('inv_misc_pocketwatch_01'), 'Sat at full', resPc(ff), 'na', ty in RES_UNNAMED ? (lg && lg.e - lg.s >= 2 ? 'of the time alive. The longest was ' + lg.p.name + ', ' + Math.round(lg.e - lg.s) + ' s from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.s) : 'of the time alive, never for long') : 'of the time alive', true),
       plTile(plIco('inv_misc_coin_02'), 'Built · spent', resAmt(ty, tB) + '<span> · </span>' + resAmt(ty, tS), 'na', 'by ' + plural(rows.length, 'player') + (one ? '' : ' over ' + plural(list.length, 'pull')), true)];
     head = { v: resPc(wf) + '<span> wasted</span>', s: nm + ' · ' + resPc(ff) + ' at full' };
   }
@@ -14457,13 +14463,13 @@ function resTypeView(list, one, ty, sw) {
   }
   // ---- a bar per player: all they built, the wasted part in red (mana: what they had left at the end) ----
   const bars = rows.map((x, i) => { const on = sel === x; let segs, v, sub, chips = '';
-    if (mana) { const e = x.end || 0; segs = [[Math.max(1, 100 * e), 'm']]; v = x.end == null ? '—' : resPc(e); sub = resAmt(ty, x.sA);
-      chips = one ? ' <span class="hm-p ' + x.per[0].q.v.st + '">' + esc(x.per[0].q.v.pill) + '</span>' : x.lowN ? ' <span class="hm-p warn">low in ' + x.lowN + ' of ' + x.per.length + '</span>' : ''; }
+    if (mana) { const e = x.end || 0; segs = [[Math.max(1, 100 * e), 'm']]; v = x.end == null ? '—' : resPc(e); sub = resAmt(ty, x.sA); }
     else { segs = [[100 * (1 - x.share), 'm'], [100 * x.share, 'ad']]; v = resPc(x.share); sub = secsS(x.capped); }
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' rs-r', attrs: ' type="button" data-rn="' + esc(x.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: x.p, segs, v, sub, chips }) + (on ? '<!--pf-inl-->' : ''); }).join('');
   const left = '<div class="panel pf-bars rs-bars"><h3 class="nh"><span>' + resDot(ty) + esc(nm) + (mana ? ' by healer' : ' by player') + '</span><small>' + (mana ? 'the bar: mana left at the end' + (one ? '' : ', on average') + ' · spent: in full bars' : 'the bar: all they built · red: built while already full') + (one ? '' : ' · over ' + plural(list.length, 'pull')) + '</small></h3>' +
     (mana ? cbHead('Left', 'Spent') : cbHead('Wasted', 'At full')) + bars + '</div>';
-  return { head, html: top + pfViewSw(sw) + '<div class="pf-cols">' + left.replace('<!--pf-inl-->', sel ? '<div class="pf-inl">' + resDetail(sel, ty, one) + '</div>' : '') + '<div class="panel pf-det rs-det">' + resRaid(rows, ty, one) + '</div></div>' + resHow(mana) };
+  // (no side panel (your call, Oct 18): the bars say it, and a player opens in place)
+  return { head, html: top + pfViewSw(sw) + '<div class="pf-cols solo">' + left.replace('<!--pf-inl-->', sel ? '<div class="pf-inl">' + resDetail(sel, ty, one) + '</div>' : '') + '</div>' + resHow(mana) };
 }
 // Everyone's power: a row per player, their most wasted power on the bar (all their powers named), the most wasted first
 function resAllView(list, one, types, sw) {
@@ -14477,10 +14483,12 @@ function resAllView(list, one, types, sw) {
   // ---- the raid at a glance: who wasted the most, how many wasted 10% or more, the longest stretch at full ----
   const worst = all[0], over = all.filter((o) => o.top.x.share >= 0.1);
   const lg = all.flatMap((o) => o.pw.filter((q) => q.ty in RES_UNNAMED).flatMap((q) => q.x.runs.map((u) => ({ ...u, p: o.p, ty: q.ty })))).sort((a, b) => (b.e - b.s) - (a.e - a.s))[0];
-  const tiles = [plTile(plIco('spell_shadow_manaburn'), 'Most wasted', worst ? resPc(worst.top.x.share) : '—', worst ? rsStW(worst.top.x.share) : 'na', worst ? worst.p.name + ' · ' + resAmt(worst.top.ty, worst.top.x.wasted) + ' ' + resNm(worst.top.ty, worst.top.x.wasted) : ''),
-    plTile(plIco('ability_warrior_innerrage'), 'Wasted 10% or more', String(over.length), over.length ? 'warn' : 'ok', over.length ? over.slice(0, 3).map((o) => o.p.name).join(', ') + (over.length > 3 ? ' and ' + (over.length - 3) + ' more' : '') : 'everyone under 10%'),
+  // (plain data: who wasted the most, the middle player's waste, the longest stretch at full; no verdicts)
+  const midW = cstMed(all.map((o) => o.top.x.share));
+  const tiles = [plTile(plIco('spell_shadow_manaburn'), 'Most wasted', worst ? resPc(worst.top.x.share) : '—', 'na', worst ? worst.p.name + ' · ' + resAmt(worst.top.ty, worst.top.x.wasted) + ' ' + resNm(worst.top.ty, worst.top.x.wasted) : '', true),
+    plTile(plIco('ability_warrior_innerrage'), 'Wasted, the middle player', all.length ? resPc(midW) : '—', 'na', 'of their most wasted power', true),
     plTile(plIco('inv_misc_pocketwatch_01'), 'Longest at full', lg && lg.e - lg.s >= 2 ? Math.round(lg.e - lg.s) + '<span> s</span>' : '—', 'na', lg && lg.e - lg.s >= 2 ? lg.p.name + ' · ' + resName(lg.ty) + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.s) : 'nobody sat at full for long', true)];
-  const head = { v: over.length + '<span> wasted 10%+</span>', s: worst ? 'most: ' + esc(worst.p.name) + ' ' + resPc(worst.top.x.share) : '' };
+  const head = { v: (all.length ? resPc(midW) : '—') + '<span> wasted</span>', s: 'the middle player' + (worst ? ' · most: ' + esc(worst.p.name) + ' ' + resPc(worst.top.x.share) : '') };
   const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
   // ---- the picked player's chart (one pull), in that power's own numbers; over the night, a chart per pull ----
   let top;
@@ -14504,12 +14512,12 @@ function resAllView(list, one, types, sw) {
     (bars ? cbHead('Wasted', 'At full') + bars : '<p class="muted">Nobody in this role has a power to track.</p>') + '</div>';
   // ---- the picked player (a tab per power), or the raid ----
   const tabs = sel && sel.pw.length > 1 ? '<div class="seg rs-pt" role="tablist" aria-label="Their powers">' + sel.pw.map((q) => '<button type="button" role="tab" data-pw="' + q.ty + '" aria-selected="' + (q === pw) + '"' + (q === pw ? ' class="on"' : '') + '>' + resDot(q.ty) + esc(resName(q.ty)) + ' <span class="sub">' + resPc(q.x.share) + '</span></button>').join('') + '</div>' : '';
-  return { head, html: top + pfViewSw(sw) + '<div class="pf-cols">' + left.replace('<!--pf-inl-->', sel ? '<div class="pf-inl">' + resDetail(pw.x, pw.ty, one, tabs) + '</div>' : '') + '<div class="panel pf-det rs-det">' + resRaidAll(all, one) + '</div></div>' + resHow(false) };
+  return { head, html: top + pfViewSw(sw) + '<div class="pf-cols solo">' + left.replace('<!--pf-inl-->', sel ? '<div class="pf-inl">' + resDetail(pw.x, pw.ty, one, tabs) + '</div>' : '') + '</div>' + resHow(false) };
 }
 // (How it works, under the view)
 const resHow = (mana) => '<details class="howit"><summary>How it works</summary><div>' + (mana
-  ? 'Mana comes from each healer\'s casts, every 2 seconds at most, up to the wipe filter, and is counted in full bars (1 bar is their whole mana). The aim is for mana to come down about as fast as the boss\'s health (the grey line) and end as low as it can. <b>Ran low</b>: under 25% for 8 seconds or more. <b>Spent fast</b>: under 40% while the boss still had 25 points more health. <b>Mana to spare</b>: 30 points more mana than the boss had health at the end, so there was room to heal harder. <b>Gained from</b>: what the log names (Innervate, Mana Tea, Source of Magic, potions…). Their own regeneration is worked out from what they spent and what they started and ended with.'
-  : 'Every power but mana: what each cast cost, every spell that gave some, and the level on their casts and hits, up to the wipe filter and to when they died for good. Each player is listed by the power they wasted the most of. <b>Wasted</b>: what a spell gave while they were already full, plus about what their natural regeneration (for rage: auto attacks and hits) would have given while they sat at full. <b>At full</b>: time spent at the top, between two readings both at full (up to 4 s each), not while paying it, dead, mind controlled or while the whole raid was waiting. A power that only builds from spells (Holy Power, combo points, Soul Shards…) wastes nothing just by being full. Only what a spell gave while it was full counts, so the Report card judges those by the amount wasted, and the others by their time at full. Warcraft Logs reads powers like Holy Power only on casts, so the level in between is filled in from each gain and cost. What the log doesn\'t name is worked out: what they spent, plus what they ended with, less what they started with and what the named gains gave.') + '</div></details>';
+  ? 'Mana comes from each healer\'s casts, every 2 seconds at most, up to the wipe filter, and is counted in full bars (1 bar is their whole mana). The grey line is the boss\'s health, to compare with. <b>Under 25%</b> counts healers who stayed under 25% for 8 seconds or more. <b>Gained from</b> is what the log names (Innervate, Mana Tea, Source of Magic, potions and so on). Their own regeneration is worked out from what they spent and what they started and ended with.'
+  : 'Every power but mana: what each cast cost, every spell that gave some, and the level on their casts and hits, up to the wipe filter and to when they died for good. Each player is listed by the power they wasted the most of. <b>Wasted</b>: what a spell gave while they were already full, plus about what their natural regeneration (for rage: auto attacks and hits) would have given while they sat at full. <b>At full</b>: time spent at the top, between two readings both at full (up to 4 s each), not while paying it, dead, mind controlled or while the whole raid was waiting. A power that only builds from spells (Holy Power, combo points, Soul Shards and so on) wastes nothing just by being full: only what a spell gave while it was full counts. Warcraft Logs reads powers like Holy Power only on casts, so the level in between is filled in from each gain and cost. What the log doesn\'t name is worked out: what they spent, plus what they ended with, less what they started with and what the named gains gave.') + '</div></details>';
 // no one picked, Everyone's power: where the waste came from (each spell that gave a power while it was full, and who;
 // ranked by how many full bars of that power it was, so 8 Holy Power and 300 Energy compare fairly), and the longest
 // stretches at full of the powers that build on their own
@@ -14550,8 +14558,6 @@ function resNightChart(list, valOf, o) {
 function resDetail(x, ty, one, tabs) {
   const nm = resName(ty), mana = ty === '0';
   let h = '<h3 class="nh">' + avatar(x.p, true) + ' <span class="nm" style="color:' + x.p.color + '">' + esc(x.p.name) + '</span><small>' + esc(x.p.specName || '') + ' · ' + esc(nm) + (one ? '' : ' · ' + plural(x.per.length, 'pull')) + '</small><button class="btn sm" id="rsClose" type="button">Show the raid</button></h3>' + (tabs || '');
-  if (mana && one) { const v = x.per[0].q.v; h += '<p class="rs-v"><span class="hm-p ' + v.st + '">' + esc(v.pill) + '</span>' + esc(v.txt) + '</p>'; }
-  else if (mana) { const pn = paceNight(x); h += '<p class="rs-v"><span class="hm-p ' + pn.st + '">' + esc(pn.pill) + '</span>' + esc(pn.txt) + '</p>'; }
   h += '<div class="rs-nums">' + [['Built', resUnit(ty, x.built), ''], ['Spent', resUnit(ty, x.sA), x.nS ? 'on ' + plural(x.nS, 'cast') : ''], ['Wasted', resUnit(ty, x.wasted), resPc(x.share) + ' of it'], ['At full', secsS(x.capped), resPc(x.atFull) + ' of the time' + (mana || ty in RES_UNNAMED ? '' : ', which isn\'t waste by itself')]]
     .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + v + '</b>' + (s ? '<small>' + s + '</small>' : '') + '</div>').join('') + '</div>';
   // gained from: each spell that gave it (what counted, and what came while they were full), then what the log doesn't name
@@ -14559,13 +14565,13 @@ function resDetail(x, ty, one, tabs) {
   if (x.unnamed > 0) gl.push({ html: '<span class="rs-un" title="Not in the log by name: worked out from what they spent, and what they started and ended with">' + esc(RES_UNNAMED[ty] || 'Not named in the log') + '</span>', a: x.unnamed, o: x.lost, un: true });
   gl.sort((a, b) => b.a - a.a);
   const gmx = Math.max(1e-9, ...gl.map((g) => g.a)), bar = (v, mx) => '<i style="width:' + Math.max(1, Math.round(100 * v / mx)) + '%;background:' + x.p.color + '"></i>';
-  const gT = gl.length ? '<div class="hm-ut rs-ut"><div class="hm-uh"><span>From</span><span>Gained</span><span>Wasted</span><span>Share</span></div>' + gl.map((g) => '<div class="hm-ur"><span>' + g.html + '</span><span>' + resAmt(ty, g.a) + '</span><span' + (g.o > 0.004 ? ' class="rs-w"' : '') + (g.un && g.o > 0 ? ' title="About: what it would have given while they sat at full"' : '') + '>' + (g.o > 0.004 ? (g.un ? '≈' : '') + resAmt(ty, g.o) : '—') + '</span><span>' + bar(g.a, gmx) + '<b>' + resPc(g.a / Math.max(1e-9, x.built)) + '</b></span></div>').join('') + '</div>' : '<p class="muted">Nothing gained in the log.</p>';
+  const gT = gl.length ? '<div class="hm-ut rs-ut"><div class="hm-uh"><span>From</span><span>Gained</span><span>Wasted</span><span>Share</span></div>' + gl.map((g) => '<div class="hm-ur"><span>' + g.html + '</span><span>' + resAmt(ty, g.a) + '</span><span' + (g.un && g.o > 0 ? ' title="About: what it would have given while they sat at full"' : '') + '>' + (g.o > 0.004 ? (g.un ? '≈' : '') + resAmt(ty, g.o) : '—') + '</span><span>' + bar(g.a, gmx) + '<b>' + resPc(g.a / Math.max(1e-9, x.built)) + '</b></span></div>').join('') + '</div>' : '<p class="muted">Nothing gained in the log.</p>';
   const smx = Math.max(1e-9, ...x.spendL.map((c) => c.amt));
   const sT = x.spendL.length ? '<div class="hm-ut rs-ut"><div class="hm-uh"><span>On</span><span>Casts</span><span>Spent</span><span>Share</span></div>' + x.spendL.map((c) => '<div class="hm-ur"><span>' + spell(c.id, c.spell) + '</span><span>' + c.n + '</span><span title="' + esc(resUnit(ty, c.amt / c.n) + ' a cast') + '">' + resAmt(ty, c.amt) + '</span><span>' + bar(c.amt, smx) + '<b>' + resPc(c.amt / Math.max(1e-9, x.sA)) + '</b></span></div>').join('') + '</div>' : '<p class="muted">No casts that cost ' + esc(nm) + '.</p>';
   // sat at full: the longest stretches, in time order
   const long = x.runs.filter((u) => u.e - u.s >= 1.5).sort((a, b) => (b.e - b.s) - (a.e - a.s)).slice(0, 8).sort((a, b) => a.pull - b.pull || a.s - b.s);
   const fT = long.length ? '<div class="rs-full">' + long.map((u) => '<span class="rs-fc">' + (one ? '' : '<span class="sub">pull ' + u.pull + '</span> ') + T(u.s) + ' <b>' + Math.round(u.e - u.s) + ' s</b></span>').join('') + '</div>' : '<p class="sub" style="margin:0">Never sat at full for long.</p>';
-  const pT = one ? '' : '<div class="hm-ut rs-ut rs-pl"><div class="hm-uh"><span>Pull</span><span>' + (mana ? 'Left' : 'Wasted') + '</span><span>At full</span><span>' + (mana ? 'Pace' : 'Built') + '</span></div>' + x.per.map(({ w, q }) => '<div class="hm-ur"><span>Pull ' + w.r.item.pull + ' <span class="sub">' + esc(pullLabel(w.r.item)) + '</span></span><span>' + (mana ? (q.lv1 == null ? '—' : resPc(q.lv1)) : resPc(q.share)) + '</span><span>' + secsS(q.fr.capped) + '</span><span>' + (mana ? '<span class="hm-p ' + q.v.st + '">' + esc(q.v.pill) + '</span>' : '<b>' + resAmt(ty, q.built) + '</b>') + '</span></div>').join('') + '</div>';
+  const pT = one ? '' : '<div class="hm-ut rs-ut rs-pl"><div class="hm-uh"><span>Pull</span><span>' + (mana ? 'Left' : 'Wasted') + '</span><span>At full</span><span>' + (mana ? 'Spent' : 'Built') + '</span></div>' + x.per.map(({ w, q }) => '<div class="hm-ur"><span>Pull ' + w.r.item.pull + ' <span class="sub">' + esc(pullLabel(w.r.item)) + '</span></span><span>' + (mana ? (q.lv1 == null ? '—' : resPc(q.lv1)) : resPc(q.share)) + '</span><span>' + secsS(q.fr.capped) + '</span><span><b>' + resAmt(ty, mana ? q.sA : q.built) + '</b></span></div>').join('') + '</div>';
   h += rsSec('Gained from', mana ? 'in full bars of mana' : esc(nm) + ', and what came while they were full', gT) + rsSec('Spent on', (mana ? 'in full bars of mana' : esc(nm)) + (x.nS ? '. Hover a number for one cast\'s cost.' : ''), sT) +
     rsSec('Sat at full', secsS(x.capped) + ' in all' + (x.runs.length ? ', ' + plural(x.runs.length, 'time') : '') + (long.length ? ', the longest' : ''), fT) + (pT ? rsSec('Pull by pull', '', pT) : '');
   return h + '<p class="sub" style="margin:10px 0 0">Click their bar again for the whole raid.</p>';
@@ -14575,14 +14581,9 @@ function resRaid(rows, ty, one) {
   const nm = resName(ty), mana = ty === '0', who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>';
   let h = '<h3 class="nh"><span>The raid</span><small>' + esc(nm) + (one ? '' : ', over the pulls') + '</small></h3>';
   if (mana) {
-    const vs = one ? rows.map((x) => [x, x.per[0].q.v]) : [];
-    const nLow = vs.filter(([, v]) => v.low), nNoPot = nLow.filter(([x]) => !x.pots).length, nSpare = vs.filter(([, v]) => v.spare).length, nFast = vs.filter(([, v]) => v.fast).length, parts = [];
-    if (nLow.length) parts.push(plural(nLow.length, 'healer') + ' ran low on mana' + (nNoPot === nLow.length ? (nLow.length === 1 ? ', with no mana potion' : ', and none used a mana potion') : nNoPot ? ', ' + nNoPot + ' without a mana potion' : ''));
-    if (nFast) parts.push(plural(nFast, 'healer') + ' spent mana faster than the boss lost health');
-    if (nSpare) parts.push(plural(nSpare, 'healer') + ' had mana to spare');
-    if (one) h += '<p class="hm-sum ' + (parts.length ? 'warn' : 'ok') + '">' + (parts.length ? '! ' : '✓\u00a0') + esc(parts.length ? parts.join('; ') + '.' : 'Every healer\'s mana kept pace with the boss\'s health.') + '</p>';
-    h += '<div class="rs-vl">' + rows.map((x) => { const v = one ? x.per[0].q.v : paceNight(x);
-      return '<button type="button" class="rs-vr" data-rn="' + esc(x.p.name) + '">' + avatar(x.p, true) + '<span>' + who(x.p) + ' <span class="hm-p ' + v.st + '">' + esc(v.pill) + '</span></span><span class="rs-vt">' + esc(v.txt) + '</span></button>'; }).join('') + '</div>';
+    // (plain data: each healer's mana at the end, what they spent, and their mana potions; no verdicts)
+    const line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
+    h += rsSec('Each healer', 'mana left at the end' + (one ? '' : ', on average') + ', spent in full bars, and mana potions', rows.map((x) => line(who(x.p) + ' <span class="sub">' + esc(x.p.specName || '') + '</span>', resAmt(ty, x.sA) + ' spent' + (x.pots ? ' · ' + plural(x.pots, 'mana potion') : ''), x.end == null ? '—' : resPc(x.end))).join(''));
   } else {
     // where the waste came from: each spell that gave it while they were full, and who; then regeneration while full
     const by = new Map();
@@ -14592,7 +14593,7 @@ function resRaid(rows, ty, one) {
     const line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
     h += rsSec('Where the waste came from', esc(nm) + ' built while already full', wl.length ? wl.map((o) => line(o.html + ' <span class="sub">by</span> ' + o.who.sort((a, b) => b[1] - a[1]).slice(0, 3).map(([p, v]) => who(p) + (o.who.length > 1 ? ' <span class="sub">' + resAmt(ty, v) + '</span>' : '')).join(', ') + (o.who.length > 3 ? ' <span class="sub">and ' + (o.who.length - 3) + ' more</span>' : ''), '', resAmt(ty, o.v))).join('') : '<p class="sub" style="margin:0">Nothing went to waste.</p>');
     const lg = rows.flatMap((x) => x.runs.map((u) => ({ ...u, p: x.p }))).filter((u) => u.e - u.s >= 2).sort((a, b) => (b.e - b.s) - (a.e - a.s)).slice(0, 6);
-    h += rsSec('Longest at full', 'the time they could have spent it', lg.length ? lg.map((u) => line(who(u.p), (one ? '' : 'pull ' + u.pull + ' · ') + 'from ' + T(u.s), Math.round(u.e - u.s) + ' s')).join('') : '<p class="sub" style="margin:0">Nobody sat at full for long.</p>');
+    h += rsSec('Longest at full', 'time at the top, in one stretch', lg.length ? lg.map((u) => line(who(u.p), (one ? '' : 'pull ' + u.pull + ' · ') + 'from ' + T(u.s), Math.round(u.e - u.s) + ' s')).join('') : '<p class="sub" style="margin:0">Nobody sat at full for long.</p>');
   }
   return h;
 }
@@ -18699,8 +18700,9 @@ function castView(list, one) {
     // (through the night, with 4 pulls or more of 10 s casting: the later half's pace against the first half's)
     else { const v = a.per.filter((o) => o.c.al >= 10).map((o) => o.c.cpm), h = v.length >> 1, m = (l) => l.reduce((s, y) => s + y, 0) / l.length;
       if (v.length >= 4) { a.trE = m(v.slice(0, h)); a.trL = m(v.slice(v.length - h)); a.tr = a.trE ? (a.trL - a.trE) / a.trE : null; } } }
-  // (the slowest for their spec first, then those with no sim to measure against, by their pace against their usual)
-  all.sort((a, b) => (a.f == null) - (b.f == null) || (a.f != null ? a.f - b.f : (a.d ?? 0) - (b.d ?? 0) || b.cpm - a.cpm));
+  // (plain data, like Warcraft Logs (your call, Oct 18): the most casts a minute first, no pace or verdicts; how each
+  // player's casting compares with their spec's top players is on their Spec checks page)
+  all.sort((a, b) => b.cpm - a.cpm);
   const has = new Set(all.map((a) => a.p.role || 'dps')), rc = roleCur(has), rows = all.filter((a) => rc === 'all' || (a.p.role || 'dps') === rc);
   if (S.castSel && !acc.has(S.castSel)) S.castSel = null;
   const sel = S.castSel ? acc.get(S.castSel) : null;
@@ -18708,36 +18710,32 @@ function castView(list, one) {
   const slow = all.filter((a) => a.f != null && a.f < 0.75), withSim = all.filter((a) => a.f != null);
   const below = one ? all.filter((a) => a.d != null && a.d <= -0.1) : [], withUs = one ? all.filter((a) => a.us).length : 0;
   const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).sort((x, y) => y.len - x.len)[0], names = (l) => l.slice(0, 3).map((a) => a.p.name).join(', ') + (l.length > 3 ? ' and ' + (l.length - 3) + ' more' : '');
-  const tiles = [plTile(plIco('spell_nature_lightning'), 'Slow for their spec', withSim.length ? String(slow.length) : '—', !withSim.length ? 'na' : slow.length ? 'bad' : 'ok', !withSim.length ? 'no pace for these specs yet' : slow.length ? names(slow) + ', under 75% of the pace' : 'everyone at 75% of their spec\'s pace or more'),
-    one ? plTile(plIco('ability_warrior_innerrage'), 'Below their usual', withUs ? String(below.length) : '—', !withUs ? 'na' : below.length ? 'warn' : 'ok', !withUs ? 'needs 2 more pulls of this boss read' : below.length ? names(below) + ', 10% or more under' : 'everyone at their usual pace', !withUs)
-      : plTile(plIco('inv_misc_note_01'), 'On pace', withSim.length ? Math.round(100 * withSim.filter((a) => a.f >= 0.9).length / withSim.length) + '<span>%</span>' : '—', 'na', 'of the players with a pace, over ' + plural(list.length, 'pull'), true),
-    plTile(plIco('inv_misc_pocketwatch_01'), 'Longest gap', lg ? Math.round(lg.len) + '<span> s</span>' : '—', lg && lg.len >= 8 ? 'warn' : 'na', lg ? lg.p.name + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.t) + (lg.mv === true ? ', while moving' : lg.mv === false ? ', while standing still' : '') : 'no gaps of 4 s or more', !(lg && lg.len >= 8))];
-  const mid = cstMed(withSim.map((a) => a.f)), head = { v: withSim.length ? slow.length + '<span> slow</span>' : fmtCpm(cstMed(all.map((a) => a.cpm))) + '<span>/min</span>', s: withSim.length ? 'the middle player at ' + Math.round(100 * mid) + '% of their spec\'s pace' : 'casts per minute, the middle player' };
+  const most = all.slice().sort((a, b) => b.n - a.n)[0], midCpm = cstMed(all.map((a) => a.cpm));
+  const tiles = [plTile(plIco('spell_nature_lightning'), 'Casts per minute', fmtCpm(midCpm), 'na', 'the middle player, while alive', true),
+    plTile(plIco('inv_misc_note_01'), 'Most casts', most ? String(most.n) : '—', 'na', most ? most.p.name + (one ? '' : ', over ' + plural(list.length, 'pull')) : '', true),
+    plTile(plIco('inv_misc_pocketwatch_01'), 'Longest gap', lg ? Math.round(lg.len) + '<span> s</span>' : '—', 'na', lg ? lg.p.name + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.t) + (lg.mv === true ? ', while moving' : lg.mv === false ? ', while standing still' : '') : 'no gaps of 4 s or more', true)];
+  const head = { v: fmtCpm(midCpm) + '<span>/min</span>', s: 'casts per minute, the middle player' };
   // ---- the tiles (no charts here: the bars and the details say it) ----
   const top = '<div class="pts n3">' + tiles.join('') + '</div>';
-  // ---- a bar per player: their casts per minute, a tick at their spec's sim pace ----
-  const mx = Math.max(1, ...rows.map((a) => Math.max(a.cpm, a.sim ? a.sim.v : 0))) * 1.05;
+  // ---- a bar per player: their casts per minute, and their casts in all ----
+  const mx = Math.max(1, ...rows.map((a) => a.cpm)) * 1.05;
   const bars = rows.map((a, i) => { const on = sel === a;
-    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' cst-r', attrs: ' type="button" data-cn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * a.cpm / mx), 'm']], tick: a.sim ? 100 * a.sim.v / mx : null, v: fmtCpm(a.cpm),
-      sub: a.f != null ? '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>' : '<span class="sub">—</span>', chips: one ? (a.d != null && Math.abs(a.d) >= 0.05 ? ' ' + dlt(a.d) : '') : a.tr != null && Math.abs(a.tr) >= 0.03 ? ' ' + dlt(a.tr) : '' }) + (on ? '<div class="pf-inl">' + castDetail(a, one, all) + '</div>' : ''); }).join('');
-  const left = '<div class="panel pf-bars cst-bars"><h3 class="nh"><span>Casts per minute</span><small>While alive. The tick is their spec\'s top players\' pace, and the share of it is on the right.' + (one ? ' ▲▼ compares with their usual.' : ' · over ' + plural(list.length, 'pull') + ' ▲▼ compares the later pulls with the first.') + '</small>' + roleChips(has) + '</h3>' +
-    (bars ? cbHead('Per min', 'Of pace') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
-  return { head, html: top + '<div class="pf-cols">' + left + '<div class="panel pf-det cst-det">' + castRaid(all, one) + '</div></div>' + castHow };
+    return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' cst-r', attrs: ' type="button" data-cn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, 100 * a.cpm / mx), 'm']], v: fmtCpm(a.cpm),
+      sub: '<span class="sub">' + a.n + '</span>' }) + (on ? '<div class="pf-inl">' + castDetail(a, one, all) + '</div>' : ''); }).join('');
+  const left = '<div class="panel pf-bars cst-bars"><h3 class="nh"><span>Casts per minute</span><small>while alive' + (one ? '' : ', over ' + plural(list.length, 'pull')) + '. Click a player for every spell they pressed.</small>' + roleChips(has) + '</h3>' +
+    (bars ? cbHead('Per min', 'Casts') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
+  // (no side panel (your call, Oct 18): the bars say it, and a player opens in place)
+  return { head, html: top + '<div class="pf-cols solo">' + left + '</div>' + castHow };
 }
-const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log: not auto attacks, and not the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Per minute alive (less any time mind controlled), up to the wipe filter: the way Warcraft Logs counts it. <b>The pace</b> is what the spec\'s top players press on this boss: the middle of its 5 best logs on Warcraft Logs (Mythic where enough guilds have killed it, otherwise Heroic), read on October 17. When a boss has too few, it\'s the spec\'s top logs across the raid, and failing that SimulationCraft\'s sim on a target dummy. <b>On pace</b> is 90% of it or more, <b>A little slow</b> 75%, <b>Slow</b> under that. Every spec has a pace this way, healers too. <b>Gaps</b>: 4 seconds or more without a cast that weren\'t forced, marked moving when they walked 4 yards or more. <b>▲▼ over All pulls</b>: each player\'s later half of pulls against their first half. Later pulls often get further into the fight, which can change the pace a little.</div></details>';
+const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log. Auto attacks aren\'t counted, and neither are the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Casts per minute are counted while they were alive (less any time mind controlled), up to the wipe filter, the way Warcraft Logs counts them. A gap is 4 seconds or more without a cast that wasn\'t forced, and it\'s marked "moving" when they walked 4 yards or more. How each player\'s casting compares with the top players of their spec is on their Spec checks page.</div></details>';
 // no one picked: the slowest against their spec, the biggest drops against their usual, and the longest gaps
 function castRaid(all, one) {
   const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
   let h = '<h3 class="nh"><span>The raid</span><small>casts' + (one ? '' : ', over the pulls') + '</small></h3>';
-  const sl = all.filter((a) => a.f != null).sort((a, b) => a.f - b.f).slice(0, 6);
-  h += rsSec('Furthest under their spec\'s pace', 'casts a minute, and the pace', sl.length ? sl.map((a) => line(who(a.p) + ' <span class="sub">' + esc(a.p.specName || '') + '</span>', fmtCpm(a.cpm) + ' of ' + fmtCpm(a.sim.v), '<span class="cst-f ' + paceSt(a.f) + '">' + Math.round(100 * a.f) + '%</span>')).join('') : '<p class="sub" style="margin:0">No pace for these specs yet.</p>');
-  if (one) { const dr = all.filter((a) => a.d != null && a.d < -0.05).sort((a, b) => a.d - b.d).slice(0, 5);
-    h += rsSec('Slower than their usual', 'against their own other pulls of this boss', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.cpm) + ', usually ' + fmtCpm(a.us.cpm), dlt(a.d))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.us) ? 'Nobody was slower than usual.' : 'Needs 2 more pulls of this boss read.') + '</p>'); }
-  if (!one) { const dr = all.filter((a) => a.tr != null && a.tr <= -0.05).sort((a, b) => a.tr - b.tr).slice(0, 5);
-    h += rsSec('Slowed down later on', 'the later pulls against the first', dr.length ? dr.map((a) => line(who(a.p), fmtCpm(a.trE) + ' → ' + fmtCpm(a.trL) + ' a minute', dlt(a.tr))).join('') : '<p class="sub" style="margin:0">' + (all.some((a) => a.tr != null) ? 'Nobody slowed down 5% or more.' : 'Needs 4 pulls or more.') + '</p>'); }
-  // (the lowest cast efficiency: a spell with a cooldown that could have gone out 3 times or more)
-  const ef = all.flatMap((a) => (a.eff ? a.eff.list.filter((o) => o.judged && o.f != null && o.poss >= 3).map((o) => ({ a, o })) : [])).sort((x, y) => x.o.f - y.o.f).slice(0, 6), efWait = all.some((a) => a.eff && a.eff.wait);
-  if (all.some((a) => a.eff)) h += rsSec('Lowest cast efficiency', 'casts against what was possible', ef.length ? ef.map(({ a, o }) => line(who(a.p) + ' ' + spell(o.id, o.name), o.n + ' of ' + o.poss, '<span class="cst-f ' + paceSt(o.f) + '">' + Math.round(100 * o.f) + '%</span>')).join('') : '<p class="sub" style="margin:0">' + (efWait ? 'Reading the spells\' cooldowns…' : 'No spells with a cooldown to measure.') + '</p>');
+  // (plain data: the raid's most-cast spells, who pressed them most, and the longest gaps)
+  const sp = new Map(); for (const a of all) for (const s of a.abL) { let o = sp.get(s.name); if (!o) sp.set(s.name, o = { name: s.name, id: s.id, n: 0, top: null }); o.n += s.n; if (!o.top || s.n > o.top.n) o.top = { p: a.p, n: s.n }; }
+  const spL = [...sp.values()].sort((x, y) => y.n - x.n).slice(0, 8);
+  h += rsSec('Most-cast spells', 'every player together, and who pressed each one most', spL.length ? spL.map((o) => line(spell(o.id, o.name), 'most by ' + who(o.top.p) + ' (' + o.top.n + ')', String(o.n))).join('') : '<p class="sub" style="margin:0">No casts.</p>');
   const lg = all.flatMap((a) => a.gaps.map((g) => ({ ...g, p: a.p }))).slice().sort((x, y) => y.len - x.len).slice(0, 6);
   h += rsSec('Longest gaps', 'not dead, and not while the raid was waiting', lg.length ? lg.map((g) => line(who(g.p), (one ? '' : 'pull ' + g.pull + ' · ') + 'from ' + T(g.t) + (g.mv === true ? ', while moving' : g.mv === false ? ', while standing still' : ''), Math.round(g.len) + ' s')).join('') : '<p class="sub" style="margin:0">No gaps of 4 s or more.</p>');
   return h;
@@ -18745,24 +18743,20 @@ function castRaid(all, one) {
 // the picked player: their pace, each spell (casts, per minute, against their usual), their gaps, what wasn't counted
 function castDetail(a, one, all) {
   let h = '<h3 class="nh">' + avatar(a.p, true) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span><small>' + esc(a.p.specName || '') + (one ? '' : ' · ' + plural(a.per.length, 'pull')) + '</small><button class="btn sm" id="csClose" type="button">Show the raid</button></h3>';
-  const ss = a.sim && a.sim.sim, simTxt = a.sim ? fmtCpm(a.cpm) + ' casts a minute alive: ' + Math.round(100 * a.f) + '% of the pace of ' + paceSrc(a.sim) + ' (' + fmtCpm(a.sim.v) + (a.sim.src !== 'sim' ? ', the middle of ' + a.sim.n : '') + ').' +
-      (a.sim.src !== 'sim' && ss ? ' SimulationCraft\'s target dummy presses ' + fmtCpm(ss.v) + '.' : '')
-    : fmtCpm(a.cpm) + ' casts a minute alive. There\'s no pace for ' + (a.p.specName || 'this spec') + ' yet, so it\'s measured against their own pulls and the same spec here.';
-  h += '<p class="rs-v"><span class="hm-p ' + paceSt(a.f) + '">' + pacePill(a.f) + '</span>' + esc(simTxt) + '</p>';
+  // (plain data: their numbers, every spell, their gaps; how it compares with their spec's top players is on Spec checks)
   const peers = all.filter((b) => b !== a && b.p.specId && b.p.specId === a.p.specId).sort((x, y) => y.cpm - x.cpm);
-  h += '<div class="rs-nums">' + [['Casts', String(a.n), 'pressed'], ['Per minute', fmtCpm(a.cpm), 'while alive'], ['Their spec\'s pace', a.sim ? fmtCpm(a.sim.v) : '—', a.sim ? (a.sim.src === 'boss' ? 'top logs, this boss' : a.sim.src === 'raid' ? 'top logs, the raid' : 'the sim') : 'none yet'], one ? ['Their usual', a.us ? fmtCpm(a.us.cpm) : '—', a.us ? 'over ' + plural(a.us.n, 'other pull') : 'needs 2 more pulls'] : ['Best pull', fmtCpm(Math.max(0, ...a.per.filter(({ c }) => c.al >= 60).map(({ c }) => c.cpm))), 'a minute alive or more']]
+  h += '<div class="rs-nums">' + [['Casts', String(a.n), 'pressed'], ['Per minute', fmtCpm(a.cpm), 'while alive'], ['Alive', T(a.al), one ? 'up to the wipe filter' : 'over ' + plural(a.per.length, 'pull')], ['Gaps', String(a.gaps.length), '4 s or more']]
     .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + v + '</b>' + (s ? '<small>' + esc(s) + '</small>' : '') + '</div>').join('') + '</div>';
   if (peers.length) h += '<p class="sub" style="margin:-4px 0 10px">Same spec ' + (one ? 'this pull' : 'over these pulls') + ': ' + peers.map((b) => '<span class="nm" style="color:' + b.p.color + '">' + esc(b.p.name) + '</span> ' + fmtCpm(b.cpm)).join(', ') + '</p>';
-  // each spell: casts, per minute, and (one pull) their usual for it, low ones marked
-  const smx = Math.max(1, ...a.abL.map((s) => s.n)), us = one && a.us ? a.us.ab : null;
+  // each spell: casts, per minute and its share of their casts
+  const smx = Math.max(1, ...a.abL.map((s) => s.n)), us = null;
   const tb = '<div class="hm-ut rs-ut cst-ut' + (us ? ' u5' : '') + '"><div class="hm-uh"><span>Spell</span><span>Casts</span><span>Per min</span>' + (us ? '<span>Usual</span>' : '') + '<span>Share</span></div>' + a.abL.map((s) => { const pm = 60 * s.n / Math.max(1, a.al), u = us ? us.get(s.name) : null, low = u != null && u >= 1 && pm < u * 0.85;
     return '<div class="hm-ur"><span>' + spell(s.id, s.name) + '</span><span>' + s.n + '</span><span' + (low ? ' class="rs-w" title="Under their usual for this spell"' : '') + '>' + pm.toFixed(1) + '</span>' + (us ? '<span class="sub">' + (u != null ? u.toFixed(1) : '—') + '</span>' : '') + '<span><i style="width:' + Math.max(1, Math.round(100 * s.n / smx)) + '%;background:' + a.p.color + '"></i><b>' + resPc(s.n / Math.max(1, a.n)) + '</b></span></div>'; }).join('') + '</div>';
   const gp = a.gaps.slice(0, 8).sort((x, y) => (x.pull || 0) - (y.pull || 0) || x.t - y.t);
   const gT = gp.length ? '<div class="rs-full">' + gp.map((g) => '<span class="rs-fc">' + (one ? '' : '<span class="sub">pull ' + g.pull + '</span> ') + T(g.t) + ' <b>' + Math.round(g.len) + ' s</b>' + (g.mv === true ? ' <span class="sub">moving</span>' : g.mv === false ? ' <span class="sub">still</span>' : '') + '</span>').join('') + '</div>' : '<p class="sub" style="margin:0">No gaps of 4 s or more.</p>';
-  const pT = one ? '' : '<div class="hm-ut rs-ut rs-pl"><div class="hm-uh"><span>Pull</span><span>Per min</span><span>Of pace</span><span>Casts</span></div>' + a.per.map(({ w, c }) => { const f = a.sim ? c.cpm / a.sim.v : null; return '<div class="hm-ur"><span>Pull ' + w.r.item.pull + ' <span class="sub">' + esc(pullLabel(w.r.item)) + '</span></span><span>' + fmtCpm(c.cpm) + '</span><span>' + (f != null ? '<span class="cst-f ' + paceSt(f) + '">' + Math.round(100 * f) + '%</span>' : '—') + '</span><span><b>' + c.n + '</b></span></div>'; }).join('') + '</div>';
+  const pT = one ? '' : '<div class="hm-ut rs-ut rs-pl"><div class="hm-uh"><span>Pull</span><span>Per min</span><span>Alive</span><span>Casts</span></div>' + a.per.map(({ w, c }) => '<div class="hm-ur"><span>Pull ' + w.r.item.pull + ' <span class="sub">' + esc(pullLabel(w.r.item)) + '</span></span><span>' + fmtCpm(c.cpm) + '</span><span>' + T(c.al) + '</span><span><b>' + c.n + '</b></span></div>').join('') + '</div>';
   const pr = [...a.procs].sort((x, y) => y[1] - x[1]), notC = (a.auto ? plural(a.auto, 'auto attack') : '') + (pr.length ? (a.auto ? ', and ' : '') + plural(pr.reduce((s, [, v]) => s + v, 0), 'proc') + ' (' + pr.slice(0, 3).map(([k, v]) => k + ' ' + v).join(', ') + ')' : '');
-  if (a.eff) h += rsSec('Cast efficiency', 'spells with a cooldown that do damage or healing. Big cooldowns are on Cooldowns.', effTable(a, one));
-  h += rsSec('Every spell they pressed', 'most first' + (us ? '. Red means under their usual.' : ''), tb) + rsSec('Gaps', a.gaps.length ? plural(a.gaps.length, 'gap') + ' of 4 s or more' : '', gT) + (pT ? rsSec('Pull by pull', '', pT) : '');
+  h += rsSec('Every spell they pressed', 'most first', tb) + rsSec('Gaps', a.gaps.length ? plural(a.gaps.length, 'gap') + ' of 4 s or more' : '', gT) + (pT ? rsSec('Pull by pull', '', pT) : '');
   if (notC) h += '<p class="sub" style="margin:10px 0 0">Not counted: ' + esc(notC) + '.</p>';
   return h + '<p class="sub" style="margin:6px 0 0">Click their bar again for the whole raid.</p>';
 }

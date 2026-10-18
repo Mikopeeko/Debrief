@@ -173,6 +173,24 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 204: Performance as plain data, like Warcraft Logs (your call)
+Everything outside Spec checks now shows numbers and charts, with no verdicts (no ✕ / ! marks, no grade colors).
+- **Casts:** the most casts a minute first, with each player's total casts. No "pace" against top players, no "slow for
+  their spec", no "below their usual" or cast efficiency. Click a player for every spell they pressed, their gaps and
+  pull by pull. (How casting compares with top players is on Spec checks.)
+- **Resources:** plain boxes (most wasted, the middle player's waste, longest at full). The healers' "On pace" /
+  "Spent fast" pills and the red marks on wasted numbers are gone; the wasted amounts stay as numbers.
+- **Damage, Healing:** "Lost to deaths" is a plain number. **Through the night** (all pulls) is no longer green/amber.
+- **Cooldowns:** "used of possible" isn't colored any more, and "a raid cooldown, so half of them is plenty" is gone.
+- **Buffs:** it opens on the raid's most common buff with every player's uptime of it (like Warcraft Logs), not on a
+  count of how many buffs each player had. Pick another on the right, or search.
+- **Side panels removed** (your note): Casts, Resources, Damage, Damage taken, Cooldowns, Utility and Survivability are
+  one full-width list now; a player still opens in place. Kept: Buffs (it's where you pick a buff) and Damage into adds
+  (its set-by-set panel is part of that view).
+- Utility and Survivability were plain already. Spec checks is unchanged.
+- [ ] Your call: **Power Infusion** still grades every cast (good / could be better / poor), shows "Biggest win: give it
+  to X instead", "Left on the table" and a plan for the next pull. Plain data would remove all of that coaching.
+
 ## 2026-10-18, round 203: The Report card is gone (your call)
 Your direction for Performance: Spec checks stays as it is (it reviews each player's own play), and everything else
 becomes plain data and charts, like Warcraft Logs but easier to read.
