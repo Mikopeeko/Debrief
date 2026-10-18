@@ -87,6 +87,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 161: Holy Shock with an Infusion waiting, fairer for other builds
+- [x] **Your question: is your casting like Clarius's?** Yes: Holy Shock, Eternal Flame and Flash of Light about 11 to 13 a
+  minute each, like their two Beacon of Virtue kills. The differences: you press Judgment more (3 a minute, they 0.5 to 1),
+  and you lost 8 Infusions to Holy Lights cast while you still held one (they lost 2).
+- [x] **The fix (your go-ahead):** on Clarius's Beacon of Faith kill the line said "away from Beacon of Virtue" and was red
+  at 19 presses with a guessed 1.38M. Now it only mentions Beacon of Virtue when you play it, it's yellow at most, and its
+  cost counts only the Infusions it really lost: a new one landing on top of the one you held right after the press
+  (Clarius: 2 of the 19, about 362K). Clarius's kill went from 94 to 97; yours stays 94.
+- [x] **Found while checking:** Warcraft Logs reports don't show a new Infusion landing on a full stack of 2, so a few
+  losses can't be seen. The line says so.
+- [ ] Later (your call): other builds (Beacon of Faith, Lightsmith, Avenging Crusader) get their own rules.
+
 ## 2026-10-17, round 160: What each mistake cost, Holy Light overhealing, and Holy Shock with an Infusion re-checked
 - [x] **Your note: double-check Holy Shock with an Infusion waiting.** You were right, it's a misplay: Wowhead, Icy Veins
   and WoWAnalyzer all spend the Infusion on Flash of Light first, because a Holy Shock can bring a new Infusion that
