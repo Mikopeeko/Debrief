@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Performance Controls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49; --text: #ece8df; --muted: #98a0ad; --faint: #6c7381; --gold: #e6b450; --blue: #4fb6e8; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Barlow, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 28px 16px 60px; }
+h1 { font-size: 26px; margin: 0 0 4px; }
+.lead { color: var(--muted); margin: 0 0 22px; max-width: 780px; }
+.opt { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 0 0 18px; }
+.opt.pick { border-color: var(--gold); box-shadow: inset 4px 0 0 var(--gold); }
+.opt h2 { margin: 0; font-size: 19px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: var(--raised); color: var(--muted); }
+.tag.rec { background: var(--gold); color: #1b1406; }
+.sub { color: var(--muted); font-size: 14px; margin: 4px 0 14px; }
+.verdict { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--raised); font-size: 14px; }
+.verdict b { color: #f3c969; } .pick .verdict b { color: var(--gold); }
+.stage { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow: hidden; }
+.cap { font-size: 12px; color: var(--faint); margin: 8px 2px 0; }
+/* shared bits */
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg span { padding: 5px 12px; border-radius: 6px; color: var(--muted); font-weight: 500; font-size: 14px; white-space: nowrap; }
+.seg span.on { background: var(--raised); color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); }
+.seg small { color: var(--faint); font-size: 12px; margin-left: 4px; }
+.search { flex: 1; min-width: 160px; max-width: 280px; height: 34px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--faint); font-size: 14px; display: flex; align-items: center; padding: 0 12px; margin-left: auto; }
+.note { color: var(--faint); font-size: 13px; white-space: nowrap; } .note b { color: var(--muted); }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.tile .l { color: var(--muted); font-size: 13px; } .tile .v { font-size: 22px; font-weight: 700; } .tile .s { color: var(--faint); font-size: 12.5px; }
+.list { margin-top: 12px; height: 56px; border: 1px dashed var(--line2); border-radius: 10px; display: grid; place-items: center; color: var(--faint); font-size: 13px; }
+/* option A: grouped sub-tabs, like the main tab bar */
+.subtabs { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; margin-bottom: 12px; }
+.grp { display: flex; flex-direction: column; flex: none; } .grp > b { font-size: 10px; letter-spacing: .9px; text-transform: uppercase; color: var(--faint); padding: 0 11px 2px; font-weight: 700; white-space: nowrap; }
+.grp > div { display: flex; } .st { padding: 6px 11px 8px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; font-size: 14px; }
+.st.on { color: var(--text); border-bottom-color: var(--gold); }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin: 8px 6px 6px; flex: none; }
+/* option B: a side list */
+.side { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 14px; }
+.nav { border-right: 1px solid var(--line); padding-right: 12px; } .nav b { display: block; font-size: 10px; letter-spacing: .9px; text-transform: uppercase; color: var(--faint); margin: 10px 0 3px; } .nav b:first-child { margin-top: 0; }
+.nav span { display: block; padding: 4px 8px; border-radius: 6px; color: var(--muted); font-size: 14px; } .nav span.on { background: var(--raised); color: var(--text); box-shadow: inset 3px 0 0 var(--gold); }
+/* option C: a slim dropdown */
+.dd { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-weight: 600; font-size: 14px; }
+.dd i { color: var(--faint); font-style: normal; font-size: 12px; } .dd em { color: var(--faint); font-style: normal; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.phone { width: 340px; max-width: 100%; margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: var(--bg); overflow: hidden; }
+.phone .row { gap: 6px; } .phone .seg span { padding: 4px 9px; font-size: 13px; } .phone .search { max-width: none; min-width: 0; flex-basis: 100%; margin: 0; }
+/* the current bar, roughly */
+.cur .pick2 { display: inline-flex; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; border: 1px solid var(--line2); border-radius: 10px; background: var(--raised); box-shadow: inset 0 -2px 0 var(--blue); }
+.cur .pick2 .ic { width: 30px; height: 30px; border-radius: 6px; background: #22406a; } .cur .pick2 small { display: block; font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); font-weight: 600; } .cur .pick2 strong { font-size: 16px; }
+.cur .wipe { color: var(--muted); font-size: 14px; border-bottom: 1px solid var(--line2); padding-bottom: 2px; }
+ul.notes { color: var(--muted); font-size: 14px; margin: 6px 0 0; padding-left: 20px; } ul.notes li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Performance: the controls at the top</h1>
+<p class="lead">Your bar today, then three tidier ways to lay it out. Only the controls change. The lists and charts underneath stay the same, and the boxes at the top go (your note).</p>
+
+<section class="opt cur">
+  <h2>Today <span class="tag">current</span></h2>
+  <p class="sub">Four different control styles in one row: a big dropdown card with a glow (which hides the 11 views), two pill switches, a line of text that looks like a button, and a search box of a different height. The dropdown's "5% wasted" repeats the first box.</p>
+  <div class="stage">
+    <div class="row"><span class="pick2"><span class="ic"></span><span><small>How they played</small><strong>Resources</strong> <span style="color:#c9ced8">5% wasted</span></span> <span style="color:var(--faint)">▾</span></span>
+      <span class="seg"><span>All pulls <small>32</small></span><span class="on">Pull #32 <small>wipe</small></span></span>
+      <span class="seg"><span class="on">Whole pull</span><span>P1</span><span>P2</span></span>
+      <span class="wipe">Counted up to <b style="color:var(--text)">3:28</b>, the wipe filter</span>
+      <span class="search">Search players, spells, buffs…</span></div>
+  </div>
+</section>
+
+<section class="opt pick">
+  <h2>Option A: the views as tabs, like the main tab bar <span class="tag rec">my pick</span></h2>
+  <p class="sub">All 11 views in a row of tabs, under small group labels, the same look as the main tabs you picked. One click to any view, and you can see what's there. Below that, one tidy row: the two switches, the same height as the search box, with the wipe filter as a small note.</p>
+  <div class="stage">
+    <div class="subtabs">
+      <div class="grp"><b>How they played</b><div><span class="st">Spec checks</span><span class="st">Casts</span><span class="st on">Resources</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Output</b><div><span class="st">Damage</span><span class="st">Healing</span><span class="st">Damage taken</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Cooldowns and buffs</b><div><span class="st">Cooldowns</span><span class="st">Power Infusion</span><span class="st">Buffs</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Toolkit</b><div><span class="st">Utility</span><span class="st">Survivability</span></div></div>
+    </div>
+    <div class="row"><span class="seg"><span class="on">Pull #32 <small>wipe</small></span><span>All pulls <small>32</small></span></span>
+      <span class="seg"><span class="on">Whole pull</span><span>P1</span><span>P2</span></span>
+      <span class="note">Counted up to <b>3:28</b> (wipe filter)</span>
+      <span class="search">Search players, spells, buffs…</span></div>
+    
+    <div class="list">the list of players, as now</div>
+  </div>
+  <div class="phone">
+    <div class="subtabs"><div class="grp"><b>How they played</b><div><span class="st">Spec checks</span><span class="st">Casts</span><span class="st on">Resources</span></div></div><span class="sep"></span><div class="grp"><b>Output</b><div><span class="st">Damage</span><span class="st">Healing</span></div></div></div>
+    <div class="row"><span class="seg"><span class="on">Pull #32</span><span>All pulls</span></span><span class="seg"><span class="on">Whole</span><span>P1</span><span>P2</span></span><span class="search">Search…</span></div>
+  </div>
+  <p class="cap">On a phone the view tabs scroll sideways, like the main tabs, and the search box drops to its own line.</p>
+  <p class="verdict"><b>Why I'd pick it:</b> it matches the main tab bar, so the whole site looks like one thing; every view is one click away instead of two; and the controls all line up at one height. Warcraft Logs uses tabs for its views too, so raiders will know it.</p>
+</section>
+
+<section class="opt">
+  <h2>Option B: the views in a list down the side <span class="tag">roomy</span></h2>
+  <p class="sub">The 11 views as a short list on the left, grouped, with the switches and search across the top of the page. On a phone the list turns into a dropdown.</p>
+  <div class="stage side">
+    <div class="nav"><b>How they played</b><span>Spec checks</span><span>Casts</span><span class="on">Resources</span><b>Output</b><span>Damage</span><span>Healing</span><span>Damage taken</span><b>Cooldowns and buffs</b><span>Cooldowns</span><span>Power Infusion</span><span>Buffs</span><b>Toolkit</b><span>Utility</span><span>Survivability</span></div>
+    <div><div class="row"><span class="seg"><span class="on">Pull #32</span><span>All pulls</span></span><span class="seg"><span class="on">Whole pull</span><span>P1</span><span>P2</span></span><span class="search">Search…</span></div>
+      <div class="note" style="margin-top:6px">Counted up to <b>3:28</b> (wipe filter)</div>
+      </div>
+  </div>
+  <p class="verdict"><b>Trade-off:</b> very clear, and room for more views later, but it takes about 200 pixels of width from every view, and the page would no longer look like the rest of the site.</p>
+</section>
+
+<section class="opt">
+  <h2>Option C: keep a dropdown, but slim <span class="tag">smallest change</span></h2>
+  <p class="sub">The same dropdown, cut down to the height of the switches, with no glow and no repeated number. Everything sits in one even row.</p>
+  <div class="stage">
+    <div class="row"><span class="dd"><em>View</em> Resources <i>▾</i></span>
+      <span class="seg"><span class="on">Pull #32 <small>wipe</small></span><span>All pulls <small>32</small></span></span>
+      <span class="seg"><span class="on">Whole pull</span><span>P1</span><span>P2</span></span>
+      <span class="note">Counted up to <b>3:28</b> (wipe filter)</span>
+      <span class="search">Search players, spells, buffs…</span></div>
+  </div>
+  <p class="verdict"><b>Trade-off:</b> the tidiest bar, but the views stay hidden behind a click, which is the main thing that makes the page feel harder to move around.</p>
+</section>
+
+<section class="opt">
+  <h2>Things I'd do whichever you pick</h2>
+  <ul class="notes">
+    <li>Swap the order of the pull switch to <b>Pull #32 | All pulls</b>, so the one you're on usually comes first.</li>
+    <li>Make the wipe filter a small note, not underlined text that looks like a button.</li>
+    <li>All controls the same height (34 pixels), same corners and same gold underline when picked.</li>
+    <li>The boxes at the top go (your note): this section shows facts, not scores. The view name loses its number too ("5% wasted").</li>
+  </ul>
+</section>
+</main>
+</body>
+</html>

@@ -13272,8 +13272,9 @@ function perf() {
     const lost = rs.reduce((s, x) => s + (x.al > 0 ? x.alive * Math.max(0, wl - x.al) : 0), 0), lf = lost / Math.max(1, tot + lost);
     return plTile(plIco('inv_misc_bone_humanskull_01'), 'Lost to deaths', !tot ? '—' : lost && lf < 0.01 ? '<1<span>%</span>' : Math.round(100 * lf) + '<span>%</span>', 'na', lost >= 1 ? 'about ' + C(lost) + ' ' + what : 'nothing lost to deaths', true); }; // (plain data: no verdict color)
   let tiles;
-  if (kind === 'dmg') tiles = [lostTile(null, 'the dead would have done')];
-  else if (kind === 'heal') tiles = [lostTile('healer', 'healing the dead healers would have done')];
+  // (no boxes (your call, Oct 18): this section shows facts, not summaries)
+  if (false) tiles = [lostTile(null, 'the dead would have done')];
+  else if (false) tiles = [lostTile('healer', 'healing the dead healers would have done')];
   else tiles = []; // (Damage taken: what hit the raid, avoidable damage and deaths are on Mechanics)
   // (the tiles sit beside the chart, below)
   const tilesH = tiles.length ? '<div class="pts pf-side n' + tiles.length + '">' + tiles.join('') + '</div>' : '';
@@ -13696,9 +13697,8 @@ async function perfNight(r0, kind, scopeSw) {
   }
   const what = { dmg: 'damage', heal: 'healing', taken: 'damage taken' }[kind], best = pulls.filter((x) => x.wl >= (phSel ? MIN : 60)).reduce((m, x) => (!m || x.ps > m.ps ? x : m), null);
   const half = Math.floor(pulls.length / 2), first = half ? pulls.slice(0, half).reduce((s, x) => s + x.ps, 0) / half : 0, last = half ? pulls.slice(-half).reduce((s, x) => s + x.ps, 0) / half : 0;
-  h += '<div class="pts n3">' + plTile(plIco('achievement_boss_lichking'), 'Best pull', best ? C(best.ps) + '<span>/s</span>' : '—', 'na', best ? 'pull ' + best.n + ' · ' + best.label : '') +
-    plTile(plIco('spell_holy_borrowedtime'), 'Through the night', half >= 3 ? (last >= first ? '▲ ' : '▼ ') + Math.abs(Math.round(100 * (last - first) / Math.max(1, first))) + '<span>%</span>' : '—', 'na', half >= 3 ? 'the last ' + half + ' pulls against the first ' + half + (!phSel && keys.length > 1 ? '. Pick a phase to compare like with like.' : '') : 'not enough pulls yet') +
-    plTile(plIco('inv_misc_pocketwatch_01'), 'Pulls', String(pulls.length), 'na', T(pulls.reduce((s, x) => s + x.wl, 0)) + ' counted') + '</div>';
+  // (no boxes (your call, Oct 18): facts, not summaries; the per-pull chart below says it)
+  void best; void first; void last;
   // the night as bars: one per pull, its height the raid's output per second (green: a kill, gold: the best), the line a
   // 3-pull average; a click opens that pull
   const narrow = (document.documentElement.clientWidth || 1000) < 700, mxv = Math.max(1, ...pulls.map((x) => x.ps)) * 1.08, W = narrow ? 420 : 1000, H = narrow ? 200 : 150, L = narrow ? 40 : 46, Tp = 10, B = 20, ih = H - Tp - B, stepX = (W - L - 8) / Math.max(1, pulls.length), bw = Math.max(4, Math.min(24, stepX - 6));
@@ -14445,7 +14445,7 @@ function resTypeView(list, one, ty, sw) {
       plTile(plIco('inv_misc_coin_02'), 'Built · spent', resAmt(ty, tB) + '<span> · </span>' + resAmt(ty, tS), 'na', 'by ' + plural(rows.length, 'player') + (one ? '' : ' over ' + plural(list.length, 'pull')), true)];
     head = { v: resPc(wf) + '<span> wasted</span>', s: nm + ' · ' + resPc(ff) + ' at full' };
   }
-  const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
+  const tilesH = ''; void tiles; // (no boxes (your call, Oct 18): facts, not summaries)
   // ---- the chart (one pull): everyone's line, or the picked player's with their time at full shaded ----
   let top;
   if (one) { const w = list[0], boss = mana ? bossHpLine(w.r, w.end) : null, shown = sel ? [sel] : rows;
@@ -14454,12 +14454,12 @@ function resTypeView(list, one, ty, sw) {
     const M = mana ? 0 : Math.max(1, ...shown.map((x) => x.per[0].q.max));
     const cr = shown.map((x) => { const q = x.per[0].q; return { p: x.p, dash: x.dash && !sel, mx: M, cap: mana ? 0 : q.max, pots: mana ? q.pots : [], ms: q.pts.map(([t, c, m]) => [t, mana ? (m > 0 ? Math.max(0, Math.min(1, c / m)) : 0) : Math.max(0, Math.min(1, c / M))]) }; });
     const sub = (mana ? (boss ? (PROGRESS[w.r.item.boss] ? 'beside the boss health left in the whole fight (grey) · ' : 'beside the boss\'s health (grey) · ') : '') + '○ mana potion · ✕ death · shaded: under 25%' : 'in ' + nm + (sel ? ' (they hold up to ' + Math.round(sel.per[0].q.max) + ') · shaded red: sitting at full' : '')) + ' · hover for numbers' + (sel ? '' : ', click a name to hide it');
-    top = '<div class="pf-chartrow"><div class="panel pf-chart pf-mana">' + manaChart(w.r, cr, w.w0, w.w1, boss, { side: true, low: mana, step: !mana, scale: M, full: sel ? sel.per[0].q.fr.runs : null, aria: (sel ? sel.p.name + '\'s ' : 'The raid\'s ') + nm,
+    top = '<div class="pf-chartrow solo"><div class="panel pf-chart pf-mana">' + manaChart(w.r, cr, w.w0, w.w1, boss, { side: false, low: mana, step: !mana, scale: M, full: sel ? sel.per[0].q.fr.runs : null, aria: (sel ? sel.p.name + '\'s ' : 'The raid\'s ') + nm,
       ttl: (sel ? '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' : '') + esc(nm), sub }) + '</div>' + tilesH + '</div>';
   } else {
     const avg = (v) => (v.length ? v.reduce((s, x) => s + x, 0) / v.length : null);
     const valOf = (w) => { let b = 0, wa = 0; const e = []; for (const x of rows) for (const o of x.per) if (o.w === w) { b += o.q.built; wa += o.q.wasted; if (o.q.lv1 != null) e.push(o.q.lv1); } return mana ? avg(e) : b + wa > 0 ? wa / (b + wa) : null; };
-    top = '<div class="pts n3">' + tiles.join('') + '</div>' + resNightChart(list, valOf, { ty, full: mana, ttl: mana ? 'Healer mana left at the end, per pull' : esc(nm) + ' wasted, per pull', sub: mana ? 'on average' : 'of all the raid built', tip: (v) => resPc(v) + (mana ? ' mana left on average' : ' of the ' + nm + ' built went to waste') });
+    top = resNightChart(list, valOf, { ty, full: mana, ttl: mana ? 'Healer mana left at the end, per pull' : esc(nm) + ' wasted, per pull', sub: mana ? 'on average' : 'of all the raid built', tip: (v) => resPc(v) + (mana ? ' mana left on average' : ' of the ' + nm + ' built went to waste') });
   }
   // ---- a bar per player: all they built, the wasted part in red (mana: what they had left at the end) ----
   const bars = rows.map((x, i) => { const on = sel === x; let segs, v, sub, chips = '';
@@ -14489,19 +14489,19 @@ function resAllView(list, one, types, sw) {
     plTile(plIco('ability_warrior_innerrage'), 'Wasted, the middle player', all.length ? resPc(midW) : '—', 'na', 'of their most wasted power', true),
     plTile(plIco('inv_misc_pocketwatch_01'), 'Longest at full', lg && lg.e - lg.s >= 2 ? Math.round(lg.e - lg.s) + '<span> s</span>' : '—', 'na', lg && lg.e - lg.s >= 2 ? lg.p.name + ' · ' + resName(lg.ty) + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.s) : 'nobody sat at full for long', true)];
   const head = { v: (all.length ? resPc(midW) : '—') + '<span> wasted</span>', s: 'the middle player' + (worst ? ' · most: ' + esc(worst.p.name) + ' ' + resPc(worst.top.x.share) : '') };
-  const tilesH = '<div class="pts pf-side n3">' + tiles.join('') + '</div>';
+  const tilesH = ''; void tiles; // (no boxes (your call, Oct 18): facts, not summaries)
   // ---- the picked player's chart (one pull), in that power's own numbers; over the night, a chart per pull ----
   let top;
   if (one && sel) { const w = list[0], q = pw.x.per[0].q, M = Math.max(1, q.max);
     const cr = [{ p: sel.p, mx: M, cap: q.max, pots: [], ms: q.pts.map(([t, c]) => [t, Math.max(0, Math.min(1, c / M))]) }];
-    top = '<div class="pf-chartrow"><div class="panel pf-chart pf-mana">' + manaChart(w.r, cr, w.w0, w.w1, null, { side: true, low: false, step: true, scale: M, full: q.fr.runs, aria: sel.p.name + '\'s ' + resName(pw.ty),
+    top = '<div class="pf-chartrow solo"><div class="panel pf-chart pf-mana">' + manaChart(w.r, cr, w.w0, w.w1, null, { side: false, low: false, step: true, scale: M, full: q.fr.runs, aria: sel.p.name + '\'s ' + resName(pw.ty),
       ttl: '<span class="nm" style="color:' + sel.p.color + '">' + esc(sel.p.name) + '</span> · ' + resDot(pw.ty) + esc(resName(pw.ty)), sub: 'in ' + resName(pw.ty) + ' (they hold up to ' + Math.round(q.max) + ') · shaded red: sitting at full · hover for numbers' }) + '</div>' + tilesH + '</div>';
-  } else if (one) top = '<div class="pts n3">' + tiles.join('') + '</div>';
+  } else if (one) top = '';
   else {
     // (no one picked: the average player's most wasted power, pull by pull; a player picked: their power, pull by pull)
     const valOf = sel ? (w) => { const o = pw.x.per.find((y) => y.w === w); return o ? o.q.share : null; }
       : (w) => { const v = []; for (const o of all) { let b = null; for (const q of o.pw) { const y = q.x.per.find((z) => z.w === w); if (y && (b == null || y.q.share > b)) b = y.q.share; } if (b != null) v.push(b); } return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
-    top = '<div class="pts n3">' + tiles.join('') + '</div>' + resNightChart(list, valOf, sel ? { ty: pw.ty, ttl: esc(sel.p.name) + '\'s ' + esc(resName(pw.ty)) + ' wasted, per pull', sub: 'of what they built', tip: (v) => resPc(v) + ' of their ' + resName(pw.ty) + ' went to waste' }
+    top = resNightChart(list, valOf, sel ? { ty: pw.ty, ttl: esc(sel.p.name) + '\'s ' + esc(resName(pw.ty)) + ' wasted, per pull', sub: 'of what they built', tip: (v) => resPc(v) + ' of their ' + resName(pw.ty) + ' went to waste' }
       : { ty: types[0], dots: types.slice(0, 3), ttl: 'Wasted, per pull', sub: 'the average player, each by their most wasted power', tip: (v) => resPc(v) + ' wasted, the average player' });
   }
   // ---- a bar per player ----
@@ -18716,7 +18716,7 @@ function castView(list, one) {
     plTile(plIco('inv_misc_pocketwatch_01'), 'Longest gap', lg ? Math.round(lg.len) + '<span> s</span>' : '—', 'na', lg ? lg.p.name + ' from ' + (one ? '' : 'pull ' + lg.pull + ' at ') + T(lg.t) + (lg.mv === true ? ', while moving' : lg.mv === false ? ', while standing still' : '') : 'no gaps of 4 s or more', true)];
   const head = { v: fmtCpm(midCpm) + '<span>/min</span>', s: 'casts per minute, the middle player' };
   // ---- the tiles (no charts here: the bars and the details say it) ----
-  const top = '<div class="pts n3">' + tiles.join('') + '</div>';
+  const top = ''; // (no boxes (your call, Oct 18): facts, not summaries)
   // ---- a bar per player: their casts per minute, and their casts in all ----
   const mx = Math.max(1, ...rows.map((a) => a.cpm)) * 1.05;
   const bars = rows.map((a, i) => { const on = sel === a;

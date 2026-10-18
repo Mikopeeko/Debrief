@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Performance Controls 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49; --text: #ece8df; --muted: #98a0ad; --faint: #6c7381; --gold: #e6b450; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Barlow, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 28px 16px 60px; }
+h1 { font-size: 26px; margin: 0 0 4px; } h3 { margin: 22px 0 8px; font-size: 16px; color: var(--muted); font-weight: 600; }
+.lead { color: var(--muted); margin: 0 0 22px; max-width: 800px; }
+.opt { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 0 0 18px; }
+.opt.pick { border-color: var(--gold); box-shadow: inset 4px 0 0 var(--gold); }
+.opt h2 { margin: 0; font-size: 19px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: var(--raised); color: var(--muted); }
+.tag.rec { background: var(--gold); color: #1b1406; }
+.sub { color: var(--muted); font-size: 14px; margin: 4px 0 14px; }
+.verdict { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--raised); font-size: 14px; } .verdict b { color: #f3c969; } .pick .verdict b { color: var(--gold); }
+.stage { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow: hidden; }
+.list { margin-top: 12px; height: 70px; border: 1px dashed var(--line2); border-radius: 10px; display: grid; place-items: center; color: var(--faint); font-size: 13px; }
+/* view tabs (option A), as you liked them */
+.subtabs { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.grp { display: flex; flex-direction: column; flex: none; } .grp > b { font-size: 10px; letter-spacing: .9px; text-transform: uppercase; color: var(--faint); padding: 0 11px 2px; font-weight: 700; white-space: nowrap; }
+.grp > div { display: flex; } .st { padding: 6px 11px 8px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; font-size: 14px; } .st.on { color: var(--text); border-bottom-color: var(--gold); }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin: 8px 6px 6px; flex: none; }
+/* side list (option B), as you liked it */
+.side { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 16px; }
+.nav { border-right: 1px solid var(--line); padding-right: 12px; } .nav b { display: block; font-size: 10px; letter-spacing: .9px; text-transform: uppercase; color: var(--faint); margin: 12px 0 3px; } .nav b:first-child { margin-top: 0; }
+.nav span { display: block; padding: 5px 9px; border-radius: 6px; color: var(--muted); font-size: 14px; } .nav span.on { background: var(--raised); color: var(--text); box-shadow: inset 3px 0 0 var(--gold); }
+.nav .nsw { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+/* switch style 1: plain words, like the tabs */
+.tx { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 10px; }
+.tx .g { display: flex; align-items: center; gap: 2px; } .tx .g i { font-style: normal; color: var(--faint); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; margin-right: 8px; }
+.tx .g span { color: var(--muted); font-size: 14px; padding: 2px 8px; border-bottom: 2px solid transparent; } .tx .g span.on { color: var(--text); border-bottom-color: var(--gold); }
+.tx .g span small { color: var(--faint); font-size: 12px; margin-left: 4px; }
+/* switch style 2: two small dropdowns */
+.dd { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 14px; } .dd em { font-style: normal; color: var(--faint); font-size: 12px; } .dd i { font-style: normal; color: var(--faint); font-size: 11px; }
+/* side list switches: a small two-way choice at the top of the list */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; } .two span { text-align: center; font-size: 13px; padding: 4px 0; border-radius: 6px; color: var(--muted); } .two span.on { background: var(--raised); color: var(--text); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; } .chips span { font-size: 13px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); } .chips span.on { border-color: var(--gold); color: var(--text); }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.search { flex: 1; min-width: 160px; max-width: 260px; height: 32px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--faint); font-size: 14px; display: flex; align-items: center; padding: 0 12px; margin-left: auto; }
+.note { color: var(--faint); font-size: 12.5px; } .note b { color: var(--muted); }
+.phone { width: 340px; max-width: 100%; margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: var(--bg); overflow: hidden; }
+.cap { font-size: 12px; color: var(--faint); margin: 8px 2px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Performance controls, round 2</h1>
+<p class="lead">From your notes: "How they played" now holds only Spec checks, and Casts and Resources get their own group, "Casting". Both layouts you liked are here, the tabs and the side list, each with new looks for the two switches (which pull, and which phase). The boxes at the top are gone.</p>
+
+<section class="opt pick">
+  <h2>Tabs, with the switches as plain words <span class="tag rec">my pick</span></h2>
+  <p class="sub">The switches look like smaller tabs: plain words with a gold line under the one you're on, and a small label in front. No boxes or pills, so the row matches the tabs above it.</p>
+  <div class="stage">
+    <div class="subtabs">
+      <div class="grp"><b>How they played</b><div><span class="st">Spec checks</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Output</b><div><span class="st">Damage</span><span class="st">Healing</span><span class="st">Damage taken</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Casting</b><div><span class="st">Casts</span><span class="st on">Resources</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Cooldowns and buffs</b><div><span class="st">Cooldowns</span><span class="st">Power Infusion</span><span class="st">Buffs</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Toolkit</b><div><span class="st">Utility</span><span class="st">Survivability</span></div></div>
+    </div>
+    <div class="tx"><span class="g"><i>Pulls</i><span class="on">Pull #32 <small>wipe</small></span><span>All 32</span></span>
+      <span class="g"><i>Phase</i><span class="on">Whole pull</span><span>P1</span><span>P2</span></span>
+      <span class="note">Counted up to <b>3:28</b>, the wipe filter</span>
+      <span class="search">Search players, spells, buffs…</span></div>
+    <div class="list">the list of players, as now</div>
+  </div>
+  <p class="verdict"><b>Why I'd pick it:</b> one style for everything at the top, so nothing looks bolted on. The labels ("Pulls", "Phase") say what each switch is for.</p>
+</section>
+
+<section class="opt">
+  <h2>Tabs, with the switches as two small dropdowns <span class="tag">compact</span></h2>
+  <p class="sub">"Pull #32 ▾" and "Whole pull ▾": the least space, and the choices open on a click.</p>
+  <div class="stage">
+    <div class="subtabs">
+      <div class="grp"><b>How they played</b><div><span class="st">Spec checks</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Output</b><div><span class="st">Damage</span><span class="st">Healing</span><span class="st">Damage taken</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Casting</b><div><span class="st">Casts</span><span class="st on">Resources</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Cooldowns and buffs</b><div><span class="st">Cooldowns</span><span class="st">Power Infusion</span><span class="st">Buffs</span></div></div><span class="sep"></span>
+      <div class="grp"><b>Toolkit</b><div><span class="st">Utility</span><span class="st">Survivability</span></div></div>
+    </div>
+    <div class="row"><span class="dd">Pull #32 <em>wipe</em> <i>▾</i></span><span class="dd">Whole pull <i>▾</i></span><span class="note">Counted up to <b>3:28</b>, the wipe filter</span><span class="search">Search players, spells, buffs…</span></div>
+    <div class="list">the list of players, as now</div>
+  </div>
+  <p class="verdict"><b>Trade-off:</b> the tidiest, but the phases (P1, P2) are hidden behind a click, and switching phases is something people do a lot on this page.</p>
+</section>
+
+<section class="opt">
+  <h2>Side list, with the switches in the list <span class="tag">roomy</span></h2>
+  <p class="sub">The list down the side, regrouped. The pull switch sits at the top of the list, and the phases are small chips above the content.</p>
+  <div class="stage side">
+    <div class="nav">
+      <div class="nsw"><div class="two"><span class="on">Pull #32</span><span>All pulls</span></div></div>
+      <b>How they played</b><span>Spec checks</span>
+      <b>Output</b><span>Damage</span><span>Healing</span><span>Damage taken</span>
+      <b>Casting</b><span>Casts</span><span class="on">Resources</span>
+      <b>Cooldowns and buffs</b><span>Cooldowns</span><span>Power Infusion</span><span>Buffs</span>
+      <b>Toolkit</b><span>Utility</span><span>Survivability</span>
+    </div>
+    <div>
+      <div class="row" style="margin-top:0"><span class="chips"><span class="on">Whole pull</span><span>P1</span><span>P2</span></span><span class="note">Counted up to <b>3:28</b>, the wipe filter</span><span class="search">Search…</span></div>
+      <div class="list">the list of players, as now</div>
+    </div>
+  </div>
+  <p class="cap">On a phone the side list turns into a dropdown at the top ("Resources ▾"), with the pull switch beside it.</p>
+  <p class="verdict"><b>Trade-off:</b> very easy to scan, and room for more views later. It takes about 200 pixels of width from every view, so the bars and charts get narrower, and it looks less like the main tab bar.</p>
+</section>
+
+<h3>On a phone, the tabs with plain-word switches</h3>
+<div class="phone">
+  <div class="subtabs"><div class="grp"><b>How they played</b><div><span class="st">Spec checks</span></div></div><span class="sep"></span><div class="grp"><b>Output</b><div><span class="st">Damage</span><span class="st">Healing</span></div></div></div>
+  <div class="tx" style="gap:12px"><span class="g"><i>Pulls</i><span class="on">#32</span><span>All</span></span><span class="g"><i>Phase</i><span class="on">Whole</span><span>P1</span><span>P2</span></span></div>
+  <div class="row"><span class="search" style="max-width:none;margin:0">Search…</span></div>
+</div>
+<p class="cap">The view tabs scroll sideways, like the main tabs.</p>
+</main>
+</body>
+</html>

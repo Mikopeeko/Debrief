@@ -173,6 +173,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 205: No boxes at the top of the plain views (your note)
+- Your note: Performance is a raw data section, for facts, not grades or scores. So the boxes at the top are gone from
+  Casts, Resources, Damage, Healing and Damage taken, for one pull and for all pulls ("Most wasted", "Longest gap",
+  "Lost to deaths", "Best pull", "Through the night" and the like). The charts now use the full width.
+- Power Infusion keeps its boxes, with its coaching (your call, for now). Spec checks is unchanged.
+- [ ] The controls at the top (your note: sloppy). Mockups in notes: "Performance controls options.html" (round 1: you
+  liked the view tabs and the side list, not the row of pill switches) and "Performance controls round 2.html" (with
+  "How they played" holding only Spec checks, Casts and Resources as "Casting", and three switch styles).
+
 ## 2026-10-18, round 204: Performance as plain data, like Warcraft Logs (your call)
 Everything outside Spec checks now shows numbers and charts, with no verdicts (no ✕ / ! marks, no grade colors).
 - **Casts:** the most casts a minute first, with each player's total casts. No "pace" against top players, no "slow for
