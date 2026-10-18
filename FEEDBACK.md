@@ -126,6 +126,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Your note: Ringing of the Heavens merged into Aura Mastery.** One line, one number: what Aura Mastery prevented plus
   what its Divine Tolls healed (yours: 4.72M, 2.79M prevented and 1.92M healed, 960.7K a Divine Toll against 457.4K for one
   of your own). The separate Ringing of the Heavens tile is gone; each press's card still shows both.
+- [x] **Your note: the original font back.** The WoW feel was meant for the art on the card and talents, not the lettering: the
+  serif is gone everywhere (names, headings, chapters, tooltips); the game's own art and the gold trim stay.
+- [x] **Your note: weird empty space.** A single small tile sitting alone at the left is now a normal full-width line; two or
+  more tiles spread out to fill their row, and the number boxes stretch to fill theirs. On all four specs.
 - [ ] Open (your call): "Aura Mastery during Beacon of Virtue" is the same kind of line (the window boxes show Aura Mastery
   too). Say if it should go as well.
 
