@@ -4961,6 +4961,8 @@ function analyze(item, text, opts) {
     // so it changes nothing else. Warcraft Logs sends none for Infusion of Light, Divine Purpose or Dawnlight)
     if (ev === 'SPELL_AURA_REFRESH') { const f = split(line, c + 1), p = f.length >= 12 && f[11] === 'BUFF' && r.players.get(f[4]), b = p && buffPre(p, num(f[8]), f[9]);
       if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); if (isPlayer(f[0]) && f[0] !== f[4]) { const w = shortName(f[0], f[1]); b.by.set(w, (b.by.get(w) || 0) + 1); } } continue; }
+    // (an empowered spell let go: its rank, on the player who cast it, for the spec checks)
+    if (ev === 'SPELL_EMPOWER_END') { const f = split(line, c + 1), p = f.length >= 12 && r.players.get(f[0]); if (p) { if (!p.empL) p.empL = []; if (p.empL.length < 600) p.empL.push([t, f[9], num(f[11])]); } continue; }
     if (!WANTED.has(ev)) continue;
     const f = split(line, c + 1);
 
@@ -5160,6 +5162,8 @@ function analyze(item, text, opts) {
         const p = P(sg, sn);
         p.casts++;
         if (f[f.length - 1] === 'FAKE') { const fk = spell.toLowerCase(); let fl = p.fakeT.get(fk); if (!fl) p.fakeT.set(fk, fl = []); fl.push(t); }
+        // (who each cast was aimed at, for the spec checks: an ally, an enemy, or nobody (0); [time, spell, target guid])
+        if (!p.castTg) p.castTg = []; if (p.castTg.length < 4000) p.castTg.push([t, spell, dg && dg !== '0000000000000000' ? dg : 0]);
         if (f.length >= 11 + ADV && f[11] === sg) { manaAt(p, f, 11, t, spell, id); resAt(p, f, 11, t);
           // (what the cast cost, in each power it used)
           const tys = String(f[21]).split('|'), cos = String(f[24]).split('|'); for (let k = 0; k < tys.length; k++) { const c = +cos[k]; if (c > 0 && tys[k] !== '' && p.spendL.length < 6000) p.spendL.push({ t, ty: tys[k], spell, id, amt: c }); } }

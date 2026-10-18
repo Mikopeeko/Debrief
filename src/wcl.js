@@ -429,6 +429,10 @@ function translate(item, events) {
       case 'removebuffstack': case 'removedebuffstack':
         add(e, 'SPELL_AURA_REMOVED_DOSE,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + (e.type === 'removebuffstack' ? 'BUFF' : 'DEBUFF') + ',' + (e.stack || 0));
         break;
+      // (an empowered spell let go, as WoW writes it: the rank it was charged to, e.g. Dream Breath at rank 1)
+      case 'empowerend':
+        add(e, 'SPELL_EMPOWER_END,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + (e.empowermentLevel || 0));
+        break;
       case 'interrupt':
         add(e, 'SPELL_INTERRUPT,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID));
         break;

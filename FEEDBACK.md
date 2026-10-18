@@ -87,6 +87,29 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 167: Preservation Evoker Spec checks ("a hard one")
+- [x] **Researched:** Wowhead's rotation and talent guides and Icy Veins' rotation, cooldowns and mechanics page (both Midnight
+  Season 2, 12.1.5), and WoWAnalyzer's Preservation module (12.1: Dream Breath, Essence Burst, Emerald Blossom, Echo, Temporal
+  Anomaly, Stasis, Dream Flight, Inner Flame).
+- [x] **The log reader now keeps** how far each empowered spell was charged (Dream Breath at rank 1, Fire Breath at rank 3) and
+  who each cast was aimed at (Living Flame on an enemy or an ally).
+- [x] **The page:** Casting (always be casting, Living Flame on enemies); Echo and Temporal Anomaly (on cooldown, Echoes that ran
+  out, what used them up, Echoes per Merithra's Blessing); Dream Breath and Merithra's Blessing (on cooldown, at rank 1, Dream
+  Breath that used up Echoes, Merithra's Blessings that ran out); Essence and Essence Burst (time at full Essence, Essence Bursts
+  wasted, Emerald Blossom without one); Cooldowns (what Stasis stored, Emerald Blossoms in Inner Flame, Stasis, Tip the Scales,
+  Rewind, Dream Flight, Time Dilation and Zephyr uses, Fire Breath at full rank); Mana.
+- [x] **Your note: every healing cooldown shows what it healed:** Temporal Anomaly, Dream Breath, Merithra's Blessing, Stasis
+  (its stored spells), Inner Flame (healing a second inside it against outside), Rewind, Dream Flight and Tip the Scales (the
+  breaths it went into). Zephyr and Time Dilation say they prevent damage instead.
+- [x] **Checked on the top 14 Mythic Twin Fangs kills and Huservoker** (your raid's Preservation Evoker): no errors; they score
+  80 to 96 (middle 89); Huservoker 88 on the kill, 93 over the night. Found and fixed on the way: a stacking buff is renewed
+  in the log on every stack change (not a waste); Merithra's Blessing uses Echoes as its short cast starts; Stasis's copies were
+  counted as presses. Scales eased to what the top players do (casting 64%, Temporal Anomaly 72%, mana left up to half).
+- [x] **Your note: the Evoker's frame and backdrop weren't great.** Redone as the Emerald Dream and bronze time: a bronze border
+  with an emerald shine, filigree corners with turning clocks, an hourglass of green sand between emerald wings, a drifting
+  mist, Echo rings, floating blossoms, a clock ring round the portrait, and a clock face behind the talents.
+- [ ] Not testable yet: every top kill is Flameshaper, so the Chronowarden parts have only been read through.
+
 ## 2026-10-17, round 166: Restoration Druid finished and debugged (your go-ahead)
 - [x] **Three new checks:** Mastery (your HoTs on each person you healed: the top players average 2.7, and Questionably Epic
   says 2 to 3 in raid; not graded), Nature's Swiftness on yourself with Overgrowth (the top players: every one), and Wrath in
