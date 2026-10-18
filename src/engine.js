@@ -569,6 +569,8 @@ const CA_ZONE = ['ring of peace'];
 // the ones that leave nothing on their targets, counted when cast (Ring of Peace, Gorefiend's Grasp)
 const PERF_CC = new Set(CA_CC.filter((n) => !['deep breath', 'abomination limb', 'mortal coil', 'grip of the dead', 'ring of peace', "gorefiend's grasp"].includes(n)).concat(['blinding sleet', 'war stomp', 'bull rush', 'haymaker', 'quaking palm']));
 const PERF_CC_CAST = new Set(['ring of peace', "gorefiend's grasp"]);
+// (single-target heals whose target the spec checks read: [time, target, healed, overhealed])
+const HEAL_TO = new Set(['flash of light', 'holy light', 'eternal flame', 'word of glory']);
 // Curses that slow a Spiteful Soulcoiler's casts (Curse of the Satyr replaces Curse of Tongues for some warlocks)
 const CA_CURSE = ['curse of tongues', 'curse of the satyr'];
 // Personal defensives by name (from DEFENSIVES, minus raid-wide ones), for soak checks.
@@ -5041,6 +5043,7 @@ function analyze(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) p.lowHeal += eff; }
+          if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 4000) l.push([t, dg, eff, over]); }
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
           if (ck && (ck !== 'Celestial Conduit' || p.specId === 270)) { const u = cdPress(owner, ck, t, true); u.heal += eff; u.over += over; }
           if (/healthstone/i.test(spell) && !p.cons.healthstone.some((x) => Math.abs(x.t - t) < 2)) p.cons.healthstone.push({ t, name: spell, id });
@@ -5433,7 +5436,9 @@ function parseCombatant(line, body, f) {
   const auras = []; for (let k = 0; k + 1 < buffs.length; k += 3) auras.push({ source: buffs[k], ability: buffs[k + 1], stacks: buffs[k + 2] }); // (caster, spell ID, stacks)
   // (fields counted on a 12.1 log: 2-5 strength, agility, stamina, intellect; 10-12 crit; 13 speed; 14 leech; 15-17
   // haste; 18 avoidance; 19 mastery; 20-22 versatility; 23 armor; 24 spec)
-  return { guid: f[0], specId: n(24) || n(23), gear, auras,
+  // (the talents: the first list, (node, entry, rank) each)
+  const talents = (lists[0] || []).filter((t) => Array.isArray(t) && t.length >= 2).map((t) => ({ nodeID: t[0], id: t[1], rank: t[2] || 1 }));
+  return { guid: f[0], specId: n(24) || n(23), gear, auras, talents,
     stats: { strength: n(2), agility: n(3), stamina: n(4), intellect: n(5), crit: Math.max(n(10), n(11), n(12)), speed: n(13), leech: n(14), haste: Math.max(n(15), n(16), n(17)), avoidance: n(18), mastery: n(19), versatility: n(20), armor: n(23) } };
 }
 

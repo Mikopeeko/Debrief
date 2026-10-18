@@ -87,6 +87,25 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 152: Holy Paladin, deeper (Wowhead, Icy Veins, WoWAnalyzer, your talents, your 30 Twin Fangs pulls)
+- [x] **Your real talents, read from the log** (Warcraft Logs and combat logs both), named from Raidbots' talent data and
+  WoWAnalyzer's lists, and **your talent tree drawn as the game draws it** (class, Herald of the Sun and Holy side by side,
+  34/34, 13/13, 34/34, the apex Beacon of the Savior 4/4): a fold under your talents, to check the reading.
+- [x] **New checks from the guides and from what your talents do together** (grouped: On cooldown, Procs, Beacon of
+  Virtue windows, Rotation, From your talents, Resources):
+  - Eternal Flame over Light of Dawn inside Beacon of Virtue (Light of Dawn sends half to Beacons); casting inside each
+    window (WoWAnalyzer's grade) and the raid's damage in it; Infused Flash of Light on a Beacon (Moment of Compassion);
+    a square per Beacon of Virtue window, graded like WoWAnalyzer (casting through it, one step up with Divine Toll).
+  - Divine Toll and Aura Mastery (Ringing of the Heavens) on 3+ Holy Power; Divine Toll inside Avenging Wrath (Born in
+    Sunlight); Holy Shock with Light of the Martyr up (with Bestow Light); Flash of Light and Holy Light on yourself
+    (Selfless Healer); Infusion spent while Holy Shock was full (Imbued Infusions); Holy Shock with an Infusion waiting
+    and builders at 5 Holy Power (WoWAnalyzer's priority list, as moments to review); Infusions lost to Holy Lights cast
+    while full (the tier set); mana left at a kill, in Holy Lights.
+  - **Pull by pull** over the night: Holy Shock, Beacon, procs wasted, Eternal Flame in Beacon, casting in Beacon.
+  Your kill: Holy Shock 90%, Beacon of Virtue 81%, 8 Infusion uses lost to Holy Lights cast while full, Eternal Flame 78%
+  in Beacon, 89% casting in Beacon, 33 of 69 Infused Flash of Lights on a Beacon, 8% mana left.
+- [x] Proofread and polished the page; the talent tree starts folded so the checks come first.
+
 ## 2026-10-17, round 151: Spec checks, a nicer look (and WoWAnalyzer read)
 - [x] **Your ask: better graphics.** Talents as chips; a tile per check (its spell's icon, the number, a short line);
   **your cooldowns over the pull** on one time line (Avenging Wrath and Beacon of Virtue as bars, Divine Toll and Aura
