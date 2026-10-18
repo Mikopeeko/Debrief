@@ -570,7 +570,8 @@ const CA_ZONE = ['ring of peace'];
 const PERF_CC = new Set(CA_CC.filter((n) => !['deep breath', 'abomination limb', 'mortal coil', 'grip of the dead', 'ring of peace', "gorefiend's grasp"].includes(n)).concat(['blinding sleet', 'war stomp', 'bull rush', 'haymaker', 'quaking palm']));
 const PERF_CC_CAST = new Set(['ring of peace', "gorefiend's grasp"]);
 // (single-target heals whose target the spec checks read: [time, target, healed, overhealed])
-const HEAL_TO = new Set(['flash of light', 'holy light', 'eternal flame', 'word of glory', 'holy shock', 'beacon of light', 'pillar of lights']);
+const HEAL_TO = new Set(['flash of light', 'holy light', 'eternal flame', 'word of glory', 'holy shock', 'beacon of light', 'pillar of lights',
+  'regrowth', 'wild growth', 'swiftmend', 'lifebloom', 'rejuvenation', 'rejuvenation (germination)', 'tranquility']);
 // Curses that slow a Spiteful Soulcoiler's casts (Curse of the Satyr replaces Curse of Tongues for some warlocks)
 const CA_CURSE = ['curse of tongues', 'curse of the satyr'];
 // Personal defensives by name (from DEFENSIVES, minus raid-wide ones), for soak checks.
@@ -4852,6 +4853,7 @@ function buffUp(p, id, name, t, by) { let b = p.buffs.get(name); if (!b) p.buffs
 // (debuffs on players the same way: when each went on and off, from whom, and the most stacks it reached)
 function debuffUp(p, id, name, t, by) { let b = p.debuffs.get(name); if (!b) p.debuffs.set(name, b = { name, id, sp: [], by: new Map(), mx: 1 }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) return; if (b.sp.length < 400) b.sp.push([t, null]); if (by) b.by.set(by, (b.by.get(by) || 0) + 1); }
 function debuffDown(p, id, name, t) { const b = p.debuffs.get(name); if (!b) { p.debuffs.set(name, { name, id, sp: [[0, t]], by: new Map(), mx: 1 }); return; } const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; }
+function buffPre(p, id, name) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [[0, null]], by: new Map() }); return b; }
 function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [], by: new Map() }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; else if (!b.sp.length) b.sp.push([0, t]); }
 // a player's mana from a cast's advanced block (the power lists are pipe-separated: "9|0" with "5|274744" is Holy Power 5
 // and mana 274744): [t, fraction], at most one every 2 seconds
@@ -4957,8 +4959,8 @@ function analyze(item, text, opts) {
     const ev = line.substring(ts.body, c);
     // (a buff renewed while it was still up, e.g. a proc landing on one you still hold: noted on that player's buff only,
     // so it changes nothing else. Warcraft Logs sends none for Infusion of Light, Divine Purpose or Dawnlight)
-    if (ev === 'SPELL_AURA_REFRESH') { const f = split(line, c + 1), p = f.length >= 12 && f[11] === 'BUFF' && r.players.get(f[4]), b = p && p.buffs.get(f[9]);
-      if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); } continue; }
+    if (ev === 'SPELL_AURA_REFRESH') { const f = split(line, c + 1), p = f.length >= 12 && f[11] === 'BUFF' && r.players.get(f[4]), b = p && buffPre(p, num(f[8]), f[9]);
+      if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); if (isPlayer(f[0]) && f[0] !== f[4]) { const w = shortName(f[0], f[1]); b.by.set(w, (b.by.get(w) || 0) + 1); } } continue; }
     if (!WANTED.has(ev)) continue;
     const f = split(line, c + 1);
 
@@ -5047,7 +5049,7 @@ function analyze(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) p.lowHeal += eff; }
-          if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over]); }
+          if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
           if (ck && (ck !== 'Celestial Conduit' || p.specId === 270)) { const u = cdPress(owner, ck, t, true); u.heal += eff; u.over += over; }
           if (/healthstone/i.test(spell) && !p.cons.healthstone.some((x) => Math.abs(x.t - t) < 2)) p.cons.healthstone.push({ t, name: spell, id });
@@ -5100,7 +5102,7 @@ function analyze(item, text, opts) {
         // (crowd control a player, their pet or their totem landed on an enemy)
         if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF' && (parseInt(f[6], 16) & 0x40) && PERF_CC.has(f[9].toLowerCase())) { const q = P(owner, pet ? null : sn); if (q.ccL.length < 600) q.ccL.push({ t, spell: f[9], id: num(f[8]), on: dn }); }
         // (a buff's extra stack is a proc too, and its top stack: e.g. Infusion of Light at 2 with Inflorescence of the Sunwell)
-        if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = P(dg, dn).buffs.get(f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); } }
+        if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); } }
         if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
         break;
       }
@@ -5136,7 +5138,7 @@ function analyze(item, text, opts) {
       case 'SPELL_AURA_REMOVED_DOSE': {
         if (f.length >= 13 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'rdose', t, dst: dg, spell: f[9], id: num(f[8]), stacks: num(f[12]), src: sg });
         if (f.length < 13 || !isPlayer(dg)) break;
-        if (f[11] === 'BUFF') { const b = P(dg, dn).buffs.get(f[9]); if (b) { if (!b.rd) b.rd = []; if (b.rd.length < 600) b.rd.push(t); } } // (a stack spent)
+        if (f[11] === 'BUFF') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { if (!b.rd) b.rd = []; if (b.rd.length < 600) b.rd.push(t); } } // (a stack spent)
         const sr = mech.get('stacks', num(f[8]), f[9]);
         if (sr) stackEv.push({ t, guid: dg, rule: sr, stacks: num(f[12]), up: false, id: num(f[8]) });
         break;

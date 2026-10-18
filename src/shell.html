@@ -1048,6 +1048,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .tm-lg i { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #13161d; box-shadow: 0 0 0 1.5px #2f3441; } .tm-lg i.on { background: #6b5320; box-shadow: 0 0 0 2px #e6b450; } .tm-lg i.ch { border-radius: 4px; } .tm-lg i.ap { width: 18px; height: 18px; }
 .tm-lg u { display: inline-block; width: 18px; border-top: 1px dashed var(--faint); } .tm-lg b { padding: 0 3px; border-radius: 4px; background: #0f1117; color: #9be27a; font: 700 9px/13px var(--body); box-shadow: 0 0 0 1px #3a3f4d; }
 @media (max-width: 760px) { .tm { grid-template-columns: 1fr !important; } .tm-lg .sub { margin-left: 0; } }
+/* (a phone: a 9-column tree, like the Druid's, fits with smaller talents) */
+@media (max-width: 480px) { .tm-p { padding: 10px 8px 12px; } .tm-c { min-width: 0 !important; } .tm-n { width: 24px; height: 24px; margin: -12px 0 0 -12px; } .tm-n.ap { width: 32px; height: 32px; margin: -16px 0 0 -16px; } }
 /* ---- Spec checks: what the top players do, beside each line ---- */
 .spc-shv { display: inline-flex; align-items: baseline; gap: 10px; } .spc-tp { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
 .spc-htp { margin-top: 6px; color: var(--muted); font-size: 12px; }

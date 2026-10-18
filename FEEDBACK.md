@@ -87,6 +87,28 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 163: Restoration Druid Spec checks (your go-ahead: "you're on your own")
+- [x] **Researched:** Wowhead's and Icy Veins' Midnight Season 2 guides (both by Voulk, Oct 12-13), WoWAnalyzer's Restoration
+  Druid module (12.1, full support), and Questionably Epic, the site you sent (Voulk's own; its spell numbers are used, but its
+  Raid page is still The War Within, so the newer guides win where they differ).
+- [x] **Built the page** the same way as Holy Paladin's (score ring, "Work on these first" by healing cost, your talents as
+  our trees, blocks with a line per check, boxes per cast, moments, a cooldown timeline, the night view):
+  Casting; Lifebloom (on you with Everbloom, your HoTs on you); Swiftmend (on cooldown, on yourself, Soul of the Forest);
+  Regrowth and Abundance (Abundance up, Regrowth without a discount, Clearcasting, Nature's Swiftness, Regrowths to
+  Rejuvenations); Wild Growth (every target); Cooldowns (Tranquility and Convoke ramps, Tree of Life, uses of each,
+  Nature's Swiftness with the tier set); Mana (at the kill, Innervate on yourself and how often, mana from others).
+- [x] **Checked on the top 14 kills on Mythic Twin Fangs:** no errors; they score 85 to 100 (middle 96). What they taught:
+  half of them Swiftmend others (not graded), they press Ironbark when their raid needs it (not graded), and they let 2 or 3
+  Clearcastings go (allowed).
+- [x] **Two bugs found and fixed for every spec:** a buff that went on before the pull and was only renewed or stacked during
+  it (Lifebloom with Everbloom, Abundance) was read as never up; and procs Convoke made and used itself counted as wasted.
+- [x] **Left out on purpose:** "Lifebloom refreshed in time" (with Everbloom, other things bloom and renew it too, so the log
+  can't tell an early recast; the advice is in the Lifebloom line instead). Some logs never show Abundance at all; then its
+  checks are skipped.
+- [x] Phone: the Druid's class tree is 9 columns wide, so talents shrink a little on a phone to fit.
+- [ ] Your raid has no Restoration Druid yet (Earthday plays Balance). When one joins, have them read their page, the way you
+  did for Holy Paladin.
+
 ## 2026-10-17, round 162: Renewed buffs were being thrown away (your catch)
 - [x] **Your note: "you'd know Divine Purpose was overwritten, because the player already has the buff."** Checking it found
   a real bug: the app skipped every "buff renewed while still up" event (9,917 on your kill). Fixed, and kept apart so it
