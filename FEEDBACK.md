@@ -170,7 +170,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - **Roles, top to bottom:** Founder (you, legendary orange, shown separately), Debrief Team (you, gold, shown separately;
   can time out, mention everyone, manage and pin messages, and manage forum posts and tags), Helper (teal, shown
   separately; manage and pin messages, manage forum posts and tags, for trusted raiders you pick), Raid leader (purple),
-  Tank (blue), Healer (green), DPS (red), Patch notes ping (no color). Your server nickname is Debrief(Claude).
+  Tank (blue), Healer (green), DPS (red), Patch notes ping (no color). Your server nickname is Debrief.
 - **Self-pick on joining (Onboarding):** "What do you play?" (Tank, Healer, DPS, more than one allowed) and "Anything
   else?" ("I lead raids or write the NSRT note" gives Raid leader, "Ping me when patch notes go up" gives Patch notes
   ping). Both are optional, and members can change them later under Channels & Roles. New members see a short welcome
