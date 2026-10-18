@@ -1100,6 +1100,64 @@ const PERF_OFF = () => !!window.WLA_HOSTED;
 const SPEC_OFF = () => !!window.WLA_HOSTED;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
+// ---- "Report a problem" (your note, Oct 18): a short form that files the problem on the project's private GitHub,
+// through the website's own server (so nobody needs a GitHub account), with this page attached: the tab, boss, pull,
+// Warcraft Logs report, screen size and the page's last errors. Only on the website once its GitHub key is set
+// (window.WLA_REPORT, added by the Worker); until then the menu and start page keep the Discord link.
+const REPORT_ON = () => !!window.WLA_REPORT;
+const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
+window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
+window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
+const TAB_NAME = { live: 'Pull recap', audit: 'Mechanics', overview: 'Assignments', perf: 'Performance', night: 'Night summary', player: 'Players' };
+function reportCtx() {
+  const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
+  if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
+  if (it && it.wcl) c.report = 'https://www.warcraftlogs.com/reports/' + it.wcl.code + '#fight=' + it.wcl.fight; else if (S.wclCode) c.report = 'https://www.warcraftlogs.com/reports/' + S.wclCode; else if (S.file) c.report = 'a combat log file';
+  if (typeof LIVE !== 'undefined' && LIVE.on) c.live = 'yes';
+  c.screen = innerWidth + ' x ' + innerHeight; c.browser = navigator.userAgent.slice(0, 160);
+  if (RECENT_ERR.length) c.errors = RECENT_ERR.slice();
+  return c;
+}
+// (the start page's last line: report a problem, and the Discord)
+const homeFoot = () => '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.' + (REPORT_ON() ? ' Found something wrong? <a href="#" class="rp-open">Report a problem</a>' +
+  (DISCORD_URL ? ', or ask on <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">our Discord</a>.' : '.') : DISCORD_URL ? ' Found something wrong, or have an idea? <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Tell us on Discord</a>.' : '') + '</div>';
+document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('.rp-open'); if (a) { e.preventDefault(); openReport(); } });
+function openReport() {
+  if ($('#rpBox')) return;
+  const c = reportCtx(), el = document.createElement('div'); el.id = 'rpBox'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Report a problem');
+  const att = [c.page, c.boss ? c.boss + (c.pull ? ', pull ' + c.pull : '') : null, c.report && /^http/.test(c.report) ? 'the Warcraft Logs report' : null].filter(Boolean).join(', ');
+  const disc = DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">our Discord</a>' : '';
+  el.innerHTML = '<form class="tr-card rp-card" novalidate><h2>Report a problem</h2><p>Tell us what looks wrong or didn\'t work. It goes straight onto our to-do list, and we read every one.</p>' +
+    '<label class="rp-l">What went wrong?<textarea id="rpText" rows="5" maxlength="4000" placeholder="For example: Mechanics says I missed the soak at 2:10, but I was in the circle."></textarea></label>' +
+    '<label class="rp-l">Your name or Discord name <span>(optional, so we can ask you about it)</span><input id="rpName" maxlength="60" autocomplete="nickname"></label>' +
+    '<input id="rpWeb" class="rp-hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+    '<p class="rp-att">Sent with it: ' + esc(att) + ', and your browser and screen size, so we can see what you saw.</p><p class="rp-msg" id="rpMsg" role="status"></p>' +
+    '<div class="tr-nav"><span></span><div><button class="btn" type="button" id="rpCancel">Cancel</button><button class="btn primary" type="submit" id="rpSend">Send</button></div></div></form>';
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  const close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); };
+  document.addEventListener('keydown', key, true);
+  el.onclick = (e) => { if (e.target === el) close(); };
+  $('#rpCancel').onclick = close;
+  const form = el.querySelector('form'), msg = $('#rpMsg'), send = $('#rpSend');
+  form.onsubmit = async (e) => {
+    e.preventDefault(); const text = $('#rpText').value.trim();
+    if (text.length < 10) { msg.className = 'rp-msg bad'; msg.textContent = 'Please say a little more about what went wrong.'; $('#rpText').focus(); return; }
+    send.disabled = true; send.textContent = 'Sending…'; msg.className = 'rp-msg'; msg.textContent = '';
+    try {
+      const r = await fetch('/api/bug', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, name: $('#rpName').value.trim(), website: $('#rpWeb').value, ctx: c }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || 'The report couldn\'t be sent (' + r.status + ').');
+      form.innerHTML = '<h2>Thank you!</h2><p>Your report was sent, and we\'ll look at it soon.' + (disc ? ' If you\'d like to follow up, post in #bug-reports on ' + disc + '.' : '') + '</p>' +
+        '<div class="tr-nav"><span></span><div><button class="btn primary" type="button" id="rpDone">Done</button></div></div>';
+      $('#rpDone').onclick = close; $('#rpDone').focus();
+    } catch (err) {
+      send.disabled = false; send.textContent = 'Send'; msg.className = 'rp-msg bad';
+      msg.innerHTML = esc(err.message) + (disc ? ' You can also post it in #bug-reports on ' + disc + '.' : '');
+    }
+  };
+  setTimeout(() => { const t = $('#rpText'); if (t) t.focus(); }, 60);
+}
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
@@ -11835,7 +11893,7 @@ function home() {
         '<div class="fp-note">Example data. Click a tab to look around.</div></div></section></div>' +
     (teamsTop ? '' : homeTeams()) +
     '<section class="fp-ways"><h2>Four ways to look at a night</h2><div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div></section>' +
-    '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.' + (DISCORD_URL ? ' Found something wrong, or have an idea? <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Tell us on Discord</a>.' : '') + '</div></div>';
+    homeFoot() + '</div>';
   bindHomeTeams(); homeTeamsSoon();
   // open a report: with a saved login (or the hosted site) straight away; otherwise the login form, link filled in
   const go = async (inputId, msgId, live) => {
@@ -12067,7 +12125,7 @@ function renderTeamsHome() {
   $('#main').innerHTML = '<div class="home th-home2">' + teamsBar() +
     '<section class="th-teams"><div class="th-h"><h2>Your teams</h2>' + (ago != null ? '<span class="sub">' + (S.progBusy ? 'checking for new nights…' : 'checked ' + (ago < 1 ? 'just now' : ago < 60 ? plural(ago, 'minute') + ' ago' : ago < 1440 ? plural(Math.round(ago / 60), 'hour') + ' ago' : 'on ' + esc(nightLabel(last + 6 * 3600e3)))) + '</span>' : '') + '</div>' +
       '<div class="tt-row">' + gl.map((g) => teamTile(g, all, order)).join('') + '<button class="tt-card tt-add" type="button" data-g="+"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a team</span><span class="tt-l">or your character</span></button></div></section>' +
-    homePreviews() + '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.' + (DISCORD_URL ? ' Found something wrong, or have an idea? <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Tell us on Discord</a>.' : '') + '</div></div>';
+    homePreviews() + homeFoot() + '</div>';
   progLit(false); bindTeamsBar();
   $$('#main .tt-card').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); window.scrollTo(0, 0); }));
   $$('#main .tp-card').forEach((b) => (b.onclick = () => startTour(+b.dataset.tour)));
@@ -12113,7 +12171,7 @@ function homeHosted() {
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
     (teamsTop ? '' : homeTeams()) +
-    '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.' + (DISCORD_URL ? ' Found something wrong, or have an idea? <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Tell us on Discord</a>.' : '') + '</div></div>';
+    homeFoot() + '</div>';
   bindHomeTeams(); homeTeamsSoon();
   // (either box takes any report link: the live one follows it from the start, the other turns live on by itself if the
   // report is still being logged)
@@ -12615,6 +12673,7 @@ $('#brandHome').onclick = () => home();
 }
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
 if ($('#tbDiscord') && DISCORD_URL) { $('#tbDiscord').href = DISCORD_URL; $('#tbDiscord').hidden = false; $('#tbDiscord').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; }; }
+if ($('#tbReport') && REPORT_ON()) { $('#tbReport').hidden = false; $('#tbReport').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openReport(); }; }
 if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };

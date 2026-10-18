@@ -161,6 +161,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 197: A Q&A Discord, and "Report a problem" straight to GitHub (your note)
+- **Server picture:** the Debrief shield on the site's dark background (Discord matched a gold banner to it).
+- **#questions, a forum:** each question is its own post with its own replies, so answers are easy to find later. Its
+  guidelines ask for one question per post, a search first, and a tag. Tags: Answered, Getting started, Mechanics,
+  Assignments, Performance, Teams and Other.
+- **"Report a problem" on the website:** in the menu and on the start page. The person writes what went wrong (and,
+  if they like, their name), and the website's server files it as an issue on our private GitHub. It comes with the
+  page they were on: the tab, boss, pull, the Warcraft Logs report link, their screen size, browser and the page's
+  last errors. Nobody needs a GitHub account. If it can't send, it points them to #bug-reports on Discord.
+  - Guard rails: 3 reports per person in 10 minutes and 40 an hour in all, only from Debrief's own pages, no @mentions,
+    and a hidden box that robots fill in (those are dropped).
+  - Tested with a pretend GitHub: every check above, the issue's layout, the form on desktop and phone, and the
+    failure message.
+  - [ ] Waiting on you: the GitHub key in Cloudflare (GITHUB_TOKEN). Until then the button stays hidden on the website.
+- [ ] The welcome message for #announcements is drafted (now with #questions and Report a problem). Post it once the
+  key is in, so "Report a problem" is really there.
+
 ## 2026-10-18, round 196: The Debrief Discord (your go-ahead)
 - Made the Debrief server on your Discord account, with four text channels: #general, #announcements, #feedback and
   #bug-reports. In #announcements, everyone can read and react, but only you can post.

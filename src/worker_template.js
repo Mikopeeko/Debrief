@@ -1,6 +1,7 @@
 // Debrief: Cloudflare Worker.
 // Serves the app and fetches Warcraft Logs data with YOUR API key, so visitors (and the desktop app) just paste a link.
 // Required secrets (Worker > Settings > Variables and Secrets): WCL_CLIENT_ID and WCL_CLIENT_SECRET.
+// Optional: GITHUB_TOKEN, which switches on "Report a problem" (reports become issues on the project's GitHub).
 // Answers are cached at Cloudflare, so a pull someone already opened doesn't use your API allowance again.
 // It only runs the app's own fixed queries (below), never one a visitor sends, so it can't be used as a free proxy for
 // your key; and each visitor gets a fair share of the uncached requests (FAIR).
@@ -125,6 +126,46 @@ const ROUTES = {
     out: (d) => { const ev = d.reportData.report.events; return { data: typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data, nextPageTimestamp: ev.nextPageTimestamp }; } },
 };
 
+// "Report a problem" (the site's form): files it as an issue on the project's private GitHub, with the page it came
+// from. Needs the GITHUB_TOKEN secret: a fine-grained token for this one repository, with Issues: read and write.
+// Limits: 3 reports per visitor in 10 minutes and 40 an hour in all (per server instance, so soft), short texts only,
+// only from the site's own pages, and a hidden field that bots fill in.
+const BUG_REPO = 'Mikopeeko/Debrief', bugSeen = new Map();
+let bugHour = { t: 0, n: 0 };
+async function fileBug(req, env, url) {
+  if (!env.GITHUB_TOKEN) return json({ error: 'Reporting isn\'t switched on yet.' }, 503);
+  if (req.headers.get('Origin') !== url.origin) return json({ error: 'Reports can only be sent from the Debrief website.' }, 403);
+  let b; try { b = await req.json(); } catch (e) { return json({ error: 'That report was empty.' }, 400); }
+  if (!b || typeof b !== 'object') return json({ error: 'That report was empty.' }, 400);
+  if (b.website) return json({ ok: true }); // (a bot filled in the hidden field: say thanks and drop it)
+  const text = String(b.text || '').trim().slice(0, 4000), name = String(b.name || '').trim().slice(0, 60);
+  if (text.length < 10) return json({ error: 'Please say a little more about what went wrong.' }, 400);
+  const ip = req.headers.get('CF-Connecting-IP') || 'x', now = Date.now();
+  let w = bugSeen.get(ip); if (!w || now - w.t > 600000) { w = { t: now, n: 0 }; bugSeen.set(ip, w); if (bugSeen.size > 2000) bugSeen.clear(); }
+  if (w.n >= 3) return json({ error: 'You\'ve sent a few reports just now. Please wait a few minutes before sending another.' }, 429);
+  if (now - bugHour.t > 3600000) bugHour = { t: now, n: 0 };
+  if (bugHour.n >= 40) return json({ error: 'A lot of reports came in just now. Please try again in a little while.' }, 429);
+  w.n++; bugHour.n++;
+  // (no @mentions, links stay plain text in a quote, and the page details go in a small table)
+  const clean = (v) => String(v).replace(/@/g, '@​').replace(/\|/g, '/').replace(/[\r\n]+/g, ' ').slice(0, 300);
+  const ctx = b.ctx && typeof b.ctx === 'object' && !Array.isArray(b.ctx) ? b.ctx : {};
+  const rows = Object.entries(ctx).slice(0, 15).map(([k, v]) => '| ' + clean(k) + ' | ' + (Array.isArray(v) ? v.slice(0, 5).map(clean).join('<br>') : clean(v)) + ' |');
+  const first = text.split(/\r?\n/)[0].replace(/\s+/g, ' ').replace(/@/g, '@​');
+  const title = '[site] ' + (first.length > 80 ? first.slice(0, 79) + '…' : first);
+  const body = text.replace(/@/g, '@​').split(/\r?\n/).map((l) => '> ' + l).join('\n') + '\n\n' + (name ? '**From:** ' + clean(name) + '\n\n' : '') +
+    (rows.length ? '| | |\n|---|---|\n' + rows.join('\n') + '\n\n' : '') + '_Sent with the website\'s Report a problem form._';
+  try {
+    const r = await fetch('https://api.github.com/repos/' + BUG_REPO + '/issues', { method: 'POST', body: JSON.stringify({ title, body }),
+      headers: { Authorization: 'Bearer ' + env.GITHUB_TOKEN, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'debrief-site', 'Content-Type': 'application/json' } });
+    if (!r.ok) return json({ error: 'The report couldn\'t be sent right now (GitHub answered ' + r.status + ').' }, 502);
+    const j = await r.json().catch(() => ({}));
+    return json({ ok: true, n: j.number || null });
+  } catch (err) { return json({ error: 'The report couldn\'t be sent right now. Please try again in a minute.' }, 502); }
+}
+// (the page, with the report form switched on once the GitHub key is set)
+let HTML_REPORT = null;
+const appHtml = (env) => (env.GITHUB_TOKEN ? HTML_REPORT || (HTML_REPORT = APP_HTML.replace('window.WLA_HOSTED = true;', 'window.WLA_HOSTED = true; window.WLA_REPORT = true;')) : APP_HTML);
+
 // (the pull downloads also answer at /api/fightlog: ad blockers' tracking lists block addresses ending in "/api/events",
 // which broke the site in a browser with one; /api/events stays for pages and desktop apps still asking there)
 ROUTES['/api/fightlog'] = ROUTES['/api/events'];
@@ -133,6 +174,7 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (url.pathname === '/api/bug') return req.method === 'POST' ? fileBug(req, env, url) : json({ error: 'Send reports with the website\'s form.' }, 405);
     if (route) {
       const v = route.v(url.searchParams);
       if (!v) return json({ error: "That request is missing something (a report code, fight or time range)." }, 400);
@@ -156,6 +198,6 @@ export default {
         return json({ error: String(err && err.message || err) }, 502);
       }
     }
-    return new Response(APP_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
+    return new Response(appHtml(env), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
   },
 };
