@@ -532,6 +532,14 @@ const UL_N = {
 // Ravenous Feast strike circle radius in yards: not published (server-side), measured from 5 Mythic pulls (most
 // soak groups fit inside ~8 yd; wider spreads are players moving between position samples).
 const FEAST_R = 8;
+// (each ground mechanic's colour on the maps, from its spell icon (your note, Oct 18): the icon's main colour, measured, so a
+// circle reads as the icon beside it. The word is what the map's key calls it)
+const MECH_COL = { 'Ravenous Feast': ['#f24224', 'Red'], 'Coiling Ichor': ['#f2243a', 'Red'], 'Corrosive Spit': ['#9ff26d', 'Green'], 'Shifting Protovenom': ['#9ff26d', 'Green'],
+  'Protovenom Eruption': ['#d6f25a', 'Lime'], 'Toxic Droplets': ['#d2f230', 'Lime'], 'Unstable Miasma': ['#f23724', 'Red'], 'Viscous Cyst': ['#d8f22f', 'Lime'], 'Raging Crosswinds': ['#dfe6f2', 'White'],
+  'Plague Froth': ['#dbf231', 'Lime'], 'Hungering Pyre': ['#f2a924', 'Orange'], 'Soulcoil Well': ['#2cf2b5', 'Teal'], 'Blink Nova': ['#7a6df2', 'Violet'], 'Mighty Thud': ['#f2842f', 'Orange'],
+  'Gloombomb': ['#da3df2', 'Purple'], 'Spectral Coils': ['#24f2cb', 'Teal'], 'Guillotine': ['#f24824', 'Red'], 'Grim Guillotine': ['#46f2d1', 'Teal'], 'Noxious Shell': ['#3af2a8', 'Green'], 'Fester Burst': ['#d8f22f', 'Lime'], "Serpent's Bite": ['#f23243', 'Red'],
+  'Volatile Purge': ['#9ff224', 'Lime'] };
+const mcol = (n, a) => { const x = MECH_COL[n] || ['#e6b450', 'Gold'], h = x[0]; return { color: h, fill: 'rgba(' + [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(',') + ',' + (a == null ? 0.16 : a) + ')', cn: x[1] + ' circle' }; };
 // Smallest circle around points [[x, y], ...] (Welzl, fine for a handful of soakers): { x, y, r }.
 function mec(P) {
   const inC = (c, p) => Math.hypot(p[0] - c.x, p[1] - c.y) <= c.r + 1e-6;
@@ -855,7 +863,7 @@ function buildTwinFangs(ev, r, h) {
     for (const s of strikes) {
       s.pts = h.snap(s.t); const sp = s.pts.filter((q) => s.who.includes(q.guid)).map((q) => [q.x, q.y]);
       const c = sp.length >= 2 ? mec(sp) : sp.length ? { x: sp[0][0], y: sp[0][1], r: 0 } : null;
-      s.ring = c ? { x: c.x, y: c.y, r: Math.max(FEAST_R, c.r), label: 'Ravenous Feast strike (~' + FEAST_R + ' yd)' } : null;
+      s.ring = c ? { x: c.x, y: c.y, r: Math.max(FEAST_R, c.r), label: 'Ravenous Feast strike (~' + FEAST_R + ' yd)', ...mcol('Ravenous Feast') } : null;
     }
     // a death counts for the last strike that player soaked (strikes are ~1.5s apart)
     strikes.forEach((s, k) => { s.died = s.who.filter((g) => !strikes.slice(k + 1).some((z) => z.who.includes(g))).map((g) => diedNear(g, s.t, 3)).filter(Boolean); });
@@ -1157,7 +1165,7 @@ function buildTwinFangs(ev, r, h) {
   const ICHOR_LONG = 5;
   // the circle on each marked player: it follows them and shrinks (measured on 30 Mythic pulls: about 11 yd for the first
   // ~6s, then down to about 6 yd at 10s; the map draws it that way, ring.shrink = 'ichor')
-  const ichRings = (c) => c.tg.map((g) => ({ guid: g, t0: c.t, dur: 12, shrink: 'ichor', r: 11, label: 'Coiling Ichor', color: '#7ee08f' }));
+  const ichRings = (c) => c.tg.map((g) => ({ guid: g, t0: c.t, dur: 12, shrink: 'ichor', r: 11, label: 'Coiling Ichor', ...mcol('Coiling Ichor') }));
   for (const c of ichCasts) for (const [g, o] of c.others) {
     // (only a long stand-in, and minor: damage only; the gore puddle is the carrier's to place)
     if (o.n < ICHOR_LONG) continue;
@@ -1404,10 +1412,10 @@ function buildEntombedSentinels(ev, r, h) {
     // about the same distance (median 7 yards just before the blast), so touching is another player stepping inside a
     // circle about 6 yards around its player. (Protovenom Eruption's 10 yards is the blast, shown on its own.) It does
     // nothing for about the first 1.5 s: players already next to each other still clear at about 1.6 s.
-    const pvRings = cr.map((x) => ({ guid: x.g, r: 6, color: '#ff8a1f', fill: 'rgba(255,138,31,.16)', label: '', t0: x.on, dur: Math.max(0.5, (x.off ?? last) - x.on), cn: 'Orange circle', legend: 'Shifting Protovenom, about 6 yd (measured from when circles clear and erupt)' }))
-      .concat(cr.filter((x) => x.mate && x.off != null).map((x) => ({ guid: x.g, r: 4, color: '#45c15c', fill: 'rgba(69,193,92,.22)', label: '', t0: x.off, dur: 1.2, cn: 'Green flash', legend: 'cleared with a partner' })))
+    const pvRings = cr.map((x) => ({ guid: x.g, r: 6, ...mcol('Shifting Protovenom'), label: '', t0: x.on, dur: Math.max(0.5, (x.off ?? last) - x.on), legend: 'Shifting Protovenom, about 6 yd (measured from when circles clear and erupt)' }))
+      .concat(cr.filter((x) => x.mate && x.off != null).map((x) => ({ guid: x.g, r: 4, color: '#ffffff', fill: 'rgba(255,255,255,.22)', label: '', t0: x.off, dur: 1.2, cn: 'White flash', legend: 'cleared with a partner' })))
       // (an eruption's blast is 10 yd, its published radius, around the circle player it came from)
-      .concat(er.flatMap((q) => { const c = q.who.filter((g) => circles.includes(g)); return (c.length ? c : q.who.slice(0, 1)).map((g) => ({ guid: g, r: 10, color: '#ff3b3b', fill: 'rgba(255,59,59,.14)', label: 'Eruption', t0: q.t - 0.1, dur: 1.6, cn: 'Red circle', legend: 'Protovenom Eruption (10 yd blast)' })); }));
+      .concat(er.flatMap((q) => { const c = q.who.filter((g) => circles.includes(g)); return (c.length ? c : q.who.slice(0, 1)).map((g) => ({ guid: g, r: 10, ...mcol('Protovenom Eruption', 0.2), label: 'Eruption', t0: q.t - 0.1, dur: 1.6, legend: 'Protovenom Eruption (10 yd blast)' })); }));
     const bad = er.length > 0 || cr.some((x) => x.d), warn = cr.some((x) => x.took > 6 || !x.mate);
     return { title: 'Protovenom ' + (i + 1), t, bad, warn,
       sub: pl(circles.length, 'circle') + ', ' + (cr.filter((x) => x.mate).length) + ' cleared in pairs' + (cr.some((x) => x.took != null) ? ', slowest ' + Math.max(...cr.map((x) => x.took || 0)).toFixed(1) + ' s' : '') + (er.length ? ', ' + pl(er.length, 'eruption') : ''),
@@ -1444,7 +1452,7 @@ function buildEntombedSentinels(ev, r, h) {
     // (an erupted droplet is flagged by the rule pack: Noxious Blast)
     const takers = [...per.values()].filter((o) => o.ts.length);
     // (the map: a green flash where each droplet was stepped on, blue for an immunity, red where the venom flying back hit)
-    const dRings = pk.map((e) => ({ guid: e.dst, r: 1.8, color: '#5fd35f', fill: 'rgba(95,211,95,.3)', label: '', t0: e.t, dur: 1.2, cn: 'Green flash', legend: 'stepped on a droplet' }))
+    const dRings = pk.map((e) => ({ guid: e.dst, r: 1.8, ...mcol('Toxic Droplets', 0.3), label: '', t0: e.t, dur: 1.2, cn: 'Lime flash', legend: 'stepped on a droplet' }))
       .concat(im.map((e) => ({ guid: e.dst, r: 1.8, color: '#6aa8ff', fill: 'rgba(106,168,255,.3)', label: '', t0: e.t, dur: 1.2, cn: 'Blue flash', legend: 'stepped on one with an immunity' })))
       .concat(lv.map((e) => ({ guid: e.dst, r: 2.2, color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', label: '', t0: e.t, dur: 1.2, cn: 'Red flash', legend: 'hit by Living Venom' })));
     return { title: 'Set ' + (i + 1) + (hard ? ' (before the intermission)' : ''), t, bad: blN.length > 0 || rows.some((x) => x[4].bad), warn: rows.some((x) => x[2].warn),
@@ -1488,7 +1496,7 @@ function buildEntombedSentinels(ev, r, h) {
     return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' of ' + need : ''), bad: !!few, sub: soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
       // (the soak: 7.5 yd around the marked player, its published radius, shown from 3 s before it lands)
       t1 != null ? { map: { t: t1, good: soak, goodLabel: 'soaked', goodAt: soak.map((g) => [g, t1]), pendLabel: 'in the soak (before it lands)', hl: tg ? [tg] : [], hlLabel: 'marked', title: 'Unstable Miasma ' + (i + 1) + ' at ' + h.fmtT(t1), pts: h.snap(t1), frames: frames(t1 - 3, t1 + 1.5),
-        rings: tg ? [{ guid: tg, r: 7.5, color: '#e5534b', fill: 'rgba(229,83,75,.16)', label: '7.5 yd', t0: t1 - 3.2, dur: 3.6, cn: 'Red circle', legend: 'Unstable Miasma soak (7.5 yd)' }] : [] } } : { txt: '' }];
+        rings: tg ? [{ guid: tg, r: 7.5, ...mcol('Unstable Miasma'), label: '7.5 yd', t0: t1 - 3.2, dur: 3.6, legend: 'Unstable Miasma soak (7.5 yd)' }] : [] } } : { txt: '' }];
   });
   if (mRows.length) sections.push({ id: 'miasma', title: 'Unstable Miasma: soaked by enough', spell: [ES.miCast, 'Unstable Miasma'],
     verdict: mRows.some((x) => x[3].bad || x[4].bad) ? 'bad' : 'good',
@@ -1826,7 +1834,7 @@ function buildSszorak(ev, r, h) {
     const whole = [{ txt: 'Whole cast', sub: 'every marked player, on one map', dim: true }, { t: knock }, { txt: '' }, { txt: '' },
       { map: { t: knock, pendLabel: 'marked, before the launch', good: info.filter((o) => o.res === 'pair').map((o) => o.g), goodLabel: 'collided', goodAt: info.filter((o) => o.res === 'pair').map((o) => [o.g, o.q.t0]),
         bad: drift.map((o) => o.g).concat(byst.map((o) => o.g)), badLabel: 'drifted, or hit by a flying player', badAt: drift.map((o) => [o.g, o.q.t0 + 2.5]).concat(byst.map((o) => [o.g, knock])), links,
-        arrows: info.filter((o) => SZ_CW[o.id]).map((o) => ({ g: o.g, ang: SZ_CW[o.id][0] * Math.PI / 180, t0: (cwA.find((e) => e.dst === o.g && e.t >= t - 0.5) || { t }).t, t1: knock })), title: 'Raging Crosswinds ' + (i + 1) + ' at ' + T(t), pts: h.snap(knock), frames: frames(knock - 6, knock + 6) } }];
+        arrows: info.filter((o) => SZ_CW[o.id]).map((o) => ({ g: o.g, color: mcol('Raging Crosswinds').color, ang: SZ_CW[o.id][0] * Math.PI / 180, t0: (cwA.find((e) => e.dst === o.g && e.t >= t - 0.5) || { t }).t, t1: knock })), title: 'Raging Crosswinds ' + (i + 1) + ' at ' + T(t), pts: h.snap(knock), frames: frames(knock - 6, knock + 6) } }];
     return { title: 'Raging Crosswinds ' + (i + 1), t, bad: rows.some((q) => q[3].bad), warn: rows.some((q) => q[3].warn), sub: pl(gm.length, 'marked player') + ': ' + pl(info.filter((o) => o.mate).length / 2, 'pair') + ' collided' + (drift.length ? ', ' + drift.length + ' drifted' : '') + (imm.length ? ', ' + imm.length + ' not launched' : '') + (byst.length ? ', ' + pl(byst.length, 'bystander') + ' hit' : ''), rows: [whole].concat(rows) };
   }).filter((g) => g.rows.length > 1);
   if (cwGroups.length) sections.push({ id: 'crosswinds', title: 'Raging Crosswinds: collided in the air', spell: [SZ.cwCast, 'Raging Crosswinds'], verdict: cwGroups.some((g) => g.bad) ? 'bad' : cwGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -1950,7 +1958,7 @@ function buildNekzali(ev, r, h) {
   const ignAt = ev.find((e) => e.k === 'cast' && has(e, [NZ.ignition, NZ.ignitionCh]) && e.x != null);
   const W0 = ignAt ? { x: ignAt.x, y: ignAt.y } : { x: 0, y: 206.5 };
   const wellD = (p) => (p ? Math.hypot(p.x - W0.x, p.y - W0.y) : null);
-  const wellRing = { x: W0.x, y: W0.y, r: 15, color: '#9b7be0', fill: 'rgba(155,123,224,.12)', label: '', cn: 'Purple circle', legend: 'the Soulcoil Well (about 15 yd)' };
+  const wellRing = { x: W0.x, y: W0.y, r: 15, ...mcol('Soulcoil Well', 0.12), label: '', legend: 'the Soulcoil Well (about 15 yd)' };
   const spot = (x, y, color, legend, cn) => ({ x, y, r: 3, color, fill: color + '66', label: '', cn, legend });
 
   // ---- phases: P1, the intermission (Ritual of Awakening at 50%), P2 (Uncoiling) ----
@@ -2122,7 +2130,7 @@ function buildNekzali(ev, r, h) {
     const pyH = dmgId(NZ.pyre).filter((e) => e.t >= ritT && e.t <= iEnd + 5), pys = []; for (const e of pyH) { const p = pys[pys.length - 1]; if (p && e.t - p.t < 1) p.who.add(e.dst); else pys.push({ t: e.t, who: new Set([e.dst]) }); }
     // (the soak's 10 yards, centred on the players it hit, as the Spectral Coil map does: the log has no position for the Pyre itself)
     const pyreRing = (p) => { const sk = h.snap(p.t).filter((q) => p.who.has(q.guid)); if (!sk.length) return []; const cx = sk.reduce((v, q) => v + q.x, 0) / sk.length, cy = sk.reduce((v, q) => v + q.y, 0) / sk.length;
-      return [{ x: cx, y: cy, r: 10, label: '10 yd soak', legend: 'the soak, 10 yd (centred on its soakers)' }]; };
+      return [{ x: cx, y: cy, r: 10, label: '10 yd soak', ...mcol('Hungering Pyre'), legend: 'the soak, 10 yd (centred on its soakers)' }]; };
     pys.forEach((p, k) => {
       _nz.pyres.push({ i: k + 1, t: p.t, who: [...p.who].map(pname) });
       const died = r.deaths.filter((d) => d.t >= p.t - 0.2 && d.t <= p.t + 1 && /hungering pyre/i.test(d.ability || ''));
@@ -2306,9 +2314,9 @@ function buildVashnik(ev, r, h) {
         M(o.t, pname(o.g), 'Plague Wave', d ? 'High' : 'Medium', 'Hit by a Plague Wave' + (o.from ? ' from ' + pname(o.from) + '\'s Plague Froth' : '') + ' (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.');
         return [{ p: pname(o.g), sub: f.who.includes(o.g) ? 'had Plague Froth too' : '' }, { t: o.t }, d ? { txt: 'died', bad: true } : { txt: 'hit for ' + fmtM(o.amt), warn: true }, o.from ? { p: pname(o.from) } : { txt: '—', dim: true }, { txt: '' }];
       });
-      const arrows = f.ends.flatMap((x) => [0, 90, 180, 270].map((a) => ({ g: x.g, ang: a * Math.PI / 180, len: 30, color: '#9be36b', t0: x.t - 1.5, t1: x.t + 1 })));
+      const arrows = f.ends.flatMap((x) => [0, 90, 180, 270].map((a) => ({ g: x.g, ang: a * Math.PI / 180, len: 30, color: mcol('Plague Froth').color, t0: x.t - 1.5, t1: x.t + 1 })));
       const whole = [{ txt: 'Whole cast', sub: 'the targets and their lines, on one map', dim: true }, { t: f.end }, { txt: '' }, { txt: '' },
-        { map: { t: f.end, hl: f.who, hlLabel: 'had Plague Froth', bad: [...by.keys()], badLabel: 'hit by a Plague Wave', badAt: [...by.values()].map((o) => [o.g, o.t]), arrows, title: 'Plague Froth ' + (i + 1) + ' at ' + T(f.t), pts: h.snap(f.end), frames: frames(f.end - 3, f.end + 2) } }];
+        { map: { t: f.end, hl: f.who, hlLabel: 'had Plague Froth', arrowLabel: 'the four Plague Waves it sends out when it ends (about 30 yd)', bad: [...by.keys()], badLabel: 'hit by a Plague Wave', badAt: [...by.values()].map((o) => [o.g, o.t]), arrows, title: 'Plague Froth ' + (i + 1) + ' at ' + T(f.t), pts: h.snap(f.end), frames: frames(f.end - 3, f.end + 2) } }];
       return { title: 'Plague Froth ' + (i + 1) + ' (' + cyName(cycOf(f.t)) + ')', t: f.t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(f.who.length, 'target') + ', ' + (by.size ? pl(by.size, 'player') + ' hit by a wave' : 'nobody hit by a wave'), rows: [whole].concat(rows) };
     });
     if (groups.length) sections.push({ id: 'froth', title: 'Plague Froth: nobody on the lines', spell: [VS.froth, 'Plague Froth'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
@@ -2514,7 +2522,7 @@ function buildLostExplorers(ev, r, h) {
       for (const d of died) M(d.t, d.player, 'Blink Nova', 'High', 'Died to Blink Nova.', 'Spread out for Blink Nova. Its target moves at least 20 yards from the melee and away from the raid.');
       return [{ p: pname(e.dst) }, { t: tm }, { txt: who.size ? fmtM(hits.reduce((s, x) => s + (x.raw || x.amt), 0) / who.size) + ' each on average' : '—', dim: !who.size }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
         { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1),
-          rings: [{ guid: e.dst, r: bR, t0: e.t, dur: tm - e.t + 1, label: 'Blink Nova', color: '#7fb6ff', fill: 'rgba(127,182,255,.12)', cn: 'Blue circle', legend: '20 yards around the Blink Nova target, from the moment it was marked; the guides say to keep the raid outside it' }] } }];
+          rings: [{ guid: e.dst, r: bR, t0: e.t, dur: tm - e.t + 1, label: 'Blink Nova', ...mcol('Blink Nova', 0.12), legend: '20 yards around the Blink Nova target, from the moment it was marked; the guides say to keep the raid outside it' }] } }];
     });
     if (rows.length) sections.push({ id: 'blink', title: 'Blink Nova: spread, target away from the raid', spell: [LE.blink, 'Blink Nova'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good',
       summary: pl(rows.length, 'Blink Nova') + '. It shows each one\'s target, what it cost the raid, and deaths to it.', cols: ['Target', 'When', 'Raid damage', 'Died', ''], rows });
@@ -2534,7 +2542,7 @@ function buildLostExplorers(ev, r, h) {
         for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split, and use a defensive if your health is low.');
         return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
           { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 3, l.t + 1),
-            rings: (() => { const n = namaAt(l.t + 0.8); return n && tR ? [{ x: n.x, y: n.y, r: tR, t0: l.t - 0.2, dur: 1.4, label: 'Mighty Thud', color: '#e0a050', fill: 'rgba(224,160,80,.18)', cn: 'Orange circle', legend: 'where the leap landed; it hit players up to ' + tR + ' yd away (measured)' }] : []; })() } }];
+            rings: (() => { const n = namaAt(l.t + 0.8); return n && tR ? [{ x: n.x, y: n.y, r: tR, t0: l.t - 0.2, dur: 1.4, label: 'Mighty Thud', ...mcol('Mighty Thud', 0.18), legend: 'where the leap landed; it hit players up to ' + tR + ' yd away (measured)' }] : []; })() } }];
       });
       groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: rows.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
     }
@@ -2804,7 +2812,7 @@ function buildCoiledAltar(ev, r, h) {
     // transparent mint green circle with a "15 yd" label. Anyone the explosion clipped without carrying one gets an orange !
     if (mp.gloom) {
       const gb = gbAt(t);
-      mp.rings = (mp.rings || []).concat(gb.map((c) => ({ guid: c.g, r: 15, color: '#6ff2c4', fill: 'rgba(111,242,196,.16)', label: '15 yd', legend: 'Gloombomb explosion (15 yd around the carrier)', cn: 'Mint circle' })));
+      mp.rings = (mp.rings || []).concat(gb.map((c) => ({ guid: c.g, r: 15, ...mcol('Gloombomb'), label: '15 yd', legend: 'Gloombomb explosion (15 yd around the carrier)' })));
       const cl = clipAt(t).filter((g) => !gb.some((c) => c.g === g));
       if (cl.length) { mp.warn = [...new Set((mp.warn || []).concat(cl))]; mp.warnLabel = 'clipped by a bomb they didn\'t carry'; }
     }
@@ -3268,7 +3276,7 @@ function buildCoiledAltar(ev, r, h) {
     const all = s.who.concat(tgt && !s.who.includes(tgt) ? [tgt] : []);
     // The axe lands where the target stands and hits everyone within 9 yards (soakers come from the damage hits).
     const lp = tgt && h.snap(hit).find((p) => p.guid === tgt);
-    const ring = lp ? [{ x: lp.x, y: lp.y, r: GUILLOTINE_R, label: 'soak ' + GUILLOTINE_R + ' yd' }] : [];
+    const ring = lp ? [{ x: lp.x, y: lp.y, r: GUILLOTINE_R, label: 'soak ' + GUILLOTINE_R + ' yd', ...mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }] : [];
     // outcome on the map: soakers who lived = right; soakers who died, or a target with no protection = wrong
     const diedG = r.deaths.filter((d) => s.died.includes(d.player) && Math.abs(d.t - hit) < 6).map((d) => d.guid);
     const wrong = diedG.concat(mythic && tgt && !tag(tgt) && !diedG.includes(tgt) ? [tgt] : []);
@@ -3798,7 +3806,7 @@ function buildUlatek(ev, r, h) {
     eggRows.push([{ t: v.t0 }, g ? { p: pname(g) } : { txt: 'nobody', dim: true }, { txt: cause, bad: true }, { txt: v.died != null ? 'killed ' + Math.round(v.died - v.t0) + 's later' : 'still up', dim: v.died != null },
       // (a Noxious Splash: the carriers who came within 3 yards of each other, each with their 3-yard circle, a moment before
       // it went off; any other Viper: who had the egg)
-      splashG ? { map: { t: Math.max(0, c.e - 0.15), hl: [g].concat(splashG), bad: [g].concat(splashG), badLabel: 'egg carriers within 3 yards', rings: [g].concat(splashG).map((x) => ({ guid: x, r: 3, label: '3 yd', color: '#ff6b6b', fill: 'rgba(229,83,75,.14)', cn: 'Red circle', legend: 'a Noxious Shell, 3 yd (another carrier inside breaks both)' })),
+      splashG ? { map: { t: Math.max(0, c.e - 0.15), hl: [g].concat(splashG), bad: [g].concat(splashG), badLabel: 'egg carriers within 3 yards', rings: [g].concat(splashG).map((x) => ({ guid: x, r: 3, label: '3 yd', ...mcol('Noxious Shell', 0.14), legend: 'a Noxious Shell, 3 yd (another carrier inside breaks both)' })),
         title: 'Noxious Splash at ' + T(c.e) + ': ' + (splashG.length ? andList([g].concat(splashG).map(pname)) + ' came within 3 yards' : pname(g) + '\'s egg (the other carrier isn\'t in the log)'), pts: posPts(Math.max(0, c.e - 0.15)), focus: ctrOf(posPts(Math.max(0, c.e - 0.15)), [g].concat(splashG), 8) } }
         : { map: { t: Math.max(0, (c ? c.e : v.t0) - 0.4), hl: g ? [g] : [], bad: g ? [g] : [], badLabel: 'had the egg', title: 'Blightscale Viper at ' + T(v.t0) + (g ? ' (' + pname(g) + ')' : ''), pts: snap(Math.max(0, (c ? c.e : v.t0) - 0.4)) } }]);
   }
@@ -3838,7 +3846,7 @@ function buildUlatek(ev, r, h) {
       // outside it marked)
       const at = hcUp ? posPts(c.t) : [], sp = at.filter((p) => soak.includes(p.guid)), ctr = sp.length ? { x: sp.reduce((s, p) => s + p.x, 0) / sp.length, y: sp.reduce((s, p) => s + p.y, 0) / sp.length } : null;
       const near = ctr ? at.filter((p) => p.kind === 'player' && !soak.includes(p.guid) && Math.hypot(p.x - ctr.x, p.y - ctr.y) <= 15).map((p) => p.guid) : [], diedG = died.map((d) => d.guid);
-      const mapC = ctr ? { map: { t: c.t, good: soak.filter((g) => !diedG.includes(g)), goodLabel: 'in the circle (soaked)', bad: diedG, badLabel: 'died to it', hl: near, hlLabel: 'near it, not in it', rings: [{ x: ctr.x, y: ctr.y, r: 10, label: '10 yd soak', legend: 'the soak, 10 yd (centred on its soakers)' }], focus: { x: ctr.x, y: ctr.y, r: 13 },
+      const mapC = ctr ? { map: { t: c.t, good: soak.filter((g) => !diedG.includes(g)), goodLabel: 'in the circle (soaked)', bad: diedG, badLabel: 'died to it', hl: near, hlLabel: 'near it, not in it', rings: [{ x: ctr.x, y: ctr.y, r: 10, label: '10 yd soak', ...mcol('Spectral Coils'), legend: 'the soak, 10 yd (centred on its soakers)' }], focus: { x: ctr.x, y: ctr.y, r: 13 },
         title: 'Spectral Coil at ' + T(c.t) + ': ' + pl(soak.length, 'soaker') + (near.length ? ', ' + near.length + ' more within 5 yards of it' : ''), pts: at } } : { txt: '', dim: true };
       return [{ txt: '#' + (k + 1) }, { t: c.t }, hcUp ? { txt: String(soak.length), bad: none, warn: thin, sub: thin ? 'under ' + minSoak : '' } : { txt: 'not shown on Normal', dim: true }, { ps: soak.map(pname), none: hcUp ? 'nobody' : '' },
         { n: c.amt / Math.max(1, c.n), sub: 'each' }, { ps: died.map((d) => d.player), none: '—', bad: died.length > 0 }, mapC];
@@ -3928,7 +3936,7 @@ function buildUlatek(ev, r, h) {
       const bursts = ts.map((t) => { const hits = festHit.filter((e) => e.t >= t && e.t <= t + 6); return { land: hits.length ? hits[0].t : t + 2, out: [...new Set(hits.map((e) => e.dst))] }; }).sort((a, b) => b.out.length - a.out.length);
       const pick = bursts[0], mt = pick ? Math.max(0, pick.land - 0.3) : null, fr = pick && h.frames ? ((h.frames(mt, mt, 0.2, [x.g])[0] || { pts: [] }).pts) : [];
       const mapC = pick && fr.some((p) => p.guid === x.g) ? { map: { t: mt, bad: pick.out.filter((g) => role(g) !== 'tank'), badLabel: 'outside the bubble (hit)', hl: pick.out.filter((g) => role(g) === 'tank'), hlLabel: 'tank outside (not judged)',
-        rings: [{ guid: x.g, r: 10, label: '10 yd bubble', color: '#7ee08f', fill: 'rgba(126,224,143,.12)', cn: 'Green circle', legend: 'the Wretch\'s bubble, 10 yd (inside is safe)' }], focus: ctrOf(fr, [x.g], 13), title: 'Fester Burst at ' + T(pick.land) + ': the Wretch\'s 10-yard bubble' + (pick.out.length ? ', ' + pl(pick.out.length, 'player') + ' outside' : ', everyone inside'), pts: fr } } : { txt: '', dim: true };
+        rings: [{ guid: x.g, r: 10, label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd (inside is safe)' }], focus: ctrOf(fr, [x.g], 13), title: 'Fester Burst at ' + T(pick.land) + ': the Wretch\'s 10-yard bubble' + (pick.out.length ? ', ' + pl(pick.out.length, 'player') + ' outside' : ', everyone inside'), pts: fr } } : { txt: '', dim: true };
       return [{ t: x.t0 }, { txt: x.died != null ? 'killed after ' + Math.round(x.died - x.t0) + 's' : 'still up', dim: x.died == null }, { txt: pl(ts.length, 'bubble'), warn: late, sub: late ? 'kill it before the third' : '' }, { ps: outside.map(pname), none: 'nobody outside', warn: outside.length > 0, sub: outT ? pl(outT, 'tank') + ' outside (not judged)' : '' }, mapC];
     });
     if (wrRows.length) sections.push({ id: 'wretch', title: 'Blightscale Wretch: bubbles', spell: S('fester burst'), mythicOnly: true, verdict: wrRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
@@ -4032,14 +4040,14 @@ function buildUlatek(ev, r, h) {
       if (bad) M(e.t, pname(e.dst), "Serpent's Bite", UL.biteCast, 'High', "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': ' + res + '.', 'Their soakers stand with them right away, and nobody with a bite takes extra damage before it clears.');
       // (the map: just before it cleared, every bite of this cast with its 7-yard leech circle, and who took the venom)
       const mt = Math.max(0, (end < dur ? end : e.t + 2) - 0.3);
-      const bmap = { map: { t: mt, hl: [e.dst], hlLabel: 'bitten', good: helpers, goodLabel: 'took the venom (now a Purge holder)', rings: set.map((x) => ({ guid: x.dst, r: 7, label: '7 yd', legend: 'leech range, 7 yd' })), title: "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': the 7-yard leech circles', pts: posPts(mt), focus: ctrOf(posPts(mt), set.map((x) => x.dst), 12) } };
+      const bmap = { map: { t: mt, hl: [e.dst], hlLabel: 'bitten', good: helpers, goodLabel: 'took the venom (now a Purge holder)', rings: set.map((x) => ({ guid: x.dst, r: 7, label: '7 yd', ...mcol("Serpent's Bite", 0.12), legend: 'leech range, 7 yd' })), title: "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': the 7-yard leech circles', pts: posPts(mt), focus: ctrOf(posPts(mt), set.map((x) => x.dst), 12) } };
       return [{ t: e.t }, { p: pname(e.dst) }, { txt: res, bad, sub: end < dur && !bad ? 'after ' + Math.round(end - e.t) + 's' : '' }, bmap]; });
     const lastEnd = Math.max(...ends), bm = booms.filter((x) => x.t >= lastEnd + 3 && x.t <= lastEnd + 7.5), seenB = [];
     for (const e of bm) { if (seenB.some((t) => Math.abs(t - e.t) < 0.5)) continue; seenB.push(e.t);
       const hold = holdersAt(e.t), caught = [...new Set(bm.filter((x) => Math.abs(x.t - e.t) < 0.5 && !hold.has(x.dst)).map((x) => x.dst))];
       // (the map: each holder's burst a moment before it went off. Its size isn't published: about 12 yards, from where the
       // players it caught stood in a Mythic kill)
-      const pt = Math.max(0, e.t - 0.1), pmap = { map: { t: pt, hl: [...hold], hlLabel: 'held a Volatile Purge', bad: caught, badLabel: "caught in someone else's", rings: [...hold].map((x) => ({ guid: x, r: 12, label: '~12 yd', color: '#ff6b6b', fill: 'rgba(229,83,75,.10)', cn: 'Red circle', legend: 'a Volatile Purge burst, about 12 yd' })),
+      const pt = Math.max(0, e.t - 0.1), pmap = { map: { t: pt, hl: [...hold], hlLabel: 'held a Volatile Purge', bad: caught, badLabel: "caught in someone else's", rings: [...hold].map((x) => ({ guid: x, r: 12, label: '~12 yd', ...mcol('Volatile Purge', 0.1), legend: 'a Volatile Purge burst, about 12 yd' })),
         title: 'Volatile Purge at ' + T(e.t) + ': each holder\'s burst (about 12 yards, measured from logs)', pts: posPts(pt), focus: ctrOf(posPts(pt), [...hold], 16) } };
       // (a Volatile Purge exploding on someone who wasn't holding one: not spread)
       for (const g of caught) { M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', "Caught in someone else's Volatile Purge at " + T(e.t) + '.', 'Spread before the Purges explode, 5 seconds after a bite is cleared.');
@@ -5843,7 +5851,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

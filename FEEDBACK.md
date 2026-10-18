@@ -196,6 +196,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 213: Map drawings in their icon's colour (your note)
+- [x] **Each ground mechanic is drawn in the main colour of its own spell icon**, measured from the icon itself, so a
+  circle on the map matches the icon in its row and in game. The key's colour words follow ("Purple circle: Gloombomb").
+  The biggest changes: Gloombomb mint → purple; Soulcoil Well purple → teal; Coiling Ichor green (and a purple ring) →
+  red; Shifting Protovenom orange → green; Noxious Shell and Volatile Purge red → green and lime; Ravenous Feast, Spectral
+  Coils and the Guillotine soaks gold → red, teal and red (Grim Guillotine teal); Blink Nova blue → violet; the Viscous
+  Cysts → lime; Raging Crosswinds' arrows → pale white like the wind on its icon; Plague Froth → lime. Already matching
+  and kept: the Sever frontal (red), Corrosive Spit (green), Unstable Miasma (red), Mighty Thud (orange), and the orbs
+  (green and purple, as in game). Pictures of each sent.
+- [x] One table holds every mechanic's colour, so new drawings use it too. The marks that mean what happened to a player
+  (✓, ✕, the white "cleared with a partner" flash) keep their own colours.
+- [x] Fixed: Vashnik's Plague Froth map called its arrows "the way Raging Crosswinds will launch them" (a Sszorak
+  mechanic); now it says "the four Plague Waves it sends out". The key's arrow sample matches the arrows' colour.
+
 ## 2026-10-18, round 212: Every mini map checked against your rule, and lead-ups that play
 I went through every map on one pull of each of the 8 bosses (the test night) and sorted them: does it draw the mechanic
 itself, or only dots?
@@ -293,6 +307,24 @@ itself, or only dots?
   player's page, and the spec fixes and grades in Pull recap's "Talk to" box (those used to follow the Graphs switch).
 - [x] **Power Infusion rework:** mockups in notes, "Power Infusion options.html" (a sentence for each cast, my pick; the
   plan against what happened, as a table; the chart first). You picked the first; built in round 208.
+- [ ] **More for Graphs? (your question, Oct 18): what other data, information or charts belong there.** My first
+  thoughts, to talk through: (1) a boss timeline, the boss's health over the pull with every boss ability marked (what
+  Warcraft Logs calls Events, made readable); (2) movement, how far each player moved and how long they stood still (only
+  possible because these logs have positions, and no other site shows it well); (3) the trinket and gear-proc view already
+  in Next up. Lower on the list: absorbs and shields as their own view, and a deaths list (Mechanics has it already).
+- [ ] **Match NSRT notes to pulls on their own (your note, Oct 18):** so raid leaders and raiders don't have to guess
+  which saved note goes with which pulls. My take: good, and half built: each pull already picks the saved note that
+  names the most of its players ("Pick by roster"). To add: match on the note's boss line, the roster, and whether the
+  players it names actually did those jobs that pull; and say it plainly ("Mythic main: used for pulls 3 to 12; Without
+  Optt: pulls 13 to 18"), with a one-click fix when one is wrong.
+- [ ] **A list of your saved NSRT notes on the Assignments tab (your note, Oct 18):** today they hide in a small menu on
+  the note bar. My take: good, and it goes with the matching above: a panel listing each saved note (its name, when it
+  was saved, how many players it names, and the pulls it was used for), with Use, Edit and Remove on each, and Add a note
+  at the bottom. Build the two together.
+- [ ] **A bigger "new pull" alert for live logging (your note, Oct 18):** the alert that a new pull is in, which you click
+  to open it, should be easier to notice: in the middle of the screen and a bit bigger. My take: good; between pulls people
+  only glance at the screen. My suggestion: a centred card with the pull's result ("Pull 19: wipe at 34%") and an "Open
+  it" button, which fades away by itself after a few seconds if it's ignored, so it never blocks anything.
 - [ ] **Every chart has a hover box (your note, Oct 18):** any chart on screen shows the basics when you hover over it (the
   time, the value, who or what it is) before anything is clicked. My take: good; most charts have one already, so this is
   a pass over every chart to find the ones that don't (and a tap does the same on a phone).

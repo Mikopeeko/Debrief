@@ -2762,10 +2762,10 @@ function cystBlob(x, y, ring, n, k) {
   let d = 'M' + ((P[0][0] + P[9][0]) / 2).toFixed(1) + ' ' + ((P[0][1] + P[9][1]) / 2).toFixed(1);
   for (let i = 0; i < 10; i++) { const p = P[i], q = P[(i + 1) % 10]; d += 'Q' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' ' + ((p[0] + q[0]) / 2).toFixed(1) + ' ' + ((p[1] + q[1]) / 2).toFixed(1); }
   return '<path d="' + d + 'Z" fill="#000" fill-opacity=".45" transform="translate(1.5 2)"/>' +
-    '<path d="' + d + 'Z" fill="#8fd94a" stroke="' + ring + '" stroke-width="' + (2.6 * k).toFixed(1) + '"/>' +
-    '<path d="' + d + 'Z" fill="#3f7a12" fill-opacity=".45" transform="translate(' + (x * 0.25).toFixed(1) + ' ' + (y * 0.25 + 2.2 * k).toFixed(1) + ') scale(.75)"/>' +
+    '<path d="' + d + 'Z" fill="#cde33a" stroke="' + ring + '" stroke-width="' + (2.6 * k).toFixed(1) + '"/>' +
+    '<path d="' + d + 'Z" fill="#6e7a12" fill-opacity=".45" transform="translate(' + (x * 0.25).toFixed(1) + ' ' + (y * 0.25 + 2.2 * k).toFixed(1) + ') scale(.75)"/>' +
     '<ellipse cx="' + (x - 3.6 * k).toFixed(1) + '" cy="' + (y - 4 * k).toFixed(1) + '" rx="' + (3.4 * k).toFixed(1) + '" ry="' + (2 * k).toFixed(1) + '" fill="#fff" fill-opacity=".6"/>' +
-    '<circle cx="' + (x + 11.5 * k).toFixed(1) + '" cy="' + (y - 7 * k).toFixed(1) + '" r="' + (2.3 * k).toFixed(1) + '" fill="#8fd94a" stroke="' + ring + '" stroke-width="1.2"/>' +
+    '<circle cx="' + (x + 11.5 * k).toFixed(1) + '" cy="' + (y - 7 * k).toFixed(1) + '" r="' + (2.3 * k).toFixed(1) + '" fill="#cde33a" stroke="' + ring + '" stroke-width="1.2"/>' +
     (n != null ? '<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" style="font:800 11px var(--body,sans-serif)" fill="#13260a">' + n + '</text>' : '');
 }
 // a popped cyst: a faded splat of goo
@@ -2856,7 +2856,7 @@ function miniMap(mp, pmap) {
     const a = byG.get(l.from), b = byG.get(l.to); if (!a || !b) continue;
     // only a spit that went off turns yellow; one cut short by the add dying fades out grey (it never hurt anyone)
     // an aim whose add dies before it fires is grey and dashed the whole time, so it's clear it never hurt anyone
-    const dud = l.landed === false, ended = ft >= l.t1 - 0.1, fired = ended && !dud, col = fired ? '#d6ff3b' : dud ? '#9aa0ac' : '#5fe35f';
+    const dud = l.landed === false, ended = ft >= l.t1 - 0.1, fired = ended && !dud, col = fired ? '#d6ff3b' : dud ? '#9aa0ac' : '#9ff26d';
     // the line runs from the add through its target and on past them
     const ax = X(a), ay = Y(a), tx = X(b), ty = Y(b), d0 = Math.hypot(tx - ax, ty - ay) || 1, reach = Math.max(SPIT_LEN * yd, d0);
     const bx = ax + (tx - ax) / d0 * reach, by = ay + (ty - ay) / d0 * reach, len = reach, hw = SPIT_W / 2 * yd;
@@ -2894,7 +2894,7 @@ function miniMap(mp, pmap) {
       '<text x="' + x + '" y="' + (y + 25) + '" class="ml">' + esc(p.name) + '</text>');
   }
   for (const p of pts.filter((q) => q.kind === 'boss')) s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name) + '<text x="' + X(p) + '" y="' + (Y(p) + 33) + '" class="ml" fill="#f3c969" style="font-size:13px;font-weight:800">' + esc(p.name) + '</text>');
-  for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(200,90,255,.16)" stroke="#c85aff" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
+  for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(242,36,58,.16)" stroke="#f2243a" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);
   // animated maps: a red X appears only once that player is actually hit
@@ -2923,7 +2923,7 @@ function miniMap(mp, pmap) {
   if (mp.goodAt && good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="1.5"/>', 'White ring: ' + (mp.pendLabel || 'not done yet')]);
   if (good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#2fd15a" stroke-width="2.5"/><path d="M' + (x - 3) + ' ' + y + 'l2 2.5l4-4.5" fill="none" stroke="#2fd15a" stroke-width="2"/>', 'Green ✓: ' + (mp.goodLabel || 'did it right') + (mp.goodAt ? ' (from the moment they do)' : '')]);
   if ((mp.cysts || []).length) leg.push([(x, y) => cystBlob(x, y, '#2fd15a', null, 0.62), 'Viscous Cyst: its number, and what it was used for']);
-  if ((mp.arrows || []).length) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 3) + '" y2="' + (y - 2) + '" stroke="#7fd8ff" stroke-width="2.5" stroke-linecap="round"/><path d="M' + (x + 7) + ' ' + (y - 5) + 'l-6 0.5l3 4z" fill="#7fd8ff"/>', 'Arrow: the way Raging Crosswinds will launch them']);
+  if ((mp.arrows || []).length) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 3) + '" y2="' + (y - 2) + '" stroke="' + (mp.arrows[0].color || '#7fd8ff') + '" stroke-width="2.5" stroke-linecap="round"/><path d="M' + (x + 7) + ' ' + (y - 5) + 'l-6 0.5l3 4z" fill="' + (mp.arrows[0].color || '#7fd8ff') + '"/>', 'Arrow: ' + (mp.arrowLabel || 'the way Raging Crosswinds will launch them')]);
   // (the sample is the tag itself when it's a short word, like "Fury"; a number otherwise)
   if ((mp.tags || []).length) { const tw = String(mp.tags[0][1]), smp = tw.length <= 4 && !/^\d+$/.test(tw) ? tw : '3';
     leg.push([(x, y) => '<text x="' + x + '" y="' + (y + 4) + '" fill="#f3d48a" font-size="' + (smp.length > 1 ? 10 : 12) + '" font-weight="800" text-anchor="middle">' + esc(smp) + '</text>', mp.tagLabel || 'Number by a name']); }
@@ -2934,9 +2934,9 @@ function miniMap(mp, pmap) {
   if (pts.some((q) => q.kind === 'add' && !(ADD_LOOK[q.name] || ADD_LOOK[String(q.name).replace(/ \(.*\)$/, '')]))) leg.push([(x, y) => '<rect x="' + (x - 4.5) + '" y="' + (y - 4.5) + '" width="9" height="9" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000"/>', 'Add' + (gAdd.size ? ' (green ring: kicked)' : bAdd.size ? ' (red ring: cast got off)' : '')]);
   if (pts.some((q) => q.kind === 'boss')) leg.push([(x, y) => bossCrest(x, y, 'Boss', 0.33), 'Boss (gold crest)']);
   for (const k of hasObj) leg.push([(x, y) => k === 'ghost' ? '<path d="M' + (x - 5) + ' ' + (y + 6) + 'v-6a5 5 0 0 1 10 0v6l-2.5-1.7-2.5 1.7-2.5-1.7z" fill="#e9eef7" stroke="#000"/>' : '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="url(#' + (k === 'porb' ? 'orbP' : 'orbG') + ')"/>', OBJS[k][1]]);
-  if (mp.lines && mp.lines.length) leg.push([(x, y) => '<path d="M1 11L11 1L15 5L5 15Z" fill="rgba(95,227,95,.4)" stroke="#5fe35f" stroke-width="1.2"/>', 'Green band: Corrosive Spit aiming, from the add through its target and beyond. It only hurts the moment it fires (turns yellow); grey dashed = the add died before it fired, so it never hit anyone. About ' + SPIT_LEN + ' yd long, ' + SPIT_W + ' yd wide, measured from bystander hits']);
+  if (mp.lines && mp.lines.length) leg.push([(x, y) => '<path d="M1 11L11 1L15 5L5 15Z" fill="rgba(159,242,109,.4)" stroke="#9ff26d" stroke-width="1.2"/>', 'Green band: Corrosive Spit aiming, from the add through its target and beyond. It only hurts the moment it fires (turns yellow); grey dashed = the add died before it fired, so it never hit anyone. About ' + SPIT_LEN + ' yd long, ' + SPIT_W + ' yd wide, measured from bystander hits']);
   for (const [nm, look] of Object.entries(ADD_LOOK)) if (pts.some((q) => q.kind === 'add' && q.name === nm) || (mp.frames && mp.frames.some((f) => f.pts.some((q) => q.name === nm)))) leg.push([(x, y) => addIcon(x, y, look, '', 6 / (look.r + 2.5)), look.legend || nm]);
-  if ((mp.marks || []).some((m) => m.kind === 'ichor')) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="rgba(200,90,255,.2)" stroke="#c85aff" stroke-width="2" stroke-dasharray="3 2"/>', 'Purple dashed ring: Coiling Ichor target (circle size not published)']);
+  if ((mp.marks || []).some((m) => m.kind === 'ichor')) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="rgba(242,36,58,.2)" stroke="#f2243a" stroke-width="2" stroke-dasharray="3 2"/>', 'Red dashed ring: Coiling Ichor target (circle size not published)']);
   if ((mp.marks || []).some((m) => m.kind === 'stone')) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="rgba(255,150,40,.25)" stroke="#ff9628" stroke-width="1.5" stroke-dasharray="3 2"/>', 'Orange circle: Stone Breaker on the tank (3.5 yd)']);
   if (mp.cone) leg.push([(x, y) => '<path d="M' + (x - 6) + ' ' + (y + 5) + 'L' + (x + 6) + ' ' + (y + 5) + 'L' + x + ' ' + (y - 6) + 'Z" fill="rgba(255,45,45,.45)" stroke="#ff3b3b" stroke-width="1.5"/>', 'Frontal: 60° cone, ' + mp.cone.r + ' yd, aimed at the tank']);
   if (hitSet.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ffd23b" stroke-width="2.5"/>', 'Yellow ring: orb inside the frontal']);
