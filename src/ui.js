@@ -1092,9 +1092,9 @@ function headerHtml(r, allMode) {
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
 const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
-// (Performance can be greyed out on the website, "Under development" on hover or tap; it's on everywhere since the launch
-// to the raid on Oct 19: the Players grades are half the Report card, so it has to be there to look into)
-const PERF_OFF = () => false;
+// (Performance is greyed out on the website, "Under development" on hover or tap, until its vision is complete (your note, Oct 18);
+// it shows in the local app. Buttons elsewhere that would jump into it are hidden on the website)
+const PERF_OFF = () => !!window.WLA_HOSTED;
 // (Spec checks is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
 const SPEC_OFF = () => !!window.WLA_HOSTED;
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
@@ -2312,7 +2312,7 @@ function audit() {
     box.querySelectorAll('.pf-row.pf-srow[data-src], .pf-sl[data-src]').forEach((b) => (b.onclick = () => { S.srcSel = S.srcSel === b.dataset.src ? null : b.dataset.src; go(); }));
     box.querySelectorAll('.pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; go(); }));
     const mo = box.querySelector('#pfSrcMore'); if (mo) mo.onclick = () => { S.srcMore = !S.srcMore; go(); }; const cl = box.querySelector('#pfSrcClose'); if (cl) cl.onclick = () => { S.srcSel = null; go(); };
-    box.querySelectorAll('.pf-sw.pf-hn[data-n]').forEach((el) => (el.onclick = () => { S.tab = 'perf'; S.perfKind = 'taken'; S.perfSel = el.dataset.n; S.perfLens = 'players'; renderMain(); window.scrollTo({ top: 0 }); }));
+    box.querySelectorAll('.pf-sw.pf-hn[data-n]').forEach((el) => (el.onclick = () => { if (PERF_OFF()) return; S.tab = 'perf'; S.perfKind = 'taken'; S.perfSel = el.dataset.n; S.perfLens = 'players'; renderMain(); window.scrollTo({ top: 0 }); }));
     pfSortBind(); } }
   $('#view').querySelectorAll('.pill').forEach((b) => (b.onclick = () => { S.role = b.dataset.r; audit(); refreshIcons(); }));
   const mbp = $('#sec-players'); if (mbp) mbp.ontoggle = () => { S.mbpOpen = mbp.open; };
@@ -6198,7 +6198,7 @@ const SPEC_TOP = {
   'Blood Death Knight': { 'The Twin Fangs|16': { 'score': '92', 'abc': '81%', 'cd:blood boil': '77%', 'cd:death and decay': '96%', 'res': '4%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'out': '177738' } },
   'Windwalker Monk': { 'The Twin Fangs|16': { 'score': '84', 'abc': '78%', 'cd:rising sun kick': '93%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '68%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '80%', 'cd:celestial conduit': '80%', 'apl': '100%', 'rep': '1', 'out': '327053' } },
   'Arms Warrior': { 'The Twin Fangs|16': { 'score': '94', 'abc': '76%', 'p:Sudden Death': '2 wasted', 'dot:Rend': '97%', 'cd:colossus smash': '85%', 'cd:avatar': '86%', 'cd:bladestorm': '100%', 'apl': '89%', 'win': '100%', 'out': '361938' } },
-  'Protection Paladin': { 'The Twin Fangs|16': { 'score': '88', 'abc': '67%', 'cd:avenger\'s shield': '74%', 'cd:judgment': '86%', 'cd:blessed hammer': '81%', 'res': '10%', 'up:Shield of the Righteous': '98%', 'cd:avenging wrath': '100%', 'cd:divine toll': '83%', 'out': '130219' } },
+  'Protection Paladin': { 'The Twin Fangs|16': { 'score': '92', 'abc': '67%', 'cd:avenger\'s shield': '74%', 'cd:judgment': '86%', 'cd:blessed hammer': '81%', 'res': '10%', 'up:Shield of the Righteous': '98%', 'cd:avenging wrath': '100%', 'cd:divine toll': '83%', 'out': '130219', 'apl': '83%' } },
   'Restoration Shaman': { 'The Twin Fangs|16': { 'score': '93', 'abc': '75%', 'cd:riptide': '96%', 'cd:healing stream totem': '95%', 'cd:surging totem': '88%', 'mana': '18%', 'cd:ascendance': '67%', 'cd:spirit link totem': '67%', 'win': '100%', 'apl': '94%', 'out': '335261' } },
   'Frost Mage': { 'The Twin Fangs|16': { 'score': '100', 'abc': '84%', 'cd:frozen orb': '100%', 'cd:ray of frost': '91%', 'p:Brain Freeze': '2 wasted', 'p:Fingers of Frost': 'All spent', 'p:Glacial Spike!': 'All spent', 'apl': '92%', 'out': '307964' } },
   'Devourer Demon Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '64%', 'cd:void ray': '98%', 'cd:soul immolation': '100%', 'win': '100%', 'out': '281627' } },
@@ -6216,7 +6216,7 @@ const SPEC_TOP = {
   'Guardian Druid': { 'The Twin Fangs|16': { 'score': '100', 'abc': '70%', 'cd:mangle': '96%', 'cd:thrash': '90%', 'up:Ironfur': '97%', 'cd:incarnation: guardian of ursoc': '100%', 'out': '177547' } },
   'Enhancement Shaman': { 'The Twin Fangs|16': { 'abc': '73%', 'cd:stormstrike': '99%', 'cd:crash lightning': '99%', 'cd:doom winds': '100%', 'cd:ascendance': '100%', 'apl': '81%', 'win': '100%', 'out': '323615' } },
   'Protection Warrior': { 'The Twin Fangs|16': { 'score': '92', 'abc': '75%', 'cd:shield slam': '99%', 'cd:thunder clap': '95%', 'up:Shield Block': '92%', 'cd:avatar': '89%', 'cd:demoralizing shout': '94%', 'out': '182303' } },
-  'Brewmaster Monk': { 'The Twin Fangs|16': { 'score': '93', 'abc': '82%', 'cd:keg smash': '99%', 'cd:blackout kick': '73%', 'cd:breath of fire': '100%', 'up:Shuffle': '100%', 'cd:invoke niuzao, the black ox': '100%', 'cd:exploding keg': '86%', 'out': '157540' } },
+  'Brewmaster Monk': { 'The Twin Fangs|16': { 'score': '93', 'abc': '82%', 'cd:keg smash': '99%', 'cd:blackout kick': '73%', 'cd:breath of fire': '100%', 'up:Shuffle': '100%', 'cd:invoke niuzao, the black ox': '100%', 'cd:exploding keg': '86%', 'out': '157540', 'apl': '85%' } },
   'Demonology Warlock': { 'The Twin Fangs|16': { out: '305316', score: '99', apl: '88%', abc: '80%', tyh: '9.3', tyd: 'all of them', tyc: '4 in 5', tyx: '23', imp: '4.3', ssw: '0%', 'p:Demonic Core': 'All spent', dbh: '1', 'cd:summon demonic tyrant': 'all of them', 'cd:call dreadstalkers': '95%', 'cd:grimoire: imp lord': 'all of them' } }, 'Preservation Evoker': { 'The Twin Fangs|16': { out: '394356', score: '89', apl: '86%', abc: '67%', ta: '76%', db: '95%', dbr: 'all of them', ess: '7%', ecu: '87%', ecl: '0', te: '82%', 'p:Essence Burst': '4 wasted', inf: '3.2', mana: '37%', ebh: '1', dbec: '2', 'p:Merithra\'s Blessing': 'All used' } }, 'Restoration Druid': { 'The Twin Fangs|16': { out: '368163', score: '96', apl: '89%', mast: '2.7', abc: '82%', lb: '99%', hots: '81%', sm: '97%', ab: '98%', wg: '97%', rgb: '0', 'p:Clearcasting': '2 or 3 wasted', 'p:Soul of the Forest': 'All spent', mana: '12%', rr: '90 to 145' } }, 'Holy Paladin': { 'The Twin Fangs|16': { out: '334402', score: '94', abc: '83%', apl: '93%', hs: '95%', jhs: '1', 'p:Infusion of Light': '1 wasted', fol: '4', folb: '58%', hp: '6%', ef: '94%', 'p:Divine Purpose': '1 wasted', 'p:Dawnlight': 'All spent', mana: '23%', bv: '85%', act: '93%', dt: '80%', 'cd:divine toll': '85%', 'cd:avenging wrath': '3 or 4 of 4', 'cd:aura mastery': '2 of 3', hlo: '53%', b5: '2' } } };
 const HPAL_PROCS = [
   { n: 'Infusion of Light', use: ['flash of light', 'judgment'], tip: 'Best on Flash of Light; Judgment when nobody needs healing' },
@@ -8582,6 +8582,15 @@ const GEN_SPECS = {
     cds: [{ n: 'Dancing Rune Weapon', cd: 90, ok: 0.85, warn: 0.7, why: 'Dancing Rune Weapon is the core of the spec: use it on cooldown.' }],
     lead: { ups: 'Keep Bone Shield up all fight.', dots: 'Keep Blood Plague on the boss.', rot: 'Press Blood Boil and Death and Decay on cooldown.', res: 'Turn your Runes into Runic Power, and Runic Power into Death Strikes.', cds: 'Press Dancing Rune Weapon on cooldown.' } },
   'Protection Paladin': { ic: 'Shield of the Righteous', top: 'Protection Paladins', k: { abc: [0.75, 0.6] },
+    apl: { blk: 'Your priority', ok: 0.78, warn: 0.68, why: 'From WoWAnalyzer\'s Protection Paladin rotation check and the Wowhead guide.', list: [
+      { s: 'Hammer of Light', if: { buff: "Light's Deliverance" }, why: 'it was free', tip: 'Cast Hammer of Light as soon as Light\'s Deliverance makes it free.' },
+      { s: 'Shield of the Righteous', alt: ['Word of Glory'], if: { any: [{ res: ['9', 5] }, { buff: 'Divine Purpose' }] }, why: 'you were at 5 Holy Power or had Divine Purpose', tip: 'At 5 Holy Power, or with Divine Purpose, spend on Shield of the Righteous before building more.' },
+      { s: 'Blessed Hammer', alt: ['Hammer of the Righteous', 'Hammer of Wrath'], shareCd: true, full: true, g: 1, why: 'Blessed Hammer was at full charges', tip: 'Don\'t let Blessed Hammer sit at full charges: spend one before your other builders.' },
+      { s: 'Hammer of Wrath', cdq: true, if: { any: [{ exe: 0.2 }, { buff: 'Avenging Wrath' }, { buff: 'Sentinel' }] }, why: 'it was usable', tip: 'Press Hammer of Wrath whenever it\'s usable.' },
+      { s: 'Judgment', alt: ['Hammer of Wrath'], full: true, g: 1.5, why: 'Judgment was at full charges', tip: 'Don\'t let Judgment sit at full charges: it builds Holy Power.' },
+      { s: 'Blessed Hammer', alt: ['Hammer of the Righteous'], if: { buff: 'Shake the Heavens' }, why: 'Shake the Heavens was up', tip: 'With Shake the Heavens up, Blessed Hammer comes before Avenger\'s Shield.' },
+      { s: "Avenger's Shield", why: 'it was ready', tip: "Avenger's Shield comes before Blessed Hammer and Consecration." },
+      { s: 'Blessed Hammer', alt: ['Hammer of the Righteous', 'Consecration', 'Shield of the Righteous', 'Word of Glory', 'Judgment', "Avenger's Shield", 'Hammer of Wrath', 'Hammer of Light'] }] },
     ups: [{ n: 'Shield of the Righteous', ok: 0.7, warn: 0.55, why: 'Shield of the Righteous is your active mitigation: keep it up by spending Holy Power on it.' }],
     rot: [{ n: "Avenger's Shield", cd: 15, h: true, ok: 0.8, warn: 0.65, why: "Avenger's Shield on cooldown." }, { n: 'Judgment', cd: 6, h: true, chT: [["Crusader's Judgment", 2]], ok: 0.8, warn: 0.65, why: 'Press Judgment on cooldown: it builds Holy Power.' }, { n: 'Blessed Hammer', cd: 5, h: true, ch: 3, ok: 0.75, warn: 0.6, why: 'Press Blessed Hammer on cooldown: it builds Holy Power.' }],
     procs: [{ n: 'Shining Light', use: ['Word of Glory'], max: 2, why: 'Shining Light makes Word of Glory free: spend it.' }],
@@ -8594,6 +8603,14 @@ const GEN_SPECS = {
     cds: [{ n: 'Incarnation: Guardian of Ursoc', names: ['Incarnation: Guardian of Ursoc', 'Berserk'], cd: 180, ok: 0.8, warn: 0.6, why: 'Use your big cooldown as often as the fight allows.' }],
     lead: { ups: 'Keep Ironfur up while you tank, without overspending Rage on it.', rot: 'Press Mangle and Thrash as often as possible.', cds: 'Rotate your defensives for the big hits.' } },
   'Brewmaster Monk': { ic: 'Keg Smash', top: 'Brewmaster Monks', gcd1: true, k: { abc: [0.75, 0.6] },
+    apl: { blk: 'Your priority', ok: 0.7, warn: 0.6, why: 'From WoWAnalyzer\'s Brewmaster rotation check and the Wowhead guide.', list: [
+      { s: 'Blackout Kick', why: 'it was ready', tip: 'Blackout Kick comes first whenever it\'s ready: it keeps Shuffle up and sets up Blackout Combo.' },
+      { s: 'Tiger Palm', if: { buff: 'Blackout Combo' }, why: 'Blackout Combo was up', tip: 'With Blackout Combo up, spend it on Tiger Palm.' },
+      { s: 'Keg Smash', if: { buff: 'Empty Barrel' }, why: 'Empty Barrel was up', tip: 'With Empty Barrel up, Keg Smash comes next.' },
+      { s: 'Keg Smash', full: true, tal: 'Flurry Strikes', why: 'Keg Smash was at full charges', tip: 'As Shado-Pan, cast Keg Smash at or near 2 charges.' },
+      { s: 'Breath of Fire', why: 'it was ready', tip: 'Breath of Fire comes before Keg Smash and your fillers.' },
+      { s: 'Keg Smash', why: 'it was ready', tip: 'Keg Smash comes before Tiger Palm.' },
+      { s: 'Tiger Palm', alt: ['Spinning Crane Kick', 'Rushing Jade Wind', 'Blackout Kick', 'Keg Smash', 'Breath of Fire', 'Exploding Keg', 'Chi Burst'] }] },
     ups: [{ n: 'Shuffle', ok: 0.9, warn: 0.75, why: 'Shuffle smooths how fast you take damage: Blackout Kick and Keg Smash on cooldown keep it up.' }],
     rot: [{ n: 'Keg Smash', cd: 8, h: true, ok: 0.85, warn: 0.7, why: 'Press Keg Smash on cooldown: keep enough Energy for it.' }, { n: 'Blackout Kick', cd: 3, ok: 0.8, warn: 0.65, why: 'Press Blackout Kick on cooldown: its cooldown never changes, so plan around it.' }, { n: 'Breath of Fire', cd: 15, ok: 0.8, warn: 0.65, why: 'Press Breath of Fire on cooldown.' }],
     cds: [{ n: 'Invoke Niuzao, the Black Ox', cd: 120, ok: 0.85, warn: 0.7, why: 'Press Niuzao on cooldown.' }, { n: 'Exploding Keg', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Exploding Keg on cooldown.' }],
@@ -9783,7 +9800,7 @@ function plPlayer(a, one, reps, mvpL, data) {
     '<div class="rs-n"><span>' + (one ? 'In their role' : 'Through the night') + '</span><b>' + (one ? ordinal(rank) + '<span class="sub"> of ' + mates.length + '</span>' : a.trend == null ? '—' : plTr(a.trend)) + '</b><small>' + esc(one ? (role === 'dps' ? 'DPS' : role === 'healer' ? 'healers' : 'tanks') + ' this pull' : a.trend == null ? 'needs 4 pulls' : 'the later pulls against the first') + '</small></div></div>';
   // fix these first: the three biggest, then the rest folded
   const fx = a.fixes.filter((f) => (f.gain || 0) >= 0.5 || f.rank), top = fx.slice(0, 3), more = fx.slice(3);
-  const go = (f) => '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(a.p.name) + '">' + (f.go === 'prep' ? 'Their prep ↓' : 'See it in ' + PL_GO[f.go]) + '</button>';
+  const go = (f) => (PERF_OFF() && f.go !== 'prep' && f.go !== 'audit' ? '' : '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(a.p.name) + '">' + (f.go === 'prep' ? 'Their prep ↓' : 'See it in ' + PL_GO[f.go]) + '</button>');
   const pts = (f) => (f.gain >= 0.5 ? '<span class="rk-gain" title="About how much fixing it would add to their grade">+' + Math.max(1, Math.round(f.gain)) + ' points</span>' : '<span class="rk-gain tip">a tip</span>');
   const fxRow = (f, i) => '<div class="rk-w"><span class="rk-wn">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b> ' + pts(f) + (!one && f.k > 1 ? ' <span class="sub">· in ' + f.k + ' of ' + a.n + ' pulls</span>' : '') + '<div class="rk-wx">' + esc(f.x) + '</div>' + go(f) + '</div></div>';
   h += '<div class="rk-work pl-work"><div class="rk-wh">' + (top.length ? 'Fix these first <span class="sub">biggest gain first' + (one ? '' : ', over ' + plural(a.n, 'pull')) + '</span>' : 'Nothing big to fix') + '</div>' +
@@ -11145,6 +11162,33 @@ async function groupsBackfill() {
     const x = groups().find((q) => q.gid === g.gid); if (!x) continue; x.look = look || null; x.lookV = 1; groupPut(x); }
   if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } else if ($('#main .pg-hub')) renderProgHub(); else if ($('#main .home.prog')) renderProgress();
 }
+// ---- Top guilds: Raider.IO's world Mythic rankings for the raid (the world's best, and guilds near world #50, #200, #700 and #1000), kept a week ----
+const TOPG_KEY = 'wla-topg3', TOPG_RAID = 'the-venomous-abyss', TOPG_N = 8; // (the raid's own bosses, as Raider.IO counts them)
+let TOPG_LIST = null, TOPG_P = null;
+const topGuildsP = () => TOPG_P || (TOPG_P = topGuilds().then((l) => (TOPG_LIST = l)).finally(() => { TOPG_P = null; }));
+async function topGuilds() {
+  try { const c = JSON.parse(store.get(TOPG_KEY) || 'null'); if (c && c.list && c.list.length && Date.now() - c.at < 6 * 864e5) return c.list; } catch (e) { /* (fetch again) */ }
+  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 12000);
+  const page = async (p) => { const r = await fetch('https://raider.io/api/v1/raiding/raid-rankings?raid=' + TOPG_RAID + '&difficulty=mythic&region=world&limit=50&page=' + p, { signal: ac.signal }); if (!r.ok) throw new Error('Raider.IO ' + r.status); return (await r.json()).raidRankings || []; };
+  const [p0, p3, p13, p19] = await Promise.all([page(0), page(3), page(13), page(19)]).finally(() => clearTimeout(to));
+  const pick = (e, grp) => e && e.guild ? { grp, rank: e.rank, name: e.guild.name, realm: e.guild.realm.name, rs: e.guild.realm.slug, rg: e.guild.region.slug, kills: (e.encountersDefeated || []).length,
+    last: ((e.encountersDefeated || []).slice().sort((a, b) => String(b.firstDefeated).localeCompare(String(a.firstDefeated)))[0] || {}).slug || null,
+    faction: e.guild.faction ? e.guild.faction[0].toUpperCase() + e.guild.faction.slice(1) : null } : null;
+  const ok = (e) => e && e.guild && e.guild.region && e.guild.region.slug !== 'cn', near = (l) => l.slice().reverse().find(ok);
+  const list = p0.filter(ok).slice(0, 6).map((e) => pick(e, 'top')).concat([near(p0), near(p3), near(p13), near(p19)].map((e) => pick(e, 'rank'))).filter(Boolean);
+  if (list.length) store.set(TOPG_KEY, JSON.stringify({ at: Date.now(), list })); return list;
+}
+const tgLink = (g) => 'https://www.warcraftlogs.com/guild/' + g.rg + '/' + g.rs + '/' + encodeURIComponent(g.name);
+function topGuildsHtml(list) {
+  const n = TOPG_N, slugOf = (b) => b.toLowerCase().replace(/'/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const card = (g) => { const fc = FACTION[g.faction], hb = g.last && Object.keys(BOSS_HERO).find((b) => slugOf(b) === g.last), art = hb && BOSS_HERO[hb];
+    return '<div class="tg-card' + (g.grp === 'top' && g.rank <= 3 ? ' m' + g.rank : '') + '" style="--bc:' + (fc ? fc[0] : 'var(--gold)') + '">' +
+    (art ? '<img class="tg-art" src="https://wow.zamimg.com/uploads/guide/header/' + art[0] + '.jpg" alt="" loading="lazy" style="object-position:' + art[1] + '% 25%" onerror="this.remove()">' : '') +
+    '<div class="tg-t">' + banner({ kind: 'guild', name: g.name, faction: g.faction }) + '<div class="tg-id"><b>' + esc(g.name) + '</b><span class="sub">' + esc(g.realm) + ' · ' + esc(g.rg.toUpperCase()) + '</span></div><span class="tg-rk">World #' + g.rank + '</span></div>' +
+    '<div class="tg-b"><button class="btn sm tg-add" type="button" data-tl="' + esc(tgLink(g)) + '">Add</button><a class="linkbtn" href="' + esc(tgLink(g)) + '" target="_blank" rel="noopener">Warcraft Logs</a><span class="tg-k' + (g.kills === n ? ' full' : '') + '">' + g.kills + '/' + n + ' Mythic</span></div></div>'; };
+  const top = list.filter((g) => g.grp === 'top'), rk = list.filter((g) => g.grp === 'rank');
+  return (top.length ? '<div class="tg-g"><h4>The world\'s best</h4><div class="tg-row">' + top.map(card).join('') + '</div></div>' : '') + (rk.length ? '<div class="tg-g"><h4>At other ranks</h4><div class="tg-row">' + rk.map(card).join('') + '</div></div>' : '');
+}
 // (asHome: the home page: the slim bar for logs on top, titled "Your teams")
 function renderProgHub(msg, msgErr, asHome) {
   if (asHome == null) asHome = !!S.hubHome; S.hubHome = asHome;
@@ -11170,7 +11214,8 @@ function renderProgHub(msg, msgErr, asHome) {
   const hero = '<section class="pg-hero"><img class="pg-hero-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO["Kith'ix"][0] + '.jpg" alt="" onerror="this.remove()">' +
     '<div class="pg-ht"><span class="pg-kick">The Venomous Abyss</span><h1>Your teams</h1><p class="sub">' + (gl.length ? 'Pick a team or your character: every boss and night, with your rankings.' : 'Add your team, guild or your own character from Warcraft Logs: every raid night, boss by boss.') + '</p></div>' + stats + '</section>';
   $('#main').innerHTML = '<div class="home prog pg-hubp' + (asHome ? ' th-home' : '') + '">' + (asHome ? teamsBar() : back) + hero +
-    '<div class="pg-hub">' + (gl.length ? '<div class="hc-grid">' + gl.map((g, i) => hubCard(g, all, order, i)).join('') + '</div>' : '') + add + '</div></div>';
+    '<div class="pg-hub">' + (gl.length ? '<div class="hc-grid">' + gl.map((g, i) => hubCard(g, all, order, i)).join('') + '</div>' : '') + add +
+    '<section class="pg-topg" id="pgTopG"><div class="tg-h"><h3>Top guilds</h3><span class="sub">See how the world\'s best and guilds at other ranks are doing: add one to browse its nights like your own team. Ranks from Raider.IO, updated weekly.</span></div><div class="tg-body"><p class="sub">Loading the rankings…</p></div></section></div></div>';
   progLit(!asHome);
   if (asHome) bindTeamsBar(); else pageTips('hub');
   $('#pgWhich').onclick = () => { const bx = $('#pgWhichBox'); bx.hidden = !bx.hidden; $('#pgWhich').setAttribute('aria-expanded', String(!bx.hidden)); };
@@ -11184,6 +11229,11 @@ function renderProgHub(msg, msgErr, asHome) {
   $('#pgTeam').onkeydown = (e) => { if (e.key === 'Enter') $('#pgTeamGo').click(); };
   if (S.pgFocusAdd || !gl.length) { S.pgFocusAdd = false; $('#pgTeam').focus(); }
   if ($('#pgBack')) $('#pgBack').onclick = () => select(PROG_BACK);
+  // (the top guilds fill in once Raider.IO answers; Add puts a guild's Warcraft Logs page in the add box and adds it)
+  const fillTopG = (l) => { const b = $('#pgTopG .tg-body'); if (!b) return; b.innerHTML = l.length ? topGuildsHtml(l) : '<p class="sub">No rankings yet.</p>';
+    $$('#pgTopG .tg-add').forEach((x) => (x.onclick = () => { $('#pgTeam').value = x.dataset.tl; $('#pgTeamGo').click(); window.scrollTo({ top: 0, behavior: 'smooth' }); })); };
+  if (TOPG_LIST) fillTopG(TOPG_LIST); else topGuildsP().then(fillTopG)
+    .catch(() => { const b = $('#pgTopG .tg-body'); if (b) b.innerHTML = '<p class="sub">Raider.IO didn\'t answer just now: the top guilds will show next time.</p>'; });
 }
 // bringing in a team's nights: the steps show on its page; when it ends, the page you're on is redrawn only if it's that
 // team's page or the teams page (an import keeps going if you leave)

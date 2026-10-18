@@ -13,6 +13,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
 - [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
   Brewmaster; the rest from the guides, checked against the top players like the healers.
+  **Update (round 186):** Protection Paladin and Brewmaster are done. Next: Blood, Vengeance, Guardian and Protection Warrior,
+  from the guides. Havoc's first list blamed the top players (its order bends around Fury and procs), so it was taken out;
+  Havoc and Devourer keep their cooldown and resource checks until a list holds up against the top players.
+- [x] **Performance greyed out on the live site until its vision is complete (your note, Oct 18):** it's incomplete and not
+  clear what it's for yet, so the whole tab is off on the website for launch (round 186) and stays on your PC. To do: decide
+  what Performance is for, then finish it before turning it back on. My take: agreed, launch with what's polished.
+- [ ] **A better, fancier logo and brand (your note, Oct 18).** My take: worth doing before Debrief is promoted widely, not
+  before the raid test; I can mock up a few directions to pick from.
+- [ ] **Make the whole website look "fancy" (your note, Oct 18).** My take: goes with the brand work; do them together so the
+  new look starts from the logo and colours.
+- [ ] **Saved NSRT notes (your note, Oct 18):** save several notes, and pick the saved one that matches the pull's exact
+  raid composition (or have Debrief pick it), or edit an existing note in place for small composition changes (swapping a
+  name). My take: very useful for raid leaders, and it fits how notes change week to week. Matching by roster is the easy
+  part; editing in place should stay small (swap a player for another), so the note doesn't drift from the one in game.
 - [ ] **Simplify the tabs in Performance (your note, Oct 18).**
 - [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
   reports and announcements, and how to link it from the site).
@@ -87,17 +101,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   format the app reads from a file), and Warcraft Logs reports are turned into that same format first. What's new is the
   sending: the app itself, a place on the website to receive and keep the log (a night's raw log is hundreds of MB, so it
   goes in compressed pieces), and a way for the raid to open the live night. Parses still need the log on Warcraft Logs.
+  **My take (Oct 18): probably not worth building.** Warcraft Logs' own uploader already live-logs during raid, and Debrief's
+  "Live" switch already checks that report every 30 seconds for new pulls. A Debrief app would rebuild what raiders already
+  have, plus storage costs. It's only worth it if live Warcraft Logs isn't fast enough, or some raiders won't use Warcraft Logs.
 - [x] **Survivability view in Performance** (round 118).
 - [x] **Healers view, simpler**, with the boss's health beside the mana (round 118).
 - [x] **The Parse column** (round 118).
 - [x] **Progress page**: easier to find, several teams, edit and remove, your own Warcraft Logs page (round 119).
 - [ ] **A better web address** for the site (your question).
-- [ ] **Top teams from Warcraft Logs** (your note): pick from the top-ranked teams. My take: keep them apart from your own
+- [x] **Top teams from Warcraft Logs** (your note; built in round 186 as "Top guilds" on the Your teams page, from Raider.IO's
+  rankings; "pulls and nights to kill" per boss is still to come): pick from the top-ranked teams. My take: keep them apart from your own
   teams (a "Compare" option: how many pulls and nights a top guild needed per boss, next to yours). Design to show you first.
   **Update (your note, Oct 17):** on the Your teams page, under "Add a team or character", show about four top guilds
   already pulled up, at different ranges: around world #50, #200, #700 and #1000, so people can look and compare.
   My take: pick them from Warcraft Logs' rankings each week (the ranks move), not fixed guilds, and show the same card
   as your own teams plus "how many pulls and nights to kill" per boss.
+  **Update (your note, Oct 18):** an extra section on the Teams page with various top-ranked guilds for people to browse,
+  the popular top guilds (the world's best, like the race guilds) as well as ones at other ranks.
 - [x] **Healer mana, more**: what each healer spent the most mana on (round 119).
 - [x] **Performance charts you can explore**: hover readouts and click-to-hide (round 119). More charts can follow.
 - [ ] **The new 12.1.5 boss** (your note): make sure every version of it is in the project (each difficulty: its checks, its
@@ -112,6 +132,27 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 186: Top guilds on Your teams (your #12), Performance off online, tank rotation checks (your #6)
+- [x] **Top guilds (your #12 and your note):** a section under "Add a team or character" with the world's six best guilds and
+  the guilds near world #50, #200, #700 and #1000, from Raider.IO's Mythic rankings, refreshed weekly. Each card shows the
+  guild's server and region, its world rank and its kills. **Add** brings the guild in like your own team (its nights from
+  Warcraft Logs), and **Warcraft Logs** opens its page there.
+- [x] **A nicer small banner (your note):** each card has its Horde or Alliance crest (the same one as your team cards), a top
+  edge in its faction's colour, the art of the furthest boss it has killed faded behind, and gold, silver and bronze ranks for
+  the world's top three. The cards stay small.
+- Chinese guilds are left out, because their logs are on a separate Warcraft Logs site and Add can't bring them in. The next
+  guild takes their place.
+- Note: Raider.IO counts The Venomous Abyss as 8 bosses, with Nymrissa and Kith'ix as raids of their own. That's why a top
+  guild shows "8/8" while your teams show "/10".
+- [x] **Performance greyed out on the website (your note):** it shows "Under development" on hover or tap, and the buttons
+  elsewhere that jump into it are hidden there. It stays on in the app on your PC.
+- [x] **Rotation checks for Protection Paladin and Brewmaster (your #6),** from WoWAnalyzer's lists, checked against the top
+  players. Top Protection Paladins land at 83% (the bar is 78%), and top Brewmasters at 85% (the bar is 70%). Your raid's
+  Protection Paladins score 88% and 86% on the Twin Fangs kill.
+- Fixed by that check: top Protection Paladins press Hammer of Wrath outside execute and wings, through procs the log can't
+  see. Pressing it never counts as a slip now. The leftover slips in top logs are real ones, mostly building more Holy Power
+  while already at 5.
 
 ## 2026-10-18, round 185: Mechanics opens with What went wrong / What went well (your note)
 - [x] The strip of chips at the top of Mechanics is replaced by the same pair as Latest pull: **What went wrong** lists each
