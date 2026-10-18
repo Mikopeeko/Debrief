@@ -173,6 +173,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 207: Graphs on the live site, Power Infusion greyed out there
+- [x] **Graphs is on for everyone (your call).** My take: right for launch, it's plain numbers and charts now, nothing
+  graded. Players' "See it in Casts" and "See it in Resources" buttons show on the website too.
+- [x] **Power Infusion stays greyed out on the website** ("Under development") until its rework (your call). Its plan line
+  on Pull recap is hidden there too, and a search for Power Infusion opens Cooldowns instead.
+- [x] Rotation is still greyed out on the website, and with it the parts that come from it: "See it in Rotation" on a
+  player's page, and the spec fixes and grades in Pull recap's "Talk to" box (those used to follow the Graphs switch).
+- [ ] **Go easier on tanks for standing in bad stuff (your note).** My take: strong; tanks often take hits on purpose
+  (holding the boss in place) and can live through them, so flagging it is noise. My suggestion: a tank's hit from avoidable
+  damage is only a small note, not a mistake, unless it's a tank mechanic, it killed them, or it was unusually big.
+
 ## 2026-10-18, round 206: Rotation and Graphs, tabs for the views, All pulls back at the top
 - [x] **Spec checks is its own main tab, "Rotation"** (your call), between Assignments and Graphs. My take: strong; it
   separates "how you played" from the raw numbers. It works for one pull and for all pulls, and is greyed out on the live

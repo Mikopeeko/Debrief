@@ -9897,9 +9897,12 @@ function headerHtml(r, allMode) {
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
 const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
-// (Graphs is greyed out on the website, "Under development" on hover or tap, until its vision is complete (your note, Oct 18);
-// it shows in the local app. Buttons elsewhere that would jump into it are hidden on the website)
-const PERF_OFF = () => !!window.WLA_HOSTED;
+// (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
+// () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with the buttons that jump into it)
+const PERF_OFF = () => false;
+// (Power Infusion, one of Graphs' views, stays greyed out on the website until its rework (your call, Oct 18): its tab
+// says "Under development", and the Power Infusion plan on Pull recap is hidden there)
+const PI_OFF = () => !!window.WLA_HOSTED;
 // (Rotation (Spec checks) is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
 const SPEC_OFF = () => !!window.WLA_HOSTED;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
@@ -13208,7 +13211,7 @@ const PERF_HINT = { card: 'grades and what to fix', spec: 'your spec, the guides
 function perfTabs(kind) {
   if (kind === 'spec') return ''; // (Rotation: its own main tab, with no views to pick)
   const LB = new Map(PERF_KINDS);
-  const tab = (k) => { const off = k === 'spec' && SPEC_OFF();
+  const tab = (k) => { const off = (k === 'spec' && SPEC_OFF()) || (k === 'pi' && PI_OFF());
     return '<button class="pft' + (k === kind ? ' on' : '') + (off ? ' off' : '') + '" type="button" role="tab" aria-selected="' + (k === kind) + '"' + (off ? ' aria-disabled="true" title="Under development"' : ' data-k="' + k + '" title="' + esc(PERF_HINT[k] || '') + '"') + '>' + LB.get(k) + '</button>'; };
   return '<nav class="pft-row" role="tablist" aria-label="What to show">' + PERF_GROUPS.map(([gl, ks]) => '<span class="pft-g" role="presentation"><b aria-hidden="true">' + gl + '</b><span role="presentation">' + ks.map(tab).join('') + '</span></span>').join('<span class="pft-sep" aria-hidden="true"></span>') + '</nav>';
 }
@@ -13232,7 +13235,7 @@ const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || 
 function perf() {
   // (Rotation is always Spec checks; Graphs opens on the view you last had, Damage the first time. S.perfKind is the
   // Graphs view only, so going to Rotation and back keeps it)
-  const rot = S.tab === 'rot', isK = (k) => k && k !== 'spec' && PERF_KINDS.some(([x]) => x === k);
+  const rot = S.tab === 'rot', isK = (k) => k && k !== 'spec' && !(k === 'pi' && PI_OFF()) && PERF_KINDS.some(([x]) => x === k);
   if (!rot) { if (!isK(S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = isK(k) ? k : 'dmg'; } store.set('wla-pf-kind', S.perfKind); }
   const r = S.rep, kind = rot ? 'spec' : S.perfKind, ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
   const ps = players().filter((p) => p.name && !/^Player-/.test(p.name));
@@ -13989,7 +13992,7 @@ function pfFindIndex(r) {
   const kickN = new Set(r.interrupts.map((k) => String(k.spell).toLowerCase())), ccN = new Set(ps.flatMap((p) => (p.ccL || []).map((c) => String(c.spell).toLowerCase()))), done = new Set(out.filter((o) => o.g === 'dmg' || o.g === 'heal').map((o) => o.n.toLowerCase()));
   for (const x of agg((p) => [...p.castAb].map(([n, a]) => [n, a.id, a.n || 1]))) { const ln = x.n.toLowerCase(), pr = x.v === 1 ? '1 cast' : x.v + ' casts';
     const uc = DISPEL_N.has(ln) ? 'disp' : EXT_N.includes(ln) ? 'ext' : BRES_N.includes(ln) ? 'bres' : ccN.has(ln) ? 'cc' : null;
-    if (cdN.has(ln)) out.push({ g: 'cds', ...x, d: pr + ' · ' + by(x), go: () => (ln === 'power infusion' ? (S.perfKind = 'pi') : pfGo('cds', x.top.name, true)) }); // (Power Infusion has its own view)
+    if (cdN.has(ln)) out.push({ g: 'cds', ...x, d: pr + ' · ' + by(x), go: () => (ln === 'power infusion' && !PI_OFF() ? (S.perfKind = 'pi') : pfGo('cds', x.top.name, true)) }); // (Power Infusion has its own view, where it's on)
     else if (uc) out.push({ g: 'util', ...x, d: pr + ' · ' + by(x), go: () => { S.perfKind = 'util'; S.utilCat = uc; S.utilSel = x.top.name; } });
     else if (survK.has(ln)) out.push({ g: 'surv', ...x, d: pr + ' · ' + by(x), go: () => { S.perfKind = 'surv'; S.survCat = survK.get(ln); S.survSel = x.top.name; } });
     else if (!done.has(ln)) out.push({ g: 'cast', ...x, d: pr + ' · ' + by(x), go: () => pfGo('cast', x.top.name, true) }); }
@@ -19797,7 +19800,8 @@ function plPlayer(a, one, reps, mvpL, data) {
     '<div class="rs-n"><span>' + (one ? 'In their role' : 'Through the night') + '</span><b>' + (one ? ordinal(rank) + '<span class="sub"> of ' + mates.length + '</span>' : a.trend == null ? '—' : plTr(a.trend)) + '</b><small>' + esc(one ? (role === 'dps' ? 'DPS' : role === 'healer' ? 'healers' : 'tanks') + ' this pull' : a.trend == null ? 'needs 4 pulls' : 'the later pulls against the first') + '</small></div></div>';
   // fix these first: the three biggest, then the rest folded
   const fx = a.fixes.filter((f) => (f.gain || 0) >= 0.5 || f.rank), top = fx.slice(0, 3), more = fx.slice(3);
-  const go = (f) => (PERF_OFF() && f.go !== 'prep' && f.go !== 'audit' ? '' : '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(a.p.name) + '">' + (f.go === 'prep' ? 'Their prep ↓' : 'See it in ' + PL_GO[f.go]) + '</button>');
+  // (a button only where its tab is on: Rotation's for the spec fixes, Graphs' for Casts and Resources)
+  const go = (f) => ((f.go === 'card' ? SPEC_OFF() : (f.go === 'cast' || f.go === 'res') && PERF_OFF()) ? '' : '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(a.p.name) + '">' + (f.go === 'prep' ? 'Their prep ↓' : 'See it in ' + PL_GO[f.go]) + '</button>');
   const pts = (f) => (f.gain >= 0.5 ? '<span class="rk-gain" title="About how much fixing it would add to their grade">+' + Math.max(1, Math.round(f.gain)) + ' points</span>' : '<span class="rk-gain tip">a tip</span>');
   const fxRow = (f, i) => '<div class="rk-w"><span class="rk-wn">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b> ' + pts(f) + (!one && f.k > 1 ? ' <span class="sub">· in ' + f.k + ' of ' + a.n + ' pulls</span>' : '') + '<div class="rk-wx">' + esc(f.x) + '</div>' + go(f) + '</div></div>';
   h += '<div class="rk-work pl-work"><div class="rk-wh">' + (top.length ? 'Fix these first <span class="sub">biggest gain first' + (one ? '' : ', over ' + plural(a.n, 'pull')) + '</span>' : 'Nothing big to fix') + '</div>' +
@@ -20110,7 +20114,7 @@ function pullSections(r) {
 function lpStats(r) {
   const ct = cutT(r), HCD = 'Assigned cooldown', ms = keptMistakes(r).filter((m) => m.mechanic !== 'Death' && m.severity !== 'Low' && m.mechanic !== HCD);
   const hasNote = !!(r.assign && !r.assign.error && r.assign.note), cdRows = hasNote ? (r.assign.cds || []).filter((x) => x.expected != null && x.expected <= ct + 0.05 && /^(on time|late|early|missed)$/.test(x.status)) : [];
-  const v = PERF_OFF() ? [] : rcCards([r]).map((x) => x.overall).filter((s) => s != null);
+  const v = SPEC_OFF() ? [] : rcCards([r]).map((x) => x.overall).filter((s) => s != null);
   return { deaths: keptDeaths(r).length, probs: new Set(ms.map((m) => m.mechanic)).size, hasNote, noteMiss: ms.filter((m) => m.fromNote).length, cdRows,
     cdPct: cdRows.length ? 100 * cdRows.filter((x) => x.status === 'on time').length / cdRows.length : null, rc: v.length ? v.reduce((s, x) => s + x, 0) / v.length : null };
 }
@@ -20142,7 +20146,7 @@ function lpPrep(r, rows) {
   const list = (ps) => ps.slice(0, 8).map(lpWho).join(', ') + (ps.length > 8 ? ' and ' + (ps.length - 8) + ' more' : '');
   if (noPot.length) lines.push(['bad', 'No potion', list(noPot)]);
   if (rows) for (const [k, l] of [['No flask', 'No flask'], ['No food buff', 'No food'], ['No weapon oil or stone', 'No weapon oil']]) { const ps = rows.filter((x) => x.issues.includes(k)).map((x) => x.p); if (ps.length) lines.push(['warn', l, list(ps)]); }
-  const pi = PERF_OFF() ? [] : [...piPull(r).priests.values()].filter((x) => x.plan).map((x) => ['pi', 'Power Infusion', lpWho(x.p) + ' gives it to ' + lpWho(x.plan.q) + (x.plan.cd ? '<span class="sub">, timed with their ' + esc(x.plan.cd.name) + '.</span>' : '.')]);
+  const pi = PI_OFF() ? [] : [...piPull(r).priests.values()].filter((x) => x.plan).map((x) => ['pi', 'Power Infusion', lpWho(x.p) + ' gives it to ' + lpWho(x.plan.q) + (x.plan.cd ? '<span class="sub">, timed with their ' + esc(x.plan.cd.name) + '.</span>' : '.')]);
   const has = Array.isArray(rows), ok = !lines.length ? '<div class="lp-pr ok"><span class="lp-pk">✓</span><span>' + (has ? 'Everyone drank a potion and had a flask, food and weapon oil.' : 'Everyone drank a potion.') + '</span></div>' : '';
   return '<div class="panel lp-side-p lp-prep" id="lpPrep"><h3 class="nh"><span>Before the next pull</span><small>' + (has ? 'Potions during this pull, and flask, food and oil at its start' : rows === null ? 'Potions during this pull. Checking flasks and food…' : 'Potions during this pull') + '</small></h3>' + ok +
     lines.concat(pi).map(([st, k, v]) => '<div class="lp-pr ' + st + '"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
@@ -20150,7 +20154,7 @@ function lpPrep(r, rows) {
 // who to talk to: each player's first thing to fix this pull (from their grade on Players: mechanics, and the Report card
 // where Performance is on), most to gain first; potions and healing cooldowns have their own boxes here, so they're left out
 function lpTalk(r) {
-  const credit = assignCredit(r), off = PERF_OFF(), list = [];
+  const credit = assignCredit(r), off = SPEC_OFF(), list = []; // (the spec fixes and grades come with Rotation)
   for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; let g; try { g = plGrade(r, p, null, credit); } catch (e) { continue; }
     const f = g.fixes.find((z) => (z.crit || (z.gain || 0) >= 3) && !/potion/i.test(z.t) && z.key !== 'm|Assigned cooldown' && (!off || /^m\|/.test(z.key))); if (f) list.push({ p, g, f }); }
   if (!list.length) return '';
