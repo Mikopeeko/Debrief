@@ -109,6 +109,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Not testable yet: every top kill is Diabolist, so the Soul Harvester parts (and Power Siphon, Doomguard) are read through only.
 - [x] **Your note: the card and talent graphics look cheap and cartoony.** Done in round 172.
 
+## 2026-10-18, round 174: Each spec page reorganized, and Beacon of Virtue and Divine Toll as boxes with big tooltips
+- [x] **Your note: the organization of each module.** Every spec page now runs in the same order: the summary; your pull at a
+  glance (the cooldown timeline moved up from the bottom, or the pull-by-pull table over the night); the menu, grouped by
+  chapter; then three chapters, **Rotation, Resources and Cooldowns**; and your talents at the bottom, folded until clicked.
+  The healers' single "Cooldowns" block became one block per cooldown (Tranquility, Convoke the Spirits, Stasis and Inner
+  Flame, and "Other cooldowns"); Holy Paladin's cooldowns are Beacon of Virtue, Avenging Wrath and Aura Mastery.
+- [x] **Your note: smaller boxes with bigger, clear tooltips** for the many Beacons of Virtue and Divine Tolls. Each Beacon of
+  Virtue window is a box: hover it for what it healed through your Beacons, whether Divine Toll (and Aura Mastery) went in,
+  how much of it you spent casting, and the icon of every spell you cast in it. Each Divine Toll is a box with what its Holy
+  Shocks healed, inside Beacon of Virtue or not, and the Holy Power it wasted. Every box on all four pages got the same big,
+  clear tooltip (the game's style) in place of the browser's small one.
+- [x] **Condensed:** the windows' line says it all (casting, what they healed, how many had a Divine Toll), so the separate
+  "Healing from Beacon of Virtue" tile folded into it. Your note: "Divine Toll during Beacon of Virtue" repeated the windows
+  above it, so it's gone; its boxes moved to "Healing from Divine Toll", which also says how many were inside Beacon of Virtue.
+- [ ] Open (your call): "Aura Mastery during Beacon of Virtue" is the same kind of line (the window boxes show Aura Mastery
+  too). Say if it should go as well.
+
 ## 2026-10-18, round 173: The four specs cleaned up ("organizational, graphical, technical, debug, polish")
 - [x] **One page for every spec.** Holy Paladin had its own copy of the page; it now uses the same one as Druid, Evoker and
   Demonology, so every fix and every new look lands on all four at once. Checked line by line: the page came out the same.
