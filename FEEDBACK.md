@@ -123,6 +123,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Condensed:** the windows' line says it all (casting, what they healed, how many had a Divine Toll), so the separate
   "Healing from Beacon of Virtue" tile folded into it. Your note: "Divine Toll during Beacon of Virtue" repeated the windows
   above it, so it's gone; its boxes moved to "Healing from Divine Toll", which also says how many were inside Beacon of Virtue.
+- [x] **Your note: Ringing of the Heavens merged into Aura Mastery.** One line, one number: what Aura Mastery prevented plus
+  what its Divine Tolls healed (yours: 4.72M, 2.79M prevented and 1.92M healed, 960.7K a Divine Toll against 457.4K for one
+  of your own). The separate Ringing of the Heavens tile is gone; each press's card still shows both.
 - [ ] Open (your call): "Aura Mastery during Beacon of Virtue" is the same kind of line (the window boxes show Aura Mastery
   too). Say if it should go as well.
 
