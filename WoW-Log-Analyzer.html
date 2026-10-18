@@ -957,6 +957,35 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
   .spc-mt .hm-ur > span:first-child { white-space: normal; overflow: visible; line-height: 1.25; } .spc-mt .ef-t { display: none; } }
 path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255,.45); } .tl-r.tl-lv svg { height: 18px; } .tl-r.tl-lv { height: 26px; } line.tl-t.io { stroke: #b07cf0; stroke-width: 2.5; }
 .tl-lg i.hp { background: rgba(230,180,80,.75); } .tl-lg i.mn { background: rgba(106,168,255,.65); } .spc-tile.info .pt { border-left-color: var(--line2); }
+/* ---- the character card's class frame (our own drawings): behind the card's content, never in the way of a click ---- */
+.spc-deco { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.spc-hero > .spc-hl, .spc-hero > .spc-hf { z-index: 1; }
+.dco-c { position: absolute; width: 58px; height: 58px; } .dco-c svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.dco-tl { left: 0; top: 0; } .dco-tr { right: 0; top: 0; transform: scaleX(-1); } .dco-bl { left: 0; bottom: 0; transform: scaleY(-1); } .dco-br { right: 0; bottom: 0; transform: scale(-1, -1); }
+.dco-e { position: absolute; left: 60px; right: 60px; height: 10px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.dco-e svg { display: block; width: 100%; height: 100%; } .dco-t { top: 0; } .dco-b { bottom: 0; transform: scaleY(-1); }
+/* (Holy Paladin: gold, a sun in each corner, soft rays from the top left, a few motes of light rising) */
+.dco-rays { position: absolute; left: -170px; top: -170px; width: 340px; height: 340px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255,226,150,.12) 0deg 5deg, transparent 5deg 15deg); -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 68%); mask-image: radial-gradient(circle, #000 15%, transparent 68%); }
+.dco-sun { transform-box: fill-box; transform-origin: center; }
+.dco-mote { position: absolute; bottom: 6px; width: 4px; height: 4px; border-radius: 50%; background: #ffe6a0; box-shadow: 0 0 8px 2px rgba(255,214,120,.45); opacity: 0; }
+/* (Restoration Druid: green, a vine along the edges, a Lifebloom in each corner, leaves drifting down) */
+.spc-hero.cls-druid { border-color: rgba(120,200,90,.32); background: radial-gradient(120% 160% at 0% 0%, rgba(110,190,90,.15), transparent 55%), radial-gradient(80% 120% at 100% 100%, rgba(255,124,10,.08), transparent 60%), linear-gradient(135deg, #161c15 0%, #15191c 55%, #121419 100%); }
+.dco-dru .dco-c { width: 64px; height: 64px; } .dco-dru .dco-e { left: 64px; right: 64px; height: 16px; } .dco-dru .dco-t { top: -3px; } .dco-dru .dco-b { bottom: -3px; }
+.dco-bloom { transform-box: fill-box; transform-origin: center; }
+.dco-leaf { position: absolute; top: -14px; width: calc(15px * var(--s, 1)); height: calc(12px * var(--s, 1)); opacity: 0; } .dco-leaf svg { display: block; width: 100%; height: 100%; }
+.dco-any .dco-c { width: 40px; height: 40px; }
+@media (prefers-reduced-motion: no-preference) {
+  .dco-rays { animation: dcoSpin 90s linear infinite; } .dco-sun { animation: dcoTw 4.5s ease-in-out infinite alternate; } .dco-tr .dco-sun { animation-delay: -1.5s; } .dco-bl .dco-sun { animation-delay: -3s; } .dco-br .dco-sun { animation-delay: -2.2s; }
+  .dco-mote { animation: dcoMote 12s linear infinite; }
+  .dco-bloom { animation: dcoBloom 7s ease-in-out infinite alternate; } .dco-tr .dco-bloom { animation-delay: -2.5s; } .dco-bl .dco-bloom { animation-delay: -5s; } .dco-br .dco-bloom { animation-delay: -1.2s; }
+  .dco-leaf { animation: dcoLeaf 17s linear infinite; }
+}
+@keyframes dcoSpin { to { transform: rotate(360deg); } }
+@keyframes dcoTw { from { transform: scale(.82); opacity: .7; } to { transform: scale(1.08); opacity: 1; } }
+@keyframes dcoMote { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .7; } 80% { opacity: .3; } 100% { transform: translateY(-150px); opacity: 0; } }
+@keyframes dcoBloom { from { transform: scale(.8) rotate(-10deg); } to { transform: scale(1.06) rotate(12deg); } }
+@keyframes dcoLeaf { 0% { transform: translate(0, 0) rotate(0deg); opacity: 0; } 10% { opacity: .55; } 50% { transform: translate(-34px, 110px) rotate(150deg); } 85% { opacity: .35; } 100% { transform: translate(-12px, 240px) rotate(310deg); opacity: 0; } }
+@media (max-width: 760px) { .dco-c { width: 44px; height: 44px; } .dco-dru .dco-c { width: 50px; height: 50px; } .dco-e { left: 46px; right: 46px; } .dco-dru .dco-e { left: 50px; right: 50px; } .dco-any .dco-c { width: 32px; height: 32px; } }
 /* ---- Spec checks, the WoWAnalyzer way: a banner, the build, the groups, and a row per check (how it's judged beside what you did, each cast a box) ---- */
 .spc-v { --ok: #45c15c; --wa: #e8a23a; --ba: #e5534b; }
 .spc-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; margin: 6px 0 14px; padding: 20px 22px; border-radius: 16px; border: 1px solid rgba(230,180,80,.3);
@@ -15320,7 +15349,7 @@ function hpalChecks(reps, name, one) {
   const it = per[per.length - 1].r.item, heroN = herald ? 'Herald of the Sun' : smith ? 'Lightsmith' : '';
   const meta = one ? esc(it.boss || '') + ', pull ' + it.pull + ' (' + esc(pullLabel(it)) + ')' : rows.length + ' pulls of ' + esc(it.boss || '');
   const focus = checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
-  const hero = '<div class="spc-hero" style="--cc:' + (P0.color || '#f48cba') + '"><div class="spc-hbg" style="background-image:url(' + whIcon('spell_holy_holybolt') + ')"></div>' +
+  const hero = '<div class="spc-hero cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#f48cba') + '"><div class="spc-hbg" style="background-image:url(' + whIcon('spell_holy_holybolt') + ')"></div>' + heroDeco(P0.cls) +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="Each check counts by how much it matters: Holy Shock and Infusion of Light count three times as much as most, heals on yourself half. Good counts in full, could be better half."><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + avatar(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (heroN ? ' · ' + heroN : '') + '</div><div class="sub">' + meta + '</div></div></div>' +
     (TOPB && TOPB.score ? '<div class="spc-htp">The top 10 Holy Paladins on this boss score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
@@ -15410,6 +15439,37 @@ function hpalTimeline(x, o) {
     '<span><i class="io"></i>Infusion of Light up, or spent on Judgment</span><span><i class="hp"></i>Holy Power</span><span><i class="mn"></i>Mana</span><span><i class="red"></i>Ready for a whole extra use, Holy Shock full, or Holy Power at 5</span>' + (t1 < end - 0.5 ? '<span><i class="dd"></i>Dead</span>' : '') + '</div><div class="tl-hv" hidden></div><div class="tl-tip" hidden></div></div>';
 }
 
+// ---- the character card's frame, drawn for the class (our own drawings, no game art): Holy Paladin gold filigree with a sun in each corner and
+// soft light rays; Restoration Druid a vine along the edges with leaves, a Lifebloom in each corner that slowly blooms, and a few leaves drifting
+// down; any other class, corners in its class colour. Behind everything on the card, and still for anyone who asks for less motion ----
+function heroDeco(cls) {
+  const corners = (svg) => ['tl', 'tr', 'bl', 'br'].map((k) => '<span class="dco-c dco-' + k + '">' + svg + '</span>').join('');
+  if (cls === 'PALADIN') {
+    const sun = '<g class="dco-sun"><polygon points="14,5.5 15.6,11.9 21.4,9.6 17.3,14 21.4,18.4 15.6,16.1 14,22.5 12.4,16.1 6.6,18.4 10.7,14 6.6,9.6 12.4,11.9" fill="url(#dcoPg)"/><circle cx="14" cy="14" r="2.4" fill="#fff4cf"/></g>';
+    const c = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="dcoPg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0c0"/><stop offset=".45" stop-color="#e6b450"/><stop offset="1" stop-color="#8f621c"/></linearGradient></defs>' +
+      '<path d="M5 60 V16 Q5 5 16 5 H60" fill="none" stroke="url(#dcoPg)" stroke-width="1.7"/><path d="M10 52 V19 Q10 10 19 10 H52" fill="none" stroke="url(#dcoPg)" stroke-width=".8" opacity=".55"/>' +
+      '<path d="M5 34 q7 -1 9 -8 q1 6 -4 9" fill="none" stroke="url(#dcoPg)" stroke-width="1.1"/><path d="M34 5 q-1 7 -8 9 q6 1 9 -4" fill="none" stroke="url(#dcoPg)" stroke-width="1.1"/>' +
+      '<circle cx="5" cy="44" r="1.3" fill="#e6b450"/><circle cx="44" cy="5" r="1.3" fill="#e6b450"/>' + sun + '</svg>';
+    const edge = '<svg aria-hidden="true" preserveAspectRatio="none"><defs><pattern id="dcoPe" width="34" height="10" patternUnits="userSpaceOnUse"><path d="M0 5 H34" stroke="#e6b450" stroke-width=".7" opacity=".55"/><path d="M17 1.6 L20 5 L17 8.4 L14 5 Z" fill="#e6b450" opacity=".85"/></pattern></defs><rect width="100%" height="100%" fill="url(#dcoPe)"/></svg>';
+    return '<div class="spc-deco dco-pal" aria-hidden="true"><i class="dco-rays"></i>' + corners(c) + '<span class="dco-e dco-t">' + edge + '</span><span class="dco-e dco-b">' + edge + '</span>' +
+      '<i class="dco-mote" style="left:38%;animation-delay:0s"></i><i class="dco-mote" style="left:61%;animation-delay:-4s"></i><i class="dco-mote" style="left:83%;animation-delay:-8s"></i></div>';
+  }
+  if (cls === 'DRUID') {
+    const leaf = (x, y, r, s) => '<path d="M0 0 C3 -5 9 -5 13 0 C9 5 3 5 0 0 Z" transform="translate(' + x + ' ' + y + ') rotate(' + r + ') scale(' + (s || 1) + ')" fill="url(#dcoDl)"/>';
+    const petals = [0, 72, 144, 216, 288].map((a) => '<ellipse cx="0" cy="-5.6" rx="3.4" ry="5.6" transform="rotate(' + a + ')" fill="url(#dcoDp)"/>').join('');
+    const c = '<svg viewBox="0 0 72 72" aria-hidden="true"><defs><linearGradient id="dcoDl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a8e07a"/><stop offset="1" stop-color="#2f7d34"/></linearGradient><radialGradient id="dcoDp"><stop offset="0" stop-color="#ffe0b8"/><stop offset=".55" stop-color="#ff9f5a"/><stop offset="1" stop-color="#e0573a"/></radialGradient></defs>' +
+      '<path d="M5 70 C4 44 4 26 9 17 S27 5 70 5" fill="none" stroke="#5aa14a" stroke-width="1.8" stroke-linecap="round"/><path d="M9 54 C14 50 15 46 13 41" fill="none" stroke="#5aa14a" stroke-width="1.1"/><path d="M50 8 C46 13 42 14 37 12" fill="none" stroke="#5aa14a" stroke-width="1.1"/>' +
+      leaf(5, 50, -70) + leaf(6, 32, -95, 0.85) + leaf(32, 6, 5, 0.85) + leaf(52, 5, -12) + leaf(13, 41, -150, 0.7) + leaf(37, 12, 120, 0.7) +
+      '<circle cx="62" cy="5" r="1.6" fill="#ffb27a"/><circle cx="5" cy="62" r="1.6" fill="#ffb27a"/>' +
+      '<g transform="translate(15 15)"><g class="dco-bloom">' + petals + '<circle r="2.8" fill="#ffd36a"/><circle r="1.2" fill="#fff3c4"/></g></g></svg>';
+    const edge = '<svg aria-hidden="true" preserveAspectRatio="none"><defs><pattern id="dcoDe" width="56" height="16" patternUnits="userSpaceOnUse"><path d="M0 8 Q14 1 28 8 T56 8" fill="none" stroke="#5aa14a" stroke-width="1.2"/>' +
+      '<path d="M0 0 C2.4 -3.6 7 -3.6 10 0 C7 3.6 2.4 3.6 0 0 Z" transform="translate(12 4.6) rotate(-28)" fill="#6fbf5a" opacity=".9"/><path d="M0 0 C2.4 -3.6 7 -3.6 10 0 C7 3.6 2.4 3.6 0 0 Z" transform="translate(40 11.4) rotate(28)" fill="#4f9a44" opacity=".9"/></pattern></defs><rect width="100%" height="100%" fill="url(#dcoDe)"/></svg>';
+    const drift = (l, d, s) => '<i class="dco-leaf" style="left:' + l + '%;animation-delay:' + d + 's;--s:' + s + '"><svg viewBox="-1 -6 15 12"><path d="M0 0 C3 -5 9 -5 13 0 C9 5 3 5 0 0 Z" fill="#7cc95e"/></svg></i>';
+    return '<div class="spc-deco dco-dru" aria-hidden="true">' + corners(c) + '<span class="dco-e dco-t">' + edge + '</span><span class="dco-e dco-b">' + edge + '</span>' + drift(46, 0, 1) + drift(70, -6, 0.8) + drift(88, -11, 1.15) + '</div>';
+  }
+  const c = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 36 V12 Q4 4 12 4 H36" fill="none" stroke="var(--cc)" stroke-width="1.6" opacity=".7"/><circle cx="4" cy="24" r="1.2" fill="var(--cc)"/><circle cx="24" cy="4" r="1.2" fill="var(--cc)"/></svg>';
+  return '<div class="spc-deco dco-any" aria-hidden="true">' + corners(c) + '</div>';
+}
 // ---- one spec's Spec checks page, shared: the banner (a score out of 100, the filter, what to work on first), the build, the groups (a block with a
 // line per check, or a row per check), each check's moments, boxes and strip, and the sections under them. Holy Paladin's page has its own copy of
 // this; Restoration Druid and the specs after it use this one.
@@ -15464,7 +15524,7 @@ function specPage(o) {
   const pill = (f, l, n, cls) => '<button type="button" class="spc-pill ' + cls + (SF === f ? ' on' : '') + '" data-sf="' + f + '" aria-pressed="' + (SF === f) + '">' + l + ' <b>' + n + '</b></button>';
   const it = per[per.length - 1].r.item, meta = one ? esc(it.boss || '') + ', pull ' + it.pull + ' (' + esc(pullLabel(it)) + ')' : rows.length + ' pulls of ' + esc(it.boss || '');
   const focus = checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
-  const hero = '<div class="spc-hero" style="--cc:' + (P0.color || '#ff7c0a') + '"><div class="spc-hbg" style="background-image:url(' + whIcon(o.bg) + ')"></div>' +
+  const hero = '<div class="spc-hero cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + '"><div class="spc-hbg" style="background-image:url(' + whIcon(o.bg) + ')"></div>' + heroDeco(P0.cls) +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts by how much it matters. Good counts in full, could be better half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + avatar(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' +
     (TOPB && TOPB.score ? '<div class="spc-htp">The top 10 ' + esc(o.top) + ' on this boss score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +

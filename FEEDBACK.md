@@ -87,6 +87,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 164: A class-themed frame around the character card (your idea)
+- [x] **Holy Paladin:** gold filigree corners with a small sun in each, gold studs along the top and bottom edges, soft light
+  rays from the top left that turn slowly, and a few motes of light rising.
+- [x] **Restoration Druid:** a vine with leaves along the top and bottom edges, a Lifebloom flower in each corner that slowly
+  blooms, a few leaves drifting down, and a green tint to the card instead of gold.
+- [x] **Every other class:** simple corners in its class color, until its page is built and gets its own frame.
+- [x] All our own drawings (no game art), behind the card's content so nothing is covered or blocked, smaller on a phone, and
+  still for anyone whose device asks for less motion.
+
 ## 2026-10-17, round 163: Restoration Druid Spec checks (your go-ahead: "you're on your own")
 - [x] **Researched:** Wowhead's and Icy Veins' Midnight Season 2 guides (both by Voulk, Oct 12-13), WoWAnalyzer's Restoration
   Druid module (12.1, full support), and Questionably Epic, the site you sent (Voulk's own; its spell numbers are used, but its
