@@ -173,6 +173,21 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 208: Power Infusion, a sentence for each cast (your pick)
+- [x] **Rebuilt as you picked (mockup 1):** for each priest, "Used 2 of 2", the plan for the next pull in a gold box
+  ("Next pull: give it to Zaffia with their Deathmark, at about 0:06 and 2:19."), the pull as a strip (Power Infusion in
+  gold, the target's cooldown in purple, Bloodlust, the raid's downtime), then one plain sentence per cast with a short
+  line of why under it: "Optt gave it to Zaffia, 2 seconds before their Deathmark. Zaffia was the best target at that
+  moment." A green, amber or red dot sits beside each one. No boxes and no letter grades.
+- [x] Stretches it sat ready (20 seconds or more) are rows too, in time order. For example: "Power Infusion sat ready for 45 seconds,
+  from 1:10 to 1:55. At 1:30 Zaffia pressed Deathmark. Using it then would have added about 1.9M damage."
+- [x] All pulls: the casts that went well are one line ("29 of the 39 went well: 27 on Zaffia and 2 on Earthday."), the rest
+  are rows by pull (past 10, the rest open in place), and the plan box names a habit: "7 times it came just before
+  Zaffia's Deathmark. Hold it about 13 seconds."
+- [x] Who gains the most is folded into one line (the top three and their numbers) and opens in place as bars. "How it
+  works" is rewritten in short sentences (your note: simple, readable language).
+- [ ] Your call: turn Power Infusion on for the live site (it's still greyed out there).
+
 ## 2026-10-18, round 207: Graphs on the live site, Power Infusion greyed out there
 - [x] **Graphs is on for everyone (your call).** My take: right for launch, it's plain numbers and charts now, nothing
   graded. Players' "See it in Casts" and "See it in Resources" buttons show on the website too.
@@ -180,8 +195,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   on Pull recap is hidden there too, and a search for Power Infusion opens Cooldowns instead.
 - [x] Rotation is still greyed out on the website, and with it the parts that come from it: "See it in Rotation" on a
   player's page, and the spec fixes and grades in Pull recap's "Talk to" box (those used to follow the Graphs switch).
-- [ ] **Power Infusion rework:** mockups in notes, "Power Infusion options.html" (a sentence for each cast, my pick; the
-  plan against what happened, as a table; the chart first). Waiting on your pick.
+- [x] **Power Infusion rework:** mockups in notes, "Power Infusion options.html" (a sentence for each cast, my pick; the
+  plan against what happened, as a table; the chart first). You picked the first; built in round 208.
+- [ ] **Damage into the adds looks different from the other graphs (your note, with a screenshot of Ula'tek):** it missed
+  the plain-data pass. The chart is stacked filled areas (the others are lines), and Ula'tek, Venomous Heart and Gore Rattle
+  are three near-identical blues. The bars are boss-blue and purple, not class colors. It still has ✓ marks, "slow:
+  Bellapearl 11s" and jargon ("on in 0.0s · 2 of 2", "% = their share into priority adds"). The "Priority adds, set by
+  set" side panel leaves a big empty space. My suggestion: lines with clearly different colors per target, class-colored
+  bars with the adds share as a plain number, and the set-by-set list as plain sentences at full width.
+- [ ] **Check Heroic Ula'tek's Anguished Cry (your note, with a screenshot):** a row at 4:25 says "kick rotation:
+  Icefrosting (31 yd), got off". To check: whether Heroic runs Anguished Cry the same as Mythic (who casts it, when, and
+  whether it can and must be kicked), so the Mythic rules aren't judging a Heroic pull, and whether 31 yards was really the
+  kicker being out of range or the wrong add being measured.
 - [ ] **Go easier on tanks for standing in bad stuff (your note).** My take: strong; tanks often take hits on purpose
   (holding the boss in place) and can live through them, so flagging it is noise. My suggestion: a tank's hit from avoidable
   damage is only a small note, not a mistake, unless it's a tank mechanic, it killed them, or it was unusually big.

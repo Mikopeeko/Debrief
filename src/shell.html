@@ -2032,59 +2032,36 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .gv-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; font-size: 12.5px; } .gv-tx .csn { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
 .gv-sl { color: var(--faint); font-size: 11.5px; } .gv-sl .csgems { margin-left: 4px; } .gv-tx .csen, .gv-tx .csbad { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 560px) { .gv-top { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gv-st { grid-template-columns: minmax(0, 1fr); } .gv-grid { grid-template-columns: minmax(0, 1fr); } }
-/* Performance, Power Infusion: each priest's casts, graded for target and timing, and who gains the most */
-.pi-pr { padding: 8px 0 10px; border-top: 1px solid var(--line); } .pi-pr:first-of-type { border-top: 0; }
-.pi-ph { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; } .pi-ph .nm { font-weight: 600; }
-.pi-use { margin-left: auto; font: 700 12.5px var(--body); font-variant-numeric: tabular-nums; } .pi-use.ok { color: #7ee08f; } .pi-use.warn { color: #f3c969; } .pi-use.bad { color: #ff8f87; }
-.pi-hold { margin: 2px 0 4px 30px; font-size: 12.5px; }
-.pi-c { display: grid; grid-template-columns: 60px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 6px 0 6px 30px; font-size: 13px; border-top: 1px solid rgba(53,59,73,.45); }
-.pi-t { font-variant-numeric: tabular-nums; color: var(--muted); } .pi-on { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .pi-on .nm { font-weight: 600; }
-.pi-pills { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; } .pi-pills .hm-p { margin: 0; cursor: help; }
-.pi-why { grid-column: 2 / -1; font-size: 12px; } .pi-g { grid-column: 2 / -1; font-size: 12.5px; line-height: 1.45; } .pi-g b { font-weight: 600; } .pi-g .nm { font-weight: 600; }
-.pi-up { color: #ff8f87; font-weight: 700; } .pi-dn { color: #7ee08f; font-weight: 700; }
-/* a cast, one pull: the time on the left, then who got it with the two pills, the bars, one line of why */
-.pi-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 10px 0 10px 30px; border-top: 1px solid rgba(53,59,73,.45); }
-.pi-rt { display: flex; flex-direction: column; gap: 2px; padding-top: 3px; } .pi-rt b { font: 700 15px var(--head); font-variant-numeric: tabular-nums; }
-.pi-rm { min-width: 0; } .pi-rh { display: flex; align-items: center; gap: 8px; min-width: 0; } .pi-rh .av.sm { width: 22px; height: 22px; }
-.pi-rh .pi-on { flex: 1; font-size: 14px; } .pi-rh .pi-pills { flex: none; }
-.pi-bars { display: flex; flex-direction: column; gap: 3px; margin: 7px 0 5px; max-width: 520px; }
-.pi-bar { display: grid; grid-template-columns: 120px minmax(0, 1fr) 56px; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted); }
-.pi-bar.me { color: var(--text); font-weight: 600; } .pi-bn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pi-gt { margin-left: 3px; padding: 0 5px; border-radius: 999px; background: rgba(246,220,154,.14); color: #f6dc9a; font: 700 10px var(--body); }
-.pi-bt { height: 8px; border-radius: 4px; background: rgba(255,255,255,.05); overflow: hidden; } .pi-bt i { display: block; height: 100%; border-radius: 4px; opacity: .55; } .pi-bar.me .pi-bt i { opacity: 1; }
-.pi-bar b { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-.pi-rn { font-size: 12px; line-height: 1.45; }
-/* the night: who got it, then a line per cast */
-.pi-who { margin: 6px 0 4px 30px; font-size: 13px; } .pi-who .nm { font-weight: 600; }
-.pi-tab { margin: 4px 0 0 30px; font-size: 12.5px; }
-.pi-tr { display: grid; grid-template-columns: 92px minmax(90px, 1fr) minmax(0, 1.6fr) 62px minmax(90px, 1fr); gap: 8px; align-items: center; padding: 5px 0; border-top: 1px solid rgba(53,59,73,.4); }
-.pi-th { color: var(--faint); font-size: 11.5px; border-top: 0; padding-top: 0; } .pi-tr .nm { font-weight: 600; } .pi-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pi-pills.l { justify-content: flex-start; }
-@media (max-width: 760px) { .pi-row { padding-left: 0; grid-template-columns: 44px minmax(0, 1fr); } .pi-rh { flex-wrap: wrap; } .pi-rh .pi-pills { width: 100%; justify-content: flex-start; } .pi-bar { grid-template-columns: 88px minmax(0, 1fr) 50px; }
-  .pi-who, .pi-tab { margin-left: 0; } .pi-tr { grid-template-columns: 70px minmax(0, 1fr) 58px; } .pi-tr > :nth-child(3) { grid-column: 1 / -1; order: 9; } .pi-tr > :nth-child(5), .pi-th > :nth-child(5) { display: none; } }
-.pi-aoe { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: rgba(176,124,240,.16); color: #cfb2f7; font: 700 10.5px var(--body); cursor: help; }
-/* a priest's pull on one line: downtime grey, ready-and-unused green, each cast gold (good target) or red */
-.pi-strip { position: relative; height: 14px; margin: 8px 0 2px 30px; border-radius: 4px; background: rgba(255,255,255,.04); overflow: hidden; }
-.pi-strip i { position: absolute; top: 0; bottom: 0; } .pi-sd { background: rgba(155,163,178,.22); } .pi-sr { background: rgba(69,193,92,.35); }
-.pi-sc { background: #e6b450; min-width: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.4); } .pi-sc.warn { background: #f3a06a; } .pi-sc.bad { background: #e5534b; } .pi-sc.na { background: #9aa3b2; }
-.pi-sl { width: 2px; background: var(--gold); }
-.pi-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 6px; font-size: 11.5px; color: var(--muted); } .pi-leg span { display: inline-flex; align-items: center; gap: 5px; }
-.pi-leg i { position: static; display: inline-block; width: 12px; height: 9px; border-radius: 2px; } .pi-leg i.pi-sl { width: 2px; height: 11px; }
-.pi-ax { position: relative; height: 14px; margin: 0 0 4px 30px; font-size: 10.5px; color: var(--faint); } .pi-ax span { position: absolute; transform: translateX(-50%); white-space: nowrap; } .pi-ax span:first-child { transform: none; }
-.pi-miss { margin: 6px 0 0 30px; padding: 6px 10px; border-radius: 8px; background: rgba(69,193,92,.07); } .pi-mh { font: 600 12.5px var(--head); color: #9fe0ab; margin-bottom: 2px; }
-.pi-m { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; padding: 3px 0; font-size: 12.5px; line-height: 1.45; } .pi-m .nm { font-weight: 600; }
-.pi-plan { margin: 8px 0 0 30px; padding: 7px 10px; border-left: 3px solid var(--gold); border-radius: 0; background: rgba(246,220,154,.06); font-size: 13px; } .pi-plan .nm { font-weight: 600; }
-@media (max-width: 560px) { .pi-strip, .pi-ax, .pi-miss, .pi-plan { margin-left: 0; } .pi-m { grid-template-columns: 44px minmax(0, 1fr); } } .pi-l { color: var(--gold); } .pi-got { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: rgba(246,220,154,.14); color: #f6dc9a; font: 700 10.5px var(--body); }
-.pi-det .pfu-l { display: grid; grid-template-columns: minmax(0, 1fr) auto 36px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
-.pi-det .nh + .pfu-l { border-top: 0; } .pi-det .pfu-l > b { text-align: right; font-variant-numeric: tabular-nums; } .pi-det .pfu-l > .sub { font-size: 12px; text-align: right; }
-.pi-vd { margin: 6px 0 0 30px; font-size: 13.5px; line-height: 1.55; } .pi-vd .nm { font-weight: 600; } .pi-vh { color: var(--muted); font-size: 12.5px; }
-.pi-vb { display: inline-block; margin-right: 7px; padding: 0 7px; border-radius: 999px; background: rgba(246,220,154,.14); color: #f6dc9a; font: 700 10.5px/18px var(--body); text-transform: uppercase; letter-spacing: .04em; vertical-align: 1px; }
-.pi-gain { color: #7ee08f; font-weight: 700; font-variant-numeric: tabular-nums; } .pi-vb.t { background: rgba(120,170,255,.14); color: #a9c8ff; }
-.pi-st { width: 2px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45); z-index: 2; } .pi-leg i.pi-st { width: 2px; height: 11px; }
-.pi-rh .grade { flex: none; } .pi-rn { margin-top: 3px; } .pi-tw { display: flex; align-items: center; gap: 7px; min-width: 0; } .pi-tw > span:last-child { font-size: 12px; line-height: 1.4; color: var(--muted); } .pi-tw .grade { flex: none; }
-.pi-okl { margin: 8px 0 2px 30px; font-size: 13px; line-height: 1.6; } .pi-okl .nm { font-weight: 600; } .pi-sh { margin: 10px 0 0 30px; font: 600 12.5px var(--head); color: #f3c969; } .pi-none { margin: 6px 0 0 30px; }
-@media (max-width: 560px) { .pi-vd, .pi-okl, .pi-sh, .pi-none { margin-left: 0; } }
-@media (max-width: 560px) { .pi-c { grid-template-columns: 48px minmax(0, 1fr); padding-left: 0; } .pi-pills { grid-column: 1 / -1; justify-content: flex-start; } .pi-why { grid-column: 1 / -1; } .pi-hold { margin-left: 0; } }
+/* Graphs, Power Infusion (your pick, Oct 18: a sentence for each cast): each priest's plan for the next pull, the pull as a
+   strip, then one plain sentence per cast or stretch it sat ready; who gains the most folds away */
+.pi-pr { padding: 4px 0 14px; } .pi-pr + .pi-pr { padding-top: 14px; border-top: 1px solid var(--line); }
+.pi-ph { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; } .pi-ph .nm { font-weight: 600; }
+.pi-use { margin-left: auto; color: var(--muted); font-size: 14px; } .pi-use b { color: var(--text); font-weight: 600; }
+.pi-plan { margin: 10px 0 12px; padding: 9px 12px; border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; background: rgba(230,180,80,.07); font-size: 14.5px; line-height: 1.5; }
+.pi-plan > b { color: var(--gold); font-weight: 600; } .pi-plan .nm { font-weight: 600; } .pi-plan .pi-hb { display: block; margin-top: 3px; color: var(--muted); font-size: 13.5px; }
+.pi-strip { position: relative; height: 28px; margin: 4px 0 2px; border-radius: 6px; background: #151821; border: 1px solid var(--line); overflow: hidden; }
+.pi-strip i { position: absolute; top: 0; bottom: 0; } .pi-sd { background: rgba(155,163,178,.16); }
+.pi-strip .pi-sr, .pi-strip .pi-sc { top: 4px; bottom: auto; height: 10px; border-radius: 2px; } .pi-sr { background: rgba(69,193,92,.3); } .pi-sc { background: var(--gold); min-width: 3px; }
+.pi-strip .pi-st { top: 16px; bottom: 4px; width: 4px; margin-left: -2px; border-radius: 2px; background: #b07cf0; }
+.pi-sl { width: 2px; background: #f6dc9a; opacity: .8; }
+.pi-ax { position: relative; height: 16px; margin: 0 0 2px; font-size: 11px; color: var(--faint); } .pi-ax span { position: absolute; transform: translateX(-50%); white-space: nowrap; } .pi-ax span:first-child { transform: none; }
+.pi-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 8px; font-size: 12.5px; color: var(--muted); } .pi-leg > span { display: inline-flex; align-items: center; gap: 6px; } .pi-leg .nm { font-weight: 600; }
+.pi-leg i { display: inline-block; width: 12px; height: 9px; border-radius: 2px; } .pi-leg i.pi-st { width: 4px; height: 10px; background: #b07cf0; } .pi-leg i.pi-sl { width: 2px; height: 11px; }
+.pi-c2 { display: grid; grid-template-columns: 52px 10px minmax(0, 1fr); gap: 4px 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.5; }
+.pi-t2 { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; } .pi-t2 .sub { display: block; font-size: 11.5px; font-weight: 500; }
+.pi-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); align-self: start; margin-top: 7px; } .pi-dot.ok { background: #45c15c; } .pi-dot.warn { background: #f3c969; } .pi-dot.bad { background: #e5534b; }
+.pi-s { min-width: 0; } .pi-s .nm { font-weight: 600; } .pi-w { display: block; margin-top: 2px; color: var(--muted); font-size: 13.5px; }
+.pi-l { margin-left: 4px; color: var(--gold); cursor: help; }
+.pi-okl { margin: 4px 0 2px; font-size: 14.5px; } .pi-okl .nm { font-weight: 600; } .pi-none { margin: 6px 0 0; }
+.pi-more > summary { cursor: pointer; padding: 8px 0 2px; color: var(--muted); font-size: 13.5px; }
+.pi-gn { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); } .pi-gn > summary { cursor: pointer; font-size: 14px; color: var(--muted); list-style: none; } .pi-gn > summary::-webkit-details-marker { display: none; }
+.pi-gn > summary b { margin-right: 8px; color: var(--text); font-weight: 600; } .pi-gn > summary .nm { font-weight: 600; } .pi-gn > summary::after { content: ' ▾'; color: var(--faint); } .pi-gn[open] > summary::after { content: ' ▴'; }
+.pi-gn[open] > summary .pi-gs { display: none; }
+.pi-bars { display: grid; gap: 5px; margin: 10px 0 4px; max-width: 560px; }
+.pi-bar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 13.5px; } .pi-bn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .pi-bn .nm { font-weight: 600; }
+.pi-gt { margin-left: 6px; color: var(--gold); font-size: 11px; font-weight: 700; }
+.pi-bt { height: 10px; border-radius: 3px; background: var(--line); overflow: hidden; } .pi-bt i { display: block; height: 100%; opacity: .75; } .pi-bar b { text-align: right; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .pi-c2 { grid-template-columns: 42px 9px minmax(0, 1fr); font-size: 14px; } .pi-bar { grid-template-columns: 100px minmax(0, 1fr) 50px; } }
 /* Performance, Casts: every cast on one time line (a row per player, or per spell), the pace against each spec's sim */
 .cst .cst-hit { fill: transparent; } .cst-l.k { cursor: pointer; } .cst-l.k:hover .cst-hit { fill: rgba(255,255,255,.04); }
 .cst-t { fill: none; stroke-width: 1.3; opacity: .9; } .cst-n { font: 500 11px var(--body); } .cst-dd { fill: rgba(229,83,75,.12); }
