@@ -1871,17 +1871,15 @@ function audit() {
       return { b, w: all.filter((row) => !row.some((c) => c.bad) && row.some((c) => c.warn)).length }; };
     // tiles: problems first, then could be better, then clean; within each, by importance (IMPORTANCE)
     const impT = IMPORTANCE[r.item.boss] || [], ixT = (s) => (s.id === 'deaths' ? -1 : impT.indexOf(s.id) < 0 ? 99 : impT.indexOf(s.id)), tierT = (s) => { const c = cnt(s); return c.b ? 0 : c.w ? 1 : s.info ? 3 : 2; };
-    // A slim scoreboard: one chip per mechanic with a problem (✕ problems, ! could be better), worst first, each a link to
-    // its section; the clean ones in one chip at the end. (It replaced a grid of tiles, and "What went wrong / right"
-    // is on Latest pull only, so the first mechanic is on the first screen.)
+    // What went wrong / What went well, like Latest pull (your note, Oct 18; it had been a slim strip of chips): each mechanic with a problem
+    // (✕ problems, ! could be better), worst first, with its own summary and a link to its section; the clean ones as what went well.
     const ord = secs.filter((x) => !x.kick && firstAt.has(x.s.id)).sort((a, b) => tierT(a.s) - tierT(b.s) || ixT(a.s) - ixT(b.s)).map(({ s }) => s);
     const icon = (s) => (s.spell[0] || sidOf(s.spell[1]) ? '<span class="sp" data-sid="' + (s.spell[0] || 0) + '" data-sn="' + esc(s.spell[1]) + '">' + spellIcon(s.spell[0], s.spell[1]) + '</span>' : spellIcon(s.spell[0], s.spell[1]));
     const href = (s) => '#sec-' + s.id + '-' + firstAt.get(s.id);
-    const chips = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), cls = b ? 'bad' : 'warn';
-      return '<a class="msc tlink ' + cls + '" href="' + href(s) + '" title="' + esc(s.summary) + '">' + icon(s) + '<span class="msc-n">' + esc(s.title.split(': ')[0]) + '</span><span class="msc-s ' + cls + '">' + (b ? '✕\u00a0' + b : '! ' + w) + (b && w ? ' <i>! ' + w + '</i>' : '') + '</span></a>'; });
-    const clean = ord.filter((s) => tierT(s) >= 2);
-    if (clean.length) chips.push('<a class="msc tlink ok" href="' + href(clean[0]) + '" title="' + esc(clean.map((s) => s.title.split(': ')[0] + (s.info ? ' (' + s.info + ')' : '')).join(', ')) + '"><span class="msc-n">' + (chips.length ? '+' + clean.length + ' clean' : 'All ' + clean.length + ' clean') + '</span><span class="msc-s ok">✓</span></a>');
-    if (chips.length) h += '<div class="mscore">' + chips.join('') + '</div>';
+    const name = (s) => '<a class="tlink mwr-l" href="' + href(s) + '">' + icon(s) + '<b>' + esc(s.title.split(': ')[0]) + '</b></a>';
+    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s); return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
+    const right = ord.filter((s) => tierT(s) === 2).map((s) => name(s) + (s.summary ? ' <span class="sub">' + esc(s.summary) + '</span>' : ''));
+    if (wrong.length || right.length) h += wrongRight(wrong, right, { none: 'Every mechanic went to plan.', moreWhere: 'below' });
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
   // "2:08 Guillotine: In circle 5 / 6 · Target Xyron (no protection) · Died Chumfu"
@@ -2321,6 +2319,8 @@ function audit() {
   // remember which mechanic blocks are open; summary tiles open the block they jump to
   $('#view').querySelectorAll('details.secd').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
   $('#view').querySelectorAll('a.tlink').forEach((a) => (a.onclick = () => { const d = document.querySelector(a.getAttribute('href')); if (d && d.tagName === 'DETAILS') d.open = true; }));
+  // (a line of What went wrong / What went well takes you to its mechanic from anywhere on it)
+  $('#view').querySelectorAll('.wr .pb-r').forEach((row) => { const a = row.querySelector('a.tlink'); if (!a) return; row.classList.add('pb-go'); row.onclick = (e) => { if (!e.target.closest('a, button')) a.click(); }; });
   // Recap / Details buttons: open their html in a row right under the row (one per table), like maps
   $('#view').querySelectorAll('.mmb2').forEach((b) => (b.onclick = () => {
     const tr = b.closest('tr'), next = tr.nextElementSibling;
@@ -10851,7 +10851,7 @@ const PAGE_TIPS = {
     { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note (from wowutils). Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
     { sel: '#view .as-tiles', t: 'Each assignment at a glance', p: 'Red went wrong, green was done. Click one to jump straight to it.' }],
   audit: [
-    { sel: '#view .mscore', t: 'Every mechanic in one line', p: 'Red and amber chips went wrong. Click one to jump straight to it.' },
+    { sel: '#view .wr-wrap', t: 'What went wrong, and what went well', p: 'Each mechanic with a problem, worst first, with what happened. Click one to jump straight to it.' },
     { sel: '#view details.secd', t: 'Open a mechanic', p: 'Each one shows who got it wrong, when, and on many, a map of where everyone stood.' }],
   night: [
     { sel: '#sum-prog', t: 'How far the night got', p: 'Every pull of the night on one chart: lower is further. Click a dot to open that pull.' },

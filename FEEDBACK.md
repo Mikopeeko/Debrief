@@ -78,8 +78,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   **Update (your note, Oct 17):** a comparison area: your logs against other logs (a top guild's on the same boss), and
   yourself against other people on your team. My take: start with you against a teammate of the same spec and against
   your own best pull, then your raid against one of the top guilds above on the same boss.
+  **Update (your note, Oct 18):** a Compare button against top guilds with a similar raid composition (the same classes and
+  specs, or close to it), so the comparison is fair.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
 - [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
+  **Update (your note, Oct 18):** the desktop app is only for live logging: it reads your WoWCombatLog.txt during the raid
+  and sends it to the website. Answer: the analysis stays the same. The website already reads raw combat logs (the same
+  format the app reads from a file), and Warcraft Logs reports are turned into that same format first. What's new is the
+  sending: the app itself, a place on the website to receive and keep the log (a night's raw log is hundreds of MB, so it
+  goes in compressed pieces), and a way for the raid to open the live night. Parses still need the log on Warcraft Logs.
 - [x] **Survivability view in Performance** (round 118).
 - [x] **Healers view, simpler**, with the boss's health beside the mana (round 118).
 - [x] **The Parse column** (round 118).
@@ -105,6 +112,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 185: Mechanics opens with What went wrong / What went well (your note)
+- [x] The strip of chips at the top of Mechanics is replaced by the same pair as Latest pull: **What went wrong** lists each
+  mechanic with a problem, worst first, with its own summary ("Corrosive Spit: 5 add sets, 20 spits fired, 3 players hit by a
+  spit that wasn't aimed at them."); **What went well** shows the clean ones, with theirs.
+- [x] **Every line takes you there (your note):** a "›" button like Latest pull's, or a click anywhere on the line, jumps to
+  that mechanic, opens it, and lands with its title in view.
+- Note: the chips had replaced this pair once before, so the first mechanic would be on the first screen. The pair is
+  clearer; it pushes the first mechanic down a little.
+- [x] Noted (your notes): a Compare button against top guilds with a similar raid composition; the desktop app only for live
+  logging (see its note for my take).
 
 ## 2026-10-18, round 184: The Survival kit, simpler (your #4)
 - [x] **One summary line** instead of three: "10 of 20 players were in good shape. Most often: combat or mana potion missing (9),

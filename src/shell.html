@@ -583,6 +583,8 @@ button.dchip { cursor: pointer; } button.dchip:hover { filter: brightness(1.15);
 /* (a Mechanics table's fine rows, folded under the others) */
 /* (on a phone, a what-to-fix table puts each sentence on its own line, under the player, their grade and Details) */
 @media (max-width: 640px) { .tbl-fix thead { display: none; } .tbl-fix tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 8px 6px; } .tbl-fix tbody td { padding: 0; border: 0; } .tbl-fix tbody td:nth-child(3) { grid-column: 1 / -1; grid-row: 2; } .tbl-fix tbody td:nth-child(4) { grid-column: 3; grid-row: 1; } }
+details[id^="sec-"] { scroll-margin-top: 96px; } /* (a jump to a mechanic lands with its title below the sticky bar) */
+.pb-r.pb-go { cursor: pointer; } .pb-r.pb-go:hover { background: rgba(255,255,255,.04); }
 .okfold { margin: 8px 0 0; } .okfold > summary { cursor: pointer; padding: 6px 2px; color: var(--muted); font-size: 12.5px; } .okfold > summary:hover { color: var(--text); }
 .msum { background: #161b25; border: 1px solid #2a3142; border-radius: 6px; padding: 10px 14px; margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: #d8dce5; } .msum p { margin: 0 0 6px; padding-left: 10px; border-left: 3px solid #45c15c; } .msum p:last-child { margin-bottom: 0; } .msum p b { font-weight: 700; } .msum p.bad { border-left-color: #e5534b; } .msum p.bad b { color: #ff8a82; } .msum p.warn { border-left-color: #e6b450; } .msum p.warn b { color: #f3c969; } .msum p.ok b { color: #7ee08f; }
 /* night summary MVPs */
