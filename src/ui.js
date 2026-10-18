@@ -6168,34 +6168,34 @@ const MANA_EXT = ['Innervate', 'Source of Magic', 'Symbol of Hope', 'Mana Tide T
 // read with these same checks on Oct 17 2026. Shown beside each line as a reference, never as the grade.
 const SPEC_TOP = {
   // (the other specs: the middle of their players in the 32 fastest Mythic kills and their own top rankings, read with GEN_TUNE's bars)
-  'Arcane Mage': { 'The Twin Fangs|16': { 'score': '92', 'abc': '76%', 'cd:touch of the magi': '89%', 'p:Clearcasting': '22 wasted', 'p:Prismatic Bolt!': '5 wasted', 'cd:arcane surge': '100%' } },
-  'Shadow Priest': { 'The Twin Fangs|16': { 'score': '94', 'abc': '74%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '88%', 'cd:voidform': '100%', 'cd:power infusion': '100%' } },
-  'Marksmanship Hunter': { 'The Twin Fangs|16': { 'score': '91', 'abc': '80%', 'cd:aimed shot': '98%', 'cd:rapid fire': '97%', 'p:Precise Shots': '11 wasted', 'cd:trueshot': '100%', 'cd:volley': '89%' } },
-  'Havoc Demon Hunter': { 'The Twin Fangs|16': { 'abc': '69%', 'cd:eye beam': '100%', 'cd:blade dance': '85%', 'cd:immolation aura': '65%', 'cd:essence break': '85%', 'res': '17%', 'cd:metamorphosis': '75%' } },
-  'Balance Druid': { 'The Twin Fangs|16': { 'score': '93', 'abc': '83%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '3%', 'cd:incarnation: chosen of elune': '100%', 'up:Eclipse': '71%' } },
-  'Retribution Paladin': { 'The Twin Fangs|16': { 'score': '94', 'abc': '71%', 'cd:wake of ashes': '92%', 'cd:blade of justice': '80%', 'p:Divine Purpose': '2 wasted', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%' } },
-  'Holy Priest': { 'The Twin Fangs|16': { 'score': '90', 'abc': '75%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'cd:apotheosis': '75%', 'cd:divine hymn': '75%' } },
-  'Frost Death Knight': { 'The Twin Fangs|16': { 'abc': '64%', 'p:Rime': '5 wasted', 'res': '11%', 'cd:pillar of frost': '90%', 'cd:reaper\'s mark': '90%', 'cd:breath of sindragosa': '100%' } },
+  'Arcane Mage': { 'The Twin Fangs|16': { 'score': '92', 'abc': '76%', 'cd:touch of the magi': '89%', 'p:Clearcasting': '22 wasted', 'p:Prismatic Bolt!': '5 wasted', 'cd:arcane surge': '100%', 'apl': '97%', 'win': '100%' } },
+  'Shadow Priest': { 'The Twin Fangs|16': { 'score': '94', 'abc': '74%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '88%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'apl': '93%', 'win': '100%' } },
+  'Marksmanship Hunter': { 'The Twin Fangs|16': { 'score': '91', 'abc': '80%', 'cd:aimed shot': '98%', 'cd:rapid fire': '97%', 'p:Precise Shots': '11 wasted', 'cd:trueshot': '100%', 'cd:volley': '89%', 'win': '100%', 'apl': '88%' } },
+  'Havoc Demon Hunter': { 'The Twin Fangs|16': { 'abc': '69%', 'cd:eye beam': '100%', 'cd:blade dance': '85%', 'cd:immolation aura': '65%', 'cd:essence break': '85%', 'res': '17%', 'cd:metamorphosis': '75%', 'win': '100%' } },
+  'Balance Druid': { 'The Twin Fangs|16': { 'score': '93', 'abc': '83%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '3%', 'cd:incarnation: chosen of elune': '100%', 'up:Eclipse': '71%', 'apl': '87%', 'win': '100%' } },
+  'Retribution Paladin': { 'The Twin Fangs|16': { 'score': '94', 'abc': '71%', 'cd:wake of ashes': '92%', 'cd:blade of justice': '80%', 'p:Divine Purpose': '2 wasted', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'apl': '88%', 'win': '100%' } },
+  'Holy Priest': { 'The Twin Fangs|16': { 'score': '90', 'abc': '75%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'cd:apotheosis': '75%', 'cd:divine hymn': '75%', 'win': '100%' } },
+  'Frost Death Knight': { 'The Twin Fangs|16': { 'abc': '64%', 'p:Rime': '5 wasted', 'res': '11%', 'cd:pillar of frost': '90%', 'cd:reaper\'s mark': '90%', 'cd:breath of sindragosa': '100%', 'apl': '97%', 'win': '100%' } },
   'Blood Death Knight': { 'The Twin Fangs|16': { 'score': '92', 'abc': '81%', 'cd:blood boil': '77%', 'cd:death and decay': '96%', 'res': '4%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%' } },
-  'Windwalker Monk': { 'The Twin Fangs|16': { 'score': '84', 'abc': '78%', 'cd:rising sun kick': '93%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '68%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '80%', 'cd:celestial conduit': '80%' } },
-  'Arms Warrior': { 'The Twin Fangs|16': { 'score': '94', 'abc': '76%', 'p:Sudden Death': '2 wasted', 'dot:Rend': '97%', 'cd:colossus smash': '85%', 'cd:avatar': '86%', 'cd:bladestorm': '100%' } },
+  'Windwalker Monk': { 'The Twin Fangs|16': { 'score': '84', 'abc': '78%', 'cd:rising sun kick': '93%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '68%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '80%', 'cd:celestial conduit': '80%', 'apl': '100%', 'rep': '1' } },
+  'Arms Warrior': { 'The Twin Fangs|16': { 'score': '94', 'abc': '76%', 'p:Sudden Death': '2 wasted', 'dot:Rend': '97%', 'cd:colossus smash': '85%', 'cd:avatar': '86%', 'cd:bladestorm': '100%', 'apl': '89%', 'win': '100%' } },
   'Protection Paladin': { 'The Twin Fangs|16': { 'score': '88', 'abc': '67%', 'cd:avenger\'s shield': '74%', 'cd:judgment': '86%', 'cd:blessed hammer': '81%', 'res': '10%', 'up:Shield of the Righteous': '98%', 'cd:avenging wrath': '100%', 'cd:divine toll': '83%' } },
-  'Restoration Shaman': { 'The Twin Fangs|16': { 'score': '93', 'abc': '75%', 'cd:riptide': '96%', 'cd:healing stream totem': '95%', 'cd:surging totem': '88%', 'mana': '18%', 'cd:ascendance': '67%', 'cd:spirit link totem': '67%' } },
-  'Frost Mage': { 'The Twin Fangs|16': { 'score': '100', 'abc': '84%', 'cd:frozen orb': '100%', 'cd:ray of frost': '91%', 'p:Brain Freeze': '2 wasted', 'p:Fingers of Frost': 'All spent', 'p:Glacial Spike!': 'All spent' } },
-  'Devourer Demon Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '64%', 'cd:void ray': '98%', 'cd:soul immolation': '100%' } },
-  'Devastation Evoker': { 'The Twin Fangs|16': { 'score': '89', 'abc': '66%', 'cd:fire breath': '95%', 'cd:eternity surge': '95%', 'p:Essence Burst': '1 wasted', 'cd:dragonrage': '100%' } },
-  'Elemental Shaman': { 'The Twin Fangs|16': { 'score': '87', 'abc': '83%', 'cd:stormkeeper': '78%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '99%', 'res': '7%', 'cd:ascendance': '100%' } },
-  'Mistweaver Monk': { 'The Twin Fangs|16': { 'score': '94', 'abc': '75%', 'cd:renewing mist': '99%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '94%', 'mana': '20%', 'cd:invoke yu\'lon, the jade serpent': '75%', 'cd:celestial conduit': '80%', 'cd:life cocoon': '86%', 'cd:revival': '67%' } },
-  'Subtlety Rogue': { 'The Twin Fangs|16': { 'score': '88', 'abc': '77%', 'cd:shadow dance': '95%', 'cd:goremaw\'s bite': '89%', 'cd:shadow blades': '80%' } },
-  'Augmentation Evoker': { 'The Twin Fangs|16': { 'score': '100', 'abc': '80%', 'cd:upheaval': '100%', 'cd:fire breath': '94%', 'p:Essence Burst': '4 wasted', 'up:Ebon Might': '93%', 'cd:breath of eons': '80%', 'cd:time skip': '100%' } },
-  'Affliction Warlock': { 'The Twin Fangs|16': { 'score': '91', 'abc': '72%', 'cd:haunt': '85%', 'p:Nightfall': '8 wasted', 'dot:Agony': '100%', 'dot:Unstable Affliction': '93%', 'dot:Wither': '100%', 'cd:summon darkglare': '100%', 'cd:malevolence': '100%', 'cd:dark harvest': '86%' } },
-  'Beast Mastery Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '79%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '9%', 'cd:bestial wrath': '93%' } },
-  'Assassination Rogue': { 'The Twin Fangs|16': { 'score': '94', 'abc': '82%', 'dot:Rupture': '100%', 'dot:Garrote': '99%', 'up:Envenom': '83%', 'res': '6%', 'cd:deathmark': '75%', 'cd:kingsbane': '86%' } },
+  'Restoration Shaman': { 'The Twin Fangs|16': { 'score': '93', 'abc': '75%', 'cd:riptide': '96%', 'cd:healing stream totem': '95%', 'cd:surging totem': '88%', 'mana': '18%', 'cd:ascendance': '67%', 'cd:spirit link totem': '67%', 'win': '100%' } },
+  'Frost Mage': { 'The Twin Fangs|16': { 'score': '100', 'abc': '84%', 'cd:frozen orb': '100%', 'cd:ray of frost': '91%', 'p:Brain Freeze': '2 wasted', 'p:Fingers of Frost': 'All spent', 'p:Glacial Spike!': 'All spent', 'apl': '92%' } },
+  'Devourer Demon Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '64%', 'cd:void ray': '98%', 'cd:soul immolation': '100%', 'win': '100%' } },
+  'Devastation Evoker': { 'The Twin Fangs|16': { 'score': '89', 'abc': '66%', 'cd:fire breath': '95%', 'cd:eternity surge': '95%', 'p:Essence Burst': '1 wasted', 'cd:dragonrage': '100%', 'apl': '99%', 'win': '100%' } },
+  'Elemental Shaman': { 'The Twin Fangs|16': { 'score': '87', 'abc': '83%', 'cd:stormkeeper': '78%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '99%', 'res': '7%', 'cd:ascendance': '100%', 'apl': '94%', 'win': '100%' } },
+  'Mistweaver Monk': { 'The Twin Fangs|16': { 'score': '94', 'abc': '75%', 'cd:renewing mist': '99%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '94%', 'mana': '20%', 'cd:invoke yu\'lon, the jade serpent': '75%', 'cd:celestial conduit': '80%', 'cd:life cocoon': '86%', 'cd:revival': '67%', 'win': '100%' } },
+  'Subtlety Rogue': { 'The Twin Fangs|16': { 'score': '88', 'abc': '77%', 'cd:shadow dance': '95%', 'cd:goremaw\'s bite': '89%', 'cd:shadow blades': '80%', 'win': '100%', 'lv:0': '100%' } },
+  'Augmentation Evoker': { 'The Twin Fangs|16': { 'score': '100', 'abc': '80%', 'cd:upheaval': '100%', 'cd:fire breath': '94%', 'p:Essence Burst': '4 wasted', 'up:Ebon Might': '93%', 'cd:breath of eons': '80%', 'cd:time skip': '100%', 'apl': '100%' } },
+  'Affliction Warlock': { 'The Twin Fangs|16': { 'score': '91', 'abc': '72%', 'cd:haunt': '85%', 'p:Nightfall': '8 wasted', 'dot:Agony': '100%', 'dot:Unstable Affliction': '93%', 'dot:Wither': '100%', 'cd:summon darkglare': '100%', 'cd:malevolence': '100%', 'cd:dark harvest': '86%', 'apl': '90%', 'win': '100%' } },
+  'Beast Mastery Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '79%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '9%', 'cd:bestial wrath': '93%', 'apl': '88%', 'win': '100%' } },
+  'Assassination Rogue': { 'The Twin Fangs|16': { 'score': '94', 'abc': '82%', 'dot:Rupture': '100%', 'dot:Garrote': '99%', 'up:Envenom': '83%', 'res': '6%', 'cd:deathmark': '75%', 'cd:kingsbane': '86%', 'win': '100%', 'lv:0': '99%' } },
   'Vengeance Demon Hunter': { 'The Twin Fangs|16': { 'score': '89', 'abc': '73%', 'cd:fracture': '90%', 'cd:immolation aura': '97%', 'cd:sigil of flame': '77%', 'cd:fel devastation': '67%', 'cd:sigil of spite': '86%', 'res': '13%', 'cd:fiery brand': '100%', 'up:Demon Spikes': '100%' } },
-  'Destruction Warlock': { 'The Twin Fangs|16': { 'score': '100', 'abc': '83%', 'cd:conflagrate': '98%', 'cd:soul fire': '88%', 'p:Backdraft': '1 wasted', 'dot:Wither': '100%', 'cd:summon infernal': '100%', 'cd:malevolence': '100%' } },
-  'Unholy Death Knight': { 'The Twin Fangs|16': { 'score': '100', 'abc': '79%', 'p:Sudden Doom': '2 wasted', 'dot:Virulent Plague': '97%', 'res': '4%', 'cd:dark transformation': '100%', 'cd:army of the dead': '100%' } },
+  'Destruction Warlock': { 'The Twin Fangs|16': { 'score': '100', 'abc': '83%', 'cd:conflagrate': '98%', 'cd:soul fire': '88%', 'p:Backdraft': '1 wasted', 'dot:Wither': '100%', 'cd:summon infernal': '100%', 'cd:malevolence': '100%', 'apl': '99%', 'win': '100%' } },
+  'Unholy Death Knight': { 'The Twin Fangs|16': { 'score': '100', 'abc': '79%', 'p:Sudden Doom': '2 wasted', 'dot:Virulent Plague': '97%', 'res': '4%', 'cd:dark transformation': '100%', 'cd:army of the dead': '100%', 'apl': '86%' } },
   'Guardian Druid': { 'The Twin Fangs|16': { 'score': '100', 'abc': '70%', 'cd:mangle': '96%', 'cd:thrash': '90%', 'up:Ironfur': '97%', 'cd:incarnation: guardian of ursoc': '100%' } },
-  'Enhancement Shaman': { 'The Twin Fangs|16': { 'abc': '73%', 'cd:stormstrike': '99%', 'cd:crash lightning': '99%', 'cd:doom winds': '100%', 'cd:ascendance': '100%' } },
+  'Enhancement Shaman': { 'The Twin Fangs|16': { 'abc': '73%', 'cd:stormstrike': '99%', 'cd:crash lightning': '99%', 'cd:doom winds': '100%', 'cd:ascendance': '100%', 'apl': '81%', 'win': '100%' } },
   'Protection Warrior': { 'The Twin Fangs|16': { 'score': '92', 'abc': '75%', 'cd:shield slam': '99%', 'cd:thunder clap': '95%', 'up:Shield Block': '92%', 'cd:avatar': '89%', 'cd:demoralizing shout': '94%' } },
   'Brewmaster Monk': { 'The Twin Fangs|16': { 'score': '93', 'abc': '82%', 'cd:keg smash': '99%', 'cd:blackout kick': '73%', 'cd:breath of fire': '100%', 'up:Shuffle': '100%', 'cd:invoke niuzao, the black ox': '100%', 'cd:exploding keg': '86%' } },
   'Demonology Warlock': { 'The Twin Fangs|16': { score: '99', abc: '80%', tyh: '9.3', tyd: 'all of them', tyc: '4 in 5', tyx: '23', imp: '4.3', ssw: '0%', 'p:Demonic Core': 'All spent', dbh: '1', 'cd:summon demonic tyrant': 'all of them', 'cd:call dreadstalkers': '95%', 'cd:grimoire: imp lord': 'all of them' } }, 'Preservation Evoker': { 'The Twin Fangs|16': { score: '89', abc: '67%', ta: '76%', db: '95%', dbr: 'all of them', ess: '7%', ecu: '87%', ecl: '0', te: '82%', 'p:Essence Burst': '4 wasted', inf: '3.2', mana: '37%', ebh: '1', dbec: '2', 'p:Merithra\'s Blessing': 'All used' } }, 'Restoration Druid': { 'The Twin Fangs|16': { score: '96', mast: '2.7', abc: '82%', lb: '99%', hots: '81%', sm: '97%', ab: '98%', wg: '97%', rgb: '0', 'p:Clearcasting': '2 or 3 wasted', 'p:Soul of the Forest': 'All spent', mana: '12%', rr: '90 to 145' } }, 'Holy Paladin': { 'The Twin Fangs|16': { 'cd:divine toll': '89%', 'cd:avenging wrath': '3 or 4 of 4', 'cd:aura mastery': '2 of 3', score: '90', hlo: '53%', abc: '85%', ef: '88%', hs: '95%', lm: '88%', bv: '87%', act: '92%',  folb: '58%', hp: '2%', mana: '31%', dt: '88%', 'p:Infusion of Light': '1 wasted', fol: '3 or 4', 'p:Divine Purpose': '1 wasted', b5: '2', jhs: '1', self: '3' } } };
@@ -6867,7 +6867,7 @@ function specPage(o) {
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts by how much it matters. Good counts in full, could be better half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAv(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' +
     (TOPB && TOPB.score ? '<div class="spc-htp">' + esc(o.topH || 'The top 10 ' + o.top + ' on this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
-    '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : '<p class="spc-fok">Everything is in good shape. Nice work.</p>') + '</div></div>';
+    '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : '<p class="spc-fok">Everything is in good shape. Nice work.</p>') + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
     : (o.talents && o.talents.length ? '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + o.talents.map((t) => '<span class="spc-t">' + spellIcon(0, (o.talIc || {})[t] || t) + esc(t) + '</span>').join('') + '</div></div></div>' : '');
@@ -6883,11 +6883,18 @@ const spcHw = (k, how) => { if (!how) return ['', '']; const id = 'spc-hw-' + St
 // (a check in a block: a full line when it has a picture, a small tile when it's a number and a sentence; the tiles sit side by side
 // after the lines)
 const SPC_MK = { ok: '✓', warn: '!', bad: '✕', na: '•' };
-const spcLine = (c, top, id, v, bic) => { const hw = spcHw(c.k, c.how); return '<div class="spc-sl ' + c.st + '" id="' + id + '"><span class="spc-si">' + SPC_MK[c.st] + '</span><div class="spc-sm"><div class="spc-sh"><span class="spc-shl">' + (c.ic && c.ic !== bic ? spellIcon(0, c.ic) : '') + '<b>' + esc(c.label) + '</b></span><span class="spc-shv">' + top + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + v + '</div></div>'; };
-const spcMini = (c, top, id, extra) => { const hw = spcHw(c.k, c.how); return '<div class="spc-mini ' + c.st + '" id="' + id + '"><div class="spc-mh">' + (c.ic ? spellIcon(0, c.ic) : '') + '<b>' + esc(c.label) + '</b><span class="spc-si">' + SPC_MK[c.st] + '</span></div><div class="spc-mv"><span class="cst-f ' + c.st + '">' + c.v + '</span>' + top + '</div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + (extra || '') + '</div>'; };
-const spcLines = (vis, vz, top, slug, bic, tmo) => { const big = [], small = []; for (const c of vis) { const v = vz(c), id = 'spc-r-' + slug(c.k); if (v) big.push(spcLine(c, top(c.k), id, v, bic)); else small.push(spcMini(c, top(c.k), id, tmo ? tmo(c) : '')); }
-  if (small.length === 1) return vis.map((c) => { const v = vz(c); return spcLine(c, top(c.k), 'spc-r-' + slug(c.k), v || (tmo ? tmo(c) : ''), bic); }).join(''); // (a tile alone: a line, in its own place)
-  return big.join('') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
+const spcTip = (c) => (c.tip && (c.st === 'warn' || c.st === 'bad') ? '<p class="spc-tip"><b>Next time:</b> ' + esc(c.tip) + '</p>' : '');
+const spcLine = (c, top, id, v, bic) => { const hw = spcHw(c.k, c.how); return '<div class="spc-sl ' + c.st + '" id="' + id + '"><span class="spc-si">' + SPC_MK[c.st] + '</span><div class="spc-sm"><div class="spc-sh"><span class="spc-shl">' + (c.ic && c.ic !== bic ? spellIcon(0, c.ic) : '') + '<b>' + esc(c.label) + '</b></span><span class="spc-shv">' + top + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></div>'; };
+const spcMini = (c, top, id, extra) => { const hw = spcHw(c.k, c.how); return '<div class="spc-mini ' + c.st + '" id="' + id + '"><div class="spc-mh">' + (c.ic ? spellIcon(0, c.ic) : '') + '<b>' + esc(c.label) + '</b><span class="spc-si">' + SPC_MK[c.st] + '</span></div><div class="spc-mv"><span class="cst-f ' + c.st + '">' + c.v + '</span>' + top + '</div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + (extra || '') + '</div>'; };
+const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) => /^cd:/.test(c.k) && !vz(c)), tbl = cdl.length >= 3, rest = tbl ? vis.filter((c) => !cdl.includes(c)) : vis, big = [], small = [];
+  for (const c of rest) { const v = vz(c), id = 'spc-r-' + slug(c.k); if (v) big.push(spcLine(c, top(c.k), id, v, bic)); else small.push(spcMini(c, top(c.k), id, tmo ? tmo(c) : '')); }
+  if (small.length === 1) return rest.map((c) => { const v = vz(c); return spcLine(c, top(c.k), 'spc-r-' + slug(c.k), v || (tmo ? tmo(c) : ''), bic); }).join('') + (tbl ? spcTable(cdl, top, slug, tmo) : ''); // (a tile alone: a line, in its own place)
+  return big.join('') + (tbl ? spcTable(cdl, top, slug, tmo) : '') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
+// (three or more cooldowns in a block: a compact table, a row each, with its mark, its name, a bar of its uses, the count, what it did each time and the top
+// raids'. A row opens in place to its sentence, how it's judged, its "Next time" and its moments; the ones to fix start open)
+const spcTable = (l, top, slug, tmo) => '<div class="spc-tbl">' + l.map((c) => { const hw = spcHw(c.k, c.how), m = String(c.v).match(/^(\d+)<span>\/(\d+)<\/span>$/), f = m && +m[2] ? Math.min(1, +m[1] / +m[2]) : null;
+  return '<details class="spc-tr ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (c.st === 'bad' ? ' open' : '') + '><summary><span class="spc-si">' + SPC_MK[c.st] + '</span>' + (c.ic ? spellIcon(0, c.ic) : '') + '<b class="spc-tn">' + esc(c.label) + '</b><span class="spc-tb" aria-hidden="true">' + (f != null ? '<i style="width:' + Math.round(100 * f) + '%"></i>' : '') + '</span>' +
+    '<span class="spc-tv">' + (c.ext ? '<span class="spc-te">' + esc(c.ext) + '</span>' : '') + top(c.k) + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></summary><div class="spc-td">' + (top(c.k) ? '<div class="spc-tdt">' + top(c.k) + '</div>' : '') + '<p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + (tmo ? tmo(c) : '') + '</div></details>'; }).join('') + '</div>';
 // (a bar of the casts by colour, with its legend, and the counts behind it)
 const spcSumBar = (n, lg) => { const ks = ['g3', 'ok', 'g2', 'warn', 'g1', 'bad', 'g0'].filter((k) => n[k]); if (!ks.length) return '';
   return '<div class="spc-sb"><div class="spc-sbb">' + ks.map((k) => '<i class="' + k + '" style="flex:' + n[k] + '"></i>').join('') + '</div><div class="spc-sbl">' + ks.filter((k) => lg[k]).map((k) => '<span><i class="' + k + '"></i>' + esc(lg[k]) + ' <b>' + n[k] + '</b></span>').join('') + '</div></div>'; };
@@ -7828,6 +7835,11 @@ function genRun(spec, D, reps, name, one) {
   const known = (q) => q.tal && TAL && [].concat(q.tal).some(tal), live = (q) => on(q) && (pressed(q) || known(q));
   const rot = (D.rot || []).filter(live), cds = (D.cds || []).filter(live), procs = (D.procs || []).filter(on), dots = (D.dots || []).filter((q) => on(q) && (dotSeen(q) || known(q))), ups = (D.ups || []).filter((q) => on(q) && per.some(({ p }) => (q.names || [q.n]).some((n) => p.buffs.has(n)))), res = D.res && on(D.res) ? D.res : null;
   const K = { ...GEN_DEF, ...(D.k || {}) }, rows = [], lc = (n) => n.toLowerCase(); let wait = 0;
+  // (the big cooldown whose windows get a card each (win): it counts when it's pressed over these pulls, or for one that comes on its own (buffOnly), when
+  // its buff is seen. Its partners are groups of spells, any one of which counts, kept when you pressed one of them at all)
+  const pressedAny = (n) => per.some(({ p, t1 }) => (p.byName.get(lc(n)) || []).some((t) => t <= t1));
+  const WIN = D.win && on(D.win) && (D.win.buffOnly ? per.some(({ p }) => (D.win.buffs || D.win.names || [D.win.n]).some((n) => p.buffs.has(n))) : pressed(D.win)) ? D.win : null;
+  const winWith = WIN ? (WIN.with || []).map((g) => [].concat(g)).filter((g) => g.some(pressedAny)) : [];
   for (const x of per) { const { r, p, t1, c } = x, s = { pull: r.item.pull, kill: r.item.kill, len: t1, m: {}, bx: {}, cdu: {}, pr: {}, dot: {}, up: {} }, BX = (k, t, cls, tip) => (s.bx[k] = s.bx[k] || []).push([t, cls, tip]);
     const dead = deadSpans(r, p).map(([a, b]) => [a, b == null ? t1 : Math.min(b, t1)]).filter(([a, b]) => a < t1 && b > a), deadL = dead.reduce((v, [a, b]) => v + b - a, 0), alive = Math.max(1, t1 - deadL);
     const inDead = (t) => dead.some(([a, b]) => t >= a - 1 && t <= b + 1);
@@ -7849,6 +7861,8 @@ function genRun(spec, D, reps, name, one) {
         // (what the spell itself did, by its own name: its damage and its healing)
         const own = (m) => [...(m || new Map()).values()].filter((y) => nms.includes(lc(String(y.name)))).reduce((v, y) => v + (y.total || 0), 0);
         const sim = cdSim(ts, cd, ch, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, ch, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
+    // (the rotation check: each cast against the priority list)
+    if (D.apl) s.apl = genAplRun(x, s, D.apl, { hasteF, pressed: (n) => per.some(({ p: pp, t1: tt }) => (pp.byName.get(lc(n)) || []).some((t) => t <= tt)), tal, heroN });
     // (procs: each one spent with the spell it's for, or wasted: run out, or replaced while still up)
     for (const q of procs) { const o = genProc(r, p, t1, q, inDead); if (!o) continue; s.pr[q.n] = o; s.m['p:' + q.n] = o.wt;
       for (const [t, k] of o.ev || []) BX('p:' + q.n, t, k == null ? 'bad' : 'ok', T(t) + (k == null ? ': wasted' : ': spent on ' + spellNm(k))); }
@@ -7867,12 +7881,31 @@ function genRun(spec, D, reps, name, one) {
     for (const q of ups) { const raw = (q.names || [q.n]).map((n) => p.buffs.get(n)).filter(Boolean).flatMap((b) => b.sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)])).sort((u, w) => u[0] - w[0]), sp = [];
       for (const [a, e] of raw) { if (sp.length && a <= sp[sp.length - 1][1]) sp[sp.length - 1][1] = Math.max(sp[sp.length - 1][1], e); else sp.push([a, e]); } const upL = sp.reduce((v, [a, e]) => v + Math.max(0, e - a), 0);
       s.up[q.n] = { up: Math.min(1, upL / alive), sp }; const gaps = []; let prev = 0; for (const [a, e] of sp) { if (a - prev >= 4 && !inDead(a)) gaps.push([prev, a]); prev = Math.max(prev, e); } if (t1 - prev >= 4 && !inDead(t1 - 1)) gaps.push([prev, t1]); s.m['up:' + q.n] = gaps; }
+    // (the big cooldown's windows: from each press to the end of its buff (or its listed length), what you did in it against your usual, whether its
+    // partners went in (pressed in it or just before), its key spell's casts, your casting pace, and, for some, your damage over time up at the start)
+    if (WIN) { const nms = (WIN.names || [WIN.n]).map(lc), inP = (n, a, b) => (p.byName.get(lc(n)) || []).filter((t) => t >= a && t <= b && t <= t1).length;
+      const press = WIN.buffOnly ? [] : c.ab.filter((y) => nms.includes(lc(y.name))).flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w);
+      const bl = (WIN.buffs || WIN.names || [WIN.n]).map((n) => p.buffs.get(n)).filter(Boolean).flatMap((b) => b.sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)])).sort((u, w) => u[0] - w[0]);
+      const sp = (WIN.buffOnly ? bl : press.map((t) => { const b = bl.find(([a]) => Math.abs(a - t) <= 1.5); return [t, b ? b[1] : Math.min(t1, t + (WIN.dur || 20))]; })).filter(([a, e]) => e - a >= 3);
+      const ser = D.unitN === 'healing' ? p.healS : p.dmgS, inL = sp.reduce((v, [a, e]) => v + e - a, 0), inD = sp.reduce((v, [a, e]) => v + sumIn(ser || [], a, e), 0), tot = sumIn(ser || [], 0, t1), outR = (tot - inD) / Math.max(1, alive - inL);
+      const inN = sp.reduce((v, [a, e]) => v + c.all.filter((t) => t >= a && t <= e).length, 0), outCpm = 60 * Math.max(0, c.n - inN) / Math.max(1, c.al - inL);
+      const keyN = WIN.key ? [].concat(WIN.key.names) : [];
+      s.win = sp.map(([a, e]) => { const len = Math.max(1, e - a), d = sumIn(ser || [], a, e), cpm = 60 * c.all.filter((t) => t >= a && t <= e).length / len;
+        const parts = winWith.map((g) => { const hit = g.find((n) => inP(n, a - (WIN.pre || 3), e)); return { n: hit || g.find((n) => pressedAny(n)) || g[0], ok: !!hit }; });
+        const key = WIN.key ? keyN.reduce((v, n) => v + inP(n, a, e), 0) : null;
+        // (the damage over time the window wants up (all of yours, or the ones it names): on the boss within 2 seconds of the press)
+        const dotsMiss = WIN.dotsUp ? dots.filter((q) => (!Array.isArray(WIN.dotsUp) || WIN.dotsUp.includes(q.n)) && !(s.dot[q.n] && s.dot[q.n].sp.some(([u, w]) => u <= a + 2 && w >= a))).map((q) => q.n) : [];
+        const slow = outCpm > 0 && cpm < 0.85 * outCpm, low = WIN.keyMin != null && key != null && key < WIN.keyMin, iss = parts.filter((x) => !x.ok).length + (slow ? 1 : 0) + (dotsMiss.length ? 1 : 0) + (low ? 1 : 0);
+        return { t: a, e, len, d, x: outR > 0 ? (d / len) / outR : null, cpm, parts, key, dotsMiss, slow, low, st: !iss ? 'ok' : iss === 1 ? 'warn' : 'bad' }; });
+      s.winOut = { rate: outR, cpm: outCpm }; s.m.win = s.win.filter((w) => w.st !== 'ok').map((w) => [w.t, w.e]); }
     // (a healer's mana: what was left at the kill, and any stretch spent out of it)
     if (D.mana) { const ml = (p.mana || []).filter(([t]) => t <= t1 + 1); s.mnOut = null; for (let i = 0; i < ml.length && !s.mnOut; i++) { if (ml[i][1] > 0.02 || ml[i][0] >= t1 - 15) continue; let j = i; while (j + 1 < ml.length && ml[j + 1][1] <= 0.02) j++; if (ml[j][0] - ml[i][0] >= 8) s.mnOut = [ml[i][0], ml[j][0]]; i = j; } if (r.item.kill && ml.length) s.mana = ml[ml.length - 1][1]; }
     s.dmgTot = sumIn(p.dmgS || [], 0, t1); s.healTot = sumIn(p.healS || [], 0, t1);
     rows.push(s); }
   // ---- the whole (one pull, or the night added up) ----
-  const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%', mins = sum((s) => s.len) / 60, times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
+  const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%', mins = sum((s) => s.len) / 60, times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times'), orL = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' or ' + l[l.length - 1]);
+  // (where a line's worst moment was, for its "Next time": the time, and the pull when the night is added up)
+  const atT = (m) => (m.a < 2 ? 'the start of ' + (one ? 'the pull' : 'pull ' + m.pull) : T(m.a) + (one ? '' : ' on pull ' + m.pull)), worst = (k) => M(k).filter((m) => m.b != null).sort((u, w) => w.b - w.a - (u.b - u.a))[0] || null;
   const M = (k) => rows.flatMap((s) => ((s.m && s.m[k]) || []).map((x) => (Array.isArray(x) ? { pull: s.pull, a: x[0], b: x[1] } : { pull: s.pull, a: x }))).sort((u, w) => u.pull - w.pull || u.a - w.a);
   const groups = [], grp = (t) => { const g = { t, l: [] }; groups.push(g); return g; }, add = (g, st, ic, label, v, sub, k, how) => g.l.push({ st, ic, label, v, sub, k, how, mo: M(k) });
   const okP = (f) => Math.round(100 * f) + '% or more is good.';
@@ -7882,54 +7915,99 @@ function genRun(spec, D, reps, name, one) {
   const cdLine = (g, q, okF, warnF) => { const n = lc(q.n), l = rows.map((s) => s.cdu[n]).filter(Boolean), u = l.reduce((v, y) => v + y.n, 0), poss = l.reduce((v, y) => v + y.poss, 0); if (!poss) return; const f = Math.min(1, u / poss), cap = l.reduce((v, y) => v + y.cap, 0);
     for (const s of rows) if (s.cdu[n]) s.m['cd:' + n] = (s.cdu[n].capL || []).filter(([a, b]) => b - a >= s.cdu[n].cd);
     add(g, q.info ? 'na' : f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + (q.big ? ' uses' : ' on cooldown'), u + '<span>/' + poss + '</span>', (u ? 'You pressed it ' + times(u) + ' out of a possible ' + poss + '.' : 'You never pressed it, out of a possible ' + poss + '.') + (cap >= 1 ? ' It sat ready for ' + durW(cap) + ' in all.' : '') + ownT(l, u), 'cd:' + n,
-      (q.why ? q.why + ' ' : '') + (q.info ? 'Not graded: ' + (q.infoWhy || 'your raid note decides when it goes out') + '. The moments are the times it sat ready long enough for a whole extra use.' : okP(okF) + ' The moments are the times it sat ready long enough for a whole extra use.')); };
+      (q.why ? q.why + ' ' : '') + (q.info ? 'Not graded: ' + (q.infoWhy || 'your raid note decides when it goes out') + '. The moments are the times it sat ready long enough for a whole extra use.' : okP(okF) + ' The moments are the times it sat ready long enough for a whole extra use.'));
+    // (its damage or healing each time, for the cooldown table, and what to do next time, at its longest wait)
+    const cc = g.l[g.l.length - 1], dmT = l.reduce((v, y) => v + (y.dmg || 0), 0), hlT = l.reduce((v, y) => v + (y.heal || 0), 0), vv = D.unitN === 'healing' && hlT >= 1000 ? hlT : dmT >= 1000 ? dmT : hlT; if (u && vv >= 1000) cc.ext = C(vv / u) + ' each';
+    if (!q.info && f < okF) { const w = worst('cd:' + n); cc.tip = q.tip || (!u ? 'Work ' + q.n + ' into your pull: it was ready the whole time.' : w ? (q.big ? 'Use ' + q.n + ' when it comes back: from ' + atT(w) + ', it sat ready for ' + Math.round(w.b - w.a) + ' seconds, long enough for one more use.' : 'Press ' + q.n + ' the moment it comes back: from ' + atT(w) + ', it sat ready for ' + Math.round(w.b - w.a) + ' seconds.') : 'Press ' + q.n + ' a little sooner each time it comes back.'); } };
   // (Casting)
   const gC = grp('Casting');
   { const al = sum((s) => (s.abcAl >= 10 ? s.abcAl : 0)), busy = sum((s) => (s.abcAl >= 10 ? s.abcBusy : 0));
     if (al >= 10) { const f = busy / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
       add(gC, f >= K.abc[0] ? 'ok' : f >= K.abc[1] ? 'warn' : 'bad', D.ic, 'Always be casting', pct(f), 'You were casting for ' + pct(f) + ' of the time you were alive.' + (gp ? ' Your longest stretch with nothing pressed was ' + Math.round(gp.len) + ' seconds, at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while you were moving.' : '.') : ''), 'abc',
-        'The share of your time alive spent casting or on a global cooldown. ' + (D.abcWhy ? D.abcWhy + ' ' : '') + okP(K.abc[0]) + ' Time dead or while the whole raid waits isn\'t counted. The moments are the stretches of 4 seconds or more with nothing pressed.'); } }
+        'The share of your time alive spent casting or on a global cooldown. ' + (D.abcWhy ? D.abcWhy + ' ' : '') + okP(K.abc[0]) + ' Time dead or while the whole raid waits isn\'t counted. The moments are the stretches of 4 seconds or more with nothing pressed.');
+      if (f < K.abc[0]) gC.l[gC.l.length - 1].tip = D.abcTip || 'Press something every global cooldown: when you have to move, use an instant instead of stopping.'; } }
+  // (the rotation check: the share of casts that were the list's best button then, and the slips, most common first)
+  const aplN = (D.apl && D.apl.blk) || 'Rotation priority', gA = grp(aplN); let aplSl = [];
+  const slipT = (e) => e.did + ' when ' + e.want + ' was the better button' + (e.why ? ' (' + e.why + ')' : '');
+  if (D.apl) { const J = sum((s) => s.apl && s.apl.judged), OK = sum((s) => s.apl && s.apl.ok); if (J >= 10) { const f = OK / J, sl = new Map();
+      for (const s of rows) if (s.apl) for (const [kk, e] of s.apl.slips) { const z = sl.get(kk) || { ...e, ts: [], n: 0 }; z.n += e.ts.length; sl.set(kk, z); }
+      for (const s of rows) s.m.apl = s.apl ? [...s.apl.slips.values()].flatMap((e) => e.ts).sort((u, w) => u - w) : [];
+      aplSl = [...sl.values()].sort((a, b) => b.n - a.n); const okF = D.apl.ok || 0.85, warnF = D.apl.warn || 0.75, t0 = aplSl[0];
+      add(gA, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', D.apl.ic || D.ic, 'Rotation priority', pct(f), 'Of your ' + J + ' casts the priority list covers, ' + pct(f) + ' were the best button at the time.' + (t0 ? ' Your most common slip was ' + slipT(t0) + ', ' + times(t0.n) + '.' : ' You never slipped.'), 'apl',
+        (D.apl.why ? D.apl.why + ' ' : '') + 'Each cast is checked against your priority list, from the top: the first spell that was ready, with its condition met, is the one to press, and pressing a spell lower on the list is a slip. It has to have been ready a moment before you pressed, so a press queued a hair early isn\'t blamed. ' + okP(okF) + ' The moments are each slip.');
+      const cc = gA.l[gA.l.length - 1]; if (t0 && f < okF) cc.tip = t0.tip || 'Press ' + t0.want + ' before ' + t0.did + ' whenever it\'s ready.'; } }
+  // (spenders at the right level, and repeated abilities)
+  if (D.apl) { (D.apl.levels || []).forEach((L, i) => { const okN = sum((s) => s.apl && s.apl.levels[i] && s.apl.levels[i].ok), badL = rows.map((s) => (s.apl && s.apl.levels[i] ? s.apl.levels[i].bad : [])), bad = badL.reduce((v, l) => v + l.length, 0), N = okN + bad; if (N < 5) return; const f = okN / N, okF = L.ok || 0.9, warnF = L.warn || 0.75;
+      rows.forEach((s, j) => { s.m['lv:' + i] = badL[j]; }); add(gA, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', L.ic || L.s[0], L.label, pct(f), okN + ' of your ' + N + ' ' + L.what + ' came ' + L.at + '.', 'lv:' + i, (L.why ? L.why + ' ' : '') + okP(okF) + ' The moments are the ones that didn\'t.');
+      const cc = gA.l[gA.l.length - 1]; if (f < okF && L.tip) cc.tip = L.tip; });
+    const rp = rows.reduce((v, s) => v + (s.apl && s.apl.rep ? s.apl.rep.bad.length : 0), 0), rn = sum((s) => s.apl && s.apl.rep && s.apl.rep.n); if (D.apl.norepeat && rn >= 20) { for (const s of rows) s.m.rep = s.apl && s.apl.rep ? s.apl.rep.bad : [];
+      const okN = Math.max(1, Math.round(mins / 3)), warnN = Math.max(3, Math.round(mins)); add(gA, rp <= okN ? 'ok' : rp <= warnN ? 'warn' : 'bad', D.apl.repIc || D.ic, 'Same ability twice in a row', String(rp), rp ? 'You pressed the same ability twice in a row ' + times(rp) + ', which breaks Combo Strikes.' : 'You never pressed the same ability twice in a row.', 'rep', 'Combo Strikes: your Mastery only boosts a spell that\'s different from the one before it, so pressing the same one twice loses it. A few in a long fight is fine. The moments are each one.');
+      const cc = gA.l[gA.l.length - 1]; if (rp > okN) cc.tip = 'Alternate your abilities: check what you pressed last before pressing it again.'; } }
   // (spells pressed on cooldown)
-  const rotN = D.rotN || 'Core spells', gR = grp(rotN); for (const q of rot) cdLine(gR, q, q.ok || K.rot[0], q.warn || K.rot[1]);
+  // (a block is named for what's in it: its one or two spells by name, or the list's own name, or a plain one for three or more)
+  const nmB = (l, dflt) => (l.length && l.length <= 2 ? andL(l.map((q) => (q.ic && /!$/.test(q.n) ? q.ic : q.n))) : dflt);
+  const rotN = D.rotN || nmB(rot, 'Core spells'), gR = grp(rotN); for (const q of rot) cdLine(gR, q, q.ok || K.rot[0], q.warn || K.rot[1]);
   // (procs)
-  const procN = D.procN || 'Procs', gP = grp(procN);
+  const procN = D.procN || nmB(procs, 'Procs'), gP = grp(procN);
   for (const q of procs) { const l = rows.map((s) => s.pr[q.n]).filter(Boolean); if (!l.length) continue; const x = { gained: 0, wasted: 0, ran: 0, lost: 0, by: new Map() }; for (const o of l) { x.gained += o.gained; x.wasted += o.wasted; x.ran += o.ran; x.lost += o.lost; for (const [k, v] of o.by) x.by.set(k, (x.by.get(k) || 0) + v); } if (!x.gained) continue;
     const st = x.wasted <= Math.max(1, mins / 3, (q.okW || 0.05) * x.gained) ? 'ok' : x.wasted <= Math.max(2, 2 * mins / 3, (q.warnW || 0.12) * x.gained) ? 'warn' : 'bad', sp = [...x.by].sort((a, b) => b[1] - a[1]);
     add(gP, st, q.ic || q.n, q.n, x.wasted ? x.wasted + '<span> wasted</span>' : 'All<span> spent</span>', 'You had ' + plural(x.gained, 'use') + (sp.length > 1 ? ': ' + andL(sp.map(([k, v]) => v + ' on ' + spellNm(k))) : '') + '.' + (x.ran ? ' ' + (x.ran === 1 ? 'One ran out.' : x.ran + ' ran out.') : '') + (x.lost ? ' ' + (x.lost === 1 ? 'One was' : x.lost + ' were') + ' replaced by a new one while you still had it.' : '') + (!x.wasted ? ' None were wasted.' : ''), 'p:' + q.n,
-      (q.why ? q.why + ' ' : '') + 'A proc is wasted when it runs out, or when a new one comes while you still hold it. A few in a long fight is fine. The moments are each one wasted.'); }
+      (q.why ? q.why + ' ' : '') + 'A proc is wasted when it runs out, or when a new one comes while you still hold it. A few in a long fight is fine. The moments are each one wasted.');
+    if (st !== 'ok') { const w0 = M('p:' + q.n)[0], nm = q.ic || q.n; gP.l[gP.l.length - 1].tip = q.tip || (x.lost > x.ran ? 'Spend ' + nm + ' before the next one comes: one that comes while you still hold it is lost.' : 'Spend ' + nm + ' on ' + q.use[0] + ' before your filler, so it doesn\'t run out.') + (w0 ? ' Your first wasted one was at ' + atT(w0) + '.' : ''); } }
   // (damage over time)
-  const dotN = D.dotN || 'Damage over time', gT = grp(dotN);
+  const dotN = D.dotN || nmB(dots, 'Damage over time'), gT = grp(dotN);
   for (const q of dots) { const l = rows.map((s) => [s, s.dot[q.n]]).filter(([, d]) => d); if (!l.length) continue; const al = l.reduce((v, [s]) => v + s.len, 0), f = l.reduce((v, [s, d]) => v + d.up * s.len, 0) / Math.max(1, al), okF = q.ok || K.dots[0], warnF = q.warn || K.dots[1];
-    add(gT, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' uptime', pct(f), q.n + ' was on the boss ' + pct(f) + ' of the time you were alive.', 'dot:' + q.n, (q.why ? q.why + ' ' : '') + 'The first seconds of the pull aren\'t counted. ' + okP(okF) + ' The moments are the gaps of 3 seconds or more.'); }
+    add(gT, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' uptime', pct(f), q.n + ' was on the boss ' + pct(f) + ' of the time you were alive.', 'dot:' + q.n, (q.why ? q.why + ' ' : '') + 'The first seconds of the pull aren\'t counted. ' + okP(okF) + ' The moments are the gaps of 3 seconds or more.');
+    if (f < okF) { const w = worst('dot:' + q.n); gT.l[gT.l.length - 1].tip = q.tip || 'Refresh ' + q.n + ' before it runs out' + (w ? ': your longest gap was ' + Math.round(w.b - w.a) + ' seconds, from ' + atT(w) + '.' : '.'); } }
   // (the resource)
   if (res) { const g = sum((s) => s.resG), w = sum((s) => s.resW); if (g) { const f = w / g, okF = res.ok || K.res[0], warnF = res.warn || K.res[1];
     const nl = res.nl || res.n; add(grp(res.n), f <= okF ? 'ok' : f <= warnF ? 'warn' : 'bad', res.ic || D.ic, res.n + ' wasted', pct(f), w ? Math.round(w) + ' of the ' + Math.round(g) + ' ' + nl + ' you gained came while you were full, and ' + (Math.round(w) === 1 ? 'was' : 'were') + ' lost.' : 'None of the ' + Math.round(g) + ' ' + nl + ' you gained was lost.', 'res',
-      (res.why ? res.why + ' ' : '') + Math.round(100 * okF) + '% or less is good. The moments are each gain that came while you were full.'); } }
+      (res.why ? res.why + ' ' : '') + Math.round(100 * okF) + '% or less is good. The moments are each gain that came while you were full.');
+    if (f > okF) { const by = new Map(); for (const s of rows) for (const [k, v] of s.resBy || []) by.set(k, (by.get(k) || 0) + v[1]); const b0 = [...by].sort((a, b) => b[1] - a[1])[0], gg = groups[groups.length - 1];
+      gg.l[gg.l.length - 1].tip = res.tip || 'Spend ' + nl + ' before you\'re full' + (b0 && b0[1] > 0 && by.size > 1 && pressedAny(b0[0]) ? ': most of what you lost came from ' + b0[0] + ', so spend before you press it when you\'re close to full.' : '.'); } } }
   // (a healer's mana at the kill)
   if (D.mana) { const kl = rows.filter((s) => s.mana != null); if (kl.length) { const mk = D.manaK || [0.35, 0.5], s = kl[kl.length - 1], out = s.mnOut, st = out ? 'warn' : s.mana <= mk[0] ? 'ok' : s.mana <= mk[1] ? 'warn' : 'bad';
     add(grp('Mana'), st, D.manaIc || D.ic, 'Mana at the kill', pct(s.mana), out ? 'You ran out at ' + T(out[0]) + ', ' + T(s.len - out[0]) + ' before the kill.' : s.mana <= 0.2 ? 'You used nearly all of it, which is the goal.' : 'You ended the kill with ' + pct(s.mana) + ' of your mana, and that is healing you never did.', 'mana',
-      'Mana left when the boss dies is healing you didn\'t do: spend more of it on your stronger heals when you can, and aim to end near empty without running out early. ' + Math.round(100 * mk[0]) + '% or less is good.'); } }
+      'Mana left when the boss dies is healing you didn\'t do: spend more of it on your stronger heals when you can, and aim to end near empty without running out early. ' + Math.round(100 * mk[0]) + '% or less is good.');
+    const gg = groups[groups.length - 1]; if (st !== 'ok') gg.l[gg.l.length - 1].tip = out ? 'Pace your mana: you ran out ' + T(s.len - out[0]) + ' before the kill, so use fewer expensive heals early in the fight.' : 'Spend more of your mana: use your stronger heals when the raid needs healing, and aim to end the kill near empty.'; } }
   // (buffs kept up)
   const upN = D.upN || 'Active mitigation', gU = grp(upN);
   for (const q of ups) { const l = rows.map((s) => [s, s.up[q.n]]).filter(([, d]) => d); if (!l.length) continue; const al = l.reduce((v, [s]) => v + s.len, 0), f = l.reduce((v, [s, d]) => v + d.up * s.len, 0) / Math.max(1, al), okF = q.ok || K.ups[0], warnF = q.warn || K.ups[1];
-    add(gU, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' uptime', pct(f), (q.upTxt || q.n + ' was up') + ' ' + pct(f) + ' of the time you were alive.', 'up:' + q.n, (q.why ? q.why + ' ' : '') + okP(okF) + ' The moments are the gaps of 4 seconds or more.'); }
-  // (big cooldowns)
-  const cdN = D.cdN || 'Cooldowns', gK = grp(cdN); for (const q of cds) cdLine(gK, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]);
+    add(gU, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' uptime', pct(f), (q.upTxt || q.n + ' was up') + ' ' + pct(f) + ' of the time you were alive.', 'up:' + q.n, (q.why ? q.why + ' ' : '') + okP(okF) + ' The moments are the gaps of 4 seconds or more.');
+    if (f < okF) { const w = worst('up:' + q.n); gU.l[gU.l.length - 1].tip = (q.tip ? q.tip + ' ' : 'Keep ' + q.n + ' up' + (w ? '. ' : '.')) + (w ? 'Your longest gap was ' + Math.round(w.b - w.a) + ' seconds, from ' + atT(w) + '.' : ''); } }
+  // (the big cooldown's windows: one has everything when its partners went in, you kept your casting pace and, for some, your damage over time was up
+  // as it started. Each gets a card, and the line counts the ones with everything)
+  const winN = WIN ? WIN.blk || WIN.n : null, gW = WIN ? grp(winN) : null, UNW = D.unitN === 'healing' ? 'healing' : 'damage', winL = WIN ? rows.flatMap((s) => (s.win || []).map((w) => ({ ...w, pull: s.pull }))) : [];
+  const keyW = (n) => n + ' ' + (n === 1 ? WIN.key.one || WIN.key.names[0] : WIN.key.many || WIN.key.names[0] + 's');
+  if (winL.length) { const okN = winL.filter((w) => w.st === 'ok').length, N = winL.length, f = okN / N, xs = winL.map((w) => w.x).filter((v) => v != null), xm = xs.length ? xs.reduce((v, y) => v + y, 0) / xs.length : null;
+    const miss = new Map(), bump = (k) => miss.set(k, (miss.get(k) || 0) + 1); for (const w of winL) { for (const q of w.parts) if (!q.ok) bump('p:' + q.n); if (w.slow) bump('pace'); if (w.low) bump('key'); if (w.dotsMiss.length) bump('dots'); }
+    const ms = [...miss].sort((a, b) => b[1] - a[1]), m0 = ms[0], ofN = (n) => (n === N ? (N === 2 ? 'both' : 'all ' + N) : n + ' of them');
+    const missT = (k, n) => (k.startsWith('p:') ? k.slice(2) + ' wasn\'t in ' + ofN(n) + '.' : k === 'pace' ? 'In ' + ofN(n) + ' you cast slower than you do outside it.' : k === 'key' ? 'In ' + ofN(n) + ' you fit fewer than ' + keyW(WIN.keyMin) + '.' : 'In ' + ofN(n) + ' your damage over time wasn\'t all up as it started.');
+    const okF = WIN.ok || 0.75, warnF = WIN.warn || 0.5, need = winWith.map((g) => 'you pressed ' + orL(g) + ' in it, or up to ' + (WIN.pre || 3) + ' seconds before').concat(['you cast at least 85% as fast as you do outside it'], WIN.dotsUp ? ['your damage over time was up as it started'] : [], WIN.keyMin ? ['you fit in ' + keyW(WIN.keyMin) + ' or more'] : []);
+    add(gW, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', WIN.ic || WIN.n, WIN.label || WIN.n + ' windows', okN + '<span>/' + N + '</span>', (N === 1 ? 'Your ' + WIN.n + ' window ' + (okN ? 'had everything in it.' : 'was missing something.') : okN + ' of your ' + N + ' ' + WIN.n + ' windows had everything in them.') + (xm != null ? ' Inside ' + (N === 1 ? 'it' : 'them') + ' you did ' + xm.toFixed(1) + ' times your usual ' + UNW + ' a second.' : '') + (m0 ? ' ' + missT(m0[0], m0[1]) : ''), 'win',
+      (WIN.why ? WIN.why + ' ' : '') + 'A window runs from the press to the end of its buff. It has everything when ' + andL(need) + '. ' + okP(okF) + ' Each window has a card' + (one ? '' : ' on its pull\'s own page') + ', and the moments are the ones missing something.');
+    const cc = gW.l[gW.l.length - 1]; if (m0 && f < okF) cc.tip = m0[0].startsWith('p:') ? 'Press ' + m0[0].slice(2) + ' with ' + WIN.n + ', in the same few seconds, so they hit together.' : m0[0] === 'pace' ? 'Keep casting through ' + WIN.n + ': move before or after it, or use your instants while you move.' : m0[0] === 'key' ? 'Fit at least ' + keyW(WIN.keyMin) + ' into each ' + WIN.n + '.' : 'Have all your damage over time on the boss before you press ' + WIN.n + '.'; }
+  // (big cooldowns: the window cooldown's uses go with its windows, and the rest in their own block)
+  if (WIN) { const q = cds.find((y) => lc(y.n) === lc(WIN.n)); if (q) cdLine(gW, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]); }
+  const cdN = D.cdN || (WIN ? 'Other cooldowns' : 'Cooldowns'), gK = grp(cdN); for (const q of cds) if (!WIN || lc(q.n) !== lc(WIN.n)) cdLine(gK, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]);
   // ---- the page ----
   const sl = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  const LAYOUT = [['Rotation', [['Casting', ['abc']], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n))]]]];
+  const LAYOUT = [['Rotation', [['Casting', ['abc']], [aplN, ['apl', 'rep'].concat(((D.apl && D.apl.levels) || []).map((L, i) => 'lv-' + i))], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n))]]]];
   if (res || D.mana) LAYOUT.push(['Resources', [res ? [res.n, ['res']] : null, D.mana ? ['Mana', ['mana']] : null].filter(Boolean)]);
   if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch && D.upFirst) ch[1].splice(1, 0, b); else if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
-  LAYOUT.push(['Cooldowns', [[cdN, cds.map((q) => sl('cd:' + lc(q.n)))]]]);
+  LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
   const L0 = D.lead || {}, MERGE = { Casting: { ic: D.ic, main: 'abc', lead: L0.abc || 'Keep casting: time with nothing pressed is ' + (D.unitN === 'healing' ? 'healing' : 'damage') + ' you never do.' } };
+  if (D.apl) MERGE[aplN] = { ic: D.apl.ic || D.ic, main: 'apl', lead: D.apl.lead || 'The order to press your buttons in, from your guides and the simulations: each cast is checked against it, and the slips show what to press instead.' };
   if (rot.length) MERGE[rotN] = { ic: rot[0].ic || rot[0].n, main: 'cd:' + lc(rot[0].n), lead: L0.rot || 'Press these whenever they\'re ready.' };
   if (procs.length) MERGE[procN] = { ic: procs[0].ic || procs[0].n, main: 'p:' + procs[0].n, lead: L0.procs || 'Your procs: spend each one before it runs out, or before a new one replaces it.' };
   if (dots.length) MERGE[dotN] = { ic: dots[0].ic || dots[0].n, main: 'dot:' + dots[0].n, lead: L0.dots || 'Keep these on the boss all fight.' };
   if (res) MERGE[res.n] = { ic: res.ic || D.ic, main: 'res', lead: L0.res || '' };
   if (D.mana) MERGE.Mana = { ic: D.manaIc || D.ic, main: 'mana', lead: L0.mana || 'Mana left at the kill is healing you never did: end near empty, without running out early.' };
   if (ups.length) MERGE[upN] = { ic: ups[0].ic || ups[0].n, main: 'up:' + ups[0].n, lead: L0.ups || 'Keep your active mitigation up while you tank.' };
-  if (cds.length) MERGE[cdN] = { ic: cds[0].ic || cds[0].n, main: 'cd:' + lc(cds[0].n), lead: L0.cds || 'Your big cooldowns: press each one as often as the fight allows.' };
-  const WT = { abc: 2, res: 2, mana: 2 }; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
+  const cdO = cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n));
+  if (WIN) MERGE[winN] = { ic: WIN.ic || WIN.n, main: 'win', lead: WIN.lead || (WIN.n + ' is your big window' + (winWith.length ? ': press ' + andL(winWith.map(orL)) + ' with it, and keep casting all the way through' : ': keep casting all the way through') + (WIN.key ? ', fitting in as many ' + (WIN.key.many || WIN.key.names[0] + 's') + ' as you can' : '') + (WIN.dotsUp ? ', with your damage over time up before you press it' : '') + '.') };
+  if (cdO.length) MERGE[cdN] = { ic: cdO[0].ic || cdO[0].n, main: 'cd:' + lc(cdO[0].n), lead: (WIN ? L0.cdsO || (D.unitN === 'healing' ? L0.cds : '') : L0.cds) || (WIN ? 'Your other cooldowns: press each one as often as the fight allows.' : 'Your big cooldowns: press each one as often as the fight allows.') };
+  const WT = { abc: 2, res: 2, mana: 2, apl: 3, win: 3 }; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
   const LG = {}; for (const q of procs) LG['p:' + q.n] = { ok: 'Spent', bad: 'Wasted' };
   const TOPB = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const keyN = new Set([].concat(...rot.concat(cds, procs, dots, ups).map((q) => [q.n].concat(q.tal || []))).filter((n) => TAL && TAL.names.has(n)));
@@ -7939,9 +8017,16 @@ function genRun(spec, D, reps, name, one) {
     const ab = s.abcAl >= 10 ? s.abcBusy / s.abcAl : null, q = c1 && s.cdu[lc(c1.n)], qf = q && q.poss ? Math.min(1, q.n / q.poss) : null, dd = d1 && s.dot[d1.n] ? s.dot[d1.n].up : null, rw = s.resG ? s.resW / s.resG : null, pw = Object.values(s.pr).reduce((v, o) => v + o.wasted, 0);
     return '<button type="button" class="hm-ur' + (s.kill ? ' spc-kill' : '') + '" data-gopull="' + s.pull + '" title="Open pull ' + s.pull + '"><span data-v="' + s.pull + '">Pull ' + s.pull + (s.kill ? ' <span class="ok-t">kill</span>' : '') + ' <span class="sub">' + T(s.len) + '</span></span><span>' + (ab != null ? cell(pct(ab), ab >= K.abc[0] ? 'ok' : ab >= K.abc[1] ? 'warn' : 'bad', ab) : '—') + '</span>' +
       (c1 ? '<span>' + (qf != null ? cell(pct(qf), paceSt(qf), qf) : '—') + '</span>' : '') + (d1 ? '<span>' + (dd != null ? cell(pct(dd), dd >= (d1.ok || K.dots[0]) ? 'ok' : dd >= (d1.warn || K.dots[1]) ? 'warn' : 'bad', dd) : '—') + '</span>' : '') + (res ? '<span>' + (rw != null ? cell(pct(rw), rw <= (res.ok || K.res[0]) ? 'ok' : rw <= (res.warn || K.res[1]) ? 'warn' : 'bad', rw) : '—') + '</span>' : '') + (procs.length ? '<span>' + cell(pw, pw ? 'warn' : 'ok', pw) + '</span>' : '') + '</button>'; }).join('') + '</div>' : '';
+  // (the rotation slips: what you pressed, what the list wanted, how often)
+  const VIZ = { apl: () => (!aplSl.length ? '' : '<div class="spc-slp">' + aplSl.slice(0, 6).map((e) => '<div class="spc-slr"><span class="spc-sln">' + spellIcon(0, e.did) + '<b>' + esc(e.did) + '</b><span class="sub">instead of</span>' + spellIcon(0, e.want) + '<b>' + esc(e.want) + '</b>' + (e.why ? '<span class="sub">' + esc(e.why) + '</span>' : '') + '</span><span class="spc-slc">' + times(e.n) + '</span></div>').join('') + '</div>'),
+    // (a card per window, on one pull: its time, what you did in it against your usual, and what went into it)
+    win: () => { if (!one || !winL.length) return ''; const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
+      return '<div class="spc-ws">' + winL.map((w) => '<div class="spc-w ' + w.st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.len) + ' seconds</span></div>' +
+        '<div class="spc-wv">' + (w.x != null ? w.x.toFixed(1) + '×<span> your usual ' + UNW + ' a second</span>' : C(w.d) + '<span> ' + UNW + '</span>') + '</div><div class="spc-wc spc-chk">' + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting') +
+        (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + '</div></div>').join('') + '</div>'; } };
   const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs }) : '';
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
-    TOPP: new Set(['abc', 'res', 'mana'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top raids', topTip: 'The middle of the ' + (D.top || spec + 's') + ' in the fastest Mythic kills of this boss on Warcraft Logs', topH: 'The ' + (D.top || spec + 's') + ' in the fastest kills of this boss', pullT,
+  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
+    TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top raids', topTip: 'The middle of the ' + (D.top || spec + 's') + ' in the fastest Mythic kills of this boss on Warcraft Logs', topH: 'The ' + (D.top || spec + 's') + ' in the fastest kills of this boss', pullT,
     src: 'Built with help from the Wowhead and Icy Veins guides and WoWAnalyzer\'s checks for ' + spec + ', and from what your talents do.', secIc: { 'Your pull at a glance': D.ic, 'Pull by pull': D.ic } });
   return { checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html, wait };
 }
@@ -7966,10 +8051,79 @@ function genTimeline(x, s, o) {
   return '<div class="spc-tl" data-ev="' + esc(JSON.stringify(ev)) + '">' + h + '<div class="tl-ax"><div>' + ax.join('') + '</div></div><div class="tl-lg"><span><i class="ok"></i>Pressed</span>' + (o.dots.length || o.ups.length ? '<span><i class="bv"></i>Up</span>' : '') + '<span><i class="red"></i>Ready for a whole extra use</span>' + (t1 < end - 0.5 ? '<span><i class="dd"></i>Dead</span>' : '') + '</div><div class="tl-hv" hidden></div><div class="tl-tip" hidden></div></div>';
 }
 
+// ---- The rotation check: every cast against the spec's priority list ----
+// The list is the spec's single-target priority from its Wowhead and Icy Veins guides, the SimulationCraft list Raidbots sims with, and
+// WoWAnalyzer's rotation check, kept to what a log can prove. At each cast of a spell the list covers, the first rule whose spell was ready and
+// whose condition held is the one the list wanted. Both have to have held for a moment before the cast (0.6 s), so a press queued a hair early
+// isn't blamed. Pressing that spell is right; pressing a spell lower on the list is a slip ("Slam while Mortal Strike was ready"). A spell the
+// list puts higher than the one it wanted is never blamed (the log can't always see why it was castable). Casts the list doesn't cover
+// (cooldowns, defensives, movement) aren't judged, and a rule whose spell the player never pressed over these pulls (a talent they don't
+// have) is skipped.
+// A rule: { s: spell, alt: [spells also right], cd, ch, h (cooldown shortened by haste), if: condition, tip: what to do instead }.
+// A condition (all of it must hold): buff / no (a buff of yours up, or not), st (its stacks, at least), lt (at most), deb / nodeb (one of your
+// debuffs on the boss), drem (that debuff has under this many seconds left), res: [power type, at least, at most] (from the log's readings),
+// exe (the boss under this share of its health), en (bosses alive, at least), en1 (only one boss alive), prev (the spell cast just before).
+function genAplRun(x, s, A, k) {
+  const { r, p, t1, c } = x, lc = (n) => String(n).toLowerCase(), G = 0.6;
+  // (each spell's casts, and its charges over time: a press with no charge left counts as one a reset gave)
+  const tsOf = (n) => c.ab.filter((y) => lc(y.name) === lc(n)).flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w);
+  const segs = new Map(), segOf = (q) => { const key = lc(q.s); if (segs.has(key)) return segs.get(key); const cu = s.cdu[key]; let cd = q.cd != null ? (q.h ? q.cd / k.hasteF : q.cd) : cu ? cu.cd : null, ch = q.ch || (cu ? cu.ch : 1) || 1;
+    if (!cd) { segs.set(key, null); return null; } const ts = q.shareCd ? [q.s].concat(q.alt || []).flatMap((nn) => tsOf(nn)).sort((u, w) => u - w) : tsOf(q.s), seg = []; let n = ch, rech = null, last = 0; const push = (b) => { if (b > last) seg.push([last, b, n]); last = b; };
+    for (const u of ts) { while (rech != null && rech <= u) { push(rech); n++; rech = n < ch ? rech + cd : null; } push(u); if (n > 0) { n--; if (rech == null) rech = u + cd; } else if (rech == null) rech = u + cd; }
+    while (rech != null && rech <= t1) { push(rech); n++; rech = n < ch ? rech + cd : null; } push(t1); segs.set(key, seg); return seg; };
+  // (ready since: the start of the run of time with a charge, up to t)
+  const readySince = (q, t) => { const seg = segOf(q); if (!seg) return -1; let since = null; for (const [a, b, n] of seg) { if (a > t) break; if (n >= 1) { if (since == null) since = a; } else since = null; if (b > t) break; } return since == null ? Infinity : since; };
+  const fullAt = (q, t) => { const seg = segOf(q); if (!seg) return false; const ch = q.ch || (s.cdu[lc(q.s)] || {}).ch || 1, z = seg.find(([a, b]) => a <= t && b > t); return !!z && z[2] >= ch; };
+  // (a buff's stacks at a moment: up from its start, set by each added stack, down by each one taken)
+  const bAt = (n, t) => { const b = p.buffs.get(n); if (!b) return 0; const sp = b.sp.find(([a, e]) => a <= t && (e == null || e > t)); if (!sp) return 0; let st = 1;
+    const ev = (b.dose || []).filter(([u]) => u >= sp[0] && u <= t).map(([u, m]) => [u, m]).concat((b.rd || []).filter((u) => u >= sp[0] && u <= t).map((u) => [u, -1])).sort((u, w) => u[0] - w[0]);
+    for (const [, m] of ev) st = m === -1 ? Math.max(1, st - 1) : m; return st; };
+  const bossG = new Set([...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name)).map(([g]) => g));
+  const dSp = new Map(), debOf = (n) => { if (dSp.has(n)) return dSp.get(n); const sp = [], open = new Map(); for (const [t, kk, nm, g] of p.dotEv || []) { if (lc(nm) !== lc(n) || (bossG.size && !bossG.has(g))) continue; if (kk === 1) { if (!open.has(g)) open.set(g, t); } else if (open.has(g)) { sp.push([open.get(g), t]); open.delete(g); } } for (const [, a] of open) sp.push([a, t1]); dSp.set(n, sp); return sp; };
+  const debRem = (n, t) => { const sp = debOf(n).filter(([a, e]) => a <= t && e > t); return sp.length ? Math.max(...sp.map(([, e]) => e - t)) : 0; };
+  // (a resource's level over time, in the log's own units: set by each reading the log takes at a cast (the level before its cost), moved by every gain
+  // and spend between. Rage, Runic Power, Astral Power and Soul Shards are read in tenths, so their gains count ten times)
+  const RF = { 1: 10, 6: 10, 7: 10, 8: 10 }, lvl = new Map(), lvOf = (ty) => { if (lvl.has(ty)) return lvl.get(ty); const f = RF[ty] || 1, ev = [];
+    for (const y of ((p.res && p.res.get(ty)) || { pts: [] }).pts) ev.push([y[0], 0, y[1], y[2]]); for (const g of p.gainL || []) if (g.ty === ty) ev.push([g.t, 2, f * (g.amt - (g.over || 0))]); for (const y of p.spendL || []) if (y.ty === ty) ev.push([y.t, 1, -y.amt]);
+    ev.sort((a, b) => a[0] - b[0] || a[1] - b[1]); let v = 0, cap = 0; const tl = []; for (const [t, kk, a, cp] of ev) { if (kk === 0) { v = a; if (cp) cap = cp; } else v = Math.max(0, Math.min(cap || 1e9, v + a)); tl.push([t, v, kk]); } const o = { tl, cap }; lvl.set(ty, o); return o; };
+  const resAt = (ty, t) => { const o = lvOf(ty); let v = null; for (const [u, val, kk] of o.tl) { if (u > t - 0.001) { if (kk === 0 && u <= t + 0.01) return val; break; } v = val; } return v; }, resCap = (ty) => lvOf(ty).cap;
+  const bosses = [...(r.hpUnits || new Map())].filter(([g]) => bossG.has(g)).map(([, u]) => u.samples || []), hpAt = (sm, t) => { const i = Math.min(sm.length - 1, Math.max(0, Math.floor(t))); return sm[i] ? sm[i][1] : 0; };
+  const alive = (t) => bosses.filter((sm) => sm.length && t <= sm[sm.length - 1][0] + 1 && hpAt(sm, t) > 0).length, lowHp = (t) => Math.min(1, ...bosses.filter((sm) => hpAt(sm, t) > 0).map((sm) => hpAt(sm, t)));
+  const all = c.ab.flatMap((y) => y.ts.filter((t) => t <= t1).map((t) => [t, lc(y.name), y.name])).sort((u, w) => u[0] - w[0]);
+  const ruleSp = new Set(A.list.flatMap((q) => [q.s].concat(q.alt || [])).map(lc)), judgeSp = new Set([...ruleSp].concat((A.judge || []).map(lc)));
+  const usable = A.list.filter((q) => [q.s].concat(q.alt || []).some((n) => k.pressed(n)) && (!q.tal || k.tal(q.tal)) && (!q.hero || [].concat(q.hero).includes(k.heroN)));
+  const cond = (f, t, prevN) => { if (!f) return true;
+    if (f.buff && bAt(f.buff, t) < (f.st || 1)) return false; if (f.buff && f.lt != null && bAt(f.buff, t) > f.lt) return false; if (f.no && bAt(f.no, t) > 0) return false;
+    if (f.deb && !debRem(f.deb, t)) return false; if (f.nodeb && debRem(f.nodeb, t)) return false; if (f.drem != null && debRem(f.deb || f.dremOf, t) >= f.drem) return false;
+    if (f.res) { const v = resAt(f.res[0], t); if (v == null) return false; if (f.res[1] != null && v < f.res[1]) return false; if (f.res[2] != null && v > f.res[2]) return false; }
+    if (f.resF) { const v = resAt(f.resF[0], t), cp = resCap(f.resF[0]); if (v == null || !cp || v < f.resF[1] * cp) return false; }
+    if (f.low && bAt(f.low[0], t) > f.low[1]) return false;
+    if (f.exe != null && lowHp(t) > f.exe) return false; if (f.noexe != null && lowHp(t) <= f.noexe) return false; if (f.en != null && alive(t) < f.en) return false; if (f.en1 && alive(t) > 1) return false;
+    if (f.prev && !f.prev.map(lc).includes(prevN)) return false; if (f.any) return f.any.some((g) => cond(g, t, prevN)); return true; };
+  const o = { judged: 0, ok: 0, slips: new Map() }; let prevN = '';
+  for (const [t, n, nm] of all) { if (!judgeSp.has(n)) { if (!A.offGcd || !A.offGcd.map(lc).includes(n)) prevN = n; continue; } if (t < (A.from || 3)) { prevN = n; continue; }
+    let want = null, wi = -1; for (let i = 0; i < usable.length; i++) { const q = usable[i], rs = readySince(q, t); if (rs !== -1 && rs > t - G) continue; if (q.full && !fullAt(q, t - G)) continue; if (!cond(q.if, t - G, prevN) || !cond(q.if, t - 0.05, prevN)) continue; want = q; wi = i; break; }
+    if (!want) { prevN = n; continue; } o.judged++;
+    const right = [want.s].concat(want.alt || []).map(lc).includes(n), mine = usable.findIndex((q) => [q.s].concat(q.alt || []).map(lc).includes(n));
+    if (right || (mine >= 0 && mine <= wi)) o.ok++;
+    else { const key = nm + '|' + want.s + '|' + (want.why || ''), e = o.slips.get(key) || { did: nm, want: want.s, why: want.why || '', tip: want.tip || '', ts: [] }; e.ts.push(t); o.slips.set(key, e); }
+    prevN = n; }
+  // (spenders at the right level, e.g. finishers at 6 or more combo points: the level just before each cast)
+  o.levels = (A.levels || []).map((L) => { const nm = L.s.map(lc), ok = [], bad = []; for (const [t, n2] of all) { if (!nm.includes(n2) || t < 3) continue; if (L.no && bAt(L.no, t) > 0) continue; const v = resAt(L.ty, t); if (v == null) continue; ((L.min == null || v >= L.min) && (L.max == null || v <= L.max) ? ok : bad).push(t); } return { ok: ok.length, bad }; });
+  // (the same ability twice in a row, which breaks Combo Strikes)
+  if (A.norepeat) { const set = new Set(A.norepeat.map(lc)); let last = '', nn = 0; const bad = []; for (const [t, n2] of all) { if (!set.has(n2)) continue; nn++; if (n2 === last) bad.push(t); last = n2; } o.rep = { n: nn, bad }; }
+  return o;
+}
+
 // Each spec's list (see genRun), from Wowhead's and Icy Veins' Midnight 12.1.5 rotation guides and WoWAnalyzer's checks for the spec (the midnight
 // branch: its cooldowns and how often each should go out), read Oct 18 2026. Spell, buff and debuff names are the game's, as the log has them.
 const GEN_SPECS = {
   'Arcane Mage': { ic: 'Arcane Blast', top: 'Arcane Mages',
+    win: { n: 'Arcane Surge', with: [['Touch of the Magi']], dur: 15, why: 'Arcane Surge is your burst: Touch of the Magi goes out with it, so the damage it stores is your biggest.' },
+    apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Arcane Missiles', alt: ['Prismatic Bolt'], if: { buff: 'Clearcasting', low: ['Arcane Salvo', 11] }, why: 'you had Clearcasting and under 12 Arcane Salvo', tip: 'With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first.' },
+      { s: 'Prismatic Bolt', if: { buff: 'Prismatic Bolt!' }, why: 'Prismatic Bolt was ready', tip: 'Cast Prismatic Bolt as soon as it\'s ready: it doesn\'t stack, so holding it risks losing the next one.' },
+      { s: 'Arcane Blast', alt: ['Arcane Orb', 'Arcane Pulse', 'Arcane Missiles', 'Prismatic Bolt'] }] },
     abcWhy: 'Arcane Blast and Arcane Missiles are your fillers, and Arcane Barrage and Arcane Orb are instant when you have to move.',
     rot: [{ n: 'Touch of the Magi', cd: 45, ok: 0.85, warn: 0.7, why: 'Touch of the Magi stores part of your damage on the target and releases it at the end: press it on cooldown, right after an Arcane Barrage.' },
       { n: 'Arcane Orb', hero: 'Spellslinger', cd: 20, chT: [['Charged Orb', 2]], ok: 0.7, warn: 0.5, why: 'Arcane Orb builds Arcane Charges: cast it when you have fewer than 3.' }],
@@ -7978,6 +8132,15 @@ const GEN_SPECS = {
     cds: [{ n: 'Arcane Surge', cd: 90, ok: 0.85, warn: 0.7, why: 'Arcane Surge is your main cooldown: use as many as the fight allows, lined up with when damage matters most.' }],
     lead: { rot: 'Press Touch of the Magi on cooldown, and aim to have 4 Arcane Charges whenever you cast Arcane Barrage.', procs: 'Clearcasting into Arcane Missiles is your main proc. Spend Prismatic Bolt quickly, because it doesn\'t stack.', cds: 'Use Arcane Surge every 90 seconds.' } },
   'Arms Warrior': { ic: 'Mortal Strike', top: 'Arms Warriors',
+    win: { n: 'Avatar', with: [['Colossus Smash', 'Warbreaker']], dur: 20, why: 'Avatar is your burst: Colossus Smash goes out with it.' },
+    apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'From WoWAnalyzer\'s Arms rotation check and the Wowhead guide (Slayer and Colossus share it outside execute range).', list: [
+      { s: 'Execute', if: { buff: 'Sudden Death', st: 2 }, why: 'Sudden Death was at 2 stacks', tip: 'At 2 stacks of Sudden Death, press Execute before anything else, so the next proc isn\'t lost.' },
+      { s: 'Overpower', cd: 12, ch: 2, alt: ['Mortal Strike'], if: { buff: 'Opportunist', st: 2 }, why: 'Opportunist was at 2 stacks', tip: 'At 2 stacks of Opportunist, spend one on Overpower before it caps.' },
+      { s: 'Mortal Strike', cd: 6, if: { noexe: 0.2, res: ['1', 300] }, tip: 'Outside execute range, Mortal Strike comes before Heroic Strike, Execute procs, Overpower and Slam.' },
+      { s: 'Heroic Strike', if: { buff: 'Master of Warfare' }, why: 'Master of Warfare was up', tip: 'While Master of Warfare is up, Heroic Strike comes right after Mortal Strike.' },
+      { s: 'Execute', if: { any: [{ buff: 'Sudden Death' }, { exe: 0.2, res: ['1', 400] }] }, why: 'Sudden Death was up, or the boss was in execute range', tip: 'Spend Sudden Death on Execute before Overpower and Slam.' },
+      { s: 'Overpower', cd: 12, ch: 2, tip: 'Overpower comes before Slam.' },
+      { s: 'Slam', tip: 'Slam only fills a global when nothing else is ready.' }] },
     abcWhy: 'Arms gets most of its Rage from auto-attacks, so time away from the boss costs twice: use Charge and Heroic Leap to stay on it.',
     procs: [{ n: 'Sudden Death', use: ['Execute'], max: 2, why: 'Sudden Death makes your next Execute free and usable at any health: spend it before it runs out.' }],
     dots: [{ n: 'Rend', ok: 0.85, warn: 0.7, why: 'Rend is a bleed you keep up with Cleave or Rend: refresh it with under 5 seconds left, or under 10 just before Colossus Smash.' }],
@@ -7986,12 +8149,25 @@ const GEN_SPECS = {
       { noSeen: true, n: 'Bladestorm', cd: 90, why: 'Bladestorm goes inside Colossus Smash.' }, { noSeen: true, n: 'Demolish', cd: 45, why: 'Demolish goes inside Colossus Smash.' }, { noSeen: true, n: 'Ravager', cd: 90, why: 'Ravager goes just before Colossus Smash.' }],
     lead: { abc: 'Stay on the boss: Arms gets most of its Rage from hitting it, so every second away costs Rage and damage.', procs: 'Sudden Death is a free Execute at any health: spend it before it runs out.', dots: 'Keep Rend on the boss.', cds: 'Colossus Smash, Avatar and your Bladestorm or Demolish drive the rotation: keep them on cooldown and together, or they drift apart.' } },
   'Beast Mastery Hunter': { ic: 'Kill Command', top: 'Beast Mastery Hunters',
+    win: { n: 'Bestial Wrath', key: { names: ['Kill Command'] }, dur: 15, why: 'Bestial Wrath makes you and your pets hit harder: fit as many Kill Commands into it as you can.' },
+    apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide (Pack Leader).', list: [
+      { s: 'Barbed Shot', full: true, why: 'Barbed Shot was at 2 charges', tip: 'Don\'t let Barbed Shot sit at 2 charges: press it before Cobra Shot.' },
+      { s: 'Kill Command', if: { any: [{ buff: "Nature's Ally" }, { buff: 'Howl of the Pack Leader' }] }, why: "Nature's Ally was up", tip: "With Nature's Ally up, Kill Command comes before Barbed Shot and Cobra Shot." },
+      { s: 'Barbed Shot', tip: 'Barbed Shot comes before Cobra Shot.' },
+      { s: 'Cobra Shot', alt: ['Kill Command', 'Barbed Shot', 'Black Arrow', 'Wailing Arrow'] }] },
     rot: [{ n: 'Kill Command', cd: 7.5, h: true, chT: [['Alpha Predator', 2]], ok: 0.85, warn: 0.7, why: 'Kill Command is your main button: never let it sit at full charges.' },
       { n: 'Barbed Shot', cd: 12, h: true, ch: 2, ok: 0.8, warn: 0.65, why: 'Barbed Shot gives Focus over time and keeps your pet\'s Frenzy up: don\'t let its charges sit full.' }],
     res: { ty: '2', n: 'Focus', why: 'Focus comes back on its own and from Barbed Shot: spend it before you\'re full.' },
     cds: [{ n: 'Bestial Wrath', cd: 90, cdT: [['The Beast Within', 30]], ok: 0.85, warn: 0.7, why: 'Bestial Wrath is your main cooldown: press it on cooldown, and fit as many Kill Commands into it as you can.' }],
     lead: { rot: 'Keep your strongest spells on cooldown and fill the gaps with Cobra Shot: Kill Command should never reach 2 charges.', res: 'Focus comes back on its own and from Barbed Shot. Spend it on Kill Command and Cobra Shot before you\'re full.', cds: 'Press Bestial Wrath on cooldown.' } },
   'Marksmanship Hunter': { ic: 'Aimed Shot', top: 'Marksmanship Hunters',
+    win: { n: 'Trueshot', key: { names: ['Aimed Shot'] }, dur: 15, why: 'Trueshot speeds up Aimed Shot: fit as many into it as you can.' },
+    apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Aimed Shot', if: { buff: 'Trueshot', no: 'Precise Shots' }, why: 'Trueshot was up and you had no Precise Shots', tip: 'Inside Trueshot, with no Precise Shots, Aimed Shot comes first.' },
+      { s: 'Rapid Fire', alt: ['Multi-Shot'], if: { no: 'Precise Shots' }, why: 'it was ready and your Precise Shots were spent', tip: 'Press Rapid Fire on cooldown, once your Precise Shots are spent.' },
+      { s: 'Arcane Shot', alt: ['Multi-Shot', 'Kill Shot', 'Chimaera Shot', 'Black Arrow'], if: { buff: 'Precise Shots' }, why: 'Precise Shots was up', tip: 'Follow every Aimed Shot and Rapid Fire with Arcane Shot (Multi-Shot on 2 or more targets) to spend Precise Shots.' },
+      { s: 'Aimed Shot', tip: 'Aimed Shot comes before Steady Shot.' },
+      { s: 'Steady Shot', alt: ['Aimed Shot', 'Rapid Fire', 'Arcane Shot', 'Multi-Shot', 'Kill Shot', 'Black Arrow'] }] },
     abcWhy: 'Steady Shot is your filler, and it can be cast while moving, so there\'s no reason for an empty global cooldown.',
     rot: [{ n: 'Aimed Shot', cd: 12, h: true, ch: 2, ok: 0.85, warn: 0.7, why: 'Aimed Shot is your main hit: keep its charges rolling, and move while it isn\'t casting.' },
       { n: 'Rapid Fire', cd: 20, ok: 0.85, warn: 0.7, why: 'Rapid Fire gives Focus and hits hard: press it on cooldown.' }],
@@ -7999,6 +8175,16 @@ const GEN_SPECS = {
     cds: [{ n: 'Trueshot', cd: 120, cdT: [['Calling the Shots', 90]], ok: 0.85, warn: 0.7, why: 'Trueshot is your main cooldown: press it as often as the fight allows.' }, { n: 'Volley', cd: 45, why: 'Press Volley on cooldown.' }],
     lead: { abc: 'Casting as much as possible matters more than the perfect button: Steady Shot fills every gap, even while you move.', rot: 'Press Aimed Shot and Rapid Fire on cooldown, with Steady Shot in between.', procs: 'Spend every Precise Shots before your next Aimed Shot.', cds: 'Use Trueshot as often as the fight allows.' } },
   'Retribution Paladin': { ic: 'Blade of Justice', top: 'Retribution Paladins',
+    win: { n: 'Avenging Wrath', names: ['Avenging Wrath', 'Crusade'], with: [['Execution Sentence'], ['Divine Toll']], dur: 20, why: 'Avenging Wrath is your burst: Execution Sentence and Divine Toll go out with it.' },
+    apl: { blk: 'Your priority', ok: 0.75, warn: 0.65, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide (Herald of the Sun).', list: [
+      { s: 'Divine Storm', alt: ['Final Verdict', "Templar's Verdict"], if: { buff: 'Divine Arbiter', res: ['9', 5] }, why: 'Divine Arbiter was up at 5 Holy Power', tip: 'With Divine Arbiter at 5 Holy Power, Divine Storm comes first.' },
+      { s: 'Final Verdict', alt: ["Templar's Verdict", 'Divine Storm'], if: { res: ['9', 5] }, why: 'you were at 5 Holy Power', tip: 'At 5 Holy Power, spend it on Final Verdict (Divine Storm on 2 or more targets) before building more.' },
+      { s: 'Wake of Ashes', tip: 'Wake of Ashes comes before your other builders.' },
+      { s: 'Blade of Justice', if: { buff: 'Art of War', st: 2, no: 'Avenging Wrath' }, why: 'Art of War was at 2 stacks', tip: 'At 2 stacks of Art of War, Blade of Justice comes before spending.' },
+      { s: 'Final Verdict', alt: ["Templar's Verdict", 'Divine Storm'], if: { res: ['9', 3] }, why: 'you had 3 or more Holy Power', tip: 'With 3 or more Holy Power, Final Verdict comes before Blade of Justice and Judgment.' },
+      { s: 'Hammer of Wrath', cd: 10, ch: 2, if: { any: [{ exe: 0.2 }, { buff: 'Avenging Wrath' }, { buff: 'Crusade' }] }, why: 'it was usable', tip: 'Hammer of Wrath comes before Blade of Justice and Judgment.' },
+      { s: 'Blade of Justice', tip: 'Blade of Justice comes before Judgment.' },
+      { s: 'Judgment', cd: 12, alt: ['Blade of Justice', 'Wake of Ashes', 'Final Verdict', 'Divine Storm', "Templar's Verdict", 'Hammer of Wrath'] }] },
     rot: [{ n: 'Wake of Ashes', cd: 30, ok: 0.85, warn: 0.7, why: 'Wake of Ashes gives 3 Holy Power and hits hard: press it on cooldown.' },
       { n: 'Blade of Justice', cd: 12, h: true, chT: [['Improved Blade of Justice', 2]], ok: 0.8, warn: 0.65, why: 'Blade of Justice is your strongest builder: keep it on cooldown.' }],
     procs: [{ n: 'Art of War', use: ['Blade of Justice'], max: 2, why: 'Art of War resets Blade of Justice: press it soon after. It stacks to 2, so you have a little room.' },
@@ -8008,6 +8194,11 @@ const GEN_SPECS = {
       { n: 'Execution Sentence', cd: 60, ok: 0.85, warn: 0.7, why: 'Execution Sentence goes with Avenging Wrath.' }, { n: 'Divine Toll', cd: 60, ok: 0.85, warn: 0.7, why: 'Divine Toll goes with Avenging Wrath, for the Holy Power.' }],
     lead: { rot: 'Generate and spend Holy Power: your builders on cooldown, and never above what you need.', procs: 'Spend Divine Purpose before it runs out.', res: 'Holy Power is most of your damage: don\'t build above 5.', cds: 'Press Avenging Wrath with Execution Sentence and Divine Toll, together and on cooldown.' } },
   'Balance Druid': { ic: 'Starsurge', top: 'Balance Druids',
+    win: { n: 'Incarnation: Chosen of Elune', names: ['Incarnation: Chosen of Elune', 'Celestial Alignment'], with: [['Fury of Elune', 'Force of Nature']], dur: 20, why: 'Your big cooldown puts you in both Eclipses: Fury of Elune or Force of Nature goes out with it.' },
+    apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Starfall', if: { buff: "Starweaver's Warp" }, why: "Starweaver's Warp made it free", tip: "Spend Starweaver's Warp on Starfall right away." },
+      { s: 'Starsurge', alt: ['Starfall'], if: { any: [{ buff: 'Touch the Cosmos' }, { buff: "Starweaver's Weft" }, { res: ['8', 850] }] }, why: 'it was free, or you were near full Astral Power', tip: 'Spend Astral Power on Starsurge (Starfall on more targets) before it caps, and use your free ones right away.' },
+      { s: 'Starfire', alt: ['Wrath', 'Starsurge', 'Starfall', 'Moonfire', 'Sunfire', 'New Moon', 'Half Moon', 'Full Moon'] }] },
     abcWhy: 'Starsurge and Starfall are instant, so build Astral Power while you can stand still and spend it while you move.',
     ups: [{ n: 'Eclipse', ic: 'Lunar Eclipse', names: ['Eclipse (Lunar)', 'Eclipse (Solar)'], label: 'Time in Eclipse', upTxt: 'You were in Eclipse', ok: 0.65, warn: 0.5, why: 'Eclipse is a 32-second cooldown: Starfire before it gives Lunar Eclipse, Wrath before it gives Solar, and your big cooldown gives both. Time in Eclipse is your damage, so press it on cooldown, with Force of Nature or Fury of Elune.' }], upN: 'Eclipse', upCh: 'Rotation', upFirst: true,
     rot: [{ n: 'Fury of Elune', cd: 60, ok: 0.85, warn: 0.7, why: 'Fury of Elune gives Astral Power and hits hard: press it on cooldown, with Eclipse.' }, { n: 'Force of Nature', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Force of Nature on cooldown, with Eclipse.' }],
@@ -8016,6 +8207,11 @@ const GEN_SPECS = {
     cds: [{ n: 'Incarnation: Chosen of Elune', names: ['Incarnation: Chosen of Elune', 'Celestial Alignment'], cd: 180, chT: [['Whirling Stars', 2]], ok: 0.85, warn: 0.7, why: 'Your big cooldown: press it as often as the fight allows.' }],
     lead: { ups: 'Time in Eclipse is your damage: press it on cooldown, with your short cooldowns inside it.', rot: 'Press your short cooldowns with Eclipse.', dots: 'Moonfire and Sunfire tick into Shooting Stars, so keep both on the boss.', res: 'Spend Astral Power before you\'re full: Starsurge on one target, Starfall on more.', cds: 'Use your big cooldown as often as the fight allows.' } },
   'Elemental Shaman': { ic: 'Lava Burst', top: 'Elemental Shamans',
+    win: { n: 'Ascendance', key: { names: ['Lava Burst'] }, dur: 15, why: 'Ascendance makes Lava Burst free of its cooldown: fit as many into it as you can.' },
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Earth Shock', alt: ['Elemental Blast', 'Earthquake'], if: { resF: ['11', 0.9] }, why: 'you were near full Maelstrom', tip: 'Spend Maelstrom on Earth Shock or Elemental Blast (Earthquake on more targets) before it caps.' },
+      { s: 'Lava Burst', if: { buff: 'Lava Surge', no: 'Master of the Elements', en1: true }, why: 'Lava Surge was up', tip: 'With Lava Surge up and no Master of the Elements waiting, Lava Burst comes before Lightning Bolt.' },
+      { s: 'Lightning Bolt', alt: ['Chain Lightning', 'Lava Burst', 'Earth Shock', 'Elemental Blast', 'Earthquake', 'Tempest', 'Voltaic Blaze', 'Flame Shock'] }] },
     abcWhy: 'Elemental has little to cast on the move, so plan your movement: Spiritwalker\'s Grace and Nature\'s Swiftness keep you casting.',
     dots: [{ n: 'Flame Shock', why: 'Flame Shock gives Lava Surge procs: keep it on the boss.' }],
     procs: [{ n: 'Lava Surge', use: ['Lava Burst'], why: 'Lava Surge makes your next Lava Burst instant: cast it.' }, { n: 'Stormkeeper', use: ['Lightning Bolt', 'Chain Lightning', 'Tempest'], max: 3, why: 'Stormkeeper empowers your next Lightning Bolts or Chain Lightnings: spend it.' }],
@@ -8024,22 +8220,39 @@ const GEN_SPECS = {
     cds: [{ n: 'Ascendance', cd: 180, cdT: [['First Ascendant', 120]], ok: 0.85, warn: 0.7, why: 'Ascendance powers every spell you cast in it: save Maelstrom and procs for it, and press it as often as the fight allows.' }],
     lead: { abc: 'Keep casting: plan your movement, and use Spiritwalker\'s Grace and Nature\'s Swiftness when you must move.', dots: 'Keep Flame Shock on the boss for Lava Surge procs.', procs: 'React to your procs: Lava Surge into Lava Burst, and Stormkeeper\'s empowered casts.', res: 'Don\'t waste Maelstrom: spend it before you\'re full.', cds: 'Press Ascendance with Maelstrom and procs saved for it.' } },
   'Frost Mage': { ic: 'Frostbolt', top: 'Frost Mages',
+    win: { n: 'Icy Veins', dur: 25, why: 'Icy Veins is your burst: keep casting all the way through it.' },
+    apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide (Frostfire).', list: [
+      { s: 'Glacial Spike', alt: ['Ice Lance'], if: { buff: 'Glacial Spike!' }, why: 'Glacial Spike was ready', tip: 'Cast Glacial Spike as soon as it\'s ready.' },
+      { s: 'Flurry', if: { buff: 'Brain Freeze', no: 'Thermal Void' }, why: 'Brain Freeze was up', tip: 'Spend Brain Freeze on Flurry before your filler.' },
+      { s: 'Ice Lance', if: { buff: 'Fingers of Frost', st: 2 }, why: 'Fingers of Frost was at 2 stacks', tip: 'At 2 stacks of Fingers of Frost, Ice Lance comes before your filler.' },
+      { s: 'Frozen Orb', tip: 'Frozen Orb comes before your filler whenever it\'s ready.' },
+      { s: 'Frostfire Bolt', alt: ['Frostbolt', 'Ice Lance', 'Flurry', 'Glacial Spike', 'Frozen Orb', 'Ray of Frost', 'Comet Storm'] }] },
     abcWhy: 'Frostbolt or Frostfire Bolt is your filler, and Ice Lance can be cast while moving.',
     rot: [{ n: 'Frozen Orb', cd: 60, ok: 0.85, warn: 0.7, why: 'Frozen Orb hits hard and brings Fingers of Frost: press it on cooldown.' }, { n: 'Ray of Frost', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Ray of Frost on cooldown.' }, { n: 'Comet Storm', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Comet Storm on cooldown: it also spends Freezing for Shatter.' }],
     procs: [{ n: 'Brain Freeze', use: ['Flurry'], why: 'Brain Freeze makes Flurry instant: spend it quickly.' }, { n: 'Fingers of Frost', use: ['Ice Lance'], max: 2, why: 'Fingers of Frost makes Ice Lance Shatter: spend it on Ice Lance.' }, { n: 'Glacial Spike!', ic: 'Glacial Spike', use: ['Glacial Spike'], why: 'Glacial Spike is ready: cast it.' }],
     cds: [{ n: 'Icy Veins', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Icy Veins as often as the fight allows.' }],
     lead: { abc: 'Always be doing something: Frostbolt fills every gap, and Ice Lance works on the move.', rot: 'Press Frozen Orb and your other big spells as often as they\'re ready.', procs: 'Spend Brain Freeze, Fingers of Frost and Glacial Spike quickly.', cds: 'Use your big cooldown as often as the fight allows.' } },
   'Devastation Evoker': { ic: 'Disintegrate', top: 'Devastation Evokers',
+    win: { n: 'Dragonrage', with: [['Fire Breath'], ['Eternity Surge']], ok: 0.65, warn: 0.4, dur: 18, why: 'Dragonrage is your burst: Fire Breath and Eternity Surge go out inside it.' },
+    apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'From WoWAnalyzer\'s Devastation rotation check, the SimulationCraft list and the Wowhead guide. Your empowered spells are judged on their own, with Dragonrage.', list: [
+      { s: 'Disintegrate', alt: ['Pyre'], if: { buff: 'Essence Burst', st: 2 }, why: 'Essence Burst was at 2 stacks', tip: 'At 2 stacks of Essence Burst, spend one on Disintegrate before your fillers bring more.' },
+      { s: 'Living Flame', if: { buff: 'Burnout' }, why: 'Burnout made it instant', tip: 'Spend Burnout on Living Flame.' },
+      { s: 'Disintegrate', alt: ['Pyre'], if: { buff: 'Essence Burst' }, why: 'Essence Burst was up', tip: 'Spend Essence Burst on Disintegrate before casting fillers.' },
+      { s: 'Living Flame', alt: ['Azure Strike', 'Disintegrate', 'Pyre'] }] },
     abcWhy: 'Use Hover to cast while moving, and fill gaps with Azure Strike or Living Flame.',
     rot: [{ n: 'Fire Breath', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Fire Breath, your empowered spell, on cooldown: with Animosity it also stretches Dragonrage.' }, { n: 'Eternity Surge', cd: 30, cdT: [['Event Horizon', 27]], ok: 0.8, warn: 0.65, why: 'Press Eternity Surge on cooldown: with Animosity it also stretches Dragonrage.' }],
     procs: [{ n: 'Essence Burst', use: ['Disintegrate', 'Pyre'], max: 2, why: 'Essence Burst makes your next Disintegrate or Pyre free: spend it before more come.' }],
     cds: [{ n: 'Dragonrage', cd: 120, ok: 0.85, warn: 0.7, why: 'Dragonrage is your main cooldown: every filler in it gives Essence Burst. Press it as often as the fight allows.' }],
     lead: { abc: 'Constant casting is the key: Hover lets you cast on the move, and Azure Strike beats doing nothing.', rot: 'Press your empowered spells on cooldown, and fit more of them into Dragonrage.', procs: 'Spend Essence and Essence Burst, then fill while you wait.', cds: 'Press Dragonrage on cooldown.' } },
   'Devourer Demon Hunter': { ic: 'Void Ray', top: 'Devourer Demon Hunters',
+    win: { n: 'Void Metamorphosis', buffOnly: true, key: { names: ['Collapsing Star'] }, why: 'Void Metamorphosis is your burst: fit as many Collapsing Stars into it as you can.' },
     rot: [{ n: 'Void Ray', cd: 16, ok: 0.8, warn: 0.65, why: 'Void Ray as soon as it\'s ready, so your Fury doesn\'t overflow.' }, { n: 'Soul Immolation', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Soul Immolation on cooldown.' }],
     res: { ty: '17', n: 'Fury', why: 'Use Void Metamorphosis and Void Ray as soon as they\'re ready, so Fury doesn\'t overflow.' },
     lead: { rot: 'Press Void Ray and your other short cooldowns as soon as they\'re ready, and in Void Metamorphosis cast as many Collapsing Stars as you can.', res: 'Avoid wasting Fury: spend it as it comes.' } },
-  'Assassination Rogue': { ic: 'Envenom', top: 'Assassination Rogues', gcd1: true, k: { abc: [0.6, 0.5] },
+  'Assassination Rogue': { ic: 'Envenom', top: 'Assassination Rogues',
+    win: { n: 'Deathmark', with: [['Kingsbane']], dur: 16, why: 'Deathmark doubles your bleeds and poisons: Kingsbane goes out with it.' },
+    apl: { blk: 'Your priority', list: [], levels: [
+      { s: ['Envenom', 'Rupture'], ty: '4', min: 5, no: 'Darkest Night', ic: 'Envenom', label: 'Finishers at 5 or more combo points', what: 'Envenoms and Ruptures', at: 'at 5 or more combo points', why: 'The SimulationCraft list spends only at 5 or more combo points (or at full with Darkest Night).', tip: 'Build to 5 combo points before Envenom or Rupture.' }] }, gcd1: true, k: { abc: [0.6, 0.5] },
     abcWhy: 'Assassination is held back by Energy, not the global cooldown, so some quiet time is normal and the scale is gentler.',
     dots: [{ n: 'Rupture', why: 'Rupture is your main bleed: keep it on the boss.' }, { n: 'Garrote', ok: 0.85, warn: 0.7, why: 'Garrote is your other bleed: keep it on the boss.' }],
     ups: [{ n: 'Envenom', ok: 0.75, warn: 0.6, why: 'Envenom\'s buff powers many of your talents, like Rapid Injection: keep it up without overflowing Energy or combo points.' }], upN: 'Envenom', upCh: 'Rotation',
@@ -8047,6 +8260,12 @@ const GEN_SPECS = {
     cds: [{ n: 'Deathmark', cd: 120, ok: 0.85, warn: 0.7, why: 'Deathmark is your main cooldown: press it as often as the fight allows, with your bleeds up.' }, { n: 'Kingsbane', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Kingsbane on cooldown, with Envenom up.' }],
     lead: { abc: 'Energy, not the global cooldown, sets your pace: spend it on the right button rather than pressing something every time you can.', dots: 'Keep Rupture and Garrote on the boss.', ups: 'Keep Envenom\'s buff up.', res: 'Don\'t overflow combo points.', cds: 'Use Deathmark and Kingsbane as often as the fight allows.' } },
   'Frost Death Knight': { ic: 'Obliterate', top: 'Frost Death Knights',
+    win: { n: 'Pillar of Frost', key: { names: ['Obliterate'] }, dur: 12, why: 'Pillar of Frost is your burst: fit as many Obliterates into it as you can.' },
+    apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'From the SimulationCraft list Raidbots sims with, the Wowhead guide and WoWAnalyzer\'s Rime and Killing Machine checks.', list: [
+      { s: 'Howling Blast', alt: ['Obliterate'], if: { buff: 'Rime' }, why: 'Rime was up', tip: 'Spend Rime on Howling Blast right away: it also brings Empower Rune Weapon back sooner.' },
+      { s: 'Frost Strike', alt: ['Obliterate'], if: { resF: ['6', 0.75] }, why: 'you were near full Runic Power', tip: 'Spend Runic Power on Frost Strike before it caps.' },
+      { s: 'Obliterate', if: { buff: 'Killing Machine', st: 2 }, why: 'Killing Machine was at 2 stacks', tip: 'At 2 stacks of Killing Machine, Obliterate comes first.' },
+      { s: 'Obliterate', alt: ['Frost Strike', 'Howling Blast', 'Frostscythe', 'Glacial Advance'] }] },
     procs: [{ n: 'Killing Machine', use: ['Obliterate', 'Frostscythe'], max: 2, why: 'Killing Machine is the base of your damage: a sure crit that also sets off Arctic Assault, Bonegrinder and Killing Streak. Spend it on Obliterate.' },
       { n: 'Rime', use: ['Howling Blast'], why: 'Rime makes Howling Blast free and stronger, and brings back Empower Rune Weapon faster: cast Howling Blast with it.' }],
     res: { ty: '6', n: 'Runic Power', why: 'Spend Runic Power on Frost Strike before it overflows.' },
@@ -8054,32 +8273,50 @@ const GEN_SPECS = {
       { n: 'Breath of Sindragosa', cd: 120, ok: 0.85, warn: 0.7, why: 'Breath of Sindragosa as often as the fight allows, with Runic Power saved for it.' }],
     lead: { procs: 'Frost is about spending procs: Killing Machine on Obliterate, and Rime on Howling Blast.', res: 'Don\'t let Runic Power overflow: Frost Strike spends it.', cds: 'Press Pillar of Frost on cooldown, with your other cooldowns.' } },
   'Havoc Demon Hunter': { ic: 'Chaos Strike', top: 'Havoc Demon Hunters',
+    win: { n: 'Metamorphosis', key: { names: ['Annihilation', 'Death Sweep'], one: 'Annihilation or Death Sweep', many: 'Annihilations and Death Sweeps' }, dur: 20, why: 'Metamorphosis turns Chaos Strike into Annihilation and Blade Dance into Death Sweep: fit as many as you can.' },
     abcWhy: 'Stay on the boss: Demon Blades only give Fury while you hit it, and Vengeful Retreat is part of the rotation, so plan where you land.',
     rot: [{ n: 'Eye Beam', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Eye Beam on cooldown.' }, { n: 'Blade Dance', names: ['Blade Dance', 'Death Sweep'], cd: 10, h: true, ok: 0.8, warn: 0.65, why: 'Press Blade Dance (Death Sweep in Metamorphosis) on cooldown: keep enough Fury for it.' },
       { n: 'Immolation Aura', cd: 30, h: true, ok: 0.8, warn: 0.65, why: 'Press Immolation Aura on cooldown, for Fury and damage.' }, { n: 'Essence Break', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Essence Break on cooldown, with Blade Dance and Chaos Strikes inside it.' }],
     res: { ty: '17', n: 'Fury', why: 'Spend Fury on Chaos Strike before it overflows, but keep enough for Blade Dance when it comes back.' },
     cds: [{ n: 'Metamorphosis', cd: 120, ok: 0.8, warn: 0.6, why: 'Use Metamorphosis as often as the fight allows.' }],
     lead: { rot: 'Press Blade Dance, Immolation Aura and Eye Beam on cooldown, with Chaos Strike in between.', res: 'Avoid wasting Fury, but keep enough for Blade Dance.', cds: 'Use Metamorphosis as often as the fight allows.' } },
-  'Subtlety Rogue': { ic: 'Shadow Dance', top: 'Subtlety Rogues', gcd1: true, k: { abc: [0.6, 0.5] },
+  'Subtlety Rogue': { ic: 'Shadow Dance', top: 'Subtlety Rogues',
+    win: { n: 'Shadow Blades', with: [['Shadow Dance']], dur: 16, why: 'Shadow Blades is your burst: Shadow Dance goes out with it.' },
+    apl: { blk: 'Your priority', list: [], levels: [
+      { s: ['Eviscerate', 'Black Powder', 'Coup de Grace'], ty: '4', min: 6, ic: 'Eviscerate', label: 'Finishers at 6 or more combo points', what: 'finishers', at: 'at 6 or more combo points', why: 'The guide and the SimulationCraft list finish close to the maximum, at 6 or 7 combo points.', tip: 'Build to 6 or 7 combo points before a finisher.' }] }, gcd1: true, k: { abc: [0.6, 0.5] },
     abcWhy: 'Energy is your limit most of the time, and feeling starved outside cooldowns is normal, so the scale is gentler.',
     rot: [{ n: 'Shadow Dance', cd: 20, chT: [['Double Dance', 2]], ok: 0.75, warn: 0.6, why: 'Shadow Dance goes with Secret Technique: use it when Secret Technique is ready, and a second right after the first, with Shadow Blades.' }, { n: "Goremaw's Bite", cd: 45, ok: 0.85, warn: 0.7, why: "Goremaw's Bite on cooldown." }],
     res: { ty: '4', n: 'Combo points', nl: 'combo points', from: /^(Backstab|Gloomblade|Shadowstrike|Shuriken Storm|Shuriken Toss|Goremaw's Bite)$/, why: 'Finish at 6 or 7 combo points, before your builders would overflow them. Shadow Techniques\' automatic points aren\'t counted.' },
     cds: [{ n: 'Shadow Blades', cd: 90, ok: 0.85, warn: 0.7, why: 'Shadow Blades is your major cooldown: use it with Shadow Dance, as often as the fight allows.' }],
     lead: { abc: 'Energy sets your pace: some quiet time outside cooldowns is normal.', rot: 'Line everything up with Secret Technique: press Shadow Dance when it\'s ready.', res: 'Finish at 6 or 7 combo points.', cds: 'Use Shadow Blades with Shadow Dance.' } },
   'Shadow Priest': { ic: 'Mind Blast', top: 'Shadow Priests',
+    win: { n: 'Voidform', with: [['Power Infusion']], dur: 20, why: 'Voidform is your burst: Power Infusion goes out with it, unless your raid gives it to someone else.' },
+    apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Shadow Word: Madness', alt: ['Devouring Plague'], if: { any: [{ buff: 'Mind Devourer' }, { resF: ['13', 0.65] }] }, why: 'it was free, or you were near full Insanity', tip: 'Spend Insanity on Shadow Word: Madness before it caps, and use Mind Devourer right away.' },
+      { s: 'Mind Blast', cd: 9, h: true, alt: ['Void Blast', 'Void Volley', 'Tentacle Slam', 'Vampiric Touch', 'Shadow Word: Pain'], tip: 'Mind Blast comes before Mind Flay whenever it\'s ready.' },
+      { s: 'Mind Flay: Insanity', alt: ['Void Volley', 'Void Blast'], if: { buff: 'Mind Flay: Insanity' }, why: 'Mind Flay: Insanity was ready', tip: 'Cast Mind Flay: Insanity before your filler.' },
+      { s: 'Mind Flay', alt: ['Mind Blast', 'Shadow Word: Madness', 'Devouring Plague', 'Mind Flay: Insanity', 'Void Volley', 'Void Blast', 'Tentacle Slam', 'Vampiric Touch', 'Shadow Word: Pain', 'Shadow Word: Death'] }] },
     dots: [{ n: 'Vampiric Touch', why: 'Keep Vampiric Touch on the boss.' }, { n: 'Shadow Word: Pain', ok: 0.85, warn: 0.7, why: 'Keep Shadow Word: Pain on the boss.' }, { n: 'Shadow Word: Madness', ok: 0.7, warn: 0.5, why: 'Shadow Word: Madness is what you spend Insanity on: keep it up as long as you can, for Mastery: Shadow Weaving.' }],
     rot: [{ n: 'Mind Blast', cd: 9, h: true, chT: [['Thought Harvester', 2]], ok: 0.8, warn: 0.65, why: 'Mind Blast is your main builder: keep it on cooldown.' }, { n: 'Void Torrent', cd: 30, ok: 0.85, warn: 0.7, why: 'Press Void Torrent on cooldown.' }, { n: 'Halo', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Halo on cooldown.' }],
     procs: [{ n: 'Shadowy Insight', use: ['Mind Blast'], why: 'Shadowy Insight resets Mind Blast and makes it instant: cast it.' }, { n: 'Mind Devourer', use: ['Shadow Word: Madness', 'Devouring Plague'], why: 'Mind Devourer makes your next spender free: use it.' }],
     res: { ty: '13', n: 'Insanity', why: 'Spend Insanity on Shadow Word: Madness before it caps at 100.' },
     cds: [{ n: 'Voidform', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Voidform as often as the fight allows.' }, { n: 'Power Infusion', cd: 120, ok: 0.8, warn: 0.6, why: 'Power Infusion as often as you can, on yourself or a teammate your raid picks.' }],
     lead: { dots: 'Keep your damage over time on the boss, and Shadow Word: Madness up as long as you can.', rot: 'Press your short cooldowns first, so you never lose a use.', procs: 'React to Shadowy Insight and Mind Devourer as they come.', res: 'Don\'t cap Insanity at 100.', cds: 'Use Voidform and Power Infusion as often as the fight allows.' } },
-  'Windwalker Monk': { ic: 'Rising Sun Kick', top: 'Windwalker Monks', gcd1: true,
+  'Windwalker Monk': { ic: 'Rising Sun Kick', top: 'Windwalker Monks',
+    apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'From the SimulationCraft list Raidbots sims with and WoWAnalyzer\'s Windwalker check, kept to what a log can prove: Combo Strikes and free Blackout Kicks.', list: [
+      { s: 'Blackout Kick', alt: ['Rising Sun Kick', 'Fists of Fury', 'Whirling Dragon Punch', 'Strike of the Windlord', 'Rushing Wind Kick', 'Zenith Stomp', 'Touch of Death'], if: { buff: 'Blackout Kick!', st: 2 }, why: 'you had 2 free Blackout Kicks', tip: 'At 2 free Blackout Kicks, spend one before Tiger Palm, or the next is lost.' },
+      { s: 'Tiger Palm', alt: ['Blackout Kick', 'Spinning Crane Kick', 'Rising Sun Kick', 'Fists of Fury', 'Whirling Dragon Punch', 'Strike of the Windlord', 'Rushing Wind Kick'] }],
+      norepeat: ['Tiger Palm', 'Blackout Kick', 'Rising Sun Kick', 'Fists of Fury', 'Spinning Crane Kick', 'Whirling Dragon Punch', 'Strike of the Windlord', 'Rushing Wind Kick', 'Touch of Death', 'Zenith Stomp'], repIc: 'Tiger Palm' }, gcd1: true,
     rot: [{ n: 'Rising Sun Kick', cd: 10, h: true, ok: 0.8, warn: 0.65, why: 'Rising Sun Kick is one of your strongest buttons: keep it on cooldown.' }, { n: 'Fists of Fury', cd: 24, h: true, ok: 0.85, warn: 0.7, why: 'Press Fists of Fury on cooldown.' },
       { n: 'Whirling Dragon Punch', cd: 35, ok: 0.8, warn: 0.65, why: 'Use Whirling Dragon Punch when it\'s ready.' }, { n: 'Strike of the Windlord', cd: 35, ok: 0.85, warn: 0.7, why: 'Press Strike of the Windlord on cooldown.' }],
     procs: [{ n: 'Blackout Kick!', ic: 'Blackout Kick', use: ['Blackout Kick'], max: 2, why: 'A free Blackout Kick: spend it.' }],
     cds: [{ n: 'Zenith', cd: 90, ok: 0.85, warn: 0.7, why: 'Zenith\'s cooldown depends on your talents: plan it for every 60, 90 or 120 seconds.' }, { n: 'Invoke Xuen, the White Tiger', cd: 120, cdT: [["Xuen's Bond", 90]], ok: 0.85, warn: 0.7, why: 'Use Xuen as often as the fight allows.' }, { n: 'Celestial Conduit', cd: 90, ok: 0.85, warn: 0.7, why: 'Press Celestial Conduit on cooldown.' }],
     lead: { rot: 'Keep Rising Sun Kick and Fists of Fury on cooldown, and never press the same button twice in a row (Combo Strikes).', procs: 'Spend your free Blackout Kicks.', cds: 'Plan your Zenith windows, with Xuen.' } },
   'Unholy Death Knight': { ic: 'Scourge Strike', top: 'Unholy Death Knights',
+    apl: { blk: 'Your priority', ok: 0.75, warn: 0.65, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Death Coil', alt: ['Epidemic', 'Necrotic Coil', 'Vampiric Strike'], if: { buff: 'Sudden Doom' }, why: 'Sudden Doom was up', tip: 'Spend Sudden Doom on Death Coil (Epidemic on more targets) as soon as it comes.' },
+      { s: 'Death Coil', alt: ['Epidemic', 'Necrotic Coil'], if: { resF: ['6', 0.85] }, why: 'you were near full Runic Power', tip: 'Spend Runic Power before it caps.' },
+      { s: 'Scourge Strike', alt: ['Clawing Shadows', 'Vampiric Strike', 'Festering Strike', 'Festering Scythe', 'Death Coil', 'Necrotic Coil', 'Epidemic', 'Putrefy', 'Soul Reaper'] }] },
     procs: [{ n: 'Sudden Doom', use: ['Death Coil', 'Epidemic', 'Necrotic Coil'], max: 2, why: 'Sudden Doom is your strongest button outside cooldowns: spend it on Death Coil or Epidemic right away.' }],
     dots: [{ n: 'Virulent Plague', why: 'Keep Virulent Plague on the boss.' }],
     res: { ty: '6', n: 'Runic Power', why: 'Spend Runic Power on Death Coil before it overflows.' },
@@ -8087,6 +8324,9 @@ const GEN_SPECS = {
       { n: 'Summon Gargoyle', cd: 180, ok: 0.85, warn: 0.7, why: 'Use Summon Gargoyle as often as the fight allows.' }, { n: 'Army of the Dead', cd: 180, ok: 0.8, warn: 0.6, why: 'Use Army of the Dead as often as the fight allows.' }, { n: 'Raise Abomination', cd: 90, ok: 0.85, warn: 0.7, why: 'Press Raise Abomination on cooldown.' }],
     lead: { procs: 'Spend Sudden Doom as quickly as you can.', dots: 'Keep Virulent Plague on the boss.', res: 'Don\'t let Runic Power overflow.', cds: 'Unholy is a burst spec: its cooldowns, as often as possible, are its biggest priority.' } },
   'Augmentation Evoker': { ic: 'Ebon Might', top: 'Augmentation Evokers',
+    apl: { blk: 'Your priority', ok: 0.95, warn: 0.85, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Eruption', if: { buff: 'Essence Burst', st: 2 }, why: 'Essence Burst was at 2 stacks', tip: 'At 2 stacks of Essence Burst, spend one on Eruption before Living Flame or Prescience.' },
+      { s: 'Living Flame', alt: ['Azure Strike', 'Eruption'] }] },
     abcWhy: 'Use Hover to cast on the move, and fill gaps with Living Flame or Azure Strike.',
     ups: [{ n: 'Ebon Might', ok: 0.85, warn: 0.7, why: 'Ebon Might is the center of your rotation: Sands of Time stretches it as you deal damage, so keep it up.' }], upN: 'Ebon Might', upCh: 'Rotation', upFirst: true,
     rot: [{ n: 'Upheaval', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Upheaval on cooldown, at the right rank.' }, { n: 'Fire Breath', cd: 30, ok: 0.85, warn: 0.7, why: 'Press Fire Breath on cooldown, at the right rank.' }],
@@ -8094,36 +8334,55 @@ const GEN_SPECS = {
     cds: [{ n: 'Breath of Eons', cd: 120, ok: 0.8, warn: 0.6, why: 'Breath of Eons with your allies\' cooldowns and the fight\'s big damage moments.' }, { n: 'Time Skip', cd: 180, ok: 0.8, warn: 0.6, why: 'Time Skip brings your cooldowns back faster: use it as often as the fight allows.' }],
     lead: { ups: 'Keep Ebon Might up: it\'s how you raise your group\'s damage.', rot: 'Press Upheaval and Fire Breath on cooldown, and spend with Eruption.', procs: 'Don\'t let Essence Burst overflow.', cds: 'Line up Breath of Eons with your raid\'s big moments.' } },
   'Destruction Warlock': { ic: 'Chaos Bolt', top: 'Destruction Warlocks',
+    win: { n: 'Summon Infernal', key: { names: ['Chaos Bolt'] }, dur: 30, why: 'Your Infernal makes Soul Shards: spend them on Chaos Bolt while it\'s out.' },
+    apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Conflagrate', full: true, why: 'Conflagrate was at 2 charges', tip: 'Don\'t let Conflagrate sit at 2 charges.' },
+      { s: 'Chaos Bolt', alt: ['Shadowburn'], if: { res: ['7', 40] }, why: 'you had 4 or more Soul Shards', tip: 'At 4 or more Soul Shards, Chaos Bolt comes before Incinerate, so no Soul Shard is lost.' },
+      { s: 'Incinerate', alt: ['Chaos Bolt', 'Conflagrate', 'Shadowburn', 'Soul Fire', 'Wither', 'Immolate', 'Infernal Bolt', 'Ruination'] }] },
     dots: [{ n: 'Wither', why: 'Keep Wither on the boss.' }, { n: 'Immolate', why: 'Keep Immolate on the boss.' }],
     rot: [{ n: 'Conflagrate', cd: 13, h: true, ch: 2, ok: 0.8, warn: 0.65, why: 'Conflagrate builds Soul Shards and Backdraft: don\'t let its charges sit full.' }, { n: 'Soul Fire', cd: 45, ok: 0.85, warn: 0.7, why: 'Press Soul Fire on cooldown.' }, { n: 'Channel Demonfire', cd: 25, h: true, ok: 0.85, warn: 0.7, why: 'Press Channel Demonfire on cooldown.' }],
     procs: [{ n: 'Backdraft', use: ['Incinerate', 'Chaos Bolt', 'Soul Fire'], max: 2, why: 'Backdraft makes your next Incinerate or Chaos Bolt faster: spend it before Conflagrate brings more.' }],
     cds: [{ n: 'Summon Infernal', cd: 120, cdT: [['Inferno', 90]], ok: 0.85, warn: 0.7, why: 'Use Summon Infernal with Soul Shards ready, as often as the fight allows.' }, { n: 'Malevolence', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Malevolence on cooldown.' }],
     lead: { dots: 'Keep your damage over time on the boss.', rot: 'Press Conflagrate and your short cooldowns on time, and spend with Chaos Bolt.', procs: 'Spend Backdraft before more comes.', cds: 'Use Summon Infernal and Malevolence with Soul Shards ready.' } },
   'Enhancement Shaman': { ic: 'Stormstrike', top: 'Enhancement Shamans',
+    win: { n: 'Doom Winds', key: { names: ['Stormstrike', 'Windstrike'], one: 'Stormstrike', many: 'Stormstrikes' }, dur: 8, why: 'Doom Winds powers up Stormstrike: fit as many into it as you can.' },
+    apl: { blk: 'Your priority', ok: 0.75, warn: 0.65, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide.', list: [
+      { s: 'Tempest', alt: ['Lightning Bolt', 'Chain Lightning', 'Primordial Storm', 'Elemental Blast'], if: { buff: 'Maelstrom Weapon', st: 10 }, why: 'Maelstrom Weapon was at 10', tip: 'At 10 Maelstrom Weapon, spend it before anything else: every new stack is lost.' },
+      { s: 'Stormstrike', alt: ['Windstrike'], shareCd: true, full: true, why: 'Stormstrike was at full charges', tip: 'Don\'t let Stormstrike sit at full charges.' },
+      { s: 'Stormstrike', alt: ['Windstrike', 'Lava Lash', 'Crash Lightning', 'Voltaic Blaze', 'Sundering', 'Flame Shock', 'Lightning Bolt', 'Chain Lightning', 'Tempest', 'Primordial Storm', 'Elemental Blast'] }] },
     procs: [{ n: 'Maelstrom Weapon', use: ['Lightning Bolt', 'Chain Lightning', 'Tempest', 'Elemental Blast', 'Primordial Storm', 'Healing Surge'], max: 10, bulk: true, why: 'Maelstrom Weapon makes your spells instant: spend it at 9 or more stacks, before it overflows at 10.' }],
     rot: [{ n: 'Stormstrike', names: ['Stormstrike', 'Windstrike'], cd: 7.5, h: true, ch: 2, ok: 0.8, warn: 0.65, why: 'Press Stormstrike on cooldown (Stormbringer).' }, { n: 'Lava Lash', hero: 'Totemic', cd: 18, h: true, ok: 0.8, warn: 0.65, why: 'Press Lava Lash on cooldown (Totemic).' }, { n: 'Crash Lightning', cd: 12, h: true, ok: 0.75, warn: 0.6, why: 'Use Crash Lightning when it\'s ready.' }],
     cds: [{ n: 'Doom Winds', cd: 60, ok: 0.9, warn: 0.75, why: 'Press Doom Winds on cooldown.' }, { n: 'Ascendance', cd: 180, ok: 0.85, warn: 0.7, why: 'Use Ascendance as often as the fight allows.' }, { n: 'Feral Spirit', cd: 90, ok: 0.85, warn: 0.7, why: 'Press Feral Spirit on cooldown.' }],
     lead: { procs: 'Don\'t waste Maelstrom Weapon: spend it at 9 or more, on Lightning Bolt (one target) or Chain Lightning (more).', rot: 'Keep your strikes on cooldown.', cds: 'Press Doom Winds on cooldown.' } },
   'Affliction Warlock': { ic: 'Unstable Affliction', top: 'Affliction Warlocks',
+    win: { n: 'Summon Darkglare', dotsUp: ['Agony', 'Wither', 'Corruption'], dur: 20, why: 'Darkglare makes your damage over time hit harder, so have it all up before you summon it.' },
+    apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'From the SimulationCraft list Raidbots sims with and the Wowhead guide (Hellcaller).', list: [
+      { s: 'Haunt', tip: 'Haunt comes first whenever it\'s ready.' },
+      { s: 'Shadow Bolt', alt: ['Drain Soul', 'Malefic Grasp'], if: { buff: 'Nightfall', st: 2 }, why: 'Nightfall was at 2 stacks', tip: 'At 2 stacks of Nightfall, spend one before anything else.' },
+      { s: 'Unstable Affliction', if: { res: ['7', 50] }, why: 'you were at 5 Soul Shards', tip: 'At 5 Soul Shards, Unstable Affliction comes first, so no Soul Shard is lost.' },
+      { s: 'Shadow Bolt', alt: ['Malefic Grasp', 'Drain Soul', 'Agony', 'Wither', 'Corruption', 'Unstable Affliction', 'Haunt'] }] },
     dots: [{ n: 'Agony', why: 'Keep Agony on the boss: it builds your Soul Shards.' }, { n: 'Unstable Affliction', why: 'Keep Unstable Affliction on the boss.' }, { n: 'Wither', why: 'Keep Wither on the boss.' }, { n: 'Corruption', why: 'Keep Corruption on the boss.' }],
     rot: [{ n: 'Haunt', cd: 15, ok: 0.85, warn: 0.7, why: 'Press Haunt on cooldown.' }],
     procs: [{ n: 'Nightfall', use: ['Shadow Bolt', 'Drain Soul'], max: 2, why: 'Nightfall makes your next Shadow Bolt or Drain Soul instant: spend it before it overflows.' }],
     cds: [{ n: 'Summon Darkglare', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Summon Darkglare with your damage over time up, as often as the fight allows.' }, { n: 'Malevolence', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Malevolence on cooldown.' }, { n: 'Dark Harvest', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Dark Harvest on cooldown.' }],
     lead: { dots: 'Keep your damage over time on the boss.', procs: 'React to Nightfall before it overflows.', cds: 'Use Summon Darkglare with everything up.' } },
-  'Holy Priest': { ic: 'Holy Word: Serenity', top: 'Holy Priests', unitN: 'healing', mana: true, manaIc: 'Flash Heal', k: { abc: [0.75, 0.6] },
+  'Holy Priest': { ic: 'Holy Word: Serenity', top: 'Holy Priests',
+    win: { n: 'Apotheosis', key: { names: ['Holy Word: Serenity', 'Holy Word: Sanctify'], one: 'Holy Word', many: 'Holy Words' }, dur: 20, why: 'Apotheosis brings your Holy Words back much faster: fit as many into it as you can.' }, unitN: 'healing', mana: true, manaIc: 'Flash Heal', k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Holy Word: Serenity', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Your Holy Words are your strongest spells, and your other heals bring them back faster: don\'t sit on full charges.' }, { n: 'Holy Word: Sanctify', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Holy Word: Sanctify, your group heal, as often as it\'s ready when healing is needed.' },
       { n: 'Prayer of Mending', cd: 12, h: true, ok: 0.8, warn: 0.6, why: 'Press Prayer of Mending on cooldown.' }, { n: 'Halo', cd: 60, ok: 0.8, warn: 0.6, why: 'Press Halo on cooldown, when healing is needed.' }],
     procs: [{ n: 'Surge of Light', use: ['Flash Heal'], max: 2, why: 'Surge of Light makes Flash Heal free and instant: spend it.' }],
     cds: [{ n: 'Apotheosis', cd: 120, ok: 0.6, warn: 0.3, why: 'Use Apotheosis for heavy damage.' }, { n: 'Divine Hymn', info: true, cd: 180, cdT: [['Seraphic Crescendo', 120]], ok: 0.6, warn: 0.3, why: 'Use Divine Hymn when your raid note calls for it.' }],
     lead: { rot: 'Keep your Holy Words on cooldown: they\'re your most powerful spells.', procs: 'Spend Surge of Light.', cds: 'Your raid note decides the big cooldowns.' } },
-  'Restoration Shaman': { ic: 'Riptide', top: 'Restoration Shamans', unitN: 'healing', mana: true, manaIc: 'Chain Heal', k: { abc: [0.75, 0.6] },
+  'Restoration Shaman': { ic: 'Riptide', top: 'Restoration Shamans',
+    win: { n: 'Ascendance', dur: 15, why: 'Ascendance copies your healing: keep casting all the way through it.' }, unitN: 'healing', mana: true, manaIc: 'Chain Heal', k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Riptide', cd: 6, ch: 2, ok: 0.75, warn: 0.6, why: 'Put Riptide on people who don\'t have it yet: many of your talents want as many Riptides out as possible.' }, { n: 'Healing Stream Totem', cd: 30, ch: 2, ok: 0.75, warn: 0.6, why: 'Use Healing Stream Totem early and often.' },
       { n: 'Surging Totem', cd: 25, ok: 0.8, warn: 0.65, why: 'Use Surging Totem early and often.' }, { n: 'Unleash Life', cd: 15, ok: 0.75, warn: 0.6, why: 'Use Unleash Life early and often.' }],
     cds: [{ n: 'Ascendance', cd: 180, ok: 0.6, warn: 0.3, why: 'Use Ascendance for heavy damage.' }, { n: 'Spirit Link Totem', info: true, cd: 180, ok: 0.6, warn: 0.3, why: 'Use Spirit Link Totem when your raid note calls for it.' }, { n: 'Healing Tide Totem', info: true, cd: 180, ok: 0.6, warn: 0.3, why: 'Use Healing Tide Totem when your raid note calls for it.' }],
     lead: { rot: 'Your short cooldowns are worth the most when you use them early and often.', cds: 'Your raid note decides the big cooldowns.' } },
-  'Mistweaver Monk': { ic: 'Renewing Mist', top: 'Mistweaver Monks', unitN: 'healing', mana: true, manaIc: 'Vivify', gcd1: true, k: { abc: [0.75, 0.6] },
+  'Mistweaver Monk': { ic: 'Renewing Mist', top: 'Mistweaver Monks',
+    win: { n: "Invoke Yu'lon, the Jade Serpent", names: ["Invoke Yu'lon, the Jade Serpent", 'Invoke Chi-Ji, the Red Crane'], label: 'Celestial windows', blk: 'Your celestial', lead: 'Your celestial heals with what you cast: keep casting all the way through it.', dur: 12, why: 'Your celestial heals with what you cast: keep casting all the way through it.' }, unitN: 'healing', mana: true, manaIc: 'Vivify', gcd1: true, k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Renewing Mist', cd: 9, chT: [['Pool of Mists', 3]], ch: 2, ok: 0.8, warn: 0.65, why: 'Press Renewing Mist on cooldown: Vivify heals everyone who has it.' }, { n: 'Rushing Wind Kick', cd: 12, h: true, ok: 0.8, warn: 0.65, why: 'Press Rushing Wind Kick on cooldown.' }, { n: 'Thunder Focus Tea', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Thunder Focus Tea on cooldown.' }],
     cds: [{ n: "Invoke Yu'lon, the Jade Serpent", names: ["Invoke Yu'lon, the Jade Serpent", 'Invoke Chi-Ji, the Red Crane'], cd: 120, cdT: [['Gift of the Celestials', 60]], ok: 0.8, warn: 0.6, why: 'Use your celestial as often as the fight allows.' }, { n: 'Celestial Conduit', cd: 90, ok: 0.8, warn: 0.6, why: 'Press Celestial Conduit on cooldown.' },
@@ -8480,7 +8739,7 @@ function bindPerf() {
     $$('.spc-pt [data-gopull]').forEach((b) => (b.onclick = () => spcOpen(+b.dataset.gopull)));
     $$('.spc-mo[data-mt], .spc-w[data-mt], .spc-bx[data-mt]').forEach((el) => keyGo(el, () => { const t = +el.dataset.mt; if (el.dataset.mp) { S.specPin = t; spcOpen(+el.dataset.mp); } else spcPin(t, true); }));
     spcSortBind(); spcTlBind();
-    $$('#view [data-fo]').forEach((b) => (b.onclick = () => { const id = '#spc-r-' + b.dataset.fo, go = () => { const el = $(id); if (!el) return; el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); };
+    $$('#view [data-fo]').forEach((b) => (b.onclick = () => { const id = '#spc-r-' + b.dataset.fo, go = () => { const el = $(id); if (!el) return; if (el.tagName === 'DETAILS') el.open = true; el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); };
       if (!$(id)) { S.specFilter = 'all'; perf(); requestAnimationFrame(go); } else go(); }));
     $$('#view [data-gj]').forEach((b) => (b.onclick = () => { const el = $('#spc-g-' + b.dataset.gj); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));
     $$('#view [data-tgt]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.specTreeTab = b.dataset.tgt; S.specTree = true; perf(); }));

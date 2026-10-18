@@ -87,6 +87,44 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 178: Teaching, not just counting (your note: help people learn their mistakes and improve)
+- [x] **Rotation checks for 19 damage specs (your note: rotational errors, with the sims and WoWAnalyzer).** Each spec's
+  priority list comes from the SimulationCraft list Raidbots sims with, the Wowhead and Icy Veins guides, and WoWAnalyzer's
+  rotation checks, kept to what a log can prove. Every cast the list covers is checked: the first spell that was ready, with its
+  condition met, is the right one. The line gives the share of right presses, and the slips, most common first, as "Starfire
+  instead of Starsurge (it was free, or you were near full Astral Power), 51 times" (Earthday), with what to do instead. A press queued a hair early isn't
+  blamed. Rogues get "finishers at the right combo points", and Windwalker gets Combo Strikes (the same ability twice in a row).
+- [x] **Every rule checked against the top raids** (29 of the fastest Mythic kills, over 300 damage players). Rules that blamed the
+  best players were wrong, checked against the sim lists, and fixed or dropped:
+  - Hammer of Wrath only works in execute range or during Avenging Wrath.
+  - Mortal Strike comes before Heroic Strike.
+  - Prismatic Bolt goes out the moment it lights up.
+  - Ice Lance and Obliterate aren't slips against Glacial Spike and Rime.
+  - Rapid Fire comes after Precise Shots.
+  - Shadow's damage over time comes before Mind Blast.
+  - Chain Lightning cleaves on two bosses.
+  - Windwalker's and Havoc's priorities follow states a log can't see, so Windwalker keeps only what a log proves, and Havoc keeps
+    its cooldown lines.
+  - Each spec's bar sits where nearly all the top players pass.
+- [x] **A card for each big cooldown window** (Avenging Wrath, Avatar, Arcane Surge, Bestial Wrath, Trueshot, Metamorphosis,
+  Dragonrage, Darkglare, Apotheosis and 12 more). Each card shows:
+  - your damage or healing a second in it against your usual (Hobbz: 2.6 times, over 7 windows);
+  - whether its partners went in (Execution Sentence and Divine Toll; Touch of the Magi; Colossus Smash...);
+  - its key spell's casts (6 Kill Commands);
+  - whether you kept casting.
+  The window and its cooldown's uses share a block named after it, and the rest sit in "Other cooldowns".
+- [x] **A "Next time" on every line that isn't good, with the real moment:**
+  - "Use Arcane Surge when it comes back: from the start of the pull, it sat ready for 93 seconds, long enough for one more use."
+    (Boltzzx)
+  - "Spend Precise Shots before the next one comes. Your first wasted one was at 0:03." (Schooty)
+- [x] **A compact cooldown table:** a block with three or more cooldowns shows one row each, with a bar of its uses, the count,
+  what it did each time and the top raids'. A row opens in place to its sentence, how it's judged, its tip and its moments, and
+  the ones to fix start open. It's shared, so the hand-built specs get it too.
+- [x] **Blocks named for what's in them:** "Wake of Ashes and Blade of Justice", "Clearcasting and Prismatic Bolt", "Moonfire
+  and Sunfire", instead of "Core spells", "Procs" and "Damage over time".
+- [ ] **Your next goal (your note):** bring total damage or healing into this page, then pieces of the Performance charts, until
+  it reads like a top raider going through your logs: everything you did wrong, what to do better, and what you did well.
+
 ## 2026-10-18, round 171: Demonology Warlock Spec checks (your next spec, with sims)
 - [x] **Researched:** the Wowhead and Icy Veins Midnight guides (12.1.5), WoWAnalyzer's Demonology module (12.1: its Tyrant
   window score, cooldowns, Soul Shards), and, your note for damage specs, **SimulationCraft's priority list**, the one Raidbots
