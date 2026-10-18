@@ -87,6 +87,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 159: A smarter Light of Dawn rule, always be casting, and a last check
+- [x] **Your #4: Light of Dawn judged by overhealing.** At each Light of Dawn during Beacon of Virtue, the most health one
+  ally was missing just before it, against what one of your Eternal Flames heals in one go: if nobody was missing 60% of
+  that, an Eternal Flame would have mostly overhealed, so Light of Dawn counts as the right call (each box says why).
+  Your kill: 3 of 11 were right; the top 10 now sit at 91% (Clarius's 57% was mostly right calls).
+- [x] **Your #5: always be casting**, a new Casting block on top: the share of your time alive on a cast or a global
+  cooldown, and the longest stretches with nothing pressed. Your kill 84%, the top 10 85%; good from 75%.
+- [x] **The check:** 13 logs (Clarius's three, one of them Beacon of Faith, and the top 10) with no errors. Two flags
+  were still too eager for the top players and were eased (Divine Toll and Aura Mastery on 3+ Holy Power). In the night
+  view, "Top 10" shows only next to percentages (a count from one kill can't be compared with a whole night's).
+  Your kill: 92; the top 10 about 90.
+
 ## 2026-10-17, round 158: The grading scale, fairer, and checked against the top 10
 - [x] **Your ask: scan the grading scale.** 17 of your pulls graded one by one, every rule compared with WoWAnalyzer's.
   Fixed: Holy Shock good at 85% (WoWAnalyzer 80%), Beacon of Virtue at 80%, Divine Toll during Beacon of Virtue at 80%;

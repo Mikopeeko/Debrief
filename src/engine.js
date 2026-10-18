@@ -4886,7 +4886,7 @@ function analyze(item, text, opts) {
   const cdPress = (g, cd, t, make) => { for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (u.g === g && u.cd === cd && u.t <= t + 0.5) return u; }
     if (!make) return null; const u = { g, cd, t, end: null, heal: 0, over: 0, prev: 0, taken: 0, hp: 0, cov: new Set(), late: true }; r.cdUse.push(u); return u; };
   const devOn = new Set(), drOn = new Map(); // (who has Devotion Aura up; who sits in a Barrier, Spirit Link or Anti-Magic Zone: guid|buff -> the caster)
-  const pMax = new Map(); // (each player's maximum health, last seen: what a Rallying Cry adds 10% to)
+  const pMax = new Map(); r.pMax = pMax; // (each player's maximum health, last seen: what a Rallying Cry adds 10% to)
   // a hit on a player from an enemy, after mitigation (absorbs included): what an Aura Mastery, a Barrier or a Spirit Link
   // over them took off it (estimated from the reduction: the log only has what was left)
   const cdCover = (dg, t, amt, magic) => {
