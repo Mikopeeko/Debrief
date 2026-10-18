@@ -6172,7 +6172,7 @@ const SPEC_TOP = {
   'Shadow Priest': { 'The Twin Fangs|16': { 'score': '94', 'abc': '74%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '88%', 'cd:voidform': '100%', 'cd:power infusion': '100%' } },
   'Marksmanship Hunter': { 'The Twin Fangs|16': { 'score': '91', 'abc': '80%', 'cd:aimed shot': '98%', 'cd:rapid fire': '97%', 'p:Precise Shots': '11 wasted', 'cd:trueshot': '100%', 'cd:volley': '89%' } },
   'Havoc Demon Hunter': { 'The Twin Fangs|16': { 'abc': '69%', 'cd:eye beam': '100%', 'cd:blade dance': '85%', 'cd:immolation aura': '65%', 'cd:essence break': '85%', 'res': '17%', 'cd:metamorphosis': '75%' } },
-  'Balance Druid': { 'The Twin Fangs|16': { 'score': '93', 'abc': '83%', 'cd:eclipse': '60%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '3%', 'cd:incarnation: chosen of elune': '100%' } },
+  'Balance Druid': { 'The Twin Fangs|16': { 'score': '93', 'abc': '83%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '3%', 'cd:incarnation: chosen of elune': '100%', 'up:Eclipse': '71%' } },
   'Retribution Paladin': { 'The Twin Fangs|16': { 'score': '94', 'abc': '71%', 'cd:wake of ashes': '92%', 'cd:blade of justice': '80%', 'p:Divine Purpose': '2 wasted', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%' } },
   'Holy Priest': { 'The Twin Fangs|16': { 'score': '90', 'abc': '75%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'cd:apotheosis': '75%', 'cd:divine hymn': '75%' } },
   'Frost Death Knight': { 'The Twin Fangs|16': { 'abc': '64%', 'p:Rime': '5 wasted', 'res': '11%', 'cd:pillar of frost': '90%', 'cd:reaper\'s mark': '90%', 'cd:breath of sindragosa': '100%' } },
@@ -7824,7 +7824,7 @@ function genRun(spec, D, reps, name, one) {
   // (a spell pressed on cooldown or a big cooldown counts when it's pressed at least once over these pulls, or when a talent it needs is known; a damage
   // over time, when it's seen on an enemy or its talent is known)
   const known = (q) => q.tal && TAL && [].concat(q.tal).some(tal), live = (q) => on(q) && (pressed(q) || known(q));
-  const rot = (D.rot || []).filter(live), cds = (D.cds || []).filter(live), procs = (D.procs || []).filter(on), dots = (D.dots || []).filter((q) => on(q) && (dotSeen(q) || known(q))), ups = (D.ups || []).filter((q) => on(q) && per.some(({ p }) => p.buffs.has(q.n))), res = D.res && on(D.res) ? D.res : null;
+  const rot = (D.rot || []).filter(live), cds = (D.cds || []).filter(live), procs = (D.procs || []).filter(on), dots = (D.dots || []).filter((q) => on(q) && (dotSeen(q) || known(q))), ups = (D.ups || []).filter((q) => on(q) && per.some(({ p }) => (q.names || [q.n]).some((n) => p.buffs.has(n)))), res = D.res && on(D.res) ? D.res : null;
   const K = { ...GEN_DEF, ...(D.k || {}) }, rows = [], lc = (n) => n.toLowerCase(); let wait = 0;
   for (const x of per) { const { r, p, t1, c } = x, s = { pull: r.item.pull, kill: r.item.kill, len: t1, m: {}, bx: {}, cdu: {}, pr: {}, dot: {}, up: {} }, BX = (k, t, cls, tip) => (s.bx[k] = s.bx[k] || []).push([t, cls, tip]);
     const dead = deadSpans(r, p).map(([a, b]) => [a, b == null ? t1 : Math.min(b, t1)]).filter(([a, b]) => a < t1 && b > a), deadL = dead.reduce((v, [a, b]) => v + b - a, 0), alive = Math.max(1, t1 - deadL);
@@ -7862,7 +7862,8 @@ function genRun(spec, D, reps, name, one) {
         const first = un.length ? un[0][0] : t1, upL = un.reduce((v, [a, b]) => v + Math.max(0, Math.min(b, t1) - a), 0), base = Math.max(1, alive - Math.min(first, 6));
         s.dot[q.n] = { up: Math.min(1, upL / base), sp: un }; const gaps = []; let prev = Math.min(first, 6); for (const [a, b] of un) { if (a - prev >= 3 && !inDead(a)) gaps.push([prev, a]); prev = Math.max(prev, b); } if (t1 - prev >= 3 && !inDead(t1 - 1)) gaps.push([prev, t1]); s.m['dot:' + q.n] = gaps; } }
     // (a buff kept up on yourself: its share of the time you were alive)
-    for (const q of ups) { const b = p.buffs.get(q.n), sp = b ? b.sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)]) : []; const upL = sp.reduce((v, [a, e]) => v + Math.max(0, e - a), 0);
+    for (const q of ups) { const raw = (q.names || [q.n]).map((n) => p.buffs.get(n)).filter(Boolean).flatMap((b) => b.sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)])).sort((u, w) => u[0] - w[0]), sp = [];
+      for (const [a, e] of raw) { if (sp.length && a <= sp[sp.length - 1][1]) sp[sp.length - 1][1] = Math.max(sp[sp.length - 1][1], e); else sp.push([a, e]); } const upL = sp.reduce((v, [a, e]) => v + Math.max(0, e - a), 0);
       s.up[q.n] = { up: Math.min(1, upL / alive), sp }; const gaps = []; let prev = 0; for (const [a, e] of sp) { if (a - prev >= 4 && !inDead(a)) gaps.push([prev, a]); prev = Math.max(prev, e); } if (t1 - prev >= 4 && !inDead(t1 - 1)) gaps.push([prev, t1]); s.m['up:' + q.n] = gaps; }
     // (a healer's mana: what was left at the kill, and any stretch spent out of it)
     if (D.mana) { const ml = (p.mana || []).filter(([t]) => t <= t1 + 1); s.mnOut = null; for (let i = 0; i < ml.length && !s.mnOut; i++) { if (ml[i][1] > 0.02 || ml[i][0] >= t1 - 15) continue; let j = i; while (j + 1 < ml.length && ml[j + 1][1] <= 0.02) j++; if (ml[j][0] - ml[i][0] >= 8) s.mnOut = [ml[i][0], ml[j][0]]; i = j; } if (r.item.kill && ml.length) s.mana = ml[ml.length - 1][1]; }
@@ -7878,8 +7879,8 @@ function genRun(spec, D, reps, name, one) {
     return D.unitN === 'healing' && hl >= 1000 ? ' It healed for ' + C(hl) + ea(hl) + '.' : dm >= 1000 ? ' It did ' + C(dm) + ' damage' + ea(dm) + '.' : hl >= 1000 ? ' It healed for ' + C(hl) + ea(hl) + '.' : ''; };
   const cdLine = (g, q, okF, warnF) => { const n = lc(q.n), l = rows.map((s) => s.cdu[n]).filter(Boolean), u = l.reduce((v, y) => v + y.n, 0), poss = l.reduce((v, y) => v + y.poss, 0); if (!poss) return; const f = Math.min(1, u / poss), cap = l.reduce((v, y) => v + y.cap, 0);
     for (const s of rows) if (s.cdu[n]) s.m['cd:' + n] = (s.cdu[n].capL || []).filter(([a, b]) => b - a >= s.cdu[n].cd);
-    add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + (q.big ? ' uses' : ' on cooldown'), u + '<span>/' + poss + '</span>', (u ? 'You pressed it ' + times(u) + ' out of a possible ' + poss + '.' : 'You never pressed it, out of a possible ' + poss + '.') + (cap >= 1 ? ' It sat ready for ' + durW(cap) + ' in all.' : '') + ownT(l, u), 'cd:' + n,
-      (q.why ? q.why + ' ' : '') + okP(okF) + ' The moments are the times it sat ready long enough for a whole extra use.'); };
+    add(g, q.info ? 'na' : f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + (q.big ? ' uses' : ' on cooldown'), u + '<span>/' + poss + '</span>', (u ? 'You pressed it ' + times(u) + ' out of a possible ' + poss + '.' : 'You never pressed it, out of a possible ' + poss + '.') + (cap >= 1 ? ' It sat ready for ' + durW(cap) + ' in all.' : '') + ownT(l, u), 'cd:' + n,
+      (q.why ? q.why + ' ' : '') + (q.info ? 'Not graded: ' + (q.infoWhy || 'your raid note decides when it goes out') + '. The moments are the times it sat ready long enough for a whole extra use.' : okP(okF) + ' The moments are the times it sat ready long enough for a whole extra use.')); };
   // (Casting)
   const gC = grp('Casting');
   { const al = sum((s) => (s.abcAl >= 10 ? s.abcAl : 0)), busy = sum((s) => (s.abcAl >= 10 ? s.abcBusy : 0));
@@ -7909,14 +7910,14 @@ function genRun(spec, D, reps, name, one) {
   // (buffs kept up)
   const upN = D.upN || 'Active mitigation', gU = grp(upN);
   for (const q of ups) { const l = rows.map((s) => [s, s.up[q.n]]).filter(([, d]) => d); if (!l.length) continue; const al = l.reduce((v, [s]) => v + s.len, 0), f = l.reduce((v, [s, d]) => v + d.up * s.len, 0) / Math.max(1, al), okF = q.ok || K.ups[0], warnF = q.warn || K.ups[1];
-    add(gU, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' uptime', pct(f), q.n + ' was up ' + pct(f) + ' of the time you were alive.', 'up:' + q.n, (q.why ? q.why + ' ' : '') + okP(okF) + ' The moments are the gaps of 4 seconds or more.'); }
+    add(gU, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' uptime', pct(f), (q.upTxt || q.n + ' was up') + ' ' + pct(f) + ' of the time you were alive.', 'up:' + q.n, (q.why ? q.why + ' ' : '') + okP(okF) + ' The moments are the gaps of 4 seconds or more.'); }
   // (big cooldowns)
   const cdN = D.cdN || 'Cooldowns', gK = grp(cdN); for (const q of cds) cdLine(gK, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]);
   // ---- the page ----
   const sl = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
   const LAYOUT = [['Rotation', [['Casting', ['abc']], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n))]]]];
   if (res || D.mana) LAYOUT.push(['Resources', [res ? [res.n, ['res']] : null, D.mana ? ['Mana', ['mana']] : null].filter(Boolean)]);
-  if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
+  if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch && D.upFirst) ch[1].splice(1, 0, b); else if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
   LAYOUT.push(['Cooldowns', [[cdN, cds.map((q) => sl('cd:' + lc(q.n)))]]]);
   const L0 = D.lead || {}, MERGE = { Casting: { ic: D.ic, main: 'abc', lead: L0.abc || 'Keep casting: time with nothing pressed is ' + (D.unitN === 'healing' ? 'healing' : 'damage') + ' you never do.' } };
   if (rot.length) MERGE[rotN] = { ic: rot[0].ic || rot[0].n, main: 'cd:' + lc(rot[0].n), lead: L0.rot || 'Press these whenever they\'re ready.' };
@@ -7932,10 +7933,10 @@ function genRun(spec, D, reps, name, one) {
   const keyN = new Set([].concat(...rot.concat(cds, procs, dots, ups).map((q) => [q.n].concat(q.tal || []))).filter((n) => TAL && TAL.names.has(n)));
   const cell = (v, st, n) => '<span class="cst-f ' + st + '" data-v="' + (n == null ? '' : n) + '">' + v + '</span>';
   const c1 = rot[0] || cds[0], d1 = dots[0];
-  const pullT = !one && rows.length > 1 ? '<div class="hm-ut rs-ut spc-pt" data-sk="pulls"><div class="hm-uh"><span>Pull</span><span>Casting</span>' + (c1 ? '<span>' + esc(c1.n) + '</span>' : '') + (d1 ? '<span>' + esc(d1.n) + '</span>' : '') + (res ? '<span>' + esc(res.n) + ' wasted</span>' : '') + '<span>Procs wasted</span></div>' + rows.map((s) => {
+  const pullT = !one && rows.length > 1 ? '<div class="hm-ut rs-ut spc-pt" data-sk="pulls"><div class="hm-uh"><span>Pull</span><span>Casting</span>' + (c1 ? '<span>' + esc(c1.n) + '</span>' : '') + (d1 ? '<span>' + esc(d1.n) + '</span>' : '') + (res ? '<span>' + esc(res.n) + ' wasted</span>' : '') + (procs.length ? '<span>Procs wasted</span>' : '') + '</div>' + rows.map((s) => {
     const ab = s.abcAl >= 10 ? s.abcBusy / s.abcAl : null, q = c1 && s.cdu[lc(c1.n)], qf = q && q.poss ? Math.min(1, q.n / q.poss) : null, dd = d1 && s.dot[d1.n] ? s.dot[d1.n].up : null, rw = s.resG ? s.resW / s.resG : null, pw = Object.values(s.pr).reduce((v, o) => v + o.wasted, 0);
     return '<button type="button" class="hm-ur' + (s.kill ? ' spc-kill' : '') + '" data-gopull="' + s.pull + '" title="Open pull ' + s.pull + '"><span data-v="' + s.pull + '">Pull ' + s.pull + (s.kill ? ' <span class="ok-t">kill</span>' : '') + ' <span class="sub">' + T(s.len) + '</span></span><span>' + (ab != null ? cell(pct(ab), ab >= K.abc[0] ? 'ok' : ab >= K.abc[1] ? 'warn' : 'bad', ab) : '—') + '</span>' +
-      (c1 ? '<span>' + (qf != null ? cell(pct(qf), paceSt(qf), qf) : '—') + '</span>' : '') + (d1 ? '<span>' + (dd != null ? cell(pct(dd), dd >= (d1.ok || K.dots[0]) ? 'ok' : dd >= (d1.warn || K.dots[1]) ? 'warn' : 'bad', dd) : '—') + '</span>' : '') + (res ? '<span>' + (rw != null ? cell(pct(rw), rw <= (res.ok || K.res[0]) ? 'ok' : rw <= (res.warn || K.res[1]) ? 'warn' : 'bad', rw) : '—') + '</span>' : '') + '<span>' + cell(pw, pw ? 'warn' : 'ok', pw) + '</span></button>'; }).join('') + '</div>' : '';
+      (c1 ? '<span>' + (qf != null ? cell(pct(qf), paceSt(qf), qf) : '—') + '</span>' : '') + (d1 ? '<span>' + (dd != null ? cell(pct(dd), dd >= (d1.ok || K.dots[0]) ? 'ok' : dd >= (d1.warn || K.dots[1]) ? 'warn' : 'bad', dd) : '—') + '</span>' : '') + (res ? '<span>' + (rw != null ? cell(pct(rw), rw <= (res.ok || K.res[0]) ? 'ok' : rw <= (res.warn || K.res[1]) ? 'warn' : 'bad', rw) : '—') + '</span>' : '') + (procs.length ? '<span>' + cell(pw, pw ? 'warn' : 'ok', pw) + '</span>' : '') + '</button>'; }).join('') + '</div>' : '';
   const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs }) : '';
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
     TOPP: new Set(['abc', 'res', 'mana'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top raids', topTip: 'The middle of the ' + (D.top || spec + 's') + ' in the fastest Mythic kills of this boss on Warcraft Logs', topH: 'The ' + (D.top || spec + 's') + ' in the fastest kills of this boss', pullT,
@@ -8006,12 +8007,12 @@ const GEN_SPECS = {
     lead: { rot: 'Generate and spend Holy Power: your builders on cooldown, and never above what you need.', procs: 'Spend Divine Purpose before it runs out.', res: 'Holy Power is most of your damage: don\'t build above 5.', cds: 'Press Avenging Wrath with Execution Sentence and Divine Toll, together and on cooldown.' } },
   'Balance Druid': { ic: 'Starsurge', top: 'Balance Druids',
     abcWhy: 'Starsurge and Starfall are instant, so build Astral Power while you can stand still and spend it while you move.',
-    rot: [{ n: 'Eclipse', ic: 'Lunar Eclipse', names: ['Lunar Eclipse', 'Solar Eclipse'], cd: 32, fix: true, ok: 0.85, warn: 0.7, why: 'Eclipse is a 32-second cooldown: Starfire before it gives Lunar Eclipse, Wrath before it gives Solar. Time in Eclipse is your damage, so press it on cooldown, with Force of Nature or Fury of Elune.' },
-      { n: 'Fury of Elune', cd: 60, ok: 0.85, warn: 0.7, why: 'Fury of Elune gives Astral Power and hits hard: press it on cooldown, with Eclipse.' }, { n: 'Force of Nature', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Force of Nature on cooldown, with Eclipse.' }],
+    ups: [{ n: 'Eclipse', ic: 'Lunar Eclipse', names: ['Eclipse (Lunar)', 'Eclipse (Solar)'], label: 'Time in Eclipse', upTxt: 'You were in Eclipse', ok: 0.65, warn: 0.5, why: 'Eclipse is a 32-second cooldown: Starfire before it gives Lunar Eclipse, Wrath before it gives Solar, and your big cooldown gives both. Time in Eclipse is your damage, so press it on cooldown, with Force of Nature or Fury of Elune.' }], upN: 'Eclipse', upCh: 'Rotation', upFirst: true,
+    rot: [{ n: 'Fury of Elune', cd: 60, ok: 0.85, warn: 0.7, why: 'Fury of Elune gives Astral Power and hits hard: press it on cooldown, with Eclipse.' }, { n: 'Force of Nature', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Force of Nature on cooldown, with Eclipse.' }],
     dots: [{ n: 'Moonfire', why: 'Moonfire\'s ticks bring Shooting Stars, so keep it on the boss.' }, { n: 'Sunfire', why: 'Sunfire\'s ticks bring Shooting Stars, so keep it on the boss.' }],
     res: { ty: '8', n: 'Astral Power', why: 'Spend Astral Power on Starsurge or Starfall before you\'re full.' },
     cds: [{ n: 'Incarnation: Chosen of Elune', names: ['Incarnation: Chosen of Elune', 'Celestial Alignment'], cd: 180, chT: [['Whirling Stars', 2]], ok: 0.85, warn: 0.7, why: 'Your big cooldown: press it as often as the fight allows.' }],
-    lead: { rot: 'Press Eclipse on cooldown, with your short cooldowns inside it.', dots: 'Moonfire and Sunfire tick into Shooting Stars, so keep both on the boss.', res: 'Spend Astral Power before you\'re full: Starsurge on one target, Starfall on more.', cds: 'Use your big cooldown as often as the fight allows.' } },
+    lead: { ups: 'Time in Eclipse is your damage: press it on cooldown, with your short cooldowns inside it.', rot: 'Press your short cooldowns with Eclipse.', dots: 'Moonfire and Sunfire tick into Shooting Stars, so keep both on the boss.', res: 'Spend Astral Power before you\'re full: Starsurge on one target, Starfall on more.', cds: 'Use your big cooldown as often as the fight allows.' } },
   'Elemental Shaman': { ic: 'Lava Burst', top: 'Elemental Shamans',
     abcWhy: 'Elemental has little to cast on the move, so plan your movement: Spiritwalker\'s Grace and Nature\'s Swiftness keep you casting.',
     dots: [{ n: 'Flame Shock', why: 'Flame Shock gives Lava Surge procs: keep it on the boss.' }],
@@ -8085,7 +8086,7 @@ const GEN_SPECS = {
     lead: { procs: 'Spend Sudden Doom as quickly as you can.', dots: 'Keep Virulent Plague on the boss.', res: 'Don\'t let Runic Power overflow.', cds: 'Unholy is a burst spec: its cooldowns, as often as possible, are its biggest priority.' } },
   'Augmentation Evoker': { ic: 'Ebon Might', top: 'Augmentation Evokers',
     abcWhy: 'Use Hover to cast on the move, and fill gaps with Living Flame or Azure Strike.',
-    ups: [{ n: 'Ebon Might', ok: 0.85, warn: 0.7, why: 'Ebon Might is the center of your rotation: Sands of Time stretches it as you deal damage, so keep it up.' }], upN: 'Ebon Might', upCh: 'Rotation',
+    ups: [{ n: 'Ebon Might', ok: 0.85, warn: 0.7, why: 'Ebon Might is the center of your rotation: Sands of Time stretches it as you deal damage, so keep it up.' }], upN: 'Ebon Might', upCh: 'Rotation', upFirst: true,
     rot: [{ n: 'Upheaval', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Upheaval on cooldown, at the right rank.' }, { n: 'Fire Breath', cd: 30, ok: 0.85, warn: 0.7, why: 'Press Fire Breath on cooldown, at the right rank.' }],
     procs: [{ n: 'Essence Burst', use: ['Eruption'], max: 2, why: 'Essence Burst stacks to 2: spend it on Eruption before casting more spells that give it.' }],
     cds: [{ n: 'Breath of Eons', cd: 120, ok: 0.8, warn: 0.6, why: 'Breath of Eons with your allies\' cooldowns and the fight\'s big damage moments.' }, { n: 'Time Skip', cd: 180, ok: 0.8, warn: 0.6, why: 'Time Skip brings your cooldowns back faster: use it as often as the fight allows.' }],
@@ -8112,19 +8113,19 @@ const GEN_SPECS = {
     rot: [{ n: 'Holy Word: Serenity', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Your Holy Words are your strongest spells, and your other heals bring them back faster: don\'t sit on full charges.' }, { n: 'Holy Word: Sanctify', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Holy Word: Sanctify, your group heal, as often as it\'s ready when healing is needed.' },
       { n: 'Prayer of Mending', cd: 12, h: true, ok: 0.8, warn: 0.6, why: 'Press Prayer of Mending on cooldown.' }, { n: 'Halo', cd: 60, ok: 0.8, warn: 0.6, why: 'Press Halo on cooldown, when healing is needed.' }],
     procs: [{ n: 'Surge of Light', use: ['Flash Heal'], max: 2, why: 'Surge of Light makes Flash Heal free and instant: spend it.' }],
-    cds: [{ n: 'Apotheosis', cd: 120, ok: 0.6, warn: 0.3, why: 'Use Apotheosis for heavy damage.' }, { n: 'Divine Hymn', cd: 180, cdT: [['Seraphic Crescendo', 120]], ok: 0.6, warn: 0.3, why: 'Use Divine Hymn when your raid note calls for it.' }],
+    cds: [{ n: 'Apotheosis', cd: 120, ok: 0.6, warn: 0.3, why: 'Use Apotheosis for heavy damage.' }, { n: 'Divine Hymn', info: true, cd: 180, cdT: [['Seraphic Crescendo', 120]], ok: 0.6, warn: 0.3, why: 'Use Divine Hymn when your raid note calls for it.' }],
     lead: { rot: 'Keep your Holy Words on cooldown: they\'re your most powerful spells.', procs: 'Spend Surge of Light.', cds: 'Your raid note decides the big cooldowns.' } },
   'Restoration Shaman': { ic: 'Riptide', top: 'Restoration Shamans', unitN: 'healing', mana: true, manaIc: 'Chain Heal', k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Riptide', cd: 6, ch: 2, ok: 0.75, warn: 0.6, why: 'Put Riptide on people who don\'t have it yet: many of your talents want as many Riptides out as possible.' }, { n: 'Healing Stream Totem', cd: 30, ch: 2, ok: 0.75, warn: 0.6, why: 'Use Healing Stream Totem early and often.' },
       { n: 'Surging Totem', cd: 25, ok: 0.8, warn: 0.65, why: 'Use Surging Totem early and often.' }, { n: 'Unleash Life', cd: 15, ok: 0.75, warn: 0.6, why: 'Use Unleash Life early and often.' }],
-    cds: [{ n: 'Ascendance', cd: 180, ok: 0.6, warn: 0.3, why: 'Use Ascendance for heavy damage.' }, { n: 'Spirit Link Totem', cd: 180, ok: 0.6, warn: 0.3, why: 'Use Spirit Link Totem when your raid note calls for it.' }, { n: 'Healing Tide Totem', cd: 180, ok: 0.6, warn: 0.3, why: 'Use Healing Tide Totem when your raid note calls for it.' }],
+    cds: [{ n: 'Ascendance', cd: 180, ok: 0.6, warn: 0.3, why: 'Use Ascendance for heavy damage.' }, { n: 'Spirit Link Totem', info: true, cd: 180, ok: 0.6, warn: 0.3, why: 'Use Spirit Link Totem when your raid note calls for it.' }, { n: 'Healing Tide Totem', info: true, cd: 180, ok: 0.6, warn: 0.3, why: 'Use Healing Tide Totem when your raid note calls for it.' }],
     lead: { rot: 'Your short cooldowns are worth the most when you use them early and often.', cds: 'Your raid note decides the big cooldowns.' } },
   'Mistweaver Monk': { ic: 'Renewing Mist', top: 'Mistweaver Monks', unitN: 'healing', mana: true, manaIc: 'Vivify', gcd1: true, k: { abc: [0.75, 0.6] },
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Renewing Mist', cd: 9, chT: [['Pool of Mists', 3]], ch: 2, ok: 0.8, warn: 0.65, why: 'Press Renewing Mist on cooldown: Vivify heals everyone who has it.' }, { n: 'Rushing Wind Kick', cd: 12, h: true, ok: 0.8, warn: 0.65, why: 'Press Rushing Wind Kick on cooldown.' }, { n: 'Thunder Focus Tea', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Thunder Focus Tea on cooldown.' }],
     cds: [{ n: "Invoke Yu'lon, the Jade Serpent", names: ["Invoke Yu'lon, the Jade Serpent", 'Invoke Chi-Ji, the Red Crane'], cd: 120, cdT: [['Gift of the Celestials', 60]], ok: 0.8, warn: 0.6, why: 'Use your celestial as often as the fight allows.' }, { n: 'Celestial Conduit', cd: 90, ok: 0.8, warn: 0.6, why: 'Press Celestial Conduit on cooldown.' },
-      { n: 'Life Cocoon', cd: 120, cdT: [['Chrysalis', 75]], ok: 0.5, warn: 0.25, why: 'Put Life Cocoon on someone in danger.' }, { n: 'Revival', cd: 180, ok: 0.6, warn: 0.3, why: 'Use Revival when your raid note calls for it.' }],
+      { n: 'Life Cocoon', info: true, infoWhy: 'when to use it depends on who is in danger', cd: 120, cdT: [['Chrysalis', 75]], ok: 0.5, warn: 0.25, why: 'Put Life Cocoon on someone in danger.' }, { n: 'Revival', info: true, cd: 180, ok: 0.6, warn: 0.3, why: 'Use Revival when your raid note calls for it.' }],
     lead: { rot: 'Juggle your short cooldowns, and keep Renewing Mists out for Vivify.', mana: 'Spend Mana Tea in quiet moments so you have mana for the next damage.', cds: 'Use your celestial and Celestial Conduit as often as the fight allows.' } },
   'Blood Death Knight': { ic: 'Death Strike', top: 'Blood Death Knights', k: { abc: [0.75, 0.6] },
     ups: [{ n: 'Bone Shield', ok: 0.95, warn: 0.85, why: 'Bone Shield gives armor and makes Death Strike cheaper: Marrowrend keeps it up.' }],
@@ -8160,7 +8161,7 @@ const GEN_SPECS = {
     rot: [{ n: 'Fracture', cd: 4.5, h: true, ch: 2, ok: 0.8, warn: 0.65, why: 'Your generators come first: keep Fracture\'s charges rolling.' }, { n: 'Immolation Aura', cd: 15, h: true, ok: 0.85, warn: 0.7, why: 'Press Immolation Aura on cooldown.' },
       { n: 'Sigil of Flame', cd: 30, ok: 0.85, warn: 0.7, why: 'Press Sigil of Flame on cooldown.' }, { n: 'Fel Devastation', cd: 40, ok: 0.8, warn: 0.65, why: 'Press Fel Devastation on cooldown.' }, { n: 'Sigil of Spite', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Sigil of Spite on cooldown.' }],
     res: { ty: '17', n: 'Fury', why: 'Build and spend in waves, so Fury doesn\'t overflow.' },
-    cds: [{ n: 'Fiery Brand', cd: 60, ok: 0.6, warn: 0.4, why: 'Use Fiery Brand for the big hits.' }],
+    cds: [{ n: 'Fiery Brand', info: true, infoWhy: 'when to use it depends on the hits you take', cd: 60, ok: 0.6, warn: 0.4, why: 'Use Fiery Brand for the big hits.' }],
     lead: { ups: 'Keep Demon Spikes up while you tank.', rot: 'Press your generators on cooldown, then your spenders with as many Souls as possible.', res: 'Avoid overcapping Fury.', cds: 'Press cooldowns as they come up.' } },
 };
 
@@ -8175,7 +8176,7 @@ const GEN_TUNE = {
   'Shadow Priest': { abc: [0.74, 0.65], drop: ['cd:mind blast', 'res'], set: { 'dot:Shadow Word: Madness': { ok: 0.85, warn: 0.7 } } },
   'Marksmanship Hunter': { abc: [0.76, 0.68], set: { 'p:Precise Shots': { okW: 0.15, warnW: 0.25 } } },
   'Havoc Demon Hunter': { abc: [0.69, 0.6], res: [0.19, 0.27], set: { 'cd:immolation aura': { h: false, ok: 0.6, warn: 0.45 }, 'cd:essence break': { ok: 0.8, warn: 0.65 } } },
-  'Balance Druid': { abc: [0.83, 0.74], set: { 'cd:eclipse': { ok: 0.55, warn: 0.4 } } },
+  'Balance Druid': { abc: [0.83, 0.74] },
   'Retribution Paladin': { abc: [0.7, 0.62], drop: ['p:Art of War', 'res'], set: { 'cd:blade of justice': { ok: 0.72, warn: 0.6 } } },
   'Holy Priest': { abc: [0.72, 0.62], drop: ['p:Surge of Light', 'mana'] },
   'Frost Death Knight': { abc: [0.64, 0.55], res: [0.15, 0.22], drop: ['p:Killing Machine'], set: { 'p:Rime': { okW: 0.1, warnW: 0.18 } } },
