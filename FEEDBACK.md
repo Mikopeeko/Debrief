@@ -131,6 +131,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] The Casts view now judges cast efficiency for every spec too, from the same spells.
 - [ ] **For you or your raiders:** these 30 were built from guides and logs, not by someone who plays them. A raider who plays
   one should look over its page; anything off is a one-line fix.
+- [x] **Review rounds (your note: review, refine, check accuracy, repeatedly):** every new spec tested on your raid's 17 players
+  of those specs, on one pull and over the night, on desktop and phone, with no errors. Changes from the reviews: Balance now
+  measures time in Eclipse (65% for Earthday, about 71% for the top) instead of Eclipse presses; raid-note cooldowns (Divine
+  Hymn, Revival, Spirit Link, Healing Tide) and reactive ones (Life Cocoon, Fiery Brand) are shown but not graded, like Aura
+  Mastery; Lava Lash counts only for Totemic; every intro and line is a full sentence ("Press Avenger's Shield on cooldown", not
+  "Avenger's Shield on cooldown"); the talent trees name Death Knights and Demon Hunters right (Devourer read "Hunter").
+- [x] **Polish across the app:** every tab and Performance view opened with all its sections unfolded and scanned for errors,
+  blank values ("undefined", "NaN"), doubled words and broken sentences: none left. Fixed wording: "soaks was clean" (now "No
+  one had trouble with ... this time"), "before it caps" (now "before it fills up", like the rest), and a kill now says "on pull
+  30 of the night", so it doesn't look like it disagrees with "100 pulls to the kill".
 
 ## 2026-10-18, round 176: Holy Paladin, one last pass against the guides and WoWAnalyzer
 - [x] **Your note: Avenging Wrath's healing tile** now shows what each one added on average (yours: about 3.59M each, 10.76M
