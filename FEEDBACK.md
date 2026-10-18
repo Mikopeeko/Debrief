@@ -109,6 +109,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Not testable yet: every top kill is Diabolist, so the Soul Harvester parts (and Power Siphon, Doomguard) are read through only.
 - [x] **Your note: the card and talent graphics look cheap and cartoony.** Done in round 172.
 
+## 2026-10-18, round 173: The four specs cleaned up ("organizational, graphical, technical, debug, polish")
+- [x] **One page for every spec.** Holy Paladin had its own copy of the page; it now uses the same one as Druid, Evoker and
+  Demonology, so every fix and every new look lands on all four at once. Checked line by line: the page came out the same.
+- [x] **Leftovers removed:** the hidden guide-name labels (about 100 of them), the old card background icon, and code the
+  shared page now does itself. Checked again: nothing visible changed, on all four specs.
+- [x] **Every block opens with its short intro** (Holy Paladin's Judgment and Mana, the Druid's and the Evoker's Mana had none).
+- [x] **Checks where everything went right are small tiles**, not a full-width green bar (Divine Purpose, Dawnlight, Soul of
+  the Forest, Merithra's Blessing, Ruination, Infernal Bolt, Demonic Art and the like). Anything with a mistake keeps its boxes.
+- [x] The Top 10 tip reads plainly ("the middle of the kills by the top 10 …"), and How it works lists all four specs.
+- [x] **Debugged:** the top 10 Holy Paladin kills on the new page (scores 83 to 100), two more top kills each for Druid,
+  Evoker and Demonology, your own kill for all four, and the whole night for Flëxørçïst, Huservoker and Komo: no errors.
+  Desktop and phone.
+
 ## 2026-10-18, round 172: The character card and talents, the game's own look (your go-ahead on the mockup)
 - [x] The drawn class frames (flowers, clocks, fireflies, fel flames) and the portrait rings are gone, on all four specs.
 - [x] Behind the card and the talent trees: **the spec's own talent art from the game**, the same picture Wowhead's talent
