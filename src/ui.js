@@ -1083,6 +1083,8 @@ const setHeadRes = refreshHead;
 // (Performance can be greyed out on the website, "Under development" on hover or tap; it's on everywhere since the launch
 // to the raid on Oct 19: the Players grades are half the Report card, so it has to be there to look into)
 const PERF_OFF = () => false;
+// (Spec checks is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
+const SPEC_OFF = () => !!window.WLA_HOSTED;
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
@@ -4228,7 +4230,8 @@ const PERF_HINT = { card: 'grades and what to fix', spec: 'your spec, the guides
 function perfTabs(kind, vals) {
   const LB = new Map(PERF_KINDS), v = vals[kind] || {}, g = PERF_GROUPS.find(([, ks]) => ks.includes(kind));
   const ico = (k) => '<img class="pfk-i" src="' + whIcon(PERF_ICON[k]) + '" alt="" onerror="this.style.visibility=\'hidden\'">';
-  const item = (k) => '<button class="pfm-i' + (k === kind ? ' on' : '') + '" type="button" role="menuitem" data-k="' + k + '"' + (k === kind ? ' aria-current="true"' : '') + '>' + ico(k) + '<span class="pfm-it"><b>' + LB.get(k) + '</b><span class="sub">' + (k === kind ? 'you\'re here' : PERF_HINT[k]) + '</span></span></button>';
+  const item = (k) => { const off = k === 'spec' && SPEC_OFF();
+    return '<button class="pfm-i' + (k === kind ? ' on' : '') + (off ? ' off' : '') + '" type="button" role="menuitem"' + (off ? ' aria-disabled="true" title="Under development"' : ' data-k="' + k + '"') + (k === kind ? ' aria-current="true"' : '') + '>' + ico(k) + '<span class="pfm-it"><b>' + LB.get(k) + '</b><span class="sub">' + (off ? 'under development' : k === kind ? 'you\'re here' : PERF_HINT[k]) + '</span></span></button>'; };
   return '<div class="pfm k-' + kind + '"><button class="pfm-b" id="pfMenuB" type="button" aria-haspopup="menu" aria-expanded="false" title="Pick what to show">' + ico(kind) +
     '<span class="pfm-t"><span class="pfm-g">' + (g ? g[0] : 'Performance') + '</span><span class="pfm-l">' + LB.get(kind) + (v.v ? '<span class="pfm-v">' + v.v + '</span>' : '') + '</span></span><span class="pfm-c" aria-hidden="true">▾</span></button>' +
     '<div class="pfm-p" id="pfMenu" role="menu" aria-label="What to show" hidden>' + PERF_GROUPS.map(([gl, ks]) => '<div class="pfm-gr"><div class="pfm-gl">' + gl + '</div>' + ks.map(item).join('') + '</div>').join('') + '</div></div>';
@@ -4251,6 +4254,7 @@ const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || 
   return { v: t('disp') + '<span> dispels</span> ' + t('ext') + '<span> externals</span>', s: resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
 function perf() {
   if (!S.perfKind || !PERF_KINDS.some(([x]) => x === S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = PERF_KINDS.some(([x]) => x === k) ? k : 'card'; }
+  if (S.perfKind === 'spec' && SPEC_OFF()) S.perfKind = 'card';
   store.set('wla-pf-kind', S.perfKind);
   const r = S.rep, kind = S.perfKind || 'card', ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
   const ps = players().filter((p) => p.name && !/^Player-/.test(p.name));
