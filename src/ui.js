@@ -5243,8 +5243,8 @@ function perfTargets(r, ps, w0, w1, bossN) {
   const rows = per.filter((x) => keep.has(x.p)).map((x) => { const c = [0, 0, 0]; for (const [n, v] of x.m) c[cat(n)] += v; const t = c[0] + c[1] + c[2], l = sw.get(x.p.name) || [], hit = l.filter((v) => v != null);
     return { p: x.p, c, t, prioShare: t ? c[1] / t : 0, med: med(hit), hit: hit.length, of: l.length }; }).filter((x) => x.t > 0).sort((a, b) => b.t - a.t);
   const mxT = Math.max(1, ...rows.map((x) => x.t)), CC = ['#6aa8ff', '#b07cf0', '#6c7381'];
-  const bars = rows.map((x) => '<div class="pf-tg-r" data-n="' + esc(x.p.name) + '" tabindex="0" role="button"><span class="pf-tg-n">' + pfName(x.p) + '</span><span class="pf-bar pf-tgb">' + x.c.map((v, i) => (v > 0 ? '<i style="width:' + (100 * v / mxT).toFixed(1) + '%;background:' + CC[i] + '" title="' + esc(['Boss', capS(addW), 'Other'][i] + ': ' + C(v)) + '"></i>' : '')).join('') + '</span>' +
-    '<span class="pf-tg-v"><b>' + (prio.size ? Math.round(100 * x.prioShare) + '%' : '—') + '</b><span class="sub">' + (x.of ? (x.med != null ? 'on in ' + x.med.toFixed(1) + 's' : 'none hit') + ' · ' + x.hit + ' of ' + x.of : '') + '</span></span></div>').join('');
+  const bars = (rows.length ? cbHead(prio.size ? 'Into ' + addW : '', 'Switch', '', ' pf-tgr') : '') + rows.map((x, i) => cbRow({ tag: 'button', cls: ' pf-tgr', attrs: ' type="button" data-n="' + esc(x.p.name) + '" title="' + esc(['Boss', capS(addW), 'Other'].map((nm, j) => nm + ': ' + C(x.c[j])).join(' · ')) + '"', k: i + 1, p: x.p,
+    segs: x.c.map((v, j) => [100 * v / mxT, ['tb', 'ta', 'to'][j]]), v: prio.size ? Math.round(100 * x.prioShare) + '%' : '—', sub: x.of ? (x.med != null ? 'on in ' + x.med.toFixed(1) + 's' : 'none hit') + ' · ' + x.hit + ' of ' + x.of : '' })).join('');
   const setRows = sets.filter((s) => s.on.length + s.miss.length).map((s) => { const m = med(s.on.map(([, d]) => d)), late = s.on.filter(([, d]) => d >= 6), st = !s.on.length || (m != null && m >= 4) ? 'warn' : 'ok';
     return ckLine(st, '<b>' + esc(s.name) + (s.gs.length > 1 ? ' ×' + s.gs.length : '') + '</b> at ' + T(s.t0) + ' <span class="sub">' + (s.dead != null && s.dead <= w1 ? 'dead in ' + Math.round(s.dead - s.t0) + 's' : 'still up at ' + T(w1)) + ' · ' + s.on.length + ' DPS on it' + (m != null ? ', half within ' + m.toFixed(1) + 's' : '') + '</span>' +
       // (a few names stand out; a long list is usually the plan, e.g. the raid split in two sides, so it's just a count)
@@ -8931,7 +8931,7 @@ function bindPerf() {
   $$('.pf-a[data-src]').forEach((b) => (b.onclick = () => { S.perfLens = 'sources'; S.srcSel = b.dataset.src; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));
   // (a name in any of the other views opens that player on Players)
   $$('[data-wi]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfWin = +b.dataset.wi; perf(); }));
-  $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n], .pf-row.pf-wr[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+  $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n], .pf-row.pf-wr[data-n], .pf-row.pf-tgr[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
     el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
   // (the main chart's legend: each entry hides or shows its marks; the mana and target charts' readouts and switches)
   $$('.pf-main .pf-hk').forEach((el) => { const go = () => { const k = el.dataset.hk; S.pfcHide = S.pfcHide || new Set(); if (S.pfcHide.has(k)) S.pfcHide.delete(k); else S.pfcHide.add(k);

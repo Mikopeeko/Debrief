@@ -55,7 +55,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Second pass, desktop only** (your note): layout measured at 1920×1080 and 1440×900, with to-scale page maps. Read it at
   https://claude.ai/artifact/ELNR2Ci3BXvb2Wq1FAF1wU (copy in notes/Desktop layout review.html). All 12 changes built in round 117,
   on a separate copy (branch desktop-layout): the live site is unchanged until you say it's good.
-- [ ] **Performance: the same bar charts everywhere** (your note). Done so far: Utility, Damage done, Damage windows. Left: Targets, Heatmap.
+- [x] **Performance: the same bar charts everywhere** (your note). Done: Utility, Damage done, Damage windows, and Targets (round
+  182). The Heatmap view was removed earlier, at your request.
 - [x] **Heal absorbs: who healed them off** (your note; the wrong "clean" fixed in round 140): every mechanic that puts a heal absorb on players gets a chart of
   the healers who helped remove it, and how much each one healed into it. Example: Twin Fangs' Tainted Blood founts,
   where players stand in the fount to soak it and the soakers get a healing absorb.
@@ -99,6 +100,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 182: Targets in the same bars as the rest of Performance (your #9)
+- [x] **Performance > Damage done > Targets** now uses the same bar rows as Players and Damage windows: the rank, the bar with the
+  player's icon and name on it, their share into the adds, and their switch time. The bar keeps its three colours (boss, adds,
+  other, as in the legend), and hovering a row gives all three amounts. Clicking a player still opens them on Players.
+- [x] Heatmap: nothing to do, it was removed earlier at your request.
 
 ## 2026-10-18, round 181: The spec page opens like a review (your #7, first part)
 - [x] **Your output, under your name:** your damage (healing for healers) a second over the pull, your Warcraft Logs parse on a

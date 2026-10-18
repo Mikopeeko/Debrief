@@ -1791,7 +1791,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* Performance: condensed player bars. Columns: rank | the bar (avatar, name, chips ... number) | small number; the night
    view adds a sparkline column. The bar is the row; its fill is the class colour, faint, with a solid edge where it ends. */
 .pf-row.cb { grid-template-columns: 20px minmax(0, 1fr) 64px 52px; gap: 8px; padding: 2px 6px 2px 2px; border-radius: 5px; }
-.pf-row.cb.pf-nr { grid-template-columns: 20px minmax(0, 1fr) 64px 150px; } .pf-row.cb.pf-wr { grid-template-columns: 20px minmax(0, 1fr) 64px 62px; }
+.pf-row.cb.pf-nr { grid-template-columns: 20px minmax(0, 1fr) 64px 150px; } .pf-row.cb.pf-tgr { grid-template-columns: 20px minmax(0, 1fr) 64px 124px; } .pf-row.cb.pf-wr { grid-template-columns: 20px minmax(0, 1fr) 64px 62px; }
 .pf-row.cb.pf-pr { grid-template-columns: 20px minmax(0, 1fr) 64px 52px 34px; } .pf-row.cb.pf-nr.pf-pr { grid-template-columns: 20px minmax(0, 1fr) 64px 150px 34px; }
 .cb-r { display: flex; justify-content: center; }
 /* the column names over the bars */
@@ -1828,6 +1828,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .cb-f { position: absolute; inset: 0; display: flex; pointer-events: none; } .cb-f i { display: block; height: 100%; flex: none; }
 .cb-f i.m { background: color-mix(in srgb, var(--c) 32%, transparent); transition: background .1s; }
 .cb-f i.oh { background: color-mix(in srgb, var(--c) 9%, transparent); }
+.cb-f i.tb { background: rgba(106,168,255,.34); } .cb-f i.ta { background: rgba(176,124,240,.46); } .cb-f i.to { background: rgba(108,115,129,.3); } /* (Targets: boss, adds, other, the legend's colours) */
 .cb-f i.ad { background: repeating-linear-gradient(135deg, rgba(229,83,75,.62) 0 3px, rgba(229,83,75,.28) 3px 6px); } /* (striped: a red class colour, like a Death Knight's, would hide a plain red) */
 .pf-row.cb:not(.nb):hover .cb-f i.m, .pf-row.cb.on .cb-f i.m { background: color-mix(in srgb, var(--c) 42%, transparent); }
 .cb-in { position: relative; display: flex; align-items: center; gap: 7px; height: 100%; min-width: 0; padding: 0 8px 0 3px; }
@@ -1840,7 +1841,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 
 @media (max-width: 640px) {
   .pf-row.cb { grid-template-columns: 16px minmax(0, 1fr) 50px 42px; gap: 6px; padding: 2px 0; }
-  .pf-row.cb.pf-nr { grid-template-columns: 16px minmax(0, 1fr) 50px 84px; } .pf-row.cb.pf-wr { grid-template-columns: 16px minmax(0, 1fr) 50px 48px; } .cb-v { font-size: 12px; }
+  .pf-row.cb.pf-nr { grid-template-columns: 16px minmax(0, 1fr) 50px 84px; } .pf-row.cb.pf-tgr { grid-template-columns: 16px minmax(0, 1fr) 46px 92px; } .pf-row.cb.pf-wr { grid-template-columns: 16px minmax(0, 1fr) 50px 48px; } .cb-v { font-size: 12px; }
   .pf-row.cb.pf-pr { grid-template-columns: 16px minmax(0, 1fr) 50px 40px 30px; } .pf-row.cb.pf-nr.pf-pr { grid-template-columns: 16px minmax(0, 1fr) 50px 84px 30px; }
   .pf-row.cb.cb-h { font-size: 9.5px; letter-spacing: 0; }
   .cb-in { gap: 6px; padding: 0 7px 0 3px; } .cb-in .pf-nm { font-size: 12.5px; } .cb-s { font-size: 12px; }
@@ -13984,8 +13985,8 @@ function perfTargets(r, ps, w0, w1, bossN) {
   const rows = per.filter((x) => keep.has(x.p)).map((x) => { const c = [0, 0, 0]; for (const [n, v] of x.m) c[cat(n)] += v; const t = c[0] + c[1] + c[2], l = sw.get(x.p.name) || [], hit = l.filter((v) => v != null);
     return { p: x.p, c, t, prioShare: t ? c[1] / t : 0, med: med(hit), hit: hit.length, of: l.length }; }).filter((x) => x.t > 0).sort((a, b) => b.t - a.t);
   const mxT = Math.max(1, ...rows.map((x) => x.t)), CC = ['#6aa8ff', '#b07cf0', '#6c7381'];
-  const bars = rows.map((x) => '<div class="pf-tg-r" data-n="' + esc(x.p.name) + '" tabindex="0" role="button"><span class="pf-tg-n">' + pfName(x.p) + '</span><span class="pf-bar pf-tgb">' + x.c.map((v, i) => (v > 0 ? '<i style="width:' + (100 * v / mxT).toFixed(1) + '%;background:' + CC[i] + '" title="' + esc(['Boss', capS(addW), 'Other'][i] + ': ' + C(v)) + '"></i>' : '')).join('') + '</span>' +
-    '<span class="pf-tg-v"><b>' + (prio.size ? Math.round(100 * x.prioShare) + '%' : '—') + '</b><span class="sub">' + (x.of ? (x.med != null ? 'on in ' + x.med.toFixed(1) + 's' : 'none hit') + ' · ' + x.hit + ' of ' + x.of : '') + '</span></span></div>').join('');
+  const bars = (rows.length ? cbHead(prio.size ? 'Into ' + addW : '', 'Switch', '', ' pf-tgr') : '') + rows.map((x, i) => cbRow({ tag: 'button', cls: ' pf-tgr', attrs: ' type="button" data-n="' + esc(x.p.name) + '" title="' + esc(['Boss', capS(addW), 'Other'].map((nm, j) => nm + ': ' + C(x.c[j])).join(' · ')) + '"', k: i + 1, p: x.p,
+    segs: x.c.map((v, j) => [100 * v / mxT, ['tb', 'ta', 'to'][j]]), v: prio.size ? Math.round(100 * x.prioShare) + '%' : '—', sub: x.of ? (x.med != null ? 'on in ' + x.med.toFixed(1) + 's' : 'none hit') + ' · ' + x.hit + ' of ' + x.of : '' })).join('');
   const setRows = sets.filter((s) => s.on.length + s.miss.length).map((s) => { const m = med(s.on.map(([, d]) => d)), late = s.on.filter(([, d]) => d >= 6), st = !s.on.length || (m != null && m >= 4) ? 'warn' : 'ok';
     return ckLine(st, '<b>' + esc(s.name) + (s.gs.length > 1 ? ' ×' + s.gs.length : '') + '</b> at ' + T(s.t0) + ' <span class="sub">' + (s.dead != null && s.dead <= w1 ? 'dead in ' + Math.round(s.dead - s.t0) + 's' : 'still up at ' + T(w1)) + ' · ' + s.on.length + ' DPS on it' + (m != null ? ', half within ' + m.toFixed(1) + 's' : '') + '</span>' +
       // (a few names stand out; a long list is usually the plan, e.g. the raid split in two sides, so it's just a count)
@@ -17672,7 +17673,7 @@ function bindPerf() {
   $$('.pf-a[data-src]').forEach((b) => (b.onclick = () => { S.perfLens = 'sources'; S.srcSel = b.dataset.src; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));
   // (a name in any of the other views opens that player on Players)
   $$('[data-wi]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfWin = +b.dataset.wi; perf(); }));
-  $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n], .pf-row.pf-wr[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+  $$('.pf-t tr[data-n], .pf-hn[data-n], .pf-tg-r[data-n], .pf-row.pf-wr[data-n], .pf-row.pf-tgr[data-n]').forEach((el) => { const go = () => { S.perfSel = el.dataset.n; S.perfLens = 'players'; perf(); const c = $('.pf-cols'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
     el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
   // (the main chart's legend: each entry hides or shows its marks; the mana and target charts' readouts and switches)
   $$('.pf-main .pf-hk').forEach((el) => { const go = () => { const k = el.dataset.hk; S.pfcHide = S.pfcHide || new Set(); if (S.pfcHide.has(k)) S.pfcHide.delete(k); else S.pfcHide.add(k);

@@ -1791,7 +1791,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* Performance: condensed player bars. Columns: rank | the bar (avatar, name, chips ... number) | small number; the night
    view adds a sparkline column. The bar is the row; its fill is the class colour, faint, with a solid edge where it ends. */
 .pf-row.cb { grid-template-columns: 20px minmax(0, 1fr) 64px 52px; gap: 8px; padding: 2px 6px 2px 2px; border-radius: 5px; }
-.pf-row.cb.pf-nr { grid-template-columns: 20px minmax(0, 1fr) 64px 150px; } .pf-row.cb.pf-wr { grid-template-columns: 20px minmax(0, 1fr) 64px 62px; }
+.pf-row.cb.pf-nr { grid-template-columns: 20px minmax(0, 1fr) 64px 150px; } .pf-row.cb.pf-tgr { grid-template-columns: 20px minmax(0, 1fr) 64px 124px; } .pf-row.cb.pf-wr { grid-template-columns: 20px minmax(0, 1fr) 64px 62px; }
 .pf-row.cb.pf-pr { grid-template-columns: 20px minmax(0, 1fr) 64px 52px 34px; } .pf-row.cb.pf-nr.pf-pr { grid-template-columns: 20px minmax(0, 1fr) 64px 150px 34px; }
 .cb-r { display: flex; justify-content: center; }
 /* the column names over the bars */
@@ -1828,6 +1828,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .cb-f { position: absolute; inset: 0; display: flex; pointer-events: none; } .cb-f i { display: block; height: 100%; flex: none; }
 .cb-f i.m { background: color-mix(in srgb, var(--c) 32%, transparent); transition: background .1s; }
 .cb-f i.oh { background: color-mix(in srgb, var(--c) 9%, transparent); }
+.cb-f i.tb { background: rgba(106,168,255,.34); } .cb-f i.ta { background: rgba(176,124,240,.46); } .cb-f i.to { background: rgba(108,115,129,.3); } /* (Targets: boss, adds, other, the legend's colours) */
 .cb-f i.ad { background: repeating-linear-gradient(135deg, rgba(229,83,75,.62) 0 3px, rgba(229,83,75,.28) 3px 6px); } /* (striped: a red class colour, like a Death Knight's, would hide a plain red) */
 .pf-row.cb:not(.nb):hover .cb-f i.m, .pf-row.cb.on .cb-f i.m { background: color-mix(in srgb, var(--c) 42%, transparent); }
 .cb-in { position: relative; display: flex; align-items: center; gap: 7px; height: 100%; min-width: 0; padding: 0 8px 0 3px; }
@@ -1840,7 +1841,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 
 @media (max-width: 640px) {
   .pf-row.cb { grid-template-columns: 16px minmax(0, 1fr) 50px 42px; gap: 6px; padding: 2px 0; }
-  .pf-row.cb.pf-nr { grid-template-columns: 16px minmax(0, 1fr) 50px 84px; } .pf-row.cb.pf-wr { grid-template-columns: 16px minmax(0, 1fr) 50px 48px; } .cb-v { font-size: 12px; }
+  .pf-row.cb.pf-nr { grid-template-columns: 16px minmax(0, 1fr) 50px 84px; } .pf-row.cb.pf-tgr { grid-template-columns: 16px minmax(0, 1fr) 46px 92px; } .pf-row.cb.pf-wr { grid-template-columns: 16px minmax(0, 1fr) 50px 48px; } .cb-v { font-size: 12px; }
   .pf-row.cb.pf-pr { grid-template-columns: 16px minmax(0, 1fr) 50px 40px 30px; } .pf-row.cb.pf-nr.pf-pr { grid-template-columns: 16px minmax(0, 1fr) 50px 84px 30px; }
   .pf-row.cb.cb-h { font-size: 9.5px; letter-spacing: 0; }
   .cb-in { gap: 6px; padding: 0 7px 0 3px; } .cb-in .pf-nm { font-size: 12.5px; } .cb-s { font-size: 12px; }
