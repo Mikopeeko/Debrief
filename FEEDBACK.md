@@ -87,6 +87,27 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 154: Holy Paladin: Holy Power, mana and Judgment in full, and plain sentences
+- [x] **Your ask: grey out Spec checks on the live site** so nobody sees it yet. Done and deployed: it shows "under
+  development" in the Performance menu on the website, and anyone who had it open lands on the Report card. Your local
+  copy still shows it.
+- [x] **Judgment, researched** (Wowhead's rotation guide and its Common Mistakes and Mana tabs, Icy Veins, WoWAnalyzer's
+  Judgment, Crusader's Might, Empyrean Legacy and Infusion modules, and every talent's tooltip). New "Judgment" checks:
+  how often you cast it and the Holy Power it gave (not graded, like WoWAnalyzer), Infusions spent on it (Flash of Light
+  heals far more whenever anyone needs it), Judgment pressed while Holy Shock was full, and, if you take Crusader's Might,
+  Holy Shocks that took nothing off Judgment. A Judgment section: Truth Prevails' healing, Greater Judgment's prevented
+  damage, Divine Revelations' mana, Judgments inside Avenging Wrath, and the Infusions it granted.
+- [x] **Your note: the tier set.** Holy Light always granting an Infusion, and Judgment's 20% chance, only count when
+  your log shows the set at work (it does on your kill: 4 of 21 Judgments started an Infusion).
+- [x] **Your note: 2 uses per Infusion only with Inflorescence of the Sunwell**, 1 without. Read from your talents first.
+- [x] **Holy Power in full:** gained (Holy Shock, Divine Toll, Aura Mastery, Flash of Light, Holy Light, Judgment),
+  spent (Eternal Flame and Light of Dawn, free ones apart), wasted, time at 5; a new check for builders pressed at 5.
+- [x] **Mana in full:** what each spell cost and its healing per mana, what came back (Innervate, Source of Magic,
+  Reclamation, Divine Revelations), the low point, and running out early.
+- [x] The cooldown timeline gained Judgment, Holy Power and Mana lanes; its readout shows your Holy Power and mana.
+  Empyrean Legacy and Awakening are tracked as procs when you take them. The pull table gained Holy Power wasted.
+- [x] **Your note: wording.** Every line on the page rewritten as plain, full sentences.
+
 ## 2026-10-17, round 153: Spec checks you can explore (design and interaction)
 - [x] **Filter the checks**: All · To fix · Could be better · Good, with counts.
 - [x] **Click a check** and it opens right under it: how it's judged, where the rule comes from (Wowhead, Icy Veins,
