@@ -837,7 +837,7 @@ const DANCERS = [
 ];
 const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'On Latest pull, every box opens the tab with its details.', 'Summary shows the whole night, with how far each pull got and what kept going wrong.', 'Players gives everyone one grade, half from mechanics and half from the Report card.'];
+  'On Pull recap, every box opens the tab with its details.', 'Night summary shows the whole night, with how far each pull got and what kept going wrong.', 'Players gives everyone one grade, half from mechanics and half from the Report card.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -922,10 +922,11 @@ function bgFetch(item) {
 }
 
 // ---------- main frame ----------
-// Tabs: Latest pull (the live recap, always one pull), Assignments (the NSRT audit), Mechanics (the fight audit),
-// Summary (the night, always all pulls) and Player audit (gear, consumables and survival kit). Damage, Healing and
-// Damage taken are hidden for now (to be redone); meter() stays for that.
-const TABS = [['overview', 'Assignments'], ['audit', 'Mechanics'], ['perf', 'Performance'], ['night', 'Summary'], ['player', 'Players']];
+// Tabs, in two labelled groups (your pick, Oct 18: option A): "This pull" has Pull recap (the live recap), Mechanics
+// (the fight audit), Assignments (the NSRT audit) and Performance; "Whole night" has Night summary (always all pulls)
+// and Players. The keys stay as they were, so saved spots and links still open the same page.
+const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['perf', 'Performance'], ['night', 'Night summary'], ['player', 'Players']];
+const TAB_GROUPS = [['This pull', ['live', 'audit', 'overview', 'perf']], ['Whole night', ['night', 'player']]];
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
 // report cards); Latest pull, Assignments and Mechanics are always one pull; the Player audit has both, switched on its
 // own page. The pull cards pick it: a pull, or All pulls (which opens Summary, or the Player audit's all-pulls view).
@@ -1097,6 +1098,8 @@ const setHeadRes = refreshHead;
 const PERF_OFF = () => !!window.WLA_HOSTED;
 // (Spec checks is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
 const SPEC_OFF = () => !!window.WLA_HOSTED;
+// (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
+const DISCORD_URL = '';
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
@@ -1120,11 +1123,13 @@ function renderMain() {
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
   $('#bossHead').innerHTML = headerHtml(r, allMode) + meBar(r); // (and, when this log isn't known yet, "Is this your raid?")
   $('#main').innerHTML =
-    // the Latest pull recap first (with a red dot while live logging is on), then the rest; every tab is about this raid
-    // (your teams are under Your teams in the top bar, on every page)
-    '<div class="tabbar"><nav class="tabs" role="tablist">' + [['live', 'Latest pull']].concat(TABS).map(([k, l]) => { const off = k === 'perf' && PERF_OFF(), tt = off ? 'Under development' : TAB_TIP[k] || '';
-      return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
-      (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>'; }).join('') + '</nav>' + tbPull(r, allMode) + '</div>' +
+    // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
+    // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
+    '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Pull recap']].concat(TABS));
+      const tab = (k) => { const l = name.get(k), off = k === 'perf' && PERF_OFF(), tt = off ? 'Under development' : TAB_TIP[k] || '';
+        return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+        (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>'; };
+      return TAB_GROUPS.map(([g, ks]) => '<span class="tgrp" role="presentation"><b aria-hidden="true">' + g + '</b><span role="presentation">' + ks.map(tab).join('') + '</span></span>').join('<span class="tsep" aria-hidden="true"></span>'); })() + '</nav>' + tbPull(r, allMode) + '</div>' +
     '<section id="view"></section>';
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
   { const tp = $('#main .tb-pull'); if (tp) tp.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -1286,24 +1291,55 @@ function bindStackKinds() {
 
 // ---------- NSRT assignments ----------
 const noteKey = (boss) => 'wla-note-' + boss;
+// Saved notes: several per boss, each with a name (raids change their note as the roster changes week to week). A pull uses the one you pick,
+// or with "Pick by roster" (the default) the one that names the most of that pull's players, the newest on a tie. A note saved before this
+// is the first one. Kept in this browser, like the single note was.
+const notesKey = (boss) => 'wla-notes-' + boss;
+function notesOf(boss) {
+  let o = null; try { o = JSON.parse(store.get(notesKey(boss)) || 'null'); } catch (e) { o = null; }
+  if (!o || !Array.isArray(o.list)) { const old = store.get(noteKey(boss)); o = { list: old ? [{ id: 'n1', name: 'Note 1', text: old, saved: Date.now() }] : [], pick: 'auto' }; }
+  return o;
+}
+function notesSave(boss, o) { if (o.list.length) store.set(notesKey(boss), JSON.stringify(o)); else localStorage.removeItem(notesKey(boss)); localStorage.removeItem(noteKey(boss)); }
+// (a note's roster match: how many of the pull's players it names, as whole words)
+const noteHas = (text, name) => new RegExp('(^|[^\\p{L}])' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu').test(text);
+const noteScore = (text, rep) => [...rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name) && noteHas(text, p.name.split('-')[0])).length;
+function noteForRep(rep) {
+  const o = notesOf(rep.item.boss); if (!o.list.length) return null;
+  const chosen = o.pick !== 'auto' && o.list.find((n) => n.id === o.pick); if (chosen) return { ...chosen, auto: false };
+  const best = o.list.map((n) => ({ n, s: noteScore(n.text, rep) })).sort((a, b) => b.s - a.s || (b.n.saved || 0) - (a.n.saved || 0))[0];
+  return { ...best.n, auto: o.list.length > 1, score: best.s };
+}
+// (the names a note gives, for "swap a player": reminder tags and the words after a line's label, kept to ones that look like character names)
+const NOTE_WORDS = new Set(['soak', 'soaks', 'kick', 'kicks', 'orb', 'orbs', 'group', 'left', 'right', 'melee', 'ranged', 'tank', 'tanks', 'healer', 'healers', 'dps', 'backup', 'everyone', 'rest', 'all', 'then', 'and', 'or', 'name', 'names']);
+function noteNames(text) {
+  const out = new Set();
+  for (const raw of String(text || '').split(/\r?\n/)) { const ln = raw.trim(); if (!ln || /^EncounterID:/i.test(ln)) continue;
+    if (/(^|;)\s*time:/i.test(ln)) { const m = ln.match(/(?:^|;)\s*tag:([^;]*)/i); if (m) m[1].split(/\s+/).filter(Boolean).forEach((w) => out.add(w.split('-')[0])); continue; }
+    const body = ln.replace(/\{[^}]*\}/g, ' '), ci = body.indexOf(':');
+    for (const w of (ci >= 0 ? body.slice(ci + 1) : '').split(/[\s,;]+/)) { const t = w.replace(/[()[\]."]/g, '').split('-')[0]; if (t.length >= 2 && /^\p{Lu}/u.test(t) && /^[\p{L}'-]+$/u.test(t) && !NOTE_WORDS.has(t.toLowerCase())) out.add(t); } }
+  return [...out];
+}
 function applyNote(rep) {
   rep.mistakes = rep.mistakes.filter((m) => !m.fromNote);
   rep.assign = null;
-  const text = store.get(noteKey(rep.item.boss));
+  const pick = noteForRep(rep), text = pick ? pick.text : null; rep.noteUsed = pick ? { id: pick.id, name: pick.name, auto: pick.auto } : null;
   if (!text) return;
   try { rep.assign = E.checkAssignments(rep, text); } catch (e) { rep.assign = { error: e.message }; return; }
   for (const m of rep.assign.mistakes) rep.mistakes.push({ ...m, fromNote: true });
   rep.mistakes.sort((a, b) => a.t - b.t);
 }
 function assign(only) { // (only: just the note, for the all-pulls NSRT audit, which draws its own results)
-  const r = S.rep, boss = r.item.boss, text = store.get(noteKey(boss)) || '', a = r.assign;
+  const r = S.rep, boss = r.item.boss, NO = notesOf(boss), used = noteForRep(r), text = used ? used.text : '', a = r.assign;
+  // (the note being edited: the one this pull uses, or a new one)
+  const editN = S.noteEditId === 'new' ? null : (S.noteEditId && NO.list.find((n) => n.id === S.noteEditId)) || used, editT = editN ? editN.text : '';
   const pmap = new Map(players().map((p) => [p.name, p]));
   const who = (n, cls) => { const p = pmap.get(n); return '<span class="chipn' + (cls ? ' ' + cls : '') + '">' + (p ? avatar(p, true) + '<span class="nm" style="color:' + p.color + '">' : '<span class="nm">') + esc(n) + '</span></span>'; };
   const chips = (ns, cls) => ns.length ? '<span class="chips">' + ns.map((n) => who(n, cls)).join('') + '</span>' : '<span class="sub">none</span>';
   // no note yet: one line with a button instead of an empty editor taking half the page
   if (!text && !S.noteEdit) {
     $('#assignBox').innerHTML = '<div class="panel noteempty"><div><b>Assignments</b> <span class="sub">No NSRT note for ' + esc(boss) + ' yet. Paste the one your raid is using (from wowutils, or your raid leader) to check soaks, kicks, orbs and cooldowns. It\'s kept in this browser. Paste the new one when it changes.</span></div><button class="btn primary" id="noteAdd">Add NSRT note</button></div>';
-    $('#noteAdd').onclick = () => { S.noteEdit = true; assign(only); };
+    $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
     return;
   }
   const editing = S.noteEdit || !text;
@@ -1329,12 +1365,23 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const pst = (st, html) => '<div class="pst ' + st + '">' + ({ ok: '✓\u00a0', bad: '✕\u00a0', warn: '!\u00a0' }[st] || '') + html + '</div>';
   const qline = (title, right, cls) => '<div class="qrow"><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></div>';
   const qfold = (title, right, cls, body) => '<details class="qrow"><summary><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></summary><div class="q-b">' + body + '</div></details>';
-  if (editing) top += '<div class="panel"><h3>NSRT note for ' + esc(boss) + ' <small>' + (text ? 'saved on this PC, used for every pull of this boss' : 'paste your Northern Sky Raid Tools note to check assignments') + '</small></h3>' +
-    '<textarea id="noteBox" class="notebox" placeholder="Paste the whole NSRT note here: the EncounterID line, reminder lines (time:…;ph:…;tag:…;spellid:…) and your text assignments (Guillotine 1: Name Name…, {skull} Kicks: Name Name…)">' + esc(text) + '</textarea>' +
-    '<div style="margin-top:8px;display:flex;gap:8px"><button class="btn primary" id="noteSave">Save and check</button>' + (text ? '<button class="btn" id="noteCancel">Cancel</button><button class="btn" id="noteDel">Remove note</button>' : '') + '</div>' +
+  // (swap a player: a name in the note, the ones not in this pull first, for one of this pull's players the note doesn't name; it changes the text
+  // in the box, and Save keeps it)
+  const inPull = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => p.name.split('-')[0]);
+  const nNames = editN ? noteNames(editT) : [], outN = nNames.filter((n) => !inPull.some((q) => q.toLowerCase() === n.toLowerCase())), inN = nNames.filter((n) => !outN.includes(n));
+  const newP = editN ? inPull.filter((q) => !noteHas(editT, q)).sort() : [];
+  const opt = (v, l) => '<option value="' + esc(v) + '">' + esc(l) + '</option>';
+  const swapRow = editN && nNames.length && newP.length ? '<div class="nt-swap"><span class="sub">Swap a player:</span> <select id="noteFrom">' + (outN.length ? '<optgroup label="Not in this pull">' + outN.map((n) => opt(n, n)).join('') + '</optgroup>' : '') + (inN.length ? '<optgroup label="In this pull">' + inN.map((n) => opt(n, n)).join('') + '</optgroup>' : '') + '</select> <span class="sub">for</span> <select id="noteTo">' + newP.map((n) => opt(n, n)).join('') + '</select> <button class="btn" id="noteSwap" type="button">Swap</button></div>' : '';
+  if (editing) top += '<div class="panel"><h3>' + (editN ? 'Edit the note' : 'A new NSRT note') + ' for ' + esc(boss) + ' <small>' + (NO.list.length ? 'saved in this browser. Each pull uses the one you pick, or the one that names the most of its players' : 'paste your Northern Sky Raid Tools note to check assignments') + '</small></h3>' +
+    '<div class="nt-name"><label for="noteName" class="sub">Name</label> <input id="noteName" type="text" maxlength="40" value="' + esc(editN ? editN.name : 'Note ' + (NO.list.length + 1)) + '" placeholder="Like Mythic main, or Without Optt"></div>' +
+    '<textarea id="noteBox" class="notebox" placeholder="Paste the whole NSRT note here: the EncounterID line, reminder lines (time:…;ph:…;tag:…;spellid:…) and your text assignments (Guillotine 1: Name Name…, {skull} Kicks: Name Name…)">' + esc(editT) + '</textarea>' + swapRow +
+    '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="noteSave">Save and check</button>' + (editN ? '<button class="btn" id="noteSaveNew">Save as a new note</button>' : '') + (NO.list.length ? '<button class="btn" id="noteCancel">Cancel</button>' : '') + (editN ? '<button class="btn" id="noteDel">Remove this note</button>' : '') + '</div>' +
     '<p class="muted" style="font-size:13px;margin:10px 0 0">' + checked + '</p></div>';
-  // (the saved note, with a button to paste an updated one, sits on top where it's easy to find)
-  if (!editing) top += '<div class="panel notebar"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<b>NSRT note</b> <span class="sub">' + (a && a.note ? plural(a.note.reminders.length, 'reminder') + ' and ' + plural(a.note.lines.length, 'text line') + ', ' : '') + 'used for every pull of ' + esc(boss) + '</span></span><button class="btn" id="noteEditBtn">Update note</button></div>';
+  // (the note this pull uses, the saved notes to pick from, and buttons to edit it or add another, on top where it's easy to find)
+  if (!editing) { const sel = NO.list.length > 1 ? '<select id="notePick" class="nt-pick" aria-label="Which note">' + opt('auto', 'Pick by roster') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>' + esc(n.name) + '</option>').join('') + '</select>' : '';
+    const why = used ? (used.auto ? 'picked for this pull\'s roster (it names ' + (used.score || 0) + ' of its players)' : NO.list.length > 1 ? 'picked by you' : '') : '';
+    top += '<div class="panel notebar"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<b>NSRT note' + (used ? ': ' + esc(used.name) : '') + '</b> <span class="sub">' + (a && a.note ? plural(a.note.reminders.length, 'reminder') + ' and ' + plural(a.note.lines.length, 'text line') : '') + (why ? (a && a.note ? ', ' : '') + why : '') + '</span></span>' + sel +
+      '<button class="btn" id="noteEditBtn">Edit note</button><button class="btn" id="noteNewBtn">New note</button></div>'; }
   if (a && a.error) top += '<div class="panel">Couldn\'t read the note: ' + esc(a.error) + '</div>';
   const B = (a && a.boss) || {};
   if (!only && a && !a.error) {
@@ -1761,11 +1808,23 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // (a tile opens its section if it's folded, then scrolls to it under the sticky tabs)
   $$('#assignBox details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
   $$('#assignBox .pt-go').forEach((x) => (x.onclick = (e) => { e.preventDefault(); const id = x.getAttribute('href').slice(1), el = document.getElementById(id) || document.querySelector('#assignBox [id^="' + id + '-"]'); if (!el) return; if (el.tagName === 'DETAILS') el.open = true; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); }));
-  const save = () => { const v = $('#noteBox').value.trim(); if (v) store.set(noteKey(boss), v); else localStorage.removeItem(noteKey(boss)); S.noteEdit = false; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
-  if ($('#noteSave')) $('#noteSave').onclick = save;
-  if ($('#noteCancel')) $('#noteCancel').onclick = () => { S.noteEdit = false; assign(only); refreshIcons(); };
-  if ($('#noteDel')) $('#noteDel').onclick = () => { if (confirm('Remove the saved note for ' + boss + '?')) { localStorage.removeItem(noteKey(boss)); S.noteEdit = false; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); } };
-  if ($('#noteEditBtn')) $('#noteEditBtn').onclick = () => { S.noteEdit = true; assign(only); };
+  // (saving: the note in the box replaces the one being edited, or becomes a new one; every pull of the boss is checked again)
+  const redo = () => { S.noteEdit = false; S.noteEditId = null; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
+  const save = (asNew) => { const v = $('#noteBox').value.trim(), nm = ($('#noteName').value || '').trim() || 'Note ' + (NO.list.length + 1), o = notesOf(boss);
+    if (!v) { if (editN && !asNew) o.list = o.list.filter((n) => n.id !== editN.id); }
+    else if (editN && !asNew) { const n = o.list.find((x) => x.id === editN.id); if (n) Object.assign(n, { name: nm, text: v, saved: Date.now() }); }
+    else o.list.push({ id: 'n' + Date.now().toString(36), name: asNew && editN && nm === editN.name ? nm + ' (copy)' : nm, text: v, saved: Date.now() });
+    if (o.pick !== 'auto' && !o.list.some((n) => n.id === o.pick)) o.pick = 'auto'; notesSave(boss, o); redo(); };
+  if ($('#noteSave')) $('#noteSave').onclick = () => save(false);
+  if ($('#noteSaveNew')) $('#noteSaveNew').onclick = () => save(true);
+  if ($('#noteCancel')) $('#noteCancel').onclick = () => { S.noteEdit = false; S.noteEditId = null; assign(only); refreshIcons(); };
+  if ($('#noteDel')) $('#noteDel').onclick = () => { if (editN && confirm('Remove the note "' + editN.name + '" for ' + boss + '?')) { const o = notesOf(boss); o.list = o.list.filter((n) => n.id !== editN.id); if (o.pick === editN.id) o.pick = 'auto'; notesSave(boss, o); redo(); } };
+  if ($('#noteEditBtn')) $('#noteEditBtn').onclick = () => { S.noteEdit = true; S.noteEditId = used ? used.id : null; assign(only); };
+  if ($('#noteNewBtn')) $('#noteNewBtn').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+  if ($('#notePick')) { $('#notePick').value = NO.pick || 'auto'; $('#notePick').onchange = () => { const o = notesOf(boss); o.pick = $('#notePick').value; notesSave(boss, o); redo(); }; }
+  // (swap: every whole-word use of the name in the box, so a reminder tag and a text line both change)
+  if ($('#noteSwap')) $('#noteSwap').onclick = () => { const a0 = $('#noteFrom').value, b0 = $('#noteTo').value, box = $('#noteBox'); if (!a0 || !b0) return;
+    box.value = box.value.replace(new RegExp('(^|[^\\p{L}])' + a0.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:-[\\p{L}\'’]+)?(?=$|[^\\p{L}])', 'giu'), (m, pre) => pre + b0); };
 }
 
 // ---------- death cutoff ----------
@@ -1877,8 +1936,14 @@ function audit() {
     const icon = (s) => (s.spell[0] || sidOf(s.spell[1]) ? '<span class="sp" data-sid="' + (s.spell[0] || 0) + '" data-sn="' + esc(s.spell[1]) + '">' + spellIcon(s.spell[0], s.spell[1]) + '</span>' : spellIcon(s.spell[0], s.spell[1]));
     const href = (s) => '#sec-' + s.id + '-' + firstAt.get(s.id);
     const name = (s) => '<a class="tlink mwr-l" href="' + href(s) + '">' + icon(s) + '<b>' + esc(s.title.split(': ')[0]) + '</b></a>';
-    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s); return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
-    const right = ord.filter((s) => tierT(s) === 2).map((s) => name(s) + (s.summary ? ' <span class="sub">' + esc(s.summary) + '</span>' : ''));
+    // (each one says what went wrong, not what the section shows: its worst row as one short line, the way Summary does, and how many more)
+    // (the group's title without the mechanic's name, which is just before it: "Plague Froth #5 (Imbibe 2)", not "Plague Froth Plague Froth 5")
+    const gTitle = (s, t) => { const n = s.title.split(': ')[0]; if (!t.toLowerCase().startsWith(n.toLowerCase() + ' ')) return t; const x = t.slice(n.length + 1); return /^\d/.test(x) ? '#' + x : x; };
+    const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn)); for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
+    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
+    // (and what went well keeps only its count, "10 tank frontals.", not what the section shows)
+    const okSum = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/\bshows?\b/i.test(x)).join(' ');
+    const right = ord.filter((s) => tierT(s) === 2).map((s) => { const t = okSum(s.summary); return name(s) + (t ? ' <span class="sub">' + esc(t) + '</span>' : ''); });
     if (wrong.length || right.length) h += wrongRight(wrong, right, { none: 'Every mechanic went to plan.', moreWhere: 'below' });
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
@@ -3108,9 +3173,18 @@ const cellTxt = (c) => c.txt || (c.s && c.s[1]) || c.p || (c.ps && c.ps.join(', 
 // a flagged row as one short line: its time and name, then the flagged values ("3:12 Dreadmarch #2: Result 2 ghosts touched")
 function rowText(s, row) {
   const t = row.find((c) => c.t != null), first = row.find((c) => c.t == null && !c.map && !c.maps && !c.more);
-  // (each flagged value says its column, unless it already does, and its note: "Target Arsyn (no protection)")
+  // (each flagged value says its column, unless it already does, and its note: "Target Arsyn (no protection)";
+  // a one-word column the value repeats is left off: "2 touches", not "Touches 2 touches"; "Died" goes after the names,
+  // and "Orbs popped" with "3 orbs" reads "3 orbs popped")
+  const stems = (w) => [w, w.replace(/s$/, ''), w.replace(/es$/, ''), w.replace(/d$/, '')].filter((x) => x.length >= 3);
+  const has = (lv, w) => stems(w).some((x) => new RegExp('(^|[^\\p{L}])' + x, 'u').test(lv));
+  const label = (col, v) => { const w = col.toLowerCase(), lv = v.toLowerCase(), ws = w.split(/\s+/);
+    if (lv.startsWith(w)) return v; if (w === 'died') return has(lv, w) ? v : v + ' died';
+    if (ws.length === 1) return has(lv, w) ? v : col + ' ' + v;
+    return /^\d[\d.,]*\s+\S+$/.test(v) && has(lv, ws[0]) ? v + ' ' + ws.slice(1).join(' ') : col + ' ' + v; };
+  const flat = (t) => String(t).replace(/\s*\(([^()]*)\)/g, ', $1');
   const bits = row.map((c, i) => ({ c, col: s.cols[i] || '' })).filter(({ c }) => (c.bad || c.warn) && c !== first && !c.map && !c.maps && !c.more)
-    .map(({ c, col }) => { const v = String(cellTxt(c)); return v ? (col && !c.s && !/^(result|rating)$/i.test(col) && !v.toLowerCase().startsWith(col.toLowerCase()) ? col + ' ' : '') + v + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + c.sub + ')' : '') : ''; }).filter(Boolean);
+    .map(({ c, col }) => { const v = String(cellTxt(c)), plain = /^(result|rating|notes?|what happened)$/i.test(col); return v ? (col && !c.s && !plain ? label(col, v) : v) + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + flat(c.sub) + ')' : '') : ''; }).filter(Boolean);
   return ((t ? T(t.t) + ' ' : '') + (first ? cellTxt(first) : '')).trim() + (bits.length ? ': ' + bits.join(' · ') : '');
 }
 // every Fight audit mechanic across the pulls: per pull its status (up to the wipe filter), its problems as short lines,
@@ -3264,7 +3338,7 @@ async function night() {
   const res = (r) => { const pg = progressOf(r); return r.item.kill ? 'kill' : 'wipe' + (pg ? (pg.phase ? ' in ' : ' at ') + pg.label : ''); };
   const gst = (l) => (l === 'S' || l === 'A' ? 'ok' : l === 'B' || l === 'C' ? 'warn' : 'bad');
   const kill = pulls.find((b) => b.kill), known = pulls.filter((b) => pullPct(b) != null), bestP = kill || (known.length ? known.reduce((m, b) => (pullPct(b) < pullPct(m) ? b : m)) : null);
-  const time = pulls.reduce((s, b) => s + (b.duration || 0), 0), hasNote = !!store.get(noteKey(b0.boss));
+  const time = pulls.reduce((s, b) => s + (b.duration || 0), 0), hasNote = notesOf(b0.boss).list.length > 0;
   const gm = reps.length ? gradeBoss(reps) : null, ga = hasNote && reps.length ? gradeAssign(reps) : null;
   const overall = gm ? (ga ? 0.6 * gm.overall + 0.4 * ga.overall : gm.overall) : null;
   // ---- the pieces shared by both groups: a row of dots (one per pull), a fold-out row, a phase block ----
@@ -11661,9 +11735,9 @@ function syncUrl(item) {
 // Three ways in: follow the raid's Warcraft Logs live log during raid, open a combat log file from this PC, or import a
 // Warcraft Logs report. Warcraft Logs needs the login once (local helper); after that a pasted link opens directly.
 const LOGO = '<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="3" stroke-linejoin="round"/><path d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z" fill="none" stroke="#e6b450" stroke-width="4" stroke-linejoin="round"/><path d="m27 32.5 4 4 8.5-9.5" fill="none" stroke="#7ee08f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-// The front page's preview: an app-like window with four views (Latest pull, Mechanics, Assignments, Summary). All
-// made-up example data and names, drawn in code (no game art).
-const FP_SCENES = [['live', 'Latest pull'], ['mech', 'Mechanics'], ['assign', 'Assignments'], ['summary', 'Summary']];
+// The front page's preview: an app-like window with four views (Pull recap, Mechanics, Assignments, Night summary).
+// All made-up example data and names, drawn in code (no game art).
+const FP_SCENES = [['live', 'Pull recap'], ['mech', 'Mechanics'], ['assign', 'Assignments'], ['summary', 'Night summary']];
 function fpParts() {
   const mark = { bad: '✕', warn: '!', ok: '✓' };
   const r = (k, html, who) => '<div class="fp-r ' + k + '"><i>' + mark[k] + '</i><span>' + html + '</span>' + (who ? '<span class="fp-who">' + who + '</span>' : '') + '</div>';
@@ -11761,7 +11835,7 @@ function home() {
         '<div class="fp-note">Example data. Click a tab to look around.</div></div></section></div>' +
     (teamsTop ? '' : homeTeams()) +
     '<section class="fp-ways"><h2>Four ways to look at a night</h2><div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div></section>' +
-    '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+    '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.' + (DISCORD_URL ? ' Found something wrong, or have an idea? <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Tell us on Discord</a>.' : '') + '</div></div>';
   bindHomeTeams(); homeTeamsSoon();
   // open a report: with a saved login (or the hosted site) straight away; otherwise the login form, link filled in
   const go = async (inputId, msgId, live) => {
@@ -11853,7 +11927,7 @@ function teamTile(g, all, order) {
 function homePreviews() {
   const card = (k, t, body) => '<button class="tp-card" type="button" data-tour="' + k + '"><span class="tp-t">' + t + '</span><span class="tp-art">' + body + '</span></button>';
   return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
-    card(1, 'Latest pull', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
+    card(1, 'Pull recap', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
     card(2, 'Mechanics', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
     card(3, 'Performance', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
     card(4, 'Teams', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
@@ -11905,7 +11979,7 @@ const PAGE_TIPS = {
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went fine, amber could be better, and red went wrong. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
     { sel: '#view .lp-main', t: 'What went well, and what to fix', p: 'What the raid did well comes first, then the three things to fix before you pull again, then everything that went wrong. The › button opens each one.' },
     { sel: '#view .lp-prep', t: 'Before the next pull', p: 'This shows who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it are the players to talk to, each with their one thing to fix.' },
-    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig deeper into this pull, with your assignments, every mechanic, the meters, the whole night and every player.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs under "This pull" dig deeper into it: every mechanic, your assignments and the meters. The tabs under "Whole night" cover every pull together and every player.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
     { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note (from wowutils). Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
@@ -11993,7 +12067,7 @@ function renderTeamsHome() {
   $('#main').innerHTML = '<div class="home th-home2">' + teamsBar() +
     '<section class="th-teams"><div class="th-h"><h2>Your teams</h2>' + (ago != null ? '<span class="sub">' + (S.progBusy ? 'checking for new nights…' : 'checked ' + (ago < 1 ? 'just now' : ago < 60 ? plural(ago, 'minute') + ' ago' : ago < 1440 ? plural(Math.round(ago / 60), 'hour') + ' ago' : 'on ' + esc(nightLabel(last + 6 * 3600e3)))) + '</span>' : '') + '</div>' +
       '<div class="tt-row">' + gl.map((g) => teamTile(g, all, order)).join('') + '<button class="tt-card tt-add" type="button" data-g="+"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a team</span><span class="tt-l">or your character</span></button></div></section>' +
-    homePreviews() + '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+    homePreviews() + '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.' + (DISCORD_URL ? ' Found something wrong, or have an idea? <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Tell us on Discord</a>.' : '') + '</div></div>';
   progLit(false); bindTeamsBar();
   $$('#main .tt-card').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); window.scrollTo(0, 0); }));
   $$('#main .tp-card').forEach((b) => (b.onclick = () => startTour(+b.dataset.tour)));
@@ -12039,7 +12113,7 @@ function homeHosted() {
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
     (teamsTop ? '' : homeTeams()) +
-    '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.</div></div>';
+    '<div class="home-foot">Built for Mythic progression in The Venomous Abyss.' + (DISCORD_URL ? ' Found something wrong, or have an idea? <a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Tell us on Discord</a>.' : '') + '</div></div>';
   bindHomeTeams(); homeTeamsSoon();
   // (either box takes any report link: the live one follows it from the start, the other turns live on by itself if the
   // report is still being logged)
@@ -12540,6 +12614,7 @@ $('#brandHome').onclick = () => home();
   }
 }
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
+if ($('#tbDiscord') && DISCORD_URL) { $('#tbDiscord').href = DISCORD_URL; $('#tbDiscord').hidden = false; $('#tbDiscord').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; }; }
 if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tab Layout Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --text: #ece8df; --muted: #98a0ad; --faint: #6c7381; --gold: #e6b450; --ok: #7ee08f; --warn: #f3c969; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Barlow, system-ui, sans-serif; }
+main { max-width: 1060px; margin: 0 auto; padding: 28px 16px 60px; }
+h1 { font-size: 26px; margin: 0 0 4px; }
+.lead { color: var(--muted); margin: 0 0 22px; max-width: 760px; }
+.opt { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 16px; margin: 0 0 18px; }
+.opt.pick { border-color: var(--gold); box-shadow: inset 4px 0 0 var(--gold); }
+.opt h2 { margin: 0; font-size: 19px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: var(--raised); color: var(--muted); }
+.tag.rec { background: var(--gold); color: #1b1406; }
+.sub { color: var(--muted); font-size: 14px; margin: 4px 0 12px; }
+.bar { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; padding: 4px 4px 0; background: var(--bg); border-radius: 8px 8px 0 0; }
+.tab { padding: 10px 14px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; display: inline-flex; gap: 7px; align-items: center; }
+.tab svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tab.on { color: var(--text); border-bottom-color: var(--gold); }
+.tab.off { opacity: .45; }
+.grp { display: flex; flex-direction: column; }
+.grp > b { font-size: 10.5px; letter-spacing: .9px; text-transform: uppercase; color: var(--faint); padding: 0 14px; font-weight: 700; }
+.grp > div { display: flex; gap: 2px; }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin: 10px 8px 8px; }
+.phone { width: 340px; max-width: 100%; margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 10px 0 0; background: var(--bg); overflow: hidden; }
+.phone .bar { border-radius: 0; }
+.phone .tab { padding: 9px 11px; font-size: 14px; }
+.cap { font-size: 12px; color: var(--faint); margin: 6px 2px 0; }
+.what { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px 16px; margin: 14px 0 0; padding: 0; list-style: none; }
+.what li { font-size: 14px; color: var(--muted); }
+.what li b { color: var(--text); font-weight: 600; }
+.verdict { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--raised); font-size: 14px; }
+.verdict b { color: var(--warn); }
+.pick .verdict b { color: var(--gold); }
+.notes { color: var(--muted); font-size: 14px; }
+.notes li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Main tabs: order and names</h1>
+<p class="lead">Your tabs today, then three ways to order and name them so each one says what it does. Only the tab bar changes: every page stays the same. Performance is shown faded, as it's greyed out on the website.</p>
+
+<section class="opt">
+  <h2>Today <span class="tag">current</span></h2>
+  <p class="sub">The problems: "Latest pull" shows any pull you pick, not only the latest. "Summary" doesn't say it's the whole night. And the one-pull tabs and the whole-night tabs are mixed together.</p>
+  <div class="bar" data-bar="now"></div>
+</section>
+
+<section class="opt pick">
+  <h2>Option A: two labelled groups <span class="tag rec">my pick</span></h2>
+  <p class="sub">"This pull" tabs on the left and "Whole night" tabs on the right, with a small label over each group. Only two names change: Latest pull becomes Pull recap, and Summary becomes Night summary.</p>
+  <div class="bar" data-bar="a"></div>
+  <div class="phone"><div class="bar" data-bar="a"></div></div>
+  <p class="cap">On a phone the bar scrolls sideways as it does today, and the labels stay over their groups.</p>
+  <ul class="what">
+    <li><b>Pull recap:</b> the pull at a glance, and what to fix before the next one.</li>
+    <li><b>Mechanics:</b> every boss mechanic in this pull, with maps.</li>
+    <li><b>Assignments:</b> your NSRT note, checked against this pull.</li>
+    <li><b>Performance:</b> how each player played their character.</li>
+    <li><b>Night summary:</b> every pull of the boss tonight, together.</li>
+    <li><b>Players:</b> each player's grade and page, for the night or one pull.</li>
+  </ul>
+  <p class="verdict"><b>Why I'd pick it:</b> the labels answer the question raiders actually have ("is this about one pull or the whole night?") without making anyone relearn much. Mechanics moves before Assignments because more raiders look at it.</p>
+</section>
+
+<section class="opt">
+  <h2>Option B: same order idea, no labels <span class="tag">simplest</span></h2>
+  <p class="sub">The same order and names as A, with a thin divider instead of labels. Less to read, but the divider alone doesn't say what it means.</p>
+  <div class="bar" data-bar="b"></div>
+  <p class="verdict"><b>Trade-off:</b> the cleanest bar, but new raiders may not notice that the last two tabs cover the whole night.</p>
+</section>
+
+<section class="opt">
+  <h2>Option C: night first, for after the raid <span class="tag">different use</span></h2>
+  <p class="sub">The night summary comes first, since after raid people review the whole night. The pull tabs follow, and Players moves next to them.</p>
+  <div class="bar" data-bar="c"></div>
+  <p class="verdict"><b>Trade-off:</b> better for review the next day, worse during raid, when the pull that just ended is what everyone opens. Debrief already opens on the latest pull while you're live-logging, so the first tab would often be the wrong one.</p>
+</section>
+
+<section class="opt">
+  <h2>Things I'd keep whichever you pick</h2>
+  <ul class="notes">
+    <li>Your teams stays in the top bar, on every page, as it is now.</li>
+    <li>The page tips and the tour get the new names.</li>
+    <li>Old links keep working: a saved link to "Summary" opens Night summary.</li>
+    <li>Other names I considered and dropped: "Recap" alone (too vague), "Tonight" (wrong for a log from last week), and "NSRT note" for Assignments (Assignments already says it well).</li>
+  </ul>
+</section>
+</main>
+<script>
+const IC = {
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
+  target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+  bars: '<path d="M4 20h16"/><path d="M6.5 17v-5M11 17V7M15.5 17v-8M20 17v-3"/>',
+  chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
+  users: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9.5" r="2.5"/><path d="M15.5 14.2c2.4-.2 4.4 1.3 5 4.3"/>' };
+const T = (ic, name, on, off) => '<span class="tab' + (on ? ' on' : '') + (off ? ' off' : '') + '"><svg viewBox="0 0 24 24">' + IC[ic] + '</svg>' + name + '</span>';
+const G = (label, tabs) => '<span class="grp"><b>' + label + '</b><div>' + tabs + '</div></span>';
+const pullTabs = T('clock', 'Pull recap', true) + T('target', 'Mechanics') + T('list', 'Assignments') + T('bars', 'Performance', false, true);
+const nightTabs = T('chart', 'Night summary') + T('users', 'Players');
+const BARS = {
+  now: T('clock', 'Latest pull', true) + T('list', 'Assignments') + T('target', 'Mechanics') + T('bars', 'Performance', false, true) + T('chart', 'Summary') + T('users', 'Players'),
+  a: G('This pull', pullTabs) + '<span class="sep"></span>' + G('Whole night', nightTabs),
+  b: pullTabs + '<span class="sep"></span>' + nightTabs,
+  c: T('chart', 'Night summary', true) + T('clock', 'Pull recap') + T('target', 'Mechanics') + T('list', 'Assignments') + T('users', 'Players') + T('bars', 'Performance', false, true) };
+document.querySelectorAll('[data-bar]').forEach((el) => (el.innerHTML = BARS[el.dataset.bar]));
+</script>
+</body>
+</html>

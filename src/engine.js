@@ -1189,8 +1189,8 @@ function buildTwinFangs(ev, r, h) {
     });
     const tankG = (rows.find((x) => x.tank.length) || { tank: [] }).tank[0] || (auraId(TF.sbDeb).find((e) => e.t >= set[0].t && e.t <= set[0].t + 10) || {}).dst;
     for (const x of rows) if (!x.tank.length && x.raid.length) {
-      const map = { t: x.hitT, bad: tankG ? [tankG] : [], badLabel: 'tank who missed it', hl: x.raid.filter((g) => g !== tankG), hlLabel: 'hit by the missed circle', title: 'Stone Breaker #' + (i + 1) + ', circle ' + (x.k + 1) + ' at ' + h.fmtT(x.hitT), pts: h.snap(x.hitT) };
-      M(x.hitT, tankG ? pname(tankG) : 'Unknown', 'stone breaker', 'High', 'Missed Stone Breaker circle ' + (x.k + 1) + ': it hit ' + pl(x.raid.length, 'player') + '.', 'Tank: stand in each of the three circles in order as they land.', map);
+      // (no map: the log can't place the circle itself, only where the tank and the raid stood, and a map of that alone would look like proof)
+      M(x.hitT, tankG ? pname(tankG) : 'Unknown', 'stone breaker', 'High', 'Missed Stone Breaker circle ' + (x.k + 1) + ': it hit ' + pl(x.raid.length, 'player') + '.', 'Tank: stand in each of the three circles in order as they land.');
     }
     return { i, t: set[0].t, rows, tankG };
   });
@@ -1202,7 +1202,7 @@ function buildTwinFangs(ev, r, h) {
       const miss = s.rows.filter((x) => !x.tank.length).length;
       return { title: 'Stone Breaker ' + (s.i + 1), t: s.t, bad: miss > 0, sub: (s.tankG ? pname(s.tankG) + ', ' : '') + (s.rows.length - miss) + ' of ' + s.rows.length + ' circles soaked',
         rows: s.rows.map((x) => [{ txt: '#' + (x.k + 1) }, { t: x.hitT }, x.tank.length ? { ps: x.tank.map(pname) } : { txt: 'missed', bad: true }, x.raid.length ? { txt: pl(x.raid.length, 'player'), bad: true } : { txt: 'none', dim: true },
-          { map: { t: x.hitT, good: x.tank, goodLabel: 'tank soaked it', bad: x.tank.length ? [] : s.tankG ? [s.tankG] : [], badLabel: 'tank who missed it', hl: x.raid, hlLabel: 'hit by the missed circle', title: 'Stone Breaker ' + (s.i + 1) + ', circle ' + (x.k + 1) + ' at ' + h.fmtT(x.hitT), pts: h.snap(x.hitT) } }]) };
+          { txt: '' }]) };
     }), rows: [] });
 
   // ---- 9. avoidable: Stir the Depths and Sanguine Storm ----
@@ -1711,7 +1711,7 @@ function buildSszorak(ev, r, h) {
     });
     const hit = [...by.values()];
     const whole = [{ txt: 'Whole Tempest', sub: 'every touch, on one map', dim: true }, { t }, { txt: String(hit.reduce((n, o) => n + o.ts.length, 0)), dim: true }, { txt: '' },
-      { map: { t: t + 3, bad: hit.map((o) => o.g), badAt: hit.map((o) => [o.g, o.ts[0]]), badLabel: 'touched by a tornado', title: 'Tempest ' + (i + 1) + ' at ' + T(t), pts: h.snap(t + 3), frames: frames(t - 1, tEnd) } }];
+      { txt: '' }];
     return { title: s ? setTitle(s) : 'Tempest ' + (i + 1), t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: hit.length ? pl(hit.length, 'player') + ' touched' : 'nobody touched', rows: rows.length ? [whole].concat(rows) : [] };
   });
   if (tmpGroups.length) sections.push({ id: 'tempest', title: 'Tempest: tornadoes dodged', spell: [SZ.tempestCast, 'Tempest'], verdict: tmpGroups.some((g) => g.bad) ? 'bad' : tmpGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -1891,7 +1891,7 @@ function buildSszorak(ev, r, h) {
         return [{ p: pname(o.g) }, { t: o.t }, { txt: fmtM(o.amt), sub: o.n > 1 ? o.n + ' hits' : '' }, d ? { txt: 'clipped, died', bad: true } : { txt: 'clipped', warn: true }, { txt: '' }]; });
       const hurt = [...by.values()].filter((o) => o.amt > 0).length, tb = f.popT + 5;
       return { title: 'Fury ' + (k + 1) + ' pop', t: f.popT, bad: rows.some((q) => q[3].bad), warn: rows.some((q) => q[3].warn), sub: pl(f.soak.length, 'player') + ' with Virulence, ' + (hurt ? pl(hurt, 'player') + ' clipped' : 'nobody clipped') + (early.length ? '; ' + early.map((d) => d.player).join(', ') + ' died with it, so it burst early, in the stack' : ''),
-        rows: [[{ txt: 'Whole burst', sub: 'everyone with Virulence, on one map', dim: true }, { t: tb }, { txt: '' }, { txt: '' }, { map: { t: tb, hl: f.soak, hlLabel: 'had Virulence', bad: [...by.keys()], badLabel: 'clipped by a burst', badAt: [...by.values()].map((o) => [o.g, o.t]), title: 'Virulence after Fury ' + (k + 1) + ' at ' + T(tb), pts: h.snap(tb), frames: frames(f.popT + 1, tb + 3) } }]].concat(rows) };
+        rows: [[{ txt: 'Whole burst', sub: 'everyone with Virulence', dim: true }, { t: tb }, { txt: '' }, { txt: '' }, { txt: '' }]].concat(rows) };
     });
     if (vGroups.length) sections.push({ id: 'virulence', title: 'Virulence: spread after the pop', spell: [SZ.vir[0], 'Virulence'], verdict: vGroups.some((g) => g.bad) ? 'bad' : vGroups.some((g) => g.warn) ? 'warn' : 'good',
       summary: pl(vGroups.length, 'pop') + '. It shows anyone a Virulence burst clipped.', cols: ['Player', 'When', 'Hit for', 'Result', ''], groups: vGroups, rows: [] });
@@ -2120,12 +2120,15 @@ function buildNekzali(ev, r, h) {
     }
     // (Hungering Pyre: the soak lands 7.5 s after its cast starts; its hit splits between everyone within 10 yards)
     const pyH = dmgId(NZ.pyre).filter((e) => e.t >= ritT && e.t <= iEnd + 5), pys = []; for (const e of pyH) { const p = pys[pys.length - 1]; if (p && e.t - p.t < 1) p.who.add(e.dst); else pys.push({ t: e.t, who: new Set([e.dst]) }); }
+    // (the soak's 10 yards, centred on the players it hit, as the Spectral Coil map does: the log has no position for the Pyre itself)
+    const pyreRing = (p) => { const sk = h.snap(p.t).filter((q) => p.who.has(q.guid)); if (!sk.length) return []; const cx = sk.reduce((v, q) => v + q.x, 0) / sk.length, cy = sk.reduce((v, q) => v + q.y, 0) / sk.length;
+      return [{ x: cx, y: cy, r: 10, label: '10 yd soak', legend: 'the soak, 10 yd (centred on its soakers)' }]; };
     pys.forEach((p, k) => {
       _nz.pyres.push({ i: k + 1, t: p.t, who: [...p.who].map(pname) });
       const died = r.deaths.filter((d) => d.t >= p.t - 0.2 && d.t <= p.t + 1 && /hungering pyre/i.test(d.ability || ''));
       if (died.length) M(p.t, 'Raid', 'Hungering Pyre', 'High', 'Hungering Pyre was soaked by ' + pl(p.who.size, 'player') + ' and ' + pl(died.length, 'player') + ' died.', 'Send the melee into every Hungering Pyre so its damage is split.');
       rows.push([{ txt: 'Hungering Pyre ' + (k + 1) }, { t: p.t }, { txt: pl(p.who.size, 'soaker'), warn: p.who.size < 4 && !died.length, bad: !!died.length, sub: [...p.who].map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
-        { map: { t: p.t, good: [...p.who], goodLabel: 'soaked', title: 'Hungering Pyre ' + (k + 1) + ' at ' + T(p.t), pts: h.snap(p.t), frames: frames(p.t - 4, p.t + 1) } }]);
+        { map: { t: p.t, good: [...p.who], goodLabel: 'soaked', title: 'Hungering Pyre ' + (k + 1) + ' at ' + T(p.t), pts: h.snap(p.t), rings: pyreRing(p), frames: frames(p.t - 4, p.t + 1) } }]);
     });
     const stHits = dmgId(NZ.transfer);
     castOk(NZ.transfer[0]).filter((t) => t >= ritT - 1 && t <= iEnd + 1).forEach((t, k) => {
@@ -2281,7 +2284,7 @@ function buildVashnik(ev, r, h) {
         const left = mine.filter((o) => o.died == null || o.died > next + 0.2);
         if (left.length) M(next, 'Raid', 'Malignance', left.length >= 2 ? 'High' : 'Medium', pl(left.length, 'Malignant Totem') + ' still up at Imbibe ' + (i + 2) + ': Malignance hit the raid' + (left.length >= 2 ? ' once for each (two usually wipe).' : '.'), 'Aim the Plague Waves at the totems. Walk to your marker with Plague Froth so its four lines run through them.');
         rows.push([{ txt: 'At Imbibe ' + (i + 2) }, { t: next }, left.length ? { txt: pl(left.length, 'totem') + ' still up', bad: left.length >= 2, warn: left.length === 1, sub: 'Malignance' } : { txt: 'all cleared' }, { txt: '' },
-          { map: { t: next - 0.5, title: 'Totems left at Imbibe ' + (i + 2), pts: h.snap(next - 0.5) } }]);
+          { txt: '' }]);
       } else rows.push([{ txt: r.item.kill ? 'He died' : 'The pull ended' }, { t: dur }, { txt: mine.filter((o) => o.died == null).length + ' still up', dim: true }, { txt: '' }, { txt: '' }]);
       return { title: 'Totems from Imbibe ' + (i + 1), t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(mine.length, 'totem') + (next != null ? ', ' + mine.filter((o) => o.died == null || o.died > next + 0.2).length + ' left at the next Imbibe' : ''), rows };
     }).filter(Boolean);
@@ -2321,7 +2324,7 @@ function buildVashnik(ev, r, h) {
       if (un.length) M(un[0].t, 'Raid', 'Catalytic Bile', 'High', pl(un.length, 'Catalytic Bile') + ' landed with nobody under it and hit the whole raid.', 'Spread out before the bile lands so every impact has someone within 6 yards.');
       const tm = (sk[0] || un[0] || { t: t + 7 }).t;
       return [{ txt: 'Malignant Catalyst ' + (i + 1) }, { t: tm }, un.length ? { txt: pl(un.length, 'bile') + ' unsoaked', bad: true, sub: 'the whole raid took it' } : { txt: biles ? 'every bile soaked' : '—', dim: !biles }, { txt: who.length ? pl(who.length, 'soaker') : '—', dim: !who.length, sub: who.map(pname).join(', ') },
-        { map: { t: tm, good: who, goodLabel: 'soaked a bile', goodAt: sk.map((e) => [e.dst, e.t]), title: 'Malignant Catalyst ' + (i + 1) + ' at ' + T(t), pts: h.snap(tm), frames: frames(tm - 3, tm + 1) } }];
+        { txt: '' }];
     });
     if (rows.length) sections.push({ id: 'bile', title: 'Catalytic Bile: every impact soaked', spell: [VS.catalyst, 'Malignant Catalyst'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good',
       summary: pl(rows.length, 'Malignant Catalyst') + '. It shows who stood under the biles, and any bile that landed on nobody.', cols: ['Cast', 'When', 'Result', 'Soakers', ''], rows });

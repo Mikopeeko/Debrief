@@ -33,11 +33,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   "fancy" work. Do one border per class with a tint per spec (jade filigree for Monk, tinted for Mistweaver), not 40
   separate designs. Draw them ourselves as clean vector ornaments (never Blizzard art), and mock up two or three classes
   first so you can judge the quality before all 13 are made.
-- [ ] **Saved NSRT notes (your note, Oct 18):** save several notes, and pick the saved one that matches the pull's exact
+- [x] **Saved NSRT notes (your note, Oct 18):** done in round 195. Save several notes, and pick the saved one that matches the pull's exact
   raid composition (or have Debrief pick it), or edit an existing note in place for small composition changes (swapping a
   name). My take: very useful for raid leaders, and it fits how notes change week to week. Matching by roster is the easy
   part; editing in place should stay small (swap a player for another), so the note doesn't drift from the one in game.
-- [ ] **Minimaps must show the mechanic itself (your note, Oct 18):** every minimap that highlights a mechanic has to draw
+- [x] **Minimaps must show the mechanic itself (your note, Oct 18):** done in round 195. Every minimap that highlights a mechanic has to draw
   where the mechanic is, not only where the players stood. If its location can't be drawn properly and accurately, remove
   that map. My take: agreed, a map with only player dots looks like proof but doesn't show anything. A log can place players,
   bosses and adds (anything that is a unit in the log), and mechanics centred on a player (a spread circle around whoever had
@@ -50,12 +50,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   then Performance and Spec checks before they go live, since they're still changing. Each line checked against the rules:
   plain words, full sentences, no clipped fragments chained with colons.
 - [ ] **Review the Mechanics tab for improvements (your note, Oct 18):** go through it boss by boss and list what could be
-  clearer, simpler or more useful.
-- [ ] **Reorder and rename the main tabs (your note, Oct 18):** so each tab's name says what it does, and the order makes
+  clearer, simpler or more useful. First pass done in round 195 (Coiled Altar and Ula'tek, plus the maps); what's left is
+  listed there.
+- [x] **Reorder and rename the main tabs (your note, Oct 18):** done in round 195 (your pick, option A). So each tab's name says what it does, and the order makes
   sense (today: Teams, Latest pull, Assignments, Mechanics, Performance, Summary, Players).
 - [ ] **Simplify the tabs in Performance (your note, Oct 18).**
 - [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
-  reports and announcements, and how to link it from the site).
+  reports and announcements, and how to link it from the site). The site's side is ready (round 195): it needs your
+  invite link, then "Join the Discord" shows in the menu and on the start page.
 - [ ] **Buffs, trinkets and gear procs (your note, Oct 18):** uptime of the important buffs, and what each trinket gave (on-use
   and random procs): its average stats and its damage or healing. The same for Venomcursed items, cantrip items, enchants,
   weapon oil procs and the like. (This brings back the "Stats" idea skipped earlier.)
@@ -158,6 +160,36 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 195: New tab order, saved NSRT notes, honest maps, and the Discord link (your top 4)
+- **The main tabs (your pick, option A).** Two labelled groups. "This pull" has Pull recap (was Latest pull), Mechanics,
+  Assignments and Performance. "Whole night" has Night summary (was Summary) and Players. Mechanics now comes before
+  Assignments. Saved spots and old links still open the same page. The start page, loading tips and the Pull recap's tips
+  use the new names. Works on a phone too: the bar scrolls sideways, with the labels over their groups.
+- **Saved NSRT notes.** Save as many notes per boss as you like, each with a name. Debrief picks the one that names the
+  most players in the pull (it says so: "picked for this pull's roster"), or you pick one yourself. "Swap a player"
+  replaces one name with another everywhere in the note, realm included, for small roster changes. Your existing note
+  was kept and moved over.
+- **Maps that show the mechanic, or no map.** Removed the maps that could only show player dots: Stone Breaker, Tempest,
+  Virulence, Malignant Totems and Catalytic Bile (the log can't place those effects). Hungering Pyre's map now draws the
+  10-yard soak circle. All other maps already drew their mechanic and stay.
+- **Discord, ready for your link.** "Join the Discord" in the menu, and "Tell us on Discord" on the start page, show up as
+  soon as you send me the invite link. Hidden until then.
+- **Mechanics review, first pass (Coiled Altar and Ula'tek, then checked on Sszorak, Lost Explorers and Vashnik).**
+  - [x] "What went wrong" showed what each section contains ("It shows each Dreadmarch from start to finish…"), not
+    what went wrong. It now shows the first real problem: "Dreadmarch #1, 3:16 Ghost collision: ghosts touched".
+  - [x] Those lines had repeated words ("Touches 2 touches", "Died Huservoker died", "Plague Froth Plague Froth 5").
+    Now "2 touches", "Huservoker died", "Plague Froth #5". The same fix reaches the Night summary's lines.
+  - [x] "What went well" repeated each section's description. It now keeps only the count ("10 tank frontals.").
+  - [ ] Solid, quick: each section opens with "Overall: … / Main problems: … / Could be tighter: …". One plain sentence
+    would say the same with less to read.
+  - [ ] Solid, quick: the "Data check" panel at the bottom is for me (checking the spell IDs), not raiders. Fold it under
+    "For checking" or show it only on your computer.
+  - [ ] Solid: death lines run long ("Killed by X (94% to 0 in 6.1s) · Still had ready A, B and a healing potion"). In the
+    "What went wrong" box, the cause and one missed button would be enough.
+  - [ ] Lackluster, small: the phase headers' small print ("defensives, Healthstones and potions count up to the wipe
+    filter…") could be shorter.
+  - [ ] Still to review: the other six bosses' sections one by one (I only checked their summary lines this round).
 
 ## 2026-10-18, round 194: Devourer's checks, and an honest line on thin spec pages (your note)
 - [x] **No more "Nice work" over a low parse:** when every check on a spec page is good but the parse is under 50 (or, with
