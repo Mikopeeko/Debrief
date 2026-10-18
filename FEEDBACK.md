@@ -244,7 +244,9 @@ pulls). What was fixed, everywhere it showed up:
     and a hidden box that robots fill in (those are dropped).
   - Tested with a pretend GitHub: every check above, the issue's layout, the form on desktop and phone, and the
     failure message.
-  - [ ] Waiting on you: the GitHub key in Cloudflare (GITHUB_TOKEN). Until then the button stays hidden on the website.
+  - [x] Waiting on you: the GitHub key in Cloudflare (GITHUB_TOKEN). Until then the button stays hidden on the website.
+    Done Oct 18: you added the key (it never expires, works only on this project, and can only read and write issues).
+    A test report from the live site arrived as issue #1 (safe to close).
 - [ ] The welcome message for #announcements is drafted (now with #questions and Report a problem). Post it once the
   key is in, so "Report a problem" is really there.
 
