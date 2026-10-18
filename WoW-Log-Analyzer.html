@@ -1036,6 +1036,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .spc-fo { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 11px; text-align: left; border-radius: 10px; border: 1px solid var(--line); border-left: 3px solid var(--wa); background: rgba(0,0,0,.3); color: var(--text); font: inherit; cursor: pointer; transition: background .15s, transform .15s; }
 .spc-fo.bad { border-left-color: var(--ba); } .spc-fo:hover { background: rgba(255,255,255,.06); transform: translateX(3px); } .spc-fo .icw { width: 28px; height: 28px; margin: 0; flex: none; border-radius: 6px; overflow: hidden; } .spc-fo .icw svg, .spc-fo .icw img { width: 100%; height: 100%; }
 .spc-fo > span { min-width: 0; } .spc-fo b { display: block; font-size: 13px; } .spc-fo .sub { display: block; font-size: 12px; line-height: 1.4; } .spc-fok { margin: 0; color: #7ee08f; font-size: 13px; }
+.spc-fgap { margin: 0; color: #f3c969; font-size: 13px; line-height: 1.45; } /* (all checks good, but a low parse) */
 .spc-build { margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); } .spc-bh { display: flex; flex-direction: column; gap: 6px; } .spc-bh .spc-tals { margin: 0; } .spc-bh > .sub { font-size: 12px; }
 .spc-build details.spc-all { margin: 0; } .spc-build details.spc-all > summary { cursor: pointer; font: 600 13px var(--body); color: var(--gold); }
 .tb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 10px 0 6px; } .tb-c { min-width: 0; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(0,0,0,.22); }
@@ -15108,15 +15109,15 @@ const SPEC_TOP = {
     'Kith\'ix|16': { 'n': '3', 'score': '100', 'abc': '68%', 'apl': '100%', 'cd:fire breath': '100%', 'cd:eternity surge': '100%', 'p:Essence Burst': '1 wasted', 'win': '100%', 'cd:dragonrage': '100%' },
   },
   'Devourer Demon Hunter': {
-    'The Twin Fangs|16': { 'n': '3', 'score': '100', 'abc': '63%', 'cd:void ray': '100%', 'cd:soul immolation': '100%', 'win': '100%', 'outP': '289542' },
-    'Nek\'zali the Soulcoiler|16': { 'n': '7', 'score': '89', 'abc': '65%', 'cd:void ray': '97%', 'cd:soul immolation': '89%', 'win': '100%', 'outP': '242849' },
-    'Entombed Sentinels|16': { 'n': '8', 'score': '83', 'abc': '68%', 'cd:void ray': '97%', 'cd:soul immolation': '89%', 'win': '75%', 'outP': '220301' },
+    'The Twin Fangs|16': { 'n': '3', 'score': '100', 'abc': '63%', 'cd:soul immolation': '100%', 'p:Soulburst': 'All spent', 'res': '7%', 'win': '100%', 'wr': '7.0 a minute', 'outP': '289542' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '7', 'score': '92', 'abc': '65%', 'lv:0': '88%', 'cd:soul immolation': '89%', 'p:Soulburst': 'All spent', 'res': '4%', 'win': '100%', 'wr': '5.6 a minute', 'outP': '242849' },
+    'Entombed Sentinels|16': { 'n': '8', 'score': '96', 'abc': '68%', 'lv:0': '91%', 'cd:soul immolation': '89%', 'p:Soulburst': 'All spent', 'res': '8%', 'win': '100%', 'wr': '6.3 a minute', 'outP': '220301' },
     'Vashnik the Malignant|16': { 'outP': '341009' },
-    'The Lost Explorers|16': { 'n': '9', 'score': '78', 'abc': '64%', 'cd:void ray': '97%', 'cd:soul immolation': '86%', 'win': '50%', 'outP': '299683' },
+    'The Lost Explorers|16': { 'n': '9', 'score': '92', 'abc': '64%', 'lv:0': '96%', 'cd:soul immolation': '86%', 'p:Soulburst': 'All spent', 'res': '7%', 'win': '100%', 'wr': '6.7 a minute', 'outP': '299683' },
     'Sszorak|16': { 'outP': '227461' },
-    'The Coiled Altar|16': { 'n': '3', 'score': '67', 'abc': '64%', 'cd:void ray': '100%', 'cd:soul immolation': '100%', 'win': '33%', 'outP': '232132' },
+    'The Coiled Altar|16': { 'n': '3', 'score': '88', 'abc': '64%', 'lv:0': '69%', 'cd:soul immolation': '100%', 'p:Soulburst': 'All spent', 'res': '9%', 'win': '86%', 'wr': '5.4 a minute', 'outP': '232132' },
     'Ula\'tek|16': { 'outP': '301882' },
-    'Nymrissa Wavecaller|16': { 'n': '7', 'score': '100', 'abc': '65%', 'cd:void ray': '97%', 'cd:soul immolation': '89%', 'win': '100%', 'outP': '248741' },
+    'Nymrissa Wavecaller|16': { 'n': '7', 'score': '100', 'abc': '65%', 'lv:0': '100%', 'cd:soul immolation': '89%', 'p:Soulburst': 'All spent', 'res': '5%', 'win': '100%', 'wr': '6.6 a minute', 'outP': '248741' },
   },
   'Discipline Priest': {
     'The Twin Fangs|16': { 'outP': '388600' },
@@ -16597,6 +16598,10 @@ const spcTipK = (c, one) => { const at = (m) => (m.a < 2 ? 'the start of ' + (on
 // (a count like "3/3" said as "3 of 3", with its share when the top players' number is a share, so the two compare: "3 of 3 (100%)")
 const ofPct = (v, top) => { const m = v.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/); if (!m) return v.replace(/\s*\/\s*/, ' of ');
   return m[1] + ' of ' + m[2] + (/%\s*$/.test(String(top)) && +m[2] ? ' (' + Math.round(100 * m[1] / m[2]) + '%)' : ''); };
+// (when every check is good: "Nice work", unless the parse is low (under 50) or, with no parse, the output is well under the
+// top parses. Then the checks don't cover what's missing yet, and the page says so instead of praising it)
+const spcGap = (prs1, outR, topOut, UN) => { const pc = prs1 && prs1.pct != null ? Math.floor(prs1.pct) : null, low = pc != null ? pc < 50 : !!(topOut && outR > 0 && outR < 0.85 * topOut);
+  return !low ? '<p class="spc-fok">Everything is in good shape. Nice work.</p>' : '<p class="spc-fgap">Your checks look good, but ' + (pc != null ? 'your parse is ' + pc : 'your ' + (UN === 'healing' ? 'healing' : 'damage') + ' is well under the top parses\'') + ', so the gap is in things these checks don\'t cover yet. Compare your casts and cooldowns with a top player\'s log on Warcraft Logs.</p>'; };
 // (the shared "Next time" for a cooldown, a proc, casting and mana, when the page has none of its own)
 const spcAutoTip = (c, one) => { const K = spcTipK(c, one), n = c.ic || c.label;
   if (/^cd:/.test(c.k)) return K.long ? 'Press ' + n + ' as soon as it comes back. From ' + K.long.from + ', it sat ready for ' + K.long.secs + ' seconds.' : 'Press ' + n + ' a little sooner each time it comes back.';
@@ -16680,7 +16685,7 @@ function specPage(o) {
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A good check counts in full, and one that could be better counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
     (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
-    '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : '<p class="spc-fok">Everything is in good shape. Nice work.</p>') + goodH + '</div></div>';
+    '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
     : (o.talents && o.talents.length ? '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + o.talents.map((t) => '<span class="spc-t">' + spellIcon(0, (o.talIc || {})[t] || t) + esc(t) + '</span>').join('') + '</div></div></div>' : '');
@@ -17727,7 +17732,11 @@ function genRun(spec, D, reps, name, one) {
   // (the big cooldown whose windows get a card each (win): it counts when it's pressed over these pulls, or for one that comes on its own (buffOnly), when
   // its buff is seen. Its partners are groups of spells, any one of which counts, kept when you pressed one of them at all)
   const pressedAny = (n) => per.some(({ p, t1 }) => (p.byName.get(lc(n)) || []).some((t) => t <= t1));
-  const WIN = D.win && on(D.win) && (D.win.buffOnly ? per.some(({ p }) => (D.win.buffs || D.win.names || [D.win.n]).some((n) => p.buffs.has(n))) : pressed(D.win)) ? D.win : null;
+  const WIN0 = D.win && on(D.win) && (D.win.buffOnly ? per.some(({ p }) => (D.win.buffs || D.win.names || [D.win.n]).some((n) => p.buffs.has(n))) : pressed(D.win)) ? D.win : null;
+  // (a key-spell target that depends on the hero tree: Devourer's Annihilator aims for 4 Collapsing Stars a window, Void-Scarred for 3)
+  const WIN = WIN0 && WIN0.keyMinH ? { ...WIN0, keyMin: WIN0.keyMinH[heroN] != null ? WIN0.keyMinH[heroN] : WIN0.keyMin } : WIN0;
+  // (this boss's top players' numbers, for the checks whose bar follows them)
+  const TB0 = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const winWith = WIN ? (WIN.with || []).map((g) => [].concat(g)).filter((g) => g.some(pressedAny)) : [];
   for (const x of per) { const { r, p, t1, c } = x, s = { pull: r.item.pull, kill: r.item.kill, len: t1, m: {}, bx: {}, cdu: {}, pr: {}, dot: {}, up: {} }, BX = (k, t, cls, tip) => (s.bx[k] = s.bx[k] || []).push([t, cls, tip]);
     const dead = deadSpans(r, p).map(([a, b]) => [a, b == null ? t1 : Math.min(b, t1)]).filter(([a, b]) => a < t1 && b > a), deadL = dead.reduce((v, [a, b]) => v + b - a, 0), alive = Math.max(1, t1 - deadL);
@@ -17756,7 +17765,9 @@ function genRun(spec, D, reps, name, one) {
     for (const q of procs) { const o = genProc(r, p, t1, q, inDead); if (!o) continue; s.pr[q.n] = o; s.m['p:' + q.n] = o.wt;
       for (const [t, k] of o.ev || []) BX('p:' + q.n, t, k == null ? 'bad' : 'ok', T(t) + (k == null ? ': wasted' : ': spent on ' + spellNm(k))); }
     // (the resource: what was gained while already full is lost)
-    if (res) { const gl = (p.gainL || []).filter((g) => g.ty === res.ty && g.t <= t1 && (!res.from || res.from.test(g.spell))); s.resG = gl.reduce((v, g) => v + g.amt, 0); s.resW = gl.reduce((v, g) => v + (g.over || 0), 0);
+    // (outside: gains during that buff don't count, like Devourer's Fury inside Void Metamorphosis, where the bar is a timer that drains)
+    const outB = res && res.outside ? (p.buffs.get(res.outside) || { sp: [] }).sp : null, inOut = (t) => !!outB && outB.some(([a, e]) => t >= a - 0.05 && (e == null || t <= e));
+    if (res) { const gl = (p.gainL || []).filter((g) => g.ty === res.ty && g.t <= t1 && (!res.from || res.from.test(g.spell)) && !inOut(g.t)); s.resG = gl.reduce((v, g) => v + g.amt, 0); s.resW = gl.reduce((v, g) => v + (g.over || 0), 0);
       s.m.res = gl.filter((g) => g.over > 0).map((g) => g.t).filter((t, i, l) => !i || t - l[i - 1] > 0.5); s.resBy = new Map(); for (const g of gl) { const v = s.resBy.get(g.spell) || [0, 0]; v[0] += g.amt; v[1] += g.over || 0; s.resBy.set(g.spell, v); } }
     // (damage over time on the boss: the time it was up on at least one of the boss's units, against the time you were alive)
     if (dots.length) { const bossG = new Set([...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name)).map(([g]) => g)), ev = p.dotEv || [];
@@ -17775,18 +17786,29 @@ function genRun(spec, D, reps, name, one) {
     if (WIN) { const nms = (WIN.names || [WIN.n]).map(lc), inP = (n, a, b) => (p.byName.get(lc(n)) || []).filter((t) => t >= a && t <= b && t <= t1).length;
       const press = WIN.buffOnly ? [] : c.ab.filter((y) => nms.includes(lc(y.name))).flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w);
       const bl = (WIN.buffs || WIN.names || [WIN.n]).map((n) => p.buffs.get(n)).filter(Boolean).flatMap((b) => b.sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)])).sort((u, w) => u[0] - w[0]);
-      const sp = (WIN.buffOnly ? bl : press.map((t) => { const b = bl.find(([a]) => Math.abs(a - t) <= 1.5); return [t, b ? b[1] : Math.min(t1, t + (WIN.dur || 20))]; })).filter(([a, e]) => e - a >= 3);
+      // (merge: a buff that drops for a moment and comes back (Devourer's Collapsing Star counter) is one window; minLen drops the blips)
+      const blM = WIN.merge ? bl.reduce((m, [a, e]) => { const z = m[m.length - 1]; if (z && a - z[1] <= WIN.merge) z[1] = Math.max(z[1], e); else m.push([a, e]); return m; }, []) : bl;
+      const sp = (WIN.buffOnly ? blM : press.map((t) => { const b = bl.find(([a]) => Math.abs(a - t) <= 1.5); return [t, b ? b[1] : Math.min(t1, t + (WIN.dur || 20))]; })).filter(([a, e]) => e - a >= (WIN.minLen || 3));
       const ser = D.unitN === 'healing' ? p.healS : p.dmgS, inL = sp.reduce((v, [a, e]) => v + e - a, 0), inD = sp.reduce((v, [a, e]) => v + sumIn(ser || [], a, e), 0), tot = sumIn(ser || [], 0, t1), outR = (tot - inD) / Math.max(1, alive - inL);
       const inN = sp.reduce((v, [a, e]) => v + c.all.filter((t) => t >= a && t <= e).length, 0), outCpm = 60 * Math.max(0, c.n - inN) / Math.max(1, c.al - inL);
       const keyN = WIN.key ? [].concat(WIN.key.names) : [];
-      s.win = sp.map(([a, e]) => { const len = Math.max(1, e - a), d = sumIn(ser || [], a, e), cpm = 60 * c.all.filter((t) => t >= a && t <= e).length / len;
+      // (ready: a window that comes from a full stack (Devourer's 50 souls): how long that stack sat full, since the window before, before you went in)
+      const rdB = WIN.ready ? p.buffs.get(WIN.ready.buf) : null;
+      s.win = sp.map(([a, e], wi) => { const len = Math.max(1, e - a), d = sumIn(ser || [], a, e), cpm = 60 * c.all.filter((t) => t >= a && t <= e).length / len;
+        let rdT = null; if (rdB && rdB.dose && rdB.mx) { const prevE = wi ? sp[wi - 1][1] : -1; for (const [u, st] of rdB.dose) { if (u <= prevE) continue; if (u > a) break; if (st >= rdB.mx) { rdT = u; break; } } }
+        // (info: shown on the cards and the line, not graded, when the top players hold it too)
+        const lateBy = rdT != null ? Math.max(0, a - rdT) : null, late = lateBy != null && !WIN.ready.info && lateBy > (WIN.ready.late || 3);
+        // (the key spell's target, smaller for a window the pull cut short: one per keyPer seconds, up to the full target)
+        const kNeed = WIN.keyMin == null ? null : WIN.keyPer ? Math.min(WIN.keyMin, Math.max(1, Math.floor(len / WIN.keyPer))) : WIN.keyMin;
         const parts = winWith.map((g) => { const hit = g.find((n) => inP(n, a - (WIN.pre || 3), e)); return { n: hit || g.find((n) => pressedAny(n)) || g[0], ok: !!hit }; });
         const key = WIN.key ? keyN.reduce((v, n) => v + inP(n, a, e), 0) : null;
         // (the damage over time the window wants up (all of yours, or the ones it names): on the boss within 2 seconds of the press)
         const dotsMiss = WIN.dotsUp ? dots.filter((q) => (!Array.isArray(WIN.dotsUp) || WIN.dotsUp.includes(q.n)) && !(s.dot[q.n] && s.dot[q.n].sp.some(([u, w]) => u <= a + 2 && w >= a))).map((q) => q.n) : [];
-        const slow = outCpm > 0 && cpm < 0.85 * outCpm, low = WIN.keyMin != null && key != null && key < WIN.keyMin, iss = parts.filter((x) => !x.ok).length + (slow ? 1 : 0) + (dotsMiss.length ? 1 : 0) + (low ? 1 : 0);
-        return { t: a, e, len, d, x: outR > 0 ? (d / len) / outR : null, cpm, parts, key, dotsMiss, slow, low, st: !iss ? 'ok' : iss === 1 ? 'warn' : 'bad' }; });
-      s.winOut = { rate: outR, cpm: outCpm }; s.m.win = s.win.filter((w) => w.st !== 'ok').map((w) => [w.t, w.e]); }
+        const slow = !WIN.noPace && outCpm > 0 && cpm < 0.85 * outCpm, low = kNeed != null && key != null && key < kNeed, iss = parts.filter((x) => !x.ok).length + (slow ? 1 : 0) + (dotsMiss.length ? 1 : 0) + (low ? 1 : 0) + (late ? 1 : 0);
+        return { t: a, e, len, d, x: outR > 0 ? (d / len) / outR : null, cpm, parts, key, kNeed, dotsMiss, slow, low, lateBy, late, st: !iss ? 'ok' : iss === 1 ? 'warn' : 'bad' }; });
+      s.winOut = { rate: outR, cpm: outCpm }; s.m.win = s.win.filter((w) => w.st !== 'ok').map((w) => [w.t, w.e]);
+      // (rate: one spell's casts a minute inside the windows, like Devourer's Void Ray, which keeps Void Metamorphosis going)
+      if (WIN.rate) s.wr = { n: sp.reduce((v, [a, e]) => v + inP(WIN.rate.n, a, e), 0), len: sp.reduce((v, [a, e]) => v + e - a, 0) }; }
     // (a healer's mana: what was left at the kill, and any stretch spent out of it)
     if (D.mana) { const ml = (p.mana || []).filter(([t]) => t <= t1 + 1); s.mnOut = null; for (let i = 0; i < ml.length && !s.mnOut; i++) { if (ml[i][1] > 0.02 || ml[i][0] >= t1 - 15) continue; let j = i; while (j + 1 < ml.length && ml[j + 1][1] <= 0.02) j++; if (ml[j][0] - ml[i][0] >= 8) s.mnOut = [ml[i][0], ml[j][0]]; i = j; } if (r.item.kill && ml.length) s.mana = ml[ml.length - 1][1]; }
     s.dmgTot = sumIn(p.dmgS || [], 0, t1); s.healTot = sumIn(p.healS || [], 0, t1);
@@ -17818,7 +17840,9 @@ function genRun(spec, D, reps, name, one) {
   // (the rotation check: the share of casts that were the list's best button then, and the slips, most common first)
   const aplN = (D.apl && D.apl.blk) || 'Rotation priority', gA = grp(aplN), aplSl = D.apl ? aplAdd(rows, D.apl, add, gA, D.apl.ic || D.ic) : [];
   // (spenders at the right level, and repeated abilities)
-  if (D.apl) { (D.apl.levels || []).forEach((L, i) => { const okN = sum((s) => s.apl && s.apl.levels[i] && s.apl.levels[i].ok), badL = rows.map((s) => (s.apl && s.apl.levels[i] ? s.apl.levels[i].bad : [])), bad = badL.reduce((v, l) => v + l.length, 0), N = okN + bad; if (N < 5) return; const f = okN / N, okF = L.ok || 0.9, warnF = L.warn || 0.75;
+  if (D.apl) { (D.apl.levels || []).forEach((L, i) => { const okN = sum((s) => s.apl && s.apl.levels[i] && s.apl.levels[i].ok), badL = rows.map((s) => (s.apl && s.apl.levels[i] ? s.apl.levels[i].bad : [])), bad = badL.reduce((v, l) => v + l.length, 0), N = okN + bad; if (N < 5) return;
+    // (rel: the bar comes down on a boss where the top players score lower, like Reap at 4 souls on a boss full of adds: 8 points under their middle is good)
+    const tv = L.rel && TB0 && TB0['lv:' + i] ? parseFloat(TB0['lv:' + i]) / 100 : null, f = okN / N, okF = tv != null ? Math.min(L.ok || 0.9, tv - 0.08) : L.ok || 0.9, warnF = tv != null ? Math.min(L.warn || 0.75, tv - 0.2) : L.warn || 0.75;
       rows.forEach((s, j) => { s.m['lv:' + i] = badL[j]; }); add(gA, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', L.ic || L.s[0], L.label, pct(f), okN + ' of your ' + N + ' ' + L.what + ' came ' + L.at + '.', 'lv:' + i, (L.why ? L.why + ' ' : '') + okP(okF) + ' The times listed are the ones that didn\'t.');
       const cc = gA.l[gA.l.length - 1]; if (f < okF && L.tip) cc.tip = L.tip; });
     const rp = rows.reduce((v, s) => v + (s.apl && s.apl.rep ? s.apl.rep.bad.length : 0), 0), rn = sum((s) => s.apl && s.apl.rep && s.apl.rep.n); if (D.apl.norepeat && rn >= 20) { for (const s of rows) s.m.rep = s.apl && s.apl.rep ? s.apl.rep.bad : [];
@@ -17861,13 +17885,21 @@ function genRun(spec, D, reps, name, one) {
   const winN = WIN ? WIN.blk || WIN.n : null, gW = WIN ? grp(winN) : null, UNW = D.unitN === 'healing' ? 'healing' : 'damage', winL = WIN ? rows.flatMap((s) => (s.win || []).map((w) => ({ ...w, pull: s.pull }))) : [];
   const keyW = (n) => n + ' ' + (n === 1 ? WIN.key.one || WIN.key.names[0] : WIN.key.many || WIN.key.names[0] + 's');
   if (winL.length) { const okN = winL.filter((w) => w.st === 'ok').length, N = winL.length, f = okN / N, xs = winL.map((w) => w.x).filter((v) => v != null), xm = xs.length ? xs.reduce((v, y) => v + y, 0) / xs.length : null;
-    const miss = new Map(), bump = (k) => miss.set(k, (miss.get(k) || 0) + 1); for (const w of winL) { for (const q of w.parts) if (!q.ok) bump('p:' + q.n); if (w.slow) bump('pace'); if (w.low) bump('key'); if (w.dotsMiss.length) bump('dots'); }
+    const miss = new Map(), bump = (k) => miss.set(k, (miss.get(k) || 0) + 1); for (const w of winL) { for (const q of w.parts) if (!q.ok) bump('p:' + q.n); if (w.slow) bump('pace'); if (w.low) bump('key'); if (w.late) bump('late'); if (w.dotsMiss.length) bump('dots'); }
+    const lateL = WIN.ready ? winL.filter((w) => w.lateBy != null) : [], lateSum = lateL.reduce((v, w) => v + w.lateBy, 0), lateS = WIN.ready ? (WIN.ready.late || 3) : 0;
     const ms = [...miss].sort((a, b) => b[1] - a[1]), m0 = ms[0], ofN = (n) => (n === N ? (N === 2 ? 'both' : 'all ' + N) : n + ' of them');
-    const missT = (k, n) => (k.startsWith('p:') ? k.slice(2) + ' wasn\'t in ' + ofN(n) + '.' : k === 'pace' ? 'In ' + ofN(n) + ' you cast slower than you do outside it.' : k === 'key' ? 'In ' + ofN(n) + ' you fit fewer than ' + keyW(WIN.keyMin) + '.' : 'In ' + ofN(n) + ' your damage over time wasn\'t all up as it started.');
-    const okF = WIN.ok || 0.75, warnF = WIN.warn || 0.5, need = winWith.map((g) => 'you pressed ' + orL(g) + ' in it, or up to ' + (WIN.pre || 3) + ' seconds before').concat(['you cast at least 85% as fast as you do outside it'], WIN.dotsUp ? ['your damage over time was up as it started'] : [], WIN.keyMin ? ['you fit in ' + keyW(WIN.keyMin) + ' or more'] : []);
-    add(gW, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', WIN.ic || WIN.n, WIN.label || WIN.n + ' windows', okN + '<span>/' + N + '</span>', (N === 1 ? 'Your ' + WIN.n + ' window ' + (okN ? 'was done right.' : 'missed something.') : okN + ' of your ' + N + ' ' + WIN.n + ' windows were done right.') + (xm != null ? ' Inside ' + (N === 1 ? 'it' : 'them') + ' you did ' + xm.toFixed(1) + ' times your usual ' + UNW + ' a second.' : '') + (m0 ? ' ' + missT(m0[0], m0[1]) : ''), 'win',
-      (WIN.why ? WIN.why + ' ' : '') + 'A window lasts from when you press it until its buff ends. It counts as done right when ' + andL(need) + '. ' + okP(okF) + ' Each window has its own card' + (one ? '' : ' on its pull\'s own page') + ', and the times listed are the ones that missed something.');
-    const cc = gW.l[gW.l.length - 1]; if (m0 && f < okF) cc.tip = m0[0].startsWith('p:') ? 'Press ' + m0[0].slice(2) + ' with ' + WIN.n + ', in the same few seconds, so they hit together.' : m0[0] === 'pace' ? 'Keep casting through ' + WIN.n + '. Move before or after it, or use your instant spells while you move.' : m0[0] === 'key' ? 'Fit at least ' + keyW(WIN.keyMin) + ' into each ' + WIN.n + '.' : 'Have all your damage over time on the boss before you press ' + WIN.n + '.'; }
+    const missT = (k, n) => (k.startsWith('p:') ? k.slice(2) + ' wasn\'t in ' + ofN(n) + '.' : k === 'pace' ? 'In ' + ofN(n) + ' you cast slower than you do outside it.' : k === 'key' ? 'In ' + ofN(n) + ' you fit fewer than ' + keyW(WIN.keyMin) + '.' : k === 'late' ? 'You went into ' + ofN(n) + ' more than ' + lateS + ' seconds after ' + WIN.n + ' was ready.' : 'In ' + ofN(n) + ' your damage over time wasn\'t all up as it started.');
+    const okF = WIN.ok || 0.75, warnF = WIN.warn || 0.5, need = (WIN.ready && !WIN.ready.info ? ['you went in within ' + lateS + ' seconds of it being ready (' + WIN.ready.what + ')'] : []).concat(winWith.map((g) => 'you pressed ' + orL(g) + ' in it, or up to ' + (WIN.pre || 3) + ' seconds before'), WIN.noPace ? [] : ['you cast at least 85% as fast as you do outside it'], WIN.dotsUp ? ['your damage over time was up as it started'] : [], WIN.keyMin ? ['you fit in ' + keyW(WIN.keyMin) + ' or more' + (WIN.keyPer ? ' (fewer in a window the pull cut short)' : '')] : []);
+    add(gW, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', WIN.ic || WIN.n, WIN.label || WIN.n + ' windows', okN + '<span>/' + N + '</span>', (N === 1 ? 'Your ' + WIN.n + ' window ' + (okN ? 'was done right.' : 'missed something.') : okN + ' of your ' + N + ' ' + WIN.n + ' windows were done right.') + (xm != null ? ' Inside ' + (N === 1 ? 'it' : 'them') + ' you did ' + xm.toFixed(1) + ' times your usual ' + UNW + ' a second.' : '') + (m0 ? ' ' + missT(m0[0], m0[1]) : '') + (lateSum >= 3 ? ' In all, it sat ready for ' + durW(lateSum) + ' before you went in.' : ''), 'win',
+      (WIN.why ? WIN.why + ' ' : '') + (WIN.buffOnly ? 'A window lasts as long as its buff is up.' : 'A window lasts from when you press it until its buff ends.') + (WIN.ready && WIN.ready.info ? ' How long it sat ready before you went in is shown, but not graded: ' + WIN.ready.info : '') + ' It counts as done right when ' + andL(need) + '. ' + okP(okF) + ' Each window has its own card' + (one ? '' : ' on its pull\'s own page') + ', and the times listed are the ones that missed something.');
+    const cc = gW.l[gW.l.length - 1]; if (m0 && f < okF) cc.tip = m0[0].startsWith('p:') ? 'Press ' + m0[0].slice(2) + ' with ' + WIN.n + ', in the same few seconds, so they hit together.' : m0[0] === 'pace' ? 'Keep casting through ' + WIN.n + '. Move before or after it, or use your instant spells while you move.' : m0[0] === 'key' ? 'Fit at least ' + keyW(WIN.keyMin) + ' into each ' + WIN.n + '.' : m0[0] === 'late' ? 'Go into ' + WIN.n + ' as soon as it\'s ready (' + WIN.ready.what + '). Every second it waits is a second less of your burst.' : 'Have all your damage over time on the boss before you press ' + WIN.n + '.'; }
+  // (a spell's casts a minute inside the windows, against the bar set from the top players)
+  // (the bar follows the top players on this boss (92% of their middle is good, 82% could be better), since a boss with more movement leaves less room;
+  // with no top players' logs for the boss it's shown, not graded)
+  if (WIN && WIN.rate) { const R = WIN.rate, n = sum((s) => (s.wr ? s.wr.n : 0)), L = sum((s) => (s.wr ? s.wr.len : 0)); if (L >= 30) { const pm = 60 * n / L, topR = TB0 && TB0.wr ? parseFloat(TB0.wr) : null, okR = topR ? 0.92 * topR : null, warnR = topR ? 0.82 * topR : null;
+    add(gW, okR == null ? 'na' : pm >= okR ? 'ok' : pm >= warnR ? 'warn' : 'bad', R.ic || R.n, R.label, pm.toFixed(1) + '<span> a minute</span>', 'You cast ' + R.n + ' ' + plural(n, 'time') + ' in ' + durW(L) + ' of ' + WIN.n + ', ' + pm.toFixed(1) + ' times a minute.', 'wr',
+      (R.why ? R.why + ' ' : '') + (okR == null ? 'There aren\'t enough top players\' logs on this boss yet, so it isn\'t graded.' : 'The top players on this boss cast it ' + topR.toFixed(1) + ' times a minute, so ' + okR.toFixed(1) + ' or more is good.'));
+    if (okR != null && pm < okR) gW.l[gW.l.length - 1].tip = R.tip; } }
   // (big cooldowns: the window cooldown's uses go with its windows, and the rest in their own block)
   if (WIN) { const q = cds.find((y) => lc(y.n) === lc(WIN.n)); if (q) cdLine(gW, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]); }
   const cdN = D.cdN || (WIN ? 'Other cooldowns' : 'Cooldowns'), gK = grp(cdN); for (const q of cds) if (!WIN || lc(q.n) !== lc(WIN.n)) cdLine(gK, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]);
@@ -17876,7 +17908,7 @@ function genRun(spec, D, reps, name, one) {
   const LAYOUT = [['Rotation', [['Casting', ['abc']], [aplN, ['apl', 'rep'].concat(((D.apl && D.apl.levels) || []).map((L, i) => 'lv-' + i))], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n))]]]];
   if (res || D.mana) LAYOUT.push(['Resources', [res ? [res.n, ['res']] : null, D.mana ? ['Mana', ['mana']] : null].filter(Boolean)]);
   if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch && D.upFirst) ch[1].splice(1, 0, b); else if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
-  LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
+  LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', 'wr', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
   const L0 = D.lead || {}, MERGE = { Casting: { ic: D.ic, main: 'abc', lead: L0.abc || 'Keep casting. Time with nothing pressed is ' + (D.unitN === 'healing' ? 'healing' : 'damage') + ' you never do.' } };
   if (D.apl) MERGE[aplN] = { ic: D.apl.ic || D.ic, main: 'apl', lead: D.apl.lead || APL_LEAD };
   if (rot.length) MERGE[rotN] = { ic: rot[0].ic || rot[0].n, main: 'cd:' + lc(rot[0].n), lead: L0.rot || 'Press these whenever they\'re ready.' };
@@ -17903,11 +17935,11 @@ function genRun(spec, D, reps, name, one) {
     // (a card per window, on one pull: its time, what you did in it against your usual, and what went into it)
     win: () => { if (!one || !winL.length) return ''; const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
       return '<div class="spc-ws">' + winL.map((w) => '<div class="spc-w ' + w.st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.len) + ' seconds</span></div>' +
-        '<div class="spc-wv">' + (w.x != null ? w.x.toFixed(1) + '<span> times your usual ' + UNW + ' a second</span>' : C(w.d) + '<span> ' + UNW + '</span>') + '</div><div class="spc-wc spc-chk">' + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting') +
+        '<div class="spc-wv">' + (w.x != null ? w.x.toFixed(1) + '<span> times your usual ' + UNW + ' a second</span>' : C(w.d) + '<span> ' + UNW + '</span>') + '</div><div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) +
         (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + '</div></div>').join('') + '</div>'; } };
   const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs }) : '';
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
-    TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top players', topH: 'The ' + (D.top || spec + 's') + ' who parsed 75 or higher in the fastest kills of this boss', pullT,
+    TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win', 'wr'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top players', topH: 'The ' + (D.top || spec + 's') + ' who parsed 75 or higher in the fastest kills of this boss', pullT,
     src: 'Built with help from the Wowhead and Icy Veins guides and WoWAnalyzer\'s checks for ' + spec + ', and from what your talents do.', secIc: { 'Your pull at a glance': D.ic, 'Pull by pull': D.ic } });
   return { checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html, wait };
 }
@@ -17944,6 +17976,7 @@ function genTimeline(x, s, o) {
 // A condition (all of it must hold): buff / no (a buff of yours up, or not), st (its stacks, at least), lt (at most), deb / nodeb (one of your
 // debuffs on the boss), drem (that debuff has under this many seconds left), res: [power type, at least, at most] (from the log's readings),
 // exe (the boss under this share of its health), en (bosses alive, at least), en1 (only one boss alive), prev (the spell cast just before).
+// A spender level (levels) reads a power (ty) or, with buf, a buff's stacks just before the cast ("Reap at 4 or more Soul Fragments").
 function genAplRun(x, s, A, k) {
   const { r, p, t1, c } = x, lc = (n) => String(n).toLowerCase(), G = 0.6;
   // (each spell's casts, and its charges over time: a press with no charge left counts as one a reset gave)
@@ -17998,7 +18031,7 @@ function genAplRun(x, s, A, k) {
     else { const key = nm + '|' + want.s + '|' + (want.why || ''), e = o.slips.get(key) || { did: nm, want: want.s, why: want.why || '', tip: want.tip || '', ts: [] }; e.ts.push(t); o.slips.set(key, e); }
     prevN = n; }
   // (spenders at the right level, e.g. finishers at 6 or more combo points: the level just before each cast)
-  o.levels = (A.levels || []).map((L) => { const nm = L.s.map(lc), ok = [], bad = []; for (const [t, n2] of all) { if (!nm.includes(n2) || t < 3) continue; if (L.no && bAt(L.no, t) > 0) continue; const v = resAt(L.ty, t); if (v == null) continue; ((L.min == null || v >= L.min) && (L.max == null || v <= L.max) ? ok : bad).push(t); } return { ok: ok.length, bad }; });
+  o.levels = (A.levels || []).map((L) => { const nm = L.s.map(lc), ok = [], bad = []; for (const [t, n2] of all) { if (!nm.includes(n2) || t < 3) continue; if (L.no && bAt(L.no, t) > 0) continue; const v = L.buf ? bAt(L.buf, t - 0.05) : resAt(L.ty, t); if (v == null) continue; ((L.min == null || v >= L.min) && (L.max == null || v <= L.max) ? ok : bad).push(t); } return { ok: ok.length, bad }; });
   // (the same ability twice in a row, which breaks Combo Strikes)
   if (A.norepeat) { const set = new Set(A.norepeat.map(lc)); let last = '', nn = 0; const bad = []; for (const [t, n2] of all) { if (!set.has(n2)) continue; nn++; if (n2 === last) bad.push(t); last = n2; } o.rep = { n: nn, bad }; }
   return o;
@@ -18164,11 +18197,21 @@ const GEN_SPECS = {
     procs: [{ n: 'Essence Burst', use: ['Disintegrate', 'Pyre'], max: 2, why: 'Essence Burst makes your next Disintegrate or Pyre free. Spend it before more come.' }],
     cds: [{ n: 'Dragonrage', cd: 120, ok: 0.85, warn: 0.7, why: 'Dragonrage is your main cooldown. Every filler in it gives Essence Burst. Press it as often as the fight allows.' }],
     lead: { abc: 'Constant casting is the key. Hover lets you cast on the move, and Azure Strike beats doing nothing.', rot: 'Press your empowered spells on cooldown, and fit more of them into Dragonrage.', procs: 'Spend Essence and Essence Burst, then fill while you wait.', cds: 'Press Dragonrage on cooldown.' } },
+  // (Devourer, from the Wowhead and Icy Veins guides (Oct 2026) and the SimulationCraft list: Void Metamorphosis has no cooldown, it's ready at 50 Soul
+  // Fragments (35 with Soul Glutton) and lasts until the Fury bar drains. The log has two buffs both called Void Metamorphosis (the soul counter and
+  // the form), so the windows are read from the Collapsing Star counter, which is only up in the form. Void Ray outside the form has no cooldown and
+  // costs 100 Fury, so it's judged by the Fury left to overflow, not by a timer)
   'Devourer Demon Hunter': { ic: 'Void Ray', top: 'Devourer Demon Hunters',
-    win: { n: 'Void Metamorphosis', buffOnly: true, key: { names: ['Collapsing Star'] }, why: 'Void Metamorphosis is your burst. Fit as many Collapsing Stars into it as you can.' },
-    rot: [{ n: 'Void Ray', cd: 16, ok: 0.8, warn: 0.65, why: 'Void Ray as soon as it\'s ready, so your Fury doesn\'t overflow.' }, { n: 'Soul Immolation', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Soul Immolation on cooldown.' }],
-    res: { ty: '17', n: 'Fury', why: 'Use Void Metamorphosis and Void Ray as soon as they\'re ready, so Fury doesn\'t overflow.' },
-    lead: { rot: 'Press Void Ray and your other short cooldowns as soon as they\'re ready, and in Void Metamorphosis cast as many Collapsing Stars as you can.', res: 'Avoid wasting Fury. Spend it as it comes.' } },
+    win: { n: 'Void Metamorphosis', buffOnly: true, buffs: ['Collapsing Star'], key: { names: ['Collapsing Star'] }, keyMinH: { Annihilator: 3, 'Void-Scarred': 3 }, keyMin: 3, keyPer: 11, merge: 2.5, minLen: 8,
+      ready: { buf: 'Void Metamorphosis', late: 3, what: 'at 50 Soul Fragments, or 35 with Soul Glutton', info: 'the top players often hold it for a few seconds, for Bloodlust or the fight\'s phases.' },
+      rate: { n: 'Void Ray', label: 'Void Ray in Void Metamorphosis', why: 'Inside Void Metamorphosis, Void Ray costs no Fury and pauses your Fury drain, so pressing it on cooldown keeps the form going for longer.', tip: 'In Void Metamorphosis, press Void Ray every time it comes back, before Collapsing Star and Devour.' },
+      why: 'Void Metamorphosis is your burst. It\'s ready at 50 Soul Fragments (35 with Soul Glutton), and it lasts until your Fury drains, so go in right away and keep it going with Void Ray and Collapsing Star. The guides aim for 4 to 5 Collapsing Stars in each one as Annihilator, and 3 to 4 as Void-Scarred. The top players get 4 in most full windows, and 3 or more counts as done right.' },
+    apl: { blk: 'Your priority', list: [], levels: [
+      { s: ['Reap', 'Cull'], buf: 'Soul Fragments', min: 4, ok: 0.85, warn: 0.65, rel: true, ic: 'Reap', label: 'Reap and Cull at 4 or more souls', what: 'Reaps and Culls', at: 'at 4 or more Soul Fragments', why: 'In single target, both hero trees press Reap (Cull in Void Metamorphosis) only when it will collect 4 or more Soul Fragments, for its damage and the tier set\'s Soulburst.', tip: 'Wait for 4 or more Soul Fragments on the ground before you press Reap or Cull.' }] },
+    rot: [{ n: 'Soul Immolation', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Soul Immolation on cooldown.' }],
+    procs: [{ n: 'Soulburst', use: ['Consume', 'Devour'], why: 'Soulburst, from your tier set, makes your next Consume (Devour in Void Metamorphosis) instant and explode. It\'s first on both priority lists, so spend it right away.' }],
+    res: { ty: '17', n: 'Fury', outside: 'Collapsing Star', from: /^(?!Void Metamorphosis$)/, ok: 0.16, warn: 0.24, why: 'Outside Void Metamorphosis, Void Ray costs 100 Fury and has no cooldown, so press it as soon as you reach 100. Fury that comes in while you\'re full is lost. Inside Void Metamorphosis the Fury bar is a timer, so it isn\'t counted.' },
+    lead: { rot: 'Press Soul Immolation as soon as it\'s ready.', procs: 'Spend Soulburst right away.', res: 'Outside Void Metamorphosis, press Void Ray as soon as you reach 100 Fury.' } },
   'Assassination Rogue': { ic: 'Envenom', top: 'Assassination Rogues',
     win: { n: 'Deathmark', with: [['Kingsbane']], dur: 16, why: 'Deathmark doubles your bleeds and poisons. Kingsbane goes out with it.' },
     apl: { blk: 'Your priority', list: [], levels: [
@@ -18432,7 +18475,7 @@ const GEN_TUNE = {
   'Protection Paladin': { abc: [0.66, 0.58], res: [0.12, 0.18], drop: ['p:Shining Light'], set: { "cd:avenger's shield": { ok: 0.62, warn: 0.5 }, 'cd:blessed hammer': { ok: 0.6, warn: 0.5 }, 'up:Shield of the Righteous': { ok: 0.9, warn: 0.8 }, 'cd:divine toll': { ok: 0.8, warn: 0.65 } } },
   'Restoration Shaman': { abc: [0.7, 0.6], set: { 'cd:ascendance': { ok: 0.5, warn: 0.3 }, 'cd:spirit link totem': { ok: 0.5, warn: 0.3 }, 'cd:healing tide totem': { ok: 0.5, warn: 0.3 } } },
   'Frost Mage': { abc: [0.8, 0.72] },
-  'Devourer Demon Hunter': { abc: [0.6, 0.52], drop: ['res'] },
+  'Devourer Demon Hunter': { abc: [0.6, 0.52] },
   'Devastation Evoker': { abc: [0.6, 0.5], set: { 'cd:eternity surge': { ok: 0.7, warn: 0.55 }, 'p:Essence Burst': { okW: 0.1, warnW: 0.2 } } },
   'Elemental Shaman': { abc: [0.82, 0.74], set: { 'cd:stormkeeper': { ok: 0.75, warn: 0.6 } } },
   'Mistweaver Monk': { abc: [0.7, 0.6], mana: [0.45, 0.6], set: { 'cd:thunder focus tea': { ok: 0.7, warn: 0.55 }, "cd:invoke yu'lon, the jade serpent": { ok: 0.7, warn: 0.5 } } },
@@ -20596,7 +20639,7 @@ function homePreviews() {
     card(1, 'Latest pull', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
     card(2, 'Mechanics', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
     card(3, 'Performance', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
-    card(4, 'Progress', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
+    card(4, 'Teams', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
 }
 // ---- the tour: five short steps on a first visit, required once (no close button), remembered in this browser ----
 // Each step has a small picture that animates in (the logo drawing itself, a pull card building line by line, a player

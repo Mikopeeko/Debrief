@@ -49,6 +49,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   drifts). Go one tab at a time: first the tabs raiders see now (Latest pull, Mechanics, Assignments, Players, Summary),
   then Performance and Spec checks before they go live, since they're still changing. Each line checked against the rules:
   plain words, full sentences, no clipped fragments chained with colons.
+- [ ] **Review the Mechanics tab for improvements (your note, Oct 18):** go through it boss by boss and list what could be
+  clearer, simpler or more useful.
+- [ ] **Reorder and rename the main tabs (your note, Oct 18):** so each tab's name says what it does, and the order makes
+  sense (today: Teams, Latest pull, Assignments, Mechanics, Performance, Summary, Players).
 - [ ] **Simplify the tabs in Performance (your note, Oct 18).**
 - [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
   reports and announcements, and how to link it from the site).
@@ -146,7 +150,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   fight module, Progress).
 - [ ] **Debrief's own ranking system** (your note): a score of our own, from all the performance data together (damage or
   healing, survivability, mechanical execution and so on), not just output like Warcraft Logs parses.
-- [ ] **Customize your Progress page** (your note): let people pick their own background banner, character avatar and so on.
+- [ ] **Customize your Teams page** (your note; it was called Progress): let people pick their own background banner, character avatar and so on.
 - [ ] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
   to the game's name, so people know which mechanic it is.
 - [x] **A first-time guided tour** (your note; there is one, and page tips: brought up to date in round 141): a tutorial that walks a new user through the app, with nice animations showing how
@@ -155,10 +159,34 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 194: Devourer's checks, and an honest line on thin spec pages (your note)
+- [x] **No more "Nice work" over a low parse:** when every check on a spec page is good but the parse is under 50 (or, with
+  no parse, the output is well under the top parses), the page now says "Your checks look good, but your parse is 35, so
+  the gap is in things these checks don't cover yet," instead of praising it. This covers every spec with few checks.
+- [x] **Devourer, researched in full** (the Wowhead and Icy Veins guides and the SimulationCraft list), then checked against
+  the top Devourers' kills:
+  - **Void Metamorphosis windows were read wrong:** the log has two buffs both called Void Metamorphosis (the soul counter
+    and the form), so the page counted 11 "windows" where there were 5. The windows now come from the Collapsing Star
+    counter, which is only up in the form. 3 or more Collapsing Stars counts as done right (the top players get 4 in most
+    full windows; the guides aim for 4 to 5), with fewer needed in a window the pull cut short.
+  - **New: Void Ray in Void Metamorphosis, a minute.** Inside the form, Void Ray is free and pauses the Fury drain. The bar
+    follows each boss's top players, since bosses with more movement leave less room (about 7 a minute on Twin Fangs and
+    Vashnik, about 4 on Kith'ix): 92% of theirs is good, 82% could be better, and a boss without enough top logs is shown
+    but not graded. This is what separated Dashtoswirly (parse 35, 4.9 a minute against the top players' 7.0) from them.
+  - Reap and Cull at 4 or more souls also follows each boss (the top players sit at 69% on the Coiled Altar, with its adds).
+  - "Top players" marks for Devourer were measured again with the new checks, from the same players (parse 75 or higher,
+    fastest kills) on each boss.
+  - **New: Reap and Cull at 4 or more souls**, **Soulburst spent** (the tier set's proc), and **Fury wasted outside the
+    form** (inside it, Fury is a timer, so it doesn't count). The old "Void Ray on cooldown" check was removed: outside the
+    form Void Ray has no cooldown, it costs 100 Fury.
+  - **How long Void Metamorphosis sat ready** before you went in is shown on each window, but not graded: the top players
+    also hold it for 6 to 35 seconds a kill (Bloodlust, the boss's phases).
+  - The top Devourers now score 88 to 100, and Dashtoswirly 84 instead of 100.
+
 ## 2026-10-18, round 193: Clear wording across the whole site (your note)
 - [x] **The same style as the priority card, everywhere:** every tab was read on real pulls of all ten bosses (your team's
   nights, plus Adequate's Ula'tek) and rewritten where it read like notes. Two thoughts glued with a colon, a semicolon or
-  a "·" are now plain sentences. Latest pull, Mechanics (every boss), Assignments, Summary, Players, Progress, the start
+  a "·" are now plain sentences. Latest pull, Mechanics (every boss), Assignments, Summary, Players, the Teams page, the start
   page, the tour, the page tips and the tab descriptions are done, and so are the Performance views.
 - [x] **Examples:** "✕ first: Hobbz at 0:27" is now "Hobbz died first, at 0:27". "Clean: Interrupts, ..." is now "No
   problems with interrupts, ... and Stone Breaker." "Hit 3x for 452,377 avoidable damage" is now "Got hit 3 times, for
