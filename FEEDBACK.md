@@ -161,6 +161,25 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 199: Discord roles, Community mode, a welcome on joining, spam protection (your go-ahead)
+- **#rules** (read-only), under Start here. The rules text is drafted for your OK; nothing is posted there yet.
+- **Community mode is on.** New members need a verified email, explicit images are filtered, everyone's notifications
+  default to mentions only, and risky permissions are off for everyone. The server is still invite-only (not listed
+  publicly). A private #moderator-only channel gets Discord's admin notes and safety alerts. The invite preview now
+  has a short server description.
+- **Roles, top to bottom:** Founder (you, legendary orange, shown separately), Debrief Team (you, gold, shown separately;
+  can time out, mention everyone, manage and pin messages, and manage forum posts and tags), Helper (teal, shown
+  separately; manage and pin messages, manage forum posts and tags, for trusted raiders you pick), Raid leader (purple),
+  Tank (blue), Healer (green), DPS (red), Patch notes ping (no color). Your server nickname is Debrief(Claude).
+- **Self-pick on joining (Onboarding):** "What do you play?" (Tank, Healer, DPS, more than one allowed) and "Anything
+  else?" ("I lead raids or write the NSRT note" gives Raid leader, "Ping me when patch notes go up" gives Patch notes
+  ping). Both are optional, and members can change them later under Channels & Roles. New members see a short welcome
+  and four first steps: read the rules, ask a first question, share or vote on an idea, say hello.
+- **Spam protection:** AutoMod blocks mention spam and suspected spam. Raid protection and DM spam protection were
+  already on. The swear-word filter is off (it isn't spam, and raiders swear); say if you want it.
+- [ ] Note for later: a Helper or Debrief Team member other than you can't post in #updates, #start-here or #rules
+  (they're read-only for everyone). If you add team members, I'll let their role post there.
+
 ## 2026-10-18, round 198: The Discord, laid out so each channel says what it's for (your note)
 - Three sections. **Start here:** #start-here (read-only, for the welcome post) and #updates (read-only: patch notes
   every few days, your call, plus news). **Help and ideas:** #questions (forum), #suggestions (forum) and #bug-reports.
