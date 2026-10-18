@@ -87,6 +87,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 165: The class frames, done properly ("you can do better"), and themed talent backgrounds
+- [x] **Holy Paladin card:** a gilded double border all the way round with a shine running along it, scrollwork corners each
+  with a glowing amber gem, a winged sun at the top, a gem ornament at the bottom, light beams from the top, twinkling
+  sparkles, rising motes, and a turning golden halo round the portrait.
+- [x] **Restoration Druid card:** braided vines with leaves and buds on all four edges, a big layered Lifebloom with leaves in
+  each corner that slowly blooms, stag antlers round a glowing crescent moon at the top, a tree line along the bottom,
+  fireflies, drifting leaves, and a wreath of leaves round the portrait.
+- [x] **Your note: a themed background behind the talents.** Paladin: soft golden light, faint rays and a sun emblem behind
+  each tree. Druid: a deep forest green, a tree line along the bottom and scattered leaves. Faint, so the talents read first.
+- [x] Checked on desktop and a phone; all still for anyone whose device asks for less motion.
+
 ## 2026-10-17, round 164: A class-themed frame around the character card (your idea)
 - [x] **Holy Paladin:** gold filigree corners with a small sun in each, gold studs along the top and bottom edges, soft light
   rays from the top left that turn slowly, and a few motes of light rising.

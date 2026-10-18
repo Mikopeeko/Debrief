@@ -6657,12 +6657,12 @@ function hpalChecks(reps, name, one) {
   const focus = checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
   const hero = '<div class="spc-hero cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#f48cba') + '"><div class="spc-hbg" style="background-image:url(' + whIcon('spell_holy_holybolt') + ')"></div>' + heroDeco(P0.cls) +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="Each check counts by how much it matters: Holy Shock and Infusion of Light count three times as much as most, heals on yourself half. Good counts in full, could be better half."><b>' + score + '</b><span>out of 100</span></div></div>' +
-    '<div class="spc-hm"><div class="spc-hn">' + avatar(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (heroN ? ' · ' + heroN : '') + '</div><div class="sub">' + meta + '</div></div></div>' +
+    '<div class="spc-hm"><div class="spc-hn">' + heroAv(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (heroN ? ' · ' + heroN : '') + '</div><div class="sub">' + meta + '</div></div></div>' +
     (TOPB && TOPB.score ? '<div class="spc-htp">The top 10 Holy Paladins on this boss score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · worth about ' + C(fTot) + ' healing</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.sub) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : '<p class="spc-fok">Everything is in good shape. Nice work.</p>') + '</div></div>';
   // (the build: the talents these checks read, then every talent taken, by tree, and the game's own layout one click further)
   const LP = per[per.length - 1], keyN = new Set(KEY_T.filter((n) => TAL && TAL.names.has(n)));
-  const build = TAL ? '<div class="spc-build">' +
+  const build = TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '">' +
       '<details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, keyN) || '') + '</details></div>'
     : '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + talents.map((t) => '<span class="spc-t">' + spellIcon(0, TAL_IC[t] || t) + esc(t) + '</span>').join('') + '</div></div></div>';
   // (a bar made of parts, with its legend: Procs, Holy Power's sources and spenders, mana's)
@@ -6745,36 +6745,76 @@ function hpalTimeline(x, o) {
     '<span><i class="io"></i>Infusion of Light up, or spent on Judgment</span><span><i class="hp"></i>Holy Power</span><span><i class="mn"></i>Mana</span><span><i class="red"></i>Ready for a whole extra use, Holy Shock full, or Holy Power at 5</span>' + (t1 < end - 0.5 ? '<span><i class="dd"></i>Dead</span>' : '') + '</div><div class="tl-hv" hidden></div><div class="tl-tip" hidden></div></div>';
 }
 
-// ---- the character card's frame, drawn for the class (our own drawings, no game art): Holy Paladin gold filigree with a sun in each corner and
-// soft light rays; Restoration Druid a vine along the edges with leaves, a Lifebloom in each corner that slowly blooms, and a few leaves drifting
-// down; any other class, corners in its class colour. Behind everything on the card, and still for anyone who asks for less motion ----
+// ---- the character card's frame, drawn for the class (our own drawings, no game art), behind everything on the card and still for anyone who asks
+// for less motion. Holy Paladin: a gilded border with a shine running along it, scrollwork corners each with a glowing gem, a winged sun at the top,
+// beams of light, sparkles and rising motes. Restoration Druid: braided vines on all four edges, a Lifebloom with leaves in each corner, stag antlers
+// round a crescent moon at the top, a tree line along the bottom, fireflies and drifting leaves. Any other class: corners in its class colour ----
+const DCO_LEAF = 'M0 0 C6 -9 18 -9 26 0 C18 9 6 9 0 0 Z';
 function heroDeco(cls) {
   const corners = (svg) => ['tl', 'tr', 'bl', 'br'].map((k) => '<span class="dco-c dco-' + k + '">' + svg + '</span>').join('');
   if (cls === 'PALADIN') {
-    const sun = '<g class="dco-sun"><polygon points="14,5.5 15.6,11.9 21.4,9.6 17.3,14 21.4,18.4 15.6,16.1 14,22.5 12.4,16.1 6.6,18.4 10.7,14 6.6,9.6 12.4,11.9" fill="url(#dcoPg)"/><circle cx="14" cy="14" r="2.4" fill="#fff4cf"/></g>';
-    const c = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="dcoPg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0c0"/><stop offset=".45" stop-color="#e6b450"/><stop offset="1" stop-color="#8f621c"/></linearGradient></defs>' +
-      '<path d="M5 60 V16 Q5 5 16 5 H60" fill="none" stroke="url(#dcoPg)" stroke-width="1.7"/><path d="M10 52 V19 Q10 10 19 10 H52" fill="none" stroke="url(#dcoPg)" stroke-width=".8" opacity=".55"/>' +
-      '<path d="M5 34 q7 -1 9 -8 q1 6 -4 9" fill="none" stroke="url(#dcoPg)" stroke-width="1.1"/><path d="M34 5 q-1 7 -8 9 q6 1 9 -4" fill="none" stroke="url(#dcoPg)" stroke-width="1.1"/>' +
-      '<circle cx="5" cy="44" r="1.3" fill="#e6b450"/><circle cx="44" cy="5" r="1.3" fill="#e6b450"/>' + sun + '</svg>';
-    const edge = '<svg aria-hidden="true" preserveAspectRatio="none"><defs><pattern id="dcoPe" width="34" height="10" patternUnits="userSpaceOnUse"><path d="M0 5 H34" stroke="#e6b450" stroke-width=".7" opacity=".55"/><path d="M17 1.6 L20 5 L17 8.4 L14 5 Z" fill="#e6b450" opacity=".85"/></pattern></defs><rect width="100%" height="100%" fill="url(#dcoPe)"/></svg>';
-    return '<div class="spc-deco dco-pal" aria-hidden="true"><i class="dco-rays"></i>' + corners(c) + '<span class="dco-e dco-t">' + edge + '</span><span class="dco-e dco-b">' + edge + '</span>' +
-      '<i class="dco-mote" style="left:38%;animation-delay:0s"></i><i class="dco-mote" style="left:61%;animation-delay:-4s"></i><i class="dco-mote" style="left:83%;animation-delay:-8s"></i></div>';
+    const gold = '<linearGradient id="dqPg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2c4"/><stop offset=".4" stop-color="#e6b450"/><stop offset="1" stop-color="#8a5c18"/></linearGradient>';
+    const c = '<svg viewBox="0 0 100 100" aria-hidden="true"><defs>' + gold + '<radialGradient id="dqPgem" cx=".38" cy=".34" r=".7"><stop offset="0" stop-color="#fff6cf"/><stop offset=".35" stop-color="#ffc24a"/><stop offset="1" stop-color="#9a4f00"/></radialGradient></defs>' +
+      '<path d="M9 74 V31 C9 17 17 9 31 9 H74" fill="none" stroke="url(#dqPg)" stroke-width="2.4"/><path d="M16 62 V35 C16 24 24 16 35 16 H62" fill="none" stroke="url(#dqPg)" stroke-width="1" opacity=".6"/>' +
+      '<path d="M9 74 c0 9 9 11 12 5 c3 -5 -3 -9 -6 -5" fill="none" stroke="url(#dqPg)" stroke-width="1.6"/><path d="M74 9 c9 0 11 9 5 12 c-5 3 -9 -3 -5 -6" fill="none" stroke="url(#dqPg)" stroke-width="1.6"/>' +
+      '<path d="M9 48 c7 0 11 5 10 10 c-1 4 -7 4 -7 0" fill="none" stroke="url(#dqPg)" stroke-width="1.3"/><path d="M48 9 c0 7 5 11 10 10 c4 -1 4 -7 0 -7" fill="none" stroke="url(#dqPg)" stroke-width="1.3"/>' +
+      '<g stroke="#ffd98a" stroke-width="1" opacity=".75">' + [0, 45, 90, 135, 180, 225, 270, 315].map((a) => '<line x1="0" y1="-10" x2="0" y2="-15" transform="translate(23 23) rotate(' + a + ')"/>').join('') + '</g>' +
+      '<g class="dco-gem"><circle cx="23" cy="23" r="7.5" fill="url(#dqPgem)" stroke="url(#dqPg)" stroke-width="1.6"/><ellipse cx="20.6" cy="20.4" rx="2.4" ry="1.5" fill="#fffbe8" opacity=".9" transform="rotate(-35 20.6 20.4)"/></g>' +
+      '<circle cx="9" cy="62" r="1.6" fill="#e6b450"/><circle cx="62" cy="9" r="1.6" fill="#e6b450"/></svg>';
+    const feather = (d) => '<path d="' + d + '" fill="url(#dqPw)" stroke="#8a5c18" stroke-width=".6"/>';
+    const wing = feather('M86 27 C70 22 52 11 30 13 C46 20 62 27 85 31 Z') + feather('M85 32 C67 31 48 25 26 29 C44 34 62 37 85 37 Z') + feather('M86 38 C70 40 54 39 36 46 C54 48 70 45 87 42 Z');
+    const rays = Array.from({ length: 16 }, (_, i) => '<polygon points="0,-13 1.6,-' + (i % 2 ? 18 : 23) + ' -1.6,-' + (i % 2 ? 18 : 23) + '" transform="rotate(' + (i * 22.5) + ')" fill="#ffe08a"/>').join('');
+    const crest = '<svg viewBox="0 0 200 56" aria-hidden="true"><defs><linearGradient id="dqPw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a5c18"/><stop offset=".5" stop-color="#e6b450"/><stop offset="1" stop-color="#fff0c0"/></linearGradient><radialGradient id="dqPs"><stop offset="0" stop-color="#fffbe6"/><stop offset=".5" stop-color="#ffd36a"/><stop offset="1" stop-color="#d98c1e"/></radialGradient></defs>' +
+      '<g>' + wing + '</g><g transform="translate(200 0) scale(-1 1)">' + wing + '</g>' +
+      '<g transform="translate(100 28)"><g class="dco-rays2">' + rays + '</g><circle r="11.5" fill="url(#dqPs)" stroke="#a86f1c" stroke-width="1"/><circle r="6" fill="#fffbe6" opacity=".55"/></g>' +
+      '<path d="M100 1 L104 6 L100 11 L96 6 Z" fill="url(#dqPs)" stroke="#a86f1c" stroke-width=".6"/></svg>';
+    const foot = '<svg viewBox="0 0 140 24" aria-hidden="true"><path d="M8 12 C26 12 38 4 54 10 M132 12 C114 12 102 4 86 10" fill="none" stroke="#e6b450" stroke-width="1.4"/><path d="M42 13 c4 4 9 3 9 -1 M98 13 c-4 4 -9 3 -9 -1" fill="none" stroke="#e6b450" stroke-width="1"/><path d="M70 4 L77 12 L70 20 L63 12 Z" fill="#ffc24a" stroke="#fff0c0" stroke-width="1"/></svg>';
+    const star = '<svg viewBox="-6 -6 12 12"><path d="M0 -6 L1.2 -1.2 L6 0 L1.2 1.2 L0 6 L-1.2 1.2 L-6 0 L-1.2 -1.2 Z" fill="#fff4cf"/></svg>';
+    const sp = (pos, d) => '<i class="dco-sp" style="' + pos + ';animation-delay:' + d + 's">' + star + '</i>';
+    return '<div class="spc-deco dco-pal" aria-hidden="true"><i class="dco-beams"></i><span class="dco-ring"></span><span class="dco-ring2"></span>' + corners(c) +
+      '<span class="dco-crest">' + crest + '</span><span class="dco-foot">' + foot + '</span>' +
+      sp('left:24%;top:2px', 0) + sp('left:71%;top:2px', -1.1) + sp('left:38%;bottom:2px', -2) + sp('left:86%;bottom:2px', -0.6) + sp('left:2px;top:48%', -1.6) + sp('right:2px;top:36%', -2.6) +
+      ['18%', '43%', '62%', '84%'].map((l, i) => '<i class="dco-mote" style="left:' + l + ';animation-delay:' + (-i * 3.2) + 's"></i>').join('') + '</div>';
   }
   if (cls === 'DRUID') {
-    const leaf = (x, y, r, s) => '<path d="M0 0 C3 -5 9 -5 13 0 C9 5 3 5 0 0 Z" transform="translate(' + x + ' ' + y + ') rotate(' + r + ') scale(' + (s || 1) + ')" fill="url(#dcoDl)"/>';
-    const petals = [0, 72, 144, 216, 288].map((a) => '<ellipse cx="0" cy="-5.6" rx="3.4" ry="5.6" transform="rotate(' + a + ')" fill="url(#dcoDp)"/>').join('');
-    const c = '<svg viewBox="0 0 72 72" aria-hidden="true"><defs><linearGradient id="dcoDl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a8e07a"/><stop offset="1" stop-color="#2f7d34"/></linearGradient><radialGradient id="dcoDp"><stop offset="0" stop-color="#ffe0b8"/><stop offset=".55" stop-color="#ff9f5a"/><stop offset="1" stop-color="#e0573a"/></radialGradient></defs>' +
-      '<path d="M5 70 C4 44 4 26 9 17 S27 5 70 5" fill="none" stroke="#5aa14a" stroke-width="1.8" stroke-linecap="round"/><path d="M9 54 C14 50 15 46 13 41" fill="none" stroke="#5aa14a" stroke-width="1.1"/><path d="M50 8 C46 13 42 14 37 12" fill="none" stroke="#5aa14a" stroke-width="1.1"/>' +
-      leaf(5, 50, -70) + leaf(6, 32, -95, 0.85) + leaf(32, 6, 5, 0.85) + leaf(52, 5, -12) + leaf(13, 41, -150, 0.7) + leaf(37, 12, 120, 0.7) +
-      '<circle cx="62" cy="5" r="1.6" fill="#ffb27a"/><circle cx="5" cy="62" r="1.6" fill="#ffb27a"/>' +
-      '<g transform="translate(15 15)"><g class="dco-bloom">' + petals + '<circle r="2.8" fill="#ffd36a"/><circle r="1.2" fill="#fff3c4"/></g></g></svg>';
-    const edge = '<svg aria-hidden="true" preserveAspectRatio="none"><defs><pattern id="dcoDe" width="56" height="16" patternUnits="userSpaceOnUse"><path d="M0 8 Q14 1 28 8 T56 8" fill="none" stroke="#5aa14a" stroke-width="1.2"/>' +
-      '<path d="M0 0 C2.4 -3.6 7 -3.6 10 0 C7 3.6 2.4 3.6 0 0 Z" transform="translate(12 4.6) rotate(-28)" fill="#6fbf5a" opacity=".9"/><path d="M0 0 C2.4 -3.6 7 -3.6 10 0 C7 3.6 2.4 3.6 0 0 Z" transform="translate(40 11.4) rotate(28)" fill="#4f9a44" opacity=".9"/></pattern></defs><rect width="100%" height="100%" fill="url(#dcoDe)"/></svg>';
-    const drift = (l, d, s) => '<i class="dco-leaf" style="left:' + l + '%;animation-delay:' + d + 's;--s:' + s + '"><svg viewBox="-1 -6 15 12"><path d="M0 0 C3 -5 9 -5 13 0 C9 5 3 5 0 0 Z" fill="#7cc95e"/></svg></i>';
-    return '<div class="spc-deco dco-dru" aria-hidden="true">' + corners(c) + '<span class="dco-e dco-t">' + edge + '</span><span class="dco-e dco-b">' + edge + '</span>' + drift(46, 0, 1) + drift(70, -6, 0.8) + drift(88, -11, 1.15) + '</div>';
+    const leaf = (x, y, r, s, f) => '<g transform="translate(' + x + ' ' + y + ') rotate(' + r + ') scale(' + (s || 1) + ')"><path d="' + DCO_LEAF + '" fill="url(#' + (f || 'dqDl') + ')"/><path d="M1 0 L24 0" stroke="#2c6a2c" stroke-width=".8" opacity=".7"/></g>';
+    const petals = (n, ry, rx, f, off) => Array.from({ length: n }, (_, i) => '<ellipse cx="0" cy="-' + ry + '" rx="' + rx + '" ry="' + ry + '" transform="rotate(' + (off + i * 360 / n) + ')" fill="url(#' + f + ')"/>').join('');
+    const flower = '<g class="dco-bloom">' + petals(6, 11, 6, 'dqDp', 0) + petals(5, 7.5, 4.2, 'dqDp2', 36) + '<circle r="4.2" fill="#ffd36a"/>' + [0, 72, 144, 216, 288].map((a) => '<circle cx="0" cy="-2.6" r=".9" fill="#fff3c4" transform="rotate(' + a + ')"/>').join('') + '</g>';
+    const defs = '<linearGradient id="dqDl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b4e884"/><stop offset="1" stop-color="#2f7d34"/></linearGradient><linearGradient id="dqDl2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fd16a"/><stop offset="1" stop-color="#1f5e27"/></linearGradient>' +
+      '<radialGradient id="dqDp"><stop offset="0" stop-color="#ffe6c4"/><stop offset=".5" stop-color="#ff9f5a"/><stop offset="1" stop-color="#d9483a"/></radialGradient><radialGradient id="dqDp2"><stop offset="0" stop-color="#fff2de"/><stop offset="1" stop-color="#ffb27a"/></radialGradient>';
+    const c = '<svg viewBox="0 0 120 120" aria-hidden="true"><defs>' + defs + '</defs>' +
+      '<path d="M10 118 C9 80 10 56 17 40 C24 26 38 16 60 12 C76 10 96 10 118 10" fill="none" stroke="#5aa14a" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<path d="M50 14 c7 -3 12 1 10 6 c-2 4 -7 2 -6 -1" fill="none" stroke="#6fbf5a" stroke-width="1.2"/><path d="M14 50 c-3 7 1 12 6 10 c4 -2 2 -7 -1 -6" fill="none" stroke="#6fbf5a" stroke-width="1.2"/>' +
+      leaf(34, 22, -8, 1, 'dqDl') + leaf(22, 34, 98, 1, 'dqDl2') + leaf(38, 38, 45, 0.9, 'dqDl') + leaf(64, 11, 6, 0.7, 'dqDl2') + leaf(11, 64, 84, 0.7, 'dqDl') + leaf(86, 10, -10, 0.55, 'dqDl') + leaf(10, 86, 100, 0.55, 'dqDl2') +
+      '<ellipse cx="100" cy="9" rx="2.6" ry="4" transform="rotate(70 100 9)" fill="#ff9f5a"/><ellipse cx="9" cy="100" rx="2.6" ry="4" transform="rotate(20 9 100)" fill="#ff9f5a"/>' +
+      '<g transform="translate(26 26)">' + flower + '</g></svg>';
+    const hTile = '<path d="M0 11 Q16 4 32 11 T64 11" fill="none" stroke="#5aa14a" stroke-width="1.7"/><path d="M0 11 Q16 18 32 11 T64 11" fill="none" stroke="#3f7f39" stroke-width="1.2"/>' +
+      '<g transform="translate(13 6) rotate(-32) scale(.42)"><path d="' + DCO_LEAF + '" fill="#7cc95e"/></g><g transform="translate(51 16) rotate(148) scale(.34)"><path d="' + DCO_LEAF + '" fill="#4f9a44"/></g><circle cx="32" cy="11" r="1.7" fill="#ffb27a"/>';
+    const edge = (id, rot) => '<svg aria-hidden="true"><defs><pattern id="' + id + '" width="64" height="22" patternUnits="userSpaceOnUse"' + (rot ? ' patternTransform="rotate(90)"' : '') + '>' + hTile + '</pattern></defs><rect width="100%" height="100%" fill="url(#' + id + ')"/></svg>';
+    const tree = '<path d="M8 46 L18 14 L28 46 Z M22 46 L34 6 L46 46 Z" /><circle cx="64" cy="26" r="14"/><rect x="62" y="30" width="4" height="16"/><path d="M80 46 L92 18 L104 46 Z"/><circle cx="124" cy="30" r="11"/><rect x="122" y="32" width="3" height="14"/><path d="M136 46 L148 10 L160 46 Z"/>';
+    const forest = '<svg aria-hidden="true"><defs><pattern id="dqDf" width="160" height="46" patternUnits="userSpaceOnUse" patternTransform="translate(0 0)"><g fill="#2c5a2e">' + tree + '</g></pattern><pattern id="dqDf2" width="160" height="46" patternUnits="userSpaceOnUse" patternTransform="translate(70 6) scale(.8)"><g fill="#3d7a3c">' + tree + '</g></pattern></defs><rect class="b" width="100%" height="100%" fill="url(#dqDf2)"/><rect width="100%" height="100%" fill="url(#dqDf)"/></svg>';
+    const ant = (s) => '<g' + (s ? ' transform="translate(200 0) scale(-1 1)"' : '') + ' fill="none" stroke="url(#dqDa)" stroke-width="3.2" stroke-linecap="round"><path d="M90 46 C78 40 68 30 62 12"/><path d="M73 34 C65 33 59 29 54 22"/><path d="M66 23 C60 19 57 13 58 6"/><path d="M80 41 C72 44 63 44 56 40"/></g>';
+    const crest = '<svg viewBox="0 0 200 60" aria-hidden="true"><defs><linearGradient id="dqDa" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#6e4b2c"/><stop offset="1" stop-color="#d9b48a"/></linearGradient><radialGradient id="dqDm"><stop offset="0" stop-color="#f6fff0"/><stop offset="1" stop-color="#b8e6a0"/></radialGradient>' + defs.replace(/id="dqD/g, 'id="dqC') + '</defs>' + ant(false) + ant(true) +
+      '<g transform="translate(100 26)"><circle r="15" fill="#b8e6a0" opacity=".12" class="dco-moonglow"/><path d="M5 -10 A11 11 0 1 0 5 10 A8.4 8.4 0 1 1 5 -10 Z" fill="url(#dqDm)"/></g>' +
+      '<g transform="translate(88 50) rotate(-160) scale(.55)"><path d="' + DCO_LEAF + '" fill="url(#dqCl)"/></g><g transform="translate(112 50) rotate(-20) scale(.55)"><path d="' + DCO_LEAF + '" fill="url(#dqCl2)"/></g><circle cx="100" cy="50" r="2.4" fill="#ff9f5a"/></svg>';
+    const ff = (l, t, d, dur) => '<i class="dco-ff" style="left:' + l + ';top:' + t + ';animation-delay:' + d + 's,' + (d / 2) + 's;animation-duration:' + dur + 's,2.6s"></i>';
+    const drift = (l, d, s, col) => '<i class="dco-leaf" style="left:' + l + '%;animation-delay:' + d + 's;--s:' + s + '"><svg viewBox="-1 -10 28 20"><path d="' + DCO_LEAF + '" fill="' + col + '"/></svg></i>';
+    return '<div class="spc-deco dco-dru" aria-hidden="true"><span class="dco-forest">' + forest + '</span>' +
+      '<span class="dco-e dco-t">' + edge('dqDe1') + '</span><span class="dco-e dco-b">' + edge('dqDe2') + '</span><span class="dco-v dco-l">' + edge('dqDe3', true) + '</span><span class="dco-v dco-r">' + edge('dqDe4', true) + '</span>' +
+      corners(c) + '<span class="dco-crest">' + crest + '</span>' +
+      ff('22%', '62%', 0, 11) + ff('37%', '30%', -3, 14) + ff('55%', '70%', -6, 12) + ff('68%', '42%', -2, 15) + ff('81%', '64%', -8, 10) + ff('90%', '28%', -5, 13) + ff('12%', '36%', -9, 16) +
+      drift(48, 0, 1, '#7cc95e') + drift(73, -6, 0.8, '#e0a14a') + drift(90, -11, 1.1, '#5aa14a') + '</div>';
   }
   const c = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 36 V12 Q4 4 12 4 H36" fill="none" stroke="var(--cc)" stroke-width="1.6" opacity=".7"/><circle cx="4" cy="24" r="1.2" fill="var(--cc)"/><circle cx="24" cy="4" r="1.2" fill="var(--cc)"/></svg>';
   return '<div class="spc-deco dco-any" aria-hidden="true">' + corners(c) + '</div>';
+}
+// (the portrait on the card: a turning golden halo for a Paladin, a wreath of leaves with two small Lifeblooms for a Druid)
+function heroAv(p) {
+  const av = avatar(p);
+  if (p.cls === 'PALADIN') return '<span class="dco-avw"><i class="dco-halo"></i><i class="dco-halo2"></i>' + av + '</span>';
+  if (p.cls === 'DRUID') { const lv = Array.from({ length: 12 }, (_, i) => '<g transform="rotate(' + (i * 30) + ' 27 27) translate(27 3.6) rotate(' + (i % 2 ? 18 : -18) + ') scale(.34)"><path d="' + DCO_LEAF + '" transform="translate(-13 0)" fill="' + (i % 3 ? '#6fbf5a' : '#3f8f3a') + '"/></g>').join('');
+    return '<span class="dco-avw"><svg class="dco-wreath" viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="23.5" fill="none" stroke="#3f7f39" stroke-width="1.2"/>' + lv + '<circle cx="27" cy="3.4" r="2.6" fill="#ff9f5a"/><circle cx="27" cy="3.4" r="1.1" fill="#ffd36a"/><circle cx="27" cy="50.6" r="2.2" fill="#ffb27a"/></svg>' + av + '</span>'; }
+  return av;
 }
 // ---- one spec's Spec checks page, shared: the banner (a score out of 100, the filter, what to work on first), the build, the groups (a block with a
 // line per check, or a row per check), each check's moments, boxes and strip, and the sections under them. Holy Paladin's page has its own copy of
@@ -6832,11 +6872,11 @@ function specPage(o) {
   const focus = checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
   const hero = '<div class="spc-hero cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + '"><div class="spc-hbg" style="background-image:url(' + whIcon(o.bg) + ')"></div>' + heroDeco(P0.cls) +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts by how much it matters. Good counts in full, could be better half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
-    '<div class="spc-hm"><div class="spc-hn">' + avatar(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' +
+    '<div class="spc-hm"><div class="spc-hn">' + heroAv(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' +
     (TOPB && TOPB.score ? '<div class="spc-htp">The top 10 ' + esc(o.top) + ' on this boss score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · worth about ' + C(fTot) + ' healing</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.sub) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : '<p class="spc-fok">Everything is in good shape. Nice work.</p>') + '</div></div>';
   const LP = per[per.length - 1];
-  const build = o.TAL ? '<div class="spc-build"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
+  const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
     : (o.talents && o.talents.length ? '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + o.talents.map((t) => '<span class="spc-t">' + spellIcon(0, t) + esc(t) + '</span>').join('') + '</div></div></div>' : '');
   const sec = (t, sb, b) => (b ? '<section class="spc-card"><header class="spc-ch"><span class="spc-ri">' + spellIcon(0, (o.secIc || {})[t] || t, true) + '</span><div><h3>' + t + '</h3>' + (sb ? '<span class="sub">' + sb + '</span>' : '') + '</div></header>' + b + '</section>' : '');
   return { score, checks, html: hero + build + nav + body + (o.tl ? sec('Your cooldowns over the pull', o.tlSub || '', o.tl) : '') + (o.pullT ? sec('Pull by pull', 'Click a pull to open it, or a column name to sort.', o.pullT) : '') + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
