@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec borders gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090a0e; --line: #2a2f3b; --text: #ece8df; --muted: #98a0ad; --gold: #e6b450;
+    --head: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 44px 28px 80px; background: radial-gradient(1400px 700px at 50% 0, #13151c, var(--bg)); color: var(--text); font: 15px/1.45 var(--body); }
+  .intro { max-width: 1240px; margin: 0 auto 40px; }
+  .intro h1 { margin: 0 0 6px; font: 700 28px var(--head); }
+  .intro p { margin: 0 0 12px; color: var(--muted); max-width: 860px; }
+  .nav { display: flex; flex-wrap: wrap; gap: 8px; }
+  .nav a { padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--cc); text-decoration: none; font: 600 13px var(--body); background: rgba(0, 0, 0, .3); }
+  .nav a.on { border-color: var(--cc); background: rgba(255, 255, 255, .08); }
+  .cls { max-width: 1240px; margin: 0 auto; padding: 46px 0 40px; }
+  .cls-h { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 66px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .cls-h h2 { margin: 0; font: 700 27px var(--head); color: var(--cc); letter-spacing: .02em; }
+  .cls-h span { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 96px 60px; }
+
+  /* ---- a framed spec card: metal band, inner accent line, corners, crest, clasps ---- */
+  .card { position: relative; isolation: isolate; min-height: 214px; padding: 52px 60px 46px; border: 6px solid transparent; border-radius: 3px;
+    background: var(--fbg) padding-box, repeating-linear-gradient(90deg, rgba(0, 0, 0, .22) 0 1px, transparent 1px 7px) border-box, var(--band) border-box;
+    box-shadow: 0 0 0 1px #040406, inset 0 0 0 1px rgba(0, 0, 0, .9), inset 0 0 80px rgba(0, 0, 0, .6), 0 22px 50px rgba(0, 0, 0, .6); }
+  .card::before { content: ''; position: absolute; inset: 6px; border: 1px solid var(--fl2); pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .55); }
+  .card::after { content: ''; position: absolute; inset: -6px; border-radius: 3px; pointer-events: none; padding: 6px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 3px, rgba(0, 0, 0, 0) calc(100% - 3px), rgba(0, 0, 0, .45));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .orn { position: absolute; overflow: visible; pointer-events: none; z-index: 3; }
+  .corner { width: 150px; height: 150px; }
+  .corner.tl { top: -13px; left: -13px; } .corner.tr { top: -13px; right: -13px; transform: scaleX(-1); }
+  .corner.bl { bottom: -13px; left: -13px; transform: scaleY(-1); } .corner.br { bottom: -13px; right: -13px; transform: scale(-1, -1); }
+  .crest { width: 250px; height: 80px; top: -43px; left: calc(50% - 125px); }
+  .clasp { width: 44px; height: 76px; top: calc(50% - 38px); }
+  .clasp.l { left: -25px; } .clasp.r { right: -25px; transform: scaleX(-1); }
+  .clasp.b { top: auto; bottom: -41px; left: calc(50% - 22px); transform: rotate(-90deg); }
+  .in { position: relative; z-index: 1; display: flex; align-items: center; gap: 20px; }
+  .in img { width: 66px; height: 66px; flex: none; border-radius: 50%; border: 2px solid var(--acc); box-shadow: 0 0 18px var(--accg); }
+  .in h3 { margin: 0; font: 700 26px/1.1 var(--head); color: var(--cc); text-shadow: 0 2px 8px rgba(0, 0, 0, .8); }
+  .in .th { margin-top: 3px; font-size: 14.5px; }
+  .in .mini { margin-top: 9px; color: var(--muted); font-size: 13.5px; } .in .mini b { color: var(--text); font: 700 19px var(--head); margin-right: 3px; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 560px) {
+    body { padding: 28px 16px 56px; } .card { padding: 46px 26px 40px; } .corner { width: 112px; height: 112px; }
+    .crest { width: 200px; height: 64px; top: -35px; left: calc(50% - 100px); } .clasp.l, .clasp.r { display: none; }
+    .in img { width: 52px; height: 52px; } .in h3 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="defs"></defs></svg>
+<div class="intro">
+  <h1>Spec borders: every class and spec</h1>
+  <p>One frame per class, in its own material and motifs, tinted for each spec through its gem, its glow and a spec motif. Shown on a
+     small spec card; on the spec page it frames the review header the same way. Everything is drawn here as vectors, with no game art.</p>
+  <div class="nav" id="nav"></div>
+</div>
+<div id="gallery"></div>
+
+<script>
+// ===================================================================================================================
+// A small toolkit of drawn parts (metals, gems, feathers, leaves, scales, chains, runes), and one builder per class that
+// puts its corner, crest and clasp together from them, tinted for each spec.
+// ===================================================================================================================
+const NS = 'http://www.w3.org/2000/svg', DEFS = document.getElementById('defs');
+const E = (tag, at, parent) => { const e = document.createElementNS(NS, tag); if (at) for (const k in at) if (at[k] != null) e.setAttribute(k, at[k]); if (parent) parent.appendChild(e); return e; };
+const f2 = (v) => String(Math.round(v * 100) / 100);
+const P = (x, y) => f2(x) + ' ' + f2(y);
+const poly = (pts) => 'M' + pts.map((p) => P(p[0], p[1])).join(' L') + ' Z';
+let UID = 0; const nid = (p) => p + (++UID);
+function LIN(stops, x1 = 0, y1 = 0, x2 = 1, y2 = 1) { const id = nid('l'), g = E('linearGradient', { id, x1, y1, x2, y2 }, DEFS); for (const s of stops) E('stop', { offset: s[0], 'stop-color': s[1], 'stop-opacity': s[2] }, g); return 'url(#' + id + ')'; }
+function RAD(stops, cx = .36, cy = .3, r = .8) { const id = nid('r'), g = E('radialGradient', { id, cx, cy, r }, DEFS); for (const s of stops) E('stop', { offset: s[0], 'stop-color': s[1], 'stop-opacity': s[2] }, g); return 'url(#' + id + ')'; }
+const FC = new Map();
+// raised, lit metal: a bump from the shape's own edges, lit from the top left, with a drop shadow under it
+function bevel(light, exp, scale, k3, blur = 1.3) {
+  const key = 'b' + [light, exp, scale, k3, blur].join(); if (FC.has(key)) return FC.get(key);
+  const id = nid('bv'), f = E('filter', { id, x: '-25%', y: '-25%', width: '150%', height: '150%', 'color-interpolation-filters': 'sRGB' }, DEFS);
+  E('feGaussianBlur', { in: 'SourceAlpha', stdDeviation: blur, result: 'b' }, f);
+  const sp = E('feSpecularLighting', { in: 'b', surfaceScale: scale, specularConstant: 1.05, specularExponent: exp, 'lighting-color': light, result: 's' }, f);
+  E('fePointLight', { x: -40, y: -80, z: 150 }, sp);
+  E('feComposite', { in: 's', in2: 'SourceAlpha', operator: 'in', result: 's2' }, f);
+  E('feComposite', { in: 'SourceGraphic', in2: 's2', operator: 'arithmetic', k1: 0, k2: 1, k3, k4: 0, result: 'lit' }, f);
+  E('feDropShadow', { in: 'lit', dx: 0, dy: 2.5, stdDeviation: 2.2, 'flood-color': '#000', 'flood-opacity': .75 }, f);
+  const u = 'url(#' + id + ')'; FC.set(key, u); return u;
+}
+function glow(color, std = 3, op = .55) {
+  const key = 'g' + [color, std, op].join(); if (FC.has(key)) return FC.get(key);
+  const id = nid('gl'), f = E('filter', { id, x: '-40%', y: '-40%', width: '180%', height: '180%' }, DEFS);
+  E('feGaussianBlur', { in: 'SourceGraphic', stdDeviation: std, result: 'b' }, f);
+  E('feFlood', { 'flood-color': color, 'flood-opacity': op }, f);
+  E('feComposite', { in2: 'b', operator: 'in', result: 'g' }, f);
+  const m = E('feMerge', {}, f); E('feMergeNode', { in: 'g' }, m); E('feMergeNode', { in: 'SourceGraphic' }, m);
+  const u = 'url(#' + id + ')'; FC.set(key, u); return u;
+}
+const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; };
+
+// ---- metals and materials ----
+const MAT = {};
+const mat = (n, stops, edge, hi, lo, light, exp, scale, k3, band) => (MAT[n] = { fill: LIN(stops), edge, hi, lo, bv: bevel(light, exp, scale, k3), band });
+mat('gold', [[0, '#fff4c4'], [.18, '#f0c862'], [.38, '#a8701e'], [.55, '#f7dc8c'], [.76, '#b98228'], [1, '#6e4510']], '#3b2507', '#fff3c8', '#4a3008', '#fff2cc', 20, 4, .85,
+  'linear-gradient(90deg,#5e3a0c,#f2d488 9%,#a06a1c 20%,#fff0bd 34%,#b47c24 48%,#f4d68a 63%,#8c5a16 78%,#f0cc74 90%,#6a4210)');
+mat('silver', [[0, '#ffffff'], [.2, '#dfe4ea'], [.42, '#8c949f'], [.58, '#f2f4f7'], [.8, '#9ea6b1'], [1, '#5a626d']], '#262a31', '#ffffff', '#4a515c', '#ffffff', 26, 4, .75,
+  'linear-gradient(90deg,#4a515c,#e6eaef 10%,#8a929d 22%,#ffffff 36%,#99a1ac 50%,#e9ecf0 64%,#6f7782 78%,#d6dbe1 90%,#4a515c)');
+mat('steel', [[0, '#eef2f7'], [.2, '#9aa3af'], [.44, '#454b55'], [.6, '#aab3bf'], [.8, '#383e47'], [1, '#727b88']], '#0a0c10', '#e9eef4', '#1a1d22', '#eef4ff', 30, 4.5, .9,
+  'linear-gradient(90deg,#2a2e35,#a7b0bc 10%,#4b525c 22%,#dfe5ec 36%,#575e69 50%,#b4bcc7 64%,#3a4048 78%,#9aa3af 90%,#2a2e35)');
+mat('iron', [[0, '#9aa0aa'], [.22, '#454952'], [.48, '#1b1d22'], [.68, '#5f636d'], [1, '#202228']], '#030304', '#c8ced8', '#000000', '#d8e0ea', 30, 4.5, .95,
+  'linear-gradient(90deg,#141518,#5d616b 10%,#24262c 22%,#8b909a 36%,#2a2c32 50%,#6d717b 64%,#1c1d22 78%,#575b64 90%,#141518)');
+mat('bronze', [[0, '#ffe2b8'], [.2, '#d49a5a'], [.42, '#7a4a1e'], [.6, '#e8b878'], [.8, '#8e5a26'], [1, '#4a2a0c']], '#2a1606', '#ffe9c8', '#3a200a', '#ffe8c8', 18, 4, .8,
+  'linear-gradient(90deg,#3e220a,#d9a466 10%,#7e4c1e 22%,#f1c890 36%,#8c5826 50%,#ddae72 64%,#6a3e16 78%,#cf9a5c 90%,#3e220a)');
+mat('wood', [[0, '#b07e4c'], [.28, '#6e4524'], [.5, '#946238'], [.75, '#4e3018'], [1, '#33200e']], '#1a0d04', '#e8c49a', '#24140a', '#ffe6c8', 10, 3, .42,
+  'linear-gradient(90deg,#3a2410,#8e5e34 12%,#5a3a1c 26%,#a8784a 40%,#5e3e20 54%,#94643a 68%,#4a2e16 82%,#86582f 92%,#3a2410)');
+mat('stone', [[0, '#d2ccbf'], [.3, '#8f897e'], [.55, '#b3ad9f'], [.8, '#6f6a61'], [1, '#4f4b44']], '#221f1b', '#f2ede2', '#3a3630', '#fffaf0', 9, 3, .45,
+  'linear-gradient(90deg,#4f4b44,#aaa498 12%,#77726a 26%,#c9c3b6 40%,#7c776e 54%,#b4ae9f 68%,#66625a 82%,#a39d90 92%,#4f4b44)');
+mat('leather', [[0, '#8a6040'], [.35, '#4e3220'], [.65, '#6a4429'], [1, '#2e1c10']], '#140a04', '#e8c8a8', '#1a0e06', '#ffe0c0', 8, 2.5, .35,
+  'linear-gradient(90deg,#24160c,#6a4429 14%,#3e2817 30%,#7a5236 46%,#3a2414 62%,#6e482c 78%,#2e1c10)');
+mat('ivory', [[0, '#fffaf0'], [.3, '#ece0c6'], [.62, '#c9b48e'], [1, '#7e6a48']], '#3a2e1a', '#ffffff', '#5a4a2e', '#ffffff', 14, 3.5, .6, '');
+mat('horn', [[0, '#efe4cc'], [.4, '#a8946e'], [.75, '#5a4a32'], [1, '#2a2014']], '#140e06', '#fff6e0', '#3a2e1c', '#fff6e0', 14, 3.5, .6, '');
+mat('void', [[0, '#d8c6ff'], [.25, '#6a5498'], [.5, '#261c3e'], [.75, '#7a64a8'], [1, '#1c142e']], '#07040e', '#e6dcff', '#0a0614', '#e6dcff', 26, 4, .8,
+  'linear-gradient(90deg,#140e22,#6a5498 10%,#2a2040 22%,#a690d8 36%,#30264a 50%,#7a64a8 64%,#201834 78%,#5e4a8a 90%,#140e22)');
+const FEA = {
+  gold: { fill: LIN([[0, '#a87322'], [.45, '#f3cf78'], [1, '#fff3c8']], 0, 0, 1, 0), edge: '#4a2f08', rach: '#6b470f' },
+  white: { fill: LIN([[0, '#8e98a8'], [.45, '#e6ebf2'], [1, '#ffffff']], 0, 0, 1, 0), edge: '#3a4250', rach: '#7a8494' },
+  dark: { fill: LIN([[0, '#140c24'], [.5, '#3e2c66'], [1, '#9a80d8']], 0, 0, 1, 0), edge: '#05020a', rach: '#b49cff' },
+};
+const FADE = new Map(); const fade = (c) => { if (!FADE.has(c)) FADE.set(c, LIN([[0, c, 0], [.22, c, 1], [.78, c, 1], [1, c, 0]], 0, 0, 1, 0)); return FADE.get(c); };
+
+// ---- parts ----
+function sym(id, vb) { return E('symbol', { id, viewBox: vb, overflow: 'visible' }, DEFS); }
+// (an arm: drawn along the top edge, and the same part turned for the left edge)
+function arm(parent, draw, filter) { const g = E('g', { id: nid('a'), filter }, parent); draw(g); E('use', { href: '#' + g.id, transform: 'matrix(0 1 1 0 0 0)' }, parent); return g; }
+// (a crest's left half, and the same mirrored for the right)
+function halves(parent, draw, filter) { const g = E('g', { id: nid('h'), filter }, parent); draw(g); E('use', { href: '#' + g.id, transform: 'matrix(-1 0 0 1 320 0)' }, parent); return g; }
+function feather(g, B, T, w, s, pal) {
+  const dx = T[0] - B[0], dy = T[1] - B[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy * s, ny = ux * s;
+  const M = [B[0] + dx * .5, B[1] + dy * .5], c1 = [M[0] + nx * w, M[1] + ny * w], c2 = [M[0] - nx * w * .4, M[1] - ny * w * .4];
+  E('path', { d: 'M' + P(...B) + ' Q' + P(...c1) + ' ' + P(...T) + ' Q' + P(...c2) + ' ' + P(...B) + ' Z', fill: pal.fill, stroke: pal.edge, 'stroke-width': .8, 'stroke-linejoin': 'round' }, g);
+  const q = (t, k) => { const a = (1 - t) * (1 - t), b = 2 * t * (1 - t), c = t * t; return [a * B[0] + b * (M[0] + nx * w * k) + c * T[0], a * B[1] + b * (M[1] + ny * w * k) + c * T[1]]; };
+  E('path', { d: 'M' + P(...B) + ' Q' + P(M[0] + nx * w * .25, M[1] + ny * w * .25) + ' ' + P(...T), fill: 'none', stroke: pal.rach, 'stroke-width': .8, opacity: .85 }, g);
+  for (const t of [.24, .36, .48, .6, .72, .84]) { const a = q(t, .25), b = q(t + .07, .95); E('path', { d: 'M' + P(...a) + ' L' + P(...b), stroke: pal.rach, 'stroke-width': .5, opacity: .55 }, g); }
+}
+function spikes(g, cx, cy, r1, rL, rS, n, hwL, hwS, M, off = -Math.PI / 2) {
+  for (let i = 0; i < n; i++) { const a = off + i * 2 * Math.PI / n, lg = i % 2 === 0, r2 = lg ? rL : rS, hw = (lg ? hwL : hwS) * Math.PI / 180;
+    E('path', { d: 'M' + P(cx + r1 * Math.cos(a - hw), cy + r1 * Math.sin(a - hw)) + ' L' + P(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a)) + ' L' + P(cx + r1 * Math.cos(a + hw), cy + r1 * Math.sin(a + hw)) + ' Z',
+      fill: M.fill, stroke: M.edge, 'stroke-width': .7, 'stroke-linejoin': 'round' }, g); } }
+function starPoly(cx, cy, ro, ri, n, off = -Math.PI / 2) { const pts = []; for (let i = 0; i < n * 2; i++) { const a = off + i * Math.PI / n, r = i % 2 ? ri : ro; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } return poly(pts); }
+const star4 = (x, y, s) => starPoly(x, y, s, s * .28, 4);
+function rivet(g, x, y, r, M) { E('circle', { cx: x, cy: y, r, fill: M.fill, stroke: M.edge, 'stroke-width': .8 }, g); E('circle', { cx: x - r * .3, cy: y - r * .3, r: r * .35, fill: '#fff', opacity: .5 }, g); }
+function gemRound(g, cx, cy, r, T) {
+  E('circle', { cx, cy, r: r + 1.3, fill: '#0c0704' }, g); E('circle', { cx, cy, r, fill: T.gFill }, g);
+  E('path', { d: poly([[cx, cy - r], [cx + r * .7, cy], [cx, cy + r], [cx - r * .7, cy]]), fill: '#fff', opacity: .08 }, g);
+  E('ellipse', { cx: f2(cx - r * .36), cy: f2(cy - r * .42), rx: f2(r * .4), ry: f2(r * .21), fill: '#fff', opacity: .85, transform: 'rotate(-35 ' + P(cx - r * .36, cy - r * .42) + ')' }, g);
+  E('path', { d: star4(cx + r * .4, cy + r * .36, r * .3), fill: '#fff', opacity: .9 }, g);
+}
+function gemCut(g, cx, cy, r, T, n = 6, rot = Math.PI / 6) {
+  const pts = [...Array(n)].map((_, i) => { const a = rot + i * 2 * Math.PI / n; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
+  E('path', { d: poly(pts), fill: '#0c0406', stroke: '#0c0406', 'stroke-width': 2.4, 'stroke-linejoin': 'round' }, g);
+  pts.forEach((p, i) => { const q = pts[(i + 1) % n]; E('path', { d: poly([[cx, cy], p, q]), fill: T.facets[i % T.facets.length] }, g); });
+  const tb = pts.map(([x, y]) => [cx + (x - cx) * .46, cy + (y - cy) * .46]);
+  E('path', { d: poly(tb), fill: T.gem[1], opacity: .85 }, g); E('path', { d: poly(tb), fill: 'none', stroke: '#fff', 'stroke-width': .5, opacity: .5 }, g);
+  E('ellipse', { cx: f2(cx - r * .3), cy: f2(cy - r * .35), rx: f2(r * .3), ry: f2(r * .16), fill: '#fff', opacity: .8, transform: 'rotate(-35 ' + P(cx - r * .3, cy - r * .35) + ')' }, g);
+}
+function shard(g, cx, cy, len, w, ang, T) {
+  const h = len / 2, s = w * .55, t = E('g', { transform: 'translate(' + P(cx, cy) + ') rotate(' + ang + ')' }, g);
+  E('path', { d: poly([[0, -h], [w / 2, -h + s], [w / 2, h - s], [0, h], [-w / 2, h - s], [-w / 2, -h + s]]), fill: '#0b0410', stroke: '#0b0410', 'stroke-width': 2, 'stroke-linejoin': 'round' }, t);
+  E('path', { d: poly([[0, -h], [-w / 2, -h + s], [-w / 2, h - s], [0, h]]), fill: T.gem[1] }, t);
+  E('path', { d: poly([[0, -h], [w / 2, -h + s], [w / 2, h - s], [0, h]]), fill: T.gem[2] }, t);
+  E('path', { d: poly([[0, -h], [-w / 2, -h + s], [0, -h + s * 1.6], [w / 2, -h + s]]), fill: T.gem[0], opacity: .85 }, t);
+  E('path', { d: poly([[0, h], [-w / 2, h - s], [0, h - s * 1.4], [w / 2, h - s]]), fill: T.gem[3], opacity: .9 }, t);
+  E('path', { d: 'M0 ' + f2(-h + s * 1.6) + ' V' + f2(h - s * 1.4), stroke: '#fff', 'stroke-width': .7, opacity: .55 }, t);
+}
+// (engraved scrollwork along an edge: a cut line, its lit lip, and dots in the curls)
+function filigree(g, x0, x1, y, M) {
+  const p = 9, a = 2.6; let d = 'M' + x0 + ' ' + y, k = 0;
+  for (let x = x0; x + p <= x1; x += p, k++) { const s = k % 2 ? 1 : -1; d += ' c' + f2(p * .3) + ' ' + f2(s * a) + ' ' + f2(p * .7) + ' ' + f2(s * a) + ' ' + p + ' 0'; }
+  E('path', { d, fill: 'none', stroke: M.lo, 'stroke-width': .9, opacity: .75 }, g); E('path', { d, fill: 'none', stroke: M.hi, 'stroke-width': .5, opacity: .5, transform: 'translate(0 1)' }, g);
+  for (let i = 0; i < k; i++) E('circle', { cx: f2(x0 + p * (i + .5)), cy: f2(y + (i % 2 ? 1 : -1) * a * 1.25), r: .9, fill: M.lo, opacity: .7 }, g);
+}
+function leaf(g, x, y, ang, len, wid, LV) {
+  const t = E('g', { transform: 'translate(' + P(x, y) + ') rotate(' + ang + ')' }, g);
+  E('path', { d: 'M0 0 Q' + P(len * .45, -wid) + ' ' + P(len, 0) + ' Q' + P(len * .45, wid) + ' 0 0 Z', fill: LV.fill, stroke: LV.edge, 'stroke-width': .7, 'stroke-linejoin': 'round' }, t);
+  E('path', { d: 'M0 0 Q' + P(len * .5, -wid * .1) + ' ' + P(len * .94, 0), fill: 'none', stroke: LV.vein, 'stroke-width': .6, opacity: .8 }, t);
+  for (const k of [.3, .5, .7]) E('path', { d: 'M' + P(len * k, -wid * .04) + ' L' + P(len * (k + .13), -wid * .5) + ' M' + P(len * k, wid * .04) + ' L' + P(len * (k + .13), wid * .5), stroke: LV.vein, 'stroke-width': .45, opacity: .55 }, t);
+}
+function chain(g, A, C, B, M) {
+  const L = Math.hypot(C[0] - A[0], C[1] - A[1]) + Math.hypot(B[0] - C[0], B[1] - C[1]), n = Math.round(L / 7.5);
+  for (let i = 0; i <= n; i++) { const t = i / n, a = (1 - t) * (1 - t), b = 2 * t * (1 - t), c = t * t, x = a * A[0] + b * C[0] + c * B[0], y = a * A[1] + b * C[1] + c * B[1];
+    const tx = 2 * (1 - t) * (C[0] - A[0]) + 2 * t * (B[0] - C[0]), ty = 2 * (1 - t) * (C[1] - A[1]) + 2 * t * (B[1] - C[1]), ang = Math.atan2(ty, tx) * 180 / Math.PI, ry = i % 2 ? 1.3 : 2.9;
+    for (const [st, w] of [['#050506', 2.8], [M.fill, 1.6]]) E('ellipse', { cx: f2(x), cy: f2(y), rx: 4.6, ry, fill: 'none', stroke: st, 'stroke-width': w, transform: 'rotate(' + f2(ang) + ' ' + P(x, y) + ')' }, g); } }
+function cloud(g, cx, cy, k, flip, fill, edge) {
+  const t = E('g', { transform: 'translate(' + P(cx, cy) + ') scale(' + (flip ? -k : k) + ' ' + k + ')' }, g);
+  E('path', { d: 'M-24 7 C-29 7 -29 -2 -23.5 -2.5 C-23 -10 -14 -12.5 -9.5 -7.5 C-7.5 -16 6.5 -17.5 10 -8.5 C14 -14 24 -11.5 23 -3 C28.5 -3 28.5 7 23.5 7 Z', fill, stroke: edge, 'stroke-width': 1.6, 'stroke-linejoin': 'round' }, t);
+  for (const d of ['M-3 3 C-3.5 -4.5 6.5 -6 8 -0.5 C8.6 2.8 4.6 3.8 3.6 1.5', 'M-19.5 4 C-19.8 -0.5 -13.5 -1.8 -12.6 1.6 C-12.2 3.4 -14.6 3.9 -15.1 2.6', 'M14 3.6 C13.8 -0.2 19.2 -1.2 19.8 1.8 C20.1 3.4 18 3.8 17.6 2.7', 'M-26 7 H26'])
+    E('path', { d, fill: 'none', stroke: '#f2dc9a', 'stroke-width': 1.1, 'stroke-linecap': 'round', opacity: .9 }, t);
+}
+function eye(g, cx, cy, L, T, rot) {
+  const t = E('g', { transform: 'translate(' + P(cx, cy) + ') rotate(' + rot + ')' }, g), d = 'M' + (-L) + ' 0 Q0 ' + f2(-L * .62) + ' ' + L + ' 0 Q0 ' + f2(L * .62) + ' ' + (-L) + ' 0 Z';
+  E('path', { d, fill: '#050003', stroke: '#050003', 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, t); E('path', { d, fill: T.gFill }, t);
+  E('ellipse', { cx: 0, cy: 0, rx: f2(L * .13), ry: f2(L * .5), fill: '#0a0006' }, t);
+  E('ellipse', { cx: f2(-L * .38), cy: f2(-L * .16), rx: f2(L * .22), ry: f2(L * .08), fill: '#fff', opacity: .75 }, t);
+}
+// (runes of our own, in an 8 by 8 box)
+const GLYPH = ['M0 8 L4 0 L8 8 M2 5 H6', 'M0 0 H8 M4 0 V8 M1 8 H7', 'M0 4 H8 M2 0 L6 8 M6 0 L2 8', 'M1 0 V8 H7', 'M0 0 L8 8 M8 0 L4 4', 'M4 0 L8 4 L4 8 L0 4 Z', 'M0 8 V0 L4 4 L8 0 V8', 'M0 2 Q4 -2 8 2 M4 2 V8'];
+function glyph(g, x, y, k, i, color, w = 1.1) { E('path', { d: GLYPH[i % GLYPH.length], fill: 'none', stroke: color, 'stroke-width': w / k, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', transform: 'translate(' + P(x - 4 * k, y - 4 * k) + ') scale(' + k + ')' }, g); }
+function scaleFin(g, x, y, r, SC) {
+  E('path', { d: 'M' + P(x, y - r * .2) + ' C' + P(x + r, y - r * .2) + ' ' + P(x + r, y + r * .6) + ' ' + P(x, y + r * 1.2) + ' C' + P(x - r, y + r * .6) + ' ' + P(x - r, y - r * .2) + ' ' + P(x, y - r * .2) + ' Z', fill: SC.fill, stroke: SC.edge, 'stroke-width': .7 }, g);
+  E('path', { d: 'M' + P(x - r * .45, y + r * .1) + ' Q' + P(x, y + r * .55) + ' ' + P(x + r * .45, y + r * .1), fill: 'none', stroke: '#fff', 'stroke-width': .6, opacity: .28 }, g);
+}
+const stroked = (g, d, M, w, extra) => { E('path', Object.assign({ d, fill: 'none', stroke: M.edge, 'stroke-width': w + 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, extra), g); E('path', Object.assign({ d, fill: 'none', stroke: M.fill, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, extra), g); };
+const fadeLines = (s, c, y = 51) => E('path', { d: 'M0 ' + y + ' H72 M248 ' + y + ' H320', stroke: fade(c), 'stroke-width': 2 }, s);
+
+// ===================================================================================================================
+// The classes
+// ===================================================================================================================
+const B = {};
+const PLATE = 'M6 6 L156 6 L168 13 L156 20 L76 20 C54 20 40 26 33 33 C26 40 20 54 20 76 L20 156 L13 168 L6 156 Z';
+const PLATE_SLIM = 'M6 6 L152 6 L164 13 L152 20 L44 20 C30 20 20 30 20 44 L20 152 L13 164 L6 152 Z';
+const plate = (g, d, M) => E('path', { d, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2, 'stroke-linejoin': 'round' }, g);
+
+// ---------------- Paladin: polished gold, golden wings, a gem in a sunburst ----------------
+B.PALADIN = (T, id) => {
+  const M = MAT.gold; let s = sym(id.corner, '0 0 210 210'), G = E('g', { filter: glow(T.glow, 3.5, .45) }, s);
+  arm(G, (g) => { for (const [t, w] of [[[146, 31], 10], [[126, 43], 9], [[104, 53], 8], [[82, 60], 7], [[62, 63], 6]]) feather(g, [46, 27], t, w, 1, FEA.gold); }, M.bv);
+  const pl = E('g', { filter: M.bv }, G); plate(pl, PLATE, M);
+  for (const d of ['M166 13 C179 13 185 4 194 7.5 C201.5 10.5 200 21.5 192.5 21.5 C187 21.5 186 15 190.5 14.5', 'M13 166 C13 179 4 185 7.5 194 C10.5 201.5 21.5 200 21.5 192.5 C21.5 187 15 186 14.5 190.5']) E('path', { d, fill: 'none', stroke: M.fill, 'stroke-width': 2.8, 'stroke-linecap': 'round' }, pl);
+  arm(pl, (g) => { filigree(g, 54, 150, 13, M); for (const x of [100, 132]) rivet(g, x, 13, 2.6, M); });
+  spikes(pl, 27, 27, 19, 37, 30, 16, 5, 4, M);
+  E('circle', { cx: 27, cy: 27, r: 21, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, pl); E('circle', { cx: 27, cy: 27, r: 16, fill: '#2a1a05', stroke: M.hi, 'stroke-width': .8 }, pl);
+  gemRound(G, 27, 27, 13.5, T);
+  s = sym(id.crest, '0 0 320 102'); fadeLines(s, '#f2d27e'); G = E('g', { filter: glow(T.glow, 3.5, .45) }, s);
+  halves(G, (g) => { for (const [t, w] of [[[34, 18], 13], [[24, 36], 12], [[26, 54], 11], [[38, 70], 9.5], [[58, 82], 8], [[82, 88], 6.5]]) feather(g, [134, 52], t, w, -1, FEA.gold); }, M.bv);
+  const md = E('g', { filter: M.bv }, G);
+  if (T.motif === 'shield') { E('path', { d: 'M160 2 L200 13 C200 56 185 81 160 99 C135 81 120 56 120 13 Z', fill: M.fill, stroke: M.edge, 'stroke-width': 1.3, 'stroke-linejoin': 'round' }, md);
+    E('path', { d: 'M160 9 L193 18 C193 55 180 76 160 91 C140 76 127 55 127 18 Z', fill: LIN([[0, T.gem[1]], [.5, T.gem[2]], [1, T.gem[3]]]), stroke: '#0a1030', 'stroke-width': .8 }, md); }
+  if (T.motif === 'sword') { E('path', { d: 'M155.5 -10 L164.5 -10 L166 88 L160 104 L154 88 Z', fill: MAT.silver.fill, stroke: MAT.silver.edge, 'stroke-width': 1 }, md);
+    E('path', { d: 'M126 18 H194 L189 26 H131 Z', fill: M.fill, stroke: M.edge, 'stroke-width': 1 }, md); }
+  if (T.motif !== 'shield') spikes(md, 160, 51, 25, T.motif === 'sun' ? 46 : 37, T.motif === 'sun' ? 38 : 31, 16, 4.5, 3.6, M);
+  E('circle', { cx: 160, cy: 51, r: 27, fill: M.fill, stroke: M.edge, 'stroke-width': 1.3 }, md); E('circle', { cx: 160, cy: 51, r: 21.5, fill: '#2a1a05', stroke: M.hi, 'stroke-width': .9 }, md);
+  gemRound(G, 160, 51, 18.5, T);
+  s = sym(id.clasp, '0 0 64 110'); G = E('g', { filter: glow(T.glow, 3, .45) }, s); const c = E('g', { filter: M.bv }, G);
+  for (const t of [[26, 2], [40, 4], [26, 108], [40, 106]]) feather(c, [32, 55], t, 5, t[0] < 32 ? 1 : -1, FEA.gold);
+  E('path', { d: 'M32 30 L48 55 L32 80 L16 55 Z', fill: M.fill, stroke: M.edge, 'stroke-width': 1.1, 'stroke-linejoin': 'round' }, c);
+  gemCut(G, 32, 55, 10, T, 4, 0);
+};
+
+// ---------------- Monk: gold with a stone inlay, upturned eaves, stone discs and clouds ----------------
+B.MONK = (T, id) => {
+  const M = MAT.gold, SF = LIN([[0, T.gem[0]], [.35, T.gem[1]], [.72, T.gem[2]], [1, T.gem[3]]]), sb = bevel('#f4fffa', 26, 3.5, .7, 1.6);
+  let s = sym(id.corner, '0 0 210 210'), G = E('g', { filter: glow(T.glow, 3, .42) }, s);
+  arm(G, (g) => { cloud(g, 76, 32, .95, false, SF, '#d9b45c'); cloud(g, 122, 30, .72, false, SF, '#d9b45c'); }, sb);
+  plate(E('g', { filter: M.bv }, G), 'M6 6 H140 C154 6 164 1 174 -9 C174 6 165 20 142 20 H44 C30 20 20 30 20 44 V142 C20 165 6 174 -9 174 C1 164 6 154 6 140 Z', M);
+  E('path', { d: 'M11 30 V136 C11 147 9 155 4.5 160 C12 156 15.5 148 15.5 138 V44 C15.5 28 28 15.5 44 15.5 H138 C148 15.5 156 12 160 4.5 C155 9 147 11 136 11 H30 C19 11 11 19 11 30 Z', fill: SF, stroke: T.gem[3], 'stroke-width': .6 }, E('g', { filter: sb }, G));
+  arm(G, (g) => { for (const x of [74, 106]) E('rect', { x: x - 2.3, y: 11, width: 4.6, height: 4.6, fill: M.fill, stroke: M.edge, 'stroke-width': .6, transform: 'rotate(45 ' + x + ' 13.3)' }, g); });
+  E('circle', { cx: 29, cy: 29, r: 25, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, E('g', { filter: M.bv }, G));
+  E('circle', { cx: 29, cy: 29, r: 21, fill: T.gFill }, E('g', { filter: sb }, G));
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; E('circle', { cx: f2(29 + 14 * Math.cos(a)), cy: f2(29 + 14 * Math.sin(a)), r: 1.5, fill: '#f2dc9a', stroke: '#6b4a12', 'stroke-width': .4 }, G); }
+  E('circle', { cx: 29, cy: 29, r: 7, fill: '#04150e', stroke: M.fill, 'stroke-width': 2 }, G);
+  E('ellipse', { cx: 21, cy: 19.5, rx: 6, ry: 3, fill: '#fff', opacity: .5, transform: 'rotate(-35 21 19.5)' }, G);
+  s = sym(id.crest, '0 0 320 102'); fadeLines(s, '#e8c878', 50);
+  E('path', { d: 'M30 44 V56 M40 44 V56 M50 44 V56 M290 44 V56 M280 44 V56 M270 44 V56', stroke: '#e8c878', 'stroke-width': 1, opacity: .7 }, s);
+  G = E('g', { filter: glow(T.glow, 3, .42) }, s);
+  const cl = E('g', { filter: sb }, G); cloud(cl, 112, 68, 1.1, true, SF, '#d9b45c'); cloud(cl, 208, 68, 1.1, false, SF, '#d9b45c');
+  const rf = E('g', { filter: M.bv }, G);
+  plate(rf, 'M92 40 C120 36 140 23 160 8 C180 23 200 36 228 40 C237 41 245 37 252 30 C248 45 235 52 220 51 L100 51 C85 52 72 45 68 30 C75 37 83 41 92 40 Z', M);
+  E('path', { d: 'M160 8 L163 -4 L160 -10 L157 -4 Z', fill: M.fill, stroke: M.edge, 'stroke-width': .8 }, rf);
+  E('circle', { cx: 160, cy: 70, r: 27, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, rf);
+  E('path', { d: 'M100 45.5 H220', stroke: M.lo, 'stroke-width': 1, opacity: .7 }, G); E('path', { d: 'M100 46.7 H220', stroke: M.hi, 'stroke-width': .6, opacity: .5 }, G);
+  const ds = E('g', { filter: sb }, G); E('circle', { cx: 160, cy: 70, r: 23, fill: T.gFill }, ds); E('circle', { cx: 160, cy: -1, r: 4.5, fill: T.gFill }, ds);
+  E('path', { d: 'M147 74 C147 62 158 56 166 61 C173 65.5 170 76 162.5 74.5 C158 73.5 158.8 67.5 162.8 68.2 M173 66 C173 78 162 84 154 79 C147 74.5 150 64 157.5 65.5', fill: 'none', stroke: '#f3fff9', 'stroke-width': 2, 'stroke-linecap': 'round', opacity: .92 }, G);
+  E('ellipse', { cx: 151, cy: 58, rx: 7, ry: 3.4, fill: '#fff', opacity: .42, transform: 'rotate(-35 151 58)' }, G);
+  s = sym(id.clasp, '0 0 64 110'); G = E('g', { filter: glow(T.glow, 3, .42) }, s); const c = E('g', { filter: M.bv }, G);
+  plate(c, 'M32 18 C40 30 44 40 44 55 C44 70 40 80 32 92 C24 80 20 70 20 55 C20 40 24 30 32 18 Z', M); E('circle', { cx: 32, cy: 55, r: 14, fill: M.fill, stroke: M.edge, 'stroke-width': 1.1 }, c);
+  E('circle', { cx: 32, cy: 55, r: 11, fill: T.gFill }, E('g', { filter: sb }, G)); E('circle', { cx: 32, cy: 55, r: 3.6, fill: '#04150e', stroke: M.fill, 'stroke-width': 1.4 }, G);
+};
+
+// ---------------- Death Knight: spiked dark steel, glowing runes, a cut gem in a spiked socket ----------------
+B.DEATHKNIGHT = (T, id) => {
+  const M = MAT.steel, gl = glow(T.glow, 2.4, .9); let s = sym(id.corner, '0 0 210 210');
+  const pg = E('g', { filter: M.bv }, s);
+  arm(pg, (g) => { for (const [x, h, w] of [[60, 16, 7], [82, 11, 6], [104, 14, 6.5], [126, 9, 5], [144, 6, 4]]) E('path', { d: poly([[x - w, 5], [x + 1.5, 5 - h], [x + w, 5]]), fill: M.fill, stroke: M.edge, 'stroke-width': .9, 'stroke-linejoin': 'round' }, g); });
+  plate(pg, 'M4 4 H150 L174 -3 L160 14 L150 23 H46 L23 46 V150 L14 160 L-3 174 L4 150 Z', M);
+  E('path', { d: 'M9 9 H148 L156 4 L150 13 L148 17 H44 L17 44 V148 L13 150 L4 156 L9 148 Z', fill: 'none', stroke: M.hi, 'stroke-width': .6, opacity: .35 }, pg);
+  arm(pg, (g) => { for (const x of [98, 130]) rivet(g, x, 13.5, 2.7, M); });
+  E('path', { d: starPoly(29, 29, 28, 18, 8, -Math.PI / 8), fill: M.fill, stroke: M.edge, 'stroke-width': 1, 'stroke-linejoin': 'round' }, pg);
+  arm(s, (g) => { E('path', { d: 'M54 13.5 H90 M106 13.5 H124 M138 13.5 H148', stroke: T.gem[1], 'stroke-width': 1.3, 'stroke-linecap': 'round' }, g); for (let i = 0; i < 3; i++) glyph(g, 60 + i * 13, 35, .62, i * 3 + 1, T.gem[1]); }, gl);
+  if (T.extra === 'ice') arm(s, (g) => { const IC = LIN([[0, '#ffffff'], [.5, '#bfeaff'], [1, '#5fb8e8']], 0, 0, 0, 1); for (const [x, l] of [[52, 10], [66, 7], [80, 12], [96, 8], [112, 11], [128, 7], [142, 9]]) E('path', { d: poly([[x - 2.6, 22], [x + 2.6, 22], [x + .4, 22 + l]]), fill: IC, stroke: '#2a6a9a', 'stroke-width': .4 }, g); }, bevel('#ffffff', 30, 2.5, .8, .8));
+  if (T.extra === 'drip') arm(s, (g) => { for (const [x, l] of [[58, 9], [84, 13], [110, 8], [136, 11]]) { E('path', { d: 'M' + (x - 2.2) + ' 22 V' + (22 + l) + ' C' + (x - 2.2) + ' ' + (25 + l) + ' ' + (x + 2.2) + ' ' + (25 + l) + ' ' + (x + 2.2) + ' ' + (22 + l) + ' V22 Z', fill: T.gem[1], opacity: .92 }, g); } }, gl);
+  E('path', { d: 'M29 12 L43.7 20.5 V37.5 L29 46 L14.3 37.5 V20.5 Z', fill: '#1a0306', stroke: M.edge, 'stroke-width': 1 }, E('g', { filter: M.bv }, s));
+  gemCut(s, 29, 29, 14, T);
+  s = sym(id.crest, '0 0 320 102'); const cg = E('g', { filter: M.bv }, s);
+  halves(cg, (g) => { plate(g, 'M128 44 L28 48 L4 51 L28 54 L128 58 Z', M); plate(g, 'M118 40 L126 -2 L136 32 Z M140 28 L146 -14 L152 24 Z', M); });
+  plate(cg, 'M152 22 L160 -26 L168 22 Z', M); plate(cg, 'M160 18 L189 34.5 V67.5 L160 84 L131 67.5 V34.5 Z', M); plate(cg, 'M150 84 L160 100 L170 84 Z', M);
+  E('path', { d: 'M160 26 L182 38.7 V63.3 L160 76 L138 63.3 V38.7 Z', fill: '#131317', stroke: T.gem[2], 'stroke-width': 1.2 }, s);
+  const rg = E('g', { filter: gl }, s); E('path', { d: 'M120 51 H34 M200 51 H286', stroke: T.gem[1], 'stroke-width': 1.2 }, rg);
+  E('path', { d: 'M160 32 V70 M160 42 L150 33 M160 42 L170 33 M151 58 L160 50 L169 58 M154 66 H166', fill: 'none', stroke: T.gem[1], 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, rg);
+  s = sym(id.clasp, '0 0 64 110'); const kg = E('g', { filter: M.bv }, s);
+  plate(kg, 'M32 6 L38 34 L52 30 L44 55 L52 80 L38 76 L32 104 L26 76 L12 80 L20 55 L12 30 L26 34 Z', M); E('path', { d: 'M32 42 L43 48.5 V61.5 L32 68 L21 61.5 V48.5 Z', fill: '#1a0306', stroke: M.edge, 'stroke-width': 1 }, kg);
+  gemCut(s, 32, 55, 10, T);
+};
+
+// ---------------- Demon Hunter: fel-scarred black iron, sweeping horns, glowing tattoos, a demon eye ----------------
+B.DEMONHUNTER = (T, id) => {
+  const M = MAT.iron, gl = glow(T.glow, 2.6, .85); let s = sym(id.corner, '0 0 210 210');
+  arm(s, (g) => { plate(g, 'M24 30 C60 22 104 24 142 38 C112 34 80 34 48 40 Z', M); plate(g, 'M8 6 C64 0 124 2 186 20 C160 15 128 15 100 17 C70 19 44 22 26 30 Z', M);
+    E('path', { d: 'M40 11 C80 7 130 8 170 16', fill: 'none', stroke: M.hi, 'stroke-width': .7, opacity: .35 }, g); }, M.bv);
+  arm(s, (g) => { E('path', { d: 'M34 17 C74 11 120 11 158 17 M60 27 C84 25 104 27 122 31', fill: 'none', stroke: T.gem[1], 'stroke-width': 1.3, 'stroke-linecap': 'round' }, g);
+    for (const x of [78, 104, 130]) E('path', { d: 'M' + x + ' 10 l5 3.5 l-5 3.5', fill: 'none', stroke: T.gem[1], 'stroke-width': 1, 'stroke-linecap': 'round' }, g); }, gl);
+  const cp = E('g', { filter: M.bv }, s);
+  for (const d of ['M18 31 L-12 18 L14 21 Z', 'M31 18 L18 -12 L21 14 Z', 'M17 17 L-10 -10 L23 11 L11 23 Z']) plate(cp, d, M);
+  E('circle', { cx: 27, cy: 27, r: 17, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, cp);
+  eye(E('g', { filter: glow(T.glow, 3, .7) }, s), 27, 27, 15, T, 45);
+  s = sym(id.crest, '0 0 320 102');
+  halves(s, (g) => { plate(g, 'M150 58 C126 24 80 12 28 22 C70 24 106 38 130 64 Z', M); plate(g, 'M146 38 C138 16 124 4 102 -4 C120 10 128 24 134 44 Z', M); }, M.bv);
+  halves(s, (g) => E('path', { d: 'M138 52 C116 30 84 22 50 24', fill: 'none', stroke: T.gem[1], 'stroke-width': 1.3, 'stroke-linecap': 'round' }, g), gl);
+  E('circle', { cx: 160, cy: 52, r: 24, fill: M.fill, stroke: M.edge, 'stroke-width': 1.3 }, E('g', { filter: M.bv }, s));
+  eye(E('g', { filter: glow(T.glow, 3.5, .75) }, s), 160, 52, 20, T, 0);
+  s = sym(id.clasp, '0 0 64 110'); plate(E('g', { filter: M.bv }, s), 'M30 2 C50 22 54 58 40 104 C44 70 40 38 18 12 Z', M);
+  eye(E('g', { filter: glow(T.glow, 2.6, .7) }, s), 37, 55, 9, T, 90);
+};
+
+// ---------------- Druid: living wood and leaves, a moonstone in a burl, an antlered crest ----------------
+B.DRUID = (T, id) => {
+  const W = MAT.wood, I = MAT.ivory, LV = { fill: LIN([[0, T.leaf[0]], [.5, T.leaf[1]], [1, T.leaf[2]]], 0, 0, 1, 0), edge: '#10200a', vein: T.leaf[2] }, lb = bevel('#f4ffe8', 16, 2.5, .5, 1.1);
+  let s = sym(id.corner, '0 0 210 210');
+  arm(s, (g) => { plate(g, 'M4 10 C40 2 84 6 122 10 C146 12 164 8 180 0 C170 14 150 22 122 22 C86 22 50 24 22 34 Z', W);
+    E('path', { d: 'M30 17 C62 11 100 13 140 15 M44 21 C70 18 96 18 118 19', fill: 'none', stroke: W.lo, 'stroke-width': .8, opacity: .7 }, g);
+    E('ellipse', { cx: 92, cy: 15, rx: 3.2, ry: 2, fill: 'none', stroke: W.lo, 'stroke-width': .8, opacity: .8 }, g); }, W.bv);
+  arm(s, (g) => { for (const [x, y, a, l, w] of [[56, 22, 28, 24, 7], [74, 12, -32, 20, 6], [96, 22, 34, 22, 6.5], [118, 12, -26, 18, 5.5], [138, 21, 30, 16, 5], [156, 11, -22, 13, 4]]) leaf(g, x, y, a, l, w, LV); }, lb);
+  arm(s, (g) => { for (const d of ['M66 26 c5 7 12 7 12 2 c0 -3 -5 -3 -5 0', 'M128 24 c4 6 10 6 10 2 c0 -3 -4 -3 -4 0']) E('path', { d, fill: 'none', stroke: T.leaf[1], 'stroke-width': 1.1, 'stroke-linecap': 'round' }, g);
+    if (T.motif === 'bloom') for (const [x, y] of [[86, 29], [146, 27]]) { for (let i = 0; i < 5; i++) { const a = i * 72 * Math.PI / 180; E('ellipse', { cx: f2(x + 3.4 * Math.cos(a)), cy: f2(y + 3.4 * Math.sin(a)), rx: 2.8, ry: 1.7, fill: '#ffe8f2', stroke: '#c86a9a', 'stroke-width': .4, transform: 'rotate(' + f2(i * 72) + ' ' + P(x + 3.4 * Math.cos(a), y + 3.4 * Math.sin(a)) + ')' }, g); } E('circle', { cx: x, cy: y, r: 1.6, fill: '#ffd24a' }, g); }
+    if (T.motif === 'moon') for (const [x, y, k] of [[88, 31, 3.6], [150, 28, 3], [112, 34, 2.2]]) E('path', { d: star4(x, y, k), fill: T.gem[0] }, g);
+    if (T.motif === 'claws') for (let i = 0; i < 3; i++) E('path', { d: 'M' + (96 + i * 6) + ' 9 C' + (100 + i * 6) + ' 13 ' + (102 + i * 6) + ' 17 ' + (101 + i * 6) + ' 21', fill: 'none', stroke: T.gem[1], 'stroke-width': 1.4, 'stroke-linecap': 'round' }, g); }, glow(T.glow, 2, .8));
+  const bg = E('g', { filter: W.bv }, s); E('circle', { cx: 29, cy: 29, r: 23, fill: W.fill, stroke: W.edge, 'stroke-width': 1.2 }, bg);
+  for (const r of [19.5, 17]) E('circle', { cx: 29, cy: 29, r, fill: 'none', stroke: W.lo, 'stroke-width': .7, opacity: .7 }, bg);
+  const lg = E('g', { filter: lb }, s); for (const a of [-135, -45, 45, 135]) leaf(lg, 29 + 15 * Math.cos(a * Math.PI / 180), 29 + 15 * Math.sin(a * Math.PI / 180), a, 12, 4, LV);
+  gemRound(E('g', { filter: glow(T.glow, 3, .55) }, s), 29, 29, 12.5, T);
+  s = sym(id.crest, '0 0 320 102'); const ag = E('g', { filter: I.bv }, s);
+  halves(ag, (g) => { stroked(g, 'M148 50 C134 40 120 28 104 4', I, 5.5); for (const d of ['M124 30 C116 24 112 14 112 2', 'M134 40 C134 30 138 22 144 14', 'M112 16 C104 14 96 16 88 22', 'M142 46 C132 46 124 50 116 57']) stroked(g, d, I, 3.4); });
+  const cl = E('g', { filter: lb }, s); for (const [x, y, a] of [[138, 62, 160], [182, 62, 20], [146, 72, 130], [174, 72, 50]]) leaf(cl, x, y, a, 18, 6, LV);
+  if (T.motif === 'moon') E('path', { d: 'M174 36 A22 22 0 1 0 174 68 A17 17 0 1 1 174 36 Z', fill: MAT.silver.fill, stroke: MAT.silver.edge, 'stroke-width': .8 }, E('g', { filter: MAT.silver.bv }, s));
+  const cb = E('g', { filter: W.bv }, s); E('circle', { cx: 160, cy: 52, r: 22, fill: W.fill, stroke: W.edge, 'stroke-width': 1.2 }, cb); E('circle', { cx: 160, cy: 52, r: 18.5, fill: 'none', stroke: W.lo, 'stroke-width': .7 }, cb);
+  gemRound(E('g', { filter: glow(T.glow, 3.5, .6) }, s), 160, 52, 15, T);
+  if (T.motif === 'claws') { const kg = E('g', { filter: glow(T.glow, 2, .9) }, s); for (let i = 0; i < 3; i++) E('path', { d: 'M' + (196 + i * 7) + ' 28 C' + (202 + i * 7) + ' 40 ' + (204 + i * 7) + ' 52 ' + (200 + i * 7) + ' 66', fill: 'none', stroke: T.gem[1], 'stroke-width': 2, 'stroke-linecap': 'round' }, kg); }
+  if (T.motif === 'bloom') { const fg = E('g', {}, s); for (const [x, y] of [[124, 40], [196, 40]]) { for (let i = 0; i < 5; i++) { const a = i * 72 * Math.PI / 180; E('ellipse', { cx: f2(x + 4.4 * Math.cos(a)), cy: f2(y + 4.4 * Math.sin(a)), rx: 3.6, ry: 2.2, fill: '#ffe8f2', stroke: '#c86a9a', 'stroke-width': .5, transform: 'rotate(' + f2(i * 72) + ' ' + P(x + 4.4 * Math.cos(a), y + 4.4 * Math.sin(a)) + ')' }, fg); } E('circle', { cx: x, cy: y, r: 2, fill: '#ffd24a' }, fg); } }
+  s = sym(id.clasp, '0 0 64 110'); const lc = E('g', { filter: lb }, s); leaf(lc, 32, 44, -90, 40, 9, LV); leaf(lc, 32, 66, 90, 40, 9, LV);
+  E('circle', { cx: 32, cy: 55, r: 12, fill: W.fill, stroke: W.edge, 'stroke-width': 1 }, E('g', { filter: W.bv }, s)); gemRound(E('g', { filter: glow(T.glow, 2.6, .55) }, s), 32, 55, 8.5, T);
+};
+
+// ---------------- Evoker: bronze and dragon scales, horns at the corners, dragon wings ----------------
+B.EVOKER = (T, id) => {
+  const M = MAT.bronze, I = MAT.horn, SC = { fill: LIN([[0, T.gem[1]], [.55, T.gem[2]], [1, T.gem[3]]], 0, 0, 0, 1), edge: '#140806' }, sb = bevel('#fff0e0', 22, 3, .7, 1);
+  let s = sym(id.corner, '0 0 210 210');
+  arm(s, (g) => { for (let i = 0; i < 11; i++) scaleFin(g, 46 + i * 10, 21, 8.5 * (1 - i * .045), SC); for (let i = 0; i < 10; i++) scaleFin(g, 51 + i * 10, 29, 8.5 * (.8 - i * .04), SC); }, sb);
+  const pg = E('g', { filter: M.bv }, s); plate(pg, PLATE_SLIM, M);
+  arm(pg, (g) => { plate(g, 'M162 13 C172 12 178 8 183 1 C183 10 177 18 164 19 Z', M); filigree(g, 50, 148, 13, M); });
+  const hg = E('g', { filter: I.bv }, s); for (const d of ['M28 20 C14 12 4 -2 0 -22 C10 -10 20 -2 36 12 Z', 'M20 28 C12 14 -2 4 -22 0 C-10 10 -2 20 12 36 Z']) plate(hg, d, I);
+  E('circle', { cx: 28, cy: 28, r: 18, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, E('g', { filter: M.bv }, s));
+  shard(E('g', { filter: glow(T.glow, 3, .6) }, s), 28, 28, 27, 11, -45, T);
+  s = sym(id.crest, '0 0 320 102');
+  halves(s, (g) => { E('path', { d: 'M138 46 L62 4 Q60 18 40 20 Q46 32 30 42 Q42 50 42 62 Q92 62 138 56 Z', fill: LIN([[0, T.gem[2]], [1, T.gem[3]]], 0, 0, 1, 1), stroke: '#140806', 'stroke-width': .9, opacity: .95 }, g); }, sb);
+  halves(s, (g) => { for (const t of [[62, 4], [40, 20], [30, 42], [42, 62]]) stroked(g, 'M138 48 L' + P(...t), M, 2.4); plate(g, 'M62 4 L54 -4 L66 2 Z', I); }, M.bv);
+  halves(s, (g) => plate(g, 'M150 34 C142 16 128 4 108 -2 C124 10 134 22 140 38 Z', I), I.bv);
+  E('circle', { cx: 160, cy: 52, r: 22, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, E('g', { filter: M.bv }, s));
+  shard(E('g', { filter: glow(T.glow, 3.5, .6) }, s), 160, 50, 34, 14, 0, T);
+  s = sym(id.clasp, '0 0 64 110'); const cs = E('g', { filter: sb }, s); for (const [y, r] of [[18, 12], [36, 13], [56, 14], [76, 12]]) scaleFin(cs, 32, y, r, SC);
+  shard(E('g', { filter: glow(T.glow, 2.6, .6) }, s), 32, 58, 20, 9, 0, T);
+};
+
+// ---------------- Hunter: carved bow wood and leather, fletching, claws, an eagle over crossed arrows ----------------
+B.HUNTER = (T, id) => {
+  const W = MAT.wood, L = MAT.leather, Br = MAT.bronze, I = MAT.ivory, FL = { fill: LIN([[0, T.fl[2]], [.5, T.fl[1]], [1, T.fl[0]]], 0, 0, 1, 0), edge: '#1e140a', rach: '#3a2a18' };
+  let s = sym(id.corner, '0 0 210 210');
+  arm(s, (g) => { plate(g, 'M10 9 C60 3 112 3 166 12 L172 19 C114 11 62 13 22 23 Z', W); E('path', { d: 'M40 12 C80 8 120 8 160 14', fill: 'none', stroke: W.lo, 'stroke-width': .8, opacity: .7 }, g); E('circle', { cx: 170, cy: 15.5, r: 3.6, fill: Br.fill, stroke: Br.edge, 'stroke-width': .8 }, g); }, W.bv);
+  arm(s, (g) => { plate(g, 'M22 6.5 L52 5.5 L52 21 L24 24 Z', L); E('path', { d: 'M25 14.5 H50', stroke: '#d9b48a', 'stroke-width': .9, 'stroke-dasharray': '2 2.2' }, g);
+    for (const x of [96, 128]) { E('path', { d: 'M' + x + ' 16 V27', stroke: '#c9a27a', 'stroke-width': 1 }, g); plate(g, 'M' + x + ' 26 C' + (x + 4) + ' 32 ' + (x + 4) + ' 40 ' + (x - 2) + ' 46 C' + x + ' 39 ' + (x - 2) + ' 33 ' + (x - 4) + ' 28 Z', I); } }, L.bv);
+  const fg = E('g', { filter: W.bv }, s); for (const [t, w] of [[[88, 60], 7.5], [[74, 74], 8], [[60, 88], 7.5]]) feather(fg, [30, 30], t, w, 1, FL);
+  const ah = E('g', { filter: Br.bv }, s); plate(ah, 'M0 0 L32 15 L38 38 L15 32 Z', Br); E('path', { d: 'M2 2 L36 36', stroke: Br.hi, 'stroke-width': .8, opacity: .6 }, ah);
+  gemRound(E('g', { filter: glow(T.glow, 2.6, .55) }, s), 27, 27, 8, T);
+  s = sym(id.crest, '0 0 320 102'); const ar = E('g', { filter: W.bv }, s);
+  for (const [a, b] of [[[84, 98], [236, 4]], [[236, 98], [84, 4]]]) { stroked(ar, 'M' + P(...a) + ' L' + P(...b), W, 2.8); const dx = b[0] - a[0], dy = b[1] - a[1], L2 = Math.hypot(dx, dy), ux = dx / L2, uy = dy / L2;
+    plate(ar, poly([[b[0] + ux * 12, b[1] + uy * 12], [b[0] - uy * 5, b[1] + ux * 5], [b[0] + uy * 5, b[1] - ux * 5]]), Br); for (const sg of [1, -1]) feather(ar, [a[0] + ux * 14, a[1] + uy * 14], [a[0] - uy * 7 * sg + ux * 2, a[1] + ux * 7 * sg + uy * 2], 3, sg, FL); }
+  halves(s, (g) => { for (const [t, w] of [[[44, 20], 11], [[34, 36], 10.5], [[36, 52], 10], [[48, 66], 9], [[66, 76], 7.5]]) feather(g, [138, 50], t, w, -1, FL); }, W.bv);
+  E('circle', { cx: 160, cy: 51, r: 22, fill: Br.fill, stroke: Br.edge, 'stroke-width': 1.2 }, E('g', { filter: Br.bv }, s));
+  gemRound(E('g', { filter: glow(T.glow, 3, .55) }, s), 160, 51, 14.5, T);
+  s = sym(id.clasp, '0 0 64 110'); E('path', { d: 'M32 4 V40', stroke: '#c9a27a', 'stroke-width': 1.4 }, s);
+  plate(E('g', { filter: I.bv }, s), 'M30 54 C42 66 44 84 34 104 C34 86 30 74 22 62 Z', I); gemRound(E('g', { filter: glow(T.glow, 2.4, .55) }, s), 32, 46, 8, T);
+};
+
+// ---------------- Mage: fine silver rails, runic circles, floating crystals ----------------
+B.MAGE = (T, id) => {
+  const M = MAT.silver, gl = glow(T.glow, 2.2, .9); let s = sym(id.corner, '0 0 210 210'); const pg = E('g', { filter: M.bv }, s);
+  plate(pg, 'M6 6 H160 C166 6 170 9 172 13 C166 11 162 11 156 11 H22 C16 11 11 16 11 22 V156 C11 162 11 166 13 172 C9 170 6 166 6 160 Z', M);
+  plate(pg, 'M24 17 H140 C146 17 150 19 152 22 H30 C25.5 22 22 25.5 22 30 V152 C19 150 17 146 17 140 V24 C17 20 20 17 24 17 Z', M);
+  arm(pg, (g) => { for (const x of [62, 100, 138]) rivet(g, x, 14, 1.9, M); E('path', { d: 'M172 13 C180 15 184 10 181 6 C179 3.5 175 5 176.5 8', fill: 'none', stroke: M.fill, 'stroke-width': 2.2, 'stroke-linecap': 'round' }, g); });
+  arm(s, (g) => { for (let i = 0; i < 4; i++) glyph(g, 76 + i * 15, 14, .45, i * 2, T.gem[1], .9); }, gl);
+  const rc = E('g', { filter: M.bv }, s); for (const [r, w] of [[24, 3.2], [18, 1.4]]) { E('circle', { cx: 30, cy: 30, r, fill: 'none', stroke: M.edge, 'stroke-width': w + 1.6 }, rc); E('circle', { cx: 30, cy: 30, r, fill: 'none', stroke: M.fill, 'stroke-width': w }, rc); }
+  E('circle', { cx: 30, cy: 30, r: 16.8, fill: 'rgba(5,6,12,.75)' }, s);
+  const rg = E('g', { filter: gl }, s); for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12; E('path', { d: 'M' + P(30 + 19.6 * Math.cos(a), 30 + 19.6 * Math.sin(a)) + ' L' + P(30 + 22.2 * Math.cos(a), 30 + 22.2 * Math.sin(a)), stroke: T.gem[1], 'stroke-width': .9 }, rg); }
+  if (T.motif === 'frost') for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, x = 30 + 14 * Math.cos(a), y = 30 + 14 * Math.sin(a); E('path', { d: 'M30 30 L' + P(x, y) + ' M' + P(30 + 9 * Math.cos(a) + 3 * Math.cos(a + 1), 30 + 9 * Math.sin(a) + 3 * Math.sin(a + 1)) + ' L' + P(30 + 9 * Math.cos(a), 30 + 9 * Math.sin(a)) + ' L' + P(30 + 9 * Math.cos(a) + 3 * Math.cos(a - 1), 30 + 9 * Math.sin(a) + 3 * Math.sin(a - 1)), fill: 'none', stroke: T.gem[0], 'stroke-width': .9, opacity: .8 }, rg); }
+  if (T.motif === 'arcane') for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; E('circle', { cx: f2(30 + 13 * Math.cos(a)), cy: f2(30 + 13 * Math.sin(a)), r: .9, fill: T.gem[0] }, rg); }
+  if (T.motif === 'fire') for (const [x, y, k, r] of [[22, 20, 1, -30], [38, 22, .8, 20], [20, 38, .8, -60]]) E('path', { d: 'M0 0 C-4 -4 -2 -9 0 -13 C1 -8 5 -6 4 -2 C3 0 1 1 0 0 Z', fill: T.gem[1], opacity: .9, transform: 'translate(' + P(x, y) + ') rotate(' + r + ') scale(' + k + ')' }, rg);
+  shard(E('g', { filter: glow(T.glow, 3, .6) }, s), 30, 30, 26, 10, -45, T);
+  for (const [x, y, k] of [[54, 22, 3], [22, 54, 3], [48, 46, 2]]) E('path', { d: star4(x, y, k), fill: T.gem[0] }, E('g', { filter: gl }, s));
+  s = sym(id.crest, '0 0 320 102'); fadeLines(s, '#e9ecf0');
+  halves(s, (g) => { plate(g, 'M118 51 C96 44 72 46 40 51 C72 56 96 58 118 51 Z', M); E('path', { d: 'M40 51 C32 46 26 50 28 54 C29.5 57 34 56 33 53', fill: 'none', stroke: M.fill, 'stroke-width': 2.2, 'stroke-linecap': 'round' }, g); }, M.bv);
+  const cr = E('g', { filter: M.bv }, s); for (const [r, w] of [[40, 2.6], [33, 1.2]]) { E('circle', { cx: 160, cy: 51, r, fill: 'none', stroke: M.edge, 'stroke-width': w + 1.6 }, cr); E('circle', { cx: 160, cy: 51, r, fill: 'none', stroke: M.fill, 'stroke-width': w }, cr); }
+  E('circle', { cx: 160, cy: 51, r: 31.8, fill: 'rgba(5,6,12,.7)' }, s);
+  const cg = E('g', { filter: gl }, s); E('circle', { cx: 160, cy: 51, r: 26, fill: 'none', stroke: T.gem[1], 'stroke-width': .9, opacity: .8 }, cg);
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + Math.PI / 8; glyph(cg, 160 + 36.5 * Math.cos(a), 51 + 36.5 * Math.sin(a), .42, i, T.gem[1], .9); }
+  const sg = E('g', { filter: glow(T.glow, 3.5, .6) }, s); shard(sg, 160, 48, 46, 14, 0, T); shard(sg, 133, 60, 20, 8, -25, T); shard(sg, 187, 60, 20, 8, 25, T);
+  s = sym(id.clasp, '0 0 64 110'); const kr = E('g', { filter: M.bv }, s); E('circle', { cx: 32, cy: 55, r: 16, fill: 'none', stroke: M.edge, 'stroke-width': 3.6 }, kr); E('circle', { cx: 32, cy: 55, r: 16, fill: 'none', stroke: M.fill, 'stroke-width': 2.2 }, kr);
+  plate(kr, 'M32 20 L35 37 L32 39 L29 37 Z M32 90 L35 73 L32 71 L29 73 Z', M); shard(E('g', { filter: glow(T.glow, 2.6, .6) }, s), 32, 55, 20, 8, 0, T);
+};
+
+// ---------------- Priest: white silver and gold, pearls, a halo and white wings ----------------
+B.PRIEST = (T, id) => {
+  const M = T.shadow ? MAT.void : MAT.silver, GD = T.shadow ? MAT.void : MAT.gold, FP = T.shadow ? FEA.dark : FEA.white;
+  const PRL = T.shadow ? RAD([[0, '#efe6ff'], [.5, '#7a5cc0'], [1, '#1c1036']]) : RAD([[0, '#ffffff'], [.55, '#e6e2dc'], [1, '#8a8478']]);
+  let s = sym(id.corner, '0 0 210 210'), G = E('g', { filter: glow(T.glow, 3.5, .45) }, s);
+  arm(G, (g) => { for (const [t, w] of [[[126, 30], 9], [[106, 40], 8], [[86, 47], 7]]) feather(g, [44, 26], t, w, 1, FP); }, M.bv);
+  const pg = E('g', { filter: M.bv }, G); plate(pg, PLATE, M);
+  arm(pg, (g) => { stroked(g, 'M50 17 H150', GD, 1.4); for (let x = 54; x <= 146; x += 11) { E('circle', { cx: x, cy: 11.5, r: 2.7, fill: PRL, stroke: '#3a3630', 'stroke-width': .5 }, g); } });
+  if (T.shadow) arm(G, (g) => { for (const d of ['M60 24 C64 38 78 38 78 29 C78 24 72 24 72 28', 'M112 24 C114 34 124 34 124 27']) E('path', { d, fill: 'none', stroke: T.gem[1], 'stroke-width': 1.6, 'stroke-linecap': 'round' }, g); }, glow(T.glow, 2, .8));
+  const rays = E('g', { filter: glow(T.glow, 2, .7) }, G); for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; E('path', { d: 'M' + P(27 + 24 * Math.cos(a), 27 + 24 * Math.sin(a)) + ' L' + P(27 + 33 * Math.cos(a), 27 + 33 * Math.sin(a)), stroke: T.gem[0], 'stroke-width': 1, opacity: .8 }, rays); }
+  const hl = E('g', { filter: GD.bv }, G); E('circle', { cx: 27, cy: 27, r: 21, fill: 'none', stroke: GD.edge, 'stroke-width': 4.6 }, hl); E('circle', { cx: 27, cy: 27, r: 21, fill: 'none', stroke: GD.fill, 'stroke-width': 3 }, hl);
+  E('circle', { cx: 27, cy: 27, r: 18.5, fill: M.fill, stroke: M.edge, 'stroke-width': 1 }, E('g', { filter: M.bv }, G));
+  gemRound(G, 27, 27, 12.5, T);
+  s = sym(id.crest, '0 0 320 102'); fadeLines(s, T.shadow ? '#a690d8' : '#e9ecf0'); G = E('g', { filter: glow(T.glow, 3.5, .45) }, s);
+  const sp = E('g', { filter: M.bv }, G); spikes(sp, 160, 52, 24, 42, 34, 24, 2.6, 2, M);
+  halves(G, (g) => { for (const [t, w] of [[[30, 16], 13], [[18, 32], 12.5], [[16, 50], 12], [[24, 66], 10.5], [[40, 80], 9], [[60, 90], 7.5], [[84, 94], 6]]) feather(g, [134, 54], t, w, -1, FP); }, M.bv);
+  if (T.motif === 'shield') plate(E('g', { filter: M.bv }, G), 'M160 20 L186 28 C186 56 176 74 160 86 C144 74 134 56 134 28 Z', M);
+  const ha = E('g', { filter: GD.bv }, G); E('ellipse', { cx: 160, cy: 10, rx: 28, ry: 7.5, fill: 'none', stroke: GD.edge, 'stroke-width': 4.8 }, ha); E('ellipse', { cx: 160, cy: 10, rx: 28, ry: 7.5, fill: 'none', stroke: GD.fill, 'stroke-width': 3.2 }, ha);
+  E('circle', { cx: 160, cy: 54, r: 23, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, E('g', { filter: M.bv }, G));
+  E('circle', { cx: 160, cy: 54, r: 19.5, fill: 'none', stroke: GD.fill, 'stroke-width': 1.6 }, G);
+  gemRound(G, 160, 54, 16, T);
+  s = sym(id.clasp, '0 0 64 110'); G = E('g', { filter: glow(T.glow, 3, .45) }, s); const c = E('g', { filter: M.bv }, G);
+  for (const t of [[24, 4], [40, 6], [24, 106], [40, 104]]) feather(c, [32, 55], t, 5, t[0] < 32 ? 1 : -1, FP);
+  E('circle', { cx: 32, cy: 55, r: 14, fill: M.fill, stroke: M.edge, 'stroke-width': 1.1 }, c); E('circle', { cx: 32, cy: 55, r: 11.5, fill: 'none', stroke: GD.fill, 'stroke-width': 1.4 }, G);
+  gemRound(G, 32, 55, 9, T);
+};
+
+// ---------------- Rogue: stitched leather and blackened steel, daggers along the edges, a coin medallion ----------------
+B.ROGUE = (T, id) => {
+  const L = MAT.leather, S = MAT.steel, K = MAT.iron, C = T.coin ? MAT.gold : MAT.iron; let s = sym(id.corner, '0 0 210 210');
+  const pg = E('g', { filter: L.bv }, s); plate(pg, 'M6 6 H150 L160 13 L150 20 H40 C28 20 20 28 20 40 V150 L13 160 L6 150 Z', L);
+  arm(pg, (g) => { for (const y of [9.6, 16.6]) E('path', { d: 'M44 ' + y + ' H148', stroke: '#c9a27a', 'stroke-width': .8, 'stroke-dasharray': '2.4 2.2' }, g); });
+  arm(s, (g) => { plate(g, 'M54 8.5 L150 9 L182 13.5 L150 18 L54 18.5 Z', S); E('path', { d: 'M58 13.5 H146', stroke: S.lo, 'stroke-width': 1.2, opacity: .7 }, g); E('path', { d: 'M58 12.4 H146', stroke: S.hi, 'stroke-width': .5, opacity: .6 }, g);
+    plate(g, 'M47 2 C50 4 52 4 54 2 L54 25 C52 23 50 23 47 25 Z', K); plate(g, 'M34 7.5 H47 V19.5 H34 Z', L); for (const x of [37, 41, 45]) E('path', { d: 'M' + x + ' 7.5 L' + (x - 2.5) + ' 19.5', stroke: '#1a0e06', 'stroke-width': .7 }, g); }, S.bv);
+  if (T.motif === 'poison') arm(s, (g) => { for (const [x, y, r] of [[150, 26, 2.2], [164, 32, 1.8], [176, 24, 1.6], [156, 38, 1.4]]) E('path', { d: 'M' + x + ' ' + (y - r * 2.2) + ' C' + (x + r) + ' ' + (y - r) + ' ' + (x + r) + ' ' + y + ' ' + x + ' ' + (y + r * .6) + ' C' + (x - r) + ' ' + y + ' ' + (x - r) + ' ' + (y - r) + ' ' + x + ' ' + (y - r * 2.2) + ' Z', fill: T.gem[1] }, g); }, glow(T.glow, 1.8, .8));
+  if (T.motif === 'smoke') arm(s, (g) => { for (const d of ['M60 30 C66 22 76 30 72 36 C68 42 60 36 66 32', 'M100 32 C104 26 112 30 110 36 C108 40 102 38 105 34', 'M140 30 C144 25 150 28 149 33']) E('path', { d, fill: 'none', stroke: T.gem[1], 'stroke-width': 1.6, 'stroke-linecap': 'round', opacity: .55 }, g); }, glow(T.glow, 2.5, .6));
+  const cn = E('g', { filter: C.bv }, s); E('circle', { cx: 28, cy: 28, r: 21, fill: C.fill, stroke: C.edge, 'stroke-width': 1.2 }, cn);
+  for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12; E('path', { d: 'M' + P(28 + 17 * Math.cos(a), 28 + 17 * Math.sin(a)) + ' L' + P(28 + 19.5 * Math.cos(a), 28 + 19.5 * Math.sin(a)), stroke: C.lo, 'stroke-width': .8 }, cn); }
+  gemCut(s, 28, 28, 11, T);
+  s = sym(id.crest, '0 0 320 102');
+  halves(s, (g) => { plate(g, 'M96 48 H130 V55 H96 Z', L); E('path', { d: 'M98 51.5 H128', stroke: '#c9a27a', 'stroke-width': .7, 'stroke-dasharray': '2 2' }, g); plate(g, starPoly(84, 51.5, 11, 4, 4, Math.PI / 4), S); E('circle', { cx: 84, cy: 51.5, r: 2, fill: '#0a0c10' }, g); }, S.bv);
+  for (const ang of [-34, 34]) { const t = E('g', { transform: 'translate(160 64) rotate(' + ang + ')', filter: S.bv }, s); plate(t, 'M0 -70 L6 -56 L5 -4 L-5 -4 L-6 -56 Z', S); E('path', { d: 'M0 -60 V-8', stroke: S.lo, 'stroke-width': 1.1, opacity: .7 }, t); plate(t, 'M-14 -4 H14 V2 H-14 Z', K); plate(t, 'M-4 2 H4 V18 H-4 Z', L); E('circle', { cx: 0, cy: 22, r: 4.5, fill: K.fill, stroke: K.edge, 'stroke-width': .8 }, t); }
+  E('circle', { cx: 160, cy: 50, r: 24, fill: C.fill, stroke: C.edge, 'stroke-width': 1.3 }, E('g', { filter: C.bv }, s));
+  gemCut(s, 160, 50, 14, T);
+  s = sym(id.clasp, '0 0 64 110'); const dg = E('g', { filter: S.bv }, s); plate(dg, 'M27 34 L37 34 L36 92 L32 106 L28 92 Z', S); plate(dg, 'M16 28 H48 V34 H16 Z', K); plate(dg, 'M28 14 H36 V28 H28 Z', L);
+  gemCut(s, 32, 10, 6.5, T);
+};
+
+// ---------------- Shaman: carved stone and totem wood, elemental orbs, a thunderbird crest ----------------
+B.SHAMAN = (T, id) => {
+  const St = MAT.stone, W = MAT.wood, gl = glow(T.glow, 2.4, .85), FLW = { fill: LIN([[0, '#5a4630'], [.5, '#e8dcc8'], [1, '#ffffff']], 0, 0, 1, 0), edge: '#2a2014', rach: '#6a5a44' };
+  let s = sym(id.corner, '0 0 210 210'); const pg = E('g', { filter: St.bv }, s);
+  plate(pg, 'M6 6 H156 L164 14 L156 22 H46 C32 22 22 32 22 46 V156 L14 164 L6 156 Z', St);
+  arm(pg, (g) => { for (const x of [62, 86, 110, 134]) { E('path', { d: 'M' + x + ' 7 V21', stroke: St.lo, 'stroke-width': 1.1 }, g); E('path', { d: 'M' + (x + 1) + ' 7 V21', stroke: St.hi, 'stroke-width': .5, opacity: .5 }, g); }
+    for (const x of [74, 122]) E('path', { d: 'M' + x + ' 14 m-4 0 a4 4 0 1 1 4 4 a2.6 2.6 0 1 1 -2.6 -2.6', fill: 'none', stroke: St.lo, 'stroke-width': .9 }, g); });
+  arm(s, (g) => {
+    if (T.motif === 'lightning') { E('path', { d: 'M50 32 L58 27 L56 33 L66 28 L64 34 L76 29 M96 33 L102 29 L101 34 L109 30', fill: 'none', stroke: T.gem[1], 'stroke-width': 1.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, g); }
+    if (T.motif === 'flames') for (const x of [60, 86, 112]) E('path', { d: 'M0 0 C-4 -4 -2 -9 0 -12 C1 -8 5 -6 4 -2 C3 0 1 1 0 0 Z', fill: T.gem[1], transform: 'translate(' + x + ' 34) scale(.9)' }, g);
+    if (T.motif === 'water') E('path', { d: 'M48 31 q6 -6 12 0 t12 0 t12 0 t12 0 t12 0', fill: 'none', stroke: T.gem[1], 'stroke-width': 1.6, 'stroke-linecap': 'round' }, g); }, gl);
+  E('path', { d: 'M44 44 L58 58', stroke: '#c9a27a', 'stroke-width': 1.2 }, s); E('circle', { cx: 49, cy: 49, r: 2.6, fill: T.gem[1] }, s); E('circle', { cx: 54, cy: 54, r: 2, fill: '#efe4cc' }, s);
+  feather(E('g', { filter: W.bv }, s), [57, 57], [76, 76], 5, 1, FLW);
+  const dg = E('g', { filter: St.bv }, s); E('circle', { cx: 28, cy: 28, r: 25, fill: St.fill, stroke: St.edge, 'stroke-width': 1.2 }, dg); E('circle', { cx: 28, cy: 28, r: 19, fill: 'none', stroke: St.lo, 'stroke-width': .9 }, dg);
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; E('path', { d: 'M' + P(28 + 19 * Math.cos(a), 28 + 19 * Math.sin(a)) + ' L' + P(28 + 23 * Math.cos(a), 28 + 23 * Math.sin(a)), stroke: St.lo, 'stroke-width': .9 }, dg); }
+  gemRound(E('g', { filter: glow(T.glow, 3.5, .65) }, s), 28, 28, 12.5, T);
+  s = sym(id.crest, '0 0 320 102');
+  halves(s, (g) => { plate(g, 'M138 40 L60 26 L70 34 L52 36 L64 44 L46 48 L60 54 L44 60 L62 64 L138 58 Z', W); for (const [a, b] of [[[118, 37], [118, 59]], [[100, 34], [100, 61]], [[82, 31], [82, 63]]]) E('path', { d: 'M' + P(...a) + ' L' + P(...b), stroke: T.gem[1], 'stroke-width': 2, opacity: .85 }, g); E('path', { d: 'M110 36 L110 60 M92 33 L92 62', stroke: '#efe4cc', 'stroke-width': 1.2, opacity: .7 }, g); }, W.bv);
+  const hd = E('g', { filter: W.bv }, s); plate(hd, 'M148 30 L160 4 L172 30 Z', W); plate(hd, 'M154 18 L160 -2 L166 18 Z', W);
+  const cs = E('g', { filter: St.bv }, s); E('circle', { cx: 160, cy: 52, r: 24, fill: St.fill, stroke: St.edge, 'stroke-width': 1.3 }, cs); E('circle', { cx: 160, cy: 52, r: 19, fill: 'none', stroke: St.lo, 'stroke-width': .9 }, cs);
+  gemRound(E('g', { filter: glow(T.glow, 3.5, .65) }, s), 160, 52, 15, T);
+  s = sym(id.clasp, '0 0 64 110'); plate(E('g', { filter: St.bv }, s), 'M32 22 C44 22 48 32 48 48 C48 64 42 78 32 84 C22 78 16 64 16 48 C16 32 20 22 32 22 Z', St);
+  gemRound(E('g', { filter: glow(T.glow, 2.8, .65) }, s), 32, 50, 10, T); feather(E('g', { filter: W.bv }, s), [32, 84], [33, 106], 4, 1, FLW);
+};
+
+// ---------------- Warlock: black iron with glowing cracks, ram horns, chains, a soul shard ----------------
+B.WARLOCK = (T, id) => {
+  const M = MAT.iron, H = MAT.horn, S = MAT.steel, gl = glow(T.glow, 2.4, .9); let s = sym(id.corner, '0 0 210 210');
+  plate(E('g', { filter: M.bv }, s), 'M4 4 H152 L164 12 L152 21 H44 C30 21 21 30 21 44 V152 L12 164 L4 152 Z', M);
+  arm(s, (g) => E('path', { d: 'M60 12 l6 -3 l5 4 l7 -3 l6 3 M110 13 l5 3 l6 -4 l7 3', fill: 'none', stroke: T.gem[1], 'stroke-width': 1.1, 'stroke-linejoin': 'round' }, g), gl);
+  arm(s, (g) => chain(g, [64, 22], [106, 46], [148, 22], S));
+  arm(s, (g) => { plate(g, 'M34 18 C52 4 76 4 86 18 C94 30 86 44 72 42 C62 41 60 30 68 28 C72 34 78 32 78 26 C76 18 64 16 54 22 C46 26 40 30 34 30 Z', H);
+    for (const d of ['M50 11 q3 6 0 12', 'M62 8 q3 6 0 12', 'M74 10 q4 5 2 11']) E('path', { d, fill: 'none', stroke: H.edge, 'stroke-width': .7, opacity: .6 }, g); }, H.bv);
+  E('circle', { cx: 28, cy: 28, r: 17, fill: M.fill, stroke: M.edge, 'stroke-width': 1.2 }, E('g', { filter: M.bv }, s));
+  shard(E('g', { filter: glow(T.glow, 3, .7) }, s), 28, 28, 28, 11, -45, T);
+  s = sym(id.crest, '0 0 320 102');
+  halves(s, (g) => chain(g, [70, 72], [56, 86], [40, 92], S));
+  halves(s, (g) => { plate(g, 'M138 44 C116 20 80 14 64 36 C52 54 64 76 86 72 C102 69 106 52 94 48 C90 56 82 60 76 54 C70 46 76 34 90 32 C108 30 124 40 132 54 Z', H);
+    for (const d of ['M120 30 q-4 7 0 14', 'M104 24 q-4 8 0 15', 'M86 22 q-6 6 -3 14']) E('path', { d, fill: 'none', stroke: H.edge, 'stroke-width': .8, opacity: .6 }, g); }, H.bv);
+  plate(E('g', { filter: M.bv }, s), starPoly(160, 52, 28, 19, 10), M);
+  shard(E('g', { filter: glow(T.glow, 3.5, .7) }, s), 160, 50, 44, 14, 0, T);
+  s = sym(id.clasp, '0 0 64 110'); chain(s, [32, 4], [32, 30], [32, 52], S); shard(E('g', { filter: glow(T.glow, 2.6, .7) }, s), 32, 76, 34, 12, 0, T);
+};
+
+// ---------------- Warrior: heavy riveted steel, a bronze shield boss, a heraldic shield ----------------
+B.WARRIOR = (T, id) => {
+  const M = MAT.steel, Br = MAT.bronze, W = MAT.wood, CL = LIN([[0, T.cloth[0]], [.5, T.cloth[1]], [1, T.cloth[2]]], 0, 0, 0, 1); let s = sym(id.corner, '0 0 210 210');
+  const pg = E('g', { filter: M.bv }, s); plate(pg, 'M4 4 H156 L168 13 L156 25 H46 L25 46 V156 L13 168 L4 156 Z', M);
+  arm(pg, (g) => { for (const x of [72, 120]) E('path', { d: poly([[x - 4, 4], [x, 9.5], [x + 4, 4]]), fill: '#0a0c10' }, g); for (const x of [64, 92, 120, 148]) rivet(g, x, 14.5, 3.2, Br); });
+  const bg = E('g', { filter: Br.bv }, s); E('circle', { cx: 30, cy: 30, r: 26, fill: Br.fill, stroke: Br.edge, 'stroke-width': 1.3 }, bg);
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + Math.PI / 8; rivet(bg, 30 + 22 * Math.cos(a), 30 + 22 * Math.sin(a), 2, M); }
+  E('circle', { cx: 30, cy: 30, r: 17, fill: CL, stroke: Br.edge, 'stroke-width': 1 }, bg);
+  gemCut(s, 30, 30, 10.5, T);
+  s = sym(id.crest, '0 0 320 102'); const wg = E('g', { filter: M.bv }, s);
+  if (T.motif === 'axes') halves(wg, (g) => { stroked(g, 'M228 98 L96 -2', W, 3.4); plate(g, 'M100 0 C88 -6 78 2 74 14 C70 26 76 36 86 40 C86 30 92 20 104 12 Z', M); });
+  if (T.motif === 'swords') halves(wg, (g) => { plate(g, 'M96 -6 L104 -10 L212 84 L206 92 Z', M); plate(g, 'M190 62 L204 50 L210 56 L196 68 Z', Br); stroked(g, 'M206 70 L222 86', W, 3); });
+  if (T.motif === 'shield') halves(wg, (g) => { plate(g, 'M128 46 L36 42 L22 51 L36 60 L128 56 Z', M); for (const x of [56, 80, 104]) rivet(g, x, 51, 2.2, Br); });
+  const big = T.motif === 'shield' ? 1.12 : 1, sh = (d) => d.replace(/(-?\d+(\.\d+)?) (-?\d+(\.\d+)?)/g, (m, x, _a, y) => P(160 + (x - 160) * big, 53 + (y - 53) * big));
+  const sg = E('g', { filter: Br.bv }, s); plate(sg, sh('M160 8 L194 18 C194 58 180 82 160 98 C140 82 126 58 126 18 Z'), Br);
+  E('path', { d: sh('M160 15 L187 23 C187 56 175 77 160 90 C145 77 133 56 133 23 Z'), fill: CL, stroke: Br.edge, 'stroke-width': .9 }, sg);
+  E('path', { d: sh('M160 15 V90 M133 40 H187'), stroke: Br.fill, 'stroke-width': 2.4, opacity: .9 }, sg);
+  for (const [x, y] of [[138, 22], [182, 22], [160, 94]]) rivet(sg, 160 + (x - 160) * big, 53 + (y - 53) * big, 2.2, M);
+  gemCut(s, 160, 46, 10, T);
+  s = sym(id.clasp, '0 0 64 110'); const cg = E('g', { filter: Br.bv }, s); plate(cg, 'M32 26 L50 32 C50 58 42 74 32 84 C22 74 14 58 14 32 Z', Br);
+  E('path', { d: 'M32 31 L45 35.5 C45 57 39 70 32 78 C25 70 19 57 19 35.5 Z', fill: CL, stroke: Br.edge, 'stroke-width': .7 }, cg); gemCut(s, 32, 52, 7.5, T);
+};
+
+// ===================================================================================================================
+// Specs and their tints
+// ===================================================================================================================
+const G4 = {
+  TOPAZ: ['#fffdf0', '#ffe390', '#e09222', '#6a3a06'], SAPPHIRE: ['#f0f6ff', '#8fb8ff', '#2a56c0', '#0a1a48'], RUBY: ['#ffe8e4', '#ff6a5a', '#c01a1a', '#3a0404'],
+  JADE: ['#d2fff0', '#5ee0ad', '#11694c', '#052a1d'], AMBER: ['#fff3d0', '#ffc45a', '#c07512', '#3e2204'], SKY: ['#f0faff', '#a8dcff', '#3f86c8', '#10304e'],
+  ICE: ['#f2fcff', '#9ae6ff', '#2f9ad0', '#0a3250'], PLAGUE: ['#f2ffd8', '#a6e85a', '#4a8a14', '#152e06'], FEL: ['#f2ffd0', '#9cff3a', '#3f8f0a', '#123006'],
+  MOLTEN: ['#fff2c8', '#ffb340', '#d4520f', '#4a1404'], VOID: ['#f2e6ff', '#b77cff', '#5a22b8', '#1c0742'], MOON: ['#f8f6ff', '#c4bcff', '#5b4fc0', '#1d1748'],
+  FERAL: ['#fff3d0', '#ffb54a', '#c25d10', '#3d1a04'], BEAR: ['#f7ead6', '#d4a26a', '#7a4f22', '#2a1808'], LEAFG: ['#eaffd8', '#7fe06a', '#2f8a2a', '#0d2e0c'],
+  DRED: ['#ffe6d8', '#ff6a4a', '#b31a12', '#3d0604'], DGREEN: ['#e0fff2', '#4fe0a8', '#13895f', '#063020'], DBRONZE: ['#fff3cf', '#f0b84a', '#a8661a', '#3a2006'],
+  HGREEN: ['#f0ffd8', '#a8e05a', '#4f8a1f', '#1a3008'], HBLUE: ['#ecf6ff', '#8ec6ff', '#2f6fb0', '#0c2440'], HRUST: ['#fff1dc', '#e8954a', '#9a4f18', '#331806'],
+  ARCANE: ['#fdeeff', '#e07cff', '#8a2fc0', '#2e0a48'], FIRE: ['#fff4cc', '#ff9a3a', '#d23a0a', '#4a0e02'], DISC: ['#fffbe8', '#ffe9a8', '#d8b04a', '#5a3e0a'],
+  HOLYP: ['#ffffff', '#fff3c0', '#e8c060', '#6a4a10'], POISON: ['#f2ffd2', '#b6f04a', '#5f9a12', '#1d3304'], COIN: ['#fff6cc', '#ffd24a', '#c08a12', '#3e2a04'],
+  SUBT: ['#f1eaff', '#b59cff', '#5c4aa8', '#1a1236'], STORM: ['#eef8ff', '#7fc8ff', '#2a6ad0', '#0a1e4a'], FLAME: ['#fff2d4', '#ffa040', '#c8501a', '#3c1404'],
+  WATER: ['#e8fffc', '#5fe0d4', '#16908a', '#063230'], AFFL: ['#f3e8ff', '#b48aff', '#5c34b0', '#1a0c3a'], DESTRO: ['#ffeadb', '#ff7a3a', '#c82a0a', '#3a0802'],
+  ARMS: ['#ffe8e0', '#ff6a5a', '#a81a1a', '#300404'], FURY: ['#fff2d4', '#ffa040', '#d04a10', '#3e1004'],
+};
+const LEAF = { green: ['#d9f5c8', '#6fbf5a', '#2f6e2a'], autumn: ['#ffe6a8', '#d9a23a', '#7a4a14'], olive: ['#e0f0b8', '#8aa84a', '#4a5e1e'], fresh: ['#e6ffd0', '#7fe06a', '#2f8a2a'] };
+const FLT = { brown: ['#f3e3c3', '#9a6a3a', '#4a2e14'], grey: ['#ffffff', '#b8c4d0', '#4a5866'], rust: ['#ffd8b0', '#c8642a', '#5a2610'] };
+const CLOTH = { red: ['#d84a3a', '#8a1a14', '#4a0a08'], orange: ['#ff9a4a', '#c04a14', '#5a1a06'], blue: ['#6a9aff', '#2a4ab0', '#101e50'] };
+const ICON = { 62: 'spell_holy_magicalsentry', 63: 'spell_fire_firebolt02', 64: 'spell_frost_frostbolt02', 65: 'spell_holy_holybolt', 66: 'ability_paladin_shieldofthetemplar', 70: 'spell_holy_auraoflight',
+  71: 'ability_warrior_savageblow', 72: 'ability_warrior_innerrage', 73: 'ability_warrior_defensivestance', 102: 'spell_nature_starfall', 103: 'ability_druid_catform', 104: 'ability_racial_bearform', 105: 'spell_nature_healingtouch',
+  250: 'spell_deathknight_bloodpresence', 251: 'spell_deathknight_frostpresence', 252: 'spell_deathknight_unholypresence', 253: 'ability_hunter_bestialdiscipline', 254: 'ability_hunter_focusedaim', 255: 'ability_hunter_camouflage',
+  256: 'spell_holy_powerwordshield', 257: 'spell_holy_guardianspirit', 258: 'spell_shadow_shadowwordpain', 259: 'ability_rogue_deadlybrew', 260: 'ability_rogue_waylay', 261: 'ability_stealth',
+  262: 'spell_nature_lightning', 263: 'spell_shaman_improvedstormstrike', 264: 'spell_nature_magicimmunity', 265: 'spell_shadow_deathcoil', 266: 'spell_shadow_metamorphosis', 267: 'spell_shadow_rainoffire',
+  268: 'spell_monk_brewmaster_spec', 269: 'spell_monk_windwalker_spec', 270: 'spell_monk_mistweaver_spec', 577: 'ability_demonhunter_specdps', 581: 'ability_demonhunter_spectank', 1480: 'inv_112_ability_demonhunter_metamorphasisvoid',
+  1467: 'classicon_evoker_devastation', 1468: 'classicon_evoker_preservation', 1473: 'classicon_evoker_augmentation' };
+const CLASSES = [
+  ['PALADIN', 'Paladin', '#F48CBA', 'gold', 'Polished gold, golden wings, a gem in a sunburst and a winged crest.', [
+    [65, 'Holy', 'TOPAZ', { motif: 'sun' }, 'A topaz in a full sunburst.'], [66, 'Protection', 'SAPPHIRE', { motif: 'shield' }, 'A sapphire, with a shield on the crest.'], [70, 'Retribution', 'RUBY', { motif: 'sword' }, 'A ruby, with a sword on the crest.']]],
+  ['DEATHKNIGHT', 'Death Knight', '#C41E3A', 'steel', 'Spiked dark steel, glowing runes, a cut gem in a spiked socket and a crowned rune stone.', [
+    [250, 'Blood', 'RUBY', {}, 'A ruby and blood-red runes.'], [251, 'Frost', 'ICE', { extra: 'ice' }, 'A sapphire, ice-blue runes and icicles.'], [252, 'Unholy', 'PLAGUE', { extra: 'drip' }, 'An emerald, sickly green runes and dripping plague.']]],
+  ['DEMONHUNTER', 'Demon Hunter', '#A330C9', 'iron', 'Fel-scarred black iron, sweeping horns, glowing tattoos and a demon eye.', [
+    [577, 'Havoc', 'FEL', {}, 'Fel green.'], [581, 'Vengeance', 'MOLTEN', {}, 'Molten orange, like a sigil of flame.'], [1480, 'Devourer', 'VOID', {}, 'Void purple.']]],
+  ['DRUID', 'Druid', '#FF7C0A', 'wood', 'Living wood and leaves, a gem in a burl and an antlered crest.', [
+    [102, 'Balance', 'MOON', { leaf: LEAF.green, motif: 'moon' }, 'A moonstone, stars and a crescent moon.'], [103, 'Feral', 'FERAL', { leaf: LEAF.autumn, motif: 'claws' }, 'Amber, autumn leaves and claw marks.'],
+    [104, 'Guardian', 'BEAR', { leaf: LEAF.olive }, 'Brown amber and old oak.'], [105, 'Restoration', 'LEAFG', { leaf: LEAF.fresh, motif: 'bloom' }, 'Green, fresh leaves and blossoms.']]],
+  ['EVOKER', 'Evoker', '#33937F', 'bronze', 'Bronze and dragon scales, horns at the corners and dragon wings on the crest.', [
+    [1467, 'Devastation', 'DRED', {}, 'Red scales.'], [1468, 'Preservation', 'DGREEN', {}, 'Green scales.'], [1473, 'Augmentation', 'DBRONZE', {}, 'Bronze scales.']]],
+  ['HUNTER', 'Hunter', '#AAD372', 'wood', 'Carved bow wood and leather, fletching, claws and an eagle over crossed arrows.', [
+    [253, 'Beast Mastery', 'HGREEN', { fl: FLT.brown }, 'Wild green and brown feathers.'], [254, 'Marksmanship', 'HBLUE', { fl: FLT.grey }, 'Cold blue and grey feathers.'], [255, 'Survival', 'HRUST', { fl: FLT.rust }, 'Rust and red feathers.']]],
+  ['MAGE', 'Mage', '#3FC7EB', 'silver', 'Fine silver rails, runic circles and floating crystals.', [
+    [62, 'Arcane', 'ARCANE', { motif: 'arcane' }, 'Violet, with an inner ring of runes.'], [63, 'Fire', 'FIRE', { motif: 'fire' }, 'Orange, with flames around the crystal.'], [64, 'Frost', 'ICE', { motif: 'frost' }, 'Ice blue, with a snowflake in the circle.']]],
+  ['MONK', 'Monk', '#00FF98', 'gold', 'Gold with a stone inlay, upturned eaves, stone discs and clouds.', [
+    [268, 'Brewmaster', 'AMBER', {}, 'Amber.'], [270, 'Mistweaver', 'JADE', {}, 'Jade.'], [269, 'Windwalker', 'SKY', {}, 'Pale sky-blue stone.']]],
+  ['PRIEST', 'Priest', '#FFFFFF', 'silver', 'White silver and gold, pearls, a halo and white wings.', [
+    [256, 'Discipline', 'DISC', { motif: 'shield' }, 'Pale gold, with a shield behind the gem.'], [257, 'Holy', 'HOLYP', {}, 'White-gold light.'], [258, 'Shadow', 'VOID', { shadow: true, mat: 'void' }, 'Void-dark metal, dark wings and violet light.']]],
+  ['ROGUE', 'Rogue', '#FFF468', 'leather', 'Stitched leather and blackened steel, daggers along the edges and a coin medallion.', [
+    [259, 'Assassination', 'POISON', { motif: 'poison' }, 'Poison green, dripping from the blades.'], [260, 'Outlaw', 'COIN', { coin: true }, 'A gold doubloon.'], [261, 'Subtlety', 'SUBT', { motif: 'smoke' }, 'Violet shadow and smoke.']]],
+  ['SHAMAN', 'Shaman', '#0070DD', 'stone', 'Carved stone and totem wood, elemental orbs and a thunderbird crest.', [
+    [262, 'Elemental', 'STORM', { motif: 'lightning' }, 'Storm blue and lightning.'], [263, 'Enhancement', 'FLAME', { motif: 'flames' }, 'Fiery orange and flames.'], [264, 'Restoration', 'WATER', { motif: 'water' }, 'Sea teal and waves.']]],
+  ['WARLOCK', 'Warlock', '#8788EE', 'iron', 'Black iron with glowing cracks, ram horns, chains and a soul shard.', [
+    [265, 'Affliction', 'AFFL', {}, 'Shadow purple.'], [266, 'Demonology', 'FEL', {}, 'Fel green.'], [267, 'Destruction', 'DESTRO', {}, 'Chaos fire.']]],
+  ['WARRIOR', 'Warrior', '#C69B6D', 'steel', 'Heavy riveted steel, a bronze shield boss and a heraldic shield.', [
+    [71, 'Arms', 'ARMS', { cloth: CLOTH.red, motif: 'swords' }, 'Blood red, with crossed swords.'], [72, 'Fury', 'FURY', { cloth: CLOTH.orange, motif: 'axes' }, 'Rage orange, with crossed axes.'],
+    [73, 'Protection', 'SAPPHIRE', { cloth: CLOTH.blue, motif: 'shield' }, 'Shield blue, with a bigger shield.']]],
+];
+function tint(gem, extra) { const T = Object.assign({ gem }, extra); T.gFill = RAD([[0, gem[0]], [.28, gem[1]], [.68, gem[2]], [1, gem[3]]]); T.facets = [gem[1], gem[2], gem[3], gem[2], gem[1], gem[0]]; T.glow = gem[1]; return T; }
+
+// ---- build every spec's ornaments and its card ----
+const gal = document.getElementById('gallery'), nav = document.getElementById('nav'); let n = 0;
+for (const [key, cname, ccol, mname, about, specs] of CLASSES) {
+  nav.insertAdjacentHTML('beforeend', '<a href="#c-' + key + '" style="--cc:' + ccol + '">' + cname + '</a>');
+  const sec = document.createElement('section'); sec.className = 'cls'; sec.id = 'c-' + key; sec.style.setProperty('--cc', ccol);
+  sec.innerHTML = '<div class="cls-h"><h2>' + cname + '</h2><span>' + about + '</span></div><div class="grid"></div>'; gal.appendChild(sec);
+  const grid = sec.querySelector('.grid');
+  for (const [sid, sname, gk, extra, note] of specs) {
+    const T = tint(G4[gk], extra), ids = { corner: 'k' + sid + 'c', crest: 'k' + sid + 'r', clasp: 'k' + sid + 'p' };
+    try { B[key](T, ids); } catch (e) { console.error(key, sname, e); }
+    const M = MAT[extra.mat || mname], o = (c, i) => '<svg class="orn ' + c + '"><use href="#' + i + '"/></svg>';
+    const card = document.createElement('div'); card.className = 'card';
+    card.style.cssText = '--band:' + M.band + ';--fbg:radial-gradient(90% 70% at 50% -5%, ' + hexA(T.glow, .14) + ', transparent 60%), linear-gradient(180deg, #16151a, #0e0f13);--fl2:' + hexA(T.glow, .45) + ';--acc:' + T.gem[1] + ';--accg:' + hexA(T.glow, .45);
+    card.innerHTML = o('corner tl', ids.corner) + o('corner tr', ids.corner) + o('corner bl', ids.corner) + o('corner br', ids.corner) + o('crest', ids.crest) + o('clasp l', ids.clasp) + o('clasp r', ids.clasp) + o('clasp b', ids.clasp) +
+      '<div class="in"><img src="https://wow.zamimg.com/images/wow/icons/large/' + ICON[sid] + '.jpg" alt="" onerror="this.style.visibility=\'hidden\'"><div><h3>' + sname + ' ' + cname + '</h3><div class="th">' + note + '</div><div class="mini"><b>' + (84 + (n++ * 7) % 14) + '</b> out of 100</div></div></div>';
+    grid.appendChild(card);
+  }
+}
+// (one class at a time, picked from the names at the top; "All" shows every class)
+nav.insertAdjacentHTML('beforeend', '<a href="#" data-k="all" style="--cc:#e6b450">All</a>');
+nav.querySelectorAll('a').forEach((a) => { if (!a.dataset.k) a.dataset.k = a.getAttribute('href').slice(3); a.onclick = (e) => { e.preventDefault(); show(a.dataset.k); }; });
+window.show = (k) => { for (const s of document.querySelectorAll('.cls')) s.style.display = k === 'all' || s.id === 'c-' + k ? '' : 'none'; nav.querySelectorAll('a').forEach((a) => a.classList.toggle('on', a.dataset.k === k)); window.scrollTo(0, 0); };
+show('PALADIN');
+</script>
+</body>
+</html>

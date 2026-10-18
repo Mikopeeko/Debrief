@@ -9,6 +9,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   or healing summary and "what you did well".
 - [ ] **Your call for launch (Oct 19): Spec checks on the live site?** They're still greyed out online; Performance's other
   views are on.
+- [ ] **Top players: fastest kills plus good parses (my suggestion, your call, Oct 18):** the bars and "Top raids" marks now
+  come from every player of the spec in the fastest Mythic kills (speed, not parses), so they show how players on the best
+  teams play the real fight. My suggestion: keep the fastest kills but count only the players in them who also parsed well
+  (75 or higher), for real fights and strong individual play at once. The catch: rare specs have fewer players left, so their
+  bars rest on less data. Holy Paladin's marks still come from an earlier set of 10 kills: move it to the same set.
 - [ ] **Spec checks on every boss (my suggestion):** every bar and "Top raids" mark comes from Twin Fangs. The other bosses
   grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
 - [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
@@ -23,6 +28,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   before the raid test; I can mock up a few directions to pick from.
 - [ ] **Make the whole website look "fancy" (your note, Oct 18).** My take: goes with the brand work; do them together so the
   new look starts from the logo and colours.
+- [ ] **Spec-themed borders (your note, Oct 18):** fancier borders around a player's spec page (like the review header), in
+  good quality and matched to the spec's theme, never cheap or cartoony. My take: a good idea that goes with the brand and
+  "fancy" work. Do one border per class with a tint per spec (jade filigree for Monk, tinted for Mistweaver), not 40
+  separate designs. Draw them ourselves as clean vector ornaments (never Blizzard art), and mock up two or three classes
+  first so you can judge the quality before all 13 are made.
 - [ ] **Saved NSRT notes (your note, Oct 18):** save several notes, and pick the saved one that matches the pull's exact
   raid composition (or have Debrief pick it), or edit an existing note in place for small composition changes (swapping a
   name). My take: very useful for raid leaders, and it fits how notes change week to week. Matching by roster is the easy
@@ -33,6 +43,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   bosses and adds (anything that is a unit in the log), and mechanics centred on a player (a spread circle around whoever had
   the debuff). It can't place ground effects that aren't units, like most puddles. So: go through every map, keep the ones
   that can draw their mechanic, and remove the rest.
+- [ ] **A grammar and wording pass over everything (your note, Oct 18):** the Performance modules and the whole project.
+  My take: worth doing, and it's a big one (thousands of lines of player-facing text written over many rounds, so the style
+  drifts). Go one tab at a time: first the tabs raiders see now (Latest pull, Mechanics, Assignments, Players, Summary),
+  then Performance and Spec checks before they go live, since they're still changing. Each line checked against the rules:
+  plain words, full sentences, no clipped fragments chained with colons.
 - [ ] **Simplify the tabs in Performance (your note, Oct 18).**
 - [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
   reports and announcements, and how to link it from the site).
@@ -138,6 +153,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 188: Spec frames on the spec page (your note)
+- [x] **Every class has its own frame, tinted for each spec,** around the spec page's review header: a metal band, heavy corner
+  pieces with raised, lit edges, a crest on top and clasps on the sides. Paladin: gold wings and a gem in a sunburst
+  (a sapphire and a shield for Protection, a ruby and a sword for Retribution). Monk: gold and stone, pagoda eaves and clouds.
+  Death Knight: spiked steel and glowing runes (icicles for Frost, dripping plague for Unholy). Demon Hunter: black iron horns
+  and a demon eye. Druid: living wood, leaves and antlers. Evoker: bronze and dragon scales. Hunter: bow wood, fletching and an
+  eagle over crossed arrows. Mage: silver rune circles and crystals. Priest: silver, pearls, a halo and wings (void-dark for
+  Shadow). Rogue: leather and daggers. Shaman: carved stone and a thunderbird. Warlock: black iron, ram horns and chains.
+  Warrior: riveted steel and a heraldic shield. All drawn by us, no game art. The whole set, every spec side by side:
+  notes/Spec borders - all classes.html.
+- [x] **Sharper spec pictures (your note):** the spell icons stop at 56 pixels everywhere (Wowhead, Blizzard, Warcraft Logs,
+  Raider.IO), so the review header now shows the spec's own HD art from the game's spec picker in a ring. The icon comes back
+  if it doesn't load.
+- Note: Spec checks are greyed out on the website, so the frames show in the app on your PC until Spec checks go live.
+- [x] Noted (your notes): a grammar and wording pass over everything; spec-themed borders (built here).
 
 ## 2026-10-18, round 187: Rotation checks for every tank (your #6)
 - [x] **Blood, Vengeance, Guardian and Protection Warrior** get a "Your priority" check like the other specs, from the

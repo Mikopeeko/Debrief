@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec borders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090a0e; --line: #2a2f3b; --text: #ece8df; --muted: #98a0ad; --gold: #e6b450; --good: #4cc26a;
+    --head: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 48px 28px 80px; background: radial-gradient(1200px 600px at 50% 0, #12141b, var(--bg)); color: var(--text); font: 15px/1.45 var(--body); }
+  .intro { max-width: 1180px; margin: 0 auto 70px; }
+  .intro h1 { margin: 0 0 6px; font: 700 28px var(--head); }
+  .intro p { margin: 0; color: var(--muted); max-width: 800px; }
+  .mock { max-width: 1180px; margin: 0 auto 96px; }
+  .label { display: flex; align-items: baseline; gap: 12px; margin: 0 0 88px; }
+  .label b { font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+  .label span { color: var(--muted); font-size: 14px; }
+
+  /* ---- the frame: a metal band, an inner accent line, heavy corner pieces, a crest, side clasps ---- */
+  .frame { position: relative; isolation: isolate; padding: 58px 64px 54px; border: 7px solid transparent; border-radius: 3px;
+    background: var(--fbg) padding-box, var(--band) border-box;
+    box-shadow: 0 0 0 1px #040406, inset 0 0 0 1px rgba(0, 0, 0, .9), inset 0 0 90px rgba(0, 0, 0, .6), 0 24px 60px rgba(0, 0, 0, .6); }
+  .frame::before { content: ''; position: absolute; inset: 7px; border: 1px solid var(--fl2); border-radius: 1px; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .55); }
+  .frame::after { content: ''; position: absolute; inset: -7px; border-radius: 3px; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 3px, rgba(0, 0, 0, 0) calc(100% - 3px), rgba(0, 0, 0, .45));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; padding: 7px; }
+  .orn { position: absolute; overflow: visible; pointer-events: none; z-index: 3; }
+  .corner { width: 210px; height: 210px; }
+  .corner.tl { top: -18px; left: -18px; } .corner.tr { top: -18px; right: -18px; transform: scaleX(-1); }
+  .corner.bl { bottom: -18px; left: -18px; transform: scaleY(-1); } .corner.br { bottom: -18px; right: -18px; transform: scale(-1, -1); }
+  .crest { width: 320px; height: 102px; top: -55px; left: calc(50% - 160px); }
+  .clasp { width: 64px; height: 110px; top: calc(50% - 55px); }
+  .clasp.l { left: -35px; } .clasp.r { right: -35px; transform: scaleX(-1); }
+  .clasp.b { top: auto; bottom: -59px; left: calc(50% - 32px); transform: rotate(-90deg); }
+
+  .pal { --band: linear-gradient(90deg, #5e3a0c, #f2d488 9%, #a06a1c 20%, #fff0bd 34%, #b47c24 48%, #f4d68a 63%, #8c5a16 78%, #f0cc74 90%, #6a4210);
+         --fbg: radial-gradient(90% 70% at 50% -5%, rgba(255, 214, 130, .13), transparent 60%), repeating-conic-gradient(from 0deg at 50% -40%, rgba(255, 220, 150, .025) 0 2deg, transparent 2deg 6deg), linear-gradient(180deg, #18161a, #0f1015);
+         --fl2: rgba(240, 200, 110, .35); --cls: #f48cba; --acc: #f3cf78; }
+  .mw  { --band: linear-gradient(90deg, #5a3c10, #e8c878 10%, #9c6d22 22%, #f6e2a8 36%, #a5772c 50%, #efd08a 64%, #7f5617 78%, #e6c272 90%, #5a3c10);
+         --fbg: radial-gradient(90% 70% at 50% -5%, rgba(70, 220, 160, .12), transparent 60%), repeating-linear-gradient(45deg, rgba(120, 230, 190, .018) 0 1px, transparent 1px 22px), repeating-linear-gradient(-45deg, rgba(120, 230, 190, .018) 0 1px, transparent 1px 22px), linear-gradient(180deg, #111a18, #0c1113);
+         --fl2: rgba(80, 220, 165, .45); --cls: #00ff98; --acc: #7fe9c2; }
+  .bdk { --band: linear-gradient(90deg, #2a2e35, #a7b0bc 10%, #4b525c 22%, #dfe5ec 36%, #575e69 50%, #b4bcc7 64%, #3a4048 78%, #9aa3af 90%, #2a2e35);
+         --fbg: radial-gradient(90% 70% at 50% -5%, rgba(220, 40, 60, .13), transparent 60%), repeating-linear-gradient(115deg, rgba(200, 210, 225, .016) 0 1px, transparent 1px 9px), linear-gradient(180deg, #151418, #0e0f13);
+         --fl2: rgba(225, 50, 70, .5); --cls: #c41e3a; --acc: #e0485a; }
+
+  /* ---- the header inside (the spec page's review header, unchanged) ---- */
+  .hd { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 34px; align-items: center; }
+  .who { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 26px; align-items: center; }
+  .ring { width: 150px; height: 150px; position: relative; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring .n { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ring .n b { font: 700 46px/1 var(--head); } .ring .n span { color: var(--muted); font-size: 13px; }
+  .nm { display: flex; align-items: center; gap: 14px; }
+  .nm img { width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--acc); box-shadow: 0 0 14px color-mix(in srgb, var(--acc) 40%, transparent); }
+  .nm h2 { margin: 0; font: 700 30px/1.05 var(--head); color: var(--cls); text-shadow: 0 2px 8px rgba(0, 0, 0, .8); }
+  .nm .sp { font-size: 15.5px; } .nm .bs { color: var(--muted); font-size: 14px; }
+  .out { margin: 14px 0 4px; font-size: 15px; color: var(--muted); } .out b { color: var(--text); font: 700 22px var(--head); margin-right: 4px; }
+  .out .pp { display: inline-block; margin: 0 6px 0 14px; padding: 0 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--text); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chips span { padding: 5px 13px; border: 1px solid var(--line); border-radius: 999px; font: 600 13.5px var(--body); color: var(--muted); background: rgba(0, 0, 0, .3); }
+  .chips span.on { color: var(--text); border-color: rgba(230, 180, 80, .6); background: rgba(230, 180, 80, .13); }
+  .col h4 { margin: 0 0 8px; font: 700 11.5px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+  .col h4 + .card { margin-bottom: 16px; }
+  .card { display: flex; gap: 14px; align-items: center; padding: 11px 14px; margin-bottom: 8px; border: 1px solid var(--line); border-left: 3px solid var(--good); border-radius: 8px; background: rgba(0, 0, 0, .35); }
+  .card.fix { border-left-color: var(--line); }
+  .card img { width: 38px; height: 38px; border-radius: 6px; flex: none; }
+  .card b { display: block; font: 600 15px var(--body); } .card span { color: var(--muted); font-size: 13.5px; }
+  .note { margin: 40px 4px 0; color: var(--muted); font-size: 14px; max-width: 980px; }
+  .note b { color: var(--text); font-weight: 600; }
+
+  /* (up close) */
+  .close { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .close > div { padding: 26px 18px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--fbg); }
+  .close .big { display: block; width: 100%; max-width: 270px; aspect-ratio: 1; margin: 10px auto 0; overflow: visible; }
+  .close .row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 34px; }
+  .close .bigc { width: 78%; aspect-ratio: 320 / 102; overflow: visible; } .close .bigs { width: 15%; aspect-ratio: 64 / 110; overflow: visible; }
+  .close p { margin: 18px 0 0; color: var(--muted); font-size: 13.5px; text-align: center; }
+
+  @media (max-width: 1000px) { .hd { grid-template-columns: minmax(0, 1fr); } .close { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 760px) {
+    body { padding: 32px 16px 56px; }
+    .frame { padding: 48px 22px 40px; } .corner { width: 140px; height: 140px; } .corner.tl, .corner.tr { top: -13px; } .corner.bl, .corner.br { bottom: -13px; }
+    .corner.tl, .corner.bl { left: -13px; } .corner.tr, .corner.br { right: -13px; }
+    .crest { width: 230px; height: 73px; top: -40px; left: calc(50% - 115px); } .clasp.l, .clasp.r { display: none; } .clasp.b { bottom: -50px; }
+    .who { grid-template-columns: 104px minmax(0, 1fr); gap: 16px; } .ring { width: 104px; height: 104px; } .ring .n b { font-size: 34px; }
+    .nm img { width: 44px; height: 44px; } .nm h2 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Every ornament is drawn here, as vectors (no game art). The repeated parts (spikes, feathers, clouds, gem facets) are filled in by the script at the bottom. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- metals and stones -->
+    <linearGradient id="gGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff4c4"/><stop offset=".18" stop-color="#f0c862"/><stop offset=".38" stop-color="#a8701e"/><stop offset=".55" stop-color="#f7dc8c"/><stop offset=".76" stop-color="#b98228"/><stop offset="1" stop-color="#6e4510"/></linearGradient>
+    <linearGradient id="gFeather" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a87322"/><stop offset=".45" stop-color="#f3cf78"/><stop offset="1" stop-color="#fff3c8"/></linearGradient>
+    <radialGradient id="gTopaz" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fffdf0"/><stop offset=".28" stop-color="#ffe390"/><stop offset=".68" stop-color="#e09222"/><stop offset="1" stop-color="#6a3a06"/></radialGradient>
+    <linearGradient id="gJade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9ffe0"/><stop offset=".35" stop-color="#3fcf98"/><stop offset=".72" stop-color="#0f6e50"/><stop offset="1" stop-color="#073a2a"/></linearGradient>
+    <radialGradient id="gJadeR" cx=".34" cy=".3" r=".85"><stop offset="0" stop-color="#d2fff0"/><stop offset=".3" stop-color="#5ee0ad"/><stop offset=".72" stop-color="#11694c"/><stop offset="1" stop-color="#052a1d"/></radialGradient>
+    <linearGradient id="gSteel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef2f7"/><stop offset=".2" stop-color="#9aa3af"/><stop offset=".44" stop-color="#454b55"/><stop offset=".6" stop-color="#aab3bf"/><stop offset=".8" stop-color="#383e47"/><stop offset="1" stop-color="#727b88"/></linearGradient>
+    <linearGradient id="gFadeGold" x1="1" x2="0"><stop offset="0" stop-color="#f2d27e"/><stop offset="1" stop-color="#f2d27e" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gFadeJade" x1="1" x2="0"><stop offset="0" stop-color="#4fd3a2"/><stop offset="1" stop-color="#4fd3a2" stop-opacity="0"/></linearGradient>
+
+    <!-- raised, lit metal: a bump from the shape's own edges, lit from above, and a drop shadow under it -->
+    <filter id="bvGold" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.3" result="b"/>
+      <feSpecularLighting in="b" surfaceScale="4" specularConstant="1.05" specularExponent="20" lighting-color="#fff2cc" result="s"><fePointLight x="-40" y="-80" z="150"/></feSpecularLighting>
+      <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+      <feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3=".85" k4="0" result="lit"/>
+      <feDropShadow in="lit" dx="0" dy="2.5" stdDeviation="2.2" flood-color="#000" flood-opacity=".75"/>
+    </filter>
+    <filter id="bvJade" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.6" result="b"/>
+      <feSpecularLighting in="b" surfaceScale="3.5" specularConstant=".9" specularExponent="26" lighting-color="#eafff6" result="s"><fePointLight x="-40" y="-80" z="150"/></feSpecularLighting>
+      <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+      <feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3=".7" k4="0" result="lit"/>
+      <feDropShadow in="lit" dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity=".7"/>
+    </filter>
+    <filter id="bvSteel" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="b"/>
+      <feSpecularLighting in="b" surfaceScale="4.5" specularConstant="1.1" specularExponent="30" lighting-color="#eef4ff" result="s"><fePointLight x="-40" y="-80" z="150"/></feSpecularLighting>
+      <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+      <feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3=".9" k4="0" result="lit"/>
+      <feDropShadow in="lit" dx="0" dy="2.5" stdDeviation="2.4" flood-color="#000" flood-opacity=".8"/>
+    </filter>
+    <filter id="glowRed" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4" result="b"/><feFlood flood-color="#ff2a44" flood-opacity=".9"/><feComposite in2="b" operator="in" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glowGold" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.5" result="b"/><feFlood flood-color="#ffd27a" flood-opacity=".55"/><feComposite in2="b" operator="in" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glowJade" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3" result="b"/><feFlood flood-color="#5cf0b8" flood-opacity=".45"/><feComposite in2="b" operator="in" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+
+    <!-- ================= PALADIN ================= -->
+    <symbol id="palCorner" viewBox="0 0 210 210" overflow="visible">
+      <g filter="url(#glowGold)">
+        <g filter="url(#bvGold)"><g id="palWing"></g></g>
+        <use href="#palWingL"/>
+        <g filter="url(#bvGold)">
+          <path d="M6 6 L156 6 L168 13 L156 20 L76 20 C54 20 40 26 33 33 C26 40 20 54 20 76 L20 156 L13 168 L6 156 Z" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M166 13 C179 13 185 4 194 7.5 C201.5 10.5 200 21.5 192.5 21.5 C187 21.5 186 15 190.5 14.5" fill="none" stroke="url(#gGold)" stroke-width="2.8" stroke-linecap="round"/>
+          <path d="M13 166 C13 179 4 185 7.5 194 C10.5 201.5 21.5 200 21.5 192.5 C21.5 187 15 186 14.5 190.5" fill="none" stroke="url(#gGold)" stroke-width="2.8" stroke-linecap="round"/>
+          <path d="M50 11.5 H150 M11.5 50 V150" stroke="#4a3008" stroke-width="1" opacity=".75"/>
+          <path d="M50 12.8 H150 M12.8 50 V150" stroke="#fff3c8" stroke-width=".6" opacity=".55"/>
+          <g fill="url(#gGold)" stroke="#3b2507" stroke-width=".8"><circle cx="100" cy="13" r="2.8"/><circle cx="132" cy="13" r="2.8"/><circle cx="13" cy="100" r="2.8"/><circle cx="13" cy="132" r="2.8"/></g>
+          <g id="palSpikes"></g>
+          <circle cx="27" cy="27" r="21" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.2"/>
+          <circle cx="27" cy="27" r="16" fill="#2a1a05" stroke="#f7dc8c" stroke-width=".8"/>
+        </g>
+        <circle cx="27" cy="27" r="13.5" fill="url(#gTopaz)"/>
+        <path d="M27 14 L37 27 L27 40 L17 27 Z" fill="#fff" opacity=".1"/><path d="M27 14 L27 40 M17 27 L37 27" stroke="#fff" stroke-width=".5" opacity=".25"/>
+        <ellipse cx="22" cy="21" rx="5" ry="2.8" fill="#fff" opacity=".85" transform="rotate(-35 22 21)"/>
+        <path d="M32.5 31 l1.2 3.4 l3.4 1.2 l-3.4 1.2 l-1.2 3.4 l-1.2 -3.4 l-3.4 -1.2 l3.4 -1.2 z" fill="#fff" opacity=".95"/>
+      </g>
+    </symbol>
+    <g id="palWingL" transform="matrix(0 1 1 0 0 0)" filter="url(#bvGold)"><use href="#palWing"/></g>
+    <symbol id="palCrest" viewBox="0 0 320 102" overflow="visible">
+      <path d="M0 51 H70 M250 51 H320" stroke="url(#gFadeGold)" stroke-width="2"/>
+      <g filter="url(#glowGold)">
+        <g filter="url(#bvGold)"><g id="palCrestWingL"></g><g transform="matrix(-1 0 0 1 320 0)"><use href="#palCrestWingL"/></g></g>
+        <g filter="url(#bvGold)"><g id="palCrestSpikes"></g>
+          <circle cx="160" cy="51" r="27" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.3"/>
+          <circle cx="160" cy="51" r="21.5" fill="#2a1a05" stroke="#f7dc8c" stroke-width=".9"/></g>
+        <circle cx="160" cy="51" r="18.5" fill="url(#gTopaz)"/>
+        <path d="M160 33 L174 51 L160 69 L146 51 Z" fill="#fff" opacity=".1"/><path d="M160 33 V69 M146 51 H174 M150 41 L170 61 M170 41 L150 61" stroke="#fff" stroke-width=".5" opacity=".22"/>
+        <ellipse cx="153" cy="43" rx="6.5" ry="3.6" fill="#fff" opacity=".85" transform="rotate(-35 153 43)"/>
+        <path d="M167 56 l1.5 4.2 l4.2 1.5 l-4.2 1.5 l-1.5 4.2 l-1.5 -4.2 l-4.2 -1.5 l4.2 -1.5 z" fill="#fff" opacity=".95"/>
+      </g>
+    </symbol>
+    <symbol id="palClasp" viewBox="0 0 64 110" overflow="visible">
+      <g filter="url(#bvGold)"><g id="palClaspF"></g>
+        <path d="M32 30 L48 55 L32 80 L16 55 Z" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.1" stroke-linejoin="round"/></g>
+      <path d="M32 39 L42 55 L32 71 L22 55 Z" fill="url(#gTopaz)"/><ellipse cx="29" cy="49" rx="3" ry="1.8" fill="#fff" opacity=".85" transform="rotate(-50 29 49)"/>
+    </symbol>
+
+    <!-- ================= MONK ================= -->
+    <symbol id="mwCorner" viewBox="0 0 210 210" overflow="visible">
+      <g filter="url(#glowJade)">
+        <g filter="url(#bvJade)"><g id="mwClouds"></g></g>
+        <use href="#mwCloudsL"/>
+        <g filter="url(#bvGold)">
+          <path d="M6 6 H140 C154 6 164 1 174 -9 C174 6 165 20 142 20 H44 C30 20 20 30 20 44 V142 C20 165 6 174 -9 174 C1 164 6 154 6 140 Z" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.2" stroke-linejoin="round"/>
+        </g>
+        <g filter="url(#bvJade)">
+          <path d="M11 30 V136 C11 147 9 155 4.5 160 C12 156 15.5 148 15.5 138 V44 C15.5 28 28 15.5 44 15.5 H138 C148 15.5 156 12 160 4.5 C155 9 147 11 136 11 H30 C19 11 11 19 11 30 Z" fill="url(#gJade)" stroke="#06301f" stroke-width=".6"/>
+        </g>
+        <g fill="url(#gGold)" stroke="#3b2507" stroke-width=".6"><rect x="72" y="11" width="4.6" height="4.6" transform="rotate(45 74.3 13.3)"/><rect x="104" y="11" width="4.6" height="4.6" transform="rotate(45 106.3 13.3)"/>
+          <rect x="11" y="72" width="4.6" height="4.6" transform="rotate(45 13.3 74.3)"/><rect x="11" y="104" width="4.6" height="4.6" transform="rotate(45 13.3 106.3)"/></g>
+        <g filter="url(#bvGold)"><circle cx="29" cy="29" r="25" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.2"/></g>
+        <g filter="url(#bvJade)"><circle cx="29" cy="29" r="21" fill="url(#gJadeR)"/></g>
+        <g id="mwDots"></g>
+        <circle cx="29" cy="29" r="7" fill="#04150e" stroke="url(#gGold)" stroke-width="2"/>
+        <ellipse cx="21" cy="19.5" rx="6" ry="3" fill="#fff" opacity=".55" transform="rotate(-35 21 19.5)"/>
+      </g>
+    </symbol>
+    <g id="mwCloudsL" transform="matrix(0 1 1 0 0 0)" filter="url(#bvJade)"><use href="#mwClouds"/></g>
+    <symbol id="mwCrest" viewBox="0 0 320 102" overflow="visible">
+      <g stroke="url(#gFadeGold)" stroke-width="1.6"><path d="M0 50 H64 M256 50 H320"/></g>
+      <g stroke="#e8c878" stroke-width="1" opacity=".7"><path d="M30 44 V56 M40 44 V56 M50 44 V56 M290 44 V56 M280 44 V56 M270 44 V56"/></g>
+      <g filter="url(#glowJade)">
+        <g filter="url(#bvJade)"><g id="mwCrestClouds"></g></g>
+        <g filter="url(#bvGold)">
+          <path d="M92 40 C120 36 140 23 160 8 C180 23 200 36 228 40 C237 41 245 37 252 30 C248 45 235 52 220 51 L100 51 C85 52 72 45 68 30 C75 37 83 41 92 40 Z" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M160 8 L163 -4 L160 -10 L157 -4 Z" fill="url(#gGold)" stroke="#3b2507" stroke-width=".8"/>
+          <circle cx="160" cy="70" r="27" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.2"/></g>
+        <path d="M100 45.5 H220" stroke="#4a3008" stroke-width="1" opacity=".7"/><path d="M100 46.7 H220" stroke="#fff3c8" stroke-width=".6" opacity=".5"/>
+        <g filter="url(#bvJade)"><circle cx="160" cy="70" r="23" fill="url(#gJadeR)"/><circle cx="160" cy="-1" r="4.5" fill="url(#gJadeR)"/></g>
+        <path d="M147 74 C147 62 158 56 166 61 C173 65.5 170 76 162.5 74.5 C158 73.5 158.8 67.5 162.8 68.2 M173 66 C173 78 162 84 154 79 C147 74.5 150 64 157.5 65.5" fill="none" stroke="#f3fff9" stroke-width="2" stroke-linecap="round" opacity=".95"/>
+        <ellipse cx="151" cy="58" rx="7" ry="3.4" fill="#fff" opacity=".45" transform="rotate(-35 151 58)"/>
+      </g>
+    </symbol>
+    <symbol id="mwClasp" viewBox="0 0 64 110" overflow="visible">
+      <g filter="url(#bvGold)"><path d="M32 18 C40 30 44 40 44 55 C44 70 40 80 32 92 C24 80 20 70 20 55 C20 40 24 30 32 18 Z" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.1"/><circle cx="32" cy="55" r="14" fill="url(#gGold)" stroke="#3b2507" stroke-width="1.1"/></g>
+      <g filter="url(#bvJade)"><circle cx="32" cy="55" r="11" fill="url(#gJadeR)"/></g>
+      <circle cx="32" cy="55" r="3.6" fill="#04150e" stroke="url(#gGold)" stroke-width="1.4"/>
+    </symbol>
+
+    <!-- ================= DEATH KNIGHT ================= -->
+    <symbol id="dkCorner" viewBox="0 0 210 210" overflow="visible">
+      <g filter="url(#bvSteel)">
+        <g id="dkSpikes"></g>
+        <use href="#dkSpikes" transform="matrix(0 1 1 0 0 0)"/>
+        <path d="M4 4 H150 L174 -3 L160 14 L150 23 H46 L23 46 V150 L14 160 L-3 174 L4 150 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M9 9 H148 L156 4 L150 13 L148 17 H44 L17 44 V148 L13 150 L4 156 L9 148 Z" fill="none" stroke="#e9eef4" stroke-width=".6" opacity=".35"/>
+        <g fill="url(#gSteel)" stroke="#0a0c10" stroke-width=".8"><circle cx="98" cy="13.5" r="2.7"/><circle cx="130" cy="13.5" r="2.7"/><circle cx="13.5" cy="98" r="2.7"/><circle cx="13.5" cy="130" r="2.7"/></g>
+        <path d="M29 1 L35 13 L49 9 L43 21 L55 29 L43 37 L49 49 L35 45 L29 57 L23 45 L9 49 L15 37 L3 29 L15 21 L9 9 L23 13 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1" stroke-linejoin="round"/>
+      </g>
+      <g filter="url(#glowRed)">
+        <path d="M54 13.5 H90 M106 13.5 H124 M138 13.5 H148 M13.5 54 V90 M13.5 106 V124 M13.5 138 V148" stroke="#ff3a4f" stroke-width="1.3" stroke-linecap="round"/>
+        <g fill="none" stroke="#ff4a5c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M60 30 V40 M60 30 L65 35 L60 40"/><path d="M72 30 L77 40 M77 30 L72 40"/><path d="M86 30 V40 M83 33 H89"/>
+          <path d="M30 60 H40 M30 60 L35 65 L40 60"/><path d="M30 72 L40 77 M30 77 L40 72"/><path d="M30 86 H40 M33 83 V89"/>
+        </g>
+      </g>
+      <g filter="url(#bvSteel)"><path d="M29 12 L43.7 20.5 V37.5 L29 46 L14.3 37.5 V20.5 Z" fill="#1a0306" stroke="#0a0c10" stroke-width="1"/></g>
+      <g id="dkGem"></g>
+      <ellipse cx="24" cy="22.5" rx="4.5" ry="2.4" fill="#fff" opacity=".8" transform="rotate(-35 24 22.5)"/>
+    </symbol>
+    <symbol id="dkCrest" viewBox="0 0 320 102" overflow="visible">
+      <g filter="url(#bvSteel)">
+        <path d="M128 44 L28 48 L4 51 L28 54 L128 58 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M192 44 L292 48 L316 51 L292 54 L192 58 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M118 40 L126 -2 L136 32 Z M202 40 L194 -2 L184 32 Z M140 28 L146 -14 L152 24 Z M180 28 L174 -14 L168 24 Z M152 22 L160 -26 L168 22 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M160 18 L189 34.5 V67.5 L160 84 L131 67.5 V34.5 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1.2"/>
+        <path d="M150 84 L160 100 L170 84 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1"/>
+      </g>
+      <path d="M160 26 L182 38.7 V63.3 L160 76 L138 63.3 V38.7 Z" fill="#131317" stroke="#7a0a18" stroke-width="1.2"/>
+      <g filter="url(#glowRed)">
+        <path d="M120 51 H34 M200 51 H286" stroke="#ff3a4f" stroke-width="1.2"/>
+        <path d="M160 32 V70 M160 42 L150 33 M160 42 L170 33 M151 58 L160 50 L169 58 M154 66 H166" fill="none" stroke="#ff5265" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </symbol>
+    <symbol id="dkClasp" viewBox="0 0 64 110" overflow="visible">
+      <g filter="url(#bvSteel)"><path d="M32 6 L38 34 L52 30 L44 55 L52 80 L38 76 L32 104 L26 76 L12 80 L20 55 L12 30 L26 34 Z" fill="url(#gSteel)" stroke="#0a0c10" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M32 42 L43 48.5 V61.5 L32 68 L21 61.5 V48.5 Z" fill="#1a0306" stroke="#0a0c10" stroke-width="1"/></g>
+      <g id="dkGemS"></g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="intro">
+  <h1>Spec borders, second pass: heavier and more detailed</h1>
+  <p>One frame per class, drawn as vectors (no game art) and tinted per spec: a metal band all round, heavy corner pieces with raised,
+     lit edges, cut gems, a crest on top and clasps on the sides. Everything inside the frame stays as it is.</p>
+</div>
+
+<section class="mock">
+  <div class="label"><b>Paladin</b><span>Holy: polished gold, golden wings at every corner, a topaz in a sunburst, a winged sun crest.</span></div>
+  <div class="frame pal">
+    <svg class="orn corner tl"><use href="#palCorner"/></svg><svg class="orn corner tr"><use href="#palCorner"/></svg>
+    <svg class="orn corner bl"><use href="#palCorner"/></svg><svg class="orn corner br"><use href="#palCorner"/></svg>
+    <svg class="orn crest"><use href="#palCrest"/></svg>
+    <svg class="orn clasp l"><use href="#palClasp"/></svg><svg class="orn clasp r"><use href="#palClasp"/></svg><svg class="orn clasp b"><use href="#palClasp"/></svg>
+    <div class="hd">
+      <div class="who">
+        <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="43" fill="none" stroke="#262b35" stroke-width="9"/><circle cx="50" cy="50" r="43" fill="none" stroke="#4cc26a" stroke-width="9" stroke-linecap="round" stroke-dasharray="248 270"/></svg><div class="n"><b>92</b><span>out of 100</span></div></div>
+        <div>
+          <div class="nm"><img src="https://wow.zamimg.com/images/wow/icons/large/classicon_paladin.jpg" alt="" onerror="this.style.visibility='hidden'"><div><h2>Flëxørçïst</h2><div class="sp">Holy Paladin · Herald of the Sun</div><div class="bs">The Twin Fangs, pull 37 (kill)</div></div></div>
+          <div class="out"><b>334.4K</b> healing a second <span class="pp">81</span> Top raids: 334.4K · you're at 100%</div>
+          <div class="chips"><span class="on">All 12</span><span>✕ To fix 0</span><span>! Could be better 2</span><span>✓ Good 10</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <h4>Work on these first</h4>
+        <div class="card fix"><img src="https://wow.zamimg.com/images/wow/icons/large/spell_holy_flashheal.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Flash of Light with Infusion</b><span>Next time: spend each Infusion of Light on Flash of Light.</span></div></div>
+        <h4>What you did well</h4>
+        <div class="card"><img src="https://wow.zamimg.com/images/wow/icons/large/spell_holy_avenginewrath.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Avenging Wrath</b><span>Yours: 4 of 4, the top raids: 3 or 4 of 4.</span></div></div>
+        <div class="card"><img src="https://wow.zamimg.com/images/wow/icons/large/spell_holy_searinglight.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Holy Shock on cooldown</b><span>Yours: 96%, the top raids: 95%.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <p class="note"><b>Per spec:</b> Holy keeps the topaz and white-gold light; Protection would set a sapphire with a shield crest;
+    Retribution a ruby with a sword crest. The same gold wings for every Paladin.</p>
+</section>
+
+<section class="mock">
+  <div class="label"><b>Monk</b><span>Mistweaver: gold with a jade inlay, upturned pagoda eaves, jade discs and clouds, a roofed jade crest.</span></div>
+  <div class="frame mw">
+    <svg class="orn corner tl"><use href="#mwCorner"/></svg><svg class="orn corner tr"><use href="#mwCorner"/></svg>
+    <svg class="orn corner bl"><use href="#mwCorner"/></svg><svg class="orn corner br"><use href="#mwCorner"/></svg>
+    <svg class="orn crest"><use href="#mwCrest"/></svg>
+    <svg class="orn clasp l"><use href="#mwClasp"/></svg><svg class="orn clasp r"><use href="#mwClasp"/></svg><svg class="orn clasp b"><use href="#mwClasp"/></svg>
+    <div class="hd">
+      <div class="who">
+        <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="43" fill="none" stroke="#262b35" stroke-width="9"/><circle cx="50" cy="50" r="43" fill="none" stroke="#4cc26a" stroke-width="9" stroke-linecap="round" stroke-dasharray="257 270"/></svg><div class="n"><b>95</b><span>out of 100</span></div></div>
+        <div>
+          <div class="nm"><img src="https://wow.zamimg.com/images/wow/icons/large/classicon_monk.jpg" alt="" onerror="this.style.visibility='hidden'"><div><h2>Ashdknight</h2><div class="sp">Mistweaver Monk · Conduit of the Celestials</div><div class="bs">The Twin Fangs, pull 30 (kill)</div></div></div>
+          <div class="out"><b>331.0K</b> healing a second <span class="pp">18</span> Top raids: 356.1K · you're at 93%</div>
+          <div class="chips"><span class="on">All 11</span><span>✕ To fix 0</span><span>! Could be better 1</span><span>✓ Good 8</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <h4>Work on these first</h4>
+        <div class="card fix"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_monk_renewingmists.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Always be casting</b><span>Next time: press something every global cooldown; when you move, use an instant.</span></div></div>
+        <h4>What you did well</h4>
+        <div class="card"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_monk_dragonkick.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Celestial windows</b><span>Yours: 3 of 3, the top raids: 100%.</span></div></div>
+        <div class="card"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_monk_thunderfocustea.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Thunder Focus Tea on cooldown</b><span>Yours: 19 of 19, the top raids: 94%.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <p class="note"><b>Per spec:</b> Mistweaver keeps jade; Brewmaster would set amber in bronze; Windwalker pale sky-blue stone.
+    The same eaves, discs and clouds for every Monk.</p>
+</section>
+
+<section class="mock">
+  <div class="label"><b>Death Knight</b><span>Blood: spiked dark steel, glowing blood runes, a cut ruby in a spiked socket, a crowned rune stone.</span></div>
+  <div class="frame bdk">
+    <svg class="orn corner tl"><use href="#dkCorner"/></svg><svg class="orn corner tr"><use href="#dkCorner"/></svg>
+    <svg class="orn corner bl"><use href="#dkCorner"/></svg><svg class="orn corner br"><use href="#dkCorner"/></svg>
+    <svg class="orn crest"><use href="#dkCrest"/></svg>
+    <svg class="orn clasp l"><use href="#dkClasp"/></svg><svg class="orn clasp r"><use href="#dkClasp"/></svg><svg class="orn clasp b"><use href="#dkClasp"/></svg>
+    <div class="hd">
+      <div class="who">
+        <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="43" fill="none" stroke="#262b35" stroke-width="9"/><circle cx="50" cy="50" r="43" fill="none" stroke="#4cc26a" stroke-width="9" stroke-linecap="round" stroke-dasharray="243 270"/></svg><div class="n"><b>90</b><span>out of 100</span></div></div>
+        <div>
+          <div class="nm"><img src="https://wow.zamimg.com/images/wow/icons/large/classicon_deathknight.jpg" alt="" onerror="this.style.visibility='hidden'"><div><h2>Mortheus</h2><div class="sp">Blood Death Knight · San'layn</div><div class="bs">The Twin Fangs, pull 12 (kill)</div></div></div>
+          <div class="out"><b>142.8K</b> damage a second <span class="pp">74</span> Top raids: 151.0K · you're at 95%</div>
+          <div class="chips"><span class="on">All 9</span><span>✕ To fix 0</span><span>! Could be better 2</span><span>✓ Good 7</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <h4>Work on these first</h4>
+        <div class="card fix"><img src="https://wow.zamimg.com/images/wow/icons/large/spell_deathknight_bloodboil.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Blood Boil on cooldown</b><span>Next time: don't let its charges sit full.</span></div></div>
+        <h4>What you did well</h4>
+        <div class="card"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_deathknight_marrowrend.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Bone Shield uptime</b><span>Yours: 100%, the top raids: 100%.</span></div></div>
+        <div class="card"><img src="https://wow.zamimg.com/images/wow/icons/large/inv_sword_07.jpg" alt="" onerror="this.style.visibility='hidden'"><div><b>Dancing Rune Weapon</b><span>Yours: 4 of 4, the top raids: 4 of 4.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <p class="note"><b>Per spec:</b> Blood keeps the ruby and red runes; Frost would set a sapphire with ice-blue runes and frost on
+    the steel; Unholy an emerald with sickly green runes. The same spiked steel for every Death Knight.</p>
+</section>
+
+<section class="mock">
+  <div class="label"><b>Up close</b><span>Each corner, crest and clasp drawn large. They stay sharp at any size.</span></div>
+  <div class="close">
+    <div class="pal"><svg class="big" viewBox="-20 -20 230 230"><use href="#palCorner" width="210" height="210"/></svg><div class="row"><svg class="bigc" viewBox="0 -30 320 140"><use href="#palCrest" width="320" height="102"/></svg><svg class="bigs" viewBox="0 0 64 110"><use href="#palClasp" width="64" height="110"/></svg></div><p>Paladin</p></div>
+    <div class="mw"><svg class="big" viewBox="-20 -20 230 230"><use href="#mwCorner" width="210" height="210"/></svg><div class="row"><svg class="bigc" viewBox="0 -30 320 140"><use href="#mwCrest" width="320" height="102"/></svg><svg class="bigs" viewBox="0 0 64 110"><use href="#mwClasp" width="64" height="110"/></svg></div><p>Monk</p></div>
+    <div class="bdk"><svg class="big" viewBox="-20 -20 230 230"><use href="#dkCorner" width="210" height="210"/></svg><div class="row"><svg class="bigc" viewBox="0 -30 320 140"><use href="#dkCrest" width="320" height="102"/></svg><svg class="bigs" viewBox="0 0 64 110"><use href="#dkClasp" width="64" height="110"/></svg></div><p>Death Knight</p></div>
+  </div>
+</section>
+
+<script>
+  // The repeated parts of the ornaments: sunburst spikes, wing feathers, clouds, the jade disc's dots, the cut ruby.
+  const NS = 'http://www.w3.org/2000/svg', $ = (id) => document.getElementById(id);
+  const el = (tag, at, parent) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); if (parent) parent.appendChild(e); return e; };
+  const P = (x, y) => x.toFixed(2) + ' ' + y.toFixed(2);
+  function spikes(g, cx, cy, r1, rL, rS, n, hwL, hwS) {
+    for (let i = 0; i < n; i++) { const a = (i / n) * 2 * Math.PI - Math.PI / 2, lg = i % 2 === 0, r2 = lg ? rL : rS, hw = (lg ? hwL : hwS) * Math.PI / 180;
+      el('path', { d: 'M' + P(cx + r1 * Math.cos(a - hw), cy + r1 * Math.sin(a - hw)) + ' L' + P(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a)) + ' L' + P(cx + r1 * Math.cos(a + hw), cy + r1 * Math.sin(a + hw)) + ' Z',
+        fill: 'url(#gGold)', stroke: '#3b2507', 'stroke-width': .7, 'stroke-linejoin': 'round' }, g); } }
+  // a feather from its quill (B) to its tip (T), w wide, curving to one side (s), with its shaft and barbs
+  function feather(g, B, T, w, s) {
+    const dx = T[0] - B[0], dy = T[1] - B[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy * s, ny = ux * s;
+    const M = [B[0] + dx * .5, B[1] + dy * .5], c1 = [M[0] + nx * w, M[1] + ny * w], c2 = [M[0] - nx * w * .4, M[1] - ny * w * .4];
+    el('path', { d: 'M' + P(...B) + ' Q' + P(...c1) + ' ' + P(...T) + ' Q' + P(...c2) + ' ' + P(...B) + ' Z', fill: 'url(#gFeather)', stroke: '#4a2f08', 'stroke-width': .8, 'stroke-linejoin': 'round' }, g);
+    const q = (t, k) => { const a = (1 - t) * (1 - t), b = 2 * t * (1 - t), c = t * t; return [a * B[0] + b * (M[0] + nx * w * k) + c * T[0], a * B[1] + b * (M[1] + ny * w * k) + c * T[1]]; };
+    el('path', { d: 'M' + P(...B) + ' Q' + P(M[0] + nx * w * .25, M[1] + ny * w * .25) + ' ' + P(...T), fill: 'none', stroke: '#6b470f', 'stroke-width': .8, opacity: .85 }, g);
+    for (const t of [.24, .36, .48, .6, .72, .84]) { const a = q(t, .25), b = q(t + .07, .95); el('path', { d: 'M' + P(...a) + ' L' + P(...b), stroke: '#6b470f', 'stroke-width': .5, opacity: .55 }, g); }
+  }
+  // a cloud in the Pandaren style: three rising curls on a flat base, jade edged in gold, with spirals carved in (f: mirrored)
+  function cloud(g, cx, cy, k, f) {
+    const t = el('g', { transform: 'translate(' + cx + ' ' + cy + ') scale(' + (f ? -k : k) + ' ' + k + ')' }, g);
+    el('path', { d: 'M-24 7 C-29 7 -29 -2 -23.5 -2.5 C-23 -10 -14 -12.5 -9.5 -7.5 C-7.5 -16 6.5 -17.5 10 -8.5 C14 -14 24 -11.5 23 -3 C28.5 -3 28.5 7 23.5 7 Z',
+      fill: 'url(#gJade)', stroke: '#d9b45c', 'stroke-width': 1.6, 'stroke-linejoin': 'round' }, t);
+    for (const d of ['M-3 3 C-3.5 -4.5 6.5 -6 8 -0.5 C8.6 2.8 4.6 3.8 3.6 1.5', 'M-19.5 4 C-19.8 -0.5 -13.5 -1.8 -12.6 1.6 C-12.2 3.4 -14.6 3.9 -15.1 2.6',
+      'M14 3.6 C13.8 -0.2 19.2 -1.2 19.8 1.8 C20.1 3.4 18 3.8 17.6 2.7', 'M-26 7 H26']) el('path', { d, fill: 'none', stroke: '#f2dc9a', 'stroke-width': 1.1, 'stroke-linecap': 'round', opacity: .9 }, t);
+  }
+  // a cut gem: six facets around a lighter table
+  function gem(g, cx, cy, r, cols) {
+    const pts = [...Array(6)].map((_, i) => { const a = Math.PI / 6 + i * Math.PI / 3; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
+    pts.forEach((p, i) => { const q = pts[(i + 1) % 6]; el('path', { d: 'M' + P(cx, cy) + ' L' + P(...p) + ' L' + P(...q) + ' Z', fill: cols[i], stroke: '#2a0207', 'stroke-width': .5 }, g); });
+    const tb = pts.map(([x, y]) => [cx + (x - cx) * .45, cy + (y - cy) * .45]); el('path', { d: 'M' + tb.map((p) => P(...p)).join(' L') + ' Z', fill: '#ff6a7a', opacity: .75 }, g);
+  }
+
+  spikes($('palSpikes'), 27, 27, 19, 37, 30, 16, 5, 4);
+  spikes($('palCrestSpikes'), 160, 51, 25, 46, 38, 16, 4.5, 3.6);
+  // the corner wing lies along the top edge, under the plate (the left one is the same, turned)
+  for (const [T, w] of [[[146, 31], 10], [[126, 43], 9], [[104, 53], 8], [[82, 60], 7], [[62, 63], 6]]) feather($('palWing'), [46, 27], T, w, 1);
+  // the crest's left wing (the right one is the same, mirrored)
+  for (const [T, w] of [[[34, 18], 13], [[24, 36], 12], [[26, 54], 11], [[38, 70], 9.5], [[58, 82], 8], [[82, 88], 6.5]]) feather($('palCrestWingL'), [134, 52], T, w, -1);
+  // the side clasp: two small feathers up, two down
+  for (const [T, w] of [[[26, 2], 5], [[40, 4], 5], [[26, 108], 5], [[40, 106], 5]]) feather($('palClaspF'), [32, 55], T, w, T[0] < 32 ? 1 : -1);
+
+  cloud($('mwClouds'), 76, 32, .95); cloud($('mwClouds'), 122, 30, .72);
+  cloud($('mwCrestClouds'), 112, 68, 1.1, true); cloud($('mwCrestClouds'), 208, 68, 1.1);
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; el('circle', { cx: 29 + 14 * Math.cos(a), cy: 29 + 14 * Math.sin(a), r: 1.5, fill: '#f2dc9a', stroke: '#6b4a12', 'stroke-width': .4 }, $('mwDots')); }
+
+  // the Death Knight plate's spikes along the top edge (the left ones are the same, turned)
+  for (const [x, h, w] of [[60, 16, 7], [82, 11, 6], [104, 14, 6.5], [126, 9, 5], [144, 6, 4]]) el('path', { d: 'M' + P(x - w, 5) + ' L' + P(x + 1.5, 5 - h) + ' L' + P(x + w, 5) + ' Z', fill: 'url(#gSteel)', stroke: '#0a0c10', 'stroke-width': .9, 'stroke-linejoin': 'round' }, $('dkSpikes'));
+  const RUBY = ['#ff5a6c', '#c41e3a', '#7a0a18', '#4a0710', '#a3122a', '#e2283f'];
+  gem($('dkGem'), 29, 29, 14, RUBY); gem($('dkGemS'), 32, 55, 10, RUBY);
+</script>
+</body>
+</html>
