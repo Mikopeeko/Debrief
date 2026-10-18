@@ -161,6 +161,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 200: A Beta Tester role (your note)
+- **Beta Tester**, in Heirloom cyan, just under Helper. You hand it out yourself (right-click a member, then Roles); it
+  isn't one people can pick. Use it to thank early testers and to ping just them when something new is ready to try.
+- [ ] Your call: the item-quality ladder for every role (Founder Legendary, Debrief Team Artifact, Helper Epic, Raid
+  leader Rare, Tank/Healer/DPS without a name color so everyone else shows Common white).
+
 ## 2026-10-18, round 199: Discord roles, Community mode, a welcome on joining, spam protection (your go-ahead)
 - **#rules** (read-only), under Start here, with five short rules (your OK), posted and pinned.
 - **Community mode is on.** New members need a verified email, explicit images are filtered, everyone's notifications
