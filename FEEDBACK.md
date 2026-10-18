@@ -87,6 +87,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 166: Restoration Druid finished and debugged (your go-ahead)
+- [x] **Three new checks:** Mastery (your HoTs on each person you healed: the top players average 2.7, and Questionably Epic
+  says 2 to 3 in raid; not graded), Nature's Swiftness on yourself with Overgrowth (the top players: every one), and Wrath in
+  quiet moments with Master Shapeshifter (how many, and the mana it gave back; not graded).
+- [x] **Checked on 26 top kills in all** (the top 14 and 12 more from ranks 15 to 40): no errors. Two scales were still too
+  strict for good players and were eased: your HoTs on you (now 70% is good) and Clearcastings (judged as a share of the
+  procs: up to 1 in 5 wasted is fine).
+- [x] **A wording bug fixed:** the Efflorescence line said "down" for the time it was up.
+- [ ] **Not testable yet:** all 26 top kills play Convoke the Spirits and Lifetreading, so the Tree of Life and hand-placed
+  Efflorescence checks have only been read through, never run on a real log. They will be the first time a raider uses them.
+
 ## 2026-10-17, round 165: The class frames, done properly ("you can do better"), and themed talent backgrounds
 - [x] **Holy Paladin card:** a gilded double border all the way round with a shine running along it, scrollwork corners each
   with a glowing amber gem, a winged sun at the top, a gem ornament at the bottom, light beams from the top, twinkling
