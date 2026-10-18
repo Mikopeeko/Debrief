@@ -174,9 +174,11 @@ function modMaps(r) {
 // the line's, like Guillotine or ghosts, so a line never borrows another mechanic's map)
 const MAP_STOP = new Set(['kicks', 'soaks', 'front', 'coold', 'assig', 'mecha', 'spell', 'pulls', 'every', 'their', 'there', 'didn\'']);
 const mapStems = (t) => new Set(String(t).replace(/<[^>]+>/g, ' ').toLowerCase().split(/[^a-z']+/).filter((w) => w.length >= 5).map((w) => w.slice(0, 5)).filter((w) => !MAP_STOP.has(w)));
-function mapAt(r, t, label) {
-  if (t == null) return null; const want = mapStems(label); if (!want.size) return null;
-  const c = modMaps(r).filter((x) => Math.abs(x.t - t) <= 1.5 && [...mapStems(x.title)].some((w) => want.has(w))).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
+// (back: how far before the moment a row may start, for a mistake that comes at the end of its mechanic, like a globule
+// exploding seconds after its set)
+function mapAt(r, t, label, win, back) {
+  if (t == null) return null; const want = mapStems(label); if (!want.size) return null; const w = win || 1.5, bk = Math.max(w, back || 0);
+  const c = modMaps(r).filter((x) => x.t >= t - bk && x.t <= t + w && [...mapStems(x.title)].some((s) => want.has(s))).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
   return c || null;
 }
 // One line per item (the worst wrong first; at most five, the rest counted), its time on the right, the whole line on hover.
@@ -2607,10 +2609,12 @@ function audit() {
       if (el.tagName === 'TR') { const row = document.createElement('tr'); row.className = 'maprow'; row.innerHTML = '<td colspan="' + el.children.length + '"><div class="mm mm-set"></div></td>'; el.after(row); box = row.querySelector('.mm'); }
       else box.classList.add('mm-set');
       box.innerHTML = bs.map((b) => '<div class="mm-one">' + (bs.length > 1 && !/^map$/i.test(b.textContent.trim()) ? '<div class="mm-lb">' + esc(b.textContent.trim()) + '</div>' : '') + '<div class="mm-in"></div></div>').join('');
-      box.querySelectorAll('.mm-in').forEach((one, k) => { const mp = AUDITMAPS[+bs[k].dataset.i]; one.innerHTML = miniMap(mp, pmap); bindZoom(one); bindAnim(one, mp, pmap, true); hydrateMapIcons(one); });
+      box.querySelectorAll('.mm-in').forEach((one, k) => { const mp = AUDITMAPS[+bs[k].dataset.i]; one.innerHTML = miniMap(mp, pmap); bindZoom(one); bindAnim(one, mp, pmap, true); hydrateMapIcons(one); if (one._lead && leadObs) leadObs.observe(one); });
     }
     if (sets.size) refreshIcons();
   };
+  // (each animated map plays its lead-up once, the first time most of it is on screen; only the ones in view move)
+  const leadObs = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && e.target._lead) { leadObs.unobserve(e.target); e.target._lead(); } }, { threshold: 0.6 }) : null;
   drawMaps();
   wrThumbFit($('#view')); // (What went wrong's small maps)
   $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open) drawMaps(); }));
@@ -2923,7 +2927,7 @@ function miniMap(mp, pmap) {
   // (the sample is the tag itself when it's a short word, like "Fury"; a number otherwise)
   if ((mp.tags || []).length) { const tw = String(mp.tags[0][1]), smp = tw.length <= 4 && !/^\d+$/.test(tw) ? tw : '3';
     leg.push([(x, y) => '<text x="' + x + '" y="' + (y + 4) + '" fill="#f3d48a" font-size="' + (smp.length > 1 ? 10 : 12) + '" font-weight="800" text-anchor="middle">' + esc(smp) + '</text>', mp.tagLabel || 'Number by a name']); }
-  for (const l of (mp.links || []).filter((x, i, a) => a.findIndex((y) => y.color === x.color) === i)) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 6) + '" y2="' + (y - 4) + '" stroke="' + l.color + '" stroke-width="3" stroke-linecap="round"/>', (l.color === '#2fd15a' ? 'Green line: ' : l.color === '#f3c969' ? 'Amber line: ' : 'Line: ') + (l.legend || '')]);
+  for (const l of (mp.links || []).filter((x, i, a) => a.findIndex((y) => y.color === x.color) === i)) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 6) + '" y2="' + (y - 4) + '" stroke="' + l.color + '" stroke-width="3" stroke-linecap="round"/>', (l.color === '#2fd15a' ? 'Green line: ' : l.color === '#f3c969' ? 'Amber line: ' : l.color === '#ff5a4f' ? 'Red line: ' : 'Line: ') + (l.legend || '')]);
   if (bad.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff3b3b" stroke-width="2.5"/><path d="M' + (x - 2.5) + ' ' + (y - 2.5) + 'l5 5M' + (x + 2.5) + ' ' + (y - 2.5) + 'l-5 5" stroke="#ff3b3b" stroke-width="2"/>', 'Red ✕: ' + (mp.badLabel || 'got it wrong')]);
   if (warnS.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff9f1c" stroke-width="2.5"/><path d="M' + x + ' ' + (y - 3) + 'v3M' + x + ' ' + (y + 2) + 'v.5" stroke="#ff9f1c" stroke-width="2" stroke-linecap="round"/>', 'Orange !: ' + (mp.warnLabel || 'needs a look')]);
   if (gAdd.size || bAdd.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="' + (gAdd.size ? '#2fd15a' : '#ff3b3b') + '" stroke-width="2.5"/>', gAdd.size ? 'Green ring: the add that was kicked' : 'Red ring: the add whose cast got off']);
@@ -2942,7 +2946,7 @@ function miniMap(mp, pmap) {
   for (const g of (mp.rings || []).filter((x, i, a) => a.findIndex((y) => (y.legend || y.label || '') === (x.legend || x.label || '')) === i)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (g.fill || (g.color ? 'rgba(126,224,143,.2)' : 'rgba(230,180,80,.2)')) + '" stroke="' + (g.color || '#e6b450') + '" stroke-dasharray="3 2"/>', (g.cn ? g.cn + ': ' : g.color === '#b65cff' ? 'Purple circle: ' : g.color ? 'Green circle: ' : 'Gold circle: ') + (g.legend || g.label || 'mechanic area') + (g.shrink === 'ichor' ? ' (shrinks from ~11 yd)' : '')]);
   s += '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
-  const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg>' + esc(t) + '</span>').join('') + '</div>';
+  const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
   return '<div class="sub" style="margin:10px 0 6px">' + esc(mp.title) + '. Hover any icon for a name.' +
     (mi || arena ? '' : ' To show the room behind the dots, add a map image under Interrupts → Missed casts.') +
     (mp.note ? '<div style="margin-top:4px;font-weight:600;color:var(--text)">' + esc(mp.note) + '</div>' : '') + '</div>' +
@@ -2962,7 +2966,7 @@ function bindAnim(box, mp, pmap, still) {
   // Playback is drawn every screen refresh (~60 fps) at real-time speed, blending each unit's position between the
   // 0.2s frames (the log itself records positions about every 0.5s, so this smooths movement, it doesn't add detail).
   const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t;
-  let ft = t0, raf = null, last = 0, drawn = -1;
+  let ft = t0, raf = null, last = 0, drawn = -1, until = null; // (until: a lead-up stops on the key moment)
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;
     const a = fr[i], b = fr[Math.min(i + 1, fr.length - 1)], w = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
@@ -2982,18 +2986,22 @@ function bindAnim(box, mp, pmap, still) {
   const step = (now) => {
     if (!box.isConnected) return stop();
     const dt = last ? (now - last) / 1000 : 0; last = now;
+    if (until != null && ft + dt >= until) { show(until); until = null; return stop(); }
     show(ft + dt);
     if (ft >= t1) return stop();
     raf = requestAnimationFrame(step);
   };
   const play = () => { if (ft >= t1) ft = t0; btn.textContent = '❚❚ Pause'; last = 0; raf = requestAnimationFrame(step); };
-  btn.onclick = () => (raf ? stop() : play());
+  btn.onclick = () => { until = null; if (raf) stop(); else play(); };
   rng.oninput = () => { stop(); show(fr[+rng.value].t); };
   if (!still) { show(t0); play(); return; }
   // (the key moment: the frame closest to the map's own snapshot)
   const ref = (mp.pts || []).slice(0, 6); let bi = 0, bd = Infinity;
   fr.forEach((f, i) => { const m = new Map(f.pts.map((p) => [p.guid, p])); let d = 0, n = 0; for (const p of ref) { const q = m.get(p.guid); if (q) { d += Math.abs(q.x - p.x) + Math.abs(q.y - p.y); n++; } } if (n && d < bd) { bd = d; bi = i; } });
   show(fr[bi].t); stop();
+  // (the lead-up, once it's on screen: from the clip's start to the key moment, then it holds there (your note, Oct 18:
+  // the seconds before show why, above all for a death))
+  box._lead = () => { if (raf || bi === 0) return; ft = t0; until = fr[bi].t; show(t0); play(); };
 }
 // Zoom and pan for miniMap: wheel zooms around the cursor, drag pans, double-click goes back to the mechanic.
 // Icons are counter-scaled so they keep their size on screen; the scale bar follows the zoom.
@@ -11534,7 +11542,8 @@ async function lastPull() {
   const secFor = (name) => secOf(name) || (secJ.filter(([, j]) => j.includes(String(name).toLowerCase())).map(([id]) => id).sort((a, b) => (a === 'avoid') - (b === 'avoid') || ix(a) - ix(b))[0] || null);
   [...groups.values()].sort((a, b) => b.hi - a.hi || ix(secOf(a.m.mechanic)) - ix(secOf(b.m.mechanic)) || b.n - a.n).slice(0, 6).forEach((g) => {
     const sid = secFor(g.m.mechanic);
-    wrong.push({ sev: g.hi ? 'bad' : 'warn', map: g.m.map, go: g.m.fromNote ? ['overview', null] : ['audit', sid ? 'sec-' + sid : null], html: '<b>' + mech(g.m.mechanic, g.m.id) + '</b>' + (g.n > 1 ? ' <span class="sub">(' + g.n + ' times)</span>' : '') + ': ' + esc(g.m.detail) + (g.who.size > 1 ? ' <span class="sub">' + esc(lpAnd([...g.who].slice(0, 4).concat(g.who.size > 4 ? [(g.who.size - 4) + ' more'] : []))) + '.</span>' : '') });
+    // (its map: the mistake's own, else the fight check's map of that moment for the same mechanic, which draws it)
+    wrong.push({ sev: g.hi ? 'bad' : 'warn', map: g.m.map || (mapAt(r, g.m.t, g.m.mechanic, 4, 15) || {}).map, go: g.m.fromNote ? ['overview', null] : ['audit', sid ? 'sec-' + sid : null], html: '<b>' + mech(g.m.mechanic, g.m.id) + '</b>' + (g.n > 1 ? ' <span class="sub">(' + g.n + ' times)</span>' : '') + ': ' + esc(g.m.detail) + (g.who.size > 1 ? ' <span class="sub">' + esc(lpAnd([...g.who].slice(0, 4).concat(g.who.size > 4 ? [(g.who.size - 4) + ' more'] : []))) + '.</span>' : '') });
     fixes.push({ w: g.hi ? 1 : 2, t: g.m.mechanic, x: g.m.fix });
   });
   const worse = [...P].filter(([id, x]) => { const q = Q.get(id); return q && x.st === 'bad' && q.st !== 'bad'; }).sort((a, b) => ix(a[0]) - ix(b[0])).map(([, x]) => shortT(x.s.title));

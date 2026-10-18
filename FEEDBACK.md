@@ -14,6 +14,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
      turns green with the kicker's name when it's kicked, and red when it goes off. My take: amazing; it makes the kick
      maps read like the game. The log has when each cast started and when it was kicked or finished, so the bar can fill
      in time on the animated maps, and show where the cast stood at that moment on the still ones.
+  5. **Drawings that look like the real mechanic (your note, Oct 18):** when we can, each mechanic is drawn the way it looks
+     in game, in its colour (a green venom puddle, a purple shadow circle) with its spell's icon at the centre (loaded at
+     play time like every icon, never bundled). My take: good; people recognise a mechanic by its look faster than by a label.
   4. Sharper maps (the older note further down): the floor art is about 1 pixel per yard, which is why it looks soft. My
      take: draw our own clean outline of each boss room (walls, platforms, edges), starting with the progression boss;
      pulling Blizzard's art from the game files would break the "never bundle Blizzard art" rule.
@@ -193,6 +196,32 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 212: Every mini map checked against your rule, and lead-ups that play
+I went through every map on one pull of each of the 8 bosses (the test night) and sorted them: does it draw the mechanic
+itself, or only dots?
+- [x] **The fight checks' own maps were mostly right:** rings, cones, orbs, ghosts, cysts, arrows and lines. **Three
+  were dots only, all on The Lost Explorers, and are fixed** (pictures sent):
+  - **United Defense:** red lines join the three explorers while they were within 30 yards of each other.
+  - **Blink Nova:** a 20-yard circle around its target, from the moment it's marked (the guides' advice: keep the raid
+    outside it). Measured, it hits almost the whole raid, weaker further out, so there's no blast circle to draw.
+  - **Mighty Thud:** an orange circle where each leap landed, as big as the furthest player it hit (about 17 yards).
+- [x] **The "mistake" maps were dots only:** a positional mistake, and any medium or serious mistake without its own map,
+  showed only the player who made it, ringed, with no puddle, cone or circle. They even brought back maps for Tempest,
+  Virulence and Catalytic Bile that you'd removed in round 195. **They're gone.** A Pull recap line now borrows the fight
+  check's own map of that moment for the same mechanic (Caustic Globule shows its soak), and has none when there isn't one
+  (Eternal Venom's Stir the Depths can't be placed).
+- [x] **One rule for every map from now on:** after the maps are made, any fight-check or mistake map left with nothing
+  but players and bosses on it is dropped (it took out 2 ghost-collision maps that had no ghost logged). Death maps stay:
+  where someone died is the point of them.
+- [x] **Maps play their lead-up (your note):** every map shown on Mechanics plays once, by itself, from a few seconds
+  before up to the key moment, the first time it scrolls into view, then holds there; ▶ Play runs the whole clip. Only the
+  maps on screen move. About 60 fight-check maps that had no animation now have the 4 seconds before (Twin Fangs' feast,
+  Coiled Altar's gloombombs, Ula'tek's coils and more); one whose drawn things aren't units in the log (the orbs) stays
+  still, so they don't vanish. Every death map was already animated (the last 5 seconds).
+- [x] The map's key no longer splits around a spell name ("( United Defense )").
+- [ ] Next: cast bars on the maps, drawings that look like the real mechanic, a first-death map on Pull recap, sharper
+  room outlines, and a hover box on every chart (all in Next up).
+
 ## 2026-10-18, round 211: The Assignments how-to, small maps everywhere, every line showing
 - [x] **Assignments explains itself (your note):** with no note yet, the page says what it does ("Your raid's NSRT note
   says who soaks, who kicks, who takes the orbs and who presses which cooldown. Paste it here once, and Debrief checks
@@ -264,6 +293,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   player's page, and the spec fixes and grades in Pull recap's "Talk to" box (those used to follow the Graphs switch).
 - [x] **Power Infusion rework:** mockups in notes, "Power Infusion options.html" (a sentence for each cast, my pick; the
   plan against what happened, as a table; the chart first). You picked the first; built in round 208.
+- [ ] **Every chart has a hover box (your note, Oct 18):** any chart on screen shows the basics when you hover over it (the
+  time, the value, who or what it is) before anything is clicked. My take: good; most charts have one already, so this is
+  a pass over every chart to find the ones that don't (and a tap does the same on a phone).
 - [ ] **Damage into the adds looks different from the other graphs (your note, with a screenshot of Ula'tek):** it missed
   the plain-data pass. The chart is stacked filled areas (the others are lines), and Ula'tek, Venomous Heart and Gore Rattle
   are three near-identical blues. The bars are boss-blue and purple, not class colors. It still has ✓ marks, "slow:

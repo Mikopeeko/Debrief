@@ -2461,7 +2461,9 @@ function buildLostExplorers(ev, r, h) {
     const rows = on.map((c) => { const off = ud.find((e) => e.op === 'remove' && e.t >= c.t); const len = (off ? off.t : dur) - c.t;
       M(c.t, 'Raid', 'United Defense', len > 5 ? 'High' : 'Medium', 'All three explorers came within 30 yards of each other: United Defense (99% less damage taken) for ' + len.toFixed(1) + ' s.', 'Keep at most two explorers together. Tanks move them apart as soon as a third gets close.');
       return [{ txt: 'United Defense' }, { t: c.t }, { txt: 'up for ' + len.toFixed(1) + ' s', warn: len <= 5, bad: len > 5 }, { txt: phOf(c.t), dim: true },
-        { map: { t: c.t + 0.3, title: 'United Defense at ' + T(c.t), pts: h.snap(c.t + 0.3), frames: frames(c.t - 4, c.t + Math.min(len, 6) + 1) } }]; });
+        // (the three explorers joined by red lines while United Defense was up: they were within 30 yards of each other)
+        { map: { t: c.t + 0.3, title: 'United Defense at ' + T(c.t), pts: h.snap(c.t + 0.3), frames: frames(c.t - 4, c.t + Math.min(len, 6) + 1),
+          links: (() => { const ex = h.snap(c.t + 0.3).filter((p) => p.kind === 'boss').slice(0, 3), l = []; for (let i = 0; i < ex.length; i++) for (let j = i + 1; j < ex.length; j++) l.push({ from: ex[i].guid, to: ex[j].guid, t0: c.t - 0.3, t1: c.t + len + 0.3, color: '#ff5a4f', legend: 'the explorers were within 30 yards of each other (United Defense)' }); return l; })() } }]; });
     sections.push({ id: 'united', title: 'United Defense: explorers kept apart', spell: [LE.united, 'United Defense'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.length ? 'warn' : 'good',
       summary: rows.length ? pl(rows.length, 'time') + ' all three explorers came within 30 yards of each other.' : 'All three explorers were never within 30 yards of each other.', cols: ['What', 'When', 'Result', 'Turn', ''], rows });
   }
@@ -2501,11 +2503,18 @@ function buildLostExplorers(ev, r, h) {
       summary: pl(groups.length, 'volley') + '. It shows when each player cleared their Burning Flames or Piercing Frost, and anyone still carrying one at the next volley.', cols: ['Player', 'Cleared', 'Result', ''], groups, rows: [] });
 
     const bA = aur(LE.blink).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bH = dmgId(LE.blinkHit);
+    // (the blast's size, measured: how far from its target the furthest player it hit stood, over the pull's Blink Novas,
+    // so each map draws the circle it really covered (the guides don't publish it))
+    const bOf = (e) => { const hits = bH.filter((x) => x.t >= e.t + 5 && x.t <= e.t + 9); return { hits, tm: hits.length ? hits[0].t : e.t + 7 }; };
+    // (measured, it hits nearly the whole raid (55 yards on the test night), weaker further out, so there's no blast circle
+    // to draw; the map shows the guides' advice instead: 20 yards around the target, with the raid outside it)
+    const bR = 20;
     const rows = bA.map((e) => {
-      const hits = bH.filter((x) => x.t >= e.t + 5 && x.t <= e.t + 9), tm = hits.length ? hits[0].t : e.t + 7, died = deadBy(/blink nova/i, tm - 0.2, tm + 2), who = new Set(hits.map((x) => x.dst));
+      const { hits, tm } = bOf(e), died = deadBy(/blink nova/i, tm - 0.2, tm + 2), who = new Set(hits.map((x) => x.dst));
       for (const d of died) M(d.t, d.player, 'Blink Nova', 'High', 'Died to Blink Nova.', 'Spread out for Blink Nova. Its target moves at least 20 yards from the melee and away from the raid.');
       return [{ p: pname(e.dst) }, { t: tm }, { txt: who.size ? fmtM(hits.reduce((s, x) => s + (x.raw || x.amt), 0) / who.size) + ' each on average' : '—', dim: !who.size }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
-        { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1) } }];
+        { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1),
+          rings: [{ guid: e.dst, r: bR, t0: e.t, dur: tm - e.t + 1, label: 'Blink Nova', color: '#7fb6ff', fill: 'rgba(127,182,255,.12)', cn: 'Blue circle', legend: '20 yards around the Blink Nova target, from the moment it was marked; the guides say to keep the raid outside it' }] } }];
     });
     if (rows.length) sections.push({ id: 'blink', title: 'Blink Nova: spread, target away from the raid', spell: [LE.blink, 'Blink Nova'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good',
       summary: pl(rows.length, 'Blink Nova') + '. It shows each one\'s target, what it cost the raid, and deaths to it.', cols: ['Target', 'When', 'Raid damage', 'Died', ''], rows });
@@ -2514,13 +2523,18 @@ function buildLostExplorers(ev, r, h) {
   // ---- 5. Nama: Mighty Thud (three leaps, each split by everyone under it) ----
   {
     const leaps = castOk(LE.thud), hit = dmgId(LE.thudHit), groups = [];
+    // (where each leap landed: Nama, just after it; and its size, measured from how far the furthest player it hit stood)
+    const namaAt = (t) => h.snap(t).find((p) => p.kind === 'boss' && /nama/i.test(p.name || ''));
+    const tDs = []; for (const t of leaps) { const n = namaAt(t + 0.8); if (!n) continue; const sp = h.snap(t + 0.8); for (const g of new Set(hit.filter((e) => e.t >= t - 0.2 && e.t <= t + 0.8).map((e) => e.dst))) { const q = sp.find((p) => p.guid === g); if (q) tDs.push(Math.hypot(q.x - n.x, q.y - n.y)); } }
+    tDs.sort((a, b) => a - b); const tR = tDs.length >= 3 ? Math.ceil(tDs[Math.floor(tDs.length * 0.9)] + 1) : null;
     for (const c of clusters(leaps.map((t) => ({ t })), 6)) {
       const rows = c.list.map((l, k) => {
         const who = [...new Set(hit.filter((e) => e.t >= l.t - 0.2 && e.t <= l.t + 0.8).map((e) => e.dst))], died = deadBy(/mighty thud/i, l.t - 0.2, l.t + 1.5);
         if (!who.length) M(l.t, 'Raid', 'Mighty Thud', 'High', 'Nobody was under Mighty Thud leap ' + (k + 1) + ': the whole raid took the full hit.', 'Line up away from Nama and soak all three leaps. Everyone takes the first, then gets knocked into the next.');
         for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split, and use a defensive if your health is low.');
         return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
-          { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 2, l.t + 1) } }];
+          { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 3, l.t + 1),
+            rings: (() => { const n = namaAt(l.t + 0.8); return n && tR ? [{ x: n.x, y: n.y, r: tR, t0: l.t - 0.2, dur: 1.4, label: 'Mighty Thud', color: '#e0a050', fill: 'rgba(224,160,80,.18)', cn: 'Orange circle', legend: 'where the leap landed; it hit players up to ' + tR + ' yd away (measured)' }] : []; })() } }];
       });
       groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: rows.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
     }
@@ -5403,19 +5417,16 @@ function analyze(item, text, opts) {
       if (groups.some((x) => x.bad && !left.includes(x) && /Soulcoiler/.test(x.title))) addSec.verdict = missed > 2 ? 'bad' : addSec.verdict === 'good' ? 'warn' : addSec.verdict;
     }
   }
-  // rule-pack mistakes about where someone stood (avoidable hits, missed soaks, raid failures) get a map of that moment
-  for (const m of r.mistakes) if (m.pos && !m.map) {
-    const g = guidOf.get(m.player);
-    m.map = { t: m.t, hl: g ? [g] : [], bad: g ? [g] : [], badLabel: 'made this mistake', title: m.mechanic + ' at ' + fmtT(m.t) + (g ? ' (' + m.player + ' ringed)' : ''), pts: snapAt(m.t) };
-  }
-  // Animated maps for the pull recap (and the Fight audit): every medium or serious mistake gets a map of that moment
-  // if it has none, and every map gets animation frames from 4s before to 2s after; every death gets one of the last
-  // 5 seconds. (Skipped when the log has no positions.)
+  // (rule-pack mistakes about where someone stood used to get a map of just the player, ringed: no puddle, cone or circle,
+  // so it showed nothing about the mechanic. Removed (your rule, Oct 18: a map draws its mechanic, or there's no map); a
+  // line elsewhere borrows the fight check's own map of that moment instead)
+  // Animated maps for the pull recap (and the Fight audit): every mistake map gets animation frames from 4s before to 2s
+  // after; every death gets one of the last 5 seconds. (Skipped when the log has no positions.) A mistake with no map of
+  // its own no longer gets one of just the player (see above)
   if (r.positions && r.positions.size) {
     try {
       for (const m of r.mistakes) {
-        if (m.mechanic === 'Death' || m.severity === 'Low') continue;
-        if (!m.map) { const g = guidOf.get(m.player); m.map = { t: m.t, hl: g ? [g] : [], bad: g ? [g] : [], badLabel: 'made this mistake', title: m.mechanic + ' at ' + fmtT(m.t) + (g ? ' (' + m.player + ' ringed)' : ''), pts: snapAt(m.t) }; }
+        if (m.mechanic === 'Death' || !m.map) continue;
         if (!m.map.frames) m.map.frames = framesAt(Math.max(0, m.map.t - 4), Math.min(r.duration, m.map.t + 2), 0.2);
       }
       // kick maps (Interrupts, and adds sections that merged them): animate them and show every add of that set, so the
@@ -5425,7 +5436,23 @@ function analyze(item, text, opts) {
         const own = [...(mp.goodAdd || []), ...(mp.badAdd || [])], u0 = (r.kickUnits || []).find((u) => own.includes(u.guid));
         const mates = u0 ? (r.kickUnits || []).filter((u) => u.name === u0.name && u.wave === u0.wave).map((u) => u.guid) : [];
         mp.frames = framesAt(Math.max(0, mp.t - 3), Math.min(r.duration, mp.t + 1.5), 0.25, [...new Set(own.concat(mates))]);
-      }      for (const d of r.deaths) if (!d.map) d.map = { t: d.t, hl: [d.guid], bad: [d.guid], badLabel: 'died here', title: d.player + ' died at ' + fmtT(d.t) + (d.ability ? ' to ' + d.ability : ''), pts: snapAt(Math.max(0, d.t - 0.3)), frames: framesAt(Math.max(0, d.t - 5), d.t + 0.4, 0.2) };
+      }
+      // (your rule, Oct 18: a map draws its mechanic, or there's no map. Any fight-check or mistake map that ended up with
+      // nothing but players and bosses on it (a ghost collision with no ghost logged, a soak with no globule) is dropped.
+      // Death maps stay: where someone died is the point of them)
+      // (every fight-check map plays the 4 seconds leading up to its moment (your note, Oct 18), with the adds on it moving
+      // too; one whose drawn things aren't units in the log (orbs placed by the check) stays still, so they don't vanish)
+      if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
+        for (const mp of c && c.map ? [c.map] : c && c.maps ? c.maps.map((x) => x[1]) : []) { if (mp.frames || mp.t == null || !(mp.pts || []).length) continue;
+          const extra = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss'); if (!extra.every((p) => p.guid && r.positions.has(p.guid))) continue;
+          mp.frames = framesAt(Math.max(0, mp.t - 4), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
+      const drawsMech = (mp) => !!(mp.cone || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
+        [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
+      if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
+        if (!c) continue; if (c.map && !drawsMech(c.map)) delete c.map;
+        if (c.maps) { c.maps = c.maps.filter(([, mp]) => drawsMech(mp)); if (!c.maps.length) delete c.maps; } }
+      for (const m of r.mistakes) if (m.map && m.mechanic !== 'Death' && !drawsMech(m.map)) delete m.map;
+      for (const d of r.deaths) if (!d.map) d.map = { t: d.t, hl: [d.guid], bad: [d.guid], badLabel: 'died here', title: d.player + ' died at ' + fmtT(d.t) + (d.ability ? ' to ' + d.ability : ''), pts: snapAt(Math.max(0, d.t - 0.3)), frames: framesAt(Math.max(0, d.t - 5), d.t + 0.4, 0.2) };
     } catch (e) { console.error(e); } // (maps are extra: never block the pull)
   }  r.hasPack = mech.packs.length > 0;
   r.packSources = mech.packs.flatMap((p) => p.sources).join('; ');

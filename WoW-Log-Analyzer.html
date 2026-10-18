@@ -658,7 +658,7 @@ details[id^="sec-"] { scroll-margin-top: 96px; } /* (a jump to a mechanic lands 
 .zscale i { display: block; height: 3px; background: #d8dce5; margin-bottom: 3px; box-shadow: 0 1px 2px #000; }
 .znorth { position: absolute; right: 10px; top: 8px; font-size: 12px; color: #d8dce5; pointer-events: none; text-shadow: 0 1px 2px #000; }
 .zleg { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 10px; border-top: 1px solid var(--line); font-size: 12px; color: #d8dce5; }
-.zleg span { display: inline-flex; align-items: center; gap: 6px; }
+.zleg > span { display: inline-flex; align-items: center; gap: 6px; } .zleg > span > span { display: inline; }
 .map g.pl.k > circle { stroke: #fff; stroke-width: 1.5; }
 .map .ml { fill: #ece8df; font-size: 12px; text-anchor: middle; font-weight: 600; paint-order: stroke; stroke: #0f1117; stroke-width: 3px; }
 .map .ml.dim { fill: #8a92a6; font-weight: 500; } .map .ml.hot { fill: #ff8f87; font-size: 13px; }
@@ -4975,7 +4975,9 @@ function buildLostExplorers(ev, r, h) {
     const rows = on.map((c) => { const off = ud.find((e) => e.op === 'remove' && e.t >= c.t); const len = (off ? off.t : dur) - c.t;
       M(c.t, 'Raid', 'United Defense', len > 5 ? 'High' : 'Medium', 'All three explorers came within 30 yards of each other: United Defense (99% less damage taken) for ' + len.toFixed(1) + ' s.', 'Keep at most two explorers together. Tanks move them apart as soon as a third gets close.');
       return [{ txt: 'United Defense' }, { t: c.t }, { txt: 'up for ' + len.toFixed(1) + ' s', warn: len <= 5, bad: len > 5 }, { txt: phOf(c.t), dim: true },
-        { map: { t: c.t + 0.3, title: 'United Defense at ' + T(c.t), pts: h.snap(c.t + 0.3), frames: frames(c.t - 4, c.t + Math.min(len, 6) + 1) } }]; });
+        // (the three explorers joined by red lines while United Defense was up: they were within 30 yards of each other)
+        { map: { t: c.t + 0.3, title: 'United Defense at ' + T(c.t), pts: h.snap(c.t + 0.3), frames: frames(c.t - 4, c.t + Math.min(len, 6) + 1),
+          links: (() => { const ex = h.snap(c.t + 0.3).filter((p) => p.kind === 'boss').slice(0, 3), l = []; for (let i = 0; i < ex.length; i++) for (let j = i + 1; j < ex.length; j++) l.push({ from: ex[i].guid, to: ex[j].guid, t0: c.t - 0.3, t1: c.t + len + 0.3, color: '#ff5a4f', legend: 'the explorers were within 30 yards of each other (United Defense)' }); return l; })() } }]; });
     sections.push({ id: 'united', title: 'United Defense: explorers kept apart', spell: [LE.united, 'United Defense'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.length ? 'warn' : 'good',
       summary: rows.length ? pl(rows.length, 'time') + ' all three explorers came within 30 yards of each other.' : 'All three explorers were never within 30 yards of each other.', cols: ['What', 'When', 'Result', 'Turn', ''], rows });
   }
@@ -5015,11 +5017,18 @@ function buildLostExplorers(ev, r, h) {
       summary: pl(groups.length, 'volley') + '. It shows when each player cleared their Burning Flames or Piercing Frost, and anyone still carrying one at the next volley.', cols: ['Player', 'Cleared', 'Result', ''], groups, rows: [] });
 
     const bA = aur(LE.blink).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bH = dmgId(LE.blinkHit);
+    // (the blast's size, measured: how far from its target the furthest player it hit stood, over the pull's Blink Novas,
+    // so each map draws the circle it really covered (the guides don't publish it))
+    const bOf = (e) => { const hits = bH.filter((x) => x.t >= e.t + 5 && x.t <= e.t + 9); return { hits, tm: hits.length ? hits[0].t : e.t + 7 }; };
+    // (measured, it hits nearly the whole raid (55 yards on the test night), weaker further out, so there's no blast circle
+    // to draw; the map shows the guides' advice instead: 20 yards around the target, with the raid outside it)
+    const bR = 20;
     const rows = bA.map((e) => {
-      const hits = bH.filter((x) => x.t >= e.t + 5 && x.t <= e.t + 9), tm = hits.length ? hits[0].t : e.t + 7, died = deadBy(/blink nova/i, tm - 0.2, tm + 2), who = new Set(hits.map((x) => x.dst));
+      const { hits, tm } = bOf(e), died = deadBy(/blink nova/i, tm - 0.2, tm + 2), who = new Set(hits.map((x) => x.dst));
       for (const d of died) M(d.t, d.player, 'Blink Nova', 'High', 'Died to Blink Nova.', 'Spread out for Blink Nova. Its target moves at least 20 yards from the melee and away from the raid.');
       return [{ p: pname(e.dst) }, { t: tm }, { txt: who.size ? fmtM(hits.reduce((s, x) => s + (x.raw || x.amt), 0) / who.size) + ' each on average' : '—', dim: !who.size }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
-        { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1) } }];
+        { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1),
+          rings: [{ guid: e.dst, r: bR, t0: e.t, dur: tm - e.t + 1, label: 'Blink Nova', color: '#7fb6ff', fill: 'rgba(127,182,255,.12)', cn: 'Blue circle', legend: '20 yards around the Blink Nova target, from the moment it was marked; the guides say to keep the raid outside it' }] } }];
     });
     if (rows.length) sections.push({ id: 'blink', title: 'Blink Nova: spread, target away from the raid', spell: [LE.blink, 'Blink Nova'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good',
       summary: pl(rows.length, 'Blink Nova') + '. It shows each one\'s target, what it cost the raid, and deaths to it.', cols: ['Target', 'When', 'Raid damage', 'Died', ''], rows });
@@ -5028,13 +5037,18 @@ function buildLostExplorers(ev, r, h) {
   // ---- 5. Nama: Mighty Thud (three leaps, each split by everyone under it) ----
   {
     const leaps = castOk(LE.thud), hit = dmgId(LE.thudHit), groups = [];
+    // (where each leap landed: Nama, just after it; and its size, measured from how far the furthest player it hit stood)
+    const namaAt = (t) => h.snap(t).find((p) => p.kind === 'boss' && /nama/i.test(p.name || ''));
+    const tDs = []; for (const t of leaps) { const n = namaAt(t + 0.8); if (!n) continue; const sp = h.snap(t + 0.8); for (const g of new Set(hit.filter((e) => e.t >= t - 0.2 && e.t <= t + 0.8).map((e) => e.dst))) { const q = sp.find((p) => p.guid === g); if (q) tDs.push(Math.hypot(q.x - n.x, q.y - n.y)); } }
+    tDs.sort((a, b) => a - b); const tR = tDs.length >= 3 ? Math.ceil(tDs[Math.floor(tDs.length * 0.9)] + 1) : null;
     for (const c of clusters(leaps.map((t) => ({ t })), 6)) {
       const rows = c.list.map((l, k) => {
         const who = [...new Set(hit.filter((e) => e.t >= l.t - 0.2 && e.t <= l.t + 0.8).map((e) => e.dst))], died = deadBy(/mighty thud/i, l.t - 0.2, l.t + 1.5);
         if (!who.length) M(l.t, 'Raid', 'Mighty Thud', 'High', 'Nobody was under Mighty Thud leap ' + (k + 1) + ': the whole raid took the full hit.', 'Line up away from Nama and soak all three leaps. Everyone takes the first, then gets knocked into the next.');
         for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split, and use a defensive if your health is low.');
         return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
-          { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 2, l.t + 1) } }];
+          { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 3, l.t + 1),
+            rings: (() => { const n = namaAt(l.t + 0.8); return n && tR ? [{ x: n.x, y: n.y, r: tR, t0: l.t - 0.2, dur: 1.4, label: 'Mighty Thud', color: '#e0a050', fill: 'rgba(224,160,80,.18)', cn: 'Orange circle', legend: 'where the leap landed; it hit players up to ' + tR + ' yd away (measured)' }] : []; })() } }];
       });
       groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: rows.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
     }
@@ -7917,19 +7931,16 @@ function analyze(item, text, opts) {
       if (groups.some((x) => x.bad && !left.includes(x) && /Soulcoiler/.test(x.title))) addSec.verdict = missed > 2 ? 'bad' : addSec.verdict === 'good' ? 'warn' : addSec.verdict;
     }
   }
-  // rule-pack mistakes about where someone stood (avoidable hits, missed soaks, raid failures) get a map of that moment
-  for (const m of r.mistakes) if (m.pos && !m.map) {
-    const g = guidOf.get(m.player);
-    m.map = { t: m.t, hl: g ? [g] : [], bad: g ? [g] : [], badLabel: 'made this mistake', title: m.mechanic + ' at ' + fmtT(m.t) + (g ? ' (' + m.player + ' ringed)' : ''), pts: snapAt(m.t) };
-  }
-  // Animated maps for the pull recap (and the Fight audit): every medium or serious mistake gets a map of that moment
-  // if it has none, and every map gets animation frames from 4s before to 2s after; every death gets one of the last
-  // 5 seconds. (Skipped when the log has no positions.)
+  // (rule-pack mistakes about where someone stood used to get a map of just the player, ringed: no puddle, cone or circle,
+  // so it showed nothing about the mechanic. Removed (your rule, Oct 18: a map draws its mechanic, or there's no map); a
+  // line elsewhere borrows the fight check's own map of that moment instead)
+  // Animated maps for the pull recap (and the Fight audit): every mistake map gets animation frames from 4s before to 2s
+  // after; every death gets one of the last 5 seconds. (Skipped when the log has no positions.) A mistake with no map of
+  // its own no longer gets one of just the player (see above)
   if (r.positions && r.positions.size) {
     try {
       for (const m of r.mistakes) {
-        if (m.mechanic === 'Death' || m.severity === 'Low') continue;
-        if (!m.map) { const g = guidOf.get(m.player); m.map = { t: m.t, hl: g ? [g] : [], bad: g ? [g] : [], badLabel: 'made this mistake', title: m.mechanic + ' at ' + fmtT(m.t) + (g ? ' (' + m.player + ' ringed)' : ''), pts: snapAt(m.t) }; }
+        if (m.mechanic === 'Death' || !m.map) continue;
         if (!m.map.frames) m.map.frames = framesAt(Math.max(0, m.map.t - 4), Math.min(r.duration, m.map.t + 2), 0.2);
       }
       // kick maps (Interrupts, and adds sections that merged them): animate them and show every add of that set, so the
@@ -7939,7 +7950,23 @@ function analyze(item, text, opts) {
         const own = [...(mp.goodAdd || []), ...(mp.badAdd || [])], u0 = (r.kickUnits || []).find((u) => own.includes(u.guid));
         const mates = u0 ? (r.kickUnits || []).filter((u) => u.name === u0.name && u.wave === u0.wave).map((u) => u.guid) : [];
         mp.frames = framesAt(Math.max(0, mp.t - 3), Math.min(r.duration, mp.t + 1.5), 0.25, [...new Set(own.concat(mates))]);
-      }      for (const d of r.deaths) if (!d.map) d.map = { t: d.t, hl: [d.guid], bad: [d.guid], badLabel: 'died here', title: d.player + ' died at ' + fmtT(d.t) + (d.ability ? ' to ' + d.ability : ''), pts: snapAt(Math.max(0, d.t - 0.3)), frames: framesAt(Math.max(0, d.t - 5), d.t + 0.4, 0.2) };
+      }
+      // (your rule, Oct 18: a map draws its mechanic, or there's no map. Any fight-check or mistake map that ended up with
+      // nothing but players and bosses on it (a ghost collision with no ghost logged, a soak with no globule) is dropped.
+      // Death maps stay: where someone died is the point of them)
+      // (every fight-check map plays the 4 seconds leading up to its moment (your note, Oct 18), with the adds on it moving
+      // too; one whose drawn things aren't units in the log (orbs placed by the check) stays still, so they don't vanish)
+      if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
+        for (const mp of c && c.map ? [c.map] : c && c.maps ? c.maps.map((x) => x[1]) : []) { if (mp.frames || mp.t == null || !(mp.pts || []).length) continue;
+          const extra = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss'); if (!extra.every((p) => p.guid && r.positions.has(p.guid))) continue;
+          mp.frames = framesAt(Math.max(0, mp.t - 4), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
+      const drawsMech = (mp) => !!(mp.cone || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
+        [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
+      if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
+        if (!c) continue; if (c.map && !drawsMech(c.map)) delete c.map;
+        if (c.maps) { c.maps = c.maps.filter(([, mp]) => drawsMech(mp)); if (!c.maps.length) delete c.maps; } }
+      for (const m of r.mistakes) if (m.map && m.mechanic !== 'Death' && !drawsMech(m.map)) delete m.map;
+      for (const d of r.deaths) if (!d.map) d.map = { t: d.t, hl: [d.guid], bad: [d.guid], badLabel: 'died here', title: d.player + ' died at ' + fmtT(d.t) + (d.ability ? ' to ' + d.ability : ''), pts: snapAt(Math.max(0, d.t - 0.3)), frames: framesAt(Math.max(0, d.t - 5), d.t + 0.4, 0.2) };
     } catch (e) { console.error(e); } // (maps are extra: never block the pull)
   }  r.hasPack = mech.packs.length > 0;
   r.packSources = mech.packs.flatMap((p) => p.sources).join('; ');
@@ -8975,9 +9002,11 @@ function modMaps(r) {
 // the line's, like Guillotine or ghosts, so a line never borrows another mechanic's map)
 const MAP_STOP = new Set(['kicks', 'soaks', 'front', 'coold', 'assig', 'mecha', 'spell', 'pulls', 'every', 'their', 'there', 'didn\'']);
 const mapStems = (t) => new Set(String(t).replace(/<[^>]+>/g, ' ').toLowerCase().split(/[^a-z']+/).filter((w) => w.length >= 5).map((w) => w.slice(0, 5)).filter((w) => !MAP_STOP.has(w)));
-function mapAt(r, t, label) {
-  if (t == null) return null; const want = mapStems(label); if (!want.size) return null;
-  const c = modMaps(r).filter((x) => Math.abs(x.t - t) <= 1.5 && [...mapStems(x.title)].some((w) => want.has(w))).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
+// (back: how far before the moment a row may start, for a mistake that comes at the end of its mechanic, like a globule
+// exploding seconds after its set)
+function mapAt(r, t, label, win, back) {
+  if (t == null) return null; const want = mapStems(label); if (!want.size) return null; const w = win || 1.5, bk = Math.max(w, back || 0);
+  const c = modMaps(r).filter((x) => x.t >= t - bk && x.t <= t + w && [...mapStems(x.title)].some((s) => want.has(s))).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
   return c || null;
 }
 // One line per item (the worst wrong first; at most five, the rest counted), its time on the right, the whole line on hover.
@@ -11408,10 +11437,12 @@ function audit() {
       if (el.tagName === 'TR') { const row = document.createElement('tr'); row.className = 'maprow'; row.innerHTML = '<td colspan="' + el.children.length + '"><div class="mm mm-set"></div></td>'; el.after(row); box = row.querySelector('.mm'); }
       else box.classList.add('mm-set');
       box.innerHTML = bs.map((b) => '<div class="mm-one">' + (bs.length > 1 && !/^map$/i.test(b.textContent.trim()) ? '<div class="mm-lb">' + esc(b.textContent.trim()) + '</div>' : '') + '<div class="mm-in"></div></div>').join('');
-      box.querySelectorAll('.mm-in').forEach((one, k) => { const mp = AUDITMAPS[+bs[k].dataset.i]; one.innerHTML = miniMap(mp, pmap); bindZoom(one); bindAnim(one, mp, pmap, true); hydrateMapIcons(one); });
+      box.querySelectorAll('.mm-in').forEach((one, k) => { const mp = AUDITMAPS[+bs[k].dataset.i]; one.innerHTML = miniMap(mp, pmap); bindZoom(one); bindAnim(one, mp, pmap, true); hydrateMapIcons(one); if (one._lead && leadObs) leadObs.observe(one); });
     }
     if (sets.size) refreshIcons();
   };
+  // (each animated map plays its lead-up once, the first time most of it is on screen; only the ones in view move)
+  const leadObs = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && e.target._lead) { leadObs.unobserve(e.target); e.target._lead(); } }, { threshold: 0.6 }) : null;
   drawMaps();
   wrThumbFit($('#view')); // (What went wrong's small maps)
   $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open) drawMaps(); }));
@@ -11724,7 +11755,7 @@ function miniMap(mp, pmap) {
   // (the sample is the tag itself when it's a short word, like "Fury"; a number otherwise)
   if ((mp.tags || []).length) { const tw = String(mp.tags[0][1]), smp = tw.length <= 4 && !/^\d+$/.test(tw) ? tw : '3';
     leg.push([(x, y) => '<text x="' + x + '" y="' + (y + 4) + '" fill="#f3d48a" font-size="' + (smp.length > 1 ? 10 : 12) + '" font-weight="800" text-anchor="middle">' + esc(smp) + '</text>', mp.tagLabel || 'Number by a name']); }
-  for (const l of (mp.links || []).filter((x, i, a) => a.findIndex((y) => y.color === x.color) === i)) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 6) + '" y2="' + (y - 4) + '" stroke="' + l.color + '" stroke-width="3" stroke-linecap="round"/>', (l.color === '#2fd15a' ? 'Green line: ' : l.color === '#f3c969' ? 'Amber line: ' : 'Line: ') + (l.legend || '')]);
+  for (const l of (mp.links || []).filter((x, i, a) => a.findIndex((y) => y.color === x.color) === i)) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 6) + '" y2="' + (y - 4) + '" stroke="' + l.color + '" stroke-width="3" stroke-linecap="round"/>', (l.color === '#2fd15a' ? 'Green line: ' : l.color === '#f3c969' ? 'Amber line: ' : l.color === '#ff5a4f' ? 'Red line: ' : 'Line: ') + (l.legend || '')]);
   if (bad.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff3b3b" stroke-width="2.5"/><path d="M' + (x - 2.5) + ' ' + (y - 2.5) + 'l5 5M' + (x + 2.5) + ' ' + (y - 2.5) + 'l-5 5" stroke="#ff3b3b" stroke-width="2"/>', 'Red ✕: ' + (mp.badLabel || 'got it wrong')]);
   if (warnS.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff9f1c" stroke-width="2.5"/><path d="M' + x + ' ' + (y - 3) + 'v3M' + x + ' ' + (y + 2) + 'v.5" stroke="#ff9f1c" stroke-width="2" stroke-linecap="round"/>', 'Orange !: ' + (mp.warnLabel || 'needs a look')]);
   if (gAdd.size || bAdd.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="' + (gAdd.size ? '#2fd15a' : '#ff3b3b') + '" stroke-width="2.5"/>', gAdd.size ? 'Green ring: the add that was kicked' : 'Red ring: the add whose cast got off']);
@@ -11743,7 +11774,7 @@ function miniMap(mp, pmap) {
   for (const g of (mp.rings || []).filter((x, i, a) => a.findIndex((y) => (y.legend || y.label || '') === (x.legend || x.label || '')) === i)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (g.fill || (g.color ? 'rgba(126,224,143,.2)' : 'rgba(230,180,80,.2)')) + '" stroke="' + (g.color || '#e6b450') + '" stroke-dasharray="3 2"/>', (g.cn ? g.cn + ': ' : g.color === '#b65cff' ? 'Purple circle: ' : g.color ? 'Green circle: ' : 'Gold circle: ') + (g.legend || g.label || 'mechanic area') + (g.shrink === 'ichor' ? ' (shrinks from ~11 yd)' : '')]);
   s += '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
-  const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg>' + esc(t) + '</span>').join('') + '</div>';
+  const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
   return '<div class="sub" style="margin:10px 0 6px">' + esc(mp.title) + '. Hover any icon for a name.' +
     (mi || arena ? '' : ' To show the room behind the dots, add a map image under Interrupts → Missed casts.') +
     (mp.note ? '<div style="margin-top:4px;font-weight:600;color:var(--text)">' + esc(mp.note) + '</div>' : '') + '</div>' +
@@ -11763,7 +11794,7 @@ function bindAnim(box, mp, pmap, still) {
   // Playback is drawn every screen refresh (~60 fps) at real-time speed, blending each unit's position between the
   // 0.2s frames (the log itself records positions about every 0.5s, so this smooths movement, it doesn't add detail).
   const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t;
-  let ft = t0, raf = null, last = 0, drawn = -1;
+  let ft = t0, raf = null, last = 0, drawn = -1, until = null; // (until: a lead-up stops on the key moment)
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;
     const a = fr[i], b = fr[Math.min(i + 1, fr.length - 1)], w = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
@@ -11783,18 +11814,22 @@ function bindAnim(box, mp, pmap, still) {
   const step = (now) => {
     if (!box.isConnected) return stop();
     const dt = last ? (now - last) / 1000 : 0; last = now;
+    if (until != null && ft + dt >= until) { show(until); until = null; return stop(); }
     show(ft + dt);
     if (ft >= t1) return stop();
     raf = requestAnimationFrame(step);
   };
   const play = () => { if (ft >= t1) ft = t0; btn.textContent = '❚❚ Pause'; last = 0; raf = requestAnimationFrame(step); };
-  btn.onclick = () => (raf ? stop() : play());
+  btn.onclick = () => { until = null; if (raf) stop(); else play(); };
   rng.oninput = () => { stop(); show(fr[+rng.value].t); };
   if (!still) { show(t0); play(); return; }
   // (the key moment: the frame closest to the map's own snapshot)
   const ref = (mp.pts || []).slice(0, 6); let bi = 0, bd = Infinity;
   fr.forEach((f, i) => { const m = new Map(f.pts.map((p) => [p.guid, p])); let d = 0, n = 0; for (const p of ref) { const q = m.get(p.guid); if (q) { d += Math.abs(q.x - p.x) + Math.abs(q.y - p.y); n++; } } if (n && d < bd) { bd = d; bi = i; } });
   show(fr[bi].t); stop();
+  // (the lead-up, once it's on screen: from the clip's start to the key moment, then it holds there (your note, Oct 18:
+  // the seconds before show why, above all for a death))
+  box._lead = () => { if (raf || bi === 0) return; ft = t0; until = fr[bi].t; show(t0); play(); };
 }
 // Zoom and pan for miniMap: wheel zooms around the cursor, drag pans, double-click goes back to the mechanic.
 // Icons are counter-scaled so they keep their size on screen; the scale bar follows the zoom.
@@ -20335,7 +20370,8 @@ async function lastPull() {
   const secFor = (name) => secOf(name) || (secJ.filter(([, j]) => j.includes(String(name).toLowerCase())).map(([id]) => id).sort((a, b) => (a === 'avoid') - (b === 'avoid') || ix(a) - ix(b))[0] || null);
   [...groups.values()].sort((a, b) => b.hi - a.hi || ix(secOf(a.m.mechanic)) - ix(secOf(b.m.mechanic)) || b.n - a.n).slice(0, 6).forEach((g) => {
     const sid = secFor(g.m.mechanic);
-    wrong.push({ sev: g.hi ? 'bad' : 'warn', map: g.m.map, go: g.m.fromNote ? ['overview', null] : ['audit', sid ? 'sec-' + sid : null], html: '<b>' + mech(g.m.mechanic, g.m.id) + '</b>' + (g.n > 1 ? ' <span class="sub">(' + g.n + ' times)</span>' : '') + ': ' + esc(g.m.detail) + (g.who.size > 1 ? ' <span class="sub">' + esc(lpAnd([...g.who].slice(0, 4).concat(g.who.size > 4 ? [(g.who.size - 4) + ' more'] : []))) + '.</span>' : '') });
+    // (its map: the mistake's own, else the fight check's map of that moment for the same mechanic, which draws it)
+    wrong.push({ sev: g.hi ? 'bad' : 'warn', map: g.m.map || (mapAt(r, g.m.t, g.m.mechanic, 4, 15) || {}).map, go: g.m.fromNote ? ['overview', null] : ['audit', sid ? 'sec-' + sid : null], html: '<b>' + mech(g.m.mechanic, g.m.id) + '</b>' + (g.n > 1 ? ' <span class="sub">(' + g.n + ' times)</span>' : '') + ': ' + esc(g.m.detail) + (g.who.size > 1 ? ' <span class="sub">' + esc(lpAnd([...g.who].slice(0, 4).concat(g.who.size > 4 ? [(g.who.size - 4) + ' more'] : []))) + '.</span>' : '') });
     fixes.push({ w: g.hi ? 1 : 2, t: g.m.mechanic, x: g.m.fix });
   });
   const worse = [...P].filter(([id, x]) => { const q = Q.get(id); return q && x.st === 'bad' && q.st !== 'bad'; }).sort((a, b) => ix(a[0]) - ix(b[0])).map(([, x]) => shortT(x.s.title));
