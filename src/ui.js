@@ -8923,7 +8923,7 @@ function cardOf(r, p) {
           : '<span class="sub"> (' + Math.round(x2.share) + '% of what you built)' + (x2.top ? ' · most from ' + esc(x2.top.spell) : '') + '</span>'))).join('');
       add('btn', { k: 'res', label: 'Wasted resources', sc, w: role === 'tank' ? 12 : 25, num: worst.regen ? worst.pct : worst.share, unit: worst.regen ? '% of the time at full' : '% wasted', wst: Object.fromEntries(rows.map((x2) => [x2.nm, x2.wst])),
         html: head + (rows.length > 1 || subs ? subs : ''),
-        fix: sc >= 90 ? null : worst.regen ? { t: 'Spend your ' + worst.nm + ' before it caps', x: 'Your ' + worst.nm + ' sat at full for ' + Math.round(worst.capped) + ' s (' + plural(worst.runs, 'time') + (worst.longest ? ', the longest from ' + T(worst.longest.s) : '') + ')' + (worst.wst >= 1 ? ', and ' + wOf(worst) + ' went to waste' : '') + '. Anything it would have built there was wasted: spend some before you press another builder.' }
+        fix: sc >= 90 ? null : worst.regen ? { t: 'Spend your ' + worst.nm + ' before it fills up', x: 'Your ' + worst.nm + ' sat at full for ' + Math.round(worst.capped) + ' s (' + plural(worst.runs, 'time') + (worst.longest ? ', the longest from ' + T(worst.longest.s) : '') + ')' + (worst.wst >= 1 ? ', and ' + wOf(worst) + ' went to waste' : '') + '. Anything it would have built there was wasted: spend some before you press another builder.' }
           : { t: 'Spend your ' + worst.nm + ' before it fills up', x: wOf(worst) + ' (' + Math.round(worst.share) + '% of what you built) came while you were already full' + (worst.top ? ', most of it from ' + worst.top.spell : '') + '. Spend some before it fills up: anything that comes in while it\'s full is lost.' } });
     }
   }
@@ -9755,7 +9755,7 @@ async function lastPull() {
   if (!ds.length) well.push('<b>Nobody died</b>' + (it.kill ? '.' : ' before the end.'));
   else if (ds[0].t > r.duration * 0.6) well.push('<b>No deaths until ' + T(ds[0].t) + '</b>, well into the pull.');
   const improved = [...P].filter(([id, x]) => { const q = Q.get(id); return q && q.st !== 'ok' && x.st === 'ok'; }).sort((a, b) => ix(a[0]) - ix(b[0]));
-  for (const [, x] of improved.slice(0, 3)) well.push('<b>' + esc(shortT(x.s.title)) + '</b> was clean this time (it had problems last pull).');
+  for (const [, x] of improved.slice(0, 3)) well.push('No one had trouble with <b>' + esc(shortT(x.s.title)) + '</b> this time, after problems last pull.');
   const clean = [...P].filter(([id, x]) => x.st === 'ok' && !improved.some(([j]) => j === id)).sort((a, b) => ix(a[0]) - ix(b[0])).map(([, x]) => shortT(x.s.title));
   if (clean.length) well.push('<b>Clean:</b> ' + esc(clean.slice(0, 5).join(', ')) + (clean.length > 5 ? ' and ' + (clean.length - 5) + ' more' : '') + '.');
   const ct = cutT(r), missedK = (r.missedKicks || []).filter((m) => m.t <= ct + 0.05).length, kicks = r.interrupts.filter((x) => x.t <= ct + 0.05).length;
@@ -10883,7 +10883,7 @@ function renderProgress(msg, msgErr) {
     const prog = kills.length ? list.filter((v) => v.at <= kills[0].at) : list, after = list.length - prog.length;
     const nights = new Map(); for (const v of prog) { const k = nightOf(v.at); if (!nights.has(k)) nights.set(k, []); nights.get(k).push(v); }
     const time = prog.reduce((s, v) => s + (v.dur || 0), 0), last = list[list.length - 1].at;
-    const st = kills.length ? 'Killed ' + esc(nightLabel(kills[0].at)) + ' on pull ' + kills[0].pull + (kills.length > 1 ? ' · ' + plural(kills.length - 1, 'more kill') + ' since' : '') : b ? 'Best: ' + esc(b.label) + ' · ' + plural(nights.size, 'night') + ' so far' : 'No result yet';
+    const st = kills.length ? 'Killed ' + esc(nightLabel(kills[0].at)) + ' on pull ' + kills[0].pull + ' of the night' + (kills.length > 1 ? ' · ' + plural(kills.length - 1, 'more kill') + ' since' : '') : b ? 'Best: ' + esc(b.label) + ' · ' + plural(nights.size, 'night') + ' so far' : 'No result yet';
     // (the night menu has every night, farm nights after the kill too)
     const allN = new Map(); for (const v of list) { const k = nightOf(v.at); if (!allN.has(k)) allN.set(k, []); allN.get(k).push(v); }
     const opts = [...allN].sort((x, y) => (x[0] < y[0] ? 1 : -1)).map(([, l]) => {
