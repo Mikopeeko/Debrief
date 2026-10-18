@@ -95,6 +95,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   with the others under its block's lines (Healing from Divine Toll, Healing from Beacon of Virtue, Aura Mastery, Mana from
   others, the cooldown "uses" lines and so on). Checks with a picture stay full width. On all three specs.
 - [x] Fixed: a check mark pill on a card could split in two when it named a spell ("✓ In" and "Beacon of Virtue").
+- [x] **Your note: Aura Mastery and Ringing of the Heavens, each one clearer.** A card per Aura Mastery in the Devotion Aura
+  block: the damage its 12% Devotion Aura prevented, and, kept apart, what the Divine Toll it cast healed (yours: 1.76M and
+  844K at 0:46; 1.03M and 1.08M at 4:40), plus Beacon of Virtue and Holy Power.
+- [x] **Your note: icons for both.** Every tile now shows its spell's icon, and a line shows its own icon when it isn't the
+  block's spell. Ringing of the Heavens uses its talent icon. On all three specs.
 
 ## 2026-10-17, round 169: Spec checks, readable and clear ("nice and crisp"), the same on all three specs
 - [x] **The explanations fold away.** The column of "how it's judged" text beside every block is gone. Each block keeps its short
