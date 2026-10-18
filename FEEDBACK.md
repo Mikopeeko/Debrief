@@ -87,6 +87,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 169: Spec checks, readable and clear ("nice and crisp"), the same on all three specs
+- [x] **The explanations fold away.** The column of "how it's judged" text beside every block is gone. Each block keeps its short
+  intro on top, and each check has a small "How it's judged" link at the end of its sentence that opens the explanation right
+  there (and stays open). The phone page is about a quarter shorter.
+- [x] **"Work on these first" cards** show their sentence in full instead of cutting it off (the first one, and the second when
+  both are short; what it cost is already on the card).
+- [x] **Checks where everything went right** fold their row of green boxes under the bar: "Show all 25" opens them.
+- [x] **The number tiles** sit in one even row, and **the mana spell list** shows the top 8 when there are more than 10
+  ("Show all 13 spells" for the rest).
+- [x] Your rule: nothing on one spec's page that the others don't have. All of this is shared by Holy Paladin, Restoration
+  Druid and Preservation Evoker.
+
 ## 2026-10-17, round 168: Evoker finished, healing on every cooldown, and the guide names moved out of the way
 - [x] **Preservation Evoker, the rest of the list (your "do all that"):**
   - A timeline of the pull: Stasis, Inner Flame, Tip the Scales, Rewind, Temporal Anomaly, Dream Breath by rank, Merithra's
