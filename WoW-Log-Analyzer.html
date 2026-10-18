@@ -16509,7 +16509,7 @@ function pdemTimeline(x, s, doa) {
 // on this boss do (read on Warcraft Logs), so a good line means close to them.
 // A cooldown's length is Wowhead's for the live patch, like the Casts view's, unless the list fixes it (fix), or a talent sets it (cdT: [[talent,
 // seconds]]) or adds a charge (chT); a spell the game names two ways (Lunar or Solar Eclipse) lists both (names).
-const GEN_DEF = { abc: [0.8, 0.7], rot: [0.85, 0.7], cds: [0.8, 0.6], res: [0.05, 0.12], dots: [0.9, 0.8], ups: [0.6, 0.45] };
+const GEN_DEF = { abc: [0.8, 0.7], rot: [0.85, 0.7], cds: [0.8, 0.6], res: [0.05, 0.12], dots: [0.85, 0.7], ups: [0.6, 0.45] };
 function genChecks(spec, D) { const T = genTuned(spec, D); return (reps, name, one) => genRun(spec, T, reps, name, one); }
 // a proc over one pull, up to t1, counted in uses, stacks and all: gained when it comes or a stack is added; used when a stack goes, or it ends with
 // one of its spells cast; wasted when it runs out, or when a new one comes while it's already at its top stack. One cut by a death or the end isn't judged.
