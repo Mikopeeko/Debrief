@@ -87,6 +87,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 157: Holy Paladin, a polishing pass (your ask)
+- [x] Every line proofread on your kill, a wipe and the whole night. Labels read naturally ("Infusions spent while Holy
+  Shock was full", "Builders pressed at 5 Holy Power", "Flash of Light without an Infusion"); each line says what you
+  did first ("You pressed 10 of your 12 during Beacon of Virtue"), then why it matters; "during" everywhere instead of
+  "inside"; lists read "A, B and C".
+- [x] Mana over the night in bars ("4.9 bars", not "491% of a bar"); "lowest" left out when it's the same as what was
+  left; a wipe shows "Mana at the end", not graded. Judgment reads "21 casts"; Avenging Wrath's block leads with what it
+  added (+41%).
+- [x] The night's time chips no longer repeat the pull number under each "Pull N"; the group bar's names aren't
+  underlined as tooltip links; the timeline legend and pull table say "during" too.
+- [x] Checked on desktop and phone.
+
 ## 2026-10-17, round 156: Seven blocks, mana from others, Avenging Wrath's healing, Devotion Aura
 - [x] **Your yes: two more merges.** "Infusion of Light and Flash of Light" is one block (Infusion uses, Flash of Light
   without one, on a Beacon, on yourself); Divine Purpose and Dawnlight moved into Holy Power. The page is now blocks:
