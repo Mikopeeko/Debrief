@@ -109,6 +109,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Not testable yet: every top kill is Diabolist, so the Soul Harvester parts (and Power Siphon, Doomguard) are read through only.
 - [x] **Your note: the card and talent graphics look cheap and cartoony.** Done in round 172.
 
+## 2026-10-18, round 175: Holy Paladin cleaned up (your note: messy next to the others)
+- [x] From 28 checks in 9 blocks to 18 in 8, each thing said once. Left out as repeats: Holy Shock with an Infusion waiting
+  (the Infusion of Light check counts the ones it lost), Judgment's own casts and the Infusions it spent (the Infusion bar and
+  "Judgment while Holy Shock was full" say it), Aura Mastery during Beacon of Virtue (the window boxes show it). Left out as
+  small talent extras: Holy Shock with Light of the Martyr, heals on yourself, Divine Toll during Avenging Wrath, and Holy Light
+  overhealing when your tier set means it isn't graded.
+- [x] Merged: Holy Shock and Judgment, your two Holy Power builders, are one block with Judgment's numbers; Avenging Wrath's
+  cards are the picture on its casting-pace line (and say when no Divine Toll went in); Devotion Aura's all-fight total is on
+  the Aura Mastery line. The number rows keep only what's new (no "wasted" repeat, no "From others" bar beside its own tile).
+- [x] Every block's intro says only what the page still checks.
+
 ## 2026-10-18, round 174: Each spec page reorganized, and Beacon of Virtue and Divine Toll as boxes with big tooltips
 - [x] **Your note: the organization of each module.** Every spec page now runs in the same order: the summary; your pull at a
   glance (the cooldown timeline moved up from the bottom, or the pull-by-pull table over the night); the menu, grouped by
