@@ -87,6 +87,26 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 168: Evoker finished, healing on every cooldown, and the guide names moved out of the way
+- [x] **Preservation Evoker, the rest of the list (your "do all that"):**
+  - A timeline of the pull: Stasis, Inner Flame, Tip the Scales, Rewind, Temporal Anomaly, Dream Breath by rank, Merithra's
+    Blessing and Essence Burst held, and your Essence and mana levels. Hover it for a readout.
+  - A new check, "Essence Bursts spent the Twin Echoes way": Emerald Blossom until Twin Echoes has 2 stacks, then Echo.
+  - Source of Magic: who you put it on, and the mana it gave them.
+  - A card for each Stasis (what it stored and healed) and each Inner Flame (healing a second inside it against outside).
+  - A bar showing where your Echoes went, Time Dilation and Zephyr folded into one ungraded line, and the blocks in the
+    spec's own order (Casting, Echo, Essence, Dream Breath, Cooldowns, Mana).
+- [x] **Your note: every healing cooldown shows what it healed,** now on the Druid too: each Tranquility, each Convoke (above
+  your usual 4 seconds), Tree of Life (healing a second inside it against outside), Nature's Swiftness, Ironbark (about what it
+  prevented), Wild Growth, and the mana Innervate gave back. Tranquility and Convoke get a card each, with check marks for what
+  was set up. On Holy Paladin, a new line in the Beacon of Virtue block, "Healing from Divine Toll", shows what its Holy Shocks
+  healed (yours: 5.49M from 12, about 457K each). Your note: at first it was only the last sentence of the line above, too
+  easy to miss.
+- [x] **Your note: no guide names in the module.** The "From Wowhead…" line under every title is gone, and the explanations
+  say the advice plainly. The guides are credited once, in a small faint line at the very bottom of each page.
+- [x] **Twin Echoes check, tested on the top 14 Mythic Twin Fangs kills and Huservoker:** no errors. The top players land
+  between 59% and 96% (middle 82%), so "good" was eased from 75% to 70%; Huservoker has 81%. Scores stay 84 to 97.
+
 ## 2026-10-17, round 167: Preservation Evoker Spec checks ("a hard one")
 - [x] **Researched:** Wowhead's rotation and talent guides and Icy Veins' rotation, cooldowns and mechanics page (both Midnight
   Season 2, 12.1.5), and WoWAnalyzer's Preservation module (12.1: Dream Breath, Essence Burst, Emerald Blossom, Echo, Temporal
