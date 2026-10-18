@@ -338,6 +338,11 @@ itself, or only dots?
   Bellapearl 11s" and jargon ("on in 0.0s · 2 of 2", "% = their share into priority adds"). The "Priority adds, set by
   set" side panel leaves a big empty space. My suggestion: lines with clearly different colors per target, class-colored
   bars with the adds share as a plain number, and the set-by-set list as plain sentences at full width.
+- [ ] **Ula'tek: every egg, one line each (your question, Oct 18: can we track who picks up or carries an egg?).** Yes:
+  picking one up puts a shell on the carrier (Noxious Shell on Mythic, Malignant Shell on Heroic), so Debrief already
+  knows who carried each egg, when they picked it up, how long they held it, whether it was popped in a Spectral Coil as
+  planned, and what broke the ones that became Vipers. Today the Eggs section lists only the problems and a count. My
+  suggestion: list every egg (carrier, picked up at, held for, how it ended) with a map of the pickup.
 - [ ] **Check Heroic Ula'tek's Anguished Cry (your note, with a screenshot):** a row at 4:25 says "kick rotation:
   Icefrosting (31 yd), got off". To check: whether Heroic runs Anguished Cry the same as Mythic (who casts it, when, and
   whether it can and must be kicked), so the Mythic rules aren't judging a Heroic pull, and whether 31 yards was really the
