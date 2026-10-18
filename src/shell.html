@@ -876,17 +876,6 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 @media (max-width: 640px) { .pf-find { flex: 1 1 100%; margin-left: 0; } .pf-find .pf-q { width: 100%; } .pf-fr { left: 0; right: auto; width: 100%; } }
 .pf-cdw { margin-left: 8px; color: #c9ced8; font-size: 12px; font-weight: 600; opacity: .85; } .pf-hrow .cb-in .icw { flex: none; }
 /* ---- Performance: the view picker (one button, every view in a menu under it) ---- */
-.pfm { position: relative; flex: none; --kc: var(--gold); } .pfm.k-dmg { --kc: #6aa8ff; } .pfm.k-heal { --kc: #45c15c; } .pfm.k-taken { --kc: #e5534b; } .pfm.k-res { --kc: #4fb6e8; } .pfm.k-util { --kc: #b07cf0; } .pfm.k-cast { --kc: #f0a35e; } .pfm.k-pi { --kc: #f6dc9a; }
-.pfm-b { display: flex; align-items: center; gap: 11px; min-width: 250px; padding: 8px 14px 8px 9px; background: var(--raised); border: 1px solid var(--line2); border-radius: 10px; box-shadow: inset 0 -2px 0 var(--kc); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-.pfm-b:hover { background: #1f2330; } .pfm-b .pfk-i { opacity: 1; filter: none; } .pfm-t { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.pfm-g { color: var(--faint); font: 600 10px var(--body); letter-spacing: .07em; text-transform: uppercase; } .pfm-l { display: flex; align-items: baseline; gap: 10px; font: 700 16px/1.25 var(--head); white-space: nowrap; }
-.pfm-v { font-size: 15px; color: #c9ced8; font-variant-numeric: tabular-nums; } .pfm-v span { font-size: 12px; font-weight: 600; color: var(--faint); margin-right: 5px; } .pfm-c { color: var(--faint); font-size: 14px; margin-left: 6px; } .pfm-b[aria-expanded="true"] .pfm-c { transform: rotate(180deg); }
-.pfm-p { position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; display: grid; grid-template-columns: repeat(4, minmax(170px, 1fr)); gap: 14px; width: min(820px, calc(100vw - 32px)); padding: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 12px; box-shadow: 0 16px 44px rgba(0,0,0,.6); }
-.pfm-p[hidden] { display: none; } .pfm-gl { padding: 2px 8px 6px; color: var(--faint); font: 600 10.5px var(--body); letter-spacing: .07em; text-transform: uppercase; }
-.pfm-i { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; } .pfm-i .pfk-i { opacity: .85; filter: none; }
-.pfm-i:hover, .pfm-i:focus { background: rgba(255,255,255,.06); outline: none; } .pfm-i.on { background: rgba(230,180,80,.12); } .pfm-it { display: flex; flex-direction: column; min-width: 0; } .pfm-it b { font: 600 14px var(--head); } .pfm-it .sub { font-size: 11.5px; }
-@media (max-width: 900px) { .pfm-p { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .pfm { flex: 1 1 100%; } .pfm-b { width: 100%; min-width: 0; } .pfm-p { grid-template-columns: minmax(0, 1fr); width: 100%; max-height: 70vh; overflow-y: auto; } }
 .pf-asw { grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) 58px; cursor: default; } .pf-asw:hover { background: none; }
 .pf-an2 { grid-area: p; display: flex; align-items: center; gap: 7px; min-width: 0; font-weight: 600; } .pf-an2 > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pf-an2 .icw { flex: none; }
 @media (max-width: 640px) { .pf-asw { grid-template-columns: minmax(0, 1fr) 56px; } }
@@ -937,7 +926,6 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .spc-bw { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: -2px 0 12px; padding: 8px 10px; background: var(--raised); border-radius: 8px; font-size: 12px; } .spc-bws { display: flex; flex-wrap: wrap; gap: 4px; }
 .spc-bws i { display: inline-block; width: 16px; height: 16px; border-radius: 4px; cursor: help; } .spc-bws i.g3 { background: #45c15c; } .spc-bws i.g2 { background: #2f8a42; } .spc-bws i.g1 { background: #e8a23a; } .spc-bws i.g0 { background: #e5534b; }
 .spc-bwt { display: inline-flex; align-items: center; gap: 5px; margin-right: 10px; } .spc-bwt i { cursor: default; }
-.pfm-i.off { opacity: .45; filter: grayscale(1); cursor: not-allowed; } .pfm-i.off:hover { background: none; }
 /* ---- Spec checks: the filter, a check's drawer, a Beacon of Virtue's casts, the cooldown readout, the night's table ---- */
 .spc-flt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; } .spc-flt .seg { margin: 0; } .spc-flt .seg button { padding: 5px 12px; font-size: 13px; } .spc-flt > .sub { font-size: 12px; } .spc-fh { margin-left: auto; }
 .spc-tile { display: block; min-width: 0; border-radius: 8px; cursor: pointer; outline: none; } .spc-tile .pt { position: relative; height: 100%; padding-right: 26px; transition: background .12s, box-shadow .12s; }
@@ -1375,6 +1363,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .fcard.fall { width: 128px; margin: 0; padding: 6px 10px 7px; border-radius: 9px; border-color: var(--line2); background: var(--panel); font: 400 12px var(--body); color: var(--text); }
 .fcard.fall .ap-i { color: var(--gold); font-weight: 800; } .fcard.fall .fc-p { color: #f3c969; }
 .fcard.fall.sel { border-color: var(--gold); background: rgba(230,180,80,.1); box-shadow: 0 0 0 1px rgba(230,180,80,.35); }
+@media (max-width: 640px) { .fcard.fall { width: 74px; padding: 6px 8px 7px; } .fcard.fall .fa-x, .fcard.fall .fc-s { display: none; } } /* (a phone: "∑ All", so the pulls keep their room) */
 .film { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 1px 4px; scrollbar-width: none; } .film::-webkit-scrollbar { display: none; }
 .film.keys .fcard { width: auto; min-width: 150px; }
 .film.fl { -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px); mask-image: linear-gradient(90deg, transparent, #000 40px); }
@@ -1721,8 +1710,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .btn.sm { padding: 3px 10px; font-size: 12.5px; }
 /* ---- Performance: the pickers, the four views as switches, the timeline, a bar per player and the side panel ---- */
 .pfv .pf-top { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 10px; }
-.pf-top .seg { margin: 0; padding: 2px; } .pf-top .seg button { padding: 5px 12px; font-size: 13.5px; } .pf-top .pfph button { padding: 5px 11px; }
-.pf-top .cutbar { margin: 0 0 0 auto; flex: 0 1 auto; min-width: 0; }
+.pf-top .seg { margin: 0; padding: 2px; } .pf-top .seg button { padding: 5px 12px; font-size: 13.5px; }
+.pf-top .cutbar { flex: 0 1 auto; min-width: 0; }
 .pfu-miss { margin: 12px 0 0; line-height: 1.5; } .pfu-miss b { color: var(--muted); font-weight: 600; }
 .pfk-i { width: 30px; height: 30px; border-radius: 7px; flex: none; box-shadow: 0 0 0 1px #000, 0 0 0 2px var(--line2); }
 .pts.n2 { --n: 2; } .pts.n3 { --n: 3; } .pts.n4 { --n: 4; } @media (max-width: 1100px) { .pts.n4 { --n: 2; } }
@@ -2263,12 +2252,25 @@ body.bh-off .tabbar .tb-id { display: inline-flex; }
 .msc:hover { background: var(--raised); border-color: var(--line2); } .msc.bad { border-left-color: var(--bad); } .msc.warn { border-left-color: #e6b450; } .msc.ok { padding-left: 11px; }
 .msc .icw, .msc .icw .ico, .msc .icw img { width: 20px; height: 20px; }
 .msc-s { font-weight: 700; } .msc-s.bad { color: #ff8f87; } .msc-s.warn { color: #f3c969; } .msc-s.ok { color: #7ee08f; } .msc-s i { font-style: normal; color: #f3c969; font-weight: 600; margin-left: 4px; }
-/* Performance, top: the four kinds and the switches in one row, Damage checks as one line that opens, the tiles beside
-   the chart, so the player bars come up onto the first screen */
-.pf-head { margin: 0 0 10px; } .pfv .pf-head .pf-top { margin: 0; }
+/* Graphs, top: the views as tabs in labelled groups, like the main tab bar (your pick, Oct 18), then one row with the
+   phase switch as plain words, the wipe filter as a small note, and the search on the right. Rotation has only the row */
+.pf-head { margin: 0 0 12px; } .pfv .pf-head .pf-top { margin: 0; } .pfv .pf-head .pft-row + .pf-top { margin-top: 10px; }
+.pft-row { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.pft-row::-webkit-scrollbar { display: none; }
+.pft-g { display: flex; flex-direction: column; flex: none; } .pft-g > span { display: flex; }
+.pft-g > b { padding: 0 11px 2px; font-size: 10px; line-height: 1.2; letter-spacing: .9px; text-transform: uppercase; color: var(--faint); font-weight: 700; white-space: nowrap; }
+.pft { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; margin-bottom: -1px; padding: 6px 11px 8px; color: var(--muted); font: 500 14px var(--body); white-space: nowrap; cursor: pointer; }
+.pft:hover { color: var(--text); } .pft.on { color: var(--text); border-bottom-color: var(--gold); }
+.pft:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.pft.off { opacity: .45; cursor: not-allowed; } .pft.off:hover { color: var(--muted); }
+.pft-sep { flex: none; width: 1px; align-self: stretch; margin: 8px 6px 6px; background: var(--line); }
+.pfph { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.pft-lb { margin-right: 8px; color: var(--faint); font: 700 11px var(--body); letter-spacing: .08em; text-transform: uppercase; }
+.pf-top .pfph button { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 3px 8px; color: var(--muted); font: 500 14px var(--body); cursor: pointer; }
+.pf-top .pfph button:hover { color: var(--text); } .pf-top .pfph button.on { color: var(--text); border-bottom-color: var(--gold); background: none; }
+.pf-top .cutbar, .pf-top .cutbar.on { margin: 0; padding: 0 !important; border: 0; background: none; box-shadow: none; }
+.pf-top .cutbar .cutnow { font-size: 12.5px; color: var(--faint); } .pf-top .cutbar .cutnow b { color: var(--muted); font-weight: 600; }
 @media (min-width: 1101px) {
-  .pf-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin: 0 0 12px; }
-  .pf-head .pf-top { flex: 1; min-width: 320px; } /* (with many views, the pull switch drops under them instead of squeezing) */
   .pf-chartrow { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; align-items: stretch; margin: 0 0 14px; }
   .pf-chartrow.solo { grid-template-columns: minmax(0, 1fr); }
   .pf-chartrow > .panel { margin: 0; } .pf-chartrow > .pts.pf-side { --n: 1; margin: 0; grid-auto-rows: 1fr; }

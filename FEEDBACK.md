@@ -173,12 +173,34 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 206: Rotation and Graphs, tabs for the views, All pulls back at the top
+- [x] **Spec checks is its own main tab, "Rotation"** (your call), between Assignments and Graphs. My take: strong; it
+  separates "how you played" from the raw numbers. It works for one pull and for all pulls, and is greyed out on the live
+  site like before ("Under development").
+- [x] **Performance is now "Graphs"** (your call). My take: right, now that only charts and numbers are left in it. Still
+  greyed out on the live site.
+- [x] **Graphs' controls (your pick: round 2, the first layout):** the views as tabs under four small labels (Output:
+  Damage, Healing, Damage taken · Casting: Casts, Resources · Cooldowns and buffs: Cooldowns, Power Infusion, Buffs ·
+  Toolkit: Utility, Survivability), like the main tab bar. Under them: "Phase  Whole pull  P1  P2" as plain words with a
+  gold line under the one you're on, the wipe filter as a small note ("Counted up to 3:28, the wipe filter"), and the search
+  on the right. No numbers in the tab names. The dropdown menu is gone. On a phone the tabs scroll sideways.
+- [x] **No pull switch inside the page (your call).** One catch I found: the top of the page only picked single pulls (the
+  All pulls card was taken off in round 66), so without the switch there was no way to see the whole night on these tabs.
+  So the **"∑ All pulls" card is back at the left end of the pull cards** (just "∑ All" on a phone). On Rotation, Graphs
+  and Players it shows every pull of the boss together; on the other tabs it opens Night summary.
+- [x] Checked: a pull card, the ‹ › arrows in the pinned bar and All pulls all keep you on the same tab, and Graphs on the
+  same view (Casts stays Casts). Going to Rotation and back keeps Graphs' view. Players' "See it in Rotation" opens Rotation.
+- [x] The tips for Graphs (once more, since they changed) and new ones for Rotation; the tour's step is "Rotation and graphs".
+- [ ] **Power Infusion needs a rework (your note: difficult to read).** My take: agreed, it's the wordiest view left in
+  Graphs and the only one that still coaches. Next: a few mockups to pick from, like the controls.
+- [ ] The Players tab's help text still mentions the old Report card and Performance (for when we look at Players).
+
 ## 2026-10-18, round 205: No boxes at the top of the plain views (your note)
 - Your note: Performance is a raw data section, for facts, not grades or scores. So the boxes at the top are gone from
   Casts, Resources, Damage, Healing and Damage taken, for one pull and for all pulls ("Most wasted", "Longest gap",
   "Lost to deaths", "Best pull", "Through the night" and the like). The charts now use the full width.
 - Power Infusion keeps its boxes, with its coaching (your call, for now). Spec checks is unchanged.
-- [ ] The controls at the top (your note: sloppy). Mockups in notes: "Performance controls options.html" (round 1: you
+- [x] The controls at the top (your note: sloppy; done in round 206). Mockups in notes: "Performance controls options.html" (round 1: you
   liked the view tabs and the side list, not the row of pill switches) and "Performance controls round 2.html" (with
   "How they played" holding only Spec checks, Casts and Resources as "Casting", and three switch styles).
 

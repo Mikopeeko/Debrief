@@ -442,9 +442,11 @@ function renderList() {
       return '<button class="pull fcard' + (b.kill ? ' kill' : '') + (b === best ? ' best' : '') + (v == null && !b.kill ? ' unk' : '') + (b === S.item ? ' sel' : '') + (allMode ? ' dim' : '') + '" type="button" data-i="' + add(b) + '" title="' + esc(tip) + '" style="--pc:' + col + '">' +
         '<span class="fc-h"><b>Pull ' + b.pull + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + esc(v == null && !b.kill ? T(b.duration) : pullShort(b)) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
     };
-    // (no "All pulls" card: the Summary tab is the all-pulls page, and the banner shows the best pull)
+    // (an "All pulls" card at the left end, always in view (back on Oct 18, when the pull switch left Rotation and Graphs):
+    // Rotation, Graphs and Players then show every pull of the boss together; the other tabs open Night summary)
+    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together" aria-pressed="' + allMode + '"><span class="fc-h"><b><span class="ap-i">∑</span> All<span class="fa-x"> pulls</span></b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><span class="fc-s">the whole night</span></button>' : '';
     // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
-    h = '<div class="sg-row"><div class="fwrap"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
+    h = '<div class="sg-row">' + allC + '<div class="fwrap"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
   } else {
     // a Mythic+ key: the whole key, then each boss in it
     h = '<div class="sg-row"><div class="film keys">' + cur.list.map((b, i) => { const ok = b.kill || b.result === 'Timed';
@@ -456,7 +458,7 @@ function renderList() {
   if (bosses.some((b) => !b.wcl && !CACHE.has(b))) warmPulls();
   // (clicking one pull shows that pull on every tab; All pulls shows every pull of the boss: see setScope)
   box.querySelectorAll('.pull').forEach((b) => (b.onclick = () => { setScope('pull'); select(ITEMS[+b.dataset.i]); }));
-  box.querySelectorAll('.allp').forEach((b) => (b.onclick = () => { setScope('all'); const it = ITEMS[+b.dataset.last]; if (S.item === it && S.rep) renderMain(); else select(it); }));
+  box.querySelectorAll('[data-all]').forEach((b) => (b.onclick = () => { if (S.scope === 'all' && S.tab !== 'live') return; const keep = S.item && S.rep && cur.list.includes(S.item); setScope('all'); if (keep) renderMain(); else select(ITEMS[+b.dataset.all]); }));
   if (pick) {
     const pb = pick.querySelector('.bp-b'), pop = pick.querySelector('.bp-pop');
     if (pb && pop) pb.onclick = (e) => { e.stopPropagation(); pop.hidden = !pop.hidden; pb.setAttribute('aria-expanded', String(!pop.hidden)); };
@@ -923,17 +925,20 @@ function bgFetch(item) {
 
 // ---------- main frame ----------
 // Tabs, in two labelled groups (your pick, Oct 18: option A): "This pull" has Pull recap (the live recap), Mechanics
-// (the fight audit), Assignments (the NSRT audit) and Performance; "Whole night" has Night summary (always all pulls)
-// and Players. The keys stay as they were, so saved spots and links still open the same page.
-const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['perf', 'Performance'], ['night', 'Night summary'], ['player', 'Players']];
-const TAB_GROUPS = [['This pull', ['live', 'audit', 'overview', 'perf']], ['Whole night', ['night', 'player']]];
+// (the fight audit), Assignments (the NSRT audit), Rotation (Spec checks, moved out of Performance: how each player
+// played their own spec) and Graphs (what was Performance: the raw numbers); "Whole night" has Night summary (always all
+// pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
+const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['night', 'Night summary'], ['player', 'Players']];
+const TAB_GROUPS = [['This pull', ['live', 'audit', 'overview', 'rot', 'perf']], ['Whole night', ['night', 'player']]];
+// (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
+const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
 // report cards); Latest pull, Assignments and Mechanics are always one pull; the Player audit has both, switched on its
 // own page. The pull cards pick it: a pull, or All pulls (which opens Summary, or the Player audit's all-pulls view).
 const OLD_ALL = { nightaudit: 1, nightassign: 1 }; // (the old all-pulls Mechanics and Assignments, e.g. in a saved resume: Summary has them now)
 function setScope(sc) {
   S.scope = sc;
-  if (sc === 'all') { if (S.tab !== 'player' && S.tab !== 'perf') S.tab = 'night'; }
+  if (sc === 'all') { if (S.tab !== 'player' && !PF_TAB(S.tab)) S.tab = 'night'; }
   else if (S.tab === 'night' || OLD_ALL[S.tab]) S.tab = 'audit';
 }
 // the header's result for all pulls: the kill, or the best pull so far
@@ -944,19 +949,21 @@ function nightResult(it) {
   return { cls: 'best', txt: best ? 'Best: ' + pullLabel(best.b) + ' (pull ' + best.b.pull + ')' : 'No kill yet', big: best ? 'Best: ' + pullLabel(best.b) : 'No kill yet', left: best ? best.v : null, pull: best ? best.b.pull : null };
 }
 // the tabs' icons (drawn here, no game art)
-const TAB_IC = { live: 'clock', overview: 'list', audit: 'target', perf: 'bars', night: 'chart', player: 'users' };
+const TAB_IC = { live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
   live: 'The pull that just ended, at a glance. It shows what went wrong and what to fix before the next pull, and follows live logging.',
   overview: 'Your NSRT note, checked against this pull. It covers soaks, externals, orbs, kicks, mind control CC, curses and healing cooldowns, and shows who missed theirs.',
   audit: 'Every boss mechanic in this pull, phase by phase. It shows what went wrong and who was involved, with maps, plus deaths and survival.',
-  perf: 'Damage, healing and damage taken in this pull, player by player and over time, with the phases, boss mechanics, Bloodlust and deaths marked. It also covers utility, like interrupts, dispels, battle resses and externals.',
+  rot: 'How each player played their own spec in this pull, checked against the guides: what they pressed and when, their cooldowns, their resources and their talents.',
+  perf: 'The raw numbers for this pull, player by player and over time: damage, healing, damage taken, casts, resources, cooldowns, buffs and utility. The phases, boss mechanics, Bloodlust and deaths are marked on the charts.',
   night: 'Every pull of this boss together. It shows report cards, how far you got, what to fix before the next raid, and each mechanic and assignment pull by pull.',
   player: 'Each player\'s page, for this pull or all pulls. It shows one grade from their mechanics and Report card, what they should fix first, and their prep.',
 };
 const TICO = { clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
   target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>', chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
   bars: '<path d="M4 20h16"/><path d="M6.5 17v-5M11 17V7M15.5 17v-8M20 17v-3"/>',
+  cycle: '<path d="M19 12a7 7 0 0 1-12 4.95M5 12a7 7 0 0 1 12-4.95"/><path d="M17.5 3.5v3.8h-3.8M6.5 20.5v-3.8h3.8"/>',
   trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>',
   users: '<circle cx="9" cy="8" r="3.3"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><path d="M15.5 4.8a3.3 3.3 0 0 1 0 6.4M17.5 14c2.1.7 3.5 2.8 3.5 5.5"/>' };
 const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true">' + (TICO[TAB_IC[k]] || '') + '</svg>';
@@ -1093,10 +1100,10 @@ function headerHtml(r, allMode) {
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
 const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
-// (Performance is greyed out on the website, "Under development" on hover or tap, until its vision is complete (your note, Oct 18);
+// (Graphs is greyed out on the website, "Under development" on hover or tap, until its vision is complete (your note, Oct 18);
 // it shows in the local app. Buttons elsewhere that would jump into it are hidden on the website)
 const PERF_OFF = () => !!window.WLA_HOSTED;
-// (Spec checks is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
+// (Rotation (Spec checks) is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
 const SPEC_OFF = () => !!window.WLA_HOSTED;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
@@ -1108,7 +1115,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { live: 'Pull recap', audit: 'Mechanics', overview: 'Assignments', perf: 'Performance', night: 'Night summary', player: 'Players' };
+const TAB_NAME = { live: 'Pull recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'Night summary', player: 'Players' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -1170,11 +1177,13 @@ function renderMain() {
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
   if (S.tab === 'raid') S.tab = 'player'; // (the Raid audit is part of the Player audit now)
   if (OLD_ALL[S.tab]) S.tab = 'night';
-  if (S.tab === 'perf' && PERF_OFF()) S.tab = 'live';
+  // (a jump into Spec checks from an old saved spot or link opens Rotation; Graphs then opens on its last view)
+  if (S.tab === 'perf' && S.perfKind === 'spec') { S.tab = 'rot'; S.perfKind = null; }
+  if ((S.tab === 'perf' && PERF_OFF()) || (S.tab === 'rot' && SPEC_OFF())) S.tab = 'live';
   if (!VIEWS[S.tab]) S.tab = 'overview';
   // Summary is all pulls; Latest pull, Assignments and Mechanics are one pull; the Player audit keeps its own switch.
   // (a Mythic+ key has no all-pulls view)
-  if (S.tab === 'night') S.scope = 'all'; else if (S.tab !== 'player' && S.tab !== 'perf') S.scope = 'pull';
+  if (S.tab === 'night') S.scope = 'all'; else if (S.tab !== 'player' && !PF_TAB(S.tab)) S.scope = 'pull';
   if (single) S.scope = 'pull';
   const allMode = S.scope === 'all' && !single && S.tab !== 'live';
   const serious = allMode ? 0 : keptMistakes(r).filter((m) => m.severity === 'High' && m.mechanic !== 'Death').length;
@@ -1184,7 +1193,7 @@ function renderMain() {
     // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Pull recap']].concat(TABS));
-      const tab = (k) => { const l = name.get(k), off = k === 'perf' && PERF_OFF(), tt = off ? 'Under development' : TAB_TIP[k] || '';
+      const tab = (k) => { const l = name.get(k), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>'; };
       return TAB_GROUPS.map(([g, ks]) => '<span class="tgrp" role="presentation"><b aria-hidden="true">' + g + '</b><span role="presentation">' + ks.map(tab).join('') + '</span></span>').join('<span class="tsep" aria-hidden="true"></span>'); })() + '</nav>' + tbPull(r, allMode) + '</div>' +
@@ -4318,9 +4327,9 @@ function kicks() {
 // (the Report card is gone (your call, Oct 18): Spec checks reviews each player's play, the rest is plain data; its
 // scoring stays behind the Players grade until Players is looked at again)
 const PERF_KINDS = [['spec', 'Spec checks'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
-// (the buttons in four groups: how each player played, the meters, cooldowns and buffs, and their toolkit; one thing per
-// tab, each in one place)
-const PERF_GROUPS = [['How they played', ['spec', 'cast', 'res']], ['Output', ['dmg', 'heal', 'taken']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
+// (Graphs' views as tabs in four labelled groups, like the main tab bar (your pick, Oct 18); Spec checks, the "how they
+// played" part, is its own main tab now, Rotation)
+const PERF_GROUPS = [['Output', ['dmg', 'heal', 'taken']], ['Casting', ['cast', 'res']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
 // (the views that count presses or grade, not output over time: no phase picker and no chart)
 const PERF_COUNTS = new Set(['card', 'spec', 'util', 'surv', 'pi', 'cds', 'aura']);
 // Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds: checked
@@ -4397,19 +4406,20 @@ const PERF_COL = { dmg: '#6aa8ff', heal: '#45c15c', taken: '#e5534b' };
 // (one button for the view you're on, with its group and its number; a click opens every view, in their four groups, each
 // with a short hint. It closes when one is picked, on Escape, or with a click anywhere else.)
 const PERF_HINT = { card: 'grades and what to fix', spec: 'your spec, the guides\' way', cast: 'pace and gaps', res: 'mana and waste', dmg: 'who did what', heal: 'heals and overhealing', taken: 'what hit the raid', cds: 'big and raid cooldowns', pi: 'for priests', aura: 'uptime of their buffs', util: 'dispels, externals and CC', surv: 'defensives and close calls' };
-function perfTabs(kind, vals) {
-  const LB = new Map(PERF_KINDS), v = vals[kind] || {}, g = PERF_GROUPS.find(([, ks]) => ks.includes(kind));
-  const ico = (k) => '<img class="pfk-i" src="' + whIcon(PERF_ICON[k]) + '" alt="" onerror="this.style.visibility=\'hidden\'">';
-  const item = (k) => { const off = k === 'spec' && SPEC_OFF();
-    return '<button class="pfm-i' + (k === kind ? ' on' : '') + (off ? ' off' : '') + '" type="button" role="menuitem"' + (off ? ' aria-disabled="true" title="Under development"' : ' data-k="' + k + '"') + (k === kind ? ' aria-current="true"' : '') + '>' + ico(k) + '<span class="pfm-it"><b>' + LB.get(k) + '</b><span class="sub">' + (off ? 'under development' : k === kind ? 'you\'re here' : PERF_HINT[k]) + '</span></span></button>'; };
-  return '<div class="pfm k-' + kind + '"><button class="pfm-b" id="pfMenuB" type="button" aria-haspopup="menu" aria-expanded="false" title="Pick what to show">' + ico(kind) +
-    '<span class="pfm-t"><span class="pfm-g">' + (g ? g[0] : 'Performance') + '</span><span class="pfm-l">' + LB.get(kind) + (v.v ? '<span class="pfm-v">' + v.v + '</span>' : '') + '</span></span><span class="pfm-c" aria-hidden="true">▾</span></button>' +
-    '<div class="pfm-p" id="pfMenu" role="menu" aria-label="What to show" hidden>' + PERF_GROUPS.map(([gl, ks]) => '<div class="pfm-gr"><div class="pfm-gl">' + gl + '</div>' + ks.map(item).join('') + '</div>').join('') + '</div></div>';
+// (every view one click away, as tabs under small group labels, the same look as the main tab bar (your pick, Oct 18);
+// no numbers in the names: this section shows facts in the views themselves)
+function perfTabs(kind) {
+  if (kind === 'spec') return ''; // (Rotation: its own main tab, with no views to pick)
+  const LB = new Map(PERF_KINDS);
+  const tab = (k) => { const off = k === 'spec' && SPEC_OFF();
+    return '<button class="pft' + (k === kind ? ' on' : '') + (off ? ' off' : '') + '" type="button" role="tab" aria-selected="' + (k === kind) + '"' + (off ? ' aria-disabled="true" title="Under development"' : ' data-k="' + k + '" title="' + esc(PERF_HINT[k] || '') + '"') + '>' + LB.get(k) + '</button>'; };
+  return '<nav class="pft-row" role="tablist" aria-label="What to show">' + PERF_GROUPS.map(([gl, ks]) => '<span class="pft-g" role="presentation"><b aria-hidden="true">' + gl + '</b><span role="presentation">' + ks.map(tab).join('') + '</span></span>').join('<span class="pft-sep" aria-hidden="true"></span>') + '</nav>';
 }
 // a phase by its short name (P1, P2, Intermission, P3); the chips: the whole pull, or one phase
 const pfPhK = (q) => q.name.split(' ')[0];
+// (plain words with a gold line under the one you're on, and a small "Phase" label, to match the tabs above (your pick))
 function phaseChips(keys, sel) {
-  return keys.length > 1 ? '<div class="seg pfph" role="tablist" aria-label="Phase"><button data-ph=""' + (!sel ? ' class="on"' : '') + '>Whole pull</button>' + keys.map((k) => '<button data-ph="' + esc(k) + '"' + (k === sel ? ' class="on"' : '') + '>' + esc(k) + '</button>').join('') + '</div>' : '';
+  return keys.length > 1 ? '<div class="pfph" role="tablist" aria-label="Phase"><span class="pft-lb" aria-hidden="true">Phase</span><button data-ph=""' + (!sel ? ' class="on"' : '') + '>Whole pull</button>' + keys.map((k) => '<button data-ph="' + esc(k) + '"' + (k === sel ? ' class="on"' : '') + '>' + esc(k) + '</button>').join('') + '</div>' : '';
 }
 // the role chips over the player bars: everyone, or one role (ranks count within it)
 // (a view can start on one role, e.g. Damage windows on DPS; picking All keeps all)
@@ -4423,11 +4433,11 @@ const resses = (n) => n + (n === 1 ? ' battle res' : ' battle resses');
 const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || { rows: [] }).rows.reduce((s, x) => s + x.n, 0);
   return { v: t('disp') + '<span> dispels</span> ' + t('ext') + '<span> externals</span>', s: resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
 function perf() {
-  // (it opens on Spec checks; where Spec checks is greyed out, on Damage. An old saved "Report card" opens Spec checks)
-  if (!S.perfKind || !PERF_KINDS.some(([x]) => x === S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = PERF_KINDS.some(([x]) => x === k) ? k : 'spec'; }
-  if (S.perfKind === 'spec' && SPEC_OFF()) S.perfKind = 'dmg';
-  store.set('wla-pf-kind', S.perfKind);
-  const r = S.rep, kind = S.perfKind || 'spec', ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
+  // (Rotation is always Spec checks; Graphs opens on the view you last had, Damage the first time. S.perfKind is the
+  // Graphs view only, so going to Rotation and back keeps it)
+  const rot = S.tab === 'rot', isK = (k) => k && k !== 'spec' && PERF_KINDS.some(([x]) => x === k);
+  if (!rot) { if (!isK(S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = isK(k) ? k : 'dmg'; } store.set('wla-pf-kind', S.perfKind); }
+  const r = S.rep, kind = rot ? 'spec' : S.perfKind, ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
   const ps = players().filter((p) => p.name && !/^Player-/.test(p.name));
   // (one pull or all pulls of the boss, switched here like on the Player audit)
   const isBoss = r.item.kind === 'boss' && !r.item.run, nP = isBoss && S.index ? S.index.bosses.filter((b) => b.id === r.item.id && b.diffId === r.item.diffId).length : 0;
@@ -4452,8 +4462,10 @@ function perf() {
     taken: { v: C(sumOf(R3.taken) / wl) + '<span>/s</span>', s: C(sumOf(R3.taken)) + inPh }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView([r], true).head : {}, cds: kind === 'cds' ? cdHead([r]) : {}, spec: kind === 'spec' ? specHead([r]) : {}, aura: kind === 'aura' ? auraHead([r]) : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutLine = '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (ph && !counts ? '<b>' + esc(ph.name) + '</b>, ' + T(w0) + '–' + T(w1) + (cut && w1 >= end - 0.5 ? ' (the wipe filter)' : '') : cut ? 'Counted up to <b>' + T(ct) + '</b>, the wipe filter' : r.item.kill ? '<b>Kill</b>, so the whole pull counts' : 'The whole pull counts') + '</span></div>';
-  // (one row on top: the kinds, then the pull / phase switches and the wipe filter line)
-  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + pfFindBox() + '</div></div>';
+  // (on top: the views as tabs, then one row with the phase switch, the wipe filter note and the search. No pull switch
+  // here (your call, Oct 18): the pull cards at the top of the page pick the pull, or All pulls, and keep this view)
+  void scopeSw; void vals;
+  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + (rot ? '' : pfFindBox()) + '</div></div>';
   if (counts) { view(h + countView(kind, [r], true, ucats, scats) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
   const rowsAll = R3[kind], total = sumOf(rowsAll), key = KEY[kind];
@@ -4863,8 +4875,9 @@ function chartBreakdown(r, kind, p, dur) {
 // Each pull counts up to its own wipe filter (and, with a phase picked, only that phase in the pulls that reached it); a
 // pull counted for under 30 seconds (a reset) is left out of the numbers. "While alive" leaves out time spent dead.
 async function perfNight(r0, kind, scopeSw) {
-  const it = r0.item, still = () => S.tab === 'perf' && S.scope === 'all' && S.rep === r0;
-  view('<div class="pfv"><div class="pf-top">' + scopeSw + '</div>' + loadCard('Reading the night', 'Reading the pulls…', 0) + '</div>'); bindPerf();
+  const it = r0.item, tab0 = S.tab, still = () => S.tab === tab0 && (kind === 'spec' || S.perfKind === kind) && S.scope === 'all' && S.rep === r0;
+  void scopeSw;
+  view('<div class="pfv"><div class="pf-head">' + perfTabs(kind) + '</div>' + loadCard('Reading the night', 'Reading the pulls…', 0) + '</div>'); bindPerf();
   const got = await bossReps(it, still, (n, of) => loadSet('#view', 'Reading the pulls… ' + n + ' of ' + of, of ? n / of : null)); if (!got || !still()) return;
   const reps = got.reps, KEY = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && !pm.has(p.name)) pm.set(p.name, p);
@@ -4885,7 +4898,8 @@ async function perfNight(r0, kind, scopeSw) {
   const vals = { card: kind === 'card' ? rcHead(reps) : {}, dmg: { v: C(avgK('dmg')) + '<span>/s</span>', s: avgS }, heal: { v: C(avgK('heal')) + '<span>/s</span>', s: avgS }, taken: { v: C(avgK('taken')) + '<span>/s</span>', s: avgS }, res: kind === 'res' && RV ? RV.head : {}, cast: kind === 'cast' && RV ? RV.head : {}, pi: kind === 'pi' ? piView(reps, false).head : {}, cds: kind === 'cds' ? cdHead(reps) : {}, spec: kind === 'spec' ? specHead(reps) : {}, aura: kind === 'aura' ? auraHead(reps) : {}, util: utilHead(ucats), surv: survHead(scats) };
   const counts = PERF_COUNTS.has(kind);
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
-  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind, vals) + '<div class="pf-top">' + scopeSw + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div>' + pfFindBox() + '</div></div>';
+  void vals;
+  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div>' + (kind === 'spec' ? '' : pfFindBox()) + '</div></div>';
   if (counts) { view(h + countView(kind, reps, false, ucats, scats) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons();
     const byP = new Map(reps.map((r) => [r.item.pull, r.item])); $$('#view .pfn-b').forEach((g) => (g.onclick = () => { const b = byP.get(+g.dataset.pull); if (!b) return; S.scope = 'pull'; select(b); })); return; }
@@ -4966,12 +4980,14 @@ function lensBar(list, cur) {
 }
 // (a view's own switch, kept in S[key]: the same "View" row as the other views)
 const viewSw = (key, list, cur) => pfViewSw('<div class="seg pf-vsw" role="tablist" aria-label="View" data-vk="' + key + '">' + list.map(([k, l]) => '<button type="button" role="tab" data-v="' + k + '" aria-selected="' + (k === cur) + '"' + (k === cur ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>');
-// (open another Performance view on one player: their cooldowns, buffs or defensives)
+// (open another Graphs view on one player: their cooldowns, buffs or defensives; their spec checks are on Rotation)
 function pfGo(k, n, quiet) {
+  if (k === 'spec') { S.specSel = n; S.tab = 'rot'; if (!quiet) { renderMain(); window.scrollTo({ top: 0 }); } return; }
+  const moved = S.tab !== 'perf'; S.tab = 'perf';
   S.perfKind = k === 'debuffs' ? 'aura' : k;
   if (k === 'spec') S.specSel = n; else if (k === 'cds') { S.cdView = 'use'; S.cdsSel = n; } else if (k === 'aura' || k === 'debuffs') { S.auraView = k === 'debuffs' ? 'debuffs' : 'buffs'; S.auraQ = ''; S.auraSel = n; } else if (k === 'surv') { S.survCat = 'def'; S.survSel = n; } else if (k === 'util') S.utilSel = n;
   else if (k === 'res') { S.resSel = n; S.resPw = null; S.resMode = null; } else if (k === 'cast') S.castSel = n; else { S.perfSel = n; S.perfLens = 'players'; }
-  if (quiet) return; perf(); window.scrollTo({ top: 0 });
+  if (quiet) return; if (moved) renderMain(); else perf(); window.scrollTo({ top: 0 });
 }
 const pfGoRow = (n, list) => '<div class="rk-go pf-go"><span class="sub">See it in</span>' + list.map(([k, l]) => '<button class="btn" type="button" data-pgo="' + k + '" data-pgn="' + esc(n) + '">' + l + '</button>').join('') + '</div>';
 const presses = (n) => (n === 1 ? '1 press' : n + ' presses');
@@ -5161,7 +5177,7 @@ function pfFindIndex(r) {
   const agg = (get) => { const m = new Map(); for (const p of ps) for (const [n, id, v] of get(p)) { if (!n) continue; let x = m.get(n); if (!x) m.set(n, x = { n, id, v: 0, who: new Map() }); if (!x.id && id) x.id = id; x.v += v; x.who.set(p, (x.who.get(p) || 0) + v); }
     return [...m.values()].map((x) => ({ ...x, top: [...x.who].sort((a, b) => b[1] - a[1])[0][0] })); };
   const by = (x) => (x.who.size === 1 ? 'by ' + esc(x.top.name) : plural(x.who.size, 'player') + ', most ' + esc(x.top.name));
-  for (const p of ps) out.push({ g: 'player', n: p.name, p, d: esc(p.specName || ''), go: () => { if (SPEC_OFF()) { S.perfKind = 'dmg'; S.perfSel = p.name; } else { S.perfKind = 'spec'; S.specSel = p.name; } } });
+  for (const p of ps) out.push({ g: 'player', n: p.name, p, d: esc(p.specName || ''), go: () => { S.perfKind = p.role === 'healer' ? 'heal' : 'dmg'; S.perfSel = p.name; S.perfLens = 'players'; } }); // (on Graphs: their damage, or healing for a healer)
   for (const x of agg((p) => [...p.dmgAb.values()].map((a) => [strip(a.name), a.id, a.total]))) if (x.v > 0) out.push({ g: 'dmg', ...x, d: C(x.v) + ' · ' + by(x), go: () => pfGo('dmg', x.top.name, true) });
   const healN = new Set();
   for (const x of agg((p) => [...p.healAb.values()].map((a) => [strip(a.name), a.id, a.total]))) { healN.add(x.n); if (x.v > 0) out.push({ g: 'heal', ...x, d: C(x.v) + ' · ' + by(x), go: () => pfGo('heal', x.top.name, true) }); }
@@ -5191,7 +5207,7 @@ function pfFindRun(r, q) {
       return '<button class="pf-fi" type="button" data-fi="' + (items.length - 1) + '"><span class="pf-fn">' + (o.p ? avatar(o.p, true) + '<span class="nm" style="color:' + o.p.color + '">' + esc(o.n) + '</span>' : spellIcon(o.id, o.n) + '<span>' + esc(o.n) + '</span>') + '</span><span class="sub">' + o.d + '</span></button>'; }).join(''); }).join('');
   return { items, html: html || '<p class="sub pf-fnone">Nothing in this pull matches "' + esc(q) + '".</p>' };
 }
-const pfFindBox = () => '<div class="pf-find"><input class="pf-q" id="pfFind" type="search" placeholder="Search players, spells, buffs…" aria-label="Search Performance" autocomplete="off" spellcheck="false"><div class="pf-fr" id="pfFindR" hidden></div></div>';
+const pfFindBox = () => '<div class="pf-find"><input class="pf-q" id="pfFind" type="search" placeholder="Search players, spells, buffs…" aria-label="Search Graphs" autocomplete="off" spellcheck="false"><div class="pf-fr" id="pfFindR" hidden></div></div>';
 // (the views that count presses or uptime rather than output over time)
 const countView = (kind, reps, one, ucats, scats) => (kind === 'card' ? reportCard(reps, !one) : kind === 'pi' ? piView(reps, one).html : kind === 'cds' ? cdView(reps, one) : kind === 'spec' ? specView(reps, one) : kind === 'aura' ? auraView(reps, one) : utilCards(kind === 'surv' ? scats : ucats, one, kind));
 // one phase of a pull (or the whole pull, with no key), up to its wipe filter: { w0, w1, wl }, or null if it never got there
@@ -6214,7 +6230,7 @@ function cdInfo(id) {
   CDI.set(id, undefined); cdiQ.push(id); cdiPump(); return undefined;
 }
 // (when the last one is read, the Casts view draws again, unless someone's typing in a box)
-function cdiRedraw() { clearTimeout(cdiWait); cdiWait = setTimeout(() => { const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) { cdiRedraw(); return; } if (S.tab === 'perf' && (S.perfKind === 'cast' || S.perfKind === 'spec')) perf(); }, 120); }
+function cdiRedraw() { clearTimeout(cdiWait); cdiWait = setTimeout(() => { const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) { cdiRedraw(); return; } if (S.tab === 'rot' || (S.tab === 'perf' && S.perfKind === 'cast')) perf(); }, 120); }
 function cdiPump() {
   while (cdiBusy < 4 && cdiQ.length) { const id = cdiQ.shift(); cdiBusy++;
     tipData(id).then((j) => { const t = j ? String(j.tooltip || '').replace(/<[^>]+>/g, ' ') : '', m = t.match(/(\d+(?:\.\d+)?)\s*(sec|min)\s*(?:cooldown|recharge)/i), k = t.match(/(\d+)\s*Charges/i);
@@ -9932,7 +9948,7 @@ function castView(list, one) {
   // (no side panel (your call, Oct 18): the bars say it, and a player opens in place)
   return { head, html: top + '<div class="pf-cols solo">' + left + '</div>' + castHow };
 }
-const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log. Auto attacks aren\'t counted, and neither are the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Casts per minute are counted while they were alive (less any time mind controlled), up to the wipe filter, the way Warcraft Logs counts them. A gap is 4 seconds or more without a cast that wasn\'t forced, and it\'s marked "moving" when they walked 4 yards or more. How each player\'s casting compares with the top players of their spec is on their Spec checks page.</div></details>';
+const castHow = '<details class="howit"><summary>How it works</summary><div>Every cast a player pressed, from the log. Auto attacks aren\'t counted, and neither are the casts Warcraft Logs marks as not pressed (procs, like Reclamation after a Holy Shock or Shattered Souls). Casts per minute are counted while they were alive (less any time mind controlled), up to the wipe filter, the way Warcraft Logs counts them. A gap is 4 seconds or more without a cast that wasn\'t forced, and it\'s marked "moving" when they walked 4 yards or more. How each player\'s casting compares with the top players of their spec is on the Rotation tab.</div></details>';
 // no one picked: the slowest against their spec, the biggest drops against their usual, and the longest gaps
 function castRaid(all, one) {
   const who = (p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>', line = (html, sub, v) => '<div class="pfu-l"><span class="pfu-w">' + html + '</span><span class="sub">' + sub + '</span><b>' + v + '</b></div>';
@@ -9993,7 +10009,7 @@ function parsesFor(r, kind) {
   const k = r.item.wcl.code + ':' + r.item.wcl.fight + ':' + kind;
   if (PARSES.has(k)) { const v = PARSES.get(k); return v instanceof Map ? v : null; }
   PARSES.set(k, 'loading');
-  WCL.loadRankings(S.wclCreds, r.item, kind === 'heal' ? 'hps' : 'dps').then((m) => { PARSES.set(k, m); if (S.tab === 'perf' && S.rep === r && S.scope !== 'all' && ((S.perfKind || 'spec') === kind || (S.perfKind || 'spec') === 'card' || S.perfKind === 'spec')) perf(); })
+  WCL.loadRankings(S.wclCreds, r.item, kind === 'heal' ? 'hps' : 'dps').then((m) => { PARSES.set(k, m); if (PF_TAB(S.tab) && S.rep === r && S.scope !== 'all' && (S.tab === 'rot' || S.perfKind === kind)) perf(); })
     .catch((e) => { console.warn('Parses:', e && e.message); PARSES.set(k, new Map()); });
   return null;
 }
@@ -10011,7 +10027,7 @@ function pfSortApply(items, keyOf, on, dir) {
   return ks.map((x) => x.it);
 }
 function pfSortBind() {
-  const base = (S.perfKind || 'spec') + '|' + (S.scope || 'pull') + '|', cur = S.pfSort || {}, COL = { 'pf-k': 'k', 'cb-hn': 'hn', 'cb-v': 'v', 'cb-s': 's', 'cb-r': 'r' };
+  const base = (S.tab === 'rot' ? 'spec' : S.perfKind) + '|' + (S.scope || 'pull') + '|', cur = S.pfSort || {}, COL = { 'pf-k': 'k', 'cb-hn': 'hn', 'cb-v': 'v', 'cb-s': 's', 'cb-r': 'r' };
   const key = (el, go) => { el.setAttribute('role', 'button'); el.tabIndex = 0; el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; };
   // (the bar lists: each row, with its opened detail right under it, moves as one)
   $$('#view .pfv .cb-h').forEach((hd, i) => { const k = base + i, pn = hd.parentElement, groups = [];
@@ -10077,16 +10093,15 @@ function spcTlBind() {
 function bindPerf() {
   // (every chart folds away with a click on its title and stays folded, per view, until it's opened again)
   { let fold; try { fold = new Set(JSON.parse(store.get('wla-pf-fold') || '[]')); } catch (e) { fold = new Set(); }
-    $$('#view .pf-chart').forEach((pn, i) => { const h3 = pn.querySelector('h3.nh'); if (!h3) return; const key = (S.perfKind || 'spec') + ':' + (S.scope || 'pull') + ':' + i, set = () => { const f = fold.has(key); pn.classList.toggle('folded', f); h3.setAttribute('aria-expanded', String(!f)); };
+    $$('#view .pf-chart').forEach((pn, i) => { const h3 = pn.querySelector('h3.nh'); if (!h3) return; const key = (S.tab === 'rot' ? 'spec' : S.perfKind) + ':' + (S.scope || 'pull') + ':' + i, set = () => { const f = fold.has(key); pn.classList.toggle('folded', f); h3.setAttribute('aria-expanded', String(!f)); };
       pn.classList.add('pf-fold'); h3.title = 'Click to fold or open the chart'; set();
       h3.onclick = (e) => { if (e.target.closest('button, a, .pfc-lg, .seg, input, select, .pf-hk')) return; if (fold.has(key)) fold.delete(key); else fold.add(key); store.set('wla-pf-fold', JSON.stringify([...fold])); set(); }; }); }
-  { const b = $('#pfMenuB'), m = $('#pfMenu'); if (b && m) { const set = (o) => { m.hidden = !o; b.setAttribute('aria-expanded', String(o)); if (o) { const on = m.querySelector('.pfm-i.on') || m.querySelector('.pfm-i'); if (on) on.focus(); } };
-    b.onclick = () => set(m.hidden); b.onkeydown = (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); set(true); } };
-    m.querySelectorAll('[data-k]').forEach((x) => (x.onclick = () => { set(false); if (x.dataset.k !== S.perfKind) { S.perfKind = x.dataset.k; perf(); } }));
-    m.onkeydown = (e) => { const xs = [...m.querySelectorAll('[data-k]')], i = xs.indexOf(document.activeElement); if (e.key === 'Escape') { set(false); b.focus(); } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); xs[(i + 1) % xs.length].focus(); } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); xs[(i - 1 + xs.length) % xs.length].focus(); } };
-    if (!window._pfMenuDoc) { window._pfMenuDoc = 1; document.addEventListener('mousedown', (e) => { const mm = $('#pfMenu'); if (mm && !mm.hidden && !(e.target.closest && e.target.closest('.pfm'))) { mm.hidden = true; const bb = $('#pfMenuB'); if (bb) bb.setAttribute('aria-expanded', 'false'); } }); } } }
+  // (the view tabs; the arrow keys move along them, like the main tab bar)
+  { const row = $('#view .pft-row'); if (row) { const xs = [...row.querySelectorAll('[data-k]')];
+    xs.forEach((x) => (x.onclick = () => { if (x.dataset.k !== S.perfKind) { S.perfKind = x.dataset.k; perf(); } }));
+    row.onkeydown = (e) => { const i = xs.indexOf(document.activeElement); if (i < 0) return; const j = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : null; if (j == null) return; e.preventDefault(); xs[(j + xs.length) % xs.length].focus(); };
+    const on = row.querySelector('.pft.on'); if (on && row.scrollWidth > row.clientWidth) row.scrollLeft = Math.max(0, on.offsetLeft - 40); } }
   $$('details.pf-dc').forEach((d) => d.addEventListener('toggle', () => { S.perfDcOpen = d.open; })); // (Damage checks stays open or closed as you left it)
-  $$('.pfv .plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   $$('.pfph button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfPh = b.dataset.ph || null; perf(); }));
   $$('.pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; perf(); }));
   $$('.pf-tg button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfTgt = b.dataset.tg; perf(); }));
@@ -10854,7 +10869,7 @@ function deaths() {
 // it in full; and over the night, how they did pull by pull, their best pull, the MVPs and who improved most. What the
 // other tabs already show in full (the survival kit, output) isn't repeated here.
 // (a fix that used to open the Report card opens the player's Spec checks page, since the Report card is gone)
-const PL_GO = { audit: 'Mechanics', card: 'Spec checks', cast: 'Casts', res: 'Resources', prep: 'Their prep' };
+const PL_GO = { audit: 'Mechanics', card: 'Rotation', cast: 'Casts', res: 'Resources', prep: 'Their prep' };
 const PL_RC_GO = { act: 'cast', unf: 'cast', res: 'res' }; // (a Report card fix that has its own view)
 // one player's pull -> { mech, perf, prep, score, fixes: [{ key, t, x, gain, go }], mistakes, x }
 function plGrade(r, p, x, credit) {
@@ -11119,7 +11134,8 @@ function bindPlayers(c) {
   $$('#plBody [data-plgo]').forEach((b) => (b.onclick = () => { const nm = b.dataset.pn, g = b.dataset.plgo;
     if (g === 'prep') { const el = $('#plPrep'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (g === 'audit') S.tab = 'audit';
-    else { S.tab = 'perf'; S.perfKind = g === 'cast' ? 'cast' : g === 'res' ? 'res' : 'spec'; if (g === 'cast') S.castSel = nm; else if (g === 'res') { S.resSel = nm; S.resPw = null; S.resMode = null; } else S.specSel = nm; }
+    else if (g === 'cast' || g === 'res') { S.tab = 'perf'; S.perfKind = g; if (g === 'cast') S.castSel = nm; else { S.resSel = nm; S.resPw = null; S.resMode = null; } }
+    else { S.tab = 'rot'; S.specSel = nm; }
     renderMain(); window.scrollTo({ top: 0 }); }));
   const byPull = new Map(c.reps.map((q) => [q.item.pull, q.item]));
   $$('#plBody [data-plpull]').forEach((b) => (b.onclick = () => { const it = byPull.get(+b.dataset.plpull); if (!it) return; S.plSel = b.dataset.pn; S.tab = 'player'; setScope('pull'); select(it); }));
@@ -11417,7 +11433,7 @@ async function lastPull() {
   const noteLow = new Set(ms.filter((m) => m.fromNote && m.severity === 'Low' && m.mechanic !== HCD).map((m) => m.player)).size;
   const cdRows = S0.cdRows, cdMiss = cdRows.filter((x) => x.status === 'missed').length, cdLate = cdRows.filter((x) => x.status === 'late' || x.status === 'early').length;
   const hiN = [...groups.values()].filter((g) => g.hi).length, medN = groups.size - hiN;
-  const TNAME = { audit: 'Mechanics', overview: 'Assignments', perf: 'Performance' };
+  const TNAME = { audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs' };
   const go = (html, tab, sec, kind) => '<button class="pt-go lp-go" type="button" data-go="' + tab + '"' + (sec ? ' data-sec="' + sec + '"' : '') + (kind ? ' data-kind="' + kind + '"' : '') + ' title="Open ' + TNAME[tab] + '">' + html + '</button>';
   const cmp = (a, b) => (S1 ? lpDelta(a, b, true) : '');
   // (the Report card's box is gone with the Report card itself)
@@ -11458,7 +11474,7 @@ async function lastPull() {
   // (flasks and food: once their buffs' names are looked up, the box fills in)
   if (cs.length && needNames) resolveCombatants(cs).then(() => { if (S.rep !== r || S.tab !== 'live') return; const el = $('#lpPrep'); if (el) { el.outerHTML = lpPrep(r, prepRows()); refreshIcons(); } }).catch(() => { /* (the potions are still shown) */ });
 }
-const VIEWS = { audit, overview, night, player, perf, live: lastPull };
+const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();
@@ -11996,7 +12012,7 @@ function homePreviews() {
   return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
     card(1, 'Pull recap', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
     card(2, 'Mechanics', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
-    card(3, 'Performance', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
+    card(3, 'Rotation and graphs', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
     card(4, 'Teams', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
 }
 // ---- the tour: five short steps on a first visit, required once (no close button), remembered in this browser ----
@@ -12011,7 +12027,7 @@ const TOUR = [
     art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ Brann died first, at 1:42, to Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
   { t: 'Mechanics and assignments', p: 'Every mechanic is checked for every player, with a map of who stood where. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
-  { t: 'Performance', p: 'Spec checks goes through how each player played their own character, the way a top player of their spec would. Then come the numbers, like Warcraft Logs but easier to read: damage, healing, casts, resources, cooldowns and more. Hover any chart for its numbers.',
+  { t: 'Rotation and graphs', p: 'Rotation goes through how each player played their own spec, the way a top player of it would. Graphs has the raw numbers, like Warcraft Logs but easier to read: damage, healing, casts, resources, cooldowns and more. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
   { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs to see every raid night, boss by boss, with your rankings. New nights come in by themselves, and "Your teams" at the top of every page takes you there.',
     art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
@@ -12046,7 +12062,7 @@ const PAGE_TIPS = {
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went fine, amber could be better, and red went wrong. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
     { sel: '#view .lp-main', t: 'What went well, and what to fix', p: 'What the raid did well comes first, then the three things to fix before you pull again, then everything that went wrong. The › button opens each one.' },
     { sel: '#view .lp-prep', t: 'Before the next pull', p: 'This shows who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it are the players to talk to, each with their one thing to fix.' },
-    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs under "This pull" dig deeper into it: every mechanic, your assignments and the meters. The tabs under "Whole night" cover every pull together and every player.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs under "This pull" dig deeper into it: every mechanic, your assignments, each player\'s rotation and the graphs. The tabs under "Whole night" cover every pull together and every player.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
     { sel: '#assignBox .noteempty, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note (from wowutils). Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
@@ -12063,9 +12079,13 @@ const PAGE_TIPS = {
     { sel: '#view .pl-bars', t: 'Every player', p: 'Each player gets one grade, half from mechanics and half from the Report card. Prep can only take points off. Sort them best first, or by who has the most to gain.' },
     { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player to see what they should fix first, each with a link to the tab that shows it, and their prep.' }],
   perf: [
-    { sel: '.pfm', t: 'What to look at', p: 'Pick a view here. Spec checks comes first and goes through how each player played their own character. Then come damage, healing, damage taken, cooldowns, buffs, utility and survivability, each on its own.' },
-    { sel: '#view .spc-bars, #view .pf-bars', t: 'Every player', p: 'Click a player to open their page.' },
-    { sel: '.pfv .plsw', t: 'This pull or the night', p: 'Grade one pull, or every pull of this boss together.' }],
+    { sel: '#view .pft-row', t: 'What to look at', p: 'Pick a view here: damage, healing or damage taken, casts and resources, cooldowns and buffs, or utility and survivability. Each one shows the raw numbers, player by player.' },
+    { sel: '#view .pfph', t: 'One phase', p: 'Count the whole pull, or only one phase of it.' },
+    { sel: '#view .pf-bars > h3', t: 'Every player', p: 'Click a player to see their numbers on the chart.' },
+    { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on the same view.' }],
+  rot: [
+    { sel: '#view .pfu-bars > h3', t: 'Every player', p: 'Each player\'s share of checks in good shape for their own spec. Click a player to see each check: what they pressed and when, their cooldowns, their resources and their talents.' },
+    { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on Rotation.' }],
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
     { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
@@ -12076,7 +12096,7 @@ const PAGE_TIPS = {
     { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams are at the top. From there you can jump to another team or your character, see them all, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
-const TIPS_V = { live: 2, perf: 3 }; // (bumped when a page's tips change, so they show once more)
+const TIPS_V = { live: 2, perf: 4 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
 const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
