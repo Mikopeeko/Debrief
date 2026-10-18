@@ -170,6 +170,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   bosses have mechanic checks, and every tile's line now starts with a capital.
 - [x] Short labels keep their colons ("Overall:", "Red:", "Green ring:", "Top players: 86%"), and so do lists ("It covers:
   soaks, kicks, orbs").
+- [x] **Performance, a last pass:** "0 of 3 on a good target · 3 of 3 with the target's cooldown · 1 not used" now uses
+  commas, "Schooty from 5:01 · moving" is now "Schooty from 5:01, while moving", and the Power Infusion misses read "At 2:35
+  Arsyn pressed Summon Darkglare, worth about 1.77M more."
 
 ## 2026-10-18, round 192: The Rotation priority card, said plainly (your guildmates' feedback)
 - [x] **The summary:** "Of the 301 casts the priority list covers, 87% were the best button..." is now "Debrief checked
