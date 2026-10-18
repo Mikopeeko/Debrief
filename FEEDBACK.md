@@ -13,6 +13,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
 - [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
   Brewmaster; the rest from the guides, checked against the top players like the healers.
+- [ ] **Simplify the tabs in Performance (your note, Oct 18).**
 - [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
   reports and announcements, and how to link it from the site).
 - [ ] **Buffs, trinkets and gear procs (your note, Oct 18):** uptime of the important buffs, and what each trinket gave (on-use
@@ -67,7 +68,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   cleared. Check whether that's right, or the check isn't seeing the soakers.
 - [x] **Loading screens, nicer to look at** (your note; round 141, with dancing WoW creatures): the "Downloading Nymrissa Wavecaller pull 1 from Warcraft Logs:
   290,179 events…" screen is a line of grey text on an empty page. Make the in-between screens more appealing.
-- [ ] **Survivability in the Mechanics tab, simpler** (your note): its drop-down needs to be simpler and easier to read.
+- [x] **Survivability in the Mechanics tab, simpler** (your note): its drop-down needs to be simpler and easier to read. Done in
+  round 184.
 - [x] **Weights of the mechanical execution grades** (your note; a fairness pass in round 140): look again at how much each mechanic counts toward a
   player's or the raid's execution grade (what's weighted heavier, what lighter), and whether that's fair.
 - [ ] **Performance: a Compare option** (your note): put two things side by side somewhere in the Performance tab (for example
@@ -103,6 +105,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 184: The Survival kit, simpler (your #4)
+- [x] **One summary line** instead of three: "10 of 20 players were in good shape. Most often: combat or mana potion missing (9),
+  close calls with nothing pressed (3), a tank's big defensives under 80% (2)."
+- [x] **One sentence per player** instead of four columns of "fine", "none used" and "none": "Died with a defensive still ready,
+  died with a Healthstone or health potion unused and had a close call with nothing pressed." What they used is under it in
+  small text ("Used: Healthstone 3:53 · health potion 5:29"). The grade and Details stay.
+- [x] **The players in good shape fold** under the others ("Show the 10 who were in good shape"). The section went from about
+  1,300 to 730 pixels on your kill.
+- [x] **On a phone**, each sentence sits on its own line under the player, their grade and Details.
+- [x] Noted (your note): simplify the tabs in Performance.
 
 ## 2026-10-18, round 183: Deaths, one summary line (your #3)
 - [x] Your round 108 note was mostly done in round 115 (one line per death, opening in place), but it was never ticked. What was

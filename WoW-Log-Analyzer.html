@@ -580,6 +580,10 @@ button.dchip { cursor: pointer; } button.dchip:hover { filter: brightness(1.15);
 .cutbar .cutwhy { flex-basis: 100%; }.cdfold > summary { cursor: pointer; list-style: revert; } .cdfold > summary b { margin-right: 6px; }
 .noteempty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; } .noteempty b { margin-right: 6px; }
 /* written summary under each mechanic: one box, a short paragraph per verdict */
+/* (a Mechanics table's fine rows, folded under the others) */
+/* (on a phone, a what-to-fix table puts each sentence on its own line, under the player, their grade and Details) */
+@media (max-width: 640px) { .tbl-fix thead { display: none; } .tbl-fix tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 8px 6px; } .tbl-fix tbody td { padding: 0; border: 0; } .tbl-fix tbody td:nth-child(3) { grid-column: 1 / -1; grid-row: 2; } .tbl-fix tbody td:nth-child(4) { grid-column: 3; grid-row: 1; } }
+.okfold { margin: 8px 0 0; } .okfold > summary { cursor: pointer; padding: 6px 2px; color: var(--muted); font-size: 12.5px; } .okfold > summary:hover { color: var(--text); }
 .msum { background: #161b25; border: 1px solid #2a3142; border-radius: 6px; padding: 10px 14px; margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: #d8dce5; } .msum p { margin: 0 0 6px; padding-left: 10px; border-left: 3px solid #45c15c; } .msum p:last-child { margin-bottom: 0; } .msum p b { font-weight: 700; } .msum p.bad { border-left-color: #e5534b; } .msum p.bad b { color: #ff8a82; } .msum p.warn { border-left-color: #e6b450; } .msum p.warn b { color: #f3c969; } .msum p.ok b { color: #7ee08f; }
 /* night summary MVPs */
 .mvps { display: grid; gap: 8px; }
@@ -10736,6 +10740,8 @@ function audit() {
       const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([p, n]) => p + ' (' + n + ')');
       return '<div class="msum"><p class="' + (red.size || died ? 'bad' : cnt.size ? 'warn' : 'ok') + '"><b>Overall:</b> ' + esc(!cnt.size ? 'Clean: no tornado touched anyone.' : plural(cnt.size, 'player') + ' touched by a tornado over ' + plural(groups.length, 'Tempest') +
         (red.size ? ', ' + red.size + ' of them twice or more in one' : '') + (died ? ', ' + plural(died, 'death') + ' to it' : '') + '. Most touches: ' + top.join(', ') + '.') + '</p></div>'; }
+    // Survival kit: one line, from the section's own count
+    if (s.id === 'defensives' && s.lead) return '<div class="msum"><p class="' + (all.some((x) => isBadRow(x.row)) ? 'bad' : all.some((x) => isWarnRow(x.row)) ? 'warn' : 'ok') + '"><b>Overall:</b> ' + esc(s.lead) + '</p></div>';
     // Deaths: only when nobody died (the deaths' own count line says the rest, and each death says whether something was still ready)
     if (s.id === 'deaths') return all.length ? '' : '<div class="msum"><p class="ok"><b>Overall:</b> ' + esc('Nobody died ' + (m.sectionGroups ? 'this pull.' : 'in this phase.')) + '</p></div>';
     {
@@ -11007,6 +11013,8 @@ function audit() {
         // the set's rows: one nested card, indented under its bar, with its own column headings
         '<tr class="gdet" data-gp="' + key + '"' + (open ? '' : ' hidden') + '><td colspan="' + s.cols.length + '"><div class="gcard ' + (gb ? 'gbad' : gw ? 'gwarn' : 'gok') + '"><table class="tbl gsub"><thead><tr>' + s.cols.map((c) => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' +
         g.rows.map((row) => '<tr' + trCls(row) + '>' + row.map((c) => '<td>' + cell(c, sid) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div></td></tr>'; }).join('') + '</tbody></table></div>';
+    else if (rows.length && s.foldOk && rows.some((row) => okRow(row)) && rows.some((row) => !okRow(row))) { const tbl = (l) => '<div class="scroll"><table class="tbl tbl-fix"><thead><tr>' + s.cols.map((c) => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' + l.map((row) => '<tr' + trCls(row) + '>' + row.map((c) => '<td>' + cell(c, sid) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>', okL = rows.filter((row) => okRow(row));
+      b += tbl(rows.filter((row) => !okRow(row))) + '<details class="okfold"><summary>Show the ' + okL.length + ' who ' + s.foldOk + '</summary>' + tbl(okL) + '</details>'; }
     else if (rows.length) b += '<div class="scroll"><table class="tbl"><thead><tr>' + s.cols.map((c) => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' + rows.map((row) => '<tr' + trCls(row) + '>' + row.map((c) => '<td>' + cell(c, sid) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
     else b += '<p class="muted">Nothing recorded for this mechanic on this pull.</p>';
     b += '<div class="mm" id="mm-' + sid + '"></div>';
@@ -11149,26 +11157,36 @@ function deathSection(r) {
 // Defensives per player (the old Survivability cards): red = Poor, amber = Okay; Details opens the full list.
 // The Survival kit for this pull (the Mechanics tab's Survival section): every player's survival score (survivalOf), lowest
 // first, with what cost them points; red under 65, amber under 88. Details lists each defensive, potion and Healthstone.
+// (what costs a player survival points, in words: each as [kind, words], the kind for the summary's count)
+const kitFix = (p, s) => { const f = [], potN = p.role === 'healer' ? 'combat or mana potion' : 'combat potion';
+  if (s.defReady) f.push(['def', 'died with a defensive still ready' + (s.defReady > 1 ? ' (' + times2(s.defReady) + ')' : '')]);
+  if (s.kitReady) f.push(['kit', 'died with a Healthstone or health potion unused']);
+  if (s.expect && s.used < s.expect) f.push(['pot', s.used ? 'used ' + s.used + ' of ' + s.expect + ' ' + potN + 's' : 'didn\'t use a ' + potN]);
+  if (s.silent) f.push(['call', s.silent === 1 ? 'had a close call with nothing pressed' : 'had ' + s.silent + ' close calls with nothing pressed']);
+  if (s.tank && s.cdPoss && s.cdUsed / s.cdPoss < 0.8) f.push(['tcd', 'used big defensives ' + s.cdUsed + ' of a possible ' + s.cdPoss + ' times']);
+  return f; };
+const times2 = (n) => (n === 2 ? 'twice' : n + ' times');
 function defenseSection(r) {
   const list = players().filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => ({ p, s: survivalOf(r, p) })).sort((a, b) => a.s.score - b.s.score || a.p.name.localeCompare(b.p.name));
   const low = list.filter((x) => x.s.score < 65).length, mid = list.filter((x) => x.s.score >= 65 && x.s.score < 88).length;
   const defR = list.reduce((n, x) => n + x.s.defReady, 0), potN = list.filter((x) => x.s.expect).length, potOk = list.filter((x) => x.s.expect && x.s.used >= x.s.expect).length;
   const nStone = list.reduce((n, x) => n + x.s.stones, 0), nHp = list.reduce((n, x) => n + x.s.hpots, 0);
+  // (the summary: how many had nothing to fix, and the most common things to fix)
+  const KW = { def: 'a defensive ready at death', kit: 'a Healthstone or health potion unused at death', pot: 'combat or mana potion missing', call: 'close calls with nothing pressed', tcd: 'a tank\'s big defensives under 80%' }, kc = new Map();
+  let none = 0; for (const { p, s } of list) { const f = kitFix(p, s); if (s.score >= 88) none++; for (const k of new Set(f.map((x) => x[0]))) kc.set(k, (kc.get(k) || 0) + 1); }
+  const kitLead = (none === list.length ? 'Everyone was in good shape.' : none + ' of ' + list.length + ' players were in good shape.') + (kc.size ? ' Most often: ' + [...kc].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => KW[k] + ' (' + n + ')').join(', ') + '.' : '');
   return { id: 'defensives', title: 'Survival kit: defensives, Healthstones, potions', spell: [0, 'Shield Wall'], verdict: low ? 'bad' : mid ? 'warn' : 'good',
     summary: (potN ? potOk + ' of ' + potN + ' players used their combat or mana potion; ' : '') + (defR ? plural(defR, 'death') + ' with a defensive or self-heal ready; ' : 'nobody died with a defensive or self-heal ready; ') + plural(nStone, 'Healthstone') + ' and ' + plural(nHp, 'health potion') + ' used. Each use\'s time is under its count.',
     how: 'Each player\'s survival kit this pull, up to the wipe filter, scored out of 100: defensives 40 (dying with a personal defensive ready costs 50, a close call under 30% health with nothing pressed costs 20), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts; one is expected per pull, two if alive more than 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts. Defensives are matched by spell name with base cooldowns, so talented ones can be off by one.',
-    cols: ['Player', 'Survival', 'Defensives', 'Healthstone and health potion', 'Combat or mana potion', 'Close calls', ''],
+    cols: ['Player', 'Survival', 'What to fix', ''], foldOk: 'were in good shape', lead: kitLead,
     rows: list.map(({ p, s }) => {
       const more = p.defs.map((x) => drow(spell(x.id, x.name), x.uses.length, x.possible, x.uses)).join('') +
         crow('Healthstone', p.cons.healthstone) + crow('Healing or defensive potion', p.cons.healpot) + crow('Combat potion', p.cons.combatpot) +
         (p.cons.manapot.length ? crow('Mana potion', p.cons.manapot) : '') + (p.cons.utilpot.length ? crow('Utility potion', p.cons.utilpot) : '');
+      const fx = kitFix(p, s), cap1 = (t) => t.charAt(0).toUpperCase() + t.slice(1), used = [p.cons.healthstone.length ? 'Healthstone ' + p.cons.healthstone.map((u) => T(u.t)).join(', ') : '', p.cons.healpot.length ? 'health potion ' + p.cons.healpot.map((u) => T(u.t)).join(', ') : '',
+        (s.pre || p.cons.combatpot.length || p.cons.manapot.length) ? (p.role === 'healer' ? 'combat or mana potion ' : 'combat potion ') + [s.pre ? 'before the pull' : ''].concat(p.cons.combatpot.concat(p.cons.manapot).filter((u) => u.t >= 3).sort((a, b) => a.t - b.t).map((u) => T(u.t))).filter(Boolean).join(', ') : ''].filter(Boolean);
       return [{ p: p.name }, { g: letterOf(s.score), gs: Math.round(s.score), bad: s.score < 65, warn: s.score >= 65 && s.score < 88 },
-        s.defReady ? { txt: 'died with one ready' + (s.defReady > 1 ? ' (' + s.defReady + 'x)' : ''), bad: true } : { txt: s.deaths ? 'died with nothing left' : 'fine', dim: true },
-        // (the Potions and Healthstones table was merged in here: each use's time under its count)
-        { txt: (s.stones || s.hpots ? [s.stones ? plural(s.stones, 'Healthstone') : '', s.hpots ? plural(s.hpots, 'health potion') : ''].filter(Boolean).join(', ') : 'none used') + (s.kitReady ? ', died with one unused' : ''), bad: s.kitReady > 0, dim: !s.kitReady && !(s.stones + s.hpots),
-          sub: [p.cons.healthstone.length ? 'Healthstone ' + p.cons.healthstone.map((u) => T(u.t)).join(', ') : '', p.cons.healpot.length ? 'potion ' + p.cons.healpot.map((u) => T(u.t)).join(', ') : ''].filter(Boolean).join(' · ') },
-        s.expect ? { txt: s.used + ' of ' + s.expect, bad: !s.used, warn: s.used > 0 && s.used < s.expect, sub: [s.pre ? 'pre-pot' : ''].concat(p.cons.combatpot.concat(p.cons.manapot).filter((u) => u.t >= 3).sort((a, b) => a.t - b.t).map((u) => T(u.t))).filter(Boolean).join(', ') } : { txt: 'not judged', dim: true },
-        { txt: s.calls ? s.calls + (s.silent ? ', ' + s.silent + ' with nothing pressed' : ', all answered') : 'none', warn: s.silent > 0, dim: !s.calls }, { more, label: 'Details' }];
+        { txt: fx.length ? cap1(andList(fx.map((x) => x[1]))) + '.' : 'Nothing to fix.', bad: s.score < 65, warn: s.score >= 65 && s.score < 88, dim: !fx.length, sub: used.length ? 'Used: ' + used.join(' · ') : '' }, { more, label: 'Details' }];
     }) };
 }
 // Corrosive Spit line size in yards. Blizzard doesn't publish it (server-side areatrigger 42733); measured from
