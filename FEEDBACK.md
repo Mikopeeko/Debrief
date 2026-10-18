@@ -87,6 +87,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 160: What each mistake cost, Holy Light overhealing, and Holy Shock with an Infusion re-checked
+- [x] **Your note: double-check Holy Shock with an Infusion waiting.** You were right, it's a misplay: Wowhead, Icy Veins
+  and WoWAnalyzer all spend the Infusion on Flash of Light first, because a Holy Shock can bring a new Infusion that
+  replaces the one you hold. The top players' flagged presses were almost all in the 6 seconds before a Beacon of Virtue
+  or during it (saving the Infusion for the window), so those don't count. It's graded again: good at one every 2 minutes
+  or fewer. Your kill: 1 counted, plus 6 while saving one for Beacon of Virtue. Not graded with Beacon of Faith and
+  Moment of Compassion (holding one for a Beacon target can be right there, and the log can't tell when).
+- [x] **Removed** "Infusions spent while Holy Shock was full" (it went against "Infusion first").
+- [x] **Merged** "Builders pressed at 5" into Holy Power wasted (one sentence there now).
+- [x] **What each mistake cost:** every line that's yellow or red now says about how much healing it cost (for example, a
+  wasted Infusion is worth one of your Infused Flash of Lights). "Work on these first" is ranked by it and shows the total.
+  Your kill: Infused Flash of Light on a Beacon about 3.64M, wasted Infusions about 1.59M.
+- [x] **New: Holy Light overhealing** in the Mana block (Holy Lights that mostly overhealed, and the mana that cost).
+  Not graded while you wear the tier set: every Holy Light then grants an Infusion, and even the top 10 overheal about 53%
+  of it. Your kill: 63%.
+- [ ] Later (your call): Compare against a top player.
+
 ## 2026-10-17, round 159: A smarter Light of Dawn rule, always be casting, and a last check
 - [x] **Your #4: Light of Dawn judged by overhealing.** At each Light of Dawn during Beacon of Virtue, the most health one
   ally was missing just before it, against what one of your Eternal Flames heals in one go: if nobody was missing 60% of
