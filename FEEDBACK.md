@@ -154,6 +154,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 190: Your parse, and how far you are from the best (your note)
+- [x] **No more "you're at 88%":** next to a parse it read like a second score out of 100. The line under your damage or
+  healing and your parse now says the gap in plain words: "The top parses do 289.5K a second, 36.1K more than you." Someone
+  above the top parses sees "You beat the top parses (289.5K a second) by 4.2K."
+
 ## 2026-10-18, round 189: Comparisons from parses, on every boss (your note, and your #5)
 - [x] **Your damage or healing against the top parses (your note):** the line under your name is now "Top parses: 398.6K ·
   you're at 90%", the middle of the top 100 parses for your spec on that boss, from Warcraft Logs' rankings (Mythic). It used
