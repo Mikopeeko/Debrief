@@ -4124,7 +4124,7 @@ function buildEntombedSentinels(ev, r, h) {
     { name: 'Blood side', sub: "Blood of Ula'tek (red)", ids: ['miasma', 'blighted', 'pools'] },
     { name: 'Intermission', sub: 'Vitriolic Stasis: the pairing game', ids: ['helix'] },
     // (Shifting Protovenom is cast by Vashnik, in the room on Mythic: read from the logs; it sits with the rest here)
-    { name: 'Misc', sub: 'Shifting Protovenom, the Marks, boss balance, tanks', ids: ['protovenom', 'marks', 'balance', 'tanks'] },
+    { name: 'Whole fight', sub: 'Shifting Protovenom, the Marks, boss balance, tanks', ids: ['protovenom', 'marks', 'balance', 'tanks'] },
     { name: 'Deaths and avoidable damage', sub: '', ids: ['deaths', 'avoid', 'kicks'], rest: true },
   ];
   return { _sides, _cycles: phases, diag, title: r.item.diff + ' audit: Entombed Sentinels', reached: phases[phases.length - 1].name, phases: [], sectionGroups, marks, sections, mistakes,
@@ -10877,7 +10877,7 @@ function audit() {
     amani: { Result: 'Amani reaching the well', '!Shield': 'shields never broken' }, ignition: { Result: 'players hit by two circles', '!Result': 'circle hits or Ritual Burn going in', Died: 'deaths in Ignition' },
     depths: { Result: 'Curses that got off or deaths in the well', '!Result': 'Swirling Spirit hits', '!Who': 'going in with Soul Exhaustion' }, rend: { Removed: 'deaths with Essence Rend', '!Puddle': 'puddles in the way' },
     // (Lost Explorers)
-    boxes: { Result: 'boxes left to rupture', Splinters: 'deaths to the bleed', '!Splinters': 'pops that took the raid to four stacks' }, united: { Result: 'long United Defenses', '!Result': 'United Defense coming up' }, ascension: { Result: 'Final Ascensions that went off' },
+    boxes: { Result: 'boxes left to rupture', Splinters: 'deaths to the bleed', '!Splinters': 'pops that took the raid to four stacks' }, united: { Result: 'long United Defenses', '!Result': 'short United Defenses' }, ascension: { Result: 'Final Ascensions that went off' },
     frostfire: { Result: 'debuffs still on at the next volley', '!Result': 'slow clears' }, blink: { Died: 'deaths to Blink Nova' }, thud: { Soakers: 'empty leaps', '!Soakers': 'thin soaks', Died: 'deaths to Mighty Thud' }, bomb: { Result: 'Blast Wave hits' }, tankstacks: { Died: 'tank deaths with stacks up' },
     // (Vashnik)
     venoms: { Result: 'venoms reaching the middle', '!Result': 'adds living over a minute', '!Notes': 'fire adds dying together' }, totems: { Result: 'Imbibes with two or more totems up', '!Result': 'a totem left up' },
@@ -10914,7 +10914,7 @@ function audit() {
       for (const g of groups) for (const row of g.rows) { const p = row[0] && row[0].p; if (!p) continue; cnt.set(p, (cnt.get(p) || 0) + (parseInt(row[2].txt, 10) || 0)); if (row[2].bad) red.add(p); if (row[3] && row[3].bad) died++; }
       const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([p, n]) => p + ' (' + n + ')');
       return '<div class="msum"><p class="' + (red.size || died ? 'bad' : cnt.size ? 'warn' : 'ok') + '">' + esc(!cnt.size ? 'No tornado touched anyone.' : plural(cnt.size, 'player') + ' touched by a tornado over ' + plural(groups.length, 'Tempest') +
-        (red.size ? ', ' + red.size + ' of them twice or more in one' : '') + (died ? ', ' + plural(died, 'death') + ' to it' : '') + '. Most touches: ' + top.join(', ') + '.') + '</p></div>'; }
+        (red.size ? ', ' + red.size + ' of them twice or more in one' : '') + (died ? ', ' + plural(died, 'death') + ' to it' : '') + '. The players touched most were ' + andJ(top) + '.') + '</p></div>'; }
     // Survival kit: one line, from the section's own count
     if (s.id === 'defensives' && s.lead) return '<div class="msum"><p class="' + (all.some((x) => isBadRow(x.row)) ? 'bad' : all.some((x) => isWarnRow(x.row)) ? 'warn' : 'ok') + '">' + esc(s.lead) + '</p></div>';
     // Deaths: only when nobody died (the deaths' own count line says the rest, and each death says whether something was still ready)
@@ -10936,13 +10936,14 @@ function audit() {
       const setsOnly = (pred) => groups.filter((g) => pred(g) && !g.rows.some((row) => isBadRow(row) || (pred === badPred ? false : isWarnRow(row))));
       const badPred = (g) => g.bad, badSetL = setsOnly(badPred), warnSetL = setsOnly((g) => g.warn && !g.bad);
       const badSets = badSetL.length, warnSets = warnSetL.length, setNames = (l) => andJ(l.slice(0, 3).map((g) => g.title)) + (l.length > 3 ? ' and ' + (l.length - 3) + ' more' : '');
-      const ratio = n ? okL.length / n : 1, sing = (w) => w.replace(/sses$/, 'ss').replace(/s$/, '');
+      const ratio = n ? okL.length / n : 1, sing = (w) => w.replace(/sses$/, 'ss').replace(/ies$/, 'y').replace(/s$/, ''), were = okL.length === 1 ? ' was clean' : ' were clean';
       let lead;
       if (s.id === 'avoid') {
         // (avoidable damage counts players: a row is one player and one source, so "40 of 70" meant nothing)
         const who = (f) => new Set(all.filter((x) => f(x.row)).map((x) => x.row[0].p)), pb = who(isBadRow), pw = [...who(isWarnRow)].filter((p) => !pb.has(p)).length, hitN = new Set(all.map((x) => x.row[0].p)).size;
         lead = !pb.size && !pw ? 'Nobody took avoidable damage worth flagging' + (hitN ? ' (' + plural(hitN, 'player') + ' clipped by something minor).' : '.')
-          : (pb.size ? plural(pb.size, 'player') + ' took dangerous or repeated hits' + (pw ? ', and ' + pw + ' more could be tighter' : '') : plural(pw, 'player') + ' could be tighter') + ' (' + hitN + ' hit by something avoidable).';
+          : (pb.size ? plural(pb.size, 'player') + ' took dangerous or repeated hits' + (pw ? ', and ' + pw + ' more took a few smaller ones' : '') : plural(pw, 'player') + ' took a few avoidable hits') +
+            (hitN > pb.size + pw ? ' (' + hitN + ' were hit by something avoidable in all).' : '.');
       } else if (s.id === 'eggs') {
         // (Ula'tek eggs: each red row is a Viper, each amber one an egg picked up with Rancid Yolk on)
         lead = badL.length ? plural(badL.length, 'Viper') + ' hatched' + (warnL.length ? ', and ' + plural(warnL.length, 'egg') + ' went to a carrier with Rancid Yolk still on' : '') + '.'
@@ -10951,19 +10952,23 @@ function audit() {
         // (Ula'tek's Caustic Waves: every row is a hit, so say how many and on whom, not "0 of 6 were clean")
         const pw = new Set(all.map((x) => (x.row[1].ps || [])[0])).size, dw = all.filter((x) => x.row[4] && x.row[4].bad).length;
         lead = n ? plural(n, 'wave hit') + ' on ' + plural(pw, 'player') + (dw ? ', and ' + (dw === 1 ? 'one ended in a death' : dw + ' ended in deaths') : '') + '. Each row says which wave it was.' : 'Nobody was hit by Caustic Waves.';
-      } else lead = !badL.length && !warnL.length && !badSets && !warnSets ? (n > 2 ? 'Clean, all ' + n + ' ' + noun + ' went to plan.' : n === 2 ? 'Clean, both ' + noun + ' went to plan.' : 'Clean.')
-        // (one result: say it, not "0 of 1")
+      } else lead = !badL.length && !warnL.length && !badSets && !warnSets ? (n > 2 ? 'Clean, all ' + n + ' ' + noun + ' went to plan.' : n === 2 ? 'Clean, both ' + noun + ' went to plan.' : n === 1 ? 'Clean, the only ' + sing(noun) + ' went to plan.' : 'Clean.')
+        // (one result: say it, not "0 of 1"; none clean: "neither Barrage was clean", not "0 of 2 Barrages were clean")
         : n === 1 ? (badL.length || badSets ? 'The only ' + sing(noun) + ' went wrong.' : 'The only ' + sing(noun) + ' could be better.')
-        : !badL.length && !badSets ? (ratio >= 0.5 ? 'Mostly fine, with a few things to tighten up (' + okL.length + ' of ' + n + ' ' + noun + ' were clean).' : 'No real problems, but plenty to tighten up (' + okL.length + ' of ' + n + ' ' + noun + ' were clean).')
+        : !badL.length && !badSets ? (ratio >= 0.5 ? 'Mostly fine, with a few things to tighten up (' + okL.length + ' of ' + n + ' ' + noun + were + ').'
+          : okL.length ? 'No real problems, but plenty to tighten up (' + okL.length + ' of ' + n + ' ' + noun + were + ').'
+          : n === 2 ? 'No real problems, but neither ' + sing(noun) + ' was clean.' : 'No real problems, but none of the ' + n + ' ' + noun + ' were clean.')
         : ratio >= 0.75 ? 'Mostly clean, with a few real problems (' + okL.length + ' of ' + n + ' ' + noun + ' went fine).'
         : ratio >= 0.5 ? 'Some real problems. ' + okL.length + ' of ' + n + ' ' + noun + ' went cleanly.'
         : okL.length ? 'A rough one. Only ' + okL.length + ' of ' + n + ' ' + noun + ' went cleanly.' : 'A rough one. None of the ' + n + ' ' + noun + ' went cleanly.';
       // (one plain paragraph, not "Overall: / Main problems: / Could be tighter:" labels (your review, Oct 18); its bar
       // shows the worst of it)
       const tb = tally(badL, 'bad'), tw = tally(warnL, 'warn'), say = [lead], hdr = (k) => ' (see ' + (k === 1 ? 'its' : 'their') + ' header).';
-      if ((tb.length || badSets) && s.id !== 'waves') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
+      // (avoidable damage is by source, so say where the hits came from; the same source can be in both)
+      if (s.id === 'avoid') { if (tb.length) say.push('The dangerous hits came from ' + listT(tb) + '.'); if (tw.length) say.push((tb.length ? 'Smaller hits came from ' : 'The hits came from ') + listT(tw) + '.'); }
+      else if ((tb.length || badSets) && s.id !== 'waves') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
         (badSets ? (tb.length ? ' Also look at ' : 'Look at ') + setNames(badSetL) + hdr(badSets) : ''));
-      if ((tw.length || warnSets) && s.id !== 'waves') say.push((tw.length ? cap(listT(tw)) + ' could be tighter.' : '') +
+      if ((tw.length || warnSets) && s.id !== 'waves' && s.id !== 'avoid') say.push((tw.length ? cap(listT(tw)) + ' could be tighter.' : '') +
         (warnSets ? (tw.length ? ' So could ' + setNames(warnSetL) : setNames(warnSetL) + ' could be tighter') + hdr(warnSets) : ''));
       const sev = badL.length || badSets ? (ratio >= 0.8 ? 'warn' : 'bad') : warnL.length || warnSets ? 'warn' : 'ok';
       return '<div class="msum"><p class="' + sev + '">' + esc(say.join(' ').replace(/\s+/g, ' ').trim()) + '</p></div>';
@@ -11141,7 +11146,7 @@ function audit() {
     // "How it works" is folded away at the top of the opened section
     const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok';
     let b = '<details class="panel secd st-' + stc + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(s.info) : '✓\u00a0clean') + '</span></summary><div class="secbody">' +
+      '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span></summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -11223,7 +11228,7 @@ function audit() {
   // Damage taken by source (moved from Performance): every ability that hit the raid as bars, and who took it
   if (!r.allPulls && [...r.players.values()].some((p) => (p.takenAbS || []).length)) { const e0 = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration)), ps0 = players().filter((p) => p.name && !/^Player-/.test(p.name));
     h += '<details class="phase" open><summary><b>Damage taken</b> <span class="sub">what hit the raid' + (cut ? ', up to the wipe filter' : '') + '</span></summary><details class="panel secd st-na" id="sec-dsrc" data-k="dsrc"' + (S.openSecs.has('dsrc') ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, 'Shadowfury', true) + '<b>Damage taken by source</b></span><span class="sst na">every ability, and who took it</span></summary><div class="secbody"><div class="pfv">' + perfSources(r, ps0, 0, e0) + '</div></div></details></details>'; }
-  if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean /, 'Clean. ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
+  if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean (?=No kickable)/, '').replace(/^Clean /, 'Clean. ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
@@ -11354,7 +11359,7 @@ function defenseSection(r) {
   // (the summary: how many had nothing to fix, and the most common things to fix)
   const KW = { def: 'a defensive ready at death', kit: 'a Healthstone or health potion unused at death', pot: 'combat or mana potion missing', call: 'close calls with nothing pressed', tcd: 'a tank\'s big defensives under 80%' }, kc = new Map();
   let none = 0; for (const { p, s } of list) { const f = kitFix(p, s); if (s.score >= 88) none++; for (const k of new Set(f.map((x) => x[0]))) kc.set(k, (kc.get(k) || 0) + 1); }
-  const kitLead = (none === list.length ? 'Everyone was in good shape.' : none + ' of ' + list.length + ' players were in good shape.') + (kc.size ? ' Most often: ' + [...kc].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => KW[k] + ' (' + n + ')').join(', ') + '.' : '');
+  const kitLead = (none === list.length ? 'Everyone was in good shape.' : none + ' of ' + list.length + ' players were in good shape.') + (kc.size ? ' The most common problems were ' + andList([...kc].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => KW[k] + ' (' + n + ')')) + '.' : '');
   return { id: 'defensives', title: 'Survival kit: defensives, Healthstones, potions', spell: [0, 'Shield Wall'], verdict: low ? 'bad' : mid ? 'warn' : 'good',
     summary: (potN ? potOk + ' of ' + potN + ' players used their combat or mana potion; ' : '') + (defR ? plural(defR, 'death') + ' with a defensive or self-heal ready; ' : 'nobody died with a defensive or self-heal ready; ') + plural(nStone, 'Healthstone') + ' and ' + plural(nHp, 'health potion') + ' used. Each use\'s time is under its count.',
     how: 'Each player\'s survival kit this pull, up to the wipe filter, scored out of 100: defensives 40 (dying with a personal defensive ready costs 50, a close call under 30% health with nothing pressed costs 20), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts, and one is expected per pull, two if alive more than 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts. Defensives are matched by spell name with base cooldowns, so talented ones can be off by one.',

@@ -1616,7 +1616,7 @@ function buildEntombedSentinels(ev, r, h) {
     { name: 'Blood side', sub: "Blood of Ula'tek (red)", ids: ['miasma', 'blighted', 'pools'] },
     { name: 'Intermission', sub: 'Vitriolic Stasis: the pairing game', ids: ['helix'] },
     // (Shifting Protovenom is cast by Vashnik, in the room on Mythic: read from the logs; it sits with the rest here)
-    { name: 'Misc', sub: 'Shifting Protovenom, the Marks, boss balance, tanks', ids: ['protovenom', 'marks', 'balance', 'tanks'] },
+    { name: 'Whole fight', sub: 'Shifting Protovenom, the Marks, boss balance, tanks', ids: ['protovenom', 'marks', 'balance', 'tanks'] },
     { name: 'Deaths and avoidable damage', sub: '', ids: ['deaths', 'avoid', 'kicks'], rest: true },
   ];
   return { _sides, _cycles: phases, diag, title: r.item.diff + ' audit: Entombed Sentinels', reached: phases[phases.length - 1].name, phases: [], sectionGroups, marks, sections, mistakes,

@@ -170,8 +170,30 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   ready". The full detail stays in the Deaths section.
 - **The Data check panel is gone from the website.** It stays on your computer, where it's for checking the spell IDs.
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
-- [ ] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
-  six bosses.
+- [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
+  six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 202: Mechanics, the other six bosses read section by section (your go-ahead)
+Read every section of Twin Fangs, Nek'zali, Entombed Sentinels, Lost Explorers, Vashnik and Sszorak (the test night's
+pulls). What was fixed, everywhere it showed up:
+- **Avoidable damage said things twice** ("4 players could be tighter (4 hit by something avoidable). Stir the Depths
+  water (4) could be tighter", and the same source in both lists). Now: "4 players took a few avoidable hits. The hits came
+  from Stir the Depths water (4)", or "The dangerous hits came from … Smaller hits came from …".
+- **Grammar:** "1 of 2 casts was clean", not "were".
+- **None clean:** "No real problems, but neither Barrage was clean", not "(0 of 2 Barrages were clean)".
+- **One clean result:** "Clean, the only Fury went to plan", not just "Clean."
+- **A stray "true" in two headings** ("Energy: what fed her true", "Final Ascension: a fish in time true") now reads
+  "not judged".
+- **Labels gone:** the survival kit's "Most often: …" is now "The most common problems were …", and Sszorak's Tempest
+  "Most touches: …" is now "The players touched most were …".
+- **Interrupts with nothing to kick** says "No kickable casts this pull", not "Clean. No kickable casts".
+- **Smaller wording:** "United Defense coming up" is now "short United Defenses", and the Sentinels phase "Misc" is now
+  "Whole fight", like the other bosses.
+- [ ] Lackluster, small: some problem names are clumsy ("Circle hits or Ritual Burn going in", "Drifts or players hit by
+  a flying player", "Pops that took the raid to four stacks"). A naming pass would tidy them.
+- [ ] Solid, small: Nek'zali's Soulcoil Ignition counts "results" (a vague word); it should name what it counts.
+- [ ] Lackluster, small: the phase headers' small print ("defensives, Healthstones and potions count up to the wipe
+  filter…") could be shorter.
 
 ## 2026-10-18, round 200: A Beta Tester role (your note)
 - **Beta Tester**, in Heirloom cyan, just under Helper. You hand it out yourself (right-click a member, then Roles); it
