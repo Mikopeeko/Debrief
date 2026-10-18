@@ -55,9 +55,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Reorder and rename the main tabs (your note, Oct 18):** done in round 195 (your pick, option A). So each tab's name says what it does, and the order makes
   sense (today: Teams, Latest pull, Assignments, Mechanics, Performance, Summary, Players).
 - [ ] **Simplify the tabs in Performance (your note, Oct 18).**
-- [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
-  reports and announcements, and how to link it from the site). The site's side is ready (round 195): it needs your
-  invite link, then "Join the Discord" shows in the menu and on the start page.
+- [x] **A Discord server for Debrief (your note, Oct 18):** done in round 196. The server is made (Debrief, on your
+  account), with #general, #announcements (read-only: only you post), #feedback and #bug-reports, and a never-expiring
+  invite, https://discord.gg/qyVKJ2hB2b, linked from the menu and the start page.
 - [ ] **Buffs, trinkets and gear procs (your note, Oct 18):** uptime of the important buffs, and what each trinket gave (on-use
   and random procs): its average stats and its damage or healing. The same for Venomcursed items, cantrip items, enchants,
   weapon oil procs and the like. (This brings back the "Stats" idea skipped earlier.)
@@ -160,6 +160,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 196: The Debrief Discord (your go-ahead)
+- Made the Debrief server on your Discord account, with four text channels: #general, #announcements, #feedback and
+  #bug-reports. In #announcements, everyone can read and react, but only you can post.
+- The invite link never expires and has no use limit: https://discord.gg/qyVKJ2hB2b (it lands in #general).
+- "Join the Discord" is now in the site's menu, and the start page says "Found something wrong, or have an idea? Tell us
+  on Discord."
+- [ ] Left for you, if you like: a server picture (the Debrief logo), a welcome message in #announcements, and moving
+  #announcements to the top of the list (drag it). I'll write the welcome message if you want; nothing is posted yet.
 
 ## 2026-10-18, round 195: New tab order, saved NSRT notes, honest maps, and the Discord link (your top 4)
 - **The main tabs (your pick, option A).** Two labelled groups. "This pull" has Pull recap (was Latest pull), Mechanics,
