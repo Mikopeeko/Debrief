@@ -119,6 +119,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   cards are the picture on its casting-pace line (and say when no Divine Toll went in); Devotion Aura's all-fight total is on
   the Aura Mastery line. The number rows keep only what's new (no "wasted" repeat, no "From others" bar beside its own tile).
 - [x] Every block's intro says only what the page still checks.
+- [x] **Cooldown uses, like the other specs:** Divine Toll uses (in the Beacon of Virtue block), Avenging Wrath uses, and
+  Aura Mastery uses (shown, not graded: your raid note decides). From the top 10 Mythic Twin Fangs kills: they use about 9 in 10
+  of their Divine Tolls (75% or more is good) and 3 or 4 of their 4 Avenging Wraths, the last one often skipped near the end
+  (75% or more is good). Yours: Divine Toll 12 of 14, Avenging Wrath 3 of 4, Aura Mastery 2 of 3.
+- [x] **Your note: Divine Toll only needs its uses.** "Healing from Divine Toll" is gone.
+- [x] Noted (your note): nobody plays Lightsmith in raid, so it needs no testing.
 
 ## 2026-10-18, round 174: Each spec page reorganized, and Beacon of Virtue and Divine Toll as boxes with big tooltips
 - [x] **Your note: the organization of each module.** Every spec page now runs in the same order: the summary; your pull at a
