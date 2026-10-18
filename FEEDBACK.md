@@ -13,9 +13,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
 - [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
   Brewmaster; the rest from the guides, checked against the top players like the healers.
-  **Update (round 186):** Protection Paladin and Brewmaster are done. Next: Blood, Vengeance, Guardian and Protection Warrior,
-  from the guides. Havoc's first list blamed the top players (its order bends around Fury and procs), so it was taken out;
-  Havoc and Devourer keep their cooldown and resource checks until a list holds up against the top players.
+  **Update (round 187):** every tank has one now (Protection Paladin and Brewmaster in round 186; Blood, Vengeance, Guardian
+  and Protection Warrior in round 187). Havoc's first list blamed the top players (its order bends around Fury and procs), so
+  it was taken out; Havoc and Devourer keep their cooldown and resource checks until a list holds up against the top players.
 - [x] **Performance greyed out on the live site until its vision is complete (your note, Oct 18):** it's incomplete and not
   clear what it's for yet, so the whole tab is off on the website for launch (round 186) and stays on your PC. To do: decide
   what Performance is for, then finish it before turning it back on. My take: agreed, launch with what's polished.
@@ -27,6 +27,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   raid composition (or have Debrief pick it), or edit an existing note in place for small composition changes (swapping a
   name). My take: very useful for raid leaders, and it fits how notes change week to week. Matching by roster is the easy
   part; editing in place should stay small (swap a player for another), so the note doesn't drift from the one in game.
+- [ ] **Minimaps must show the mechanic itself (your note, Oct 18):** every minimap that highlights a mechanic has to draw
+  where the mechanic is, not only where the players stood. If its location can't be drawn properly and accurately, remove
+  that map. My take: agreed, a map with only player dots looks like proof but doesn't show anything. A log can place players,
+  bosses and adds (anything that is a unit in the log), and mechanics centred on a player (a spread circle around whoever had
+  the debuff). It can't place ground effects that aren't units, like most puddles. So: go through every map, keep the ones
+  that can draw their mechanic, and remove the rest.
 - [ ] **Simplify the tabs in Performance (your note, Oct 18).**
 - [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
   reports and announcements, and how to link it from the site).
@@ -132,6 +138,31 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 187: Rotation checks for every tank (your #6)
+- [x] **Blood, Vengeance, Guardian and Protection Warrior** get a "Your priority" check like the other specs, from the
+  SimulationCraft lists Raidbots sims with and the Wowhead guides, kept to what a log can prove (buffs like Crimson Scourge,
+  Gore, Revenge!, Thunder Blast and Colossal Might; Bone Shield and Soul Fragments counts; the Thrash bleed on the boss).
+- [x] **Checked against the top players, and fixed where it blamed them:**
+  - Blood: top Blood Death Knights hold Runic Power high on purpose, to have Death Strike ready for big hits, so only Runic
+    Power about to overflow counts. San'layn spends runes on Heart Strike before Blood Boil, so "Blood Boil at full charges"
+    is for Deathbringer only. "Boiling Point" came out, and Crimson Scourge counts only when you're not already standing in
+    Death and Decay.
+  - Guardian: Ironfur is pressed between your other buttons, so it's never judged.
+  - Protection Warrior: the "Shield Slam!" buff lasts a long time, so it isn't a "press it now" reset. That rule came out.
+  - Where top players land now (the bar for "good" just under it): Blood 92% (85%), Vengeance 89% (80%), Guardian 97%
+    (90%), Protection Warrior 98% (90%), Protection Paladin 83% (78%), Brewmaster 87% (70%).
+- [x] **Two fixes in the check itself, for every spec:**
+  - A spell that resets (Shield Slam and Rushing Wind Kick, among others) starts its cooldown again when you press it
+    after the reset. The check thought it came back sooner, so top players were blamed for presses the game didn't allow.
+    Top players went up where resets happen: Mistweaver 89% → 99%, Protection Warrior 83% → 98%, Marksmanship 90% → 95%,
+    Arms 89% → 93%. Specs without resets didn't move, and Mistweaver's bar went up to 85%.
+  - When two rules named the same spell, they shared one record of its cooldown, so a rule that ignores the cooldown (like
+    "Gore reset Mangle") could switch it off for the other. Each rule keeps its own now, and Hammer of Wrath presses no longer
+    use up Blessed Hammer's charges. Your Holy Paladin page is unchanged (92%).
+- Note: Vengeance, Guardian and Protection Warrior have only 4 or 5 top players each in the Twin Fangs logs, so their bars
+  rest on fewer players than the others.
+- [x] Noted (your note): minimaps must show where the mechanic is, or be removed.
 
 ## 2026-10-18, round 186: Top guilds on Your teams (your #12), Performance off online, tank rotation checks (your #6)
 - [x] **Top guilds (your #12 and your note):** a section under "Add a team or character" with the world's six best guilds and
