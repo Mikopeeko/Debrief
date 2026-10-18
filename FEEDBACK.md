@@ -154,6 +154,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 191: Wording pass on every spec page (your guildmates' feedback)
+- [x] **Spec checks, all 34 spec pages:** every sentence was read again, on the pages themselves, and rewritten where it
+  was hard to follow. The main fix: two thoughts glued together with a colon ("Press something every global cooldown: when
+  you have to move...") are now two sentences, or one joined with "because" or "so". More than 400 lines of text changed.
+- [x] **Clearer words:** "The moments are" is now "The times listed are"; "had everything in it" is now "was done right";
+  "Not graded: ..." is now "It isn't graded, because ..."; "You had 69 Demonic Cores: 66 spent" is now "You had 69 Demonic
+  Cores, and spent 66 on Demonbolts."
+- [x] **What you did well:** a count now shows its share when the top players' number is a share ("You had 3 of 3 (100%),
+  and the top players had 100%."), and when both are zero it says "You had none, and neither did the top players."
+- [x] Short labels ("Top players: 86%", "Demonbolt: 129") and the times in hover boxes ("2:14: ...") keep their colons.
+- [ ] Still to do from the same note: the rest of the project (Latest pull, Mechanics, Assignments, Players, Summary and
+  the other Performance views).
+
 ## 2026-10-18, round 190: Your parse, and how far you are from the best (your note)
 - [x] **No more "you're at 88%":** next to a parse it read like a second score out of 100. The line under your damage or
   healing and your parse now says the gap in plain words: "The top parses do 289.5K a second, 36.1K more than you." Someone
