@@ -188,8 +188,9 @@ Everything outside Spec checks now shows numbers and charts, with no verdicts (n
   one full-width list now; a player still opens in place. Kept: Buffs (it's where you pick a buff) and Damage into adds
   (its set-by-set panel is part of that view).
 - Utility and Survivability were plain already. Spec checks is unchanged.
-- [ ] Your call: **Power Infusion** still grades every cast (good / could be better / poor), shows "Biggest win: give it
-  to X instead", "Left on the table" and a plan for the next pull. Plain data would remove all of that coaching.
+- [ ] **Power Infusion** still grades every cast (good / could be better / poor), shows "Biggest win: give it to X
+  instead", "Left on the table" and a plan for the next pull. Your call: keep that coaching as it is for now, and decide
+  when we look at Spec checks again.
 
 ## 2026-10-18, round 203: The Report card is gone (your call)
 Your direction for Performance: Spec checks stays as it is (it reviews each player's own play), and everything else
