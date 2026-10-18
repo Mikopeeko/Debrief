@@ -109,6 +109,25 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Not testable yet: every top kill is Diabolist, so the Soul Harvester parts (and Power Siphon, Doomguard) are read through only.
 - [x] **Your note: the card and talent graphics look cheap and cartoony.** Done in round 172.
 
+## 2026-10-18, round 176: Holy Paladin, one last pass against the guides and WoWAnalyzer
+- [x] **Your note: Avenging Wrath's healing tile** now shows what each one added on average (yours: about 3.59M each, 10.76M
+  over your 3).
+- [x] **Checked every line** against Wowhead's and Icy Veins' Midnight guides, WoWAnalyzer's Holy Paladin code, and each
+  spell's own description on Wowhead. All the numbers the page quotes match (Moment of Compassion 50%, Beacon of Virtue
+  9 seconds every 15, Avenging Wrath 20%, Aura Mastery 12%, Ringing of the Heavens 200%, Born in Sunlight 15%). The Beacon of
+  Virtue window grades match WoWAnalyzer's exactly (75% casting is good, all of it perfect, a step up with Divine Toll).
+- [x] **Eternal Flame over Light of Dawn now covers the whole pull** and moved into the Holy Power block. Both guides say
+  Eternal Flame is your best spender all the time, and Light of Dawn is only for when Eternal Flame would overheal a lot, not
+  just during Beacon of Virtue. The sentence still says how many of the misses were during Beacon of Virtue, where it matters
+  most. The top 12 kills range from 59% to 100%, with a middle of 88%; yours is 87%.
+- [x] **Divine Toll on an enemy:** the guides warn that its Holy Shocks then go to enemies first. The top players did it once
+  in about 140 presses, so the Divine Toll line just says so when it happens (you never did).
+- [x] **Cooldown talents read from your talents:** Quickened Invocation (Divine Toll 45 seconds) and Unwavering Spirit (Aura
+  Mastery 150 seconds), as WoWAnalyzer does, so a cooldown pressed only a few times is still counted right.
+- [x] Checked, and left as it is: Holy Shock's recharge doesn't get faster with haste (your kill, at about 25% haste, never
+  pressed it sooner than 6 seconds allows, apart from Glorious Dawn's refunds). Judgment during Beacon of Virtue isn't flagged:
+  the guides call it a weak spell there, but every top player casts a few.
+
 ## 2026-10-18, round 175: Holy Paladin cleaned up (your note: messy next to the others)
 - [x] From 28 checks in 9 blocks to 18 in 8, each thing said once. Left out as repeats: Holy Shock with an Infusion waiting
   (the Infusion of Light check counts the ones it lost), Judgment's own casts and the Infusions it spent (the Infusion bar and
