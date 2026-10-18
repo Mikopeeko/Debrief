@@ -161,6 +161,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 201: Mechanics, plainer before launch (from my review)
+- **Each mechanic opens with one plain paragraph** instead of "Overall: … / Main problems: … / Could be tighter: …". For
+  example: "Mostly fine, with a few things to tighten up (7 of 8 frontals were clean). Frontals off the orb plan (1) could
+  be tighter." Its colored bar still shows the worst of it. The same for Twin Fangs' marks, Sszorak's Tempest, the survival
+  kit and "Nobody died".
+- **Deaths in "What went wrong" read short:** "3:20 Kargaryen died to Dreadful Presence, with Healthstone and more still
+  ready". The full detail stays in the Deaths section.
+- **The Data check panel is gone from the website.** It stays on your computer, where it's for checking the spell IDs.
+- Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
+- [ ] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
+  six bosses.
+
 ## 2026-10-18, round 200: A Beta Tester role (your note)
 - **Beta Tester**, in Heirloom cyan, just under Helper. You hand it out yourself (right-click a member, then Roles); it
   isn't one people can pick. Use it to thank early testers and to ping just them when something new is ready to try.
@@ -243,12 +255,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   - [x] Those lines had repeated words ("Touches 2 touches", "Died Huservoker died", "Plague Froth Plague Froth 5").
     Now "2 touches", "Huservoker died", "Plague Froth #5". The same fix reaches the Night summary's lines.
   - [x] "What went well" repeated each section's description. It now keeps only the count ("10 tank frontals.").
-  - [ ] Solid, quick: each section opens with "Overall: … / Main problems: … / Could be tighter: …". One plain sentence
-    would say the same with less to read.
-  - [ ] Solid, quick: the "Data check" panel at the bottom is for me (checking the spell IDs), not raiders. Fold it under
-    "For checking" or show it only on your computer.
-  - [ ] Solid: death lines run long ("Killed by X (94% to 0 in 6.1s) · Still had ready A, B and a healing potion"). In the
-    "What went wrong" box, the cause and one missed button would be enough.
+  - [x] Solid, quick: each section opens with "Overall: … / Main problems: … / Could be tighter: …". One plain sentence
+    would say the same with less to read. Done in round 201.
+  - [x] Solid, quick: the "Data check" panel at the bottom is for me (checking the spell IDs), not raiders. Fold it under
+    "For checking" or show it only on your computer. Done in round 201 (only on your computer).
+  - [x] Solid: death lines run long ("Killed by X (94% to 0 in 6.1s) · Still had ready A, B and a healing potion"). In the
+    "What went wrong" box, the cause and one missed button would be enough. Done in round 201.
   - [ ] Lackluster, small: the phase headers' small print ("defensives, Healthstones and potions count up to the wipe
     filter…") could be shorter.
   - [ ] Still to review: the other six bosses' sections one by one (I only checked their summary lines this round).

@@ -1997,7 +1997,12 @@ function audit() {
     // (each one says what went wrong, not what the section shows: its worst row as one short line, the way Summary does, and how many more)
     // (the group's title without the mechanic's name, which is just before it: "Plague Froth #5 (Imbibe 2)", not "Plague Froth Plague Froth 5")
     const gTitle = (s, t) => { const n = s.title.split(': ')[0]; if (!t.toLowerCase().startsWith(n.toLowerCase() + ' ')) return t; const x = t.slice(n.length + 1); return /^\d/.test(x) ? '#' + x : x; };
-    const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn)); for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
+    // (a death says it short: "3:20 Kargaryen died to Dreadful Presence, with Healthstone still ready"; the rest is in Deaths)
+    const deathLine = (d) => { const ready = d.react !== false && d.available && d.available.length ? d.available : [];
+      return T(d.t) + ' ' + d.player + ' died to ' + (d.ability || d.killer || 'something') + (ready.length ? ', with ' + ready[0] + (ready.length > 1 ? ' and more' : '') + ' still ready' : ''); };
+    const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
+      if (s.id === 'deaths') { const row = (s.rows || []).find(want); if (row && row[0] && row[0].death) return deathLine(row[0].death); }
+      for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
     const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
     // (and what went well keeps only its count, "10 tank frontals.", not what the section shows)
     const okSum = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/\bshows?\b/i.test(x)).join(' ');
@@ -2108,17 +2113,17 @@ function audit() {
     if (s.info) return '<div class="msum"><p class="na"><b>Not judged.</b> ' + esc(s.summary || '') + '</p></div>';
     // Sentinels Marks: only the players in range of both bosses are listed, so say who, not "0 of 4 clean"
     if (s.id === 'marks') { const fl = new Set(); for (const g of groups) for (const row of g.rows) if (row[0] && row[0].p && row.some((c) => c.bad || c.warn)) fl.add(row[0].p);
-      return '<div class="msum"><p class="' + (fl.size ? 'warn' : 'ok') + '"><b>Overall:</b> ' + esc(fl.size ? plural(fl.size, 'player') + ' picked up stacks of the other boss\'s Mark (in range of both): ' + [...fl].slice(0, 6).join(', ') + (fl.size > 6 ? ' and more' : '') + '.' : 'Everyone stayed in range of their own boss only.') + '</p></div>'; }
+      return '<div class="msum"><p class="' + (fl.size ? 'warn' : 'ok') + '">' + esc(fl.size ? plural(fl.size, 'player') + ' picked up stacks of the other boss\'s Mark (in range of both): ' + [...fl].slice(0, 6).join(', ') + (fl.size > 6 ? ' and more' : '') + '.' : 'Everyone stayed in range of their own boss only.') + '</p></div>'; }
     // Tempest (Sszorak): its rows are only the players a tornado touched, so say how many and who most, not "none went cleanly"
     if (s.id === 'tempest') { const cnt = new Map(), red = new Set(); let died = 0;
       for (const g of groups) for (const row of g.rows) { const p = row[0] && row[0].p; if (!p) continue; cnt.set(p, (cnt.get(p) || 0) + (parseInt(row[2].txt, 10) || 0)); if (row[2].bad) red.add(p); if (row[3] && row[3].bad) died++; }
       const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([p, n]) => p + ' (' + n + ')');
-      return '<div class="msum"><p class="' + (red.size || died ? 'bad' : cnt.size ? 'warn' : 'ok') + '"><b>Overall:</b> ' + esc(!cnt.size ? 'No tornado touched anyone.' : plural(cnt.size, 'player') + ' touched by a tornado over ' + plural(groups.length, 'Tempest') +
+      return '<div class="msum"><p class="' + (red.size || died ? 'bad' : cnt.size ? 'warn' : 'ok') + '">' + esc(!cnt.size ? 'No tornado touched anyone.' : plural(cnt.size, 'player') + ' touched by a tornado over ' + plural(groups.length, 'Tempest') +
         (red.size ? ', ' + red.size + ' of them twice or more in one' : '') + (died ? ', ' + plural(died, 'death') + ' to it' : '') + '. Most touches: ' + top.join(', ') + '.') + '</p></div>'; }
     // Survival kit: one line, from the section's own count
-    if (s.id === 'defensives' && s.lead) return '<div class="msum"><p class="' + (all.some((x) => isBadRow(x.row)) ? 'bad' : all.some((x) => isWarnRow(x.row)) ? 'warn' : 'ok') + '"><b>Overall:</b> ' + esc(s.lead) + '</p></div>';
+    if (s.id === 'defensives' && s.lead) return '<div class="msum"><p class="' + (all.some((x) => isBadRow(x.row)) ? 'bad' : all.some((x) => isWarnRow(x.row)) ? 'warn' : 'ok') + '">' + esc(s.lead) + '</p></div>';
     // Deaths: only when nobody died (the deaths' own count line says the rest, and each death says whether something was still ready)
-    if (s.id === 'deaths') return all.length ? '' : '<div class="msum"><p class="ok"><b>Overall:</b> ' + esc('Nobody died ' + (m.sectionGroups ? 'this pull.' : 'in this phase.')) + '</p></div>';
+    if (s.id === 'deaths') return all.length ? '' : '<div class="msum"><p class="ok">' + esc('Nobody died ' + (m.sectionGroups ? 'this pull.' : 'in this phase.')) + '</p></div>';
     {
       const T2 = THEMES[s.id] || {}, firstI = (row) => row.findIndex((c) => c.t == null && !c.map && !c.maps && !c.more);
       // a row's theme: its flagged label (e.g. "Orb collision"), or the first flagged column in plain words
@@ -2158,13 +2163,15 @@ function audit() {
         : ratio >= 0.75 ? 'Mostly clean, with a few real problems (' + okL.length + ' of ' + n + ' ' + noun + ' went fine).'
         : ratio >= 0.5 ? 'Some real problems. ' + okL.length + ' of ' + n + ' ' + noun + ' went cleanly.'
         : okL.length ? 'A rough one. Only ' + okL.length + ' of ' + n + ' ' + noun + ' went cleanly.' : 'A rough one. None of the ' + n + ' ' + noun + ' went cleanly.';
-      const parts = [['ok', 'Overall', lead]];
-      const tb = tally(badL, 'bad');
-      if ((tb.length || badSets) && s.id !== 'waves') parts.push(['bad', 'Main problems', (tb.length ? cap(listT(tb)) + '.' : '') + (badSets ? (tb.length ? ' Also ' : '') + setNames(badSetL) + ' (see ' + (badSets === 1 ? 'its' : 'their') + ' header).' : '')]);
-      const tw = tally(warnL, 'warn');
-      if ((tw.length || warnSets) && s.id !== 'waves') parts.push(['warn', 'Could be tighter', (tw.length ? cap(listT(tw)) + '.' : '') + (warnSets ? (tw.length ? ' Also ' : '') + setNames(warnSetL) + ' (see ' + (warnSets === 1 ? 'its' : 'their') + ' header).' : '')]);
-      parts[0][0] = badL.length || badSets ? (ratio >= 0.8 ? 'warn' : 'bad') : warnL.length || warnSets ? 'warn' : 'ok';
-      return '<div class="msum">' + parts.map(([k, h, t]) => '<p class="' + k + '"><b>' + h + ':</b> ' + esc(t) + '</p>').join('') + '</div>';
+      // (one plain paragraph, not "Overall: / Main problems: / Could be tighter:" labels (your review, Oct 18); its bar
+      // shows the worst of it)
+      const tb = tally(badL, 'bad'), tw = tally(warnL, 'warn'), say = [lead], hdr = (k) => ' (see ' + (k === 1 ? 'its' : 'their') + ' header).';
+      if ((tb.length || badSets) && s.id !== 'waves') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
+        (badSets ? (tb.length ? ' Also look at ' : 'Look at ') + setNames(badSetL) + hdr(badSets) : ''));
+      if ((tw.length || warnSets) && s.id !== 'waves') say.push((tw.length ? cap(listT(tw)) + ' could be tighter.' : '') +
+        (warnSets ? (tw.length ? ' So could ' + setNames(warnSetL) : setNames(warnSetL) + ' could be tighter') + hdr(warnSets) : ''));
+      const sev = badL.length || badSets ? (ratio >= 0.8 ? 'warn' : 'bad') : warnL.length || warnSets ? 'warn' : 'ok';
+      return '<div class="msum"><p class="' + sev + '">' + esc(say.join(' ').replace(/\s+/g, ' ').trim()) + '</p></div>';
     }
     const bad = all.filter((x) => isBadRow(x.row)), warn = all.filter((x) => isWarnRow(x.row)), ok = all.filter((x) => okRow(x.row));
     // the same problem on several rows becomes one clause; who and where, then what
@@ -2422,7 +2429,8 @@ function audit() {
   if (!r.allPulls && [...r.players.values()].some((p) => (p.takenAbS || []).length)) { const e0 = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration)), ps0 = players().filter((p) => p.name && !/^Player-/.test(p.name));
     h += '<details class="phase" open><summary><b>Damage taken</b> <span class="sub">what hit the raid' + (cut ? ', up to the wipe filter' : '') + '</span></summary><details class="panel secd st-na" id="sec-dsrc" data-k="dsrc"' + (S.openSecs.has('dsrc') ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, 'Shadowfury', true) + '<b>Damage taken by source</b></span><span class="sst na">every ability, and who took it</span></summary><div class="secbody"><div class="pfv">' + perfSources(r, ps0, 0, e0) + '</div></div></details></details>'; }
   if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean /, 'Clean. ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
-  if (m.diag) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
+  // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
+  if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
     m.diag.map((d) => '<tr' + (d.total ? '' : ' style="opacity:.55"') + '><td>' + spell(d.id, d.name) + (d.total ? '' : ' <span class="sub">not found</span>') + '</td><td class="r">' + d.cast + '</td><td class="r">' + d.dmg + '</td><td class="r">' + d.aura + '</td><td class="r">' + d.other + '</td></tr>').join('') +
     '</tbody></table><p class="muted" style="font-size:13px">A spell can legitimately be missing if the pull ended before it happened (for example, no intermission spells on a P1 wipe). If something you saw in the fight shows "not found", screenshot this table and send it to me.</p></details>';
