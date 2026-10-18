@@ -3,6 +3,16 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **The spec page as a top raider's review (your goal, Oct 18):** your total damage or healing against the top players of
+  your spec, what you did well, and pieces of the Performance charts (conclusions, not the raw charts), until it reads like a
+  top raider going through your logs. My take: one page that reads like a review, not one giant card; start with the damage
+  or healing summary and "what you did well".
+- [ ] **Your call for launch (Oct 19): Spec checks on the live site?** They're still greyed out online; Performance's other
+  views are on.
+- [ ] **Spec checks on every boss (my suggestion):** every bar and "Top raids" mark comes from Twin Fangs. The other bosses
+  grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
+- [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
+  Brewmaster; the rest from the guides, checked against the top players like the healers.
 - [ ] **Buffs, trinkets and gear procs (your note, Oct 18):** uptime of the important buffs, and what each trinket gave (on-use
   and random procs): its average stats and its damage or healing. The same for Venomcursed items, cantrip items, enchants,
   weapon oil procs and the like. (This brings back the "Stats" idea skipped earlier.)
@@ -10,7 +20,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   Report card is the part that judges; the other views show the numbers. Ideas on the shelf for later: a short "what stood
   out" in each view's right panel (three lines at most, replacing what's there, not added), small red/gold marks on the
   rows that need attention, and a "Me" switch that puts your own character first everywhere.
-- [ ] **To talk about next (your note): Player audit vs Performance.** The Report card may have replaced the Player audit
+- [x] **To talk about next (your note): Player audit vs Performance.** The Report card may have replaced the Player audit
   (both grade each player: casting, cooldowns, survival kit, a focus list). Decide what stays where: fold the Player audit's
   unique parts (gear, enchants and buffs at the pull, "ready to raid", MVPs) into Performance, or keep it as its own tab.
   Your idea: turn the Player audit into a **Rankings** tab: a Debrief score per player from Mechanics (their own mistakes
@@ -89,6 +99,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 181: The spec page opens like a review (your #7, first part)
+- [x] **Your output, under your name:** your damage (healing for healers) a second over the pull, your Warcraft Logs parse on a
+  kill (its tooltip gives Warcraft Logs' own number), and the top raids' middle for your spec on this boss, with how close you
+  are. Yours: 360.2K healing a second, parse 72, the top raids 334.4K, so you're at 108%. Over the night it shows your output
+  only, since wipes would make the comparison unfair.
+- [x] **The top raids' output for every spec:** read from the 580 players of 39 specs in the 29 fastest Twin Fangs kills,
+  counted the same way as yours (about 300K for damage, 330K to 390K for healers, 130K to 190K for tanks).
+- [x] **"What you did well"**, beside "Work on these first": your good lines, the ones at or above the top raids first, each
+  with both numbers. Yours: Holy Power wasted (2%, the top raids 6%), Always be casting (84%, 83%), Mana at the kill (8%, 23%).
+- [ ] **Next part of #7:** pieces of the Performance charts as conclusions, starting with where your damage or healing came
+  from, spell by spell, against the top players of your spec.
 
 ## 2026-10-18, round 180: Holy Paladin, refined by the guides, WoWAnalyzer and the top logs (not just your play)
 - [x] **The audit:** every line checked against Wowhead, Icy Veins and WoWAnalyzer's Holy Paladin guide (its sections: always be

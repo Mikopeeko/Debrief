@@ -1105,6 +1105,9 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* ---- Spec checks: what the top players do, beside each line ---- */
 .spc-shv { display: inline-flex; align-items: baseline; gap: 10px; } .spc-tp { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
 .spc-htp { margin-top: 6px; color: var(--muted); font-size: 12px; }
+/* (the review line under the name: your output a second, your parse, the top raids'; and the green "what you did well" beside "work on these first") */
+.spc-out { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: 10px; font-size: 13px; color: var(--muted); } .spc-ov b { font: 600 18px var(--head); color: var(--text); } .spc-op .prs { margin-left: 4px; } .spc-ot { color: var(--muted); }
+.spc-fo.ok { border-left-color: var(--good); } .spc-hgt { margin-top: 8px; color: #7ee08f; }
 @media (max-width: 560px) { .spc-sh { flex-wrap: wrap; } .spc-shv { gap: 6px; } }
 /* ---- Spec checks: what a fix is worth ---- */
 .spc-hft span { color: var(--muted); font-weight: 600; letter-spacing: 0; text-transform: none; } .spc-fo .spc-fc { margin-left: auto; flex: none; padding: 2px 8px; border-radius: 999px; background: rgba(230,180,80,.14); color: var(--gold); font: 700 11.5px var(--body); font-style: normal; font-variant-numeric: tabular-nums; }
