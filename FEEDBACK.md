@@ -6,10 +6,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Maps first: raiders really love the mini maps (your note, Oct 18, now high priority).** My take: agreed, they're
   what people remember about Debrief, so show them off. Three parts:
   1. Every mini map on Mechanics shows open, with no drop-down (done in round 209, with the tour leading with maps).
-  2. Make them stand out on the mechanics where a map tells the story (soaks, spreads, baits, adds): for example a small
-     map right in "What went wrong" for that mechanic, a map for the first death on Pull recap, and a "Map" mark on the
-     rows that have one.
-  3. Sharper maps (the older note further down): the floor art is about 1 pixel per yard, which is why it looks soft.
+  2. Make them stand out on the mechanics where a map tells the story (soaks, spreads, baits, adds): a small map right in
+     "What went wrong" for that mechanic (done in round 210), and a map for the first death on Pull recap (next). The
+     "Map" mark on rows was dropped: the maps show on their own now.
+  3. Sharper maps (the older note further down): the floor art is about 1 pixel per yard, which is why it looks soft. My
+     take: draw our own clean outline of each boss room (walls, platforms, edges), starting with the progression boss;
+     pulling Blizzard's art from the game files would break the "never bundle Blizzard art" rule.
+- [ ] **A short how-to on the Assignments tab (your note, Oct 18):** it's basically empty until a note is pasted, and no
+  other website does this, so it needs explaining clearly to stand out. My take: strong, an empty page loses people. My
+  suggestion: when no note is pasted yet, the page shows three plain steps (copy your raid's NSRT note, paste it here,
+  Debrief checks every assignment on every pull: soaks, kicks, orbs, cooldowns), a small picture of what the results look
+  like, and a "Try it with an example" button that fills in a sample note so people see it work before they have their
+  own. The Assignments tips and the tour step point at it too.
 - [ ] **The spec page as a top raider's review (your goal, Oct 18):** your total damage or healing against the top players of
   your spec, what you did well, and pieces of the Performance charts (conclusions, not the raw charts), until it reads like a
   top raider going through your logs. My take: one page that reads like a review, not one giant card; start with the damage
@@ -179,6 +187,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 210: A small map in What went wrong (your pick from the map notes)
+- [x] **Each line in Mechanics' "What went wrong" carries a small map** when its worst moment has one (on pull 32: the
+  ghost collision for Dreadmarch, the frontal with its orbs for Venom orbs). It's the same moment the line describes,
+  zoomed to the mechanic. Hover it on a computer and it grows to a big, clear map; click it and you go to the mechanic,
+  where its full maps are already showing. On a phone it's a little smaller, and a tap goes to the mechanic.
+- [x] Power Infusion is on for the website (your call).
+- [ ] Next from the map notes: a map of the first death on Pull recap, when the death was about where someone stood.
+  Sharper maps: draw our own clean outline of each boss room instead of the soft floor pictures (pulling Blizzard's art
+  from the game files would break the "never bundle Blizzard art" rule). A "Map" mark on rows was dropped, since the maps
+  now show on their own.
 
 ## 2026-10-18, round 209: Power Infusion for new raiders, every map showing on Mechanics
 - [x] **Power Infusion, worded for a raider still learning (your notes):** one line on top says what it's for ("Power

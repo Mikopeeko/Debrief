@@ -230,6 +230,13 @@ svg .thit { fill: transparent; stroke: none; pointer-events: all; cursor: pointe
 .chipn.bad { box-shadow: inset 0 0 0 1.5px var(--bad); } .chipn.warn { box-shadow: inset 0 0 0 1.5px var(--warn); }
 .mmb { padding: 2px 10px; font-size: 13px; }
 .mm:empty { display: none; } .mm { margin-top: 10px; }
+/* (Mechanics, What went wrong: a small map of the worst moment on its line, bigger on hover; a click goes to it) */
+.wr-map { position: relative; flex: none; display: block; width: 84px; height: 84px; overflow: hidden; border: 1px solid var(--line2); border-radius: 7px; background: #0b0d12; transition: transform .15s ease, box-shadow .15s ease; transform-origin: right center; }
+.wr-map > :not(.zwrap) { display: none !important; } .wr-map .zwrap { max-width: none !important; border: 0; border-radius: 0; } .wr-map .zwrap > :not(.zbox), .wr-map .zbox > :not(svg) { display: none !important; }
+.wr-map svg.zmap { width: 84px; height: 84px; pointer-events: none; }
+@media (hover: hover) { .wr-map:hover { z-index: 20; transform: scale(3.2); box-shadow: 0 10px 34px rgba(0,0,0,.6); border-color: var(--faint); } }
+.wr .pb-r:has(.wr-map) { padding: 4px 0; }
+@media (max-width: 640px) { .wr-map, .wr-map svg.zmap { width: 64px; height: 64px; } }
 /* (Mechanics: every map shows on its own, side by side when a row has more than one) */
 .mm-set { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-start; } .mm-one { flex: 0 1 560px; min-width: 0; } .mm-lb { margin: 0 0 4px; font-size: 12.5px; color: var(--muted); }
 .tlink { text-decoration: none; color: inherit; } .tlink:hover { border-color: var(--line2); }
@@ -10793,7 +10800,13 @@ function audit() {
     const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
       if (s.id === 'deaths') { const row = (s.rows || []).find(want); if (row && row[0] && row[0].death) return deathLine(row[0].death); }
       for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
-    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
+    // (a small map of that same worst moment, when its row has one (your note, Oct 18: raiders love the maps, so show them
+    // off): zoomed to the mechanic, bigger on hover, and a click goes to the mechanic and its full map)
+    const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
+    const probMap = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
+      for (const row of s.rows || []) if (want(row)) return rowMap(row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return rowMap(row); return null; };
+    const thumb = (s, mp) => (mp ? '<a class="wr-map tlink" href="' + href(s) + '" title="' + esc('See the map of ' + s.title.split(': ')[0]) + '" aria-label="' + esc('See the map of ' + s.title.split(': ')[0]) + '">' + miniMap(mp, pmap) + '</a>' : '');
+    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: thumb(s, probMap(s, b)) + '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
     // (and what went well keeps only its count, "10 tank frontals.", not what the section shows)
     const okSum = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/\bshows?\b/i.test(x)).join(' ');
     const right = ord.filter((s) => tierT(s) === 2).map((s) => { const t = okSum(s.summary); return name(s) + (t ? ' <span class="sub">' + esc(t) + '</span>' : ''); });
@@ -11314,6 +11327,11 @@ function audit() {
     if (sets.size) refreshIcons();
   };
   drawMaps();
+  // (What went wrong's small maps: zoomed to the mechanic, the class icons filled in)
+  $('#view').querySelectorAll('.wr-map').forEach((a) => { const svg = a.querySelector('svg.zmap'); if (!svg || !svg.dataset.focus) return;
+    const f = svg.dataset.focus.split(',').map(Number), k = f[2] / 480; svg.setAttribute('viewBox', f.join(' '));
+    for (const g of svg.querySelectorAll('g.ic')) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); }
+    hydrateMapIcons(a); });
   $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open) drawMaps(); }));
   $('#view').querySelectorAll('.md-i, .dd-r').forEach((b) => b.addEventListener('click', () => setTimeout(drawMaps, 0)));
 }

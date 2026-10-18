@@ -2015,7 +2015,13 @@ function audit() {
     const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
       if (s.id === 'deaths') { const row = (s.rows || []).find(want); if (row && row[0] && row[0].death) return deathLine(row[0].death); }
       for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
-    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
+    // (a small map of that same worst moment, when its row has one (your note, Oct 18: raiders love the maps, so show them
+    // off): zoomed to the mechanic, bigger on hover, and a click goes to the mechanic and its full map)
+    const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
+    const probMap = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
+      for (const row of s.rows || []) if (want(row)) return rowMap(row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return rowMap(row); return null; };
+    const thumb = (s, mp) => (mp ? '<a class="wr-map tlink" href="' + href(s) + '" title="' + esc('See the map of ' + s.title.split(': ')[0]) + '" aria-label="' + esc('See the map of ' + s.title.split(': ')[0]) + '">' + miniMap(mp, pmap) + '</a>' : '');
+    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: thumb(s, probMap(s, b)) + '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
     // (and what went well keeps only its count, "10 tank frontals.", not what the section shows)
     const okSum = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/\bshows?\b/i.test(x)).join(' ');
     const right = ord.filter((s) => tierT(s) === 2).map((s) => { const t = okSum(s.summary); return name(s) + (t ? ' <span class="sub">' + esc(t) + '</span>' : ''); });
@@ -2536,6 +2542,11 @@ function audit() {
     if (sets.size) refreshIcons();
   };
   drawMaps();
+  // (What went wrong's small maps: zoomed to the mechanic, the class icons filled in)
+  $('#view').querySelectorAll('.wr-map').forEach((a) => { const svg = a.querySelector('svg.zmap'); if (!svg || !svg.dataset.focus) return;
+    const f = svg.dataset.focus.split(',').map(Number), k = f[2] / 480; svg.setAttribute('viewBox', f.join(' '));
+    for (const g of svg.querySelectorAll('g.ic')) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); }
+    hydrateMapIcons(a); });
   $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open) drawMaps(); }));
   $('#view').querySelectorAll('.md-i, .dd-r').forEach((b) => b.addEventListener('click', () => setTimeout(drawMaps, 0)));
 }
