@@ -230,6 +230,8 @@ svg .thit { fill: transparent; stroke: none; pointer-events: all; cursor: pointe
 .chipn.bad { box-shadow: inset 0 0 0 1.5px var(--bad); } .chipn.warn { box-shadow: inset 0 0 0 1.5px var(--warn); }
 .mmb { padding: 2px 10px; font-size: 13px; }
 .mm:empty { display: none; } .mm { margin-top: 10px; }
+/* (Mechanics: every map shows on its own, side by side when a row has more than one) */
+.mm-set { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-start; } .mm-one { flex: 0 1 560px; min-width: 0; } .mm-lb { margin: 0 0 4px; font-size: 12.5px; color: var(--muted); }
 .tlink { text-decoration: none; color: inherit; } .tlink:hover { border-color: var(--line2); }
 .tlink .l .icw { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
 .who.sm { display: inline-flex; gap: 6px; } .who.sm .av { width: 22px; height: 22px; }
@@ -2034,6 +2036,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 @media (max-width: 560px) { .gv-top { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gv-st { grid-template-columns: minmax(0, 1fr); } .gv-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Graphs, Power Infusion (your pick, Oct 18: a sentence for each cast): each priest's plan for the next pull, the pull as a
    strip, then one plain sentence per cast or stretch it sat ready; who gains the most folds away */
+.pi-intro { margin: 2px 0 14px; color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 860px; }
 .pi-pr { padding: 4px 0 14px; } .pi-pr + .pi-pr { padding-top: 14px; border-top: 1px solid var(--line); }
 .pi-ph { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; } .pi-ph .nm { font-weight: 600; }
 .pi-use { margin-left: auto; color: var(--muted); font-size: 14px; } .pi-use b { color: var(--text); font-weight: 600; }
@@ -2042,7 +2045,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .pi-strip { position: relative; height: 28px; margin: 4px 0 2px; border-radius: 6px; background: #151821; border: 1px solid var(--line); overflow: hidden; }
 .pi-strip i { position: absolute; top: 0; bottom: 0; } .pi-sd { background: rgba(155,163,178,.16); }
 .pi-strip .pi-sr, .pi-strip .pi-sc { top: 4px; bottom: auto; height: 10px; border-radius: 2px; } .pi-sr { background: rgba(69,193,92,.3); } .pi-sc { background: var(--gold); min-width: 3px; }
-.pi-strip .pi-st { top: 16px; bottom: 4px; width: 4px; margin-left: -2px; border-radius: 2px; background: #b07cf0; }
+.pi-strip .pi-st { top: 16px; bottom: 4px; width: 4px; margin-left: -2px; border-radius: 2px; background: #b07cf0; } .pi-strip .pi-st.bar { margin-left: 0; min-width: 4px; }
+.pi-leg i.pi-st { width: 12px; }
 .pi-sl { width: 2px; background: #f6dc9a; opacity: .8; }
 .pi-ax { position: relative; height: 16px; margin: 0 0 2px; font-size: 11px; color: var(--faint); } .pi-ax span { position: absolute; transform: translateX(-50%); white-space: nowrap; } .pi-ax span:first-child { transform: none; }
 .pi-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 8px; font-size: 12.5px; color: var(--muted); } .pi-leg > span { display: inline-flex; align-items: center; gap: 6px; } .pi-leg .nm { font-weight: 600; }

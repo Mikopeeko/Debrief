@@ -230,6 +230,8 @@ svg .thit { fill: transparent; stroke: none; pointer-events: all; cursor: pointe
 .chipn.bad { box-shadow: inset 0 0 0 1.5px var(--bad); } .chipn.warn { box-shadow: inset 0 0 0 1.5px var(--warn); }
 .mmb { padding: 2px 10px; font-size: 13px; }
 .mm:empty { display: none; } .mm { margin-top: 10px; }
+/* (Mechanics: every map shows on its own, side by side when a row has more than one) */
+.mm-set { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-start; } .mm-one { flex: 0 1 560px; min-width: 0; } .mm-lb { margin: 0 0 4px; font-size: 12.5px; color: var(--muted); }
 .tlink { text-decoration: none; color: inherit; } .tlink:hover { border-color: var(--line2); }
 .tlink .l .icw { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
 .who.sm { display: inline-flex; gap: 6px; } .who.sm .av { width: 22px; height: 22px; }
@@ -2034,6 +2036,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 @media (max-width: 560px) { .gv-top { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gv-st { grid-template-columns: minmax(0, 1fr); } .gv-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Graphs, Power Infusion (your pick, Oct 18: a sentence for each cast): each priest's plan for the next pull, the pull as a
    strip, then one plain sentence per cast or stretch it sat ready; who gains the most folds away */
+.pi-intro { margin: 2px 0 14px; color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 860px; }
 .pi-pr { padding: 4px 0 14px; } .pi-pr + .pi-pr { padding-top: 14px; border-top: 1px solid var(--line); }
 .pi-ph { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; } .pi-ph .nm { font-weight: 600; }
 .pi-use { margin-left: auto; color: var(--muted); font-size: 14px; } .pi-use b { color: var(--text); font-weight: 600; }
@@ -2042,7 +2045,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .pi-strip { position: relative; height: 28px; margin: 4px 0 2px; border-radius: 6px; background: #151821; border: 1px solid var(--line); overflow: hidden; }
 .pi-strip i { position: absolute; top: 0; bottom: 0; } .pi-sd { background: rgba(155,163,178,.16); }
 .pi-strip .pi-sr, .pi-strip .pi-sc { top: 4px; bottom: auto; height: 10px; border-radius: 2px; } .pi-sr { background: rgba(69,193,92,.3); } .pi-sc { background: var(--gold); min-width: 3px; }
-.pi-strip .pi-st { top: 16px; bottom: 4px; width: 4px; margin-left: -2px; border-radius: 2px; background: #b07cf0; }
+.pi-strip .pi-st { top: 16px; bottom: 4px; width: 4px; margin-left: -2px; border-radius: 2px; background: #b07cf0; } .pi-strip .pi-st.bar { margin-left: 0; min-width: 4px; }
+.pi-leg i.pi-st { width: 12px; }
 .pi-sl { width: 2px; background: #f6dc9a; opacity: .8; }
 .pi-ax { position: relative; height: 16px; margin: 0 0 2px; font-size: 11px; color: var(--faint); } .pi-ax span { position: absolute; transform: translateX(-50%); white-space: nowrap; } .pi-ax span:first-child { transform: none; }
 .pi-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 8px; font-size: 12.5px; color: var(--muted); } .pi-leg > span { display: inline-flex; align-items: center; gap: 6px; } .pi-leg .nm { font-weight: 600; }
@@ -11292,6 +11296,26 @@ function audit() {
     if (box.dataset.i === b.dataset.i) { box.innerHTML = ''; box.dataset.i = ''; return; }
     box.dataset.i = b.dataset.i; box.innerHTML = miniMap(mp, pmap); bindZoom(box); bindAnim(box, mp, pmap); hydrateMapIcons(box);
   }));
+  // (every mini map shows on its own (your note, Oct 18): no Map button, no drop-down. A map draws once its part of the
+  // page is on screen (its mechanic opened, its pane picked), so a closed mechanic costs nothing; side by side when a row
+  // has more than one)
+  const drawMaps = () => {
+    const sets = new Map();
+    for (const b of $('#view').querySelectorAll('.mmb:not([data-shown])')) { if (!b.offsetParent) continue;
+      const tr = b.closest('tr'), box = tr || (b.closest('.md-d') && b.closest('.md-d').querySelector('.md-map')) || $('#mm-' + b.dataset.sec); if (!box) continue;
+      b.dataset.shown = '1'; b.hidden = true; const l = sets.get(box) || []; l.push(b); sets.set(box, l); }
+    for (const [el, bs] of sets) {
+      let box = el;
+      if (el.tagName === 'TR') { const row = document.createElement('tr'); row.className = 'maprow'; row.innerHTML = '<td colspan="' + el.children.length + '"><div class="mm mm-set"></div></td>'; el.after(row); box = row.querySelector('.mm'); }
+      else box.classList.add('mm-set');
+      box.innerHTML = bs.map((b) => '<div class="mm-one">' + (bs.length > 1 && !/^map$/i.test(b.textContent.trim()) ? '<div class="mm-lb">' + esc(b.textContent.trim()) + '</div>' : '') + '<div class="mm-in"></div></div>').join('');
+      box.querySelectorAll('.mm-in').forEach((one, k) => { const mp = AUDITMAPS[+bs[k].dataset.i]; one.innerHTML = miniMap(mp, pmap); bindZoom(one); bindAnim(one, mp, pmap, true); hydrateMapIcons(one); });
+    }
+    if (sets.size) refreshIcons();
+  };
+  drawMaps();
+  $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open) drawMaps(); }));
+  $('#view').querySelectorAll('.md-i, .dd-r').forEach((b) => b.addEventListener('click', () => setTimeout(drawMaps, 0)));
 }
 // Fight audit panels shown as a list with a detail pane (the ones with many columns per row)
 const MD_SECS = new Set(['soakq', 'push', 'tankfront', 'shield', 'addsets']);
@@ -11630,7 +11654,8 @@ function miniMap(mp, pmap) {
 }
 // Animated map (mp.frames): plays once from the first frame, then the slider scrubs. Each frame redraws the
 // map's contents in place, so zoom and pan stay where they are.
-function bindAnim(box, mp, pmap) {
+// (still: a map shown on its own with the page holds on its key moment until ▶ Play, so many maps don't all play at once)
+function bindAnim(box, mp, pmap, still) {
   if (!mp.frames || !mp.frames.length) return;
   const svg = box.querySelector('svg.zmap'), rng = box.querySelector('.zrange'), btn = box.querySelector('.zplay'), lab = box.querySelector('.ztime');
   if (!svg || !rng) return;
@@ -11665,7 +11690,11 @@ function bindAnim(box, mp, pmap) {
   const play = () => { if (ft >= t1) ft = t0; btn.textContent = '❚❚ Pause'; last = 0; raf = requestAnimationFrame(step); };
   btn.onclick = () => (raf ? stop() : play());
   rng.oninput = () => { stop(); show(fr[+rng.value].t); };
-  show(t0); play();
+  if (!still) { show(t0); play(); return; }
+  // (the key moment: the frame closest to the map's own snapshot)
+  const ref = (mp.pts || []).slice(0, 6); let bi = 0, bd = Infinity;
+  fr.forEach((f, i) => { const m = new Map(f.pts.map((p) => [p.guid, p])); let d = 0, n = 0; for (const p of ref) { const q = m.get(p.guid); if (q) { d += Math.abs(q.x - p.x) + Math.abs(q.y - p.y); n++; } } if (n && d < bd) { bd = d; bi = i; } });
+  show(fr[bi].t); stop();
 }
 // Zoom and pan for miniMap: wheel zooms around the cursor, drag pans, double-click goes back to the mechanic.
 // Icons are counter-scaled so they keep their size on screen; the scale bar follows the zoom.
@@ -14729,7 +14758,7 @@ function piPull(r) {
     // how far into it the target died)
     const cdAt = withCd ? withCd.ts.filter((u) => Math.abs(u - t) <= 6).sort((a, b) => Math.abs(a - t) - Math.abs(b - t))[0] : null;
     const cdHit = withCd ? { name: withCd.name, dt: cdAt != null ? cdAt - t : null } : null, diedIn = died ? died.t - t : null;
-    casts.push({ pr, tg, t, best, vT, vB, ratio, tgt, tim, lust, many, noSim, cdHit, diedIn, sc: (scT + scW) / 2, dmg: healer || noSim ? 0 : vT * PI_CD, bestDmg: noSim ? 0 : vB * PI_CD, alts, inWin, usual,
+    casts.push({ pr, tg, t, best, vT, vB, ratio, tgt, tim, lust, many, noSim, cdHit, diedIn, cdNames: cds.map((z) => z.name), sc: (scT + scW) / 2, dmg: healer || noSim ? 0 : vT * PI_CD, bestDmg: noSim ? 0 : vB * PI_CD, alts, inWin, usual,
       cdsAfter: tim.st === 'warn' ? cds.map((d) => { const u = d.ts.find((v) => v > t + 6 && v <= t + 25); return u != null ? { name: d.name, dt: u - t } : null; }).filter(Boolean) : [] });
   }
   casts.sort((a, b) => a.t - b.t);
@@ -14760,63 +14789,75 @@ function piPull(r) {
 // (a cast's dot: green went well, amber could be better, red went wrong)
 const piTier = (c) => (c.sc >= 88 ? 'ok' : c.sc >= 65 ? 'warn' : 'bad');
 const piSec = (n) => { n = Math.max(1, Math.round(Math.abs(n))); return n === 1 ? '1 second' : n + ' seconds'; };
-// one cast in plain sentences, like the Rotation rows (your pick, Oct 18): what happened, then why it was good or what to
-// change -> { say, why }
+// one cast in plain sentences, written for a raider still learning (your note, Oct 18): what happened, naming the player
+// every time (never a "their" that could mean either), then why it matters or what to do next time -> { say, why }
+const piOr = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
 function piSay(c, who) {
-  const self = c.tg === c.pr, tn = who(c.tg), they = self ? 'they' : tn, was = self ? 'They were' : tn + ' was';
+  const self = c.tg === c.pr, tn = who(c.tg), u = self ? 'they' : tn, healer = (c.tg.role || 'dps') === 'healer';
   const after = (c.cdsAfter || []).slice().sort((a, b) => a.dt - b.dt)[0], down = c.tim.pill === 'Raid downtime';
-  const hold = !c.over && c.diedIn == null && !down && c.tim.st === 'warn' && after;
-  let say = self ? who(c.pr) + ' kept it for themselves' : who(c.pr) + ' gave it to ' + tn;
-  if (c.over) say += ', but ' + who(c.over.pr) + ' had given ' + (self ? 'them' : tn) + ' one ' + piSec(c.over.dt) + ' before.';
-  else if (c.diedIn != null) say += ', but ' + they + ' died ' + piSec(c.diedIn) + ' later.';
-  else if (down) say += ', but the raid couldn\'t do damage for most of it.';
-  else if (c.cdHit) { const d = c.cdHit.dt, n = esc(c.cdHit.name); say += d == null ? ' while their ' + n + ' was up.' : Math.abs(d) < 1.5 ? ' with their ' + n + '.' : ', ' + piSec(d) + (d > 0 ? ' before' : ' after') + ' their ' + n + '.'; }
-  else if (c.tim.st === 'warn') say += after ? ', but their ' + esc(after.name) + ' came ' + piSec(after.dt) + ' later.' : ', but none of their big cooldowns was up.';
-  else say += '.';
-  const why = [], healer = (c.tg.role || 'dps') === 'healer';
-  if (c.over) why.push('Two Power Infusions on one player don\'t stack, so most of this one was wasted.');
-  if (down) why.push('Save it for when the raid can hit the boss.');
-  if (healer) why.push(tn + ' is a healer, so it added no damage. That\'s only worth it when the raid needs a lot of healing.');
-  else if (c.noSim || c.ratio == null) why.push('There\'s no sim for ' + esc(c.tg.specName || 'this spec') + ', so this target isn\'t judged.');
-  else if (c.tgt.st !== 'ok') why.push(who(c.best) + ' would have gained about ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more from it.');
-  else if (!hold && !c.over && !down && c.diedIn == null) why.push(c.best === c.tg ? was + ' the best target at that moment.' : was + ' nearly as good a target as ' + who(c.best) + '.');
-  if (hold) why.push('Waiting until ' + T(c.t + after.dt) + ' would have lined it up with their ' + esc(after.name) + '.');
+  const early = !c.over && c.diedIn == null && !down && c.tim.st === 'warn' && after, noCd = !early && !c.over && c.diedIn == null && !down && c.tim.st === 'warn';
+  const to = self ? who(c.pr) + ' used it on themselves' : who(c.pr) + ' gave it to ' + tn;
+  let say;
+  if (c.over) say = to + (self ? ', but they' : ', who') + ' already had one from ' + who(c.over.pr) + '.';
+  else if (c.diedIn != null) say = to + ', but ' + u + ' died ' + piSec(c.diedIn) + ' later.';
+  else if (down) say = to + ' while the raid couldn\'t do damage.';
+  else if (c.cdHit) { const d = c.cdHit.dt, n = esc(c.cdHit.name); say = to + (d == null ? ' while ' + (self ? 'their own' : tn + '\'s') + ' ' + n + ' was up.' : Math.abs(d) < 1.5 ? ' just as ' + u + ' used ' + n + '.' : ' ' + piSec(d) + (d > 0 ? ' before ' : ' after ') + u + ' used ' + n + '.'); }
+  else if (early) say = to + ' ' + piSec(after.dt) + ' too early.';
+  else if (noCd) say = to + ', but ' + u + ' didn\'t use a big cooldown with it.';
+  else say = to + '.';
+  const why = [];
+  if (c.over) why.push('Two don\'t stack, so most of it was wasted.');
+  else if (c.diedIn != null) why.push('Most of the boost was lost.');
+  else if (down) why.push('Most of it was lost. Save it for when the raid can do damage.');
+  else if (early) why.push(tn + ' used ' + esc(after.name) + ' at ' + T(c.t + after.dt) + '. Next time, wait for it, so both are up at the same time.');
+  else if (noCd && (c.cdNames || []).length) why.push('Next time, give it when ' + u + ' uses ' + piOr(c.cdNames.map(esc)) + '.');
+  if (healer) why.push(tn + ' is a healer, so it added no damage. On a healer it\'s only worth it when the raid needs a lot of healing.');
+  else if (c.noSim || c.ratio == null) why.push('There\'s no sim for ' + esc(c.tg.specName || 'this spec') + ', so we can\'t tell how much it added.');
+  else if (c.tgt.st !== 'ok') why.push(who(c.best) + ' would have gained about ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more, so ' + who(c.best) + ' was the better pick.');
+  else if (!why.length) why.push(c.best === c.tg ? 'That\'s the best use: ' + tn + ' gains the most from it' + (c.cdHit ? ', and both were up at the same time.' : '.') : 'A good pick. Only ' + who(c.best) + ' would have gained a little more.');
   return { say, why: why.join(' ') };
 }
 // a stretch it sat ready (20 seconds or more), in the same sentences: how long, and the best moment in it
 function piReady(m, who) {
-  const say = 'Power Infusion sat ready for ' + piSec(m.b - m.a) + ', from ' + T(m.a) + ' to ' + T(m.b) + '.', gain = m.pick ? C(m.pick.v * PI_CD) : '';
-  const why = !m.pick ? '' : m.pick.cd ? 'At ' + T(m.pick.t) + ' ' + who(m.pick.q) + ' pressed ' + esc(m.pick.cd) + '. Using it then would have added about ' + gain + ' damage.'
-    : who(m.pick.q) + ' was the best target then. Using it on them would have added about ' + gain + ' damage.';
+  const say = 'Power Infusion was ready but not used for ' + piSec(m.b - m.a) + ' (' + T(m.a) + ' to ' + T(m.b) + ').', gain = m.pick ? C(m.pick.v * PI_CD) : '';
+  const why = !m.pick ? '' : m.pick.cd ? who(m.pick.q) + ' used ' + esc(m.pick.cd) + ' at ' + T(m.pick.t) + '. Giving it then would have added about ' + gain + ' damage.'
+    : who(m.pick.q) + ' was the best player to give it to then, for about ' + gain + ' more damage.';
   return { say, why };
 }
 // (a row: the time (and the pull, over the night), a dot, the sentence and its why under it)
-const piRow = (time, tier, s, lust) => '<div class="pi-c2"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + (s.why ? '<span class="pi-w">' + s.why + '</span>' : '') + '</span></div>';
+const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + (s.why ? '<span class="pi-w">' + s.why + '</span>' : '') + '</span></div>';
 // a priest's pull as a strip: each Power Infusion gold, the stretches it sat ready green, the raid's downtime grey,
 // Bloodlust a line, and under them, in purple, when the player planned for it pressed their big cooldown
 function piStrip(d, x, casts, who) {
   const end = Math.max(1, d.end), P = (t) => (100 * Math.max(0, Math.min(end, t)) / end).toFixed(2) + '%', W = (a, b) => (100 * Math.max(0, Math.min(end, b) - Math.max(0, a)) / end).toFixed(2) + '%', pl = x.plan;
   const cdT = pl && pl.cd ? pl.cd.ts.filter((u) => u <= end) : [];
+  // (the cooldown for as long as it lasted (your note, Oct 18): the player's own buff of that name, or else the debuff of
+  // that name they put on an enemy (Deathmark is on the boss); a press with neither in the log stays a small mark)
+  const spans = (() => { const q = pl && pl.q, n = pl && pl.cd && pl.cd.name; if (!n) return []; const b = q.buffs && q.buffs.get(n);
+    let sp = b && b.sp && b.sp.length ? b.sp.map(([a, z]) => [a, z == null ? end : z]) : [];
+    if (!sp.length && q.dotEv) { const open = new Map(); for (const [t, k, nm, g] of q.dotEv) { if (nm !== n) continue; if (k) { if (!open.has(g)) open.set(g, t); } else if (open.has(g)) { sp.push([open.get(g), t]); open.delete(g); } } for (const a of open.values()) sp.push([a, end]); }
+    return sp; })();
+  const cdB = cdT.map((u) => { const near = spans.filter(([a]) => a >= u - 1.5 && a <= u + 3); return [u, near.length ? Math.min(end, Math.max(u + 1, ...near.map((s) => s[1]))) : null]; });
   const h = '<div class="pi-strip" aria-hidden="true">' + (d.idle || []).map(([a, b]) => '<i class="pi-sd" style="left:' + P(a) + ';width:' + W(a, b) + '" title="' + esc('The raid couldn\'t do damage, ' + T(a) + ' to ' + T(b)) + '"></i>').join('') +
     x.ready.filter(([a, b]) => b - a >= 10).map(([a, b]) => '<i class="pi-sr" style="left:' + P(a) + ';width:' + W(a, b) + '" title="' + esc('Ready, not used, ' + T(a) + ' to ' + T(b)) + '"></i>').join('') +
     (d.lust != null ? '<i class="pi-sl" style="left:' + P(d.lust) + '" title="Bloodlust at ' + T(d.lust) + '"></i>' : '') +
     casts.map((c) => '<i class="pi-sc" style="left:' + P(c.t) + ';width:' + W(c.t, c.t + PI_LEN) + '" title="' + esc(T(c.t) + ', on ' + c.tg.name) + '"></i>').join('') +
-    cdT.map((u) => '<i class="pi-st" style="left:' + P(u) + '" title="' + esc(pl.q.name + ' pressed ' + pl.cd.name + ' at ' + T(u)) + '"></i>').join('') + '</div>';
+    cdB.map(([u, b]) => '<i class="pi-st' + (b != null ? ' bar' : '') + '" style="left:' + P(u) + (b != null ? ';width:' + W(u, b) : '') + '" title="' + esc(pl.q.name + '\'s ' + pl.cd.name + ', ' + T(u) + (b != null ? ' to ' + T(b) : '')) + '"></i>').join('') + '</div>';
   const step = end > 400 ? 120 : 60; let ax = '<div class="pi-ax">'; for (let t = 0; t <= end - step / 3; t += step) ax += '<span style="left:' + P(t) + '">' + T(t) + '</span>'; ax += '<span style="left:100%;transform:translateX(-100%)">' + T(end) + '</span></div>';
-  const leg = ['<span><i class="pi-sc"></i>Power Infusion</span>', x.ready.some(([a, b]) => b - a >= 10) ? '<span><i class="pi-sr"></i>Ready, not used</span>' : '', cdT.length ? '<span><i class="pi-st"></i><span>' + who(pl.q) + '\'s ' + esc(pl.cd.name) + '</span></span>' : '',
+  const leg = ['<span><i class="pi-sc"></i>Power Infusion (15 seconds)</span>', x.ready.some(([a, b]) => b - a >= 10) ? '<span><i class="pi-sr"></i>Ready, not used</span>' : '', cdT.length ? '<span><i class="pi-st"></i><span>' + (cdB.some(([, b]) => b != null) ? who(pl.q) + '\'s ' + esc(pl.cd.name) : 'When ' + who(pl.q) + ' used ' + esc(pl.cd.name)) + '</span></span>' : '',
     d.lust != null ? '<span><i class="pi-sl"></i>Bloodlust</span>' : '', (d.idle || []).length ? '<span><i class="pi-sd"></i>The raid couldn\'t do damage</span>' : ''].filter(Boolean).join('');
-  return h + ax + '<div class="pi-leg">' + leg + '</div>';
+  return h + ax + '<div class="pi-leg nolk">' + leg + '</div>';
 }
 // a priest's plan for the next pull, on top: who to give it to and with what; over the night, also a habit to fix (the
 // same player's same cooldown pressed just after it, more than once)
 function piPlan(x, mine, one, who) {
   if (!x.plan) return '';
   const q = x.plan.q, cd = x.plan.cd, self = q === x.p, ts = cd ? cd.ts.slice(0, 3).map((u) => T(u)) : [];
-  let s = '<b>Next pull:</b> ' + (self ? 'keep it for themselves' : 'give it to ' + who(q)) + (cd ? ' with their ' + esc(cd.name) + (one && ts.length ? ', at about ' + andList(ts) : ', every 2 minutes') : ', every 2 minutes') + '.';
+  let s = '<b>Next pull:</b> ' + (self ? 'use it on themselves' : 'give it to ' + who(q)) + (cd ? ' when ' + (self ? 'they use' : who(q) + ' uses') + ' ' + esc(cd.name) + (one && ts.length ? ', at about ' + andList(ts) : '') : ' every time it\'s ready') + '.';
   if (!one) { const hg = new Map();
     for (const c of mine) if (c.tim.st === 'warn' && (c.cdsAfter || []).length) { const d = c.cdsAfter.reduce((a, b) => (b.dt < a.dt ? b : a)), k = c.tg.name + '|' + d.name, y = hg.get(k) || { q: c.tg, name: d.name, l: [] }; y.l.push(d.dt); hg.set(k, y); }
     const hb = [...hg.values()].sort((a, b) => b.l.length - a.l.length)[0];
-    if (hb && hb.l.length > 1) { const dts = hb.l.slice().sort((a, b) => a - b); s += '<span class="pi-hb">' + hb.l.length + ' times it came just before ' + who(hb.q) + '\'s ' + esc(hb.name) + '. Hold it about ' + piSec(dts[dts.length >> 1]) + '.</span>'; } }
+    if (hb && hb.l.length > 1) { const dts = hb.l.slice().sort((a, b) => a - b); s += '<span class="pi-hb nolk">' + hb.l.length + ' times tonight it went out just before ' + who(hb.q) + ' used ' + esc(hb.name) + '. Wait about ' + piSec(dts[dts.length >> 1]) + ' longer.</span>'; } }
   return '<div class="pi-plan">' + s + '</div>';
 }
 // The view (your pick, Oct 18: a sentence for each cast): for each priest, the plan for the next pull, the pull as a
@@ -14854,10 +14895,12 @@ function piView(reps, one) {
   const rk = new Map(); for (const { d } of all) for (const q of d.rank) { const y = rk.get(q.p.name) || { p: q.p, v: 0, n: 0, got: 0 }; y.v += q.v; y.n++; rk.set(q.p.name, y); }
   for (const c of casts) { const y = rk.get(c.tg.name); if (y) y.got++; }
   const ranked = [...rk.values()].map((y) => ({ ...y, v: y.v / y.n })).sort((a, b) => b.v - a.v).slice(0, 8), mx = ranked.length ? Math.max(1, ranked[0].v) : 1;
-  const gains = ranked.length ? '<details class="pi-gn"><summary><b>Who gains the most</b><span class="pi-gs">' + ranked.slice(0, 3).map((y) => who(y.p) + ' ' + C(y.v * PI_CD)).join(' · ') + (ranked.length > 3 ? ' · ' + (ranked.length - 3) + ' more' : '') + '</span></summary>' +
+  const gains = ranked.length ? '<details class="pi-gn" open><summary><b>Who gains the most</b><span class="pi-gs">' + ranked.slice(0, 3).map((y) => who(y.p) + ' ' + C(y.v * PI_CD)).join(' · ') + (ranked.length > 3 ? ' · ' + (ranked.length - 3) + ' more' : '') + '</span></summary>' +
     '<div class="pi-bars">' + ranked.map((y) => '<div class="pi-bar"><span class="pi-bn">' + who(y.p) + (y.got ? '<span class="pi-gt">got it' + (y.got === 2 ? ' twice' : y.got > 2 ? ' ' + y.got + ' times' : '') + '</span>' : '') + '</span><span class="pi-bt"><i style="width:' + Math.max(2, 100 * y.v / mx).toFixed(1) + '%;background:' + y.p.color + '"></i></span><b>' + C(y.v * PI_CD) + '</b></div>').join('') + '</div>' +
-    '<p class="sub" style="margin:4px 0 0">About how much damage one Power Infusion on them adds' + (one ? ' this pull' : ', on average over the night') + '.</p></details>' : '';
-  const panel = '<div class="panel pi-list"><h3 class="nh"><span>Every Power Infusion</span><small>' + (one ? 'this pull, up to the wipe filter' : 'over ' + plural(reps.length, 'pull') + ', each up to its wipe filter') + '</small></h3>' + list + gains + '</div>';
+    '<p class="sub nolk" style="margin:4px 0 0">About how much extra damage one Power Infusion gives each player' + (one ? ' this pull' : ', on average over the night') + '. The longer the bar, the better the pick.</p></details>' : '';
+  // (one line on what Power Infusion is for, for a raider still learning (your note, Oct 18))
+  const intro = '<p class="pi-intro nolk">Power Infusion is a Priest spell that speeds up another player for 15 seconds, once every 2 minutes. It does the most on a strong damage dealer, given at the moment they use their own big cooldown.</p>';
+  const panel = '<div class="panel pi-list"><h3 class="nh"><span>Every Power Infusion</span><small>' + (one ? 'this pull, up to the wipe filter' : 'over ' + plural(reps.length, 'pull') + ', each up to its wipe filter') + '</small></h3>' + intro + list + gains + '</div>';
   const how = '<details class="howit"><summary>How it works</summary><div><p><b>Who gains the most</b>: Bloodmallet\'s Midnight sims (October 14) say how much extra damage each spec does with Power Infusion. That\'s scaled by how hard each player hit ' + (one ? 'this pull' : 'in each pull') + '. When 3 or more enemies were losing health, the sims for 3 targets are used. A good target is within 15% of the best player alive at that moment. A healer gains no damage from it. Balance Druids and Evokers have no sim, so they aren\'t judged.</p>' +
     '<p><b>Good timing</b>: lined up with the target\'s own big cooldown, pressed within 6 seconds of it or while it was up. It shouldn\'t land while the raid can\'t do damage, on a target who dies during it, or on a player who already has another priest\'s Power Infusion, because two don\'t stack. ⚡ means Bloodlust was up.</p>' +
     '<p><b>Sat ready</b>: Power Infusion comes back every 2 minutes. When it sat ready for 20 seconds or more, that stretch is listed with the best moment in it.</p><p>Everything counts up to the wipe filter. The damage numbers are estimates from the sims, not measured damage.</p></div></details>';
@@ -20797,7 +20840,7 @@ function homePreviews() {
   const card = (k, t, body) => '<button class="tp-card" type="button" data-tour="' + k + '"><span class="tp-t">' + t + '</span><span class="tp-art">' + body + '</span></button>';
   return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
     card(1, 'Pull recap', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
-    card(2, 'Mechanics', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
+    card(2, 'Mechanics and maps', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
     card(3, 'Rotation and graphs', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
     card(4, 'Teams', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
 }
@@ -20811,7 +20854,7 @@ const TOUR = [
     art: () => '<svg class="tr-logo" viewBox="0 0 64 64" aria-hidden="true"><path class="s1" d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z"/><path class="s2" d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z"/><path class="s3" d="m27 32.5 4 4 8.5-9.5"/></svg>' },
   { t: 'Every pull, explained', p: 'The moment a pull ends, its card shows what went well, what went wrong, and the one thing to fix before you pull again. Click a pull at the top to see any of them.',
     art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ Brann died first, at 1:42, to Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
-  { t: 'Mechanics and assignments', p: 'Every mechanic is checked for every player, with a map of who stood where. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it.',
+  { t: 'Mechanics, with maps', p: 'Open any mechanic on the Mechanics tab to see a map of where everyone stood, and press Play to watch the moment again. Every mechanic is checked for every player. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it too.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
   { t: 'Rotation and graphs', p: 'Rotation goes through how each player played their own spec, the way a top player of it would. Graphs has the raw numbers, like Warcraft Logs but easier to read: damage, healing, casts, resources, cooldowns and more. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
@@ -20855,7 +20898,7 @@ const PAGE_TIPS = {
     { sel: '#view .as-tiles', t: 'Each assignment at a glance', p: 'Red went wrong, green was done. Click one to jump straight to it.' }],
   audit: [
     { sel: '#view .wr-wrap', t: 'What went wrong, and what went well', p: 'Each mechanic with a problem is listed here, worst first, with what happened. Click one to jump straight to it.' },
-    { sel: '#view details.secd', t: 'Open a mechanic', p: 'Each one shows who got it wrong, when, and on many, a map of where everyone stood.' }],
+    { sel: '#view details.secd', t: 'Open a mechanic for its map', p: 'Each one shows who got it wrong and when. Many have a map of where everyone stood, and Play shows the moment again.' }],
   night: [
     { sel: '#sum-prog', t: 'How far the night got', p: 'Every pull of the night on one chart, where lower means further. Click a dot to open that pull.' },
     { sel: '#view .sum-rc', t: 'The night\'s grades', p: 'Mechanics and assignments, each graded over every pull of the night.' },
@@ -20882,7 +20925,7 @@ const PAGE_TIPS = {
     { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams are at the top. From there you can jump to another team or your character, see them all, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
-const TIPS_V = { live: 2, perf: 4 }; // (bumped when a page's tips change, so they show once more)
+const TIPS_V = { live: 2, perf: 4, audit: 2 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
 const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);

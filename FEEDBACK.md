@@ -3,6 +3,13 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Maps first: raiders really love the mini maps (your note, Oct 18, now high priority).** My take: agreed, they're
+  what people remember about Debrief, so show them off. Three parts:
+  1. Every mini map on Mechanics shows open, with no drop-down (done in round 209, with the tour leading with maps).
+  2. Make them stand out on the mechanics where a map tells the story (soaks, spreads, baits, adds): for example a small
+     map right in "What went wrong" for that mechanic, a map for the first death on Pull recap, and a "Map" mark on the
+     rows that have one.
+  3. Sharper maps (the older note further down): the floor art is about 1 pixel per yard, which is why it looks soft.
 - [ ] **The spec page as a top raider's review (your goal, Oct 18):** your total damage or healing against the top players of
   your spec, what you did well, and pieces of the Performance charts (conclusions, not the raw charts), until it reads like a
   top raider going through your logs. My take: one page that reads like a review, not one giant card; start with the damage
@@ -54,7 +61,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   listed there.
 - [x] **Reorder and rename the main tabs (your note, Oct 18):** done in round 195 (your pick, option A). So each tab's name says what it does, and the order makes
   sense (today: Teams, Latest pull, Assignments, Mechanics, Performance, Summary, Players).
-- [ ] **Simplify the tabs in Performance (your note, Oct 18).**
+- [x] **Simplify the tabs in Performance (your note, Oct 18).** Done in round 206 (Graphs, with grouped view tabs).
 - [x] **A Discord server for Debrief (your note, Oct 18):** done in round 196. The server is made (Debrief, on your
   account), with #general, #announcements (read-only: only you post), #feedback and #bug-reports, and a never-expiring
   invite, https://discord.gg/qyVKJ2hB2b, linked from the menu and the start page.
@@ -172,6 +179,24 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 209: Power Infusion for new raiders, every map showing on Mechanics
+- [x] **Power Infusion, worded for a raider still learning (your notes):** one line on top says what it's for ("Power
+  Infusion is a Priest spell that speeds up another player for 15 seconds, once every 2 minutes. It does the most on a
+  strong damage dealer, given at the moment they use their own big cooldown."). The sentences name the player every time
+  instead of "their": "Optt gave it to Zaffia 13 seconds too early. Zaffia used Deathmark at 2:19. Next time, wait for
+  it, so both are up at the same time." Spell names in these lines are no longer underlined, so they read cleanly.
+- [x] **Who gains the most is open by default** (your note), with "The longer the bar, the better the pick."
+- [x] **The strip shows the cooldown for as long as it lasted** (your note: Zaffia's Deathmark was a short tick). It's
+  drawn from the log: the player's own buff, or the debuff they put on the boss (Deathmark lasts 16 seconds). So you can see
+  whether Power Infusion landed inside it.
+- [x] **Every mini map on Mechanics shows, with no Map button or drop-down (your note).** Each map draws as soon as its
+  mechanic is open, under its row (side by side when a row has two). One in a pane you haven't picked yet (another orb
+  set, a death's recap) draws when you pick it. Animated maps hold still on the key moment until you press ▶ Play, so a
+  page of maps doesn't all play at once. My take: the right call; the page is longer, but the maps are the proof.
+- [x] **A raider (Lissona, on Discord) loved the tour but missed the maps in it:** the tour step is now "Mechanics, with
+  maps" and leads with them, the front page's card says "Mechanics and maps", and the Mechanics tips say "Open a mechanic
+  for its map" (shown once more).
 
 ## 2026-10-18, round 208: Power Infusion, a sentence for each cast (your pick)
 - [x] **Rebuilt as you picked (mockup 1):** for each priest, "Used 2 of 2", the plan for the next pull in a gold box
