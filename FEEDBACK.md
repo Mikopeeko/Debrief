@@ -173,6 +173,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 203: The Report card is gone (your call)
+Your direction for Performance: Spec checks stays as it is (it reviews each player's own play), and everything else
+becomes plain data and charts, like Warcraft Logs but easier to read.
+- The Report card view is removed. Performance now opens on Spec checks (on Damage where Spec checks is greyed out),
+  and an old saved "Report card" opens Spec checks instead.
+- Its box on Pull recap is gone (that box only showed on your computer).
+- The tour and the Performance page tips no longer mention it.
+- Players is unchanged for now (your call: later). Its grade still uses the Report card's scoring behind the scenes,
+  and a fix that used to say "See it in Report card" now says "See it in Spec checks" and opens that player's page.
+- [ ] Later (your call): what the Players grade should be built from, now that the Report card is gone. Its text still
+  says "half from the Report card".
+- [ ] Next: Round 2, the other Performance views as plain data (no ✕ / ! verdicts or grade colors), and Buffs as an
+  uptime list instead of a count of buffs.
+
 ## 2026-10-18, round 202: Mechanics, the other six bosses read section by section (your go-ahead)
 Read every section of Twin Fangs, Nek'zali, Entombed Sentinels, Lost Explorers, Vashnik and Sszorak (the test night's
 pulls). What was fixed, everywhere it showed up:

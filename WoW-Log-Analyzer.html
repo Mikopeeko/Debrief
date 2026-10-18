@@ -13110,10 +13110,12 @@ function kicks() {
 // picked player's) with the phases shaded and the boss mechanics, Bloodlust and deaths marked, then a bar per player.
 // A click on a player draws their line and shows what their damage went into (targets and abilities). Everything counts
 // up to the wipe filter; "while alive" divides by the time until a player's first death.
-const PERF_KINDS = [['card', 'Report card'], ['spec', 'Spec checks'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
+// (the Report card is gone (your call, Oct 18): Spec checks reviews each player's play, the rest is plain data; its
+// scoring stays behind the Players grade until Players is looked at again)
+const PERF_KINDS = [['spec', 'Spec checks'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (the buttons in four groups: how each player played, the meters, cooldowns and buffs, and their toolkit; one thing per
 // tab, each in one place)
-const PERF_GROUPS = [['How they played', ['card', 'spec', 'cast', 'res']], ['Output', ['dmg', 'heal', 'taken']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
+const PERF_GROUPS = [['How they played', ['spec', 'cast', 'res']], ['Output', ['dmg', 'heal', 'taken']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
 // (the views that count presses or grade, not output over time: no phase picker and no chart)
 const PERF_COUNTS = new Set(['card', 'spec', 'util', 'surv', 'pi', 'cds', 'aura']);
 // Each spec's big damage and healing cooldowns, by the name the log uses, with their base cooldown in seconds: checked
@@ -13216,10 +13218,11 @@ const resses = (n) => n + (n === 1 ? ' battle res' : ' battle resses');
 const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || { rows: [] }).rows.reduce((s, x) => s + x.n, 0);
   return { v: t('disp') + '<span> dispels</span> ' + t('ext') + '<span> externals</span>', s: resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
 function perf() {
-  if (!S.perfKind || !PERF_KINDS.some(([x]) => x === S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = PERF_KINDS.some(([x]) => x === k) ? k : 'card'; }
-  if (S.perfKind === 'spec' && SPEC_OFF()) S.perfKind = 'card';
+  // (it opens on Spec checks; where Spec checks is greyed out, on Damage. An old saved "Report card" opens Spec checks)
+  if (!S.perfKind || !PERF_KINDS.some(([x]) => x === S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = PERF_KINDS.some(([x]) => x === k) ? k : 'spec'; }
+  if (S.perfKind === 'spec' && SPEC_OFF()) S.perfKind = 'dmg';
   store.set('wla-pf-kind', S.perfKind);
-  const r = S.rep, kind = S.perfKind || 'card', ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
+  const r = S.rep, kind = S.perfKind || 'spec', ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
   const ps = players().filter((p) => p.name && !/^Player-/.test(p.name));
   // (one pull or all pulls of the boss, switched here like on the Player audit)
   const isBoss = r.item.kind === 'boss' && !r.item.run, nP = isBoss && S.index ? S.index.bosses.filter((b) => b.id === r.item.id && b.diffId === r.item.diffId).length : 0;
@@ -13948,7 +13951,7 @@ function pfFindIndex(r) {
   const agg = (get) => { const m = new Map(); for (const p of ps) for (const [n, id, v] of get(p)) { if (!n) continue; let x = m.get(n); if (!x) m.set(n, x = { n, id, v: 0, who: new Map() }); if (!x.id && id) x.id = id; x.v += v; x.who.set(p, (x.who.get(p) || 0) + v); }
     return [...m.values()].map((x) => ({ ...x, top: [...x.who].sort((a, b) => b[1] - a[1])[0][0] })); };
   const by = (x) => (x.who.size === 1 ? 'by ' + esc(x.top.name) : plural(x.who.size, 'player') + ', most ' + esc(x.top.name));
-  for (const p of ps) out.push({ g: 'player', n: p.name, p, d: esc(p.specName || ''), go: () => { S.perfKind = 'card'; S.rcSel = p.name; } });
+  for (const p of ps) out.push({ g: 'player', n: p.name, p, d: esc(p.specName || ''), go: () => { if (SPEC_OFF()) { S.perfKind = 'dmg'; S.perfSel = p.name; } else { S.perfKind = 'spec'; S.specSel = p.name; } } });
   for (const x of agg((p) => [...p.dmgAb.values()].map((a) => [strip(a.name), a.id, a.total]))) if (x.v > 0) out.push({ g: 'dmg', ...x, d: C(x.v) + ' · ' + by(x), go: () => pfGo('dmg', x.top.name, true) });
   const healN = new Set();
   for (const x of agg((p) => [...p.healAb.values()].map((a) => [strip(a.name), a.id, a.total]))) { healN.add(x.n); if (x.v > 0) out.push({ g: 'heal', ...x, d: C(x.v) + ' · ' + by(x), go: () => pfGo('heal', x.top.name, true) }); }
@@ -18791,7 +18794,7 @@ function parsesFor(r, kind) {
   const k = r.item.wcl.code + ':' + r.item.wcl.fight + ':' + kind;
   if (PARSES.has(k)) { const v = PARSES.get(k); return v instanceof Map ? v : null; }
   PARSES.set(k, 'loading');
-  WCL.loadRankings(S.wclCreds, r.item, kind === 'heal' ? 'hps' : 'dps').then((m) => { PARSES.set(k, m); if (S.tab === 'perf' && S.rep === r && S.scope !== 'all' && ((S.perfKind || 'card') === kind || (S.perfKind || 'card') === 'card' || S.perfKind === 'spec')) perf(); })
+  WCL.loadRankings(S.wclCreds, r.item, kind === 'heal' ? 'hps' : 'dps').then((m) => { PARSES.set(k, m); if (S.tab === 'perf' && S.rep === r && S.scope !== 'all' && ((S.perfKind || 'spec') === kind || (S.perfKind || 'spec') === 'card' || S.perfKind === 'spec')) perf(); })
     .catch((e) => { console.warn('Parses:', e && e.message); PARSES.set(k, new Map()); });
   return null;
 }
@@ -18809,7 +18812,7 @@ function pfSortApply(items, keyOf, on, dir) {
   return ks.map((x) => x.it);
 }
 function pfSortBind() {
-  const base = (S.perfKind || 'card') + '|' + (S.scope || 'pull') + '|', cur = S.pfSort || {}, COL = { 'pf-k': 'k', 'cb-hn': 'hn', 'cb-v': 'v', 'cb-s': 's', 'cb-r': 'r' };
+  const base = (S.perfKind || 'spec') + '|' + (S.scope || 'pull') + '|', cur = S.pfSort || {}, COL = { 'pf-k': 'k', 'cb-hn': 'hn', 'cb-v': 'v', 'cb-s': 's', 'cb-r': 'r' };
   const key = (el, go) => { el.setAttribute('role', 'button'); el.tabIndex = 0; el.onclick = go; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; };
   // (the bar lists: each row, with its opened detail right under it, moves as one)
   $$('#view .pfv .cb-h').forEach((hd, i) => { const k = base + i, pn = hd.parentElement, groups = [];
@@ -18875,7 +18878,7 @@ function spcTlBind() {
 function bindPerf() {
   // (every chart folds away with a click on its title and stays folded, per view, until it's opened again)
   { let fold; try { fold = new Set(JSON.parse(store.get('wla-pf-fold') || '[]')); } catch (e) { fold = new Set(); }
-    $$('#view .pf-chart').forEach((pn, i) => { const h3 = pn.querySelector('h3.nh'); if (!h3) return; const key = (S.perfKind || 'card') + ':' + (S.scope || 'pull') + ':' + i, set = () => { const f = fold.has(key); pn.classList.toggle('folded', f); h3.setAttribute('aria-expanded', String(!f)); };
+    $$('#view .pf-chart').forEach((pn, i) => { const h3 = pn.querySelector('h3.nh'); if (!h3) return; const key = (S.perfKind || 'spec') + ':' + (S.scope || 'pull') + ':' + i, set = () => { const f = fold.has(key); pn.classList.toggle('folded', f); h3.setAttribute('aria-expanded', String(!f)); };
       pn.classList.add('pf-fold'); h3.title = 'Click to fold or open the chart'; set();
       h3.onclick = (e) => { if (e.target.closest('button, a, .pfc-lg, .seg, input, select, .pf-hk')) return; if (fold.has(key)) fold.delete(key); else fold.add(key); store.set('wla-pf-fold', JSON.stringify([...fold])); set(); }; }); }
   { const b = $('#pfMenuB'), m = $('#pfMenu'); if (b && m) { const set = (o) => { m.hidden = !o; b.setAttribute('aria-expanded', String(o)); if (o) { const on = m.querySelector('.pfm-i.on') || m.querySelector('.pfm-i'); if (on) on.focus(); } };
@@ -19651,7 +19654,8 @@ function deaths() {
 // pull) only able to take points off; what they should fix first across all of it, each with a link to the tab that shows
 // it in full; and over the night, how they did pull by pull, their best pull, the MVPs and who improved most. What the
 // other tabs already show in full (the survival kit, output) isn't repeated here.
-const PL_GO = { audit: 'Mechanics', card: 'Report card', cast: 'Casts', res: 'Resources', prep: 'Their prep' };
+// (a fix that used to open the Report card opens the player's Spec checks page, since the Report card is gone)
+const PL_GO = { audit: 'Mechanics', card: 'Spec checks', cast: 'Casts', res: 'Resources', prep: 'Their prep' };
 const PL_RC_GO = { act: 'cast', unf: 'cast', res: 'res' }; // (a Report card fix that has its own view)
 // one player's pull -> { mech, perf, prep, score, fixes: [{ key, t, x, gain, go }], mistakes, x }
 function plGrade(r, p, x, credit) {
@@ -19916,7 +19920,7 @@ function bindPlayers(c) {
   $$('#plBody [data-plgo]').forEach((b) => (b.onclick = () => { const nm = b.dataset.pn, g = b.dataset.plgo;
     if (g === 'prep') { const el = $('#plPrep'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (g === 'audit') S.tab = 'audit';
-    else { S.tab = 'perf'; S.perfKind = g === 'cast' ? 'cast' : g === 'res' ? 'res' : 'card'; if (g === 'cast') S.castSel = nm; else if (g === 'res') { S.resSel = nm; S.resPw = null; S.resMode = null; } else S.rcSel = nm; }
+    else { S.tab = 'perf'; S.perfKind = g === 'cast' ? 'cast' : g === 'res' ? 'res' : 'spec'; if (g === 'cast') S.castSel = nm; else if (g === 'res') { S.resSel = nm; S.resPw = null; S.resMode = null; } else S.specSel = nm; }
     renderMain(); window.scrollTo({ top: 0 }); }));
   const byPull = new Map(c.reps.map((q) => [q.item.pull, q.item]));
   $$('#plBody [data-plpull]').forEach((b) => (b.onclick = () => { const it = byPull.get(+b.dataset.plpull); if (!it) return; S.plSel = b.dataset.pn; S.tab = 'player'; setScope('pull'); select(it); }));
@@ -20217,10 +20221,8 @@ async function lastPull() {
   const TNAME = { audit: 'Mechanics', overview: 'Assignments', perf: 'Performance' };
   const go = (html, tab, sec, kind) => '<button class="pt-go lp-go" type="button" data-go="' + tab + '"' + (sec ? ' data-sec="' + sec + '"' : '') + (kind ? ' data-kind="' + kind + '"' : '') + ' title="Open ' + TNAME[tab] + '">' + html + '</button>';
   const cmp = (a, b) => (S1 ? lpDelta(a, b, true) : '');
-  // (the Report card: the raid's average grade this pull and the fix most players share; only where Performance is on)
-  let rcTile = '';
-  if (!off && S0.rc != null) { const cm = new Map(); for (const x of rcCards([r])) { const f = x.fixes[0]; if (f && f.gain >= 3) cm.set(f.t, (cm.get(f.t) || 0) + 1); } const top = [...cm].sort((a, b) => b[1] - a[1])[0];
-    rcTile = go(plTile(rcG(S0.rc), 'Report card', Math.round(S0.rc) + '<span>/100</span>' + (S1 && S1.rc != null ? lpDelta(S0.rc, S1.rc, false) : ''), gBucket(S0.rc), top ? 'Most common fix: ' + top[0] : 'The raid\'s average', true), 'perf', null, 'card'); }
+  // (the Report card's box is gone with the Report card itself)
+  const rcTile = '';
   const tiles = '<div class="pts lp-tiles' + (rcTile ? ' six' : '') + '">' +
     go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length) + cmp(S0.deaths, S1 && S1.deaths), ds.length ? 'bad' : 'ok', ds.length ? ds[0].player + ' died first, at ' + T(ds[0].t) : 'Nobody died'), 'audit', 'sec-deaths') +
     go(plTile(plIco('ability_creature_cursed_02'), 'Mechanics', (groups.size ? groups.size + '<span> ' + (groups.size === 1 ? 'problem' : 'problems') + '</span>' : '0') + cmp(S0.probs, S1 && S1.probs), hiN ? 'bad' : medN ? 'warn' : 'ok', groups.size ? [hiN ? hiN + ' serious' : '', medN ? medN + ' medium' : ''].filter(Boolean).join(' and ') : 'Nothing medium or serious'), 'audit') +
@@ -20810,7 +20812,7 @@ const TOUR = [
     art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ Brann died first, at 1:42, to Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
   { t: 'Mechanics and assignments', p: 'Every mechanic is checked for every player, with a map of who stood where. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
-  { t: 'Performance', p: 'Every player gets a Report card for how they played their own character. Then come the meters, like Warcraft Logs but with the why behind them: casts, resources, cooldowns, Power Infusion and defensives. Hover any chart for its numbers.',
+  { t: 'Performance', p: 'Spec checks goes through how each player played their own character, the way a top player of their spec would. Then come the numbers, like Warcraft Logs but easier to read: damage, healing, casts, resources, cooldowns and more. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
   { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs to see every raid night, boss by boss, with your rankings. New nights come in by themselves, and "Your teams" at the top of every page takes you there.',
     art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
@@ -20862,9 +20864,8 @@ const PAGE_TIPS = {
     { sel: '#view .pl-bars', t: 'Every player', p: 'Each player gets one grade, half from mechanics and half from the Report card. Prep can only take points off. Sort them best first, or by who has the most to gain.' },
     { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player to see what they should fix first, each with a link to the tab that shows it, and their prep.' }],
   perf: [
-    { sel: '.pfm', t: 'What to look at', p: 'Pick a view here. The Report card comes first and shows how each player played their own character. Then come damage, healing, damage taken, cooldowns, buffs, utility and survivability, each on its own.' },
-    { sel: '.rk-tiles', t: 'The raid\'s grades', p: 'The raid\'s average for pressing buttons, staying alive and using the toolkit. S is the best and F the worst.' },
-    { sel: '.rk-list .rk-r', t: 'Every player', p: 'Whoever has the most to gain comes first, with the one thing that would help them most. Click a player for their full card.' },
+    { sel: '.pfm', t: 'What to look at', p: 'Pick a view here. Spec checks comes first and goes through how each player played their own character. Then come damage, healing, damage taken, cooldowns, buffs, utility and survivability, each on its own.' },
+    { sel: '#view .spc-bars, #view .pf-bars', t: 'Every player', p: 'Click a player to open their page.' },
     { sel: '.pfv .plsw', t: 'This pull or the night', p: 'Grade one pull, or every pull of this boss together.' }],
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
@@ -20876,7 +20877,7 @@ const PAGE_TIPS = {
     { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams are at the top. From there you can jump to another team or your character, see them all, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
-const TIPS_V = { live: 2, perf: 2 }; // (bumped when a page's tips change, so they show once more)
+const TIPS_V = { live: 2, perf: 3 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
 const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
