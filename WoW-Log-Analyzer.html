@@ -14963,41 +14963,448 @@ const shareSt = (f, ok, warn) => (f == null ? 'na' : f <= ok ? 'ok' : f <= warn 
 // Infusion of Light carries 2 uses per proc with Inflorescence of the Sunwell, 1 without (the talent when the log has it; otherwise the
 // log's own stacks).
 const MANA_EXT = ['Innervate', 'Source of Magic', 'Symbol of Hope', 'Mana Tide Totem', 'Mana Tide'];
-// What the top Holy Paladins do, per boss and difficulty: the middle of the top 10 kills on Warcraft Logs (all Herald of the Sun and Beacon of Virtue),
-// read with these same checks on Oct 17 2026. Shown beside each line as a reference, never as the grade.
+// What the top players of each spec do, per boss and difficulty, read with these same checks on Oct 18 2026 (Mythic, every raid boss):
+//  - every mark: the middle of the players of the spec in the 20 fastest kills of the boss on Warcraft Logs (29 on The Twin Fangs) who also parsed 75 or
+//    higher there (n: how many); a spec with fewer than 3 of them on a boss gets no marks there
+//  - outP: the middle of the top 100 parses for the spec on the boss, from Warcraft Logs' rankings (damage a second, healing a second for a healer)
+// Shown beside each line as a reference, never as the grade.
 const SPEC_TOP = {
-  // (the other specs: the middle of their players in the 32 fastest Mythic kills and their own top rankings, read with GEN_TUNE's bars)
-  'Arcane Mage': { 'The Twin Fangs|16': { 'score': '92', 'abc': '76%', 'cd:touch of the magi': '89%', 'p:Clearcasting': '22 wasted', 'p:Prismatic Bolt!': '5 wasted', 'cd:arcane surge': '100%', 'apl': '97%', 'win': '100%', 'out': '296032' } },
-  'Shadow Priest': { 'The Twin Fangs|16': { 'score': '94', 'abc': '74%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '88%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'apl': '95%', 'win': '100%', 'out': '289745' } },
-  'Marksmanship Hunter': { 'The Twin Fangs|16': { 'score': '91', 'abc': '80%', 'cd:aimed shot': '98%', 'cd:rapid fire': '97%', 'p:Precise Shots': '11 wasted', 'cd:trueshot': '100%', 'cd:volley': '89%', 'win': '100%', 'apl': '95%', 'out': '282198' } },
-  'Havoc Demon Hunter': { 'The Twin Fangs|16': { 'abc': '69%', 'cd:eye beam': '100%', 'cd:blade dance': '85%', 'cd:immolation aura': '65%', 'cd:essence break': '85%', 'res': '17%', 'cd:metamorphosis': '75%', 'win': '100%', 'out': '289881' } },
-  'Balance Druid': { 'The Twin Fangs|16': { 'score': '93', 'abc': '83%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '3%', 'cd:incarnation: chosen of elune': '100%', 'up:Eclipse': '71%', 'apl': '87%', 'win': '100%', 'out': '303273' } },
-  'Retribution Paladin': { 'The Twin Fangs|16': { 'score': '94', 'abc': '71%', 'cd:wake of ashes': '92%', 'cd:blade of justice': '80%', 'p:Divine Purpose': '2 wasted', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'apl': '88%', 'win': '100%', 'out': '349609' } },
-  'Holy Priest': { 'The Twin Fangs|16': { 'score': '90', 'abc': '75%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'cd:apotheosis': '75%', 'cd:divine hymn': '75%', 'win': '100%', 'apl': '99%', 'out': '365733' } },
-  'Frost Death Knight': { 'The Twin Fangs|16': { 'abc': '64%', 'p:Rime': '5 wasted', 'res': '11%', 'cd:pillar of frost': '90%', 'cd:reaper\'s mark': '90%', 'cd:breath of sindragosa': '100%', 'apl': '97%', 'win': '100%', 'out': '323752' } },
-  'Blood Death Knight': { 'The Twin Fangs|16': { 'score': '92', 'abc': '81%', 'cd:blood boil': '77%', 'cd:death and decay': '96%', 'res': '4%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'out': '177738', 'apl': '92%' } },
-  'Windwalker Monk': { 'The Twin Fangs|16': { 'score': '84', 'abc': '78%', 'cd:rising sun kick': '93%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '68%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '80%', 'cd:celestial conduit': '80%', 'apl': '100%', 'rep': '1', 'out': '327053' } },
-  'Arms Warrior': { 'The Twin Fangs|16': { 'score': '94', 'abc': '76%', 'p:Sudden Death': '2 wasted', 'dot:Rend': '97%', 'cd:colossus smash': '85%', 'cd:avatar': '86%', 'cd:bladestorm': '100%', 'apl': '93%', 'win': '100%', 'out': '361938' } },
-  'Protection Paladin': { 'The Twin Fangs|16': { 'score': '92', 'abc': '67%', 'cd:avenger\'s shield': '74%', 'cd:judgment': '86%', 'cd:blessed hammer': '81%', 'res': '10%', 'up:Shield of the Righteous': '98%', 'cd:avenging wrath': '100%', 'cd:divine toll': '83%', 'out': '130219', 'apl': '83%' } },
-  'Restoration Shaman': { 'The Twin Fangs|16': { 'score': '93', 'abc': '75%', 'cd:riptide': '96%', 'cd:healing stream totem': '95%', 'cd:surging totem': '88%', 'mana': '18%', 'cd:ascendance': '67%', 'cd:spirit link totem': '67%', 'win': '100%', 'apl': '94%', 'out': '335261' } },
-  'Frost Mage': { 'The Twin Fangs|16': { 'score': '100', 'abc': '84%', 'cd:frozen orb': '100%', 'cd:ray of frost': '91%', 'p:Brain Freeze': '2 wasted', 'p:Fingers of Frost': 'All spent', 'p:Glacial Spike!': 'All spent', 'apl': '92%', 'out': '307964' } },
-  'Devourer Demon Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '64%', 'cd:void ray': '98%', 'cd:soul immolation': '100%', 'win': '100%', 'out': '281627' } },
-  'Devastation Evoker': { 'The Twin Fangs|16': { 'score': '89', 'abc': '66%', 'cd:fire breath': '95%', 'cd:eternity surge': '95%', 'p:Essence Burst': '1 wasted', 'cd:dragonrage': '100%', 'apl': '99%', 'win': '100%', 'out': '284890' } },
-  'Elemental Shaman': { 'The Twin Fangs|16': { 'score': '87', 'abc': '83%', 'cd:stormkeeper': '78%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '99%', 'res': '7%', 'cd:ascendance': '100%', 'apl': '94%', 'win': '100%', 'out': '267202' } },
-  'Mistweaver Monk': { 'The Twin Fangs|16': { 'score': '94', 'abc': '75%', 'cd:renewing mist': '99%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '94%', 'mana': '20%', 'cd:invoke yu\'lon, the jade serpent': '75%', 'cd:celestial conduit': '80%', 'cd:life cocoon': '86%', 'cd:revival': '67%', 'win': '100%', 'apl': '99%', 'out': '356076' } },
-  'Subtlety Rogue': { 'The Twin Fangs|16': { 'score': '88', 'abc': '77%', 'cd:shadow dance': '95%', 'cd:goremaw\'s bite': '89%', 'cd:shadow blades': '80%', 'win': '100%', 'lv:0': '100%', 'out': '318277' } },
-  'Augmentation Evoker': { 'The Twin Fangs|16': { 'score': '100', 'abc': '80%', 'cd:upheaval': '100%', 'cd:fire breath': '94%', 'p:Essence Burst': '4 wasted', 'up:Ebon Might': '93%', 'cd:breath of eons': '80%', 'cd:time skip': '100%', 'apl': '100%', 'out': '317539' } },
-  'Affliction Warlock': { 'The Twin Fangs|16': { 'score': '91', 'abc': '72%', 'cd:haunt': '85%', 'p:Nightfall': '8 wasted', 'dot:Agony': '100%', 'dot:Unstable Affliction': '93%', 'dot:Wither': '100%', 'cd:summon darkglare': '100%', 'cd:malevolence': '100%', 'cd:dark harvest': '86%', 'apl': '90%', 'win': '100%', 'out': '296583' } },
-  'Beast Mastery Hunter': { 'The Twin Fangs|16': { 'score': '100', 'abc': '79%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '9%', 'cd:bestial wrath': '93%', 'apl': '88%', 'win': '100%', 'out': '280551' } },
-  'Assassination Rogue': { 'The Twin Fangs|16': { 'score': '94', 'abc': '82%', 'dot:Rupture': '100%', 'dot:Garrote': '99%', 'up:Envenom': '83%', 'res': '6%', 'cd:deathmark': '75%', 'cd:kingsbane': '86%', 'win': '100%', 'lv:0': '99%', 'out': '271788' } },
-  'Vengeance Demon Hunter': { 'The Twin Fangs|16': { 'score': '89', 'abc': '73%', 'cd:fracture': '90%', 'cd:immolation aura': '97%', 'cd:sigil of flame': '77%', 'cd:fel devastation': '67%', 'cd:sigil of spite': '86%', 'res': '13%', 'cd:fiery brand': '100%', 'up:Demon Spikes': '100%', 'out': '190863', 'apl': '89%' } },
-  'Destruction Warlock': { 'The Twin Fangs|16': { 'score': '100', 'abc': '83%', 'cd:conflagrate': '98%', 'cd:soul fire': '88%', 'p:Backdraft': '1 wasted', 'dot:Wither': '100%', 'cd:summon infernal': '100%', 'cd:malevolence': '100%', 'apl': '99%', 'win': '100%', 'out': '297518' } },
-  'Unholy Death Knight': { 'The Twin Fangs|16': { 'score': '100', 'abc': '79%', 'p:Sudden Doom': '2 wasted', 'dot:Virulent Plague': '97%', 'res': '4%', 'cd:dark transformation': '100%', 'cd:army of the dead': '100%', 'apl': '86%', 'out': '323926' } },
-  'Guardian Druid': { 'The Twin Fangs|16': { 'score': '100', 'abc': '70%', 'cd:mangle': '96%', 'cd:thrash': '90%', 'up:Ironfur': '97%', 'cd:incarnation: guardian of ursoc': '100%', 'out': '177547', 'apl': '97%' } },
-  'Enhancement Shaman': { 'The Twin Fangs|16': { 'abc': '73%', 'cd:stormstrike': '99%', 'cd:crash lightning': '99%', 'cd:doom winds': '100%', 'cd:ascendance': '100%', 'apl': '81%', 'win': '100%', 'out': '323615' } },
-  'Protection Warrior': { 'The Twin Fangs|16': { 'score': '92', 'abc': '75%', 'cd:shield slam': '99%', 'cd:thunder clap': '95%', 'up:Shield Block': '92%', 'cd:avatar': '89%', 'cd:demoralizing shout': '94%', 'out': '182303', 'apl': '98%' } },
-  'Brewmaster Monk': { 'The Twin Fangs|16': { 'score': '93', 'abc': '82%', 'cd:keg smash': '99%', 'cd:blackout kick': '73%', 'cd:breath of fire': '100%', 'up:Shuffle': '100%', 'cd:invoke niuzao, the black ox': '100%', 'cd:exploding keg': '86%', 'out': '157540', 'apl': '87%' } },
-  'Demonology Warlock': { 'The Twin Fangs|16': { out: '305316', score: '99', apl: '88%', abc: '80%', tyh: '9.3', tyd: 'all of them', tyc: '4 in 5', tyx: '23', imp: '4.3', ssw: '0%', 'p:Demonic Core': 'All spent', dbh: '1', 'cd:summon demonic tyrant': 'all of them', 'cd:call dreadstalkers': '95%', 'cd:grimoire: imp lord': 'all of them' } }, 'Preservation Evoker': { 'The Twin Fangs|16': { out: '394356', score: '89', apl: '86%', abc: '67%', ta: '76%', db: '95%', dbr: 'all of them', ess: '7%', ecu: '87%', ecl: '0', te: '82%', 'p:Essence Burst': '4 wasted', inf: '3.2', mana: '37%', ebh: '1', dbec: '2', 'p:Merithra\'s Blessing': 'All used' } }, 'Restoration Druid': { 'The Twin Fangs|16': { out: '368163', score: '96', apl: '89%', mast: '2.7', abc: '82%', lb: '99%', hots: '81%', sm: '97%', ab: '98%', wg: '97%', rgb: '0', 'p:Clearcasting': '2 or 3 wasted', 'p:Soul of the Forest': 'All spent', mana: '12%', rr: '90 to 145' } }, 'Holy Paladin': { 'The Twin Fangs|16': { out: '334402', score: '94', abc: '83%', apl: '93%', hs: '95%', jhs: '1', 'p:Infusion of Light': '1 wasted', fol: '4', folb: '58%', hp: '6%', ef: '94%', 'p:Divine Purpose': '1 wasted', 'p:Dawnlight': 'All spent', mana: '23%', bv: '85%', act: '93%', dt: '80%', 'cd:divine toll': '85%', 'cd:avenging wrath': '3 or 4 of 4', 'cd:aura mastery': '2 of 3', hlo: '53%', b5: '2' } } };
+  'Affliction Warlock': {
+    'The Twin Fangs|16': { 'outP': '272855' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '208447' },
+    'Entombed Sentinels|16': { 'outP': '215113' },
+    'Vashnik the Malignant|16': { 'outP': '230106' },
+    'The Lost Explorers|16': { 'outP': '289252' },
+    'Sszorak|16': { 'n': '3', 'score': '89', 'abc': '69%', 'apl': '93%', 'cd:haunt': '86%', 'p:Nightfall': '9 wasted', 'dot:Agony': '100%', 'dot:Unstable Affliction': '98%', 'win': '100%', 'cd:summon darkglare': '100%', 'cd:dark harvest': '83%', 'outP': '196335' },
+    'The Coiled Altar|16': { 'n': '21', 'score': '58', 'abc': '78%', 'apl': '88%', 'cd:haunt': '81%', 'p:Nightfall': '10 wasted', 'dot:Agony': '65%', 'dot:Unstable Affliction': '51%', 'win': '75%', 'cd:summon darkglare': '80%', 'cd:dark harvest': '89%', 'outP': '281614', 'dot:Wither': '66%', 'cd:malevolence': '89%' },
+    'Nymrissa Wavecaller|16': { 'n': '5', 'score': '64', 'abc': '81%', 'apl': '69%', 'cd:haunt': '75%', 'p:Nightfall': '7 wasted', 'dot:Agony': '91%', 'dot:Unstable Affliction': '50%', 'win': '100%', 'cd:summon darkglare': '100%', 'cd:dark harvest': '80%', 'outP': '276928', 'dot:Corruption': '100%' },
+  },
+  'Arcane Mage': {
+    'The Twin Fangs|16': { 'n': '17', 'score': '100', 'abc': '76%', 'apl': '97%', 'cd:touch of the magi': '89%', 'p:Clearcasting': '21 wasted', 'p:Prismatic Bolt!': '4 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '303719' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '25', 'score': '93', 'abc': '75%', 'apl': '98%', 'cd:touch of the magi': '86%', 'p:Clearcasting': '17 wasted', 'p:Prismatic Bolt!': '3 wasted', 'win': '100%', 'cd:arcane surge': '75%', 'outP': '259117' },
+    'Entombed Sentinels|16': { 'n': '24', 'score': '88', 'abc': '73%', 'apl': '98%', 'cd:touch of the magi': '86%', 'p:Clearcasting': '19 wasted', 'p:Prismatic Bolt!': '4 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '230340' },
+    'Vashnik the Malignant|16': { 'n': '14', 'score': '100', 'abc': '78%', 'apl': '98%', 'cd:touch of the magi': '100%', 'p:Clearcasting': '20 wasted', 'p:Prismatic Bolt!': '4 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '363413' },
+    'The Lost Explorers|16': { 'n': '26', 'score': '100', 'abc': '74%', 'apl': '99%', 'cd:touch of the magi': '100%', 'p:Clearcasting': '18 wasted', 'p:Prismatic Bolt!': '3 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '315604' },
+    'Sszorak|16': { 'n': '21', 'score': '100', 'abc': '74%', 'apl': '98%', 'cd:touch of the magi': '100%', 'p:Clearcasting': '22 wasted', 'p:Prismatic Bolt!': '5 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '231189' },
+    'The Coiled Altar|16': { 'n': '20', 'score': '100', 'abc': '77%', 'apl': '97%', 'cd:touch of the magi': '92%', 'p:Clearcasting': '30 wasted', 'p:Prismatic Bolt!': '6 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '256060' },
+    'Ula\'tek|16': { 'n': '10', 'score': '100', 'abc': '77%', 'apl': '97%', 'cd:touch of the magi': '100%', 'p:Clearcasting': '36 wasted', 'p:Prismatic Bolt!': '7 wasted', 'win': '100%', 'cd:arcane surge': '86%', 'outP': '389100' },
+    'Nymrissa Wavecaller|16': { 'n': '23', 'score': '100', 'abc': '75%', 'apl': '97%', 'cd:touch of the magi': '100%', 'p:Clearcasting': '18 wasted', 'p:Prismatic Bolt!': '4 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '284706' },
+    'Kith\'ix|16': { 'n': '11', 'score': '100', 'abc': '75%', 'apl': '99%', 'cd:touch of the magi': '100%', 'p:Clearcasting': '19 wasted', 'p:Prismatic Bolt!': '3 wasted', 'win': '100%', 'cd:arcane surge': '100%', 'outP': '217357' },
+  },
+  'Arms Warrior': {
+    'The Twin Fangs|16': { 'n': '23', 'score': '100', 'abc': '76%', 'apl': '93%', 'p:Sudden Death': '1 wasted', 'dot:Rend': '98%', 'win': '100%', 'cd:avatar': '86%', 'cd:colossus smash': '85%', 'cd:bladestorm': '100%', 'outP': '354980' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '23', 'score': '93', 'abc': '77%', 'apl': '95%', 'p:Sudden Death': '1 wasted', 'dot:Rend': '75%', 'win': '100%', 'cd:avatar': '83%', 'cd:colossus smash': '83%', 'cd:bladestorm': '91%', 'outP': '241829' },
+    'Entombed Sentinels|16': { 'n': '28', 'score': '94', 'abc': '73%', 'apl': '93%', 'p:Sudden Death': '1 wasted', 'dot:Rend': '96%', 'win': '100%', 'cd:avatar': '83%', 'cd:colossus smash': '83%', 'cd:bladestorm': '91%', 'outP': '238795' },
+    'Vashnik the Malignant|16': { 'n': '14', 'score': '100', 'abc': '77%', 'apl': '92%', 'p:Sudden Death': 'All spent', 'dot:Rend': '98%', 'win': '100%', 'cd:avatar': '83%', 'cd:colossus smash': '83%', 'cd:bladestorm': '100%', 'outP': '322987' },
+    'The Lost Explorers|16': { 'n': '23', 'score': '96', 'abc': '74%', 'apl': '93%', 'p:Sudden Death': '1 wasted', 'dot:Rend': '100%', 'win': '100%', 'cd:avatar': '100%', 'cd:colossus smash': '90%', 'cd:bladestorm': '100%', 'outP': '351582' },
+    'Sszorak|16': { 'n': '23', 'score': '100', 'abc': '77%', 'apl': '94%', 'p:Sudden Death': '1 wasted', 'dot:Rend': '100%', 'win': '100%', 'cd:avatar': '86%', 'cd:colossus smash': '92%', 'cd:bladestorm': '100%', 'outP': '241456' },
+    'The Coiled Altar|16': { 'n': '21', 'score': '86', 'abc': '75%', 'apl': '93%', 'p:Sudden Death': '2 wasted', 'dot:Rend': '66%', 'win': '100%', 'cd:avatar': '90%', 'cd:colossus smash': '90%', 'cd:bladestorm': '100%', 'outP': '275331' },
+    'Ula\'tek|16': { 'n': '5', 'score': '82', 'abc': '74%', 'apl': '94%', 'p:Sudden Death': '2 wasted', 'dot:Rend': '67%', 'win': '100%', 'cd:avatar': '82%', 'cd:colossus smash': '85%', 'cd:bladestorm': '100%', 'outP': '369638' },
+    'Nymrissa Wavecaller|16': { 'n': '26', 'score': '100', 'abc': '80%', 'apl': '94%', 'p:Sudden Death': '1 wasted', 'dot:Rend': '100%', 'win': '100%', 'cd:avatar': '83%', 'cd:colossus smash': '83%', 'cd:bladestorm': '91%', 'outP': '239796' },
+    'Kith\'ix|16': { 'n': '13', 'score': '94', 'abc': '77%', 'apl': '92%', 'p:Sudden Death': '1 wasted', 'dot:Rend': '87%', 'win': '100%', 'cd:avatar': '83%', 'cd:colossus smash': '83%', 'cd:bladestorm': '100%', 'outP': '202680' },
+  },
+  'Assassination Rogue': {
+    'The Twin Fangs|16': { 'n': '6', 'score': '100', 'abc': '86%', 'lv:0': '100%', 'dot:Rupture': '100%', 'dot:Garrote': '100%', 'up:Envenom': '92%', 'res': '5%', 'win': '100%', 'cd:deathmark': '100%', 'cd:kingsbane': '100%', 'outP': '282799' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '6', 'score': '87', 'abc': '77%', 'lv:0': '100%', 'dot:Rupture': '83%', 'dot:Garrote': '77%', 'up:Envenom': '82%', 'res': '6%', 'win': '100%', 'cd:deathmark': '100%', 'cd:kingsbane': '100%', 'outP': '222512' },
+    'Entombed Sentinels|16': { 'n': '9', 'score': '100', 'abc': '76%', 'lv:0': '100%', 'dot:Rupture': '100%', 'dot:Garrote': '99%', 'up:Envenom': '80%', 'res': '6%', 'win': '100%', 'cd:deathmark': '100%', 'cd:kingsbane': '100%', 'outP': '218823' },
+    'Vashnik the Malignant|16': { 'n': '5', 'score': '100', 'abc': '80%', 'lv:0': '100%', 'dot:Rupture': '100%', 'dot:Garrote': '99%', 'up:Envenom': '90%', 'res': '7%', 'win': '100%', 'cd:deathmark': '100%', 'cd:kingsbane': '100%', 'outP': '304020' },
+    'The Lost Explorers|16': { 'n': '5', 'score': '100', 'abc': '83%', 'lv:0': '100%', 'dot:Rupture': '100%', 'dot:Garrote': '99%', 'up:Envenom': '79%', 'res': '5%', 'win': '100%', 'cd:deathmark': '100%', 'cd:kingsbane': '100%', 'outP': '279285' },
+    'Sszorak|16': { 'n': '4', 'score': '100', 'abc': '82%', 'lv:0': '100%', 'dot:Rupture': '100%', 'dot:Garrote': '100%', 'up:Envenom': '93%', 'res': '6%', 'win': '100%', 'cd:deathmark': '100%', 'cd:kingsbane': '100%', 'outP': '232307' },
+    'The Coiled Altar|16': { 'n': '6', 'score': '64', 'abc': '76%', 'lv:0': '100%', 'dot:Rupture': '65%', 'dot:Garrote': '64%', 'up:Envenom': '85%', 'res': '7%', 'win': '100%', 'cd:deathmark': '80%', 'cd:kingsbane': '89%', 'outP': '251363' },
+    'Ula\'tek|16': { 'outP': '420515' },
+    'Nymrissa Wavecaller|16': { 'n': '10', 'score': '100', 'abc': '77%', 'lv:0': '100%', 'dot:Rupture': '100%', 'dot:Garrote': '100%', 'up:Envenom': '90%', 'res': '6%', 'win': '100%', 'cd:deathmark': '100%', 'cd:kingsbane': '100%', 'outP': '221436' },
+  },
+  'Augmentation Evoker': {
+    'The Twin Fangs|16': { 'n': '11', 'score': '100', 'abc': '80%', 'up:Ebon Might': '95%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '94%', 'p:Essence Burst': '3 wasted', 'cd:breath of eons': '100%', 'cd:time skip': '100%', 'outP': '309344' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '18', 'score': '94', 'abc': '80%', 'up:Ebon Might': '95%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '92%', 'p:Essence Burst': '1 wasted', 'cd:breath of eons': '75%', 'cd:time skip': '100%', 'outP': '243771' },
+    'Entombed Sentinels|16': { 'n': '8', 'score': '94', 'abc': '82%', 'up:Ebon Might': '93%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '100%', 'p:Essence Burst': '4 wasted', 'cd:breath of eons': '75%', 'cd:time skip': '100%', 'outP': '228894' },
+    'Vashnik the Malignant|16': { 'n': '5', 'score': '100', 'abc': '80%', 'up:Ebon Might': '97%', 'apl': '100%', 'cd:upheaval': '94%', 'cd:fire breath': '100%', 'p:Essence Burst': '5 wasted', 'cd:breath of eons': '80%', 'cd:time skip': '100%', 'outP': '311604' },
+    'The Lost Explorers|16': { 'n': '14', 'score': '94', 'abc': '79%', 'up:Ebon Might': '98%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '92%', 'p:Essence Burst': '4 wasted', 'cd:breath of eons': '75%', 'cd:time skip': '100%', 'outP': '327178' },
+    'Sszorak|16': { 'n': '9', 'score': '94', 'abc': '80%', 'up:Ebon Might': '93%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '93%', 'p:Essence Burst': '2 wasted', 'cd:breath of eons': '75%', 'cd:time skip': '100%', 'outP': '233466' },
+    'The Coiled Altar|16': { 'n': '12', 'score': '96', 'abc': '78%', 'up:Ebon Might': '93%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '96%', 'p:Essence Burst': '5 wasted', 'cd:breath of eons': '86%', 'cd:time skip': '100%', 'outP': '271238' },
+    'Ula\'tek|16': { 'n': '3', 'score': '84', 'abc': '75%', 'up:Ebon Might': '90%', 'apl': '99%', 'cd:upheaval': '100%', 'cd:fire breath': '96%', 'p:Essence Burst': '11 wasted', 'cd:breath of eons': '75%', 'cd:time skip': '100%', 'outP': '375181' },
+    'Nymrissa Wavecaller|16': { 'n': '15', 'score': '94', 'abc': '84%', 'up:Ebon Might': '96%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '93%', 'p:Essence Burst': '1 wasted', 'cd:breath of eons': '75%', 'cd:time skip': '100%', 'outP': '242726' },
+    'Kith\'ix|16': { 'n': '6', 'score': '100', 'abc': '80%', 'up:Ebon Might': '94%', 'apl': '100%', 'cd:upheaval': '100%', 'cd:fire breath': '93%', 'p:Essence Burst': '2 wasted', 'cd:breath of eons': '100%', 'cd:time skip': '100%', 'outP': '223455' },
+  },
+  'Balance Druid': {
+    'The Twin Fangs|16': { 'n': '15', 'score': '100', 'abc': '86%', 'up:Eclipse': '71%', 'apl': '88%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '2%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '298537' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '19', 'score': '88', 'abc': '87%', 'up:Eclipse': '70%', 'apl': '88%', 'cd:fury of elune': '100%', 'dot:Moonfire': '78%', 'dot:Sunfire': '77%', 'res': '2%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '239745' },
+    'Entombed Sentinels|16': { 'n': '23', 'score': '95', 'abc': '80%', 'up:Eclipse': '67%', 'apl': '86%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '5%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '262009' },
+    'Vashnik the Malignant|16': { 'n': '7', 'score': '91', 'abc': '85%', 'up:Eclipse': '71%', 'apl': '82%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '1%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '320419', 'cd:force of nature': '75%' },
+    'The Lost Explorers|16': { 'n': '23', 'score': '100', 'abc': '88%', 'up:Eclipse': '71%', 'apl': '88%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '2%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '348070' },
+    'Sszorak|16': { 'n': '21', 'score': '94', 'abc': '81%', 'up:Eclipse': '66%', 'apl': '87%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '0%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '219270', 'cd:force of nature': '86%' },
+    'The Coiled Altar|16': { 'n': '19', 'score': '71', 'abc': '86%', 'up:Eclipse': '65%', 'apl': '84%', 'cd:fury of elune': '100%', 'dot:Moonfire': '67%', 'dot:Sunfire': '67%', 'res': '3%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '239574' },
+    'Ula\'tek|16': { 'n': '5', 'score': '76', 'abc': '80%', 'up:Eclipse': '64%', 'apl': '92%', 'cd:fury of elune': '90%', 'dot:Moonfire': '70%', 'dot:Sunfire': '70%', 'res': '1%', 'win': '100%', 'cd:incarnation: chosen of elune': '86%', 'outP': '328833', 'cd:force of nature': '65%' },
+    'Nymrissa Wavecaller|16': { 'n': '21', 'score': '84', 'abc': '83%', 'up:Eclipse': '69%', 'apl': '76%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '5%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '340915', 'cd:force of nature': '71%' },
+    'Kith\'ix|16': { 'n': '7', 'score': '95', 'abc': '80%', 'up:Eclipse': '70%', 'apl': '89%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '1%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '215521' },
+  },
+  'Beast Mastery Hunter': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '100', 'abc': '79%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '10%', 'win': '100%', 'cd:bestial wrath': '93%', 'outP': '269463' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '7', 'score': '100', 'abc': '80%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '100%', 'cd:bestial wrath': '90%', 'outP': '233822' },
+    'Entombed Sentinels|16': { 'n': '4', 'score': '100', 'abc': '79%', 'apl': '88%', 'cd:kill command': '98%', 'cd:barbed shot': '100%', 'res': '13%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '213137' },
+    'Vashnik the Malignant|16': { 'n': '5', 'score': '94', 'abc': '79%', 'apl': '86%', 'cd:kill command': '100%', 'cd:barbed shot': '100%', 'res': '7%', 'win': '100%', 'cd:bestial wrath': '80%', 'outP': '342251' },
+    'The Lost Explorers|16': { 'n': '4', 'score': '100', 'abc': '77%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '7%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '275355' },
+    'Sszorak|16': { 'n': '17', 'score': '100', 'abc': '81%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '100%', 'cd:bestial wrath': '91%', 'outP': '244134' },
+    'The Coiled Altar|16': { 'n': '3', 'score': '100', 'abc': '83%', 'apl': '87%', 'cd:kill command': '99%', 'cd:barbed shot': '101%', 'res': '14%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '214616' },
+    'Ula\'tek|16': { 'outP': '339840' },
+    'Nymrissa Wavecaller|16': { 'n': '9', 'score': '100', 'abc': '80%', 'apl': '87%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '237516' },
+    'Kith\'ix|16': { 'n': '3', 'score': '100', 'abc': '76%', 'apl': '89%', 'cd:kill command': '100%', 'cd:barbed shot': '100%', 'res': '12%', 'win': '90%', 'cd:bestial wrath': '100%', 'outP': '216261' },
+  },
+  'Blood Death Knight': {
+    'The Twin Fangs|16': { 'n': '11', 'score': '100', 'abc': '83%', 'apl': '93%', 'cd:blood boil': '82%', 'cd:death and decay': '96%', 'res': '1%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '180753' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '22', 'score': '87', 'abc': '75%', 'apl': '90%', 'cd:blood boil': '80%', 'cd:death and decay': '94%', 'res': '3%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '114583' },
+    'Entombed Sentinels|16': { 'n': '19', 'score': '87', 'abc': '75%', 'apl': '91%', 'cd:blood boil': '64%', 'cd:death and decay': '94%', 'res': '4%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '123733' },
+    'Vashnik the Malignant|16': { 'n': '9', 'score': '94', 'abc': '82%', 'apl': '88%', 'cd:blood boil': '81%', 'cd:death and decay': '94%', 'res': '2%', 'up:Bone Shield': '99%', 'cd:dancing rune weapon': '100%', 'outP': '166918' },
+    'The Lost Explorers|16': { 'n': '21', 'score': '87', 'abc': '77%', 'apl': '91%', 'cd:blood boil': '74%', 'cd:death and decay': '100%', 'res': '3%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '157884' },
+    'Sszorak|16': { 'n': '12', 'score': '94', 'abc': '76%', 'apl': '90%', 'cd:blood boil': '85%', 'cd:death and decay': '95%', 'res': '0%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '116891' },
+    'The Coiled Altar|16': { 'n': '10', 'score': '81', 'abc': '75%', 'apl': '88%', 'cd:blood boil': '68%', 'cd:death and decay': '97%', 'res': '4%', 'up:Bone Shield': '99%', 'cd:dancing rune weapon': '100%', 'outP': '133317' },
+    'Ula\'tek|16': { 'n': '9', 'score': '87', 'abc': '76%', 'apl': '93%', 'cd:blood boil': '67%', 'cd:death and decay': '100%', 'res': '2%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '86%', 'outP': '183734' },
+    'Nymrissa Wavecaller|16': { 'n': '21', 'score': '87', 'abc': '70%', 'apl': '91%', 'cd:blood boil': '70%', 'cd:death and decay': '94%', 'res': '2%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '103859' },
+    'Kith\'ix|16': { 'n': '15', 'score': '94', 'abc': '75%', 'apl': '92%', 'cd:blood boil': '75%', 'cd:death and decay': '100%', 'res': '2%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '94438' },
+  },
+  'Brewmaster Monk': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '100', 'abc': '82%', 'apl': '87%', 'cd:keg smash': '100%', 'cd:blackout kick': '73%', 'cd:breath of fire': '100%', 'up:Shuffle': '100%', 'cd:invoke niuzao, the black ox': '100%', 'cd:exploding keg': '100%', 'outP': '118632' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '108743' },
+    'Entombed Sentinels|16': { 'outP': '108864' },
+    'Vashnik the Malignant|16': { 'outP': '149780' },
+    'The Lost Explorers|16': { 'outP': '131637' },
+    'Sszorak|16': { 'outP': '99952' },
+    'The Coiled Altar|16': { 'outP': '78064' },
+    'Ula\'tek|16': { 'outP': '117716' },
+    'Nymrissa Wavecaller|16': { 'outP': '92375' },
+  },
+  'Demonology Warlock': {
+    'The Twin Fangs|16': { 'n': '15', 'score': '98', 'abc': '80%', 'apl': '88%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '1%', 'tyh': '8.6', 'cd:summon demonic tyrant': '100%', 'tyd': '100%', 'tyc': '60%', 'tyx': '22', 'pi': '67%', 'cd:call dreadstalkers': '94%', 'cd:grimoire: imp lord': '100%', 'imp': '4.1', 'outP': '328435' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '23', 'score': '97', 'abc': '84%', 'apl': '85%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '0%', 'tyh': '9', 'cd:summon demonic tyrant': '100%', 'tyd': '100%', 'tyc': '75%', 'tyx': '22', 'pi': '100%', 'cd:call dreadstalkers': '93%', 'cd:grimoire: imp lord': '100%', 'imp': '3.6', 'outP': '253765' },
+    'Entombed Sentinels|16': { 'n': '3', 'score': '95', 'abc': '83%', 'apl': '79%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '2%', 'tyh': '9.6', 'cd:summon demonic tyrant': '100%', 'tyd': '100%', 'tyc': '75%', 'tyx': '23', 'cd:call dreadstalkers': '93%', 'cd:grimoire: imp lord': '100%', 'imp': '3.5', 'outP': '234495' },
+    'Vashnik the Malignant|16': { 'n': '22', 'score': '96', 'abc': '85%', 'apl': '87%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '1%', 'tyh': '9.8', 'cd:summon demonic tyrant': '100%', 'tyd': '100%', 'tyc': '75%', 'tyx': '22', 'pi': '67%', 'cd:call dreadstalkers': '93%', 'cd:grimoire: imp lord': '100%', 'imp': '3.4', 'outP': '370107' },
+    'The Lost Explorers|16': { 'n': '17', 'score': '95', 'abc': '84%', 'apl': '89%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '0%', 'tyh': '8.4', 'cd:summon demonic tyrant': '100%', 'tyd': '100%', 'tyc': '75%', 'tyx': '20', 'pi': '100%', 'cd:call dreadstalkers': '93%', 'cd:grimoire: imp lord': '100%', 'imp': '3.5', 'outP': '347465' },
+    'Sszorak|16': { 'n': '22', 'score': '91', 'abc': '77%', 'apl': '88%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '0%', 'tyh': '9.2', 'cd:summon demonic tyrant': '83%', 'tyd': '100%', 'tyc': '75%', 'tyx': '22', 'pi': '100%', 'cd:call dreadstalkers': '94%', 'cd:grimoire: imp lord': '100%', 'imp': '3.5', 'outP': '224584' },
+    'The Coiled Altar|16': { 'outP': '259384' },
+    'Ula\'tek|16': { 'n': '5', 'score': '96', 'abc': '81%', 'apl': '88%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '0%', 'tyh': '8.3', 'cd:summon demonic tyrant': '90%', 'tyd': '89%', 'tyc': '63%', 'tyx': '23', 'cd:call dreadstalkers': '93%', 'cd:grimoire: imp lord': '100%', 'imp': '3.3', 'outP': '372044' },
+    'Nymrissa Wavecaller|16': { 'n': '22', 'score': '98', 'abc': '83%', 'apl': '87%', 'p:Demonic Core': 'All spent', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '1%', 'tyh': '9.4', 'cd:summon demonic tyrant': '100%', 'tyd': '100%', 'tyc': '75%', 'tyx': '22', 'pi': '100%', 'cd:call dreadstalkers': '93%', 'cd:grimoire: imp lord': '100%', 'imp': '3.5', 'outP': '264272' },
+    'Kith\'ix|16': { 'n': '14', 'score': '96', 'abc': '78%', 'apl': '87%', 'p:Demonic Core': '1 wasted', 'dbh': '1', 'p:Ruination': 'All spent', 'p:Infernal Bolt': 'All spent', 'p:Demonic Art': 'All spent', 'ssw': '1%', 'tyh': '8.6', 'cd:summon demonic tyrant': '100%', 'tyd': '100%', 'tyc': '75%', 'tyx': '22', 'pi': '100%', 'cd:call dreadstalkers': '93%', 'cd:grimoire: imp lord': '100%', 'imp': '3.8', 'outP': '209559' },
+  },
+  'Destruction Warlock': {
+    'The Twin Fangs|16': { 'n': '3', 'score': '100', 'abc': '85%', 'apl': '99%', 'cd:conflagrate': '98%', 'cd:soul fire': '88%', 'p:Backdraft': '1 wasted', 'dot:Wither': '100%', 'win': '100%', 'cd:summon infernal': '100%', 'cd:malevolence': '100%', 'outP': '273302' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '185142' },
+    'Entombed Sentinels|16': { 'n': '23', 'score': '100', 'abc': '85%', 'apl': '96%', 'cd:conflagrate': '93%', 'cd:soul fire': '86%', 'p:Backdraft': 'All spent', 'dot:Wither': '100%', 'win': '100%', 'cd:summon infernal': '100%', 'cd:malevolence': '100%', 'outP': '281612' },
+    'Vashnik the Malignant|16': { 'outP': '225215' },
+    'The Lost Explorers|16': { 'n': '11', 'score': '100', 'abc': '88%', 'apl': '99%', 'cd:conflagrate': '98%', 'cd:soul fire': '100%', 'p:Backdraft': 'All spent', 'dot:Wither': '100%', 'win': '100%', 'cd:summon infernal': '100%', 'cd:malevolence': '100%', 'outP': '337118' },
+    'Sszorak|16': { 'outP': '178037' },
+    'Nymrissa Wavecaller|16': { 'outP': '174656' },
+  },
+  'Devastation Evoker': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '95', 'abc': '66%', 'apl': '100%', 'cd:fire breath': '100%', 'cd:eternity surge': '100%', 'p:Essence Burst': '2 wasted', 'win': '100%', 'cd:dragonrage': '100%', 'outP': '292567' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '4', 'score': '100', 'abc': '67%', 'apl': '100%', 'cd:fire breath': '100%', 'cd:eternity surge': '100%', 'p:Essence Burst': '2 wasted', 'win': '100%', 'cd:dragonrage': '100%', 'outP': '234833' },
+    'Entombed Sentinels|16': { 'n': '4', 'score': '94', 'abc': '63%', 'apl': '99%', 'cd:fire breath': '100%', 'cd:eternity surge': '100%', 'p:Essence Burst': '4 wasted', 'win': '100%', 'cd:dragonrage': '100%', 'outP': '207218' },
+    'Vashnik the Malignant|16': { 'n': '4', 'score': '100', 'abc': '70%', 'apl': '99%', 'cd:fire breath': '100%', 'cd:eternity surge': '100%', 'p:Essence Burst': '2 wasted', 'win': '100%', 'cd:dragonrage': '100%', 'outP': '306176' },
+    'The Lost Explorers|16': { 'n': '7', 'score': '94', 'abc': '64%', 'apl': '99%', 'cd:fire breath': '100%', 'cd:eternity surge': '94%', 'p:Essence Burst': 'All spent', 'win': '67%', 'cd:dragonrage': '100%', 'outP': '327592' },
+    'Sszorak|16': { 'n': '3', 'score': '100', 'abc': '69%', 'apl': '100%', 'cd:fire breath': '100%', 'cd:eternity surge': '95%', 'p:Essence Burst': '3 wasted', 'win': '67%', 'cd:dragonrage': '100%', 'outP': '187385' },
+    'The Coiled Altar|16': { 'n': '3', 'score': '94', 'abc': '64%', 'apl': '99%', 'cd:fire breath': '97%', 'cd:eternity surge': '97%', 'p:Essence Burst': '3 wasted', 'win': '100%', 'cd:dragonrage': '80%', 'outP': '238865' },
+    'Nymrissa Wavecaller|16': { 'n': '6', 'score': '95', 'abc': '68%', 'apl': '99%', 'cd:fire breath': '100%', 'cd:eternity surge': '100%', 'p:Essence Burst': '4 wasted', 'win': '100%', 'cd:dragonrage': '100%', 'outP': '251701' },
+    'Kith\'ix|16': { 'n': '3', 'score': '100', 'abc': '68%', 'apl': '100%', 'cd:fire breath': '100%', 'cd:eternity surge': '100%', 'p:Essence Burst': '1 wasted', 'win': '100%', 'cd:dragonrage': '100%' },
+  },
+  'Devourer Demon Hunter': {
+    'The Twin Fangs|16': { 'n': '3', 'score': '100', 'abc': '63%', 'cd:void ray': '100%', 'cd:soul immolation': '100%', 'win': '100%', 'outP': '289542' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '7', 'score': '89', 'abc': '65%', 'cd:void ray': '97%', 'cd:soul immolation': '89%', 'win': '100%', 'outP': '242849' },
+    'Entombed Sentinels|16': { 'n': '8', 'score': '83', 'abc': '68%', 'cd:void ray': '97%', 'cd:soul immolation': '89%', 'win': '75%', 'outP': '220301' },
+    'Vashnik the Malignant|16': { 'outP': '341009' },
+    'The Lost Explorers|16': { 'n': '9', 'score': '78', 'abc': '64%', 'cd:void ray': '97%', 'cd:soul immolation': '86%', 'win': '50%', 'outP': '299683' },
+    'Sszorak|16': { 'outP': '227461' },
+    'The Coiled Altar|16': { 'n': '3', 'score': '67', 'abc': '64%', 'cd:void ray': '100%', 'cd:soul immolation': '100%', 'win': '33%', 'outP': '232132' },
+    'Ula\'tek|16': { 'outP': '301882' },
+    'Nymrissa Wavecaller|16': { 'n': '7', 'score': '100', 'abc': '65%', 'cd:void ray': '97%', 'cd:soul immolation': '89%', 'win': '100%', 'outP': '248741' },
+  },
+  'Discipline Priest': {
+    'The Twin Fangs|16': { 'outP': '388600' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '285125' },
+    'Entombed Sentinels|16': { 'outP': '322937' },
+    'Vashnik the Malignant|16': { 'outP': '287976' },
+    'The Lost Explorers|16': { 'outP': '332313' },
+    'Sszorak|16': { 'outP': '369536' },
+    'The Coiled Altar|16': { 'outP': '387986' },
+    'Nymrissa Wavecaller|16': { 'outP': '267990' },
+  },
+  'Elemental Shaman': {
+    'The Twin Fangs|16': { 'n': '6', 'score': '100', 'abc': '88%', 'apl': '98%', 'cd:stormkeeper': '78%', 'p:Lava Surge': '2 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '100%', 'res': '3%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '280800' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '16', 'score': '88', 'abc': '91%', 'apl': '90%', 'cd:stormkeeper': '86%', 'p:Lava Surge': 'All spent', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '73%', 'res': '1%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '246856' },
+    'Entombed Sentinels|16': { 'n': '10', 'score': '100', 'abc': '88%', 'apl': '97%', 'cd:stormkeeper': '86%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '98%', 'res': '3%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '219396' },
+    'Vashnik the Malignant|16': { 'n': '3', 'score': '86', 'abc': '91%', 'apl': '88%', 'cd:stormkeeper': '75%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '100%', 'res': '8%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '317103' },
+    'The Lost Explorers|16': { 'n': '16', 'score': '95', 'abc': '89%', 'apl': '96%', 'cd:stormkeeper': '86%', 'p:Lava Surge': 'All spent', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '100%', 'res': '2%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '289379' },
+    'Sszorak|16': { 'n': '12', 'score': '100', 'abc': '87%', 'apl': '92%', 'cd:stormkeeper': '86%', 'p:Lava Surge': 'All spent', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '100%', 'res': '1%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '229699' },
+    'The Coiled Altar|16': { 'n': '8', 'score': '82', 'abc': '89%', 'apl': '93%', 'cd:stormkeeper': '85%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '64%', 'res': '1%', 'win': '100%', 'cd:ascendance': '80%', 'outP': '241114' },
+    'Ula\'tek|16': { 'outP': '327122' },
+    'Nymrissa Wavecaller|16': { 'n': '11', 'score': '83', 'abc': '85%', 'apl': '88%', 'cd:stormkeeper': '86%', 'p:Lava Surge': '1 wasted', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '71%', 'res': '2%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '283189' },
+    'Kith\'ix|16': { 'n': '6', 'score': '100', 'abc': '90%', 'apl': '90%', 'cd:stormkeeper': '88%', 'p:Lava Surge': 'All spent', 'p:Stormkeeper': 'All spent', 'dot:Flame Shock': '100%', 'res': '5%', 'win': '100%', 'cd:ascendance': '100%', 'outP': '227568' },
+  },
+  'Enhancement Shaman': {
+    'The Twin Fangs|16': { 'n': '3', 'score': '100', 'abc': '76%', 'apl': '88%', 'cd:stormstrike': '99%', 'cd:crash lightning': '99%', 'win': '100%', 'cd:doom winds': '100%', 'cd:ascendance': '100%', 'outP': '281367' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '227734' },
+    'Entombed Sentinels|16': { 'outP': '203803' },
+    'Vashnik the Malignant|16': { 'outP': '303703' },
+    'The Lost Explorers|16': { 'n': '3', 'score': '94', 'abc': '70%', 'apl': '88%', 'cd:stormstrike': '98%', 'cd:crash lightning': '98%', 'win': '100%', 'cd:doom winds': '100%', 'cd:ascendance': '100%', 'outP': '280768' },
+    'Sszorak|16': { 'outP': '214820' },
+    'Nymrissa Wavecaller|16': { 'outP': '227728' },
+  },
+  'Feral Druid': {
+    'The Twin Fangs|16': { 'outP': '256170' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '208685' },
+    'Entombed Sentinels|16': { 'outP': '198206' },
+    'Vashnik the Malignant|16': { 'outP': '268896' },
+    'The Lost Explorers|16': { 'outP': '245471' },
+    'Sszorak|16': { 'outP': '220118' },
+    'Nymrissa Wavecaller|16': { 'outP': '206979' },
+  },
+  'Fire Mage': {
+    'Nek\'zali the Soulcoiler|16': { 'outP': '177882' },
+    'Entombed Sentinels|16': { 'outP': '176476' },
+    'Vashnik the Malignant|16': { 'outP': '309873' },
+    'The Lost Explorers|16': { 'outP': '224107' },
+    'Sszorak|16': { 'outP': '204908' },
+    'Nymrissa Wavecaller|16': { 'outP': '190195' },
+  },
+  'Frost Death Knight': {
+    'The Twin Fangs|16': { 'n': '10', 'score': '94', 'abc': '66%', 'apl': '99%', 'p:Rime': '4 wasted', 'res': '15%', 'win': '100%', 'cd:pillar of frost': '100%', 'cd:reaper\'s mark': '100%', 'cd:breath of sindragosa': '100%', 'outP': '332926' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '8', 'score': '94', 'abc': '69%', 'apl': '98%', 'p:Rime': '2 wasted', 'res': '12%', 'win': '100%', 'cd:pillar of frost': '100%', 'cd:reaper\'s mark': '100%', 'cd:breath of sindragosa': '100%', 'outP': '238872' },
+    'Entombed Sentinels|16': { 'n': '11', 'score': '89', 'abc': '63%', 'apl': '99%', 'p:Rime': '2 wasted', 'res': '14%', 'win': '100%', 'cd:pillar of frost': '86%', 'cd:reaper\'s mark': '86%', 'cd:breath of sindragosa': '75%', 'outP': '231053' },
+    'Vashnik the Malignant|16': { 'n': '8', 'score': '94', 'abc': '68%', 'apl': '93%', 'p:Rime': '4 wasted', 'res': '11%', 'win': '100%', 'cd:pillar of frost': '100%', 'cd:reaper\'s mark': '100%', 'cd:breath of sindragosa': '100%', 'outP': '339233' },
+    'The Lost Explorers|16': { 'n': '8', 'score': '94', 'abc': '64%', 'apl': '98%', 'p:Rime': '2 wasted', 'res': '15%', 'win': '100%', 'cd:pillar of frost': '100%', 'cd:reaper\'s mark': '100%', 'cd:breath of sindragosa': '100%', 'outP': '317164' },
+    'Sszorak|16': { 'n': '9', 'score': '94', 'abc': '67%', 'apl': '100%', 'p:Rime': '1 wasted', 'res': '18%', 'win': '100%', 'cd:pillar of frost': '100%', 'cd:reaper\'s mark': '100%', 'cd:breath of sindragosa': '100%', 'outP': '243633' },
+    'The Coiled Altar|16': { 'n': '6', 'score': '94', 'abc': '64%', 'apl': '99%', 'p:Rime': '4 wasted', 'res': '14%', 'win': '100%', 'cd:pillar of frost': '92%', 'cd:reaper\'s mark': '92%', 'cd:breath of sindragosa': '100%', 'outP': '248918' },
+    'Ula\'tek|16': { 'n': '4', 'score': '89', 'abc': '59%', 'apl': '96%', 'p:Rime': '4 wasted', 'res': '17%', 'win': '100%', 'cd:pillar of frost': '100%', 'cd:reaper\'s mark': '100%', 'cd:breath of sindragosa': '86%', 'outP': '351487' },
+    'Nymrissa Wavecaller|16': { 'n': '3', 'score': '94', 'abc': '66%', 'apl': '99%', 'p:Rime': 'All spent', 'res': '15%', 'win': '100%', 'cd:pillar of frost': '86%', 'cd:reaper\'s mark': '86%', 'cd:breath of sindragosa': '75%', 'outP': '231574' },
+    'Kith\'ix|16': { 'n': '5', 'score': '100', 'abc': '65%', 'apl': '95%', 'p:Rime': '2 wasted', 'res': '10%', 'win': '100%', 'cd:pillar of frost': '100%', 'cd:reaper\'s mark': '100%', 'cd:breath of sindragosa': '100%', 'outP': '199711' },
+  },
+  'Frost Mage': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '100', 'abc': '87%', 'apl': '91%', 'cd:frozen orb': '100%', 'p:Brain Freeze': '2 wasted', 'p:Fingers of Frost': '1 wasted', 'p:Glacial Spike!': 'All spent', 'outP': '343287' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '212780' },
+    'Entombed Sentinels|16': { 'outP': '234506' },
+    'Vashnik the Malignant|16': { 'outP': '281142' },
+    'The Lost Explorers|16': { 'n': '5', 'score': '100', 'abc': '86%', 'apl': '90%', 'cd:frozen orb': '100%', 'p:Brain Freeze': '1 wasted', 'p:Fingers of Frost': '1 wasted', 'p:Glacial Spike!': 'All spent', 'outP': '334711' },
+    'Sszorak|16': { 'outP': '183047' },
+    'The Coiled Altar|16': { 'outP': '233503' },
+    'Nymrissa Wavecaller|16': { 'outP': '208881' },
+  },
+  'Fury Warrior': {
+    'Nek\'zali the Soulcoiler|16': { 'outP': '204031' },
+    'Entombed Sentinels|16': { 'outP': '181650' },
+    'Vashnik the Malignant|16': { 'outP': '304339' },
+    'The Lost Explorers|16': { 'outP': '228095' },
+    'Sszorak|16': { 'outP': '204275' },
+    'Nymrissa Wavecaller|16': { 'outP': '213042' },
+  },
+  'Guardian Druid': {
+    'The Twin Fangs|16': { 'n': '3', 'score': '100', 'abc': '71%', 'apl': '97%', 'cd:mangle': '98%', 'cd:thrash': '90%', 'up:Ironfur': '97%', 'cd:incarnation: guardian of ursoc': '100%', 'outP': '148008' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '115706' },
+    'Entombed Sentinels|16': { 'outP': '111428' },
+    'Vashnik the Malignant|16': { 'outP': '151237' },
+    'The Lost Explorers|16': { 'outP': '135978' },
+    'Sszorak|16': { 'n': '3', 'score': '100', 'abc': '69%', 'apl': '95%', 'cd:mangle': '93%', 'cd:thrash': '86%', 'up:Ironfur': '89%', 'cd:incarnation: guardian of ursoc': '100%', 'outP': '114216' },
+    'The Coiled Altar|16': { 'outP': '128092' },
+    'Nymrissa Wavecaller|16': { 'outP': '106737' },
+  },
+  'Havoc Demon Hunter': {
+    'The Twin Fangs|16': { 'n': '11', 'score': '94', 'abc': '72%', 'cd:eye beam': '95%', 'cd:blade dance': '87%', 'cd:immolation aura': '64%', 'cd:essence break': '91%', 'res': '17%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '300331' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '15', 'score': '94', 'abc': '70%', 'cd:eye beam': '93%', 'cd:blade dance': '89%', 'cd:immolation aura': '71%', 'cd:essence break': '89%', 'res': '16%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '249289' },
+    'Entombed Sentinels|16': { 'n': '14', 'score': '94', 'abc': '69%', 'cd:eye beam': '100%', 'cd:blade dance': '84%', 'cd:immolation aura': '69%', 'cd:essence break': '90%', 'res': '15%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '228636' },
+    'Vashnik the Malignant|16': { 'n': '13', 'score': '94', 'abc': '73%', 'cd:eye beam': '100%', 'cd:blade dance': '88%', 'cd:immolation aura': '67%', 'cd:essence break': '90%', 'res': '15%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '330599' },
+    'The Lost Explorers|16': { 'n': '14', 'score': '88', 'abc': '71%', 'cd:eye beam': '100%', 'cd:blade dance': '86%', 'cd:immolation aura': '67%', 'cd:essence break': '89%', 'res': '18%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '294840' },
+    'Sszorak|16': { 'n': '14', 'score': '100', 'abc': '73%', 'cd:eye beam': '100%', 'cd:blade dance': '91%', 'cd:immolation aura': '68%', 'cd:essence break': '91%', 'res': '16%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '237537' },
+    'The Coiled Altar|16': { 'n': '12', 'score': '88', 'abc': '69%', 'cd:eye beam': '100%', 'cd:blade dance': '88%', 'cd:immolation aura': '59%', 'cd:essence break': '82%', 'res': '16%', 'win': '100%', 'cd:metamorphosis': '80%', 'outP': '255272' },
+    'Ula\'tek|16': { 'n': '6', 'score': '88', 'abc': '70%', 'cd:eye beam': '77%', 'cd:blade dance': '87%', 'cd:immolation aura': '93%', 'cd:essence break': '84%', 'res': '11%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '355028' },
+    'Nymrissa Wavecaller|16': { 'n': '20', 'score': '100', 'abc': '73%', 'cd:eye beam': '94%', 'cd:blade dance': '90%', 'cd:immolation aura': '67%', 'cd:essence break': '90%', 'res': '16%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '242257' },
+    'Kith\'ix|16': { 'n': '7', 'score': '88', 'abc': '69%', 'cd:eye beam': '73%', 'cd:blade dance': '91%', 'cd:immolation aura': '77%', 'cd:essence break': '90%', 'res': '7%', 'win': '100%', 'cd:metamorphosis': '100%', 'outP': '228173' },
+  },
+  'Holy Paladin': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '94', 'abc': '85%', 'apl': '96%', 'hs': '98%', 'jhs': '0', 'p:Infusion of Light': '1 wasted', 'fol': '8', 'hp': '6%', 'ef': '79%', 'p:Divine Purpose': '2 wasted', 'p:Dawnlight': 'All spent', 'mana': '49%', 'mnx': '30%', 'cd:divine toll': '86%', 'cd:avenging wrath': '100%', 'cd:aura mastery': '67%', 'folb': '56%', 'bv': '79%', 'act': '93%', 'dt': '75%', 'outP': '398608' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '12', 'score': '95', 'abc': '80%', 'apl': '94%', 'hs': '93%', 'jhs': '2', 'p:Infusion of Light': 'All spent', 'fol': '3', 'hp': '2%', 'ef': '92%', 'p:Divine Purpose': 'All spent', 'p:Dawnlight': 'All spent', 'mana': '35%', 'mnx': '32%', 'cd:divine toll': '89%', 'cd:avenging wrath': '67%', 'cd:aura mastery': '100%', 'folb': '60%', 'bv': '84%', 'act': '87%', 'dt': '100%', 'outP': '355056' },
+    'Entombed Sentinels|16': { 'n': '7', 'score': '93', 'abc': '81%', 'apl': '93%', 'hs': '91%', 'jhs': '2', 'p:Infusion of Light': '1 wasted', 'fol': '4', 'hp': '4%', 'ef': '89%', 'p:Divine Purpose': 'All spent', 'p:Dawnlight': 'All spent', 'mana': '27%', 'mnx': '11%', 'cd:divine toll': '80%', 'cd:avenging wrath': '100%', 'cd:aura mastery': '50%', 'folb': '68%', 'bv': '80%', 'act': '90%', 'dt': '63%', 'outP': '363006' },
+    'Vashnik the Malignant|16': { 'n': '4', 'score': '85', 'abc': '80%', 'apl': '91%', 'hs': '92%', 'jhs': '2', 'p:Infusion of Light': '1 wasted', 'fol': '3', 'hp': '5%', 'ef': '78%', 'p:Divine Purpose': 'All spent', 'p:Dawnlight': 'All spent', 'mana': '45%', 'mnx': '10%', 'cd:divine toll': '80%', 'cd:avenging wrath': '67%', 'cd:aura mastery': '100%', 'folb': '62%', 'bv': '79%', 'act': '88%', 'dt': '100%', 'outP': '351206' },
+    'The Lost Explorers|16': { 'n': '14', 'score': '94', 'abc': '78%', 'apl': '95%', 'hs': '95%', 'jhs': '1', 'p:Infusion of Light': '1 wasted', 'fol': '2', 'hp': '1%', 'ef': '93%', 'p:Divine Purpose': 'All spent', 'p:Dawnlight': 'All spent', 'mana': '35%', 'mnx': '10%', 'cd:divine toll': '89%', 'cd:avenging wrath': '67%', 'cd:aura mastery': '100%', 'folb': '57%', 'bv': '88%', 'act': '86%', 'dt': '88%', 'outP': '375958' },
+    'Sszorak|16': { 'n': '5', 'score': '89', 'abc': '83%', 'apl': '90%', 'hs': '94%', 'jhs': '1', 'p:Infusion of Light': '1 wasted', 'fol': '1', 'hp': '2%', 'ef': '76%', 'p:Divine Purpose': 'All spent', 'p:Dawnlight': 'All spent', 'mana': '40%', 'mnx': '12%', 'cd:divine toll': '90%', 'cd:avenging wrath': '100%', 'cd:aura mastery': '100%', 'folb': '58%', 'bv': '90%', 'act': '91%', 'dt': '100%', 'outP': '396886' },
+    'The Coiled Altar|16': { 'n': '11', 'score': '95', 'abc': '87%', 'apl': '94%', 'hs': '94%', 'jhs': '1', 'p:Infusion of Light': '2 wasted', 'fol': '9', 'hp': '2%', 'ef': '90%', 'p:Divine Purpose': '2 wasted', 'p:Dawnlight': '1 wasted', 'mana': '24%', 'mnx': '20%', 'cd:divine toll': '83%', 'cd:avenging wrath': '80%', 'cd:aura mastery': '100%', 'folb': '57%', 'bv': '83%', 'act': '95%', 'dt': '93%', 'outP': '396647' },
+    'Ula\'tek|16': { 'outP': '412783' },
+    'Nymrissa Wavecaller|16': { 'n': '4', 'score': '88', 'abc': '82%', 'apl': '90%', 'hs': '94%', 'jhs': '2', 'p:Infusion of Light': '1 wasted', 'fol': '0', 'hp': '9%', 'ef': '100%', 'p:Divine Purpose': '1 wasted', 'p:Dawnlight': '2 wasted', 'mana': '52%', 'mnx': '14%', 'cd:divine toll': '80%', 'cd:avenging wrath': '67%', 'cd:aura mastery': '100%', 'folb': '68%', 'bv': '63%', 'act': '90%', 'dt': '100%', 'outP': '345220', 'aw': '52.0 a minute' },
+    'Kith\'ix|16': { 'outP': '322921' },
+  },
+  'Holy Priest': {
+    'The Twin Fangs|16': { 'n': '6', 'score': '100', 'abc': '77%', 'apl': '100%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'win': '100%', 'cd:apotheosis': '100%', 'cd:divine hymn': '100%', 'outP': '449940' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '13', 'score': '100', 'abc': '80%', 'apl': '99%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '67%', 'cd:divine hymn': '67%', 'outP': '402207' },
+    'Entombed Sentinels|16': { 'n': '10', 'score': '100', 'abc': '79%', 'apl': '98%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '100%', 'cd:divine hymn': '67%', 'outP': '432887' },
+    'Vashnik the Malignant|16': { 'n': '8', 'score': '100', 'abc': '80%', 'apl': '99%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '67%', 'cd:divine hymn': '67%', 'outP': '387548' },
+    'The Lost Explorers|16': { 'n': '10', 'score': '100', 'abc': '79%', 'apl': '97%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '67%', 'cd:divine hymn': '67%', 'outP': '439040' },
+    'Sszorak|16': { 'n': '12', 'score': '100', 'abc': '75%', 'apl': '98%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '98%', 'win': '100%', 'cd:apotheosis': '100%', 'cd:divine hymn': '100%', 'outP': '435650' },
+    'The Coiled Altar|16': { 'n': '4', 'score': '100', 'abc': '82%', 'apl': '100%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '100%', 'cd:divine hymn': '80%', 'outP': '480478' },
+    'Ula\'tek|16': { 'n': '4', 'score': '100', 'abc': '79%', 'apl': '99%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '100%', 'cd:divine hymn': '80%', 'outP': '488678' },
+    'Nymrissa Wavecaller|16': { 'n': '9', 'score': '100', 'abc': '79%', 'apl': '93%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '67%', 'cd:divine hymn': '67%', 'outP': '365816' },
+    'Kith\'ix|16': { 'n': '5', 'score': '100', 'abc': '77%', 'apl': '99%', 'cd:holy word: serenity': '100%', 'cd:prayer of mending': '97%', 'win': '100%', 'cd:apotheosis': '100%', 'cd:divine hymn': '100%', 'outP': '349989' },
+  },
+  'Marksmanship Hunter': {
+    'The Twin Fangs|16': { 'n': '25', 'score': '100', 'abc': '81%', 'apl': '96%', 'cd:aimed shot': '100%', 'cd:rapid fire': '96%', 'p:Precise Shots': '10 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '88%', 'outP': '292067' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '20', 'score': '96', 'abc': '83%', 'apl': '97%', 'cd:aimed shot': '100%', 'cd:rapid fire': '95%', 'p:Precise Shots': '10 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '86%', 'outP': '241190' },
+    'Entombed Sentinels|16': { 'n': '23', 'score': '94', 'abc': '80%', 'apl': '92%', 'cd:aimed shot': '98%', 'cd:rapid fire': '95%', 'p:Precise Shots': '7 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '86%', 'outP': '247517' },
+    'Vashnik the Malignant|16': { 'n': '13', 'score': '90', 'abc': '85%', 'apl': '96%', 'cd:aimed shot': '100%', 'cd:rapid fire': '96%', 'p:Precise Shots': '9 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '71%', 'outP': '333112' },
+    'The Lost Explorers|16': { 'n': '22', 'score': '100', 'abc': '83%', 'apl': '95%', 'cd:aimed shot': '100%', 'cd:rapid fire': '95%', 'p:Precise Shots': '8 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '100%', 'outP': '313710' },
+    'Sszorak|16': { 'n': '11', 'score': '96', 'abc': '81%', 'apl': '94%', 'cd:aimed shot': '100%', 'cd:rapid fire': '96%', 'p:Precise Shots': '11 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '86%', 'outP': '221879' },
+    'The Coiled Altar|16': { 'n': '24', 'score': '90', 'abc': '79%', 'apl': '94%', 'cd:aimed shot': '99%', 'cd:rapid fire': '97%', 'p:Precise Shots': '12 wasted', 'win': '100%', 'cd:trueshot': '80%', 'cd:volley': '83%', 'outP': '256893' },
+    'Ula\'tek|16': { 'n': '9', 'score': '90', 'abc': '75%', 'apl': '94%', 'cd:aimed shot': '100%', 'cd:rapid fire': '100%', 'p:Precise Shots': '20 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '92%', 'outP': '339878' },
+    'Nymrissa Wavecaller|16': { 'n': '14', 'score': '94', 'abc': '82%', 'apl': '96%', 'cd:aimed shot': '100%', 'cd:rapid fire': '95%', 'p:Precise Shots': '7 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '83%', 'outP': '237207' },
+    'Kith\'ix|16': { 'n': '13', 'score': '100', 'abc': '79%', 'apl': '96%', 'cd:aimed shot': '100%', 'cd:rapid fire': '100%', 'p:Precise Shots': '5 wasted', 'win': '100%', 'cd:trueshot': '100%', 'cd:volley': '86%', 'outP': '221756' },
+  },
+  'Mistweaver Monk': {
+    'The Twin Fangs|16': { 'outP': '416948' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '3', 'score': '95', 'abc': '83%', 'apl': '99%', 'cd:renewing mist': '98%', 'cd:rushing wind kick': '99%', 'cd:thunder focus tea': '79%', 'mana': '20%', 'win': '100%', 'cd:invoke yu\'lon, the jade serpent': '100%', 'cd:celestial conduit': '67%', 'cd:life cocoon': '83%', 'outP': '350595' },
+    'Entombed Sentinels|16': { 'outP': '363161' },
+    'Vashnik the Malignant|16': { 'outP': '330905' },
+    'The Lost Explorers|16': { 'n': '4', 'score': '95', 'abc': '83%', 'apl': '100%', 'cd:renewing mist': '100%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '93%', 'mana': '23%', 'win': '100%', 'cd:invoke yu\'lon, the jade serpent': '100%', 'cd:celestial conduit': '100%', 'cd:life cocoon': '100%', 'outP': '392812' },
+    'Sszorak|16': { 'outP': '410632' },
+    'The Coiled Altar|16': { 'n': '4', 'score': '100', 'abc': '82%', 'apl': '99%', 'cd:renewing mist': '99%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '96%', 'mana': '15%', 'win': '100%', 'cd:invoke yu\'lon, the jade serpent': '80%', 'cd:celestial conduit': '100%', 'cd:life cocoon': '88%', 'outP': '382537' },
+    'Nymrissa Wavecaller|16': { 'n': '4', 'score': '90', 'abc': '81%', 'apl': '98%', 'cd:renewing mist': '98%', 'cd:rushing wind kick': '100%', 'cd:thunder focus tea': '79%', 'mana': '46%', 'win': '100%', 'cd:invoke yu\'lon, the jade serpent': '67%', 'cd:celestial conduit': '75%', 'cd:life cocoon': '83%', 'outP': '325446' },
+    'Kith\'ix|16': { 'outP': '366337' },
+  },
+  'Outlaw Rogue': {
+    'The Twin Fangs|16': { 'outP': '270810' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '208321' },
+    'Entombed Sentinels|16': { 'outP': '180950' },
+    'Vashnik the Malignant|16': { 'outP': '273022' },
+    'The Lost Explorers|16': { 'outP': '233942' },
+    'Sszorak|16': { 'outP': '221266' },
+    'Nymrissa Wavecaller|16': { 'outP': '195907' },
+  },
+  'Preservation Evoker': {
+    'The Twin Fangs|16': { 'n': '6', 'score': '88', 'abc': '67%', 'lfa': '100%', 'apl': '84%', 'ta': '71%', 'ecl': '0', 'ecu': '89%', 'ecm': '9.7', 'db': '94%', 'dbr': '100%', 'dbec': '2', 'p:Merithra\'s Blessing': 'All spent', 'ess': '14%', 'p:Essence Burst': '7 wasted', 'te': '86%', 'ebh': '2', 'mana': '48%', 'mnx': '13%', 'stc': '67%', 'cd:stasis': '100%', 'inf': '3.5', 'cd:tip the scales': '100%', 'cd:rewind': '100%', 'fbr': '82%', 'cd:util': '50%', 'outP': '456400' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '16', 'score': '84', 'abc': '69%', 'lfa': '100%', 'apl': '87%', 'ta': '70%', 'ecl': '0', 'ecu': '82%', 'ecm': '10', 'db': '93%', 'dbr': '100%', 'dbec': '1', 'p:Merithra\'s Blessing': 'All spent', 'ess': '14%', 'p:Essence Burst': '5 wasted', 'te': '73%', 'ebh': '0', 'mana': '53%', 'mnx': 'None', 'stc': '100%', 'cd:stasis': '75%', 'inf': '3.3', 'cd:tip the scales': '67%', 'cd:rewind': '100%', 'fbr': '83%', 'cd:util': '20%', 'outP': '412132' },
+    'Entombed Sentinels|16': { 'n': '7', 'score': '81', 'abc': '69%', 'lfa': '100%', 'apl': '83%', 'ta': '70%', 'ecl': '0', 'ecu': '76%', 'ecm': '7.6', 'db': '93%', 'dbr': '100%', 'dbec': '2', 'p:Merithra\'s Blessing': 'All spent', 'ess': '16%', 'p:Essence Burst': '5 wasted', 'te': '73%', 'ebh': '2', 'mana': '35%', 'mnx': 'None', 'stc': '80%', 'cd:stasis': '75%', 'inf': '2.7', 'cd:tip the scales': '67%', 'cd:rewind': '67%', 'fbr': '67%', 'cd:util': '20%', 'outP': '392265' },
+    'Vashnik the Malignant|16': { 'n': '6', 'score': '81', 'abc': '71%', 'lfa': '100%', 'apl': '82%', 'ta': '76%', 'ecl': '0', 'ecu': '92%', 'ecm': '9.5', 'db': '93%', 'dbr': '100%', 'dbec': '1', 'p:Merithra\'s Blessing': 'All spent', 'ess': '17%', 'p:Essence Burst': '10 wasted', 'te': '75%', 'ebh': '3', 'mana': '49%', 'mnx': '10%', 'stc': '75%', 'cd:stasis': '75%', 'inf': '3.7', 'cd:tip the scales': '100%', 'cd:rewind': '100%', 'fbr': '38%', 'cd:util': '40%', 'outP': '370937' },
+    'The Lost Explorers|16': { 'n': '11', 'score': '89', 'abc': '67%', 'lfa': '100%', 'apl': '89%', 'ta': '75%', 'ecl': '0', 'ecu': '86%', 'ecm': '9.8', 'db': '92%', 'dbr': '100%', 'dbec': '1', 'p:Merithra\'s Blessing': 'All spent', 'ess': '11%', 'p:Essence Burst': '2 wasted', 'te': '72%', 'ebh': '1', 'mana': '46%', 'mnx': 'None', 'stc': '75%', 'cd:stasis': '100%', 'inf': '3.3', 'cd:tip the scales': '67%', 'cd:rewind': '100%', 'fbr': '63%', 'cd:util': '20%', 'outP': '411724' },
+    'Sszorak|16': { 'n': '6', 'score': '90', 'abc': '68%', 'lfa': '100%', 'apl': '89%', 'ta': '74%', 'ecl': '2', 'ecu': '90%', 'ecm': '9.2', 'db': '94%', 'dbr': '100%', 'dbec': '1', 'p:Merithra\'s Blessing': 'All spent', 'ess': '12%', 'p:Essence Burst': '4 wasted', 'te': '85%', 'ebh': '2', 'mana': '34%', 'mnx': '9%', 'stc': '100%', 'cd:stasis': '100%', 'inf': '3.5', 'cd:tip the scales': '100%', 'cd:rewind': '100%', 'fbr': '75%', 'cd:util': '20%', 'outP': '454646' },
+    'The Coiled Altar|16': { 'n': '9', 'score': '93', 'abc': '70%', 'lfa': '100%', 'apl': '88%', 'ta': '80%', 'ecl': '0', 'ecu': '87%', 'ecm': '9.3', 'db': '96%', 'dbr': '100%', 'dbec': '2', 'p:Merithra\'s Blessing': 'All spent', 'ess': '11%', 'p:Essence Burst': '6 wasted', 'te': '76%', 'ebh': '1', 'mana': '26%', 'mnx': '15%', 'stc': '100%', 'cd:stasis': '100%', 'inf': '3.5', 'cd:tip the scales': '80%', 'cd:rewind': '67%', 'fbr': '43%', 'cd:util': '33%', 'outP': '489685' },
+    'Ula\'tek|16': { 'n': '3', 'score': '88', 'abc': '69%', 'lfa': '100%', 'apl': '87%', 'ta': '67%', 'ecl': '0', 'ecu': '87%', 'ecm': '9.4', 'db': '96%', 'dbr': '100%', 'dbec': '1', 'p:Merithra\'s Blessing': 'All spent', 'ess': '21%', 'p:Essence Burst': '14 wasted', 'te': '75%', 'ebh': '1', 'mana': '25%', 'mnx': '20%', 'stc': '88%', 'cd:stasis': '100%', 'inf': '3.4', 'cd:tip the scales': '83%', 'cd:rewind': '100%', 'fbr': '88%', 'cd:util': '64%', 'outP': '511778' },
+    'Nymrissa Wavecaller|16': { 'n': '8', 'score': '81', 'abc': '71%', 'lfa': '100%', 'apl': '82%', 'ta': '72%', 'ecl': '7', 'ecu': '82%', 'ecm': '11', 'db': '92%', 'dbr': '100%', 'dbec': '2', 'p:Merithra\'s Blessing': 'All spent', 'ess': '16%', 'p:Essence Burst': '5 wasted', 'te': '84%', 'ebh': '2', 'mana': '62%', 'mnx': '11%', 'stc': '100%', 'cd:stasis': '75%', 'inf': '3.7', 'cd:tip the scales': '100%', 'cd:rewind': '100%', 'fbr': '83%', 'cd:util': '25%', 'outP': '365687' },
+    'Kith\'ix|16': { 'n': '10', 'score': '85', 'abc': '69%', 'lfa': '100%', 'apl': '87%', 'ta': '72%', 'ecl': '3', 'ecu': '82%', 'ecm': '9.6', 'db': '93%', 'dbr': '100%', 'dbec': '2', 'p:Merithra\'s Blessing': 'All spent', 'ess': '20%', 'p:Essence Burst': '4 wasted', 'te': '77%', 'ebh': '1', 'mana': '57%', 'mnx': '10%', 'stc': '100%', 'cd:stasis': '75%', 'inf': '3.5', 'cd:tip the scales': '100%', 'cd:rewind': '50%', 'fbr': '78%', 'cd:util': '17%', 'outP': '355927' },
+  },
+  'Protection Paladin': {
+    'The Twin Fangs|16': { 'n': '6', 'score': '100', 'abc': '72%', 'apl': '85%', 'cd:avenger\'s shield': '93%', 'cd:judgment': '85%', 'cd:blessed hammer': '82%', 'res': '9%', 'up:Shield of the Righteous': '99%', 'cd:avenging wrath': '100%', 'cd:divine toll': '100%', 'outP': '147148' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '6', 'score': '100', 'abc': '69%', 'apl': '85%', 'cd:avenger\'s shield': '93%', 'cd:judgment': '86%', 'cd:blessed hammer': '78%', 'res': '8%', 'up:Shield of the Righteous': '98%', 'cd:avenging wrath': '100%', 'cd:divine toll': '100%', 'outP': '131781' },
+    'Entombed Sentinels|16': { 'n': '4', 'score': '92', 'abc': '68%', 'apl': '77%', 'cd:avenger\'s shield': '88%', 'cd:judgment': '87%', 'cd:blessed hammer': '74%', 'res': '8%', 'up:Shield of the Righteous': '94%', 'cd:avenging wrath': '100%', 'cd:divine toll': '100%', 'outP': '121605' },
+    'Vashnik the Malignant|16': { 'outP': '191575' },
+    'The Lost Explorers|16': { 'n': '7', 'score': '95', 'abc': '72%', 'apl': '80%', 'cd:avenger\'s shield': '87%', 'cd:judgment': '87%', 'cd:blessed hammer': '74%', 'res': '10%', 'up:Shield of the Righteous': '95%', 'cd:avenging wrath': '100%', 'cd:divine toll': '80%', 'outP': '153662' },
+    'Sszorak|16': { 'n': '7', 'score': '100', 'abc': '71%', 'apl': '81%', 'cd:avenger\'s shield': '94%', 'cd:judgment': '87%', 'cd:blessed hammer': '76%', 'res': '5%', 'up:Shield of the Righteous': '99%', 'cd:avenging wrath': '100%', 'cd:divine toll': '83%', 'outP': '123439' },
+    'The Coiled Altar|16': { 'n': '7', 'score': '72', 'abc': '63%', 'apl': '76%', 'cd:avenger\'s shield': '80%', 'cd:judgment': '85%', 'cd:blessed hammer': '79%', 'res': '18%', 'up:Shield of the Righteous': '90%', 'cd:avenging wrath': '89%', 'cd:divine toll': '82%', 'outP': '107996' },
+    'Ula\'tek|16': { 'outP': '164213' },
+    'Nymrissa Wavecaller|16': { 'n': '4', 'score': '95', 'abc': '72%', 'apl': '82%', 'cd:avenger\'s shield': '82%', 'cd:judgment': '83%', 'cd:blessed hammer': '77%', 'res': '6%', 'up:Shield of the Righteous': '99%', 'cd:avenging wrath': '100%', 'cd:divine toll': '100%', 'outP': '114288' },
+  },
+  'Protection Warrior': {
+    'The Twin Fangs|16': { 'n': '5', 'score': '100', 'abc': '75%', 'apl': '98%', 'cd:shield slam': '99%', 'cd:thunder clap': '95%', 'up:Shield Block': '92%', 'cd:avatar': '89%', 'cd:demoralizing shout': '100%', 'outP': '151089' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '120828' },
+    'Entombed Sentinels|16': { 'outP': '113608' },
+    'Vashnik the Malignant|16': { 'outP': '169671' },
+    'The Lost Explorers|16': { 'outP': '141594' },
+    'Sszorak|16': { 'outP': '115943' },
+    'Nymrissa Wavecaller|16': { 'outP': '108273' },
+  },
+  'Restoration Druid': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '93', 'abc': '81%', 'mast': '2.7', 'apl': '93%', 'lb': '100%', 'hots': '74%', 'sm': '97%', 'sms': '85%', 'p:Soul of the Forest': 'All spent', 'p:Clearcasting': '4 wasted', 'p:Nature\'s Swiftness': 'All spent', 'nss': '100%', 'wg': '96%', 'mana': '10%', 'inn': '100%', 'cd:innervate': '100%', 'mnx': '42%', 'wr': '2', 'tq': '100%', 'cd:tranquility': '67%', 'cv': '100%', 'cd:convoke the spirits': '80%', 'cd:nature\'s swiftness': '86%', 'ns4': '20%', 'cd:ironbark': '25%', 'outP': '446495' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '6', 'score': '95', 'abc': '84%', 'mast': '2.6', 'apl': '94%', 'lb': '100%', 'hots': '79%', 'sm': '96%', 'sms': '100%', 'p:Soul of the Forest': 'All spent', 'p:Clearcasting': '1 wasted', 'p:Nature\'s Swiftness': 'All spent', 'nss': '100%', 'wg': '100%', 'mana': '10%', 'inn': '100%', 'cd:innervate': '100%', 'mnx': '33%', 'wr': '0', 'tq': '100%', 'cd:tranquility': '100%', 'cv': '100%', 'cd:convoke the spirits': '80%', 'cd:nature\'s swiftness': '80%', 'ns4': '50%', 'cd:ironbark': '25%', 'outP': '394079', 'ab': '100%', 'rgb': '0' },
+    'Entombed Sentinels|16': { 'outP': '421722' },
+    'Vashnik the Malignant|16': { 'outP': '360085' },
+    'The Lost Explorers|16': { 'n': '5', 'score': '95', 'abc': '81%', 'mast': '2.6', 'apl': '96%', 'lb': '100%', 'hots': '77%', 'sm': '96%', 'sms': '96%', 'p:Soul of the Forest': 'All spent', 'p:Clearcasting': '2 wasted', 'p:Nature\'s Swiftness': 'All spent', 'nss': '100%', 'wg': '95%', 'mana': '16%', 'inn': '100%', 'cd:innervate': '100%', 'mnx': '22%', 'wr': '2', 'tq': '100%', 'cd:tranquility': '100%', 'cv': '100%', 'cd:convoke the spirits': '80%', 'cd:nature\'s swiftness': '80%', 'ns4': '100%', 'cd:ironbark': '33%', 'outP': '419868', 'ab': '99%', 'rgb': '0' },
+    'Sszorak|16': { 'n': '3', 'score': '93', 'abc': '85%', 'mast': '2.6', 'apl': '95%', 'lb': '98%', 'hots': '63%', 'sm': '97%', 'sms': '100%', 'p:Soul of the Forest': '1 wasted', 'p:Clearcasting': '2 wasted', 'p:Nature\'s Swiftness': 'All spent', 'nss': '100%', 'wg': '100%', 'mana': '37%', 'inn': '100%', 'cd:innervate': '100%', 'mnx': '50%', 'tq': '100%', 'cd:tranquility': '100%', 'cv': '100%', 'cd:convoke the spirits': '83%', 'cd:nature\'s swiftness': '83%', 'ns4': '100%', 'cd:ironbark': '25%', 'outP': '446056' },
+    'The Coiled Altar|16': { 'n': '3', 'score': '98', 'abc': '83%', 'mast': '2.7', 'apl': '94%', 'lb': '99%', 'hots': '75%', 'sm': '98%', 'sms': '94%', 'p:Soul of the Forest': 'All spent', 'p:Clearcasting': '2 wasted', 'p:Nature\'s Swiftness': 'All spent', 'nss': '100%', 'wg': '97%', 'mana': '15%', 'inn': '100%', 'cd:innervate': '100%', 'mnx': '21%', 'tq': '100%', 'cd:tranquility': '67%', 'cv': '100%', 'cd:convoke the spirits': '89%', 'cd:nature\'s swiftness': '80%', 'ns4': '43%', 'cd:ironbark': '29%', 'outP': '467380', 'ab': '99%', 'rgb': '0' },
+    'Ula\'tek|16': { 'outP': '488116' },
+    'Nymrissa Wavecaller|16': { 'n': '3', 'score': '97', 'abc': '80%', 'mast': '2.6', 'apl': '91%', 'lb': '99%', 'hots': '74%', 'sm': '92%', 'sms': '100%', 'p:Soul of the Forest': 'All spent', 'p:Clearcasting': 'All spent', 'p:Nature\'s Swiftness': 'All spent', 'nss': '100%', 'wg': '100%', 'mana': '25%', 'inn': '100%', 'cd:innervate': '100%', 'mnx': 'None', 'wr': '0', 'tq': '100%', 'cd:tranquility': '100%', 'cv': '100%', 'cd:convoke the spirits': '80%', 'cd:nature\'s swiftness': '80%', 'ns4': '0%', 'cd:ironbark': '50%', 'outP': '345658' },
+    'Kith\'ix|16': { 'outP': '321678' },
+  },
+  'Restoration Shaman': {
+    'The Twin Fangs|16': { 'n': '8', 'score': '100', 'abc': '76%', 'apl': '96%', 'cd:riptide': '97%', 'cd:healing stream totem': '100%', 'cd:surging totem': '93%', 'mana': '12%', 'win': '100%', 'cd:ascendance': '67%', 'cd:spirit link totem': '67%', 'outP': '389266' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '11', 'score': '100', 'abc': '80%', 'apl': '90%', 'cd:riptide': '96%', 'cd:healing stream totem': '94%', 'cd:surging totem': '83%', 'mana': '24%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '50%', 'outP': '373002' },
+    'Entombed Sentinels|16': { 'n': '5', 'score': '100', 'abc': '75%', 'apl': '89%', 'cd:riptide': '95%', 'cd:healing stream totem': '94%', 'cd:surging totem': '92%', 'mana': '18%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '50%', 'outP': '355808' },
+    'Vashnik the Malignant|16': { 'n': '5', 'score': '100', 'abc': '80%', 'apl': '90%', 'cd:riptide': '93%', 'cd:healing stream totem': '100%', 'cd:surging totem': '92%', 'mana': '23%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '50%', 'outP': '338795' },
+    'The Lost Explorers|16': { 'n': '5', 'score': '100', 'abc': '78%', 'apl': '93%', 'cd:riptide': '98%', 'cd:healing stream totem': '100%', 'cd:surging totem': '91%', 'mana': '13%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '50%', 'outP': '395014' },
+    'Sszorak|16': { 'n': '8', 'score': '100', 'abc': '75%', 'apl': '94%', 'cd:riptide': '97%', 'cd:healing stream totem': '100%', 'cd:surging totem': '92%', 'mana': '21%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '100%', 'outP': '398398' },
+    'The Coiled Altar|16': { 'n': '11', 'score': '100', 'abc': '78%', 'apl': '94%', 'cd:riptide': '97%', 'cd:healing stream totem': '100%', 'cd:surging totem': '91%', 'mana': '21%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '67%', 'outP': '410506' },
+    'Ula\'tek|16': { 'n': '6', 'score': '100', 'abc': '80%', 'apl': '96%', 'cd:riptide': '98%', 'cd:healing stream totem': '100%', 'cd:surging totem': '92%', 'mana': '12%', 'win': '100%', 'cd:ascendance': '75%', 'cd:spirit link totem': '75%', 'outP': '404051' },
+    'Nymrissa Wavecaller|16': { 'n': '9', 'score': '100', 'abc': '82%', 'apl': '93%', 'cd:riptide': '93%', 'cd:healing stream totem': '94%', 'cd:surging totem': '91%', 'mana': '19%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '50%', 'outP': '320250' },
+    'Kith\'ix|16': { 'n': '4', 'score': '89', 'abc': '80%', 'apl': '89%', 'cd:riptide': '98%', 'cd:healing stream totem': '100%', 'cd:surging totem': '92%', 'mana': '45%', 'win': '100%', 'cd:ascendance': '100%', 'cd:spirit link totem': '50%', 'outP': '285727' },
+  },
+  'Retribution Paladin': {
+    'The Twin Fangs|16': { 'n': '10', 'score': '100', 'abc': '73%', 'apl': '92%', 'cd:wake of ashes': '92%', 'cd:blade of justice': '78%', 'p:Divine Purpose': '2 wasted', 'win': '100%', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'outP': '324895' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '9', 'score': '95', 'abc': '73%', 'apl': '91%', 'cd:wake of ashes': '90%', 'cd:blade of justice': '78%', 'p:Divine Purpose': '1 wasted', 'win': '100%', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'outP': '252354' },
+    'Entombed Sentinels|16': { 'n': '9', 'score': '90', 'abc': '71%', 'apl': '89%', 'cd:wake of ashes': '90%', 'cd:blade of justice': '70%', 'p:Divine Purpose': '2 wasted', 'win': '100%', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'outP': '234508' },
+    'Vashnik the Malignant|16': { 'outP': '355717' },
+    'The Lost Explorers|16': { 'n': '8', 'score': '100', 'abc': '72%', 'apl': '92%', 'cd:wake of ashes': '100%', 'cd:blade of justice': '80%', 'p:Divine Purpose': '1 wasted', 'win': '100%', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'outP': '325877' },
+    'Sszorak|16': { 'n': '8', 'score': '86', 'abc': '74%', 'apl': '93%', 'cd:wake of ashes': '91%', 'cd:blade of justice': '77%', 'p:Divine Purpose': '2 wasted', 'win': '100%', 'cd:avenging wrath': '100%', 'cd:execution sentence': '83%', 'cd:divine toll': '83%', 'outP': '248405' },
+    'The Coiled Altar|16': { 'n': '6', 'score': '90', 'abc': '68%', 'apl': '85%', 'cd:wake of ashes': '100%', 'cd:blade of justice': '77%', 'p:Divine Purpose': '3 wasted', 'win': '100%', 'cd:avenging wrath': '89%', 'cd:execution sentence': '89%', 'cd:divine toll': '89%', 'outP': '246235' },
+    'Ula\'tek|16': { 'outP': '345975' },
+    'Nymrissa Wavecaller|16': { 'n': '14', 'score': '95', 'abc': '72%', 'apl': '95%', 'cd:wake of ashes': '100%', 'cd:blade of justice': '75%', 'p:Divine Purpose': '1 wasted', 'win': '100%', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'outP': '242219' },
+    'Kith\'ix|16': { 'n': '6', 'score': '100', 'abc': '72%', 'apl': '95%', 'cd:wake of ashes': '100%', 'cd:blade of justice': '74%', 'p:Divine Purpose': '1 wasted', 'win': '100%', 'cd:avenging wrath': '100%', 'cd:execution sentence': '100%', 'cd:divine toll': '100%', 'outP': '229680' },
+  },
+  'Shadow Priest': {
+    'The Twin Fangs|16': { 'n': '13', 'score': '100', 'abc': '76%', 'apl': '96%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '92%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '285006' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '17', 'score': '77', 'abc': '77%', 'apl': '94%', 'cd:halo': '100%', 'dot:Vampiric Touch': '81%', 'dot:Shadow Word: Pain': '78%', 'dot:Shadow Word: Madness': '68%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '230566' },
+    'Entombed Sentinels|16': { 'n': '14', 'score': '90', 'abc': '74%', 'apl': '91%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '82%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '258433' },
+    'Vashnik the Malignant|16': { 'n': '11', 'score': '100', 'abc': '76%', 'apl': '94%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '95%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '288991' },
+    'The Lost Explorers|16': { 'n': '18', 'score': '100', 'abc': '76%', 'apl': '96%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '96%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '339634' },
+    'Sszorak|16': { 'n': '8', 'score': '95', 'abc': '75%', 'apl': '96%', 'cd:halo': '83%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '97%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '204164', 'cd:void torrent': '91%', 'p:Shadowy Insight': '22 wasted' },
+    'The Coiled Altar|16': { 'n': '16', 'score': '60', 'abc': '78%', 'apl': '95%', 'cd:halo': '89%', 'dot:Vampiric Touch': '67%', 'dot:Shadow Word: Pain': '65%', 'dot:Shadow Word: Madness': '51%', 'win': '100%', 'cd:voidform': '80%', 'cd:power infusion': '89%', 'outP': '254105' },
+    'Ula\'tek|16': { 'n': '5', 'score': '72', 'abc': '74%', 'apl': '93%', 'cd:halo': '90%', 'dot:Vampiric Touch': '70%', 'dot:Shadow Word: Pain': '70%', 'dot:Shadow Word: Madness': '54%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '368010' },
+    'Nymrissa Wavecaller|16': { 'n': '17', 'score': '90', 'abc': '74%', 'apl': '96%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '85%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '328995' },
+    'Kith\'ix|16': { 'n': '10', 'score': '95', 'abc': '74%', 'apl': '93%', 'cd:halo': '100%', 'dot:Vampiric Touch': '100%', 'dot:Shadow Word: Pain': '100%', 'dot:Shadow Word: Madness': '91%', 'win': '100%', 'cd:voidform': '100%', 'cd:power infusion': '100%', 'outP': '234728' },
+  },
+  'Subtlety Rogue': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '100', 'abc': '76%', 'lv:0': '100%', 'cd:shadow dance': '95%', 'cd:goremaw\'s bite': '88%', 'win': '100%', 'cd:shadow blades': '100%', 'outP': '308893' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '15', 'score': '100', 'abc': '83%', 'lv:0': '100%', 'cd:shadow dance': '100%', 'cd:goremaw\'s bite': '86%', 'win': '100%', 'cd:shadow blades': '75%', 'outP': '278677' },
+    'Entombed Sentinels|16': { 'n': '9', 'score': '100', 'abc': '80%', 'lv:0': '100%', 'cd:shadow dance': '100%', 'cd:goremaw\'s bite': '86%', 'win': '100%', 'cd:shadow blades': '100%', 'outP': '263583' },
+    'Vashnik the Malignant|16': { 'n': '3', 'score': '100', 'abc': '83%', 'lv:0': '99%', 'cd:shadow dance': '94%', 'cd:goremaw\'s bite': '86%', 'win': '100%', 'cd:shadow blades': '75%', 'outP': '407119' },
+    'The Lost Explorers|16': { 'n': '13', 'score': '100', 'abc': '77%', 'lv:0': '100%', 'cd:shadow dance': '100%', 'cd:goremaw\'s bite': '100%', 'win': '100%', 'cd:shadow blades': '100%', 'outP': '303564' },
+    'Sszorak|16': { 'n': '10', 'score': '100', 'abc': '86%', 'lv:0': '99%', 'cd:shadow dance': '100%', 'cd:goremaw\'s bite': '100%', 'win': '100%', 'cd:shadow blades': '75%', 'outP': '278906' },
+    'The Coiled Altar|16': { 'n': '11', 'score': '100', 'abc': '81%', 'lv:0': '100%', 'cd:shadow dance': '96%', 'cd:goremaw\'s bite': '91%', 'win': '100%', 'cd:shadow blades': '100%', 'outP': '268428' },
+    'Ula\'tek|16': { 'outP': '360331' },
+    'Nymrissa Wavecaller|16': { 'n': '7', 'score': '100', 'abc': '83%', 'lv:0': '100%', 'cd:shadow dance': '100%', 'cd:goremaw\'s bite': '86%', 'win': '100%', 'cd:shadow blades': '75%', 'outP': '264656' },
+    'Kith\'ix|16': { 'n': '5', 'score': '100', 'abc': '81%', 'lv:0': '100%', 'cd:shadow dance': '100%', 'cd:goremaw\'s bite': '100%', 'win': '100%', 'cd:shadow blades': '100%', 'outP': '243016' },
+  },
+  'Survival Hunter': {
+    'Nek\'zali the Soulcoiler|16': { 'outP': '200319' },
+    'Entombed Sentinels|16': { 'outP': '183255' },
+    'Vashnik the Malignant|16': { 'outP': '278633' },
+    'The Lost Explorers|16': { 'outP': '246554' },
+    'Sszorak|16': { 'outP': '218072' },
+    'Nymrissa Wavecaller|16': { 'outP': '201114' },
+  },
+  'Unholy Death Knight': {
+    'The Twin Fangs|16': { 'n': '3', 'score': '100', 'abc': '79%', 'apl': '86%', 'p:Sudden Doom': '2 wasted', 'dot:Virulent Plague': '97%', 'res': '4%', 'cd:dark transformation': '100%', 'cd:army of the dead': '100%', 'outP': '263879' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '230379' },
+    'Entombed Sentinels|16': { 'outP': '223954' },
+    'Vashnik the Malignant|16': { 'outP': '343823' },
+    'The Lost Explorers|16': { 'outP': '294222' },
+    'Sszorak|16': { 'outP': '243658' },
+    'The Coiled Altar|16': { 'n': '3', 'score': '83', 'abc': '77%', 'apl': '84%', 'p:Sudden Doom': '3 wasted', 'dot:Virulent Plague': '66%', 'res': '3%', 'cd:dark transformation': '92%', 'cd:army of the dead': '100%', 'outP': '271697' },
+    'Nymrissa Wavecaller|16': { 'n': '3', 'score': '95', 'abc': '79%', 'apl': '84%', 'p:Sudden Doom': '1 wasted', 'dot:Virulent Plague': '96%', 'res': '9%', 'cd:dark transformation': '100%', 'cd:army of the dead': '100%', 'outP': '224817' },
+  },
+  'Vengeance Demon Hunter': {
+    'The Twin Fangs|16': { 'n': '4', 'score': '95', 'abc': '74%', 'apl': '89%', 'cd:fracture': '91%', 'cd:immolation aura': '97%', 'cd:sigil of flame': '77%', 'cd:fel devastation': '67%', 'cd:sigil of spite': '100%', 'res': '13%', 'cd:fiery brand': '100%', 'up:Demon Spikes': '100%', 'outP': '144818' },
+    'Nek\'zali the Soulcoiler|16': { 'outP': '100583' },
+    'Entombed Sentinels|16': { 'n': '3', 'score': '71', 'abc': '66%', 'apl': '90%', 'cd:fracture': '88%', 'cd:immolation aura': '95%', 'cd:sigil of flame': '60%', 'res': '6%', 'cd:fiery brand': '100%', 'up:Demon Spikes': '99%', 'outP': '101407' },
+    'Vashnik the Malignant|16': { 'outP': '163847' },
+    'The Lost Explorers|16': { 'n': '3', 'score': '85', 'abc': '70%', 'apl': '89%', 'cd:fracture': '87%', 'cd:immolation aura': '83%', 'cd:sigil of flame': '78%', 'cd:sigil of spite': '80%', 'res': '9%', 'cd:fiery brand': '100%', 'up:Demon Spikes': '100%', 'outP': '131302' },
+    'Sszorak|16': { 'n': '3', 'score': '83', 'abc': '74%', 'apl': '89%', 'cd:fracture': '88%', 'cd:immolation aura': '96%', 'cd:sigil of flame': '82%', 'cd:sigil of spite': '83%', 'res': '8%', 'cd:fiery brand': '89%', 'up:Demon Spikes': '98%', 'outP': '98669' },
+    'The Coiled Altar|16': { 'outP': '103371' },
+    'Nymrissa Wavecaller|16': { 'outP': '92949' },
+  },
+  'Windwalker Monk': {
+    'The Twin Fangs|16': { 'n': '12', 'score': '100', 'abc': '80%', 'apl': '100%', 'rep': '0', 'cd:rising sun kick': '94%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '79%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '100%', 'outP': '312794' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '18', 'score': '96', 'abc': '78%', 'apl': '98%', 'rep': '1', 'cd:rising sun kick': '97%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '91%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '75%', 'cd:celestial conduit': '75%', 'outP': '236968' },
+    'Entombed Sentinels|16': { 'n': '14', 'score': '100', 'abc': '75%', 'apl': '100%', 'rep': '1', 'cd:rising sun kick': '95%', 'cd:fists of fury': '97%', 'cd:whirling dragon punch': '91%', 'p:Blackout Kick!': 'All spent', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '100%', 'outP': '225539' },
+    'Vashnik the Malignant|16': { 'n': '12', 'score': '97', 'abc': '78%', 'apl': '100%', 'rep': '0', 'cd:rising sun kick': '98%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '92%', 'p:Blackout Kick!': 'All spent', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '75%', 'outP': '358882' },
+    'The Lost Explorers|16': { 'n': '15', 'score': '92', 'abc': '76%', 'apl': '99%', 'rep': '1', 'cd:rising sun kick': '93%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '77%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '100%', 'outP': '299817' },
+    'Sszorak|16': { 'n': '14', 'score': '100', 'abc': '79%', 'apl': '100%', 'rep': '1', 'cd:rising sun kick': '100%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '100%', 'p:Blackout Kick!': 'All spent', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '100%', 'outP': '228957' },
+    'The Coiled Altar|16': { 'n': '13', 'score': '96', 'abc': '75%', 'apl': '99%', 'rep': '2', 'cd:rising sun kick': '95%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '95%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '83%', 'outP': '246688' },
+    'Ula\'tek|16': { 'n': '8', 'score': '85', 'abc': '71%', 'apl': '98%', 'rep': '2', 'cd:rising sun kick': '85%', 'cd:fists of fury': '102%', 'cd:whirling dragon punch': '95%', 'p:Blackout Kick!': '5 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '71%', 'outP': '398684' },
+    'Nymrissa Wavecaller|16': { 'n': '14', 'score': '100', 'abc': '79%', 'apl': '100%', 'rep': '0', 'cd:rising sun kick': '97%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '100%', 'p:Blackout Kick!': '1 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '75%', 'outP': '239031' },
+    'Kith\'ix|16': { 'n': '7', 'score': '96', 'abc': '76%', 'apl': '97%', 'rep': '1', 'cd:rising sun kick': '98%', 'cd:fists of fury': '100%', 'cd:whirling dragon punch': '91%', 'p:Blackout Kick!': '3 wasted', 'cd:zenith': '100%', 'cd:invoke xuen, the white tiger': '100%', 'cd:celestial conduit': '75%', 'outP': '228621' },
+  },
+};
 const HPAL_PROCS = [
   { n: 'Infusion of Light', use: ['flash of light', 'judgment'], tip: 'Best on Flash of Light; Judgment when nobody needs healing' },
   { n: 'Divine Purpose', use: ['eternal flame', 'light of dawn', 'word of glory', 'shield of the righteous'], tip: 'A free Holy Power spender' },
@@ -16231,7 +16638,7 @@ function specPage(o) {
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
     '<div class="spc-rb"><div class="spc-rd"><p class="spc-rs">' + esc(c.sub) + spcHw(c.k, c.how)[0] + '</p>' + spcHw(c.k, c.how)[1] + viz(c) + '</div></div></article>';
   const dots = (l) => '<span class="spc-dots">' + l.map((c) => '<i class="' + c.st + '"></i>').join('') + '</span>';
-  const TOPB = o.TOPB, TOPP = o.TOPP || new Set(), topT = (k) => (TOPB && TOPB[k] && (one || TOPP.has(k)) ? '<span class="spc-tp" title="' + esc(o.topTip || 'The middle of the ' + o.top + ' in the fastest Mythic kills of this boss on Warcraft Logs') + '">' + esc(o.topL || 'Top raids') + ': ' + TOPB[k] + '</span>' : '');
+  const TOPB = o.TOPB, TOPP = o.TOPP || new Set(), topT = (k) => (TOPB && TOPB[k] && (one || TOPP.has(k)) ? '<span class="spc-tp" title="' + esc(o.topTip || topWho(o.top, TOPB)) + '">' + esc(o.topL || 'Top players') + ': ' + TOPB[k] + '</span>' : '');
   const blk = (g, gi, info, vis) => { const gd = g.l.filter((c) => c.st !== 'na'), worst = gd.some((c) => c.st === 'bad') ? 'bad' : gd.some((c) => c.st === 'warn') ? 'warn' : gd.length ? 'ok' : 'na', main = g.l.find((c) => c.k === info.main) || g.l[0];
     return '<section class="spc-grp" id="spc-g-' + gi + '"><article class="spc-row spc-blk ' + worst + '"><header class="spc-rh">' + icB(info.ic) + '<div class="spc-rt"><h4>' + esc(g.t) + '</h4></div><div class="spc-rv">' + (main ? '<b class="cst-f ' + main.st + '">' + main.v + '</b>' : '') + '<span class="spc-bd ' + worst + '">' + BADGE[worst] + '</span></div></header>' +
       '<div class="spc-rb"><div class="spc-rd">' + (info.lead ? '<p class="spc-lead">' + esc(info.lead) + '</p>' : '') + spcLines(vis, viz, topT, slug, info.ic, (c) => momT(c, 6)) + (info.det ? '<div class="spc-det">' + info.det + '</div>' : '') + '</div></div></article></section>'; };
@@ -16253,21 +16660,21 @@ function specPage(o) {
   const it = per[per.length - 1].r.item, meta = one ? esc(it.boss || '') + ', pull ' + it.pull + ' (' + esc(pullLabel(it)) + ')' : rows.length + ' pulls of ' + esc(it.boss || '');
   const focus = checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
   // (your output: damage, or healing for a healer, a second over the pull (or the night's pulls, wipes included), as Warcraft Logs counts it: all of it over the
-  // fight's length; on a kill, your parse and the top raids' middle for your spec on this boss)
+  // fight's length; on a kill, your parse and the middle of the top 100 parses for your spec on this boss)
   const outK = UN === 'healing' ? 'healS' : 'dmgS', outT = per.reduce((v, x) => v + ((x.p[outK] || []).reduce((w, y) => w + (y || 0), 0)), 0), durT = per.reduce((v, x) => v + Math.max(1, x.r.duration || x.end || x.t1), 0), outR = outT / durT;
-  const prsM = one && per.length === 1 ? parsesFor(per[0].r, UN === 'healing' ? 'heal' : 'dmg') : null, prs1 = prsM ? prsM.get(P0.name) : null, topOut = one && TOPB && TOPB.out ? +TOPB.out : null;
+  const prsM = one && per.length === 1 ? parsesFor(per[0].r, UN === 'healing' ? 'heal' : 'dmg') : null, prs1 = prsM ? prsM.get(P0.name) : null, topOut = one && TOPB && TOPB.outP ? +TOPB.outP : null;
   const outH = outT >= 1000 ? '<div class="spc-out"><span class="spc-ov"><b>' + C(outR) + '</b> ' + (UN === 'healing' ? 'healing' : 'damage') + ' a second' + (one ? '' : ', over these pulls') + '</span>' + (prs1 ? '<span class="spc-op"' + (prs1.amount ? ' title="' + esc('Warcraft Logs counts ' + C(prs1.amount) + ' a second for this kill, over its own clock for the fight') + '"' : '') + '>Parse ' + prsChip(prs1) + '</span>' : '') +
-    (topOut ? '<span class="spc-ot" title="' + esc('The middle of the ' + o.top + ' in the fastest Mythic kills of this boss on Warcraft Logs') + '">Top raids: ' + C(topOut) + ' <span class="sub">· you\'re at ' + Math.round(100 * outR / topOut) + '%</span></span>' : '') + '</div>' : '';
-  // (what you did well: your good lines, the ones at or above the top raids first, then the ones that count the most)
+    (topOut ? '<span class="spc-ot" title="' + esc('The middle of the top 100 parses for ' + o.top + ' on this boss on Warcraft Logs (Mythic)') + '">Top parses: ' + C(topOut) + ' <span class="sub">· you\'re at ' + Math.round(100 * outR / topOut) + '%</span></span>' : '') + '</div>' : '';
+  // (what you did well: your good lines, the ones at or above the top players first, then the ones that count the most)
   const LOWB = /^(p:|res$|hp$|ssw$|ess$|mana$|mnx$|fol$|dbh$|ebh$|rgb$|jhs$|cm$|rep$|dbec$|tyc$|imp$)/, numV = (x) => { const t = String(x == null ? '' : x).replace(/<[^>]+>/g, '').trim(); let m; if ((m = t.match(/^(\d+(?:\.\d+)?)%$/))) return +m[1]; if ((m = t.match(/^(\d+)\s*\/\s*(\d+)$/))) return +m[2] ? 100 * m[1] / m[2] : null; if (/^All (spent|used)$/.test(t)) return 0; if ((m = t.match(/^(\d+(?:\.\d+)?)( wasted)?$/))) return +m[1]; return null; };
   const beats = (c) => { if (!TOPB || TOPB[c.k] == null) return false; const a = numV(c.v), b = numV(TOPB[c.k]); return a != null && b != null && (LOWB.test(c.k) ? a <= b : a >= b); };
   const good = checks.filter((c) => c.st === 'ok').map((c) => ({ c, b: beats(c) })).sort((u, w) => (w.b - u.b) || (wOf(w.c) - wOf(u.c))).slice(0, 3);
-  const goodH = good.length ? '<div class="spc-hft spc-hgt">What you did well</div>' + good.map(({ c, b }) => '<button type="button" class="spc-fo ok" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(b ? 'Yours: ' + String(c.v).replace(/<[^>]+>/g, '').replace(/\s*\/\s*/, ' of ') + ', the top raids: ' + TOPB[c.k] + '.' : spcFirst(c.sub)) + '</span></span></button>').join('') : '';
+  const goodH = good.length ? '<div class="spc-hft spc-hgt">What you did well</div>' + good.map(({ c, b }) => '<button type="button" class="spc-fo ok" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(b ? 'Yours: ' + String(c.v).replace(/<[^>]+>/g, '').replace(/\s*\/\s*/, ' of ') + ', the top players: ' + TOPB[c.k] + '.' : spcFirst(c.sub)) + '</span></span></button>').join('') : '';
   const fr = specFrame(P0);
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts by how much it matters. Good counts in full, could be better half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
-    (TOPB && TOPB.score ? '<div class="spc-htp">' + esc(o.topH || 'The ' + o.top + ' in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
+    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : '<p class="spc-fok">Everything is in good shape. Nice work.</p>') + goodH + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
@@ -16278,6 +16685,8 @@ function specPage(o) {
   const glance = o.tl ? sec('Your pull at a glance', o.tlSub || '', o.tl) : o.pullT ? sec('Pull by pull', 'Click a pull to open it, or a column name to sort.', o.pullT) : '';
   return { score, checks, html: hero + build + glance + nav + body + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
 }
+// (who a spec page's "Top players" marks come from, said in full)
+const topWho = (top, TOPB) => 'The middle of the ' + (TOPB && TOPB.n ? TOPB.n + ' ' : '') + top + ' who parsed 75 or higher in the fastest Mythic kills of this boss on Warcraft Logs';
 // (a check's "How it's judged": a small link at the end of its sentence that opens the explanation in place, and stays open)
 const spcHw = (k, how) => { if (!how) return ['', '']; const id = 'spc-hw-' + String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase(), on = !!(S.spcHwOpen && S.spcHwOpen[k]);
   return [' <button type="button" class="spc-hwb" data-hw="' + esc(k) + '" aria-expanded="' + on + '" aria-controls="' + id + '">How it\'s judged</button>', '<p class="spc-hwp" id="' + id + '"' + (on ? '' : ' hidden') + '>' + esc(how) + '</p>']; };
@@ -17493,7 +17902,7 @@ function genRun(spec, D, reps, name, one) {
         (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + '</div></div>').join('') + '</div>'; } };
   const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs }) : '';
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, tlSub: 'Hover to see what you pressed and what was up. Red marks a cooldown left ready long enough for another use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
-    TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top raids', topTip: 'The middle of the ' + (D.top || spec + 's') + ' in the fastest Mythic kills of this boss on Warcraft Logs', topH: 'The ' + (D.top || spec + 's') + ' in the fastest kills of this boss', pullT,
+    TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top players', topH: 'The ' + (D.top || spec + 's') + ' who parsed 75 or higher in the fastest kills of this boss', pullT,
     src: 'Built with help from the Wowhead and Icy Veins guides and WoWAnalyzer\'s checks for ' + spec + ', and from what your talents do.', secIc: { 'Your pull at a glance': D.ic, 'Pull by pull': D.ic } });
   return { checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html, wait };
 }

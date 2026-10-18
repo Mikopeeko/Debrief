@@ -9,12 +9,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   or healing summary and "what you did well".
 - [ ] **Your call for launch (Oct 19): Spec checks on the live site?** They're still greyed out online; Performance's other
   views are on.
-- [ ] **Top players: fastest kills plus good parses (my suggestion, your call, Oct 18):** the bars and "Top raids" marks now
+- [x] **Top players: fastest kills plus good parses (built in round 189, with your output-from-parses note):** the bars and "Top raids" marks now
   come from every player of the spec in the fastest Mythic kills (speed, not parses), so they show how players on the best
   teams play the real fight. My suggestion: keep the fastest kills but count only the players in them who also parsed well
   (75 or higher), for real fights and strong individual play at once. The catch: rare specs have fewer players left, so their
   bars rest on less data. Holy Paladin's marks still come from an earlier set of 10 kills: move it to the same set.
-- [ ] **Spec checks on every boss (my suggestion):** every bar and "Top raids" mark comes from Twin Fangs. The other bosses
+- [x] **Spec checks on every boss (my suggestion; done in round 189):** every bar and "Top raids" mark comes from Twin Fangs. The other bosses
   grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
 - [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
   Brewmaster; the rest from the guides, checked against the top players like the healers.
@@ -153,6 +153,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 189: Comparisons from parses, on every boss (your note, and your #5)
+- [x] **Your damage or healing against the top parses (your note):** the line under your name is now "Top parses: 398.6K ·
+  you're at 90%", the middle of the top 100 parses for your spec on that boss, from Warcraft Logs' rankings (Mythic). It used
+  to be the middle of the players in the fastest kills.
+- [x] **Every other mark from players who parsed well:** "Top players" (the rotation, cooldowns, uptimes and the rest) is
+  now the middle of the players of your spec in the fastest kills who also parsed 75 or higher there. Its tooltip says how many
+  players that is. Reading each top parse's own log would mean thousands of logs, so this keeps real fights and strong play
+  together. A spec with fewer than 3 such players on a boss gets no marks there (Mistweaver on Twin Fangs, for one), but it
+  still gets the top parses line.
+- [x] **On every raid boss (your #5):** all ten bosses have these numbers now, from the 20 fastest Mythic kills of each (29 on
+  Twin Fangs), every spec. Holy Paladin moved to the same set as the others.
+- Note: the bars for good and could be better still come from the fastest kills (set near where those players land), so a
+  grade means "plays like players on the best teams".
 
 ## 2026-10-18, round 188: Spec frames on the spec page (your note)
 - [x] **Every class has its own frame, tinted for each spec,** around the spec page's review header: a metal band, heavy corner
