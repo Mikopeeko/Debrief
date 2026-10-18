@@ -13,6 +13,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
 - [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
   Brewmaster; the rest from the guides, checked against the top players like the healers.
+- [ ] **A Discord server for Debrief (your note, Oct 18):** help you set one up once you launch (channels for feedback, bug
+  reports and announcements, and how to link it from the site).
 - [ ] **Buffs, trinkets and gear procs (your note, Oct 18):** uptime of the important buffs, and what each trinket gave (on-use
   and random procs): its average stats and its damage or healing. The same for Venomcursed items, cantrip items, enchants,
   weapon oil procs and the like. (This brings back the "Stats" idea skipped earlier.)
@@ -43,7 +45,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Entombed Sentinels module (round 95).
 - [x] Sszorak module (round 99).
 - [x] Then the next fight modules: Nek'zali the Soulcoiler, Vashnik the Malignant, The Lost Explorers (round 108). Every raid boss has a module now.
-- [ ] **Simplify Deaths in the Mechanics tab** a little (your note, round 108).
+- [x] **Simplify Deaths in the Mechanics tab** a little (your note, round 108). Rebuilt in round 115; round 183 made its three
+  summary lines one ("1 death, to Stone Breaker.").
 - [x] **Rework the raid cooldowns timeline** in the Mechanics tab, fully (round 110).
 - [x] **Ula'tek: a damage graph on the Venomous Heart** (round 113).
 - [x] **Damage windows, clearer** and **Big cooldowns, simpler**: mockup shown; you'd rather keep the Performance tab as it is now.
@@ -100,6 +103,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 183: Deaths, one summary line (your #3)
+- [x] Your round 108 note was mostly done in round 115 (one line per death, opening in place), but it was never ticked. What was
+  left: three lines saying the same thing at the top of each phase's Deaths. Now there's one: "1 death, to Stone Breaker." or
+  "3 deaths: 2 to Stone Breaker, 1 to Toxic Fumes." The "Overall" line is gone (each death already says whether a defensive,
+  Healthstone or potion was still ready), and so is "Pick the death for what did it", left from the old layout. A phase with
+  no deaths still says "Nobody died in this phase."
+- [x] Noted (your note): a Discord server for Debrief once you launch.
 
 ## 2026-10-18, round 182: Targets in the same bars as the rest of Performance (your #9)
 - [x] **Performance > Damage done > Targets** now uses the same bar rows as Players and Damage windows: the rank, the bar with the

@@ -10736,11 +10736,8 @@ function audit() {
       const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([p, n]) => p + ' (' + n + ')');
       return '<div class="msum"><p class="' + (red.size || died ? 'bad' : cnt.size ? 'warn' : 'ok') + '"><b>Overall:</b> ' + esc(!cnt.size ? 'Clean: no tornado touched anyone.' : plural(cnt.size, 'player') + ' touched by a tornado over ' + plural(groups.length, 'Tempest') +
         (red.size ? ', ' + red.size + ' of them twice or more in one' : '') + (died ? ', ' + plural(died, 'death') + ' to it' : '') + '. Most touches: ' + top.join(', ') + '.') + '</p></div>'; }
-    // Deaths: just how many and how many with something still ready
-    if (s.id === 'deaths') {
-      const n = all.length, ready = all.filter((x) => isWarnRow(x.row) || x.row.some((c) => c.warn)).length;
-      return '<div class="msum"><p class="' + (n ? 'bad' : 'ok') + '"><b>Overall:</b> ' + esc(n ? n + (n === 1 ? ' player died' : ' players died') + (m.sectionGroups ? ' this pull' : ' in this phase') + (ready ? ', ' + (n === 1 ? '' : (ready === n ? 'all ' : ready + ' ')) + 'with a defensive, Healthstone or potion still ready' : '') + '. Pick ' + (n === 1 ? 'the' : 'a') + ' death for what did it.' : 'Nobody died in this phase.') + '</p></div>';
-    }
+    // Deaths: only when nobody died (the deaths' own count line says the rest, and each death says whether something was still ready)
+    if (s.id === 'deaths') return all.length ? '' : '<div class="msum"><p class="ok"><b>Overall:</b> ' + esc('Nobody died ' + (m.sectionGroups ? 'this pull.' : 'in this phase.')) + '</p></div>';
     {
       const T2 = THEMES[s.id] || {}, firstI = (row) => row.findIndex((c) => c.t == null && !c.map && !c.maps && !c.more);
       // a row's theme: its flagged label (e.g. "Orb collision"), or the first flagged column in plain words
@@ -10908,7 +10905,7 @@ function audit() {
     // (deaths from the same hit, each within 2 s of the one before, are one line: "Schooty and 14 more", every name
     // listed when it's opened, with the first one's recap)
     const groups = []; items.forEach((x, i) => { if (same[i] && groups.length) groups[groups.length - 1].push(x); else groups.push([x]); });
-    return '<div class="md dd"><p class="dd-top">' + plural(ds.length, 'death') + ' · killed by: ' + [...causes].sort((a, b) => b[1] - a[1]).map(([c, n]) => esc(c) + ' ' + n).join(', ') + '</p>' +
+    return '<div class="md dd"><p class="dd-top">' + (() => { const cs = [...causes].sort((a, b) => b[1] - a[1]); return ds.length === 1 ? '1 death, to ' + esc(cs[0][0]) + '.' : cs.length === 1 ? ds.length + ' deaths, ' + (ds.length === 2 ? 'both' : 'all') + ' to ' + esc(cs[0][0]) + '.' : plural(ds.length, 'death') + ': ' + cs.map(([c, n]) => n + ' to ' + esc(c)).join(', ') + '.'; })() + '</p>' +
       groups.map((g, gi) => { const x = g[0], many = g.length > 1;
         const names = many ? '<div class="dd-all"><span class="sub">' + g.length + ' died to it: </span>' + g.map((y) => '<span class="nm" style="color:' + ((pmap.get(y.d.player) || {}).color || 'inherit') + '">' + esc(y.d.player) + '</span>').join(', ') + '</div>' : '';
         return '<button class="md-i dd-r ' + x.st + (gi === 0 ? ' on' : '') + '" type="button" data-i="' + gi + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '" data-dgs="' + esc(g.map((y) => y.d.guid + '@' + y.d.t.toFixed(2)).join(' ')) + '" aria-expanded="' + (gi === 0) + '">' +
