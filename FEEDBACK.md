@@ -162,7 +162,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
 ## 2026-10-18, round 199: Discord roles, Community mode, a welcome on joining, spam protection (your go-ahead)
-- **#rules** (read-only), under Start here. The rules text is drafted for your OK; nothing is posted there yet.
+- **#rules** (read-only), under Start here, with five short rules (your OK), posted and pinned.
 - **Community mode is on.** New members need a verified email, explicit images are filtered, everyone's notifications
   default to mentions only, and risky permissions are off for everyone. The server is still invite-only (not listed
   publicly). A private #moderator-only channel gets Discord's admin notes and safety alerts. The invite preview now
