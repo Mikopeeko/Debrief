@@ -9,10 +9,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   2. Make them stand out on the mechanics where a map tells the story (soaks, spreads, baits, adds): a small map right in
      "What went wrong" for that mechanic (done in round 210), and a map for the first death on Pull recap (next). The
      "Map" mark on rows was dropped: the maps show on their own now.
-  3. Sharper maps (the older note further down): the floor art is about 1 pixel per yard, which is why it looks soft. My
+  3. **Cast bars on the maps (your note, Oct 18):** an add, boss or other enemy casting something that should be kicked
+     (or that the note assigns a kick for) gets a cast bar under its nameplate, like in game. It fills as the cast goes,
+     turns green with the kicker's name when it's kicked, and red when it goes off. My take: amazing; it makes the kick
+     maps read like the game. The log has when each cast started and when it was kicked or finished, so the bar can fill
+     in time on the animated maps, and show where the cast stood at that moment on the still ones.
+  4. Sharper maps (the older note further down): the floor art is about 1 pixel per yard, which is why it looks soft. My
      take: draw our own clean outline of each boss room (walls, platforms, edges), starting with the progression boss;
      pulling Blizzard's art from the game files would break the "never bundle Blizzard art" rule.
-- [ ] **A short how-to on the Assignments tab (your note, Oct 18):** it's basically empty until a note is pasted, and no
+- [x] **A short how-to on the Assignments tab (your note, Oct 18; done in round 211):** it's basically empty until a note is pasted, and no
   other website does this, so it needs explaining clearly to stand out. My take: strong, an empty page loses people. My
   suggestion: when no note is pasted yet, the page shows three plain steps (copy your raid's NSRT note, paste it here,
   Debrief checks every assignment on every pull: soaks, kicks, orbs, cooldowns), a small picture of what the results look
@@ -187,6 +192,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 211: The Assignments how-to, small maps everywhere, every line showing
+- [x] **Assignments explains itself (your note):** with no note yet, the page says what it does ("Your raid's NSRT note
+  says who soaks, who kicks, who takes the orbs and who presses which cooldown. Paste it here once, and Debrief checks
+  every player against it on every pull. No other site does this."), then three numbered steps, a small picture of what
+  the results look like, and two buttons: "Add your NSRT note" and **"Try it with an example"**.
+- [x] **The example is made from the pull you're on:** the raid cooldowns your raid really pressed (Restoral, Aura Mastery
+  and the like), at the times they pressed them, plus one healer's raid cooldown they never pressed, so it shows "4 of 5
+  on time, 1 missed". A gold banner says it's an example, with "Add your own note" and "Remove the example". Saving your
+  own note replaces it. The Assignments tips point at the how-to (shown once more).
+- [x] **Every line in every "What went wrong" box shows** (your note): no more "+2 more below", on Mechanics,
+  Assignments, Night summary and Pull recap.
+- [x] **Small maps on every "What went wrong" line that has one** (your note): Pull recap's "Map" buttons are now the
+  small map itself (hover for a big one, click for the full moving map under the line). An Assignments line borrows
+  Mechanics' map from the same moment when it's clearly the same mechanic (like Guillotine), and a click opens it on
+  Mechanics. Night summary's lines cover the whole night, not one moment, so they have no map.
+- [x] Fixed: switching pulls while Pull recap was still loading could throw an error.
 
 ## 2026-10-18, round 210: A small map in What went wrong (your pick from the map notes)
 - [x] **Each line in Mechanics' "What went wrong" carries a small map** when its worst moment has one (on pull 32: the
