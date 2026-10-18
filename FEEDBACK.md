@@ -87,6 +87,31 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 158: The grading scale, fairer, and checked against the top 10
+- [x] **Your ask: scan the grading scale.** 17 of your pulls graded one by one, every rule compared with WoWAnalyzer's.
+  Fixed: Holy Shock good at 85% (WoWAnalyzer 80%), Beacon of Virtue at 80%, Divine Toll during Beacon of Virtue at 80%;
+  Holy Power waste counts only what you could have avoided (Divine Toll on 1 or 2 is fine, the guides say); Infusions on
+  Judgment count only while the raid was taking damage; one or two wasted procs in a pull is fine; Holy Shock with an
+  Infusion waiting and Infusions spent while Holy Shock was full are no longer graded (moments to look at; the second
+  went against the guides' "Infusion first"); Infused Flash of Light on a Beacon is never red.
+- [x] **Your question: Perfect beyond Beacon of Virtue.** Four levels per cast for Infusion of Light (Flash of Light on
+  a Beacon, Flash of Light elsewhere, Judgment, wasted), Divine Toll and Aura Mastery (during Beacon of Virtue with
+  nothing wasted, with 1 or 2 wasted, outside it, 3 or more wasted) and Avenging Wrath.
+- [x] **The ring is a score out of 100**, each check counting by how much it matters (Holy Shock and Infusion of Light
+  three times as much as most). Your kill: 91.
+- [x] **Your idea: run it on the top logs.** The top 10 Holy Paladin kills on Mythic Twin Fangs (all Herald of the Sun,
+  Beacon of Virtue) loaded and checked. They confirmed Eternal Flame over Light of Dawn (84% for them) and showed a few
+  rules were too strict even for them (hard-cast Flash of Lights, mana at the kill: they end with about 31%), which were
+  loosened. Each line now shows "Top 10: X" on this boss, and the banner says what they score (about 89; your kill 91).
+- [x] **Your question: Clarius's logs** (he writes Wowhead's guide; Sabotage, Ragnaros EU). Three Mythic Twin Fangs kills
+  checked: 98, 98 and 94. His Holy Power is near perfect; he hard-casts a few Flash of Lights (that limit loosened again)
+  and uses Light of Dawn during Beacon of Virtue more than his guide says (57%); one kill ran Beacon of Faith, which the
+  checks handled.
+- [x] **Your notes on the talents:** all three trees side by side, compact, Paladin on the left and Holy on the right,
+  open by default; the single-tree tabs and the list are gone.
+- [x] **Your ask: Beacon of Virtue's own healing.** What your Beacons passed on during each window plus Pillars of
+  Light: 35.4M on your kill, 24% of your healing; each window's share is on its box and in its cast sequence.
+
 ## 2026-10-17, round 157: Holy Paladin, a polishing pass (your ask)
 - [x] Every line proofread on your kill, a wipe and the whole night. Labels read naturally ("Infusions spent while Holy
   Shock was full", "Builders pressed at 5 Holy Power", "Flash of Light without an Infusion"); each line says what you

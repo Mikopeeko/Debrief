@@ -570,7 +570,7 @@ const CA_ZONE = ['ring of peace'];
 const PERF_CC = new Set(CA_CC.filter((n) => !['deep breath', 'abomination limb', 'mortal coil', 'grip of the dead', 'ring of peace', "gorefiend's grasp"].includes(n)).concat(['blinding sleet', 'war stomp', 'bull rush', 'haymaker', 'quaking palm']));
 const PERF_CC_CAST = new Set(['ring of peace', "gorefiend's grasp"]);
 // (single-target heals whose target the spec checks read: [time, target, healed, overhealed])
-const HEAL_TO = new Set(['flash of light', 'holy light', 'eternal flame', 'word of glory', 'holy shock']);
+const HEAL_TO = new Set(['flash of light', 'holy light', 'eternal flame', 'word of glory', 'holy shock', 'beacon of light', 'pillar of lights']);
 // Curses that slow a Spiteful Soulcoiler's casts (Curse of the Satyr replaces Curse of Tongues for some warlocks)
 const CA_CURSE = ['curse of tongues', 'curse of the satyr'];
 // Personal defensives by name (from DEFENSIVES, minus raid-wide ones), for soak checks.
@@ -5043,7 +5043,7 @@ function analyze(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) p.lowHeal += eff; }
-          if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 4000) l.push([t, dg, eff, over]); }
+          if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over]); }
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
           if (ck && (ck !== 'Celestial Conduit' || p.specId === 270)) { const u = cdPress(owner, ck, t, true); u.heal += eff; u.over += over; }
           if (/healthstone/i.test(spell) && !p.cons.healthstone.some((x) => Math.abs(x.t - t) < 2)) p.cons.healthstone.push({ t, name: spell, id });
