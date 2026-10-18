@@ -6300,7 +6300,7 @@ function talentTreeHtml(r, p) {
       return '<span class="tt-n sp' + (lit ? ' on' : '') + (n.ty === 'c' ? ' ch' : e.passive ? ' pa' : '') + (n.ty === 't' ? ' ap' : '') + '" style="left:' + cx.toFixed(1) + 'px;top:' + cy.toFixed(1) + 'px" data-sid="' + e.spell + '" data-sn="' + esc(e.name) + '" data-ex="' + esc((n.max > 1 ? k + '/' + n.max + ' · ' : '') + (lit ? 'taken' : 'not taken') + alt) + '">' +
         '<img src="' + whIcon(e.icon) + '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'' + whIcon('inv_misc_questionmark') + '\'">' + (n.max > 1 && lit ? '<b>' + k + '/' + n.max + '</b>' : '') + (n.free ? '<i class="tt-f" title="free">✓</i>' : '') + '</span>'; }).join('');
     return '<div class="tt-p"><div class="tt-h"><b>' + esc(label) + '</b><span class="sub">' + pts + (cap ? '/' + cap : '') + ' points</span></div><div class="tt-s"><div class="tt-c" style="width:' + W.toFixed(0) + 'px;height:' + H.toFixed(0) + 'px"><svg width="' + W.toFixed(0) + '" height="' + H.toFixed(0) + '" aria-hidden="true">' + lines + '</svg>' + nodes + '</div></div></div>'; };
-  const cls = (p.specName || '').split(' ').slice(-1)[0], spec = (p.specName || '').split(' ').slice(0, -1).join(' ');
+  const [spec, cls] = specSplit(p.specName);
   return '<div class="tt">' + panel(cls, tr.nodes.filter((n) => n.t === 'C'), 'C') + panel(tr.hero.get(sub) || 'Hero talents', tr.nodes.filter((n) => n.t === 'H' && n.sub === sub), 'H') + panel(spec, tr.nodes.filter((n) => n.t === 'S'), 'S') + '</div>';
 }
 // a player's build as a list anyone can read: every talent they took, by tree (class, hero, spec), top of the tree first, with its rank;
@@ -6315,19 +6315,21 @@ function talentBuildHtml(r, p, key) {
       return '<span class="tb-i sp' + (key.has(e.name) ? ' key' : '') + (apex ? ' apex' : '') + '" data-sid="' + e.spell + '" data-sn="' + esc(e.name) + '"><img src="' + whIcon(e.icon) + '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'' + whIcon('inv_misc_questionmark') + '\'"><span class="tb-n"><b>' + esc(e.name) + '</b>' +
         (n.max > 1 ? ' <span class="tb-r">' + rk + '/' + n.max + '</span>' : '') + (apex ? ' <span class="spc-ap">apex</span>' : '') + (alt ? '<span class="tb-alt">picked over ' + esc(alt) + '</span>' : '') + '</span></span>'; }).join('');
     return '<div class="tb-c"><div class="tb-h"><b>' + esc(label) + '</b><span class="sub">' + pts + (cap ? ' of ' + cap : '') + ' points</span></div><div class="tb-l">' + items + '</div></div>'; };
-  const cls = (p.specName || '').split(' ').slice(-1)[0], spec = (p.specName || '').split(' ').slice(0, -1).join(' ');
+  const [spec, cls] = specSplit(p.specName);
   return '<div class="tb">' + col(spec, tr.nodes.filter((n) => n.t === 'S'), 'S') + col(tr.hero.get(sub) || 'Hero talents', tr.nodes.filter((n) => n.t === 'H' && n.sub === sub), 'H') + col(cls, tr.nodes.filter((n) => n.t === 'C'), 'C') + '</div>' +
     '<p class="sub tb-k">Lit in gold: the talents these checks read.</p>';
 }
 // a player's talents as our own trees: class, hero and spec side by side, in the game's order, each sized to its columns. A round icon per talent
 // where the tree puts it, gold when taken, the branches between taken ones lit, the rest faint; a choice as a rounded square (the side taken,
 // the other in its tooltip), ranks as a badge, the apex larger, a dashed line where more points unlock the next rows. Or the same as a list.
+// (a spec's full name into its spec and its class: Death Knight and Demon Hunter are two words)
+const specSplit = (sn) => { const t = String(sn || ''), m = t.match(/^(.*) (Death Knight|Demon Hunter)$/) || t.match(/^(.*) (\S+)$/); return m ? [m[1], m[2]] : ['', t]; };
 function talentGraphHtml(r, p, key, tab) {
   const tr = treeOf(p.specName), c = (r.combatants || []).find((x) => x.name === p.name); if (!tr || !c || !c.talents || !c.talents.length) return '';
   const got = new Map(); for (const t of c.talents) got.set(+t.id, (got.get(+t.id) || 0) + (+t.rank || 1));
   const sub = ((tr.nodes.find((n) => n.t === 'H' && n.entries.some((e) => got.has(e.id))) || {}).sub) || 0;
   const on = (n) => n.entries.some((e) => got.has(e.id)), rk = (n) => n.entries.reduce((v, e) => v + (got.get(e.id) || 0), 0);
-  const cls = (p.specName || '').split(' ').slice(-1)[0], spec = (p.specName || '').split(' ').slice(0, -1).join(' ');
+  const [spec, cls] = specSplit(p.specName);
   const TR = [['C', cls, tr.nodes.filter((n) => n.t === 'C')], ['H', tr.hero.get(sub) || 'Hero talents', tr.nodes.filter((n) => n.t === 'H' && n.sub === sub)], ['S', spec, tr.nodes.filter((n) => n.t === 'S')]].filter(([, , ns]) => ns.length);
   const pts = (ns) => ns.reduce((v, n) => v + (n.free ? 0 : rk(n)), 0);
   const colsOf = (ns) => [...new Set(ns.map((n) => Math.round(n.x / 300)))].sort((a, b) => a - b);
