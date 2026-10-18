@@ -87,6 +87,28 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 171: Demonology Warlock Spec checks (your next spec, with sims)
+- [x] **Researched:** the Wowhead and Icy Veins Midnight guides (12.1.5), WoWAnalyzer's Demonology module (12.1: its Tyrant
+  window score, cooldowns, Soul Shards), and, your note for damage specs, **SimulationCraft's priority list**, the one Raidbots
+  sims with (Hand of Gul'dan while Dominion of Argus is up, Power Siphon at 1 Demonic Core or fewer, Demonbolt only under 4
+  Soul Shards, Dreadstalkers held for Tyrant with Reign of Tyranny, potion and Power Infusion in Tyrant).
+- [x] **The log reader now keeps** each player's summons (Warcraft Logs reports too: they weren't passed on before), the
+  Tyrant's demon count (Demonic Power's stacks), and Implosion's hits one by one (how many Wild Imps each one threw).
+- [x] **The page:** Casting (always be casting, cast bars counted); Demonic Tyrant (on cooldown; a card per Tyrant with its
+  window, your damage in it, its Hand of Gul'dans, Dreadstalkers, Demonic Cores and demons; Dreadstalkers out for it; Demonic
+  Cores held for it; demons it empowered; Power Infusion in it); Soul Shards (wasted, where they came from and went, their
+  level); Demonic Core (spent or wasted, Demonbolt without one); Cooldowns (Call Dreadstalkers, the Grimoires, Doomguard, Power
+  Siphon, Wild Imps per Implosion); Diabolist (Ruination, Infernal Bolt, Demonic Art). Costs are in damage, not healing.
+  A Warlock frame (fel fire and void purple) and a summoning-circle backdrop behind the talents.
+- [x] **Checked on the top 15 Mythic Twin Fangs kills** (all Diabolist): no errors; they score 87 to 100. Eased to what they
+  do: casting 77%, 8 Hand of Gul'dans a Tyrant (they do 8.5 to 10.7), Demonic Cores for Tyrant 60%. Two checks didn't tell
+  good play from bad and were changed: "Implosion with 6 Wild Imps" (the top players cast it on cooldown and throw about 4)
+  is now shown, not graded; "Soul Shards left as Tyrant ended" is gone.
+- [x] **Komo** (your raid's Demonology Warlock) scores 88 on your kill: casting 72%, Dreadstalkers out for 4 of 6 Tyrants,
+  and 2 Demonic Cores held for only 1 of 5.
+- [ ] Not testable yet: every top kill is Diabolist, so the Soul Harvester parts (and Power Siphon, Doomguard) are read through only.
+- [ ] **Your note: the card and talent graphics look cheap and cartoony.** Next: a WoW-style look (see the proposal).
+
 ## 2026-10-17, round 170: A card for each Divine Toll, and small tiles for the simple checks
 - [x] **Your note: Divine Toll like the others.** The "Divine Toll during Beacon of Virtue" line now has a card per press, like
   Tranquility and Stasis: when, what its Holy Shocks healed, inside Beacon of Virtue or not, and the Holy Power it wasted.

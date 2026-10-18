@@ -406,6 +406,10 @@ function translate(item, events) {
       case 'cast':
         add(e, 'SPELL_CAST_SUCCESS,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + adv(e, 1) + (e.fake ? ',FAKE' : ''));
         break;
+      // (a summon: who summoned what, e.g. a Warlock's Wild Imps and Dreadstalkers, for the spec checks)
+      case 'summon':
+        add(e, 'SPELL_SUMMON,' + src(e) + ',' + dst(e) + ',' + spell(ab));
+        break;
       case 'begincast':
         add(e, 'SPELL_CAST_START,' + src(e) + ',' + dst(e) + ',' + spell(ab));
         break;

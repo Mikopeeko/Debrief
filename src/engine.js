@@ -4869,6 +4869,7 @@ function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|')
 // number is from just before paying it (a finisher at 7 combo points reads 7), so it says they were spending, not
 // sitting at the top.
 const RES_SKIP = new Set(['0', '16']);
+const PET_AURA = new Set(['demonic power']), DMG_EV = new Set(['implosion']);
 function resAt(p, f, a, t) {
   const ty = String(f[a + 10]).split('|'); if (!ty.length || (ty.length === 1 && RES_SKIP.has(ty[0]))) return;
   const cu = String(f[a + 11]).split('|'), mx = String(f[a + 12]).split('|'), co = String(f[a + 13]).split('|');
@@ -4978,7 +4979,8 @@ function analyze(item, text, opts) {
     // (an enemy's spell: from a hostile unit that isn't a player's or their pet's)
     if (f.length > 9 && ENEMY_EV.has(ev) && !isPlayer(sg) && !pets.has(sg) && (parseInt(f[2], 16) & 0x40)) noteEnemy(num(f[8]), f[9]);
 
-    if (ev === 'SPELL_SUMMON') { if (isPlayer(sg)) pets.set(dg, sg); continue; }
+    // (a player's summon: the pet is theirs, and its time and spell are kept for the spec checks, e.g. a Warlock's demons)
+    if (ev === 'SPELL_SUMMON') { if (isPlayer(sg)) { pets.set(dg, sg); if (f.length > 9 && f[8] !== '0') { const q = P(sg, sn); if (!q.sumL) q.sumL = []; if (q.sumL.length < 6000) q.sumL.push([t, f[9], dg, dn]); } } continue; }
     if (ev === 'UNIT_DIED') {
       if (!isPlayer(dg)) { const u = units.get(dg); if (u) u.samples.push([t | 0, 0]); if (!r.enemyDied.has(dg)) r.enemyDied.set(dg, t); if (mod) modEv.push({ k: 'die', t, guid: dg, name: dn }); continue; }
       if (f[8] === '1') continue;
@@ -5028,6 +5030,8 @@ function analyze(item, text, opts) {
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
+          // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
+          if (DMG_EV.has(spell.toLowerCase())) { if (!p.dmgEv) p.dmgEv = []; if (p.dmgEv.length < 3000) p.dmgEv.push([t, spell, dg]); }
         }
         break;
       }
@@ -5096,6 +5100,8 @@ function analyze(item, text, opts) {
         mech.aura(t, pl ? P(dg, dn).name : dn, pl, num(f[8]), f[9], stacks);
         if (W(f[9], f[8])) modEv.push({ k: 'aura', op: ev === 'SPELL_AURA_APPLIED' ? 'apply' : 'dose', t, dst: dg, spell: f[9], id: num(f[8]), stacks, src: sg, own: owner }); // (own: the player behind a pet or totem)
         if (pl) { const sr = mech.get('stacks', num(f[8]), f[9]); if (sr) stackEv.push({ t, guid: dg, rule: sr, stacks, up: true, id: num(f[8]) }); }
+        // (a buff on a player's demon that the spec checks read: Demonic Power's stacks are how many demons the Demonic Tyrant empowers)
+        if (!pl && owner && f[11] === 'BUFF' && PET_AURA.has(f[9].toLowerCase())) { const q = P(owner, null); if (!q.petAur) q.petAur = []; if (q.petAur.length < 4000) q.petAur.push([t, f[9], stacks, dg]); }
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED') { buffUp(P(dg, dn), num(f[8]), f[9], t, isPlayer(sg) && sg !== dg ? shortName(sg, sn) : '');
           // (a zone's buff comes from the zone itself, e.g. Anti-Magic Zone: credit the player who pressed it last)
           const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.add(dg);
