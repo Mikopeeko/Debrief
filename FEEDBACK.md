@@ -87,6 +87,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 153: Spec checks you can explore (design and interaction)
+- [x] **Filter the checks**: All · To fix · Could be better · Good, with counts.
+- [x] **Click a check** and it opens right under it: how it's judged, where the rule comes from (Wowhead, Icy Veins,
+  WoWAnalyzer or your talent), and every moment it found, on a strip of the pull and as times. In one pull a time
+  shows it on your cooldown timeline; over the night it opens that pull, on the same check, with the moment shown.
+- [x] **Hover the cooldown timeline**: a line and a box with the time, what you pressed within 2 seconds, and what was up
+  (Avenging Wrath, a Beacon of Virtue, Holy Shock at full charges, Infusions held). A click keeps it there.
+- [x] **Click a Beacon of Virtue square**: that window's casts in order, with their time into the window and its grade.
+- [x] **Pull by pull**: click a pull to open it; click a column to sort.
+- [x] Avenging Wrath cards show their spot on the timeline when clicked. Checked on desktop and phone.
+- [ ] **Your note (next, Holy Paladin only until it's right):** more depth here, redundancy is fine: Holy Power
+  (gained, spent, wasted), mana usage, and Judgment (how it works with the kit; I had left it out).
+
 ## 2026-10-17, round 152: Holy Paladin, deeper (Wowhead, Icy Veins, WoWAnalyzer, your talents, your 30 Twin Fangs pulls)
 - [x] **Your real talents, read from the log** (Warcraft Logs and combat logs both), named from Raidbots' talent data and
   WoWAnalyzer's lists, and **your talent tree drawn as the game draws it** (class, Herald of the Sun and Holy side by side,
