@@ -3,6 +3,10 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Spruce up the Discord before launch (your note, Oct 18).** My take: right priority, it's the first place new
+  raiders land. Suggestions: a short "What is Debrief" post with three pictures (a map, What went wrong, the Assignments
+  how-to); the first patch notes in #updates covering today's work (drafted for your OK first); a small pinned FAQ in the
+  questions channel; tidier channel descriptions and emojis. Every post is shown to you before it goes up.
 - [ ] **Maps first: raiders really love the mini maps (your note, Oct 18, now high priority).** My take: agreed, they're
   what people remember about Debrief, so show them off. Three parts:
   1. Every mini map on Mechanics shows open, with no drop-down (done in round 209, with the tour leading with maps).
