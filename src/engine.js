@@ -166,11 +166,11 @@ const PACKS = [
   { type: 'avoidable', spellIds: [1294846], name: 'Anguished Echoes', severity: 'Medium', tip: 'Dodge the circles that rain out of the well during Soulcoil Ignition.' },
   { type: 'avoidable', spellIds: [1288554], name: 'Latent Cultist', severity: 'Medium', tip: 'Stay out of the cultist puddles (they move around the well in P2), and walk to the side of the room before Essence Rend is dispelled so the cultist spawns out of the way.' },
   { type: 'avoidable', spellIds: [1292248, 1289902], name: 'Soul Transfer', severity: 'High', tip: "Step out of the Echo of Jawae's line toward Nek'zali before its 15-second channel ends." },
-  { type: 'avoidable', spellIds: [1300239], name: 'Swirling Spirit', severity: 'Low', difficulties: ['Mythic'], tip: 'Avoid the spirits circling inside the well during Grasping Depths; their damage stacks.' },
+  { type: 'avoidable', spellIds: [1300239], name: 'Swirling Spirit', severity: 'Low', difficulties: ['Mythic'], tip: 'Avoid the spirits circling inside the well during Grasping Depths. Their damage stacks.' },
   { type: 'debuff', spellIds: [1290361], name: 'Soulcoiled', severity: 'High', tip: "Your soul was dragged to the well. Don't die in the well, and make sure Soulcoiler's Curse gets interrupted on Mythic." },
   { type: 'interrupt', spellIds: [1300238], name: "Soulcoiler's Curse", severity: 'High', difficulties: ['Mythic'], tip: 'Kick every Soulcoiler\'s Curse from the Drowned Echo. If it lands, everyone in the well is thrown out and Soulcoiled.' },
   { type: 'bossBuff', spellIds: [1284034], name: 'Uncoiled Rage', severity: 'High', tip: "Nek'zali hit full energy. Keep Restless Amani out of the well, reach the intermission before the fourth Soulcoil Ignition, and Bloodlust in P2." },
-  { type: 'stacks', spellIds: [1284109], name: 'Hollowing Strikes', severity: 'Low', threshold: 8, tip: 'Tank swap sooner: each stack cuts healing and absorbs on the tank by 5%. Guides swap at 30 to 40%, 6 to 8 stacks.' },
+  { type: 'stacks', spellIds: [1284109], name: 'Hollowing Strikes', severity: 'Low', threshold: 8, tip: 'Tank swap sooner. Each stack cuts healing and absorbs on the tank by 5%. Guides swap at 30 to 40%, 6 to 8 stacks.' },
 ]},
 { encounter: 'Entombed Sentinels', sources: SRC, rules: [
   { type: 'raidFail', spellIds: [1284452], name: 'Noxious Blast', severity: 'High', tip: 'A Toxic Droplet was left alone and exploded on the whole raid. Step on every droplet before it erupts.' },
@@ -185,7 +185,7 @@ const PACKS = [
 // (Vashnik: spell IDs checked against real Mythic pulls, 2026-10; Malignant Burst and Malignance weren't in them, so they
 // match by name. The fight module covers the adds, totems, soaks, dispels and tank swaps.)
 { encounter: 'Vashnik the Malignant', sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
-  { type: 'raidFail', name: 'Malignant Burst', severity: 'High', tip: 'A living venom reached the Malignant Cavity. Kill or control every venom add before it gets to the middle; more than one usually wipes.' },
+  { type: 'raidFail', name: 'Malignant Burst', severity: 'High', tip: 'A living venom reached the Malignant Cavity. Kill or control every venom add before it gets to the middle. More than one usually wipes.' },
   { type: 'raidFail', spellIds: [1282616], name: 'Catalytic Bile', severity: 'High', tip: 'A Catalytic Bile landed with nobody under it and hit the whole raid. Spread so every impact has someone within 6 yards.' },
   { type: 'avoidable', spellIds: [1295798], name: 'Plague Wave', severity: 'High', tip: 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.' },
   { type: 'avoidable', spellIds: [1286737], name: 'Umbral Ejection', severity: 'Medium', tip: 'Step out of the circles a Shrouded Venom leaves when it dies.' },
@@ -193,20 +193,20 @@ const PACKS = [
 // (Lost Explorers: spell IDs checked against real Mythic pulls, 2026-10; the fight module covers boxes, United Defense,
 // Final Ascension, Frostfire, Blink Nova, Mighty Thud, the bomb and tank stacks)
 { encounter: 'The Lost Explorers', sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
-  { type: 'avoidable', spellIds: [1310500], name: 'Aftershock', severity: 'Medium', tip: 'Step out of the Aftershock craters Mighty Thud leaves; they last 30 seconds.' },
+  { type: 'avoidable', spellIds: [1310500], name: 'Aftershock', severity: 'Medium', tip: 'Step out of the Aftershock craters Mighty Thud leaves. They last 30 seconds.' },
   { type: 'avoidable', spellIds: [1292764], name: 'Evil Eyes', severity: 'Medium', tip: 'Stay out of the flame puddles the statues leave.' },
   { type: 'bossBuff', spellIds: [1297646], name: 'United Defense', severity: 'High', tip: 'All three explorers were within 30 yards of each other. Keep at most two of them together.' },
   { type: 'raidFail', name: 'Relic Rupture', severity: 'High', tip: 'A box glowed green and ruptured on the raid. Your box popper needs to keep popping on the 2-stacks rhythm.' },
   { type: 'raidFail', spellIds: [1292780], name: 'Final Ascension', severity: 'High', tip: 'Final Ascension went off before a fish stopped it. Feed the Disgusting Fish with about 4 seconds left on the cast.' },
-  { type: 'interrupt', spellIds: [1286922], name: 'Icebound Flames', severity: 'Medium', tip: "Interrupt Iku's Icebound Flames; dispel it if a kick is missed." },
-  { type: 'debuff', spellIds: [1291918], name: 'Shell Spin', severity: 'Low', tip: "Stunned by Shell Spin: don't stand in front of Nama; melee bait it toward the room's edge." },
+  { type: 'interrupt', spellIds: [1286922], name: 'Icebound Flames', severity: 'Medium', tip: "Interrupt Iku's Icebound Flames. Dispel it if a kick is missed." },
+  { type: 'debuff', spellIds: [1291918], name: 'Shell Spin', severity: 'Low', tip: "Stunned by Shell Spin. Don't stand in front of Nama, and melee should bait it toward the room's edge." },
 ]},
 // (Sszorak: spell IDs checked against real Mythic pulls, 2026-10. A Tempest touch and its stacking DoT share an ID, so it
 // counts touches, not ticks. Unbound Ferocity, the Serpent's Fury enrage, is flagged by the fight module with why.)
 { encounter: 'Sszorak', sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
-  { type: 'avoidable', spellIds: [1287083], name: 'Tempest', severity: 'Medium', ticks: true, tip: 'Dodge the tornadoes Tempest sends roaming out from Sszorak; each touch hits hard and stacks a damage over time.' },
+  { type: 'avoidable', spellIds: [1287083], name: 'Tempest', severity: 'Medium', ticks: true, tip: 'Dodge the tornadoes Tempest sends roaming out from Sszorak. Each touch hits hard and stacks a damage over time.' },
   { type: 'avoidable', spellIds: [1305998], name: 'Caustic Claws', severity: 'Medium', tip: 'Step out of the venom splashes that land around Sszorak during Venomous Surge.' },
-  { type: 'avoidable', spellIds: [1296667], name: 'Caustic Residue', severity: 'Low', ticks: true, escalate: { touches: 8, severity: 'Medium' }, difficulties: ['Heroic', 'Mythic'], tip: 'Step out of the Caustic Residue puddles; the tank moves Sszorak to a clean part of the room.' },
+  { type: 'avoidable', spellIds: [1296667], name: 'Caustic Residue', severity: 'Low', ticks: true, escalate: { touches: 8, severity: 'Medium' }, difficulties: ['Heroic', 'Mythic'], tip: 'Step out of the Caustic Residue puddles. The tank moves Sszorak to a clean part of the room.' },
 ]},
 { encounter: 'The Twin Fangs', sources: SRC, rules: [
   { type: 'stacks', name: 'Eternal Venom', severity: 'Medium', threshold: 6,
@@ -217,11 +217,11 @@ const PACKS = [
 { encounter: 'The Coiled Altar', aliases: ['The Bargained Crown'], sources: ['raid strategy guides'], rules: [
   { type: 'interrupt', spellIds: [1286399], name: 'Wail of Terror', severity: 'High', tip: 'Kick the Spiteful Soulcoiler\'s Wail of Terror (a raid-wide fear). On Mythic, interrupting it also briefly reveals the hidden ghosts.' },
   // (damage spell 1285017 is a debuff that ticks fast while you stand in an axe: counted per touch, not per tick)
-  { type: 'avoidable', spellIds: [1283832, 1285017], name: 'Axegrinder', severity: 'Low', ticks: true, escalate: { touches: 5, severity: 'Medium' }, tip: 'Dodge the Axegrinder axes; they move around the room and don\'t despawn. Ranged: stay out of melee when you can; melee: step into a puddle rather than an axe. They also knock you back, so don\'t get knocked into a purple orb.' },
+  { type: 'avoidable', spellIds: [1283832, 1285017], name: 'Axegrinder', severity: 'Low', ticks: true, escalate: { touches: 5, severity: 'Medium' }, tip: 'Dodge the Axegrinder axes. They move around the room and don\'t despawn. Ranged: stay out of melee when you can. Melee: step into a puddle rather than an axe. They also knock you back, so don\'t get knocked into a purple orb.' },
 ]},
 // (Ula'tek: spell IDs checked against real Heroic and Mythic pulls, 2026-10; the fight module covers the rest)
 { encounter: "Ula'tek", sources: ['the encounter journal', 'raid strategy guides', 'real Heroic and Mythic logs'], rules: [
-  { type: 'avoidable', spellIds: [1292403], name: 'Caustic Waves', severity: 'Medium', tip: "Dodge the venom waves from Ula'tek and her tail; on Stage 1 she lifts a wing first to show the side." },
+  { type: 'avoidable', spellIds: [1292403], name: 'Caustic Waves', severity: 'Medium', tip: "Dodge the venom waves from Ula'tek and her tail. On Stage 1 she lifts a wing first to show the side." },
   { type: 'raidFail', spellIds: [1299206], name: 'Rattler Slam', severity: 'High', tip: 'Nobody was in reach of the tail (Gore Rattle), so it slammed the raid. Keep a tank on the tail at all times.' },
   { type: 'raidFail', spellIds: [1301007], name: 'Unchecked Rage', severity: 'High', tip: "Nobody was in melee of Ula'tek, so she hit the raid. Keep her tanked through swaps and when she resurfaces." },
   { type: 'raidFail', spellIds: [1290991], name: 'Malice', severity: 'High', tip: "A Doomscale Warden's Malice went off on the raid. Interrupt it the moment it starts." },
@@ -231,7 +231,7 @@ const PACKS = [
 ]},
 // (Venom Roar and Dark Devastation hit the tanks by design, and Commanding Presence lands on adds as they spawn, so none is a rule)
 { encounter: "Kith'ix", raid: "The Unbinding of Kith'ix", sources: ['the encounter journal', 'raid strategy guides', 'real Heroic logs'], rules: [
-  { type: 'avoidable', spellIds: [1303685], name: 'Twisted Appendage', severity: 'Medium', tip: 'Dodge the tentacle slaps: step out of the circle before it lands, about 3 seconds after it shows.' },
+  { type: 'avoidable', spellIds: [1303685], name: 'Twisted Appendage', severity: 'Medium', tip: 'Dodge the tentacle slaps. Step out of the circle before it lands, about 3 seconds after it shows.' },
   { type: 'debuff', spellIds: [1303257], name: 'Suffocation', severity: 'Medium', tip: "You left Liadrin's Refulgent Bulwark during Suffocating Darkness. Stay inside it until Divine Radiance." },
   { type: 'avoidable', spellIds: [1308881], name: 'Nullshards', severity: 'Low', tip: 'Dodge the shards the Null Gates release in phase 2. Each hit stacks Nullify, and enough stacks kill you.' },
 ]},
@@ -810,9 +810,9 @@ function buildTwinFangs(ev, r, h) {
   const balBad = false, balWarn = false;
   sections.push({ id: 'twins', title: 'Twin balance: the Fangs\' health', spell: [0, 'The Twin Fangs'], info: 'shown, not judged',
     verdict: 'good',
-    summary: (tw.length ? tw.map((x) => x.name).join(' and ') : 'No boss units found') + '. ' +
-      (gap != null ? 'Both died ' + gap.toFixed(1) + 's apart.' : firstDown != null ? 'One Fang died; the other ended at ' + (tw.find((x) => x.died == null) || {}).end + '%.' : 'Health at the end of the pull for each Fang.') +
-      ' Biggest health gap ' + Math.round(worst.gap) + '%' + (worst.gap ? ' at ' + h.fmtT(worst.t) : '') + '.' +
+    summary: (tw.length ? [...new Set(tw.map((x) => x.name))].join(' and ') : 'No boss units found') + '. ' +
+      (gap != null ? 'Both died ' + gap.toFixed(1) + 's apart.' : firstDown != null ? 'One Fang died, and the other ended at ' + (tw.find((x) => x.died == null) || {}).end + '%.' : 'This is each Fang\'s health at the end of the pull.') +
+      ' The biggest health gap was ' + Math.round(worst.gap) + '%' + (worst.gap ? ', at ' + h.fmtT(worst.t) : '') + '.' +
       (wrathMax ? ' Uncoiled Wrath reached ' + pl(wrathMax, 'stack') + ' (first at ' + h.fmtT(wrathEv[0].t) + ').' : ' No Uncoiled Wrath.'),
     cols: ['Boss', 'Health at end', 'Died', 'Uncoiled Wrath'],
     // one group at the first death, so both Fangs stay together in the last phase
@@ -837,7 +837,7 @@ function buildTwinFangs(ev, r, h) {
   const over = vRows.filter((x) => x.peak > budget);
   sections.push({ id: 'venom', title: 'Eternal Venom stacks', spell: S('eternal venom'),
     verdict: vRows.some((x) => x.atDeath != null && x.atDeath >= lethal) ? 'bad' : over.length ? 'warn' : 'good',
-    summary: pl(vRows.length, 'player') + ' got Eternal Venom; ' + pl(over.length, 'player') + ' went over the ' + budget + '-stack budget. Lethal at ' + lethal + ' on ' + diff + '.',
+    summary: pl(vRows.length, 'player') + ' got Eternal Venom, and ' + pl(over.length, 'player') + ' went over the ' + budget + '-stack budget. It\'s lethal at ' + lethal + ' on ' + diff + '.',
     cols: ['Player', 'Highest stacks', 'Over budget at', 'Stacks at death'],
     // red: one stack from lethal (or died to it); amber: over the budget but still safe
     rows: vRows.map((x) => [{ p: pname(x.g) }, { txt: String(x.peak), bad: x.peak >= lethal - 1, warn: x.peak > budget }, x.overAt != null ? { txt: h.fmtT(x.overAt), warn: true } : { txt: '—', dim: true }, x.atDeath != null ? { txt: String(x.atDeath), bad: x.atDeath >= lethal } : { txt: '—', dim: true }]) });
@@ -870,7 +870,7 @@ function buildTwinFangs(ev, r, h) {
   // red: a repeat soaker (Feasted) or a death in the strike; amber: under 4 fresh soakers but everyone lived
   const lowStrike = (s) => s.who.length - s.repeat.length < 4;
   // under 4 fresh soakers on a strike: the raid takes the full hit (medium, raid-wide)
-  for (const f of feastGroups) f.strikes.forEach((s, k) => { if (lowStrike(s)) M(s.t, 'Raid', 'ravenous feast', 'Medium', 'Ravenous Feast #' + (f.i + 1) + ' strike ' + (k + 1) + ' had only ' + (s.who.length - s.repeat.length) + ' fresh soakers (needs 4); the raid took the full hit.', 'Each strike needs at least 4 players who haven\'t soaked this Feast: stick to your group and its strike.'); });
+  for (const f of feastGroups) f.strikes.forEach((s, k) => { if (lowStrike(s)) M(s.t, 'Raid', 'ravenous feast', 'Medium', 'Ravenous Feast #' + (f.i + 1) + ' strike ' + (k + 1) + ' had only ' + (s.who.length - s.repeat.length) + ' fresh soakers (needs 4). The raid took the full hit.', 'Each strike needs at least 4 players who haven\'t soaked this Feast. Stick to your group and its strike.'); });
   const strikeBad = (s) => s.repeat.length > 0 || s.died.length > 0;
   sections.push({ id: 'feast', title: 'Ravenous Feast soak groups', spell: S('ravenous feast'),
     verdict: feastGroups.some((f) => f.strikes.some(strikeBad)) ? 'bad' : feastGroups.some((f) => f.strikes.some(lowStrike)) ? 'warn' : 'good',
@@ -904,12 +904,12 @@ function buildTwinFangs(ev, r, h) {
   const clearAll = clearedBy(habs);
   // a fount nobody absorbed erupts on the whole raid: serious
   { const seen = []; for (const e of bursts.slice().sort((a, b) => a.t - b.t)) { if (seen.some((t) => Math.abs(t - e.t) < 2)) continue; seen.push(e.t);
-    M(e.t, 'Raid', 'tainted burst', 'High', 'A Tainted Blood fount nobody absorbed erupted as Tainted Burst on the raid (' + pl(new Set(bursts.filter((x) => Math.abs(x.t - e.t) < 2).map((x) => x.dst)).size, 'player') + ' hit).', 'Every fount needs its soakers inside it before it erupts; the group that didn\'t get knocked back takes them.'); } }
+    M(e.t, 'Raid', 'tainted burst', 'High', 'A Tainted Blood fount nobody absorbed erupted as Tainted Burst on the raid (' + pl(new Set(bursts.filter((x) => Math.abs(x.t - e.t) < 2).map((x) => x.dst)).size, 'player') + ' hit).', 'Every fount needs its soakers inside it before it erupts. The group that didn\'t get knocked back takes them.'); } }
   // (only when the pull had founts: Heroic has none (no Tainted Blood or Tainted Burst anywhere in a Heroic night on
   // Warcraft Logs), and grading it there called every Feast clean with nobody absorbing)
   if (taint.length || bursts.length || habs.length) sections.push({ id: 'founts', title: 'Tainted Blood founts: absorbed in time', spell: S('tainted blood'),
     verdict: bursts.length ? 'bad' : 'good',
-    summary: (bursts.length ? 'Tainted Burst went off ' + pl(new Set(bursts.map((e) => Math.round(e.t))).size, 'time') + '.' : 'No Tainted Burst: every fount was absorbed.') +
+    summary: (bursts.length ? 'Tainted Burst went off ' + pl(new Set(bursts.map((e) => Math.round(e.t))).size, 'time') + '.' : 'Every fount was absorbed, so there was no Tainted Burst.') +
       (clearAll.heal.length ? ' Heal absorbs cleared: ' + clearAll.heal.map(([g, a]) => pname(g) + ' ' + fmtM(a)).join(', ') + (clearAll.other ? ', everyone else ' + fmtM(clearAll.other) : '') + '.' : ''),
     cols: ['After', 'When', 'Players who absorbed', 'Tainted Burst', 'Heal absorbs cleared'], rows: fRows,
     // (the whole pull's totals per healer, under the table)
@@ -945,9 +945,9 @@ function buildTwinFangs(ev, r, h) {
   const bSets = setsOf(bars, 20).map((l, i) => ({ i, t: l[0].t, bars: l }));
   const ranOutT = bars.filter((b) => b.ranOut).map((b) => b.t1 ?? b.t + 10);
   for (const b of bars) {
-    if (b.ranOut) M(b.t1 ?? b.t + 10, 'Raid', 'barbed bulwark', 'High', 'Nobody broke a Caustic Globule\'s Barbed Bulwark: it ran out after ' + (b.up != null ? b.up.toFixed(0) : '10') + ' seconds and the globule exploded on the raid, +1 Eternal Venom each.', 'Every globule needs a stun, fear or other crowd control as it lands: assign one per globule, with a backup.');
+    if (b.ranOut) M(b.t1 ?? b.t + 10, 'Raid', 'barbed bulwark', 'High', 'Nobody broke a Caustic Globule\'s Barbed Bulwark. It ran out after ' + (b.up != null ? b.up.toFixed(0) : '10') + ' seconds, and the globule exploded on the raid, giving everyone 1 more Eternal Venom stack.', 'Every globule needs a stun, fear or other crowd control as it lands. Assign one per globule, with a backup.');
     // (a late break is the raid's: whoever finally broke it did the job, the log can't tell who was meant to)
-    else if (b.late) M(b.t1, 'Raid', 'barbed bulwark', 'Medium', 'A Caustic Globule\'s Barbed Bulwark took ' + b.up.toFixed(1) + ' seconds to break (' + b.by.spell + '), leaving little time to soak it before it explodes.', 'Break each barrier right as the globules land; they explode about 10 seconds after.');
+    else if (b.late) M(b.t1, 'Raid', 'barbed bulwark', 'Medium', 'A Caustic Globule\'s Barbed Bulwark took ' + b.up.toFixed(1) + ' seconds to break (' + b.by.spell + '), leaving little time to soak it before it explodes.', 'Break each barrier right as the globules land. They explode about 10 seconds after.');
     for (const [p, o] of b.into) M(o.t, pname(p), 'barbed bulwark', o.died ? 'High' : 'Medium', 'Ran into a Caustic Globule while its Barbed Bulwark was still up: ' + (o.amt > 0 ? 'hit for ' + fmtN(o.amt) + ' and ' : '') + 'knocked back' + (o.died ? ', and died' : '') + '.', 'Wait for the barrier to break before going in to soak.',
       { t: o.t, good: [], goodLabel: '', bad: [p], badLabel: 'ran into a live barrier', title: 'Barbed Bulwark at ' + h.fmtT(o.t), pts: h.snap(o.t), frames: h.frames(Math.max(0, o.t - 3), Math.min(dur, o.t + 1.5), 0.25) });
   }
@@ -959,7 +959,7 @@ function buildTwinFangs(ev, r, h) {
   const gBurst = []; for (const e of dmgId(TF.globBurst).filter((x) => h.isPlayer(x.dst)).sort((a, b) => a.t - b.t)) { const c = gBurst[gBurst.length - 1]; if (c && e.t - c.t <= 0.5) c.who.add(e.dst); else gBurst.push({ t: e.t, who: new Set([e.dst]) }); }
   const globExplode = gBurst.filter((c) => c.who.size >= 6);
   // (one whose barrier ran out is flagged under Barbed Bulwark instead: that's what went wrong)
-  for (const c of globExplode) if (!ranOutT.some((t) => Math.abs(c.t - t) < 1.5)) M(c.t, 'Raid', 'caustic globule', 'High', 'A Caustic Globule nobody soaked exploded on the raid: ' + c.who.size + ' players hit, each +1 Eternal Venom.', 'Every globule needs a soaker before it ruptures: assign one per player per set, and send someone with low stacks to any left over.');
+  for (const c of globExplode) if (!ranOutT.some((t) => Math.abs(c.t - t) < 1.5)) M(c.t, 'Raid', 'caustic globule', 'High', 'A Caustic Globule nobody soaked exploded on the raid: ' + c.who.size + ' players hit, each +1 Eternal Venom.', 'Every globule needs a soaker before it ruptures. Assign one per player per set, and send someone with low stacks to any left over.');
   const gSets = setsOf(globs, 20).map((set, i) => ({ i, t: set[0].t, end: set[set.length - 1].t, hits: set }));
   const prevSoakers = new Set();
   for (const s of gSets) {
@@ -999,7 +999,7 @@ function buildTwinFangs(ev, r, h) {
   const setWarn = (s) => s.bul.size > 0 || s.backHi.length > 0;
   sections.push({ id: 'soaks', title: 'Caustic Globule soaks', spell: S('caustic globule'),
     verdict: globExplode.length || gSets.some(setBad) ? 'bad' : gSets.some(setWarn) ? 'warn' : 'good',
-    summary: pl(gSets.length, 'set') + ', ' + pl(globs.length, 'globule') + ' soaked' + (globExplode.length ? ', ' + pl(globExplode.length, 'globule') + ' exploded on the raid unsoaked' : '') + '. One globule per player per set, sets taken in turns (high-venom players sit one out), and no touching a globule while its Barbed Bulwark is up.',
+    summary: pl(globs.length, 'globule') + ' soaked over ' + pl(gSets.length, 'set') + (globExplode.length ? ', and ' + pl(globExplode.length, 'globule') + ' exploded on the raid unsoaked' : '') + '. The plan is one globule per player per set, with sets taken in turns (high-venom players sit one out), and no touching a globule while its Barbed Bulwark is up.',
     cols: ['Soaker', 'When', 'Globules', 'Venom at a risky soak', 'Barbed Bulwark hits', 'Died', ''],
     groups: gSets.map((s, si) => {
       // globules nobody soaked that exploded on the raid, listed in the set they came from (the last set that spawned before it)
@@ -1020,7 +1020,7 @@ function buildTwinFangs(ev, r, h) {
         })()].concat(ex.map((c) => [{ txt: 'Exploded unsoaked', bad: true }, { t: c.t }, { txt: '—', dim: true }, { txt: c.who.size + ' players hit, +1 Eternal Venom each', bad: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '' }])).concat(who.map((g) => {
           const o = s.by.get(g), b = s.bul.get(g), d = s.died.find((x) => x.guid === g), t = (o || b).t;
           const bad = (o && o.n > 1) || b || d, risky = o && o.n > 1 && o.hiStacks >= budget, again = o && s.backHi.includes(g);
-          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!risky }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack') + ', extra globule', bad: risky } : again ? { txt: pl(o.backSt, 'stack') + ', second set in a row', warn: true } : { txt: '—', dim: true }, b ? { txt: b.n + 'x', warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
+          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!risky }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack') + ', extra globule', bad: risky } : again ? { txt: pl(o.backSt, 'stack') + ', second set in a row', warn: true } : { txt: '—', dim: true }, b ? { txt: String(b.n), warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
             { txt: '' }];
         })) };
     }), rows: [] });
@@ -1035,8 +1035,8 @@ function buildTwinFangs(ev, r, h) {
     const top = [...byWho].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => n + ' (' + c + ')').join(', ');
     sections.push({ id: 'bulwark', title: 'Barbed Bulwark: barriers broken', spell: S('barbed bulwark'),
       verdict: bars.some(bBad) ? 'bad' : bars.some(bWarn) ? 'warn' : 'good',
-      summary: pl(bars.length, 'barrier') + ' over ' + pl(bSets.length, 'set') + ': ' + (outN ? pl(outN, 'barrier') + ' nobody broke (the globule exploded)' : 'every one broken') + (med != null ? ', half within ' + med.toFixed(1) + ' s' : '') +
-        ', ' + (intoN ? pl(intoN, 'time') + ' someone ran into a live barrier' : 'nobody ran into a live barrier') + '.' + (top ? ' Most broken by ' + top + '.' : ''),
+      summary: pl(bars.length, 'barrier') + ' over ' + pl(bSets.length, 'set') + '. ' + (outN ? pl(outN, 'barrier') + (outN === 1 ? ' wasn\'t' : ' weren\'t') + ' broken, so the globule exploded' : 'Every one was broken') + (med != null ? ', half of them within ' + med.toFixed(1) + ' seconds' : '') +
+        ', and ' + (intoN ? 'someone ran into a live barrier ' + pl(intoN, 'time') : 'nobody ran into a live barrier') + '.' + (top ? ' The most were broken by ' + top + '.' : ''),
       cols: ['Globule', 'Landed', 'Broken by', 'With', 'Barrier up', 'Ran into it'],
       groups: bSets.map((s) => {
         const sOut = s.bars.filter((b) => b.ranOut).length, sInto = s.bars.reduce((n, b) => n + b.into.size, 0), slow = Math.max(0, ...s.bars.filter((b) => b.by).map((b) => b.up));
@@ -1047,7 +1047,7 @@ function buildTwinFangs(ev, r, h) {
             return [{ txt: 'Globule ' + (j + 1) }, { t: b.t },
               b.by && b.by.who ? { p: b.by.who } : { txt: b.ranOut ? 'nobody' : b.t1 == null ? 'still up at the end' : 'not seen', bad: b.ranOut, dim: !b.ranOut },
               b.by ? { s: [b.by.id, b.by.spell] } : { txt: '—', dim: true },
-              b.ranOut ? { txt: 'ran out: it exploded', bad: true } : b.up != null ? { txt: b.up.toFixed(1) + ' s', warn: b.late } : { txt: '—', dim: true },
+              b.ranOut ? { txt: 'ran out, so it exploded', bad: true } : b.up != null ? { txt: b.up.toFixed(1) + ' s', warn: b.late } : { txt: '—', dim: true },
               b.into.size ? { ps: [...b.into.keys()].map(pname), bad: died, warn: !died } : { txt: '—', dim: true }];
           }) };
       }), rows: [] });
@@ -1097,7 +1097,7 @@ function buildTwinFangs(ev, r, h) {
   });
   for (const o of spitOthers) {
     const a = aims.find((w) => w.byst.includes(o)), setAims = aims.filter((w) => w.t0 <= o.e.t + 0.6 && w.t1 >= (a ? a.t0 : o.e.t - 5));
-    M(o.e.t, pname(o.e.dst), 'corrosive spit', 'Medium', 'Hit by a Corrosive Spit aimed at ' + (o.target ? pname(o.target) : 'someone else') + ' (' + fmtN(o.e.amt) + ' damage).', 'Stay out of the line from a Spawn of Vexhul through its marked target; it keeps going past them.',
+    M(o.e.t, pname(o.e.dst), 'corrosive spit', 'Medium', 'Hit by a Corrosive Spit aimed at ' + (o.target ? pname(o.target) : 'someone else') + ' (' + fmtN(o.e.amt) + ' damage).', 'Stay out of the line from a Spawn of Vexhul through its marked target. It keeps going past them.',
       spitMap((a ? a.t0 : o.e.t - 5) - 0.4, o.e.t + 0.6, setAims, a ? [a] : [], [[o.e.dst, o.e.t]], 'Corrosive Spit at ' + h.fmtT(o.e.t) + ': ' + pname(o.e.dst) + ' in the line'));
   }
   const repeatSpit = (a) => a.fired && a.n >= 2; // the add lived long enough for another spit
@@ -1105,7 +1105,7 @@ function buildTwinFangs(ev, r, h) {
   // look like hits): who the log says it hit, and the closest other player to the line when it fired.
   // Line: from the add through its target, ~55 yd long and ~3 yd each side of center (see SPIT_LEN / SPIT_W in ui.js).
   const spitNote = (a) => {
-    if (!a.fired) return 'No spit: the add died before it fired, so nobody was hit.';
+    if (!a.fired) return 'No spit. The add died before it fired, so nobody was hit.';
     const hit = (a.hitTarget ? [pname(a.g) + ' (the target)'] : []).concat(a.byst.map((o) => pname(o.e.dst) + ' (not targeted)'));
     let near = '';
     const f = (h.frames(a.t1, a.t1, 0.2, [a.src])[0] || { pts: [] }).pts, ad = f.find((p) => p.guid === a.src), tg = f.find((p) => p.guid === a.g);
@@ -1123,7 +1123,7 @@ function buildTwinFangs(ev, r, h) {
   sections.push({ id: 'spit', title: 'Corrosive Spit: standing in the line', spell: S('corrosive spit'),
     // red: someone hit who wasn't targeted, or an add's 3rd spit; amber: an add's 2nd spit (it should have died)
     verdict: spitOthers.length || aims.some((a) => a.fired && a.n >= 3) ? 'bad' : aims.some(repeatSpit) ? 'warn' : 'good',
-    summary: pl(spawnSets.length, 'add set') + ', ' + pl(aims.filter((a) => a.fired).length, 'spit') + ' fired, ' + pl(spitOthers.length, 'player') + ' hit by a spit that wasn\'t aimed at them.',
+    summary: pl(spawnSets.length, 'add set') + ' fired ' + pl(aims.filter((a) => a.fired).length, 'spit') + ', and ' + pl(spitOthers.length, 'player') + (spitOthers.length === 1 ? ' was' : ' were') + ' hit by a spit that wasn\'t aimed at them.',
     cols: ['Spit', 'Aimed', 'Aimed at (not at fault)', 'Result', 'Hit without being targeted', ''],
     groups: spawnSets.map((s) => {
       const fired = s.aims.filter((a) => a.fired).length, extra = s.aims.filter(repeatSpit).length, oth = s.aims.reduce((n, a) => n + a.byst.length, 0);
@@ -1161,13 +1161,13 @@ function buildTwinFangs(ev, r, h) {
   for (const c of ichCasts) for (const [g, o] of c.others) {
     // (only a long stand-in, and minor: damage only; the gore puddle is the carrier's to place)
     if (o.n < ICHOR_LONG) continue;
-    M(o.t, pname(g), 'coiling ichor', 'Low', 'Stood in a Coiling Ichor circle that wasn\'t theirs: hit ' + o.n + 'x (' + fmtN(o.amt) + ' damage).', 'Give marked players room: they carry the circle to the edge, so stay out of it until it expires.',
+    M(o.t, pname(g), 'coiling ichor', 'Low', 'Stood in a Coiling Ichor circle that wasn\'t theirs: hit ' + o.n + 'x (' + fmtN(o.amt) + ' damage).', 'Give marked players room. They carry the circle to the edge, so stay out of it until it expires.',
       { t: o.t, hl: c.tg, hlLabel: 'circle target (not at fault)', bad: [g], badLabel: 'in someone\'s circle', title: 'Coiling Ichor at ' + h.fmtT(o.t) + ': ' + pname(g) + ' in a circle', pts: h.snap(o.t), rings: ichRings(c) });
     mistakes[mistakes.length - 1].avoid = true; // (avoidable damage: graded there on the Night summary's report card)
   }
   sections.push({ id: 'ichor', title: 'Coiling Ichor: standing in a circle', spell: S('coiling ichor'),
     verdict: ichCasts.some((c) => [...c.others.values()].some((o) => o.n >= ICHOR_LONG)) ? 'warn' : 'good',
-    summary: pl(ichCasts.length, 'cast') + ', ' + pl(ichCasts.reduce((n, c) => n + [...c.others.values()].filter((o) => o.n >= ICHOR_LONG).length, 0), 'player') + ' stayed in a circle that wasn\'t theirs for ' + ICHOR_LONG + '+ ticks (a tick or two while stepping out is fine; hits in the first ' + ICHOR_GRACE + 's are spread time and not counted).',
+    summary: pl(ichCasts.length, 'cast') + '. ' + pl(ichCasts.reduce((n, c) => n + [...c.others.values()].filter((o) => o.n >= ICHOR_LONG).length, 0), 'player') + ' stayed in a circle that wasn\'t theirs for ' + ICHOR_LONG + ' ticks or more. A tick or two while stepping out is fine, and hits in the first ' + ICHOR_GRACE + ' seconds are spread time, so they aren\'t counted.',
     cols: ['When', 'Circle targets', 'In someone else\'s circle', ''],
     rows: ichCasts.map((c) => {
       const hitList = [...c.others].sort((a, b) => b[1].n - a[1].n);
@@ -1196,7 +1196,7 @@ function buildTwinFangs(ev, r, h) {
   });
   sections.push({ id: 'stone', title: 'Stone Breaker: tank catches the circles', spell: S('stone breaker'),
     verdict: sbSets.some((s) => s.rows.some((x) => !x.tank.length)) ? 'bad' : 'good',
-    summary: pl(sbSets.length, 'Stone Breaker') + ', ' + pl(sbSets.reduce((n, s) => n + s.rows.filter((x) => !x.tank.length).length, 0), 'circle') + ' missed by the tank.',
+    summary: ((m) => pl(sbSets.length, 'Stone Breaker') + (m ? ', and the tank missed ' + pl(m, 'circle') : ', and the tank caught every circle') + '.')(sbSets.reduce((n, s) => n + s.rows.filter((x) => !x.tank.length).length, 0)),
     cols: ['Circle', 'When', 'Soaked by', 'Raid hit', ''],
     groups: sbSets.map((s) => {
       const miss = s.rows.filter((x) => !x.tank.length).length;
@@ -1220,7 +1220,7 @@ function buildTwinFangs(ev, r, h) {
   const avSet = (title, sub, key, amtOf, sp) => { const rs = avRows.filter(([, a]) => a[key] > 0).sort((a, b) => b[1][key] - a[1][key]);
     if (!rs.length) return null; const rows = rs.map(([g, a]) => [{ p: pname(g) }, { txt: a[key] + (a[key] === 1 ? ' hit' : ' hits'), bad: a[key] >= 3, warn: a[key] > 0 }, { n: amtOf(a) }, { txt: '—', dim: true }]);
     const nT = rs.reduce((n, [, a]) => n + a[key], 0), amt = rs.reduce((n, [, a]) => n + amtOf(a), 0), spl = S(sp);
-    return { title, t: null, harm: 'Medium', nT, amt, spell: spl, sub: sub + ' · ' + pl(nT, 'hit') + ' on ' + pl(rs.length, 'player'), bad: rows.some((x) => x[1].bad), warn: true, rows }; };
+    return { title, t: null, harm: 'Medium', nT, amt, spell: spl, sub: sub + '. ' + pl(nT, 'hit') + ' on ' + pl(rs.length, 'player') + '.', bad: rows.some((x) => x[1].bad), warn: true, rows }; };
   const avGroups = [avSet('Stir the Depths water', 'Harmful: stepping into the churned water it leaves (each step is a hit)', 'stir', () => 0, 'stir the depths'),
     avSet('Sanguine Storm', 'Harmful: each hit', 'storm', (a) => a.amt, 'sanguine storm')].filter(Boolean);
   sections.push({ id: 'avoid', title: 'Avoidable damage', spell: S('sanguine storm'),
@@ -1333,7 +1333,7 @@ function buildEntombedSentinels(ev, r, h) {
     }).concat(diedIn.map((e) => [{ pt: [[pname(e.dst), lab(e.dst)]] }, { t: e.t }, { txt: '—', dim: true }, { txt: 'died during the intermission', bad: true }, { txt: '' }]),
       [...failed].map((g) => { const e = cb.find((q) => q.dst === g), wb = wrong.find((b) => b.who.includes(g)), d = diedNear(g, e.t, 70);
       return [{ pt: [[pname(g), lab(g)]] }, { t: e.t }, { txt: 'ran out', bad: true }, { txt: 'Cultivated Burst' + (e.amt ? ' (' + fmtM(e.amt) + ')' : '') + (wb ? ' after a wrong bump (to ' + wb.st + ')' : '') + (d ? ', died' : ''), bad: true }, { txt: '' }]; }));
-    for (const g of failed) { const e = cb.find((q) => q.dst === g); M(e.t, pname(g), 'Helical Toxins', 'High', 'Didn\'t solve Helical Toxins in intermission ' + (x.i + 1) + ': took Cultivated Burst (' + (e.amt ? fmtM(e.amt) + ', then ' : '') + 'a long DoT and a pool).', 'Pair with exactly one player so your green orbs make 4 (1 with 3, 2 with 2); if you fail, go to the far corner and stop bumping.'); }
+    for (const g of failed) { const e = cb.find((q) => q.dst === g); M(e.t, pname(g), 'Helical Toxins', 'High', 'Didn\'t solve Helical Toxins in intermission ' + (x.i + 1) + ': took Cultivated Burst (' + (e.amt ? fmtM(e.amt) + ', then ' : '') + 'a long DoT and a pool).', 'Pair with exactly one player so your green orbs make 4 (1 with 3, 2 with 2). If you fail, go to the far corner and stop bumping.'); }
     for (const b of wrong) if (b.who.some((g) => !failed.has(g))) M(b.t, b.who.map(pname).join(' and '), 'Helical Toxins', 'Medium', 'Bumped into the wrong partner in intermission ' + (x.i + 1) + ': the stacks went to ' + b.st + ' instead of clearing.', 'Bump only into a partner that makes 4: follow the raid\'s system (who pings, who goes under the boss).');
     const slow = solved.length ? Math.max(...solved.map((s) => s.t - t0)) : null;
     const who = got.filter((g) => !failed.has(g)), fl = [...failed];
@@ -1359,7 +1359,7 @@ function buildEntombedSentinels(ev, r, h) {
   });
   if (hGroups.length) sections.push({ id: 'helix', title: 'Helical Toxins: the pairing game', spell: [ES.helix, 'Helical Toxins'],
     verdict: hGroups.some((g) => g.bad) ? 'bad' : hGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(hGroups.length, 'intermission') + '. Pairs that solved it, how fast, wrong bumps, and anyone who took Cultivated Burst.',
+    summary: pl(hGroups.length, 'intermission') + '. It shows the pairs that solved it, how fast, any wrong bumps, and anyone who took Cultivated Burst.',
     cols: ['Players', 'When', 'Solved after', 'Result', ''], groups: hGroups, rows: [] });
 
   // ---- 2. Shifting Protovenom (Mythic): circles that clear by touching another circle ----
@@ -1396,7 +1396,7 @@ function buildEntombedSentinels(ev, r, h) {
     const plain = [...new Set(er.flatMap((q) => q.who))].filter((g) => !circles.includes(g)).map((g) => { const ex = eruptOf(g);
       return [{ p: pname(g), sub: 'no circle' }, { t: ex.t }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: 'touched by a circle', bad: true }, { txt: '' }]; });
     // (eruption hits themselves are flagged by the rule pack, one per player hit)
-    for (const x of cr) if (!x.ex && x.took > 6) M(x.off, pname(x.g), 'Shifting Protovenom', 'Low', 'Took ' + x.took.toFixed(1) + ' s to clear Shifting Protovenom (' + pl(x.n, 'pulse') + ' of 233k).', 'Find a partner with a circle right away; cross to the other group if yours has none.');
+    for (const x of cr) if (!x.ex && x.took > 6) M(x.off, pname(x.g), 'Shifting Protovenom', 'Low', 'Took ' + x.took.toFixed(1) + ' s to clear Shifting Protovenom (' + pl(x.n, 'pulse') + ' of 233k).', 'Find a partner with a circle right away. Cross to the other group if yours has none.');
     const last = Math.max(t + 8, ...cr.map((x) => x.off ?? t + 14)), tm = cr.length ? cr[0].on + 1 : t + 5;
     // (the map: an orange circle on each player while they have it, a green flash where a pair cleared, a red one at
     // each eruption. The circle's size isn't published (a server-side area). Measured on 30 Mythic pulls: two circles
@@ -1415,7 +1415,7 @@ function buildEntombedSentinels(ev, r, h) {
   });
   if (pvGroups.length) sections.push({ id: 'protovenom', title: 'Shifting Protovenom: circles cleared', spell: [ES.pv, 'Shifting Protovenom'],
     verdict: pvGroups.some((g) => g.bad) ? 'bad' : pvGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(pvGroups.length, 'cast') + '. Who cleared with whom and how fast, and any eruption.',
+    summary: pl(pvGroups.length, 'cast') + '. It shows who cleared with whom and how fast, and any eruption.',
     cols: ['Player', 'Circle', 'Cleared with', 'Took', 'Pulses', 'Eruption', ''], groups: pvGroups, rows: [] });
 
   // ---- 3. Toxic Droplets (green): step on every droplet, one each, and dodge the venom flying back ----
@@ -1436,10 +1436,10 @@ function buildEntombedSentinels(ev, r, h) {
       // (two at once: two pickups within half a second that both did damage; an absorbed or immune one doesn't count)
       o.ts.sort((a, b) => a - b); const hurt = pk.filter((e) => e.dst === o.g && e.amt > 0).map((e) => e.t).sort((a, b) => a - b), dbl = hurt.some((x, k) => k && x - hurt[k - 1] <= 0.5);
       const d = diedNear(o.g, o.ts[0] ?? o.lvT, 6), tank = isTank(o.g);
-      if (dbl && !tank) M(hurt.find((x, k) => k && x - hurt[k - 1] <= 0.5), pname(o.g), 'Toxic Droplets', d ? 'High' : 'Medium', 'Stepped on two Toxic Droplets at once (375k each)' + (d ? ' and died' : '') + '.', 'One droplet at a time unless you have an immunity; tanks can take extras.');
+      if (dbl && !tank) M(hurt.find((x, k) => k && x - hurt[k - 1] <= 0.5), pname(o.g), 'Toxic Droplets', d ? 'High' : 'Medium', 'Stepped on two Toxic Droplets at once (375k each)' + (d ? ' and died' : '') + '.', 'Pick up one droplet at a time unless you have an immunity. Tanks can take extras.');
       // (Living Venom hits are judged under Avoidable damage and flagged by the rule pack; here they're only shown, so
       // they aren't counted twice)
-      return [{ p: pname(o.g), sub: tank ? 'tank' : '' }, { t: o.ts[0] ?? o.lvT }, { txt: String(o.ts.length) + (o.imm ? ' (' + o.imm + ' immune)' : ''), warn: dbl && !tank }, o.lv ? { txt: o.lv + 'x', sub: 'see Avoidable damage' } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
+      return [{ p: pname(o.g), sub: tank ? 'tank' : '' }, { t: o.ts[0] ?? o.lvT }, { txt: String(o.ts.length) + (o.imm ? ' (' + o.imm + ' immune)' : ''), warn: dbl && !tank }, o.lv ? { txt: pl(o.lv, 'hit'), sub: 'see Avoidable damage' } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
     });
     // (an erupted droplet is flagged by the rule pack: Noxious Blast)
     const takers = [...per.values()].filter((o) => o.ts.length);
@@ -1454,7 +1454,7 @@ function buildEntombedSentinels(ev, r, h) {
   });
   if (dGroups.length) sections.push({ id: 'droplets', title: 'Toxic Droplets: stepped on, one each', spell: [ES.drop, 'Toxic Droplets'],
     verdict: dGroups.some((g) => g.bad) ? 'bad' : dGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(dGroups.length, 'set') + ' of droplets. Who stepped on them, two at once, any that erupted on the raid, and hits from the venom flying back.',
+    summary: pl(dGroups.length, 'set') + ' of droplets. It shows who stepped on them, anyone who took two at once, any that erupted on the raid, and hits from the venom flying back.',
     cols: ['Player', 'When', 'Droplets', 'Living Venom', 'Died', ''], groups: dGroups, rows: [] });
 
   // ---- 4. Venom Coagulation (green add): kill it, the second of each cycle before the intermission ----
@@ -1467,13 +1467,13 @@ function buildEntombedSentinels(ev, r, h) {
     const nextI = inters.find((x) => x.t0 > a.t), lastC = cycOf(a.t) === phases.length - 1 && inters.length >= 4;
     const before = nextI && !adds.some((b) => b.t > a.t && b.t < nextI.t0); // (the cycle's last add: it spawns right before the intermission)
     const alive = before && (a.died == null || a.died > nextI.t0), dmg = contam.filter((e) => e.t >= a.t && e.t <= (a.died ?? dur) + 0.5 && !adds.some((b) => b !== a && b.t > a.t && e.t >= b.t && (b.died == null || e.t <= b.died))).reduce((s, e) => s + e.amt, 0);
-    if (alive && !lastC) M(nextI.t0, 'Raid', 'Venom Coagulation', 'Medium', 'The Venom Coagulation was still alive when the intermission started: its Contaminate pulses hit the raid during the pairing game.', 'Give the cycle\'s second Venom Coagulation priority so it dies before Vitriolic Stasis; ranged on the red side can help.');
+    if (alive && !lastC) M(nextI.t0, 'Raid', 'Venom Coagulation', 'Medium', 'The Venom Coagulation was still alive when the intermission started. Its Contaminate pulses hit the raid during the pairing game.', 'Give the cycle\'s second Venom Coagulation priority so it dies before Vitriolic Stasis. Ranged on the red side can help.');
     return [{ txt: 'Add ' + (i + 1) + (before ? ' (before the intermission)' : '') }, { t: a.t }, a.died != null ? { txt: 'died +' + (a.died - a.t).toFixed(0) + ' s' } : { txt: 'not killed', warn: !lastC, dim: lastC }, { txt: fmtM(dmg) + ' on the raid' },
-      alive ? (lastC ? { txt: 'alive (the enrage is near: not judged)', dim: true } : { txt: 'still alive at the intermission', bad: true }) : before ? { txt: 'dead in time' } : { txt: '—', dim: true }];
+      alive ? (lastC ? { txt: 'alive (the enrage is near, so it isn\'t judged)', dim: true } : { txt: 'still alive at the intermission', bad: true }) : before ? { txt: 'dead in time' } : { txt: '—', dim: true }];
   });
   if (aRows.length) sections.push({ id: 'coag', title: 'Venom Coagulation: adds killed in time', spell: [ES.coagCast, 'Venom Coagulation'],
     verdict: aRows.some((x) => x[4].bad) ? 'bad' : aRows.some((x) => x[2].warn) ? 'warn' : 'good',
-    summary: pl(adds.length, 'add') + '. Time to kill and the raid damage each did; the one before each intermission has to be dead before it.',
+    summary: pl(adds.length, 'add') + '. It shows each one\'s time to kill and the raid damage it did. The one before each intermission has to be dead before it.',
     cols: ['Add', 'Spawned', 'Killed', 'Contaminate', 'At the intermission'], rows: aRows });
 
   // ---- 5. Unstable Miasma (red): a soak, at least 8 players on Mythic ----
@@ -1483,8 +1483,8 @@ function buildEntombedSentinels(ev, r, h) {
     const hit = miHits.filter((e) => e.t >= t && e.t <= t + 12), t1 = hit.length ? hit[0].t : null, soak = [...new Set(hit.filter((e) => e.t <= (t1 ?? 0) + 1).map((e) => e.dst))];
     const tg = (miTg.find((e) => e.t >= t - 1 && e.t <= t + 8) || {}).dst, died = soak.map((g) => diedNear(g, t1 ?? t, 3)).filter(Boolean);
     const few = need && soak.length < need;
-    if (few) M(t1 ?? t, 'Raid', 'Unstable Miasma', 'High', 'Unstable Miasma ' + (i + 1) + ' had ' + pl(soak.length, 'soaker') + ' (at least ' + need + ' needed on Mythic): more stacks and bigger pools for each.', 'Get at least eight players into every Unstable Miasma, far back in a corner.');
-    for (const d of died) M(d.t, d.player, 'Unstable Miasma', 'High', 'Died in the Unstable Miasma soak.', 'Soak at full health with a defensive if you\'re low; more soakers means less each.');
+    if (few) M(t1 ?? t, 'Raid', 'Unstable Miasma', 'High', 'Unstable Miasma ' + (i + 1) + ' had ' + pl(soak.length, 'soaker') + ', but Mythic needs at least ' + need + ', so each soaker got more stacks and a bigger pool.', 'Get at least eight players into every Unstable Miasma, far back in a corner.');
+    for (const d of died) M(d.t, d.player, 'Unstable Miasma', 'High', 'Died in the Unstable Miasma soak.', 'Soak at full health, with a defensive if you\'re low. More soakers means less damage each.');
     return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' of ' + need : ''), bad: !!few, sub: soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
       // (the soak: 7.5 yd around the marked player, its published radius, shown from 3 s before it lands)
       t1 != null ? { map: { t: t1, good: soak, goodLabel: 'soaked', goodAt: soak.map((g) => [g, t1]), pendLabel: 'in the soak (before it lands)', hl: tg ? [tg] : [], hlLabel: 'marked', title: 'Unstable Miasma ' + (i + 1) + ' at ' + h.fmtT(t1), pts: h.snap(t1), frames: frames(t1 - 3, t1 + 1.5),
@@ -1503,14 +1503,14 @@ function buildEntombedSentinels(ev, r, h) {
     const rows = s.l.map((e) => {
       const off = bbA.find((x) => x.op === 'remove' && x.dst === e.dst && x.t > e.t), dp = off && disp.find((x) => x.dst === e.dst && Math.abs(x.t - off.t) < 0.3), d = diedNear(e.dst, e.t, (off ? off.t - e.t : 20) + 0.5);
       const on = off ? off.t - e.t : null, slow = dp && on > 5, ran = off && !dp && !d;
-      if (ran) M(off.t, pname(e.dst), 'Blighted Blood', 'Low', 'Blighted Blood wasn\'t dispelled and ran out, dropping a pool.', 'Healers dispel Blighted Blood as soon as it lands; if it does run out, drop the pool at the edge.');
-      return [{ p: pname(e.dst) }, { t: e.t }, on != null ? { txt: on.toFixed(1) + ' s', warn: slow } : { txt: '—', dim: true }, dp ? { p: dp.src } : { txt: d ? 'died with it' : ran ? 'not dispelled: pool' : '—', bad: !!d, warn: ran }];
+      if (ran) M(off.t, pname(e.dst), 'Blighted Blood', 'Low', 'Blighted Blood wasn\'t dispelled and ran out, dropping a pool.', 'Healers dispel Blighted Blood as soon as it lands. If it does run out, drop the pool at the edge.');
+      return [{ p: pname(e.dst) }, { t: e.t }, on != null ? { txt: on.toFixed(1) + ' s', warn: slow } : { txt: '—', dim: true }, dp ? { p: dp.src } : { txt: d ? 'died with it' : ran ? 'not dispelled, so it dropped a pool' : '—', bad: !!d, warn: ran }];
     });
     return { title: 'Blighted Blood ' + (i + 1), t: s.t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(s.l.length, 'player') + ', ' + rows.filter((x) => x[3].p).length + ' dispelled', rows };
   });
   if (bbGroups.length) sections.push({ id: 'blighted', title: 'Blighted Blood: dispelled quickly', spell: [ES.bb, 'Blighted Blood'],
     verdict: bbGroups.some((g) => g.bad) ? 'bad' : bbGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(bbOn.length, 'Blighted Blood') + '. How long each stayed on and who dispelled it.', cols: ['Player', 'When', 'On for', 'Dispelled by'], groups: bbGroups, rows: [] });
+    summary: pl(bbOn.length, 'Blighted Blood') + '. It shows how long each stayed on and who dispelled it.', cols: ['Player', 'When', 'On for', 'Dispelled by'], groups: bbGroups, rows: [] });
 
   // ---- 7. Blood pools: where they landed, cycle by cycle (a pool lands when Blood Venom, a Blighted Blood that ran out
   // or Bloodvenom Injection ends on someone); for keeping the floor clean, not judged ----
@@ -1547,14 +1547,14 @@ function buildEntombedSentinels(ev, r, h) {
     const rows = [];
     for (const o of list) { const main = o.acid >= o.blood ? 'acid' : 'blood', off = main === 'acid' ? o.blood : o.acid; _sides[c].set(pname(o.g), main === 'acid' ? 'Breath' : 'Blood');
       if (off >= 3 && !isTank(o.g)) { rows.push([{ p: pname(o.g) }, { txt: main === 'acid' ? 'Breath (green)' : 'Blood (red)' }, { txt: off + ' stacks', bad: off >= 6, warn: off < 6 }]);
-        M(ph.start + 1, pname(o.g), 'Mark of ' + (main === 'acid' ? 'Blood' : 'Acid'), off >= 6 ? 'Medium' : 'Low', 'Picked up ' + off + ' stacks of the other boss\'s Mark in cycle ' + (c + 1) + ': in range of both bosses.', 'Stay within 40 yards of your own boss only; cleave both from the edge of range.'); } }
+        M(ph.start + 1, pname(o.g), 'Mark of ' + (main === 'acid' ? 'Blood' : 'Acid'), off >= 6 ? 'Medium' : 'Low', 'Picked up ' + off + ' stacks of the other boss\'s Mark in cycle ' + (c + 1) + ', by standing in range of both bosses.', 'Stay within 40 yards of your own boss only. To hit both, cleave from the edge of range.'); } }
     const nB = [..._sides[c].values()].filter((v) => v === 'Breath').length;
     return { title: 'Cycle ' + (c + 1), t: ph.start + 0.02, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: nB + ' on the Breath (green), ' + (_sides[c].size - nB) + ' on the Blood (red)' + (rows.length ? ', ' + pl(rows.length, 'player') + ' in range of both' : ''),
       rows: rows.length ? rows : [[{ txt: 'Nobody in range of both bosses', dim: true }, { txt: '' }, { txt: '' }]] };
   }).filter(Boolean);
   if (sGroups.length) sections.push({ id: 'marks', title: 'Marks: in range of one boss only', spell: [ES.acid, 'Mark of Acid'],
     verdict: sGroups.some((g) => g.bad) ? 'bad' : sGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: 'Each cycle, who was on which side, and anyone who picked up 3 or more stacks of the other boss\'s Mark.', cols: ['Player', 'Their side', 'Other boss\'s Mark'], groups: sGroups, rows: [] });
+    summary: 'It shows who was on which side each cycle, and anyone who picked up 3 or more stacks of the other boss\'s Mark.', cols: ['Player', 'Their side', 'Other boss\'s Mark'], groups: sGroups, rows: [] });
 
   // boss health at each intermission (Vitriolic Stasis heals the weaker boss up to the other), and the 40-yard rule
   const hpAt = (g, t) => { const u = g && r.hpUnits && r.hpUnits.get(g); if (!u) return null; let v = null; for (const [tt, f] of u.samples) { if (tt > t) break; v = f; } return v; };
@@ -1577,7 +1577,7 @@ function buildEntombedSentinels(ev, r, h) {
   if (near.length >= 3) M(near[0], 'Raid', 'Entombed Sentinels', 'Medium', 'The bosses were within 40 yards of each other for about ' + near.length + ' seconds outside the intermissions (99% less damage taken).', 'Keep the bosses on opposite sides of the room, 40+ yards apart.');
   if (balRows.length || near.length) sections.push({ id: 'balance', title: 'Boss balance: even health, 40 yards apart', spell: [ES.stasisHeal, 'Vitriolic Stasis'],
     verdict: near.length >= 3 ? 'bad' : balRows.some((x) => x[4].warn) ? 'warn' : 'good',
-    summary: 'Each boss\'s health going into every intermission (Vitriolic Stasis heals the lower one up to the other) and how much it healed back.' + (near.length ? ' The bosses were within 40 yards for about ' + near.length + ' s outside the intermissions.' : ' The bosses stayed 40+ yards apart.'),
+    summary: 'It shows each boss\'s health going into every intermission (Vitriolic Stasis heals the lower one up to the other) and how much it healed back.' + (near.length ? ' The bosses were within 40 yards for about ' + near.length + ' s outside the intermissions.' : ' The bosses stayed 40+ yards apart.'),
     cols: ['Intermission', 'When', 'Breath (green)', 'Blood (red)', 'Gap', 'Healed back'], rows: balRows });
 
   // ---- 9. Tanks: one on each boss, swapping at every intermission ----
@@ -1592,11 +1592,11 @@ function buildEntombedSentinels(ev, r, h) {
     return [{ txt: 'Cycle ' + (c + 1) }, { t: ph.start + 0.03 }, g ? { p: pname(g), sub: pl(sl[1], 'Empowering Slam') } : { txt: '—', dim: true }, b ? { p: pname(b), sub: pl(ij[1], 'Bloodvenom Injection') } : { txt: '—', dim: true }, c === 0 ? { txt: '—', dim: true } : noSwap ? { txt: 'no swap', bad: true } : { txt: 'swapped' }];
   });
   if (tRows.some((x) => x[2].p || x[3].p)) sections.push({ id: 'tanks', title: 'Tanks: swapping at every intermission', spell: [ES.slam, 'Empowering Slam'],
-    verdict: tRows.some((x) => x[4].bad) ? 'bad' : 'good', summary: 'Who tanked each boss each cycle; they should trade at every intermission.', cols: ['Cycle', 'When', 'Breath (green) tank', 'Blood (red) tank', 'After the intermission'], rows: tRows });
+    verdict: tRows.some((x) => x[4].bad) ? 'bad' : 'good', summary: 'Who tanked each boss each cycle. They should trade at every intermission.', cols: ['Cycle', 'When', 'Breath (green) tank', 'Blood (red) tank', 'After the intermission'], rows: tRows });
 
   // ---- 10. avoidable damage ----
   const av = avoidPanel(ev, r, h, [
-    { n: ['protovenom eruption'], label: 'Protovenom Eruption', harm: 'High', why: 'a circle touching a player without one: a blast and a knockback for both' },
+    { n: ['protovenom eruption'], label: 'Protovenom Eruption', harm: 'High', why: 'a circle touching a player without one, which blasts and knocks back both' },
     { n: ['living venom'], label: 'Living Venom', harm: 'Medium', why: 'a droplet\'s venom flying back to the Breath of Ula\'tek (375k a hit)', warnAt: 1, badAt: 3 },
     { n: ['blood venom'], label: 'Blood pools', harm: 'Medium', why: 'standing in a blood pool (166k a second)', skip: (e) => e.id !== ES.pool },
   ]);
@@ -1668,14 +1668,14 @@ function buildSszorak(ev, r, h) {
   const ravRows = castOk(SZ.ravageCast).map((t) => {
     const who = [...new Set(ravHits.filter((e) => e.t >= t - 0.3 && e.t <= t + 1.2).map((e) => e.dst))];
     const tanks = who.filter(isTank), others = who.filter((g) => !isTank(g)), dbl = who.filter((g) => upAt(SZ.ravageDeb, g, t, 25)), died = who.map((g) => diedNear(g, t, 3)).filter(Boolean);
-    for (const g of others) M(t, pname(g), 'Ravage', 'High', 'Hit by Ravage, the tank frontal.', 'Ravage is aimed at the tank: stay out of its cone; tanks take it at the edge, away from the raid.');
+    for (const g of others) M(t, pname(g), 'Ravage', 'High', 'Hit by Ravage, the tank frontal.', 'Ravage is aimed at the tank: stay out of its cone. Tanks take it at the edge, away from the raid.');
     for (const g of dbl) M(t, pname(g), 'Ravage', 'High', 'Took a second Ravage with the first one\'s debuff still up' + (died.some((d) => d.guid === g) ? ', and died.' : '.'), 'Taunt between the two Ravages of every tank combo, so each tank takes one.');
     return { t, row: [{ txt: 'Ravage' }, { t }, tanks.length ? { ps: tanks.map(pname) } : { txt: 'nobody', warn: true }, dbl.length ? { ps: dbl.map(pname), bad: true } : { txt: '—', dim: true },
       others.length ? { ps: others.map(pname), bad: true } : { txt: '—', dim: true }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }] };
   });
   const ravGroups = sets.map((s) => { const rows = ravRows.filter((x) => setOf(x.t) === s).map((x) => x.row); return { title: setTitle(s), t: s.t0, bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), sub: pl(rows.length, 'Ravage'), rows }; }).filter((g) => g.rows.length);
   if (ravGroups.length) sections.push({ id: 'ravage', title: 'Ravage: one per tank', spell: [SZ.ravageCast, 'Ravage'], verdict: ravGroups.some((g) => g.bad) ? 'bad' : ravGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(ravRows.length, 'Ravage') + '. Who took each one; a tank taking a second with the debuff up, or anyone else in the cone.', cols: ['Cast', 'When', 'Tank', 'Debuff up', 'Others hit', 'Died'], groups: ravGroups, rows: [] });
+    summary: pl(ravRows.length, 'Ravage') + '. It shows who took each one, any tank taking a second with the debuff up, and anyone else in the cone.', cols: ['Cast', 'When', 'Tank', 'Debuff up', 'Others hit', 'Died'], groups: ravGroups, rows: [] });
 
   // ---- 2. Mutilate: the soak frontal, split by everyone in it; two groups alternate because of Mutilated Gash ----
   // (_sz: what the NSRT note check needs: who soaked each Mutilate, when each Fury popped, who popped each cyst)
@@ -1688,13 +1688,13 @@ function buildSszorak(ev, r, h) {
     const each = hits.length ? hits.reduce((s, e) => s + (e.raw || e.amt), 0) / hits.length : 0;
     if (few) M(t, 'Raid', 'Mutilate', 'High', 'Mutilate was soaked by only ' + pl(who.length, 'player') + ' (at least 5 are needed).', 'Bring the whole group into every Mutilate.');
     else if (!who.length) M(t, 'Raid', 'Mutilate', 'High', 'Nobody soaked Mutilate.', 'Bring the whole group into every Mutilate.');
-    for (const g of dd) M(t, pname(g), 'Mutilate', 'High', 'Soaked Mutilate with Mutilated Gash still on (500% more damage)' + (died.some((d) => d.guid === g) ? ', and died.' : '.'), 'Soak only your group\'s Mutilate; the other group takes the next one.');
+    for (const g of dd) M(t, pname(g), 'Mutilate', 'High', 'Soaked Mutilate with Mutilated Gash still on (500% more damage)' + (died.some((d) => d.guid === g) ? ', and died.' : '.'), 'Soak only your group\'s Mutilate. The other group takes the next one.');
     return { t, row: [{ txt: 'Mutilate' }, { t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody', bad: few || !who.length, sub: who.map(pname).join(', ') }, dd.length ? { ps: dd.map(pname), bad: true } : { txt: '—', dim: true },
       died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, each ? { txt: fmtM(each) + ' each', dim: true } : { txt: '—', dim: true }] };
   });
   const mutGroups = sets.map((s) => { const rows = mutRows.filter((x) => setOf(x.t) === s).map((x) => x.row); return { title: setTitle(s), t: s.t0, bad: rows.some((x) => x.some((c) => c.bad)), warn: false, sub: pl(rows.length, 'Mutilate'), rows }; }).filter((g) => g.rows.length);
   if (mutGroups.length) sections.push({ id: 'mutilate', title: 'Mutilate: two groups, alternating', spell: [SZ.mutCast, 'Mutilate'], verdict: mutGroups.some((g) => g.bad) ? 'bad' : 'good',
-    summary: pl(mutRows.length, 'Mutilate') + '. Who soaked each, and anyone soaking with Mutilated Gash still on from the last one.', cols: ['Cast', 'When', 'Soakers', 'With Gash', 'Died', 'Hit each'], groups: mutGroups, rows: [] });
+    summary: pl(mutRows.length, 'Mutilate') + '. It shows who soaked each one, and anyone soaking with Mutilated Gash still on from the last one.', cols: ['Cast', 'When', 'Soakers', 'With Gash', 'Died', 'Hit each'], groups: mutGroups, rows: [] });
 
   // ---- 3. Tempest: roaming tornadoes, once per combo; each touch is a big hit and a stack of its damage over time ----
   // (read from Mythic pulls: the tornadoes come out as the cast starts and roam for about 30 seconds, so a Tempest's
@@ -1715,7 +1715,7 @@ function buildSszorak(ev, r, h) {
     return { title: s ? setTitle(s) : 'Tempest ' + (i + 1), t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: hit.length ? pl(hit.length, 'player') + ' touched' : 'nobody touched', rows: rows.length ? [whole].concat(rows) : [] };
   });
   if (tmpGroups.length) sections.push({ id: 'tempest', title: 'Tempest: tornadoes dodged', spell: [SZ.tempestCast, 'Tempest'], verdict: tmpGroups.some((g) => g.bad) ? 'bad' : tmpGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(tmpGroups.length, 'Tempest') + '. Who a tornado touched, how often, and deaths to it.', cols: ['Player', 'When', 'Touches', 'Died', ''], groups: tmpGroups, rows: [] });
+    summary: pl(tmpGroups.length, 'Tempest') + '. It shows who a tornado touched, how often, and deaths to it.', cols: ['Player', 'When', 'Touches', 'Died', ''], groups: tmpGroups, rows: [] });
 
   // ---- 4. Venomous Surge: two players per combo each drop a Viscous Cyst; the cysts are for the intermission's winds ----
   // (a cyst lands where its player stood when Surge ended. A pop coats nearly the whole platform, and someone runs to the
@@ -1753,8 +1753,8 @@ function buildSszorak(ev, r, h) {
     const by = p.by ? ', popped by ' + pname(p.by) : '';
     if (p.slot === 'outside') return { txt: 'popped outside the intermission', warn: true, sub: T(p.t) + by };
     return { txt: p.slot === 'spare' ? 'the spare, after the winds' : 'wind ' + p.slot, sub: T(p.t) + ', intermission ' + (p.inter.i + 1) + by }; };
-  for (const p of pops.filter((q) => q.slot === 'outside')) M(p.t, p.by ? pname(p.by) : 'Raid', 'Viscous Cyst', 'Medium', (p.by ? 'Popped a Viscous Cyst' : 'A Viscous Cyst popped') + (p.cyst ? ' (' + pname(p.cyst.g) + '\'s)' : '') + ' outside the intermission, knocking back ' + pl(p.who.size, 'player') + '.', 'Keep away from the cysts until Dig In; each one is meant for a wind.');
-  for (const c of cysts.filter((q) => q.died)) M(c.died.t, pname(c.g), 'Venomous Surge', 'Medium', 'Died with Venomous Surge on.', 'Venomous Surge hits hard for 10 seconds: a defensive, and walk to your cyst spot early so healers can focus you.');
+  for (const p of pops.filter((q) => q.slot === 'outside')) M(p.t, p.by ? pname(p.by) : 'Raid', 'Viscous Cyst', 'Medium', (p.by ? 'Popped a Viscous Cyst' : 'A Viscous Cyst popped') + (p.cyst ? ' (' + pname(p.cyst.g) + '\'s)' : '') + ' outside the intermission, knocking back ' + pl(p.who.size, 'player') + '.', 'Keep away from the cysts until Dig In. Each one is meant for a wind.');
+  for (const c of cysts.filter((q) => q.died)) M(c.died.t, pname(c.g), 'Venomous Surge', 'Medium', 'Died with Venomous Surge on.', 'Venomous Surge hits hard for 10 seconds. Use a defensive, and walk to your cyst spot early so healers can focus you.');
   const cyGroups = [...new Set(cysts.map((c) => c.cyc))].map((k) => {
     const list = cysts.filter((c) => c.cyc === k), x = inters[k];
     // (each cyst as a goo blob: its number, what it was for underneath, outlined green for a wind, blue for the spare,
@@ -1768,7 +1768,7 @@ function buildSszorak(ev, r, h) {
       rows: [[{ txt: 'Every cyst', sub: 'where each landed, on one map', dim: true }, { t: tm }, { txt: '' }, { txt: '' }, { map: { t: tm, title: 'Viscous Cysts' + (x ? ' for intermission ' + (x.i + 1) : ''), pts: h.snap(tm), cysts: cyMap, ...(cyFocus(list) ? { focus: cyFocus(list) } : {}) } }]].concat(rows) };
   });
   if (cysts.length) sections.push({ id: 'cysts', title: 'Venomous Surge: the cysts', spell: [SZ.surgeCast, 'Venomous Surge'], verdict: cyGroups.some((g) => g.bad) ? 'bad' : cyGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(cysts.length, 'Viscous Cyst') + '. Who dropped each, where, and what it was used for.', cols: ['Player', 'When', 'Surge', 'Used for', ''], groups: cyGroups, rows: [] });
+    summary: pl(cysts.length, 'Viscous Cyst') + '. It shows who dropped each one, where, and what it was used for.', cols: ['Player', 'When', 'Surge', 'Used for', ''], groups: cyGroups, rows: [] });
 
   // ---- 5. the intermission (Dig In): three winds, a cyst popped against each, then the spare ----
   const wGroups = inters.map((x) => {
@@ -1799,7 +1799,7 @@ function buildSszorak(ev, r, h) {
     return { title: 'Intermission ' + (x.i + 1), t: x.t0, bad: rows.some((q) => q[2].bad || q[4].bad), warn: rows.some((q) => q[2].warn), sub: 'Dig In ' + T(x.t0) + ' to ' + T(x.t1) + (blownAll.length ? ', ' + pl(blownAll.length, 'death') : ''), rows };
   }).filter((g) => g.rows.length); // (an intermission the pull ended in before its first wind has nothing to show)
   if (wGroups.length) sections.push({ id: 'winds', title: 'Intermission: a cyst for every wind', spell: [SZ.digIn, 'Dig In'], verdict: wGroups.some((g) => g.bad) ? 'bad' : wGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(wGroups.length, 'intermission') + '. For each of the three winds: the cyst popped against it, who it coated, and who died.', cols: ['Wind', 'When', 'Cyst', 'Coated', 'Died', ''], groups: wGroups, rows: [] });
+    summary: pl(wGroups.length, 'intermission') + '. For each of the three winds, it shows the cyst popped against it, who it coated, and who died.', cols: ['Wind', 'When', 'Cyst', 'Coated', 'Died', ''], groups: wGroups, rows: [] });
 
   // ---- 6. Raging Crosswinds: marked players are launched the way their arrow points; pairs collide in the air ----
   // (read from Mythic pulls: Turbulent Gusts is the launch; two players who collide lose it together within about a
@@ -1816,11 +1816,11 @@ function buildSszorak(ev, r, h) {
     // (an unmarked player launched or hit at the same moment: a flying player ran into them)
     const byst = players.filter((g) => !gm.includes(g)).map((g) => ({ g, hit: cwHits.filter((e) => e.dst === g && e.t >= knock - 0.3 && e.t <= knock + 5), q: gOf(g) })).filter((o) => o.hit.length || o.q);
     const drift = info.filter((o) => o.res === 'drift'), imm = info.filter((o) => o.res === 'none');
-    for (const o of drift) M(knock, pname(o.g), 'Raging Crosswinds', o.died ? 'High' : 'Medium', 'Drifted after Raging Crosswinds instead of colliding with another marked player' + (o.died ? ', and died.' : '.'), 'Point your arrow at another marked player so you collide in the air; arrows at right angles work too.');
+    for (const o of drift) M(knock, pname(o.g), 'Raging Crosswinds', o.died ? 'High' : 'Medium', 'Drifted after Raging Crosswinds instead of colliding with another marked player' + (o.died ? ', and died.' : '.'), 'Point your arrow at another marked player so you collide in the air. Arrows at right angles work too.');
     for (const o of byst) M(knock, pname(o.g), 'Raging Crosswinds', 'Low', 'Hit by a player flying from Raging Crosswinds' + (o.hit.length ? ' (' + fmtM(o.hit.reduce((s, e) => s + (e.raw || e.amt), 0)) + ')' : '') + '.', 'Stay out of the marked players\' arrow lines until they land.');
     const aw = (o) => (SZ_CW[o.id] ? 'arrow ' + SZ_CW[o.id][1] : '');
     const rows = info.map((o) => [{ p: pname(o.g), sub: aw(o) }, { t: o.q ? o.q.t0 : knock }, o.mate ? { p: pname(o.mate.g), sub: aw(o.mate) } : { txt: '—', dim: true },
-      o.died ? { txt: o.res === 'drift' ? 'drifted, died' : 'died', bad: true } : o.res === 'pair' ? { txt: 'collided' } : o.res === 'drift' ? { txt: 'drifted ' + o.q.len.toFixed(1) + ' s', warn: true } : { txt: 'no launch', dim: true, sub: 'an immunity or a cancel' + (drift.length ? '; someone in this set drifted' : '') }, { txt: '' }])
+      o.died ? { txt: o.res === 'drift' ? 'drifted, died' : 'died', bad: true } : o.res === 'pair' ? { txt: 'collided' } : o.res === 'drift' ? { txt: 'drifted ' + o.q.len.toFixed(1) + ' s', warn: true } : { txt: 'no launch', dim: true, sub: 'an immunity or a cancel' + (drift.length ? '. Someone in this set drifted' : '') }, { txt: '' }])
       .concat(byst.map((o) => [{ p: pname(o.g) }, { t: knock }, { txt: 'not marked', dim: true }, diedNear(o.g, knock - 0.5, 6) ? { txt: 'hit by a flying player, died', bad: true } : { txt: 'hit by a flying player', warn: true }, { txt: '' }]));
     const links = info.filter((o) => o.mate && o.g < o.mate.g).map((o) => ({ from: o.g, to: o.mate.g, t0: knock - 0.2, t1: knock + 2, color: '#2fd15a', legend: 'collided in the air' }));
     const whole = [{ txt: 'Whole cast', sub: 'every marked player, on one map', dim: true }, { t: knock }, { txt: '' }, { txt: '' },
@@ -1830,7 +1830,7 @@ function buildSszorak(ev, r, h) {
     return { title: 'Raging Crosswinds ' + (i + 1), t, bad: rows.some((q) => q[3].bad), warn: rows.some((q) => q[3].warn), sub: pl(gm.length, 'marked player') + ': ' + pl(info.filter((o) => o.mate).length / 2, 'pair') + ' collided' + (drift.length ? ', ' + drift.length + ' drifted' : '') + (imm.length ? ', ' + imm.length + ' not launched' : '') + (byst.length ? ', ' + pl(byst.length, 'bystander') + ' hit' : ''), rows: [whole].concat(rows) };
   }).filter((g) => g.rows.length > 1);
   if (cwGroups.length) sections.push({ id: 'crosswinds', title: 'Raging Crosswinds: collided in the air', spell: [SZ.cwCast, 'Raging Crosswinds'], verdict: cwGroups.some((g) => g.bad) ? 'bad' : cwGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(cwGroups.length, 'cast') + '. Who collided with whom, who drifted, and anyone a flying player hit.', cols: ['Player', 'When', 'Landed with', 'Result', ''], groups: cwGroups, rows: [] });
+    summary: pl(cwGroups.length, 'cast') + '. It shows who collided with whom, who drifted, and anyone a flying player hit.', cols: ['Player', 'When', 'Landed with', 'Result', ''], groups: cwGroups, rows: [] });
 
   // ---- 7. Mythic: Serpent's Fury (14 players pop the marked player's circle to reset his rage) and Virulence ----
   const furies = [];
@@ -1863,7 +1863,7 @@ function buildSszorak(ev, r, h) {
         const why = short != null && short > -0.5 ? 'Rage hit 100 at ' + T(enr.t) + ', ' + Math.max(0, short).toFixed(1) + ' s before the tank combo ended. The Fury before the intermission was popped at ' + T(prev.popT) + ': popped about ' + Math.max(1, Math.ceil(short + 0.25)) + ' s later, this one would have had room.'
           : 'Rage hit 100 at ' + T(enr.t) + (sEnd != null && enr.t > sEnd + 0.5 && enr.t - sEnd < 30 ? ', ' + (enr.t - sEnd).toFixed(1) + ' s after the tank combo ended,' : '') + ' before this Fury was popped.';
         res = { txt: 'he enraged', bad: true, sub: why };
-        M(enr.t, 'Raid', "Serpent's Fury", 'High', 'Sszorak enraged (Unbound Ferocity). ' + why, 'Pop each Serpent\'s Fury on time: right as the tank combo ends after the pull or an intermission, a few seconds after the combo before an intermission. A timer helps.');
+        M(enr.t, 'Raid', "Serpent's Fury", 'High', 'Sszorak enraged (Unbound Ferocity). ' + why, 'Pop each Serpent\'s Fury on time. Pop it right as the tank combo ends after the pull or an intermission, and a few seconds after the combo before an intermission. A timer helps.');
       } else if (atEnd) { res = { txt: 'popped as Dig In ended', warn: true, sub: 'the marked player should leave the stack before Dig In ends' };
         M(f.popT, pname(f.holders[f.holders.length - 1]), "Serpent's Fury", 'Medium', 'Serpent\'s Fury popped as Dig In ended, earlier than planned.', 'During the intermission, step out of the stack after the third wind so the Fury waits for the tank combo.'); }
       const who = f.holders.map(pname);
@@ -1873,7 +1873,7 @@ function buildSszorak(ev, r, h) {
         f.popT ? { map: { t: f.popT, good: f.soak, goodLabel: 'popped it (got Virulence)', goodAt: f.soak.map((g) => [g, f.popT]), pendLabel: 'in the stack, before the pop', tags: [[f.holders[f.holders.length - 1], 'Fury', f.popT - 6, f.popT + 1]], tagLabel: 'the marked player', title: "Serpent's Fury " + (i + 1) + ' at ' + T(f.popT), pts: h.snap(f.popT), frames: frames(f.popT - 5, f.popT + 1) } } : { txt: '' }];
     });
     if (fRows.length) sections.push({ id: 'fury', title: "Serpent's Fury: popped on time", spell: [SZ.fury, "Serpent's Fury"], verdict: fRows.some((x) => x[6].bad) ? 'bad' : fRows.some((x) => x[6].warn) ? 'warn' : 'good',
-      summary: furies.length + ' Serpent\'s Fur' + (furies.length === 1 ? 'y' : 'ies') + '. When each was popped against the tank combo, his rage at the pop, and who soaked it.' + (rate ? ' His rage climbs about ' + rate.toFixed(1) + ' a second (not during Dig In); 100 is the enrage.' : ''),
+      summary: furies.length + ' Serpent\'s Fur' + (furies.length === 1 ? 'y' : 'ies') + '. It shows when each was popped against the tank combo, his rage at the pop, and who soaked it.' + (rate ? ' His rage climbs about ' + rate.toFixed(1) + ' a second (not during Dig In), and 100 is the enrage.' : ''),
       cols: ['Fury', 'Popped', 'Marked', 'After the tank combo', 'Rage', 'Soakers', 'Result', ''], rows: fRows });
 
     // Virulence: the soakers burst 5 s after the pop in four lines; a line clipping someone is a big hit and another Virulence
@@ -1894,7 +1894,7 @@ function buildSszorak(ev, r, h) {
         rows: [[{ txt: 'Whole burst', sub: 'everyone with Virulence, on one map', dim: true }, { t: tb }, { txt: '' }, { txt: '' }, { map: { t: tb, hl: f.soak, hlLabel: 'had Virulence', bad: [...by.keys()], badLabel: 'clipped by a burst', badAt: [...by.values()].map((o) => [o.g, o.t]), title: 'Virulence after Fury ' + (k + 1) + ' at ' + T(tb), pts: h.snap(tb), frames: frames(f.popT + 1, tb + 3) } }]].concat(rows) };
     });
     if (vGroups.length) sections.push({ id: 'virulence', title: 'Virulence: spread after the pop', spell: [SZ.vir[0], 'Virulence'], verdict: vGroups.some((g) => g.bad) ? 'bad' : vGroups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(vGroups.length, 'pop') + '. Anyone a Virulence burst clipped.', cols: ['Player', 'When', 'Hit for', 'Result', ''], groups: vGroups, rows: [] });
+      summary: pl(vGroups.length, 'pop') + '. It shows anyone a Virulence burst clipped.', cols: ['Player', 'When', 'Hit for', 'Result', ''], groups: vGroups, rows: [] });
   }
 
   // ---- 8. avoidable damage (Tempest, Virulence clips and flying players have their own sections) ----
@@ -2012,10 +2012,10 @@ function buildNekzali(ev, r, h) {
     const rings = [wellRing].concat(rows.filter((x) => x.at).map((x) => x.a.fed != null ? spot(x.at.x, x.at.y, '#ff5a4f', 'an Amani that reached the well', 'Red dot') : spot(x.at.x, x.at.y, '#2fd15a', 'where an Amani died', 'Green dot')));
     const whole = [{ txt: 'Whole set', sub: 'where each one died, on one map', dim: true }, { t: s.t }, { txt: '' }, { txt: '' },
       { map: { t: tEnd, title: 'Restless Amani set ' + (i + 1) + ' at ' + T(s.t), pts: h.snap(tEnd), rings, frames: frames(s.t, tEnd) } }];
-    return { title: 'Set ' + (i + 1) + ' (' + phOf(s.t) + ')', t: s.t, bad: fed.length > 0, warn: false, sub: pl(s.list.length, 'Amani') + (fed.length ? ', ' + fed.length + ' reached the well' : ', none reached the well'), rows: [whole].concat(rows.map((x) => x.row)) };
+    return { title: 'Set ' + (i + 1) + ' (' + phOf(s.t) + ')', t: s.t, bad: fed.length > 0, warn: false, sub: s.list.length + ' Amani' + (fed.length ? ', ' + fed.length + ' reached the well' : ', none reached the well'), rows: [whole].concat(rows.map((x) => x.row)) };
   });
   if (amGroups.length) sections.push({ id: 'amani', title: 'Restless Amani: none reach the well', spell: [NZ.shield, 'Restless Amani'], verdict: amGroups.some((g) => g.bad) ? 'bad' : 'good',
-    summary: pl(amani.size, 'Restless Amani') + ' in ' + pl(amGroups.length, 'set') + '. When each one\'s shield broke, and whether it died or reached the well.', cols: ['Add', 'Spawned', 'Shield', 'Result', ''], groups: amGroups, rows: [] });
+    summary: amani.size + ' Restless Amani in ' + pl(amGroups.length, 'set') + '. It shows when each one\'s shield broke, and whether it died or reached the well.', cols: ['Add', 'Spawned', 'Shield', 'Result', ''], groups: amGroups, rows: [] });
 
   // ---- 2. Soulcoil Ignition: five Rites on the raid while Anguished Echoes rain out of the well ----
   const echoHits = dmgId(NZ.echoes);
@@ -2026,7 +2026,7 @@ function buildNekzali(ev, r, h) {
     const src = feeds.filter((f) => f.t < s && f.t > s - 60).map((f) => f.by ? 'an Amani at ' + T(f.t) : 'the well fed at ' + T(f.t));
     const by = new Map(); for (const e of echoHits.filter((e) => e.t >= s && e.t <= t1)) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, n: 0, last: -9, amt: 0 }); if (e.t - o.last > 1) o.n++; o.last = e.t; o.amt += e.raw || e.amt; }
     const died = r.deaths.filter((d) => d.t >= s && d.t <= t1 && h.isPlayer(d.guid));
-    if (burned.length) M(s, 'Raid', 'Soulcoil Ignition', 'Medium', pl(burned.length, 'player') + ' went into Soulcoil Ignition with Ritual Burn up' + (src.length ? ' (from ' + src.join(', ') + ')' : '') + ', so every Rite hit them harder.', 'Go into Ignition with no Ritual Burn: no Amani in the well in the minute before.');
+    if (burned.length) M(s, 'Raid', 'Soulcoil Ignition', 'Medium', pl(burned.length, 'player') + ' went into Soulcoil Ignition with Ritual Burn up' + (src.length ? ' (from ' + src.join(', ') + ')' : '') + ', so every Rite hit them harder.', 'Go into Ignition with no Ritual Burn, so let no Amani into the well in the minute before.');
     for (const o of by.values()) { const d = died.find((x) => x.guid === o.g); M(o.t, pname(o.g), 'Anguished Echoes', d || o.n >= 2 ? 'High' : 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Anguished Echoes circles' : 'an Anguished Echoes circle') + ' during Soulcoil Ignition' + (d ? ', and died.' : '.'), 'Watch for the circles raining from the well during Ignition and step out before they land.'); }
     const e0 = energyAt(s - 0.1), e1 = energyAt(t1);
     const rows = [[{ txt: 'Going in' }, { t: s }, burnOn ? (burned.length ? { txt: pl(burned.length, 'player') + ' with Ritual Burn', warn: true, sub: src.length ? 'from ' + src.join(', ') : '' } : { txt: 'no Ritual Burn' }) : { txt: '—', dim: true },
@@ -2035,7 +2035,7 @@ function buildNekzali(ev, r, h) {
     return { title: 'Soulcoil Ignition ' + (i + 1) + (cut ? ' (cut short by the intermission)' : ''), t: s, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: (by.size ? pl(by.size, 'player') + ' hit by the circles' : 'nobody hit by the circles') + (burned.length ? ', ' + burned.length + ' with Ritual Burn' : ''), rows };
   });
   if (igGroups.length) sections.push({ id: 'ignition', title: 'Soulcoil Ignition: no Ritual Burn, circles dodged', spell: [NZ.ignition, 'Soulcoil Ignition'], verdict: igGroups.some((g) => g.bad) ? 'bad' : igGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(igGroups.length, 'Soulcoil Ignition') + '. Ritual Burn going in' + (burnOn ? '' : ' (Heroic and Mythic only)') + ', who the Anguished Echoes circles hit, and her energy before and after.', cols: ['Who', 'When', 'Result', 'Died', ''], groups: igGroups, rows: [] });
+    summary: pl(igGroups.length, 'Soulcoil Ignition') + '. It shows any Ritual Burn going in' + (burnOn ? '' : ' (Heroic and Mythic only)') + ', who the Anguished Echoes circles hit, and her energy before and after.', cols: ['Who', 'When', 'Result', 'Died', ''], groups: igGroups, rows: [] });
 
   // ---- 3. Mythic: Grasping Depths, a Drowned Echo in the well twice a phase; a team goes in, kicks every Curse ----
   if (mythic) {
@@ -2048,7 +2048,7 @@ function buildNekzali(ev, r, h) {
       const rows = [];
       for (const [k, cs] of cuSt.filter((t) => t >= w.t0 - 0.5 && t <= t1 + 0.5).entries()) {
         const kick = r.interrupts.find((x) => x.id === NZ.curse && x.t >= cs - 0.2 && x.t <= cs + 4.5), off = !kick && cuOk.find((t) => t >= cs && t <= cs + 5);
-        if (off) M(off, 'Raid', "Soulcoiler's Curse", 'High', "Soulcoiler's Curse got off: everyone in the well was thrown out and Soulcoiled.", 'Kick every Soulcoiler\'s Curse; give the well team two kickers in turn.');
+        if (off) M(off, 'Raid', "Soulcoiler's Curse", 'High', "Soulcoiler's Curse got off. Everyone in the well was thrown out and Soulcoiled.", 'Kick every Soulcoiler\'s Curse. Give the well team two kickers in turn.');
         rows.push([{ txt: "Soulcoiler's Curse " + (k + 1) }, { t: cs }, kick ? { txt: 'kicked' } : off ? { txt: 'got off', bad: true, sub: 'the well team was thrown out' } : { txt: 'cast stopped', dim: true }, kick ? { p: kick.player } : { txt: '—', dim: true }, { txt: '' }]);
       }
       for (const g of team) {
@@ -2057,8 +2057,8 @@ function buildNekzali(ev, r, h) {
         const d = r.deaths.find((x) => x.guid === g && x.t >= w.t0 && x.t <= t1 + 1);
         if (!ex && !n && !d) continue;
         // (a single Swirling Spirit touch is common even on kills: shown, not judged; two or more in one Echo are)
-        if (ex) M(first.t, pname(g), 'Grasping Depths', 'Low', 'Went into the well with Soul Exhaustion still on (300% more damage from the well).', 'Keep the two well teams apart: the team that just left sits out the next Drowned Echo.');
-        if (n >= 2 || (n && d)) M(hits[0].t, pname(g), 'Swirling Spirit', d ? 'High' : 'Medium', 'Hit by ' + (n === 1 ? 'a Swirling Spirit' : n + ' Swirling Spirits') + ' in the well' + (d ? ', and died.' : '.'), 'Watch the spirits circling inside the well and step around them; their damage stacks.');
+        if (ex) M(first.t, pname(g), 'Grasping Depths', 'Low', 'Went into the well with Soul Exhaustion still on (300% more damage from the well).', 'Keep the two well teams apart. The team that just left sits out the next Drowned Echo.');
+        if (n >= 2 || (n && d)) M(hits[0].t, pname(g), 'Swirling Spirit', d ? 'High' : 'Medium', 'Hit by ' + (n === 1 ? 'a Swirling Spirit' : n + ' Swirling Spirits') + ' in the well' + (d ? ', and died.' : '.'), 'Watch the spirits circling inside the well and step around them. Their damage stacks.');
         rows.push([{ p: pname(g) }, { t: first ? first.t : w.t0 }, d ? { txt: 'died in the well', bad: true, sub: d.ability || '' } : n ? { txt: pl(n, 'Swirling Spirit hit'), warn: n >= 2, dim: n < 2 } : { txt: 'in with Soul Exhaustion', warn: true }, ex && (n || d) ? { txt: 'went in with Soul Exhaustion', warn: true } : { txt: '—', dim: true }, { txt: '' }]);
       }
       // (nobody going in for the last Echo of a kill is the raid burning the boss: shown, not judged)
@@ -2068,7 +2068,7 @@ function buildNekzali(ev, r, h) {
       return { title: 'Grasping Depths ' + (i + 1) + ' (' + phOf(w.t0) + ')', t: w.t0, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn || x[3].warn) || !!head[3].warn, sub: (team.length ? pl(team.length, 'player') + ' in the well' : 'nobody in the well') + (w.t1 != null ? ', Echo dead in ' + Math.round(w.t1 - w.t0) + ' s' : ''), rows: [head].concat(rows) };
     });
     if (dpGroups.length) sections.push({ id: 'depths', title: 'Grasping Depths: the well team', spell: [NZ.curse, "Soulcoiler's Curse"], verdict: dpGroups.some((g) => g.bad) ? 'bad' : dpGroups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(dpGroups.length, 'Drowned Echo') + '. Who went into the well, every Soulcoiler\'s Curse and its kick, and Swirling Spirit hits or Soul Exhaustion in the team.', cols: ['What', 'When', 'Result', 'Who', ''], groups: dpGroups, rows: [] });
+      summary: dpGroups.length + (dpGroups.length === 1 ? ' Drowned Echo' : ' Drowned Echoes') + '. It shows who went into the well, every Soulcoiler\'s Curse and its kick, and any Swirling Spirit hits or Soul Exhaustion in the team.', cols: ['What', 'When', 'Result', 'Who', ''], groups: dpGroups, rows: [] });
   }
 
   // ---- 4. Essence Rend: a dispellable damage over time; a Latent Cultist puddle spawns where it ends ----
@@ -2081,7 +2081,7 @@ function buildNekzali(ev, r, h) {
       const p = posOf(e.dst, tE), d = wellD(p), died = r.deaths.find((x) => x.guid === e.dst && x.t >= e.t && x.t <= tE + 0.3);
       return { g: e.dst, t: e.t, tE, by, p, d, died, near: !died && d != null && d < NZ_EDGE };
     });
-    for (const o of info.filter((x) => x.near)) M(o.tE, pname(o.g), 'Essence Rend', 'Low', 'Essence Rend ended ' + Math.round(o.d) + ' yards from the well\'s centre, so the Latent Cultist puddle landed in the way.', 'Walk to the side of the room with Essence Rend and get dispelled there; the puddles stay for the whole fight and move in P2.');
+    for (const o of info.filter((x) => x.near)) M(o.tE, pname(o.g), 'Essence Rend', 'Low', 'Essence Rend ended ' + Math.round(o.d) + ' yards from the well\'s centre, so the Latent Cultist puddle landed in the way.', 'Walk to the side of the room with Essence Rend and get dispelled there. The puddles stay for the whole fight and move in P2.');
     const rows = info.map((o) => [{ p: pname(o.g) }, { t: o.tE }, o.died ? { txt: 'died with it', bad: true } : o.by ? { txt: 'dispelled after ' + (o.tE - o.t).toFixed(1) + ' s', sub: 'by ' + o.by.src } : { txt: o.tE - o.t >= 14 ? 'ran out' : 'ended after ' + (o.tE - o.t).toFixed(1) + ' s' },
       o.d != null ? { txt: Math.round(o.d) + ' yd from the well', warn: o.near } : { txt: '—', dim: true }, { txt: '' }]);
     const tm = Math.max(...info.map((o) => o.tE)) + 0.3;
@@ -2090,7 +2090,7 @@ function buildNekzali(ev, r, h) {
     return { title: 'Essence Rend ' + (i + 1) + ' (' + phOf(s.t) + ')', t: s.t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[3].warn), sub: pl(info.length, 'player') + (info.some((o) => o.near) ? ', ' + info.filter((o) => o.near).length + ' puddle' + (info.filter((o) => o.near).length > 1 ? 's' : '') + ' in the way' : ', every puddle at the side'), rows: [whole].concat(rows) };
   });
   if (rdGroups.length) sections.push({ id: 'rend', title: 'Essence Rend: puddles at the side', spell: [NZ.rend, 'Essence Rend'], verdict: rdGroups.some((g) => g.bad) ? 'bad' : rdGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(rdA.length, 'Essence Rend') + '. Who dispelled each one, and how far from the well its Latent Cultist puddle landed.', cols: ['Player', 'Ended', 'Removed', 'Puddle', ''], groups: rdGroups, rows: [] });
+    summary: pl(rdA.length, 'Essence Rend') + '. It shows who dispelled each one, and how far from the well its Latent Cultist puddle landed.', cols: ['Player', 'Ended', 'Removed', 'Puddle', ''], groups: rdGroups, rows: [] });
 
   // ---- 5. Possession Barrage: spirits at the tank, raid damage that falls off with the tank's distance ----
   const pbHits = dmgId(NZ.barrageHit), pbAura = aur(NZ.barrage).filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
@@ -2102,7 +2102,7 @@ function buildNekzali(ev, r, h) {
     return [{ p: tk ? pname(tk.dst) : '?' }, { t: c.t }, d != null ? { txt: Math.round(d) + ' yd from the boss', warn: close } : { txt: '—', dim: true }, { txt: who.size ? fmtM(tot / who.size) + ' each on average' : '—', sub: who.size ? pl(who.size, 'player') + ' hit' : '', dim: !who.size }, { txt: '' }];
   });
   if (pbRows.length) sections.push({ id: 'barrage', title: 'Possession Barrage: tank far from the boss', spell: [NZ.barrage, 'Possession Barrage'], verdict: pbRows.some((x) => x[2].warn) ? 'warn' : 'good',
-    summary: pl(pbRows.length, 'Possession Barrage') + '. How far the tank stood from Nek\'zali when it went out, and what it cost the raid.', cols: ['Tank', 'When', 'Distance', 'Raid damage', ''], rows: pbRows });
+    summary: pl(pbRows.length, 'Possession Barrage') + '. It shows how far the tank stood from Nek\'zali when it went out, and what it cost the raid.', cols: ['Tank', 'When', 'Distance', 'Raid damage', ''], rows: pbRows });
 
   // ---- 6. the intermission: corpses coming back, the Hungering Pyre soaks, Soul Transfer, the Echoes of Jawae ----
   if (ritT != null) {
@@ -2112,7 +2112,7 @@ function buildNekzali(ev, r, h) {
     for (const w of waves) {
       const n = w.g.size, died = r.deaths.filter((d) => d.t >= w.t && d.t <= w.t1 + 8 && /vessel of awakening/i.test(d.ability || ''));
       if (n >= 3 || died.length) M(w.t, 'Raid', 'Vessel of Awakening', 'High', pl(n, 'Amani corpse') + ' came back at once' + (died.length ? ': ' + pl(died.length, 'player') + ' died to them.' : '.'), 'Burn the corpses during the intermission with the Hungering Pyre soak and the Slithering Flames, so at most one comes back at a time.');
-      else if (n === 2) M(w.t, 'Raid', 'Vessel of Awakening', 'Medium', '2 Amani corpses came back at once.', 'Burn more corpses during the intermission; one coming back at a time is the goal.');
+      else if (n === 2) M(w.t, 'Raid', 'Vessel of Awakening', 'Medium', '2 Amani corpses came back at once.', 'Burn more corpses during the intermission. One coming back at a time is the goal.');
       // (where each came back: the corpse's position, or the new Amani's first one)
       const at = [...w.g].map((g) => { for (const x of [g, revOf.get(g)]) { const u = x && r.positions.get(x); if (u && u.pts.length) { const p = u.pts.find((q) => q[0] >= w.t - 1) || u.pts[u.pts.length - 1]; return { x: p[1], y: p[2] }; } } return null; }).filter(Boolean);
       rows.push([{ txt: 'Corpses back' }, { t: w.t }, { txt: n + ' at once', bad: n >= 3, warn: n === 2 }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true },
@@ -2136,7 +2136,7 @@ function buildNekzali(ev, r, h) {
     if (jaw.length) rows.push([{ txt: 'Echoes of Jawae' }, { t: jaw[jaw.length - 1] }, { txt: jaw.length >= 2 ? 'both dead, ' + Math.round(jaw[jaw.length - 1] - ritT) + ' s in' : 'one dead', dim: jaw.length < 2 }, { txt: jaw.map(T).join(', '), dim: true }, { txt: '' }]);
     rows.sort((a, b) => a[1].t - b[1].t);
     if (rows.length) sections.push({ id: 'ritual', title: 'Intermission: corpses, Pyres and the Echoes', spell: [NZ.vessel, 'Vessel of Awakening'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
-      summary: 'The intermission, ' + T(ritT) + ' to ' + T(iEnd) + ': corpses that came back and how many at once, every Hungering Pyre soak, Soul Transfer hits, and when the Echoes of Jawae died.', cols: ['What', 'When', 'Result', 'Who', ''],
+      summary: 'The intermission ran from ' + T(ritT) + ' to ' + T(iEnd) + '. It shows the corpses that came back and how many at once, every Hungering Pyre soak, any Soul Transfer hits, and when the Echoes of Jawae died.', cols: ['What', 'When', 'Result', 'Who', ''],
       groups: [{ title: 'Intermission', t: ritT, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: pl(waves.reduce((s, w) => s + w.g.size, 0), 'corpse') + ' came back, ' + pl(pys.length, 'Pyre'), rows }], rows: [] });
   }
 
@@ -2145,11 +2145,11 @@ function buildNekzali(ev, r, h) {
     const inv = aur(NZ.invokeDeb).filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
     const ivRows = invC.map((t, k) => {
       const who = [...new Set(inv.filter((e) => Math.abs(e.t - t) < 0.6).map((e) => e.dst))];
-      for (const g of who) M(t, pname(g), 'Invoke', 'Low', 'Was casting when Invoke finished: interrupted and silenced for 3 seconds.', 'Stop casting just before Invoke finishes (it has a 5-second cast bar).');
+      for (const g of who) M(t, pname(g), 'Invoke', 'Low', 'Was still casting when Invoke finished, so got interrupted and silenced for 3 seconds.', 'Stop casting just before Invoke finishes (it has a 5-second cast bar).');
       return [{ txt: 'Invoke ' + (k + 1) }, { t }, who.length ? { txt: pl(who.length, 'player') + ' interrupted', warn: true } : { txt: 'nobody interrupted' }, who.length ? { ps: who.map(pname) } : { txt: '—', dim: true }, { txt: '' }];
     });
     sections.push({ id: 'invoke', title: 'Invoke: casts stopped in time', spell: [NZ.invoke, 'Invoke'], verdict: ivRows.some((x) => x[2].warn) ? 'warn' : 'good',
-      summary: pl(ivRows.length, 'Invoke') + '. Who was still casting when it finished (interrupted and silenced for 3 seconds).', cols: ['Cast', 'When', 'Result', 'Who', ''], rows: ivRows });
+      summary: pl(ivRows.length, 'Invoke') + '. It shows who was still casting when it finished, which interrupts and silences them for 3 seconds.', cols: ['Cast', 'When', 'Result', 'Who', ''], rows: ivRows });
   }
 
   // ---- 8. her energy: what fed it; 100 is the enrage ----
@@ -2157,11 +2157,11 @@ function buildNekzali(ev, r, h) {
     const rows = ignSt.map((s, i) => [{ txt: 'Soulcoil Ignition ' + (i + 1) }, { t: s }, { txt: ritT != null && s < ritT && ritT < s + 12 ? 'cut short' : '+25' }, { txt: energyAt(s + 13) != null ? 'energy ' + energyAt(s + 13) : '', dim: true }]);
     // (an Amani in the well is judged under Restless Amani: listed here, not flagged twice)
     for (const f of feeds) rows.push([{ txt: f.by ? 'An Amani reached the well' : f.died ? f.died.player + ' died in the well' : 'The well was fed' }, { t: f.t }, { txt: '+5' }, { txt: f.by ? 'see Restless Amani' : f.died ? 'dying in the well feeds it' : 'an add or a player in the water', dim: true }]);
-    if (p2T != null) { const e2 = energyAt(p2T + 15); rows.push([{ txt: 'P2 starts' }, { t: p2T }, { txt: e2 != null ? 'energy ' + e2 + ' soon after' : '—', dim: true }, { txt: 'Uncoiling: it climbs on its own from here', dim: true }]); }
+    if (p2T != null) { const e2 = energyAt(p2T + 15); rows.push([{ txt: 'P2 starts' }, { t: p2T }, { txt: e2 != null ? 'energy ' + e2 + ' soon after' : '—', dim: true }, { txt: 'Uncoiling, so it climbs on its own from here', dim: true }]); }
     const endE = energyAt(dur);
     if (enr) {
       const why = feeds.filter((f) => f.by).length;
-      M(enr.t, 'Raid', 'Uncoiled Rage', 'High', 'Nek\'zali reached 100 energy and enraged (Uncoiled Rage)' + (why ? ': ' + pl(why, 'Amani') + ' reached the well before that.' : '.'), p2T != null && enr.t > p2T ? 'P2 is a damage race: save Bloodlust and damage cooldowns for it, and keep Amani out of the well.' : 'Reach the intermission (50%) before the fourth Soulcoil Ignition, and keep every Amani out of the well.');
+      M(enr.t, 'Raid', 'Uncoiled Rage', 'High', 'Nek\'zali reached 100 energy and enraged (Uncoiled Rage)' + (why ? '. ' + why + ' Amani reached the well before that.' : '.'), p2T != null && enr.t > p2T ? 'P2 is a damage race. Save Bloodlust and damage cooldowns for it, and keep Amani out of the well.' : 'Reach the intermission (50%) before the fourth Soulcoil Ignition, and keep every Amani out of the well.');
       rows.push([{ txt: 'Uncoiled Rage' }, { t: enr.t }, { txt: 'she enraged', bad: true }, { txt: 'at 100 energy', dim: true }]);
     } else if (endE != null) rows.push([{ txt: r.item.kill ? 'She died' : 'The pull ended' }, { t: dur }, { txt: 'energy ' + endE, dim: true }, { txt: '' }]);
     rows.sort((a, b) => a[1].t - b[1].t);
@@ -2222,12 +2222,12 @@ function buildVashnik(ev, r, h) {
       const died = r.deaths.filter((d) => d.t >= t - 0.3 && d.t <= t + 3 && /expulsion|imbibe/i.test(d.ability || '') && h.isPlayer(d.guid));
       const hit = exp.filter((e) => e.t >= t - 0.3 && e.t <= t + 2), each = hit.length ? hit.reduce((s, e) => s + (e.raw || e.amt), 0) / new Set(hit.map((e) => e.dst)).size : 0;
       const quick = i && t - imb[i - 1] < 40;
-      if (died.length) M(t, 'Raid', 'Imbibe', 'High', pl(died.length, 'player') + ' died to the fountains\' raid hit at Imbibe ' + (i + 1) + '.', 'Stack for healing cooldowns and defensives on every Imbibe; the hits grow with each infusion and Toxic Vapor stack.');
+      if (died.length) M(t, 'Raid', 'Imbibe', 'High', pl(died.length, 'player') + ' died to the fountains\' raid hit at Imbibe ' + (i + 1) + '.', 'Stack for healing cooldowns and defensives on every Imbibe. The hits grow with each infusion and Toxic Vapor stack.');
       return [{ txt: 'Imbibe ' + (i + 1), sub: quick ? 'only ' + Math.round(t - imb[i - 1]) + ' s after the last one' : '' }, { t }, got.length ? { txt: got.join(' and ') + ' fountains' } : { txt: '—', dim: true },
         died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, { txt: each ? fmtM(each) + ' each' : '', dim: true }];
     });
     if (rows.length) sections.push({ id: 'imbibe', title: 'Imbibe: the fountains and the raid hit', spell: [VS.imbibe, 'Imbibe'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good', info: !rows.some((x) => x[3].bad),
-      summary: pl(rows.length, 'Imbibe') + '. Which two fountains he drained each time, what the raid took, and deaths to it. Each one adds a Toxic Vapor stack: the longer the fight, the harder it gets.', cols: ['Imbibe', 'When', 'Drained', 'Died', 'Raid hit'], rows });
+      summary: pl(rows.length, 'Imbibe') + '. It shows which two fountains he drained each time, what the raid took, and deaths to it. Each one adds a Toxic Vapor stack, so the longer the fight, the harder it gets.', cols: ['Imbibe', 'When', 'Drained', 'Died', 'Raid hit'], rows });
   }
 
   // ---- 2. the adds: Burning Venoms (kill one at a time, before they reach the middle) and Shrouded Venoms ----
@@ -2239,14 +2239,14 @@ function buildVashnik(ev, r, h) {
     for (const e of ev) if (e.k === 'die' && born.has(e.guid)) { const a = born.get(e.guid); if (a.died == null) a.died = e.t; }
     const surgeT = castOk(VS.surge), hard = ev.filter((e) => e.k === 'aura' && e.op === 'apply' && L(e.spell) === 'hardened venom' && !h.isPlayer(e.dst));
     const burst = dmgName('malignant burst'), bursts = clusters(burst, 2);
-    for (const b of bursts) M(b.t, 'Raid', 'Malignant Burst', 'High', 'A Living Venom reached the Malignant Cavity: Malignant Burst hit the whole raid and left a stacking damage over time.', 'Kill or crowd control every venom before it gets to the middle; the Burning Venoms first.');
+    for (const b of bursts) M(b.t, 'Raid', 'Malignant Burst', 'High', 'A Living Venom reached the Malignant Cavity: Malignant Burst hit the whole raid and left a stacking damage over time.', 'Kill or crowd control every venom before it gets to the middle, starting with the Burning Venoms.');
     const groups = [...new Set([...born.values()].map((a) => cycOf(a.t)))].sort((a, b) => a - b).map((k) => {
       const list = [...born.values()].filter((a) => cycOf(a.t) === k).sort((a, b) => a.t - b.t), burning = list.filter((a) => a.kind === 'burning'), shr = list.filter((a) => a.kind === 'shrouded');
       const end = k < imb.length ? imb[k] : dur, rows = [];
       burning.forEach((a, j) => {
         const together = a.died != null && burning.some((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3);
         const old = (a.died ?? Math.min(dur, end)) - a.t > 60 || hard.some((e) => e.dst === a.g);
-        if (together && burning.indexOf(a) < burning.findIndex((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3)) M(a.died, 'Raid', 'Burning Venom', 'Medium', 'Two Burning Venoms died within 3 seconds: their Caustic Surges hit the raid together.', 'Kill the fire adds one at a time (crowd control or banish the others), never together.');
+        if (together && burning.indexOf(a) < burning.findIndex((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3)) M(a.died, 'Raid', 'Burning Venom', 'Medium', 'Two Burning Venoms died within 3 seconds. Their Caustic Surges hit the raid together.', 'Kill the fire adds one at a time (crowd control or banish the others), never together.');
         rows.push([{ txt: 'Burning Venom ' + (j + 1) }, { t: a.t }, a.died != null ? { txt: 'killed after ' + Math.round(a.died - a.t) + ' s', warn: old } : { txt: 'alive', dim: a.t > dur - 60, warn: !r.item.kill && old }, together ? { txt: 'died with another', warn: true, sub: 'two Caustic Surges at once' } : old ? { txt: 'hardened (over 60 s)', warn: true } : { txt: '—', dim: true }, { txt: '' }]);
       });
       if (shr.length) {
@@ -2258,7 +2258,7 @@ function buildVashnik(ev, r, h) {
       return { title: cyName(k) + ' adds', t: list[0].t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(burning.length, 'Burning Venom') + (shr.length ? ', ' + pl(shr.length, 'Shrouded Venom') : '') + (bb.length ? ', ' + pl(bb.length, 'Malignant Burst') : ''), rows };
     }).filter((g) => g.rows.length);
     if (groups.length) sections.push({ id: 'venoms', title: 'Living Venoms: killed one at a time', spell: [VS.surge, 'Caustic Surge'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: 'The adds from each Imbibe. Each Burning Venom\'s time alive and whether two died together; how long the Shrouded Venoms lived; any venom that reached the middle.' + (surgeT.length ? ' ' + pl(surgeT.length, 'Caustic Surge') + ' this pull.' : ''), cols: ['Add', 'Spawned', 'Result', 'Notes', ''], groups, rows: [] });
+      summary: 'These are the adds from each Imbibe. It shows each Burning Venom\'s time alive and whether two died together, how long the Shrouded Venoms lived, and any venom that reached the middle.' + (surgeT.length ? ' ' + pl(surgeT.length, 'Caustic Surge') + ' this pull.' : ''), cols: ['Add', 'Spawned', 'Result', 'Notes', ''], groups, rows: [] });
   }
 
   // ---- 3. Mythic: Malignant Totems; Plague Waves must clear every one before the next Imbibe ----
@@ -2279,14 +2279,14 @@ function buildVashnik(ev, r, h) {
       });
       if (next != null) {
         const left = mine.filter((o) => o.died == null || o.died > next + 0.2);
-        if (left.length) M(next, 'Raid', 'Malignance', left.length >= 2 ? 'High' : 'Medium', pl(left.length, 'Malignant Totem') + ' still up at Imbibe ' + (i + 2) + ': Malignance hit the raid' + (left.length >= 2 ? ' once for each (two usually wipe).' : '.'), 'Aim the Plague Waves at the totems: walk to your marker with Plague Froth so its four lines run through them.');
+        if (left.length) M(next, 'Raid', 'Malignance', left.length >= 2 ? 'High' : 'Medium', pl(left.length, 'Malignant Totem') + ' still up at Imbibe ' + (i + 2) + ': Malignance hit the raid' + (left.length >= 2 ? ' once for each (two usually wipe).' : '.'), 'Aim the Plague Waves at the totems. Walk to your marker with Plague Froth so its four lines run through them.');
         rows.push([{ txt: 'At Imbibe ' + (i + 2) }, { t: next }, left.length ? { txt: pl(left.length, 'totem') + ' still up', bad: left.length >= 2, warn: left.length === 1, sub: 'Malignance' } : { txt: 'all cleared' }, { txt: '' },
           { map: { t: next - 0.5, title: 'Totems left at Imbibe ' + (i + 2), pts: h.snap(next - 0.5) } }]);
       } else rows.push([{ txt: r.item.kill ? 'He died' : 'The pull ended' }, { t: dur }, { txt: mine.filter((o) => o.died == null).length + ' still up', dim: true }, { txt: '' }, { txt: '' }]);
       return { title: 'Totems from Imbibe ' + (i + 1), t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(mine.length, 'totem') + (next != null ? ', ' + mine.filter((o) => o.died == null || o.died > next + 0.2).length + ' left at the next Imbibe' : ''), rows };
     }).filter(Boolean);
     if (groups.length) sections.push({ id: 'totems', title: 'Malignant Totems: all cleared by the next Imbibe', spell: [VS.malignance, 'Malignance'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: 'Every set of totems: how many each Plague Froth\'s waves cleared, and any still up when the next Imbibe went off (each one casts Malignance on the raid).', cols: ['What', 'When', 'Result', '', ''], groups, rows: [] });
+      summary: 'For every set of totems, it shows how many each Plague Froth\'s waves cleared, and any still up when the next Imbibe went off (each one casts Malignance on the raid).', cols: ['What', 'When', 'Result', '', ''], groups, rows: [] });
   }
 
   // ---- 4. Plague Froth: four Plague Wave lines from each target when it ends; nobody else on them ----
@@ -2309,7 +2309,7 @@ function buildVashnik(ev, r, h) {
       return { title: 'Plague Froth ' + (i + 1) + ' (' + cyName(cycOf(f.t)) + ')', t: f.t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(f.who.length, 'target') + ', ' + (by.size ? pl(by.size, 'player') + ' hit by a wave' : 'nobody hit by a wave'), rows: [whole].concat(rows) };
     });
     if (groups.length) sections.push({ id: 'froth', title: 'Plague Froth: nobody on the lines', spell: [VS.froth, 'Plague Froth'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(groups.length, 'Plague Froth') + '. Who a Plague Wave hit, and whose line it was (the target lined up with them).', cols: ['Player', 'When', 'Result', 'Whose line', ''], groups, rows: [] });
+      summary: pl(groups.length, 'Plague Froth') + '. It shows who a Plague Wave hit, and whose line it was (the target lined up with them).', cols: ['Player', 'When', 'Result', 'Whose line', ''], groups, rows: [] });
   }
 
   // ---- 5. Malignant Catalyst: every Catalytic Bile needs someone under it ----
@@ -2324,7 +2324,7 @@ function buildVashnik(ev, r, h) {
         { map: { t: tm, good: who, goodLabel: 'soaked a bile', goodAt: sk.map((e) => [e.dst, e.t]), title: 'Malignant Catalyst ' + (i + 1) + ' at ' + T(t), pts: h.snap(tm), frames: frames(tm - 3, tm + 1) } }];
     });
     if (rows.length) sections.push({ id: 'bile', title: 'Catalytic Bile: every impact soaked', spell: [VS.catalyst, 'Malignant Catalyst'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good',
-      summary: pl(rows.length, 'Malignant Catalyst') + '. Who stood under the biles, and any bile that landed on nobody.', cols: ['Cast', 'When', 'Result', 'Soakers', ''], rows });
+      summary: pl(rows.length, 'Malignant Catalyst') + '. It shows who stood under the biles, and any bile that landed on nobody.', cols: ['Cast', 'When', 'Result', 'Soakers', ''], rows });
   }
 
   // ---- 6. Adaptive Infection: Exploding (dispel one at a time), Stygian (spread) ----
@@ -2338,21 +2338,21 @@ function buildVashnik(ev, r, h) {
       for (const o of ex) {
         const with2 = o.rm != null ? ex.filter((q) => q !== o && q.rm != null && Math.abs(q.rm - o.rm) < 1.5) : [];
         const dead = o.rm != null ? r.deaths.filter((d) => d.t >= o.rm - 0.2 && d.t <= o.rm + 1.2 && /caustic explosion|exploding infection/i.test(d.ability || '')) : [];
-        if (with2.length && ex.indexOf(o) < ex.indexOf(with2[0])) M(o.rm, 'Raid', 'Exploding Infection', 'Medium', 'Two Exploding Infections were removed within ' + Math.abs(with2[0].rm - o.rm).toFixed(1) + ' s: two Caustic Explosions on the raid at once.', 'Dispel the fire infection one player at a time, once the raid is topped up.');
+        if (with2.length && ex.indexOf(o) < ex.indexOf(with2[0])) M(o.rm, 'Raid', 'Exploding Infection', 'Medium', 'Two Exploding Infections were removed within ' + Math.abs(with2[0].rm - o.rm).toFixed(1) + ' s, which put two Caustic Explosions on the raid at once.', 'Dispel the fire infection one player at a time, once the raid is topped up.');
         if (dead.length && ex.indexOf(o) === ex.findIndex((q) => q.rm != null && Math.abs(q.rm - o.rm) < 1.5)) M(o.rm, 'Raid', 'Caustic Explosion', 'High', pl(dead.length, 'player') + ' died to a Caustic Explosion as an Exploding Infection came off.', 'Hold the dispel until the raid is healed up, and never two at once.');
         rows.push([{ p: pname(o.g), sub: 'Exploding Infection' }, { t: o.rm ?? o.t }, o.rm == null ? { txt: 'still on', dim: true } : o.by ? { txt: 'dispelled after ' + (o.rm - o.t).toFixed(1) + ' s', sub: 'by ' + o.by.src } : { txt: 'came off after ' + (o.rm - o.t).toFixed(1) + ' s' },
           dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : with2.length ? { txt: 'with ' + with2.map((q) => pname(q.g)).join(', '), warn: true, sub: 'removed together' } : { txt: '—', dim: true }, { txt: '' }]);
       }
       const sg = c.list.filter((e) => e.id === VS.stygian).map((e) => e.dst), bh = burst.filter((e) => e.t >= c.t && e.t <= t1 && !sg.includes(e.dst));
       const by = new Map(); for (const e of bh) { const o = by.get(e.dst) || { g: e.dst, t: e.t, n: 0 }; o.n++; by.set(e.dst, o); }
-      for (const o of by.values()) { M(o.t, pname(o.g), 'Stygian Burst', 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Stygian Bursts' : 'a Stygian Burst') + ' from a player with Stygian Infection.', 'Stay 6 yards away from players with Stygian Infection; they should spread too.');
+      for (const o of by.values()) { M(o.t, pname(o.g), 'Stygian Burst', 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Stygian Bursts' : 'a Stygian Burst') + ' from a player with Stygian Infection.', 'Stay 6 yards away from players with Stygian Infection. They should spread too.');
         rows.push([{ p: pname(o.g) }, { t: o.t }, { txt: 'hit by a Stygian Burst', warn: true, sub: o.n > 1 ? o.n + ' hits' : '' }, { txt: '—', dim: true }, { txt: '' }]); }
       if (sg.length) rows.push([{ txt: 'Stygian Infection', sub: sg.map(pname).join(', ') }, { t: c.t }, { txt: by.size ? '' : 'nobody else hit', dim: !by.size }, { txt: '' }, { txt: '' }]);
       rows.sort((a, b) => a[1].t - b[1].t);
       return { title: 'Adaptive Infection ' + (i + 1) + ' (' + cyName(cycOf(c.t)) + ')', t: c.t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: [ex.length ? pl(ex.length, 'Exploding') : '', sg.length ? pl(sg.length, 'Stygian') : ''].filter(Boolean).join(', '), rows };
     });
     if (groups.length) sections.push({ id: 'infect', title: 'Adaptive Infection: one dispel at a time, spread', spell: [VS.exploding, 'Exploding Infection'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(groups.length, 'Adaptive Infection') + '. Each Exploding Infection\'s dispel (two together is two raid hits at once), and anyone a Stygian Burst hit.', cols: ['Player', 'When', 'Result', 'Notes', ''], groups, rows: [] });
+      summary: pl(groups.length, 'Adaptive Infection') + '. It shows each Exploding Infection\'s dispel (two together is two raid hits at once), and anyone a Stygian Burst hit.', cols: ['Player', 'When', 'Result', 'Notes', ''], groups, rows: [] });
   }
 
   // ---- 7. tanks: swap on every Dripping Fangs (100% more physical damage taken for 32 s) ----
@@ -2364,7 +2364,7 @@ function buildVashnik(ev, r, h) {
       return [{ p: on ? pname(on.dst) : '?' }, { t }, again ? { txt: 'took two in a row', bad: true } : { txt: i ? 'swapped' : 'first' }, { txt: diedNear(on && on.dst, t, 5) ? 'died' : '—', bad: !!(on && diedNear(on.dst, t, 5)), dim: !(on && diedNear(on.dst, t, 5)) }];
     });
     if (rows.length) sections.push({ id: 'fangs', title: 'Dripping Fangs: a swap every time', spell: [VS.fangs, 'Dripping Fangs'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : 'good',
-      summary: pl(rows.length, 'Dripping Fangs') + '. Which tank took each one.', cols: ['Tank', 'When', 'Result', 'Died'], rows });
+      summary: rows.length + ' Dripping Fangs. It shows which tank took each one.', cols: ['Tank', 'When', 'Result', 'Died'], rows });
   }
 
   // ---- 8. avoidable damage ----
@@ -2449,14 +2449,14 @@ function buildLostExplorers(ev, r, h) {
       return { title: 'Boxes, ' + p.name, t: list[0].rupt ?? list[0].died, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[3].warn), sub: pl(list.length, 'box') .replace('boxs', 'boxes') + (list.some((b) => b.rupt != null) ? ', ' + list.filter((b) => b.rupt != null).length + ' ruptured' : ', none ruptured'), rows };
     }).filter(Boolean);
     if (groups.length) sections.push({ id: 'boxes', title: 'Boxes: popped before they glow', spell: [LE.rupture, 'Relic Rupture'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(boxes.length, 'box').replace('boxs', 'boxes') + '. Each one popped or left to rupture' + (mythic ? ', and the raid\'s Splinters stacks right after each pop (two at a time is the rhythm).' : '.'), cols: ['Box', 'When', 'Result', mythic ? 'Splinters' : '', ''], groups, rows: [] });
+      summary: pl(boxes.length, 'box').replace('boxs', 'boxes') + '. It shows whether each one was popped or left to rupture' + (mythic ? ', and the raid\'s Splinters stacks right after each pop (two at a time is the rhythm).' : '.'), cols: ['Box', 'When', 'Result', mythic ? 'Splinters' : '', ''], groups, rows: [] });
   }
 
   // ---- 2. United Defense: all three explorers within 30 yards of each other (99% less damage taken) ----
   {
     const ud = aur(LE.united).filter((e) => !h.isPlayer(e.dst)), on = clusters(ud.filter((e) => e.op === 'apply'), 2);
     const rows = on.map((c) => { const off = ud.find((e) => e.op === 'remove' && e.t >= c.t); const len = (off ? off.t : dur) - c.t;
-      M(c.t, 'Raid', 'United Defense', len > 5 ? 'High' : 'Medium', 'All three explorers came within 30 yards of each other: United Defense (99% less damage taken) for ' + len.toFixed(1) + ' s.', 'Keep at most two explorers together; tanks move them apart as soon as a third gets close.');
+      M(c.t, 'Raid', 'United Defense', len > 5 ? 'High' : 'Medium', 'All three explorers came within 30 yards of each other: United Defense (99% less damage taken) for ' + len.toFixed(1) + ' s.', 'Keep at most two explorers together. Tanks move them apart as soon as a third gets close.');
       return [{ txt: 'United Defense' }, { t: c.t }, { txt: 'up for ' + len.toFixed(1) + ' s', warn: len <= 5, bad: len > 5 }, { txt: phOf(c.t), dim: true },
         { map: { t: c.t + 0.3, title: 'United Defense at ' + T(c.t), pts: h.snap(c.t + 0.3), frames: frames(c.t - 4, c.t + Math.min(len, 6) + 1) } }]; });
     sections.push({ id: 'united', title: 'United Defense: explorers kept apart', spell: [LE.united, 'United Defense'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.length ? 'warn' : 'good',
@@ -2469,13 +2469,13 @@ function buildLostExplorers(ev, r, h) {
     const rows = fish.map((t, k) => [{ txt: 'Fish ' + (k + 1) }, { t }, { txt: 'fed' }, { txt: phOf(t + 1), dim: true }]);
     for (const c of clusters(hits, 3)) {
       const who = new Set(c.list.map((e) => e.dst)), died = deadBy(/final ascension/i, c.t, c.t1 + 2);
-      M(c.t, 'Raid', 'Final Ascension', 'High', 'Final Ascension went off on the raid (' + pl(who.size, 'player') + ' hit' + (died.length ? ', ' + pl(died.length, 'death') : '') + ') before a fish stopped it.', 'Feed the Disgusting Fish in time, every time (about 4 seconds left on the cast); the fourth time it can\'t be stopped.');
+      M(c.t, 'Raid', 'Final Ascension', 'High', 'Final Ascension went off on the raid (' + pl(who.size, 'player') + ' hit' + (died.length ? ', ' + pl(died.length, 'death') : '') + ') before a fish stopped it.', 'Feed the Disgusting Fish in time, every time (about 4 seconds left on the cast). The fourth time, it can\'t be stopped.');
       rows.push([{ txt: 'Final Ascension' }, { t: c.t }, { txt: 'went off', bad: true, sub: pl(who.size, 'player') + ' hit for ' + (c.t1 - c.t + 0.5).toFixed(1) + ' s' }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true }]);
     }
     asc.filter((t) => !hits.some((e) => e.t >= t && e.t <= t + 9)).forEach((t) => rows.push([{ txt: 'Final Ascension cast' }, { t }, { txt: 'stopped by the fish' }, { txt: '' }]));
     rows.sort((a, b) => a[1].t - b[1].t);
     if (rows.length) sections.push({ id: 'ascension', title: 'Final Ascension: a fish in time', spell: [LE.fish, 'Disgusting Fish'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good', info: !rows.some((x) => x[2].bad),
-      summary: pl(fish.length, 'fish') + ' fed. Every Final Ascension cast, and any that went off on the raid.', cols: ['What', 'When', 'Result', 'Turn'], rows });
+      summary: (fish.length === 1 ? '1 fish' : fish.length + ' fish') + ' fed. It shows every Final Ascension cast, and any that went off on the raid.', cols: ['What', 'When', 'Result', 'Turn'], rows });
   }
 
   // ---- 4. Iku: Frostfire Volley (clear Burning Flames in a frost patch, Piercing Frost in a fire patch) and Blink Nova ----
@@ -2486,26 +2486,26 @@ function buildLostExplorers(ev, r, h) {
       const rows = got.map((e) => {
         const rm = fl.find((x) => x.op === 'remove' && x.dst === e.dst && x.id === e.id && x.t > e.t), tE = rm ? rm.t : dur, d = r.deaths.find((x) => x.guid === e.dst && x.t >= e.t && x.t <= tE + 0.3);
         const late = !d && tE > next - 0.2, type = e.id === LE.flames ? 'Burning Flames' : 'Piercing Frost';
-        if (late) M(next, pname(e.dst), type, 'High', 'Still had ' + type + ' when the next Frostfire Volley landed (an Elemental Explosion risk).', 'Clear it before the next volley: stand in the other element\'s patch (frost patch for Burning Flames, fire patch for Piercing Frost).');
+        if (late) M(next, pname(e.dst), type, 'High', 'Still had ' + type + ' when the next Frostfire Volley landed (an Elemental Explosion risk).', 'Clear it before the next volley. Stand in the other element\'s patch (frost patch for Burning Flames, fire patch for Piercing Frost).');
         if (d) M(d.t, pname(e.dst), type, 'High', 'Died with ' + type + ' still on.', 'Clear it right away in the other element\'s patch.');
         return [{ p: pname(e.dst), sub: type }, { t: tE }, d ? { txt: 'died with it', bad: true } : late ? { txt: 'still on at the next volley', bad: true } : { txt: 'cleared after ' + (tE - e.t).toFixed(1) + ' s', warn: tE - e.t > 8 }, { txt: '' }];
       });
       const bb = boom.filter((e) => e.t >= t && e.t < next);
-      if (bb.length) { M(bb[0].t, 'Raid', 'Elemental Explosion', 'High', 'Elemental Explosion went off on the raid: a volley hit someone still carrying the other element.', 'Clear Burning Flames and Piercing Frost before the next volley, every time.'); rows.push([{ txt: 'Elemental Explosion' }, { t: bb[0].t }, { txt: 'went off', bad: true }, { txt: '' }]); }
+      if (bb.length) { M(bb[0].t, 'Raid', 'Elemental Explosion', 'High', 'Elemental Explosion went off on the raid. A volley hit someone still carrying the other element.', 'Clear Burning Flames and Piercing Frost before the next volley, every time.'); rows.push([{ txt: 'Elemental Explosion' }, { t: bb[0].t }, { txt: 'went off', bad: true }, { txt: '' }]); }
       return { title: 'Frostfire Volley ' + (i + 1), t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(got.length, 'player') + ' hit' + (rows.some((x) => x[2].bad) ? '' : ', all cleared'), rows };
     }).filter((g) => g.rows.length);
     if (groups.length) sections.push({ id: 'frostfire', title: 'Frostfire Volley: cleared before the next', spell: [LE.volley, 'Frostfire Volley'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(groups.length, 'volley') + '. When each player cleared their Burning Flames or Piercing Frost, and any still on at the next volley.', cols: ['Player', 'Cleared', 'Result', ''], groups, rows: [] });
+      summary: pl(groups.length, 'volley') + '. It shows when each player cleared their Burning Flames or Piercing Frost, and anyone still carrying one at the next volley.', cols: ['Player', 'Cleared', 'Result', ''], groups, rows: [] });
 
     const bA = aur(LE.blink).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bH = dmgId(LE.blinkHit);
     const rows = bA.map((e) => {
       const hits = bH.filter((x) => x.t >= e.t + 5 && x.t <= e.t + 9), tm = hits.length ? hits[0].t : e.t + 7, died = deadBy(/blink nova/i, tm - 0.2, tm + 2), who = new Set(hits.map((x) => x.dst));
-      for (const d of died) M(d.t, d.player, 'Blink Nova', 'High', 'Died to Blink Nova.', 'Spread out for Blink Nova; its target moves at least 20 yards from the melee and away from the raid.');
+      for (const d of died) M(d.t, d.player, 'Blink Nova', 'High', 'Died to Blink Nova.', 'Spread out for Blink Nova. Its target moves at least 20 yards from the melee and away from the raid.');
       return [{ p: pname(e.dst) }, { t: tm }, { txt: who.size ? fmtM(hits.reduce((s, x) => s + (x.raw || x.amt), 0) / who.size) + ' each on average' : '—', dim: !who.size }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
         { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1) } }];
     });
     if (rows.length) sections.push({ id: 'blink', title: 'Blink Nova: spread, target away from the raid', spell: [LE.blink, 'Blink Nova'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good',
-      summary: pl(rows.length, 'Blink Nova') + '. Its target, what it cost the raid, and deaths to it.', cols: ['Target', 'When', 'Raid damage', 'Died', ''], rows });
+      summary: pl(rows.length, 'Blink Nova') + '. It shows each one\'s target, what it cost the raid, and deaths to it.', cols: ['Target', 'When', 'Raid damage', 'Died', ''], rows });
   }
 
   // ---- 5. Nama: Mighty Thud (three leaps, each split by everyone under it) ----
@@ -2514,15 +2514,15 @@ function buildLostExplorers(ev, r, h) {
     for (const c of clusters(leaps.map((t) => ({ t })), 6)) {
       const rows = c.list.map((l, k) => {
         const who = [...new Set(hit.filter((e) => e.t >= l.t - 0.2 && e.t <= l.t + 0.8).map((e) => e.dst))], died = deadBy(/mighty thud/i, l.t - 0.2, l.t + 1.5);
-        if (!who.length) M(l.t, 'Raid', 'Mighty Thud', 'High', 'Nobody was under Mighty Thud leap ' + (k + 1) + ': the whole raid took the full hit.', 'Line up away from Nama and soak all three leaps: everyone takes the first, then gets knocked into the next.');
-        for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split; a defensive if your health is low.');
+        if (!who.length) M(l.t, 'Raid', 'Mighty Thud', 'High', 'Nobody was under Mighty Thud leap ' + (k + 1) + ': the whole raid took the full hit.', 'Line up away from Nama and soak all three leaps. Everyone takes the first, then gets knocked into the next.');
+        for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split, and use a defensive if your health is low.');
         return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
           { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 2, l.t + 1) } }];
       });
       groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: rows.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
     }
     if (groups.length) sections.push({ id: 'thud', title: 'Mighty Thud: every leap soaked', spell: [1296094, 'Mighty Thud'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(groups.length, 'Mighty Thud') + '. Who was under each of the three leaps, and deaths to them.', cols: ['Leap', 'When', 'Soakers', 'Died', ''], groups, rows: [] });
+      summary: pl(groups.length, 'Mighty Thud') + '. It shows who was under each of the three leaps, and deaths to them.', cols: ['Leap', 'When', 'Soakers', 'Died', ''], groups, rows: [] });
   }
 
   // ---- 6. Gebbo: Explosive Surprise (bounce over the Blast Wave with a mushroom) ----
@@ -2534,7 +2534,7 @@ function buildLostExplorers(ev, r, h) {
       return [{ p: pname(e.dst), sub: 'had the bomb' }, { t: e.t }, hitW.length ? { txt: pl(hitW.length, 'player') + ' hit by the Blast Wave', bad: true, sub: hitW.map(pname).join(', ') } : { txt: 'nobody hit by the Blast Wave' }, { txt: pl(up.length, 'player') + ' bounced', dim: true, sub: hitF.length ? pl(hitF.length, 'Fungal Burst hit') : '' }];
     });
     if (rows.length) sections.push({ id: 'bomb', title: 'Explosive Surprise: over the Blast Wave', spell: [LE.bomb, 'Explosive Surprise'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good',
-      summary: pl(rows.length, 'bomb') + '. Who had it, who bounced over the wave on a mushroom, and anyone the Blast Wave hit.', cols: ['Bomb', 'When', 'Result', 'Bounced'], rows });
+      summary: pl(rows.length, 'bomb') + '. It shows who had it, who bounced over the wave on a mushroom, and anyone the Blast Wave hit.', cols: ['Bomb', 'When', 'Result', 'Bounced'], rows });
   }
 
   // ---- 7. tanks: Shredding Shards (Iku) and Steady Strikes (Nama), stacks before each swap ----
@@ -2550,7 +2550,7 @@ function buildLostExplorers(ev, r, h) {
     const said = new Set();
     for (const x of rows.filter((q) => q[3].bad)) { const k = x[0].p + '|' + Math.round(x[1].t); if (said.has(k)) continue; said.add(k); M(x[1].t, x[0].p, x[0].sub, 'High', 'Died with ' + x[2].txt.replace(' before it dropped', '') + ' of ' + x[0].sub + '.', 'Swap tanks earlier as the stacks ramp.'); }
     if (rows.length) sections.push({ id: 'tankstacks', title: 'Tank stacks: swapped in time', spell: [LE.shards, 'Shredding Shards'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good', info: !rows.some((x) => x[3].bad),
-      summary: 'Each tank\'s Shredding Shards (Iku) and Steady Strikes (Nama) stacks before they dropped.', cols: ['Tank', 'Dropped', 'Stacks', 'Died'], rows });
+      summary: 'It shows each tank\'s Shredding Shards (Iku) and Steady Strikes (Nama) stacks before they dropped.', cols: ['Tank', 'Dropped', 'Stacks', 'Died'], rows });
   }
 
   // ---- 8. avoidable damage ----
@@ -2577,107 +2577,107 @@ function buildLostExplorers(ev, r, h) {
 // section in the Fight audit. Keep these neutral and short; they match what the checks look for.
 const HOW = {
   'The Coiled Altar': {
-    orbs: 'Toxic Deluge spits venom orbs around the room, and every orb left out pulses raid damage. Players carry orbs into a line in front of the boss, and the tank\'s Sever destroys every orb in its cone; each destroyed orb gives the whole raid one Venom Rupture stack, whatever its color. Aim for 5 to 6 orbs per frontal and never more than 7. At the end of P1 the second-to-last frontal pops only 2 to 3 and the last one hits empty ground, because the orbs explode when Zul\'jan dies (aim for 9 to 11 stacks at the push, under stacked raid cooldowns). On Mythic some orbs are purple: only the assigned carriers move them, nothing may touch a purple\'s ring (a carried green may pass a carried purple), and a purple still out when the pools come is a wipe. In P3 the first frontal takes every purple at once; greens can be left if needed, purples never. Defilement of the Coiled Altar detonates whatever is on the ground.',
-    soakq: 'Zul\'jan marks a player and drops an axe on them; everyone inside the 9-yard circle splits the damage. On Mythic it needs at least 5 players (3 on Heroic and Normal), so over-send. Guillotine 1 takes 6 to 7: the players who will immune the 2nd plus tanky players with personals, with externals on the target. The 2nd is both tanks with personals, two immunities and Blessing of Protection on the target; its immuners stand in the 1st too, because that debuff stops the 2nd from targeting them. In P3 Grim Guillotine 1 has its own spot, and 2 and 3 go together in another: Grim 2 is three immunities with Spellwarding and big externals on the target, Grim 3 is everyone without the debuff.',
+    orbs: 'Toxic Deluge spits venom orbs around the room, and every orb left out pulses raid damage. Players carry orbs into a line in front of the boss, and the tank\'s Sever destroys every orb in its cone. Each destroyed orb gives the whole raid one Venom Rupture stack, whatever its color. Aim for 5 to 6 orbs per frontal and never more than 7. At the end of P1 the second-to-last frontal pops only 2 to 3 and the last one hits empty ground, because the orbs explode when Zul\'jan dies (aim for 9 to 11 stacks at the push, under stacked raid cooldowns). On Mythic some orbs are purple. Only the assigned carriers move them, nothing may touch a purple\'s ring (a carried green may pass a carried purple), and a purple still out when the pools come is a wipe. In P3 the first frontal takes every purple at once. Greens can be left if needed, but purples never. Defilement of the Coiled Altar detonates whatever is on the ground.',
+    soakq: 'Zul\'jan marks a player and drops an axe on them. Everyone inside the 9-yard circle splits the damage. On Mythic it needs at least 5 players (3 on Heroic and Normal), so over-send. Guillotine 1 takes 6 to 7: the players who will immune the 2nd plus tanky players with personals, with externals on the target. The 2nd is both tanks with personals, two immunities and Blessing of Protection on the target. Its immuners stand in the 1st too, because that debuff stops the 2nd from targeting them. In P3 Grim Guillotine 1 has its own spot, and 2 and 3 go together in another: Grim 2 is three immunities with Spellwarding and big externals on the target, Grim 3 is everyone without the debuff.',
     tankfront: 'The boss frontals leave a debuff on the tank. In P1 the tanks taunt-swap so every Sever lands on a fresh tank. In P2 one tank takes every Soul Sever: a defensive on the first stack, a defensive plus two externals on the second, and the stacks drop before a third. Red: a tank died to it or took a third stack. Amber: a second stack without two externals, or a missed swap in P1.',
-    shield: 'Every second set of adds is followed by Eternal Nightfall: Malacrass shields himself while casting it. This is the damage check of P2 and P3: assign cooldowns and pool damage for every shield. The cast can only be kicked once the shield is gone, so it takes two steps: break the shield, then kick Malacrass before the 17s cast finishes. Give every shield a kicker and a backup. Broken shows how far into the cast the shield came off and how much time was left to kick.',
-    dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs; stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly); two ghosts touching hits both players hard (Malevolent Resonance). The boss tank aims Soul Sever to hit as many ghosts as possible; a ghost it misses is walked back for the next one, and staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
-    addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick; the melee add\'s second kick should be a melee player. Kill both adds before the next set spawns. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
+    shield: 'Every second set of adds is followed by Eternal Nightfall: Malacrass shields himself while casting it. This is the damage check of P2 and P3: assign cooldowns and pool damage for every shield. The cast can only be kicked once the shield is gone, so it takes two steps. Break the shield, then kick Malacrass before the 17s cast finishes. Give every shield a kicker and a backup. Broken shows how far into the cast the shield came off and how much time was left to kick.',
+    dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs. Stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly). Two ghosts touching hits both players hard (Malevolent Resonance). The boss tank aims Soul Sever to hit as many ghosts as possible; a ghost it misses is walked back for the next one, and staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
+    addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick. The melee add\'s second kick should be a melee player. Kill both adds before the next set spawns. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
     gloom: 'On Mythic each Spiteful Soulcoiler spawns with Spirit Shield (99% damage reduction, 2 stacks). Malacrass puts Gloombomb on two melee and two ranged players; 5 seconds later each one explodes in a 15-yard circle, and every Soulcoiler inside loses a stack. Each pair overlaps its circles on its own add (melee on the unmarked melee add, ranged on the marked ranged add), so both shields break. A bomb that misses, or lands on a leftover add from an earlier set, leaves this set\'s shield up. Everyone else stays out of the circles.',
     inter: 'Malacrass channels Soulbinding: Zul\'jan takes double damage, so use Bloodlust and burn him. Fragments of Malacrass rush toward Zul\'jan and heal him for about 10% if they reach him, which is close to a wipe. Players block them, but every block gives the whole raid a Spirit Erasure stack (more damage taken), so soak in rounds: 3 to 5 stacks, let them drop, repeat; near the end stack raid cooldowns in the middle and go up to 7 to 10. Spread soakers around the room, including the inner ring. Zul\'jan under 35% when it ends is on pace for the kill.',
-    avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous (red on any hit): tank frontals on non-tanks and ghosts touching. Harmful: the statue poison pools (Noxious Ground), Axegrinder axes, someone else\'s Gloombomb, standing near a purple orb carrier, and P3 Defiled Ground. Minor: standing near a green orb carrier and Toxic Deluge impacts. Each hit is one time walking into it (a pool or axe ticks fast while you stand in it; the ticks are listed under it). Tanks aren\'t judged on Axegrinder. Raid-wide damage (orb pulses and ruptures, Dreadful Presence, Retaliatory Malice, the Guillotine burst) isn\'t avoidable and isn\'t listed.',
-    vf: 'Zul\'jan\'s Venomfang puts a 14-second poison on random players. It can be dispelled: the rule is to dispel it quickly, and any healer can take it. Each row is one Venomfang: how long it stayed on and who dispelled it. Amber: on for more than 4 seconds or never dispelled; red: the player died with it on.',
+    avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous (red on any hit): tank frontals on non-tanks and ghosts touching. Harmful: the statue poison pools (Noxious Ground), Axegrinder axes, someone else\'s Gloombomb, standing near a purple orb carrier, and P3 Defiled Ground. Minor: standing near a green orb carrier and Toxic Deluge impacts. Each hit is one time walking into it (a pool or axe ticks fast while you stand in it, and the ticks are listed under it). Tanks aren\'t judged on Axegrinder. Raid-wide damage (orb pulses and ruptures, Dreadful Presence, Retaliatory Malice, the Guillotine burst) isn\'t avoidable and isn\'t listed.',
+    vf: 'Zul\'jan\'s Venomfang puts a 14-second poison on random players. It can be dispelled: the rule is to dispel it quickly, and any healer can take it. Each row is one Venomfang: how long it stayed on and who dispelled it. Amber: on for more than 4 seconds or never dispelled. Red: the player died with it on.',
     push: 'Phase changes are timed. In P1 hold damage, keep the last frontal on empty ground, then kill Zul\'jan in the middle after the last Toxic Deluge with Darkness, Anti-Magic Zone and Spirit Link stacked (aim for 9 to 11 stacks). Push Malacrass right after a Soul Sever clears the ghosts (watch the knockback at the edge), use Lust in the intermission, and in P3 kill Zul\'jan first, before the Defilement that follows the burn, with Malacrass at about 7 to 8%, then finish Malacrass before he enrages.',
   },
   'Entombed Sentinels': {
-    helix: 'At 100 energy both bosses go to the middle and take 99% less damage (Vitriolic Stasis), and everyone gets Helical Toxins: four orbs over your head, some green. Touch exactly one other player so your green orbs make 4: 1 with 3, 2 with 2. On Mythic the counts hide after a few seconds, so the raid uses a system (who pings and jumps, who goes under the boss) and your debuff stacks are your green orbs. A wrong bump adds the two counts together instead of clearing; anyone still holding it after 28 seconds takes Cultivated Burst (a huge hit, a long damage over time and a red pool), so a failed player goes to a far corner and stops bumping. The bosses heal during the game: calm, but not slow. Each player\'s count (the number by their name) isn\'t written in the log; it\'s read from the debuff\'s damage, about 15k a stack every 2 seconds, so a pair that solved it before the first tick has none. Amber: solved after a wrong bump; red: didn\'t solve it (Cultivated Burst).',
-    protovenom: 'Mythic: Vashnik, in the room, puts an orange circle on eight players (Shifting Protovenom), about 6 yards around them, pulsing about 233k every 2 seconds. It does nothing for the first second and a half. Two circles touching clears both harmlessly; a circle touching a player without one is a Protovenom Eruption, damage and a big knockback for both, and the circle stays. Everyone, tanks and melee too, spreads before it lands, then circles pair up, crossing to the other group if needed. Amber: took over 6 seconds to clear; red: an eruption.',
-    droplets: 'The Breath of Ula\'tek sprays Toxic Droplets: step on each one (about 375k) before it erupts on the whole raid 12 seconds later (Noxious Blast). On Mythic two at once can kill you, so one each; tanks can take extras. On the hard sets, the one right before the intermission or droplets in a blood pool, use mobile immunities. Each destroyed droplet\'s venom flies back to the boss 4 seconds later (Living Venom, 375k a hit): dodge it. Amber: two at once (not a tank or immune); red: one erupted on the raid, or a death. Venom hits are shown here and judged under Avoidable damage.',
-    coag: 'The Breath of Ula\'tek spawns a Venom Coagulation near random players; it pulses raid damage (Contaminate) while alive. Bait it ahead of the group so it doesn\'t land in blood. The first of a cycle can be cleaved down; the second spawns right before the intermission and has to die before it, with red-side ranged helping. After the last intermission, leave the new add: the enrage is close. Amber: an add never killed; red: the one before an intermission still alive when it starts.',
-    miasma: 'The Blood of Ula\'tek marks a player with Unstable Miasma: a soak. On Mythic at least eight players soak it, far back in a corner; fewer means more Blood Venom stacks each and bigger pools, and too few kills. The soakers then line up along the back wall to drop their pools and move out. Red: fewer than eight soakers on Mythic, or a soaker died.',
-    blighted: 'Blighted Blood is a dispellable damage over time on a few players. Healers dispel it as soon as it lands; one that runs out drops a blood pool. Amber: on for more than 5 seconds, or it ran out; red: the player died with it.',
-    pools: 'Everything on the red side drops blood pools: Blood Venom when it ends (bigger with more stacks), a Blighted Blood that ran out, and the red tank\'s Bloodvenom Injection when the tank swaps off. Keep a set pattern along the walls so the room stays open; after the second intermission most of it should still be free. One floor map per cycle, every pool so far, this cycle\'s brighter. Not judged.',
-    marks: 'Each boss stacks its own damage over time on everyone within 40 yards: Mark of Acid from the Breath, Mark of Blood from the Blood. Be in range of only one boss; spread-damage specs cleave both from the edge of range. Stacks are counted from 8 seconds after each intermission (the swap). Amber: 3 or more stacks of the other boss\'s Mark in a cycle; red: 6 or more. Tanks aren\'t judged.',
-    balance: 'Keep the bosses 40+ yards apart (closer, they take 99% less damage) and at even health: Vitriolic Stasis heals the lower one up to the other, so any lead is wasted. Balance by moving players between sides, not by stopping damage. Amber: 5+ points apart going into an intermission; red: within 40 yards for 3+ seconds outside the intermissions.',
-    tanks: 'One tank on each boss: Empowering Slam on the Breath ramps on the same tank, Bloodvenom Injection on the Blood stacks a damage over time. They trade bosses at every intermission so the stacks drop, and the tank leaving the Blood drops a big pool when Injection ends: into old blood. Red: no swap after an intermission.',
-    avoid: 'Every source of damage positioning can avoid, most harmful first. Dangerous: Protovenom Eruption (a circle touching a player without one). Harmful: Living Venom (a droplet\'s venom flying back to the boss, 375k a hit) and standing in a blood pool. Raid-wide damage (the Marks, Contaminate, Noxious Blast, the Helical Toxins ticks) isn\'t listed, and neither is Clinging Murk: it lands on every Unstable Miasma soaker.',
+    helix: 'At 100 energy both bosses go to the middle and take 99% less damage (Vitriolic Stasis), and everyone gets Helical Toxins: four orbs over your head, some green. Touch exactly one other player so your green orbs make 4: 1 with 3, 2 with 2. On Mythic the counts hide after a few seconds, so the raid uses a system (who pings and jumps, who goes under the boss) and your debuff stacks are your green orbs. A wrong bump adds the two counts together instead of clearing. Anyone still holding it after 28 seconds takes Cultivated Burst (a huge hit, a long damage over time and a red pool), so a failed player goes to a far corner and stops bumping. The bosses heal during the game: calm, but not slow. Each player\'s count (the number by their name) isn\'t written in the log. It\'s read from the debuff\'s damage, about 15k a stack every 2 seconds, so a pair that solved it before the first tick has none. Amber: solved after a wrong bump. Red: didn\'t solve it (Cultivated Burst).',
+    protovenom: 'Mythic: Vashnik, in the room, puts an orange circle on eight players (Shifting Protovenom), about 6 yards around them, pulsing about 233k every 2 seconds. It does nothing for the first second and a half. Two circles touching clears both harmlessly. A circle touching a player without one is a Protovenom Eruption, damage and a big knockback for both, and the circle stays. Everyone, tanks and melee too, spreads before it lands, then circles pair up, crossing to the other group if needed. Amber: took over 6 seconds to clear. Red: an eruption.',
+    droplets: 'The Breath of Ula\'tek sprays Toxic Droplets. Step on each one (about 375k) before it erupts on the whole raid 12 seconds later (Noxious Blast). On Mythic two at once can kill you, so one each. Tanks can take extras. On the hard sets, the one right before the intermission or droplets in a blood pool, use mobile immunities. Each destroyed droplet\'s venom flies back to the boss 4 seconds later (Living Venom, 375k a hit): dodge it. Amber: two at once (not a tank or immune). Red: one erupted on the raid, or a death. Venom hits are shown here and judged under Avoidable damage.',
+    coag: 'The Breath of Ula\'tek spawns a Venom Coagulation near random players. It pulses raid damage (Contaminate) while alive. Bait it ahead of the group so it doesn\'t land in blood. The first of a cycle can be cleaved down. The second spawns right before the intermission and has to die before it, with red-side ranged helping. After the last intermission, leave the new add: the enrage is close. Amber: an add never killed. Red: the one before an intermission still alive when it starts.',
+    miasma: 'The Blood of Ula\'tek marks a player with Unstable Miasma: a soak. On Mythic at least eight players soak it, far back in a corner. Fewer means more Blood Venom stacks each and bigger pools, and too few kills. The soakers then line up along the back wall to drop their pools and move out. Red: fewer than eight soakers on Mythic, or a soaker died.',
+    blighted: 'Blighted Blood is a dispellable damage over time on a few players. Healers dispel it as soon as it lands. One that runs out drops a blood pool. Amber: on for more than 5 seconds, or it ran out. Red: the player died with it.',
+    pools: 'Everything on the red side drops blood pools: Blood Venom when it ends (bigger with more stacks), a Blighted Blood that ran out, and the red tank\'s Bloodvenom Injection when the tank swaps off. Keep a set pattern along the walls so the room stays open. After the second intermission most of it should still be free. One floor map per cycle, every pool so far, this cycle\'s brighter. Not judged.',
+    marks: 'Each boss stacks its own damage over time on everyone within 40 yards: Mark of Acid from the Breath, Mark of Blood from the Blood. Be in range of only one boss. Spread-damage specs cleave both from the edge of range. Stacks are counted from 8 seconds after each intermission (the swap). Amber: 3 or more stacks of the other boss\'s Mark in a cycle. Red: 6 or more. Tanks aren\'t judged.',
+    balance: 'Keep the bosses 40+ yards apart (closer, they take 99% less damage) and at even health: Vitriolic Stasis heals the lower one up to the other, so any lead is wasted. Balance by moving players between sides, not by stopping damage. Amber: 5+ points apart going into an intermission. Red: within 40 yards for 3+ seconds outside the intermissions.',
+    tanks: 'There\'s one tank on each boss. Empowering Slam on the Breath ramps on the same tank, and Bloodvenom Injection on the Blood stacks a damage over time. They trade bosses at every intermission so the stacks drop, and the tank leaving the Blood drops a big pool when Injection ends: into old blood. Red: no swap after an intermission.',
+    avoid: 'Every source of damage positioning can avoid, most harmful first. Dangerous: Protovenom Eruption (a circle touching a player without one). Harmful: Living Venom (a droplet\'s venom flying back to the boss, 375k a hit) and standing in a blood pool. Raid-wide damage (the Marks, Contaminate, Noxious Blast, the Helical Toxins ticks) isn\'t listed, and neither is Clinging Murk. It lands on every Unstable Miasma soaker.',
   },
   'The Lost Explorers': {
-    boxes: 'Trader Gebbo throws boxes around the room. A box left alone glows green and ruptures on the whole raid (Relic Rupture), so one player pops every box. On Mythic every pop also hits the whole raid with a stacking bleed (Splinters), so the popper keeps a rhythm: two stacks, let them drop, two more (three if needed, never during Blink Nova or other big damage). Each row is one box: popped or ruptured, and the raid\'s stacks right after. Red: a box ruptured, or deaths to the bleed; amber: a pop that took the raid to four stacks.',
-    united: 'When all three explorers are within 30 yards of each other they take 99% less damage (United Defense). Keep at most two of them together and move them apart as soon as a third comes close. Amber: up for a moment; red: up for more than 5 seconds.',
-    ascension: 'Mor\'zahi builds energy and at 100 casts Final Ascension, which keeps hitting the raid until everyone dies. Feeding a Disgusting Fish (from the boxes) to the turtle he controls stops it and moves him to the next explorer, which then uses its empowered moves. You get three feeds; the fourth Final Ascension is the hard enrage. Feed with about 4 seconds left on the cast. Red: Final Ascension went off.',
-    frostfire: 'Iku\'s Frostfire Volley gives some players Burning Flames (fire) and others Piercing Frost (frost), each leaving a patch on the floor. Clear yours by standing in the other element\'s patch: a frost patch clears Burning Flames, a fire patch clears Piercing Frost. If the next volley hits someone still carrying the other element, Elemental Explosion can wipe the raid. Spread, and don\'t walk into a patch of your own type. Red: still on at the next volley, or a death with it; amber: cleared after more than 8 seconds.',
-    blink: 'Blink Nova: Iku blinks to a player and explodes, hitting the whole raid less the farther away they are. Spread out; the target moves at least 20 yards from the melee and away from the raid. Each row is one Blink Nova: its target, the average hit, and deaths. Red: a death to it.',
-    thud: 'Nama\'s Mighty Thud marks spots and leaps to them in turn; each landing is split between everyone within 6 yards and knocks them back, and an empty spot hits the whole raid for the full amount. Line up away from Nama: everyone soaks the first leap and gets knocked into the next, then the third. Each landing leaves Aftershock craters for 30 seconds. Red: a leap with nobody under it, or a death; amber: fewer than five soakers.',
+    boxes: 'Trader Gebbo throws boxes around the room. A box left alone glows green and ruptures on the whole raid (Relic Rupture), so one player pops every box. On Mythic every pop also hits the whole raid with a stacking bleed (Splinters), so the popper keeps a rhythm: two stacks, let them drop, two more (three if needed, never during Blink Nova or other big damage). Each row is one box: popped or ruptured, and the raid\'s stacks right after. Red: a box ruptured, or deaths to the bleed. Amber: a pop that took the raid to four stacks.',
+    united: 'When all three explorers are within 30 yards of each other they take 99% less damage (United Defense). Keep at most two of them together and move them apart as soon as a third comes close. Amber: up for a moment. Red: up for more than 5 seconds.',
+    ascension: 'Mor\'zahi builds energy and at 100 casts Final Ascension, which keeps hitting the raid until everyone dies. Feeding a Disgusting Fish (from the boxes) to the turtle he controls stops it and moves him to the next explorer, which then uses its empowered moves. You get three feeds, and the fourth Final Ascension is the hard enrage. Feed with about 4 seconds left on the cast. Red: Final Ascension went off.',
+    frostfire: 'Iku\'s Frostfire Volley gives some players Burning Flames (fire) and others Piercing Frost (frost), each leaving a patch on the floor. Clear yours by standing in the other element\'s patch: a frost patch clears Burning Flames, a fire patch clears Piercing Frost. If the next volley hits someone still carrying the other element, Elemental Explosion can wipe the raid. Spread, and don\'t walk into a patch of your own type. Red: still on at the next volley, or a death with it. Amber: cleared after more than 8 seconds.',
+    blink: 'Blink Nova: Iku blinks to a player and explodes, hitting the whole raid less the farther away they are. Spread out. The target moves at least 20 yards from the melee and away from the raid. Each row is one Blink Nova: its target, the average hit, and deaths. Red: a death to it.',
+    thud: 'Nama\'s Mighty Thud marks spots and leaps to them in turn. Each landing is split between everyone within 6 yards and knocks them back, and an empty spot hits the whole raid for the full amount. Line up away from Nama. Everyone soaks the first leap and gets knocked into the next, then the third. Each landing leaves Aftershock craters for 30 seconds. Red: a leap with nobody under it, or a death. Amber: fewer than five soakers.',
     bomb: 'Gebbo\'s Explosive Surprise lands a bomb on a player, then sends out a Blast Wave that kills: bounce over it on a Bouncy Mushroom (on Mythic there\'s one mushroom per bomb, so don\'t pop it early), or blink, teleport or leap over it. Drop the bomb at the edge of the room. Red: hit by the Blast Wave.',
-    tankstacks: 'Iku\'s Shredding Shards (50% more damage from them per stack) and Nama\'s Steady Strikes (4% more physical damage per stack) ramp on their tanks: swap as they climb. Each row is one stretch on a tank: the stacks before they dropped. Red: a tank death with them up.',
+    tankstacks: 'Iku\'s Shredding Shards (50% more damage from them per stack) and Nama\'s Steady Strikes (4% more physical damage per stack) ramp on their tanks, so swap as they climb. Each row is one stretch on a tank: the stacks before they dropped. Red: a tank death with them up.',
     avoid: 'Every source of damage positioning can avoid, most harmful first: the Blast Wave, Aftershock craters, the statues\' Evil Eyes puddles, Fungal Burst from a used mushroom, and standing where a box lands. Raid-wide damage (Malevolent Presence, Splinters, Blink Nova, Fishy Feedback) isn\'t listed.',
   },
   'Vashnik the Malignant': {
-    imbibe: 'At 100 energy Vashnik casts Imbibe: it hits the raid, adds a stack of Toxic Vapor (raid damage that never goes away: the longer the fight, the harder), and drains the two fountains nearest to him. Each drained fountain gives him an infusion and sends out its venoms, so where the tank holds him decides the next stretch of the fight; many raids keep him between the Shadow and Fire fountains the whole time. Stack for healing cooldowns and defensives on every Imbibe. Each row is one Imbibe: the fountains, the raid hit, deaths. Red: a death to it.',
-    venoms: 'Each drained fountain sends venoms crawling toward the Malignant Cavity in the middle: if one gets there, Malignant Burst hits the raid hard and stacks. Burning Venoms (fire; three on Mythic) pulse fire damage while alive and burst (Caustic Surge) when they die: kill them first, one at a time, with crowd control or a banish on the others. Shrouded Venoms (shadow) have a full-health shield, so they need killing twice. Anything alive for 60 seconds hardens (immune to crowd control, faster). Red: a venom reached the middle; amber: two fire adds died within 3 seconds, or an add lived over 60 seconds.',
-    totems: 'Mythic: each Imbibe also raises Malignant Totems across the raid\'s half of the room. Only Plague Waves remove them; any totem still up at the next Imbibe casts Malignance (a heavy raid hit and a stacking damage over time). One is survivable, two usually wipe. Players with Plague Froth walk to markers so their lines run through the totems; a totem glows when a wave is aimed at it. Red: two or more left at an Imbibe; amber: one.',
-    froth: 'Plague Froth coats a few players in venom that hurts anyone within 5 yards; after 8 seconds Plague Wave erupts from each of them in four lines: north, south, east and west. Targets move away from the raid (on Mythic, to their totem markers), and everyone else stays off those lines. The map draws the four lines from each target. Red: a death to a wave; amber: hit by one.',
-    bile: 'Malignant Catalyst hits the raid and launches Catalytic Bile across the room; each one splashes everyone within 6 yards when it lands, and one that lands on nobody hits the whole raid much harder. Spread out so every impact has someone under it. Red: a bile landed on nobody.',
-    infect: 'Adaptive Infection hits a few players with an infection that matches the current infusions. Exploding Infection (fire) ticks until it\'s removed, and removing it sets off Caustic Explosion on the whole raid: healers dispel one at a time, with the raid topped up. Stygian Infection (shadow) bursts on everyone within 6 yards: the infected spread out. Red: a death to Caustic Explosion; amber: two removed within 1.5 seconds, or hit by someone\'s Stygian Burst.',
+    imbibe: 'At 100 energy Vashnik casts Imbibe. It hits the raid, adds a stack of Toxic Vapor (raid damage that never goes away: the longer the fight, the harder), and drains the two fountains nearest to him. Each drained fountain gives him an infusion and sends out its venoms, so where the tank holds him decides the next stretch of the fight. Many raids keep him between the Shadow and Fire fountains the whole time. Stack for healing cooldowns and defensives on every Imbibe. Each row is one Imbibe: the fountains, the raid hit, deaths. Red: a death to it.',
+    venoms: 'Each drained fountain sends venoms crawling toward the Malignant Cavity in the middle. If one gets there, Malignant Burst hits the raid hard and stacks. Burning Venoms (fire, and three on Mythic) pulse fire damage while alive and burst (Caustic Surge) when they die. Kill them first, one at a time, with crowd control or a banish on the others. Shrouded Venoms (shadow) have a full-health shield, so they need killing twice. Anything alive for 60 seconds hardens (immune to crowd control, faster). Red: a venom reached the middle. Amber: two fire adds died within 3 seconds, or an add lived over 60 seconds.',
+    totems: 'Mythic: each Imbibe also raises Malignant Totems across the raid\'s half of the room. Only Plague Waves remove them. Any totem still up at the next Imbibe casts Malignance (a heavy raid hit and a stacking damage over time). One is survivable, two usually wipe. Players with Plague Froth walk to markers so their lines run through the totems. A totem glows when a wave is aimed at it. Red: two or more left at an Imbibe. Amber: one.',
+    froth: 'Plague Froth coats a few players in venom that hurts anyone within 5 yards. After 8 seconds, Plague Wave erupts from each of them in four lines: north, south, east and west. Targets move away from the raid (on Mythic, to their totem markers), and everyone else stays off those lines. The map draws the four lines from each target. Red: a death to a wave. Amber: hit by one.',
+    bile: 'Malignant Catalyst hits the raid and launches Catalytic Bile across the room. Each one splashes everyone within 6 yards when it lands, and one that lands on nobody hits the whole raid much harder. Spread out so every impact has someone under it. Red: a bile landed on nobody.',
+    infect: 'Adaptive Infection hits a few players with an infection that matches the current infusions. Exploding Infection (fire) ticks until it\'s removed, and removing it sets off Caustic Explosion on the whole raid: healers dispel one at a time, with the raid topped up. Stygian Infection (shadow) bursts on everyone within 6 yards: the infected spread out. Red: a death to Caustic Explosion. Amber: two removed within 1.5 seconds, or hit by someone\'s Stygian Burst.',
     fangs: 'Dripping Fangs hits the tank hard and doubles the physical damage they take for 32 seconds, so the tanks swap on every cast. Red: one tank taking two in a row.',
     avoid: 'Every source of damage positioning can avoid, most harmful first: Plague Wave lines, Umbral Ejection circles from Shrouded Venoms, Stygian Bursts from infected players, and standing next to a Plague Froth target. Raid-wide damage (Imbibe, Toxic Vapor, the expulsions, Burning Presence, Caustic Surge, Malignant Catalyst) isn\'t listed.',
   },
   "Nek'zali the Soulcoiler": {
-    amani: 'Restless Amani rise from the coffins at the sides and walk to the Soulcoil Well in the middle, protected by a magic-only shield (Gravebound Advance) worth a quarter of their health: break it with magic damage, then kill them before they reach the water. Each one that gets in gives Nek\'zali 5 energy and hits the raid with a Soulcoil Rite (on Heroic and Mythic, plus a Ritual Burn stack). A dead Amani bursts (Corpse Blight) and, on Heroic and Mythic, leaves a corpse that comes back in the intermission. Red: one reached the well.',
-    ignition: 'Nek\'zali teleports into the well and channels Soulcoil Ignition: five Soulcoil Rites on the raid and 25 energy, while Anguished Echoes rain out of the well as circles that hit hard and knock back. Use healing cooldowns and dodge the circles. On Heroic and Mythic, Ritual Burn makes each Rite hit 15% harder per stack for 60 seconds, so go in with none: an Amani reaching the well in the minute before leaves the raid with a stack. Amber: hit by a circle, or going in with Ritual Burn; red: hit by two, or died.',
-    depths: 'Mythic: twice per phase a Drowned Echo wakes in the well (Grasping Depths). While it lives the whole raid is pulled toward the middle and takes damage, so a team of about three damage dealers and a healer goes into the well to kill it, and two teams take turns. Kick every Soulcoiler\'s Curse: one that gets off throws everyone out of the well and Soulcoils them. Dodge the Swirling Spirits inside. Anyone who leaves the well gets Soul Exhaustion (300% more damage from the well), so the team that just left sits out the next one. Each group is one Echo: the team, every Curse and who kicked it. Red: a Curse got off, or a death in the well; amber: Swirling Spirit hits, or going in with Soul Exhaustion.',
-    rend: 'Essence Rend pulls a few players in, knocks them back and leaves a damage over time that healers dispel. Where it ends, a Latent Cultist spawns: a slowing puddle that stays for the whole fight and moves around the well in P2. Walk to the side of the room and get dispelled there, so the puddles stay out of the way. Each row is one debuff: who dispelled it and how far from the well its puddle landed. Amber: a puddle closer than 25 yards to the well\'s centre.',
-    barrage: 'Possession Barrage sends spirits at the current tank: they hit the whole raid, harder the closer the tank stands to Nek\'zali. The tank steps 30 or more yards away from her, and nobody stands in the line between them. Amber: the tank closer than 25 yards when it went out.',
-    ritual: 'At 50% Nek\'zali retreats into the well and two Echoes of Jawae protect her: kill both to end it. Each Echo channels Soul Transfer for 15 seconds, then blasts in a line toward her: step out of it. Hungering Pyre is a soak split between everyone within 10 yards (the melee take it); everyone else gets a Slithering Flame, and the Pyre and the flames burn corpses. On Mythic every Amani corpse left on the floor comes back during the intermission, and more than one at a time hits the raid very hard, so burn them first. Red: three or more corpses back at once, deaths to them or to a Pyre, or a Soul Transfer hit; amber: two at once, or a Pyre with fewer than four soakers.',
-    invoke: 'Mythic: in P2 Nek\'zali casts Invoke (a 5-second cast): a Soulcoil Rite on the raid, the cultist puddles move around the well, and anyone casting as it finishes is interrupted and silenced for 3 seconds. Stop casting just before it ends. Amber: interrupted by it.',
-    energy: 'Nek\'zali enrages at 100 energy (Uncoiled Rage). In P1 each Soulcoil Ignition gives her 25 and each Amani that reaches the well 5, so the fourth Ignition fills her: reach the intermission at 50% before it. In P2 her energy climbs on its own (Uncoiling), so P2 is a damage race: Bloodlust there. This lists what gave her energy. Red: she enraged.',
+    amani: 'Restless Amani rise from the coffins at the sides and walk to the Soulcoil Well in the middle, protected by a magic-only shield (Gravebound Advance) worth a quarter of their health. Break it with magic damage, then kill them before they reach the water. Each one that gets in gives Nek\'zali 5 energy and hits the raid with a Soulcoil Rite (on Heroic and Mythic, plus a Ritual Burn stack). A dead Amani bursts (Corpse Blight) and, on Heroic and Mythic, leaves a corpse that comes back in the intermission. Red: one reached the well.',
+    ignition: 'Nek\'zali teleports into the well and channels Soulcoil Ignition, which puts five Soulcoil Rites on the raid and gives her 25 energy, while Anguished Echoes rain out of the well as circles that hit hard and knock back. Use healing cooldowns and dodge the circles. On Heroic and Mythic, Ritual Burn makes each Rite hit 15% harder per stack for 60 seconds, so go in with none. An Amani reaching the well in the minute before leaves the raid with a stack. Amber: hit by a circle, or going in with Ritual Burn. Red: hit by two, or died.',
+    depths: 'Mythic: twice per phase a Drowned Echo wakes in the well (Grasping Depths). While it lives the whole raid is pulled toward the middle and takes damage, so a team of about three damage dealers and a healer goes into the well to kill it, and two teams take turns. Kick every Soulcoiler\'s Curse. One that gets off throws everyone out of the well and Soulcoils them. Dodge the Swirling Spirits inside. Anyone who leaves the well gets Soul Exhaustion (300% more damage from the well), so the team that just left sits out the next one. Each group is one Echo: the team, every Curse and who kicked it. Red: a Curse got off, or a death in the well. Amber: Swirling Spirit hits, or going in with Soul Exhaustion.',
+    rend: 'Essence Rend pulls a few players in, knocks them back and leaves a damage over time that healers dispel. Where it ends, a Latent Cultist spawns, a slowing puddle that stays for the whole fight and moves around the well in P2. Walk to the side of the room and get dispelled there, so the puddles stay out of the way. Each row is one debuff: who dispelled it and how far from the well its puddle landed. Amber: a puddle closer than 25 yards to the well\'s centre.',
+    barrage: 'Possession Barrage sends spirits at the current tank. They hit the whole raid, harder the closer the tank stands to Nek\'zali. The tank steps 30 or more yards away from her, and nobody stands in the line between them. Amber: the tank closer than 25 yards when it went out.',
+    ritual: 'At 50% Nek\'zali retreats into the well and two Echoes of Jawae protect her. Kill both to end it. Each Echo channels Soul Transfer for 15 seconds, then blasts in a line toward her. Step out of it. Hungering Pyre is a soak split between everyone within 10 yards (the melee take it). Everyone else gets a Slithering Flame, and the Pyre and the flames burn corpses. On Mythic every Amani corpse left on the floor comes back during the intermission, and more than one at a time hits the raid very hard, so burn them first. Red: three or more corpses back at once, deaths to them or to a Pyre, or a Soul Transfer hit. Amber: two at once, or a Pyre with fewer than four soakers.',
+    invoke: 'Mythic: in P2 Nek\'zali casts Invoke, a 5-second cast. When it finishes, it puts a Soulcoil Rite on the raid, moves the cultist puddles around the well, and interrupts and silences anyone still casting for 3 seconds. Stop casting just before it ends. Amber: interrupted by it.',
+    energy: 'Nek\'zali enrages at 100 energy (Uncoiled Rage). In P1 each Soulcoil Ignition gives her 25 and each Amani that reaches the well 5, so the fourth Ignition fills her. Reach the intermission at 50% before it. In P2 her energy climbs on its own (Uncoiling), so P2 is a damage race. Use Bloodlust there. This lists what gave her energy. Red: she enraged.',
     avoid: 'Every source of damage positioning can avoid, most harmful first: the Soul Transfer line blast, the Anguished Echoes circles, the Latent Cultist puddles, and on Mythic the Swirling Spirits in the well. Raid-wide damage (Soulcoil Rite, Corpse Blight, Possession Barrage, Uncoiling, Grasping Depths) isn\'t listed.',
   },
   Sszorak: {
     ravage: 'Ravage is the tank frontal in Sszorak\'s Apex Predator combo (five casts in random order: two Ravage, two Mutilate, one Tempest). It hits the tank very hard and leaves a debuff that makes the next Ravage hit far harder for 25 seconds, so the tanks taunt between the two Ravages of each combo and take them at the edge, away from the raid. Red: a tank taking a second Ravage with the debuff up, or anyone else in the cone.',
-    mutilate: 'Mutilate is the soak frontal in the same combo: aimed at the tank and split between everyone in it, lethal with fewer than five. Everyone hit gets Mutilated Gash for 22 seconds, which makes the next Mutilate hit them 500% harder, so the raid soaks in two groups that alternate: one takes the first Mutilate of each combo, the other the second. Red: fewer than five soakers, or someone soaking with Mutilated Gash still on.',
-    tempest: 'Once per combo, Tempest sends tornadoes roaming out from the boss. A touch hits hard and stacks a damage over time; on Mythic they are one of the two biggest wipe causes. Watch them and move early. Amber: touched once; red: touched twice or more in one Tempest, or died to it.',
+    mutilate: 'Mutilate is the soak frontal in the same combo. It\'s aimed at the tank and split between everyone in it, and it\'s lethal with fewer than five. Everyone hit gets Mutilated Gash for 22 seconds, which makes the next Mutilate hit them 500% harder, so the raid soaks in two groups that alternate: one takes the first Mutilate of each combo, the other the second. Red: fewer than five soakers, or someone soaking with Mutilated Gash still on.',
+    tempest: 'Once per combo, Tempest sends tornadoes roaming out from the boss. A touch hits hard and stacks a damage over time. On Mythic they are one of the two biggest wipe causes. Watch them and move early. Amber: touched once. Red: touched twice or more in one Tempest, or died to it.',
     cysts: 'After each combo, Venomous Surge puts a heavy 10-second damage over time on two players. When it ends the raid takes a hit (more the closer you are) and a Viscous Cyst drops where they stand. The cysts are the plan for the intermission: place them at the markers opposite the wind tunnels that will fire (the orbs above a tunnel show its order: one orb first, then two, then three). Four cysts for three winds leaves one spare. Each row is one cyst: who dropped it and what it was used for. Red: died with Surge on. Amber: a cyst popped outside the intermission (it knocks everyone near it back, and that cyst is gone).',
-    crosswinds: 'Raging Crosswinds marks several players with an arrow; 8 seconds later each is launched the way it points. Point your arrow at another marked player so you collide in the air and both land safely; arrows at right angles work too. Missing everyone means drifting toward the edge. An immunity stops your own launch but can leave your partner with nobody to hit, so agree on it first. Each direction is its own debuff, so the log knows which way every arrow pointed: the map draws them (roughly north, south, east and west on the room\'s map). Amber: drifted, or hit by a flying player; red: died.',
-    fury: 'Mythic: at the pull, and again after each pop, one player is marked with Serpent\'s Fury (a big red circle; it goes to the player furthest from the boss) while Sszorak builds rage. At 100 he enrages and the raid dies (Unbound Ferocity). Fourteen players stacking in the circle pop it and reset his rage. Each tank combo ends with one pop: right as the combo ends after the pull or an intermission, and a few seconds after the combo before an intermission, because his rage stops climbing during Dig In and the first pop after it needs room. Pop that one too early and the next can\'t be reached in time; too late and he enrages on the spot, so a timer helps. It can\'t pop during Dig In: the marked player joins the stack once Dig In starts and leaves it after the third wind. After tells how long after the tank combo each was popped; Rage is his rage at the pop, read from his casts. Red: he enraged. Amber: popped as Dig In ended.',
-    virulence: 'Mythic: everyone in a Serpent\'s Fury pop gets Virulence, which bursts 5 seconds later in four lines. Anyone a line clips takes a big hit and gets Virulence again, with longer lines. Spread out right after every pop (speed boosts help; a personal every other one). Amber: clipped; red: died to it.',
-    winds: 'At 100 energy Sszorak casts Dig In for 25 seconds and takes 30% more damage: burn him. Three winds blow across the platform from the tunnels, one after another. The raid stacks in the middle; each wind pushes the stack into the cyst opposite its tunnel, which pops, knocks everyone back toward the boss and coats them against the wind. After the third wind, pop the spare together. Each row is one wind: the cyst popped against it, how many it coated, and who died. Red: a wind with no cyst, or someone dying in it. Amber: the spare left up (it pops on its own later and knocks the raid).',
+    crosswinds: 'Raging Crosswinds marks several players with an arrow. Eight seconds later, each is launched the way it points. Point your arrow at another marked player so you collide in the air and both land safely. Arrows at right angles work too. Missing everyone means drifting toward the edge. An immunity stops your own launch but can leave your partner with nobody to hit, so agree on it first. Each direction is its own debuff, so the log knows which way every arrow pointed: the map draws them (roughly north, south, east and west on the room\'s map). Amber: drifted, or hit by a flying player. Red: died.',
+    fury: 'Mythic: at the pull, and again after each pop, one player is marked with Serpent\'s Fury (a big red circle that goes to the player furthest from the boss) while Sszorak builds rage. At 100 he enrages and the raid dies (Unbound Ferocity). Fourteen players stacking in the circle pop it and reset his rage. Each tank combo ends with one pop: right as the combo ends after the pull or an intermission, and a few seconds after the combo before an intermission, because his rage stops climbing during Dig In and the first pop after it needs room. Pop that one too early and the next can\'t be reached in time. Too late, and he enrages on the spot, so a timer helps. It can\'t pop during Dig In: the marked player joins the stack once Dig In starts and leaves it after the third wind. After tells how long after the tank combo each was popped, and Rage is his rage at the pop, read from his casts. Red: he enraged. Amber: popped as Dig In ended.',
+    virulence: 'Mythic: everyone in a Serpent\'s Fury pop gets Virulence, which bursts 5 seconds later in four lines. Anyone a line clips takes a big hit and gets Virulence again, with longer lines. Spread out right after every pop (speed boosts help, and so does a personal every other one). Amber: clipped. Red: died to it.',
+    winds: 'At 100 energy Sszorak casts Dig In for 25 seconds and takes 30% more damage: burn him. Three winds blow across the platform from the tunnels, one after another. The raid stacks in the middle. Each wind pushes the stack into the cyst opposite its tunnel, which pops, knocks everyone back toward the boss and coats them against the wind. After the third wind, pop the spare together. Each row is one wind: the cyst popped against it, how many it coated, and who died. Red: a wind with no cyst, or someone dying in it. Amber: the spare left up (it pops on its own later and knocks the raid).',
     avoid: 'Every source of damage positioning can avoid. Harmful: Caustic Claws, the venom splashes that land around the boss during Venomous Surge. Minor: standing in Caustic Residue, the puddles they leave (on Mythic the floor fills up, so move the boss to clean ground). Tempest, Virulence and flying players from Raging Crosswinds have their own sections.',
   },
   'The Twin Fangs': {
     twins:'Once one of Vexhul and Ithraz dies, the other gains Uncoiled Wrath, a stacking enrage. The Mythic plan in the guides kills one first on purpose (start on Vexhul, swap to Ithraz at 40%, kill Vexhul before the last Submerge), then finishes the other before the Wrath stacks get too high. Shown, not judged: each Fang\'s health, when it died, the biggest health gap and the Uncoiled Wrath stacks.',
     venom: 'Most mechanics add Eternal Venom stacks, and it becomes lethal at about 11 stacks on Normal and 10 on Heroic and Mythic. The plan is a budget of about one stack per set, roughly 3 under lethal (6 on Mythic) going into the enrage. Extra stacks come from soaking more than your share, standing in someone else\'s circle and Stir the Depths.',
     feast: 'Ravenous Feast strikes three times, once per group (two ranged groups and melee). Each strike needs 4 or more soakers, and a soaker is Feasted afterward, so nobody soaks a second strike in the same Feast. Under-soaked strikes hit much harder.',
-    founts: 'Ravenous Feast leaves Tainted Blood founts. Players absorb them, taking a heal absorb that healers clear; a fount nobody absorbs erupts as Tainted Burst on the raid. Each Feast row shows how much of the heal absorbs each healer cleared (their healing eaten by Tainted Blood); everyone else\'s own healing and leech is added up apart. The whole pull\'s totals are under the table.',
-    soaks: 'Caustic Globules land in timed sets, and every globule must be soaked: one nobody soaks explodes on the whole raid and gives everyone an Eternal Venom stack (shown in red as Exploded unsoaked). Each player takes at most one globule per set, since each soak adds Eternal Venom; when there are fewer globules than players, rotate who soaks so the same players don\'t keep stacking. On Mythic every globule lands behind a Barbed Bulwark barrier, which has to be broken before it can be soaked (see its own section).',
-    bulwark: 'On Mythic every Caustic Globule lands channeling Barbed Bulwark, a barrier that blocks the soak: running into the globule while it\'s up hits for about 500k and knocks you back. Anything that stops a cast breaks it at once: stuns, fears, disorients and incapacitates (and, per the spell, an interrupt). Slows do nothing. Break every barrier as the globules land, then soak; a barrier nobody breaks runs out after about 10 seconds and the globule explodes on the raid with it still up. Each row is one globule: who broke its barrier, with what, and how long it was up. Amber: broken after 6 seconds (little time left to soak) or someone ran into it; red: nobody broke it, or someone died running into it.',
-    spit: 'Venomous Emergence spawns Spawn of Vexhul adds. Each marks a player for about 5 seconds and then spits a line at them. Being the target is fine; anyone else standing in the line gets hit. Kill one add right away and the rest before their second spit.',
-    ichor: 'Coiling Ichor puts a circle on a few players for about 12 seconds, damaging everyone inside it, and leaves a puddle when it expires. Targets take their circle to the edge of the room. Being a target is fine. Anyone else inside takes a small hit each second (no Eternal Venom stack, from the logs): a tick or two while stepping out is fine and isn\'t judged; staying in it for 5 or more ticks is.',
+    founts: 'Ravenous Feast leaves Tainted Blood founts. Players absorb them, taking a heal absorb that healers clear. A fount nobody absorbs erupts as Tainted Burst on the raid. Each Feast row shows how much of the heal absorbs each healer cleared (their healing eaten by Tainted Blood). Everyone else\'s own healing and leech is added up apart. The whole pull\'s totals are under the table.',
+    soaks: 'Caustic Globules land in timed sets, and every globule must be soaked. One nobody soaks explodes on the whole raid and gives everyone an Eternal Venom stack (shown in red as Exploded unsoaked). Each player takes at most one globule per set, since each soak adds Eternal Venom. When there are fewer globules than players, rotate who soaks so the same players don\'t keep stacking. On Mythic every globule lands behind a Barbed Bulwark barrier, which has to be broken before it can be soaked (see its own section).',
+    bulwark: 'On Mythic every Caustic Globule lands channeling Barbed Bulwark, a barrier that blocks the soak. Running into the globule while it\'s up hits for about 500k and knocks you back. Anything that stops a cast breaks it at once: stuns, fears, disorients and incapacitates (and, per the spell, an interrupt). Slows do nothing. Break every barrier as the globules land, then soak. A barrier nobody breaks runs out after about 10 seconds and the globule explodes on the raid with it still up. Each row is one globule: who broke its barrier, with what, and how long it was up. Amber: broken after 6 seconds (little time left to soak) or someone ran into it. Red: nobody broke it, or someone died running into it.',
+    spit: 'Venomous Emergence spawns Spawn of Vexhul adds. Each marks a player for about 5 seconds and then spits a line at them. Being the target is fine. Anyone else standing in the line gets hit. Kill one add right away and the rest before their second spit.',
+    ichor: 'Coiling Ichor puts a circle on a few players for about 12 seconds, damaging everyone inside it, and leaves a puddle when it expires. Targets take their circle to the edge of the room. Being a target is fine. Anyone else inside takes a small hit each second (no Eternal Venom stack, from the logs): a tick or two while stepping out is fine and isn\'t judged, but staying in it for 5 or more ticks is.',
     stone: 'Stone Breaker drops three circles in a row on the active tank, who must stand in each one as it lands. A circle the tank misses hits the whole raid.',
-    avoid: 'Stir the Depths pulses the whole raid while it is out; that part can\'t be avoided and isn\'t counted. What can be avoided is stepping into the churned water it leaves behind, so each step counts as a hit. Sanguine Storm is avoidable too: dodge it (and the puddles it leaves on Heroic and Mythic). One hit is amber, three or more red.',
+    avoid: 'Stir the Depths pulses the whole raid while it is out. That part can\'t be avoided and isn\'t counted. What can be avoided is stepping into the churned water it leaves behind, so each step counts as a hit. Sanguine Storm is avoidable too. Dodge it (and the puddles it leaves on Heroic and Mythic). One hit is amber, three or more red.',
   },
 };
 
 HOW["Ula'tek"] = {
   waves: 'Caustic Waves are green venom waves rolling across the platform. The tail (Gore Rattle) surfaces at the edge, two spots at a time, and each sends a wave straight across, about 12.5 yards a second. Ula\'tek sends her own as well: with the tail twice in Stage 1 and alone in Stage 3, and on Mythic every Toxic Incubation impact sends waves out from whoever took it. A hit leaves a 10-second Caustic Waves poison, and a wave that touches an egg breaks it into a Viper. Each row is one hit and says which wave it was: a tail wave (and which way it was heading), Ula\'tek\'s own, or a Toxic Incubation\'s.',
-  eggs: 'Call of the Serpent drops eggs (Blightscale Spawn): on Mythic eight at the pull and eight more halfway through Stage 1, in random spots. Each egg has an assigned carrier (zones that turn with the boss) and backups. An egg that hatches on its own becomes a weak Blightscale Rawling, and a Spectral Coil popping the eggs its soakers carry is fine. Anything else green touching an egg or its carrier (Caustic Waves, the waves from the Toxic Incubation beam, Mephitic Thrash), or its carrier dying, breaks it into a Blightscale Viper. On Mythic eggs start Hardened (break the shell first; specs with spread damage do this), carrying one puts Noxious Shell on you with a 3-yard circle, and two carriers touching burst both eggs (Noxious Splash). After an egg breaks its carrier has Rancid Yolk: picking up another egg before it drops is deadly for anyone but a tank. In Stage 2 it is safer to let Blight Vein drop before picking up an egg; that isn\'t flagged on its own (the eggs drop right after the tether break), but a carrier who dies with it shows up as the Viper\'s cause.',
+  eggs: 'Call of the Serpent drops eggs (Blightscale Spawn): on Mythic eight at the pull and eight more halfway through Stage 1, in random spots. Each egg has an assigned carrier (zones that turn with the boss) and backups. An egg that hatches on its own becomes a weak Blightscale Rawling, and a Spectral Coil popping the eggs its soakers carry is fine. Anything else green touching an egg or its carrier (Caustic Waves, the waves from the Toxic Incubation beam, Mephitic Thrash), or its carrier dying, breaks it into a Blightscale Viper. On Mythic eggs start Hardened (break the shell first, which specs with spread damage do), carrying one puts Noxious Shell on you with a 3-yard circle, and two carriers touching burst both eggs (Noxious Splash). After an egg breaks, its carrier has Rancid Yolk, and picking up another egg before it drops is deadly for anyone but a tank. In Stage 2 it is safer to let Blight Vein drop before picking up an egg. That isn\'t flagged on its own (the eggs drop right after the tether break), but a carrier who dies with it shows up as the Viper\'s cause.',
   coils: 'The tail (Gore Rattle) slams Spectral Coils: two circles in Stage 1, the right-hand one first, and a fast run of them in the intermission (six on Heroic, eight on Mythic). Each slam hits the whole raid and the players in its circle split it, so the more soakers, the less everyone takes. A soaker gets Soul Constrictor and doesn\'t count toward the next circle (standing in both is fine, it just doesn\'t help), so groups alternate: two on Heroic, three in the Mythic intermission. Egg carriers have assigned soak spots so they never touch. Soakers are counted from Soul Constrictor; a circle with fewer than about a fifth of the raid in it is flagged.',
-  tank: 'One tank holds Ula\'tek and one holds her tail (Gore Rattle). Mother\'s Wrath hits the boss tank several times, knocks them back and adds Stone Venom, so swap on stacks; if its target is out of reach, the raid takes it. Nobody on the tail means Rattler Slam on the raid, and nobody in melee of Ula\'tek means Unchecked Rage. Stay in reach through swaps and when she resurfaces after submerging; misdirects go on the tank picking up the adds.',
-  incub: 'Mythic: a spectral image of Ula\'tek appears and its Toxic Incubation beam fires at the Blightscale Wretch (5 impacts). The tank not on the boss stands in the beam with a defensive; every impact that reaches the Wretch gives it Mother\'s Boon (more damage dealt, less taken). The beam also sends Caustic Waves from the tank, so they stand where the waves hit no eggs. The image\'s side also shows where the next tail spawns.',
-  wretch: 'Mythic: a Blightscale Wretch spawns at the pull, halfway through Stage 1 and in Stage 3. Its Fester Burst makes a 10-yard bubble around it and hits everyone outside, so the raid (egg carriers included) pre-positions to step in. It enrages after 30 seconds (more tank damage, and faster bursts, so stand closer for the second one); letting it enrage is fine, but kill it before its third bubble. The bubbles come about 36, 68 and 100 seconds after it lands, so it dies in the half minute between the second and the third: it doesn\'t need a fast switch, just steady damage.',
-  amps: 'Rage of the Shackled opens the Venomous Heart for 20 seconds, taking 100% more damage, three times a fight: at the end of Stage 1, at the end of Stage 2 and on the last platform. These are the damage windows: line up damage cooldowns and potions for them (combat potions before the pull and around 4:45 and 9:45, Bloodlust on the second once the raid gets there alive). Dodge the brown Falling Debris circles: they kill anyone. On Mythic, Ula\'tek at 67% or lower after the first window and 45% or lower after the second is on pace for a kill. Shown: each window\'s damage into the heart, player by player (the faded end of a bar is damage into Ula\'tek or her tail instead, which isn\'t doubled), the boss\'s health before and after it, and the combat potions drunk for it.',
-  fangs: 'Stage 2: each Doomscale Warden tethers three players with Grasping Fangs; breaking a tether puts Blight Vein on the whole raid (both sides), and on Mythic it stacks. A common plan: one mobile ranged player breaks first, then the other five together on a call, all at the edge of their tether a couple of seconds early, with raid cooldowns stacked on both sides (meet where there are no eggs). A spread-out big break means extra Blight Vein ticks. Shown: who was tethered, each batch, the raid cooldowns under it and the Blight Vein peak; a death while tethered is flagged.',
-  doomscale: 'Stage 2: break the egg shields, then kill the Doomscale Warden before its second gestation (its enrage). While it lives, standing on or next to its eggs hurts (Warden\'s Protection). Drop the small eggs into the cauldron first and the big Doomscale Eggs last (they don\'t have the 3-yard circle), before the big egg\'s timer runs out, or it hatches a Ravenous Doomscale. The cauldron hatches Weakened Doomscales (four on Mythic): mark them, give each a kick rotation for Anguished Cry, keep them off the raid with their frontal, and kill them together: when one dies the others gain Revenge (100% more haste and damage). Revenge is marked to look at; it\'s a problem when it costs something: an Anguished Cry gets through (about 1.1M to everyone within 60 yards and a 6-second stun under Revenge) or someone dies to that Doomscale while it has it. How long it lasts matters less than whether every Cry is kicked: it casts twice as fast.',
-  bite: 'Stage 3: Serpent\'s Bite marks a melee, a healer and a ranged player. Assigned soakers stand with them to take the venom off before it turns them into a Calcified Corpse; a bitten player dying is a wipe. Taking it off gives the soaker Volatile Purge: on Mythic it hits them for about 2 million when it pops, then a long damage over time, so soakers are few (about four per cast), pick players with immunities or big defensives, and get externals after; their Purges also shoot waves, so they spread where the waves miss the raid. Shown: who cleared each bite, any Calcified Corpse, Purge holders without a defensive (Mythic) and anyone caught in a Purge they weren\'t holding.',
-  shriek: 'Stage 3: each Call of the Serpent drops egg clutches. On Mythic they crawl toward the water: grip them platform to platform (not across the middle, which can hatch Vipers) and kill them so they hatch as Rawlings before the waves. Eggs that reach the venom hatch Blightscale Shriekers: tank them, interrupt Vicious Echoes (see Interrupts) and kill them before their next cast; on Mythic, Shriekers and Rawlings start Boiling Venom (stronger) if they live too long. Shown: each Shrieker\'s time alive and anything beyond its first cast, and any Rawling that cast Acidic Expulsion.',
+  tank: 'One tank holds Ula\'tek and one holds her tail (Gore Rattle). Mother\'s Wrath hits the boss tank several times, knocks them back and adds Stone Venom, so swap on stacks. If its target is out of reach, the raid takes it. Nobody on the tail means Rattler Slam on the raid, and nobody in melee of Ula\'tek means Unchecked Rage. Stay in reach through swaps and when she resurfaces after submerging. Misdirects go on the tank picking up the adds.',
+  incub: 'Mythic: a spectral image of Ula\'tek appears and its Toxic Incubation beam fires at the Blightscale Wretch (5 impacts). The tank not on the boss stands in the beam with a defensive. Every impact that reaches the Wretch gives it Mother\'s Boon (more damage dealt, less taken). The beam also sends Caustic Waves from the tank, so they stand where the waves hit no eggs. The image\'s side also shows where the next tail spawns.',
+  wretch: 'Mythic: a Blightscale Wretch spawns at the pull, halfway through Stage 1 and in Stage 3. Its Fester Burst makes a 10-yard bubble around it and hits everyone outside, so the raid (egg carriers included) pre-positions to step in. It enrages after 30 seconds (more tank damage, and faster bursts, so stand closer for the second one). Letting it enrage is fine, but kill it before its third bubble. The bubbles come about 36, 68 and 100 seconds after it lands, so it dies in the half minute between the second and the third. It doesn\'t need a fast switch, just steady damage.',
+  amps: 'Rage of the Shackled opens the Venomous Heart for 20 seconds, taking 100% more damage, three times a fight: at the end of Stage 1, at the end of Stage 2 and on the last platform. These are the damage windows. Line up damage cooldowns and potions for them (combat potions before the pull and around 4:45 and 9:45, Bloodlust on the second once the raid gets there alive). Dodge the brown Falling Debris circles. They kill anyone. On Mythic, Ula\'tek at 67% or lower after the first window and 45% or lower after the second is on pace for a kill. Shown: each window\'s damage into the heart, player by player (the faded end of a bar is damage into Ula\'tek or her tail instead, which isn\'t doubled), the boss\'s health before and after it, and the combat potions drunk for it.',
+  fangs: 'Stage 2: each Doomscale Warden tethers three players with Grasping Fangs. Breaking a tether puts Blight Vein on the whole raid (both sides), and on Mythic it stacks. A common plan: one mobile ranged player breaks first, then the other five together on a call, all at the edge of their tether a couple of seconds early, with raid cooldowns stacked on both sides (meet where there are no eggs). A spread-out big break means extra Blight Vein ticks. Shown: who was tethered, each batch, the raid cooldowns under it and the Blight Vein peak; a death while tethered is flagged.',
+  doomscale: 'Stage 2: break the egg shields, then kill the Doomscale Warden before its second gestation (its enrage). While it lives, standing on or next to its eggs hurts (Warden\'s Protection). Drop the small eggs into the cauldron first and the big Doomscale Eggs last (they don\'t have the 3-yard circle), before the big egg\'s timer runs out, or it hatches a Ravenous Doomscale. The cauldron hatches Weakened Doomscales (four on Mythic): mark them, give each a kick rotation for Anguished Cry, keep them off the raid with their frontal, and kill them together. When one dies the others gain Revenge (100% more haste and damage). Revenge is marked to look at. It\'s a problem when it costs something: an Anguished Cry gets through (about 1.1M to everyone within 60 yards and a 6-second stun under Revenge) or someone dies to that Doomscale while it has it. How long it lasts matters less than whether every Cry is kicked, because it casts twice as fast.',
+  bite: 'Stage 3: Serpent\'s Bite marks a melee, a healer and a ranged player. Assigned soakers stand with them to take the venom off before it turns them into a Calcified Corpse. A bitten player dying is a wipe. Taking it off gives the soaker Volatile Purge. On Mythic it hits them for about 2 million when it pops, then a long damage over time, so soakers are few (about four per cast), pick players with immunities or big defensives, and get externals after. Their Purges also shoot waves, so they spread where the waves miss the raid. Shown: who cleared each bite, any Calcified Corpse, Purge holders without a defensive (Mythic) and anyone caught in a Purge they weren\'t holding.',
+  shriek: 'Stage 3: each Call of the Serpent drops egg clutches. On Mythic they crawl toward the water. Grip them platform to platform (not across the middle, which can hatch Vipers) and kill them so they hatch as Rawlings before the waves. Eggs that reach the venom hatch Blightscale Shriekers: tank them, interrupt Vicious Echoes (see Interrupts) and kill them before their next cast; on Mythic, Shriekers and Rawlings start Boiling Venom (stronger) if they live too long. Shown: each Shrieker\'s time alive and anything beyond its first cast, and any Rawling that cast Acidic Expulsion.',
   avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous: Noxious Splash (Mythic: two egg carriers within 3 yards) and the brown Falling Debris circles during the damage amps (they kill anyone). Harmful: Caustic Waves, the Weakened Doomscale frontal on non-tanks, Fester Burst (Mythic: outside the Wretch\'s bubble) and Virulent Spit. Minor: standing on or next to an egg while its Doomscale Warden lives. Raid-wide damage (Necrotic Vapors, Spectral Coils, Mephitic Thrash, Blight Vein, Circling Prey) isn\'t avoidable and isn\'t listed.',
 };
 
 // "How it works" for the Interrupts mechanic, per boss
 const HOW_KICKS = {
   "Ula'tek": 'Three adds cast spells that must be interrupted: the Doomscale Warden\'s Malice (Stage 2, a deadly raid-wide channel), the Weakened Doomscale\'s Anguished Cry (Stage 2) and the Blightscale Shrieker\'s Vicious Echoes (Stage 3, a raid hit and stun). Give each add a kicker and a backup.',
-  'The Twin Fangs': 'The Broodling of Ithraz adds cast Visceral Burst, and every cast should be interrupted. Each add is marked left or right: its side of the platform as the raid faces the twins at the pull (Vexhul starts on the left). The first two sets come five on each side; later sets come all on one side. Give each side its kickers and a backup, and use the map to see who was in range when a cast got off.',
+  'The Twin Fangs': 'The Broodling of Ithraz adds cast Visceral Burst, and every cast should be interrupted. Each add is marked left or right, by its side of the platform as the raid faces the twins at the pull (Vexhul starts on the left). The first two sets come five on each side. Later sets come all on one side. Give each side its kickers and a backup, and use the map to see who was in range when a cast got off.',
   'The Coiled Altar': 'Wail of Terror is a raid-wide fear cast by the Spiteful Soulcoiler adds, so every cast has to be interrupted. The add jumps after each kick, so give each add a kick order with a backup and stay in range. On Mythic, kicking it also briefly reveals the hidden ghosts.',
 };
 const pl2e = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -2708,7 +2708,7 @@ function avoidPanel(ev, r, h, list) {
     const byId = new Map(); for (const e of hits) if (e.id) { const c = byId.get(e.id) || { n: 0, name: e.spell }; c.n++; byId.set(e.id, c); }
     const top = [...byId].sort((a, b) => b[1].n - a[1].n)[0], sid = src.id || (top && top[0]) || 0;
     const sname = (sid && byId.has(sid) && byId.get(sid).name) || (top && top[1].name) || src.label;
-    return { title: src.label, t: null, harm: src.harm, spell: sid ? [sid, sname] : null, sub: HARM[src.harm] + ': ' + src.why + ' · ' + pl2e(nT, 'hit') + ' on ' + pl2e(per.size, 'player') + ', ' + compact(amt) + ' damage',
+    return { title: src.label, t: null, harm: src.harm, spell: sid ? [sid, sname] : null, sub: HARM[src.harm] + ': ' + src.why + '. ' + pl2e(nT, 'hit') + ' on ' + pl2e(per.size, 'player') + ', for ' + compact(amt) + ' damage.',
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows, nT, amt, label: src.label,
       // for the Night summary report card: each player's touch times, so it can stop at the wipe filter
       names: src.n, wA, bA, judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !!(src.tankOk && h.role(x.g) === 'tank'), ts: x.ts, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
@@ -2830,7 +2830,7 @@ function buildCoiledAltar(ev, r, h) {
     const df = defils.find((t) => b.t >= t - 0.5 && b.t <= t + 4);
     if (df != null) { detonations.push({ t: df, gain: b.gain }); bursts.splice(i, 1); }
   }
-  for (const x of detonations) M(x.t, 'Raid', 'defilement of the coiled altar', 'High', 'Defilement of the Coiled Altar detonated the orbs still on the ground: the raid gained ' + x.gain + '+ Venom Rupture stacks at once.', 'Clear every purple orb before Defilement (and kill Zul\'jan before the one that follows the burn). Green orbs left over are survivable; purples are not.');
+  for (const x of detonations) M(x.t, 'Raid', 'defilement of the coiled altar', 'High', 'Defilement of the Coiled Altar detonated the orbs still on the ground: the raid gained ' + x.gain + '+ Venom Rupture stacks at once.', 'Clear every purple orb before Defilement (and kill Zul\'jan before the one that follows the burn). Green orbs left over are survivable, but purples are not.');
   for (const b of bursts) {
     const who = carriersAt(b.t).map((c) => pname(c.g));
     M(b.t, 'Raid', 'venom rupture', 'High', 'A purple orb exploded into other orbs: players gained ' + b.gain + '+ Venom Rupture stacks at once' + (who.length ? '. Carrying a purple orb at that moment: ' + who.join(', ') : '') + '.', 'Purple orbs must never touch green or purple orbs. Carriers path around every other orb.');
@@ -2919,7 +2919,7 @@ function buildCoiledAltar(ev, r, h) {
     const alive = next != null ? mine.filter((a) => a.died == null || a.died > next) : [];
     const next2 = sc[i + 2] != null && phaseAt(sc[i + 2]) === phaseAt(t) ? sc[i + 2] : null, lateDm = next2 != null ? mine.filter((a) => a.died == null || a.died > next2) : [];
     if (lateDm.length) M(next2, 'Raid', 'spiritcackle', 'High', lateDm.length + ' Spiteful Soulcoiler' + (lateDm.length > 1 ? 's were' : ' was') + ' still alive two sets later.', 'Break each Spirit Shield with two overlapping Gloombombs (melee targets on the melee add, ranged on the ranged add) and kill both adds before the next set.');
-    else if (alive.length) M(next, 'Raid', 'spiritcackle', 'Low', alive.length + ' Spiteful Soulcoiler' + (alive.length > 1 ? 's were' : ' was') + ' still alive when the next set of adds spawned.', 'Kill both adds before the next set spawns; the shield comes first, but don\'t let sets pile up.');
+    else if (alive.length) M(next, 'Raid', 'spiritcackle', 'Low', alive.length + ' Spiteful Soulcoiler' + (alive.length > 1 ? 's were' : ' was') + ' still alive when the next set of adds spawned.', 'Kill both adds before the next set spawns. The shield comes first, but don\'t let sets pile up.');
     const kicks = r.interrupts.filter((k) => mine.some((a) => a.g === k.target));
     return [{ txt: 'Set ' + (i + 1) }, { t }, { txt: mine.map((a) => a.died != null ? 'died ' + h.fmtT(a.died) + ' (' + Math.round(a.died - a.t0) + 's)' : 'not killed').join(', ') || 'no adds seen', bad: mine.some((a) => a.died == null) },
       { txt: String(kicks.length) }, { txt: lateDm.length ? 'alive two sets later' : alive.length ? 'alive when the next set spawned' : next == null ? 'last set of the phase' : 'dead in time', bad: lateDm.length > 0, warn: alive.length > 0 }];
@@ -2934,10 +2934,10 @@ function buildCoiledAltar(ev, r, h) {
     else if (e.op === 'remove') { const c = gbWin.filter((x) => x.g === e.dst && x.s <= e.t).pop(); if (c) c.e = e.t; }
   }
   const gbAt = (t) => gbWin.filter((c) => t >= c.s - 0.2 && t <= c.e + 0.3), clipAt = (t) => gbClip.filter((e) => Math.abs(e.t - t) <= 1.5).map((e) => e.dst);
-  for (const e of gbClip) M(e.t, pname(e.dst), 'gloombomb', 'Medium', 'Got clipped by someone else\'s Gloombomb, so they also had to collect souls.', 'Gloombomb targets move to the add or to the side; everyone else stays out of the circles.');
+  for (const e of gbClip) M(e.t, pname(e.dst), 'gloombomb', 'Medium', 'Got clipped by someone else\'s Gloombomb, so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
   sections.push({ id: 'adds', title: 'Spiritcackle adds and Gloombombs', spell: S('spiritcackle'),
     verdict: setRows.some((r2) => r2[4].bad) ? 'bad' : gbClip.length ? 'warn' : 'good',
-    summary: pl(sc.length, 'add set') + ', ' + pl(gbClip.length, 'player') + ' clipped by a Gloombomb they weren\'t targeted by. Kick details per add are in Interrupts below.',
+    summary: pl(sc.length, 'add set') + ', and ' + pl(gbClip.length, 'player') + ' clipped by a Gloombomb they weren\'t targeted by. The kicks on each add are under Interrupts below.',
     cols: ['Set', 'Spawned', 'Adds', 'Kicks', 'Result'], rows: setRows });
 
   // ---- 6. Intermission: fragments reaching Zul'jan, Spirit Erasure stacks ----
@@ -2961,7 +2961,7 @@ function buildCoiledAltar(ev, r, h) {
     const until = rounds[i + 1] ? rounds[i + 1].t : (p3 ?? dur), through = reclaim.filter((t) => t >= rd.t - 1 && t < until).length;
     const cd = rcdCasts.filter((e) => e.t >= rd.t - 10 && e.t <= (rd.end ?? until)), cap = cd.length ? 10 : 5;
     const over = rd.peak > cap, way = rd.peak > cap + 2;
-    if (over) M(rd.t, 'Raid', 'spirit erasure', way ? 'High' : 'Medium', 'The raid reached ' + rd.peak + ' Spirit Erasure stacks in soak round ' + (i + 1) + (cd.length ? ' (with raid cooldowns up)' : ' with no raid cooldown up') + '.', cd.length ? 'Even with cooldowns stacked, stop around 10 and let the stacks drop.' : 'Without cooldowns, stop at 3 to 5 stacks and let them drop; save higher counts for when Darkness, Anti-Magic Zone or Spirit Link is down.');
+    if (over) M(rd.t, 'Raid', 'spirit erasure', way ? 'High' : 'Medium', 'The raid reached ' + rd.peak + ' Spirit Erasure stacks in soak round ' + (i + 1) + (cd.length ? ' (with raid cooldowns up)' : ' with no raid cooldown up') + '.', cd.length ? 'Even with cooldowns stacked, stop around 10 and let the stacks drop.' : 'Without cooldowns, stop at 3 to 5 stacks and let them drop. Save higher counts for when Darkness, Anti-Magic Zone or Spirit Link is down.');
     return [{ txt: 'Round ' + (i + 1) }, { t: rd.t }, { txt: rd.peak + ' stacks', bad: way, warn: over, sub: cd.length ? 'cooldowns: ' + [...new Set(cd.map((e) => e.spell))].join(', ') : '' }, { txt: through ? through + ' got through' : 'none got through', bad: through > 0 && mythic, warn: through > 0 }];
   });
   // Zul'jan's health when the intermission ends: under 35% is on pace for the kill
@@ -2972,7 +2972,7 @@ function buildCoiledAltar(ev, r, h) {
   if (notSoaked.length) seRows.unshift([{ txt: 'Not blocked' }, { t: notSoaked[0] }, { txt: 'no Spirit Erasure', dim: true, sub: 'nobody stood in the way' }, { txt: notSoaked.length + ' got through', sub: 'each healed Zul\'jan ' + (mythic ? '10%' : r.item.diff === 'Heroic' ? '3%' : 'a little'), bad: mythic, warn: !mythic }]);
   if (inter != null) sections.push({ id: 'inter', title: 'Intermission: blocking the Fragments', spell: S('soulbinding'),
     verdict: reclaim.length ? (mythic ? 'bad' : 'warn') : seRows.some((x) => x[2].warn || x[2].bad) ? 'warn' : 'good',
-    summary: pl(rounds.length, 'soak round') + ', ' + pl(reclaim.length, 'fragment') + ' reached Zul\'jan.',
+    summary: pl(rounds.length, 'soak round') + ', and ' + pl(reclaim.length, 'fragment') + ' reached Zul\'jan.',
     cols: ['Soak round', 'Started', 'Raid peak (3 to 5; up to 10 with cooldowns)', 'Fragments to Zul\'jan'], rows: seRows });
 
   // ---- 7. Venomfang dispels ----
@@ -2988,7 +2988,7 @@ function buildCoiledAltar(ev, r, h) {
   const slow = vfRows.filter((x) => x.took != null && x.took > 4 && !x.by);
   if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
     verdict: slow.length > 2 ? 'warn' : 'good',
-    summary: pl(vfRows.length, 'Venomfang debuff') + ', ' + vfRows.filter((x) => x.by).length + ' dispelled. Average time on a player: ' +
+    summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + 's' : 'n/a') + '.',
     // amber: a slow or missed dispel (no guide sets a hard rule); red only when the player died with it on them
     cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t }, { p: pname(x.g) }, { txt: x.took != null ? x.took.toFixed(1) + 's' : 'not removed', bad: x.died, warn: x.took == null || x.took > 4, sub: x.died ? 'died with it on' : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
@@ -3000,7 +3000,7 @@ function buildCoiledAltar(ev, r, h) {
   {
     const sec = avoidPanel(ev, r, h, [
       { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a 200% damage-taken debuff', skip: (e) => role(e.dst) === 'tank' },
-      { n: ['malevolent resonance'], label: 'Malevolent Resonance', id: S('malevolent resonance')[0], harm: 'High', why: 'two ghosts touching: a lethal damage over time' },
+      { n: ['malevolent resonance'], label: 'Malevolent Resonance', id: S('malevolent resonance')[0], harm: 'High', why: 'two ghosts touching, which is a lethal damage over time' },
       { n: ['noxious ground'], label: 'Noxious Ground', harm: 'Medium', why: 'the poison pools under the snake statues, every second you stand in them', warnAt: 2, badAt: 5 },
       { n: ['axegrinder'], label: 'Axegrinder', id: S('axegrinder')[0], harm: 'Medium', why: 'damage and a knockback every half second in an axe', warnAt: 5, badAt: 8, tankOk: true },
       { n: ['gloombomb'], label: 'Gloombomb (not your own)', id: S('gloombomb')[0], harm: 'Medium', why: 'Gravebound: collect your soul fragments or die', warnAt: 1, badAt: 2, skip: (e) => gbT.some((a) => a.dst === e.dst && e.t - a.t >= 0 && e.t - a.t <= 10) },
@@ -3060,7 +3060,7 @@ function buildCoiledAltar(ev, r, h) {
     const dmFirst = ss != null ? dm.filter((t) => t > ss + 0.5 && t < pt) : [], late = dmFirst.length > 0;
     if (late) M(pt, 'Raid', 'soul sever', 'Medium', 'Malacrass was pushed ' + delta.toFixed(1) + 's after the last Soul Sever, after the next Dreadmarch had gone out.', 'Hold damage until the frontal clears the ghosts, then push before the next Dreadmarch, or the raid gets mind controlled.');
     const lust = pcasts(LUST).filter((e) => e.t >= inter - 20 && e.t <= inter + 25);
-    if (!lust.length && mythic) M(inter, 'Raid', 'soulbinding', 'Low', 'No Bloodlust or Heroism during the Soulbinding intermission.', 'Use Hero/Lust on the intermission: it is the big damage window on Zul\'jan.');
+    if (!lust.length && mythic) M(inter, 'Raid', 'soulbinding', 'Low', 'No Bloodlust or Heroism during the Soulbinding intermission.', 'Use Hero/Lust on the intermission, because it is the big damage window on Zul\'jan.');
     const zjDmg = ev.filter((e) => e.k === 'pdmg' && e.t >= inter && e.t <= (p3 ?? dur) && zj.includes(e.dst)).reduce((s, e) => s + e.amt, 0);
     pushRows.push([{ txt: 'P2 → Intermission' }, { t: pt }, { txt: delta == null ? 'no Soul Sever found' : '+' + delta.toFixed(1) + 's after the last Soul Sever' + (late ? ', after the next Dreadmarch (' + h.fmtT(dmFirst[0]) + ')' : ', before the next Dreadmarch'), bad: delta != null && dueS != null && pt > dueS, warn: late }, // red once the next Soul Sever was due (ghosts pile up)
       { txt: 'Lust: ' + (lust.length ? fmtList(lust) : 'none'), bad: !lust.length && mythic }, { txt: 'Damage to Zul\'jan in intermission: ' + h.compact(zjDmg) }, { txt: '' }]);
@@ -3088,7 +3088,7 @@ function buildCoiledAltar(ev, r, h) {
   }
   sections.unshift({ id: 'push', title: 'Phase changes: timing and cooldowns', spell: S('fangs of the coiled altar'),
     verdict: mistakes.some((x) => ['Fangs of the Coiled Altar', 'Soul Sever', 'Soulbinding', 'Defilement of the Coiled Altar'].includes(x.mechanic) && x.player === 'Raid') ? 'warn' : 'good',
-    summary: 'Push timing against the plan, raid cooldowns and potions at the P1 push, Lust and damage in the intermission, and boss balance in P3.',
+    summary: 'It shows the push timing against the plan, raid cooldowns and potions at the P1 push, Bloodlust and damage in the intermission, and boss balance in P3.',
     cols: ['Transition', 'When', 'Timing', 'Stacks / Lust / balance', 'Cooldowns / damage', 'Potions at push'], rows: pushRows });
 
   // ---- Sever orb accounting ----
@@ -3116,12 +3116,12 @@ function buildCoiledAltar(ev, r, h) {
     const cyc = deluges.filter((d) => d <= s.t).length, nth = severs.filter((x) => x.t <= s.t && deluges.filter((d) => d <= x.t).length === cyc).length;
     const pf = planFor(s), plan = pf.txt;
     const bad = popped >= pf.badAt;
-    if (bad) M(s.t, 'Raid', s.n, 'Medium', S(s.n)[1] + ' popped about ' + popped + ' orbs at once (plan: ' + plan + ').', 'Each popped orb is a raid-wide stack: aim for 5 to 6 per frontal and never more than 7.');
+    if (bad) M(s.t, 'Raid', s.n, 'Medium', S(s.n)[1] + ' popped about ' + popped + ' orbs at once (plan: ' + plan + ').', 'Each popped orb is a raid-wide stack. Aim for 5 to 6 per frontal and never more than 7.');
     return [{ txt: '#' + (i + 1) }, { t: s.t }, { s: S(s.n) }, { txt: phaseAt(s.t) }, { txt: '~' + popped + ' orbs', bad }, { txt: plan || '—', dim: true }];
   });
   sections.splice(2, 0, { id: 'sever', title: 'Sever orb counts', spell: S('sever'), mythicOnly: false,
     verdict: sevRows.some((x) => x[4].bad) ? 'warn' : 'good',
-    summary: 'Orbs popped by each frontal, estimated from the Venom Rupture stacks the raid gained in the 3 seconds after it. Each popped orb adds one stack.',
+    summary: 'It shows the orbs each frontal popped, estimated from the Venom Rupture stacks the raid gained in the 3 seconds after it. Each popped orb adds one stack.',
     cols: ['Frontal', 'When', 'Spell', 'Phase', 'Orbs popped', 'Plan'], rows: sevRows });
 
   // ---- add execution: shield breaks and kick timing ----
@@ -3143,8 +3143,8 @@ function buildCoiledAltar(ev, r, h) {
       const shLate = gbL != null && shOff && shOff.t > gbL + 7;
       // (late in P3 the plan only keeps kicks on the adds: they don't enrage before the bosses die, so the last P3 set
       // isn't judged and earlier P3 sets are only Low)
-      if (mythic && !shOff && a.died == null && !lastOfPhase) M(t, 'Raid', 'spirit shield', phaseAt(t) === 'P3' ? 'Low' : 'Medium', 'A Spiteful Soulcoiler\'s Spirit Shield was never broken (set ' + (i + 1) + ').', phaseAt(t) === 'P3' ? 'In P3, break the shields while there\'s time; near the end, keeping kicks on the adds is enough.' : 'The two Gloombomb targets overlap their circles on the add: melee targets on the melee add, ranged on the ranged add.');
-      if (mythic && beforeGb && (!shOff || shLate)) M(k, 'Raid', 'wail of terror', 'Low', 'First kick on set ' + (i + 1) + ' came ' + (gbS - k).toFixed(1) + 's before Gloombomb started, so the add jumped before the bombs could overlap on it.', 'Kick as soon as you see the Gloombomb cast start: the add stays put for the overlap and there\'s still time for the next kick.');
+      if (mythic && !shOff && a.died == null && !lastOfPhase) M(t, 'Raid', 'spirit shield', phaseAt(t) === 'P3' ? 'Low' : 'Medium', 'A Spiteful Soulcoiler\'s Spirit Shield was never broken (set ' + (i + 1) + ').', phaseAt(t) === 'P3' ? 'In P3, break the shields while there\'s time. Near the end, keeping kicks on the adds is enough.' : 'The two Gloombomb targets overlap their circles on the add: melee targets on the melee add, and ranged targets on the ranged add.');
+      if (mythic && beforeGb && (!shOff || shLate)) M(k, 'Raid', 'wail of terror', 'Low', 'First kick on set ' + (i + 1) + ' came ' + (gbS - k).toFixed(1) + 's before Gloombomb started, so the add jumped before the bombs could overlap on it.', 'Kick as soon as you see the Gloombomb cast start, so the add stays put for the overlap and there\'s still time for the next kick.');
       addRows.push([{ txt: 'Set ' + (i + 1) }, { t: a.t0 }, { txt: kd == null ? 'no kick' : '+' + kd.toFixed(1) + 's after spawn', sub: gbS != null && k != null ? (beforeGb ? (gbS - k).toFixed(1) + 's before Gloombomb started' : 'after Gloombomb started') : '', warn: mythic && beforeGb && (!shOff || shLate) },
         { txt: shOff ? 'broken at +' + (shOff.t - a.t0).toFixed(1) + 's' : mythic ? (lastOfPhase ? (phaseAt(t) === 'P3' ? 'not broken (kicks are enough at the end of P3)' : 'not broken (breaks at the transition)') : 'never broken') : '—', bad: mythic && !shOff && !lastOfPhase && phaseAt(t) !== 'P3', warn: mythic && !shOff && !lastOfPhase && phaseAt(t) === 'P3' },
         { txt: a.died != null ? 'died at ' + h.fmtT(a.died) : 'alive', bad: a.died == null && !lastOfPhase, dim: a.died == null && lastOfPhase }]);
@@ -3154,7 +3154,7 @@ function buildCoiledAltar(ev, r, h) {
   });
   sections.push({ id: 'addx', title: 'Add execution: shields and kick timing', spell: S('spirit shield'), mythicOnly: true,
     verdict: addRows.some((x) => x[3].bad) ? 'bad' : addRows.some((x) => x[2].bad) ? 'warn' : 'good',
-    summary: 'Each Spiteful Soulcoiler: first kick timing against the Gloombomb cast, when its Spirit Shield came off, and when it died.',
+    summary: 'For each Spiteful Soulcoiler, it shows when the first kick came against the Gloombomb cast, when its Spirit Shield came off, and when it died.',
     cols: ['Set', 'Spawned', 'First kick', 'Spirit Shield', 'Died'], rows: addRows });
 
   // ---- Tank frontals: who took each Sever / Soul Sever / Blighted Sever, on which stack, and with what up ----
@@ -3179,7 +3179,7 @@ function buildCoiledAltar(ev, r, h) {
   }
   if (tfRows.length) sections.push({ id: 'tankfront', title: 'Tank frontals: stacks and defensives', spell: S('soul sever'),
     verdict: tfRows.some((x) => x.row.some((c) => c.bad)) ? 'bad' : tfRows.some((x) => x.row.some((c) => c.warn)) ? 'warn' : 'good',
-    summary: pl(tfRows.length, 'tank frontal') + ': who took it, on which stack, and the defensives and externals they had up.',
+    summary: pl(tfRows.length, 'tank frontal') + '. It shows who took each one, on which stack, and the defensives and externals they had up.',
     cols: ['When', 'Frontal', 'Tank', 'Stack', 'Had up', 'Result'], rows: tfRows.sort((a, b) => a.t - b.t).map((x) => x.row) });
 
   // ---- Eternal Nightfall: Malacrass shields himself while casting; breaking it in time is the real damage check ----
@@ -3204,8 +3204,8 @@ function buildCoiledAltar(ev, r, h) {
     // who kicked, and how long after the shield fell (only possible once it's down)
     const kickCell = kick ? { p: kick.player, sub: kick.by + (brokeAt != null && hasAbs ? ' · ' + (kick.t - brokeAt).toFixed(1) + 's after the break' : '') } : brokeAt != null && done != null ? { txt: 'nobody kicked', bad: true } : { txt: '—', dim: true };
     let res;
-    if (done != null && brokeAt == null) { res = { txt: 'cast finished', bad: true }; M(done, 'Raid', 'eternal nightfall', 'High', 'Eternal Nightfall finished casting: the shield wasn\'t broken in time.', 'Save cooldowns and pooled damage for every shield; it is the damage check that wipes the raid.'); }
-    else if (done != null) { res = { txt: 'cast finished', bad: true }; M(done, 'Raid', 'eternal nightfall', 'High', 'The Eternal Nightfall shield broke, but nobody kicked Malacrass before the cast finished.', 'Assign a kicker and a backup for every Eternal Nightfall: kick the moment the shield breaks.'); }
+    if (done != null && brokeAt == null) { res = { txt: 'cast finished', bad: true }; M(done, 'Raid', 'eternal nightfall', 'High', 'Eternal Nightfall finished casting, because the shield wasn\'t broken in time.', 'Save cooldowns and pooled damage for every shield. It is the damage check that wipes the raid.'); }
+    else if (done != null) { res = { txt: 'cast finished', bad: true }; M(done, 'Raid', 'eternal nightfall', 'High', 'The Eternal Nightfall shield broke, but nobody kicked Malacrass before the cast finished.', 'Assign a kicker and a backup for every Eternal Nightfall. Kick the moment the shield breaks.'); }
     else if (kick) res = { txt: 'stopped' };
     else res = { txt: 'pull ended first', dim: true };
     { const to = brokeAt ?? done ?? Math.min(end, dur), dmgIn = ev.filter((e) => e.k === 'pdmg' && mal.includes(e.dst) && e.t >= t && e.t <= to).reduce((s, e) => s + e.amt, 0);
@@ -3214,7 +3214,7 @@ function buildCoiledAltar(ev, r, h) {
   });
   if (enRows.length) sections.push({ id: 'shield', title: 'Eternal Nightfall: break the shield, then kick', spell: S('eternal nightfall'),
     verdict: enRows.some((x) => x[5].bad) ? 'bad' : enRows.some((x) => x[3].warn) ? 'warn' : 'good',
-    summary: pl(enRows.length, 'shield') + ', ' + enRows.filter((x) => x[5].txt === 'stopped').length + ' broken and kicked in time.',
+    summary: pl(enRows.length, 'shield') + ', and ' + enRows.filter((x) => x[5].txt === 'stopped').length + ' were broken and kicked in time.',
     cols: ['Shield', 'Cast started', 'Phase', 'Broken', 'Kicked by', 'Result'], rows: enRows });
 
   // ---- Guillotine protection ----
@@ -3222,7 +3222,7 @@ function buildCoiledAltar(ev, r, h) {
   const p1g = soaks.filter((s) => s.n === 'guillotine' && phaseAt(s.t) === 'P1');
   const grim = soaks.filter((s) => s.n === 'grim guillotine');
   // The Mythic plan per soak: who goes in, what they need, and where (corner relative to the room center)
-  // The Mythic plan per soak. The players who immune the 2nd soak also stand in the 1st: its debuff stops the 2nd
+  // The Mythic plan per soak. The players who immune the 2nd soak also stand in the 1st, because its debuff stops the 2nd
   // from targeting them (a targeted immuner would leave the circle a player short).
   const SHORT = { 'divine shield': 'Bubble', 'blessing of protection': 'BoP', 'blessing of spellwarding': 'Spellwarding', 'aspect of the turtle': 'Turtle', 'cloak of shadows': 'Cloak', 'ice block': 'Ice Block', 'dispersion': 'Dispersion', 'anti-magic shell': 'AMS', 'netherwalk': 'Netherwalk',
     'blessing of sacrifice': 'Sacrifice', 'pain suppression': 'Pain Suppression', 'guardian spirit': 'Guardian Spirit', 'ironbark': 'Ironbark', 'life cocoon': 'Life Cocoon', 'time dilation': 'Time Dilation', 'zephyr': 'Zephyr', tank: 'Tank' };
@@ -3274,7 +3274,7 @@ function buildCoiledAltar(ev, r, h) {
     if (mythic && (key === 'g2' || key === 'gg2')) {
       const first = (key === 'g2' ? p1g : grim)[0];
       for (const g of s.who) if (g !== tgt && IMMUNE.some((n) => has(g, n, hit)) && first && !first.who.includes(g))
-        MS(s.t, pname(g), s.n, 'Low', 'Immuned ' + S(s.n)[1] + ' 2 without having soaked the 1st, so they could have been its target.', 'Players who immune the 2nd soak also stand in the 1st: its debuff stops the 2nd from targeting them.', map);
+        MS(s.t, pname(g), s.n, 'Low', 'Immuned ' + S(s.n)[1] + ' 2 without having soaked the 1st, so they could have been its target.', 'Players who immune the 2nd soak also stand in the 1st, because its debuff stops the 2nd from targeting them.', map);
     }
     // one row per drop: what the plan wanted, who was in the circle (and what they had up), target, corner, deaths
     // soakers as player chips with a short badge for what they had up (the plan per soak is in How it works)
@@ -3291,7 +3291,7 @@ function buildCoiledAltar(ev, r, h) {
   sections.push({ id: 'soakq', title: 'Guillotine soaks', spell: S('guillotine'),
     verdict: soaks.some((s) => s.died.length || (s.who.length && s.who.length < need)) ? 'bad'
       : soaks.some((s) => s.landed && s.who.length < need) || mistakes.some((x) => /Guillotine/.test(x.mechanic) && /external|immunit|tank|Healer|personal|corner/.test(x.detail)) ? 'warn' : 'good',
-    summary: pl(soaks.length, 'drop') + ' checked against the plan (see How it works): soakers in the ' + GUILLOTINE_R + '-yard circle (at least ' + need + '), what each had up (immunity, external or personal), target protection, and where it was soaked. Map shows the circle at the drop.',
+    summary: pl(soaks.length, 'drop') + ' checked against the plan (see How it works). It shows the soakers in the ' + GUILLOTINE_R + '-yard circle (at least ' + need + '), what each had up (immunity, external or personal), the target\'s protection, and where it was soaked. The map shows the circle at the drop.',
     cols: ['When', 'Soak', 'In circle', 'Soakers', 'Target', 'Corner', 'Died', ''], rows: qRows });
 
   // ---- mind controls: deaths by falling in P2/P3 ----
@@ -3400,7 +3400,7 @@ function buildCoiledAltar(ev, r, h) {
     });
     orbSec0.rows = []; orbSec0.title = 'Venom orbs into the frontals'; orbSec0.mythicOnly = false;
     orbSec0.cols = ['Frontal', 'When', 'Spell', 'Orbs popped', ''];
-    orbSec0.summary = orbSec0.summary + ' Each frontal shows how many orbs it popped (each one is a Venom Rupture stack on everyone) against the plan; open its map to see the cone and which orbs were in it.';
+    orbSec0.summary = orbSec0.summary + ' Each frontal shows how many orbs it popped (each one is a Venom Rupture stack on everyone) against the plan. Open its map to see the cone and which orbs were in it.';
   }
   // Dreadmarch: targets should pixel-stack on the nearest edge marker so ghost spawns are consistent
   const dmRows = [], dmCC = [];
@@ -3423,7 +3423,7 @@ function buildCoiledAltar(ev, r, h) {
   }
   if (dm.length) sections.push({ id: 'dmstack', title: 'Dreadmarch stacking and ghost spawns', spell: S('dreadmarch'),
     verdict: dmRows.some((x) => x[2].bad) ? 'warn' : 'good',
-    summary: 'How far apart the Dreadmarch targets stood (the plan: pixel-stack on the nearest edge marker) and how many ghosts spawned. Open a map to see where the ghosts appeared relative to the frontal.',
+    summary: 'It shows how far apart the Dreadmarch targets stood (the plan is to pixel-stack on the nearest edge marker) and how many ghosts spawned. Open a map to see where the ghosts appeared relative to the frontal.',
     cols: ['When', 'Targets', 'Target spread', 'Ghosts', ''], rows: dmRows });
 
   // ---- Soul Sever (and P3 Blighted Sever): which ghosts the frontal removed and which it missed ----
@@ -3452,12 +3452,12 @@ function buildCoiledAltar(ev, r, h) {
       extraPts: out.map((g) => ({ guid: g.guid, name: g.name, x: g.pts[0][1], y: g.pts[0][2], kind: 'ghost' })),
       note: removed.length + ' of ' + out.length + ' ghosts removed' + (missed.length ? ', ' + missed.length + ' missed' : '') + (est ? ' (estimated from spawn spots; Blighted Sever hits on ghosts are not always logged)' : ''),
       title: S(f.n)[1] + ' at ' + h.fmtT(f.t) + ': ghosts at their spawn spots (green ring = removed, red X = missed)' };
-    if (mythic && missed.length && !est) MS(f.t, 'Raid', f.n, 'Low', missed.length + ' ghost' + (missed.length === 1 ? ' was' : 's were') + ' not in ' + S(f.n)[1] + ' and stayed alive.', 'Stare at your ghost so it stays put; if it was outside the frontal, walk it back to the stack spot for the next one.', map);
+    if (mythic && missed.length && !est) MS(f.t, 'Raid', f.n, 'Low', missed.length + ' ghost' + (missed.length === 1 ? ' was' : 's were') + ' not in ' + S(f.n)[1] + ' and stayed alive.', 'Stare at your ghost so it stays put. If it was outside the frontal, walk it back to the stack spot for the next one.', map);
     ssRows.push([{ t: f.t }, { s: S(f.n), sub: est ? 'estimate' : '' }, { txt: String(out.length) }, { txt: String(removed.length) }, { txt: String(missed.length), warn: missed.length > 0 && !est }, { map }]);
   }
   if (ssRows.length) sections.push({ id: 'soulsever', title: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'),
     verdict: ssRows.some((x) => x[4].bad) ? 'bad' : 'good',
-    summary: 'For each P2 Soul Sever: how many ghosts it removed and how many it missed (from the log; P3 Blighted Sever isn\'t covered because its ghost hits aren\'t reliably logged). The map shows the 60° cone and where each ghost spawned; ghosts move after spawning, so a missed ghost may have walked out of a good spawn spot.',
+    summary: 'For each P2 Soul Sever, it shows how many ghosts it removed and how many it missed (from the log; P3 Blighted Sever isn\'t covered because its ghost hits aren\'t reliably logged). The map shows the 60° cone and where each ghost spawned. Ghosts move after spawning, so a missed ghost may have walked out of a good spawn spot.',
     cols: ['When', 'Frontal', 'Ghosts out', 'Removed', 'Missed', ''], rows: ssRows });
 
   // ---- maps on existing sections ----
@@ -3496,7 +3496,7 @@ function buildCoiledAltar(ev, r, h) {
         if (!g.rows.length) g.rows.push([{ txt: 'Clean', dim: true }, { t: g.t }, { txt: '' }, { txt: 'no collisions, falls or missed ghosts', dim: true }, { txt: '' }]);
       }
       sections.push({ id: 'dmghost', title: 'Dreadmarch: mind controls and ghosts', spell: S('dreadmarch'), verdict: worst([sDm, sGh, sMc, sSs]),
-        summary: 'Each Dreadmarch from start to finish: who was targeted and whether they stacked on the marker, where the ghosts spawned, ghosts touching, players mind controlled off the edge, and whether Soul Sever cleaned the ghosts up. Every row has its map.',
+        summary: 'It shows each Dreadmarch from start to finish: who was targeted and whether they stacked on the marker, where the ghosts spawned, ghosts touching, players mind controlled off the edge, and whether Soul Sever cleaned the ghosts up. Every row has its map.',
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: groups.filter((g) => g.rows.length) });
     }
   }
@@ -3595,8 +3595,8 @@ function buildCoiledAltar(ev, r, h) {
             // melee belongs on the unmarked add (only judged when the raid marked one of this set's adds)
             const wrongAdd = tg && tg.mine && role && mineAdds.some((a) => markerAt(r, a.g, te) > 0) && ((role === 'melee') === tg.mk);
             let what, bad = false, warn = false;
-            if (!x.a) { what = x.d != null ? 'missed the adds (' + x.d + ' yd from the nearest)' : 'no position logged'; bad = x.d != null; if (bad) M(te, pname(x.c), 'gloombomb', 'Medium', 'Their Gloombomb didn\'t land on an add in set ' + (k + 1) + ' (' + x.d + ' yd from the nearest Soulcoiler), so it didn\'t take a Spirit Shield stack off.', 'Take your Gloombomb to your add before it explodes: melee to the unmarked add, ranged to the marked one, overlapping with your partner.'); }
-            else if (!tg.mine) { what = 'landed on ' + tg.label + ' (wasted)'; warn = true; M(te, pname(x.c), 'gloombomb', 'Low', 'Their Gloombomb in set ' + (k + 1) + ' landed on a leftover add from an earlier set instead of this set\'s.', 'Drop it on this set\'s adds; kill leftovers before the next set.'); }
+            if (!x.a) { what = x.d != null ? 'missed the adds (' + x.d + ' yd from the nearest)' : 'no position logged'; bad = x.d != null; if (bad) M(te, pname(x.c), 'gloombomb', 'Medium', 'Their Gloombomb didn\'t land on an add in set ' + (k + 1) + ' (' + x.d + ' yd from the nearest Soulcoiler), so it didn\'t take a Spirit Shield stack off.', 'Take your Gloombomb to your add before it explodes. Melee take theirs to the unmarked add and ranged to the marked one, overlapping with your partner.'); }
+            else if (!tg.mine) { what = 'landed on ' + tg.label + ' (wasted)'; warn = true; M(te, pname(x.c), 'gloombomb', 'Low', 'Their Gloombomb in set ' + (k + 1) + ' landed on a leftover add from an earlier set instead of this set\'s.', 'Drop it on this set\'s adds. Kill leftovers before the next set.'); }
             else { what = 'hit ' + tg.label + (wrongAdd ? ', but ' + role + ' bombs go on the ' + (role === 'melee' ? 'unmarked' : 'marked') + ' add' : ''); warn = !!wrongAdd; if (wrongAdd) M(te, pname(x.c), 'gloombomb', 'Low', 'Dropped their Gloombomb on the ' + (tg.mk ? 'marked' : 'unmarked') + ' add in set ' + (k + 1) + ' as a ' + role + ' player.', 'Melee Gloombombs go on the unmarked (melee) add, ranged on the marked (ranged) add, so each add gets its pair.'); }
             g.rows.push([{ txt: 'Gloombomb' }, { t: te }, { p: pname(x.c), sub: role || (r.players.get(x.c) || {}).role || '' }, { txt: what, bad, warn },
               // one map per bomb at the moment it explodes; every circle in the wave looks the same (mint, 15 yd)
@@ -3612,11 +3612,11 @@ function buildCoiledAltar(ev, r, h) {
         for (const g of gGroups) { g.bad = g.bad || g.rows.some(isBad); g.warn = g.warn || g.rows.some((row) => row.some((c) => c.warn)); }
       }
       sections.push({ id: 'addsets', title: 'Spiritcackle adds: kicks', spell: S('spiritcackle'), verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-        summary: pl(groups.length, 'add set') + '. Each set shows its adds (first kick against the Gloombomb cast, and when it died), then every Wail of Terror: kicked by whom, or got off.',
+        summary: pl(groups.length, 'add set') + '. Each set shows its adds (first kick against the Gloombomb cast, and when it died), then every Wail of Terror and who kicked it, or that it got off.',
         cols: ['Add', 'Spawned', 'First kick', '', 'Died'], rows: [], groups });
       if (mythic) sections.push({ id: 'gloom', title: 'Gloombombs: breaking the Spirit Shields', spell: S('gloombomb'), mythicOnly: true,
         verdict: gGroups.some((g) => g.bad) ? 'bad' : gGroups.some((g) => g.warn) ? 'warn' : 'good',
-        summary: 'Each set: whether each add\'s Spirit Shield broke, then whose Gloombomb landed on which add (or missed, or was wasted on a leftover add), and anyone clipped by someone else\'s bomb.',
+        summary: 'For each set, it shows whether each add\'s Spirit Shield broke, then whose Gloombomb landed on which add (or missed, or was wasted on a leftover add), and anyone clipped by someone else\'s bomb.',
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: gGroups });
     }
   }
@@ -3773,11 +3773,11 @@ function buildUlatek(ev, r, h) {
       const died = r.deaths.find((d) => d.guid === c.g && d.t >= c.s && d.t <= Math.min(c.e, v.t0) + 0.6 && d.t >= v.t0 - 1.3), sp = splashes.find((e) => e.dst === c.g && Math.abs(e.t - c.e) <= 0.6), gr = greens.filter((e) => e.dst === c.g && e.t >= c.e - 0.7 && e.t <= c.e + 0.2).pop();
       if (sp) { splashG = [...new Set(splashes.filter((e) => Math.abs(e.t - sp.t) <= 0.4 && e.dst !== c.g).map((e) => e.dst))]; const other = splashG.map(pname);
         cause = 'Noxious Splash' + (other.length ? ' with ' + other.join(', ') : ''); fix = 'Carriers keep their own lanes and never come within 3 yards of each other.'; }
-      else if (died) { cause = 'died carrying it'; fix = 'An egg breaks into a Viper when its carrier dies: carriers get defensives and healing, and pass on the egg if they are low.'; }
-      else if (gr) { cause = 'hit by ' + gr.spell; fix = 'Keep eggs away from anything green: dodge the waves, and only take an egg into a Spectral Coil that is meant to pop it.'; }
+      else if (died) { cause = 'died carrying it'; fix = 'An egg breaks into a Viper when its carrier dies. Carriers should get defensives and healing, and pass on the egg if they\'re low.'; }
+      else if (gr) { cause = 'hit by ' + gr.spell; fix = 'Keep eggs away from anything green. Dodge the waves, and only take an egg into a Spectral Coil that is meant to pop it.'; }
       else { cause = 'broke in their hands'; fix = 'Anything green touching an egg or its carrier breaks it into a Viper.'; }
-    } else { cause = 'an egg on the ground'; fix = 'Pick up every egg after Call of the Serpent: one left on the ground breaks into a Viper when a wave or a Coil hits it.'; }
-    M(v.t0, g ? pname(g) : 'Raid', 'Viper hatched', mythic ? UL.noxShell : UL.malShell, 'High', 'A Blightscale Viper hatched at ' + T(v.t0) + (g ? ' from ' + pname(g) + '\'s egg: ' + cause + '.' : ' from an egg on the ground (or one the log doesn\'t tie to a carrier).'), fix);
+    } else { cause = 'an egg on the ground'; fix = 'Pick up every egg after Call of the Serpent. One left on the ground breaks into a Viper when a wave or a Coil hits it.'; }
+    M(v.t0, g ? pname(g) : 'Raid', 'Viper hatched', mythic ? UL.noxShell : UL.malShell, 'High', 'A Blightscale Viper hatched at ' + T(v.t0) + (g ? ' from ' + pname(g) + '\'s egg (' + cause + ').' : ' from an egg on the ground, or one the log doesn\'t tie to a carrier.'), fix);
     eggRows.push([{ t: v.t0 }, g ? { p: pname(g) } : { txt: 'nobody', dim: true }, { txt: cause, bad: true }, { txt: v.died != null ? 'killed ' + Math.round(v.died - v.t0) + 's later' : 'still up', dim: v.died != null },
       // (a Noxious Splash: the carriers who came within 3 yards of each other, each with their 3-yard circle, a moment before
       // it went off; any other Viper: who had the egg)
@@ -3803,7 +3803,7 @@ function buildUlatek(ev, r, h) {
   if (carry.length) eggRows.unshift([{ t: carry[0].s }, { txt: 'the raid' }, { txt: pl(carry.length, 'egg') + ' carried' + (vipers.length ? '' : ', none broke into a Viper'), sub: veinN ? veinN + ' picked up with Blight Vein still on (fine unless the carrier dies)' : '' }, { txt: '—', dim: true }]);
   const nV = vipers.length;
   sections.push({ id: 'eggs', title: 'Eggs: no Vipers', spell: S(mythic ? 'noxious shell' : 'malignant shell'), verdict: nV ? 'bad' : eggRows.some((x) => x[2].warn) ? 'warn' : 'good',
-    summary: nV ? pl(nV, 'Blightscale Viper') + ' hatched; each row says who had the egg and what broke it.' : carry.length ? pl(carry.length, 'egg') + ' carried and none broke into a Viper.' : 'No eggs carried yet.',
+    summary: nV ? pl(nV, 'Blightscale Viper') + ' hatched. Each row says who had the egg and what broke it.' : carry.length ? pl(carry.length, 'egg') + ' carried and none broke into a Viper.' : 'No eggs carried yet.',
     cols: ['When', 'Carrier', 'What happened', 'Viper', ''], rows: eggRows });
 
   // ---- 2. Spectral Coils: soakers per circle (Soul Constrictor marks a soaker on Heroic and Mythic) ----
@@ -3815,7 +3815,7 @@ function buildUlatek(ev, r, h) {
     const rows = set.map((c, k) => {
       const soak = [...new Set(sc.filter((e) => Math.abs(e.t - c.t) < 1).map((e) => e.dst))], died = r.deaths.filter((d) => d.t >= c.t - 0.2 && d.t <= c.t + 2 && /spectral coils/i.test(d.ability || ''));
       const none = hcUp && !soak.length, thin = hcUp && soak.length > 0 && soak.length < minSoak;
-      if (died.length) for (const d of died) M(c.t, d.player, 'Spectral Coils', UL.coil, 'High', 'Died to Spectral Coils at ' + T(c.t) + (hcUp ? ' (' + pl(soak.length, 'soaker') + ' in that circle).' : '.'), 'More soakers per circle: everyone in it splits the hit. Alternate the two groups so nobody with Soul Constrictor is counted on.');
+      if (died.length) for (const d of died) M(c.t, d.player, 'Spectral Coils', UL.coil, 'High', 'Died to Spectral Coils at ' + T(c.t) + (hcUp ? ' (' + pl(soak.length, 'soaker') + ' in that circle).' : '.'), 'Get more soakers into each circle, because everyone in it splits the hit. Alternate the two groups so nobody with Soul Constrictor is counted on.');
       else if (none) M(c.t, 'Raid', 'Spectral Coils', UL.coil, 'High', 'Nobody soaked the Spectral Coil at ' + T(c.t) + '.', 'Every circle needs its group inside before the tail slams it.');
       // (the map: the 10-yard soak to scale, centred on its soakers (the impact point isn't in the log), with anyone just
       // outside it marked)
@@ -3831,7 +3831,7 @@ function buildUlatek(ev, r, h) {
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
   if (coilGroups.length) sections.push({ id: 'coils', title: 'Spectral Coils: soaked', spell: S('spectral coils'), verdict: coilGroups.some((g) => g.bad) ? 'bad' : coilGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(coilHits.length, 'circle') + (hcUp ? '; a circle under ' + minSoak + ' soakers is flagged.' : '.'), cols: ['Circle', 'When', 'Soakers', 'Who soaked', 'Damage', 'Died', ''], rows: [], groups: coilGroups });
+    summary: pl(coilHits.length, 'circle') + (hcUp ? '. A circle under ' + minSoak + ' soakers is flagged.' : '.'), cols: ['Circle', 'When', 'Soakers', 'Who soaked', 'Damage', 'Died', ''], rows: [], groups: coilGroups });
 
   // ---- 2b. Caustic Waves: every wave hit, and where that wave came from ----
   // A hit puts the 10 s Caustic Waves poison on. The tail's waves (Gore Rattle surfacing at the platform's edge, two at a
@@ -3868,7 +3868,7 @@ function buildUlatek(ev, r, h) {
   });
   const wvPl = new Set(wvHits.map((e) => e.dst)).size;
   if (wvHits.length || tailW.length) sections.push({ id: 'waves', title: 'Caustic Waves: dodged', spell: S('caustic waves'), verdict: waveRows.some((x) => x[4].bad) ? 'bad' : waveRows.length ? 'warn' : 'good',
-    summary: wvHits.length ? pl(wvHits.length, 'wave hit') + ' on ' + pl(wvPl, 'player') + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ')' : '') + '; each row says which wave it was.' : 'Nobody was hit by Caustic Waves' + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ').' : '.'),
+    summary: wvHits.length ? pl(wvHits.length, 'wave hit') + ' on ' + pl(wvPl, 'player') + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ')' : '') + '. Each row says which wave it was.' : 'Nobody was hit by Caustic Waves' + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ').' : '.'),
     cols: ['When', 'Hit', 'Which wave', 'Damage', 'Died'], rows: waveRows });
 
   // ---- 3. tanks: Mother's Wrath on the boss tank, Stone Venom, nobody on the tail or in melee ----
@@ -3886,7 +3886,7 @@ function buildUlatek(ev, r, h) {
   }
   tankRows.sort((a, b) => a[0].t - b[0].t);
   if (tankRows.length) sections.push({ id: 'tank', title: 'Tanks: boss and tail', spell: S("mother's wrath"), verdict: tankRows.some((x) => x.some((c) => c.bad)) ? 'bad' : tankRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
-    summary: "Each Mother's Wrath, its tank and the Stone Venom they still had going in, and any time the raid was punished for nobody tanking.", cols: ['When', 'What', 'Tank', 'Stone Venom', 'Result'], rows: tankRows });
+    summary: "It shows each Mother's Wrath, its tank and the Stone Venom they still had going in, and any time the raid was punished for nobody tanking.", cols: ['When', 'What', 'Tank', 'Stone Venom', 'Result'], rows: tankRows });
 
   // ---- 4. Mythic: Toxic Incubation (the inactive tank stands in the beam) and each Wretch's bubbles ----
   if (mythic) {
@@ -3898,14 +3898,14 @@ function buildUlatek(ev, r, h) {
       return [{ t: land }, { ps: who.map(pname), none: 'nobody' }, { txt: hits.length + ' of ' + (hits.length + boon), sub: who.length ? 'Toxic Burn up to ' + Math.max(...who.map((g) => maxIn(burnH, g, w0, w1 + 1))) + (who.every((g) => role(g) === 'tank') ? ' · tank' : '') : '' }, { txt: boon ? boon + ' reached the Wretch' : 'none reached the Wretch', bad: boon > 0 }];
     });
     if (incRows.length) sections.push({ id: 'incub', title: 'Toxic Incubation: intercepted', spell: S('toxic incubation'), mythicOnly: true, verdict: incRows.some((x) => x[3].bad) ? 'bad' : 'good',
-      summary: 'Each Toxic Incubation: who took the impacts and how many reached the Wretch.', cols: ['When', 'Took it', 'Impacts taken', 'Wretch'], rows: incRows });
+      summary: 'For each Toxic Incubation, it shows who took the impacts and how many reached the Wretch.', cols: ['When', 'Took it', 'Impacts taken', 'Wretch'], rows: incRows });
     // (each Blightscale Wretch dies before its third Fester Burst bubble; anyone outside a bubble takes the burst)
     const fest = ev.filter((e) => (e.k === 'start' || e.k === 'cast') && e.id === UL.fester), festHit = dmgId(UL.fester);
     const wrRows = unitsNamed(/^Blightscale Wretch$/).map((x) => {
       const ts = unitCasts(fest, x.g), late = ts.length >= 3;
       // (tanks aren't judged: the one on the Toxic Incubation beam has to stand away from the Wretch)
       const outAll = [...new Set(festHit.filter((e) => ts.some((t) => e.t >= t && e.t <= t + 6)).map((e) => e.dst))], outside = outAll.filter((g) => role(g) !== 'tank'), outT = outAll.length - outside.length;
-      if (late) M(ts[2], 'Raid', 'Fester Burst', UL.fester, 'Low', 'A Blightscale Wretch got to its third Fester Burst at ' + T(ts[2]) + '.', 'Kill each Wretch before its third bubble; it enrages after 30 seconds and bursts faster.');
+      if (late) M(ts[2], 'Raid', 'Fester Burst', UL.fester, 'Low', 'A Blightscale Wretch got to its third Fester Burst at ' + T(ts[2]) + '.', 'Kill each Wretch before its third bubble. It enrages after 30 seconds and bursts faster.');
       // (the map: the burst that caught the most people outside, a moment before it landed, with the Wretch's 10-yard
       // bubble to scale; everyone it hit was outside it)
       const bursts = ts.map((t) => { const hits = festHit.filter((e) => e.t >= t && e.t <= t + 6); return { land: hits.length ? hits[0].t : t + 2, out: [...new Set(hits.map((e) => e.dst))] }; }).sort((a, b) => b.out.length - a.out.length);
@@ -3915,7 +3915,7 @@ function buildUlatek(ev, r, h) {
       return [{ t: x.t0 }, { txt: x.died != null ? 'killed after ' + Math.round(x.died - x.t0) + 's' : 'still up', dim: x.died == null }, { txt: pl(ts.length, 'bubble'), warn: late, sub: late ? 'kill it before the third' : '' }, { ps: outside.map(pname), none: 'nobody outside', warn: outside.length > 0, sub: outT ? pl(outT, 'tank') + ' outside (not judged)' : '' }, mapC];
     });
     if (wrRows.length) sections.push({ id: 'wretch', title: 'Blightscale Wretch: bubbles', spell: S('fester burst'), mythicOnly: true, verdict: wrRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
-      summary: 'Each Wretch: how long it lived, how many Fester Bursts it got off and who was outside the bubble.', cols: ['Spawned', 'Killed', 'Bubbles', 'Outside the bubble', ''], rows: wrRows });
+      summary: 'For each Wretch, it shows how long it lived, how many Fester Bursts it got off and who was outside the bubble.', cols: ['Spawned', 'Killed', 'Bubbles', 'Outside the bubble', ''], rows: wrRows });
   }
 
   // ---- 5. damage amps: Rage of the Shackled windows (damage in, boss health after, potions) ----
@@ -3941,7 +3941,7 @@ function buildUlatek(ev, r, h) {
       { txt: hp != null ? (hp < 0.005 ? 'killed in it' : pc(hp) + ' after') : '—', warn: slow, dim: hp == null, sub: [a.hp0 != null && hp != null ? 'from ' + pc(a.hp0) : '', a.pace != null ? 'on pace at ' + pc(a.pace) + ' or lower' : ''].filter(Boolean).join(' · ') },
       { txt: pl(a.pots, 'combat potion'), dim: !a.pots, sub: a.lust ? 'with Bloodlust' : '' }]; });
   if (ampRows.length) sections.push({ id: 'amps', title: 'Damage amps: Rage of the Shackled', spell: S('rage of the shackled'), verdict: ampRows.some((x) => x[3].warn) ? 'warn' : 'good',
-    summary: 'Damage into the Venomous Heart in each 20-second window, player by player, the boss\'s health before and after it' + (mythic ? ' (on pace: 67% after the first, 45% after the second)' : '') + ' and the combat potions drunk for it' + (lustT != null ? '; Bloodlust at ' + T(lustT) : '') + '.',
+    summary: 'It shows the damage into the Venomous Heart in each 20-second window, player by player, the boss\'s health before and after it' + (mythic ? ' (on pace: 67% after the first, 45% after the second)' : '') + ' and the combat potions drunk for it' + (lustT != null ? '. Bloodlust was at ' + T(lustT) : '') + '.',
     cols: ['Window', 'When', 'Into the heart', 'Boss health', 'Potions'], rows: ampRows, amps });
 
   // ---- 6. Stage 2: Grasping Fangs tethers (broken in planned batches, the big one together under a raid cooldown) ----
@@ -3967,13 +3967,13 @@ function buildUlatek(ev, r, h) {
     return { title: 'Grasping Fangs ' + (i + 1), t: t0, sub: pl(set.length, 'tether') + ', broken in ' + batches.map((b) => b.length).join(' + ') + ' · Blight Vein up to ' + pl(pk, 'stack') + ' on the raid', bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
   if (fangGroups.length) sections.push({ id: 'fangs', title: 'Grasping Fangs: tether breaks', spell: S('grasping fangs'), verdict: fangGroups.some((g) => g.bad) ? 'bad' : fangGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: 'Who each Doomscale Warden tethered, when each tether broke, how each batch went and the raid cooldowns under it.', cols: ['When', 'Tethered', 'Broke', 'Result'], rows: [], groups: fangGroups });
+    summary: 'It shows who each Doomscale Warden tethered, when each tether broke, how each batch went and the raid cooldowns under it.', cols: ['When', 'Tethered', 'Broke', 'Result'], rows: [], groups: fangGroups });
 
   // ---- 7. Stage 2: Wardens (dead before their second gestation), Doomscales (killed together), a big egg that hatched ----
   const weak = unitsNamed(/^Weakened Doomscale$/), rav = unitsNamed(/^Ravenous Doomscale$/), rev = auraId(UL.revenge, 'apply').filter((e) => !h.isPlayer(e.dst)), dsRows = [];
   const gest = ev.filter((e) => (e.k === 'start' || e.k === 'cast') && e.id === UL.wardenGest);
   for (const x of unitsNamed(/^Doomscale Warden$/)) { const gs = unitCasts(gest, x.g), late = gs.length >= 2;
-    if (late) M(gs[1], 'Raid', 'Writhing Gestation', UL.wardenGest, 'Low', 'A Doomscale Warden reached its second Writhing Gestation at ' + T(gs[1]) + ' (its enrage).', 'Kill each Warden before its second gestation: focus it while the eggs are cleaved down.');
+    if (late) M(gs[1], 'Raid', 'Writhing Gestation', UL.wardenGest, 'Low', 'A Doomscale Warden reached its second Writhing Gestation at ' + T(gs[1]) + ' (its enrage).', 'Kill each Warden before its second gestation. Focus it while the eggs are cleaved down.');
     dsRows.push([{ t: x.t0 }, { txt: 'Doomscale Warden' }, { txt: x.died != null ? 'killed after ' + Math.round(x.died - x.t0) + 's' : 'not killed', dim: x.died == null }, { txt: late ? 'reached its second gestation' : gs.length ? 'before its second gestation' : '—', warn: late, dim: !late }]); }
   const wSets = []; for (const x of weak) { const cur = wSets[wSets.length - 1]; if (cur && x.t0 - cur[0].t0 < 8) cur.push(x); else wSets.push([x]); }
   wSets.forEach((set, i) => { const ds = set.map((x) => x.died).filter((t) => t != null), gap = ds.length === set.length && ds.length > 1 ? Math.max(...ds) - Math.min(...ds) : null;
@@ -3988,7 +3988,7 @@ function buildUlatek(ev, r, h) {
     const cries = Math.max(0, ...cost.map((c) => c.cry)), deadN = [...new Set(cost.flatMap((c) => c.dead))], rvBad = cries > 0 || deadN.length > 0;
     const hurt = (cries ? 'its Anguished Cry hit ' + pl(cries, 'player') : '') + (deadN.length ? (cries ? ' and ' : '') + deadN.join(', ') + ' died to it' : '');
     if (rv.length) M(rv[0].t, 'Raid', 'Revenge', UL.revenge, rvBad ? 'High' : 'Low', 'A Weakened Doomscale gained Revenge at ' + T(rv[0].t) + ' (another one died first: 100% more haste and damage)' + (rvBad ? ': ' + hurt + '.' : '.'),
-      rvBad ? 'While a Doomscale has Revenge it casts twice as fast: keep a kick ready for every Anguished Cry, keep its frontal off the raid, and kill the Doomscales together.' : 'Keep every Doomscale at the same health (call it out) and kill them together.');
+      rvBad ? 'While a Doomscale has Revenge it casts twice as fast. Keep a kick ready for every Anguished Cry, keep its frontal off the raid, and kill the Doomscales together.' : 'Keep every Doomscale at the same health (call it out) and kill them together.');
     dsRows.push([{ t: set[0].t0 }, { txt: pl(set.length, 'Weakened Doomscale') }, { txt: ds.length ? 'killed ' + ds.map((t) => T(t)).join(', ') : 'not killed', dim: !ds.length },
       { txt: rv.length ? 'Revenge' + (gap != null ? ' (' + Math.round(gap) + 's apart)' : '') : gap != null ? Math.round(gap) + 's apart' : '—', bad: rvBad, warn: rv.length > 0 && !rvBad, dim: !rv.length && gap == null,
         sub: rv.length ? (rvBad ? hurt : 'no Anguished Cry got through') : '' }]); });
@@ -3996,7 +3996,7 @@ function buildUlatek(ev, r, h) {
     dsRows.push([{ t: x.t0 }, { txt: 'Ravenous Doomscale' }, { txt: 'a big egg hatched' }, { txt: 'a problem', bad: true }]); }
   dsRows.sort((a, b) => a[0].t - b[0].t);
   if (dsRows.length) sections.push({ id: 'doomscale', title: 'Wardens and Doomscales: killed in time', spell: S('hatching doom'), verdict: dsRows.some((x) => x.some((c) => c.bad)) ? 'bad' : dsRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
-    summary: 'Each Doomscale Warden (dead before its second gestation), each set of Weakened Doomscales and how close together they died' + (mythic ? ' (Revenge if not)' : '') + ', and any big egg that hatched.', cols: ['When', 'What', 'Killed', 'Result'], rows: dsRows });
+    summary: 'It shows each Doomscale Warden (it should die before its second gestation), each set of Weakened Doomscales and how close together they died' + (mythic ? ' (Revenge if not)' : '') + ', and any big egg that hatched.', cols: ['When', 'What', 'Killed', 'Result'], rows: dsRows });
 
   // ---- 8. Stage 3: Serpent's Bite, one set per cast (cleared in time; Volatile Purge spread; on Mythic, a defensive for it) ----
   // (the three bites of a cast clear together on Mythic, so their helpers belong to the cast, not to one bite)
@@ -4029,12 +4029,12 @@ function buildUlatek(ev, r, h) {
         rows.push([{ t: e.t }, { p: pname(g) }, { txt: "caught in someone else's Volatile Purge", warn: true }, pmap]); }
       // (Mythic: the Purge hits its holder for about 2 million, so every holder needs a big defensive or an external)
       if (mythic) for (const g of hold) { if (r.deaths.some((d) => d.guid === g && d.t < e.t - 0.2)) continue; const c = covered(g, e.t);
-        if (!c) M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', 'Took the Volatile Purge at ' + T(e.t) + ' with no defensive or external.', 'The Purge hits its holder for about 2 million: use a big defensive or immunity for it, then personals and externals through the damage over time after it.');
+        if (!c) M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', 'Took the Volatile Purge at ' + T(e.t) + ' with no defensive or external.', 'The Purge hits its holder for about 2 million. Use a big defensive or immunity for it, then personals and externals through the damage over time after it.');
         rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'held a Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'held a Volatile Purge with no defensive', warn: !c, dim: !!c }, pmap]); } }
     return { title: "Serpent's Bite " + (i + 1), t: t0, sub: pl(set.length, 'bite') + (!helpers.length ? '' : helpers.length <= 4 ? ', cleared by ' + helpers.map(pname).join(', ') : ', cleared by ' + pl(helpers.length, 'player')), bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
   if (biteGroups.length) sections.push({ id: 'bite', title: "Serpent's Bite: cleared and spread", spell: S("serpent's bite"), verdict: biteGroups.some((g) => g.bad) ? 'bad' : biteGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: 'Each bite, who took it off' + (mythic ? ' and whether each Purge holder had a defensive' : '') + ', and anyone caught in a Volatile Purge they weren\'t holding.', cols: ['When', 'Player', 'Result', ''], rows: [], groups: biteGroups });
+    summary: 'It shows each bite, who took it off' + (mythic ? ' and whether each Purge holder had a defensive' : '') + ', and anyone caught in a Volatile Purge they weren\'t holding.', cols: ['When', 'Player', 'Result', ''], rows: [], groups: biteGroups });
 
   // ---- 9. Stage 3: Blightscale Shriekers (and any Rawling that got its Acidic Expulsion off) ----
   const exp = ev.filter((e) => e.k === 'cast' && e.id === UL.expulsion), boil = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === UL.boilS), shRows = [];
@@ -4045,7 +4045,7 @@ function buildUlatek(ev, r, h) {
   for (const e of rawEx) shRows.push([{ t: e.t }, { txt: 'Blightscale Rawling' }, { txt: 'lived long enough to expel' }, { txt: 'Acidic Expulsion', warn: true }]);
   shRows.sort((a, b) => a[0].t - b[0].t);
   if (shRows.length) sections.push({ id: 'shriek', title: 'Shriekers and Rawlings: killed in time', spell: S('acidic expulsion'), verdict: shRows.some((x) => x.some((c) => c.bad)) ? 'bad' : shRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
-    summary: 'Each Shrieker\'s time alive and what it got off (the first Acidic Expulsion comes right after it spawns), and any Rawling that cast Acidic Expulsion (a raid-wide damage over time).', cols: ['When', 'Add', 'Killed', 'Got off'], rows: shRows });
+    summary: 'It shows each Shrieker\'s time alive and what it got off (the first Acidic Expulsion comes right after it spawns), and any Rawling that cast Acidic Expulsion (a raid-wide damage over time).', cols: ['When', 'Add', 'Killed', 'Got off'], rows: shRows });
 
   // ---- 10. avoidable damage ----
   const av = avoidPanel(ev, r, h, [
@@ -4145,7 +4145,7 @@ function checkAssignments(r, noteText) {
       else {
         row.status = 'missed';
         res.mistakes.push({ t: row.expected, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Medium',
-          detail: 'Never used ' + (row.spell || 'their assigned spell') + ' for the assignment at ' + fmtT(row.expected) + ' (P' + rem.ph + ' ' + fmtT(rem.time) + ').', fix: 'Assigned cooldowns are planned around the damage; if it was on cooldown, tell the raid leader so the plan can change.' });
+          detail: 'Never used ' + (row.spell || 'their assigned spell') + ' for the assignment at ' + fmtT(row.expected) + ' (P' + rem.ph + ' ' + fmtT(rem.time) + ').', fix: 'Assigned cooldowns are planned around the damage. If it was on cooldown, tell the raid leader so the plan can change.' });
       }
       res.cds.push(row);
     }
@@ -4191,7 +4191,7 @@ function checkAssignments(r, noteText) {
         // (the axe's target is picked by the game and stands in the circle by definition: never an "extra" soaker)
         row.missing = row.assigned.filter((n) => !got.has(n) && !deadAt(r, n, s.hit)); row.extra = [...got].filter((n) => !row.assigned.includes(n) && n !== s.target);
         if (s.target && !row.assigned.includes(s.target)) row.info2 = 'target: ' + s.target;
-        for (const n of row.missing) res.mistakes.push({ t: s.t, player: n, mechanic: (grim ? 'Grim ' : '') + 'Guillotine assignment', id: grim ? 1299267 : 1283489, severity: 'Medium', detail: 'Was assigned to ' + (row.label || 'this soak') + ' but wasn\'t in it.', fix: 'Check your soak number before the pull; the soak is planned around exactly this group.' });
+        for (const n of row.missing) res.mistakes.push({ t: s.t, player: n, mechanic: (grim ? 'Grim ' : '') + 'Guillotine assignment', id: grim ? 1299267 : 1283489, severity: 'Medium', detail: 'Was assigned to ' + (row.label || 'this soak') + ' but wasn\'t in it.', fix: 'Check your soak number before the pull. The soak is planned around exactly this group.' });
         for (const n of row.extra) res.mistakes.push({ t: s.t, player: n, mechanic: (grim ? 'Grim ' : '') + 'Guillotine assignment', id: grim ? 1299267 : 1283489, severity: 'Low', detail: 'Soaked ' + (row.label || 'a Guillotine') + ' without being assigned to it.', fix: 'Extra soakers pick up a vulnerability that breaks the next soak rotation. Only soak your own number.' });
       } else row.note = num ? 'This pull had no ' + nm.trim() + '.' : 'No soak number in the label, so it can\'t be matched to a specific soak.';
       res.soaks.push(row); continue;
@@ -4258,8 +4258,8 @@ function checkAssignments(r, noteText) {
       if (e.kind !== 'purple') continue;
       // mistakes: someone else picked up a purple orb (Low), and an assigned carrier whose orb was taken by someone else (Low)
       const what = (row.ph != null ? ' in P' + row.ph : '');
-      for (const [nm, o] of row.outside) res.mistakes.push({ t: o.t, player: nm, mechanic: 'Orb assignment', id: 0, severity: 'Low', detail: 'Picked up ' + (o.n === 1 ? 'a purple orb' : o.n + ' purple orbs') + what + ' without being on the purple orb list.', fix: 'Purple orbs are for the assigned carriers only; everyone else moves green orbs out of their way.' });
-      if (row.ph != null && row.outside.size) for (const [nm, g] of row.got) if (g.of && g.n === 0) res.mistakes.push({ t: px0(row), player: nm, mechanic: 'Orb assignment', id: 0, severity: 'Low', detail: 'Was assigned a purple orb' + what + ' but picked none up' + (g.of > 1 ? ' in ' + g.of + ' sets' : '') + '; someone who wasn\'t assigned took them.', fix: 'Be at the orb when it lands: your carrier spot is planned around you.' });
+      for (const [nm, o] of row.outside) res.mistakes.push({ t: o.t, player: nm, mechanic: 'Orb assignment', id: 0, severity: 'Low', detail: 'Picked up ' + (o.n === 1 ? 'a purple orb' : o.n + ' purple orbs') + what + ' without being on the purple orb list.', fix: 'Purple orbs are for the assigned carriers only. Everyone else moves green orbs out of their way.' });
+      if (row.ph != null && row.outside.size) for (const [nm, g] of row.got) if (g.of && g.n === 0) res.mistakes.push({ t: px0(row), player: nm, mechanic: 'Orb assignment', id: 0, severity: 'Low', detail: 'Was assigned a purple orb' + what + ' but picked none up' + (g.of > 1 ? ' in ' + g.of + ' sets' : '') + '. Someone who wasn\'t assigned took them.', fix: 'Be at the orb when it lands, because your carrier spot is planned around you.' });
     }
     function px0(row) { const px = phaseOf(row.ph); return px ? px.start : 0; }
   }
@@ -4322,8 +4322,8 @@ function coiledAltarAssign(r, note, res, isName, P, realPh) {
     const kicks = u.kicked.slice().sort((a, b) => a.t - b.t), rows = [];
     kicks.forEach((k, i) => { const want = line.length ? line[i % line.length] : null; rows.push({ t: k.t, who: k.player, want, n: i + 1, ok: !want || k.player === want, listed: line.includes(k.player) }); });
     const gotOff = u.missed.map((m) => { const before = kicks.filter((k) => k.t < m.t).length, want = line.length ? line[before % line.length] : null; return { t: m.t, want, n: before + 1, dead: want ? dead(want, m.t) : false }; });
-    for (const g of gotOff) if (g.want && !g.dead) res.mistakes.push({ t: g.t, player: g.want, mechanic: 'Kick assignment', id: 0, severity: 'Medium', fromNote: true, detail: 'A Spiteful Soulcoiler cast got through on their turn (kick ' + g.n + ' on the ' + (marked ? 'marked' : 'unmarked') + ' add, set ' + u.wave + ').', fix: 'Watch the NSRT box on the add: when it shows your name, have your interrupt ready and kick the cast.' });
-    for (const k of rows) if (!k.ok && k.listed) res.mistakes.push({ t: k.t, player: k.who, mechanic: 'Kick order', id: 0, severity: 'Low', fromNote: true, detail: 'Kicked the ' + (marked ? 'marked' : 'unmarked') + ' Spiteful Soulcoiler out of turn (kick ' + k.n + ', set ' + u.wave + '): it was ' + k.want + '\'s.', fix: 'Kick only when the NSRT box shows your name; kicking early takes the next player\'s turn.' });
+    for (const g of gotOff) if (g.want && !g.dead) res.mistakes.push({ t: g.t, player: g.want, mechanic: 'Kick assignment', id: 0, severity: 'Medium', fromNote: true, detail: 'A Spiteful Soulcoiler cast got through on their turn (kick ' + g.n + ' on the ' + (marked ? 'marked' : 'unmarked') + ' add, set ' + u.wave + ').', fix: 'Watch the NSRT box on the add. When it shows your name, have your interrupt ready and kick the cast.' });
+    for (const k of rows) if (!k.ok && k.listed) res.mistakes.push({ t: k.t, player: k.who, mechanic: 'Kick order', id: 0, severity: 'Low', fromNote: true, detail: 'Kicked the ' + (marked ? 'marked' : 'unmarked') + ' Spiteful Soulcoiler out of turn (kick ' + k.n + ', set ' + u.wave + '): it was ' + k.want + '\'s.', fix: 'Kick only when the NSRT box shows your name. Kicking early takes the next player\'s turn.' });
     let s = sets.get(u.wave); if (!s) sets.set(u.wave, s = { set: u.wave, t: u.spawn, phase: inP3 ? (wave2 ? 'P3, 2nd set' : 'P3') : 'P2', adds: [] });
     s.adds.push({ marked, line, kicks: rows, gotOff, died: u.died, first: kicks.length ? kicks[0].t - u.spawn : null });
   }
@@ -4444,7 +4444,7 @@ function coiledAltarNote(r, note, res, isName, P, phaseOf) {
         });
         const t0 = Math.min(...s.adds.map((a) => a.t0)), idle = all.filter((n) => !deadAt(r, n, t0 + 3) && !s.adds.some((a) => a.curses.some((c) => c.who === n)));
         for (const n of all.filter((x) => !deadAt(r, x, t0 + 3))) tally(n, !idle.includes(n));
-        for (const n of idle) res.mistakes.push({ t: t0, player: n, mechanic: 'Curse assignment', id: 1714, severity: 'Low', fromNote: true, detail: 'Didn\'t curse either Spiteful Soulcoiler in set ' + s.n + ' (' + s.ph + ').', fix: 'Curse your add as soon as the set spawns: the curse slows its casts, which gives the kickers more time.' });
+        for (const n of idle) res.mistakes.push({ t: t0, player: n, mechanic: 'Curse assignment', id: 1714, severity: 'Low', fromNote: true, detail: 'Didn\'t curse either Spiteful Soulcoiler in set ' + s.n + ' (' + s.ph + ').', fix: 'Curse your add as soon as the set spawns. The curse slows its casts, which gives the kickers more time.' });
         return { n: s.n, t: s.t, ph: s.ph, noMark: true, idle, adds };
       }
       const adds = s.adds.slice().sort((a, b) => a.marked - b.marked).map((a) => {
@@ -4464,7 +4464,7 @@ function coiledAltarNote(r, note, res, isName, P, phaseOf) {
         const what = (a.marked ? 'raid-marked' : 'unmarked') + ' Spiteful Soulcoiler in set ' + s.n + ' (' + s.ph + ')';
         if (st !== 'ok') for (const n of alive.filter((x) => !who.includes(x)) ) if (st === 'bad' || st === 'warn') res.mistakes.push({ t: a.t0, player: n, mechanic: 'Curse assignment', id: c0 ? c0.id : 1714, severity: 'Low', fromNote: true,
           detail: swapped.includes(n) ? 'Cursed the other add instead of the ' + what + '.' : st === 'warn' ? 'Didn\'t curse the ' + what + '; ' + who.join(' and ') + ' covered it.' : 'Didn\'t curse the ' + what + '.',
-          fix: 'Curse your add as soon as the set spawns: the curse slows its casts, which gives the kickers more time. Unmarked and raid-marked adds each have their own warlock.' });
+          fix: 'Curse your add as soon as the set spawns. The curse slows its casts, which gives the kickers more time. Unmarked and raid-marked adds each have their own warlock.' });
         return { kind, want: w, curses: a.curses.map((c) => ({ ...c, rel: c.t - a.t0 })), st, txt, swapped, t0: a.t0 };
       });
       return { n: s.n, t: s.t, ph: s.ph, adds };
@@ -4494,7 +4494,7 @@ function sentinelsAssign(r, note, res, isName, P) {
   const issues = [...by.values()].map((o) => ({ ...o, all: o.cycles.length === rows.length }));
   for (const i of issues) res.mistakes.push({ t: i.t, player: i.who, mechanic: 'Side assignment', id: 0, severity: 'Low', fromNote: true,
     detail: i.all ? 'Played the other group\'s side all pull: the note puts them in the ' + i.group + ' group.' : 'Was on the other boss in cycle' + (i.cycles.length > 1 ? 's ' : ' ') + i.cycles.join(', ') + ' (the note puts them in the ' + i.group + ' group).',
-    fix: 'Stay with your group: its boss in cycle 1, then the other one after each intermission. If the split changed, update the note.' });
+    fix: 'Stay with your group. That\'s its boss in cycle 1, then the other one after each intermission. If the split changed, update the note.' });
   res.boss = Object.assign(res.boss || {}, { sides: { rows, issues, blood: [...grp].filter(([, k]) => k === 'Blood').map(([n]) => n), breath: [...grp].filter(([, k]) => k === 'Breath').map(([n]) => n) } });
 }
 
@@ -4533,9 +4533,9 @@ function sszorakAssign(r, note, res, isName, P) {
     const issues = [...by.values()];
     for (const x of issues) res.mistakes.push({ t: (Z.muts.find((m) => (m.set || 0) === x.wrong[0]) || Z.muts[0] || { t: 0 }).t, player: x.who, mechanic: 'Mutilate group', id: 0, severity: 'Low', fromNote: true,
       detail: 'Soaked the other group\'s Mutilate (set' + (x.wrong.length > 1 ? 's ' : ' ') + [...new Set(x.wrong)].join(', ') + '): the note puts them in the ' + x.group + ' group.',
-      fix: 'Soak only your group\'s Mutilate: the other group takes the next one, and an extra soak leaves you with Mutilated Gash for your own.' });
+      fix: 'Soak only your group\'s Mutilate. The other group takes the next one, and an extra soak leaves you with Mutilated Gash for your own.' });
     for (const x of rows.filter((q) => q.short)) res.mistakes.push({ t: x.t, player: 'Raid', mechanic: 'Mutilate group', id: 0, severity: 'Low', fromNote: true,
-      detail: 'Mutilate ' + x.i + ' (set ' + (x.set || '?') + ') was ' + x.missed.length + ' short of the ' + x.group + ' group: ' + x.missed.join(', ') + '.', fix: 'Bring the whole group into every Mutilate: fewer soakers means a bigger hit each.' });
+      detail: 'Mutilate ' + x.i + ' (set ' + (x.set || '?') + ') was ' + x.missed.length + ' short of the ' + x.group + ' group: ' + x.missed.join(', ') + '.', fix: 'Bring the whole group into every Mutilate, because fewer soakers means a bigger hit each.' });
     out.mut = { groups, rows, issues, missedBy: [...missedBy].map(([who, sets]) => ({ who, sets })), short: SHORT };
   }
   // the cyst poppers: who the note names, and who popped each cyst (not judged)
@@ -4550,7 +4550,7 @@ function sszorakAssign(r, note, res, isName, P) {
       return { i: i + 1, t, popT: f ? f.popT : null, d, pre: f ? f.pre : null, st };
     });
     for (const x of rows.filter((q) => q.st === 'warn')) res.mistakes.push({ t: x.popT, player: 'Raid', mechanic: 'Fury timer', id: 0, severity: 'Low', fromNote: true,
-      detail: 'Serpent\'s Fury ' + x.i + ' popped ' + Math.abs(x.d).toFixed(1) + ' s ' + (x.d < 0 ? 'before' : 'after') + ' the note\'s timer.', fix: x.d < 0 ? 'Wait for the timer: before an intermission an early pop leaves the next one without enough time.' : 'Stack on the timer: a late pop is close to the enrage.' });
+      detail: 'Serpent\'s Fury ' + x.i + ' popped ' + Math.abs(x.d).toFixed(1) + ' s ' + (x.d < 0 ? 'before' : 'after') + ' the note\'s timer.', fix: x.d < 0 ? 'Wait for the timer. Before an intermission, an early pop leaves the next one without enough time.' : 'Stack on the timer, because a late pop is close to the enrage.' });
     out.timer = { rows, triggers: tr && tr.lines.length ? tr.lines[0].names : [] };
   }
   res.boss = Object.assign(res.boss || {}, { sz: out });
@@ -4589,7 +4589,7 @@ function nekzaliAssign(r, note, res, isName, P) {
     });
     const issues = [...by.values()];
     for (const x of issues) res.mistakes.push({ t: (Z.depths.find((d) => d.i === x.echoes[0]) || { t0: 0 }).t0, player: x.who, mechanic: 'Well group', id: 0, severity: 'Low', fromNote: true,
-      detail: 'Went into the well on the other group\'s turn (Drowned Echo ' + x.echoes.join(', ') + '): the note puts them in ' + x.group + '.', fix: 'Go in only on your group\'s Echo; leaving the well gives you Soul Exhaustion for the next one.' });
+      detail: 'Went into the well on the other group\'s turn (Drowned Echo ' + x.echoes.join(', ') + '): the note puts them in ' + x.group + '.', fix: 'Go in only on your group\'s Echo. Leaving the well gives you Soul Exhaustion for the next one.' });
     for (const x of rows.filter((q) => q.short)) res.mistakes.push({ t: x.t, player: 'Raid', mechanic: 'Well group', id: 0, severity: 'Low', fromNote: true,
       detail: 'Drowned Echo ' + x.i + ' (' + x.group + '\'s turn) was ' + x.missed.length + ' short: ' + x.missed.join(', ') + '.', fix: 'The whole group goes in for its Echo, so it dies fast and every Curse gets kicked.' });
     out.well = { groups, rows, issues, short: SHORT };
@@ -4788,9 +4788,9 @@ class Mech {
     for (const list of this.fails.values()) for (const f of list) out.push({ t: f.t, player: 'Raid', mechanic: f.r.name, id: f.id, severity: f.r.severity, pos: true,
       detail: f.r.name + ' went off and hit ' + f.hit.size + (f.hit.size === 1 ? ' player' : ' players') + ' for ' + Math.round(f.dmg).toLocaleString('en-US') + '.', fix: f.r.tip });
     for (const a of this.avoid.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.escalate && a.touches >= a.r.escalate.touches ? a.r.escalate.severity : a.r.severity, dmg: a.dmg, pos: true,
-      detail: (a.r.ticks ? 'Walked into it ' + a.touches + (a.touches === 1 ? ' time' : ' times') : 'Hit ' + a.hits + 'x') + ' for ' + Math.round(a.dmg).toLocaleString('en-US') + ' avoidable damage.', fix: a.r.tip });
+      detail: (a.r.ticks ? 'Walked into it ' + (a.touches === 1 ? 'once' : a.touches === 2 ? 'twice' : a.touches + ' times') : 'Got hit ' + (a.hits === 1 ? 'once' : a.hits === 2 ? 'twice' : a.hits + ' times')) + (a.dmg >= 1 ? ', for ' + Math.round(a.dmg).toLocaleString('en-US') + ' avoidable damage.' : '.'), fix: a.r.tip });
     for (const a of this.debuffs.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity, pos: true,
-      detail: 'Got ' + a.r.name + ' ' + a.n + 'x.', fix: a.r.tip });
+      detail: 'Got ' + a.r.name + ' ' + (a.n === 1 ? 'once' : a.n === 2 ? 'twice' : a.n + ' times') + '.', fix: a.r.tip });
     for (const a of this.stk.values()) if (a.max > a.r.threshold) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity,
       detail: 'Reached ' + a.max + ' stacks (aim to stay at or under ' + a.r.threshold + ').', fix: a.r.tip });
     return out;
@@ -5566,7 +5566,7 @@ function stackReport(r, evs, hits, overrides) {
     const n = avoid.reduce((a, s) => a + s.n, 0);
     if (n) r.mistakes.push({ t: Math.min(...avoid.map((s) => s.t)), player: pr.p.name, mechanic: rep.name, id: rep.id, severity: n >= 3 ? 'High' : 'Medium', pos: true,
       detail: 'Gained ' + n + ' avoidable ' + rep.name + (n === 1 ? ' stack' : ' stacks') + ' from ' + avoid.map((s) => s.src + ' (' + s.n + ')').join(', ') + '.',
-      fix: 'Dodge those mechanics; every avoidable stack brings you closer to the lethal count.' });
+      fix: 'Dodge those mechanics. Every avoidable stack brings you closer to the lethal count.' });
   }
 }
 function classify(rule, src, overrides) {
@@ -5689,7 +5689,7 @@ function explainDeaths(r) {
     // why
     const why = [];
     const killer = d.ability || d.killer || 'an unknown hit';
-    why.push(killer + ' finished them' + (d.healthy && d.window > 0 ? ', from ' + Math.round(d.startHp) + '% health to 0 in ' + d.window.toFixed(1) + 's' + (fast ? ' (a burst: little time to react)' : '') : '') + '.');
+    why.push(killer + ' finished them' + (d.healthy && d.window > 0 ? ', from ' + Math.round(d.startHp) + '% health to 0 in ' + d.window.toFixed(1) + 's' + (fast ? ' (a burst, with little time to react)' : '') : '') + '.');
     if (top.length > 1 || (top[0] && top[0].name !== d.ability)) why.push('Most of the damage in their last seconds: ' + top.slice(0, 3).map((t) => t.name + ' ' + pct(t.amt, dmg) + '%').join(', ') + '.');
     if (dmg && slow && heal < dmg * 0.2) why.push('Very little healing came in (' + pct(heal, dmg) + '% of the damage taken) over ' + d.window.toFixed(0) + 's.');
     for (const m of mine.slice(0, 2)) why.push('Just before: ' + m.detail.replace(/\.$/, '') + '.');
@@ -5704,12 +5704,12 @@ function explainDeaths(r) {
     for (const m of mine.slice(0, 2)) if (m.fix && !fix.includes(m.fix)) fix.push(m.fix);
     for (const a of avoid.slice(0, 2)) if (a.x.tip && !fix.includes(a.x.tip)) fix.push(a.x.tip);
     if (envBig) fix.push('Stay out of the ' + env.name + ' (room damage, not a boss ability).');
-    if (low && !fast) fix.push('Get topped up before the next mechanic: a Healthstone, potion or defensive while low, or call for healing.');
-    if (defs.length && !(envBig && pct(env.amt, dmg) >= 80)) fix.push((fast ? 'Press ' + defs[0] + ' before ' + killer + ' lands' : 'Use ' + andJoin(defs.slice(0, 2)) + ' when health starts dropping') + ': ' + (defs.length > 1 ? 'they were' : 'it was') + ' ready.');
+    if (low && !fast) fix.push('Get topped up before the next mechanic. Use a Healthstone, potion or defensive while low, or call for healing.');
+    if (defs.length && !(envBig && pct(env.amt, dmg) >= 80)) fix.push(fast ? 'Press ' + defs[0] + ' before ' + killer + ' lands. It was ready.' : 'Use ' + andJoin(defs.slice(0, 2)) + ' when your health starts dropping. ' + (defs.length > 1 ? 'Both were' : 'It was') + ' ready.');
     if (cons.length && !fast) fix.push(andJoin(cons) + ' would have bought time.');
     if (dmg && slow && heal < dmg * 0.2) fix.push((p && p.role === 'healer' ? 'Stay in range of the other healers, or ' : 'Stay in healer range, or ') + 'call for an external when you are taking steady damage.');
-    if (p && p.role === 'tank' && top[0] && /melee/i.test(top[0].name) && !defs.length) fix.push('Tank damage: plan an external or tank swap for this point.');
-    if (!fix.length) fix.push(fast ? 'No mistake found in the log and nothing was left to press: this looks like a raid damage check. Plan a raid cooldown or a personal before ' + killer + '.' : 'No clear mistake found in the log. Open the recap to see the hits in order.');
+    if (p && p.role === 'tank' && top[0] && /melee/i.test(top[0].name) && !defs.length) fix.push('This is tank damage. Plan an external or a tank swap for this point.');
+    if (!fix.length) fix.push(fast ? 'No mistake found in the log and nothing was left to press. This looks like a raid damage check. Plan a raid cooldown or a personal before ' + killer + '.' : 'No clear mistake found in the log. Open the recap to see the hits in order.');
     d.why = why; d.prevent = fix;
     // for the Deaths panel: the hit that did it (the biggest of their last 4 seconds, when it was well over the finishing
     // one: a 447k globule explosion, then a 59k tick "finished" them), the mistakes linked to it (their own in the last
@@ -5768,11 +5768,11 @@ function checklist(p, r, cut) {
   const act = Math.min(100, 100 * active / alive);
   out.push({ status: act >= 90 ? 'Good' : act >= 80 ? 'Okay' : 'Poor', check: 'Activity', detail: Math.round(act) + '% of the time spent casting (gaps over 2.5s count as downtime).' });
   const died = r.deaths.filter((d) => d.guid === p.guid && d.t <= ct + 0.05).length;
-  out.push(died ? { status: 'Poor', check: 'Survival', detail: 'Died ' + died + 'x.' } : { status: 'Good', check: 'Survival', detail: 'Stayed alive.' });
+  out.push(died ? { status: 'Poor', check: 'Survival', detail: died === 1 ? 'Died once.' : 'Died ' + died + ' times.' } : { status: 'Good', check: 'Survival', detail: 'Stayed alive.' });
   for (const [id, name, cd] of COOLDOWNS[p.specId] || []) {
     const times = (p.castTimes.get(id) || []).filter((t) => t <= ct);
     const poss = Math.floor(alive / cd) + 1;
-    if (!times.length) { out.push({ status: 'Poor', check: name, id, detail: 'Never used. Could have been used up to ' + poss + 'x.' }); continue; }
+    if (!times.length) { out.push({ status: 'Poor', check: name, id, detail: 'Never used, though it could have been used up to ' + (poss === 1 ? 'once' : poss === 2 ? 'twice' : poss + ' times') + '.' }); continue; }
     let idle = times[0];
     for (let i = 1; i < times.length; i++) idle += Math.max(0, times[i] - times[i - 1] - cd);
     const e = times.length / poss;

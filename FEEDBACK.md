@@ -43,7 +43,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   bosses and adds (anything that is a unit in the log), and mechanics centred on a player (a spread circle around whoever had
   the debuff). It can't place ground effects that aren't units, like most puddles. So: go through every map, keep the ones
   that can draw their mechanic, and remove the rest.
-- [ ] **A grammar and wording pass over everything (your note, Oct 18):** the Performance modules and the whole project.
+- [x] **A grammar and wording pass over everything (your note, Oct 18):** the Performance modules and the whole project.
+  Done in rounds 191 to 193.
   My take: worth doing, and it's a big one (thousands of lines of player-facing text written over many rounds, so the style
   drifts). Go one tab at a time: first the tabs raiders see now (Latest pull, Mechanics, Assignments, Players, Summary),
   then Performance and Spec checks before they go live, since they're still changing. Each line checked against the rules:
@@ -153,6 +154,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+
+## 2026-10-18, round 193: Clear wording across the whole site (your note)
+- [x] **The same style as the priority card, everywhere:** every tab was read on real pulls of all ten bosses (your team's
+  nights, plus Adequate's Ula'tek) and rewritten where it read like notes. Two thoughts glued with a colon, a semicolon or
+  a "·" are now plain sentences. Latest pull, Mechanics (every boss), Assignments, Summary, Players, Progress, the start
+  page, the tour, the page tips and the tab descriptions are done, and so are the Performance views.
+- [x] **Examples:** "✕ first: Hobbz at 0:27" is now "Hobbz died first, at 0:27". "Clean: Interrupts, ..." is now "No
+  problems with interrupts, ... and Stone Breaker." "Hit 3x for 452,377 avoidable damage" is now "Got hit 3 times, for
+  452,377 avoidable damage." "12 Mutilates. Who soaked each..." is now "12 Mutilates. It shows who soaked each one...".
+  "Caustic Globule ended 5 of 29 wipes · first to die: ..." is now "Caustic Globule ended 5 of 29 wipes. The first to die
+  were ...". "Used: Healthstone 2:10 · health potion 6:19" is now "Used a Healthstone at 2:10 and a health potion at 6:19."
+- [x] **Small fixes found on the way:** wrong plurals ("Dripping Fangss", "Drowned Echos", "Restless Amanis", "fishs"), a
+  boss listed twice ("Vexhul and Ithraz and Vexhul"), "they were ready" for a single defensive, an old line saying only two
+  bosses have mechanic checks, and every tile's line now starts with a capital.
+- [x] Short labels keep their colons ("Overall:", "Red:", "Green ring:", "Top players: 86%"), and so do lists ("It covers:
+  soaks, kicks, orbs").
 
 ## 2026-10-18, round 192: The Rotation priority card, said plainly (your guildmates' feedback)
 - [x] **The summary:** "Of the 301 casts the priority list covers, 87% were the best button..." is now "Debrief checked
