@@ -90,6 +90,31 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 180: Holy Paladin, refined by the guides, WoWAnalyzer and the top logs (not just your play)
+- [x] **The audit:** every line checked against Wowhead, Icy Veins and WoWAnalyzer's Holy Paladin guide (its sections: always be
+  casting, Holy Shock, Holy Power, Holy Light, Judgment, the priority list, Infusion of Light with Flash of Light, Beacons,
+  healing cooldowns, defensives), and scored on the 21 top Holy Paladins in the 29 fastest Twin Fangs kills. Everything the page
+  checks is in the guides or WoWAnalyzer, and most lines separate good play from great.
+- [x] **Fairer bars where the best players failed:**
+
+  | Line | Old good | New good | Top players passing (before → after) |
+  |---|---|---|---|
+  | Holy Power wasted | 3% | 9% (their middle is 6%) | 8 → 18 of 21 |
+  | Flash of Light without an Infusion | 0.75 a minute | 1.5 a minute (they cast about 5 a pull) | 11 → 16 of 21 |
+  | Beacon of Virtue uses | 80% | 75% | 11 → 16 of 19 |
+  | Divine Purpose | 2 a pull | 3 a pull | 14 → 17 of 21 |
+- [x] **Back as its own graded line: Divine Toll inside Beacon of Virtue**, the guide's main raid point. It was removed in round
+  174 for repeating the windows line, so the windows line no longer gives the count. The top players put about 80% of theirs
+  inside: 60% or more is good. Yours: 10 of 12 on the kill, 127 of 153 over the night.
+- [x] **Less clutter:** long rows of boxes (one per cast) fold behind "Show each one" when there are more than 30, on every spec
+  (the coloured bar above them stays); "left at the kill" is gone from the mana details (the tile above says it); the Avenging Wrath
+  cards follow the other window cards (time and length on top, Divine Toll and Infusions as check marks).
+- [x] **The top-raid references read again** from the 21 top Holy Paladins (Holy Power wasted was 2%, now 6%), and labelled
+  "Top raids" on every spec, as on the others.
+- [x] **Kept as is:** defensives (the survival pages cover them), Flash of Light on any Beacon (Wowhead says any is fine;
+  WoWAnalyzer only Beacon of the Savior), and Avenging Wrath's casting pace (every top player passes, but it matches every
+  spec's window line).
+
 ## 2026-10-18, round 179: Your first four specs catch up, and every healer gets a rotation check
 - [x] **Your note: the newer format skipped Holy Paladin, Restoration Druid, Preservation and Demonology.** Confirmed, and fixed:
   - **"Next time" on every line that isn't good**, on all four. Each page has its own tips for its own lines (Tyrant windows,
