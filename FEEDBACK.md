@@ -87,6 +87,26 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 155: Spec checks redesigned, WoWAnalyzer's way (your ask: "really fancy and nice")
+- [x] **A banner** at the top: a ring of your checks by colour, your name, spec and pull, the filter as pills, and
+  "Work on these first" (your three biggest fixes; a click jumps to them). A bar of the groups jumps to each one.
+- [x] **Each check beside how it's judged** (your note: you liked WoWAnalyzer's design more): the explanation on the
+  left, the result on the right, with a bar of your casts by colour and **a box for every cast** (hover for what it
+  was, click to see it on your cooldowns). Strips of the pull for Holy Shock, Beacon of Virtue, Holy Power and mana.
+- [x] **Your idea: merge what belongs together.** One block each for Holy Shock, Beacon of Virtue, Holy Power,
+  Judgment, Avenging Wrath and Mana, every part a line with its own mark; the repeated cards at the bottom are gone.
+- [x] **Your notes:** "inside" renamed ("Divine Toll during Beacon of Virtue"); Perfect is now cyan, apart from Good;
+  every proc with nothing wasted says "None were wasted"; the talent chips row removed.
+- [x] **Your talent tree, our own way** (your ask): Holy, Herald of the Sun and Paladin as tabs, each talent a capsule
+  with its name, gold for what you took and the branches between them, choices and ranks marked, tooltips on hover,
+  and a list view.
+- [x] **Divine Purpose, triple-checked** (your note: any new one while you hold one is wasted). Warcraft Logs doesn't
+  record a buff being replaced, so the case Debrief can see is counted: a Divine Toll pressed while you still held one
+  loses Aurora's new one. 7 over your 30 pulls (none on the kill); a first count of 8 had a false alarm (the log put
+  the Divine Toll's own Divine Purpose a tenth of a second early).
+- [x] **Your idea: Aura Mastery's value.** The damage its stronger Devotion Aura prevented (an estimate, 2.9M over your
+  kill's two) and the healing of Ringing of the Heavens' Divine Toll (961K each, against 457K for one of your own).
+
 ## 2026-10-17, round 154: Holy Paladin: Holy Power, mana and Judgment in full, and plain sentences
 - [x] **Your ask: grey out Spec checks on the live site** so nobody sees it yet. Done and deployed: it shows "under
   development" in the Performance menu on the website, and anyone who had it open lands on the Report card. Your local

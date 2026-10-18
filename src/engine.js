@@ -570,7 +570,7 @@ const CA_ZONE = ['ring of peace'];
 const PERF_CC = new Set(CA_CC.filter((n) => !['deep breath', 'abomination limb', 'mortal coil', 'grip of the dead', 'ring of peace', "gorefiend's grasp"].includes(n)).concat(['blinding sleet', 'war stomp', 'bull rush', 'haymaker', 'quaking palm']));
 const PERF_CC_CAST = new Set(['ring of peace', "gorefiend's grasp"]);
 // (single-target heals whose target the spec checks read: [time, target, healed, overhealed])
-const HEAL_TO = new Set(['flash of light', 'holy light', 'eternal flame', 'word of glory']);
+const HEAL_TO = new Set(['flash of light', 'holy light', 'eternal flame', 'word of glory', 'holy shock']);
 // Curses that slow a Spiteful Soulcoiler's casts (Curse of the Satyr replaces Curse of Tongues for some warlocks)
 const CA_CURSE = ['curse of tongues', 'curse of the satyr'];
 // Personal defensives by name (from DEFENSIVES, minus raid-wide ones), for soak checks.
