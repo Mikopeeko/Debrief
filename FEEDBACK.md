@@ -161,6 +161,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-18, round 198: The Discord, laid out so each channel says what it's for (your note)
+- Three sections. **Start here:** #start-here (read-only, for the welcome post) and #updates (read-only: patch notes
+  every few days, your call, plus news). **Help and ideas:** #questions (forum), #suggestions (forum) and #bug-reports.
+  **Hang out:** #general-chat (chat about anything) and Voice chat.
+- Every channel has a one-line description at the top saying what it's for.
+- **#suggestions:** one idea per post, a 👍 on each post to vote, topic tags (Mechanics, Assignments, Performance,
+  Teams, Website), and status tags only you can set (Planned, Done, Not planned), so people see what happened to their idea.
+- The old empty #feedback became #start-here, and #announcements became #updates, so nothing was deleted. The
+  invite link still works and lands in #general-chat.
+- [ ] Patch notes: every few days, I draft a short summary from these rounds for you to OK before it's posted.
+
 ## 2026-10-18, round 197: A Q&A Discord, and "Report a problem" straight to GitHub (your note)
 - **Server picture:** the Debrief shield on the site's dark background (Discord matched a gold banner to it).
 - **#questions, a forum:** each question is its own post with its own replies, so answers are easy to find later. Its
