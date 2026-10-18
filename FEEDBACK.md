@@ -107,7 +107,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Komo** (your raid's Demonology Warlock) scores 88 on your kill: casting 72%, Dreadstalkers out for 4 of 6 Tyrants,
   and 2 Demonic Cores held for only 1 of 5.
 - [ ] Not testable yet: every top kill is Diabolist, so the Soul Harvester parts (and Power Siphon, Doomguard) are read through only.
-- [ ] **Your note: the card and talent graphics look cheap and cartoony.** Next: a WoW-style look (see the proposal).
+- [x] **Your note: the card and talent graphics look cheap and cartoony.** Done in round 172.
+
+## 2026-10-18, round 172: The character card and talents, the game's own look (your go-ahead on the mockup)
+- [x] The drawn class frames (flowers, clocks, fireflies, fel flames) and the portrait rings are gone, on all four specs.
+- [x] Behind the card and the talent trees: **the spec's own talent art from the game**, the same picture Wowhead's talent
+  calculator shows, loaded from Wowhead at runtime like the icons (nothing bundled; a plain dark panel if it can't load).
+- [x] A dark card with thin gold trim and gold corners, the talent trees on dark glass over the art, the portrait in a gold
+  ring, and a WoW-style serif (Cinzel) for names and headings.
 
 ## 2026-10-17, round 170: A card for each Divine Toll, and small tiles for the simple checks
 - [x] **Your note: Divine Toll like the others.** The "Divine Toll during Beacon of Virtue" line now has a card per press, like
