@@ -87,6 +87,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
+## 2026-10-17, round 156: Seven blocks, mana from others, Avenging Wrath's healing, Devotion Aura
+- [x] **Your yes: two more merges.** "Infusion of Light and Flash of Light" is one block (Infusion uses, Flash of Light
+  without one, on a Beacon, on yourself); Divine Purpose and Dawnlight moved into Holy Power. The page is now blocks:
+  Holy Shock, Infusion and Flash of Light, Beacon of Virtue, Holy Power, Judgment, Avenging Wrath, Devotion Aura, Mana.
+- [x] **Your note: mana from others.** A "Mana from others" line names who gave it ("Innervate from Earthday gave you 50%
+  of a bar"; Source of Magic, cast before the pull, says "from one of your Evokers"), and the bar is split into from
+  others and from you.
+- [x] **Your ask: Avenging Wrath's healing.** The healing you did during it, a second inside against outside, and what
+  Avenging Wrath itself added (20% more healing and 20% more crit, from your own crit rate): +41% while up, about 10.8M
+  on your kill, 7% of your healing.
+- [x] **Your ask: a Devotion Aura block.** The damage it prevented over the pull (about 18.3M on your kill), Aura
+  Mastery's part of it (2.8M) and Ringing of the Heavens' Divine Tolls (961K each, against 457K for your own).
+
 ## 2026-10-17, round 155: Spec checks redesigned, WoWAnalyzer's way (your ask: "really fancy and nice")
 - [x] **A banner** at the top: a ring of your checks by colour, your name, spec and pull, the filter as pills, and
   "Work on these first" (your three biggest fixes; a click jumps to them). A bar of the groups jumps to each one.
