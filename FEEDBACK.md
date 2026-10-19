@@ -18,7 +18,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   2. Make them stand out on the mechanics where a map tells the story (soaks, spreads, baits, adds): a small map right in
      "What went wrong" for that mechanic (done in round 210), and a map for the first death on Pull recap (next). The
      "Map" mark on rows was dropped: the maps show on their own now.
-  3. **Cast bars on the maps (your note, Oct 18):** an add, boss or other enemy casting something that should be kicked
+  3. **Cast bars on the maps (your note, Oct 18; done in round 217):** an add, boss or other enemy casting something that should be kicked
      (or that the note assigns a kick for) gets a cast bar under its nameplate, like in game. It fills as the cast goes,
      turns green with the kicker's name when it's kicked, and red when it goes off. My take: amazing; it makes the kick
      maps read like the game. The log has when each cast started and when it was kicked or finished, so the bar can fill
@@ -81,9 +81,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   drifts). Go one tab at a time: first the tabs raiders see now (Latest pull, Mechanics, Assignments, Players, Summary),
   then Performance and Spec checks before they go live, since they're still changing. Each line checked against the rules:
   plain words, full sentences, no clipped fragments chained with colons.
-- [ ] **Review the Mechanics tab for improvements (your note, Oct 18):** go through it boss by boss and list what could be
-  clearer, simpler or more useful. First pass done in round 195 (Coiled Altar and Ula'tek, plus the maps); what's left is
-  listed there.
+- [x] **Review the Mechanics tab for improvements (your note, Oct 18):** go through it boss by boss and list what could be
+  clearer, simpler or more useful. Done in rounds 195, 201 and 202; its three small leftovers moved to "Mechanic names in
+  the Mechanics tab" below (your call, Oct 18).
 - [x] **Reorder and rename the main tabs (your note, Oct 18):** done in round 195 (your pick, option A). So each tab's name says what it does, and the order makes
   sense (today: Teams, Latest pull, Assignments, Mechanics, Performance, Summary, Players).
 - [x] **Simplify the tabs in Performance (your note, Oct 18).** Done in round 206 (Graphs, with grouped view tabs).
@@ -155,7 +155,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   **Update (your note, Oct 18):** a Compare button against top guilds with a similar raid composition (the same classes and
   specs, or close to it), so the comparison is fair.
 - [ ] **Character page** (your question): a player's own page from their Warcraft Logs character link. Full answer still owed.
-- [ ] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md).
+- [x] The desktop app (.exe) with auto-update (plan in notes/Desktop app plan.md). **Removed for now (your call, Oct 18).**
   **Update (your note, Oct 18):** the desktop app is only for live logging: it reads your WoWCombatLog.txt during the raid
   and sends it to the website. Answer: the analysis stays the same. The website already reads raw combat logs (the same
   format the app reads from a file), and Warcraft Logs reports are turned into that same format first. What's new is the
@@ -187,6 +187,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Customize your Teams page** (your note; it was called Progress): let people pick their own background banner, character avatar and so on.
 - [ ] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
   to the game's name, so people know which mechanic it is.
+  **Also in this pass (from the Mechanics review, Oct 18):** clumsy problem names ("Circle hits or Ritual Burn going in",
+  "Drifts or players hit by a flying player", "Pops that took the raid to four stacks"); Nek'zali's Soulcoil Ignition
+  counts "results", a vague word, so it should name what it counts; and shorter small print under the phase headers
+  ("defensives, Healthstones and potions count up to the wipe filter…").
 - [x] **A first-time guided tour** (your note; there is one, and page tips: brought up to date in round 141): a tutorial that walks a new user through the app, with nice animations showing how
   everything works.
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
@@ -204,6 +208,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 217: Cast bars on the maps (your note)
+- [x] **Adds and bosses get a cast bar under their name, like in game,** whenever they cast something that should be
+  kicked (any spell someone kicked that pull, or one the fight's rules say to kick). It fills in gold as the cast goes,
+  then for a moment shows how it ended: green "Kicked: Telegon", red "Wail of Terror went off", or grey "Add died" or
+  "Stopped" (a stun or knockback cut it). On animated maps it fills in time with the clip; on a still map it shows where
+  the cast stood at that moment. The map's key explains it.
+- [x] **The bar's length is the real cast time,** measured from that pull's finished casts (the Soulcoilers' Wail of Terror
+  takes about 13 seconds), so a kicked bar shows how far the cast got before the kick.
+- [x] Fixed on the way: the log writes a second "Wail of Terror" at the moment each one is kicked, which would have shown as
+  "went off" right after the kick. It's ignored now. (It never counted as a missed kick: checked on 5 Coiled Altar pulls.)
+- [x] Checked on The Coiled Altar, Ula'tek (Anguished Cry and Malice) and The Twin Fangs (Visceral Burst), with no errors.
 
 ## 2026-10-18, round 216: A bigger "new pull" alert for live logging (your note)
 - [x] **The new-pull alert is a card in the middle of the screen now,** bigger than the old one in the corner: "New pull",

@@ -2773,6 +2773,9 @@ function cystSplat(x, y) {
   let s = ''; for (let i = 0; i < 6; i++) { const a = i * 1.05 + 0.4, r = 7 + (i % 3) * 2; s += '<circle cx="' + (x + Math.cos(a) * r).toFixed(1) + '" cy="' + (y + Math.sin(a) * r * 0.85).toFixed(1) + '" r="' + (1.6 + (i % 2)).toFixed(1) + '" fill="#8fd94a" fill-opacity=".5"/>'; }
   return '<ellipse cx="' + x + '" cy="' + y + '" rx="7" ry="5.5" fill="#8fd94a" fill-opacity=".35" stroke="#8fd94a" stroke-opacity=".5" stroke-dasharray="2 2"/>' + s;
 }
+// Each pull's cast bars (engine: r.castBars), by the casting unit, built once per pull
+const CB_IX = new WeakMap();
+const cbIndex = (r) => { let m = CB_IX.get(r); if (!m) { m = new Map(); for (const c of (r && r.castBars) || []) { if (!m.has(c.g)) m.set(c.g, []); m.get(c.g).push(c); } if (r) CB_IX.set(r, m); } return m; };
 function miniMap(mp, pmap) {
   const pts = mp.pts || [];
   if (!pts.length && !(mp.frames && mp.frames.some((f) => f.pts.length))) return '<p class="muted">No position data at this moment (needs Advanced Combat Logging).</p>';
@@ -2881,19 +2884,35 @@ function miniMap(mp, pmap) {
     if (gMiss.has(p.guid)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
     s += ic(X(p), Y(p), inner);
   }
+  // cast bars under an add's or boss's name, like in game (your note, Oct 18): gold while it casts something kickable, then
+  // for a moment green with the kicker's name when it's kicked, red when it went off, grey when something else stopped it
+  const cbs = cbIndex(S.rep); let cbShown = false;
+  const castBar = (g, x, y) => {
+    const l = cbs.get(g); if (!l) return ''; let c = null;
+    for (const q of l) { if (q.t0 - 0.05 > ft) break; if (ft <= q.t1 + 1.5) c = q; }
+    if (!c) return ''; cbShown = true;
+    // (it shows how it ended from a quarter second before: a still map's frame can sit just before the kick)
+    const live = ft < c.t1 - 0.25, frac = c.end === 'done' && !live ? 1 : Math.min(1, Math.max(0.04, ((live ? ft : c.t1) - c.t0) / (c.len || 1)));
+    const col = live ? '#f3c969' : c.end === 'kick' ? '#2fd15a' : c.end === 'done' ? '#ff3b3b' : '#8a909c';
+    const txt = live ? c.spell : c.end === 'kick' ? 'Kicked: ' + c.by : c.end === 'done' ? c.spell + ' went off' : c.end === 'died' ? 'Add died' : 'Stopped';
+    const t = txt.length > 26 ? txt.slice(0, 25) + '…' : txt, w = 108, h = 14, bx = x - w / 2;
+    return '<g class="cbar"><rect x="' + bx + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2.5" fill="#05060a" fill-opacity=".85" stroke="#000" stroke-width="1"/>' +
+      '<rect x="' + (bx + 1) + '" y="' + (y + 1) + '" width="' + ((w - 2) * frac).toFixed(1) + '" height="' + (h - 2) + '" rx="2" fill="' + col + '"/>' +
+      '<text x="' + x + '" y="' + (y + h - 3.2) + '" text-anchor="middle" style="font-size:10.5px;font-weight:800" fill="#fff" stroke="#000" stroke-width="2.4" paint-order="stroke">' + esc(t) + '</text></g>';
+  };
   // adds (e.g. the Spiteful Soulcoiler casting Wail of Terror): diamond with its name; green ring = kicked, red = got off
   const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []);
   for (const p of pts.filter((q) => q.kind === 'add')) {
     const x = X(p), y = Y(p), ring = gAdd.has(p.guid) ? '#2fd15a' : bAdd.has(p.guid) ? '#ff3b3b' : null;
     const look = ADD_LOOK[p.name] || ADD_LOOK[String(p.name).replace(/ \(.*\)$/, '')]; // (kick maps name adds like "Spiteful Soulcoiler (Set 1 #2)")
     // an add with its own icon still gets the kick result: green ring = kicked, red = its cast got off, and it says so
-    if (look) { const st = gAdd.has(p.guid) ? ' · kicked' : bAdd.has(p.guid) ? ' · cast got off' : ''; s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="' + (look.r + 6) + '" fill="none" stroke="' + ring + '" stroke-width="3.5"/>' : '') + addIcon(x, y, look, esc(p.name)) + (look.label ? '<text x="' + x + '" y="' + (y + look.r + 14) + '" class="ml" style="font-size:10px' + (ring ? ';font-weight:800" fill="' + ring : '') + '">' + esc(look.label + st) + '</text>' : '')); continue; }
+    if (look) { const st = gAdd.has(p.guid) ? ' · kicked' : bAdd.has(p.guid) ? ' · cast got off' : ''; s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="' + (look.r + 6) + '" fill="none" stroke="' + ring + '" stroke-width="3.5"/>' : '') + addIcon(x, y, look, esc(p.name)) + (look.label ? '<text x="' + x + '" y="' + (y + look.r + 14) + '" class="ml" style="font-size:10px' + (ring ? ';font-weight:800" fill="' + ring : '') + '">' + esc(look.label + st) + '</text>' : '') + castBar(p.guid, x, y + look.r + (look.label ? 18 : 6))); continue; }
     s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="14" fill="none" stroke="' + ring + '" stroke-width="3"/>' : '') +
       '<rect x="' + (x - 8) + '" y="' + (y - 8) + '" width="16" height="16" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000" stroke-width="1.5"><title>' + esc(p.name) + '</title></rect>' +
       (bAdd.has(p.guid) ? '<path d="M' + (x - 4) + ' ' + (y - 4) + 'l8 8M' + (x + 4) + ' ' + (y - 4) + 'l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' : '') +
-      '<text x="' + x + '" y="' + (y + 25) + '" class="ml">' + esc(p.name) + '</text>');
+      '<text x="' + x + '" y="' + (y + 25) + '" class="ml">' + esc(p.name) + '</text>' + castBar(p.guid, x, y + 29));
   }
-  for (const p of pts.filter((q) => q.kind === 'boss')) s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name) + '<text x="' + X(p) + '" y="' + (Y(p) + 33) + '" class="ml" fill="#f3c969" style="font-size:13px;font-weight:800">' + esc(p.name) + '</text>');
+  for (const p of pts.filter((q) => q.kind === 'boss')) s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name) + '<text x="' + X(p) + '" y="' + (Y(p) + 33) + '" class="ml" fill="#f3c969" style="font-size:13px;font-weight:800">' + esc(p.name) + '</text>' + castBar(p.guid, X(p), Y(p) + 38));
   for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(242,36,58,.16)" stroke="#f2243a" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);
@@ -2933,6 +2952,8 @@ function miniMap(mp, pmap) {
   if (gAdd.size || bAdd.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="' + (gAdd.size ? '#2fd15a' : '#ff3b3b') + '" stroke-width="2.5"/>', gAdd.size ? 'Green ring: the add that was kicked' : 'Red ring: the add whose cast got off']);
   if (pts.some((q) => q.kind === 'add' && !(ADD_LOOK[q.name] || ADD_LOOK[String(q.name).replace(/ \(.*\)$/, '')]))) leg.push([(x, y) => '<rect x="' + (x - 4.5) + '" y="' + (y - 4.5) + '" width="9" height="9" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000"/>', 'Add' + (gAdd.size ? ' (green ring: kicked)' : bAdd.size ? ' (red ring: cast got off)' : '')]);
   if (pts.some((q) => q.kind === 'boss')) leg.push([(x, y) => bossCrest(x, y, 'Boss', 0.33), 'Boss (gold crest)']);
+  // (on an animated map the bar can show up later in the clip, so the key says so whenever this map's units cast)
+  if (cbShown || (mp.frames && pts.some((q) => (q.kind === 'add' || q.kind === 'boss') && cbs.has(q.guid)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" rx="1.5" fill="#05060a" stroke="#000"/><rect x="' + (x - 6.5) + '" y="' + (y - 2.5) + '" width="8" height="5" rx="1" fill="#f3c969"/>', 'Cast bar: gold while it casts, then green with who kicked it, or red when it went off']);
   for (const k of hasObj) leg.push([(x, y) => k === 'ghost' ? '<path d="M' + (x - 5) + ' ' + (y + 6) + 'v-6a5 5 0 0 1 10 0v6l-2.5-1.7-2.5 1.7-2.5-1.7z" fill="#e9eef7" stroke="#000"/>' : '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="url(#' + (k === 'porb' ? 'orbP' : 'orbG') + ')"/>', OBJS[k][1]]);
   if (mp.lines && mp.lines.length) leg.push([(x, y) => '<path d="M1 11L11 1L15 5L5 15Z" fill="rgba(159,242,109,.4)" stroke="#9ff26d" stroke-width="1.2"/>', 'Green band: Corrosive Spit aiming, from the add through its target and beyond. It only hurts the moment it fires (turns yellow); grey dashed = the add died before it fired, so it never hit anyone. About ' + SPIT_LEN + ' yd long, ' + SPIT_W + ' yd wide, measured from bystander hits']);
   for (const [nm, look] of Object.entries(ADD_LOOK)) if (pts.some((q) => q.kind === 'add' && q.name === nm) || (mp.frames && mp.frames.some((f) => f.pts.some((q) => q.name === nm)))) leg.push([(x, y) => addIcon(x, y, look, '', 6 / (look.r + 2.5)), look.legend || nm]);

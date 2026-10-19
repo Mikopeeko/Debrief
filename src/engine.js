@@ -4963,7 +4963,7 @@ function analyze(item, text, opts) {
     for (const [ln, [cd, red, mag]] of CD_DR) { if (mag && !magic) continue; const by = drOn.get(dg + '|' + ln); if (!by) continue; const u = cdPress(by, cd, t, true); u.prev += amt * red / (1 - red); u.taken += amt; u.cov.add(dg); }
   };
   const pets = new Map(), recaps = new Map(), mech = new Mech(item, packs);
-  const hits = new Map(), stackEv = [], npcCasts = [], npcStart = new Map();
+  const hits = new Map(), stackEv = [], npcCasts = [], npcStart = new Map(), npcStarts = [];
   const mod = item.kind === 'boss' ? MODULES.find((m) => m.encounter === item.boss) : null;
   const watch = mod ? new Set(mod.spells) : null, modEv = [];
   const watchIds = mod && mod.ids ? new Set(mod.ids) : null;
@@ -5208,7 +5208,7 @@ function analyze(item, text, opts) {
         // (an instant proc can log its start and its cast at the same moment, the cast first: then it's done already)
         if (f.length >= 10 && isPlayer(sg)) { const ps = P(sg, sn), sid = num(f[8]), tl = ps.castTimes.get(sid), already = tl && tl.length && Math.abs(tl[tl.length - 1] - t) <= 0.05;
           if (ps.starts.length < 4000) ps.starts.push({ t, id: sid, spell: f[9], done: already ? t : null }); }
-        if (f.length >= 10 && !isPlayer(sg)) npcStart.set(sg + '|' + num(f[8]), t); // cast-bar spells (see kickReport)
+        if (f.length >= 10 && !isPlayer(sg)) { npcStart.set(sg + '|' + num(f[8]), t); if (npcStarts.length < 30000) npcStarts.push({ t, guid: sg, id: num(f[8]), spell: f[9] }); } // cast-bar spells (see kickReport)
         if (f.length >= 10 && !isPlayer(sg) && W(f[9], f[8])) modEv.push({ k: 'start', t, src: sg, srcName: sn, spell: f[9], id: num(f[8]) });
         break;
       case 'SPELL_AURA_REMOVED_DOSE': {
@@ -5319,7 +5319,7 @@ function analyze(item, text, opts) {
       const died = r.deaths.some((d) => d.player === m.player && ((d.abilityId && m.ruleIds.includes(d.abilityId)) || L(d.ability) === L(m.mechanic)));
       if (died || (m.touches || 1) >= tankKept(1)) continue;
       m.severity = 'Low'; m.tankEase = true; m.detail = String(m.detail || '').replace(/\s*$/, '') + ' Tanks often take this on purpose, so it\'s only a note.'; } }
-  kickReport(r, npcCasts, mech);
+  kickReport(r, npcCasts, mech, npcStarts);
   stackReport(r, stackEv, hits, (opts && opts.overrides) || {});
   r.mistakes.sort((a, b) => a.t - b.t);
   for (const d of r.deaths) {
@@ -5554,7 +5554,7 @@ const NO_KICK_BLAME = new Set([1286918]);
 const TANK_OK = new Set(['Axegrinder']);
 // Interrupts: a spell counts as kickable if anyone kicked it this pull or a rule says so.
 // A completed cast of a kickable spell with no kick on that caster within 12s counts as "got off".
-function kickReport(r, casts, mech) {
+function kickReport(r, casts, mech, starts) {
   const byKey = new Map();
   const key = (id, name) => id || ('n:' + String(name).toLowerCase());
   const row = (id, name) => { const k = key(id, name); let x = byKey.get(k); if (!x) byKey.set(k, x = { id, name, kicked: 0, missed: 0, kickers: new Map(), missedAt: [] }); return x; };
@@ -5570,6 +5570,45 @@ function kickReport(r, casts, mech) {
     if (!kicked) { const x = row(c.id, c.spell); x.missed++; x.missedAt.push({ t: c.t, caster: c.caster, guid: c.guid }); }
   }
   r.kicks = [...byKey.values()].sort((a, b) => (b.kicked + b.missed) - (a.kicked + a.missed));
+  // Cast bars for the maps (your note, Oct 18): every cast of a kickable spell, from its start to how it ended: kicked (and
+  // by whom), went off, or stopped another way (the add died, or a stun or knockback cut it). A channel logs its success
+  // when it starts, so a kicked channel runs from there to the kick. `len` is how long the cast takes when it finishes
+  // (the middle of this pull's finished casts of that spell), so a kicked bar shows how far it got.
+  const isKick = (id, spell) => !NO_KICK_BLAME.has(id) && (byKey.has(key(id, spell)) || ruleIds.has(id) || ruleNames.has(String(spell).toLowerCase()));
+  const grp = (xs, kf) => { const m = new Map(); for (const x of xs) { const k = kf(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); } return m; };
+  const doneBy = grp(casts.filter((c) => c.hadStart && isKick(c.id, c.spell)), (c) => c.guid + '|' + c.id), kickBy = grp(r.interrupts, (k) => k.target + '|' + k.id);
+  const bars = [], usedK = new Set();
+  for (const [k, ss] of grp((starts || []).filter((x) => isKick(x.id, x.spell)), (x) => x.guid + '|' + x.id)) {
+    ss.sort((a, b) => a.t - b.t);
+    const dn = doneBy.get(k) || [], kk = kickBy.get(k) || [];
+    ss.forEach((x, i) => {
+      const nxt = i + 1 < ss.length ? ss[i + 1].t : Infinity, died = r.enemyDied.get(x.guid) ?? Infinity;
+      const kick = kk.find((q) => !usedK.has(q) && q.t >= x.t - 0.05 && q.t < nxt + 0.05), done = dn.find((c) => c.t >= x.t - 0.05 && c.t < nxt + 0.05);
+      const b = { g: x.guid, id: x.id, spell: x.spell, t0: x.t };
+      if (kick && (!done || kick.t <= done.t)) { usedK.add(kick); bars.push({ ...b, t1: kick.t, end: 'kick', by: kick.player }); }
+      else if (done) bars.push({ ...b, t1: done.t, end: 'done' });
+      else bars.push({ ...b, t1: Math.min(nxt, died), end: died < nxt ? 'died' : 'stop' }); // (its end is set from the spell's length below)
+    });
+  }
+  // (the Soulcoilers' Wail of Terror also logs a cast of the same name at the moment it's kicked: that's not a cast going off)
+  const kickedNear = (c) => r.interrupts.some((k) => k.target === c.guid && k.t <= c.t + 0.05 && k.t >= c.t - 0.5);
+  for (const c of casts) {
+    if (c.hadStart || !isKick(c.id, c.spell) || kickedNear(c)) continue;
+    const kick = (kickBy.get(c.guid + '|' + c.id) || []).find((q) => !usedK.has(q) && q.t >= c.t && q.t - c.t <= 12);
+    if (kick) { usedK.add(kick); bars.push({ g: c.guid, id: c.id, spell: c.spell, t0: c.t, t1: kick.t, end: 'kick', by: kick.player, chan: true }); }
+    else bars.push({ g: c.guid, id: c.id, spell: c.spell, t0: c.t, t1: c.t, end: 'done', chan: true });
+  }
+  const lens = grp(bars.filter((b) => b.end === 'done' && !b.chan), (b) => b.id), lenOf = new Map();
+  for (const [id, bs] of lens) { const v = bs.map((b) => b.t1 - b.t0).sort((a, b) => a - b); lenOf.set(id, v[v.length >> 1]); }
+  // (a spell that was always kicked has no finished cast to measure: a bit longer than its latest kick, 2 s at least)
+  const latestKick = new Map(); for (const b of bars) if (b.end === 'kick' && !b.chan) latestKick.set(b.id, Math.max(latestKick.get(b.id) || 0, b.t1 - b.t0));
+  for (const b of bars) {
+    b.len = b.chan ? Math.max(0.5, b.t1 - b.t0) : b.end === 'done' ? b.t1 - b.t0 : lenOf.get(b.id) || Math.max(2, 1.15 * (latestKick.get(b.id) || 0));
+    // (a cast that just stops ends where it would have finished; one whose add died after that point was stopped first)
+    if (b.end === 'stop') b.t1 = Math.min(b.t1, b.t0 + b.len);
+    else if (b.end === 'died' && b.t1 > b.t0 + b.len) { b.t1 = b.t0 + b.len; b.end = 'stop'; }
+  }
+  r.castBars = bars.sort((a, b) => a.t0 - b.t0);
   // Per enemy unit: number adds of the same name in the order they first act ("Spawn of Vexhul #2"),
   // so a missed cast can be traced to the exact add and to who had been kicking it.
   const missed = [];
