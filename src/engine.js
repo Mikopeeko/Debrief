@@ -5898,7 +5898,7 @@ function kickReport(r, casts, mech, starts) {
     // Visceral Burst (a Twin Fangs Broodling) hits the whole raid every second with a stacking DoT: the fight's main wipe cause
     r.mistakes.push({ t: m.t, player: 'Raid', mechanic: 'Missed interrupt', id: m.id, severity: /^visceral burst$/i.test(m.spell) ? 'High' : 'Medium',
       detail: m.label + ' got ' + m.spell + ' off with no kick.' + (who.length ? ' Kicked earlier by ' + who.join(', ') + '.' : ''),
-      fix: 'Keep a kick rotation on every add that casts this, with a backup kicker. The Mechanics tab shows a map of who was nearby.' });
+      fix: 'Keep a kick rotation on every add that casts this, with a backup kicker. The Breakdown tab shows a map of who was nearby.' });
   }
 }
 

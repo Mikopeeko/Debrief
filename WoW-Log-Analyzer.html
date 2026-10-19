@@ -3787,8 +3787,6 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .dbf-short { position: relative; overflow: hidden; padding: 17px 20px 15px; } .dbf-short::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--gold); }
 .dbf-k { font: 700 12px var(--body); letter-spacing: .9px; text-transform: uppercase; color: var(--gold); margin: 0 0 5px; }
 .dbf-short p { margin: 0; font-size: 17px; line-height: 1.6; color: var(--text); max-width: 82ch; } .dbf-short p b { font-weight: 700; }
-/* (Oct 19: Mechanics' few facts on top, one pull or all pulls: the Recap box's look, a size smaller) */
-.mch-sum { margin-bottom: 12px; } .mch-sum p { font-size: 15px; line-height: 1.55; } .mch-sum p + p { margin-top: 6px; }
 .dbf-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0; padding: 4px 6px; }
 .dbf-n { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-left: 1px solid var(--line); min-width: 0; } .dbf-n:first-child { border-left: 0; }
 .dbf-n > b { font: 700 24px/1.1 var(--head); color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dbf-n:first-child > b { white-space: normal; } @media (min-width: 641px) { .dbf-n:first-child { grid-column: span 2; } } /* (how far it got, like "P2 · Malacrass 66%": two columns wide on a computer, and wrapping instead of losing its % on a phone) */ .dbf-n > b span { font-size: 15px; color: var(--faint); font-weight: 600; }
@@ -9791,7 +9789,7 @@ function kickReport(r, casts, mech, starts) {
     // Visceral Burst (a Twin Fangs Broodling) hits the whole raid every second with a stacking DoT: the fight's main wipe cause
     r.mistakes.push({ t: m.t, player: 'Raid', mechanic: 'Missed interrupt', id: m.id, severity: /^visceral burst$/i.test(m.spell) ? 'High' : 'Medium',
       detail: m.label + ' got ' + m.spell + ' off with no kick.' + (who.length ? ' Kicked earlier by ' + who.join(', ') + '.' : ''),
-      fix: 'Keep a kick rotation on every add that casts this, with a backup kicker. The Mechanics tab shows a map of who was nearby.' });
+      fix: 'Keep a kick rotation on every add that casts this, with a backup kicker. The Breakdown tab shows a map of who was nearby.' });
   }
 }
 
@@ -11699,7 +11697,7 @@ function bgFetch(item) {
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
-const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['cmp', 'Compare']];
+const TABS = [['audit', 'Breakdown'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set(['overview', 'rot', 'player', 'cmp']);
 const TAB_ORDER = ['live', 'audit', 'overview', 'rot', 'perf', 'player', 'cmp'];
@@ -11887,7 +11885,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { live: 'Recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card' };
+const TAB_NAME = { live: 'Recap', audit: 'Breakdown', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -11907,7 +11905,7 @@ function openReport() {
   const att = [c.page, c.boss ? c.boss + (c.pull ? ', pull ' + c.pull : '') : null, c.report && /^http/.test(c.report) ? 'the Warcraft Logs report' : null].filter(Boolean).join(', ');
   const disc = DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">our Discord</a>' : '';
   el.innerHTML = '<form class="tr-card rp-card" novalidate><h2>Report a problem</h2><p>Tell us what looks wrong or didn\'t work. It goes straight onto our to-do list, and we read every one.</p>' +
-    '<label class="rp-l">What went wrong?<textarea id="rpText" rows="5" maxlength="4000" placeholder="For example: Mechanics says I missed the soak at 2:10, but I was in the circle."></textarea></label>' +
+    '<label class="rp-l">What went wrong?<textarea id="rpText" rows="5" maxlength="4000" placeholder="For example: Breakdown says I missed the soak at 2:10, but I was in the circle."></textarea></label>' +
     '<label class="rp-l">Your name or Discord name <span>(optional, so we can ask you about it)</span><input id="rpName" maxlength="60" autocomplete="nickname"></label>' +
     '<input id="rpWeb" class="rp-hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
     '<p class="rp-att">Sent with it: ' + esc(att) + ', and your browser and screen size, so we can see what you saw.</p><p class="rp-msg" id="rpMsg" role="status"></p>' +
@@ -12842,7 +12840,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
           '<td class="fwho">' + (x.wrong.length ? x.wrong.map(nm).join(', ') : '<span class="sub">—</span>') + '</td><td class="fwho' + (x.short ? '' : ' sub') + '">' + (x.missed.length ? x.missed.map(nm).join(', ') : '—') + '</td></tr>').join('') + '</tbody></table>' +
         (Mu.missedBy.length ? '<p class="sub" style="margin:8px 0 0">Not in their group\'s Mutilate (not judged on its own): ' + Mu.missedBy.sort((a, b) => b.sets.length - a.sets.length).map((x) => esc(x.who) + ' (' + x.sets.length + ')').join(', ') + '.</p>' : '');
       vpanel('Mutilate groups', nw ? pill('warn', [Mu.issues.length ? plural(Mu.issues.length, 'player') + ' in the other group\'s soak' : '', shortR.length ? plural(shortR.length, 'short-handed soak') : ''].filter(Boolean).join(' · ')) : pill('ok', 'no mistakes'),
-        'From the note\'s two soak groups (' + Mu.groups.map((g) => esc(g.label) + ': ' + g.names.length).join(', ') + '). Each Mutilate is soaked by one group and the next by the other, because Mutilated Gash makes a second one hit 500% harder. The group with the most players in a Mutilate is the one soaking it. Amber: someone from the other group in it (they\'ll have Mutilated Gash for their own group\'s next one), or ' + Mu.short + ' or more of the soaking group not in it. One or two out is fine, so a single player missing isn\'t flagged. (Soaking with Mutilated Gash still on, and fewer than 5 soakers, are in Mechanics.)',
+        'From the note\'s two soak groups (' + Mu.groups.map((g) => esc(g.label) + ': ' + g.names.length).join(', ') + '). Each Mutilate is soaked by one group and the next by the other, because Mutilated Gash makes a second one hit 500% harder. The group with the most players in a Mutilate is the one soaking it. Amber: someone from the other group in it (they\'ll have Mutilated Gash for their own group\'s next one), or ' + Mu.short + ' or more of the soaking group not in it. One or two out is fine, so a single player missing isn\'t flagged. (Soaking with Mutilated Gash still on, and fewer than 5 soakers, are on Breakdown.)',
         iss, 'Every Mutilate was soaked by its own group, with at most ' + (Mu.short - 1) + ' missing.', tbl, 'as-szmut', icoWh('ability_rogue_mutilate'));
     }
     if (SZ && SZ.timer && SZ.timer.rows.length) {
@@ -12852,7 +12850,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
         Tm.rows.map((x) => '<tr' + (x.st === 'warn' ? ' class="rwarn"' : '') + '><td><b>' + x.i + '</b>' + (x.pre ? '<div class="sub">before the intermission</div>' : '') + '</td><td>' + T(x.t) + '</td><td>' + (x.popT != null ? T(x.popT) : '<span class="sub">not popped</span>') + '</td><td class="tc">' + (x.d != null ? '<span class="' + (x.st === 'warn' ? 'warnv' : 'okv') + '">' + (x.d >= 0 ? '+' : '') + x.d.toFixed(1) + ' s</span>' : '—') + '</td></tr>').join('') + '</tbody></table>' +
         (Tm.triggers.length ? '<p class="sub" style="margin:8px 0 0">The note\'s Virulence triggers: ' + Tm.triggers.map(nm).join(', ') + '</p>' : '');
       vpanel('Serpent\'s Fury timer', off.length ? pill('warn', plural(off.length, 'pop') + ' off the timer') : pill('ok', 'every pop on the timer'),
-        'This uses the note\'s reminders that say when to pop Serpent\'s Fury, and checks each pop against the nearest one. Amber: the pop before an intermission more than 1.5 s early (the next one then can\'t be reached in time), or any pop more than 3 s late. A Fury that was never popped (the enrage) is in Mechanics.',
+        'This uses the note\'s reminders that say when to pop Serpent\'s Fury, and checks each pop against the nearest one. Amber: the pop before an intermission more than 1.5 s early (the next one then can\'t be reached in time), or any pop more than 3 s late. A Fury that was never popped (the enrage) is on Breakdown.',
         iss, 'Every Serpent\'s Fury was popped on the note\'s timer.', tbl, 'as-szfury', icoWh('ability_hunter_pet_raptor'));
     }
     if (SZ && SZ.poppers && SZ.poppers.pops.length) {
@@ -12885,7 +12883,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
         Py.rows.map((x) => '<tr' + (x.wrong.length || x.short ? ' class="rwarn"' : '') + '><td><b>' + x.i + '</b><div class="sub">' + T(x.t) + '</div></td><td class="tc"><span class="' + (x.short ? 'warnv' : '') + '">' + x.n + ' of ' + x.of + '</span>' + (x.extra.length ? '<div class="sub">+ ' + x.extra.map(esc).join(', ') + '</div>' : '') + '</td>' +
           '<td class="fwho">' + (x.wrong.length ? x.wrong.map(nm).join(', ') : '<span class="sub">—</span>') + '</td><td class="fwho' + (x.short ? '' : ' sub') + '">' + (x.missed.length ? x.missed.map(nm).join(', ') : '—') + '</td></tr>').join('') + '</tbody></table>';
       vpanel('Pyre soak', nw ? pill('warn', [Py.issues.length ? plural(Py.issues.length, 'player') + ' from the don\'t-soak list in it' : '', shortR.length ? plural(shortR.length, 'short-handed Pyre') : ''].filter(Boolean).join(' · ')) : pill('ok', 'no mistakes'),
-        'This uses the note\'s Hungering Pyre lists. The soak list (' + Py.soak.length + ') goes into every Pyre, and the don\'t-soak list (' + Py.out.length + ') stays out, because their Slithering Flame burns the corpses. Amber: someone from the don\'t-soak list in it, or ' + Py.short + ' or more of the soak list missing (anyone dead, or in the well then, isn\'t counted). Deaths to a Pyre are in Mechanics.',
+        'This uses the note\'s Hungering Pyre lists. The soak list (' + Py.soak.length + ') goes into every Pyre, and the don\'t-soak list (' + Py.out.length + ') stays out, because their Slithering Flame burns the corpses. Amber: someone from the don\'t-soak list in it, or ' + Py.short + ' or more of the soak list missing (anyone dead, or in the well then, isn\'t counted). Deaths to a Pyre are on Breakdown.',
         iss, 'Every Pyre was soaked by its list, with at most ' + (Py.short - 1) + ' missing.', tbl, 'as-nzpyre', spellIcon(0, 'Hungering Pyre', true));
     }
 
@@ -13148,7 +13146,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     // (a line at a moment Mechanics has a map for, the same mechanic within a second or two, gets that small map; a click
     // opens it on Mechanics)
     const tOf = (w) => { const mm = /^(\d+):(\d{2})/.exec(String(w || '')); return mm ? +mm[1] * 60 + +mm[2] : null; };
-    for (const p of probs) { const hit = mapAt(r, tOf(p.when), p.html); if (hit) p.extra = '<div class="wr-map" role="button" tabindex="0" data-asec="sec-' + esc(hit.sid) + '" title="See it on Mechanics" aria-label="See it on Mechanics">' + miniMap(hit.map, pmap) + '</div>'; }
+    for (const p of probs) { const hit = mapAt(r, tOf(p.when), p.html); if (hit) p.extra = '<div class="wr-map" role="button" tabindex="0" data-asec="sec-' + esc(hit.sid) + '" title="See it on Breakdown" aria-label="See it on Breakdown">' + miniMap(hit.map, pmap) + '</div>'; }
     // (the cooldown reminders that went wrong get one line in that box too, so the top of the page always says how the pull
     // went; their full list stays in Healing cooldowns below)
     const dueC = (a.cds || []).filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected)), offC = dueC.filter((c) => c.status !== 'on time');
@@ -13426,23 +13424,8 @@ function pfPick(ps) {
   const k = PF_SELK[S.perfKind], cur = (k && S[k]) || S.mechP || null, pc = cur ? ps.find((p) => p.name === cur) : null;
   const note = pc ? oneOn(pc, k ? 'Showing <b style="color:' + pc.color + '">' + esc(pc.name) + '</b> on every chart, as if you had clicked them.' : 'This view shows everyone. <b style="color:' + pc.color + '">' + esc(pc.name) + '</b> is shown on the other views.')
     : cur ? '<span class="mp-on sub">' + esc(cur) + " isn't in this pull, so everyone is shown. " + onePx + '</span>'
-    : '<span class="sub">Pick a player to see them on every chart. The pick carries over to Mechanics and Night summary.</span>';
+    : '<span class="sub">Pick a player to see them on every chart. The pick carries over to Breakdown and Recap.</span>';
   return onePick(ps, cur, note, !!pc);
-}
-// Mechanics on one pull, a few facts on top (your ask, Oct 19: "a brief summary of pulls at the top of mechanic individual
-// pulls"): how the pull ended and how many died, then which mechanics failed, had some mistakes or were done right. Facts
-// only, like the rest of Mechanics; the story and the advice are on Recap
-function mechSum(r, m) {
-  const it = r.item, A = dbfStats(r), lab = A.label && !/^(wipe|kill)$/.test(A.label) ? A.label : '', ds = (r.deaths || []).slice().sort((a, b) => a.t - b.t);
-  const s1 = it.run ? '' : '<b>Pull ' + it.pull + '</b> was ' + (it.kill ? 'a kill in ' + T(r.duration) : 'a wipe' + (lab ? ' at <b>' + esc(lab) + '</b>' : '') + ' after ' + T(r.duration)) + ', with ' + (ds.length ? plural(ds.length, 'death') + ' (the first at ' + T(ds[0].t) + ')' : 'no deaths') + '.';
-  const L = { bad: [], warn: [], ok: [] };
-  for (const x of m.sections) { if (x.info || x.id === 'deaths') continue; const rows = x.rows.concat(...(x.groups || []).map((g) => g.rows)); if (!rows.length) continue;
-    const nB = rows.filter((row) => row.some((c) => c.bad)).length, nW = rows.filter((row) => !row.some((c) => c.bad) && row.some((c) => c.warn)).length, lv = lvlJudge(x.id, nB, nW, rows.length);
-    L[lv === 'major' || lv === 'moderate' ? 'bad' : lv === 'minor' ? 'warn' : 'ok'].push('<b>' + esc(shortT(x.title)) + '</b>'); }
-  const n = L.bad.length + L.warn.length + L.ok.length, few = (l) => (l.length > 4 ? l.slice(0, 4).join(', ') + ' and ' + (l.length - 4) + ' more' : lpAnd(l));
-  const be = (l) => (l.length === 1 ? 'was' : 'were');
-  const s2 = n ? plural(n, 'mechanic') + ' ' + be(Array(n)) + ' checked. ' + [L.bad.length ? L.bad.length + ' failed: ' + few(L.bad) + '.' : '', L.warn.length ? L.warn.length + ' had some mistakes: ' + few(L.warn) + '.' : '', L.ok.length ? L.ok.length + ' ' + be(L.ok) + ' done right: ' + few(L.ok) + '.' : ''].filter(Boolean).join(' ') : '';
-  return s1 || s2 ? '<div class="panel dbf-short mch-sum"><div class="dbf-k">' + (it.run ? 'This run' : 'This pull') + '</div>' + (s1 ? '<p>' + s1 + '</p>' : '') + (s2 ? '<p>' + s2 + '</p>' : '') + '</div>' : '';
 }
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
@@ -13472,7 +13455,7 @@ function audit() {
   const vb = { good: ['b-good', 'Clean'], warn: ['b-med', 'Some mistakes'], bad: ['b-high', 'Problems'] };
   // (the fight timeline panel was removed: the audit is organized by phase below instead)
   // (the page header already names the boss and difficulty; only a module note is worth a line here)
-  let h = mechSum(r, m) + (m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '');
+  let h = m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '';
 
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
@@ -15344,21 +15327,11 @@ function nightMechC(o) {
   const lateL = probs.filter((r) => lateOf(r).recent), solvedL = probs.filter((r) => lateOf(r).solved), topP = probs[0];
   const byWr = probs.slice().sort((u, v) => factsOf(v).Wr - factsOf(u).Wr);
   void byWr; void topP;
-  // (a few facts on top (your ask, Oct 19: "and then one for whole night"): how the pulls went, then the mechanics by flag,
-  // and the ones that went wrong in the most pulls)
-  const sum = (() => { const rs = pullNs.map((n) => byPull.get(n)).filter(Boolean), kill = rs.find((q) => q.item.kill), wip = rs.filter((q) => !q.item.kill && pullPct(q.item) != null);
-    const best = wip.reduce((b, q) => (!b || pullPct(q.item) < pullPct(b.item) ? q : b), null), dAvg = rs.length ? rs.reduce((t, q) => t + (q.deaths || []).length, 0) / rs.length : 0;
-    const s1 = '<b>' + plural(N, 'pull') + '</b>' + (kill ? ', killed on pull ' + kill.item.pull : ', no kill yet') + (!kill && best ? '. The best got to <b>' + esc(pullLabel(best.item)) + '</b> (pull ' + best.item.pull + ')' : '') + '. ' + (dAvg ? dAvg.toFixed(1) + ' deaths a pull on average.' : 'Nobody died.');
-    const nb = (l) => '<b>' + esc(shortT(l.title)) + '</b>', few = (l) => (l.length > 3 ? l.slice(0, 3).map(nb).join(', ') + ' and ' + (l.length - 3) + ' more' : lpAnd(l.map(nb)));
-    const F = all.filter((q) => ['major', 'moderate'].includes(lvOf(q))), Wn = all.filter((q) => lvOf(q) === 'minor'), Ok = all.filter((q) => lvOf(q) === 'clean');
-    const be = (l) => (l.length === 1 ? 'was' : 'were');
-    const s2 = all.length ? plural(all.length, 'mechanic') + ' ' + be(all) + ' checked. ' + [F.length ? F.length + ' failed in half ' + (F.length === 1 ? 'its' : 'their') + ' pulls or more: ' + few(F) + '.' : '', Wn.length ? Wn.length + ' had some mistakes: ' + few(Wn) + '.' : '', Ok.length ? Ok.length + ' ' + be(Ok) + ' done right every time: ' + few(Ok) + '.' : ''].filter(Boolean).join(' ') : '';
-    const wN = (q) => judged(q).filter((n) => stAt(q, n) !== 'ok').length, top = probs.slice().sort((u, v) => wN(v) - wN(u) || wN(v) / judged(v).length - wN(u) / judged(u).length).slice(0, 3);
-    const s3 = top.length ? 'Wrong in the most pulls: ' + lpAnd(top.map((q, i) => nb(q) + ' in ' + judged(q).filter((n) => stAt(q, n) !== 'ok').length + ' of ' + judged(q).length + (i ? '' : ' pulls'))) + '.' : '';
-    return '<div class="panel dbf-short mch-sum"><div class="dbf-k">All pulls</div><p>' + s1 + '</p>' + (s2 ? '<p>' + s2 + '</p>' : '') + (s3 ? '<p>' + s3 + '</p>' : '') + '</div>'; })();
-  const verdict = '';
+  // (the headline: the mechanics that went wrong in the most pulls (Oct 19: in place of "Most results gone wrong: Sever 3 of 10"))
+  const wN = (q) => judged(q).filter((n) => stAt(q, n) !== 'ok').length, top3 = probs.slice().sort((u, v) => wN(v) - wN(u) || wN(v) / judged(v).length - wN(u) / judged(u).length).slice(0, 3);
+  const verdict = top3.length ? '<p class="mcx-verdict">Wrong in the most pulls: ' + lpAnd(top3.map((q, i) => '<b>' + esc(shortT(q.title)) + '</b> in ' + wN(q) + ' of ' + judged(q).length + (i ? '' : ' pulls'))) + '.' + (tot('clean') ? ' <span class="mcx-good">' + plural(tot('clean'), 'mechanic') + ' done right every time.</span>' : '') + '</p>' : '<p class="mcx-verdict"><span class="mcx-good">Every mechanic was done right in every pull.</span></p>';
   const strip = '<div class="mcx-strip">' + [['major', 'bad', 'Failed'], ['minor', 'warn', 'Some mistakes'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + tot(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Red: failed in half its pulls or more, over ' + plural(N, 'pull') + (gm && !one ? ' · mechanics score ' + Math.round(gm.overall) + ' / 100' : '') + '.</span></div>';
-  const head = sum + '<div class="panel mcx-tl nmc-tl"><h3 class="nh">All pulls at a glance<small>A dot per pull where it went wrong. Click one to open that pull.</small></h3>' + verdict + (lanes ? '<div class="mcx-lanes nmc-lanes">' + lanes + axis + '</div>' : '') + strip + '</div>';
+  const head = '<div class="panel mcx-tl nmc-tl"><h3 class="nh">All pulls at a glance<small>A dot per pull where it went wrong. Click one to open that pull.</small></h3>' + verdict + (lanes ? '<div class="mcx-lanes nmc-lanes">' + lanes + axis + '</div>' : '') + strip + '</div>';
   return { html: head + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
 }
 // (a tile, a chip or a dot: that pull's Mechanics at the mechanic)
@@ -15414,12 +15387,12 @@ function lpUsedNight(reps) {
       const d = (p.defs || []).reduce((n, q) => n + inT(q.uses).length, 0); dU += d; dN.set(p.name, (dN.get(p.name) || 0) + d); hs.set(p.name, (hs.get(p.name) || 0) + inT(p.cons.healthstone).length); hp.set(p.name, (hp.get(p.name) || 0) + inT(p.cons.healpot).length); } }
   const none = (l) => (l.length ? (l.length === live.size ? '<span class="lp-none">Nobody used one all night.</span>' : '<span class="lp-none"><span class="sub">None all night from </span>' + l.slice(0, 8).map(W).join(', ') + (l.length > 8 ? '<span class="sub"> and ' + (l.length - 8) + ' more</span>' : '') + '</span>') : '<span class="lp-none ok">✓ Everyone used one.</span>');
   const kl = [...kby].sort((a, b) => b[1] - a[1]);
-  if (kk || miss) lines.push(['Interrupts', '<button class="lp-dgo" type="button" data-go="audit" title="Open the interrupts on Mechanics"><b>' + kk + '</b> kicked' + (miss ? '<span class="lp-kmiss">, ' + plural(miss, 'cast') + ' got through</span>' : '') + ' ›</button>' +
+  if (kk || miss) lines.push(['Interrupts', '<button class="lp-dgo" type="button" data-go="audit" title="Open the interrupts on Breakdown"><b>' + kk + '</b> kicked' + (miss ? '<span class="lp-kmiss">, ' + plural(miss, 'cast') + ' got through</span>' : '') + ' ›</button>' +
     (kl.length ? '<span class="lp-none">' + kl.slice(0, 8).map(([n, c]) => W(n) + '<span class="sub"> ' + c + '</span>').join(', ') + (kl.length > 8 ? '<span class="sub"> and ' + (kl.length - 8) + ' more</span>' : '') + '</span>' : '')]);
   const L = [...live], sum = (m) => [...m.values()].reduce((s, v) => s + v, 0);
   // (counts only (your call, Oct 19): who didn't use one isn't advice)
   void L; void none; void hasD; void dN;
-  lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" title="Open the defensives on Mechanics"><b>' + dU + '</b> used ›</button>']);
+  lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" title="Open the defensives on Breakdown"><b>' + dU + '</b> used ›</button>']);
   lines.push(['Healthstones', '<b>' + sum(hs) + '</b> used'], ['Health potions', '<b>' + sum(hp) + '</b> used']);
   return '<div class="panel lp-side-p lp-used"><h3 class="nh"><span>Used tonight</span><small>' + plural(reps.length, 'pull') + '</small></h3>' + lines.map(([k, v]) => '<div class="lp-pr"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
 }
@@ -15523,7 +15496,7 @@ async function night(part) {
     // (avoidable damage: its chart by source instead of a list of pulls)
     // (a section that only shows something, like the floor maps, says so instead of "didn't come up")
     const info = x.info && v.st === 'na' && x.per.size > 0;
-    const body = info ? '<div class="pdesc">This one isn\'t judged here. Open a pull\'s Mechanics tab to see it.</div>' : x.id === 'avoid' && !one ? trendLine(v) + avoidChart(reps, whoT) : bodyOf(x.per, v, 'audit', 'sec-' + x.id, 'this mechanic');
+    const body = info ? '<div class="pdesc">This one isn\'t judged here. Open a pull\'s Breakdown tab to see it.</div>' : x.id === 'avoid' && !one ? trendLine(v) + avoidChart(reps, whoT) : bodyOf(x.per, v, 'audit', 'sec-' + x.id, 'this mechanic');
     return { x, v, id: 'sm-' + x.id, ph, ord: ixOf(x.id), st: v.st, txt: info ? x.info : v.txt + (v.worst ? ', worst on pull ' + v.worst : '') + (v.trend ? ', ' + v.trend : ''), tip: x.spell && x.spell[1], title: x.title, how: x.how, icon: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, x.spell ? x.spell[1] : '', true), dots: dotsOf(x.per, 'audit', 'sec-' + x.id), gr: gradeOf(x.per), body };
   });
   let mHtml = '';
@@ -15661,7 +15634,7 @@ async function night(part) {
   view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part nmc">' + nightMechC({ groups: mGroups, pullNs, byPull, mByPull: new Map(mReps.map((r) => [r.item.pull, r])), pm, one, res, gm, boss: b0.boss }).html + '</div>'
     : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
     : NR ? NR.html
-    : '<div class="nsa sumv sum3">' + pickS + (one ? rcTop : nightGrade) + recapHp(b0, pulls) + fixSplit + progress + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Report card.</p></div>'));
+    : '<div class="nsa sumv sum3">' + pickS + (one ? rcTop : nightGrade) + recapHp(b0, pulls) + fixSplit + progress + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Breakdown and Assignments tabs, with All pulls picked. Each player\'s grade and the MVPs of the night are on Report card.</p></div>'));
   refreshIcons(); setHeadRes(); fitTrends();
   if (NR) bindNightRecap(NR, reps, pulls, here);
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
@@ -16592,7 +16565,7 @@ function perf() {
   // (no boxes (your call, Oct 18): this section shows facts, not summaries)
   if (false) tiles = [lostTile(null, 'the dead would have done')];
   else if (false) tiles = [lostTile('healer', 'healing the dead healers would have done')];
-  else tiles = []; // (Damage taken: what hit the raid, avoidable damage and deaths are on Mechanics)
+  else tiles = []; // (Damage taken: what hit the raid, avoidable damage and deaths are on Breakdown)
   // (the tiles sit beside the chart, below)
   const tilesH = tiles.length ? '<div class="pts pf-side n' + tiles.length + '">' + tiles.join('') + '</div>' : '';
   // ---- the timeline: the raid's line, or the picked player's (the picked phase stands out) ----
@@ -16645,7 +16618,7 @@ function perf() {
   const head = cbHead(addsOn ? 'Damage' : { dmg: 'DPS', heal: 'HPS', taken: 'Per sec' }[kind], { heal: 'Overheal' }[kind] || 'Share', prs ? 'Parse' : '', rowCls);
   const ttl = addsOn ? 'Damage into adds' : bossOn ? 'Damage ' + onBossW : { dmg: 'Damage done', heal: 'Healing done', taken: 'Damage taken' }[kind];
   h += '<div class="pf-cols' + (kind === 'heal' || !addsOn ? ' solo' : '') + '"><div class="panel pf-bars"><h3 class="nh"><span>' + ttl + '</span><small>' + (addsOn ? 'total over ' + span + ' · ' + esc(AD.label) : 'per second over ' + span) + (kind === 'heal' ? ', with overhealing faded' : '') + '</small>' + tgtSw + roleChips(has) + '</h3>' + (bars ? head + bars : '<p class="muted">Nothing recorded.</p>') + '</div>' +
-    (kind === 'heal' || !addsOn ? '' : '<div class="panel pf-det">' + AD.panel() + '</div>') + '</div>' + (kind === 'taken' ? mechGo('dsrc', 'Which abilities hit the raid, and how much of it was avoidable, is on Mechanics') : '') + (PERF_HOW[kind] || '');
+    (kind === 'heal' || !addsOn ? '' : '<div class="panel pf-det">' + AD.panel() + '</div>') + '</div>' + (kind === 'taken' ? mechGo('dsrc', 'Which abilities hit the raid, and how much of it was avoidable, is on Breakdown') : '') + (PERF_HOW[kind] || '');
   view(h + '</div>');
   bindPerf();
   refreshIcons();
@@ -16760,7 +16733,7 @@ function perfDetail(r, kind, p, bossN, rowsAll) {
       body = sec(kind === 'heal' ? 'The biggest heals' : 'What hit the raid hardest', 'whole pull', barList([...by.values()].sort((a, b) => b.total - a.total).slice(0, 10).map((a) => ({ html: spell(a.id, a.name) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : ''), v: a.total, attr: kind === 'taken' ? ' data-src="' + esc(a.name) + '" role="button" tabindex="0" title="Who took it"' : '' })), PERF_COL[kind])); }
     // (Healing: just the hint; the role split and the biggest heals weren't useful there)
     if (kind === 'heal') return '<h3 class="nh"><span>The raid</span></h3>' + hint;
-    return '<h3 class="nh"><span>The raid</span></h3>' + hint + sec('By role', '', roleBar) + (kind === 'taken' ? '' : body); // (what hit the raid is on Mechanics)
+    return '<h3 class="nh"><span>The raid</span></h3>' + hint + sec('By role', '', roleBar) + (kind === 'taken' ? '' : body); // (what hit the raid is on Breakdown)
   }
   const pc = perfContext(r), x0 = pc.per.get(p.name), t1 = x0 ? Math.min(x0.until, pc.end) : pc.end, gone = t1 < pc.end - 0.05;
   const upTo = gone ? 'up to their death' : isFinite(cutT(r)) && pc.end < r.duration - 0.5 ? 'up to the wipe filter' : 'whole pull';
@@ -16828,7 +16801,7 @@ function utilCats(reps) {
     { key: 'disp', icon: 'spell_holy_dispelmagic', title: 'Dispels', sub: 'what they removed', none: 'Nothing dispelled.', unit: 'dispel' },
     { key: 'bres', icon: 'spell_nature_reincarnation', title: 'Battle resses', sub: 'who they brought back', none: 'No battle resses used.', who: true },
     { key: 'ext', icon: 'spell_holy_painsupression', title: 'Externals', sub: 'who they saved', tip: 'Pain Suppression, Guardian Spirit, Ironbark, Life Cocoon, Blessings of Sacrifice, Protection and Spellwarding, Time Dilation, Rescue', none: 'No externals cast.', who: true, unit: 'external' },
-    { key: 'cc', icon: 'ability_monk_legsweep', title: 'Crowd control', sub: 'stuns, roots and knockbacks that landed', tip: 'Counted once per press when it landed on an enemy, with how many it hit. Ring of Peace and Gorefiend\'s Grasp leave nothing in the log, so they count when cast. The fight\'s own CC jobs, like a mind control, are on Mechanics.', none: 'No crowd control landed.', unit: 'use' }].map((c) => ({ ...c, m: new Map() }));
+    { key: 'cc', icon: 'ability_monk_legsweep', title: 'Crowd control', sub: 'stuns, roots and knockbacks that landed', tip: 'Counted once per press when it landed on an enemy, with how many it hit. Ring of Peace and Gorefiend\'s Grasp leave nothing in the log, so they count when cast. The fight\'s own CC jobs, like a mind control, are on Breakdown.', none: 'No crowd control landed.', unit: 'use' }].map((c) => ({ ...c, m: new Map() }));
   const C2 = Object.fromEntries(cats.map((c) => [c.key, c]));
   const add = (cat, p, key, html, t, hit) => { if (!p) return; let x = cat.m.get(p.name); if (!x) cat.m.set(p.name, x = { p: pm.get(p.name) || p, n: 0, d: new Map() }); const d = x.d.get(key) || { html, n: 0, ts: [] }; d.n++; d.ts.push(t); if (hit) d.hit = (d.hit || 0) + hit; x.d.set(key, d); x.n++; };
   for (const r of reps) {
@@ -16923,7 +16896,7 @@ function utilCards(cats, one, st) {
   const by = new Map(); for (const x of c.rows) for (const d of x.d.values()) { const k = d.key || d.html; let o = by.get(k); if (!o) by.set(k, o = { html: d.html, n: 0, ts: [], heal: 0, hit: 0, who: [] }); o.n += d.n; o.heal += d.heal || 0; o.hit += d.hit || 0; o.who.push([x.p, d.n]); }
   const right = '<h3 class="nh"><span>The raid</span><small>' + esc(c.sub) + ', by ' + (c.key === 'calls' ? 'what they pressed' : 'spell') + '</small></h3>' + ([...by.values()].sort((a, b) => b.n - a.n).map((o) => line({ html: o.html, n: o.n, ts: [], heal: o.heal, hit: o.hit }, o.who.sort((a, b) => b[1] - a[1]).map(([p, n]) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>' + (n > 1 ? ' ' + n : '')).join(', '))).join('') || '<p class="muted">' + esc(c.none) + '</p>') + missL;
   const how = st === 'surv' ? 'Each bar is how many times a player did it, up to the wipe filter: defensives, self-heals (buttons that only heal yourself), health potions and Healthstones, with what each one healed and who used none. <b>Close calls</b> are the times someone dropped under 30% health and lived, and what they pressed for it. Click a row for each one, with its times.'
-    : 'Each bar is how many times a player did it, up to the wipe filter: dispels, battle resses, externals and crowd control. Interrupts follow the raid\'s kick order, so they\'re on Mechanics. Crowd control counts once per press when it landed on an enemy, with how many it hit; the fight\'s own CC jobs, like a mind control, are on Mechanics. Click a row for each one, with its times.';
+    : 'Each bar is how many times a player did it, up to the wipe filter: dispels, battle resses, externals and crowd control. Interrupts follow the raid\'s kick order, so they\'re on Breakdown. Crowd control counts once per press when it landed on an enemy, with how many it hit; the fight\'s own CC jobs, like a mind control, are on Breakdown. Click a row for each one, with its times.';
   void right; // (no side panel (your call, Oct 18): the bars say it, and a player opens in place)
   return sw + '<div class="pf-cols solo" data-st="' + st + '">' + left.replace('<!--pf-inl-->', det ? '<div class="pf-inl">' + det + '</div>' : '') + '</div>' +
     '<details class="howit"><summary>How it works</summary><div>' + how + '</div></details>';
@@ -17071,10 +17044,10 @@ const cbHead = (v, s, end, cls, first) => '<div class="pf-row cb nb cb-h' + (cls
 const PERF_HOW = {
   dmg: '<details class="howit"><summary>How it works</summary><div>Each bar is a player\'s damage per second over the pull, or the phase picked, up to the wipe filter. Time spent dead counts against them, so a death shows as a shorter bar (the ✕ says when). The small column is their share of the raid\'s damage. Bosses, All targets and On adds pick which targets count. Click a row for their spells and targets, and the chart then shows their line.</div></details>',
   heal: '<details class="howit"><summary>How it works</summary><div>Each bar is a player\'s healing per second over the pull, or the phase picked, up to the wipe filter. The faded end is overhealing, which doesn\'t count, and the small column says how much of it was. Click a row for their heals, and the chart then shows their line.</div></details>',
-  taken: '<details class="howit"><summary>How it works</summary><div>Each bar is the damage a player took per second, up to the wipe filter, and the small column is their share of the raid\'s. Click a row for their biggest hits; their defensives and close calls are on Survivability. What hit the raid, who took it and avoidable damage are on Mechanics.</div></details>',
+  taken: '<details class="howit"><summary>How it works</summary><div>Each bar is the damage a player took per second, up to the wipe filter, and the small column is their share of the raid\'s. Click a row for their biggest hits; their defensives and close calls are on Survivability. What hit the raid, who took it and avoidable damage are on Breakdown.</div></details>',
   spec: '<details class="howit"><summary>How it works</summary><div>Each spec gets its own checks, built from the spec\'s best guides and from the talents each player ran (read from the log). Every spec that\'s common in Mythic raids has them. Holy Paladin, Restoration Druid, Preservation Evoker and Demonology Warlock go deepest; the others share one set of checks, filled in from each spec\'s guides and WoWAnalyzer, with the bar for good set from what top raids do. Each bar shows how many of a player\'s checks are in good shape. Click a player to see every check beside how it\'s judged, each cast as a colored box, and their resources and cooldowns. Everything counts up to the wipe filter.</div></details>',
   cds: '<details class="howit"><summary>How it works</summary><div><b>Uses</b>: each bar is the share of a player\'s possible uses of their big cooldowns, damage and healing alike, each counted up to their death or the wipe filter. A cooldown counts once they\'ve cast it on this boss, so one they don\'t have talented never shows. Raid cooldowns (Tranquility, Aura Mastery, Rallying Cry and the like) wait for the big damage, so half their possible uses is full marks. Click a row for each cooldown on the pull: when it was pressed, when it sat ready, and Bloodlust. <b>Raid cooldowns</b>: a bar per healing or raid cooldown and player, as long as what it did: what it healed (overhealing not counted), the damage it took off (an estimate from the reduction: the log only has what was left), what Darkness made players avoid, or the health Rallying Cry added. Click one for each press. Cooldowns that make a healer stronger, like Avenging Wrath, are on the right: what the healer healed while they were up.</div></details>',
-  aura: '<details class="howit"><summary>How it works</summary><div>Each bar is a player, with how many different buffs they had, up to the wipe filter. Click a name for their own list: each one\'s uptime (a share of the time they were alive), how many times it went on, and who gave it. Pick a buff on the right, or search for one, to see each player\'s uptime of it. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted; Sated and Exhaustion are left out. The boss\'s debuffs on the raid are on Mechanics.</div></details>',
+  aura: '<details class="howit"><summary>How it works</summary><div>Each bar is a player, with how many different buffs they had, up to the wipe filter. Click a name for their own list: each one\'s uptime (a share of the time they were alive), how many times it went on, and who gave it. Pick a buff on the right, or search for one, to see each player\'s uptime of it. Buffs up the whole time (raid buffs, flasks, food, passives) are only counted; Sated and Exhaustion are left out. The boss\'s debuffs on the raid are on Breakdown.</div></details>',
 };
 const PERF_LENS = [['players', 'Players'], ['hits', 'Big hits'], ['phases', 'Phases'], ['windows', 'Damage windows'], ['targets', 'Targets']];
 const KEY_OF = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
@@ -17177,7 +17150,7 @@ function hcdView(reps, one) {
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pf-hrow', attrs: ' type="button" data-hc="' + esc(a.key) + '" aria-pressed="' + on + '"', k: i + 1, icon: spellIcon(a.id, a.cd), name: esc(CD_SHORT[a.cd] || a.cd), color: a.p.color,
       chips: '<span class="pf-cdw">' + esc(a.p.name) + '</span>', segs: [[Math.max(1, 100 * a.v / mx), 'm']], v: hcdPre(a.kind) + C(a.v), sub: String(a.n) }) + (on ? '<div class="pf-inl pf-srcd">' + hcdDetail(a, one) + '</div>' : ''); }).join('');
   const left = '<div class="panel pf-bars"><h3 class="nh"><span>Raid cooldowns</span><small>what each healing or raid cooldown did' + (one ? ', up to the wipe filter' : ' over the night') + '</small></h3>' +
-    (bars ? cbHead('Amount', 'Presses', '', ' pf-hrow', 'Cooldown') + bars : '<p class="muted" style="margin:10px 0 0">No healing or raid cooldowns were pressed.</p>') + (one ? mechGo('sv-cds', 'Which big hits each raid cooldown covered is on Mechanics') : '') + '</div>';
+    (bars ? cbHead('Amount', 'Presses', '', ' pf-hrow', 'Cooldown') + bars : '<p class="muted" style="margin:10px 0 0">No healing or raid cooldowns were pressed.</p>') + (one ? mechGo('sv-cds', 'Which big hits each raid cooldown covered is on Breakdown') : '') + '</div>';
   // ---- the right: what they did in all, each player's, and the ones that make a healer stronger ----
   const line = (l, v) => '<div class="pf-sl"><span>' + l + '</span><span>' + v + '</span></div>';
   const kinds = (T4.heal ? line('Healed', '<b>' + C(T4.heal) + '</b> <span class="sub">' + Math.round(100 * T4.heal / Math.max(1, all)) + '% of all healing</span>') : '') + (T4.off ? line('Damage taken off', '<b>~' + C(T4.off) + '</b>') : '') +
@@ -17281,7 +17254,7 @@ function auraView(reps, one) {
 // ---- Performance: one search over every view ----
 // Players, spells (damage, heals, casts), what hit the raid, buffs, debuffs, cooldowns and the toolkit, from the pull
 // open: each match says where it is, and a click opens that view with it picked
-const FIND_G = [['player', 'Players'], ['dmg', 'Damage done'], ['heal', 'Healing done'], ['taken', 'Damage taken (on Mechanics)'], ['buff', 'Buffs'], ['cds', 'Cooldowns'], ['util', 'Utility'], ['surv', 'Survivability'], ['cast', 'Casts']];
+const FIND_G = [['player', 'Players'], ['dmg', 'Damage done'], ['heal', 'Healing done'], ['taken', 'Damage taken (on Breakdown)'], ['buff', 'Buffs'], ['cds', 'Cooldowns'], ['util', 'Utility'], ['surv', 'Survivability'], ['cast', 'Casts']];
 function pfFindIndex(r) {
   if (r._find) return r._find;
   const ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), out = [], strip = (n) => String(n).replace(/^[^:]+: /, '');
@@ -17549,7 +17522,7 @@ function perfTargets(r, ps, w0, w1, bossN) {
   const lg = '<p class="sub pf-tlg">Each bar is the damage a player did, in their class colour: the bright part went into ' + addW + ', the faded part into the boss, and the grey part into anything else. The number is how much of it went into ' + addW + '.</p>';
   return '<div class="panel pf-chart">' + tgtChart(r, w0, w1, cat) + '</div>' +
     '<div class="panel pf-lp">' + lensHead('Where the damage went', prio.size ? Math.round(100 * shareOf(1) / Math.max(1, shareOf(0) + shareOf(1) + shareOf(2))) + '% of it into ' + addW : '', roleChips(has)) + lg + (bars || '<p class="muted">No damage recorded.</p>') + '</div>' +
-    '<div class="panel pf-sets"><h3 class="nh"><span>' + capS(addW) + ', set by set</span></h3>' + (prio.size ? '<div class="pf-hint">' + esc([...prio].join(', ')) + (listN.length ? '' : ' (there\'s no list for this boss yet, so every add that took 3% of the damage counts)') + (timed.size ? '<br>' + esc([...timed].join(', ')) + ' counts as useful damage but isn\'t timed here, because it dies on its own clock (see Mechanics)' : '') + '</div>' : '') +
+    '<div class="panel pf-sets"><h3 class="nh"><span>' + capS(addW) + ', set by set</span></h3>' + (prio.size ? '<div class="pf-hint">' + esc([...prio].join(', ')) + (listN.length ? '' : ' (there\'s no list for this boss yet, so every add that took 3% of the damage counts)') + (timed.size ? '<br>' + esc([...timed].join(', ')) + ' counts as useful damage but isn\'t timed here, because it dies on its own clock (see Breakdown)' : '') + '</div>' : '') +
       (setRows || '<p class="muted">' + (prio.size ? 'No set stayed up long enough to need a switch.' : 'No adds that matter were up here.') + '</p>') +
       '<details class="howit"><summary>How it works</summary><div>A set is the same add spawning together (the raid\'s first hits on them within 8 seconds). Each DPS\'s time is from the raid\'s first hit on the set to their own first hit on any of it, so time the add spent unattackable isn\'t counted. Sets that died within 6 seconds, and players dead when it spawned, aren\'t judged. "Half of them within" is the middle DPS\'s time; 6 seconds or more is slow. Some DPS are told to stay on the boss: read this with your plan.</div></details></div>';
 }
@@ -25606,7 +25579,7 @@ function reportCard(reps, night) {
       '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night) : ''); };
   return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade covers the pulls they were in, by their time alive. ▲▼ compares their later pulls with the first.' : 'This pull, up to the wipe filter') + ' Most to gain comes first.</span>' + roleChips(has, 'all') + '</div>' +
     '<div class="rk-list">' + rows.map(row).join('') + '</div>' +
-    '<p class="sub rk-how">Graded on how each player played their own character: casting, big cooldowns, their defensives and their kit. Deaths, interrupts and the boss\'s mechanics are on Mechanics. S is 95 or more, A 88, B 78, C 65, D 50.</p></div>';
+    '<p class="sub rk-how">Graded on how each player played their own character: casting, big cooldowns, their defensives and their kit. Deaths, interrupts and the boss\'s mechanics are on Breakdown. S is 95 or more, A 88, B 78, C 65, D 50.</p></div>';
 }
 // a player's card: what to work on first (with what each fix is worth), then the three grades and their checks
 function rcDetail(x, night) {
@@ -25738,7 +25711,7 @@ function deaths() {
 // it in full; and over the night, how they did pull by pull, their best pull, the MVPs and who improved most. What the
 // other tabs already show in full (the survival kit, output) isn't repeated here.
 // (a fix that used to open the Report card opens the player's Spec checks page, since the Report card is gone)
-const PL_GO = { audit: 'Mechanics', asg: 'Assignments', card: 'Rotation', cast: 'Casts', res: 'Resources', prep: 'Their prep', surv: 'Survivability', util: 'Utility', cds: 'Cooldowns' };
+const PL_GO = { audit: 'Breakdown', asg: 'Assignments', card: 'Rotation', cast: 'Casts', res: 'Resources', prep: 'Their prep', surv: 'Survivability', util: 'Utility', cds: 'Cooldowns' };
 // (each staying alive and toolkit fix opens the Graphs view that shows it, on its own list there; a combat potion, or a fix no view
 // shows, gets no button)
 const PL_RC_GO = { act: 'cast', unf: 'cast', res: 'res', mana: 'res', cd: 'cds', defs: 'surv:def', tcd: 'surv:def', calls: 'surv:calls', kit: 'surv:stone', ext: 'util:ext', disp: 'util:disp', bres: 'util:bres', pot: 'none', out: 'none' };
@@ -26488,11 +26461,11 @@ function lpUsed(r) {
   // (the kicks that landed, and who got them, most first; a click opens this pull's interrupts on Mechanics (your ask, Oct 19))
   const kk = r.interrupts.filter((x) => x.t <= ct + 0.05), miss = (r.missedKicks || []).filter((m) => m.t <= ct + 0.05).length, kby = new Map(); for (const x of kk) kby.set(x.player, (kby.get(x.player) || 0) + 1);
   const pm = new Map(ps.map((p) => [p.name, p])), kl = [...kby].sort((a, b) => b[1] - a[1]);
-  if (kk.length || miss) lines.push(['Interrupts', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-' + (r.module && r.module.kicksMerged ? 'addsets' : 'kicks') + '" title="Open the interrupts on Mechanics"><b>' + kk.length + '</b> kicked' + (miss ? '<span class="lp-kmiss">, ' + plural(miss, 'cast') + ' got through</span>' : '') + ' ›</button>' +
+  if (kk.length || miss) lines.push(['Interrupts', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-' + (r.module && r.module.kicksMerged ? 'addsets' : 'kicks') + '" title="Open the interrupts on Breakdown"><b>' + kk.length + '</b> kicked' + (miss ? '<span class="lp-kmiss">, ' + plural(miss, 'cast') + ' got through</span>' : '') + ' ›</button>' +
     (kl.length ? '<span class="lp-none">' + kl.slice(0, 8).map(([n, c]) => (pm.get(n) ? lpWho(pm.get(n)) : esc(n)) + '<span class="sub"> ' + c + '</span>').join(', ') + (kl.length > 8 ? '<span class="sub"> and ' + (kl.length - 8) + ' more</span>' : '') + '</span>' : '')]);
   // (a click opens this pull's Survival kit on Mechanics, where each player's defensives are)
   // (counts only (your call, Oct 19): who didn't use one isn't advice, most players didn't need to)
-  lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Mechanics"><b>' + dU + '</b> used ›</button>']);
+  lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Breakdown"><b>' + dU + '</b> used ›</button>']);
   lines.push(['Healthstones', '<b>' + live.reduce((n, p) => n + hsN(p), 0) + '</b> used'], ['Health potions', '<b>' + live.reduce((n, p) => n + hpN(p), 0) + '</b> used']);
   return '<div class="panel lp-side-p lp-used"><h3 class="nh"><span>Used this pull</span></h3>' + lines.map(([k, v]) => '<div class="lp-pr"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
 }
@@ -26572,7 +26545,7 @@ const dbfSecName = (s) => (s.spell && s.spell[1] ? s.spell[1] : shortT(s.title).
 const dbfUs = (n) => (n === 1 ? 'one of us' : n + ' of us');
 // (one pull's Recap, the small arrow at the end of a line (your ask, Oct 19: "add small arrows that link them to the mechanic to
 // view more details"): it opens that section on this pull's Mechanics, by the start of its id ("sec-vf-" is Venomfang)
-const dbfGo = (sec) => '<button class="dbf-go" type="button" data-dsec="' + esc(sec) + '" title="See it on Mechanics" aria-label="See it on Mechanics">›</button>';
+const dbfGo = (sec) => '<button class="dbf-go" type="button" data-dsec="' + esc(sec) + '" title="See it on Breakdown" aria-label="See it on Breakdown">›</button>';
 // (a Mechanics row that went wrong, in words (your call, Oct 19: "Venomfang (Dispels) had a mistake" makes no sense): the player
 // the row is about and what was wrong, with its column, "Boltzzx (removed after 8.5s)"; null when the row doesn't read that way)
 const dbfRowSay = (s, row, pm) => { const col = (c) => String((s.cols || [])[row.indexOf(c)] || '').toLowerCase();
@@ -26686,7 +26659,7 @@ function dbfPull(o) {
   const room = Math.max(2, 5 - wrong.length - tail.length), shown = bad.slice(0, room);
   for (const [, x] of shown) wrong.push(mLine(x) + dbfGo('sec-' + x.s.id + '-'));
   wrong.push(...tail.slice(0, Math.max(0, 5 - wrong.length)));
-  if (bad.length > shown.length) wrong.push('<span class="sub">' + plural(bad.length - shown.length, 'more mechanic') + ' had mistakes. They\'re all on Mechanics.</span>');
+  if (bad.length > shown.length) wrong.push('<span class="sub">' + plural(bad.length - shown.length, 'more mechanic') + ' had mistakes. They\'re all on Breakdown.</span>');
   // ---- better and worse than the last pull (the last one that wasn't a reset) ----
   const up = [], down = [];
   if (B) {
@@ -26776,7 +26749,7 @@ function dbfNight(o) {
     'went wrong ' + (m.wr.length < m.j.length ? 'in ' + m.wr.length + ' of ' + plural(m.j.length, 'pull') : m.j.length === n ? 'in every pull' : 'every time it came up (' + plural(m.j.length, 'pull') + ')') + mostly(m.who)) + '.' + tip(mFix(m.x)));
   const missAll = S.reduce((s, x) => s + x.missK, 0); if (missAll) oL.push('<b>' + plural(missAll, 'kickable cast') + ' got through.</b> Check the kick order.');
   const room = Math.max(2, 5 - dL.length - oL.length), wrong = dL.slice(0, 3).concat(mL.slice(0, room), oL);
-  if (mL.length > room) wrong.push('<span class="sub">' + plural(mL.length - room, 'more mechanic') + ' went wrong. They\'re all on Mechanics.</span>');
+  if (mL.length > room) wrong.push('<span class="sub">' + plural(mL.length - room, 'more mechanic') + ' went wrong. They\'re all on Breakdown.</span>');
   // ---- what got better and what got worse, from the first half of the night to the second ----
   const up = [], down = [], tr = (a, b, lowGood) => (lowGood ? b < a : b > a), E = 'early in the night', Lt = 'later';
   if (cmp) {
@@ -27288,7 +27261,7 @@ const LOGO = '<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="
 // The front page's preview: an app-like window with four views (Pull recap, Mechanics, Rotation, Assignments; your call,
 // Oct 19: Rotation in, Night summary out, since Night summary is now Pull recap on the whole night).
 // All made-up example data and names, drawn in code (no game art).
-const FP_SCENES = [['live', 'Recap'], ['mech', 'Mechanics'], ['rot', 'Rotation'], ['assign', 'Assignments']];
+const FP_SCENES = [['live', 'Recap'], ['mech', 'Breakdown'], ['rot', 'Rotation'], ['assign', 'Assignments']];
 const FP_MODS = { live: 'What went well, what didn\'t, and what changed since the last pull.', mech: 'Every mechanic checked, with maps of who stood where.', rot: 'Your own casts and cooldowns, checked like a coach would.', assign: 'Your NSRT note against what really happened.' };
 function fpParts() {
   const mark = { bad: '✕', warn: '!', ok: '✓' };
@@ -27516,7 +27489,7 @@ const TOUR = [
     art: () => '<svg class="tr-logo" viewBox="0 0 64 64" aria-hidden="true"><path class="s1" d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z"/><path class="s2" d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z"/><path class="s3" d="m27 32.5 4 4 8.5-9.5"/></svg>' },
   { t: 'Every pull, explained', p: 'The moment a pull ends, Recap explains it in plain words: what went well, what didn\'t, and what changed since the last pull. Click a pull at the top to see any of them.',
     art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ Brann died first, at 1:42, to Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
-  { t: 'Mechanics, with maps', p: 'Open any mechanic on the Mechanics tab to see a map of where everyone stood, and press Play to watch the moment again. Every mechanic is checked for every player. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it too.',
+  { t: 'Mechanics, with maps', p: 'Open any mechanic on the Breakdown tab to see a map of where everyone stood, and press Play to watch the moment again. Every mechanic is checked for every player. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it too.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
   { t: 'Rotation and graphs', p: 'Rotation goes through how each player played their own spec, the way a top player of it would. Graphs has the raw numbers, like Warcraft Logs but easier to read: damage, healing, casts, resources, cooldowns and more. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
