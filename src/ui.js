@@ -3553,7 +3553,9 @@ function audit() {
     // rebuild, Oct 19: this tab is the mechanics; the rest is one click away))
     if (!r.allPulls) { h = h.slice(0, refAt); dbMore = grid; void wEnd; void nb; }
     else h = wEnd >= 0 ? h.slice(0, wEnd) + grid + '</details>' : h.slice(0, refAt) + '<details class="phase mcx-ph" data-mst="' + (nb ? 'major' : 'clean') + '" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b><span class="sub">your kit, raid cooldowns, damage taken and kicks</span></summary>' + grid + '</details>'; } }
-  if (!r.allPulls) { try { dbMore += burstPanel(r, m, cut); } catch (e) { console.error(e); } } // (never block the page)
+  // (your note, Oct 19: on a fight with a damage window or DPS check, the burst windows are a mechanic of their own, so they sit on the page
+  // after the checklist; on the rest they're Bloodlust only, and wait in More)
+  if (!r.allPulls) { try { const A0 = BOSS_AMP[r.item.boss], bp = burstPanel(r, m, cut); if (A0 && !A0.lust) h += bp; else dbMore += bp; } catch (e) { console.error(e); } } // (never block the page)
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
