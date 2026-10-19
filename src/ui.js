@@ -9656,7 +9656,8 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
 // The Rotation tab as sections of tiles (Oct 19, "make each and every rotation tab a similar design": a sentence of why on the left, the checks as
 // tiles on the right, the section's stat boxes and bars under them)
 const SPC_BW = { ok: 'Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' };
-const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1;
+// (a tile with burst-window cards in it starts open on every spec page, clean or not (your call, Oct 19): the cards are the part players read most)
+const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1 || String(v || '').includes('class="spc-w ');
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
     '<b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>' + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
     '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';
