@@ -1362,6 +1362,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .bp-pop, .tbm-pop { position: absolute; top: calc(100% + 8px); z-index: 40; display: flex; flex-direction: column; gap: 2px; min-width: 250px; padding: 6px; background: #1a1e28; border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.55); }
 .bp-pop[hidden], .tbm-pop[hidden] { display: none; } .bp-pop { left: 0; } .tbm-pop { right: 0; }
 .bp-i, .tbm-i { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--text); font: 600 14px var(--body); text-align: left; cursor: pointer; }
+.bp-i[hidden], .tbm-i[hidden] { display: none; } /* (the website hides Open combat log and Saved progress: display: flex above beat it) */
 .bp-i span, .tbm-i span { font: 400 12px var(--body); color: var(--faint); } .bp-i b { font-weight: 600; } .bp-i:hover, .tbm-i:hover { background: var(--raised); } .bp-i.on { background: rgba(230,180,80,.1); }
 .tbmenu { position: relative; } .tbm-b { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; padding: 0; border-radius: 9px; }
 .tbm-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }

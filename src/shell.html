@@ -1362,6 +1362,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .bp-pop, .tbm-pop { position: absolute; top: calc(100% + 8px); z-index: 40; display: flex; flex-direction: column; gap: 2px; min-width: 250px; padding: 6px; background: #1a1e28; border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.55); }
 .bp-pop[hidden], .tbm-pop[hidden] { display: none; } .bp-pop { left: 0; } .tbm-pop { right: 0; }
 .bp-i, .tbm-i { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--text); font: 600 14px var(--body); text-align: left; cursor: pointer; }
+.bp-i[hidden], .tbm-i[hidden] { display: none; } /* (the website hides Open combat log and Saved progress: display: flex above beat it) */
 .bp-i span, .tbm-i span { font: 400 12px var(--body); color: var(--faint); } .bp-i b { font-weight: 600; } .bp-i:hover, .tbm-i:hover { background: var(--raised); } .bp-i.on { background: rgba(230,180,80,.1); }
 .tbmenu { position: relative; } .tbm-b { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; padding: 0; border-radius: 9px; }
 .tbm-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
@@ -2917,45 +2918,40 @@ details.pf-dc > summary .sst { margin-left: auto; }
 }
 /* (a mechanic's spell icon on the maps: in the middle of a floor circle, a badge on the edge of one on a player) */
 .zmap .mic { opacity: 0; transition: opacity .25s; pointer-events: none; } .zmap .mic.on { opacity: .92; } .zmap .mic.edge.on { opacity: 1; }
-/* Compare tab (Oct 19, "what you are comparing and who against is not clear"): the same order in every view. The switch
-   (Fellow raiders, Top raiders of your spec, Similar raid groups), then one panel with you on the left and who you are
-   compared with on the right, and the scoreboard under them (mirrored bars, the better side bright), then Biggest
-   differences, then the details folded. Lists are the site's bar rows (cbRow), as on Graphs and Players. */
-.cmp-seg { margin: 0 0 12px; }
-.cmp-vsp { padding: 18px 20px 14px; }
-.cmp-vsh { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
-.cmp-side { display: flex; align-items: center; gap: 12px; min-width: 0; } .cmp-side.r { flex-direction: row-reverse; text-align: right; }
-.cmp-side > .av { width: 46px; height: 46px; flex: none; }
-.cmp-sn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; } .cmp-side.r .cmp-sn { align-items: flex-end; }
-.cmp-snm { font: 700 22px/1.15 var(--head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.cmp-sn > .sub { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.cmp-vsx { font: 700 15px var(--head); color: var(--faint); letter-spacing: .12em; text-transform: uppercase; padding: 6px 10px; border: 1px solid var(--line2); border-radius: 999px; }
-.cmp-badge { width: 46px; height: 46px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
-.cmp-badge svg { width: 24px; height: 24px; fill: none; stroke: var(--c); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.cmp-sn .rot-sel { display: inline-block; width: auto; max-width: 190px; min-width: 0; height: auto; margin: 4px 0 0; padding: 3px 26px 3px 10px; border: 1px solid var(--line2); border-radius: 999px; background-color: rgba(0,0,0,.3); color: var(--muted); font: 600 12px var(--body); cursor: pointer; appearance: auto; }
-.cmp-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 4px; }
-/* the scoreboard: a value | its bar growing left | what it is | the other bar growing right | the other value */
-.cmp-sb { display: flex; flex-direction: column; gap: 2px; padding-top: 10px; }
-.cmp-sb-r { display: grid; grid-template-columns: 96px minmax(0, 1fr) 180px minmax(0, 1fr) 96px; align-items: center; gap: 10px; padding: 5px 0; }
-.cmp-sb-l { text-align: center; font-size: 13px; color: var(--muted); }
-.cmp-sb-b { display: flex; height: 8px; border-radius: 4px; background: rgba(255,255,255,.04); overflow: hidden; } .cmp-sb-b.l { justify-content: flex-end; }
-.cmp-sb-b i { display: block; height: 100%; border-radius: 4px; opacity: .55; }
-.cmp-sb-v { font: 600 15px var(--head); font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; } .cmp-sb-v.l { text-align: right; } .cmp-sb-v.r { text-align: left; }
-.cmp-sb-v.win { color: var(--text); font-size: 17px; }
-.cmp-sb-r:has(.win) .cmp-sb-b i { opacity: .4; } .cmp-sb-r:has(.cmp-sb-v.l.win) .cmp-sb-b.l i, .cmp-sb-r:has(.cmp-sb-v.r.win) .cmp-sb-b.r i { opacity: .95; }
-/* the folded details */
-.cmp-fold > summary { list-style: none; cursor: pointer; } .cmp-fold > summary::-webkit-details-marker { display: none; }
-.cmp-fold > summary h3 { margin: 0; } .cmp-fold > summary h3::before { content: "\25B8"; color: var(--faint); font-size: .8em; margin-right: 2px; } .cmp-fold[open] > summary h3::before { content: "\25BE"; }
-.cmp-fold[open] > summary { margin-bottom: 10px; } .cmp-fold > summary:hover h3 { color: var(--gold); }
-.cmp-lbl { display: block; font: 700 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 0 0 7px; }
+/* Compare tab (Oct 19): built from the site's own pieces. The header as on Players ("Name vs Name", each with Change),
+   the tiles, then a panel of the site's bar rows in pairs (as on Graphs: hover a bar for its numbers, click a pair to
+   open its details under it), then Biggest differences as on Rotation. */
+.cmp-head { padding-bottom: 12px; } .cmp-head .seg { margin: 0 0 12px; }
+.cmp h3.cmp-vh { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: 0; }
+.cmp-who { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; } .cmp-who small { color: var(--faint); font-size: 12.5px; }
+.cmp-vs { font: 700 12px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.cmp h3 .rot-sel { display: inline-block; width: auto; max-width: 170px; min-width: 0; height: auto; margin: 0; padding: 3px 26px 3px 10px; border: 1px solid var(--line2); border-radius: 999px; background-color: rgba(0,0,0,.3); color: var(--muted); font: 600 12px var(--body); cursor: pointer; appearance: auto; }
+.cmp h3 .btn { margin: 0; }
+.cmp-ico { width: 20px; height: 20px; flex: none; display: inline-grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.cmp-ico svg { width: 12px; height: 12px; fill: none; stroke: var(--c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cmp .cutbar .btn { margin-left: auto; }
+.cmp-pts { margin-bottom: 14px; }
+/* the pairs: a label, the two bar rows, and when open their details under them */
+.cmp-grp { padding: 8px 0 6px; border-top: 1px solid var(--line); } .cmp-grp:first-of-type { border-top: 0; padding-top: 2px; }
+.cmp-lbl { display: block; font: 700 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 0 0 5px; }
+.cmp-lbl span { margin-left: 8px; color: var(--faint); font-weight: 500; letter-spacing: 0; text-transform: none; font-size: 12px; }
+.cmp-key { display: inline-block; width: 14px; height: 8px; margin: 0 4px 0 6px; border-radius: 2px; vertical-align: 0; background: repeating-linear-gradient(135deg, rgba(229,83,75,.62) 0 3px, rgba(229,83,75,.28) 3px 6px); }
+.pf-row.cb.cmp-gr { grid-template-columns: 0 minmax(0, 1fr) 70px 70px; } .cmp-gr .pf-k { visibility: hidden; }
+.cmp-gr .cb-in .cmp-ico { margin-left: 2px; }
+.cmp-grp.on .pf-row.cb.cmp-gr { background: var(--raised); }
+.cmp-inl { margin: 8px 0 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.2); }
+.cmp-how { margin: 0 0 8px; font-size: 12.5px; }
+.cmp-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 22px; } .cmp-col { min-width: 0; }
+.pf-row.cb.cmp-sr2 { grid-template-columns: 18px minmax(0, 1fr) 58px 0; }
+.cmp-sr2 .cb-in .icw, .cmp-sr .cb-in .icw { width: 18px; height: 18px; flex: none; margin: 0; border-radius: 3px; overflow: hidden; } .cmp-sr2 .cb-in .icw svg, .cmp-sr2 .cb-in .icw img, .cmp-sr .cb-in .icw svg, .cmp-sr .cb-in .icw img { width: 100%; height: 100%; }
+/* Biggest differences: cards with an icon and a sentence, as on Rotation */
 .cmp-dg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .cmp-dc { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; background: rgba(0,0,0,.25); }
 .cmp-dc .icw { width: 30px; height: 30px; margin: 1px 0 0; flex: none; border-radius: 6px; overflow: hidden; } .cmp-dc .icw svg, .cmp-dc .icw img { width: 100%; height: 100%; }
 .cmp-dc > span { min-width: 0; } .cmp-dc b { display: block; font-size: 14px; } .cmp-dc .sub { display: block; font-size: 13px; line-height: 1.45; color: var(--muted); }
-/* the bar rows' columns: spells (# | bar | theirs | the other side | casts a minute), player by player (bar | this pull |
-   their best | gap) and the raids (rank | bar | kill | raid DPS | specs matched) */
+/* the other bar rows' columns: spells (# | bar | theirs | the other side | casts a minute), player by player (bar | this
+   pull | their best | gap) and the raids (rank | bar | kill | raid DPS | specs matched) */
 .pf-row.cb.cmp-sr { grid-template-columns: 20px minmax(0, 1fr) 62px 62px 96px; }
-.cmp-sr .cb-in .icw { width: 18px; height: 18px; flex: none; margin: 0; border-radius: 3px; overflow: hidden; } .cmp-sr .cb-in .icw svg, .cmp-sr .cb-in .icw img { width: 100%; height: 100%; }
 .cmp-sr .cb-r { justify-content: flex-end; gap: 4px; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pf-row.cb.cmp-ssr { grid-template-columns: 0 minmax(0, 1fr) 64px 160px 56px; } .cmp-ssr .pf-k { visibility: hidden; } .cmp-ssr .cb-r { justify-content: flex-end; }
 .pf-row.cb.cmp-kr { grid-template-columns: 30px minmax(0, 1fr) 56px 64px 44px; padding-top: 4px; padding-bottom: 4px; } .cmp-kr .cb-r { justify-content: flex-end; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -2964,21 +2960,18 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 14px; } .cmp-ctl .seg { margin: 0; }
 .cmp-find { background: var(--panel); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 10px; font: inherit; min-width: 0; width: 180px; }
 .cmp-list { padding-bottom: 8px; } .cmp-list h3 { margin-bottom: 8px; }
-.cmp-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
-.cmp .cutbar .btn { margin-left: auto; }
 @media (max-width: 640px) {
-  .cmp-vsp { padding: 14px 12px 10px; }
-  .cmp-vsh { gap: 8px; } .cmp-side { flex-direction: column; align-items: flex-start; gap: 6px; } .cmp-side.r { flex-direction: column; align-items: flex-end; }
-  .cmp-side > .av, .cmp-badge { width: 38px; height: 38px; } .cmp-snm { font-size: 17px; } .cmp-vsx { padding: 4px 7px; font-size: 12px; }
-  .cmp-sb-r { grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 64px; gap: 4px 6px; padding: 4px 0; } .cmp-sb-l { grid-column: 1 / -1; grid-row: 1; font-size: 12px; }
-  .cmp-sb-v { font-size: 13.5px; } .cmp-sb-v.win { font-size: 15px; }
+  .cmp-head .seg, .cmp-ctl .seg { width: 100%; } .cmp-find { width: 100%; }
+  .cmp h3.cmp-vh { flex-direction: column; align-items: flex-start; } .cmp-vs { margin-left: 2px; }
+  .pf-row.cb.cmp-gr { grid-template-columns: 0 minmax(0, 1fr) 54px 54px; }
+  .cmp-two, .cmp-dg { grid-template-columns: 1fr; }
   .pf-row.cb.cmp-sr { grid-template-columns: 16px minmax(0, 1fr) 46px 58px; } .cmp-sr .cb-r { display: none; }
   .pf-row.cb.cmp-ssr { grid-template-columns: 0 minmax(0, 1fr) 50px 0 46px; } .cmp-ssr .cb-s { visibility: hidden; }
   .pf-row.cb.cmp-kr { grid-template-columns: 24px minmax(0, 1fr) 42px 50px 34px; } .cmp-kr .pf-nm .sub { display: none; }
-  .cmp-diff, .cmp-dg { grid-template-columns: 1fr; } .cmp-find { width: 100%; } .cmp-seg, .cmp-ctl .seg { width: 100%; }
-  .cmp .panel > h3, .cmp-fold > summary h3 { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .cmp .panel > h3 { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 </style>
+
 
 
 
