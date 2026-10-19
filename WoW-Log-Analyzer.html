@@ -21198,7 +21198,7 @@ function cmp() {
   const v = $('#view');
   v.querySelectorAll('#cmpMode button').forEach((b) => (b.onclick = () => { S.cmpMode = b.dataset.m; S.cmpG = null; cmp(); }));
   const sel = (id, f) => { const e = $('#' + id); if (e) e.onchange = () => { if (!e.value) return; f(e.value); cmp(); }; };
-  sel('cmpMe', (nm) => { S.cmpMe = nm; if (S.cmpMate === nm) S.cmpMate = null; }); sel('cmpMate', (nm) => { S.cmpMate = nm; });
+  sel('cmpMe', (nm) => { S.cmpMe = nm; if (S.cmpMate === nm) S.cmpMate = null; }); sel('cmpMate', (nm) => { S.cmpMate = nm; }); sel('cmpTopW', (v) => { S.cmpTopW = v === 'avg' ? 'avg' : +v; });
   // (a pair of bars: open its details under it, or close them)
   v.querySelectorAll('[data-cg]').forEach((b) => (b.onclick = () => { S.cmpG = S.cmpG === b.dataset.cg ? null : b.dataset.cg; cmp(); }));
   const all2 = $('#cmpAllSp'); if (all2) all2.onclick = () => { S.cmpAllSp = !S.cmpAllSp; cmp(); };
