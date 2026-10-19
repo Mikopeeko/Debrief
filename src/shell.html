@@ -1500,6 +1500,16 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .fph-how { margin: 10px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: #c4c9d2; } .fph-how b { color: #f1f3f7; }
 .fph-sec { width: 100%; max-width: 640px; margin-top: 22px; text-align: left; } .fph-sl { margin-bottom: 8px; font-size: 14px; color: #c4c9d2; }
 .fph-alt { margin-top: 8px; font-size: 13px; color: var(--muted); } .fph-alt .linkbtn { margin: 0; padding: 0; font-size: 13px; }
+/* "Start here" on the welcome page: add your team or your character */
+.hs-start { width: 100%; max-width: 640px; margin: 30px auto 0; padding: 20px 20px 16px; box-sizing: border-box; text-align: left; border-radius: 16px; border: 1px solid rgba(230,180,80,.5); background: linear-gradient(180deg, rgba(230,180,80,.09), transparent 70%) var(--panel); }
+.hs-start + .fph-main { margin-top: 18px; }
+.hs-k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.hs-start h2 { margin: 4px 0 0; font: 700 24px var(--head); color: #f3f5f9; } .hs-lead { margin: 6px 0 14px; font-size: 14px; line-height: 1.5; color: #c4c9d2; }
+.hs-pick { display: flex; gap: 8px; margin-bottom: 10px; } .hs-pick button { flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line2); background: var(--bg); color: #c4c9d2; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.hs-pick button:hover { border-color: var(--gold); } .hs-pick button.on { border-color: var(--gold); background: rgba(230,180,80,.14); color: #f3f5f9; }
+.hs-start .fp-msg { margin-top: 8px; } .hs-how { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); } .hs-how a { color: var(--gold); }
+.hs-how code { font-size: 12px; padding: 0 4px; border-radius: 4px; background: var(--raised); color: #d6dae2; word-break: break-all; }
+@media (max-width: 760px) { .hs-start { margin-top: 22px; padding: 14px; } .hs-start h2 { font-size: 21px; } .hs-start .fph-box { flex-direction: column; } .hs-start .fph-box .btn { width: 100%; } }
 .fph-prev { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 1100px; margin: 0 auto; } .fph-prev h2 { margin: 0; font: 700 24px var(--head); color: #f3f5f9; text-align: center; }
 .fph .fp-prev { flex: none; } .fph .fp-mods button { flex: 1 1 200px; }
 @media (max-width: 760px) {

@@ -12425,10 +12425,10 @@ function home() {
         '<div class="fp-tabs">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '" aria-pressed="' + (i ? 'false' : 'true') + '"' + (i ? '' : ' class="on"') + '>' + t + '</button>').join('') + '</div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
         '<div class="fp-note">Example data. Click a tab to look around.</div></div></section></div>' +
-    (teamsTop ? '' : homeTeams()) +
+    (teamsTop ? '' : homeStart()) +
     '<section class="fp-ways"><h2>Four ways to look at a night</h2><div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div></section>' +
     homeFoot() + '</div>';
-  bindHomeTeams(); homeTeamsSoon();
+  bindHomeTeams(); bindHomeStart(); homeTeamsSoon();
   // open a report: with a saved login (or the hosted site) straight away; otherwise the login form, link filled in
   const go = async (inputId, msgId, live) => {
     const raw = $('#' + inputId).value, link = WCL.parseLink(raw), msg = $('#' + msgId);
@@ -12707,9 +12707,8 @@ function homeHosted() {
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
-    (teamsTop ? '' : homeTeams()) +
     homeFoot() + '</div>';
-  bindHomeTeams(); homeTeamsSoon();
+  bindHomeTeams(); bindHomeStart(); homeTeamsSoon();
   // (either box takes any report link: the live one follows it from the start, the other turns live on by itself if the
   // report is still being logged)
   const go = async (k, live) => {
@@ -12813,6 +12812,37 @@ function charAff(g) {
   const parts = (g.guild ? ['‹' + g.guild + '›'] : []).concat(teams.filter((n) => n !== g.guild));
   return parts.length ? '<span class="ht-g">' + esc(parts.join(' · ')) + '</span>' : '';
 }
+// ---- "Start here" on the welcome page: someone new adds their team or their character first ----
+// Two choices (team or guild, or character) set the box's hint and where to find the link; either link works in the
+// same box, and a report link pasted here by mistake just opens that report.
+const HS_KIND = {
+  team: { ph: 'Paste your team or guild page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.' },
+  char: { ph: 'Paste your character page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your character\'s name, open it, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.' } };
+function homeStart() {
+  return '<section class="hs-start" id="hsStart"><div class="hs-k">Start here</div><h2>Add your team or your character</h2>' +
+    '<p class="hs-lead">Debrief brings in every raid night of the tier from Warcraft Logs, boss by boss, and new nights come in by themselves.</p>' +
+    '<div class="hs-pick" role="group" aria-label="What to add"><button type="button" class="on" data-k="team" aria-pressed="true">My team or guild</button><button type="button" data-k="char" aria-pressed="false">My character</button></div>' +
+    '<div class="fph-box"><input id="hsIn" placeholder="' + HS_KIND.team.ph + '" autocomplete="off" aria-label="Warcraft Logs team, guild or character link"><button class="btn primary" id="hsGo" type="button">Add</button></div>' +
+    '<div class="fp-msg" id="hsMsg"></div><p class="hs-how" id="hsHow">' + HS_KIND.team.how + '</p></section>';
+}
+function bindHomeStart() {
+  if (!$('#hsStart')) return;
+  const inp = $('#hsIn'), msg = $('#hsMsg');
+  $$('#hsStart .hs-pick button').forEach((b) => (b.onclick = () => {
+    $$('#hsStart .hs-pick button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    inp.placeholder = HS_KIND[b.dataset.k].ph; $('#hsHow').innerHTML = HS_KIND[b.dataset.k].how; inp.focus(); }));
+  const go = async () => {
+    const raw = inp.value;
+    if (!groupLink(raw) && WCL.parseLink(raw)) { openReportLink(raw, msg); return; } // (one night: open it)
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
+    try { const { g: ng, already } = await groupAdd(raw);
+      if (already) { progressPage(gName(ng) + ' is already on your list.', ng.gid); return; }
+      progressPage('Added ' + ng.name + '. Importing its nights…', ng.gid); progRun(ng); groupsBackfill();
+    } catch (e) { msg.style.color = ''; msg.textContent = e.message.replace(' (see "Which link?" below)', '. The line under this box says where to find it'); }
+  };
+  $('#hsGo').onclick = go;
+  inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+}
 // a team's card (the start screen and the teams page): bosses killed on each difficulty it pulled, its last night
 function teamCard(g, all, order, big) {
   const mine = all.filter(groupFilter(g)), last = mine.reduce((m, v) => Math.max(m, v.at), 0), nights = new Set(mine.map((v) => nightOf(v.at))).size;
@@ -12822,6 +12852,7 @@ function teamCard(g, all, order, big) {
     // (a team's World and US rank, once its page has read them)
     (g && g.rank && (g.rank.w || g.rank.r) ? '<span class="ht-g ht-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '') +
     '<span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g) + (g.faction ? ' · ' + esc(g.faction) : '')) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
+      (teamsTop ? '' : homeStart()) +
     '<span class="ht-d">' + (diffs || '<span>not imported yet</span>') + '</span><span class="ht-l">' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : g ? 'open to import its nights' : 'nothing saved yet') + '</span></span></button>';
 }
 // A team's card on the teams page: the art of the boss it's on now (or its last kill) faded in behind, its banner, name
