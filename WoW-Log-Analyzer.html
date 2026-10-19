@@ -5229,7 +5229,7 @@ function buildLostExplorers(ev, r, h) {
 
   // ---- 5. Nama: Mighty Thud (three leaps, each split by everyone under it) ----
   {
-    const leaps = castOk(LE.thud), hit = dmgId(LE.thudHit), groups = [];
+    const leaps = castOk(LE.thud), hit = dmgId(LE.thudHit), after = dmgId(LE.aftershock), groups = [];
     // How it plays (Method's Heroic and Mythic guides, and the log): Nama marks three players and leaps onto each in turn,
     // closest first, about 2 seconds apart. Each landing hits everyone within 6 yards (the log's hits all stood within
     // about 5.5 yards of the marked player) and knocks them back; on Mythic the raid lines the marks up away from Nama and
@@ -5239,7 +5239,8 @@ function buildLostExplorers(ev, r, h) {
     const spotOf = (t) => { const c = ev.find((e) => e.k === 'cast' && e.id === LE.thud && Math.abs(e.t - t) < 0.4 && e.x != null), sp = h.snap(t);
       const who = new Set(hit.filter((e) => e.t >= t - 0.2 && e.t <= t + 0.8).map((e) => e.dst)), on = sp.filter((p) => who.has(p.guid));
       return c ? { x: c.x, y: c.y } : on.length ? { x: on.reduce((s, p) => s + p.x, 0) / on.length, y: on.reduce((s, p) => s + p.y, 0) / on.length } : null; };
-    for (const c of clusters(leaps.map((t) => ({ t })), 6)) {
+    const sets = clusters(leaps.map((t) => ({ t })), 6);
+    for (const [si, c] of sets.entries()) { const nextSet = sets[si + 1] ? sets[si + 1].t : null;
       // (one map for the whole set (your note, Oct 18), on its own row above the leaps: all three marks numbered in order,
       // each filling as its leap comes, then slamming and leaving a crater (Aftershock), with a dashed line from Nama to the
       // mark he leaps to next)
@@ -5269,10 +5270,23 @@ function buildLostExplorers(ev, r, h) {
       rows.unshift([{ txt: 'All ' + c.list.length + ' leaps', sub: 'the whole set, on one map', dim: true }, { t: c.t }, { txt: '' }, { txt: '' },
         { map: { t: tEnd, good: [...first.keys()], goodLabel: 'soaked a leap', goodAt: [...first].map(([g, t]) => [g, t]), pendLabel: 'not under a leap yet', bad: allDied, badLabel: 'died to it',
           title: 'Mighty Thud at ' + T(c.t) + ': all ' + c.list.length + ' leaps, in order', pts: h.snap(tEnd), frames: setFrames, rings: setRings(), links: setLinks, focus } }]);
-      const lr = rows.slice(1); groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: lr.some((x) => x[2].bad || x[3].bad), warn: lr.some((x) => x[2].warn), sub: lr.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
+      // (the craters it leaves (Aftershock) count too (your note, Oct 18: any mess-up with it shows under what went wrong):
+      // everyone who stood in one, from the first leap until the next set or a minute later, with a map of the first hit)
+      const lr = rows.slice(1), cEnd = Math.min(nextSet != null ? nextSet : Infinity, c.list[c.list.length - 1].t + 60);
+      const ash = after.filter((e) => e.t >= c.list[0].t && e.t < cEnd), ashBy = new Map(); for (const e of ash) { const o = ashBy.get(e.dst) || { n: 0, amt: 0, t: e.t }; o.n++; o.amt += e.amt || 0; ashBy.set(e.dst, o); }
+      const ashDied = deadBy(/aftershock/i, c.list[0].t, cEnd);
+      if (ashBy.size || ashDied.length) { const t1 = ash.length ? ash[0].t : ashDied[0].t, ord = [...ashBy].sort((a, b) => b[1].n - a[1].n);
+        // (the count leads the row, so the summary line reads "7 players stood in a crater"; the names and ticks sit beside it)
+        lr.push([{ txt: ashBy.size ? pl(ashBy.size, 'player') + ' stood in a crater' : 'Craters', warn: ashBy.size > 0 }, { t: t1 }, { txt: ord.map(([g, o]) => pname(g) + ' (' + o.n + (o.n === 1 ? ' tick)' : ' ticks)')).join(', ') || '—', dim: true },
+          ashDied.length ? { txt: ashDied.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
+          { map: { t: t1 + 0.2, hl: [...ashBy.keys()], hlLabel: 'stood in a crater', bad: [...new Set(ash.filter((e) => e.t <= t1 + 3).map((e) => e.dst))], badAt: ash.filter((e) => e.t <= t1 + 3).map((e) => [e.dst, e.t]), badLabel: 'took an Aftershock tick',
+            title: 'Aftershock at ' + T(t1) + ': the craters Mighty Thud left, and who stood in one', pts: h.snap(t1 + 0.2), frames: frames(t1 - 2.5, t1 + 3), focus,
+            rings: c.list.flatMap((l, k) => spots[k] ? [{ x: spots[k].x, y: spots[k].y, r: THUD_R, color: '#a8662e', fill: 'rgba(120,70,30,.22)', fx: 'puddle', t0: l.t + 0.8, dur: 60, label: '', cn: 'Brown circle', legend: 'a crater a leap left (Aftershock: stay out of it)' }] : []) } }]);
+        rows.push(lr[lr.length - 1]); }
+      groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: lr.some((x) => x.some((q) => q.bad)), warn: lr.some((x) => x.some((q) => q.warn)), sub: lr.slice(0, c.list.length).map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers' + (ashBy.size ? ', ' + pl(ashBy.size, 'player') + ' in a crater' : ''), rows });
     }
-    if (groups.length) sections.push({ id: 'thud', title: 'Mighty Thud (leaps): every landing soaked', spell: [1296094, 'Mighty Thud'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(groups.length, 'Mighty Thud') + '. It shows who was under each of the three leaps, and deaths to them.', cols: ['Leap', 'When', 'Soakers', 'Died', ''], groups, rows: [] });
+    if (groups.length) sections.push({ id: 'thud', title: 'Mighty Thud (leaps): every landing soaked, craters avoided', spell: [1296094, 'Mighty Thud'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'Mighty Thud') + '. It shows who was under each of the three leaps, deaths to them, and anyone who stood in the craters they left.', cols: ['Leap', 'When', 'Soakers', 'Died', ''], groups, rows: [] });
   }
 
   // ---- 6. Gebbo: Explosive Surprise (bounce over the Blast Wave with a mushroom) ----
@@ -5358,7 +5372,7 @@ const HOW = {
     ascension: 'Mor\'zahi builds energy and at 100 casts Final Ascension, which keeps hitting the raid until everyone dies. Feeding a Disgusting Fish (from the boxes) to the turtle he controls stops it and moves him to the next explorer, which then uses its empowered moves. You get three feeds, and the fourth Final Ascension is the hard enrage. Feed with about 4 seconds left on the cast. Red: Final Ascension went off.',
     frostfire: 'Iku\'s Frostfire Volley gives some players Burning Flames (fire) and others Piercing Frost (frost), each leaving a patch on the floor. Clear yours by standing in the other element\'s patch: a frost patch clears Burning Flames, a fire patch clears Piercing Frost. If the next volley hits someone still carrying the other element, Elemental Explosion can wipe the raid. Spread, and don\'t walk into a patch of your own type. Red: still on at the next volley, or a death with it. Amber: cleared after more than 8 seconds.',
     blink: 'Blink Nova: Iku blinks to a player and explodes, hitting the whole raid less the farther away they are. Spread out. The target moves at least 20 yards from the melee and away from the raid. Each row is one Blink Nova: its target, the average hit, and deaths. Red: a death to it.',
-    thud: 'Nama\'s Mighty Thud marks spots and leaps to them in turn. Each landing is split between everyone within 6 yards and knocks them back, and an empty spot hits the whole raid for the full amount. Line up away from Nama. Everyone soaks the first leap and gets knocked into the next, then the third. Each landing leaves Aftershock craters for 30 seconds. Red: a leap with nobody under it, or a death. Amber: fewer than five soakers.',
+    thud: 'Nama\'s Mighty Thud marks spots and leaps to them in turn. Each landing is split between everyone within 6 yards and knocks them back, and an empty spot hits the whole raid for the full amount. Line up away from Nama. Everyone soaks the first leap and gets knocked into the next, then the third. Each landing leaves Aftershock craters for 30 seconds. Red: a leap with nobody under it, or a death. Amber: fewer than five soakers, or anyone standing in a crater.',
     bomb: 'Gebbo\'s Explosive Surprise lands a bomb on a player, then sends out a Blast Wave that kills: bounce over it on a Bouncy Mushroom (on Mythic there\'s one mushroom per bomb, so don\'t pop it early), or blink, teleport or leap over it. Drop the bomb at the edge of the room. Red: hit by the Blast Wave.',
     tankstacks: 'Iku\'s Shredding Shards (50% more damage from them per stack) and Nama\'s Steady Strikes (4% more physical damage per stack) ramp on their tanks, so swap as they climb. Each row is one stretch on a tank: the stacks before they dropped. Red: a tank death with them up.',
     avoid: 'Every source of damage positioning can avoid, most harmful first: the Blast Wave, Aftershock craters, the statues\' Evil Eyes puddles, Fungal Burst from a used mushroom, and standing where a box lands. Raid-wide damage (Malevolent Presence, Splinters, Blink Nova, Fishy Feedback) isn\'t listed.',
