@@ -8484,7 +8484,8 @@ function hpalTimeline(x, o) {
 // ---- the character card and the talents, the game's own way: the spec's own talent art behind them (Blizzard's, the one Wowhead's talent
 // calculator shows, loaded from Wowhead like the icons; a plain dark panel when it can't load), thin gold trim, and the portrait in a gold ring ----
 const SPEC_ART = 'https://wow.zamimg.com/images/tools/dragonflight-talent-calc/blizzard/talentbg-';
-function specArt(p) { const c = String(p.cls || '').toLowerCase(), sp = String(p.specName || '').replace(/ (Death Knight|Demon Hunter|\w+)$/, '').replace(/[^a-z]/gi, '').toLowerCase(); return c && sp ? 'url(' + SPEC_ART + c + '-' + sp + '.jpg)' : 'none'; }
+// (Wowhead names these pictures with dashes for the two-word classes and Beast Mastery: death-knight-blood, demon-hunter-havoc, hunter-beast-mastery)
+function specArt(p) { const c = String(p.cls || '').toLowerCase().replace(/^(death|demon)/, '$1-'), sp = String(p.specName || '').replace(/ (Death Knight|Demon Hunter|\w+)$/, '').replace(/[^a-z]/gi, '').toLowerCase().replace(/^beastmastery$/, 'beast-mastery'); return c && sp ? 'url(' + SPEC_ART + c + '-' + sp + '.jpg)' : 'none'; }
 function heroAv(p) { return '<span class="spc-av">' + avatar(p) + '</span>'; }
 // ---- Spec frames: the spec page's banner framed the way the game frames things, one frame per class (its material and motifs: Paladin gold
 // wings, Monk eaves and clouds, Death Knight spiked steel and runes, and so on) tinted for each spec through its gem, its glow and a spec motif.
