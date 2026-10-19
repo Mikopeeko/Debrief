@@ -22261,7 +22261,13 @@ const GEN_SPECS = {
   // Fragments (35 with Soul Glutton) and lasts until the Fury bar drains. The log has two buffs both called Void Metamorphosis (the soul counter and
   // the form), so the windows are read from the Collapsing Star counter, which is only up in the form. Void Ray outside the form has no cooldown and
   // costs 100 Fury, so it's judged by the Fury left to overflow, not by a timer)
-  'Devourer Demon Hunter': { ic: 'Void Ray', top: 'Devourer Demon Hunters',
+  'Devourer Demon Hunter': { ic: 'Void Ray', top: 'Devourer Demon Hunters', multi: { 'soul fragment': -1, 'the hunt': 0.4, voidblade: 0.4 }, heroBy: { Annihilator: ['Voidfall'], 'Void-Scarred': ['Voidsurge', "Reaper's Toll", 'Pierce the Veil', "Predator's Wake"] },
+    pre: [{ k: 'oil', n: 'Weapon oil', ench: true, label: 'Weapon oil on', okTxt: 'Your weapon had an oil on when the boss was pulled.', noTxt: 'Your weapon had no oil on when the boss was pulled.', why: "Wowhead's pre-combat check: weapon oils, food, a flask and an augment rune.", tip: 'Put a weapon oil on before the pull.' }],
+    open: { ic: 'Consume', bars: ['Void Metamorphosis', 'Soul Fragments', 'Soulburst'], len: 15, ok: 0.85, warn: 0.6,
+      seqs: [{ src: 'Wowhead and Icy Veins', steps: [{ n: 'Consume' }, { any: ['Reap', 'Eradicate'] }, { n: 'Void Ray' }] }],
+      why: "Both guides: Devourer has no opener in the usual sense, since Void Metamorphosis is not ready at the pull. Pre-cast Soul Immolation 2 seconds before the pull, then Consume, Reap, Soul Immolation, more Consumes and Reaps, and Void Ray at 100 Fury, until you can enter Void Metamorphosis with your potion and trinkets.",
+      lead: 'Soul Immolation before the pull, then Consume and Reap toward your first Void Metamorphosis.' },
+    stats: { low: 'versatility', order: [['mastery'], ['haste'], ['crit'], ['versatility']], orderWhy: 'Both guides, for both hero trees: Mastery, then Haste, then Critical Strike, Versatility last. Wowhead: Haste from your talents and potion lowers its value on gear.', lowWhy: 'Both guides put Versatility last.', lead: 'Mastery, then Haste and Critical Strike, Versatility last.' },
     win: { n: 'Void Metamorphosis', buffOnly: true, buffs: ['Collapsing Star'], key: { names: ['Collapsing Star'] }, keyMinH: { Annihilator: 3, 'Void-Scarred': 3 }, keyMin: 3, keyPer: 11, merge: 2.5, minLen: 8,
       ready: { buf: 'Void Metamorphosis', late: 3, what: 'at 50 Soul Fragments, or 35 with Soul Glutton', info: 'the top players often hold it for a few seconds, for Bloodlust or the fight\'s phases.' },
       rate: { n: 'Void Ray', label: 'Void Ray in Void Metamorphosis', why: 'Inside Void Metamorphosis, Void Ray costs no Fury and pauses your Fury drain, so pressing it on cooldown keeps the form going for longer.', tip: 'In Void Metamorphosis, press Void Ray every time it comes back, before Collapsing Star and Devour.' },
