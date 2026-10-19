@@ -7908,11 +7908,13 @@ function talentTreeHtml(r, p) {
     const lines = ns.flatMap((n) => n.next.filter((m) => by.has(m)).map((m) => { const [a, b] = P(n), [c2, d2] = P(by.get(m)); return '<line x1="' + a.toFixed(1) + '" y1="' + b.toFixed(1) + '" x2="' + c2.toFixed(1) + '" y2="' + d2.toFixed(1) + '"' + (on(n) && on(by.get(m)) ? ' class="on"' : '') + '/>'; })).join('');
     const pts = ns.reduce((v, n) => v + (n.free ? 0 : rk(n)), 0), cap = tr.caps[key];
     const nodes = ns.map((n) => { const e = n.entries.find((x) => got.has(x.id)) || n.entries[0], lit = on(n), k = rk(n), [cx, cy] = P(n), alt = n.ty === 'c' && !lit ? ' · a choice: ' + n.entries.map((x) => x.name).join(' or ') : '';
-      return '<span class="tt-n sp' + (lit ? ' on' : '') + (n.ty === 'c' ? ' ch' : e.passive ? ' pa' : '') + (n.ty === 't' ? ' ap' : '') + '" style="left:' + cx.toFixed(1) + 'px;top:' + cy.toFixed(1) + 'px" data-sid="' + e.spell + '" data-sn="' + esc(e.name) + '" data-ex="' + esc((n.max > 1 ? k + '/' + n.max + ' · ' : '') + (lit ? 'taken' : 'not taken') + alt) + '">' +
+      return '<span class="tt-n sp' + (lit ? ' on' : '') + (n.ty === 'c' ? ' ch' : e.passive ? ' pa' : '') + (n.ty === 't' ? ' ap' : '') + (dif(n) ? ' df' : '') + '" style="left:' + cx.toFixed(1) + 'px;top:' + cy.toFixed(1) + 'px" data-sid="' + e.spell + '" data-sn="' + esc(e.name) + '" data-ex="' + esc((n.max > 1 ? k + '/' + n.max + ' · ' : '') + (lit ? 'taken' : 'not taken') + alt) + '">' +
         '<img src="' + whIcon(e.icon) + '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'' + whIcon('inv_misc_questionmark') + '\'">' + (n.max > 1 && lit ? '<b>' + k + '/' + n.max + '</b>' : '') + (n.free ? '<i class="tt-f" title="free">✓</i>' : '') + '</span>'; }).join('');
     return '<div class="tt-p"><div class="tt-h"><b>' + esc(label) + '</b><span class="sub">' + pts + (cap ? '/' + cap : '') + ' points</span></div><div class="tt-s"><div class="tt-c" style="width:' + W.toFixed(0) + 'px;height:' + H.toFixed(0) + 'px"><svg width="' + W.toFixed(0) + '" height="' + H.toFixed(0) + '" aria-hidden="true">' + lines + '</svg>' + nodes + '</div></div></div>'; };
   const [spec, cls] = specSplit(p.specName);
-  return '<div class="tt">' + panel(cls, tr.nodes.filter((n) => n.t === 'C'), 'C') + panel(tr.hero.get(sub) || 'Hero talents', tr.nodes.filter((n) => n.t === 'H' && n.sub === sub), 'H') + panel(spec, tr.nodes.filter((n) => n.t === 'S'), 'S') + '</div>';
+  const one = { C: () => panel(cls, tr.nodes.filter((n) => n.t === 'C'), 'C'), H: () => panel(tr.hero.get(sub) || 'Hero talents', tr.nodes.filter((n) => n.t === 'H' && n.sub === sub), 'H'), S: () => panel(spec, tr.nodes.filter((n) => n.t === 'S'), 'S') };
+  if (only) return '<div class="tt">' + one[only]() + '</div>';
+  return '<div class="tt">' + one.C() + one.H() + one.S() + '</div>';
 }
 // a player's build as a list anyone can read: every talent they took, by tree (class, hero, spec), top of the tree first, with its rank;
 // a choice shows what it was picked over, the apex is marked, and the talents the checks read are lit. Hover one for its tooltip.
@@ -11301,10 +11303,14 @@ function cmpTalents(r, p, q) {
   const oa = only(ta, tb), ob = only(tb, ta), rk = [...ta.names].filter(([n, t]) => tb.names.has(n) && tb.names.get(n).rank !== t.rank).map(([n, t]) => ({ n, id: t.id, a: t.rank, b: tb.names.get(n).rank, max: t.max }));
   const An = cmpIsMe(p) ? 'You' : esc(p.name), Bn = esc(q.name), li = (x) => '<span class="cmp-tal">' + spellIcon(x.id, x.n) + esc(x.n) + '</span>';
   const col = (t, xs) => '<div class="cmp-col"><div class="cmp-lbl">' + t + '</div>' + (xs.length ? '<div class="cmp-tals">' + xs.map(li).join('') + '</div>' : '<p class="sub" style="margin:4px 0">None.</p>') + '</div>';
+  const tRows = ['S', 'H', 'C'].map((key) => { const x = talentTreeHtml(r, p, q, key), y = talentTreeHtml(r, q, p, key); return x || y ? '<div class="cmp-tt2"><div><div class="cmp-lbl">' + An + '</div>' + x + '</div><div><div class="cmp-lbl">' + Bn + '</div>' + y + '</div></div>' : ''; }).join('');
+  const trees = tRows ? '<details class="cmp-tdet"' + (S.cmpTreesShut ? '' : ' open') + '><summary>Both talent trees. A talent where their picks differ has a blue ring.</summary>' + tRows + '</details>' : '';
   const html = '<div class="panel"><h3>Talent differences<small>Talents only one of them took. They can explain part of the gap.</small></h3>' +
     (!oa.length && !ob.length && !rk.length ? '<p class="cmp-wlead" style="margin:0">Both took the same talents.</p>'
       : cmpTwo(col('Only ' + An + ' took', oa), col('Only ' + Bn + ' took', ob)) +
-        (rk.length ? '<div class="cmp-lbl" style="margin-top:12px">Different ranks</div><div class="cmp-tals">' + rk.map((x) => '<span class="cmp-tal">' + spellIcon(x.id, x.n) + esc(x.n) + ' <span class="sub">' + An + ' ' + x.a + ', ' + Bn + ' ' + x.b + (x.max ? ' of ' + x.max : '') + '</span></span>').join('') + '</div>' : '')) + '</div>';
+        (rk.length ? '<div class="cmp-lbl" style="margin-top:12px">Different ranks</div><div class="cmp-tals">' + rk.map((x) => '<span class="cmp-tal">' + spellIcon(x.id, x.n) + esc(x.n) + ' <span class="sub">' + An + ' ' + x.a + ', ' + Bn + ' ' + x.b + (x.max ? ' of ' + x.max : '') + '</span></span>').join('') + '</div>' : '')) +
+    // (both trees, each kind side by side: spec, hero, class; a talent where their picks differ ringed in blue)
+    trees + '</div>';
   return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html };
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
@@ -11562,6 +11568,7 @@ function cmp() {
   v.querySelectorAll('[data-cg]').forEach((b) => (b.onclick = () => { S.cmpG = S.cmpG === b.dataset.cg ? null : b.dataset.cg; cmp(); }));
   const all2 = $('#cmpAllSp'); if (all2) all2.onclick = () => { S.cmpAllSp = !S.cmpAllSp; cmp(); };
   { const b = $('#cmpRotAll'); if (b) b.onclick = () => { S.cmpRotAll = !S.cmpRotAll; cmp(); }; }
+  { const d = $('#view .cmp-tdet'); if (d) d.ontoggle = () => { S.cmpTreesShut = !d.open; }; }
   v.querySelectorAll('#cmpRange button').forEach((b) => (b.onclick = () => { S.cmpPage = +b.dataset.p; cmp(); }));
   v.querySelectorAll('#cmpSort button').forEach((b) => (b.onclick = () => { S.cmpSort = b.dataset.s; cmp(); }));
   const fd = $('#cmpFind'); if (fd) fd.oninput = () => { S.cmpFind = fd.value; clearTimeout(S._cmpT); S._cmpT = setTimeout(() => { cmp(); const e = $('#cmpFind'); if (e) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }, 250); };
