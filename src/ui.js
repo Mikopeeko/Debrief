@@ -11292,9 +11292,29 @@ function cmpTop(r, p) {
   const sides = TS.who.map((w, i) => ({ col: p.color, name: esc(w.name), chips: '<span class="sub">' + esc(w.server + (w.region ? '-' + w.region : '')) + '</span>', v: w.amount, txt: C(w.amount), sub: T(w.dur),
     tip: cmpTip(w.name, '#' + (i + 1) + ' on this boss, ' + C(w.amount) + ' ' + U + ' a second', 'Their kill took ' + T(w.dur)) }))
     .concat([{ p, v: mine, txt: C(mine), sub: T(end), chips: '<span class="sub">this pull</span>', tip: cmpTip(p.name, C(mine) + ' ' + U + ' a second while alive', cmpVs(mine, avg, 'the top 3 on average')) }]).sort((a, b) => b.v - a.v);
-  const groups = cmpGroup('out', capS(U) + ' a second', sides, '<p class="sub cmp-how">The bar is ' + esc(p.name) + '\'s share of their ' + U + '. The white mark is the top 3\'s.</p>' + cmpSpellRows(A, B));
+  // (side by side, as on Fellow raiders (your note, Oct 19): this player against the top 3's average, a pair of bars for
+  // each, hover for the numbers, click for spell by spell. Casts a minute and crit count the spells that did the healing
+  // or damage, the same way on both sides, so they compare fairly; crit is weighted by each spell's share.)
+  const top3 = { icon: cmpIcon('trophy', 'var(--gold)'), name: 'Top 3 average', col: 'var(--gold)' }, nm = (x) => String(x.name).replace(/^[^:]+: /, '');
+  const myAll = (() => { const by = new Map(); for (const a of (k === 'heal' ? p.healAb : p.dmgAb).values()) { const o = by.get(a.name) || { hits: 0, crits: 0, total: 0 }; o.hits += a.hits; o.crits += a.crits; o.total += a.total; by.set(a.name, o); } return by; })();
+  const myTot = [...myAll.values()].reduce((s, a) => s + a.total, 0) || 1;
+  const myCrit = [...myAll.values()].reduce((s, a) => s + (a.hits ? (a.total / myTot) * (a.crits / a.hits) : 0), 0), topCrit = TS.ab.reduce((s, t) => s + (t.crit != null ? t.share * t.crit : 0), 0) / (TS.ab.reduce((s, t) => s + (t.crit != null ? t.share : 0), 0) || 1);
+  const myCpm = A.ab.reduce((s, a) => s + (a.cpm || 0), 0), topCpm = TS.ab.reduce((s, t) => s + (t.cpm || 0), 0), pc = (x) => (100 * x).toFixed(1) + '%';
+  const critL = (xs, f) => xs.slice().sort((a, b) => b.share - a.share).slice(0, 8).map(f).filter(Boolean);
+  const pair = (g, label, a, b, fa, fb, line, detail) => cmpGroup(g, label, [
+    { p, v: a, txt: fa, tip: cmpTip(p.name, fa + ' ' + line, cmpVs(a, b, 'the top 3 on average')) },
+    { ...top3, v: b, txt: fb, tip: cmpTip('The top 3 ' + spn + 's', fb + ' ' + line + ', on average', TS.who.map((w) => w.name).join(', ')) }], detail);
+  const groups =
+    pair('out', capS(U) + ' a second', mine, avg, C(mine), C(avg), U + ' a second', '<p class="sub cmp-how">The bar is ' + esc(p.name) + '\'s share of their ' + U + '. The white mark is the top 3\'s.</p>' + cmpSpellRows(A, B)) +
+    pair('cpm', 'Casts a minute', myCpm, topCpm, myCpm.toFixed(1), topCpm.toFixed(1), 'casts a minute of the spells that did their ' + U,
+      cmpTwo(cmpList(esc(p.name), p.color, A.ab.filter((a) => a.cpm).sort((a, b) => b.cpm - a.cpm).slice(0, 8).map((a) => ({ name: nm(a), id: a.id, v: a.cpm, txt: a.cpm.toFixed(1) }))),
+        cmpList('The top 3', 'var(--gold)', TS.ab.filter((t) => t.cpm).sort((a, b) => b.cpm - a.cpm).slice(0, 8).map((t) => ({ name: nm(t), id: t.id, v: t.cpm, txt: t.cpm.toFixed(1) }))))) +
+    pair('crit', 'Crit chance', myCrit, topCrit, pc(myCrit), pc(topCrit), 'of their ' + U + ' crit, weighted by each spell',
+      cmpTwo(cmpList(esc(p.name), p.color, critL(A.ab, (a) => { const o = myAll.get(a.name); return o && o.hits ? { name: nm(a), id: a.id, v: o.crits / o.hits, txt: pc(o.crits / o.hits) } : null; })),
+        cmpList('The top 3', 'var(--gold)', critL(TS.ab.filter((t) => t.crit), (t) => ({ name: nm(t), id: t.id, v: t.crit, txt: pc(t.crit) }))))) + // (spells that can't crit, like Leech, left out)
+    cmpGroup('who', 'Where ' + (cmpIsMe(p) ? 'you' : esc(p.name)) + ' would place', sides, '');
   return { vs: vs0(TS.who.map((w) => esc(w.name)).join(', ')),
-    body: tiles + '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click the rows for spell by spell.</small></h3>' + groups + '</div>' + cmpDiffs({ ...A, who: cmpIsMe(p) ? 'You' : p.name }, { ...B, who: 'The top 3', many: true }, k) };
+    body: tiles + '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3>' + groups + '</div>' + cmpDiffs({ ...A, who: cmpIsMe(p) ? 'You' : p.name }, { ...B, who: 'The top 3', many: true }, k) };
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from
 // the list; then it's your raid against theirs, the same page as the other two.
