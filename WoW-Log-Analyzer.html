@@ -11162,7 +11162,7 @@ const DANCERS = [
 ];
 const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'On Pull recap, every box opens the tab with its details.', 'Night summary shows the whole night, with how far each pull got and what kept going wrong.', 'Players gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
+  'On Pull recap, every box opens the tab with its details.', 'Night summary shows the whole night, with how far each pull got and what kept going wrong.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -11253,7 +11253,7 @@ function bgFetch(item) {
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
-const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Players'], ['cmp', 'Compare']];
+const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set(['overview', 'rot', 'player', 'cmp']);
 const TAB_ORDER = ['live', 'audit', 'overview', 'rot', 'perf', 'player', 'cmp'];
@@ -11441,7 +11441,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { live: 'Pull recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'Night summary', player: 'Players' };
+const TAB_NAME = { live: 'Pull recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'Night summary', player: 'Report card' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -11523,7 +11523,7 @@ function renderMain() {
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       return TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
-    (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Players', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
+    (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
@@ -14877,7 +14877,7 @@ async function night(part) {
       '<div class="pts rc-cats" style="--n:3">' + plTile(icoW('ability_rogue_feigndeath'), 'Deaths', String(dN), !dN ? 'ok' : dN >= 3 || dN / Math.max(1, inN) >= 0.34 ? 'bad' : 'warn', !dN ? 'alive at the end of every pull' : 'died in ' + dN + ' of ' + plural(inN, 'pull') + (fN ? ', first to die in ' + fN : ''), true) +
       plTile(icoW('spell_shadow_shadowfury'), 'Mechanics', mJ.length ? mW.length + '<span> of ' + mJ.length + '</span>' : '—', !mJ.length ? 'na' : mB.length ? 'bad' : mW.length ? 'warn' : 'ok', !mJ.length ? 'none came up' : mW.length ? 'had mistakes' : 'all clean', true) +
       plTile(icoW('inv_inscription_scroll'), 'Assignments', oneA.of ? (Math.round(oneA.did * 2) / 2) + '<span> / ' + oneA.of + '</span>' : '—', aSt, !hasNote ? 'no NSRT note for this boss' : oneA.of ? 'done, across the pulls' : 'none of theirs came up', true) + '</div>' +
-      '<button class="btn sm" type="button" id="sumOneP">See their grade on the Players tab</button></div>'; };
+      '<button class="btn sm" type="button" id="sumOneP">See their grade on the Report card tab</button></div>'; };
   const oneWrong = !one ? [] : [].concat(oneD.some((x) => x.died) ? [{ sev: oneD.filter((x) => x.died).length >= 3 ? 'bad' : 'warn', html: '<b>Died in ' + oneD.filter((x) => x.died).length + ' of ' + plural(oneD.length, 'pull') + '</b>' + (oneD.some((x) => x.first) ? '. <span class="sub">First to die in ' + oneD.filter((x) => x.first).length + '.</span>' : '.') }] : [],
     mRows.concat(aRows).filter((o) => o.st === 'bad' || o.st === 'warn').map((o) => ({ sev: o.st, html: '<b>' + esc(o.title) + '</b>: ' + esc(o.txt) + '.' })));
   const others = [...groups].filter(([k]) => k !== key0).map(([k, l]) => { const kl = l.find((b) => b.kill), kn = l.filter((b) => pullPct(b) != null), bp = kl || (kn.length ? kn.reduce((m, b) => (pullPct(b) < pullPct(m) ? b : m)) : null);
@@ -14930,7 +14930,7 @@ async function night(part) {
       : (aCard || '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
   view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part">' + pickS + mPart + legend + '</div>'
     : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
-    : recapHp(b0, pulls) + '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Players.</p></div>' + rail + '</div>'));
+    : '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Report card.</p></div>' + rail + '</div>'));
   refreshIcons(); setHeadRes(); fitTrends();
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };
@@ -24827,7 +24827,7 @@ function lpTalk(r) {
   list.sort((a, b) => (b.f.crit ? 1 : 0) - (a.f.crit ? 1 : 0) || b.f.gain - a.f.gain);
   return '<div class="panel lp-side-p lp-talk"><h3 class="nh"><span>Talk to</span><small>Each player\'s first thing to fix</small></h3>' +
     list.slice(0, 6).map(({ p, g, f }) => '<div class="lp-tk">' + avatar(p, true) + '<span class="lp-tn">' + lpWho(p) + '</span>' + (off || g.perf == null ? '' : gradeChip(letterOf(g.score))) + '<span class="lp-tf' + (f.crit ? ' crit' : '') + '">' + (/^m\|/.test(f.key) && !/^From the note/.test(f.t) ? '<span class="sub">Mechanic:</span> ' : '') + esc(f.t) + '</span></div>').join('') +
-    (list.length > 6 ? '<div class="sub lp-more">And ' + (list.length - 6) + ' more on Players.</div>' : '') + '</div>';
+    (list.length > 6 ? '<div class="sub lp-more">And ' + (list.length - 6) + ' more on Report card.</div>' : '') + '</div>';
 }
 // what the raid pressed this pull, up to the wipe filter (your ask, Oct 19): each priest's Power Infusions (used of the uses they
 // had, and on whom), each Restoration Druid's Innervates, and the raid's defensives, Healthstones and health potions in all
@@ -26546,7 +26546,7 @@ function sinceLast(list) {
   const up = rows.filter((x) => x.d >= 2), dn = rows.filter((x) => x.d <= -2).reverse(), lv = rows.length - up.length - dn.length;
   const col = (h, l, none) => '<div class="ps-c"><div class="ps-h">' + h + '</div>' + (l.length ? l.slice(0, 8).map(line).join('') + (l.length > 8 ? '<p class="sub" style="margin:4px 0 0">and ' + (l.length - 8) + ' more</p>' : '') : '<p class="sub" style="margin:0">' + none + '</p>') + '</div>';
   return '<section class="panel pg-since">' + ttl + '<small>' + sub + '</small></h3><div class="ps-cols">' + col('<span class="okv">▲ Got better</span>', up, 'Nobody rose 2 points or more.') + col('<span class="hotv">▼ Slipped</span>', dn, 'Nobody dropped 2 points or more.') + '</div>' +
-    '<p class="sub" style="margin:8px 0 0">' + (lv ? plural(lv, 'player') + ' stayed about the same. ' : '') + 'The grade from Players (mechanics and Rotation, each night\'s pulls averaged by time alive), without prep.</p></section>';
+    '<p class="sub" style="margin:8px 0 0">' + (lv ? plural(lv, 'player') + ' stayed about the same. ' : '') + 'The grade from Report card (mechanics and Rotation, each night\'s pulls averaged by time alive), without prep.</p></section>';
 }
 // (the header's rank chips (Oct 19: up from the bottom of the page): the team's World, region, server and speed ranks;
 // a character's best and median parse. Drawn again in place once the rankings come in)
