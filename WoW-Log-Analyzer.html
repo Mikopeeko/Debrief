@@ -3034,6 +3034,23 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-cdm:not(.big) { width: 18px; height: 18px; margin: -9px 0 0 -9px; border-width: 1.5px; opacity: .85; } .cmp-cdm.big { width: 30px; height: 30px; margin: -15px 0 0 -15px; z-index: 2; } .cmp-cdm.big.hit { z-index: 3; } .cmp-cdm .icw { width: 100%; height: 100%; margin: 0; } .cmp-cdm .icw img, .cmp-cdm .icw svg { width: 100%; height: 100%; } .cmp-cdm:hover { transform: scale(1.25); z-index: 3; }
 .cmp-cdx { position: relative; height: 16px; margin-left: 184px; font-size: 11px; color: var(--faint); } .cmp-cdx span { position: absolute; transform: translateX(-50%); }
 @media (max-width: 640px) { .cmp-cdl { grid-template-columns: 1fr; gap: 4px; } .cmp-cdx { margin-left: 0; } }
+/* the opener timeline (casts at their times, buff bars), the guide's steps; a window's lower half; the slips over the pull */
+.spc-otl { margin: 10px 0 6px; } .spc-otc { position: relative; border-bottom: 1px solid var(--line); } .spc-otp { position: absolute; top: 0; bottom: -4px; width: 2px; margin-left: -1px; background: var(--gold); opacity: .7; }
+.spc-oti { position: absolute; transform: translateX(-50%); width: 24px; height: 24px; } .spc-oti .icw { width: 24px; height: 24px; margin: 0; border-radius: 4px; overflow: hidden; } .spc-oti .icw img, .spc-oti .icw svg { width: 100%; height: 100%; }
+.spc-otx { position: relative; height: 16px; font-size: 10.5px; color: var(--faint); } .spc-otx i { position: absolute; transform: translateX(-50%); font-style: normal; top: 2px; }
+.spc-otb { position: relative; height: 6px; margin: 3px 0; border-radius: 3px; background: rgba(255,255,255,.04); } .spc-otb i { position: absolute; top: 0; bottom: 0; border-radius: 3px; opacity: .85; } .spc-otg { margin-top: 6px; }
+.spc-ost { list-style: none; counter-reset: ost; margin: 10px 0 2px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; } .spc-ost li { counter-increment: ost; display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 7px; background: var(--raised); border: 1px solid var(--line); border-left: 3px solid var(--line2); font-size: 12.5px; min-width: 0; }
+.spc-ost li::before { content: counter(ost); font: 700 11px var(--head); color: var(--faint); width: 12px; } .spc-ost li.ok { border-left-color: rgba(69,193,92,.8); } .spc-ost li.warn { border-left-color: rgba(230,180,80,.85); } .spc-ost li.no { border-left-color: rgba(229,83,75,.85); }
+.spc-ost li .icw { width: 20px; height: 20px; flex: none; margin: 0; border-radius: 4px; overflow: hidden; } .spc-ost li .icw img, .spc-ost li .icw svg { width: 100%; height: 100%; } .spc-ost li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .spc-ost li span { margin-left: auto; white-space: nowrap; color: var(--muted); font-size: 12px; } .spc-ost li.ok span { color: #7ee08f; } .spc-ost li.warn span { color: #f3c969; } .spc-ost li.no span { color: #ff8f87; } .spc-osr { margin: 6px 0 0; font-size: 12px; }
+.spc-wm { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 7px; font-size: 12px; color: var(--muted); } .spc-wm b { color: var(--text); font-variant-numeric: tabular-nums; }
+.spc-wi { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 7px; } .spc-wi .icw { width: 18px; height: 18px; margin: 0; border-radius: 3px; overflow: hidden; } .spc-wi .icw img, .spc-wi .icw svg { width: 100%; height: 100%; } .spc-wn { margin-top: 4px; font-size: 11.5px; color: var(--faint); }
+.spc-ast { position: relative; height: 26px; margin: 10px 0 0; border-radius: 5px; background: rgba(255,255,255,.035); overflow: hidden; } .spc-ast em { position: absolute; top: 0; bottom: 0; background: rgba(230,180,80,.13); border-left: 1px solid rgba(230,180,80,.45); border-right: 1px solid rgba(230,180,80,.45); }
+.spc-ast i { position: absolute; bottom: 4px; width: 2px; margin-left: -1px; height: 8px; border-radius: 1px; background: rgba(69,193,92,.55); } .spc-ast i.no { height: 18px; width: 3px; background: #e5534b; z-index: 1; }
+.spc-asx { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--faint); margin-top: 2px; } .spc-asm { margin: 6px 0 4px; font-size: 12.5px; color: var(--muted); }
+.spc-slw { flex-wrap: wrap; } .spc-slx { flex-basis: 100%; font-size: 12px; color: var(--faint); margin-top: 2px; } .spc-slt { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.spc-sltc { padding: 1px 7px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--muted); font: 600 11px var(--head); font-variant-numeric: tabular-nums; cursor: pointer; } .spc-sltc:hover { color: var(--gold); border-color: var(--gold); } .spc-sltc.in { border-color: rgba(230,180,80,.55); color: #f3c969; }
+.cmp-wop { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; align-items: start; margin: 6px 0; } .cmp-wop .spc-otl { margin: 0; }
+@media (max-width: 760px) { .cmp-wop { grid-template-columns: 1fr; gap: 2px; } }
 /* the opener (your first casts against the guide's) and your stats (a bar each, the top players' range shaded) */
 .spc-opn { display: grid; gap: 8px; margin: 10px 0 4px; } .spc-opr { display: flex; align-items: flex-start; gap: 6px; flex-wrap: wrap; } .spc-opr > .sub { width: 44px; padding-top: 6px; font-size: 12px; font-weight: 700; }
 .spc-opi { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 30px; } .spc-opi .icw { width: 28px; height: 28px; margin: 0; border-radius: 5px; overflow: hidden; } .spc-opi .icw img, .spc-opi .icw svg { width: 100%; height: 100%; } .spc-opi i { font-style: normal; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -20036,6 +20053,19 @@ const GEN_DEF = { abc: [0.8, 0.7], rot: [0.85, 0.7], cds: [0.8, 0.6], res: [0.05
 const STAT_NM = { crit: 'Critical Strike', haste: 'Haste', mastery: 'Mastery', versatility: 'Versatility' }, STAT_COL = { mastery: '#e6b450', haste: '#5aa9e6', crit: '#e5534b', versatility: '#45c15c' };
 const STAT_IC = { crit: 'Critical Strike', haste: 'Haste', mastery: 'Mastery', versatility: 'Versatility' }, STAT_DR = { crit: 1380, haste: 1320, mastery: 1380, versatility: 1620 };
 const LUST_BUFFS = ['Bloodlust', 'Heroism', 'Time Warp', 'Primal Rage', 'Fury of the Aspects', 'Ancient Hysteria', 'Netherwinds', 'Feral Hide Drums', 'Timeless Drums', 'Harrier\'s Cry'];
+// The opener as a timeline: your casts as icons at their times over the first seconds (one cast before the pull at the far left, the pull marked),
+// a thin bar for each buff that matters under them, and their names below
+function openTlHtml(seq, bars, len) {
+  const L = len || 15, X = (t) => (t < 0 ? 1 : 7 + 92 * Math.min(1, t / L)), lanes = [];
+  const ic = (seq || []).map(([t, n]) => { const x = X(t); let ln = 0; while (lanes[ln] != null && x - lanes[ln] < 3.2) ln++; lanes[ln] = x; return '<span class="spc-oti" style="left:' + x.toFixed(2) + '%;top:' + (ln * 27) + 'px" title="' + esc(n + (t < 0 ? ', before the pull' : ', at ' + t.toFixed(1) + ' s')) + '">' + spIc(n) + '</span>'; }).join('');
+  const ticks = [0, 5, 10, 15, 20].filter((u) => u <= L).map((u) => '<i style="left:' + X(u).toFixed(2) + '%">' + (u ? u + 's' : 'Pull') + '</i>').join('');
+  const bl = (bars || []).filter((b) => b.sp && b.sp.length), br = bl.map((b) => '<div class="spc-otb">' + b.sp.map(([a, e]) => { const x0 = X(Math.max(-0.5, a)), x1 = X(Math.min(L, e == null ? L : e)); return x1 > x0 ? '<i style="left:' + x0.toFixed(2) + '%;width:' + (x1 - x0).toFixed(2) + '%;background:' + b.col + '"></i>' : ''; }).join('') + '</div>').join('');
+  return '<div class="spc-otl"><div class="spc-otc" style="height:' + (Math.max(1, lanes.length) * 27 + 2) + 'px"><b class="spc-otp" style="left:' + X(0).toFixed(2) + '%"></b>' + ic + '</div><div class="spc-otx">' + ticks + '</div>' + br +
+    (bl.length ? '<div class="cmp-glegend spc-otg">' + bl.map((b) => '<span><i style="background:' + b.col + '"></i>' + esc(b.n) + '</span>').join('') + '</div>' : '') + '</div>';
+}
+function openStepsHtml(steps, src) {
+  return '<ol class="spc-ost">' + steps.map((o) => '<li class="' + (o.pts === 1 ? 'ok' : o.pts ? 'warn' : 'no') + '">' + spIc(o.n || (o.st.any ? o.st.any[0] : o.st.n)) + '<b>' + esc(o.n || (o.st.any ? o.st.any.join(' or ') : o.st.n)) + '</b><span>' + (o.t == null ? (o.ord ? '✕ Out of order' : '✕ Not in your opener') : o.t < 0 ? '✓ Before the pull' : (o.pts === 1 ? '✓ ' : '! ') + o.t.toFixed(1) + ' s' + (o.pts < 1 ? ', not before the pull' : '')) + '</span></li>').join('') + '</ol>' + (src ? '<p class="sub spc-osr">' + esc(src) + '</p>' : '');
+}
 function genChecks(spec, D) { const T = genTuned(spec, D); return (reps, name, one) => genRun(spec, T, reps, name, one); }
 // a proc over one pull, up to t1, counted in uses, stacks and all: gained when it comes or a stack is added; used when a stack goes, or it ends with
 // one of its spells cast; wasted when it runs out, or when a new one comes while it's already at its top stack. One cut by a death or the end isn't judged.
@@ -20095,11 +20125,12 @@ function genRun(spec, D, reps, name, one) {
   // (Oct 19, "really read the guides looking for those nuances": what the guides ask for before the pull (D.pre), in the opener (D.open) and of
   // your stats (D.stats), each kept when the top players do it too)
   const combOf = (r, p) => (r.combatants || []).find((y) => y.name === p.name || (y.name && y.name.split('-')[0] === p.name.split('-')[0])) || null;
-  const pres = (D.pre || []).filter(on), OPEN0 = D.open && on(D.open) ? { ...D.open, l: D.open.by.filter((q) => on(q) && pressedAny(q.n)) } : null, OPEN = OPEN0 && OPEN0.l.length ? OPEN0 : null;
+  const pres = (D.pre || []).filter(on), OPEN = D.open && on(D.open) && (D.open.seqs || []).some((q) => !q.hero || q.hero === heroN) ? D.open : null;
   const pairs = (D.pairs || []).filter((q) => on(q) && (q.buf ? per.some(({ p }) => p.buffs.has(q.buf)) : pressedAny(q.a)));
   // (this boss's top players' numbers, for the checks whose bar follows them)
   const TB0 = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
-  const winWith = WIN ? (WIN.with || []).map((g) => [].concat(g)).filter((g) => g.some(pressedAny)) : [];
+  const winWith = WIN ? (WIN.with || []).map((g) => [].concat(g)).filter((g) => g.some(pressedAny)) : [], WSET = WIN ? (WIN.setup || []).filter((q) => on(q) && pressedAny(q.n)) : [];
+  const openBars = (p) => { const cols = ['#5aa9e6', '#e6b450', '#7ee08f', '#c792ea', '#e5534b'], L = (OPEN && OPEN.len) || 15, l = ((OPEN && OPEN.bars) || []).map((n) => ({ n, sp: (p.buffs.get(n) || { sp: [] }).sp })), lb = LUST_BUFFS.find((n) => p.buffs.has(n)); if (lb) l.push({ n: lb, sp: p.buffs.get(lb).sp }); return l.map((b, i) => ({ ...b, col: cols[i % cols.length] })).filter((b) => b.sp.some(([a]) => a < L)); };
   for (const x of per) { const { r, p, t1, c } = x, s = { pull: r.item.pull, kill: r.item.kill, len: t1, m: {}, bx: {}, cdu: {}, pr: {}, dot: {}, up: {} }, BX = (k, t, cls, tip) => (s.bx[k] = s.bx[k] || []).push([t, cls, tip]);
     const dead = deadSpans(r, p).map(([a, b]) => [a, b == null ? t1 : Math.min(b, t1)]).filter(([a, b]) => a < t1 && b > a), deadL = dead.reduce((v, [a, b]) => v + b - a, 0), alive = Math.max(1, t1 - deadL);
     const inDead = (t) => dead.some(([a, b]) => t >= a - 1 && t <= b + 1);
@@ -20108,8 +20139,8 @@ function genRun(spec, D, reps, name, one) {
     { const l = [], bySp = new Map(); for (const y of p.starts || []) { if (y.t > t1) continue; const k = y.spell.toLowerCase(); if (!bySp.has(k)) bySp.set(k, []); bySp.get(k).push([y.t, 0]); }
       for (const a of c.ab) { const k = a.name.toLowerCase(), ev = (bySp.get(k) || []).concat(a.ts.filter((t) => t <= t1).map((t) => [t, 1])).sort((u, w) => u[0] - w[0] || w[1] - u[1]); let open = null, lastC = -9;
         for (const [t, kk] of ev) { if (kk === 1) { if (open != null && t - open >= 0.25 && t - open <= 8) l.push([open, Math.max(t, open + gcd)]); else { l.push([t, t + gcd]); lastC = t; } open = null; } else if (Math.abs(t - lastC) > 0.02) open = t; } }
-      l.sort((a, b) => a[0] - b[0]); let cs = -1, ce = -1, bz = 0; for (const [a, z] of l) { if (a > ce) { if (ce > cs) bz += ce - cs; cs = a; ce = z; } else ce = Math.max(ce, z); } if (ce > cs) bz += ce - cs;
-      s.abcAl = c.al; s.abcBusy = Math.min(bz, c.al); s.abcTop = (c.gaps || []).find((g) => g.t > 1) || null; s.m.abc = (c.gaps || []).filter((g) => g.len >= 4).sort((a, b) => a.t - b.t).map((g) => [g.t, g.t + g.len]); }
+      l.sort((a, b) => a[0] - b[0]); let cs = -1, ce = -1, bz = 0; const mg = []; for (const [a, z] of l) { if (a > ce) { if (ce > cs) { bz += ce - cs; mg.push([cs, ce]); } cs = a; ce = z; } else ce = Math.max(ce, z); } if (ce > cs) { bz += ce - cs; mg.push([cs, ce]); }
+      s.busy = mg; s.abcAl = c.al; s.abcBusy = Math.min(bz, c.al); s.abcTop = (c.gaps || []).find((g) => g.t > 1) || null; s.m.abc = (c.gaps || []).filter((g) => g.len >= 4).sort((a, b) => a.t - b.t).map((g) => [g.t, g.t + g.len]); }
     // (haste, for a cooldown it shortens: from the global cooldown, 1.5 seconds before haste; read from the middle of the quick presses, not the fastest)
     const gMid = gs.length ? gs[Math.floor(gs.length * 0.35)] : 1.5, hasteF = D.gcd1 ? 1 : Math.max(1, Math.min(1.6, 1.5 / Math.max(0.75, gMid)));
     // (each spell pressed on cooldown and each big cooldown, against how often it could have been pressed)
@@ -20123,7 +20154,7 @@ function genRun(spec, D, reps, name, one) {
         const own = (m) => [...(m || new Map()).values()].filter((y) => nms.includes(lc(String(y.name)))).reduce((v, y) => v + (y.total || 0), 0);
         const sim = cdSim(ts, cd, ch, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, ch, ch0, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
     // (the rotation check: each cast against the priority list)
-    if (D.apl) s.apl = genAplRun(x, s, D.apl, { hasteF, pressed: (n) => per.some(({ p: pp, t1: tt }) => (pp.byName.get(lc(n)) || []).some((t) => t <= tt)), tal, heroN });
+    if (D.apl) s.apl = genAplRun(x, s, D.apl, { hasteF, pressed: (n) => per.some(({ p: pp, t1: tt }) => (pp.byName.get(lc(n)) || []).some((t) => t <= tt)), tal, heroN, ctxRes: res ? res.ty : null, ctxB: D.apl.ctx || procs.map((q) => q.n) });
     // (procs: each one spent with the spell it's for, or wasted: run out, or replaced while still up)
     for (const q of procs) { const o = genProc(r, p, t1, q, inDead); if (!o) continue; s.pr[q.n] = o; s.m['p:' + q.n] = o.wt;
       for (const [t, k] of o.ev || []) BX('p:' + q.n, t, k == null ? 'bad' : 'ok', T(t) + (k == null ? ': wasted' : ': spent on ' + spellNm(k))); }
@@ -20170,8 +20201,15 @@ function genRun(spec, D, reps, name, one) {
         const key = WIN.key ? keyN.reduce((v, n) => v + inP(n, a, e), 0) : null;
         // (the damage over time the window wants up (all of yours, or the ones it names): on the boss within 2 seconds of the press)
         const dotsMiss = WIN.dotsUp ? dots.filter((q) => (!Array.isArray(WIN.dotsUp) || WIN.dotsUp.includes(q.n)) && !(s.dot[q.n] && s.dot[q.n].sp.some(([u, w]) => u <= a + 2 && w >= a))).map((q) => q.n) : [];
+        // (more about each window (Oct 19, "your opener/burst window sections should be more detailed"): what was set up before it, the resource
+        // you went in with, your potion and Bloodlust, the share of it spent casting, what you cast in it, and the procs wasted in it)
+        const setup = WSET.map((q) => ({ n: q.n, post: q.post, ok: (p.byName.get(lc(q.n)) || []).some((u) => u >= a - (q.pre || 12) && u <= a + (q.post || 0.3)) || (!!q.orBuf && (p.buffs.get(q.orBuf) || { sp: [] }).sp.some(([u, w]) => u <= a + 0.2 && (w == null || w >= a - 0.2))) }));
+        const busyIn = Math.min(1, (s.busy || []).reduce((v, [u, w]) => v + Math.max(0, Math.min(w, e) - Math.max(u, a)), 0) / len), rf = res ? { 1: 10, 6: 10, 7: 10, 8: 10 }[res.ty] || 1 : 1;
+        const rp = res ? (((p.res && p.res.get(res.ty)) || { pts: [] }).pts.filter((y) => y[0] <= a + 0.05).pop() || null) : null, resA = rp ? [rp[1] / rf, (rp[2] || 0) / rf] : null;
+        const potIn = COMBAT_POTS.some((n) => (p.byName.get(n) || []).some((u) => u >= a - 30 && u <= e)), lustIn = LUST_BUFFS.some((n) => (p.buffs.get(n) || { sp: [] }).sp.some(([u, w]) => u < e && (w == null || w > a)));
+        const inside = c.ab.filter((y) => !nms.includes(lc(y.name)) && !COMBAT_POTS.includes(lc(y.name)) && !/flask|potion|healthstone/i.test(y.name)).flatMap((y) => y.ts.filter((u) => u >= a - 0.05 && u <= e).map((u) => [u, y.name])).sort((u, w) => u[0] - w[0]), wasted = procs.flatMap((q) => ((s.pr[q.n] || {}).wt || []).filter((u) => u >= a && u <= e).map(() => q.n));
         const slow = !WIN.noPace && outCpm > 0 && cpm < 0.85 * outCpm, low = kNeed != null && key != null && key < kNeed, iss = parts.filter((x) => !x.ok).length + (slow ? 1 : 0) + (dotsMiss.length ? 1 : 0) + (low ? 1 : 0) + (late ? 1 : 0);
-        return { t: a, e, len, d, x: outR > 0 ? (d / len) / outR : null, cpm, parts, key, kNeed, dotsMiss, slow, low, lateBy, late, st: !iss ? 'ok' : iss === 1 ? 'warn' : 'bad' }; });
+        return { t: a, e, len, d, x: outR > 0 ? (d / len) / outR : null, cpm, parts, key, kNeed, dotsMiss, slow, low, lateBy, late, setup, busyIn, resA, potIn, lustIn, inside, wasted, st: !iss ? 'ok' : iss === 1 ? 'warn' : 'bad' }; });
       s.winOut = { rate: outR, cpm: outCpm }; s.m.win = s.win.filter((w) => w.st !== 'ok').map((w) => [w.t, w.e]);
       // (rate: one spell's casts a minute inside the windows, like Devourer's Void Ray, which keeps Void Metamorphosis going)
       if (WIN.rate) s.wr = { n: sp.reduce((v, [a, e]) => v + inP(WIN.rate.n, a, e), 0), len: sp.reduce((v, [a, e]) => v + e - a, 0) }; }
@@ -20180,9 +20218,11 @@ function genRun(spec, D, reps, name, one) {
     s.pair = {};
     // (a press the log shows more than once, like Secret Technique's clones, counts once)
     for (const q of pairs) { const inP = (n, a, b) => (p.byName.get(lc(n)) || []).filter((t) => t >= a && t <= b && t <= t1).length, l = [], pr1 = (n) => (p.byName.get(lc(n)) || []).filter((u) => u <= t1).slice().sort((u, w) => u - w).filter((u, i, z) => !i || u - z[i - 1] > 0.9);
-      if (q.inBuf) { const bs = (p.buffs.get(q.inBuf) || { sp: [] }).sp; for (const t of pr1(q.a)) l.push({ a: t, e: t + 1, ok: bs.some(([a, e]) => t >= a - 0.3 && (e == null || t <= e + 0.3)) }); }
+      const bossUp = (t) => [...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name) && (u.samples || []).length && t <= u.samples[u.samples.length - 1][0] + 1 && (u.samples[Math.min(u.samples.length - 1, Math.max(0, Math.floor(t)))] || [0, 0])[1] > 0).length;
+      if (q.inBuf || q.notInBuf) { const bs = (p.buffs.get(q.inBuf || q.notInBuf) || { sp: [] }).sp; for (const t of pr1(q.a)) { if ((q.from && t < q.from) || (q.minB && bossUp(t) < q.minB)) continue;
+        const inB = q.inBuf ? bs.some(([a, e]) => t >= a - 0.3 && (e == null || t <= e + 0.3)) : bs.some(([a, e]) => t > a + 0.3 && (e == null || t < e - 0.1)); l.push({ a: t, e: t + 1, ok: q.inBuf ? inB : !inB }); } }
       else { const sp = q.buf ? (p.buffs.get(q.buf) || { sp: [] }).sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)]) : pr1(q.a).map((t) => [t, Math.min(t1, t + (q.dur || 0))]);
-        for (const [a, e] of sp) { const n = q.b.reduce((v, nn) => v + inP(nn, a - (q.pre || 0), e + (q.post || 0)), 0) + (q.orBuf && (p.buffs.get(q.orBuf) || { sp: [] }).sp.some(([u, w]) => u <= a + 0.2 && (w == null || w >= a - 0.2)) ? 1 : 0), need = q.min || 1; if (n < need && (e + (q.post || 0) >= t1 - 1 || inDead(e) || inDead(a))) continue; l.push({ a, e, n, ok: n >= need }); } }
+        for (const [a, e] of sp) { if (q.from && a < q.from) continue; const n = q.b.reduce((v, nn) => v + inP(nn, a - (q.pre || 0), e + (q.post || 0)), 0) + (q.orBuf && (p.buffs.get(q.orBuf) || { sp: [] }).sp.some(([u, w]) => u <= a + 0.2 && (w == null || w >= a - 0.2)) ? 1 : 0), need = q.min || 1; if (n < need && (e + (q.post || 0) >= t1 - 1 || inDead(e) || inDead(a))) continue; l.push({ a, e, n, ok: n >= need }); } }
       s.pair[q.k] = l; s.m['pr:' + q.k] = l.filter((w) => !w.ok).map((w) => [w.a, Math.max(w.e, w.a + 1)]); }
     // (before the pull: a buff you had on as the boss was pulled (the log's record of each player at the start, or a buff of yours up in the
     // first moment, like Stormkeeper cast before the pull), or your weapon's temporary enchant, like an imbue. Not judged without that record)
@@ -20191,12 +20231,21 @@ function genRun(spec, D, reps, name, one) {
       if (q.ench) { const it = cb && cb.gear && cb.gear[q.slot || 15]; s.pre[q.k] = it && it.id ? q.ench.includes(it.temporaryEnchant) : null; }
       else s.pre[q.k] = named ? b0 || (cb.auras || []).some((a) => nms.includes(a.name) && (!q.self || a.source === cb.self)) : b0 ? true : null;
       s.m['pre:' + q.k] = s.pre[q.k] === false ? [0] : []; }
-    // (the opener: when each of its spells first went out (-1: cast before the pull, its buff up in the first moment), and your first casts)
-    if (OPEN) { const first = (n) => { const ts = (p.byName.get(lc(n)) || []).filter((t) => t <= t1); if ((p.buffs.get(n) || { sp: [] }).sp.some(([a]) => a < 0.3) && !ts.some((t) => t < 0.3)) return -1; return ts.length ? Math.min(...ts) : null; };
-      s.open = OPEN.l.map((q) => { const t = first(q.n), bt = q.before ? first(q.before) : null, late = t == null || (q.by != null && t > q.by) || (q.before != null && bt != null && t > bt + 0.25); return { n: q.n, t, bt, q, ok: !late }; });
-      s.m.open = s.open.filter((o) => !o.ok).map((o) => Math.max(0, o.t == null ? 0 : o.t));
-      s.openSeq = c.ab.flatMap((y) => y.ts.filter((t) => t <= 15).map((t) => [t, y.name])).sort((u, w) => u[0] - w[0]).slice(0, 8);
-      for (const n of OPEN.pre || []) if (first(n) === -1) s.openSeq.unshift([-1, n]); }
+    // (the opener (Oct 19, "the guides clearly show a specific opener rotation to follow"): the guide's opener for your hero talents and the bosses
+    // up at the start (one, or two and more), matched step by step, in order, against your casts in the first 15 seconds (others in between are
+    // fine). A step meant for before the pull (Stormkeeper's buff up at the start, or a Lava Burst landing in the first second) counts half later.
+    // Also your first casts, for the timeline, and your opener's damage against the whole pull)
+    if (OPEN) { const L0x = OPEN.len || 15, first = (n) => { const ts = (p.byName.get(lc(n)) || []).filter((t) => t <= t1); if ((p.buffs.get(n) || { sp: [] }).sp.some(([a]) => a < 0.3) && !ts.some((t) => t < 0.3)) return -1; return ts.length ? Math.min(...ts) : null; };
+      const nB = Math.max(1, [...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name) && (u.samples || []).some(([t, h]) => t <= 10 && h > 0)).length);
+      const SQ = (OPEN.seqs || []).filter((q) => !q.hero || q.hero === heroN).sort((u, w) => (w.tgt || 1) - (u.tgt || 1)).find((q) => (q.tgt || 1) <= nB) || null;
+      const ys = c.ab.flatMap((y) => y.ts.filter((t) => t <= L0x).map((t) => [t, y.name])).sort((u, w) => u[0] - w[0]);
+      for (const n of OPEN.pre || []) if (first(n) === -1) ys.unshift([-1, n]);
+      s.openSeq = ys;
+      if (SQ) { let at = 0; const used = new Set();
+        s.openSteps = SQ.steps.map((st) => { const nm = (st.any || [st.n]).filter((x) => !used.has(x)).map(lc); let hit = -1; for (let i = at; i < ys.length; i++) if (nm.includes(lc(ys[i][1]))) { hit = i; break; }
+          if (hit < 0) return { st, t: null, pts: 0, ord: ys.some((y) => nm.includes(lc(y[1]))) }; at = hit + 1; const [t, n] = ys[hit]; if (st.any) used.add(st.any.find((x) => lc(x) === lc(n))); const ok = !st.pre || t <= 1.2; return { st, n, t, pts: ok ? 1 : 0.5 }; });
+        s.openSq = SQ; s.openF = s.openSteps.reduce((v, o) => v + o.pts, 0) / SQ.steps.length; s.m.open = s.openSteps.filter((o) => o.pts < 1).map((o) => Math.max(0, o.t == null ? 0 : o.t)); }
+      const ser = D.unitN === 'healing' ? p.healS : p.dmgS; if (ser && t1 > 30) { const all = sumIn(ser, 0, t1) / alive; s.openX = all > 0 ? (sumIn(ser, 0, L0x) / L0x) / all : null; } }
     // (a combat potion, for a damage dealer with a big window: with that window (its buff up, or pressed up to 4 seconds after), with Bloodlust,
     // or in the last 30 seconds of the pull)
     if (WIN && D.unitN !== 'healing') { const spOf = (l) => l.flatMap((n) => (p.buffs.get(n) || { sp: [] }).sp), wb = spOf(WIN.buffs || WIN.names || [WIN.n]), lust = spOf(LUST_BUFFS), wp = (WIN.names || [WIN.n]).flatMap((n) => p.byName.get(lc(n)) || []);
@@ -20304,6 +20353,22 @@ function genRun(spec, D, reps, name, one) {
     add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.a || q.buf, q.label, okN + '<span>/' + N + '</span>', q.txt.replace('{ok}', N === okN && N > 1 ? (q.txt.startsWith('{ok}') ? 'All' : 'all') : String(okN)).replace('{n}', String(N)), 'pr:' + q.k,
       (q.why ? q.why + ' ' : '') + okP(okF) + ' The times listed are the ones that missed.');
     if (f < okF && q.tip) g.l[g.l.length - 1].tip = q.tip; }
+  // (inside the windows: the share spent casting, the resource you went in with (graded once its bar is known), and the procs wasted in them)
+  if (WIN && winL.length) { const LW = winL.reduce((v, w) => v + w.len, 0), bf = winL.reduce((v, w) => v + w.busyIn * w.len, 0) / Math.max(1, LW), okC = WIN.castOk || 0.9, warnC = WIN.castWarn || 0.8;
+    for (const s of rows) s.m['win:cast'] = (s.win || []).filter((w) => w.busyIn < okC).map((w) => [w.t, w.e]);
+    add(gW, bf >= okC ? 'ok' : bf >= warnC ? 'warn' : 'bad', WIN.ic || WIN.n, 'Casting in ' + WIN.n, pct(bf), 'You were casting for ' + pct(bf) + ' of your ' + WIN.n + (winL.length === 1 ? ' window.' : ' windows.'), 'win:cast',
+      'Every second of ' + WIN.n + ' with nothing cast is burst you never get back. Plan your movement around it, and use instant spells or movement spells inside it. ' + okP(okC) + ' The times listed are the windows under that.');
+    if (bf < okC) gW.l[gW.l.length - 1].tip = WIN.castTip || 'Keep casting all the way through ' + WIN.n + '. Use instant spells or your movement spells if you must move.';
+    const rl = winL.filter((w) => w.resA); if (res && WIN.pool && rl.length) { const P = WIN.pool, av = rl.reduce((v, w) => v + w.resA[0], 0) / rl.length, cap = rl[0].resA[1], st = P.ok == null ? 'na' : av >= P.ok ? 'ok' : av >= P.warn ? 'warn' : 'bad';
+      for (const s of rows) s.m['win:res'] = (s.win || []).filter((w) => w.resA && P.ok != null && w.resA[0] < P.ok).map((w) => [w.t, w.e]);
+      add(gW, st, res.ic || D.ic, (res.nl || res.n) + ' saved for ' + WIN.n, Math.round(av) + (cap ? '<span>/' + Math.round(cap) + '</span>' : ''), 'On average you went into ' + WIN.n + ' with ' + Math.round(av) + ' ' + (res.nl || res.n) + (cap ? ' out of ' + Math.round(cap) : '') + '.', 'win:res',
+        (P.why ? P.why + ' ' : '') + (P.ok != null ? Math.round(P.ok) + ' or more is good. The times listed are the windows under that.' : 'It is not graded.'));
+      if (st === 'warn' || st === 'bad') gW.l[gW.l.length - 1].tip = P.tip || 'Save up ' + (res.nl || res.n) + ' in the seconds before ' + WIN.n + ', without letting it overflow.'; }
+    if (procs.length) { const wn = winL.reduce((v, w) => v + w.wasted.length, 0), okW = WIN.procOk != null ? WIN.procOk : Math.max(1, Math.round(winL.length / 2)), warnW = Math.max(okW + 1, Math.round(winL.length * 1.5)), by = new Map(); for (const w of winL) for (const n of w.wasted) by.set(n, (by.get(n) || 0) + 1);
+      for (const s of rows) s.m['win:proc'] = (s.win || []).filter((w) => w.wasted.length).map((w) => [w.t, w.e]);
+      add(gW, wn <= okW ? 'ok' : wn <= warnW ? 'warn' : 'bad', procs[0].ic || procs[0].n, 'Procs wasted in ' + WIN.n, String(wn), wn ? 'You wasted ' + andL([...by].map(([n, v]) => v + ' ' + n)) + ' inside ' + WIN.n + '.' : 'You wasted no procs inside ' + WIN.n + '.', 'win:proc',
+        'A proc wasted inside ' + WIN.n + ' costs the most, because everything hits harder there. One now and then is fine. The times listed are the windows with one.');
+      if (wn > okW) gW.l[gW.l.length - 1].tip = 'Inside ' + WIN.n + ', spend each proc before the next one comes.'; } }
   // (your potion with your big window)
   { const l = rows.flatMap((s) => (s.pot || []).map((o) => ({ ...o, pull: s.pull }))), N = l.length; if (WIN && N) { const okN = l.filter((o) => o.ok).length;
     add(gW, okN === N ? 'ok' : okN >= N / 2 ? 'warn' : 'bad', spellNm(l[0].n), 'Potion with ' + WIN.n, okN + '<span>/' + N + '</span>', (N === 1 ? (okN ? 'Your potion went out with ' + WIN.n + ', Bloodlust or at the end of the kill.' : 'Your potion went out at ' + T(l[0].t) + ', away from ' + WIN.n + ' and Bloodlust.') : okN + ' of your ' + N + ' potions went out with ' + WIN.n + ', Bloodlust or at the end of the kill.'), 'pot',
@@ -20315,23 +20380,28 @@ function genRun(spec, D, reps, name, one) {
     add(gPre, okN === N ? 'ok' : N > 1 && okN >= N / 2 ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' at the pull', N === 1 ? (okN ? 'Yes' : 'No') : okN + '<span>/' + N + '</span>', N === 1 ? (okN ? q.okTxt || 'You had ' + q.n + ' on when the boss was pulled.' : q.noTxt || 'You didn\'t have ' + q.n + ' on when the boss was pulled.') : 'You had ' + q.n + ' on at ' + (okN === N ? 'every one of your ' + N + ' pulls' : okN + ' of your ' + N + ' pulls') + '.', 'pre:' + q.k,
       (q.why ? q.why + ' ' : '') + 'Debrief reads what you had on at the moment the boss was pulled.');
     if (okN < N) gPre.l[gPre.l.length - 1].tip = q.tip || 'Put ' + q.n + ' on before every pull.'; }
-  // (the opener: each of its spells on time, or before the spell it should come before)
+  // (the opener: the share of the guide opener's steps you followed, in order; and your opener's damage, not graded)
   const gO = OPEN ? grp('Opener') : null;
-  if (OPEN) { const l = rows.flatMap((s) => (s.open || []).map((o) => ({ ...o, pull: s.pull }))), N = l.length;
-    if (N) { const okN = l.filter((o) => o.ok).length, f = okN / N, secs = (t) => (t < 60 ? t.toFixed(1) + ' s' : T(t)), when = (o) => (o.t == null ? 'never came' : o.t < 0 ? 'went out before the pull' : 'came at ' + secs(o.t)), miss = l.filter((o) => !o.ok);
-      const why1 = (o) => (o.t == null ? o.n + ' never came' : o.q.before && o.bt != null && o.t > o.bt + 0.25 ? o.n + ' came after ' + o.q.before : o.n + ' came at ' + secs(o.t) + ', after the first ' + o.q.by + ' seconds');
-      add(gO, f >= 0.999 ? 'ok' : f >= 0.6 ? 'warn' : 'bad', OPEN.ic || OPEN.l[0].n, OPEN.label || 'Opener', okN + '<span>/' + N + '</span>', rows.length === 1 ? (miss.length ? andL(miss.map(why1)) + '.' : 'Every cooldown of your opener went out on time: ' + andL(l.map((o) => o.n + ' ' + when(o).replace('came ', ''))) + '.') : okN + ' of the ' + N + ' opener cooldowns over your ' + rows.length + ' pulls went out on time.' + (miss.length ? ' The most common miss: ' + why1(miss[0]) + '.' : ''), 'open',
-        (OPEN.why ? OPEN.why + ' ' : '') + 'Debrief checks when each one first went out' + (OPEN.l.some((q) => q.by != null) ? ', and that ' + andL(OPEN.l.filter((q) => q.by != null).map((q) => q.n)) + ' came in the first ' + OPEN.l.find((q) => q.by != null).by + ' seconds' : '') + '. The times listed are the late ones.');
-      if (miss.length) gO.l[gO.l.length - 1].tip = miss[0].q.tip || (miss[0].q.before ? 'Press ' + miss[0].n + ' before ' + miss[0].q.before + ' at the start of the pull.' : 'Press ' + miss[0].n + ' in your first ' + miss[0].q.by + ' seconds.'); } }
+  if (OPEN) { const l = rows.filter((s) => s.openSteps), N = l.length;
+    if (N) { const f = l.reduce((v, s) => v + s.openF, 0) / N, okF = OPEN.ok || 0.85, warnF = OPEN.warn || 0.6, s0 = l[l.length - 1], SQ = s0.openSq, nS = SQ.steps.length, hits = s0.openSteps.filter((o) => o.pts === 1).length;
+      const nm1 = (o) => (o.st.any ? o.st.any.join(' or ') : o.st.n), miss = s0.openSteps.map((o, i) => [o, i]).filter(([o]) => o.pts < 1), say = ([o, i]) => 'step ' + (i + 1) + ', ' + nm1(o) + (o.t == null ? (o.ord ? ' (out of order)' : ' (not in your opener)') : ' (not before the pull)');
+      const which = 'the guide opener for ' + (heroN ? heroN + ' on ' : '') + ((SQ.tgt || 1) > 1 ? 'two or more bosses' : 'one boss') + ' (' + (SQ.src || 'your guides') + ')';
+      add(gO, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', OPEN.ic || D.ic, 'Opener, step by step', N === 1 ? hits + '<span>/' + nS + '</span>' : pct(f), N === 1 ? 'You followed ' + hits + ' of the ' + nS + ' steps of ' + which + ', in order.' + (miss.length ? ' Missed: ' + andL(miss.map(say)) + '.' : '') : 'Over your ' + N + ' pulls you followed ' + pct(f) + ' of the steps of your guide opener, in order.', 'open',
+        (OPEN.why ? OPEN.why + ' ' : '') + 'Debrief matches your casts in the first ' + (OPEN.len || 15) + ' seconds against the guide opener, step by step and in order. Other casts in between are fine. A step meant for before the pull counts half when it comes after. ' + okP(okF));
+      const cc = gO.l[gO.l.length - 1]; if (f < okF) cc.tip = 'Follow the guide opener: ' + SQ.steps.map((st) => nm1({ st })).join(', then ') + '.';
+      if (N === 1) cc.strip = { seq: s0.openSeq, steps: s0.openSteps, bars: openBars(per[per.length - 1].p), src: which, len: OPEN.len || 15 }; }
+    const lx = rows.filter((s) => s.openX != null); if (lx.length) { const x = lx.reduce((v, s) => v + s.openX, 0) / lx.length;
+      add(gO, 'na', OPEN.ic || D.ic, 'Opener ' + UNW, x.toFixed(1) + '<span>x</span>', 'Your first ' + (OPEN.len || 15) + ' seconds did ' + x.toFixed(1) + ' times your usual ' + UNW + ' a second' + (lx.length > 1 ? ', on average over your pulls.' : '.'), 'open:x',
+        'Stacking your cooldowns at the start makes the opener your strongest stretch of the pull. It is not graded, because Bloodlust and the fight change it.'); } }
   // (your stats: as the log records them at the pull (the last pull's), against your guides and the top players. The goal stat to its rating,
   // the stat to keep low kept lowest, the order, and any stat past the point where it starts giving less)
   const ST = D.stats && on(D.stats) ? D.stats : null, stv = ST ? (() => { for (let i = per.length - 1; i >= 0; i--) { const cb = combOf(per[i].r, per[i].p), v = cb && cb.stats; if (v && (v.crit || 0) + (v.haste || 0) + (v.mastery || 0) + (v.versatility || 0) > 400) return v; } return null; })() : null;
   const gS = stv ? grp('Your stats') : null;
   if (stv) { const NM = STAT_NM, fm = (v) => Math.round(v || 0).toLocaleString('en-US'), top = ST.top || null, rng = (k) => (top && top[k] ? fm(top[k][0]) + ' to ' + fm(top[k][1]) : null), K4 = ['mastery', 'haste', 'crit', 'versatility'];
     const topS = top ? ' The top ' + (top.n || '') + ' ' + (D.top || spec + 's') + (top.on ? ' on ' + top.on : '') + ' have ' : '';
-    if (ST.goal) { const [k, at] = ST.goal, v = stv[k] || 0, bar = Math.min(at, top && top[k] ? top[k][0] : at);
+    if (ST.goal) { const [k, at] = ST.goal, v = stv[k] || 0, bar = at;
       add(gS, v >= bar ? 'ok' : v >= 0.9 * bar ? 'warn' : 'bad', STAT_IC[k], NM[k], fm(v), 'You have ' + fm(v) + ' ' + NM[k] + ' rating. ' + (ST.goalTxt || 'Your guides want ' + fm(at) + ' first.') + (rng(k) ? topS + rng(k) + '.' : ''), 'st:goal',
-        (ST.why ? ST.why + ' ' : '') + 'Good is ' + fm(bar) + ' or more' + (bar < at ? ', where the top players start' : '') + '.');
+        (ST.why ? ST.why + ' ' : '') + 'Good is ' + fm(bar) + ' or more, the guide goal.');
       if (v < bar) gS.l[gS.l.length - 1].tip = 'Pick gear, gems and enchants with ' + NM[k] + ' until you reach ' + fm(bar) + '.'; }
     if (ST.low) { const k = ST.low, others = K4.filter((x) => x !== k), below = others.filter((x) => (stv[x] || 0) < (stv[k] || 0));
       add(gS, !below.length ? 'ok' : below.length === 1 ? 'warn' : 'bad', STAT_IC[k], NM[k] + ' kept low', fm(stv[k]), !below.length ? NM[k] + ' is your lowest secondary stat, as your guides want.' + (rng(k) ? topS + rng(k) + '.' : '') : 'Your ' + NM[k] + ' (' + fm(stv[k]) + ') is higher than your ' + andL(below.map((x) => NM[x] + ' (' + fm(stv[x]) + ')')) + '.', 'st:low',
@@ -20350,11 +20420,11 @@ function genRun(spec, D, reps, name, one) {
   const LAYOUT = [['Rotation', [['Casting', ['abc']], [aplN, ['apl', 'rep'].concat(((D.apl && D.apl.levels) || []).map((L, i) => 'lv-' + i))], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n))]]]];
   if (res || D.mana) LAYOUT.push(['Resources', [res ? [res.n, ['res']] : null, D.mana ? ['Mana', ['mana']] : null].filter(Boolean)]);
   if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch && D.upFirst) ch[1].splice(1, 0, b); else if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
-  LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', 'wr', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
+  LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', 'win-cast', 'win-res', 'win-proc', 'wr', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
   // (each pair goes into its block (a block already on the page, like the window's, or its own), in its chapter)
   for (const q of pairL) { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Cooldowns')) || (LAYOUT.push([q.ch || 'Cooldowns', []]), LAYOUT[LAYOUT.length - 1]), b = ch[1].find((x) => x && x[0] === q.blk); if (b) b[1].push(sl('pr:' + q.k)); else ch[1].push([q.blk, [sl('pr:' + q.k)]]); }
   if (WIN) { const ch = LAYOUT.find(([c]) => c === 'Cooldowns'), b = ch && ch[1].find((x) => x && x[0] === winN); if (b) b[1].push('pot'); }
-  if (pres.length || OPEN) LAYOUT.unshift(['Start of the pull', [pres.length ? ['Before the pull', pres.map((q) => sl('pre:' + q.k))] : null, OPEN ? ['Opener', ['open']] : null].filter(Boolean)]);
+  if (pres.length || OPEN) LAYOUT.unshift(['Start of the pull', [pres.length ? ['Before the pull', pres.map((q) => sl('pre:' + q.k))] : null, OPEN ? ['Opener', ['open', 'open-x']] : null].filter(Boolean)]);
   if (stv) LAYOUT.push(['Stats', [['Your stats', ['st-goal', 'st-low', 'st-order', 'st-dr']]]]);
   const L0 = D.lead || {}, MERGE = { Casting: { ic: D.ic, main: 'abc', lead: L0.abc || 'Keep casting. Time with nothing pressed is ' + (D.unitN === 'healing' ? 'healing' : 'damage') + ' you never do.' } };
   if (D.apl) MERGE[aplN] = { ic: D.apl.ic || D.ic, main: 'apl', lead: D.apl.lead || APL_LEAD };
@@ -20369,9 +20439,9 @@ function genRun(spec, D, reps, name, one) {
   if (cdO.length) MERGE[cdN] = { ic: cdO[0].ic || cdO[0].n, main: 'cd:' + lc(cdO[0].n), lead: (WIN ? L0.cdsO || (D.unitN === 'healing' ? L0.cds : '') : L0.cds) || (WIN ? 'Press each of your other cooldowns as often as the fight allows.' : 'Press each of your big cooldowns as often as the fight allows.') };
   for (const q of pairL) if (!MERGE[q.blk]) MERGE[q.blk] = { ic: q.ic || q.a || q.buf, main: 'pr:' + q.k, lead: q.lead || '' };
   if (pres.length) MERGE['Before the pull'] = { ic: pres[0].ic || pres[0].n, main: 'pre:' + pres[0].k, lead: L0.pre || 'Be ready before the boss is pulled. These cost nothing in the fight.' };
-  if (OPEN) MERGE.Opener = { ic: OPEN.ic || OPEN.l[0].n, main: 'open', lead: OPEN.lead || 'Start the pull with your cooldowns stacked.' };
+  if (OPEN) MERGE.Opener = { ic: OPEN.ic || D.ic, main: 'open', lead: OPEN.lead || 'Start the pull with your cooldowns stacked.' };
   if (stv) MERGE['Your stats'] = { ic: STAT_IC[(ST.goal || ['mastery'])[0]], main: ST.goal ? 'st:goal' : 'st:order', lead: ST.lead || '' };
-  const WT = { abc: 2, res: 2, mana: 2, apl: 3, win: 3, open: 2, pot: 1, 'st:goal': 1, 'st:low': 1, 'st:order': 1, 'st:dr': 0.5 }; for (const q of pres) WT['pre:' + q.k] = q.w || 1; for (const q of pairL) WT['pr:' + q.k] = q.w || 2; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
+  const WT = { abc: 2, res: 2, mana: 2, apl: 3, win: 3, open: 2, 'open:x': 0, 'win:cast': 1.5, 'win:res': 1, 'win:proc': 1, pot: 1, 'st:goal': 1, 'st:low': 1, 'st:order': 1, 'st:dr': 0.5 }; for (const q of pres) WT['pre:' + q.k] = q.w || 1; for (const q of pairL) WT['pr:' + q.k] = q.w || 2; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
   const LG = {}; for (const q of procs) LG['p:' + q.n] = { ok: 'Spent', bad: 'Wasted' };
   const TOPB = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const keyN = new Set([].concat(...rot.concat(cds, procs, dots, ups).map((q) => [q.n].concat(q.tal || []))).filter((n) => TAL && TAL.names.has(n)));
@@ -20382,16 +20452,19 @@ function genRun(spec, D, reps, name, one) {
     return '<button type="button" class="hm-ur' + (s.kill ? ' spc-kill' : '') + '" data-gopull="' + s.pull + '" title="Open pull ' + s.pull + '"><span data-v="' + s.pull + '">Pull ' + s.pull + (s.kill ? ' <span class="ok-t">kill</span>' : '') + ' <span class="sub">' + T(s.len) + '</span></span><span>' + (ab != null ? cell(pct(ab), ab >= K.abc[0] ? 'ok' : ab >= K.abc[1] ? 'warn' : 'bad', ab) : '—') + '</span>' +
       (c1 ? '<span>' + (qf != null ? cell(pct(qf), paceSt(qf), qf) : '—') + '</span>' : '') + (d1 ? '<span>' + (dd != null ? cell(pct(dd), dd >= (d1.ok || K.dots[0]) ? 'ok' : dd >= (d1.warn || K.dots[1]) ? 'warn' : 'bad', dd) : '—') + '</span>' : '') + (res ? '<span>' + (rw != null ? cell(pct(rw), rw <= (res.ok || K.res[0]) ? 'ok' : rw <= (res.warn || K.res[1]) ? 'warn' : 'bad', rw) : '—') + '</span>' : '') + (procs.length ? '<span>' + cell(pw, pw ? 'warn' : 'ok', pw) + '</span>' : '') + '</button>'; }).join('') + '</div>' : '';
   // (the rotation slips: what you pressed, what the list wanted, how often)
-  const VIZ = { apl: () => aplViz(aplSl),
-    open: () => { if (!one || !OPEN || !rows[0] || !rows[0].openSeq) return ''; const g = (OPEN.seq && (OPEN.seq[heroN] || OPEN.seq.all)) || null, ic = (n, t) => '<span class="spc-opi" title="' + esc(n + (t == null ? '' : t < 0 ? ', before the pull' : ', at ' + T(t))) + '">' + spIc(n) + (t == null ? '' : '<i>' + (t < 0 ? 'pre' : t.toFixed(1) + 's') + '</i>') + '</span>';
-      return '<div class="spc-opn"><div class="spc-opr"><span class="sub">You</span>' + rows[0].openSeq.map(([t, n]) => ic(n, t)).join('') + '</div>' + (g ? '<div class="spc-opr"><span class="sub">Guide</span>' + g.map((n) => ic(n)).join('') + '</div>' : '') + '</div>'; },
+  const VIZ = { apl: () => (one && rows.length === 1 && rows[0].apl && rows[0].apl.log ? aplWhere(rows[0].apl.log, rows[0].win || [], rows[0].len, WIN, res) : aplViz(aplSl)),
+    open: () => { const s0 = rows[rows.length - 1]; if (!one || !OPEN || !s0 || !s0.openSeq) return ''; return openTlHtml(s0.openSeq, openBars(per[per.length - 1].p), OPEN.len || 15) + (s0.openSteps ? openStepsHtml(s0.openSteps, 'The guide opener: ' + (s0.openSq.src || 'your guides') + '.') : ''); },
     'st:order': () => { if (!stv) return ''; const top = ST.top || {}, K4 = ['mastery', 'haste', 'crit', 'versatility'], mx = Math.max(...K4.map((x) => Math.max(stv[x] || 0, top[x] ? top[x][1] : 0))) || 1;
       return '<div class="spc-sts">' + K4.map((x) => '<div class="spc-str"><span class="spc-stn">' + STAT_NM[x] + '</span><span class="spc-stb">' + (top[x] ? '<em style="left:' + (100 * top[x][0] / mx).toFixed(1) + '%;width:' + (100 * (top[x][1] - top[x][0]) / mx).toFixed(1) + '%"></em>' : '') + '<i style="width:' + (100 * (stv[x] || 0) / mx).toFixed(1) + '%;background:' + STAT_COL[x] + '"></i></span><b>' + Math.round(stv[x] || 0).toLocaleString('en-US') + '</b></div>').join('') + (ST.top ? '<div class="spc-stx"><em></em> The top players\' range</div>' : '') + '</div>'; },
     // (a card per window, on one pull: its time, what you did in it against your usual, and what went into it)
     win: () => { if (!one || !winL.length) return ''; const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
       return '<div class="spc-ws">' + winL.map((w) => '<div class="spc-w ' + w.st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.len) + ' seconds</span></div>' +
-        '<div class="spc-wv">' + (w.x != null ? w.x.toFixed(1) + '<span> times your usual ' + UNW + ' a second</span>' : C(w.d) + '<span> ' + UNW + '</span>') + '</div><div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) +
-        (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + '</div></div>').join('') + '</div>'; } };
+        '<div class="spc-wv">' + (w.x != null ? w.x.toFixed(1) + '<span> times your usual ' + UNW + ' a second</span>' : C(w.d) + '<span> ' + UNW + '</span>') + '</div><div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) + (w.setup || []).map((q) => ck(q.ok, q.n + (q.post ? ' with it' : ' before'))).join('') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : '') +
+        (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + '</div>' + winMore(w) + '</div>').join('') + '</div>'; } };
+  // (a window card's lower half: the resource you went in with, the share spent casting, and what you cast, in order and counted)
+  function winMore(w) { const cnt = new Map(); for (const [, n] of w.inside || []) cnt.set(n, (cnt.get(n) || 0) + 1); const top = [...cnt].sort((u, v) => v[1] - u[1]).slice(0, 4);
+    return '<div class="spc-wm">' + (w.resA ? '<span>' + esc(res.nl || res.n) + ' at the start: <b>' + Math.round(w.resA[0]) + (w.resA[1] ? '/' + Math.round(w.resA[1]) : '') + '</b></span>' : '') + (w.busyIn != null ? '<span>Casting <b>' + Math.round(100 * w.busyIn) + '%</b> of it</span>' : '') + '</div>' +
+      ((w.inside || []).length ? '<div class="spc-wi">' + w.inside.slice(0, 28).map(([u, n]) => '<span title="' + esc(n + ', ' + T(u)) + '">' + spIc(n) + '</span>').join('') + '</div><div class="spc-wn">' + top.map(([n, v]) => v + ' ' + esc(n)).join(' · ') + '</div>' : ''); }
   const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs }) : '';
   const burst = winL.length && WIN ? (() => { const xs = winL.map((w) => w.x).filter((v) => v != null); return xs.length ? { x: xs.reduce((v, y) => v + y, 0) / xs.length, n: xs.length, name: WIN.n } : null; })() : null;
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
@@ -20482,7 +20555,7 @@ function genAplRun(x, s, A, k) {
     if (f.prev && !f.prev.map(lc).includes(prevN)) return false;
     // (soon: [spell, seconds]: not when you did press that spell within those seconds, like Soul Shards pooled for the Tyrant you summoned next)
     if (f.soon && tsOf(f.soon[0]).some((u) => u > t && u <= t + f.soon[1] + G)) return false; if (f.any) return f.any.some((g) => cond(g, t, prevN)); return true; };
-  const o = { judged: 0, ok: 0, slips: new Map() }; let prevN = '';
+  const o = { judged: 0, ok: 0, slips: new Map(), log: [] }; let prevN = '';
   for (const [t, n, nm] of all) { if (!judgeSp.has(n)) { if (!A.offGcd || !A.offGcd.map(lc).includes(n)) prevN = n; continue; } if (t < (A.from || 3)) { prevN = n; continue; }
     // (a rule's own grace (g), for a healer: wanted only once the spell has sat ready, or at full charges, that long)
     let want = null, wi = -1; for (let i = 0; i < usable.length; i++) { const q = usable[i], rs = readySince(q, t), gq = q.g != null ? q.g : G; if (rs !== -1 && rs > t - gq) continue; if (q.full && !fullAt(q, t - gq)) continue; if (!cond(q.if, t - G, prevN) || !cond(q.if, t - 0.05, prevN)) continue; want = q; wi = i; break; }
@@ -20490,6 +20563,7 @@ function genAplRun(x, s, A, k) {
     const right = [want.s].concat(want.alt || []).map(lc).includes(n), mine = usable.findIndex((q) => [q.s].concat(q.alt || []).map(lc).includes(n));
     if (right || (mine >= 0 && mine <= wi)) o.ok++;
     else { const key = nm + '|' + want.s + '|' + (want.why || ''), e = o.slips.get(key) || { did: nm, want: want.s, why: want.why || '', tip: want.tip || '', ts: [] }; e.ts.push(t); o.slips.set(key, e); }
+    { const cx = (k.ctxB || []).filter((bn) => bAt(bn, t - 0.05) > 0), rv = k.ctxRes ? resAt(k.ctxRes, t) : null; o.log.push([t, right || (mine >= 0 && mine <= wi), nm, want.s, want.why || '', cx, rv == null ? null : Math.round(rv / (RF[k.ctxRes] || 1))]); }
     prevN = n; }
   // (spenders at the right level, e.g. finishers at 6 or more combo points: the level just before each cast)
   o.levels = (A.levels || []).map((L) => { const nm = L.s.map(lc), ok = [], bad = []; for (const [t, n2] of all) { if (!nm.includes(n2) || t < 3) continue; if (L.no && bAt(L.no, t) > 0) continue; const v = L.buf ? bAt(L.buf, t - 0.05) : resAt(L.ty, t); if (v == null) continue; ((L.min == null || v >= L.min) && (L.max == null || v <= L.max) ? ok : bad).push(t); } return { ok: ok.length, bad }; });
@@ -20526,6 +20600,25 @@ const aplSlipEnd = (e) => { const w = String(e.why || '').trim().replace(/, or /
   if (lw.startsWith('it ')) return w.slice(3) + '.';
   return (/ and /.test(w) ? 'was ready, ' : 'was ready and ') + w + '.'; };
 const aplViz = (l) => (!l.length ? '' : '<div class="spc-slp">' + l.slice(0, 6).map((e) => '<div class="spc-slr"><span class="spc-sln spc-sent"><span class="sub">You pressed</span> <span class="spc-nw">' + spIc(e.did) + '<b>' + esc(e.did) + '</b></span> <span class="sub">while</span> <span class="spc-nw">' + spIc(e.want) + '<b>' + esc(e.want) + '</b></span> <span class="sub">' + esc(aplSlipEnd(e)) + '</span></span><span class="spc-slc">' + (e.n === 1 ? 'once' : e.n === 2 ? 'twice' : e.n + ' times') + '</span></div>').join('') + '</div>');
+// The rotation check on one pull, in detail (Oct 19, "the priority section could be more detailed as well as to where they made priority casting
+// mistakes"): every judged cast over the pull as a tick (a slip red and taller), your big windows shaded; how many slips came inside them; then each
+// kind of slip with the times it happened (each one shows where it was on your cooldowns), what you usually had up then, and on each time your
+// resource and procs
+function aplWhere(log, wins, len, WIN, res) {
+  const L = Math.max(1, len), X = (t) => (100 * Math.min(1, Math.max(0, t / L))).toFixed(2), bad = log.filter((y) => !y[1]), inW = (t) => (wins || []).some((w) => t >= w.t && t <= w.e), nIn = bad.filter((y) => inW(y[0])).length, rn = res ? res.nl || res.n : '';
+  const strip = '<div class="spc-ast">' + (wins || []).map((w) => '<em style="left:' + X(w.t) + '%;width:' + (100 * (w.e - w.t) / L).toFixed(2) + '%"></em>').join('') + log.map((y) => '<i class="' + (y[1] ? 'ok' : 'no') + '" style="left:' + X(y[0]) + '%"' + (y[1] ? '' : ' title="' + esc(T(y[0]) + ': you pressed ' + y[2] + ', the list wanted ' + y[3]) + '"') + '></i>').join('') + '</div>' +
+    '<div class="spc-asx"><span>0:00</span><span>' + T(L / 2) + '</span><span>' + T(L) + '</span></div>';
+  const sum = '<p class="spc-asm">' + (bad.length ? bad.length + (bad.length === 1 ? ' slip' : ' slips') + ' in ' + log.length + ' checked casts' + (WIN && (wins || []).length ? ': ' + nIn + ' inside ' + WIN.n + ' (shaded), ' + (bad.length - nIn) + ' outside it.' : '.') : 'No slips in ' + log.length + ' checked casts.') + ' Green marks a right press, red a slip.</p>';
+  const g = new Map(); for (const y of bad) { const kk = y[2] + '|' + y[3] + '|' + y[4]; if (!g.has(kk)) g.set(kk, []); g.get(kk).push(y); }
+  const ctx = (y) => [y[6] != null && rn ? rn + ' ' + y[6] : '', y[5].length ? y[5].join(', ') + ' up' : '', inW(y[0]) && WIN ? 'in ' + WIN.n : ''].filter(Boolean).join(' · ');
+  const rowsH = [...g.values()].sort((u, v) => v.length - u.length).slice(0, 8).map((l) => { const e = { did: l[0][2], want: l[0][3], why: l[0][4] }, cnt = new Map(); for (const y of l) for (const b of y[5]) cnt.set(b, (cnt.get(b) || 0) + 1);
+    const common = [...cnt].filter(([b, v]) => v >= l.length / 2 && !String(e.why).includes(b)).map(([b]) => b), rv = l.map((y) => y[6]).filter((v) => v != null), avR = rv.length ? Math.round(rv.reduce((v, x) => v + x, 0) / rv.length) : null;
+    const usual = [common.length ? andL(common) + ' up' : '', avR != null && rn ? 'about ' + avR + ' ' + rn : ''].filter(Boolean);
+    return '<div class="spc-slr spc-slw"><span class="spc-sln spc-sent"><span class="sub">You pressed</span> <span class="spc-nw">' + spIc(e.did) + '<b>' + esc(e.did) + '</b></span> <span class="sub">while</span> <span class="spc-nw">' + spIc(e.want) + '<b>' + esc(e.want) + '</b></span> <span class="sub">' + esc(aplSlipEnd(e)) + '</span></span><span class="spc-slc">' + (l.length === 1 ? 'once' : l.length === 2 ? 'twice' : l.length + ' times') + '</span>' +
+      (usual.length ? '<span class="spc-slx">Usually with ' + esc(usual.join(' and ')) + '.</span>' : '') +
+      '<span class="spc-slt">' + l.map((y) => '<button type="button" class="spc-sltc' + (inW(y[0]) ? ' in' : '') + '" data-mt="' + y[0].toFixed(2) + '" title="' + esc(ctx(y) || T(y[0])) + '">' + T(y[0]) + '</button>').join('') + '</span></div>'; }).join('');
+  return strip + sum + (rowsH ? '<div class="spc-slp">' + rowsH + '</div>' : '');
+}
 const APL_LEAD = 'This is the order to press your buttons in, from your guides and the simulations. Each cast is checked against it, and each slip shows what to press instead.';
 const HEAL_LEAD = 'This is what to press when nothing more urgent is happening, from your guides. Each cast is checked against it, and each slip shows what to press instead.';
 
@@ -20624,21 +20717,27 @@ const GEN_SPECS = {
     cds: [{ n: 'Incarnation: Chosen of Elune', names: ['Incarnation: Chosen of Elune', 'Celestial Alignment'], cd: 180, chT: [['Whirling Stars', 2]], ok: 0.85, warn: 0.7, why: 'Press your big cooldown as often as the fight allows.' }],
     lead: { ups: 'Time in Eclipse is your damage. Press it on cooldown, with your short cooldowns inside it.', rot: 'Press your short cooldowns with Eclipse.', dots: 'Moonfire and Sunfire tick into Shooting Stars, so keep both on the boss.', res: 'Spend Astral Power before you\'re full, on Starsurge for one target and Starfall for more.', cds: 'Use your big cooldown as often as the fight allows.' } },
   'Elemental Shaman': { ic: 'Lava Burst', top: 'Elemental Shamans',
-    win: { n: 'Ascendance', dur: 15, why: 'Ascendance puts Flame Shock on its targets, makes every spell that can overload do it one extra time, and makes overloads hit 75% harder. Keep casting all the way through it.' },
-    pairs: [{ k: 'skasc', a: 'Ascendance', pre: 12, b: ['Stormkeeper'], orBuf: 'Stormkeeper', blk: 'Ascendance', ok: 0.6, warn: 0.4, label: 'Stormkeeper before Ascendance', txt: '{ok} of your {n} Ascendances came right after a Stormkeeper.',
-      why: 'Both guides: press Stormkeeper first, then Ascendance, so Stormkeeper\'s empowered spells get Ascendance\'s extra overloads. Holding Stormkeeper up to 10 seconds for it is fine. The top Elemental Shamans manage about 7 in 10.', tip: 'When Ascendance is coming back within 10 seconds, hold Stormkeeper and press it one or two casts before Ascendance.' }],
+    win: { n: 'Ascendance', dur: 15, setup: [{ n: 'Stormkeeper', pre: 12, orBuf: 'Stormkeeper' }, { n: 'Ancestral Swiftness', pre: 12, post: 3, orBuf: 'Ancestral Swiftness', hero: 'Farseer' }], pool: { ok: 90, warn: 60, why: 'Wowhead: save Maelstrom and procs for Ascendance, which makes the spells you spend them on overload more. Enough for one Elemental Blast (90) is the bar.' }, why: 'Ascendance puts Flame Shock on its targets, makes every spell that can overload do it one extra time, and makes overloads hit 75% harder. Keep casting all the way through it.' },
+    pairs: [{ k: 'skasc', a: 'Ascendance', pre: 12, b: ['Stormkeeper'], orBuf: 'Stormkeeper', blk: 'Ascendance', ok: 0.85, warn: 0.6, label: 'Stormkeeper before Ascendance', txt: '{ok} of your {n} Ascendances came right after a Stormkeeper.',
+      why: 'Both guides: press Stormkeeper first, then Ascendance, so Stormkeeper\'s empowered spells get Ascendance\'s extra overloads. Wowhead: always after Stormkeeper. Icy Veins: hold Stormkeeper up to 10 seconds to cast it one or two casts before Ascendance.', tip: 'When Ascendance is coming back within 10 seconds, hold Stormkeeper and press it one or two casts before Ascendance.' },
+      { k: 'ebasc', a: 'Ascendance', pre: 3.5, from: 20, b: ['Elemental Blast'], tal: 'Elemental Blast', blk: 'Ascendance', ok: 0.85, warn: 0.6, label: 'Elemental Blast right before Ascendance', txt: '{ok} of your {n} Ascendances after the opener came right after an Elemental Blast.', why: 'Icy Veins: with Elemental Blast, cast it immediately before Ascendance, so its stat buff covers the window. The opener is left out.', tip: 'Cast Elemental Blast just before you press Ascendance.' },
+      { k: 'vbout', a: 'Voltaic Blaze', notInBuf: 'Ascendance', minB: 2, hero: 'Farseer', blk: 'Ascendance', ok: 0.9, warn: 0.75, label: 'Voltaic Blaze outside Ascendance', txt: '{ok} of your {n} Voltaic Blazes on two or more bosses went out outside Ascendance.', why: 'Wowhead (Farseer on more targets): line Voltaic Blaze up right after Stormkeeper and Ancestral Swiftness, but outside Ascendance. Your burst goes Stormkeeper, Ancestral Swiftness, Voltaic Blaze, then Ascendance.', tip: 'Press Voltaic Blaze just before Ascendance, not inside it.' }],
     pre: [{ k: 'skyfury', n: 'Skyfury', why: 'Skyfury gives you and your group Mastery and extra weapon strikes. Any Shaman\'s counts.', tip: 'Cast Skyfury before the pull, unless another Shaman already has.' },
+      { k: 'shield', n: 'Lightning Shield', names: ['Lightning Shield', 'Earth Shield'], label: 'Lightning Shield or Earth Shield on', okTxt: 'You had your shield on when the boss was pulled.', noTxt: 'You had neither Lightning Shield nor Earth Shield on when the boss was pulled.', why: 'Wowhead: put on Lightning Shield if you play Lightning Capacitor, and Earth Shield otherwise or with Elemental Orbit. Instinctive Imbuements puts on both.', tip: 'Put your shield on before every pull: Lightning Shield with Lightning Capacitor, Earth Shield otherwise.' },
       { k: 'imbue', n: 'Flametongue Weapon', ench: [5400], label: 'Flametongue Weapon on', okTxt: 'Your weapon had Flametongue Weapon on when the boss was pulled.', noTxt: 'Your weapon didn\'t have Flametongue Weapon on when the boss was pulled.', why: 'Flametongue Weapon is your weapon imbue. With Instinctive Imbuements, casting Lightning Shield puts it on for you.', tip: 'Put Flametongue Weapon on your weapon before the pull.' }],
-    open: { ic: 'Stormkeeper', pre: ['Stormkeeper'], by: [{ n: 'Stormkeeper', before: 'Ascendance', tip: 'Cast Stormkeeper before Ascendance, ideally about 3 seconds before the pull.' }, { n: 'Ascendance', by: 10 }, { n: 'Ancestral Swiftness', by: 10, hero: 'Farseer' }],
-      seq: { Farseer: ['Stormkeeper', 'Lava Burst', 'Ascendance', 'Ancestral Swiftness', 'Lava Burst', 'Lightning Bolt', 'Lightning Bolt'], Stormbringer: ['Stormkeeper', 'Lava Burst', 'Ascendance', 'Lava Burst', 'Tempest', 'Lightning Bolt'] },
-      why: 'Both guides stack your cooldowns at the start: Stormkeeper about 3 seconds before the pull and a Lava Burst so it lands as the pull starts, then Ascendance and Ancestral Swiftness right away. On two bosses, putting Flame Shock on both first is fine, as long as Stormkeeper still comes before Ascendance.',
-      lead: 'Stack your cooldowns at the start: Stormkeeper before the pull, then Ascendance and Ancestral Swiftness in your first few casts.' },
-    stats: { goal: ['mastery', 1200], goalTxt: 'Wowhead\'s goal is 1,200 Mastery first.', low: 'versatility', order: [['mastery'], ['haste', 'crit'], ['versatility']], loose: [['mastery', 'crit']],
+    open: { ic: 'Stormkeeper', pre: ['Stormkeeper'], bars: ['Stormkeeper', 'Ascendance', 'Ancestral Swiftness', 'Light\'s Potential'], ok: 0.85, warn: 0.6, seqs: [
+      { hero: 'Farseer', tgt: 1, src: 'Wowhead and Icy Veins', steps: [{ n: 'Stormkeeper', pre: true }, { n: 'Lava Burst', pre: true }, { any: ['Ascendance', 'Ancestral Swiftness'] }, { any: ['Ascendance', 'Ancestral Swiftness'] }, { n: 'Lava Burst' }, { n: 'Lightning Bolt' }, { n: 'Lightning Bolt' }] },
+      { hero: 'Farseer', tgt: 2, src: 'Icy Veins\' multi-target opener, the same as Wowhead\'s burst order', steps: [{ n: 'Stormkeeper' }, { n: 'Ancestral Swiftness' }, { n: 'Voltaic Blaze' }, { n: 'Ascendance' }] },
+      { hero: 'Stormbringer', tgt: 1, src: 'Wowhead', steps: [{ n: 'Stormkeeper', pre: true }, { n: 'Lava Burst', pre: true }, { n: 'Ascendance' }, { n: 'Lava Burst' }, { n: 'Tempest' }, { n: 'Lightning Bolt' }] },
+      { hero: 'Stormbringer', tgt: 2, src: 'Icy Veins\' multi-target opener', steps: [{ n: 'Stormkeeper' }, { n: 'Voltaic Blaze' }, { n: 'Ascendance' }] }],
+      why: 'Both guides give an exact opener. On one boss: Stormkeeper about 3 seconds before the pull, a Lava Burst cast so it lands as the pull starts, then Ascendance and Ancestral Swiftness (Wowhead and Icy Veins put them in a different order, so either counts), then Lava Burst and Lightning Bolts. On two or more bosses, Icy Veins opens Stormkeeper, Ancestral Swiftness, Voltaic Blaze, then Ascendance, which is also Wowhead\'s burst order for Farseer.',
+      lead: 'Both guides give an exact opener: Stormkeeper and a Lava Burst before the pull, then Ascendance and Ancestral Swiftness right away. On two or more bosses: Stormkeeper, Ancestral Swiftness, Voltaic Blaze, then Ascendance.' },
+    stats: { goal: ['mastery', 1200], goalTxt: 'Wowhead\'s goal is 1,200 Mastery first, then Haste and Critical Strike.', low: 'versatility', order: [['mastery'], ['haste', 'crit'], ['versatility']],
       top: { mastery: [925, 1208], haste: [747, 1053], crit: [807, 1147], versatility: [117, 278], n: 6, on: 'The Lost Explorers' },
       why: 'Mastery gives your spells their overloads and boosts all your damage. Wowhead: get it to 1,200 rating, then split Haste and Critical Strike. Past about 86% Mastery (100% with Elemental Blast\'s Mastery buff) more does very little.',
-      orderWhy: 'Both guides: Mastery, then Haste and Critical Strike, then Versatility. Wowhead adds that Critical Strike has caught up with Haste, and the top players carry about as much Critical Strike as Mastery, so those two count as even.',
+      orderWhy: 'Both guides: Mastery, then Haste and Critical Strike, then Versatility. Icy Veins puts Haste a little ahead, and Wowhead says Critical Strike has caught up with it, so those two count as even.',
       lowWhy: 'Both guides put Versatility last.', lead: 'Mastery first, then Haste and Critical Strike about evenly, and as little Versatility as you can.' },
-    apl: { blk: 'Your priority', ok: 0.84, warn: 0.75, why: 'The list comes from the Wowhead and Icy Veins guides for your hero talents, and the SimulationCraft list that Raidbots sims with.', list: [
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, ctx: ['Master of the Elements', 'Lava Surge', 'Overcharge!', 'Flowing Elements', 'Stormkeeper', 'Ascendance'], why: 'The list comes from the Wowhead and Icy Veins guides for your hero talents, and the SimulationCraft list that Raidbots sims with.', list: [
       { s: 'Earthquake', hero: 'Farseer', tal: 'Earthquake', known: true, if: { en: 2, buff: 'Call of the Ancestors', st: 3, res: ['11', 60], any: [{ buff: 'Overcharge!' }, { buff: 'Master of the Elements' }, { resF: ['11', 0.91] }] }, why: 'two bosses were up with 3 or more Ancestors out', tip: 'On two bosses with 3 or more Ancestors out, spend on Earthquake instead of Elemental Blast. Every Ancestor copies it.' },
       { s: 'Elemental Blast', alt: ['Earth Shock', 'Earthquake'], if: { buff: 'Overcharge!', any: [{ buff: 'Flowing Elements' }] }, why: 'both tier buffs (Overcharge! and Flowing Elements) were up', tip: 'With both tier buffs up, Overcharge! and Flowing Elements, cast Elemental Blast right away. A new Overcharge! replaces the one you hold.' },
       { s: 'Elemental Blast', alt: ['Earth Shock', 'Earthquake'], if: { resF: ['11', 0.91] }, why: 'you were within 15 Maelstrom of full', tip: 'Within 15 Maelstrom of full, spend before anything else, so nothing you build is lost.' },
@@ -21354,6 +21453,7 @@ function cmpAutoSum(checks) {
   for (const c of checks || []) { if (!c.sec) continue; let sec = secs.find((y) => y.t === c.sec); if (!sec) secs.push(sec = { t: c.sec, ic: c.secIc, txt: c.secLead, tiles: [], splits: [] });
     const v = cmpNumV(String(c.v == null ? '' : c.v).replace(/(\d),(?=\d{3})/g, '$1')); if (c.st !== 'na' || v != null) sec.tiles.push({ k: c.k, l: c.label || c.k, v, fs: String(c.v == null ? '–' : c.v).replace(/^([\d.,]+%?)\s+([A-Za-z][^<]*)$/, '$1<span> $2</span>'), st: c.st, b: c.dir || lo.test((c.label || '') + ' ' + String(c.v || '').replace(/<[^>]+>/g, '')) ? 'lo' : 'hi', tip: c.sub ? esc(c.sub) : '' });
     if (c.split) sec.splits.push(c.split);
+    if (c.strip) sec.strip = c.strip;
     if (c.lgN && c.bx && c.bx.length) { const n = {}; for (const b of c.bx) n[b.cls] = (n[b.cls] || 0) + 1; const ks = Object.keys(c.lgN).filter((k) => n[k]);
       if (ks.length >= 2) sec.splits.push({ l: c.label + ', each one', parts: ks.map((k) => [c.lgN[k], n[k]]), cmap: Object.fromEntries(ks.map((k) => [c.lgN[k], CMP_KCOL[k] || '#888'])) }); } }
   return { sections: secs.filter((y) => y.tiles.length || y.splits.length) };
@@ -21378,7 +21478,8 @@ function cmpSumView(sa, sb, x, top) {
   const sec = (s1) => { const s2 = sb.sections.find((y) => y.t === s1.t) || { tiles: [], splits: [] }, keys = []; for (const t of s1.tiles.concat(s2.tiles)) if (t && !keys.includes(t.k)) keys.push(t.k);
     const tl = keys.map((k2) => tile(s1.tiles.find((y) => y.k === k2), s2.tiles.find((y) => y.k === k2))).join('');
     const sp = (s1.splits || []).map((p) => split(p, (s2.splits || []).find((y) => y.l === p.l))).join('');
-    return '<section class="cmp-wsec"><div class="cmp-wsx"><h4>' + spellIcon(0, s1.ic) + esc(s1.t) + '</h4><p>' + esc(s1.txt) + '</p></div><div class="cmp-wsd"><div class="cmp-wts">' + tl + '</div>' + sp + (s1.mana || s2.mana ? mana(s1.mana, s2.mana) : '') + '</div></section>'; };
+    const so = s1.strip || s2.strip ? '<div class="cmp-wsp"><div class="cmp-wtl">The first ' + ((s1.strip || s2.strip).len || 15) + ' seconds</div>' + [[Ln, colA, s1.strip], [Bn, colB, s2.strip]].map(([nm, col, st]) => '<div class="cmp-wop"><span class="cmp-wsn" style="color:' + col + '">' + nm + '</span>' + (st ? openTlHtml(st.seq, st.bars, st.len) : '<span class="sub">No opener to show</span>') + '</div>').join('') + '</div>' : '';
+    return '<section class="cmp-wsec"><div class="cmp-wsx"><h4>' + spellIcon(0, s1.ic) + esc(s1.t) + '</h4><p>' + esc(s1.txt) + '</p></div><div class="cmp-wsd"><div class="cmp-wts">' + tl + '</div>' + so + sp + (s1.mana || s2.mana ? mana(s1.mana, s2.mana) : '') + '</div></section>'; };
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>The numbers that decide your ' + (/^(Holy|Restoration|Discipline|Mistweaver|Preservation)/.test((x.pA || {}).specName || '') ? 'healing' : /^(Protection|Guardian|Blood|Brewmaster|Vengeance)/.test((x.pA || {}).specName || '') ? 'tanking' : 'damage') + '. Hover a tile for what it means.</small></h3>' + (top || '') + sa.sections.map(sec).join('') + '</div>';
 }
 function cmpChips(rot, x) {
@@ -22380,7 +22481,7 @@ function bindPerf() {
     $$('.spc-drx').forEach((b) => (b.onclick = () => { const k = S.specCheck; S.specCheck = null; perf(); spcKeep(k); }));
     spcTipInit();
     $$('.spc-pt [data-gopull]').forEach((b) => (b.onclick = () => spcOpen(+b.dataset.gopull)));
-    $$('.spc-mo[data-mt], .spc-w[data-mt], .spc-bx[data-mt]').forEach((el) => keyGo(el, () => { const t = +el.dataset.mt; if (el.dataset.mp) { S.specPin = t; spcOpen(+el.dataset.mp); } else spcPin(t, true); }));
+    $$('.spc-mo[data-mt], .spc-w[data-mt], .spc-bx[data-mt], .spc-sltc[data-mt]').forEach((el) => keyGo(el, () => { const t = +el.dataset.mt; if (el.dataset.mp) { S.specPin = t; spcOpen(+el.dataset.mp); } else spcPin(t, true); }));
     spcSortBind(); spcTlBind();
     $$('#view [data-fo]').forEach((b) => (b.onclick = () => { const id = '#spc-r-' + b.dataset.fo, go = () => { const el = $(id); if (!el) return; if (el.tagName === 'DETAILS') el.open = true; el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); };
       if (!$(id)) { S.specFilter = 'all'; perf(); requestAnimationFrame(go); } else go(); }));
