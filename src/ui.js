@@ -10471,7 +10471,8 @@ const GEN_SPECS = {
     apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide.', list: [
       { s: 'Arcane Missiles', alt: ['Prismatic Bolt'], if: { buff: 'Clearcasting', low: ['Arcane Salvo', 11] }, why: 'you had Clearcasting and under 12 Arcane Salvo', tip: 'With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first.' },
       { s: 'Prismatic Bolt', if: { buff: 'Prismatic Bolt!' }, why: 'Prismatic Bolt was ready', tip: 'Cast Prismatic Bolt as soon as it\'s ready. It doesn\'t stack, so holding it risks losing the next one.' },
-      { s: 'Arcane Blast', alt: ['Arcane Orb', 'Arcane Pulse', 'Arcane Missiles', 'Prismatic Bolt'] }] },
+      { s: 'Arcane Blast', alt: ['Arcane Orb', 'Arcane Pulse', 'Arcane Missiles', 'Prismatic Bolt'] }], levels: [
+      { s: ['Arcane Barrage'], ty: '16', min: 4, ok: 0.8, warn: 0.65, ic: 'Arcane Barrage', label: 'Arcane Barrage at 4 Arcane Charges', what: 'Arcane Barrages', at: 'at 4 Arcane Charges', why: 'Arcane Barrage spends your Arcane Charges, and each one makes it hit harder, so the list waits for all 4 (except to move).', tip: 'Build to 4 Arcane Charges before Arcane Barrage.' }] },
     abcWhy: 'Arcane Blast and Arcane Missiles are your fillers, and Arcane Barrage and Arcane Orb are instant when you have to move.',
     rot: [{ n: 'Touch of the Magi', cd: 45, ok: 0.85, warn: 0.7, why: 'Touch of the Magi stores part of your damage on the target and releases it at the end. Press it on cooldown, right after an Arcane Barrage.' },
       { n: 'Arcane Orb', hero: 'Spellslinger', cd: 20, chT: [['Charged Orb', 2]], ok: 0.7, warn: 0.5, why: 'Arcane Orb builds Arcane Charges. Cast it when you have fewer than 3.' }],
@@ -10481,6 +10482,7 @@ const GEN_SPECS = {
     lead: { rot: 'Press Touch of the Magi on cooldown, and aim to have 4 Arcane Charges whenever you cast Arcane Barrage.', procs: 'Clearcasting into Arcane Missiles is your main proc. Spend Prismatic Bolt quickly, because it doesn\'t stack.', cds: 'Use Arcane Surge every 90 seconds.' } },
   'Arms Warrior': { ic: 'Mortal Strike', top: 'Arms Warriors',
     win: { n: 'Avatar', with: [['Colossus Smash', 'Warbreaker']], dur: 20, why: 'Avatar is your burst. Colossus Smash goes out with it.' },
+    pairs: [{ k: 'demo', a: 'Demolish', pre: 12, b: ['Colossus Smash', 'Warbreaker'], min: 1, tal: 'Demolish', blk: 'Avatar', label: 'Demolish in Colossus Smash', txt: '{ok} of your {n} Demolishes went out inside Colossus Smash.', why: 'Colossus Smash makes the target take more damage, and Demolish is your biggest hit, so they go together.', tip: 'Press Demolish inside Colossus Smash.' }],
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'The list comes from WoWAnalyzer\'s Arms rotation check and the Wowhead guide (Slayer and Colossus share it outside execute range).', list: [
       { s: 'Execute', if: { buff: 'Sudden Death', st: 2 }, why: 'Sudden Death was at 2 stacks', tip: 'At 2 stacks of Sudden Death, press Execute before anything else, so the next proc isn\'t lost.' },
       { s: 'Overpower', cd: 12, ch: 2, alt: ['Mortal Strike'], if: { buff: 'Opportunist', st: 2 }, why: 'Opportunist was at 2 stacks', tip: 'At 2 stacks of Opportunist, spend one on Overpower before it caps.' },
@@ -10548,6 +10550,7 @@ const GEN_SPECS = {
       { s: 'Starsurge', alt: ['Starfall'], if: { any: [{ buff: 'Touch the Cosmos' }, { buff: "Starweaver's Weft" }, { res: ['8', 850] }] }, why: 'it was free, or you were near full Astral Power', tip: 'Spend Astral Power on Starsurge (Starfall on more targets) before it caps, and use your free ones right away.' },
       { s: 'Starfire', alt: ['Wrath', 'Starsurge', 'Starfall', 'Moonfire', 'Sunfire', 'New Moon', 'Half Moon', 'Full Moon'] }] },
     abcWhy: 'Starsurge and Starfall are instant, so build Astral Power while you can stand still and spend it while you move.',
+    procs: [{ n: 'Touch the Cosmos', okW: 0.15, warnW: 0.3, use: ['Starsurge', 'Starfall'], why: 'Touch the Cosmos makes your next Starsurge or Starfall free. Spend it.' }, { n: "Starweaver's Weft", use: ['Starsurge'], why: "Starweaver's Weft makes your next Starsurge free. Spend it." }, { n: "Starweaver's Warp", use: ['Starfall'], why: "Starweaver's Warp makes your next Starfall free. Spend it." }],
     ups: [{ n: 'Eclipse', ic: 'Lunar Eclipse', names: ['Eclipse (Lunar)', 'Eclipse (Solar)'], label: 'Time in Eclipse', upTxt: 'You were in Eclipse', ok: 0.65, warn: 0.5, why: 'Eclipse is a 32-second cooldown. Starfire before it gives Lunar Eclipse, Wrath before it gives Solar, and your big cooldown gives both. Time in Eclipse is your damage, so press it on cooldown, with Force of Nature or Fury of Elune.' }], upN: 'Eclipse', upCh: 'Rotation', upFirst: true,
     rot: [{ n: 'Fury of Elune', cd: 60, ok: 0.85, warn: 0.7, why: 'Fury of Elune gives Astral Power and hits hard. Press it on cooldown, with Eclipse.' }, { n: 'Force of Nature', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Force of Nature on cooldown, with Eclipse.' }],
     dots: [{ n: 'Moonfire', why: 'Moonfire\'s ticks bring Shooting Stars, so keep it on the boss.' }, { n: 'Sunfire', why: 'Sunfire\'s ticks bring Shooting Stars, so keep it on the boss.' }],
@@ -10562,7 +10565,7 @@ const GEN_SPECS = {
       { s: 'Lightning Bolt', alt: ['Chain Lightning', 'Lava Burst', 'Earth Shock', 'Elemental Blast', 'Earthquake', 'Tempest', 'Voltaic Blaze', 'Flame Shock'] }] },
     abcWhy: 'Elemental has little to cast on the move, so plan your movement. Spiritwalker\'s Grace and Nature\'s Swiftness keep you casting.',
     dots: [{ n: 'Flame Shock', why: 'Flame Shock gives Lava Surge procs. Keep it on the boss.' }],
-    procs: [{ n: 'Lava Surge', use: ['Lava Burst'], why: 'Lava Surge makes your next Lava Burst instant. Cast it.' }, { n: 'Stormkeeper', use: ['Lightning Bolt', 'Chain Lightning', 'Tempest'], max: 3, why: 'Stormkeeper empowers your next Lightning Bolts or Chain Lightnings. Spend it.' }],
+    procs: [{ n: 'Master of the Elements', okW: 0.12, warnW: 0.2, use: ['Earth Shock', 'Elemental Blast', 'Tempest', 'Lightning Bolt', 'Earthquake', 'Chain Lightning', 'Icefury', 'Frost Shock'], why: 'Lava Burst gives Master of the Elements, which makes your next spell stronger. Follow it with a spender, like Earth Shock or Elemental Blast.' }, { n: 'Lava Surge', use: ['Lava Burst'], why: 'Lava Surge makes your next Lava Burst instant. Cast it.' }, { n: 'Stormkeeper', use: ['Lightning Bolt', 'Chain Lightning', 'Tempest'], max: 3, why: 'Stormkeeper empowers your next Lightning Bolts or Chain Lightnings. Spend it.' }],
     res: { ty: '11', n: 'Maelstrom', why: 'Maelstrom pays for Earth Shock, Elemental Blast and Earthquake. Spend it before you\'re full.' },
     rot: [{ n: 'Stormkeeper', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Stormkeeper on cooldown.' }],
     cds: [{ n: 'Ascendance', cd: 180, cdT: [['First Ascendant', 120]], ok: 0.85, warn: 0.7, why: 'Ascendance powers every spell you cast in it. Save Maelstrom and procs for it, and press it as often as the fight allows.' }],
@@ -10669,7 +10672,7 @@ const GEN_SPECS = {
     cds: [{ n: 'Shadow Blades', cd: 90, ok: 0.85, warn: 0.7, why: 'Shadow Blades is your major cooldown. Use it with Shadow Dance, as often as the fight allows.' }],
     lead: { abc: 'Energy sets your pace. Some quiet time outside cooldowns is normal.', rot: 'Line everything up with Secret Technique. Press Shadow Dance when it\'s ready.', res: 'Finish at 6 or 7 combo points.', cds: 'Use Shadow Blades with Shadow Dance.' } },
   'Shadow Priest': { ic: 'Mind Blast', top: 'Shadow Priests',
-    win: { n: 'Voidform', with: [['Power Infusion']], dur: 20, why: 'Voidform is your burst. Power Infusion goes out with it, unless your raid gives it to someone else.' },
+    win: { n: 'Voidform', with: [['Power Infusion']], dotsUp: ['Vampiric Touch', 'Shadow Word: Pain'], dur: 20, why: 'Voidform is your burst. Power Infusion goes out with it, unless your raid gives it to someone else.' },
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide.', list: [
       { s: 'Shadow Word: Madness', alt: ['Devouring Plague'], if: { any: [{ buff: 'Mind Devourer' }, { resF: ['13', 0.65] }] }, why: 'it was free, or you were near full Insanity', tip: 'Spend Insanity on Shadow Word: Madness before it caps, and use Mind Devourer right away.' },
       { s: 'Mind Blast', cd: 9, h: true, alt: ['Void Blast', 'Void Volley', 'Tentacle Slam', 'Vampiric Touch', 'Shadow Word: Pain'], tip: 'Mind Blast comes before Mind Flay whenever it\'s ready.' },
@@ -10705,6 +10708,7 @@ const GEN_SPECS = {
       { n: 'Summon Gargoyle', cd: 180, ok: 0.85, warn: 0.7, why: 'Use Summon Gargoyle as often as the fight allows.' }, { n: 'Army of the Dead', cd: 180, ok: 0.8, warn: 0.6, why: 'Use Army of the Dead as often as the fight allows.' }, { n: 'Raise Abomination', cd: 90, ok: 0.85, warn: 0.7, why: 'Press Raise Abomination on cooldown.' }],
     lead: { procs: 'Spend Sudden Doom as quickly as you can.', dots: 'Keep Virulent Plague on the boss.', res: 'Don\'t let Runic Power overflow.', cds: 'Unholy is a burst spec, so using its cooldowns as often as possible is its biggest priority.' } },
   'Augmentation Evoker': { ic: 'Ebon Might', top: 'Augmentation Evokers',
+    pairs: [{ k: 'eons', a: 'Breath of Eons', inBuf: 'Ebon Might', blk: 'Breath of Eons', ch: 'Cooldowns', label: 'Breath of Eons in Ebon Might', minN: 1, txt: '{ok} of your {n} Breaths of Eons went out while Ebon Might was up.', why: 'Breath of Eons copies a share of your allies\' damage, and Ebon Might boosts it, so they go together.', tip: 'Press Breath of Eons while Ebon Might is up.', lead: 'Line Breath of Eons up with Ebon Might.' }],
     apl: { blk: 'Your priority', ok: 0.95, warn: 0.85, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide.', list: [
       { s: 'Eruption', if: { buff: 'Essence Burst', st: 2 }, why: 'Essence Burst was at 2 stacks', tip: 'At 2 stacks of Essence Burst, spend one on Eruption before Living Flame or Prescience.' },
       { s: 'Living Flame', alt: ['Azure Strike', 'Eruption'] }] },
@@ -10736,7 +10740,7 @@ const GEN_SPECS = {
     cds: [{ n: 'Doom Winds', cd: 60, ok: 0.9, warn: 0.75, why: 'Press Doom Winds on cooldown.' }, { n: 'Ascendance', cd: 180, ok: 0.85, warn: 0.7, why: 'Use Ascendance as often as the fight allows.' }, { n: 'Feral Spirit', cd: 90, ok: 0.85, warn: 0.7, why: 'Press Feral Spirit on cooldown.' }],
     lead: { procs: 'Don\'t waste Maelstrom Weapon. Spend it at 9 or more, on Lightning Bolt (one target) or Chain Lightning (more).', rot: 'Keep your strikes on cooldown.', cds: 'Press Doom Winds on cooldown.' } },
   'Affliction Warlock': { ic: 'Unstable Affliction', top: 'Affliction Warlocks',
-    win: { n: 'Summon Darkglare', dotsUp: ['Agony', 'Wither', 'Corruption'], dur: 20, why: 'Darkglare makes your damage over time hit harder, so have it all up before you summon it.' },
+    win: { n: 'Summon Darkglare', with: [['Malevolence']], pre: 5, dotsUp: ['Agony', 'Wither', 'Corruption'], dur: 20, why: 'Darkglare makes your damage over time hit harder, so have it all up before you summon it.' },
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide (Hellcaller).', list: [
       { s: 'Haunt', tip: 'Haunt comes first whenever it\'s ready.' },
       { s: 'Shadow Bolt', alt: ['Drain Soul', 'Malefic Grasp'], if: { buff: 'Nightfall', st: 2 }, why: 'Nightfall was at 2 stacks', tip: 'At 2 stacks of Nightfall, spend one before anything else.' },
@@ -10812,7 +10816,7 @@ const GEN_SPECS = {
       { s: 'Blessed Hammer', alt: ['Hammer of the Righteous'], shareCd: true, if: { buff: 'Shake the Heavens' }, why: 'Shake the Heavens was up', tip: 'With Shake the Heavens up, Blessed Hammer comes before Avenger\'s Shield.' },
       { s: "Avenger's Shield", why: 'it was ready', tip: "Avenger's Shield comes before Blessed Hammer and Consecration." },
       { s: 'Blessed Hammer', alt: ['Hammer of the Righteous', 'Consecration', 'Shield of the Righteous', 'Word of Glory', 'Judgment', "Avenger's Shield", 'Hammer of Wrath', 'Hammer of Light'] }] },
-    ups: [{ n: 'Shield of the Righteous', ok: 0.7, warn: 0.55, why: 'Shield of the Righteous is your active mitigation. Keep it up by spending Holy Power on it.' }],
+    ups: [{ n: 'Shield of the Righteous', ok: 0.7, warn: 0.55, why: 'Shield of the Righteous is your active mitigation. Keep it up by spending Holy Power on it.' }, { n: 'Consecration', ok: 0.55, warn: 0.4, upTxt: 'You stood in your Consecration', why: 'Consecration under you cuts the damage you take and powers your Blessed Hammers. Keep it down where you tank.' }],
     rot: [{ n: "Avenger's Shield", cd: 15, h: true, ok: 0.8, warn: 0.65, why: "Avenger's Shield on cooldown." }, { n: 'Judgment', cd: 6, h: true, chT: [["Crusader's Judgment", 2]], ok: 0.8, warn: 0.65, why: 'Press Judgment on cooldown. It builds Holy Power.' }, { n: 'Blessed Hammer', cd: 5, h: true, ch: 3, ok: 0.75, warn: 0.6, why: 'Press Blessed Hammer on cooldown. It builds Holy Power.' }],
     procs: [{ n: 'Shining Light', use: ['Word of Glory'], max: 2, why: 'Shining Light makes Word of Glory free. Spend it.' }],
     res: { ty: '9', n: 'Holy Power', why: 'Never sit at 5 Holy Power. Spend it on Shield of the Righteous.' },
@@ -10852,6 +10856,7 @@ const GEN_SPECS = {
       { s: 'Revenge', if: { buff: 'Revenge!' }, why: 'Revenge! made it free', tip: 'Spend a free Revenge before Thunder Clap.' },
       { s: 'Thunder Clap', alt: ['Thunder Blast'], shareCd: true, cd: 6, h: true, why: 'it was ready', tip: 'Thunder Clap on cooldown comes before a Revenge you pay for.' },
       { s: 'Revenge', alt: ['Devastate', 'Execute', 'Shield Slam', 'Thunder Clap', 'Thunder Blast', 'Demolish', 'Shield Charge', "Champion's Spear", 'Ravager', 'Heroic Throw'] }] },
+    procs: [{ n: 'Revenge!', ic: 'Revenge', okW: 0.25, warnW: 0.4, use: ['Revenge'], why: 'Revenge! makes your next Revenge free. Spend it before it runs out.' }],
     ups: [{ n: 'Shield Block', ok: 0.6, warn: 0.45, why: 'Shield Block is your active mitigation against physical hits. Keep it up while you tank.' }],
     rot: [{ n: 'Shield Slam', cd: 9, h: true, ok: 0.85, warn: 0.7, why: 'Press Shield Slam whenever it\'s ready. It gives the most Rage, threat and damage.' }, { n: 'Thunder Clap', names: ['Thunder Clap', 'Thunder Blast'], cd: 6, h: true, ok: 0.75, warn: 0.6, why: 'Press Thunder Clap on cooldown.' }],
     cds: [{ n: 'Avatar', cd: 90, ok: 0.85, warn: 0.7, why: 'Press Avatar on cooldown, about once a minute.' }, { n: 'Demoralizing Shout', cd: 45, ok: 0.75, warn: 0.55, why: 'Demoralizing Shout comes up often. Use it.' }],
