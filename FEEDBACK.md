@@ -198,6 +198,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   list as the site's bar rows (as on Graphs and Players), with a white mark for the other side; a Biggest differences
   section in plain sentences. **Your rule:** nothing opens on another website; a raid opens with "Open this kill" on
   Debrief (the "Open on Warcraft Logs" button is gone).
+  **Later rounds (Oct 19):** Fellow raiders and Top raiders of your spec only (Similar raid groups off for now, code kept);
+  "How they differ" in plain sentences, who did more first; Top raiders against one top raider (#1 by default) or their
+  average; and **only what adds up to HPS or DPS** (your call): output, spell mix, casts a minute, crit, hit size,
+  overhealing, big cooldowns, boss and adds. Mistakes, damage taken, deaths, kicks and dispels stay on Mechanics and Players.
+- [ ] **Compare raid vs raid: mechanical execution (your note, Oct 19).** Your raid against another raid on the same boss,
+  mechanic by mechanic: how many soaks were missed, who got hit by what, deaths and what caused them, for each raid.
+  My take: **amazing**, and the best use for the parked "Similar raid groups". Debrief can already open any report and run
+  its full Mechanics check, so the other raid's kill can be read the same way as yours and put side by side (their
+  mistakes per mechanic against yours). It needs their whole kill downloaded and checked, so it's slower than the
+  current Compare (about as long as opening a pull). Pairs well with picking a raid with a group like yours.
 - [ ] **A Comparison tab (your note, Oct 19; this gathers the Compare notes below and the "comparison tab" note under the header):**
   its own tab with three ways to compare: (1) you against a teammate, (2) your raid against other raids with a similar
   group (the same classes and specs, or close), found by browsing or searching, and (3) you against the top players of
