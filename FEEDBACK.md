@@ -88,6 +88,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Performance greyed out on the live site until its vision is complete (your note, Oct 18):** it's incomplete and not
   clear what it's for yet, so the whole tab is off on the website for launch (round 186) and stays on your PC. To do: decide
   what Performance is for, then finish it before turning it back on. My take: agreed, launch with what's polished.
+- [ ] **Brand mockups made (Oct 19), waiting for your pick:** https://claude.ai/artifact/UibNV8WFcjzjsz1dpmCCBc. Three logo
+  directions next to today's (A The Crest, B The Marker, C The Pull Line) and two looks, A Raid-ready (Cinzel, gold frames)
+  and B Tactical (sharp cut corners, condensed caps), on the front page and on a pull. My pick: logo A with look A.
 - [ ] **A better, fancier logo and brand (your note, Oct 18).** My take: worth doing before Debrief is promoted widely, not
   before the raid test; I can mock up a few directions to pick from.
 - [ ] **Make the whole website look "fancy" (your note, Oct 18).** My take: goes with the brand work; do them together so the
