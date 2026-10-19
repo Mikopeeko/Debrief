@@ -7108,27 +7108,27 @@ function piSay(c, who) {
   if (c.over) say = to + (self ? ', but they' : ', who') + ' already had one from ' + who(c.over.pr) + '.';
   else if (c.diedIn != null) say = to + ', but ' + u + ' died ' + piSec(c.diedIn) + ' later.';
   else if (down) say = to + ' while the raid couldn\'t do damage.';
-  else if (c.cdHit) { const d = c.cdHit.dt, n = esc(c.cdHit.name); say = to + (d == null ? ' while ' + (self ? 'their own' : tn + '\'s') + ' ' + n + ' was up.' : Math.abs(d) < 1.5 ? ' just as ' + u + ' used ' + n + '.' : ' ' + piSec(d) + (d > 0 ? ' before ' : ' after ') + u + ' used ' + n + '.'); }
+  else if (c.cdHit) { const d = c.cdHit.dt, n = esc(c.cdHit.name); say = to + (d == null ? ' during ' + (self ? 'their own' : tn + '\'s') + ' ' + n + '.' : Math.abs(d) < 1.5 ? ' as ' + u + ' used ' + n + '.' : ' ' + piSec(d) + (d > 0 ? ' before ' : ' after ') + u + ' used ' + n + '.'); }
   else if (early) say = to + ' ' + piSec(after.dt) + ' too early.';
-  else if (noCd) say = to + ', but ' + u + ' didn\'t use a big cooldown with it.';
+  else if (noCd) say = to + ', but ' + u + ' didn\'t use a big cooldown.';
   else say = to + '.';
   const why = [];
-  if (c.over) why.push('Two don\'t stack, so most of it was wasted.');
+  if (c.over) why.push('Two don\'t stack.');
   else if (c.diedIn != null) why.push('Most of the boost was lost.');
-  else if (down) why.push('Most of it was lost. Save it for when the raid can do damage.');
-  else if (early) why.push(tn + ' used ' + esc(after.name) + ' at ' + T(c.t + after.dt) + '. Next time, wait for it, so both are up at the same time.');
-  else if (noCd && (c.cdNames || []).length) why.push('Next time, give it when ' + u + ' uses ' + piOr(c.cdNames.map(esc)) + '.');
-  if (healer) why.push(tn + ' is a healer, so it added no damage. On a healer it\'s only worth it when the raid needs a lot of healing.');
-  else if (c.noSim || c.ratio == null) why.push('There\'s no sim for ' + esc(c.tg.specName || 'this spec') + ', so we can\'t tell how much it added.');
-  else if (c.tgt.st !== 'ok') why.push((c.many ? 'With 3 or more enemies up then, ' : 'At that moment, ') + who(c.best) + ' would have gained about ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more, so ' + who(c.best) + ' was the better pick then.');
-  else if (!why.length) why.push(c.best === c.tg ? 'That\'s the best use: ' + tn + ' gains the most from it' + (c.cdHit ? ', and both were up at the same time.' : '.') : 'A good pick. ' + (c.many ? 'With 3 or more enemies up then, only ' : 'At that moment, only ') + who(c.best) + ' would have gained a little more.');
+  else if (down) why.push('Save it for when the raid can do damage.');
+  else if (early) why.push(tn + ' used ' + esc(after.name) + ' at ' + T(c.t + after.dt) + '. Wait for it.');
+  else if (noCd && (c.cdNames || []).length) why.push('Give it with ' + piOr(c.cdNames.map(esc)) + '.');
+  if (healer) why.push(tn + ' is a healer, so it added no damage.');
+  else if (c.noSim || c.ratio == null) why.push('No sim for ' + esc(c.tg.specName || 'this spec') + ', so the gain is unknown.');
+  else if (c.tgt.st !== 'ok') why.push(who(c.best) + ' would have gained ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more' + (c.many ? ' with 3+ enemies up.' : '.'));
+  else if (!why.length) why.push(c.best === c.tg ? 'Best pick.' : 'Good pick. Only ' + who(c.best) + ' would have gained a little more.');
   return { say, why: why.join(' ') };
 }
 // a stretch it sat ready (20 seconds or more), in the same sentences: how long, and the best moment in it
 function piReady(m, who) {
-  const say = 'Power Infusion was ready but not used for ' + piSec(m.b - m.a) + ' (' + T(m.a) + ' to ' + T(m.b) + ').', gain = m.pick ? C(m.pick.v * PI_CD) : '';
-  const why = !m.pick ? '' : m.pick.cd ? who(m.pick.q) + ' used ' + esc(m.pick.cd) + ' at ' + T(m.pick.t) + '. Giving it then would have added about ' + gain + ' damage.'
-    : who(m.pick.q) + ' was the best player to give it to then, for about ' + gain + ' more damage.';
+  const say = 'Sat ready for ' + piSec(m.b - m.a) + ' (' + T(m.a) + ' to ' + T(m.b) + ').', gain = m.pick ? C(m.pick.v * PI_CD) : '';
+  const why = !m.pick ? '' : m.pick.cd ? 'Best moment: ' + who(m.pick.q) + '\'s ' + esc(m.pick.cd) + ' at ' + T(m.pick.t) + ', worth about ' + gain + ' damage.'
+    : 'Best pick then: ' + who(m.pick.q) + ', worth about ' + gain + ' damage.';
   return { say, why };
 }
 // (a row: the time (and the pull, over the night), a dot, the sentence and its why under it)
@@ -7160,7 +7160,7 @@ function piStrip(d, x, casts, who) {
 function piPlan(x, mine, one, who) {
   if (!x.plan) return '';
   const q = x.plan.q, cd = x.plan.cd, self = q === x.p, ts = cd ? cd.ts.slice(0, 3).map((u) => T(u)) : [];
-  let s = '<b>Next pull:</b> ' + (self ? 'use it on themselves' : 'give it to ' + who(q)) + (cd ? ' when ' + (self ? 'they use' : who(q) + ' uses') + ' ' + esc(cd.name) + (one && ts.length ? ', at about ' + andList(ts) : '') : ' every time it\'s ready') + '.';
+  let s = '<b>Next pull:</b> ' + (self ? 'use it on themselves' : 'give it to ' + who(q)) + (cd ? ' with ' + esc(cd.name) + (one && ts.length ? ' (about ' + andList(ts) + ')' : '') : ' every time it\'s ready') + '.';
   if (!one) { const hg = new Map();
     for (const c of mine) if (c.tim.st === 'warn' && (c.cdsAfter || []).length) { const d = c.cdsAfter.reduce((a, b) => (b.dt < a.dt ? b : a)), k = c.tg.name + '|' + d.name, y = hg.get(k) || { q: c.tg, name: d.name, l: [] }; y.l.push(d.dt); hg.set(k, y); }
     const hb = [...hg.values()].sort((a, b) => b.l.length - a.l.length)[0];
@@ -7207,7 +7207,7 @@ function piView(reps, one, only) {
     '<div class="pi-bars">' + ranked.map((y) => '<div class="pi-bar"><span class="pi-bn">' + who(y.p) + (y.got ? '<span class="pi-gt">got it' + (y.got === 2 ? ' twice' : y.got > 2 ? ' ' + y.got + ' times' : '') + '</span>' : '') + '</span><span class="pi-bt"><i style="width:' + Math.max(2, 100 * y.v / mx).toFixed(1) + '%;background:' + y.p.color + '"></i></span><b>' + C(y.v * PI_CD) + '</b></div>').join('') + '</div>' +
     '<p class="sub nolk" style="margin:4px 0 0">About how much extra damage one Power Infusion gives each player on a single target' + (one ? ' over this pull' : ', on average over the night') + '. The longer the bar, the better the pick. A moment with 3 or more enemies up can favour someone else, which is why a cast above can name another player.</p></details>' : '';
   // (one line on what Power Infusion is for, for a raider still learning (your note, Oct 18))
-  const intro = '<p class="pi-intro nolk">Power Infusion is a Priest spell that speeds up another player for 15 seconds, once every 2 minutes. It does the most on a strong damage dealer, given at the moment they use their own big cooldown.</p>';
+  const intro = '<p class="pi-intro nolk">Power Infusion speeds up one player for 15 seconds, every 2 minutes. Give it to a strong damage dealer during their big cooldown.</p>';
   const panel = '<div class="panel pi-list"><h3 class="nh"><span>Every Power Infusion</span><small>' + (one ? 'this pull, up to the wipe filter' : 'over ' + plural(reps.length, 'pull') + ', each up to its wipe filter') + '</small></h3>' + intro + list + gains + '</div>';
   const how = '<details class="howit"><summary>How it works</summary><div><p><b>Who gains the most</b>: Bloodmallet\'s Midnight sims (October 14) say how much extra damage each spec does with Power Infusion. That\'s scaled by how hard each player hit ' + (one ? 'this pull' : 'in each pull') + '. When 3 or more enemies were losing health, the sims for 3 targets are used. A good target is within 15% of the best player alive at that moment. A healer gains no damage from it. Balance Druids and Evokers have no sim, so they aren\'t judged.</p>' +
     '<p><b>Good timing</b>: lined up with the target\'s own big cooldown, pressed within 6 seconds of it or while it was up. It shouldn\'t land while the raid can\'t do damage, on a target who dies during it, or on a player who already has another priest\'s Power Infusion, because two don\'t stack. ⚡ means Bloodlust was up.</p>' +
