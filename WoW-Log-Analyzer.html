@@ -1176,6 +1176,11 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* ---- Spec checks: what the top players do, beside each line ---- */
 .spc-shv { display: inline-flex; align-items: baseline; gap: 10px; } .spc-tp { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
 .spc-htp { margin-top: 6px; color: var(--muted); font-size: 12px; }
+.spc-kts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; max-width: 520px; }
+.spc-kt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 11px; border: 1px solid var(--line2); border-radius: 10px; background: rgba(0, 0, 0, .28); min-width: 0; }
+.spc-ktl { color: var(--muted); font-size: 11.5px; } .spc-ktv { font: 600 20px var(--head); color: var(--text); line-height: 1.2; } .spc-ktv .prs { font-size: 15px; padding: 1px 8px; }
+.spc-ktx { color: var(--faint); font-size: 11px; line-height: 1.3; }
+@media (max-width: 560px) { .spc-kts { gap: 6px; } .spc-kt { padding: 7px 8px; } .spc-ktv { font-size: 17px; } }
 /* (the review line under the name: your output a second, your parse, the top raids'; and the green "what you did well" beside "work on these first") */
 .spc-out { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: 10px; font-size: 13px; color: var(--muted); } .spc-ov b { font: 600 18px var(--head); color: var(--text); } .spc-op .prs { margin-left: 4px; } .spc-ot { flex-basis: 100%; color: var(--muted); } .spc-ot b { color: var(--text); font-weight: 600; }
 .spc-fo.ok { border-left-color: var(--good); } .spc-hgt { margin-top: 8px; color: #7ee08f; }
@@ -10872,21 +10877,29 @@ function noteFit(text, rep) {
   const enc = hd.encounterid && rep.item.id ? +hd.encounterid === +rep.item.id : null;
   const dif = hd.difficulty && rep.item.diff ? String(rep.item.diff).toLowerCase().slice(0, 3) === String(hd.difficulty).toLowerCase().slice(0, 3) : null;
   const inPull = [...rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => p.name.split('-')[0].toLowerCase());
-  const hit = noteScore(text, rep), away = noteNames(text).filter((n) => !inPull.includes(n.toLowerCase())).length;
-  return { enc, dif, hit, away, of: inPull.length, roster: hit - 0.5 * away - (dif === false ? 5 : 0) - (enc === false ? 20 : 0) };
+  const hit = noteScore(text, rep), nn = noteNames(text), away = nn.filter((n) => !inPull.includes(n.toLowerCase())).length;
+  // (the strict roster match (your rule, Oct 19): a note only goes on a pull when all but 2 of the players it names were
+  // there (and at least 3 were), so it never lands on a pug or another group; a note for another fight never does)
+  const named = nn.length, found = named - away, match = enc !== false && away <= 2 && found >= 3;
+  return { enc, dif, hit, away, named, found, match, of: inPull.length, roster: hit - 0.5 * away - (dif === false ? 5 : 0) - (enc === false ? 20 : 0) };
 }
 const noteJobs = (res) => { if (!res || res.error) return null; const cds = (res.cds || []).filter((x) => /^(on time|late|early|missed)$/.test(x.status));
   const ok = cds.filter((x) => x.status === 'on time').length, bad = (res.mistakes || []).filter((m) => m.severity !== 'Low').length; return { ok, bad, score: ok - bad }; };
 const NFIT = new WeakMap(); // (each pull's automatic pick, kept until a note is saved, added or removed)
 function noteForRep(rep) {
   const o = notesOf(rep.item.boss); if (!o.list.length) return null;
-  const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) return { ...one, auto: false, how: 'pull' };
-  const chosen = o.pick !== 'auto' && o.list.find((n) => n.id === o.pick); if (chosen) return { ...chosen, auto: false, how: 'all' };
-  const ck = o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) return had.v;
-  let v;
-  if (o.list.length === 1) v = { ...o.list[0], auto: false, how: 'only', fit: noteFit(o.list[0].text, rep) };
+  const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) { rep.noteMiss = null; return { ...one, auto: false, how: 'pull' }; }
+  const ck = o.pick + '#' + o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) { rep.noteMiss = had.miss; return had.v; }
+  // (only the notes that pass the roster match (or the example) can be used; with none, the pull has no note, and noteMiss
+  // keeps the closest one so the tab can say plainly why)
+  const all = o.list.map((n) => ({ n, f: noteFit(n.text, rep) })), ok = all.filter((x) => x.n.example || x.f.match);
+  let v, miss = null;
+  const chosen = o.pick !== 'auto' && ok.find((x) => x.n.id === o.pick);
+  if (chosen) v = { ...chosen.n, auto: false, how: 'all', fit: chosen.f };
+  else if (!ok.length) { v = null; const best = all.filter((x) => !x.n.example).sort((a, b) => b.f.found - a.f.found || (b.n.saved || 0) - (a.n.saved || 0))[0]; miss = best ? { note: best.n, fit: best.f } : null; }
+  else if (ok.length === 1) v = { ...ok[0].n, auto: false, how: 'only', fit: ok[0].f };
   else {
-    const fs = o.list.map((n) => ({ n, f: noteFit(n.text, rep) })).sort((a, b) => b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
+    const fs = ok.slice().sort((a, b) => b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
     // (only notes that fit the roster equally well go on to the jobs: one that names a player who wasn't there loses outright,
     // or that player's missing cooldown would make it look better)
     const near = fs.filter((x) => x.f.roster >= fs[0].f.roster - 0.25);
@@ -10900,7 +10913,7 @@ function noteForRep(rep) {
     const best = near.length > 1 ? near[0] : fs[0], next = near.length > 1 ? near[1] : fs[1];
     v = { ...best.n, auto: true, how, fit: best.f, jobs: best.j || null, res: best.res || null, rival: next ? { name: next.n.name, jobs: next.j || null, fit: next.f } : null };
   }
-  NFIT.set(rep, { k: ck, v }); return v;
+  rep.noteMiss = miss; NFIT.set(rep, { k: ck, v, miss }); return v;
 }
 // (why a pull uses its note, in one plain sentence)
 function noteWhy(u) {
@@ -10908,7 +10921,7 @@ function noteWhy(u) {
   if (u.how === 'pull') return 'You picked it for this pull.';
   if (u.how === 'all') return 'You set it for every pull.';
   const f = u.fit || {}, names = f.of ? 'it names ' + f.hit + " of this pull's " + f.of + ' players' : '';
-  if (u.how === 'only') return f.dif === false ? "It's your only note for this boss, but its first line says another difficulty." : '';
+  if (u.how === 'only') return f.named ? 'It fits this group: ' + f.found + ' of the ' + plural(f.named, 'player') + ' it names ' + (f.found === 1 ? 'was' : 'were') + ' in this pull' + (f.dif === false ? ", but its first line says another difficulty" : '') + '.' : '';
   if (u.how === 'jobs' && u.rival) { const rv = esc(u.rival.name), rj = u.rival.jobs, n0 = (v) => (v ? v : 'none');
     return 'Picked for this pull: ' + names + ', ' + (u.rival.fit && u.rival.fit.hit === f.hit ? 'the same as ' : 'about as many as ') + rv + ', and more of its jobs got done: ' + n0(u.jobs.ok) + ' on time and ' + n0(u.jobs.bad) + ' missed, against ' + (rj ? n0(rj.ok) + ' on time and ' + n0(rj.bad) + ' missed' : 'none checked') + ' for ' + rv + '.'; }
   if (u.how === 'newest' && u.rival) return 'Picked for this pull: ' + names + ', the same as ' + esc(u.rival.name) + ", and it's the newer one.";
@@ -11222,6 +11235,22 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const chips = (ns, cls) => ns.length ? '<span class="chips">' + ns.map((n) => who(n, cls)).join('') + '</span>' : '<span class="sub">none</span>';
   // no note yet: a short how-to (your note, Oct 18: no other site does this, so explain it clearly): what it does, three
   // plain steps, a picture of the results, and a button to try it with an example made from this pull
+  // notes saved for this boss, but none fits this group (your rule, Oct 19): said plainly, with the closest note and why
+  // it didn't fit, and a way to use it anyway or add one for this group
+  const miss = !text && !S.noteEdit && !only && r.noteMiss && NO.list.some((n) => !n.example) ? r.noteMiss : null;
+  if (miss) {
+    const f = miss.fit, n = miss.note, when = n.saved ? ' <span class="sub">(saved ' + esc(new Date(n.saved).toLocaleDateString([], { month: 'short', day: 'numeric' })) + ')</span>' : '';
+    const why = f.enc === false ? "Its first line says it's for another fight." : !f.named ? "Debrief didn't find any player names in it." : 'It names ' + plural(f.named, 'player') + ', and ' + (f.found ? 'only ' + f.found : 'none') + ' of them ' + (f.found === 1 ? 'was' : 'were') + ' in this pull.';
+    $('#assignBox').innerHTML = asViews() + '<div class="panel nmiss"><h3>No saved note matches this group</h3>' +
+      '<p class="ah-lead">A note is used on a pull only when all but 2 of the players it names were there, so it never lands on a pug or another raid.</p>' +
+      '<p>The closest is <b>' + esc(n.name) + '</b>' + when + '. ' + why + '</p>' +
+      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note for this group</button><button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use ' + esc(n.name) + ' anyway</button><button class="btn" type="button" data-asv="notes">See your notes</button></div></div>';
+    $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+    $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[pullKey(r.item)] = b.dataset.nuse; notesSave(boss, o);
+      for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }));
+    bindAsViews(only);
+    return;
+  }
   if (!text && !S.noteEdit) {
     const ex = exampleNote(r), dot = (c) => '<i style="background:' + c + '"></i>';
     const pic = '<div class="ah-pic nolk" aria-hidden="true"><div class="ah-pl">What you\'ll see</div>' +
@@ -18345,8 +18374,15 @@ function specPage(o) {
   // fight's length; on a kill, your parse, and how far you are from the middle of the top 100 parses for your spec on this boss, said as a gap)
   const outK = UN === 'healing' ? 'healS' : 'dmgS', outT = per.reduce((v, x) => v + ((x.p[outK] || []).reduce((w, y) => w + (y || 0), 0)), 0), durT = per.reduce((v, x) => v + Math.max(1, x.r.duration || x.end || x.t1), 0), outR = outT / durT;
   const prsM = one && per.length === 1 ? parsesFor(per[0].r, UN === 'healing' ? 'heal' : 'dmg') : null, prs1 = prsM ? prsM.get(P0.name) : null, topOut = one && it.kill && TOPB && TOPB.outP ? +TOPB.outP : null; // (top parses are kills: no comparison on a wipe)
-  const outH = outT >= 1000 ? '<div class="spc-out"><span class="spc-ov"><b>' + C(outR) + '</b> ' + (UN === 'healing' ? 'healing' : 'damage') + ' a second' + (one ? '' : ', over these pulls') + '</span>' + (prs1 ? '<span class="spc-op"' + (prs1.amount ? ' title="' + esc('Warcraft Logs\' own number for this kill is ' + C(prs1.amount) + ' a second, timed by its own clock for the fight.') + '"' : '') + '>Parse ' + prsChip(prs1) + '</span>' : '') +
-    (topOut ? '<span class="spc-ot" title="' + esc('The middle of the top 100 parses for ' + o.top + ' on this boss on Warcraft Logs (Mythic)') + '">' + (outR < topOut ? 'The top parses do ' + C(topOut) + ' a second, <b>' + C(topOut - outR) + '</b> more than you.' : 'You beat the top parses (' + C(topOut) + ' a second) by <b>' + C(outR - topOut) + '</b>.') + '</span>' : '') + '</div>' : '';
+  // (three tiles (your call, Oct 19): output a second against the top parses, the parse, and burst windows (how much harder you hit
+  // in your big cooldown than usual: o.burst from the module) or, for a healer, overhealing)
+  const tile = (l, v, sub, tip) => '<div class="spc-kt"' + (tip ? ' title="' + esc(tip) + '"' : '') + '><span class="spc-ktl">' + l + '</span><b class="spc-ktv">' + v + '</b><span class="spc-ktx">' + sub + '</span></div>';
+  const ohT = per.reduce((v, x) => v + (x.p.overheal || 0), 0), hlT = per.reduce((v, x) => v + (x.p.healing || 0), 0), B = o.burst;
+  const outH = outT >= 1000 ? '<div class="spc-kts">' +
+    tile(UN === 'healing' ? 'Healing a second' : 'Damage a second', C(outR), topOut ? 'Top parses: ' + C(topOut) : one ? (it.kill ? '' : 'a wipe, so no top parses') : 'over these pulls', topOut ? 'The middle of the top 100 parses for ' + o.top + ' on this boss on Warcraft Logs (Mythic).' : '') +
+    tile('Parse', prs1 ? prsChip(prs1) : '<span class="sub">–</span>', prs1 ? esc(o.top) + ' on this boss' : one && !it.kill ? 'Warcraft Logs only ranks kills' : one ? 'not ranked' : 'one pull at a time', prs1 && prs1.amount ? 'Warcraft Logs\' own number for this kill is ' + C(prs1.amount) + ' a second, timed by its own clock for the fight.' : '') +
+    (UN === 'healing' ? tile('Overhealing', hlT + ohT ? Math.round(100 * ohT / (hlT + ohT)) + '%' : '–', 'of the healing you cast', 'Healing that landed on someone already at full health.')
+      : tile('Burst windows', B && B.x != null ? '×' + B.x.toFixed(1) : '<span class="sub">–</span>', B && B.x != null ? 'your usual damage, in ' + esc(B.name) : 'no burst cooldown pressed', B && B.x != null ? 'Your damage a second inside your ' + B.name + ' windows (' + B.n + '), against the rest of the pull.' : '')) + '</div>' : '';
   // (what you did well: your good lines, the ones at or above the top players first, then the ones that count the most)
   const LOWB = /^(p:|res$|hp$|ssw$|ess$|mana$|mnx$|fol$|dbh$|ebh$|rgb$|jhs$|cm$|rep$|dbec$|tyc$|imp$)/, numV = (x) => { const t = String(x == null ? '' : x).replace(/<[^>]+>/g, '').trim(); let m; if ((m = t.match(/^(\d+(?:\.\d+)?)%$/))) return +m[1]; if ((m = t.match(/^(\d+)\s*\/\s*(\d+)$/))) return +m[2] ? 100 * m[1] / m[2] : null; if (/^All (spent|used)$/.test(t)) return 0; if ((m = t.match(/^(\d+(?:\.\d+)?)( wasted)?$/))) return +m[1]; return null; };
   const beats = (c) => { if (!TOPB || TOPB[c.k] == null) return false; const a = numV(c.v), b = numV(TOPB[c.k]); return a != null && b != null && (LOWB.test(c.k) ? a <= b : a >= b); };
@@ -19318,7 +19354,8 @@ function pdemChecks(reps, name, one) {
   const LAYOUT = [['Rotation', [['Casting', ['abc']], ['Your priority', ['apl']], ['Demonic Core', ['p-demonic-core', 'dbh']], [heroN || 'Hero talents', ['p-ruination', 'p-infernal-bolt', 'p-demonic-art']]]],
     ['Resources', [['Soul Shards', ['ssw']]]],
     ['Cooldowns', [['Demonic Tyrant', ['tyh', 'cd-summon-demonic-tyrant', 'tyd', 'tyc', 'tyx', 'pi']], ['Other demons', ['cd-call-dreadstalkers', 'cd-grimoire-imp-lord', 'cd-grimoire-fel-ravager', 'cd-summon-doomguard', 'cd-power-siphon', 'imp']]]]];
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PDEM_TIPS, TOPP: new Set(['abc', 'apl', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
+  const tyX = rows.flatMap((s) => s.ty || []).map((q) => q.x).filter((v) => v != null), burst = tyX.length ? { x: tyX.reduce((v, y) => v + y, 0) / tyX.length, n: tyX.length, name: 'Summon Demonic Tyrant' } : null;
+  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PDEM_TIPS, TOPP: new Set(['abc', 'apl', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Demonology Warlock, SimulationCraft\'s priority list (the one Raidbots sims with), and from what your talents do.', ringTip: 'Each check counts as much as it matters. Demonic Tyrant and Hand of Gul\'dan in it count three times as much as most. A good check counts in full, and one that could be better counts half.', secIc: { 'Your pull at a glance': 'Summon Demonic Tyrant', 'Pull by pull': 'Hand of Gul\'dan' } });
   return { checks: pg.checks, talents, html: pg.html, wait: 0 };
 }
@@ -19632,7 +19669,8 @@ function genRun(spec, D, reps, name, one) {
         '<div class="spc-wv">' + (w.x != null ? w.x.toFixed(1) + '<span> times your usual ' + UNW + ' a second</span>' : C(w.d) + '<span> ' + UNW + '</span>') + '</div><div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) +
         (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + '</div></div>').join('') + '</div>'; } };
   const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs }) : '';
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
+  const burst = winL.length && WIN ? (() => { const xs = winL.map((w) => w.x).filter((v) => v != null); return xs.length ? { x: xs.reduce((v, y) => v + y, 0) / xs.length, n: xs.length, name: WIN.n } : null; })() : null;
+  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
     TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win', 'wr'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top players', topH: 'The ' + (D.top || spec + 's') + ' who parsed 75 or higher in the fastest kills of this boss', pullT,
     src: 'Built with help from the Wowhead and Icy Veins guides and WoWAnalyzer\'s checks for ' + spec + ', and from what your talents do.', secIc: { 'Your pull at a glance': D.ic, 'Pull by pull': D.ic } });
   // (a priest's Power Infusion: the same cards and advice as Graphs' Power Infusion view, for this priest only, at the end

@@ -247,6 +247,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 250: Assignments, a note only goes on its own group (your rule)
+- [x] **Strict roster match:** a saved note is used on a pull only when all but 2 of the players it names were there
+  (and at least 3 were). A pug or another raid never gets your note, even when it's your only note for that boss. A note
+  whose first line is for another fight never matches either.
+- [x] **Said plainly when none fits:** "No saved note matches this group", with the closest note and why ("It names 15
+  players, and only 12 of them were in this pull"), plus Add a note for this group, Use it anyway, and See your notes.
+- [x] When a note fits, the line under it says so: "It fits this group: 12 of the 14 players it names were in this pull."
+- [x] Checked on a real night with test notes: a pug note and a 3-missing note are turned down, a 2-missing note is
+  picked on its own, Use it anyway works; no errors.
+
 ## 2026-10-19, round 249: One wipe filter, and no tag beside the tabs (your notes)
 - [x] **The tag beside the tabs is gone** ("Pull 13 · Wipe" / "Whole night · 17 pulls" with ‹ ›). You hadn't noticed it:
   the pull cards above the tabs already say which pull you're on. The ☰ menu still shows there once you scroll down.

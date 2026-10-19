@@ -1463,21 +1463,29 @@ function noteFit(text, rep) {
   const enc = hd.encounterid && rep.item.id ? +hd.encounterid === +rep.item.id : null;
   const dif = hd.difficulty && rep.item.diff ? String(rep.item.diff).toLowerCase().slice(0, 3) === String(hd.difficulty).toLowerCase().slice(0, 3) : null;
   const inPull = [...rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => p.name.split('-')[0].toLowerCase());
-  const hit = noteScore(text, rep), away = noteNames(text).filter((n) => !inPull.includes(n.toLowerCase())).length;
-  return { enc, dif, hit, away, of: inPull.length, roster: hit - 0.5 * away - (dif === false ? 5 : 0) - (enc === false ? 20 : 0) };
+  const hit = noteScore(text, rep), nn = noteNames(text), away = nn.filter((n) => !inPull.includes(n.toLowerCase())).length;
+  // (the strict roster match (your rule, Oct 19): a note only goes on a pull when all but 2 of the players it names were
+  // there (and at least 3 were), so it never lands on a pug or another group; a note for another fight never does)
+  const named = nn.length, found = named - away, match = enc !== false && away <= 2 && found >= 3;
+  return { enc, dif, hit, away, named, found, match, of: inPull.length, roster: hit - 0.5 * away - (dif === false ? 5 : 0) - (enc === false ? 20 : 0) };
 }
 const noteJobs = (res) => { if (!res || res.error) return null; const cds = (res.cds || []).filter((x) => /^(on time|late|early|missed)$/.test(x.status));
   const ok = cds.filter((x) => x.status === 'on time').length, bad = (res.mistakes || []).filter((m) => m.severity !== 'Low').length; return { ok, bad, score: ok - bad }; };
 const NFIT = new WeakMap(); // (each pull's automatic pick, kept until a note is saved, added or removed)
 function noteForRep(rep) {
   const o = notesOf(rep.item.boss); if (!o.list.length) return null;
-  const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) return { ...one, auto: false, how: 'pull' };
-  const chosen = o.pick !== 'auto' && o.list.find((n) => n.id === o.pick); if (chosen) return { ...chosen, auto: false, how: 'all' };
-  const ck = o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) return had.v;
-  let v;
-  if (o.list.length === 1) v = { ...o.list[0], auto: false, how: 'only', fit: noteFit(o.list[0].text, rep) };
+  const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) { rep.noteMiss = null; return { ...one, auto: false, how: 'pull' }; }
+  const ck = o.pick + '#' + o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) { rep.noteMiss = had.miss; return had.v; }
+  // (only the notes that pass the roster match (or the example) can be used; with none, the pull has no note, and noteMiss
+  // keeps the closest one so the tab can say plainly why)
+  const all = o.list.map((n) => ({ n, f: noteFit(n.text, rep) })), ok = all.filter((x) => x.n.example || x.f.match);
+  let v, miss = null;
+  const chosen = o.pick !== 'auto' && ok.find((x) => x.n.id === o.pick);
+  if (chosen) v = { ...chosen.n, auto: false, how: 'all', fit: chosen.f };
+  else if (!ok.length) { v = null; const best = all.filter((x) => !x.n.example).sort((a, b) => b.f.found - a.f.found || (b.n.saved || 0) - (a.n.saved || 0))[0]; miss = best ? { note: best.n, fit: best.f } : null; }
+  else if (ok.length === 1) v = { ...ok[0].n, auto: false, how: 'only', fit: ok[0].f };
   else {
-    const fs = o.list.map((n) => ({ n, f: noteFit(n.text, rep) })).sort((a, b) => b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
+    const fs = ok.slice().sort((a, b) => b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
     // (only notes that fit the roster equally well go on to the jobs: one that names a player who wasn't there loses outright,
     // or that player's missing cooldown would make it look better)
     const near = fs.filter((x) => x.f.roster >= fs[0].f.roster - 0.25);
@@ -1491,7 +1499,7 @@ function noteForRep(rep) {
     const best = near.length > 1 ? near[0] : fs[0], next = near.length > 1 ? near[1] : fs[1];
     v = { ...best.n, auto: true, how, fit: best.f, jobs: best.j || null, res: best.res || null, rival: next ? { name: next.n.name, jobs: next.j || null, fit: next.f } : null };
   }
-  NFIT.set(rep, { k: ck, v }); return v;
+  rep.noteMiss = miss; NFIT.set(rep, { k: ck, v, miss }); return v;
 }
 // (why a pull uses its note, in one plain sentence)
 function noteWhy(u) {
@@ -1499,7 +1507,7 @@ function noteWhy(u) {
   if (u.how === 'pull') return 'You picked it for this pull.';
   if (u.how === 'all') return 'You set it for every pull.';
   const f = u.fit || {}, names = f.of ? 'it names ' + f.hit + " of this pull's " + f.of + ' players' : '';
-  if (u.how === 'only') return f.dif === false ? "It's your only note for this boss, but its first line says another difficulty." : '';
+  if (u.how === 'only') return f.named ? 'It fits this group: ' + f.found + ' of the ' + plural(f.named, 'player') + ' it names ' + (f.found === 1 ? 'was' : 'were') + ' in this pull' + (f.dif === false ? ", but its first line says another difficulty" : '') + '.' : '';
   if (u.how === 'jobs' && u.rival) { const rv = esc(u.rival.name), rj = u.rival.jobs, n0 = (v) => (v ? v : 'none');
     return 'Picked for this pull: ' + names + ', ' + (u.rival.fit && u.rival.fit.hit === f.hit ? 'the same as ' : 'about as many as ') + rv + ', and more of its jobs got done: ' + n0(u.jobs.ok) + ' on time and ' + n0(u.jobs.bad) + ' missed, against ' + (rj ? n0(rj.ok) + ' on time and ' + n0(rj.bad) + ' missed' : 'none checked') + ' for ' + rv + '.'; }
   if (u.how === 'newest' && u.rival) return 'Picked for this pull: ' + names + ', the same as ' + esc(u.rival.name) + ", and it's the newer one.";
@@ -1813,6 +1821,22 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const chips = (ns, cls) => ns.length ? '<span class="chips">' + ns.map((n) => who(n, cls)).join('') + '</span>' : '<span class="sub">none</span>';
   // no note yet: a short how-to (your note, Oct 18: no other site does this, so explain it clearly): what it does, three
   // plain steps, a picture of the results, and a button to try it with an example made from this pull
+  // notes saved for this boss, but none fits this group (your rule, Oct 19): said plainly, with the closest note and why
+  // it didn't fit, and a way to use it anyway or add one for this group
+  const miss = !text && !S.noteEdit && !only && r.noteMiss && NO.list.some((n) => !n.example) ? r.noteMiss : null;
+  if (miss) {
+    const f = miss.fit, n = miss.note, when = n.saved ? ' <span class="sub">(saved ' + esc(new Date(n.saved).toLocaleDateString([], { month: 'short', day: 'numeric' })) + ')</span>' : '';
+    const why = f.enc === false ? "Its first line says it's for another fight." : !f.named ? "Debrief didn't find any player names in it." : 'It names ' + plural(f.named, 'player') + ', and ' + (f.found ? 'only ' + f.found : 'none') + ' of them ' + (f.found === 1 ? 'was' : 'were') + ' in this pull.';
+    $('#assignBox').innerHTML = asViews() + '<div class="panel nmiss"><h3>No saved note matches this group</h3>' +
+      '<p class="ah-lead">A note is used on a pull only when all but 2 of the players it names were there, so it never lands on a pug or another raid.</p>' +
+      '<p>The closest is <b>' + esc(n.name) + '</b>' + when + '. ' + why + '</p>' +
+      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note for this group</button><button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use ' + esc(n.name) + ' anyway</button><button class="btn" type="button" data-asv="notes">See your notes</button></div></div>';
+    $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+    $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[pullKey(r.item)] = b.dataset.nuse; notesSave(boss, o);
+      for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }));
+    bindAsViews(only);
+    return;
+  }
   if (!text && !S.noteEdit) {
     const ex = exampleNote(r), dot = (c) => '<i style="background:' + c + '"></i>';
     const pic = '<div class="ah-pic nolk" aria-hidden="true"><div class="ah-pl">What you\'ll see</div>' +
