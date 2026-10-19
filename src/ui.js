@@ -3309,7 +3309,7 @@ function audit() {
       return { name: y.p.name, o, sc: o.major * 9 + o.minor, worst: y.l.filter((x) => st({ x }) !== 'clean').sort((u, v) => rk[st({ x: u })] - rk[st({ x: v })]).map((x) => x.s.title.split(': ')[0]) }; });
     const topP = per.slice().sort((u, v) => v.sc - u.sc)[0], clean = per.filter((y) => !y.sc);
     const verdict = topP && topP.sc && per.length > 1 ? '<p class="mcx-verdict">Most trouble was in <b>' + esc(topP.name) + '</b>: ' + lvlText(topP.o).replace('<span class="lvx-s"> · </span>', ', ') +
-      (topP.worst.length ? ', led by <b>' + topP.worst.slice(0, 2).map(esc).join('</b> and <b>') + '</b>' : '') + '.' + (clean.length ? ' <span class="mcx-good">' + esc(clean.map((y) => y.name).join(' and ')) + ' went clean.</span>' : '') + '</p>' : '';
+      (topP.worst.length ? ', led by <b>' + topP.worst.slice(0, 2).map(esc).join('</b> and <b>') + '</b>' : '') + '.' + (clean.length ? ' <span class="mcx-good">' + (clean.length > 1 ? 'Clean phases: ' : 'Clean phase: ') + esc(clean.map((y) => y.name).join(' and ')) + '.</span>' : '') + '</p>' : ''; // ("Clean phase: One Fang left.", not "One Fang left went clean." (Oct 19))
     const head = '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake and each skull a death. Hover one for what happened, click it to open that moment.</small></h3>' + verdict;
     // (the whole pull to its last phase, or to its end when the wipe filter cut it short; one phase is enough: most prog wipes end in P1)
     const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end = Math.max(lastE, isFinite(r.duration) ? r.duration : 0);
@@ -3347,7 +3347,7 @@ function audit() {
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
     h += secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
-      (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })(); }
+      (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' handled' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })(); }
   // Damage taken by source (moved from Performance): every ability that hit the raid as bars, and who took it
   if (!r.allPulls && [...r.players.values()].some((p) => (p.takenAbS || []).length)) { const e0 = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration)), ps0 = players().filter((p) => p.name && !/^Player-/.test(p.name));
     h += '<details class="panel secd st-na" id="sec-dsrc" data-k="dsrc"' + (S.openSecs.has('dsrc') ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, 'Shadowfury', true) + '<b>Damage taken by source</b></span><span class="sst na">every ability, and who took it</span></summary><div class="secbody"><div class="pfv">' + perfSources(r, ps0, 0, e0) + '</div></div></details>'; }
@@ -3905,13 +3905,18 @@ function miniMap(mp, pmap) {
   const badMark = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="9.5" fill="none" stroke="#ff3b3b" stroke-width="2"/><circle cx="' + (x + 7.5) + '" cy="' + (y - 7.5) + '" r="4.5" fill="#ff3b3b" stroke="#000" stroke-width="1"/><path d="M' + (x + 5.9) + ' ' + (y - 9.1) + 'l3.2 3.2M' + (x + 9.1) + ' ' + (y - 9.1) + 'l-3.2 3.2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
   const warnMark = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="9.5" fill="none" stroke="#ff9f1c" stroke-width="2"/><circle cx="' + (x + 7.5) + '" cy="' + (y - 7.5) + '" r="4.5" fill="#ff9f1c" stroke="#000" stroke-width="1"/><path d="M' + (x + 7.5) + ' ' + (y - 10) + 'v3.2M' + (x + 7.5) + ' ' + (y - 5.3) + 'v.5" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>';
   const meN = S.tab === 'audit' && S.mechP ? S.mechP : null; // (Mechanics showing one player: a gold ring on them on every map)
+  // (names: when two would overlap, only the more important one is written (you, then red, amber, ringed, green); the other
+  // still shows on hover over its icon (Oct 19: a soak's names piled on top of each other))
+  const nameL = [];
   for (const p of pts.filter((q) => q.kind === 'player')) {
     const pl = pmap.get(p.name), col = pl ? pl.color : '#9aa0ac', me = !!meN && p.name === meN, on = me || hl.has(p.guid) || good.has(p.guid) || bad.has(p.guid) || warnS.has(p.guid), mark = badNow.has(p.guid) ? 'bad' : goodNow.has(p.guid) ? 'good' : warnS.has(p.guid) ? 'warn' : '';
     const tg = tagOf.get(p.guid);
     s += ic(X(p), Y(p), (me ? '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="12.5" fill="rgba(230,180,80,.14)" stroke="#e6b450" stroke-width="2.5"/>' : '') + playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
-      (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : '') +
-      (on ? '<text x="' + X(p) + '" y="' + (Y(p) - 15) + '" class="ml" fill="' + col + '">' + esc(p.name) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' : ''));
+      (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : ''));
+    if (on) nameL.push({ x: X(p), y: Y(p), w: (p.name.length + (tg ? String(tg).length + 1 : 0)) * 6.2, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : 4,
+      html: '<text x="' + X(p) + '" y="' + (Y(p) - 15) + '" class="ml" fill="' + col + '">' + esc(p.name) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
   }
+  { const put = []; for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.y - n.y) < 12)) continue; put.push(n); s += ic(n.x, n.y, n.html); } }
   // legend inside the image: only what this map shows
   const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', 'Player (class icon)']];
   if (meN && pts.some((q) => q.name === meN)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#e6b450" stroke-width="2.5"/>', 'Gold ring: ' + meN]);
@@ -3950,7 +3955,7 @@ function miniMap(mp, pmap) {
   void mi; void arena;
   return '<div class="sub" style="margin:10px 0 6px">' + esc(mp.title) + '. Hover any icon for a name.' +
     (mp.note ? '<div style="margin-top:4px;font-weight:600;color:var(--text)">' + esc(mp.note) + '</div>' : '') + '</div>' +
-    '<div class="zwrap" style="max-width:560px"><div class="zbar">' + (A ? '<button class="btn zfull on" type="button">Full arena</button><button class="btn zfocus" type="button">Zoom to mechanic</button>' : '') +
+    '<div class="zwrap" style="max-width:560px"><div class="zbar">' + (A ? '<button class="btn zfull" type="button">Full arena</button><button class="btn zfocus on" type="button">Zoom to mechanic</button>' : '') +
     '<span class="sub">Scroll to zoom, drag to move, double-click to switch views</span></div>' +
     '<div class="zbox">' + s + '<div class="zscale"><i></i><span>10 yards</span></div><div class="znorth">N ↑</div></div>' +
     (mp.frames ? '<div class="zanim"><button class="btn zplay" type="button">❚❚ Pause</button><input class="zrange" type="range" min="0" max="' + (mp.frames.length - 1) + '" value="0" step="1"><span class="ztime sub"></span></div>' : '') + legend + '</div>';
@@ -4021,7 +4026,9 @@ function bindZoom(box) {
   const focus = svg.dataset.focus.split(',').map(Number), full = svg.dataset.full.split(',').map(Number), yd = +svg.dataset.yd;
   const bar = box.querySelector('.zscale i');
   const hasArena = !!box.querySelector('.zfull');
-  let vb = (hasArena ? full : focus).slice(); // starts on the whole arena (see miniMap)
+  // (starts zoomed to the mechanic, like the tile thumbnails (Oct 19: on the whole arena a spit line or a soak circle looked
+  // tiny); "Full arena" shows the room)
+  let vb = focus.slice(); void hasArena;
   const apply = () => {
     svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
     const k = vb[2] / 480; // 1 at the mechanic view
@@ -6474,7 +6481,8 @@ function cdView(reps, one) {
 // different ones they had), opening under their name to their own list with each one's uptime; the right side is the
 // raid's most common ones, and picking one (or searching) turns the bars into each player's uptime of it. Buffs up the
 // whole time (raid buffs, flasks, food, passives) are only counted; Bloodlust's Sated and Exhaustion are left out.
-const AURA_SKIP = new Set(['sated', 'exhaustion', 'temporal displacement', 'fatigued', 'insanity']);
+// (Visage, spell 372014: a background aura every player has, switching on and off all pull, not a buff anyone chose (Oct 19))
+const AURA_SKIP = new Set(['sated', 'exhaustion', 'temporal displacement', 'fatigued', 'insanity', 'visage']);
 // (the raid buffs and paladin auras: counted at the bottom when they were up most of the time; and a buff that heals or
 // shields, like Renew or Power Word: Shield, is a heal, on Healing, not a buff)
 const RAID_BUFF_N = new Set(['blessing of the bronze', 'skyfury', 'battle shout', 'mark of the wild', 'power word: fortitude', 'arcane intellect', 'devotion aura', 'concentration aura', 'crusader aura', 'retribution aura']);
@@ -9513,7 +9521,7 @@ function specPage(o) {
   const momT = (c, cap) => { const mo = c.mo.filter((m, i, l) => !i || m.b != null || m.pull !== l[i - 1].pull || T(m.a) !== T(l[i - 1].a)); if (!mo.length) return ''; const n = cap || 16;
     return one ? '<div class="spc-mos">' + mo.slice(0, n).map(tm).join('') + (mo.length > n ? '<span class="sub">and ' + (mo.length - n) + ' more</span>' : '') + '</div>'
       : '<div class="spc-mos">' + [...new Set(mo.map((m) => m.pull))].slice(0, 10).map((pl) => { const l = mo.filter((m) => m.pull === pl); return '<span class="spc-mp"><b>Pull ' + pl + '</b></span>' + l.slice(0, 5).map(tm).join('') + (l.length > 5 ? '<span class="sub">and ' + (l.length - 5) + ' more</span>' : ''); }).join('') + '</div>'; };
-  const BADGE = { ok: '✓ Clean', warn: 'Minor', bad: 'MAJOR', na: 'Not graded' };
+  const BADGE = { ok: '✓ Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' }; // (the same three words as Mechanics (Oct 19))
   const icB = (n) => '<span class="spc-ri">' + spIc(n, true) + '</span>';
   const viz = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
@@ -9564,7 +9572,7 @@ function specPage(o) {
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
-    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'MAJOR', cnt.bad, 'bad') + pill('warn', 'Minor', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
+    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'Failed', cnt.bad, 'bad') + pill('warn', 'Some mistakes', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
@@ -9592,7 +9600,7 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
   return big.join('') + (tbl ? spcTable(cdl, top, slug, tmo) : '') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
 // The Rotation tab as sections of tiles (Oct 19, "make each and every rotation tab a similar design": a sentence of why on the left, the checks as
 // tiles on the right, the section's stat boxes and bars under them)
-const SPC_BW = { ok: 'Clean', warn: 'Minor', bad: 'MAJOR', na: 'Not graded' };
+const SPC_BW = { ok: 'Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' };
 const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1;
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
     '<b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>' + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
@@ -13114,7 +13122,7 @@ function cmpChips(rot, x) {
       (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + cost + '</div>' : '') + '</div></details>'; };
   const cnt = (l) => { const o = { bad: 0, warn: 0, ok: 0 }; for (const c of l) if (o[c.st] != null) o[c.st]++; return o; }, side = (n, col, sc, l) => { const o = cnt(l);
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
-      '<span class="cmp-rcnt"><i class="bad">' + o.bad + ' <span class="lv-maj">MAJOR</span></i><i class="warn">' + o.warn + ' minor</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
+      '<span class="cmp-rcnt"><i class="bad">' + o.bad + ' failed</i><i class="warn">' + o.warn + ' with mistakes</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
   if (rot.sa && rot.sb && rot.sa.sections) return cmpSumView(rot.sa, rot.sb, x, '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>');
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a chart for the details.</small></h3>' +
@@ -14262,8 +14270,12 @@ function rcdData(r) {
       const mine = new Set(uses.filter((u) => u.p === p).map((u) => u.name).concat(RCD_SPEC[p.specName] || []));
       for (const n of mine) { const cd = RCD_CD[n]; if (!cd) continue; const last = uses.filter((u) => u.p === p && u.name === n && u.t < t0).pop(); if (!last || t0 - last.t >= cd) ready.push({ p, name: n }); }
     }
-    const st = cov.length ? 'ok' : died.length ? 'bad' : ready.length ? 'warn' : 'na';
-    return { k: k + 1, t: t0 + 1.5, t0, t1, dmg: s, name: by.length ? by[0][0] : 'Raid damage', id: by.length ? by[0][1][0] : 0, also: by.slice(1, 3).map(([n]) => n), cov, ready, died, st };
+    // (a hit nobody needed a cooldown for: no deaths, and fewer than 3 players under 40% health in it or just after (Oct 19: top
+    // kills save their cooldowns for the hits that hurt, and read "1 of 7 covered"))
+    const lowN = [...r.players.values()].filter((p) => named(p) && ((r.php && r.php.get(p.guid)) || []).some(([t, f]) => t >= t0 && t <= t1 + 2 && f < 0.4)).length;
+    const handled = !cov.length && !died.length && lowN < 3;
+    const st = cov.length || handled ? 'ok' : died.length ? 'bad' : ready.length ? 'warn' : 'na';
+    return { k: k + 1, t: t0 + 1.5, t0, t1, dmg: s, name: by.length ? by[0][0] : 'Raid damage', id: by.length ? by[0][1][0] : 0, also: by.slice(1, 3).map(([n]) => n), cov, ready, died, st, handled, lowN };
   });
   return { dur, ct, ts, uses, lust, hits };
 }
@@ -14291,18 +14303,18 @@ function raidCdPanel(r) {
   // the list: each big hit, what it was, what covered it, or what was ready
   const cdName = (u) => '<span class="rc-chip"><span class="nm" style="color:' + u.p.color + '">' + esc(u.p.name) + '</span> ' + esc(CD_SHORT[u.name] || u.name) + '</span>';
   const rows = d.hits.map((h, i) => {
-    const cov = h.cov.length ? h.cov.map(cdName).join('') : '<span class="' + (h.st === 'bad' ? 'hotv' : h.st === 'warn' ? 'rc-wn' : 'sub') + '">nothing used</span>';
-    const ready = h.ready.length ? '<div class="sub">Ready: ' + h.ready.slice(0, 4).map((x) => esc(x.name) + ' (' + esc(x.p.name) + ')').join(', ') + (h.ready.length > 4 ? ' and ' + (h.ready.length - 4) + ' more' : '') + '</div>' : !h.cov.length ? '<div class="sub">No raid cooldown was ready.</div>' : '';
+    const cov = h.cov.length ? h.cov.map(cdName).join('') : h.handled ? '<span class="sub">handled without a cooldown</span>' : '<span class="' + (h.st === 'bad' ? 'hotv' : h.st === 'warn' ? 'rc-wn' : 'sub') + '">nothing used</span>';
+    const ready = h.handled ? '<div class="sub">' + (h.lowN ? plural(h.lowN, 'player') + ' dipped under 40%, nobody died.' : 'Nobody dipped under 40% health.') + '</div>' : h.ready.length ? '<div class="sub">Ready: ' + h.ready.slice(0, 4).map((x) => esc(x.name) + ' (' + esc(x.p.name) + ')').join(', ') + (h.ready.length > 4 ? ' and ' + (h.ready.length - 4) + ' more' : '') + '</div>' : !h.cov.length ? '<div class="sub">No raid cooldown was ready.</div>' : '';
     const died = h.died.length ? '<div class="hotv">' + esc(h.died.map((x) => x.player).join(', ')) + ' died</div>' : '';
     return '<div class="rc-row ' + h.st + '" data-rch="' + i + '"><i class="rc-st">' + ST[h.st][0] + '</i><span class="rc-k">' + h.k + '</span><span class="tc">' + T(h.t0) + '</span>' +
       '<span class="rc-what">' + spell(h.id, h.name) + (h.also.length ? '<div class="sub">also ' + esc(h.also.join(', ')) + '</div>' : '') + '</span><span class="rc-dmg">' + C(h.dmg) + '<div class="sub">in 3 s</div></span><span class="rc-cov">' + cov + ready + died + '</span></div>';
   }).join('');
   const nc = d.hits.filter((h) => h.st === 'ok').length, nb = d.hits.filter((h) => h.st === 'bad').length;
-  const pill = d.hits.length ? '<span class="rc-pill ' + (nb ? 'bad' : nc === d.hits.length ? 'ok' : 'warn') + '">' + nc + ' of ' + plural(d.hits.length, 'big hit') + ' covered</span>' : '';
+  const pill = d.hits.length ? '<span class="rc-pill ' + (nb ? 'bad' : nc === d.hits.length ? 'ok' : 'warn') + '">' + nc + ' of ' + plural(d.hits.length, 'big hit') + ' handled</span>' : '';
   return '<div class="panel rc" id="rcdTl"><h3 class="nh"><span>Raid cooldowns</span><small>the big hits this pull' + (d.ct < d.dur - 0.5 ? ' (up to the wipe filter)' : '') + ', and what covered them</small>' + pill + '</h3>' +
     chart + (lanesH ? '<div class="rc-lanes">' + lanesH + '</div>' : '<p class="muted" style="margin:6px 0">No raid cooldowns were used this pull.</p>') + axis +
     (rows ? '<div class="rc-list">' + rows + '</div>' : '') +
-    '<details class="howit"><summary>How it works</summary><div>The big hits are the 3-second stretches with the most damage on the raid this pull (at least 10 seconds apart and well above its usual damage), up to the wipe filter, each named by the spell that did most of it. A hit is covered when a raid cooldown (healing, damage reduction, Rallying Cry, Darkness and so on) was up during it. When nothing was, it lists the raid cooldowns that were ready: ones their player used this pull, or a healer\'s own spec cooldown, off cooldown by their base cooldown (talents can shorten some, so a few may be missing). Bloodlust is shown, not counted as cover. Click a hit to find it on the chart.</div></details></div>';
+    '<details class="howit"><summary>How it works</summary><div>The big hits are the 3-second stretches with the most damage on the raid this pull (at least 10 seconds apart and well above its usual damage), up to the wipe filter, each named by the spell that did most of it. A hit is covered when a raid cooldown (healing, damage reduction, Rallying Cry, Darkness and so on) was up during it, and handled without one when nobody died and fewer than 3 players dropped under 40% health. When nothing was up and it hurt, it lists the raid cooldowns that were ready: ones their player used this pull, or a healer\'s own spec cooldown, off cooldown by their base cooldown (talents can shorten some, so a few may be missing). Bloodlust is shown, not counted as cover. Click a hit to find it on the chart.</div></details></div>';
 }
 document.addEventListener('click', (e) => {
   const el = e.target.closest && e.target.closest('[data-rch]'); if (!el) return; const box = el.closest('.rc'); if (!box) return;
@@ -15298,7 +15310,7 @@ function plRow(o) {
 // the rows in three groups, worst first, under one line of column names
 function plRoster(rows, id) {
   let h = '<div class="plr-list" id="' + id + '"><div class="plr-hd"><span>Player</span><span>Ready to raid</span><span>Survival kit</span><span>Buffs and kit</span><span>What stands out</span><span></span></div>';
-  for (const [st, label] of [['bad', 'Needs a word'], ['warn', 'Minor'], ['ok', 'All set']]) {
+  for (const [st, label] of [['bad', 'Needs a word'], ['warn', 'Some mistakes'], ['ok', 'All set']]) {
     const g = rows.filter((o) => (o.st === 'na' ? 'ok' : o.st) === st); if (!g.length) continue;
     h += '<div class="plg-h ' + st + '">' + { bad: '', warn: '', ok: '✓ ' }[st] + label + '<span>' + plural(g.length, 'player') + '</span></div>' + g.map((o) => plRow(o) + (o.open ? '<div class="plx">' + o.detail() + '</div>' : '')).join('');
   }
@@ -15558,7 +15570,8 @@ function lpPace(r, best, bestNo) {
   const L1 = bossHpLine(r, r.duration, 5), L0 = bossHpLine(best, best.duration, 5); if (!L1 || !L0) return '';
   const at = (L, t) => { let v = null; for (const [s, f] of L) { if (s > t + 0.01) break; v = f; } return v; }, top = Math.min(r.duration, cutT(r), best.duration);
   const pts = []; for (let t = 60; t <= top + 0.01; t += 60) { const a = at(L1, t), b = at(L0, t); if (a != null && b != null) pts.push({ t, d: 100 * (b - a) }); }
-  if (!pts.length) return '';
+  // (every minute even says nothing, e.g. The Coiled Altar's timed P1 where the raid holds damage until the push (Oct 19))
+  if (!pts.length || pts.every((p) => Math.abs(p.d) < 1)) return '';
   const chip = (d) => (Math.abs(d) < 1 ? '<span class="lp-d lv">even</span>' : '<span class="lp-d ' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.round(Math.abs(d)) + '%</span>');
   const last = pts[pts.length - 1], st = Math.abs(last.d) < 1 ? 'na' : last.d > 0 ? 'ok' : 'warn';
   return '<div class="panel lp-side-p lp-pace ' + st + '"><h3 class="nh"><span>Pace against your best</span><small>Against pull ' + bestNo + ', by how much of the fight was left at each minute</small></h3>' +
