@@ -11677,7 +11677,7 @@ function cmpGapWhy(x) {
     for (const n2 of l) { const i = o.findIndex((z) => z.name === n2); if (i >= 0) { t.share += o[i].share; t.plus = n2; o.splice(i, 1); } } } return o; };
   const ahead = [];
   for (const [a, h] of cmpPairs({ ab: fold(lo.ab) }, { ab: fold(hi.ab) })) {
-    const va = a ? a.share * lo.rate : 0, vh = h ? h.share * hi.rate : 0, d = vh - va; if (d <= -0.03 * hi.rate) ahead.push({ name: nm(a || h), v: -d }); if (d < 0.03 * hi.rate) continue;
+    const va = a ? a.share * lo.rate : 0, vh = h ? h.share * hi.rate : 0, d = vh - va; if (d <= -0.03 * hi.rate) ahead.push({ name: nm(a || h), v: -d }); if (d < 0.005 * hi.rate) continue;
     const y = a || h, name = String(y.name), both = a && h && a.cpm && h.cpm, perL = both ? va * 60 / a.cpm : 0, perH = both ? vh * 60 / h.cpm : 0;
     const plus = (a && a.plus) || (h && h.plus), withP = plus ? ' (with ' + esc(plus) + '\'s shields)' : '';
     const kind = !a ? 'only' : both && h.cpm / a.cpm >= (vh / Math.max(1, va)) / (h.cpm / a.cpm) ? 'casts' : both ? 'per' : 'more';
@@ -11715,8 +11715,9 @@ function cmpGapWhy(x) {
   // the playbook's own reasons; one that explains a spell above joins that line instead of repeating it
   if (x.book && x.book.extra) for (const e of x.book.extra(lo, hi, b, C)) { const t = e.merge && out.find((o) => e.merge.includes(o.key));
     if (t) { t.txt += ' ' + e.add; t.tip += '<br>' + e.tip; t.fix = e.fix || t.fix; t.split = e.split || t.split; } else out.push(e); }
-  // (only where the gap went: the spells. The rest is under More detail)
-  out.splice(0, out.length, ...out.filter((o) => o.real));
+  // (the 6 biggest differences of any kind, by healing or damage a second: mostly spells, and casting, crits, big cooldowns or a Rotation
+  // check when one is bigger (Oct 19: "do 6 total blocks"); talents stay under More detail)
+  out.splice(0, out.length, ...out.filter((o) => o.real || !/A talent difference/.test(o.tip || "")));
   if (!out.length) return '';
   out.sort((p, q) => q.v - p.v);
   const top = out.slice(0, 6), COLS = ['#e6b450', '#5aa9e6', '#7ee08f', '#c792ea', '#f07178', '#89ddff'];
