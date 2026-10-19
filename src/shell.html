@@ -2945,11 +2945,16 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-wh > span { display: flex; flex-direction: column; min-width: 0; } .cmp-wh b { font-size: 14px; } .cmp-wd { font-size: 12.5px; font-weight: 600; } .cmp-wd.up { color: #7ee08f; } .cmp-wd.dn { color: #f3c969; }
 .cmp-ct b { color: var(--text); }
 /* both talent trees, each kind side by side; a talent where the picks differ ringed in blue (gold is taken) */
+/* the talent notes: the icon(s), what differs, what it did */
+.cmp-tns { display: flex; flex-direction: column; } .cmp-tn { display: flex; align-items: flex-start; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--line); } .cmp-tn:first-child { border-top: 0; }
+.cmp-tni { display: flex; gap: 3px; flex: none; } .cmp-tni .icw { width: 26px; height: 26px; margin: 0; border-radius: 6px; overflow: hidden; } .cmp-tni .icw svg, .cmp-tni .icw img { width: 100%; height: 100%; }
+.cmp-tn > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .cmp-tnh { font-size: 14px; } .cmp-tnh b, .cmp-tn .sub b { color: var(--text); } .cmp-tn .sub { font-size: 13px; line-height: 1.45; }
 .cmp-tdet { margin-top: 14px; } .cmp-tdet > summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 10px; } .cmp-tdet > summary:hover { color: var(--gold); }
-.cmp-tt2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; margin-bottom: 14px; } .cmp-tt2 > div { min-width: 0; overflow-x: auto; }
+.cmp-tt2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; margin-bottom: 8px; } .cmp-tt2 > div { min-width: 0; overflow-x: auto; }
+.cmp-tt2 .tt { zoom: .44; flex-wrap: nowrap; } /* (compact: each player's three trees in one row at under half of Rotation's size, your note) */
+@media (max-width: 1250px) { .cmp-tt2 { grid-template-columns: 1fr; } .cmp-tt2 .tt { zoom: .5; } }
 .cmp-tt2 .tt-n.df { outline: 3px solid #6aa8ff; outline-offset: 3px; box-shadow: 0 0 14px 2px rgba(106,168,255,.75); z-index: 2; }
 @media (max-width: 900px) { .cmp-tt2 { grid-template-columns: 1fr; } }
-.cmp-tals { display: flex; flex-wrap: wrap; gap: 6px; } .cmp-tal { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border: 1px solid var(--line2); border-radius: 999px; background: var(--raised); font-size: 13px; } .cmp-tal .icw { width: 20px; height: 20px; margin: 0; flex: none; border-radius: 50%; overflow: hidden; } .cmp-tal .icw svg, .cmp-tal .icw img { width: 100%; height: 100%; } .cmp-tal .sub { font-size: 12px; }
 .cmp-hnote { margin: 0 0 10px; padding: 8px 12px; border: 1px solid rgba(230,180,80,.35); border-left: 3px solid #e6b450; border-radius: 8px; background: rgba(230,180,80,.07); font-size: 13.5px; } .cmp-hnote b { color: var(--text); }
 /* Rotation side by side: a row a check, the two players's results with their marks; the edge yellow where the first player was behind */
 .cmp-rr { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 10px; padding: 7px 8px; border-top: 1px solid var(--line); border-left: 3px solid transparent; font-size: 13.5px; }
