@@ -14244,7 +14244,7 @@ function plPage(data, reps, one) {
   const ranked = data.filter((a) => a.ranked), mvp = new Map();
   for (const [role, n, lab] of [['tank', 1, 'Top tank'], ['healer', 2, 'healer'], ['dps', 3, 'DPS']]) ranked.filter((a) => (a.p.role || 'dps') === role).sort((u, v) => v.score - u.score).slice(0, n).forEach((a, k) => mvp.set(a.p.name, n === 1 ? lab : ['1st', '2nd', '3rd'][k] + ' ' + lab));
   const imp = one ? [] : data.filter((a) => a.trend != null && a.trend >= 3).sort((u, v) => v.trend - u.trend).slice(0, 3);
-  const has = new Set(data.map((a) => a.p.role || 'dps')), rc = roleCur(has), worstFirst = S.plSort === 'gain';
+  const has = new Set(data.map((a) => a.p.role || 'dps')), rc = roleCur(has), worstFirst = false; // (no Most to gain first switch (your call, Oct 19): always best first)
   const rows = data.filter((a) => rc === 'all' || (a.p.role || 'dps') === rc).sort((u, v) => (worstFirst ? u.score - v.score : v.score - u.score) || u.p.name.localeCompare(v.p.name));
   if (S.plSel && !data.some((a) => a.p.name === S.plSel)) S.plSel = null;
   const sel = S.plSel ? data.find((a) => a.p.name === S.plSel) : null, avg = (f) => { const v = data.map(f).filter((x) => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };

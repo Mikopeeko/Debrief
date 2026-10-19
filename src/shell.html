@@ -3454,6 +3454,15 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .op-x { all: unset; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--muted); font-size: 12px; cursor: pointer; } .op-x:hover { background: rgba(255,255,255,.08); color: var(--text); } .op-x:focus-visible { outline: 2px solid var(--gold); }
 .tabbar .op-pick + .tb-id { margin-left: 8px; }
 @media (max-width: 1150px) { .tabbar .op-pick { margin-left: 0; } }
+/* (Oct 19: Talk to as feedback: the name and what to fix on one line, why under it) */
+.lp-tk.lp-tk2 { align-items: flex-start; gap: 10px; padding: 9px 0; } .lp-tk2 .av.sm { margin-top: 1px; } .lp-tb { flex: 1; min-width: 0; }
+.lp-th { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; } .lp-th .nm { font-weight: 700; } .lp-th .lp-tf { flex: 0 1 auto; }
+.lp-tx { margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.pl-prepgo { all: unset; display: block; min-width: 0; cursor: pointer; border-radius: 8px; } .pl-prepgo .pt { height: 100%; transition: background .12s, border-color .12s; } .pl-prepgo:hover .pt, .pl-prepgo.on .pt { background: var(--raised); border-color: var(--line2); } .pl-prepgo:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.pl-prepl { margin: 0 0 14px; } .pl-prepl .lp-pr { grid-template-columns: 160px minmax(0, 1fr); font-size: 13.5px; } @media (max-width: 560px) { .pl-prepl .lp-pr { grid-template-columns: minmax(0, 1fr); } }
+.pp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pp-c { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 5px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line2); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.pp-i { width: 22px; height: 22px; border-radius: 5px; flex: none; } .pp-m, .pp-m svg { display: block; width: 16px; height: 16px; flex: none; } .pp-c.bad { border-color: rgba(212,17,30,.45); }
 .lp-kmiss { color: var(--lv-maj-t); font-weight: 600; }
 .lp-none { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; } .lp-none.ok { color: #7ee08f; font-weight: 600; }
 .lpv .lp-used .lp-pr { padding: 4px 0; font-size: 13px; } .lpv .lp-used h3 { font-size: 16px; } .lpv .lp-used .lp-pk { color: var(--muted); font-weight: 600; }
