@@ -20972,9 +20972,9 @@ function cmpSpellRows(A, B) {
 // a player's own spells, the same shape as the top players'
 function cmpMyAb(r, p, k) {
   // (one row a spell name: the log splits some spells over several IDs, and the top players' come by name too)
-  const by = new Map(); for (const a of (k === 'heal' ? p.healAb : p.dmgAb).values()) { const o = by.get(a.name); if (o) o.total += a.total; else by.set(a.name, { name: a.name, id: a.id, total: a.total }); }
+  const by = new Map(); for (const a of (k === 'heal' ? p.healAb : p.dmgAb).values()) { const o = by.get(a.name); if (o) { o.total += a.total; o.over += a.over || 0; } else by.set(a.name, { name: a.name, id: a.id, total: a.total, over: a.over || 0 }); }
   const all = [...by.values()], tot = all.reduce((s, a) => s + a.total, 0) || 1, min = cmpAlive(r, p) / 60;
-  return all.map((a) => ({ name: a.name, id: a.id, share: a.total / tot, cpm: /: /.test(a.name) ? null : ((p.castAb.get(a.name) || {}).n || 0) / min }));
+  return all.map((a) => ({ name: a.name, id: a.id, share: a.total / tot, oh: k === 'heal' && a.total + a.over > 0 ? a.over / (a.total + a.over) : null, cpm: /: /.test(a.name) ? null : ((p.castAb.get(a.name) || {}).n || 0) / min }));
 }
 const cmpMsg = (t) => '<div class="panel"><p class="muted" style="margin:0">' + t + '</p></div>';
 const cmpNeedWcl = (what) => cmpMsg(what + ' show for raid bosses opened from a report link. Open this pull from its report link to see them.');
@@ -21105,6 +21105,229 @@ function cmpTalKind(txt) {
   if (/heal|damage|critical|haste|mastery|versatility|absorb/i.test(txt)) return 'out';
   return '';
 }
+// Spec playbooks (Oct 19, "you still don't know all the nuances to classes rotation/talents/gameplay/hero trees ... the
+// talents are what make the gameplay ... some talents affect other talents"): what a top player of the spec knows, written
+// down for Compare, so a difference is explained the way a coach would explain it and not guessed from tooltip text.
+// Holy Paladin first (your spec). From the game's own talent data (every node and choice of the class, spec and both hero
+// trees, read from Raidbots' talents.json), each talent's and spell's numbers on Wowhead (the spell power coefficients:
+// Holy Light 32.5, Holy Shock 11.17, Light of Dawn 5.07 a target, Eternal Flame 3.78 plus 1.09 over 16 s, Flash of Light
+// 3.16 (3 times that with Infusion of Light), Dawnlight 5.38 over 8 s, Pillars of Light 5.86 a Beacon of Virtue target),
+// Wowhead's raid builds (decoded) and Icy Veins' talent and rotation pages (12.1.5, read Oct 19 2026), and two real kills
+// (the top Holy Paladin on The Coiled Altar Mythic: 155 Eternal Flames, no Light of Dawn, no Holy Light), and Wowhead's rotation
+// guide's advanced notes: Beacons copy only direct heals (Light of Dawn at half the rate, heals over time not at all), Beacon of the
+// Savior's target takes 20% more healing, Mastery is full within 10 yards of you or a Beacon and none at 40.
+// A talent: [kind, what it does, how it plays with the rest, the log's spell names it shows up in]. kind 'out' changes the
+// healing a second, 'mana' lets you cast more of the big heals, 'none' doesn't change the healing (left out of Compare).
+const SPEC_BOOK = {};
+SPEC_BOOK['Holy Paladin'] = {
+  talents: {
+    // the spec tree: Holy Shock
+    'Light\'s Conviction': ['out', 'Holy Shock has 2 charges.', 'More Holy Shocks means more Holy Power and more Infusion of Light procs, so nearly every other talent gets more out of it.', ['Holy Shock']],
+    'Glorious Dawn': ['out', 'Holy Shock heals 10% more and sometimes gives a charge back.', 'The refunds add Holy Shocks you didn\'t have to wait for.', ['Holy Shock']],
+    'Reclamation': ['out', 'Holy Shock heals up to 50% more on someone low, and gives back some mana.', 'It rewards aiming Holy Shock at the lowest player instead of whoever is closest.', ['Holy Shock']],
+    'Imbued Infusions': ['out', 'Spending an Infusion of Light takes 1 second off Holy Shock.', 'It turns Infusions into more Holy Shocks, which make more Infusions.', ['Holy Shock']],
+    'Awestruck': ['out', 'Holy Shock, Flash of Light and Holy Light crits heal 20% more.', 'Worth more the more you crit: Divine Glimpse, Luminosity and Avenging Wrath all add crit.', ['Holy Shock', 'Flash of Light', 'Holy Light']],
+    'Divine Glimpse': ['out', 'Holy Shock and Judgment crit 8% more often.', 'More Holy Shock crits also feed Awestruck and, on Herald of the Sun, Sun Sear.', ['Holy Shock', 'Judgment']],
+    'Overflowing Light': ['out', 'Half of Holy Shock\'s overhealing becomes a shield.', 'It saves some of the healing that would have been wasted.', ['Holy Shock']],
+    'Light of the Martyr': ['out', 'Holy Shock heals 20% more while you are above 80% health, but puts a heal-absorb on you.', 'The log shows it as negative healing on you. It pays off when you stay healthy.', ['Holy Shock', 'Light of the Martyr']],
+    'Bestow Light': ['out', 'Light of the Martyr works down to 70% health and grows Holy Shock up to 15% more the longer it lasts.', 'Only does anything with Light of the Martyr.', ['Holy Shock', 'Bestow Light']],
+    'Blessed Assurance': ['out', 'After a Holy Power spender, the next Holy Shock heals twice as much.', 'Alternate spender and Holy Shock to use it every time.', ['Holy Shock']],
+    // Infusion of Light and Flash of Light
+    'Infusion of Light': ['out', 'Holy Shock sometimes makes the next Flash of Light instant and 3 times as strong.', 'Spend it on Flash of Light whenever anyone needs healing; Judgment only when no one does.', ['Flash of Light']],
+    'Inflorescence of the Sunwell': ['out', 'Infusion of Light holds 2 uses instead of 1.', 'Fewer procs are lost when 2 come close together.', ['Flash of Light']],
+    'Divine Revelations': ['out', 'An Infusion of Light Flash of Light heals 20% more, and an infused Judgment gives back mana.', 'Only matters when Infusions are spent, which is most of the fight.', ['Flash of Light']],
+    'Moment of Compassion': ['out', 'Flash of Light heals 50% more on someone with your Beacon.', 'Cast every Flash of Light on a Beacon target (Virtue or the Savior) unless someone else is in danger: an Infusion Flash of Light into a Virtue target is one of the strongest casts you have.', ['Flash of Light']],
+    'Selfless Healer': ['out', 'Flash of Light and Holy Light heal others 30% more, and heal you too.', '', ['Flash of Light', 'Holy Light', 'Selfless Healer']],
+    'Walk Into Light': ['out', 'Infusion of Light comes twice as often during Avenging Wrath.', 'Avenging Wrath windows are full of instant 3-times Flash of Lights.', ['Flash of Light']],
+    'Laying Down Arms': ['out', 'When a Holy Armament fades from you, you get an Infusion of Light.', 'These free Infusions are why Lightsmith leans on Holy Light more than on Holy Shock.', ['Flash of Light']],
+    // Holy Light (the Beacon of Faith builds)
+    'Divine Favor': ['mana', 'Holy Light costs 10% less and casts 15% faster.', 'Part of the Holy Light set the Beacon of Faith builds take.', ['Holy Light']],
+    'Divine Overload': ['out', 'Holy Light heals 30% more but costs 20% more.', 'Holy Light is your biggest single heal, about 3 Holy Shocks, so this is big if you have the mana for it.', ['Holy Light']],
+    'Resplendent Light': ['out', 'Holy Light also heals up to 5 people nearby for 8% of it.', 'Only as good as how many Holy Lights you cast.', ['Holy Light']],
+    'Hand of Divinity': ['out', 'Avenging Wrath makes your next 2 Holy Lights instant and half price.', 'Two cheap big heals in every Avenging Wrath (they wait 20 seconds, so save them for damage).', ['Holy Light']],
+    'Veneration': ['out', 'Judgment shields up to 5 hurt allies, and Flash of Light and Holy Light crits reset Judgment.', '', ['Judgment']],
+    // Holy Power spenders
+    'Light of Dawn': ['out', 'Your group heal: spends Holy Power to heal up to 5 people.', 'The guides say Eternal Flame is the better spender unless it would mostly overheal.', ['Light of Dawn']],
+    'Breaking Dawn': ['out', 'Light of Dawn heals more.', 'Only matters as much as you cast Light of Dawn.', ['Light of Dawn']],
+    'Unending Light': ['out', 'Light of Dawn gets 20% more from your Mastery.', 'Only matters as much as you cast Light of Dawn.', ['Light of Dawn']],
+    'Extrication': ['out', 'Word of Glory and Light of Dawn crit more often on low-health targets.', 'Aim spenders at the lowest players.', ['Eternal Flame', 'Word of Glory', 'Light of Dawn']],
+    'Empyrean Legacy': ['out', 'A Judgment crit makes your next Word of Glory also cast a Light of Dawn.', 'Needs Judgment casts and Judgment crits (Divine Glimpse, Awakening).', ['Light of Dawn', 'Word of Glory', 'Eternal Flame']],
+    'Seraphic Barrier': ['out', 'Word of Glory and Light of Dawn turn 15% of their healing into a shield.', '', ['Eternal Flame', 'Word of Glory', 'Light of Dawn']],
+    'Divine Purpose': ['out', 'Spenders sometimes make the next spender free and 15% stronger.', 'More free spenders means more healing for the same Holy Power.', ['Eternal Flame', 'Word of Glory', 'Light of Dawn']],
+    'Sacred Strength': ['out', 'Holy Power spenders heal 2% more.', '', ['Eternal Flame', 'Word of Glory', 'Light of Dawn']],
+    'Afterimage': ['out', 'Every 20 Holy Power spent, your next Word of Glory also heals someone nearby.', '', ['Eternal Flame', 'Word of Glory', 'Afterimage']],
+    // the Beacons
+    'Beacon of Virtue': ['out', 'Puts a Beacon on 5 people for 9 seconds, every 15 seconds.', 'The strongest choice in raid when you cast it as damage lands and fill the window with single-target heals (Holy Shock, Flash of Light, Eternal Flame, Holy Light). It costs a lot of mana.', ['Beacon of Light', 'Pillar of Lights']],
+    'Beacon of Faith': ['out', 'A second Beacon that stays up, both copying 30% less.', 'Cheaper and easier than Beacon of Virtue, so the Faith builds spend the mana on Holy Light instead.', ['Beacon of Light']],
+    'Commanding Light': ['out', 'Beacons copy 15% of your healing instead of 10%.', 'Half again as much Beacon healing, Beacon of the Savior included.', ['Beacon of Light', 'Beacon of the Savior']],
+    'Beacon of the Lightbringer': ['out', 'Your Mastery counts the distance to your Beacons too.', 'More Mastery on most heals for free.', []],
+    'Beacon of the Savior': ['out', 'An extra Beacon that jumps to the lowest player by itself, with shields at higher ranks.', 'Every Beacon talent (Commanding Light, Saved by the Light) boosts it too, so it is a third Beacon all fight.', ['Beacon of the Savior', 'Beacon of Light']],
+    'Saved by the Light': ['out', 'Your Beacon targets get a shield when they take damage, bigger the lower they are.', 'Works on Beacon of the Savior too.', ['Saved by the Light']],
+    'Glistening Radiance': ['out', 'Beacon targets at full health slowly build a shield.', 'It shows up most on easy stretches, when people are full, so a gap in it says little about play.', ['Glistening Radiance']],
+    'Pillars of Light': ['out', 'With Beacon of Virtue: each cast heals all 5 targets right away. With Beacon of Faith: your Beacons heal a little over time.', 'With Virtue it rewards casting Beacon of Virtue close to on cooldown.', ['Pillar of Lights']],
+    'Rising Sunlight': ['out', 'You heal up to 10% more, based on how healthy your Beacon targets are.', 'The guides pair it with Beacon of Faith.', []],
+    'Light\'s Protection': ['none', 'Beacon targets take 5% less damage.', '', []],
+    // cooldowns
+    'Avenging Wrath': ['out', 'Two minutes: 20% more healing and crit.', 'Everything is stronger, so use it on cooldown and in big damage.', []],
+    'Sanctified Wrath': ['out', 'Avenging Wrath lasts longer.', '', []],
+    'Call of the Righteous': ['out', 'Avenging Wrath comes back 30 seconds sooner but lasts 5 seconds less.', '', []],
+    'Avenging Crusader': ['out', 'Replaces Avenging Wrath: Judgment and Crusader Strike heal 5 people for part of their damage.', 'A melee-range playstyle (mostly Lightsmith); the guides don\'t use it in raid.', ['Avenging Crusader', 'Judgment', 'Crusader Strike']],
+    'Seek Deliverance': ['out', '5% more Mastery outside Avenging Wrath.', '', []],
+    'Tyr\'s Deliverance': ['out', 'Avenging Wrath also heals people around you for a while, and your heals on them are 10% stronger.', '', ['Tyr\'s Deliverance']],
+    'Aura Mastery': ['none', 'A raid cooldown: less damage taken for 8 seconds.', 'It saves lives, but doesn\'t add healing by itself.', []],
+    'Protection of Tyr': ['out', 'Aura Mastery also makes everyone take 10% more healing.', '', []],
+    'Ringing of the Heavens': ['out', 'Aura Mastery also casts a double-strength Divine Toll.', 'Cast Aura Mastery while Beacon of Virtue is up, and when people are already hurt, for a huge burst.', ['Holy Shock']],
+    'Unwavering Spirit': ['none', 'Aura Mastery comes back 30 seconds sooner.', '', []],
+    'Divine Toll': ['out', 'Casts 5 Holy Shocks at once (aim it at an ally, or it hits enemies first).', 'On Herald of the Sun it also starts Dawnlight and, with Aurora, a free spender.', ['Holy Shock']],
+    'Holy Prism': ['out', 'A beam: cast at an enemy, it heals 5 allies around it.', 'Lightsmith\'s choice; on Herald of the Sun it starts Dawnlight like Divine Toll, but Divine Toll is the pick there.', ['Holy Prism']],
+    'Quickened Invocation': ['out', 'Divine Toll (or Holy Prism) comes back 15 seconds sooner.', 'More Divine Tolls means more Holy Shocks and, on Herald of the Sun, more Dawnlights.', ['Holy Shock']],
+    'Divine Resonance': ['out', 'After Divine Toll, you cast a free Holy Shock every 5 seconds for 15 seconds.', '', ['Holy Shock']],
+    'Truth Prevails': ['out', 'Judgment heals you and costs 30% less.', '', ['Judgment']],
+    'Barrier of Faith': ['out', 'A shield that keeps growing from your other heals.', '', ['Barrier of Faith']],
+    // stats and passives
+    'Holy Aegis': ['out', '4% more crit.', '', []],
+    'Seal of Might': ['out', 'More Mastery and Intellect.', '', []],
+    'Solar Grace': ['out', '5% more haste.', 'More casts of everything.', []],
+    'Lightbearer': ['out', 'Part of the healing you receive also heals people near you.', 'Passive; it grows with how much healing you take.', ['Lightbearer']],
+    'Merciful Auras': ['out', 'Your aura heals 3 people every 2 seconds.', 'Passive.', ['Merciful Auras']],
+    'Holy Ritual': ['out', 'Blessing of Protection and Sacrifice also heal their target.', 'Small; it comes with the utility.', ['Holy Ritual']],
+    'Recompense': ['out', 'Damage taken through Blessing of Sacrifice is added to your next Word of Glory.', '', ['Eternal Flame', 'Word of Glory']],
+    'A Just Reward': ['out', 'Cleansing someone also heals them.', 'Only as much as there is to dispel.', ['A Just Reward']],
+    'Tirion\'s Devotion': ['mana', 'Lay on Hands comes back sooner and gives back 5% mana.', '', []],
+    'Brought to Light': ['none', 'Heals around you when an enemy dies.', 'Only on adds and trash.', []],
+    // Herald of the Sun (the raid hero tree)
+    'Dawnlight': ['out', 'After Divine Toll (or Holy Prism), your next 2 spenders also place a Dawnlight, a big heal over 8 seconds.', 'Everything else on Herald of the Sun hangs off it. It doesn\'t copy to Beacons, so Dawnlight is about how many Divine Tolls you cast.', ['Dawnlight']],
+    'Eternal Flame': ['out', 'Word of Glory becomes Eternal Flame: the same big heal plus a heal over time.', 'The guides\' main spender: Light of Dawn only when Eternal Flame would mostly overheal.', ['Eternal Flame']],
+    'Morning Star': ['out', 'Dawnlight grows 5% stronger every 5 seconds, up to 50%.', 'Rewards not sitting on Divine Toll too long and not wasting Dawnlights.', ['Dawnlight']],
+    'Gleaming Rays': ['out', 'Holy Power spenders heal 3% more.', '', ['Eternal Flame', 'Light of Dawn']],
+    'Luminosity': ['out', 'Holy Shock and Light of Dawn crit 5% more often.', 'More crits mean more Sun Sear.', ['Holy Shock', 'Light of Dawn']],
+    'Endless Gleam': ['out', 'Dawnlight lasts longer when it heals someone already full.', '', ['Dawnlight']],
+    'Blessing of An\'she': ['out', 'Holy Shock heals 15% more.', '', ['Holy Shock']],
+    'Lingering Radiance': ['out', 'When Dawnlight ends, it leaves a 6-second Eternal Flame.', '', ['Eternal Flame', 'Dawnlight']],
+    'Sun Sear': ['out', 'Holy Shock and Light of Dawn crits also heal over 4 seconds.', 'It grows with crit: Luminosity, Divine Glimpse and Avenging Wrath.', ['Sun Sear']],
+    'Aurora': ['out', 'Divine Toll (or Holy Prism) gives a free, 15% stronger spender.', 'One more Eternal Flame for every Divine Toll.', ['Eternal Flame', 'Light of Dawn']],
+    'Second Sunrise': ['out', 'Holy Shock and Light of Dawn sometimes cast again at 30%.', '', ['Holy Shock', 'Light of Dawn']],
+    'Born in Sunlight': ['out', 'Dawnlight crits 15% more often during Avenging Wrath.', 'Line up Divine Toll with Avenging Wrath to use it.', ['Dawnlight']],
+    'Sun\'s Avatar': ['out', 'Light beams run from you to each Dawnlight and heal anyone who walks through them.', 'It comes from Dawnlights, so it follows how many Divine Tolls you cast and where you stand.', ['Sun\'s Avatar']],
+    'Illumine': ['none', 'Dawnlight speeds up allies and slows enemies.', '', []],
+    'Will of the Dawn': ['none', 'More movement speed.', '', []],
+    // Lightsmith (Mythic+ and the Avenging Crusader build; the guides don't play it in raid)
+    'Holy Armaments': ['out', 'Gives a Holy Bulwark (a shield) or a Sacred Weapon (extra healing) to someone, and 3 Holy Power.', 'Sacred Weapon goes on yourself; Holy Bulwark on a player who needs to live through something.', ['Holy Armaments', 'Sacred Weapon', 'Holy Bulwark']],
+    'Hammer and Anvil': ['out', 'Judgment crits heal up to 5 hurt allies.', 'Lightsmith\'s main healing; it wants lots of Judgments.', ['Hammer and Anvil']],
+    'Resounding Strike': ['out', 'Holy Armaments also set off Hammer and Anvil.', '', ['Hammer and Anvil']],
+    'Blessing of the Forge': ['out', 'Avenging Wrath adds a Sacred Weapon that copies your spenders.', '', ['Sacred Weapon']],
+    'Divine Guidance': ['out', 'Each spender makes your next Consecration hit and heal 3 allies.', '', ['Divine Guidance']],
+    'Masterwork': ['out', 'After a Holy Armament, your next 3 Holy Shocks hand out smaller Armaments.', '', []],
+    'Valiance': ['out', 'Spending Infusion of Light brings Holy Armaments back sooner.', '', []],
+    'Forewarning': ['out', 'Holy Armaments come back 20% sooner.', '', []],
+    'Solidarity': ['out', 'You get the Armament too, or someone near you does.', '', []],
+    'Divine Inspiration': ['out', 'Your spells sometimes hand out a Holy Armament.', '', []],
+    'Rite of Sanctification': ['out', 'A weapon buff: 5% more Intellect.', '', []],
+    'Rite of Adjuration': ['out', 'A weapon buff: spenders sometimes heal around the target.', '', []],
+    'Tempered in Battle': ['out', 'Overhealing on you or a Holy Bulwark target goes to the other.', '', []],
+    'Reflection of Radiance': ['out', 'Holy Armaments sometimes give Awakening (a Judgment crit).', '', []],
+    'Shared Resolve': ['none', 'Your aura is stronger on Armament targets.', '', []],
+    'Authoritative Rebuke': ['none', 'Dispels bring Cleanse back sooner.', '', []],
+    // the rest of the class and spec trees: a few feed healing, most are survival and utility (left out of Compare)
+    'Holy Shock': ['out', 'Your main heal and Holy Power builder.', '', ['Holy Shock']],
+    'Awakening': ['out', 'Spenders sometimes make your next Judgment crit; Avenging Wrath gives one too.', 'It feeds the talents that need Judgment crits: Empyrean Legacy, and Hammer and Anvil on Lightsmith.', ['Judgment']],
+    'Crusader\'s Might': ['out', 'Holy Shock takes 1.5 seconds off Judgment.', 'More Judgments, which matters for the Judgment builds (Lightsmith, Empyrean Legacy).', ['Judgment']],
+    'Golden Path': ['out', 'Consecration heals you and up to 5 allies standing in it.', 'Small; it needs Consecration down and people in it.', ['Golden Path']],
+    'Lightforged Blessing': ['out', 'Shield of the Righteous heals you and 2 allies.', 'Small; Shield of the Righteous is for when no one needs healing.', ['Lightforged Blessing']],
+    'Liberation': ['none', 'Part of Word of Glory and Light of Dawn\'s healing also hits an enemy.', 'Damage, not healing.', []],
+    'Righteous Judgment': ['none', 'Judgment drops a Consecration.', 'Damage, not healing.', []],
+    'Shining Righteousness': ['none', 'Shield of the Righteous hits harder and can give Divine Purpose.', 'Mostly damage.', []],
+    'Hammer of Wrath': ['none', 'During Avenging Wrath, Judgment becomes Hammer of Wrath.', 'Damage, not healing.', []],
+    'Vengeful Wrath': ['none', 'Hammer of Wrath hits harder on low enemies.', 'Damage, not healing.', []],
+    'Greater Judgment': ['none', 'Judgment makes the target deal less damage.', 'It prevents damage instead of healing it.', []],
+    'Blessing of Dawn': ['none', 'Takes a little of nearby allies\' damage onto you while you are healthy.', '', []],
+    'Lay on Hands': ['none', 'Heals someone to full, every 10 minutes.', 'An emergency button, not part of the healing a second.', []],
+    'Guided Prayer': ['none', 'A free Word of Glory on you when you drop low.', 'Keeps you alive.', []],
+    'Blessing of Sacrifice': ['none', 'Takes 30% of an ally\'s damage onto you.', 'A defensive for someone else.', []],
+    'Blessing of Protection': ['none', 'Makes an ally immune to physical damage.', '', []],
+    'Blessing of Freedom': ['none', 'Frees an ally from slows and roots.', '', []],
+    'Auras of the Resolute': ['none', 'Gives you the three auras.', '', []],
+    'Improved Cleanse': ['none', 'Cleanse also removes poisons and diseases.', '', []],
+    'Empyreal Ward': ['none', 'Lay on Hands also adds armor.', '', []],
+    'Fist of Justice': ['none', 'Hammer of Justice comes back sooner.', '', []],
+    'Blinding Light': ['none', 'Disorients nearby enemies.', '', []],
+    'Turn Evil': ['none', 'Makes an undead, demon or aberration flee.', '', []],
+    'Divine Steed': ['none', 'A burst of speed.', '', []],
+    'Light\'s Countenance': ['none', 'Blinding Light comes back sooner.', '', []],
+    'Wrench Evil': ['none', 'Turn Evil is instant.', '', []],
+    'Stand Against Evil': ['none', 'Turn Evil hits more enemies.', '', []],
+    'Holy Reprieve': ['none', 'Forbearance is shorter.', '', []],
+    'Cavalier': ['none', 'Divine Steed has 2 charges.', '', []],
+    'Divine Spurs': ['none', 'Divine Steed comes back sooner but is shorter.', '', []],
+    'Steed of Liberty': ['none', 'Divine Steed also frees you from slows.', '', []],
+    'Armory of Light': ['none', 'You sometimes block or parry part of a hit.', 'Keeps you alive.', []],
+    'Obduracy': ['none', 'A little speed and less area damage taken.', '', []],
+    'Echoing Blessings': ['none', 'Your Blessings linger and reduce damage.', '', []],
+    'Unbound Freedom': ['none', 'Blessing of Freedom adds speed.', '', []],
+    'Sanctified Plates': ['none', 'More armor and stamina.', '', []],
+    'Divine Reach': ['none', 'Your auras reach farther.', '', []],
+    'Fear No Evil': ['none', 'Fears on you are shorter.', '', []],
+    'Consecrated Ground': ['none', 'Consecration is bigger and slows.', '', []],
+    'Sacrifice of the Just': ['none', 'Blessing of Sacrifice comes back sooner.', '', []],
+    'Improved Blessing of Protection': ['none', 'Blessing of Protection comes back sooner.', '', []],
+    'Unbreakable Spirit': ['none', 'Your defensives come back sooner.', '', []],
+    'Lead the Charge': ['none', 'Divine Steed speeds up allies\' movement cooldowns.', '', []],
+    'Worthy Sacrifice': ['none', 'Blessing of Sacrifice casts itself on a low ally.', '', []],
+    'Righteous Protection': ['none', 'Blessing of Sacrifice clears poisons and diseases.', '', []],
+    'Blessed Calling': ['none', 'Your Blessings add speed.', '', []],
+    'Inspired Guard': ['none', 'Divine Protection also raises healing taken.', '', []],
+    'Light\'s Revocation': ['none', 'Divine Shield heals you when it clears debuffs.', '', []],
+    'Faith\'s Armor': ['none', 'Word of Glory adds armor.', '', []],
+    'Stoicism': ['none', 'Stuns on you are shorter.', '', []],
+    'Eye for an Eye': ['none', 'Attackers take damage during your defensives.', '', []],
+    'Blessing of Dusk': ['none', 'You take less damage the lower you are.', '', []],
+  },
+  // the guides' raid builds (Wowhead, decoded; Icy Veins agrees): the Herald of the Sun picks that change the healing
+  guide: {
+    'Beacon of Virtue': ['Beacon of Virtue', 'Divine Toll', 'Moment of Compassion', 'Saved by the Light', 'Glistening Radiance', 'Pillars of Light', 'Commanding Light', 'Light\'s Conviction', 'Glorious Dawn', 'Imbued Infusions', 'Reclamation', 'Awestruck', 'Divine Glimpse', 'Inflorescence of the Sunwell', 'Divine Revelations', 'Extrication', 'Seek Deliverance', 'Rising Sunlight', 'Truth Prevails', 'Ringing of the Heavens', 'Sanctified Wrath', 'Beacon of the Savior', 'Divine Purpose', 'Quickened Invocation', 'Afterimage', 'Selfless Healer', 'Lightbearer', 'Holy Aegis', 'Seal of Might', 'Aurora', 'Blessing of An\'she', 'Sun Sear', 'Gleaming Rays', 'Luminosity', 'Second Sunrise', 'Walk Into Light', 'Eternal Flame', 'Sun\'s Avatar', 'Endless Gleam', 'Born in Sunlight', 'Solar Grace'],
+    'Beacon of Faith': ['Beacon of Faith', 'Divine Toll', 'Divine Favor', 'Resplendent Light', 'Hand of Divinity', 'Protection of Tyr', 'Commanding Light', 'Light\'s Conviction', 'Glorious Dawn', 'Imbued Infusions', 'Reclamation', 'Awestruck', 'Divine Glimpse', 'Inflorescence of the Sunwell', 'Divine Revelations', 'Extrication', 'Seek Deliverance', 'Rising Sunlight', 'Truth Prevails', 'Ringing of the Heavens', 'Sanctified Wrath', 'Beacon of the Savior', 'Divine Purpose', 'Quickened Invocation', 'Afterimage', 'Selfless Healer', 'Lightbearer', 'Holy Aegis', 'Seal of Might', 'Aurora', 'Blessing of An\'she', 'Sun Sear', 'Gleaming Rays', 'Luminosity', 'Second Sunrise', 'Walk Into Light', 'Eternal Flame', 'Sun\'s Avatar', 'Endless Gleam', 'Born in Sunlight', 'Solar Grace'],
+  },
+  // a player's build in a few words, from their talent names and hero tree
+  build(has, hero) {
+    const virtue = has('Beacon of Virtue'), faith = has('Beacon of Faith'), hl = ['Divine Favor', 'Hand of Divinity', 'Resplendent Light', 'Divine Overload'].filter(has).length;
+    const extra = [virtue ? 'Beacon of Virtue' : faith ? 'Beacon of Faith' : '', has('Avenging Crusader') ? 'Avenging Crusader' : '', has('Holy Prism') && !has('Divine Toll') ? 'Holy Prism' : ''].filter(Boolean);
+    const style = has('Avenging Crusader') ? 'built around Judgment and melee' : faith || hl >= 2 ? 'built around Holy Light (more Holy Light, no Beacon of Virtue to cast)' : virtue ? 'built for burst healing into 5 Beacons' : '';
+    return { key: (virtue ? 'V' : faith ? 'F' : '') + (has('Avenging Crusader') ? 'C' : '') + (hero || ''), name: (hero || 'Holy Paladin') + (extra.length ? ' with ' + extra.join(' and ') : ''), style, guide: this.guide[virtue ? 'Beacon of Virtue' : 'Beacon of Faith'] };
+  },
+  // a sentence that explains where a spell's healing comes from, with both players' numbers where the log has them
+  // (s: a side: { n (name), cn(spell) casts, min (minutes alive) })
+  spells: {
+    'Holy Shock': (lo, hi, f) => 'Holy Shock is the button to press most; every Divine Toll adds 5 more. ' + f('Divine Toll', 'Divine Tolls'),
+    'Eternal Flame': (lo, hi, f) => 'Eternal Flame is the best place for Holy Power; Light of Dawn is for when Eternal Flame would mostly overheal. ' + f('Eternal Flame', 'Eternal Flames') + ' ' + f('Light of Dawn', 'Light of Dawns'),
+    'Word of Glory': (lo, hi, f) => 'Word of Glory is the best place for Holy Power; Light of Dawn is for when it would mostly overheal. ' + f('Word of Glory', 'Words of Glory') + ' ' + f('Light of Dawn', 'Light of Dawns'),
+    'Light of Dawn': (lo, hi, f) => 'Light of Dawn is the spender for when Eternal Flame would mostly overheal. ' + f('Light of Dawn', 'Light of Dawns'),
+    'Beacon of Light': (lo, hi, f) => 'Beacons copy part of every direct heal (Light of Dawn only half as much, heals over time not at all), so this grows with Holy Shock, Flash of Light, Eternal Flame and Holy Light cast into Beacon of Virtue windows. ' + f('Beacon of Virtue', 'Beacons of Virtue'),
+    'Pillar of Lights': (lo, hi, f) => 'Every Beacon of Virtue heals its 5 targets right away (Pillars of Light). ' + f('Beacon of Virtue', 'Beacons of Virtue'),
+    'Dawnlight': (lo, hi, f) => 'Each Divine Toll gives 2 Dawnlights. ' + f('Divine Toll', 'Divine Tolls'),
+    'Sun\'s Avatar': (lo, hi, f) => 'The beams run to your Dawnlights, which come from Divine Toll. ' + f('Divine Toll', 'Divine Tolls'),
+    'Flash of Light': (lo, hi, f) => 'Flash of Light is 3 times as strong with Infusion of Light, and 50% stronger on a Beacon target. ' + f('Flash of Light', 'Flashes of Light'),
+    'Holy Light': (lo, hi, f) => 'Holy Light is the biggest single heal, about 3 Holy Shocks, but it costs a lot of mana: the guides cast more of it when there is mana to spare (the Beacon of Faith builds) and barely any with Beacon of Virtue. ' + f('Holy Light', 'Holy Lights'),
+    'Sun Sear': () => 'It comes from Holy Shock and Light of Dawn crits.',
+    'Glistening Radiance': () => 'It builds on Beacon targets who are at full health, so it\'s bigger on calm stretches; a gap here says little about play.',
+    'Light of the Martyr': () => 'Light of the Martyr\'s heal-absorb on you shows as negative healing.',
+  },
+  // more reasons for Why the gap, worked out from the log (lo: the side that did less)
+  extra(lo, hi, b, C) {
+    const out = [], sp = (s) => { const ef = s.cn('Eternal Flame') + s.cn('Word of Glory'), ld = s.cn('Light of Dawn'); return { ef, ld, all: ef + ld, f: ef + ld ? ld / (ef + ld) : 0 }; };
+    const L = sp(lo), H = sp(hi);
+    // the spender: Light of Dawn where Eternal Flame was the better heal (both guides; the top Holy Paladin cast none)
+    if (L.all >= 10 && H.all >= 10 && L.f - H.f >= 0.2) {
+      const per = (s, nm) => { const a = s.ab.find((y) => y.name === nm), n = s.cn(nm); return a && n ? a.share * s.rate * s.min * 60 / n : 0; };
+      const pe = per(lo, 'Eternal Flame') || per(lo, 'Word of Glory') || per(hi, 'Eternal Flame'), pl = per(lo, 'Light of Dawn');
+      const v = pe > pl && pl ? (pe - pl) * L.ld * (L.f - H.f) / L.f / (lo.min * 60) : 0;
+      out.push({ v: v || 0.02 * hi.rate, txt: b('Spending Holy Power') + ': ' + Math.round(100 * L.f) + '% of ' + lo.pos + ' spenders were Light of Dawn, against ' + Math.round(100 * H.f) + '% of ' + hi.pos + '. ' +
+        (pe && pl ? 'Each of ' + lo.pos + ' Eternal Flames healed for ' + b(C(pe)) + ', each Light of Dawn for ' + b(C(pl)) + '. ' : '') + 'The guides say Eternal Flame is the better spender unless it would mostly overheal, and Light of Dawn also copies only half as much to your Beacons.' });
+    }
+    return out;
+  },
+};
+// the playbook for a spec, or null
+const specBook = (spec) => SPEC_BOOK[spec] || null;
 function cmpTalents(r, p, q, SA, SB, rB) {
   rB = rB || r; const ta = talentsOf(r, p), tb = talentsOf(rB, q); if (!ta || !tb) return null;
   const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = esc(q.name), U = SA && SA.unit === 'heal' ? 'healing' : 'damage', tr = treeOf(p.specName), b = (x) => '<b>' + x + '</b>';
@@ -21119,7 +21342,12 @@ function cmpTalents(r, p, q, SA, SB, rB) {
   // (Oct 19, "summarize the differences in the talents and the impact on their DPS/HPS, don't write out the tooltip": each
   // talent only one of them took, judged from its text: does it change the number a second, and what the log shows for it.
   // The text itself is the tooltip.)
+  const bk = specBook(p.specName), inLog = (n) => [...(SA.ab || []), ...(SB.ab || [])].some((y) => key(y.name) === key(n));
   const judge = (x, sideH, sideL) => {
+    // (the playbook knows the talent: its own words, and the spells it shows up in)
+    const bt = bk && bk.talents[x.name];
+    if (bt) { const own = per(sideH, x.name), ts = bt[3].filter((n) => key(n) !== key(x.name) && inLog(n)).slice(0, 2), none = bt[0] === 'none';
+      return { e: x, bt, kind: bt[0], own, ts, none, pending: false, w: none ? 0 : own || ts.reduce((v, n) => v + Math.abs(per(sideH, n) - per(sideL, n)), 0) || 0.001 * (sideH.rate || 1) }; }
     const txt = TALTXT.get(x.spell), kind = cmpTalKind(txt), own = per(sideH, x.name), ts = touches(txt, x.name);
     // (whether it adds the other kind, judged without the spell names in it: Acid Rain names Healing Rain but only deals damage)
     const plain = spellNames.reduce((t, n) => t.split(new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')).join(' '), String(txt || ''));
@@ -21128,7 +21356,8 @@ function cmpTalents(r, p, q, SA, SB, rB) {
     return { e: x, kind: other ? 'other' : kind, own, ts, none, pending: !txt, w: own || (none ? 0 : ts.reduce((v, n) => v + Math.abs(per(sideH, n) - per(sideL, n)), 0)) };
   };
   // (one line for a talent that changed the number: what it did by itself, or the spells it changes for both of them)
-  const impact = (j, H, L, sideH, sideL) => j.own ? 'It did ' + b(C(j.own)) + ' ' + U + ' a second by itself.'
+  const impact = (j, H, L, sideH, sideL) => j.bt ? esc(j.bt[1]) + (j.bt[2] ? ' ' + esc(j.bt[2]) : '') + (j.own ? ' It did ' + b(C(j.own)) + ' ' + U + ' a second by itself.' : j.ts.length ? ' ' + j.ts.map((n) => H + '\'s ' + esc(n) + ' did ' + b(C(per(sideH, n))) + ' a second, ' + L + '\'s ' + b(C(per(sideL, n))) + '.').join(' ') : '')
+    : j.own ? 'It did ' + b(C(j.own)) + ' ' + U + ' a second by itself.'
     : (j.ts.length ? 'It makes ' + esc(j.ts.join(' and ')) + ' stronger. ' : '') + j.ts.map((n) => H + '\'s ' + esc(n) + ' did ' + b(C(per(sideH, n))) + ' a second, ' + L + '\'s ' + b(C(per(sideL, n))) + '.').join(' ') +
       (j.ts.some((n) => per(sideH, n) > per(sideL, n) * 1.05) ? ' That is part of the gap.' : j.ts.length ? ' That isn\'t where the gap is.' : 'Its effect is spread across other spells.');
   const took = { A: [], B: [] }, hits = [];
@@ -21140,9 +21369,16 @@ function cmpTalents(r, p, q, SA, SB, rB) {
     if (ea) { const j = judge(ea, SA, SB); took.A.push(j); if (!j.none) hits.push({ j, H: An, L: Bn, sH: SA, sL: SB }); }
     if (eb) { const j = judge(eb, SB, SA); took.B.push(j); if (!j.none) hits.push({ j, H: Bn, L: An, sH: SB, sL: SA }); }
   }
-  cmpTalText([...took.A, ...took.B].map((j) => j.e.spell));
+  cmpTalText([...took.A, ...took.B].filter((j) => !j.bt).map((j) => j.e.spell));
   hits.sort((u, v) => v.j.w - u.j.w);
-  const tip = (x) => ' data-tt="' + esc('<b>' + esc(x.name) + '</b><br>' + esc(TALTXT.get(x.spell) || 'Loading what it does…')) + '"';
+  const tip = (x) => ' data-tt="' + esc('<b>' + esc(x.name) + '</b><br>' + esc((bk && bk.talents[x.name] && bk.talents[x.name][1]) || TALTXT.get(x.spell) || 'Loading what it does…')) + '"';
+  // each player's build (the playbook): the same one, or different ones, said first; and the guides' picks each one skipped
+  const hasA = (n) => ta.names.has(n), hasB = (n) => tb.names.has(n), bA = bk && bk.build ? bk.build(hasA, cmpHeroOf(r, p)) : null, bB = bk && bk.build ? bk.build(hasB, cmpHeroOf(rB, q)) : null;
+  const skip = (bd, has) => (bd && bd.guide ? bd.guide.filter((n) => !has(n) && bk.talents[n] && bk.talents[n][0] !== 'none') : []);
+  const sA = skip(bA, hasA), sB = skip(bB, hasB), andL = (l) => (l.length > 1 ? l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1] : l[0] || '');
+  const buildL = !bA || !bB || !bA.name ? '' : bA.key === bB.key ? 'Both play ' + b(esc(bA.name)) + (bA.style ? ', ' + esc(bA.style) : '') + '.'
+    : An + ' plays ' + b(esc(bA.name)) + (bA.style ? ', ' + esc(bA.style) : '') + '. ' + Bn + ' plays ' + b(esc(bB.name)) + (bB.style ? ', ' + esc(bB.style) : '') + '. Some of the gap comes from the build itself.';
+  const guideL = bA && bB && bA.guide && !sA.length && !sB.length ? 'Both took every healing pick the guides\' raid build takes.' : [sA.length ? An + ' skipped ' + plural(sA.length, 'healing pick') + ' the guides take: ' + esc(andL(sA.slice(0, 4))) + (sA.length > 4 ? ' and more' : '') + '.' : '', sB.length ? Bn + ' skipped ' + plural(sB.length, 'healing pick') + ' the guides take: ' + esc(andL(sB.slice(0, 4))) + (sB.length > 4 ? ' and more' : '') + '.' : ''].filter(Boolean).join(' ');
   // the lead (Oct 19, "if it doesn't affect HPS/DPS, omit it"): only the different picks that change the number a second
   const addL = (l) => l.filter((j) => !j.none), xA = addL(took.A), xB = addL(took.B), names = (l) => esc(l.map((j) => j.e.name).join(', '));
   const pend = [...took.A, ...took.B].some((j) => j.pending);
@@ -21155,8 +21391,8 @@ function cmpTalents(r, p, q, SA, SB, rB) {
     (hits.length > 5 ? '<button class="btn sm cmp-more" type="button" id="cmpTalAll">' + (S.cmpTalAll ? 'Show fewer' : 'Show all ' + hits.length) + '</button>' : '') : '';
   const tx = talentTreeHtml(r, p, q, null, rB), ty = talentTreeHtml(rB, q, p, null, r), tRows = tx || ty ? '<div class="cmp-tt2"><div><div class="cmp-lbl">' + An + '</div>' + tx + '</div><div><div class="cmp-lbl">' + Bn + '</div>' + ty + '</div></div>' : '';
   const trees = tRows ? '<details class="cmp-tdet"' + (S.cmpTreesShut ? '' : ' open') + '><summary>Both talent trees. A talent where their picks differ has a blue ring.</summary>' + tRows + '</details>' : '';
-  const html = '<div class="panel"><h3>Talent differences<small>Only the picks that change the ' + U + ' a second</small></h3><p class="cmp-wlead">' + lead + '</p>' + hitL + trees + '</div>';
-  return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html, hits };
+  const html = '<div class="panel"><h3>Talent differences<small>Only the picks that change the ' + U + ' a second</small></h3>' + (buildL ? '<p class="cmp-wlead">' + buildL + '</p>' : '') + '<p class="cmp-wlead">' + lead + '</p>' + (guideL ? '<p class="sub" style="margin:4px 0 0">' + guideL + '</p>' : '') + hitL + trees + '</div>';
+  return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html, hits, bA, bB };
 }
 // Why the gap (Oct 19, "summarize any differences that contributed to the HPS/DPS difference"): everything Compare finds,
 // as plain sentences from the side of whoever did less, the biggest first. An estimate a second where the log allows it
@@ -21173,7 +21409,9 @@ function cmpGapWhy(x) {
       : a.cpm && h && h.cpm ? 'each of ' + hi.pos + ' casts did ' + b(C(vh * 60 / h.cpm)) + ', each of ' + loPos + ' ' + b(C(va * 60 / a.cpm)) : hi.n + ' got more out of it';
     // (a talent only the higher side took that makes this spell stronger is named right here, and not again below)
     const sk = String(nm(y)).toLowerCase(), tl = (x.hits || []).filter((o) => o.H === hi.nRaw && !o.j.own && o.j.ts.some((n) => n.toLowerCase() === sk)); tl.forEach((o) => (o.used = true));
-    out.push({ v: d, txt: b(esc(nm(y))) + ': ' + capS(loN) + ' did ' + b(C(d)) + ' less ' + U + ' a second with it. ' + capS(why) + '.' +
+    const ohT = a && h && a.oh != null && h.oh != null && /each of/.test(why) && a.oh - h.oh >= 0.1 ? ' ' + capS(loN) + ' overhealed ' + b(Math.round(100 * a.oh) + '%') + ' of it, ' + hi.n + ' ' + b(Math.round(100 * h.oh) + '%') + ': healing that lands on someone already full is wasted.' : '';
+    const bs = x.book && x.book.spells[String(y.name)], bsT = bs ? ' ' + bs(lo, hi, (sn, pl) => { const a = lo.cn ? lo.cn(sn) / lo.min : 0, h = hi.cn ? hi.cn(sn) / hi.min : 0; return (!a && !h) || (sn === String(y.name) && /a minute/.test(why)) ? '' : capS(hi.n) + ' cast ' + b(h.toFixed(1)) + ' ' + pl + ' a minute, ' + loN + ' ' + b(a.toFixed(1)) + '.'; }).trim() : '';
+    out.push({ v: d, txt: b(esc(nm(y))) + ': ' + capS(loN) + ' did ' + b(C(d)) + ' less ' + U + ' a second with it. ' + capS(why) + '.' + ohT + bsT +
       (tl.length ? ' ' + hi.n + ' also took ' + tl.map((o) => b(esc(o.j.e.name))).join(' and ') + ', which make' + (tl.length > 1 ? '' : 's') + ' it stronger.' : '') });
   }
   // casting less often (more casts of the spells that do the work add about that much more)
@@ -21188,10 +21426,11 @@ function cmpGapWhy(x) {
   // talents only the higher side took that make the spells where the gap is stronger
   for (const o of x.hits || []) if (o.used) continue; else if (o.H === hi.nRaw && o.j.ts.length && !o.j.own) out.push({ v: 0.2 * o.j.w, txt: b(esc(o.j.e.name)) + ' (talent): only ' + hi.n + ' took it, and it makes ' + esc(o.j.ts.join(' and ')) + ' stronger.' });
     else if (o.H === hi.nRaw && o.j.own) out.push({ v: o.j.own, txt: b(esc(o.j.e.name)) + ' (talent): only ' + hi.n + ' took it. It did ' + b(C(o.j.own)) + ' ' + U + ' a second by itself.' });
+  if (x.book && x.book.extra) out.push(...x.book.extra(lo, hi, b, C));
   if (!out.length) return '';
   out.sort((p, q) => q.v - p.v);
   const top = out.slice(0, 6);
-  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The reasons, the biggest first</small></h3><p class="cmp-wlead">' + hi.n + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(C(gap) + ' more') + ' a second than ' + loN + '. The main reasons:</p>' +
+  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The reasons, the biggest first</small></h3><p class="cmp-wlead">' + hi.n + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(C(gap) + ' more') + ' a second than ' + loN + '. The main reasons:</p>' + (x.builds ? '<p class="sub" style="margin:2px 0 6px">' + x.builds + '</p>' : '') +
     '<ol class="cmp-gl">' + top.map((o) => '<li>' + o.txt + '</li>').join('') + '</ol>' + (out.length > 6 ? '<p class="sub" style="margin:6px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in the sections below.</p>' : '') + '</div>';
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
@@ -21287,9 +21526,15 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const rot = cmpRot(r, p, q, rB);
   if (rot && rot.a != null && rot.b != null) cards.unshift({ ...two, label: 'Rotation score', a: rot.a, b: rot.b, fa: String(Math.round(rot.a)), fb: String(Math.round(rot.b)), gap: cmpGap(rot.a, rot.b), st: rot.a >= rot.b - 2 ? 'ok' : 'warn', txt: 'Their scores on the Rotation tab.' });
   const critOfAll = (x, kk) => { let h = 0, c = 0; for (const a of (kk === 'heal' ? x.healAb : x.dmgAb).values()) { h += a.hits; c += a.crits; } return h ? c / h : null; };
-  const side = (x, rr, kk, ab, isA) => ({ n: isA ? An : Bn, nRaw: isA ? An : Bn, pos: isA ? (me ? 'your' : An + '\'s') : Bn + '\'s', rate: isA ? ra : rb, ab, cpm: ab.reduce((t, a) => t + (a.cpm || 0), 0), crit: critOfAll(x, kk), cd: cdT(isA ? cdA : cdB) });
+  const side = (x, rr, kk, ab, isA) => ({ cn: (nm) => (x.castAb.get(nm) || {}).n || 0, min: cmpAlive(rr, x) / 60, n: isA ? An : Bn, nRaw: isA ? An : Bn, pos: isA ? (me ? 'your' : An + '\'s') : Bn + '\'s', rate: isA ? ra : rb, ab, cpm: ab.reduce((t, a) => t + (a.cpm || 0), 0), crit: critOfAll(x, kk), cd: cdT(isA ? cdA : cdB) });
   const sA = side(p, r, k, A.ab, true), sB = side(q, rB, kq, B.ab, false), loA = ra < rb;
-  const gapH = k === kq ? cmpGapWhy({ lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits }) : '';
+  // (gear: the average item level, worked out the way Players does it; better gear makes every heal or hit bigger)
+  const ilv = (rr, x) => { const c = (rr.combatants || []).find((y) => y.name === x.name), g = c && c.gear; if (!g || !g.length) return 0; const mh = g[15], two = mh && mh.id && (!g[16] || !g[16].id);
+    const l = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((i) => (i === 16 && two ? mh.itemLevel : g[i] && g[i].id ? g[i].itemLevel : 0)); return l.reduce((t, v) => t + v, 0) / l.length; };
+  const iA = ilv(r, p), iB = ilv(rB, q), iLo = loA ? iA : iB, iHi = loA ? iB : iA;
+  const gearL = iLo && iHi && iHi - iLo >= 3 ? 'Gear: ' + (loA ? sB : sA).pos + ' item level is ' + Math.round(iHi) + ', ' + ((loA ? sA : sB).n === 'You' ? 'yours' : (loA ? sA : sB).pos) + ' ' + Math.round(iLo) + '. Better gear makes every heal bigger, so part of the gap is gear.' : '';
+  const gapH = k === kq ? cmpGapWhy({ lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits, book: q.specName === p.specName ? specBook(p.specName) : null,
+    builds: [tal && tal.bA && tal.bB && tal.bA.name && tal.bA.key !== tal.bB.key ? 'They play different builds (' + esc(tal.bA.name) + ' and ' + esc(tal.bB.name) + '), so some of the gap is the build. See Talent differences.' : '', gearL].filter(Boolean).join(' ') }) : '';
   return { vs, body: (lead || '') + gapH + whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups + ohGroup) };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
