@@ -2897,7 +2897,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
     <span class="tb-sp"></span>
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 15 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
-    <div class="tbteams"><button class="btn tb-prog" id="tbProgBtn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your teams and your character: switch, see them all, or add one"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Your teams</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button><div class="tbt-pop" id="tbTeamsPop" role="menu" aria-label="Your teams" hidden></div></div>
+    <div class="tbteams"><button class="btn tb-prog" id="tbProgBtn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your teams: switch to another, or add one"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg><span>Your teams</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button><div class="tbt-pop" id="tbTeamsPop" role="menu" aria-label="Your teams" hidden></div></div>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
     <div class="progress" id="prog"><div></div></div>
@@ -22728,7 +22728,7 @@ function startTour(at) {
   const el = document.createElement('div'); el.id = 'tour'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'A quick tour of Debrief');
   document.body.appendChild(el); document.body.classList.add('touring');
   const finish = (go) => { store.set(TOUR_KEY, '1'); document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260);
-    if (go === 'add') { S.pgFocusAdd = true; progressPage(); } else if (go === 'teams') home(); };
+    if (go === 'add') gsStart(); else if (go === 'teams') home(); };
   const draw = () => { const s = TOUR[i], last = i === TOUR.length - 1, has = groups().length > 0;
     el.innerHTML = '<div class="tr-card" key="' + i + '"><div class="tr-bar">' + TOUR.map((_, j) => '<i' + (j <= i ? ' class="on"' : '') + '></i>').join('') + '</div>' +
       '<div class="tr-art">' + s.art() + '</div><h2>' + esc(s.t) + '</h2><p>' + esc(s.p) + '</p>' +
@@ -22784,7 +22784,7 @@ const PAGE_TIPS = {
     { sel: '#pgNights', t: 'Raid nights', p: 'Every raid night, newest first, with how far you got. Click one to go through it pull by pull.' },
     { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Each card shows a boss\'s result and totals. Click one for the chart of every pull and its nights.' },
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
-    { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams are at the top. From there you can jump to another team or your character, see them all, or add one.' },
+    { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams are in this menu at the top. Switch to another one, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
 const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 2, team: 2 }; // (bumped when a page's tips change, so they show once more)
@@ -22847,7 +22847,7 @@ function renderTeamsHome() {
       '<div class="tt-row">' + gl.map((g) => teamTile(g, all, order)).join('') + '<button class="tt-card tt-add" type="button" data-g="+"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a team or character</span></button></div></section>' +
     homePreviews() + homeFoot() + '</div>';
   progLit(false); bindTeamsBar();
-  $$('#main .tt-card').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); window.scrollTo(0, 0); }));
+  $$('#main .tt-card').forEach((b) => (b.onclick = () => { const v = b.dataset.g; if (v === '+') { gsStart(); return; } progressPage(undefined, v); window.scrollTo(0, 0); }));
   $$('#main .tp-card').forEach((b) => (b.onclick = () => startTour(+b.dataset.tour)));
 }
 function bindTeamsBar() {
@@ -22868,7 +22868,7 @@ function homeTeams() {
 }
 // (a team's card opens its page; "add" opens the teams page, ready to paste a link)
 function bindHomeTeams() {
-  $$('#homeTeams [data-g]').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); }));
+  $$('#homeTeams [data-g]').forEach((b) => (b.onclick = () => { const v = b.dataset.g; if (v === '+') { gsStart(); return; } progressPage(undefined, v); }));
 }
 // ---- "Start here" on the welcome page: someone new adds their team or their character first ----
 // Two choices (team or guild, or character) set the box's hint and where to find the link; either link works in the
@@ -23068,7 +23068,7 @@ async function gsMe(b) {
 // points at your team's card; its page at a boss, then the boss's night menu and Open; once a pull is open, its own tips
 // show the tabs. While your nights are still coming in, the bubble says so. "End the guide" stops it.
 function gsPointStart(gid) {
-  S.gsPoint = { gid }; progressPage(); window.scrollTo(0, 0);
+  S.gsPoint = { gid }; progressPage(undefined, gid); window.scrollTo(0, 0);
   clearInterval(S.gsPT); S.gsPT = setInterval(gsPointTick, 500); setTimeout(gsPointTick, 150);
 }
 function gsPointEnd(done) {
@@ -23317,6 +23317,7 @@ function topGuildsHtml(list) {
   return (top.length ? '<div class="tg-g"><h4>The world\'s best</h4><div class="tg-row">' + top.map(card).join('') + '</div></div>' : '') + (rk.length ? '<div class="tg-g"><h4>At other ranks</h4><div class="tg-row">' + rk.map(card).join('') + '</div></div>' : '');
 }
 // (asHome: the home page: the slim bar for logs on top, titled "Your teams")
+// (not reached since Oct 19, when the Your teams page went: kept for the comparison tab to come, which reuses its Top guilds)
 function renderProgHub(msg, msgErr, asHome) {
   if (asHome == null) asHome = !!S.hubHome; S.hubHome = asHome;
   S.page = asHome ? 'home' : 'prog'; queueMicrotask(navNote); // (a step for Back, once the page is drawn)
@@ -23450,7 +23451,7 @@ const liveAgo = (x) => { const m = Math.round((Date.now() - x.end) / 60000); ret
 const LIVE_AUTO = 'wla-live-auto';
 function liveSet(x) {
   const was = S.liveNow; S.liveNow = x;
-  const b = $('#tbProgBtn'); if (b) { b.classList.toggle('live', !!x); b.title = x ? gName(x.g) + ' is raiding now' : 'Your teams and your character: switch, see them all, or add one'; }
+  const b = $('#tbProgBtn'); if (b) { b.classList.toggle('live', !!x); b.title = x ? gName(x.g) + ' is raiding now' : 'Your teams: switch to another, or add one'; }
   // (your team's page: the strip comes and goes with it, and its line keeps time)
   if ($('#main .home.prog') && S.progView && !!$('#pgLive') !== liveHere(x)) renderProgress(($('#pgMsg') || {}).textContent || '');
   else if (x && $('#pgLive .sub')) $('#pgLive .sub').textContent = liveAgo(x);
@@ -23582,7 +23583,8 @@ function renderProgress(msg, msgErr) {
   S.page = 'prog'; queueMicrotask(navNote); // (a step for Back, once the page is drawn)
   // (the teams page, unless a team (or everything saved) is picked)
   const gl = groups(), g = S.progView && S.progView !== '*' ? gl.find((x) => x.gid === S.progView) : null;
-  if (S.progView == null || (S.progView !== '*' && !g)) { S.progView = null; renderProgHub(msg, msgErr); return; }
+  // (no Your teams page any more (your call, Oct 19): with none picked, your team's page; with nothing added, the front page)
+  if (S.progView == null || (S.progView !== '*' && !g)) { const t = homeTarget(); if (t) { S.progView = t.gid; renderProgress(msg, msgErr); return; } S.progView = null; home(); return; }
   const P = mePair();
   if (g && P && g.gid === P.c.gid && !S.progMine) { S.progView = P.t.gid; renderProgress(msg, msgErr); return; } // (your character's page is your team's now)
   const you = g && P && g.gid === P.t.gid ? P.c : null, youC = you && you.cls && E.CLASSES[you.cls], mineOf = g && P && g.gid === P.c.gid ? P.t : null;
@@ -23712,7 +23714,7 @@ function renderProgress(msg, msgErr) {
     (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '') + '</section>';
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
-  $('#main').innerHTML = '<div class="home prog pg-v2"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
+  $('#main').innerHTML = '<div class="home prog pg-v2"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
     '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + liveStrip + meCard + sugg +
     (all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') +
@@ -23721,7 +23723,6 @@ function renderProgress(msg, msgErr) {
   $$('#pgNights [data-code], #pnwGo').forEach((b) => (b.onclick = async () => { b.disabled = true; try { await openWcl({ code: b.dataset.code, fight: +b.dataset.fight || null }, await wclCreds()); } catch (e) { b.disabled = false; toast('<span>' + esc(e.message) + '</span>', 6000); } }));
   if ($('#pnMore')) $('#pnMore').onclick = () => { S.pnAll = !S.pnAll; renderProgress(); };
   if ($('#pgLiveGo')) $('#pgLiveGo').onclick = liveFollow;
-  $('#pgHub').onclick = () => { S.progView = null; S.progMine = false; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgMine')) $('#pgMine').onclick = () => { S.progMine = true; S.progView = you.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgTeamBack')) $('#pgTeamBack').onclick = () => { S.progMine = false; S.progView = mineOf.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
@@ -23806,7 +23807,7 @@ $('#brandHome').onclick = () => home();
       const pic = av ? '<span class="tbt-av" style="--bc:' + (c ? c[1] : 'var(--gold)') + '"><img src="' + av + '" alt="" onerror="this.parentNode.classList.add(\'nf\');this.remove()">' + banner(g) + '</span>' : banner(g);
       return '<button class="tbt-i' + (on ? ' on' : '') + '" type="button" role="menuitem" data-go="' + esc(g.gid) + '"' + (on ? ' aria-current="page"' : '') + '>' + pic +
         '<span class="tbt-t"><b' + (c ? ' style="color:' + c[1] + '"' : '') + '>' + esc(gName(g)) + '</b><span>' + esc([c ? c[0] : gKind(g), w, P && g.gid === P.t.gid ? 'with you' : ''].filter(Boolean).join(' · ')) + '</span></span>' + (on ? '<span class="tbt-k" aria-hidden="true">✓</span>' : '') + '</button>'; }).join('') +
-      '<div class="tbt-f"><button class="tbt-a" type="button" role="menuitem" data-go="*">All teams</button><button class="tbt-a add" type="button" role="menuitem" data-go="+">+ Add a team or character</button></div>'; };
+      '<div class="tbt-f"><button class="tbt-a add" type="button" role="menuitem" data-go="+">+ Add a team or character</button></div>'; };
   const close = () => { pop.hidden = true; b.setAttribute('aria-expanded', 'false'); };
   const show = () => { draw(); pop.style.right = ''; pop.hidden = false; b.setAttribute('aria-expanded', 'true');
     const r = pop.getBoundingClientRect(); if (r.left < 12) pop.style.right = Math.round(r.left - 12) + 'px';
@@ -23814,10 +23815,10 @@ $('#brandHome').onclick = () => home();
   if (b && pop) {
     b.onclick = (e) => { e.stopPropagation(); if (!pop.hidden) { close(); return; }
       const m = $('#tbMenuPop'); if (m && !m.hidden) { m.hidden = true; $('#tbMenu').setAttribute('aria-expanded', 'false'); }
-      if (!groups().length) { S.pgFocusAdd = true; progressPage(); window.scrollTo(0, 0); return; }
+      if (!groups().length) { gsStart(); return; } // (nothing added yet: the setup)
       if (HIST.mem.size) show(); else HIST.load().then(show); };
     pop.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (!t) return; close(); const v = t.dataset.go;
-      S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' || v === '*' ? null : v); window.scrollTo(0, 0); });
+      if (v === '+') { gsStart(); return; } progressPage(undefined, v); window.scrollTo(0, 0); });
     document.addEventListener('click', (e) => { if (!pop.hidden && !e.target.closest('.tbteams')) close(); }, true);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { close(); b.focus(); } });
   }

@@ -286,6 +286,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Bosses** in a tidier grid, then **Since last raid** under the nights, and the **rankings** (the team's and yours)
   at the bottom. On a phone: Now on, Raid nights, Bosses, Since last raid. Your own page uses the same layout.
 - [x] The guide's pointer now points at the newest raid night; the page tips walk the new parts (shown once more).
+- [x] **The Your teams page is gone** (your call: "this entire page can be removed now"). Every way to it goes to your
+  team's page instead; the Your teams menu at the top is the switcher (its All teams line is gone), and "+ Add a team or
+  character" runs the setup. "‹ All teams" left the team page.
+- [ ] **Next (your note): a comparison tab**, where the Top guilds go. Their code is kept for it (renderProgHub, topGuilds).
 
 ## 2026-10-19, round 256: Live now, your team's raid followed without a link (your idea)
 - [x] **While Debrief is open, your team's newest report is checked every 30 seconds** (your call; it was every minute;
