@@ -10224,7 +10224,7 @@ function genRun(spec, D, reps, name, one) {
   // of their page (your call, Oct 19: on both). Left out for a priest without it in these pulls)
   let piH = '';
   if (/ Priest$/.test(spec) && !PI_OFF()) { const pv = piView(per.map((x) => x.r), one, name).html;
-    if (!/no priest cast it/.test(pv)) piH = '<section class="spc-card spc-pi"><header class="spc-ch"><div><h3>Power Infusion</h3><div class="sub">The same as Graphs › Power Infusion, for you only.</div></div></header>' + pv + '</section>'; }
+    if (!/no priest cast it/.test(pv)) piH = '<section class="spc-card spc-pi"><header class="spc-ch"><span class="spc-ri">' + spellIcon(10060, 'Power Infusion', true) + '</span><div><h3>Power Infusion</h3><span class="sub">The same as Graphs › Power Infusion, for you only.</span></div></header>' + pv + '</section>'; }
   return { checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html + piH, wait };
 }
 // one pull on its time line: each cooldown and core spell as ticks, with the time it sat ready for a whole extra use in red; each damage over time and
