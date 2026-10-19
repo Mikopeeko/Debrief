@@ -3492,6 +3492,14 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 @media (max-width: 1100px) { .sum-grade .rc-all { min-width: 0; } .sum-grade .rc-cats { --n: 3 !important; } }
 @media (max-width: 640px) { .sum-grade .rc-cats { --n: 2 !important; } }
 @media (max-width: 1000px) { .wr-wrap.wr-split { grid-template-columns: minmax(0, 1fr); } }
+/* ---- Report card (Oct 19): the raid's report card on top, and a player's six parts and their place in one row ---- */
+.pl-rc { margin: 0 0 14px; padding: 12px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.pl-rc .rc-all { min-width: 260px; border-radius: 12px; } .pl-rc .rc-all .sub { max-width: 210px; } .pl-rc .rc-cats { gap: 10px; --n: 3 !important; } .pl-rc .pt { border-radius: 12px; }
+.pl-rc .pt-s { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; line-height: 1.35; }
+@media (max-width: 1100px) { .pl-rc .rc-all { min-width: 0; } } @media (max-width: 640px) { .pl-rc .rc-cats { --n: 2 !important; } } .pl-rc .pt-go { display: block; text-decoration: none; color: inherit; } .pl-rc .pt-go > .pt { height: 100%; }
+.pl-det .rs-nums.pl7 { grid-template-columns: repeat(7, minmax(0, 1fr)); } .pl-det .rs-nums.pl7 .rs-n span i { font-style: normal; font-size: 11px; color: var(--faint); }
+@media (max-width: 1100px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   <header class="topbar" id="topbar">
     <div class="brand" id="brandHome" title="Home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="3" stroke-linejoin="round"/><path d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z" fill="none" stroke="#e6b450" stroke-width="4" stroke-linejoin="round"/><path d="m27 32.5 4 4 8.5-9.5" fill="none" stroke="#7ee08f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h1>Debrief</h1><p>Retail combat logs, read on your PC</p></div></div>
     <div class="bosspick" id="bossPick"></div>
@@ -15176,8 +15184,11 @@ function prepChips(x) {
   return '<div class="pp-chips">' + c(x.lowIlvl ? 'warn' : 'ok', 'inv_helmet_03', 'Item level ' + Math.round(x.ilvl), x.raidIlvl ? 'Raid median ' + Math.round(x.raidIlvl) : '') +
     c(miss.length ? 'bad' : r1 ? 'warn' : 'ok', 'trade_engraving', miss.length ? 'No ' + esc(andList(miss)) + ' enchant' : r1 ? plural(r1, 'enchant') + ' at rank 1' : 'All ' + nE + ' enchants') +
     c(x.emptySockets || empty.length ? 'bad' : 'ok', 'inv_misc_gem_variety_01', x.emptySockets ? plural(x.emptySockets, 'empty socket') : 'Gems') +
-    c(x.flask ? 'ok' : 'bad', PL_ICON.flask, x.flask ? 'Flask' : 'No flask') + c(x.food ? 'ok' : 'bad', PL_ICON.food, x.food ? 'Food' : 'No food') +
-    c(x.temp ? 'ok' : 'bad', PL_ICON.oil, x.temp ? esc(x.temp[0]) : 'No weapon oil') + '</div>';
+    c(x.flask ? 'ok' : 'bad', PL_ICON.flask, x.flask ? 'Flask' : 'No flask', x.flask ? 'A flask\'s rank isn\'t in the log, so any flask counts in full' : '') +
+    // (food and the augment rune by quality, as the Report card grades them: Hearty food stays through a death; the current rune is Ethereal)
+    c(!x.food ? 'bad' : /hearty/i.test(x.food.name || '') ? 'ok' : 'warn', PL_ICON.food, !x.food ? 'No food' : /hearty/i.test(x.food.name || '') ? 'Hearty food' : 'Plain food', x.food && !/hearty/i.test(x.food.name || '') ? 'Hearty food stays through a death' : '') +
+    c(x.temp ? (x.temp[2] === 1 && x.temp[1] === 1 ? 'warn' : 'ok') : 'bad', PL_ICON.oil, x.temp ? esc(x.temp[0]) + (x.temp[2] === 1 && x.temp[1] === 1 ? ' (rank 1)' : '') : 'No weapon oil') +
+    c(!x.rune ? 'bad' : /ethereal/i.test(x.rune.name || '') ? 'ok' : 'warn', PL_ICON.rune, !x.rune ? 'No augment rune' : /ethereal/i.test(x.rune.name || '') ? 'Augment rune' : 'Older augment rune', x.rune ? x.rune.name : '') + '</div>';
 }
 function survLines(s) {
   return ckLine(s.expect ? (s.used >= s.expect ? 'ok' : s.used ? 'warn' : 'bad') : 'na', s.expect ? 'Combat or mana potion: ' + s.used + ' of ' + s.expect + (s.pre ? ' (' + (s.pre === true || s.pre === 1 ? 'pre-pot' : s.pre + ' pre-pots') + ')' : '') : 'Combat or mana potion: not judged (under 20 s alive)') +
@@ -24382,6 +24393,24 @@ function charSheet(x, embed) { // (embed: inside the Player audit, titled "Gear 
 function surv() {
   const r = S.rep, ps = players();
   const stones = ps.reduce((s, p) => s + p.cons.healthstone.length, 0), hp = ps.reduce((s, p) => s + p.cons.healpot.length, 0), cp = ps.reduce((s, p) => s + p.cons.combatpot.length, 0);
+// Prep for the Report card grade (your ask, Oct 19: "everything, low quality against high quality"), 0 to 100 at the pull:
+// flask 25 (its rank isn't in the log: every rank of a flask has the same buff), food 20 (Hearty, which stays through a
+// death, in full; plain Well Fed 17), weapon oil or stone 15 (rank 1: 10), augment rune 5 (the current Ethereal one in
+// full, an older one 2), enchants 25 shared between the enchantable slots (rank 1 half, missing none), gem sockets 10
+// (5 off each empty one), and 15 off for each empty gear slot. items: what cost points, with how many.
+function prepScore(x) {
+  const items = [], lose = (t, n) => { if (n > 0) items.push({ t, n }); };
+  lose('No flask', x.flask ? 0 : 25);
+  const hearty = x.food && /hearty/i.test(x.food.name || ''); lose(x.food ? 'Plain food (Hearty food stays through a death)' : 'No food buff', x.food ? (hearty ? 0 : 3) : 20);
+  const r1Oil = x.temp && x.temp[2] === 1 && x.temp[1] === 1; lose(x.temp ? (r1Oil ? x.temp[0] + ' is rank 1' : '') : 'No weapon oil or stone', x.temp ? (r1Oil ? 5 : 0) : 15);
+  const newRune = x.rune && /ethereal/i.test(x.rune.name || ''); lose(x.rune ? (newRune ? '' : 'An older augment rune (' + x.rune.name + ')') : 'No augment rune', x.rune ? (newRune ? 0 : 3) : 5);
+  const en = [...x.ench.entries()], each = en.length ? 25 / en.length : 0, slotN = new Map(ENCHANT_SLOTS);
+  for (const [i, e] of en) { if (!e) lose('No ' + String(slotN.get(i) || 'gear').toLowerCase() + ' enchant', each); else if (e.rank === 1) lose((slotN.get(i) || 'An') + ' enchant is rank 1', each / 2); }
+  if (x.emptySockets) lose(plural(x.emptySockets, 'empty gem socket'), Math.min(10, 5 * x.emptySockets));
+  for (const t of x.issues.filter((s) => /^Empty /.test(s))) lose(t, 15);
+  const lost = items.reduce((s, o) => s + o.n, 0);
+  return { score: Math.max(0, 100 - lost), items };
+}
   const withDefs = r.deaths.filter((d) => d.available && d.available.some((a) => !/^(Healthstone|a healing potion)$/.test(a))).length;
   let h = '<div class="tiles">' + tile('Defensives used', Math.round(100 * r.defUse) + '%', 'of possible casts') +
     tile('Died with defensives ready', withDefs + ' of ' + r.deaths.length, 'deaths') +
@@ -24452,7 +24481,7 @@ function deaths() {
 // it in full; and over the night, how they did pull by pull, their best pull, the MVPs and who improved most. What the
 // other tabs already show in full (the survival kit, output) isn't repeated here.
 // (a fix that used to open the Report card opens the player's Spec checks page, since the Report card is gone)
-const PL_GO = { audit: 'Mechanics', card: 'Rotation', cast: 'Casts', res: 'Resources', prep: 'Their prep', surv: 'Survivability', util: 'Utility', cds: 'Cooldowns' };
+const PL_GO = { audit: 'Mechanics', asg: 'Assignments', card: 'Rotation', cast: 'Casts', res: 'Resources', prep: 'Their prep', surv: 'Survivability', util: 'Utility', cds: 'Cooldowns' };
 // (each staying alive and toolkit fix opens the Graphs view that shows it, on its own list there; a combat potion, or a fix no view
 // shows, gets no button)
 const PL_RC_GO = { act: 'cast', unf: 'cast', res: 'res', mana: 'res', cd: 'cds', defs: 'surv:def', tcd: 'surv:def', calls: 'surv:calls', kit: 'surv:stone', ext: 'util:ext', disp: 'util:disp', bres: 'util:bres', pot: 'none', out: 'none' };
@@ -24462,41 +24491,43 @@ function rotOf(reps, p, one) { const f = SPEC_CHECKS[p.specName]; if (!f) return
 function plGrade(r, p, x, credit, rot) {
   const mm = keptMistakes(r).filter((m) => m.player === p.name && m.mechanic !== 'Death'), tank = p.role === 'tank';
   const own = mm.filter((m) => !m.fromNote), lostOf = (m) => (m.severity === 'High' ? 14 : m.severity === 'Medium' ? 4 : tank && TANK_MECH.has(m.mechanic) ? 2 : m.severity === 'Low' ? 1 : 0);
-  // mechanics: 14 off per serious mistake, 4 per medium, 1 per minor slip (2 on a tank's own frontals); with NSRT
-  // assignments, 70% that and 30% the share of their assignments they did
-  const mist = Math.max(0, 100 - own.reduce((s, m) => s + lostOf(m), 0)), c = credit.get(p.name), asS = c && c.of ? 100 * c.did / c.of : null, mech = asS == null ? mist : 0.7 * mist + 0.3 * asS;
-  const card = cardOf(r, p), prep = x ? readyScore(x) : null;
-  // with a Rotation page, Rotation stands in for the Report card's pressing buttons (casting, cooldowns, resources): the grade is
-  // 40% mechanics, 40% Rotation and 20% the card's staying alive and toolkit. Without one, half mechanics and half the card.
-  // (alive under 20 s: no card and no Rotation, graded on mechanics)
-  const rs = card && rot ? rot.score : null, W = RC_W[(card && card.role) || 'dps'] || RC_W.dps;
-  const ak = card ? [['alive', W.alive], ['kit', W.kit]].filter(([k]) => card.secs[k].sc != null) : [], akW = ak.reduce((s, [, w]) => s + w, 0);
-  const rest = rs == null ? null : akW ? ak.reduce((s, [k, w]) => s + w * card.secs[k].sc, 0) / akW : null;
-  const perf = rs != null ? rest : card && card.overall != null ? card.overall : null;
-  const mW = rs != null ? (rest == null ? 0.5 : 0.4) : perf == null ? 1 : 0.5, rW = rs == null ? 0 : rest == null ? 0.5 : 0.4, cW = rs != null ? (rest == null ? 0 : 0.2) : perf == null ? 0 : 0.5;
-  const base = mW * mech + rW * (rs || 0) + cW * (perf || 0), prepOff = prep != null ? Math.max(0, 90 - prep) / 4 : 0, score = Math.max(0, base - prepOff);
+  // The grade (your ask, Oct 19: "an individual person's report card ... factor in everything"): six parts, each 0 to 100,
+  // weighted mechanics 25, Rotation 25, survival 15, prep 15, assignments 10 and toolkit 10. A part that doesn't apply (no
+  // note, no Rotation page and too short to judge, no gear logged) is left out and the others share its weight.
+  //  Mechanics: 100, less 14 per serious mistake of their own, 4 per medium, 1 per minor slip (2 on a tank's own frontals).
+  //  Assignments: the share of their NSRT note jobs they did (assignCredit).
+  //  Rotation: the Rotation tab's score; for a spec without a page, the card's pressing buttons (casting, cooldowns, resources).
+  //  Survival: the card's staying alive (defensives, big defensives, close calls, Healthstone and health potion).
+  //  Toolkit: the card's toolkit (combat or mana potion, externals).
+  //  Prep: prepScore (flask, food, weapon oil, augment rune, enchants by rank, gems, empty slots).
+  const mist = Math.max(0, 100 - own.reduce((s, m) => s + lostOf(m), 0)), c = credit.get(p.name), asS = c && c.of ? 100 * c.did / c.of : null;
+  const card = cardOf(r, p), pr = x ? prepScore(x) : null, prep = pr ? pr.score : null;
+  const rs = card && rot ? rot.score : null, sec = (k) => (card && card.secs[k] && card.secs[k].sc != null ? card.secs[k].sc : null);
+  const play = rs != null ? rs : sec('btn'), surv = sec('alive'), tool = sec('kit');
+  const parts = { mech: mist, asg: asS, rot: play, surv, tool, prep };
+  const on = Object.keys(PL_PW).filter((k) => parts[k] != null), wsum = on.reduce((s, k) => s + PL_PW[k], 0) || 1, wt = (k) => (parts[k] == null ? 0 : PL_PW[k] / wsum);
+  const score = on.reduce((s, k) => s + wt(k) * parts[k], 0);
   const fixes = [];
-  // a fix per mechanic they got wrong, with the mistake's own advice
+  // a fix per mechanic they got wrong, with the mistake's own advice (a note miss is an assignment)
   const by = new Map(); for (const m of mm) { const o = by.get(m.mechanic) || { n: 0, lost: 0, m, note: !!m.fromNote }; o.n++; o.lost += m.fromNote ? (c && c.of ? 100 / c.of : 0) : lostOf(m); if (m.severity === 'High') o.m = m; by.set(m.mechanic, o); }
-  for (const [nm, o] of by) { if (!o.note && !o.lost) continue; fixes.push({ key: 'm|' + nm, t: (o.note ? (nm === 'Assigned cooldown' ? 'Healing cooldown late or missed' : 'From the note: ' + nm) : nm) + (o.n > 1 ? ' ×' + o.n : ''), x: o.m.fix || o.m.detail || '', gain: mW * (o.note ? 0.3 : asS == null ? 1 : 0.7) * o.lost, go: 'audit', crit: o.note && o.m.severity === 'High' }); }
-  // the Report card's, as they are (their gain is on the card's 0 to 100; here it's half of the grade)
-  // (with a Rotation page, the card's pressing-buttons fixes are left to Rotation, and the rest are scaled to their 20%)
-  const wsAll = card ? RC_SEC.reduce((s, [k]) => s + (card.secs[k].sc != null ? W[k] : 0), 0) : 0;
-  for (const f of (card && card.fixes) || []) { if (rs != null && f.sec === 'btn') continue; fixes.push({ key: 'c|' + f.key, t: f.t, x: f.x, gain: rs != null ? (akW ? cW * f.gain * wsAll / akW : 0) : 0.5 * f.gain, go: PL_RC_GO[String(f.key).split('|')[0]] || 'none' }); }
+  for (const [nm, o] of by) { if (!o.note && !o.lost) continue; fixes.push({ key: 'm|' + nm, t: (o.note ? (nm === 'Assigned cooldown' ? 'Healing cooldown late or missed' : 'From the note: ' + nm) : nm) + (o.n > 1 ? ' ×' + o.n : ''), x: o.m.fix || o.m.detail || '', gain: wt(o.note ? 'asg' : 'mech') * o.lost, go: o.note ? 'asg' : 'audit', crit: o.note && o.m.severity === 'High' }); }
+  // the card's fixes, each on its own part: staying alive is survival, the toolkit is the toolkit, pressing buttons is the
+  // Rotation part for a spec without a page (with a page, Rotation's own checks stand in for them)
+  const W = RC_W[(card && card.role) || 'dps'] || RC_W.dps, wsAll = card ? RC_SEC.reduce((s, [k]) => s + (card.secs[k].sc != null ? W[k] : 0), 0) : 0, partOf = { btn: 'rot', alive: 'surv', kit: 'tool' };
+  for (const f of (card && card.fixes) || []) { if (rs != null && f.sec === 'btn') continue; fixes.push({ key: 'c|' + f.key, t: f.t, x: f.x, gain: W[f.sec] ? wt(partOf[f.sec]) * f.gain * wsAll / W[f.sec] : 0, go: PL_RC_GO[String(f.key).split('|')[0]] || 'none' }); }
   // Rotation's checks that weren't good, with its own "Next time" (a good one adds its share of the Rotation score, one that
   // could be better half of it)
-  if (rs != null) for (const c of rot.checks) if ((c.st === 'bad' || c.st === 'warn') && c.share) fixes.push({ key: 'r|' + c.k, t: c.label, x: c.tip || c.sub || '', gain: rW * (c.st === 'bad' ? 100 : 50) * c.share, go: 'card' });
-  // pressing pace against the spec's top players: added to the Report card's casting fix when there is one, its own tip otherwise (not graded;
+  if (rs != null) for (const ck of rot.checks) if ((ck.st === 'bad' || ck.st === 'warn') && ck.share) fixes.push({ key: 'r|' + ck.k, t: ck.label, x: ck.tip || ck.sub || '', gain: wt('rot') * (ck.st === 'bad' ? 100 : 50) * ck.share, go: 'card' });
+  // pressing pace against the spec's top players: added to the card's casting fix when there is one, its own tip otherwise (not graded;
   // Rotation's casting check says it when the spec has a page)
   if (rs == null) { const pc = paceOf(r, p), cs = pc ? castOf(r, p, 0, Math.max(1, Math.min(r.duration, cutT(r))), true) : null, f = pc && cs && cs.al >= 30 ? cs.cpm / pc.v : null;
     if (f != null && f < 0.85) { const line = fmtCpm(cs.cpm) + ' casts a minute: ' + Math.round(100 * f) + '% of what the top ' + (p.specName || 'players') + ' press on this boss (' + fmtCpm(pc.v) + ').', act = fixes.find((z) => /^c\|act\|/.test(z.key));
       if (act) act.x += ' ' + line; else fixes.push({ key: 'pace', t: 'Press more often', x: line, gain: 0, rank: (0.9 - f) * 20, go: 'cast' }); } }
-  // prep: what was missing at the pull (a missing thing counts twice a "could be better")
-  if (x && prepOff > 0) { const its = x.issues.map((t) => [t, 2]).concat(x.tighten.map((t) => [t, 1])), tw = its.reduce((s, [, w]) => s + w, 0) || 1;
-    for (const [t, w] of its) fixes.push({ key: 'p|' + t, t: capS(t), x: 'At the pull. Sort it before the next one.', gain: prepOff * w / tw, go: 'prep' }); }
+  // prep: each thing that cost points at the pull
+  if (pr) for (const o of pr.items) fixes.push({ key: 'p|' + o.t, t: capS(o.t), x: 'At the pull. Sort it before the next one.', gain: wt('prep') * o.n, go: 'prep' });
   // (a serious miss of the note's assignments, like an assigned external not given, comes first: it's a job for the raid)
   fixes.sort((a, b) => (b.crit ? 1 : 0) - (a.crit ? 1 : 0) || (b.gain || b.rank || 0) - (a.gain || a.rank || 0));
-  return { r, p, mech, mist, asS, perf, rot: rs, prep, prepOff, score, fixes, mistakes: own.length, x, until: card ? card.until : 0, wait: rot ? rot.wait || 0 : 0 };
+  return { r, p, mech: mist, mist, asS, asg: asS, perf: play, play, rot: rs, surv, tool, prep, score, fixes, mistakes: own.length, x, until: card ? card.until : 0, wait: rot ? rot.wait || 0 : 0 };
 }
 // every player over one pull or several: each grade and fix averaged over their pulls (by time alive), the trend through
 // the night, their best pull. Gear and buffs need their names looked up first.
@@ -24521,7 +24552,7 @@ async function plData(reps, still) {
     const fixes = [...fx.values()].sort((u, v) => (v.gain || v.rank) - (u.gain || u.rank));
     const sc = a.per.map((g) => g.score), h2 = Math.floor(n / 2), mean = (l) => l.reduce((s, v) => s + v, 0) / l.length;
     const best = a.per.filter((g) => g.until >= 60).reduce((m, g) => (!m || g.score > m.score ? g : m), null);
-    return { ...a, n, score: wAvg(a.per, (g) => g.score), mech: wAvg(a.per, (g) => g.mech), perf: wAvg(a.per, (g) => g.perf), rot: wAvg(a.per, (g) => g.rot), wait: a.per.reduce((s, g) => s + g.wait, 0), prep: wAvg(a.per, (g) => g.prep), mistakes: a.per.reduce((s, g) => s + g.mistakes, 0),
+    return { ...a, n, score: wAvg(a.per, (g) => g.score), mech: wAvg(a.per, (g) => g.mech), perf: wAvg(a.per, (g) => g.perf), rot: wAvg(a.per, (g) => g.rot), play: wAvg(a.per, (g) => g.play), asg: wAvg(a.per, (g) => g.asg), surv: wAvg(a.per, (g) => g.surv), tool: wAvg(a.per, (g) => g.tool), wait: a.per.reduce((s, g) => s + g.wait, 0), prep: wAvg(a.per, (g) => g.prep), mistakes: a.per.reduce((s, g) => s + g.mistakes, 0),
       fixes, trend: n >= 4 ? mean(sc.slice(n - h2)) - mean(sc.slice(0, h2)) : null, best, ranked: n >= half, last: a.per[n - 1] };
   }).filter((a) => a.score != null);
 }
@@ -24543,18 +24574,22 @@ function plPage(data, reps, one) {
   const missL = data.filter((a) => a.last.x && a.last.x.issues.length).sort((u, v) => v.last.x.issues.length - u.last.x.issues.length || u.p.name.localeCompare(v.p.name));
   const prepL = S.plPrepOpen && missL.length ? '<div class="panel pl-prepl"><h3 class="nh"><span>Missing at the pull</span><small>' + (one ? 'this pull' : 'the last pull') + '</small></h3>' +
     missL.map((a) => '<div class="lp-pr"><span class="lp-pk">' + lpWho(a.p) + '</span><span>' + esc(andList(a.last.x.issues.map((t, i) => (i ? t.charAt(0).toLowerCase() + t.slice(1) : t)))) + '</span></div>').join('') + '</div>' : '';
-  const tile = (v, label, txt) => plTile(plGr(v), label, v == null ? '—' : Math.round(v) + '<span>/100</span>', gBucket(v), txt, true);
-  const tiles = '<div class="pts n4">' + tile(avg((a) => a.score), 'Raid grade', plural(data.length, 'player') + (one ? '' : ' · ' + plural(reps.length, 'pull'))) + tile(avg((a) => a.mech), 'Own mechanics', mist ? 'each player\'s own mistakes: ' + plural(mist, 'mistake') + ' that cost points' : 'each player\'s own mistakes: none that cost points') +
-    (data.some((a) => a.rot != null) ? tile(avg((a) => a.rot), 'Rotation', 'how each player played their spec, from the Rotation tab') : tile(avg((a) => a.perf), 'How they played', 'casting, cooldowns, resources, staying alive, their kit')) +
-    (fullPrep < lastX.length ? '<button class="pt-go pl-prepgo' + (S.plPrepOpen ? ' on' : '') + '" type="button" id="plPrepGo" aria-expanded="' + !!S.plPrepOpen + '" title="See who is missing what">' : '') + plTile(plIco(PL_ICON.ench), 'Prep', lastX.length ? fullPrep + '<span> / ' + lastX.length + '</span>' : '—', !lastX.length ? 'na' : fullPrep === lastX.length ? 'ok' : 'warn', !lastX.length ? 'no gear logged' : fullPrep === lastX.length ? 'everyone fully set up' + (one ? '' : ' at the last pull') : (lastX.length - fullPrep) + ' missing something' + (one ? '' : ' at the last pull') + ' ' + (S.plPrepOpen ? '▴' : '▾'), true) + (fullPrep < lastX.length ? '</button>' : '') + '</div>' + prepL;
+  // (the raid's report card (your ask, Oct 19): the raid's grade and each of the six parts, averaged over everyone, in the
+  // same card as Recap's grade for the night; the Prep tile opens who is missing what)
+  const raidG = avg((a) => a.score), partTxt = { mech: mist ? plural(mist, 'mistake') + ' that cost points' : 'no mistakes that cost points', rot: 'how each player played their spec', surv: 'defensives, Healthstones, health potions',
+    prep: !lastX.length ? 'no gear logged' : fullPrep === lastX.length ? 'everyone fully set up' + (one ? '' : ' at the last pull') : (lastX.length - fullPrep) + ' missing something ' + (S.plPrepOpen ? '▴' : '▾'), asg: 'the NSRT note\'s jobs', tool: 'combat or mana potions, externals' };
+  const partTile = (k) => { const v = avg((a) => a[k === 'rot' ? 'play' : k]), t = plTile(plGr(v), PL_PN[k], v == null ? '—' : Math.round(v) + '<span> / 100</span>', gBucket(v), v == null ? (k === 'asg' ? 'no NSRT note, or no jobs in it' : 'not judged') : partTxt[k], true);
+    return k === 'prep' && fullPrep < lastX.length ? '<button class="pt-go pl-prepgo' + (S.plPrepOpen ? ' on' : '') + '" type="button" id="plPrepGo" aria-expanded="' + !!S.plPrepOpen + '" title="See who is missing what">' + t + '</button>' : t; };
+  const tiles = raidG == null ? '' : '<div class="panel nc-rc2 pl-rc"><div class="rc-all" title="Grades go S, A, B, C, D and F, and each pull counts up to the wipe filter">' + gradeChip(letterOf(raidG), true) + '<div><div class="pt-l">The raid\'s report card</div><div class="rc-sc">' + Math.round(raidG) + '<span> / 100</span></div><div class="sub">' +
+    plural(data.length, 'player') + (one ? ', this pull' : ' · ' + plural(reps.length, 'pull')) + '. Each player\'s grade, averaged.</div></div></div><div class="pts rc-cats" style="--n:6">' + Object.keys(PL_PW).map(partTile).join('') + '</div></div>' + prepL;
   // ---- a row per player: their grade on the bar, the trend (all pulls) or their first fix's points (one pull) ----
   const bars = rows.map((a, i) => { const on = sel === a, m = mvp.get(a.p.name);
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pl-r', attrs: ' type="button" data-pn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, a.score), 'm']], v: '<span class="pl-g">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span>',
       sub: one ? '<span class="sub" title="' + (a.rot != null ? 'Mechanics · Rotation' : 'Mechanics · How they played') + '">' + Math.round(a.mech) + ' · ' + (a.rot != null ? Math.round(a.rot) : a.perf == null ? '—' : Math.round(a.perf)) + '</span>' : plTr(a.trend) || '<span class="sub">—</span>', chips: m ? ' <span class="pl-mvp">' + esc(m) + '</span>' : '' }); }).join('');
   const sortSw = '';
-  const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>Mechanics and Rotation count most. Prep only takes points off.' + (one ? ' On the right are mechanics and Rotation.' :' The arrows show the change through the night.') + '</small>' + roleChips(has) + '</h3>' + sortSw +
+  const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>Each grade is made of six parts: mechanics, Rotation, survival, prep, assignments and toolkit.' + (one ? ' On the right are mechanics and Rotation.' :' The arrows show the change through the night.') + '</small>' + roleChips(has) + '</h3>' + sortSw +
     (bars ? cbHead('Grade', one ? 'Mech · Rot' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
-  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious mistake of their own, 4 for each medium one and 1 for each small slip (2 for a tank\'s slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half, and an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Rotation</b>: their score out of 100 on the Rotation tab, the same checks and the same number. <b>Staying alive and toolkit</b>: defensives, potions, Healthstones, kicks, externals. <b>The grade</b> is 40% mechanics, 40% Rotation and 20% staying alive and toolkit. For a spec without a Rotation page, it\'s half mechanics and half how they played (casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive and toolkit). A player alive under 20 s is graded on mechanics. <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade, Rotation\'s checks that weren\'t good among them, with its "Next time". Without a Rotation page, a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
+  const how = '<details class="howit"><summary>How it\'s graded</summary><div>Each player\'s grade is made of six parts, each out of 100. <b>Mechanics</b> (25%): 100, less 14 for each serious mistake of their own, 4 for each medium one and 1 for each small slip (2 for a tank\'s slip on their own frontals). <b>Rotation</b> (25%): their score on the Rotation tab, the same checks and the same number. For a spec without a Rotation page, how they pressed their buttons: casting, big cooldowns, wasted resources, casts that didn\'t finish. <b>Survival</b> (15%): personal and big defensives, close calls with nothing pressed, and the Healthstone and health potion, with a death that had one of them ready costing the most. <b>Prep</b> (15%), at the pull: a flask 25, food 20 (Hearty food, which stays through a death, in full; plain food 17), a weapon oil or stone 15 (rank 1: 10), an augment rune 5 (the current one in full, an older one 2), enchants 25 shared between the slots (rank 1 counts half, missing none), gem sockets 10 (5 off each empty one), and 15 off for an empty gear slot. A flask\'s rank isn\'t in the log, so any flask counts in full. <b>Assignments</b> (10%): the share of their NSRT note jobs they did (late or partly done counts half, an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Toolkit</b> (10%): their combat or mana potion, and externals. A part that doesn\'t apply (no note, no jobs in it, no gear logged, alive under 20 s) is left out and the others share its weight. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. The raid\'s report card is everyone\'s grade and parts, averaged. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
   // (a picked player's page is full width, like Rotation's, with a Change player dropdown in its header; the list comes back with Show the raid)
   if (sel) return tiles + '<div class="pf-cols solo"><div class="panel pf-det pl-det">' + plPlayer(sel, one, reps, mvp.get(sel.p.name), data) + '</div></div>' + how;
   return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + plRaid(data, one, mvp, imp) + '</div></div>' + how;
@@ -24609,8 +24644,11 @@ function plPlayer(a, one, reps, mvpL, data) {
   const x0 = a.last.x, gearOn = S.plView === 'gear' && !!x0;
   h += '<div class="seg pl-view" role="tablist" aria-label="Show"><button type="button" data-pv="page"' + (gearOn ? '' : ' class="on"') + '>Their page</button><button type="button" data-pv="gear"' + (gearOn ? ' class="on"' : '') + (x0 ? '' : ' disabled title="No gear was logged for this player"') + '>Gear and stats</button></div>';
   if (gearOn) return h + gearView(x0);
-  h += '<div class="rs-nums">' + [['Mechanics', a.mech, a.mistakes ? plural(a.mistakes, 'mistake') : 'no mistakes'], a.rot != null ? ['Rotation', a.rot, a.perf != null ? 'staying alive and toolkit: ' + Math.round(a.perf) : 'how they played their spec'] : ['How they played', a.perf, a.perf == null ? 'alive under 20 s' : 'casting, cooldowns, staying alive'],['Prep', a.prep, a.prep == null ? 'no gear logged' : 'only takes points off']]
-    .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + plGr(v) + ' ' + (v == null ? '—' : Math.round(v)) + '</b><small>' + esc(s) + '</small></div>').join('') +
+  // (the six parts of their grade, each with its weight, then where they stand)
+  const ws6 = Object.keys(PL_PW).filter((k) => a[k === 'rot' ? 'play' : k] != null).reduce((s, k) => s + PL_PW[k], 0) || 1;
+  const pSub = { mech: a.mistakes ? plural(a.mistakes, 'mistake') : 'no mistakes', rot: a.rot != null ? 'from the Rotation tab' : 'casting, cooldowns, resources', surv: 'defensives, Healthstone, health potion', prep: 'consumables, enchants, gems', asg: 'their NSRT note jobs', tool: 'combat potion, externals' };
+  h += '<div class="rs-nums pl7">' + Object.keys(PL_PW).map((k) => { const v = a[k === 'rot' ? 'play' : k];
+    return '<div class="rs-n"><span>' + (k === 'rot' && a.rot == null ? 'How they played' : PL_PN[k]) + (v != null ? ' <i class="sub">' + Math.round(100 * PL_PW[k] / ws6) + '%</i>' : '') + '</span><b>' + plGr(v) + ' ' + (v == null ? '—' : Math.round(v)) + '</b><small>' + esc(v == null ? (k === 'asg' ? 'no note jobs' : 'not judged') : pSub[k]) + '</small></div>'; }).join('') +
     '<div class="rs-n"><span>' + (one ? 'In their role' : 'Through the night') + '</span><b>' + (one ? ordinal(rank) + '<span class="sub"> of ' + mates.length + '</span>' : a.trend == null ? '—' : plTr(a.trend)) + '</b><small>' + esc(one ? (role === 'dps' ? 'DPS' : role === 'healer' ? 'healers' : 'tanks') + ' this pull' : a.trend == null ? 'needs 4 pulls' : 'the later pulls against the first') + '</small></div></div>';
   // fix these first: the three biggest, then the rest folded
   const fx = a.fixes.filter((f) => (f.gain || 0) >= 0.5 || f.rank), top = fx.slice(0, 3), more = fx.slice(3);
@@ -24622,7 +24660,7 @@ function plPlayer(a, one, reps, mvpL, data) {
     (top.length ? top.map(fxRow).join('') : '<div class="rk-wx">' + ckLine('ok', 'A clean ' + (one ? 'pull' : 'night') + ': nothing cost them points.') + '</div>') +
     (more.length ? '<details class="pl-more"><summary>' + plural(more.length, 'more thing') + ' to look at</summary>' + more.map((f, i) => fxRow(f, i + 3)).join('') + '</details>' : '') + '</div>';
   // the night: a square per pull, its grade; a click opens that pull here
-  if (!one) h += rsSec('Pull by pull', a.best ? 'best: pull ' + a.best.r.item.pull + ', ' + letterOf(a.best.score) + ' ' + Math.round(a.best.score) : '', '<div class="pl-pulls">' + a.per.map((g) => '<button type="button" class="nm-cell st-q-' + letterOf(g.score) + '" data-plpull="' + g.r.item.pull + '" data-pn="' + esc(a.p.name) + '" title="' + esc('Pull ' + g.r.item.pull + ' (' + pullLabel(g.r.item) + '): ' + letterOf(g.score) + ' ' + Math.round(g.score) + ' · mechanics ' + Math.round(g.mech) + (g.rot != null ? ', Rotation ' + Math.round(g.rot) : '') + (g.perf != null ? (g.rot != null ? ', staying alive and toolkit ' : ', how they played ') + Math.round(g.perf) : '') + (g.prepOff >= 1 ? ', prep −' + Math.round(g.prepOff) : '')) + '"></button>').join('') + '</div><p class="sub" style="margin:4px 0 0">Click a square to open that pull.</p>');
+  if (!one) h += rsSec('Pull by pull', a.best ? 'best: pull ' + a.best.r.item.pull + ', ' + letterOf(a.best.score) + ' ' + Math.round(a.best.score) : '', '<div class="pl-pulls">' + a.per.map((g) => '<button type="button" class="nm-cell st-q-' + letterOf(g.score) + '" data-plpull="' + g.r.item.pull + '" data-pn="' + esc(a.p.name) + '" title="' + esc('Pull ' + g.r.item.pull + ' (' + pullLabel(g.r.item) + '): ' + letterOf(g.score) + ' ' + Math.round(g.score) + ' · ' + Object.keys(PL_PW).filter((k) => g[k === 'rot' ? 'play' : k] != null).map((k) => PL_PN[k].toLowerCase() + ' ' + Math.round(g[k === 'rot' ? 'play' : k])).join(', ')) + '"></button>').join('') + '</div><p class="sub" style="margin:4px 0 0">Click a square to open that pull.</p>');
   // their prep: the latest pull's gear and buffs (and over the night, what was missed how often)
   const x = a.last.x;
   let prep = x ? prepChips(x) : ckLine('na', 'No gear or buffs were logged for this player.');
@@ -24765,7 +24803,6 @@ function pullNotes(x, s) {
   if (s.defReady) out.push(['bad', 'died with a defensive or self-heal ready', 'surv']);
   if (s.expect && !s.used) out.push(['bad', 'no combat or mana potion', 'surv']); else if (s.expect && s.used < s.expect) out.push(['warn', 'combat or mana potion ' + s.used + ' of ' + s.expect, 'surv']);
   if (s.kitReady) out.push(['bad', 'died with a Healthstone or potion unused', 'surv']);
-    else if (/^(surv|util|cds)/.test(g)) { const [k, cat] = g.split(':'); pfGo(k, nm, true); if (k === 'surv') S.survCat = cat; else if (k === 'util') S.utilCat = cat; }
   if (s.silent) out.push(['warn', s.tank ? plural(s.silent, 'dip') + ' under 15% with nothing pressed' : plural(s.silent, 'close call') + ' with nothing pressed', 'surv']);
   if (s.tank && s.cdPoss >= 2 && s.cdUsed / s.cdPoss < 0.4) out.push(['warn', 'big cooldowns used ' + s.cdUsed + ' of ' + s.cdPoss + ' times they were up', 'surv']);
   if (x) for (const t of x.tighten) out.push(['warn', t, 'ready']);
@@ -24834,6 +24871,9 @@ function activityIn(r, p, a, b) {
   for (let i = 1; i < ts.length; i++) { const c = Math.min(ts[i] - ts[i - 1], 2.5); act += c - idleIn(ts[i - 1], ts[i - 1] + c); }
   return Math.min(100, 100 * act / Math.max(1, aliveSecs(r, p, a, b) - forced - idle));
 }
+// the six parts of the Report card grade, their weights and names
+const PL_PW = { mech: 25, rot: 25, surv: 15, prep: 15, asg: 10, tool: 10 };
+const PL_PN = { mech: 'Mechanics', rot: 'Rotation', surv: 'Survival', prep: 'Prep', asg: 'Assignments', tool: 'Toolkit' };
 function perfContext(r) {
   const ct = cutT(r); if (r._pc && r._pc.ct === ct) return r._pc;
   const end = Math.max(1, Math.min(r.duration, ct)), boss = new Set(r.bossUnits || []), per = new Map();
@@ -25087,7 +25127,9 @@ async function lastPull() {
   // (one player picked in the tab bar: only the problems they were part of, and their death if they died)
   const oneP = S.mechP && r.players && [...r.players.values()].some((p) => p.name === S.mechP) ? S.mechP : null;
   if (oneP) { const od = ds.find((d) => d.player === oneP); for (let i = wrong.length - 1; i >= 0; i--) if (!(wrong[i].who || []).includes(oneP)) wrong.splice(i, 1);
+    else if (g === 'asg') S.tab = 'overview';
     if (od && od !== ds[0]) wrong.unshift({ lv: 'moderate', w: -1, map: deathMap(r, od), go: ['audit', 'sec-deaths'], ic: spellIcon(0, 'Deaths', true), name: esc(od.player) + ' died', vn: 'Deaths', tags: [T(od.t)], who: [od.player], what: od.ability ? 'To ' + mech(od.ability, od.abilityId) + '.' : '', fix: od.prevent && od.prevent[0] }); }
+    else if (/^(surv|util|cds)/.test(g)) { const [k, cat] = g.split(':'); pfGo(k, nm, true); if (k === 'surv') S.survCat = cat; else if (k === 'util') S.utilCat = cat; }
   const worse = [...P].filter(([id, x]) => { const q = Q.get(id); return q && x.st === 'bad' && q.st !== 'bad'; }).sort((a, b) => ix(a[0]) - ix(b[0])).map(([, x]) => shortT(x.s.title));
   // ---- what went well: a sentence or two, then the clean mechanics as small green tiles, as on Mechanics ----
   const well = [];
