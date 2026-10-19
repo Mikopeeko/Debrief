@@ -253,6 +253,24 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 253: A guided setup for new visitors, and Where to? for returning ones (your ideas)
+- [x] **One front page for everyone:** the logo, the headline, one **Start now** button, and a small "Already have a report
+  link?" line (a report or live log, or a combat log, or see a real raid night). The two link boxes, the Start here box
+  and your team cards at the top are gone from the website's front page. The old 5-step tour no longer opens by itself
+  there (it's still in the menu).
+- [x] **Start now, someone new:** three steps, each with what it does, where to find the link, Back and Skip. 1 Your
+  character, then "You raid with Wolfthorn" (found in its raid nights, one click to add). 2 Your team, when none was added
+  yet, then "Which one is you?". 3 You're set, then pointers on the real pages: your team's card, a boss, a night and
+  Open, and the pull's own tips do the tabs. Checked as a brand-new visitor with Flëxørçïst: it found Wolfthorn (29 of 31
+  nights).
+- [x] **A team added during the setup comes in first.** A character with many reports (Flëxørçïst has 60+) took minutes,
+  and the team waited behind it; now the character pauses and carries on right after the team.
+- [x] **Start now, someone back: "Where to?"** Your teams and character as cards, a card to open one raid night, then All
+  teams and Add a team or character (which runs the setup).
+- [ ] **Next (your note): merge the team page with the character page** ("it's giving me decision fatigue"). My take:
+  solid, close to amazing. One "Your raid" page: the team's bosses and nights, with a "You" part for your rankings and
+  your parse on each boss; a character-only visitor gets the same page without the team parts.
+
 ## 2026-10-19, round 252: Rotation, the missing-checks review (your note: a pass over every spec)
 - [x] **Reviewed all 30 shared spec pages against the SimulationCraft lists.** 3 amazing gaps, 13 solid additions, a few
   lackluster ones skipped. The three amazing ones are built and checked on 24 top players:

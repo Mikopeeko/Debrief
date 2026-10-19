@@ -814,6 +814,9 @@ async function teamImportRun(g0, onStep, onFound) {
   // (the rest are read three at a time)
   const rest = todo.filter((x) => !known(x) && g.done[x.code] !== x.endTime);
   for (let i = 0; i < rest.length; i += 3) {
+    // (the setup added your team while this one was being read: this one pauses here, without its "checked" time, and
+    // carries on right after the team, skipping the reports it already read)
+    if (S.importYield === g.gid) { S.importYield = null; groupPut(g); histSoon(); return { reports: 0, pulls, added, dup, failed, paused: true }; }
     const batch = rest.slice(i, i + 3); if (onStep) onStep('Reading ' + nightLabel(batch[0].startTime) + ' (' + Math.min(rest.length, i + batch.length) + ' of ' + rest.length + ')…');
     store.set(IMPORT_LOCK, String(Date.now()));
     // (a report that won't load, like a private one, is skipped and tried again next time; the rest carry on)
@@ -843,6 +846,7 @@ async function teamImportRun(g0, onStep, onFound) {
     }
   }
   await histTidy();
+  if (S.importYield === g.gid) S.importYield = null;
   g.last = Date.now(); g.reports = reps.length; groupPut(g); histSoon();
   return { reports: todo.length - failed, pulls, added, dup, failed };
 }
@@ -13397,10 +13401,9 @@ function homeHosted() {
   $('#hDemo').onclick = async () => { const b = $('#hDemo'), msg = $('#hDemoMsg'); b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Opening a Mythic night on Ula\'tek…';
     try { await openWcl(WCL.parseLink(DEMO_REPORT), null, false); } catch (err) { if (document.body.contains(b)) { b.disabled = false; msg.style.color = ''; msg.textContent = err.message; } } };
   $('#hFileGo').onclick = () => $('#fileIn').click();
-  bindFront(true);
   HIST.load().then(groupsBackfill);
+  bindFront(true);
 }
-// (said on the website when a file pick ends without a file: usually Chrome refusing the WoW folder)
 // ---- the guided setup (your idea, Oct 19): Start now walks someone new through it, one question at a time ----
 // 1 Your character: what it brings in and where to find the link; then the teams Debrief finds in its raid nights ("You
 // raid with …"). 2 Your team, when none was added yet, and "Which one is you?" on it. 3 You're set, then pointers on the
@@ -13499,14 +13502,17 @@ async function gsAdd(s) {
   b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
   try { const { g, already } = await groupAdd(raw); if (!GS) return;
     if (g.kind === 'char') { GS.char = g.gid; if (!meOf()) store.set(ME_KEY, JSON.stringify({ name: g.name, cls: g.cls || null, char: g.gid, at: Date.now() })); } else GS.team = g.gid;
-    if (!already) { groupsBackfill(); if (!S.progBusy) progRun(g); } // (one at a time: one added meanwhile is read right after)
+    if (!already) { groupsBackfill(); gsRead(g); }
     gsGo(g.kind === 'char' ? 'found' : meOf() ? 'done' : 'me');
   } catch (e) { if (!GS || !document.body.contains(b)) return; b.disabled = false; msg.style.color = ''; msg.textContent = e.message.replace(/ \(see "Which link\?" below\)/, ''); }
 }
+// (bringing in what the setup added: one import at a time, so one added meanwhile is read right after; a team goes ahead
+// of your character, whose nights can take minutes when it has many reports, since the guide shows the team next)
+function gsRead(g) { if (!S.progBusy) progRun(g); else if (g.kind !== 'char' && S.progBusy === (GS && GS.char)) S.importYield = S.progBusy; }
 async function gsRw(b) {
   const msg = $('#gsMsg'); b.disabled = true;
   try { const { g, already } = await groupAdd('https://www.warcraftlogs.com/guild/id/' + b.dataset.rw); if (!GS) return;
-    GS.team = GS.team || g.gid; if (!already) { groupsBackfill(); if (!S.progBusy) progRun(g); }
+    GS.team = GS.team || g.gid; if (!already) { groupsBackfill(); gsRead(g); }
     if (GS.rw && GS.rw.length === 1) gsGo('done'); else gsDraw();
   } catch (e) { if (!GS) return; b.disabled = false; if (msg) { msg.style.color = ''; msg.textContent = e.message; } }
 }
@@ -13541,7 +13547,7 @@ function gsPointTick() {
     const cards = $$('#main .pc-card[data-boss]'), open = cards.find((c) => !c.classList.contains('mini'));
     if (open) pick(open.querySelector('.pc-pick') || open, 'Pick a night, then Open', 'Pick a raid night from the menu, then click Open. Debrief goes through it pull by pull: what went wrong, what went well, and what to fix first.');
     else if (cards.length) pick(cards.find((c) => !/Killed/.test((c.querySelector('.pc-big') || {}).textContent || '')) || cards[0], 'Pick a boss', 'Each card is one boss, with how far you got. Click one to see its raid nights.');
-    else pick(null, 'Your raid nights are coming in', 'The bosses show up here as soon as the first night is in. It takes a minute or so.');
+    else pick(null, 'Your raid nights are coming in', 'The bosses show up here once its nights are in. The first time, this can take a few minutes.');
   }
   gsMark(e, t, p);
 }
@@ -13554,8 +13560,10 @@ function gsMark(e, t, p) {
   const bub = m.querySelector('.gsm-bub');
   if (m.dataset.t !== t) { m.dataset.t = t;
     bub.innerHTML = '<div class="pt-k">Getting around</div><b>' + esc(t) + '</b><p>' + esc(p) + '</p><div class="pt-nav"><button class="linkbtn" id="gsmEnd" type="button">End the guide</button></div>';
-    bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in'); $('#gsmEnd').onclick = () => gsPointEnd(true);
-    if (e) { const b = e.getBoundingClientRect(); if (b.top < 80 || b.bottom > innerHeight - 60) e.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
+    bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in'); $('#gsmEnd').onclick = () => gsPointEnd(true); S.gsScr = 0; }
+  // (what to click is off screen, at first or once something above it filled in, like the rankings: it's scrolled into
+  // view, a few times at most per step, so it doesn't fight you if you scroll away)
+  if (e && (S.gsScr || 0) < 3 && Date.now() - (S.gsScrAt || 0) > 1500) { const b = e.getBoundingClientRect(); if (b.top < 80 || b.bottom > innerHeight - 60) { S.gsScr = (S.gsScr || 0) + 1; S.gsScrAt = Date.now(); e.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
   gsPlace();
 }
 // (the ring around the spot and the bubble below it, or above when there's no room; with no spot, the bubble sits low in
@@ -13601,6 +13609,7 @@ function whereTo() {
     const f = d.querySelector('.ht-card'); if (f) f.focus({ preventScroll: true });
   });
 }
+// (said on the website when a file pick ends without a file: usually Chrome refusing the WoW folder)
 const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder, that\'s Chrome protecting Program Files, and a website can\'t get past it. Use a Warcraft Logs live log instead.';
 // ---------- Progress: every boss of the tier, night by night, from the pulls saved on this PC ----------
 // One row per boss and difficulty, in raid order, with a coloured left edge like everywhere else: orange once killed,
@@ -13832,7 +13841,6 @@ const ME_KEY = 'wla-me';
 const pgDlg = (id, inner) => '<div class="pg-dim" id="' + id + 'D"><div class="pg-dlg" role="dialog" aria-modal="true" aria-labelledby="' + id + 'T">' + inner + '</div></div>';
 const meOf = () => { try { const m = JSON.parse(store.get(ME_KEY) || 'null'); return m && m.name ? m : null; } catch (e) { return null; } };
 const srvSlug = (x) => String(x || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
-// (a team's players, most nights first: from its saved raid nights, with the class and server the import kept; the regulars
 // (picking yourself on a team: you're remembered, and your own character page is added too, found by name and server)
 async function meAdd(g, m) {
   store.set(ME_KEY, JSON.stringify({ name: m.name, cls: m.cls, team: g.gid, at: Date.now() }));
@@ -13846,6 +13854,7 @@ async function meAdd(g, m) {
   }
   return { note, cg };
 }
+// (a team's players, most nights first: from its saved raid nights, with the class and server the import kept; the regulars
 // (2 nights or more) when there are 8 or more of them)
 function teamMembers(g) {
   const nights = new Map(); for (const v of HIST.mem.values()) if (pullGroups(v).includes(g.gid)) { const k = nightOf(v.at); for (const n of v.players || []) { let x = nights.get(n); if (!x) nights.set(n, x = new Set()); x.add(k); } }
@@ -13869,7 +13878,7 @@ async function progRun(g, quiet) {
   const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
   S.progBusy = g.gid; say(g.last ? 'Checking for new nights…' : 'Bringing in every night of the tier…');
   S.meTold = false; const found = () => { if (onIt()) renderProgress(($('#pgMsg') || {}).textContent || ''); };
-  try { const res = await teamImport(g, say, found); S.progBusy = null; done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date, with no new reports.') +
+  try { const res = await teamImport(g, say, found); S.progBusy = null; if (res.paused) done(''); else done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date, with no new reports.') +
     (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy). They\'ll be tried again next time.' : '')); }
   catch (e) { S.progBusy = null; if (quiet && /already running|Connect Warcraft Logs/.test(e.message)) { done(''); return; } done(e.message, true); }
   // (a team or character added while this one was being read, like your own page picked on a team: it's read next)
@@ -14182,10 +14191,10 @@ const RQ = new URLSearchParams(location.search), RNAV = ((performance.getEntries
 const backAgain = WCL.HOSTED && !!RQ.get('report') && (RNAV === 'reload' || RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report'));
 if (backAgain) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
 const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain;
-if (!tourDone() && sharedLink) S.tourAfterPull = true;
 // (the website's welcome is the setup behind Start now (your idea, Oct 19), so the old tour doesn't open by itself there,
 // and a shared pull link gets that page's own tips; "Take the tour" in the menu still plays it)
 if (WCL.HOSTED && !window.WLA_DESKTOP && !tourDone()) store.set(TOUR_KEY, '1');
+if (!tourDone() && sharedLink) S.tourAfterPull = true;
 if (WCL.HOSTED) {
   $('#wclBtn').innerHTML = 'Open a report or log<span>paste a Warcraft Logs link, or pick a log on this PC</span>';
   $('#wclBtn').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; home(); setTimeout(() => { const i = $('#hWcl'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } }, 60); };
