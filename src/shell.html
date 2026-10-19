@@ -2897,6 +2897,18 @@ details.secd.mcx-tile[open] { grid-column: 1 / -1; } details.secd.mcx-tile[open]
 .mcx-hd { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; } .mcx-hd .sst { margin-left: auto; font-size: 11.5px; text-align: right; } .mcx-hd .icw.big { width: 26px; height: 26px; margin-right: 8px; vertical-align: -8px; border-radius: 6px; overflow: hidden; }
 .mcx-ln { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 6px 12px 12px; }
 .mcx-s { flex-basis: 100%; margin-top: 2px; font-size: 12.5px; line-height: 1.45; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+/* (Oct 19: a death on the timeline is a skull; with the wipe filter on, the part after the cut is greyed behind a red line; a tile with no map
+   shows who died (Deaths) or its moments as a strip in the map's place, the same height) */
+.mcx-dot.dead { width: 16px; height: 16px; margin-left: -8px; bottom: 4px; background-size: cover; background-position: center; border-color: #e5534b; z-index: 3; }
+.mcx-cut { position: absolute; top: 0; bottom: 0; right: 0; z-index: 2; border-left: 2px solid #e5534b; background: repeating-linear-gradient(135deg, rgba(10,11,15,.7) 0 6px, rgba(10,11,15,.45) 6px 12px); pointer-events: auto; }
+.mcx-cut span { position: absolute; left: 6px; top: 4px; font: 600 11px var(--body); color: #ff8f87; white-space: nowrap; }
+.mcx-alt { display: flex; flex-direction: column; justify-content: center; gap: 6px; height: 150px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: #0b0d12; overflow: hidden; }
+.mcx-ddr { display: flex; align-items: center; gap: 8px; font-size: 12.5px; min-width: 0; } .mcx-ddr > i { flex: none; width: 34px; font-style: normal; color: var(--faint); font-variant-numeric: tabular-nums; }
+.mcx-msb { position: relative; height: 34px; border-radius: 6px; background: rgba(255,255,255,.045); } .mcx-msb i { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; }
+.mcx-msb i.bad { background: #e5534b; } .mcx-msb i.warn { background: #e8a23a; } .mcx-msb i.ok { background: rgba(69,193,92,.6); }
+.mcx-msx { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+details.secd.mcx-tile[open] .mcx-alt { display: none; }
+@media (max-width: 640px) { .mcx-alt { height: auto; min-height: 0; } .mcx-cut span { display: none; } .mcx-tl h3 { display: block; } .mcx-tl h3 small { display: block; margin: 4px 0 0; } }
 .wr-tag { padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--muted); font: 600 11px var(--body); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wr-plus { padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
 @media (max-width: 640px) { .mcx-tiles { grid-template-columns: 1fr; } .mcx-lead { margin-left: 0; flex-basis: 100%; } .mcx-seg span { display: none; } }

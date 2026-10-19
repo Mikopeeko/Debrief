@@ -2787,8 +2787,15 @@ function audit() {
     // pull's timeline go at the top (filled in once the phases are drawn), and each problem mechanic is a tile in its phase: its map, its
     // worst moment and one sentence)
     const tagOf = (t) => { const m = String(t).match(/^([^:]{0,18}?\b\d+:\d\d)[,:]?\s*/); return m ? { tag: m[1], rest: t.slice(m[0].length) } : { tag: '', rest: t }; };
-    tileOf = (s, rows, groups) => { const x = { ...s, rows, groups }, { b, w } = cnt(x), fp = firstProb(x, b), tg = tagOf(fp || ''), mp = probMap(x, b);
-      return { tag: tg.tag, txt: fp ? capS(tg.rest) : '', more: Math.max(0, b + w - 1), map: mp ? miniMap(mp, pmap) : '' }; };
+    // (a tile with no map shows something in its place: Deaths who died, in order; any other mechanic its moments in the phase as a strip)
+    tileOf = (s, rows, groups, key) => { const x = { ...s, rows, groups }, { b, w } = cnt(x), fp = firstProb(x, b), tg = tagOf(fp || ''), mp = probMap(x, b); let alt = '';
+      if (!mp) { const dead = s.id === 'deaths' ? rows.map((row) => row[0] && row[0].death).filter(Boolean) : [];
+        const all = rows.map((row) => ({ row, t: rowT(row) })).concat(...groups.map((g) => g.rows.map((row) => ({ row, t: rowT(row) != null ? rowT(row) : g.t })))).filter((e) => e.t != null);
+        if (dead.length) alt = '<span class="mcx-alt mcx-dd">' + dead.slice(0, 5).map((d) => '<span class="mcx-ddr"><i>' + T(d.t) + '</i>' + who(d.player) + '</span>').join('') + (dead.length > 5 ? '<span class="sub">+' + (dead.length - 5) + ' more</span>' : '') + '</span>';
+        else if (all.length) { const p = phs[key], fin = p && isFinite(p.end), a = fin ? p.start : Math.min(...all.map((e) => e.t)), z = fin ? p.end : Math.max(...all.map((e) => e.t)), span = Math.max(1, z - a);
+          const sv = (row) => (row.some((c) => c.bad) ? 'bad' : row.some((c) => c.warn) ? 'warn' : 'ok');
+          alt = '<span class="mcx-alt mcx-ms"><span class="mcx-msb">' + all.map((e) => '<i class="' + sv(e.row) + '" style="left:' + Math.min(100, Math.max(0, 100 * (e.t - a) / span)).toFixed(1) + '%"></i>').join('') + '</span><span class="mcx-msx"><span>' + T(a) + '</span><span>' + plural(all.length, 'moment') + '</span><span>' + T(z) + '</span></span></span>'; } }
+      return { tag: tg.tag, txt: fp ? capS(tg.rest) : '', more: Math.max(0, b + w - 1), map: mp ? miniMap(mp, pmap) : '', alt }; };
     if (ord.length) h += MT_TOP;
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
@@ -3143,9 +3150,9 @@ function audit() {
     const v = nBad ? (s.verdict === 'good' ? 'warn' : s.verdict) : nWarn ? 'warn' : (rows.length || groups.length ? 'good' : s.verdict);
     // the row: a coloured edge and one status line on the right (✕ problems, ! could be better, ✓ clean), like Assignments;
     // "How it works" is folded away at the top of the opened section
-    const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok', ti = tile && tileOf ? tileOf(s, rows, groups) : null;
+    const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok', ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
     const tiLn = ti && (ti.tag || ti.more || ti.txt) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
-    let b = '<details class="panel secd st-' + stc + (ti ? ' mcx-tile' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : '') + (ti ? '<span class="mcx-hd">' : '') + secHead(s) +
+    let b = '<details class="panel secd st-' + stc + (ti ? ' mcx-tile' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti ? '<span class="mcx-hd">' : '') + secHead(s) +
       '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? '</span>' + tiLn : '') + '</summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
@@ -3232,13 +3239,17 @@ function audit() {
     const st = ({ x }) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return a.some(isBadRow) ? 'bad' : a.some(isWarnRow) ? 'warn' : 'ok'; };
     const nB = ent.filter((e) => st(e) === 'bad').length, nW = ent.filter((e) => st(e) === 'warn').length, nO = ent.length - nB - nW;
     const strip = '<div class="panel mcx-strip"><span class="mcx-k bad"><b>' + nB + '</b>with problems</span><span class="mcx-k warn"><b>' + nW + '</b>could be better</span><span class="mcx-k ok"><b>' + nO + '</b>clean</span><span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
-    const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), end = cut ? Math.min(cut.t, tp.length ? tp[tp.length - 1].p.end : cut.t) : tp.length ? tp[tp.length - 1].p.end : 0;
-    if (tp.length < 2 || !(end > 0)) return strip;
+    // (the whole pull to its last phase; with the wipe filter on, what's after the cut is greyed behind a red line, since it isn't counted)
+    const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end = Math.max(lastE, isFinite(r.duration) ? r.duration : 0);
+    if (!tp.length || !(end > 0)) return strip; // (one phase is enough: most prog wipes end in P1)
+    // (each dot carries its moment, so a click opens that exact moment, not just the mechanic; a death is a skull)
     const dots = []; for (const { x, k } of ent) { if (k === 'w') continue; const add = (row, t0) => { const t = rowT(row) != null ? rowT(row) : t0; if (t == null || t > end || !(isBadRow(row) || isWarnRow(row))) return;
-      dots.push('<a class="mcx-dot tlink ' + (isBadRow(row) ? 'bad' : 'warn') + '" href="#sec-' + x.s.id + '-' + k + '" style="left:' + (100 * t / end).toFixed(2) + '%" title="' + esc(T(t) + ' ' + x.s.title.split(': ')[0] + ': ' + rowText(x.s, row)) + '"></a>'); };
+      const dead = x.s.id === 'deaths' && row[0] && row[0].death;
+      dots.push('<a class="mcx-dot tlink ' + (dead ? 'dead' : isBadRow(row) ? 'bad' : 'warn') + '" href="#sec-' + x.s.id + '-' + k + '" data-t="' + T(t0 != null ? t0 : t) + '" style="left:' + (100 * t / end).toFixed(2) + '%' + (dead ? ';background-image:url(' + whIcon('inv_misc_bone_humanskull_01') + ')' : '') + '" title="' + esc(T(t) + ' ' + (dead ? dead.player + ' died' + (dead.ability ? ' to ' + dead.ability : '') : x.s.title.split(': ')[0] + ': ' + rowText(x.s, row))) + '"></a>'); };
       x.rows.forEach((row) => add(row, null)); x.groups.forEach((g) => g.rows.forEach((row) => add(row, g.t))); }
-    return '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake. Hover one for what happened, click it to open that mechanic.</small></h3><div class="mcx-bar">' +
-      tp.filter(({ p }) => p.start < end).map(({ p }) => '<div class="mcx-seg" style="flex:' + (Math.min(p.end, end) - p.start) + '"><span>' + esc(p.name) + '</span></div>').join('') + dots.join('') + '</div><div class="mcx-ax"><span>0:00</span><span>' + T(end) + '</span></div></div>' + strip; });
+    const cutL = cut && cut.t < end ? '<div class="mcx-cut" style="left:' + (100 * cut.t / end).toFixed(2) + '%" title="' + esc('The wipe filter: counted up to ' + T(cut.t) + ', the ' + ordinal(cut.n) + ' death. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '';
+    return '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake and each skull a death. Hover one for what happened, click it to open that moment.</small></h3><div class="mcx-bar">' +
+      tp.filter(({ p }) => p.start < end).map(({ p }) => '<div class="mcx-seg" style="flex:' + (Math.min(p.end, end) - p.start) + '"><span>' + esc(p.name) + '</span></div>').join('') + (end - lastE > 1 ? '<div class="mcx-seg" style="flex:' + (end - lastE) + '"></div>' : '') + cutL + dots.join('') + '</div><div class="mcx-ax"><span>0:00</span><span>' + T(end) + '</span></div></div>' + strip; });
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
@@ -3270,6 +3281,9 @@ function audit() {
   // remember which mechanic blocks are open; summary tiles open the block they jump to
   $('#view').querySelectorAll('details.secd').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
   $('#view').querySelectorAll('a.tlink').forEach((a) => (a.onclick = () => { const d = document.querySelector(a.getAttribute('href')); if (d && d.tagName === 'DETAILS') d.open = true; }));
+  // (a timeline dot also picks its own moment in the opened mechanic: the entry with its time, its map with it)
+  $('#view').querySelectorAll('a.mcx-dot').forEach((a) => a.addEventListener('click', () => setTimeout(() => { const d = document.querySelector(a.getAttribute('href')); if (!d) return;
+    const it = [...d.querySelectorAll('.md-i')].find((b) => ((b.querySelector('.md-t, .dd-t') || {}).textContent || '').trim() === a.dataset.t); if (it) { if (!it.classList.contains('on')) it.click(); it.scrollIntoView({ block: 'center' }); } }, 60)));
   // (a line of What went wrong / What went well takes you to its mechanic from anywhere on it)
   $('#view').querySelectorAll('.wr .pb-r').forEach((row) => { const a = row.querySelector('a.tlink'); if (!a) return; row.classList.add('pb-go'); row.onclick = (e) => { if (!e.target.closest('a, button')) a.click(); }; });
   // Recap / Details buttons: open their html in a row right under the row (one per table), like maps
