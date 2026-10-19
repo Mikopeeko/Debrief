@@ -11809,7 +11809,7 @@ function cmpGapWhy(x) {
   // check when one is bigger (Oct 19: "do 6 total blocks"); talents stay under More detail)
   out.splice(0, out.length, ...out.filter((o) => o.real || !/A talent difference/.test(o.tip || "")));
   if (!out.length) return '';
-  out.sort((p, q) => q.v - p.v);
+  out.sort((p, q) => q.v - p.v); x.items = out; // (the ranked reasons, for the biggest fixes at the top of the page)
   const top = out.slice(0, 6), COLS = ['#e6b450', '#5aa9e6', '#7ee08f', '#c792ea', '#f07178', '#89ddff'];
   top.forEach((o, i) => (o.col = COLS[i]));
   // (Oct 19, "make the comparisons even more visually clear, I'm a visual person, most WoW players are": the gap as one bar cut
@@ -11932,7 +11932,7 @@ function cmpPair(r, p, rB, q, vs, lead) {
     const l = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((i) => (i === 16 && two ? mh.itemLevel : g[i] && g[i].id ? g[i].itemLevel : 0)); return l.reduce((t, v) => t + v, 0) / l.length; };
   const iA = ilv(r, p), iB = ilv(rB, q), iLo = loA ? iA : iB, iHi = loA ? iB : iA;
   const gearL = iLo && iHi && iHi - iLo >= 3 ? 'Gear: ' + (loA ? sB : sA).pos + ' gear is a little better (item level ' + Math.round(iHi) + ', ' + ((loA ? sA : sB).n === 'You' ? 'yours' : (loA ? sA : sB).pos) + ' ' + Math.round(iLo) + '), so part of the gap is gear.' : '';
-  const gapH = k === kq ? cmpGapWhy({ lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits, book: q.specName === p.specName ? specBook(p.specName) : null,
+  let GX = null; const gapH = k === kq ? cmpGapWhy(GX = { lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits, book: q.specName === p.specName ? specBook(p.specName) : null,
     builds: [tal && tal.bA && tal.bB && tal.bA.name && tal.bA.key !== tal.bB.key ? 'They play different builds (' + esc(tal.bA.name) + ' and ' + esc(tal.bB.name) + '), so some of the gap is the build. See Talent differences.' : '', gearL].filter(Boolean).join(' ') }) : '';
   // (no overhealing section: "overhealing is a very small concern for healers", Oct 19)
   // (Oct 19: Compare is for the main differences and where they came from, so Why the gap stands alone; talents, Rotation's checks and the
@@ -11947,7 +11947,15 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const gapPc = k === kq && ra && rb ? Math.abs(ra - rb) / Math.min(ra, rb) : null, hiN = ra >= rb ? (me ? 'You' : An) : Bn, verbH = k === 'heal' ? 'healed' : 'did';
   const hps = '<div class="panel cmp-hps">' + big(me ? 'You' : An, p.color, ra, k) + '<div class="cmp-hpm">' + (gapPc == null ? '<span class="sub">vs</span>' : gapPc < 0.02 ? '<b>About the same</b>' : '<b>' + hiN + ' ' + verbH + ' ' + Math.round(100 * gapPc) + '% more</b><span class="sub">' + C(Math.abs(ra - rb)) + ' a second</span>') + '</div>' + big(Bn, colB, rb, kq) + '</div>';
   const sideBy = '<div class="panel"><h3>Side by side<small>Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>';
-  return { vs, body: (lead || '') + hps + (chips || gapH) + numbers + spells + sideBy + chart +
+  // (Oct 19, "I want players to use this tab to make themselves better": the 3 things costing the first player the most against this one, each
+  // with what it's worth a second, one plain line and the Try; the rest of the page is the evidence)
+  const fixes = (() => { if (!GX || !GX.items || !loA) return ''; const l = GX.items.filter((o) => o.fix && o.v > 0).slice(0, 3); if (!l.length) return '';
+    const tot = l.reduce((t, o) => t + o.v, 0), gap = rb - ra, Ln = me ? 'You' : An;
+    const card = (o, i) => '<div class="cmp-fix"' + (o.tip ? ' data-tt="' + esc(o.tip) + '"' : '') + '><div class="cmp-fxh"><span class="cmp-fxn">' + (i + 1) + '</span>' + (o.icon || '') + '<b>' + o.head + '</b><span class="cmp-fxv">+' + C(o.v) + '<span> a second</span></span></div>' +
+      '<p>' + (o.pills ? Ln + ': <b>' + o.pills[0] + '</b>. ' + Bn + ': <b>' + o.pills[1] + '</b>.' : o.txt) + '</p><div class="cmp-try"><b>Try:</b> ' + o.fix + '</div></div>';
+    return '<div class="panel cmp-fixs"><h3>' + (me ? 'Your' : An + '\'s') + ' ' + (l.length === 1 ? 'biggest fix' : l.length + ' biggest fixes') + '<small>Against ' + Bn + ', the biggest first. Hover one for the numbers.</small></h3>' +
+      '<p class="cmp-wlead">' + (tot >= gap * 0.95 ? 'Together ' + (l.length === 1 ? 'it adds' : 'these add') + ' up to more than the whole <b>' + C(gap) + '</b> ' + U(k) + ' a second between you (some overlap): this is where the gap is.' : 'Fix ' + (l.length === 1 ? 'this' : 'these') + ' and ' + (me ? 'you' : An) + ' close about <b>' + C(tot) + '</b> of the <b>' + C(gap) + '</b> ' + U(k) + ' a second between you.') + '</p><div class="cmp-fxs">' + l.map(card).join('') + '</div></div>'; })();
+  return { vs, body: (lead || '') + hps + fixes + (chips || gapH) + numbers + spells + sideBy + chart +
     cmpFold('more', 'More detail', 'Talent differences and every Rotation check. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '')) };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
