@@ -1497,10 +1497,13 @@ function noteWhy(u) {
 }
 // (the names a note gives, for "swap a player": reminder tags and the words after a line's label, kept to ones that look like character names)
 const NOTE_WORDS = new Set(['soak', 'soaks', 'kick', 'kicks', 'orb', 'orbs', 'group', 'left', 'right', 'melee', 'ranged', 'tank', 'tanks', 'healer', 'healers', 'dps', 'backup', 'everyone', 'rest', 'all', 'then', 'and', 'or', 'name', 'names']);
+// (NSRT reminder tags that are a group, not a character: everyone, a role, a class or spec, a raid group)
+const NOTE_TAGS = /^(everyone|all|raid|me|tanks?|healers?|heals|dps|melee|ranged|casters?|group\d*|grp\d*|g\d|warriors?|paladins?|hunters?|rogues?|priests?|deathknights?|dks?|shamans?|mages?|warlocks?|monks?|druids?|demonhunters?|dhs?|evokers?)$/i;
 function noteNames(text) {
   const out = new Set();
   for (const raw of String(text || '').split(/\r?\n/)) { const ln = raw.trim(); if (!ln || /^EncounterID:/i.test(ln)) continue;
-    if (/(^|;)\s*time:/i.test(ln)) { const m = ln.match(/(?:^|;)\s*tag:([^;]*)/i); if (m) m[1].split(/\s+/).filter(Boolean).forEach((w) => out.add(w.split('-')[0])); continue; }
+    // (a reminder's tags: only character names; NSRT's raid-wide tags (everyone, a role, a class, a group) aren't anyone (your note, Oct 18))
+    if (/(^|;)\s*time:/i.test(ln)) { const m = ln.match(/(?:^|;)\s*tag:([^;]*)/i); if (m) m[1].split(/\s+/).filter(Boolean).map((w) => w.split('-')[0]).filter((w) => !NOTE_TAGS.test(w) && !NOTE_WORDS.has(w.toLowerCase())).forEach((w) => out.add(w)); continue; }
     const body = ln.replace(/\{[^}]*\}/g, ' '), ci = body.indexOf(':');
     for (const w of (ci >= 0 ? body.slice(ci + 1) : '').split(/[\s,;]+/)) { const t = w.replace(/[()[\]."]/g, '').split('-')[0]; if (t.length >= 2 && /^\p{Lu}/u.test(t) && /^[\p{L}'-]+$/u.test(t) && !NOTE_WORDS.has(t.toLowerCase())) out.add(t); } }
   return [...out];
