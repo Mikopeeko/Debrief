@@ -529,7 +529,7 @@ function renderList() {
     // (the same three lines as a pull card (your pick, Oct 19): its name, how many pulls, and a gold bar of how far the
     // night got, its kill or best pull)
     const nDone = kill ? 100 : best && pullPct(best) != null ? Math.max(3, 100 - pullPct(best)) : 0;
-    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '"><span class="fc-h"><b>Whole night</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><i class="fc-bar"><b style="width:' + nDone.toFixed(1) + '%"></b></i></button>' : '';
+    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '"><span class="fc-h"><b>All pulls</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><i class="fc-bar"><b style="width:' + nDone.toFixed(1) + '%"></b></i></button>' : '';
     // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
     // (on Report card the single pulls are greyed out and can't be picked: it's always the whole night (your call, Oct 19))
     const lock = S.tab === 'player' && !!allC;
@@ -540,7 +540,7 @@ function renderList() {
       return '<button class="pull fcard' + (ok ? ' kill' : '') + (b === S.item ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--pc:' + (ok ? '#45c15c' : '#e5534b') + '"><span class="fc-h"><b>' + (i ? esc(b.boss) : '∑ Whole key') + '</b></span><span class="fc-p">' + esc(b.result) + ' · ' + T(b.duration) + '</span><i class="fc-bar"><b style="width:' + (ok ? 100 : 40) + '%"></b></i></button>'; }).join('') + '</div></div>';
   }
   box.innerHTML = h;
-  box.querySelectorAll('.fc-lock .pull').forEach((b) => { b.disabled = true; b.title = 'Report card is always the whole night'; });
+  box.querySelectorAll('.fc-lock .pull').forEach((b) => { b.disabled = true; b.title = 'Report card always shows all pulls'; });
   // the wipe filter: a card at the right end of a boss's pull cards (a Mythic+ key doesn't have one)
   bhCutBind(); // (the wipe filter sits behind its chip in the banner)
   if (bosses.some((b) => !b.wcl && !CACHE.has(b))) warmPulls();
@@ -944,7 +944,7 @@ const DANCERS = [
 ];
 const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'Recap explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick Whole night above the pulls to see how the whole night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
+  'Recap explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick All pulls above the pull cards to see how the night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -1190,7 +1190,7 @@ function headerHtml(r, allMode) {
   const tm = !isKey ? pullTeam(r || S.rep, it) : null, tmL = tm ? '<button class="bh-team" type="button" data-team="' + esc(tm.gid) + '" title="' + esc(tm.name) + '\'s progress, every boss and night">' + esc(tm.name) + ' · ' + tm.k + '/' + tm.of + ' ' + esc(tm.diff || '') + ' ›</button>' : '';
   // (what the tabs below are showing, as a tag on every tab and on a phone too (your note, Oct 18: "Whole night" was plain,
   // one pull wasn't): gold for the whole night, like its card; white for one pull, like the picked pull card)
-  const kN = same.indexOf(it) + 1, scope = isKey || it.run ? '' : allMode ? '<span class="bh-scope all">Whole night<span> · ' + esc(plural(same.length, 'pull')) + '</span></span>'
+  const kN = same.indexOf(it) + 1, scope = isKey || it.run ? '' : allMode ? '<span class="bh-scope all">All pulls<span> · ' + esc(plural(same.length, 'pull')) + '</span></span>'
     : '<span class="bh-scope one">Pull ' + it.pull + (kN && same.length > 1 ? '<span> · ' + (kN === same.length ? 'the latest' : kN + ' of ' + same.length) + '</span>' : '') + '</span>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
@@ -1223,7 +1223,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { live: 'Recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'Whole night', player: 'Report card' };
+const TAB_NAME = { live: 'Recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -2765,6 +2765,21 @@ function pfPick(ps) {
     : '<span class="sub">Pick a player to see them on every chart. The pick carries over to Mechanics and Night summary.</span>';
   return onePick(ps, cur, note, !!pc);
 }
+// Mechanics on one pull, a few facts on top (your ask, Oct 19: "a brief summary of pulls at the top of mechanic individual
+// pulls"): how the pull ended and how many died, then which mechanics failed, had some mistakes or were done right. Facts
+// only, like the rest of Mechanics; the story and the advice are on Recap
+function mechSum(r, m) {
+  const it = r.item, A = dbfStats(r), lab = A.label && !/^(wipe|kill)$/.test(A.label) ? A.label : '', ds = (r.deaths || []).slice().sort((a, b) => a.t - b.t);
+  const s1 = it.run ? '' : '<b>Pull ' + it.pull + '</b> was ' + (it.kill ? 'a kill in ' + T(r.duration) : 'a wipe' + (lab ? ' at <b>' + esc(lab) + '</b>' : '') + ' after ' + T(r.duration)) + ', with ' + (ds.length ? plural(ds.length, 'death') + ' (the first at ' + T(ds[0].t) + ')' : 'no deaths') + '.';
+  const L = { bad: [], warn: [], ok: [] };
+  for (const x of m.sections) { if (x.info || x.id === 'deaths') continue; const rows = x.rows.concat(...(x.groups || []).map((g) => g.rows)); if (!rows.length) continue;
+    const nB = rows.filter((row) => row.some((c) => c.bad)).length, nW = rows.filter((row) => !row.some((c) => c.bad) && row.some((c) => c.warn)).length, lv = lvlJudge(x.id, nB, nW, rows.length);
+    L[lv === 'major' || lv === 'moderate' ? 'bad' : lv === 'minor' ? 'warn' : 'ok'].push('<b>' + esc(shortT(x.title)) + '</b>'); }
+  const n = L.bad.length + L.warn.length + L.ok.length, few = (l) => (l.length > 4 ? l.slice(0, 4).join(', ') + ' and ' + (l.length - 4) + ' more' : lpAnd(l));
+  const be = (l) => (l.length === 1 ? 'was' : 'were');
+  const s2 = n ? plural(n, 'mechanic') + ' ' + be(Array(n)) + ' checked. ' + [L.bad.length ? L.bad.length + ' failed: ' + few(L.bad) + '.' : '', L.warn.length ? L.warn.length + ' had some mistakes: ' + few(L.warn) + '.' : '', L.ok.length ? L.ok.length + ' ' + be(L.ok) + ' done right: ' + few(L.ok) + '.' : ''].filter(Boolean).join(' ') : '';
+  return s1 || s2 ? '<div class="panel dbf-short mch-sum"><div class="dbf-k">' + (it.run ? 'This run' : 'This pull') + '</div>' + (s1 ? '<p>' + s1 + '</p>' : '') + (s2 ? '<p>' + s2 + '</p>' : '') + '</div>' : '';
+}
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
   if (m0.error) { view('<div class="panel">The audit for this fight hit an error: ' + esc(m0.error) + '</div>'); return; }
@@ -2793,7 +2808,7 @@ function audit() {
   const vb = { good: ['b-good', 'Clean'], warn: ['b-med', 'Some mistakes'], bad: ['b-high', 'Problems'] };
   // (the fight timeline panel was removed: the audit is organized by phase below instead)
   // (the page header already names the boss and difficulty; only a module note is worth a line here)
-  let h = m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '';
+  let h = mechSum(r, m) + (m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '');
 
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
@@ -4664,9 +4679,22 @@ function nightMechC(o) {
   const axis = '<div class="mcx-ax2">' + pullNs.map((n, i) => '<span style="left:calc(var(--lw) + (100% - var(--lw)) * ' + ((i + 0.5) / N).toFixed(4) + ')">' + n + '</span>').join('') + '</div>';
   const lateL = probs.filter((r) => lateOf(r).recent), solvedL = probs.filter((r) => lateOf(r).solved), topP = probs[0];
   const byWr = probs.slice().sort((u, v) => factsOf(v).Wr - factsOf(u).Wr);
-  const verdict = topP ? '<p class="mcx-verdict">Most results gone wrong: ' + byWr.slice(0, 3).map((r) => '<b>' + esc(shortT(r.title)) + '</b> ' + factsOf(r).Wr + ' of ' + factsOf(r).R).join(', ') + '.' + (tot('clean') ? ' <span class="mcx-good">' + plural(tot('clean'), 'mechanic') + ' clean all night.</span>' : '') + '</p>' : '<p class="mcx-verdict"><span class="mcx-good">Every mechanic was clean all night.</span></p>';
+  void byWr; void topP;
+  // (a few facts on top (your ask, Oct 19: "and then one for whole night"): how the pulls went, then the mechanics by flag,
+  // and the ones that went wrong in the most pulls)
+  const sum = (() => { const rs = pullNs.map((n) => byPull.get(n)).filter(Boolean), kill = rs.find((q) => q.item.kill), wip = rs.filter((q) => !q.item.kill && pullPct(q.item) != null);
+    const best = wip.reduce((b, q) => (!b || pullPct(q.item) < pullPct(b.item) ? q : b), null), dAvg = rs.length ? rs.reduce((t, q) => t + (q.deaths || []).length, 0) / rs.length : 0;
+    const s1 = '<b>' + plural(N, 'pull') + '</b>' + (kill ? ', killed on pull ' + kill.item.pull : ', no kill yet') + (!kill && best ? '. The best got to <b>' + esc(pullLabel(best.item)) + '</b> (pull ' + best.item.pull + ')' : '') + '. ' + (dAvg ? dAvg.toFixed(1) + ' deaths a pull on average.' : 'Nobody died.');
+    const nb = (l) => '<b>' + esc(shortT(l.title)) + '</b>', few = (l) => (l.length > 3 ? l.slice(0, 3).map(nb).join(', ') + ' and ' + (l.length - 3) + ' more' : lpAnd(l.map(nb)));
+    const F = all.filter((q) => ['major', 'moderate'].includes(lvOf(q))), Wn = all.filter((q) => lvOf(q) === 'minor'), Ok = all.filter((q) => lvOf(q) === 'clean');
+    const be = (l) => (l.length === 1 ? 'was' : 'were');
+    const s2 = all.length ? plural(all.length, 'mechanic') + ' ' + be(all) + ' checked. ' + [F.length ? F.length + ' failed in half ' + (F.length === 1 ? 'its' : 'their') + ' pulls or more: ' + few(F) + '.' : '', Wn.length ? Wn.length + ' had some mistakes: ' + few(Wn) + '.' : '', Ok.length ? Ok.length + ' ' + be(Ok) + ' done right every time: ' + few(Ok) + '.' : ''].filter(Boolean).join(' ') : '';
+    const wN = (q) => judged(q).filter((n) => stAt(q, n) !== 'ok').length, top = probs.slice().sort((u, v) => wN(v) - wN(u) || wN(v) / judged(v).length - wN(u) / judged(u).length).slice(0, 3);
+    const s3 = top.length ? 'Wrong in the most pulls: ' + lpAnd(top.map((q, i) => nb(q) + ' in ' + judged(q).filter((n) => stAt(q, n) !== 'ok').length + ' of ' + judged(q).length + (i ? '' : ' pulls'))) + '.' : '';
+    return '<div class="panel dbf-short mch-sum"><div class="dbf-k">All pulls</div><p>' + s1 + '</p>' + (s2 ? '<p>' + s2 + '</p>' : '') + (s3 ? '<p>' + s3 + '</p>' : '') + '</div>'; })();
+  const verdict = '';
   const strip = '<div class="mcx-strip">' + [['major', 'bad', 'Failed'], ['minor', 'warn', 'Some mistakes'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + tot(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Red: failed in half its pulls or more, over ' + plural(N, 'pull') + (gm && !one ? ' · mechanics score ' + Math.round(gm.overall) + ' / 100' : '') + '.</span></div>';
-  const head = '<div class="panel mcx-tl nmc-tl"><h3 class="nh">The night at a glance<small>A dot per pull where it went wrong. Click one to open that pull.</small></h3>' + verdict + (lanes ? '<div class="mcx-lanes nmc-lanes">' + lanes + axis + '</div>' : '') + strip + '</div>';
+  const head = sum + '<div class="panel mcx-tl nmc-tl"><h3 class="nh">All pulls at a glance<small>A dot per pull where it went wrong. Click one to open that pull.</small></h3>' + verdict + (lanes ? '<div class="mcx-lanes nmc-lanes">' + lanes + axis + '</div>' : '') + strip + '</div>';
   return { html: head + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
 }
 // (a tile, a chip or a dot: that pull's Mechanics at the mechanic)
@@ -15395,7 +15423,7 @@ function rctTeam(c, F) {
   const ok = (a) => F.pl.get(a.p.name).deaths <= Math.max(1, a.n / 4);
   const pick = (r, n) => { const l = c.data.filter((a) => (a.p.role || 'dps') === r).sort((u, v) => v.score - u.score), good = l.filter(ok); return (good.length >= Math.min(n, l.length) ? good : l).slice(0, n); };
   const line = (lab, l) => (l.length ? '<div class="rct-ll">' + lab + '</div><div class="rct-line">' + l.map((a) => rctCard(c, F, a)).join('') + '</div>' : '');
-  return '<section class="rct-sec"><h3 class="rct-h">Team of the night<small>The best of each role tonight, among players who stayed alive. Click a card for their whole night.</small></h3><div class="rct-pitch">' +
+  return '<section class="rct-sec"><h3 class="rct-h">Team of the night<small>The best of each role tonight, among players who stayed alive. Click a card for all their pulls.</small></h3><div class="rct-pitch">' +
     line('Damage dealers', pick('dps', 4)) + line('Healers', pick('healer', 2)) + line('Tanks', pick('tank', 2)) + '</div></section>';
 }
 function rctAll(c, F) {
@@ -16102,7 +16130,7 @@ function dbfNight(o) {
   }
   const cap = (l) => (l.length > 4 ? l.slice(0, 4).concat('<span class="sub">And ' + (l.length - 4) + ' more.</span>') : l);
   const short = n < 6 ? 'Not enough pulls yet to say what changed over the night.' : '';
-  return { top: '<div class="panel dbf-short"><div class="dbf-k">The night</div><p>' + s1 + s2 + '</p>' + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists:
+  return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div><p>' + s1 + s2 + '</p>' + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists:
     '<div class="dbf-4">' + dbfCard('ok', 'What went well', well, 'Nothing was done right all night yet.') + dbfCard('bad', 'What didn\'t go well', wrong, 'Nothing kept going wrong. Keep it up.') +
     dbfCard('up', 'What got better over the night', cap(up), short || 'Nothing clearly got better from early in the night to later.') + dbfCard('down', 'What got worse over the night', cap(down), short || 'Nothing clearly got worse from early in the night to later.') + '</div>' };
 }
@@ -16861,7 +16889,7 @@ const PAGE_TIPS = {
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went right; yellow had some mistakes; red failed. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
     { sel: '#view .lp-main', t: 'What went well, and what went wrong', p: 'What the raid did well comes first, then what went wrong, worst first, with who it was. Under them: what got better or worse since the last pull.' },
     { sel: '#view .lp-prep', t: 'Before the next pull', p: 'This shows who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it are the players to talk to, each with their one thing to fix.' },
-    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig deeper: every mechanic, your assignments, each player\'s rotation and the graphs. Report card grades every player over the whole night.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig deeper: every mechanic, your assignments, each player\'s rotation and the graphs. Report card grades every player over all pulls.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
     { sel: '#assignBox .as-how, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note here, or try the example first. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
@@ -16874,7 +16902,7 @@ const PAGE_TIPS = {
     { sel: '#view .sum-rc', t: 'The night\'s grades', p: 'Mechanics and assignments, each graded over every pull of the night.' },
     { sel: '#view .sumv details.secd', t: 'Each mechanic, pull by pull', p: 'Each pull gets a square. Green is clean, yellow had some mistakes, and red failed. Click a square to open that pull.' }],
   player: [
-    { sel: '#view .plsw', t: 'The whole night, or one pull', p: 'Look at every pull of the night together, or just the pull you\'re on.' },
+    { sel: '#view .plsw', t: 'All pulls, or one pull', p: 'Look at every pull of the night together, or just the pull you\'re on.' },
     { sel: '#view .pl-bars', t: 'Every player', p: 'Each player gets one grade from their mechanics, their Rotation, and how they stayed alive. Prep can only take points off. Sort them best first, or by who has the most to gain.' },
     { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player to see what they should fix first, each with a link to the tab that shows it, and their prep.' }],
   perf: [

@@ -3787,6 +3787,8 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .dbf-short { position: relative; overflow: hidden; padding: 17px 20px 15px; } .dbf-short::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--gold); }
 .dbf-k { font: 700 12px var(--body); letter-spacing: .9px; text-transform: uppercase; color: var(--gold); margin: 0 0 5px; }
 .dbf-short p { margin: 0; font-size: 17px; line-height: 1.6; color: var(--text); max-width: 82ch; } .dbf-short p b { font-weight: 700; }
+/* (Oct 19: Mechanics' few facts on top, one pull or all pulls: the Recap box's look, a size smaller) */
+.mch-sum { margin-bottom: 12px; } .mch-sum p { font-size: 15px; line-height: 1.55; } .mch-sum p + p { margin-top: 6px; }
 .dbf-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0; padding: 4px 6px; }
 .dbf-n { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-left: 1px solid var(--line); min-width: 0; } .dbf-n:first-child { border-left: 0; }
 .dbf-n > b { font: 700 24px/1.1 var(--head); color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dbf-n:first-child > b { white-space: normal; } @media (min-width: 641px) { .dbf-n:first-child { grid-column: span 2; } } /* (how far it got, like "P2 · Malacrass 66%": two columns wide on a computer, and wrapping instead of losing its % on a phone) */ .dbf-n > b span { font-size: 15px; color: var(--faint); font-weight: 600; }
