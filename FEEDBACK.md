@@ -3,6 +3,11 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Sleeping on it (your question, Oct 19): open a log or live log without saving anything.** My suggestion: not a branch
+  of the guided setup (that's about saving you), but one small link under Start now and under Welcome Back!, "Just open a log ›",
+  that opens the existing "Open a report or log" window (paste a link, a log on your PC, or live logging). Nothing is saved,
+  no character or team. My take: amazing, a tiny change that keeps the front page to one main button. Also check that opening
+  a log never quietly adds a team or character. Front-page work: best done by the session that owns the front page.
 - [x] **A high-expectations raider's pass (your note, Oct 18; fixed in round 243): what would lose a serious Mythic player.** Walked a real
   night (Adequate, Ula'tek Mythic, 6 wipes at 89–96% in P1, plus The Coiled Altar kill) on every tab, one pull and the
   whole night, desktop and phone.
