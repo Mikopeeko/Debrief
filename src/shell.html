@@ -1643,6 +1643,25 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .fph-disc u { text-decoration: none; color: var(--gold); font-weight: 600; } .fph-disc i { font-style: normal; color: var(--gold); transition: transform .15s; }
 .fph-disc:hover u { text-decoration: underline; text-underline-offset: 3px; } .fph-disc:hover i { transform: translateX(3px); }
 @media (max-width: 760px) { .fph-tag { top: -12px; right: -18px; font-size: 10.5px; } .fph-disc { font-size: 13px; } }
+/* (the website's front page, last pass, Oct 19: no repeat of the name in the top bar; the four cards with an icon each and
+   a gold bar filling under the one that's playing; the preview window as tall as its tallest view, so no empty space; and
+   a close with the three steps and the Start button again) */
+body:has(.home.fph) .brand p { display: none; }
+.fph .fp-mods button { position: relative; overflow: hidden; }
+.fph .fp-mods b { display: flex; align-items: center; gap: 8px; } .fph .fp-mods b svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fph-prev.fp-auto .fp-mods button.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold); transform-origin: left; animation: fpTick 7s linear both; }
+.fph-prev.fp-auto:hover .fp-mods button.on::after { animation-play-state: paused; }
+@keyframes fpTick { from { transform: scaleX(0); } }
+.fph .fp-stage { display: grid; min-height: 0; } .fph .fp-scene { display: flex; grid-area: 1 / 1; visibility: hidden; } .fph .fp-scene.on { visibility: visible; }
+.fph-end { width: 100%; max-width: 1100px; margin: 0 auto; padding: 34px 28px 32px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 18px; text-align: center;
+  background: radial-gradient(ellipse 60% 90% at 50% 0%, rgba(230,180,80,.10), transparent 70%), var(--panel); }
+.fph-end h2 { margin: 0; font: 700 24px var(--head); color: #f3f5f9; }
+.fph-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 22px 0 26px; padding: 0; list-style: none; counter-reset: fst; text-align: left; }
+.fph-steps li { position: relative; padding: 16px 16px 15px 60px; border: 1px solid var(--line); border-radius: 12px; background: #161a22; counter-increment: fst; }
+.fph-steps li::before { content: counter(fst); position: absolute; left: 16px; top: 15px; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(230,180,80,.4); border-radius: 50%; background: rgba(230,180,80,.12); color: var(--gold); font: 700 15px var(--head); }
+.fph-steps b { display: block; font: 600 16px var(--head); color: #f3f5f9; } .fph-steps span { display: block; margin-top: 4px; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.fph-end .gs-cta { margin-top: 0; }
+@media (max-width: 760px) { .fph-end { padding: 24px 16px; } .fph-steps { grid-template-columns: 1fr; gap: 10px; margin: 16px 0 20px; } }
 .fph-beta { display: inline-flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1px solid rgba(230,180,80,.35); background: rgba(230,180,80,.08); color: #e6d3a8; font-size: 13px; text-decoration: none; transition: border-color .15s, background .15s; }
 .fph-beta b { padding: 3px 10px; border-radius: 999px; background: var(--gold); color: #1a1407; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .fph-beta i { font-style: normal; color: var(--gold); transition: transform .15s; } .fph-beta:hover { border-color: var(--gold); background: rgba(230,180,80,.14); } .fph-beta:hover i { transform: translateX(3px); }

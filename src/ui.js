@@ -13094,15 +13094,24 @@ function bindFront(auto) {
   let picked = false;
   box.querySelectorAll('.fp-tabs button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); }; });
   box.querySelectorAll('.fp-mods button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); const p = $('#fpPrev'), rc = p.getBoundingClientRect(); if (rc.top < 0 || rc.bottom > innerHeight) p.scrollIntoView({ behavior: 'smooth', block: 'center' }); }; });
-  // (the website's preview moves on to the next view every 7 seconds, paused while the mouse is on it, until a view is picked)
-  if (!auto || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const t = setInterval(() => {
-    if (!document.body.contains(box)) { clearInterval(t); return; }
-    if (picked || box.querySelector('.fph-prev:hover')) return;
+  // (the website's preview moves on to the next view every 7 seconds, paused while the mouse is on it, until a view is picked.
+  // The timer is the gold bar filling along the bottom of the card that's playing: when it fills, the next card starts)
+  const sec = box.querySelector('.fph-prev');
+  if (!auto || !sec || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  sec.classList.add('fp-auto');
+  sec.addEventListener('click', (e) => { if (e.target.closest('.fp-mods button')) sec.classList.remove('fp-auto'); });
+  sec.addEventListener('animationend', (e) => {
+    if (e.animationName !== 'fpTick' || picked) return;
     const cur = FP_SCENES.findIndex(([k]) => box.querySelector('.fp-scene.on[data-s="' + k + '"]'));
     show(FP_SCENES[(cur + 1) % FP_SCENES.length][0]);
-  }, 7000);
+  });
 }
+// (the four cards' icons on the website's front page: a checklist, a map pin, a cycle, a note)
+const FP_ICO = {
+  live: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 5.5 8 8 5.5M4 12.5 5.5 14 8 11.5M4 18.5 5.5 20 8 17.5M11 7h9M11 13h9M11 19h9"/></svg>',
+  mech: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  rot: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 0 1-13 5.1M4.5 12a7.5 7.5 0 0 1 13-5.1"/><path d="M17.5 3v4h-4M6.5 21v-4h4"/></svg>',
+  assign: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>' };
 // the start screen's card icons (drawn here, no game art)
 const HICO = {
   live: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><path d="M8.3 15.7a5.3 5.3 0 0 1 0-7.4M15.7 8.3a5.3 5.3 0 0 1 0 7.4M5.5 18.5a9.2 9.2 0 0 1 0-13M18.5 5.5a9.2 9.2 0 0 1 0 13"/></svg>',
@@ -13468,12 +13477,18 @@ function homeHosted() {
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p><button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
-      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
+      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + FP_ICO[k] + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
         '<div class="fp-note">Made-up example. <button class="linkbtn" id="fpDemo" type="button">See a real raid night ›</button></div><div class="fp-msg fp-note" id="fpDemoMsg"></div></div></section>' +
+    // (the close: how it works in three steps, and the same button again, so nobody scrolls back up to start)
+    '<section class="fph-end"><h2>How it works</h2><ol class="fph-steps">' +
+      '<li><b>Add your team</b><span>Your character and your team\'s Warcraft Logs page. It takes about a minute.</span></li>' +
+      '<li><b>Raid with logs on</b><span>Turn on Warcraft Logs live logging, or upload your log after the raid.</span></li>' +
+      '<li><b>Read the debrief</b><span>Between pulls, see what went wrong and what to fix first.</span></li></ol>' +
+      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo2" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button></div></section>' +
     homeFoot() + '</div>';
-  $('#gsGo').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
+  $('#gsGo').onclick = $('#gsGo2').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
   // (one log or live log, nothing added: no character, no team, no setup; the menu's Open a report or log window)
   $('#gsJust').onclick = nightDlg;
   HIST.load().then(groupsBackfill);
