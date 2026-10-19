@@ -5850,7 +5850,7 @@ const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || 
 // ---------- Graphs as bar graphs (your ask, Oct 19: "a tab full of bar graphs like warcraftlogs ... I want to be able to click on the bars, and it give
 // me more basic breakdown information, as well as tooltips when hovering over the bars") ----------
 // One board of cards, each a ranked list of players with bars in their class colour, the way Warcraft Logs draws its tables: damage done, healing
-// done, damage taken, avoidable damage taken, deaths, interrupts, dispels and casts a minute, up to the wipe filter. Hovering a bar shows its numbers;
+// done, damage taken, deaths, interrupts, dispels and casts a minute, up to the wipe filter (no avoidable damage: that judgment lives on Breakdown). Hovering a bar shows its numbers;
 // clicking it opens that player's breakdown under it (their spells, the hits they took, their deaths, what they kicked or dispelled). The detailed
 // views (charts over time, resources, cooldowns, buffs) stay one click away under the board. One pull at a time; All pulls keeps its own view.
 let GB = null;
@@ -5865,7 +5865,6 @@ function graphsBoard(r, end) {
     { k: 'dmg', t: 'Damage done', ic: 'bars', rate: 'DPS', val: (p) => sumTo(p.dmgS || []) },
     { k: 'heal', t: 'Healing done', ic: 'heart', rate: 'HPS', val: (p) => sumTo(p.healS || []) },
     { k: 'taken', t: 'Damage taken', ic: 'shield', rate: 'a second', val: (p) => sumTo(p.takenS || []) },
-    { k: 'avoid', t: 'Avoidable damage taken', ic: 'warn', val: (p) => takenBy(p).reduce((v, x) => v + x.av, 0) },
     { k: 'death', t: 'Deaths', ic: 'skull', count: true, val: (p) => deaths(p).length },
     { k: 'kick', t: 'Interrupts', ic: 'kick', count: true, val: (p) => kicks(p).length },
     { k: 'disp', t: 'Dispels', ic: 'disp', count: true, val: (p) => disp(p).length },
