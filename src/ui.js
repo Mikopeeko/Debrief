@@ -12747,9 +12747,10 @@ function home() {
   if (WCL.HOSTED && location.search) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ } // (the address is the front page again)
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
   $('.brand p').textContent = WCL.HOSTED ? 'Paste a Warcraft Logs link or drop your own log' : 'Retail combat logs, read on your PC'; // (not the last report's name)
-  // (with a team added, home is your teams; someone new gets the welcome page)
-  if (groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderTeamsHome(); groupsBackfill(); }); return; }
+  // (the website: always the front page, with your teams on it once you have one (your note, Oct 18: everyone starts on
+  // the redesigned front page). The app on a PC: with a team added, home is your teams; someone new gets the welcome page)
   if (WCL.HOSTED && !window.WLA_DESKTOP) { homeHosted(); return; }
+  if (groups().length) { S.progView = null; PROG_BACK = null; HIST.load().then(() => { renderTeamsHome(); groupsBackfill(); }); return; }
   // the front page (what people see first): the ways in beside a clickable preview of the app, and the four main views
   // underneath as buttons that switch it. The live button comes first; the other ways to follow a log and the help are
   // folded under the start panel.

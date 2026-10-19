@@ -213,6 +213,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 238: The website's front page is always the redesign (your note: "the entire front page looks wrong")
+- [x] **Everyone gets the redesigned front page now**: the raid art behind the headline, the Beta tag, the live log and
+  finished night boxes side by side, and See a real raid night. Before, it only showed for visitors who hadn't added a
+  team; anyone with a team got the old page from Oct 17. With a team, your teams sit on top of it ("Your progress").
+- [x] **Fixed: the team names drawn as small boxes on top of the line under them, "Add a team" squeezed into a box, and a
+  box around the "Holy · 81 best average" line.** An old talent tree, no longer drawn anywhere, used the same style names
+  as the team cards. Its styles now only apply inside it.
+
 ## 2026-10-18, round 237: Show one player on Night summary and Graphs; the site always opens on the front page (your notes)
 - [x] **The "Show one player" pick is on Night summary and Graphs too**, and it's one pick: choosing someone on any of
   the three tabs (Mechanics, Night summary, Graphs) picks them on the others, and Show everyone clears it everywhere.
