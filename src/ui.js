@@ -10259,7 +10259,8 @@ function genRun(spec, D, reps, name, one) {
   // as it started. Each gets a card, and the line counts the ones with everything)
   const winN = WIN ? WIN.blk || WIN.n : null, gW = WIN ? grp(winN) : null, UNW = D.unitN === 'healing' ? 'healing' : 'damage', winL = WIN ? rows.flatMap((s) => (s.win || []).map((w) => ({ ...w, pull: s.pull }))) : [];
   const keyW = (n) => n + ' ' + (n === 1 ? WIN.key.one || WIN.key.names[0] : WIN.key.many || WIN.key.names[0] + 's');
-  if (winL.length) { const okN = winL.filter((w) => w.st === 'ok').length, N = winL.length, f = okN / N, xs = winL.map((w) => w.x).filter((v) => v != null), xm = xs.length ? xs.reduce((v, y) => v + y, 0) / xs.length : null;
+  // (tileOnly: windows read only for the Burst windows tile, no graded line or cards, for a burst without fixed partners like Frost's Ray of Frost)
+  if (winL.length && !WIN.tileOnly) { const okN = winL.filter((w) => w.st === 'ok').length, N = winL.length, f = okN / N, xs = winL.map((w) => w.x).filter((v) => v != null), xm = xs.length ? xs.reduce((v, y) => v + y, 0) / xs.length : null;
     const miss = new Map(), bump = (k) => miss.set(k, (miss.get(k) || 0) + 1); for (const w of winL) { for (const q of w.parts) if (!q.ok) bump('p:' + q.n); if (w.slow) bump('pace'); if (w.low) bump('key'); if (w.late) bump('late'); if (w.dotsMiss.length) bump('dots'); }
     const lateL = WIN.ready ? winL.filter((w) => w.lateBy != null) : [], lateSum = lateL.reduce((v, w) => v + w.lateBy, 0), lateS = WIN.ready ? (WIN.ready.late || 3) : 0;
     const ms = [...miss].sort((a, b) => b[1] - a[1]), m0 = ms[0], ofN = (n) => (n === N ? (N === 2 ? 'both' : 'all ' + N) : n + ' of them');
@@ -10563,7 +10564,7 @@ const GEN_SPECS = {
     cds: [{ n: 'Ascendance', cd: 180, cdT: [['First Ascendant', 120]], ok: 0.85, warn: 0.7, why: 'Ascendance powers every spell you cast in it. Save Maelstrom and procs for it, and press it as often as the fight allows.' }],
     lead: { abc: 'Keep casting. Plan your movement, and use Spiritwalker\'s Grace and Nature\'s Swiftness when you must move.', dots: 'Keep Flame Shock on the boss for Lava Surge procs.', procs: 'React to your procs. Spend Lava Surge on Lava Burst, and use Stormkeeper\'s empowered casts.', res: 'Don\'t waste Maelstrom. Spend it before you\'re full.', cds: 'Press Ascendance with Maelstrom and procs saved for it.' } },
   'Frost Mage': { ic: 'Frostbolt', top: 'Frost Mages',
-    win: { n: 'Icy Veins', dur: 25, why: 'Icy Veins is your burst. Keep casting all the way through it.' },
+    win: { n: 'Ray of Frost', dur: 8, noPace: true, tileOnly: true, why: 'In Midnight, Frost\'s burst is built around Ray of Frost (the SimulationCraft list no longer uses Icy Veins). It has no fixed partners, so it only feeds the Burst windows tile.' },
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide (Frostfire).', list: [
       { s: 'Glacial Spike', alt: ['Ice Lance'], if: { buff: 'Glacial Spike!' }, why: 'Glacial Spike was ready', tip: 'Cast Glacial Spike as soon as it\'s ready.' },
       { s: 'Flurry', if: { buff: 'Brain Freeze', no: 'Thermal Void' }, why: 'Brain Freeze was up', tip: 'Spend Brain Freeze on Flurry before your filler.' },
@@ -10573,8 +10574,7 @@ const GEN_SPECS = {
     abcWhy: 'Frostbolt or Frostfire Bolt is your filler, and Ice Lance can be cast while moving.',
     rot: [{ n: 'Frozen Orb', cd: 60, ok: 0.85, warn: 0.7, why: 'Frozen Orb hits hard and brings Fingers of Frost. Press it on cooldown.' }, { n: 'Ray of Frost', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Ray of Frost on cooldown.' }, { n: 'Comet Storm', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Comet Storm on cooldown. It also spends Freezing for Shatter.' }],
     procs: [{ n: 'Brain Freeze', use: ['Flurry'], why: 'Brain Freeze makes Flurry instant. Spend it quickly.' }, { n: 'Fingers of Frost', use: ['Ice Lance'], max: 2, why: 'Fingers of Frost makes Ice Lance Shatter. Spend it on Ice Lance.' }, { n: 'Glacial Spike!', ic: 'Glacial Spike', use: ['Glacial Spike'], why: 'Glacial Spike is ready. Cast it.' }],
-    cds: [{ n: 'Icy Veins', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Icy Veins as often as the fight allows.' }],
-    lead: { abc: 'Always be doing something. Frostbolt fills every gap, and Ice Lance works on the move.', rot: 'Press Frozen Orb and your other big spells as often as they\'re ready.', procs: 'Spend Brain Freeze, Fingers of Frost and Glacial Spike quickly.', cds: 'Use your big cooldown as often as the fight allows.' } },
+    lead: { abc: 'Always be doing something. Frostbolt fills every gap, and Ice Lance works on the move.', rot: 'Press Frozen Orb and your other big spells as often as they\'re ready.', procs: 'Spend Brain Freeze, Fingers of Frost and Glacial Spike quickly.' } },
   'Devastation Evoker': { ic: 'Disintegrate', top: 'Devastation Evokers',
     win: { n: 'Dragonrage', with: [['Fire Breath'], ['Eternity Surge']], ok: 0.65, warn: 0.4, dur: 18, why: 'Dragonrage is your burst. Fire Breath and Eternity Surge go out inside it.' },
     apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'The list comes from WoWAnalyzer\'s Devastation rotation check, the SimulationCraft list and the Wowhead guide. Your empowered spells are judged on their own, with Dragonrage.', list: [
@@ -10678,6 +10678,7 @@ const GEN_SPECS = {
     cds: [{ n: 'Voidform', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Voidform as often as the fight allows.' }, { n: 'Power Infusion', cd: 120, ok: 0.8, warn: 0.6, why: 'Power Infusion as often as you can, on yourself or a teammate your raid picks.' }],
     lead: { dots: 'Keep your damage over time on the boss, and Shadow Word: Madness up as long as you can.', rot: 'Press your short cooldowns first, so you never lose a use.', procs: 'React to Shadowy Insight and Mind Devourer as they come.', res: 'Don\'t cap Insanity at 100.', cds: 'Use Voidform and Power Infusion as often as the fight allows.' } },
   'Windwalker Monk': { ic: 'Rising Sun Kick', top: 'Windwalker Monks',
+    win: { n: 'Zenith', dur: 15, with: [['Fists of Fury'], ['Whirling Dragon Punch', 'Strike of the Windlord']], why: 'Zenith is your burst. Fists of Fury and your big hits (Whirling Dragon Punch or Strike of the Windlord) go out inside it.' },
     apl: { blk: 'Your priority', ok: 0.9, warn: 0.8, why: 'The list comes from the SimulationCraft list that Raidbots sims with and WoWAnalyzer\'s Windwalker check, kept to what a log can prove, like Combo Strikes and free Blackout Kicks.', list: [
       { s: 'Blackout Kick', alt: ['Rising Sun Kick', 'Fists of Fury', 'Whirling Dragon Punch', 'Strike of the Windlord', 'Rushing Wind Kick', 'Zenith Stomp', 'Touch of Death'], if: { buff: 'Blackout Kick!', st: 2 }, why: 'you had 2 free Blackout Kicks', tip: 'At 2 free Blackout Kicks, spend one before Tiger Palm, or the next is lost.' },
       { s: 'Tiger Palm', alt: ['Blackout Kick', 'Spinning Crane Kick', 'Rising Sun Kick', 'Fists of Fury', 'Whirling Dragon Punch', 'Strike of the Windlord', 'Rushing Wind Kick'] }],
@@ -10688,6 +10689,7 @@ const GEN_SPECS = {
     cds: [{ n: 'Zenith', cd: 90, ok: 0.85, warn: 0.7, why: 'Zenith\'s cooldown depends on your talents. Plan it for every 60, 90 or 120 seconds.' }, { n: 'Invoke Xuen, the White Tiger', cd: 120, cdT: [["Xuen's Bond", 90]], ok: 0.85, warn: 0.7, why: 'Use Xuen as often as the fight allows.' }, { n: 'Celestial Conduit', cd: 90, ok: 0.85, warn: 0.7, why: 'Press Celestial Conduit on cooldown.' }],
     lead: { rot: 'Keep Rising Sun Kick and Fists of Fury on cooldown, and never press the same button twice in a row (Combo Strikes).', procs: 'Spend your free Blackout Kicks.', cds: 'Plan your Zenith windows, with Xuen.' } },
   'Unholy Death Knight': { ic: 'Scourge Strike', top: 'Unholy Death Knights',
+    win: { n: 'Dark Transformation', dur: 15, with: [['Apocalypse'], ['Putrefy']], why: 'Dark Transformation is your burst. Apocalypse and Putrefy go out inside it.' },
     apl: { blk: 'Your priority', ok: 0.75, warn: 0.65, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide.', list: [
       { s: 'Death Coil', alt: ['Epidemic', 'Necrotic Coil', 'Vampiric Strike'], if: { buff: 'Sudden Doom' }, why: 'Sudden Doom was up', tip: 'Spend Sudden Doom on Death Coil (Epidemic on more targets) as soon as it comes.' },
       { s: 'Death Coil', alt: ['Epidemic', 'Necrotic Coil'], if: { resF: ['6', 0.85] }, why: 'you were near full Runic Power', tip: 'Spend Runic Power before it caps.' },
@@ -13257,7 +13259,7 @@ const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') 
 const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4) return e; } return null; };
 let TIPS_WAIT = null;
 function pageTips(k, force) {
-  if (!k || !PAGE_TIPS[k] || $('#tour') || $('#ptip') || (!force && (store.get(TIPS_KEY(k)) === '1' || !tourDone()))) return;
+  if (!k || !PAGE_TIPS[k] || $('#tour') || $('#ptip') || (!force && (store.get(TIPS_KEY(k)) === '1' || !tourDone() || (S.gsPoint && (k === 'hub' || k === 'team'))))) return;
   if (TIPS_WAIT === k && !force) return; TIPS_WAIT = k;
   // (pages that fill in bit by bit, like Summary and Player audit: once the first part is up, the rest get a few more
   // seconds to appear before the tips start)
@@ -13371,49 +13373,234 @@ const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); 
 function homeHosted() {
   const fp = fpParts();
   const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
-  const teamsTop = groups().length > 0; // (your teams first once you have one; for someone new, the invite under the start box)
-  // (the raid's art fades in behind the headline; the start box comes first, then the two other ways in side by side)
+  // (one front page for everyone (your notes, Oct 19): the logo and headline, one Start button, and a small line for a
+  // report link. Start walks someone new through adding their character and team; someone back picks where to go)
+  const back = groups().length > 0;
   $('#main').innerHTML = '<div class="home fp fph">' +
-    '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' + (teamsTop ? homeTeams() : '') +
+    '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' +
     '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<b>Debrief</b></div>' + (DISCORD_URL ? '<a class="fph-beta" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener"><b>Beta</b><span>Help shape Debrief: join our Discord</span><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
-      (teamsTop ? '' : homeStart()) +
-      '<div class="fph-ways">' +
-        '<div class="fph-way"><div class="fph-h">' + HICO.live + '<b>Raiding right now?</b></div><p>Paste your raid\'s live log. Each pull shows up about a minute after it ends.</p>' +
-          '<div class="fph-box sm"><input id="hLive" placeholder="Live log link" autocomplete="off" aria-label="Warcraft Logs live log link"><button class="btn" id="hLiveGo">Go live</button></div><div class="fp-msg" id="hLiveMsg"></div>' +
-          '<button class="linkbtn fph-q" id="hHow" type="button" aria-expanded="false">How to live log</button>' +
-          '<ol class="fph-how" id="hHowList" hidden><li>Whoever logs for the raid opens the Warcraft Logs uploader and starts <b>Live Log</b>.</li><li>Copy the live log\'s link (it\'s on warcraftlogs.com too, under your guild\'s reports).</li><li>Paste it above and keep this tab open during raid.</li></ol></div>' +
-        '<div class="fph-way"><div class="fph-h">' + HICO.file + '<b>Looking at a finished night?</b></div><p>Paste any Warcraft Logs report, yours or anyone\'s.</p>' +
-          '<div class="fph-box sm"><input id="hWcl" placeholder="Report link" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
-          '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or drop one on the page.</div></div>' +
-      '</div>' +
-      '<div class="fph-demo"><span>No link handy?</span><button class="btn" id="hDemo" type="button">' + HICO.play + 'See a real raid night</button><div class="fp-msg" id="hDemoMsg"></div></div></section>' +
+      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">Start now</button><p class="gs-cs">' + (back ? 'Pick up where you left off: your team, your character, or a raid night.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div>' +
+      '<div class="gs-link"><label class="gs-lt" for="hWcl">Already have a report link?</label><div class="fph-box sm"><input id="hWcl" placeholder="Paste a Warcraft Logs report or live log" autocomplete="off"><button class="btn" id="hWclGo" type="button">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
+        '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or <button class="linkbtn" id="hDemo" type="button">see a real raid night</button>.</div><div class="fp-msg" id="hDemoMsg"></div></div></section>' +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
     homeFoot() + '</div>';
-  bindHomeTeams(); bindHomeStart(); homeTeamsSoon();
-  // (either box takes any report link: the live one follows it from the start, the other turns live on by itself if the
-  // report is still being logged)
-  const go = async (k, live) => {
-    const inp = $('#h' + k), btn = $('#h' + k + 'Go'), msg = $('#h' + k + 'Msg'), link = WCL.parseLink(inp.value);
-    if (!link) { msg.style.color = ''; msg.textContent = 'That doesn\'t look like a Warcraft Logs link.'; return; }
-    msg.style.color = 'var(--muted)'; msg.textContent = live ? 'Opening the live log…' : 'Opening the report…'; btn.disabled = true;
-    try { await openWcl(link, null, live); } catch (err) { if (document.body.contains(btn)) { btn.disabled = false; msg.style.color = ''; msg.textContent = err.message; } }
-  };
-  for (const [k, live] of [['Live', true], ['Wcl', false]]) {
-    $('#h' + k + 'Go').onclick = () => go(k, live);
-    $('#h' + k).onkeydown = (e) => { if (e.key === 'Enter') go(k, live); };
-    $('#h' + k).onpaste = () => setTimeout(() => { if (WCL.parseLink($('#h' + k).value)) go(k, live); }, 50); // (a pasted link opens at once)
-  }
-  $('#hHow').onclick = () => { const l = $('#hHowList'); l.hidden = !l.hidden; $('#hHow').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('#gsGo').onclick = () => (groups().length ? whereTo() : gsStart());
+  // (any report link: one still being logged turns live on by itself, see openWcl; a team or character page goes in Start)
+  const inp = $('#hWcl'), msg = $('#hWclMsg');
+  const go = () => { msg.style.color = ''; if (groupLink(inp.value)) { msg.textContent = 'That\'s a team or character page. Click Start now to add it.'; return; } if (!WCL.parseLink(inp.value)) { msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; } openReportLink(inp.value, msg); };
+  $('#hWclGo').onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+  inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(); }, 50); // (a pasted link opens at once)
   $('#hDemo').onclick = async () => { const b = $('#hDemo'), msg = $('#hDemoMsg'); b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Opening a Mythic night on Ula\'tek…';
     try { await openWcl(WCL.parseLink(DEMO_REPORT), null, false); } catch (err) { if (document.body.contains(b)) { b.disabled = false; msg.style.color = ''; msg.textContent = err.message; } } };
   $('#hFileGo').onclick = () => $('#fileIn').click();
   bindFront(true);
+  HIST.load().then(groupsBackfill);
 }
 // (said on the website when a file pick ends without a file: usually Chrome refusing the WoW folder)
+// ---- the guided setup (your idea, Oct 19): Start now walks someone new through it, one question at a time ----
+// 1 Your character: what it brings in and where to find the link; then the teams Debrief finds in its raid nights ("You
+// raid with …"). 2 Your team, when none was added yet, and "Which one is you?" on it. 3 You're set, then pointers on the
+// real pages: your team's card, a boss, a night and Open; the pull's own tips show the tabs. Each question can be
+// skipped, Back goes to the one before, and Escape or × closes it.
+const GS_STEPS = ['Your character', 'Your team', 'Take a look'];
+let GS = null;
+function gsStart() {
+  if ($('#gs')) return;
+  store.set(TOUR_KEY, '1'); // (the setup is the website's welcome now: no tour after it, and the pages' own tips can show)
+  GS = { step: 'char', back: [], char: null, team: null, wait: 0, rw: null, none: false, t: 0, drawn: '' };
+  const el = document.createElement('div'); el.id = 'gs'; el.className = 'tour gs'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'gsT');
+  document.body.appendChild(el); document.body.classList.add('touring');
+  GS.key = (e) => { if (e.key === 'Escape' && $('#gs')) { e.preventDefault(); e.stopPropagation(); gsClose(); } };
+  document.addEventListener('keydown', GS.key, true);
+  gsDraw();
+}
+function gsClose(then) {
+  const el = $('#gs'); if (GS) { clearTimeout(GS.t); document.removeEventListener('keydown', GS.key, true); } GS = null;
+  if (el) { el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); }
+  if (then) then();
+}
+const gsFind = (gid) => (gid ? groups().find((x) => x.gid === gid) : null);
+const gsGo = (step) => { GS.back.push(GS.step); GS.step = step; GS.wait = 0; gsDraw(); };
+const gsTo = (step) => { GS.step = step; GS.wait = 0; gsDraw(); }; // (moving on by itself: Back skips the step it left)
+function gsDraw() {
+  const el = $('#gs'); if (!el || !GS) return; clearTimeout(GS.t);
+  const s = GS.step, n = s === 'char' || s === 'found' ? 0 : s === 'done' ? 2 : 1, cg = gsFind(GS.char), tg = gsFind(GS.team);
+  const later = (ms) => { GS.t = setTimeout(gsDraw, ms); };
+  const box = (ph) => '<div class="fph-box"><input id="gsIn" placeholder="' + ph + '" autocomplete="off" aria-label="' + ph + '"><button class="btn primary" id="gsAdd" type="button">Add</button></div><div class="fp-msg gs-msg" id="gsMsg"></div>';
+  const btn = (k, t, pri) => '<button class="btn' + (pri ? ' primary' : '') + '" data-gs="' + k + '" type="button">' + t + '</button>';
+  const dots = '<div class="gs-wait" aria-hidden="true"><i></i><i></i><i></i></div>';
+  let body = '', nav = '', key = s;
+  if (s === 'char') {
+    body = cg ? '<h2 id="gsT">Your character</h2><p class="gs-ok">✓ ' + esc(gName(cg)) + ' is added.</p>'
+      : '<h2 id="gsT">Add your character?</h2><p>Your character\'s page on Warcraft Logs brings in every raid night you were in this tier, with any group, and your own rankings. Debrief also finds the teams you raid with.</p>' + box(HS_KIND.char.ph) + '<p class="hs-how">' + HS_KIND.char.how + '</p>';
+    nav = cg ? btn('next', 'Next', true) : btn('skip', 'Skip');
+  } else if (s === 'found') {
+    // (the teams and guilds that logged 2 or more of their raid nights: read in the first seconds of bringing them in)
+    if (!GS.rw && cg && cg.raidsWithAll) GS.rw = cg.raidsWithAll.filter((t) => !groups().some((o) => o.kind !== 'char' && o.id === t.id));
+    if (!GS.rw) { GS.wait = GS.wait || Date.now(); if (!cg || Date.now() - GS.wait > 30000 || (S.progBusy !== cg.gid && Date.now() - GS.wait > 4000)) GS.rw = []; }
+    if (GS.rw && !GS.rw.length) { GS.none = true; gsTo('team'); return; }
+    key += GS.rw ? 'r' : 'w';
+    if (!GS.rw) { body = '<h2 id="gsT">Finding the teams you raid with</h2><p>Debrief is looking through ' + esc(gName(cg)) + '\'s raid nights for the teams and guilds that logged them. This takes a few seconds.</p>' + dots; nav = btn('skip', 'Skip'); later(700); }
+    else { const one = GS.rw.length === 1 ? GS.rw[0] : null, on = (t) => groups().some((o) => o.kind !== 'char' && o.id === t.id);
+      body = '<h2 id="gsT">' + (one ? 'You raid with ' + esc(one.name) : 'Are you on these teams?') + '</h2><p>' + (one ? 'They logged ' + one.n + ' of your ' + one.of + ' raid nights this tier. Add them too to see the whole team\'s progress, with everyone\'s grades.' : 'They logged your raid nights this tier. Add the ones you raid with to see the whole team\'s progress, with everyone\'s grades.') + '</p>' +
+        (one ? '' : '<div class="gs-rw">' + GS.rw.map((t) => '<div class="gs-rwr"><span><b>' + esc(t.name) + '</b><span class="sub">' + t.n + ' of your ' + t.of + ' raid nights</span></span>' + (on(t) ? '<span class="gs-ok">✓ Added</span>' : '<button class="btn" type="button" data-rw="' + t.id + '">Add</button>') + '</div>').join('') + '</div>') + '<div class="fp-msg gs-msg" id="gsMsg"></div>';
+      nav = one ? btn('rwno', 'Skip') + '<button class="btn primary" type="button" data-rw="' + one.id + '">Add ' + esc(one.name) + '</button>' : GS.rw.some(on) ? btn('rwdone', 'Next', true) : btn('rwno', 'Skip'); }
+  } else if (s === 'team') {
+    body = tg ? '<h2 id="gsT">Your team</h2><p class="gs-ok">✓ ' + esc(gName(tg)) + ' is added.</p>'
+      : (GS.none && cg ? '<p class="gs-note">Debrief didn\'t find a team that logged ' + esc(gName(cg)) + '\'s raid nights this tier.</p>' : '') + '<h2 id="gsT">Add your team?</h2><p>Your team\'s or guild\'s page on Warcraft Logs brings in every raid night your team logged this tier, boss by boss, with everyone\'s grades and the team\'s rankings.</p>' + box(HS_KIND.team.ph) + '<p class="hs-how">' + HS_KIND.team.how + '</p>';
+    nav = tg ? btn('next', 'Next', true) : btn('skip', 'Skip');
+  } else if (s === 'me') {
+    if (!tg || meOf()) { gsTo('done'); return; }
+    // (its players come in with its first raid night, a few seconds after it's added)
+    const ml = teamMembers(tg); GS.wait = GS.wait || Date.now();
+    const gaveUp = !ml.length && (Date.now() - GS.wait > 60000 || (!!tg.last && S.progBusy !== tg.gid));
+    key += ml.length ? 'l' : gaveUp ? 'g' : 'w';
+    body = '<h2 id="gsT">Which one is you?</h2>' + (ml.length ? '<p>Pick your character. Debrief adds your own page too, with every raid you were in.</p><div class="me-l">' + ml.map((m) => { const k = m.cls && E.CLASSES[m.cls]; return '<button class="me-c" type="button" data-me="' + esc(m.name) + '"' + (k ? ' style="--cc:' + k[1] + '"' : '') + '>' + (k ? '<img src="' + whIcon('classicon_' + k[2]) + '" alt="" onerror="this.remove()">' : '') + '<span class="me-n">' + esc(m.name) + '</span><span class="me-k">' + plural(m.n, 'night') + '</span></button>'; }).join('') + '</div><div class="fp-msg gs-msg" id="gsMsg"></div>'
+      : gaveUp ? '<p>Debrief didn\'t find ' + esc(gName(tg)) + '\'s players yet. You can pick yourself on its page later.</p>'
+      : '<p>Debrief is bringing in ' + esc(gName(tg)) + '\'s raid nights to list its players. This takes a few seconds.</p>' + dots);
+    nav = gaveUp ? btn('next', 'Next', true) : btn('meno', 'Skip'); if (!ml.length && !gaveUp) later(800);
+  } else {
+    const got = [cg, tg].filter(Boolean);
+    body = got.length ? '<h2 id="gsT">You\'re set</h2><p>Debrief is bringing in your raid nights now. New ones come in by themselves after each raid.</p><div class="gs-got">' + got.map((x) => { const c = x.kind === 'char' && x.cls && E.CLASSES[x.cls];
+        return '<div class="gs-gr">' + banner(x) + '<span><b' + (c ? ' style="color:' + c[1] + '"' : '') + '>' + esc(gName(x)) + '</b><span class="sub">' + (x.kind === 'char' ? 'your character' : 'your team') + '</span></span></div>'; }).join('') + '</div><p>Next, Debrief shows you where to click to go through a raid night, pull by pull.</p>'
+      : '<h2 id="gsT">That\'s all for now</h2><p>You can add your character or your team any time: click <b>Your teams</b> at the top of any page. To look at one raid night, paste its report link on the front page.</p>';
+    nav = got.length ? btn('show', 'Show me', true) : btn('close', 'Done', true);
+  }
+  // (redrawn while it waits: the card doesn't slide in again, and the focus only moves when the question changes)
+  const fresh = GS.drawn !== key; GS.drawn = key;
+  el.innerHTML = '<div class="tr-card gs-card' + (fresh ? '' : ' gs-re') + '"><button class="gs-x" data-gs="close" type="button" aria-label="Close the setup">×</button><div class="tr-bar">' + GS_STEPS.map((_, j) => '<i' + (j <= n ? ' class="on"' : '') + '></i>').join('') + '</div>' +
+    '<div class="gs-k">Step ' + (n + 1) + ' of ' + GS_STEPS.length + ' · ' + GS_STEPS[n] + '</div>' + body +
+    '<div class="tr-nav"><span>' + (GS.back.length && s !== 'done' ? btn('back', 'Back') : '') + '</span><div>' + nav + '</div></div></div>';
+  el.querySelectorAll('[data-gs]').forEach((b) => (b.onclick = () => gsAct(b.dataset.gs)));
+  const inp = $('#gsIn'); if (inp) { $('#gsAdd').onclick = () => gsAdd(s); inp.onkeydown = (e) => { if (e.key === 'Enter') gsAdd(s); }; }
+  el.querySelectorAll('[data-rw]').forEach((b) => (b.onclick = () => gsRw(b)));
+  el.querySelectorAll('[data-me]').forEach((b) => (b.onclick = () => gsMe(b)));
+  if (fresh) { const f = inp || el.querySelector('.me-c, .btn.primary') || el.querySelector('[data-gs="skip"], [data-gs="meno"]'); if (f) f.focus({ preventScroll: true }); }
+}
+function gsAct(a) {
+  if (!GS) return;
+  const s = GS.step, cg = gsFind(GS.char), tg = gsFind(GS.team);
+  if (a === 'close') gsClose();
+  else if (a === 'back') { GS.step = GS.back.pop() || 'char'; GS.wait = 0; gsDraw(); }
+  else if (a === 'skip') gsGo(s === 'team' ? 'done' : 'team');
+  else if (a === 'next') gsGo(s === 'char' ? 'found' : s === 'team' && !meOf() ? 'me' : 'done');
+  // ("Skip" or "Next" on the teams it found: your character's page doesn't ask about them again)
+  else if (a === 'rwno' || a === 'rwdone') { if (cg) { cg.raidsWithNo = true; groupPut(cg); } gsGo(a === 'rwdone' || tg ? 'done' : 'team'); }
+  else if (a === 'meno') { if (tg) { tg.meNo = true; groupPut(tg); } gsGo('done'); }
+  else if (a === 'show') { const gid = (tg || cg).gid; gsClose(() => gsPointStart(gid)); }
+}
+async function gsAdd(s) {
+  const inp = $('#gsIn'), msg = $('#gsMsg'), b = $('#gsAdd'), raw = inp.value.trim(), want = s === 'char' ? 'character' : 'team or guild';
+  if (!groupLink(raw)) { msg.style.color = ''; msg.textContent = WCL.parseLink(raw) ? 'That\'s a report link, which is one raid night. Here, paste your ' + want + ' page. You can open the report from the front page after this.' : raw ? 'That doesn\'t look like a Warcraft Logs ' + want + ' page. The line under this box says where to find it.' : 'Paste the link first. The line under this box says where to find it.'; inp.focus(); return; }
+  b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
+  try { const { g, already } = await groupAdd(raw); if (!GS) return;
+    if (g.kind === 'char') { GS.char = g.gid; if (!meOf()) store.set(ME_KEY, JSON.stringify({ name: g.name, cls: g.cls || null, char: g.gid, at: Date.now() })); } else GS.team = g.gid;
+    if (!already) { groupsBackfill(); if (!S.progBusy) progRun(g); } // (one at a time: one added meanwhile is read right after)
+    gsGo(g.kind === 'char' ? 'found' : meOf() ? 'done' : 'me');
+  } catch (e) { if (!GS || !document.body.contains(b)) return; b.disabled = false; msg.style.color = ''; msg.textContent = e.message.replace(/ \(see "Which link\?" below\)/, ''); }
+}
+async function gsRw(b) {
+  const msg = $('#gsMsg'); b.disabled = true;
+  try { const { g, already } = await groupAdd('https://www.warcraftlogs.com/guild/id/' + b.dataset.rw); if (!GS) return;
+    GS.team = GS.team || g.gid; if (!already) { groupsBackfill(); if (!S.progBusy) progRun(g); }
+    if (GS.rw && GS.rw.length === 1) gsGo('done'); else gsDraw();
+  } catch (e) { if (!GS) return; b.disabled = false; if (msg) { msg.style.color = ''; msg.textContent = e.message; } }
+}
+async function gsMe(b) {
+  const tg = gsFind(GS.team), m = tg && teamMembers(tg).find((x) => x.name === b.dataset.me); if (!m) return;
+  $$('#gs .me-c').forEach((x) => (x.disabled = true)); b.classList.add('on');
+  const msg = $('#gsMsg'); if (msg) { msg.style.color = 'var(--muted)'; msg.textContent = 'Adding your own page…'; }
+  const { cg } = await meAdd(tg, m); if (!GS) return; if (cg) GS.char = GS.char || cg.gid; gsGo('done');
+}
+// ---- after the setup: one pointer at a time on the real pages, to a raid night and its tabs ----
+// A pulsing ring around what to click and a bubble beside it, without dimming, so the page works as usual: the teams page
+// points at your team's card; its page at a boss, then the boss's night menu and Open; once a pull is open, its own tips
+// show the tabs. While your nights are still coming in, the bubble says so. "End the guide" stops it.
+function gsPointStart(gid) {
+  S.gsPoint = { gid }; progressPage(); window.scrollTo(0, 0);
+  clearInterval(S.gsPT); S.gsPT = setInterval(gsPointTick, 500); setTimeout(gsPointTick, 150);
+}
+function gsPointEnd(done) {
+  clearInterval(S.gsPT); S.gsPT = null; S.gsPoint = null; S.gsEl = null; const m = $('#gsm'); if (m) m.remove();
+  removeEventListener('scroll', gsPlace, true); removeEventListener('resize', gsPlace);
+  if (done) { store.set(TIPS_KEY('hub'), '1'); store.set(TIPS_KEY('team'), '1'); } // (the guide showed those pages)
+}
+function gsPointTick() {
+  const P = S.gsPoint; if (!P) { gsPointEnd(); return; }
+  if (S.rep && $('#view')) { gsPointEnd(true); return; } // (a pull is open: its own tips take over)
+  let e = null, t = '', p = '';
+  const pick = (q, tt, pp) => { e = q; t = tt; p = pp; };
+  if ($('.pg-dim') || $('#tour') || $('#ptip') || $('#gs')) { /* (a pop-up or tips are up: the pointer waits) */ }
+  else if ($('#main .pg-hub') && !S.hubHome) { const g = gsFind(P.gid), c = $('#main .pg-hub .hc-card[data-g="' + CSS.escape(P.gid) + '"]');
+    if (c) pick(c, g && g.kind === 'char' ? 'Open your character' : 'Open your team', 'Click its card to see every boss and raid night.'); }
+  else if ($('#main .home.prog') && S.progView) {
+    const cards = $$('#main .pc-card[data-boss]'), open = cards.find((c) => !c.classList.contains('mini'));
+    if (open) pick(open.querySelector('.pc-pick') || open, 'Pick a night, then Open', 'Pick a raid night from the menu, then click Open. Debrief goes through it pull by pull: what went wrong, what went well, and what to fix first.');
+    else if (cards.length) pick(cards.find((c) => !/Killed/.test((c.querySelector('.pc-big') || {}).textContent || '')) || cards[0], 'Pick a boss', 'Each card is one boss, with how far you got. Click one to see its raid nights.');
+    else pick(null, 'Your raid nights are coming in', 'The bosses show up here as soon as the first night is in. It takes a minute or so.');
+  }
+  gsMark(e, t, p);
+}
+function gsMark(e, t, p) {
+  let m = $('#gsm');
+  if (!t) { if (m) m.hidden = true; return; }
+  if (!m) { m = document.createElement('div'); m.id = 'gsm'; m.className = 'gsm'; m.innerHTML = '<div class="gsm-ring"></div><div class="pt-bub gsm-bub" role="status"></div>'; document.body.appendChild(m);
+    addEventListener('scroll', gsPlace, true); addEventListener('resize', gsPlace); }
+  m.hidden = false; S.gsEl = e;
+  const bub = m.querySelector('.gsm-bub');
+  if (m.dataset.t !== t) { m.dataset.t = t;
+    bub.innerHTML = '<div class="pt-k">Getting around</div><b>' + esc(t) + '</b><p>' + esc(p) + '</p><div class="pt-nav"><button class="linkbtn" id="gsmEnd" type="button">End the guide</button></div>';
+    bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in'); $('#gsmEnd').onclick = () => gsPointEnd(true);
+    if (e) { const b = e.getBoundingClientRect(); if (b.top < 80 || b.bottom > innerHeight - 60) e.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
+  gsPlace();
+}
+// (the ring around the spot and the bubble below it, or above when there's no room; with no spot, the bubble sits low in
+// the middle of the screen)
+function gsPlace() {
+  const m = $('#gsm'); if (!m || m.hidden) return;
+  const ring = m.querySelector('.gsm-ring'), bub = m.querySelector('.gsm-bub'), e = S.gsEl && document.body.contains(S.gsEl) ? S.gsEl : null;
+  const bw = Math.min(340, innerWidth - 24); bub.style.width = bw + 'px'; const bh = bub.offsetHeight;
+  if (!e) { ring.hidden = true; bub.dataset.side = 'n'; bub.style.left = Math.round((innerWidth - bw) / 2) + 'px'; bub.style.top = Math.max(70, innerHeight - bh - 24) + 'px'; return; }
+  const b = e.getBoundingClientRect(), pad = 6, h = Math.min(b.height + 2 * pad, innerHeight - 24);
+  ring.hidden = false; ring.style.left = (b.left - pad) + 'px'; ring.style.top = (b.top - pad) + 'px'; ring.style.width = (b.width + 2 * pad) + 'px'; ring.style.height = h + 'px';
+  let top = b.top - pad + h + 14, side = 'b'; if (top + bh > innerHeight - 10) { top = b.top - pad - bh - 14; side = 't'; } if (top < 10) { top = Math.max(10, Math.min(innerHeight - bh - 10, b.top + 12)); side = 'n'; }
+  const left = Math.max(12, Math.min(innerWidth - bw - 12, b.left + Math.min(24, b.width / 2) - 24));
+  bub.style.top = top + 'px'; bub.style.left = left + 'px'; bub.dataset.side = side; bub.style.setProperty('--ax', Math.max(18, Math.min(bw - 18, b.left + Math.min(b.width / 2, 60) - left)) + 'px');
+}
+// ---- Start for someone back (your note, Oct 19): where to go ----
+// Your teams and your character as cards (how far each is), and a card to open one raid night (a report or live log link,
+// or a combat log from this PC); then All teams, and Add a team or character, which runs the setup.
+function whereTo() {
+  if ($('#wtD')) return;
+  HIST.load().then(() => {
+    if ($('#wtD')) return;
+    const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss)), me = meOf();
+    const cards = gl.filter((g) => g.kind !== 'char').concat(gl.filter((g) => g.kind === 'char')).map((g) => teamCard(g, all, order, false)).join('');
+    document.body.insertAdjacentHTML('beforeend', pgDlg('wt', '<section class="wt" id="wt"><button class="gs-x" id="wtX" type="button" aria-label="Close">×</button><h2 id="wtT">Where to?</h2><p class="sub">' + (me ? 'Welcome back, ' + esc(me.name) + '.' : 'Welcome back.') + ' Pick a team, your character, or one raid night.</p>' +
+      '<div class="wt-g">' + cards + '<div class="wt-night"><b>Open a raid night</b><span class="sub">Paste a Warcraft Logs report or live log link.</span><div class="fph-box sm"><input id="wtIn" placeholder="Report or live log link" autocomplete="off" aria-label="Warcraft Logs report or live log link"><button class="btn primary" id="wtGo" type="button">Open</button></div><div class="fp-msg" id="wtMsg"></div>' +
+        '<div class="fph-alt">Or <button class="linkbtn" id="wtFile" type="button">open a combat log</button> from this PC.</div></div></div>' +
+      '<div class="wt-f"><button class="linkbtn" id="wtAll" type="button">All teams</button><button class="linkbtn" id="wtAdd" type="button">+ Add a team or character</button></div></section>'));
+    const d = $('#wtD'), close = () => { d.remove(); document.removeEventListener('keydown', key, true); };
+    const key = (e) => { if (e.key === 'Escape' && document.body.contains(d)) { e.preventDefault(); e.stopPropagation(); close(); } };
+    document.addEventListener('keydown', key, true);
+    d.onclick = (e) => { if (e.target === d) close(); };
+    $('#wtX').onclick = close;
+    $$('#wt [data-g]').forEach((b) => (b.onclick = () => { close(); store.set(GROUP_CUR, b.dataset.g); progressPage(undefined, b.dataset.g); window.scrollTo(0, 0); }));
+    const inp = $('#wtIn'), msg = $('#wtMsg');
+    const go = async () => { msg.style.color = ''; if (groupLink(inp.value)) { msg.textContent = 'That\'s a team or character page. Add it with "Add a team or character" below.'; return; } if (!WCL.parseLink(inp.value)) { msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; }
+      await openReportLink(inp.value, msg); if (S.rep && document.body.contains(d)) close(); };
+    $('#wtGo').onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+    inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(); }, 50);
+    $('#wtFile').onclick = () => { close(); $('#fileIn').click(); };
+    $('#wtAll').onclick = () => { close(); progressPage(); window.scrollTo(0, 0); };
+    $('#wtAdd').onclick = () => { close(); gsStart(); };
+    const f = d.querySelector('.ht-card'); if (f) f.focus({ preventScroll: true });
+  });
+}
 const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder, that\'s Chrome protecting Program Files, and a website can\'t get past it. Use a Warcraft Logs live log instead.';
 // ---------- Progress: every boss of the tier, night by night, from the pulls saved on this PC ----------
 // One row per boss and difficulty, in raid order, with a coloured left edge like everywhere else: orange once killed,
@@ -13646,6 +13833,19 @@ const pgDlg = (id, inner) => '<div class="pg-dim" id="' + id + 'D"><div class="p
 const meOf = () => { try { const m = JSON.parse(store.get(ME_KEY) || 'null'); return m && m.name ? m : null; } catch (e) { return null; } };
 const srvSlug = (x) => String(x || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
 // (a team's players, most nights first: from its saved raid nights, with the class and server the import kept; the regulars
+// (picking yourself on a team: you're remembered, and your own character page is added too, found by name and server)
+async function meAdd(g, m) {
+  store.set(ME_KEY, JSON.stringify({ name: m.name, cls: m.cls, team: g.gid, at: Date.now() }));
+  const reg = ((g.server || '').match(/\((\w{2})\)\s*$/) || [])[1], srv = m.srv || (g.server || '').replace(/\s*\(\w{2}\)\s*$/, '');
+  let note = "Got it: you're " + m.name + '.', cg = null;
+  if (reg && srv) {
+    try { const r = await groupAdd('https://www.warcraftlogs.com/character/' + reg.toLowerCase() + '/' + srvSlug(srv) + '/' + encodeURIComponent(m.name)); cg = r.g;
+      note += r.already ? ' Your own page was already on your list.' : ' Your own page is on All teams now, with every raid you were in.';
+      if (!r.already) { groupsBackfill(); if (!S.progBusy) progRun(cg, true); } }
+    catch (e) { note += " Warcraft Logs didn't find your own page, so add it from All teams when you like."; }
+  }
+  return { note, cg };
+}
 // (2 nights or more) when there are 8 or more of them)
 function teamMembers(g) {
   const nights = new Map(); for (const v of HIST.mem.values()) if (pullGroups(v).includes(g.gid)) { const k = nightOf(v.at); for (const n of v.players || []) { let x = nights.get(n); if (!x) nights.set(n, x = new Set()); x.add(k); } }
@@ -13894,16 +14094,7 @@ function renderProgress(msg, msgErr) {
     $$('#pgMe [data-me]').forEach((b) => (b.onclick = async () => {
       const m = teamMembers(g).find((x) => x.name === b.dataset.me); if (!m) return;
       $$('#pgMe button').forEach((x) => (x.disabled = true)); b.classList.add('on');
-      store.set(ME_KEY, JSON.stringify({ name: m.name, cls: m.cls, team: g.gid, at: Date.now() }));
-      const reg = ((g.server || '').match(/\((\w{2})\)\s*$/) || [])[1], srv = m.srv || (g.server || '').replace(/\s*\(\w{2}\)\s*$/, '');
-      let note = "Got it: you're " + m.name + '.';
-      if (reg && srv) {
-        try { const { g: cg, already } = await groupAdd('https://www.warcraftlogs.com/character/' + reg.toLowerCase() + '/' + srvSlug(srv) + '/' + encodeURIComponent(m.name));
-          note += already ? ' Your own page was already on your list.' : ' Your own page is on All teams now, with every raid you were in.';
-          if (!already) { groupsBackfill(); if (!S.progBusy) progRun(cg, true); } }
-        catch (e) { note += " Warcraft Logs didn't find your own page, so add it from All teams when you like."; }
-      }
-      store.set(GROUP_CUR, g.gid); renderProgress(note);
+      const { note } = await meAdd(g, m); store.set(GROUP_CUR, g.gid); renderProgress(note);
     }));
   }
   if ($('#pgMeAgain')) $('#pgMeAgain').onclick = () => { g.meNo = false; groupPut(g); renderProgress(); };
@@ -13992,6 +14183,9 @@ const backAgain = WCL.HOSTED && !!RQ.get('report') && (RNAV === 'reload' || RNAV
 if (backAgain) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
 const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain;
 if (!tourDone() && sharedLink) S.tourAfterPull = true;
+// (the website's welcome is the setup behind Start now (your idea, Oct 19), so the old tour doesn't open by itself there,
+// and a shared pull link gets that page's own tips; "Take the tour" in the menu still plays it)
+if (WCL.HOSTED && !window.WLA_DESKTOP && !tourDone()) store.set(TOUR_KEY, '1');
 if (WCL.HOSTED) {
   $('#wclBtn').innerHTML = 'Open a report or log<span>paste a Warcraft Logs link, or pick a log on this PC</span>';
   $('#wclBtn').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; home(); setTimeout(() => { const i = $('#hWcl'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } }, 60); };
