@@ -17661,9 +17661,12 @@ function talentsOf(r, p) {
 // a player's talents as the game shows them: the class tree, their hero tree and the spec tree side by side, each node where the game puts it,
 // lit when taken (with its rank) and dim when not, choices as octagons showing the side taken, passives round, the apex node larger, the
 // lines between taken nodes lit. Hover a node for its tooltip.
-function talentTreeHtml(r, p) {
+// (Compare passes another player of the same spec to ring the talents where their picks differ, and one tree to draw: C, H or S)
+function talentTreeHtml(r, p, other, only) {
   const tr = treeOf(p.specName), c = (r.combatants || []).find((x) => x.name === p.name); if (!tr || !c || !c.talents || !c.talents.length) return '';
   const got = new Map(); for (const t of c.talents) got.set(+t.id, (got.get(+t.id) || 0) + (+t.rank || 1));
+  const co = other && (r.combatants || []).find((x) => x.name === other.name), gotO = new Map(); if (co && co.talents) for (const t of co.talents) gotO.set(+t.id, (gotO.get(+t.id) || 0) + (+t.rank || 1));
+  const dif = (n) => !!co && n.entries.map((e) => got.get(e.id) || 0).join() !== n.entries.map((e) => gotO.get(e.id) || 0).join();
   const sub = ((tr.nodes.find((n) => n.t === 'H' && n.entries.some((e) => got.has(e.id))) || {}).sub) || 0;
   const on = (n) => n.entries.some((e) => got.has(e.id)), rk = (n) => n.entries.reduce((v, e) => v + (got.get(e.id) || 0), 0);
   const panel = (label, ns, key) => { if (!ns.length) return ''; const S = 600, U = 44, x0 = Math.min(...ns.map((n) => n.x)), y0 = Math.min(...ns.map((n) => n.y));
