@@ -14208,7 +14208,7 @@ function audit() {
     const over = tp.filter(({ p }) => p.start > 0 && p.start < end).map(({ p }) => '<i class="mcx-pl" style="left:' + X(p.start) + '"></i>').join('') + ticks.map((t) => '<i class="mcx-tk" style="left:' + X(t) + '"></i>').join('') +
       (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('The wipe filter: counted up to ' + T(cut.t) + ', the ' + ordinal(cut.n) + ' death. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
     const axis = '<div class="mcx-ax2">' + [0].concat(ticks, [end]).map((t, i, l) => '<span class="' + (i === 0 ? 'a0' : i === l.length - 1 ? 'a1' : '') + '" style="left:' + X(t) + '">' + T(t) + '</span>').join('') + '</div>';
-    return head + '<div class="mcx-lanes">' + band + rows + wipe + over + axis + '</div>' + totals + '</div>'; });
+    return head + '<div class="mcx-lanes">' + band + rows + wipe + over + axis + '</div></div>'; });
   const refAt = h.length; // (where the reference panels start: they're gathered into one card below)
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
