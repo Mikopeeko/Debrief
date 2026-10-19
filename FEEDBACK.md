@@ -239,25 +239,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
-## 2026-10-18, round 240: Full priority checks for Havoc, Devourer, Assassination and Subtlety (your note: "work on these right now")
-- [x] **Each of the four now has a "Your priority" list,** from the Wowhead guide and the SimulationCraft lists Raidbots sims
-  with, kept to what a log can prove:
-  - **Havoc:** Eye Beam first, then Blade Dance outside Metamorphosis (when you have the Fury for it), then Chaos Strike.
-    Throw Glaive, Reaver's Glaive and Fel Rush aren't judged (Screaming Brutality throws glaives for free), and neither is
-    Essence Break (top players hold it for Eye Beam).
-  - **Devourer:** Soulburst spent on Consume right away outside Void Metamorphosis, Reap or Cull at 4 or more Soul
-    Fragments, and Void Ray at 100 Fury outside the form, before Consume.
-  - **Assassination:** Garrote and Rupture refreshed before they run out, Envenom at 5 combo points before building more,
-    then Mutilate.
-  - **Subtlety:** Secret Technique first in Shadow Dance, and Shadowstrike (not Backstab or Gloomblade) while stealthed.
-    Building at full combo points isn't judged: the SimulationCraft list does it on purpose for Ancient Arts.
-- [x] **Checked on 85 top-ranked players (Mythic, 8 bosses) and fixed where it blamed them.** Where they land now: Havoc
-  89-99%, Devourer 95-100%, Assassination 94-99%, Subtlety 100%. The bars are 85% for good and 75% for could be better.
-  Fixes found by the check: free Throw Glaives, Annihilation before Blade Dance in Metamorphosis, bleeds that drop on their
-  own when the boss leaves (only a bleed still on the boss and about to run out counts), and Subtlety's full combo points.
-- Note: Subtlety's list stays light, because most of its choices depend on things a log can't show.
-
-## 2026-10-18, round 240: Getting around, smoother (your pick: my suggestions, Option B)
+## 2026-10-18, round 241: Getting around, smoother (your pick: my suggestions, Option B)
 - [x] **Back and Forward work inside Debrief.** Every page you open is a step: Home, the teams page, a team, a pull, its tab,
   one pull or the whole night. Before, Back always left the site. (A reload starts on Home, and Back from there goes to
   the pull you were on.)
@@ -280,6 +262,24 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   everywhere.
 - [x] Tested on a real night (desktop and phone): Back and Forward through tabs, pulls and the whole night, the boss
   picker, the wipe filter chip, every tab on the whole night; no errors.
+
+## 2026-10-18, round 240: Full priority checks for Havoc, Devourer, Assassination and Subtlety (your note: "work on these right now")
+- [x] **Each of the four now has a "Your priority" list,** from the Wowhead guide and the SimulationCraft lists Raidbots sims
+  with, kept to what a log can prove:
+  - **Havoc:** Eye Beam first, then Blade Dance outside Metamorphosis (when you have the Fury for it), then Chaos Strike.
+    Throw Glaive, Reaver's Glaive and Fel Rush aren't judged (Screaming Brutality throws glaives for free), and neither is
+    Essence Break (top players hold it for Eye Beam).
+  - **Devourer:** Soulburst spent on Consume right away outside Void Metamorphosis, Reap or Cull at 4 or more Soul
+    Fragments, and Void Ray at 100 Fury outside the form, before Consume.
+  - **Assassination:** Garrote and Rupture refreshed before they run out, Envenom at 5 combo points before building more,
+    then Mutilate.
+  - **Subtlety:** Secret Technique first in Shadow Dance, and Shadowstrike (not Backstab or Gloomblade) while stealthed.
+    Building at full combo points isn't judged: the SimulationCraft list does it on purpose for Ancient Arts.
+- [x] **Checked on 85 top-ranked players (Mythic, 8 bosses) and fixed where it blamed them.** Where they land now: Havoc
+  89-99%, Devourer 95-100%, Assassination 94-99%, Subtlety 100%. The bars are 85% for good and 75% for could be better.
+  Fixes found by the check: free Throw Glaives, Annihilation before Blade Dance in Metamorphosis, bleeds that drop on their
+  own when the boss leaves (only a bleed still on the boss and about to run out counts), and Subtlety's full combo points.
+- Note: Subtlety's list stays light, because most of its choices depend on things a log can't show.
 
 ## 2026-10-18, round 239: Add a team, pick yourself; add a character, add your teams (your notes)
 - [x] **Add a team, and a pop-up asks "Which one is you?"** as soon as its first night is read: the team's players in their
