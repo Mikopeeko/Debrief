@@ -8445,7 +8445,10 @@ function analyze(item, text, opts) {
     // (a buff renewed while it was still up, e.g. a proc landing on one you still hold: noted on that player's buff only,
     // so it changes nothing else. Warcraft Logs sends none for Infusion of Light, Divine Purpose or Dawnlight)
     if (ev === 'SPELL_AURA_REFRESH') { const f = split(line, c + 1), p = f.length >= 12 && f[11] === 'BUFF' && r.players.get(f[4]), b = p && buffPre(p, num(f[8]), f[9]);
-      if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); if (isPlayer(f[0]) && f[0] !== f[4]) { const w = shortName(f[0], f[1]); b.by.set(w, (b.by.get(w) || 0) + 1); } } continue; }
+      if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); if (isPlayer(f[0]) && f[0] !== f[4]) { const w = shortName(f[0], f[1]); b.by.set(w, (b.by.get(w) || 0) + 1); } }
+      // (a debuff a player renewed on an enemy while it was still up: kept with their damage over time events, marked 2, for the early-refresh check)
+      if (f.length >= 12 && f[11] === 'DEBUFF' && !isPlayer(f[4])) { const q0 = r.players.get(f[0]); if (q0) { if (!q0.dotEv) q0.dotEv = []; if (q0.dotEv.length < 30000) q0.dotEv.push([t, 2, f[9], f[4]]); } }
+      continue; }
     // (an empowered spell let go: its rank, on the player who cast it, for the spec checks)
     if (ev === 'SPELL_EMPOWER_END') { const f = split(line, c + 1), p = f.length >= 12 && r.players.get(f[0]); if (p) { if (!p.empL) p.empL = []; if (p.empL.length < 600) p.empL.push([t, f[9], num(f[11])]); } continue; }
     if (!WANTED.has(ev)) continue;
@@ -18093,7 +18096,10 @@ function hpalChecks(reps, name, one) {
       iv.sort((a, b) => a[0] - b[0]); let busy = 0, cs = -1, ce = -1; for (const [a, z] of iv) { if (a > ce) { if (ce > cs) busy += ce - cs; cs = a; ce = z; } else ce = Math.max(ce, z); } if (ce > cs) busy += ce - cs;
       s.abc = c.al >= 10 ? Math.min(1, busy / c.al) : null; s.abcL = c.al; s.busy = busyOf(p, c, t1); Object.assign(s, castMetricsOf(r, p, c, t1)); s.m.cc = s.ccT;
       s.pre = {}; for (const q of HPAL_D.pre.filter(hpOn)) { s.pre[q.k] = prePullOf(r, p, q); s.m['pre:' + q.k] = s.pre[q.k] === false ? [0] : []; }
-      for (const w of wins.slice(w0n)) winDetail(x, w, { names: [wingN], busy: s.busy, mana: true, procsWt: (s.procs || []).map((y) => [y.n, y.wt || []]) }); s.m.abc = (c.gaps || []).filter((g) => g.len >= 4).sort((a, b) => a.t - b.t).map((g) => [g.t, g.t + g.len]); s.abcTop = (c.gaps || []).find((g) => g.t > 1) || null; }
+      for (const w of wins.slice(w0n)) winDetail(x, w, { names: [wingN], busy: s.busy, mana: true, procsWt: (s.procs || []).map((y) => [y.n, y.wt || []]) });
+      if (s.bw && s.bw.length) { const hS = p.healS || [], inH = s.bw.reduce((v, w) => v + sumIn(hS, w.t, Math.min(t1, w.t + 9)), 0), oR = (sumIn(hS, 0, t1) - inH) / Math.max(1, c.al - 9 * s.bw.length);
+        for (const w of s.bw) { w.a = w.t; w.e = Math.min(t1, w.t + 9); w.rate = sumIn(hS, w.a, w.e) / Math.max(1, w.e - w.a); w.outR = oR;
+          winDetail(x, w, { names: ['Beacon of Virtue'], busy: s.busy, mana: true, procsWt: (s.procs || []).map((y) => [y.n, y.wt || []]), setup: [{ n: 'Divine Toll', pre: 0.5, post: 9, info: true }, roth ? { n: 'Aura Mastery', pre: 0.5, post: 9, info: true } : null, { n: 'Holy Light', pre: 1.2, post: 0.1, info: true, lbl: 'Holy Light queued into it' }].filter(Boolean) }); } } s.m.abc = (c.gaps || []).filter((g) => g.len >= 4).sort((a, b) => a.t - b.t).map((g) => [g.t, g.t + g.len]); s.abcTop = (c.gaps || []).find((g) => g.t > 1) || null; }
     // (Avenging Wrath: the healing you did during it, against the whole pull)
     if (b && !crusader) { const hsS = p.healS || []; s.awH = 0; s.awL = 0; for (const [a, e0] of b.sp) { if (a > t1) continue; const e = Math.min(e0, t1); s.awH += sumIn(hsS, a, e); s.awL += Math.max(0, e - a); } s.allH = sumIn(hsS, 0, t1); s.allL = t1; }
     { const mw = wins.slice(w0n); s.m.aw = mw.filter((w) => w.cpm < 0.95 * w.out).map((w) => [w.a, w.e]); s.m.awdt = mw.filter((w) => !w.dt).map((w) => [w.a, w.e]);
@@ -18319,7 +18325,7 @@ function hpalChecks(reps, name, one) {
         (q.rh != null ? '<div class="spc-wv spc-wv2">' + C(q.rh) + '<span> healed by its Divine Toll</span></div>' : '') +
         (roth ? '<div class="spc-wc spc-chk">' + (q.ib == null ? '' : '<span class="' + (q.ib ? 'ok' : 'no') + '">' + (q.ib ? '✓ In Beacon of Virtue' : '✕ Outside it') + '</span>') + '<span class="' + (q.lw > 2 ? 'no' : 'ok') + '">' + (q.lw ? q.lw + ' Holy Power wasted' : 'No Holy Power wasted') + '</span></div>' : '') + '</div>'; }).join('') + '</div>'; };
   const dtCls = (q) => (virtue ? (q.lw > 2 ? 'g0' : q.ib === false ? 'g1' : q.lw ? 'g2' : 'g3') : q.lw > 2 ? 'warn' : 'ok');
-  const VIZ = Object.assign({ apl: () => (one && rows.length === 1 && rows[0].apl && rows[0].apl.log ? aplWhere(rows[0].apl.log, wins.map((w) => ({ t: w.a, e: w.e })), rows[0].len, { n: wingN }, { n: 'Holy Power' }) : aplViz(aplSl)), dth: () => { const l = rows.flatMap((s) => s.dtC || []); if (!l.length) return ''; const n = {}; for (const q of l) n[dtCls(q)] = (n[dtCls(q)] || 0) + 1; return spcSumBar(n, virtue ? LG.dt : { ok: 'Nothing wasted, or 1 or 2', warn: '3 or more wasted' }) + dtBoxes(); } }, { devam: () => amCards(), aw: () => winT }, bwD && bwD.bws.length ? { act: () => bvBoxes() } : {});
+  const VIZ = Object.assign({ apl: () => (one && rows.length === 1 && rows[0].apl && rows[0].apl.log ? aplWhere(rows[0].apl.log, wins.map((w) => ({ t: w.a, e: w.e })), rows[0].len, { n: wingN }, { n: 'Holy Power' }) : aplViz(aplSl)), dth: () => { const l = rows.flatMap((s) => s.dtC || []); if (!l.length) return ''; const n = {}; for (const q of l) n[dtCls(q)] = (n[dtCls(q)] || 0) + 1; return spcSumBar(n, virtue ? LG.dt : { ok: 'Nothing wasted, or 1 or 2', warn: '3 or more wasted' }) + dtBoxes(); } }, { devam: () => amCards(), aw: () => winT }, bwD && bwD.bws.length ? { act: () => bvBoxes() + (one && bwD && bwD.bws.length ? '<div class="spc-ws">' + bwD.bws.map(bvCard).join('') + '</div>' : '') } : {});
   // (a bar made of parts, with its legend: Procs, Holy Power's sources and spenders, mana's)
   const PC = SPC_PC, barRow = spcBarRow, facts = spcFacts;
   const pctM = (v) => (!mx ? C(v) : barNum(v / mx) + (v >= mx ? ' bars' : '')), ofBar = (v) => pctM(v) + (mx && v < mx ? ' of a bar' : '');
@@ -18342,6 +18348,10 @@ function hpalChecks(reps, name, one) {
   const jT2 = jN ? facts([[jN, 'Judgments cast'], [jHp, 'Holy Power from Judgment'], jProc ? [jProc, 'Infusions Judgment granted'] : null, truth && heal.get('Truth Prevails') ? [C(heal.get('Truth Prevails')), 'healed by Truth Prevails'] : null,
     gj && heal.get('Greater Judgment') ? [C(heal.get('Greater Judgment')), 'prevented by Greater Judgment'] : null, revel && mnG.get('Divine Revelations') ? [pctM(mnG.get('Divine Revelations')), 'mana back (Divine Revelations)'] : null]) +
     '' : '';
+  const bvCard = (w) => { const g = bwD ? bwD.bwG(w) : 2, st = g >= 2 ? 'ok' : g === 1 ? 'warn' : 'bad';
+    return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e || w.t + 9) + '</b><span class="sub">' + (bwD ? bwD.GN[g] : '') + '</span></div>' +
+      (w.rate != null ? '<div class="spc-wv">' + C(w.rate) + '<span> HPS</span></div><div class="spc-wo">Rest of the pull: ' + C(w.outR) + (w.vh >= 1000 ? ', and ' + C(w.vh) + ' healed through your Beacons' : '') + '</div>' : '') +
+      '<div class="spc-wc spc-chk">' + winTagsHtml(w) + '</div>' + winLowerHtml(w) + '</div>'; };
   const hpalWinCard = (w) => { const st = w.cpm >= 0.95 * w.out ? 'ok' : w.cpm >= 0.85 * w.out ? 'warn' : 'bad';
     return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + w.a.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.a) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.e - w.a) + ' seconds, ' + w.inN + ' casts</span></div>' + (w.rate != null ? '<div class="spc-wv">' + C(w.rate) + '<span> HPS</span></div><div class="spc-wo">Rest of the pull: ' + C(w.outR) + '</div>' : '') + '<div class="spc-wv' + (w.x != null ? ' spc-wv2' : '') + '">' + fmtCpm(w.cpm) + '<span> casts a minute, against ' + fmtCpm(w.out) + ' outside it</span></div><div class="spc-wc spc-chk"><span class="' + (w.dt ? 'ok' : 'no') + '">' + (w.dt ? '✓ Divine Toll' : '✕ No Divine Toll') + '</span>' + (w.io ? '<span class="ok">' + plural(w.io, 'Infusion') + ' spent</span>' : '') + winTagsHtml(w) + '</div>' + winLowerHtml(w) + '</div>'; };
   const winT = wins.length ? (one ? '<div class="spc-ws">' + wins.map(hpalWinCard).join('') + '</div>' : '') : '';
@@ -18369,7 +18379,7 @@ function hpalChecks(reps, name, one) {
   // your tier set means it isn't graded)
   const DROP = new Set(['rev', 'lm', 'self', 'j', 'jio', 'am', 'awdt', 'dev', 'dth', 'p:Dawnlight'].concat(tier4 ? ['hlo'] : [])); for (const g of groups) g.l = g.l.filter((c) => !DROP.has(c.k));
   Object.assign(VIZ, SH.VIZ); Object.assign(MERGE, SH.MERGE); Object.assign(WT, SH.WT, { 'win:cast': 1.5, 'win:proc': 1 });
-  if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log); if (c.k === 'aw' && wins.length) { c.cards = wins.map(hpalWinCard); c.cardsL = 'Each ' + wingN + ', side by side'; } }
+  if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log); if (c.k === 'aw' && wins.length) { c.cards = wins.map(hpalWinCard); c.cardsL = 'Each ' + wingN + ', side by side'; } if (c.k === 'act' && bwD && bwD.bws.length) { c.cards = bwD.bws.map(bvCard); c.cardsL = 'Each Beacon of Virtue, side by side'; } }
   const LAYOUT = [['Rotation', [['Casting', ['abc'].concat(SH.keys.cast)], ['Your priority', ['apl']], ['Holy Shock and Judgment', ['hs', 'ii', 'jhs', 'p-empyrean-legacy', 'p-awakening'].concat(virtue ? [] : ['dth'])], ['Infusion of Light and Flash of Light', ['p-infusion-of-light', 'fol', 'folb']]]],
     ['Resources', [['Holy Power', ['hp', 'ef', 'b5', 'p-divine-purpose', 'p-dawnlight']], ['Mana', ['mana', 'hlo', 'mnx']]]],
     ['Cooldowns', [['Beacon of Virtue', ['bv', 'act', 'dt', 'cd-divine-toll', 'dth', 'am']], [wingN, ['cd-' + wingN.toLowerCase().replace(/ /g, '-'), 'aw', 'win-cast', 'win-proc', 'awh', 'awdt', 'p-hand-of-divinity']], ['Aura Mastery', ['devam', 'cd-aura-mastery', 'dev']]]]];
@@ -18413,7 +18423,7 @@ function hpalChecks(reps, name, one) {
     { t: 'Mana', ic: 'Holy Light', txt: 'Mana left at the kill is healing you never did: Holy Light is how you spend it. Aim to run low near the end without running out early.',
       tiles: [{ k: 'mk', l: 'Mana at the kill', v: kl2.length ? kl2[kl2.length - 1].mana : null, f: P1, b: 'lo' }], mana: one && rows[0] ? { pts: rows[0].mnL || [], end: rows[0].len } : null },
   ] };
-  sumO.addFirst = ['Before the pull']; sumO.addAuto = ['Casting', 'Your priority', wingN, 'Your stats']; sumO.dropK = ['abc'];
+  sumO.addFirst = ['Before the pull']; sumO.addAuto = ['Casting', 'Your priority', 'Beacon of Virtue', wingN, 'Your stats']; sumO.dropK = ['abc'];
   return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait, sum: sumO };
 }
 
@@ -20178,7 +20188,7 @@ function busyOf(p, c, t1) {
 // cast in it, and the procs wasted in it)
 function winDetail(x, w, o) {
   const { p, c } = x, a = w.a, e = w.e, len = Math.max(1, e - a), lc = (n) => String(n).toLowerCase(), nms = (o.names || []).map(lc);
-  w.setup = (o.setup || []).map((q) => ({ n: q.n, post: q.post, ok: (p.byName.get(lc(q.n)) || []).some((u) => u >= a - (q.pre || 12) && u <= a + (q.post || 0.3)) || (!!q.orBuf && (p.buffs.get(q.orBuf) || { sp: [] }).sp.some(([u, v]) => u <= a + 0.2 && (v == null || v >= a - 0.2))) }));
+  w.setup = (o.setup || []).map((q) => ({ n: q.n, post: q.post, info: q.info, lbl: q.lbl, ok: (p.byName.get(lc(q.n)) || []).some((u) => u >= a - (q.pre || 12) && u <= a + (q.post || 0.3)) || (!!q.orBuf && (p.buffs.get(q.orBuf) || { sp: [] }).sp.some(([u, v]) => u <= a + 0.2 && (v == null || v >= a - 0.2))) }));
   w.busyIn = Math.min(1, (o.busy || []).reduce((v, [u, z]) => v + Math.max(0, Math.min(z, e) - Math.max(u, a)), 0) / len);
   if (o.mana) { const mr = (p.mana || []).filter(([u]) => u <= a + 0.05).pop(); w.manaA = mr ? mr[1] : null; }
   w.potIn = COMBAT_POTS.some((n) => (p.byName.get(n) || []).some((u) => u >= a - 30 && u <= e)); w.lustIn = LUST_BUFFS.some((n) => (p.buffs.get(n) || { sp: [] }).sp.some(([u, v]) => u < e && (v == null || v > a)));
@@ -20188,7 +20198,7 @@ function winDetail(x, w, o) {
 }
 // (a window card's extra marks, and its lower half: mana at the start, the share spent casting, and what you cast, in order and counted)
 function winTagsHtml(w) { const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
-  return (w.setup || []).map((q) => ck(q.ok, q.n + (q.post ? ' with it' : ' before'))).join('') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : ''); }
+  return (w.setup || []).filter((q) => !q.info || q.ok).map((q) => ck(q.ok, q.lbl || q.n + (q.post ? ' with it' : ' before'))).join('') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : ''); }
 function winLowerHtml(w) { const cnt = new Map(); for (const [, n] of w.inside || []) cnt.set(n, (cnt.get(n) || 0) + 1); const top = [...cnt].sort((u, v) => v[1] - u[1]).slice(0, 4);
   return '<div class="spc-wm">' + (w.manaA != null ? '<span>Mana at the start: <b>' + Math.round(100 * w.manaA) + '%</b></span>' : '') + (w.busyIn != null ? '<span>Casting <b>' + Math.round(100 * w.busyIn) + '%</b> of it</span>' : '') + '</div>' +
     ((w.inside || []).length ? '<div class="spc-wi">' + w.inside.slice(0, 28).map(([u, n]) => '<span title="' + esc(n + ', ' + T(u)) + '">' + spIc(n) + '</span>').join('') + '</div><div class="spc-wn">' + top.map(([n, v]) => v + ' ' + esc(n)).join(' · ') + '</div>' : ''); }
@@ -20243,7 +20253,7 @@ function genChecks(spec, D) { const T = genTuned(spec, D); return (reps, name, o
 // when the boss was out of reach in a pull: stretches of 6 s or more, up to t1, when no player had any debuff of theirs on a boss
 // unit (an intermission, or the whole raid on another target). Kept on the pull, worked out once.
 function bossAway(r, bossG, t1) {
-  if (!r._bossOn) { const sp = []; for (const p of r.players.values()) { const open = new Map(); for (const [t, k, nm, g] of p.dotEv || []) { if (!bossG.has(g)) continue; const key = g + '|' + nm; if (k === 1) { if (!open.has(key)) open.set(key, t); } else if (open.has(key)) { sp.push([open.get(key), t]); open.delete(key); } } for (const [, a] of open) sp.push([a, Infinity]); }
+  if (!r._bossOn) { const sp = []; for (const p of r.players.values()) { const open = new Map(); for (const [t, k, nm, g] of p.dotEv || []) { if (!bossG.has(g)) continue; const key = g + '|' + nm; if (k === 1) { if (!open.has(key)) open.set(key, t); } else if (k === 0 && open.has(key)) { sp.push([open.get(key), t]); open.delete(key); } } for (const [, a] of open) sp.push([a, Infinity]); }
     sp.sort((u, w) => u[0] - w[0]); const un = []; for (const [a, b] of sp) { if (un.length && a <= un[un.length - 1][1] + 1) un[un.length - 1][1] = Math.max(un[un.length - 1][1], b); else un.push([a, b]); } r._bossOn = un; }
   const out = []; let prev = null; for (const [a, b] of r._bossOn) { if (a >= t1) break; if (prev != null && a - prev >= 6) out.push([prev, a]); prev = prev == null ? b : Math.max(prev, b); }
   if (prev != null && t1 - prev >= 6) out.push([prev, t1]); return out; // (before the first debuff is the pull's start, not the boss away)
@@ -20344,13 +20354,28 @@ function genRun(spec, D, reps, name, one) {
     if (dots.length) { const bossG = new Set([...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name)).map(([g]) => g)), ev = p.dotEv || [];
       for (const q of dots) { const nm = lc(q.n), mine = ev.filter((e) => lc(e[2]) === nm && e[0] <= t1); if (!mine.length) { s.dot[q.n] = { up: 0, sp: [] }; continue; }
         const tgt = bossG.size && mine.some((e) => bossG.has(e[3])) ? bossG : new Set([[...mine.reduce((m, e) => m.set(e[3], (m.get(e[3]) || 0) + 1), new Map())].sort((a, b) => b[1] - a[1])[0][0]]);
-        const sp = [], open = new Map(); for (const [t, k, , g] of mine) { if (!tgt.has(g)) continue; if (k === 1) { if (!open.has(g)) open.set(g, t); } else if (open.has(g)) { sp.push([open.get(g), t]); open.delete(g); } }
+        const sp = [], open = new Map(); for (const [t, k, , g] of mine) { if (!tgt.has(g)) continue; if (k === 1) { if (!open.has(g)) open.set(g, t); } else if (k === 0 && open.has(g)) { sp.push([open.get(g), t]); open.delete(g); } }
         for (const [, a] of open) sp.push([a, t1]); sp.sort((u, w) => u[0] - w[0]); const un = []; for (const [a, b] of sp) { if (un.length && a <= un[un.length - 1][1]) un[un.length - 1][1] = Math.max(un[un.length - 1][1], b); else un.push([a, b]); }
         // (the boss out of reach: stretches of 6 s or more when nobody in the raid had anything on it, like an intermission or the raid
         // on another target. They don't count against anyone: left out of the time, and a gap only counts its part outside them)
         const away = tgt === bossG ? bossAway(r, bossG, t1) : [];
         const first = un.length ? un[0][0] : t1, upL = un.reduce((v, [a, b]) => v + Math.max(0, Math.min(b, t1) - a), 0), awayT = away.reduce((v, [x, y]) => v + aliveSecs(r, p, x, y), 0), base = Math.max(1, alive - Math.min(first, 6) - awayT);
         s.dot[q.n] = { up: Math.min(1, upL / base), sp: un }; const gaps = [], gap = (a, b) => { let x0 = a; for (const [x, y] of away) { if (y <= x0 || x >= b) continue; if (x - x0 >= 3) gaps.push([x0, x]); x0 = Math.max(x0, y); } if (b - x0 >= 3) gaps.push([x0, b]); }; let prev = Math.min(first, 6); for (const [a, b] of un) { if (a - prev >= 3 && !inDead(a)) gap(prev, a); prev = Math.max(prev, b); } if (t1 - prev >= 3 && !inDead(t1 - 1)) gap(prev, t1); s.m['dot:' + q.n] = gaps; } }
+    // (refreshed too early (Oct 19, "for dot classes ... how often they are early refreshing and not utilizing the pandemic window"): a renewal with more
+    // than 30% of the damage over time left throws the rest away. Its full length is read from your own applications that ran out on their own (talents
+    // that lengthen it included); a renewal in the 8 seconds before your big window is left out (the guides refresh before it), and so is one with two or
+    // more bosses up when the spec spreads it on cooldown there (clipMinB))
+    if (dots.length) { const bossG2 = new Set([...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name)).map(([g]) => g)), winP = WIN ? (WIN.names || [WIN.n]).flatMap((n) => p.byName.get(lc(n)) || []) : [];
+      const bossUp = (t) => [...(r.hpUnits || new Map())].filter(([g, u]) => bossG2.has(g) && (u.samples || []).length && t <= u.samples[u.samples.length - 1][0] + 1 && (u.samples[Math.min(u.samples.length - 1, Math.max(0, Math.floor(t)))] || [0, 0])[1] > 0).length;
+      s.clip = {}; for (const q of dots) { if (!q.clip) continue; const nm = lc(q.n), byG = new Map();
+        for (const e of (p.dotEv || []).filter((y) => lc(y[2]) === nm && y[0] <= t1 && (!bossG2.size || bossG2.has(y[3]))).sort((u, w) => u[0] - w[0])) { if (!byG.has(e[3])) byG.set(e[3], []); byG.get(e[3]).push(e); }
+        const smp = []; for (const l of byG.values()) for (let i = 0; i < l.length - 1; i++) if (l[i][1] === 1 && l[i + 1][1] === 0 && l[i + 1][0] < t1 - 1) smp.push(l[i + 1][0] - l[i][0]);
+        const spreadT = bossG2.size ? (p.dotEv || []).filter((y) => y[1] === 1 && lc(y[2]) === nm && !bossG2.has(y[3])).map((y) => y[0]) : [];
+        smp.sort((u, w) => u - w); const Dd = smp.length >= 2 ? smp[Math.floor(smp.length / 2)] : q.dur; if (!Dd || Dd < 4) continue; const pw = 0.3 * Dd, o = { n: 0, early: [], dur: Dd };
+        for (const l of byG.values()) { let exp = null; for (const [t, k] of l) { if (k === 1) exp = t + Dd; else if (k === 0) exp = null; else if (exp != null) { const rem = exp - t; if (rem <= 0) { exp = t + Dd; continue; } o.n++;
+          if (rem > pw + 0.5 && !winP.some((u) => u >= t - 0.5 && u <= t + 8) && !spreadT.some((u) => Math.abs(u - t) <= 0.5) && !(q.clipMinB && bossUp(t) >= q.clipMinB)) o.early.push({ t, lost: rem - pw }); exp = t + Dd + Math.min(rem, pw); } } }
+        s.clip[q.n] = o; }
+      s.m.clip = Object.values(s.clip).flatMap((o) => o.early.map((y) => y.t)).sort((u, w) => u - w); }
     // (a buff kept up on yourself: its share of the time you were alive)
     for (const q of ups) { const raw = (q.names || [q.n]).map((n) => p.buffs.get(n)).filter(Boolean).flatMap((b) => b.sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)])).sort((u, w) => u[0] - w[0]), sp = [];
       for (const [a, e] of raw) { if (sp.length && a <= sp[sp.length - 1][1]) sp[sp.length - 1][1] = Math.max(sp[sp.length - 1][1], e); else sp.push([a, e]); } const upL = sp.reduce((v, [a, e]) => v + Math.max(0, e - a), 0);
@@ -20494,6 +20519,13 @@ function genRun(spec, D, reps, name, one) {
   for (const q of dots) { const l = rows.map((s) => [s, s.dot[q.n]]).filter(([, d]) => d); if (!l.length) continue; const al = l.reduce((v, [s]) => v + s.len, 0), f = l.reduce((v, [s, d]) => v + d.up * s.len, 0) / Math.max(1, al), okF = q.ok || K.dots[0], warnF = q.warn || K.dots[1];
     add(gT, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + ' uptime', pct(f), q.n + ' was on the boss ' + pct(f) + ' of the time you were alive.', 'dot:' + q.n, (q.why ? q.why + ' ' : '') + 'The first seconds of the pull aren\'t counted. ' + okP(okF) + ' The times listed are the gaps of 3 seconds or more.');
     if (f < okF) { const w = worst('dot:' + q.n); gT.l[gT.l.length - 1].tip = q.tip || 'Refresh ' + q.n + ' before it runs out' + (w ? '. Your longest gap was ' + Math.round(w.b - w.a) + ' seconds, from ' + atT(w) + '.' : '.'); } }
+  // (damage over time refreshed too early)
+  { const by = new Map(); for (const s of rows) for (const [n, o] of Object.entries(s.clip || {})) { const z = by.get(n) || { n: 0, early: [] }; z.n += o.n; z.early.push(...o.early); by.set(n, z); }
+    const N = [...by.values()].reduce((v, z) => v + z.n, 0), E = [...by.values()].reduce((v, z) => v + z.early.length, 0);
+    if (N >= 4) { const f = E / N, lost = [...by.values()].reduce((v, z) => v + z.early.reduce((a, y) => a + y.lost, 0), 0);
+      add(gT, f <= 0.1 ? 'ok' : f <= 0.25 ? 'warn' : 'bad', dots[0].ic || dots[0].n, 'Refreshed too early', E + '<span>/' + N + '</span>', E ? E + ' of your ' + N + ' refreshes came before the last 30% (the pandemic window), throwing away about ' + plural(Math.max(1, Math.round(lost)), 'second') + ' of damage over time. ' + andL([...by].filter(([, z]) => z.early.length).map(([n, z]) => n + ' ' + z.early.length + ' of ' + z.n)) + '.' : 'Every one of your ' + N + ' refreshes came in the last 30% (the pandemic window).', 'clip',
+        (D.clipWhy ? D.clipWhy + ' ' : '') + 'A refresh adds the time that was left, up to 30% of the full length (the pandemic window). Refresh any earlier and the rest is thrown away. A refresh in the 8 seconds before your big cooldown is not counted, because the guides refresh before it, and neither is one that also spread it to an add. 10% or fewer early is good. The times listed are each early one.');
+      gT.l[gT.l.length - 1].dir = 'lo'; if (f > 0.1) gT.l[gT.l.length - 1].tip = D.clipTip || 'Refresh your damage over time in its last 30%, not earlier.'; } }
   // (the resource)
   if (res) { const g = sum((s) => s.resG), w = sum((s) => s.resW); if (g) { const f = w / g, okF = res.ok || K.res[0], warnF = res.warn || K.res[1];
     const nl = res.nl || res.n; add(grp(res.n), f <= okF ? 'ok' : f <= warnF ? 'warn' : 'bad', res.ic || D.ic, res.n + ' wasted', pct(f), w ? Math.round(w).toLocaleString('en-US') + ' of the ' + Math.round(g).toLocaleString('en-US') + ' ' + nl + ' you gained came while you were already full, so ' + (Math.round(w) === 1 ? 'it was' : 'they were') + ' lost.' : 'None of the ' + Math.round(g).toLocaleString('en-US') + ' ' + nl + ' you gained was lost.', 'res',
@@ -20609,7 +20641,7 @@ function genRun(spec, D, reps, name, one) {
     if (over.length) add(gS, 'warn', STAT_IC[over[0]], 'Past the falloff point', String(over.length), andL(over.map((x) => NM[x] + ' (' + fm(stv[x]) + ') is past ' + fm(STAT_DR[x]))) + ', where each point gives 10% less.', 'st:dr', 'Past a set rating, each point of a stat gives less: 10% less past the first line, more past the next. Spread your stats out instead.'); }
   // ---- the page ----
   const sl = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  const LAYOUT = [['Rotation', [['Casting', ['abc', 'cpm', 'cc']], [aplN, ['apl', 'rep'].concat(((D.apl && D.apl.levels) || []).map((L, i) => 'lv-' + i))], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n))]]]];
+  const LAYOUT = [['Rotation', [['Casting', ['abc', 'cpm', 'cc']], [aplN, ['apl', 'rep'].concat(((D.apl && D.apl.levels) || []).map((L, i) => 'lv-' + i))], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n)).concat(['clip'])]]]];
   if (res || D.mana) LAYOUT.push(['Resources', [res ? [res.n, ['res']] : null, D.mana ? ['Mana', ['mana']] : null].filter(Boolean)]);
   if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch && D.upFirst) ch[1].splice(1, 0, b); else if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
   LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', 'win-cast', 'win-dots', 'win-res', 'win-proc', 'wr', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
@@ -20633,7 +20665,7 @@ function genRun(spec, D, reps, name, one) {
   if (pres.length) MERGE['Before the pull'] = { ic: pres[0].ic || pres[0].n, main: 'pre:' + pres[0].k, lead: L0.pre || 'Be ready before the boss is pulled. These cost nothing in the fight.' };
   if (OPEN) MERGE.Opener = { ic: OPEN.ic || D.ic, main: 'open', lead: OPEN.lead || 'Start the pull with your cooldowns stacked.' };
   if (stv) MERGE['Your stats'] = { ic: STAT_IC[(ST.goal || ['mastery'])[0]], main: ST.goal ? 'st:goal' : 'st:order', lead: ST.lead || '' };
-  const WT = { abc: 2, cpm: 0, cc: 1, res: 2, mana: 2, apl: 3, win: 3, open: 2, 'open:x': 0, 'win:cast': 1.5, 'win:dots': 1, 'win:res': 1, 'win:proc': 1, pot: 1, 'st:goal': 1, 'st:low': 1, 'st:order': 1, 'st:dr': 0.5 }; for (const q of pres) WT['pre:' + q.k] = q.w || 1; for (const q of pairL) WT['pr:' + q.k] = q.w || 2; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
+  const WT = { abc: 2, cpm: 0, cc: 1, clip: 1.5, res: 2, mana: 2, apl: 3, win: 3, open: 2, 'open:x': 0, 'win:cast': 1.5, 'win:dots': 1, 'win:res': 1, 'win:proc': 1, pot: 1, 'st:goal': 1, 'st:low': 1, 'st:order': 1, 'st:dr': 0.5 }; for (const q of pres) WT['pre:' + q.k] = q.w || 1; for (const q of pairL) WT['pr:' + q.k] = q.w || 2; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
   const LG = {}; for (const q of procs) LG['p:' + q.n] = { ok: 'Spent', bad: 'Wasted' };
   const TOPB = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const keyN = new Set([].concat(...rot.concat(cds, procs, dots, ups).map((q) => [q.n].concat(q.tal || []))).filter((n) => TAL && TAL.names.has(n)));
@@ -20726,7 +20758,7 @@ function genAplRun(x, s, A, k) {
     const ev = (b.dose || []).filter(([u]) => u >= sp[0] && u <= t).map(([u, m]) => [u, m]).concat((b.rd || []).filter((u) => u >= sp[0] && u <= t).map((u) => [u, -1])).sort((u, w) => u[0] - w[0]);
     for (const [, m] of ev) st = m === -1 ? Math.max(1, st - 1) : m; return st; };
   const bossG = new Set([...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name)).map(([g]) => g));
-  const dSp = new Map(), debOf = (n) => { if (dSp.has(n)) return dSp.get(n); const sp = [], open = new Map(); for (const [t, kk, nm, g] of p.dotEv || []) { if (lc(nm) !== lc(n) || (bossG.size && !bossG.has(g))) continue; if (kk === 1) { if (!open.has(g)) open.set(g, t); } else if (open.has(g)) { sp.push([open.get(g), t]); open.delete(g); } } for (const [, a] of open) sp.push([a, t1]); dSp.set(n, sp); return sp; };
+  const dSp = new Map(), debOf = (n) => { if (dSp.has(n)) return dSp.get(n); const sp = [], open = new Map(); for (const [t, kk, nm, g] of p.dotEv || []) { if (lc(nm) !== lc(n) || (bossG.size && !bossG.has(g))) continue; if (kk === 1) { if (!open.has(g)) open.set(g, t); } else if (kk === 0 && open.has(g)) { sp.push([open.get(g), t]); open.delete(g); } } for (const [, a] of open) sp.push([a, t1]); dSp.set(n, sp); return sp; };
   const debRem = (n, t) => { const sp = debOf(n).filter(([a, e]) => a <= t && e > t); return sp.length ? Math.max(...sp.map(([, e]) => e - t)) : 0; };
   // (a resource's level over time, in the log's own units: set by each reading the log takes at a cast (the level before its cost), moved by every gain
   // and spend between. Rage, Runic Power, Astral Power and Soul Shards are read in tenths, so their gains count ten times)
@@ -20933,7 +20965,7 @@ const GEN_SPECS = {
       { s: 'Sunfire', if: { dremOf: 'Sunfire', drem: 2 }, why: 'Sunfire was about to fall off', tip: 'Keep Sunfire on the boss. Refresh it before it falls off.' },
       { s: 'Moonfire', if: { dremOf: 'Moonfire', drem: 2 }, why: 'Moonfire was about to fall off', tip: 'Keep Moonfire on the boss. Refresh it before it falls off.' },
       { s: 'Sunfire', if: { dremOf: 'Sunfire', drem: 5.4, nos: ["Eclipse (Lunar)","Eclipse (Solar)","Incarnation: Chosen of Elune","Celestial Alignment"] }, why: 'Sunfire was in its last 30% outside Eclipse', tip: 'Outside Eclipse, refresh Sunfire in its last 5 seconds (the time left carries over), so you never need to inside Eclipse.' },
-      { s: 'Moonfire', if: { dremOf: 'Moonfire', drem: 6.6, nos: ["Eclipse (Lunar)","Eclipse (Solar)","Incarnation: Chosen of Elune","Celestial Alignment"] }, why: 'Moonfire was in its last 30% outside Eclipse', tip: 'Outside Eclipse, refresh Moonfire in its last 6 seconds (the time left carries over), so you never need to inside Eclipse.' },
+      { s: 'Moonfire', if: { dremOf: 'Moonfire', drem: 5.4, nos: ["Eclipse (Lunar)","Eclipse (Solar)","Incarnation: Chosen of Elune","Celestial Alignment"] }, why: 'Moonfire was in its last 30% outside Eclipse', tip: 'Outside Eclipse, refresh Moonfire in its last 5 seconds (the time left carries over), so you never need to inside Eclipse.' },
       { s: 'Starfall', if: { buff: "Starweaver's Warp" }, why: "Starweaver's Warp made it free", tip: "Spend Starweaver's Warp on Starfall right away." },
       { s: 'Starsurge', alt: ['Starfall'], if: { any: [{ buff: 'Touch the Cosmos' }, { buff: "Starweaver's Weft" }] }, why: 'a free one (Touch the Cosmos or Starweaver\'s Weft) was up', tip: 'Spend Touch the Cosmos and Starweaver\'s Weft right away (Touch the Cosmos on Starfall when you play Starweaver).' },
       { s: 'Starsurge', alt: ['Starfall'], if: { res: ['8', 800] }, why: 'you were within 20 Astral Power of full', tip: 'Within 20 Astral Power of full, spend it before you cast another builder.' },
@@ -20944,7 +20976,7 @@ const GEN_SPECS = {
       { n: 'Ascendant Fires', use: ['Starfire'], max: 3, why: 'Both guides: inside your big cooldown, Starfire uses Ascendant Fires for instant casts. Spend them.' }],
     ups: [{ n: 'Eclipse', ic: 'Lunar Eclipse', names: ['Eclipse (Lunar)', 'Eclipse (Solar)'], label: 'Time in Eclipse', upTxt: 'You were in Eclipse', ok: 0.65, warn: 0.5, why: 'Icy Veins: you can keep Eclipse up, cooldowns included, 65% to 75% of the time. Never sit at 2 charges, and line it up with Fury of Elune or Force of Nature.' }], upN: 'Eclipse', upCh: 'Rotation', upFirst: true,
     rot: [{ n: 'Fury of Elune', cd: 60, ok: 0.85, warn: 0.7, why: 'Fury of Elune gives Astral Power and hits hard. With Lunation, Wowhead sends it on cooldown; otherwise it goes out with Eclipse or your big cooldown.' }, { n: 'Force of Nature', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Force of Nature on cooldown, paired with your big cooldown or your next Eclipse.' }],
-    dots: [{ n: 'Moonfire', why: 'Moonfire\'s ticks bring Shooting Stars, so keep it on the boss.' }, { n: 'Sunfire', why: 'Sunfire\'s ticks bring Shooting Stars, so keep it on the boss.' }],
+    dots: [{ n: 'Moonfire', clip: true, dur: 18, why: 'Moonfire\'s ticks bring Shooting Stars, so keep it on the boss.' }, { n: 'Sunfire', clip: true, dur: 18, why: 'Sunfire\'s ticks bring Shooting Stars, so keep it on the boss.' }], clipWhy: 'Wowhead: outside Eclipse, refresh Moonfire and Sunfire once they are in the pandemic window (their last 5 seconds). Before Incarnation, refreshing them early so they last through it is right.', clipTip: 'Refresh Moonfire and Sunfire in their last 5 seconds. When you have to move, keep some Astral Power for Starsurge instead of recasting them (Wowhead).',
     res: { ty: '8', n: 'Astral Power', why: 'Spend Astral Power on Starsurge or Starfall before you\'re full.' },
     cds: [{ n: 'Incarnation: Chosen of Elune', names: ['Incarnation: Chosen of Elune', 'Celestial Alignment'], cd: 180, chT: [['Whirling Stars', 2]], ok: 0.85, warn: 0.7, why: 'Press your big cooldown as often as the fight allows.' },
       { n: 'Innervate', tal: 'Innervate', cd: 180, ok: 0.5, warn: 0.25, label: 'Innervate on a healer', why: 'Wowhead: decide with your healers or raid leader which healer gets your Innervate, and use it.' }],
@@ -20982,7 +21014,7 @@ const GEN_SPECS = {
       { s: 'Lava Burst', full: true, if: { no: 'Master of the Elements' }, why: 'it sat at full charges', tip: 'Don\'t let Lava Burst sit at full charges. Cast it to set up Master of the Elements.' },
       { s: 'Lightning Bolt', alt: ['Chain Lightning', 'Lava Burst', 'Earth Shock', 'Elemental Blast', 'Earthquake', 'Tempest', 'Voltaic Blaze', 'Flame Shock'] }] },
     abcWhy: 'Elemental has little to cast on the move, so plan your movement. Spiritwalker\'s Grace and Nature\'s Swiftness keep you casting.',
-    dots: [{ n: 'Flame Shock', why: 'Flame Shock gives Lava Surge procs. Keep it on the boss.' }],
+    dots: [{ n: 'Flame Shock', clip: true, dur: 18, clipMinB: 2, why: 'Flame Shock gives Lava Surge procs. Keep it on the boss.' }], clipWhy: 'Both guides: refresh Flame Shock (with Voltaic Blaze) in its last 30%. On two or more bosses, Icy Veins presses Voltaic Blaze on cooldown, so those are not counted.',
     procs: [{ n: 'Master of the Elements', okW: 0.12, warnW: 0.2, use: ['Earth Shock', 'Elemental Blast', 'Tempest', 'Lightning Bolt', 'Earthquake', 'Chain Lightning', 'Icefury', 'Frost Shock'], why: 'Lava Burst gives Master of the Elements, which makes your next spell stronger. Follow it with a spender, like Earth Shock or Elemental Blast.' }, { n: 'Lava Surge', use: ['Lava Burst'], why: 'Lava Surge makes your next Lava Burst instant. Cast it.' }, { n: 'Stormkeeper', use: ['Lightning Bolt', 'Chain Lightning', 'Tempest'], max: 3, why: 'Stormkeeper empowers your next Lightning Bolts or Chain Lightnings. Spend it.' },
       { n: 'Overcharge!', use: ['Elemental Blast', 'Earth Shock', 'Earthquake'], why: 'Overcharge!, from your tier set, makes your next spender free. A new one replaces the one you hold, so Icy Veins says to spend it as soon as you get it.' }],
     res: { ty: '11', n: 'Maelstrom', why: 'Maelstrom pays for Earth Shock, Elemental Blast and Earthquake. Spend it before you\'re full.' },

@@ -5233,7 +5233,10 @@ function analyze(item, text, opts) {
     // (a buff renewed while it was still up, e.g. a proc landing on one you still hold: noted on that player's buff only,
     // so it changes nothing else. Warcraft Logs sends none for Infusion of Light, Divine Purpose or Dawnlight)
     if (ev === 'SPELL_AURA_REFRESH') { const f = split(line, c + 1), p = f.length >= 12 && f[11] === 'BUFF' && r.players.get(f[4]), b = p && buffPre(p, num(f[8]), f[9]);
-      if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); if (isPlayer(f[0]) && f[0] !== f[4]) { const w = shortName(f[0], f[1]); b.by.set(w, (b.by.get(w) || 0) + 1); } } continue; }
+      if (b) { if (!b.ref) b.ref = []; if (b.ref.length < 600) b.ref.push(t); if (isPlayer(f[0]) && f[0] !== f[4]) { const w = shortName(f[0], f[1]); b.by.set(w, (b.by.get(w) || 0) + 1); } }
+      // (a debuff a player renewed on an enemy while it was still up: kept with their damage over time events, marked 2, for the early-refresh check)
+      if (f.length >= 12 && f[11] === 'DEBUFF' && !isPlayer(f[4])) { const q0 = r.players.get(f[0]); if (q0) { if (!q0.dotEv) q0.dotEv = []; if (q0.dotEv.length < 30000) q0.dotEv.push([t, 2, f[9], f[4]]); } }
+      continue; }
     // (an empowered spell let go: its rank, on the player who cast it, for the spec checks)
     if (ev === 'SPELL_EMPOWER_END') { const f = split(line, c + 1), p = f.length >= 12 && r.players.get(f[0]); if (p) { if (!p.empL) p.empL = []; if (p.empL.length < 600) p.empL.push([t, f[9], num(f[11])]); } continue; }
     if (!WANTED.has(ev)) continue;
