@@ -278,6 +278,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   itself (click it to switch boss), keep the pull cards right under it with All pulls as the first card, and drop the
   separate picker at the top. A few mockups to pick from first, like the Graphs controls.
 
+## 2026-10-19, round 262: Rotation, under construction (your idea: construction workers building the site)
+- [x] A little building site across the top of every Rotation page, drawn in the page (no images): a crane swinging a steel beam,
+  a worker waving it in, one hammering on the scaffolding, one carrying a plank past a cone and some bricks, and caution tape
+  along the bottom, with a short note: "Our crew is still building the Rotation pages. Everything below works, but the checks
+  and their wording may change." The Rotation page under it works as before. On a phone the scene sits above the note and
+  shows the crane and the scaffolding only. People who turn off motion see it standing still.
+
 ## 2026-10-19, round 261: Note checks for every boss with a note (your note: "make modules for the other notes")
 - [x] **Nymrissa, new:** a small fight module records who soaked each set of Frost Orbs (each Chilling Frost drops 3; a
   Frost Orb hit is the soak, and an immunity counts), shown on Mechanics as "Frost Orbs (Soaks)" with any orb that
