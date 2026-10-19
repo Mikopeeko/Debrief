@@ -269,6 +269,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   A click swaps the page. Only the shown player's checks are worked out, so it opens faster too.
 - Checked on Wolfthorn's Twin Fangs kill (opens on Flëxørçïst, Arsyn on a click), at phone width, with no errors.
 
+## 2026-10-19, round 257: The team page, revamped as one page (your call, creative freedom; "SOLID!")
+- [x] **Header:** the team's name with its standing as chips (7/10 Mythic, World #1,455, US #440), "You: Flëxørçïst ·
+  Paladin" and "See every raid you were in", the difficulty switch on the right. Live now stays right under it.
+- [x] **Now on:** one big card for the boss you're working on, with its art, your best, every pull on a chart and **Open
+  the last night**. **Raid nights** beside it, newest first: each night's main boss, how far it got and what else died,
+  one click to open it pull by pull (6 shown, "Show all").
+- [x] **Bosses** in a tidier grid, then **Since last raid** under the nights, and the **rankings** (the team's and yours)
+  at the bottom. On a phone: Now on, Raid nights, Bosses, Since last raid. Your own page uses the same layout.
+- [x] The guide's pointer now points at the newest raid night; the page tips walk the new parts (shown once more).
+
 ## 2026-10-19, round 256: Live now, your team's raid followed without a link (your idea)
 - [x] **While Debrief is open, your team's newest report is checked every 30 seconds** (your call; it was every minute;
   a new quick check on the site, kept 30 seconds and shared by everyone on the same team). A report that got something in

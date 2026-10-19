@@ -1385,6 +1385,37 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
    pages. Its menu: a row per team or character (banner, name, how far it is; the one whose page is up is ticked), then
    All teams and Add. */
 .tbteams { position: relative; }
+/* the team page as one page (Oct 19): header, Now on beside Raid nights, every boss, then the rankings */
+.pg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pgc { display: inline-flex; align-items: baseline; gap: 5px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line2); background: var(--raised); font-size: 13px; color: #c4c9d2; }
+.pgc b { color: #f3f5f9; font-weight: 700; } .pgc.gold { border-color: rgba(230,180,80,.55); background: rgba(230,180,80,.1); } .pgc.gold b { color: #f6dc9a; }
+.pg-v2 .pg-sum { margin-top: 6px; } .pg-v2 .pg-you { margin-top: 8px; }
+.pg-cols { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.pg-main, .pg-side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.pg-sh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 12px; } .pg-sh h2 { margin: 0; font: 700 20px var(--head); color: #f3f5f9; } .pg-sh .pc-legend { margin: 0; }
+.pg-v2 .pc-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; } .pg-v2 .pc-open { margin-top: 12px; }
+.pg-now { position: relative; overflow: hidden; isolation: isolate; padding: 20px 22px 16px; border-radius: 14px; border: 1px solid var(--line2); border-left: 4px solid var(--ec); background: var(--panel); }
+.pnw-art { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; opacity: .3; -webkit-mask-image: linear-gradient(90deg, transparent 15%, #000 75%); mask-image: linear-gradient(90deg, transparent 15%, #000 75%); }
+.pnw-t { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.pnw-k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.pg-now h2 { margin: 2px 0 4px; font: 700 30px/1.1 var(--head); color: #f6f7fa; text-shadow: 0 2px 14px rgba(0,0,0,.6); } .pg-now .sub { font-size: 13.5px; color: #c4c9d2; }
+.pnw-big { flex: none; text-align: right; font: 700 40px/1 var(--head); text-shadow: 0 2px 14px rgba(0,0,0,.6); } .pnw-big span { display: block; margin-top: 4px; font: 500 12px var(--body); color: var(--muted); }
+.pg-now .pc-chart { display: block; width: 100%; margin-top: 14px; }
+.pnw-b { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; } .pnw-b .btn { padding: 9px 18px; font-weight: 600; } .pnw-b .sub { font-size: 13px; }
+.pg-nights { margin: 0; padding: 16px 16px 12px; } .pg-nights .pg-sh { margin-bottom: 10px; } .pg-nights .pg-sh .sub { font-size: 12.5px; }
+.pn-list { display: flex; flex-direction: column; gap: 6px; }
+.pn-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s, background .15s; }
+.pn-row:hover, .pn-row:focus-visible { border-color: var(--gold); background: #1a1e28; outline: none; } .pn-row:disabled { cursor: default; opacity: .6; border-color: var(--line); background: var(--bg); }
+.pn-d { flex: none; width: 46px; display: flex; flex-direction: column; font-size: 12px; line-height: 1.25; color: var(--muted); } .pn-d b { color: var(--gold); text-transform: uppercase; letter-spacing: .04em; }
+.pn-b { flex: 1; min-width: 0; display: flex; flex-direction: column; } .pn-b b { font-size: 14.5px; color: #f3f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pn-b .sub { font-size: 12.5px; line-height: 1.35; }
+.pn-r { flex: none; font: 700 16px var(--head); } .pn-go { flex: none; font-size: 18px; color: var(--faint); } .pn-row:hover .pn-go { color: var(--gold); }
+.pn-more { margin-top: 10px; padding: 0; font-size: 13px; }
+.pg-v2 .pg-since { margin: 0; }
+.pg-rk2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px; align-items: start; } .pg-v2 .pg-rank-me { margin-top: 0; }
+@media (max-width: 1100px) {
+  .pg-cols { display: flex; flex-direction: column; } .pg-main, .pg-side { display: contents; }
+  #pgNow { order: 1; } #pgNights { order: 2; } #pgBosses { order: 3; } .pg-cols .pg-since { order: 4; } }
+@media (max-width: 560px) { .pg-now { padding: 16px 16px 12px; } .pg-now h2 { font-size: 24px; } .pnw-big { font-size: 30px; } .pg-rk2 { grid-template-columns: minmax(0, 1fr); } .pg-v2 .pc-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Live now (Oct 19): the red dot, the strip on your team's page, and the bar under the top bar */
 .tb-prog { position: relative; } .tb-prog.live::after { content: ''; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #ff4d4d; box-shadow: 0 0 0 2px var(--panel); animation: lvPulse 1.6s ease-in-out infinite; }
 .lv-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #ff4d4d; animation: lvPulse 1.6s ease-in-out infinite; }

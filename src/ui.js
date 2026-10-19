@@ -1770,18 +1770,20 @@ const SN_I = { users: snSvg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-
   copy: snSvg('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>'),
   pull: snSvg('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/>'),
   notes: snSvg('<path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7"/><path d="M7 4a3 3 0 0 0-3 3v1h3M7 4v13a3 3 0 0 0 3 3"/><path d="M11 9h6M11 13h6M11 17h3"/>') };
-// The Assignments tab's two views (your note, Oct 18: a separate tab for the stored notes): This pull, and Stored notes
+// The Assignments tab is one page (your note, Oct 19: "combined into just the one assignments tab"): the note for this
+// pull, its results, then your saved notes at the bottom. It had two views, This pull and Stored notes.
 const noteCount = () => E.PACKS.reduce((s, p) => s + notesOf(p.encounter).list.length, 0);
-const asViews = (ed) => { const n = noteCount(), on = !!ed || S.asView === 'notes';
+const asViews = () => '';
+const asViewsOld = (ed) => { const n = noteCount(), on = !!ed || S.asView === 'notes';
   return '<div class="seg as-views" role="tablist" aria-label="Assignments"><button type="button" role="tab" data-asv="pull"' + (on ? '' : ' class="on"') + ' aria-selected="' + !on + '">' + SN_I.pull + 'This pull</button><button type="button" role="tab" data-asv="notes"' + (on ? ' class="on"' : '') + ' aria-selected="' + on + '">' + SN_I.notes + 'Stored notes' + (n ? '<span class="n">' + n + '</span>' : '') + '</button></div>'; };
-const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.onclick = () => { if (!S.noteEdit && (S.asView === b.dataset.asv || (!S.asView && b.dataset.asv === 'pull'))) return; S.noteEdit = false; S.noteEditId = null; S.asView = b.dataset.asv; assign(only); refreshIcons(); }));
+const bindAsViews = (only) => $('#assignBox [data-asv]').forEach((b) => (b.onclick = () => { const sn = $('#snBox'); if (sn) { window.scrollTo({ top: Math.max(0, sn.getBoundingClientRect().top + window.scrollY - 70), behavior: 'smooth' }); return; } if (!S.noteEdit && (S.asView === b.dataset.asv || (!S.asView && b.dataset.asv === 'pull'))) return; S.noteEdit = false; S.noteEditId = null; S.asView = b.dataset.asv; assign(only); refreshIcons(); }));
 // Stored notes: every saved note, the boss of the open pull first, then the rest in raid order; each with when it was saved
 // and the logs it goes with, each with its date and time: the log that's open (and which of its pulls use it), and every
 // saved night it fits (at least half its names there), newest first, a click opening that night
 // (the small calendar on a log's chip, drawn here)
 const SN_CAL = '<svg class="sn-cal" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-function storedNotes(only) {
-  const r = S.rep, cur = r.item.boss, used = noteForRep(r), k0 = pullKey(r.item);
+function storedNotes() {
+  const r = S.rep, cur = r.item.boss, used = noteForRep(r);
   const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur);
   const when = (t) => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const day = (t) => nightLabel(t) + ', ' + new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -1818,38 +1820,42 @@ function storedNotes(only) {
   // there's no banner; loaded at runtime from Wowhead, never bundled, and gone if it doesn't load)
   const artOf = (b) => (BOSS_HERO[b] ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[b][1] + '% 28%" onerror="this.remove()">'
     : BOSS_ART[b] ? '<img class="mdl" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
+  // (other bosses fold to one line, "Ula'tek · 2 notes"; the open boss is shown open)
+  const fold = ([b, o]) => (b === cur ? panel([b, o]) : '<details class="sn-fold"><summary><b>' + esc(b) + '</b><span class="sub">' + plural(o.list.length, 'note') + '</span></summary>' + panel([b, o]) + '</details>');
   const panel = ([b, o]) => '<div class="panel nlib sn-b' + (b === cur ? ' cur' : '') + '"><div class="sn-hd"><div class="sn-art" aria-hidden="true">' + artOf(b) + '</div>' +
     '<div class="sn-who"><span class="sn-por" aria-hidden="true">' + (BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy"' + (ART_ZOOM[b] ? ' style="--az:' + (1.25 * ART_ZOOM[b]).toFixed(2) + '"' : '') + ' onerror="this.remove()">' : '') + '</span>' +
     '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div></div>' +
     '<span class="nl-hb">' + (b === cur ? '' : '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">Open ' + esc(b) + '</button>') + '</span></div>' +
     '<div class="sn-body">' + (o.list.length ? '<div class="sn-grid">' + o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + '</div>' + (b === cur ? sel : '')
       : '<div class="sn-empty"><span class="sn-eico">' + SN_I.notes + '</span><div><b>No note for ' + esc(b) + ' yet</b><div class="sub">Add your raid\'s NSRT note, and it shows here with the logs it goes with.</div></div></div>') + '</div></div>';
-  $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + (() => { const nN = bosses.reduce((t, [, o]) => t + o.list.length, 0), nB = bosses.filter(([, o]) => o.list.length).length;
-    return '<div class="sn-top"><span class="sn-tico" aria-hidden="true">' + SN_I.notes + '</span><div><h2>Stored notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ' for ' + (nB === 1 ? '1 boss' : nB + ' bosses') + ', saved in this browser. ' : '') + 'Each note shows its logs: the one you have open, and the raid nights saved to your progress (the Save it link on a pull).</div></div><button class="btn primary" type="button" id="noteNewBtn" style="margin-left:auto;flex:none">Add a note</button></div>'; })() + bosses.map(panel).join('') + '</div>';
-  bindAsViews(only);
+  const nN = bosses.reduce((t, [, o]) => t + o.list.length, 0);
+  return '<section class="sn-all" id="snBox"><div class="sn-top"><span class="sn-tico" aria-hidden="true">' + SN_I.notes + '</span><div><h2>Your saved notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ', saved in this browser. ' : '') + 'Each note shows the nights it goes with.</div></div><button class="btn primary" type="button" id="noteNewBtn" style="margin-left:auto;flex:none">Add a note</button></div>' + bosses.map(fold).join('') + '</section>';
+}
+// (the saved notes' buttons, bound after the rest of the page so theirs win: Add, Edit, Use for this pull, Copy, remove, open a night)
+function storedNotesBind(only) {
+  const r = S.rep, cur = r.item.boss, k0 = pullKey(r.item), NO = notesOf(cur);
   // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
   const redo = (b) => { for (const rep of CACHE.values()) if (rep.item.boss === b) applyNote(rep); renderMain(); };
-  if ($('#noteNewBtn')) $('#noteNewBtn').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
-  $$('#assignBox [data-nedit]').forEach((x) => (x.onclick = () => { S.noteEdit = true; S.noteEditId = x.dataset.nedit; assign(only); }));
+  if ($('#snBox #noteNewBtn')) $('#snBox #noteNewBtn').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+  $$('#snBox [data-nedit]').forEach((x) => (x.onclick = () => { S.noteEdit = true; S.noteEditId = x.dataset.nedit; assign(only); }));
   // (picking a note takes you to This pull with it, at the top of the tab, so you see how the pull went with it (your note, Oct 18))
-  $$('#assignBox [data-nuse]').forEach((x) => (x.onclick = () => { const o = notesOf(cur); o.byPull = o.byPull || {}; o.byPull[k0] = x.dataset.nuse; notesSave(cur, o); S.asView = 'pull'; redo(cur);
+  $$('#snBox [data-nuse]').forEach((x) => (x.onclick = () => { const o = notesOf(cur); o.byPull = o.byPull || {}; o.byPull[k0] = x.dataset.nuse; notesSave(cur, o); S.asView = 'pull'; redo(cur);
     const top = $('#assignBox'); if (top) window.scrollTo({ top: Math.max(0, top.getBoundingClientRect().top + window.scrollY - 70) }); }));
-  if ($('#notePick')) { $('#notePick').value = NO.pick || 'auto'; $('#notePick').onchange = () => { const o = notesOf(cur); o.pick = $('#notePick').value; notesSave(cur, o); redo(cur); }; }
+  if ($('#snBox #notePick')) { $('#snBox #notePick').value = NO.pick || 'auto'; $('#snBox #notePick').onchange = () => { const o = notesOf(cur); o.pick = $('#snBox #notePick').value; notesSave(cur, o); redo(cur); }; }
   // (Copy: the note's text, to paste into NSRT in game)
-  $$('#assignBox [data-ncopy]').forEach((x) => (x.onclick = () => { const k = x.dataset.ncopy, i = k.lastIndexOf('|'), n = notesOf(k.slice(0, i)).list.find((y) => y.id === k.slice(i + 1)); if (n) copyBtn(x, n.text); }));
+  $$('#snBox [data-ncopy]').forEach((x) => (x.onclick = () => { const k = x.dataset.ncopy, i = k.lastIndexOf('|'), n = notesOf(k.slice(0, i)).list.find((y) => y.id === k.slice(i + 1)); if (n) copyBtn(x, n.text); }));
   // (the trash can: a second click removes the note from its boss)
-  $$('#assignBox [data-sndel]').forEach((x) => (x.onclick = () => {
+  $$('#snBox [data-sndel]').forEach((x) => (x.onclick = () => {
     if (!x.dataset.armed) { x.dataset.armed = '1'; x.innerHTML = NOTE_TRASH + ' Click again to remove'; x.classList.add('bad'); setTimeout(() => { if (x.isConnected) { delete x.dataset.armed; x.innerHTML = NOTE_TRASH; x.classList.remove('bad'); } }, 4000); return; }
     const [b, id] = [x.dataset.sndel.slice(0, x.dataset.sndel.lastIndexOf('|')), x.dataset.sndel.slice(x.dataset.sndel.lastIndexOf('|') + 1)], o = notesOf(b);
     o.list = o.list.filter((n) => n.id !== id); if (o.pick === id) o.pick = 'auto'; for (const [kk, v] of Object.entries(o.byPull || {})) if (v === id) delete o.byPull[kk]; notesSave(b, o); redo(b); }));
-  $$('#assignBox [data-nopen]').forEach((x) => (x.onclick = async () => { const [code, fight] = x.dataset.nopen.split('|'); x.disabled = true;
+  $$('#snBox [data-nopen]').forEach((x) => (x.onclick = async () => { const [code, fight] = x.dataset.nopen.split('|'); x.disabled = true;
     try { await openWcl({ code, fight: +fight || null }, await wclCreds()); } catch (e) { x.disabled = false; x.title = e.message; } }));
-  $$('#assignBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example), newest = l.slice().sort((p, q) => (q.saved || 0) - (p.saved || 0))[0];
+  $$('#snBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example), newest = l.slice().sort((p, q) => (q.saved || 0) - (p.saved || 0))[0];
     x.disabled = true; S.asView = 'pull'; if (!(await noteGoBoss(to, newest && newest.text))) { S.asView = 'notes'; x.disabled = false; x.textContent = 'Open a pull of ' + to + ' first'; } }));
 }
 function assign(only) { // (only: just the note, for the all-pulls NSRT audit, which draws its own results)
   const r = S.rep, boss = r.item.boss, NO = notesOf(boss), used = noteForRep(r), text = used ? used.text : '', a = r.assign;
-  if (!only && S.asView === 'notes' && !S.noteEdit) return storedNotes(only);
   // (the note being edited: the one this pull uses, or a new one)
   const editN = S.noteEditId === 'new' ? null : (S.noteEditId && NO.list.find((n) => n.id === S.noteEditId)) || used, editT = editN ? editN.text : '';
   const pmap = new Map(players().map((p) => [p.name, p]));
@@ -1866,14 +1872,14 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const closeL = close ? '<p>' + esc(n.name) + ' is close: only ' + esc(andL(g)) + (g.length === 1 ? " wasn't" : " weren't") + ' here.</p>' : '';
     // (a note just imported says what it found on top, as when a note fits)
     const scB = S.noteScan && S.noteScan.boss === boss && S.noteScan.r ? noteScanBox(S.noteScan) : '';
-    $('#assignBox').innerHTML = asViews() + scB + '<div class="panel nmiss"><h3>No note for this pull</h3>' +
+    $('#assignBox').innerHTML = scB + '<div class="panel nmiss"><h3>No note for this pull</h3>' +
       '<p class="ah-lead">' + (nN === 1 ? 'Your saved note for ' + esc(boss) + " doesn't" : 'None of your ' + nN + ' saved notes for ' + esc(boss)) + " have this pull's players.</p>" + closeL +
-      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note</button>' + (close ? '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use it anyway</button>' : '') + '<button class="btn" type="button" data-asv="notes">See your notes</button></div></div>';
+      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note</button>' + (close ? '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use it anyway</button>' : '') + '<button class="btn" type="button" data-asv="notes">See your notes</button></div></div>' + storedNotes();
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
     $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[pullKey(r.item)] = b.dataset.nuse; notesSave(boss, o);
       for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }));
     if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
-    bindAsViews(only);
+    bindAsViews(only); storedNotesBind(only);
     return;
   }
   if (!text && !S.noteEdit) {
@@ -2455,7 +2461,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // (one row as wide as the tiles there are, up to 6: six tiles in a row of five left one alone on a second row)
   const tileRow = tiles.length >= 3 ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + ' an' + Math.min(6, tiles.length) + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
   // (adding or editing a note happens on Stored notes (your note, Oct 18): the tabs with it on, and the editor alone)
-  $('#assignBox').innerHTML = '<div class="nsa">' + (only ? '' : asViews(editing)) + top + (editing ? '' : tileRow + box + h) + (quiet.length && !editing ? '<div class="panel quiet"><div class="q-h">' + SN_I.notes + 'About your note</div>' + quiet.join('') + '</div>' : '') + '</div>';
+  $('#assignBox').innerHTML = '<div class="nsa">' + (only ? '' : asViews(editing)) + top + (editing ? '' : tileRow + box + h) + (quiet.length && !editing ? '<div class="panel quiet"><div class="q-h">' + SN_I.notes + 'About your note</div>' + quiet.join('') + '</div>' : '') + (only || editing ? '' : storedNotes()) + '</div>';
   // (a tile opens its section if it's folded, then scrolls to it under the sticky tabs)
   $$('#assignBox details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
   wrThumbFit($('#assignBox')); $$('#assignBox [data-asec]').forEach((b) => onPress(b, () => { S.tab = 'audit'; S.pendingSec = b.dataset.asec; renderMain(); }));
@@ -2562,6 +2568,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // (swap: every whole-word use of the name in the box, so a reminder tag and a text line both change)
   if ($('#noteSwap')) $('#noteSwap').onclick = () => { const a0 = $('#noteFrom').value, b0 = $('#noteTo').value, box = $('#noteBox'); if (!a0 || !b0) return;
     box.value = box.value.replace(new RegExp('(^|[^\\p{L}])' + a0.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:-[\\p{L}\'’]+)?(?=$|[^\\p{L}])', 'giu'), (m, pre) => pre + b0); };
+  if (!only && $('#snBox')) storedNotesBind(only); // (the saved notes at the bottom: bound last, so their buttons are theirs)
 }
 
 // ---------- death cutoff ----------
@@ -13260,13 +13267,14 @@ const PAGE_TIPS = {
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
     { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
   team: [
-    { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
-    { sel: '#pgRank', t: 'Rankings', p: 'Your Warcraft Logs rankings this tier.' },
+    { sel: '#pgNow', t: 'What you\'re on now', p: 'The boss your team is working on, with your best pull and a dot for every pull. Open its last night from here.' },
+    { sel: '#pgNights', t: 'Raid nights', p: 'Every raid night, newest first, with how far you got. Click one to go through it pull by pull.' },
     { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Each card shows a boss\'s result and totals. Click one for the chart of every pull and its nights.' },
+    { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
     { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams are at the top. From there you can jump to another team or your character, see them all, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
-const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 2 }; // (bumped when a page's tips change, so they show once more)
+const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 2, team: 2 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
 const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
@@ -13564,10 +13572,9 @@ function gsPointTick() {
   else if ($('#main .pg-hub') && !S.hubHome) { const g = gsFind(P.gid), c = $('#main .pg-hub .hc-card[data-g="' + CSS.escape(P.gid) + '"]');
     if (c) pick(c, g && g.kind === 'char' ? 'Open your character' : 'Open your team', 'Click its card to see every boss and raid night.'); }
   else if ($('#main .home.prog') && S.progView) {
-    const cards = $$('#main .pc-card[data-boss]'), open = cards.find((c) => !c.classList.contains('mini'));
-    if (open) pick(open.querySelector('.pc-pick') || open, 'Pick a night, then Open', 'Pick a raid night from the menu, then click Open. Debrief goes through it pull by pull: what went wrong, what went well, and what to fix first.');
-    else if (cards.length) pick(cards.find((c) => !/Killed/.test((c.querySelector('.pc-big') || {}).textContent || '')) || cards[0], 'Pick a boss', 'Each card is one boss, with how far you got. Click one to see its raid nights.');
-    else pick(null, 'Your raid nights are coming in', 'The bosses show up here once its nights are in. The first time, this can take a few minutes.');
+    const row = $('#pgNights .pn-row:not([disabled])');
+    if (row) pick(row, 'Open a raid night', 'Click one to go through it pull by pull: what went wrong, what went well, and what to fix first.');
+    else pick(null, 'Your raid nights are coming in', 'They show up here once they\'re in. The first time, this can take a few minutes.');
   }
   gsMark(e, t, p);
 }
@@ -14142,13 +14149,64 @@ function renderProgress(msg, msgErr) {
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
   const legend = pullLegend();
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
+  // ---- the page's parts (Oct 19): what you're on now, your raid nights, then every boss ----
+  const wclOf = (v) => v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: null } : null);
+  // (a night's report and the pull it opens on: its kill, else its best pull; none for a night only in your combat log)
+  const nightOpen = (l) => { const codes = new Map(); for (const v of l) if (wclOf(v)) codes.set(wclOf(v).code, (codes.get(wclOf(v).code) || 0) + 1);
+    const code = [...codes].sort((p, q) => q[1] - p[1]).map((x) => x[0])[0]; if (!code) return null;
+    const at = l.filter((v) => wclOf(v) && wclOf(v).code === code).sort((p, q) => (q.kill ? 1 : 0) - (p.kill ? 1 : 0) || (p.left ?? 101) - (q.left ?? 101))[0];
+    return { code, fight: at && wclOf(at).fight != null ? wclOf(at).fight : '' }; };
+  // (every night on this difficulty, newest first: the boss it spent most pulls on, how far it got, and the others pulled)
+  const nightsM = new Map(); for (const v of list) { const k = nightOf(v.at); if (!nightsM.has(k)) nightsM.set(k, []); nightsM.get(k).push(v); }
+  const nightsL = [...nightsM].sort((x, y) => (x[0] < y[0] ? 1 : -1)).map(([k, l]) => { l.sort((a, b) => a.at - b.at);
+    const by = order.map((boss) => ({ boss, l: l.filter((v) => v.boss === boss) })).filter((x) => x.l.length), main = by.slice().sort((a, b) => b.l.length - a.l.length)[0];
+    return { k, at: l[0].at, by, main, kills: by.filter((x) => x.l.some((v) => v.kill)).map((x) => x.boss), nb: bestOf(main.l), op: nightOpen(l) }; });
+  const dayOf = (at) => new Date(at - 6 * 3600e3);
+  const pnRow = (n) => { const kill = n.main.l.some((v) => v.kill), d = dayOf(n.at), others = n.by.filter((x) => x !== n.main).map((x) => x.boss), killO = n.kills.filter((b) => b !== n.main.boss);
+    const sub = plural(n.main.l.length, 'pull') + (kill ? ', killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ', best ' + n.nb.label : '') +
+      (others.length ? ' · also ' + (killO.length ? 'killed ' + (killO.length === 1 ? killO[0] : killO.length + ' more') : others.length === 1 ? others[0] : others.length + ' more bosses') : ''); // (short: one boss by name, more as a count)
+    return '<button class="pn-row" type="button"' + (n.op ? ' data-code="' + esc(n.op.code) + '" data-fight="' + esc(String(n.op.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '>' +
+      '<span class="pn-d"><b>' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</b><span>' + esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span></span>' +
+      '<span class="pn-b"><b>' + esc(n.main.boss) + '</b><span class="sub">' + esc(sub) + '</span></span>' +
+      '<span class="pn-r" style="color:' + (kill ? '#ff8000' : n.nb ? qc(n.nb) : 'var(--muted)') + '">' + (kill ? 'Kill' : n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%' : '—') + '</span><span class="pn-go" aria-hidden="true">›</span></button>'; };
+  const PN_MAX = 6;
+  const nightsHtml = nightsL.length ? '<section class="panel pg-nights" id="pgNights"><div class="pg-sh"><h2>Raid nights</h2><span class="sub">' + plural(nightsL.length, 'night') + ' on ' + esc(diffName) + '</span></div>' +
+    '<div class="pn-list">' + nightsL.slice(0, S.pnAll ? nightsL.length : PN_MAX).map(pnRow).join('') + '</div>' +
+    (nightsL.length > PN_MAX ? '<button class="linkbtn pn-more" id="pnMore" type="button">' + (S.pnAll ? 'Show fewer' : 'Show all ' + nightsL.length + ' nights') + '</button>' : '') + '</section>' : '';
+  // (Now on: the boss pulled most recently without a kill on this difficulty, else the last kill; its pulls on a chart,
+  // and its last night one click away)
+  const openB = list.filter((v) => !list.some((x) => x.boss === v.boss && x.kill)).sort((a, b) => b.at - a.at)[0], lastK = list.filter((v) => v.kill).sort((a, b) => b.at - a.at)[0];
+  const nowBoss = openB ? openB.boss : lastK ? lastK.boss : null;
+  let nowHtml = '';
+  if (nowBoss) {
+    const bl = list.filter((v) => v.boss === nowBoss).sort((a, b) => a.at - b.at), bk = bl.filter((v) => v.kill), pr = bk.length ? bl.filter((v) => v.at <= bk[0].at) : bl, nb = bestOf(bl);
+    const nts = new Set(pr.map((v) => nightOf(v.at))).size, time = pr.reduce((s, v) => s + (v.dur || 0), 0);
+    const lastN = nightsL.find((n) => n.by.some((x) => x.boss === nowBoss)), lastL = lastN && lastN.by.find((x) => x.boss === nowBoss).l, lastOp = lastL && nightOpen(lastL);
+    const col = bk.length ? '#ff8000' : nb ? qc(nb) : 'var(--muted)';
+    nowHtml = '<section class="pg-now" id="pgNow" style="--ec:' + col + '">' + (BOSS_HERO[nowBoss] ? '<img class="pnw-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[nowBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[nowBoss][1] + '% 20%" onerror="this.remove()">' : '') +
+      '<div class="pnw-t"><div><span class="pnw-k">' + (openB ? 'Now on' : 'Last kill') + ' · ' + esc(diffName) + '</span><h2>' + esc(nowBoss) + '</h2><span class="sub">' +
+        esc((bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label : 'No result yet') + ' · ' + plural(pr.length, 'pull') + (bk.length ? ' to the kill' : '') + ' over ' + plural(nts, 'night') + ' · ' + durH(time)) + '</span></div>' +
+        '<div class="pnw-big" style="color:' + col + '">' + (bk.length ? 'Killed' : nb && nb.left != null ? Math.floor(100 - nb.left) + '%' : '—') + (bk.length ? '' : '<span>of the encounter</span>') + '</div></div>' +
+      progChart(pr, nowBoss) +
+      (lastOp ? '<div class="pnw-b"><button class="btn primary" id="pnwGo" type="button" data-code="' + esc(lastOp.code) + '" data-fight="' + esc(String(lastOp.fight)) + '">Open the last night</button><span class="sub">' + esc(nightLabel(lastN.at)) + ' · ' + plural(lastL.length, 'pull') + ' on ' + esc(nowBoss) + '</span></div>' : '') + '</section>';
+  }
+  // (the header's standing: kills on this difficulty, and the team's World and region rank once its rankings have been read;
+  // a character: their best average)
+  const chips = g ? '<div class="pg-chips">' + (list.length ? '<span class="pgc gold"><b>' + killedOn(cur) + '/' + order.length + '</b> ' + esc(diffName) + '</span>' : '') +
+    (g.kind !== 'char' && g.rank && g.rank.w ? '<span class="pgc">World <b>#' + g.rank.w.toLocaleString('en-US') + '</b></span>' : '') + (g.kind !== 'char' && g.rank && g.rank.r ? '<span class="pgc">' + esc(g.rank.rn || 'Region') + ' <b>#' + g.rank.r.toLocaleString('en-US') + '</b></span>' : '') +
+    (g.kind === 'char' && g.parse ? '<span class="pgc">' + esc(g.parse.spec) + ' <b>' + Math.floor(g.parse.best) + '</b> best average</span>' : '') + '</div>' : '';
+  const bosses = '<section class="pg-bosses" id="pgBosses"><div class="pg-sh"><h2>Bosses</h2>' + legend + '</div><div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
+    (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '') + '</section>';
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
-  $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '</div></div>' + sw + '</div>' + team + pgMsg + liveStrip + meCard + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (you && you.cls ? '<section class="panel pg-rank pg-rank-me" id="pgRankMe"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
-    (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
-        (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
-      : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
+  $('#main').innerHTML = '<div class="home prog pg-v2"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + liveStrip + meCard + sugg +
+    (all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
+      : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') +
+    (g && (g.kind !== 'char' || g.cls) ? '<section class="pg-ranks" id="pgRanks"><div class="pg-sh"><h2>Rankings</h2></div><div class="pg-rk2"><section class="panel pg-rank" id="pgRank"></section>' + (you && you.cls ? '<section class="panel pg-rank pg-rank-me" id="pgRankMe"></section>' : '') + '</div></section>' : '') + '</div>';
+  // (a raid night, or Now on's last night: that report, on its kill or best pull)
+  $$('#pgNights [data-code], #pnwGo').forEach((b) => (b.onclick = async () => { b.disabled = true; try { await openWcl({ code: b.dataset.code, fight: +b.dataset.fight || null }, await wclCreds()); } catch (e) { b.disabled = false; toast('<span>' + esc(e.message) + '</span>', 6000); } }));
+  if ($('#pnMore')) $('#pnMore').onclick = () => { S.pnAll = !S.pnAll; renderProgress(); };
   if ($('#pgLiveGo')) $('#pgLiveGo').onclick = liveFollow;
   $('#pgHub').onclick = () => { S.progView = null; S.progMine = false; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgMine')) $('#pgMine').onclick = () => { S.progMine = true; S.progView = you.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
