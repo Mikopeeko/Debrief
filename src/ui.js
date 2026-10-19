@@ -1027,6 +1027,8 @@ function bgFetch(item) {
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
 const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Players'], ['cmp', 'Compare']];
+// (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
+const WIP_TABS = new Set(['overview', 'player', 'cmp']);
 const TAB_ORDER = ['live', 'audit', 'overview', 'rot', 'perf', 'player', 'cmp'];
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
@@ -1292,8 +1294,8 @@ function renderMain() {
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
       const tab = (k) => { const l = name.get(k), soon = k === 'cmp' && CMP_OFF(), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
-        return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
-        (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
+        return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+        (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       return TAB_ORDER.map(tab).join(''); })() + '</nav>' + tbPull() + '</div>' +
     '<section id="view"></section>';
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
@@ -1302,6 +1304,7 @@ function renderMain() {
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
   // (the whole night: Recap is the night's summary, Mechanics and Assignments their rows across the pulls; Rotation, Graphs
   // and Players have their own whole-night views)
+  document.body.dataset.wip = WIP_TABS.has(S.tab) ? '1' : ''; // (the under-construction banner: drawn by the page's style, so a page that redraws itself keeps it)
   if (allMode && (S.tab === 'live' || S.tab === 'audit' || S.tab === 'overview')) night({ live: null, audit: 'mech', overview: 'asg' }[S.tab]); else VIEWS[S.tab]();
   // (opened from a Summary row: open that mechanic's or assignment's row on this pull and bring it into view)
   if (S.pendingSec) { const el = document.querySelector('#view [id^="' + CSS.escape(S.pendingSec) + '"]'); S.pendingSec = null;
@@ -11339,7 +11342,11 @@ function cmpChips(rot, x) {
     for (const c of g.a) { if (c === g.main) continue; const d = bk.get(c.k), k2 = key(c.v, d && d.v); if (k2 && seen.has(k2)) continue; if (k2) seen.add(k2); items.push({ l: c.label || c.k, a: c.v, b: d && d.v, sa: c.st, sb: d && d.st, ck: true, c, d }); }
     const fb = new Map((FB.get(g.t) || []).map((y) => [y.l, y.v])), fl = (FA.get(g.t) || []).map((y) => ({ l: y.l, a: y.v, b: fb.get(y.l) })).concat((FB.get(g.t) || []).filter((y) => !(FA.get(g.t) || []).some((z) => z.l === y.l)).map((y) => ({ l: y.l, a: null, b: y.v })));
     for (const o of fl) { if (items.some((y) => y.l === o.l)) continue; const k2 = key(o.a, o.b); if (k2 && seen.has(k2)) continue; if (k2) seen.add(k2); items.push(o); }
-    for (const o of items) { o.st2 = o.sa && o.sb && RK[o.sa] != null && RK[o.sb] != null && o.sa !== o.sb; o.rel = relOf(o.a, o.b); o.df = o.st2 || o.rel >= 0.1; }
+    // (a stat named after a check in this section drops that name when what's left is still unique: "Eternal Flame over Light of Dawn: Eternal Flame" -> "Eternal Flame")
+    const ckN = new Set(g.a.map((c) => c.label).concat([g.t])), cut = (o) => { const m = o.l.match(/^(.+?): (.+)$/); return m && ckN.has(m[1]) && m[2].split(' ').length >= 2 && !/\b(it|one|them)\b/i.test(m[2]) ? m[2] : null; }; // (only when what's left reads on its own: not "Okay" or "Outside it")
+    for (const o of items) { const c2 = cut(o); o.l2 = c2 && !items.some((y) => y !== o && (cut(y) || y.l) === c2) ? c2.charAt(0).toUpperCase() + c2.slice(1) : o.l; }
+    // (a strong gold edge: a different grade, or 20% or more apart; a light one: 10% to 20%; the rest faded)
+    for (const o of items) { o.st2 = o.sa && o.sb && RK[o.sa] != null && RK[o.sb] != null && o.sa !== o.sb; o.rel = relOf(o.a, o.b); o.d2 = o.st2 || o.rel >= 0.2; o.d1 = !o.d2 && o.rel >= 0.1; o.df = o.d2 || o.d1; }
     items.sort((u, v) => (v.df - u.df) || (v.st2 - u.st2) || v.rel - u.rel); g.items = items; g.nDf = items.filter((o) => o.df).length;
   }
   const grp = (g) => (g.net > 0 ? 0 : g.net < 0 ? 1 : 2); secs.sort((u, v) => grp(u) - grp(v) || Math.abs(v.net) - Math.abs(u.net) || v.nDf - u.nDf);
@@ -11350,14 +11357,22 @@ function cmpChips(rot, x) {
     return r1(a, u, colA, sa) + r1(b, w, colB, sb); };
   const sec = (g) => {
     const open = S.cmpSecs && S.cmpSecs[g.t] != null ? S.cmpSecs[g.t] : g.net !== 0 || g.nDf > 0;
-    const who = g.net > 0 ? Ln + ' did better here' : g.net < 0 ? Bn + ' did better here' : g.nDf ? 'Graded the same, some numbers apart' : 'Even';
+    const who = g.net > 0 ? Ln + ' did better here' : g.net < 0 ? Bn + ' did better here' : 'Graded the same';
     const bad = g.diff.filter((o) => o.w > 0).sort((u, v) => (v.c.cost || 0) - (u.c.cost || 0))[0], tip = bad && bad.c.tip ? String(bad.c.tip).replace(/^Next time:\s*/i, '') : '';
     const cost = bad && (bad.c.cost || 0) >= 20000 ? ' It cost ' + (me ? 'you' : An) + ' about ' + C(bad.c.cost) + ' ' + x.UN + '.' : '';
-    const chip = (o) => '<div class="cmp-mc' + (o.df ? ' df' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><div class="cmp-mcl">' + esc(o.l) + '</div>' + pair(o.a, o.b, o.sa, o.sb) + '</div>';
+    // (the difference, from the first player's side: points for percentages and fractions, plain for counts; green or amber when the grades say who's better)
+    const badge = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b); if (u == null || w == null || Math.abs(u - w) < 1e-9) return ''; const d = u - w, v = Math.abs(d), pt = /%|\//.test(plain(o.a) + plain(o.b)), sg = d > 0 ? '+' : '−';
+      const t = pt ? sg + (v < 10 ? v.toFixed(1) : Math.round(v)) + ' pts' : v >= 1000 ? sg + C(v) : sg + (v < 10 && v % 1 ? v.toFixed(1) : Math.round(v)); const cl = o.st2 ? (RK[o.sa] > RK[o.sb] ? ' up' : ' dn') : '';
+      return '<span class="cmp-mcb' + cl + '">' + t + '</span>'; };
+    const chip = (o) => '<div class="cmp-mc' + (o.d2 ? ' d2' : o.d1 ? ' d1' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><div class="cmp-mch"><span class="cmp-mcl">' + esc(o.l2 || o.l) + '</span>' + badge(o) + '</div>' + pair(o.a, o.b, o.sa, o.sb) + '</div>';
     return '<details class="cmp-sec ' + (g.net > 0 ? 'ok' : g.net < 0 ? 'warn' : 'na') + '" data-s="' + esc(g.t) + '"' + (open ? ' open' : '') + '><summary class="cmp-sech">' +
-      '<span class="cmp-secn">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.t) + '</b><span class="cmp-wd ' + (g.net > 0 ? 'up' : g.net < 0 ? 'dn' : '') + '">' + who + '</span></span></span>' +
+      '<span class="cmp-secn">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.t) + '</b><span class="cmp-wd ' + (g.net > 0 ? 'up' : g.net < 0 ? 'dn' : '') + '">' + who + (g.nDf ? '<span class="cmp-secc"> · ' + g.nDf + ' of ' + g.items.length + ' apart</span>' : '') + '</span></span></span>' +
       '<span class="cmp-secm"><span class="cmp-vl">' + esc(g.main.label || g.main.k) + '</span>' + pair(g.main.v, g.mainB && g.mainB.v, g.stA, g.stB) + '</span></summary>' +
-      '<div class="cmp-secb">' + (g.items.length ? '<div class="cmp-mcs">' + g.items.map(chip).join('') + '</div>' : '<p class="sub" style="margin:0">Nothing more in this section.</p>') +
+      '<div class="cmp-secb">' + (() => { const dif = g.items.filter((o) => o.df), same = g.items.filter((o) => !o.df), grid = (l) => '<div class="cmp-mcs">' + l.map(chip).join('') + '</div>';
+        // (Oct 19, "make it really crisp, clean and readable": only the chips that differ; the ones that match wait behind a toggle)
+        if (!g.items.length) return '<p class="sub" style="margin:0">Nothing more in this section.</p>';
+        if (!dif.length) return grid(same);
+        return grid(dif) + (same.length ? '<details class="cmp-same"><summary>' + plural(same.length, 'more number') + ' that ' + (same.length === 1 ? 'matches' : 'match') + '</summary>' + grid(same) + '</details>' : ''); })() +
       (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + cost + '</div>' : '') + '</div></details>'; };
   const cnt = (l) => { const o = { bad: 0, warn: 0, ok: 0 }; for (const c of l) if (o[c.st] != null) o[c.st]++; return o; }, side = (n, col, sc, l) => { const o = cnt(l);
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
