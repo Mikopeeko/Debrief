@@ -2977,6 +2977,22 @@ details.secd.mcx-tile[open] .mcx-rib, details.secd.mcx-tile[open] .mcx-who { dis
 @media (max-width: 640px) { .mcx-lanes { --lw: 28px; } .mcx-ll > span:not(.icw), .mcx-ll > b { display: none; } .mcx-tiles { grid-template-columns: 1fr; } .mcx-big:not([open]) { grid-column: auto; grid-row: auto; }
   .mcx-big:not([open]) .wr-map.mcx-map, .mcx-big:not([open]) .wr-map.mcx-map svg.zmap { height: 200px !important; } .mcx-tile .mcx-alt, .mcx-big:not([open]) .mcx-alt { height: auto; }
   #view details.phase.mcx-ph { padding: 0 10px 10px; } #view details.phase.mcx-ph > summary { margin: 0 -10px 10px; padding: 12px 12px 12px 16px; flex-wrap: wrap; gap: 8px; } #view details.phase.mcx-ph > summary > b { font-size: 17px; } .mcx-ring span { display: none; } }
+/* (Oct 19: the reference panels (Survival kit, Raid cooldowns, Damage taken, Interrupts) in one quieter card at the end: a silver badge, a
+   smaller banner, a compact tile each (icon, name, one status line, a red or amber line on top when it has problems), opening across the card) */
+#view details.phase.mcx-ref > summary { padding-top: 11px; padding-bottom: 11px; } #view details.phase.mcx-ref > summary > b { font-size: 17px; }
+.mcx-pn.mcx-pn2 { min-width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(160deg, #d9dde6, #8b93a5); color: #15171d; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.5); }
+.mcx-refg { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.mcx-refg > details.secd { margin: 0; position: relative; border-radius: 12px; }
+.mcx-refg > details.secd:not([open]) { overflow: hidden; box-shadow: none; border: 1px solid var(--line2); transition: transform .15s, border-color .15s; } .mcx-refg > details.secd:not([open]):hover { transform: translateY(-2px); border-color: var(--faint); }
+.mcx-refg > details.secd:not([open])::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--line2); }
+.mcx-refg > details.secd.st-bad:not([open])::before { background: #e5534b; } .mcx-refg > details.secd.st-warn:not([open])::before { background: #e8a23a; } .mcx-refg > details.secd.st-ok:not([open])::before { background: rgba(69,193,92,.7); }
+.mcx-refg > details.secd:not([open]) > summary { flex-wrap: wrap; align-items: center; row-gap: 3px; min-height: 66px; padding: 12px 12px 10px; }
+.mcx-refg > details.secd:not([open]) > summary::after { display: none; }
+.mcx-refg > details.secd:not([open]) > summary .icw.big { width: 26px; height: 26px; margin-right: 9px; vertical-align: -8px; border-radius: 6px; overflow: hidden; }
+.mcx-refg > details.secd:not([open]) > summary .sechd b, .mcx-refg > details.secd:not([open]) > summary > b { font: 700 14px var(--head); }
+.mcx-refg > details.secd:not([open]) > summary > .sst, .mcx-refg > details.secd:not([open]) > summary > .sub { flex-basis: 100%; margin: 0 0 0 35px; text-align: left; white-space: normal; font-size: 12px; line-height: 1.35; }
+.mcx-refg > details.secd[open] { grid-column: 1 / -1; }
+@media (max-width: 640px) { .mcx-refg { grid-template-columns: 1fr 1fr; } .mcx-refg > details.secd:not([open]) > summary > .sst, .mcx-refg > details.secd:not([open]) > summary > .sub { margin-left: 0; } }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
@@ -13319,16 +13335,20 @@ function audit() {
       (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('The wipe filter: counted up to ' + T(cut.t) + ', the ' + ordinal(cut.n) + ' death. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
     const axis = '<div class="mcx-ax2">' + [0].concat(ticks, [end]).map((t, i, l) => '<span class="' + (i === 0 ? 'a0' : i === l.length - 1 ? 'a1' : '') + '" style="left:' + X(t) + '">' + T(t) + '</span>').join('') + '</div>';
     return head + '<div class="mcx-lanes">' + band + rows + over + axis + '</div>' + totals + '</div>'; });
+  const refAt = h.length; // (where the reference panels start: they're gathered into one card below)
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
-    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">up to the wipe filter (raid cooldowns: the whole pull)</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕\u00a0' + pl2(nd, 'problem') : '✓\u00a0clean') + '</span></summary>' +
-      secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
-      (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })() + '</details>'; }
+    h += secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
+      (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })(); }
   // Damage taken by source (moved from Performance): every ability that hit the raid as bars, and who took it
   if (!r.allPulls && [...r.players.values()].some((p) => (p.takenAbS || []).length)) { const e0 = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration)), ps0 = players().filter((p) => p.name && !/^Player-/.test(p.name));
-    h += '<details class="phase" open><summary><b>Damage taken</b> <span class="sub">what hit the raid' + (cut ? ', up to the wipe filter' : '') + '</span></summary><details class="panel secd st-na" id="sec-dsrc" data-k="dsrc"' + (S.openSecs.has('dsrc') ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, 'Shadowfury', true) + '<b>Damage taken by source</b></span><span class="sst na">every ability, and who took it</span></summary><div class="secbody"><div class="pfv">' + perfSources(r, ps0, 0, e0) + '</div></div></details></details>'; }
+    h += '<details class="panel secd st-na" id="sec-dsrc" data-k="dsrc"' + (S.openSecs.has('dsrc') ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, 'Shadowfury', true) + '<b>Damage taken by source</b></span><span class="sst na">every ability, and who took it</span></summary><div class="secbody"><div class="pfv">' + perfSources(r, ps0, 0, e0) + '</div></div></details>'; }
   if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean (?=No kickable)/, '').replace(/^Clean /, 'Clean. ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
+  // (Oct 19, "they aren't major mechanics": Survival kit, Raid cooldowns, Damage taken and Interrupts in one quieter card at the end,
+  // a silver badge instead of a gold number, a small tile each that opens in place across the card)
+  { const ref = h.slice(refAt); if (ref) { const nb = (ref.match(/secd st-bad/g) || []).length;
+    h = h.slice(0, refAt) + '<details class="phase mcx-ph mcx-ref" data-mst="' + (nb ? 'bad' : 'na') + '" open><summary><span class="mcx-pn mcx-pn2">+</span><b>More from this pull</b><span class="sub">your kit, raid cooldowns, damage taken and kicks' + (cut ? ', up to the wipe filter' : '') + '</span></summary><div class="mcx-refg">' + ref + '</div></details>'; } }
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +

@@ -2977,6 +2977,22 @@ details.secd.mcx-tile[open] .mcx-rib, details.secd.mcx-tile[open] .mcx-who { dis
 @media (max-width: 640px) { .mcx-lanes { --lw: 28px; } .mcx-ll > span:not(.icw), .mcx-ll > b { display: none; } .mcx-tiles { grid-template-columns: 1fr; } .mcx-big:not([open]) { grid-column: auto; grid-row: auto; }
   .mcx-big:not([open]) .wr-map.mcx-map, .mcx-big:not([open]) .wr-map.mcx-map svg.zmap { height: 200px !important; } .mcx-tile .mcx-alt, .mcx-big:not([open]) .mcx-alt { height: auto; }
   #view details.phase.mcx-ph { padding: 0 10px 10px; } #view details.phase.mcx-ph > summary { margin: 0 -10px 10px; padding: 12px 12px 12px 16px; flex-wrap: wrap; gap: 8px; } #view details.phase.mcx-ph > summary > b { font-size: 17px; } .mcx-ring span { display: none; } }
+/* (Oct 19: the reference panels (Survival kit, Raid cooldowns, Damage taken, Interrupts) in one quieter card at the end: a silver badge, a
+   smaller banner, a compact tile each (icon, name, one status line, a red or amber line on top when it has problems), opening across the card) */
+#view details.phase.mcx-ref > summary { padding-top: 11px; padding-bottom: 11px; } #view details.phase.mcx-ref > summary > b { font-size: 17px; }
+.mcx-pn.mcx-pn2 { min-width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(160deg, #d9dde6, #8b93a5); color: #15171d; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.5); }
+.mcx-refg { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.mcx-refg > details.secd { margin: 0; position: relative; border-radius: 12px; }
+.mcx-refg > details.secd:not([open]) { overflow: hidden; box-shadow: none; border: 1px solid var(--line2); transition: transform .15s, border-color .15s; } .mcx-refg > details.secd:not([open]):hover { transform: translateY(-2px); border-color: var(--faint); }
+.mcx-refg > details.secd:not([open])::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--line2); }
+.mcx-refg > details.secd.st-bad:not([open])::before { background: #e5534b; } .mcx-refg > details.secd.st-warn:not([open])::before { background: #e8a23a; } .mcx-refg > details.secd.st-ok:not([open])::before { background: rgba(69,193,92,.7); }
+.mcx-refg > details.secd:not([open]) > summary { flex-wrap: wrap; align-items: center; row-gap: 3px; min-height: 66px; padding: 12px 12px 10px; }
+.mcx-refg > details.secd:not([open]) > summary::after { display: none; }
+.mcx-refg > details.secd:not([open]) > summary .icw.big { width: 26px; height: 26px; margin-right: 9px; vertical-align: -8px; border-radius: 6px; overflow: hidden; }
+.mcx-refg > details.secd:not([open]) > summary .sechd b, .mcx-refg > details.secd:not([open]) > summary > b { font: 700 14px var(--head); }
+.mcx-refg > details.secd:not([open]) > summary > .sst, .mcx-refg > details.secd:not([open]) > summary > .sub { flex-basis: 100%; margin: 0 0 0 35px; text-align: left; white-space: normal; font-size: 12px; line-height: 1.35; }
+.mcx-refg > details.secd[open] { grid-column: 1 / -1; }
+@media (max-width: 640px) { .mcx-refg { grid-template-columns: 1fr 1fr; } .mcx-refg > details.secd:not([open]) > summary > .sst, .mcx-refg > details.secd:not([open]) > summary > .sub { margin-left: 0; } }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
