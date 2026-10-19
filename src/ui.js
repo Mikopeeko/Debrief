@@ -941,7 +941,7 @@ const DANCERS = [
 ];
 const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'On Pull recap, every box opens the tab with its details.', 'Night summary shows the whole night, with how far each pull got and what kept going wrong.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
+  'Recap explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick Whole night above the pulls to see how the whole night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -1220,7 +1220,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { live: 'Pull recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'Night summary', player: 'Report card' };
+const TAB_NAME = { live: 'Recap', audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'Whole night', player: 'Report card' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -2904,7 +2904,7 @@ function audit() {
     // (Entombed Sentinels)
     droplets: { Died: 'deaths after a droplet', '!Droplets': 'two droplets at once', '!Living Venom': 'hits from the venom flying back' },
     coag: { 'At the intermission': 'adds still alive at the intermission', '!Killed': 'adds not killed' },
-    miasma: { Soakers: 'soaks with too few players', Died: 'deaths in the soak' },
+    miasma: { Soakers: 'soaks two or more players short', '!Soakers': 'soaks one player short', Died: 'deaths in the soak' },
     blighted: { 'Dispelled by': 'players who died with it', '!Dispelled by': 'ones that ran out and dropped a pool', '!On for': 'slow dispels' },
     protovenom: { Eruption: 'eruptions', '!Took': 'slow clears', '!Cleared with': 'circles not cleared with a partner' },
     helix: { 'Solved after': 'players who didn\'t solve it', Result: 'failures', '!Result': 'wrong bumps' },
@@ -2933,7 +2933,7 @@ function audit() {
     ichor: { 'In someone else\'s circle': 'players standing in someone else\'s circle' }, stone: { 'Soaked by': 'missed Stone Breaker circles', 'Raid hit': 'missed circles hitting the raid' },
     avoid: { 'Stir the Depths steps': 'players stepping into Stir the Depths water again and again', '!Stir the Depths steps': 'a step into Stir the Depths water', 'Sanguine Storm hits': 'players taking repeated Sanguine Storm hits', '!Sanguine Storm hits': 'a single Sanguine Storm hit' },
     deaths: { 'Killed by': 'deaths', 'Still had ready': 'dying with a defensive or self-heal still ready' },
-    orbs: { Spell: 'frontals hitting non-tanks', 'Orbs popped': 'frontals off the orb plan' }, soakq: { 'In circle': 'short-handed soaks', Target: 'targets without an external', Died: 'deaths in the soak', Soakers: 'soak assignment mix-ups' },
+    orbs: { 'Orbs popped': 'Deluges with too many orbs at once', '!Orbs popped': 'Deluges off the orb plan', Result: 'Deluges that went wrong' }, soakq: { 'In circle': 'short-handed soaks', Target: 'targets without an external', Died: 'deaths in the soak', Soakers: 'soak assignment mix-ups' },
     dmghost: { Result: 'ghost collisions or mind-control falls', '!Result': 'ghosts missed by Soul Sever' }, addsets: { Who: 'kicks before Gloombomb went out', Result: 'shields or adds not dealt with in time' },
     tankfront: { Stack: 'tanks taking too many stacks', 'Had up': 'second stacks without two externals', Result: 'tank deaths' }, shield: { Result: 'casts nobody kicked', Broken: 'shields not broken in time', '!Broken': 'shields broken with little time to kick' },
     defensives: { Survival: 'low survival kit scores', '!Survival': 'survival kits with room to improve', Defensives: 'dying with a defensive or self-heal still ready', 'Healthstone and health potion': 'dying with a Healthstone or health potion unused', 'Combat or mana potion': 'pulls without a combat or mana potion', 'Close calls': 'close calls with nothing pressed' },
@@ -2943,8 +2943,8 @@ function audit() {
     incub: { Wretch: 'venom reaching the Wretch' }, wretch: { '!Bubbles': 'Wretches alive for a third bubble', '!Outside the bubble': 'players outside a bubble' }, amps: { '!Boss health': 'windows behind pace' }, fangs: { Result: 'deaths while tethered', '!Broke': 'tethers never broken', '!Result': 'batches spread out or without a raid cooldown' }, doomscale: { Result: 'a hatched big egg or a long Revenge', '!Result': 'a Warden reaching its second gestation, or a short Revenge' }, bite: { Result: 'bites not cleared', '!Result': 'Purges not spread or held without a defensive' }, shriek: { Killed: 'adds left alive', '!Got off': 'adds that got their casts off' },
   };
   // (row labels that don't read as a plural noun on their own)
-  const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets' };
-  const SNOUN = { boxes: 'boxes', united: 'United Defenses', ascension: 'Final Ascension casts', gloom: 'Gloombomb checks', frostfire: 'debuffs', blink: 'Blink Novas', thud: 'leaps', bomb: 'bombs', tankstacks: 'tank stretches', venoms: 'adds', fangs: 'Dripping Fangs', totems: 'totem checks', froth: 'players', bile: 'Catalysts', infect: 'infections', imbibe: 'Imbibes', amani: 'Amani', ignition: 'Ignition checks', depths: 'players in the well', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission checks', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'adds and kicks', dmghost: 'Dreadmarch checks', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'eggs', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangsT: 'tethers', doomscale: 'Doomscale sets', bite: 'bites', shriek: 'adds' };
+  const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets', 'erupted on the raid': 'droplets erupting on the raid' };
+  const SNOUN = { boxes: 'boxes', united: 'United Defenses', ascension: 'Final Ascension casts', gloom: 'Gloombomb checks', frostfire: 'debuffs', blink: 'Blink Novas', thud: 'leaps', bomb: 'bombs', tankstacks: 'tank stretches', venoms: 'adds', fangs: 'Dripping Fangs', totems: 'totem checks', froth: 'players', bile: 'Catalysts', infect: 'infections', imbibe: 'Imbibes', amani: 'Amani', ignition: 'Ignition checks', depths: 'well trips', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission checks', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'adds and kicks', dmghost: 'Dreadmarch checks', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'eggs', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangsT: 'tethers', doomscale: 'Doomscale sets', bite: 'bites', shriek: 'adds' };
   const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
   const synopsis = (s, rows, groups) => {
     const all = []; for (const g of groups) for (const row of g.rows) all.push({ row, g }); for (const row of rows) all.push({ row, g: null });
@@ -2979,13 +2979,14 @@ function audit() {
       // (a flagged label reads as a plural: "orb collisions"; one that isn't a noun, like "Exploded unsoaked", has its
       // own wording in LABEL_T)
       // (a label starting with a spell's name keeps its capital: "Gloombomb clips", not "gloombomb clips")
-      const theme = (row, flag) => { const fi = firstI(row); if (fi >= 0 && row[fi][flag] && row[fi].txt && !row[fi].p) { const l0 = String(row[fi].txt), l = l0.toLowerCase(), w = sidOf(l0.split(' ')[0]) ? l0 : l; return LABEL_T[l] || (/s$/.test(w) ? w : w + 's'); }
+      const theme = (row, flag) => { const fi = firstI(row); if (fi >= 0 && row[fi][flag] && row[fi].txt && !row[fi].p) { const l0 = String(row[fi].txt), l = l0.toLowerCase(), w = sidOf(l0.split(' ')[0]) ? l0 : l; if (/^\d/.test(l0)) return l0; return LABEL_T[l] || (/s$/.test(w) ? w : w + 's'); }
         const i = row.findIndex((c, k) => k !== fi && c[flag] && !c.map); const col = s.cols[i] || ''; return (flag === 'warn' && T2['!' + col]) || T2[col] || (col ? col.toLowerCase() : 'other problems'); };
       // (avoidable damage: by what hit them, "Malevolent Resonance (2)", not by column)
       const tally = (list, flag) => { const m = new Map(); for (const x of list) { const k = s.id === 'avoid' && x.g ? x.g.title : theme(x.row, flag); m.set(k, (m.get(k) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
       const badL = all.filter((x) => isBadRow(x.row)), warnL = all.filter((x) => isWarnRow(x.row)), okL = all.filter((x) => okRow(x.row)), n = badL.length + warnL.length + okL.length;
       const noun = (s.id === 'fangs' && /^Grasping/.test(s.title) ? SNOUN.fangsT : SNOUN[s.id]) || NOUN[(s.cols[0] || '').toLowerCase()] || 'results'; // (two bosses have a 'fangs' section)
-      const item = ([k, c]) => (/\)$/.test(k) ? k.replace(/\)$/, ', ' + c + ')') : k + ' (' + c + ')');
+      // (a label that already starts with its count, like "5 players stood in a crater", is said as it is)
+      const item = ([k, c]) => (/^\d/.test(k) ? k : /\)$/.test(k) ? k.replace(/\)$/, ', ' + c + ')') : k + ' (' + c + ')');
       const listT = (t) => (t.length > 3 ? t.slice(0, 3).map(item).join(', ') + ' and a few smaller things' : andJ(t.map(item)));
       // (a set flagged only in its own header, like adds still up when the next set came, is named, not counted)
       const setsOnly = (pred) => groups.filter((g) => pred(g) && !g.rows.some((row) => isBadRow(row) || (pred === badPred ? false : isWarnRow(row))));
@@ -3003,6 +3004,11 @@ function audit() {
         // (Ula'tek eggs: each red row is a Viper, each amber one an egg picked up with Rancid Yolk on)
         lead = badL.length ? plural(badL.length, 'Viper') + ' hatched' + (warnL.length ? ', and ' + plural(warnL.length, 'egg') + ' went to a carrier with Rancid Yolk still on' : '') + '.'
           : warnL.length ? 'No Vipers, but ' + plural(warnL.length, 'egg') + ' went to a carrier with Rancid Yolk still on.' : 'No egg broke into a Viper.';
+      } else if (s.id === 'froth') {
+        // (Vashnik's Plague Froth: its rows are only the players a wave hit, so say how many hits on whom, not "none of the 20
+        // players went cleanly" (scan, Oct 19))
+        const pw = new Set(all.map((x) => x.row[0] && x.row[0].p).filter(Boolean)).size, dw = badL.length;
+        lead = n ? plural(n, 'Plague Wave hit') + ' on ' + plural(pw, 'player') + ' over ' + plural(groups.length, 'Plague Froth') + (dw ? ', and ' + (dw === 1 ? 'one was a death' : dw + ' were deaths') : '') + '.' : 'Nobody was hit by a Plague Wave.';
       } else if (s.id === 'waves') {
         // (Ula'tek's Caustic Waves: every row is a hit, so say how many and on whom, not "0 of 6 were clean")
         const pw = new Set(all.map((x) => (x.row[1].ps || [])[0])).size, dw = all.filter((x) => x.row[4] && x.row[4].bad).length;
@@ -3021,10 +3027,10 @@ function audit() {
       const tb = tally(badL, 'bad'), tw = tally(warnL, 'warn'), say = [lead], hdr = (k) => ' (see ' + (k === 1 ? 'its' : 'their') + ' header).';
       // (avoidable damage is by source, so say where the hits came from; the same source can be in both)
       if (s.id === 'avoid') { if (tb.length) say.push('The dangerous hits came from ' + listT(tb) + '.'); if (tw.length) say.push((tb.length ? 'Smaller hits came from ' : 'The hits came from ') + listT(tw) + '.'); }
-      else if ((tb.length || badSets) && s.id !== 'waves') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
+      else if ((tb.length || badSets) && s.id !== 'waves' && s.id !== 'froth') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
         (badSets ? (tb.length ? ' Also look at ' : 'Look at ') + setNames(badSetL) + hdr(badSets) : ''));
       // ("Smaller things to tighten up: slow dispels (7)", not "Slow dispels (7) could be tighter" (scan, Oct 19))
-      if ((tw.length || warnSets) && s.id !== 'waves' && s.id !== 'avoid') say.push('Smaller things to tighten up: ' + [tw.length ? listT(tw) : '', warnSets ? setNames(warnSetL) + hdr(warnSets).replace(/\.$/, '') : ''].filter(Boolean).join(', and ') + '.');
+      if ((tw.length || warnSets) && s.id !== 'waves' && s.id !== 'froth' && s.id !== 'avoid') say.push('Smaller things to tighten up: ' + [tw.length ? listT(tw) : '', warnSets ? setNames(warnSetL) + hdr(warnSets).replace(/\.$/, '') : ''].filter(Boolean).join(', and ') + '.');
       const sev = badL.length || badSets ? (ratio >= 0.8 ? 'warn' : 'bad') : warnL.length || warnSets ? 'warn' : 'ok';
       return '<div class="msum"><p class="' + sev + '">' + esc(say.join(' ').replace(/\s+/g, ' ').trim()) + '</p></div>';
     }
@@ -3940,8 +3946,9 @@ function miniMap(mp, pmap) {
   s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
   const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
+  // (the old "add a map image under Interrupts → Missed casts" tip is gone: that tab was removed (scan, Oct 19))
+  void mi; void arena;
   return '<div class="sub" style="margin:10px 0 6px">' + esc(mp.title) + '. Hover any icon for a name.' +
-    (mi || arena ? '' : ' To show the room behind the dots, add a map image under Interrupts → Missed casts.') +
     (mp.note ? '<div style="margin-top:4px;font-weight:600;color:var(--text)">' + esc(mp.note) + '</div>' : '') + '</div>' +
     '<div class="zwrap" style="max-width:560px"><div class="zbar">' + (A ? '<button class="btn zfull on" type="button">Full arena</button><button class="btn zfocus" type="button">Zoom to mechanic</button>' : '') +
     '<span class="sub">Scroll to zoom, drag to move, double-click to switch views</span></div>' +
@@ -5677,7 +5684,7 @@ function kicks() {
 // up to the wipe filter; "while alive" divides by the time until a player's first death.
 // (the Report card is gone (your call, Oct 18): Spec checks reviews each player's play, the rest is plain data; its
 // scoring stays behind the Players grade until Players is looked at again)
-const PERF_KINDS = [['spec', 'Spec checks'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
+const PERF_KINDS = [['spec', 'Rotation'], ['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['res', 'Resources'], ['cast', 'Casts'], ['cds', 'Cooldowns'], ['pi', 'Power Infusion'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survivability']];
 // (Graphs' views as tabs in four labelled groups, like the main tab bar (your pick, Oct 18); Spec checks, the "how they
 // played" part, is its own main tab now, Rotation)
 const PERF_GROUPS = [['Output', ['dmg', 'heal', 'taken']], ['Casting', ['cast', 'res']], ['Cooldowns and buffs', ['cds', 'pi', 'aura']], ['Toolkit', ['util', 'surv']]];
@@ -14467,7 +14474,10 @@ function survivalOf(r, p) {
   const cdPoss = cds.reduce((s, d) => s + d.poss, 0), cdUsed = cds.reduce((s, d) => s + d.used, 0), cdUse = cdPoss ? cdUsed / cdPoss : null;
   const def = tank ? Math.max(0, 100 - 50 * defReady - 10 * Math.min(4, silent) - (cdUse == null ? 0 : 45 * (1 - Math.min(1, cdUse / 0.8)))) : Math.max(0, 100 - 50 * defReady - 20 * silent);
   const kit = tank ? Math.max(0, 100 - 50 * kitReady - 5 * Math.min(4, silentKit)) : Math.max(0, 100 - 50 * kitReady - 20 * silentKit);
-  const pots = p.cons.combatpot.concat(p.cons.manapot).filter((u) => u.t <= end + 0.05), pre = !pots.some((u) => u.t < 3) && prepotted(r, p);
+  // (a player brought back with a battle res counts to the pull's end: a potion after the res is theirs too (scan, Oct 19: "Didn't
+  // use a combat potion" next to "used a combat potion at 4:24"))
+  const ctEnd = Math.min(r.duration, ct), rezzed = p.cons.combatpot.concat(p.cons.manapot).some((u) => u.t > end + 0.05 && u.t <= ctEnd + 0.05);
+  const potEnd = rezzed ? ctEnd : end, pots = p.cons.combatpot.concat(p.cons.manapot).filter((u) => u.t <= potEnd + 0.05), pre = !pots.some((u) => u.t < 3) && prepotted(r, p);
   // (a wipe under 2 minutes doesn't expect a potion: early resets bury the real problems under potion names (your review, Oct 18))
   const shortW = !r.item.kill && Math.min(r.duration, cutT(r)) < 120;
   // (how many fit, given when they drank them (scan, Oct 19): combat and mana potions share a 5-minute cooldown, so holding one
@@ -14475,7 +14485,7 @@ function survivalOf(r, p) {
   // of the pull. One drunk before the pull counts as drunk at the pull)
   const potFit = (() => { const us = pots.map((u) => u.t).sort((a, b) => a - b); if (pre) us.unshift(-1); let avail = 0, extra = 0;
     for (const u of us) { const gap = u - avail; if (gap >= 300) extra += Math.floor(gap / 300); avail = Math.max(u, avail) + 300; }
-    const tail = end - avail; if (tail >= 60) extra += 1 + Math.floor((tail - 60) / 300); return us.length + extra; })();
+    const tail = potEnd - avail; if (tail >= 60) extra += 1 + Math.floor((tail - 60) / 300); return us.length + extra; })();
   const expect = end < 20 || shortW ? 0 : Math.max(1, potFit), used = Math.min(pots.length + (pre ? 1 : 0), expect || 9);
   const pot = expect ? 100 * Math.min(1, used / expect) : null;
   const W = tank ? [0.6, 0.15, 0.25] : [0.4, 0.3, 0.3];
@@ -14731,7 +14741,7 @@ function rcDetail(x, night) {
     return ckLine(rcSt(a), '<b>' + esc(ck.label) + '</b>' + (txt ? ': ' + esc(txt) : '') + esc(wTxt) + (a != null && ck.worst && ck.worst[0] < 85 && ck.scs.length > 1 ? '<span class="sub">, worst on pull ' + ck.worst[1] + '</span>' : '')); };
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
     return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span>' + (night && x.secTr && x.secTr[k] != null ? plTr(x.secTr[k]) : '') + '</header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
-  const go = pfGoRow(x.p.name, [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage']].concat(SPEC_CHECKS[x.p.specName] ? [['spec', 'Spec checks']] : [], [['cast', 'Casts'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['surv', 'Survivability'], ['util', 'Utility']]));
+  const go = pfGoRow(x.p.name, [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage']].concat(SPEC_CHECKS[x.p.specName] ? [['spec', 'Rotation']] : [], [['cast', 'Casts'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['surv', 'Survivability'], ['util', 'Utility']]));
   return '<div class="rk-d">' + work + secs + go + '</div>';
 }
 function bindReportCard() {
@@ -16293,8 +16303,8 @@ const LOGO = '<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="
 // The front page's preview: an app-like window with four views (Pull recap, Mechanics, Rotation, Assignments; your call,
 // Oct 19: Rotation in, Night summary out, since Night summary is now Pull recap on the whole night).
 // All made-up example data and names, drawn in code (no game art).
-const FP_SCENES = [['live', 'Pull recap'], ['mech', 'Mechanics'], ['rot', 'Rotation'], ['assign', 'Assignments']];
-const FP_MODS = { live: 'What went wrong, what went well, and what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', rot: 'Your own casts and cooldowns, checked like a coach would.', assign: 'Your NSRT note against what really happened.' };
+const FP_SCENES = [['live', 'Recap'], ['mech', 'Mechanics'], ['rot', 'Rotation'], ['assign', 'Assignments']];
+const FP_MODS = { live: 'What went well, what didn\'t, and what changed since the last pull.', mech: 'Every mechanic checked, with maps of who stood where.', rot: 'Your own casts and cooldowns, checked like a coach would.', assign: 'Your NSRT note against what really happened.' };
 function fpParts() {
   const mark = { bad: '✕', warn: '!', ok: '✓' };
   const r = (k, html, who) => '<div class="fp-r ' + k + '"><i>' + mark[k] + '</i><span>' + html + '</span>' + (who ? '<span class="fp-who">' + who + '</span>' : '') + '</div>';
@@ -16323,7 +16333,7 @@ function fpParts() {
   const rot = '<div class="fp-head"><div class="fp-hl"><small>Ilyra · Holy Paladin · Pull 18</small><b>Rotation</b><span class="up">▲ 2 fewer slips than last pull</span></div></div>' +
     '<div class="fp-tiles">' + tile('ok', 'Holy Shock', '44 of 48 possible') + tile('warn', 'Holy Power wasted', '11%') + tile('ok', 'Aura Mastery', '2 of 2 in Beacon') + tile('ok', 'Avenging Wrath', '1.4M healing, 2 casts') + '</div>' +
     pnl(h4('Your priority', 'warn', '! 3 slips') + r('warn', 'You pressed <b>Flash of Light</b> while <b>Holy Shock</b> was ready.', '0:52') + r('warn', 'You pressed <b>Judgment</b> while <b>Holy Shock</b> sat at full charges.', '1:20') +
-      r('warn', 'You pressed a <b>builder</b> while already at 5 Holy Power.', '1:37') + r('ok', 'You pressed <b>Divine Toll</b> during 2 of your 2 Dawnlights.'));
+      r('warn', 'You pressed a <b>builder</b> while already at 5 Holy Power.', '1:37') + r('ok', 'You pressed <b>Divine Toll</b> during both of your Dawnlights.'));
   const assign = '<div class="fp-row">' + pnl(h4('Your NSRT note') + '<pre class="fp-code">intstart\nKaelis Brann Ilyra\nThessa Vosk Doran\nintend\n\nsoak1 Morwyn Kaelis Vosk\nsoak2 Brann Ilyra Thessa</pre>') +
     pnl(h4('Assignments vs what happened') + r('ok', '<b>Kicks, set 1</b> · in order: Kaelis, Brann, Ilyra') + r('bad', '<b>Kicks, set 2</b> · Vosk kicked in Thessa\'s turn', 'Vosk') + r('ok', '<b>Soak 1</b> · all 3 assigned players soaked') +
       r('bad', '<b>Soak 2</b> · Ilyra wasn\'t there', 'Ilyra') + r('ok', '<b>CC</b> · every globule set crowd controlled'), 'wide') + '</div>';
@@ -16506,7 +16516,7 @@ function teamTile(g, all, order) {
 function homePreviews() {
   const card = (k, t, body) => '<button class="tp-card" type="button" data-tour="' + k + '"><span class="tp-t">' + t + '</span><span class="tp-art">' + body + '</span></button>';
   return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
-    card(1, 'Pull recap', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
+    card(1, 'Recap', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
     card(2, 'Mechanics and maps', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
     card(3, 'Rotation and graphs', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
     card(4, 'Teams', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
@@ -16519,7 +16529,7 @@ const TOUR_KEY = 'wla-tour-done', tourDone = () => store.get(TOUR_KEY) === '1';
 const TOUR = [
   { t: 'Welcome to Debrief', p: 'Debrief reads your raid\'s combat logs and Warcraft Logs reports, and turns every pull into a short list: what went wrong, what went right, and what to fix next. Here\'s a quick look around.',
     art: () => '<svg class="tr-logo" viewBox="0 0 64 64" aria-hidden="true"><path class="s1" d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z"/><path class="s2" d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z"/><path class="s3" d="m27 32.5 4 4 8.5-9.5"/></svg>' },
-  { t: 'Every pull, explained', p: 'The moment a pull ends, its card shows what went well, what went wrong, and the one thing to fix before you pull again. Click a pull at the top to see any of them.',
+  { t: 'Every pull, explained', p: 'The moment a pull ends, Recap explains it in plain words: what went well, what didn\'t, and what changed since the last pull. Click a pull at the top to see any of them.',
     art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ Brann died first, at 1:42, to Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
   { t: 'Mechanics, with maps', p: 'Open any mechanic on the Mechanics tab to see a map of where everyone stood, and press Play to watch the moment again. Every mechanic is checked for every player. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it too.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },

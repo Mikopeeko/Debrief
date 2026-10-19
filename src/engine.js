@@ -1529,10 +1529,12 @@ function buildEntombedSentinels(ev, r, h) {
   const mRows = miT.map((t, i) => {
     const hit = miHits.filter((e) => e.t >= t && e.t <= t + 12), t1 = hit.length ? hit[0].t : null, soak = [...new Set(hit.filter((e) => e.t <= (t1 ?? 0) + 1).map((e) => e.dst))];
     const tg = (miTg.find((e) => e.t >= t - 1 && e.t <= t + 8) || {}).dst, died = soak.map((g) => diedNear(g, t1 ?? t, 3)).filter(Boolean);
-    const few = need && soak.length < need;
-    if (few) M(t1 ?? t, 'Raid', 'Unstable Miasma', 'High', 'Unstable Miasma ' + (i + 1) + ' had ' + pl(soak.length, 'soaker') + ', but Mythic needs at least ' + need + ', so each soaker got more stacks and a bigger pool.', 'Get at least eight players into every Unstable Miasma, far back in a corner.');
+    // (one short is amber, two or more red (scan, Oct 19): a top Mythic kill soaked every other one with 7 and nobody died, so 7
+    // works, just with more stacks each; the guides' plan is 8)
+    const few = need && soak.length < need, veryFew = need && soak.length < need - 1;
+    if (few) M(t1 ?? t, 'Raid', 'Unstable Miasma', veryFew ? 'High' : 'Medium', 'Unstable Miasma ' + (i + 1) + ' had ' + pl(soak.length, 'soaker') + ', but Mythic needs at least ' + need + ', so each soaker got more stacks and a bigger pool.', 'Get at least eight players into every Unstable Miasma, far back in a corner.');
     for (const d of died) M(d.t, d.player, 'Unstable Miasma', 'High', 'Died in the Unstable Miasma soak.', 'Soak at full health, with a defensive if you\'re low. More soakers means less damage each.');
-    return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' of ' + need : ''), bad: !!few, sub: soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
+    return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' of ' + need : ''), bad: !!veryFew, warn: !!few && !veryFew, sub: soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
       // (the soak: 7.5 yd around the marked player, its published radius, shown from 3 s before it lands)
       t1 != null ? { map: { t: t1, good: soak, goodLabel: 'soaked', goodAt: soak.map((g) => [g, t1]), pendLabel: 'in the soak (before it lands)', hl: tg ? [tg] : [], hlLabel: 'marked', title: 'Unstable Miasma ' + (i + 1) + ' at ' + h.fmtT(t1), pts: h.snap(t1), frames: frames(t1 - 3, t1 + 1.5),
         rings: tg ? [{ guid: tg, r: 7.5, ...mcol('Unstable Miasma'), label: '7.5 yd', t0: t1 - 3.2, dur: 3.6, fx: 'soak', at: t1, legend: 'Unstable Miasma soak (7.5 yd)' }] : [] } } : { txt: '' }];
@@ -2673,7 +2675,7 @@ function buildLostExplorers(ev, r, h) {
   {
     const bm = aur(LE.bomb).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bo = aur(LE.bounce).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bw = dmgName('blast wave'), fb = dmgName('fungal burst');
     const rows = bm.map((e) => {
-      const t1 = e.t + 30, up = [...new Set(bo.filter((x) => x.t >= e.t && x.t <= t1).map((x) => x.dst))], hitW = [...new Set(bw.filter((x) => x.t >= e.t && x.t <= t1).map((x) => x.dst))], hitF = [...new Set(fb.filter((x) => x.t >= e.t - 10 && x.t <= t1).map((x) => x.dst))];
+      const t1 = e.t + 30, up = [...new Set(bo.filter((x) => x.t >= e.t && x.t <= t1).map((x) => x.dst))], hitW = [...new Set(bw.filter((x) => x.t >= e.t && x.t <= t1 && x.amt !== 0 /* (an immunity or a shield that took all of it is a way over it too) */).map((x) => x.dst))], hitF = [...new Set(fb.filter((x) => x.t >= e.t - 10 && x.t <= t1).map((x) => x.dst))];
       for (const g of hitW) M(e.t + 10, pname(g), 'Blast Wave', 'High', 'Hit by the Blast Wave from Explosive Surprise.', 'Bounce over the Blast Wave on a mushroom, or use a blink, teleport or leap.');
       return [{ p: pname(e.dst), sub: 'had the bomb' }, { t: e.t }, hitW.length ? { txt: pl(hitW.length, 'player') + ' hit by the Blast Wave', bad: true, sub: hitW.map(pname).join(', ') } : { txt: 'nobody hit by the Blast Wave' }, { txt: pl(up.length, 'player') + ' bounced', dim: true, sub: hitF.length ? pl(hitF.length, 'Fungal Burst hit') : '' }];
     });
@@ -2738,7 +2740,7 @@ const HOW = {
     protovenom: 'Mythic: Vashnik, in the room, puts an orange circle on eight players (Shifting Protovenom), about 6 yards around them, pulsing about 233k every 2 seconds. It does nothing for the first second and a half. Two circles touching clears both harmlessly. A circle touching a player without one is a Protovenom Eruption, damage and a big knockback for both, and the circle stays. Everyone, tanks and melee too, spreads before it lands, then circles pair up, crossing to the other group if needed. Amber: took over 6 seconds to clear. Red: an eruption.',
     droplets: 'The Breath of Ula\'tek sprays Toxic Droplets. Step on each one (about 375k) before it erupts on the whole raid 12 seconds later (Noxious Blast). On Mythic two at once can kill you, so one each. Tanks can take extras. On the hard sets, the one right before the intermission or droplets in a blood pool, use mobile immunities. Each destroyed droplet\'s venom flies back to the boss 4 seconds later (Living Venom, 375k a hit): dodge it. Amber: two at once (not a tank or immune). Red: one erupted on the raid, or a death. Venom hits are shown here and judged under Avoidable damage.',
     coag: 'The Breath of Ula\'tek spawns a Venom Coagulation near random players. It pulses raid damage (Contaminate) while alive. Bait it ahead of the group so it doesn\'t land in blood. The first of a cycle can be cleaved down. The second spawns right before the intermission and has to die before it, with red-side ranged helping. After the last intermission, leave the new add: the enrage is close. Amber: an add never killed. Red: the one before an intermission still alive when it starts.',
-    miasma: 'The Blood of Ula\'tek marks a player with Unstable Miasma: a soak. On Mythic at least eight players soak it, far back in a corner. Fewer means more Blood Venom stacks each and bigger pools, and too few kills. The soakers then line up along the back wall to drop their pools and move out. Red: fewer than eight soakers on Mythic, or a soaker died.',
+    miasma: 'The Blood of Ula\'tek marks a player with Unstable Miasma: a soak. On Mythic at least eight players soak it, far back in a corner. Fewer means more Blood Venom stacks each and bigger pools, and too few kills. The soakers then line up along the back wall to drop their pools and move out. Amber: seven soakers on Mythic (one short). Red: six or fewer, or a soaker died.',
     blighted: 'Blighted Blood is a dispellable damage over time on a few players. Healers dispel it as soon as it lands. One that runs out drops a blood pool. Amber: on for more than 5 seconds, or it ran out. Red: the player died with it.',
     pools: 'Everything on the red side drops blood pools: Blood Venom when it ends (bigger with more stacks), a Blighted Blood that ran out, and the red tank\'s Bloodvenom Injection when the tank swaps off. Keep a set pattern along the walls so the room stays open. After the second intermission most of it should still be free. One floor map per cycle, every pool so far, this cycle\'s brighter. Not judged.',
     marks: 'Each boss stacks its own damage over time on everyone within 40 yards: Mark of Acid from the Breath, Mark of Blood from the Blood. Be in range of only one boss. Spread-damage specs cleave both from the edge of range. Stacks are counted from 8 seconds after each intermission (the swap). Amber: 3 or more stacks of the other boss\'s Mark in a cycle. Red: 6 or more. Tanks aren\'t judged.',
@@ -2841,7 +2843,9 @@ function avoidPanel(ev, r, h, list) {
   // (one source's set from its hits and deaths up to cut; the wipe filter builds it again with recut, so a hit or a death
   // after the filter never shows or counts)
   const build = (src, all, cut) => {
-    const hits = all.filter((e) => e.t <= cut + 0.05); if (!hits.length) return null;
+    // (a hit that did no damage, met with an immunity or fully absorbed, isn't avoidable damage taken (scan, Oct 19: a top kill's
+    // Blast Wave "hits" were four immunities))
+    const hits = all.filter((e) => e.t <= cut + 0.05 && e.amt !== 0); if (!hits.length) return null;
     const [wA, bA] = [src.warnAt ?? DEF[src.harm][0], src.badAt ?? DEF[src.harm][1]];
     const per = new Map();
     for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [] }); x.ticks++; x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); } x.last = e.t; }
