@@ -1742,6 +1742,28 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .nlib .nl-foot { display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .nlib .nl-foot > .sub { flex: 1; min-width: 240px; }
 .nlib .nl-pk { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+/* (Assignments, easier: the note in one line on top with its buttons on the right; the other notes one line each under it;
+   the example note tinted gold; the editor with the note first and the rarer actions smaller) */
+.nlib .nl-hb { display: flex; gap: 6px; flex-wrap: wrap; }
+.nlib.ex { border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.05); }
+.nlib .nl-why { margin: 6px 0 0; }
+.nlib .nl-list { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.nlib .nl-lh { font-family: var(--head); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 2px; }
+.nlib .nl-r { padding: 6px 10px; margin-top: 5px; }
+.nlib .nl-in { margin-left: 8px; }
+.as-none { padding: 12px 14px; line-height: 1.5; }
+.as-none .sub { display: block; margin-top: 4px; }
+.as-none .as-why { margin: 6px 0 4px; padding-left: 20px; } .as-none .as-why li { margin: 2px 0; }
+.nt-ed .notebox { min-height: 160px; }
+.nt-ed .nt-name { margin: 10px 0 0; }
+.nt-ed .nt-name input { max-width: 380px; }
+.nt-ed .nt-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.nt-ed .nt-sp { flex: 1; }
+.nt-ed .nt-more, .nt-ed .nt-how { margin-top: 8px; }
+.nt-ed details > summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.nt-ed .nt-more .nt-swap { margin-top: 6px; }
+.nt-ed .nt-chk { margin: 12px 0 0; }
+@media (max-width: 640px) { .nlib .nl-in { display: block; margin-left: 0; } .nt-ed .nt-sp { display: none; } }
 .nsa .tbl tr.rsub td { padding-top: 0; border-top: 0; font-size: 12.5px; }
 /* ---- Summary: the all-pulls page (overall report card, how far the night got, what to fix, then Mechanics and Assignments with a row per mechanic or assignment and a dot per pull) ---- */
 .sumv .sum-others { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 2px 0 10px; }
@@ -10456,7 +10478,9 @@ function noteForRep(rep) {
   if (o.list.length === 1) v = { ...o.list[0], auto: false, how: 'only', fit: noteFit(o.list[0].text, rep) };
   else {
     const fs = o.list.map((n) => ({ n, f: noteFit(n.text, rep) })).sort((a, b) => b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
-    const near = fs.filter((x) => x.f.roster >= fs[0].f.roster - 1.5);
+    // (only notes that fit the roster equally well go on to the jobs: one that names a player who wasn't there loses outright,
+    // or that player's missing cooldown would make it look better)
+    const near = fs.filter((x) => x.f.roster >= fs[0].f.roster - 0.25);
     let how = fs.length > 1 && fs[0].f.roster > fs[1].f.roster ? 'roster' : 'newest';
     if (near.length > 1) {
       for (const x of near) { try { x.res = E.checkAssignments(rep, x.n.text); } catch (e) { x.res = { error: e.message }; } x.j = noteJobs(x.res); }
@@ -10559,6 +10583,26 @@ function noteFits(text, boss) {
     return '<button class="btn sm" type="button" data-nopen="' + esc(o.wcl.code + '|' + (o.wcl.fight || '')) + '" title="Open the pulls from this night">' + l + '</button>'; };
   return '<div class="nl-fits" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="sub">Fits your saved logs:</span>' + r.fits.slice(0, 4).map(one).join('') + (r.fits.length > 4 ? '<span class="sub">and ' + (r.fits.length - 4) + ' more</span>' : '') + '</div>';
 }
+// A saved note's name when none is typed (your note, Oct 18: name the saved note for me): its difficulty and "plan", then
+// what changed from your newest note for the boss ("without Optt", "with Brakk", "Brakk for Optt"), else the day it's saved
+function autoNoteName(text, list, rep) {
+  let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
+  const DN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }, d0 = String(hd.difficulty || '').trim(), dif = DN[d0] || d0 || (rep && rep.item.diff) || '';
+  const base = /^(mythic|heroic|normal)$/i.test(dif) ? capS(String(dif).toLowerCase()) + ' plan' : 'Plan';
+  const prev = list.filter((n) => !n.example).sort((x, y) => (y.saved || 0) - (x.saved || 0))[0];
+  let tail = '';
+  if (prev) {
+    const A = noteNames(prev.text), B = noteNames(text), lc = (s) => s.toLowerCase(), aS = new Set(A.map(lc)), bS = new Set(B.map(lc));
+    const out = A.filter((n) => !bS.has(lc(n))), inn = B.filter((n) => !aS.has(lc(n)));
+    if (out.length === 1 && inn.length === 1) tail = inn[0] + ' for ' + out[0];
+    else if (out.length && out.length <= 2 && !inn.length) tail = 'without ' + out.join(' and ');
+    else if (inn.length && inn.length <= 2 && !out.length) tail = 'with ' + inn.join(' and ');
+  }
+  if (!tail) tail = new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
+  let nm = (base + ', ' + tail).slice(0, 36), k = 2; const stem = nm;
+  while (list.some((n) => n.name === nm)) nm = stem + ' (' + k++ + ')';
+  return nm;
+}
 function applyNote(rep) {
   rep.mistakes = rep.mistakes.filter((m) => !m.fromNote);
   rep.assign = null;
@@ -10625,8 +10669,10 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     return;
   }
   const editing = S.noteEdit || !text;
-  const CHECKS = { 'The Coiled Altar': 'the Spiteful Soulcoiler kick rotations (the intstart … intend block: line 1 unmarked add, line 2 marked add, optional P3 lines), Guillotine and orb lines, the CC order on mind controls ("1st CC on Mindcontrol: Name"), the add curses ("Curse Unmarked Add: Name"), the intermission ghost soaks ("Soak Ghost at {cross}: Name"), and cooldown reminders', 'The Twin Fangs': 'the Ravenous Feast groups and their order, Broodling kick areas and order, the odd/even set globule CC groups, and cooldown reminders' };
-  const checked = 'Checked for ' + esc(boss) + ': ' + (CHECKS[boss] || 'cooldown reminders (who pressed what, and when) and text lines labelled Guillotine/Soak, Kick/Interrupt or Orbs') + '. Names must be character names; NSRT nicknames can\'t be matched yet.';
+  // (what Debrief checks in a note for this fight, in plain words; how to write those lines is folded in the editor)
+  const CHECKS = { 'The Coiled Altar': 'who kicks each Spiteful Soulcoiler, the Guillotine soaks, the orb lines, who CCs each mind control, the add curses, the ghost soaks in the intermission, and the cooldown reminders', 'The Twin Fangs': 'the Ravenous Feast groups and their order, the Broodling kick order, the globule CC groups, and the cooldown reminders' };
+  const checkedL = CHECKS[boss] || 'the cooldown reminders, and any line named Soak, Kick or Orbs', checked = 'On ' + esc(boss) + ', Debrief checks ' + checkedL + '.';
+  const SYNTAX = { 'The Coiled Altar': 'Kick rotations go in the intstart … intend block (line 1 the unmarked add, line 2 the marked one, optional P3 lines). Guillotine and orb lines read like "Guillotine 1: Name Name". Mind-control CC: "1st CC on Mindcontrol: Name". Curses: "Curse Unmarked Add: Name". Ghost soaks: "Soak Ghost at {cross}: Name".', 'The Twin Fangs': 'The Feast groups, the Broodling kick areas and the globule CC groups are read from their labelled lines, as NSRT writes them.' };
   // The page: what went wrong this pull (a box on top), then the panels, then the quiet things as one line each (the
   // note itself, cooldown reminders, checks that didn't come up). Each row states its result once: the coloured edge
   // of the row plus a short ✓ / ✕ / ! line, with the spells the log shows.
@@ -10654,34 +10700,42 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const newP = editN ? inPull.filter((q) => !noteHas(editT, q)).sort() : [];
   const opt = (v, l) => '<option value="' + esc(v) + '">' + esc(l) + '</option>';
   const swapRow = editN && nNames.length && newP.length ? '<div class="nt-swap"><span class="sub">Swap a player:</span> <select id="noteFrom">' + (outN.length ? '<optgroup label="Not in this pull">' + outN.map((n) => opt(n, n)).join('') + '</optgroup>' : '') + (inN.length ? '<optgroup label="In this pull">' + inN.map((n) => opt(n, n)).join('') + '</optgroup>' : '') + '</select> <span class="sub">for</span> <select id="noteTo">' + newP.map((n) => opt(n, n)).join('') + '</select> <button class="btn" id="noteSwap" type="button">Swap</button></div>' : '';
-  if (editing) top += '<div class="panel"><h3>' + (editN ? 'Edit the note' : 'A new NSRT note') + ' for ' + esc(boss) + ' <small>' + (NO.list.length ? 'saved in this browser. Each pull uses the one you pick, or the one that names the most of its players' : 'paste your Northern Sky Raid Tools note to check assignments') + '</small></h3>' +
-    '<div class="nt-name"><label for="noteName" class="sub">Name</label> <input id="noteName" type="text" maxlength="40" value="' + esc(editN ? editN.name : 'Note ' + (NO.list.length + 1)) + '" placeholder="Like Mythic main, or Without Optt"></div>' +
-    '<textarea id="noteBox" class="notebox" placeholder="Paste the whole NSRT note here: the EncounterID line, reminder lines (time:…;ph:…;tag:…;spellid:…) and your text assignments (Guillotine 1: Name Name…, {skull} Kicks: Name Name…)">' + esc(editT) + '</textarea>' + swapRow +
-    '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="noteSave">Save and check</button>' + (editN ? '<button class="btn" id="noteSaveNew">Save as a new note</button>' : '') + (NO.list.length ? '<button class="btn" id="noteCancel">Cancel</button>' : '') + (editN ? '<button class="btn" id="noteDel">Remove this note</button>' : '') + '</div>' +
-    '<p class="muted" style="font-size:13px;margin:10px 0 0">' + checked + '</p></div>';
-  // (the note this pull uses, the saved notes to pick from, and buttons to edit it or add another, on top where it's easy to find)
+  // the note editor (your note, Oct 18: make Assignments easy): the note first, then its name (left empty, Debrief names it),
+  // then Save and Cancel; the rarer actions (a copy, removing it, swapping a player) are smaller, and how to write the lines
+  // is folded at the bottom
+  if (editing) {
+    const more = editN ? '<button class="btn sm" type="button" id="noteSaveNew">Save as a new note</button><button class="btn sm" type="button" id="noteDel">' + NOTE_TRASH + ' Remove this note</button>' : '';
+    const swapD = swapRow ? '<details class="nt-more"><summary>Swap a player</summary>' + swapRow + '</details>' : '';
+    const howTo = '<details class="nt-how"><summary>How to write it</summary><p class="sub">Paste the whole note from NSRT: its first line (EncounterID…), the reminder lines (time:…;ph:…;tag:…;spellid:…) and your text lines ("Guillotine 1: Name Name", "{skull} Kicks: Name Name"). ' + esc(SYNTAX[boss] || '') + ' Names must be character names; NSRT nicknames can\'t be matched yet.</p></details>';
+    top += '<div class="panel nt-ed"><h3>' + (editN ? 'Edit ' + esc(editN.name) : 'Add your NSRT note') + ' <small>for ' + esc(boss) + ', saved in this browser</small></h3>' +
+      '<textarea id="noteBox" class="notebox" placeholder="Paste your raid\'s whole NSRT note here.">' + esc(editT) + '</textarea>' + swapD +
+      '<div class="nt-name"><label for="noteName" class="sub">Name</label> <input id="noteName" type="text" maxlength="40" value="' + esc(editN ? editN.name : '') + '" placeholder="Leave it empty and Debrief names it, like Mythic plan, Oct 18"></div>' +
+      '<div class="nt-btns"><button class="btn primary" id="noteSave">Save and check</button><button class="btn" id="noteCancel">Cancel</button><span class="nt-sp"></span>' + more + '</div>' +
+      '<p class="sub nt-chk">' + checked + '</p>' + howTo + '</div>';
+  }
+  // the note this pull uses, in one line, with why and Edit; under it every saved note when there are more, one line each, with
+  // the pulls it was used for, Use for this pull, Edit and the trash can; an example note says what it is, with the way out
   if (!editing) {
-    // the saved notes, each with the pulls it was used for (your note, Oct 18: a list on the tab, not a small menu), which one
-    // this pull uses and why, and a one-click fix when that pick is wrong
     const k = pullKey(r.item), same = S.index.bosses.filter((b) => b.boss === boss && b.diffId === r.item.diffId), usedBy = new Map(); let unopened = 0;
     for (const b of same) { const rr = CACHE.get(b); if (!rr) { unopened++; continue; } const u = rr === r ? used : noteForRep(rr); if (u) { if (!usedBy.has(u.id)) usedBy.set(u.id, []); usedBy.get(u.id).push(b.pull); } }
     const rng = (ps) => { const v = [...new Set(ps)].sort((x, y) => x - y), out = []; for (let i = 0; i < v.length;) { let j = i; while (j + 1 < v.length && v[j + 1] === v[j] + 1) j++; out.push(i === j ? String(v[i]) : v[i] + '–' + v[j]); i = j + 1; } return out.join(', '); };
     const when = (t) => (t ? new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+    // (the nights a note fits, from your saved logs; nothing when none does, rather than a line saying so)
+    const fitsOf = (n) => { if (n.example) return ''; const f = noteFits(n.text, boss); return /No saved raid night/.test(f) ? '' : f; };
     const rowN = (n) => { const on = used && used.id === n.id, ps = usedBy.get(n.id) || [], nn = noteNames(n.text).length;
-      return '<div class="nl-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b>' + (n.example ? ' <span class="sub">(example)</span>' : '') +
-        '<div class="sub">' + [n.saved ? 'Saved ' + esc(when(n.saved)) : '', nn ? 'names ' + plural(nn, 'player') : '', ps.length ? 'used for ' + (ps.length === 1 ? 'pull ' : 'pulls ') + rng(ps) : 'not used by an opened pull yet'].filter(Boolean).join(' · ') + '</div>' + (n.example ? '' : noteFits(n.text, boss)) + '</div>' +
-        '<div class="nl-b">' + (on ? '<span class="nl-this">✓ This pull</span>' : '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>') +
-        '<button class="btn" type="button" data-nedit="' + esc(n.id) + '">Edit</button><button class="btn" type="button" data-ndel="' + esc(n.id) + '" title="Remove this note" aria-label="Remove the note ' + esc(n.name) + '">' + NOTE_TRASH + '</button></div></div>'; };
+      return '<div class="nl-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b><span class="sub nl-in">' + [nn ? plural(nn, 'player') : '', ps.length ? 'used for ' + (ps.length === 1 ? 'pull ' : 'pulls ') + rng(ps) : '', n.saved ? 'saved ' + esc(when(n.saved)) : ''].filter(Boolean).join(' · ') + '</span>' + fitsOf(n) + '</div>' +
+        '<div class="nl-b">' + (on ? '<span class="nl-this">✓ This pull</span>' : '<button class="btn sm" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>') +
+        '<button class="btn sm" type="button" data-nedit="' + esc(n.id) + '">Edit</button><button class="btn sm" type="button" data-ndel="' + esc(n.id) + '" title="Remove this note" aria-label="Remove the note ' + esc(n.name) + '">' + NOTE_TRASH + '</button></div></div>'; };
     const sel = NO.list.length > 1 ? '<label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label>' : '';
-    const back = used && (used.how === 'pull' || used.how === 'all') && NO.list.length > 1 ? ' <button class="btn" type="button" id="noteAuto">Pick it automatically again</button>' : '';
-    const has = a && a.note ? ' <span class="sub">(' + plural(a.note.reminders.length, 'reminder') + ' and ' + plural(a.note.lines.length, 'text line') + ')</span>' : '';
-    const later = unopened ? ' ' + plural(unopened, 'pull') + " of this boss " + (unopened === 1 ? "isn't" : "aren't") + ' opened yet, so ' + (unopened === 1 ? "it isn't" : "they aren't") + ' counted here.' : '';
-    top += '<div class="panel nlib"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<b>Your NSRT notes for ' + esc(boss) + '</b> <span class="sub">saved in this browser</span></span><button class="btn" type="button" id="noteNewBtn">Add a note</button></div>' +
-      (used ? '<div class="nl-why">This pull uses <b>' + esc(used.name) + '</b>' + has + '. ' + noteWhy(used) + back + '</div>' : '') +
-      NO.list.map(rowN).join('') +
-      (NO.list.length > 1 ? '<div class="nl-foot">' + sel + '<span class="sub">Each pull picks the note for its difficulty that names the most of its players. When two fit the roster alike, it picks the one whose jobs got done.' + later + '</span></div>' : '') + '</div>';
-    // (the example from the how-to says what it is, with the way out)
-    if (used && used.example) top += '<div class="panel ah-exbar"><span><b>This is an example note</b> <span class="sub">made from one pull: your healers\' cooldowns, and one they didn\'t press. Paste your raid\'s own note to check the real plan.</span></span><button class="btn primary" id="noteExReal">Add your own note</button><button class="btn" id="noteExDel">Remove the example</button></div>'; }
+    const back = used && (used.how === 'pull' || used.how === 'all') && NO.list.length > 1 ? ' <button class="btn sm" type="button" id="noteAuto">Pick it automatically again</button>' : '';
+    const kinds = a && a.note ? [a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', a.note.lines.length ? plural(a.note.lines.length, 'assignment line') : ''].filter(Boolean).join(' and ') : '';
+    const later = unopened ? ' ' + plural(unopened, 'pull') + ' of this boss ' + (unopened === 1 ? "isn't" : "aren't") + ' opened yet, so ' + (unopened === 1 ? "it isn't" : "they aren't") + ' counted here.' : '';
+    const ex = !!(used && used.example), why = ex ? "Made from this pull: your healers' cooldowns at the times they pressed them, plus one they didn't. Paste your raid's own note to check the real plan." : noteWhy(used) || 'Saved in this browser.';
+    top += '<div class="panel nlib' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span><b>' + (ex ? 'An example note' : 'Your note: ' + esc(used.name)) + '</b>' + (kinds ? ' <span class="sub">' + kinds + '</span>' : '') + '</span></span>' +
+      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" id="noteNewBtn">Add a note</button>') + '</span></div>' +
+      '<div class="nl-why sub">' + why + back + '</div>' + (NO.list.length === 1 ? fitsOf(used) : '') +
+      (NO.list.length > 1 ? '<div class="nl-list"><div class="nl-lh">Your notes for ' + esc(boss) + '</div>' + NO.list.map(rowN).join('') + '<div class="nl-foot">' + sel + '<span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.' + later + '</span></div></div>' : '') + '</div>';
+  }
   if (a && a.error) top += '<div class="panel">Couldn\'t read the note: ' + esc(a.error) + '</div>';
   // (what the note just saved is for, from your saved logs: on top, until "Got it")
   if (S.noteScan && S.noteScan.boss === boss && !editing) top = noteScanBox(S.noteScan) + top;
@@ -11072,9 +11126,9 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const later = gGone.map((d) => d.lab).concat(orbsLater.map((p) => p + ' orb assignments'), caLater, hcdLater ? [plural(hcdLater, 'healing cooldown reminder') + ' from later phases'] : []);
     if (later.length) quiet.push(qline('Not in this pull', esc(later.join(', '))));
     if (a.unknownNames.length) quiet.push(qline('In the note but not in this pull', esc(a.unknownNames.join(', ')) + ' <span class="sub">(sat out, a nickname, or misspelled)</span>'));
-    if (a.other.length) quiet.push(qfold('Other note lines', plural(a.other.length, 'line') + ' shown for reference, not checked', '', a.other.map((o) => '<div class="drow"><b style="min-width:140px">' + esc(o.label || '—') + '</b>' + chips(o.names) + '</div>').join('')));
+    if (a.other.length) quiet.push(qfold('Lines Debrief doesn\'t check yet', plural(a.other.length, 'line') + ', shown for reference', '', a.other.map((o) => '<div class="drow"><b style="min-width:140px">' + esc(o.label || '—') + '</b>' + chips(o.names) + '</div>').join('')));
   }
-  if (!editing) quiet.push(qfold('What the note is checked for', '', '', '<p class="muted" style="font-size:13px;margin:0">' + checked + '</p>'));
+  if (!editing) quiet.push(qline('What Debrief checks', capS(checkedL)));
   // the box on top: everything that went wrong this pull, worst first (or one green line when nothing did)
   let box = '';
   if (!only && a && !a.error) {
@@ -11085,7 +11139,27 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     // opens it on Mechanics)
     const tOf = (w) => { const mm = /^(\d+):(\d{2})/.exec(String(w || '')); return mm ? +mm[1] * 60 + +mm[2] : null; };
     for (const p of probs) { const hit = mapAt(r, tOf(p.when), p.html); if (hit) p.extra = '<div class="wr-map" role="button" tabindex="0" data-asec="sec-' + esc(hit.sid) + '" title="See it on Mechanics" aria-label="See it on Mechanics">' + miniMap(hit.map, pmap) + '</div>'; }
-    if (probs.length || any) box = wrongRight(probs, right, { sub: isFinite(ct) ? 'up to the wipe filter (' + T(ct) + ')' : '', none: 'Every assignment in the note that came up this pull was done.', noneRight: 'Nothing fully clean this pull.', moreWhere: 'in the rows below' });
+    // (the cooldown reminders that went wrong get one line in that box too, so the top of the page always says how the pull
+    // went; their full list stays in Healing cooldowns below)
+    const dueC = (a.cds || []).filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected)), offC = dueC.filter((c) => c.status !== 'on time');
+    if (offC.length) probs.push({ sev: offC.some((c) => c.status === 'missed') ? 'bad' : 'warn', when: T(offC[0].expected),
+      html: '<b>Healing cooldowns</b>: ' + offC.slice(0, 3).map((c) => esc(c.player) + (c.status === 'missed' ? " didn't press " : ' pressed ') + esc(c.spell || 'Spell ' + c.spellid) + (c.status === 'missed' ? '' : ' ' + Math.abs(c.delta).toFixed(0) + ' s ' + c.status)).join('; ') + (offC.length > 3 ? ', and ' + (offC.length - 3) + ' more' : '') + '.' });
+    if (probs.length || any || dueC.length) box = wrongRight(probs, right, { sub: isFinite(ct) ? 'up to the wipe filter (' + T(ct) + ')' : '', none: 'Every assignment in the note that came up this pull was done.', noneRight: 'Nothing fully clean this pull.', moreWhere: 'in the rows below' });
+    // (nothing in the note came up: say so, and why, instead of a page that looks empty)
+    else {
+      // (worked out from the note itself: reminders for phases this pull didn't reach, reminders that are only a message to the
+      // raid, assignment lines this fight has no check for yet, and players it names who weren't there)
+      const rem = (a.note && a.note.reminders) || [], phN = (p) => { const m = /^P(\d+)/.exec(p.name); return m ? +m[1] : /intermission/i.test(p.name) ? 0 : 1; };
+      const reached = PHS.length ? Math.max(1, ...PHS.map(phN)) : 1, isLater = (x) => +x.ph > reached + 0.01;
+      const laterR = rem.filter(isLater).length, textR = rem.filter((x) => !x.spellid && !isLater(x)).length;
+      const lines = ((a.note && a.note.lines) || []).filter((l) => l.words && l.words.length), ex1 = lines.find((l) => l.label) || lines[0];
+      const checkedAny = a.soaks.length || a.kicks.length || a.orbs.length || Object.keys(a.boss || {}).length, why = [];
+      if (laterR) why.push(plural(laterR, 'reminder') + ' ' + (laterR === 1 ? 'is' : 'are') + ' for later phases, and this pull ended in ' + esc(PHS.length ? PHS[PHS.length - 1].name : 'the first phase'));
+      if (textR) why.push(plural(textR, 'reminder') + ' ' + (textR === 1 ? 'is' : 'are') + " a message to the raid, which a log can't show");
+      if (lines.length && !checkedAny) why.push(plural(lines.length, 'assignment line') + (ex1 ? ' (like "' + esc(ex1.raw) + '")' : '') + ' ' + (lines.length === 1 ? "isn't" : "aren't") + ' something Debrief checks on ' + esc(boss) + ' yet');
+      if (a.unknownNames.length) why.push(plural(a.unknownNames.length, 'player') + ' it names ' + (a.unknownNames.length === 1 ? "wasn't" : "weren't") + ' in this pull');
+      box = '<div class="panel as-none"><b>Nothing in your note came up this pull.</b>' + (why.length ? '<ul class="as-why">' + why.map((w) => '<li>' + capS(w) + '.</li>').join('') + '</ul>' : '') + '</div>';
+    }
   }
   // the page: the tiles (one per assignment, click to jump), what went wrong, then the panels in fight order (Twin Fangs:
   // Feasts, Broodlings, globules; Coiled Altar: Guillotine and orbs in P1, then the Soulcoiler kicks), healing cooldowns,
@@ -11105,11 +11179,11 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       list.sort((x, y) => x.ord - y.ord).map(secRow).join('') + '</details>'; };
   PHS.forEach((p, k) => { const list = secs.filter((o) => o.ph === k); if (list.length) h += phaseBlock(esc(p.name), isFinite(p.end) ? T(p.start) + '–' + T(p.end) : '', list); });
   { const list = secs.filter((o) => o.ph === 'w'); if (list.length) h += phaseBlock('Whole fight', PHS.length ? 'assignments that aren\'t tied to one phase' : '', list); }
-  { const list = secs.filter((o) => o.ph === 'hcd'); if (list.length) h += phaseBlock('Healing cooldowns', 'the cooldown reminders in the note, kept apart from the mechanics', list); }
+  { const list = secs.filter((o) => o.ph === 'hcd'); if (list.length) h += phaseBlock('Healing cooldowns', 'the cooldown reminders in your note', list); }
   const ORDER = ['feast', 'bk', 'orbcc', 'guil', 'orbs', 'mc', 'ca', 'curse', 'ghost', 'kt', 'hcd'];
   tiles.sort((x, y) => ORDER.indexOf(x.id.slice(3)) - ORDER.indexOf(y.id.slice(3))); // (the tiles in fight order too)
   // (one row as wide as the tiles there are, up to 6: six tiles in a row of five left one alone on a second row)
-  const tileRow = tiles.length ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + ' an' + Math.min(6, tiles.length) + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
+  const tileRow = tiles.length >= 3 ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + ' an' + Math.min(6, tiles.length) + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
   $('#assignBox').innerHTML = '<div class="nsa">' + top + tileRow + box + h + (quiet.length ? '<div class="panel quiet"><div class="q-h">About the note</div>' + quiet.join('') + '</div>' : '') + '</div>';
   // (a tile opens its section if it's folded, then scrolls to it under the sticky tabs)
   $$('#assignBox details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
@@ -11117,7 +11191,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   $$('#assignBox .pt-go').forEach((x) => (x.onclick = (e) => { e.preventDefault(); const id = x.getAttribute('href').slice(1), el = document.getElementById(id) || document.querySelector('#assignBox [id^="' + id + '-"]'); if (!el) return; if (el.tagName === 'DETAILS') el.open = true; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); }));
   // (saving: the note in the box replaces the one being edited, or becomes a new one; every pull of the boss is checked again)
   const redo = () => { S.noteEdit = false; S.noteEditId = null; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
-  const save = (asNew) => { const v = $('#noteBox').value.trim(), nm = ($('#noteName').value || '').trim() || 'Note ' + (NO.list.length + 1), o = notesOf(boss);
+  const save = (asNew) => { const v = $('#noteBox').value.trim(), nm = ($('#noteName').value || '').trim() || autoNoteName(v, NO.list.filter((n) => !editN || asNew || n.id !== editN.id), r), o = notesOf(boss);
     // (the same note twice for one fight isn't saved: it says which saved note it already is)
     const dup = v && o.list.find((n) => !n.example && (asNew || !editN || n.id !== editN.id) && noteNorm(n.text) === noteNorm(v));
     if (dup) { S.noteScan = { boss, dup: dup.name }; S.noteEdit = false; S.noteEditId = null; assign(only); return; }

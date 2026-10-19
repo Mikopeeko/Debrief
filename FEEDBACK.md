@@ -213,6 +213,31 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 227: Assignments, easier to use (your note), and notes that name themselves (your note)
+- [x] **The top of the page says how the pull went.** The "What went wrong / What went well" box (the same as on Pull
+  recap and Mechanics) now includes the healing cooldowns too: "Healing cooldowns: Xastral didn't press Darkness. 7:59".
+- [x] **When nothing in the note came up, it says why** instead of a page that looks empty: "Nothing in your note came
+  up this pull", then each reason: "13 reminders are for later phases, and this pull ended in P1", "2 reminders are a
+  message to the raid, which a log can't show", "57 assignment lines (like "Boss tank: Vandagos") aren't something Debrief
+  checks on Ula'tek yet", "7 players it names weren't in this pull".
+- [x] **The note is one line on top:** "Your note: Mythic plan, Oct 18 · 5 cooldown reminders" with Edit and Add a note,
+  and why this pull uses it. With more than one note, they're listed under it one line each (players, the pulls it was
+  used for, when it was saved, Use for this pull, Edit, 🗑). The example note is the same bar in gold, with "Add your own
+  note" and "Remove the example". "No saved raid night fits it yet" is gone (it only shows the nights that do fit).
+- [x] **The editor is simpler:** the note box first, then its name, then Save and Cancel. "Save as a new note", "Remove
+  this note" and "Swap a player" are smaller or folded away, and the long "intstart … intend block" paragraph is now one
+  plain line ("On The Coiled Altar, Debrief checks who kicks each Spiteful Soulcoiler, the Guillotine soaks…") with "How to
+  write it" folded under it.
+- [x] **Notes name themselves (your note):** leave the name empty and it's named from the note: "Mythic plan, Oct 18",
+  and a second note for the same boss says what changed, "Mythic plan, Brakk for Xastral" (or "without Optt", "with
+  Brakk"). You can still type your own.
+- [x] One tile that repeated the section under it is gone (tiles show when there are three or more), and "kept apart
+  from the mechanics" is now "the cooldown reminders in your note".
+- [x] Fixed on the way: automatic matching could pick a note naming a player who wasn't there, because that player's
+  missed cooldown didn't count against it. Now a note with a better roster fit always wins, and jobs done only decide
+  between notes that fit equally.
+- Checked on your guild's Coiled Altar kill and an Ula'tek wipe, on desktop and phone; test notes removed.
+
 ## 2026-10-18, round 226: A trash can on each saved note (your ask, via the Discord session)
 - [x] **Each saved note on Assignments has a trash-can button** instead of the word "Remove". The first click turns it
   red with "Click again to remove", so one slip never deletes a note; the second click removes it. Checked with two test

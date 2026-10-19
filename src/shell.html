@@ -1742,6 +1742,28 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .nlib .nl-foot { display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .nlib .nl-foot > .sub { flex: 1; min-width: 240px; }
 .nlib .nl-pk { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+/* (Assignments, easier: the note in one line on top with its buttons on the right; the other notes one line each under it;
+   the example note tinted gold; the editor with the note first and the rarer actions smaller) */
+.nlib .nl-hb { display: flex; gap: 6px; flex-wrap: wrap; }
+.nlib.ex { border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.05); }
+.nlib .nl-why { margin: 6px 0 0; }
+.nlib .nl-list { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.nlib .nl-lh { font-family: var(--head); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 2px; }
+.nlib .nl-r { padding: 6px 10px; margin-top: 5px; }
+.nlib .nl-in { margin-left: 8px; }
+.as-none { padding: 12px 14px; line-height: 1.5; }
+.as-none .sub { display: block; margin-top: 4px; }
+.as-none .as-why { margin: 6px 0 4px; padding-left: 20px; } .as-none .as-why li { margin: 2px 0; }
+.nt-ed .notebox { min-height: 160px; }
+.nt-ed .nt-name { margin: 10px 0 0; }
+.nt-ed .nt-name input { max-width: 380px; }
+.nt-ed .nt-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.nt-ed .nt-sp { flex: 1; }
+.nt-ed .nt-more, .nt-ed .nt-how { margin-top: 8px; }
+.nt-ed details > summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.nt-ed .nt-more .nt-swap { margin-top: 6px; }
+.nt-ed .nt-chk { margin: 12px 0 0; }
+@media (max-width: 640px) { .nlib .nl-in { display: block; margin-left: 0; } .nt-ed .nt-sp { display: none; } }
 .nsa .tbl tr.rsub td { padding-top: 0; border-top: 0; font-size: 12.5px; }
 /* ---- Summary: the all-pulls page (overall report card, how far the night got, what to fix, then Mechanics and Assignments with a row per mechanic or assignment and a dot per pull) ---- */
 .sumv .sum-others { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 2px 0 10px; }
