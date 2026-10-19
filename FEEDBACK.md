@@ -277,6 +277,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   question ("which boss, which pull?"), so it reads as clutter. One idea: make the boss name in the banner the boss picker
   itself (click it to switch boss), keep the pull cards right under it with All pulls as the first card, and drop the
   separate picker at the top. A few mockups to pick from first, like the Graphs controls.
+- [ ] **Smoother loading screens when several logs load (your note, Oct 19).** Opening a night reads many pulls one after
+  another, and the loading card swaps in and out between them. Find a way to make it feel like one smooth load, for
+  example one card that stays up with a single progress bar for all the pulls, and the page filling in as pulls finish.
 
 ## 2026-10-19, round 264: Rotation marked under construction like the others (your note)
 - [x] The Rotation tab name gets the same little 🚧 sign and striped edge as Assignments, Players and Compare, and its

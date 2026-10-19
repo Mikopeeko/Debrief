@@ -12709,13 +12709,25 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       list.sort((x, y) => x.ord - y.ord).map(secRow).join('') + '</details>'; };
   PHS.forEach((p, k) => { const list = secs.filter((o) => o.ph === k); if (list.length) h += phaseBlock(esc(p.name), isFinite(p.end) ? T(p.start) + '–' + T(p.end) : '', list); });
   { const list = secs.filter((o) => o.ph === 'w'); if (list.length) h += phaseBlock('Whole fight', PHS.length ? 'assignments that aren\'t tied to one phase' : '', list); }
+  // (one player picked in the tab bar (Oct 19): only the assignments that name them; their lines are kept and the others' hidden
+  // once the page is drawn, below)
+  const oneP = S.mechP && [...r.players.values()].some((p) => p.name === S.mechP) ? S.mechP : null, oneS = oneP ? oneP.split('-')[0] : '';
+  const oneRe = oneP ? new RegExp('(^|[^\\p{L}])' + oneS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu') : null;
+  const named = (html) => !!oneRe && oneRe.test(String(html).replace(/<[^>]+>/g, ' '));
+  if (oneP) { for (let i = secs.length - 1; i >= 0; i--) if (!named(secs[i].body + ' ' + secs[i].sub)) secs.splice(i, 1);
+    if (!secs.length) h += '<div class="panel as-none"><b>' + esc(oneS) + ' had nothing assigned in your note this pull.</b></div>'; }
   { const list = secs.filter((o) => o.ph === 'hcd'); if (list.length) h += phaseBlock('Healing cooldowns', 'the cooldown reminders in your note', list); }
   const ORDER = ['feast', 'bk', 'orbcc', 'guil', 'orbs', 'mc', 'ca', 'curse', 'ghost', 'kt', 'hcd'];
   tiles.sort((x, y) => ORDER.indexOf(x.id.slice(3)) - ORDER.indexOf(y.id.slice(3))); // (the tiles in fight order too)
   // (one row as wide as the tiles there are, up to 6: six tiles in a row of five left one alone on a second row)
   const tileRow = tiles.length >= 3 ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + ' an' + Math.min(6, tiles.length) + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
   // (adding or editing a note happens on Stored notes (your note, Oct 18): the tabs with it on, and the editor alone)
-  $('#assignBox').innerHTML = '<div class="nsa">' + (only ? '' : asViews(editing)) + top + (editing ? '' : tileRow + box + h) + (quiet.length && !editing ? '<div class="panel quiet"><div class="q-h">' + SN_I.notes + 'About your note</div>' + quiet.join('') + '</div>' : '') + (only || editing ? '' : storedNotes()) + '</div>';
+  $('#assignBox').innerHTML = '<div class="nsa">' + (only ? '' : asViews(editing)) + top + (editing ? '' : (oneP ? '' : tileRow) + box + h) + (quiet.length && !editing ? '<div class="panel quiet"><div class="q-h">' + SN_I.notes + 'About your note</div>' + quiet.join('') + '</div>' : '') + (only || editing ? '' : storedNotes()) + '</div>';
+  // (one player picked: in what went wrong and in each table, the lines about someone else are hidden)
+  // (style.display, since these rows' own display would beat the hidden attribute)
+  if (oneP && !editing) { $$('#assignBox .pb-r').forEach((x) => { if (!named(x.innerHTML)) x.style.display = 'none'; });
+    $$('#assignBox details.secd tbody tr, #assignBox details.secd .hcs, #assignBox details.secd .md-i').forEach((tr) => { if (tr.querySelector('.nm, .chipn') && !named(tr.innerHTML)) tr.style.display = 'none'; });
+    $$('#assignBox .panel').forEach((p) => { const l = p.querySelectorAll('.pb-r'); if (l.length && [...l].every((x) => x.style.display === 'none')) p.style.display = 'none'; }); }
   // (a tile opens its section if it's folded, then scrolls to it under the sticky tabs)
   $$('#assignBox details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
   wrThumbFit($('#assignBox')); $$('#assignBox [data-asec]').forEach((b) => onPress(b, () => { S.tab = 'audit'; S.pendingSec = b.dataset.asec; renderMain(); }));
@@ -25037,7 +25049,7 @@ async function lastPull() {
     box.querySelector('.rcp-x').onclick = () => { box.remove(); b.hidden = false; t.classList.remove('rcp-play'); }; };
     b.onclick = (e) => { e.stopPropagation(); play(); }; b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); play(); } }; });
   // (flasks and food: once their buffs' names are looked up, the box fills in)
-  if (cs.length && needNames) resolveCombatants(cs).then(() => { if (S.rep !== r || S.tab !== 'live') return; const el = $('#lpPrep'); if (el) { el.outerHTML = lpPrep(r, prepRows()); refreshIcons(); $('#lpPrep [data-go]').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; renderMain(); window.scrollTo({ top: 0 }); })); } }).catch(() => { /* (the potions are still shown) */ });
+  if (cs.length && needNames) resolveCombatants(cs).then(() => { if (S.rep !== r || S.tab !== 'live') return; const el = $('#lpPrep'); if (el) { el.outerHTML = lpPrep(r, prepRows()); refreshIcons(); $$('#lpPrep [data-go]').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; renderMain(); window.scrollTo({ top: 0 }); })); } }).catch(() => { /* (the potions are still shown) */ });
 }
 const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp };
 
