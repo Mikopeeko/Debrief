@@ -11353,8 +11353,8 @@ SPEC_BOOK['Holy Paladin'] = {
     'Imbued Infusions': ['out', 'Spending an Infusion of Light takes 1 second off Holy Shock.', 'It turns Infusions into more Holy Shocks, which make more Infusions.', ['Holy Shock']],
     'Awestruck': ['out', 'Holy Shock, Flash of Light and Holy Light crits heal 20% more.', 'Worth more the more you crit: Divine Glimpse, Luminosity and Avenging Wrath all add crit.', ['Holy Shock', 'Flash of Light', 'Holy Light']],
     'Divine Glimpse': ['out', 'Holy Shock and Judgment crit 8% more often.', 'More Holy Shock crits also feed Awestruck and, on Herald of the Sun, Sun Sear.', ['Holy Shock', 'Judgment']],
-    'Overflowing Light': ['out', 'Half of Holy Shock\'s overhealing becomes a shield.', 'It saves some of the healing that would have been wasted.', ['Holy Shock']],
-    'Light of the Martyr': ['out', 'Holy Shock heals 20% more while you are above 80% health, but puts a heal-absorb on you.', 'The log shows it as negative healing on you. It pays off when you stay healthy.', ['Holy Shock', 'Light of the Martyr']],
+    'Overflowing Light': ['out', 'Half of Holy Shock\'s overhealing becomes a shield on the target (up to 10% of their health).', 'So a Holy Shock on someone who is full isn\'t wasted: it shields them before the next hit. Never hold a Holy Shock charge just to avoid overhealing; an unused charge heals nothing.', ['Overflowing Light', 'Holy Shock']],
+    'Light of the Martyr': ['out', 'Holy Shock heals 20% more while you are above 80% health, but puts a heal-absorb on you.', 'The log shows it as negative healing on you. It pays off when you stay healthy, and it stops your own Beacon healing you, so never put a Beacon on yourself.', ['Holy Shock', 'Light of the Martyr']],
     'Bestow Light': ['out', 'Light of the Martyr works down to 70% health and grows Holy Shock up to 15% more the longer it lasts.', 'Only does anything with Light of the Martyr.', ['Holy Shock', 'Bestow Light']],
     'Blessed Assurance': ['out', 'After a Holy Power spender, the next Holy Shock heals twice as much.', 'Alternate spender and Holy Shock to use it every time.', ['Holy Shock']],
     // Infusion of Light and Flash of Light
@@ -11386,7 +11386,7 @@ SPEC_BOOK['Holy Paladin'] = {
     'Beacon of Faith': ['out', 'A second Beacon that stays up, both copying 30% less.', 'Cheaper and easier than Beacon of Virtue, so the Faith builds spend the mana on Holy Light instead.', ['Beacon of Light']],
     'Commanding Light': ['out', 'Beacons copy 15% of your healing instead of 10%.', 'Half again as much Beacon healing, Beacon of the Savior included.', ['Beacon of Light', 'Beacon of the Savior']],
     'Beacon of the Lightbringer': ['out', 'Your Mastery counts the distance to your Beacons too.', 'More Mastery on most heals for free.', []],
-    'Beacon of the Savior': ['out', 'An extra Beacon that jumps to the lowest player by itself, with shields at higher ranks.', 'Every Beacon talent (Commanding Light, Saved by the Light) boosts it too, so it is a third Beacon all fight.', ['Beacon of the Savior', 'Beacon of Light']],
+    'Beacon of the Savior': ['out', 'An extra Beacon that jumps to the lowest player by itself, with shields at higher ranks.', 'Every Beacon talent (Commanding Light, Saved by the Light, Moment of Compassion) boosts it too, so it is a third Beacon all fight; its target takes 20% more of your healing, so healing them directly is fine.', ['Beacon of the Savior', 'Beacon of Light']],
     'Saved by the Light': ['out', 'Your Beacon targets get a shield when they take damage, bigger the lower they are.', 'Works on Beacon of the Savior too.', ['Saved by the Light']],
     'Glistening Radiance': ['out', 'Beacon targets at full health slowly build a shield.', 'It shows up most on easy stretches, when people are full, so a gap in it says little about play.', ['Glistening Radiance']],
     'Pillars of Light': ['out', 'With Beacon of Virtue: each cast heals all 5 targets right away. With Beacon of Faith: your Beacons heal a little over time.', 'With Virtue it rewards casting Beacon of Virtue close to on cooldown.', ['Pillar of Lights']],
@@ -11423,7 +11423,7 @@ SPEC_BOOK['Holy Paladin'] = {
     // Herald of the Sun (the raid hero tree)
     'Dawnlight': ['out', 'After Divine Toll (or Holy Prism), your next 2 spenders also place a Dawnlight, a big heal over 8 seconds.', 'Everything else on Herald of the Sun hangs off it. It doesn\'t copy to Beacons, so Dawnlight is about how many Divine Tolls you cast.', ['Dawnlight']],
     'Eternal Flame': ['out', 'Word of Glory becomes Eternal Flame: the same big heal plus a heal over time.', 'The guides\' main spender: Light of Dawn only when Eternal Flame would mostly overheal.', ['Eternal Flame']],
-    'Morning Star': ['out', 'Dawnlight grows 5% stronger every 5 seconds, up to 50%.', 'Rewards not sitting on Divine Toll too long and not wasting Dawnlights.', ['Dawnlight']],
+    'Morning Star': ['out', 'Your next Dawnlight grows 5% stronger every 5 seconds, up to 50%.', 'Passive: with Divine Toll on cooldown, each Dawnlight lands with most of the stacks.', ['Dawnlight']],
     'Gleaming Rays': ['out', 'Holy Power spenders heal 3% more.', '', ['Eternal Flame', 'Light of Dawn']],
     'Luminosity': ['out', 'Holy Shock and Light of Dawn crit 5% more often.', 'More crits mean more Sun Sear.', ['Holy Shock', 'Light of Dawn']],
     'Endless Gleam': ['out', 'Dawnlight lasts longer when it heals someone already full.', '', ['Dawnlight']],
@@ -11533,9 +11533,38 @@ SPEC_BOOK['Holy Paladin'] = {
     'Flash of Light': (lo, hi, f) => 'Flash of Light is 3 times as strong with Infusion of Light, and 50% stronger on a Beacon target. ' + f('Flash of Light', 'Flashes of Light'),
     'Holy Light': (lo, hi, f) => 'Holy Light is the biggest single heal, about 3 Holy Shocks, but it costs a lot of mana: the guides cast more of it when there is mana to spare (the Beacon of Faith builds) and barely any with Beacon of Virtue. ' + f('Holy Light', 'Holy Lights'),
     'Sun Sear': () => 'It comes from Holy Shock and Light of Dawn crits.',
+    'Overflowing Light': () => 'Half of Holy Shock\'s overhealing comes back as these shields, so it grows when Holy Shock lands on full players.',
     'Glistening Radiance': () => 'It builds on Beacon targets who are at full health, so it\'s bigger on calm stretches; a gap here says little about play.',
     'Light of the Martyr': () => 'Light of the Martyr\'s heal-absorb on you shows as negative healing.',
   },
+  // what to try, for the spell where the gap is (kind: why that spell fell short: 'casts', 'oh' (overhealing), 'per', 'only', 'more')
+  fix: {
+    'Eternal Flame': 'Spend Holy Power on Eternal Flame, on whoever is lowest. Use Light of Dawn only when Eternal Flame would mostly overheal.',
+    'Word of Glory': 'Spend Holy Power on Word of Glory, on whoever is lowest. Use Light of Dawn only when it would mostly overheal.',
+    'Light of Dawn': 'Use Light of Dawn when most of the raid is hurt; otherwise Eternal Flame.',
+    'Holy Shock': (k) => (k === 'oh' ? 'Aim Holy Shock at whoever is lowest (it heals them up to 50% more). If no one is hurt, still use it before a charge goes to waste.' : k === 'casts' ? 'Press Holy Shock whenever a charge is ready, even if no one is hurt: Overflowing Light turns the extra into a shield.' : 'Aim Holy Shock at whoever is lowest, and never let a charge sit full.'),
+    'Flash of Light': (k) => (k === 'oh' ? 'Save Flash of Light for players who are hurt, ideally one with a Beacon (it heals them 50% more).' : 'Spend every Infusion of Light on Flash of Light, on a player with a Beacon.'),
+    'Beacon of Light': 'Cast Beacon of Virtue as damage lands, then cast single-target heals (Holy Shock, Flash of Light, Eternal Flame) while it is up.',
+    'Pillar of Lights': 'Cast Beacon of Virtue close to every 15 seconds.',
+    'Dawnlight': 'Cast Divine Toll whenever it is ready, aimed at an ally.',
+    'Sun\'s Avatar': 'Cast Divine Toll whenever it is ready, and stand near the group so the beams cross people.',
+    'Holy Light': 'Cast Holy Light when you have mana to spare.',
+  },
+  // the shield that catches part of a spell's overhealing: that part isn't wasted (Overflowing Light, Oct 19: "you didn't study the
+  // talent overflowing light very well")
+  shields: { 'Holy Shock': 'Overflowing Light' },
+  // what to try for a Rotation check the lower side did worse on (by its label on the Rotation tab)
+  rotFix: {
+    'Divine Purpose': 'A free spender from Divine Purpose runs out: spend it right away.',
+    'Judgment while Holy Shock was full': 'When Holy Shock has a full charge, press it before Judgment.',
+    'Infusion of Light': 'Spend every Infusion of Light, on Flash of Light when anyone is hurt.',
+    'Holy Shock': 'Never let Holy Shock sit at full charges.',
+    'Beacon of Virtue': 'Cast Beacon of Virtue close to every 15 seconds, as damage lands.',
+    'Divine Toll uses': 'Cast Divine Toll whenever it is ready, aimed at an ally.',
+    'Always be casting': 'Always be casting something: even a small heal is better than none.',
+  },
+  // a plain line for a spell whose healing comes from the others
+  plain: { 'Beacon of Light': 'Your Beacons copy part of your other heals, so this follows the lines above.' },
   // more reasons for Why the gap, worked out from the log (lo: the side that did less)
   extra(lo, hi, b, C) {
     const out = [], sp = (s) => { const ef = s.cn('Eternal Flame') + s.cn('Word of Glory'), ld = s.cn('Light of Dawn'); return { ef, ld, all: ef + ld, f: ef + ld ? ld / (ef + ld) : 0 }; };
@@ -11545,8 +11574,12 @@ SPEC_BOOK['Holy Paladin'] = {
       const per = (s, nm) => { const a = s.ab.find((y) => y.name === nm), n = s.cn(nm); return a && n ? a.share * s.rate * s.min * 60 / n : 0; };
       const pe = per(lo, 'Eternal Flame') || per(lo, 'Word of Glory') || per(hi, 'Eternal Flame'), pl = per(lo, 'Light of Dawn');
       const v = pe > pl && pl ? (pe - pl) * L.ld * (L.f - H.f) / L.f / (lo.min * 60) : 0;
-      out.push({ v: v || 0.02 * hi.rate, txt: b('Spending Holy Power') + ': ' + Math.round(100 * L.f) + '% of ' + lo.pos + ' spenders were Light of Dawn, against ' + Math.round(100 * H.f) + '% of ' + hi.pos + '. ' +
-        (pe && pl ? 'Each of ' + lo.pos + ' Eternal Flames healed for ' + b(C(pe)) + ', each Light of Dawn for ' + b(C(pl)) + '. ' : '') + 'The guides say Eternal Flame is the better spender unless it would mostly overheal, and Light of Dawn also copies only half as much to your Beacons.' });
+      const lp = lo.n === 'You' ? 'your' : lo.pos, pcL = Math.round(100 * L.f) + '%', pcH = Math.round(100 * H.f) + '%';
+      out.push({ v: v || 0.02 * hi.rate, key: 'Holy Power', merge: ['Eternal Flame', 'Word of Glory'], head: 'Holy Power',
+        txt: capS(lp) + ' Holy Power mostly went to Light of Dawn: ' + b(pcL) + ' of ' + lp + ' spenders, against ' + b(pcH) + ' for ' + hi.n + '.',
+        add: 'Most of ' + lp + ' Holy Power went to Light of Dawn instead: ' + b(pcL) + ' of ' + lp + ' spenders, against ' + b(pcH) + ' for ' + hi.n + '.',
+        tip: (pe && pl ? 'Each of ' + lo.pos + ' Eternal Flames healed for ' + C(pe) + ', each Light of Dawn for ' + C(pl) + '. ' : '') + 'The guides say Eternal Flame is the better spender unless it would mostly overheal, and Light of Dawn copies only half as much to your Beacons.',
+        fix: 'Spend Holy Power on Eternal Flame, on whoever is lowest. Use Light of Dawn only when Eternal Flame would mostly overheal.' });
     }
     return out;
   },
@@ -11624,39 +11657,61 @@ function cmpTalents(r, p, q, SA, SB, rB) {
 // (a spell's own gap, what Rotation works out a check cost, what more crits or casts would add), none where it doesn't.
 // x: { lo, hi (the two sides: { n, pos, p, rate, ab, cpm, crit, cd }), U, end, rot (Rotation's rows, from lo's side or not), hits (talents) }
 function cmpGapWhy(x) {
+  // (Oct 19, "simplify the way you summarize it so new players can understand": each reason is a name, one plain sentence with one
+  // comparison, and a Try line from the spec's playbook; every number behind it is in the line's tooltip for the top raiders)
   const { lo, hi, U } = x, gap = hi.rate - lo.rate; if (gap <= 0.02 * hi.rate) return '';
-  const loN = lo.n === 'You' ? 'you' : lo.n, loPos = lo.n === 'You' ? 'yours' : lo.pos, sp = U === 'healing' ? 'heals' : 'hits';
+  const me = lo.n === 'You', L = me ? 'you' : lo.n, Lp = me ? 'your' : lo.pos, loPos = me ? 'yours' : lo.pos, H = hi.n, Hp = hi.pos, sp = U === 'healing' ? 'heals' : 'hits', did = U === 'healing' ? 'healed for' : 'hit for';
   const b = (v) => '<b>' + v + '</b>', nm = (y) => { const m = String(y.name).match(/^([^:]+): (.+)$/); return m ? m[2] + ' (' + m[1] + ')' : String(y.name); }, out = [];
+  const n1 = (v) => (v >= 10 ? String(Math.round(v)) : v.toFixed(1)), pc = (v) => Math.round(100 * v) + '%';
+  const fixOf = (name, kind) => { const fx = x.book && x.book.fix && x.book.fix[name]; return !fx ? '' : typeof fx === 'function' ? fx(kind) : fx; };
   // the spells: where the number went missing, and why
   for (const [a, h] of cmpPairs({ ab: lo.ab }, { ab: hi.ab })) {
     const va = a ? a.share * lo.rate : 0, vh = h ? h.share * hi.rate : 0, d = vh - va; if (d < 0.03 * hi.rate) continue;
-    const y = a || h, why = !a ? 'only ' + hi.n + ' used it' : a.cpm && h && h.cpm && h.cpm / a.cpm >= (vh / Math.max(1, va)) / (h.cpm / a.cpm) ? hi.n + ' cast it ' + b(h.cpm.toFixed(1)) + ' times a minute, ' + loN + ' ' + b(a.cpm.toFixed(1))
-      : a.cpm && h && h.cpm ? 'each of ' + hi.pos + ' casts did ' + b(C(vh * 60 / h.cpm)) + ', each of ' + loPos + ' ' + b(C(va * 60 / a.cpm)) : hi.n + ' got more out of it';
+    const y = a || h, name = String(y.name), both = a && h && a.cpm && h.cpm, perL = both ? va * 60 / a.cpm : 0, perH = both ? vh * 60 / h.cpm : 0;
+    // (the overhealing that was really lost: what a talent's shield caught (Overflowing Light for Holy Shock) isn't)
+    const shN = x.book && x.book.shields && x.book.shields[name], shOf = (sd) => { const t = shN && sd.ab.find((z) => z.name === shN); return t ? t.share * sd.rate : 0; };
+    const lost = (e, v, sd) => (e && e.oh != null && e.oh < 1 ? Math.max(0, v * e.oh / (1 - e.oh) - shOf(sd)) / (v / (1 - e.oh) || 1) : null);
+    const ohL = a ? lost(a, va, lo) : null, ohH = h ? lost(h, vh, hi) : null;
+    const kind = !a ? 'only' : both && h.cpm / a.cpm >= (vh / Math.max(1, va)) / (h.cpm / a.cpm) ? 'casts' : both ? (ohL != null && ohH != null && ohL - ohH >= 0.1 ? 'oh' : 'per') : 'more';
+    const simple = kind === 'only' ? 'Only ' + H + ' used it.'
+      : kind === 'casts' ? capS(L) + ' cast it ' + b(n1(a.cpm)) + ' times a minute, ' + H + ' ' + b(n1(h.cpm)) + '.'
+      : kind === 'oh' ? (shN ? 'Even after ' + esc(shN) + '\'s shields, more' : 'More') + ' of ' + Lp + ' ' + esc(nm(y)) + ' was wasted on players already at full health: ' + b(pc(ohL)) + ', against ' + b(pc(ohH)) + ' for ' + H + '.'
+      : kind === 'per' ? 'Each of ' + Hp + ' casts ' + did + ' more: ' + b(C(perH)) + ', against ' + b(C(perL)) + '.'
+      : (x.book && x.book.plain && x.book.plain[name]) || capS(H) + ' got more out of it.';
     // (a talent only the higher side took that makes this spell stronger is named right here, and not again below)
     const sk = String(nm(y)).toLowerCase(), tl = (x.hits || []).filter((o) => o.H === hi.nRaw && !o.j.own && o.j.ts.some((n) => n.toLowerCase() === sk)); tl.forEach((o) => (o.used = true));
-    const ohT = a && h && a.oh != null && h.oh != null && /each of/.test(why) && a.oh - h.oh >= 0.1 ? ' ' + capS(loN) + ' overhealed ' + b(Math.round(100 * a.oh) + '%') + ' of it, ' + hi.n + ' ' + b(Math.round(100 * h.oh) + '%') + ': healing that lands on someone already full is wasted.' : '';
-    const bs = x.book && x.book.spells[String(y.name)], bsT = bs ? ' ' + bs(lo, hi, (sn, pl) => { const a = lo.cn ? lo.cn(sn) / lo.min : 0, h = hi.cn ? hi.cn(sn) / hi.min : 0; return (!a && !h) || (sn === String(y.name) && /a minute/.test(why)) ? '' : capS(hi.n) + ' cast ' + b(h.toFixed(1)) + ' ' + pl + ' a minute, ' + loN + ' ' + b(a.toFixed(1)) + '.'; }).trim() : '';
-    out.push({ v: d, txt: b(esc(nm(y))) + ': ' + capS(loN) + ' did ' + b(C(d)) + ' less ' + U + ' a second with it. ' + capS(why) + '.' + ohT + bsT +
-      (tl.length ? ' ' + hi.n + ' also took ' + tl.map((o) => b(esc(o.j.e.name))).join(' and ') + ', which make' + (tl.length > 1 ? '' : 's') + ' it stronger.' : '') });
+    const bs = x.book && x.book.spells[name], bsT = bs ? bs(lo, hi, (sn, pl) => { const ca = lo.cn ? lo.cn(sn) / lo.min : 0, ch = hi.cn ? hi.cn(sn) / hi.min : 0; return !ca && !ch ? '' : capS(H) + ' cast ' + ch.toFixed(1) + ' ' + pl + ' a minute, ' + L + ' ' + ca.toFixed(1) + '.'; }).trim() : '';
+    const tip = '<b>' + esc(nm(y)) + '</b><br>' + capS(L) + ' did ' + C(d) + ' less ' + U + ' a second with it (' + C(va) + ' against ' + C(vh) + ').' +
+      (both ? '<br>Casts a minute: ' + a.cpm.toFixed(1) + ' against ' + h.cpm.toFixed(1) + '. Each cast: ' + C(perL) + ' against ' + C(perH) + '.' : '') +
+      (a && h && a.oh != null && h.oh != null ? '<br>Overhealing: ' + pc(a.oh) + ' against ' + pc(h.oh) + '.' + (shN ? ' ' + esc(shN) + ' turned part of it into shields that absorbed ' + C(shOf(lo)) + ' a second for ' + L + ' and ' + C(shOf(hi)) + ' for ' + H + ', so the healing really lost was ' + pc(ohL) + ' against ' + pc(ohH) + '.' : '') : '') + (bsT ? '<br>' + bsT : '');
+    out.push({ v: d, key: name, head: esc(nm(y)), tip, fix: fixOf(name, kind),
+      txt: simple + (tl.length ? ' ' + capS(H) + ' also took ' + tl.map((o) => b(esc(o.j.e.name))).join(' and ') + ', which make' + (tl.length > 1 ? '' : 's') + ' it stronger.' : '') });
   }
-  // casting less often (more casts of the spells that do the work add about that much more)
-  if (lo.cpm && hi.cpm && hi.cpm > lo.cpm * 1.08) out.push({ v: lo.rate * (hi.cpm / lo.cpm - 1) * 0.5, txt: b('Casting') + ': ' + capS(loN) + ' cast ' + U + ' spells ' + b(Math.round(100 * (1 - lo.cpm / hi.cpm)) + '% less often') + ', ' + lo.cpm.toFixed(1) + ' times a minute against ' + hi.cpm.toFixed(1) + ', and fewer casts means less ' + U + '.' });
+  // casting less often
+  if (lo.cpm && hi.cpm && hi.cpm > lo.cpm * 1.08) out.push({ v: lo.rate * (hi.cpm / lo.cpm - 1) * 0.5, head: 'Casting', txt: capS(L) + ' cast ' + b(pc(1 - lo.cpm / hi.cpm) + ' less often') + ' than ' + H + '.',
+    tip: capS(U) + ' spells cast a minute: ' + lo.cpm.toFixed(1) + ' against ' + hi.cpm.toFixed(1) + '.', fix: 'Always be casting something: even a small heal is better than none.' });
   // fewer crits (a crit does double)
-  if (lo.crit != null && hi.crit != null && hi.crit - lo.crit > 0.02) out.push({ v: lo.rate * (hi.crit - lo.crit), txt: b('Critical strikes') + ': ' + Math.round(100 * hi.crit) + '% of ' + hi.pos + ' ' + sp + ' were critical strikes (they do double), ' + Math.round(100 * lo.crit) + '% of ' + loPos + '. That alone is worth about ' + b(C(lo.rate * (hi.crit - lo.crit))) + ' a second.' });
+  if (lo.crit != null && hi.crit != null && hi.crit - lo.crit > 0.02) out.push({ v: lo.rate * (hi.crit - lo.crit), head: 'Critical strikes', txt: capS(Hp) + ' ' + sp + ' were critical strikes more often: ' + b(pc(hi.crit)) + ', against ' + b(pc(lo.crit)) + '. A critical strike ' + (U === 'healing' ? 'heals' : 'hits') + ' for double.',
+    tip: 'Worth about ' + C(lo.rate * (hi.crit - lo.crit)) + ' a second. It comes mostly from gear and talents.' });
   // big cooldowns
-  if (hi.cd > lo.cd * 1.2 && hi.cd - lo.cd > 0.02 * hi.rate * x.end) out.push({ v: (hi.cd - lo.cd) / Math.max(1, x.end) * 0.5, txt: b('Big cooldowns') + ': ' + hi.pos + ' big cooldowns ' + (U === 'healing' ? 'healed for ' : 'did ') + b(C(hi.cd)) + ' in all, ' + loPos + ' ' + b(C(lo.cd)) + '.' });
+  if (hi.cd > lo.cd * 1.2 && hi.cd - lo.cd > 0.02 * hi.rate * x.end) out.push({ v: (hi.cd - lo.cd) / Math.max(1, x.end) * 0.5, head: 'Big cooldowns', txt: capS(Hp) + ' big cooldowns ' + (U === 'healing' ? 'healed' : 'did') + ' more in all.',
+    tip: C(hi.cd) + ' against ' + C(lo.cd) + ' in all.', fix: 'Use them on cooldown, when big damage is coming.' });
   // Rotation checks the lower side did worse on, with what Rotation works out they cost
   for (const o of x.rot || []) { const lw = x.rotLo === 'A' ? o.w > 0 : o.w < 0; if (!lw) continue; const c = x.rotLo === 'A' ? o.c : o.d, d2 = x.rotLo === 'A' ? o.d : o.c;
-    out.push({ v: (c.cost || 0) / Math.max(1, x.end) || 0.01 * hi.rate, txt: b(esc(c.label || c.k)) + ' (Rotation): ' + capS(loN) + ' ' + (c.v != null ? b(c.v) : '') + ', ' + hi.n + ' ' + (d2.v != null ? b(d2.v) : '') + '.' + ((c.cost || 0) >= 20000 ? ' Rotation puts the cost at about ' + b(C(c.cost / Math.max(1, x.end))) + ' a second.' : '') }); }
+    out.push({ v: (c.cost || 0) / Math.max(1, x.end) || 0.01 * hi.rate, head: esc(c.label || c.k), txt: capS(L) + ': ' + b(c.v != null ? c.v : '?') + '. ' + capS(H) + ': ' + b(d2.v != null ? d2.v : '?') + '.',
+      tip: 'A check from the Rotation tab.' + ((c.cost || 0) >= 20000 ? ' Rotation puts the cost at about ' + C(c.cost / Math.max(1, x.end)) + ' a second.' : ''), fix: (x.book && x.book.rotFix && x.book.rotFix[c.label]) || 'The Rotation tab shows this one cast by cast.' }); }
   // talents only the higher side took that make the spells where the gap is stronger
-  for (const o of x.hits || []) if (o.used) continue; else if (o.H === hi.nRaw && o.j.ts.length && !o.j.own) out.push({ v: 0.2 * o.j.w, txt: b(esc(o.j.e.name)) + ' (talent): only ' + hi.n + ' took it, and it makes ' + esc(o.j.ts.join(' and ')) + ' stronger.' });
-    else if (o.H === hi.nRaw && o.j.own) out.push({ v: o.j.own, txt: b(esc(o.j.e.name)) + ' (talent): only ' + hi.n + ' took it. It did ' + b(C(o.j.own)) + ' ' + U + ' a second by itself.' });
-  if (x.book && x.book.extra) out.push(...x.book.extra(lo, hi, b, C));
+  for (const o of x.hits || []) if (o.used) continue; else if (o.H === hi.nRaw && o.j.ts.length && !o.j.own) out.push({ v: 0.2 * o.j.w, head: esc(o.j.e.name), txt: 'Only ' + H + ' took this talent. It makes ' + esc(o.j.ts.join(' and ')) + ' stronger.', tip: 'A talent difference: see Talent differences.' });
+    else if (o.H === hi.nRaw && o.j.own) out.push({ v: o.j.own, head: esc(o.j.e.name), txt: 'Only ' + H + ' took this talent. It ' + (U === 'healing' ? 'healed for ' : 'did ') + b(C(o.j.own)) + ' a second by itself.', tip: 'A talent difference: see Talent differences.' });
+  // the playbook's own reasons; one that explains a spell above joins that line instead of repeating it
+  if (x.book && x.book.extra) for (const e of x.book.extra(lo, hi, b, C)) { const t = e.merge && out.find((o) => e.merge.includes(o.key));
+    if (t) { t.txt += ' ' + e.add; t.tip += '<br>' + e.tip; t.fix = e.fix || t.fix; } else out.push(e); }
   if (!out.length) return '';
   out.sort((p, q) => q.v - p.v);
   const top = out.slice(0, 6);
-  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The reasons, the biggest first</small></h3><p class="cmp-wlead">' + hi.n + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(C(gap) + ' more') + ' a second than ' + loN + '. The main reasons:</p>' + (x.builds ? '<p class="sub" style="margin:2px 0 6px">' + x.builds + '</p>' : '') +
-    '<ol class="cmp-gl">' + top.map((o) => '<li>' + o.txt + '</li>').join('') + '</ol>' + (out.length > 6 ? '<p class="sub" style="margin:6px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in the sections below.</p>' : '') + '</div>';
+  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The biggest reasons first. Hover one for the numbers.</small></h3><p class="cmp-wlead">' + H + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(pc(gap / Math.max(1, lo.rate)) + ' more') + ' than ' + L + ' (' + C(hi.rate) + ' a second, against ' + C(lo.rate) + ').</p>' + (x.builds ? '<p class="sub" style="margin:2px 0 6px">' + x.builds + '</p>' : '') +
+    '<ol class="cmp-gl">' + top.map((o) => '<li' + (o.tip ? ' data-tt="' + esc(o.tip) + '"' : '') + '><b>' + o.head + '</b>: ' + o.txt + (o.fix ? '<span class="cmp-try"><b>Try:</b> ' + o.fix + '</span>' : '') + '</li>').join('') + '</ol>' +
+    (out.length > 6 ? '<p class="sub" style="margin:6px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in the sections below.</p>' : '') + '</div>';
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
 const cmpLead = (A, a, B, b, verb) => (!a && !b ? '' : Math.abs(a - b) / Math.max(a, b) < 0.03 ? 'About the same.' : A + ' ' + verb + ' ' + (b ? Math.round(100 * Math.abs(a - b) / b) + '% ' : '') + (a > b ? 'more' : 'less') + ' than ' + B + '.'); // (from the first side, the same way as the arrow)
@@ -11757,7 +11812,7 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const ilv = (rr, x) => { const c = (rr.combatants || []).find((y) => y.name === x.name), g = c && c.gear; if (!g || !g.length) return 0; const mh = g[15], two = mh && mh.id && (!g[16] || !g[16].id);
     const l = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((i) => (i === 16 && two ? mh.itemLevel : g[i] && g[i].id ? g[i].itemLevel : 0)); return l.reduce((t, v) => t + v, 0) / l.length; };
   const iA = ilv(r, p), iB = ilv(rB, q), iLo = loA ? iA : iB, iHi = loA ? iB : iA;
-  const gearL = iLo && iHi && iHi - iLo >= 3 ? 'Gear: ' + (loA ? sB : sA).pos + ' item level is ' + Math.round(iHi) + ', ' + ((loA ? sA : sB).n === 'You' ? 'yours' : (loA ? sA : sB).pos) + ' ' + Math.round(iLo) + '. Better gear makes every heal bigger, so part of the gap is gear.' : '';
+  const gearL = iLo && iHi && iHi - iLo >= 3 ? 'Gear: ' + (loA ? sB : sA).pos + ' gear is a little better (item level ' + Math.round(iHi) + ', ' + ((loA ? sA : sB).n === 'You' ? 'yours' : (loA ? sA : sB).pos) + ' ' + Math.round(iLo) + '), so part of the gap is gear.' : '';
   const gapH = k === kq ? cmpGapWhy({ lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits, book: q.specName === p.specName ? specBook(p.specName) : null,
     builds: [tal && tal.bA && tal.bB && tal.bA.name && tal.bA.key !== tal.bB.key ? 'They play different builds (' + esc(tal.bA.name) + ' and ' + esc(tal.bB.name) + '), so some of the gap is the build. See Talent differences.' : '', gearL].filter(Boolean).join(' ') }) : '';
   return { vs, body: (lead || '') + gapH + whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups + ohGroup) };
