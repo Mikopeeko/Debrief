@@ -213,6 +213,21 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 234: Assignments, refined graphics (your note: the cards, and This pull's other parts)
+- [x] **Stored notes, refined:** a gold notes tile next to the "Stored notes" title; a round portrait of each boss in its
+  band (a gold ring on the boss you have open); on each card, the class-icon faces of its players who are in this pull; a
+  thin edge in the card's difficulty colour (Mythic orange, Heroic purple); "✓ This pull" as a gold pill; and the "Every
+  pull" line set apart under a dashed line.
+- [x] **Healing cooldowns read like a timeline now:** each phase has a strip with a ring where each cooldown was planned
+  and a dot in the player's colour where it was pressed (joined by a line when it was off, a red ✕ when it was never
+  pressed; hover any of them for the times), with a small key. Under it, one sentence each, in the order they were planned:
+  "Voidfel pressed Vampiric Embrace at 0:07, on time.", "Xastral didn't press Darkness (planned for 7:59, 0:49 into P3
+  Coiled Union)." The old table is still there under "Show the table", without the NSRT code ("P1, 0:07" in place of
+  "ph:1 + 0:07").
+- [x] **About your note** (it was "About the note") has small icons on each line, and the players it names who weren't in
+  this pull are name chips.
+- Checked on your guild's Coiled Altar kill, desktop and phone; test notes removed.
+
 ## 2026-10-18, round 233: Stored notes as cards (your note: pleasing on the eyes)
 - [x] **Each note is a card**, two side by side on a wide screen and one per row on a phone: its difficulty as a badge in
   its WoW colour (Mythic orange, Heroic purple, Normal green), its name big, small icons for how many players it names

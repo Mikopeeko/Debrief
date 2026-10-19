@@ -1752,10 +1752,13 @@ function storedNotes(only) {
   // (each note a card (your note, Oct 18: pleasing on the eyes): its difficulty as a badge in its WoW colour, its name, how many
   // players and when it was saved, its logs as date chips, and its buttons at the bottom (Use for this pull, then icons))
   const DIF = { mythic: ['Mythic', 'm'], heroic: ['Heroic', 'h'], normal: ['Normal', 'n'], lfr: ['LFR', 'l'] };
+  const byNm = new Map([...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => [p.name.split('-')[0].toLowerCase(), p]));
   const difOf = (n) => { let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (e) { hd = {}; } return DIF[String({ 14: 'normal', 15: 'heroic', 16: 'mythic', 17: 'lfr' }[hd.difficulty] || hd.difficulty || '').toLowerCase()] || null; };
   const row = (n, b) => { const isCur = b === cur, on = isCur && used && used.id === n.id, nn = noteNames(n.text).length, d = difOf(n), nm = esc(n.name);
-    return '<div class="sn-card' + (on ? ' on' : '') + '"><div class="sn-ch">' + (d ? '<span class="sn-dif ' + d[1] + '">' + d[0] + '</span>' : '') + '<b class="sn-nm">' + nm + '</b>' + (n.example ? '<span class="sub">example</span>' : '') + (on ? '<span class="sn-this">✓ This pull</span>' : '') + '</div>' +
-      '<div class="sn-meta">' + (nn ? '<span>' + SN_I.users + plural(nn, 'player') + '</span>' : '') + (n.saved ? '<span>' + SN_I.clock + 'saved ' + esc(when(n.saved)) + '</span>' : '') + '</div>' + logsOf(n, b) +
+    // (the faces of its players who are in this pull, as on the meters)
+    const faces = isCur ? [...new Set(noteNames(n.text).map((x) => x.toLowerCase()))].map((x) => byNm.get(x)).filter(Boolean) : [];
+    return '<div class="sn-card' + (on ? ' on' : '') + (d ? ' d' + d[1] : '') + '"><div class="sn-ch">' + (d ? '<span class="sn-dif ' + d[1] + '">' + d[0] + '</span>' : '') + '<b class="sn-nm">' + nm + '</b>' + (n.example ? '<span class="sub">example</span>' : '') + (on ? '<span class="sn-this">✓ This pull</span>' : '') + '</div>' +
+      '<div class="sn-meta">' + (nn ? '<span>' + SN_I.users + plural(nn, 'player') + '</span>' : '') + (n.saved ? '<span>' + SN_I.clock + 'saved ' + esc(when(n.saved)) + '</span>' : '') + '</div>' + (faces.length ? '<div class="sn-faces">' + faces.slice(0, 12).map((p) => '<span class="sn-face" title="' + esc(p.name) + '">' + avatar(p, true) + '</span>').join('') + (faces.length > 12 ? '<span class="sub">+' + (faces.length - 12) + '</span>' : '') + '</div>' : '') + logsOf(n, b) +
       '<div class="sn-cf">' + (isCur && !on ? '<button class="btn sm primary" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>' : '') + '<span class="sn-sp"></span>' +
       (isCur ? '<button class="btn sm sn-ib" type="button" data-nedit="' + esc(n.id) + '" title="Edit this note" aria-label="Edit the note ' + nm + '">' + SN_I.pen + '</button>' : '') +
       '<button class="btn sm sn-ib" type="button" data-ncopy="' + esc(b + '|' + n.id) + '" title="Copy the note, to paste into NSRT in game" aria-label="Copy the note ' + nm + '">' + SN_I.copy + '</button>' +
@@ -1767,12 +1770,13 @@ function storedNotes(only) {
   const artOf = (b) => (BOSS_HERO[b] ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[b][1] + '% 28%" onerror="this.remove()">'
     : BOSS_ART[b] ? '<img class="mdl" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
   const panel = ([b, o]) => '<div class="panel nlib sn-b' + (b === cur ? ' cur' : '') + '"><div class="sn-hd"><div class="sn-art" aria-hidden="true">' + artOf(b) + '</div>' +
-    '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div>' +
+    '<div class="sn-who"><span class="sn-por" aria-hidden="true">' + (BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy"' + (ART_ZOOM[b] ? ' style="--az:' + (1.25 * ART_ZOOM[b]).toFixed(2) + '"' : '') + ' onerror="this.remove()">' : '') + '</span>' +
+    '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div></div>' +
     '<span class="nl-hb">' + (b === cur ? '<button class="btn sm" type="button" id="noteNewBtn">Add a note</button>' : '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">Open ' + esc(b) + '</button>') + '</span></div>' +
     '<div class="sn-body">' + (o.list.length ? '<div class="sn-grid">' + o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + '</div>' + (b === cur ? sel : '')
       : '<div class="sn-empty"><span class="sn-eico">' + SN_I.notes + '</span><div><b>No note for ' + esc(b) + ' yet</b><div class="sub">Add your raid\'s NSRT note, and it shows here with the logs it goes with.</div></div></div>') + '</div></div>';
   $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + (() => { const nN = bosses.reduce((t, [, o]) => t + o.list.length, 0), nB = bosses.filter(([, o]) => o.list.length).length;
-    return '<div class="sn-top"><div><h2>Stored notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ' for ' + (nB === 1 ? '1 boss' : nB + ' bosses') + ', saved in this browser. ' : '') + 'Each note shows its logs: the one you have open, and the raid nights saved to your progress (the Save it link on a pull).</div></div></div>'; })() + bosses.map(panel).join('') + '</div>';
+    return '<div class="sn-top"><span class="sn-tico" aria-hidden="true">' + SN_I.notes + '</span><div><h2>Stored notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ' for ' + (nB === 1 ? '1 boss' : nB + ' bosses') + ', saved in this browser. ' : '') + 'Each note shows its logs: the one you have open, and the raid nights saved to your progress (the Save it link on a pull).</div></div></div>'; })() + bosses.map(panel).join('') + '</div>';
   bindAsViews(only);
   // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
   const redo = (b) => { for (const rep of CACHE.values()) if (rep.item.boss === b) applyNote(rep); renderMain(); };
@@ -2281,7 +2285,34 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       const hSt = !due.length ? 'na' : missedN ? 'bad' : late ? 'warn' : 'ok', hTxt = !due.length ? 'none came up' + (isFinite(ct) ? ' before the wipe filter' : ' this pull') : late ? [missedN ? missedN + ' missed' : '', lateN ? lateN + ' late or early' : ''].filter(Boolean).join(' and ') : allOf(due.length, 'pressed on time', 'on time');
       addTile('as-hcd', icoWh('spell_holy_divinehymn'), 'Healing cooldowns', due.length ? due.length - late + '<span> / ' + due.length + ' on time</span>' : '—', hSt, hTxt);
       const res = (c) => { if (c.expected != null && !kept(c.expected)) return hst('na', AFTER); const s = c.status, k = s === 'on time' ? 'ok' : s === 'missed' ? 'bad' : s === 'late' || s === 'early' ? 'warn' : 'na'; return hst(k, s === 'late' || s === 'early' ? Math.abs(c.delta).toFixed(1) + 's ' + s : s); };
-      const rowH = (c) => '<tr class="' + (kept(c.expected) ? ({ 'on time': 'rok', late: 'rwarn', early: 'rwarn', missed: 'rbad' }[c.status] || '') : 'rna') + '"><td>' + who(c.player) + '</td><td>' + spell(c.spellid, c.spell || ('Spell ' + c.spellid)) + '</td><td class="tc">ph:' + c.ph + ' + ' + T(c.time) + '</td><td class="tc">' + (c.expected != null ? T(c.expected) : '—') + '</td><td class="tc">' + (c.used != null ? T(c.used) + ' <span class="sub">(' + (c.delta >= 0 ? '+' : '') + c.delta.toFixed(1) + 's)</span>' : '—') + '</td><td class="cdr">' + res(c) + '</td></tr>';
+      const rowH = (c) => '<tr class="' + (kept(c.expected) ? ({ 'on time': 'rok', late: 'rwarn', early: 'rwarn', missed: 'rbad' }[c.status] || '') : 'rna') + '"><td>' + who(c.player) + '</td><td>' + spell(c.spellid, c.spell || ('Spell ' + c.spellid)) + '</td><td class="tc">' + (Number.isInteger(+c.ph) ? 'P' + c.ph : 'Intermission') + ', ' + T(c.time) + '</td><td class="tc">' + (c.expected != null ? T(c.expected) : '—') + '</td><td class="tc">' + (c.used != null ? T(c.used) + ' <span class="sub">(' + (c.delta >= 0 ? '+' : '') + c.delta.toFixed(1) + 's)</span>' : '—') + '</td><td class="cdr">' + res(c) + '</td></tr>';
+      // (each phase's cooldowns as a timeline (your note, Oct 18: pleasing graphics): a ring where each was planned and a dot in
+      // the player's colour where it was pressed, joined when it was off; a red cross for one never pressed; hover for the times)
+      const hcdTl = (list, name) => {
+        const ph = PHS.find((p) => p.name === name), ts = list.flatMap((x) => [x.expected, x.used]).filter((t) => t != null); if (!ts.length) return '';
+        let t0 = Math.min(ph ? ph.start : Infinity, ...ts), t1 = Math.max(ph && isFinite(ph.end) ? ph.end : -Infinity, ...ts); if (t1 - t0 < 20) { t0 -= 10; t1 += 10; }
+        const W = 1000, Hh = 58, L = 16, R = 16, X = (t) => L + ((t - t0) / (t1 - t0)) * (W - L - R), y = 26;
+        let g = '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" class="hct-ax"/>';
+        const step = t1 - t0 > 300 ? 60 : 30; for (let t = Math.ceil(t0 / step) * step; t <= t1; t += step) g += '<line x1="' + X(t).toFixed(1) + '" x2="' + X(t).toFixed(1) + '" y1="' + (y - 5) + '" y2="' + (y + 5) + '" class="hct-tk"/><text x="' + X(t).toFixed(1) + '" y="' + (Hh - 4) + '" class="hct-tx" text-anchor="middle">' + T(t) + '</text>';
+        for (const x of list) { if (x.expected == null) continue;
+          const st = !kept(x.expected) ? 'na' : x.status === 'on time' ? 'ok' : x.status === 'missed' ? 'bad' : x.status === 'late' || x.status === 'early' ? 'warn' : 'na';
+          const p = pmap.get(x.player), col = p ? p.color : '#9aa0ac', xe = X(x.expected);
+          const tip = ctData([esc(x.player) + ' · ' + esc(x.spell || 'Spell ' + x.spellid), 'planned at ' + T(x.expected), x.used != null ? 'pressed at ' + T(x.used) + ' (' + (x.delta >= 0 ? '+' : '') + x.delta.toFixed(1) + ' s)' : "didn't press it"]);
+          if (x.used != null && Math.abs(x.used - x.expected) > 0.6) g += '<line x1="' + xe.toFixed(1) + '" x2="' + X(x.used).toFixed(1) + '" y1="' + y + '" y2="' + y + '" class="hct-ln ' + st + '"/>';
+          g += '<g class="hct-m ' + st + '"' + tip + '><rect x="' + (xe - 12).toFixed(1) + '" y="' + (y - 14) + '" width="24" height="28" fill="transparent"/><circle cx="' + xe.toFixed(1) + '" cy="' + y + '" r="8" class="hct-pl"/>' +
+            (x.used != null ? '<circle cx="' + X(x.used).toFixed(1) + '" cy="' + y + '" r="5.5" fill="' + col + '" class="hct-pr"/>' : '<path d="M' + (xe - 4).toFixed(1) + ' ' + (y - 4) + 'l8 8M' + (xe + 4).toFixed(1) + ' ' + (y - 4) + 'l-8 8" class="hct-x"/>') + '</g>'; }
+        return '<svg class="hct" viewBox="0 0 ' + W + ' ' + Hh + '" role="img" aria-label="When each cooldown was planned and when it was pressed">' + g + '</svg>' +
+          '<div class="hct-k sub"><span><i class="k-pl"></i>planned</span><span><i class="k-pr"></i>pressed</span><span><i class="k-x">✕</i>not pressed</span></div>';
+      };
+      // (and one sentence for each, in the order they were planned)
+      const sayC = (x) => { const sp = spell(x.spellid, x.spell || ('Spell ' + x.spellid)), w = who(x.player), pl = x.expected != null ? T(x.expected) : '';
+        if (x.expected != null && !kept(x.expected)) return ['na', w + ' ' + sp + ' <span class="sub">(after the wipe filter, not counted)</span>', pl];
+        if (x.status === 'on time') return ['ok', w + ' pressed ' + sp + ' at ' + T(x.used) + ', on time.', pl];
+        if (x.status === 'late' || x.status === 'early') return ['warn', w + ' pressed ' + sp + ' at ' + T(x.used) + ', ' + Math.abs(x.delta).toFixed(0) + ' s ' + x.status + ' (planned for ' + pl + ').', pl];
+        if (x.status === 'missed') return ['bad', w + " didn't press " + sp + ' (planned for ' + pl + ', ' + T(x.time) + ' into ' + esc(x.phName || 'the phase') + ').', pl];
+        if (/dead/i.test(x.status || '')) return ['na', w + ' was dead before ' + sp + ' was due (' + pl + ').', pl];
+        return ['na', w + ' ' + sp + ': ' + esc(x.status || ''), pl]; };
+      const rowS = (x) => { const [st, html, t] = sayC(x); return '<div class="hcs ' + st + '"><span class="hcs-m">' + ({ ok: '✓', warn: '!', bad: '✕' }[st] || '–') + '</span><span class="hcs-t">' + html + '</span><span class="hcs-w">' + t + '</span></div>'; };
       const hPh = new Map(); for (const c of a.cds) { const k = c.phName || 'Other'; if (!hPh.has(k)) hPh.set(k, []); hPh.get(k).push(c); }
       let hi = 0;
       for (const [name, list] of hPh) {
@@ -2290,15 +2321,16 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
         addSec({ id: 'as-hcd-' + hi, ph: 'hcd', ord: hi++, icon: icoWh('spell_holy_divinehymn'), title: esc(capS(name)), sub: plural(list.length, 'reminder'),
           st: !d2.length ? 'na' : m2 ? 'bad' : l2 ? 'warn' : 'ok', txt: !d2.length ? (list.some((c) => c.expected != null && c.expected <= r.duration) ? AFTER : 'didn\'t come up') : l2 ? [m2 ? m2 + ' missed' : '', l2 - m2 ? (l2 - m2) + ' late or early' : ''].filter(Boolean).join(' and ') : allOf(d2.length, 'pressed on time', 'on time'),
           how: hi === 1 ? 'These are the cooldown reminders in the note. Pressed within 5 seconds of the reminder is on time, because healing cooldowns are timed around raid damage that doesn\'t land on the exact second. Later or earlier than that is late or early, and not pressed at all is missed. Reminders after the wipe filter are greyed and not counted.' : '',
-          body: '<div class="scroll"><table class="tbl nsx"><thead><tr><th>Player</th><th>Spell</th><th>Note time</th><th>Expected</th><th>Pressed</th><th>Result</th></tr></thead><tbody>' + list.map(rowH).join('') + '</tbody></table></div>' });
+          body: hcdTl(list, name) + '<div class="hcs-list">' + list.slice().sort((x, y) => (x.expected ?? 1e9) - (y.expected ?? 1e9)).map(rowS).join('') + '</div>' +
+            '<details class="nsp-d"><summary>Show the table</summary><div class="scroll"><table class="tbl nsx"><thead><tr><th>Player</th><th>Spell</th><th>In the note</th><th>Planned</th><th>Pressed</th><th>Result</th></tr></thead><tbody>' + list.map(rowH).join('') + '</tbody></table></div></details>' });
       }
     }
     const later = gGone.map((d) => d.lab).concat(orbsLater.map((p) => p + ' orb assignments'), caLater, hcdLater ? [plural(hcdLater, 'healing cooldown reminder') + ' from later phases'] : []);
-    if (later.length) quiet.push(qline('Not in this pull', esc(later.join(', '))));
-    if (a.unknownNames.length) quiet.push(qline('In the note but not in this pull', esc(a.unknownNames.join(', ')) + ' <span class="sub">(sat out, a nickname, or misspelled)</span>'));
-    if (a.other.length) quiet.push(qfold('Lines Debrief doesn\'t check yet', plural(a.other.length, 'line') + ', shown for reference', '', a.other.map((o) => '<div class="drow"><b style="min-width:140px">' + esc(o.label || '—') + '</b>' + chips(o.names) + '</div>').join('')));
+    if (later.length) quiet.push(qline(SN_I.clock + 'Not in this pull', esc(later.join(', '))));
+    if (a.unknownNames.length) quiet.push(qline(SN_I.users + 'In the note but not in this pull', '<span class="chips">' + a.unknownNames.map((n) => '<span class="chipn idle"><span class="nm">' + esc(n) + '</span></span>').join('') + '</span> <span class="sub">sat out, a nickname, or misspelled</span>'));
+    if (a.other.length) quiet.push(qfold(SN_I.notes + 'Lines Debrief doesn\'t check yet', plural(a.other.length, 'line') + ', shown for reference', '', a.other.map((o) => '<div class="drow"><b style="min-width:140px">' + esc(o.label || '—') + '</b>' + chips(o.names) + '</div>').join('')));
   }
-  if (!editing) quiet.push(qline('What Debrief checks', capS(checkedL)));
+  if (!editing) quiet.push(qline(SN_I.pull + 'What Debrief checks', capS(checkedL)));
   // the box on top: everything that went wrong this pull, worst first (or one green line when nothing did)
   let box = '';
   if (!only && a && !a.error) {
@@ -2355,7 +2387,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // (one row as wide as the tiles there are, up to 6: six tiles in a row of five left one alone on a second row)
   const tileRow = tiles.length >= 3 ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + ' an' + Math.min(6, tiles.length) + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
   // (adding or editing a note happens on Stored notes (your note, Oct 18): the tabs with it on, and the editor alone)
-  $('#assignBox').innerHTML = '<div class="nsa">' + (only ? '' : asViews(editing)) + top + (editing ? '' : tileRow + box + h) + (quiet.length && !editing ? '<div class="panel quiet"><div class="q-h">About the note</div>' + quiet.join('') + '</div>' : '') + '</div>';
+  $('#assignBox').innerHTML = '<div class="nsa">' + (only ? '' : asViews(editing)) + top + (editing ? '' : tileRow + box + h) + (quiet.length && !editing ? '<div class="panel quiet"><div class="q-h">' + SN_I.notes + 'About your note</div>' + quiet.join('') + '</div>' : '') + '</div>';
   // (a tile opens its section if it's folded, then scrolls to it under the sticky tabs)
   $$('#assignBox details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
   wrThumbFit($('#assignBox')); $$('#assignBox [data-asec]').forEach((b) => onPress(b, () => { S.tab = 'audit'; S.pendingSec = b.dataset.asec; renderMain(); }));
