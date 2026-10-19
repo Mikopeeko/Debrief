@@ -1636,6 +1636,32 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .wt h2 { margin: 0; font: 700 26px var(--head); color: #f6f7fa; } .wt > .sub { margin: 4px 40px 0 0; font-size: 14px; } .nd .fph-box { margin-top: 14px; } .nd .fp-msg { margin-top: 6px; } .nd .fph-alt { margin-top: 10px; }
 .nd { width: min(560px, 100%); margin: 0 auto; }
 @media (max-width: 640px) { .gs-go { width: 100%; max-width: 340px; } .gs .fph-box, .nd .fph-box { flex-direction: column; } .gs .fph-box .btn, .nd .fph-box .btn { width: 100%; } .wt { padding: 18px 16px; } .wt h2 { font-size: 23px; } }
+/* (Beta: a gold stamp tilted onto the top corner of the name, and the Discord invite as a quiet line under the logo) */
+.fph-name { position: relative; display: inline-block; }
+.fph-tag { position: absolute; top: -14px; right: -22px; padding: 4px 9px 3px; border-radius: 5px; background: var(--gold); color: #1a1407; font: 800 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; transform: rotate(12deg); box-shadow: 0 3px 12px rgba(0,0,0,.5), 0 0 0 2px rgba(15,18,24,.9); pointer-events: none; }
+.fph-disc { display: inline-flex; align-items: center; gap: 6px; margin: -6px 0 14px; color: #b9b2a2; font-size: 14px; text-decoration: none; }
+.fph-disc u { text-decoration: none; color: var(--gold); font-weight: 600; } .fph-disc i { font-style: normal; color: var(--gold); transition: transform .15s; }
+.fph-disc:hover u { text-decoration: underline; text-underline-offset: 3px; } .fph-disc:hover i { transform: translateX(3px); }
+@media (max-width: 760px) { .fph-tag { top: -12px; right: -18px; font-size: 10.5px; } .fph-disc { font-size: 13px; } }
+/* (the website's front page, last pass, Oct 19: no repeat of the name in the top bar; the four cards with an icon each and
+   a gold bar filling under the one that's playing; the preview window as tall as its tallest view, so no empty space; and
+   a close with the three steps and the Start button again) */
+body:has(.home.fph) .brand p { display: none; }
+.fph .fp-mods button { position: relative; overflow: hidden; }
+.fph .fp-mods b { display: flex; align-items: center; gap: 8px; } .fph .fp-mods b svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fph-prev.fp-auto .fp-mods button.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold); transform-origin: left; animation: fpTick 7s linear both; }
+.fph-prev.fp-auto:hover .fp-mods button.on::after { animation-play-state: paused; }
+@keyframes fpTick { from { transform: scaleX(0); } }
+.fph .fp-stage { display: grid; min-height: 0; } .fph .fp-scene { display: flex; grid-area: 1 / 1; visibility: hidden; } .fph .fp-scene.on { visibility: visible; }
+.fph-end { width: 100%; max-width: 1100px; margin: 0 auto; padding: 34px 28px 32px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 18px; text-align: center;
+  background: radial-gradient(ellipse 60% 90% at 50% 0%, rgba(230,180,80,.10), transparent 70%), var(--panel); }
+.fph-end h2 { margin: 0; font: 700 24px var(--head); color: #f3f5f9; }
+.fph-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 22px 0 26px; padding: 0; list-style: none; counter-reset: fst; text-align: left; }
+.fph-steps li { position: relative; padding: 16px 16px 15px 60px; border: 1px solid var(--line); border-radius: 12px; background: #161a22; counter-increment: fst; }
+.fph-steps li::before { content: counter(fst); position: absolute; left: 16px; top: 15px; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(230,180,80,.4); border-radius: 50%; background: rgba(230,180,80,.12); color: var(--gold); font: 700 15px var(--head); }
+.fph-steps b { display: block; font: 600 16px var(--head); color: #f3f5f9; } .fph-steps span { display: block; margin-top: 4px; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.fph-end .gs-cta { margin-top: 0; }
+@media (max-width: 760px) { .fph-end { padding: 24px 16px; } .fph-steps { grid-template-columns: 1fr; gap: 10px; margin: 16px 0 20px; } }
 .fph-beta { display: inline-flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1px solid rgba(230,180,80,.35); background: rgba(230,180,80,.08); color: #e6d3a8; font-size: 13px; text-decoration: none; transition: border-color .15s, background .15s; }
 .fph-beta b { padding: 3px 10px; border-radius: 999px; background: var(--gold); color: #1a1407; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .fph-beta i { font-style: normal; color: var(--gold); transition: transform .15s; } .fph-beta:hover { border-color: var(--gold); background: rgba(230,180,80,.14); } .fph-beta:hover i { transform: translateX(3px); }
@@ -10529,7 +10555,7 @@ const DANCERS = [
 ];
 const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'On Pull recap, every box opens the tab with its details.', 'Night summary shows the whole night, with how far each pull got and what kept going wrong.', 'Players gives everyone one grade, half from mechanics and half from the Report card.'];
+  'On Pull recap, every box opens the tab with its details.', 'Night summary shows the whole night, with how far each pull got and what kept going wrong.', 'Players gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -10648,7 +10674,7 @@ const TAB_TIP = {
   rot: 'How each player played their own spec in this pull, checked against the guides: what they pressed and when, their cooldowns, their resources and their talents.',
   perf: 'The raw numbers for this pull, player by player and over time: damage, healing, damage taken, casts, resources, cooldowns, buffs and utility. The phases, boss mechanics, Bloodlust and deaths are marked on the charts.',
   night: 'Every pull of this boss together. It shows report cards, how far you got, what to fix before the next raid, and each mechanic and assignment pull by pull.',
-  player: 'Each player\'s page, for this pull or all pulls. It shows one grade from their mechanics and Report card, what they should fix first, and their prep.',
+  player: 'Each player\'s page, for this pull or all pulls. It shows one grade from their mechanics and Rotation, what they should fix first, and their prep.',
 };
 const TICO = { clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
   target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>', chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
@@ -21663,16 +21689,16 @@ function plPage(data, reps, one) {
   const lastX = data.map((a) => a.last.x).filter(Boolean), fullPrep = lastX.filter((x) => !x.issues.length).length, mist = data.reduce((s, a) => s + a.mistakes, 0);
   const tile = (v, label, txt) => plTile(plGr(v), label, v == null ? '—' : Math.round(v) + '<span>/100</span>', gBucket(v), txt, true);
   const tiles = '<div class="pts n4">' + tile(avg((a) => a.score), 'Raid grade', plural(data.length, 'player') + (one ? '' : ' · ' + plural(reps.length, 'pull'))) + tile(avg((a) => a.mech), 'Own mechanics', mist ? 'each player\'s own mistakes: ' + plural(mist, 'mistake') + ' that cost points' : 'each player\'s own mistakes: none that cost points') +
-    (data.some((a) => a.rot != null) ? tile(avg((a) => a.rot), 'Rotation', 'how each player played their spec, from the Rotation tab') : tile(avg((a) => a.perf), 'Report card', 'casting, cooldowns, resources, staying alive, their kit')) +
+    (data.some((a) => a.rot != null) ? tile(avg((a) => a.rot), 'Rotation', 'how each player played their spec, from the Rotation tab') : tile(avg((a) => a.perf), 'How they played', 'casting, cooldowns, resources, staying alive, their kit')) +
     plTile(plIco(PL_ICON.ench), 'Prep', lastX.length ? fullPrep + '<span> / ' + lastX.length + '</span>' : '—', !lastX.length ? 'na' : fullPrep === lastX.length ? 'ok' : 'warn', !lastX.length ? 'no gear logged' : fullPrep === lastX.length ? 'everyone fully set up' + (one ? '' : ' at the last pull') : (lastX.length - fullPrep) + ' missing something' + (one ? '' : ' at the last pull'), true) + '</div>';
   // ---- a row per player: their grade on the bar, the trend (all pulls) or their first fix's points (one pull) ----
   const bars = rows.map((a, i) => { const on = sel === a, m = mvp.get(a.p.name);
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pl-r', attrs: ' type="button" data-pn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, a.score), 'm']], v: '<span class="pl-g">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span>',
-      sub: one ? '<span class="sub" title="' + (a.rot != null ? 'Mechanics · Rotation' : 'Mechanics · Report card') + '">' + Math.round(a.mech) + ' · ' + (a.rot != null ? Math.round(a.rot) : a.perf == null ? '—' : Math.round(a.perf)) + '</span>' : plTr(a.trend) || '<span class="sub">—</span>', chips: m ? ' <span class="pl-mvp">' + esc(m) + '</span>' : '' }); }).join('');
+      sub: one ? '<span class="sub" title="' + (a.rot != null ? 'Mechanics · Rotation' : 'Mechanics · How they played') + '">' + Math.round(a.mech) + ' · ' + (a.rot != null ? Math.round(a.rot) : a.perf == null ? '—' : Math.round(a.perf)) + '</span>' : plTr(a.trend) || '<span class="sub">—</span>', chips: m ? ' <span class="pl-mvp">' + esc(m) + '</span>' : '' }); }).join('');
   const sortSw = '<div class="seg pl-sort" role="tablist" aria-label="Order"><button type="button" data-o="best"' + (worstFirst ? '' : ' class="on"') + '>Best first</button><button type="button" data-o="gain"' + (worstFirst ? ' class="on"' : '') + '>Most to gain first</button></div>';
   const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>Mechanics and Rotation count most. Prep only takes points off.' + (one ? ' On the right are mechanics and Rotation.' :' The arrows show the change through the night.') + '</small>' + roleChips(has) + '</h3>' + sortSw +
     (bars ? cbHead('Grade', one ? 'Mech · Rot' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
-  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious and 4 for each medium mistake of their own (a tank also loses 2 for a minor slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half, and an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Rotation</b>: their score out of 100 on the Rotation tab, the same checks and the same number. <b>Staying alive and toolkit</b>: defensives, potions, Healthstones, kicks, externals. <b>The grade</b> is 40% mechanics, 40% Rotation and 20% staying alive and toolkit. For a spec without a Rotation page, it\'s half mechanics and half the Report card (casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive and toolkit). A player alive under 20 s is graded on mechanics. <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade, Rotation\'s checks that weren\'t good among them, with its "Next time". Without a Rotation page, a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
+  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious and 4 for each medium mistake of their own (a tank also loses 2 for a minor slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half, and an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Rotation</b>: their score out of 100 on the Rotation tab, the same checks and the same number. <b>Staying alive and toolkit</b>: defensives, potions, Healthstones, kicks, externals. <b>The grade</b> is 40% mechanics, 40% Rotation and 20% staying alive and toolkit. For a spec without a Rotation page, it\'s half mechanics and half how they played (casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive and toolkit). A player alive under 20 s is graded on mechanics. <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade, Rotation\'s checks that weren\'t good among them, with its "Next time". Without a Rotation page, a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
   return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + (sel ? plPlayer(sel, one, reps, mvp.get(sel.p.name), data) : plRaid(data, one, mvp, imp)) + '</div></div>' + how;
 }
 // A player's gear, laid out clean for the Players page (and anyone looking at what others wear): their item level against
@@ -21721,7 +21747,7 @@ function plPlayer(a, one, reps, mvpL, data) {
   const x0 = a.last.x, gearOn = S.plView === 'gear' && !!x0;
   h += '<div class="seg pl-view" role="tablist" aria-label="Show"><button type="button" data-pv="page"' + (gearOn ? '' : ' class="on"') + '>Their page</button><button type="button" data-pv="gear"' + (gearOn ? ' class="on"' : '') + (x0 ? '' : ' disabled title="No gear was logged for this player"') + '>Gear and stats</button></div>';
   if (gearOn) return h + gearView(x0);
-  h += '<div class="rs-nums">' + [['Mechanics', a.mech, a.mistakes ? plural(a.mistakes, 'mistake') : 'no mistakes'], a.rot != null ? ['Rotation', a.rot, a.perf != null ? 'staying alive and toolkit: ' + Math.round(a.perf) : 'how they played their spec'] : ['Report card', a.perf, a.perf == null ? 'alive under 20 s' : 'how they played'],['Prep', a.prep, a.prep == null ? 'no gear logged' : 'only takes points off']]
+  h += '<div class="rs-nums">' + [['Mechanics', a.mech, a.mistakes ? plural(a.mistakes, 'mistake') : 'no mistakes'], a.rot != null ? ['Rotation', a.rot, a.perf != null ? 'staying alive and toolkit: ' + Math.round(a.perf) : 'how they played their spec'] : ['How they played', a.perf, a.perf == null ? 'alive under 20 s' : 'casting, cooldowns, staying alive'],['Prep', a.prep, a.prep == null ? 'no gear logged' : 'only takes points off']]
     .map(([l, v, s]) => '<div class="rs-n"><span>' + l + '</span><b>' + plGr(v) + ' ' + (v == null ? '—' : Math.round(v)) + '</b><small>' + esc(s) + '</small></div>').join('') +
     '<div class="rs-n"><span>' + (one ? 'In their role' : 'Through the night') + '</span><b>' + (one ? ordinal(rank) + '<span class="sub"> of ' + mates.length + '</span>' : a.trend == null ? '—' : plTr(a.trend)) + '</b><small>' + esc(one ? (role === 'dps' ? 'DPS' : role === 'healer' ? 'healers' : 'tanks') + ' this pull' : a.trend == null ? 'needs 4 pulls' : 'the later pulls against the first') + '</small></div></div>';
   // fix these first: the three biggest, then the rest folded
@@ -21734,7 +21760,7 @@ function plPlayer(a, one, reps, mvpL, data) {
     (top.length ? top.map(fxRow).join('') : '<div class="rk-wx">' + ckLine('ok', 'A clean ' + (one ? 'pull' : 'night') + ': nothing cost them points.') + '</div>') +
     (more.length ? '<details class="pl-more"><summary>' + plural(more.length, 'more thing') + ' to look at</summary>' + more.map((f, i) => fxRow(f, i + 3)).join('') + '</details>' : '') + '</div>';
   // the night: a square per pull, its grade; a click opens that pull here
-  if (!one) h += rsSec('Pull by pull', a.best ? 'best: pull ' + a.best.r.item.pull + ', ' + letterOf(a.best.score) + ' ' + Math.round(a.best.score) : '', '<div class="pl-pulls">' + a.per.map((g) => '<button type="button" class="nm-cell st-q-' + letterOf(g.score) + '" data-plpull="' + g.r.item.pull + '" data-pn="' + esc(a.p.name) + '" title="' + esc('Pull ' + g.r.item.pull + ' (' + pullLabel(g.r.item) + '): ' + letterOf(g.score) + ' ' + Math.round(g.score) + ' · mechanics ' + Math.round(g.mech) + (g.rot != null ? ', Rotation ' + Math.round(g.rot) : '') + (g.perf != null ? (g.rot != null ? ', staying alive and toolkit ' : ', Report card ') + Math.round(g.perf) : '') + (g.prepOff >= 1 ? ', prep −' + Math.round(g.prepOff) : '')) + '"></button>').join('') + '</div><p class="sub" style="margin:4px 0 0">Click a square to open that pull.</p>');
+  if (!one) h += rsSec('Pull by pull', a.best ? 'best: pull ' + a.best.r.item.pull + ', ' + letterOf(a.best.score) + ' ' + Math.round(a.best.score) : '', '<div class="pl-pulls">' + a.per.map((g) => '<button type="button" class="nm-cell st-q-' + letterOf(g.score) + '" data-plpull="' + g.r.item.pull + '" data-pn="' + esc(a.p.name) + '" title="' + esc('Pull ' + g.r.item.pull + ' (' + pullLabel(g.r.item) + '): ' + letterOf(g.score) + ' ' + Math.round(g.score) + ' · mechanics ' + Math.round(g.mech) + (g.rot != null ? ', Rotation ' + Math.round(g.rot) : '') + (g.perf != null ? (g.rot != null ? ', staying alive and toolkit ' : ', how they played ') + Math.round(g.perf) : '') + (g.prepOff >= 1 ? ', prep −' + Math.round(g.prepOff) : '')) + '"></button>').join('') + '</div><p class="sub" style="margin:4px 0 0">Click a square to open that pull.</p>');
   // their prep: the latest pull's gear and buffs (and over the night, what was missed how often)
   const x = a.last.x;
   let prep = x ? readyLines(x) : ckLine('na', 'No gear or buffs were logged for this player.');
@@ -21838,7 +21864,7 @@ function player() {
   // (one pull or the whole night, switched on top of the page, next to the wipe filter's line)
   const sw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (v === 'night' ? ' class="on"' : '') + '>All pulls<span class="n">' + pulls.length + '</span></button><button data-v="pull"' + (v === 'pull' ? ' class="on"' : '') + '>Pull #' + it.pull + '<span class="n">' + (it.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   const cached = S.plData && S.plData.key === key ? S.plData : null;
-  void sw; view('<div class="plv"><div class="plhd">' + cutLine + '</div><div id="plBody">' + (cached ? '' : v === 'night' ? loadCard('Reading the night', 'Reading tonight\'s pulls…', 0) : loadCard('Grading the players', 'Mechanics, the Report card and prep…', null)) + '</div></div>');
+  void sw; view('<div class="plv"><div class="plhd">' + cutLine + '</div><div id="plBody">' + (cached ? '' : v === 'night' ? loadCard('Reading the night', 'Reading tonight\'s pulls…', 0) : loadCard('Grading the players', 'Mechanics, Rotation and prep…', null)) + '</div></div>');
   $$('.plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   const still = () => S.tab === 'player' && S.rep && S.rep.item === it && $('#plBody');
   const draw = (c) => { const el = $('#plBody'); if (!el) return; el.innerHTML = (c.load || '') + plPage(c.data, c.reps, v === 'pull'); bindPlayers(c); refreshIcons(); fillItemNames(el);
@@ -22688,11 +22714,16 @@ function bindFront(auto) {
   let picked = false;
   box.querySelectorAll('.fp-tabs button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); }; });
   box.querySelectorAll('.fp-mods button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); const p = $('#fpPrev'), rc = p.getBoundingClientRect(); if (rc.top < 0 || rc.bottom > innerHeight) p.scrollIntoView({ behavior: 'smooth', block: 'center' }); }; });
-  // (the website's preview moves on to the next view every 7 seconds, paused while the mouse is on it, until a view is picked)
-  if (!auto || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const t = setInterval(() => {
-    if (!document.body.contains(box)) { clearInterval(t); return; }
-    if (picked || box.querySelector('.fph-prev:hover')) return;
+  // (under the preview: the real raid night it stands in for)
+  const demo = $('#fpDemo'); if (demo) demo.onclick = () => openReportLink(DEMO_REPORT, $('#fpDemoMsg'));
+  // (the website's preview moves on to the next view every 7 seconds, paused while the mouse is on it, until a view is picked.
+  // The timer is the gold bar filling along the bottom of the card that's playing: when it fills, the next card starts)
+  const sec = box.querySelector('.fph-prev');
+  if (!auto || !sec || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  sec.classList.add('fp-auto');
+  sec.addEventListener('click', (e) => { if (e.target.closest('.fp-mods button')) sec.classList.remove('fp-auto'); });
+  sec.addEventListener('animationend', (e) => {
+    if (e.animationName !== 'fpTick' || picked) return;
     const cur = FP_SCENES.findIndex(([k]) => box.querySelector('.fp-scene.on[data-s="' + k + '"]'));
     show(FP_SCENES[(cur + 1) % FP_SCENES.length][0]);
   }, 7000);
@@ -22849,6 +22880,12 @@ function homePreviews() {
     card(3, 'Rotation and graphs', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
     card(4, 'Teams', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
 }
+// (the four cards' icons on the website's front page: a checklist, a map pin, a cycle, a note)
+const FP_ICO = {
+  live: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 5.5 8 8 5.5M4 12.5 5.5 14 8 11.5M4 18.5 5.5 20 8 17.5M11 7h9M11 13h9M11 19h9"/></svg>',
+  mech: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  rot: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 0 1-13 5.1M4.5 12a7.5 7.5 0 0 1 13-5.1"/><path d="M17.5 3v4h-4M6.5 21v-4h4"/></svg>',
+  assign: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>' };
 // ---- the tour: five short steps on a first visit, required once (no close button), remembered in this browser ----
 // Each step has a small picture that animates in (the logo drawing itself, a pull card building line by line, a player
 // walking into a soak, meter bars growing, a progress strip filling). Someone who opens a shared pull link sees that pull
@@ -22910,7 +22947,7 @@ const PAGE_TIPS = {
     { sel: '#view .sumv details.secd', t: 'Each mechanic, pull by pull', p: 'Each pull gets a square. Green is clean, amber could be better, and red went wrong. Click a square to open that pull.' }],
   player: [
     { sel: '#view .plsw', t: 'The whole night, or one pull', p: 'Look at every pull of the night together, or just the pull you\'re on.' },
-    { sel: '#view .pl-bars', t: 'Every player', p: 'Each player gets one grade, half from mechanics and half from the Report card. Prep can only take points off. Sort them best first, or by who has the most to gain.' },
+    { sel: '#view .pl-bars', t: 'Every player', p: 'Each player gets one grade from their mechanics, their Rotation, and how they stayed alive. Prep can only take points off. Sort them best first, or by who has the most to gain.' },
     { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player to see what they should fix first, each with a link to the tab that shows it, and their prep.' }],
   perf: [
     { sel: '#view .pft-row', t: 'What to look at', p: 'Pick a view here: damage, healing or damage taken, casts and resources, cooldowns and buffs, or utility and survivability. Each one shows the raw numbers, player by player.' },
@@ -23057,16 +23094,17 @@ function homeHosted() {
   const tg = homeTarget();
   $('#main').innerHTML = '<div class="home fp fph">' +
     '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' +
-    '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<b>Debrief</b></div>' + (DISCORD_URL ? '<a class="fph-beta" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener"><b>Beta</b><span>Help shape Debrief: join our Discord</span><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
+    // (Beta as a gold stamp tilted onto the name's corner, and the Discord invite as a quiet line under it; your idea, Oct 19)
+    '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<span class="fph-name"><b>Debrief</b><span class="fph-tag">Beta</span></span></div>' + (DISCORD_URL ? '<a class="fph-disc" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Help shape Debrief: <u>join our Discord</u><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p><button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
-      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
+      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + FP_ICO[k] + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
         '<div class="fp-note">Made-up example. <button class="linkbtn" id="fpDemo" type="button">See a real raid night ›</button></div><div class="fp-msg fp-note" id="fpDemoMsg"></div></div></section>' +
     homeFoot() + '</div>';
-  $('#gsGo').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
+  $('#gsGo').onclick = $('#gsGo2').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
   // (one log or live log, nothing added: no character, no team, no setup; the menu's Open a report or log window)
   $('#gsJust').onclick = nightDlg;
   HIST.load().then(groupsBackfill);
@@ -23215,6 +23253,12 @@ async function gsMe(b) {
 // show the tabs. While your nights are still coming in, the bubble says so. "End the guide" stops it.
 function gsPointStart(gid) {
   S.gsPoint = { gid }; progressPage(undefined, gid); window.scrollTo(0, 0);
+    // (the close: how it works in three steps, and the same button again, so nobody scrolls back up to start)
+    '<section class="fph-end"><h2>How it works</h2><ol class="fph-steps">' +
+      '<li><b>Add your team</b><span>Your character and your team\'s Warcraft Logs page. It takes about a minute.</span></li>' +
+      '<li><b>Raid with logs on</b><span>Turn on Warcraft Logs live logging, or upload your log after the raid.</span></li>' +
+      '<li><b>Read the debrief</b><span>Between pulls, see what went wrong and what to fix first.</span></li></ol>' +
+      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo2" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button></div></section>' +
   clearInterval(S.gsPT); S.gsPT = setInterval(gsPointTick, 500); setTimeout(gsPointTick, 150);
 }
 function gsPointEnd(done) {
@@ -23725,7 +23769,7 @@ function sinceLast(list) {
   const up = rows.filter((x) => x.d >= 2), dn = rows.filter((x) => x.d <= -2).reverse(), lv = rows.length - up.length - dn.length;
   const col = (h, l, none) => '<div class="ps-c"><div class="ps-h">' + h + '</div>' + (l.length ? l.slice(0, 8).map(line).join('') + (l.length > 8 ? '<p class="sub" style="margin:4px 0 0">and ' + (l.length - 8) + ' more</p>' : '') : '<p class="sub" style="margin:0">' + none + '</p>') + '</div>';
   return '<section class="panel pg-since">' + ttl + '<small>' + sub + '</small></h3><div class="ps-cols">' + col('<span class="okv">▲ Got better</span>', up, 'Nobody rose 2 points or more.') + col('<span class="hotv">▼ Slipped</span>', dn, 'Nobody dropped 2 points or more.') + '</div>' +
-    '<p class="sub" style="margin:8px 0 0">' + (lv ? plural(lv, 'player') + ' stayed about the same. ' : '') + 'The grade from Players (mechanics and Report card, each night\'s pulls averaged by time alive), without prep.</p></section>';
+    '<p class="sub" style="margin:8px 0 0">' + (lv ? plural(lv, 'player') + ' stayed about the same. ' : '') + 'The grade from Players (mechanics and Rotation, each night\'s pulls averaged by time alive), without prep.</p></section>';
 }
 // (the header's rank chips (Oct 19: up from the bottom of the page): the team's World, region, server and speed ranks;
 // a character's best and median parse. Drawn again in place once the rankings come in)
