@@ -3007,6 +3007,28 @@ details.secd.mcx-tile[open] .mcx-rib, details.secd.mcx-tile[open] .mcx-who { dis
 .mcx-ph > .ph-ok > details.secd:not([open]) > summary .sst { display: block; flex-basis: 100%; margin: 0 0 0 35px; text-align: left; white-space: normal; font-size: 12px; }
 .mcx-ph > .ph-ok > details.secd[open] { grid-column: 1 / -1; }
 @media (max-width: 640px) { .mcx-ph > .ph-ok { grid-template-columns: 1fr 1fr; } .mcx-ph > .ph-ok > details.secd:not([open]) > summary .sst { margin-left: 0; } }
+/* (Oct 19: four levels, Clean / Minor / Moderate / Major; Moderate is orange, between Major's red and Minor's amber ("bad mod" on the page))
+   and the phase titles stand out more: a taller banner, a bigger name, and a soft glow in the phase's level colour behind it) */
+.sst.bad.mod, .mcx-k.bad.mod b { color: #ff9e66; }
+details.secd.st-bad.mod { box-shadow: inset 3px 0 0 #f07a3a; }
+details.secd.mcx-tile.st-bad.mod:not([open])::before, .mcx-refg > details.secd.st-bad.mod:not([open])::before { background: #f07a3a; }
+details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(240,122,58,.18); }
+.mcx-tile.st-bad.mod .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(240,122,58,.12), transparent 40%); }
+.mcx-dot.bad.mod { background: #f07a3a; }
+#view details.phase.mcx-ph > summary > .sst.bad.mod { background: rgba(240,122,58,.14); box-shadow: inset 0 0 0 1px rgba(240,122,58,.45); }
+#view details.phase.mcx-ph[data-mst="major"] > summary::before { background: #e5534b; } #view details.phase.mcx-ph[data-mst="moderate"] > summary::before { background: #f07a3a; }
+#view details.phase.mcx-ph[data-mst="minor"] > summary::before { background: #e8a23a; } #view details.phase.mcx-ph[data-mst="clean"] > summary::before { background: #45c15c; }
+#view details.phase.mcx-ph > summary { padding: 18px 20px 18px 24px; }
+#view details.phase.mcx-ph > summary::before { top: 0; bottom: 0; width: 5px; border-radius: 16px 0 0 16px; }
+#view details.phase.mcx-ph:not([open]) > summary::before { border-radius: 16px 0 0 16px; }
+#view details.phase.mcx-ph[data-mst="major"] > summary { background: linear-gradient(90deg, rgba(229,83,75,.16), rgba(255,255,255,.035) 45%); }
+#view details.phase.mcx-ph[data-mst="moderate"] > summary { background: linear-gradient(90deg, rgba(240,122,58,.15), rgba(255,255,255,.035) 45%); }
+#view details.phase.mcx-ph[data-mst="minor"] > summary { background: linear-gradient(90deg, rgba(232,162,58,.13), rgba(255,255,255,.035) 45%); }
+#view details.phase.mcx-ph[data-mst="clean"] > summary { background: linear-gradient(90deg, rgba(69,193,92,.12), rgba(255,255,255,.035) 45%); }
+#view details.phase.mcx-ph > summary > b { font: 800 25px/1.1 var(--head); letter-spacing: .01em; text-shadow: 0 2px 10px rgba(0,0,0,.45); }
+#view details.phase.mcx-ph > summary > .mcx-pn { min-width: 42px; height: 42px; font-size: 18px; border-radius: 12px; }
+#view details.phase.mcx-ph.mcx-ref > summary { padding: 13px 18px 13px 22px; } #view details.phase.mcx-ph.mcx-ref > summary > b { font-size: 18px; } #view details.phase.mcx-ph.mcx-ref > summary > .mcx-pn { min-width: 30px; height: 30px; font-size: 16px; }
+@media (max-width: 640px) { #view details.phase.mcx-ph > summary { padding: 14px 12px 14px 18px; } #view details.phase.mcx-ph > summary > b { font-size: 20px; } #view details.phase.mcx-ph > summary > .mcx-pn { min-width: 36px; height: 36px; font-size: 16px; } }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
@@ -10208,7 +10230,7 @@ function svgIcon(id, name, big) {
 // A mechanic name as text with the spell tooltip on hover (the ID comes from the log when only the name is known)
 function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
 // A status on the right of a heading or bar, in the same words and marks on every tab: ✕ a problem, ! could be better, ✓ fine
-const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</span>'; // (the mark stays with its first word)
+const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[String(st).split(' ')[0]] || '') + esc(txt) + '</span>'; // (the mark stays with its first word)
 // "all 3 done", but just "done" for one (never "all 1 done")
 const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all ' + n + ' ' + many);
 // "What went well" first, then "What went wrong", the same on Latest pull and Summary: what the raid did well leads (a strip
@@ -12179,7 +12201,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       const tbl = '<table class="tbl"><thead><tr><th>Set</th><th>Assigned</th><th>Soaked</th><th>Result</th></tr></thead><tbody>' +
         NY.rows.map((x) => '<tr><td class="tc"><b>' + x.i + '</b><div class="sub">' + T(x.t) + '</div></td><td>' + (x.want.length ? x.want.map(nm).join(', ') : '<span class="sub">none</span>') + '</td><td>' + (x.who.length ? x.who.map(nm).join(', ') : '<span class="sub">nobody</span>') + '</td><td>' +
           (x.st === 'bad' ? pill('bad', x.shatter ? 'an orb Shattered' : 'not by the assigned') : x.st === 'warn' ? pill('warn', 'someone else helped') : x.st === 'na' ? pill('na', x.want.length ? 'the fight ended first' : 'not in the note') : pill('ok', 'soaked as planned')) + '</td></tr>').join('') + '</tbody></table>';
-      vpanel('Orb soaks', bad.length ? pill('bad', plural(bad.length, 'set') + ' missed') : warn.length ? pill('warn', plural(warn.length, 'set') + ' could be better') : pill('ok', 'no mistakes'),
+      vpanel('Orb soaks', bad.length ? pill('bad', plural(bad.length, 'set') + ' missed') : warn.length ? pill('warn', warn.length + ' minor') : pill('ok', 'no mistakes'),
         "This comes from the note's Orb Soak lines: set N is the Nth Chilling Frost. Who soaked comes from the Frost Orb hits (an immunity counts).",
         iss, 'Every set was soaked by its assigned players.', tbl, 'as-nyorbs', icoWh('spell_frost_frostbolt02'));
     }
@@ -12252,7 +12274,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       for (const d of M.rows) if (kept(d.s) && (d.st === 'bad' || d.st === 'warn')) probs.push({ sev: d.st, html: '<b>Mind control CC</b>: Dreadmarch ' + d.n + ' ' + esc(d.st === 'bad' ? 'had no CC (' + andList(d.mcd) + ' walked for ' + d.len.toFixed(1) + 's)' : '· ' + d.txt), when: T(d.s) });
       const judged = (list) => list.filter((d) => kept(d.s) && d.st !== 'na');
       const stOf = (list) => { const j = judged(list), b = j.filter((d) => d.st === 'bad').length, w = j.filter((d) => d.st === 'warn').length;
-        return [!j.length ? 'na' : b ? 'bad' : w ? 'warn' : 'ok', !j.length ? (list.some((d) => !kept(d.s)) ? AFTER : 'none needed a CC') : b ? dmN(b) + ' with no CC' + (w ? ' · ' + w + ' could be better' : '') : w ? w + ' of ' + j.length + ' could be better' : allOf(j.length, 'the mind control was CC\'d', 'mind controls CC\'d'), j.length - b]; };
+        return [!j.length ? 'na' : b ? 'bad' : w ? 'warn' : 'ok', !j.length ? (list.some((d) => !kept(d.s)) ? AFTER : 'none needed a CC') : b ? dmN(b) + ' with no CC' + (w ? ' · ' + w + ' minor' : '') : w ? w + ' of ' + j.length + ' minor' : allOf(j.length, 'the mind control was CC\'d', 'mind controls CC\'d'), j.length - b]; };
       const [aSt, aTxt, held] = stOf(M.rows), jAll = judged(M.rows).length;
       addTile('as-mc', spellIcon(0, 'Dreadmarch', true), 'Mind control CC', jAll ? held + '<span> / ' + jAll + ' CC\'d</span>' : '—', aSt, aTxt);
       const rel = (c) => (c.rel <= 0.05 ? (c.rel < -0.05 ? Math.abs(c.rel).toFixed(1) + 's before' : 'as it landed') : '+' + c.rel.toFixed(1) + 's');
@@ -12286,7 +12308,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
         for (const x of s.adds) if (x.st === 'bad' || x.st === 'warn') probs.push({ sev: x.st, html: '<b>Add curses</b>: the ' + KN[x.kind] + ' add in set ' + s.n + ' ' + (x.st === 'bad' ? 'wasn\'t cursed' + (x.want.length ? ' (' + esc(andList(x.want)) + ')' : '') : 'was ' + esc(x.txt)), when: T(s.t) });
         if (s.idle && s.idle.length) probs.push({ sev: 'warn', html: '<b>Add curses</b>: ' + esc(andList(s.idle)) + ' cursed neither add in set ' + s.n, when: T(s.t) }); }
       const stOf = (list) => { const j = list.filter((s) => kept(s.t)).map(setSt).filter((x) => x !== 'na'), b = j.filter((x) => x === 'bad').length, w = j.filter((x) => x === 'warn').length;
-        return [!j.length ? 'na' : b ? 'bad' : w ? 'warn' : 'ok', !j.length ? (list.some((s) => !kept(s.t)) ? AFTER : 'no set to judge') : b ? plural(b, 'set') + ' with an add not cursed' + (w ? ' · ' + w + ' could be better' : '') : w ? w + ' of ' + j.length + ' sets could be better' : allOf(j.length, 'both adds cursed', 'sets cursed'), j.length - b - w, j.length]; };
+        return [!j.length ? 'na' : b ? 'bad' : w ? 'warn' : 'ok', !j.length ? (list.some((s) => !kept(s.t)) ? AFTER : 'no set to judge') : b ? plural(b, 'set') + ' with an add not cursed' + (w ? ' · ' + w + ' minor' : '') : w ? w + ' of ' + j.length + ' sets minor' : allOf(j.length, 'both adds cursed', 'sets cursed'), j.length - b - w, j.length]; };
       const [aSt, aTxt, clean, nJ] = stOf(C.rows);
       addTile('as-curse', spellIcon(0, 'Curse of Tongues', true), 'Add curses', nJ ? clean + '<span> / ' + nJ + ' sets clean</span>' : '—', aSt, aTxt);
       const rowC = (s) => {
@@ -12538,7 +12560,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const secRow = (o) => '<details class="panel secd st-' + o.st + '" id="' + o.id + '" data-k="' + o.id + '"' + (S.openSecs.has(o.id) ? ' open' : '') + '><summary><span' + tipOf(o) + '>' + o.icon + '<b>' + o.title + '</b></span>' + (o.sub ? ' <span class="sub">' + o.sub + '</span>' : '') + (o.txtHtml != null ? stH(o.st, o.txtHtml) : hst(o.st, o.txt)) + '</summary>' +
     '<div class="secbody">' + (o.how ? '<details class="howit"><summary>How it works</summary><div>' + o.how + '</div></details>' : '') + o.body + '</div></details>';
   const phaseBlock = (name, sub, list) => { const nb = list.filter((o) => o.st === 'bad').length, nw = list.filter((o) => o.st === 'warn').length, judged = list.some((o) => o.st !== 'na');
-    return '<details class="phase" open><summary><b>' + name + '</b>' + (sub ? ' <span class="sub">' + sub + '</span>' : '') + hst(!judged ? 'na' : nb ? 'bad' : nw ? 'warn' : 'ok', !judged ? 'not judged' : nb ? plural(nb, 'problem') + (nw ? ' · ' + nw + ' could be better' : '') : nw ? nw + ' could be better' : 'clean') + '</summary>' +
+    return '<details class="phase" open><summary><b>' + name + '</b>' + (sub ? ' <span class="sub">' + sub + '</span>' : '') + hst(!judged ? 'na' : nb ? 'bad' : nw ? 'warn' : 'ok', !judged ? 'not judged' : nb ? nb + ' major' + (nw ? ' · ' + nw + ' minor' : '') : nw ? nw + ' minor' : 'clean') + '</summary>' +
       list.sort((x, y) => x.ord - y.ord).map(secRow).join('') + '</details>'; };
   PHS.forEach((p, k) => { const list = secs.filter((o) => o.ph === k); if (list.length) h += phaseBlock(esc(p.name), isFinite(p.end) ? T(p.start) + '–' + T(p.end) : '', list); });
   { const list = secs.filter((o) => o.ph === 'w'); if (list.length) h += phaseBlock('Whole fight', PHS.length ? 'assignments that aren\'t tied to one phase' : '', list); }
@@ -13075,7 +13097,7 @@ function audit() {
     const cleanSets = groups.filter((g) => !g.bad && !g.warn && g.rows.length && g.rows.every((row) => !isBadRow(row) && !isWarnRow(row))).map((g) => g.title);
     const parts = [];
     if (bad.length || badSets.length) parts.push(['bad', 'What went wrong', (bad.length ? clauses(bad, 3) : '') + (badSets.length ? ' ' + badSets.join('. ') + '.' : '')]);
-    if (warn.length || warnSets.length) parts.push(['warn', 'Could be better', (warn.length ? clauses(warn, 2) : '') + (warnSets.length ? ' ' + warnSets.join('. ') + '.' : '')]);
+    if (warn.length || warnSets.length) parts.push(['warn', 'Minor slips', (warn.length ? clauses(warn, 2) : '') + (warnSets.length ? ' ' + warnSets.join('. ') + '.' : '')]);
     const were = (n) => (n === 1 ? ' was clean' : ' were clean');
     if (ok.length) parts.push(['ok', 'What went well', (ok.length === total ? (total === 1 ? 'It was clean.' : 'All ' + total + ' ' + noun + ' were clean.') : ok.length + ' of ' + total + ' ' + noun + were(ok.length) +
       (cleanSets.length && cleanSets.length < groups.length ? (cleanSets.length <= 3 ? ', including every one in ' + andJ(cleanSets) : ', and ' + cleanSets.length + ' of ' + groups.length + ' sets had no problems at all') : '') + '.')]);
@@ -13224,10 +13246,10 @@ function audit() {
     const v = nBad ? (s.verdict === 'good' ? 'warn' : s.verdict) : nWarn ? 'warn' : (rows.length || groups.length ? 'good' : s.verdict);
     // the row: a coloured edge and one status line on the right (✕ problems, ! could be better, ✓ clean), like Assignments;
     // "How it works" is folded away at the top of the opened section
-    const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok', ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
+    const lc = lvlCounts(tierOf(r.item.boss, s.id), nBad, nWarn), stc = !nBad && !nWarn ? (s.info ? 'na' : 'ok') : LVL_CLS[lvlOf(lc)], ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
     const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti ? ' mcx-tile' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti ? '<span class="mcx-hd">' : '') + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? '</span>' + tiLn : '') + '</summary><div class="secbody">' +
+      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? '</span>' + tiLn : '') + '</summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -13271,7 +13293,7 @@ function audit() {
       // one line per set (name, time, what happened, result); click it for that set's rows
       groups.map((g, gi) => { const gb = g.bad || g.rows.some(isBadRow), gw = !gb && (g.warn || g.rows.some(isWarnRow)), key = s.id + '-' + sid + '-' + gi, open = S.openSets.has(key);
         const nb = g.rows.filter(isBadRow).length, nw = g.rows.filter((row) => !isBadRow(row) && isWarnRow(row)).length;
-        const pill = hst(gb ? 'bad' : gw ? 'warn' : 'ok', gb ? (nb ? pl2(nb, 'problem') : 'problem') : gw ? (nw > 1 ? nw + ' could be better' : 'could be better') : 'clean');
+        const pill = hst(gb ? LVL_CLS[tierOf(r.item.boss, s.id)] : gw ? 'warn' : 'ok', gb ? (nb || 1) + ' ' + tierOf(r.item.boss, s.id) + (nw ? ' · ' + nw + ' minor' : '') : gw ? (nw || 1) + ' minor' : 'clean');
         return (gi ? '<tr class="gsp2"><td colspan="' + s.cols.length + '"></td></tr>' : '') + '<tr class="grp gline ' + (gb ? 'gbad' : gw ? 'gwarn' : 'gok') + (open ? ' open' : '') + '" data-gk="' + key + '"><td colspan="' + s.cols.length + '"><div class="gl"><span class="gl-t">' + esc(g.title) + '</span><span class="gl-w">' + (g.t != null ? T(g.t) : '') + '</span><span class="gl-s">' + esc(g.sub || '') + '</span>' + pill + '<span class="gl-c" aria-hidden="true">▸</span></div></td></tr>' +
         // the set's rows: one nested card, indented under its bar, with its own column headings
         '<tr class="gdet" data-gp="' + key + '"' + (open ? '' : ' hidden') + '><td colspan="' + s.cols.length + '"><div class="gcard ' + (gb ? 'gbad' : gw ? 'gwarn' : 'gok') + '"><table class="tbl gsub"><thead><tr>' + s.cols.map((c) => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' +
@@ -13292,15 +13314,16 @@ function audit() {
   const okSec = (x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return !x.s.info && !a.some(isBadRow) && !a.some(isWarnRow); };
   // (its problem mechanics as tiles in a grid (info-only sections stay full rows), then the clean chips)
   // (the worst mechanic with a map leads its phase as a big tile, "Fix this first"; the rest small beside it)
-  const bigFirst = (l) => { const i = l.findIndex((t) => t.includes('class="wr-map mcx-map"')); if (i < 0) return l; const t = l[i].replace('mcx-tile', 'mcx-tile mcx-big').replace('<summary>', '<summary><span class="mcx-rib">Fix this first</span>'); return [t].concat(l.slice(0, i), l.slice(i + 1)); };
+  const bigFirst = (l) => { const rk = (t) => (!t.includes('class="wr-map mcx-map"') ? 9 : /st-bad mod/.test(t) ? 1 : /st-bad/.test(t) ? 0 : 2), i = l.reduce((b, t, j) => (rk(t) < rk(l[b]) ? j : b), 0); if (rk(l[i]) === 9) return l; const t = l[i].replace('mcx-tile', 'mcx-tile mcx-big').replace('<summary>', '<summary><span class="mcx-rib">Fix this first</span>'); return [t].concat(l.slice(0, i), l.slice(i + 1)); };
   const phaseBody = (list, key) => { const ok = list.filter(okSec), pr = list.filter((x) => !okSec(x) && !x.s.info), inf = list.filter((x) => !okSec(x) && x.s.info);
     return (pr.length ? '<div class="mcx-tiles">' + bigFirst(pr.map((x) => secBlock(x, key, true))).join('') + '</div>' : '') + inf.map((x) => secBlock(x, key)).join('') +
     (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean</span>' + ok.map((x) => secBlock(x, key)).join('') + '</div>' : ''); };
   // (a phase's banner (Oct 19, refined): a gold number, and a ring of how much of it was clean (green), could be better (amber) or had problems (red))
   const phNum = (n, i) => { const m = String(n).match(/^P(\d+)/); return '<span class="mcx-pn">' + (m ? m[1] : /^intermission/i.test(n) ? 'Int' : /^whole/i.test(n) ? 'All' : i != null ? i + 1 : '•') + '</span>'; };
-  const phRing = (list) => { const l = list.filter((x) => !x.s.info), ok = l.filter(okSec).length, b = l.filter((x) => x.rows.concat(...x.groups.map((g) => g.rows)).some(isBadRow)).length, w = l.length - ok - b, tot = l.length; if (!tot) return '';
-    const C = 2 * Math.PI * 14, seg = (n, off, col) => (n ? '<circle r="14" cx="18" cy="18" fill="none" stroke="' + col + '" stroke-width="5" stroke-dasharray="' + (C * n / tot).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-C * off / tot).toFixed(2) + '" transform="rotate(-90 18 18)"/>' : '');
-    return '<span class="mcx-ring" title="' + ok + ' of ' + plural(tot, 'mechanic') + ' clean"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg(ok, 0, '#45c15c') + seg(w, ok, '#e8a23a') + seg(b, ok + w, '#e5534b') + '</svg><span><b>' + ok + '/' + tot + '</b>clean</span></span>'; };
+  const phLv = (list) => list.filter((x) => !x.s.info).reduce((o, x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), c = lvlCounts(tierOf(r.item.boss, x.s.id), a.filter(isBadRow).length, a.filter(isWarnRow).length); o.major += c.major; o.moderate += c.moderate; o.minor += c.minor; return o; }, { major: 0, moderate: 0, minor: 0 });
+  const phRing = (list) => { const l = list.filter((x) => !x.s.info), lv = l.map((x) => lvlOf(phLv([x]))), n = (k) => lv.filter((v) => v === k).length, tot = l.length; if (!tot) return '';
+    const C = 2 * Math.PI * 14, seg = (k, off, col) => (n(k) ? '<circle r="14" cx="18" cy="18" fill="none" stroke="' + col + '" stroke-width="5" stroke-dasharray="' + (C * n(k) / tot).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-C * off / tot).toFixed(2) + '" transform="rotate(-90 18 18)"/>' : '');
+    return '<span class="mcx-ring" title="' + n('clean') + ' of ' + plural(tot, 'mechanic') + ' clean"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg('clean', 0, '#45c15c') + seg('minor', n('clean'), '#e8a23a') + seg('moderate', n('clean') + n('minor'), '#f07a3a') + seg('major', n('clean') + n('minor') + n('moderate'), '#e5534b') + '</svg><span><b>' + n('clean') + '/' + tot + '</b>clean</span></span>'; };
   // phases, in fight order; each phase is a header with its mechanics, problems first
   buckets.forEach((list, i) => {
     if (!list.length) return;
@@ -13310,22 +13333,21 @@ function audit() {
     const p = phs[i], allR = list.flatMap((x) => x.rows.concat(...x.groups.map((g) => g.rows))), probs = allR.filter(isBadRow).length, better = allR.filter((row) => !isBadRow(row) && isWarnRow(row)).length;
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
-    h += '<details class="phase mcx-ph" data-mst="' + (probs ? 'bad' : better ? 'warn' : 'ok') + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
-      phRing(list) + '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕\u00a0' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓\u00a0clean') + '</span></summary>' + phaseBody(list, i) + '</details>';
+    h += '<details class="phase mcx-ph" data-mst="' + lvlOf(phLv(list)) + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
+      phRing(list) + '<span class="sst ' + LVL_CLS[lvlOf(phLv(list))] + '">' + lvlText(phLv(list)) + '</span></summary>' + phaseBody(list, i) + '</details>';
   });
   if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span>' + phRing(whole) + '</summary>' + phaseBody(whole, 'w') + '</details>';
   // (the top of the page (Oct 19, layout B, refined): one card with a plain verdict, the pull as lanes (one per mechanic with a mistake,
   // Deaths first as skulls; the phases as bands across the top with lines down through the lanes, minute marks, the wipe filter's cut
   // greyed behind a red line), and the totals; a dot opens its exact moment)
   h = h.replace(MT_TOP, () => { const ent = buckets.flatMap((l, i) => l.map((x) => ({ x, k: i }))).concat(whole.map((x) => ({ x, k: 'w' }))).filter(({ x }) => !x.s.info);
-    const st = ({ x }) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return a.some(isBadRow) ? 'bad' : a.some(isWarnRow) ? 'warn' : 'ok'; };
-    const nB = ent.filter((e) => st(e) === 'bad').length, nW = ent.filter((e) => st(e) === 'warn').length, nO = ent.length - nB - nW;
-    const totals = '<div class="mcx-strip"><span class="mcx-k bad"><b>' + nB + '</b>with problems</span><span class="mcx-k warn"><b>' + nW + '</b>could be better</span><span class="mcx-k ok"><b>' + nO + '</b>clean</span><span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
-    // (the verdict: the phase with the most trouble and its worst mechanics, and the phases that went clean)
-    const per = buckets.map((l, i) => ({ p: phs[i], l: l.filter((x) => !x.s.info) })).filter((y) => y.l.length).map((y) => { const sv = y.l.map((x) => ({ x, v: st({ x }) }));
-      return { name: y.p.name, b: sv.filter((o) => o.v === 'bad').length, w: sv.filter((o) => o.v === 'warn').length, worst: sv.filter((o) => o.v !== 'ok').sort((u, v) => (u.v === 'bad' ? 0 : 1) - (v.v === 'bad' ? 0 : 1)).map((o) => o.x.s.title.split(': ')[0]) }; });
-    const topP = per.slice().sort((u, v) => (v.b * 3 + v.w) - (u.b * 3 + u.w))[0], clean = per.filter((y) => !y.b && !y.w);
-    const verdict = topP && (topP.b || topP.w) && per.length > 1 ? '<p class="mcx-verdict">Most trouble was in <b>' + esc(topP.name) + '</b>: ' + [topP.b ? plural(topP.b, 'mechanic') + ' with problems' : '', topP.w ? topP.w + ' that could be better' : ''].filter(Boolean).join(' and ') +
+    const st = ({ x }) => lvlOf(phLv([x])), cnt = (k) => ent.filter((e) => st(e) === k).length;
+    const totals = '<div class="mcx-strip">' + [['major', 'bad', 'Major'], ['moderate', 'bad mod', 'Moderate'], ['minor', 'warn', 'Minor'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + cnt(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
+    // (the verdict: the phase with the most trouble, Major counting most, its worst mechanics, and the phases that went clean)
+    const per = buckets.map((l, i) => ({ p: phs[i], l: l.filter((x) => !x.s.info) })).filter((y) => y.l.length).map((y) => { const o = phLv(y.l), rk = { major: 0, moderate: 1, minor: 2, clean: 3 };
+      return { name: y.p.name, o, sc: o.major * 9 + o.moderate * 3 + o.minor, worst: y.l.filter((x) => st({ x }) !== 'clean').sort((u, v) => rk[st({ x: u })] - rk[st({ x: v })]).map((x) => x.s.title.split(': ')[0]) }; });
+    const topP = per.slice().sort((u, v) => v.sc - u.sc)[0], clean = per.filter((y) => !y.sc);
+    const verdict = topP && topP.sc && per.length > 1 ? '<p class="mcx-verdict">Most trouble was in <b>' + esc(topP.name) + '</b>: ' + ['major', 'moderate', 'minor'].filter((k) => topP.o[k]).map((k) => topP.o[k] + ' ' + k).join(', ') +
       (topP.worst.length ? ', led by <b>' + topP.worst.slice(0, 2).map(esc).join('</b> and <b>') + '</b>' : '') + '.' + (clean.length ? ' <span class="mcx-good">' + esc(clean.map((y) => y.name).join(' and ')) + ' went clean.</span>' : '') + '</p>' : '';
     const head = '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake and each skull a death. Hover one for what happened, click it to open that moment.</small></h3>' + verdict;
     // (the whole pull to its last phase, or to its end when the wipe filter cut it short; one phase is enough: most prog wipes end in P1)
@@ -13336,7 +13358,7 @@ function audit() {
     const lanes = new Map();
     for (const { x, k } of ent) { if (k === 'w') continue; let L = lanes.get(x.s.id); if (!L) lanes.set(x.s.id, (L = { s: x.s, dots: [] }));
       const add = (row, t0) => { const t = rowT(row) != null ? rowT(row) : t0; if (t == null || t > end || !(isBadRow(row) || isWarnRow(row))) return; const dead = x.s.id === 'deaths' && row[0] && row[0].death;
-        L.dots.push('<a class="mcx-dot tlink ' + (dead ? 'dead' : isBadRow(row) ? 'bad' : 'warn') + '" href="#sec-' + x.s.id + '-' + k + '" data-t="' + T(t0 != null ? t0 : t) + '" style="left:' + at(t) + (dead ? ';background-image:url(' + whIcon('inv_misc_bone_humanskull_01') + ')' : '') + '" title="' +
+        L.dots.push('<a class="mcx-dot tlink ' + (dead ? 'dead' : isBadRow(row) ? LVL_CLS[tierOf(r.item.boss, x.s.id)] : 'warn') + '" href="#sec-' + x.s.id + '-' + k + '" data-t="' + T(t0 != null ? t0 : t) + '" style="left:' + at(t) + (dead ? ';background-image:url(' + whIcon('inv_misc_bone_humanskull_01') + ')' : '') + '" title="' +
           esc(T(t) + ' ' + (dead ? dead.player + ' died' + (dead.ability ? ' to ' + dead.ability : '') : x.s.title.split(': ')[0] + ': ' + rowText(x.s, row))) + '"></a>'); };
       x.rows.forEach((row) => add(row, null)); x.groups.forEach((g) => g.rows.forEach((row) => add(row, g.t))); }
     const ls = [...lanes.values()].filter((L) => L.dots.length).sort((u, v) => (u.s.id === 'deaths' ? -1 : v.s.id === 'deaths' ? 1 : v.dots.length - u.dots.length));
@@ -13362,7 +13384,7 @@ function audit() {
   // (Oct 19, "they aren't major mechanics": Survival kit, Raid cooldowns, Damage taken and Interrupts in one quieter card at the end,
   // a silver badge instead of a gold number, a small tile each that opens in place across the card)
   { const ref = h.slice(refAt); if (ref) { const nb = (ref.match(/secd st-bad/g) || []).length;
-    h = h.slice(0, refAt) + '<details class="phase mcx-ph mcx-ref" data-mst="' + (nb ? 'bad' : 'na') + '" open><summary><span class="mcx-pn mcx-pn2">+</span><b>More from this pull</b><span class="sub">your kit, raid cooldowns, damage taken and kicks' + (cut ? ', up to the wipe filter' : '') + '</span></summary><div class="mcx-refg">' + ref + '</div></details>'; } }
+    h = h.slice(0, refAt) + '<details class="phase mcx-ph mcx-ref" data-mst="' + (nb ? 'major' : 'na') + '" open><summary><span class="mcx-pn mcx-pn2">+</span><b>More from this pull</b><span class="sub">your kit, raid cooldowns, damage taken and kicks' + (cut ? ', up to the wipe filter' : '') + '</span></summary><div class="mcx-refg">' + ref + '</div></details>'; } }
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
@@ -13484,6 +13506,25 @@ const IMPORTANCE = {
   "Nek'zali the Soulcoiler": ['ritual', 'amani', 'depths', 'energy', 'ignition', 'rend', 'barrage', 'invoke', 'avoid'],
   "Ula'tek": ['eggs', 'coils', 'waves', 'tank', 'incub', 'wretch', 'amps', 'fangs', 'doomscale', 'kicks', 'bite', 'shriek', 'avoid'],
 };
+// Each mechanic's tier (Oct 19, your rule): what failing it does. Major likely wipes the raid, Moderate could kill one or a few players,
+// Minor makes the fight harder. A mistake (red) takes its mechanic's tier; a slip (amber) is always Minor. Deaths are Moderate, Avoidable
+// damage Minor, anything not listed Moderate.
+const TIERS = {
+  'The Coiled Altar': { major: ['orbs', 'sever', 'shield', 'dmghost', 'ghosts', 'soakq', 'inter'], minor: ['front', 'kicks', 'vf'] },
+  'The Twin Fangs': { major: ['kicks', 'bulwark', 'soaks', 'feast'], minor: ['ichor'] },
+  'Entombed Sentinels': { major: ['helix', 'protovenom', 'miasma'], minor: ['pools'] },
+  Sszorak: { major: ['fury', 'tempest'], minor: [] },
+  'Vashnik the Malignant': { major: ['totems', 'venoms'], minor: [] },
+  'The Lost Explorers': { major: ['boxes', 'ascension', 'frostfire', 'thud'], minor: [] },
+  "Nek'zali the Soulcoiler": { major: ['ritual', 'amani', 'depths', 'energy'], minor: [] },
+  "Ula'tek": { major: ['eggs', 'coils', 'waves', 'tank'], minor: ['kicks', 'shriek'] },
+};
+const tierOf = (boss, id) => { if (id === 'avoid') return 'minor'; const t = TIERS[boss]; return t && t.major.includes(id) ? 'major' : t && t.minor.includes(id) ? 'minor' : 'moderate'; };
+// (a mechanic's mistakes and slips as levels; its level is the worst of them; the words and the colour class for each)
+const lvlCounts = (tier, nBad, nWarn) => { const o = { major: 0, moderate: 0, minor: nWarn || 0 }; if (nBad) o[tier] += nBad; return o; };
+const lvlOf = (o) => (o.major ? 'major' : o.moderate ? 'moderate' : o.minor ? 'minor' : 'clean');
+const LVL_CLS = { major: 'bad', moderate: 'bad mod', minor: 'warn', clean: 'ok' };
+const lvlText = (o) => { const l = lvlOf(o), w = ['major', 'moderate', 'minor'].filter((k) => o[k]).map((k) => o[k] + ' ' + k); return w.length ? (l === 'minor' ? '!' : '✕') + '\u00a0' + w.join(' · ') : '✓\u00a0clean'; };
 let AUDITMAPS = [], AUDITHTML = [];
 const kfmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
 // Deaths as a Fight audit mechanic: one red row per death; amber note when they still had something to press.
@@ -14523,13 +14564,13 @@ async function night(part) {
   const overall = gm ? (ga ? 0.6 * gm.overall + 0.4 * ga.overall : gm.overall) : null;
   // ---- the pieces shared by both groups: a row of dots (one per pull), a fold-out row, a phase block ----
   const dotsOf = (per, tab, sec) => '<span class="dots" data-tab="' + tab + '" data-sec="' + esc(sec || '') + '">' + pullNs.map((n) => { const p = per.get(n), st = p ? p.st : 'na', r = byPull.get(n);
-    return '<button class="d st-' + st + '" type="button" data-pull="' + n + '" title="' + esc('Pull ' + n + ' · ' + res(r) + ' · ' + (!p ? 'didn\'t come up' : st === 'na' ? 'didn\'t come up, or after the wipe filter' : st === 'ok' ? 'clean' : (p.nb ? plural(p.nb, 'problem') : '') + (p.nb && p.nw ? ', ' : '') + (p.nw ? p.nw + ' could be better' : ''))) + '"></button>'; }).join('') + '</span>';
+    return '<button class="d st-' + st + '" type="button" data-pull="' + n + '" title="' + esc('Pull ' + n + ' · ' + res(r) + ' · ' + (!p ? 'didn\'t come up' : st === 'na' ? 'didn\'t come up, or after the wipe filter' : st === 'ok' ? 'clean' : (p.nb ? p.nb + ' major' : '') + (p.nb && p.nw ? ', ' : '') + (p.nw ? p.nw + ' minor' : ''))) + '"></button>'; }).join('') + '</span>';
   // how a row went across the night: red when it went wrong in at least 3 pulls (or a third of them), amber when it went
   // wrong at all or could be better, green when clean; plus the worst pull and whether the second half was better
   const verdictOf = (per) => {
     const j = pullNs.filter((n) => per.has(n) && per.get(n).st !== 'na'), b = j.filter((n) => per.get(n).st === 'bad'), w = j.filter((n) => per.get(n).st === 'warn');
     const st = !j.length ? 'na' : b.length && (b.length >= 3 || b.length / j.length >= 0.34) ? 'bad' : b.length || w.length ? 'warn' : 'ok';
-    const txt = !j.length ? 'didn\'t come up' : b.length ? 'went wrong in ' + b.length + ' of ' + plural(j.length, 'pull') + (w.length ? ', and ' + w.length + ' could be better' : '') : w.length ? 'could be better in ' + w.length + ' of ' + j.length : j.length === 2 ? 'clean in both' : 'clean in all ' + j.length;
+    const txt = !j.length ? 'didn\'t come up' : b.length ? 'went wrong in ' + b.length + ' of ' + plural(j.length, 'pull') + (w.length ? ', and ' + w.length + ' minor' : '') : w.length ? 'minor in ' + w.length + ' of ' + j.length : j.length === 2 ? 'clean in both' : 'clean in all ' + j.length;
     const worst = b.length ? b.reduce((m, n) => (per.get(n).nb > per.get(m).nb ? n : m)) : null;
     const half = Math.floor(j.length / 2), e = j.slice(0, half).filter((n) => per.get(n).st !== 'ok').length, l = j.slice(j.length - half).filter((n) => per.get(n).st !== 'ok').length;
     // (a trend only when it's a real change: at least 2 pulls and a quarter apart)
@@ -14548,13 +14589,13 @@ async function night(part) {
     // clean one 90 or more; so a red row never gets an A, and an amber row stays a B or C)
     const scOf = (p) => (p.st === 'bad' ? Math.max(30, Math.min(p.sc, 65)) : p.st === 'warn' ? Math.max(65, Math.min(p.sc, 85)) : Math.max(p.sc, 90));
     const avg = (a) => a.reduce((s, p) => s + scOf(p), 0) / a.length, score = avg(xs), k = Math.floor(xs.length / 2), late = k >= 2 ? avg(xs.slice(-k)) : null, early = k >= 2 ? avg(xs.slice(0, k)) : null, d = late != null ? late - early : 0, l = letterOf(score);
-    const tip = 'Grade ' + l + ': ' + Math.round(score) + ' / 100 over ' + plural(xs.length, 'pull') + '. A clean result counts in full, and one that could be better counts half. The letter follows the colour: a pull where it went wrong counts 65 at most.' + (Math.abs(d) >= 8 ? ' The later ' + k + ' pulls scored ' + Math.round(late) + ', against ' + Math.round(early) + ' in the first ' + k + '.' : '');
+    const tip = 'Grade ' + l + ': ' + Math.round(score) + ' / 100 over ' + plural(xs.length, 'pull') + '. A clean result counts in full, and a minor one counts half. The letter follows the colour: a pull where it went wrong counts 65 at most.' + (Math.abs(d) >= 8 ? ' The later ' + k + ' pulls scored ' + Math.round(late) + ', against ' + Math.round(early) + ' in the first ' + k + '.' : '');
     return '<span class="sgr" title="' + esc(tip) + '">' + gradeChip(l) + (d >= 8 ? '<span class="gtr up">▲' + Math.round(d) + '</span>' : d <= -8 ? '<span class="gtr down">▼' + Math.round(-d) + '</span>' : '') + '</span>';
   };
   const sumRow = (o) => '<details class="panel secd st-' + o.st + '" id="' + o.id + '" data-k="' + o.id + '"' + (S.openSecs.has(o.id) ? ' open' : '') + '><summary>' + (o.gr || '<span class="sgr"></span>') + '<span' + tipAttr(o.tip, o.title, o.how) + '>' + o.icon + '<b>' + esc(o.title) + '</b></span>' + o.dots + hst(o.st, o.txt) + '</summary>' +
     '<div class="secbody">' + (o.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(o.how) + '</div></details>' : '') + o.body + '</div></details>';
   const phaseBlock = (name, sub, list) => { const nb = list.filter((o) => o.st === 'bad').length, nw = list.filter((o) => o.st === 'warn').length, judged = list.some((o) => o.st !== 'na');
-    return '<details class="phase" open><summary><b>' + esc(name) + '</b>' + (sub ? ' <span class="sub">' + esc(sub) + '</span>' : '') + hst(!judged ? 'na' : nb ? 'bad' : nw ? 'warn' : 'ok', !judged ? 'not judged' : nb ? plural(nb, 'problem') + (nw ? ' · ' + nw + ' could be better' : '') : nw ? nw + ' could be better' : 'clean') + '</summary>' + list.map(sumRow).join('') + '</details>'; };
+    return '<details class="phase" open><summary><b>' + esc(name) + '</b>' + (sub ? ' <span class="sub">' + esc(sub) + '</span>' : '') + hst(!judged ? 'na' : nb ? 'bad' : nw ? 'warn' : 'ok', !judged ? 'not judged' : nb ? nb + ' major' + (nw ? ' · ' + nw + ' minor' : '') : nw ? nw + ' minor' : 'clean') + '</summary>' + list.map(sumRow).join('') + '</details>'; };
   // the body of a row: the trend in one line, who keeps getting flagged, then the pulls that went wrong (latest first)
   const trendLine = (v) => (v.half >= 3 ? '<div class="pdesc sum-tr">In the first half of the night, ' + v.e + ' of ' + v.half + ' pulls had something wrong, and in the second half, ' + v.l + ' of ' + v.half + '.' + (v.real ? (v.better ? ' <span class="okv">It\'s getting better.</span>' : ' <span class="hotv">It\'s getting worse.</span>') : ' <span class="sub">It\'s about the same.</span>') + '</div>' : '');
   const bodyOf = (per, v, tab, sec, what) => {
@@ -14566,9 +14607,9 @@ async function night(part) {
     if (!probs.length) return h + '<div class="nsp-ok"><span class="iss-dot"></span>Nothing went wrong with ' + what + ' in any pull.</div>';
     // the pulls that went wrong, as a list on the left (latest first) and the picked pull's problems on the right
     const items = probs.map((n) => { const p = per.get(n), r = byPull.get(n);
-      return { n, st: p.st, sub: p.nb ? plural(p.nb, 'problem') + (p.nw ? ' · ' + p.nw + ' could be better' : '') : p.nw + ' could be better',
+      return { n, st: p.st, sub: p.nb ? p.nb + ' major' + (p.nw ? ' · ' + p.nw + ' minor' : '') : p.nw + ' minor',
         body: '<div class="md-h"><b>Pull ' + n + '</b> <span class="sub">' + esc(capS(res(r))) + ' · ' + T(r.duration) + '</span><button class="btn sm" type="button" data-open="' + n + '" data-tab="' + tab + '" data-sec="' + esc(sec || '') + '">Open this pull</button></div>' +
-          hst(p.st, p.nb ? plural(p.nb, 'problem') + (p.nw ? ' · ' + p.nw + ' could be better' : '') : p.nw + ' could be better') +
+          hst(p.st, p.nb ? p.nb + ' major' + (p.nw ? ' · ' + p.nw + ' minor' : '') : p.nw + ' minor') +
           '<ul class="sp-l">' + p.lines.map((l) => '<li class="' + l.st + '">' + esc(l.txt) + '</li>').join('') + '</ul>' }; });
     h += '<div class="md sum-md"><div class="md-list">' + items.map((x, i) => '<button class="md-i ' + x.st + (i ? '' : ' on') + '" type="button" data-i="' + i + '"><span class="md-dot"></span><span class="md-l">Pull ' + x.n + '</span><span class="md-t">' + esc(x.sub) + '</span></button>').join('') + '</div>' +
       '<div class="md-pane">' + items.map((x, i) => '<div class="md-d" data-i="' + i + '"' + (i ? ' hidden' : '') + '>' + x.body + '</div>').join('') + '</div></div>';
@@ -14651,7 +14692,7 @@ async function night(part) {
     const aSt = !oneA.of ? 'na' : oneA.did / oneA.of >= 0.9 ? 'ok' : oneA.did / oneA.of >= 0.7 ? 'warn' : 'bad';
     return '<div class="panel sum-one"><div class="so-h">' + avatar(p) + '<div><div class="pt-l">' + esc(one) + "'s night</div><div class=\"so-nm\" style=\"color:" + p.color + '">' + esc(one) + '</div><div class="sub">' + esc(p.specName || '') + (p.specName ? ' · ' : '') + 'in ' + inN + ' of ' + plural(reps.length, 'pull') + '</div></div></div>' +
       '<div class="pts rc-cats" style="--n:3">' + plTile(icoW('ability_rogue_feigndeath'), 'Deaths', String(dN), !dN ? 'ok' : dN >= 3 || dN / Math.max(1, inN) >= 0.34 ? 'bad' : 'warn', !dN ? 'alive at the end of every pull' : 'died in ' + dN + ' of ' + plural(inN, 'pull') + (fN ? ', first to die in ' + fN : ''), true) +
-      plTile(icoW('spell_shadow_shadowfury'), 'Mechanics', mJ.length ? mW.length + '<span> of ' + mJ.length + '</span>' : '—', !mJ.length ? 'na' : mB.length ? 'bad' : mW.length ? 'warn' : 'ok', !mJ.length ? 'none came up' : mW.length ? 'went wrong or could be better' : 'all clean', true) +
+      plTile(icoW('spell_shadow_shadowfury'), 'Mechanics', mJ.length ? mW.length + '<span> of ' + mJ.length + '</span>' : '—', !mJ.length ? 'na' : mB.length ? 'bad' : mW.length ? 'warn' : 'ok', !mJ.length ? 'none came up' : mW.length ? 'had mistakes' : 'all clean', true) +
       plTile(icoW('inv_inscription_scroll'), 'Assignments', oneA.of ? (Math.round(oneA.did * 2) / 2) + '<span> / ' + oneA.of + '</span>' : '—', aSt, !hasNote ? 'no NSRT note for this boss' : oneA.of ? 'done, across the pulls' : 'none of theirs came up', true) + '</div>' +
       '<button class="btn sm" type="button" id="sumOneP">See their grade on the Players tab</button></div>'; };
   const oneWrong = !one ? [] : [].concat(oneD.some((x) => x.died) ? [{ sev: oneD.filter((x) => x.died).length >= 3 ? 'bad' : 'warn', html: '<b>Died in ' + oneD.filter((x) => x.died).length + ' of ' + plural(oneD.length, 'pull') + '</b>' + (oneD.some((x) => x.first) ? '. <span class="sub">First to die in ' + oneD.filter((x) => x.first).length + '.</span>' : '.') }] : [],
@@ -14698,7 +14739,7 @@ async function night(part) {
   // (the picker on top, for the whole night)
   const pickS = onePick([...pm.values()], S.mechP, one ? oneOn(pm.get(one), 'Showing <b style="color:' + pm.get(one).color + '">' + esc(one) + '</b> only: their mechanics, assignments and deaths in the ' + plural(oneD.length, 'pull') + ' they were in.')
     : S.mechP ? '<span class="mp-on sub">' + esc(S.mechP) + " wasn't in these pulls, so everyone is shown. " + onePx + '</span>' : '<span class="sub">Pick a player to see only their part of the night: their mechanics, their assignments and their deaths.</span>', !!one);
-  const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, amber could be better, red means something went wrong, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
+  const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, amber is minor, red is moderate or major, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
   // (Recap: the report cards, how far the night got and what kept going wrong; Mechanics and Assignments: their rows across
   // the pulls, with their report card on top)
   const mPart = gm ? secHead('sum-mech', 'Mechanics, the whole night', 'every mechanic across the pulls. Open one for the pulls that went wrong.') + (mCard || '') + (mHtml || '') : '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>';
@@ -14819,7 +14860,7 @@ async function nightPlayers(reps, still) {
   const few = (l, txt) => plural(l.length, 'player') + ' ' + txt; // (the rows below name them)
   const tiles = '<div class="pts">' +
     plTile(rAvg == null ? '' : gradeChip(letterOf(rAvg)), 'Ready to raid', rAvg == null ? '—' : Math.round(rAvg) + '<span> avg</span>', rAvg == null ? 'na' : rBad.length ? 'bad' : rWarn.length ? 'warn' : 'ok',
-      rAvg == null ? 'no gear logged' : rBad.length ? few(rBad, 'missing gear or buffs') : rWarn.length ? plural(rWarn.length, 'player') + ' could be better' : 'everyone ready', false, rAvg == null ? null : letterOf(rAvg)) +
+      rAvg == null ? 'no gear logged' : rBad.length ? few(rBad, 'missing gear or buffs') : rWarn.length ? plural(rWarn.length, 'player') + ' minor' : 'everyone ready', false, rAvg == null ? null : letterOf(rAvg)) +
     plTile(gradeChip(letterOf(sAvg)), 'Survival kit', Math.round(sAvg) + '<span> avg</span>', defR ? 'bad' : 'ok', defR ? plural(defR, 'death') + ' with a defensive or self-heal ready' : 'no deaths with a defensive or self-heal ready', false, letterOf(sAvg)) +
     plTile(plIco(PL_ICON.pot), 'Combat or mana pots', potE ? Math.round(100 * potU / potE) + '<span>%</span>' : '—', !potE ? 'na' : never.length ? 'bad' : low.length ? 'warn' : 'ok',
       !potE ? 'not judged yet' : never.length ? few(never, 'never potted') : low.length ? few(low, 'under 70%') : 'everyone potted') +
@@ -14844,7 +14885,7 @@ async function nightPlayers(reps, still) {
   // ---- everyone: worst group first, lowest score first inside it ----
   const all = ps.slice().sort((a, b) => ((a.readyS == null ? a.survS : (a.readyS + a.survS) / 2) - (b.readyS == null ? b.survS : (b.readyS + b.survS) / 2)) || a.p.name.localeCompare(b.p.name));
   const byPull = new Map(reps.map((r) => [r.item.pull, r.item]));
-  const howit = '<details class="howit"><summary>How it\'s scored</summary><div>Ready to raid, per pull: consumables 60 (flask 25, food 20, weapon oil or stone 15) and gear 40 (missing enchants, rank 1 enchants, empty slots and gem sockets, and an item level 5 or more under the raid cost points). Augment runes aren\'t judged.<br>Survival kit, per pull up to the wipe filter: defensives 40 (dying with one ready, or a close call under 30% health with nothing pressed), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts; one per pull, two if alive over 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts.<br>Groups: "needs a word" is a missing enchant or empty slot, a flask, food or weapon oil missed on a fifth of the pulls or more, no combat or mana potion all night, or dying with a defensive or self-heal ready on a fifth of the pulls or more. Smaller slips are "could be better".<br>MVPs, by role (the best tank, the top two healers, the top three DPS): 40% execution (deaths and mechanic mistakes per pull; tanks also lose a little for each minor slip on their own frontals, like a missed taunt swap), 30% survival, 30% ready. A player with assignments in the NSRT note: 35% execution, 20% assignments (the share of their own they did; late or partly done counts half), 25% survival, 20% ready. Players need half the pulls to be ranked.</div></details>';
+  const howit = '<details class="howit"><summary>How it\'s scored</summary><div>Ready to raid, per pull: consumables 60 (flask 25, food 20, weapon oil or stone 15) and gear 40 (missing enchants, rank 1 enchants, empty slots and gem sockets, and an item level 5 or more under the raid cost points). Augment runes aren\'t judged.<br>Survival kit, per pull up to the wipe filter: defensives 40 (dying with one ready, or a close call under 30% health with nothing pressed), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts; one per pull, two if alive over 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts.<br>Groups: "needs a word" is a missing enchant or empty slot, a flask, food or weapon oil missed on a fifth of the pulls or more, no combat or mana potion all night, or dying with a defensive or self-heal ready on a fifth of the pulls or more. Smaller slips are "minor".<br>MVPs, by role (the best tank, the top two healers, the top three DPS): 40% execution (deaths and mechanic mistakes per pull; tanks also lose a little for each minor slip on their own frontals, like a missed taunt swap), 30% survival, 30% ready. A player with assignments in the NSRT note: 35% execution, 20% assignments (the share of their own they did; late or partly done counts half), 25% survival, 20% ready. Players need half the pulls to be ranked.</div></details>';
   let rows = [];
   const render = () => {
     // (a tank's row says what their score is made of: their frontals, deaths and big cooldowns over the night)
@@ -18580,7 +18621,7 @@ function hpalChecks(reps, name, one) {
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
   const pg = specPage({ per, rows, groups, one, P0, heroN, TAL, keyN, talents, talIc: TAL_IC, TIPS: HPAL_TIPS, LAYOUT, LG, LANE, WT, MERGE, TOPB, TOPP, top: 'Holy Paladins', tl, VIZ, pullT,
     tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use, Holy Shock at full charges, or Holy Power sitting at 5.',
-    src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Holy Paladin, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Holy Shock and Infusion of Light count three times as much as most, and heals on yourself count half. A good check counts in full, and one that could be better counts half.',
+    src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Holy Paladin, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Holy Shock and Infusion of Light count three times as much as most, and heals on yourself count half. A clean check counts in full, and a minor one counts half.',
     secIc: { 'Your pull at a glance': 'Avenging Wrath', 'Pull by pull': 'Holy Shock' } });
   // ---- the key numbers, for Compare (Oct 19: WoWAnalyzer's Holy Paladin pages as the model: a short why, the numbers as tiles, where things went
   // as split bars, the mana line). Each tile: k, label, value, format, which way is better ('hi', 'lo', or none) ----
@@ -19270,7 +19311,7 @@ function specPage(o) {
   const momT = (c, cap) => { const mo = c.mo.filter((m, i, l) => !i || m.b != null || m.pull !== l[i - 1].pull || T(m.a) !== T(l[i - 1].a)); if (!mo.length) return ''; const n = cap || 16;
     return one ? '<div class="spc-mos">' + mo.slice(0, n).map(tm).join('') + (mo.length > n ? '<span class="sub">and ' + (mo.length - n) + ' more</span>' : '') + '</div>'
       : '<div class="spc-mos">' + [...new Set(mo.map((m) => m.pull))].slice(0, 10).map((pl) => { const l = mo.filter((m) => m.pull === pl); return '<span class="spc-mp"><b>Pull ' + pl + '</b></span>' + l.slice(0, 5).map(tm).join('') + (l.length > 5 ? '<span class="sub">and ' + (l.length - 5) + ' more</span>' : ''); }).join('') + '</div>'; };
-  const BADGE = { ok: '✓ Good', warn: '! Could be better', bad: '✕ To fix', na: 'Not graded' };
+  const BADGE = { ok: '✓ Clean', warn: '! Minor', bad: '✕ Major', na: 'Not graded' };
   const icB = (n) => '<span class="spc-ri">' + spIc(n, true) + '</span>';
   const viz = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
@@ -19319,9 +19360,9 @@ function specPage(o) {
   const goodH = good.length ? '<div class="spc-hft spc-hgt">What you did well</div>' + good.map(({ c, b }) => '<button type="button" class="spc-fo ok" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(b ? (/^\s*0\s*$/.test(String(c.v).replace(/<[^>]+>/g, '')) && /^\s*0\s*$/.test(String(TOPB[c.k])) ? 'You had none, and neither did the top players.' : 'You had ' + ofPct(String(c.v).replace(/<[^>]+>/g, ''), TOPB[c.k]) + ', and the top players had ' + TOPB[c.k] + '.') : spcFirst(c.sub)) + '</span></span></button>').join('') : '';
   const fr = null; // (the ornate spec frame, specFrame(P0), is off: the card is a plain panel like the site's other cards)
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
-    '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A good check counts in full, and one that could be better counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
+    '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
-    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ To fix', cnt.bad, 'bad') + pill('warn', '! Could be better', cnt.warn, 'warn') + pill('ok', '✓ Good', cnt.ok, 'ok') + '</div></div></div>' +
+    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ Major', cnt.bad, 'bad') + pill('warn', '! Minor', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
@@ -19349,7 +19390,7 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
   return big.join('') + (tbl ? spcTable(cdl, top, slug, tmo) : '') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
 // The Rotation tab as sections of tiles (Oct 19, "make each and every rotation tab a similar design": a sentence of why on the left, the checks as
 // tiles on the right, the section's stat boxes and bars under them)
-const SPC_BW = { ok: 'Good', warn: 'Could be better', bad: 'To fix', na: 'Not graded' };
+const SPC_BW = { ok: 'Clean', warn: 'Minor', bad: 'Major', na: 'Not graded' };
 const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1;
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
     '<b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-tlb ' + c.st + '">' + SPC_MK[c.st] + ' ' + SPC_BW[c.st] + '</span>' + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
@@ -20168,7 +20209,7 @@ function pevkChecks(reps, name, one) {
     ['Cooldowns', [[stasisT ? 'Stasis and Inner Flame' : 'Dream Flight and Inner Flame', ['stc', 'stl', 'cd-stasis', 'cd-dream-flight', 'inf', 'fbs', 'win-cast', 'win-proc']], ['Other cooldowns', ['cd-tip-the-scales', 'cd-rewind', 'fbr', 'cd-util']]]]];
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, LAYOUT, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PEVK_TIPS, TOPP: new Set(['abc', 'apl', 'ta', 'db', 'dbr', 'ess', 'ecu', 'mana']), top: 'Preservation Evokers', pullT,
-    src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Preservation Evoker, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Temporal Anomaly, Dream Breath and Essence Burst count three times as much as most. A good check counts in full, and one that could be better counts half.', secIc: { 'Your pull at a glance': 'Stasis', 'Pull by pull': 'Echo' } });
+    src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Preservation Evoker, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Temporal Anomaly, Dream Breath and Essence Burst count three times as much as most. A clean check counts in full, and a minor one counts half.', secIc: { 'Your pull at a glance': 'Stasis', 'Pull by pull': 'Echo' } });
   return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait: sum((s) => s.wait) };
 }
 
@@ -20416,7 +20457,7 @@ function pdemChecks(reps, name, one) {
     ['Cooldowns', [['Demonic Tyrant', ['tyh', 'cd-summon-demonic-tyrant', 'tyd', 'tyc', 'tyx', 'pi']], ['Other demons', ['cd-call-dreadstalkers', 'cd-grimoire-imp-lord', 'cd-grimoire-fel-ravager', 'cd-summon-doomguard', 'cd-power-siphon', 'imp']]]]];
   const tyX = rows.flatMap((s) => s.ty || []).map((q) => q.x).filter((v) => v != null), tyI = rows.reduce((v, s) => v + (s.tyIn || 0), 0), tyL = rows.reduce((v, s) => v + (s.tyInL || 0), 0), tyA = rows.reduce((v, s) => v + (s.allD || 0), 0), tyAL = rows.reduce((v, s) => v + (s.allL || 0), 0), burst = tyX.length ? { x: tyX.reduce((v, y) => v + y, 0) / tyX.length, n: tyX.length, name: 'Summon Demonic Tyrant', dps: tyL ? tyI / tyL : null, out: tyAL - tyL > 0 ? (tyA - tyI) / (tyAL - tyL) : null } : null;
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PDEM_TIPS, TOPP: new Set(['abc', 'apl', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
-    src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Demonology Warlock, SimulationCraft\'s priority list (the one Raidbots sims with), and from what your talents do.', ringTip: 'Each check counts as much as it matters. Demonic Tyrant and Hand of Gul\'dan in it count three times as much as most. A good check counts in full, and one that could be better counts half.', secIc: { 'Your pull at a glance': 'Summon Demonic Tyrant', 'Pull by pull': 'Hand of Gul\'dan' } });
+    src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Demonology Warlock, SimulationCraft\'s priority list (the one Raidbots sims with), and from what your talents do.', ringTip: 'Each check counts as much as it matters. Demonic Tyrant and Hand of Gul\'dan in it count three times as much as most. A clean check counts in full, and a minor one counts half.', secIc: { 'Your pull at a glance': 'Summon Demonic Tyrant', 'Pull by pull': 'Hand of Gul\'dan' } });
   return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait: 0 };
 }
 
@@ -22276,7 +22317,7 @@ function cmpChips(rot, x) {
       (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + cost + '</div>' : '') + '</div></details>'; };
   const cnt = (l) => { const o = { bad: 0, warn: 0, ok: 0 }; for (const c of l) if (o[c.st] != null) o[c.st]++; return o; }, side = (n, col, sc, l) => { const o = cnt(l);
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
-      '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' to fix</i><i class="warn">! ' + o.warn + ' could be better</i><i class="ok">✓ ' + o.ok + ' good</i></span></div>'; };
+      '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' major</i><i class="warn">! ' + o.warn + ' minor</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
   if (rot.sa && rot.sb && rot.sa.sections) return cmpSumView(rot.sa, rot.sb, x, '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>');
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a chart for the details.</small></h3>' +
@@ -24177,7 +24218,7 @@ function plRow(o) {
 // the rows in three groups, worst first, under one line of column names
 function plRoster(rows, id) {
   let h = '<div class="plr-list" id="' + id + '"><div class="plr-hd"><span>Player</span><span>Ready to raid</span><span>Survival kit</span><span>Buffs and kit</span><span>What stands out</span><span></span></div>';
-  for (const [st, label] of [['bad', 'Needs a word'], ['warn', 'Could be better'], ['ok', 'All set']]) {
+  for (const [st, label] of [['bad', 'Needs a word'], ['warn', 'Minor'], ['ok', 'All set']]) {
     const g = rows.filter((o) => (o.st === 'na' ? 'ok' : o.st) === st); if (!g.length) continue;
     h += '<div class="plg-h ' + st + '">' + { bad: '✕', warn: '!', ok: '✓' }[st] + ' ' + label + '<span>' + plural(g.length, 'player') + '</span></div>' + g.map((o) => plRow(o) + (o.open ? '<div class="plx">' + o.detail() + '</div>' : '')).join('');
   }
@@ -24275,14 +24316,14 @@ async function playerPull(r) {
   const fewA = (l, txt) => (l.length <= 2 ? txt + ': ' + andList(l.map((a) => a.p.name)) : plural(l.length, 'player') + ' ' + txt);
   const tiles = '<div class="pts">' + cov(anyIcon('flask', PL_ICON.flask), 'Flask', g.filter((x) => !x.flask)) + cov(anyIcon('food', PL_ICON.food), 'Food', g.filter((x) => !x.food)) +
     cov(PL_ICON.oil, 'Weapon oil or stone', g.filter((x) => !x.temp)) +
-    plTile(plIco(PL_ICON.ench), 'Enchants and gems', n ? n - new Set(enchMiss.concat(gemMiss)).size + '<span> / ' + n + '</span>' : '—', !n ? 'na' : enchMiss.length ? 'bad' : gemMiss.length ? 'warn' : 'ok', !n ? 'no gear logged' : enchMiss.length ? few(enchMiss, 'missing enchants') : gemMiss.length ? few(gemMiss, 'could be better') : 'all enchanted and gemmed') +
+    plTile(plIco(PL_ICON.ench), 'Enchants and gems', n ? n - new Set(enchMiss.concat(gemMiss)).size + '<span> / ' + n + '</span>' : '—', !n ? 'na' : enchMiss.length ? 'bad' : gemMiss.length ? 'warn' : 'ok', !n ? 'no gear logged' : enchMiss.length ? few(enchMiss, 'missing enchants') : gemMiss.length ? few(gemMiss, 'minor') : 'all enchanted and gemmed') +
     plTile(plIco(PL_ICON.pot), 'Combat or mana pot', judged.length ? judged.length - noPot.length + '<span> / ' + judged.length + '</span>' : '—', !judged.length ? 'na' : noPot.length ? 'bad' : lowPot.length ? 'warn' : 'ok', !judged.length ? 'not judged (pull too short)' : noPot.length ? fewA(noPot, 'didn\'t pot') : lowPot.length ? fewA(lowPot, 'potted once of twice') : 'everyone potted') + '</div>';
   // (a tank's row says what their score is made of this pull: their frontals, whether they died, their big cooldowns)
   const tfP = r.module && !r.module.error && (r.module.sections || []).find((q) => q.id === 'tankfront'), ctP = cutT(r);
   const tankLineP = (a) => { if (!a.s.tank) return ''; const mine = tfP ? tfP.rows.filter((row) => row[0].t != null && row[0].t <= ctP + 0.05 && row[2] && row[2].p === a.p.name) : [];
     return [mine.length ? 'frontals clean ' + mine.filter((row) => !row.some((c) => c.bad || c.warn)).length + '/' + mine.length : '', a.s.deaths ? 'died' : 'no deaths', a.s.cdPoss ? 'big cooldowns ' + a.s.cdUsed + '/' + a.s.cdPoss : ''].filter(Boolean).join(' · '); };
   const rows = all.map((a, k) => ({ k, p: a.p, st: a.st, sub: (a.p.specName || '') + (a.x ? ' · ' + a.x.ilvl.toFixed(1) + ' ilvl' : ''), tankLine: tankLineP(a), ready: a.ready, surv: a.s.score, icons: pullIcons(a.x, a.s), notes: a.notes, open: S.plOpenP === a.p.name, detail: () => pullDetail(r, a) }));
-  const howit = '<details class="howit"><summary>How it\'s scored</summary><div>Gear and buffs are from when the pull started' + (cs.length ? '' : ' (none were logged, because combat logs record them only with Advanced Combat Logging on)') + '. Enchantable slots in Midnight: head, shoulders, chest, legs (spellthread or armor kit), feet, both rings and the weapon. Rank 1 enchants and oils, empty gem sockets, and an item level 5 or more under the raid show as "could be better". Augment runes aren\'t judged.<br>Survival kit, up to the wipe filter: defensives 40, Healthstone and health potion 30, combat or mana potion 30 (they share one 5-minute cooldown; one per pull, two if alive over 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts.</div></details>';
+  const howit = '<details class="howit"><summary>How it\'s scored</summary><div>Gear and buffs are from when the pull started' + (cs.length ? '' : ' (none were logged, because combat logs record them only with Advanced Combat Logging on)') + '. Enchantable slots in Midnight: head, shoulders, chest, legs (spellthread or armor kit), feet, both rings and the weapon. Rank 1 enchants and oils, empty gem sockets, and an item level 5 or more under the raid show as "minor". Augment runes aren\'t judged.<br>Survival kit, up to the wipe filter: defensives 40, Healthstone and health potion 30, combat or mana potion 30 (they share one 5-minute cooldown; one per pull, two if alive over 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts.</div></details>';
   box().innerHTML = tiles + plRoster(rows, 'plRosterP') + howit;
   bindRoster('plRosterP', rows, (o) => { S.plOpenP = o ? o.p.name : null; }, (x) => { fillItemNames(x); const d = x.querySelector('details.plgear'); if (d) d.ontoggle = () => store.set('wla-pl-gear', d.open ? '1' : '0'); });
   refreshIcons();
@@ -24543,8 +24584,8 @@ async function lastPull() {
   const rcTile = '';
   const tiles0 = '<div class="pts lp-tiles' + (rcTile ? ' six' : '') + '">' +
     go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length) + cmp(S0.deaths, S1 && S1.deaths), ds.length ? 'bad' : 'ok', ds.length ? ds[0].player + ' died first, at ' + T(ds[0].t) : 'Nobody died'), 'audit', 'sec-deaths') +
-    go(plTile(plIco('ability_creature_cursed_02'), 'Mechanics', (groups.size ? groups.size + '<span> ' + (groups.size === 1 ? 'problem' : 'problems') + '</span>' : '0') + cmp(S0.probs, S1 && S1.probs), hiN ? 'bad' : medN ? 'warn' : 'ok', groups.size ? [hiN ? hiN + ' serious' : '', medN ? medN + ' medium' : ''].filter(Boolean).join(' and ') : 'Nothing medium or serious'), 'audit') +
-    go(plTile(plIco('inv_inscription_scroll'), 'Assignments', hasNote ? noteMiss.length + '<span> missed</span>' + (S1 && S1.hasNote ? cmp(S0.noteMiss, S1.noteMiss) : '') : '—', !hasNote ? 'na' : noteMiss.some((m) => m.severity === 'High') ? 'bad' : noteMiss.length || noteLow ? 'warn' : 'ok', !hasNote ? 'No NSRT note for this boss yet' : noteMiss.length ? 'By ' + plural(new Set(noteMiss.map((m) => m.player)).size, 'player') : noteLow ? noteLow + ' could be better' : 'All followed'), 'overview') +
+    go(plTile(plIco('ability_creature_cursed_02'), 'Mechanics', (groups.size ? groups.size + '<span> ' + (groups.size === 1 ? 'mistake' : 'mistakes') + '</span>' : '0') + cmp(S0.probs, S1 && S1.probs), hiN ? 'bad' : medN ? 'warn' : 'ok', groups.size ? [hiN ? hiN + ' serious' : '', medN ? medN + ' medium' : ''].filter(Boolean).join(' and ') : 'Nothing medium or serious'), 'audit') +
+    go(plTile(plIco('inv_inscription_scroll'), 'Assignments', hasNote ? noteMiss.length + '<span> missed</span>' + (S1 && S1.hasNote ? cmp(S0.noteMiss, S1.noteMiss) : '') : '—', !hasNote ? 'na' : noteMiss.some((m) => m.severity === 'High') ? 'bad' : noteMiss.length || noteLow ? 'warn' : 'ok', !hasNote ? 'No NSRT note for this boss yet' : noteMiss.length ? 'By ' + plural(new Set(noteMiss.map((m) => m.player)).size, 'player') : noteLow ? noteLow + ' minor' : 'All followed'), 'overview') +
     (hasNote ? go(plTile(plIco('spell_holy_divinehymn'), 'Healing cooldowns', cdRows.length ? cdRows.length - cdMiss - cdLate + '<span> / ' + cdRows.length + ' on time</span>' + (S1 && S1.cdPct != null ? lpDelta(S0.cdPct, S1.cdPct, false, '%') : '') : '—', !cdRows.length ? 'na' : cdMiss ? 'bad' : cdLate ? 'warn' : 'ok', !cdRows.length ? (hasNote ? 'None were due this pull' : 'No NSRT note for this boss yet') : cdMiss || cdLate ? [cdMiss ? cdMiss + ' missed' : '', cdLate ? cdLate + ' late or early' : ''].filter(Boolean).join(' and ') : 'All on time'), 'overview') : '') +
     (kicks || missedK ? go(plTile(plIco('ability_kick'), 'Interrupts', kicks + '<span> ' + (kicks === 1 ? 'kick' : 'kicks') + '</span>', missedK ? 'bad' : kicks ? 'ok' : 'na', missedK ? plural(missedK, 'cast') + ' got through' : kicks ? 'Every cast was kicked' : 'Nothing to kick'), 'audit', 'sec-kicks') : '') + rcTile + '</div>', tiles = tiles0.replace('class="pts lp-tiles', 'data-n="' + (tiles0.match(/class="pt /g) || []).length + '" class="pts lp-tiles');
   // ---- layout: what to fix first and what went wrong on the left, the boxes for between pulls on the right ----
@@ -25036,8 +25077,8 @@ function fpParts() {
     '<rect x="58" y="34" width="14" height="14" rx="3" class="fp-mb" transform="rotate(45 65 41)"/><text x="65" y="22" class="fp-mt">Malacrass</text>' +
     dot(120, 55, 'ok') + dot(136, 52, 'ok') + dot(122, 72, 'ok') + dot(139, 70, 'ok') + dot(72, 112, 'bad') + '<text x="72" y="130" class="fp-mt bad">Doran</text>' +
     '<path d="M80 106 L104 84" class="fp-ml"/><text x="160" y="102" class="fp-mt">needs 5</text></svg>';
-  const mech = '<div class="fp-tiles">' + tile('bad', 'Deaths', '3 problems') + tile('bad', 'Guillotine soaks', '1 problem') + tile('warn', 'Venom orbs', '2 could be better') + tile('ok', 'Wail of Terror', 'all kicked') + '</div>' +
-    '<div class="fp-row">' + pnl(h4('Guillotine soaks', 'bad', '✕ 1 problem') + r('ok', '<b>0:43</b> Guillotine · 7 in the circle') + r('ok', '<b>1:51</b> Guillotine · 5 in, 2 immunities') + r('bad', '<b>2:31</b> Grim Guillotine · 4 in, needs 5', 'Doran') +
+  const mech = '<div class="fp-tiles">' + tile('bad', 'Deaths', '3 moderate') + tile('bad', 'Guillotine soaks', '1 major') + tile('warn', 'Venom orbs', '2 minor') + tile('ok', 'Wail of Terror', 'all kicked') + '</div>' +
+    '<div class="fp-row">' + pnl(h4('Guillotine soaks', 'bad', '✕ 1 major') + r('ok', '<b>0:43</b> Guillotine · 7 in the circle') + r('ok', '<b>1:51</b> Guillotine · 5 in, 2 immunities') + r('bad', '<b>2:31</b> Grim Guillotine · 4 in, needs 5', 'Doran') +
       r('warn', '<b>1:12</b> Sever clipped Ilyra behind the tank', 'Ilyra'), 'wide') +
     pnl(h4('2:31 · Grim Guillotine') + map) + '</div>';
   // (Rotation: one player's own page, a Holy Paladin, worded like the real checks)
@@ -25276,7 +25317,7 @@ function startTour(at) {
 const PAGE_TIPS = {
   live: [
     { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its color shows how far it got, and orange is a kill.' },
-    { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went fine, amber could be better, and red went wrong. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
+    { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went fine, amber is minor, and red is moderate or major. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
     { sel: '#view .lp-main', t: 'What went well, and what to fix', p: 'What the raid did well comes first, then the three things to fix before you pull again, then everything that went wrong. The › button opens each one.' },
     { sel: '#view .lp-prep', t: 'Before the next pull', p: 'This shows who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it are the players to talk to, each with their one thing to fix.' },
     { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs under "This pull" dig deeper into it: every mechanic, your assignments, each player\'s rotation and the graphs. The tabs under "Whole night" cover every pull together and every player.' },
@@ -25290,7 +25331,7 @@ const PAGE_TIPS = {
   night: [
     { sel: '#sum-prog', t: 'How far the night got', p: 'Every pull of the night on one chart, where lower means further. Click a dot to open that pull.' },
     { sel: '#view .sum-rc', t: 'The night\'s grades', p: 'Mechanics and assignments, each graded over every pull of the night.' },
-    { sel: '#view .sumv details.secd', t: 'Each mechanic, pull by pull', p: 'Each pull gets a square. Green is clean, amber could be better, and red went wrong. Click a square to open that pull.' }],
+    { sel: '#view .sumv details.secd', t: 'Each mechanic, pull by pull', p: 'Each pull gets a square. Green is clean, amber is minor, and red is moderate or major. Click a square to open that pull.' }],
   player: [
     { sel: '#view .plsw', t: 'The whole night, or one pull', p: 'Look at every pull of the night together, or just the pull you\'re on.' },
     { sel: '#view .pl-bars', t: 'Every player', p: 'Each player gets one grade from their mechanics, their Rotation, and how they stayed alive. Prep can only take points off. Sort them best first, or by who has the most to gain.' },
