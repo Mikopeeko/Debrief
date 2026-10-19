@@ -10495,6 +10495,8 @@ function noteNames(text) {
 // tell you): its first line (EncounterID and difficulty) and its names, against the pulls saved on the Teams page. The
 // best fit is the raid night of that boss that has the most of its names; names that are in no saved pull at all are
 // listed, since they're usually a typo or an NSRT nickname. Read from what's in memory, so it's instant.
+// (the trash can on each saved note's row: removes it, after a second click)
+const NOTE_TRASH = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px"><path fill="currentColor" fill-rule="evenodd" d="M9 3h6l1 2h4v2H4V5h4l1-2ZM6 9h12l-1 12H7L6 9Zm4 2v8h1.5v-8H10Zm2.5 0v8H14v-8h-1.5Z"/></svg>';
 // (two notes are the same note when only spacing, blank lines or capitals differ)
 const noteNorm = (t) => String(t || '').replace(/\r/g, '').split('\n').map((l) => l.trim().replace(/\s+/g, ' ')).filter(Boolean).join('\n').toLowerCase();
 function noteScan(text, boss) {
@@ -10669,7 +10671,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       return '<div class="nl-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b>' + (n.example ? ' <span class="sub">(example)</span>' : '') +
         '<div class="sub">' + [n.saved ? 'Saved ' + esc(when(n.saved)) : '', nn ? 'names ' + plural(nn, 'player') : '', ps.length ? 'used for ' + (ps.length === 1 ? 'pull ' : 'pulls ') + rng(ps) : 'not used by an opened pull yet'].filter(Boolean).join(' · ') + '</div>' + (n.example ? '' : noteFits(n.text, boss)) + '</div>' +
         '<div class="nl-b">' + (on ? '<span class="nl-this">✓ This pull</span>' : '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>') +
-        '<button class="btn" type="button" data-nedit="' + esc(n.id) + '">Edit</button><button class="btn" type="button" data-ndel="' + esc(n.id) + '">Remove</button></div></div>'; };
+        '<button class="btn" type="button" data-nedit="' + esc(n.id) + '">Edit</button><button class="btn" type="button" data-ndel="' + esc(n.id) + '" title="Remove this note" aria-label="Remove the note ' + esc(n.name) + '">' + NOTE_TRASH + '</button></div></div>'; };
     const sel = NO.list.length > 1 ? '<label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label>' : '';
     const back = used && (used.how === 'pull' || used.how === 'all') && NO.list.length > 1 ? ' <button class="btn" type="button" id="noteAuto">Pick it automatically again</button>' : '';
     const has = a && a.note ? ' <span class="sub">(' + plural(a.note.reminders.length, 'reminder') + ' and ' + plural(a.note.lines.length, 'text line') + ')</span>' : '';
@@ -11154,7 +11156,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[k0] = b.dataset.nuse; notesSave(boss, o); redo(); }));
   $$('#assignBox [data-nedit]').forEach((b) => (b.onclick = () => { S.noteEdit = true; S.noteEditId = b.dataset.nedit; assign(only); }));
   $$('#assignBox [data-ndel]').forEach((b) => (b.onclick = () => {
-    if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again to remove'; b.classList.add('bad'); setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Remove'; b.classList.remove('bad'); } }, 4000); return; }
+    if (!b.dataset.armed) { b.dataset.armed = '1'; b.innerHTML = NOTE_TRASH + ' Click again to remove'; b.classList.add('bad'); setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.innerHTML = NOTE_TRASH; b.classList.remove('bad'); } }, 4000); return; }
     const id = b.dataset.ndel, o = notesOf(boss); o.list = o.list.filter((n) => n.id !== id); if (o.pick === id) o.pick = 'auto';
     for (const [kk, v] of Object.entries(o.byPull || {})) if (v === id) delete o.byPull[kk]; notesSave(boss, o); redo(); }));
   if ($('#noteAuto')) $('#noteAuto').onclick = () => { const o = notesOf(boss); if (o.byPull && o.byPull[k0]) delete o.byPull[k0]; else o.pick = 'auto'; notesSave(boss, o); redo(); };

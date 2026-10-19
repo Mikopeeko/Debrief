@@ -213,6 +213,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 226: A trash can on each saved note (your ask, via the Discord session)
+- [x] **Each saved note on Assignments has a trash-can button** instead of the word "Remove". The first click turns it
+  red with "Click again to remove", so one slip never deletes a note; the second click removes it. Checked with two test
+  notes (removed after).
+
 ## 2026-10-18, round 225: Your notes for other bosses, and "Move it" takes you there (the Discord session's fix)
 - [x] **The empty Assignments page lists the notes you saved for other bosses:** "No note for Ula'tek yet. Your notes for
   other bosses: The Coiled Altar (1)". A click goes to that boss: a pull of it in the report that's open (the same
