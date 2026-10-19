@@ -12683,7 +12683,7 @@ async function openWcl(link, creds, live) {
   select(pick);
 }
 // ---------- live logging ----------
-// While the raid live-logs to Warcraft Logs, re-read the report every 30s and add pulls as they finish. A pull
+// While the raid live-logs to Warcraft Logs, re-read the report every 15 seconds (your call, Oct 19: a wipe shows up soon after it ends) and add pulls as they finish. A pull
 // counts as finished once its end time stops changing between two checks, so a half-uploaded pull is never
 // shown (or saved on this PC). If you're on the newest pull, the app jumps to the new one on the same tab.
 // Opening a report whose last event is under 10 minutes old turns live on by itself; following a report stops by itself
@@ -12886,7 +12886,7 @@ function setLive(on) {
   // live logging opens on the Last pull recap; turning it off leaves that tab
   if (on && !was) { S.tab = 'live'; S.scope = 'pull'; }
   if (was !== on && S.rep && $('#view')) renderMain();
-  if (on) { LIVE.changed = Date.now(); LIVE.timer = setInterval(liveTick, FH.dir ? 10000 : 30000); liveTick(); }
+  if (on) { LIVE.changed = Date.now(); LIVE.timer = setInterval(liveTick, FH.dir ? 10000 : 15000); liveTick(); }
   try { sessionStorage.setItem('wla-live', on ? '1' : ''); } catch (e) { /* ignore */ }
   liveUi();
 }

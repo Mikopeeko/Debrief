@@ -86,8 +86,8 @@ const CODE = /^[A-Za-z0-9]{8,32}$/;
 const num = (v) => { const n = parseFloat(v); return n === n ? n : null; };
 // every route: what it needs from the address, its query and variables, how long to keep the answer, and what to return
 const ROUTES = {
-  // (short: a report being live logged keeps getting new pulls, and following one live asks every 30 seconds)
-  '/api/report': { q: () => REPORT_Q, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null), age: (p) => (p.get('live') ? 20 : 120),
+  // (short: a report being live logged keeps getting new pulls, and following one live asks every 15 seconds)
+  '/api/report': { q: () => REPORT_Q, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null), age: (p) => (p.get('live') ? 15 : 120),
     out: (d, v) => { const rep = d && d.reportData && d.reportData.report; return rep || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 }; } },
   // (raw: the big downloads pass Warcraft Logs' reply straight through, unparsed, which keeps the Worker's CPU time tiny)
   '/api/events': { q: () => EVENTS_Q, age: 86400, raw: true,

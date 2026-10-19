@@ -264,6 +264,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **While Debrief is open, your team's newest report is checked every 30 seconds** (your call; it was every minute;
   a new quick check on the site, kept 30 seconds and shared by everyone on the same team). A report that got something in
   the last 10 minutes is live.
+- [x] **Wipes show up faster** (your note: right after a wipe is when people look). The live pull screen asks every 15
+  seconds instead of 30, and the site keeps a live report 15 seconds instead of 20: a wipe now shows up about 15 to 30
+  seconds after Warcraft Logs has it (was 20 to 50). Not lower for now, so many teams raiding at once stay under Warcraft
+  Logs' hourly limit.
 - [x] **Your team's page:** a red "Live now" strip under the team's name with Follow live. If you're on that page when the
   raid is first seen, it opens by itself (once per raid in a tab).
 - [x] **Everywhere else** (not the front page, your call): a red dot on Your teams and a thin "Wolfthorn is raiding now ·
