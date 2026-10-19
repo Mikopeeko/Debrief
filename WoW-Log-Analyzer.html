@@ -3029,6 +3029,33 @@ details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba
 #view details.phase.mcx-ph > summary > .mcx-pn { min-width: 42px; height: 42px; font-size: 18px; border-radius: 12px; }
 #view details.phase.mcx-ph.mcx-ref > summary { padding: 13px 18px 13px 22px; } #view details.phase.mcx-ph.mcx-ref > summary > b { font-size: 18px; } #view details.phase.mcx-ph.mcx-ref > summary > .mcx-pn { min-width: 30px; height: 30px; font-size: 16px; }
 @media (max-width: 640px) { #view details.phase.mcx-ph > summary { padding: 14px 12px 14px 18px; } #view details.phase.mcx-ph > summary > b { font-size: 20px; } #view details.phase.mcx-ph > summary > .mcx-pn { min-width: 36px; height: 36px; font-size: 16px; } }
+/* (Oct 19, the level colours: Minor a greenish yellow, Moderate a deeper orange, Major a nasty red with a little glow; one set of colours for
+   every label, edge, line, dot, ring, glow and count that shows a level) */
+:root { --lv-maj: #d4111e; --lv-maj-t: #ff3b46; --lv-mod: #e2540f; --lv-mod-t: #ff7a3d; --lv-min: #b5c42a; --lv-min-t: #d2df4a; }
+.sst.bad, .mcx-k.bad b, .mcx-verdict b { color: var(--lv-maj-t); } .sst.bad.mod, .mcx-k.bad.mod b { color: var(--lv-mod-t); } .sst.warn, .mcx-k.warn b { color: var(--lv-min-t); }
+.spc-v { --wa: var(--lv-min); --ba: var(--lv-maj); } .spc-pill.bad b { color: var(--lv-maj-t); } .spc-pill.warn b { color: var(--lv-min-t); }
+.pb-r.bad .pb-i { background: var(--lv-maj); } .pb-r.warn .pb-i { background: var(--lv-min); }
+.cmp-rcnt .bad { color: var(--lv-maj-t); } .cmp-rcnt .warn { color: var(--lv-min-t); }
+details.secd.st-bad { box-shadow: inset 3px 0 0 var(--lv-maj); } details.secd.st-bad.mod { box-shadow: inset 3px 0 0 var(--lv-mod); } details.secd.st-warn { box-shadow: inset 3px 0 0 var(--lv-min); }
+details.secd.mcx-tile:not([open])::before, .mcx-refg > details.secd.st-warn:not([open])::before { background: var(--lv-min); }
+details.secd.mcx-tile.st-bad:not([open])::before, .mcx-refg > details.secd.st-bad:not([open])::before { background: var(--lv-maj); box-shadow: 0 0 10px rgba(212,17,30,.7); }
+details.secd.mcx-tile.st-bad.mod:not([open])::before, .mcx-refg > details.secd.st-bad.mod:not([open])::before { background: var(--lv-mod); box-shadow: none; }
+details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(181,196,42,.16); }
+.mcx-tile.st-bad .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(212,17,30,.18), transparent 40%); } .mcx-tile.st-bad.mod .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(226,84,15,.14), transparent 40%); } .mcx-tile.st-warn .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(181,196,42,.1), transparent 40%); }
+.mcx-dot.bad { background: var(--lv-maj); box-shadow: 0 0 6px rgba(212,17,30,.8); } .mcx-dot.bad.mod { background: var(--lv-mod); box-shadow: none; } .mcx-dot.warn { background: var(--lv-min); } .mcx-dot.dead { border-color: var(--lv-maj); }
+.mcx-msb i.bad { background: var(--lv-maj); } .mcx-msb i.warn { background: var(--lv-min); } .mcx-gll::before { background: var(--lv-min); } .mcx-gll.bad::before { background: var(--lv-maj); }
+.mcx-hbb i { background: linear-gradient(90deg, var(--lv-min), #dfe86a); }
+#view details.phase.mcx-ph > summary > .sst.bad { background: rgba(212,17,30,.16); box-shadow: inset 0 0 0 1px rgba(212,17,30,.55), 0 0 12px rgba(212,17,30,.25); }
+#view details.phase.mcx-ph > summary > .sst.bad.mod { background: rgba(226,84,15,.15); box-shadow: inset 0 0 0 1px rgba(226,84,15,.5); } #view details.phase.mcx-ph > summary > .sst.warn { background: rgba(181,196,42,.13); box-shadow: inset 0 0 0 1px rgba(181,196,42,.45); }
+#view details.phase.mcx-ph[data-mst="major"] > summary::before, #view details.phase.mcx-ph[data-mst="bad"] > summary::before { background: var(--lv-maj); box-shadow: 0 0 12px rgba(212,17,30,.8); } #view details.phase.mcx-ph[data-mst="moderate"] > summary::before { background: var(--lv-mod); } #view details.phase.mcx-ph[data-mst="minor"] > summary::before { background: var(--lv-min); }
+#view details.phase.mcx-ph[data-mst="major"] > summary { background: linear-gradient(90deg, rgba(212,17,30,.24), rgba(255,255,255,.035) 50%); }
+#view details.phase.mcx-ph[data-mst="moderate"] > summary { background: linear-gradient(90deg, rgba(226,84,15,.18), rgba(255,255,255,.035) 45%); }
+#view details.phase.mcx-ph[data-mst="minor"] > summary { background: linear-gradient(90deg, rgba(181,196,42,.14), rgba(255,255,255,.035) 45%); }
+/* (Oct 19: Whole fight holds the kit, raid cooldowns, damage taken and kicks as small tiles under their own label; tiles keep their own
+   edge (the line on top), never the row's coloured left edge) */
+.mcx-refh { margin: 16px 0 8px; font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); } .mcx-ph > .mcx-refh:first-of-type { margin-top: 2px; }
+#view details.secd.mcx-tile:not([open]) { box-shadow: 0 6px 18px rgba(0,0,0,.35); } #view .mcx-refg > details.secd:not([open]) { box-shadow: none; }
+#view details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } #view details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } #view details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(181,196,42,.16); }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
@@ -10230,7 +10257,7 @@ function svgIcon(id, name, big) {
 // A mechanic name as text with the spell tooltip on hover (the ID comes from the log when only the name is known)
 function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
 // A status on the right of a heading or bar, in the same words and marks on every tab: ✕ a problem, ! could be better, ✓ fine
-const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[String(st).split(' ')[0]] || '') + esc(txt) + '</span>'; // (the mark stays with its first word)
+const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '', ok: '✓\u00a0' }[String(st).split(' ')[0]] || '') + esc(txt) + '</span>'; // (the mark stays with its first word)
 // "all 3 done", but just "done" for one (never "all 1 done")
 const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all ' + n + ' ' + many);
 // "What went well" first, then "What went wrong", the same on Latest pull and Summary: what the raid did well leads (a strip
@@ -10298,6 +10325,7 @@ function wrongRight(wrong, right, o) {
 const lcLead = (d) => (/^(Their|They|Was|Were|Had|Took|Got|Gained|Died|Stood|Used|Soaked|Kicked|Picked|Cursed|Didn't|Never|Ran|Walked|Moved|Left|Missed|Is)\b/.test(d) ? d.charAt(0).toLowerCase() + d.slice(1) : d);
 // A Fight audit section header: icon and title with the mechanic's spell tooltip, plus the section's summary of this pull
 function secHead(s) {
+  if (s.icon) return '<span class="sechd"><span class="icw big">' + svgIcon(0, s.title, true) + '<img class="oi" data-icon="' + esc(s.icon) + '" alt=""></span><b>' + esc(s.title) + '</b></span>'; // (its own icon, no spell tooltip)
   // (a heading for a kind of thing, not one spell, like Avoidable damage or Deaths: its own icon and our explanation, never
   // a spell's tooltip, even when the module gave it one boss ability's icon)
   const generic = GENERIC_SEC.test(s.title) || GENERIC_SEC.test((s.spell && s.spell[1]) || ''), name = generic ? s.title : (s.spell && s.spell[1]) || s.title, id = generic ? 0 : (s.spell && s.spell[0]) || sidOf(name);
@@ -12029,7 +12057,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const phOf = (n) => { const k = PHS.findIndex((p) => new RegExp('^P' + n + '\\b').test(p.name)); return k >= 0 ? k : 'w'; };
   const secs = [], addSec = (o) => secs.push(o);
   const icoWh = (n) => '<span class="icw big"><img class="wh-i" src="' + whIcon(n) + '" alt="" onerror="this.style.visibility=\'hidden\'"></span>';
-  const pst = (st, html) => '<div class="pst ' + st + '">' + ({ ok: '✓\u00a0', bad: '✕\u00a0', warn: '!\u00a0' }[st] || '') + html + '</div>';
+  const pst = (st, html) => '<div class="pst ' + st + '">' + ({ ok: '✓\u00a0', bad: '✕\u00a0', warn: '' }[st] || '') + html + '</div>';
   const qline = (title, right, cls) => '<div class="qrow"><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></div>';
   const qfold = (title, right, cls, body) => '<details class="qrow"><summary><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></summary><div class="q-b">' + body + '</div></details>';
   // (swap a player: a name in the note, the ones not in this pull first, for one of this pull's players the note doesn't name; it changes the text
@@ -12551,7 +12579,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // and the note itself and other reference lines at the bottom
   // the sections, as on Mechanics: under their phase in fight order (Guillotine, orbs, kicks), then the whole-fight ones,
   // then healing cooldowns; each a fold-out row (icon, title, a short summary, its status), closed until clicked
-  const stH = (st, html) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + html + '</span>';
+  const stH = (st, html) => '<span class="sst ' + st + '">' + ({ bad: '✕\u00a0', warn: '', ok: '✓\u00a0' }[st] || '') + html + '</span>';
   // (the icon and title carry the same hover tooltip as on Mechanics: the spell's description when there's one, plus how it's checked)
   // (a heading with neither a spell nor an explanation gets no tooltip, rather than an empty one)
   const tipOf = (o) => { const gen = GENERIC_SEC.test(plainOf(o.title)), n = gen ? plainOf(o.title) : o.tip || plainOf(o.title), sid = gen ? 0 : sidOf(n), ex = plainOf(o.how || '');
@@ -13198,7 +13226,7 @@ function audit() {
         const names = many ? '<div class="dd-all"><span class="sub">' + g.length + ' died to it: </span>' + g.map((y) => '<span class="nm" style="color:' + ((pmap.get(y.d.player) || {}).color || 'inherit') + '">' + esc(y.d.player) + '</span>').join(', ') + '</div>' : '';
         return '<button class="md-i dd-r ' + x.st + (gi === 0 ? ' on' : '') + '" type="button" data-i="' + gi + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '" data-dgs="' + esc(g.map((y) => y.d.guid + '@' + y.d.t.toFixed(2)).join(' ')) + '" aria-expanded="' + (gi === 0) + '">' +
           '<span class="dd-t">' + T(x.d.t) + '</span><span class="dd-w">' + who(x.d.player) + (many ? '<span class="dd-n">and ' + (g.length - 1) + ' more</span>' : '') + '</span><span class="dd-c"><b>' + esc(x.cause) + '</b>' + (x.how ? ' <span class="sub">' + esc(x.how) + '</span>' : '') + '</span>' +
-          '<span class="dd-h ' + x.h0.st + '">' + (x.h0.st === 'bad' ? '✕\u00a0' : x.h0.st === 'warn' ? '! ' : '') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
+          '<span class="dd-h ' + x.h0.st + '">' + (x.h0.st === 'bad' ? '✕\u00a0' : '') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
           '<div class="md-d dd-b" data-i="' + gi + '"' + (gi === 0 ? '' : ' hidden') + '>' + names + x.body + '</div>'; }).join('') +
       (after ? '<div class="dmore">' + plural(after, 'more death') + ' after the wipe filter</div>' : '') + '</div>';
   };
@@ -13323,7 +13351,7 @@ function audit() {
   const phLv = (list) => list.filter((x) => !x.s.info).reduce((o, x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), c = lvlCounts(tierOf(r.item.boss, x.s.id), a.filter(isBadRow).length, a.filter(isWarnRow).length); o.major += c.major; o.moderate += c.moderate; o.minor += c.minor; return o; }, { major: 0, moderate: 0, minor: 0 });
   const phRing = (list) => { const l = list.filter((x) => !x.s.info), lv = l.map((x) => lvlOf(phLv([x]))), n = (k) => lv.filter((v) => v === k).length, tot = l.length; if (!tot) return '';
     const C = 2 * Math.PI * 14, seg = (k, off, col) => (n(k) ? '<circle r="14" cx="18" cy="18" fill="none" stroke="' + col + '" stroke-width="5" stroke-dasharray="' + (C * n(k) / tot).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-C * off / tot).toFixed(2) + '" transform="rotate(-90 18 18)"/>' : '');
-    return '<span class="mcx-ring" title="' + n('clean') + ' of ' + plural(tot, 'mechanic') + ' clean"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg('clean', 0, '#45c15c') + seg('minor', n('clean'), '#e8a23a') + seg('moderate', n('clean') + n('minor'), '#f07a3a') + seg('major', n('clean') + n('minor') + n('moderate'), '#e5534b') + '</svg><span><b>' + n('clean') + '/' + tot + '</b>clean</span></span>'; };
+    return '<span class="mcx-ring" title="' + n('clean') + ' of ' + plural(tot, 'mechanic') + ' clean"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg('clean', 0, '#45c15c') + seg('minor', n('clean'), '#b5c42a') + seg('moderate', n('clean') + n('minor'), '#e2540f') + seg('major', n('clean') + n('minor') + n('moderate'), '#d4111e') + '</svg><span><b>' + n('clean') + '/' + tot + '</b>clean</span></span>'; };
   // phases, in fight order; each phase is a header with its mechanics, problems first
   buckets.forEach((list, i) => {
     if (!list.length) return;
@@ -13336,7 +13364,7 @@ function audit() {
     h += '<details class="phase mcx-ph" data-mst="' + lvlOf(phLv(list)) + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
       phRing(list) + '<span class="sst ' + LVL_CLS[lvlOf(phLv(list))] + '">' + lvlText(phLv(list)) + '</span></summary>' + phaseBody(list, i) + '</details>';
   });
-  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span>' + phRing(whole) + '</summary>' + phaseBody(whole, 'w') + '</details>';
+  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">mechanics not tied to one phase, your kit, raid cooldowns and damage taken</span>' + phRing(whole) + '</summary>' + phaseBody(whole, 'w') + '</details>';
   // (the top of the page (Oct 19, layout B, refined): one card with a plain verdict, the pull as lanes (one per mechanic with a mistake,
   // Deaths first as skulls; the phases as bands across the top with lines down through the lanes, minute marks, the wipe filter's cut
   // greyed behind a red line), and the totals; a dot opens its exact moment)
@@ -13381,10 +13409,11 @@ function audit() {
   if (!r.allPulls && [...r.players.values()].some((p) => (p.takenAbS || []).length)) { const e0 = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration)), ps0 = players().filter((p) => p.name && !/^Player-/.test(p.name));
     h += '<details class="panel secd st-na" id="sec-dsrc" data-k="dsrc"' + (S.openSecs.has('dsrc') ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, 'Shadowfury', true) + '<b>Damage taken by source</b></span><span class="sst na">every ability, and who took it</span></summary><div class="secbody"><div class="pfv">' + perfSources(r, ps0, 0, e0) + '</div></div></details>'; }
   if (!m.sections.some((x) => x.id === 'kicks') && !m.kicksMerged) h += '<details class="panel secd" id="sec-kicks" data-k="kicks"' + (S.openSecs.has('kicks') ? ' open' : '') + '><summary>' + spellIcon(0, 'Kick', true) + '<b>Interrupts</b> <span class="sub">' + esc(kickTile(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('Interrupts', '').trim().replace(/^Clean (?=No kickable)/, '').replace(/^Clean /, 'Clean. ')) + '</span></summary><div class="secbody"><div id="kickBox"></div></div></details>';
-  // (Oct 19, "they aren't major mechanics": Survival kit, Raid cooldowns, Damage taken and Interrupts in one quieter card at the end,
-  // a silver badge instead of a gold number, a small tile each that opens in place across the card)
+  // (Oct 19, "they aren't major mechanics": Survival kit, Raid cooldowns, Damage taken and Interrupts as small tiles at the end of Whole fight,
+  // under their own label, each opening in place across the card)
   { const ref = h.slice(refAt); if (ref) { const nb = (ref.match(/secd st-bad/g) || []).length;
-    h = h.slice(0, refAt) + '<details class="phase mcx-ph mcx-ref" data-mst="' + (nb ? 'major' : 'na') + '" open><summary><span class="mcx-pn mcx-pn2">+</span><b>More from this pull</b><span class="sub">your kit, raid cooldowns, damage taken and kicks' + (cut ? ', up to the wipe filter' : '') + '</span></summary><div class="mcx-refg">' + ref + '</div></details>'; } }
+    const grid = '<div class="mcx-refh">Your kit and the raid' + (cut ? ', up to the wipe filter' : '') + '</div><div class="mcx-refg">' + ref + '</div>', wEnd = whole.length ? h.lastIndexOf('</details>', refAt) : -1;
+    h = wEnd >= 0 ? h.slice(0, wEnd) + grid + '</details>' : h.slice(0, refAt) + '<details class="phase mcx-ph" data-mst="' + (nb ? 'major' : 'clean') + '" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b><span class="sub">your kit, raid cooldowns, damage taken and kicks</span></summary>' + grid + '</details>'; } }
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
@@ -13524,7 +13553,7 @@ const tierOf = (boss, id) => { if (id === 'avoid') return 'minor'; const t = TIE
 const lvlCounts = (tier, nBad, nWarn) => { const o = { major: 0, moderate: 0, minor: nWarn || 0 }; if (nBad) o[tier] += nBad; return o; };
 const lvlOf = (o) => (o.major ? 'major' : o.moderate ? 'moderate' : o.minor ? 'minor' : 'clean');
 const LVL_CLS = { major: 'bad', moderate: 'bad mod', minor: 'warn', clean: 'ok' };
-const lvlText = (o) => { const l = lvlOf(o), w = ['major', 'moderate', 'minor'].filter((k) => o[k]).map((k) => o[k] + ' ' + k); return w.length ? (l === 'minor' ? '!' : '✕') + '\u00a0' + w.join(' · ') : '✓\u00a0clean'; };
+const lvlText = (o) => { const l = lvlOf(o), w = ['major', 'moderate', 'minor'].filter((k) => o[k]).map((k) => o[k] + ' ' + k); return w.length ? (l === 'minor' ? '' : '✕\u00a0') + w.join(' · ') : '✓\u00a0clean'; };
 let AUDITMAPS = [], AUDITHTML = [];
 const kfmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
 // Deaths as a Fight audit mechanic: one red row per death; amber note when they still had something to press.
@@ -13565,7 +13594,7 @@ function defenseSection(r) {
   const KW = { def: 'a defensive ready at death', kit: 'a Healthstone or health potion unused at death', pot: 'combat or mana potion missing', call: 'close calls with nothing pressed', tcd: 'a tank\'s big defensives under 80%' }, kc = new Map();
   let none = 0; for (const { p, s } of list) { const f = kitFix(p, s); if (s.score >= 88) none++; for (const k of new Set(f.map((x) => x[0]))) kc.set(k, (kc.get(k) || 0) + 1); }
   const kitLead = (none === list.length ? 'Everyone was in good shape.' : none + ' of ' + list.length + ' players were in good shape.') + (kc.size ? ' The most common problems were ' + andList([...kc].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => KW[k] + ' (' + n + ')')) + '.' : '');
-  return { id: 'defensives', title: 'Survival kit: defensives, Healthstones, potions', spell: [0, 'Shield Wall'], verdict: low ? 'bad' : mid ? 'warn' : 'good',
+  return { id: 'defensives', title: 'Survival kit: defensives, Healthstones, potions', spell: [0, 'Shield Wall'], icon: 'inv_alchemy_70_red', verdict: low ? 'bad' : mid ? 'warn' : 'good',
     summary: (potN ? potOk + ' of ' + potN + ' players used their combat or mana potion; ' : '') + (defR ? plural(defR, 'death') + ' with a defensive or self-heal ready; ' : 'nobody died with a defensive or self-heal ready; ') + plural(nStone, 'Healthstone') + ' and ' + plural(nHp, 'health potion') + ' used. Each use\'s time is under its count.',
     how: 'Each player\'s survival kit this pull, up to the wipe filter, scored out of 100: defensives 40 (dying with a personal defensive ready costs 50, a close call under 30% health with nothing pressed costs 20), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts, and one is expected per pull, two if alive more than 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts. Defensives are matched by spell name with base cooldowns, so talented ones can be off by one.',
     cols: ['Player', 'Survival', 'What to fix', ''], foldOk: 'were in good shape', lead: kitLead,
@@ -19311,7 +19340,7 @@ function specPage(o) {
   const momT = (c, cap) => { const mo = c.mo.filter((m, i, l) => !i || m.b != null || m.pull !== l[i - 1].pull || T(m.a) !== T(l[i - 1].a)); if (!mo.length) return ''; const n = cap || 16;
     return one ? '<div class="spc-mos">' + mo.slice(0, n).map(tm).join('') + (mo.length > n ? '<span class="sub">and ' + (mo.length - n) + ' more</span>' : '') + '</div>'
       : '<div class="spc-mos">' + [...new Set(mo.map((m) => m.pull))].slice(0, 10).map((pl) => { const l = mo.filter((m) => m.pull === pl); return '<span class="spc-mp"><b>Pull ' + pl + '</b></span>' + l.slice(0, 5).map(tm).join('') + (l.length > 5 ? '<span class="sub">and ' + (l.length - 5) + ' more</span>' : ''); }).join('') + '</div>'; };
-  const BADGE = { ok: '✓ Clean', warn: '! Minor', bad: '✕ Major', na: 'Not graded' };
+  const BADGE = { ok: '✓ Clean', warn: 'Minor', bad: '✕ Major', na: 'Not graded' };
   const icB = (n) => '<span class="spc-ri">' + spIc(n, true) + '</span>';
   const viz = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
@@ -19362,7 +19391,7 @@ function specPage(o) {
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
-    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ Major', cnt.bad, 'bad') + pill('warn', '! Minor', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
+    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '✕ Major', cnt.bad, 'bad') + pill('warn', 'Minor', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
@@ -20515,7 +20544,7 @@ function openTlHtml(seq, bars, len) {
     (bl.length ? '<div class="cmp-glegend spc-otg">' + bl.map((b) => '<span><i style="background:' + b.col + '"></i>' + esc(b.n) + '</span>').join('') + '</div>' : '') + '</div>';
 }
 function openStepsHtml(steps, src) {
-  return '<ol class="spc-ost">' + steps.map((o) => '<li class="' + (o.pts === 1 ? 'ok' : o.pts ? 'warn' : 'no') + '">' + spIc(o.n || (o.st.any ? o.st.any[0] : o.st.n)) + '<b>' + esc(o.n || (o.st.any ? o.st.any.join(' or ') : o.st.n)) + '</b><span>' + (o.t == null ? (o.ord ? '✕ Out of order' : '✕ Not in your opener') : o.t < 0 ? '✓ Before the pull' : (o.pts === 1 ? '✓ ' : '! ') + o.t.toFixed(1) + ' s' + (o.pts < 1 ? ', not before the pull' : '')) + '</span></li>').join('') + '</ol>' + (src ? '<p class="sub spc-osr">' + esc(src) + '</p>' : '');
+  return '<ol class="spc-ost">' + steps.map((o) => '<li class="' + (o.pts === 1 ? 'ok' : o.pts ? 'warn' : 'no') + '">' + spIc(o.n || (o.st.any ? o.st.any[0] : o.st.n)) + '<b>' + esc(o.n || (o.st.any ? o.st.any.join(' or ') : o.st.n)) + '</b><span>' + (o.t == null ? (o.ord ? '✕ Out of order' : '✕ Not in your opener') : o.t < 0 ? '✓ Before the pull' : (o.pts === 1 ? '✓ ' : '') + o.t.toFixed(1) + ' s' + (o.pts < 1 ? ', not before the pull' : '')) + '</span></li>').join('') + '</ol>' + (src ? '<p class="sub spc-osr">' + esc(src) + '</p>' : '');
 }
 // ---- Shared Rotation pieces for the hand-built spec pages, the same as the shared module's: what you had on at the pull, casts a minute and
 // casts that did not finish, your stats, and a big window's details ----
@@ -22317,7 +22346,7 @@ function cmpChips(rot, x) {
       (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + cost + '</div>' : '') + '</div></details>'; };
   const cnt = (l) => { const o = { bad: 0, warn: 0, ok: 0 }; for (const c of l) if (o[c.st] != null) o[c.st]++; return o; }, side = (n, col, sc, l) => { const o = cnt(l);
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
-      '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' major</i><i class="warn">! ' + o.warn + ' minor</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
+      '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' major</i><i class="warn">' + o.warn + ' minor</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
   if (rot.sa && rot.sb && rot.sa.sections) return cmpSumView(rot.sa, rot.sb, x, '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>');
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a chart for the details.</small></h3>' +
@@ -24180,7 +24209,7 @@ const gBucket = (v) => (v == null ? 'na' : v >= 88 ? 'ok' : v >= 65 ? 'warn' : '
 // a stat tile at the top of either view: a picture (grade or icon), the label, a big value and one status line
 // (quiet: the line under the value is a detail, not a verdict: grey, with no mark; the edge still shows the status)
 // (a tile's line under its number starts with a capital, like a sentence: "Nobody died", "By Optt and Hobbz")
-const plTile = (pic, label, v, st, txt0, quiet, grade) => { const txt = String(txt0 == null ? '' : txt0).replace(/^\w/, (c) => c.toUpperCase()); return '<div class="pt ' + st + (grade ? ' q-' + grade : '') + '">' + (pic || '') + '<div class="pt-t"><div class="pt-l">' + esc(label) + '</div><div class="pt-v">' + v + '</div><div class="pt-s ' + (quiet ? 'na' : st) + '" title="' + esc(txt) + '">' + (quiet ? '' : { bad: '✕\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</div></div></div>'; };
+const plTile = (pic, label, v, st, txt0, quiet, grade) => { const txt = String(txt0 == null ? '' : txt0).replace(/^\w/, (c) => c.toUpperCase()); return '<div class="pt ' + st + (grade ? ' q-' + grade : '') + '">' + (pic || '') + '<div class="pt-t"><div class="pt-l">' + esc(label) + '</div><div class="pt-v">' + v + '</div><div class="pt-s ' + (quiet ? 'na' : st) + '" title="' + esc(txt) + '">' + (quiet ? '' : { bad: '✕\u00a0', warn: '', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</div></div></div>'; };
 // one buff or kit icon in a player row: the ring shows how it went (ok, warn, bad; none = nothing to judge), greyed when missing
 // (aura: the buff itself, when known: then the icon gets the spell's tooltip, with the line under it as the extra text)
 const pli = (icon, st, off, title, n, aura) => '<span class="pli ' + st + (off ? ' off' : '') + (aura && aura.ability ? ' sp" data-sid="' + aura.ability + '" data-sn="' + esc(aura.name || title) + '" data-ex="' + esc(title) + '"' : '" title="' + esc(title) + '"') + '><img src="' + whIcon(icon) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (n ? '<b>' + n + '</b>' : '') + '</span>';
@@ -24220,7 +24249,7 @@ function plRoster(rows, id) {
   let h = '<div class="plr-list" id="' + id + '"><div class="plr-hd"><span>Player</span><span>Ready to raid</span><span>Survival kit</span><span>Buffs and kit</span><span>What stands out</span><span></span></div>';
   for (const [st, label] of [['bad', 'Needs a word'], ['warn', 'Minor'], ['ok', 'All set']]) {
     const g = rows.filter((o) => (o.st === 'na' ? 'ok' : o.st) === st); if (!g.length) continue;
-    h += '<div class="plg-h ' + st + '">' + { bad: '✕', warn: '!', ok: '✓' }[st] + ' ' + label + '<span>' + plural(g.length, 'player') + '</span></div>' + g.map((o) => plRow(o) + (o.open ? '<div class="plx">' + o.detail() + '</div>' : '')).join('');
+    h += '<div class="plg-h ' + st + '">' + { bad: '✕ ', warn: '', ok: '✓ ' }[st] + label + '<span>' + plural(g.length, 'player') + '</span></div>' + g.map((o) => plRow(o) + (o.open ? '<div class="plx">' + o.detail() + '</div>' : '')).join('');
   }
   return h + '</div>';
 }

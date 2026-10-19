@@ -3029,6 +3029,33 @@ details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba
 #view details.phase.mcx-ph > summary > .mcx-pn { min-width: 42px; height: 42px; font-size: 18px; border-radius: 12px; }
 #view details.phase.mcx-ph.mcx-ref > summary { padding: 13px 18px 13px 22px; } #view details.phase.mcx-ph.mcx-ref > summary > b { font-size: 18px; } #view details.phase.mcx-ph.mcx-ref > summary > .mcx-pn { min-width: 30px; height: 30px; font-size: 16px; }
 @media (max-width: 640px) { #view details.phase.mcx-ph > summary { padding: 14px 12px 14px 18px; } #view details.phase.mcx-ph > summary > b { font-size: 20px; } #view details.phase.mcx-ph > summary > .mcx-pn { min-width: 36px; height: 36px; font-size: 16px; } }
+/* (Oct 19, the level colours: Minor a greenish yellow, Moderate a deeper orange, Major a nasty red with a little glow; one set of colours for
+   every label, edge, line, dot, ring, glow and count that shows a level) */
+:root { --lv-maj: #d4111e; --lv-maj-t: #ff3b46; --lv-mod: #e2540f; --lv-mod-t: #ff7a3d; --lv-min: #b5c42a; --lv-min-t: #d2df4a; }
+.sst.bad, .mcx-k.bad b, .mcx-verdict b { color: var(--lv-maj-t); } .sst.bad.mod, .mcx-k.bad.mod b { color: var(--lv-mod-t); } .sst.warn, .mcx-k.warn b { color: var(--lv-min-t); }
+.spc-v { --wa: var(--lv-min); --ba: var(--lv-maj); } .spc-pill.bad b { color: var(--lv-maj-t); } .spc-pill.warn b { color: var(--lv-min-t); }
+.pb-r.bad .pb-i { background: var(--lv-maj); } .pb-r.warn .pb-i { background: var(--lv-min); }
+.cmp-rcnt .bad { color: var(--lv-maj-t); } .cmp-rcnt .warn { color: var(--lv-min-t); }
+details.secd.st-bad { box-shadow: inset 3px 0 0 var(--lv-maj); } details.secd.st-bad.mod { box-shadow: inset 3px 0 0 var(--lv-mod); } details.secd.st-warn { box-shadow: inset 3px 0 0 var(--lv-min); }
+details.secd.mcx-tile:not([open])::before, .mcx-refg > details.secd.st-warn:not([open])::before { background: var(--lv-min); }
+details.secd.mcx-tile.st-bad:not([open])::before, .mcx-refg > details.secd.st-bad:not([open])::before { background: var(--lv-maj); box-shadow: 0 0 10px rgba(212,17,30,.7); }
+details.secd.mcx-tile.st-bad.mod:not([open])::before, .mcx-refg > details.secd.st-bad.mod:not([open])::before { background: var(--lv-mod); box-shadow: none; }
+details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(181,196,42,.16); }
+.mcx-tile.st-bad .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(212,17,30,.18), transparent 40%); } .mcx-tile.st-bad.mod .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(226,84,15,.14), transparent 40%); } .mcx-tile.st-warn .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(181,196,42,.1), transparent 40%); }
+.mcx-dot.bad { background: var(--lv-maj); box-shadow: 0 0 6px rgba(212,17,30,.8); } .mcx-dot.bad.mod { background: var(--lv-mod); box-shadow: none; } .mcx-dot.warn { background: var(--lv-min); } .mcx-dot.dead { border-color: var(--lv-maj); }
+.mcx-msb i.bad { background: var(--lv-maj); } .mcx-msb i.warn { background: var(--lv-min); } .mcx-gll::before { background: var(--lv-min); } .mcx-gll.bad::before { background: var(--lv-maj); }
+.mcx-hbb i { background: linear-gradient(90deg, var(--lv-min), #dfe86a); }
+#view details.phase.mcx-ph > summary > .sst.bad { background: rgba(212,17,30,.16); box-shadow: inset 0 0 0 1px rgba(212,17,30,.55), 0 0 12px rgba(212,17,30,.25); }
+#view details.phase.mcx-ph > summary > .sst.bad.mod { background: rgba(226,84,15,.15); box-shadow: inset 0 0 0 1px rgba(226,84,15,.5); } #view details.phase.mcx-ph > summary > .sst.warn { background: rgba(181,196,42,.13); box-shadow: inset 0 0 0 1px rgba(181,196,42,.45); }
+#view details.phase.mcx-ph[data-mst="major"] > summary::before, #view details.phase.mcx-ph[data-mst="bad"] > summary::before { background: var(--lv-maj); box-shadow: 0 0 12px rgba(212,17,30,.8); } #view details.phase.mcx-ph[data-mst="moderate"] > summary::before { background: var(--lv-mod); } #view details.phase.mcx-ph[data-mst="minor"] > summary::before { background: var(--lv-min); }
+#view details.phase.mcx-ph[data-mst="major"] > summary { background: linear-gradient(90deg, rgba(212,17,30,.24), rgba(255,255,255,.035) 50%); }
+#view details.phase.mcx-ph[data-mst="moderate"] > summary { background: linear-gradient(90deg, rgba(226,84,15,.18), rgba(255,255,255,.035) 45%); }
+#view details.phase.mcx-ph[data-mst="minor"] > summary { background: linear-gradient(90deg, rgba(181,196,42,.14), rgba(255,255,255,.035) 45%); }
+/* (Oct 19: Whole fight holds the kit, raid cooldowns, damage taken and kicks as small tiles under their own label; tiles keep their own
+   edge (the line on top), never the row's coloured left edge) */
+.mcx-refh { margin: 16px 0 8px; font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); } .mcx-ph > .mcx-refh:first-of-type { margin-top: 2px; }
+#view details.secd.mcx-tile:not([open]) { box-shadow: 0 6px 18px rgba(0,0,0,.35); } #view .mcx-refg > details.secd:not([open]) { box-shadow: none; }
+#view details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } #view details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } #view details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(181,196,42,.16); }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
