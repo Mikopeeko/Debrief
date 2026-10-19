@@ -3,6 +3,8 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Graphs: just a plain bar graph, Warcraft Logs style (your note, Oct 19).** Make the Graphs tab a generic bar graph,
+  a Warcraft Logs-style section full of raw data. No coaching or corrections there (that lives on Rotation and Mechanics).
 - [x] **Open a log or live log without saving anything (your question, Oct 19; done in round 259).** One small, quiet link
   under Start now and under Welcome Back!, "Just open a log ›", opens the Open a raid night window (paste a report or live
   log link, a combat log on your PC, or a real raid night). Checked: opening a log never adds a team or character. Only the
