@@ -213,6 +213,24 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 232: Notes: pick one and see it, add them on Stored notes, swaps show the jobs, copy for NSRT (your notes)
+- [x] **Picking a note takes you to it** (your note): "Use for this pull" on Stored notes goes to This pull with that note
+  in use, at the top of the tab.
+- [x] **This pull's note bar has Edit and Change note** (your note: Add a note is gone from there).
+- [x] **New notes are added only on Stored notes** (your note): Add a note is on Stored notes, and the editor opens under
+  the Stored notes tab with nothing else on the page. Saving a new note takes you to This pull with it; Cancel goes back
+  to where you were. (Edit from This pull opens the same editor, and Cancel goes back to This pull.)
+- [x] **The roster offer shows which jobs are being swapped** (your note): under each missing player, their jobs from the
+  note, "Optt's jobs: Darkness (P3, 0:49) · Guillotine 1 · Skull Kicks". The guess for who takes over uses those jobs too:
+  someone new who pressed the same cooldown this pull, for a kick job someone new who kicked, for a tank or healer job a
+  new tank or healer, else the next one left.
+- [x] **Copy the note to use in game** (your note): after Make the new note, a green box says "Saved your new note, Mythic
+  plan, Xastral for Optt. Xastral takes the place of Optt. Copy it and paste it into NSRT in game, so the whole raid gets
+  the change", with **Copy the note**. Every note on Stored notes has a **Copy** button too. The button says "✓ Copied".
+- Checked on your guild's Coiled Altar kill: the buttons, the editor on Stored notes, Cancel, the redirect, the jobs
+  line, the new note's swaps (the reminder tag, the Guillotine line and the kick line all switched), and copying with a
+  real click; test notes removed.
+
 ## 2026-10-18, round 231: Assignments' new parts, easier and nicer (your note: just the new stuff)
 - [x] **The note bar on This pull:** "Your note" over its name, with small chips for what's in it (Mythic, 4 cooldown
   reminders, 1 assignment line), and Edit, **Change note** (when you have more than one) and Add a note. The why reads
