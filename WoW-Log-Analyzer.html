@@ -3043,7 +3043,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-wts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 .cmp-wt { padding: 10px 12px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line); border-left: 3px solid var(--line2); cursor: help; } .cmp-wt.wa { border-left-color: rgba(69,193,92,.8); } .cmp-wt.wb { border-left-color: rgba(230,180,80,.85); }
 .cmp-wtl { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
-.cmp-wtv { display: flex; gap: 18px; } .cmp-wtv span { display: flex; flex-direction: column; min-width: 0; } .cmp-wtv b { font: 800 22px/1.1 var(--head); font-variant-numeric: tabular-nums; } .cmp-wtv i { font-style: normal; font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
+.cmp-wtv { display: flex; gap: 18px; } .cmp-wtv > span { display: flex; flex-direction: column; min-width: 0; } .cmp-wtv b { font: 800 22px/1.1 var(--head); font-variant-numeric: tabular-nums; } .cmp-wtv b span { font: 500 12px var(--body, inherit); color: var(--muted); } .cmp-wtv > span > i { font-style: normal; font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
 .cmp-wtw { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--faint); } .cmp-wtw.up { color: #7ee08f; } .cmp-wtw.dn { color: #f3c969; }
 .cmp-wsp { margin-top: 14px; } .cmp-wsp > .cmp-wtl { margin-bottom: 4px; } .cmp-wsr { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 10px; margin: 4px 0; } .cmp-wsn { font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cmp-wsb { display: flex; height: 18px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.05); } .cmp-wsb i { display: flex; align-items: center; justify-content: center; font: 700 11px var(--head); font-style: normal; color: #15171c; } .cmp-wsb em { padding: 0 8px; font-size: 11.5px; color: var(--muted); line-height: 18px; }
@@ -11062,9 +11062,9 @@ const PI_OFF = () => false;
 // (Rotation (Spec checks) is on everywhere since Oct 18, for testing (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with its grades and fixes)
 const SPEC_OFF = () => false;
-// (Compare is greyed out on the website with "Coming soon" written over it (your call, Oct 19, while each spec's playbook is built);
-// still open on your own computer. Set this to () => false to turn it on everywhere again)
-const CMP_OFF = () => !!window.WLA_HOSTED;
+// (Compare was greyed out on the website with "Coming soon" over it while each spec's playbook was built; on everywhere again Oct 19.
+// Set this to () => !!window.WLA_HOSTED to hide it on the website again)
+const CMP_OFF = () => false;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
 // ---- "Report a problem" (your note, Oct 18): a short form that files the problem on the project's private GitHub,
@@ -18921,7 +18921,7 @@ function specPage(o) {
     const lastCh = o.LAYOUT[o.LAYOUT.length - 1][0]; for (const x of all) { if (used.has(x.c)) continue; let g = out.find((y) => y.t === x.t); if (!g) out.push(g = { t: x.t, ch: lastCh, l: [] }); g.l.push(x.c); used.add(x.c); }
     o.groups.splice(0, o.groups.length, ...out.filter((g) => g.l.length || ((o.MERGE || {})[g.t] || {}).det)); }
   // (each check's section, its icon and whether it's the section's main number: Compare shows one chip a section)
-  for (const g of o.groups) { const inf = (o.MERGE || {})[g.t] || {}, m = g.l.find((c) => c.k === inf.main) || g.l[0]; for (const c of g.l) { c.sec = g.t; c.secIc = inf.ic || c.ic; c.isMain = c === m; } }
+  for (const g of o.groups) { const inf = (o.MERGE || {})[g.t] || {}, m = g.l.find((c) => c.k === inf.main) || g.l[0]; for (const c of g.l) { c.sec = g.t; c.secIc = inf.ic || c.ic; c.isMain = c === m; c.secLead = inf.lead || ''; c.lgN = (o.LG || {})[c.k] || (String(c.k).startsWith('p:') ? { ok: 'Spent', bad: 'Wasted' } : null); } }
   const { per, rows, groups, one } = o, P0 = o.P0, SF = S.specFilter || 'all', checks = groups.flatMap((g) => g.l), cnt = { bad: 0, warn: 0, ok: 0 }; for (const c of checks) if (cnt[c.st] != null) cnt[c.st]++;
   const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%';
   const slug = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase(), dur1 = one && per.length === 1 ? Math.max(1, per[0].end) : 0, X1 = per[0];
@@ -21202,7 +21202,7 @@ function cmpRot(r, p, q, rB) {
     '<span class="cmp-rv"' + rtt(o.c, An) + '>' + mk(o.c.st) + '<span>' + (o.c.v != null ? o.c.v : '') + '</span></span><span class="cmp-rv"' + rtt(o.d, Bn) + '>' + mk(o.d.st) + '<span>' + (o.d.v != null ? o.d.v : '') + '</span></span></div>';
   const top = S.cmpRotAll ? rows : rows.slice(0, 8);
   const lead = (worse ? An + (me ? ' were' : ' was') + ' behind ' + Bn + ' on <b>' + plural(worse, 'check') + '</b>' : An + (me ? ' weren\'t' : ' wasn\'t') + ' behind ' + Bn + ' on any check') + (better ? ', and ahead on <b>' + better + '</b>.' : '.');
-  return { a: xa.score, b: xb.score, rows, ca: xa.checks, cb: xb.checks, ha: xa.html, hb: xb.html, sa: xa.sum, sb: xb.sum, html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
+  return { a: xa.score, b: xb.score, rows, ca: xa.checks, cb: xb.checks, ha: xa.html, hb: xb.html, sa: xa.sum || cmpAutoSum(xa.checks), sb: xb.sum || cmpAutoSum(xb.checks), html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
     '<p class="cmp-wlead">' + lead + '</p><div class="cmp-rr cmp-rh"><span>Check</span><span>' + An + '</span><span>' + Bn + '</span></div>' + top.map(row).join('') +
     (rows.length > 8 ? '<button class="btn sm cmp-more" type="button" id="cmpRotAll">' + (S.cmpRotAll ? 'Show fewer' : 'Show all ' + rows.length) + '</button>' : '') + '</div>' };
 }
@@ -21226,15 +21226,29 @@ function cmpFacts(html) {
 // (Oct 19, "the information is there, but it's very dense": each Rotation section a row, its main number as two bars in the header, then a
 // small chip for each check and each stat box in it, a gold edge on the ones where the two differ, the same numbers shown once; sections where
 // they differ open, the even ones folded closed (a section opened or closed stays that way))
+// (Oct 19, "make all other specs in Compare match the same style as Holy Paladin, using their own metrics and logic": built from each spec's own
+// Rotation checks; a spec module can still hand over its own, hand-picked summary, as Holy Paladin does)
+const CMP_KCOL = { g3: '#5aa9e6', ok: '#45c15c', g2: '#7ee08f', warn: '#e6b450', g1: '#e6b450', bad: '#e5534b', g0: '#e5534b' };
+function cmpAutoSum(checks) {
+  const secs = [], lo = /wasted|without|while|at 5|lost|idle|on yourself|outside|ran out|capped|clipped|missed|late|early|overcap/i;
+  for (const c of checks || []) { if (!c.sec) continue; let sec = secs.find((y) => y.t === c.sec); if (!sec) secs.push(sec = { t: c.sec, ic: c.secIc, txt: c.secLead, tiles: [], splits: [] });
+    const v = cmpNumV(c.v); if (c.st !== 'na' || v != null) sec.tiles.push({ k: c.k, l: c.label || c.k, v, fs: String(c.v == null ? '–' : c.v).replace(/^([d.,]+%?)s+([A-Za-z][^<]*)$/, '$1<span> $2</span>'), st: c.st, b: lo.test((c.label || '') + ' ' + String(c.v || '').replace(/<[^>]+>/g, '')) ? 'lo' : 'hi', tip: c.sub ? esc(c.sub) : '' });
+    if (c.lgN && c.bx && c.bx.length) { const n = {}; for (const b of c.bx) n[b.cls] = (n[b.cls] || 0) + 1; const ks = Object.keys(c.lgN).filter((k) => n[k]);
+      if (ks.length >= 2) sec.splits.push({ l: c.label + ', each one', parts: ks.map((k) => [c.lgN[k], n[k]]), cmap: Object.fromEntries(ks.map((k) => [c.lgN[k], CMP_KCOL[k] || '#888'])) }); } }
+  return { sections: secs.filter((y) => y.tiles.length || y.splits.length) };
+}
 function cmpSumView(sa, sb, x, top) {
   const { colA, colB } = x, Ln = x.me ? 'You' : x.An, Bn = x.Bn, PAL = ['#e6b450', '#5aa9e6', '#7ee08f', '#c792ea', '#f07178', '#89ddff', '#ffb86c'], WASTE = '#5c6270';
-  const tile = (ta, tb) => { const a = ta && ta.v, b = tb && tb.v, f = (ta || tb).f, okN = a != null && b != null, d = okN ? a - b : 0, win = !okN || Math.abs(d) < 1e-9 || !(ta || tb).b ? 0 : ((ta || tb).b === 'hi' ? d > 0 : d < 0) ? 1 : -1;
-    const close = okN && Math.abs(d) / Math.max(Math.abs(a), Math.abs(b), 1e-9) < 0.03;
+  const RKs = { bad: 0, warn: 1, ok: 2 }, shw = (t, v) => (!t ? '–' : t.fs != null ? t.fs : t.f ? t.f(v) : v == null ? '–' : String(v));
+  const tile = (ta, tb) => { const a = ta && ta.v, b = tb && tb.v, f = (u) => (u === a ? shw(ta, a) : shw(tb, b)), okN = a != null && b != null, d = okN ? a - b : 0;
+    const gr = ta && tb && RKs[ta.st] != null && RKs[tb.st] != null && ta.st !== tb.st ? (RKs[ta.st] > RKs[tb.st] ? 1 : -1) : 0;
+    const win = gr || (!okN || Math.abs(d) < 1e-9 || !(ta || tb).b ? 0 : ((ta || tb).b === 'hi' ? d > 0 : d < 0) ? 1 : -1);
+    const close = !gr && okN && Math.abs(d) / Math.max(Math.abs(a), Math.abs(b), 1e-9) < 0.03;
     return '<div class="cmp-wt' + (win && !close ? (win > 0 ? ' wa' : ' wb') : '') + '"' + ((ta || tb).tip ? ' data-tt="' + esc('<b>' + esc((ta || tb).l) + '</b><br>' + (ta || tb).tip) + '"' : '') + '><div class="cmp-wtl">' + esc((ta || tb).l) + '</div>' +
-      '<div class="cmp-wtv"><span><b style="color:' + colA + '">' + f(a) + '</b><i>' + Ln + '</i></span><span><b style="color:' + colB + '">' + f(b) + '</b><i>' + Bn + '</i></span></div>' +
+      '<div class="cmp-wtv"><span><b style="color:' + colA + '">' + shw(ta, a) + '</b><i>' + Ln + '</i></span><span><b style="color:' + colB + '">' + shw(tb, b) + '</b><i>' + Bn + '</i></span></div>' +
       (win && !close ? '<div class="cmp-wtw ' + (win > 0 ? 'up' : 'dn') + '">' + (win > 0 ? Ln : Bn) + (win > 0 && x.me ? ' do' : ' does') + ' better</div>' : okN ? '<div class="cmp-wtw">About the same</div>' : '') + '</div>'; };
   const split = (pa, pb) => { const names = []; for (const [n, v] of (pa ? pa.parts : []).concat(pb ? pb.parts : [])) if (v > 0 && !names.includes(n)) names.push(n);
-    if (!names.length) return ''; const cols = (pa || pb).cols, colOf = (n, i) => (n === 'Wasted' ? WASTE : cols ? cols[(pa || pb).parts.findIndex((y) => y[0] === n)] : PAL[i % PAL.length]);
+    if (!names.length) return ''; const cols = (pa || pb).cols, cmap = Object.assign({}, (pb || {}).cmap, (pa || {}).cmap), colOf = (n, i) => (cmap[n] || (n === 'Wasted' ? WASTE : cols ? cols[(pa || pb).parts.findIndex((y) => y[0] === n)] : PAL[i % PAL.length]));
     const row = (nmP, col, p) => { const m = new Map((p ? p.parts : []).map(([n, v]) => [n, v])), tot = names.reduce((v, n) => v + (m.get(n) || 0), 0);
       return '<div class="cmp-wsr"><span class="cmp-wsn" style="color:' + col + '">' + nmP + '</span><span class="cmp-wsb">' + (tot ? names.map((n, i) => { const v = m.get(n) || 0, w = 100 * v / tot; return v ? '<i style="width:' + w.toFixed(1) + '%;background:' + colOf(n, i) + '" title="' + esc(n + ': ' + Math.round(w) + '%') + '">' + (w >= 12 ? Math.round(w) + '%' : '') + '</i>' : ''; }).join('') : '<em>none</em>') + '</span></div>'; };
     return '<div class="cmp-wsp"><div class="cmp-wtl">' + esc((pa || pb).l) + '</div>' + row(Ln, colA, pa) + row(Bn, colB, pb) + '<div class="cmp-glegend">' + names.map((n, i) => '<span><i style="background:' + colOf(n, i) + '"></i>' + esc(n) + '</span>').join('') + '</div></div>'; };
@@ -21242,9 +21256,9 @@ function cmpSumView(sa, sb, x, top) {
     return '<div class="cmp-wsp"><div class="cmp-wtl">Mana over the fight, start to end</div><svg class="cmp-wmana" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none"><line x1="0" x2="' + W + '" y1="' + (H / 2) + '" y2="' + (H / 2) + '" class="cmp-lg"/>' + line(ma, colA) + line(mb, colB) + '</svg><div class="cmp-glegend"><span><i style="background:' + colA + '"></i>' + Ln + '</span><span><i style="background:' + colB + '"></i>' + Bn + '</span><span>Line: half your mana</span></div></div>'; };
   const sec = (s1) => { const s2 = sb.sections.find((y) => y.t === s1.t) || { tiles: [], splits: [] }, keys = []; for (const t of s1.tiles.concat(s2.tiles)) if (t && !keys.includes(t.k)) keys.push(t.k);
     const tl = keys.map((k2) => tile(s1.tiles.find((y) => y.k === k2), s2.tiles.find((y) => y.k === k2))).join('');
-    const sp = (s1.splits || []).map((p, i) => split(p, (s2.splits || []).find((y) => y.l === p.l) || (s2.splits || [])[i])).join('');
+    const sp = (s1.splits || []).map((p) => split(p, (s2.splits || []).find((y) => y.l === p.l))).join('');
     return '<section class="cmp-wsec"><div class="cmp-wsx"><h4>' + spellIcon(0, s1.ic) + esc(s1.t) + '</h4><p>' + esc(s1.txt) + '</p></div><div class="cmp-wsd"><div class="cmp-wts">' + tl + '</div>' + sp + (s1.mana || s2.mana ? mana(s1.mana, s2.mana) : '') + '</div></section>'; };
-  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>The numbers that decide your healing. Hover a tile for what it means.</small></h3>' + (top || '') + sa.sections.map(sec).join('') + '</div>';
+  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>The numbers that decide your ' + (/^(Holy|Restoration|Discipline|Mistweaver|Preservation)/.test((x.pA || {}).specName || '') ? 'healing' : /^(Protection|Guardian|Blood|Brewmaster|Vengeance)/.test((x.pA || {}).specName || '') ? 'tanking' : 'damage') + '. Hover a tile for what it means.</small></h3>' + (top || '') + sa.sections.map(sec).join('') + '</div>';
 }
 function cmpChips(rot, x) {
   if (!rot || !rot.ca || !rot.cb) return '';
