@@ -194,7 +194,7 @@ async function teamReports(creds, id) {
 // reports are listed 100 a page, newest first. (Hosted: the site has a route for each.)
 const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID guilds{id name} server{name slug region{slug}}}}}`;
 const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{id name}}}}}}`;
-// (the newest report only, for "Live now" on your team's page: the site keeps it a minute, not ten)
+// (the newest report only, for "Live now" on your team's page: the site keeps it 30 seconds, not ten minutes)
 const TEAM_LATEST_Q = `query($id:Int!){reportData{reports(guildID:$id,limit:1){data{code title startTime endTime zone{id name}}}}}`;
 const CHAR_LATEST_Q = `query($id:Int!){characterData{character(id:$id){recentReports(limit:1){data{code title startTime endTime zone{id name} guild{id name}}}}}}`;
 async function latestReport(creds, g) {

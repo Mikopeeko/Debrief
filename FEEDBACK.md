@@ -261,8 +261,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on Wolfthorn's Twin Fangs kill (opens on Flëxørçïst, Arsyn on a click), at phone width, with no errors.
 
 ## 2026-10-19, round 256: Live now, your team's raid followed without a link (your idea)
-- [x] **While Debrief is open, your team's newest report is checked about every minute** (a new quick check on the site,
-  kept a minute and shared by everyone on the same team). A report that got something in the last 10 minutes is live.
+- [x] **While Debrief is open, your team's newest report is checked every 30 seconds** (your call; it was every minute;
+  a new quick check on the site, kept 30 seconds and shared by everyone on the same team). A report that got something in
+  the last 10 minutes is live.
 - [x] **Your team's page:** a red "Live now" strip under the team's name with Follow live. If you're on that page when the
   raid is first seen, it opens by itself (once per raid in a tab).
 - [x] **Everywhere else** (not the front page, your call): a red dot on Your teams and a thin "Wolfthorn is raiding now ·

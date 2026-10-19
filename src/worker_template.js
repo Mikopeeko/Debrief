@@ -110,10 +110,10 @@ const ROUTES = {
   '/api/charreports': { q: () => CHAR_REPORTS_Q, age: 600,
     v: (p) => { const id = parseInt(p.get('id'), 10), page = parseInt(p.get('page'), 10) || 1; return id > 0 && page >= 1 && page <= 5 ? { id, page } : null; },
     out: (d) => (d && d.characterData && d.characterData.character && d.characterData.character.recentReports) || { error: 'Warcraft Logs has no character with that number.', status: 404 } },
-  // a team's or character's newest report, for "Live now" on their page (kept a minute, so a raid shows up as it starts;
+  // a team's or character's newest report, for "Live now" on their page (kept 30 seconds, so a raid shows up as it starts;
   // everyone looking at the same team shares the one answer)
-  '/api/teamlatest': { q: () => TEAM_LATEST_Q, age: 60, v: (p) => { const id = parseInt(p.get('id'), 10); return id > 0 ? { id } : null; }, out: (d) => d.reportData.reports },
-  '/api/charlatest': { q: () => CHAR_LATEST_Q, age: 60, v: (p) => { const id = parseInt(p.get('id'), 10); return id > 0 ? { id } : null; },
+  '/api/teamlatest': { q: () => TEAM_LATEST_Q, age: 30, v: (p) => { const id = parseInt(p.get('id'), 10); return id > 0 ? { id } : null; }, out: (d) => d.reportData.reports },
+  '/api/charlatest': { q: () => CHAR_LATEST_Q, age: 30, v: (p) => { const id = parseInt(p.get('id'), 10); return id > 0 ? { id } : null; },
     out: (d) => (d && d.characterData && d.characterData.character && d.characterData.character.recentReports) || { error: 'Warcraft Logs has no character with that number.', status: 404 } },
   // a character's rankings on one difficulty, damage or healing, one spec or their best (the character page's "Your rankings")
   '/api/charrank': { q: () => CHAR_RANK_Q, age: 1800,

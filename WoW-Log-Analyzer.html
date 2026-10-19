@@ -1176,13 +1176,13 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* ---- Spec checks: what the top players do, beside each line ---- */
 .spc-shv { display: inline-flex; align-items: baseline; gap: 10px; } .spc-tp { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
 .spc-htp { margin-top: 6px; color: var(--muted); font-size: 12px; }
-.spc-pick { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0 0 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line2); }
-.spc-pg { display: flex; flex-direction: column; gap: 6px; min-width: 0; } .spc-pgl { color: var(--faint); font-size: 11.5px; letter-spacing: .3px; }
-.spc-pgb { display: flex; flex-wrap: wrap; gap: 6px; }
-.spc-pb { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 5px; border: 1px solid var(--line2); border-radius: 999px; background: rgba(255,255,255,.03); color: var(--cc); font: 600 13px var(--body); cursor: pointer; transition: background .12s, border-color .12s; }
-.spc-pb:hover { background: rgba(255,255,255,.07); } .spc-pb.on { border-color: var(--gold); background: rgba(230,180,80,.12); box-shadow: 0 0 0 1px rgba(230,180,80,.35); }
-.spc-pb .av, .spc-pb > span:first-child:not(:last-child) { flex: none; width: 20px; height: 20px; } .spc-you { margin-left: 2px; padding: 0 6px; border-radius: 999px; background: rgba(230,180,80,.2); color: var(--gold); font-size: 11px; font-weight: 600; }
-@media (max-width: 560px) { .spc-pick { gap: 8px 14px; } .spc-pb { font-size: 12.5px; padding: 3px 9px 3px 4px; } }
+.rot-pick { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0 0 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line2); }
+.rot-pg { display: flex; flex-direction: column; gap: 6px; min-width: 0; } .rot-pgl { color: var(--faint); font-size: 11.5px; letter-spacing: .3px; }
+.rot-pgb { display: flex; flex-wrap: wrap; gap: 6px; }
+.rot-nb { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 5px; border: 1px solid var(--line2); border-radius: 999px; background: rgba(255,255,255,.03); color: var(--cc); font: 600 13px var(--body); cursor: pointer; transition: background .12s, border-color .12s; }
+.rot-nb:hover { background: rgba(255,255,255,.07); } .rot-nb.on { border-color: var(--gold); background: rgba(230,180,80,.12); box-shadow: 0 0 0 1px rgba(230,180,80,.35); }
+.rot-nb .av, .rot-nb > span:first-child:not(:last-child) { flex: none; width: 20px; height: 20px; } .rot-you { margin-left: 2px; padding: 0 6px; border-radius: 999px; background: rgba(230,180,80,.2); color: var(--gold); font-size: 11px; font-weight: 600; }
+@media (max-width: 560px) { .rot-pick { gap: 8px 14px; } .rot-nb { font-size: 12.5px; padding: 3px 9px 3px 4px; } }
 .spc-kts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; max-width: 520px; }
 .spc-kt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 11px; border: 1px solid var(--line2); border-radius: 10px; background: rgba(0, 0, 0, .28); min-width: 0; }
 .spc-ktl { color: var(--muted); font-size: 11.5px; } .spc-ktv { font: 600 20px var(--head); color: var(--text); line-height: 1.2; } .spc-ktv .prs { font-size: 15px; padding: 1px 8px; }
@@ -9167,7 +9167,7 @@ async function teamReports(creds, id) {
 // reports are listed 100 a page, newest first. (Hosted: the site has a route for each.)
 const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID guilds{id name} server{name slug region{slug}}}}}`;
 const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{id name}}}}}}`;
-// (the newest report only, for "Live now" on your team's page: the site keeps it a minute, not ten)
+// (the newest report only, for "Live now" on your team's page: the site keeps it 30 seconds, not ten minutes)
 const TEAM_LATEST_Q = `query($id:Int!){reportData{reports(guildID:$id,limit:1){data{code title startTime endTime zone{id name}}}}}`;
 const CHAR_LATEST_Q = `query($id:Int!){characterData{character(id:$id){recentReports(limit:1){data{code title startTime endTime zone{id name} guild{id name}}}}}}`;
 async function latestReport(creds, g) {
@@ -20415,16 +20415,16 @@ let SPC_REPS = [], SPC_AK = '';
 function specView(reps, one) {
   SPC_REPS = reps;
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && SPEC_CHECKS[p.specName]) pm.set(p.name, p);
-  const ps = [...pm.values()], me = meOf(), meN = me && pm.has(me.name) ? me.name : null, byN = (a, b) => a.name.localeCompare(b.name);
+  const ps = [...pm.values()], me = meOf(), meN = me && pm.has(me.name) ? me.name : groups().filter((g) => g.kind === 'char').map((g) => g.name).find((n) => pm.has(n)) || null, byN = (a, b) => a.name.localeCompare(b.name);
   if (!ps.length) return '<div class="panel"><p class="muted" style="margin:0">None of these players\' specs has a Rotation page yet. Rotation covers every spec that\'s common in Mythic raids.</p></div>';
   const ROLES = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']], inRole = (k) => ps.filter((p) => (p.role || 'dps') === k).sort(byN);
   if (!S.specSel || !pm.has(S.specSel)) S.specSel = meN || ROLES.flatMap(([k]) => inRole(k))[0].name;
-  const pick = '<div class="spc-pick">' + ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<div class="spc-pg"><span class="spc-pgl">' + l + '</span><div class="spc-pgb">' +
-    l2.map((p) => { const on = p.name === S.specSel; return '<button type="button" class="spc-pb' + (on ? ' on' : '') + '" data-un="' + esc(p.name) + '" aria-pressed="' + on + '" style="--cc:' + (p.color || '#ccc') + '" title="' + esc(p.specName || '') + '">' + avatar(p, true) + '<span>' + esc(p.name) + '</span>' + (p.name === meN ? '<span class="spc-you">you</span>' : '') + '</button>'; }).join('') + '</div></div>' : ''; }).join('') + '</div>';
+  const pick = '<div class="rot-pick">' + ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<div class="rot-pg"><span class="rot-pgl">' + l + '</span><div class="rot-pgb">' +
+    l2.map((p) => { const on = p.name === S.specSel; return '<button type="button" class="rot-nb' + (on ? ' on' : '') + '" data-un="' + esc(p.name) + '" aria-pressed="' + on + '" style="--cc:' + (p.color || '#ccc') + '" title="' + esc(p.specName || '') + '">' + avatar(p, true) + '<span>' + esc(p.name) + '</span>' + (p.name === meN ? '<span class="rot-you">you</span>' : '') + '</button>'; }).join('') + '</div></div>' : ''; }).join('') + '</div>';
   const x = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one);
   const ak = S.specSel + '|' + (one ? (S.rep && S.rep.item ? S.rep.item.pull : '') : 'all'), an = ak !== SPC_AK ? ' spc-anim' : ''; SPC_AK = ak;
   const page = x ? '<div class="pf-inl pf-srcd spc-v' + an + '">' + x.html + '</div>' + (x.wait ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') : '<p class="muted" style="margin:10px 0 0">No Rotation page for ' + esc(S.specSel) + (one ? ' this pull' : ' over these pulls') + '.</p>';
-  return '<div class="pf-cols solo" data-st="spec"><div class="panel spc-pickp">' + pick + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
+  return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + pick + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
 }
 // The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
 // player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
@@ -20654,7 +20654,7 @@ function bindPerf() {
   // (Utility and Survivability: the kind switch, and a player's bar picks them; clicking it again shows the whole raid)
   const stOf = (b) => { const w = b.closest('[data-st]'); return w ? w.dataset.st : 'util'; };
   $$('.pfu-cat button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; const st = stOf(b); S[st + 'Cat'] = b.dataset.c; S[st + 'Sel'] = null; renderMain(); refreshIcons(); }));
-  $$('.spc-pb').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.specSel = b.dataset.un; renderMain(); refreshIcons(); })); // (Rotation's name buttons)
+  $$('.rot-nb').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.specSel = b.dataset.un; renderMain(); refreshIcons(); })); // (Rotation's name buttons)
   $$('.pfu-bars .pf-row:not(.nb)').forEach((b) => (b.onclick = () => { const st = stOf(b); S[st + 'Sel'] = S[st + 'Sel'] === b.dataset.un ? null : b.dataset.un; renderMain(); refreshIcons(); pfKeep(); }));
   $$('.pf-row:not(.nb)').forEach((b) => { if (!b.closest('.pfu-bars') && !b.closest('.rs-bars')) b.onclick = () => { S.perfSel = S.perfSel === b.dataset.n ? null : b.dataset.n; perf(); pfKeep(); }; });
   // (Resources: the power switch, and a player's bar or line picks them; again, or Show the raid, for everyone)
@@ -22731,7 +22731,7 @@ const PAGE_TIPS = {
     { sel: '#view .pf-bars > h3', t: 'Every player', p: 'Click a player to see their numbers on the chart.' },
     { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on the same view.' }],
   rot: [
-    { sel: '#view .spc-pick', t: 'Every player', p: 'Pick a player to see how they played their spec: what they pressed and when, their cooldowns, their resources and their talents. It opens on you when you\'re in the pull.' },
+    { sel: '#view .rot-pick', t: 'Every player', p: 'Pick a player to see how they played their spec: what they pressed and when, their cooldowns, their resources and their talents. It opens on you when you\'re in the pull.' },
     { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on Rotation.' }],
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
@@ -23384,7 +23384,7 @@ async function autoCheck(g) {
 async function autoCheckAll() { for (const g0 of groups()) { const g = groups().find((x) => x.gid === g0.gid); if (g) await autoCheck(g); } }
 HIST.load().then(() => setTimeout(autoCheckAll, 4000));
 // ---- Live now (your idea, Oct 19): your team's raid, followed without pasting a link ----
-// While Debrief is open, your team's newest report is checked about every minute (your character's, with no team); one
+// While Debrief is open, your team's newest report is checked every 30 seconds (your character's, with no team); one
 // that got something in the last 10 minutes is being logged live. Your team's page gets a "Live now" strip, and opens the
 // raid by itself if you're on that page when it's first seen; the Your teams button gets a red dot; any other page gets a
 // thin Follow live bar under the top bar (not over the raid itself or on the front page, and × hides it). All of it goes once the log goes quiet.
@@ -23432,7 +23432,7 @@ function liveBar() {
   if (!bar) { bar = document.createElement('div'); bar.id = 'lvBar'; bar.className = 'lv-bar'; bar.setAttribute('role', 'status'); $('#topbar').insertAdjacentElement('afterend', bar); }
   if (bar.dataset.h !== html) { bar.dataset.h = html; bar.innerHTML = html; $('#lvGo').onclick = liveFollow; $('#lvX').onclick = () => { S.liveHide = x.code; liveBar(); }; }
 }
-setTimeout(liveCheck, 6000); setInterval(liveCheck, 60e3);
+setTimeout(liveCheck, 6000); setInterval(liveCheck, 30e3); // (every 30 seconds, your call: a raid shows up soon after its first pull)
 setInterval(() => { if (S.liveNow) liveBar(); }, 2000); // (the bar follows you from page to page)
 document.addEventListener('visibilitychange', () => { if (!document.hidden) liveCheck(); });
 // ---- a character's page: their Warcraft Logs rankings this tier ----

@@ -13906,7 +13906,7 @@ async function autoCheck(g) {
 async function autoCheckAll() { for (const g0 of groups()) { const g = groups().find((x) => x.gid === g0.gid); if (g) await autoCheck(g); } }
 HIST.load().then(() => setTimeout(autoCheckAll, 4000));
 // ---- Live now (your idea, Oct 19): your team's raid, followed without pasting a link ----
-// While Debrief is open, your team's newest report is checked about every minute (your character's, with no team); one
+// While Debrief is open, your team's newest report is checked every 30 seconds (your character's, with no team); one
 // that got something in the last 10 minutes is being logged live. Your team's page gets a "Live now" strip, and opens the
 // raid by itself if you're on that page when it's first seen; the Your teams button gets a red dot; any other page gets a
 // thin Follow live bar under the top bar (not over the raid itself or on the front page, and × hides it). All of it goes once the log goes quiet.
@@ -13954,7 +13954,7 @@ function liveBar() {
   if (!bar) { bar = document.createElement('div'); bar.id = 'lvBar'; bar.className = 'lv-bar'; bar.setAttribute('role', 'status'); $('#topbar').insertAdjacentElement('afterend', bar); }
   if (bar.dataset.h !== html) { bar.dataset.h = html; bar.innerHTML = html; $('#lvGo').onclick = liveFollow; $('#lvX').onclick = () => { S.liveHide = x.code; liveBar(); }; }
 }
-setTimeout(liveCheck, 6000); setInterval(liveCheck, 60e3);
+setTimeout(liveCheck, 6000); setInterval(liveCheck, 30e3); // (every 30 seconds, your call: a raid shows up soon after its first pull)
 setInterval(() => { if (S.liveNow) liveBar(); }, 2000); // (the bar follows you from page to page)
 document.addEventListener('visibilitychange', () => { if (!document.hidden) liveCheck(); });
 // ---- a character's page: their Warcraft Logs rankings this tier ----
