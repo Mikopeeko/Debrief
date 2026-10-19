@@ -213,6 +213,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 221: Notes checked against your saved logs, and a nickname on most mechanics (your notes)
+- [x] **A pasted NSRT note is checked against your saved logs (your note: "when I import a note it quickly scans, finding
+  the roster and fight, and alerts the user").** After Save and check, a box on top of Assignments says which fight the
+  note's first line is for, which raid night it fits best ("It names 7 players, and 6 of them raided Nek'zali the
+  Soulcoiler on Wed, Sep 23 (1 pull)."), and any names that aren't in any saved log (a typo or an NSRT nickname). A note
+  pasted on the wrong boss says so, with a **Move it to …** button. Checked on Nek'zali and The Coiled Altar, with no errors.
+- [x] **Short nicknames on most mechanics (your note: "simple like this"):** 27 more headings, like "Tempest (tornadoes):
+  dodged", "Imbibe (fountains): the raid hit" and "Invoke (stop casting): nobody caught", and 7 earlier ones made
+  simpler, like "Dripping Fangs (tank buster)". Headings without a game name (Orb cleanup, Boxes, Eggs, Intermission) have none.
+
 ## 2026-10-18, round 220: Ula'tek, every egg on its own line (your question)
 - [x] **The Eggs section lists every egg,** grouped by the egg phase that dropped it (each Call of the Serpent, then "Stage
   2 eggs" and any others), like the kick sets: pick a phase on the left. Each phase starts with its pickup map (everyone
