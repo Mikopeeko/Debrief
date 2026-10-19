@@ -262,6 +262,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Noticed: Frost Mage's burst is read from Icy Veins, which Wolfthorn's Frost Mage never pressed, so the tile shows "no burst
   cooldown pressed". Worth checking whether Frost's burst in Midnight is a different spell.
 
+## 2026-10-19, round 254: One note per roster, and an Add a note button (your notes)
+- [x] **No duplicate notes:** a new note for the exact same players as a saved note of that boss replaces it (keeping
+  its name and its pulls) instead of being saved twice: "Updated your note "Mythic plan, Oct 19": it's for the same
+  players, so the new version replaced it." The very same text still says "You already have this note".
+- [x] **Add a note** on the main Assignments screen, beside Edit and Change note.
+- [x] Checked on a real night: same players with new lines left one note (the new version), the same text again was
+  turned away, a different group was added as a second note; no errors.
+
 ## 2026-10-19, round 253: Importing a note opens the pull it's for (your note)
 - [x] **A note isn't tied to the pull you have open.** On Assignments, paste a note: Debrief reads its boss from its first
   line, finds the pull with its exact roster (the log you have open first, then the saved pulls of your teams and your

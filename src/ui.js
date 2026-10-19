@@ -1574,10 +1574,12 @@ function noteScan(text, boss) {
 }
 // (the box on top of Assignments after a note is saved: one plain line per finding, and a way to move a note pasted on the wrong boss)
 function noteScanBox(sc) {
+  if (sc.dup) S.noteUpd = null;
   if (sc.dup) return '<div class="panel ah-exbar nscan"><span><b>You already have this note</b> <span class="sub">It\'s the same as "' + esc(sc.dup) + '", which you saved for ' + esc(sc.boss) + ', so it wasn\'t saved again.</span></span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
   if (sc.moved) return '<div class="panel ah-exbar nscan"><span>' + (sc.from ? '<b>Moved here from ' + esc(sc.from) + '.</b> <span class="sub">The note is saved for ' + esc(sc.moved) + ' now, and its pulls use it.</span>'
     : '<b>Moved to ' + esc(sc.moved) + '.</b> <span class="sub">It\'s saved there now. Open a pull of ' + esc(sc.moved) + ' to see it in your list of notes.</span>') + '</span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
   const r = sc.r, out = [], fight = r.nBoss ? esc(r.nBoss) + (r.dif ? ' (' + esc(r.dif) + ')' : '') : '';
+  if (S.noteUpd) out.push('Updated your note "' + esc(S.noteUpd) + '": it\'s for the same players, so the new version replaced it instead of being saved twice.');
   if (sc.went) out.push('Opened ' + (sc.went.night ? esc(nightLabel(sc.went.night)) + ', ' : '') + 'pull ' + sc.went.pull + ': the pull with this note\'s exact group.');
   if (sc.savedFor) out.push('Saved for ' + esc(sc.savedFor) + ', the boss its first line names.');
   else if (r.wrongBoss && !sc.went) out.push("Its first line says it's for " + fight + ', but you saved it on ' + esc(sc.boss) + '.');
@@ -1967,7 +1969,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const difN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }[hdN.difficulty] || hdN.difficulty || '', linesN = a && a.note ? a.note.lines.filter((l) => l.words && l.words.length).length : 0;
     const chipsN = [difN ? esc(capS(String(difN).toLowerCase())) : '', a && a.note && a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', linesN ? plural(linesN, 'assignment line') : ''].filter(Boolean);
     top += '<div class="panel nlib nl-cur' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span class="nl-tt"><span class="nl-k">' + (ex ? 'Example note' : 'Your note') + '</span><b>' + esc(ex ? 'Made from this pull' : used.name) + '</b></span>' + chipsN.map((x) => '<span class="nl-chip">' + x + '</span>').join('') + '</span>' +
-      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" data-asv="notes">Change note</button>') + '</span></div>' +
+      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn primary sm" type="button" id="noteNewBtn">Add a note</button><button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" data-asv="notes">Change note</button>') + '</span></div>' +
       (why || back ? '<div class="nl-why sub">' + why + back + '</div>' : '') + '</div>';
     top += rosterOffer(r, used);
     if (S.noteMade && S.noteMade.boss === boss) top += noteMadeBox(S.noteMade);
@@ -2466,8 +2468,14 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     // (the same note twice for one fight isn't saved: it says which saved note it already is)
     const dup = v && o.list.find((n) => !n.example && (asNew || !editN || n.id !== editN.id) && noteNorm(n.text) === noteNorm(v));
     if (dup) { S.noteScan = { boss, dup: dup.name }; S.noteEdit = false; S.noteEditId = null; assign(only); return; }
+    // (one note per roster (your note, Oct 19): a new note for the exact same players as a saved one of this boss replaces
+    // it, keeping its name and its pulls, rather than being saved twice)
+    const nmSet = (t) => noteNames(t).map((x) => x.toLowerCase()).sort().join('|'), key = fresh && v ? nmSet(v) : '';
+    const same = key ? o.list.find((n) => !n.example && (!editN || n.id !== editN.id || asNew) && nmSet(n.text) === key) : null;
+    S.noteUpd = same ? same.name : null;
     let sid = editN && !asNew ? editN.id : null;
-    if (!v) { if (editN && !asNew) o.list = o.list.filter((n) => n.id !== editN.id); }
+    if (same) { Object.assign(same, { text: v, saved: Date.now() }); sid = same.id; }
+    else if (!v) { if (editN && !asNew) o.list = o.list.filter((n) => n.id !== editN.id); }
     else if (editN && !asNew) { const n = o.list.find((x) => x.id === editN.id); if (n) Object.assign(n, { name: nm, text: v, saved: Date.now(), example: false }); }
     else o.list.push({ id: sid = 'n' + Date.now().toString(36), name: asNew && editN && nm === editN.name ? nm + ' (copy)' : nm, text: v, saved: Date.now() });
     if (v) o.list = o.list.filter((n) => !n.example); // (your own note replaces the example)
