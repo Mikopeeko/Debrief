@@ -10427,7 +10427,11 @@ const GEN_SPECS = {
       ready: { buf: 'Void Metamorphosis', late: 3, what: 'at 50 Soul Fragments, or 35 with Soul Glutton', info: 'the top players often hold it for a few seconds, for Bloodlust or the fight\'s phases.' },
       rate: { n: 'Void Ray', label: 'Void Ray in Void Metamorphosis', why: 'Inside Void Metamorphosis, Void Ray costs no Fury and pauses your Fury drain, so pressing it on cooldown keeps the form going for longer.', tip: 'In Void Metamorphosis, press Void Ray every time it comes back, before Collapsing Star and Devour.' },
       why: 'Void Metamorphosis is your burst. It\'s ready at 50 Soul Fragments (35 with Soul Glutton), and it lasts until your Fury drains, so go in right away and keep it going with Void Ray and Collapsing Star. The guides aim for 4 to 5 Collapsing Stars in each one as Annihilator, and 3 to 4 as Void-Scarred. The top players get 4 in most full windows, and 3 or more counts as done right.' },
-    apl: { blk: 'Your priority', list: [], levels: [
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, why: 'From the Wowhead guide and the SimulationCraft lists Raidbots sims with, for both hero trees, kept to what a log can show.', list: [
+      { s: 'Consume', if: { buff: 'Soulburst', no: 'Collapsing Star' }, why: 'Soulburst was up', tip: 'Outside Void Metamorphosis, spend Soulburst right away on Consume.' },
+      { s: 'Reap', alt: ['Cull', 'Eradicate'], cdq: true, if: { buff: 'Soul Fragments', st: 4 }, why: 'you had 4 or more Soul Fragments', tip: 'With 4 or more Soul Fragments on the ground, press Reap (Cull in Void Metamorphosis) before your filler.' },
+      { s: 'Void Ray', if: { no: 'Collapsing Star', res: ['17', 100] }, why: 'you were at 100 Fury', tip: 'Outside Void Metamorphosis, press Void Ray as soon as you reach 100 Fury.' },
+      { s: 'Consume', alt: ['Devour', 'Collapsing Star', 'Void Ray', 'Soul Immolation', 'Voidblade', 'Hungering Slash', 'Pierce the Veil', "Reaper's Toll", "Predator's Wake", 'The Hunt'] }], levels: [
       { s: ['Reap', 'Cull'], buf: 'Soul Fragments', min: 4, ok: 0.85, warn: 0.65, rel: true, ic: 'Reap', label: 'Reap and Cull at 4 or more souls', what: 'Reaps and Culls', at: 'at 4 or more Soul Fragments', why: 'In single target, both hero trees press Reap (Cull in Void Metamorphosis) only when it will collect 4 or more Soul Fragments, for its damage and the tier set\'s Soulburst.', tip: 'Wait for 4 or more Soul Fragments on the ground before you press Reap or Cull.' }] },
     rot: [{ n: 'Soul Immolation', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Soul Immolation on cooldown.' }],
     procs: [{ n: 'Soulburst', use: ['Consume', 'Devour'], why: 'Soulburst, from your tier set, makes your next Consume (Devour in Void Metamorphosis) instant and explode. It\'s first on both priority lists, so spend it right away.' }],
@@ -10435,7 +10439,11 @@ const GEN_SPECS = {
     lead: { rot: 'Press Soul Immolation as soon as it\'s ready.', procs: 'Spend Soulburst right away.', res: 'Outside Void Metamorphosis, press Void Ray as soon as you reach 100 Fury.' } },
   'Assassination Rogue': { ic: 'Envenom', top: 'Assassination Rogues',
     win: { n: 'Deathmark', with: [['Kingsbane']], dur: 16, why: 'Deathmark doubles your bleeds and poisons. Kingsbane goes out with it.' },
-    apl: { blk: 'Your priority', list: [], levels: [
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, why: 'From the Wowhead guide and the SimulationCraft list Raidbots sims with: keep your bleeds up, spend at 5 combo points, and build with Mutilate.', list: [
+      { s: 'Garrote', cd: 6, g: 1.5, if: { deb: 'Garrote', drem: 1.5, res: ['4', null, 4] }, why: 'Garrote was about to fall off', tip: 'Don\'t let Garrote drop. Refresh it before your builder when it\'s about to run out.' },
+      { s: 'Rupture', if: { deb: 'Rupture', drem: 2, res: ['4', 5] }, why: 'you had 5 combo points and Rupture was about to fall off', tip: 'At 5 combo points, refresh Rupture first when it\'s about to run out.' },
+      { s: 'Envenom', alt: ['Rupture'], if: { res: ['4', 5] }, why: 'you had 5 or more combo points', tip: 'At 5 or more combo points, spend them on Envenom before you build more.' },
+      { s: 'Mutilate', alt: ['Ambush', 'Fan of Knives', 'Shiv', 'Garrote', 'Envenom', 'Rupture', 'Crimson Tempest'] }], levels: [
       { s: ['Envenom', 'Rupture'], ty: '4', min: 5, no: 'Darkest Night', ic: 'Envenom', label: 'Finishers at 5 or more combo points', what: 'Envenoms and Ruptures', at: 'at 5 or more combo points', why: 'The SimulationCraft list spends only at 5 or more combo points (or at full with Darkest Night).', tip: 'Build to 5 combo points before Envenom or Rupture.' }] }, gcd1: true, k: { abc: [0.6, 0.5] },
     abcWhy: 'Assassination is held back by Energy, not the global cooldown, so some quiet time is normal and the scale is gentler.',
     dots: [{ n: 'Rupture', why: 'Rupture is your main bleed. Keep it on the boss.' }, { n: 'Garrote', ok: 0.85, warn: 0.7, why: 'Garrote is your other bleed. Keep it on the boss.' }],
@@ -10458,6 +10466,10 @@ const GEN_SPECS = {
     lead: { procs: 'Frost is about spending procs. Spend Killing Machine on Obliterate, and Rime on Howling Blast.', res: 'Don\'t let Runic Power overflow. Frost Strike spends it.', cds: 'Press Pillar of Frost on cooldown, with your other cooldowns.' } },
   'Havoc Demon Hunter': { ic: 'Chaos Strike', top: 'Havoc Demon Hunters',
     win: { n: 'Metamorphosis', key: { names: ['Annihilation', 'Death Sweep'], one: 'Annihilation or Death Sweep', many: 'Annihilations and Death Sweeps' }, dur: 20, why: 'Metamorphosis turns Chaos Strike into Annihilation and Blade Dance into Death Sweep. Fit as many as you can.' },
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, why: 'From the Wowhead guide and the SimulationCraft list Raidbots sims with. The guide says overflowing Fury is fine when a cooldown is ready, so only your cooldowns are checked against Chaos Strike.', list: [
+      { s: 'Eye Beam', alt: ['Abyssal Gaze'], shareCd: true, cdq: true, if: { res: ['17', 30] }, tip: 'Press Eye Beam whenever it\'s ready, before Blade Dance and Chaos Strike.' },
+      { s: 'Blade Dance', alt: ['Death Sweep'], shareCd: true, cdq: true, g: 1.5, if: { no: 'Metamorphosis', res: ['17', 35] }, why: 'you had the Fury for it', tip: 'Outside Metamorphosis, press Blade Dance on cooldown, before Chaos Strike.' },
+      { s: 'Chaos Strike', alt: ['Annihilation', 'Death Sweep', 'Essence Break', 'Felblade', 'Immolation Aura', 'The Hunt', 'Metamorphosis'] }] },
     abcWhy: 'Stay on the boss. Demon Blades only give Fury while you hit it, and Vengeful Retreat is part of the rotation, so plan where you land.',
     rot: [{ n: 'Eye Beam', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Eye Beam on cooldown.' }, { n: 'Blade Dance', names: ['Blade Dance', 'Death Sweep'], cd: 10, h: true, ok: 0.8, warn: 0.65, why: 'Press Blade Dance (Death Sweep in Metamorphosis) on cooldown. Keep enough Fury for it.' },
       { n: 'Immolation Aura', cd: 30, h: true, ok: 0.8, warn: 0.65, why: 'Press Immolation Aura on cooldown, for Fury and damage.' }, { n: 'Essence Break', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Essence Break on cooldown, with Blade Dance and Chaos Strikes inside it.' }],
@@ -10466,7 +10478,10 @@ const GEN_SPECS = {
     lead: { rot: 'Press Blade Dance, Immolation Aura and Eye Beam on cooldown, with Chaos Strike in between.', res: 'Avoid wasting Fury, but keep enough for Blade Dance.', cds: 'Use Metamorphosis as often as the fight allows.' } },
   'Subtlety Rogue': { ic: 'Shadow Dance', top: 'Subtlety Rogues',
     win: { n: 'Shadow Blades', with: [['Shadow Dance']], dur: 16, why: 'Shadow Blades is your burst. Shadow Dance goes out with it.' },
-    apl: { blk: 'Your priority', list: [], levels: [
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, why: 'From the Wowhead guide and the SimulationCraft list Raidbots sims with: Secret Technique first in Shadow Dance, and Shadowstrike as your builder while stealthed. Building at full combo points isn\'t judged, because the list does it on purpose for Ancient Arts.', list: [
+      { s: 'Secret Technique', cdq: true, if: { buff: 'Shadow Dance', res: ['4', 5] }, why: 'you were in Shadow Dance with the combo points for it', tip: 'In Shadow Dance, spend your first finisher on Secret Technique.' },
+      { s: 'Shadowstrike', alt: ['Shuriken Storm', "Goremaw's Bite", 'Eviscerate', 'Black Powder', 'Coup de Grace', 'Secret Technique', 'Rupture', 'Slice and Dice'], if: { buff: 'Shadow Dance' }, why: 'Shadow Dance was up', tip: 'In Shadow Dance, build with Shadowstrike, not Backstab or Gloomblade.' },
+      { s: 'Backstab', alt: ['Gloomblade', 'Shadowstrike', 'Shuriken Storm', "Goremaw's Bite", 'Shuriken Toss', 'Eviscerate', 'Black Powder', 'Coup de Grace', 'Secret Technique', 'Rupture'] }], levels: [
       { s: ['Eviscerate', 'Black Powder', 'Coup de Grace'], ty: '4', min: 6, ic: 'Eviscerate', label: 'Finishers at 6 or more combo points', what: 'finishers', at: 'at 6 or more combo points', why: 'The guide and the SimulationCraft list finish close to the maximum, at 6 or 7 combo points.', tip: 'Build to 6 or 7 combo points before a finisher.' }] }, gcd1: true, k: { abc: [0.6, 0.5] },
     abcWhy: 'Energy is your limit most of the time, and feeling starved outside cooldowns is normal, so the scale is gentler.',
     rot: [{ n: 'Shadow Dance', cd: 20, chT: [['Double Dance', 2]], ok: 0.75, warn: 0.6, why: 'Shadow Dance goes with Secret Technique. Use it when Secret Technique is ready, and a second right after the first, with Shadow Blades.' }, { n: "Goremaw's Bite", cd: 45, ok: 0.85, warn: 0.7, why: "Goremaw's Bite on cooldown." }],
