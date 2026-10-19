@@ -12231,7 +12231,9 @@ function plPage(data, reps, one) {
   const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>Mechanics and Rotation count most. Prep only takes points off.' + (one ? ' On the right are mechanics and Rotation.' :' The arrows show the change through the night.') + '</small>' + roleChips(has) + '</h3>' + sortSw +
     (bars ? cbHead('Grade', one ? 'Mech · Rot' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
   const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious and 4 for each medium mistake of their own (a tank also loses 2 for a minor slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half, and an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Rotation</b>: their score out of 100 on the Rotation tab, the same checks and the same number. <b>Staying alive and toolkit</b>: defensives, potions, Healthstones, kicks, externals. <b>The grade</b> is 40% mechanics, 40% Rotation and 20% staying alive and toolkit. For a spec without a Rotation page, it\'s half mechanics and half how they played (casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive and toolkit). A player alive under 20 s is graded on mechanics. <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade, Rotation\'s checks that weren\'t good among them, with its "Next time". Without a Rotation page, a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
-  return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + (sel ? plPlayer(sel, one, reps, mvp.get(sel.p.name), data) : plRaid(data, one, mvp, imp)) + '</div></div>' + how;
+  // (a picked player's page is full width, like Rotation's, with a Change player dropdown in its header; the list comes back with Show the raid)
+  if (sel) return tiles + '<div class="pf-cols solo"><div class="panel pf-det pl-det">' + plPlayer(sel, one, reps, mvp.get(sel.p.name), data) + '</div></div>' + how;
+  return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + plRaid(data, one, mvp, imp) + '</div></div>' + how;
 }
 // A player's gear, laid out clean for the Players page (and anyone looking at what others wear): their item level against
 // the raid, enchants and gems, consumables, stats as bars, then every item in two columns: its icon with its item level,
@@ -12274,7 +12276,11 @@ function gearView(x) {
 // the picked player's page
 function plPlayer(a, one, reps, mvpL, data) {
   const role = (a.p.role || 'dps'), mates = data.filter((b) => (b.p.role || 'dps') === role).sort((u, v) => v.score - u.score), rank = mates.indexOf(a) + 1;
-  let h = '<h3 class="nh">' + avatar(a.p, true) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span><small>' + esc(a.p.specName || '') + (one ? '' : ' · ' + plural(a.n, 'pull')) + (mvpL ? ' · ' + esc(mvpL) : '') + '</small><span class="pl-big">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span><button class="btn sm" id="plClose" type="button">Show the raid</button></h3>';
+  // (Change player, as on Rotation: everyone graded, grouped by role, the one shown greyed out)
+  const me = meOf(), byN = (u, v) => u.p.name.localeCompare(v.p.name);
+  const pick = '<select class="rot-sel pl-sel" aria-label="Change player"><option value="" selected disabled>Change player</option>' + [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']].map(([k, l]) => { const l2 = data.filter((b) => (b.p.role || 'dps') === k).sort(byN); return l2.length ? '<optgroup label="' + l + '">' +
+    l2.map((b) => '<option value="' + esc(b.p.name) + '"' + (b === a ? ' disabled' : '') + '>' + esc(b.p.name) + (me && me.name === b.p.name ? ' (you)' : '') + ' · ' + esc(b.p.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') + '</select>';
+  let h = '<h3 class="nh">' + avatar(a.p, true) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span>' + pick + '<small>' + esc(a.p.specName || '') + (one ? '' : ' · ' + plural(a.n, 'pull')) + (mvpL ? ' · ' + esc(mvpL) : '') + '</small><span class="pl-big">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span><button class="btn sm" id="plClose" type="button">Show the raid</button></h3>';
   // (their page, or their gear: what they're wearing, for anyone curious)
   const x0 = a.last.x, gearOn = S.plView === 'gear' && !!x0;
   h += '<div class="seg pl-view" role="tablist" aria-label="Show"><button type="button" data-pv="page"' + (gearOn ? '' : ' class="on"') + '>Their page</button><button type="button" data-pv="gear"' + (gearOn ? ' class="on"' : '') + (x0 ? '' : ' disabled title="No gear was logged for this player"') + '>Gear and stats</button></div>';
@@ -12411,7 +12417,8 @@ function player() {
 // the tab that shows it with that player; a pull's square opens that pull here
 function bindPlayers(c) {
   const again = () => player();
-  $$('#plBody .pl-r[data-pn]').forEach((b) => (b.onclick = () => { S.plSel = S.plSel === b.dataset.pn ? null : b.dataset.pn; again(); }));
+  $$('#plBody .pl-r[data-pn]').forEach((b) => (b.onclick = () => { S.plSel = S.plSel === b.dataset.pn ? null : b.dataset.pn; S.plScroll = true; again(); }));
+  $$('#plBody .pl-sel').forEach((s) => (s.onchange = () => { if (!s.value) return; S.plSel = s.value; again(); })); // (Change player)
   { const b = $('#plClose'); if (b) b.onclick = () => { S.plSel = null; again(); }; }
   $$('#plBody .pl-sort button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.plSort = b.dataset.o; again(); }));
   $$('#plBody [data-pv]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.plView = b.dataset.pv; again(); const d = $('.pl-det'); if (d && d.getBoundingClientRect().top < 60) { d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -64); } }));
