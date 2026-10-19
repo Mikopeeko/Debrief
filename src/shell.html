@@ -3001,6 +3001,15 @@ details.pf-dc > summary .sst { margin-left: auto; }
 /* the other bar rows' columns: spells (# | bar | theirs | the other side | casts a minute), player by player (bar | this
    pull | their best | gap) and the raids (rank | bar | kill | raid DPS | specs matched) */
 .pf-row.cb.cmp-sr { grid-template-columns: 20px minmax(0, 1fr) 62px 62px 96px; }
+/* Healing a second, spell by spell: both players' bars and the difference */
+/* Rotation chips: a check with both players' values, bars when they're numbers */
+.cmp-rk { cursor: help; } .cmp-rkr { display: grid; grid-template-columns: 14px 86px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 5px 0; } .cmp-rkv { font: 700 14px var(--head); text-align: right; white-space: nowrap; } .cmp-rkv span { font: 500 12px var(--body, inherit); color: var(--muted); }
+.cmp-rk .cmp-ct { margin-top: 6px; } .cmp-rk .cmp-try { display: block; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); } .cmp-rk .cmp-try b { color: var(--gold); }
+.cmp-sxs { display: flex; flex-direction: column; gap: 4px; } .cmp-sx { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr) 76px; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,.025); cursor: help; }
+.cmp-sxn { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13.5px; font-weight: 600; } .cmp-sxn > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .cmp-sxn .icw { width: 22px; height: 22px; flex: none; margin: 0; border-radius: 4px; overflow: hidden; } .cmp-sxn .icw img, .cmp-sxn .icw svg { width: 100%; height: 100%; }
+.cmp-sxb { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .cmp-sxb > div { display: grid; grid-template-columns: minmax(0, 1fr) 62px; align-items: center; gap: 8px; } .cmp-sxb b { text-align: right; font: 700 13px var(--head); font-variant-numeric: tabular-nums; }
+.cmp-sxd { text-align: right; font: 700 14px var(--head); font-variant-numeric: tabular-nums; } .cmp-sxd.up { color: #7ee08f; } .cmp-sxd.dn { color: #f3c969; } .cmp-sxd.lv { color: var(--faint); font-weight: 600; }
+@media (max-width: 640px) { .cmp-sx { grid-template-columns: minmax(0, 1fr) auto; } .cmp-sxb { grid-column: 1 / -1; grid-row: 2; } }
 .cmp-sr .cb-r { justify-content: flex-end; gap: 4px; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pf-row.cb.cmp-ssr { grid-template-columns: 0 minmax(0, 1fr) 64px 160px 56px; } .cmp-ssr .pf-k { visibility: hidden; } .cmp-ssr .cb-r { justify-content: flex-end; }
 .pf-row.cb.cmp-kr { grid-template-columns: 30px minmax(0, 1fr) 56px 64px 44px; padding-top: 4px; padding-bottom: 4px; } .cmp-kr .cb-r { justify-content: flex-end; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
