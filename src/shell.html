@@ -3730,6 +3730,9 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .nmc details.secd.mcx-tile .wr-map.mcx-map, .nmc details.secd.mcx-tile .wr-map.mcx-map svg.zmap { height: 92px !important; }
 .nmc details.secd.mcx-tile:not([open]) .mcx-hd { padding: 7px 10px 6px; } .nmc details.secd.mcx-tile:not([open]) .mcx-hd .sechd b { font-size: 14px; }
 .nmc .mcx-ln { padding: 6px 10px 9px; font-size: 12.5px; } .nmc .mcx-s { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.npl { display: flex; flex-wrap: wrap; gap: 2px; margin: 2px 0 6px; } .npl i { width: 9px; height: 9px; border-radius: 2px; background: rgba(255,255,255,.08); cursor: pointer; }
+.npl i:hover { outline: 1px solid var(--text); } .npl .npl-bad { background: var(--lv-maj); } .npl .npl-warn { background: var(--lv-min); } .npl .npl-ok { background: rgba(69,193,92,.6); }
+.nmc .mcx-ln .npl { flex-basis: 100%; margin: 0; } .nmc details.secd.mcx-tile:not([open]):not(:has(.mcx-map)) .mcx-hd { padding-right: 96px; }
 </style>
 
 

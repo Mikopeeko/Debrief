@@ -4151,9 +4151,17 @@ function nsrtChecks(r) {
 }
 // ---------- the night: every pull of the boss on screen ----------
 // Reads every pull of this boss (Warcraft Logs pulls only once downloaded, unless "Load all pulls" was clicked).
-async function bossReps(it, still, onCount) {
+async function bossReps(it, still, onCount, all) {
   const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId);
   const reps = []; let skipped = 0;
+  // (every pull of the night (all): 3 downloads at a time, so a 30-pull night reads in a third of the time; kept in pull order)
+  if (all) {
+    const got = new Array(pulls.length), pending = pulls.map((b, i) => i); let done = 0, gone = false;
+    const worker = async () => { while (pending.length && !gone) { const i = pending.shift(); try { got[i] = await getRep(pulls[i]); } catch (e) { /* skip a pull that fails */ }
+      if (!still()) { gone = true; return; } done++; if (onCount) onCount(done, pulls.length); } };
+    await Promise.all([worker(), worker(), worker()]); if (gone || !still()) return null;
+    return { reps: got.filter(Boolean), skipped: 0, pulls };
+  }
   for (const b of pulls) {
     if (b.wcl && !NIGHT_ALL && !CACHE.has(b) && !(await WCL.isSaved(b))) { skipped++; continue; }
     try { reps.push(await getRep(b)); } catch (e) { /* skip a pull that fails */ }
@@ -4515,6 +4523,10 @@ function gradeAssign(reps) {
   for (const c of cats) c.letter = letterOf(c.score);
   return { cats, overall, letter: letterOf(overall) };
 }
+// (a whole-night tile's pulls as a strip of squares, one per pull: red went wrong, yellow-green could be better, green clean, grey
+// didn't come up; a square opens that pull (Oct 19, your ask: laid out to fit a night of 30 pulls))
+const NPL_W = { bad: 'went wrong', warn: 'could be better', ok: 'clean', na: 'didn\'t come up' };
+const nplStrip = (ns, st) => '<span class="npl">' + ns.map((n) => { const k = st(n) || 'na'; return '<i class="npl-' + k + '" data-npq="' + n + '" title="' + esc('Pull ' + n + ': ' + NPL_W[k]) + '"></i>'; }).join('') + '</span>';
 // Mechanics on the whole night (Oct 19, your call: "a more condensed version" of a single pull's Mechanics): the same look, with
 // the night's data. On top, the night at a glance: a lane per mechanic that went wrong with a dot per pull, the verdict, and the
 // Major / Moderate / Minor / Clean totals. Then each phase as its own card (its number, a ring of how much was clean, its level),
@@ -4538,7 +4550,7 @@ function nightMechC(o) {
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
     return '<details class="panel secd st-' + LC[lv] + ' mcx-tile' + (big ? ' mcx-big' : '') + '" data-np="' + worst + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + (big ? '<span class="mcx-rib">Fix this first</span>' : '') +
       (mp ? '<span class="wr-map mcx-map">' + miniMap(mp, pm) + '</span>' : '') + '<span class="mcx-hd">' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span></span>' +
-      '<span class="mcx-ln"><span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') +
+      '<span class="mcx-ln"><span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + nplStrip(pullNs, (n) => stAt(r, n)) +
       '<span class="mcx-s">' + esc(capS(r.v.txt)) + (r.v.trend ? '. ' + esc(capS(r.v.trend)) : '') + '.</span></span></summary></details>'; };
   const chip = (r) => '<details class="panel secd st-ok" data-np="' + (judged(r)[judged(r).length - 1] || '') + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ok">✓ clean</span></summary></details>';
   const ring = (l) => { const lv = l.map(lvOf), n = (k) => lv.filter((v) => v === k).length, tot = l.length; if (!tot) return ''; const C = 2 * Math.PI * 14;
@@ -4574,6 +4586,7 @@ function bindNightMechC(pulls) {
   const open = (n, sec) => { const b = pulls.find((x) => x.pull === +n); if (!b) return; S.scope = 'pull'; S.tab = 'audit'; S.pendingSec = sec || null; select(b); };
   v.querySelectorAll('.nmc [data-np]').forEach((el) => { const go = (e) => { e.preventDefault(); open(el.dataset.np, el.dataset.sec); };
     if (el.tagName === 'DETAILS') { const sm = el.querySelector('summary'); sm.onclick = go; } else el.onclick = go; });
+  v.querySelectorAll('.nmc [data-npq]').forEach((q) => (q.onclick = (e) => { e.preventDefault(); e.stopPropagation(); const t = q.closest('[data-sec]'); open(q.dataset.npq, t ? t.dataset.sec : null); }));
   wrThumbFit(v);
 }
 // Recap on the whole night (Oct 19, your call: "look exactly the same, no matter if it's on all nights or single night"): the
@@ -4582,7 +4595,7 @@ function bindNightMechC(pulls) {
 // with what to do next time); right: Deaths and Interrupts, Before the next pull (the last pull's), Talk to (each player's first
 // thing to fix over the night), Used tonight and Missed assignments. A tile opens its worst pull on Mechanics.
 function nightRecap(o) {
-  const { b0, pulls, reps, mechL, verdictOf, kill, bestP, db, one } = o, boss = b0.boss, byPull = new Map(reps.map((r) => [r.item.pull, r]));
+  const { b0, pulls, reps, mechL, verdictOf, kill, bestP, db, one } = o, boss = b0.boss, byPull = new Map(reps.map((r) => [r.item.pull, r])), pullNs = reps.map((r) => r.item.pull).sort((u, v) => u - v);
   const pmap = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && !pmap.has(p.name)) pmap.set(p.name, p);
   const LVR = { major: 0, moderate: 1, minor: 2, clean: 3 }, LVW = { major: 'Major', moderate: 'Moderate', minor: 'Minor' }, wipesR = reps.filter((r) => !r.item.kill);
   const face = (n) => { const p = pmap.get(n); return p ? avatar(p, true) : ''; };
@@ -4592,12 +4605,12 @@ function nightRecap(o) {
     const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])); for (const want of [(row) => row.some((c) => c.bad), (row) => row.some((c) => c.warn)]) for (const row of all) if (want(row)) { const m = rowMap(row); if (m) return m; } return null; };
   // ---- what went wrong: what ended the wipes, then the mechanics that kept going wrong ----
   const wrong = [], causes = new Map();
-  for (const r of wipesR) { const c = causeOf(r); if (!c) continue; const y = causes.get(c.label) || { c, n: 0, who: new Map(), last: null }; y.n++; if (c.who) y.who.set(c.who, (y.who.get(c.who) || 0) + 1); y.last = r; causes.set(c.label, y); }
+  for (const r of wipesR) { const c = causeOf(r); if (!c) continue; const y = causes.get(c.label) || { c, n: 0, who: new Map(), last: null, ps: new Set() }; y.n++; y.ps.add(r.item.pull); if (c.who) y.who.set(c.who, (y.who.get(c.who) || 0) + 1); y.last = r; causes.set(c.label, y); }
   for (const y of [...causes.values()].sort((a, b) => b.n - a.n)) { if (y.n < 2 && wipesR.length > 2) continue;
     const r = y.last, d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0], top = [...y.who].sort((u, v) => v[1] - u[1]);
     wrong.push({ lv: y.n >= Math.max(3, wipesR.length / 3) ? 'major' : 'moderate', w: -1, n: r.item.pull, sec: 'sec-deaths', map: d && d.player === y.c.who ? deathMap(r, d) : null, ic: spellIcon(y.c.id || 0, y.c.label, true), name: mech(y.c.label, y.c.id), vn: y.c.label,
       tags: [y.n + ' of ' + plural(wipesR.length, 'wipe'), 'latest: pull ' + r.item.pull], who: top.map(([n]) => n), what: 'It ended ' + y.n + ' of ' + plural(wipesR.length, 'wipe') + '.' + (top.length ? ' The first to die ' + (top.length === 1 ? 'was ' : 'were ') + top.slice(0, 3).map(([n, k]) => n + (k > 1 ? ' (' + k + ')' : '')).join(', ') + '.' : ''),
-      fix: fixFor([y.c.label]) || (d && d.prevent && d.prevent[0]) || '' }); }
+      fix: fixFor([y.c.label]) || (d && d.prevent && d.prevent[0]) || '', st: (n) => (y.ps.has(n) ? 'bad' : byPull.get(n) && !byPull.get(n).item.kill ? 'ok' : 'na') }); }
   const covered = new Set([...causes.keys()].map((k) => k.toLowerCase()));
   for (const x of mechL) { if (x.info || x.id === 'deaths') continue; const v = verdictOf(x.per); if (v.st !== 'bad' && v.st !== 'warn') continue;
     const nm = shortT(x.title), sp = x.spell && x.spell[1]; if (covered.has(String(sp || '').toLowerCase()) || covered.has(nm.toLowerCase())) continue;
@@ -4605,14 +4618,14 @@ function nightRecap(o) {
     let mp = null; for (const n of [worst].concat(ns.slice().reverse())) { mp = mapIn(n, x.id); if (mp) break; }
     const who = new Map(); for (const p of x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     wrong.push({ lv: v.st === 'bad' ? tierOf(boss, x.id) : 'minor', w: 0, n: worst, sec: 'sec-' + x.id, map: mp, ic: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, sp || '', true), name: esc(nm), vn: nm,
-      tags: [ns.length + ' of ' + plural(v.j, 'pull'), worst ? 'worst: pull ' + worst : ''], who: [...who].sort((u, w) => w[1] - u[1]).map(([n]) => n), what: capS(v.txt) + '.' + (v.trend ? ' ' + capS(v.trend) + '.' : ''), fix: fixFor([sp, nm, x.title]) }); }
+      tags: [ns.length + ' of ' + plural(v.j, 'pull'), worst ? 'worst: pull ' + worst : ''], who: [...who].sort((u, w) => w[1] - u[1]).map(([n]) => n), what: capS(v.txt) + '.' + (v.trend ? ' ' + capS(v.trend) + '.' : ''), fix: fixFor([sp, nm, x.title]), st: (n) => (x.per.get(n) || {}).st || 'na' }); }
   wrong.sort((a, b) => LVR[a.lv] - LVR[b.lv] || a.w - b.w);
   if (one) for (let i = wrong.length - 1; i >= 0; i--) if (!wrong[i].who.includes(one)) wrong.splice(i, 1);
   const MAPS = [], wTile = (x, big) => { const tg = x.tags.filter(Boolean), fs = x.who.map(face).filter(Boolean);
     return '<div class="rcp-w lv-' + x.lv + (big ? ' rcp-big' : '') + (x.map ? '' : ' rcp-nomap') + '" role="button" tabindex="0" data-npull="' + x.n + '" data-sec="' + esc(x.sec || '') + '" title="Open pull ' + x.n + ' on Mechanics">' +
       (x.map ? '<div class="wr-map rcp-map" role="button" tabindex="0" data-i="' + (MAPS.push(x.map) - 1) + '" title="Play this moment" aria-label="Play this moment">' + miniMap(x.map, pmap) + '</div>' : '') +
       '<div class="rcp-hd">' + x.ic + '<b>' + x.name + '</b>' + (fs.length ? '<span class="rcp-who">' + fs.slice(0, 3).join('') + (fs.length > 3 ? '<i>+' + (fs.length - 3) + '</i>' : '') + '</span>' : '') + '</div>' +
-      '<div class="rcp-bd">' + (tg.length ? '<div class="rcp-tg">' + tg.map((t) => '<span class="wr-tag">' + esc(t) + '</span>').join('') + '</div>' : '') + (x.what ? '<div class="rcp-wt">' + esc(x.what) + '</div>' : '') +
+      '<div class="rcp-bd">' + (tg.length ? '<div class="rcp-tg">' + tg.map((t) => '<span class="wr-tag">' + esc(t) + '</span>').join('') + '</div>' : '') + (x.st ? nplStrip(pullNs, x.st) : '') + (x.what ? '<div class="rcp-wt">' + esc(x.what) + '</div>' : '') +
       (x.fix ? '<div class="rcp-fx"><b>Next pull:</b> ' + esc(x.fix) + '</div>' : '') + '</div>' + (big ? '<span class="rcp-rib">Fix this first</span>' : '') + '<span class="rcp-lv ' + x.lv + '">' + LVW[x.lv] + '</span></div>'; };
   const lvCnt = (l) => l.reduce((m, v) => { m[v]++; return m; }, { major: 0, moderate: 0, minor: 0, clean: 0 });
   const lvHtml = (m) => ['major', 'moderate', 'minor'].filter((k) => m[k]).map((k) => '<span class="rcp-c ' + k + '">' + m[k] + ' ' + k + '</span>').join('<span class="rcp-sep"> · </span>');
@@ -4693,6 +4706,7 @@ function bindNightRecap(NR, reps, pulls, here) {
   const openP = (n, sec) => { const b = pulls.find((x) => x.pull === +n); if (!b) return; S.scope = 'pull'; S.tab = 'audit'; S.pendingSec = sec || null; select(b); };
   v.querySelectorAll('.nrv [data-npull]').forEach((t) => { t.onclick = () => openP(t.dataset.npull, t.dataset.sec); t.onkeydown = (e) => { if (e.target === t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openP(t.dataset.npull, t.dataset.sec); } }; });
   v.querySelectorAll('.nrv [data-go]').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; renderMain(); window.scrollTo({ top: 0 }); }));
+  v.querySelectorAll('.nrv [data-npq]').forEach((q) => (q.onclick = (e) => { e.stopPropagation(); const t = q.closest('[data-sec]'); openP(q.dataset.npq, t ? t.dataset.sec : null); }));
   wrThumbFit(v);
   v.querySelectorAll('.nrv .rcp-map').forEach((b) => { const play = () => {
     const t = b.closest('.rcp-w'); if (t.classList.contains('rcp-play')) return; t.classList.add('rcp-play'); b.style.display = 'none';
@@ -4712,7 +4726,7 @@ async function night(part) {
   if (!groups.size) { view('<div class="panel"><p class="muted" style="margin:0">No boss pulls in this log.</p></div>'); return; }
   const key0 = groups.has(it0.id + ':' + it0.diffId) ? it0.id + ':' + it0.diffId : [...groups.keys()].pop(), pulls = groups.get(key0), b0 = pulls[0];
   view(loadCard('Reading the night', 'Reading ' + plural(pulls.length, 'pull') + ' of ' + b0.boss + '…', 0));
-  const got = await bossReps(pulls[pulls.length - 1], here, (n, of) => loadSet('#view', 'Reading ' + of + ' pulls of ' + b0.boss + '… (' + n + ' of ' + of + ')', of ? n / of : null));
+  const got = await bossReps(pulls[pulls.length - 1], here, (n, of) => loadSet('#view', 'Reading ' + of + ' pulls of ' + b0.boss + '… (' + n + ' of ' + of + ')', of ? n / of : null), true);
   if (!got || !here()) return;
   const reps = got.reps, pullNs = reps.map((r) => r.item.pull), byPull = new Map(reps.map((r) => [r.item.pull, r]));
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
