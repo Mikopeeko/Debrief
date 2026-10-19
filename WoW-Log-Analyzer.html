@@ -3066,6 +3066,8 @@ details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212
 .mcx-wipe.end { background: linear-gradient(90deg, rgba(212,17,30,.32), rgba(212,17,30,.12) 30%, rgba(212,17,30,.1)); }
 .mcx-wipe span { position: absolute; bottom: 3px; left: 4px; pointer-events: auto; padding: 0 5px; border-radius: 4px; background: rgba(212,17,30,.85); color: #fff; font: 700 10px/15px var(--body); letter-spacing: .03em; white-space: nowrap; }
 @media (max-width: 640px) { .mcx-wipe span { display: none; } .mcx-okt { height: 8px; margin-top: -4px; } }
+/* (Oct 19, "make MAJOR all caps and bold": the word MAJOR wherever a level is written, and Rotation's MAJOR label and button, bold) */
+.lv-maj { font-weight: 800; letter-spacing: .04em; } .spc-bd.bad, .spc-tlb.bad, .spc-pill.bad { font-weight: 800; letter-spacing: .02em; }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
@@ -10267,7 +10269,7 @@ function svgIcon(id, name, big) {
 // A mechanic name as text with the spell tooltip on hover (the ID comes from the log when only the name is known)
 function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
 // A status on the right of a heading or bar, in the same words and marks on every tab: ✕ a problem, ! could be better, ✓ fine
-const hst = (st, txt) => '<span class="sst ' + st + '">' + ({ bad: '!!!\u00a0', 'bad mod': '!!\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</span>'; // (the mark stays with its first word)
+const hst = (st, txt) => '<span class="sst ' + st + '">' + (st === 'ok' ? '✓\u00a0' : '') + esc(txt).replace(/\bmajor\b/gi, '<span class="lv-maj">MAJOR</span>') + '</span>'; // (the mark stays with its first word)
 // "all 3 done", but just "done" for one (never "all 1 done")
 const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all ' + n + ' ' + many);
 // "What went well" first, then "What went wrong", the same on Latest pull and Summary: what the raid did well leads (a strip
@@ -12067,7 +12069,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const phOf = (n) => { const k = PHS.findIndex((p) => new RegExp('^P' + n + '\\b').test(p.name)); return k >= 0 ? k : 'w'; };
   const secs = [], addSec = (o) => secs.push(o);
   const icoWh = (n) => '<span class="icw big"><img class="wh-i" src="' + whIcon(n) + '" alt="" onerror="this.style.visibility=\'hidden\'"></span>';
-  const pst = (st, html) => '<div class="pst ' + st + '">' + ({ ok: '✓\u00a0', bad: '!!!\u00a0', warn: '!\u00a0' }[st] || '') + html + '</div>';
+  const pst = (st, html) => '<div class="pst ' + st + '">' + ({ ok: '✓\u00a0', bad: '', warn: '' }[st] || '') + html + '</div>';
   const qline = (title, right, cls) => '<div class="qrow"><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></div>';
   const qfold = (title, right, cls, body) => '<details class="qrow"><summary><span class="q-t">' + title + '</span><span class="q-r' + (cls ? ' ' + cls : '') + '">' + right + '</span></summary><div class="q-b">' + body + '</div></details>';
   // (swap a player: a name in the note, the ones not in this pull first, for one of this pull's players the note doesn't name; it changes the text
@@ -12589,7 +12591,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // and the note itself and other reference lines at the bottom
   // the sections, as on Mechanics: under their phase in fight order (Guillotine, orbs, kicks), then the whole-fight ones,
   // then healing cooldowns; each a fold-out row (icon, title, a short summary, its status), closed until clicked
-  const stH = (st, html) => '<span class="sst ' + st + '">' + ({ bad: '!!!\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + html + '</span>';
+  const stH = (st, html) => '<span class="sst ' + st + '">' + ({ bad: '', warn: '', ok: '✓\u00a0' }[st] || '') + html + '</span>';
   // (the icon and title carry the same hover tooltip as on Mechanics: the spell's description when there's one, plus how it's checked)
   // (a heading with neither a spell nor an explanation gets no tooltip, rather than an empty one)
   const tipOf = (o) => { const gen = GENERIC_SEC.test(plainOf(o.title)), n = gen ? plainOf(o.title) : o.tip || plainOf(o.title), sid = gen ? 0 : sidOf(n), ex = plainOf(o.how || '');
@@ -13236,7 +13238,7 @@ function audit() {
         const names = many ? '<div class="dd-all"><span class="sub">' + g.length + ' died to it: </span>' + g.map((y) => '<span class="nm" style="color:' + ((pmap.get(y.d.player) || {}).color || 'inherit') + '">' + esc(y.d.player) + '</span>').join(', ') + '</div>' : '';
         return '<button class="md-i dd-r ' + x.st + (gi === 0 ? ' on' : '') + '" type="button" data-i="' + gi + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '" data-dgs="' + esc(g.map((y) => y.d.guid + '@' + y.d.t.toFixed(2)).join(' ')) + '" aria-expanded="' + (gi === 0) + '">' +
           '<span class="dd-t">' + T(x.d.t) + '</span><span class="dd-w">' + who(x.d.player) + (many ? '<span class="dd-n">and ' + (g.length - 1) + ' more</span>' : '') + '</span><span class="dd-c"><b>' + esc(x.cause) + '</b>' + (x.how ? ' <span class="sub">' + esc(x.how) + '</span>' : '') + '</span>' +
-          '<span class="dd-h ' + x.h0.st + '">' + (x.h0.st === 'bad' ? '!!!\u00a0' : x.h0.st === 'warn' ? '!\u00a0' : '') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
+          '<span class="dd-h ' + x.h0.st + '">' + ('') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
           '<div class="md-d dd-b" data-i="' + gi + '"' + (gi === 0 ? '' : ' hidden') + '>' + names + x.body + '</div>'; }).join('') +
       (after ? '<div class="dmore">' + plural(after, 'more death') + ' after the wipe filter</div>' : '') + '</div>';
   };
@@ -13380,12 +13382,12 @@ function audit() {
   // greyed behind a red line), and the totals; a dot opens its exact moment)
   h = h.replace(MT_TOP, () => { const ent = buckets.flatMap((l, i) => l.map((x) => ({ x, k: i }))).concat(whole.map((x) => ({ x, k: 'w' }))).filter(({ x }) => !x.s.info);
     const st = ({ x }) => lvlOf(phLv([x])), cnt = (k) => ent.filter((e) => st(e) === k).length;
-    const totals = '<div class="mcx-strip">' + [['major', 'bad', 'Major'], ['moderate', 'bad mod', 'Moderate'], ['minor', 'warn', 'Minor'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + cnt(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
+    const totals = '<div class="mcx-strip">' + [['major', 'bad', '<span class="lv-maj">MAJOR</span>'], ['moderate', 'bad mod', 'Moderate'], ['minor', 'warn', 'Minor'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + cnt(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
     // (the verdict: the phase with the most trouble, Major counting most, its worst mechanics, and the phases that went clean)
     const per = buckets.map((l, i) => ({ p: phs[i], l: l.filter((x) => !x.s.info) })).filter((y) => y.l.length).map((y) => { const o = phLv(y.l), rk = { major: 0, moderate: 1, minor: 2, clean: 3 };
       return { name: y.p.name, o, sc: o.major * 9 + o.moderate * 3 + o.minor, worst: y.l.filter((x) => st({ x }) !== 'clean').sort((u, v) => rk[st({ x: u })] - rk[st({ x: v })]).map((x) => x.s.title.split(': ')[0]) }; });
     const topP = per.slice().sort((u, v) => v.sc - u.sc)[0], clean = per.filter((y) => !y.sc);
-    const verdict = topP && topP.sc && per.length > 1 ? '<p class="mcx-verdict">Most trouble was in <b>' + esc(topP.name) + '</b>: ' + ['major', 'moderate', 'minor'].filter((k) => topP.o[k]).map((k) => topP.o[k] + ' ' + k).join(', ') +
+    const verdict = topP && topP.sc && per.length > 1 ? '<p class="mcx-verdict">Most trouble was in <b>' + esc(topP.name) + '</b>: ' + ['major', 'moderate', 'minor'].filter((k) => topP.o[k]).map((k) => topP.o[k] + ' ' + (k === 'major' ? '<span class="lv-maj">MAJOR</span>' : k)).join(', ') +
       (topP.worst.length ? ', led by <b>' + topP.worst.slice(0, 2).map(esc).join('</b> and <b>') + '</b>' : '') + '.' + (clean.length ? ' <span class="mcx-good">' + esc(clean.map((y) => y.name).join(' and ')) + ' went clean.</span>' : '') + '</p>' : '';
     const head = '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake and each skull a death. Hover one for what happened, click it to open that moment.</small></h3>' + verdict;
     // (the whole pull to its last phase, or to its end when the wipe filter cut it short; one phase is enough: most prog wipes end in P1)
@@ -13573,7 +13575,7 @@ const tierOf = (boss, id) => { if (id === 'avoid') return 'minor'; const t = TIE
 const lvlCounts = (tier, nBad, nWarn) => { const o = { major: 0, moderate: 0, minor: nWarn || 0 }; if (nBad) o[tier] += nBad; return o; };
 const lvlOf = (o) => (o.major ? 'major' : o.moderate ? 'moderate' : o.minor ? 'minor' : 'clean');
 const LVL_CLS = { major: 'bad', moderate: 'bad mod', minor: 'warn', clean: 'ok' };
-const LVL_MK = { major: '!!!', moderate: '!!', minor: '!' }, lvlText = (o) => { const w = ['major', 'moderate', 'minor'].filter((k) => o[k]).map((k) => LVL_MK[k] + '\u00a0' + o[k] + ' ' + k); return w.length ? w.join(' · ') : '✓\u00a0clean'; };
+const lvlText = (o) => { const w = ['major', 'moderate', 'minor'].filter((k) => o[k]).map((k) => o[k] + ' ' + (k === 'major' ? '<span class="lv-maj">MAJOR</span>' : k)); return w.length ? w.join(' · ') : '✓\u00a0clean'; };
 let AUDITMAPS = [], AUDITHTML = [];
 const kfmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
 // Deaths as a Fight audit mechanic: one red row per death; amber note when they still had something to press.
@@ -19360,7 +19362,7 @@ function specPage(o) {
   const momT = (c, cap) => { const mo = c.mo.filter((m, i, l) => !i || m.b != null || m.pull !== l[i - 1].pull || T(m.a) !== T(l[i - 1].a)); if (!mo.length) return ''; const n = cap || 16;
     return one ? '<div class="spc-mos">' + mo.slice(0, n).map(tm).join('') + (mo.length > n ? '<span class="sub">and ' + (mo.length - n) + ' more</span>' : '') + '</div>'
       : '<div class="spc-mos">' + [...new Set(mo.map((m) => m.pull))].slice(0, 10).map((pl) => { const l = mo.filter((m) => m.pull === pl); return '<span class="spc-mp"><b>Pull ' + pl + '</b></span>' + l.slice(0, 5).map(tm).join('') + (l.length > 5 ? '<span class="sub">and ' + (l.length - 5) + ' more</span>' : ''); }).join('') + '</div>'; };
-  const BADGE = { ok: '✓ Clean', warn: '! Minor', bad: '!!! Major', na: 'Not graded' };
+  const BADGE = { ok: '✓ Clean', warn: 'Minor', bad: 'MAJOR', na: 'Not graded' };
   const icB = (n) => '<span class="spc-ri">' + spIc(n, true) + '</span>';
   const viz = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
@@ -19411,7 +19413,7 @@ function specPage(o) {
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
-    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', '!!! Major', cnt.bad, 'bad') + pill('warn', '! Minor', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
+    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'MAJOR', cnt.bad, 'bad') + pill('warn', 'Minor', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
@@ -19439,10 +19441,10 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
   return big.join('') + (tbl ? spcTable(cdl, top, slug, tmo) : '') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
 // The Rotation tab as sections of tiles (Oct 19, "make each and every rotation tab a similar design": a sentence of why on the left, the checks as
 // tiles on the right, the section's stat boxes and bars under them)
-const SPC_BW = { ok: 'Clean', warn: 'Minor', bad: 'Major', na: 'Not graded' };
+const SPC_BW = { ok: 'Clean', warn: 'Minor', bad: 'MAJOR', na: 'Not graded' };
 const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1;
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
-    '<b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-tlb ' + c.st + '">' + SPC_MK[c.st] + ' ' + SPC_BW[c.st] + '</span>' + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
+    '<b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>' + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
     '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';
 // (three or more cooldowns in a block: a compact table, a row each, with its mark, its name, a bar of its uses, the count, what it did each time and the top
 // raids'. A row opens in place to its sentence, how it's judged, its "Next time" and its moments; the ones to fix start open)
@@ -22407,7 +22409,7 @@ function cmpChips(rot, x) {
       (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + cost + '</div>' : '') + '</div></details>'; };
   const cnt = (l) => { const o = { bad: 0, warn: 0, ok: 0 }; for (const c of l) if (o[c.st] != null) o[c.st]++; return o; }, side = (n, col, sc, l) => { const o = cnt(l);
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
-      '<span class="cmp-rcnt"><i class="bad">!!! ' + o.bad + ' major</i><i class="warn">! ' + o.warn + ' minor</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
+      '<span class="cmp-rcnt"><i class="bad">' + o.bad + ' <span class="lv-maj">MAJOR</span></i><i class="warn">' + o.warn + ' minor</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
   if (rot.sa && rot.sb && rot.sa.sections) return cmpSumView(rot.sa, rot.sb, x, '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>');
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a chart for the details.</small></h3>' +
@@ -24270,7 +24272,7 @@ const gBucket = (v) => (v == null ? 'na' : v >= 88 ? 'ok' : v >= 65 ? 'warn' : '
 // a stat tile at the top of either view: a picture (grade or icon), the label, a big value and one status line
 // (quiet: the line under the value is a detail, not a verdict: grey, with no mark; the edge still shows the status)
 // (a tile's line under its number starts with a capital, like a sentence: "Nobody died", "By Optt and Hobbz")
-const plTile = (pic, label, v, st, txt0, quiet, grade) => { const txt = String(txt0 == null ? '' : txt0).replace(/^\w/, (c) => c.toUpperCase()); return '<div class="pt ' + st + (grade ? ' q-' + grade : '') + '">' + (pic || '') + '<div class="pt-t"><div class="pt-l">' + esc(label) + '</div><div class="pt-v">' + v + '</div><div class="pt-s ' + (quiet ? 'na' : st) + '" title="' + esc(txt) + '">' + (quiet ? '' : { bad: '!!!\u00a0', warn: '!\u00a0', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</div></div></div>'; };
+const plTile = (pic, label, v, st, txt0, quiet, grade) => { const txt = String(txt0 == null ? '' : txt0).replace(/^\w/, (c) => c.toUpperCase()); return '<div class="pt ' + st + (grade ? ' q-' + grade : '') + '">' + (pic || '') + '<div class="pt-t"><div class="pt-l">' + esc(label) + '</div><div class="pt-v">' + v + '</div><div class="pt-s ' + (quiet ? 'na' : st) + '" title="' + esc(txt) + '">' + (quiet ? '' : { bad: '', warn: '', ok: '✓\u00a0' }[st] || '') + esc(txt) + '</div></div></div>'; };
 // one buff or kit icon in a player row: the ring shows how it went (ok, warn, bad; none = nothing to judge), greyed when missing
 // (aura: the buff itself, when known: then the icon gets the spell's tooltip, with the line under it as the extra text)
 const pli = (icon, st, off, title, n, aura) => '<span class="pli ' + st + (off ? ' off' : '') + (aura && aura.ability ? ' sp" data-sid="' + aura.ability + '" data-sn="' + esc(aura.name || title) + '" data-ex="' + esc(title) + '"' : '" title="' + esc(title) + '"') + '><img src="' + whIcon(icon) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (n ? '<b>' + n + '</b>' : '') + '</span>';
@@ -24310,7 +24312,7 @@ function plRoster(rows, id) {
   let h = '<div class="plr-list" id="' + id + '"><div class="plr-hd"><span>Player</span><span>Ready to raid</span><span>Survival kit</span><span>Buffs and kit</span><span>What stands out</span><span></span></div>';
   for (const [st, label] of [['bad', 'Needs a word'], ['warn', 'Minor'], ['ok', 'All set']]) {
     const g = rows.filter((o) => (o.st === 'na' ? 'ok' : o.st) === st); if (!g.length) continue;
-    h += '<div class="plg-h ' + st + '">' + { bad: '!!! ', warn: '! ', ok: '✓ ' }[st] + label + '<span>' + plural(g.length, 'player') + '</span></div>' + g.map((o) => plRow(o) + (o.open ? '<div class="plx">' + o.detail() + '</div>' : '')).join('');
+    h += '<div class="plg-h ' + st + '">' + { bad: '', warn: '', ok: '✓ ' }[st] + label + '<span>' + plural(g.length, 'player') + '</span></div>' + g.map((o) => plRow(o) + (o.open ? '<div class="plx">' + o.detail() + '</div>' : '')).join('');
   }
   return h + '</div>';
 }
