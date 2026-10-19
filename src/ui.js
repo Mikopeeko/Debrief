@@ -777,6 +777,11 @@ async function teamImportRun(g0, onStep) {
   // is mostly keys, so for one only this tier's raid reports and nights a guild logged are read)
   const list = ch ? await WCL.charReports(creds, g.id) : await WCL.teamReports(creds, g.id), tierAt = list.filter((x) => x.zone && TIER_RE.test(x.zone.name)).map((x) => x.startTime);
   const since = tierAt.length ? Math.min(...tierAt) - 2 * 86400e3 : Infinity, tierBoss = new Set(E.PACKS.map((p) => p.encounter));
+  // (a character: the team or guild that logged most of their raid nights this tier, if one clearly did (2 nights or more,
+  // and half of them), for "You raid with …" on their page)
+  if (ch) { const tally = {}; let n = 0;
+    for (const x of list) if (x.zone && TIER_RE.test(x.zone.name) && x.guild && x.guild.id) { n++; (tally[x.guild.id] = tally[x.guild.id] || { id: x.guild.id, name: x.guild.name, n: 0 }).n++; }
+    const top = Object.values(tally).sort((a, b) => b.n - a.n)[0]; g.raidsWith = top && top.n >= 2 && top.n * 2 >= n ? { ...top, of: n } : null; }
   // (a boss new to the tier since the last import, like Nymrissa and Kith'ix: every report is read again for its pulls;
   // pulls already saved are skipped)
   const bossKey = [...tierBoss].join('|'); if (g.bosses !== bossKey) { g.done = {}; g.bosses = bossKey; }
@@ -12599,7 +12604,11 @@ function bindFront(auto) {
 const HICO = {
   live: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><path d="M8.3 15.7a5.3 5.3 0 0 1 0-7.4M15.7 8.3a5.3 5.3 0 0 1 0 7.4M5.5 18.5a9.2 9.2 0 0 1 0-13M18.5 5.5a9.2 9.2 0 0 1 0 13"/></svg>',
   file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7.5l4 4v13h-11.5z"/><path d="M14 3.5v4h4M9.5 12.5h5M9.5 16h5"/></svg>',
-  wcl: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10.5M7.5 10 12 14.5l4.5-4.5M5 19.5h14"/></svg>' };
+  wcl: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10.5M7.5 10 12 14.5l4.5-4.5M5 19.5h14"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z"/></svg>' };
+// ("See a real raid night" on the website's front page: a real Mythic progression night of the user's guild, Adequate,
+// on Ula'tek, for someone with no link of their own yet)
+const DEMO_REPORT = 'https://www.warcraftlogs.com/reports/4bh7kdJMZnyrgvBC';
 function home() {
   progLit(false);
   if (LIVE.on) setLive(false);
@@ -12943,7 +12952,7 @@ function homeHosted() {
   // (the raid's art fades in behind the headline; the start box comes first, then the two other ways in side by side)
   $('#main').innerHTML = '<div class="home fp fph">' +
     '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' + (teamsTop ? homeTeams() : '') +
-    '<section class="fph-hero" id="fpStart"><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1>' +
+    '<section class="fph-hero" id="fpStart">' + (DISCORD_URL ? '<a class="fph-beta" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener"><b>Beta</b><span>Help shape Debrief: join our Discord</span><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       (teamsTop ? '' : homeStart()) +
       '<div class="fph-ways">' +
@@ -12954,7 +12963,8 @@ function homeHosted() {
         '<div class="fph-way"><div class="fph-h">' + HICO.file + '<b>Looking at a finished night?</b></div><p>Paste any Warcraft Logs report, yours or anyone\'s.</p>' +
           '<div class="fph-box sm"><input id="hWcl" placeholder="Report link" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
           '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or drop one on the page.</div></div>' +
-      '</div></section>' +
+      '</div>' +
+      '<div class="fph-demo"><span>No link handy?</span><button class="btn" id="hDemo" type="button">' + HICO.play + 'See a real raid night</button><div class="fp-msg" id="hDemoMsg"></div></div></section>' +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
@@ -12975,6 +12985,8 @@ function homeHosted() {
     $('#h' + k).onpaste = () => setTimeout(() => { if (WCL.parseLink($('#h' + k).value)) go(k, live); }, 50); // (a pasted link opens at once)
   }
   $('#hHow').onclick = () => { const l = $('#hHowList'); l.hidden = !l.hidden; $('#hHow').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('#hDemo').onclick = async () => { const b = $('#hDemo'), msg = $('#hDemoMsg'); b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Opening a Mythic night on Ula\'tek…';
+    try { await openWcl(WCL.parseLink(DEMO_REPORT), null, false); } catch (err) { if (document.body.contains(b)) { b.disabled = false; msg.style.color = ''; msg.textContent = err.message; } } };
   $('#hFileGo').onclick = () => $('#fileIn').click();
   bindFront(true);
 }
@@ -13371,6 +13383,10 @@ function renderProgress(msg, msgErr) {
   // sit behind a small Edit button beside the name and only show when it's clicked (removing asks first and says how many
   // pulls go with it)
   const pgMsg = '<div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>';
+  // (a character whose raid nights were mostly logged by one team or guild that isn't on the list yet: one card to add it too)
+  const rw = g && g.kind === 'char' && !g.raidsWithNo && g.raidsWith, sugg = rw && !groups().some((o) => o.kind !== 'char' && o.id === rw.id) ?
+    '<section class="pg-sugg" id="pgSugg"><span class="pg-sg-ic" aria-hidden="true">+</span><div class="pg-sg-t"><b>You raid with ' + esc(rw.name) + '</b><span class="sub">' + rw.n + ' of your ' + rw.of + ' raid nights this tier were logged by them. Add them too to see the whole team\'s progress.</span></div>' +
+      '<div class="pg-sg-b"><button class="btn primary" id="pgSuggAdd" type="button">Add ' + esc(rw.name) + '</button><button class="linkbtn" id="pgSuggNo" type="button">Not now</button></div></section>' : '';
   const only = g ? groupOnly(g) : 0;
   const info = !g ? '' : '<div class="sub pg-info">' + (g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][0] + ' · your character' : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') + (g.label && g.label !== g.name ? ' · ' + esc(g.name) + ' on Warcraft Logs' : '') + ' · ' + (S.progBusy === g.gid ? 'checking for new nights…' : lastTxt(g)) + '</div>';
   const editing = S.pgEdit || S.pgRename || S.pgDel;
@@ -13386,13 +13402,21 @@ function renderProgress(msg, msgErr) {
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
   $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
+  if ($('#pgSugg')) {
+    $('#pgSuggNo').onclick = () => { g.raidsWithNo = true; groupPut(g); renderProgress(); };
+    $('#pgSuggAdd').onclick = async (ev) => { const b = ev.currentTarget; b.disabled = true;
+      try { const { g: ng, already } = await groupAdd('https://www.warcraftlogs.com/guild/id/' + rw.id); S.progView = ng.gid; window.scrollTo(0, 0);
+        if (already) { renderProgress(gName(ng) + ' is already on your list.'); return; }
+        renderProgress('Added ' + ng.name + '. Importing its nights…'); progRun(ng); groupsBackfill();
+      } catch (e) { b.disabled = false; const m = $('#pgMsg'); if (m) { m.textContent = e.message; m.classList.add('err'); } } };
+  }
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
   pageTips('team');
   // (new nights: checked by themselves when the page opens, if not in the last 10 minutes; the line under the name says when)

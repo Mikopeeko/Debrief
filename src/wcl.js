@@ -160,7 +160,7 @@ async function teamReports(creds, id) {
 // A Warcraft Logs character link ("…/character/us/zuljin/name" or "…/character/id/83269381") names the character; its
 // reports are listed 100 a page, newest first. (Hosted: the site has a route for each.)
 const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID guilds{id name} server{name slug region{slug}}}}}`;
-const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{name}}}}}}`;
+const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{id name}}}}}}`;
 function parseCharLink(s) {
   s = String(s || '').trim();
   let m = s.match(/character\/id\/(\d+)/); if (m) return { id: +m[1] };
