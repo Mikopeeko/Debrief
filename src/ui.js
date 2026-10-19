@@ -1418,11 +1418,56 @@ function notesSave(boss, o) { if (o.list.length) store.set(notesKey(boss), JSON.
 // (a note's roster match: how many of the pull's players it names, as whole words)
 const noteHas = (text, name) => new RegExp('(^|[^\\p{L}])' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu').test(text);
 const noteScore = (text, rep) => [...rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name) && noteHas(text, p.name.split('-')[0])).length;
+// (a pull's own key, for a note picked for that one pull: the same moment histKey uses)
+const pullKey = (it) => String(Math.round((it.wallMs || it.startMs || 0) / 10000));
+// How well a saved note fits a pull (your note, Oct 18: match notes to pulls on their own, so nobody has to guess): the
+// note's first line (its boss and difficulty), then its roster (the pull's players it names, less half a point for each name
+// it gives who isn't there), and when two notes fit the roster about as well, the one whose jobs were done that pull
+// (cooldowns on time, kicks and soaks followed), so an old and a new plan for the same players each get their own pulls.
+function noteFit(text, rep) {
+  let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
+  const enc = hd.encounterid && rep.item.id ? +hd.encounterid === +rep.item.id : null;
+  const dif = hd.difficulty && rep.item.diff ? String(rep.item.diff).toLowerCase().slice(0, 3) === String(hd.difficulty).toLowerCase().slice(0, 3) : null;
+  const inPull = [...rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => p.name.split('-')[0].toLowerCase());
+  const hit = noteScore(text, rep), away = noteNames(text).filter((n) => !inPull.includes(n.toLowerCase())).length;
+  return { enc, dif, hit, away, of: inPull.length, roster: hit - 0.5 * away - (dif === false ? 5 : 0) - (enc === false ? 20 : 0) };
+}
+const noteJobs = (res) => { if (!res || res.error) return null; const cds = (res.cds || []).filter((x) => /^(on time|late|early|missed)$/.test(x.status));
+  const ok = cds.filter((x) => x.status === 'on time').length, bad = (res.mistakes || []).filter((m) => m.severity !== 'Low').length; return { ok, bad, score: ok - bad }; };
+const NFIT = new WeakMap(); // (each pull's automatic pick, kept until a note is saved, added or removed)
 function noteForRep(rep) {
   const o = notesOf(rep.item.boss); if (!o.list.length) return null;
-  const chosen = o.pick !== 'auto' && o.list.find((n) => n.id === o.pick); if (chosen) return { ...chosen, auto: false };
-  const best = o.list.map((n) => ({ n, s: noteScore(n.text, rep) })).sort((a, b) => b.s - a.s || (b.n.saved || 0) - (a.n.saved || 0))[0];
-  return { ...best.n, auto: o.list.length > 1, score: best.s };
+  const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) return { ...one, auto: false, how: 'pull' };
+  const chosen = o.pick !== 'auto' && o.list.find((n) => n.id === o.pick); if (chosen) return { ...chosen, auto: false, how: 'all' };
+  const ck = o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) return had.v;
+  let v;
+  if (o.list.length === 1) v = { ...o.list[0], auto: false, how: 'only', fit: noteFit(o.list[0].text, rep) };
+  else {
+    const fs = o.list.map((n) => ({ n, f: noteFit(n.text, rep) })).sort((a, b) => b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
+    const near = fs.filter((x) => x.f.roster >= fs[0].f.roster - 1.5);
+    let how = fs.length > 1 && fs[0].f.roster > fs[1].f.roster ? 'roster' : 'newest';
+    if (near.length > 1) {
+      for (const x of near) { try { x.res = E.checkAssignments(rep, x.n.text); } catch (e) { x.res = { error: e.message }; } x.j = noteJobs(x.res); }
+      const js = (x) => (x.j ? x.j.score : -1e9);
+      near.sort((a, b) => js(b) - js(a) || b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
+      if (js(near[0]) > js(near[1])) how = 'jobs'; else how = near[0].f.roster > near[1].f.roster ? 'roster' : 'newest';
+    }
+    const best = near.length > 1 ? near[0] : fs[0], next = near.length > 1 ? near[1] : fs[1];
+    v = { ...best.n, auto: true, how, fit: best.f, jobs: best.j || null, res: best.res || null, rival: next ? { name: next.n.name, jobs: next.j || null, fit: next.f } : null };
+  }
+  NFIT.set(rep, { k: ck, v }); return v;
+}
+// (why a pull uses its note, in one plain sentence)
+function noteWhy(u) {
+  if (!u) return '';
+  if (u.how === 'pull') return 'You picked it for this pull.';
+  if (u.how === 'all') return 'You set it for every pull.';
+  const f = u.fit || {}, names = f.of ? 'it names ' + f.hit + ' of its ' + f.of + ' players' : '';
+  if (u.how === 'only') return f.dif === false ? "It's your only note for this boss, but its first line says another difficulty." : '';
+  if (u.how === 'jobs' && u.rival) { const rv = esc(u.rival.name), rj = u.rival.jobs, n0 = (v) => (v ? v : 'none');
+    return 'Picked for this pull: ' + names + ', ' + (u.rival.fit && u.rival.fit.hit === f.hit ? 'the same as ' : 'about as many as ') + rv + ', and more of its jobs got done: ' + n0(u.jobs.ok) + ' on time and ' + n0(u.jobs.bad) + ' missed, against ' + (rj ? n0(rj.ok) + ' on time and ' + n0(rj.bad) + ' missed' : 'none checked') + ' for ' + rv + '.'; }
+  if (u.how === 'newest' && u.rival) return 'Picked for this pull: ' + names + ', the same as ' + esc(u.rival.name) + ", and it's the newer one.";
+  return 'Picked for this pull: ' + names + (f.dif ? ", and it's for " + esc(String(S.rep && S.rep.item.diff || '')) : '') + '.';
 }
 // (the names a note gives, for "swap a player": reminder tags and the words after a line's label, kept to ones that look like character names)
 const NOTE_WORDS = new Set(['soak', 'soaks', 'kick', 'kicks', 'orb', 'orbs', 'group', 'left', 'right', 'melee', 'ranged', 'tank', 'tanks', 'healer', 'healers', 'dps', 'backup', 'everyone', 'rest', 'all', 'then', 'and', 'or', 'name', 'names']);
@@ -1439,7 +1484,9 @@ function applyNote(rep) {
   rep.assign = null;
   const pick = noteForRep(rep), text = pick ? pick.text : null; rep.noteUsed = pick ? { id: pick.id, name: pick.name, auto: pick.auto } : null;
   if (!text) return;
-  try { rep.assign = E.checkAssignments(rep, text); } catch (e) { rep.assign = { error: e.message }; return; }
+  // (the automatic pick may have checked this note already, to compare notes: that result is used as it is)
+  if (pick.res && !pick.res.error) rep.assign = pick.res;
+  else { try { rep.assign = E.checkAssignments(rep, text); } catch (e) { rep.assign = { error: e.message }; return; } }
   for (const m of rep.assign.mistakes) rep.mistakes.push({ ...m, fromNote: true });
   rep.mistakes.sort((a, b) => a.t - b.t);
 }
@@ -1524,10 +1571,26 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="noteSave">Save and check</button>' + (editN ? '<button class="btn" id="noteSaveNew">Save as a new note</button>' : '') + (NO.list.length ? '<button class="btn" id="noteCancel">Cancel</button>' : '') + (editN ? '<button class="btn" id="noteDel">Remove this note</button>' : '') + '</div>' +
     '<p class="muted" style="font-size:13px;margin:10px 0 0">' + checked + '</p></div>';
   // (the note this pull uses, the saved notes to pick from, and buttons to edit it or add another, on top where it's easy to find)
-  if (!editing) { const sel = NO.list.length > 1 ? '<select id="notePick" class="nt-pick" aria-label="Which note">' + opt('auto', 'Pick by roster') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>' + esc(n.name) + '</option>').join('') + '</select>' : '';
-    const why = used ? (used.auto ? 'picked for this pull\'s roster (it names ' + (used.score || 0) + ' of its players)' : NO.list.length > 1 ? 'picked by you' : '') : '';
-    top += '<div class="panel notebar"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<b>NSRT note' + (used ? ': ' + esc(used.name) : '') + '</b> <span class="sub">' + (a && a.note ? plural(a.note.reminders.length, 'reminder') + ' and ' + plural(a.note.lines.length, 'text line') : '') + (why ? (a && a.note ? ', ' : '') + why : '') + '</span></span>' + sel +
-      '<button class="btn" id="noteEditBtn">Edit note</button><button class="btn" id="noteNewBtn">New note</button></div>';
+  if (!editing) {
+    // the saved notes, each with the pulls it was used for (your note, Oct 18: a list on the tab, not a small menu), which one
+    // this pull uses and why, and a one-click fix when that pick is wrong
+    const k = pullKey(r.item), same = S.index.bosses.filter((b) => b.boss === boss && b.diffId === r.item.diffId), usedBy = new Map(); let unopened = 0;
+    for (const b of same) { const rr = CACHE.get(b); if (!rr) { unopened++; continue; } const u = rr === r ? used : noteForRep(rr); if (u) { if (!usedBy.has(u.id)) usedBy.set(u.id, []); usedBy.get(u.id).push(b.pull); } }
+    const rng = (ps) => { const v = [...new Set(ps)].sort((x, y) => x - y), out = []; for (let i = 0; i < v.length;) { let j = i; while (j + 1 < v.length && v[j + 1] === v[j] + 1) j++; out.push(i === j ? String(v[i]) : v[i] + '–' + v[j]); i = j + 1; } return out.join(', '); };
+    const when = (t) => (t ? new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+    const rowN = (n) => { const on = used && used.id === n.id, ps = usedBy.get(n.id) || [], nn = noteNames(n.text).length;
+      return '<div class="nl-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b>' + (n.example ? ' <span class="sub">(example)</span>' : '') +
+        '<div class="sub">' + [n.saved ? 'Saved ' + esc(when(n.saved)) : '', nn ? 'names ' + plural(nn, 'player') : '', ps.length ? 'used for ' + (ps.length === 1 ? 'pull ' : 'pulls ') + rng(ps) : 'not used by an opened pull yet'].filter(Boolean).join(' · ') + '</div></div>' +
+        '<div class="nl-b">' + (on ? '<span class="nl-this">✓ This pull</span>' : '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>') +
+        '<button class="btn" type="button" data-nedit="' + esc(n.id) + '">Edit</button><button class="btn" type="button" data-ndel="' + esc(n.id) + '">Remove</button></div></div>'; };
+    const sel = NO.list.length > 1 ? '<label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label>' : '';
+    const back = used && (used.how === 'pull' || used.how === 'all') && NO.list.length > 1 ? ' <button class="btn" type="button" id="noteAuto">Pick it automatically again</button>' : '';
+    const has = a && a.note ? ' <span class="sub">(' + plural(a.note.reminders.length, 'reminder') + ' and ' + plural(a.note.lines.length, 'text line') + ')</span>' : '';
+    const later = unopened ? ' ' + plural(unopened, 'pull') + " of this boss " + (unopened === 1 ? "isn't" : "aren't") + ' opened yet, so ' + (unopened === 1 ? "it isn't" : "they aren't") + ' counted here.' : '';
+    top += '<div class="panel nlib"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<b>Your NSRT notes for ' + esc(boss) + '</b> <span class="sub">saved in this browser</span></span><button class="btn" type="button" id="noteNewBtn">Add a note</button></div>' +
+      (used ? '<div class="nl-why">This pull uses <b>' + esc(used.name) + '</b>' + has + '. ' + noteWhy(used) + back + '</div>' : '') +
+      NO.list.map(rowN).join('') +
+      (NO.list.length > 1 ? '<div class="nl-foot">' + sel + '<span class="sub">Each pull picks the note for its difficulty that names the most of its players. When two fit the roster alike, it picks the one whose jobs got done.' + later + '</span></div>' : '') + '</div>';
     // (the example from the how-to says what it is, with the way out)
     if (used && used.example) top += '<div class="panel ah-exbar"><span><b>This is an example note</b> <span class="sub">made from one pull: your healers\' cooldowns, and one they didn\'t press. Paste your raid\'s own note to check the real plan.</span></span><button class="btn primary" id="noteExReal">Add your own note</button><button class="btn" id="noteExDel">Remove the example</button></div>'; }
   if (a && a.error) top += '<div class="panel">Couldn\'t read the note: ' + esc(a.error) + '</div>';
@@ -1977,6 +2040,16 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   if ($('#noteNewBtn')) $('#noteNewBtn').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
   if ($('#noteExReal')) $('#noteExReal').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
   if ($('#noteExDel')) $('#noteExDel').onclick = () => { const o = notesOf(boss); o.list = o.list.filter((n) => !n.example); if (!o.list.some((n) => n.id === o.pick)) o.pick = 'auto'; notesSave(boss, o); redo(); };
+  // (the saved-notes list: use one for this pull, edit it, or remove it (a second click confirms); "Pick it automatically
+  // again" undoes a pick made by hand)
+  const k0 = pullKey(r.item);
+  $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[k0] = b.dataset.nuse; notesSave(boss, o); redo(); }));
+  $$('#assignBox [data-nedit]').forEach((b) => (b.onclick = () => { S.noteEdit = true; S.noteEditId = b.dataset.nedit; assign(only); }));
+  $$('#assignBox [data-ndel]').forEach((b) => (b.onclick = () => {
+    if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again to remove'; b.classList.add('bad'); setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Remove'; b.classList.remove('bad'); } }, 4000); return; }
+    const id = b.dataset.ndel, o = notesOf(boss); o.list = o.list.filter((n) => n.id !== id); if (o.pick === id) o.pick = 'auto';
+    for (const [kk, v] of Object.entries(o.byPull || {})) if (v === id) delete o.byPull[kk]; notesSave(boss, o); redo(); }));
+  if ($('#noteAuto')) $('#noteAuto').onclick = () => { const o = notesOf(boss); if (o.byPull && o.byPull[k0]) delete o.byPull[k0]; else o.pick = 'auto'; notesSave(boss, o); redo(); };
   if ($('#notePick')) { $('#notePick').value = NO.pick || 'auto'; $('#notePick').onchange = () => { const o = notesOf(boss); o.pick = $('#notePick').value; notesSave(boss, o); redo(); }; }
   // (swap: every whole-word use of the name in the box, so a reminder tag and a text line both change)
   if ($('#noteSwap')) $('#noteSwap').onclick = () => { const a0 = $('#noteFrom').value, b0 = $('#noteTo').value, box = $('#noteBox'); if (!a0 || !b0) return;
@@ -2094,7 +2167,8 @@ function audit() {
     const name = (s) => '<a class="tlink mwr-l" href="' + href(s) + '">' + icon(s) + '<b>' + esc(s.title.split(': ')[0]) + '</b></a>';
     // (each one says what went wrong, not what the section shows: its worst row as one short line, the way Summary does, and how many more)
     // (the group's title without the mechanic's name, which is just before it: "Plague Froth #5 (Imbibe 2)", not "Plague Froth Plague Froth 5")
-    const gTitle = (s, t) => { const n = s.title.split(': ')[0]; if (!t.toLowerCase().startsWith(n.toLowerCase() + ' ')) return t; const x = t.slice(n.length + 1); return /^\d/.test(x) ? '#' + x : x; };
+    // (without the plain nickname in brackets: "Ravage (frontal)" is still "Ravage" here)
+    const gTitle = (s, t) => { const n = s.title.split(': ')[0].replace(/ \([^)]*\)/, ''); if (!t.toLowerCase().startsWith(n.toLowerCase() + ' ')) return t; const x = t.slice(n.length + 1); return /^\d/.test(x) ? '#' + x : x; };
     // (a death says it short: "3:20 Kargaryen died to Dreadful Presence, with Healthstone still ready"; the rest is in Deaths)
     const deathLine = (d) => { const ready = d.react !== false && d.available && d.available.length ? d.available : [];
       return T(d.t) + ' ' + d.player + ' died to ' + (d.ability || d.killer || 'something') + (ready.length ? ', with ' + ready[0] + (ready.length > 1 ? ' and more' : '') + ' still ready' : ''); };
@@ -2179,14 +2253,14 @@ function audit() {
     mutilate: { Soakers: 'short-handed soaks', 'With Gash': 'players soaking with Mutilated Gash on', Died: 'deaths in the soak' },
     tempest: { Touches: 'players touched twice or more', '!Touches': 'a single tornado touch', Died: 'deaths to Tempest' },
     cysts: { Surge: 'players dying with Venomous Surge', '!Used for': 'cysts popped outside the intermission' },
-    crosswinds: { Result: 'deaths after the launch', '!Result': 'drifts or players hit by a flying player' },
+    crosswinds: { Result: 'deaths after the launch', '!Result': 'players who drifted or got hit by a launched player' },
     fury: { Result: 'enrages', '!Result': 'Furies popped as Dig In ended' }, virulence: { Result: 'deaths to a Virulence clip', '!Result': 'Virulence clips' },
     winds: { Cyst: 'winds with no cyst popped', Died: 'deaths in the winds', '!Cyst': 'a spare cyst left up' },
     // (Nek'zali)
-    amani: { Result: 'Amani reaching the well', '!Shield': 'shields never broken' }, ignition: { Result: 'players hit by two circles', '!Result': 'circle hits or Ritual Burn going in', Died: 'deaths in Ignition' },
+    amani: { Result: 'Amani reaching the well', '!Shield': 'shields never broken' }, ignition: { Result: 'players hit by two circles', '!Result': 'players hit by a circle or carrying Ritual Burn', Died: 'deaths in Ignition' },
     depths: { Result: 'Curses that got off or deaths in the well', '!Result': 'Swirling Spirit hits', '!Who': 'going in with Soul Exhaustion' }, rend: { Removed: 'deaths with Essence Rend', '!Puddle': 'puddles in the way' },
     // (Lost Explorers)
-    boxes: { Result: 'boxes left to rupture', Splinters: 'deaths to the bleed', '!Splinters': 'pops that took the raid to four stacks' }, united: { Result: 'long United Defenses', '!Result': 'short United Defenses' }, ascension: { Result: 'Final Ascensions that went off' },
+    boxes: { Result: 'boxes left to rupture', Splinters: 'deaths to the bleed', '!Splinters': 'boxes popped too soon (the bleed hit four stacks)' }, united: { Result: 'long United Defenses', '!Result': 'short United Defenses' }, ascension: { Result: 'Final Ascensions that went off' },
     frostfire: { Result: 'debuffs still on at the next volley', '!Result': 'slow clears' }, blink: { Died: 'deaths to Blink Nova' }, thud: { Soakers: 'empty leaps', '!Soakers': 'thin soaks', Died: 'deaths to Mighty Thud' }, bomb: { Result: 'Blast Wave hits' }, tankstacks: { Died: 'tank deaths with stacks up' },
     // (Vashnik)
     venoms: { Result: 'venoms reaching the middle', '!Result': 'adds living over a minute', '!Notes': 'fire adds dying together' }, totems: { Result: 'Imbibes with two or more totems up', '!Result': 'a totem left up' },
@@ -2218,6 +2292,16 @@ function audit() {
     // Sentinels Marks: only the players in range of both bosses are listed, so say who, not "0 of 4 clean"
     if (s.id === 'marks') { const fl = new Set(); for (const g of groups) for (const row of g.rows) if (row[0] && row[0].p && row.some((c) => c.bad || c.warn)) fl.add(row[0].p);
       return '<div class="msum"><p class="' + (fl.size ? 'warn' : 'ok') + '">' + esc(fl.size ? plural(fl.size, 'player') + ' picked up stacks of the other boss\'s Mark (in range of both): ' + [...fl].slice(0, 6).join(', ') + (fl.size > 6 ? ' and more' : '') + '.' : 'Everyone stayed in range of their own boss only.') + '</p></div>'; }
+    // Soulcoil Ignition (Nek'zali): a "going in" line per Ignition plus a line per player the circles hit, so say what
+    // happened, not "2 of 3 results were clean"
+    if (s.id === 'ignition') { const hit = new Set(), two = new Set(); let burnOn = false, burnIgn = 0, died = 0;
+      for (const g of groups) for (const row of g.rows) { const p = row[0] && row[0].p;
+        if (p) { hit.add(p); if (parseInt(row[2].txt, 10) >= 2) two.add(p); continue; }
+        if (row[2] && !row[2].dim) { burnOn = true; if (row[2].warn) burnIgn++; }
+        if (row[3] && row[3].bad) died += row[3].txt.replace(/ died$/, '').split(', ').length; }
+      const cls = all.some((x) => isBadRow(x.row)) ? 'bad' : all.some((x) => isWarnRow(x.row)) ? 'warn' : 'ok';
+      return '<div class="msum"><p class="' + cls + '">' + esc((hit.size ? plural(hit.size, 'player') + (hit.size === 1 ? ' was' : ' were') + ' hit by the circles over ' + plural(groups.length, 'Ignition') + (two.size ? ', ' + two.size + ' of them by two or more' : '') : 'Nobody was hit by the circles') +
+        (burnOn ? (burnIgn ? ', and ' + burnIgn + ' of ' + groups.length + ' started with Ritual Burn up' : ', and nobody went in with Ritual Burn') : '') + '.' + (died ? ' ' + plural(died, 'player') + ' died during it.' : '')) + '</p></div>'; }
     // Tempest (Sszorak): its rows are only the players a tornado touched, so say how many and who most, not "none went cleanly"
     if (s.id === 'tempest') { const cnt = new Map(), red = new Set(); let died = 0;
       for (const g of groups) for (const row of g.rows) { const p = row[0] && row[0].p; if (!p) continue; cnt.set(p, (cnt.get(p) || 0) + (parseInt(row[2].txt, 10) || 0)); if (row[2].bad) red.add(p); if (row[3] && row[3].bad) died++; }

@@ -209,6 +209,20 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 219: Your saved NSRT notes as a list, and each pull picks its own (your two notes)
+- [x] **A list of your saved notes on Assignments** (it was a small menu): each note with when it was saved, how many
+  players it names, and the pulls it was used for ("used for pulls 3–12, 14"), with **Use for this pull**, **Edit** and
+  **Remove** (a second click confirms). **Add a note** is at the top. The note this pull uses is highlighted.
+- [x] **Each pull picks the note that fits it, and says why** in one sentence: "This pull uses Mythic main. Picked for
+  this pull: it names 19 of its 20 players." It goes by the note's first line (a note for another difficulty or boss
+  loses), then the roster (players it names who are in the pull, less half a point for each name who isn't), and when two
+  notes fit the roster alike (an old plan and a new one for the same players), the one whose jobs got done that pull: "and
+  more of its jobs got done: 4 on time and none missed, against none on time and 4 missed for Late plan."
+- [x] **One-click fix when it picks wrong:** "Use for this pull" sets the note for that one pull only, and "Pick it
+  automatically again" undoes it. "Every pull uses …" at the bottom still sets one note for all of them.
+- [x] Pulls you haven't opened yet aren't counted in "used for pulls", and the list says how many those are.
+- Tested with two notes for the same players and different cooldown times on The Coiled Altar; the test notes are removed.
+
 ## 2026-10-18, round 218: The first death's map on Pull recap
 - [x] **Pull recap's first death opens the map that draws what killed them.** Every death already had a map (where they
   died, and the 5 seconds before). Now, when that map shows only players and the fight check has a map of the same
@@ -394,12 +408,12 @@ itself, or only dots?
   Warcraft Logs calls Events, made readable); (2) movement, how far each player moved and how long they stood still (only
   possible because these logs have positions, and no other site shows it well); (3) the trinket and gear-proc view already
   in Next up. Lower on the list: absorbs and shields as their own view, and a deaths list (Mechanics has it already).
-- [ ] **Match NSRT notes to pulls on their own (your note, Oct 18):** so raid leaders and raiders don't have to guess
+- [x] **Match NSRT notes to pulls on their own (your note, Oct 18; done in round 219):** so raid leaders and raiders don't have to guess
   which saved note goes with which pulls. My take: good, and half built: each pull already picks the saved note that
   names the most of its players ("Pick by roster"). To add: match on the note's boss line, the roster, and whether the
   players it names actually did those jobs that pull; and say it plainly ("Mythic main: used for pulls 3 to 12; Without
   Optt: pulls 13 to 18"), with a one-click fix when one is wrong.
-- [ ] **A list of your saved NSRT notes on the Assignments tab (your note, Oct 18):** today they hide in a small menu on
+- [x] **A list of your saved NSRT notes on the Assignments tab (your note, Oct 18; done in round 219):** today they hide in a small menu on
   the note bar. My take: good, and it goes with the matching above: a panel listing each saved note (its name, when it
   was saved, how many players it names, and the pulls it was used for), with Use, Edit and Remove on each, and Add a note
   at the bottom. Build the two together.

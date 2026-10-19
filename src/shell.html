@@ -1723,6 +1723,25 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .nsa .notebar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; flex-wrap: wrap; }
 .nsa .notebar .nb-t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
 .nsa .notebar .icw.big { width: 22px; height: 22px; }
+/* the saved NSRT notes list on Assignments: each note, the pulls it was used for, and Use / Edit / Remove */
+.nsa .nlib { padding: 12px 14px; }
+.nlib .nl-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.nlib .nl-h .nb-t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.nlib .icw.big { width: 22px; height: 22px; }
+.nlib .nl-why { margin: 8px 0 4px; font-size: 14px; line-height: 1.45; }
+.nlib .nl-why .btn { margin-left: 4px; padding: 3px 10px; font-size: 13px; }
+.nlib .nl-r { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-top: 6px; flex-wrap: wrap; }
+.nlib .nl-r.on { border-color: rgba(230,180,80,.55); background: rgba(230,180,80,.06); }
+.nlib .nl-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--faint); flex: none; box-sizing: border-box; }
+.nlib .nl-r.on .nl-dot { background: var(--gold); border-color: var(--gold); }
+.nlib .nl-m { flex: 1; min-width: 200px; }
+.nlib .nl-b { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.nlib .nl-b .btn { padding: 4px 10px; font-size: 13px; }
+.nlib .nl-b .btn.bad { border-color: var(--bad); color: var(--bad); }
+.nlib .nl-this { color: var(--gold); font-weight: 600; font-size: 13px; padding: 0 6px; }
+.nlib .nl-foot { display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.nlib .nl-foot > .sub { flex: 1; min-width: 240px; }
+.nlib .nl-pk { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
 .nsa .tbl tr.rsub td { padding-top: 0; border-top: 0; font-size: 12.5px; }
 /* ---- Summary: the all-pulls page (overall report card, how far the night got, what to fix, then Mechanics and Assignments with a row per mechanic or assignment and a dot per pull) ---- */
 .sumv .sum-others { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 2px 0 10px; }
