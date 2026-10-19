@@ -5927,13 +5927,38 @@ const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || 
 // clicking it opens that player's breakdown under it (their spells, the hits they took, their deaths, what they kicked or dispelled). The detailed
 // views (charts over time, resources, cooldowns, buffs) stay one click away under the board. One pull at a time; All pulls keeps its own view.
 let GB = null;
-function graphsBoard(r, end) {
-  const ps = players().filter((p) => p.name && !/^Player-/.test(p.name)), dur = Math.max(1, end), E1 = Math.ceil(end);
+async function graphsAll(r0) { const it = r0.item, tab0 = S.tab, still = () => S.tab === tab0 && S.scope === 'all' && S.rep === r0 && !S.pfOld;
+  view(loadCard('Reading the night', 'Reading the pulls…', 0)); const got = await bossReps(it, still, (n, of) => loadSet('#view', 'Reading the pulls… ' + n + ' of ' + of, of ? n / of : null)); if (!got || !still()) return;
+  const NP = got.reps.map((rr) => ({ r: rr, end: Math.max(1, Math.min(rr.duration, cutT(rr))) })).sort((a, b) => a.r.item.pull - b.r.item.pull);
+  view(NP.length > 1 ? graphsBoard(r0, 0, NP) : graphsBoard(NP[0].r, NP[0].end)); refreshIcons(); }
+// (night: every pull of the boss (All pulls). Each player is gathered into one: their per-second lines laid end to end, their spells added up, and their
+// deaths, kicks, dispels and casts from every pull with its number; per second is over the pulls they were in. The charts over time are per pull, so
+// on All pulls they give way to pull-by-pull charts)
+function nightPlayers(NP) {
+  const names = []; for (const it of NP) for (const p of it.r.players.values()) if (p.name && !/^Player-/.test(p.name) && !names.includes(p.name)) names.push(p.name);
+  const mergeAb = (maps) => { const m = new Map(); for (const mp of maps) for (const y of mp.values()) { const x = m.get(y.name) || { name: y.name, id: y.id, total: 0, over: 0, hits: 0, crits: 0 }; x.total += y.total || 0; x.over += y.over || 0; x.hits += y.hits || 0; x.crits += y.crits || 0; m.set(y.name, x); } return m; };
+  return names.map((n) => { const parts = NP.map((it) => ({ it, p: [...it.r.players.values()].find((y) => y.name === n) })), have = parts.filter((x) => x.p), last = have[have.length - 1].p;
+    const cat = (k) => { const o = []; for (const { it, p } of parts) { const L = Math.ceil(it.end), a = (p && p[k]) || []; for (let i = 0; i < L; i++) o.push(a[i] || (k === 'takenAbS' ? null : 0)); } return o; };
+    const dmgT = new Map(); for (const { p } of have) for (const [k, v] of p.dmgT || []) dmgT.set(k, (dmgT.get(k) || 0) + v);
+    const cs = have.map(({ it, p }) => castOf(it.r, p, 0, it.end)).filter(Boolean), ab = new Map(); for (const c of cs) for (const a of c.ab) { const x = ab.get(a.name) || { name: a.name, ts: [] }; x.ts = x.ts.concat(a.ts); ab.set(a.name, x); }
+    return { name: n, color: last.color, cls: last.cls, specName: last.specName, specIcon: last.specIcon, icon: last.icon, role: last.role, guid: null,
+      dmgS: cat('dmgS'), healS: cat('healS'), takenS: cat('takenS'), takenAbS: cat('takenAbS'), dmgAb: mergeAb(have.map((x) => x.p.dmgAb)), healAb: mergeAb(have.map((x) => x.p.healAb)), dmgT,
+      healing: have.reduce((v, x) => v + (x.p.healing || 0), 0), overheal: have.reduce((v, x) => v + (x.p.overheal || 0), 0), __dur: have.reduce((v, x) => v + x.it.end, 0), __pulls: have.length,
+      __deaths: have.flatMap(({ it, p }) => (it.r.deaths || []).filter((d) => d.guid === p.guid && d.t <= it.end + 0.05).map((d) => ({ ...d, pull: it.r.item.pull }))),
+      __kicks: have.flatMap(({ it, p }) => (it.r.interrupts || []).filter((k) => k.guid === p.guid && k.t <= it.end + 0.05).map((k) => ({ ...k, pull: it.r.item.pull }))),
+      dispL: have.flatMap(({ it, p }) => (p.dispL || []).filter((d) => d.t <= it.end + 0.05).map((d) => ({ ...d, pull: it.r.item.pull, t: d.t }))),
+      __casts: cs.length ? { n: cs.reduce((v, c) => v + c.n, 0), al: cs.reduce((v, c) => v + c.al, 0), ab: [...ab.values()], all: [] } : null }; });
+}
+function graphsBoard(r, end, NP) {
+  const night = !!(NP && NP.length > 1);
+  if (night) end = NP.reduce((v, it) => v + Math.ceil(it.end), 0);
+  const ps = night ? nightPlayers(NP) : players().filter((p) => p.name && !/^Player-/.test(p.name)), dur = Math.max(1, end), E1 = Math.ceil(end);
   const sumTo = (arr) => { let s = 0; for (let i = 0; i < Math.min(arr.length, E1); i++) s += arr[i] || 0; return s; };
   // (what hit a player, up to the wipe filter: per spell, its damage, hits, biggest and the avoidable part)
   const takenBy = (p) => { const m = new Map(); (p.takenAbS || []).slice(0, E1).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { name: n, id: v[0], total: 0, hits: 0, big: 0, av: 0 }; x.total += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.av += v[4] || 0; m.set(n, x); } }); return [...m.values()]; };
-  const deaths = (p) => (r.deaths || []).filter((d) => d.guid === p.guid && d.t <= end + 0.05), kicks = (p) => (r.interrupts || []).filter((k) => k.guid === p.guid && k.t <= end + 0.05);
-  const disp = (p) => (p.dispL || []).filter((d) => d.t <= end + 0.05), castC = new Map(), castsOf = (p) => { if (!castC.has(p.name)) castC.set(p.name, castOf(r, p, 0, end)); return castC.get(p.name); };
+  const deaths = (p) => (night ? p.__deaths : (r.deaths || []).filter((d) => d.guid === p.guid && d.t <= end + 0.05)), kicks = (p) => (night ? p.__kicks : (r.interrupts || []).filter((k) => k.guid === p.guid && k.t <= end + 0.05));
+  const disp = (p) => (night ? p.dispL : (p.dispL || []).filter((d) => d.t <= end + 0.05)), castC = new Map(), castsOf = (p) => { if (night) return p.__casts; if (!castC.has(p.name)) castC.set(p.name, castOf(r, p, 0, end)); return castC.get(p.name); };
+  const pDur = (p) => (night ? Math.max(1, p.__dur || dur) : dur), PL = (x) => (night && x.pull != null ? 'Pull ' + x.pull + ', ' : '');
   const CARDS = [
     { k: 'dmg', t: 'Damage done', ic: 'bars', rate: 'DPS', val: (p) => sumTo(p.dmgS || []) },
     { k: 'heal', t: 'Healing done', ic: 'heart', rate: 'HPS', val: (p) => sumTo(p.healS || []) },
@@ -5948,22 +5973,22 @@ function graphsBoard(r, end) {
     const head = q.count ? tot + ' in all' : q.cpm ? 'raid average ' + (tot / rows.length).toFixed(1) : C(tot) + (q.rate ? ' · ' + C(tot / dur) + ' ' + q.rate : '');
     return '<section class="gb-card" data-k="' + q.k + '"><header class="gb-h"><b>' + esc(q.t) + '</b><span class="sub">' + esc(head) + '</span></header><div class="gb-rows">' + rows.map((x, i) => {
       const col = x.p.color || '#9aa0ac', w = Math.max(1.5, 100 * x.v / mx), sh = tot > 0 ? 100 * x.v / tot : 0;
-      const tip = { n: x.p.name, s: x.p.specName || '', v: fmtV(q, x.v) + (q.count ? (x.v === 1 ? ' time' : ' times') : ''), r: q.rate ? C(x.v / dur) + ' ' + q.rate : '', sh: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of the raid', rk: '#' + (i + 1) + ' of ' + rows.length, t: q.t };
+      const tip = { n: x.p.name, s: (x.p.specName || '') + (night ? ' · in ' + x.p.__pulls + ' of ' + NP.length + ' pulls' : ''), v: fmtV(q, x.v) + (q.count ? (x.v === 1 ? ' time' : ' times') : ''), r: q.rate ? C(x.v / pDur(x.p)) + ' ' + q.rate : '', sh: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of the raid', rk: '#' + (i + 1) + ' of ' + rows.length, t: q.t };
       return '<div class="gb-row" role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '">' +
         '<span class="gb-rk">' + (i + 1) + '</span>' + avatar(x.p, true) + '<span class="gb-n" style="color:' + col + '">' + esc(x.p.name) + '</span>' +
         '<span class="gb-tr"><i class="gb-f" style="width:' + w.toFixed(1) + '%;background:' + col + '"></i></span><span class="gb-v">' + fmtV(q, x.v) + '</span>' +
-        '<span class="gb-r">' + (q.rate ? C(x.v / dur) : q.cpm ? '' : q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%') + '</span></div>'; }).join('') + '</div></section>'; };
+        '<span class="gb-r">' + (q.rate ? C(x.v / pDur(x.p)) : q.cpm ? '' : q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%') + '</span></div>'; }).join('') + '</div></section>'; };
   // (a player's breakdown, built when their bar is clicked)
   const abRows = (list, opt) => { const L = list.filter((y) => y.total > 0).sort((a, b) => b.total - a.total), tot = L.reduce((v, y) => v + y.total, 0); if (!L.length) return '<p class="sub">Nothing to show.</p>';
     const mx = L[0].total; return '<div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(String(y.name).replace(/^[^:]+: /, '')) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + C(y.total) + '</span></span>' +
       '<span class="gb-bx">' + Math.round(100 * y.total / tot) + '%' + (y.hits ? ' · ' + y.hits + (y.hits === 1 ? ' hit' : ' hits') : '') + (opt && opt.crit && y.hits ? ' · ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '') + (opt && opt.over && y.total + (y.over || 0) > 0 ? ' · ' + Math.round(100 * (y.over || 0) / (y.total + (y.over || 0))) + '% overheal' : '') + (opt && opt.big && y.big ? ' · biggest ' + C(y.big) : '') + '</span></div>').join('') + (L.length > 14 ? '<p class="sub">and ' + (L.length - 14) + ' more</p>' : '') + '</div>'; };
   const cnt = (l, key) => { const m = new Map(); for (const x of l) { const n = key(x); m.set(n, (m.get(n) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
   const BD = {
-    dmg: (p) => '<p class="gb-bh">Their damage by spell, over the whole pull.</p>' + abRows([...p.dmgAb.values()], { crit: true }),
-    heal: (p) => '<p class="gb-bh">Their healing by spell, over the whole pull.</p>' + abRows([...p.healAb.values()], { crit: true, over: true }),
+    dmg: (p) => '<p class="gb-bh">Their damage by spell, over ' + (night ? 'all pulls' : 'the whole pull') + '.</p>' + abRows([...p.dmgAb.values()], { crit: true }),
+    heal: (p) => '<p class="gb-bh">Their healing by spell, over ' + (night ? 'all pulls' : 'the whole pull') + '.</p>' + abRows([...p.healAb.values()], { crit: true, over: true }),
     taken: (p) => '<p class="gb-bh">What hit them.</p>' + abRows(takenBy(p), { big: true }),
     avoid: (p) => '<p class="gb-bh">The avoidable hits they took.</p>' + abRows(takenBy(p).filter((x) => x.av > 0).map((x) => ({ ...x, total: x.av })), { big: true }),
-    death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + T(d.t) + ': ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' from ' + d.killer : '') : 'a melee hit from ' + (d.killer || 'an enemy')) + '</span></span></div>').join('') + '</div>',
+    death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + PL(d) + T(d.t) + ': ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' from ' + d.killer : '') : 'a melee hit from ' + (d.killer || 'an enemy')) + '</span></span></div>').join('') + '</div>',
     kick: (p) => { const l = kicks(p); return '<p class="gb-bh">What they interrupted.</p><div class="gb-bt">' + cnt(l, (k) => k.spell || 'a cast').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div><p class="sub">With ' + esc(andL([...new Set(l.map((k) => k.by).filter(Boolean))])) + '.</p>'; },
     disp: (p) => { const l = disp(p); return '<p class="gb-bh">What they dispelled.</p><div class="gb-bt">' + cnt(l, (d) => d.aura || 'an effect').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div>'; },
     cpm: (p) => { const c = castsOf(p); if (!c) return ''; const mins = Math.max(1, c.al) / 60, L = c.ab.map((a) => ({ name: a.name, total: a.ts.length })).sort((a, b) => b.total - a.total), mx = L.length ? L[0].total : 1;
@@ -6029,24 +6054,30 @@ function graphsBoard(r, end) {
   const healSl = (() => { const l = ps.map((p) => ({ n: p.name, col: p.color || '#9aa0ac', v: sumH(p) })).filter((x) => x.v > 0).sort((u, w) => w.v - u.v), tot = l.reduce((v, x) => v + x.v, 0), big = l.filter((x) => x.v >= 0.03 * tot), rest = l.filter((x) => x.v < 0.03 * tot);
     return rest.length ? big.concat([{ n: 'Everyone else', col: '#5c6270', v: rest.reduce((v, x) => v + x.v, 0), more: [rest.length + ' players'] }]) : big; })();
   const top5 = ps.map((p) => ({ p, v: sumD(p) })).sort((u, w) => w.v - u.v).slice(0, 5).filter((x) => x.v > 0);
-  const bossN = new Set(r.bossUnits || []), bossAdds = ps.map((p) => { let b = 0, o = 0; for (const [n, v] of p.dmgT || []) { if (bossN.has(n)) b += v; else o += v; } return { p, s: [b, o] }; });
+  const bossN = new Set(night ? NP.flatMap((it) => it.r.bossUnits || []) : r.bossUnits || []), bossAdds = ps.map((p) => { let b = 0, o = 0; for (const [n, v] of p.dmgT || []) { if (bossN.has(n)) b += v; else o += v; } return { p, s: [b, o] }; });
   const spellTop = ps.flatMap((p) => [...(p.dmgAb || new Map()).values()].map((y) => ({ n: String(y.name), ic: String(y.name).replace(/^[^:]+: /, ''), who: p.name, col: p.color, v: y.total, more: [y.hits + (y.hits === 1 ? ' hit' : ' hits') + (y.hits ? ', ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '')] })));
   const takenSrc = (() => { const m = new Map(); for (const p of ps) (p.takenAbS || []).slice(0, E1).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { n, v: 0, hits: 0, big: 0, who: new Set() }; x.v += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.who.add(p.name); m.set(n, x); } }); return [...m.values()].map((x) => ({ n: x.n, v: x.v, more: [x.hits + ' hits on ' + x.who.size + (x.who.size === 1 ? ' player' : ' players'), 'biggest hit ' + C(x.big)] })); })();
   const healOver = ps.map((p) => ({ p, s: [p.healing || 0, p.overheal || 0] }));
   const ch = (t, sub, body, wide) => (body ? '<section class="gb-card gb-ch' + (wide ? ' wide' : '') + '"><header class="gb-h"><b>' + esc(t) + '</b><span class="sub">' + esc(sub || '') + '</span></header><div class="gb-cb">' + body + '</div></section>' : '');
+  // (All pulls: damage and healing a second for each pull, side by side (a click opens the pull), and each pull's deaths on its own lane)
+  const pullBars = () => { const L = NP.map((it) => { const rr = it.r, s1 = (a) => { let v = 0; for (let i = 0; i < Math.min((a || []).length, Math.ceil(it.end)); i++) v += a[i] || 0; return v; }; return { it, d: s1(rr.dmgS) / it.end, h: s1(rr.healS) / it.end, dn: (rr.deaths || []).filter((x) => x.t <= it.end + 0.05).length }; }), mx = Math.max(1, ...L.flatMap((x) => [x.d, x.h]));
+    return '<div class="gb-pb">' + L.map((x) => { const itm = x.it.r.item; return '<button type="button" class="gb-pbar' + (itm.kill ? ' kill' : '') + '" data-gpull="' + itm.pull + '"' + gt(['Pull ' + itm.pull + ': ' + (itm.kill ? 'kill' : pullLabel(itm)), 'Length ' + T(x.it.end), 'Damage ' + C(x.d) + ' a second', 'Healing ' + C(x.h) + ' a second', x.dn + (x.dn === 1 ? ' death' : ' deaths'), 'Click to open this pull']) + '><span class="gb-pc"><i class="d" style="height:' + (100 * x.d / mx).toFixed(1) + '%"></i><i class="h" style="height:' + (100 * x.h / mx).toFixed(1) + '%"></i></span><b>' + itm.pull + '</b><small>' + esc(itm.kill ? 'Kill' : pullLabel(itm)) + '</small></button>'; }).join('') + '</div>' +
+      '<div class="gb-leg"><span><i style="background:#e6b450"></i>Damage a second</span><span><i style="background:#45c15c"></i>Healing a second</span><span class="sub">Up to ' + C(mx) + ' a second. A green number is a kill.</span></div>'; };
+  const deathLanes = () => { const mxL = Math.max(...NP.map((it) => it.end)), xs = (t) => (1000 * t / mxL).toFixed(1), ax = []; const st = (mxL > 420 ? 60 : 30) * ((document.documentElement.clientWidth || 1000) < 700 ? 2 : 1); for (let t = 0; t <= mxL; t += st) ax.push('<span style="left:' + (100 * t / mxL).toFixed(2) + '%">' + T(t) + '</span>');
+    return NP.map((it) => { const dl = (it.r.deaths || []).filter((d) => d.t <= it.end + 0.05); return '<div class="gb-lane"><span class="gb-lnm">Pull ' + it.r.item.pull + ' (' + dl.length + ')</span><svg viewBox="0 0 1000 20" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="0" width="' + xs(it.end) + '" height="20" class="gb-ph0"/>' +
+      dl.map((d) => '<line x1="' + xs(d.t) + '" x2="' + xs(d.t) + '" y1="3" y2="17" class="gb-ed"/><rect x="' + (1000 * d.t / mxL - 5).toFixed(1) + '" y="0" width="10" height="20" class="gb-hv"' + gt(['Pull ' + it.r.item.pull + ', ' + T(d.t) + ': ' + d.player + ' died', d.ability ? 'to ' + d.ability : '']) + '/>').join('') + '</svg></div>'; }).join('') + '<div class="gb-lane gb-lax"><span></span><div class="gb-ax">' + ax.join('') + '</div></div>'; };
+  // (just the bar graphs for now (your call, Oct 19: "lets stick with just the bar graphs for now"): the ranked player bars and the other bar cards
+  // in the same style. The line, donut, heatmap and timeline builders above are parked, unused)
+  void timeChart; void donut; void heat; void events; void pullBars; void deathLanes; void clsSl; void healSl; void top5;
+  const ALLP = night ? ', all pulls' : '';
   const SECS = [
-    ['over', 'Overview', 'The pull at a glance.', ch('Raid damage a second', 'Phases shaded, Bloodlust on top, deaths at the bottom', timeChart([{ n: 'Damage done', col: '#e6b450', v: bucket(r.dmgS), fill: true }], { marks: dths }), true) +
-      ch('Damage taken and healing a second', 'On one scale, so you can see the healing keep up', timeChart([{ n: 'Damage taken', col: '#e5534b', v: bucket(r.takenS), fill: true }, { n: 'Healing', col: '#45c15c', v: bucket(r.healS), fill: true }], { marks: dths }), true) +
-      ch('Damage by class', 'Who the damage came from', donut(clsSl)) + ch('Healing by player', 'Who the healing came from', donut(healSl))],
-    ['dmg', 'Damage', 'Click a bar for that player\'s spells.', byK.get('dmg') + ch('Boss or adds', 'Damage into the boss and into everything else, over the whole pull', stack(bossAdds, [{ n: 'Boss', col: '@cls' }, { n: 'Adds and others', col: '@cls', op: 0.35 }])) +
-      ch('Biggest damage spells', 'The single spells that did the most, raid-wide', bars(spellTop)) + ch('Damage a second, top 5', 'The five highest damage dealers over the pull', timeChart(top5.map((x) => ({ n: x.p.name, col: x.p.color || '#9aa0ac', v: bucket(x.p.dmgS) })), { marks: dths }), true)],
-    ['heal', 'Healing', 'Click a bar for that player\'s spells.', byK.get('heal') + ch('Healing and overhealing', 'Healing that landed, and what was more than needed, over the whole pull', stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
-    ['taken', 'Damage taken', 'Who got hit, by what, and when.', byK.get('taken') + ch('What hit the raid', 'Each source\'s damage across all players', bars(takenSrc)) + ch('Damage taken over time', 'A row per player, brighter for more damage', heat(), true)],
-    ['util', 'Deaths and utility', 'The raid\'s events, and who did them.', ch('Raid events', 'Every death, interrupt, dispel and Bloodlust on one timeline', events(), true) + (byK.get('death') || '') + (byK.get('kick') || '') + (byK.get('disp') || '')],
-    ['cast', 'Casting', 'How busy everyone was.', (byK.get('cpm') || '') + ch('Raid casts over time', 'Every player\'s casts together, a minute', (() => { const c = new Array(NB).fill(0); for (const p of ps) { const cc = castsOf(p); if (cc) for (const t of cc.all || []) if (t <= end) c[Math.min(NB - 1, Math.floor(t / STEP))]++; }
-      return c.some((v) => v > 0) ? timeChart([{ n: 'Raid casts', col: '#6aa8ff', v: c.map((v, j) => 60 * v / Math.max(1, Math.min(STEP, end - j * STEP))), fill: true, u: ' a minute', fmt: (v) => String(Math.round(v)) }], { marks: dths }) : ''; })())]].filter((x) => x[3]);
+    ['dmg', 'Damage', (night ? 'All pulls added up. ' : '') + 'Click a bar for that player\'s spells.', byK.get('dmg') + ch('Boss or adds', 'Damage into the boss and into everything else' + (night ? ALLP : ', over the whole pull'), stack(bossAdds, [{ n: 'Boss', col: '@cls' }, { n: 'Adds and others', col: '@cls', op: 0.35 }])) + ch('Biggest damage spells', 'The single spells that did the most, raid-wide' + ALLP, bars(spellTop))],
+    ['heal', 'Healing', (night ? 'All pulls added up. ' : '') + 'Click a bar for that player\'s spells.', byK.get('heal') + ch('Healing and overhealing', 'Healing that landed, and what was more than needed' + (night ? ALLP : ', over the whole pull'), stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
+    ['taken', 'Damage taken', (night ? 'All pulls added up. ' : '') + 'Click a bar for what hit that player.', byK.get('taken') + ch('What hit the raid', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
+    ['util', 'Deaths and utility', 'Who died, kicked and dispelled.', (byK.get('death') || '') + (byK.get('kick') || '') + (byK.get('disp') || '')],
+    ['cast', 'Casting', 'How busy everyone was' + (night ? ', all pulls.' : '.'), byK.get('cpm') || '']].filter((x) => x[3]);
   return '<div class="gb"><nav class="gb-nav" aria-label="Sections">' + SECS.map(([id, t]) => '<button type="button" data-gs="' + id + '">' + esc(t) + '</button>').join('') + '</nav>' +
-    '<p class="gb-note sub">Hover any bar, line or slice for its numbers, and click a player\'s bar for what made it up. ' + (end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
+    '<p class="gb-note sub">Hover any bar for its numbers, and click a player\'s bar for what made it up. ' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter.' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
     SECS.map(([id, t, sub, body]) => '<section class="gb-sec" id="gbs-' + id + '"><div class="gb-sh"><h3>' + esc(t) + '</h3><span class="sub">' + esc(sub) + '</span></div><div class="gb-grid">' + body + '</div></section>').join('') +
     // (the detailed views, each a button of its own: Power Infusion first (your note, Oct 19: "dont remove the power infusion stuff, i like that"))
     '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survival'], ['cast', 'Casts'], ['dmg', 'Charts over time']].filter(([k]) => k !== 'pi' || !PI_OFF()).map(([k, l]) => '<button type="button" class="gb-pv" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>';
@@ -6062,6 +6093,7 @@ function graphsBoard(r, end) {
     if (was || !GB) return; const p = GB.byName.get(row.dataset.p), f = GB.BD[row.dataset.k]; if (!p || !f) return;
     row.classList.add('on'); row.setAttribute('aria-expanded', 'true'); row.insertAdjacentHTML('afterend', '<div class="gb-bd">' + f(p) + '</div>'); refreshIcons(); if (tipEl) tipEl.hidden = true; };
   document.addEventListener('click', (e) => { const row = e.target.closest && e.target.closest('.gb-row'); if (row) { open(row); return; }
+    const gp = e.target.closest && e.target.closest('.gb-pbar[data-gpull]'); if (gp && S.rep && S.index) { const it = S.rep.item, b = S.index.bosses.find((x) => x.id === it.id && x.diffId === it.diffId && String(x.pull) === gp.dataset.gpull); if (b) { S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } return; }
     const gs = e.target.closest && e.target.closest('.gb-nav [data-gs]'); if (gs) { const t = document.getElementById('gbs-' + gs.dataset.gs); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - 70, behavior: 'smooth' }); return; }
     const pv = e.target.closest && e.target.closest('.gb-pv'); if (pv) { S.pfOld = true; S.perfKind = pv.dataset.pv; window.scrollTo({ top: 0 }); renderMain(); return; }
     if (e.target.closest && e.target.closest('#gbOld')) { S.pfOld = true; renderMain(); return; } if (e.target.closest && e.target.closest('#gbBack')) { S.pfOld = false; renderMain(); } });
@@ -6077,6 +6109,8 @@ function perf() {
   // (one pull or all pulls of the boss, switched here like on the Player audit)
   const isBoss = r.item.kind === 'boss' && !r.item.run, nP = isBoss && S.index ? S.index.bosses.filter((b) => b.id === r.item.id && b.diffId === r.item.diffId).length : 0;
   const scopeSw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (S.scope === 'all' ? ' class="on"' : '') + '>All pulls<span class="n">' + nP + '</span></button><button data-v="pull"' + (S.scope === 'all' ? '' : ' class="on"') + '>Pull #' + r.item.pull + '<span class="n">' + (r.item.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
+  // (All pulls: the bar graphs too, over every pull of the boss, once they're read (your screenshot, Oct 19: All pulls, the default, still showed the old view))
+  if (isBoss && S.scope === 'all' && !rot && !S.pfOld) { graphsAll(r); return; }
   if (isBoss && S.scope === 'all') { perfNight(r, kind, scopeSw); return; }
   // (Graphs opens on the bar graphs (your ask, Oct 19); the detailed views are one click away under them)
   if (!rot && !S.pfOld) { view(graphsBoard(r, end)); refreshIcons(); return; }
