@@ -15315,9 +15315,18 @@ function rememberView() {
 }
 if (!WCL.HOSTED && location.protocol === 'http:' && location.hostname === 'localhost') {
   window.__wlaUp = true; // (the app is running: the page's fallback reload in the shell stands down)
-  let ver = null;
+  // (a new build (Oct 19, your report: "it's just repeatedly loading over and over"): with several sessions building, reloading at
+  // once restarted a night's reading before it could finish. Now it never reloads while something is loading or you're on the page:
+  // a small "Debrief was updated · Reload" button waits at the bottom, and it reloads by itself only when the tab is in the
+  // background with nothing loading)
+  let ver = null, pend = false;
+  const busy = () => !!document.querySelector('.ld');
+  const reloadNow = () => { rememberView(); location.reload(); };
+  const offer = () => { if (document.hidden && !busy()) { reloadNow(); return; } if ($('#updPill')) return;
+    const b = document.createElement('button'); b.id = 'updPill'; b.className = 'upd-pill'; b.type = 'button'; b.innerHTML = '<span>Debrief was updated</span><b>Reload</b>'; b.onclick = reloadNow; document.body.appendChild(b); };
+  document.addEventListener('visibilitychange', () => { if (pend && document.hidden && !busy()) reloadNow(); });
   setInterval(() => fetch('/version', { cache: 'no-store' }).then((r) => r.text()).then((v) => {
-    if (ver == null) ver = v; else if (v !== ver) { rememberView(); location.reload(); }
+    if (ver == null) ver = v; else if (v !== ver) { pend = true; offer(); }
   }).catch(() => {}), 2000);
   window.addEventListener('beforeunload', rememberView);
   let last = null; try { last = JSON.parse(sessionStorage.getItem(RESUME) || 'null'); } catch (e) { /* ignore */ }

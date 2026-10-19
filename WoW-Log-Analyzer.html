@@ -3629,6 +3629,9 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
   .wnm-fx .wr-map.wnm-map, .wnm-fx .wr-map.wnm-map svg.zmap { height: 150px !important; }
 }
 .fc-lock .fcard.pull { opacity: .32; filter: grayscale(1); cursor: not-allowed; box-shadow: none; transform: none; }
+/* (Oct 19: a new build waits for you instead of reloading the page mid-load) */
+.upd-pill { position: fixed; right: 18px; bottom: 18px; z-index: 9000; display: inline-flex; align-items: center; gap: 10px; padding: 9px 10px 9px 14px; border-radius: 999px; border: 1px solid var(--line2); background: var(--raised); color: var(--text); font: 600 13.5px var(--body); box-shadow: 0 10px 28px rgba(0,0,0,.45); cursor: pointer; }
+.upd-pill b { padding: 4px 12px; border-radius: 999px; background: var(--gold); color: var(--gold-ink); font-weight: 700; } .upd-pill:hover { border-color: var(--faint); } .upd-pill:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 </style>
 
 
@@ -25724,9 +25727,18 @@ function rememberView() {
 }
 if (!WCL.HOSTED && location.protocol === 'http:' && location.hostname === 'localhost') {
   window.__wlaUp = true; // (the app is running: the page's fallback reload in the shell stands down)
-  let ver = null;
+  // (a new build (Oct 19, your report: "it's just repeatedly loading over and over"): with several sessions building, reloading at
+  // once restarted a night's reading before it could finish. Now it never reloads while something is loading or you're on the page:
+  // a small "Debrief was updated · Reload" button waits at the bottom, and it reloads by itself only when the tab is in the
+  // background with nothing loading)
+  let ver = null, pend = false;
+  const busy = () => !!document.querySelector('.ld');
+  const reloadNow = () => { rememberView(); location.reload(); };
+  const offer = () => { if (document.hidden && !busy()) { reloadNow(); return; } if ($('#updPill')) return;
+    const b = document.createElement('button'); b.id = 'updPill'; b.className = 'upd-pill'; b.type = 'button'; b.innerHTML = '<span>Debrief was updated</span><b>Reload</b>'; b.onclick = reloadNow; document.body.appendChild(b); };
+  document.addEventListener('visibilitychange', () => { if (pend && document.hidden && !busy()) reloadNow(); });
   setInterval(() => fetch('/version', { cache: 'no-store' }).then((r) => r.text()).then((v) => {
-    if (ver == null) ver = v; else if (v !== ver) { rememberView(); location.reload(); }
+    if (ver == null) ver = v; else if (v !== ver) { pend = true; offer(); }
   }).catch(() => {}), 2000);
   window.addEventListener('beforeunload', rememberView);
   let last = null; try { last = JSON.parse(sessionStorage.getItem(RESUME) || 'null'); } catch (e) { /* ignore */ }
