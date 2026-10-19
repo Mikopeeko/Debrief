@@ -124,7 +124,10 @@ async function topSpecOf(run, v) {
   for (const g of got) for (const a of g.ab) { let o = by.get(a.name); if (!o) by.set(a.name, o = { name: a.name, id: a.id, share: 0, cpm: 0, hits: 0, crits: 0, total: 0 });
     o.share += a.share / got.length; o.cpm += 60 * a.casts / a.dur / got.length; o.hits += a.hits; o.crits += a.crits; o.total += a.total; }
   return { n: got.length, who: got.map((g) => g.who), ab: [...by.values()].map((o) => ({ name: o.name, id: o.id, share: +o.share.toFixed(4), cpm: +o.cpm.toFixed(2), crit: o.hits ? +(o.crits / o.hits).toFixed(3) : null, avg: o.hits ? Math.round(o.total / o.hits) : null }))
-    .sort((a, b) => b.share - a.share).slice(0, 30) };
+    .sort((a, b) => b.share - a.share).slice(0, 30),
+    // (each of them on their own too, for Compare's "against one top raider": their 25 biggest spells, the same numbers)
+    per: got.map((g) => ({ name: g.who.name, ab: g.ab.slice().sort((a, b) => b.share - a.share).slice(0, 25).map((a) => ({ name: a.name, id: a.id, share: +a.share.toFixed(4), cpm: +(60 * a.casts / a.dur).toFixed(2),
+      crit: a.hits ? +(a.crits / a.hits).toFixed(3) : null, avg: a.hits ? Math.round(a.total / a.hits) : null })) })) };
 }
 // Kills of one boss, fastest first (Warcraft Logs' speed rankings, 50 a page), with who played what in each and their
 // damage (healers: healing) a second, for Compare's "Raids like yours". 20 kills from the page asked for; each kill's
@@ -172,7 +175,7 @@ async function guildProgOf(run, v) {
 }
 // </topspec>
 async function topSpec(creds, v) {
-  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m);
+  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=2'); // (v=2: with each player's own spells)
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
