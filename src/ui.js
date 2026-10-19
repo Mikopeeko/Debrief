@@ -118,7 +118,7 @@ function hydrateIcons() {
 // game icons for headings that aren't one spell (loaded by icon name, like every other icon)
 // (these win over a spell of the same name in the log: "Death" would otherwise borrow whatever spell a log calls that,
 // so the Deaths heading changed from log to log)
-const NAMED_ICON = { 'avoidable damage': 'ability_rogue_feint', death: 'inv_misc_bone_humanskull_01', 'soul shard': 'inv_misc_gem_amethyst_02' };
+const NAMED_ICON = { 'avoidable damage': 'ability_rogue_feint', death: 'inv_misc_bone_humanskull_01', deaths: 'inv_misc_bone_humanskull_01', 'soul shard': 'inv_misc_gem_amethyst_02' };
 // (a bit of the app's own HTML as plain text: tags dropped, "Zul&#39;jan" back to "Zul'jan")
 const plainOf = (h) => { const t = document.createElement('textarea'); t.innerHTML = String(h == null ? '' : h).replace(/<[^>]+>/g, ''); return t.value; };
 // (a spell named only by text: the ID the log used for that name, else a boss ability's from the built-in list. Never for
@@ -209,7 +209,8 @@ function wrongRight(wrong, right, o) {
   // (what went well: a strip across the top, its lines in two columns; left out when there's nothing to call out)
   const gPanel = right.length ? '<div class="panel probbox wr ok wr-good"><h3 class="nh">What went well' + hst('ok', plural(right.length, 'thing')) + '</h3><div class="wr-gl">' +
     right.map((x) => line(typeof x === 'string' ? { html: x } : x, 'ok')).join('') + '</div></div>' : '';
-  return '<div class="wr-wrap">' + gPanel + (o.rightTop ? '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + '</div></div>' : wPanel) + '</div>';
+  // (o.tight, Mechanics: what went well as chips, each wrong thing as an even two-line row with a coloured edge)
+  return '<div class="wr-wrap' + (o.tight ? ' wr-tight' : '') + '">' + gPanel + (o.rightTop ? '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + '</div></div>' : wPanel) + '</div>';
 }
 // (a mistake's sentence after a player's name reads on: "Kargaryen: their ghost touched another ghost")
 const lcLead = (d) => (/^(Their|They|Was|Were|Had|Took|Got|Gained|Died|Stood|Used|Soaked|Kicked|Picked|Cursed|Didn't|Never|Ran|Walked|Moved|Left|Missed|Is)\b/.test(d) ? d.charAt(0).toLowerCase() + d.slice(1) : d);
@@ -2783,12 +2784,16 @@ function audit() {
     const probMap = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
       for (const row of s.rows || []) if (want(row)) return rowMap(row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return rowMap(row); return null; };
     const thumb = (s, mp) => (mp ? '<a class="wr-map tlink" href="' + href(s) + '" title="' + esc('See the map of ' + s.title.split(': ')[0]) + '" aria-label="' + esc('See the map of ' + s.title.split(': ')[0]) + '">' + miniMap(mp, pmap) + '</a>' : '');
-    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: thumb(s, probMap(s, b)) + '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
+    // (Oct 19, "tighten its visual appeal": the moment ("Set 7, 9:47") and "+3 more" as small tags beside the name, the sentence on its own line)
+    const tagOf = (t) => { const m = String(t).match(/^([^:]{0,18}?\b\d+:\d\d)[,:]?\s*/); return m ? { tag: m[1], rest: t.slice(m[0].length) } : { tag: '', rest: t }; };
+    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1, tg = tagOf(fp || '');
+      return { sev: b ? 'bad' : 'warn', html: name(s) + (tg.tag ? ' <span class="wr-tag">' + esc(tg.tag) + '</span>' : '') + (fp && more > 0 ? ' <span class="wr-plus">+' + more + ' more</span>' : '') +
+        ' <span class="sub wr-s2">' + esc(fp ? capS(tg.rest) : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: thumb(s, probMap(s, b)) + '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
     // (and what went well keeps only its count, "10 tank frontals.", not what the section shows)
     const okSum = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/\bshows?\b/i.test(x)).join(' ');
     // (one player picked: what went well counts their rows, not the raid's summary)
     const right = ord.filter((s) => tierT(s) === 2).map((s) => { const t = mp1 ? plural((s.rows || []).length + (s.groups || []).reduce((n, g) => n + (g.rows || []).length, 0), 'row') + ' about ' + S.mechP + ', all fine.' : okSum(s.summary); return name(s) + (t ? ' <span class="sub">' + esc(t) + '</span>' : ''); });
-    if (wrong.length || right.length) h += wrongRight(wrong, right, { none: 'Every mechanic went to plan.', moreWhere: 'below' });
+    if (wrong.length || right.length) h += wrongRight(wrong, right, { none: 'Every mechanic went to plan.', moreWhere: 'below', tight: true });
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
   // "2:08 Guillotine: In circle 5 / 6 · Target Xyron (no protection) · Died Chumfu"
@@ -3202,6 +3207,11 @@ function audit() {
     if (extra) b += '<div style="margin-top:12px"><div class="sub" style="margin-bottom:6px">' + esc(extra.title) + '</div><span class="chips">' + extra.items.map((i) => '<span class="chipn">' + who(i.p) + '<b>' + i.n + '</b></span>').join('') + '</span></div>';
     return b + '</div></details>';
   };
+  // (Oct 19, "tighten its visual appeal": a phase's clean mechanics fold into one line of small chips after its problems; a chip
+  // still opens its section in place, across the whole line)
+  const okSec = (x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return !x.s.info && !a.some(isBadRow) && !a.some(isWarnRow); };
+  const phaseBody = (list, key) => { const ok = list.filter(okSec); return list.filter((x) => !okSec(x)).map((x) => secBlock(x, key)).join('') +
+    (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean</span>' + ok.map((x) => secBlock(x, key)).join('') + '</div>' : ''); };
   // phases, in fight order; each phase is a header with its mechanics, problems first
   buckets.forEach((list, i) => {
     if (!list.length) return;
@@ -3212,9 +3222,9 @@ function audit() {
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
     h += '<details class="phase" open><summary><b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
-      '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕\u00a0' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓\u00a0clean') + '</span></summary>' + list.map((x) => secBlock(x, i)).join('') + '</details>';
+      '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕\u00a0' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓\u00a0clean') + '</span></summary>' + phaseBody(list, i) + '</details>';
   });
-  if (whole.length) h += '<details class="phase" open><summary><b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span></summary>' + whole.map((x) => secBlock(x, 'w')).join('') + '</details>';
+  if (whole.length) h += '<details class="phase" open><summary><b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span></summary>' + phaseBody(whole, 'w') + '</details>';
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;

@@ -2863,6 +2863,29 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .wr-wrap { display: flex; flex-direction: column; gap: 12px; margin: 0 0 14px; } .wr-wrap > .panel, .wr-wrap > .wr-cols { margin: 0; }
 .wr-good { border-color: rgba(69, 193, 92, .32); background: linear-gradient(180deg, rgba(69, 193, 92, .06), transparent 70%), var(--panel); }
 .wr-good .wr-gl { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 22px; }
+/* (Mechanics, tighter (Oct 19): what went well as chips (the detail on hover); each wrong thing an even two-line row with a coloured edge,
+   its moment and "+3 more" as tags, a small map that grows on hover; a phase's clean mechanics as chips that open in place) */
+.wr-tight .wr-good .wr-gl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.wr-tight .wr-good .pb-r { padding: 4px 13px 4px 5px; border: 1px solid rgba(69,193,92,.35); border-radius: 999px; background: rgba(69,193,92,.08); font-size: 13px; }
+.wr-tight .wr-good .pb-r .pb-i, .wr-tight .wr-good .pb-r .sub { display: none; } .wr-tight .wr-good .wr-t { overflow: visible; }
+.wr-tight .wr-good .icw { width: 22px; height: 22px; margin-right: 7px; vertical-align: -6px; border-radius: 50%; overflow: hidden; }
+.wr-tight .probbox:not(.wr-good) .pb-r { gap: 12px; min-height: 58px; margin: 0 0 6px; padding: 7px 8px 7px 12px; border: 1px solid var(--line); border-left: 3px solid #e8a23a; border-radius: 10px; background: rgba(255,255,255,.02); }
+.wr-tight .probbox:not(.wr-good) .pb-r.bad { border-left-color: #e5534b; } .wr-tight .probbox:not(.wr-good) .pb-r.ok { border-left-color: #45c15c; }
+.wr-tight .probbox:not(.wr-good) .pb-i { display: none; } .wr-tight .probbox:not(.wr-good) .wr-t { flex: 1; min-width: 0; white-space: normal; }
+.wr-tight .probbox:not(.wr-good) .mwr-l .icw { width: 32px; height: 32px; margin-right: 9px; vertical-align: -10px; border-radius: 7px; overflow: hidden; }
+.wr-tight .wr-s2 { display: block; margin-top: 1px; padding-left: 41px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; line-height: 1.4; }
+.wr-tag { margin-left: 4px; padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--muted); font: 600 11px var(--body); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wr-plus { margin-left: 2px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
+.wr-tight .wr-map, .wr-tight .wr-map svg.zmap { width: 44px; height: 44px; } .wr-tight .wr-map { border-radius: 8px; }
+@media (hover: hover) { .wr-tight .wr-map:hover { transform: scale(5.5); } }
+.wr-tight .pb-r .btn.lp-gob { border: 0; background: none; color: var(--faint); font-size: 18px; padding: 2px 6px; } .wr-tight .pb-r .btn.lp-gob:hover { color: var(--text); }
+@media (max-width: 640px) { .wr-tight .wr-s2 { white-space: normal; padding-left: 0; margin-top: 3px; } .wr-tight .probbox:not(.wr-good) .pb-r { align-items: center; } }
+.ph-ok { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 10px; border: 1px dashed rgba(69,193,92,.35); border-radius: 10px; }
+.ph-okh { margin-right: 2px; color: #7ee08f; font: 700 12.5px var(--body); }
+.ph-ok > details.secd { margin: 0; border-radius: 999px; border-color: rgba(69,193,92,.3); background: rgba(69,193,92,.06); box-shadow: none; }
+.ph-ok > details.secd > summary { padding: 4px 13px 4px 5px; gap: 6px; } .ph-ok > details.secd > summary .icw.big { width: 22px; height: 22px; margin-right: 7px; vertical-align: -6px; border-radius: 50%; overflow: hidden; }
+.ph-ok > details.secd > summary .sechd b { font-size: 13px; } .ph-ok > details.secd:not([open]) > summary .sst, .ph-ok > details.secd:not([open]) > summary::after { display: none; }
+.ph-ok > details.secd[open] { flex-basis: 100%; border-radius: 12px; background: var(--panel); box-shadow: inset 3px 0 0 rgba(69,193,92,.7); }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
