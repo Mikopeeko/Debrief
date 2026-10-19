@@ -10068,7 +10068,12 @@ function bossRot(o) {
 function specPage(o) {
   // (This boss: the boss's damage windows, its shield, its big hits for a healer, and its talent swaps, as a chapter of their own before Stats)
   { let B; try { B = bossRot(o); } catch (e) { B = { groups: [], err: e }; } if (B.groups.length) { o.groups.push(...B.groups); Object.assign((o.MERGE = o.MERGE || {}), B.MERGE); Object.assign((o.WT = o.WT || {}), B.WT); Object.assign((o.VIZ = o.VIZ || {}), B.VIZ);
-    if (o.LAYOUT) { const ch = ['This boss', B.groups.map((g) => [g.t, g.l.map((c) => String(c.k).replace(/[^a-z0-9]+/gi, '-').toLowerCase())])], si = o.LAYOUT.findIndex(([n]) => n === 'Stats'); if (si >= 0) o.LAYOUT.splice(si, 0, ch); else o.LAYOUT.push(ch); } } }
+    // (your note, Oct 19: the boss's windows sit with the cooldowns, not on their own: Big damage moments and the boss's big hits go at the end of the
+    // Cooldowns chapter, next to the spec's own cooldown checks; only the talent swaps keep a "This boss" chapter, before Stats)
+    if (o.LAYOUT) { const blk = (g) => [g.t, g.l.map((c) => String(c.k).replace(/[^a-z0-9]+/gi, '-').toLowerCase())], cdCh = o.LAYOUT.find(([n]) => n === 'Cooldowns');
+      const toCd = cdCh ? B.groups.filter((g) => g.t !== 'Talents for this boss') : [], rest = B.groups.filter((g) => !toCd.includes(g));
+      if (toCd.length) cdCh[1].push(...toCd.map(blk));
+      if (rest.length) { const ch = ['This boss', rest.map(blk)], si = o.LAYOUT.findIndex(([n]) => n === 'Stats'); if (si >= 0) o.LAYOUT.splice(si, 0, ch); else o.LAYOUT.push(ch); } } } }
   // (the layout every spec shares: its checks in chapters (Rotation, Resources, Cooldowns), each chapter's blocks in the spec's own order, a check
   // named by its key. One the layout doesn't name stays in a block of its own group's name, at the end: nothing is ever dropped)
   if (o.LAYOUT) { const sl = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase(), all = o.groups.flatMap((g) => g.l.map((c) => ({ c, t: g.t }))), used = new Set(), out = [];
