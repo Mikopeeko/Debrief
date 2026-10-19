@@ -11361,14 +11361,17 @@ function cmpChips(rot, x) {
     const bad = g.diff.filter((o) => o.w > 0).sort((u, v) => (v.c.cost || 0) - (u.c.cost || 0))[0], tip = bad && bad.c.tip ? String(bad.c.tip).replace(/^Next time:\s*/i, '') : '';
     const cost = bad && (bad.c.cost || 0) >= 20000 ? ' It cost ' + (me ? 'you' : An) + ' about ' + C(bad.c.cost) + ' ' + x.UN + '.' : '';
     // (the difference, from the first player's side: points for percentages and fractions, plain for counts; green or amber when the grades say who's better)
-    const badge = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b); if (u == null || w == null || Math.abs(u - w) < 1e-9) return ''; const d = u - w, v = Math.abs(d), pt = /%|\//.test(plain(o.a) + plain(o.b)), sg = d > 0 ? '+' : '−';
+    const badge = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b); if (u == null || w == null || Math.abs(u - w) < 1e-9) return ''; const d = u - w, v = Math.abs(d), pt = /%|\//.test((plain(o.a) + ' ' + plain(o.b)).replace(/<[^>]+>/g, '')), sg = d > 0 ? '+' : '−'; // (the value's own text, not its markup)
       const t = pt ? sg + (v < 10 ? v.toFixed(1) : Math.round(v)) + ' pts' : v >= 1000 ? sg + C(v) : sg + (v < 10 && v % 1 ? v.toFixed(1) : Math.round(v)); const cl = o.st2 ? (RK[o.sa] > RK[o.sb] ? ' up' : ' dn') : '';
-      return '<span class="cmp-mcb' + cl + '">' + t + '</span>'; };
-    const chip = (o) => '<div class="cmp-mc' + (o.d2 ? ' d2' : o.d1 ? ' d1' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><div class="cmp-mch"><span class="cmp-mcl">' + esc(o.l2 || o.l) + '</span>' + badge(o) + '</div>' + pair(o.a, o.b, o.sa, o.sb) + '</div>';
+      return '<span class="cmp-sxd' + (cl ? cl : ' nt') + '">' + t + '</span>'; };
+    const rowB = (v, n, col, st, mx, num) => '<div>' + mk(st) + '<span class="cmp-cbb">' + (num ? '<i style="width:' + (100 * (n || 0) / mx).toFixed(1) + '%;background:' + col + '"></i>' : '') + '</span><b>' + plain(v) + '</b></div>';
+    const chip = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b), num = u != null && w != null, mx = Math.max(u || 0, w || 0) || 1;
+      return '<div class="cmp-sx cmp-sxr' + (o.d2 ? ' d2' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><span class="cmp-sxn"><span>' + esc(o.l2 || o.l) + '</span></span>' +
+        '<span class="cmp-sxb">' + rowB(o.a, u, colA, o.sa, mx, num) + rowB(o.b, w, colB, o.sb, mx, num) + '</span>' + (badge(o) || '<span class="cmp-sxd lv">same</span>') + '</div>'; };
     return '<details class="cmp-sec ' + (g.net > 0 ? 'ok' : g.net < 0 ? 'warn' : 'na') + '" data-s="' + esc(g.t) + '"' + (open ? ' open' : '') + '><summary class="cmp-sech">' +
       '<span class="cmp-secn">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.t) + '</b><span class="cmp-wd ' + (g.net > 0 ? 'up' : g.net < 0 ? 'dn' : '') + '">' + who + (g.nDf ? '<span class="cmp-secc"> · ' + g.nDf + ' of ' + g.items.length + ' apart</span>' : '') + '</span></span></span>' +
       '<span class="cmp-secm"><span class="cmp-vl">' + esc(g.main.label || g.main.k) + '</span>' + pair(g.main.v, g.mainB && g.mainB.v, g.stA, g.stB) + '</span></summary>' +
-      '<div class="cmp-secb">' + (() => { const dif = g.items.filter((o) => o.df), same = g.items.filter((o) => !o.df), grid = (l) => '<div class="cmp-mcs">' + l.map(chip).join('') + '</div>';
+      '<div class="cmp-secb">' + (() => { const dif = g.items.filter((o) => o.df), same = g.items.filter((o) => !o.df), grid = (l) => '<div class="cmp-sxs">' + l.map(chip).join('') + '</div>';
         // (Oct 19, "make it really crisp, clean and readable": only the chips that differ; the ones that match wait behind a toggle)
         if (!g.items.length) return '<p class="sub" style="margin:0">Nothing more in this section.</p>';
         if (!dif.length) return grid(same);
@@ -11378,11 +11381,34 @@ function cmpChips(rot, x) {
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
       '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' to fix</i><i class="warn">! ' + o.warn + ' could be better</i><i class="ok">✓ ' + o.ok + ' good</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
-  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab. A gold edge marks where you two differ. Hover any chip for the details.</small></h3>' +
+  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a row for the details.</small></h3>' +
     '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>' +
     '<p class="cmp-wlead">' + Ln + ' did better in <b>' + (better ? plural(better, 'section') : 'no sections') + '</b> and worse in <b>' + (worse || 'none') + '</b>.</p>' +
     '<div class="cmp-key3"><span><i style="background:' + colA + '"></i>' + Ln + '</span><span><i style="background:' + colB + '"></i>' + Bn + '</span></div>' +
     '<div class="cmp-secs">' + secs.map(sec).join('') + '</div></div>';
+}
+// Cooldowns over the fight (Oct 19, "complete creative freedom ... make it a true comparison tab"): each player's big cooldowns (PERF_CDS) on a
+// lane over their own raid's damage taken, on the same time scale, and how many went out into heavy damage (the raid taking 1.15 times its
+// usual damage or more in the 10 seconds after). Hover a press for when, what, and how hard the raid was being hit.
+function cmpCdTimeline(sides, U) {
+  const lanes = sides.map((x) => { const rr = x.r, p = x.p, end = Math.max(1, perfContext(rr).end), names = (PERF_CDS[p.specName] || []).map(([n]) => n);
+    const tk = rr.takenS || [], avg = tk.slice(0, Math.ceil(end)).reduce((v, y) => v + (y || 0), 0) / end || 1, after = (t) => { let v = 0; for (let i = Math.floor(t); i < Math.min(tk.length, Math.floor(t) + 10); i++) v += tk[i] || 0; return v / 10 / avg; };
+    const cdOf = new Map((PERF_CDS[p.specName] || []).map(([n, c]) => [n, c]));
+    const pr = names.flatMap((n) => (p.byName.get(n.toLowerCase()) || []).filter((t) => t <= end).map((t) => ({ t, n, id: E.SPELLID.get(n.toLowerCase()) || 0, x: after(t), big: (cdOf.get(n) || 0) >= 120 }))).sort((u, v) => u.t - v.t);
+    const bins = []; for (let i = 0; i < Math.ceil(end / 5); i++) { let v = 0; for (let j = i * 5; j < Math.min(tk.length, i * 5 + 5); j++) v += tk[j] || 0; bins.push(v / 5); }
+    return { ...x, end, pr, bins, inD: pr.filter((y) => y.x >= 1.15).length }; });
+  if (!lanes.some((l) => l.pr.length)) return '';
+  const mxE = Math.max(...lanes.map((l) => l.end)), W = 1000, H = 56;
+  const lane = (l) => { const mx = Math.max(1, ...l.bins), pts = l.bins.map((v, i) => ((W * (i * 5 + 2.5) / mxE).toFixed(1)) + ',' + (H - (H - 4) * v / mx).toFixed(1)).join(' ');
+    const area = '<svg class="cmp-cdt-a" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none"><polygon points="0,' + H + ' ' + pts + ' ' + (W * l.end / mxE).toFixed(1) + ',' + H + '" /></svg>';
+    const mk = l.pr.map((y) => '<span class="cmp-cdm' + (y.big ? ' big' : '') + (y.x >= 1.15 ? ' hit' : '') + '" style="left:' + (100 * y.t / mxE).toFixed(2) + '%;--c:' + l.col + '" data-tt="' + esc('<b>' + T(y.t) + ' · ' + esc(y.n) + '</b><br>' + (y.x >= 1.15 ? 'Into heavy damage: ' : 'Not into heavy damage: ') + 'the raid took ' + y.x.toFixed(1) + ' times its usual damage in the 10 seconds after.') + '">' + spellIcon(y.id, y.n) + '</span>').join('');
+    return '<div class="cmp-cdl"><div class="cmp-cdn"><span style="color:' + l.col + '">' + esc(l.name) + '</span><b>' + l.inD + '<span> of ' + l.pr.length + ' into heavy damage</span></b></div><div class="cmp-cdt-t">' + area + mk + '</div></div>'; };
+  let ticks = ''; for (let m = 60; m < mxE; m += 60) ticks += '<span style="left:' + (100 * m / mxE).toFixed(2) + '%">' + T(m) + '</span>';
+  const [a, b] = lanes, fr = (l) => (l.pr.length ? l.inD / l.pr.length : 0);
+  const lead = !a.pr.length || !b.pr.length ? '' : Math.abs(fr(a) - fr(b)) < 0.1 ? 'About the same: ' + a.inD + ' of ' + a.pr.length + ' against ' + b.inD + ' of ' + b.pr.length + '.' : (fr(a) > fr(b) ? esc(a.name) : esc(b.name)) + ' timed more of their big cooldowns into heavy damage.';
+  return '<div class="panel"><h3>Cooldowns over the fight<small>Each icon is a big cooldown. The shaded area is how hard the raid was being hit. Hover an icon for the details.</small></h3>' +
+    (lead ? '<p class="cmp-wlead">' + lead + ' The larger icons are the 2- and 3-minute cooldowns. A gold ring means it went out into heavy damage.</p>' : '') +
+    '<div class="cmp-cdt">' + lanes.map(lane).join('') + '<div class="cmp-cdx">' + ticks + '</div></div></div>';
 }
 // Hero talents (Oct 19, "check the hero talents, just to be safe"): each hero tree's talent names from the spec's tree,
 // a player's tree from their talents (or, when the log has none, from the spells they cast), and for the top raiders from
@@ -11658,7 +11684,7 @@ SPEC_BOOK['Holy Paladin'] = {
     'Always be casting': 'Always be casting something: even a small heal is better than none.',
   },
   // a plain line for a spell whose healing comes from the others
-  plain: { 'Beacon of Light': 'Your Beacons copy your other heals, so this follows the cards above.' },
+  plain: { 'Beacon of Light': 'Your Beacons copy your other heals, so fixing the other cards raises this too.' },
   // more reasons for Why the gap, worked out from the log (lo: the side that did less)
   extra(lo, hi, b, C) {
     const out = [], sp = (s) => { const ef = s.cn('Eternal Flame') + s.cn('Word of Glory'), ld = s.cn('Light of Dawn'); return { ef, ld, all: ef + ld, f: ef + ld ? ld / (ef + ld) : 0 }; };
@@ -11955,7 +11981,8 @@ function cmpPair(r, p, rB, q, vs, lead) {
       '<p>' + (o.pills ? Ln + ': <b>' + o.pills[0] + '</b>. ' + Bn + ': <b>' + o.pills[1] + '</b>.' : o.txt) + '</p><div class="cmp-try"><b>Try:</b> ' + o.fix + '</div></div>';
     return '<div class="panel cmp-fixs"><h3>' + (me ? 'Your' : An + '\'s') + ' ' + (l.length === 1 ? 'biggest fix' : l.length + ' biggest fixes') + '<small>Against ' + Bn + ', the biggest first. Hover one for the numbers.</small></h3>' +
       '<p class="cmp-wlead">' + (tot >= gap * 0.95 ? 'Together ' + (l.length === 1 ? 'it adds' : 'these add') + ' up to more than the whole <b>' + C(gap) + '</b> ' + U(k) + ' a second between you (some overlap): this is where the gap is.' : 'Fix ' + (l.length === 1 ? 'this' : 'these') + ' and ' + (me ? 'you' : An) + ' close about <b>' + C(tot) + '</b> of the <b>' + C(gap) + '</b> ' + U(k) + ' a second between you.') + '</p><div class="cmp-fxs">' + l.map(card).join('') + '</div></div>'; })();
-  return { vs, body: (lead || '') + hps + fixes + (chips || gapH) + numbers + spells + sideBy + chart +
+  const cdTl = cmpCdTimeline([{ r, p, name: me ? 'You' : p.name, col: p.color }, { r: rB, p: q, name: q.name, col: colB }], U(k));
+  return { vs, body: (lead || '') + hps + fixes + (chips || gapH) + cdTl + numbers + spells + sideBy + chart +
     cmpFold('more', 'More detail', 'Talent differences and every Rotation check. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '')) };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
