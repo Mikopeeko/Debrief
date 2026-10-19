@@ -259,6 +259,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Noticed: Frost Mage's burst is read from Icy Veins, which Wolfthorn's Frost Mage never pressed, so the tile shows "no burst
   cooldown pressed". Worth checking whether Frost's burst in Midnight is a different spell.
 
+## 2026-10-19, round 252: A note matches only the exact roster (your call)
+- [x] **None missing:** a note is used on a pull only when every player it names was in it (it allowed 2 missing).
+- [x] **Who wasn't there, by name:** "Not here: Zorbak, Quilla", so a misspelled name in the note is easy to spot, with
+  "If a name is spelled differently from the game, fix it in the note."
+- [x] A note that fits says "all 12 players it names were in this pull".
+- [x] Checked on a real night: a note with 2 absent players is turned down and names them; the same note without them
+  matches all 13 pulls; no errors.
+
 ## 2026-10-19, round 251: A new note finds its own pulls, by the exact roster (your note)
 - [x] **Saving a note checks every pull of that boss in the log you have open,** opened or not (Warcraft Logs lists
   each pull's players), and your saved raid nights, pull by pull, with the same rule a pull uses to pick its note. It
