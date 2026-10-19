@@ -1951,6 +1951,10 @@ span.sn-log { padding: 3px 10px; }
    its WoW colour, the name, small icons, date chips and icon buttons; the note in use glows gold) */
 .sn-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 2px 0 14px; }
 .sn-top h2 { margin: 0; font: 700 24px/1.1 var(--head); color: var(--text); }
+/* the saved notes at the bottom of Assignments (one page since Oct 19): a gap above them, other bosses folded to one line */
+.sn-all { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line2); }
+.sn-fold { margin: 0 0 10px; } .sn-fold > summary { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); cursor: pointer; list-style: none; }
+.sn-fold > summary::-webkit-details-marker { display: none; } .sn-fold > summary::before { content: "▸"; color: var(--muted); } .sn-fold[open] > summary::before { content: "▾"; } .sn-fold[open] > summary { margin-bottom: 10px; } .sn-fold > summary:hover { border-color: var(--faint); }
 .sn-top .sub { margin-top: 5px; max-width: 780px; }
 .sn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 8px; }
 .sn-card { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 12px 14px 10px; border: 1px solid var(--line); border-radius: 12px;
@@ -11285,7 +11289,7 @@ const noteCount = () => E.PACKS.reduce((s, p) => s + notesOf(p.encounter).list.l
 const asViews = () => '';
 const asViewsOld = (ed) => { const n = noteCount(), on = !!ed || S.asView === 'notes';
   return '<div class="seg as-views" role="tablist" aria-label="Assignments"><button type="button" role="tab" data-asv="pull"' + (on ? '' : ' class="on"') + ' aria-selected="' + !on + '">' + SN_I.pull + 'This pull</button><button type="button" role="tab" data-asv="notes"' + (on ? ' class="on"' : '') + ' aria-selected="' + on + '">' + SN_I.notes + 'Stored notes' + (n ? '<span class="n">' + n + '</span>' : '') + '</button></div>'; };
-const bindAsViews = (only) => $('#assignBox [data-asv]').forEach((b) => (b.onclick = () => { const sn = $('#snBox'); if (sn) { window.scrollTo({ top: Math.max(0, sn.getBoundingClientRect().top + window.scrollY - 70), behavior: 'smooth' }); return; } if (!S.noteEdit && (S.asView === b.dataset.asv || (!S.asView && b.dataset.asv === 'pull'))) return; S.noteEdit = false; S.noteEditId = null; S.asView = b.dataset.asv; assign(only); refreshIcons(); }));
+const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.onclick = () => { const sn = $('#snBox'); if (sn) { window.scrollTo({ top: Math.max(0, sn.getBoundingClientRect().top + window.scrollY - 70), behavior: 'smooth' }); return; } if (!S.noteEdit && (S.asView === b.dataset.asv || (!S.asView && b.dataset.asv === 'pull'))) return; S.noteEdit = false; S.noteEditId = null; S.asView = b.dataset.asv; assign(only); refreshIcons(); }));
 // Stored notes: every saved note, the boss of the open pull first, then the rest in raid order; each with when it was saved
 // and the logs it goes with, each with its date and time: the log that's open (and which of its pulls use it), and every
 // saved night it fits (at least half its names there), newest first, a click opening that night
