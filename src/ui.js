@@ -11232,7 +11232,9 @@ const cmpTip = (name, line, vs) => '<b>' + esc(name) + '</b><br>' + line + (vs ?
 function cmpCard(c) {
   const num = typeof c.a === 'number' && typeof c.b === 'number', mx = num ? Math.max(c.a, c.b) || 1 : typeof c.a === 'number' ? c.max || c.a || 1 : 1;
   const bar = (v, t, col, nm) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + nm + '</span><span class="cmp-cbb"><i style="width:' + (typeof v === 'number' ? Math.min(100, 100 * v / mx).toFixed(1) : 0) + '%;background:' + col + '"></i></span><b>' + t + '</b></div>';
-  return '<div class="cmp-card ' + (c.st || 'na') + '"' + (c.tip ? ' data-tt="' + esc(c.tip) + '"' : '') + '><div class="cmp-cl"><span>' + c.label + '</span>' + (c.gap || '') + '</div>' +
+  // (every card has a tooltip: its own, or both numbers and its line)
+  const tip = c.tip || '<b>' + c.label + '</b><br>' + c.na + ': ' + c.fa + (c.fb != null ? '<br>' + c.nb + ': ' + c.fb : '') + (c.txt ? '<br><span class="sub">' + c.txt + '</span>' : '');
+  return '<div class="cmp-card ' + (c.st || 'na') + '" data-tt="' + esc(tip) + '"><div class="cmp-cl"><span>' + c.label + '</span>' + (c.gap || '') + '</div>' +
     bar(c.a, c.fa, c.ca, c.na) + (c.fb != null ? bar(c.b, c.fb, c.cb, c.nb) : '') + (c.txt ? '<div class="cmp-ct">' + c.txt + '</div>' : '') + '</div>';
 }
 const cmpNums = (cards, pairs) => cmpFold('nums', 'All the numbers', 'Everything else that adds up to the number a second, as cards and side-by-side bars. Click to open.',
@@ -11264,9 +11266,10 @@ function cmpWhy(SA, SB, unit, spec) {
         : 'Each of ' + esc(H.name) + '\'s casts did ' + Math.round(100 * (sizeR - 1)) + '% more: <b>' + C(per(h, o.d >= 0 ? o.va : o.vb)) + '</b> against <b>' + C(per(l, o.d >= 0 ? o.vb : o.va)) + '</b>.'; }
     return 'It made <b>' + Math.round(100 * h.share) + '%</b> of ' + esc(H.name) + '\'s ' + U + ' against <b>' + Math.round(100 * l.share) + '%</b> of ' + esc(L.name) + '\'s.';
   };
-  const cards = rows.map((o) => { const mx = Math.max(o.va, o.vb) || 1, bar = (v, col, n) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + esc(n) + '</span><span class="cmp-cbb"><i style="width:' + (100 * v / mx).toFixed(1) + '%;background:' + col + '"></i></span><b>' + C(v) + '</b></div>';
+  const cards = rows.map((o) => { const mx = Math.max(o.va, o.vb) || 1, tt = (x, v, n) => ' data-tt="' + esc('<b>' + esc(n) + '</b><br>' + esc(nm(o.x)) + ': ' + C(v) + ' ' + U + ' a second' + (x ? '<br>' + Math.round(100 * x.share) + '% of their ' + U + (x.cpm ? ', cast ' + x.cpm.toFixed(1) + ' times a minute' : '') : '<br>Not used')) + '"',
+    bar = (v, col, n, x) => '<div class="cmp-cb"' + tt(x, v, n) + '><span class="cmp-cbn" style="color:' + col + '">' + esc(n) + '</span><span class="cmp-cbb"><i style="width:' + (100 * v / mx).toFixed(1) + '%;background:' + col + '"></i></span><b>' + C(v) + '</b></div>';
     return '<div class="cmp-card cmp-why ' + (o.d >= 0 ? 'ok' : 'warn') + '"><div class="cmp-wh">' + spellIcon(o.x.id, nm(o.x)) + '<span><b>' + esc(nm(o.x)) + '</b><span class="cmp-wd ' + (o.d >= 0 ? 'up' : 'dn') + '">' + (SA.name === 'You' ? 'You ' : esc(SA.name) + ' ') + (o.d >= 0 ? 'gained ' : 'lost ') + C(Math.abs(o.d)) + ' a second here</span></span></div>' +
-      bar(o.va, SA.col, SA.name) + bar(o.vb, SB.col, SB.name) + '<div class="cmp-ct">' + why(o) + '</div></div>'; }).join('');
+      bar(o.va, SA.col, SA.name, o.a) + bar(o.vb, SB.col, SB.name, o.b) + '<div class="cmp-ct">' + why(o) + '</div></div>'; }).join('');
   const heroNote = SA.hero && SB.hero && SA.hero !== SB.hero ? '<p class="cmp-hnote">Heads up: ' + esc(SA.name) + (SA.name === 'You' ? ' play ' : ' plays ') + '<b>' + esc(SA.hero) + '</b> and ' + esc(SB.name) + ' plays <b>' + esc(SB.hero) + '</b>, different hero talents. Some spells only one of them has.</p>' : '';
   return '<div class="panel cmp-story"><h3>What made the difference<small>Where the ' + U + ' a second was lost first, then where it was gained</small></h3>' + heroNote + '<p class="cmp-wlead">' + head + '</p><div class="cmp-cards">' + cards + '</div></div>';
 }
@@ -11282,9 +11285,10 @@ function cmpRot(r, p, q, rB) {
   if (!rows.length) return null;
   const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = esc(q.name), mk = (st) => '<i class="cmp-rm ' + st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[st] || '') + '</i>';
   const worse = rows.filter((o) => o.w > 0).length, better = rows.filter((o) => o.w < 0).length;
+  const rtt = (c, n) => ' data-tt="' + esc('<b>' + n + ', ' + esc(c.label || c.k) + '</b><br>' + (c.v != null ? c.v : '') + (c.sub ? '<br><span class="sub">' + c.sub + '</span>' : '')) + '"';
   const row = (o) => '<div class="cmp-rr' + (o.w > 0 ? ' warn' : o.w < 0 ? ' ok' : '') + '"><span class="cmp-rl">' + (o.c.ic ? spellIcon(0, o.c.ic) : '') + '<span><b>' + esc(o.c.label || o.c.k) + '</b>' +
     ((o.c.cost || 0) >= 20000 && o.w >= 0 ? '<span class="sub">Cost ' + (me ? 'you' : An) + ' about ' + C(o.c.cost) + ' ' + UN + '.</span>' : '') + '</span></span>' +
-    '<span class="cmp-rv">' + mk(o.c.st) + '<span>' + (o.c.v != null ? o.c.v : '') + '</span></span><span class="cmp-rv">' + mk(o.d.st) + '<span>' + (o.d.v != null ? o.d.v : '') + '</span></span></div>';
+    '<span class="cmp-rv"' + rtt(o.c, An) + '>' + mk(o.c.st) + '<span>' + (o.c.v != null ? o.c.v : '') + '</span></span><span class="cmp-rv"' + rtt(o.d, Bn) + '>' + mk(o.d.st) + '<span>' + (o.d.v != null ? o.d.v : '') + '</span></span></div>';
   const top = S.cmpRotAll ? rows : rows.slice(0, 8);
   const lead = (worse ? An + (me ? ' were' : ' was') + ' behind ' + Bn + ' on <b>' + plural(worse, 'check') + '</b>' : An + (me ? ' weren\'t' : ' wasn\'t') + ' behind ' + Bn + ' on any check') + (better ? ', and ahead on <b>' + better + '</b>.' : '.');
   return { a: xa.score, b: xb.score, html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
@@ -11303,37 +11307,81 @@ const cmpHeroOf = (r, p) => specHero(r, p) || cmpHeroBy(p.specName, [...p.castAb
 const cmpHeroSpell = (spec, name) => { const n = String(name).replace(/^[^:]+: /, '').toLowerCase(); for (const [nm, set] of cmpHeroSets(spec)) if (set.has(n)) return nm; return ''; };
 // Talent differences (your idea, Oct 19): the talents only one of two players took, and the ones both took at different
 // ranks, from the talents in the log. They can explain part of a gap. null when the log has no talents for one of them.
+// What each talent does, from its Wowhead tooltip (the same source the spell tooltips use): the text, cleaned. Loaded once
+// a talent; the page redraws when they're in.
+const TALTXT = new Map(); let TALTXT_WAIT = null;
+function cmpTalText(ids) {
+  const need = ids.filter((id) => id && !TALTXT.has(id)); if (!need.length) return;
+  for (const id of need) TALTXT.set(id, null);
+  Promise.all(need.map((id) => tipData(id).then((j) => { if (!j || !j.tooltip) return;
+    const d = new DOMParser().parseFromString(j.tooltip, 'text/html');
+    d.querySelectorAll('.q2').forEach((n) => { if (n.querySelector('.tooltip-inside-icon')) n.remove(); }); // (the list of specs Wowhead puts first)
+    // (the description is the longest text block: an active spell puts its range, cast time and cooldown in their own first)
+    const txt = [...d.querySelectorAll('.q')].map((n) => String(n.textContent || '').replace(/\s+/g, ' ').replace(/^[\s,]+/, '').trim()).sort((x, y) => y.length - x.length)[0] || '';
+    TALTXT.set(id, txt); })))
+    .then(() => { clearTimeout(TALTXT_WAIT); TALTXT_WAIT = setTimeout(() => { if (S.tab === 'cmp') cmp(); }, 50); });
+}
+// (what kind of talent it is, from its text: one that keeps you alive, one for the fight's needs (an interrupt, a stun,
+// movement, a dispel), or one that adds healing or damage)
+function cmpTalKind(txt) {
+  if (!txt) return '';
+  if (/increased health|damage (you )?take|you take|damage (they|enemies|it) deal to you|deal \d+% less damage to you|reduc\w* (all )?damage taken|your maximum health|cheat death|prevent.{0,20}death|avoidance|armor/i.test(txt)) return 'def';
+  if (/raise ally|rebirth|resurrect|battle res|interrupt|silenc|stun|incapacitat|knock|root|disorient|\bfear|movement speed|move(s|ment)? \d+% faster|dispel|purge|remove(s)? .{0,30}(curse|poison|disease|magic)|taunt|slow(s|ing)? /i.test(txt)) return 'util';
+  if (/heal|damage|critical|haste|mastery|versatility|absorb/i.test(txt)) return 'out';
+  return '';
+}
 function cmpTalents(r, p, q, SA, SB, rB) {
   rB = rB || r; const ta = talentsOf(r, p), tb = talentsOf(rB, q); if (!ta || !tb) return null;
-  const An = cmpIsMe(p) ? 'You' : esc(p.name), Bn = esc(q.name), U = SA && SA.unit === 'heal' ? 'healing' : 'damage', tr = treeOf(p.specName);
-  // (notes, talent spot by talent spot (your idea, Oct 19): what each different pick did in this pull. A talent that is a spell
-  // shows what it did a second for the one who took it; a spot both filled differently is one note; a passive says so)
+  const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = esc(q.name), U = SA && SA.unit === 'heal' ? 'healing' : 'damage', tr = treeOf(p.specName), b = (x) => '<b>' + x + '</b>';
   const gotOf = (x) => { const c = ((x === q ? rB : r).combatants || []).find((y) => y.name === x.name), m = new Map(); for (const t of (c && c.talents) || []) m.set(+t.id, (m.get(+t.id) || 0) + (+t.rank || 1)); return m; };
   const gA = gotOf(p), gB = gotOf(q), key = (x) => String(x).replace(/^[^:]+: /, '').toLowerCase();
-  const did = (side, who, nm) => { const t = side && side.ab && side.ab.find((y) => key(y.name) === key(nm)); if (!t || !t.share) return null;
-    return { v: t.share * side.rate, txt: 'It did <b>' + C(t.share * side.rate) + '</b> ' + U + ' a second for ' + who + ', ' + Math.round(100 * t.share) + '% of their ' + U + '.' }; };
-  const pas = 'It did no ' + U + ' by itself: it makes other spells stronger, or helps in another way. Hover it to read what it does.';
-  const notes = [];
+  // (each player's number a second from one spell, by name)
+  const per = (side, nm) => { const t = side && side.ab && side.ab.find((y) => key(y.name) === key(nm)); return t ? t.share * side.rate : 0; };
+  const spellNames = [...new Set([...(SA.ab || []), ...(SB.ab || [])].map((y) => String(y.name).replace(/^[^:]+: /, '')).filter((n) => n.length >= 4))];
+  // (the spells a talent's text names, the ones that did the most first)
+  const touches = (txt, own) => !txt ? [] : spellNames.filter((n) => key(n) !== key(own) && new RegExp('\\b' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(txt))
+    .sort((x, y) => (per(SA, y) + per(SB, y)) - (per(SA, x) + per(SB, x))).slice(0, 2);
+  // (Oct 19, "summarize the differences in the talents and the impact on their DPS/HPS, don't write out the tooltip": each
+  // talent only one of them took, judged from its text: does it change the number a second, and what the log shows for it.
+  // The text itself is the tooltip.)
+  const judge = (x, sideH, sideL) => {
+    const txt = TALTXT.get(x.spell), kind = cmpTalKind(txt), own = per(sideH, x.name), ts = touches(txt, x.name);
+    // (whether it adds the other kind, judged without the spell names in it: Acid Rain names Healing Rain but only deals damage)
+    const plain = spellNames.reduce((t, n) => t.split(new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')).join(' '), String(txt || ''));
+    const other = !!txt && (U === 'healing' ? !/heal|absorb|shield/i.test(plain) && /damage/i.test(plain) : !/damage/i.test(plain) && /heal/i.test(plain));
+    const none = !own && (!txt || other || kind === 'util' || kind === 'def' || (!ts.length && kind !== 'out'));
+    return { e: x, kind: other ? 'other' : kind, own, ts, none, pending: !txt, w: own || (none ? 0 : ts.reduce((v, n) => v + Math.abs(per(sideH, n) - per(sideL, n)), 0)) };
+  };
+  // (one line for a talent that changed the number: what it did by itself, or the spells it changes for both of them)
+  const impact = (j, H, L, sideH, sideL) => j.own ? 'It did ' + b(C(j.own)) + ' ' + U + ' a second for ' + H + ' by itself.'
+    : j.ts.map((n) => esc(n) + ' did ' + b(C(per(sideH, n))) + ' a second for ' + H + ', ' + b(C(per(sideL, n))) + ' for ' + L + '.').join(' ') +
+      (j.ts.some((n) => per(sideH, n) > per(sideL, n) * 1.05) ? ' Part of the gap.' : j.ts.length ? ' Not where the gap is.' : ' It makes other spells stronger; its share is spread across them.');
+  const took = { A: [], B: [] }, hits = [];
   for (const n of (tr ? tr.nodes : [])) {
     if (n.free || (n.t === 'H' && !n.entries.some((x) => gA.has(x.id) || gB.has(x.id)))) continue;
     const ka = n.entries.map((x) => gA.get(x.id) || 0).join(), kb = n.entries.map((x) => gB.get(x.id) || 0).join(); if (ka === kb) continue;
-    const ea = n.entries.find((x) => gA.has(x.id)), eb = n.entries.find((x) => gB.has(x.id)), ic = (x) => spellIcon(x.spell, x.name);
-    if (ea && eb && ea.id !== eb.id) { const da = did(SA, An, ea.name), db = did(SB, Bn, eb.name);
-      notes.push({ w: Math.max(da ? da.v : 0, db ? db.v : 0), icons: ic(ea) + ic(eb), h: 'Same spot, different pick: ' + An + ' took <b>' + esc(ea.name) + '</b>, ' + Bn + ' took <b>' + esc(eb.name) + '</b>.',
-        s: [da && da.txt.replace('It did', esc(ea.name) + ' did'), db && db.txt.replace('It did', esc(eb.name) + ' did')].filter(Boolean).join(' ') || pas });
-    } else if (ea && eb) { const ra = n.entries.reduce((v, x) => v + (gA.get(x.id) || 0), 0), rb = n.entries.reduce((v, x) => v + (gB.get(x.id) || 0), 0);
-      notes.push({ w: 0, icons: ic(ea), h: '<b>' + esc(ea.name) + '</b> at a different rank: ' + An + ' ' + ra + ', ' + Bn + ' ' + rb + (n.max > 1 ? ' of ' + n.max : '') + '.', s: 'More ranks make it stronger.' });
-    } else { const x = ea || eb, H = ea ? An : Bn, L = ea ? Bn : An, d = did(ea ? SA : SB, H, x.name);
-      notes.push({ w: d ? d.v : 0, icons: ic(x), h: 'Only ' + H + ' took <b>' + esc(x.name) + '</b>. ' + L + ' spent the point elsewhere.', s: d ? d.txt : pas }); }
+    const ea = n.entries.find((x) => gA.has(x.id)), eb = n.entries.find((x) => gB.has(x.id));
+    if (ea && eb && ea.id === eb.id) continue; // (the same talent at another rank: too small to say much about)
+    if (ea) { const j = judge(ea, SA, SB); took.A.push(j); if (!j.none) hits.push({ j, H: An, L: Bn, sH: SA, sL: SB }); }
+    if (eb) { const j = judge(eb, SB, SA); took.B.push(j); if (!j.none) hits.push({ j, H: Bn, L: An, sH: SB, sL: SA }); }
   }
-  notes.sort((u, v) => v.w - u.w); // (the ones that did the most first)
-  // (each player's three trees in one row, the two players side by side, small: your note, Oct 19, "compact the trees")
+  cmpTalText([...took.A, ...took.B].map((j) => j.e.spell));
+  hits.sort((u, v) => v.j.w - u.j.w);
+  const tip = (x) => ' data-tt="' + esc('<b>' + esc(x.name) + '</b><br>' + esc(TALTXT.get(x.spell) || 'Loading what it does…')) + '"';
+  const chip = (j) => '<span class="cmp-tchip"' + tip(j.e) + '>' + spellIcon(j.e.spell, j.e.name) + esc(j.e.name) + '</span>';
+  // the trade-off at a glance: how many of each one's different picks add to the number, and how many don't
+  const adds = (l) => l.filter((j) => !j.none).length, aA = adds(took.A), aB = adds(took.B);
+  const lead = !took.A.length && !took.B.length ? 'Both took the same talents.'
+    : An + ' took ' + b(plural(took.A.length, 'talent')) + ' ' + Bn + ' didn\'t, ' + aA + ' of them adding ' + U + '. ' + Bn + ' took ' + b(plural(took.B.length, 'talent')) + ' ' + An + ' didn\'t, ' + aB + ' of them adding ' + U + '.' +
+      (aB > aA ? ' ' + Bn + ' spent more of those points on ' + U + ', and that is part of the gap.' : aA > aB ? ' ' + An + ' spent more of those points on ' + U + '.' : '');
+  const hitL = hits.length ? '<div class="cmp-lbl" style="margin-top:12px">Talents that changed the ' + U + ' a second</div><div class="cmp-tns">' + (S.cmpTalAll ? hits : hits.slice(0, 5)).map((o) =>
+    '<div class="cmp-tn"' + tip(o.j.e) + '><span class="cmp-tni">' + spellIcon(o.j.e.spell, o.j.e.name) + '</span><span><span class="cmp-tnh">' + b(esc(o.j.e.name)) + ' <span class="sub">(only ' + o.H + ')</span></span><span class="sub">' + impact(o.j, o.H, o.L, o.sH, o.sL) + '</span></span></div>').join('') + '</div>' +
+    (hits.length > 5 ? '<button class="btn sm cmp-more" type="button" id="cmpTalAll">' + (S.cmpTalAll ? 'Show fewer' : 'Show all ' + hits.length) + '</button>' : '') : '';
+  const rest = (l, who) => { const x = l.filter((j) => j.none); return x.length ? '<span class="cmp-trest">' + x.map(chip).join('') + ' <span class="sub">' + who + '</span></span>' : ''; };
+  const restL = took.A.some((j) => j.none) || took.B.some((j) => j.none) ? '<div class="cmp-lbl" style="margin-top:12px">No effect on ' + U + ' a second <span>Utility, defensive, or the other kind of talent. Hover one for what it does.</span></div><div class="cmp-tals2">' + rest(took.A, An) + rest(took.B, Bn) + '</div>' : '';
   const tx = talentTreeHtml(r, p, q, null, rB), ty = talentTreeHtml(rB, q, p, null, r), tRows = tx || ty ? '<div class="cmp-tt2"><div><div class="cmp-lbl">' + An + '</div>' + tx + '</div><div><div class="cmp-lbl">' + Bn + '</div>' + ty + '</div></div>' : '';
   const trees = tRows ? '<details class="cmp-tdet"' + (S.cmpTreesShut ? '' : ' open') + '><summary>Both talent trees. A talent where their picks differ has a blue ring.</summary>' + tRows + '</details>' : '';
-  const html = '<div class="panel"><h3>Talent differences<small>Each different pick, and what it did in this pull. The ones that did the most first.</small></h3>' +
-    // (the 5 that did the most, the rest behind Show all)
-    (notes.length ? '<div class="cmp-tns">' + (S.cmpTalAll ? notes : notes.slice(0, 5)).map((o) => '<div class="cmp-tn"><span class="cmp-tni">' + o.icons + '</span><span><span class="cmp-tnh">' + o.h + '</span><span class="sub">' + o.s + '</span></span></div>').join('') + '</div>' + (notes.length > 5 ? '<button class="btn sm cmp-more" type="button" id="cmpTalAll">' + (S.cmpTalAll ? 'Show fewer' : 'Show all ' + notes.length) + '</button>' : '')
-      : '<p class="cmp-wlead" style="margin:0">Both took the same talents.</p>') + trees + '</div>';
+  const html = '<div class="panel"><h3>Talent differences<small>Where their picks differ, and what that did to the ' + U + ' a second</small></h3><p class="cmp-wlead">' + lead + '</p>' + hitL + restL + trees + '</div>';
   return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html };
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
