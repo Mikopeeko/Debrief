@@ -280,6 +280,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   by the browser, no sound file. If Debrief isn't the tab on screen, the browser tab's title reads "● New pull: Ula'tek,
   pull 15" until you look at it.
 - [x] Checked on a real night, desktop and phone: both tags, the pop-up, the title and back; no errors.
+- [x] **Beside the tabs, on desktop, always** (your note: "include which pull they are looking at"): "Pull 13 · Kill ·
+  The Coiled Altar" in white, or "Whole night · 13 pulls" in gold, with ‹ › for the pull before or after. It stays pinned
+  while you scroll. It used to show only once the banner scrolled away, and said "All pulls". On a phone it still shows
+  once you scroll, so the top stays short.
 
 ## 2026-10-19, round 244: Graphs, a raider's review (your notes: raw data only; comparisons yes, coaching no)
 - [x] **Reviewed every Graphs view as an experienced raider.** Kept as they are: they're plain data, as you decided for

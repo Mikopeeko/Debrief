@@ -2399,6 +2399,7 @@ span.sn-log { padding: 3px 10px; }
 .pf-abt { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
 .pf-abt th { font-weight: 500; color: var(--faint); text-align: right; padding: 2px 4px 3px; font-size: 12px; white-space: nowrap; } .pf-abt th:first-child { text-align: left; }
 .pf-abt td { padding: 2.5px 4px; text-align: right; white-space: nowrap; } .pf-abt td.an { text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; } .pf-abt td.an .icw { width: 15px; height: 15px; vertical-align: -3px; margin-right: 5px; }
+.spc-pi { margin-top: 14px; } .spc-pi > .panel { margin: 10px 0 0; }
 .pf-abt td.tp, .pf-abt th.tp { color: var(--muted); padding-left: 10px; cursor: help; } .pf-abt tr.tp-miss td { opacity: .7; } .pf-abt tr.tp-miss td.an { font-style: italic; }
 .pf-abt td.sh { width: 28%; min-width: 86px; } .pf-abt td.sh .pf-ab { display: inline-block; width: calc(100% - 42px); vertical-align: middle; margin-right: 5px; } .pf-abt td.sh b { font-weight: 600; }
 .pf-abt tr:hover td { background: rgba(255,255,255,.03); } .pf-more { font-size: 12px; margin-top: 3px; }
@@ -2516,6 +2517,10 @@ details.phase > summary { margin-top: 24px; }
 /* the pinned bar's left end: the boss, ‹ pull ›, its result and the menu, once the banner has scrolled away */
 .tabbar .tb-id { display: none; align-items: center; gap: 4px; flex: none; margin: 0 0 7px auto; }
 body.bh-off .tabbar .tb-id { display: inline-flex; }
+/* (desktop: always beside the tabs, so every tab says which pull it is; the ☰ only once the top bar is off screen) */
+@media (min-width: 761px) { .tabbar .tb-id { display: inline-flex; } body:not(.bh-off) .tabbar .tbp-menu { display: none; } }
+.tb-pull.one { border-color: #f3f5f9; background: rgba(243,245,249,.1); } .tb-pull.one b { color: #fff; }
+.tb-pull.all { border-color: var(--gold); background: rgba(230,180,80,.12); } .tb-pull.all b { color: #f3c969; }
 .tabbar .tb-id .tb-pull { margin: 0; max-width: 300px; }
 .tbp-n, .tbp-menu { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 16px; line-height: 1; cursor: pointer; }
 .tbp-n:hover:not(:disabled), .tbp-menu:hover { border-color: var(--faint); background: var(--raised); } .tbp-n:disabled { opacity: .35; cursor: default; }

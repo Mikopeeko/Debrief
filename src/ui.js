@@ -1094,10 +1094,12 @@ function tbPull(r, allMode) {
   const nav = (d, lab) => { const to = k >= 0 ? same[k + d] : null; return '<button class="tbp-n" type="button" data-d="' + d + '" aria-label="' + lab + '"' + (to ? '' : ' disabled') + '>' + (d < 0 ? '‹' : '›') + '</button>'; };
   const menu = '<button class="tbp-menu" type="button" aria-label="Open the menu" title="Menu">☰</button>';
   let pill;
-  if (allMode) pill = '<button class="tb-pull all" type="button" title="Back to the top"><b>' + esc(it.boss) + '</b><span>All pulls · ' + plural(same.length, 'pull') + '</span></button>';
+  // (what every tab is showing, beside the tabs (your note, Oct 18: "include which pull they are looking at"): white for one
+  // pull, gold for the whole night, like the banner's tag and the picked card)
+  if (allMode) pill = '<button class="tb-pull all" type="button" title="Back to the top"><b>Whole night</b><span>' + plural(same.length, 'pull') + ' · ' + esc(it.boss) + '</span></button>';
   else if (isKey) pill = '<button class="tb-pull" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill || it.result === 'Timed' ? 'ok' : 'bad') + '"></i><b>' + esc(it.boss) + '</b><span>' + esc(it.result || '') + ' · ' + T(r.duration) + '</span></button>';
   else { const pg = progressOf(r);
-    pill = '<button class="tb-pull" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill ? 'ok' : 'bad') + '"></i><b>' + esc(it.boss) + '</b><span>Pull ' + it.pull + ' · ' + (it.kill ? 'kill' : 'wipe' + (pg ? (pg.phase ? ' in ' : ' at ') + esc(pg.label) : '')) + '</span></button>'; }
+    pill = '<button class="tb-pull one" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill ? 'ok' : 'bad') + '"></i><b>Pull ' + it.pull + '</b><span>' + (it.kill ? 'Kill' : 'Wipe' + (pg ? (pg.phase ? ' in ' : ' at ') + esc(pg.label) : '')) + ' · ' + esc(it.boss) + '</span></button>'; }
   return '<div class="tb-id">' + (allMode || isKey ? pill : nav(-1, 'Earlier pull') + pill + nav(1, 'Later pull')) + menu + '</div>';
 }
 // (the pinned bar's left end shows once the banner is off screen)
@@ -6907,9 +6909,10 @@ function piPlan(x, mine, one, who) {
 // The view (your pick, Oct 18: a sentence for each cast): for each priest, the plan for the next pull, the pull as a
 // strip (one pull), then a sentence per cast and per stretch it sat ready, in time order. Over the night, the casts that
 // went well are one line and the rest are listed. Who gains the most is folded away and opens in place.
-function piView(reps, one) {
-  const all = reps.map((r) => ({ r, d: piPull(r) })), casts = all.flatMap(({ r, d }) => d.casts.map((c) => ({ ...c, r })));
-  const pri = new Map(); for (const { r, d } of all) for (const [n, x] of d.priests) { const y = pri.get(n) || { p: x.p, used: 0, poss: 0, pulls: 0, miss: [], plan: null }; y.used += x.used; y.poss += x.poss; y.pulls++; for (const m of x.miss) y.miss.push({ ...m, pull: r.item.pull }); y.plan = x.plan || y.plan; y.last = { d, x }; pri.set(n, y); }
+// (only: one priest's name, for their own Rotation page, where the same advice shows too (your call, Oct 19: on both))
+function piView(reps, one, only) {
+  const all = reps.map((r) => ({ r, d: piPull(r) })), casts = all.flatMap(({ r, d }) => d.casts.map((c) => ({ ...c, r }))).filter((c) => !only || c.pr.name === only);
+  const pri = new Map(); for (const { r, d } of all) for (const [n, x] of d.priests) { if (only && n !== only) continue; const y = pri.get(n) || { p: x.p, used: 0, poss: 0, pulls: 0, miss: [], plan: null }; y.used += x.used; y.poss += x.poss; y.pulls++; for (const m of x.miss) y.miss.push({ ...m, pull: r.item.pull }); y.plan = x.plan || y.plan; y.last = { d, x }; pri.set(n, y); }
   if (!casts.length && !pri.size) return { head: {}, html: '<div class="panel"><p class="muted" style="margin:0">No Power Infusion ' + (one ? 'this pull' : 'in these pulls') + ': no priest cast it.</p></div>' };
   const good = casts.filter((c) => c.tgt.st === 'ok'), used = [...pri.values()].reduce((s, x) => s + x.used, 0), poss = [...pri.values()].reduce((s, x) => s + x.poss, 0);
   const head = { v: casts.length ? good.length + '<span>/' + casts.length + ' good</span>' : '—', s: poss ? used + ' of ' + poss + ' possible' : '' };
@@ -10217,7 +10220,12 @@ function genRun(spec, D, reps, name, one) {
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
     TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win', 'wr'].concat(rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top players', topH: 'The ' + (D.top || spec + 's') + ' who parsed 75 or higher in the fastest kills of this boss', pullT,
     src: 'Built with help from the Wowhead and Icy Veins guides and WoWAnalyzer\'s checks for ' + spec + ', and from what your talents do.', secIc: { 'Your pull at a glance': D.ic, 'Pull by pull': D.ic } });
-  return { checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html, wait };
+  // (a priest's Power Infusion: the same cards and advice as Graphs' Power Infusion view, for this priest only, at the end
+  // of their page (your call, Oct 19: on both). Left out for a priest without it in these pulls)
+  let piH = '';
+  if (/ Priest$/.test(spec) && !PI_OFF()) { const pv = piView(per.map((x) => x.r), one, name).html;
+    if (!/no priest cast it/.test(pv)) piH = '<section class="spc-card spc-pi"><header class="spc-ch"><div><h3>Power Infusion</h3><div class="sub">The same as Graphs › Power Infusion, for you only.</div></div></header>' + pv + '</section>'; }
+  return { checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html + piH, wait };
 }
 // one pull on its time line: each cooldown and core spell as ticks, with the time it sat ready for a whole extra use in red; each damage over time and
 // mitigation buff as bars, its gaps showing
