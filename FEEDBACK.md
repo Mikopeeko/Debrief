@@ -259,6 +259,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 247: Power Infusion on the priest's own Rotation page too (your call: "duplicate it")
+- [x] **Every Holy and Shadow Priest's Rotation page ends with their Power Infusion:** the same cards as Graphs › Power
+  Infusion, for that priest only: used X of Y, the "Next pull" line, the timeline, each cast and each stretch it sat ready
+  with what it would have added, and Who gains the most. Graphs keeps its view as it was. A priest who never had it in
+  those pulls gets no section. Checked on Optt (Holy Priest, Twin Fangs kill).
+
 ## 2026-10-19, round 246: Mechanics headings are "Mechanic Name (Nickname)", and no more vague "results" (your notes)
 - [x] **Every boss's headings read "Mechanic Name (Nickname)"**, with a nickname of one or two words and nothing after it
   (your style: "soaks", "beams", "heal absorbs", "adds"). 72 headings over all 8 bosses, for example "Tainted Blood (Heal
@@ -296,8 +302,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   this boss on Warcraft Logs, beside their own Share; hover for those players' casts a minute, crit and average hit. Spells
   they press (once a minute or more, 3% or more of their output) that this player didn't are listed last as "not used".
   Fetched once per spec and boss by the site (new /api/topspec, kept a day, about a second).
-- [ ] Open (your call): Power Infusion's view still gives advice ("Next pull: give it to..."). Move that advice to the
-  priest's Rotation page and keep only the facts on Graphs?
+- [x] Power Infusion's advice: your call was to have it in both places (round 247).
 - Noticed: Utility shows "Dispels 0" on Twin Fangs; either nothing there can be dispelled (then hide it) or dispels aren't read.
 
 ## 2026-10-18, round 243: Fixes from the high-expectations pass (your go: trust, noise, readability, first look, phone)
