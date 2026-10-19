@@ -2478,6 +2478,7 @@ span.sn-log { padding: 3px 10px; }
 .pi-t2 { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; } .pi-t2 .sub { display: block; font-size: 11.5px; font-weight: 500; }
 .pi-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); align-self: start; margin-top: 7px; } .pi-dot.ok { background: #45c15c; } .pi-dot.warn { background: #f3c969; } .pi-dot.bad { background: #e5534b; }
 .pi-s { min-width: 0; } .pi-s .nm { font-weight: 600; } .pi-w { display: block; margin-top: 2px; color: var(--muted); font-size: 13.5px; }
+.pi-vd { font-weight: 700; } .pi-vd.ok { color: #45c15c; } .pi-vd.warn { color: #f3c969; } .pi-vd.bad { color: #e5534b; }
 .pi-l { margin-left: 4px; color: var(--gold); cursor: help; }
 .pi-okl { margin: 4px 0 2px; font-size: 14.5px; } .pi-okl .nm { font-weight: 600; } .pi-none { margin: 6px 0 0; }
 .pi-more > summary { cursor: pointer; padding: 8px 0 2px; color: var(--muted); font-size: 13.5px; }
@@ -17278,7 +17279,7 @@ function piSay(c, who) {
   if (healer) why.push(tn + ' is a healer, so it added no damage.');
   else if (c.noSim || c.ratio == null) why.push('No sim for ' + esc(c.tg.specName || 'this spec') + ', so the gain is unknown.');
   else if (c.tgt.st !== 'ok') why.push(who(c.best) + ' would have gained ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more' + (c.many ? ' with 3+ enemies up.' : '.'));
-  else if (!why.length) why.push(c.best === c.tg ? 'Best pick.' : 'Good pick. Only ' + who(c.best) + ' would have gained a little more.');
+  else if (!why.length) why.push(c.best === c.tg ? tn + ' gains the most from it.' : 'Only ' + who(c.best) + ' would have gained a little more.');
   return { say, why: why.join(' ') };
 }
 // a stretch it sat ready (20 seconds or more), in the same sentences: how long, and the best moment in it
@@ -17288,8 +17289,10 @@ function piReady(m, who) {
     : 'Best pick then: ' + who(m.pick.q) + ', worth about ' + gain + ' damage.';
   return { say, why };
 }
-// (a row: the time (and the pull, over the night), a dot, the sentence and its why under it)
-const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + (s.why ? '<span class="pi-w">' + s.why + '</span>' : '') + '</span></div>';
+// (a row: the time (and the pull, over the night), a dot, the sentence and its why under it, led by a coloured verdict
+// word so good, could be better and bad read at a glance (your note, Oct 19))
+const PI_VERDICT = { ok: 'Good.', warn: 'Could be better.', bad: 'Bad.' };
+const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
 // a priest's pull as a strip: each Power Infusion gold, the stretches it sat ready green, the raid's downtime grey,
 // Bloodlust a line, and under them, in purple, when the player planned for it pressed their big cooldown
 function piStrip(d, x, casts, who) {
