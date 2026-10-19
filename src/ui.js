@@ -1200,9 +1200,9 @@ const PI_OFF = () => false;
 // (Rotation (Spec checks) is on everywhere since Oct 18, for testing (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with its grades and fixes)
 const SPEC_OFF = () => false;
-// (Compare was greyed out on the website, "Coming soon" (your call, Oct 19); on everywhere since (your call, Oct 19).
-// Set this to () => !!window.WLA_HOSTED to grey it out on the website again)
-const CMP_OFF = () => false;
+// (Compare is greyed out on the website with "Coming soon" written over it (your call, Oct 19, while each spec's playbook is built);
+// still open on your own computer. Set this to () => false to turn it on everywhere again)
+const CMP_OFF = () => !!window.WLA_HOSTED;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
 // ---- "Report a problem" (your note, Oct 18): a short form that files the problem on the project's private GitHub,
@@ -1293,7 +1293,7 @@ function renderMain() {
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
       const tab = (k) => { const l = name.get(k), soon = k === 'cmp' && CMP_OFF(), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
-        (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>'; };
+        (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       return TAB_ORDER.map(tab).join(''); })() + '</nav>' + tbPull() + '</div>' +
     '<section id="view"></section>';
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
