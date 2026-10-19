@@ -215,8 +215,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Discord:** the first patch notes are posted in #updates, and the FAQ is posted in #questions (tagged Getting
   started) and pinned. Held: the "What is Debrief" post for #start-here, which needs its three pictures attached (this
   browser can't attach files).
-- [ ] Your call: the pinned welcome in #start-here still says "the Performance tab is still being built, so it's greyed
-  out" (it's Graphs now, and on), and #questions still has a "Performance" tag. Both can be updated.
+- [x] You posted the "What is Debrief" post in #start-here with its three pictures (I typed the text, you added them).
+- [x] The pinned welcome now says "the Rotation tab is still being built, so it's greyed out" (it said Performance), and
+  the #questions tag "Performance" is now "Graphs".
 
 ## 2026-10-18, round 213: Map drawings in their icon's colour (your note)
 - [x] **Each ground mechanic is drawn in the main colour of its own spell icon**, measured from the icon itself, so a
