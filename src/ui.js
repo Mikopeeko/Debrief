@@ -14555,11 +14555,12 @@ function lpUsed(r) {
   for (const p of ps) { if (p.cls !== 'DRUID' || !/balance/i.test(p.specName || '')) continue; const u = inT(p.byName.get('innervate'));
     const on = u.map((t) => ps.find((q) => ((q.buffs && q.buffs.get('Innervate')) || { sp: [] }).sp.some(([a]) => Math.abs(a - t) <= 1.5))).filter(Boolean);
     lines.push(['Innervate', lpWho(p) + ' ' + of(u.length, Math.floor(until(p) / 180) + 1) + (on.length ? '<span class="sub"> on </span>' + [...new Set(on)].map(lpWho).join(', ') : '')]); }
-  let dU = 0, dP = 0, dWho = 0, hs = 0, hp = 0;
-  for (const p of ps) { let n = 0; for (const d of p.defs || []) { n += inT(d.uses).length; dP += Math.floor(until(p) / d.cd) + 1; } dU += n; if (n) dWho++; hs += inT(p.cons.healthstone).length; hp += inT(p.cons.healpot).length; }
+  // (each: how many were used, and who used none (your ask, Oct 19); a player counts once alive 20 s or more)
+  const live = ps.filter((p) => until(p) >= 20), none = (l) => (l.length ? (l.length === live.length ? '<span class="lp-none">Nobody used one.</span>' : '<span class="lp-none"><span class="sub">None from </span>' + l.slice(0, 8).map(lpWho).join(', ') + (l.length > 8 ? '<span class="sub"> and ' + (l.length - 8) + ' more</span>' : '') + '</span>') : '<span class="lp-none ok">✓ Everyone used one.</span>');
+  const dN = (p) => (p.defs || []).reduce((n, d) => n + inT(d.uses).length, 0), dU = live.reduce((n, p) => n + dN(p), 0), hsN = (p) => inT(p.cons.healthstone).length, hpN = (p) => inT(p.cons.healpot).length;
   // (a click opens this pull's Survival kit on Mechanics, where each player's defensives are)
-  if (dP) lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Mechanics"><b>' + dU + '</b> used<span class="sub">, by ' + plural(dWho, 'player') + ' (' + dP + ' possible)</span> ›</button>']);
-  lines.push(['Healthstones', '<b>' + hs + '</b>'], ['Health potions', '<b>' + hp + '</b>']);
+  lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Mechanics"><b>' + dU + '</b> used ›</button>' + none(live.filter((p) => (p.defs || []).length && !dN(p)))]);
+  lines.push(['Healthstones', '<b>' + live.reduce((n, p) => n + hsN(p), 0) + '</b> used' + none(live.filter((p) => !hsN(p)))], ['Health potions', '<b>' + live.reduce((n, p) => n + hpN(p), 0) + '</b> used' + none(live.filter((p) => !hpN(p)))]);
   return '<div class="panel lp-side-p lp-used"><h3 class="nh"><span>Used this pull</span></h3>' + lines.map(([k, v]) => '<div class="lp-pr"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
 }
 // the healing cooldowns from the note that weren't on time, by name: when it was due, and when it was pressed (a missed one:

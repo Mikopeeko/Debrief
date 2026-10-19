@@ -3440,6 +3440,7 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .lpv .lp-talk::before { background: var(--gold); } .lpv .lp-pace.ok::before { background: #45c15c; } .lpv .lp-pace.warn::before { background: var(--lv-mod); } .lpv .lp-pace { border-left: 1px solid var(--line); }
 .lp-pis { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; } .lp-pic { display: inline-flex; align-items: center; gap: 5px; } .lp-pic .pi-ico, .lp-pic .pi-ico svg { width: 15px; height: 15px; margin: 0; }
 .lp-dgo { all: unset; cursor: pointer; border-radius: 4px; } .lp-dgo:hover { color: var(--gold); text-decoration: underline; } .lp-dgo:focus-visible { outline: 2px solid var(--gold); }
+.lp-none { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; } .lp-none.ok { color: #7ee08f; font-weight: 600; }
 .lpv .lp-used .lp-pr { padding: 4px 0; font-size: 13px; } .lpv .lp-used h3 { font-size: 16px; } .lpv .lp-used .lp-pk { color: var(--muted); font-weight: 600; }
 @media (max-width: 1400px) { .rcp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rcp-w.rcp-big { grid-row: auto; } .rcp-big .wr-map.rcp-map, .rcp-big .wr-map.rcp-map svg.zmap { height: 240px !important; } }
 @media (max-width: 1000px) { .lpv .lp-cols { grid-template-columns: minmax(0, 1fr); } }
@@ -24766,11 +24767,12 @@ function lpUsed(r) {
   for (const p of ps) { if (p.cls !== 'DRUID' || !/balance/i.test(p.specName || '')) continue; const u = inT(p.byName.get('innervate'));
     const on = u.map((t) => ps.find((q) => ((q.buffs && q.buffs.get('Innervate')) || { sp: [] }).sp.some(([a]) => Math.abs(a - t) <= 1.5))).filter(Boolean);
     lines.push(['Innervate', lpWho(p) + ' ' + of(u.length, Math.floor(until(p) / 180) + 1) + (on.length ? '<span class="sub"> on </span>' + [...new Set(on)].map(lpWho).join(', ') : '')]); }
-  let dU = 0, dP = 0, dWho = 0, hs = 0, hp = 0;
-  for (const p of ps) { let n = 0; for (const d of p.defs || []) { n += inT(d.uses).length; dP += Math.floor(until(p) / d.cd) + 1; } dU += n; if (n) dWho++; hs += inT(p.cons.healthstone).length; hp += inT(p.cons.healpot).length; }
+  // (each: how many were used, and who used none (your ask, Oct 19); a player counts once alive 20 s or more)
+  const live = ps.filter((p) => until(p) >= 20), none = (l) => (l.length ? (l.length === live.length ? '<span class="lp-none">Nobody used one.</span>' : '<span class="lp-none"><span class="sub">None from </span>' + l.slice(0, 8).map(lpWho).join(', ') + (l.length > 8 ? '<span class="sub"> and ' + (l.length - 8) + ' more</span>' : '') + '</span>') : '<span class="lp-none ok">✓ Everyone used one.</span>');
+  const dN = (p) => (p.defs || []).reduce((n, d) => n + inT(d.uses).length, 0), dU = live.reduce((n, p) => n + dN(p), 0), hsN = (p) => inT(p.cons.healthstone).length, hpN = (p) => inT(p.cons.healpot).length;
   // (a click opens this pull's Survival kit on Mechanics, where each player's defensives are)
-  if (dP) lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Mechanics"><b>' + dU + '</b> used<span class="sub">, by ' + plural(dWho, 'player') + ' (' + dP + ' possible)</span> ›</button>']);
-  lines.push(['Healthstones', '<b>' + hs + '</b>'], ['Health potions', '<b>' + hp + '</b>']);
+  lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Mechanics"><b>' + dU + '</b> used ›</button>' + none(live.filter((p) => (p.defs || []).length && !dN(p)))]);
+  lines.push(['Healthstones', '<b>' + live.reduce((n, p) => n + hsN(p), 0) + '</b> used' + none(live.filter((p) => !hsN(p)))], ['Health potions', '<b>' + live.reduce((n, p) => n + hpN(p), 0) + '</b> used' + none(live.filter((p) => !hpN(p)))]);
   return '<div class="panel lp-side-p lp-used"><h3 class="nh"><span>Used this pull</span></h3>' + lines.map(([k, v]) => '<div class="lp-pr"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
 }
 // the healing cooldowns from the note that weren't on time, by name: when it was due, and when it was pressed (a missed one:
