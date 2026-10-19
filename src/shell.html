@@ -3034,7 +3034,7 @@ details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba
 @media (max-width: 640px) { #view details.phase.mcx-ph > summary { padding: 14px 12px 14px 18px; } #view details.phase.mcx-ph > summary > b { font-size: 20px; } #view details.phase.mcx-ph > summary > .mcx-pn { min-width: 36px; height: 36px; font-size: 16px; } }
 /* (Oct 19, the level colours: Minor a greenish yellow, Moderate a deeper orange, Major a nasty red with a little glow; one set of colours for
    every label, edge, line, dot, ring, glow and count that shows a level) */
-:root { --lv-maj: #d4111e; --lv-maj-t: #ff3b46; --lv-mod: #e2540f; --lv-mod-t: #ff7a3d; --lv-min: #b5c42a; --lv-min-t: #d2df4a; }
+:root { --lv-maj: #d4111e; --lv-maj-t: #ff3b46; --lv-mod: #e2540f; --lv-mod-t: #ff7a3d; --lv-min: #e8b923; --lv-min-t: #ffd54a; }
 .sst.bad, .mcx-k.bad b, .mcx-verdict b { color: var(--lv-maj-t); } .sst.bad.mod, .mcx-k.bad.mod b { color: var(--lv-mod-t); } .sst.warn, .mcx-k.warn b { color: var(--lv-min-t); }
 .spc-v { --wa: var(--lv-min); --ba: var(--lv-maj); } .spc-pill.bad b { color: var(--lv-maj-t); } .spc-pill.warn b { color: var(--lv-min-t); }
 .pb-r.bad .pb-i { background: var(--lv-maj); } .pb-r.warn .pb-i { background: var(--lv-min); }
@@ -3043,22 +3043,22 @@ details.secd.st-bad { box-shadow: inset 3px 0 0 var(--lv-maj); } details.secd.st
 details.secd.mcx-tile:not([open])::before, .mcx-refg > details.secd.st-warn:not([open])::before { background: var(--lv-min); }
 details.secd.mcx-tile.st-bad:not([open])::before, .mcx-refg > details.secd.st-bad:not([open])::before { background: var(--lv-maj); box-shadow: 0 0 10px rgba(212,17,30,.7); }
 details.secd.mcx-tile.st-bad.mod:not([open])::before, .mcx-refg > details.secd.st-bad.mod:not([open])::before { background: var(--lv-mod); box-shadow: none; }
-details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(181,196,42,.16); }
-.mcx-tile.st-bad .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(212,17,30,.18), transparent 40%); } .mcx-tile.st-bad.mod .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(226,84,15,.14), transparent 40%); } .mcx-tile.st-warn .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(181,196,42,.1), transparent 40%); }
+details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(232,185,35,.16); }
+.mcx-tile.st-bad .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(212,17,30,.18), transparent 40%); } .mcx-tile.st-bad.mod .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(226,84,15,.14), transparent 40%); } .mcx-tile.st-warn .wr-map.mcx-map::after { background: linear-gradient(180deg, rgba(232,185,35,.1), transparent 40%); }
 .mcx-dot.bad { background: var(--lv-maj); box-shadow: 0 0 6px rgba(212,17,30,.8); } .mcx-dot.bad.mod { background: var(--lv-mod); box-shadow: none; } .mcx-dot.warn { background: var(--lv-min); } .mcx-dot.dead { border-color: var(--lv-maj); }
 .mcx-msb i.bad { background: var(--lv-maj); } .mcx-msb i.warn { background: var(--lv-min); } .mcx-gll::before { background: var(--lv-min); } .mcx-gll.bad::before { background: var(--lv-maj); }
 .mcx-hbb i { background: linear-gradient(90deg, var(--lv-min), #dfe86a); }
 #view details.phase.mcx-ph > summary > .sst.bad { background: rgba(212,17,30,.16); box-shadow: inset 0 0 0 1px rgba(212,17,30,.55), 0 0 12px rgba(212,17,30,.25); }
-#view details.phase.mcx-ph > summary > .sst.bad.mod { background: rgba(226,84,15,.15); box-shadow: inset 0 0 0 1px rgba(226,84,15,.5); } #view details.phase.mcx-ph > summary > .sst.warn { background: rgba(181,196,42,.13); box-shadow: inset 0 0 0 1px rgba(181,196,42,.45); }
+#view details.phase.mcx-ph > summary > .sst.bad.mod { background: rgba(226,84,15,.15); box-shadow: inset 0 0 0 1px rgba(226,84,15,.5); } #view details.phase.mcx-ph > summary > .sst.warn { background: rgba(232,185,35,.13); box-shadow: inset 0 0 0 1px rgba(232,185,35,.45); }
 #view details.phase.mcx-ph[data-mst="major"] > summary::before, #view details.phase.mcx-ph[data-mst="bad"] > summary::before { background: var(--lv-maj); box-shadow: 0 0 12px rgba(212,17,30,.8); } #view details.phase.mcx-ph[data-mst="moderate"] > summary::before { background: var(--lv-mod); } #view details.phase.mcx-ph[data-mst="minor"] > summary::before { background: var(--lv-min); }
 #view details.phase.mcx-ph[data-mst="major"] > summary { background: linear-gradient(90deg, rgba(212,17,30,.24), rgba(255,255,255,.035) 50%); }
 #view details.phase.mcx-ph[data-mst="moderate"] > summary { background: linear-gradient(90deg, rgba(226,84,15,.18), rgba(255,255,255,.035) 45%); }
-#view details.phase.mcx-ph[data-mst="minor"] > summary { background: linear-gradient(90deg, rgba(181,196,42,.14), rgba(255,255,255,.035) 45%); }
+#view details.phase.mcx-ph[data-mst="minor"] > summary { background: linear-gradient(90deg, rgba(232,185,35,.14), rgba(255,255,255,.035) 45%); }
 /* (Oct 19: Whole fight holds the kit, raid cooldowns, damage taken and kicks as small tiles under their own label; tiles keep their own
    edge (the line on top), never the row's coloured left edge) */
 .mcx-refh { margin: 16px 0 8px; font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); } .mcx-ph > .mcx-refh:first-of-type { margin-top: 2px; }
 #view details.secd.mcx-tile:not([open]) { box-shadow: 0 6px 18px rgba(0,0,0,.35); } #view .mcx-refg > details.secd:not([open]) { box-shadow: none; }
-#view details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } #view details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } #view details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(181,196,42,.16); }
+#view details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212,17,30,.25); } #view details.secd.mcx-tile.st-bad.mod:not([open]):hover { box-shadow: 0 8px 24px rgba(226,84,15,.2); } #view details.secd.mcx-tile.st-warn:not([open]):hover { box-shadow: 0 8px 24px rgba(232,185,35,.16); }
 /* (Oct 19, the timeline: every clean moment a faint tick on its lane; dots that stack grouped into one with a count; deaths that pile up
    (3 or more in 10 seconds) shaded red, and on a wipe the last pile runs to the end as "Wipe started") */
 .mcx-okt { position: absolute; top: 50%; z-index: 2; width: 2px; height: 10px; margin: -5px 0 0 -1px; border-radius: 1px; background: rgba(255,255,255,.2); }
@@ -3437,7 +3437,7 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .rcp-tg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; } .rcp-wt { margin-bottom: 6px; } .rcp-fx { color: var(--muted); } .rcp-fx b { color: var(--text); font-weight: 600; }
 .rcp-rib { position: absolute; left: 10px; top: 10px; z-index: 5; padding: 3px 9px; border-radius: 6px; background: linear-gradient(160deg, #f3d38a, #c8953a); color: #1a1408; font: 800 11.5px var(--body); letter-spacing: .04em; text-transform: uppercase; pointer-events: none; }
 .rcp-lv { position: absolute; right: 10px; top: 10px; z-index: 5; padding: 2px 10px; border-radius: 999px; font: 700 12px var(--body); background: rgba(15,17,23,.85); pointer-events: none; }
-.rcp-lv.major { color: var(--lv-maj-t); box-shadow: inset 0 0 0 1px rgba(212,17,30,.5), 0 0 10px rgba(212,17,30,.3); } .rcp-lv.moderate { color: var(--lv-mod-t); box-shadow: inset 0 0 0 1px rgba(226,84,15,.5); } .rcp-lv.minor { color: var(--lv-min-t); box-shadow: inset 0 0 0 1px rgba(181,196,42,.45); }
+.rcp-lv.major { color: var(--lv-maj-t); box-shadow: inset 0 0 0 1px rgba(212,17,30,.5), 0 0 10px rgba(212,17,30,.3); } .rcp-lv.moderate { color: var(--lv-mod-t); box-shadow: inset 0 0 0 1px rgba(226,84,15,.5); } .rcp-lv.minor { color: var(--lv-min-t); box-shadow: inset 0 0 0 1px rgba(232,185,35,.45); }
 .rcp-play .rcp-rib, .rcp-play .rcp-lv { display: none; }
 .rcp-none { margin: 0; color: #7ee08f; font-weight: 600; }
 .rcp-wh { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; font-size: 14.5px; line-height: 1.45; } .rcp-wh b { font-weight: 700; }
@@ -3774,6 +3774,38 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rcp-allm { display: block; margin: 12px 0 0; color: var(--muted); font: 600 13px var(--body); } .rcp-allm:hover { color: var(--gold); }
 .nmc details.secd.mcx-tile > summary > * { max-width: 100%; min-width: 0; box-sizing: border-box; } .nmc details.secd.mcx-tile .mcx-hd .sechd { min-width: 0; overflow: hidden; }
 .wr-tag.nmc-solved { color: #7ee08f; background: rgba(69,193,92,.12); }
+/* (Oct 19: Mechanics' facts on the whole night, a bar per pull of how much was done right) */
+.npc { display: flex; align-items: flex-end; gap: 1px; width: 100%; height: 30px; flex-basis: 100%; }
+.npc i { flex: 1 1 0; min-width: 2px; height: var(--h); border-radius: 1px 1px 0 0; background: rgba(69,193,92,.7); cursor: pointer; } .npc i:hover { filter: brightness(1.35); }
+.npc .npc-bad { background: var(--lv-maj); } .npc .npc-warn { background: var(--lv-min); } .npc .npc-na { height: 2px; background: rgba(255,255,255,.1); }
+.nmc-big { flex-basis: 100%; font-size: 12.5px; color: var(--muted); } .nmc-big b { font: 800 22px/1 var(--head); color: var(--text); margin-right: 4px; }
+.nmc-who { flex-basis: 100%; font-size: 12.5px; color: var(--muted); } .nmc-who span { font-weight: 600; }
+/* (Oct 19: three flags; a count of several shows each part in its own colour, whatever the pill around it) */
+.sst .lvx-f, .mcx-verdict .lvx-f { color: var(--lv-maj-t); } .sst .lvx-m, .mcx-verdict .lvx-m { color: var(--lv-min-t); } .sst .lvx-s { color: var(--muted); }
+/* (Oct 19: Recap as a debrief, the same on one pull and the whole night: the short version, the numbers, four lists; nothing opens anything) */
+.dbf > .panel { margin: 0 0 12px; border-radius: 14px; }
+.dbf-short { position: relative; overflow: hidden; padding: 17px 20px 15px; } .dbf-short::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--gold); }
+.dbf-k { font: 700 12px var(--body); letter-spacing: .9px; text-transform: uppercase; color: var(--gold); margin: 0 0 5px; }
+.dbf-short p { margin: 0; font-size: 17px; line-height: 1.6; color: var(--text); max-width: 82ch; } .dbf-short p b { font-weight: 700; }
+.dbf-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0; padding: 4px 6px; }
+.dbf-n { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-left: 1px solid var(--line); min-width: 0; } .dbf-n:first-child { border-left: 0; }
+.dbf-n > b { font: 700 24px/1.1 var(--head); color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dbf-n > b span { font-size: 15px; color: var(--faint); font-weight: 600; }
+.dbf-n > span { font-size: 12.5px; color: var(--muted); line-height: 1.3; } .dbf-n > em { font-style: normal; } .dbf-n > em .lp-d { margin: 0; vertical-align: 0; white-space: normal; }
+.dbf-4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; } .dbf-4 > .panel { margin: 0; }
+.dbf-c { position: relative; overflow: hidden; padding-top: 17px; border-radius: 14px; } .dbf-c::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; }
+.dbf-ok::before { background: #45c15c; } .dbf-bad::before { background: var(--lv-maj); } .dbf-up::before { background: #6aa8ff; } .dbf-down::before { background: var(--lv-mod); }
+.dbf-c h3.nh { margin-bottom: 6px; } .dbf-ok h3 span:first-child { color: #7ee08f; } .dbf-bad h3 span:first-child { color: var(--lv-maj-t); } .dbf-up h3 span:first-child { color: #8fbfff; } .dbf-down h3 span:first-child { color: var(--lv-mod-t); }
+.dbf-l { list-style: none; margin: 0; padding: 0; }
+.dbf-l li { position: relative; padding: 7px 0 7px 24px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; color: #cfcac0; } .dbf-l li:first-child { border-top: 0; } .dbf-l li b { color: var(--text); font-weight: 600; }
+.dbf-l li::before { position: absolute; left: 0; top: 9px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; font: 800 10px/1 var(--body); }
+.dbf-ok li::before { content: '✓'; background: rgba(69,193,92,.15); color: #7ee08f; } .dbf-bad li::before { content: '✕'; background: rgba(229,83,75,.15); color: var(--lv-maj-t); }
+.dbf-up li::before { content: '▲'; background: rgba(106,168,255,.15); color: #8fbfff; font-size: 8px; } .dbf-down li::before { content: '▼'; background: rgba(240,122,58,.15); color: var(--lv-mod-t); font-size: 8px; }
+.dbf-l li .sub { margin-left: 4px; } .dbf-none { margin: 4px 0 2px; }
+.dbf-pg .npg-b { cursor: default; } .dbf-pg .npg-b:hover i { filter: none; }
+.dbf-ng { cursor: default; } .dbf-ng:hover { color: inherit; text-decoration: none; }
+@media (max-width: 1100px) { .dbf-4 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .dbf-short { padding: 15px 15px 13px; } .dbf-short p { font-size: 15.5px; } .dbf-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 2px; }
+  .dbf-n { border-left: 0; border-top: 1px solid var(--line); padding: 8px 10px; } .dbf-n:nth-child(-n+2) { border-top: 0; } .dbf-n:nth-child(even) { border-left: 1px solid var(--line); } .dbf-n:last-child:nth-child(odd) { grid-column: 1 / -1; } .dbf-n > b { font-size: 21px; } }
 /* ---- Team of the night (rct-, Oct 19): the result banner, the team, and a rated card for every raider ---- */
 .rct { gap:22px; }
 .rct-ban { position:relative; overflow:hidden; display:grid; grid-template-columns:1fr auto; gap:14px 24px; align-items:center; border:1px solid var(--line); border-radius:14px; padding:24px 26px 20px;

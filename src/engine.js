@@ -3253,7 +3253,7 @@ function buildCoiledAltar(ev, r, h) {
     // with each frontal, so the count is shown, not judged)
     if (!mythic) return { txt: 'every orb on the ground', badAt: Infinity };
     if (s.n === 'sever') { const k = p1All.findIndex((t) => Math.abs(t - s.t) < 0.5), n = p1All.length, last = p2 != null && k === n - 1, second = p2 != null && k === n - 2;
-      return last ? { txt: 'none (hits empty ground)', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8, lowAt: 0 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8, lowAt: 3 }; }
+      return last ? { txt: 'none (hits empty ground)', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8 }; }
     return p3Sev.indexOf(s) === 0 ? { txt: 'every purple (5 to 7)', badAt: 8 } : { txt: 'the purples left (7 at most)', badAt: 8 };
   };
   const sevRows = severs.map((s, i) => {
@@ -3517,51 +3517,60 @@ function buildCoiledAltar(ev, r, h) {
     // Sever / Soul Sever / Blighted Sever: 60 degree cone (SpellTargetRestrictions.ConeDegrees via wago.tools),
     // aimed at the tank (the boss faces its target); Sever reaches 35 yards, Blighted Sever 45 (Wowhead)
     const CONE = Math.PI / 6, REACH_OF = { sever: 35, 'blighted sever': 45, 'soul sever': 45 };
-    orbSec0.groups = deluges.map((d, i) => {
+    // (your note, Oct 19: the Severs after a Toxic Deluge are one job, the tanks alternating so each cone pops its own set of
+    // orbs. So it's a row per Deluge with its frontals together, and one map that plays every cone in order. A frontal that
+    // pops fewer than 5 isn't a mistake when the pair clears the Deluge between them, and players clipped by a purple carrier
+    // are counted under Avoidable damage, so neither marks a Deluge down)
+    const frontOf = (s, d) => {
+      const before = new Map(), after = new Map();
+      for (const [g, l] of hist) { let b = 0, a = 0; for (const [tt, st] of l) { if (tt <= s.t - 0.3) b = st; if (tt <= s.t + 3) a = st; } before.set(g, b); after.set(g, a); }
+      const gains = [...after].map(([g, a]) => a - before.get(g)).filter((x) => x > 0).sort((a, b) => a - b);
+      const popped = gains.length ? gains[Math.floor(gains.length / 2)] : 0, raidMax = Math.max(0, ...after.values());
+      const tankG = (dmg(s.n).find((e) => e.t >= s.t - 0.5 && e.t <= s.t + 3 && role(e.dst) === 'tank') || {}).dst;
+      const snap = h.snap(s.t), boss = snap.find((p) => p.kind === 'boss' && zj.includes(p.guid)), tk = snap.find((p) => p.guid === tankG);
+      const ground = objs(s.t - 0.3, d).filter((o) => o.kind !== 'ghost');
+      let hit = [], cone = null;
+      if (boss && tk) {
+        const dir = Math.atan2(tk.y - boss.y, tk.x - boss.x);
+        const ang = (o) => { let a = Math.abs(Math.atan2(o.y - boss.y, o.x - boss.x) - dir); return a > Math.PI ? 2 * Math.PI - a : a; };
+        // every orb inside the cone (an orb counts if its edge, ~2 yd, is inside)
+        const REACH = REACH_OF[s.n] || 35;
+        hit = ground.filter((o) => { const dd = Math.hypot(o.x - boss.x, o.y - boss.y); return dd <= REACH + 2 && (ang(o) <= CONE || dd * Math.sin(ang(o)) <= 2); });
+        cone = { x: boss.x, y: boss.y, dir, half: CONE, r: REACH, at: s.t };
+      }
+      // red: 8 or more at once (or the raid over 12 stacks); amber: off the plan at the end of P1 (the last frontal hits orbs, or the
+      // second-to-last pops 5 or more)
+      const pf = planFor(s);
+      return { s, popped, raidMax, tankG, ground, hit, cone, plan: pf.txt, bad: popped >= (pf.badAt ?? 8) || raidMax > 12, warn: pf.warnAt != null && popped >= pf.warnAt };
+    };
+    orbSec0.rows = deluges.map((d, i) => {
       const end = deluges[i + 1] ?? (p2 != null && d < p2 ? p2 : dur);
       const picks = carry.filter((c) => c.s >= d && c.s < end), cl = clipped.filter((c) => c.t >= d && c.t < end).length;
-      const coll = bursts.find((b) => b.t >= d && b.t < end), left = leftover.some((x) => x.t === end);
-      const sv = severs.filter((s) => s.t > d && s.t < end);
-      const rows = sv.map((s, k) => {
-        const before = new Map(), after = new Map();
-        for (const [g, l] of hist) { let b = 0, a = 0; for (const [tt, st] of l) { if (tt <= s.t - 0.3) b = st; if (tt <= s.t + 3) a = st; } before.set(g, b); after.set(g, a); }
-        const gains = [...after].map(([g, a]) => a - before.get(g)).filter((x) => x > 0).sort((a, b) => a - b);
-        const popped = gains.length ? gains[Math.floor(gains.length / 2)] : 0, raidMax = Math.max(0, ...after.values());
-        const tankG = (dmg(s.n).find((e) => e.t >= s.t - 0.5 && e.t <= s.t + 3 && role(e.dst) === 'tank') || {}).dst;
-        const snap = h.snap(s.t), boss = snap.find((p) => p.kind === 'boss' && zj.includes(p.guid)), tk = snap.find((p) => p.guid === tankG);
-        const ground = objs(s.t - 0.3, d).filter((o) => o.kind !== 'ghost');
-        let hit = [], cone = null;
-        if (boss && tk) {
-          const dir = Math.atan2(tk.y - boss.y, tk.x - boss.x);
-          const ang = (o) => { let a = Math.abs(Math.atan2(o.y - boss.y, o.x - boss.x) - dir); return a > Math.PI ? 2 * Math.PI - a : a; };
-          // every orb inside the cone (an orb counts if its edge, ~2 yd, is inside)
-          const REACH = REACH_OF[s.n] || 35;
-          hit = ground.filter((o) => { const dd = Math.hypot(o.x - boss.x, o.y - boss.y); return dd <= REACH + 2 && (ang(o) <= CONE || dd * Math.sin(ang(o)) <= 2); });
-          cone = { x: boss.x, y: boss.y, dir, half: CONE, r: REACH, at: s.t };
-        }
-        const hp = hit.filter((o) => o.kind === 'porb').length, hg = hit.length - hp;
-        const differ = cone && hit.length !== popped ? ' (stacks say ' + popped + ')' : '';
-        // red: more than 7 at once; amber: off the plan for this frontal (too few early, any on the last P1 frontal)
-        const pf = planFor(s), plan = pf.txt;
-        const offPlan = (pf.warnAt != null && popped >= pf.warnAt) || (pf.lowAt != null && popped <= pf.lowAt && pf.lowAt > 0);
-        // one number per frontal: orbs popped (= Venom Rupture stacks each player gained), with the plan under it;
-        // the cone breakdown stays on the map
-        return [{ txt: 'Frontal ' + (k + 1) }, { t: s.t }, { s: S(s.n) }, { txt: popped + (popped === 1 ? ' orb' : ' orbs'), sub: 'plan: ' + plan + (raidMax > 12 ? ' · raid at ' + raidMax + ' stacks after' : ''), bad: popped >= (pf.badAt ?? 8) || raidMax > 12, warn: offPlan },
-          { map: { t: s.t, from: d, hl: tankG ? [tankG] : [], hlLabel: 'Tank the frontal hit', hitOrbs: hit.map((o) => o.guid), cone, note: '+' + popped + ' Venom Rupture stacks (raid at up to ' + raidMax + ')',
-            title: S(s.n)[1] + ' at ' + h.fmtT(s.t) + ': ' + hit.length + ' orbs in the 60° cone (yellow rings), raid +' + popped + ' stacks' } }];
-      });
-      for (const x of detonations.filter((x) => x.t >= d - 1 && x.t < end)) rows.push([{ txt: 'Defilement detonation', bad: true }, { t: x.t }, { s: S('defilement of the coiled altar') }, { txt: '+' + x.gain + ' stacks at once', sub: 'orbs still on the ground', bad: true },
-        { map: { t: x.t, from: d, title: 'Defilement of the Coiled Altar at ' + h.fmtT(x.t) + ': orbs still on the ground' } }]);
-      if (coll) rows.push([{ txt: 'Orb collision', bad: true }, { t: coll.t }, { txt: '' }, { txt: '+' + coll.gain + ' stacks at once', sub: 'a purple touched other orbs', bad: true },
-        { map: { t: coll.t, from: d, hl: carriersAt(coll.t).map((c) => c.g), hlLabel: 'Purple orb carriers', title: 'Orb collision at ' + h.fmtT(coll.t) + ' (purple carriers ringed)' } }]);
-      if (!rows.length) rows.push([{ txt: 'no frontal', dim: true }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }]);
-      return { title: 'Deluge #' + (i + 1), t: d, bad: !!coll || left || detonations.some((x) => x.t >= d - 1 && x.t < end), warn: cl > 0,
-        // (purple orbs are Mythic only: Heroic and Normal lines leave them out)
-        sub: [mythic ? pl(picks.length, 'purple pickup') + (picks.length ? ' (' + [...new Set(picks.map((c) => pname(c.g)))].join(', ') + ')' : '') : '', mythic ? pl(cl, 'player') + ' clipped by carriers' : '', coll ? 'orbs collided' : left ? 'orb left at the next Deluge' : 'clean'].filter(Boolean).join(', '), rows };
+      const coll = bursts.find((b) => b.t >= d && b.t < end), left = leftover.some((x) => x.t === end), det = detonations.filter((x) => x.t >= d - 1 && x.t < end);
+      const fs = severs.filter((s) => s.t > d && s.t < end).map((s) => frontOf(s, d)), many = fs.length > 1;
+      const fBad = fs.some((f) => f.bad), fWarn = !fBad && fs.some((f) => f.warn), raidMax = Math.max(0, ...fs.map((f) => f.raidMax));
+      // (purple orbs are Mythic only: Heroic and Normal leave them out)
+      const who = mythic ? [pl(picks.length, 'purple pickup') + (picks.length ? ' (' + [...new Set(picks.map((c) => pname(c.g)))].join(', ') + ')' : ''), cl ? pl(cl, 'player') + ' clipped by carriers' : ''].filter(Boolean).join(', ') : '';
+      const cnt = fs.length ? { txt: fs.map((f) => f.popped).join(' + ') + (fs.length === 1 && fs[0].popped === 1 ? ' orb' : ' orbs'), bad: fBad, warn: fWarn,
+        sub: (many ? fs.map((f, k) => S(f.s.n)[1] + ' ' + (k + 1) + ': ' + f.popped).join(' · ') + ' · ' : '') + (new Set(fs.map((f) => f.plan)).size === 1 ? 'plan: ' + (!many ? fs[0].plan : fs[0].plan.includes(' (') ? fs[0].plan.replace(' (', ' each (') : fs[0].plan + ' each') : 'plan: ' + fs.map((f) => f.plan).join(', then ')) + (raidMax > 12 ? ' · raid at ' + raidMax + ' stacks after' : '') } : { txt: 'no frontal', dim: true };
+      const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: a purple touched other orbs', bad: true }
+        : left ? { txt: 'orb left at the next Deluge', sub: 'it erupted on the raid', bad: true }
+        : det.length ? { txt: 'Defilement detonation', sub: '+' + det[0].gain + ' stacks at once: orbs still on the ground', bad: true }
+        : fBad ? { txt: 'too many at once', bad: true } : fWarn ? { txt: 'off the plan', warn: true } : { txt: 'clean' };
+      // (one map: every cone of the Deluge, in the order it landed, each popping the orbs it held; it plays from just before
+      // the first to just after the last, the orbs on the ground switching to each frontal's own as it comes)
+      const fc = fs.filter((f) => f.cone), all = new Map(); for (const f of fs) for (const o of f.ground) if (!all.has(o.guid)) all.set(o.guid, o);
+      const tanks = [...new Set(fs.map((f) => f.tankG).filter(Boolean))], last = fs[fs.length - 1];
+      const map = fc.length ? { map: { t: last.s.t, from: d, cones: fc.map((f) => ({ ...f.cone, hit: f.hit.map((o) => o.guid) })), segs: fs.map((f) => ({ until: f.s.t + 1, objs: f.ground })),
+        hl: tanks, hlLabel: tanks.length > 1 ? 'Tanks the frontals hit' : 'Tank the frontal hit', hitOrbs: fc.flatMap((f) => f.hit.map((o) => o.guid)), extraPts: [...all.values()],
+        note: fs.map((f) => '+' + f.popped).join(', then ') + ' Venom Rupture stacks (raid at up to ' + raidMax + ')',
+        title: 'Deluge #' + (i + 1) + ': ' + fs.map((f, k) => S(f.s.n)[1] + (many ? ' ' + (k + 1) : '') + ' at ' + h.fmtT(f.s.t) + ' popped ' + f.popped).join(', ') + (many ? ' (the cones in order; yellow rings: orbs inside)' : ' (yellow rings: orbs inside)') } } : { txt: '' };
+      return [{ txt: 'Deluge #' + (i + 1), sub: who }, { t: d }, cnt, res, map];
     });
-    orbSec0.rows = []; orbSec0.title = 'Venom orbs (Into the frontals)'; orbSec0.place = 'Venom orbs into the frontals'; orbSec0.mythicOnly = false;
-    orbSec0.cols = ['Frontal', 'When', 'Spell', 'Orbs popped', ''];
-    orbSec0.summary = orbSec0.summary + ' Each frontal shows how many orbs it popped (each one is a Venom Rupture stack on everyone) against the plan. Open its map to see the cone and which orbs were in it.';
+    delete orbSec0.groups;
+    orbSec0.title = 'Venom orbs (Into the frontals)'; orbSec0.place = 'Venom orbs into the frontals'; orbSec0.mythicOnly = false;
+    orbSec0.cols = ['Deluge', 'When', 'Orbs popped', 'Result', ''];
+    orbSec0.summary = orbSec0.summary + ' Each Toxic Deluge is followed by its frontals, the tanks taking turns so each cone pops its own set of orbs. Each row shows how many orbs each frontal popped (each one is a Venom Rupture stack on everyone) against the plan, and its map plays every cone in order.';
   }
   // Dreadmarch: targets should pixel-stack on the nearest edge marker so ghost spawns are consistent
   const dmRows = [], dmCC = [];
@@ -5716,11 +5725,13 @@ function analyze(item, text, opts) {
         for (const mp of c && c.map ? [c.map] : c && c.maps ? c.maps.map((x) => x[1]) : []) { if (mp.frames || mp.t == null || !(mp.pts || []).length) continue;
           // (a tank frontal into orbs or ghosts (Coiled Altar, your note, Oct 18): the players and bosses move, the orbs and ghosts
           // the check placed stay where they were, so the cone can be seen coming out of the boss and popping them)
+          if (mp.cones && mp.segs && mp.cones.length) { const t0 = mp.cones[0].at - 3, t1 = mp.cones[mp.cones.length - 1].at + 1.6, segs = mp.segs; delete mp.segs;
+            mp.frames = framesAt(Math.max(0, t0), Math.min(r.duration, t1), 0.2).map((fr) => { const sg = segs.find((q) => fr.t <= q.until) || segs[segs.length - 1]; return { t: fr.t, pts: fr.pts.filter((p) => !/venom stalker|virulent mutation|manifestation of dread/i.test(p.name)).concat(sg.objs) }; }); continue; }
           if (mp.cone && mp.cone.at != null) { const objs = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss');
             mp.frames = framesAt(Math.max(0, mp.t - 3), Math.min(r.duration, mp.t + 1.6), 0.2).map((fr) => ({ t: fr.t, pts: fr.pts.filter((p) => !/venom stalker|virulent mutation|manifestation of dread/i.test(p.name)).concat(objs) })); continue; }
           const extra = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss'); if (!extra.every((p) => p.guid && r.positions.has(p.guid))) continue;
           mp.frames = framesAt(Math.max(0, mp.t - 4), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
-      const drawsMech = (mp) => !!(mp.cone || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
+      const drawsMech = (mp) => !!(mp.cone || (mp.cones || []).length || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
         [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
       if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
         if (!c) continue; if (c.map && !drawsMech(c.map)) delete c.map;
@@ -5941,6 +5952,8 @@ function snapshot(r, t, units) {
   return out;
 }
 
+// (seconds a player's health line ([t, fraction] samples) spends under th between t0 and t1)
+function lowTime(l, t0, t1, th) { let s = 0; for (let i = 0; i < l.length; i++) { const [t, fr] = l[i]; if (t > t1) break; const tn = i + 1 < l.length ? Math.min(l[i + 1][0], t1) : t1; if (tn <= t0 || fr >= th) continue; s += tn - Math.max(t, t0); } return s; }
 function survivability(r) {
   let used = 0, possible = 0;
   for (const p of r.players.values()) {
@@ -5972,6 +5985,9 @@ function survivability(r) {
     d.window = ref ? d.t - ref.t : 0;
     d.startHp = ref ? ref.hp : null;
     d.healthy = !!(ref && ref.hp >= 90); // false: startHp is just their best in the window
+    // (time to react (your rule, Oct 19): sitting at or under 35% health for 2 seconds or more in the 10 before dying, so a Healthstone or
+    // potion was a choice. Nearly one-shot, or 80 to 0 in a burst, there was no time, so it isn't held against them)
+    const hl = (r.php && r.php.get(d.guid)) || []; d.lowFor = lowTime(hl, d.t - 10, d.t - 0.05, 0.35); d.reactable = d.lowFor >= 2;
   }
   for (const p of r.players.values()) {
     const died = r.deaths.filter((d) => d.guid === p.guid);
@@ -5985,6 +6001,9 @@ function survivability(r) {
   // their own). One close call lasts until they're back over 50%. It counts as answered when they had a personal
   // defensive going (pressed in the 8 s before, or up to 3 s after the low point) or used a Healthstone or health potion
   // from 2 s before to 5 s after it.
+  // Judged (your rules, Oct 19) only when there was time to answer it: 5 seconds or more under 30% (the healing wasn't keeping
+  // up), or sitting at or under 35% for 2 seconds and then taking another hit under 15%. A split-second dip isn't a fail.
+  // kitAvail: a Healthstone (when a Warlock is in the raid) or a health potion was still unused when it started.
   for (const p of r.players.values()) {
     const l = (r.php && r.php.get(p.guid)) || [], dts = r.deaths.filter((d) => d.guid === p.guid).map((d) => d.t), calls = [];
     // (a dip counts when it stays under 30% for at least a second or goes under 15%: a blip healers catch instantly
@@ -5999,7 +6018,9 @@ function survivability(r) {
     p.closeCalls = calls.filter((c) => !dts.some((dt) => dt >= c.t - 1 && dt <= c.tl + 6)).map((c) => {
       const t0 = c.tl, defUsed = (p.defs || []).concat(p.minor || []).some((d) => d.uses.some((u) => u >= t0 - 8 && u <= t0 + 3));
       const stone = p.cons.healthstone.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5), pot = p.cons.healpot.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5);
-      return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot };
+      const under = lowTime(l, c.t, c.last + 0.5, 0.3), judged = under >= 5 || (c.low < 0.15 && lowTime(l, c.t, c.tl, 0.35) >= 2);
+      const kitAvail = (stonesExist && !p.cons.healthstone.some((u) => u.t < c.t - 2)) || !p.cons.healpot.some((u) => u.t < c.t - 2);
+      return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot, under, judged, kitAvail };
     });
   }
 }
