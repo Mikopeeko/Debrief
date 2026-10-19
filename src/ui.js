@@ -4221,6 +4221,17 @@ function nightDebrief(pulls, reps) {
   const ppl = (m) => top(m, 3).map(([k, c]) => esc(k) + (c > 1 ? ' (' + c + ')' : '')).join(', ');
   const bump = (m, k, n) => m.set(k, (m.get(k) || 0) + (n || 1));
   const phaseAt = (r, t) => { const ph = r.module && !r.module.error && r.module.phases; if (!ph || !ph.length) return null; let n = null; for (const p of ph) if (t >= p.start - 0.5) n = p.name.split(' ')[0]; return /^(P\d|Intermission)$/.test(n || '') ? n : null; };
+// Recap's top strip (your ask, Oct 19): the boss's health at the end of every pull since the first one saved for this
+// team, earlier nights and tonight, as the Progress page draws it, only wide and short (a phone gets the Progress size)
+function recapHp(b0, pulls) {
+  const H = histFor(b0), now = pulls.map((b) => ({ at: b.wallMs || b.startMs, pull: b.pull, kill: !!b.kill, left: b.kill ? 0 : pullPct(b), label: pullLabel(b), dur: b.duration, go: 'pull:' + S.index.bosses.indexOf(b) }));
+  const list = H.earlier.flatMap((x) => x.list).concat(now.filter((v) => v.at)); if (!list.length) return '';
+  const kill = list.find((v) => v.kill), known = list.filter((v) => v.left != null), best = kill || (known.length ? known.reduce((m, v) => (v.left < m.left ? v : m)) : null);
+  const col = kill ? '#ff8000' : best ? (PULL_Q.find(([lo]) => 100 - best.left >= lo) || [0, '#9d9d9d'])[1] : 'var(--line2)';
+  const nN = new Set(list.map((v) => nightOf(v.at))).size;
+  return '<div class="panel rc-hp" style="--ec:' + col + '"><h3 class="nh">Boss health, every pull <small>' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' · lower is better' + (best ? ' · best: ' + esc(best.label) : '') + '</small></h3>' +
+    '<div class="rc-hp-w">' + progChart(list, b0.boss, [1160, 132]) + '</div><div class="rc-hp-n">' + progChart(list, b0.boss) + '</div></div>';
+}
   const fix = [], better = [], worse = [], trendOk = half >= 3, np = Math.max(1, reps.reduce((s, r) => s + r.players.size, 0) / Math.max(1, reps.length));
   // 1) what ended the wipes (each wipe's first death, or a serious raid-wide failure just before it)
   const causes = new Map();
@@ -4675,7 +4686,7 @@ async function night(part) {
       : (aCard || '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
   view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part">' + pickS + mPart + legend + '</div>'
     : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
-    : '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Players.</p></div>' + rail + '</div>'));
+    : recapHp(b0, pulls) + '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Players.</p></div>' + rail + '</div>'));
   refreshIcons(); setHeadRes(); fitTrends();
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };
@@ -15868,8 +15879,9 @@ const durH = (s) => (s >= 3600 ? Math.floor(s / 3600) + 'h ' + String(Math.round
 // one boss on one difficulty: every saved pull in order, as a chart like the Summary's "How far the night got" (lower
 // is further; multi-phase fights in stage bands sized by their share of the encounter), one line per pull plus the best
 // so far, nights split by a dashed line, a kill as an orange dot
-function progChart(list, boss) {
-  const W = 560, H = 160, L = 34, R = 10, Tp = 8, B = 22, n = list.length;
+// (wh: [width, height] of the drawing, for Recap's wide strip; a pull's own `go` opens it in this night instead)
+function progChart(list, boss, wh) {
+  const W = wh ? wh[0] : 560, H = wh ? wh[1] : 160, L = 34, R = 10, Tp = 8, B = 22, n = list.length;
   const X = (i) => L + (n <= 1 ? (W - L - R) / 2 : (i * (W - L - R)) / (n - 1)), Y = (v) => Tp + ((100 - v) / 100) * (H - Tp - B);
   const cfg = PROGRESS[boss] && !PROGRESS[boss].pool ? PROGRESS[boss] : null;
   let s = '<svg class="pc-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="How far each pull got, every night">';
@@ -15903,7 +15915,7 @@ function progChart(list, boss) {
     const v = p.v, wl = v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: v.fight || null } : null);
     const box = [esc(nightLabel(v.at)) + ' · pull ' + v.pull, (v.kill ? '<b class="ct-k">Kill</b>' : esc(v.label || '')) + (v.dur ? ' · ' + T(v.dur) : '')];
     if (typeof v.deaths === 'number') box.push(v.deaths ? plural(v.deaths, 'death') + (v.first ? ' · first: ' + esc(typeof v.first === 'string' ? v.first : v.first.name || '') : '') : 'Nobody died');
-    s += '<circle cx="' + cx + '" cy="' + cy + '" r="10" class="thit"' + ctData(box, wl && wl.code ? 'wcl:' + wl.code + '|' + (wl.fight != null ? wl.fight : '') : '') + '/>'; }
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="10" class="thit"' + ctData(box, v.go || (wl && wl.code ? 'wcl:' + wl.code + '|' + (wl.fight != null ? wl.fight : '') : '')) + '/>'; }
   return s + '</svg>';
 }
 progChart.n = 0;
