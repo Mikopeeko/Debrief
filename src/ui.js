@@ -11170,30 +11170,8 @@ function cmpPairs(A, B) {
   const big = (x) => Math.max(x[0] ? x[0].share : 0, x[1] ? x[1].share : 0);
   return rows.sort((x, y) => big(y) - big(x)).filter((x) => big(x) >= 0.01);
 }
-// The biggest differences, in plain sentences: a spell one side leans on more (4+ points of their total), or presses
-// much more often (a quarter more, at least once a minute). Facts only, no advice. A and B: { who: 'You' | name, many }
-function cmpDiffs(A, B, unit, story) {
-  const out = [], U = unit === 'heal' ? 'healing' : 'damage', pos = (S0) => (S0.who === 'You' ? 'your' : S0.many ? 'their' : 'their'), v = (S0, one, many) => (S0.who === 'You' || S0.many ? many : one);
-  const pct = (x) => (100 * x).toFixed(1) + '%', nm = (x) => String(x.name).replace(/^[^:]+: /, '');
-  for (const [a, b] of cmpPairs(A, B)) {
-    const sa = a ? a.share : 0, sb = b ? b.share : 0, x = a || b, d = Math.abs(sa - sb);
-    if (d >= 0.04) {
-      const [H, L, sh, sl] = sb > sa ? [B, A, sb, sa] : [A, B, sa, sb];
-      out.push({ d, x, txt: H.who + ' ' + v(H, 'gets', 'get') + ' ' + pct(sh) + ' of ' + pos(H) + ' ' + U + ' from ' + nm(x) + '. ' + (sl ? L.who + ' ' + v(L, 'gets', 'get') + ' ' + pct(sl) + '.' : L.who + ' ' + v(L, 'doesn\'t', 'don\'t') + ' use it.') });
-    } else if (a && b && a.cpm && b.cpm && Math.max(a.cpm, b.cpm) >= 1 && Math.abs(a.cpm - b.cpm) / Math.min(a.cpm, b.cpm) >= 0.25) {
-      const [H, L, ch, cl] = b.cpm > a.cpm ? [B, A, b.cpm, a.cpm] : [A, B, a.cpm, b.cpm];
-      out.push({ d: 0.03 * Math.abs(a.cpm - b.cpm) / Math.min(a.cpm, b.cpm), x, txt: H.who + ' ' + v(H, 'casts', 'cast') + ' ' + nm(x) + ' ' + ch.toFixed(1) + ' times a minute. ' + L.who + ' ' + v(L, 'casts', 'cast') + ' it ' + cl.toFixed(1) + ' times.' });
-    }
-  }
-  const top = out.sort((p, q) => q.d - p.d).slice(0, 4);
-  // (Oct 19, "detailed summaries of how each is different": the main differences in plain sentences first, the site's
-  // check lines, then these spell cards; one panel, How they differ)
-  const lines = (story || []).map(([st, h]) => ckLine(st, h)).join('');
-  if (!top.length && !lines) return '';
-  return '<div class="panel cmp-story"><h3>How they differ<small>The main differences first, then spell by spell</small></h3>' + (lines ? '<div class="cmp-lines">' + lines + '</div>' : '') +
-    (top.length ? '<div class="cmp-lbl cmp-spl">Spell by spell</div><div class="cmp-dg">' +
-    top.map((o) => '<div class="cmp-dc">' + spellIcon(o.x.id, nm(o.x)) + '<span><b>' + esc(nm(o.x)) + '</b><span class="sub">' + esc(o.txt) + '</span></span></div>').join('') + '</div>' : '') + '</div>';
-}
+// How they differ: the main differences in plain sentences, the site's check lines ([status, html] each)
+const cmpStory = (story) => (story && story.length ? '<div class="panel cmp-story"><h3>How they differ<small>The main differences first</small></h3><div class="cmp-lines">' + story.map(([st, h]) => ckLine(st, h)).join('') + '</div></div>' : '');
 // (Oct 19, "the phrasing is awkward, needs to be clear and simple": every comparison sentence leads with who did more,
 // by how much, then both numbers. A and B: { n: the name as written (or "You"), pos: "your" / "Drcornman's" })
 const cmpMore = (A, a, B, b, verb, what, fmt, tail) => { if (!a && !b) return ''; const lv = a && b && Math.abs(a - b) / Math.max(a, b) < 0.03;
@@ -11303,8 +11281,7 @@ function cmpMate(r, p, ps) {
     .concat(k === 'dmg' && kq === 'dmg' && xa && xb && xa.addShare != null && xb.addShare != null && Math.max(xa.addShare, xb.addShare) >= 0.03
       ? [['na', PA.n + ' put ' + b(pct(xa.addShare)) + ' of their damage into adds. ' + Q + ' put ' + b(pct(xb.addShare)) + '.']] : [])
     .concat(cdA.length || cdB.length ? [['na', PA.n + ' used ' + (cdA.length ? cdL(cdA) : 'no big cooldowns') + '. ' + Q + ' used ' + (cdB.length ? cdL(cdB) : 'none') + '.']] : []);
-  const sameSp = q.specName === p.specName;
-  return { vs, body: cmpDiffs({ ...A, ab: sameSp ? A.ab : [], who: cmpIsMe(p) ? 'You' : p.name }, { ...B, ab: sameSp ? B.ab : [], who: q.name }, k, story) +
+  return { vs, body: cmpStory(story) +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
 }
 // (2) Top raiders of your spec: one of the top 3 on this boss, or their average, picked like a teammate (Oct 19, "more
@@ -11370,7 +11347,7 @@ function cmpTop(r, p) {
       : (hitA > hitB ? PA.pos : PB.pos) + ' ' + spl + ' hit ' + b(Math.round(100 * Math.abs(hitA - hitB) / Math.min(hitA, hitB)) + '% harder') + ' on average.') +
       (hitRev ? ' ' + (hit0[0].avg > hit0[1].avg ? PA.pos : PB.pos) + ' ' + esc(nm(hit0[0])) + ' hit harder, though (' + b(C(Math.max(hit0[0].avg, hit0[1].avg))) + ' against ' + b(C(Math.min(hit0[0].avg, hit0[1].avg))) + ').' : '')]] : [])
     .concat(x ? [[x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', PA.pos + ' parse was ' + b(Math.floor(x.pct)) + ', better than ' + Math.floor(x.pct) + '% of ' + esc(spn) + 's on this boss.']] : []);
-  return { vs, body: cmpDiffs({ ...A, who: cmpIsMe(p) ? 'You' : p.name }, { ...B, who: B.who }, k, story) +
+  return { vs, body: cmpStory(story) +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from

@@ -2932,7 +2932,6 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp .cutbar .btn { margin-left: auto; }
 .cmp-pts { margin-bottom: 14px; }
 .cmp-lines .ck { font-size: 14px; line-height: 1.5; padding: 3px 0; } .cmp-lines .ck b { color: var(--text); }
-.cmp-lbl.cmp-spl { margin-top: 14px; }
 /* the pairs: a label, the two bar rows, and when open their details under them */
 .cmp-grp { padding: 8px 0 6px; border-top: 1px solid var(--line); } .cmp-grp:first-of-type { border-top: 0; padding-top: 2px; }
 .cmp-lbl { display: block; font: 700 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 0 0 5px; }
@@ -2949,11 +2948,6 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 22px; } .cmp-col { min-width: 0; }
 .pf-row.cb.cmp-sr2 { grid-template-columns: 18px minmax(0, 1fr) 58px 0; }
 .cmp-sr2 .cb-in .icw, .cmp-sr .cb-in .icw { width: 18px; height: 18px; flex: none; margin: 0; border-radius: 3px; overflow: hidden; } .cmp-sr2 .cb-in .icw svg, .cmp-sr2 .cb-in .icw img, .cmp-sr .cb-in .icw svg, .cmp-sr .cb-in .icw img { width: 100%; height: 100%; }
-/* Biggest differences: cards with an icon and a sentence, as on Rotation */
-.cmp-dg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.cmp-dc { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; background: rgba(0,0,0,.25); }
-.cmp-dc .icw { width: 30px; height: 30px; margin: 1px 0 0; flex: none; border-radius: 6px; overflow: hidden; } .cmp-dc .icw svg, .cmp-dc .icw img { width: 100%; height: 100%; }
-.cmp-dc > span { min-width: 0; } .cmp-dc b { display: block; font-size: 14px; } .cmp-dc .sub { display: block; font-size: 13px; line-height: 1.45; color: var(--muted); }
 /* the other bar rows' columns: spells (# | bar | theirs | the other side | casts a minute), player by player (bar | this
    pull | their best | gap) and the raids (rank | bar | kill | raid DPS | specs matched) */
 .pf-row.cb.cmp-sr { grid-template-columns: 20px minmax(0, 1fr) 62px 62px 96px; }
@@ -2970,7 +2964,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
   .cmp h3.cmp-vh { flex-direction: column; align-items: flex-start; } .cmp-vs { margin-left: 2px; }
   .pf-row.cb.cmp-gr { grid-template-columns: 0 minmax(0, 1fr) 54px 54px; }
   .cmp-gw { grid-template-columns: 1fr; } .cmp-gw > .cmp-grp:nth-child(2) { border-top: 1px solid var(--line); padding-top: 8px; }
-  .cmp-two, .cmp-dg { grid-template-columns: 1fr; }
+  .cmp-two { grid-template-columns: 1fr; }
   .pts.cmp-pts { --n: 1 !important; }
   .pf-row.cb.cmp-sr { grid-template-columns: 16px minmax(0, 1fr) 46px 58px; } .cmp-sr .cb-r { display: none; }
   .pf-row.cb.cmp-ssr { grid-template-columns: 0 minmax(0, 1fr) 50px 0 46px; } .cmp-ssr .cb-s { visibility: hidden; }
