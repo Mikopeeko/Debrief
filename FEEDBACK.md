@@ -259,6 +259,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 245: One pull or the whole night, always clear; a chime for a new pull (your notes)
+- [x] **A tag at the top of every tab says what you're looking at:** white "Pull 13 · the latest" (or "Pull 9 · 9 of 13")
+  for one pull, gold "Whole night · 13 pulls" for the whole night, matching the card you picked. It shows on a phone too
+  (the old small grey line was hidden there).
+- [x] **New pull while live:** the pop-up from round 216 now plays a soft chime (two notes; three rising for a kill), made
+  by the browser, no sound file. If Debrief isn't the tab on screen, the browser tab's title reads "● New pull: Ula'tek,
+  pull 15" until you look at it.
+- [x] Checked on a real night, desktop and phone: both tags, the pop-up, the title and back; no errors.
+
 ## 2026-10-19, round 244: Graphs, a raider's review (your notes: raw data only; comparisons yes, coaching no)
 - [x] **Reviewed every Graphs view as an experienced raider.** Kept as they are: they're plain data, as you decided for
   Graphs (Casts ranks presses, Survivability counts defensives, no verdicts). My suggestions that would have made Graphs

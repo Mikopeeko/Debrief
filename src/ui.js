@@ -1140,7 +1140,7 @@ function headerHtml(r, allMode) {
   const pk = E.PACKS.find((p) => p.encounter === it.boss), raid = pk ? pk.raid || 'The Venomous Abyss' : '';
   if (allMode) {
     const nr = nightResult(it), time = same.reduce((s, b) => s + (b.duration || 0), 0);
-    cls = nr.cls; left = nr.left; kick = ['Whole night', it.diff, raid]; big = nr.big + (nr.cls !== 'good' && nr.pull ? ' (pull ' + nr.pull + ')' : '');
+    cls = nr.cls; left = nr.left; kick = [it.diff, raid]; big = nr.big + (nr.cls !== 'good' && nr.pull ? ' (pull ' + nr.pull + ')' : '');
     stats = [['pulls', plural(same.length, 'pull')], ['timer', T(time) + ' on the boss']].concat(H.earlier.length ? [['moon', 'Night ' + (H.earlier.length + 1) + ' on this boss']] : []);
     if (H.earlier.length) side += nr.cls !== 'good' && nr.left != null && everBest != null && nr.left < everBest ? '<span class="nc-res ok">✓ Further than any night before</span>'
       : '<span class="sub">Before tonight, ' + (H.kill ? 'you killed it on ' + esc(H.kill.label) : H.best ? 'your best was ' + esc(H.best.label) : 'there was no result') + ', over ' + plural(H.pulls, 'pull') + ' in ' + plural(H.earlier.length, 'night') + '.</span>';
@@ -1152,7 +1152,7 @@ function headerHtml(r, allMode) {
     const was = prevItem ? pullPct(prevItem) : null, earlier = same.slice(0, Math.max(0, k)).map((x) => ({ x, v: pullPct(x) })).filter((o) => o.v != null);
     const bestO = earlier.length ? earlier.reduce((m, o) => (o.v < m.v ? o : m)) : null, usesPh = !!PROGRESS[it.boss], delta = now != null && was != null ? was - now : null;
     const ds = keptDeaths(r).length;
-    cls = it.kill ? 'good' : 'bad'; left = now; kick = [it.run ? '' : 'Pull ' + it.pull, it.diff, raid];
+    cls = it.kill ? 'good' : 'bad'; left = now; kick = [it.diff, raid];
     big = it.kill ? 'Kill' : now != null ? (usesPh ? 'Wipe in ' : 'Wipe at ') + (pg ? pg.label : now.toFixed(1) + '%') : 'Wipe';
     stats = [['clock', it.wallMs ? wallClock(it.wallMs) : clock(it.startMs)], ['timer', T(r.duration)], ['users', plural(r.players.size, 'player')], ['skull', plural(ds, 'death') + (cutInfo(r) ? ' before the wipe filter' : '')]];
     const yet = !it.kill && now != null && everBest != null && now < everBest && (!bestO || now < bestO.v); // (further than every saved night too)
@@ -1175,9 +1175,13 @@ function headerHtml(r, allMode) {
   // how it compares, and when, how long, who and deaths)
   // (the team this raid is, linking to its Progress: "Wolfthorn · 7/10 Mythic ›")
   const tm = !isKey ? pullTeam(r || S.rep, it) : null, tmL = tm ? '<button class="bh-team" type="button" data-team="' + esc(tm.gid) + '" title="' + esc(tm.name) + '\'s progress, every boss and night">' + esc(tm.name) + ' · ' + tm.k + '/' + tm.of + ' ' + esc(tm.diff || '') + ' ›</button>' : '';
+  // (what the tabs below are showing, as a tag on every tab and on a phone too (your note, Oct 18: "Whole night" was plain,
+  // one pull wasn't): gold for the whole night, like its card; white for one pull, like the picked pull card)
+  const kN = same.indexOf(it) + 1, scope = isKey || it.run ? '' : allMode ? '<span class="bh-scope all">Whole night<span> · ' + esc(plural(same.length, 'pull')) + '</span></span>'
+    : '<span class="bh-scope one">Pull ' + it.pull + (kN && same.length > 1 ? '<span> · ' + (kN === same.length ? 'the latest' : kN + ' of ' + same.length) + '</span>' : '') + '</span>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
-    '<div class="bh-l2"><span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
+    '<div class="bh-l2">' + scope + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
     '<span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + (isKey ? '' : bhCutChip()) + '</div></div></header>';
 }
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
@@ -12687,7 +12691,27 @@ function pullAlert(nb, opened) {
   t.querySelector('[data-x]').onclick = bye;
   const go = t.querySelector('[data-go]'); if (go) go.onclick = () => { t.remove(); select(nb); };
   t.querySelector('.np-bar').addEventListener('animationend', bye);
+  pullChime(nb.kill);
+  // (Debrief not the tab on screen: the browser tab's title says so until it's looked at)
+  if (document.hidden) document.title = '● New pull: ' + nb.boss + ', pull ' + nb.pull + ' · ' + PAGE_TITLE;
   return t;
+}
+// A soft chime with the new-pull card (your note, Oct 18): two quiet bell notes, three rising for a kill. Made by the
+// browser, no sound file. Browsers only play sound after a click on the page, which opening a report or Live already is.
+const PAGE_TITLE = document.title;
+let CHIME_CTX = null;
+document.addEventListener('pointerdown', () => { try { if (!CHIME_CTX) CHIME_CTX = new (window.AudioContext || window.webkitAudioContext)(); if (CHIME_CTX.state === 'suspended') CHIME_CTX.resume(); } catch (e) { /* no sound */ } }, true);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) document.title = PAGE_TITLE; });
+function pullChime(kill) {
+  try {
+    const c = CHIME_CTX || (CHIME_CTX = new (window.AudioContext || window.webkitAudioContext)()); if (c.state === 'suspended') c.resume();
+    (kill ? [659.25, 783.99, 1046.5] : [783.99, 1046.5]).forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + 0.05 + i * 0.16;
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.1);
+      o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.2);
+    });
+  } catch (e) { /* no sound */ }
 }
 function toast(html, ms) {
   document.querySelectorAll('.toast').forEach((x) => x.remove());
