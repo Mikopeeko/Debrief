@@ -4541,14 +4541,16 @@ const NZ = {
   ritual: 1295124, ritualAura: 1289683, // the intermission: Ritual of Awakening (the cast, her aura)
   transfer: [1292248, 1289902, 1293211], pyre: 1289855, flame: 1294933, // Echo of Jawae: Soul Transfer (the 15 s channel and line blast), Hungering Pyre (the soak), Slithering Flame (on the non-soakers)
   uncoil: 1290003, invoke: 1299673, invokeDeb: 1299722, // P2: Uncoiling (her aura as it starts), Invoke (the cast; Mythic: the debuff on players it interrupted)
-  depths: 1293212, coil: 1308227, curse: 1300238, spirit: 1300239, exhaust: 1300235, // Mythic Grasping Depths: the well's aura while a Drowned Echo lives, Immortal Coil (on the players in the well), Soulcoiler's Curse, Swirling Spirit, Soul Exhaustion
+  depths: 1293212, coil: 1308227, coilDeb: 1300524, curse: 1300238, spirit: 1300239, exhaust: 1300235, // Mythic Grasping Depths: the well's aura while a Drowned Echo lives, Immortal Coil (on the players in the well), Soulcoiler's Curse, Swirling Spirit, Soul Exhaustion
   soulcoiled: 1290361, rage: 1284034, // Soulcoiled, Uncoiled Rage (the enrage at 100 energy)
 };
 const NZ_IDS = Object.values(NZ).flat();
 // Nymrissa Wavecaller (Frost Orbs) spell IDs, read from a real Mythic kill on Warcraft Logs (Sep 16 2026): Chilling Frost
 // marks 3 players and drops a Frost Orb under each; whoever touches an orb takes Frost Orb (a hit, logged as immune for
 // someone in an immunity, and a debuff) and, on Mythic, sets off Frost Burst on the raid; an orb nobody touches Shatters.
-const NY = { chill: 1313393, orb: 1313448, burst: 1313450, shatter: 1313456 };
+const NY = { chill: 1313393, orb: 1313448, burst: 1313450, shatter: 1313456,
+  // (audit Oct 19, from a top Mythic kill: Water Jet, the tank's beam (cast, the tank's debuff, its hits), and Lingering Frost, the ice puddles)
+  jet: 1281951, jetTank: 1258901, jetHit: [1271458, 1260637], frost: 1257654 };
 const NY_IDS = Object.values(NY).flat();
 // Vashnik the Malignant spell IDs, read from real Mythic pulls on Warcraft Logs (Sep to Oct 2026). Matched by ID
 // (MODULES entry `ids`); the infusions and the rarer failures by name.
@@ -5277,7 +5279,7 @@ function buildTwinFangs(ev, r, h) {
   });
   // A hit is small (50 to 75K on Mythic) and adds no Eternal Venom stack (checked on Wolfthorn's kill), and the raid
   // stacks for soaks, so a tick or two while stepping out is fine: only a stand-in of ICHOR_LONG ticks is a mistake
-  const ICHOR_LONG = 5;
+  const ICHOR_LONG = 10;
   // the circle on each marked player: it follows them and shrinks (measured on 30 Mythic pulls: about 11 yd for the first
   // ~6s, then down to about 6 yd at 10s; the map draws it that way, ring.shrink = 'ichor')
   const ichRings = (c) => c.tg.map((g) => ({ guid: g, t0: c.t, dur: 12, shrink: 'ichor', r: 11, label: 'Coiling Ichor', ...mcol('Coiling Ichor'), fx: 'debuff' }));
@@ -5341,13 +5343,13 @@ function buildTwinFangs(ev, r, h) {
   // (one set per source, like every other boss's Avoidable damage, so it draws as bars: players, hits, damage, died)
   // (with how harmful it is, its hits and damage in total, and its spell, like avoidPanel's: the Summary's chart reads those)
   const avSet = (title, sub, key, amtOf, sp) => { const rs = avRows.filter(([, a]) => a[key] > 0).sort((a, b) => b[1][key] - a[1][key]);
-    if (!rs.length) return null; const rows = rs.map(([g, a]) => [{ p: pname(g) }, { txt: a[key] + (a[key] === 1 ? ' hit' : ' hits'), bad: a[key] >= 3, warn: a[key] > 0 }, { n: amtOf(a) }, { txt: '—', dim: true }]);
+    if (!rs.length) return null; const rows = rs.map(([g, a]) => [{ p: pname(g) }, { txt: a[key] + (a[key] === 1 ? ' hit' : ' hits'), bad: a[key] >= 5, warn: a[key] >= 2 && a[key] < 5 }, { n: amtOf(a) }, { txt: '—', dim: true }]);
     const nT = rs.reduce((n, [, a]) => n + a[key], 0), amt = rs.reduce((n, [, a]) => n + amtOf(a), 0), spl = S(sp);
-    return { title, t: null, harm: 'Medium', nT, amt, spell: spl, sub: sub + '. ' + pl(nT, 'hit') + ' on ' + pl(rs.length, 'player') + '.', bad: rows.some((x) => x[1].bad), warn: true, rows }; };
+    return { title, t: null, harm: 'Medium', nT, amt, spell: spl, sub: sub + '. ' + pl(nT, 'hit') + ' on ' + pl(rs.length, 'player') + '.', bad: rows.some((x) => x[1].bad), warn: rows.some((x) => x[1].warn), rows }; };
   const avGroups = [avSet('Stir the Depths water', 'Harmful: stepping into the churned water it leaves (each step is a hit)', 'stir', () => 0, 'stir the depths'),
     avSet('Sanguine Storm', 'Harmful: each hit', 'storm', (a) => a.amt, 'sanguine storm')].filter(Boolean);
   sections.push({ id: 'avoid', title: 'Avoidable damage', spell: S('sanguine storm'),
-    verdict: avRows.some(([, a]) => a.storm >= 3 || a.stir >= 3) ? 'bad' : avRows.some(([, a]) => hits(a)) ? 'warn' : 'good',
+    verdict: avRows.some(([, a]) => a.storm >= 5 || a.stir >= 5) ? 'bad' : avRows.some(([, a]) => a.storm >= 2 || a.stir >= 2) ? 'warn' : 'good',
     summary: avRows.length ? pl(avRows.length, 'player') + ' stepped into Stir the Depths water or got hit by Sanguine Storm.' : 'Nobody stepped into Stir the Depths water or got hit by Sanguine Storm.',
     cols: ['Player', 'Hits', 'Damage taken', 'Died'], rows: [], groups: avGroups });
 
@@ -5510,7 +5512,7 @@ function buildEntombedSentinels(ev, r, h) {
     const rowOf = (g) => {
       const on = (ap.find((e) => e.dst === g) || {}).t, off = offT.get(g), mate = mateOf.get(g) || null;
       const n = pvTicks.filter((e) => e.dst === g && e.t >= on && e.t <= (off ?? end) + 0.1).length, ex = eruptOf(g), d = diedNear(g, on, (off ?? on + 20) - on + 2);
-      const took = off != null ? off - on : null, slow = took != null && took > 6;
+      const took = off != null ? off - on : null, slow = took != null && took > 8;
       return { g, on, off, mate, n, ex, d, took, row: [{ p: pname(g) }, { t: on }, mate ? { p: pname(mate) } : { txt: off != null ? 'no partner' : 'still on', warn: true }, took != null ? { txt: took.toFixed(1) + ' s', warn: slow } : { txt: '—', dim: true },
         { txt: pl(n, 'pulse'), dim: !n }, ex ? { txt: 'erupted' + (ex.who.length > 1 ? ' with ' + ex.who.filter((q) => q !== g).map(pname).join(', ') : ''), bad: true } : d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }] };
     };
@@ -5519,7 +5521,7 @@ function buildEntombedSentinels(ev, r, h) {
     const plain = [...new Set(er.flatMap((q) => q.who))].filter((g) => !circles.includes(g)).map((g) => { const ex = eruptOf(g);
       return [{ p: pname(g), sub: 'no circle' }, { t: ex.t }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: 'touched by a circle', bad: true }, { txt: '' }]; });
     // (eruption hits themselves are flagged by the rule pack, one per player hit)
-    for (const x of cr) if (!x.ex && x.took > 6) M(x.off, pname(x.g), 'Shifting Protovenom', 'Low', 'Took ' + x.took.toFixed(1) + ' s to clear Shifting Protovenom (' + pl(x.n, 'pulse') + ' of 233k).', 'Find a partner with a circle right away. Cross to the other group if yours has none.');
+    for (const x of cr) if (!x.ex && x.took > 8) M(x.off, pname(x.g), 'Shifting Protovenom', 'Low', 'Took ' + x.took.toFixed(1) + ' s to clear Shifting Protovenom (' + pl(x.n, 'pulse') + ' of 233k).', 'Find a partner with a circle right away. Cross to the other group if yours has none.');
     const last = Math.max(t + 8, ...cr.map((x) => x.off ?? t + 14)), tm = cr.length ? cr[0].on + 1 : t + 5;
     // (the map: an orange circle on each player while they have it, a green flash where a pair cleared, a red one at
     // each eruption. The circle's size isn't published (a server-side area). Measured on 30 Mythic pulls: two circles
@@ -5531,7 +5533,7 @@ function buildEntombedSentinels(ev, r, h) {
       .concat(cr.filter((x) => x.mate && x.off != null).map((x) => ({ guid: x.g, r: 4, color: '#ffffff', fill: 'rgba(255,255,255,.22)', label: '', t0: x.off, dur: 1.2, cn: 'White flash', legend: 'cleared with a partner' })))
       // (an eruption's blast is 10 yd, its published radius, around the circle player it came from)
       .concat(er.flatMap((q) => { const c = q.who.filter((g) => circles.includes(g)); return (c.length ? c : q.who.slice(0, 1)).map((g) => ({ guid: g, r: 10, ...mcol('Protovenom Eruption', 0.2), label: 'Eruption', t0: q.t - 0.1, dur: 1.6, fx: 'burst', at: q.t, legend: 'Protovenom Eruption (10 yd blast)' })); }));
-    const bad = er.length > 0 || cr.some((x) => x.d), warn = cr.some((x) => x.took > 6 || !x.mate);
+    const bad = er.length > 0 || cr.some((x) => x.d), warn = cr.some((x) => x.took > 8 || !x.mate);
     return { title: 'Protovenom ' + (i + 1), t, bad, warn,
       sub: pl(circles.length, 'circle') + ', ' + (cr.filter((x) => x.mate).length) + ' cleared in pairs' + (cr.some((x) => x.took != null) ? ', slowest ' + Math.max(...cr.map((x) => x.took || 0)).toFixed(1) + ' s' : '') + (er.length ? ', ' + pl(er.length, 'eruption') : ''),
       rows: [[{ txt: 'Whole cast', sub: 'every circle, on one map', dim: true }, { t }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }, { map: { t: tm, hl: circles, hlLabel: 'had a circle', bad: [...new Set(er.flatMap((q) => q.who))], badLabel: 'in a Protovenom Eruption', title: 'Shifting Protovenom ' + (i + 1) + ' at ' + h.fmtT(tm), pts: h.snap(tm), rings: pvRings, frames: frames(tm - 2, last + 1) } }]].concat(cr.map((x) => x.row), plain) };
@@ -5587,7 +5589,7 @@ function buildEntombedSentinels(ev, r, h) {
   const adds = castT(ES.coagCast).map((t) => { const d = coagDie.find((x) => x > t + 1 && !usedD.has(x)); if (d != null) usedD.add(d); return { t, died: d ?? null }; });
   const contam = ev.filter((e) => e.k === 'dmg' && e.id === ES.contam && h.isPlayer(e.dst));
   const aRows = adds.map((a, i) => {
-    const nextI = inters.find((x) => x.t0 > a.t), lastC = cycOf(a.t) === phases.length - 1 && inters.length >= 4;
+    const nextI = inters.find((x) => x.t0 > a.t), lastC = (cycOf(a.t) === phases.length - 1 && inters.length >= 4) || (r.item.kill && dur - a.t < 60);
     const before = nextI && !adds.some((b) => b.t > a.t && b.t < nextI.t0); // (the cycle's last add: it spawns right before the intermission)
     const alive = before && (a.died == null || a.died > nextI.t0), dmg = contam.filter((e) => e.t >= a.t && e.t <= (a.died ?? dur) + 0.5 && !adds.some((b) => b !== a && b.t > a.t && e.t >= b.t && (b.died == null || e.t <= b.died))).reduce((s, e) => s + e.amt, 0);
     if (alive && !lastC) M(nextI.t0, 'Raid', 'Venom Coagulation', 'Medium', 'The Venom Coagulation was still alive when the intermission started. Its Contaminate pulses hit the raid during the pairing game.', 'Give the cycle\'s second Venom Coagulation priority so it dies before Vitriolic Stasis. Ranged on the red side can help.');
@@ -5671,15 +5673,15 @@ function buildEntombedSentinels(ev, r, h) {
     const list = [...gain.values()].filter((o) => o.c === c); if (!list.length) return null;
     const rows = [];
     for (const o of list) { const main = o.acid >= o.blood ? 'acid' : 'blood', off = main === 'acid' ? o.blood : o.acid; _sides[c].set(pname(o.g), main === 'acid' ? 'Breath' : 'Blood');
-      if (off >= 3 && !isTank(o.g)) { rows.push([{ p: pname(o.g) }, { txt: main === 'acid' ? 'Breath (green)' : 'Blood (red)' }, { txt: off + ' stacks', bad: off >= 6, warn: off < 6 }]);
-        M(ph.start + 1, pname(o.g), 'Mark of ' + (main === 'acid' ? 'Blood' : 'Acid'), off >= 6 ? 'Medium' : 'Low', 'Picked up ' + off + ' stacks of the other boss\'s Mark in cycle ' + (c + 1) + ', by standing in range of both bosses.', 'Stay within 40 yards of your own boss only. To hit both, cleave from the edge of range.'); } }
+      if (off >= 5 && !isTank(o.g)) { rows.push([{ p: pname(o.g) }, { txt: main === 'acid' ? 'Breath (green)' : 'Blood (red)' }, { txt: off + ' stacks', bad: off >= 12, warn: off < 12 }]);
+        M(ph.start + 1, pname(o.g), 'Mark of ' + (main === 'acid' ? 'Blood' : 'Acid'), off >= 12 ? 'Medium' : 'Low', 'Picked up ' + off + ' stacks of the other boss\'s Mark in cycle ' + (c + 1) + ', by standing in range of both bosses.', 'Stay within 40 yards of your own boss only. To hit both, cleave from the edge of range.'); } }
     const nB = [..._sides[c].values()].filter((v) => v === 'Breath').length;
     return { title: 'Cycle ' + (c + 1), t: ph.start + 0.02, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: nB + ' on the Breath (green), ' + (_sides[c].size - nB) + ' on the Blood (red)' + (rows.length ? ', ' + pl(rows.length, 'player') + ' in range of both' : ''),
       rows: rows.length ? rows : [[{ txt: 'Nobody in range of both bosses', dim: true }, { txt: '' }, { txt: '' }]] };
   }).filter(Boolean);
   if (sGroups.length) sections.push({ id: 'marks', title: 'Marks (Stacks)', place: 'Marks (stacks): in range of one boss only', spell: [ES.acid, 'Mark of Acid'],
     verdict: sGroups.some((g) => g.bad) ? 'bad' : sGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: 'It shows who was on which side each cycle, and anyone who picked up 3 or more stacks of the other boss\'s Mark.', cols: ['Player', 'Their side', 'Other boss\'s Mark'], groups: sGroups, rows: [] });
+    summary: 'It shows who was on which side each cycle, and anyone who picked up 5 or more stacks of the other boss\'s Mark (12 or more is red).', cols: ['Player', 'Their side', 'Other boss\'s Mark'], groups: sGroups, rows: [] });
 
   // boss health at each intermission (Vitriolic Stasis heals the weaker boss up to the other), and the 40-yard rule
   const hpAt = (g, t) => { const u = g && r.hpUnits && r.hpUnits.get(g); if (!u) return null; let v = null; for (const [tt, f] of u.samples) { if (tt > t) break; v = f; } return v; };
@@ -5832,7 +5834,7 @@ function buildSszorak(ev, r, h) {
     for (const e of touch) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, ts: [], last: -9 }); if (e.t - o.last > 2) o.ts.push(e.t); o.last = e.t; }
     const rows = [...by.values()].sort((a, b) => a.ts[0] - b.ts[0]).map((o) => {
       const d = r.deaths.find((x) => x.guid === o.g && x.t >= o.ts[0] && x.t <= o.ts[o.ts.length - 1] + 8 && /tempest/i.test(x.ability || ''));
-      return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.ts[0] }, { txt: pl(o.ts.length, 'touch').replace('touchs', 'touches'), warn: o.ts.length === 1 && !d, bad: o.ts.length >= 2 }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
+      const tk = isTank(o.g) && !d; return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.ts[0] }, { txt: pl(o.ts.length, 'touch').replace('touchs', 'touches'), warn: !tk && o.ts.length === 1 && !d, bad: !tk && o.ts.length >= 2, dim: tk, sub: tk ? 'a tank: tornadoes kill the others, so only a note' : '' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
     });
     const hit = [...by.values()];
     const whole = [{ txt: 'Whole Tempest', sub: 'every touch, on one map', dim: true }, { t }, { txt: String(hit.reduce((n, o) => n + o.ts.length, 0)), dim: true }, { txt: '' },
@@ -6085,7 +6087,19 @@ function buildNymrissa(ev, r, h) {
   });
   if (groups.length) sections.push({ id: 'orbs', title: 'Frost Orbs (Soaks)', place: 'Frost Orbs: soaked', spell: [NY.chill, 'Chilling Frost'], verdict: groups.some((g) => g.bad) ? 'bad' : 'good',
     summary: pl(groups.length, 'set') + ' of Frost Orbs. It shows who soaked each set, and any orb that Shattered.', cols: ['Soaker', 'When', 'How'], groups, rows: [] });
-  return { _ny, diag: [], title: r.item.diff + ' audit: Nymrissa Wavecaller', reached: '', phases: [], marks: [], sections, mistakes, legend: 'The Frost Orb soaks, set by set.', note: '' };
+  // ---- Water Jet: the tank's beam (+20% per tick), so the tanks swap on every one ----
+  { const jt = ev.filter((e) => e.k === 'aura' && e.id === NY.jetTank && e.op === 'apply' && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t).filter((e, i, a) => !i || e.t - a[i - 1].t > 3);
+    const rows = jt.map((e, i) => { const again = i && jt[i - 1].dst === e.dst, d = r.deaths.find((x) => x.guid === e.dst && x.t >= e.t && x.t <= e.t + 6);
+      if (again) mistakes.push({ t: e.t, player: pname(e.dst), mechanic: 'Water Jet', id: NY.jet, severity: 'Medium', detail: 'Took two Water Jets in a row.', fix: 'Swap tanks on every Water Jet: it hits harder with every tick.' });
+      return [{ p: pname(e.dst) }, { t: e.t }, again ? { txt: 'took two in a row', warn: true } : { txt: i ? 'swapped' : 'first' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]; });
+    if (rows.length) sections.push({ id: 'nyjet', title: 'Water Jet (Tank swap)', place: 'Water Jet: a tank swap every time', spell: [NY.jet, 'Water Jet'], verdict: rows.some((x) => x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
+      summary: pl(rows.length, 'Water Jet') + '. It shows which tank took each one. Aim the beam over the ice puddles: it clears them.', cols: ['Tank', 'When', 'Result', 'Died'], rows }); }
+  const av = avoidPanel(ev, r, h, [
+    { n: ['water jet'], label: 'Water Jet', harm: 'Medium', why: 'standing in the tank\'s beam' },
+    { n: ['lingering frost'], label: 'Lingering Frost', harm: 'Low', why: 'standing on an ice puddle' },
+  ]);
+  if (av) sections.push(av);
+  return { _ny, diag: [], title: r.item.diff + ' audit: Nymrissa Wavecaller', reached: '', phases: [], marks: [], sections, mistakes, legend: 'The Frost Orb soaks set by set, the tank swaps, then avoidable damage.', note: '' };
 }
 
 // Kith'ix (Oct 19 2026, from the guide library's notes: Wowhead, Icy Veins, Mythic Trap and a Mythic video guide). P1 adds sets and
@@ -6370,11 +6384,11 @@ function buildNekzali(ev, r, h) {
     const by = new Map(); for (const e of echoHits.filter((e) => e.t >= s && e.t <= t1)) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, n: 0, last: -9, amt: 0 }); if (e.t - o.last > 1) o.n++; o.last = e.t; o.amt += e.raw || e.amt; }
     const died = r.deaths.filter((d) => d.t >= s && d.t <= t1 && h.isPlayer(d.guid));
     if (burned.length) M(s, 'Raid', 'Soulcoil Ignition', 'Medium', pl(burned.length, 'player') + ' went into Soulcoil Ignition with Ritual Burn up' + (src.length ? ' (from ' + src.join(', ') + ')' : '') + ', so every Rite hit them harder.', 'Go into Ignition with no Ritual Burn, so let no Amani into the well in the minute before.');
-    for (const o of by.values()) { const d = died.find((x) => x.guid === o.g); M(o.t, pname(o.g), 'Anguished Echoes', d || o.n >= 2 ? 'High' : 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Anguished Echoes circles' : 'an Anguished Echoes circle') + ' during Soulcoil Ignition' + (d ? ', and died.' : '.'), 'Watch for the circles raining from the well during Ignition and step out before they land.'); }
+    for (const o of by.values()) { const d = died.find((x) => x.guid === o.g); if (isTank(o.g) && !d) continue; M(o.t, pname(o.g), 'Anguished Echoes', d || o.n >= 3 ? 'High' : 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Anguished Echoes circles' : 'an Anguished Echoes circle') + ' during Soulcoil Ignition' + (d ? ', and died.' : '.'), 'Watch for the circles raining from the well during Ignition and step out before they land.'); }
     const e0 = energyAt(s - 0.1), e1 = energyAt(t1);
     const rows = [[{ txt: 'Going in' }, { t: s }, burnOn ? (burned.length ? { txt: pl(burned.length, 'player') + ' with Ritual Burn', warn: true, sub: src.length ? 'from ' + src.join(', ') : '' } : { txt: 'no Ritual Burn' }) : { txt: '—', dim: true },
       died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, { txt: e0 != null && e1 != null ? 'energy ' + e0 + ' to ' + e1 : '', dim: true }]]
-      .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: o.n === 1 && !d, bad: o.n >= 2 || !!d, sub: fmtM(o.amt) }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
+      .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: !d && o.n < 3 && !isTank(o.g), bad: o.n >= 3 || !!d, dim: isTank(o.g) && !d && o.n < 3, sub: fmtM(o.amt) + (isTank(o.g) && !d ? ', a tank: only a note' : '') }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
     return { title: 'Soulcoil Ignition ' + (i + 1) + (cut ? ' (cut short by the intermission)' : ''), t: s, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: (by.size ? pl(by.size, 'player') + ' hit by the circles' : 'nobody hit by the circles') + (burned.length ? ', ' + burned.length + ' with Ritual Burn' : ''), rows };
   });
   if (igGroups.length) sections.push({ id: 'ignition', title: 'Soulcoil Ignition (Boss channel)', place: 'Soulcoil Ignition (boss channel): no Ritual Burn, circles dodged', spell: [NZ.ignition, 'Soulcoil Ignition'], verdict: igGroups.some((g) => g.bad) ? 'bad' : igGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -6384,7 +6398,7 @@ function buildNekzali(ev, r, h) {
   if (mythic) {
     const gd = aur(NZ.depths).filter((e) => !h.isPlayer(e.dst)), wins = [];
     for (const e of gd) { if (e.op === 'apply') wins.push({ t0: e.t, t1: null }); else if (e.op === 'remove' && wins.length && wins[wins.length - 1].t1 == null) wins[wins.length - 1].t1 = e.t; }
-    const coil = dmgId(NZ.coil), spir = dmgId(NZ.spirit), cuSt = starts(NZ.curse), cuOk = castOk(NZ.curse);
+    const coil = dmgId(NZ.coil).concat(ev.filter((e) => e.k === 'aura' && e.id === NZ.coilDeb && e.op === 'apply' && h.isPlayer(e.dst))), spir = dmgId(NZ.spirit), cuSt = starts(NZ.curse), cuOk = castOk(NZ.curse);
     const dpGroups = wins.map((w, i) => {
       const t1 = w.t1 ?? dur, team = [...new Set(coil.filter((e) => e.t >= w.t0 && e.t <= t1 + 1).map((e) => e.dst))];
       _nz.depths.push({ i: i + 1, t0: w.t0, t1, team: team.map(pname), ph: phOf(w.t0) });
@@ -6406,7 +6420,7 @@ function buildNekzali(ev, r, h) {
       }
       // (nobody going in for the last Echo of a kill is the raid burning the boss: shown, not judged)
       const burn = w.t1 == null && r.item.kill;
-      const head = [{ txt: 'Drowned Echo' }, { t: w.t0 }, w.t1 != null ? { txt: 'dead after ' + Math.round(w.t1 - w.t0) + ' s' } : { txt: 'alive when the pull ended', dim: true }, team.length ? { ps: team.map(pname) } : burn ? { txt: 'nobody went in', dim: true, sub: 'left for the burn' } : { txt: 'nobody went in', warn: true }, { txt: '' }];
+      const head = [{ txt: 'Drowned Echo' }, { t: w.t0 }, w.t1 != null ? { txt: 'dead after ' + Math.round(w.t1 - w.t0) + ' s' } : { txt: 'alive when the pull ended', dim: true }, team.length ? { ps: team.map(pname) } : burn ? { txt: 'nobody went in', dim: true, sub: 'left for the burn' } : w.t1 != null && w.t1 - w.t0 <= 45 ? { txt: 'nobody went in', dim: true, sub: 'it died anyway' } : { txt: 'nobody went in', warn: true }, { txt: '' }];
       rows.sort((a, b) => a[1].t - b[1].t);
       return { title: 'Grasping Depths ' + (i + 1) + ' (' + phOf(w.t0) + ')', t: w.t0, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn || x[3].warn) || !!head[3].warn, sub: (team.length ? pl(team.length, 'player') + ' in the well' : 'nobody in the well') + (w.t1 != null ? ', Echo dead in ' + Math.round(w.t1 - w.t0) + ' s' : ''), rows: [head].concat(rows) };
     });
@@ -6645,9 +6659,9 @@ function buildVashnik(ev, r, h) {
       // (whose line it was: the target lined up with the player north-south or east-west when it went off)
       for (const o of by.values()) { const me = posOf(o.g, o.t); if (!me) continue; let best = null; for (const x of f.ends) { if (x.g === o.g) continue; const p = posOf(x.g, x.t); if (!p) continue; const off = Math.min(Math.abs(p.x - me.x), Math.abs(p.y - me.y)); if (off < 4 && (!best || off < best.off)) best = { off, g: x.g }; } if (best) o.from = best.g; }
       const rows = [...by.values()].sort((a, b) => a.t - b.t).map((o) => {
-        const d = diedNear(o.g, o.t, 1.5);
-        M(o.t, pname(o.g), 'Plague Wave', d ? 'High' : 'Medium', 'Hit by a Plague Wave' + (o.from ? ' from ' + pname(o.from) + '\'s Plague Froth' : '') + ' (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.');
-        return [{ p: pname(o.g), sub: f.who.includes(o.g) ? 'had Plague Froth too' : '' }, { t: o.t }, d ? { txt: 'died', bad: true } : { txt: 'hit for ' + fmtM(o.amt), warn: true }, o.from ? { p: pname(o.from) } : { txt: '—', dim: true }, { txt: '' }];
+        const d = diedNear(o.g, o.t, 1.5), soft = mythic && !d && o.n < 2;
+        if (!soft) M(o.t, pname(o.g), 'Plague Wave', d ? 'High' : 'Medium', 'Hit by a Plague Wave' + (o.from ? ' from ' + pname(o.from) + '\'s Plague Froth' : '') + ' (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.');
+        return [{ p: pname(o.g), sub: f.who.includes(o.g) ? 'had Plague Froth too' : '' }, { t: o.t }, d ? { txt: 'died', bad: true } : { txt: 'hit for ' + fmtM(o.amt), warn: !soft, dim: soft, sub: soft ? 'Mythic: the totems come first, so one hit is only a note' : '' }, o.from ? { p: pname(o.from) } : { txt: '—', dim: true }, { txt: '' }];
       });
       const arrows = f.ends.flatMap((x) => [0, 90, 180, 270].map((a) => ({ g: x.g, ang: a * Math.PI / 180, len: 30, color: mcol('Plague Froth').color, t0: x.t - 1.5, t1: x.t + 1, fx: 'wave', at: x.t })));
       const whole = [{ txt: 'Whole cast', sub: 'the targets and their lines, on one map', dim: true }, { t: f.end }, { txt: '' }, { txt: '' },
@@ -6716,7 +6730,7 @@ function buildVashnik(ev, r, h) {
   // ---- 8. avoidable damage ----
   const frothOn = (g, t) => froths.some((f) => f.ends.some((x) => x.g === g && t >= f.t - 0.2 && t <= x.t + 0.2));
   const av = avoidPanel(ev, r, h, [
-    { n: ['plague wave'], label: 'Plague Wave', harm: 'High', why: 'the four lines from a Plague Froth target as it ends' },
+    { n: ['plague wave'], label: 'Plague Wave', harm: mythic ? 'Medium' : 'High', why: 'the four lines from a Plague Froth target as it ends' + (mythic ? ' (on Mythic the totems come first, so a hit is less of a mistake)' : '') },
     { n: ['umbral ejection'], label: 'Umbral Ejection', harm: 'Medium', why: 'the circles a Shrouded Venom leaves when it dies' },
     { n: ['stygian burst'], label: 'Stygian Burst', harm: 'Medium', why: 'standing within 6 yards of a player with Stygian Infection', skip: (e) => aur(VS.stygian).some((x) => x.dst === e.dst && x.op === 'apply' && e.t >= x.t - 0.2 && e.t <= x.t + 20) },
     { n: ['plague froth'], label: 'Plague Froth (nearby)', harm: 'Low', warnAt: 6, badAt: 12, why: 'standing within 5 yards of a Plague Froth target', skip: (e) => frothOn(e.dst, e.t) },
@@ -6913,7 +6927,7 @@ function buildLostExplorers(ev, r, h) {
       const ashDied = deadBy(/aftershock/i, c.list[0].t, cEnd);
       if (ashBy.size || ashDied.length) { const t1 = ash.length ? ash[0].t : ashDied[0].t, ord = [...ashBy].sort((a, b) => b[1].n - a[1].n);
         // (the count leads the row, so the summary line reads "7 players stood in a crater"; the names and ticks sit beside it)
-        lr.push([{ txt: ashBy.size ? pl(ashBy.size, 'player') + ' stood in a crater' : 'Craters', warn: ashBy.size > 0 }, { t: t1 }, { txt: ord.map(([g, o]) => pname(g) + ' (' + o.n + (o.n === 1 ? ' tick)' : ' ticks)')).join(', ') || '—', dim: true },
+        lr.push([{ txt: ashBy.size ? pl(ashBy.size, 'player') + ' stood in a crater' : 'Craters', warn: [...ashBy].some(([g, o]) => o.n >= 4 && h.role(g) !== 'tank'), sub: 'amber when someone other than a tank stayed in for 4 ticks or more' }, { t: t1 }, { txt: ord.map(([g, o]) => pname(g) + ' (' + o.n + (o.n === 1 ? ' tick)' : ' ticks)')).join(', ') || '—', dim: true },
           ashDied.length ? { txt: ashDied.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
           { map: { t: t1 + 0.2, hl: [...ashBy.keys()], hlLabel: 'stood in a crater', bad: [...new Set(ash.filter((e) => e.t <= t1 + 3).map((e) => e.dst))], badAt: ash.filter((e) => e.t <= t1 + 3).map((e) => [e.dst, e.t]), badLabel: 'took an Aftershock tick',
             title: 'Aftershock at ' + T(t1) + ': the craters Mighty Thud left, and who stood in one', pts: h.snap(t1 + 0.2), frames: frames(t1 - 2.5, t1 + 3), focus,
