@@ -253,6 +253,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 255: Rotation opens on a player, no chart (your note: "it doesn't even need to be a chart")
+- [x] **The "Spec checks, checks in good shape" bar chart is gone.** Rotation now opens straight on one player's page:
+  yours when you're in the pull (the character saved as you), otherwise the first player. Above it, every player's name as
+  a button in their class color with their spec icon, grouped Tanks · Healers · Damage dealers, with a "you" tag on yours.
+  A click swaps the page. Only the shown player's checks are worked out, so it opens faster too.
+- Checked on Wolfthorn's Twin Fangs kill (opens on Flëxørçïst, Arsyn on a click), at phone width, with no errors.
+
 ## 2026-10-19, round 254: One page for your team and you, and a one-button front page (your notes)
 - [x] **Your team and your character are one page now** ("it's giving me decision fatigue"). Wolfthorn's page has "You:
   Flëxørçïst · Paladin" under its name, the team's rankings and then yours, and your parse on each boss card. One card on
