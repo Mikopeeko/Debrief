@@ -2917,6 +2917,9 @@ details.secd.mcx-tile[open] { grid-column: 1 / -1; } details.secd.mcx-tile[open]
 .mcx-gll { position: relative; padding-left: 14px; font-size: 12.5px; line-height: 1.35; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mcx-gll::before { content: ''; position: absolute; left: 0; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: #e8a23a; } .mcx-gll.bad::before { background: #e5534b; }
 details.secd.mcx-tile[open] .mcx-alt { display: none; }
+/* (Oct 19: an opened tile moves under the others; its edge flashes once so you see where it went) */
+@keyframes mcxFlash { 0% { box-shadow: 0 0 0 2px var(--gold); } 100% { box-shadow: 0 0 0 2px transparent; } } details.secd.mcx-tile.mcx-flash { animation: mcxFlash 1.4s ease-out; }
+@media (prefers-reduced-motion: reduce) { details.secd.mcx-tile.mcx-flash { animation: none; } }
 @media (max-width: 640px) { .mcx-alt { height: auto; min-height: 0; } .mcx-cut span { display: none; } .mcx-tl h3 { display: block; } .mcx-tl h3 small { display: block; margin: 4px 0 0; } }
 .wr-tag { padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--muted); font: 600 11px var(--body); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wr-plus { padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
@@ -3804,6 +3807,10 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .dbf-ok li::before { content: '✓'; background: rgba(69,193,92,.15); color: #7ee08f; } .dbf-bad li::before { content: '✕'; background: rgba(229,83,75,.15); color: var(--lv-maj-t); }
 .dbf-up li::before { content: '▲'; background: rgba(106,168,255,.15); color: #8fbfff; font-size: 8px; } .dbf-down li::before { content: '▼'; background: rgba(240,122,58,.15); color: var(--lv-mod-t); font-size: 8px; }
 .dbf-l li .sub { margin-left: 4px; } .dbf-none { margin: 4px 0 2px; }
+/* (Oct 19: Recap as a story: each card a short paragraph; on one pull, the mechanics it names as small links under it) */
+.dbf-p { margin: 0; font-size: 14.5px; line-height: 1.65; color: #cfcac0; } .dbf-p b { color: var(--text); font-weight: 600; }
+.dbf-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; } .dbf-go.dbf-gol { margin-left: 0; padding: 0 9px; min-width: 0; height: 24px; font: 600 12.5px/1 var(--body); white-space: nowrap; }
+@media (max-width: 640px) { .dbf-p { font-size: 14px; } }
 /* (one pull's Recap: the small arrow at the end of a line opens that mechanic on Mechanics (Oct 19, your ask)) */
 .dbf-go { all: unset; display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; border: 1px solid rgba(255,255,255,.16); border-radius: 6px; background: rgba(255,255,255,.06); color: #ddd6c8; font: 700 14px/1 var(--body); vertical-align: 1px; cursor: pointer; }
 .dbf-go:hover { color: var(--gold); border-color: var(--gold); } .dbf-go:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
