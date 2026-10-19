@@ -4729,9 +4729,9 @@ function nightRecap(o) {
   const prep = lastR ? lpPrep(lastR, prepRows).replace(/<small>[^<]*<\/small>/, '<small>At the last pull (' + lastR.item.pull + ')</small>') : '';
   const talk = '<div class="panel lp-side-p lp-talk" id="nrTalk"><h3 class="nh"><span>Talk to</span><small>Mechanics and staying alive</small></h3><p class="sub">Working out each player\'s night…</p></div>';
   // (Debriefing on all pulls: the four blocks for the top, and the rest as small blocks for the bottom)
-  const more = '<div class="rc-mh"><b>More from all pulls</b><span class="sub">How far each pull got, the night start to finish, the numbers, and what to sort before the next pull</span></div>' + (D.bars ? '<div class="rc-wide">' + D.bars + '</div>' : '') +
-    '<div class="rc-cols">' + [prep, D.story, talk, rcNums(D.nums, 'early in the night against later'), lpUsedNight(reps), lpMissNight(reps)].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
-  return { html: '<div class="lpv nrv dbf">' + D.top + '<div class="lp-cols"><div class="lp-main">' + D.lists + '</div><div class="lp-side">' + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>', parts: { cards: D.cards, more } };
+  const more = '<div class="rc-mh"><b>More from all pulls</b><span class="sub">How far each pull got, the numbers, and what to sort before the next pull</span></div>' + (D.bars ? '<div class="rc-wide">' + D.bars + '</div>' : '') +
+    '<div class="rc-cols">' + [prep, talk, rcNums(D.nums, 'early in the night against later'), lpUsedNight(reps), lpMissNight(reps)].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
+  return { html: '<div class="lpv nrv dbf">' + D.top + '<div class="lp-cols"><div class="lp-main">' + D.lists + '</div><div class="lp-side">' + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>', parts: { cards: D.story + D.cards, more } }; // (the night, start to finish, sits above the four blocks (your call, Oct 19))
 }
 // (Talk to over the night: each player's first thing to fix, from every pull (the Report card's own work, so it opens quickly after))
 function nightTalkHtml(data) {
@@ -16144,7 +16144,9 @@ const dbfUs = (n) => (n === 1 ? 'one of us' : n + ' of us');
 // (Recap as a story (your call, Oct 19: "tell the stories about each pull, and the whole night instead of highlighting specific
 // errors. Like its debriefing"): each card is a short paragraph, at most four sentences; on one pull, the mechanics it names are
 // small links under it, to Breakdown)
-const dbfCardP = (k, t, l, links, none, extra) => '<div class="panel dbf-c dbf-' + k + '"><h3 class="nh"><span>' + t + '</span></h3>' +
+// (each card grows by how much it says, so a short card takes less of its row and the pair comes out about the same height)
+const dbfLen = (h) => String(h || '').replace(/<[^>]*>/g, '').length;
+const dbfCardP = (k, t, l, links, none, extra) => '<div class="panel dbf-c dbf-' + k + '" style="--dw:' + (80 + (l.length ? dbfLen(l.slice(0, 4).join(' ')) + 22 * ((links && links.length) || 0) : dbfLen(none)) + dbfLen(extra)) + '"><h3 class="nh"><span>' + t + '</span></h3>' +
   (l.length ? '<p class="dbf-p">' + l.slice(0, 4).join(' ') + '</p>' + (links && links.length ? '<div class="dbf-links">' + links.join('') + '</div>' : '') : '<p class="sub dbf-none">' + none + '</p>') + (extra || '') + '</div>';
 // (Debriefing: the one thing to fix first, at the foot of What didn't go well)
 const dbfNext = (lab, t) => (t ? '<p class="dbf-next"><b>' + lab + ':</b> ' + esc(t) + '</p>' : '');
@@ -16298,7 +16300,7 @@ function dbfPull(o) {
     if (cd2.length) Dn.push('Compared to last pull, ' + flow(cd2).replace(/^./, (s) => s.toLowerCase()));
   }
   const noPrev = B ? '' : it.pull > 1 ? 'The pulls before this were resets, so there\'s nothing to compare yet.' : 'This was our first pull, so there\'s nothing to compare yet.';
-  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing stood out as done right this pull.') + dbfCardP('bad', 'What didn\'t go well', W2, L2, 'Nothing went wrong. Do that again.', nx) +
+  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing stood out as done right this pull.') + dbfCardP('bad', 'What didn\'t go well', W2, L2, 'Nothing went wrong. Do that again.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, LU, noPrev || 'Nothing clearly improved since last pull.') + dbfCardP('down', 'What\'s getting worse', Dn, LD, noPrev || 'Nothing clearly got worse since last pull.') + '</div>';
   return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div><p>' + s1 + ' ' + (story || s2) + '</p>' + (focus ? '<p><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + '</div>' + nums, lists: four(''),
     // (Debriefing: the four blocks with "Next pull" in them, and the story on its own for the bottom)
@@ -16398,7 +16400,7 @@ function dbfNight(o) {
     const k1 = H1.reduce((t, x) => t + x.missK, 0), k2 = H2.reduce((t, x) => t + x.missK, 0); if (big(k1, k2)) (tr(k1, k2, true) ? U : Dn).push((k2 < k1 ? 'Fewer' : 'More') + ' casts are getting through our kicks: ' + nz(k2) + ' in the last ' + h + ' pulls, ' + (k2 < k1 ? 'down' : 'up') + ' from ' + nz(k1) + ' in the first ' + h + '.');
   }
   const short = n < 6 ? 'Not enough pulls yet to say what\'s changing.' : '';
-  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'Nothing kept going wrong. Keep it up.', nx) +
+  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'Nothing kept going wrong. Keep it up.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, null, short || 'Nothing is clearly improving yet.') + dbfCardP('down', 'What\'s getting worse', Dn, null, short || 'Nothing is clearly getting worse.') + '</div>';
   return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists: four(''),
     cards: four(dbfNext('Next time', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">The night, start to finish</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + '</div>', bars, nums };
