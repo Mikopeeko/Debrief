@@ -12,7 +12,9 @@ nothing repeats ("Stone Breaker: tank catches the circles" stays as it is).
 - Nek'zali: Restless Amani (adds), Soulcoil Ignition (boss channel), Essence Rend (dispel)
 - Vashnik: Living Venoms (adds), Dripping Fangs (tank buster)
 - The Lost Explorers: Final Ascension (enrage), Frostfire Volley (fire and frost), Explosive Surprise (bomb)
-- Ula'tek: Spectral Coils (tail slams), Toxic Incubation (beam), Blightscale Wretch (add), Serpent's Bite (soak)
+- Ula'tek (reviewed Oct 18): Spectral Coils (soak circles): enough soakers, Toxic Incubation (beam): blocked by the tank,
+  Blightscale Wretch (bubble add): raid inside, killed in time, Grasping Fangs (tethers): broken together, Serpent's Bite
+  (soak). Caustic Waves has no nickname (the name already says it).
 - Nymrissa and Kith'ix: none (they only have the simple checks, not Mechanics sections)
 
 Also done: the three clumsy names below (as proposed), Soulcoil Ignition's summary line ("2 players were hit by the

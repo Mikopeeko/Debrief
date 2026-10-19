@@ -3890,7 +3890,7 @@ function buildUlatek(ev, r, h) {
   // (a baseline row at the first pickup, so a pull whose Vipers all came after the wipe filter still reads clean up to it)
   if (carry.length) eggRows.unshift([{ t: carry[0].s }, { txt: 'the raid' }, { txt: pl(carry.length, 'egg') + ' carried' + (vipers.length ? '' : ', none broke into a Viper'), sub: veinN ? veinN + ' picked up with Blight Vein still on (fine unless the carrier dies)' : '' }, { txt: '—', dim: true }]);
   const nV = vipers.length;
-  sections.push({ id: 'eggs', title: 'Eggs: no Vipers', spell: S(mythic ? 'noxious shell' : 'malignant shell'), verdict: nV ? 'bad' : eggRows.some((x) => x[2].warn) ? 'warn' : 'good',
+  sections.push({ id: 'eggs', title: 'Eggs (No Vipers)', spell: S(mythic ? 'noxious shell' : 'malignant shell'), verdict: nV ? 'bad' : eggRows.some((x) => x[2].warn) ? 'warn' : 'good',
     summary: nV ? pl(nV, 'Blightscale Viper') + ' hatched. Each row says who had the egg and what broke it.' : carry.length ? pl(carry.length, 'egg') + ' carried and none broke into a Viper.' : 'No eggs carried yet.',
     cols: ['When', 'Carrier', 'What happened', 'Viper', ''], rows: eggRows, groups: eggGroups });
 
@@ -3918,7 +3918,7 @@ function buildUlatek(ev, r, h) {
     return { title: 'Spectral Coils, set ' + (si + 1) + ' (' + phaseAt(t0) + ')', t: t0, sub: pl(set.length, 'circle') + (hcUp ? ': ' + set.map((c) => sc.filter((e) => Math.abs(e.t - c.t) < 1).length).join(' / ') + ' soakers' : ''),
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
-  if (coilGroups.length) sections.push({ id: 'coils', title: 'Spectral Coils (tail slams): soaked', spell: S('spectral coils'), verdict: coilGroups.some((g) => g.bad) ? 'bad' : coilGroups.some((g) => g.warn) ? 'warn' : 'good',
+  if (coilGroups.length) sections.push({ id: 'coils', title: 'Spectral Coils (Soak circles)', spell: S('spectral coils'), verdict: coilGroups.some((g) => g.bad) ? 'bad' : coilGroups.some((g) => g.warn) ? 'warn' : 'good',
     summary: pl(coilHits.length, 'circle') + (hcUp ? '. A circle under ' + minSoak + ' soakers is flagged.' : '.'), cols: ['Circle', 'When', 'Soakers', 'Who soaked', 'Damage', 'Died', ''], rows: [], groups: coilGroups });
 
   // ---- 2b. Caustic Waves: every wave hit, and where that wave came from ----
@@ -3955,7 +3955,7 @@ function buildUlatek(ev, r, h) {
     return [{ t: a.t }, { ps: [pname(a.dst)], warn: true }, { txt: from }, { n: amt, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: died ? 'died' : '—', bad: !!died, dim: !died }];
   });
   const wvPl = new Set(wvHits.map((e) => e.dst)).size;
-  if (wvHits.length || tailW.length) sections.push({ id: 'waves', title: 'Caustic Waves (green waves): dodged', spell: S('caustic waves'), verdict: waveRows.some((x) => x[4].bad) ? 'bad' : waveRows.length ? 'warn' : 'good',
+  if (wvHits.length || tailW.length) sections.push({ id: 'waves', title: 'Caustic Waves (Dodge waves)', spell: S('caustic waves'), verdict: waveRows.some((x) => x[4].bad) ? 'bad' : waveRows.length ? 'warn' : 'good',
     summary: wvHits.length ? pl(wvHits.length, 'wave hit') + ' on ' + pl(wvPl, 'player') + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ')' : '') + '. Each row says which wave it was.' : 'Nobody was hit by Caustic Waves' + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ').' : '.'),
     cols: ['When', 'Hit', 'Which wave', 'Damage', 'Died'], rows: waveRows });
 
@@ -3973,7 +3973,7 @@ function buildUlatek(ev, r, h) {
     const hs = dmgId(id), seen = []; for (const e of hs) { if (seen.some((t) => Math.abs(t - e.t) < 3)) continue; seen.push(e.t); tankRows.push([{ t: e.t }, { s: S(nm) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: what + ': ' + pl(new Set(hs.filter((x) => Math.abs(x.t - e.t) < 3).map((x) => x.dst)).size, 'player') + ' hit', bad: true }]); }
   }
   tankRows.sort((a, b) => a[0].t - b[0].t);
-  if (tankRows.length) sections.push({ id: 'tank', title: 'Tanks: boss and tail', spell: S("mother's wrath"), verdict: tankRows.some((x) => x.some((c) => c.bad)) ? 'bad' : tankRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
+  if (tankRows.length) sections.push({ id: 'tank', title: 'Tanks (Boss and tail)', spell: S("mother's wrath"), verdict: tankRows.some((x) => x.some((c) => c.bad)) ? 'bad' : tankRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
     summary: "It shows each Mother's Wrath, its tank and the Stone Venom they still had going in, and any time the raid was punished for nobody tanking.", cols: ['When', 'What', 'Tank', 'Stone Venom', 'Result'], rows: tankRows });
 
   // ---- 4. Mythic: Toxic Incubation (the inactive tank stands in the beam) and each Wretch's bubbles ----
@@ -3985,7 +3985,7 @@ function buildUlatek(ev, r, h) {
       if (boon) M(land, 'Raid', 'Toxic Incubation', UL.incub, 'High', pl(boon, 'Toxic Incubation impact') + ' reached the Blightscale Wretch at ' + T(land) + ' (Mother\'s Boon: it hits harder and takes less damage).', 'The tank not on the boss stands in the beam for every impact, with a defensive.');
       return [{ t: land }, { ps: who.map(pname), none: 'nobody' }, { txt: hits.length + ' of ' + (hits.length + boon), sub: who.length ? 'Toxic Burn up to ' + Math.max(...who.map((g) => maxIn(burnH, g, w0, w1 + 1))) + (who.every((g) => role(g) === 'tank') ? ' · tank' : '') : '' }, { txt: boon ? boon + ' reached the Wretch' : 'none reached the Wretch', bad: boon > 0 }];
     });
-    if (incRows.length) sections.push({ id: 'incub', title: 'Toxic Incubation (beam): intercepted', spell: S('toxic incubation'), mythicOnly: true, verdict: incRows.some((x) => x[3].bad) ? 'bad' : 'good',
+    if (incRows.length) sections.push({ id: 'incub', title: 'Toxic Incubation (Block the beam)', spell: S('toxic incubation'), mythicOnly: true, verdict: incRows.some((x) => x[3].bad) ? 'bad' : 'good',
       summary: 'For each Toxic Incubation, it shows who took the impacts and how many reached the Wretch.', cols: ['When', 'Took it', 'Impacts taken', 'Wretch'], rows: incRows });
     // (each Blightscale Wretch dies before its third Fester Burst bubble; anyone outside a bubble takes the burst)
     const fest = ev.filter((e) => (e.k === 'start' || e.k === 'cast') && e.id === UL.fester), festHit = dmgId(UL.fester);
@@ -4002,7 +4002,7 @@ function buildUlatek(ev, r, h) {
         rings: [{ guid: x.g, r: 10, label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd (inside is safe)' }], focus: ctrOf(fr, [x.g], 13), title: 'Fester Burst at ' + T(pick.land) + ': the Wretch\'s 10-yard bubble' + (pick.out.length ? ', ' + pl(pick.out.length, 'player') + ' outside' : ', everyone inside'), pts: fr } } : { txt: '', dim: true };
       return [{ t: x.t0 }, { txt: x.died != null ? 'killed after ' + Math.round(x.died - x.t0) + 's' : 'still up', dim: x.died == null }, { txt: pl(ts.length, 'bubble'), warn: late, sub: late ? 'kill it before the third' : '' }, { ps: outside.map(pname), none: 'nobody outside', warn: outside.length > 0, sub: outT ? pl(outT, 'tank') + ' outside (not judged)' : '' }, mapC];
     });
-    if (wrRows.length) sections.push({ id: 'wretch', title: 'Blightscale Wretch (add): bubbles', spell: S('fester burst'), mythicOnly: true, verdict: wrRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
+    if (wrRows.length) sections.push({ id: 'wretch', title: 'Blightscale Wretch (Stand in the bubble)', spell: S('fester burst'), mythicOnly: true, verdict: wrRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
       summary: 'For each Wretch, it shows how long it lived, how many Fester Bursts it got off and who was outside the bubble.', cols: ['Spawned', 'Killed', 'Bubbles', 'Outside the bubble', ''], rows: wrRows });
   }
 
@@ -4028,7 +4028,7 @@ function buildUlatek(ev, r, h) {
     return [{ txt: '#' + a.n }, { t: a.t0 }, { n: d, sub: h.compact(d / len) + ' per second' + (a.heart && a.other ? ' · ' + pc(a.heart / (a.heart + a.other)) + ' of it on the heart' : '') },
       { txt: hp != null ? (hp < 0.005 ? 'killed in it' : pc(hp) + ' after') : '—', warn: slow, dim: hp == null, sub: [a.hp0 != null && hp != null ? 'from ' + pc(a.hp0) : '', a.pace != null ? 'on pace at ' + pc(a.pace) + ' or lower' : ''].filter(Boolean).join(' · ') },
       { txt: pl(a.pots, 'combat potion'), dim: !a.pots, sub: a.lust ? 'with Bloodlust' : '' }]; });
-  if (ampRows.length) sections.push({ id: 'amps', title: 'Damage amps: Rage of the Shackled', spell: S('rage of the shackled'), verdict: ampRows.some((x) => x[3].warn) ? 'warn' : 'good',
+  if (ampRows.length) sections.push({ id: 'amps', title: 'Rage of the Shackled (Damage windows)', spell: S('rage of the shackled'), verdict: ampRows.some((x) => x[3].warn) ? 'warn' : 'good',
     summary: 'It shows the damage into the Venomous Heart in each 20-second window, player by player, the boss\'s health before and after it' + (mythic ? ' (on pace: 67% after the first, 45% after the second)' : '') + ' and the combat potions drunk for it' + (lustT != null ? '. Bloodlust was at ' + T(lustT) : '') + '.',
     cols: ['Window', 'When', 'Into the heart', 'Boss health', 'Potions'], rows: ampRows, amps });
 
@@ -4054,7 +4054,7 @@ function buildUlatek(ev, r, h) {
     rows.sort((a, b) => a[0].t - b[0].t);
     return { title: 'Grasping Fangs ' + (i + 1), t: t0, sub: pl(set.length, 'tether') + ', broken in ' + batches.map((b) => b.length).join(' + ') + ' · Blight Vein up to ' + pl(pk, 'stack') + ' on the raid', bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
-  if (fangGroups.length) sections.push({ id: 'fangs', title: 'Grasping Fangs (tethers): the breaks', spell: S('grasping fangs'), verdict: fangGroups.some((g) => g.bad) ? 'bad' : fangGroups.some((g) => g.warn) ? 'warn' : 'good',
+  if (fangGroups.length) sections.push({ id: 'fangs', title: 'Grasping Fangs (Tether breaks)', spell: S('grasping fangs'), verdict: fangGroups.some((g) => g.bad) ? 'bad' : fangGroups.some((g) => g.warn) ? 'warn' : 'good',
     summary: 'It shows who each Doomscale Warden tethered, when each tether broke, how each batch went and the raid cooldowns under it.', cols: ['When', 'Tethered', 'Broke', 'Result'], rows: [], groups: fangGroups });
 
   // ---- 7. Stage 2: Wardens (dead before their second gestation), Doomscales (killed together), a big egg that hatched ----
@@ -4083,7 +4083,7 @@ function buildUlatek(ev, r, h) {
   for (const x of rav) { M(x.t0, 'Raid', 'Ravenous Doomscale', UL.hatching, 'High', 'A Doomscale Egg hatched into a Ravenous Doomscale at ' + T(x.t0) + '.', 'Drop the small eggs into the cauldron first and the big Doomscale Egg last, before its timer runs out.');
     dsRows.push([{ t: x.t0 }, { txt: 'Ravenous Doomscale' }, { txt: 'a big egg hatched' }, { txt: 'a problem', bad: true }]); }
   dsRows.sort((a, b) => a[0].t - b[0].t);
-  if (dsRows.length) sections.push({ id: 'doomscale', title: 'Wardens and Doomscales: killed in time', spell: S('hatching doom'), verdict: dsRows.some((x) => x.some((c) => c.bad)) ? 'bad' : dsRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
+  if (dsRows.length) sections.push({ id: 'doomscale', title: 'Wardens and Doomscales (Kill in time)', spell: S('hatching doom'), verdict: dsRows.some((x) => x.some((c) => c.bad)) ? 'bad' : dsRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
     summary: 'It shows each Doomscale Warden (it should die before its second gestation), each set of Weakened Doomscales and how close together they died' + (mythic ? ' (Revenge if not)' : '') + ', and any big egg that hatched.', cols: ['When', 'What', 'Killed', 'Result'], rows: dsRows });
 
   // ---- 8. Stage 3: Serpent's Bite, one set per cast (cleared in time; Volatile Purge spread; on Mythic, a defensive for it) ----
@@ -4121,7 +4121,7 @@ function buildUlatek(ev, r, h) {
         rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'held a Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'held a Volatile Purge with no defensive', warn: !c, dim: !!c }, pmap]); } }
     return { title: "Serpent's Bite " + (i + 1), t: t0, sub: pl(set.length, 'bite') + (!helpers.length ? '' : helpers.length <= 4 ? ', cleared by ' + helpers.map(pname).join(', ') : ', cleared by ' + pl(helpers.length, 'player')), bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
-  if (biteGroups.length) sections.push({ id: 'bite', title: "Serpent's Bite (soak): cleared and spread", spell: S("serpent's bite"), verdict: biteGroups.some((g) => g.bad) ? 'bad' : biteGroups.some((g) => g.warn) ? 'warn' : 'good',
+  if (biteGroups.length) sections.push({ id: 'bite', title: "Serpent's Bite (Soak the bite)", spell: S("serpent's bite"), verdict: biteGroups.some((g) => g.bad) ? 'bad' : biteGroups.some((g) => g.warn) ? 'warn' : 'good',
     summary: 'It shows each bite, who took it off' + (mythic ? ' and whether each Purge holder had a defensive' : '') + ', and anyone caught in a Volatile Purge they weren\'t holding.', cols: ['When', 'Player', 'Result', ''], rows: [], groups: biteGroups });
 
   // ---- 9. Stage 3: Blightscale Shriekers (and any Rawling that got its Acidic Expulsion off) ----
@@ -4132,7 +4132,7 @@ function buildUlatek(ev, r, h) {
   const rawEx = exp.filter((e) => /Rawling/.test(h.unitName(e.src) || ''));
   for (const e of rawEx) shRows.push([{ t: e.t }, { txt: 'Blightscale Rawling' }, { txt: 'lived long enough to expel' }, { txt: 'Acidic Expulsion', warn: true }]);
   shRows.sort((a, b) => a[0].t - b[0].t);
-  if (shRows.length) sections.push({ id: 'shriek', title: 'Shriekers and Rawlings: killed in time', spell: S('acidic expulsion'), verdict: shRows.some((x) => x.some((c) => c.bad)) ? 'bad' : shRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
+  if (shRows.length) sections.push({ id: 'shriek', title: 'Shriekers and Rawlings (Kill in time)', spell: S('acidic expulsion'), verdict: shRows.some((x) => x.some((c) => c.bad)) ? 'bad' : shRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
     summary: 'It shows each Shrieker\'s time alive and what it got off (the first Acidic Expulsion comes right after it spawns), and any Rawling that cast Acidic Expulsion (a raid-wide damage over time).', cols: ['When', 'Add', 'Killed', 'Got off'], rows: shRows });
 
   // ---- 10. avoidable damage ----

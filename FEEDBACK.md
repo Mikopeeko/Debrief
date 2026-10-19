@@ -213,6 +213,31 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 223: Damage into the adds, as plain as the other graphs (your note)
+- [x] **Graphs → Damage → Targets reads like the other views now:**
+  - The chart is one line per target, in six colours that are easy to tell apart (blue, amber, purple, pink, teal,
+    orange), instead of stacked areas where Ula'tek, Venomous Heart and Gore Rattle were three near-identical blues.
+  - The bars are each player's class colour: the bright part went into the adds, the faded part into the boss, grey into
+    anything else. One plain sentence above them says so, instead of "% = their share into priority adds".
+  - "Switched" reads "in 1.2 s, 2 of 2 sets" (it was "on in 1.2s · 2 of 2").
+  - "Priority adds, set by set" is plain sentences at full width under the bars, with no ✓ marks: "Blightscale Rawling ×8
+    at 0:41. Dead after 29 s. 13 DPS hit it, half of them within 0.7 s. Slow to switch: Bellapearl (11 s)."
+- Checked on a Mythic Ula'tek pull.
+
+## 2026-10-18, round 222: A hover box on every chart (your note), and the role buttons gone (your call)
+- [x] **The All / DPS / Healers / Tanks buttons are gone from every chart** (your note: "this can be removed from all
+  charts unless it's required"). My take: right, they were one more row of controls on every chart, and the bars already
+  rank everyone. Every chart shows everyone now. The one view that needs it keeps it without buttons: Damage windows still
+  shows only DPS (a healer's damage window means nothing).
+- [x] **Every chart shows the basics when you hover over it.** Most already had a hover box; a pass found the rest:
+  - Charts that only had the browser's own plain tooltip (it shows after about a second; Cooldowns, Power Infusion,
+    phases, damage sources and more) now show it in the same box as the spell tooltips, right away: "Ready, not used, 2:07
+    to 2:26".
+  - The casts under a chart (pick a player, then their casts) had nothing: hovering a row now shows the cast or buff
+    nearest the mouse, with its time ("Tiger Palm, cast at 0:18 (2 of 69)", "Power Infusion, up from 0:10 to 0:25 (15 s)").
+  - Checked on Pull recap, Mechanics, Assignments, Graphs (all views), Night summary and Players: every chart has a box.
+    Headings and buttons keep their short plain hint ("Click to fold or open the chart").
+
 ## 2026-10-18, round 221: Notes checked against your saved logs, and a nickname on most mechanics (your notes)
 - [x] **A pasted NSRT note is checked against your saved logs (your note: "when I import a note it quickly scans, finding
   the roster and fight, and alerts the user").** After Save and check, a box on top of Assignments says which fight the
@@ -448,10 +473,10 @@ itself, or only dots?
   to open it, should be easier to notice: in the middle of the screen and a bit bigger. My take: good; between pulls people
   only glance at the screen. My suggestion: a centred card with the pull's result ("Pull 19: wipe at 34%") and an "Open
   it" button, which fades away by itself after a few seconds if it's ignored, so it never blocks anything.
-- [ ] **Every chart has a hover box (your note, Oct 18):** any chart on screen shows the basics when you hover over it (the
+- [x] **Every chart has a hover box (your note, Oct 18; done in round 222):** any chart on screen shows the basics when you hover over it (the
   time, the value, who or what it is) before anything is clicked. My take: good; most charts have one already, so this is
   a pass over every chart to find the ones that don't (and a tap does the same on a phone).
-- [ ] **Damage into the adds looks different from the other graphs (your note, with a screenshot of Ula'tek):** it missed
+- [x] **Damage into the adds looks different from the other graphs (your note, with a screenshot of Ula'tek; done in round 223):** it missed
   the plain-data pass. The chart is stacked filled areas (the others are lines), and Ula'tek, Venomous Heart and Gore Rattle
   are three near-identical blues. The bars are boss-blue and purple, not class colors. It still has ✓ marks, "slow:
   Bellapearl 11s" and jargon ("on in 0.0s · 2 of 2", "% = their share into priority adds"). The "Priority adds, set by

@@ -288,6 +288,30 @@ function ctShow(el, e) {
 }
 document.addEventListener('mouseover', (e) => { const el = e.target.closest && e.target.closest('[data-ct]'); if (el && el !== ctCur && ctType === 'mouse') ctShow(el, e); });
 document.addEventListener('mouseout', (e) => { const el = e.target.closest && e.target.closest('[data-ct]'); if (el && !el.contains(e.relatedTarget) && ctType === 'mouse') { ctCur = null; spTip.style.display = 'none'; } });
+// (a chart's plain title text (a cooldown bar, a phase, a Power Infusion, a damage source) shows in this same box, at once,
+// instead of the browser's slow plain tooltip (your note, Oct 18: every chart shows the basics when you hover over it))
+const CT_IN = 'svg:not(.zmap), .pbar, [class*="strip"], [class*="chart"], .pi-g, .pf-bars, .pfc-w, .pfx';
+document.addEventListener('mouseover', (e) => {
+  const t0 = e.target; if (!t0 || !t0.closest || t0.closest('[data-ct], .zwrap, button, .btn, a, input, select, label, h3, h4, .nh, summary, th, thead, [role=tab], [role=tablist], .seg')) return; // (headings and controls keep their plain hint)
+  const el = t0.closest('[title]'), tt = !el && t0.querySelector ? t0.querySelector(':scope > title') : null, host = el || (tt ? t0 : null);
+  if (!host || !host.closest('#view') || !host.closest(CT_IN)) return;
+  const txt = el ? el.getAttribute('title') : tt.textContent; if (!txt) return;
+  if (el) el.removeAttribute('title'); else tt.remove();
+  host.dataset.ct = JSON.stringify(String(txt).split('\n').map((l) => esc(l))); ctShow(host, e);
+}, true);
+// (the casts under a chart: hovering a row shows the cast or buff nearest the mouse, with its time; the ticks are too thin
+// to point at one by one)
+document.addEventListener('mousemove', (e) => {
+  const sv = e.target && e.target.closest ? e.target.closest('.cs-r svg[data-cs]') : null;
+  if (!sv) { if (ctCur && ctCur.matches && ctCur.matches('.cs-r svg')) { ctCur = null; spTip.style.display = 'none'; } return; }
+  let o = null; try { o = JSON.parse(sv.dataset.cs); } catch (x) { return; }
+  const b = sv.getBoundingClientRect(), t = ((e.clientX - b.left) / Math.max(1, b.width)) * o.d, near = Math.max(1.5, o.d * 0.012);
+  let lines = null;
+  if (o.sp) { const k = o.sp.findIndex(([a, c]) => t >= a - near && t <= c + near); if (k >= 0) { const [a, c] = o.sp[k]; lines = [esc(o.n), 'up from ' + T(a) + ' to ' + T(c) + ' (' + Math.max(1, Math.round(c - a)) + ' s)' + (o.sp.length > 1 ? ', ' + (k + 1) + ' of ' + o.sp.length : '')]; } }
+  else { let k = -1, bd = near; o.ts.forEach((x, i) => { const d = Math.abs(x - t); if (d <= bd) { bd = d; k = i; } }); if (k >= 0) lines = [esc(o.n), (o.cd ? 'pressed at ' : /^melee$/i.test(o.n) ? 'swing at ' : 'cast at ') + T(o.ts[k]) + (o.ts.length > 1 ? ' (' + (k + 1) + ' of ' + o.ts.length + ')' : '')]; }
+  if (!lines) { if (ctCur === sv) { ctCur = null; spTip.style.display = 'none'; } return; }
+  sv.dataset.ct = JSON.stringify(lines); ctShow(sv, e); delete sv.dataset.ct;
+});
 document.addEventListener('click', async (e) => {
   const el = e.target.closest && e.target.closest('[data-ct]');
   if (!el) { if (ctCur && ctType !== 'mouse') { ctCur = null; spTip.style.display = 'none'; } return; }
@@ -1483,6 +1507,8 @@ function noteNames(text) {
 // tell you): its first line (EncounterID and difficulty) and its names, against the pulls saved on the Teams page. The
 // best fit is the raid night of that boss that has the most of its names; names that are in no saved pull at all are
 // listed, since they're usually a typo or an NSRT nickname. Read from what's in memory, so it's instant.
+// (two notes are the same note when only spacing, blank lines or capitals differ)
+const noteNorm = (t) => String(t || '').replace(/\r/g, '').split('\n').map((l) => l.trim().replace(/\s+/g, ' ')).filter(Boolean).join('\n').toLowerCase();
 function noteScan(text, boss) {
   let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
   const saved = [...HIST.mem.values()], names = noteNames(text), low = (n) => String(n).split('-')[0].toLowerCase();
@@ -1491,14 +1517,19 @@ function noteScan(text, boss) {
   const nBoss = (byId && byId.boss) || byName || null, dif = hd.difficulty || null, forBoss = nBoss || boss;
   const sameDif = (v) => !dif || String(v.diff || '').toLowerCase().slice(0, 3) === String(dif).toLowerCase().slice(0, 3);
   const nights = new Map();
-  for (const v of saved) { if (v.boss !== forBoss || !sameDif(v)) continue; const n = nightOf(v.at); let o = nights.get(n); if (!o) nights.set(n, o = { at: v.at, pulls: 0, ps: new Set(), v }); o.pulls++; for (const p of v.players || []) o.ps.add(low(p)); }
+  // (each night keeps its first pull of the boss that's on Warcraft Logs, so it can be opened right there)
+  for (const v of saved) { if (v.boss !== forBoss || !sameDif(v)) continue; const n = nightOf(v.at); let o = nights.get(n); if (!o) nights.set(n, o = { at: v.at, pulls: 0, ps: new Set(), v, wcl: null, wAt: 0 }); o.pulls++; if (v.at < o.at) o.at = v.at;
+    if (v.wcl && v.wcl.code && (!o.wcl || v.at < o.wAt)) { o.wcl = v.wcl; o.wAt = v.at; } for (const p of v.players || []) o.ps.add(low(p)); }
   let best = null; for (const o of nights.values()) { o.hit = names.filter((nm) => o.ps.has(nm.toLowerCase())).length; if (!best || o.hit > best.hit || (o.hit === best.hit && o.at > best.at)) best = o; }
   const everyone = new Set(); for (const v of saved) for (const p of v.players || []) everyone.add(low(p));
   const g = best ? groups().find((x) => x.kind !== 'char' && pullGroups(best.v).includes(x.gid)) : null;
-  return { nBoss, dif, wrongBoss: !!(nBoss && nBoss !== boss), names, best, team: g ? gName(g) : null, unknown: names.filter((nm) => !everyone.has(nm.toLowerCase())), none: !saved.length, noPulls: !nights.size };
+  // (the nights it fits: at least half its names there, newest first)
+  const need = Math.max(2, Math.ceil(names.length / 2)), fits = [...nights.values()].filter((o) => o.hit >= need).sort((a, b) => b.at - a.at);
+  return { nBoss, dif, wrongBoss: !!(nBoss && nBoss !== boss), names, best, fits, team: g ? gName(g) : null, unknown: names.filter((nm) => !everyone.has(nm.toLowerCase())), none: !saved.length, noPulls: !nights.size };
 }
 // (the box on top of Assignments after a note is saved: one plain line per finding, and a way to move a note pasted on the wrong boss)
 function noteScanBox(sc) {
+  if (sc.dup) return '<div class="panel ah-exbar nscan"><span><b>You already have this note</b> <span class="sub">It\'s the same as "' + esc(sc.dup) + '", which you saved for ' + esc(sc.boss) + ', so it wasn\'t saved again.</span></span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
   if (sc.moved) return '<div class="panel ah-exbar nscan"><span><b>Moved to ' + esc(sc.moved) + '.</b> <span class="sub">The note is saved for ' + esc(sc.moved) + ' now, and its pulls use it from there.</span></span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
   const r = sc.r, out = [], fight = r.nBoss ? esc(r.nBoss) + (r.dif ? ' (' + esc(r.dif) + ')' : '') : '';
   if (r.wrongBoss) out.push("Its first line says it's for " + fight + ', but you saved it on ' + esc(sc.boss) + '.');
@@ -1511,8 +1542,20 @@ function noteScanBox(sc) {
   if (!r.none && r.unknown.length) out.push((r.unknown.length === 1 ? "1 name wasn't" : r.unknown.length + " names weren't") + ' in any of your saved logs: ' + esc(r.unknown.slice(0, 6).join(', ')) + (r.unknown.length > 6 ? ' and ' + (r.unknown.length - 6) + ' more' : '') + ". Check the spelling, and use character names (NSRT nicknames can't be matched yet).");
   else if (!r.none && !r.noPulls && r.names.length) out.push('Every name in it is in your saved logs.');
   const warn = r.wrongBoss || (!r.none && r.unknown.length);
+  // (the night it fits best opens right from here, unless it's the report that's open now)
+  const b = r.best, open = !r.wrongBoss && b && b.hit && b.wcl && b.wcl.code !== S.wclCode ? '<button class="btn primary" type="button" data-nopen="' + esc(b.wcl.code + '|' + (b.wcl.fight || '')) + '">Open the pulls from ' + esc(nightLabel(b.at)) + '</button>' : '';
   return '<div class="panel ah-exbar nscan"><span><b>' + (warn ? 'Check your note' : 'Your note is checked') + '</b> <span class="sub">' + out.join(' ') + '</span></span>' +
-    (r.wrongBoss ? '<button class="btn primary" type="button" id="nscanMove">Move it to ' + esc(r.nBoss) + '</button>' : '') + '<button class="btn" type="button" id="nscanOk">Got it</button></div>';
+    (r.wrongBoss ? '<button class="btn primary" type="button" id="nscanMove">Move it to ' + esc(r.nBoss) + '</button>' : '') + open + '<button class="btn" type="button" id="nscanOk">Got it</button></div>';
+}
+// (a saved note's matching raid nights, newest first: a click opens that night's pulls of the boss from Warcraft Logs)
+function noteFits(text, boss) {
+  const r = noteScan(text, boss); if (r.none || r.wrongBoss || !r.names.length) return '';
+  if (!r.fits.length) return '<div class="nl-fits sub" style="margin-top:6px">No saved raid night fits it yet.</div>';
+  const one = (o) => { const l = esc(nightLabel(o.at)) + ' · ' + o.hit + ' of ' + r.names.length + ' names';
+    if (!o.wcl) return '<span class="sub">' + l + ' (only in a combat log)</span>';
+    if (o.wcl.code === S.wclCode) return '<span class="sub">' + l + ' (open now)</span>';
+    return '<button class="btn sm" type="button" data-nopen="' + esc(o.wcl.code + '|' + (o.wcl.fight || '')) + '" title="Open the pulls from this night">' + l + '</button>'; };
+  return '<div class="nl-fits" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="sub">Fits your saved logs:</span>' + r.fits.slice(0, 4).map(one).join('') + (r.fits.length > 4 ? '<span class="sub">and ' + (r.fits.length - 4) + ' more</span>' : '') + '</div>';
 }
 function applyNote(rep) {
   rep.mistakes = rep.mistakes.filter((m) => !m.fromNote);
@@ -1617,7 +1660,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const when = (t) => (t ? new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
     const rowN = (n) => { const on = used && used.id === n.id, ps = usedBy.get(n.id) || [], nn = noteNames(n.text).length;
       return '<div class="nl-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b>' + (n.example ? ' <span class="sub">(example)</span>' : '') +
-        '<div class="sub">' + [n.saved ? 'Saved ' + esc(when(n.saved)) : '', nn ? 'names ' + plural(nn, 'player') : '', ps.length ? 'used for ' + (ps.length === 1 ? 'pull ' : 'pulls ') + rng(ps) : 'not used by an opened pull yet'].filter(Boolean).join(' · ') + '</div></div>' +
+        '<div class="sub">' + [n.saved ? 'Saved ' + esc(when(n.saved)) : '', nn ? 'names ' + plural(nn, 'player') : '', ps.length ? 'used for ' + (ps.length === 1 ? 'pull ' : 'pulls ') + rng(ps) : 'not used by an opened pull yet'].filter(Boolean).join(' · ') + '</div>' + (n.example ? '' : noteFits(n.text, boss)) + '</div>' +
         '<div class="nl-b">' + (on ? '<span class="nl-this">✓ This pull</span>' : '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>') +
         '<button class="btn" type="button" data-nedit="' + esc(n.id) + '">Edit</button><button class="btn" type="button" data-ndel="' + esc(n.id) + '">Remove</button></div></div>'; };
     const sel = NO.list.length > 1 ? '<label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label>' : '';
@@ -2066,6 +2109,9 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // (saving: the note in the box replaces the one being edited, or becomes a new one; every pull of the boss is checked again)
   const redo = () => { S.noteEdit = false; S.noteEditId = null; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
   const save = (asNew) => { const v = $('#noteBox').value.trim(), nm = ($('#noteName').value || '').trim() || 'Note ' + (NO.list.length + 1), o = notesOf(boss);
+    // (the same note twice for one fight isn't saved: it says which saved note it already is)
+    const dup = v && o.list.find((n) => !n.example && (asNew || !editN || n.id !== editN.id) && noteNorm(n.text) === noteNorm(v));
+    if (dup) { S.noteScan = { boss, dup: dup.name }; S.noteEdit = false; S.noteEditId = null; assign(only); return; }
     let sid = editN && !asNew ? editN.id : null;
     if (!v) { if (editN && !asNew) o.list = o.list.filter((n) => n.id !== editN.id); }
     else if (editN && !asNew) { const n = o.list.find((x) => x.id === editN.id); if (n) Object.assign(n, { name: nm, text: v, saved: Date.now(), example: false }); }
@@ -2075,11 +2121,14 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     // (then it's checked against your saved logs: its fight and its roster, shown on top)
     S.noteScan = v ? { boss, id: sid, r: noteScan(v, boss) } : null; redo(); };
   if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
+  // (a raid night a note fits: its pulls of the boss open from Warcraft Logs)
+  $$('#assignBox [data-nopen]').forEach((x) => (x.onclick = async () => { const [code, fight] = x.dataset.nopen.split('|'); x.disabled = true; S.noteScan = null;
+    try { await openWcl({ code, fight: +fight || null }, await wclCreds()); } catch (e) { x.disabled = false; x.title = e.message; } }));
   // (a note pasted on the wrong boss: moved to the boss its first line names, and every pull of both checked again)
   if ($('#nscanMove')) $('#nscanMove').onclick = () => { const sc = S.noteScan, to = sc && sc.r.nBoss; if (!to) return;
     const o = notesOf(boss), n = o.list.find((x) => x.id === sc.id); if (!n) return;
     o.list = o.list.filter((x) => x.id !== sc.id); if (o.pick === sc.id) o.pick = 'auto'; notesSave(boss, o);
-    const o2 = notesOf(to); o2.list.push(n); notesSave(to, o2);
+    const o2 = notesOf(to); if (!o2.list.some((x) => noteNorm(x.text) === noteNorm(n.text))) o2.list.push(n); notesSave(to, o2);
     S.noteScan = { boss, moved: to }; for (const rep of CACHE.values()) if (rep.item.boss === boss || rep.item.boss === to) applyNote(rep); renderMain(); };
   if ($('#noteSave')) $('#noteSave').onclick = () => save(false);
   if ($('#noteSaveNew')) $('#noteSaveNew').onclick = () => save(true);
@@ -4704,14 +4753,11 @@ const pfPhK = (q) => q.name.split(' ')[0];
 function phaseChips(keys, sel) {
   return keys.length > 1 ? '<div class="pfph" role="tablist" aria-label="Phase"><span class="pft-lb" aria-hidden="true">Phase</span><button data-ph=""' + (!sel ? ' class="on"' : '') + '>Whole pull</button>' + keys.map((k) => '<button data-ph="' + esc(k) + '"' + (k === sel ? ' class="on"' : '') + '>' + esc(k) + '</button>').join('') + '</div>' : '';
 }
-// the role chips over the player bars: everyone, or one role (ranks count within it)
-// (a view can start on one role, e.g. Damage windows on DPS; picking All keeps all)
-const roleCur = (has, def) => (S.perfRole === 'all' ? 'all' : S.perfRole && has.has(S.perfRole) ? S.perfRole : def && has.has(def) ? def : 'all');
-function roleChips(has, def) {
-  if (has.size < 2) return '';
-  const cur = roleCur(has, def);
-  return '<div class="seg pf-rf" role="tablist" aria-label="Role">' + [['all', 'All'], ['dps', 'DPS'], ['healer', 'Healers'], ['tank', 'Tanks']].filter(([k]) => k === 'all' || has.has(k)).map(([k, l]) => '<button data-r="' + k + '"' + (k === cur ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>';
-}
+// The role chips over the player bars were taken out (your note, Oct 18: "this can be removed from all charts unless it's
+// required"): every chart shows everyone, ranked, and a view that only makes sense for one role still starts on it
+// (Damage windows on DPS).
+const roleCur = (has, def) => (def && has.has(def) ? def : 'all');
+function roleChips() { return ''; }
 const resses = (n) => n + (n === 1 ? ' battle res' : ' battle resses');
 const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || { rows: [] }).rows.reduce((s, x) => s + x.n, 0);
   return { v: t('disp') + '<span> dispels</span> ' + t('ext') + '<span> externals</span>', s: resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
@@ -5705,23 +5751,26 @@ function perfTargets(r, ps, w0, w1, bossN) {
   const { has, list } = lensRows(per.map((x) => x.p)), keep = new Set(list);
   const rows = per.filter((x) => keep.has(x.p)).map((x) => { const c = [0, 0, 0]; for (const [n, v] of x.m) c[cat(n)] += v; const t = c[0] + c[1] + c[2], l = sw.get(x.p.name) || [], hit = l.filter((v) => v != null);
     return { p: x.p, c, t, prioShare: t ? c[1] / t : 0, med: med(hit), hit: hit.length, of: l.length }; }).filter((x) => x.t > 0).sort((a, b) => b.t - a.t);
-  const mxT = Math.max(1, ...rows.map((x) => x.t)), CC = ['#6aa8ff', '#b07cf0', '#6c7381'];
-  const bars = (rows.length ? cbHead(prio.size ? 'Into ' + addW : '', 'Switch', '', ' pf-tgr') : '') + rows.map((x, i) => cbRow({ tag: 'button', cls: ' pf-tgr', attrs: ' type="button" data-n="' + esc(x.p.name) + '" title="' + esc(['Boss', capS(addW), 'Other'].map((nm, j) => nm + ': ' + C(x.c[j])).join(' · ')) + '"', k: i + 1, p: x.p,
-    segs: x.c.map((v, j) => [100 * v / mxT, ['tb', 'ta', 'to'][j]]), v: prio.size ? Math.round(100 * x.prioShare) + '%' : '—', sub: x.of ? (x.med != null ? 'on in ' + x.med.toFixed(1) + 's' : 'none hit') + ' · ' + x.hit + ' of ' + x.of : '' })).join('');
-  const setRows = sets.filter((s) => s.on.length + s.miss.length).map((s) => { const m = med(s.on.map(([, d]) => d)), late = s.on.filter(([, d]) => d >= 6), st = !s.on.length || (m != null && m >= 4) ? 'warn' : 'ok';
-    return ckLine(st, '<b>' + esc(s.name) + (s.gs.length > 1 ? ' ×' + s.gs.length : '') + '</b> at ' + T(s.t0) + ' <span class="sub">' + (s.dead != null && s.dead <= w1 ? 'dead in ' + Math.round(s.dead - s.t0) + 's' : 'still up at ' + T(w1)) + ' · ' + s.on.length + ' DPS on it' + (m != null ? ', half within ' + m.toFixed(1) + 's' : '') + '</span>' +
+  const mxT = Math.max(1, ...rows.map((x) => x.t));
+  const bars = (rows.length ? cbHead(prio.size ? 'Into ' + addW : '', 'Switched', '', ' pf-tgr') : '') + rows.map((x, i) => cbRow({ tag: 'button', cls: ' pf-tgr', attrs: ' type="button" data-n="' + esc(x.p.name) + '" title="' + esc(['Boss', capS(addW), 'Other'].map((nm, j) => nm + ': ' + C(x.c[j])).join(' · ')) + '"', k: i + 1, p: x.p,
+    segs: x.c.map((v, j) => [100 * v / mxT, ['tb', 'ta', 'to'][j]]), v: prio.size ? Math.round(100 * x.prioShare) + '%' : '—', sub: x.of ? (x.med != null ? 'in ' + x.med.toFixed(1) + ' s, ' + x.hit + ' of ' + x.of + ' sets' : 'hit none of the ' + x.of + ' sets') : '' })).join('');
+  // (each set as a plain sentence, no ✓ marks (your note, Oct 18: this view should read like the other plain graphs))
+  const nmL = (ps) => ps.map((p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>').join(', ');
+  const setRows = sets.filter((s) => s.on.length + s.miss.length).map((s) => { const m = med(s.on.map(([, d]) => d)), late = s.on.filter(([, d]) => d >= 6);
+    return '<p class="pf-set"><b>' + esc(s.name) + (s.gs.length > 1 ? ' ×' + s.gs.length : '') + '</b> at ' + T(s.t0) + '. ' + (s.dead != null && s.dead <= w1 ? 'Dead after ' + Math.round(s.dead - s.t0) + ' s.' : 'Still up at ' + T(w1) + '.') +
+      ' ' + s.on.length + ' DPS hit it' + (m != null ? ', half of them within ' + m.toFixed(1) + ' s' : '') + '.' +
       // (a few names stand out; a long list is usually the plan, e.g. the raid split in two sides, so it's just a count)
-      (late.length ? '<span class="sub"> · ' + (late.length <= 3 ? 'slow: ' + late.map(([p, d]) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span> ' + d.toFixed(0) + 's').join(', ') : late.length + ' took 6s or more') + '</span>' : '') +
-      (s.miss.length ? '<span class="sub"> · ' + (s.miss.length <= 3 ? 'never hit it: ' + s.miss.map((p) => '<span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>').join(', ') : s.miss.length + ' DPS never hit it') + '</span>' : '')); }).join('');
+      (late.length ? ' ' + (late.length <= 3 ? 'Slow to switch: ' + late.map(([p, d]) => nmL([p]) + ' (' + d.toFixed(0) + ' s)').join(', ') + '.' : late.length + ' took 6 s or more.') : '') +
+      (s.miss.length ? ' ' + (s.miss.length <= 3 ? 'Never hit it: ' + nmL(s.miss) + '.' : s.miss.length + ' DPS never hit it.') : '') + '</p>'; }).join('');
   const shareOf = (k) => rows.reduce((s, x) => s + x.c[k], 0);
-  const lg = '<span class="pfc-lg"><span><i class="lg-sq" style="background:' + CC[0] + '"></i>boss</span><span><i class="lg-sq" style="background:' + CC[1] + '"></i>' + addW + '</span><span><i class="lg-sq" style="background:' + CC[2] + '"></i>other</span><span class="sub">% = their share into ' + addW + '</span></span>';
+  const lg = '<p class="sub pf-tlg">Each bar is the damage a player did, in their class colour: the bright part went into ' + addW + ', the faded part into the boss, and the grey part into anything else. The number is how much of it went into ' + addW + '.</p>';
   return '<div class="panel pf-chart">' + tgtChart(r, w0, w1, cat) + '</div>' +
-    '<div class="pf-cols"><div class="panel pf-lp">' + lensHead('Where the damage went', prio.size ? Math.round(100 * shareOf(1) / Math.max(1, shareOf(0) + shareOf(1) + shareOf(2))) + '% of it into ' + addW : '', roleChips(has)) + lg + (bars || '<p class="muted">No damage recorded.</p>') + '</div>' +
-    '<div class="panel pf-det pf-sets"><h3 class="nh"><span>' + capS(addW) + ', set by set</span></h3>' + (prio.size ? '<div class="pf-hint">' + esc([...prio].join(', ')) + (listN.length ? '' : ' (there\'s no list for this boss yet, so every add that took 3% of the damage counts)') + (timed.size ? '<br>' + esc([...timed].join(', ')) + ' counts as useful damage but isn\'t timed here, because it dies on its own clock (see Mechanics)' : '') + '</div>' : '') +
+    '<div class="panel pf-lp">' + lensHead('Where the damage went', prio.size ? Math.round(100 * shareOf(1) / Math.max(1, shareOf(0) + shareOf(1) + shareOf(2))) + '% of it into ' + addW : '', roleChips(has)) + lg + (bars || '<p class="muted">No damage recorded.</p>') + '</div>' +
+    '<div class="panel pf-sets"><h3 class="nh"><span>' + capS(addW) + ', set by set</span></h3>' + (prio.size ? '<div class="pf-hint">' + esc([...prio].join(', ')) + (listN.length ? '' : ' (there\'s no list for this boss yet, so every add that took 3% of the damage counts)') + (timed.size ? '<br>' + esc([...timed].join(', ')) + ' counts as useful damage but isn\'t timed here, because it dies on its own clock (see Mechanics)' : '') + '</div>' : '') +
       (setRows || '<p class="muted">' + (prio.size ? 'No set stayed up long enough to need a switch.' : 'No adds that matter were up here.') + '</p>') +
-      '<details class="howit"><summary>How it works</summary><div>A set is the same add spawning together (the raid\'s first hits on them within 8 seconds). Each DPS\'s time is from the raid\'s first hit on the set to their own first hit on any of it, so time the add spent unattackable isn\'t counted. Sets that died within 6 seconds, and players dead when it spawned, aren\'t judged. "Half within" is the middle DPS\'s time; 6 seconds or more is marked slow. Some DPS are told to stay on the boss: read this with your plan.</div></details></div></div>';
+      '<details class="howit"><summary>How it works</summary><div>A set is the same add spawning together (the raid\'s first hits on them within 8 seconds). Each DPS\'s time is from the raid\'s first hit on the set to their own first hit on any of it, so time the add spent unattackable isn\'t counted. Sets that died within 6 seconds, and players dead when it spawned, aren\'t judged. "Half of them within" is the middle DPS\'s time; 6 seconds or more is slow. Some DPS are told to stay on the boss: read this with your plan.</div></details></div>';
 }
-// the raid's damage by target over time: the five biggest targets stacked (and the rest as Other), 5-second buckets
+// the raid's damage by target over time: the five biggest targets as lines (and the rest as Other), 5-second buckets
 function tgtChart(r, w0, w1, cat) {
   const B = 5, a = r.dmgTS || [], i0 = Math.max(0, Math.floor(w0)), i1 = Math.min(a.length, Math.ceil(w1)), sums = new Map();
   for (let i = i0; i < i1; i++) { const o = a[i]; if (o) for (const n in o) sums.set(n, (sums.get(n) || 0) + o[n]); }
@@ -5729,18 +5778,18 @@ function tgtChart(r, w0, w1, cat) {
   const top = [...sums].sort((x, y) => y[1] - x[1]).slice(0, 5).map(([n]) => n).sort((x, y) => cat(x) - cat(y) || sums.get(y) - sums.get(x));
   const keys = top.concat(sums.size > top.length ? ['Other'] : []), nb = Math.max(1, Math.ceil((w1 - w0) / B)), bk = keys.map(() => new Array(nb).fill(0));
   for (let i = i0; i < i1; i++) { const o = a[i]; if (!o) continue; const b = Math.min(nb - 1, Math.floor((i - w0) / B)); for (const n in o) { let k = top.indexOf(n); if (k < 0) k = keys.length - 1; bk[k][b] += o[n] / B; } }
-  let pi = 0; const colOf = (n) => (n === 'Other' ? '#4a505d' : cat(n) === 0 ? (top.filter((x) => cat(x) === 0).indexOf(n) ? '#4a7fc4' : '#6aa8ff') : cat(n) === 1 ? TG_COL[pi++ % TG_COL.length] : '#7d8494');
+  // (six colours that are easy to tell apart, in the order of the key: blue, amber, purple, pink, teal, orange; Other grey)
+  const TCOLS = ['#6aa8ff', '#e6b450', '#b07cf0', '#e07ab8', '#45c1a8', '#d98c5f'], colOf = (n, k) => (n === 'Other' ? '#7d8494' : TCOLS[k % TCOLS.length]);
   const cols = keys.map(colOf);
   const narrow = (document.documentElement.clientWidth || 1000) < 700, W = narrow ? 420 : 1000, H = narrow ? 200 : 150, L = narrow ? 40 : 46, R = 8, Tp = 12, Bm = 20, iw = W - L - R, ih = H - Tp - Bm, span = Math.max(1, w1 - w0);
-  const stack = []; for (let b = 0; b < nb; b++) { let s = 0; stack.push(keys.map((_, k) => (s += bk[k][b]))); }
-  const top1 = Math.max(1, ...stack.map((x) => x[x.length - 1])), mx = top1 * 1.08, X = (t) => L + ((t - w0) / span) * iw, Y = (v) => Tp + ih - (v / mx) * ih, xb = (b) => X(w0 + (b + 0.5) * B);
+  const top1 = Math.max(1, ...bk.flat()), mx = top1 * 1.08, X = (t) => L + ((t - w0) / span) * iw, Y = (v) => Tp + ih - (v / mx) * ih, xb = (b) => X(w0 + (b + 0.5) * B);
   let s = '<svg class="pfc" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Damage by target over time">';
   const phs = (r.module && !r.module.error && r.module.phases) || [];
   phs.forEach((q, i) => { if (q.start >= w1 || (isFinite(q.end) && q.end <= w0)) return; const x0 = X(Math.max(w0, q.start)), x1 = X(Math.min(w1, isFinite(q.end) ? q.end : w1)); s += '<rect x="' + x0.toFixed(1) + '" y="' + Tp + '" width="' + Math.max(0, x1 - x0).toFixed(1) + '" height="' + ih + '" class="pfc-ph p' + (i % 2) + '"/><text x="' + (x0 + 5).toFixed(1) + '" y="' + (Tp + 11) + '" class="pfc-pl">' + esc(phLab(q, (x1 - x0) * onScreen(W))) + '</text>'; });
   for (const f of [0.5, 1]) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(top1 * f).toFixed(1) + '" y2="' + Y(top1 * f).toFixed(1) + '" class="pfc-g"/><text x="' + (L - 6) + '" y="' + (Y(top1 * f) + 4).toFixed(1) + '" class="pfc-y" text-anchor="end">' + C(top1 * f) + '</text>';
   const off = (n) => (S.tgtHide && S.tgtHide.has(n) ? ' off' : '');
-  for (let k = keys.length - 1; k >= 0; k--) { const up = stack.map((x, b) => xb(b).toFixed(1) + ',' + Y(x[k]).toFixed(1)), dn = stack.map((x, b) => xb(b).toFixed(1) + ',' + Y(k ? x[k - 1] : 0).toFixed(1)).reverse();
-    s += '<polygon points="' + up.concat(dn).join(' ') + '" style="fill:' + cols[k] + '" class="tg-a' + off(keys[k]) + '" data-n="' + esc(keys[k]) + '"/>'; }
+  // (one line per target, like the other charts, so each one reads on its own instead of stacked on the others)
+  for (let k = keys.length - 1; k >= 0; k--) s += '<polyline points="' + bk[k].map((v, b) => xb(b).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '" style="stroke:' + cols[k] + '" class="tg-a tg-l' + off(keys[k]) + '" data-n="' + esc(keys[k]) + '"/>';
   s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + (Tp + ih) + '" y2="' + (Tp + ih) + '" class="pfc-ax"/>';
   const step = span > 400 || (narrow && span > 150) ? 60 : 30; for (let t = Math.ceil(w0 / step) * step; t <= w1; t += step) s += '<text x="' + X(t).toFixed(1) + '" y="' + (H - 5) + '" class="pfc-x" text-anchor="middle">' + T(t) + '</text>';
   s += '<line class="pfx-hv" x1="0" x2="0" y1="' + Tp + '" y2="' + (Tp + ih) + '" style="display:none"/></svg>';
@@ -10297,12 +10346,13 @@ function castStrip(r, p, kind) {
   const top = [...p.castAb.values()].filter((a) => !cdN.has(a.name.toLowerCase())).sort((a, b) => b.n - a.n).slice(0, 7);
   const dead = deadSpans(r, p).map(([a, b]) => '<rect x="' + a.toFixed(1) + '" y="0" width="' + Math.max(0, Math.min(dur, b) - a).toFixed(1) + '" height="10" class="cs-dd"/>').join('');
   const ico = (id, name, n) => '<span class="sp cs-i" data-sid="' + (id || 0) + '" data-sn="' + esc(name) + '" data-ex="' + esc(n) + '">' + spellIcon(id, name) + '</span>';
-  const row = (lab, body, cls) => '<div class="cs-r' + (cls ? ' ' + cls : '') + '">' + lab + '<svg viewBox="0 0 ' + dur + ' 10" preserveAspectRatio="none" aria-hidden="true">' + dead + body + '</svg><span></span></div>';
+  // (data-cs: the row's casts or buff spans, for its hover box)
+  const row = (lab, body, cls, cs) => '<div class="cs-r' + (cls ? ' ' + cls : '') + '">' + lab + '<svg viewBox="0 0 ' + dur + ' 10" preserveAspectRatio="none" aria-hidden="true"' + (cs ? ' data-cs="' + esc(JSON.stringify({ d: dur, ...cs })) + '"' : '') + '>' + dead + body + '</svg><span></span></div>';
   const ticks = (ts, c) => ts.map((t) => '<line x1="' + t.toFixed(2) + '" x2="' + t.toFixed(2) + '" y1="1" y2="9"' + (c ? ' style="stroke:' + c + '"' : '') + '/>').join('');
   let h = '';
-  for (const b of buffs) h += row(ico(b.id, b.name, 'buff: ' + b.sp.length + ' time' + (b.sp.length === 1 ? '' : 's')), b.sp.map(([a, c]) => '<rect x="' + a.toFixed(1) + '" y="2.5" width="' + Math.max(0.5, c - a).toFixed(1) + '" height="5" rx=".5" class="cs-b"/>').join(''), 'bf');
-  for (const c of cds) h += row(ico(c.id, c.name, 'pressed ' + c.ts.length + ' time' + (c.ts.length === 1 ? '' : 's')), ticks(c.ts, p.color), 'cd');
-  for (const a of top) h += row(ico(a.id, a.name, a.n + ' cast' + (a.n === 1 ? '' : 's')), ticks(p.byName.get(a.name.toLowerCase()) || p.castTimes.get(a.id) || []));
+  for (const b of buffs) h += row(ico(b.id, b.name, 'buff: ' + b.sp.length + ' time' + (b.sp.length === 1 ? '' : 's')), b.sp.map(([a, c]) => '<rect x="' + a.toFixed(1) + '" y="2.5" width="' + Math.max(0.5, c - a).toFixed(1) + '" height="5" rx=".5" class="cs-b"/>').join(''), 'bf', { n: b.name, sp: b.sp.map(([a, c]) => [+a.toFixed(1), +c.toFixed(1)]) });
+  for (const c of cds) h += row(ico(c.id, c.name, 'pressed ' + c.ts.length + ' time' + (c.ts.length === 1 ? '' : 's')), ticks(c.ts, p.color), 'cd', { n: c.name, cd: 1, ts: c.ts.map((t) => +t.toFixed(1)) });
+  for (const a of top) { const ts = p.byName.get(a.name.toLowerCase()) || p.castTimes.get(a.id) || []; h += row(ico(a.id, a.name, a.n + ' cast' + (a.n === 1 ? '' : 's')), ticks(ts), '', { n: a.name, ts: ts.map((t) => +t.toFixed(1)) }); }
   if (!h) return '';
   return '<div class="cs" style="--pl:' + (100 * L / W).toFixed(2) + '%;--pr:' + (100 * Rm / W).toFixed(2) + '%"><div class="cs-h">Their casts <span class="sub">' + (buffs.length ? 'key buffs as bars, then ' : '') + (kind === 'taken' ? 'defensives' : 'big cooldowns') + ' and most-cast spells. Hover an icon.</span></div>' + h + '</div>';
 }

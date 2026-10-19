@@ -1923,7 +1923,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .cb-f { position: absolute; inset: 0; display: flex; pointer-events: none; } .cb-f i { display: block; height: 100%; flex: none; }
 .cb-f i.m { background: color-mix(in srgb, var(--c) 32%, transparent); transition: background .1s; }
 .cb-f i.oh { background: color-mix(in srgb, var(--c) 9%, transparent); }
-.cb-f i.tb { background: rgba(106,168,255,.34); } .cb-f i.ta { background: rgba(176,124,240,.46); } .cb-f i.to { background: rgba(108,115,129,.3); } /* (Targets: boss, adds, other, the legend's colours) */
+.cb-f i.tb { background: color-mix(in srgb, var(--c) 30%, transparent); } .cb-f i.ta { background: color-mix(in srgb, var(--c) 78%, transparent); } .cb-f i.to { background: rgba(108,115,129,.3); } /* (Targets: boss, adds, other, the legend's colours) */
 .cb-f i.ad { background: repeating-linear-gradient(135deg, rgba(229,83,75,.62) 0 3px, rgba(229,83,75,.28) 3px 6px); } /* (striped: a red class colour, like a Death Knight's, would hide a plain red) */
 .pf-row.cb:not(.nb):hover .cb-f i.m, .pf-row.cb.on .cb-f i.m { background: color-mix(in srgb, var(--c) 42%, transparent); }
 .cb-in { position: relative; display: flex; align-items: center; gap: 7px; height: 100%; min-width: 0; padding: 0 8px 0 3px; }
@@ -2003,7 +2003,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .pf-tg-n { display: flex; align-items: center; gap: 7px; min-width: 0; } .pf-tg-n .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pf-tgb i + i { margin-left: 1px; }
 .pf-tg-v { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; white-space: nowrap; font-size: 12.5px; } .pf-tg-v b { font-variant-numeric: tabular-nums; } .pf-tg-v .sub { font-size: 12px; }
-.tg-a { opacity: .82; } .tg-a:hover { opacity: 1; }
+.tg-a { opacity: .82; } .tg-a:hover { opacity: 1; } .tg-l { fill: none; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.pf-tlg { margin: 2px 0 8px; } .pf-sets .pf-set { margin: 0 0 7px; line-height: 1.5; }
 /* charts you can explore: a hover readout on the mana and target charts; legend entries and line names as switches */
 .pfx { position: relative; } .pfx svg { touch-action: pan-y; } .pfx-hv { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
 .pfx .pfc-tip .lg-sq { display: inline-block; vertical-align: 0; }
