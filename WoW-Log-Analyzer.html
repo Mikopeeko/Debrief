@@ -2478,6 +2478,7 @@ span.sn-log { padding: 3px 10px; }
 .pi-t2 { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; } .pi-t2 .sub { display: block; font-size: 11.5px; font-weight: 500; }
 .pi-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); align-self: start; margin-top: 7px; } .pi-dot.ok { background: #45c15c; } .pi-dot.warn { background: #f3c969; } .pi-dot.bad { background: #e5534b; }
 .pi-s { min-width: 0; } .pi-s .nm { font-weight: 600; } .pi-w { display: block; margin-top: 2px; color: var(--muted); font-size: 13.5px; }
+.pi-vd { font-weight: 700; } .pi-vd.ok { color: #45c15c; } .pi-vd.warn { color: #f3c969; } .pi-vd.bad { color: #e5534b; }
 .pi-l { margin-left: 4px; color: var(--gold); cursor: help; }
 .pi-okl { margin: 4px 0 2px; font-size: 14.5px; } .pi-okl .nm { font-weight: 600; } .pi-none { margin: 6px 0 0; }
 .pi-more > summary { cursor: pointer; padding: 8px 0 2px; color: var(--muted); font-size: 13.5px; }
@@ -3355,6 +3356,43 @@ details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212
   .cmp .panel > h3 { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 </style>
+/* ---- the boss banner and the pull cards in the newer card look (Oct 19, your note: "more cohesive with the parts I've
+   recently updated"): Mechanics' section cards (16px corners, a soft shadow, a short colour strip on the left instead of a
+   thick border) and its tiles (a colour line along the top, here how far the pull got) ---- */
+header.fight.bh, header.fight.bh.hero { border: 1px solid var(--line2); border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.35); padding: 16px 24px 16px 28px; }
+header.fight.bh::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; z-index: 2; width: 4px; border-radius: 0 4px 4px 0; background: #e5534b; }
+header.fight.bh.good::before { background: #45c15c; } header.fight.bh.best::before { background: #e6b450; } header.fight.bh.q::before { background: var(--qc); }
+/* (the phase bar: a slim track with the phase names under it, not blocks that look like buttons; a phase reached is in the pull's colour) */
+header.fight.bh .bh-l1 .phb { width: 290px; gap: 3px; align-self: center; }
+header.fight.bh .phb span { height: auto; overflow: visible; background: none; border-radius: 0; display: flex; flex-direction: column; gap: 5px; }
+header.fight.bh .phb span::before { content: ''; display: block; height: 7px; border-radius: 4px; background: rgba(255,255,255,.1); }
+header.fight.bh .phb span i { top: 0; bottom: auto; height: 7px; border-radius: 4px; box-shadow: 0 0 10px color-mix(in srgb, var(--qc, #6aa8ff) 45%, transparent); }
+header.fight.bh .phb em { position: static; font: 700 10px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; text-align: left; color: rgba(255,255,255,.45); text-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header.fight.bh .phb span:has(i:not([style="width:0%"])) em { color: #e6e9ef; }
+header.fight.bh .phb.one span { gap: 0; }
+/* (the second line: the scope as a quiet chip, how it went as a status pill like Mechanics' "11 moderate") */
+header.fight.bh .bh-scope { padding: 3px 10px; border-radius: 8px; font-size: 12.5px; }
+header.fight.bh .bh-side .nc-res { padding: 3px 11px; border-radius: 999px; font: 700 12.5px/1.35 var(--body); text-shadow: none; }
+header.fight.bh .bh-side .nc-res.ok { color: #8fe39e; background: rgba(69,193,92,.14); box-shadow: inset 0 0 0 1px rgba(69,193,92,.4); }
+header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .8; }
+/* (the pull cards: tile corners and shadow, the bar as a line along the top, the result a little bigger) */
+.sg-row { gap: 8px; } .film { gap: 8px; padding: 3px 1px 8px; }
+.fcard, .fcard.fall { overflow: hidden; gap: 3px; padding: 11px 11px 9px; border-radius: 12px; border: 1px solid var(--line2); background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.005)), var(--panel); box-shadow: 0 4px 12px rgba(0,0,0,.28); }
+.fcard:hover { border-color: var(--faint); transform: translateY(-2px); }
+.fcard .fc-bar { position: absolute; left: 11px; right: 11px; top: 0; height: 3px; margin: 0; border-radius: 0 0 3px 3px; background: rgba(255,255,255,.08); }
+.fcard .fc-bar b { border-radius: 0 0 3px 3px; }
+.fcard .fc-bar b { box-shadow: 0 0 8px color-mix(in srgb, var(--pc, #6aa8ff) 60%, transparent); }
+.fcard .fc-h b { font: 700 14px/1.2 var(--head); } .fcard .fc-h span { font-size: 11px; }
+.fcard .fc-p { font: 700 14px/1.25 var(--body); }
+.fcard.best::after { top: 8px; }
+.fcard.kill { border-color: rgba(255,128,0,.55); background: linear-gradient(180deg, rgba(255,128,0,.13), rgba(255,128,0,.02) 75%), var(--panel); }
+.fcard.kill .fc-p::before { content: '✓ '; }
+.fcard.sel { border-color: #f3f5f9; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)), var(--raised); box-shadow: 0 0 0 1px #f3f5f9, 0 8px 20px rgba(0,0,0,.45); }
+.fcard.kill.sel { box-shadow: 0 0 0 1px #f3f5f9, 0 8px 22px rgba(255,128,0,.22); }
+.fcard.sel.dim { box-shadow: 0 4px 12px rgba(0,0,0,.28); border-color: var(--line2); background: var(--panel); }
+.fcard.fall { margin: 3px 0 0; border-color: rgba(230,180,80,.35); background: linear-gradient(180deg, rgba(230,180,80,.08), rgba(230,180,80,.01) 75%), var(--panel); }
+.fcard.fall.sel { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 8px 20px rgba(0,0,0,.45); }
+@media (max-width: 760px) { header.fight.bh, header.fight.bh.hero { padding: 14px 16px 14px 20px; } header.fight.bh .bh-l1 .phb { width: 100%; max-width: 300px; } }
 
 
 
@@ -17241,7 +17279,7 @@ function piSay(c, who) {
   if (healer) why.push(tn + ' is a healer, so it added no damage.');
   else if (c.noSim || c.ratio == null) why.push('No sim for ' + esc(c.tg.specName || 'this spec') + ', so the gain is unknown.');
   else if (c.tgt.st !== 'ok') why.push(who(c.best) + ' would have gained ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more' + (c.many ? ' with 3+ enemies up.' : '.'));
-  else if (!why.length) why.push(c.best === c.tg ? 'Best pick.' : 'Good pick. Only ' + who(c.best) + ' would have gained a little more.');
+  else if (!why.length) why.push(c.best === c.tg ? tn + ' gains the most from it.' : 'Only ' + who(c.best) + ' would have gained a little more.');
   return { say, why: why.join(' ') };
 }
 // a stretch it sat ready (20 seconds or more), in the same sentences: how long, and the best moment in it
@@ -17251,8 +17289,10 @@ function piReady(m, who) {
     : 'Best pick then: ' + who(m.pick.q) + ', worth about ' + gain + ' damage.';
   return { say, why };
 }
-// (a row: the time (and the pull, over the night), a dot, the sentence and its why under it)
-const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + (s.why ? '<span class="pi-w">' + s.why + '</span>' : '') + '</span></div>';
+// (a row: the time (and the pull, over the night), a dot, the sentence and its why under it, led by a coloured verdict
+// word so good, could be better and bad read at a glance (your note, Oct 19))
+const PI_VERDICT = { ok: 'Good.', warn: 'Could be better.', bad: 'Bad.' };
+const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
 // a priest's pull as a strip: each Power Infusion gold, the stretches it sat ready green, the raid's downtime grey,
 // Bloodlust a line, and under them, in purple, when the player planned for it pressed their big cooldown
 function piStrip(d, x, casts, who) {

@@ -7121,7 +7121,7 @@ function piSay(c, who) {
   if (healer) why.push(tn + ' is a healer, so it added no damage.');
   else if (c.noSim || c.ratio == null) why.push('No sim for ' + esc(c.tg.specName || 'this spec') + ', so the gain is unknown.');
   else if (c.tgt.st !== 'ok') why.push(who(c.best) + ' would have gained ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more' + (c.many ? ' with 3+ enemies up.' : '.'));
-  else if (!why.length) why.push(c.best === c.tg ? 'Best pick.' : 'Good pick. Only ' + who(c.best) + ' would have gained a little more.');
+  else if (!why.length) why.push(c.best === c.tg ? tn + ' gains the most from it.' : 'Only ' + who(c.best) + ' would have gained a little more.');
   return { say, why: why.join(' ') };
 }
 // a stretch it sat ready (20 seconds or more), in the same sentences: how long, and the best moment in it
@@ -7131,8 +7131,10 @@ function piReady(m, who) {
     : 'Best pick then: ' + who(m.pick.q) + ', worth about ' + gain + ' damage.';
   return { say, why };
 }
-// (a row: the time (and the pull, over the night), a dot, the sentence and its why under it)
-const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + (s.why ? '<span class="pi-w">' + s.why + '</span>' : '') + '</span></div>';
+// (a row: the time (and the pull, over the night), a dot, the sentence and its why under it, led by a coloured verdict
+// word so good, could be better and bad read at a glance (your note, Oct 19))
+const PI_VERDICT = { ok: 'Good.', warn: 'Could be better.', bad: 'Bad.' };
+const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
 // a priest's pull as a strip: each Power Infusion gold, the stretches it sat ready green, the raid's downtime grey,
 // Bloodlust a line, and under them, in purple, when the player planned for it pressed their big cooldown
 function piStrip(d, x, casts, who) {
