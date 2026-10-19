@@ -1179,8 +1179,9 @@ const PERF_OFF = () => false;
 // (Power Infusion, one of Graphs' views, was greyed out on the website until its rework; on everywhere since Oct 18
 // (your call). Set this back to () => !!window.WLA_HOSTED to grey it out there again, with its plan line on Pull recap)
 const PI_OFF = () => false;
-// (Rotation (Spec checks) is greyed out on the website while it's being built, "Under development" on hover; it shows in the local app)
-const SPEC_OFF = () => !!window.WLA_HOSTED;
+// (Rotation (Spec checks) is on everywhere since Oct 18, for testing (your call). Set this back to
+// () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with its grades and fixes)
+const SPEC_OFF = () => false;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
 // ---- "Report a problem" (your note, Oct 18): a short form that files the problem on the project's private GitHub,
