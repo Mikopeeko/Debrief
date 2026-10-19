@@ -2792,19 +2792,23 @@ function audit() {
     tileOf = (s, rows, groups, key) => { const x = { ...s, rows, groups }, { b, w } = cnt(x), fp = firstProb(x, b), tg = tagOf(fp || ''), mp = probMap(x, b); let alt = '';
       if (!mp) { const dead = s.id === 'deaths' ? rows.map((row) => row[0] && row[0].death).filter(Boolean) : [];
         const all = rows.map((row) => ({ row, t: rowT(row) })).concat(...groups.map((g) => g.rows.map((row) => ({ row, t: rowT(row) != null ? rowT(row) : g.t })))).filter((e) => e.t != null);
-        if (dead.length) alt = '<span class="mcx-alt mcx-dd">' + dead.slice(0, 5).map((d) => '<span class="mcx-ddr"><i>' + T(d.t) + '</i>' + who(d.player) + '</span>').join('') + (dead.length > 5 ? '<span class="sub">+' + (dead.length - 5) + ' more</span>' : '') + '</span>';
+        if (dead.length) alt = '<span class="mcx-alt mcx-dd"><span class="mcx-cap">Who died</span>' + dead.slice(0, 5).map((d) => '<span class="mcx-ddr"><i>' + T(d.t) + '</i>' + who(d.player) + '</span>').join('') + (dead.length > 5 ? '<span class="sub">+' + (dead.length - 5) + ' more</span>' : '') + '</span>';
         // (Avoidable damage has no moments, only who walked into what: the players with the most hits as bars, tanks left out as on its page)
         else if (s.id === 'avoid' && groups.length) { const by = new Map(); for (const g of groups) for (const row of g.rows) { if (!row[0] || !row[0].p || row[0].sub) continue; by.set(row[0].p, (by.get(row[0].p) || 0) + (parseInt(row[1] && row[1].txt, 10) || 0)); }
           const top = [...by].filter(([, k]) => k > 0).sort((u, v) => v[1] - u[1]), mx = top.length ? top[0][1] : 1, tot = top.reduce((t, [, k]) => t + k, 0);
-          if (top.length) alt = '<span class="mcx-alt mcx-hb">' + top.slice(0, 4).map(([n, k]) => '<span class="mcx-hbr">' + who(n) + '<span class="mcx-hbb"><i style="width:' + Math.max(4, Math.round(100 * k / mx)) + '%"></i></span><b>' + k + '</b></span>').join('') +
+          if (top.length) alt = '<span class="mcx-alt mcx-hb"><span class="mcx-cap">Most hits</span>' + top.slice(0, 4).map(([n, k]) => '<span class="mcx-hbr">' + who(n) + '<span class="mcx-hbb"><i style="width:' + Math.max(4, Math.round(100 * k / mx)) + '%"></i></span><b>' + k + '</b></span>').join('') +
             '<span class="mcx-msx"><span>Most hits</span><span>' + plural(tot, 'hit') + ' in all</span></span></span>'; }
         else if (all.length) { const p = phs[key], fin = p && isFinite(p.end), a = fin ? p.start : Math.min(...all.map((e) => e.t)), z = fin ? p.end : Math.max(...all.map((e) => e.t)), span = Math.max(1, z - a);
           const sv = (row) => (row.some((c) => c.bad) ? 'bad' : row.some((c) => c.warn) ? 'warn' : 'ok');
-          alt = '<span class="mcx-alt mcx-ms"><span class="mcx-msb">' + all.map((e) => '<i class="' + sv(e.row) + '" style="left:' + Math.min(100, Math.max(0, 100 * (e.t - a) / span)).toFixed(1) + '%"></i>').join('') + '</span><span class="mcx-msx"><span>' + T(a) + '</span><span>' + plural(all.length, 'moment') + '</span><span>' + T(z) + '</span></span></span>'; }
+          alt = '<span class="mcx-alt mcx-ms"><span class="mcx-cap">Moments</span><span class="mcx-msb">' + all.map((e) => '<i class="' + sv(e.row) + '" style="left:' + Math.min(100, Math.max(0, 100 * (e.t - a) / span)).toFixed(1) + '%"></i>').join('') + '</span><span class="mcx-msx"><span>' + T(a) + '</span><span>' + plural(all.length, 'moment') + '</span><span>' + T(z) + '</span></span></span>'; }
         // (anything else with no map and no moments: its first few problems as short lines, so a tile is never blank)
         if (!alt) { const pr = rows.map((row) => ({ row, g: null })).concat(...groups.map((g) => g.rows.map((row) => ({ row, g })))).filter(({ row }) => row.some((c) => c.bad || c.warn)).slice(0, 4);
-          if (pr.length) alt = '<span class="mcx-alt mcx-gl">' + pr.map(({ row, g }) => '<span class="mcx-gll ' + (row.some((c) => c.bad) ? 'bad' : 'warn') + '">' + esc((g ? gTitle(s, g.title) + ', ' : '') + rowText(s, row)) + '</span>').join('') + '</span>'; } }
-      return { tag: tg.tag, txt: fp ? capS(tg.rest) : '', more: Math.max(0, b + w - 1), map: mp ? miniMap(mp, pmap) : '', alt }; };
+          if (pr.length) alt = '<span class="mcx-alt mcx-gl"><span class="mcx-cap">Problems</span>' + pr.map(({ row, g }) => '<span class="mcx-gll ' + (row.some((c) => c.bad) ? 'bad' : 'warn') + '">' + esc((g ? gTitle(s, g.title) + ', ' : '') + rowText(s, row)) + '</span>').join('') + '</span>'; } }
+      // (the faces of the players behind its mistakes: the names in its flagged cells, and who died; so you know who to talk to)
+      const nm = new Set(), pick = (row) => { if (!row.some((c) => c.bad || c.warn)) return; for (const c of row) { if (!(c.bad || c.warn)) continue; if (c.p) nm.add(c.p); (c.ps || []).forEach((n) => nm.add(n)); (c.pt || []).forEach(([n]) => nm.add(n)); } if (row[0] && row[0].death) nm.add(row[0].death.player); };
+      rows.forEach(pick); groups.forEach((g) => g.rows.forEach(pick)); const wl = [...nm].filter((n) => pmap.has(n));
+      const faces = wl.length ? '<span class="mcx-who" title="' + esc(wl.join(', ')) + '">' + wl.slice(0, 5).map((n) => avatar(pmap.get(n), true)).join('') + (wl.length > 5 ? '<i>+' + (wl.length - 5) + '</i>' : '') + '</span>' : '';
+      return { tag: tg.tag, txt: fp ? capS(tg.rest) : '', more: Math.max(0, b + w - 1), map: mp ? miniMap(mp, pmap) : '', alt, who: faces }; };
     if (ord.length) h += MT_TOP;
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
@@ -3160,7 +3164,7 @@ function audit() {
     // the row: a coloured edge and one status line on the right (✕ problems, ! could be better, ✓ clean), like Assignments;
     // "How it works" is folded away at the top of the opened section
     const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok', ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
-    const tiLn = ti && (ti.tag || ti.more || ti.txt) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
+    const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti ? ' mcx-tile' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti ? '<span class="mcx-hd">' : '') + secHead(s) +
       '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? '</span>' + tiLn : '') + '</summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
@@ -3226,9 +3230,16 @@ function audit() {
   // still opens its section in place, across the whole line)
   const okSec = (x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return !x.s.info && !a.some(isBadRow) && !a.some(isWarnRow); };
   // (its problem mechanics as tiles in a grid (info-only sections stay full rows), then the clean chips)
+  // (the worst mechanic with a map leads its phase as a big tile, "Fix this first"; the rest small beside it)
+  const bigFirst = (l) => { const i = l.findIndex((t) => t.includes('class="wr-map mcx-map"')); if (i < 0) return l; const t = l[i].replace('mcx-tile', 'mcx-tile mcx-big').replace('<summary>', '<summary><span class="mcx-rib">Fix this first</span>'); return [t].concat(l.slice(0, i), l.slice(i + 1)); };
   const phaseBody = (list, key) => { const ok = list.filter(okSec), pr = list.filter((x) => !okSec(x) && !x.s.info), inf = list.filter((x) => !okSec(x) && x.s.info);
-    return (pr.length ? '<div class="mcx-tiles">' + pr.map((x) => secBlock(x, key, true)).join('') + '</div>' : '') + inf.map((x) => secBlock(x, key)).join('') +
+    return (pr.length ? '<div class="mcx-tiles">' + bigFirst(pr.map((x) => secBlock(x, key, true))).join('') + '</div>' : '') + inf.map((x) => secBlock(x, key)).join('') +
     (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean</span>' + ok.map((x) => secBlock(x, key)).join('') + '</div>' : ''); };
+  // (a phase's banner (Oct 19, refined): a gold number, and a ring of how much of it was clean (green), could be better (amber) or had problems (red))
+  const phNum = (n, i) => { const m = String(n).match(/^P(\d+)/); return '<span class="mcx-pn">' + (m ? m[1] : /^intermission/i.test(n) ? 'Int' : /^whole/i.test(n) ? 'All' : i != null ? i + 1 : '•') + '</span>'; };
+  const phRing = (list) => { const l = list.filter((x) => !x.s.info), ok = l.filter(okSec).length, b = l.filter((x) => x.rows.concat(...x.groups.map((g) => g.rows)).some(isBadRow)).length, w = l.length - ok - b, tot = l.length; if (!tot) return '';
+    const C = 2 * Math.PI * 14, seg = (n, off, col) => (n ? '<circle r="14" cx="18" cy="18" fill="none" stroke="' + col + '" stroke-width="5" stroke-dasharray="' + (C * n / tot).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-C * off / tot).toFixed(2) + '" transform="rotate(-90 18 18)"/>' : '');
+    return '<span class="mcx-ring" title="' + ok + ' of ' + plural(tot, 'mechanic') + ' clean"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg(ok, 0, '#45c15c') + seg(w, ok, '#e8a23a') + seg(b, ok + w, '#e5534b') + '</svg><span><b>' + ok + '/' + tot + '</b>clean</span></span>'; };
   // phases, in fight order; each phase is a header with its mechanics, problems first
   buckets.forEach((list, i) => {
     if (!list.length) return;
@@ -3238,27 +3249,45 @@ function audit() {
     const p = phs[i], allR = list.flatMap((x) => x.rows.concat(...x.groups.map((g) => g.rows))), probs = allR.filter(isBadRow).length, better = allR.filter((row) => !isBadRow(row) && isWarnRow(row)).length;
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
-    h += '<details class="phase" open><summary><b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
-      '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕\u00a0' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓\u00a0clean') + '</span></summary>' + phaseBody(list, i) + '</details>';
+    h += '<details class="phase mcx-ph" data-mst="' + (probs ? 'bad' : better ? 'warn' : 'ok') + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
+      phRing(list) + '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕\u00a0' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓\u00a0clean') + '</span></summary>' + phaseBody(list, i) + '</details>';
   });
-  if (whole.length) h += '<details class="phase" open><summary><b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span></summary>' + phaseBody(whole, 'w') + '</details>';
-  // (the top of the page (Oct 19, layout B): how many mechanics had problems, could be better or were clean, phase by phase, and the
-  // pull as one bar split into its phases with a dot at each mistake; hover a dot for what, click it to open that mechanic)
+  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span>' + phRing(whole) + '</summary>' + phaseBody(whole, 'w') + '</details>';
+  // (the top of the page (Oct 19, layout B, refined): one card with a plain verdict, the pull as lanes (one per mechanic with a mistake,
+  // Deaths first as skulls; the phases as bands across the top with lines down through the lanes, minute marks, the wipe filter's cut
+  // greyed behind a red line), and the totals; a dot opens its exact moment)
   h = h.replace(MT_TOP, () => { const ent = buckets.flatMap((l, i) => l.map((x) => ({ x, k: i }))).concat(whole.map((x) => ({ x, k: 'w' }))).filter(({ x }) => !x.s.info);
     const st = ({ x }) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return a.some(isBadRow) ? 'bad' : a.some(isWarnRow) ? 'warn' : 'ok'; };
     const nB = ent.filter((e) => st(e) === 'bad').length, nW = ent.filter((e) => st(e) === 'warn').length, nO = ent.length - nB - nW;
-    const strip = '<div class="panel mcx-strip"><span class="mcx-k bad"><b>' + nB + '</b>with problems</span><span class="mcx-k warn"><b>' + nW + '</b>could be better</span><span class="mcx-k ok"><b>' + nO + '</b>clean</span><span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
-    // (the whole pull to its last phase; with the wipe filter on, what's after the cut is greyed behind a red line, since it isn't counted)
+    const totals = '<div class="mcx-strip"><span class="mcx-k bad"><b>' + nB + '</b>with problems</span><span class="mcx-k warn"><b>' + nW + '</b>could be better</span><span class="mcx-k ok"><b>' + nO + '</b>clean</span><span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
+    // (the verdict: the phase with the most trouble and its worst mechanics, and the phases that went clean)
+    const per = buckets.map((l, i) => ({ p: phs[i], l: l.filter((x) => !x.s.info) })).filter((y) => y.l.length).map((y) => { const sv = y.l.map((x) => ({ x, v: st({ x }) }));
+      return { name: y.p.name, b: sv.filter((o) => o.v === 'bad').length, w: sv.filter((o) => o.v === 'warn').length, worst: sv.filter((o) => o.v !== 'ok').sort((u, v) => (u.v === 'bad' ? 0 : 1) - (v.v === 'bad' ? 0 : 1)).map((o) => o.x.s.title.split(': ')[0]) }; });
+    const topP = per.slice().sort((u, v) => (v.b * 3 + v.w) - (u.b * 3 + u.w))[0], clean = per.filter((y) => !y.b && !y.w);
+    const verdict = topP && (topP.b || topP.w) && per.length > 1 ? '<p class="mcx-verdict">Most trouble was in <b>' + esc(topP.name) + '</b>: ' + [topP.b ? plural(topP.b, 'mechanic') + ' with problems' : '', topP.w ? topP.w + ' that could be better' : ''].filter(Boolean).join(' and ') +
+      (topP.worst.length ? ', led by <b>' + topP.worst.slice(0, 2).map(esc).join('</b> and <b>') + '</b>' : '') + '.' + (clean.length ? ' <span class="mcx-good">' + esc(clean.map((y) => y.name).join(' and ')) + ' went clean.</span>' : '') + '</p>' : '';
+    const head = '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake and each skull a death. Hover one for what happened, click it to open that moment.</small></h3>' + verdict;
+    // (the whole pull to its last phase, or to its end when the wipe filter cut it short; one phase is enough: most prog wipes end in P1)
     const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end = Math.max(lastE, isFinite(r.duration) ? r.duration : 0);
-    if (!tp.length || !(end > 0)) return strip; // (one phase is enough: most prog wipes end in P1)
-    // (each dot carries its moment, so a click opens that exact moment, not just the mechanic; a death is a skull)
-    const dots = []; for (const { x, k } of ent) { if (k === 'w') continue; const add = (row, t0) => { const t = rowT(row) != null ? rowT(row) : t0; if (t == null || t > end || !(isBadRow(row) || isWarnRow(row))) return;
-      const dead = x.s.id === 'deaths' && row[0] && row[0].death;
-      dots.push('<a class="mcx-dot tlink ' + (dead ? 'dead' : isBadRow(row) ? 'bad' : 'warn') + '" href="#sec-' + x.s.id + '-' + k + '" data-t="' + T(t0 != null ? t0 : t) + '" style="left:' + (100 * t / end).toFixed(2) + '%' + (dead ? ';background-image:url(' + whIcon('inv_misc_bone_humanskull_01') + ')' : '') + '" title="' + esc(T(t) + ' ' + (dead ? dead.player + ' died' + (dead.ability ? ' to ' + dead.ability : '') : x.s.title.split(': ')[0] + ': ' + rowText(x.s, row))) + '"></a>'); };
+    if (!tp.length || !(end > 0)) return head + totals + '</div>';
+    const at = (t) => (100 * t / end).toFixed(2) + '%', X = (t) => 'calc(var(--lw) + (100% - var(--lw)) * ' + (t / end).toFixed(4) + ')';
+    // (one lane per mechanic with a mistake, Deaths first, then the busiest)
+    const lanes = new Map();
+    for (const { x, k } of ent) { if (k === 'w') continue; let L = lanes.get(x.s.id); if (!L) lanes.set(x.s.id, (L = { s: x.s, dots: [] }));
+      const add = (row, t0) => { const t = rowT(row) != null ? rowT(row) : t0; if (t == null || t > end || !(isBadRow(row) || isWarnRow(row))) return; const dead = x.s.id === 'deaths' && row[0] && row[0].death;
+        L.dots.push('<a class="mcx-dot tlink ' + (dead ? 'dead' : isBadRow(row) ? 'bad' : 'warn') + '" href="#sec-' + x.s.id + '-' + k + '" data-t="' + T(t0 != null ? t0 : t) + '" style="left:' + at(t) + (dead ? ';background-image:url(' + whIcon('inv_misc_bone_humanskull_01') + ')' : '') + '" title="' +
+          esc(T(t) + ' ' + (dead ? dead.player + ' died' + (dead.ability ? ' to ' + dead.ability : '') : x.s.title.split(': ')[0] + ': ' + rowText(x.s, row))) + '"></a>'); };
       x.rows.forEach((row) => add(row, null)); x.groups.forEach((g) => g.rows.forEach((row) => add(row, g.t))); }
-    const cutL = cut && cut.t < end ? '<div class="mcx-cut" style="left:' + (100 * cut.t / end).toFixed(2) + '%" title="' + esc('The wipe filter: counted up to ' + T(cut.t) + ', the ' + ordinal(cut.n) + ' death. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '';
-    return '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake and each skull a death. Hover one for what happened, click it to open that moment.</small></h3><div class="mcx-bar">' +
-      tp.filter(({ p }) => p.start < end).map(({ p }) => '<div class="mcx-seg" style="flex:' + (Math.min(p.end, end) - p.start) + '"><span>' + esc(p.name) + '</span></div>').join('') + (end - lastE > 1 ? '<div class="mcx-seg" style="flex:' + (end - lastE) + '"></div>' : '') + cutL + dots.join('') + '</div><div class="mcx-ax"><span>0:00</span><span>' + T(end) + '</span></div></div>' + strip; });
+    const ls = [...lanes.values()].filter((L) => L.dots.length).sort((u, v) => (u.s.id === 'deaths' ? -1 : v.s.id === 'deaths' ? 1 : v.dots.length - u.dots.length));
+    const lIc = (s) => { const g = GENERIC_SEC.test(s.title); return spellIcon(g ? 0 : (s.spell && s.spell[0]) || 0, g ? s.title : (s.spell && s.spell[1]) || s.title); };
+    const step = end > 900 ? 120 : 60, ticks = []; for (let t = step; t < end - step / 3; t += step) ticks.push(t);
+    const band = '<div class="mcx-lane mcx-phr"><span class="mcx-ll"></span><div class="mcx-bar">' + tp.filter(({ p }) => p.start < end).map(({ p }) => '<div class="mcx-seg" style="flex:' + (Math.min(p.end, end) - p.start) + '"><span>' + esc(p.name) + '</span></div>').join('') +
+      (end - lastE > 1 ? '<div class="mcx-seg" style="flex:' + (end - lastE) + '"></div>' : '') + '</div></div>';
+    const rows = ls.map((L) => { const nm = L.s.title.split(': ')[0]; return '<div class="mcx-lane"><span class="mcx-ll" title="' + esc(nm) + '">' + lIc(L.s) + '<span>' + esc((nm.match(/\(([^)]+)\)/) || [0, nm])[1]) + '</span><b>' + L.dots.length + '</b></span><div class="mcx-tr">' + L.dots.join('') + '</div></div>'; }).join('');
+    const over = tp.filter(({ p }) => p.start > 0 && p.start < end).map(({ p }) => '<i class="mcx-pl" style="left:' + X(p.start) + '"></i>').join('') + ticks.map((t) => '<i class="mcx-tk" style="left:' + X(t) + '"></i>').join('') +
+      (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('The wipe filter: counted up to ' + T(cut.t) + ', the ' + ordinal(cut.n) + ' death. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
+    const axis = '<div class="mcx-ax2">' + [0].concat(ticks, [end]).map((t, i, l) => '<span class="' + (i === 0 ? 'a0' : i === l.length - 1 ? 'a1' : '') + '" style="left:' + X(t) + '">' + T(t) + '</span>').join('') + '</div>';
+    return head + '<div class="mcx-lanes">' + band + rows + over + axis + '</div>' + totals + '</div>'; });
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
