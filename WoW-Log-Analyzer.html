@@ -316,6 +316,23 @@ details.secd .secbody { padding: 0 16px 14px; }
 .tbl tr.gok td > b { background: #45c15c; } .tbl tr.gbad td > b { background: #ff6b63; }
 .live { display: flex; align-items: center; gap: 8px; padding: 0 16px 12px; flex-wrap: wrap; } #liveBtn.on { border-color: #e5534b; color: #ff9a93; } #liveBtn.on::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #e5534b; margin-right: 6px; animation: lp 1.4s infinite; } @keyframes lp { 50% { opacity: .25; } }
 .toast { position: fixed; right: 18px; bottom: 18px; z-index: 50; background: #1a1e28; border: 1px solid #3a3f4d; border-left: 4px solid #e5534b; border-radius: 8px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
+/* the live "new pull" card: big, in the middle of the screen, gone by itself after a few seconds (hover holds it) */
+.np-card { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 60; width: min(420px, calc(100vw - 32px)); box-sizing: border-box;
+  background: var(--panel); border: 1px solid var(--line2); border-top: 4px solid var(--bad); border-radius: 12px; padding: 18px 20px 20px; text-align: center;
+  box-shadow: 0 14px 50px rgba(0,0,0,.65); overflow: hidden; animation: npIn .25s ease-out; transition: opacity .4s; }
+.np-card.kill { border-top-color: var(--good); }
+.np-card.out { opacity: 0; }
+.np-k { font-family: var(--head); font-size: 13px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.np-t { font-family: var(--head); font-size: 26px; font-weight: 700; margin-top: 2px; color: var(--text); }
+.np-s { font-size: 17px; font-weight: 600; margin-top: 2px; color: var(--bad); }
+.np-s span { font-weight: 400; color: var(--muted); }
+.np-card.kill .np-s { color: var(--good); }
+.np-b { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.np-b .btn { font-size: 15px; padding: 8px 20px; }
+.np-bar { position: absolute; left: 0; bottom: 0; width: 100%; height: 3px; background: var(--faint); transform-origin: left; animation: npBar var(--np-ms, 10s) linear forwards; }
+.np-card:hover .np-bar { animation-play-state: paused; }
+@keyframes npIn { from { opacity: 0; transform: translate(-50%, -46%) scale(.96); } }
+@keyframes npBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 .cutbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; background: #161a23; border: 1px solid #2a2f3c; border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; font-size: 13.5px; } .cutbar.on { border-color: #6b2f3b; background: rgba(229,83,75,.07); } .cutbar { flex-direction: column; align-items: stretch; border-color: #3a4a6b; } .cutset { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; } .cutset b { color: #9cc3ff; } .cutnow { color: #d8dce5; } .cutwhy { background: rgba(106,168,255,.08); border-left: 3px solid #6aa8ff; border-radius: 6px; padding: 7px 10px; font-size: 13px; line-height: 1.5; color: #d8dce5; }
 .cutq { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #6aa8ff; background: transparent; color: #9cc3ff; font-weight: 800; font-size: 12px; cursor: help; padding: 0; line-height: 18px; }
 .cutbar input { width: 56px; border: 1px solid #6aa8ff !important; box-shadow: 0 0 0 2px rgba(106,168,255,.18); font-weight: 700; margin: 0 4px; background: #0f1117; color: inherit; border: 1px solid #3a3f4d; border-radius: 6px; padding: 2px 6px; } .cutbar select { margin-left: 6px; background: #0f1117; color: inherit; border: 1px solid #3a3f4d; border-radius: 6px; padding: 2px 6px; }
@@ -8898,7 +8915,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'overview', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
+if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, pullAlert: (b, o) => pullAlert(b, o), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -20725,9 +20742,9 @@ async function fileTick() {
         // (turning live on switches to Latest pull: put back the tab and pulls switch that were open)
         if (want) { S.tab = rp.tab || S.tab; S.scope = rp.scope || S.scope; select(want).then(() => { if (rp.y) setTimeout(() => window.scrollTo(0, rp.y), 400); }); LIVE.last = Date.now(); return; }
       }
-      const nb = fresh[fresh.length - 1], what = esc(nb.boss) + ' pull ' + nb.pull + ': ' + (nb.kill ? 'Kill!' : 'wipe') + ' (' + T(nb.duration) + ')';
-      if (wasNewest) { if (S.item) toast('<span><b>New pull</b> ' + what + '</span>', 8000); select(nb); }
-      else { const t = toast('<span><b>New pull</b> ' + what + '</span><button class="btn primary" data-go>Open</button>'); t.querySelector('[data-go]').onclick = () => { t.remove(); select(nb); }; }
+      const nb = fresh[fresh.length - 1];
+      if (wasNewest) { if (S.item) pullAlert(nb, true); select(nb); }
+      else pullAlert(nb, false);
     }
     LIVE.last = Date.now();
   } catch (e) { FH.err = 'couldn\'t read the log (' + (e.name || 'error') + '), retrying'; if ($('#fhMsg')) $('#fhMsg').textContent = 'Couldn\'t read the log: ' + (e.message || e.name) + '. Retrying every 10 seconds.'; console.error(e); }
@@ -20750,6 +20767,24 @@ async function pickLogFolder(msgEl, again) {
     if (!dir) { dir = await window.showDirectoryPicker({ id: 'wow-logs', mode: 'read' }); await fhSet(dir); }
     startFileLive(dir);
   } catch (e) { if (e && e.name !== 'AbortError') msgEl.textContent = e.message; else if (WCL.HOSTED) msgEl.textContent = BLOCKED_HINT; }
+}
+// The "new pull" card for live logging: big and in the middle of the screen, since between pulls people only glance at it.
+// It says the pull and how it ended, and goes away by itself after a few seconds (hovering holds it), so it never blocks
+// anything. `opened`: Debrief already switched to it (you were on the newest pull), so there's nothing to click.
+function pullAlert(nb, opened) {
+  document.querySelectorAll('.np-card').forEach((x) => x.remove());
+  const lab = pullLabel(nb), res = nb.kill ? 'Kill!' : 'Wipe' + (lab && lab !== 'wipe' ? ' at ' + lab : '');
+  const t = document.createElement('div'); t.className = 'np-card' + (nb.kill ? ' kill' : ''); t.setAttribute('role', 'status');
+  t.style.setProperty('--np-ms', (opened ? 7 : 12) + 's');
+  t.innerHTML = '<div class="np-k">' + (opened ? 'New pull, now open' : 'New pull') + '</div><div class="np-t">' + esc(nb.boss) + ', pull ' + nb.pull + '</div>' +
+    '<div class="np-s">' + res + ' <span>after ' + T(nb.duration) + '</span></div><div class="np-b">' +
+    (opened ? '<button class="btn" data-x>OK</button>' : '<button class="btn primary" data-go>Open it</button><button class="btn" data-x>Not now</button>') + '</div><i class="np-bar"></i>';
+  document.body.appendChild(t);
+  const bye = () => { t.classList.add('out'); setTimeout(() => t.remove(), 400); };
+  t.querySelector('[data-x]').onclick = bye;
+  const go = t.querySelector('[data-go]'); if (go) go.onclick = () => { t.remove(); select(nb); };
+  t.querySelector('.np-bar').addEventListener('animationend', bye);
+  return t;
 }
 function toast(html, ms) {
   document.querySelectorAll('.toast').forEach((x) => x.remove());
@@ -20783,9 +20818,8 @@ async function liveTick() {
       S.index.bosses.push(...fresh); renderList();
       document.querySelectorAll('.pull').forEach((x) => x.classList.toggle('sel', ITEMS[+x.dataset.i] === S.item));
       const nb = fresh[fresh.length - 1];
-      const what = esc(nb.boss) + ' pull ' + nb.pull + ': ' + (nb.kill ? 'Kill!' : 'wipe') + ' (' + T(nb.duration) + ')';
-      if (wasNewest || !S.item) { toast('<span><b>New pull</b> ' + what + '</span>', 8000); select(nb); }
-      else { const t = toast('<span><b>New pull</b> ' + what + '</span><button class="btn primary" data-go>Open</button>'); t.querySelector('[data-go]').onclick = () => { t.remove(); select(nb); }; }
+      if (wasNewest || !S.item) { pullAlert(nb, true); select(nb); }
+      else pullAlert(nb, false);
     }
   } catch (e) { $('#liveMsg').textContent = 'check failed, retrying: ' + e.message; LIVE.busy = false; return; }
   LIVE.busy = false; liveUi();

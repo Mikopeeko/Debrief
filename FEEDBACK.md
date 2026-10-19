@@ -205,6 +205,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 216: A bigger "new pull" alert for live logging (your note)
+- [x] **The new-pull alert is a card in the middle of the screen now,** bigger than the old one in the corner: "New pull",
+  the boss and pull number ("Sszorak, pull 1"), and how it ended ("Wipe at 65.9% after 2:19", or "Kill!" in green), with
+  **Open it** and **Not now**. A thin line along its bottom runs down, and it fades away by itself after 12 seconds if
+  nobody clicks it (hovering over it holds it). When you were already on the newest pull, Debrief opens the new one by
+  itself as before, and the card says "New pull, now open" with an OK button, for 7 seconds. It works for Warcraft Logs
+  live reports and for following your own log file. If the browser is in the background (you're in game), the card waits
+  until you look, then starts its countdown.
+
 ## 2026-10-18, round 215: Easier on tanks in bad stuff; Heroic Anguished Cry checked
 - [x] **Tanks standing in bad stuff is only a note now (your note).** A tank hit by avoidable damage (a pool, a wave, a
   circle) is a small note, "Tanks often take this on purpose, so it's only a note.", not a mistake. It's still a mistake
@@ -370,7 +379,7 @@ itself, or only dots?
   the note bar. My take: good, and it goes with the matching above: a panel listing each saved note (its name, when it
   was saved, how many players it names, and the pulls it was used for), with Use, Edit and Remove on each, and Add a note
   at the bottom. Build the two together.
-- [ ] **A bigger "new pull" alert for live logging (your note, Oct 18):** the alert that a new pull is in, which you click
+- [x] **A bigger "new pull" alert for live logging (your note, Oct 18; done in round 216):** the alert that a new pull is in, which you click
   to open it, should be easier to notice: in the middle of the screen and a bit bigger. My take: good; between pulls people
   only glance at the screen. My suggestion: a centred card with the pull's result ("Pull 19: wipe at 34%") and an "Open
   it" button, which fades away by itself after a few seconds if it's ignored, so it never blocks anything.

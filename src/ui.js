@@ -10,7 +10,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'overview', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
+if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, pullAlert: (b, o) => pullAlert(b, o), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -11837,9 +11837,9 @@ async function fileTick() {
         // (turning live on switches to Latest pull: put back the tab and pulls switch that were open)
         if (want) { S.tab = rp.tab || S.tab; S.scope = rp.scope || S.scope; select(want).then(() => { if (rp.y) setTimeout(() => window.scrollTo(0, rp.y), 400); }); LIVE.last = Date.now(); return; }
       }
-      const nb = fresh[fresh.length - 1], what = esc(nb.boss) + ' pull ' + nb.pull + ': ' + (nb.kill ? 'Kill!' : 'wipe') + ' (' + T(nb.duration) + ')';
-      if (wasNewest) { if (S.item) toast('<span><b>New pull</b> ' + what + '</span>', 8000); select(nb); }
-      else { const t = toast('<span><b>New pull</b> ' + what + '</span><button class="btn primary" data-go>Open</button>'); t.querySelector('[data-go]').onclick = () => { t.remove(); select(nb); }; }
+      const nb = fresh[fresh.length - 1];
+      if (wasNewest) { if (S.item) pullAlert(nb, true); select(nb); }
+      else pullAlert(nb, false);
     }
     LIVE.last = Date.now();
   } catch (e) { FH.err = 'couldn\'t read the log (' + (e.name || 'error') + '), retrying'; if ($('#fhMsg')) $('#fhMsg').textContent = 'Couldn\'t read the log: ' + (e.message || e.name) + '. Retrying every 10 seconds.'; console.error(e); }
@@ -11862,6 +11862,24 @@ async function pickLogFolder(msgEl, again) {
     if (!dir) { dir = await window.showDirectoryPicker({ id: 'wow-logs', mode: 'read' }); await fhSet(dir); }
     startFileLive(dir);
   } catch (e) { if (e && e.name !== 'AbortError') msgEl.textContent = e.message; else if (WCL.HOSTED) msgEl.textContent = BLOCKED_HINT; }
+}
+// The "new pull" card for live logging: big and in the middle of the screen, since between pulls people only glance at it.
+// It says the pull and how it ended, and goes away by itself after a few seconds (hovering holds it), so it never blocks
+// anything. `opened`: Debrief already switched to it (you were on the newest pull), so there's nothing to click.
+function pullAlert(nb, opened) {
+  document.querySelectorAll('.np-card').forEach((x) => x.remove());
+  const lab = pullLabel(nb), res = nb.kill ? 'Kill!' : 'Wipe' + (lab && lab !== 'wipe' ? ' at ' + lab : '');
+  const t = document.createElement('div'); t.className = 'np-card' + (nb.kill ? ' kill' : ''); t.setAttribute('role', 'status');
+  t.style.setProperty('--np-ms', (opened ? 7 : 12) + 's');
+  t.innerHTML = '<div class="np-k">' + (opened ? 'New pull, now open' : 'New pull') + '</div><div class="np-t">' + esc(nb.boss) + ', pull ' + nb.pull + '</div>' +
+    '<div class="np-s">' + res + ' <span>after ' + T(nb.duration) + '</span></div><div class="np-b">' +
+    (opened ? '<button class="btn" data-x>OK</button>' : '<button class="btn primary" data-go>Open it</button><button class="btn" data-x>Not now</button>') + '</div><i class="np-bar"></i>';
+  document.body.appendChild(t);
+  const bye = () => { t.classList.add('out'); setTimeout(() => t.remove(), 400); };
+  t.querySelector('[data-x]').onclick = bye;
+  const go = t.querySelector('[data-go]'); if (go) go.onclick = () => { t.remove(); select(nb); };
+  t.querySelector('.np-bar').addEventListener('animationend', bye);
+  return t;
 }
 function toast(html, ms) {
   document.querySelectorAll('.toast').forEach((x) => x.remove());
@@ -11895,9 +11913,8 @@ async function liveTick() {
       S.index.bosses.push(...fresh); renderList();
       document.querySelectorAll('.pull').forEach((x) => x.classList.toggle('sel', ITEMS[+x.dataset.i] === S.item));
       const nb = fresh[fresh.length - 1];
-      const what = esc(nb.boss) + ' pull ' + nb.pull + ': ' + (nb.kill ? 'Kill!' : 'wipe') + ' (' + T(nb.duration) + ')';
-      if (wasNewest || !S.item) { toast('<span><b>New pull</b> ' + what + '</span>', 8000); select(nb); }
-      else { const t = toast('<span><b>New pull</b> ' + what + '</span><button class="btn primary" data-go>Open</button>'); t.querySelector('[data-go]').onclick = () => { t.remove(); select(nb); }; }
+      if (wasNewest || !S.item) { pullAlert(nb, true); select(nb); }
+      else pullAlert(nb, false);
     }
   } catch (e) { $('#liveMsg').textContent = 'check failed, retrying: ' + e.message; LIVE.busy = false; return; }
   LIVE.busy = false; liveUi();
