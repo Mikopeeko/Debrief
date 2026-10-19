@@ -3147,6 +3147,9 @@ const PACKS = [
   { type: 'interrupt', spellIds: [1286399], name: 'Wail of Terror', severity: 'High', tip: 'Kick the Spiteful Soulcoiler\'s Wail of Terror (a raid-wide fear). On Mythic, interrupting it also briefly reveals the hidden ghosts.' },
   // (damage spell 1285017 is a debuff that ticks fast while you stand in an axe: counted per touch, not per tick)
   { type: 'avoidable', spellIds: [1283832, 1285017], name: 'Axegrinder', severity: 'Low', ticks: true, escalate: { touches: 5, severity: 'Medium' }, tip: 'Dodge the Axegrinder axes. They move around the room and don\'t despawn. Ranged: stay out of melee when you can. Melee: step into a puddle rather than an axe. They also knock you back, so don\'t get knocked into a purple orb.' },
+  // (the axe erupts 6 s after it lands, 40 yd around it (journal; Wowhead 1283623 / 1299396; 6.0 s in every drop of a real
+  // Mythic kill). Inside: Widow's Kiss, or Death's Embrace for Grim Guillotine; outside: the small Widow's Touch / Death's Whisper)
+  { type: 'avoidable', spellIds: [1283623, 1299396], name: "Widow's Kiss", severity: 'Medium', tip: 'Soak, then run at least 40 yards from where the axe landed. It erupts 6 seconds after it lands (Widow\'s Kiss, or Death\'s Embrace for Grim Guillotine).' },
 ]},
 // (Ula'tek: spell IDs checked against real Heroic and Mythic pulls, 2026-10; the fight module covers the rest)
 { encounter: "Ula'tek", sources: ['the encounter journal', 'raid strategy guides', 'real Heroic and Mythic logs'], rules: [
@@ -3344,7 +3347,7 @@ const CA_IDS = {
   'fangs of the coiled altar': 1282487, 'dreadmarch': 1285643, 'malevolent resonance': 1310732, 'spiritcackle': 1286441,
   'wail of terror': 1286399, 'gloombomb': 1310882, 'spirit shield': 1309105, 'soulbinding': 1304032, 'spirit erasure': 1287722,
   'reclaim essence': 1287718, 'eternal nightfall': 1286918, 'defilement of the coiled altar': 1298381, 'axegrinder': 1283832, 'venomfang': 1306906, // (Zul'jan's Venomfang debuff; cast 1282287. A player ability of the same name is 1306635)
-  'volatile venom': 1282288,
+  'volatile venom': 1282288, "widow's kiss": 1283623, "death's embrace": 1299396, // (the axe's eruption, 6 s after a Guillotine / Grim Guillotine lands)
 };
 const TF_SPELLS = ['eternal venom', 'venomous emergence', 'caustic globule', 'tainted blood', 'stir the depths', 'ravenous feast', 'sanguine storm', 'coiling ichor', 'corrosive spit', 'barbed bulwark', 'stone breaker', 'uncoiled wrath', 'tainted burst'];
 // Twin Fangs spell IDs, read from a Mythic kill. Several mechanics log under shared names, so the module
@@ -3466,7 +3469,7 @@ const FEAST_R = 8;
 const MECH_COL = { 'Ravenous Feast': ['#f24224', 'Red'], 'Coiling Ichor': ['#f2243a', 'Red'], 'Corrosive Spit': ['#9ff26d', 'Green'], 'Shifting Protovenom': ['#9ff26d', 'Green'],
   'Protovenom Eruption': ['#d6f25a', 'Lime'], 'Toxic Droplets': ['#d2f230', 'Lime'], 'Unstable Miasma': ['#f23724', 'Red'], 'Viscous Cyst': ['#d8f22f', 'Lime'], 'Raging Crosswinds': ['#dfe6f2', 'White'],
   'Plague Froth': ['#dbf231', 'Lime'], 'Hungering Pyre': ['#f2a924', 'Orange'], 'Soulcoil Well': ['#2cf2b5', 'Teal'], 'Blink Nova': ['#7a6df2', 'Violet'], 'Mighty Thud': ['#f2842f', 'Orange'],
-  'Gloombomb': ['#da3df2', 'Purple'], 'Spectral Coils': ['#24f2cb', 'Teal'], 'Guillotine': ['#f24824', 'Red'], 'Grim Guillotine': ['#46f2d1', 'Teal'], 'Noxious Shell': ['#3af2a8', 'Green'], 'Fester Burst': ['#d8f22f', 'Lime'], "Serpent's Bite": ['#f23243', 'Red'],
+  'Gloombomb': ['#da3df2', 'Purple'], 'Spectral Coils': ['#24f2cb', 'Teal'], 'Guillotine': ['#f24824', 'Red'], 'Grim Guillotine': ['#46f2d1', 'Teal'], "Widow's Kiss": ['#9ff26d', 'Green'], "Death's Embrace": ['#a35cf2', 'Purple'], 'Noxious Shell': ['#3af2a8', 'Green'], 'Fester Burst': ['#d8f22f', 'Lime'], "Serpent's Bite": ['#f23243', 'Red'],
   'Volatile Purge': ['#9ff224', 'Lime'] };
 const mcol = (n, a) => { const x = MECH_COL[n] || ['#e6b450', 'Gold'], h = x[0]; return { color: h, fill: 'rgba(' + [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(',') + ',' + (a == null ? 0.16 : a) + ')', cn: x[1] + ' circle', mn: n }; }; // (mn: the mechanic, for its spell icon on the map)
 // Smallest circle around points [[x, y], ...] (Welzl, fine for a handful of soakers): { x, y, r }.
@@ -3488,6 +3491,7 @@ function mec(P) {
   return c;
 }
 const GUILLOTINE_R = 9; // soak circle radius in yards: Guillotine 1283594 and Grim Guillotine 1299296 (Wowhead)
+const AXE_ERUPT_R = 40, AXE_ERUPT_S = 6; // the axe's eruption: Widow's Kiss 1283623 / Death's Embrace 1299396, 40 yd (Wowhead, journal), 6.0 s after the drop (logs)
 // Short labels for defensives, externals and immunities shown next to a player.
 const SHORT_CD = { 'divine shield': 'Bubble', 'blessing of protection': 'BoP', 'blessing of spellwarding': 'Spellwarding', 'aspect of the turtle': 'Turtle', 'cloak of shadows': 'Cloak', 'ice block': 'Ice Block', 'anti-magic shell': 'AMS', 'blessing of sacrifice': 'Sacrifice', 'pain suppression': 'Pain Suppression', 'guardian spirit': 'Guardian Spirit', 'ironbark': 'Ironbark', 'life cocoon': 'Life Cocoon', 'time dilation': 'Time Dilation', 'zephyr': 'Zephyr' };
 // Crowd control that stops a mind-controlled player walking off the edge (Dreadmarch), by the aura it leaves on them.
@@ -6281,15 +6285,22 @@ function buildCoiledAltar(ev, r, h) {
     const lp = tgt && h.snap(hit).find((p) => p.guid === tgt);
     // (your note, Oct 19: the circle rides on the target while they run it to the spot, from the debuff to the drop, then
     // stays where the axe landed; a still map shows only the landed one)
-    const gcol = mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), tA = tgtE ? tgtE.t : hit;
-    const ring = lp ? (hit - tA > 0.3 ? [{ guid: tgt, t0: tA, dur: hit - tA - 0.05, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol }] : [])
-      .concat([{ x: lp.x, y: lp.y, t0: hit - 0.05, dur: 30, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }]) : [];
+    const gcol = mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), tA = tgtE ? tgtE.t : hit, eName = s.n === 'grim guillotine' ? "Death's Embrace" : "Widow's Kiss";
+    const ring = lp ? (hit - tA > 0.3 ? [{ guid: tgt, t0: tA, dur: hit - tA - 0.05, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }] : [])
+      .concat([{ x: lp.x, y: lp.y, t0: hit - 0.05, dur: 30, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' },
+        // (then the axe swells and erupts 40 yd around where it landed, 6 s later (your note, Oct 19): Widow's Kiss, or
+        // Death's Embrace for Grim Guillotine; it shows from the landing, turning faster until it bursts)
+        { x: lp.x, y: lp.y, t0: hit, dur: AXE_ERUPT_S + 0.7, r: AXE_ERUPT_R, fx: 'burst', at: hit + AXE_ERUPT_S, label: eName + ' ' + AXE_ERUPT_R + ' yd', ...mcol(eName, 0.07),
+          legend: eName + ': the axe erupts ' + AXE_ERUPT_S + ' s after it lands, ' + AXE_ERUPT_R + ' yd around it (get out)' }]) : [];
+    // (anyone the eruption caught, on this map)
+    const kissed = [...new Set(dmg(L(eName)).filter((e) => h.isPlayer(e.dst) && e.t >= hit + AXE_ERUPT_S - 1 && e.t <= hit + AXE_ERUPT_S + 2).map((e) => e.dst))];
     // outcome on the map: soakers who lived = right; soakers who died, or a target with no protection = wrong
     const diedG = r.deaths.filter((d) => s.died.includes(d.player) && Math.abs(d.t - hit) < 6).map((d) => d.guid);
-    const wrong = diedG.concat(mythic && tgt && !tag(tgt) && !diedG.includes(tgt) ? [tgt] : []);
-    const map = { t: hit, hl: all, hlLabel: 'Soakers (in the circle)', good: all.filter((g) => !wrong.includes(g)), goodLabel: 'soaked and lived', bad: wrong, badLabel: 'died in the soak, or target without protection', rings: ring, title: S(s.n)[1] + ' drop at ' + h.fmtT(hit) + ': ' + s.who.length + ' in the circle (soakers ringed)',
-      // (the animation starts as the target gets the debuff, so the run is part of it)
-      ...(h.frames && hit - tA > 0.3 ? { frames: h.frames(Math.max(0, Math.min(tA, hit - 4) - 0.5), Math.min(dur, hit + 1.5), 0.25) } : {}) };
+    const wrong = [...new Set(diedG.concat(mythic && tgt && !tag(tgt) && !diedG.includes(tgt) ? [tgt] : [], kissed))];
+    const map = { t: hit, hl: all, hlLabel: 'Soakers (in the circle)', good: all.filter((g) => !wrong.includes(g)), goodLabel: 'soaked and lived', bad: wrong, badLabel: 'died in the soak, target without protection, or caught by ' + eName, rings: ring,
+      title: S(s.n)[1] + ' drop at ' + h.fmtT(hit) + ': ' + s.who.length + ' in the circle (soakers ringed)' + (kissed.length ? ', ' + pl(kissed.length, 'player') + ' caught by ' + eName : ''),
+      // (the animation starts as the target gets the debuff, so the run is part of it, and ends just after the eruption)
+      ...(h.frames ? { frames: h.frames(Math.max(0, Math.min(tA, hit - 4) - 0.5), Math.min(dur, hit + AXE_ERUPT_S + 1), 0.25) } : {}) };
     const corner = cornerOf(all, hit); if (s.n === 'grim guillotine') corners[gi] = corner;
     // the target needs protection on every soak but the last Grim Guillotine (where the plan just over-sends)
     const needsProt = mythic && key !== 'gg3', tgtDied = tgt && s.died.includes(pname(tgt));

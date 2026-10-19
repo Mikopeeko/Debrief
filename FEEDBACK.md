@@ -246,6 +246,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   itself (click it to switch boss), keep the pull cards right under it with All pulls as the first card, and drop the
   separate picker at the top. A few mockups to pick from first, like the Graphs controls.
 
+## 2026-10-19, round 260: The Guillotine axe's eruption, 40 yards, 6 seconds after it lands (your note: "secondary radius")
+- [x] **What it is** (the dungeon journal, Wowhead, Method; checked in a real Mythic kill): 6.0 seconds after the axe
+  lands, it erupts 40 yards around where it landed. Inside: Widow's Kiss (Death's Embrace for Grim Guillotine), which
+  is deadly. Outside: the small Widow's Touch (Death's Whisper).
+- [x] **On the Guillotine maps:** a green circle (purple for Grim) shows from the moment the axe lands and bursts at 6
+  seconds; the map plays until just after it. Anyone it caught is marked red, and the map's title counts them.
+- [x] **A new check:** getting hit by Widow's Kiss or Death's Embrace is flagged (medium), with the fix "Soak, then run at
+  least 40 yards from where the axe landed." On your 13 Mythic pulls it caught 1 to 4 players on most pulls.
+- [x] The soak circle's key line no longer shows twice.
+
 ## 2026-10-18, round 201: Mechanics, plainer before launch (from my review)
 - **Each mechanic opens with one plain paragraph** instead of "Overall: … / Main problems: … / Could be tighter: …". For
   example: "Mostly fine, with a few things to tighten up (7 of 8 frontals were clean). Frontals off the orb plan (1) could
