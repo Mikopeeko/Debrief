@@ -213,6 +213,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 237: Show one player on Night summary and Graphs; the site always opens on the front page (your notes)
+- [x] **The "Show one player" pick is on Night summary and Graphs too**, and it's one pick: choosing someone on any of
+  the three tabs (Mechanics, Night summary, Graphs) picks them on the others, and Show everyone clears it everywhere.
+- [x] **Night summary, one player:** each mechanic and assignment row counts only that player's part, pull by pull
+  (their dots, grades and problem lists). Their card replaces the raid's grades (deaths, mechanics, assignments done,
+  and a button to their grade on the Players tab), and What went wrong lists their problems, deaths first.
+- [x] **Graphs, one player:** they're picked on every chart (Damage, Healing, Damage taken, Resources, Casts,
+  Cooldowns, Buffs, Report card), as if you'd clicked their bar. Clicking another bar makes that player the pick.
+- [x] **The site always opens on the front page** (team and character pick). A reload, Back, or the address the browser
+  fills in no longer reopens your last log. A shared link to someone else's report still opens it, and going Home
+  clears the log from the address bar.
+
 ## 2026-10-18, round 236: Rotation is on the live site, for testing (your note)
 - [x] **Rotation is no longer greyed out on the website.** Its tab, the spec grades on Players and Pull recap, and the
   "See it in Rotation" buttons all show there now, like in the app on your PC.

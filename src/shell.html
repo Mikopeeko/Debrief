@@ -1864,6 +1864,16 @@ span.sn-log { padding: 3px 10px; }
 .mech-pick .mp-l { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; } .mech-pick .mp-l .sn-i { color: var(--gold); width: 16px; height: 16px; }
 .mech-pick select { background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; color: var(--text); padding: 6px 10px; min-width: 190px; font: inherit; font-weight: 500; }
 .mech-pick .mp-on { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* (the same picker on Night summary, across both columns and first on a phone, and on Graphs) */
+.sumv.sum2 > .mech-pick { grid-column: 1 / -1; }
+@media (max-width: 1279px) { .sumv.sum2 > .mech-pick { order: -3; } }
+.pfv > .mech-pick { margin-bottom: 10px; }
+/* (Night summary with one player picked: their card on top of the right-hand column) */
+.sum-one { padding: 14px; border-color: rgba(230,180,80,.45); background: linear-gradient(180deg, rgba(230,180,80,.08), transparent 70%), var(--panel); }
+.sum-one .so-h { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.sum-one .so-h .av { width: 44px; height: 44px; }
+.sum-one .so-nm { font: 700 20px/1.15 var(--head); }
+.sum-one .pts { margin-bottom: 12px; }
 /* (refined: the title tile, a round portrait in each band, faces on the cards, a colour edge by difficulty, the gold pill) */
 .sn-top { align-items: center; justify-content: flex-start; gap: 14px; }
 .sn-tico { width: 46px; height: 46px; flex: none; border-radius: 13px; display: grid; place-items: center; color: var(--gold); background: linear-gradient(135deg, rgba(230,180,80,.22), rgba(230,180,80,.06)); border: 1px solid rgba(230,180,80,.35); }

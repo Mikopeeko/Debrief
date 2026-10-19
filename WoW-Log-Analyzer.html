@@ -1864,6 +1864,16 @@ span.sn-log { padding: 3px 10px; }
 .mech-pick .mp-l { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; } .mech-pick .mp-l .sn-i { color: var(--gold); width: 16px; height: 16px; }
 .mech-pick select { background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; color: var(--text); padding: 6px 10px; min-width: 190px; font: inherit; font-weight: 500; }
 .mech-pick .mp-on { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* (the same picker on Night summary, across both columns and first on a phone, and on Graphs) */
+.sumv.sum2 > .mech-pick { grid-column: 1 / -1; }
+@media (max-width: 1279px) { .sumv.sum2 > .mech-pick { order: -3; } }
+.pfv > .mech-pick { margin-bottom: 10px; }
+/* (Night summary with one player picked: their card on top of the right-hand column) */
+.sum-one { padding: 14px; border-color: rgba(230,180,80,.45); background: linear-gradient(180deg, rgba(230,180,80,.08), transparent 70%), var(--panel); }
+.sum-one .so-h { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.sum-one .so-h .av { width: 44px; height: 44px; }
+.sum-one .so-nm { font: 700 20px/1.15 var(--head); }
+.sum-one .pts { margin-bottom: 12px; }
 /* (refined: the title tile, a round portrait in each band, faces on the cards, a colour edge by difficulty, the gold pill) */
 .sn-top { align-items: center; justify-content: flex-start; gap: 14px; }
 .sn-tico { width: 46px; height: 46px; flex: none; border-radius: 13px; display: grid; place-items: center; color: var(--gold); background: linear-gradient(135deg, rgba(230,180,80,.22), rgba(230,180,80,.06)); border: 1px solid rgba(230,180,80,.35); }
@@ -11808,16 +11818,43 @@ function mechForPlayer(m, name, r) {
   }).filter(Boolean);
   return { m: { ...m, sections }, shown, left, rowsN };
 }
-// the picker on top of Mechanics: everyone, or one player (by role, then name; typing a name jumps to it)
-function mechPick(r, res) {
-  const ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), role = (p) => p.role || 'dps';
+// The "Show one player" picker, the same on Mechanics, Night summary and Graphs (your note, Oct 18): everyone, or one player
+// (by role, then name; typing a name jumps to it). The pick is shared, so picking someone on one tab picks them on the others
+function onePick(ps0, cur, note, on) {
+  const ps = ps0.filter((p) => p.name && !/^Player-/.test(p.name)), role = (p) => p.role || 'dps';
   const grp = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'DPS']].map(([k, l]) => [l, ps.filter((p) => role(p) === k).sort((a, b) => a.name.localeCompare(b.name))]).filter(([, xs]) => xs.length);
-  const cur = S.mechP, pc = cur ? ps.find((p) => p.name === cur) : null;
   const sel = '<select id="mechP" aria-label="Show one player"><option value="">Everyone</option>' + grp.map(([l, xs]) => '<optgroup label="' + l + '">' + xs.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</optgroup>').join('') + '</select>';
-  const note = pc && res ? '<span class="mp-on">' + avatar(pc, true) + '<span>Showing <b style="color:' + pc.color + '">' + esc(pc.name) + '</b> only: ' + plural(res.rowsN, 'row') + ' in ' + plural(res.shown, 'mechanic') + (res.left ? ', and ' + plural(res.left, 'mechanic') + ' with nothing about them left out.' : '.') + '</span><button class="btn sm" type="button" id="mechPx">Show everyone</button></span>'
-    : cur ? '<span class="mp-on sub">' + esc(cur) + " isn't in this pull, so everyone is shown. <button class=\"btn sm\" type=\"button\" id=\"mechPx\">Show everyone</button></span>"
+  return '<div class="panel mech-pick' + (on ? ' on' : '') + '"><label class="mp-l">' + SN_I.users + 'Show one player ' + sel + '</label>' + note + '</div>';
+}
+const onePx = '<button class="btn sm" type="button" id="mechPx">Show everyone</button>';
+// (the line next to it when someone is picked: their face, what is shown, and Show everyone)
+const oneOn = (p, txt) => '<span class="mp-on">' + avatar(p, true) + '<span class="mp-msg">' + txt + '</span>' + onePx + '</span>';
+// (Graphs: each view keeps its own picked player, so the pick sets them all; Mechanics and Night summary read S.mechP)
+const PF_SELK = { dmg: 'perfSel', heal: 'perfSel', taken: 'perfSel', res: 'resSel', cast: 'castSel', cds: 'cdsSel', aura: 'auraSel', card: 'rcSel' };
+function setOneP(n) { n = n || null; S.mechP = n; for (const k of new Set(Object.values(PF_SELK))) S[k] = n; S.resPw = null; S.resMode = null; S._pfSeen = null; }
+// (a Graphs view drawn again: a bar picked or closed on it since the last time becomes the pick; else it gets the pick)
+function pfOneSync(kind) { const k = PF_SELK[kind]; if (!k) return; const seen = S._pfSeen;
+  if (seen && seen.k === k && (S[k] || null) !== seen.v) setOneP(S[k]); else if (S.mechP && !S[k]) S[k] = S.mechP; }
+// (its two buttons, on whichever tab drew it; again() draws that tab again)
+function bindOnePick(again) {
+  if ($('#mechP')) $('#mechP').onchange = () => { setOneP($('#mechP').value); again(); refreshIcons(); };
+  if ($('#mechPx')) $('#mechPx').onclick = () => { setOneP(null); again(); refreshIcons(); };
+}
+// Mechanics: the picker, with how many rows and mechanics are shown
+function mechPick(r, res) {
+  const ps = [...r.players.values()], cur = S.mechP, pc = cur ? ps.find((p) => p.name === cur) : null;
+  const note = pc && res ? oneOn(pc, 'Showing <b style="color:' + pc.color + '">' + esc(pc.name) + '</b> only: ' + plural(res.rowsN, 'row') + ' in ' + plural(res.shown, 'mechanic') + (res.left ? ', and ' + plural(res.left, 'mechanic') + ' with nothing about them left out.' : '.'))
+    : cur ? '<span class="mp-on sub">' + esc(cur) + " isn't in this pull, so everyone is shown. " + onePx + '</span>'
     : '<span class="sub">Pick a player to see only their part: their rows, their problems, and a gold ring on them on every map.</span>';
-  return '<div class="panel mech-pick' + (pc ? ' on' : '') + '"><label class="mp-l">' + SN_I.users + 'Show one player ' + sel + '</label>' + note + '</div>';
+  return onePick(ps, cur, note, !!pc);
+}
+// Graphs: the picker, on top of every view but Rotation
+function pfPick(ps) {
+  const k = PF_SELK[S.perfKind], cur = (k && S[k]) || S.mechP || null, pc = cur ? ps.find((p) => p.name === cur) : null;
+  const note = pc ? oneOn(pc, k ? 'Showing <b style="color:' + pc.color + '">' + esc(pc.name) + '</b> on every chart, as if you had clicked them.' : 'This view shows everyone. <b style="color:' + pc.color + '">' + esc(pc.name) + '</b> is shown on the other views.')
+    : cur ? '<span class="mp-on sub">' + esc(cur) + " isn't in this pull, so everyone is shown. " + onePx + '</span>'
+    : '<span class="sub">Pick a player to see them on every chart. The pick carries over to Mechanics and Night summary.</span>';
+  return onePick(ps, cur, note, !!pc);
 }
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
@@ -12454,8 +12491,7 @@ function audit() {
   $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open && d.isConnected) drawMaps(); }));
   $('#view').querySelectorAll('.md-i, .dd-r').forEach((b) => b.addEventListener('click', () => setTimeout(drawMaps, 0)));
   // (the player picker: one player, or everyone again; the pick stays as you change pulls)
-  if ($('#mechP')) $('#mechP').onchange = () => { S.mechP = $('#mechP').value || null; audit(); refreshIcons(); };
-  if ($('#mechPx')) $('#mechPx').onclick = () => { S.mechP = null; audit(); refreshIcons(); };
+  bindOnePick(audit);
 }
 // Fight audit panels shown as a list with a detail pane (the ones with many columns per row)
 const MD_SECS = new Set(['soakq', 'push', 'tankfront', 'shield', 'addsets']);
@@ -13409,12 +13445,13 @@ const ASG_META = {
   'Assigned cooldowns': { pic: () => icoW('spell_holy_divinehymn'), tip: '', sec: 'as-hcd', how: 'These are the cooldown reminders in the note. Pressed within 5 seconds is on time, later or earlier is late or early, and not pressed at all is missed.' },
 };
 const ASG_ORDER = ['Well groups', 'Pyre soak', 'Sides', 'Mutilate groups', 'Fury timer', 'Guillotine', 'Purple orbs', 'Mind control CC', 'Soulcoiler kicks', 'Add curses', 'Ghost soaks', 'Kick teams', 'Assigned cooldowns'];
-function assignAcross(reps) {
+function assignAcross(reps, only) {
   const rows = new Map();
   const phOf = (c) => (c.cat === 'Ghost soaks' ? 'Intermission' : (c.label.match(/\bP(\d)\b/) || [])[1] ? 'P' + c.label.match(/\bP(\d)\b/)[1] : '');
   for (const r of reps) {
     const cs = nsrtChecks(r); if (!cs) continue;
     for (const c of cs) {
+      if (only && !(c.who || []).some(only)) continue; // (one player: only their checks)
       const ph = phOf(c), k = c.cat + '|' + ph; let x = rows.get(k);
       if (!x) rows.set(k, x = { cat: c.cat, ph, checks: new Map(), per: new Map() });
       let ck = x.checks.get(c.key); if (!ck) x.checks.set(c.key, ck = { label: c.label, ord: c.ord, cells: new Map() });
@@ -13464,6 +13501,11 @@ async function night() {
   if (!got || !here()) return;
   const reps = got.reps, pullNs = reps.map((r) => r.item.pull), byPull = new Map(reps.map((r) => [r.item.pull, r]));
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
+  // (one player at a time (your note, Oct 18), the pick shared with Mechanics and Graphs: each pull's mechanics cut to the rows
+  // about them, the note's checks to theirs; their own card instead of the raid's grades, and what went wrong for them)
+  const one = S.mechP && pm.has(S.mechP) ? S.mechP : null, oneB = one ? one.split('-')[0] : '', isOne = (w) => !!one && (w === one || String(w).split('-')[0] === oneB);
+  const inPull = (r) => [...r.players.values()].some((x) => x.name === one);
+  const mReps = !one ? reps : reps.map((r) => (!r.module || r.module.error || !r.module.sections ? r : inPull(r) ? { ...r, module: mechForPlayer(r.module, one, r).m } : { ...r, module: { ...r.module, sections: [] } }));
   const whoT = (n) => { const p = pm.get(n); return p ? '<span class="who sm">' + avatar(p, true) + '<span class="nm" style="color:' + p.color + '">' + esc(n) + '</span></span>' : '<b>' + esc(n) + '</b>'; };
   const res = (r) => { const pg = progressOf(r); return r.item.kill ? 'kill' : 'wipe' + (pg ? (pg.phase ? ' in ' : ' at ') + pg.label : ''); };
   const gst = (l) => (l === 'S' || l === 'A' ? 'ok' : l === 'B' || l === 'C' ? 'warn' : 'bad');
@@ -13479,7 +13521,7 @@ async function night() {
   const verdictOf = (per) => {
     const j = pullNs.filter((n) => per.has(n) && per.get(n).st !== 'na'), b = j.filter((n) => per.get(n).st === 'bad'), w = j.filter((n) => per.get(n).st === 'warn');
     const st = !j.length ? 'na' : b.length && (b.length >= 3 || b.length / j.length >= 0.34) ? 'bad' : b.length || w.length ? 'warn' : 'ok';
-    const txt = !j.length ? 'didn\'t come up' : b.length ? 'went wrong in ' + b.length + ' of ' + j.length + ' pulls' + (w.length ? ', and ' + w.length + ' could be better' : '') : w.length ? 'could be better in ' + w.length + ' of ' + j.length : j.length === 2 ? 'clean in both' : 'clean in all ' + j.length;
+    const txt = !j.length ? 'didn\'t come up' : b.length ? 'went wrong in ' + b.length + ' of ' + plural(j.length, 'pull') + (w.length ? ', and ' + w.length + ' could be better' : '') : w.length ? 'could be better in ' + w.length + ' of ' + j.length : j.length === 2 ? 'clean in both' : 'clean in all ' + j.length;
     const worst = b.length ? b.reduce((m, n) => (per.get(n).nb > per.get(m).nb ? n : m)) : null;
     const half = Math.floor(j.length / 2), e = j.slice(0, half).filter((n) => per.get(n).st !== 'ok').length, l = j.slice(j.length - half).filter((n) => per.get(n).st !== 'ok').length;
     // (a trend only when it's a real change: at least 2 pulls and a quarter apart)
@@ -13509,7 +13551,7 @@ async function night() {
     const ppl = [...who].sort((a, b) => b[1] - a[1]).slice(0, 10);
     const probs = pullNs.filter((n) => per.has(n) && (per.get(n).st === 'bad' || per.get(n).st === 'warn')).reverse();
     let h = trendLine(v);
-    if (ppl.length) h += '<div class="sum-who"><span class="sub">Flagged most</span><span class="chips">' + ppl.map(([n, c]) => '<span class="chipn">' + whoT(n).replace(/^<span class="who sm">|<\/span>$/g, '') + '<b>' + c + '</b></span>').join('') + '</span></div>';
+    if (ppl.length && !one) h += '<div class="sum-who"><span class="sub">Flagged most</span><span class="chips">' + ppl.map(([n, c]) => '<span class="chipn">' + whoT(n).replace(/^<span class="who sm">|<\/span>$/g, '') + '<b>' + c + '</b></span>').join('') + '</span></div>';
     if (!probs.length) return h + '<div class="nsp-ok"><span class="iss-dot"></span>Nothing went wrong with ' + what + ' in any pull.</div>';
     // the pulls that went wrong, as a list on the left (latest first) and the picked pull's problems on the right
     const items = probs.map((n) => { const p = per.get(n), r = byPull.get(n);
@@ -13522,7 +13564,7 @@ async function night() {
     return h;
   };
   // ---- Mechanics: every Fight audit mechanic, under the phase it mostly happens in ----
-  const mech = mechAcross(reps), refPh = reps.map((r) => (r.module && !r.module.error && r.module.phases) || []).reduce((m, p) => (p.length > m.length ? p : m), []);
+  const mech = mechAcross(mReps), refPh = reps.map((r) => (r.module && !r.module.error && r.module.phases) || []).reduce((m, p) => (p.length > m.length ? p : m), []);
   const imp = IMPORTANCE[b0.boss] || [], ixOf = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id));
   // the furthest pull's phases ("P1 Zul'jan" …), and the one a short phase name ("P2", "Intermission") stands for
   const phNames = refPh.map((p) => p.name), phKey = (ph) => (ph === 'Intermission' ? phNames.find((n) => /^Intermission/.test(n)) : phNames.find((n) => new RegExp('^' + ph + '\\b').test(n)));
@@ -13531,7 +13573,7 @@ async function night() {
     // (avoidable damage: its chart by source instead of a list of pulls)
     // (a section that only shows something, like the floor maps, says so instead of "didn't come up")
     const info = x.info && v.st === 'na' && x.per.size > 0;
-    const body = info ? '<div class="pdesc">This one isn\'t judged here. Open a pull\'s Mechanics tab to see it.</div>' : x.id === 'avoid' ? trendLine(v) + avoidChart(reps, whoT) : bodyOf(x.per, v, 'audit', 'sec-' + x.id, 'this mechanic');
+    const body = info ? '<div class="pdesc">This one isn\'t judged here. Open a pull\'s Mechanics tab to see it.</div>' : x.id === 'avoid' && !one ? trendLine(v) + avoidChart(reps, whoT) : bodyOf(x.per, v, 'audit', 'sec-' + x.id, 'this mechanic');
     return { id: 'sm-' + x.id, ph, ord: ixOf(x.id), st: v.st, txt: info ? x.info : v.txt + (v.worst ? ', worst on pull ' + v.worst : '') + (v.trend ? ', ' + v.trend : ''), tip: x.spell && x.spell[1], title: x.title, how: x.how, icon: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, x.spell ? x.spell[1] : '', true), dots: dotsOf(x.per, 'audit', 'sec-' + x.id), gr: gradeOf(x.per), body };
   });
   let mHtml = '';
@@ -13546,7 +13588,7 @@ async function night() {
     { const list = mRows.filter((o) => !o.ph || !refPh.some((p) => p.name === o.ph)).sort((a, b) => a.ord - b.ord); if (list.length) mHtml += phaseBlock('Whole fight', 'mechanics that aren\'t tied to one phase', list); }
   }
   // ---- Assignments: every check from the NSRT note, one row per assignment and phase; healing cooldowns at the end ----
-  const asg = hasNote ? assignAcross(reps) : [];
+  const asg = hasNote ? assignAcross(reps, one ? isOne : null) : [];
   const aRow = (x) => {
     const meta = ASG_META[x.cat] || { pic: () => '', how: '', sec: '' }, v = verdictOf(x.per), cd = x.cat === 'Assigned cooldowns';
     const checks = [...x.checks.values()].filter((c) => [...c.cells.values()].some((q) => q.st !== 'na')).sort((a, b) => a.ord - b.ord || (a.label < b.label ? -1 : 1));
@@ -13560,7 +13602,7 @@ async function night() {
   };
   const aRows = asg.map(aRow);
   // by player, in a block of its own at the end: who missed their assignments, and who pressed their cooldowns late or not at all
-  const posMiss = hasNote ? reps.flatMap((r) => keptMistakes(r).filter((m) => m.fromNote && m.player !== 'Raid' && m.mechanic !== 'Assigned cooldown').map((m) => ({ ...m, pull: r.item.pull }))) : [];
+  const posMiss = hasNote ? reps.flatMap((r) => keptMistakes(r).filter((m) => m.fromNote && m.player !== 'Raid' && m.mechanic !== 'Assigned cooldown' && (!one || isOne(m.player))).map((m) => ({ ...m, pull: r.item.pull }))) : [];
   const byRows = [];
   if (posMiss.length) {
     const pl = new Map(); for (const m of posMiss) { let x = pl.get(m.player); if (!x) pl.set(m.player, x = { n: 0, hi: 0, by: new Map(), pulls: new Set() }); x.n++; if (m.severity !== 'Low') x.hi++; x.by.set(m.mechanic, (x.by.get(m.mechanic) || 0) + 1); x.pulls.add(m.pull); }
@@ -13572,7 +13614,7 @@ async function night() {
     const cdp = new Map();
     for (const r of reps) for (const c of nsrtChecks(r) || []) {
       if (c.cat !== 'Assigned cooldowns' || c.st === 'na') continue;
-      for (const w of c.who) { let y = cdp.get(w); if (!y) cdp.set(w, y = { n: 0, ok: 0, late: 0, missed: 0, pulls: new Set() }); y.n++; if (c.st === 'ok') y.ok++; else { if (c.st === 'bad') y.missed++; else y.late++; y.pulls.add(r.item.pull); } }
+      for (const w of c.who) { if (one && !isOne(w)) continue; let y = cdp.get(w); if (!y) cdp.set(w, y = { n: 0, ok: 0, late: 0, missed: 0, pulls: new Set() }); y.n++; if (c.st === 'ok') y.ok++; else { if (c.st === 'bad') y.missed++; else y.late++; y.pulls.add(r.item.pull); } }
     }
     if (cdp.size) { const list = [...cdp].sort((a, b) => b[1].missed - a[1].missed || b[1].late - a[1].late || a[0].localeCompare(b[0])), nm = list.filter(([, y]) => y.missed).length;
       byRows.push({ id: 'sa-cdplayers', st: nm ? 'bad' : list.some(([, y]) => y.late) ? 'warn' : 'ok', txt: nm ? plural(nm, 'player') + ' missed a press' : list.some(([, y]) => y.late) ? 'some presses late or early' : 'everyone on time', title: 'Healing cooldowns', how: 'Each player\'s cooldown reminders from the note across the pulls: on time, late or early, and missed.', icon: icoW('spell_holy_divinehymn'), dots: '',
@@ -13589,13 +13631,26 @@ async function night() {
   if (byRows.length) aHtml += phaseBlock('By player', 'who missed what, across the pulls', byRows);
   if (aNever.length) aHtml += '<p class="sub sum-never">Didn\'t come up in these pulls: ' + esc(aNever.map((o) => (o.cd ? 'healing cooldowns, ' + o.title : o.title)).join(' · ')) + '</p>';
   // ---- the page ----
-  const db = reps.length ? nightDebrief(pulls, reps) : null;
+  const db = reps.length && !one ? nightDebrief(pulls, reps) : null;
+  // (the picked player's night: the pulls they were in, their deaths, and their mechanics and assignments)
+  const oneD = one ? reps.filter(inPull).map((r) => { const kd = keptDeaths(r); return { r, died: kd.some((d) => d.player === one), first: !!kd[0] && kd[0].player === one }; }) : [];
+  const oneA = (() => { let did = 0, of = 0; for (const x of asg) for (const ck of x.checks.values()) for (const q of ck.cells.values()) if (q.st !== 'na') { of++; did += q.st === 'ok' ? 1 : q.st === 'warn' ? 0.5 : 0; } return { did, of }; })();
+  const oneCard = () => { const p = pm.get(one), inN = oneD.length, dN = oneD.filter((x) => x.died).length, fN = oneD.filter((x) => x.first).length;
+    const mJ = mRows.filter((o) => o.st !== 'na'), mW = mJ.filter((o) => o.st === 'bad' || o.st === 'warn'), mB = mJ.filter((o) => o.st === 'bad');
+    const aSt = !oneA.of ? 'na' : oneA.did / oneA.of >= 0.9 ? 'ok' : oneA.did / oneA.of >= 0.7 ? 'warn' : 'bad';
+    return '<div class="panel sum-one"><div class="so-h">' + avatar(p) + '<div><div class="pt-l">' + esc(one) + "'s night</div><div class=\"so-nm\" style=\"color:" + p.color + '">' + esc(one) + '</div><div class="sub">' + esc(p.specName || '') + (p.specName ? ' · ' : '') + 'in ' + inN + ' of ' + plural(reps.length, 'pull') + '</div></div></div>' +
+      '<div class="pts rc-cats" style="--n:3">' + plTile(icoW('ability_rogue_feigndeath'), 'Deaths', String(dN), !dN ? 'ok' : dN >= 3 || dN / Math.max(1, inN) >= 0.34 ? 'bad' : 'warn', !dN ? 'alive at the end of every pull' : 'died in ' + dN + ' of ' + plural(inN, 'pull') + (fN ? ', first to die in ' + fN : ''), true) +
+      plTile(icoW('spell_shadow_shadowfury'), 'Mechanics', mJ.length ? mW.length + '<span> of ' + mJ.length + '</span>' : '—', !mJ.length ? 'na' : mB.length ? 'bad' : mW.length ? 'warn' : 'ok', !mJ.length ? 'none came up' : mW.length ? 'went wrong or could be better' : 'all clean', true) +
+      plTile(icoW('inv_inscription_scroll'), 'Assignments', oneA.of ? (Math.round(oneA.did * 2) / 2) + '<span> / ' + oneA.of + '</span>' : '—', aSt, !hasNote ? 'no NSRT note for this boss' : oneA.of ? 'done, across the pulls' : 'none of theirs came up', true) + '</div>' +
+      '<button class="btn sm" type="button" id="sumOneP">See their grade on the Players tab</button></div>'; };
+  const oneWrong = !one ? [] : [].concat(oneD.some((x) => x.died) ? [{ sev: oneD.filter((x) => x.died).length >= 3 ? 'bad' : 'warn', html: '<b>Died in ' + oneD.filter((x) => x.died).length + ' of ' + plural(oneD.length, 'pull') + '</b>' + (oneD.some((x) => x.first) ? '. <span class="sub">First to die in ' + oneD.filter((x) => x.first).length + '.</span>' : '.') }] : [],
+    mRows.concat(aRows).filter((o) => o.st === 'bad' || o.st === 'warn').map((o) => ({ sev: o.st, html: '<b>' + esc(o.title) + '</b>: ' + esc(o.txt) + '.' })));
   const others = [...groups].filter(([k]) => k !== key0).map(([k, l]) => { const kl = l.find((b) => b.kill), kn = l.filter((b) => pullPct(b) != null), bp = kl || (kn.length ? kn.reduce((m, b) => (pullPct(b) < pullPct(m) ? b : m)) : null);
     return '<button class="sum-ob" type="button" data-boss="' + esc(k) + '"><b>' + esc(l[0].boss) + '</b> <span class="sub">' + esc(l[0].diff || '') + ' · ' + plural(l.length, 'pull') + ' · ' + (kl ? 'killed on pull ' + kl.pull : bp ? 'best ' + esc(pullLabel(bp)) : 'no kill') + '</span></button>'; });
   const tileGo = (href, html) => '<a class="pt-go" href="' + href + '">' + html + '</a>';
   // (a group's tile on the overall card names its weakest part, the one to look at first)
   const weakest = (cats) => { const c = cats.slice().sort((a, b) => a.score - b.score)[0]; return cats.length > 1 ? 'weakest: ' + (c.key === 'mech' ? 'boss mechanics' : c.label.toLowerCase()) + ' (' + Math.round(c.score) + ')' : c.sub; };
-  const rcTop = overall != null ? '<div class="panel nc-rc2 sum-rc"><div class="rc-all" title="Grades go S, A, B, C, D and F, and each pull counts up to the wipe filter">' + gradeChip(letterOf(overall), true) + '<div><div class="pt-l">Report card</div><div class="rc-sc">' + Math.round(overall) + '<span> / 100</span></div><div class="sub">mechanics' + (ga ? ' and assignments' : '') + ' · ' + plural(reps.length, 'pull') + ', each up to the wipe filter</div></div></div>' +
+  const rcTop = one ? oneCard() : overall != null ? '<div class="panel nc-rc2 sum-rc"><div class="rc-all" title="Grades go S, A, B, C, D and F, and each pull counts up to the wipe filter">' + gradeChip(letterOf(overall), true) + '<div><div class="pt-l">Report card</div><div class="rc-sc">' + Math.round(overall) + '<span> / 100</span></div><div class="sub">mechanics' + (ga ? ' and assignments' : '') + ' · ' + plural(reps.length, 'pull') + ', each up to the wipe filter</div></div></div>' +
     '<div class="pts rc-cats four">' + tileGo('#sum-mech', plTile(gradeChip(gm.letter), 'Mechanics', Math.round(gm.overall) + '<span> / 100</span>', gst(gm.letter), weakest(gm.cats), true, gm.letter)) +
       tileGo('#sum-asg', ga ? plTile(gradeChip(ga.letter), 'Assignments', Math.round(ga.overall) + '<span> / 100</span>', gst(ga.letter), weakest(ga.cats), true, ga.letter) : plTile(icoW('inv_inscription_scroll'), 'Assignments', '—', 'na', hasNote ? 'nothing from the note came up' : 'no NSRT note for this boss', true)) +
       plTile(icoW(kill ? 'achievement_boss_lichking' : 'ability_hunter_markedfordeath'), kill ? 'Kill' : 'Best pull', kill ? 'Pull ' + kill.pull : bestP ? esc(pullShort(bestP)) : '—', kill ? 'ok' : 'na', kill ? 'after ' + plural(kill.pull - 1, 'wipe') : bestP ? 'pull ' + bestP.pull + ' · ' + esc(pullLabel(bestP)) : 'no result yet', true) +
@@ -13605,10 +13660,10 @@ async function night() {
   // kept going wrong (and what got worse through the night), right is what got better and what was clean every pull
   const cleanM = mRows.filter((o) => o.st === 'ok').sort((a, b) => a.ord - b.ord).map((o) => shortT(o.title));
   const cleanA = aRows.filter((o) => o.st === 'ok' && !o.cd).map((o) => o.title);
-  const wrongS = !db ? [] : db.fix.map((x) => ({ sev: x.sev, html: x.title + (x.sub ? '. <span class="sub">' + x.sub + '</span>' : '.') })).concat(db.worse.map((x) => ({ sev: 'warn', html: '<b>Getting worse:</b> ' + x })));
-  const rightS = [].concat(kill ? ['<b>Killed on pull ' + kill.pull + '</b>' + (kill.pull > 1 ? ' after ' + plural(kill.pull - 1, 'wipe') : '')] : [], db ? db.better.map((x) => '<b>Getting better:</b> ' + x) : [],
+  const wrongS = one ? oneWrong : !db ? [] : db.fix.map((x) => ({ sev: x.sev, html: x.title + (x.sub ? '. <span class="sub">' + x.sub + '</span>' : '.') })).concat(db.worse.map((x) => ({ sev: 'warn', html: '<b>Getting worse:</b> ' + x })));
+  const rightS = one ? [].concat(oneD.length && !oneD.some((x) => x.died) ? ['<b>Alive at the end of every pull</b> they were in'] : [], cleanM.length ? ['<b>Clean every pull:</b> ' + esc(cleanM.join(', '))] : [], cleanA.length ? ['<b>Assignments done every pull:</b> ' + esc(cleanA.join(', '))] : []) : [].concat(kill ? ['<b>Killed on pull ' + kill.pull + '</b>' + (kill.pull > 1 ? ' after ' + plural(kill.pull - 1, 'wipe') : '')] : [], db ? db.better.map((x) => '<b>Getting better:</b> ' + x) : [],
     cleanM.length ? ['<b>Clean every pull:</b> ' + esc(cleanM.join(', '))] : [], cleanA.length ? ['<b>Assignments done every pull:</b> ' + esc(cleanA.join(', '))] : []);
-  const fix = !db ? '' : wrongRight(wrongS, rightS, { max: 6, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter',
+  const fix = one ? wrongRight(wrongS, rightS, { sub: 'for ' + esc(one) + ', in the ' + plural(oneD.length, 'pull') + ' they were in', none: 'Nothing kept going wrong for ' + esc(one) + '.' }) : !db ? '' : wrongRight(wrongS, rightS, { max: 6, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter',
     none: 'Nothing kept going wrong.', noneRight: 'Nothing was clean every pull yet.', moreWhere: 'in Mechanics and Assignments below' });
   // each group's report card in the same framed card as the overall one: the grade and score on the left, a tile per part
   const secHead = (id, title, sub) => '<div class="sum-h" id="' + id + '"><h2>' + title + '</h2>' + (sub ? '<span class="sub">' + sub + '</span>' : '') + '</div>';
@@ -13616,8 +13671,8 @@ async function night() {
     '<div class="pts rc-cats" style="--n:' + Math.max(2, (tiles.match(/class="pt[ "]/g) || []).length) + '">' + tiles + '</div></div>';
   // (on a computer the group report cards sit in the right-hand column with the overall one; on a narrow screen each one
   // stays under its own heading, so the card is drawn in both places and CSS shows one)
-  const mCard = gm ? rcCard(gm, 'boss mechanics, avoidable damage, survival and interrupts', gm.cats.map((c) => plTile(gradeChip(c.letter), c.key === 'mech' ? 'Boss mechanics' : c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join(''), 'Mechanics') : '';
-  const aCard = hasNote && ga ? rcCard(ga, 'mechanical assignments 70%, healing cooldowns 30%', ga.cats.map((c) => plTile(gradeChip(c.letter), c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join(''), 'Assignments') : '';
+  const mCard = gm && !one ? rcCard(gm, 'boss mechanics, avoidable damage, survival and interrupts', gm.cats.map((c) => plTile(gradeChip(c.letter), c.key === 'mech' ? 'Boss mechanics' : c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join(''), 'Mechanics') : '';
+  const aCard = hasNote && ga && !one ? rcCard(ga, 'mechanical assignments 70%, healing cooldowns 30%', ga.cats.map((c) => plTile(gradeChip(c.letter), c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter)).join(''), 'Assignments') : '';
   const inl = (card) => (card ? '<div class="sum-inl">' + card + '</div>' : '');
   const mSec = gm ? secHead('sum-mech', 'Mechanics', 'every mechanic across the pulls. Open one for the pulls that went wrong.') + inl(mCard) +
     (mHtml || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>') : '';
@@ -13629,7 +13684,10 @@ async function night() {
   // grades come first, then the rest, as before.
   const rail = '<aside class="sum-rail">' + rcTop + (mCard ? '<div class="sum-rc-g">' + mCard + '</div>' : '') + (aCard ? '<div class="sum-rc-g">' + aCard + '</div>' : '') +
     '<nav class="sum-jump" aria-label="Jump to"><span class="pt-l">Jump to</span><a class="pt-go" href="#sum-prog">How far the night got</a>' + (gm ? '<a class="pt-go" href="#sum-mech">Mechanics</a>' : '') + '<a class="pt-go" href="#sum-asg">Assignments</a></nav></aside>';
-  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + '<div class="nsa sumv sum2">' + (others.length ? '<div class="sum-others"><span class="sub">Also tonight</span>' + others.join('') + '</div>' : '') +
+  // (the picker on top, for the whole night)
+  const pickS = onePick([...pm.values()], S.mechP, one ? oneOn(pm.get(one), 'Showing <b style="color:' + pm.get(one).color + '">' + esc(one) + '</b> only: their mechanics, assignments and deaths in the ' + plural(oneD.length, 'pull') + ' they were in.')
+    : S.mechP ? '<span class="mp-on sub">' + esc(S.mechP) + " wasn't in these pulls, so everyone is shown. " + onePx + '</span>' : '<span class="sub">Pick a player to see only their part of the night: their mechanics, their assignments and their deaths.</span>', !!one);
+  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + '<div class="nsa sumv sum2">' + pickS + (others.length ? '<div class="sum-others"><span class="sub">Also tonight</span>' + others.join('') + '</div>' : '') +
     '<div class="sum-main">' + progress + fix + mSec + aSec +
     '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, amber could be better, red means something went wrong, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull. Each player\'s grade and the MVPs of the night are on the Players tab.</p></div>' + rail + '</div>');
   refreshIcons(); setHeadRes(); fitTrends();
@@ -13645,6 +13703,8 @@ async function night() {
   $$('#view .md-i').forEach((b) => (b.onclick = () => { const md = b.closest('.md'); md.querySelectorAll('.md-i').forEach((x) => x.classList.toggle('on', x === b)); md.querySelectorAll('.md-d').forEach((d) => { d.hidden = d.dataset.i !== b.dataset.i; }); }));
   if ($('#sumNote')) $('#sumNote').onclick = () => { S.tab = 'overview'; renderMain(); };
   if ($('#nightAll')) $('#nightAll').onclick = () => { NIGHT_ALL = true; night(); };
+  bindOnePick(() => night());
+  if ($('#sumOneP')) $('#sumOneP').onclick = () => { S.plSel = one; S.plScroll = true; S.tab = 'player'; renderMain(); };
 }
 
 // Each player's own NSRT assignments in one pull, up to the wipe filter: how many they had and how many they did (late or
@@ -14486,6 +14546,7 @@ function perf() {
   if (!rot) { if (!isK(S.perfKind)) { const k = store.get('wla-pf-kind'); S.perfKind = isK(k) ? k : 'dmg'; } store.set('wla-pf-kind', S.perfKind); }
   const r = S.rep, kind = rot ? 'spec' : S.perfKind, ct = cutT(r), end = Math.max(1, Math.min(r.duration, ct)), cut = isFinite(ct) && ct < r.duration;
   const ps = players().filter((p) => p.name && !/^Player-/.test(p.name));
+  if (!rot) pfOneSync(kind); // (the player picked on top, shared with Mechanics and Night summary)
   // (one pull or all pulls of the boss, switched here like on the Player audit)
   const isBoss = r.item.kind === 'boss' && !r.item.run, nP = isBoss && S.index ? S.index.bosses.filter((b) => b.id === r.item.id && b.diffId === r.item.diffId).length : 0;
   const scopeSw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (S.scope === 'all' ? ' class="on"' : '') + '>All pulls<span class="n">' + nP + '</span></button><button data-v="pull"' + (S.scope === 'all' ? '' : ' class="on"') + '>Pull #' + r.item.pull + '<span class="n">' + (r.item.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
@@ -14512,7 +14573,7 @@ function perf() {
   // (on top: the views as tabs, then one row with the phase switch, the wipe filter note and the search. No pull switch
   // here (your call, Oct 18): the pull cards at the top of the page pick the pull, or All pulls, and keep this view)
   void scopeSw; void vals;
-  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + (rot ? '' : pfFindBox()) + '</div></div>';
+  let h = '<div class="pfv">' + (rot ? '' : pfPick(ps)) + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + (rot ? '' : pfFindBox()) + '</div></div>';
   if (counts) { view(h + countView(kind, [r], true, ucats, scats) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
   const rowsAll = R3[kind], total = sumOf(rowsAll), key = KEY[kind];
@@ -14946,7 +15007,7 @@ async function perfNight(r0, kind, scopeSw) {
   const counts = PERF_COUNTS.has(kind);
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
   void vals;
-  let h = '<div class="pfv"><div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div>' + (kind === 'spec' ? '' : pfFindBox()) + '</div></div>';
+  let h = '<div class="pfv">' + (kind === 'spec' ? '' : pfPick([...pm.values()])) + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div>' + (kind === 'spec' ? '' : pfFindBox()) + '</div></div>';
   if (counts) { view(h + countView(kind, reps, false, ucats, scats) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons();
     const byP = new Map(reps.map((r) => [r.item.pull, r.item])); $$('#view .pfn-b').forEach((g) => (g.onclick = () => { const b = byP.get(+g.dataset.pull); if (!b) return; S.scope = 'pull'; select(b); })); return; }
@@ -20164,6 +20225,11 @@ function spcTlBind() {
   w._unpin = () => { pinned = false; };
 }
 function bindPerf() {
+  // (the shared player pick: what this view has picked now, so a bar picked or closed since can become the pick; and its
+  // buttons, which also open Damage and Healing on the players list)
+  { const k = S.tab === 'rot' ? null : PF_SELK[S.perfKind]; S._pfSeen = k ? { k, v: S[k] || null } : null;
+    if (k && S.mechP && !S[k]) { const n = $('#view .mech-pick .mp-msg'); if (n) n.textContent = S.mechP + ' has nothing in this view, so everyone is shown.'; }
+    bindOnePick(() => { if (S.mechP) S.perfLens = 'players'; perf(); }); }
   // (every chart folds away with a click on its title and stays folded, per view, until it's opened again)
   { let fold; try { fold = new Set(JSON.parse(store.get('wla-pf-fold') || '[]')); } catch (e) { fold = new Set(); }
     $$('#view .pf-chart').forEach((pn, i) => { const h3 = pn.querySelector('h3.nh'); if (!h3) return; const key = (S.tab === 'rot' ? 'spec' : S.perfKind) + ':' + (S.scope || 'pull') + ':' + i, set = () => { const f = fold.has(key); pn.classList.toggle('folded', f); h3.setAttribute('aria-expanded', String(!f)); };
@@ -21905,6 +21971,7 @@ function hostedPanel(msg) {
 function syncUrl(item) {
   if (!WCL.HOSTED || !item || !item.wcl) return;
   try { history.replaceState(null, '', '?report=' + item.wcl.code + '&fight=' + item.wcl.fight); } catch (e) { /* ignore */ }
+  store.set('wla-last-report', item.wcl.code); // (so coming back to the site doesn't reopen it: see the start below)
 }
 
 // ---------- start screen ----------
@@ -21977,6 +22044,7 @@ function home() {
   if (LIVE.on) setLive(false);
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
+  if (WCL.HOSTED && location.search) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ } // (the address is the front page again)
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
   $('.brand p').textContent = WCL.HOSTED ? 'Paste a Warcraft Logs link or drop your own log' : 'Retail combat logs, read on your PC'; // (not the last report's name)
   // (with a team added, home is your teams; someone new gets the welcome page)
@@ -22853,13 +22921,19 @@ if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };
 // (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
-const sharedLink = WCL.HOSTED && !!new URLSearchParams(location.search).get('report');
+// (a visit always starts on the front page, with the team and character pick (your call, Oct 18). The address keeps the
+// open pull, so it can be copied and shared, and a shared link still opens its report; but your own last report doesn't
+// open again: not on a reload, not with Back, and not when the browser fills in the last address you had)
+const RQ = new URLSearchParams(location.search), RNAV = ((performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {}).type;
+const backAgain = WCL.HOSTED && !!RQ.get('report') && (RNAV === 'reload' || RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report'));
+if (backAgain) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain;
 if (!tourDone() && sharedLink) S.tourAfterPull = true;
 if (WCL.HOSTED) {
   $('#wclBtn').textContent = 'Paste a link';
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
-  const qp = new URLSearchParams(location.search);
-  if (qp.get('report')) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
+  const qp = RQ;
+  if (sharedLink) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
