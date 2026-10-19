@@ -10,7 +10,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'live', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
+if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -3848,10 +3848,12 @@ function miniMap(mp, pmap) {
   // (no focus named: frame the players the map is about (ringed, red, amber, green) and its circles, when there are some and they
   // aren't already everyone; a soak's 8 players, not the 20 spread over the room (audit, Oct 19: tiles showed the whole room))
   let fc = mp.focus;
-  if (!fc) { const inv = new Set([...(mp.hl || []), ...(mp.good || []), ...(mp.bad || []), ...(mp.warn || [])]), ip = (mp.pts && mp.pts.length ? mp.pts : bpts).filter((p) => inv.has(p.guid)); // (where they were at the map's key moment, not over the whole clip)
+  // (only on maps of players and circles: cones, lines, arrows, cysts, marks, orbs and adds the map is about sit outside that frame (map audit, Oct 19: a Deluge's frontals and a kicked add were cut off))
+  const geo = (mp.cones && mp.cones.length) || mp.cone || (mp.lines && mp.lines.length) || (mp.arrows && mp.arrows.length) || (mp.cysts && mp.cysts.length) || (mp.marks && mp.marks.length) || mp.hitOrbs || mp.extraPts || (mp.links && mp.links.length);
+  if (!fc && !geo) { const inv = new Set([...(mp.hl || []), ...(mp.good || []), ...(mp.bad || []), ...(mp.warn || []), ...(mp.goodAdd || []), ...(mp.badAdd || [])]), ip = (mp.pts && mp.pts.length ? mp.pts : bpts).filter((p) => inv.has(p.guid)); // (where they were at the map's key moment, not over the whole clip)
     // (a circle counts with its size: one that follows a player is where they were)
     const at0 = new Map((mp.pts && mp.pts.length ? mp.pts : bpts).map((p) => [p.guid, p]));
-    const rp = (mp.rings || []).filter((g) => (!g.guid || inv.has(g.guid)) && (g.t0 == null || mp.t == null || (mp.t >= g.t0 - 0.2 && mp.t <= g.t0 + (g.dur || 12)))).map((g) => { const q = g.x != null ? g : g.guid ? at0.get(g.guid) : null; return q ? { x: q.x, y: q.y, r: Math.min(15, g.r || 0) } : null; }) /* (a huge area, like a 40-yard blast, doesn't pull the view out to the room) */.filter(Boolean), all = ip.map((p) => ({ x: p.x, y: p.y, r: 0 })).concat(rp);
+    const rp = (mp.rings || []).filter((g) => (!g.guid || inv.has(g.guid)) && (g.t0 == null || mp.t == null || (mp.t >= g.t0 - 0.2 && mp.t <= g.t0 + (g.dur != null ? g.dur : g.fx === 'puddle' || g.fx === 'zone' ? Infinity : 12)))).map((g) => { const q = g.x != null ? g : g.guid ? at0.get(g.guid) : null; return q ? { x: q.x, y: q.y, r: Math.min(15, g.r || 0) } : null; }) /* (a huge area, like a 40-yard blast, doesn't pull the view out to the room) */.filter(Boolean), all = ip.map((p) => ({ x: p.x, y: p.y, r: 0 })).concat(rp);
     if (all.length && ip.length < new Set(bpts.filter((p) => p.kind === 'player').map((p) => p.guid)).size * 0.75) {
       const x0 = Math.min(...all.map((p) => p.x - p.r)), x1 = Math.max(...all.map((p) => p.x + p.r)), y0 = Math.min(...all.map((p) => -p.y - p.r)), y1 = Math.max(...all.map((p) => -p.y + p.r));
       fc = { x: (x0 + x1) / 2, y: -(y0 + y1) / 2, r: Math.max(8, Math.max(x1 - x0, y1 - y0) / 2.4) }; } }
@@ -3913,7 +3915,7 @@ function miniMap(mp, pmap) {
   const ringAt = (g0) => {
     let g = g0;
     if (g0.guid) { const p = pts.find((q) => q.guid === g0.guid); if (!p) return null; g = { ...g0, x: p.x, y: p.y }; }
-    if (g0.t0 != null) { const el = (mp.ft != null ? mp.ft : mp.t) - g0.t0; if (el < -0.2 || el > (g0.dur || 12)) return null; if (g0.shrink === 'ichor') g = { ...g, r: el <= 6 ? 11 : Math.max(5, 11 - (el - 6) * 1.2) }; }
+    if (g0.t0 != null) { const el = (mp.ft != null ? mp.ft : mp.t) - g0.t0; if (el < -0.2 || el > (g0.dur != null ? g0.dur : g0.fx === 'puddle' || g0.fx === 'zone' ? Infinity : 12)) return null; /* (a puddle or zone with no duration of its own stays: they were vanishing 12 s after landing (map audit, Oct 19)) */ if (g0.shrink === 'ichor') g = { ...g, r: el <= 6 ? 11 : Math.max(5, 11 - (el - 6) * 1.2) }; }
     return g;
   };
   // Viscous Cysts (Sszorak): a goo blob where each one landed, its number on it and what it was for underneath, outlined
@@ -4052,19 +4054,23 @@ function miniMap(mp, pmap) {
       '<text x="' + x + '" y="' + (y + h - 3.2) + '" text-anchor="middle" style="font-size:10.5px;font-weight:800" fill="#fff" stroke="#000" stroke-width="2.4" paint-order="stroke">' + esc(t) + '</text></g>';
   };
   // adds (e.g. the Spiteful Soulcoiler casting Wail of Terror): diamond with its name; green ring = kicked, red = got off
-  const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []);
+  const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []), addRes = [];
+  // (more than two of the same add: their names only on hover, so a pack doesn't bury the map in labels (map audit, Oct 19))
+  const addBase = (n) => String(n).replace(/ (.*)$/, ''), addN = new Map(); for (const q of pts) if (q.kind === 'add') addN.set(addBase(q.name), (addN.get(addBase(q.name)) || 0) + 1);
   for (const p of pts.filter((q) => q.kind === 'add')) {
-    const x = X(p), y = Y(p), ring = gAdd.has(p.guid) ? '#2fd15a' : bAdd.has(p.guid) ? '#ff3b3b' : null;
+    const x = X(p), y = Y(p), ring = gAdd.has(p.guid) ? '#2fd15a' : bAdd.has(p.guid) ? '#ff3b3b' : null, crowd = !ring && addN.get(addBase(p.name)) > 2;
+    if (ring) addRes.push({ x, y, ly: y + 22, w: 140, pri: -1, html: '' }, { x, y, ly: y + 34, w: 140, pri: -1, html: '' }); // (its name and kick tag: no other name prints over them)
     const look = ADD_LOOK[p.name] || ADD_LOOK[String(p.name).replace(/ \(.*\)$/, '')]; // (kick maps name adds like "Spiteful Soulcoiler (Set 1 #2)")
     // an add with its own icon still gets the kick result: green ring = kicked, red = its cast got off, and it says so
-    if (look) { const st = gAdd.has(p.guid) ? ' · kicked' : bAdd.has(p.guid) ? ' · cast got off' : ''; s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="' + (look.r + 6) + '" fill="none" stroke="' + ring + '" stroke-width="3.5"/>' : '') + addIcon(x, y, look, esc(p.name)) + (look.label ? '<text x="' + x + '" y="' + (y + look.r + 14) + '" class="ml" style="font-size:10px' + (ring ? ';font-weight:800" fill="' + ring : '') + '">' + esc(look.label + st) + '</text>' : '') + castBar(p.guid, x, y + look.r + (look.label ? 18 : 6))); continue; }
+    if (look) { const st = gAdd.has(p.guid) ? ' · kicked' : bAdd.has(p.guid) ? ' · cast got off' : ''; s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="' + (look.r + 6) + '" fill="none" stroke="' + ring + '" stroke-width="3.5"/>' : '') + addIcon(x, y, look, esc(p.name)) + (look.label && !crowd ? '<text x="' + x + '" y="' + (y + look.r + 14) + '" class="ml" style="font-size:10px' + (ring ? ';font-weight:800" fill="' + ring : '') + '">' + esc(look.label + st) + '</text>' : '') + castBar(p.guid, x, y + look.r + (look.label ? 18 : 6))); continue; }
     s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="14" fill="none" stroke="' + ring + '" stroke-width="3"/>' : '') +
       '<rect x="' + (x - 8) + '" y="' + (y - 8) + '" width="16" height="16" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000" stroke-width="1.5"><title>' + esc(p.name) + '</title></rect>' +
       (bAdd.has(p.guid) ? '<path d="M' + (x - 4) + ' ' + (y - 4) + 'l8 8M' + (x + 4) + ' ' + (y - 4) + 'l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' : '') +
-      '<text x="' + x + '" y="' + (y + 25) + '" class="ml">' + esc(p.name) + '</text>' + castBar(p.guid, x, y + 29));
+      (crowd ? '' : '<text x="' + x + '" y="' + (y + 25) + '" class="ml">' + esc(p.name) + '</text>') + castBar(p.guid, x, y + 29));
   }
   // (bosses a little over half the old size (your note, Oct 18: the big crests hid what was under them))
-  for (const p of pts.filter((q) => q.kind === 'boss')) s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name, 0.6) + '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' + castBar(p.guid, X(p), Y(p) + 26));
+  // (a boss's name joins the players' names below, so two bosses stood together don't print over each other (map audit, Oct 19))
+  const bossL = []; for (const p of pts.filter((q) => q.kind === 'boss')) { s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name, 0.6) + castBar(p.guid, X(p), Y(p) + 26)); bossL.push({ x: X(p), y: Y(p), ly: Y(p) + 18, w: String(p.name).length * 6.6, pri: 0.5, html: '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' }); }
   for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(242,36,58,.16)" stroke="#f2243a" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);
@@ -4087,16 +4093,16 @@ function miniMap(mp, pmap) {
   const meN = S.tab === 'audit' && S.mechP ? S.mechP : null; // (Mechanics showing one player: a gold ring on them on every map)
   // (names: when two would overlap, only the more important one is written (you, then red, amber, ringed, green); the other
   // still shows on hover over its icon (Oct 19: a soak's names piled on top of each other))
-  const nameL = [];
+  const nameL = addRes.concat(bossL);
   for (const p of pts.filter((q) => q.kind === 'player')) {
     const pl = pmap.get(p.name), col = pl ? pl.color : '#9aa0ac', me = !!meN && p.name === meN, on = me || hl.has(p.guid) || good.has(p.guid) || bad.has(p.guid) || warnS.has(p.guid), mark = badNow.has(p.guid) ? 'bad' : goodNow.has(p.guid) ? 'good' : warnS.has(p.guid) ? 'warn' : '';
     const tg = tagOf.get(p.guid);
     s += ic(X(p), Y(p), (me ? '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="12.5" fill="rgba(230,180,80,.14)" stroke="#e6b450" stroke-width="2.5"/>' : '') + playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
       (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : ''));
-    if (on) nameL.push({ x: X(p), y: Y(p), w: (p.name.length + (tg ? String(tg).length + 1 : 0)) * 6.2, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : 4,
+    if (on) nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 19, w: (p.name.length + (tg ? String(tg).length + 1 : 0)) * 6.2, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : 4,
       html: '<text x="' + X(p) + '" y="' + (Y(p) - 15) + '" class="ml" fill="' + col + '">' + esc(p.name) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
   }
-  { const put = []; for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.y - n.y) < 12)) continue; put.push(n); s += ic(n.x, n.y, n.html); } }
+  { const put = []; for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.ly - n.ly) < 12)) continue; put.push(n); s += ic(n.x, n.y, n.html); } }
   // legend inside the image: only what this map shows
   const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', 'Player (class icon)']];
   if (meN && pts.some((q) => q.name === meN)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#e6b450" stroke-width="2.5"/>', 'Gold ring: ' + meN]);
@@ -5771,11 +5777,12 @@ ARENAS["Kith'ix"] = { w: 1700, h: 1500, cx: 3, cy: 1835, s: 10 }; // (the island
 // so that area is what spans the floor's bounds. Checked against real pulls: paths sit on the Twin Fangs walkway
 // and the Coiled Altar altar. In log positions x = -world Y (east), y = world X (north).
 const FLOORS = {
-  2606: { img: 1290351, minX: -110, maxX: 525, minY: -476.25, maxY: 476.25 },
-  2607: { img: 1290352, minX: 410, maxX: 1088, minY: -508.5, maxY: 508.5 },
-  2608: { img: 1290353, minX: 265, maxX: 885, minY: -802.5, maxY: 127.5 },
-  2609: { img: 1290354, minX: 175, maxX: 940, minY: -113.75, maxY: 1033.75 },
-  2610: { img: 1290355, minX: 980, maxX: 1755, minY: -581.25, maxY: 581.25 },
+  // (map audit, Oct 19: Wowhead's mapper art for zone 16915, the same pictures at about 100 KB instead of the 1.3 MB screenshots, which left maps black while they loaded)
+  2606: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/16915-0.jpg', whole: true, minX: -110, maxX: 525, minY: -476.25, maxY: 476.25 },
+  2607: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/16915-1.jpg', whole: true, minX: 410, maxX: 1088, minY: -508.5, maxY: 508.5 },
+  2608: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/16915-2.jpg', whole: true, minX: 265, maxX: 885, minY: -802.5, maxY: 127.5 },
+  2609: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/16915-3.jpg', whole: true, minX: 175, maxX: 940, minY: -113.75, maxY: 1033.75 },
+  2610: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/16915-4.jpg', whole: true, minX: 980, maxX: 1755, minY: -581.25, maxY: 581.25 },
   // (Kith'ix, Oct 19: Wowhead's mapper art for zone 17059, floor 1 (the cave), which is the whole map area; bounds from UiMapAssignment, build 12.1.5.70448)
   2669: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/17059-1.jpg', whole: true, minX: 1510.4169921875, maxX: 2022.9169921875, minY: -393.75, maxY: 375 },
 };
