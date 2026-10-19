@@ -11538,12 +11538,12 @@ SPEC_BOOK['Holy Paladin'] = {
   },
   // what to try, for the spell where the gap is (kind: why that spell fell short: 'casts', 'oh' (overhealing), 'per', 'only', 'more')
   fix: {
-    'Eternal Flame': 'Spend Holy Power on Eternal Flame, on whoever is lowest. Use Light of Dawn only when Eternal Flame would mostly overheal.',
-    'Word of Glory': 'Spend Holy Power on Word of Glory, on whoever is lowest. Use Light of Dawn only when it would mostly overheal.',
+    'Eternal Flame': 'Spend Holy Power on Eternal Flame, not Light of Dawn.',
+    'Word of Glory': 'Spend Holy Power on Word of Glory, not Light of Dawn.',
     'Light of Dawn': 'Use Light of Dawn when most of the raid is hurt; otherwise Eternal Flame.',
-    'Holy Shock': 'Press Holy Shock every time a charge is ready, even when everyone is full: Overflowing Light turns it into a shield. When someone is hurt, aim it at the lowest player.',
-    'Flash of Light': 'Spend every Infusion of Light on Flash of Light, on a player with a Beacon (it heals them 50% more).',
-    'Beacon of Light': 'Cast Beacon of Virtue as damage lands, then cast single-target heals (Holy Shock, Flash of Light, Eternal Flame) while it is up.',
+    'Holy Shock': 'Press Holy Shock whenever a charge is ready, even on full players.',
+    'Flash of Light': 'Spend every Infusion on Flash of Light, on a player with a Beacon.',
+    'Beacon of Light': 'Cast Beacon of Virtue as damage lands, then single-target heals.',
     'Pillar of Lights': 'Cast Beacon of Virtue close to every 15 seconds.',
     'Dawnlight': 'Cast Divine Toll whenever it is ready, aimed at an ally.',
     'Sun\'s Avatar': 'Cast Divine Toll whenever it is ready, and stand near the group so the beams cross people.',
@@ -11568,7 +11568,7 @@ SPEC_BOOK['Holy Paladin'] = {
     'Always be casting': 'Always be casting something: even a small heal is better than none.',
   },
   // a plain line for a spell whose healing comes from the others
-  plain: { 'Beacon of Light': 'Your Beacons copy part of your other heals, so this follows the lines above.' },
+  plain: { 'Beacon of Light': 'Your Beacons copy your other heals, so this follows the cards above.' },
   // more reasons for Why the gap, worked out from the log (lo: the side that did less)
   extra(lo, hi, b, C) {
     const out = [], sp = (s) => { const ef = s.cn('Eternal Flame') + s.cn('Word of Glory'), ld = s.cn('Light of Dawn'); return { ef, ld, all: ef + ld, f: ef + ld ? ld / (ef + ld) : 0 }; };
@@ -11581,9 +11581,9 @@ SPEC_BOOK['Holy Paladin'] = {
       const lp = lo.n === 'You' ? 'your' : lo.pos, pcL = Math.round(100 * L.f) + '%', pcH = Math.round(100 * H.f) + '%';
       out.push({ v: v || 0.02 * hi.rate, key: 'Holy Power', merge: ['Eternal Flame', 'Word of Glory'], head: 'Holy Power',
         txt: capS(lp) + ' Holy Power mostly went to Light of Dawn: ' + b(pcL) + ' of ' + lp + ' spenders, against ' + b(pcH) + ' for ' + hi.n + '.',
-        add: 'Most of ' + lp + ' Holy Power went to Light of Dawn instead: ' + b(pcL) + ' of ' + lp + ' spenders, against ' + b(pcH) + ' for ' + hi.n + '.',
+        add: 'Most of ' + lp + ' Holy Power went to Light of Dawn instead.',
         tip: (pe && pl ? 'Each of ' + lo.pos + ' Eternal Flames healed for ' + C(pe) + ', each Light of Dawn for ' + C(pl) + '. ' : '') + 'The guides say Eternal Flame is the better spender unless it would mostly overheal, and Light of Dawn copies only half as much to your Beacons.',
-        fix: 'Spend Holy Power on Eternal Flame, on whoever is lowest. Use Light of Dawn only when Eternal Flame would mostly overheal.',
+        fix: 'Spend Holy Power on Eternal Flame, not Light of Dawn.',
         split: { label: 'Where the Holy Power went', parts: ['Eternal Flame', 'Light of Dawn'], lo: [1 - L.f, L.f], hi: [1 - H.f, H.f] } });
     }
     return out;
@@ -11682,20 +11682,19 @@ function cmpGapWhy(x) {
     const plus = (a && a.plus) || (h && h.plus), withP = plus ? ' (with ' + esc(plus) + '\'s shields)' : '';
     const kind = !a ? 'only' : both && h.cpm / a.cpm >= (vh / Math.max(1, va)) / (h.cpm / a.cpm) ? 'casts' : both ? 'per' : 'more';
     const pw = x.book && x.book.perWhy && x.book.perWhy[name];
-    const simple = kind === 'only' ? 'Only ' + H + ' used it.'
-      : kind === 'casts' ? capS(L) + ' cast it ' + b(n1(a.cpm)) + ' times a minute, ' + H + ' ' + b(n1(h.cpm)) + '.'
-      : kind === 'per' ? 'Each of ' + Hp + ' casts' + withP + ' ' + did + ' more: ' + b(C(perH)) + ', against ' + b(C(perL)) + '.' + (h.cpm >= a.cpm * 1.08 ? ' ' + capS(H) + ' also cast it more often: ' + b(n1(h.cpm)) + ' times a minute, against ' + b(n1(a.cpm)) + '.' : '') + (pw ? ' ' + pw : '')
+    const simple = kind === 'only' ? capS(L) + ' didn\'t use it.'
+      : kind === 'casts' ? capS(L) + ' cast it less: ' + b(n1(a.cpm)) + ' a minute, against ' + b(n1(h.cpm)) + '.'
+      : kind === 'per' ? capS(Lp) + ' casts ' + (U === 'healing' ? 'healed' : 'hit') + ' for less: ' + b(C(perL)) + ' each, against ' + b(C(perH)) + '.'
       : (x.book && x.book.plain && x.book.plain[name]) || capS(H) + ' got more out of it.';
     // (a talent only the higher side took that makes this spell stronger is named right here, and not again below)
     const sk = String(nm(y)).toLowerCase(), tl = (x.hits || []).filter((o) => o.H === hi.nRaw && !o.j.own && o.j.ts.some((n) => n.toLowerCase() === sk)); tl.forEach((o) => (o.used = true));
     const bs = x.book && x.book.spells[name], bsT = bs ? bs(lo, hi, (sn, pl) => { const ca = lo.cn ? lo.cn(sn) / lo.min : 0, ch = hi.cn ? hi.cn(sn) / hi.min : 0; return !ca && !ch ? '' : capS(H) + ' cast ' + ch.toFixed(1) + ' ' + pl + ' a minute, ' + L + ' ' + ca.toFixed(1) + '.'; }).trim() : '';
     const tip = '<b>' + esc(nm(y)) + '</b><br>' + capS(L) + ' did ' + C(d) + ' less ' + U + ' a second with it (' + C(va) + ' against ' + C(vh) + ').' +
       (both ? '<br>Casts a minute: ' + a.cpm.toFixed(1) + ' against ' + h.cpm.toFixed(1) + '. Each cast: ' + C(perL) + ' against ' + C(perH) + '.' : '') +
-      (plus ? '<br>Counting ' + esc(plus) + '\'s shields as part of it.' : '') + (bsT ? '<br>' + bsT : '');
-    const bars = both ? [{ l: 'Casts a minute', a: a.cpm, b: h.cpm, fa: n1(a.cpm), fb: n1(h.cpm) }, { l: (U === 'healing' ? 'Healing' : 'Damage') + ' a cast' + (plus ? ', shields included' : ''), a: perL, b: perH, fa: C(perL), fb: C(perH) }]
+      (plus ? '<br>Counting ' + esc(plus) + '\'s shields as part of it.' : '') + (pw ? '<br>' + pw : '') + (tl.length ? '<br>' + capS(H) + ' also took ' + tl.map((o) => esc(o.j.e.name)).join(' and ') + ', which make' + (tl.length > 1 ? '' : 's') + ' it stronger.' : '') + (bsT ? '<br>' + bsT : '');
+    const bars = kind === 'casts' ? [{ l: 'Casts a minute', a: a.cpm, b: h.cpm, fa: n1(a.cpm), fb: n1(h.cpm) }] : kind === 'per' ? [{ l: (U === 'healing' ? 'Healing' : 'Damage') + ' each cast' + (plus ? ', shields included' : ''), a: perL, b: perH, fa: C(perL), fb: C(perH) }]
       : [{ l: capS(U) + ' a second', a: va, b: vh, fa: C(va), fb: C(vh) }];
-    out.push({ v: d, real: true, key: name, icon: spellIcon(y.id, nm(y)), bars, head: esc(nm(y)), tip, fix: fixOf(name, kind),
-      txt: simple + (tl.length ? ' ' + capS(H) + ' also took ' + tl.map((o) => b(esc(o.j.e.name))).join(' and ') + ', which make' + (tl.length > 1 ? '' : 's') + ' it stronger.' : '') });
+    out.push({ v: d, real: true, key: name, icon: spellIcon(y.id, nm(y)), bars, head: esc(nm(y)), tip, fix: fixOf(name, kind), txt: simple });
   }
   // casting less often
   if (lo.cpm && hi.cpm && hi.cpm > lo.cpm * 1.08) out.push({ v: lo.rate * (hi.cpm / lo.cpm - 1) * 0.5, head: 'Casting', bars: [{ l: capS(U) + ' spells a minute', a: lo.cpm, b: hi.cpm, fa: n1(lo.cpm), fb: n1(hi.cpm) }], txt: capS(L) + ' cast ' + b(pc(1 - lo.cpm / hi.cpm) + ' less often') + ' than ' + H + '.',
@@ -11726,7 +11725,7 @@ function cmpGapWhy(x) {
   // into its reasons, each reason a card with its icon, both players' bars and the Try line; the numbers stay in the tooltips)
   const tot = Math.max(gap, top.reduce((t, o) => t + o.v, 0)), wOf = (o) => 100 * o.v / tot;
   // (spells where the lower side did more, which closed part of the gap: said under the bar, so the numbers add up)
-  const aheadL = ahead.sort((p, q) => q.v - p.v).slice(0, 3), aheadT = aheadL.length ? '<p class="sub" style="margin:6px 0 0">' + capS(L) + ' did more with ' + aheadL.map((o) => b(esc(o.name)) + ' (+' + C(o.v) + ' a second)').join(aheadL.length === 2 ? ' and ' : ', ') + ', which closed part of the gap.</p>' : '';
+  const aheadL = ahead.sort((p, q) => q.v - p.v).slice(0, 3), aheadT = aheadL.length ? '<p class="sub" style="margin:6px 0 0">' + capS(L) + ' did more with ' + aheadL.map((o) => b(esc(o.name)) + ' (+' + C(o.v) + ' a second)').join(aheadL.length === 2 ? ' and ' : ', ') + '.</p>' : '';
   const gbar = '<div class="cmp-gbar">' + top.map((o, i) => '<span class="cmp-gseg" style="width:' + wOf(o).toFixed(1) + '%;background:' + o.col + '" data-tt="' + esc('<b>' + (i + 1) + '. ' + o.head + '</b><br>' + (o.real ? 'About ' : 'Roughly ') + C(o.v) + ' ' + U + ' a second of the gap') + '">' + (wOf(o) >= 9 ? '<b>' + (i + 1) + '</b>' + (wOf(o) >= 16 ? ' ' + o.head : '') : '') + '</span>').join('') +
     (tot > top.reduce((t, o) => t + o.v, 0) + 1 ? '<span class="cmp-gseg oth" style="flex:1" data-tt="Smaller things, each too small to name."></span>' : '') + '</div>';
   const pair = (o, x) => { const mx = Math.max(x.a || 0, x.b || 0) || 1, row = (n, col, v, fv) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + esc(n) + '</span><span class="cmp-cbb"><i style="width:' + (100 * (v || 0) / mx).toFixed(1) + '%;background:' + col + '"></i></span><b>' + fv + '</b></div>';
@@ -11735,10 +11734,10 @@ function cmpGapWhy(x) {
     return '<div class="cmp-vl">' + sp.label + '</div>' + row(me ? 'You' : lo.n, lo.col, sp.lo) + row(H, hi.col, sp.hi) + '<div class="cmp-glegend">' + sp.parts.map((p, i) => '<span><i style="background:' + SC[i] + '"></i>' + esc(p) + '</span>').join('') + '</div>'; };
   const pills = (o) => '<div class="cmp-pills"><span class="cmp-pill" style="--c:' + lo.col + '">' + esc(me ? 'You' : lo.n) + ': <b>' + o.pills[0] + '</b></span><span class="cmp-pill" style="--c:' + hi.col + '">' + esc(H) + ': <b>' + o.pills[1] + '</b></span></div>';
   const card = (o, i) => '<div class="cmp-card cmp-rc" style="border-left-color:' + o.col + '"' + (o.tip ? ' data-tt="' + esc(o.tip) + '"' : '') + '><div class="cmp-wh"><span class="cmp-rnum" style="background:' + o.col + '">' + (i + 1) + '</span>' + (o.icon || '') +
-    '<span><b>' + o.head + '</b>' + (o.v >= 0.01 * gap ? '<span class="cmp-wd dn">' + (o.real ? '' : 'about ') + C(o.v) + ' ' + U + ' a second</span>' : '') + '</span></div>' +
+    '<span><b>' + o.head + '</b>' + (o.v >= 0.01 * gap ? '<span class="cmp-wd dn">' + (o.real ? '' : 'about ') + C(o.v) + ' a second of the gap</span>' : '') + '</span></div>' +
     '<div class="cmp-ct">' + o.txt + '</div>' + (o.bars || []).map((x) => pair(o, x)).join('') + (o.split ? split(o.split) : '') + (o.pills ? pills(o) : '') +
     (o.fix ? '<div class="cmp-try"><b>Try:</b> ' + o.fix + '</div>' : '') + '</div>';
-  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The biggest reasons first. Hover anything for the numbers.</small></h3><p class="cmp-wlead">' + H + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(pc(gap / Math.max(1, lo.rate)) + ' more') + ' than ' + L + ' (' + C(hi.rate) + ' a second, against ' + C(lo.rate) + '). Here is where it came from, spell by spell:</p>' +
+  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The biggest reasons first. Hover anything for the numbers.</small></h3><p class="cmp-wlead">' + H + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(pc(gap / Math.max(1, lo.rate)) + ' more') + ' than ' + L + ' (' + C(hi.rate) + ' a second, against ' + C(lo.rate) + ').</p>' +
     gbar + aheadT + (x.builds ? '<p class="sub" style="margin:8px 0 0">' + x.builds + '</p>' : '') + '<div class="cmp-rcards">' + top.map(card).join('') + '</div>' +
     (out.length > 6 ? '<p class="sub" style="margin:8px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in All the numbers.</p>' : '') + '</div>';
 }
