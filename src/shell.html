@@ -3492,6 +3492,14 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 @media (max-width: 1100px) { .sum-grade .rc-all { min-width: 0; } .sum-grade .rc-cats { --n: 3 !important; } }
 @media (max-width: 640px) { .sum-grade .rc-cats { --n: 2 !important; } }
 @media (max-width: 1000px) { .wr-wrap.wr-split { grid-template-columns: minmax(0, 1fr); } }
+/* ---- Report card (Oct 19): the raid's report card on top, and a player's six parts and their place in one row ---- */
+.pl-rc { margin: 0 0 14px; padding: 12px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.pl-rc .rc-all { min-width: 260px; border-radius: 12px; } .pl-rc .rc-all .sub { max-width: 210px; } .pl-rc .rc-cats { gap: 10px; --n: 3 !important; } .pl-rc .pt { border-radius: 12px; }
+.pl-rc .pt-s { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; line-height: 1.35; }
+@media (max-width: 1100px) { .pl-rc .rc-all { min-width: 0; } } @media (max-width: 640px) { .pl-rc .rc-cats { --n: 2 !important; } } .pl-rc .pt-go { display: block; text-decoration: none; color: inherit; } .pl-rc .pt-go > .pt { height: 100%; }
+.pl-det .rs-nums.pl7 { grid-template-columns: repeat(7, minmax(0, 1fr)); } .pl-det .rs-nums.pl7 .rs-n span i { font-style: normal; font-size: 11px; color: var(--faint); }
+@media (max-width: 1100px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   <header class="topbar" id="topbar">
     <div class="brand" id="brandHome" title="Home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="3" stroke-linejoin="round"/><path d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z" fill="none" stroke="#e6b450" stroke-width="4" stroke-linejoin="round"/><path d="m27 32.5 4 4 8.5-9.5" fill="none" stroke="#7ee08f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h1>Debrief</h1><p>Retail combat logs, read on your PC</p></div></div>
     <div class="bosspick" id="bossPick"></div>
