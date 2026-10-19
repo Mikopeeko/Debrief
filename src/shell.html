@@ -3868,7 +3868,9 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .nrv .rcp-bd { padding: 7px 10px 9px; font-size: 12.5px; line-height: 1.4; } .nrv .rcp-tg { margin-bottom: 4px; } .nrv .rcp-wt { margin-bottom: 4px; }
 .nrv .rcp-lv { top: 7px; right: 7px; padding: 1px 8px; font-size: 11px; } .nrv .rcp-nomap .rcp-hd { padding-right: 80px; }
 .nrv .rcp-oks { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; } .nrv .rcp-ok { padding: 9px 10px 7px; gap: 9px; } .nrv .rcp-ok .icw.big, .nrv .rcp-ok .icw.big .ico { width: 26px; height: 26px; } .nrv .rcp-ok b { font-size: 13.5px; }
-.nmc .mcx-tiles { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.nmc .mcx-tiles { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+/* (all pulls: the tiles share the row's whole width, so a phase with 3 tiles has no empty columns beside them; same for the clean ones) */
+.nmc .mcx-ph > .ph-ok { display: flex; flex-wrap: wrap; } .nmc .mcx-ph > .ph-ok > details.secd { flex: 1 1 260px; } .nmc .mcx-ph > .ph-ok > .ph-okh, .nmc .mcx-ph > .ph-ok > details.secd[open] { flex-basis: 100%; }
 .nmc details.secd.mcx-tile .wr-map.mcx-map, .nmc details.secd.mcx-tile .wr-map.mcx-map svg.zmap { height: 92px !important; }
 .nmc details.secd.mcx-tile:not([open]) .mcx-hd { padding: 7px 10px 6px; } .nmc details.secd.mcx-tile:not([open]) .mcx-hd .sechd b { font-size: 14px; }
 .nmc .mcx-ln { padding: 6px 10px 9px; font-size: 12.5px; } .nmc .mcx-s { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
