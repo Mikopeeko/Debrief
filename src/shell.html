@@ -2948,13 +2948,13 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-wh { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; } .cmp-wh .icw { width: 28px; height: 28px; flex: none; margin: 0; border-radius: 6px; overflow: hidden; } .cmp-wh .icw svg, .cmp-wh .icw img { width: 100%; height: 100%; }
 .cmp-wh > span { display: flex; flex-direction: column; min-width: 0; } .cmp-wh b { font-size: 14px; } .cmp-wd { font-size: 12.5px; font-weight: 600; } .cmp-wd.up { color: #7ee08f; } .cmp-wd.dn { color: #f3c969; }
 .cmp-ct b { color: var(--text); }
+/* Why the gap: the reasons, numbered, the biggest first */
+.cmp-gap { border-left: 3px solid var(--gold); } .cmp-gl { margin: 4px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; font-size: 14px; line-height: 1.5; } .cmp-gl b { color: var(--text); } .cmp-gl li::marker { color: var(--gold); font-weight: 700; }
 /* both talent trees, each kind side by side; a talent where the picks differ ringed in blue (gold is taken) */
 /* the talent notes: the icon(s), what differs, what it did */
 .cmp-tns { display: flex; flex-direction: column; } .cmp-tn { display: flex; align-items: flex-start; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--line); } .cmp-tn:first-child { border-top: 0; }
 .cmp-tni { display: flex; gap: 3px; flex: none; } .cmp-tni .icw { width: 26px; height: 26px; margin: 0; border-radius: 6px; overflow: hidden; } .cmp-tni .icw svg, .cmp-tni .icw img { width: 100%; height: 100%; }
-.cmp-tn > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.cmp-tals2 { display: flex; flex-direction: column; gap: 6px; } .cmp-trest { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.cmp-tchip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border: 1px solid var(--line2); border-radius: 999px; background: var(--raised); font-size: 13px; cursor: default; } .cmp-tchip .icw { width: 20px; height: 20px; margin: 0; flex: none; border-radius: 50%; overflow: hidden; } .cmp-tchip .icw svg, .cmp-tchip .icw img { width: 100%; height: 100%; } .cmp-tnh { font-size: 14px; } .cmp-tnh b, .cmp-tn .sub b { color: var(--text); } .cmp-tn .sub { font-size: 13px; line-height: 1.45; }
+.cmp-tn > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .cmp-tnh { font-size: 14px; } .cmp-tnh b, .cmp-tn .sub b { color: var(--text); } .cmp-tn .sub { font-size: 13px; line-height: 1.45; }
 .cmp-tdet { margin-top: 14px; } .cmp-tdet > summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 10px; } .cmp-tdet > summary:hover { color: var(--gold); }
 .cmp-tt2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; margin-bottom: 8px; } .cmp-tt2 > div { min-width: 0; overflow-x: auto; }
 .cmp-tt2 .tt { zoom: .44; flex-wrap: nowrap; } /* (compact: each player's three trees in one row at under half of Rotation's size, your note) */

@@ -11291,7 +11291,7 @@ function cmpRot(r, p, q, rB) {
     '<span class="cmp-rv"' + rtt(o.c, An) + '>' + mk(o.c.st) + '<span>' + (o.c.v != null ? o.c.v : '') + '</span></span><span class="cmp-rv"' + rtt(o.d, Bn) + '>' + mk(o.d.st) + '<span>' + (o.d.v != null ? o.d.v : '') + '</span></span></div>';
   const top = S.cmpRotAll ? rows : rows.slice(0, 8);
   const lead = (worse ? An + (me ? ' were' : ' was') + ' behind ' + Bn + ' on <b>' + plural(worse, 'check') + '</b>' : An + (me ? ' weren\'t' : ' wasn\'t') + ' behind ' + Bn + ' on any check') + (better ? ', and ahead on <b>' + better + '</b>.' : '.');
-  return { a: xa.score, b: xb.score, html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
+  return { a: xa.score, b: xb.score, rows, html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
     '<p class="cmp-wlead">' + lead + '</p><div class="cmp-rr cmp-rh"><span>Check</span><span>' + An + '</span><span>' + Bn + '</span></div>' + top.map(row).join('') +
     (rows.length > 8 ? '<button class="btn sm cmp-more" type="button" id="cmpRotAll">' + (S.cmpRotAll ? 'Show fewer' : 'Show all ' + rows.length) + '</button>' : '') + '</div>' };
 }
@@ -11368,21 +11368,53 @@ function cmpTalents(r, p, q, SA, SB, rB) {
   cmpTalText([...took.A, ...took.B].map((j) => j.e.spell));
   hits.sort((u, v) => v.j.w - u.j.w);
   const tip = (x) => ' data-tt="' + esc('<b>' + esc(x.name) + '</b><br>' + esc(TALTXT.get(x.spell) || 'Loading what it does…')) + '"';
-  const chip = (j) => '<span class="cmp-tchip"' + tip(j.e) + '>' + spellIcon(j.e.spell, j.e.name) + esc(j.e.name) + '</span>';
-  // the trade-off at a glance: how many of each one's different picks add to the number, and how many don't
-  const adds = (l) => l.filter((j) => !j.none).length, aA = adds(took.A), aB = adds(took.B);
-  const lead = !took.A.length && !took.B.length ? 'Both took the same talents.'
-    : An + ' took ' + b(plural(took.A.length, 'talent')) + ' ' + Bn + ' didn\'t, ' + aA + ' of them adding ' + U + '. ' + Bn + ' took ' + b(plural(took.B.length, 'talent')) + ' ' + An + ' didn\'t, ' + aB + ' of them adding ' + U + '.' +
-      (aB > aA ? ' ' + Bn + ' spent more of those points on ' + U + ', and that is part of the gap.' : aA > aB ? ' ' + An + ' spent more of those points on ' + U + '.' : '');
-  const hitL = hits.length ? '<div class="cmp-lbl" style="margin-top:12px">Talents that changed the ' + U + ' a second</div><div class="cmp-tns">' + (S.cmpTalAll ? hits : hits.slice(0, 5)).map((o) =>
+  // the lead (Oct 19, "if it doesn't affect HPS/DPS, omit it"): only the different picks that change the number a second
+  const addL = (l) => l.filter((j) => !j.none), xA = addL(took.A), xB = addL(took.B), names = (l) => esc(l.map((j) => j.e.name).join(', '));
+  const pend = [...took.A, ...took.B].some((j) => j.pending);
+  const lead = !xA.length && !xB.length ? (pend ? 'Reading what their talents do…' : 'Their different talent picks don\'t change the ' + U + ' a second.')
+    : [xA.length ? An + ' took ' + b(plural(xA.length, 'talent')) + ' that add' + (xA.length === 1 ? 's' : '') + ' ' + U + ' that ' + Bn + ' didn\'t (' + names(xA) + ').' : An + ' took no talent that adds ' + U + ' that ' + Bn + ' didn\'t.',
+      xB.length ? Bn + ' took ' + b(plural(xB.length, 'talent')) + ' that add' + (xB.length === 1 ? 's' : '') + ' ' + U + ' that ' + An + ' didn\'t (' + names(xB) + ').' : Bn + ' took no talent that adds ' + U + ' that ' + An + ' didn\'t.'].join(' ');
+  const hitL = hits.length ? '<div class="cmp-tns" style="margin-top:6px">' + (S.cmpTalAll ? hits : hits.slice(0, 5)).map((o) =>
     '<div class="cmp-tn"' + tip(o.j.e) + '><span class="cmp-tni">' + spellIcon(o.j.e.spell, o.j.e.name) + '</span><span><span class="cmp-tnh">' + b(esc(o.j.e.name)) + ' <span class="sub">(only ' + o.H + ')</span></span><span class="sub">' + impact(o.j, o.H, o.L, o.sH, o.sL) + '</span></span></div>').join('') + '</div>' +
     (hits.length > 5 ? '<button class="btn sm cmp-more" type="button" id="cmpTalAll">' + (S.cmpTalAll ? 'Show fewer' : 'Show all ' + hits.length) + '</button>' : '') : '';
-  const rest = (l, who) => { const x = l.filter((j) => j.none); return x.length ? '<span class="cmp-trest">' + x.map(chip).join('') + ' <span class="sub">' + who + '</span></span>' : ''; };
-  const restL = took.A.some((j) => j.none) || took.B.some((j) => j.none) ? '<div class="cmp-lbl" style="margin-top:12px">No effect on ' + U + ' a second <span>Utility, defensive, or the other kind of talent. Hover one for what it does.</span></div><div class="cmp-tals2">' + rest(took.A, An) + rest(took.B, Bn) + '</div>' : '';
   const tx = talentTreeHtml(r, p, q, null, rB), ty = talentTreeHtml(rB, q, p, null, r), tRows = tx || ty ? '<div class="cmp-tt2"><div><div class="cmp-lbl">' + An + '</div>' + tx + '</div><div><div class="cmp-lbl">' + Bn + '</div>' + ty + '</div></div>' : '';
   const trees = tRows ? '<details class="cmp-tdet"' + (S.cmpTreesShut ? '' : ' open') + '><summary>Both talent trees. A talent where their picks differ has a blue ring.</summary>' + tRows + '</details>' : '';
-  const html = '<div class="panel"><h3>Talent differences<small>Where their picks differ, and what that did to the ' + U + ' a second</small></h3><p class="cmp-wlead">' + lead + '</p>' + hitL + restL + trees + '</div>';
-  return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html };
+  const html = '<div class="panel"><h3>Talent differences<small>Only the picks that change the ' + U + ' a second</small></h3><p class="cmp-wlead">' + lead + '</p>' + hitL + trees + '</div>';
+  return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html, hits };
+}
+// Why the gap (Oct 19, "summarize any differences that contributed to the HPS/DPS difference"): everything Compare finds,
+// as plain sentences from the side of whoever did less, the biggest first. An estimate a second where the log allows it
+// (a spell's own gap, what Rotation works out a check cost, what more crits or casts would add), none where it doesn't.
+// x: { lo, hi (the two sides: { n, pos, p, rate, ab, cpm, crit, cd }), U, end, rot (Rotation's rows, from lo's side or not), hits (talents) }
+function cmpGapWhy(x) {
+  const { lo, hi, U } = x, gap = hi.rate - lo.rate; if (gap <= 0.02 * hi.rate) return '';
+  const b = (v) => '<b>' + v + '</b>', nm = (y) => { const m = String(y.name).match(/^([^:]+): (.+)$/); return m ? m[2] + ' (' + m[1] + ')' : String(y.name); }, out = [];
+  // the spells: where the number went missing, and why
+  for (const [a, h] of cmpPairs({ ab: lo.ab }, { ab: hi.ab })) {
+    const va = a ? a.share * lo.rate : 0, vh = h ? h.share * hi.rate : 0, d = vh - va; if (d < 0.03 * hi.rate) continue;
+    const y = a || h, why = !a ? lo.n + ' didn\'t use it' : a.cpm && h && h.cpm && h.cpm / a.cpm >= (vh / Math.max(1, va)) / (h.cpm / a.cpm) ? hi.n + ' cast it more (' + h.cpm.toFixed(1) + ' times a minute against ' + a.cpm.toFixed(1) + ')' : a.cpm && h && h.cpm ? 'each of ' + hi.pos + ' casts did more (' + C(vh * 60 / h.cpm) + ' against ' + C(va * 60 / a.cpm) + ')' : 'it was a bigger part of ' + hi.pos + ' ' + U;
+    // (a talent only the higher side took that makes this spell stronger is named right here, and not again below)
+    const sk = String(nm(y)).toLowerCase(), tl = (x.hits || []).filter((o) => o.H === hi.nRaw && !o.j.own && o.j.ts.some((n) => n.toLowerCase() === sk)); tl.forEach((o) => (o.used = true));
+    out.push({ v: d, txt: b(esc(nm(y))) + ': ' + b(C(d)) + ' a second less for ' + (lo.n === 'You' ? 'you' : lo.n) + ', because ' + why + '.' +
+      (tl.length ? ' ' + hi.pos + ' talent' + (tl.length > 1 ? 's ' : ' ') + tl.map((o) => b(esc(o.j.e.name))).join(' and ') + ', which ' + (lo.n === 'You' ? 'you' : lo.n) + ' didn\'t take, make' + (tl.length > 1 ? '' : 's') + ' it stronger.' : '') });
+  }
+  // casting less often (more casts of the spells that do the work add about that much more)
+  if (lo.cpm && hi.cpm && hi.cpm > lo.cpm * 1.08) out.push({ v: lo.rate * (hi.cpm / lo.cpm - 1) * 0.5, txt: 'Casting: ' + (lo.n === 'You' ? 'you' : lo.n) + ' cast ' + b(Math.round(100 * (1 - lo.cpm / hi.cpm)) + '% less often') + ' (' + lo.cpm.toFixed(1) + ' times a minute against ' + hi.cpm.toFixed(1) + '). Every spell did less because of it.' });
+  // fewer crits (a crit does double)
+  if (lo.crit != null && hi.crit != null && hi.crit - lo.crit > 0.02) out.push({ v: lo.rate * (hi.crit - lo.crit), txt: 'Crits: ' + hi.pos + ' ' + (U === 'healing' ? 'heals' : 'hits') + ' crit ' + b(Math.round(100 * hi.crit) + '%') + ' of the time, ' + (lo.n === 'You' ? 'yours' : lo.pos) + ' ' + b(Math.round(100 * lo.crit) + '%') + '. That alone is worth about ' + b(C(lo.rate * (hi.crit - lo.crit))) + ' a second.' });
+  // big cooldowns
+  if (hi.cd > lo.cd * 1.2 && hi.cd - lo.cd > 0.02 * hi.rate * x.end) out.push({ v: (hi.cd - lo.cd) / Math.max(1, x.end) * 0.5, txt: 'Big cooldowns: ' + hi.pos + ' did ' + b(C(hi.cd)) + ' against ' + b(C(lo.cd)) + '. Using them more often, or at better moments, adds up.' });
+  // Rotation checks the lower side did worse on, with what Rotation works out they cost
+  for (const o of x.rot || []) { const lw = x.rotLo === 'A' ? o.w > 0 : o.w < 0; if (!lw) continue; const c = x.rotLo === 'A' ? o.c : o.d, d2 = x.rotLo === 'A' ? o.d : o.c;
+    out.push({ v: (c.cost || 0) / Math.max(1, x.end) || 0.01 * hi.rate, txt: 'Rotation, ' + esc(c.label || c.k) + ': ' + (lo.n === 'You' ? 'you' : lo.n) + ' ' + (c.v != null ? b(c.v) : '') + ', ' + hi.n + ' ' + (d2.v != null ? b(d2.v) : '') + '.' + ((c.cost || 0) >= 20000 ? ' Rotation works out that cost about ' + b(C(c.cost / Math.max(1, x.end))) + ' a second.' : '') }); }
+  // talents only the higher side took that make the spells where the gap is stronger
+  for (const o of x.hits || []) if (o.used) continue; else if (o.H === hi.nRaw && o.j.ts.length && !o.j.own) out.push({ v: 0.2 * o.j.w, txt: 'Talent: ' + b(esc(o.j.e.name)) + ', which only ' + hi.n + ' took, makes ' + esc(o.j.ts.join(' and ')) + ' stronger.' });
+    else if (o.H === hi.nRaw && o.j.own) out.push({ v: o.j.own, txt: 'Talent: ' + b(esc(o.j.e.name)) + ', which only ' + hi.n + ' took, did ' + b(C(o.j.own)) + ' a second by itself.' });
+  if (!out.length) return '';
+  out.sort((p, q) => q.v - p.v);
+  const top = out.slice(0, 6);
+  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>Everything that added up to the difference, the biggest first</small></h3><p class="cmp-wlead">' + hi.n + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(C(gap) + ' more') + ' a second than ' + (lo.n === 'You' ? 'you' : lo.n) + '. The main reasons:</p>' +
+    '<ol class="cmp-gl">' + top.map((o) => '<li>' + o.txt + '</li>').join('') + '</ol>' + (out.length > 6 ? '<p class="sub" style="margin:6px 0 0">' + plural(out.length - 6, 'smaller reason') + ' below, in the sections under this one.</p>' : '') + '</div>';
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
 const cmpLead = (A, a, B, b, verb) => (!a && !b ? '' : Math.abs(a - b) / Math.max(a, b) < 0.03 ? 'About the same.' : (a > b ? A : B) + ' ' + verb + ' ' + (Math.min(a, b) ? Math.round(100 * Math.abs(a - b) / Math.min(a, b)) + '% ' : '') + 'more.');
@@ -11476,7 +11508,11 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const whyM = k === kq ? cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: ra, ab: A.ab, hero: hA, tal: tal && tal.a }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, rate: rb, ab: B.ab, hero: heroQ(q), tal: tal && tal.b }, k, p.specName) : '';
   const rot = cmpRot(r, p, q, rB);
   if (rot && rot.a != null && rot.b != null) cards.unshift({ ...two, label: 'Rotation score', a: rot.a, b: rot.b, fa: String(Math.round(rot.a)), fb: String(Math.round(rot.b)), gap: cmpGap(rot.a, rot.b), st: rot.a >= rot.b - 2 ? 'ok' : 'warn', txt: 'From the Rotation tab: how well each pressed their buttons.' });
-  return { vs, body: (lead || '') + whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups + ohGroup) };
+  const critOfAll = (x, kk) => { let h = 0, c = 0; for (const a of (kk === 'heal' ? x.healAb : x.dmgAb).values()) { h += a.hits; c += a.crits; } return h ? c / h : null; };
+  const side = (x, rr, kk, ab, isA) => ({ n: isA ? An : Bn, nRaw: isA ? An : Bn, pos: isA ? (me ? 'your' : An + '\'s') : Bn + '\'s', rate: isA ? ra : rb, ab, cpm: ab.reduce((t, a) => t + (a.cpm || 0), 0), crit: critOfAll(x, kk), cd: cdT(isA ? cdA : cdB) });
+  const sA = side(p, r, k, A.ab, true), sB = side(q, rB, kq, B.ab, false), loA = ra < rb;
+  const gapH = k === kq ? cmpGapWhy({ lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits }) : '';
+  return { vs, body: (lead || '') + gapH + whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups + ohGroup) };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
 // downloaded and read like one of your pulls, then the same page as Fellow raiders (your call, Oct 19: "both tabs set up
