@@ -3347,7 +3347,7 @@ function buildCoiledAltar(ev, r, h) {
   const corners = [];
   for (const s of soaks) {
     const hit = s.hit ?? s.t + 3;
-    const tgt = ev.filter((e) => e.k === 'aura' && e.op === 'apply' && L(e.spell) === s.n && h.isPlayer(e.dst) && e.t <= hit && e.t >= hit - 12).map((e) => e.dst)[0];
+    const tgtE = ev.find((e) => e.k === 'aura' && e.op === 'apply' && L(e.spell) === s.n && h.isPlayer(e.dst) && e.t <= hit && e.t >= hit - 12), tgt = tgtE && tgtE.dst;
     const tag = (g) => { const im = IMMUNE.filter((n) => has(g, n, hit)), ex = EXTERNAL.filter((n) => has(g, n, hit)); return im.length ? 'immune: ' + im.join('/') : ex.length ? 'external: ' + ex.join('/') : role(g) === 'tank' ? 'tank' : ''; };
     const gi = s.n === 'grim guillotine' ? grim.indexOf(s) : p1g.indexOf(s);
     const key = s.n === 'grim guillotine' ? ['gg1', 'gg2', 'gg3'][gi] : ['g1', 'g2'][gi];
@@ -3357,11 +3357,17 @@ function buildCoiledAltar(ev, r, h) {
     const all = s.who.concat(tgt && !s.who.includes(tgt) ? [tgt] : []);
     // The axe lands where the target stands and hits everyone within 9 yards (soakers come from the damage hits).
     const lp = tgt && h.snap(hit).find((p) => p.guid === tgt);
-    const ring = lp ? [{ x: lp.x, y: lp.y, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }] : [];
+    // (your note, Oct 19: the circle rides on the target while they run it to the spot, from the debuff to the drop, then
+    // stays where the axe landed; a still map shows only the landed one)
+    const gcol = mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), tA = tgtE ? tgtE.t : hit;
+    const ring = lp ? (hit - tA > 0.3 ? [{ guid: tgt, t0: tA, dur: hit - tA - 0.05, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol }] : [])
+      .concat([{ x: lp.x, y: lp.y, t0: hit - 0.05, dur: 30, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }]) : [];
     // outcome on the map: soakers who lived = right; soakers who died, or a target with no protection = wrong
     const diedG = r.deaths.filter((d) => s.died.includes(d.player) && Math.abs(d.t - hit) < 6).map((d) => d.guid);
     const wrong = diedG.concat(mythic && tgt && !tag(tgt) && !diedG.includes(tgt) ? [tgt] : []);
-    const map = { t: hit, hl: all, hlLabel: 'Soakers (in the circle)', good: all.filter((g) => !wrong.includes(g)), goodLabel: 'soaked and lived', bad: wrong, badLabel: 'died in the soak, or target without protection', rings: ring, title: S(s.n)[1] + ' drop at ' + h.fmtT(hit) + ': ' + s.who.length + ' in the circle (soakers ringed)' };
+    const map = { t: hit, hl: all, hlLabel: 'Soakers (in the circle)', good: all.filter((g) => !wrong.includes(g)), goodLabel: 'soaked and lived', bad: wrong, badLabel: 'died in the soak, or target without protection', rings: ring, title: S(s.n)[1] + ' drop at ' + h.fmtT(hit) + ': ' + s.who.length + ' in the circle (soakers ringed)',
+      // (the animation starts as the target gets the debuff, so the run is part of it)
+      ...(h.frames && hit - tA > 0.3 ? { frames: h.frames(Math.max(0, Math.min(tA, hit - 4) - 0.5), Math.min(dur, hit + 1.5), 0.25) } : {}) };
     const corner = cornerOf(all, hit); if (s.n === 'grim guillotine') corners[gi] = corner;
     // the target needs protection on every soak but the last Grim Guillotine (where the plan just over-sends)
     const needsProt = mythic && key !== 'gg3', tgtDied = tgt && s.died.includes(pname(tgt));

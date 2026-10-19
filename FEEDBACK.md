@@ -464,6 +464,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Nothing moved between phases: the old heading is kept out of sight for placing a section that has no times of
   its own. Checked on The Coiled Altar and Ula'tek pulls.
 
+## 2026-10-19, round 247: Guillotine's circle runs with its target; maps loop until closed (your notes)
+- [x] **Guillotine and Grim Guillotine (Coiled Altar):** the 9-yard circle now rides on the targeted player from the
+  moment they get the debuff, while they run it to the spot, then stays where the axe landed. The map starts just
+  before the debuff, so the run is part of it. (The other Coiled Altar circles, Gloombomb and the orb carriers, already
+  followed their players.)
+- [x] **Every animated map plays start to finish and starts over** until it's closed, with a short hold on the outcome
+  between loops. A clip longer than about 12 seconds plays faster. It used to play once and stop on the key moment,
+  which looked like a freeze.
+- [x] **No more freezing:** a frame that fails to draw is skipped instead of stopping the map, and coming back to the
+  browser tab no longer jumps to the end. Maps rest while they're off screen, so a page of maps stays smooth.
+- [x] Checked on the Mythic kill (pull 13): the circle follows the target, then holds at the drop; the loop repeats; no errors.
+
 ## 2026-10-19, round 246: The pull cards line up (your note: "something visually off about the cards")
 - [x] **Every card is the same size and edge:** Whole night was taller, wider and had a lighter edge; now it matches the
   pull cards, with its top level with theirs, on desktop and phone.

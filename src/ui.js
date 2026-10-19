@@ -1836,8 +1836,7 @@ function storedNotesBind(only) {
   const r = S.rep, cur = r.item.boss, k0 = pullKey(r.item), NO = notesOf(cur);
   // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
   const redo = (b) => { for (const rep of CACHE.values()) if (rep.item.boss === b) applyNote(rep); renderMain(); };
-  if ($('#snBox #noteNewBtn')) $('#snBox #noteNewBtn').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
-  $$('#snBox [data-nedit]').forEach((x) => (x.onclick = () => { S.noteEdit = true; S.noteEditId = x.dataset.nedit; assign(only); }));
+  if ($('#snBox #noteNewBtn')) $('#snBox #noteNewBtn').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };  $$('#snBox [data-nedit]').forEach((x) => (x.onclick = () => { S.noteEdit = true; S.noteEditId = x.dataset.nedit; assign(only); }));
   // (picking a note takes you to This pull with it, at the top of the tab, so you see how the pull went with it (your note, Oct 18))
   $$('#snBox [data-nuse]').forEach((x) => (x.onclick = () => { const o = notesOf(cur); o.byPull = o.byPull || {}; o.byPull[k0] = x.dataset.nuse; notesSave(cur, o); S.asView = 'pull'; redo(cur);
     const top = $('#assignBox'); if (top) window.scrollTo({ top: Math.max(0, top.getBoundingClientRect().top + window.scrollY - 70) }); }));
@@ -3764,8 +3763,10 @@ function bindAnim(box, mp, pmap, still) {
   const inner = (html) => { const a = html.indexOf('<svg'), b = html.indexOf('>', a), c = html.indexOf('</svg><div class="zscale">', b); return html.slice(b + 1, c); };
   // Playback is drawn every screen refresh (~60 fps) at real-time speed, blending each unit's position between the
   // 0.2s frames (the log itself records positions about every 0.5s, so this smooths movement, it doesn't add detail).
-  const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t;
-  let ft = t0, raf = null, last = 0, drawn = -1, until = null, spd = 1; // (until: a lead-up stops on the key moment; spd: how fast it plays)
+  // (your note, Oct 19: every map plays from start to finish and starts over, until it's closed. It holds a moment on
+  // the outcome before the next loop, rests while it's off screen, and a long clip plays faster: about 12 seconds a loop)
+  const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t, spd = Math.max(1, (t1 - t0) / 12), HOLD = 1.2;
+  let ft = t0, raf = null, last = 0, lastDraw = 0, drawn = -1, paused = false, seen = !still, held = 0;
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;
     const a = fr[i], b = fr[Math.min(i + 1, fr.length - 1)], w = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
@@ -3776,32 +3777,40 @@ function bindAnim(box, mp, pmap, still) {
   const show = (t) => {
     ft = Math.min(t1, Math.max(t0, t));
     const { i, pts } = at(ft);
-    svg.innerHTML = inner(miniMap({ ...mp, pts, ft }, pmap));
+    // (a frame that fails to draw is skipped, so one bad moment never stops the whole map)
+    try { svg.innerHTML = inner(miniMap({ ...mp, pts, ft }, pmap)); } catch (e) { return; }
     if (drawn !== i) { rng.value = i; drawn = i; }
     lab.textContent = T(ft) + '.' + String(Math.floor((ft % 1) * 10));
     if (box._zoomApply) box._zoomApply();
   };
+  let obs = null;
   const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; btn.textContent = '▶ Play'; };
   const step = (now) => {
-    if (!box.isConnected) return stop();
-    const dt = last ? (now - last) / 1000 : 0; last = now;
-    if (until != null && ft + dt * spd >= until) { show(until); until = null; spd = 1; return stop(); }
-    show(ft + dt * spd);
-    if (ft >= t1) return stop();
+    raf = null;
+    if (!box.isConnected) { if (obs) obs.disconnect(); return; } // (closed: done for good)
+    if (!seen) { last = 0; return; } // (off screen: rests, and picks up where it was when it's back)
+    // (at most a tenth of a second at a time, so coming back to the browser tab doesn't jump to the end)
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
+    if (ft >= t1) { held += dt; if (held >= HOLD) { held = 0; ft = t0; drawn = -1; show(t0); lastDraw = now; } }
+    else { const nt = Math.min(t1, ft + dt * spd); if (nt >= t1 || now - lastDraw >= 33) { show(nt); lastDraw = now; } else ft = nt; } // (about 30 frames a second)
     raf = requestAnimationFrame(step);
   };
-  const play = () => { if (ft >= t1) ft = t0; btn.textContent = '❚❚ Pause'; last = 0; raf = requestAnimationFrame(step); };
-  btn.onclick = () => { until = null; spd = 1; if (raf) stop(); else play(); };
-  rng.oninput = () => { stop(); show(fr[+rng.value].t); };
+  const play = () => { paused = false; btn.textContent = '❚❚ Pause'; last = 0; if (!raf) raf = requestAnimationFrame(step); };
+  btn.onclick = () => { if (paused) { if (ft >= t1) { ft = t0; held = 0; } play(); } else { paused = true; stop(); } };
+  rng.oninput = () => { paused = true; stop(); show(fr[+rng.value].t); };
+  // (it moves only while most of it is on screen)
+  if (typeof IntersectionObserver !== 'undefined') {
+    obs = new IntersectionObserver((es) => { for (const e of es) { const was = seen; seen = e.isIntersecting;
+      if (seen && !was && still && ft === t0 && drawn !== 0) show(t0); // (first time on screen: from the start)
+      if (seen && !paused && !raf) play(); } }, { threshold: 0.4 });
+    obs.observe(box);
+  } else seen = true;
   if (!still) { show(t0); play(); return; }
-  // (the key moment: the frame closest to the map's own snapshot)
+  // (until it's on screen, a map shows its key moment: the frame closest to the map's own snapshot)
   const ref = (mp.pts || []).slice(0, 6); let bi = 0, bd = Infinity;
   fr.forEach((f, i) => { const m = new Map(f.pts.map((p) => [p.guid, p])); let d = 0, n = 0; for (const p of ref) { const q = m.get(p.guid); if (q) { d += Math.abs(q.x - p.x) + Math.abs(q.y - p.y); n++; } } if (n && d < bd) { bd = d; bi = i; } });
-  show(fr[bi].t); stop();
-  // (the lead-up, once it's on screen: from the clip's start to the key moment, then it holds there (your note, Oct 18:
-  // the seconds before show why, above all for a death))
-  // (a long lead-up, like an egg phase's half a minute of pickups, plays faster: about 8 seconds at most; Play is real time)
-  box._lead = () => { if (raf || bi === 0) return; ft = t0; until = fr[bi].t; spd = Math.max(1, (until - t0) / 8); show(t0); play(); };
+  show(fr[bi].t); ft = t0; btn.textContent = '❚❚ Pause';
+  if (seen) play();
 }
 // Zoom and pan for miniMap: wheel zooms around the cursor, drag pans, double-click goes back to the mechanic.
 // Icons are counter-scaled so they keep their size on screen; the scale bar follows the zoom.
