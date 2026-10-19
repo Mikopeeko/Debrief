@@ -12175,9 +12175,15 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
   const numbers = '<div class="panel"><h3>The numbers<small>Hover any card for both numbers.</small></h3><div class="cmp-cards">' + cards.filter(Boolean).map(cmpCard).join('') + '</div></div>';
   const spells = k === kq && q.specName === p.specName ? '<div class="panel"><h3>' + capS(U(k)) + ' a second, spell by spell<small>Where the ' + U(k) + ' came from</small></h3>' + cmpSpellRows({ ...A, name: nmO ? nmO.a : me ? 'You' : p.name, rate: ra }, { ...B, name: nmO ? nmO.b : q.name, rate: rb }) + '</div>' : '';
   // (Oct 19, "highlight the total HPS each player did somewhere in the beginning": both totals, large, in their colors, and the gap between them)
-  const big = (n, col, v, kk) => '<div class="cmp-hpn"><span style="color:' + col + '">' + n + '</span><b class="cmp-hpv" style="color:' + col + '">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second</span></div>';
+  // (Oct 19, "more interesting, it starts the page": a face-off, each side's spec icon over its spec picture, the gap in a gold badge between
+  // them, and a tug of war bar along the bottom, each side as long as its number)
+  const big = (n, col, v, kk, pl, rt) => '<div class="cmp-hpn' + (rt ? ' cmp-hpr' : '') + '" style="--c:' + col + '">' + (pIcon(pl) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(pl)) + '" alt="" onerror="this.remove()">' : '') +
+    '<div><span class="cmp-hpw">' + n + '</span><b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second</span></div></div>';
   const gapPc = k === kq && ra && rb ? Math.abs(ra - rb) / Math.min(ra, rb) : null, hiN = ra >= rb ? (me ? 'You' : An) : Bn, verbH = k === 'heal' ? 'healed' : 'did';
-  const hps = '<div class="panel cmp-hps">' + big(me ? 'You' : An, p.color, ra, k) + '<div class="cmp-hpm">' + (gapPc == null ? '<span class="sub">vs</span>' : gapPc < 0.02 ? '<b>About the same</b>' : '<b>' + hiN + ' ' + verbH + ' ' + Math.round(100 * gapPc) + '% more</b><span class="sub">' + C(Math.abs(ra - rb)) + ' a second</span>') + '</div>' + big(Bn, colB, rb, kq) + '</div>';
+  const badge = gapPc == null ? '<b>vs</b>' : gapPc < 0.02 ? '<b>=</b><span>About the same</span>' : '<b>+' + Math.round(100 * gapPc) + '%</b><span>' + hiN + ' ' + verbH + ' more</span>';
+  const tug = k === kq && ra > 0 && rb > 0 ? '<div class="cmp-hpbar"><i style="flex:' + ra + ';background:' + p.color + '"></i><i style="flex:' + rb + ';background:' + colB + '"></i></div>' : '';
+  const hps = '<div class="panel cmp-hps" style="--artA:' + specArt(p) + ';--artB:' + specArt(q) + '">' + big(me ? 'You' : An, p.color, ra, k, p) +
+    '<div class="cmp-hpm"' + (gapPc != null && gapPc >= 0.02 ? ' data-tt="' + esc(hiN + ' ' + verbH + ' ' + C(Math.abs(ra - rb)) + ' a second more.') + '"' : '') + '>' + badge + '</div>' + big(Bn, colB, rb, kq, q, true) + tug + '</div>';
   const sideBy = '<div class="panel"><h3>Side by side<small>Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>';
   // (Oct 19, "I want players to use this tab to make themselves better": the 3 things costing the first player the most against this one, each
   // with what it's worth a second, one plain line and the Try; the rest of the page is the evidence)
