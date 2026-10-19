@@ -11194,6 +11194,13 @@ function cmpDiffs(A, B, unit, story) {
     (top.length ? '<div class="cmp-lbl cmp-spl">Spell by spell</div><div class="cmp-dg">' +
     top.map((o) => '<div class="cmp-dc">' + spellIcon(o.x.id, nm(o.x)) + '<span><b>' + esc(nm(o.x)) + '</b><span class="sub">' + esc(o.txt) + '</span></span></div>').join('') + '</div>' : '') + '</div>';
 }
+// (Oct 19, "the phrasing is awkward, needs to be clear and simple": every comparison sentence leads with who did more,
+// by how much, then both numbers. A and B: { n: the name as written (or "You"), pos: "your" / "Drcornman's" })
+const cmpMore = (A, a, B, b, verb, what, fmt, tail) => { if (!a && !b) return ''; const lv = a && b && Math.abs(a - b) / Math.max(a, b) < 0.03;
+  const w = what ? ' ' + what : '';
+  if (lv) return A.n + ' and ' + B.n + ' ' + verb + ' about the same' + w + ': <b>' + fmt(a) + '</b>' + (tail || '') + ' and <b>' + fmt(b) + '</b>.';
+  const [H, h, l] = a > b ? [A, a, b] : [B, b, a];
+  return H.n + ' ' + verb + ' ' + (l ? Math.round(100 * (h - l) / l) + '% ' : '') + 'more' + w + ': <b>' + fmt(h) + '</b>' + (tail || '') + ' against <b>' + fmt(l) + '</b>.'; };
 // a gap in words, for the sentences: "14% less than", "level with" (more and less read the same for any amount)
 const cmpRel = (a, b, more, less) => (!a || !b ? '' : Math.abs(a - b) / b < 0.02 ? 'level with' : Math.round(100 * Math.abs(a - b) / b) + '% ' + (a > b ? more || 'more than' : less || 'less than'));
 // Spells side by side as the site's bar rows: a bar a spell in A's class colour for A's share, a white mark at B's share,
@@ -11284,24 +11291,32 @@ function cmpMate(r, p, ps) {
       cmpTwo(cmpList(esc(p.name) + ', casts a minute', p.color, cmpCasts(r, p)), cmpList(esc(q.name) + ', casts a minute', q.color, cmpCasts(r, q))));
   // How they differ, in plain sentences: output, staying alive, mistakes, damage taken, casting, crit, utility. The mark
   // is from this player's side: green where they came out ahead, yellow where they were behind, a dash for plain facts.
-  // (the player's name once, then "they"; "you" all along when it's you. A sentence naming the teammate first keeps the name.)
-  let named = false; const S0f = cmpIsMe(p) ? 'You' : esc(p.name), They = () => (cmpIsMe(p) ? 'You' : named ? 'They' : ((named = true), esc(p.name)));
-  const Q = esc(q.name), b = (x) => '<b>' + x + '</b>', did = (kk, v) => (kk === 'heal' ? 'healed ' + b(C(v)) + ' a second' : 'did ' + b(C(v)) + ' damage a second');
-  const mlist = (x) => { const l = keptMistakes(r).filter((m) => m.player === x.name && m.mechanic !== 'Death'); return l.length ? b(plural(l.length, 'mechanic mistake')) + ' (' + esc([...new Set(l.map((m) => m.mechanic))].slice(0, 2).join(', ')) + (new Set(l.map((m) => m.mechanic)).size > 2 ? ' and more' : '') + ')' : 'no mechanic mistakes'; };
+  // How they differ, in plain sentences: who did more and by how much, staying alive, mistakes, damage taken, casting,
+  // crit, overhealing, boss and adds, cooldowns, kicks and dispels. The mark is from this player's side: green where they
+  // came out ahead, yellow where they were behind, a dash for plain facts.
+  const me = cmpIsMe(p), PA = { n: me ? 'You' : esc(p.name), pos: me ? 'Your' : esc(p.name) + '\'s' }, PB = { n: esc(q.name), pos: esc(q.name) + '\'s' }, Q = PB.n, b = (x) => '<b>' + x + '</b>';
+  const mlist = (x) => { const l = keptMistakes(r).filter((m) => m.player === x.name && m.mechanic !== 'Death'), ms = [...new Set(l.map((m) => m.mechanic))]; return plural(l.length, 'mechanic mistake') + ' (' + esc(ms.slice(0, 2).join(', ')) + (ms.length > 2 ? ' and more' : '') + ')'; };
   const crit = (x, kk) => { let h = 0, c = 0; for (const a of (kk === 'heal' ? x.healAb : x.dmgAb).values()) { h += a.hits; c += a.crits; } return h ? c / h : null; };
   const deathOf = (x, t) => 'died at ' + b(T(t)) + (dth(x) && dth(x).ability ? ' to ' + esc(dth(x).ability) : '');
+  const pct = (v) => Math.round(100 * v) + '%', mp = nmis(p), mq = nmis(q), ca = crit(p, k), cb = crit(q, kq), xa = pc.per.get(p.name), xb = pc.per.get(q.name);
+  const cdL = (l) => l.slice(0, 3).map((c) => esc(c.name) + (c.n > 1 ? ' ' + c.n + ' times' : '') + ' (' + b(C(c.v)) + ')').join(', ');
   const story = [
-    k === kq ? [ra >= rb * 0.98 ? 'ok' : 'warn', They() + ' ' + did(k, ra) + ', ' + cmpRel(ra, rb) + ' ' + Q + ' (' + b(C(rb)) + ').'] : ['na', They() + ' and ' + Q + ' have different roles, so their output isn\'t compared here.'],
-    dA == null && dB == null ? ['ok', 'Both survived the pull.'] : dA != null && dB == null ? ['warn', They() + ' ' + deathOf(p, dA) + '. ' + Q + ' survived.'] : dA == null ? ['ok', Q + ' ' + deathOf(q, dB) + '. ' + S0f + ' survived.'] : ['na', They() + ' ' + deathOf(p, dA) + '. ' + Q + ' ' + deathOf(q, dB) + '.'],
-    !nmis(p) && !nmis(q) ? ['ok', 'Neither made a mechanic mistake.'] : [nmis(p) <= nmis(q) ? 'ok' : 'warn', They() + ' made ' + mlist(p) + '. ' + Q + ' made ' + mlist(q) + '.'],
-    [(p.avoidable || 0) <= (q.avoidable || 0) ? 'ok' : 'warn', They() + ' took ' + b(C(p.taken || 0)) + ' damage, ' + (p.avoidable ? C(p.avoidable) + ' of it avoidable' : 'none of it avoidable') + '. ' + Q + ' took ' + b(C(q.taken || 0)) + ', ' + (q.avoidable ? C(q.avoidable) + ' avoidable' : 'none avoidable') + '.'],
-    ['na', They() + ' cast ' + b(cpm(p).toFixed(1)) + ' times a minute, ' + cmpRel(cpm(p), cpm(q)) + ' ' + Q + ' (' + b(cpm(q).toFixed(1)) + ').'],
-  ].concat(q.specName === p.specName && crit(p, k) != null && crit(q, kq) != null ? [['na', They() + ' crit ' + b(Math.round(100 * crit(p, k)) + '%') + ' of the time. ' + Q + ' crit ' + b(Math.round(100 * crit(q, kq)) + '%') + '.']] : [])
-    .concat(k === 'heal' && kq === 'heal' ? [['na', They() + ' overhealed ' + b(Math.round(100 * ohF(p)) + '%') + ' of their healing. ' + Q + ' overhealed ' + b(Math.round(100 * ohF(q)) + '%') + '.']] : [])
-    .concat((() => { const xa = pc.per.get(p.name), xb = pc.per.get(q.name); return k === 'dmg' && kq === 'dmg' && xa && xb && xa.addShare != null && xb.addShare != null && Math.max(xa.addShare, xb.addShare) >= 0.03
-      ? [['na', They() + ' put ' + b(Math.round(100 * (1 - xa.addShare)) + '%') + ' of their damage into the boss and ' + b(Math.round(100 * xa.addShare) + '%') + ' into adds. ' + Q + ' put ' + b(Math.round(100 * (1 - xb.addShare)) + '%') + ' into the boss.']] : []; })())
-    .concat(cdA.length || cdB.length ? [['na', They() + ' used ' + (cdA.length ? cdA.slice(0, 3).map((c) => esc(c.name) + (c.n > 1 ? ' ' + c.n + ' times' : '') + ' (' + b(C(c.v)) + ')').join(', ') : 'no big cooldowns') + '. ' + Q + ' used ' + (cdB.length ? cdB.slice(0, 3).map((c) => esc(c.name) + (c.n > 1 ? ' ' + c.n + ' times' : '') + ' (' + b(C(c.v)) + ')').join(', ') : 'none') + '.']] : [])
-    .concat((p.interrupts || p.dispels || q.interrupts || q.dispels) ? [['na', They() + ' made ' + plural(p.interrupts || 0, 'interrupt') + ' and ' + plural(p.dispels || 0, 'dispel') + '. ' + Q + ' made ' + plural(q.interrupts || 0, 'interrupt') + ' and ' + plural(q.dispels || 0, 'dispel') + '.']] : []);
+    k === kq ? [ra >= rb * 0.98 ? 'ok' : 'warn', cmpMore(PA, ra, PB, rb, k === 'heal' ? 'healed' : 'did', k === 'heal' ? '' : 'damage', C, ' a second')]
+      : ['na', PA.n + ' and ' + Q + ' have different roles, so their output isn\'t compared.'],
+    dA == null && dB == null ? ['ok', 'Both survived the pull.'] : dA != null && dB == null ? ['warn', PA.n + ' ' + deathOf(p, dA) + '. ' + Q + ' survived.'] : dA == null ? ['ok', Q + ' ' + deathOf(q, dB) + '. ' + PA.n + ' survived.'] : ['na', PA.n + ' ' + deathOf(p, dA) + '. ' + Q + ' ' + deathOf(q, dB) + '.'],
+    !mp && !mq ? ['ok', 'Neither made a mechanic mistake.'] : mp && mq ? [mp <= mq ? 'ok' : 'warn', PA.n + ' made ' + b(mlist(p)) + '. ' + Q + ' made ' + b(mlist(q)) + '.'] : mq ? ['ok', Q + ' made ' + b(mlist(q)) + '. ' + PA.n + ' made none.'] : ['warn', PA.n + ' made ' + b(mlist(p)) + '. ' + Q + ' made none.'],
+    [(p.avoidable || 0) <= (q.avoidable || 0) ? 'ok' : 'warn', !(p.avoidable || q.avoidable) ? 'Neither took avoidable damage.'
+      : !p.avoidable || !q.avoidable ? (p.avoidable ? PA : PB).n + ' took ' + b(C(p.avoidable || q.avoidable)) + ' avoidable damage. ' + (p.avoidable ? PB : PA).n + ' took none.'
+      : cmpMore(PA, p.avoidable, PB, q.avoidable, 'took', 'avoidable damage', C)],
+    ['na', cmpMore(PA, cpm(p), PB, cpm(q), 'cast', 'spells a minute', (v) => v.toFixed(1))],
+  ].concat(q.specName === p.specName && ca != null && cb != null ? [['na', Math.abs(ca - cb) < 0.01 ? PA.pos + ' and ' + PB.pos + ' spells crit about as often: ' + b(pct(ca)) + ' and ' + b(pct(cb)) + '.'
+      : (ca > cb ? PA : PB).pos + ' spells crit more often: ' + b(pct(Math.max(ca, cb))) + ' against ' + b(pct(Math.min(ca, cb))) + '.']] : [])
+    .concat(k === 'heal' && kq === 'heal' ? [['na', Math.abs(ohF(p) - ohF(q)) < 0.02 ? PA.n + ' and ' + Q + ' overhealed about the same: ' + b(pct(ohF(p))) + ' and ' + b(pct(ohF(q))) + ' of their healing.'
+      : (ohF(p) > ohF(q) ? PA : PB).n + ' overhealed more: ' + b(pct(Math.max(ohF(p), ohF(q)))) + ' of their healing against ' + b(pct(Math.min(ohF(p), ohF(q)))) + '.']] : [])
+    .concat(k === 'dmg' && kq === 'dmg' && xa && xb && xa.addShare != null && xb.addShare != null && Math.max(xa.addShare, xb.addShare) >= 0.03
+      ? [['na', PA.n + ' put ' + b(pct(xa.addShare)) + ' of their damage into adds. ' + Q + ' put ' + b(pct(xb.addShare)) + '.']] : [])
+    .concat(cdA.length || cdB.length ? [['na', PA.n + ' used ' + (cdA.length ? cdL(cdA) : 'no big cooldowns') + '. ' + Q + ' used ' + (cdB.length ? cdL(cdB) : 'none') + '.']] : [])
+    .concat((p.interrupts || p.dispels || q.interrupts || q.dispels) ? [['na', PA.n + ' made ' + plural(p.interrupts || 0, 'interrupt') + ' and ' + plural(p.dispels || 0, 'dispel') + '. ' + Q + ' made ' + plural(q.interrupts || 0, 'interrupt') + ' and ' + plural(q.dispels || 0, 'dispel') + '.']] : []);
   const sameSp = q.specName === p.specName;
   return { vs, body: cmpDiffs({ ...A, ab: sameSp ? A.ab : [], who: cmpIsMe(p) ? 'You' : p.name }, { ...B, ab: sameSp ? B.ab : [], who: q.name }, k, story) +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
@@ -11354,15 +11369,21 @@ function cmpTop(r, p) {
   // (where this player's number would place among the top 3)
   const sides = TS.who.map((y, i) => ({ v: y.amount, i })).concat([{ v: mine, me: true }]).sort((a, b) => b.v - a.v), place = sides.findIndex((y) => y.me) + 1;
   // How they differ, in plain sentences: output and where it would place, fight length, casting, crit, hit size, the parse
-  let named = false; const They = () => (cmpIsMe(p) ? 'You' : named ? 'They' : ((named = true), esc(p.name))), Their = () => (cmpIsMe(p) ? 'Your' : named ? 'Their' : ((named = true), esc(p.name) + '\'s'));
-  const b = (v) => '<b>' + v + '</b>', Bw = B.many ? 'the top 3\'s average' : esc(B.name);
+  const me = cmpIsMe(p), PA = { n: me ? 'You' : esc(p.name), pos: me ? 'Your' : esc(p.name) + '\'s' }, PB = B.many ? { n: 'The top 3', pos: 'The top 3\'s' } : { n: esc(B.name), pos: esc(B.name) + '\'s' };
+  const b = (v) => '<b>' + v + '</b>', spl = k === 'heal' ? 'heals' : 'hits', lo = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+  const ahead = place - 1, rank = ahead === 0 ? 'That is more than all of the top 3.' : ahead === 3 ? 'All of the top 3 ' + (k === 'heal' ? 'healed' : 'did') + ' more.' : 'Only ' + ahead + ' of the top 3 ' + (k === 'heal' ? 'healed' : 'did') + ' more.';
+  const hit0 = hitP.length ? hitP[0] : null, hitRev = hit0 && (hitA >= hitB) !== (hit0[0].avg >= hit0[1].avg);
   const story = [
-    [cmpGapSt(mine, B.amount) === 'bad' ? 'warn' : cmpGapSt(mine, B.amount), They() + ' ' + (k === 'heal' ? 'healed ' + b(C(mine)) + ' a second' : 'did ' + b(C(mine)) + ' damage a second') + ', ' + cmpRel(mine, B.amount) + ' ' + Bw + ' (' + b(C(B.amount)) + '). Among the top 3, that would place ' + b(ordinal(place)) + ' of 4.'],
-    ['na', 'This pull lasted ' + b(T(end)) + '. ' + (w ? Bc + '\'s kill took ' : 'Their kills took ') + b(T(B.dur)) + (w ? '' : ' on average') + (end > B.dur * 1.05 ? ', and a longer fight usually means a lower number a second.' : '.')],
-    [myCpm >= bCpm * 0.9 ? 'ok' : 'warn', They() + ' cast ' + b(myCpm.toFixed(1)) + ' times a minute with the spells that did their ' + U + ', ' + cmpRel(myCpm, bCpm, 'more than', 'fewer than') + ' ' + (B.many ? 'the top 3' : esc(B.name)) + ' (' + b(bCpm.toFixed(1)) + ').'],
-    ['na', They() + ' crit ' + b(pc(myCrit)) + ' of the time. ' + Bc + ' crit ' + b(pc(bCrit)) + '.'],
-  ].concat(hitP.length ? [[hitA >= hitB * 0.95 ? 'ok' : 'warn', Their() + ' ' + esc(nm(hitP[0][0])) + ' hit for ' + b(C(hitP[0][0].avg)) + ' on average, ' + (B.many ? 'the top 3\'s' : esc(B.name) + '\'s') + ' for ' + b(C(hitP[0][1].avg)) + '. Over their ' + hitP.length + ' biggest spells, ' + (cmpIsMe(p) ? 'your' : 'their') + ' hits were ' + cmpRel(hitA, hitB, 'bigger than', 'smaller than') + ' ' + (B.many ? 'the top 3\'s' : esc(B.name) + '\'s') + '.']] : [])
-    .concat(x ? [[x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', They() + ' parsed ' + b(Math.floor(x.pct)) + ' this kill, better than ' + Math.floor(x.pct) + '% of ' + esc(spn) + 's on this boss.']] : []);
+    [cmpGapSt(mine, B.amount) === 'bad' ? 'warn' : cmpGapSt(mine, B.amount), cmpMore(PA, mine, PB, B.amount, k === 'heal' ? 'healed' : 'did', k === 'heal' ? '' : 'damage', C, ' a second') + ' ' + rank],
+    ['na', Math.abs(end - B.dur) / B.dur < 0.05 ? 'The fights were about the same length (' + b(T(end)) + ' and ' + b(T(B.dur)) + ').'
+      : 'This pull was ' + b(Math.round(Math.abs(end - B.dur)) + ' seconds') + ' ' + (end > B.dur ? 'longer' : 'shorter') + ' than ' + lo(PB.pos) + (B.many ? ' kills, on average' : ' kill') + (end > B.dur ? '. A longer fight usually means a lower number a second.' : '.')],
+    [myCpm >= bCpm * 0.9 ? 'ok' : 'warn', cmpMore(PA, myCpm, PB, bCpm, 'cast', (k === 'heal' ? 'healing' : 'damage') + ' spells a minute', (v) => v.toFixed(1))],
+    [myCrit >= bCrit * 0.95 ? 'ok' : 'warn', Math.abs(myCrit - bCrit) < 0.01 ? PA.pos + ' ' + spl + ' crit about as often as ' + lo(PB.pos) + ': ' + b(pc(myCrit)) + ' and ' + b(pc(bCrit)) + '.'
+      : (myCrit > bCrit ? PA.pos : PB.pos) + ' ' + spl + ' crit more often: ' + b(pc(Math.max(myCrit, bCrit))) + ' against ' + b(pc(Math.min(myCrit, bCrit))) + '.'],
+  ].concat(hit0 ? [[hitA >= hitB * 0.95 ? 'ok' : 'warn', (Math.abs(hitA - hitB) / Math.max(hitA, hitB) < 0.03 ? PA.pos + ' ' + spl + ' hit about as hard as ' + lo(PB.pos) + '.'
+      : (hitA > hitB ? PA.pos : PB.pos) + ' ' + spl + ' hit ' + b(Math.round(100 * Math.abs(hitA - hitB) / Math.min(hitA, hitB)) + '% harder') + ' on average.') +
+      (hitRev ? ' ' + (hit0[0].avg > hit0[1].avg ? PA.pos : PB.pos) + ' ' + esc(nm(hit0[0])) + ' hit harder, though (' + b(C(Math.max(hit0[0].avg, hit0[1].avg))) + ' against ' + b(C(Math.min(hit0[0].avg, hit0[1].avg))) + ').' : '')]] : [])
+    .concat(x ? [[x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', PA.pos + ' parse was ' + b(Math.floor(x.pct)) + ', better than ' + Math.floor(x.pct) + '% of ' + esc(spn) + 's on this boss.']] : []);
   return { vs, body: cmpDiffs({ ...A, who: cmpIsMe(p) ? 'You' : p.name }, { ...B, who: B.who }, k, story) +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
 }
