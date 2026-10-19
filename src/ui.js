@@ -11884,7 +11884,11 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const chips = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k) });
   const numbers = '<div class="panel"><h3>The numbers<small>Hover any card for both numbers.</small></h3><div class="cmp-cards">' + cards.filter(Boolean).map(cmpCard).join('') + '</div></div>';
   const spells = k === kq && q.specName === p.specName ? '<div class="panel"><h3>' + capS(U(k)) + ' a second, spell by spell<small>Where the ' + U(k) + ' came from</small></h3>' + cmpSpellRows({ ...A, name: me ? 'You' : p.name, rate: ra }, { ...B, rate: rb }) + '</div>' : '';
-  return { vs, body: (lead || '') + (chips || gapH) + numbers + spells + chart +
+  // (Oct 19, "highlight the total HPS each player did somewhere in the beginning": both totals, large, in their colors, and the gap between them)
+  const big = (n, col, v, kk) => '<div class="cmp-hpn"><span style="color:' + col + '">' + n + '</span><b class="cmp-hpv" style="color:' + col + '">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second</span></div>';
+  const gapPc = k === kq && ra && rb ? Math.abs(ra - rb) / Math.min(ra, rb) : null, hiN = ra >= rb ? (me ? 'You' : An) : Bn, verbH = k === 'heal' ? 'healed' : 'did';
+  const hps = '<div class="panel cmp-hps">' + big(me ? 'You' : An, p.color, ra, k) + '<div class="cmp-hpm">' + (gapPc == null ? '<span class="sub">vs</span>' : gapPc < 0.02 ? '<b>About the same</b>' : '<b>' + hiN + ' ' + verbH + ' ' + Math.round(100 * gapPc) + '% more</b><span class="sub">' + C(Math.abs(ra - rb)) + ' a second</span>') + '</div>' + big(Bn, colB, rb, kq) + '</div>';
+  return { vs, body: (lead || '') + hps + (chips || gapH) + numbers + spells + chart +
     cmpFold('more', 'More detail', 'Talent differences, every Rotation check and more bars side by side. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '') + '<div class="panel"><h3>Side by side<small>Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>') };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill

@@ -3002,6 +3002,10 @@ details.pf-dc > summary .sst { margin-left: auto; }
    pull | their best | gap) and the raids (rank | bar | kill | raid DPS | specs matched) */
 .pf-row.cb.cmp-sr { grid-template-columns: 20px minmax(0, 1fr) 62px 62px 96px; }
 /* Healing a second, spell by spell: both players' bars and the difference */
+/* the two totals, large, at the top of Compare */
+.cmp-hps { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; padding: 14px 18px; } .cmp-hpn { display: flex; flex-direction: column; min-width: 0; } .cmp-hpn:last-child { align-items: flex-end; text-align: right; }
+.cmp-hpn > span:first-child { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; } .cmp-hpv { font: 800 34px/1.1 var(--head); font-variant-numeric: tabular-nums; } .cmp-hpm { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; } .cmp-hpm b { font-size: 15px; color: var(--gold); }
+@media (max-width: 640px) { .cmp-hps { grid-template-columns: 1fr 1fr; } .cmp-hpm { grid-column: 1 / -1; grid-row: 2; } .cmp-hpv { font-size: 26px; } }
 /* Rotation chips: a check with both players' values, bars when they're numbers */
 .cmp-rk { cursor: help; } .cmp-rkr { display: grid; grid-template-columns: 14px 86px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 5px 0; } .cmp-rkv { font: 700 14px var(--head); text-align: right; white-space: nowrap; } .cmp-rkv span { font: 500 12px var(--body, inherit); color: var(--muted); }
 .cmp-rk .cmp-ct { margin-top: 6px; } .cmp-rk .cmp-try { display: block; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); } .cmp-rk .cmp-try b { color: var(--gold); }
