@@ -5519,22 +5519,33 @@ function perfDetail(r, kind, p, bossN, rowsAll) {
   // (long lists show their top few, with a switch for the rest; remembered per list)
   const more = (k, n, of) => (of > n || (S.perfMore && S.perfMore[k]) ? '<button class="pf-all" type="button" data-k="' + k + '">' + (S.perfMore && S.perfMore[k] ? 'Show fewer' : 'Show all ' + of) + '</button>' : '');
   const topN = (k, n) => (S.perfMore && S.perfMore[k] ? 99 : n);
+  // (Top 3: the same spell's share for the 3 best of their spec on this boss, from Warcraft Logs, with their casts a minute, crit
+  // and average hit on hover; spells those players press that this one didn't come last, with a dash)
+  const TS = topSpecFor(r, p, kind), tsOn = TS && TS !== 'loading' && TS.n > 0, tsBy = new Map(tsOn ? TS.ab.flatMap((t) => [[String(t.name).toLowerCase(), t], ['#' + t.id, t]]) : []);
+  const tsOf = (a) => tsBy.get('#' + a.id) || tsBy.get(a.name.replace(/^[^:]+: /, '').toLowerCase()) || null;
+  const tsTip = (t) => 'The top ' + TS.n + ' ' + (p.specName || '') + 's on this boss: ' + (100 * t.share).toFixed(1) + '% of their ' + (kind === 'heal' ? 'healing' : 'damage') + (t.cpm ? ', ' + t.cpm.toFixed(1) + ' casts a minute' : '') + (t.crit != null ? ', ' + Math.round(100 * t.crit) + '% crit' : '') + (t.avg ? ', ' + C(t.avg) + ' average' : '') + '.';
+  const tsCell = (t) => (TS === 'loading' ? '<td class="tp sub">…</td>' : tsOn ? (t ? '<td class="tp" title="' + esc(tsTip(t)) + '">' + (100 * t.share).toFixed(1) + '%</td>' : '<td class="tp sub">–</td>') : '');
   const abilTable = (k) => {
     const all = [...(k === 'heal' ? p.healAb : p.dmgAb).values()].sort((a, b) => b.total - a.total), tot = all.reduce((s, a) => s + a.total, 0) || 1, top = all.slice(0, topN('abil', 6));
     if (!top.length) return '';
-    const casts = (a) => (/: /.test(a.name) ? null : (p.castAb.get(a.name) || {}).n || null), mx = Math.max(1, top[0].total);
-    return '<table class="pf-abt"><thead><tr><th>' + (k === 'heal' ? 'Heal' : 'Ability') + '</th><th>Casts</th><th>Hits</th><th>Crit</th><th>Average</th>' + (k === 'heal' ? '<th>Over</th>' : '') + '<th class="sh">Share</th></tr></thead><tbody>' +
+    const casts = (a) => (/: /.test(a.name) ? null : (p.castAb.get(a.name) || {}).n || null), mx = Math.max(1, top[0].total), tsH = TS === 'loading' || tsOn ? '<th class="tp" title="The 3 best of their spec on this boss on Warcraft Logs">Top 3</th>' : '';
+    const mine = new Set(all.flatMap((a) => ['#' + a.id, a.name.replace(/^[^:]+: /, '').toLowerCase()]));
+    const miss = tsOn ? TS.ab.filter((t) => t.cpm >= 1 && t.share >= 0.03 && !mine.has('#' + t.id) && !mine.has(String(t.name).toLowerCase())) : [];
+    const cols = k === 'heal' ? 6 : 5;
+    return '<table class="pf-abt"><thead><tr><th>' + (k === 'heal' ? 'Heal' : 'Ability') + '</th><th>Casts</th><th>Hits</th><th>Crit</th><th>Average</th>' + (k === 'heal' ? '<th>Over</th>' : '') + '<th class="sh">Share</th>' + tsH + '</tr></thead><tbody>' +
       top.map((a) => '<tr><td class="an">' + abName(a) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : '') + '</td><td>' + (casts(a) || '<span class="sub">–</span>') + '</td><td>' + a.hits + '</td><td>' + (a.hits ? Math.round(100 * a.crits / a.hits) + '%' : '') + '</td><td>' + C(a.hits ? a.total / a.hits : 0) + '</td>' +
-        (k === 'heal' ? '<td>' + (a.total + a.over ? Math.round(100 * a.over / (a.total + a.over)) + '%' : '') + '</td>' : '') + '<td class="sh"><span class="pf-ab"><i style="width:' + (100 * a.total / mx).toFixed(1) + '%;background:' + p.color + '"></i></span><b>' + (100 * a.total / tot).toFixed(1) + '%</b></td></tr>').join('') + '</tbody></table>' +
+        (k === 'heal' ? '<td>' + (a.total + a.over ? Math.round(100 * a.over / (a.total + a.over)) + '%' : '') + '</td>' : '') + '<td class="sh"><span class="pf-ab"><i style="width:' + (100 * a.total / mx).toFixed(1) + '%;background:' + p.color + '"></i></span><b>' + (100 * a.total / tot).toFixed(1) + '%</b></td>' + tsCell(tsOf(a)) + '</tr>').join('') +
+      miss.map((t) => '<tr class="tp-miss"><td class="an">' + spell(t.id, t.name) + ' <span class="sub">not used</span></td>' + '<td><span class="sub">–</span></td>'.repeat(cols - 1) + '<td class="sh"><span class="sub">–</span></td>' + tsCell(t) + '</tr>').join('') + '</tbody></table>' +
       more('abil', 6, all.length);
   };
+  const tsNote = TS === 'loading' ? 'whole pull · loading the top 3 ' + esc(p.specName || '') + 's…' : tsOn ? 'whole pull · Top 3: ' + TS.who.map((w) => esc(w.name)).join(', ') + ', the best ' + esc(p.specName || '') + 's on this boss on Warcraft Logs' : 'whole pull';
   const out = head + cmpSec(), go = pfGoRow(p.name, [['cds', 'Cooldowns'], ['cast', 'Casts'], ['aura', 'Buffs']]);
   // (a healer's heals: how much of it landed on someone under half health)
   const heals = p.healing - p.absorbs, low = p.role === 'healer' && heals > 0 ? ' · ' + Math.round(100 * p.lowHeal / heals) + '% on someone under half health' : '';
   // (abilities first: they say the most about how a pull went; targets after)
-  if (kind === 'dmg') return out + sec('Abilities', 'whole pull', abilTable('dmg')) +
+  if (kind === 'dmg') return out + sec('Abilities', tsNote, abilTable('dmg')) +
     sec('Targets', 'whole pull', barList([...p.dmgT].sort((a, b) => b[1] - a[1]).slice(0, topN('tgts', 4)).map(([n, v]) => ({ html: esc(n) + (bossN.has(n) ? ' <span class="sub">boss</span>' : ''), v })), p.color) + more('tgts', 4, p.dmgT.size)) + go;
-  return out + sec('Heals', 'the whole pull, not counting overhealing' + low, abilTable('heal')) + go;
+  return out + sec('Heals', 'the whole pull, not counting overhealing' + low + (tsNote !== 'whole pull' ? tsNote.replace('whole pull', '') : ''), abilTable('heal')) + go;
 }
 // healing from trinkets, tagged so a big line in the list reads right (counted like any other heal): Soulcoil Barrier, a
 // healer trinket's absorb on the raid
@@ -10914,6 +10925,20 @@ function parsesFor(r, kind) {
   WCL.loadRankings(S.wclCreds, r.item, kind === 'heal' ? 'hps' : 'dps').then((m) => { PARSES.set(k, m); if (PF_TAB(S.tab) && S.rep === r && S.scope !== 'all' && (S.tab === 'rot' || S.perfKind === kind)) perf(); })
     .catch((e) => { console.warn('Parses:', e && e.message); PARSES.set(k, new Map()); });
   return null;
+}
+// The top 3 players of a player's spec on this boss and difficulty, and their spells (Warcraft Logs' rankings), for the
+// Top 3 column on Graphs' player card: plain numbers side by side, no advice (your call, Oct 19: comparisons yes, coaching
+// no). Damage for tanks and DPS, healing for healers. Loaded once per spec and boss; the page redraws when it arrives.
+const TOPSPEC = new Map();
+function topSpecFor(r, p, kind) {
+  if ((!S.wclCreds && !WCL.HOSTED) || r.item.kind !== 'boss' || !r.item.id || !p.specId || !E.SPECS[p.specId]) return null;
+  const heal = kind === 'heal'; if (heal !== (p.role === 'healer')) return null;
+  const [sn, cl] = E.SPECS[p.specId], v = { e: r.item.id, c: E.CLASSES[cl][0].replace(/ /g, ''), s: sn.replace(/ /g, ''), d: WCL_DIFF_OF[r.item.diffId] || 5, m: heal ? 'hps' : 'dps' };
+  const k = [v.e, v.d, v.c, v.s, v.m].join('|'); if (TOPSPEC.has(k)) return TOPSPEC.get(k);
+  TOPSPEC.set(k, 'loading');
+  const done = (o) => { TOPSPEC.set(k, o); if (PF_TAB(S.tab) && S.tab !== 'rot' && S.rep === r && S.scope !== 'all' && S.perfKind === kind) perf(); };
+  WCL.topSpec(S.wclCreds, v).then((o) => done(o && o.n ? o : { n: 0 })).catch((e) => { console.warn('Top players:', e && e.message); done({ n: 0, err: true }); });
+  return 'loading';
 }
 // a parse as Warcraft Logs colours it
 const prsCls = (v) => (v >= 100 ? 'q7' : v >= 99 ? 'q6' : v >= 95 ? 'q5' : v >= 75 ? 'q4' : v >= 50 ? 'q3' : v >= 25 ? 'q2' : 'q1');

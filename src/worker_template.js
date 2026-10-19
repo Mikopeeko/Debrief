@@ -18,7 +18,10 @@ const CHAR_REPORTS_Q = __CHAR_REPORTS_Q__;
 const CHAR_RANK_Q = __CHAR_RANK_Q__;
 const TEAM_RANK_Q = __TEAM_RANK_Q__;
 const CHAR_LOOK_Q = __CHAR_LOOK_Q__;
+const TOPRANK_Q = __TOPRANK_Q__;
+const TOPAB_Q = __TOPAB_Q__;
 const APP_HTML = __HTML__;
+/*TOPSPEC*/
 
 let token = null;
 async function getToken(env) {
@@ -119,6 +122,9 @@ const ROUTES = {
     v: (p) => { const id = parseInt(p.get('id'), 10); return id > 0 ? { id } : null; },
     out: (t) => { const m = t.slice(0, 6000).replace(/\\\//g, '/').match(/"global":\{"_links":\{"self":\{"href":"https:\/\/(\w+)\.api\.blizzard\.com\/profile\/wow\/character\/([^/"]+)\/[^"]*"\}\},"id":(\d+)/);
       return { look: m ? m[1] + '/character/' + m[2] + '/' + (+m[3] % 256) + '/' + m[3] : null }; } },
+  // the top 3 players of a spec on a boss and their spells (Graphs' player card): a few queries in one, kept a day
+  '/api/topspec': { age: 86400, run: (env, v) => topSpecOf((q, vars) => gql(env, q, vars), v),
+    v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), c = p.get('c') || '', s = p.get('s') || ''; return e > 0 && [3, 4, 5].includes(d) && /^[A-Za-z]{4,15}$/.test(c) && /^[A-Za-z]{3,20}$/.test(s) ? { e, c, s, d, m: p.get('m') === 'hps' ? 'hps' : 'dps', n: 3 } : null; } },
   '/api/night': { q: () => NIGHT_Q, age: 600, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null),
     out: (d, v) => (d && d.reportData && d.reportData.report) || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 } },
   '/api/deaths': { q: () => DEATHS_Q, age: 600, raw: true,
@@ -189,7 +195,7 @@ export default {
           ctx.waitUntil(cache.put(key, res.clone()));
           return res;
         }
-        const out = route.out(route.text ? await gqlText(env, route.q(), v) : await gql(env, route.q(), v), v);
+        const out = route.run ? await route.run(env, v) : route.out(route.text ? await gqlText(env, route.q(), v) : await gql(env, route.q(), v), v);
         if (out && out.error) return json({ error: out.error }, out.status || 400);
         const res = json(out, 200, age);
         ctx.waitUntil(cache.put(key, res.clone()));

@@ -21,13 +21,17 @@ $js = { param($s) [System.Web.HttpUtility]::JavaScriptStringEncode($s, $true) }
 $q = @{}
 foreach ($m in [regex]::Matches($wcl, 'const (\w+_Q) = `([^`]*)`;')) { $q[$m.Groups[1].Value] = $m.Groups[2].Value }
 $w = & $read 'worker_template.js'
-foreach ($n in 'REPORT_Q', 'EVENTS_Q', 'RANK_Q', 'TEAM_INFO_Q', 'TEAM_REPORTS_Q', 'NIGHT_Q', 'DEATHS_Q', 'CHAR_INFO_Q', 'CHAR_REPORTS_Q', 'CHAR_RANK_Q', 'TEAM_RANK_Q', 'CHAR_LOOK_Q') {
+foreach ($n in 'REPORT_Q', 'EVENTS_Q', 'RANK_Q', 'TEAM_INFO_Q', 'TEAM_REPORTS_Q', 'NIGHT_Q', 'DEATHS_Q', 'CHAR_INFO_Q', 'CHAR_REPORTS_Q', 'CHAR_RANK_Q', 'TEAM_RANK_Q', 'CHAR_LOOK_Q', 'TOPRANK_Q', 'TOPAB_Q') {
   if (-not $q.ContainsKey($n)) { throw "wcl.js has no $n" }
   $w = $w.Replace("__${n}__", (& $js $q[$n]))
 }
+# (the top players' spell breakdown: the Worker runs wcl.js's own function, copied from between its markers)
+$ts = [regex]::Match($wcl, '// <topspec>[\s\S]*?// </topspec>')
+if (-not $ts.Success) { throw 'wcl.js has no <topspec> block' }
+$w = $w.Replace('/*TOPSPEC*/', $ts.Value)
 $hosted = ([regex]'<head>').Replace($html, "<head>`n<script>window.WLA_HOSTED = true;</script>", 1)
 $w = $w.Replace('__HTML__', (& $js $hosted)).Replace("`r`n", "`n")
-if ($w -match '__[A-Z_]+_Q__|__HTML__') { throw 'worker.js still has a placeholder' }
+if ($w -match '__[A-Z_]+_Q__|__HTML__|/\*TOPSPEC\*/') { throw 'worker.js still has a placeholder' }
 New-Item -ItemType Directory -Force (Join-Path $root 'online') | Out-Null
 [IO.File]::WriteAllText((Join-Path $root 'online\worker.js'), $w, $utf8)
 "app: {0:N0} chars; worker: {1:N0} chars" -f $html.Length, $w.Length

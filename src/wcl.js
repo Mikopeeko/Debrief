@@ -101,6 +101,37 @@ async function loadRankings(creds, item, metric) {
   return out;
 }
 
+// The top players of one spec on one boss (Warcraft Logs' rankings, damage or healing), and each one's spells: their
+// share, hits, crits and casts. For the player card's comparison on Graphs (plain numbers, no advice). The site keeps the
+// answer a day. v: { e: encounter, c: class, s: spec (Warcraft Logs' names, no spaces), d: difficulty, m: 'dps' | 'hps', n }
+const TOPRANK_Q = `query($e:Int!,$c:String!,$s:String!,$d:Int!,$m:CharacterRankingMetricType){worldData{encounter(id:$e){characterRankings(className:$c,specName:$s,difficulty:$d,metric:$m,page:1)}}}`;
+const TOPAB_Q = `query($c:String!,$f:[Int]!,$x:String,$t:TableDataType){reportData{report(code:$c){fights(fightIDs:$f){startTime endTime}
+  d:table(fightIDs:$f,dataType:$t,viewBy:Ability,filterExpression:$x) k:table(fightIDs:$f,dataType:Casts,viewBy:Ability,filterExpression:$x)}}}`;
+// <topspec> (the Worker runs this same function: build.ps1 copies it there)
+async function topSpecOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
+  const rk = await run(TOPRANK_Q, { e: v.e, c: v.c, s: v.s, d: v.d, m: v.m }), R = P(rk && rk.worldData && rk.worldData.encounter && rk.worldData.encounter.characterRankings);
+  const top = ((R && R.rankings) || []).slice(0, v.n || 3); if (!top.length) return { n: 0, who: [], ab: [] };
+  const one = async (t) => { const nm = String(t.name).replace(/'/g, "\\'");
+    const d = await run(TOPAB_Q, { c: t.report.code, f: [t.report.fightID], x: "source.name = '" + nm + "' or source.owner.name = '" + nm + "'", t: v.m === 'hps' ? 'Healing' : 'DamageDone' });
+    const rep = d.reportData.report, f = rep.fights[0], dur = Math.max(1, (f.endTime - f.startTime) / 1000), dd = P(rep.d).data.entries || [], kk = P(rep.k).data.entries || [];
+    const tot = dd.reduce((s, e) => s + (e.total || 0), 0) || 1, casts = new Map(kk.map((e) => [e.name, e.total || 0]));
+    return { who: { name: t.name, server: t.server ? t.server.name : '', region: t.server ? t.server.region : '', amount: Math.round(t.amount), dur: Math.round(dur) },
+      ab: dd.map((e) => ({ name: e.name, id: e.guid, share: (e.total || 0) / tot, hits: (e.hitCount || 0) + (e.tickCount || 0), crits: (e.critHitCount || 0) + (e.critTickCount || 0), total: e.total || 0, casts: casts.get(e.name) || 0, dur })) }; };
+  const got = (await Promise.all(top.map((t) => one(t).catch(() => null)))).filter(Boolean);
+  // (each spell over the players: share and casts a minute averaged (0 for one who didn't use it), crit and average hit over all their hits together)
+  const by = new Map();
+  for (const g of got) for (const a of g.ab) { let o = by.get(a.name); if (!o) by.set(a.name, o = { name: a.name, id: a.id, share: 0, cpm: 0, hits: 0, crits: 0, total: 0 });
+    o.share += a.share / got.length; o.cpm += 60 * a.casts / a.dur / got.length; o.hits += a.hits; o.crits += a.crits; o.total += a.total; }
+  return { n: got.length, who: got.map((g) => g.who), ab: [...by.values()].map((o) => ({ name: o.name, id: o.id, share: +o.share.toFixed(4), cpm: +o.cpm.toFixed(2), crit: o.hits ? +(o.crits / o.hits).toFixed(3) : null, avg: o.hits ? Math.round(o.total / o.hits) : null }))
+    .sort((a, b) => b.share - a.share).slice(0, 30) };
+}
+// </topspec>
+async function topSpec(creds, v) {
+  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m);
+  return topSpecOf((q, vars) => gql(creds, q, vars), v);
+}
+
 async function loadReport(creds, code, live) {
   let rep;
   if (HOSTED) rep = await api('/api/report?code=' + encodeURIComponent(code) + (live ? '&live=1' : '')); // (live: the site keeps it 20 seconds, not 2 minutes)
@@ -456,6 +487,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, topSpec, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
