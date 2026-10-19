@@ -6378,7 +6378,7 @@ function pfFindIndex(r) {
   return (r._find = out);
 }
 // (letters without their accents, so "flex" finds Flëxørçïst)
-const plainL = (t) => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/œ/g, 'oe').replace(/ß/g, 'ss').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/ł/g, 'l');
+const plainL = (t) => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/œ/g, 'oe').replace(/ß/g, 'ss').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/[łŀ]/g, 'l').replace(/đ/g, 'd').replace(/ı/g, 'i').replace(/ħ/g, 'h').replace(/ŧ/g, 't').replace(/ŋ/g, 'n').replace(/ĸ/g, 'k');
 function pfFindRun(r, q) {
   q = plainL(q); const all = pfFindIndex(r).filter((o) => (o.pl || (o.pl = plainL(o.n))).includes(q)), items = [];
   const html = FIND_G.map(([g, l]) => { const xs = all.filter((o) => o.g === g).sort((a, b) => (b.pl.startsWith(q) - a.pl.startsWith(q)) || (b.v || 0) - (a.v || 0)); if (!xs.length) return '';
@@ -12243,7 +12243,7 @@ function topSpecFor(r, p, kind) {
 // (Oct 19, "consistent with the rest": the status line on top as on Players, the player's name with Change player as on
 // Rotation and Players, the tiles every page uses, and the biggest differences in plain sentences, as cards with icons)
 // (Similar raid groups, ['raids', 'Similar raid groups'], is off for now (your call, Oct 19): its code below stays for later)
-const CMP_MODES = [['mate', 'Fellow raiders'], ['top', 'Top raiders of your spec'], ['self', 'Your other pulls']];
+const CMP_MODES = [['find', 'Search for a player'], ['top', 'Top raiders of your spec'], ['self', 'Your other pulls']];
 const CMP_RANGE = [[1, 'Fastest kills'], [3, 'Around #100'], [6, 'Around #250'], [11, 'Around #500']];
 const cmpPs = (r) => [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name));
 const cmpKind = (p) => (p.role === 'healer' ? 'heal' : 'dmg');
@@ -13051,20 +13051,73 @@ function cmpLine(sides, end) {
   const hov = pts[0].map((_, i) => '<rect x="' + (X(i) - (W - 2 * P) / n / 2).toFixed(1) + '" y="0" width="' + ((W - 2 * P) / n).toFixed(1) + '" height="' + H + '" fill="transparent" data-tt="' + esc('<b>' + T(i * 10) + ' to ' + T(Math.min(end, i * 10 + 10)) + '</b><br>' + sides.map((x, si) => esc(x.name) + ': ' + C(pts[si][i]) + ' a second').join('<br>')) + '"/>').join('');
   return '<div class="cmp-chart"><svg viewBox="0 0 ' + W + ' ' + H + '">' + g + lines + hov + '</svg><div class="cmp-key2">' + sides.map((x) => '<span><i style="background:' + x.col + '"></i>' + esc(x.name) + '</span>').join('') + '</div></div>';
 }
-// (1) Fellow raiders: a teammate from this pull
-function cmpMate(r, p, ps) {
-  const same = ps.filter((q) => q !== p && q.specName === p.specName);
-  // (the same spec only (your call, Oct 19): the same spells, the same Rotation checks, so it compares like with like)
-  // (the same hero tree too (your call, Oct 19); a player whose tree can't be read is kept)
-  const hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(r, x), mates = same.filter((x) => !hA || !heroQ(x) || heroQ(x) === hA);
-  const q = mates.find((x) => x.name === S.cmpMate) || mates[0];
-  const what = esc(p.specName || 'this spec') + (hA ? ' with ' + esc(hA) : '');
-  if (!q) return { vs: '<span class="sub">nobody else played ' + what + '</span>', body: cmpMsg('Nobody else played ' + what + ' in this pull' + (same.length ? ' (' + same.map((x) => esc(x.name) + ' plays ' + esc(heroQ(x) || 'another hero tree')).join(', ') + ')' : '') + '. Pick another player above, or compare with the top raiders of the spec.') };
-  const vs = avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', mates, q, p, 'Change') + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + '</small>';
-  return cmpPair(r, p, r, q, vs);
+// (1) Search for a player (your idea, Oct 19: "an individual raider comparing themselves against someone they search for"):
+// type a name and it finds players of your spec and hero tree, in this pull and in Warcraft Logs' rankings on this boss
+// (the top 300 first, more on a click). Accents and odd letters don't matter: "flex" finds Flëxørçïst. Pick one: the same
+// page as the top raiders, their whole kill read like one of your pulls.
+const SPECRANKS = new Map();
+function specRanksFor(r, p) {
+  const s = E.SPECS[p.specId]; if (!s || r.item.kind !== 'boss' || !r.item.id || (!S.wclCreds && !WCL.HOSTED)) return null;
+  const v = { e: r.item.id, c: E.CLASSES[s[1]][0].replace(/ /g, ''), s: s[0].replace(/ /g, ''), d: WCL_DIFF_OF[r.item.diffId] || 5, m: p.role === 'healer' ? 'hps' : 'dps' };
+  const k = [v.e, v.d, v.c, v.s, v.m].join('|'); let o = SPECRANKS.get(k);
+  if (!o) SPECRANKS.set(k, o = { v, list: [], pages: 0, more: true, busy: false, err: false, want: 3 });
+  return o;
+}
+// (a page at a time until it has the pages asked for; the page redraws after each)
+function specRanksMore(r, o) {
+  if (o.busy || !o.more || o.pages >= o.want) return;
+  o.busy = true; const pg = o.pages + 1;
+  WCL.specRanks(S.wclCreds, { ...o.v, p: pg }).then((x) => { o.pages = pg; o.list.push(...((x && x.list) || [])); o.more = !!(x && x.more) && pg < 20; },
+    (e) => { console.warn('Rankings:', e && e.message); o.err = true; o.more = false; })
+    .finally(() => { o.busy = false; specRanksMore(r, o); if (S.tab === 'cmp' && S.rep === r && !S.cmpPick) cmp(); });
+}
+// (a ranked player's hero tree, from their talents)
+const cmpHeroTal = (spec, ids) => { const tr = treeOf(spec); if (!tr || !ids || !ids.length) return ''; const got = new Set(ids); const n = tr.nodes.find((x) => x.t === 'H' && x.entries.some((e) => got.has(e.id))); return n ? tr.hero.get(n.sub) || '' : ''; };
+// The matches for what's typed: this pull's players first, then the rankings, names that start with it before the rest
+function cmpFindRes(r, p, ps) {
+  const hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(r, x), spn = p.specName || 'spec', o = specRanksFor(r, p), unit = p.role === 'healer' ? 'healing' : 'damage';
+  const what = esc(spn) + (hA ? ' with ' + esc(hA) : '');
+  const q = plainL(String(S.cmpQ || '').trim()), hit = (n) => !q || plainL(n).includes(q), starts = (n) => !!q && plainL(n).startsWith(q);
+  const mates = ps.filter((x) => x !== p && x.specName === p.specName && (!hA || !heroQ(x) || heroQ(x) === hA));
+  const ranked = o ? o.list.filter((w) => { if (w.hero === undefined) w.hero = cmpHeroTal(p.specName, w.tal); return !hA || !w.hero || w.hero === hA; }) : [];
+  const other = o && q ? o.list.filter((w) => hA && w.hero && w.hero !== hA && hit(w.name)).length : 0;
+  const res = mates.filter((x) => hit(x.name)).map((x) => ({ src: 'mate', name: x.name, x }))
+    .concat(q ? ranked.filter((w) => hit(w.name) || (q.includes('-') && plainL(w.name + '-' + w.server).includes(q))).map((w) => ({ src: 'rank', name: w.name, w })) : [])
+    .sort((a, b) => starts(b.name) - starts(a.name) || (a.src === 'mate' ? 0 : 1) - (b.src === 'mate' ? 0 : 1) || (a.w ? a.w.rank : 0) - (b.w ? b.w.rank : 0));
+  const shown = res.slice(0, 30); S._cmpRes = shown;
+  const row = (x, i) => { const w = x.w, m = x.x;
+    return '<button class="cmp-srchr" type="button" data-pk="' + i + '"><span class="cmp-srchn">' + (m ? avatar(m, true) : cmpIcon('trophy', 'var(--gold)')) + '<span class="nm" style="color:' + p.color + '">' + esc(x.name) + '</span>' +
+      '<span class="sub">' + (m ? 'In this pull' + (heroQ(m) ? ', ' + esc(heroQ(m)) : '') : '#' + w.rank + ' on this boss' + (w.hero ? ', ' + esc(w.hero) : '') + ' · ' + esc(w.server + (w.region ? '-' + w.region : '')) + (w.guild ? ' · ' + esc(w.guild) : '')) + '</span></span>' +
+      '<span class="cmp-srchv">' + C(m ? cmpRate(r, m, cmpKind(m)) : w.amount) + '<span class="sub"> ' + unit + ' a second</span></span></button>'; };
+  const head = !q && mates.length ? '<div class="cmp-lbl">In this pull</div>' : '';
+  const none = q && !res.length ? '<p class="muted cmp-srchm">Nobody named "' + esc(String(S.cmpQ).trim()) + '" plays ' + what + (o ? ' in this pull or in the top ' + o.list.length + ' on this boss.' : ' in this pull.') +
+    (other ? ' ' + (other === 1 ? 'One player by that name plays' : other + ' players by that name play') + ' another hero tree.' : '') + '</p>' : '';
+  const more = !q || !o ? '' : o.busy ? '<p class="sub cmp-srchm">Looking through the rankings… ' + o.list.length + ' so far.</p>'
+    : o.err ? '<p class="sub cmp-srchm">The rankings didn\'t load just now. Try again in a minute.</p>'
+    : '<p class="sub cmp-srchm">Searched this pull and the top ' + o.list.length + ' ' + esc(spn) + 's on this boss.' + (o.more ? ' <button class="btn sm" type="button" id="cmpQMore">Search further down</button>' : '') + '</p>';
+  const hint = !q ? '<p class="sub cmp-srchm">' + (o ? 'Type a name to find anyone ranked on this boss who plays ' + what + '.' : 'Type a name to find a player in this pull who plays ' + what + '. Players from other raids show for bosses opened from a report link.') + ' Accents don\'t matter: "flex" finds Flëxørçïst.</p>' : '';
+  return head + shown.map(row).join('') + (res.length > shown.length ? '<p class="sub cmp-srchm">' + (res.length - shown.length) + ' more. Type more of the name.</p>' : '') + none + hint + more;
+}
+function cmpFindP(r, p, ps) {
+  const heroQ = (x) => cmpHeroOf(r, x), spn = p.specName || 'spec', bossK = r.item.id + '|' + r.item.diffId;
+  const pk = S.cmpPick && S.cmpPick.me === p.name && S.cmpPick.boss === bossK ? S.cmpPick : null;
+  const again = '<button class="btn sm" type="button" id="cmpPickX">Search again</button>';
+  if (pk && pk.src === 'mate') { const q = ps.find((x) => x.name === pk.name);
+    if (q) return cmpPair(r, p, r, q, avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + again + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + ', in this pull</small>'); }
+  if (pk && pk.src === 'rank') { const w = pk.w;
+    const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:' + p.color + '">' + esc(w.name) + '</span>' + again + '<small>#' + w.rank + ' ' + esc(spn) + ' on this boss' + (w.hero ? ', ' + esc(w.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
+    const TF = topFightFor(r, w);
+    if (TF === 'loading') return { vs, body: cmpMsg('Loading ' + esc(w.name) + '\'s kill, the same way a pull opens. The first time takes a few seconds…') };
+    if (TF.err) return { vs, body: cmpMsg(esc(TF.err)) };
+    return cmpPair(r, p, TF.r, TF.q, vs); }
+  const o = specRanksFor(r, p); if (o && !o.pages && !o.err) specRanksMore(r, o);
+  const box = '<div class="panel cmp-srch"><h3>Search for a player<small>Anyone who plays your spec and hero tree. Pick one to compare yourself with them.</small></h3>' +
+    '<input class="cmp-find cmp-srchq" id="cmpQ" type="search" placeholder="Type a name" value="' + esc(S.cmpQ || '') + '" aria-label="Search for a player" autocomplete="off" spellcheck="false">' +
+    '<div class="cmp-srchl" id="cmpQR">' + cmpFindRes(r, p, ps) + '</div></div>';
+  return { vs: '<span class="sub">a player you search for</span>', body: box };
 }
 // The page for two players of the same spec, each read from their own pull (a teammate: this pull for both; a top raider:
-// their own kill), so Fellow raiders and Top raiders of your spec are set up the exact same way (your call, Oct 19).
+// their own kill), so Search for a player and Top raiders of your spec are set up the exact same way (your call, Oct 19).
 // rB: the second player's pull; lead: anything to show first (a note)
 function cmpPair(r, p, rB, q, vs, lead, nmO) {
   const R = (x) => (x === q ? rB : r), k = cmpKind(p), hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(R(x), x);
@@ -13272,8 +13325,8 @@ function cmpRaids(r, ps) {
     '<input class="cmp-find" id="cmpFind" type="search" placeholder="Find a guild" value="' + esc(S.cmpFind || '') + '" aria-label="Find a guild"></div>';
   if (L === 'loading') return { vs: vsPick, body: ctl + cmpMsg('Loading 20 kills of ' + esc(r.item.boss) + ', with who played what…') };
   if (!L.kills.length) return { vs: vsPick, body: ctl + cmpMsg(L.err ? 'The kills didn\'t load just now. Try again in a minute.' : 'There aren\'t that many kills yet. Pick a range nearer the top.') };
-  const ks = L.kills.map(match), f = String(S.cmpFind || '').trim().toLowerCase();
-  const shown = ks.filter((x) => !f || x.guild.toLowerCase().includes(f) || x.server.toLowerCase().includes(f)).sort((S.cmpSort || 'like') === 'fast' ? (a, b) => a.rank - b.rank : (a, b) => b.same / b.of - a.same / a.of || a.rank - b.rank);
+  const ks = L.kills.map(match), f = plainL(String(S.cmpFind || '').trim());
+  const shown = ks.filter((x) => !f || plainL(x.guild).includes(f) || plainL(x.server).includes(f)).sort((S.cmpSort || 'like') === 'fast' ? (a, b) => a.rank - b.rank : (a, b) => b.same / b.of - a.same / a.of || a.rank - b.rank);
   const rows = shown.map((x) => cbRow({ tag: 'button', cls: ' cmp-kr', attrs: ' type="button" data-raid="' + esc(x.code + '|' + x.fight) + '" data-tt="' + esc(cmpTip(x.guild || 'Unknown guild', x.same + ' of ' + x.of + ' specs match yours', 'Kill in ' + T(x.dur) + ', ' + C(x.dps) + ' raid DPS. Click to compare.')) + '"', k: x.rank, color: 'var(--gold)', segs: [[100 * x.same / x.of, 'm']], name: esc(x.guild || 'Unknown guild'),
     chips: '<span class="sub">' + esc(x.server + (x.region ? '-' + x.region : '')) + '</span>', v: T(x.dur), sub: C(x.dps), end: x.same + '/' + x.of })).join('');
   const rng = L.page > 1 ? 'Kills ' + ((L.page - 1) * 50 + 1) + ' to ' + ((L.page - 1) * 50 + ks.length) + ' by speed' : 'The 20 fastest kills';
@@ -13304,15 +13357,17 @@ function cmp() {
   const nr = all ? nightResult(r.item) : null, best = nr && nr.pull && nr.pull !== r.item.pull ? nr.pull : null;
   const line = '<div class="plhd"><div class="cutbar"><span class="cutnow">' + (all ? 'Compare looks at one pull at a time. This is <b>pull ' + r.item.pull + '</b>.' : '<b>Pull ' + r.item.pull + (r.item.kill ? ', the kill' : '') + '</b>. Everything here counts the whole pull.') + '</span>' +
     (best ? '<button class="btn sm" type="button" id="cmpBest" data-p="' + best + '">' + (nr.cls === 'good' ? 'Use the kill' : 'Use the best pull') + ' (pull ' + best + ')</button>' : '') + '</div></div>';
-  const o = mode === 'top' ? cmpTop(r, p) : mode === 'mate' ? cmpMate(r, p, ps) : mode === 'self' ? cmpSelf(r, p) : cmpRaids(r, ps);
+  const o = mode === 'top' ? cmpTop(r, p) : mode === 'find' ? cmpFindP(r, p, ps) : mode === 'self' ? cmpSelf(r, p) : cmpRaids(r, ps);
   // (the header, as on Players: who, then "vs" and who against, each with its Change)
   const n = (rl) => ps.filter((x) => (x.role || 'dps') === rl).length;
   const who = mode === 'raids' ? cmpIcon('users', 'var(--blue)') + ' <span class="nm" style="color:var(--blue)">Your raid</span><small>' + plural(n('tank'), 'tank') + ', ' + plural(n('healer'), 'healer') + ' and ' + n('dps') + ' DPS</small>'
     : avatar(p, true) + ' <span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>' + cmpSel('cmpMe', ps, p, null, 'Change') + '<small>' + esc(p.specName || '') + (cmpHeroOf(r, p) ? ', ' + esc(cmpHeroOf(r, p)) : '') + '</small>';
   const head = '<div class="panel cmp-head"><div class="seg cmp-seg" id="cmpMode" role="tablist">' + CMP_MODES.map(([k, l]) => '<button type="button" data-m="' + k + '"' + (k === mode ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' +
     '<h3 class="cmp-vh"><span class="cmp-who">' + who + '</span><span class="cmp-vs">vs</span><span class="cmp-who">' + o.vs + '</span></h3></div>';
+  const ae = document.activeElement, qAt = ae && ae.id === 'cmpQ' ? ae.selectionStart : null;
   const scrollY0 = window.scrollY;
   view('<div class="cmp">' + line + head + (o.body || '') + '</div>');
+  if (qAt != null) { const e = $('#cmpQ'); if (e) { e.focus(); e.setSelectionRange(qAt, qAt); } }
   window.scrollTo({ top: scrollY0 });
   spcTipInit();
   const v = $('#view');
@@ -13332,6 +13387,15 @@ function cmp() {
   v.querySelectorAll('#cmpSort button').forEach((b) => (b.onclick = () => { S.cmpSort = b.dataset.s; cmp(); }));
   const fd = $('#cmpFind'); if (fd) fd.oninput = () => { S.cmpFind = fd.value; clearTimeout(S._cmpT); S._cmpT = setTimeout(() => { cmp(); const e = $('#cmpFind'); if (e) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }, 250); };
   v.querySelectorAll('[data-raid]').forEach((b) => (b.onclick = () => { const kl = (o.list || []).find((x) => x.code + '|' + x.fight === b.dataset.raid); if (!kl) return; S.cmpRaid = { boss: r.item.id + '|' + r.item.diffId, kl }; S.cmpG = null; cmp(); window.scrollTo({ top: Math.max(0, $('#view').getBoundingClientRect().top + window.scrollY - 70) }); }));
+  // (Search for a player: the matches update as you type, without redrawing the page; Enter picks the first)
+  { const q = $('#cmpQ'), box = $('#cmpQR');
+    const bindPick = () => { v.querySelectorAll('[data-pk]').forEach((b) => (b.onclick = () => { const x = (S._cmpRes || [])[+b.dataset.pk]; if (!x) return;
+        S.cmpPick = { me: p.name, boss: r.item.id + '|' + r.item.diffId, src: x.src, name: x.name, w: x.w }; S.cmpG = null; cmp(); window.scrollTo({ top: Math.max(0, $('#view').getBoundingClientRect().top + window.scrollY - 70) }); }));
+      const mb = $('#cmpQMore'); if (mb) mb.onclick = () => { const o2 = specRanksFor(r, p); if (o2) { o2.want = o2.pages + 3; specRanksMore(r, o2); } cmp(); }; };
+    if (q && box) { let tm; q.oninput = () => { S.cmpQ = q.value; clearTimeout(tm); tm = setTimeout(() => { box.innerHTML = cmpFindRes(r, p, ps); bindPick(); refreshIcons(); }, 120); };
+      q.onkeydown = (e) => { if (e.key === 'Enter') { const b = box.querySelector('[data-pk]'); if (b) b.click(); } else if (e.key === 'Escape') { q.value = ''; S.cmpQ = ''; box.innerHTML = cmpFindRes(r, p, ps); bindPick(); refreshIcons(); } }; }
+    bindPick(); }
+  { const b = $('#cmpPickX'); if (b) b.onclick = () => { S.cmpPick = null; S.cmpG = null; cmp(); const e = $('#cmpQ'); if (e) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }; }
   { const b = $('#cmpRaidX'); if (b) b.onclick = () => { S.cmpRaid = null; S.cmpG = null; cmp(); }; }
   // (it opens on Debrief, never on another website: your rule, Oct 19)
   v.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => openReportLink(b.dataset.open, b.parentElement.querySelector('.cmp-msg'))));

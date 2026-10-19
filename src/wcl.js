@@ -173,6 +173,16 @@ async function guildProgOf(run, v) {
   const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
   return { pulls: k + 1, nights: days.size, kill: pulls[k].t, first: pulls[0].t };
 }
+// One page (100) of a spec's rankings on a boss, slimmed for Compare's "Search for a player": who, where, their kill, and
+// their talents (only the numbers, so the page can tell their hero tree). v: { e, c, s, d, m, p }
+const SPECRANK_Q = `query($e:Int!,$c:String!,$s:String!,$d:Int!,$m:CharacterRankingMetricType,$p:Int){worldData{encounter(id:$e){characterRankings(className:$c,specName:$s,difficulty:$d,metric:$m,page:$p,includeCombatantInfo:true)}}}`;
+async function specRanksOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
+  const rk = await run(SPECRANK_Q, { e: v.e, c: v.c, s: v.s, d: v.d, m: v.m, p: v.p || 1 }), R = P(rk && rk.worldData && rk.worldData.encounter && rk.worldData.encounter.characterRankings) || {};
+  const list = (R.rankings || []).filter((t) => t && t.name && t.report && t.report.code).map((t, i) => ({ rank: ((v.p || 1) - 1) * 100 + i + 1, name: t.name, server: t.server ? t.server.name : '', region: t.server ? t.server.region : '',
+    guild: t.guild ? t.guild.name : '', amount: Math.round(t.amount || 0), code: t.report.code, fight: t.report.fightID, tal: (t.talents || []).map((x) => x.talentID).filter(Boolean) }));
+  return { page: v.p || 1, more: !!R.hasMorePages, list };
+}
 // </topspec>
 async function topSpec(creds, v) {
   if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=4'); // (v=4: the top 8, each with their own spells and their kill's report and fight)
@@ -181,6 +191,10 @@ async function topSpec(creds, v) {
 async function topKills(creds, v) {
   if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p + '&v=2'); // (v=2: answers with each guild's number)
   return topKillsOf((q, vars) => gql(creds, q, vars), v);
+}
+async function specRanks(creds, v) {
+  if (HOSTED) return api('/api/specrank?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&p=' + v.p);
+  return specRanksOf((q, vars) => gql(creds, q, vars), v);
 }
 async function guildProg(creds, v) {
   if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t);
@@ -552,6 +566,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

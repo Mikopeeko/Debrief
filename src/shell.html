@@ -3345,7 +3345,16 @@ details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212
 .cmp-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 14px; } .cmp-ctl .seg { margin: 0; }
 .cmp-find { background: var(--panel); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 10px; font: inherit; min-width: 0; width: 180px; }
 .cmp-list { padding-bottom: 8px; } .cmp-list h3 { margin-bottom: 8px; }
+/* Compare: Search for a player */
+.cmp-srch .cmp-srchq { width: 100%; max-width: 420px; padding: 9px 12px; font-size: 15px; margin-bottom: 10px; }
+.cmp-srchl { display: flex; flex-direction: column; gap: 2px; } .cmp-srchl .cmp-lbl { margin: 2px 0 4px; }
+.cmp-srchr { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 7px 10px; border: 0; border-radius: 8px; background: none; color: var(--text); font: 14px var(--body); text-align: left; cursor: pointer; }
+.cmp-srchr:hover, .cmp-srchr:focus { background: rgba(255,255,255,.06); outline: none; }
+.cmp-srchn { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; } .cmp-srchn .nm { font-weight: 600; } .cmp-srchn .sub { font-size: 12px; }
+.cmp-srchv { flex: none; font-weight: 600; white-space: nowrap; } .cmp-srchv .sub { font-weight: 400; font-size: 12px; }
+.cmp-srchm { margin: 8px 2px 0; }
 @media (max-width: 640px) {
+  .cmp-srchr { align-items: flex-start; } .cmp-srchv .sub { display: none; }
   .cmp-head .seg, .cmp-ctl .seg { width: 100%; } .cmp-find { width: 100%; }
   .cmp h3.cmp-vh { flex-direction: column; align-items: flex-start; } .cmp-vs { margin-left: 2px; }
   .pf-row.cb.cmp-gr { grid-template-columns: 0 minmax(0, 1fr) 54px 54px; }
@@ -3470,15 +3479,6 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 @media (max-width: 1000px) { .lpv .lp-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) { .rcp-grid { grid-template-columns: minmax(0, 1fr); } .rcp-w.rcp-big { grid-column: auto; } .rcp-big .wr-map.rcp-map, .rcp-big .wr-map.rcp-map svg.zmap { height: 200px !important; }
   .rcp-oks { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rcp-ok { padding: 11px 10px 9px; gap: 9px; } .rcp-ok .icw.big, .rcp-ok .icw.big .ico { width: 28px; height: 28px; } .rcp-vd { font-size: 14px; } }
-</style>
-
-
-
-
-</head>
-<body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="icoShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs></svg>
-<div class="app">
 /* ---- Recap on the whole night (Oct 19): the grade card across the top, what went wrong beside what went well, then the chart ---- */
 .sumv.sum3 { display: block; }
 .sumv.sum3 > .sum-grade { margin: 0 0 14px; padding: 12px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
@@ -3500,6 +3500,15 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .pl-det .rs-nums.pl7 { grid-template-columns: repeat(7, minmax(0, 1fr)); } .pl-det .rs-nums.pl7 .rs-n span i { font-style: normal; font-size: 11px; color: var(--faint); }
 @media (max-width: 1100px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+
+
+
+
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="icoShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs></svg>
+<div class="app">
   <header class="topbar" id="topbar">
     <div class="brand" id="brandHome" title="Home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="3" stroke-linejoin="round"/><path d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z" fill="none" stroke="#e6b450" stroke-width="4" stroke-linejoin="round"/><path d="m27 32.5 4 4 8.5-9.5" fill="none" stroke="#7ee08f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h1>Debrief</h1><p>Retail combat logs, read on your PC</p></div></div>
     <div class="bosspick" id="bossPick"></div>
