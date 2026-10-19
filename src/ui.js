@@ -1479,6 +1479,40 @@ function noteNames(text) {
     for (const w of (ci >= 0 ? body.slice(ci + 1) : '').split(/[\s,;]+/)) { const t = w.replace(/[()[\]."]/g, '').split('-')[0]; if (t.length >= 2 && /^\p{Lu}/u.test(t) && /^[\p{L}'-]+$/u.test(t) && !NOTE_WORDS.has(t.toLowerCase())) out.add(t); } }
   return [...out];
 }
+// What a saved note is for (your note, Oct 18: when a note is imported, scan the saved logs for its fight and roster and
+// tell you): its first line (EncounterID and difficulty) and its names, against the pulls saved on the Teams page. The
+// best fit is the raid night of that boss that has the most of its names; names that are in no saved pull at all are
+// listed, since they're usually a typo or an NSRT nickname. Read from what's in memory, so it's instant.
+function noteScan(text, boss) {
+  let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
+  const saved = [...HIST.mem.values()], names = noteNames(text), low = (n) => String(n).split('-')[0].toLowerCase();
+  const encId = +hd.encounterid || 0, byId = encId ? saved.find((v) => +v.id === encId) : null;
+  const known = new Set(E.PACKS.map((p) => p.encounter)), byName = hd.name && known.has(hd.name) ? hd.name : null;
+  const nBoss = (byId && byId.boss) || byName || null, dif = hd.difficulty || null, forBoss = nBoss || boss;
+  const sameDif = (v) => !dif || String(v.diff || '').toLowerCase().slice(0, 3) === String(dif).toLowerCase().slice(0, 3);
+  const nights = new Map();
+  for (const v of saved) { if (v.boss !== forBoss || !sameDif(v)) continue; const n = nightOf(v.at); let o = nights.get(n); if (!o) nights.set(n, o = { at: v.at, pulls: 0, ps: new Set(), v }); o.pulls++; for (const p of v.players || []) o.ps.add(low(p)); }
+  let best = null; for (const o of nights.values()) { o.hit = names.filter((nm) => o.ps.has(nm.toLowerCase())).length; if (!best || o.hit > best.hit || (o.hit === best.hit && o.at > best.at)) best = o; }
+  const everyone = new Set(); for (const v of saved) for (const p of v.players || []) everyone.add(low(p));
+  const g = best ? groups().find((x) => x.kind !== 'char' && pullGroups(best.v).includes(x.gid)) : null;
+  return { nBoss, dif, wrongBoss: !!(nBoss && nBoss !== boss), names, best, team: g ? gName(g) : null, unknown: names.filter((nm) => !everyone.has(nm.toLowerCase())), none: !saved.length, noPulls: !nights.size };
+}
+// (the box on top of Assignments after a note is saved: one plain line per finding, and a way to move a note pasted on the wrong boss)
+function noteScanBox(sc) {
+  if (sc.moved) return '<div class="panel ah-exbar nscan"><span><b>Moved to ' + esc(sc.moved) + '.</b> <span class="sub">The note is saved for ' + esc(sc.moved) + ' now, and its pulls use it from there.</span></span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
+  const r = sc.r, out = [], fight = r.nBoss ? esc(r.nBoss) + (r.dif ? ' (' + esc(r.dif) + ')' : '') : '';
+  if (r.wrongBoss) out.push("Its first line says it's for " + fight + ', but you saved it on ' + esc(sc.boss) + '.');
+  else if (fight) out.push('It\'s for ' + fight + '.');
+  if (r.none) out.push("You don't have any saved logs yet, so its names couldn't be checked. Add your team on the Teams page to check notes against your raid nights.");
+  else if (r.noPulls) out.push("None of your saved logs have this boss" + (r.dif ? ' on ' + esc(r.dif) : '') + ' yet, so its roster gets checked as you open its pulls.');
+  else if (r.best && r.best.hit) out.push('It names ' + plural(r.names.length, 'player') + ', and ' + r.best.hit + ' of them raided this boss on ' + esc(nightLabel(r.best.at)) + (r.team ? ' with ' + esc(r.team) : '') + ' (' + plural(r.best.pulls, 'pull') + ').');
+  else if (r.names.length) out.push("None of its names were in your saved pulls of this boss.");
+  if (!r.none && r.unknown.length) out.push((r.unknown.length === 1 ? "1 name wasn't" : r.unknown.length + " names weren't") + ' in any of your saved logs: ' + esc(r.unknown.slice(0, 6).join(', ')) + (r.unknown.length > 6 ? ' and ' + (r.unknown.length - 6) + ' more' : '') + ". Check the spelling, and use character names (NSRT nicknames can't be matched yet).");
+  else if (!r.none && !r.noPulls && r.names.length) out.push('Every name in it is in your saved logs.');
+  const warn = r.wrongBoss || (!r.none && r.unknown.length);
+  return '<div class="panel ah-exbar nscan"><span><b>' + (warn ? 'Check your note' : 'Your note is checked') + '</b> <span class="sub">' + out.join(' ') + '</span></span>' +
+    (r.wrongBoss ? '<button class="btn primary" type="button" id="nscanMove">Move it to ' + esc(r.nBoss) + '</button>' : '') + '<button class="btn" type="button" id="nscanOk">Got it</button></div>';
+}
 function applyNote(rep) {
   rep.mistakes = rep.mistakes.filter((m) => !m.fromNote);
   rep.assign = null;
@@ -2615,7 +2649,7 @@ function audit() {
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
-    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">defensives, Healthstones and potions count up to the wipe filter, and raid cooldowns count for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕\u00a0' + pl2(nd, 'problem') : '✓\u00a0clean') + '</span></summary>' +
+    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">up to the wipe filter (raid cooldowns: the whole pull)</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕\u00a0' + pl2(nd, 'problem') : '✓\u00a0clean') + '</span></summary>' +
       secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
       (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })() + '</details>'; }
   // Damage taken by source (moved from Performance): every ability that hit the raid as bars, and who took it

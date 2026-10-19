@@ -185,8 +185,12 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] **Debrief's own ranking system** (your note): a score of our own, from all the performance data together (damage or
   healing, survivability, mechanical execution and so on), not just output like Warcraft Logs parses.
 - [ ] **Customize your Teams page** (your note; it was called Progress): let people pick their own background banner, character avatar and so on.
-- [ ] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
-  to the game's name, so people know which mechanic it is.
+- [x] **Mechanic names in the Mechanics tab** (your note): refine how mechanics are named; add a plain nickname in brackets next
+  to the game's name, so people know which mechanic it is. **Done (Oct 18, your go-ahead, "keep them simple"):** 25
+  headings got a one- or two-word nickname, like "Ravage (frontal)" (list in notes/Mechanic nicknames.md). Headings that
+  already said what the mechanic is got none, so nothing repeats. The three clumsy names, Soulcoil Ignition's summary and
+  the Survival small print below are done too. Still open: 10 other sections count vague "results" (egg results, tether
+  results and so on); each needs its own plain summary line, like Ignition's.
   **Also in this pass (from the Mechanics review, Oct 18):** clumsy problem names ("Circle hits or Ritual Burn going in",
   "Drifts or players hit by a flying player", "Pops that took the raid to four stacks"); Nek'zali's Soulcoil Ignition
   counts "results", a vague word, so it should name what it counts; and shorter small print under the phase headers
@@ -208,6 +212,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 220: Ula'tek, every egg on its own line (your question)
+- [x] **The Eggs section lists every egg,** grouped by the egg phase that dropped it (each Call of the Serpent, then "Stage
+  2 eggs" and any others), like the kick sets: pick a phase on the left. Each phase starts with its pickup map (everyone
+  moving in, a green dot where each egg was picked up), then one line per egg: who carried it, when they picked it up, how
+  long they held it, and how it ended ("Egg 1: popped in a Spectral Coil", "Egg 4: dropped at 3:47 (no Viper)", "still
+  carried when the pull ended"). The phase's summary counts them: "8 eggs: 5 popped in a Coil, 3 broke into a Viper".
+- [x] **An egg that broke is its Viper's line,** marked ✕ in its phase with the map of what broke it ("Egg 5: broke into
+  a Viper (Noxious Splash with Telegon)"), and the phase gets a red dot. An egg left on the ground stays at the top, with
+  the Rancid Yolk pickups.
+- [x] My call: no map on each egg's own line. With them, one phase showed nine big maps in a row; the phase's map already
+  shows every pickup.
+- Checked on 3 Mythic Ula'tek pulls from the test night.
 
 ## 2026-10-18, round 219: Your saved NSRT notes as a list, and each pull picks its own (your two notes)
 - [x] **A list of your saved notes on Assignments** (it was a small menu): each note with when it was saved, how many
@@ -430,7 +447,7 @@ itself, or only dots?
   Bellapearl 11s" and jargon ("on in 0.0s · 2 of 2", "% = their share into priority adds"). The "Priority adds, set by
   set" side panel leaves a big empty space. My suggestion: lines with clearly different colors per target, class-colored
   bars with the adds share as a plain number, and the set-by-set list as plain sentences at full width.
-- [ ] **Ula'tek: every egg, one line each (your question, Oct 18: can we track who picks up or carries an egg?).** Yes:
+- [x] **Ula'tek: every egg, one line each (your question, Oct 18: can we track who picks up or carries an egg?; done in round 220).** Yes:
   picking one up puts a shell on the carrier (Noxious Shell on Mythic, Malignant Shell on Heroic), so Debrief already
   knows who carried each egg, when they picked it up, how long they held it, whether it was popped in a Spectral Coil as
   planned, and what broke the ones that became Vipers. Today the Eggs section lists only the problems and a count. My

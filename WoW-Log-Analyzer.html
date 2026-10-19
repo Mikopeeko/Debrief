@@ -4597,7 +4597,7 @@ function buildNekzali(ev, r, h) {
       .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: o.n === 1 && !d, bad: o.n >= 2 || !!d, sub: fmtM(o.amt) }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
     return { title: 'Soulcoil Ignition ' + (i + 1) + (cut ? ' (cut short by the intermission)' : ''), t: s, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: (by.size ? pl(by.size, 'player') + ' hit by the circles' : 'nobody hit by the circles') + (burned.length ? ', ' + burned.length + ' with Ritual Burn' : ''), rows };
   });
-  if (igGroups.length) sections.push({ id: 'ignition', title: 'Soulcoil Ignition (well channel): no Ritual Burn, circles dodged', spell: [NZ.ignition, 'Soulcoil Ignition'], verdict: igGroups.some((g) => g.bad) ? 'bad' : igGroups.some((g) => g.warn) ? 'warn' : 'good',
+  if (igGroups.length) sections.push({ id: 'ignition', title: 'Soulcoil Ignition (boss channel): no Ritual Burn, circles dodged', spell: [NZ.ignition, 'Soulcoil Ignition'], verdict: igGroups.some((g) => g.bad) ? 'bad' : igGroups.some((g) => g.warn) ? 'warn' : 'good',
     summary: pl(igGroups.length, 'Soulcoil Ignition') + '. It shows any Ritual Burn going in' + (burnOn ? '' : ' (Heroic and Mythic only)') + ', who the Anguished Echoes circles hit, and her energy before and after.', cols: ['Who', 'When', 'Result', 'Died', ''], groups: igGroups, rows: [] });
 
   // ---- 3. Mythic: Grasping Depths, a Drowned Echo in the well twice a phase; a team goes in, kicks every Curse ----
@@ -4929,7 +4929,7 @@ function buildVashnik(ev, r, h) {
       if (again) M(t, pname(on.dst), 'Dripping Fangs', 'High', 'Took a second Dripping Fangs with the first one\'s debuff still up (100% more physical damage).', 'Taunt-swap on every Dripping Fangs.');
       return [{ p: on ? pname(on.dst) : '?' }, { t }, again ? { txt: 'took two in a row', bad: true } : { txt: i ? 'swapped' : 'first' }, { txt: diedNear(on && on.dst, t, 5) ? 'died' : '—', bad: !!(on && diedNear(on.dst, t, 5)), dim: !(on && diedNear(on.dst, t, 5)) }];
     });
-    if (rows.length) sections.push({ id: 'fangs', title: 'Dripping Fangs (tank hit): a swap every time', spell: [VS.fangs, 'Dripping Fangs'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : 'good',
+    if (rows.length) sections.push({ id: 'fangs', title: 'Dripping Fangs (tank buster): a swap every time', spell: [VS.fangs, 'Dripping Fangs'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : 'good',
       summary: rows.length + ' Dripping Fangs. It shows which tank took each one.', cols: ['Tank', 'When', 'Result', 'Died'], rows });
   }
 
@@ -5042,7 +5042,7 @@ function buildLostExplorers(ev, r, h) {
     }
     asc.filter((t) => !hits.some((e) => e.t >= t && e.t <= t + 9)).forEach((t) => rows.push([{ txt: 'Final Ascension cast' }, { t }, { txt: 'stopped by the fish' }, { txt: '' }]));
     rows.sort((a, b) => a[1].t - b[1].t);
-    if (rows.length) sections.push({ id: 'ascension', title: 'Final Ascension (enrage cast): a fish in time', spell: [LE.fish, 'Disgusting Fish'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good', info: !rows.some((x) => x[2].bad),
+    if (rows.length) sections.push({ id: 'ascension', title: 'Final Ascension (enrage): a fish in time', spell: [LE.fish, 'Disgusting Fish'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good', info: !rows.some((x) => x[2].bad),
       summary: (fish.length === 1 ? '1 fish' : fish.length + ' fish') + ' fed. It shows every Final Ascension cast, and any that went off on the raid.', cols: ['What', 'When', 'Result', 'Turn'], rows });
   }
 
@@ -6079,7 +6079,7 @@ function buildCoiledAltar(ev, r, h) {
         if (di >= 0 && g.tg && g.tg.length) { const cc = dmCC[di] || []; g.sub += ' · ' + (cc.length ? 'CC: ' + cc.join(', ') : 'no CC on the targets'); if (!cc.length && mythic) g.warn = true; }
         if (!g.rows.length) g.rows.push([{ txt: 'Clean', dim: true }, { t: g.t }, { txt: '' }, { txt: 'no collisions, falls or missed ghosts', dim: true }, { txt: '' }]);
       }
-      sections.push({ id: 'dmghost', title: 'Dreadmarch (walk-off): mind controls and ghosts', spell: S('dreadmarch'), verdict: worst([sDm, sGh, sMc, sSs]),
+      sections.push({ id: 'dmghost', title: 'Dreadmarch (mind control): ghosts and falls', spell: S('dreadmarch'), verdict: worst([sDm, sGh, sMc, sSs]),
         summary: 'It shows each Dreadmarch from start to finish: who was targeted and whether they stacked on the marker, where the ghosts spawned, ghosts touching, players mind controlled off the edge, and whether Soul Sever cleaned the ghosts up. Every row has its map.',
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: groups.filter((g) => g.rows.length) });
     }
@@ -6195,10 +6195,10 @@ function buildCoiledAltar(ev, r, h) {
         for (const g of gGroups) if (g.gb) g.sub = 'Gloombombs: ' + g.gb.map((x) => x.on + ' of ' + x.n + ' on this set\'s adds').join(', then ') + ' · ' + g.sub;
         for (const g of gGroups) { g.bad = g.bad || g.rows.some(isBad); g.warn = g.warn || g.rows.some((row) => row.some((c) => c.warn)); }
       }
-      sections.push({ id: 'addsets', title: 'Spiritcackle (fear) adds: kicks', spell: S('spiritcackle'), verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      sections.push({ id: 'addsets', title: 'Spiritcackle (fear adds): kicks', spell: S('spiritcackle'), verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
         summary: pl(groups.length, 'add set') + '. Each set shows its adds (first kick against the Gloombomb cast, and when it died), then every Wail of Terror and who kicked it, or that it got off.',
         cols: ['Add', 'Spawned', 'First kick', '', 'Died'], rows: [], groups });
-      if (mythic) sections.push({ id: 'gloom', title: 'Gloombombs (circles): breaking the Spirit Shields', spell: S('gloombomb'), mythicOnly: true,
+      if (mythic) sections.push({ id: 'gloom', title: 'Gloombombs (player bombs): breaking the Spirit Shields', spell: S('gloombomb'), mythicOnly: true,
         verdict: gGroups.some((g) => g.bad) ? 'bad' : gGroups.some((g) => g.warn) ? 'warn' : 'good',
         summary: 'For each set, it shows whether each add\'s Spirit Shield broke, then whose Gloombomb landed on which add (or missed, or was wasted on a leftover add), and anyone clipped by someone else\'s bomb.',
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: gGroups });
@@ -6365,8 +6365,10 @@ function buildUlatek(ev, r, h) {
       else if (gr) { cause = 'hit by ' + gr.spell; fix = 'Keep eggs away from anything green. Dodge the waves, and only take an egg into a Spectral Coil that is meant to pop it.'; }
       else { cause = 'broke in their hands'; fix = 'Anything green touching an egg or its carrier breaks it into a Viper.'; }
     } else { cause = 'an egg on the ground'; fix = 'Pick up every egg after Call of the Serpent. One left on the ground breaks into a Viper when a wave or a Coil hits it.'; }
+    if (c) c.viper = { t: v.t0, cause };
     M(v.t0, g ? pname(g) : 'Raid', 'Viper hatched', mythic ? UL.noxShell : UL.malShell, 'High', 'A Blightscale Viper hatched at ' + T(v.t0) + (g ? ' from ' + pname(g) + '\'s egg (' + cause + ').' : ' from an egg on the ground, or one the log doesn\'t tie to a carrier.'), fix);
-    eggRows.push([{ t: v.t0 }, g ? { p: pname(g) } : { txt: 'nobody', dim: true }, { txt: cause, bad: true }, { txt: v.died != null ? 'killed ' + Math.round(v.died - v.t0) + 's later' : 'still up', dim: v.died != null },
+    // (a Viper from a carried egg is that egg's line in its egg phase below; one from an egg on the ground stays up here)
+    (c ? (vr) => { c.vrow = vr; } : (vr) => eggRows.push(vr))([{ t: v.t0 }, g ? { p: pname(g) } : { txt: 'nobody', dim: true }, { txt: cause, bad: true }, { txt: v.died != null ? 'killed ' + Math.round(v.died - v.t0) + 's later' : 'still up', dim: v.died != null },
       // (a Noxious Splash: the carriers who came within 3 yards of each other, each with their 3-yard circle, a moment before
       // it went off; any other Viper: who had the egg)
       splashG ? { map: { t: Math.max(0, c.e - 0.15), hl: [g].concat(splashG), bad: [g].concat(splashG), badLabel: 'egg carriers within 3 yards', rings: [g].concat(splashG).map((x) => ({ guid: x, r: 3, label: '3 yd', ...mcol('Noxious Shell', 0.14), legend: 'a Noxious Shell, 3 yd (another carrier inside breaks both)' })),
@@ -6403,22 +6405,44 @@ function buildUlatek(ev, r, h) {
   if (hcUp) { const vh = stackHist(UL.vein); for (const c of carry) if (stackAt(vh, c.g, c.s) >= 2) veinN++; }
   // (each egg phase (your note, Oct 18): from Call of the Serpent until the last egg is picked up, everyone moving in, a
   // green dot where each egg was picked up (each carrier ticked from that moment), and a small ring on each carrier after)
+  // (and every egg, one line each (your question, Oct 18): grouped by the Call of the Serpent that dropped it, with who
+  // carried it, when they picked it up, how long they held it and how it ended)
+  const eggGroups = [], inCall = new Set();
+  // (no map on each egg's line: the egg phase's map above them already shows every pickup, and nine big maps in a row
+  // would bury the list; an egg that broke is its Viper's line, with the map of what broke it)
+  const eggRow = (c, k) => {
+    const held = Math.max(0, Math.round(Math.min(c.e, dur) - c.s)), end = c.e >= dur - 0.3;
+    if (c.vrow) { const v = c.vrow; return [v[0], v[1], { ...v[2], txt: 'Egg ' + k + ': broke into a Viper (' + c.viper.cause + ')', sub: 'picked up at ' + T(c.s) + ', held for ' + held + ' s' }, { ...v[3], txt: 'Viper ' + v[3].txt }].concat(v.slice(4)); }
+    const how = c.viper ? 'broke into a Viper (' + c.viper.cause + ')' : c.pop ? 'popped in a Spectral Coil' : end ? 'still carried when the pull ended' : 'dropped at ' + T(c.e) + ' (no Viper)';
+    return [{ t: c.s }, { p: pname(c.g) }, { txt: 'Egg ' + k + ': ' + how, sub: 'picked up at ' + T(c.s) + ', held for ' + held + ' s' }, { txt: c.viper ? 'Viper at ' + T(c.viper.t) : '—', dim: !c.viper }];
+  };
+  const eggSub = (ups) => { const n = (f) => ups.filter(f).length, nV = n((c) => c.viper), nP = n((c) => !c.viper && c.pop), nE = n((c) => !c.viper && !c.pop && c.e >= dur - 0.3), nD = ups.length - nV - nP - nE;
+    return pl(ups.length, 'egg') + ': ' + [nP ? nP + ' popped in a Coil' : '', nD ? nD + ' dropped' : '', nV ? nV + ' broke into a Viper' : '', nE ? nE + ' still carried at the end' : ''].filter(Boolean).join(', '); };
   cots.forEach((t, i) => { const nx = cots[i + 1] != null ? cots[i + 1] : dur, ups = carry.filter((c) => c.s >= t - 1 && c.s < Math.min(nx, t + 45)); if (!ups.length) return;
     const last = Math.max(...ups.map((c) => c.s)), t1 = Math.min(dur, last + 2);
     const spots = ups.map((c) => { const p = posPts(c.s).find((q) => q.guid === c.g); return p ? { x: p.x, y: p.y, r: 1.3, t0: c.s - 0.1, dur: t1 - c.s + 3, label: '', color: eggC.color, fill: 'rgba(58,242,168,.7)', cn: 'Green dot', legend: 'where an egg was picked up' } : null; }).filter(Boolean);
-    eggRows.push([{ t }, { txt: 'the raid' }, { txt: 'Call of the Serpent ' + (i + 1) + ': ' + pl(ups.length, 'egg') + ' picked up in ' + Math.max(1, Math.round(last - t)) + ' s', sub: andList([...new Set(ups.map((c) => pname(c.g)))]) }, { txt: '—', dim: true },
+    const phaseRow = [{ t }, { txt: 'the raid' }, { txt: 'Call of the Serpent ' + (i + 1) + ': ' + pl(ups.length, 'egg') + ' picked up in ' + Math.max(1, Math.round(last - t)) + ' s', sub: andList([...new Set(ups.map((c) => pname(c.g)))]) }, { txt: '—', dim: true },
       { map: { t: last, good: [...new Set(ups.map((c) => c.g))], goodLabel: 'picked up an egg', goodAt: ups.map((c) => [c.g, c.s]), title: 'Call of the Serpent ' + (i + 1) + ' at ' + T(t) + ': every egg picked up', pts: posPts(last), rings: spots.concat(eggRings(t, t1)),
         // ("Zoom to mechanic": around the spots the eggs were picked up)
         focus: spots.length ? (() => { const cx = spots.reduce((s, p) => s + p.x, 0) / spots.length, cy = spots.reduce((s, p) => s + p.y, 0) / spots.length; return { x: cx, y: cy, r: Math.max(10, ...spots.map((p) => Math.hypot(p.x - cx, p.y - cy) + 6)) }; })() : undefined,
-        frames: h.frames ? h.frames(Math.max(0, t - 1), t1, 0.25, []) : undefined } }]);
+        frames: h.frames ? h.frames(Math.max(0, t - 1), t1, 0.25, []) : undefined } }];
+    ups.forEach((c) => inCall.add(c));
+    eggGroups.push({ title: 'Call of the Serpent ' + (i + 1) + ', ' + T(t), t, bad: ups.some((c) => c.viper), sub: eggSub(ups), rows: [phaseRow].concat(ups.slice().sort((a, b) => a.s - b.s).map((c, k) => eggRow(c, k + 1))) });
   });
+  // (eggs no Call of the Serpent cast is logged for: the ones at the pull (cast before it), Stage 2's small eggs after the
+  // tether break, and any others)
+  const restE = carry.filter((c) => !inCall.has(c)).sort((a, b) => a.s - b.s);
+  const atPull = restE.filter((c) => c.s < Math.min(45, cots.length ? cots[0] - 1 : 45));
+  const st2 = p2 != null ? restE.filter((c) => !atPull.includes(c) && c.s >= p2 - 1 && (it == null || c.s < it)) : [], otherE = restE.filter((c) => !atPull.includes(c) && !st2.includes(c));
+  for (const [title, xs] of [['Eggs at the pull', atPull], ['Stage 2 eggs', st2], ['Other eggs', otherE]]) if (xs.length) eggGroups.push({ title: title + ', ' + T(xs[0].s), t: xs[0].s, bad: xs.some((c) => c.viper), sub: eggSub(xs), rows: xs.map((c, k) => eggRow(c, k + 1)) });
+  eggGroups.sort((a, b) => a.t - b.t);
   eggRows.sort((a, b) => a[0].t - b[0].t);
   // (a baseline row at the first pickup, so a pull whose Vipers all came after the wipe filter still reads clean up to it)
   if (carry.length) eggRows.unshift([{ t: carry[0].s }, { txt: 'the raid' }, { txt: pl(carry.length, 'egg') + ' carried' + (vipers.length ? '' : ', none broke into a Viper'), sub: veinN ? veinN + ' picked up with Blight Vein still on (fine unless the carrier dies)' : '' }, { txt: '—', dim: true }]);
   const nV = vipers.length;
   sections.push({ id: 'eggs', title: 'Eggs: no Vipers', spell: S(mythic ? 'noxious shell' : 'malignant shell'), verdict: nV ? 'bad' : eggRows.some((x) => x[2].warn) ? 'warn' : 'good',
     summary: nV ? pl(nV, 'Blightscale Viper') + ' hatched. Each row says who had the egg and what broke it.' : carry.length ? pl(carry.length, 'egg') + ' carried and none broke into a Viper.' : 'No eggs carried yet.',
-    cols: ['When', 'Carrier', 'What happened', 'Viper', ''], rows: eggRows });
+    cols: ['When', 'Carrier', 'What happened', 'Viper', ''], rows: eggRows, groups: eggGroups });
 
   // ---- 2. Spectral Coils: soakers per circle (Soul Constrictor marks a soaker on Heroic and Mythic) ----
   const coilHits = []; for (const e of dmgId(UL.coilHit)) { let c = coilHits.find((x) => Math.abs(x.t - e.t) < 1); if (!c) coilHits.push(c = { t: e.t, amt: 0, n: 0 }); c.amt += e.amt; c.n++; }
@@ -6444,7 +6468,7 @@ function buildUlatek(ev, r, h) {
     return { title: 'Spectral Coils, set ' + (si + 1) + ' (' + phaseAt(t0) + ')', t: t0, sub: pl(set.length, 'circle') + (hcUp ? ': ' + set.map((c) => sc.filter((e) => Math.abs(e.t - c.t) < 1).length).join(' / ') + ' soakers' : ''),
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
-  if (coilGroups.length) sections.push({ id: 'coils', title: 'Spectral Coils (tail circles): soaked', spell: S('spectral coils'), verdict: coilGroups.some((g) => g.bad) ? 'bad' : coilGroups.some((g) => g.warn) ? 'warn' : 'good',
+  if (coilGroups.length) sections.push({ id: 'coils', title: 'Spectral Coils (tail slams): soaked', spell: S('spectral coils'), verdict: coilGroups.some((g) => g.bad) ? 'bad' : coilGroups.some((g) => g.warn) ? 'warn' : 'good',
     summary: pl(coilHits.length, 'circle') + (hcUp ? '. A circle under ' + minSoak + ' soakers is flagged.' : '.'), cols: ['Circle', 'When', 'Soakers', 'Who soaked', 'Damage', 'Died', ''], rows: [], groups: coilGroups });
 
   // ---- 2b. Caustic Waves: every wave hit, and where that wave came from ----
@@ -11578,7 +11602,7 @@ function audit() {
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
-    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">defensives, Healthstones and potions count up to the wipe filter, and raid cooldowns count for the whole pull</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕\u00a0' + pl2(nd, 'problem') : '✓\u00a0clean') + '</span></summary>' +
+    h += '<details class="phase" open><summary><b>Survival</b> <span class="sub">up to the wipe filter (raid cooldowns: the whole pull)</span><span class="sst ' + (nd ? 'bad' : 'ok') + '">' + (nd ? '✕\u00a0' + pl2(nd, 'problem') : '✓\u00a0clean') + '</span></summary>' +
       secBlock({ s: ds, rows: ds.rows, groups: [] }, 'sv') +
       (() => { const rd = rcdData(r), nc = rd.hits.filter((x) => x.st === 'ok').length; return info('sv-cds', 'Raid cooldowns', 'Rallying Cry', rd.hits.length ? nc + ' of ' + plural(rd.hits.length, 'big hit') + ' covered' : 'the big hits and what covered them', raidCdPanel(r).replace(/^<div class="panel /, '<div class="')); })() + '</details>'; }
   // Damage taken by source (moved from Performance): every ability that hit the raid as bars, and who took it
