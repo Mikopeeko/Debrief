@@ -10963,12 +10963,14 @@ function specView(reps, one) {
   if (!ps.length) return '<div class="panel"><p class="muted" style="margin:0">None of these players\' specs has a Rotation page yet. Rotation covers every spec that\'s common in Mythic raids.</p></div>';
   const ROLES = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']], inRole = (k) => ps.filter((p) => (p.role || 'dps') === k).sort(byN);
   if (!S.specSel || !pm.has(S.specSel)) S.specSel = meN || ROLES.flatMap(([k]) => inRole(k))[0].name;
-  const pick = '<div class="rot-pick">' + ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<div class="rot-pg"><span class="rot-pgl">' + l + '</span><div class="rot-pgb">' +
-    l2.map((p) => { const on = p.name === S.specSel; return '<button type="button" class="rot-nb' + (on ? ' on' : '') + '" data-un="' + esc(p.name) + '" aria-pressed="' + on + '" style="--cc:' + (p.color || '#ccc') + '" title="' + esc(p.specName || '') + '">' + avatar(p, true) + '<span>' + esc(p.name) + '</span>' + (p.name === meN ? '<span class="rot-you">you</span>' : '') + '</button>'; }).join('') + '</div></div>' : ''; }).join('') + '</div>';
-  const x = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one);
+  // (your pick, Oct 19: no buttons above the page; a "Change player" dropdown beside the player's name in its header, everyone
+  // grouped by role inside it)
+  const sel = '<select class="rot-sel" aria-label="Change player"><option value="" selected disabled>Change player</option>' + ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<optgroup label="' + l + '">' +
+    l2.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === S.specSel ? ' disabled' : '') + '>' + esc(p.name) + (p.name === meN ? ' (you)' : '') + ' · ' + esc(p.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') + '</select>';
+  const x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one), x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
   const ak = S.specSel + '|' + (one ? (S.rep && S.rep.item ? S.rep.item.pull : '') : 'all'), an = ak !== SPC_AK ? ' spc-anim' : ''; SPC_AK = ak;
   const page = x ? '<div class="pf-inl pf-srcd spc-v' + an + '">' + x.html + '</div>' + (x.wait ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') : '<p class="muted" style="margin:10px 0 0">No Rotation page for ' + esc(S.specSel) + (one ? ' this pull' : ' over these pulls') + '.</p>';
-  return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + pick + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
+  return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
 }
 // The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
 // player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
@@ -11198,7 +11200,7 @@ function bindPerf() {
   // (Utility and Survivability: the kind switch, and a player's bar picks them; clicking it again shows the whole raid)
   const stOf = (b) => { const w = b.closest('[data-st]'); return w ? w.dataset.st : 'util'; };
   $$('.pfu-cat button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; const st = stOf(b); S[st + 'Cat'] = b.dataset.c; S[st + 'Sel'] = null; renderMain(); refreshIcons(); }));
-  $$('.rot-nb').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.specSel = b.dataset.un; renderMain(); refreshIcons(); })); // (Rotation's name buttons)
+  $$('.rot-sel').forEach((s) => (s.onchange = () => { if (!s.value) return; S.specSel = s.value; renderMain(); refreshIcons(); })); // (Rotation's Change player)
   $$('.pfu-bars .pf-row:not(.nb)').forEach((b) => (b.onclick = () => { const st = stOf(b); S[st + 'Sel'] = S[st + 'Sel'] === b.dataset.un ? null : b.dataset.un; renderMain(); refreshIcons(); pfKeep(); }));
   $$('.pf-row:not(.nb)').forEach((b) => { if (!b.closest('.pfu-bars') && !b.closest('.rs-bars')) b.onclick = () => { S.perfSel = S.perfSel === b.dataset.n ? null : b.dataset.n; perf(); pfKeep(); }; });
   // (Resources: the power switch, and a player's bar or line picks them; again, or Show the raid, for everyone)
@@ -13276,7 +13278,7 @@ const PAGE_TIPS = {
     { sel: '#view .pf-bars > h3', t: 'Every player', p: 'Click a player to see their numbers on the chart.' },
     { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on the same view.' }],
   rot: [
-    { sel: '#view .rot-pick', t: 'Every player', p: 'Pick a player to see how they played their spec: what they pressed and when, their cooldowns, their resources and their talents. It opens on you when you\'re in the pull.' },
+    { sel: '#view .rot-sel', t: 'Every player', p: 'Change player to see how anyone else played their spec: what they pressed and when, their cooldowns, their resources and their talents. It opens on you when you\'re in the pull.' },
     { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on Rotation.' }],
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },

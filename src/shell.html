@@ -1176,13 +1176,9 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* ---- Spec checks: what the top players do, beside each line ---- */
 .spc-shv { display: inline-flex; align-items: baseline; gap: 10px; } .spc-tp { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
 .spc-htp { margin-top: 6px; color: var(--muted); font-size: 12px; }
-.rot-pick { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0 0 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line2); }
-.rot-pg { display: flex; flex-direction: column; gap: 6px; min-width: 0; } .rot-pgl { color: var(--faint); font-size: 11.5px; letter-spacing: .3px; }
-.rot-pgb { display: flex; flex-wrap: wrap; gap: 6px; }
-.rot-nb { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 5px; border: 1px solid var(--line2); border-radius: 999px; background: rgba(255,255,255,.03); color: var(--cc); font: 600 13px var(--body); cursor: pointer; transition: background .12s, border-color .12s; }
-.rot-nb:hover { background: rgba(255,255,255,.07); } .rot-nb.on { border-color: var(--gold); background: rgba(230,180,80,.12); box-shadow: 0 0 0 1px rgba(230,180,80,.35); }
-.rot-nb .av, .rot-nb > span:first-child:not(:last-child) { flex: none; width: 20px; height: 20px; } .rot-you { margin-left: 2px; padding: 0 6px; border-radius: 999px; background: rgba(230,180,80,.2); color: var(--gold); font-size: 11px; font-weight: 600; }
-@media (max-width: 560px) { .rot-pick { gap: 8px 14px; } .rot-nb { font-size: 12.5px; padding: 3px 9px 3px 4px; } }
+.rot-hn h3 { display: inline; } .rot-hn .rot-sel { display: inline-block; width: auto; max-width: 190px; min-width: 0; height: auto; margin: 0 0 0 10px; padding: 3px 26px 3px 10px; border: 1px solid var(--line2); border-radius: 999px; background-color: rgba(0,0,0,.3); color: var(--muted); font: 600 12px var(--body); vertical-align: 4px; cursor: pointer; appearance: auto; }
+.rot-sel:hover, .rot-sel:focus { color: var(--text); border-color: var(--gold); outline: none; } .rot-sel option, .rot-sel optgroup { background: #1b1f29; color: var(--text); }
+@media (max-width: 560px) { .rot-hn .rot-sel { display: block; margin: 6px 0 0; vertical-align: 0; } }
 .spc-kts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; max-width: 520px; }
 .spc-kt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 11px; border: 1px solid var(--line2); border-radius: 10px; background: rgba(0, 0, 0, .28); min-width: 0; }
 .spc-ktl { color: var(--muted); font-size: 11.5px; } .spc-ktv { font: 600 20px var(--head); color: var(--text); line-height: 1.2; } .spc-ktv .prs { font-size: 15px; padding: 1px 8px; }
