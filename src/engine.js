@@ -251,7 +251,9 @@ const DIFF = { 1: 'Normal', 2: 'Heroic', 8: 'Mythic+', 14: 'Normal', 15: 'Heroic
 const WANTED = new Set(['COMBATANT_INFO', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'RANGE_DAMAGE', 'SWING_DAMAGE',
   'ENVIRONMENTAL_DAMAGE', 'SPELL_HEAL', 'SPELL_PERIODIC_HEAL', 'SPELL_ABSORBED', 'SPELL_HEAL_ABSORBED', 'SPELL_CAST_SUCCESS',
   'SPELL_INTERRUPT', 'SPELL_DISPEL', 'SPELL_SUMMON', 'UNIT_DIED', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_AURA_REMOVED_DOSE', 'SPELL_AURA_REMOVED', 'SPELL_CAST_START',
-  'SPELL_ENERGIZE', 'SPELL_PERIODIC_ENERGIZE']);
+  'SPELL_ENERGIZE', 'SPELL_PERIODIC_ENERGIZE',
+  // (Augmentation's share of other players' hits, and missed auto attacks for melee uptime, Oct 19)
+  'SPELL_DAMAGE_SUPPORT', 'SPELL_PERIODIC_DAMAGE_SUPPORT', 'RANGE_DAMAGE_SUPPORT', 'SWING_DAMAGE_LANDED_SUPPORT', 'SWING_MISSED']);
 
 // Spell school per spell ID, learned from the log (used for icon colors).
 const SCHOOL = new Map();
@@ -5157,7 +5159,7 @@ function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|')
 // number is from just before paying it (a finisher at 7 combo points reads 7), so it says they were spending, not
 // sitting at the top.
 const RES_SKIP = new Set(['0', '16']);
-const PET_AURA = new Set(['demonic power']), DMG_EV = new Set(['implosion']);
+const PET_AURA = new Set(['demonic power']), DMG_EV = new Set(['implosion', 'breath of eons']); // (Breath of Eons: its stored damage exploding, for each window's card)
 function resAt(p, f, a, t) {
   const ty = String(f[a + 10]).split('|'); if (!ty.length || (ty.length === 1 && RES_SKIP.has(ty[0]))) return;
   const cu = String(f[a + 11]).split('|'), mx = String(f[a + 12]).split('|'), co = String(f[a + 13]).split('|');
@@ -5293,6 +5295,26 @@ function analyze(item, text, opts) {
         if (f.length >= 12 && isPlayer(dg) && W(f[9], f[8])) modEv.push({ k: 'miss', t, dst: dg, spell: f[9], id: num(f[8]), how: f[11], src: sg });
         break;
       }
+      // A share of a player's hit that another player's buff gave (Augmentation's Ebon Might, Prescience, Shifting Sands, Fate Mirror, Breath of Eons):
+      // the hitter's damage again, with the buff's spell, and the buffer's GUID last. It counts for the buffer and comes off the hitter, off the hit it
+      // follows when there is one (same moment and target), the way Warcraft Logs adds them up. The whole raid's total doesn't change. (Oct 19)
+      case 'SPELL_DAMAGE_SUPPORT': case 'SPELL_PERIODIC_DAMAGE_SUPPORT': case 'RANGE_DAMAGE_SUPPORT': case 'SWING_DAMAGE_LANDED_SUPPORT': {
+        const swing = ev.startsWith('SWING'), adv = swing ? 8 : 11; if (f.length < adv + 9 || !(parseInt(f[6], 16) & 0x40)) break;
+        const hasAdv = f.length >= adv + ADV + 9, s0 = adv + (hasAdv ? ADV : 0); let sup = f[f.length - 1], hitter = owner;
+        // (the Evoker is the buffer: if the line has it the other way round, swap)
+        if (isPlayer(sg) && (r.players.get(sg) || {}).specId === 1473 && (r.players.get(sup) || {}).specId !== 1473) { const x = sup; sup = sg; hitter = isPlayer(x) ? x : (pets.get(x) || ''); }
+        if (!isPlayer(sup)) break;
+        const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))); if (!amt) break;
+        const spell = swing ? 'Support' : f[9], id = swing ? 0 : num(f[8]), crit = f[s0 + 7] === '1';
+        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit); bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
+        // (by buff, and by whose hit it came through, for "damage through your buffs"; Breath of Eons' explosions one by one)
+        (a.supAb || (a.supAb = new Map())).set(spell, (a.supAb.get(spell) || 0) + amt); if (hitter && hitter !== sup) { const hn = P(hitter, null).name || ''; if (hn) (a.supTo || (a.supTo = new Map())).set(hn, (a.supTo.get(hn) || 0) + amt); }
+        if (DMG_EV.has(String(spell).toLowerCase())) { if (!a.dmgEv) a.dmgEv = []; if (a.dmgEv.length < 6000) a.dmgEv.push([t, spell, dg, amt]); }
+        if (hitter && hitter !== sup) { const p = P(hitter, null), lh = p.lastHit, ab = lh && lh[2] === dg && Math.abs(lh[0] - t) < 0.02 ? p.dmgAb.get(lh[1]) : null;
+          p.damage -= amt; bump(p.dmgS, t, -amt); if (p.dmgT.has(dn)) p.dmgT.set(dn, p.dmgT.get(dn) - amt); bumpN(p.dmgTS, t, dn, -amt); if (ab) ab.total = Math.max(0, ab.total - amt); else p.supOut = (p.supOut || 0) + amt; }
+        else bump(r.dmgS, t, amt);
+        break;
+      }
       case 'SPELL_DAMAGE': case 'SPELL_PERIODIC_DAMAGE': case 'RANGE_DAMAGE': case 'SWING_DAMAGE': {
         const swing = ev === 'SWING_DAMAGE', adv = swing ? 8 : 11;
         if (f.length < adv + 8) break;
@@ -5324,6 +5346,7 @@ function analyze(item, text, opts) {
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
+          p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
           // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
           // (with the amount; and every "(Erupt)" hit, like the plagues Unholy's Blightfall sets off, so a press can be credited with them)
           { const lsp = spell.toLowerCase(); if (!pet && (DMG_EV.has(lsp) || lsp.endsWith(' (erupt)'))) { if (!p.dmgEv) p.dmgEv = []; if (p.dmgEv.length < 6000) p.dmgEv.push([t, spell, dg, dealt]); } }

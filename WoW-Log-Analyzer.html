@@ -937,10 +937,13 @@ details.plgear > summary .sub { font: 400 12px var(--body); } details.plgear > s
 .tl-n { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; } .tl-n > span:not(.icw) { overflow: hidden; text-overflow: ellipsis; } .tl-n .icw { width: 16px; height: 16px; margin: 0; flex: none; }
 .tl-r svg { display: block; width: 100%; height: 14px; background: rgba(255,255,255,.035); border-radius: 3px; }
 rect.tl-aw { fill: #e6b450; opacity: .6; } rect.tl-bv { fill: #6aa8ff; opacity: .5; } rect.tl-io { fill: #b07cf0; opacity: .65; } rect.tl-rd { fill: rgba(255,255,255,.07); } rect.tl-rd.red, rect.tl-cap { fill: rgba(229,83,75,.42); } rect.tl-dd { fill: rgba(0,0,0,.5); }
-line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-stroke; } line.tl-t.ok { stroke: #45c15c; } line.tl-t.warn { stroke: #e8a23a; } line.tl-t.thin { stroke: #c9ced8; stroke-width: 1.2; }
+line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-stroke; } line.tl-t.ok { stroke: #45c15c; } line.tl-t.warn { stroke: #e8a23a; }
+ line.tl-t.bad { stroke: #e5534b; }
+ path.tl-rsa { fill: rgba(181,120,255,.45); } line.tl-t.thin { stroke: #c9ced8; stroke-width: 1.2; }
 .tl-ax { margin: 2px 0 0 170px; } .tl-ax > div { position: relative; height: 14px; font-size: 10.5px; color: var(--faint); } .tl-ax span { position: absolute; transform: translateX(-50%); white-space: nowrap; } .tl-ax span:first-child { transform: none; }
 .tl-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 2px; font-size: 11.5px; color: var(--faint); } .tl-lg span { display: inline-flex; align-items: center; gap: 5px; } .tl-lg i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; }
-.tl-lg i.aw { background: #e6b450; opacity: .7; } .tl-lg i.bv { background: #6aa8ff; opacity: .6; } .tl-lg i.io { background: #b07cf0; opacity: .7; } .tl-lg i.ok { width: 3px; height: 11px; background: #45c15c; } .tl-lg i.warn { width: 3px; height: 11px; background: #e8a23a; } .tl-lg i.red { background: rgba(229,83,75,.6); } .tl-lg i.dd { background: rgba(0,0,0,.6); border: 1px solid var(--line2); }
+.tl-lg i.aw { background: #e6b450; opacity: .7; } .tl-lg i.bv { background: #6aa8ff; opacity: .6; } .tl-lg i.io { background: #b07cf0; opacity: .7; } .tl-lg i.ok { width: 3px; height: 11px; background: #45c15c; } .tl-lg i.warn { width: 3px; height: 11px; background: #e8a23a; }
+.tl-lg i.bad { width: 3px; height: 11px; background: #e5534b; } .tl-lg i.red { background: rgba(229,83,75,.6); } .tl-lg i.dd { background: rgba(0,0,0,.6); border: 1px solid var(--line2); }
 @media (max-width: 640px) { .tl-r { grid-template-columns: 22px minmax(0, 1fr); gap: 6px; } .tl-n > span:not(.icw) { display: none; } .tl-ax { margin-left: 28px; } }
 .spc-pr { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr) 70px; grid-template-areas: "n b v" ". l l"; align-items: center; gap: 2px 10px; padding: 5px 0; }
 .spc-pr + .spc-pr { border-top: 1px solid var(--line); } .spc-pn { grid-area: n; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; } .spc-pn .icw { width: 18px; height: 18px; margin: 0; flex: none; }
@@ -4142,7 +4145,9 @@ const DIFF = { 1: 'Normal', 2: 'Heroic', 8: 'Mythic+', 14: 'Normal', 15: 'Heroic
 const WANTED = new Set(['COMBATANT_INFO', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'RANGE_DAMAGE', 'SWING_DAMAGE',
   'ENVIRONMENTAL_DAMAGE', 'SPELL_HEAL', 'SPELL_PERIODIC_HEAL', 'SPELL_ABSORBED', 'SPELL_HEAL_ABSORBED', 'SPELL_CAST_SUCCESS',
   'SPELL_INTERRUPT', 'SPELL_DISPEL', 'SPELL_SUMMON', 'UNIT_DIED', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_AURA_REMOVED_DOSE', 'SPELL_AURA_REMOVED', 'SPELL_CAST_START',
-  'SPELL_ENERGIZE', 'SPELL_PERIODIC_ENERGIZE']);
+  'SPELL_ENERGIZE', 'SPELL_PERIODIC_ENERGIZE',
+  // (Augmentation's share of other players' hits, and missed auto attacks for melee uptime, Oct 19)
+  'SPELL_DAMAGE_SUPPORT', 'SPELL_PERIODIC_DAMAGE_SUPPORT', 'RANGE_DAMAGE_SUPPORT', 'SWING_DAMAGE_LANDED_SUPPORT', 'SWING_MISSED']);
 
 // Spell school per spell ID, learned from the log (used for icon colors).
 const SCHOOL = new Map();
@@ -9048,7 +9053,7 @@ function manaAt(p, f, a, t, spell, id) { const ty = String(f[a + 10]).split('|')
 // number is from just before paying it (a finisher at 7 combo points reads 7), so it says they were spending, not
 // sitting at the top.
 const RES_SKIP = new Set(['0', '16']);
-const PET_AURA = new Set(['demonic power']), DMG_EV = new Set(['implosion']);
+const PET_AURA = new Set(['demonic power']), DMG_EV = new Set(['implosion', 'breath of eons']); // (Breath of Eons: its stored damage exploding, for each window's card)
 function resAt(p, f, a, t) {
   const ty = String(f[a + 10]).split('|'); if (!ty.length || (ty.length === 1 && RES_SKIP.has(ty[0]))) return;
   const cu = String(f[a + 11]).split('|'), mx = String(f[a + 12]).split('|'), co = String(f[a + 13]).split('|');
@@ -9184,6 +9189,26 @@ function analyze(item, text, opts) {
         if (f.length >= 12 && isPlayer(dg) && W(f[9], f[8])) modEv.push({ k: 'miss', t, dst: dg, spell: f[9], id: num(f[8]), how: f[11], src: sg });
         break;
       }
+      // A share of a player's hit that another player's buff gave (Augmentation's Ebon Might, Prescience, Shifting Sands, Fate Mirror, Breath of Eons):
+      // the hitter's damage again, with the buff's spell, and the buffer's GUID last. It counts for the buffer and comes off the hitter, off the hit it
+      // follows when there is one (same moment and target), the way Warcraft Logs adds them up. The whole raid's total doesn't change. (Oct 19)
+      case 'SPELL_DAMAGE_SUPPORT': case 'SPELL_PERIODIC_DAMAGE_SUPPORT': case 'RANGE_DAMAGE_SUPPORT': case 'SWING_DAMAGE_LANDED_SUPPORT': {
+        const swing = ev.startsWith('SWING'), adv = swing ? 8 : 11; if (f.length < adv + 9 || !(parseInt(f[6], 16) & 0x40)) break;
+        const hasAdv = f.length >= adv + ADV + 9, s0 = adv + (hasAdv ? ADV : 0); let sup = f[f.length - 1], hitter = owner;
+        // (the Evoker is the buffer: if the line has it the other way round, swap)
+        if (isPlayer(sg) && (r.players.get(sg) || {}).specId === 1473 && (r.players.get(sup) || {}).specId !== 1473) { const x = sup; sup = sg; hitter = isPlayer(x) ? x : (pets.get(x) || ''); }
+        if (!isPlayer(sup)) break;
+        const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))); if (!amt) break;
+        const spell = swing ? 'Support' : f[9], id = swing ? 0 : num(f[8]), crit = f[s0 + 7] === '1';
+        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit); bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
+        // (by buff, and by whose hit it came through, for "damage through your buffs"; Breath of Eons' explosions one by one)
+        (a.supAb || (a.supAb = new Map())).set(spell, (a.supAb.get(spell) || 0) + amt); if (hitter && hitter !== sup) { const hn = P(hitter, null).name || ''; if (hn) (a.supTo || (a.supTo = new Map())).set(hn, (a.supTo.get(hn) || 0) + amt); }
+        if (DMG_EV.has(String(spell).toLowerCase())) { if (!a.dmgEv) a.dmgEv = []; if (a.dmgEv.length < 6000) a.dmgEv.push([t, spell, dg, amt]); }
+        if (hitter && hitter !== sup) { const p = P(hitter, null), lh = p.lastHit, ab = lh && lh[2] === dg && Math.abs(lh[0] - t) < 0.02 ? p.dmgAb.get(lh[1]) : null;
+          p.damage -= amt; bump(p.dmgS, t, -amt); if (p.dmgT.has(dn)) p.dmgT.set(dn, p.dmgT.get(dn) - amt); bumpN(p.dmgTS, t, dn, -amt); if (ab) ab.total = Math.max(0, ab.total - amt); else p.supOut = (p.supOut || 0) + amt; }
+        else bump(r.dmgS, t, amt);
+        break;
+      }
       case 'SPELL_DAMAGE': case 'SPELL_PERIODIC_DAMAGE': case 'RANGE_DAMAGE': case 'SWING_DAMAGE': {
         const swing = ev === 'SWING_DAMAGE', adv = swing ? 8 : 11;
         if (f.length < adv + 8) break;
@@ -9215,6 +9240,7 @@ function analyze(item, text, opts) {
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
+          p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
           // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
           // (with the amount; and every "(Erupt)" hit, like the plagues Unholy's Blightfall sets off, so a press can be credited with them)
           { const lsp = spell.toLowerCase(); if (!pet && (DMG_EV.has(lsp) || lsp.endsWith(' (erupt)'))) { if (!p.dmgEv) p.dmgEv = []; if (p.dmgEv.length < 6000) p.dmgEv.push([t, spell, dg, dealt]); } }
@@ -10584,7 +10610,10 @@ function translate(item, events) {
       case 'damage': {
         const amt = e.amount || 0, ok = e.overkill > 0 ? e.overkill : -1, abs = e.absorbed || 0, crit = e.hitType === 2 ? '1' : 'nil';
         const suffix = [amt, amt + abs, ok, 1, 0, 0, abs, crit, 'nil', 'nil', 'ST'].join(',');
-        if (ab === 1) add(e, 'SWING_DAMAGE,' + src(e) + ',' + dst(e) + ',' + adv(e, 1) + ',' + suffix);
+        // (a support line: the share of the supported player's hit that an Evoker's buff gave, sourced to the Evoker. Written the way the game
+        // writes it, the hitter's damage with the buff's spell and the Evoker's GUID last, so the parser credits the Evoker and takes it off the hitter)
+        if (e.subtractsFromSupportedActor && e.supportID != null) add(e, (e.tick ? 'SPELL_PERIODIC_DAMAGE_SUPPORT,' : 'SPELL_DAMAGE_SUPPORT,') + unit(e.supportID, e.supportInstance) + ',' + dst(e) + ',' + spell(ab) + ',' + adv(e, 2) + ',' + suffix + ',' + guid(e.sourceID, e.sourceInstance));
+        else if (ab === 1) add(e, 'SWING_DAMAGE,' + src(e) + ',' + dst(e) + ',' + adv(e, 1) + ',' + suffix);
         else add(e, (e.tick ? 'SPELL_PERIODIC_DAMAGE,' : 'SPELL_DAMAGE,') + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + adv(e, 2) + ',' + suffix);
         break;
       }
@@ -21622,6 +21651,13 @@ function meleeGaps(r, p, t1, dead) {
   const tot = (k) => gaps.reduce((v, g) => v + (k ? g.sec[k] : g.lost), 0);
   return { gaps, al, lost: tot(), you: tot('you'), mech: tot('mech'), deb: tot('deb'), unk: tot('?') };
 }
+// Whether a player had their spec's big cooldown up between a and e: their page's burst window (GEN_SPECS win), by its buff, else by its press and
+// length. null when their spec has none (healers, tanks, hand-built pages). For Augmentation's Breath of Eons cards (Oct 19).
+function bigCdUp(x, a, e) { const D = GEN_SPECS[x.specName]; if (!D || !D.win || !x.buffs) return null;
+  for (const w of [].concat(D.win)) { const bs = (w.buffs && w.buffs.length ? w.buffs : w.names || [w.n]).map((n) => x.buffs.get(n)).filter(Boolean);
+    if (bs.length) { if (bs.some((b) => b.sp.some(([u, v]) => u < e && (v == null || v > a)))) return true; continue; }
+    if (((x.byName && x.byName.get(String(w.n).toLowerCase())) || []).some((t) => t < e && t + (w.dur || 20) > a)) return true; }
+  return false; }
 function hpAtT(sm, t) { if (!sm || !sm.length || t < sm[0][0] - 1 || t > sm[sm.length - 1][0] + 1) return 0; let i = Math.min(sm.length - 1, Math.max(0, Math.floor(t - sm[0][0])));
   while (i > 0 && sm[i][0] > t) i--; while (i < sm.length - 1 && sm[i + 1][0] <= t) i++; return sm[i][1] > 0.001 ? sm[i][1] : 0; }
 function genRun(spec, D, reps, name, one) {
@@ -21871,12 +21907,17 @@ function genRun(spec, D, reps, name, one) {
     // by name, shared evenly between its presses, plus the hits it sets off under another name within a moment of each press (hits, within), like
     // Blightfall's plagues erupting)
     s.dmgL = {}; for (const q of DMGL) { const ts = (p.byName.get(lc(q.n)) || []).filter((u) => u <= t1).sort((u, w) => u - w), hs = q.hits ? new Set(q.hits.map(lc)) : null, ev = hs ? (p.dmgEv || []).filter((h) => hs.has(lc(h[1])) && h[3] > 0) : [];
-      const own = [...(p.dmgAb || new Map()).values()].filter((y) => lc(String(y.name)) === lc(q.n)).reduce((v, y) => v + (y.total || 0), 0), each = ts.map((u) => [u, own / Math.max(1, ts.length) + ev.filter((h) => h[0] >= u - 0.05 && h[0] <= u + (q.within || 0.6)).reduce((v, h) => v + h[3], 0)]);
+      const own = hs && hs.has(lc(q.n)) ? 0 : [...(p.dmgAb || new Map()).values()].filter((y) => lc(String(y.name)) === lc(q.n)).reduce((v, y) => v + (y.total || 0), 0), each = ts.map((u) => [u, own / Math.max(1, ts.length) + ev.filter((h) => h[0] >= u - 0.05 && h[0] <= u + (q.within || 0.6)).reduce((v, h) => v + h[3], 0)]);
       s.dmgL[q.n] = { each, tot: each.reduce((v, [, d]) => v + d, 0) }; }
     // (the window cards' steps (WIN.steps), shown, not graded: a spell's time into the window (at; buf: the press that spent this buff, like Reaping's
     // free Soul Reaper), a pair check's verdict for the presses in it (pair), a spell right after another (after, within), a big button's damage (dmg))
     // (a step looks up to the next window, 12 seconds at most past this one's end: Blightfall stays usable a few seconds after Dark Transformation)
     if (WSTEP.length && s.win) s.win.forEach((w, wi) => { w.steps = WSTEP.map((q) => { const a = w.t, e = w.e, e2 = Math.min((s.win[wi + 1] || { t: Infinity }).t - 0.5, e + 12), cs0 = (n) => p.byName.get(lc(n)) || [];
+      // (raid: how many of the raid's damage dealers had their big cooldown up in it; presc: who had this buff of yours in it, and whether they were bursting)
+      if (q.raid) { const l = [...r.players.values()].filter((x) => x !== p && x.role !== 'healer' && x.role !== 'tank').map((x) => bigCdUp(x, a, e2)).filter((v) => v != null); return l.length ? { ok: null, txt: l.filter(Boolean).length + ' of ' + l.length + ' damage dealers in their big cooldown' } : null; }
+      if (q.presc) { const me = p.name, on = [...r.players.values()].filter((x) => { const b = x !== p && x.buffs && x.buffs.get(q.presc); return b && (!(b.by instanceof Map) || b.by.has(me)) && b.sp.some(([u, v]) => u < e && (v == null || v > a + 0.5)); });
+        if (!on.length) return { ok: false, txt: 'No ' + q.presc + ' out' }; const inC = on.filter((x) => bigCdUp(x, a, e) === true);
+        return { ok: inC.length ? true : null, txt: q.presc + ' on ' + andL(on.map((x) => x.name)) + (!inC.length ? '' : inC.length === on.length ? (on.length > 1 ? ', all in their cooldown' : ', in their cooldown') : ', ' + inC.length + ' in their cooldown') }; }
       if (q.dmg) { const d = (s.dmgL[q.dmg] || { each: [] }).each.filter(([u]) => u >= a - 0.5 && u <= e2).reduce((v, [, x]) => v + x, 0); return d >= 1000 ? { ok: null, txt: q.dmg + ' hit for ' + C(d) } : null; }
       if (q.pair) { const l = (s.pair[q.pair] || []).filter((x) => x.a >= a - 0.5 && x.a <= e2), ok = l.length && l.every((x) => x.ok), late = l.some((x) => !x.ok && x.a > e + 0.5); return l.length ? { ok: !!ok, txt: ok ? q.lbl : late ? q.late || q.bad || q.lbl : q.bad || q.lbl } : { ok: false, txt: q.none || q.lbl }; }
       if (q.after) { const u0 = cs0(q.after).filter((u) => u >= a - 0.5 && u <= e2); if (!u0.length) return null; const ok = u0.every((u) => cs0(q.n).some((v) => v > u && v <= u + (q.within || 3))); return { ok, txt: ok ? q.lbl : q.bad || q.lbl }; }
@@ -22008,9 +22049,38 @@ function genRun(spec, D, reps, name, one) {
     add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.a || q.buf, q.label, okN + '<span>/' + N + '</span>', q.txt.replace('{ok}', N === okN && N > 1 ? (q.txt.startsWith('{ok}') ? 'All' : 'all') : String(okN)).replace('{n}', String(N)), 'pr:' + q.k,
       (crit != null ? 'Your ' + [].concat(q.critOf).join(' and ') + ' hits crit ' + Math.round(100 * crit) + '% of the time. ' : '') + (q.why ? q.why + ' ' : '') + okP(okF) + ' The times listed are the ones that missed.');
     if (f < okF && q.tip) g.l[g.l.length - 1].tip = q.tip; }
+  // (damage through your buffs (supSum), for a support spec like Augmentation: in all, each buff's part, and whose damage it came through the most)
+  if (D.supSum) { const by = new Map(), to = new Map(); for (const x of per) { for (const [n, v] of x.p.supAb || []) by.set(n, (by.get(n) || 0) + v); for (const [n, v] of x.p.supTo || []) to.set(n, (to.get(n) || 0) + v); }
+    const tot = [...by.values()].reduce((v, x) => v + x, 0), all = rows.reduce((v, s) => v + (s.dmgTot || 0), 0), bl = [...by].sort((u, w) => w[1] - u[1]), tl = [...to].sort((u, w) => w[1] - u[1]).slice(0, 3);
+    if (tot >= 1000) { const bn = D.supSum.blk || upN, g = groups.find((x) => x.t === bn) || grp(bn), sh = all > 0 ? Math.round(100 * tot / all) : null;
+      add(g, 'na', D.supSum.ic || D.ic, D.supSum.label || 'Damage through your buffs', C(tot), 'Your buffs added ' + C(tot) + ' damage through other players' + (sh != null ? ', ' + sh + '% of all your damage' : '') + ': ' + andL(bl.slice(0, 6).map(([n, v]) => n + ' ' + C(v))) + '.' + (tl.length ? ' It came through ' + andL(tl.map(([n, v]) => n + ' (' + C(v) + ')')) + ' the most.' : ''), 'sup',
+        (D.supSum.why ? D.supSum.why + ' ' : '') + 'Not graded: it shows what your buffs were worth. The log gives you the part of each buffed hit that your buff added, and takes it off the player who hit, the way Warcraft Logs counts it.');
+      // (the buffs in numbers (your ask, Oct 19: "calculate some dps numbers or stat numbers for evoker"), on the last pull: Ebon Might's share of your
+      // main stat (16%, split between the damage dealers it reaches, up to 75% more in Duplicate), how long Prescience was on two allies and Shifting Sands
+      // on one, and what your buffs added to the raid's damage and to the allies they helped most)
+      const x0 = per[per.length - 1], me = x0.p.name, cb = (x0.r.combatants || []).find((c) => c.name === me), st = cb && cb.stats, mainS = st ? Math.max(st.intellect || 0, st.agility || 0, st.strength || 0) : 0, T1 = Math.max(1, x0.t1);
+      const allies = (n) => [...x0.r.players.values()].filter((y) => { const b = y !== x0.p && y.buffs && y.buffs.get(n); return b && (!(b.by instanceof Map) || b.by.has(me)); }), upAt = (sp, t) => sp.some(([u, v]) => u <= t && (v == null || v > t));
+      const cover = (n, k) => { const ls = allies(n).map((y) => y.buffs.get(n).sp); if (!ls.length) return null; let c = 0; for (let t = 0.5; t < T1; t += 1) { let m = 0; for (const sp of ls) if (upAt(sp, t)) m++; if (m >= k) c++; } return c / T1; };
+      const emN = allies('Ebon Might').filter((y) => y.role !== 'healer' && y.role !== 'tank').length, dupB = x0.p.buffs.get('Duplicate'), dupF = dupB ? dupB.sp.reduce((v, [u, w]) => v + Math.max(0, Math.min(w == null ? T1 : w, T1) - u), 0) / T1 : 0;
+      const pr2 = cover('Prescience', 2), pr1 = cover('Prescience', 1), ss1 = cover('Shifting Sands', 1), raidD = (x0.r.dmgS || []).reduce((v, x) => v + (x || 0), 0), myT = [...(x0.p.supAb || new Map()).values()].reduce((v, x) => v + x, 0);
+      const gain = [...(x0.p.supTo || new Map())].map(([n, v]) => { const y = [...x0.r.players.values()].find((z) => z.name === n); return y && y.damage > 0 ? [n, v / y.damage] : null; }).filter(Boolean).sort((u, w) => w[1] - u[1]).slice(0, 3), P1 = (f) => (100 * f >= 10 ? Math.round(100 * f) : (100 * f).toFixed(1)) + '%';
+      const parts = []; if (mainS && emN) { const sh2 = 0.16 * mainS; parts.push('Ebon Might shares 16% of your ' + (st.intellect >= mainS ? 'Intellect' : 'main stat') + ' (' + Math.round(sh2).toLocaleString('en-US') + ' of your ' + Math.round(mainS).toLocaleString('en-US') + ' at the pull) between the damage dealers it reaches, ' + emN + ' here: about ' + Math.round(sh2 / Math.max(2, emN)) + ' each' + (dupB ? ', and up to 75% more while Duplicate is up (' + P1(dupF) + ' of the pull)' : '') + '.'); }
+      if (pr1 != null) parts.push('Prescience was on two allies ' + P1(pr2) + ' of the pull (on at least one, ' + P1(pr1) + '), each getting ' + (tal('Nozdormu Adept') ? 4 : 3) + '% Critical Strike.');
+      if (ss1 != null) parts.push('Shifting Sands (Versatility from your Mastery) was on an ally ' + P1(ss1) + ' of the pull.');
+      if (raidD > 0 && myT > 0) parts.push('Your buffs added ' + P1(myT / raidD) + ' to the raid\'s damage' + (gain.length ? ', and the most to ' + andL(gain.map(([n, f]) => n + ' (' + P1(f) + ')')) : '') + '.');
+      if (parts.length) add(g, 'na', 'Prescience', 'Your buffs in numbers', P1(myT / Math.max(1, raidD)) + '<span> of the raid</span>', parts.join(' '), 'sup:st', 'From the pull\'s log and your stats at the pull. Ebon Might: 16% of your main stat split between the damage dealers it reaches (8% with only one), up to 75% more in Duplicate. Prescience: Critical Strike on up to 2 allies at a time. Shifting Sands: Versatility on one ally from your Mastery. Not graded.'); } }
   // (big buttons' damage (dmgL), not graded: what each was worth, in all, each press, as a share of all your damage, and its biggest press)
   for (const q of DMGL) { const l = rows.flatMap((s) => ((s.dmgL || {})[q.n] || { each: [] }).each.map(([u, d]) => ({ u, d, pull: s.pull }))), N = l.length, tot = l.reduce((v, x) => v + x.d, 0), all = rows.reduce((v, s) => v + (s.dmgTot || 0), 0); if (!N || tot < 1000) continue;
     const blkN = q.blk || winN || cdN, g = groups.find((x) => x.t === blkN) || grp(blkN), big = q.hits && N > 1 ? l.slice().sort((x, y) => y.d - x.d)[0] : null, sh = all > 0 ? 100 * tot / all : null;
+    // (a button with its own timing tile (a pair check on the same spell, like Blightfall at the end of the window) gets its damage there, not a tile of
+    // its own (your call, Oct 19: "these can be merged"), with how much harder the presses on time hit, when it's clear: 1.5 times or more, with
+    // at least 2 on time and 1 not)
+    const pq = pairL.find((x) => [].concat(x.a).map(lc).includes(lc(q.n))), pc = pq && groups.flatMap((x) => x.l).find((c) => c.k === 'pr:' + pq.k);
+    if (pc) { const shT = sh != null ? ': ' + (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of all your damage' : '';
+      const pr = rows.flatMap((s) => (s.pair[pq.k] || []).map((w) => { const m = ((s.dmgL || {})[q.n] || { each: [] }).each.find(([u]) => Math.abs(u - w.a) < 0.6); return m ? { ok: w.ok, d: m[1] } : null; }).filter(Boolean)), on = pr.filter((x) => x.ok), off = pr.filter((x) => !x.ok);
+      const av = (z) => z.reduce((v, x) => v + x.d, 0) / z.length, ra = on.length >= 2 && off.length >= 1 && av(off) > 0 ? av(on) / av(off) : null, many = q.many || q.n + 's';
+      pc.sub += ' ' + (N > 1 ? 'They' : 'It') + ' did ' + C(tot) + ' damage' + (N > 1 ? ', ' + C(tot / N) + ' each' : '') + shT + '.' + (ra != null && ra >= 1.5 ? ' Your on-time ' + many + ' hit about ' + (ra >= 2 ? Math.round(ra) : ra.toFixed(1)) + ' times harder: ' + C(av(on)) + ' each, against ' + C(av(off)) + '.' : '') + (big ? ' Your biggest was ' + C(big.d) + ', at ' + (one ? '' : 'pull ' + big.pull + ', ') + T(big.u) + '.' : '');
+      pc.how = (pc.how ? pc.how + ' ' : '') + (q.why ? q.why + ' ' : '') + (q.hits ? 'Its damage shows up in the log as ' + (q.hitsTxt || andL(q.hits)) + ', so Debrief adds up those hits in the moment after each press.' : ''); continue; }
     add(g, 'na', q.ic || q.n, q.label || q.n + ' damage', C(tot), 'You pressed ' + q.n + ' ' + times(N) + '. It did ' + C(tot) + ' damage' + (N > 1 ? ', ' + C(tot / N) + ' each' : '') + (sh != null ? ': ' + (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of all your damage' : '') + '.' + (big ? ' Your biggest was ' + C(big.d) + ', at ' + (one ? '' : 'pull ' + big.pull + ', ') + T(big.u) + '.' : ''), 'dm:' + q.n,
       (q.why ? q.why + ' ' : '') + 'Not graded: it shows what the button was worth.' + (q.hits ? ' Its damage shows up in the log as ' + (q.hitsTxt || andL(q.hits)) + ', so Debrief adds up those hits in the moment after each press.' : '')); }
   // (the big window's set-up, graded (setOk): the share of windows with everything the guide wants before it; and, for a healer, into heavy damage)
@@ -22042,9 +22112,14 @@ function genRun(spec, D, reps, name, one) {
   // (inside the windows: the share spent casting, the resource you went in with (graded once its bar is known), and the procs wasted in them)
   if (WIN && winL.length && !WIN.tileOnly) { const LW = winL.reduce((v, w) => v + w.len, 0), bf = winL.reduce((v, w) => v + w.busyIn * w.len, 0) / Math.max(1, LW), okC = WIN.castOk || 0.9, warnC = WIN.castWarn || 0.8;
     for (const s of rows) s.m['win:cast'] = (s.win || []).filter((w) => w.busyIn < okC).map((w) => [w.t, w.e]);
-    add(gW, D.abcInfo ? 'na' : bf >= okC ? 'ok' : bf >= warnC ? 'warn' : 'bad', WIN.ic || WIN.n, 'Casting in ' + WSAY, pct(bf), 'You were casting for ' + pct(bf) + ' of your ' + WSAY + (winL.length === 1 ? ' window.' : ' windows.'), 'win:cast',
-      'Every second of ' + WSAY + ' with nothing cast is burst you never get back. Plan your movement around it, and use instant spells or movement spells inside it. ' + (D.abcInfo ? 'Not graded for your spec: it waits on procs, so some time with nothing pressed is normal.' : okP(okC)) + ' The times listed are the windows under ' + (D.abcInfo ? Math.round(100 * okC) + '%.' : 'that.'));
-    if (!D.abcInfo && bf < okC) gW.l[gW.l.length - 1].tip = WIN.castTip || 'Keep casting all the way through ' + WSAY + '. Use instant spells or your movement spells if you must move.';
+    // (part of the windows tile (your call, Oct 19: "these can be merged"): its sentence and explanation join it, and the tile takes the worse grade;
+    // a page without that tile keeps its own line)
+    const stC = D.abcInfo ? 'na' : bf >= okC ? 'ok' : bf >= warnC ? 'warn' : 'bad', howC = 'Every second of ' + WSAY + ' with nothing cast is burst you never get back. Plan your movement around it, and use instant spells or movement spells inside it. ' + (D.abcInfo ? 'Casting in it isn\'t graded for your spec: it waits on procs, so some time with nothing pressed is normal.' : 'Casting ' + Math.round(100 * okC) + '% or more of them is good.'),
+      tipC = WIN.castTip || 'Keep casting all the way through ' + WSAY + '. Use instant spells or your movement spells if you must move.', wc = gW.l.find((c) => c.k === 'win'), RK = { na: 0, ok: 1, warn: 2, bad: 3 };
+    if (wc) { wc.sub += ' You were casting for ' + pct(bf) + ' of ' + (winL.length === 1 ? 'it.' : 'them.'); wc.v += '<span> · ' + pct(bf) + ' casting</span>'; wc.how = (wc.how ? wc.how + ' ' : '') + howC; wc.castMerged = true;
+      if (RK[stC] > RK[wc.st]) { wc.st = stC; wc.tip = tipC; } else if (!wc.tip && stC !== 'ok' && stC !== 'na') wc.tip = tipC; }
+    else { add(gW, stC, WIN.ic || WIN.n, 'Casting in ' + WSAY, pct(bf), 'You were casting for ' + pct(bf) + ' of your ' + WSAY + (winL.length === 1 ? ' window.' : ' windows.'), 'win:cast', howC + ' The times listed are the windows under ' + Math.round(100 * okC) + '%.');
+      if (stC !== 'ok' && stC !== 'na') gW.l[gW.l.length - 1].tip = tipC; }
     if (WIN.dotsThrough && dots.length) { const okN = winL.filter((w) => !w.dotsShort.length).length, N = winL.length, f = okN / N;
       for (const s of rows) s.m['win:dots'] = (s.win || []).filter((w) => w.dotsShort.length).map((w) => [w.t, w.e]);
       add(gW, f >= 0.85 ? 'ok' : f >= 0.6 ? 'warn' : 'bad', dots[0].ic || dots[0].n, 'Damage over time through ' + WSAY, okN + '<span>/' + N + '</span>', okN === N ? 'Your damage over time lasted all the way through every ' + WSAY + '.' : okN + ' of your ' + N + ' ' + WSAY + ' windows had your damage over time up all the way through.', 'win:dots',
@@ -22119,6 +22194,7 @@ function genRun(spec, D, reps, name, one) {
   for (const q of pairL) { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Cooldowns')) || (LAYOUT.push([q.ch || 'Cooldowns', []]), LAYOUT[LAYOUT.length - 1]), b = ch[1].find((x) => x && x[0] === q.blk); if (b) b[1].push(sl('pr:' + q.k)); else ch[1].push([q.blk, [sl('pr:' + q.k)]]); }
   if (WIN) { const ch = LAYOUT.find(([c]) => c === 'Cooldowns'), b = ch && ch[1].find((x) => x && x[0] === winN); if (b) b[1].push('pot'); }
   for (const q of DMGL) { const bn = q.blk || winN || cdN, ch = LAYOUT.find(([, bl]) => bl.some((x) => x && x[0] === bn)); if (ch) ch[1].find((x) => x && x[0] === bn)[1].push(sl('dm:' + q.n)); }
+  if (D.supSum) { const bn = D.supSum.blk || upN, ch = LAYOUT.find(([, bl]) => bl.some((x) => x && x[0] === bn)); if (ch) ch[1].find((x) => x && x[0] === bn)[1].push('sup', 'sup-st'); }
   for (const q of MORE.slice().reverse()) { const ch = LAYOUT.find(([c]) => c === 'Cooldowns'), b0 = ch && ch[1].find((x) => x && x[0] === q.blk); if (b0) b0[1].unshift(sl('mw:' + q.k), sl('mw:' + q.k + ':dmg')); else if (ch) ch[1].splice(WIN ? 1 : 0, 0, [q.blk, [sl('mw:' + q.k), sl('mw:' + q.k + ':dmg')]]); }
   for (const q of TGT) { const bn = q.blk || rotN, ch0 = LAYOUT.find(([, bl]) => bl.some((x) => x && x[0] === bn)); if (ch0) ch0[1].find((x) => x && x[0] === bn)[1].push(sl('tg:' + q.k)); else { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Rotation')); if (ch) ch[1].push([bn, [sl('tg:' + q.k)]]); } }
   for (const q of FRESH) { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Rotation')), b = ch && ch[1].find((x) => x && x[0] === (q.blk || rotN)); if (b) b[1].push(sl('fr:' + q.k)); else if (ch) ch[1].push([q.blk || rotN, [sl('fr:' + q.k)]]); }
@@ -22146,7 +22222,7 @@ function genRun(spec, D, reps, name, one) {
   if (OPEN) MERGE.Opener = { ic: OPEN.ic || D.ic, main: 'open', lead: OPEN.lead || 'Start the pull with your cooldowns stacked.' };
   if (stv) MERGE['Your stats'] = { ic: 'Your stats', main: ST.goal ? 'st:goal' : 'st:order', lead: ST.lead || '' };
   const WT = { abc: 2, cpm: 0, cc: 1, clip: 1.5, res: 2, mana: 2, apl: 3, win: 3, open: 2, 'open:x': 0, 'win:cast': 1.5, 'win:dots': 1, 'win:res': 1, 'win:proc': 1, pot: 1, 'st:goal': 1, 'st:low': 1, 'st:order': 1, 'st:dr': 0.5 }; for (const q of pres) WT['pre:' + q.k] = q.w || 1; for (const q of pairL) WT['pr:' + q.k] = q.w || 2; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
-  Object.assign(WT, { 'win:set': 1.5, 'win:dmg': 1 }); for (const q of DMGL) WT['dm:' + q.n] = 0; for (const q of MORE) { WT['mw:' + q.k] = q.w || 2; WT['mw:' + q.k + ':dmg'] = 1; } for (const q of SPREAD) WT['sp:' + q.k] = 0; for (const q of FRESH) WT['fr:' + q.k] = q.w || 1.5; for (const q of TGT) WT['tg:' + q.k] = q.w || 1.5;
+  Object.assign(WT, { 'win:set': 1.5, 'win:dmg': 1 }); if (groups.some((g) => g.l.some((c) => c.k === 'win' && c.castMerged))) WT.win = 4.5; for (const q of DMGL) WT['dm:' + q.n] = 0; WT.sup = 0; WT['sup:st'] = 0; for (const q of MORE) { WT['mw:' + q.k] = q.w || 2; WT['mw:' + q.k + ':dmg'] = 1; } for (const q of SPREAD) WT['sp:' + q.k] = 0; for (const q of FRESH) WT['fr:' + q.k] = q.w || 1.5; for (const q of TGT) WT['tg:' + q.k] = q.w || 1.5;
   const LG = {}; for (const q of procs) LG['p:' + q.n] = { ok: 'Spent', bad: 'Wasted' };
   // (topNew: lines whose check changed after the top players were read, like the Death Knights' Runic Power on Oct 19; their old marks would compare
   // different things, so they're left out until the top players are read again)
@@ -22183,7 +22259,7 @@ function genRun(spec, D, reps, name, one) {
   function winMore(w) { const cnt = new Map(); for (const [, n] of w.inside || []) cnt.set(n, (cnt.get(n) || 0) + 1); const top = [...cnt].sort((u, v) => v[1] - u[1]).slice(0, 4);
     return '<div class="spc-wm">' + (w.manaA != null ? '<span>Mana at the start: <b>' + Math.round(100 * w.manaA) + '%</b></span>' : '') + (w.resA ? '<span>' + esc(res.nl || res.n) + ' at the start: <b>' + Math.round(w.resA[0]) + (w.resA[1] ? '/' + Math.round(w.resA[1]) : '') + '</b></span>' : '') + (w.busyIn != null ? '<span>Casting <b>' + Math.round(100 * w.busyIn) + '%</b> of it</span>' : '') + '</div>' +
       ((w.inside || []).length ? '<div class="spc-wi">' + w.inside.slice(0, 28).map(([u, n]) => '<span title="' + esc(n + ', ' + T(u)) + '">' + spIc(n) + '</span>').join('') + '</div><div class="spc-wn">' + top.map(([n, v]) => v + ' ' + esc(n)).join(' · ') + '</div>' : ''); }
-  const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs }) : '';
+  const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs, win: WIN, pairs: pairL, dmgL: DMGL, ctx: (D.apl && D.apl.ctx) || [], res, ic: D.ic }) : '';
   const burst = winL.length && WIN ? (() => { const xs = winL.map((w) => w.x).filter((v) => v != null); const LB = Math.max(1, winL.reduce((v, w) => v + w.len, 0)); return xs.length ? { x: xs.reduce((v, y) => v + y, 0) / xs.length, n: xs.length, name: WSAY, dps: winL.reduce((v, w) => v + w.d, 0) / LB, out: winL.reduce((v, w) => v + (w.outR || 0) * w.len, 0) / LB } : null; })() : null;
   if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'win' && winL.length) { c.cards = winL.map(winCard); c.cardsL = 'Each ' + WSAY + ', side by side'; } if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log);
     const mq = MORE.find((q) => c.k === 'mw:' + q.k); if (mq && ((rows[0].more || {})[mq.k] || []).length) { c.cards = rows[0].more[mq.k].map((w) => moreCard(mq, w)); c.cardsL = 'Each ' + mq.n + ', side by side'; } }
@@ -22206,16 +22282,32 @@ function genTimeline(x, s, o) {
   const ticks = (ts, cls) => ts.map((t) => '<line x1="' + t.toFixed(2) + '" x2="' + t.toFixed(2) + '" y1="0.5" y2="9.5" class="tl-t' + (cls ? ' ' + cls : '') + '"/>').join('');
   const red = (q) => (q && q.capL || []).map(([a, b]) => '<rect x="' + a.toFixed(1) + '" y="0" width="' + Math.max(0.5, b - a).toFixed(1) + '" height="10" class="tl-rd' + (b - a >= q.cd ? ' red' : '') + '"/>').join('');
   const row = (name, body, cls, label) => '<div class="tl-r' + (cls ? ' ' + cls : '') + '"><span class="tl-n">' + spellIcon(0, name) + '<span>' + esc(label || name) + '</span></span><svg viewBox="0 0 ' + dur + ' 10" preserveAspectRatio="none" aria-hidden="true">' + body + dd + '</svg></div>';
+  // (more detail for reviewing a pull (your ask, Oct 19: "much more detailed so people can reference them while reviewing their rotation"): the burst
+  // windows as bars on their cooldown's row; a button with a timing check (a pair) green on time and red when not; the other big buttons; procs as bars,
+  // red where one was wasted; the buffs the priority list reads; the resource with its overflows; each priority slip; for melee, time off the boss)
+  const lc = (n) => String(n).toLowerCase(), clip = (sp) => sp.filter(([a]) => a <= t1).map(([a, c]) => [a, Math.min(c == null ? t1 : c, t1)]), shown = new Set(), win = o.win && !o.win.tileOnly ? o.win : null;
+  const pairOf = (n) => (o.pairs || []).find((q) => [].concat(q.a).map(lc).includes(lc(n)) && (s.pair[q.k] || []).length), pTicks = (q) => { const l = s.pair[q.k] || []; return ticks(l.filter((w) => w.ok).map((w) => w.a), 'ok') + ticks(l.filter((w) => !w.ok).map((w) => w.a), 'bad'); };
+  const area = (pts, cls) => { if (pts.length < 2) return ''; let d = 'M' + pts[0][0].toFixed(1) + ',10'; for (const [t, v] of pts) d += ' L' + t.toFixed(1) + ',' + (10 - 10 * v).toFixed(2); return '<path d="' + d + ' L' + pts[pts.length - 1][0].toFixed(1) + ',10 Z" class="' + cls + '"/>'; };
   let h = '';
-  for (const q of o.cds.concat(o.rot)) { const k = q.n.toLowerCase(), nms = q.names || [q.n], ts = nms.flatMap((n) => by(n)), ic = nms.find((n) => by(n).length) || nms[0]; if (ts.length || s.cdu[k]) h += row(ic, red(s.cdu[k]) + ticks(ts, 'ok'), '', q.n); }
+  for (const q of o.cds.concat(o.rot)) { const k = q.n.toLowerCase(), nms = q.names || [q.n], ts = nms.flatMap((n) => by(n)), ic = nms.find((n) => by(n).length) || nms[0], pq = pairOf(q.n); nms.forEach((n) => shown.add(lc(n)));
+    if (ts.length || s.cdu[k]) h += row(ic, red(s.cdu[k]) + (win && k === lc(win.n) ? bars((s.win || []).map((w) => [w.t, Math.min(w.e, t1)]), 'tl-aw') : '') + (pq ? pTicks(pq) : ticks(ts, 'ok')), '', q.n); }
+  if (win && !shown.has(lc(win.n)) && (s.win || []).length) { shown.add(lc(win.n)); h = row(win.ic || win.n, bars(s.win.map((w) => [w.t, Math.min(w.e, t1)]), 'tl-aw') + ticks(s.win.map((w) => w.t), 'ok'), '', win.n) + h; }
+  for (const q of o.pairs || []) { const nm = [].concat(q.a)[0]; if (!(s.pair[q.k] || []).length || shown.has(lc(nm))) continue; shown.add(lc(nm)); h += row(q.ic || nm, pTicks(q), '', nm); }
+  for (const q of o.dmgL || []) { if (shown.has(lc(q.n))) continue; const ts = by(q.n); if (ts.length) { shown.add(lc(q.n)); h += row(q.ic || q.n, ticks(ts, 'ok'), '', q.n); } }
   for (const q of o.dots) { const d = s.dot[q.n]; if (d && d.sp.length) h += row(q.n, bars(d.sp.map(([a, b]) => [a, Math.min(b, t1)]), 'tl-bv'), '', q.n + ' on the boss'); }
-  for (const q of o.ups) { const d = s.up[q.n]; if (d && d.sp.length) h += row(q.n, bars(d.sp, 'tl-bv')); }
+  for (const q of o.ups) { const d = s.up[q.n]; if (d && d.sp.length) { shown.add(lc(q.n)); h += row(q.n, bars(d.sp, 'tl-bv')); } }
+  const procB = []; for (const q of o.procs) { const b = p.buffs.get(q.n), wt = (((s.pr || {})[q.n] || {}).wt || []).filter((t) => t <= t1); if (!b && !wt.length) continue; shown.add(lc(q.n)); if (b) procB.push([q.n, clip(b.sp)]); h += row(q.ic || q.n, bars(b ? clip(b.sp) : [], 'tl-io') + ticks(wt, 'bad'), '', q.n); }
+  const ctxB = []; for (const n of o.ctx || []) { if (shown.has(lc(n)) || (win && lc(n) === lc(win.n)) || ctxB.length >= 4) continue; const b = p.buffs.get(n); if (b && b.sp.length) { shown.add(lc(n)); ctxB.push([n, clip(b.sp)]); h += row(n, bars(clip(b.sp), 'tl-bv')); } }
+  if (o.res) { const rr = p.res && p.res.get(o.res.ty), pts = rr ? rr.pts.filter((y) => y[0] <= t1 && y[2] > 0).map((y) => [y[0], Math.max(0, Math.min(1, y[1] / y[2]))]) : [];
+    if (pts.length > 5) h += row(o.res.ic || o.ic, area(pts, 'tl-rsa') + ticks(((s.m && s.m.res) || []).filter((t) => t <= t1), 'bad'), 'tl-lv', o.res.n); }
+  const slips = ((s.m && s.m.apl) || []).filter((t) => t <= t1); if (slips.length) h += row(o.ic, ticks(slips, 'bad'), '', 'Priority slips');
+  if (s.mel && s.mel.gaps.length) h += row(o.ic, s.mel.gaps.map((g) => '<rect x="' + g.a.toFixed(1) + '" y="0" width="' + Math.max(0.5, g.b - g.a).toFixed(1) + '" height="10" class="' + (g.sec.you >= 1.5 ? 'tl-cap' : 'tl-rd') + '"/>').join(''), '', 'Off the boss');
   if (!h) return '';
   const R2 = (v) => Math.round(v * 100) / 100, sp2 = (l) => l.map(([a, b]) => [R2(a), R2(b)]);
   const ev = { dur: R2(dur), ev: x.c.ab.flatMap((a) => a.ts.filter((t) => t <= t1).map((t) => [R2(t), a.name, a.id])).sort((u, w) => u[0] - w[0]), dd: sp2(deadSpans(r, p).map(([a, b]) => [a, b == null ? dur : b])),
-    st: o.dots.map((q) => [q.n + ' on the boss', sp2((s.dot[q.n] || { sp: [] }).sp)]).concat(o.ups.map((q) => [q.n, sp2((s.up[q.n] || { sp: [] }).sp)])).filter((y) => y[1].length), lv: [] };
+    st: o.dots.map((q) => [q.n + ' on the boss', sp2((s.dot[q.n] || { sp: [] }).sp)]).concat(o.ups.map((q) => [q.n, sp2((s.up[q.n] || { sp: [] }).sp)]), procB.map(([n, sp]) => [n, sp2(sp)]), ctxB.map(([n, sp]) => [n, sp2(sp)]), win && (s.win || []).length ? [[win.n + ' window', sp2(s.win.map((w) => [w.t, Math.min(w.e, t1)]))]] : []).filter((y) => y[1].length), lv: [] };
   const step = dur > 400 || (document.documentElement.clientWidth || 1000) < 700 ? 60 : 30, ax = []; for (let t = 0; t <= dur; t += step) ax.push('<span style="left:' + (100 * t / dur).toFixed(2) + '%">' + T(t) + '</span>');
-  return '<div class="spc-tl" data-ev="' + esc(JSON.stringify(ev)) + '">' + h + '<div class="tl-ax"><div>' + ax.join('') + '</div></div><div class="tl-lg"><span><i class="ok"></i>Pressed</span>' + (o.dots.length || o.ups.length ? '<span><i class="bv"></i>Up</span>' : '') + '<span><i class="red"></i>Ready for a whole extra use</span>' + (t1 < end - 0.5 ? '<span><i class="dd"></i>Dead</span>' : '') + '</div><div class="tl-hv" hidden></div><div class="tl-tip" hidden></div></div>';
+  return '<div class="spc-tl" data-ev="' + esc(JSON.stringify(ev)) + '">' + h + '<div class="tl-ax"><div>' + ax.join('') + '</div></div><div class="tl-lg"><span><i class="ok"></i>Pressed (on time)</span><span><i class="bad"></i>Off time, wasted, overflowing or a slip</span>' + (win ? '<span><i class="aw"></i>' + esc(win.n) + ' window</span>' : '') + (o.dots.length || o.ups.length || ctxB.length ? '<span><i class="bv"></i>Up</span>' : '') + (procB.length ? '<span><i class="io"></i>Proc up</span>' : '') + '<span><i class="red"></i>Ready for a whole extra use' + (s.mel && s.mel.gaps.length ? ', or off the boss alone' : '') + '</span>' + (t1 < end - 0.5 ? '<span><i class="dd"></i>Dead</span>' : '') + '</div><div class="tl-hv" hidden></div><div class="tl-tip" hidden></div></div>';
 }
 
 // ---- The rotation check: every cast against the spec's priority list ----
@@ -22976,7 +23068,7 @@ const GEN_SPECS = {
       steps: [{ n: 'Soul Reaper', buf: 'Reaping', at: [3, 10], none: 'Free Soul Reaper unused' }, { pair: 'blight', tal: 'Blightfall', lbl: 'Blightfall at the end', bad: 'Blightfall too early', late: 'Blightfall after it ended', none: 'No Blightfall' },
         { n: 'Putrefy', after: 'Blightfall', within: 4, tal: 'Blightfall', lbl: 'Putrefy after Blightfall', bad: 'No Putrefy after Blightfall' }, { dmg: 'Blightfall', tal: 'Blightfall' }],
       lead: 'Dark Transformation with Army of the Dead. Inside it: Soul Reaper about 6 seconds in, Blightfall at the end, then Putrefy.' },
-    dmgL: [{ n: 'Blightfall', tal: 'Blightfall', hits: ['Virulent Plague (Erupt)', 'Dread Plague (Erupt)'], within: 0.6, hitsTxt: 'your plagues erupting', why: 'Blightfall sets off all the damage your plagues had left, at once, and gives you a Putrefy charge.' },
+    dmgL: [{ n: 'Blightfall', tal: 'Blightfall', many: 'Blightfalls', hits: ['Virulent Plague (Erupt)', 'Dread Plague (Erupt)'], within: 0.6, hitsTxt: 'your plagues erupting', why: 'Blightfall sets off all the damage your plagues had left, at once, and gives you a Putrefy charge.' },
       { n: 'Soul Reaper', why: 'Soul Reaper: the free one Dark Transformation gives you (Reaping), and any under 35% health.' }, { n: 'Putrefy', why: 'Both guides: use Putrefy as much as you can inside Dark Transformation.' }],
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, ctx: ['Sudden Doom', 'Forbidden Knowledge', 'Dark Transformation', 'Lesser Ghoul', 'Vampiric Strike'], ctxRes: '6', why: "The single-target priority from Wowhead, Icy Veins and the SimulationCraft list, for San'layn and Rider of the Apocalypse. Vampiric Strike counts as your Scourge Strike, and Necrotic Coil as your Death Coil.", list: [
       { s: 'Army of the Dead', cdq: true, cd: 90, hold: 10, tal: 'Army of the Dead', alt: ["Army of the Dead","Dark Transformation","Raise Dead","Mind Freeze","Death's Advance","Anti-Magic Shell","Icebound Fortitude","Death Pact","Lichborne","Chains of Ice","Death Grip","Asphyxiate","Blinding Sleet","Death Strike","Raise Ally","Anti-Magic Zone","Dark Command","Death and Decay","Blightfall","Outbreak","Soul Reaper","Putrefy","Graveyard","Berserking","Blood Fury"], why: 'Army of the Dead was ready', tip: 'Both guides: Army of the Dead on cooldown, every 90 seconds, with Dark Transformation.' },
@@ -23029,6 +23121,14 @@ const GEN_SPECS = {
       { k: 'erem', a: 'Eruption', inBuf: 'Ebon Might', ch: 'Rotation', blk: 'Ebon Might', ok: 0.9, warn: 0.75, label: 'Eruption in Ebon Might', txt: '{ok} of your {n} Eruptions went out while Ebon Might was up.', why: 'Wowhead: avoid spending resources outside Ebon Might. Icy Veins: Eruption only with Ebon Might up, or at 2 Essence Burst.', tip: 'Save your Essence for Ebon Might.' }],
     rot: [{ n: 'Upheaval', cd: 40, ok: 0.85, warn: 0.7, why: 'Both guides: Upheaval on cooldown, inside Ebon Might.' }, { n: 'Fire Breath', cd: 30, ok: 0.85, warn: 0.7, why: 'Both guides: Fire Breath on cooldown, inside Ebon Might.' }],
     procs: [{ n: 'Essence Burst', use: ['Eruption'], max: 2, why: 'Essence Burst stacks to 2. Spend it on Eruption before a third is lost.' }],
+    win: { n: 'Breath of Eons', buffs: [], dur: 13, noPace: true, castOk: 0.75, castWarn: 0.6,
+      why: 'Breath of Eons is your big cooldown, every 2 minutes. For 10 seconds after it lands it stores 15% of the damage your Ebon Might allies deal, then explodes for it, so each window here runs 13 seconds from the press. Both guides: press it on cooldown with Ebon Might already up, and line it up with your allies\' big cooldowns when you can. Its flight is time you can\'t cast, so casting 75% of the window is good.',
+      setup: [{ n: 'Tip the Scales', hero: 'Chronowarden', pre: 15, post: 10, info: true, lbl: 'Tip the Scales with it' }],
+      steps: [{ pair: 'eons', lbl: 'Ebon Might up', bad: 'Ebon Might not up', none: 'Ebon Might not up' }, { raid: true }, { presc: 'Prescience' }, { dmg: 'Breath of Eons' }],
+      lead: 'Breath of Eons on cooldown, inside Ebon Might, while your allies burst.' },
+    dmgL: [{ n: 'Breath of Eons', hits: ['Breath of Eons'], within: 16, many: 'Breaths of Eons', why: 'Breath of Eons explodes for the damage it stored.' },
+      { n: 'Ebon Might', why: 'Ebon Might shares your main stat with your allies; this is the damage it added to their hits.' }, { n: 'Prescience', why: 'Prescience gives an ally Critical Strike; this is the damage it added to their hits.' }],
+    supSum: { blk: 'Ebon Might', ic: 'Ebon Might', why: 'Most of your damage comes through other players: Ebon Might shares your main stat, Prescience adds Critical Strike, Shifting Sands adds Versatility, Fate Mirror repeats some of their hits and Breath of Eons stores and explodes their damage.' },
     cds: [{ n: 'Breath of Eons', cd: 120, ok: 0.8, warn: 0.6, why: 'Icy Veins: Breath of Eons on cooldown; Duplicate rewards more casts over waiting for the perfect moment. Wowhead: line it up with your allies\' burst when you can.' }, { n: 'Time Skip', cd: 180, ok: 0.8, warn: 0.6, why: 'Both guides: Time Skip when Fire Breath and Upheaval are both on cooldown, often right after Tip the Scales.' }],
     lead: { ups: "Keep Ebon Might up. It's how you raise your group's damage.", rot: 'Fire Breath and Upheaval on cooldown, inside Ebon Might, and spend with Eruption.', procs: "Don't let Essence Burst overflow.", cds: 'Breath of Eons on cooldown, with Ebon Might going.', pre: 'Blessing of the Bronze, Source of Magic, Blistering Scales and a weapon oil.' } },
   'Destruction Warlock': { ic: 'Chaos Bolt', top: 'Destruction Warlocks', heroBy: { Hellcaller: ['Wither', 'Malevolence'], Diabolist: ['Diabolic Ritual', 'Demonic Art', 'Infernal Bolt', 'Ruination'] },
