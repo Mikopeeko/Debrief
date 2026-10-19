@@ -2950,7 +2950,16 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-wh > span { display: flex; flex-direction: column; min-width: 0; } .cmp-wh b { font-size: 14px; } .cmp-wd { font-size: 12.5px; font-weight: 600; } .cmp-wd.up { color: #7ee08f; } .cmp-wd.dn { color: #f3c969; }
 .cmp-ct b { color: var(--text); }
 /* Why the gap: the reasons, numbered, the biggest first */
-.cmp-gap { border-left: 3px solid var(--gold); } .cmp-gl { margin: 4px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; font-size: 14px; line-height: 1.5; } .cmp-gl b { color: var(--text); } .cmp-gl li::marker { color: var(--gold); font-weight: 700; } .cmp-gl li[data-tt] { cursor: help; } .cmp-try { display: block; margin-top: 1px; font-size: 13px; color: var(--muted); } .cmp-try b { color: var(--gold); font-weight: 700; }
+.cmp-gap { border-left: 3px solid var(--gold); } .cmp-gl { margin: 4px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; font-size: 14px; line-height: 1.5; } .cmp-gl b { color: var(--text); } .cmp-gl li::marker { color: var(--gold); font-weight: 700; } .cmp-gl li[data-tt] { cursor: help; }
+/* Why the gap, drawn: the gap as one bar cut into its reasons, then a card a reason (each in its reason's color) */
+.cmp-gbar { display: flex; height: 26px; border-radius: 7px; overflow: hidden; background: rgba(255,255,255,.04); margin: 2px 0 4px; } .cmp-gseg { display: flex; align-items: center; gap: 5px; padding: 0 8px; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 12.5px; font-weight: 600; color: #15171c; cursor: help; border-right: 2px solid var(--panel, #171a20); } .cmp-gseg b { font-weight: 800; } .cmp-gseg.oth { background: rgba(255,255,255,.08); border-right: 0; }
+.cmp-rcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; margin-top: 10px; } .cmp-rc { cursor: help; } .cmp-rc .cmp-ct { margin: 0 0 6px; font-size: 13px; color: var(--text); } .cmp-rc .cmp-ct b { color: var(--text); }
+.cmp-rnum { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font: 800 12.5px var(--head); color: #15171c; }
+.cmp-vl { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); }
+.cmp-split { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.05); } .cmp-split i { display: flex; align-items: center; justify-content: center; font: 700 10.5px var(--head); font-style: normal; color: #15171c; }
+.cmp-glegend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; font-size: 11.5px; color: var(--muted); } .cmp-glegend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.cmp-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; } .cmp-pill { padding: 3px 9px; border-radius: 999px; font-size: 12.5px; border: 1px solid var(--c); color: var(--muted); } .cmp-pill b { color: var(--c); }
+.cmp-rc .cmp-try { display: block; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); } .cmp-try { display: block; margin-top: 1px; font-size: 13px; color: var(--muted); } .cmp-try b { color: var(--gold); font-weight: 700; }
 /* both talent trees, each kind side by side; a talent where the picks differ ringed in blue (gold is taken) */
 /* the talent notes: the icon(s), what differs, what it did */
 .cmp-tns { display: flex; flex-direction: column; } .cmp-tn { display: flex; align-items: flex-start; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--line); } .cmp-tn:first-child { border-top: 0; }
@@ -21354,7 +21363,8 @@ SPEC_BOOK['Holy Paladin'] = {
         txt: capS(lp) + ' Holy Power mostly went to Light of Dawn: ' + b(pcL) + ' of ' + lp + ' spenders, against ' + b(pcH) + ' for ' + hi.n + '.',
         add: 'Most of ' + lp + ' Holy Power went to Light of Dawn instead: ' + b(pcL) + ' of ' + lp + ' spenders, against ' + b(pcH) + ' for ' + hi.n + '.',
         tip: (pe && pl ? 'Each of ' + lo.pos + ' Eternal Flames healed for ' + C(pe) + ', each Light of Dawn for ' + C(pl) + '. ' : '') + 'The guides say Eternal Flame is the better spender unless it would mostly overheal, and Light of Dawn copies only half as much to your Beacons.',
-        fix: 'Spend Holy Power on Eternal Flame, on whoever is lowest. Use Light of Dawn only when Eternal Flame would mostly overheal.' });
+        fix: 'Spend Holy Power on Eternal Flame, on whoever is lowest. Use Light of Dawn only when Eternal Flame would mostly overheal.',
+        split: { label: 'Where the Holy Power went', parts: ['Eternal Flame', 'Light of Dawn'], lo: [1 - L.f, L.f], hi: [1 - H.f, H.f] } });
     }
     return out;
   },
@@ -21459,34 +21469,53 @@ function cmpGapWhy(x) {
     const tip = '<b>' + esc(nm(y)) + '</b><br>' + capS(L) + ' did ' + C(d) + ' less ' + U + ' a second with it (' + C(va) + ' against ' + C(vh) + ').' +
       (both ? '<br>Casts a minute: ' + a.cpm.toFixed(1) + ' against ' + h.cpm.toFixed(1) + '. Each cast: ' + C(perL) + ' against ' + C(perH) + '.' : '') +
       (a && h && a.oh != null && h.oh != null ? '<br>Overhealing: ' + pc(a.oh) + ' against ' + pc(h.oh) + '.' + (shN ? ' ' + esc(shN) + ' turned part of it into shields that absorbed ' + C(shOf(lo)) + ' a second for ' + L + ' and ' + C(shOf(hi)) + ' for ' + H + ', so the healing really lost was ' + pc(ohL) + ' against ' + pc(ohH) + '.' : '') : '') + (bsT ? '<br>' + bsT : '');
-    out.push({ v: d, key: name, head: esc(nm(y)), tip, fix: fixOf(name, kind),
+    const bars = kind === 'casts' ? [{ l: 'Casts a minute', a: a.cpm, b: h.cpm, fa: n1(a.cpm), fb: n1(h.cpm) }]
+      : kind === 'oh' ? [{ l: 'Wasted on full-health players', a: ohL, b: ohH, fa: pc(ohL), fb: pc(ohH) }]
+      : kind === 'per' ? [{ l: (U === 'healing' ? 'Healing' : 'Damage') + ' a cast', a: perL, b: perH, fa: C(perL), fb: C(perH) }]
+      : [{ l: capS(U) + ' a second', a: va, b: vh, fa: C(va), fb: C(vh) }];
+    out.push({ v: d, real: true, key: name, icon: spellIcon(y.id, nm(y)), bars, head: esc(nm(y)), tip, fix: fixOf(name, kind),
       txt: simple + (tl.length ? ' ' + capS(H) + ' also took ' + tl.map((o) => b(esc(o.j.e.name))).join(' and ') + ', which make' + (tl.length > 1 ? '' : 's') + ' it stronger.' : '') });
   }
   // casting less often
-  if (lo.cpm && hi.cpm && hi.cpm > lo.cpm * 1.08) out.push({ v: lo.rate * (hi.cpm / lo.cpm - 1) * 0.5, head: 'Casting', txt: capS(L) + ' cast ' + b(pc(1 - lo.cpm / hi.cpm) + ' less often') + ' than ' + H + '.',
+  if (lo.cpm && hi.cpm && hi.cpm > lo.cpm * 1.08) out.push({ v: lo.rate * (hi.cpm / lo.cpm - 1) * 0.5, head: 'Casting', bars: [{ l: capS(U) + ' spells a minute', a: lo.cpm, b: hi.cpm, fa: n1(lo.cpm), fb: n1(hi.cpm) }], txt: capS(L) + ' cast ' + b(pc(1 - lo.cpm / hi.cpm) + ' less often') + ' than ' + H + '.',
     tip: capS(U) + ' spells cast a minute: ' + lo.cpm.toFixed(1) + ' against ' + hi.cpm.toFixed(1) + '.', fix: 'Always be casting something: even a small heal is better than none.' });
   // fewer crits (a crit does double)
-  if (lo.crit != null && hi.crit != null && hi.crit - lo.crit > 0.02) out.push({ v: lo.rate * (hi.crit - lo.crit), head: 'Critical strikes', txt: capS(Hp) + ' ' + sp + ' were critical strikes more often: ' + b(pc(hi.crit)) + ', against ' + b(pc(lo.crit)) + '. A critical strike ' + (U === 'healing' ? 'heals' : 'hits') + ' for double.',
+  if (lo.crit != null && hi.crit != null && hi.crit - lo.crit > 0.02) out.push({ v: lo.rate * (hi.crit - lo.crit), head: 'Critical strikes', bars: [{ l: 'Critical strikes', a: lo.crit, b: hi.crit, fa: pc(lo.crit), fb: pc(hi.crit) }], txt: capS(Hp) + ' ' + sp + ' were critical strikes more often: ' + b(pc(hi.crit)) + ', against ' + b(pc(lo.crit)) + '. A critical strike ' + (U === 'healing' ? 'heals' : 'hits') + ' for double.',
     tip: 'Worth about ' + C(lo.rate * (hi.crit - lo.crit)) + ' a second. It comes mostly from gear and talents.' });
   // big cooldowns
-  if (hi.cd > lo.cd * 1.2 && hi.cd - lo.cd > 0.02 * hi.rate * x.end) out.push({ v: (hi.cd - lo.cd) / Math.max(1, x.end) * 0.5, head: 'Big cooldowns', txt: capS(Hp) + ' big cooldowns ' + (U === 'healing' ? 'healed' : 'did') + ' more in all.',
+  if (hi.cd > lo.cd * 1.2 && hi.cd - lo.cd > 0.02 * hi.rate * x.end) out.push({ v: (hi.cd - lo.cd) / Math.max(1, x.end) * 0.5, head: 'Big cooldowns', bars: [{ l: 'From big cooldowns', a: lo.cd, b: hi.cd, fa: C(lo.cd), fb: C(hi.cd) }], txt: capS(Hp) + ' big cooldowns ' + (U === 'healing' ? 'healed' : 'did') + ' more in all.',
     tip: C(hi.cd) + ' against ' + C(lo.cd) + ' in all.', fix: 'Use them on cooldown, when big damage is coming.' });
   // Rotation checks the lower side did worse on, with what Rotation works out they cost
   for (const o of x.rot || []) { const lw = x.rotLo === 'A' ? o.w > 0 : o.w < 0; if (!lw) continue; const c = x.rotLo === 'A' ? o.c : o.d, d2 = x.rotLo === 'A' ? o.d : o.c;
-    out.push({ v: (c.cost || 0) / Math.max(1, x.end) || 0.01 * hi.rate, head: esc(c.label || c.k), txt: capS(L) + ': ' + b(c.v != null ? c.v : '?') + '. ' + capS(H) + ': ' + b(d2.v != null ? d2.v : '?') + '.',
+    out.push({ v: (c.cost || 0) / Math.max(1, x.end) || 0.01 * hi.rate, head: esc(c.label || c.k), icon: c.id ? spellIcon(c.id, c.label || c.k) : '', pills: [c.v != null ? c.v : '?', d2.v != null ? d2.v : '?'], txt: 'A check from the Rotation tab, where ' + L + ' did worse.',
       tip: 'A check from the Rotation tab.' + ((c.cost || 0) >= 20000 ? ' Rotation puts the cost at about ' + C(c.cost / Math.max(1, x.end)) + ' a second.' : ''), fix: (x.book && x.book.rotFix && x.book.rotFix[c.label]) || 'The Rotation tab shows this one cast by cast.' }); }
   // talents only the higher side took that make the spells where the gap is stronger
   for (const o of x.hits || []) if (o.used) continue; else if (o.H === hi.nRaw && o.j.ts.length && !o.j.own) out.push({ v: 0.2 * o.j.w, head: esc(o.j.e.name), txt: 'Only ' + H + ' took this talent. It makes ' + esc(o.j.ts.join(' and ')) + ' stronger.', tip: 'A talent difference: see Talent differences.' });
     else if (o.H === hi.nRaw && o.j.own) out.push({ v: o.j.own, head: esc(o.j.e.name), txt: 'Only ' + H + ' took this talent. It ' + (U === 'healing' ? 'healed for ' : 'did ') + b(C(o.j.own)) + ' a second by itself.', tip: 'A talent difference: see Talent differences.' });
   // the playbook's own reasons; one that explains a spell above joins that line instead of repeating it
   if (x.book && x.book.extra) for (const e of x.book.extra(lo, hi, b, C)) { const t = e.merge && out.find((o) => e.merge.includes(o.key));
-    if (t) { t.txt += ' ' + e.add; t.tip += '<br>' + e.tip; t.fix = e.fix || t.fix; } else out.push(e); }
+    if (t) { t.txt += ' ' + e.add; t.tip += '<br>' + e.tip; t.fix = e.fix || t.fix; t.split = e.split || t.split; } else out.push(e); }
   if (!out.length) return '';
   out.sort((p, q) => q.v - p.v);
-  const top = out.slice(0, 6);
-  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The biggest reasons first. Hover one for the numbers.</small></h3><p class="cmp-wlead">' + H + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(pc(gap / Math.max(1, lo.rate)) + ' more') + ' than ' + L + ' (' + C(hi.rate) + ' a second, against ' + C(lo.rate) + ').</p>' + (x.builds ? '<p class="sub" style="margin:2px 0 6px">' + x.builds + '</p>' : '') +
-    '<ol class="cmp-gl">' + top.map((o) => '<li' + (o.tip ? ' data-tt="' + esc(o.tip) + '"' : '') + '><b>' + o.head + '</b>: ' + o.txt + (o.fix ? '<span class="cmp-try"><b>Try:</b> ' + o.fix + '</span>' : '') + '</li>').join('') + '</ol>' +
-    (out.length > 6 ? '<p class="sub" style="margin:6px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in the sections below.</p>' : '') + '</div>';
+  const top = out.slice(0, 6), COLS = ['#e6b450', '#5aa9e6', '#7ee08f', '#c792ea', '#f07178', '#89ddff'];
+  top.forEach((o, i) => (o.col = COLS[i]));
+  // (Oct 19, "make the comparisons even more visually clear, I'm a visual person, most WoW players are": the gap as one bar cut
+  // into its reasons, each reason a card with its icon, both players' bars and the Try line; the numbers stay in the tooltips)
+  const tot = Math.max(gap, top.reduce((t, o) => t + o.v, 0)), wOf = (o) => 100 * o.v / tot;
+  const gbar = '<div class="cmp-gbar">' + top.map((o, i) => '<span class="cmp-gseg" style="width:' + wOf(o).toFixed(1) + '%;background:' + o.col + '" data-tt="' + esc('<b>' + (i + 1) + '. ' + o.head + '</b><br>' + (o.real ? 'About ' : 'Roughly ') + C(o.v) + ' ' + U + ' a second of the gap') + '">' + (wOf(o) >= 9 ? '<b>' + (i + 1) + '</b>' + (wOf(o) >= 16 ? ' ' + o.head : '') : '') + '</span>').join('') +
+    (tot > top.reduce((t, o) => t + o.v, 0) + 1 ? '<span class="cmp-gseg oth" style="flex:1" data-tt="Smaller things, each too small to name."></span>' : '') + '</div>';
+  const pair = (o, x) => { const mx = Math.max(x.a || 0, x.b || 0) || 1, row = (n, col, v, fv) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + esc(n) + '</span><span class="cmp-cbb"><i style="width:' + (100 * (v || 0) / mx).toFixed(1) + '%;background:' + col + '"></i></span><b>' + fv + '</b></div>';
+    return '<div class="cmp-vl">' + x.l + '</div>' + row(me ? 'You' : lo.n, lo.col, x.a, x.fa) + row(H, hi.col, x.b, x.fb); };
+  const split = (sp) => { const SC = ['#e6b450', '#5aa9e6'], row = (n, col, fr) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + esc(n) + '</span><span class="cmp-split">' + fr.map((v, i) => (v > 0.005 ? '<i style="width:' + (100 * v).toFixed(1) + '%;background:' + SC[i] + '">' + (v >= 0.14 ? Math.round(100 * v) + '%' : '') + '</i>' : '')).join('') + '</span><b></b></div>';
+    return '<div class="cmp-vl">' + sp.label + '</div>' + row(me ? 'You' : lo.n, lo.col, sp.lo) + row(H, hi.col, sp.hi) + '<div class="cmp-glegend">' + sp.parts.map((p, i) => '<span><i style="background:' + SC[i] + '"></i>' + esc(p) + '</span>').join('') + '</div>'; };
+  const pills = (o) => '<div class="cmp-pills"><span class="cmp-pill" style="--c:' + lo.col + '">' + esc(me ? 'You' : lo.n) + ': <b>' + o.pills[0] + '</b></span><span class="cmp-pill" style="--c:' + hi.col + '">' + esc(H) + ': <b>' + o.pills[1] + '</b></span></div>';
+  const card = (o, i) => '<div class="cmp-card cmp-rc" style="border-left-color:' + o.col + '"' + (o.tip ? ' data-tt="' + esc(o.tip) + '"' : '') + '><div class="cmp-wh"><span class="cmp-rnum" style="background:' + o.col + '">' + (i + 1) + '</span>' + (o.icon || '') +
+    '<span><b>' + o.head + '</b>' + (o.v >= 0.01 * gap ? '<span class="cmp-wd dn">' + (o.real ? '' : 'about ') + C(o.v) + ' ' + U + ' a second</span>' : '') + '</span></div>' +
+    '<div class="cmp-ct">' + o.txt + '</div>' + (o.bars || []).map((x) => pair(o, x)).join('') + (o.split ? split(o.split) : '') + (o.pills ? pills(o) : '') +
+    (o.fix ? '<div class="cmp-try"><b>Try:</b> ' + o.fix + '</div>' : '') + '</div>';
+  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The biggest reasons first. Hover anything for the numbers.</small></h3><p class="cmp-wlead">' + H + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(pc(gap / Math.max(1, lo.rate)) + ' more') + ' than ' + L + ' (' + C(hi.rate) + ' a second, against ' + C(lo.rate) + '). Here is where the gap comes from:</p>' +
+    gbar + (x.builds ? '<p class="sub" style="margin:8px 0 0">' + x.builds + '</p>' : '') + '<div class="cmp-rcards">' + top.map(card).join('') + '</div>' +
+    (out.length > 6 ? '<p class="sub" style="margin:8px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in the sections below.</p>' : '') + '</div>';
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
 const cmpLead = (A, a, B, b, verb) => (!a && !b ? '' : Math.abs(a - b) / Math.max(a, b) < 0.03 ? 'About the same.' : A + ' ' + verb + ' ' + (b ? Math.round(100 * Math.abs(a - b) / b) + '% ' : '') + (a > b ? 'more' : 'less') + ' than ' + B + '.'); // (from the first side, the same way as the arrow)
@@ -21581,7 +21610,7 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const rot = cmpRot(r, p, q, rB);
   if (rot && rot.a != null && rot.b != null) cards.unshift({ ...two, label: 'Rotation score', a: rot.a, b: rot.b, fa: String(Math.round(rot.a)), fb: String(Math.round(rot.b)), gap: cmpGap(rot.a, rot.b), st: rot.a >= rot.b - 2 ? 'ok' : 'warn', txt: 'Their scores on the Rotation tab.' });
   const critOfAll = (x, kk) => { let h = 0, c = 0; for (const a of (kk === 'heal' ? x.healAb : x.dmgAb).values()) { h += a.hits; c += a.crits; } return h ? c / h : null; };
-  const side = (x, rr, kk, ab, isA) => ({ cn: (nm) => (x.castAb.get(nm) || {}).n || 0, min: cmpAlive(rr, x) / 60, n: isA ? An : Bn, nRaw: isA ? An : Bn, pos: isA ? (me ? 'your' : An + '\'s') : Bn + '\'s', rate: isA ? ra : rb, ab, cpm: ab.reduce((t, a) => t + (a.cpm || 0), 0), crit: critOfAll(x, kk), cd: cdT(isA ? cdA : cdB) });
+  const side = (x, rr, kk, ab, isA) => ({ col: isA ? p.color : q.color === p.color ? '#e8e3d8' : q.color, cn: (nm) => (x.castAb.get(nm) || {}).n || 0, min: cmpAlive(rr, x) / 60, n: isA ? An : Bn, nRaw: isA ? An : Bn, pos: isA ? (me ? 'your' : An + '\'s') : Bn + '\'s', rate: isA ? ra : rb, ab, cpm: ab.reduce((t, a) => t + (a.cpm || 0), 0), crit: critOfAll(x, kk), cd: cdT(isA ? cdA : cdB) });
   const sA = side(p, r, k, A.ab, true), sB = side(q, rB, kq, B.ab, false), loA = ra < rb;
   // (gear: the average item level, worked out the way Players does it; better gear makes every heal or hit bigger)
   const ilv = (rr, x) => { const c = (rr.combatants || []).find((y) => y.name === x.name), g = c && c.gear; if (!g || !g.length) return 0; const mh = g[15], two = mh && mh.id && (!g[16] || !g[16].id);
@@ -21590,7 +21619,8 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const gearL = iLo && iHi && iHi - iLo >= 3 ? 'Gear: ' + (loA ? sB : sA).pos + ' gear is a little better (item level ' + Math.round(iHi) + ', ' + ((loA ? sA : sB).n === 'You' ? 'yours' : (loA ? sA : sB).pos) + ' ' + Math.round(iLo) + '), so part of the gap is gear.' : '';
   const gapH = k === kq ? cmpGapWhy({ lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits, book: q.specName === p.specName ? specBook(p.specName) : null,
     builds: [tal && tal.bA && tal.bB && tal.bA.name && tal.bA.key !== tal.bB.key ? 'They play different builds (' + esc(tal.bA.name) + ' and ' + esc(tal.bB.name) + '), so some of the gap is the build. See Talent differences.' : '', gearL].filter(Boolean).join(' ') }) : '';
-  return { vs, body: (lead || '') + gapH + whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups + ohGroup) };
+  return { vs, body: (lead || '') + gapH + (gapH ? '' : whyM) + // (Why the gap's cards already show these spells)
+     (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups + ohGroup) };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
 // downloaded and read like one of your pulls, then the same page as Fellow raiders (your call, Oct 19: "both tabs set up
