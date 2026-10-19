@@ -13023,9 +13023,11 @@ function syncUrl(item) {
 // Three ways in: follow the raid's Warcraft Logs live log during raid, open a combat log file from this PC, or import a
 // Warcraft Logs report. Warcraft Logs needs the login once (local helper); after that a pasted link opens directly.
 const LOGO = '<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="3" stroke-linejoin="round"/><path d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z" fill="none" stroke="#e6b450" stroke-width="4" stroke-linejoin="round"/><path d="m27 32.5 4 4 8.5-9.5" fill="none" stroke="#7ee08f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-// The front page's preview: an app-like window with four views (Pull recap, Mechanics, Assignments, Night summary).
+// The front page's preview: an app-like window with four views (Pull recap, Mechanics, Rotation, Assignments; your call,
+// Oct 19: Rotation in, Night summary out, since Night summary is now Pull recap on the whole night).
 // All made-up example data and names, drawn in code (no game art).
-const FP_SCENES = [['live', 'Pull recap'], ['mech', 'Mechanics'], ['assign', 'Assignments'], ['summary', 'Night summary']];
+const FP_SCENES = [['live', 'Pull recap'], ['mech', 'Mechanics'], ['rot', 'Rotation'], ['assign', 'Assignments']];
+const FP_MODS = { live: 'What went wrong, what went well, and what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', rot: 'Your own casts and cooldowns, checked like a coach would.', assign: 'Your NSRT note against what really happened.' };
 function fpParts() {
   const mark = { bad: '✕', warn: '!', ok: '✓' };
   const r = (k, html, who) => '<div class="fp-r ' + k + '"><i>' + mark[k] + '</i><span>' + html + '</span>' + (who ? '<span class="fp-who">' + who + '</span>' : '') + '</div>';
@@ -13033,26 +13035,32 @@ function fpParts() {
   const pnl = (inner, cls) => '<div class="fp-pnl' + (cls ? ' ' + cls : '') + '">' + inner + '</div>';
   // (the stage bar from the pull header: each stage as wide as its share of the encounter's health)
   const seg = (w, fill, t) => '<span class="fp-seg' + (fill ? '' : ' off') + '" style="flex:' + w + '">' + (fill ? '<i style="width:' + fill + '%"></i>' : '') + '<em>' + t + '</em></span>';
-  const q = (d) => (PULL_Q.find(([lo]) => d >= lo) || [0, '#9d9d9d'])[1];
   const live = '<div class="fp-head"><div class="fp-hl"><small>Pull 18 · The Coiled Altar · Mythic</small><b>Wipe in P2 · Malacrass 34%</b><span class="up">▲ further than last pull (P2 · Malacrass 52%)</span></div>' +
       '<div class="fp-segs">' + seg('33 1 0', 100, 'P1') + seg('23 1 0', 66, 'P2') + seg('0 0 24px', 0, 'Int') + seg('44 1 0', 0, 'P3') + '</div></div>' +
     '<div class="fp-grid2">' + pnl(h4('What went wrong', 'bad', '✕\u00a02 things') + r('bad', '<b>First death:</b> Brann at 1:42 to Grim Guillotine') + r('bad', '<b>Eternal Nightfall:</b> shield broke with 0.6s to spare') + r('warn', '<b>Mutagenic Venom ×2:</b> clipped by a carrier')) +
       pnl(h4('What went well', 'ok', '✓\u00a03 things') + r('ok', '<b>Orbs and frontals</b> clean this time') + r('ok', '<b>Every Wail of Terror</b> kicked') + r('ok', '<b>No deaths</b> until 1:42')) + '</div>' +
     pnl(h4('Fix first on the next pull') + '<ol class="fp-ol"><li><b>Grim Guillotine:</b> at least 5 in the circle</li><li><b>Eternal Nightfall:</b> save cooldowns for the shield</li></ol>');
   const tile = (k, t, s) => '<div class="fp-tile ' + k + '"><b>' + t + '</b><span>' + mark[k] + ' ' + s + '</span></div>';
-  const mech = '<div class="fp-tiles">' + tile('bad', 'Deaths', '3 problems') + tile('bad', 'Guillotine soaks', '1 problem') + tile('warn', 'Venom orbs', '2 could be better') + tile('ok', 'Spiritcackle adds', 'clean') + '</div>' +
-    pnl(h4('Guillotine soaks', 'bad', '✕\u00a01 problem') + r('ok', '<b>0:43</b> Guillotine · 7 in the circle') + r('ok', '<b>1:51</b> Guillotine · 5 in, 2 immunities') + r('bad', '<b>2:31</b> Grim Guillotine · 4 in, needs 5', 'Map')) +
-    pnl(h4('Tank frontals', 'warn', '!\u00a0could be better') + r('warn', '<b>1:12</b> Sever clipped Ilyra behind the tank', 'Ilyra') + r('ok', '<b>2:05</b> Sever · tanks only'));
+  // (the map: the arena, Malacrass, the axe's circle with 4 players in it, and the one who was missing)
+  const dot = (x, y, k) => '<circle cx="' + x + '" cy="' + y + '" r="4.5" class="fp-mp ' + k + '"/>';
+  const map = '<svg class="fp-mapv" viewBox="0 0 220 150" role="img" aria-label="Map: 4 players in the Grim Guillotine circle, Doran outside it">' +
+    '<circle cx="110" cy="75" r="68" class="fp-ma"/><circle cx="128" cy="62" r="26" class="fp-mz"/>' +
+    '<rect x="58" y="34" width="14" height="14" rx="3" class="fp-mb" transform="rotate(45 65 41)"/><text x="65" y="22" class="fp-mt">Malacrass</text>' +
+    dot(120, 55, 'ok') + dot(136, 52, 'ok') + dot(122, 72, 'ok') + dot(139, 70, 'ok') + dot(72, 112, 'bad') + '<text x="72" y="130" class="fp-mt bad">Doran</text>' +
+    '<path d="M80 106 L104 84" class="fp-ml"/><text x="160" y="102" class="fp-mt">needs 5</text></svg>';
+  const mech = '<div class="fp-tiles">' + tile('bad', 'Deaths', '3 problems') + tile('bad', 'Guillotine soaks', '1 problem') + tile('warn', 'Venom orbs', '2 could be better') + tile('ok', 'Wail of Terror', 'all kicked') + '</div>' +
+    '<div class="fp-row">' + pnl(h4('Guillotine soaks', 'bad', '✕ 1 problem') + r('ok', '<b>0:43</b> Guillotine · 7 in the circle') + r('ok', '<b>1:51</b> Guillotine · 5 in, 2 immunities') + r('bad', '<b>2:31</b> Grim Guillotine · 4 in, needs 5', 'Doran') +
+      r('warn', '<b>1:12</b> Sever clipped Ilyra behind the tank', 'Ilyra'), 'wide') +
+    pnl(h4('2:31 · Grim Guillotine') + map) + '</div>';
+  // (Rotation: one player's own page, a Holy Paladin, worded like the real checks)
+  const rot = '<div class="fp-head"><div class="fp-hl"><small>Ilyra · Holy Paladin · Pull 18</small><b>Rotation</b><span class="up">▲ 2 fewer slips than last pull</span></div></div>' +
+    '<div class="fp-tiles">' + tile('ok', 'Holy Shock', '44 of 48 possible') + tile('warn', 'Holy Power wasted', '11%') + tile('ok', 'Aura Mastery', '2 of 2 in Beacon') + tile('ok', 'Avenging Wrath', '1.4M healing, 2 casts') + '</div>' +
+    pnl(h4('Your priority', 'warn', '! 3 slips') + r('warn', 'You pressed <b>Flash of Light</b> while <b>Holy Shock</b> was ready.', '0:52') + r('warn', 'You pressed <b>Judgment</b> while <b>Holy Shock</b> sat at full charges.', '1:20') +
+      r('warn', 'You pressed a <b>builder</b> while already at 5 Holy Power.', '1:37') + r('ok', 'You pressed <b>Divine Toll</b> during 2 of your 2 Dawnlights.'));
   const assign = '<div class="fp-row">' + pnl(h4('Your NSRT note') + '<pre class="fp-code">intstart\nKaelis Brann Ilyra\nThessa Vosk Doran\nintend\n\nsoak1 Morwyn Kaelis Vosk\nsoak2 Brann Ilyra Thessa</pre>') +
     pnl(h4('Assignments vs what happened') + r('ok', '<b>Kicks, set 1</b> · in order: Kaelis, Brann, Ilyra') + r('bad', '<b>Kicks, set 2</b> · Vosk kicked in Thessa\'s turn', 'Vosk') + r('ok', '<b>Soak 1</b> · all 3 assigned players soaked') +
       r('bad', '<b>Soak 2</b> · Ilyra wasn\'t there', 'Ilyra') + r('ok', '<b>CC</b> · every globule set crowd controlled'), 'wide') + '</div>';
-  const pulls = [['P1 · 62%', 12], ['P1 · 20%', 27], ['P2 · 80%', 37], ['P2 · 40%', 47], ['Int', 56], ['P3 · 70%', 69], ['P3 · 40%', 82], ['P3 · 15%', 93], ['Kill', 100]];
-  const ends = [['Tank frontal on a non-tank', 6, '#e5534b'], ['Purple orb collision', 4, '#e5534b'], ['Guillotine under-soaked', 2, '#e8a23a']];
-  const summary = pnl(h4('How far each pull got', 'kill', 'Killed on pull 9') + '<div class="fp-pulls">' + pulls.map(([t, d], i) => '<div class="fp-pc"><b>Pull ' + (i + 1) + '</b>' + t + '<i style="width:' + Math.max(6, d) + '%;background:' + (d >= 100 ? '#ff8000' : q(d)) + '"></i></div>').join('') + '</div>' +
-      '<div class="fp-small">Colored like item quality by how much of the whole encounter was done; a kill is orange.</div>') +
-    '<div class="fp-row">' + pnl(h4('What ended the pulls') + '<div class="fp-ends">' + ends.map(([n, k, c]) => '<span>' + n + '</span><span class="fp-bar"><i style="width:' + Math.round(100 * k / 6) + '%;background:' + c + '"></i></span><span>' + k + ' pulls</span>').join('') + '</div>', 'wide') +
-      pnl(h4('Focus for the next pulls') + '<ol class="fp-ol"><li><b>Tank frontals:</b> only tanks in front</li><li><b>Orbs:</b> carriers path around other orbs</li></ol>') + '</div>';
-  return { scenes: { live, mech, assign, summary } };
+  return { scenes: { live, mech, rot, assign } };
 }
 // the front page's clicks: the preview's tabs and the four buttons under it both switch the preview (a button below the
 // fold also brings the preview back into view)
@@ -13086,6 +13094,8 @@ const HICO = {
 const DEMO_REPORT = 'https://www.warcraftlogs.com/reports/4bh7kdJMZnyrgvBC';
 function home() {
   progLit(false);
+  // (under the preview: the real raid night it stands in for)
+  const demo = $('#fpDemo'); if (demo) demo.onclick = () => openReportLink(DEMO_REPORT, $('#fpDemoMsg'));
   if (LIVE.on) setLive(false);
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
@@ -13101,7 +13111,6 @@ function home() {
   // folded under the start panel.
   const fp = fpParts(), liveLab = 'Follow my combat log';
   const lock = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-  const MODS = { live: 'Between pulls, it shows what went wrong, what went well and what to fix first.', mech: 'Every mechanic checked, with arena maps of who stood where.', assign: 'Your NSRT note against what actually happened.', summary: 'How far each pull got, and what ended them.' };
   // (your teams first once you have one: the way back into your progress; for someone new, the invite sits under the start box)
   const teamsTop = groups().length > 0;
   $('#main').innerHTML = '<div class="home fp">' + (teamsTop ? homeTeams() : '') +
@@ -13126,9 +13135,9 @@ function home() {
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-tabs">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '" aria-pressed="' + (i ? 'false' : 'true') + '"' + (i ? '' : ' class="on"') + '>' + t + '</button>').join('') + '</div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
-        '<div class="fp-note">Example data. Click a tab to look around.</div></div></section></div>' +
+        '<div class="fp-note">Example data. Click a tab to look around, or <button class="linkbtn" id="fpDemo" type="button">see a real raid night</button>.</div><div class="fp-msg fp-note" id="fpDemoMsg"></div></div></section></div>' +
     (teamsTop ? '' : homeStart()) +
-    '<section class="fp-ways"><h2>Four ways to look at a night</h2><div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div></section>' +
+    '<section class="fp-ways"><h2>Four ways to look at a night</h2><div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div></section>' +
     homeFoot() + '</div>';
   bindHomeTeams(); bindHomeStart(); homeTeamsSoon();
   // open a report: with a saved login (or the hosted site) straight away; otherwise the login form, link filled in
@@ -13428,7 +13437,6 @@ function bindHomeStart() {
 const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); if (s) { s.outerHTML = homeTeams(); bindHomeTeams(); } groupsBackfill(); });
 function homeHosted() {
   const fp = fpParts();
-  const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
   // (one front page for everyone (your notes, Oct 19): the logo and headline and one button. Someone new gets Start now,
   // which walks them through adding their character and team; someone back gets Welcome Back!, straight to their page.
   // One raid night opens from the menu, and a shared report link still opens by itself)
@@ -13439,9 +13447,10 @@ function homeHosted() {
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p><button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
-      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
+      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
-        '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
+        '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
+        '<div class="fp-note">Made-up example. <button class="linkbtn" id="fpDemo" type="button">See a real raid night ›</button></div><div class="fp-msg fp-note" id="fpDemoMsg"></div></div></section>' +
     homeFoot() + '</div>';
   $('#gsGo').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
   // (one log or live log, nothing added: no character, no team, no setup; the menu's Open a report or log window)
