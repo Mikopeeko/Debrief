@@ -2,6 +2,8 @@
 'use strict';
 
 // ---------- static data ----------
+// (the label on a mechanic's whole-set map row: 'Both circles' for two, 'All 3 leaps' for more)
+const allN = (n, w) => (n === 2 ? 'Both ' + w + 's' : n === 1 ? 'The ' + w : 'All ' + n + ' ' + w + 's');
 const ADV = 19; // advanced-logging block length, retail format V22 (patch 12.x)
 const NIL = '0000000000000000';
 // The block ends with positionX, positionY, uiMapID, facing, level, so position sits 5 fields from its end.
@@ -885,6 +887,22 @@ function buildTwinFangs(ev, r, h) {
   // under 4 fresh soakers on a strike: the raid takes the full hit (medium, raid-wide)
   for (const f of feastGroups) f.strikes.forEach((s, k) => { if (lowStrike(s)) M(s.t, 'Raid', 'ravenous feast', 'Medium', 'Ravenous Feast #' + (f.i + 1) + ' strike ' + (k + 1) + ' had only ' + (s.who.length - s.repeat.length) + ' fresh soakers (needs 4). The raid took the full hit.', 'Each strike needs at least 4 players who haven\'t soaked this Feast. Stick to your group and its strike.'); });
   const strikeBad = (s) => s.repeat.length > 0 || s.died.length > 0;
+  // (one map for the whole Feast (your note, Oct 18), on its own row above the strikes: every strike's circle numbered in
+  // order, each filling as its strike comes, then slamming; a green check on each player from the strike they soaked, red
+  // from a repeat soak or a death)
+  const feastWhole = (f) => {
+    const st = f.strikes.filter((s) => s.ring), last = f.strikes[f.strikes.length - 1], c0 = (f.strikes[0] || f).t - 3, c1 = (last || f).t + 1.5;
+    const rings = st.map((s) => ({ ...s.ring, label: String(f.strikes.indexOf(s) + 1), t0: c0 - 1, dur: 60, legend: 'a Ravenous Feast strike, ~' + FEAST_R + ' yd: it fills as the strike comes, then slams (numbered in order)' }));
+    const goodAt = [], badAt = [];
+    for (const s of f.strikes) { for (const g of s.who) if (!s.repeat.includes(g) && !goodAt.some((x) => x[0] === g)) goodAt.push([g, s.t]); for (const g of s.repeat) badAt.push([g, s.t]); for (const d of s.died) badAt.push([d.guid, d.t]); }
+    const bad = [...new Set(badAt.map((x) => x[0]))], good = goodAt.filter((x) => !bad.includes(x[0]));
+    const fc = st.map((s) => s.ring), x = fc.reduce((v, p) => v + p.x, 0) / (fc.length || 1), y = fc.reduce((v, p) => v + p.y, 0) / (fc.length || 1);
+    const tEnd = (last || f).t + 0.3, all = [{ txt: allN(f.strikes.length, 'strike'), sub: 'the whole Feast, on one map', dim: true }, { t: f.t }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }];
+    if (!fc.length) return all.concat([{ txt: '' }]);
+    return all.concat([{ map: { t: tEnd, good: good.map((q) => q[0]), goodLabel: 'soaked a strike', goodAt: good, pendLabel: 'not in a strike yet', bad, badLabel: 'already Feasted, or died', badAt,
+      title: 'Ravenous Feast #' + (f.i + 1) + ' at ' + h.fmtT(f.t) + ': all ' + f.strikes.length + ' strikes, in order', pts: h.snap(tEnd), frames: h.frames(Math.max(0, c0), Math.min(dur, c1), 0.25), rings,
+      focus: { x, y, r: Math.max(10, ...fc.map((p) => Math.hypot(p.x - x, p.y - y) + p.r + 2)) } } }]);
+  };
   sections.push({ id: 'feast', title: 'Ravenous Feast (group soaks)', spell: S('ravenous feast'),
     verdict: feastGroups.some((f) => f.strikes.some(strikeBad)) ? 'bad' : feastGroups.some((f) => f.strikes.some(lowStrike)) ? 'warn' : 'good',
     summary: pl(feasts.length, 'Ravenous Feast') + '. Each strike should be soaked by 4 or more players who haven\'t soaked one yet this Feast.',
@@ -893,8 +911,8 @@ function buildTwinFangs(ev, r, h) {
       const bad = f.strikes.some(strikeBad), warn = f.strikes.some(lowStrike);
       return { title: 'Feast ' + (f.i + 1), t: f.t, bad, warn,
         sub: pl(f.strikes.length, 'strike') + ', ' + f.strikes.map((s) => s.who.length).join(' / ') + ' soakers' + (f.strikes.some((s) => s.repeat.length) ? ', ' + pl(f.strikes.reduce((n, s) => n + s.repeat.length, 0), 'repeat soak') : '') + '. Avg venom ' + f.avgB + ' → ' + f.avgA + '.',
-        rows: f.strikes.map((s, k) => [{ txt: '#' + (k + 1) }, { t: s.t }, { txt: String(s.who.length), warn: lowStrike(s) }, { ps: s.who.map(pname) }, { ps: s.repeat.map(pname), none: '—', bad: s.repeat.length > 0 }, { ps: s.died.map((d) => d.player), none: '—', bad: s.died.length > 0 },
-          { map: { t: s.t, good: s.who.filter((g) => !s.repeat.includes(g) && !s.died.some((d) => d.guid === g)), goodLabel: 'soaked', bad: s.repeat.concat(s.died.map((d) => d.guid)), badLabel: 'already Feasted, or died', title: 'Ravenous Feast #' + (f.i + 1) + ', strike ' + (k + 1) + ' at ' + h.fmtT(s.t), pts: s.pts, rings: s.ring ? [s.ring] : [] } }]) };
+        rows: [feastWhole(f)].concat(f.strikes.map((s, k) => [{ txt: '#' + (k + 1) }, { t: s.t }, { txt: String(s.who.length), warn: lowStrike(s) }, { ps: s.who.map(pname) }, { ps: s.repeat.map(pname), none: '—', bad: s.repeat.length > 0 }, { ps: s.died.map((d) => d.player), none: '—', bad: s.died.length > 0 },
+          { txt: '' }])) };
     }), rows: [] });
 
   // ---- 4. Tainted Blood founts: absorb them before they burst ----
@@ -1801,10 +1819,24 @@ function buildSszorak(ev, r, h) {
       rows.push([{ txt: 'Wind ' + k }, { t: tw }, p ? { txt: p.cyst ? pname(p.cyst.g) + '\'s cyst' : 'a cyst', sub: [p.cyst ? 'cyst #' + p.cyst.n : '', p.by ? 'popped by ' + pname(p.by) : ''].filter(Boolean).join(', ') } : { txt: 'no cyst popped', bad: true },
         p ? { txt: p.who.size + ' of ' + al.length + ' coated', sub: missed.length ? 'not coated: ' + missed.map(pname).join(', ') : '' } : { txt: '—', dim: true },
         blown.length ? { ps: blown.map((d) => d.player), bad: true } : { txt: '—', dim: true },
-        { map: { t: tw + 0.6, good: p ? [...p.who] : [], goodLabel: 'coated by the cyst', bad: blown.map((d) => d.guid), badLabel: 'died in this wind', title: 'Wind ' + k + ', intermission ' + (x.i + 1) + ' at ' + T(tw), pts: h.snap(tw + 0.6), frames: frames(tw - 3, tw + 5),
+        // (the whole intermission's map is on its own row above; a wind someone died in keeps its own map)
+        !blown.length ? { txt: '' } : { map: { t: tw + 0.6, good: p ? [...p.who] : [], goodLabel: 'coated by the cyst', bad: blown.map((d) => d.guid), badLabel: 'died in this wind', title: 'Wind ' + k + ', intermission ' + (x.i + 1) + ' at ' + T(tw), pts: h.snap(tw + 0.6), frames: frames(tw - 3, tw + 5),
           // (every cyst of this cycle: the one for this wind green, bursting as it pops; earlier ones already splats)
           cysts: cysts.filter((c) => c.x != null && c.cyc === x.i).map((c) => ({ x: c.x, y: c.y, n: c.n, ring: c.pop === p ? '#2fd15a' : '#e6b450', label: c.pop === p ? 'this wind' : '', popT: c.pop ? c.pop.t : null })),
           ...(cyFocus(cysts.filter((c) => c.cyc === x.i)) ? { focus: cyFocus(cysts.filter((c) => c.cyc === x.i)) } : {}) } }]);
+    }
+    // (one map for the whole intermission (your note, Oct 18), on its own row above the winds: every cyst of this cycle,
+    // labelled with the wind it was popped for, bursting one after another; a green check on each player from the first
+    // cyst that coated them, red for anyone who died in a wind)
+    const wins = [1, 2, 3].map((k) => ({ k, tw: twOf(k), p: pops.find((q) => q.inter === x && q.slot === k) })).filter((w) => w.tw <= dur + 0.5 && rows.some((q) => q[0].txt === 'Wind ' + w.k));
+    if (wins.length) {
+      const myC = cysts.filter((c) => c.cyc === x.i), tA = wins[0].tw, tB = wins[wins.length - 1].tw, goodAt = [];
+      for (const w of wins) if (w.p) for (const g of w.p.who) if (!goodAt.some((q) => q[0] === g)) goodAt.push([g, w.p.t]);
+      const badAt = blownAll.map((d) => [d.guid, d.t]), bad = [...new Set(badAt.map((q) => q[0]))], good = goodAt.filter((q) => !bad.includes(q[0]));
+      rows.unshift([{ txt: allN(wins.length, 'wind'), sub: 'the whole intermission, on one map', dim: true }, { t: tA }, { txt: '' }, { txt: '' }, { txt: '' },
+        { map: { t: tB + 0.6, good: good.map((q) => q[0]), goodLabel: 'coated by a cyst', goodAt: good, pendLabel: 'not coated yet', bad, badLabel: 'died in a wind', badAt, title: 'Intermission ' + (x.i + 1) + ' at ' + T(x.t0) + ': all ' + pl(wins.length, 'wind') + ', in order', pts: h.snap(tB + 0.6), frames: frames(tA - 3, tB + 5),
+          cysts: myC.filter((c) => c.x != null).map((c) => { const w = wins.find((q) => q.p && c.pop === q.p); return { x: c.x, y: c.y, n: c.n, ring: w ? '#2fd15a' : '#e6b450', label: w ? 'wind ' + w.k : '', popT: c.pop ? c.pop.t : null }; }),
+          ...(cyFocus(myC) ? { focus: cyFocus(myC) } : {}) } }]);
     }
     const sp = pops.find((q) => q.inter === x && q.slot === 'spare'), left = cysts.filter((c) => c.cyc === x.i && !c.pop && !c.died).length;
     if (x.t1 + 2 < dur) rows.push([{ txt: 'Spare cyst' }, { t: sp ? sp.t : x.t1 }, sp ? { txt: 'popped', sub: [sp.cyst ? pname(sp.cyst.g) + '\'s, cyst #' + sp.cyst.n : '', sp.by ? 'popped by ' + pname(sp.by) : ''].filter(Boolean).join(', ') } : left ? { txt: 'left up', warn: true, sub: 'it pops on its own later and knocks the raid' } : { txt: 'none left', dim: true },
@@ -3643,9 +3675,11 @@ function buildCoiledAltar(ev, r, h) {
           const te = Math.max(...w.who.map(boom));
           const alive = adds.filter((a) => a.t0 <= te && (a.died == null || a.died >= te - 0.2));
           if (!alive.length) {
-            // no adds up (P3): nothing to break, the bombs just need room. One row per bomb with its circle.
-            for (const c of w.who) g.rows.push([{ txt: 'Gloombomb' }, { t: boom(c) }, { p: pname(c), sub: roleOf(c) || (r.players.get(c) || {}).role || '' }, { txt: 'no adds up: spread out' },
-              { map: { t: boom(c), gloom: true, hl: [c], hlLabel: pname(c) + '\'s Gloombomb', title: pname(c) + '\'s Gloombomb at ' + h.fmtT(boom(c)) + ' (no adds up): the 15 yd explosion circles' } }]);
+            // no adds up (P3): nothing to break, the bombs just need room. One map for the whole wave (your note, Oct 18),
+            // then a row per bomb
+            g.rows.push([{ txt: allN(w.who.length, 'bomb'), sub: 'the whole wave, on one map', dim: true }, { t: te }, { txt: '' }, { txt: '' },
+              { map: { t: te, gloom: true, hl: [...w.who], hlLabel: 'had a Gloombomb', title: 'Gloombombs at ' + h.fmtT(te) + ' (no adds up): all ' + pl(w.who.length, 'bomb') + '\'s 15 yd explosion circles' } }]);
+            for (const c of w.who) g.rows.push([{ txt: 'Gloombomb' }, { t: boom(c) }, { p: pname(c), sub: roleOf(c) || (r.players.get(c) || {}).role || '' }, { txt: 'no adds up: spread out' }, { txt: '' }]);
             continue;
           }
           const lost = (a) => SS.filter((e) => e.dst === a.g && (e.op === 'rdose' || e.op === 'remove') && Math.abs(e.t - te) <= 0.6).length;
@@ -3664,6 +3698,12 @@ function buildCoiledAltar(ev, r, h) {
             for (const x of cand) { if (need <= 0) break; x.y.a = a; x.y.d = Math.round(x.d); need--; }
           }
           const stacks = mineAdds.map((a) => lost(a)).reduce((s, x) => s + x, 0);
+          // one map for the whole wave (your note, Oct 18), on its own row above the bombs: every carrier's 15 yd circle
+          // (all the same mint look) bursting on the adds; a bomb that missed or was wasted keeps its own map below
+          const gbMap = (hl, hlLabel, title) => ({ map: { t: te, gloom: true, hl, hlLabel, good: res.filter((y) => y.a && tag(y.a).mine).map((y) => y.c), goodLabel: 'bomb landed on this set\'s add', bad: res.filter((y) => !y.a || !tag(y.a).mine).map((y) => y.c), badLabel: 'bomb missed, or hit a leftover add',
+            extraPts: alive.map((a) => { const p = posOf(a.g, te); return p ? { guid: a.g, name: 'Spiteful Soulcoiler', x: p[1], y: p[2], kind: 'add' } : null; }).filter(Boolean), title } });
+          g.rows.push([{ txt: allN(res.length, 'bomb'), sub: 'the whole wave, on one map', dim: true }, { t: te }, { txt: '' }, { txt: '' },
+            gbMap(res.map((y) => y.c), 'had a Gloombomb', 'Gloombombs at ' + h.fmtT(te) + ' (set ' + (k + 1) + '): all ' + pl(res.length, 'bomb') + ', the 15 yd explosion circles')]);
           for (const x of res) {
             const role = roleOf(x.c), tg = x.a ? tag(x.a) : null;
             // melee belongs on the unmarked add (only judged when the raid marked one of this set's adds)
@@ -3673,10 +3713,7 @@ function buildCoiledAltar(ev, r, h) {
             else if (!tg.mine) { what = 'landed on ' + tg.label + ' (wasted)'; warn = true; M(te, pname(x.c), 'gloombomb', 'Low', 'Their Gloombomb in set ' + (k + 1) + ' landed on a leftover add from an earlier set instead of this set\'s.', 'Drop it on this set\'s adds. Kill leftovers before the next set.'); }
             else { what = 'hit ' + tg.label + (wrongAdd ? ', but ' + role + ' bombs go on the ' + (role === 'melee' ? 'unmarked' : 'marked') + ' add' : ''); warn = !!wrongAdd; if (wrongAdd) M(te, pname(x.c), 'gloombomb', 'Low', 'Dropped their Gloombomb on the ' + (tg.mk ? 'marked' : 'unmarked') + ' add in set ' + (k + 1) + ' as a ' + role + ' player.', 'Melee Gloombombs go on the unmarked (melee) add, ranged on the marked (ranged) add, so each add gets its pair.'); }
             g.rows.push([{ txt: 'Gloombomb' }, { t: te }, { p: pname(x.c), sub: role || (r.players.get(x.c) || {}).role || '' }, { txt: what, bad, warn },
-              // one map per bomb at the moment it explodes; every circle in the wave looks the same (mint, 15 yd)
-              { map: { t: boom(x.c), gloom: true, hl: [x.c], hlLabel: pname(x.c) + '\'s Gloombomb', good: res.filter((y) => y.a && tag(y.a).mine).map((y) => y.c), goodLabel: 'bomb landed on this set\'s add', bad: res.filter((y) => !y.a || !tag(y.a).mine).map((y) => y.c), badLabel: 'bomb missed, or hit a leftover add',
-                extraPts: alive.map((a) => { const p = posOf(a.g, te); return p ? { guid: a.g, name: 'Spiteful Soulcoiler', x: p[1], y: p[2], kind: 'add' } : null; }).filter(Boolean),
-                title: pname(x.c) + '\'s Gloombomb at ' + h.fmtT(boom(x.c)) + ' (set ' + (k + 1) + '): the 15 yd explosion circles of this set' } }]);
+              bad || warn ? gbMap([x.c], pname(x.c) + '\'s Gloombomb', pname(x.c) + '\'s Gloombomb at ' + h.fmtT(boom(x.c)) + ' (set ' + (k + 1) + '): the 15 yd explosion circles of this set') : { txt: '' }]);
           }
           const onMine = res.filter((y) => y.a && tag(y.a).mine).length;
           g.gb = (g.gb || []).concat([{ on: onMine, n: res.length, stacks }]);
@@ -3940,6 +3977,7 @@ function buildUlatek(ev, r, h) {
   const sc = auraId(UL.constrictor, 'apply').filter((e) => h.isPlayer(e.dst)), minSoak = Math.max(3, Math.round(r.players.size * 0.2));
   const coilSets = []; for (const c of coilHits) { const cur = coilSets[coilSets.length - 1]; if (cur && c.t - cur[cur.length - 1].t < 10) cur.push(c); else coilSets.push([c]); }
   const coilGroups = coilSets.map((set, si) => {
+    const parts = [];
     const rows = set.map((c, k) => {
       const soak = [...new Set(sc.filter((e) => Math.abs(e.t - c.t) < 1).map((e) => e.dst))], died = r.deaths.filter((d) => d.t >= c.t - 0.2 && d.t <= c.t + 2 && /spectral coils/i.test(d.ability || ''));
       const none = hcUp && !soak.length, thin = hcUp && soak.length > 0 && soak.length < minSoak;
@@ -3949,12 +3987,24 @@ function buildUlatek(ev, r, h) {
       // outside it marked)
       const at = hcUp ? posPts(c.t) : [], sp = at.filter((p) => soak.includes(p.guid)), ctr = sp.length ? { x: sp.reduce((s, p) => s + p.x, 0) / sp.length, y: sp.reduce((s, p) => s + p.y, 0) / sp.length } : null;
       const near = ctr ? at.filter((p) => p.kind === 'player' && !soak.includes(p.guid) && Math.hypot(p.x - ctr.x, p.y - ctr.y) <= 15).map((p) => p.guid) : [], diedG = died.map((d) => d.guid);
-      const mapC = ctr ? { map: { t: c.t, good: soak.filter((g) => !diedG.includes(g)), goodLabel: 'in the circle (soaked)', bad: diedG, badLabel: 'died to it', hl: near, hlLabel: 'near it, not in it', rings: [{ x: ctr.x, y: ctr.y, r: 10, fx: 'soak', at: c.t, label: '10 yd soak', ...mcol('Spectral Coils'), legend: 'the soak, 10 yd (centred on its soakers)' }], focus: { x: ctr.x, y: ctr.y, r: 13 },
-        title: 'Spectral Coil at ' + T(c.t) + ': ' + pl(soak.length, 'soaker') + (near.length ? ', ' + near.length + ' more within 5 yards of it' : ''), pts: at } } : { txt: '', dim: true };
+      if (ctr) parts.push({ k, t: c.t, ctr, soak, diedG });
       return [{ txt: '#' + (k + 1) }, { t: c.t }, hcUp ? { txt: String(soak.length), bad: none, warn: thin, sub: thin ? 'under ' + minSoak : '' } : { txt: 'not shown on Normal', dim: true }, { ps: soak.map(pname), none: hcUp ? 'nobody' : '' },
-        { n: c.amt / Math.max(1, c.n), sub: 'each' }, { ps: died.map((d) => d.player), none: '—', bad: died.length > 0 }, mapC];
+        { n: c.amt / Math.max(1, c.n), sub: 'each' }, { ps: died.map((d) => d.player), none: '—', bad: died.length > 0 }, { txt: '', dim: true }];
     });
     const t0 = set[0].t;
+    // (one map for the whole set (your note, Oct 18), on its own row above the circles: every 10-yard soak to scale, centred
+    // on its soakers (the impact point isn't in the log), numbered in order, each filling as the tail comes, then slamming;
+    // a green check on each soaker from their circle, red for a death to it)
+    if (parts.length) {
+      const c0 = t0 - 3, tL = set[set.length - 1].t, bad = [...new Set(parts.flatMap((q) => q.diedG))], goodAt = [];
+      for (const q of parts) for (const g of q.soak) if (!bad.includes(g) && !goodAt.some((x) => x[0] === g)) goodAt.push([g, q.t]);
+      const x = parts.reduce((v, q) => v + q.ctr.x, 0) / parts.length, y = parts.reduce((v, q) => v + q.ctr.y, 0) / parts.length;
+      rows.unshift([{ txt: allN(set.length, 'circle'), sub: 'the whole set, on one map', dim: true }, { t: t0 }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' },
+        { map: { t: tL + 0.3, good: goodAt.map((q) => q[0]), goodLabel: 'in a circle (soaked)', goodAt, pendLabel: 'not in a circle yet', bad, badLabel: 'died to it', badAt: parts.flatMap((q) => q.diedG.map((g) => [g, q.t])),
+          rings: parts.map((q) => ({ x: q.ctr.x, y: q.ctr.y, r: 10, fx: 'soak', at: q.t, t0: c0 - 1, dur: 60, label: String(q.k + 1), ...mcol('Spectral Coils'), legend: 'a Spectral Coil soak, 10 yd (centred on its soakers): it fills as the tail comes, then slams (numbered in order)' })),
+          focus: { x, y, r: Math.max(13, ...parts.map((q) => Math.hypot(q.ctr.x - x, q.ctr.y - y) + 12)) }, title: 'Spectral Coils at ' + T(t0) + ': all ' + pl(set.length, 'circle') + ', in order', pts: posPts(tL + 0.3),
+          ...(h.frames ? { frames: h.frames(Math.max(0, c0), Math.min(dur, tL + 1.5), 0.25) } : {}) } }]);
+    }
     return { title: 'Spectral Coils, set ' + (si + 1) + ' (' + phaseAt(t0) + ')', t: t0, sub: pl(set.length, 'circle') + (hcUp ? ': ' + set.map((c) => sc.filter((e) => Math.abs(e.t - c.t) < 1).length).join(' / ') + ' soakers' : ''),
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
@@ -4144,8 +4194,9 @@ function buildUlatek(ev, r, h) {
       // (the map: just before it cleared, every bite of this cast with its 7-yard leech circle, and who took the venom)
       const mt = Math.max(0, (end < dur ? end : e.t + 2) - 0.3);
       const bmap = { map: { t: mt, hl: [e.dst], hlLabel: 'bitten', good: helpers, goodLabel: 'took the venom (now a Purge holder)', rings: set.map((x) => ({ guid: x.dst, r: 7, fx: 'debuff', label: '7 yd', ...mcol("Serpent's Bite", 0.12), legend: 'leech range, 7 yd' })), title: "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': the 7-yard leech circles', pts: posPts(mt), focus: ctrOf(posPts(mt), set.map((x) => x.dst), 12) } };
-      return [{ t: e.t }, { p: pname(e.dst) }, { txt: res, bad, sub: end < dur && !bad ? 'after ' + Math.round(end - e.t) + 's' : '' }, bmap]; });
-    const lastEnd = Math.max(...ends), bm = booms.filter((x) => x.t >= lastEnd + 3 && x.t <= lastEnd + 7.5), seenB = [];
+      // (the whole cast's map is on its own row above; a bite that went wrong keeps its own map)
+      return [{ t: e.t }, { p: pname(e.dst) }, { txt: res, bad, sub: end < dur && !bad ? 'after ' + Math.round(end - e.t) + 's' : '' }, bad ? bmap : { txt: '' }]; });
+    const lastEnd = Math.max(...ends), bm = booms.filter((x) => x.t >= lastEnd + 3 && x.t <= lastEnd + 7.5), seenB = [], bursts = [];
     for (const e of bm) { if (seenB.some((t) => Math.abs(t - e.t) < 0.5)) continue; seenB.push(e.t);
       const hold = holdersAt(e.t), caught = [...new Set(bm.filter((x) => Math.abs(x.t - e.t) < 0.5 && !hold.has(x.dst)).map((x) => x.dst))];
       // (the map: each holder's burst a moment before it went off. Its size isn't published: about 12 yards, from where the
@@ -4158,7 +4209,22 @@ function buildUlatek(ev, r, h) {
       // (Mythic: the Purge hits its holder for about 2 million, so every holder needs a big defensive or an external)
       if (mythic) for (const g of hold) { if (r.deaths.some((d) => d.guid === g && d.t < e.t - 0.2)) continue; const c = covered(g, e.t);
         if (!c) M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', 'Took the Volatile Purge at ' + T(e.t) + ' with no defensive or external.', 'The Purge hits its holder for about 2 million. Use a big defensive or immunity for it, then personals and externals through the damage over time after it.');
-        rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'held a Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'held a Volatile Purge with no defensive', warn: !c, dim: !!c }, pmap]); } }
+        rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'held a Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'held a Volatile Purge with no defensive', warn: !c, dim: !!c }, { txt: '' }]); }
+      bursts.push({ t: e.t, hold, caught }); }
+    // (one map for the whole cast (your note, Oct 18), on its own row above: every bite's 7-yard leech circle until it
+    // cleared, a green check on each player from the moment they took the venom, then each holder's Volatile Purge
+    // bursting 5 seconds later, with anyone caught in someone else's marked red)
+    {
+      const tL = bursts.length ? Math.max(...bursts.map((b) => b.t)) + 1 : Math.min(dur, lastEnd + 2), c0 = Math.max(0, t0 - 1.5);
+      const gAt = helpers.map((g) => [g, (pa.find((x) => x.dst === g && ends.some((t) => x.t >= t - 0.3 && x.t <= t + 0.6)) || { t: lastEnd }).t]);
+      const holdAll = [...new Set(bursts.flatMap((b) => [...b.hold]))], caughtAt = bursts.flatMap((b) => b.caught.map((g) => [g, b.t]));
+      const rings = set.map((x, k) => ({ guid: x.dst, r: 7, fx: 'debuff', t0: x.t, dur: ends[k] - x.t, label: '7 yd', ...mcol("Serpent's Bite", 0.12), legend: 'a bite\'s leech range, 7 yd, until it was cleared' }))
+        .concat(bursts.flatMap((b) => [...b.hold].map((g) => ({ guid: g, r: 12, fx: 'burst', t0: b.t - 5, dur: 5.6, at: b.t, label: '~12 yd', ...mcol('Volatile Purge', 0.1), legend: 'a Volatile Purge burst, about 12 yd (5 seconds after the bite is cleared)' }))));
+      const mid = Math.min(dur, lastEnd + 2);
+      rows.unshift([{ t: t0 }, { txt: 'Whole cast', sub: 'the bites, then the Purges, on one map', dim: true }, { txt: '' },
+        { map: { t: Math.max(0, tL - 1.1), hl: set.map((x) => x.dst), hlLabel: 'bitten', good: helpers, goodLabel: 'took the venom (now a Purge holder)', goodAt: gAt, pendLabel: 'not holding venom yet', bad: [...new Set(caughtAt.map((x) => x[0]))], badLabel: "caught in someone else's Volatile Purge", badAt: caughtAt, rings,
+          title: "Serpent's Bite " + (i + 1) + ' at ' + T(t0) + ': the bites, then the Purges', pts: posPts(mid), focus: ctrOf(posPts(mid), set.map((x) => x.dst).concat(holdAll), 18), ...(h.frames ? { frames: h.frames(c0, Math.min(dur, tL), 0.25) } : {}) } }]);
+    }
     return { title: "Serpent's Bite " + (i + 1), t: t0, sub: pl(set.length, 'bite') + (!helpers.length ? '' : helpers.length <= 4 ? ', cleared by ' + helpers.map(pname).join(', ') : ', cleared by ' + pl(helpers.length, 'player')), bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
   if (biteGroups.length) sections.push({ id: 'bite', title: "Serpent's Bite (Soak the bite)", spell: S("serpent's bite"), verdict: biteGroups.some((g) => g.bad) ? 'bad' : biteGroups.some((g) => g.warn) ? 'warn' : 'good',
