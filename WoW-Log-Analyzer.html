@@ -2993,6 +2993,20 @@ details.secd.mcx-tile[open] .mcx-rib, details.secd.mcx-tile[open] .mcx-who { dis
 .mcx-refg > details.secd:not([open]) > summary > .sst, .mcx-refg > details.secd:not([open]) > summary > .sub { flex-basis: 100%; margin: 0 0 0 35px; text-align: left; white-space: normal; font-size: 12px; line-height: 1.35; }
 .mcx-refg > details.secd[open] { grid-column: 1 / -1; }
 @media (max-width: 640px) { .mcx-refg { grid-template-columns: 1fr 1fr; } .mcx-refg > details.secd:not([open]) > summary > .sst, .mcx-refg > details.secd:not([open]) > summary > .sub { margin-left: 0; } }
+/* (Oct 19, "the green clean ones the same size as the bottom ones": a phase's clean mechanics as compact tiles like More from this pull,
+   a green line on top and "✓ clean" under the name, under a small "Clean" label; still opening across the card) */
+.mcx-ph > .ph-ok { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; padding: 0; border: 0; background: none; }
+.mcx-ph > .ph-ok > .ph-okh { grid-column: 1 / -1; margin: 2px 0 -2px; font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; }
+.mcx-ph > .ph-ok > details.secd { position: relative; margin: 0; border-radius: 12px; background: var(--panel); }
+.mcx-ph > .ph-ok > details.secd:not([open]) { overflow: hidden; box-shadow: none; border: 1px solid var(--line2); transition: transform .15s, border-color .15s; } .mcx-ph > .ph-ok > details.secd:not([open]):hover { transform: translateY(-2px); border-color: var(--faint); }
+.mcx-ph > .ph-ok > details.secd:not([open])::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: rgba(69,193,92,.75); }
+.mcx-ph > .ph-ok > details.secd:not([open]) > summary { flex-wrap: wrap; align-items: center; row-gap: 3px; min-height: 66px; padding: 12px 12px 10px; gap: 0; }
+.mcx-ph > .ph-ok > details.secd:not([open]) > summary::after { display: none; }
+.mcx-ph > .ph-ok > details.secd:not([open]) > summary .icw.big { width: 26px; height: 26px; margin-right: 9px; vertical-align: -8px; border-radius: 6px; }
+.mcx-ph > .ph-ok > details.secd:not([open]) > summary .sechd b { font: 700 14px var(--head); }
+.mcx-ph > .ph-ok > details.secd:not([open]) > summary .sst { display: block; flex-basis: 100%; margin: 0 0 0 35px; text-align: left; white-space: normal; font-size: 12px; }
+.mcx-ph > .ph-ok > details.secd[open] { grid-column: 1 / -1; }
+@media (max-width: 640px) { .mcx-ph > .ph-ok { grid-template-columns: 1fr 1fr; } .mcx-ph > .ph-ok > details.secd:not([open]) > summary .sst { margin-left: 0; } }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
