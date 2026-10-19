@@ -11318,39 +11318,56 @@ function cmpFacts(html) {
     m.set(t, l); }
   return m;
 }
+// (Oct 19, "the information is there, but it's very dense": each Rotation section a row, its main number as two bars in the header, then a
+// small chip for each check and each stat box in it, a gold edge on the ones where the two differ, the same numbers shown once; sections where
+// they differ open, the even ones folded closed (a section opened or closed stays that way))
 function cmpChips(rot, x) {
   if (!rot || !rot.ca || !rot.cb) return '';
-  const { An, Bn, me, colA, colB, UN } = x, plain = (v) => String(v == null ? '–' : v), RK = { bad: 0, warn: 1, ok: 2 }, bk = new Map(rot.cb.map((c) => [c.k, c]));
+  const { An, Bn, me, colA, colB } = x, plain = (v) => String(v == null ? '–' : v), RK = { bad: 0, warn: 1, ok: 2 }, bk = new Map(rot.cb.map((c) => [c.k, c]));
+  const FA = cmpFacts(rot.ha), FB = cmpFacts(rot.hb), Ln = me ? 'You' : An;
   const worst = (l) => { const g = l.filter((c) => RK[c.st] != null); return !g.length ? 'na' : g.some((c) => c.st === 'bad') ? 'bad' : g.some((c) => c.st === 'warn') ? 'warn' : 'ok'; };
-  const FA = cmpFacts(rot.ha), FB = cmpFacts(rot.hb);
+  const relOf = (a, b) => { const u = cmpNumV(a), w = cmpNumV(b); return u == null || w == null ? (plain(a) === plain(b) ? 0 : 0.5) : Math.abs(u - w) / Math.max(Math.abs(u), Math.abs(w), 1); };
   const secs = []; for (const c of rot.ca) { if (!c.sec) continue; let g = secs.find((y) => y.t === c.sec); if (!g) secs.push(g = { t: c.sec, ic: c.secIc, a: [], b: [] }); g.a.push(c); const d = bk.get(c.k); if (d) g.b.push(d); }
   if (!secs.length) return '';
-  for (const g of secs) { g.main = g.a.find((c) => c.isMain) || g.a[0]; g.mainB = bk.get(g.main.k); g.diff = g.a.map((c) => ({ c, d: bk.get(c.k) })).filter((o) => o.d && RK[o.c.st] != null && RK[o.d.st] != null && o.c.st !== o.d.st).map((o) => ({ ...o, w: RK[o.d.st] - RK[o.c.st] }));
-    g.better = g.diff.filter((o) => o.w < 0).length; g.worse = g.diff.filter((o) => o.w > 0).length; g.net = g.better - g.worse; g.stA = worst(g.a); g.stB = worst(g.b); }
-  const grp = (g) => (g.net > 0 ? 0 : g.net < 0 ? 1 : 2); secs.sort((u, v) => grp(u) - grp(v) || Math.abs(v.net) - Math.abs(u.net));
-  const mk = (st) => '<i class="cmp-rm ' + st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[st] || '•') + '</i>';
-  const chip = (g) => { const a = cmpNumV(g.main.v), b = g.mainB ? cmpNumV(g.mainB.v) : null, num = a != null && b != null, mx = Math.max(a || 0, b || 0) || 1;
-    const row = (n, col, st, c, v) => '<div class="cmp-rkr">' + mk(st) + '<span class="cmp-cbn" style="color:' + col + '">' + n + '</span>' + (num ? '<span class="cmp-cbb"><i style="width:' + (100 * (v || 0) / mx).toFixed(1) + '%;background:' + col + '"></i></span>' : '<span></span>') + '<b class="cmp-rkv">' + plain(c && c.v) + '</b></div>';
-    const who = g.net > 0 ? (me ? 'You' : An) + ' did better here' : g.net < 0 ? Bn + ' did better here' : g.diff.length ? 'Even' : 'Graded the same';
-    // (the checks that differ: by grade, or, when every grade matches, the ones whose numbers are furthest apart)
-    const relOf = (o) => { const u = cmpNumV(o.c.v), w = cmpNumV(o.d.v); return u == null || w == null ? 0 : Math.abs(u - w) / Math.max(Math.abs(u), Math.abs(w), 1); };
-    const apart = g.diff.length ? g.diff : g.a.filter((c) => c !== g.main).map((c) => ({ c, d: bk.get(c.k) })).filter((o) => o.d && relOf(o) >= 0.05).sort((u, v) => relOf(v) - relOf(u)).slice(0, 2);
-    const lines = apart.slice(0, 3).map((o) => '<div class="cmp-rkd">' + mk(o.c.st) + '<span>' + esc(o.c.label || o.c.k) + '</span><b>' + plain(o.c.v) + ' <span class="sub">vs</span> ' + plain(o.d.v) + '</b></div>').join('');
+  for (const g of secs) {
+    g.main = g.a.find((c) => c.isMain) || g.a[0]; g.mainB = bk.get(g.main.k);
+    g.diff = g.a.map((c) => ({ c, d: bk.get(c.k) })).filter((o) => o.d && RK[o.c.st] != null && RK[o.d.st] != null && o.c.st !== o.d.st).map((o) => ({ ...o, w: RK[o.d.st] - RK[o.c.st] }));
+    g.better = g.diff.filter((o) => o.w < 0).length; g.worse = g.diff.filter((o) => o.w > 0).length; g.net = g.better - g.worse; g.stA = worst(g.a); g.stB = worst(g.b);
+    // (its chips: every check but the main one, then the stat boxes; one that repeats a number already shown is left out)
+    const items = [], seen = new Set(), key = (a, b) => { const u = cmpNumV(a), w = cmpNumV(b); return u == null || w == null ? null : u + '|' + w; };
+    const mk0 = key(g.main.v, g.mainB && g.mainB.v); if (mk0) seen.add(mk0);
+    for (const c of g.a) { if (c === g.main) continue; const d = bk.get(c.k), k2 = key(c.v, d && d.v); if (k2 && seen.has(k2)) continue; if (k2) seen.add(k2); items.push({ l: c.label || c.k, a: c.v, b: d && d.v, sa: c.st, sb: d && d.st, ck: true, c, d }); }
+    const fb = new Map((FB.get(g.t) || []).map((y) => [y.l, y.v])), fl = (FA.get(g.t) || []).map((y) => ({ l: y.l, a: y.v, b: fb.get(y.l) })).concat((FB.get(g.t) || []).filter((y) => !(FA.get(g.t) || []).some((z) => z.l === y.l)).map((y) => ({ l: y.l, a: null, b: y.v })));
+    for (const o of fl) { if (items.some((y) => y.l === o.l)) continue; const k2 = key(o.a, o.b); if (k2 && seen.has(k2)) continue; if (k2) seen.add(k2); items.push(o); }
+    for (const o of items) { o.st2 = o.sa && o.sb && RK[o.sa] != null && RK[o.sb] != null && o.sa !== o.sb; o.rel = relOf(o.a, o.b); o.df = o.st2 || o.rel >= 0.1; }
+    items.sort((u, v) => (v.df - u.df) || (v.st2 - u.st2) || v.rel - u.rel); g.items = items; g.nDf = items.filter((o) => o.df).length;
+  }
+  const grp = (g) => (g.net > 0 ? 0 : g.net < 0 ? 1 : 2); secs.sort((u, v) => grp(u) - grp(v) || Math.abs(v.net) - Math.abs(u.net) || v.nDf - u.nDf);
+  const mk = (st) => (st && RK[st] != null ? '<i class="cmp-rm ' + st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[st]) + '</i>' : '<i class="cmp-rm"></i>');
+  // (two bars and two values, in the two players' colors; bars only when both are numbers)
+  const pair = (a, b, sa, sb) => { const u = cmpNumV(a), w = cmpNumV(b), num = u != null && w != null, mx = Math.max(u || 0, w || 0) || 1;
+    const r1 = (v, n, col, st) => '<div class="cmp-mcv">' + mk(st) + (num ? '<span class="cmp-cbb"><i style="width:' + (100 * (n || 0) / mx).toFixed(1) + '%;background:' + col + '"></i></span>' : '<span></span>') + '<b style="color:' + col + '">' + plain(v) + '</b></div>';
+    return r1(a, u, colA, sa) + r1(b, w, colB, sb); };
+  const sec = (g) => {
+    const open = S.cmpSecs && S.cmpSecs[g.t] != null ? S.cmpSecs[g.t] : g.net !== 0 || g.nDf > 0;
+    const who = g.net > 0 ? Ln + ' did better here' : g.net < 0 ? Bn + ' did better here' : g.nDf ? 'Graded the same, some numbers apart' : 'Even';
     const bad = g.diff.filter((o) => o.w > 0).sort((u, v) => (v.c.cost || 0) - (u.c.cost || 0))[0], tip = bad && bad.c.tip ? String(bad.c.tip).replace(/^Next time:\s*/i, '') : '';
-    const tt = '<b>' + esc(g.t) + '</b>' + g.a.map((c) => { const d = bk.get(c.k); return '<br>' + esc(c.label || c.k) + ': ' + plain(c.v) + (d ? ' vs ' + plain(d.v) : ''); }).join('');
-    const fa = FA.get(g.t) || [], fb = new Map((FB.get(g.t) || []).map((y) => [y.l, y.v])), fl = fa.map((y) => ({ l: y.l, a: y.v, b: fb.get(y.l) })).concat((FB.get(g.t) || []).filter((y) => !fa.some((z) => z.l === y.l)).map((y) => ({ l: y.l, a: null, b: y.v })));
-    const relF = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b); return u == null || w == null ? (o.a === o.b ? 0 : 0.5) : Math.abs(u - w) / Math.max(Math.abs(u), Math.abs(w), 1); }; fl.sort((u, v) => relF(v) - relF(u));
-    const facts = fl.length ? '<div class="cmp-vl">From the Rotation tab</div>' + fl.slice(0, 8).map((o) => '<div class="cmp-rkf' + (relF(o) >= 0.1 ? ' df' : '') + '"><span>' + esc(o.l) + '</span><b style="color:' + colA + '">' + esc(o.a == null ? '–' : o.a) + '</b><b style="color:' + colB + '">' + esc(o.b == null ? '–' : o.b) + '</b></div>').join('') : '';
-    return '<div class="cmp-card cmp-rk ' + (g.net < 0 ? 'warn' : g.net > 0 ? 'ok' : 'na') + '" data-tt="' + esc(tt) + '"><div class="cmp-wh">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.t) + '</b><span class="cmp-wd ' + (g.net < 0 ? 'dn' : g.net > 0 ? 'up' : '') + '">' + who + '</span></span></div>' +
-      '<div class="cmp-vl">' + esc(g.main.label || g.main.k) + '</div>' + row(me ? 'You' : An, colA, g.stA, g.main, a) + row(Bn, colB, g.stB, g.mainB, b) + lines + facts + (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + '</div>' : '') + '</div>'; };
+    const cost = bad && (bad.c.cost || 0) >= 20000 ? ' It cost ' + (me ? 'you' : An) + ' about ' + C(bad.c.cost) + ' ' + x.UN + '.' : '';
+    const chip = (o) => '<div class="cmp-mc' + (o.df ? ' df' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><div class="cmp-mcl">' + esc(o.l) + '</div>' + pair(o.a, o.b, o.sa, o.sb) + '</div>';
+    return '<details class="cmp-sec ' + (g.net > 0 ? 'ok' : g.net < 0 ? 'warn' : 'na') + '" data-s="' + esc(g.t) + '"' + (open ? ' open' : '') + '><summary class="cmp-sech">' +
+      '<span class="cmp-secn">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.t) + '</b><span class="cmp-wd ' + (g.net > 0 ? 'up' : g.net < 0 ? 'dn' : '') + '">' + who + '</span></span></span>' +
+      '<span class="cmp-secm"><span class="cmp-vl">' + esc(g.main.label || g.main.k) + '</span>' + pair(g.main.v, g.mainB && g.mainB.v, g.stA, g.stB) + '</span></summary>' +
+      '<div class="cmp-secb">' + (g.items.length ? '<div class="cmp-mcs">' + g.items.map(chip).join('') + '</div>' : '<p class="sub" style="margin:0">Nothing more in this section.</p>') +
+      (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + cost + '</div>' : '') + '</div></details>'; };
+  const cnt = (l) => { const o = { bad: 0, warn: 0, ok: 0 }; for (const c of l) if (o[c.st] != null) o[c.st]++; return o; }, side = (n, col, sc, l) => { const o = cnt(l);
+    return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
+      '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' to fix</i><i class="warn">! ' + o.warn + ' could be better</i><i class="ok">✓ ' + o.ok + ' good</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
-  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>One chip for each section of the Rotation tab. Hover one for every check in it.</small></h3>' +
-    (() => { const cnt = (l) => { const o = { bad: 0, warn: 0, ok: 0 }; for (const c of l) if (o[c.st] != null) o[c.st]++; return o; }, side = (n, col, sc, l) => { const o = cnt(l);
-      return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
-        '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' to fix</i><i class="warn">! ' + o.warn + ' could be better</i><i class="ok">✓ ' + o.ok + ' good</i></span></div>'; };
-      return '<div class="cmp-rsum">' + side(me ? 'You' : An, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>'; })() +
-    '<p class="cmp-wlead">' + (me ? 'You' : An) + ' did better in <b>' + (better ? plural(better, 'section') : 'no sections') + '</b> and worse in <b>' + (worse || 'none') + '</b>.</p>' +
-    '<div class="cmp-rcards">' + secs.map(chip).join('') + '</div></div>';
+  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab. A gold edge marks where you two differ. Hover any chip for the details.</small></h3>' +
+    '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>' +
+    '<p class="cmp-wlead">' + Ln + ' did better in <b>' + (better ? plural(better, 'section') : 'no sections') + '</b> and worse in <b>' + (worse || 'none') + '</b>.</p>' +
+    '<div class="cmp-key3"><span><i style="background:' + colA + '"></i>' + Ln + '</span><span><i style="background:' + colB + '"></i>' + Bn + '</span></div>' +
+    '<div class="cmp-secs">' + secs.map(sec).join('') + '</div></div>';
 }
 // Hero talents (Oct 19, "check the hero talents, just to be safe"): each hero tree's talent names from the spec's tree,
 // a player's tree from their talents (or, when the log has none, from the spells they cast), and for the top raiders from
@@ -12054,6 +12071,7 @@ function cmp() {
   const all2 = $('#cmpAllSp'); if (all2) all2.onclick = () => { S.cmpAllSp = !S.cmpAllSp; cmp(); };
   { const b = $('#cmpRotAll'); if (b) b.onclick = () => { S.cmpRotAll = !S.cmpRotAll; cmp(); }; }
   { const b = $('#cmpChipsAll'); if (b) b.onclick = () => { S.cmpChipsAll = !S.cmpChipsAll; cmp(); }; }
+  for (const d of document.querySelectorAll('details.cmp-sec')) d.ontoggle = () => { S.cmpSecs = S.cmpSecs || {}; S.cmpSecs[d.dataset.s] = d.open; };
   { const b = $('#cmpTalAll'); if (b) b.onclick = () => { S.cmpTalAll = !S.cmpTalAll; cmp(); }; }
   { const d = $('#view .cmp-tdet'); if (d) d.ontoggle = () => { S.cmpTreesShut = !d.open; }; }
   v.querySelectorAll('details.cmp-fold').forEach((d) => (d.ontoggle = () => { S.cmpFolds = S.cmpFolds || new Set(); if (d.open) S.cmpFolds.add(d.dataset.f); else S.cmpFolds.delete(d.dataset.f); }));
