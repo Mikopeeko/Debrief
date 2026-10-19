@@ -3,6 +3,21 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Assignments: when the roster doesn't match the note, offer to work out the stand-ins' assignments from the pull and
+  fix the note (your note, Oct 18).** My take: solid, as an upgrade of what's there: This pull already offers "Make the
+  new note" and guesses each stand-in from the same cooldown pressed, kicks, or the same role. The upgrade reads the whole
+  pull to see what each stand-in really did (who soaked which group, who kicked in that slot, who pressed the cooldown at
+  that time) and fills in every job from that, saying how sure it is, before you copy the new note.
+- [ ] **Review where the links to other parts of the site sit, for one cohesive experience (your note, Oct 18: "things
+  feel a bit spread out, maybe even redundant").** My take: amazing, and worth doing before more raiders arrive. A first
+  look at the top-right menu and the Your teams button: "Start screen" does what the Debrief logo and Home do; "Paste a
+  link" and "Open combat log" repeat the front page's boxes; "Saved progress" overlaps Your teams; "Tips for this page" and
+  "Take the tour" could be one Help item. Plan: list every link and button that moves you somewhere (top bar, menu, front
+  page, pull banner, team pages, "See it in" buttons), group them by where they go, mock up one tidier layout (each place
+  reachable one clear way, the menu short) for your OK, then build it.
+- [ ] **Adding a team or character fills in the rest (your note, Oct 18; being built now).** Add a team, and it asks which
+  player is you (and adds your character page). Add a character, and it asks right away about the teams that logged
+  your raid nights.
 - [ ] **Discord: example posts and how-to's in the channels (your note, Oct 18).** My take: good; empty channels put people
   off posting, and one example shows what a good post looks like. Suggestions: a pinned "How to report a bug" in
   #bug-reports with a short fill-in layout (boss, pull link, what you saw, what you expected); one real example post each
@@ -200,6 +215,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [ ] Open (your call): a few thresholds in the Sentinels, Sszorak, Nek'zali, Vashnik and Lost Explorers modules are mine, not from a guide (listed in each boss's notes file). Say if your raid uses different ones.
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
+- [ ] **Merge the ways to pick what you're looking at (your note, Oct 18, with a screenshot of the top of a pull).** Right
+  now four things at the top do related jobs: the boss picker ("5 bosses · Nek'zali the Soulcoiler · Mythic"), the big
+  boss banner (pull 2, kill, down after 1 wipe), the "∑ All pulls" card, and the row of pull cards (plus the ‹ › arrows in
+  the pinned bar when you scroll). My take: solid. It's the first thing everyone sees, and three of them answer the same
+  question ("which boss, which pull?"), so it reads as clutter. One idea: make the boss name in the banner the boss picker
+  itself (click it to switch boss), keep the pull cards right under it with All pulls as the first card, and drop the
+  separate picker at the top. A few mockups to pick from first, like the Graphs controls.
 
 ## 2026-10-18, round 201: Mechanics, plainer before launch (from my review)
 - **Each mechanic opens with one plain paragraph** instead of "Overall: … / Main problems: … / Could be tighter: …". For
