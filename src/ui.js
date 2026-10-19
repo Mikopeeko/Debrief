@@ -8,7 +8,7 @@ const C = E.compact, T = E.fmtT;
 
 const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
-const S = { file: null, index: null, item: null, rep: null, tab: 'overview', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
+const S = { file: null, index: null, item: null, rep: null, tab: 'live', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
 if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
@@ -2719,7 +2719,10 @@ const PICK_TABS = new Set(['live', 'audit', 'overview', 'rot', 'perf', 'player']
 function topPick() {
   if (!S.rep || !PICK_TABS.has(S.tab) || !S.rep.players) return '';
   const ps = [...S.rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), role = (p) => p.role || 'dps';
-  const cur = S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.plSel : S.mechP, pc = cur ? ps.find((p) => p.name === cur) : null;
+  // (Rotation picks you, or your saved character, before its page is drawn, so the pick here names the same player as the page)
+  const has = (n) => !!n && ps.some((p) => p.name === n), me = meOf();
+  const rotCur = () => (has(S.specSel) ? S.specSel : me && has(me.name) ? me.name : groups().filter((g) => g.kind === 'char').map((g) => g.name).find(has) || null);
+  const cur = S.tab === 'rot' ? rotCur() : S.tab === 'player' ? S.plSel : S.mechP, pc = cur ? ps.find((p) => p.name === cur) : null;
   const grp = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'DPS']].map(([k, l]) => [l, ps.filter((p) => role(p) === k).sort((a, b) => a.name.localeCompare(b.name))]).filter(([, xs]) => xs.length);
   return '<div class="op-pick' + (pc ? ' on' : '') + '" data-tt="Show one player: only their part, on every tab">' + (pc ? avatar(pc, true) : SN_I.users) +
     '<select id="opP" aria-label="Show one player"' + (pc ? ' style="color:' + pc.color + '"' : '') + '>' + (S.tab === 'rot' ? '' : '<option value="">Everyone</option>') + grp.map(([l, xs]) => '<optgroup label="' + l + '">' + xs.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</optgroup>').join('') + '</select>' +
@@ -9519,6 +9522,12 @@ const spcAutoTip = (c, one) => { const K = spcTipK(c, one), n = c.ic || c.label;
   if (c.k === 'abc') return 'Press something every global cooldown. When you have to move, use an instant spell instead of stopping.' + (K.long ? ' Your longest gap started at ' + K.long.from + '.' : '');
   if (c.k === 'mana') return /ran (out|dry)/.test(c.sub) ? 'Pace your mana. You ran out before the kill, so use fewer expensive heals early in the fight.' : 'Spend more of your mana. Use your stronger heals when the raid needs healing, and aim to end the kill near empty.';
   return ''; };
+// ("Next time: …": the advice itself, without the source it was written with, like "Both guides: " or "A guide, as Hellcaller: ", so it doesn't
+// read "Next time: Both guides: keep Garrote up")
+function tipNow(t) {
+  const m = String(t).match(/^[^:<]{0,80}?\b(?:guides?|simulations?|simulation list|log tool)\b[^:<]{0,60}:\s*(.+)$/i);
+  return m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : t;
+}
 function specPage(o) {
   // (the layout every spec shares: its checks in chapters (Rotation, Resources, Cooldowns), each chapter's blocks in the spec's own order, a check
   // named by its key. One the layout doesn't name stays in a block of its own group's name, at the end: nothing is ever dropped)
@@ -9606,7 +9615,7 @@ function specPage(o) {
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
     (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'Failed', cnt.bad, 'bad') + pill('warn', 'Some mistakes', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
-    '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + c.tip : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
+    '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + tipNow(c.tip) : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
   const LP = per[per.length - 1];
   const build = o.TAL ? '<div class="spc-build cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree !== false ? ' open' : '') + '><summary>Your talents' + (one ? '' : ' (from the latest pull)') + '</summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
     : (o.talents && o.talents.length ? '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + o.talents.map((t) => '<span class="spc-t">' + spellIcon(0, (o.talIc || {})[t] || t) + esc(t) + '</span>').join('') + '</div></div></div>' : '');
@@ -9624,7 +9633,7 @@ const spcHw = (k, how) => { if (!how) return ['', '']; const id = 'spc-hw-' + St
 // (a check in a block: a full line when it has a picture, a small tile when it's a number and a sentence; the tiles sit side by side
 // after the lines)
 const SPC_MK = { ok: '✓', warn: '!', bad: '✕', na: '•' };
-const spcTip = (c) => (c.tip && (c.st === 'warn' || c.st === 'bad') ? '<p class="spc-tip"><b>Next time:</b> ' + esc(c.tip) + '</p>' : '');
+const spcTip = (c) => (c.tip && (c.st === 'warn' || c.st === 'bad') ? '<p class="spc-tip"><b>Next time:</b> ' + esc(tipNow(c.tip)) + '</p>' : '');
 const spcLine = (c, top, id, v, bic) => { const hw = spcHw(c.k, c.how); return '<div class="spc-sl ' + c.st + '" id="' + id + '"><span class="spc-si">' + SPC_MK[c.st] + '</span><div class="spc-sm"><div class="spc-sh"><span class="spc-shl">' + (c.ic && c.ic !== bic ? spIc(c.ic) : '') + '<b>' + esc(c.label) + '</b></span><span class="spc-shv">' + top + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></div>'; };
 const spcMini = (c, top, id, extra) => { const hw = spcHw(c.k, c.how); return '<div class="spc-mini ' + c.st + '" id="' + id + '"><div class="spc-mh">' + (c.ic ? spIc(c.ic) : '') + '<b>' + esc(c.label) + '</b><span class="spc-si">' + SPC_MK[c.st] + '</span></div><div class="spc-mv"><span class="cst-f ' + c.st + '">' + c.v + '</span>' + top + '</div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + (extra || '') + '</div>'; };
 const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) => /^cd:/.test(c.k) && !vz(c)), tbl = cdl.length >= 3, rest = tbl ? vis.filter((c) => !cdl.includes(c)) : vis, big = [], small = [];
@@ -16612,9 +16621,9 @@ const PAGE_TIPS = {
   live: [
     { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its color shows how far it got, and orange is a kill.' },
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went right; yellow had some mistakes; red failed. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
-    { sel: '#view .lp-main', t: 'What went great, and what went wrong', p: 'What the raid did well comes first. Then the worst problem, big with its map: fix it first. Each box says what to do on the next pull; click its map to play the moment, or the box to open it.' },
+    { sel: '#view .lp-main', t: 'What went well, and what went wrong', p: 'What the raid did well comes first, then what went wrong, worst first, with who it was. Under them: what got better or worse since the last pull.' },
     { sel: '#view .lp-prep', t: 'Before the next pull', p: 'This shows who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it are the players to talk to, each with their one thing to fix.' },
-    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs under "This pull" dig deeper into it: every mechanic, your assignments, each player\'s rotation and the graphs. The tabs under "Whole night" cover every pull together and every player.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig deeper: every mechanic, your assignments, each player\'s rotation and the graphs. Report card grades every player over the whole night.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
     { sel: '#assignBox .as-how, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note here, or try the example first. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
@@ -16634,10 +16643,10 @@ const PAGE_TIPS = {
     { sel: '#view .pft-row', t: 'What to look at', p: 'Pick a view here: damage, healing or damage taken, casts and resources, cooldowns and buffs, or utility and survivability. Each one shows the raw numbers, player by player.' },
     { sel: '#view .pfph', t: 'One phase', p: 'Count the whole pull, or only one phase of it.' },
     { sel: '#view .pf-bars > h3', t: 'Every player', p: 'Click a player to see their numbers on the chart.' },
-    { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on the same view.' }],
+    { sel: '#list .sg-row', t: 'Another pull', p: 'Pick another pull from the cards at the top. You stay on the same view.' }],
   rot: [
     { sel: '#view .rot-sel', t: 'Every player', p: 'Change player to see how anyone else played their spec: what they pressed and when, their cooldowns, their resources and their talents. It opens on you when you\'re in the pull.' },
-    { sel: '#list .sg-row', t: 'This pull or the night', p: 'Pick another pull at the top, or All pulls for the whole night. You stay on Rotation.' }],
+    { sel: '#list .sg-row', t: 'Another pull', p: 'Pick another pull from the cards at the top. You stay on Rotation.' }],
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
     { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
@@ -16876,7 +16885,7 @@ function gsDraw() {
     key += ml.length ? 'l' : gaveUp ? 'g' : 'w';
     body = '<h2 id="gsT">Which one is you?</h2>' + (ml.length ? '<p>Pick your character. Debrief adds your own page too, with every raid you were in.</p><div class="me-l">' + ml.map((m) => { const k = m.cls && E.CLASSES[m.cls]; return '<button class="me-c" type="button" data-me="' + esc(m.name) + '"' + (k ? ' style="--cc:' + k[1] + '"' : '') + '>' + (k ? '<img src="' + whIcon('classicon_' + k[2]) + '" alt="" onerror="this.remove()">' : '') + '<span class="me-n">' + esc(m.name) + '</span><span class="me-k">' + plural(m.n, 'night') + '</span></button>'; }).join('') + '</div><div class="fp-msg gs-msg" id="gsMsg"></div>'
       : gaveUp ? '<p>Debrief didn\'t find ' + esc(gName(tg)) + '\'s players yet. You can pick yourself on its page later.</p>'
-      : '<p>Debrief is bringing in ' + esc(gName(tg)) + '\'s raid nights to list its players. This takes a few seconds.</p>' + dots);
+      : '<p>Debrief is bringing in ' + esc(gName(tg)) + '\'s raid nights to list its players. This can take up to a minute.</p>' + dots);
     nav = gaveUp ? btn('next', 'Next', true) : btn('meno', 'Skip'); if (!ml.length && !gaveUp) later(800);
   } else {
     const got = [cg, tg].filter(Boolean);

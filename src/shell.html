@@ -1225,7 +1225,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
   .lp-tiles > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
 @media (max-width: 560px) { .lp-side-p h3.nh { flex-direction: column; align-items: flex-start; gap: 2px; } .lp-side-p h3.nh small { margin-left: 0; } .lp-pr { grid-template-columns: minmax(0, 1fr); gap: 1px; } .lp-pr.ok { grid-template-columns: 18px minmax(0, 1fr); gap: 8px; } .lp-tn { width: 92px; } .lp-cd { grid-template-columns: 36px minmax(0, 1fr); } .lp-cw { grid-column: 2; white-space: normal; } }
 /* (the pinned bar's pull name on a phone: it shrinks, so the ‹ › and menu buttons stay on screen) */
-@media (max-width: 760px) { body.bh-off .tabbar .tb-id { flex: 1 1 100%; min-width: 0; margin-left: 0; } .tabbar .tb-id .tb-pull { flex: 1 1 auto; min-width: 0; max-width: none; } }
+@media (max-width: 760px) { body.bh-off .tabbar .tb-id { flex: none; min-width: 0; } .tabbar .tb-id .tb-pull { flex: 1 1 auto; min-width: 0; max-width: none; } } /* (the menu sits beside the player pick on a phone, not on a row of its own) */
 .lp-cols .panel h3 .sst { margin-left: auto; }
 .lp-cols .nsp-list { border: 0; border-radius: 0; }
 .lp-cols .iss, .lp-cols .iss.bad, .lp-cols .iss.warn, .lp-cols .iss.good { background: none; grid-template-columns: 20px minmax(0, 1fr) auto; padding: 8px 0; border-top: 1px solid rgba(53,59,73,.55); }
@@ -3789,7 +3789,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .dbf-short p { margin: 0; font-size: 17px; line-height: 1.6; color: var(--text); max-width: 82ch; } .dbf-short p b { font-weight: 700; }
 .dbf-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0; padding: 4px 6px; }
 .dbf-n { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-left: 1px solid var(--line); min-width: 0; } .dbf-n:first-child { border-left: 0; }
-.dbf-n > b { font: 700 24px/1.1 var(--head); color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dbf-n > b span { font-size: 15px; color: var(--faint); font-weight: 600; }
+.dbf-n > b { font: 700 24px/1.1 var(--head); color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dbf-n:first-child > b { white-space: normal; } @media (min-width: 641px) { .dbf-n:first-child { grid-column: span 2; } } /* (how far it got, like "P2 · Malacrass 66%": two columns wide on a computer, and wrapping instead of losing its % on a phone) */ .dbf-n > b span { font-size: 15px; color: var(--faint); font-weight: 600; }
 .dbf-n > span { font-size: 12.5px; color: var(--muted); line-height: 1.3; } .dbf-n > em { font-style: normal; } .dbf-n > em .lp-d { margin: 0; vertical-align: 0; white-space: normal; }
 .dbf-4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; } .dbf-4 > .panel { margin: 0; }
 .dbf-c { position: relative; overflow: hidden; padding-top: 17px; border-radius: 14px; } .dbf-c::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; }
