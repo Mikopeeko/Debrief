@@ -27891,6 +27891,8 @@ function bindFront(auto) {
   let picked = false;
   box.querySelectorAll('.fp-tabs button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); }; });
   box.querySelectorAll('.fp-mods button').forEach((b) => { b.onclick = () => { picked = true; show(b.dataset.s); const p = $('#fpPrev'), rc = p.getBoundingClientRect(); if (rc.top < 0 || rc.bottom > innerHeight) p.scrollIntoView({ behavior: 'smooth', block: 'center' }); }; });
+  // (under the preview: the real raid night it stands in for)
+  const demo = $('#fpDemo'); if (demo) demo.onclick = () => openReportLink(DEMO_REPORT, $('#fpDemoMsg'));
   // (the website's preview moves on to the next view every 7 seconds, paused while the mouse is on it, until a view is picked.
   // The timer is the gold bar filling along the bottom of the card that's playing: when it fills, the next card starts)
   const sec = box.querySelector('.fph-prev');
@@ -27920,8 +27922,6 @@ const HICO = {
 const DEMO_REPORT = 'https://www.warcraftlogs.com/reports/4bh7kdJMZnyrgvBC';
 function home() {
   progLit(false);
-  // (under the preview: the real raid night it stands in for)
-  const demo = $('#fpDemo'); if (demo) demo.onclick = () => openReportLink(DEMO_REPORT, $('#fpDemoMsg'));
   if (LIVE.on) setLive(false);
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
