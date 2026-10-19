@@ -247,6 +247,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 251: Rotation, three tiles at the top of every spec page (your idea: the player behind the keyboard)
+- [x] **Under the player's name, three small tiles** replace the old line of output text, on every spec page (the four hand-built
+  ones and the shared module): **Damage a second** (Healing for healers) with the top parses under it, **Parse** (Warcraft Logs'
+  colors; on a wipe, "Warcraft Logs only ranks kills"), and **Burst windows**: how many times your usual damage you did inside
+  your big cooldown (Tyrant for Demonology, Darkglare for Affliction, and so on). Healers get **Overhealing** instead.
+- Dropped at your call: a "biggest spell gap" tile.
+- Noticed: Frost Mage's burst is read from Icy Veins, which Wolfthorn's Frost Mage never pressed, so the tile shows "no burst
+  cooldown pressed". Worth checking whether Frost's burst in Midnight is a different spell.
+
 ## 2026-10-19, round 250: Assignments, a note only goes on its own group (your rule)
 - [x] **Strict roster match:** a saved note is used on a pull only when all but 2 of the players it names were there
   (and at least 3 were). A pug or another raid never gets your note, even when it's your only note for that boss. A note
