@@ -3,6 +3,11 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **Discord: example posts and how-to's in the channels (your note, Oct 18).** My take: good; empty channels put people
+  off posting, and one example shows what a good post looks like. Suggestions: a pinned "How to report a bug" in
+  #bug-reports with a short fill-in layout (boss, pull link, what you saw, what you expected); one real example post each
+  in #questions and #suggestions (with the right tag); a one-line description at the top of #general-chat. Shown to you
+  before anything is posted.
 - [x] **Spruce up the Discord before launch (your note, Oct 18; done: patch notes, FAQ, What is Debrief, welcome fixed).** My take: right priority, it's the first place new
   raiders land. Suggestions: a short "What is Debrief" post with three pictures (a map, What went wrong, the Assignments
   how-to); the first patch notes in #updates covering today's work (drafted for your OK first); a small pinned FAQ in the
