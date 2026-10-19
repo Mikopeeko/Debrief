@@ -11170,15 +11170,6 @@ function cmpPairs(A, B) {
   const big = (x) => Math.max(x[0] ? x[0].share : 0, x[1] ? x[1].share : 0);
   return rows.sort((x, y) => big(y) - big(x)).filter((x) => big(x) >= 0.01);
 }
-// How they differ: the main differences in plain sentences, the site's check lines ([status, html] each)
-const cmpStory = (story) => (story && story.length ? '<div class="panel cmp-story"><h3>How they differ<small>The main differences first</small></h3><div class="cmp-lines">' + story.map(([st, h]) => ckLine(st, h)).join('') + '</div></div>' : '');
-// (Oct 19, "the phrasing is awkward, needs to be clear and simple": every comparison sentence leads with who did more,
-// by how much, then both numbers. A and B: { n: the name as written (or "You"), pos: "your" / "Drcornman's" })
-const cmpMore = (A, a, B, b, verb, what, fmt, tail) => { if (!a && !b) return ''; const lv = a && b && Math.abs(a - b) / Math.max(a, b) < 0.03;
-  const w = what ? ' ' + what : '';
-  if (lv) return A.n + ' and ' + B.n + ' ' + verb + ' about the same' + w + ': <b>' + fmt(a) + '</b>' + (tail || '') + ' and <b>' + fmt(b) + '</b>.';
-  const [H, h, l] = a > b ? [A, a, b] : [B, b, a];
-  return H.n + ' ' + verb + ' ' + (l ? Math.round(100 * (h - l) / l) + '% ' : '') + 'more' + w + ': <b>' + fmt(h) + '</b>' + (tail || '') + ' against <b>' + fmt(l) + '</b>.'; };
 // a gap in words, for the sentences: "14% less than", "level with" (more and less read the same for any amount)
 const cmpRel = (a, b, more, less) => (!a || !b ? '' : Math.abs(a - b) / b < 0.02 ? 'level with' : Math.round(100 * Math.abs(a - b) / b) + '% ' + (a > b ? more || 'more than' : less || 'less than'));
 // Spells side by side as the site's bar rows: a bar a spell in A's class colour for A's share, a white mark at B's share,
@@ -11224,6 +11215,54 @@ const cmpCasts = (r, x) => { const min = cmpAlive(r, x) / 60; return [...x.castA
 // how the gap reads in a tooltip: "14% below Drcornman"
 const cmpVs = (a, b, who) => (!a || !b ? '' : Math.abs(a - b) / b < 0.02 ? 'Level with ' + who : Math.round(100 * Math.abs(a - b) / b) + '% ' + (a > b ? 'above ' : 'below ') + who);
 const cmpTip = (name, line, vs) => '<b>' + esc(name) + '</b><br>' + line + (vs ? '<br><span class="sub">' + vs + '</span>' : '');
+// How they differ, as cards (Oct 19, "simple cards for comparison", "gamers are visual people"): what it is, both
+// numbers as two small bars in each side's colour, and one short line. The edge: green where this player came out ahead,
+// yellow where behind, grey for plain facts. c: { label, a, b, fa, fb, na, nb, ca, cb, st, gap, txt, tip } (b may be absent)
+function cmpCard(c) {
+  const num = typeof c.a === 'number' && typeof c.b === 'number', mx = num ? Math.max(c.a, c.b) || 1 : typeof c.a === 'number' ? c.max || c.a || 1 : 1;
+  const bar = (v, t, col, nm) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + nm + '</span><span class="cmp-cbb"><i style="width:' + (typeof v === 'number' ? Math.min(100, 100 * v / mx).toFixed(1) : 0) + '%;background:' + col + '"></i></span><b>' + t + '</b></div>';
+  return '<div class="cmp-card ' + (c.st || 'na') + '"' + (c.tip ? ' data-tt="' + esc(c.tip) + '"' : '') + '><div class="cmp-cl"><span>' + c.label + '</span>' + (c.gap || '') + '</div>' +
+    bar(c.a, c.fa, c.ca, c.na) + (c.fb != null ? bar(c.b, c.fb, c.cb, c.nb) : '') + (c.txt ? '<div class="cmp-ct">' + c.txt + '</div>' : '') + '</div>';
+}
+const cmpCards = (cards) => '<div class="panel cmp-story"><h3>Overall<small>Everything else that adds up to the number a second</small></h3><div class="cmp-cards">' + cards.filter(Boolean).map(cmpCard).join('') + '</div></div>';
+// What made the difference (Oct 19, "the most relevant information, what showed the biggest differences in HPS/DPS"):
+// a player's healing (or damage) a second is the sum of each spell's, so the gap between two players is the sum of each
+// spell's gap. The spells with the biggest gaps come first, each as a card with both numbers and where its gap comes
+// from: casting it more, each cast doing more, or only one of them using it. S: { name, col, rate, ab: [{ name, id, share, cpm }] }
+function cmpWhy(SA, SB, unit) {
+  const U = unit === 'heal' ? 'healing' : 'damage', did = unit === 'heal' ? 'healed' : 'did', nm = (x) => String(x.name).replace(/^[^:]+: /, ''), gap = SA.rate - SB.rate;
+  const rows = cmpPairs(SA, SB).map(([a, b]) => { const va = a ? a.share * SA.rate : 0, vb = b ? b.share * SB.rate : 0; return { a, b, va, vb, d: va - vb, x: a || b }; })
+    .filter((o) => Math.abs(o.d) >= 0.02 * Math.max(SA.rate, SB.rate)).sort((p, q) => p.d - q.d).slice(0, 4); // (the biggest losses first)
+  if (!rows.length) return '';
+  const A0 = esc(SA.name), same = Math.abs(gap) / Math.max(SA.rate, SB.rate) < 0.02, lost = rows.filter((o) => o.d < 0), won = rows.filter((o) => o.d > 0).sort((p, q) => q.d - p.d);
+  const head = same ? A0 + ' and ' + esc(SB.name) + ' ' + did + ' about the same a second. These spells are where they differ most.'
+    : gap < 0 ? A0 + ' ' + did + ' <b>' + C(-gap) + ' less</b> a second than ' + esc(SB.name) + '.' + (lost.length ? ' The biggest gap is ' + esc(nm(lost[0].x)) + ', <b>' + C(-lost[0].d) + '</b> a second.' : '')
+    : A0 + ' ' + did + ' <b>' + C(gap) + ' more</b> a second than ' + esc(SB.name) + '.' + (won.length ? ' The biggest gap is ' + esc(nm(won[0].x)) + ', <b>' + C(won[0].d) + '</b> a second.' : '');
+  const why = (o) => {
+    const [H, L, h, l] = o.d >= 0 ? [SA, SB, o.a, o.b] : [SB, SA, o.b, o.a];
+    if (!l) return esc(H.name) + ' used it. ' + esc(L.name) + ' didn\'t.';
+    if (h.cpm && l.cpm) { const castR = h.cpm / l.cpm, per = (x, v) => v * 60 / x.cpm, sizeR = per(h, o.d >= 0 ? o.va : o.vb) / per(l, o.d >= 0 ? o.vb : o.va);
+      return castR >= sizeR ? esc(H.name) + ' cast it more: <b>' + h.cpm.toFixed(1) + '</b> times a minute against <b>' + l.cpm.toFixed(1) + '</b>.'
+        : 'Each of ' + esc(H.name) + '\'s casts did ' + Math.round(100 * (sizeR - 1)) + '% more: <b>' + C(per(h, o.d >= 0 ? o.va : o.vb)) + '</b> against <b>' + C(per(l, o.d >= 0 ? o.vb : o.va)) + '</b>.'; }
+    return 'It made <b>' + Math.round(100 * h.share) + '%</b> of ' + esc(H.name) + '\'s ' + U + ' against <b>' + Math.round(100 * l.share) + '%</b> of ' + esc(L.name) + '\'s.';
+  };
+  const cards = rows.map((o) => { const mx = Math.max(o.va, o.vb) || 1, bar = (v, col, n) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + esc(n) + '</span><span class="cmp-cbb"><i style="width:' + (100 * v / mx).toFixed(1) + '%;background:' + col + '"></i></span><b>' + C(v) + '</b></div>';
+    return '<div class="cmp-card cmp-why ' + (o.d >= 0 ? 'ok' : 'warn') + '"><div class="cmp-wh">' + spellIcon(o.x.id, nm(o.x)) + '<span><b>' + esc(nm(o.x)) + '</b><span class="cmp-wd ' + (o.d >= 0 ? 'up' : 'dn') + '">' + (SA.name === 'You' ? 'You ' : esc(SA.name) + ' ') + (o.d >= 0 ? 'gained ' : 'lost ') + C(Math.abs(o.d)) + ' a second here</span></span></div>' +
+      bar(o.va, SA.col, SA.name) + bar(o.vb, SB.col, SB.name) + '<div class="cmp-ct">' + why(o) + '</div></div>'; }).join('');
+  return '<div class="panel cmp-story"><h3>What made the difference<small>Where the ' + U + ' a second was lost first, then where it was gained</small></h3><p class="cmp-wlead">' + head + '</p><div class="cmp-cards">' + cards + '</div></div>';
+}
+// who did more, in a few words: "Drcornman healed 16% more." / "About the same."
+const cmpLead = (A, a, B, b, verb) => (!a && !b ? '' : Math.abs(a - b) / Math.max(a, b) < 0.03 ? 'About the same.' : (a > b ? A : B) + ' ' + verb + ' ' + (Math.min(a, b) ? Math.round(100 * Math.abs(a - b) / Math.min(a, b)) + '% ' : '') + 'more.');
+// Over the fight: two players' healing or damage a second, 10 seconds at a time, as two lines; hover a stretch for both
+function cmpLine(sides, end) {
+  const W = 1100, H = 180, P = 8, n = Math.max(1, Math.ceil(end / 10)), pts = sides.map((x) => { const o = []; for (let i = 0; i < n; i++) { let t = 0; for (let j = i * 10; j < Math.min(end, i * 10 + 10); j++) t += x.arr[j] || 0; o.push(t / Math.max(1, Math.min(10, end - i * 10))); } return o; });
+  const mx = Math.max(1, ...pts.flat()), X = (i) => P + (W - 2 * P) * (n > 1 ? i / (n - 1) : 0.5), Y = (v) => H - 18 - (H - 30) * v / mx;
+  let g = '';
+  for (let m = 60; m < end; m += 60) g += '<line x1="' + X(m / 10) + '" x2="' + X(m / 10) + '" y1="6" y2="' + (H - 18) + '" class="cmp-lg"/><text x="' + X(m / 10) + '" y="' + (H - 4) + '" class="cmp-lt">' + T(m) + '</text>';
+  const lines = pts.map((o, si) => '<polyline fill="none" stroke="' + sides[si].col + '" stroke-width="2.2" stroke-linejoin="round" points="' + o.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '"/>').join('');
+  const hov = pts[0].map((_, i) => '<rect x="' + (X(i) - (W - 2 * P) / n / 2).toFixed(1) + '" y="0" width="' + ((W - 2 * P) / n).toFixed(1) + '" height="' + H + '" fill="transparent" data-tt="' + esc('<b>' + T(i * 10) + ' to ' + T(Math.min(end, i * 10 + 10)) + '</b><br>' + sides.map((x, si) => esc(x.name) + ': ' + C(pts[si][i]) + ' a second').join('<br>')) + '"/>').join('');
+  return '<div class="cmp-chart"><svg viewBox="0 0 ' + W + ' ' + H + '">' + g + lines + hov + '</svg><div class="cmp-key2">' + sides.map((x) => '<span><i style="background:' + x.col + '"></i>' + esc(x.name) + '</span>').join('') + '</div></div>';
+}
 // (1) Fellow raiders: a teammate from this pull
 function cmpMate(r, p, ps) {
   const k = cmpKind(p), same = ps.filter((q) => q !== p && q.specName === p.specName), role = ps.filter((q) => q !== p && (q.role || 'dps') === (p.role || 'dps'));
@@ -11264,25 +11303,34 @@ function cmpMate(r, p, ps) {
       { p, v: ca, txt: pct1(ca), sub: cmpGap(ca, cb), tip: cmpTip(p.name, pct1(ca) + ' of their ' + U(k) + ' crit', cmpVs(ca, cb, q.name)) },
       { p: q, v: cb, txt: pct1(cb), tip: cmpTip(q.name, pct1(cb) + ' of their ' + U(kq) + ' crit', cmpVs(cb, ca, p.name)) }],
       cmpTwo(cmpList(esc(p.name), p.color, critOf(p, k)), cmpList(esc(q.name), q.color, critOf(q, kq)))) : '');
-  // How they differ, in plain sentences, only what makes healing or damage a second: who did more and by how much,
-  // casting, crit, overhealing, boss and adds, cooldowns. The mark is from this player's side: green where they
-  // came out ahead, yellow where they were behind, a dash for plain facts.
-  const me = cmpIsMe(p), PA = { n: me ? 'You' : esc(p.name), pos: me ? 'Your' : esc(p.name) + '\'s' }, PB = { n: esc(q.name), pos: esc(q.name) + '\'s' }, Q = PB.n, b = (x) => '<b>' + x + '</b>';
-  const pct = (v) => Math.round(100 * v) + '%', xa = pc.per.get(p.name), xb = pc.per.get(q.name);
-  const cdL = (l) => l.slice(0, 3).map((c) => esc(c.name) + (c.n > 1 ? ' ' + c.n + ' times' : '') + ' (' + b(C(c.v)) + ')').join(', ');
-  const story = [
-    k === kq ? [ra >= rb * 0.98 ? 'ok' : 'warn', cmpMore(PA, ra, PB, rb, k === 'heal' ? 'healed' : 'did', k === 'heal' ? '' : 'damage', C, ' a second')]
-      : ['na', PA.n + ' and ' + Q + ' have different roles, so their output isn\'t compared.'],
-    ['na', cmpMore(PA, cpm(p), PB, cpm(q), 'cast', 'spells a minute', (v) => v.toFixed(1))],
-  ].concat(k === kq && ca != null && cb != null ? [['na', Math.abs(ca - cb) < 0.01 ? PA.pos + ' and ' + PB.pos + ' spells crit about as often: ' + b(pct(ca)) + ' and ' + b(pct(cb)) + '.'
-      : (ca > cb ? PA : PB).pos + ' spells crit more often: ' + b(pct(Math.max(ca, cb))) + ' against ' + b(pct(Math.min(ca, cb))) + '.']] : [])
-    .concat(k === 'heal' && kq === 'heal' ? [['na', Math.abs(ohF(p) - ohF(q)) < 0.02 ? PA.n + ' and ' + Q + ' overhealed about the same: ' + b(pct(ohF(p))) + ' and ' + b(pct(ohF(q))) + ' of their healing.'
-      : (ohF(p) > ohF(q) ? PA : PB).n + ' overhealed more: ' + b(pct(Math.max(ohF(p), ohF(q)))) + ' of their healing against ' + b(pct(Math.min(ohF(p), ohF(q)))) + '.']] : [])
-    .concat(k === 'dmg' && kq === 'dmg' && xa && xb && xa.addShare != null && xb.addShare != null && Math.max(xa.addShare, xb.addShare) >= 0.03
-      ? [['na', PA.n + ' put ' + b(pct(xa.addShare)) + ' of their damage into adds. ' + Q + ' put ' + b(pct(xb.addShare)) + '.']] : [])
-    .concat(cdA.length || cdB.length ? [['na', PA.n + ' used ' + (cdA.length ? cdL(cdA) : 'no big cooldowns') + '. ' + Q + ' used ' + (cdB.length ? cdL(cdB) : 'none') + '.']] : []);
-  return { vs, body: cmpStory(story) +
-    '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
+  // How they differ, as cards: only what makes healing or damage a second
+  const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = esc(q.name), pct = (v) => Math.round(100 * v) + '%', xa = pc.per.get(p.name), xb = pc.per.get(q.name), heal2 = k === 'heal' && kq === 'heal';
+  const two = { na: An, nb: Bn, ca: p.color, cb: q.color };
+  const low = (x) => (x.healing - x.absorbs > 0 ? x.lowHeal / (x.healing - x.absorbs) : 0), shd = (x) => (x.healing > 0 ? x.absorbs / x.healing : 0);
+  const cards = [
+    k === kq ? { ...two, label: capS(U(k)) + ' a second', a: ra, b: rb, fa: C(ra), fb: C(rb), gap: cmpGap(ra, rb), st: ra >= rb * 0.98 ? 'ok' : 'warn', txt: cmpLead(An, ra, Bn, rb, k === 'heal' ? 'healed' : 'did') }
+      : { ...two, label: 'Output a second', a: ra, b: rb, fa: C(ra) + ' ' + U(k), fb: C(rb) + ' ' + U(kq), txt: 'Different roles, so not compared.' },
+    { ...two, label: 'Casts a minute', a: cpm(p), b: cpm(q), fa: cpm(p).toFixed(1), fb: cpm(q).toFixed(1), gap: cmpGap(cpm(p), cpm(q)), txt: cmpLead(An, cpm(p), Bn, cpm(q), 'cast') },
+    ca != null && cb != null ? { ...two, label: 'Crit chance', a: ca, b: cb, fa: pct1(ca), fb: pct1(cb), gap: cmpGap(ca, cb), txt: Math.abs(ca - cb) < 0.01 ? 'About the same.' : (ca > cb ? An : Bn) + ' crit more often.' } : null,
+    heal2 ? { ...two, label: 'Overhealing', a: ohF(p), b: ohF(q), fa: pct(ohF(p)), fb: pct(ohF(q)), txt: Math.abs(ohF(p) - ohF(q)) < 0.02 ? 'About the same.' : (ohF(p) > ohF(q) ? An : Bn) + ' overhealed more.', tip: 'Healing that landed on someone already at full health' } : null,
+    heal2 ? { ...two, label: 'Heals on allies in danger', a: low(p), b: low(q), fa: pct(low(p)), fb: pct(low(q)), txt: 'Share of their healing on someone under half health.', tip: 'How much of their healing landed on a player below half health' } : null,
+    heal2 && (p.absorbs || q.absorbs) ? { ...two, label: 'Shields', a: shd(p), b: shd(q), fa: pct(shd(p)), fb: pct(shd(q)), txt: 'Share of their healing that was shields.' } : null,
+    cdA.length || cdB.length ? { ...two, label: 'Big cooldowns', a: cdT(cdA), b: cdT(cdB), fa: C(cdT(cdA)), fb: C(cdT(cdB)), gap: cmpGap(cdT(cdA), cdT(cdB)), txt: An + ' pressed ' + cdA.reduce((t, c) => t + c.n, 0) + ', ' + Bn + ' ' + cdB.reduce((t, c) => t + c.n, 0) + '.',
+      tip: cmpTip(p.name, cdA.length ? cdA.map((c) => esc(c.name) + (c.n > 1 ? ' ×' + c.n : '') + ' ' + C(c.v)).join('<br>') : 'None', '') + '<br>' + cmpTip(q.name, cdB.length ? cdB.map((c) => esc(c.name) + (c.n > 1 ? ' ×' + c.n : '') + ' ' + C(c.v)).join('<br>') : 'None', '') } : null,
+    k === 'dmg' && kq === 'dmg' && xa && xb && xa.addShare != null && xb.addShare != null && Math.max(xa.addShare, xb.addShare) >= 0.03
+      ? { ...two, label: 'Damage into the boss', a: 1 - xa.addShare, b: 1 - xb.addShare, fa: pct(1 - xa.addShare), fb: pct(1 - xb.addShare), txt: 'The rest went into adds.' } : null,
+  ];
+  // (overhealing, spell by spell, when both heal)
+  const ohOf = (x) => { const m = new Map(); for (const a of x.healAb.values()) { const o = m.get(a.name) || { name: String(a.name).replace(/^[^:]+: /, ''), id: a.id, t: 0, o: 0 }; o.t += a.total; o.o += a.over; m.set(a.name, o); }
+    return [...m.values()].filter((o) => o.t + o.o > 0).sort((a, b2) => b2.t + b2.o - a.t - a.o).slice(0, 8).map((o) => ({ name: o.name, id: o.id, v: o.o / (o.t + o.o), txt: pct(o.o / (o.t + o.o)) })); };
+  const ohGroup = heal2 ? cmpGroup('oh', 'Overhealing', [
+    { p, v: ohF(p), txt: pct(ohF(p)), tip: cmpTip(p.name, pct(ohF(p)) + ' of their healing was overhealing', '') },
+    { p: q, v: ohF(q), txt: pct(ohF(q)), tip: cmpTip(q.name, pct(ohF(q)) + ' of their healing was overhealing', '') }], cmpTwo(cmpList(esc(p.name), p.color, ohOf(p)), cmpList(esc(q.name), q.color, ohOf(q)))) : '';
+  const chart = k === kq ? '<div class="panel"><h3>Over the fight<small>' + capS(U(k)) + ' a second, 10 seconds at a time. Hover for both numbers.</small></h3>' +
+    cmpLine([{ name: p.name, col: p.color, arr: p[k === 'heal' ? 'healS' : 'dmgS'] || [] }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, arr: q[kq === 'heal' ? 'healS' : 'dmgS'] || [] }], pc.end) + '</div>' : '';
+  const whyM = k === kq ? cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: ra, ab: A.ab }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, rate: rb, ab: B.ab }, k) : '';
+  return { vs, body: whyM + cmpCards(cards) + chart +
+    '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + ohGroup + '</div></div>' };
 }
 // (2) Top raiders of your spec: one of the top 3 on this boss, or their average, picked like a teammate (Oct 19, "more
 // like Fellow raiders"): the same header with a Change, the same How they differ, the same bar pairs in the class colour,
@@ -11330,24 +11378,22 @@ function cmpTop(r, p) {
     (hitP.length ? pair('hit', 'Average hit, biggest spells', hitA, hitB, C(hitA), C(hitB), 'average hit of their ' + hitP.length + ' biggest spells',
       two(hitP.map(([a]) => ({ name: nm(a), id: a.id, v: a.avg, txt: C(a.avg) })), hitP.map(([, t]) => ({ name: nm(t), id: t.id, v: t.avg, txt: C(t.avg) })))) : '');
   // (where this player's number would place among the top 3)
-  const sides = TS.who.map((y, i) => ({ v: y.amount, i })).concat([{ v: mine, me: true }]).sort((a, b) => b.v - a.v), place = sides.findIndex((y) => y.me) + 1;
-  // How they differ, in plain sentences: output and where it would place, fight length, casting, crit, hit size, the parse
-  const me = cmpIsMe(p), PA = { n: me ? 'You' : esc(p.name), pos: me ? 'Your' : esc(p.name) + '\'s' }, PB = B.many ? { n: 'The top 3', pos: 'The top 3\'s' } : { n: esc(B.name), pos: esc(B.name) + '\'s' };
-  const b = (v) => '<b>' + v + '</b>', spl = k === 'heal' ? 'heals' : 'hits', lo = (t) => t.charAt(0).toLowerCase() + t.slice(1);
-  const ahead = place - 1, rank = ahead === 0 ? 'That is more than all of the top 3.' : ahead === 3 ? 'All of the top 3 ' + (k === 'heal' ? 'healed' : 'did') + ' more.' : 'Only ' + ahead + ' of the top 3 ' + (k === 'heal' ? 'healed' : 'did') + ' more.';
-  const hit0 = hitP.length ? hitP[0] : null, hitRev = hit0 && (hitA >= hitB) !== (hit0[0].avg >= hit0[1].avg);
-  const story = [
-    [cmpGapSt(mine, B.amount) === 'bad' ? 'warn' : cmpGapSt(mine, B.amount), cmpMore(PA, mine, PB, B.amount, k === 'heal' ? 'healed' : 'did', k === 'heal' ? '' : 'damage', C, ' a second') + ' ' + rank],
-    ['na', Math.abs(end - B.dur) / B.dur < 0.05 ? 'The fights were about the same length (' + b(T(end)) + ' and ' + b(T(B.dur)) + ').'
-      : 'This pull was ' + b(Math.round(Math.abs(end - B.dur)) + ' seconds') + ' ' + (end > B.dur ? 'longer' : 'shorter') + ' than ' + lo(PB.pos) + (B.many ? ' kills, on average' : ' kill') + (end > B.dur ? '. A longer fight usually means a lower number a second.' : '.')],
-    [myCpm >= bCpm * 0.9 ? 'ok' : 'warn', cmpMore(PA, myCpm, PB, bCpm, 'cast', (k === 'heal' ? 'healing' : 'damage') + ' spells a minute', (v) => v.toFixed(1))],
-    [myCrit >= bCrit * 0.95 ? 'ok' : 'warn', Math.abs(myCrit - bCrit) < 0.01 ? PA.pos + ' ' + spl + ' crit about as often as ' + lo(PB.pos) + ': ' + b(pc(myCrit)) + ' and ' + b(pc(bCrit)) + '.'
-      : (myCrit > bCrit ? PA.pos : PB.pos) + ' ' + spl + ' crit more often: ' + b(pc(Math.max(myCrit, bCrit))) + ' against ' + b(pc(Math.min(myCrit, bCrit))) + '.'],
-  ].concat(hit0 ? [[hitA >= hitB * 0.95 ? 'ok' : 'warn', (Math.abs(hitA - hitB) / Math.max(hitA, hitB) < 0.03 ? PA.pos + ' ' + spl + ' hit about as hard as ' + lo(PB.pos) + '.'
-      : (hitA > hitB ? PA.pos : PB.pos) + ' ' + spl + ' hit ' + b(Math.round(100 * Math.abs(hitA - hitB) / Math.min(hitA, hitB)) + '% harder') + ' on average.') +
-      (hitRev ? ' ' + (hit0[0].avg > hit0[1].avg ? PA.pos : PB.pos) + ' ' + esc(nm(hit0[0])) + ' hit harder, though (' + b(C(Math.max(hit0[0].avg, hit0[1].avg))) + ' against ' + b(C(Math.min(hit0[0].avg, hit0[1].avg))) + ').' : '')]] : [])
-    .concat(x ? [[x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', PA.pos + ' parse was ' + b(Math.floor(x.pct)) + ', better than ' + Math.floor(x.pct) + '% of ' + esc(spn) + 's on this boss.']] : []);
-  return { vs, body: cmpStory(story) +
+  const place = TS.who.filter((y) => y.amount > mine).length + 1;
+  // How they differ, as cards
+  const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = B.many ? 'Top 3' : esc(B.name), gold = 'var(--gold)', duo = { na: An, nb: Bn, ca: p.color, cb: gold };
+  const hit0 = hitP.length ? hitP[0] : null;
+  const cards = [
+    { ...duo, label: capS(U) + ' a second', a: mine, b: B.amount, fa: C(mine), fb: C(B.amount), gap: cmpGap(mine, B.amount), st: cmpGapSt(mine, B.amount) === 'bad' ? 'warn' : cmpGapSt(mine, B.amount),
+      txt: cmpLead(An, mine, Bn, B.amount, k === 'heal' ? 'healed' : 'did') + ' ' + (place === 1 ? 'More than all of the top 3.' : place === 4 ? 'All of the top 3 did more.' : 'Would place ' + ordinal(place) + ' among them.') },
+    { ...duo, label: 'Casts a minute', a: myCpm, b: bCpm, fa: myCpm.toFixed(1), fb: bCpm.toFixed(1), gap: cmpGap(myCpm, bCpm), st: myCpm >= bCpm * 0.9 ? 'ok' : 'warn', txt: cmpLead(An, myCpm, Bn, bCpm, 'cast') + ' Counting the spells that did their ' + U + '.' },
+    { ...duo, label: 'Crit chance', a: myCrit, b: bCrit, fa: pc(myCrit), fb: pc(bCrit), gap: cmpGap(myCrit, bCrit), st: myCrit >= bCrit * 0.95 ? 'ok' : 'warn', txt: Math.abs(myCrit - bCrit) < 0.01 ? 'About the same.' : (myCrit > bCrit ? An : Bn) + ' crit more often.' },
+    hit0 ? { ...duo, label: 'Average hit, biggest spells', a: hitA, b: hitB, fa: C(hitA), fb: C(hitB), gap: cmpGap(hitA, hitB), st: hitA >= hitB * 0.95 ? 'ok' : 'warn',
+      txt: (Math.abs(hitA - hitB) / Math.max(hitA, hitB) < 0.03 ? 'About the same.' : (hitA > hitB ? An : Bn) + ' hit harder.') + ' ' + esc(nm(hit0[0])) + ': ' + C(hit0[0].avg) + ' against ' + C(hit0[1].avg) + '.' } : null,
+    { ...duo, label: 'Fight length', a: end, b: B.dur, fa: T(end), fb: T(B.dur), txt: Math.abs(end - B.dur) / B.dur < 0.05 ? 'About the same length.' : end > B.dur ? 'A longer fight usually means a lower number a second.' : 'A shorter fight.' },
+    x ? { na: An, ca: p.color, label: 'Parse', a: x.pct, max: 100, fa: String(Math.floor(x.pct)), st: x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', txt: 'Better than ' + Math.floor(x.pct) + '% of ' + esc(spn) + 's on this boss.' } : null,
+  ];
+  const whyT = cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: mine, ab: A.ab }, { name: B.many ? 'The top 3' : B.name, col: 'var(--gold)', rate: B.amount, ab: B.ab }, k);
+  return { vs, body: whyT + cmpCards(cards) +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from
