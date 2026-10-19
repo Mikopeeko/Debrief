@@ -1552,12 +1552,17 @@ const NOTE_AWAY_OK = 0; // (how many of a note's players may be missing from a p
 const rosterMatch = (names, inSet) => { const gone = names.filter((n) => !inSet.has(n.toLowerCase())), away = gone.length, found = names.length - away; return { found, away, gone, match: away <= NOTE_AWAY_OK && found >= 3 }; };
 // (pull numbers as short ranges: 3-6, 9)
 const pullRange = (ps) => { const v = [...new Set(ps)].filter((x) => x != null).sort((x, y) => x - y), out = []; for (let i = 0; i < v.length;) { let j = i; while (j + 1 < v.length && v[j + 1] === v[j] + 1) j++; out.push(i === j ? String(v[i]) : v[i] + '–' + v[j]); i = j + 1; } return (v.length === 1 ? 'pull ' : 'pulls ') + out.join(', '); };
+// (each boss's encounter ID, as an NSRT note's first line gives it; checked against the raid's notes and Warcraft Logs)
+const NOTE_ENC = { 3420: 'Sszorak', 3421: 'The Twin Fangs', 3429: 'The Coiled Altar', 3445: 'Entombed Sentinels', 3455: 'Vashnik the Malignant', 3470: "Nek'zali the Soulcoiler", 3492: "Ula'tek", 3497: 'The Lost Explorers' };
+// (a boss from a note's Name: the full name, an alias, or a short one that's part of it, "Explorers" or "Nek'zali")
+const noteBossByName = (nm) => { const k = String(nm || '').toLowerCase().replace(/^the\s+/, '').trim(); if (k.length < 4) return null;
+  const p = E.PACKS.find((x) => [x.encounter].concat(x.aliases || []).some((n) => n.toLowerCase() === k || n.toLowerCase().replace(/^the\s+/, '') === k)) || E.PACKS.find((x) => x.encounter.toLowerCase().includes(k));
+  return p ? p.encounter : null; };
 function noteScan(text, boss) {
   let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
   const saved = [...HIST.mem.values()], names = noteNames(text), low = (n) => String(n).split('-')[0].toLowerCase();
   const encId = +hd.encounterid || 0, byId = encId ? saved.find((v) => +v.id === encId) : null;
-  const known = new Set(E.PACKS.map((p) => p.encounter)), byName = hd.name && known.has(hd.name) ? hd.name : null;
-  const nBoss = (byId && byId.boss) || byName || null, dif = hd.difficulty || null, forBoss = nBoss || boss;
+  const nBoss = (byId && byId.boss) || NOTE_ENC[encId] || noteBossByName(hd.name) || null, dif = hd.difficulty || null, forBoss = nBoss || boss;
   const difW = { 14: 'normal', 15: 'heroic', 16: 'mythic' }[String(dif || '').trim()] || String(dif || '').toLowerCase();
   const sameDif = (v) => !dif || String(v.diff || '').toLowerCase().slice(0, 3) === difW.slice(0, 3);
   const nights = new Map();
@@ -1566,7 +1571,7 @@ function noteScan(text, boss) {
   // matching pull that's on Warcraft Logs, so it can be opened right there; hit is its closest pull's count)
   for (const v of saved) { if (v.boss !== forBoss || !sameDif(v)) continue; const n = nightOf(v.at); let o = nights.get(n); if (!o) nights.set(n, o = { at: v.at, pulls: 0, ps: [], v, wcl: null, wAt: 0, hit: 0, closest: null }); o.pulls++; if (v.at < o.at) o.at = v.at;
     const inV = new Set((v.players || []).map(low)), f = rosterMatch(names, inV);
-    if (f.found > o.hit) { o.hit = f.found; o.closest = v.pull; }
+    if (f.found > o.hit) { o.hit = f.found; o.closest = v.pull; o.gone = f.gone; }
     if (f.match) { o.ps.push(v.pull); if (v.wcl && v.wcl.code && (!o.wcl || v.at < o.wAt)) { o.wcl = v.wcl; o.wAt = v.at; o.wPull = v.pull; } } }
   for (const o of nights.values()) { o.match = o.ps.length > 0; if (!o.match) o.wcl = null; }
   let best = null; for (const o of nights.values()) if (!best || o.match > best.match || (o.match === best.match && (o.hit > best.hit || (o.hit === best.hit && o.at > best.at)))) best = o;
@@ -1602,7 +1607,7 @@ function noteScanBox(sc) {
   else if (r.noPulls) out.push('None of your saved logs have ' + bn + (r.dif ? ' on ' + esc(r.dif) : '') + ' yet.');
   else if (b0 && b0.match && !(b0.wcl && b0.wcl.code === S.wclCode)) out.push('It matches your raid on ' + esc(nightLabel(b0.at)) + (r.team ? ' with ' + esc(r.team) : '') + ': ' + pullRange(b0.ps) + '.');
   // (the closest saved pull only when the open log said nothing, so the same miss isn't told twice)
-  else if (!fitsHere && !c && b0 && b0.hit && !b0.match) out.push('No saved pull has this group. The closest is ' + esc(nightLabel(b0.at)) + ', pull ' + b0.closest + ': ' + b0.hit + ' of its ' + plural(N, 'player') + (b0.hit === 1 ? ' was' : ' were') + ' there.');
+  else if (!fitsHere && !c && b0 && b0.hit && !b0.match) out.push('No saved pull has this group. The closest is ' + esc(nightLabel(b0.at)) + ', pull ' + b0.closest + ': ' + b0.hit + ' of its ' + plural(N, 'player') + (b0.hit === 1 ? ' was' : ' were') + ' there.' + (b0.gone && b0.gone.length ? ' Not there: ' + esc(goneL(b0.gone)) + '.' : ''));
   else if (!fitsHere && c && !(b0 && b0.match)) out.push('No saved pull has this group either.');
   if (!r.none && r.unknown.length) out.push((r.unknown.length === 1 ? "1 name wasn't" : r.unknown.length + " names weren't") + ' in any of your saved logs: ' + esc(r.unknown.slice(0, 6).join(', ')) + (r.unknown.length > 6 ? ' and ' + (r.unknown.length - 6) + ' more' : '') + ". Check the spelling, and use character names (NSRT nicknames can't be matched yet).");
   else if (!r.none && !r.noPulls && r.names.length) out.push('Every name in it is in your saved logs.');
@@ -1665,7 +1670,7 @@ function noteLiveHtml(text, boss, rep) {
   const inP = rep ? new Set([...rep.players.values()].filter((q) => q.name).map((q) => q.name.split('-')[0].toLowerCase())) : null, hit = inP ? names.filter((n) => inP.has(n.toLowerCase())).length : 0;
   const parts = [sc.nBoss || hd.name || '', dif ? capS(String(dif).toLowerCase()) : '', rem ? plural(rem, 'cooldown reminder') : '', lines ? plural(lines, 'assignment line') : '', names.length ? plural(names.length, 'player') + (inP ? ' (' + hit + ' in this pull, ' + (rosterMatch(names, inP).match ? 'so it matches it' : "so it doesn't match it") + ')' : '') : ''].filter(Boolean);
   let warn = '';
-  if (sc.wrongBoss) warn += "<div class=\"nt-warn\">Its first line says it's for " + esc(sc.nBoss) + ', not ' + esc(boss) + '. Save it, and Debrief offers to move it there.</div>';
+  if (sc.wrongBoss) warn += "<div class=\"nt-warn\">Its first line says it's for " + esc(sc.nBoss) + ', not ' + esc(boss) + '. Saving files it under that boss.</div>';
   if (!rem && !lines) warn += "<div class=\"nt-warn\">Debrief didn't find any reminders or assignment lines in it. Paste the whole note from NSRT.</div>";
   return '<b>Debrief reads:</b> ' + parts.map(esc).join(' · ') + warn;
 }
@@ -1892,7 +1897,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const others = noteOthers(boss);
     const otherBar = others.length ? '<div class="panel nl-other" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="sub">No note for ' + esc(boss) + ' yet. Your notes for other bosses:</span>' +
       others.map(([b, l]) => '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">' + esc(b) + ' (' + l.length + ')</button>').join('') + '</div>' : '';
-    $('#assignBox').innerHTML = (only ? '' : asViews()) + (S.noteScan && S.noteScan.boss === boss && S.noteScan.moved ? noteScanBox(S.noteScan) : '') + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
+    $('#assignBox').innerHTML = (only ? '' : asViews()) + (S.noteScan && S.noteScan.boss === boss && (S.noteScan.moved || S.noteScan.r) ? noteScanBox(S.noteScan) : '') + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
       '<p class="ah-lead">Your raid\'s NSRT note says who soaks, who kicks, who takes the orbs and who presses which cooldown. Paste it here once, and Debrief checks every player against it on every pull. No other site does this.</p>' +
       '<ol class="ah-steps"><li><span><b>Get your raid\'s NSRT note.</b> Your raid leader shares it, or you can copy it from wowutils.</span></li>' +
       '<li><span><b>Paste it here and save.</b> It stays in this browser, so you only do this once for ' + esc(boss) + '. When the plan changes, paste the new one.</span></li>' +
@@ -2511,7 +2516,8 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       try { await openWcl({ code: bn.wcl.code, fight: +bn.wcl.fight || null }, await wclCreds()); return; } catch (e) { S.noteScan.went = null; S.noteScan.openErr = e.message; }
     }
     // (no pull anywhere has its exact roster: it's saved for its boss, used nowhere yet, and the box says the closest and who wasn't there)
-    S.noteScan = { ...(S.noteScan || {}), boss, id: sid, r: sc, here, savedFor: tgt !== boss ? tgt : null }; renderMain(); };
+    // (a fresh message: only an open that failed carries over, not the last import's "Opened …")
+    S.noteScan = { boss, id: sid, r: sc, here, savedFor: tgt !== boss ? tgt : null, openErr: (S.noteScan && S.noteScan.id === sid && S.noteScan.openErr) || null }; renderMain(); };
   if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
   bindAsViews(only);
   // (the new note for a changed roster: the note with each missing player's name swapped for the one taking their place, named

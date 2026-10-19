@@ -253,6 +253,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 259: Every boss's note files under its boss (your note: Nek'zali, Sentinels, Explorers)
+- [x] **A note's boss from its first line, for all 8 bosses:** each boss's encounter ID is built in (it used to need a
+  saved pull of that boss), and short names work too ("Nek'zali", "Sentinels", "Explorers", "Twin Fangs"). Your
+  Nek'zali note wasn't recognized and didn't file under Nek'zali.
+- [x] When no saved pull has the note's exact group, the closest one names who wasn't there ("Sep 30, pull 1: 19 of its
+  20 players were there. Not there: …").
+- [x] The message after saving no longer mixes in the last import's "Opened …", and it shows on a pull with no note too.
+- [x] Checked with your Nek'zali note: filed under Nek'zali the Soulcoiler, with a plain message; no errors.
+
 ## 2026-10-19, round 258: Assignments is one page (your note: "combined into just the one assignments tab")
 - [x] **No more This pull / Stored notes sub-tabs.** Top to bottom: the note for this pull (or "No note for this
   pull"), its results, then "Your saved notes" with Add a note at the top of that section.
