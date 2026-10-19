@@ -4221,17 +4221,6 @@ function nightDebrief(pulls, reps) {
   const ppl = (m) => top(m, 3).map(([k, c]) => esc(k) + (c > 1 ? ' (' + c + ')' : '')).join(', ');
   const bump = (m, k, n) => m.set(k, (m.get(k) || 0) + (n || 1));
   const phaseAt = (r, t) => { const ph = r.module && !r.module.error && r.module.phases; if (!ph || !ph.length) return null; let n = null; for (const p of ph) if (t >= p.start - 0.5) n = p.name.split(' ')[0]; return /^(P\d|Intermission)$/.test(n || '') ? n : null; };
-// Recap's top strip (your ask, Oct 19): the boss's health at the end of every pull since the first one saved for this
-// team, earlier nights and tonight, as the Progress page draws it, only wide and short (a phone gets the Progress size)
-function recapHp(b0, pulls) {
-  const H = histFor(b0), now = pulls.map((b) => ({ at: b.wallMs || b.startMs, pull: b.pull, kill: !!b.kill, left: b.kill ? 0 : pullPct(b), label: pullLabel(b), dur: b.duration, go: 'pull:' + S.index.bosses.indexOf(b) }));
-  const list = H.earlier.flatMap((x) => x.list).concat(now.filter((v) => v.at)); if (!list.length) return '';
-  const kill = list.find((v) => v.kill), known = list.filter((v) => v.left != null), best = kill || (known.length ? known.reduce((m, v) => (v.left < m.left ? v : m)) : null);
-  const col = kill ? '#ff8000' : best ? (PULL_Q.find(([lo]) => 100 - best.left >= lo) || [0, '#9d9d9d'])[1] : 'var(--line2)';
-  const nN = new Set(list.map((v) => nightOf(v.at))).size;
-  return '<div class="panel rc-hp" style="--ec:' + col + '"><h3 class="nh">Boss health, every pull <small>' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' · lower is better' + (best ? ' · best: ' + esc(best.label) : '') + '</small></h3>' +
-    '<div class="rc-hp-w">' + progChart(list, b0.boss, [1160, 132]) + '</div><div class="rc-hp-n">' + progChart(list, b0.boss) + '</div></div>';
-}
   const fix = [], better = [], worse = [], trendOk = half >= 3, np = Math.max(1, reps.reduce((s, r) => s + r.players.size, 0) / Math.max(1, reps.length));
   // 1) what ended the wipes (each wipe's first death, or a serious raid-wide failure just before it)
   const causes = new Map();
@@ -4686,7 +4675,7 @@ async function night(part) {
       : (aCard || '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
   view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part">' + pickS + mPart + legend + '</div>'
     : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
-    : recapHp(b0, pulls) + '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Players.</p></div>' + rail + '</div>'));
+    : '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Players.</p></div>' + rail + '</div>'));
   refreshIcons(); setHeadRes(); fitTrends();
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };
@@ -10775,6 +10764,8 @@ function genRun(spec, D, reps, name, one) {
     // (a press the log shows more than once, like Secret Technique's clones, counts once)
     for (const q of pairs) { const inP = (n, a, b) => (p.byName.get(lc(n)) || []).filter((t) => t >= a && t <= b && t <= t1).length, l = [], pr1 = (n) => (p.byName.get(lc(n)) || []).filter((u) => u <= t1).slice().sort((u, w) => u - w).filter((u, i, z) => !i || u - z[i - 1] > 0.9);
       const bossUp = (t) => [...(r.hpUnits || new Map())].filter(([, u]) => (r.bossUnits || []).includes(u.name) && (u.samples || []).length && t <= u.samples[u.samples.length - 1][0] + 1 && (u.samples[Math.min(u.samples.length - 1, Math.max(0, Math.floor(t)))] || [0, 0])[1] > 0).length;
+      if (q.inCast) { for (const t of pr1(q.a)) { if (inDead(t)) continue; const st = (p.starts || []).find((y) => y.t < t - 0.05 && y.done != null && y.done >= t - 0.05 && y.done <= t + (q.inCast.within || 1)); l.push({ a: t, e: t + 1, ok: !!st }); }
+        s.pair[q.k] = l; s.m['pr:' + q.k] = l.filter((w) => !w.ok).map((w) => [w.a, w.a + 1]); continue; }
       if (q.inBuf || q.notInBuf) { const bs = [].concat(q.inBuf || q.notInBuf).flatMap((bn) => (p.buffs.get(bn) || { sp: [] }).sp); for (const t of pr1(q.a)) { if ((q.from && t < q.from) || (q.minB && bossUp(t) < q.minB)) continue;
         const inB = q.inBuf ? bs.some(([a, e]) => t >= a - 0.3 && (e == null || t <= e + 0.3)) : bs.some(([a, e]) => t > a + 0.3 && (e == null || t < e - 0.1)); l.push({ a: t, e: t + 1, ok: q.inBuf ? inB : !inB }); } }
       else { const sp = q.buf ? (p.buffs.get(q.buf) || { sp: [] }).sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)]).filter(([a, e]) => !q.minLen || e - a >= q.minLen) : pr1(q.a).map((t) => [t, Math.min(t1, t + (q.dur || 0))]);
@@ -11420,6 +11411,32 @@ const GEN_SPECS = {
       { n: 'Ancestral Swiftness', cd: 30, hero: 'Farseer', ok: 0.85, warn: 0.7, why: 'Ancestral Swiftness makes your next spell instant and 10% stronger, and with Farseer it calls an Ancestor that copies your spells. Both guides press it on cooldown.' }],
     cds: [{ n: 'Ascendance', cd: 180, cdT: [['First Ascendant', 120]], ok: 0.85, warn: 0.7, why: 'Ascendance powers every spell you cast in it. Save Maelstrom and procs for it, and press it as often as the fight allows.' }],
     lead: { abc: 'Keep casting. Plan your movement, and use Spiritwalker\'s Grace and Nature\'s Swiftness when you must move.', dots: 'Keep Flame Shock on the boss for Lava Surge procs.', procs: 'React to your procs. Spend Lava Surge on Lava Burst, use Stormkeeper\'s empowered casts, and spend Overcharge! right away.', res: 'Don\'t waste Maelstrom. Spend it before you\'re full.', cds: 'Press Ascendance with Maelstrom and procs saved for it.', rot: 'Press Stormkeeper and Ancestral Swiftness on cooldown.', pre: 'Skyfury and your weapon imbue, before every pull.' } },
+  'Fire Mage': { ic: 'Combustion', top: 'Fire Mages', heroBy: { Sunfury: ['Spellfire Sphere', 'Glorious Incandescence', 'Arcane Phoenix', 'Hyperthermia'], Frostfire: ['Frostfire Bolt', 'Frostfire Empowerment'] },
+    pre: [{ k: 'ai', n: 'Arcane Intellect', why: 'Wowhead: cast Arcane Intellect on the group before the pull. Any Mage\'s counts.', tip: 'Cast Arcane Intellect before the pull, unless another Mage already has.' },
+      { k: 'bb', n: 'Blazing Barrier', self: true, why: 'Wowhead: apply your Blazing Barrier before the pull.', tip: 'Put Blazing Barrier on before the pull.' }],
+    open: { ic: 'Pyroblast', pre: ['Pyroblast'], bars: ['Hot Streak!', 'Heating Up', 'Combustion'], len: 15, ok: 0.85, warn: 0.6,
+      seqs: [{ src: 'Wowhead, Firestarter opener', steps: [{ n: 'Pyroblast', pre: true }, { any: ['Fireball', 'Frostfire Bolt'] }, { n: 'Fire Blast' }, { n: 'Pyroblast' }, { n: 'Pyroblast' }, { n: 'Fire Blast' }, { n: 'Pyroblast' }] }],
+      why: "Wowhead's opener: hard-cast Pyroblast before the pull, then Fireball (Frostfire Bolt) with a Fire Blast during it, two instant Pyroblasts, then Fire Blast and Pyroblast in turn until your charges run out. Firestarter makes these crit while the boss is above 90%. Both guides: hold Combustion until the boss is below 90% health (about 18 seconds in).",
+      lead: "Wowhead's opener: Pyroblast before the pull, Fireball with a Fire Blast during it, then two Pyroblasts, and Fire Blast into Pyroblast until your charges run out. Combustion waits until the boss is below 90%." },
+    stats: { low: 'crit', order: [['haste'], ['mastery'], ['versatility'], ['crit']], orderWhy: 'Both guides, for Sunfury and Frostfire: Haste, then Mastery, then Versatility, Critical Strike last.', lowWhy: 'Both guides put Critical Strike last. Wowhead: Fire has so many guaranteed crits that the stat is lackluster.', lead: 'Haste first, then Mastery, then Versatility, Critical Strike last.' },
+    apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, ctx: ['Hot Streak!', 'Heating Up', 'Pyroclasm', 'Combustion', 'Hyperthermia', 'Heat Shimmer', 'Frostfire Empowerment', 'Fired Up'], why: 'The single-target priority from Wowhead and Icy Veins, for Sunfury and Frostfire. Fire Blast and Combustion go out while you cast, so they never count against you, except Fire Blast while you already have Hot Streak!.', list: [
+      { s: 'Pyroblast', alt: ['Flamestrike', 'Combustion'], if: { any: [{ buff: 'Hot Streak!' }, { buff: 'Hyperthermia' }] }, why: 'you had Hot Streak!', tip: 'Both guides: spend Hot Streak! on an instant Pyroblast (Flamestrike in AoE) right away.' },
+      { s: 'Fire Blast', full: true, g: 3, alt: ['Combustion'], why: 'Fire Blast sat at full charges', tip: 'Wowhead: try to avoid letting Fire Blast charges cap.' },
+      { s: 'Pyroblast', alt: ['Flamestrike'].concat(["Fire Blast","Combustion"]), if: { buff: 'Pyroclasm', nos: ['Combustion'] }, why: 'you had Pyroclasm', tip: 'Both guides: outside Combustion, hard-cast Pyroblast the moment Pyroclasm procs.' },
+      { s: 'Meteor', cdq: true, alt: ["Fire Blast","Combustion"], why: 'Meteor was ready', tip: 'Icy Veins: cast Meteor as soon as it is ready, and inside Combustion so it lands before Combustion ends.' },
+      { s: 'Scorch', alt: ["Fire Blast","Combustion"], if: { buff: 'Heat Shimmer', no: 'Hot Streak!' }, why: 'you had Heat Shimmer and no Hot Streak!', tip: 'Both guides: cast Scorch with Heat Shimmer when you have no Hot Streak!.' },
+      { s: 'Frostfire Bolt', hero: 'Frostfire', alt: ["Fire Blast","Combustion"], if: { buff: 'Frostfire Empowerment' }, why: 'you had Frostfire Empowerment', tip: 'Wowhead: spend Frostfire Empowerment on an instant Frostfire Bolt.' },
+      { s: 'Fireball', alt: ["Frostfire Bolt","Scorch","Pyroblast","Flamestrike","Fire Blast","Meteor","Combustion","Phoenix Flames","Shifting Power","Shimmer","Blazing Barrier","Mirror Image","Alter Time","Ice Block","Greater Invisibility","Counterspell","Time Warp","Dragon's Breath","Blast Wave","Ice Cold","Supernova","Arcane Intellect","Remove Curse","Spellsteal"] }] },
+    win: { n: 'Combustion', dur: 12, key: { names: ['Pyroblast', 'Flamestrike'], one: 'Pyroblast', many: 'Pyroblasts' }, keyMin: 6, keyPer: 2, with: [['Meteor']],
+      why: 'Combustion makes every spell crit, so you alternate instant Pyroblasts with Fire Blasts to rebuild Hot Streak!. Both guides: use all your Fire Blasts in it, spend each Hot Streak! right away, and cast Meteor so it lands before Combustion ends.',
+      lead: 'Combustion is your burst: every spell crits. Spend Hot Streak! on Pyroblast, rebuild it with Fire Blast, use all your Fire Blasts, and land a Meteor inside it.' },
+    pairs: [{ k: 'combcast', a: 'Combustion', inCast: { within: 2 }, blk: 'Combustion', ok: 0.85, warn: 0.6, label: 'Combustion during a hard cast', txt: '{ok} of your {n} Combustions went out during a hard cast, before it finished.', why: 'Both guides: Combustion can be cast while casting. Start a hard cast (Pyroblast with Pyroclasm, Scorch, Fireball or Frostfire Bolt) and press Combustion right before it ends, so that cast crits too.', tip: 'Start a hard cast, then press Combustion right before it ends.' },
+      { k: 'fbhs', a: 'Fire Blast', notInBuf: 'Hot Streak!', blk: 'Fire Blast', ok: 0.9, warn: 0.75, label: 'Fire Blast without Hot Streak! up', txt: '{ok} of your {n} Fire Blasts went out when you did not already have Hot Streak!.', lead: 'Fire Blast turns Heating Up into Hot Streak!, and goes out while you cast. Both guides: use it on Heating Up, never let its charges cap, and save them for Combustion.', why: 'Wowhead: using Fire Blast when you already have Hot Streak! up is wasteful. Use it to turn Heating Up into Hot Streak!.', tip: 'Spend Hot Streak! before you Fire Blast again.' }],
+    procs: [{ n: 'Hot Streak!', use: ['Pyroblast', 'Flamestrike'], why: 'Both guides: spend Hot Streak! on an instant Pyroblast (Flamestrike in AoE).' }, { n: 'Pyroclasm', use: ['Pyroblast', 'Flamestrike'], max: 2, why: 'Both guides: hard-cast Pyroblast with Pyroclasm. With the tier set it always crits.' },
+      { n: 'Heat Shimmer', use: ['Scorch'], why: 'Both guides: Heat Shimmer makes your next Scorch instant. Cast it when you have no Hot Streak!.' }, { n: 'Frostfire Empowerment', use: ['Frostfire Bolt'], hero: 'Frostfire', why: 'Wowhead: Frostfire Empowerment makes Frostfire Bolt instant. Meteor always gives it.' }],
+    rot: [{ n: 'Fire Blast', cd: 12, h: true, ch: 3, ok: 0.8, warn: 0.65, why: 'Wowhead: try to avoid letting Fire Blast charges cap. Fired Up and Fiery Rush bring it back faster.' }, { n: 'Meteor', cd: 30, ok: 0.85, warn: 0.7, why: 'Icy Veins: cast Meteor as soon as it is ready (30 seconds with Blast Zone).' }],
+    cds: [{ n: 'Combustion', cd: 60, ok: 0.85, warn: 0.7, why: 'Icy Veins: Combustion every minute (with Kindling), as close to on cooldown as you can. Delaying it usually loses a use.' }],
+    lead: { rot: 'Never let Fire Blast cap, and cast Meteor as soon as it is ready.', procs: 'Spend Hot Streak!, Pyroclasm and Heat Shimmer as they come.', cds: 'Combustion every minute, pressed at the end of a hard cast.', pre: 'Arcane Intellect and Blazing Barrier before the pull.' } },
   'Frost Mage': { ic: 'Frostbolt', top: 'Frost Mages',
     win: { n: 'Ray of Frost', dur: 8, noPace: true, tileOnly: true, why: 'In Midnight, Frost\'s burst is built around Ray of Frost (the SimulationCraft list no longer uses Icy Veins). It has no fixed partners, so it only feeds the Burst windows tile.' },
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide (Frostfire).', list: [
@@ -15851,9 +15868,8 @@ const durH = (s) => (s >= 3600 ? Math.floor(s / 3600) + 'h ' + String(Math.round
 // one boss on one difficulty: every saved pull in order, as a chart like the Summary's "How far the night got" (lower
 // is further; multi-phase fights in stage bands sized by their share of the encounter), one line per pull plus the best
 // so far, nights split by a dashed line, a kill as an orange dot
-// (wh: [width, height] of the drawing, for Recap's wide strip; a pull's own `go` opens it in this night instead)
-function progChart(list, boss, wh) {
-  const W = wh ? wh[0] : 560, H = wh ? wh[1] : 160, L = 34, R = 10, Tp = 8, B = 22, n = list.length;
+function progChart(list, boss) {
+  const W = 560, H = 160, L = 34, R = 10, Tp = 8, B = 22, n = list.length;
   const X = (i) => L + (n <= 1 ? (W - L - R) / 2 : (i * (W - L - R)) / (n - 1)), Y = (v) => Tp + ((100 - v) / 100) * (H - Tp - B);
   const cfg = PROGRESS[boss] && !PROGRESS[boss].pool ? PROGRESS[boss] : null;
   let s = '<svg class="pc-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="How far each pull got, every night">';
@@ -15887,7 +15903,7 @@ function progChart(list, boss, wh) {
     const v = p.v, wl = v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: v.fight || null } : null);
     const box = [esc(nightLabel(v.at)) + ' · pull ' + v.pull, (v.kill ? '<b class="ct-k">Kill</b>' : esc(v.label || '')) + (v.dur ? ' · ' + T(v.dur) : '')];
     if (typeof v.deaths === 'number') box.push(v.deaths ? plural(v.deaths, 'death') + (v.first ? ' · first: ' + esc(typeof v.first === 'string' ? v.first : v.first.name || '') : '') : 'Nobody died');
-    s += '<circle cx="' + cx + '" cy="' + cy + '" r="10" class="thit"' + ctData(box, v.go || (wl && wl.code ? 'wcl:' + wl.code + '|' + (wl.fight != null ? wl.fight : '') : '')) + '/>'; }
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="10" class="thit"' + ctData(box, wl && wl.code ? 'wcl:' + wl.code + '|' + (wl.fight != null ? wl.fight : '') : '') + '/>'; }
   return s + '</svg>';
 }
 progChart.n = 0;
