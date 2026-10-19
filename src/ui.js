@@ -2631,7 +2631,7 @@ function audit() {
     for (const g of s.groups || []) { if (g.t != null && g.title !== 'Other') { per[phaseOf(g.t)].groups.push(g); timed = true; } else per[0].groups.push(g); }
     for (const row of s.rows) { const t = rowT(row); if (t != null) { per[phaseOf(t)].rows.push(row); timed = true; } else per[0].rows.push(row); }
     if (!timed && phs.length > 1) {
-      const k = phs.findIndex((p) => s.title.toLowerCase().includes(p.name.toLowerCase().split(' ')[0]) || p.name.toLowerCase().includes(s.title.split(':')[0].toLowerCase().split(' ')[0]));
+      const pt = s.place || s.title, k = phs.findIndex((p) => pt.toLowerCase().includes(p.name.toLowerCase().split(' ')[0]) || p.name.toLowerCase().includes(pt.split(':')[0].toLowerCase().split(' ')[0])); // (place: the old heading, so a rename doesn't move it)
       (k >= 0 ? buckets[k] : whole).push({ s, rows: s.rows, groups: s.groups || [] });
       continue;
     }
@@ -2771,7 +2771,7 @@ function audit() {
   };
   // (row labels that don't read as a plural noun on their own)
   const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets' };
-  const SNOUN = { boxes: 'boxes', united: 'United Defenses', ascension: 'results', frostfire: 'debuffs', blink: 'Blink Novas', thud: 'leaps', bomb: 'bombs', tankstacks: 'tank stretches', venoms: 'adds', fangs: 'Dripping Fangs', totems: 'totem results', froth: 'players', bile: 'Catalysts', infect: 'infections', imbibe: 'Imbibes', amani: 'Amani', ignition: 'results', depths: 'well results', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission results', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'add and kick results', dmghost: 'Dreadmarch results', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'egg results', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangs: 'tether results', doomscale: 'Doomscale results', bite: 'bite results', shriek: 'adds' };
+  const SNOUN = { boxes: 'boxes', united: 'United Defenses', ascension: 'Final Ascension casts', gloom: 'Gloombomb checks', frostfire: 'debuffs', blink: 'Blink Novas', thud: 'leaps', bomb: 'bombs', tankstacks: 'tank stretches', venoms: 'adds', fangs: 'Dripping Fangs', totems: 'totem checks', froth: 'players', bile: 'Catalysts', infect: 'infections', imbibe: 'Imbibes', amani: 'Amani', ignition: 'Ignition checks', depths: 'players in the well', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission checks', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'adds and kicks', dmghost: 'Dreadmarch checks', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'eggs', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangsT: 'tethers', doomscale: 'Doomscale sets', bite: 'bites', shriek: 'adds' };
   const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
   const synopsis = (s, rows, groups) => {
     const all = []; for (const g of groups) for (const row of g.rows) all.push({ row, g }); for (const row of rows) all.push({ row, g: null });
@@ -2810,7 +2810,7 @@ function audit() {
       // (avoidable damage: by what hit them, "Malevolent Resonance (2)", not by column)
       const tally = (list, flag) => { const m = new Map(); for (const x of list) { const k = s.id === 'avoid' && x.g ? x.g.title : theme(x.row, flag); m.set(k, (m.get(k) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
       const badL = all.filter((x) => isBadRow(x.row)), warnL = all.filter((x) => isWarnRow(x.row)), okL = all.filter((x) => okRow(x.row)), n = badL.length + warnL.length + okL.length;
-      const noun = SNOUN[s.id] || NOUN[(s.cols[0] || '').toLowerCase()] || 'results';
+      const noun = (s.id === 'fangs' && /^Grasping/.test(s.title) ? SNOUN.fangsT : SNOUN[s.id]) || NOUN[(s.cols[0] || '').toLowerCase()] || 'results'; // (two bosses have a 'fangs' section)
       const item = ([k, c]) => (/\)$/.test(k) ? k.replace(/\)$/, ', ' + c + ')') : k + ' (' + c + ')');
       const listT = (t) => (t.length > 3 ? t.slice(0, 3).map(item).join(', ') + ' and a few smaller things' : andJ(t.map(item)));
       // (a set flagged only in its own header, like adds still up when the next set came, is named, not counted)
@@ -12344,7 +12344,7 @@ async function lastPull() {
   const HCD = 'Assigned cooldown', wrong = [], fixes = [];
   if (ds.length) { const d = ds[0]; wrong.push({ sev: 'bad', w: 0, map: deathMap(r, d), go: ['audit', 'sec-deaths'], html: '<b>' + esc(d.player) + ' died first</b>, at ' + T(d.t) + (d.ability ? ', to ' + mech(d.ability, d.abilityId) : '') + '.' + (ds.length > 1 ? ' <span class="sub">' + plural(ds.length, 'death') + ' in all.</span>' : '') }); if (d.prevent && d.prevent[0]) fixes.push({ w: 0, t: 'Keep ' + d.player + ' alive', x: d.prevent[0] }); }
   const groups = new Map(); for (const m of ms.filter((m) => m.severity !== 'Low' && m.mechanic !== HCD)) { const g = groups.get(m.mechanic); if (g) { g.n++; if (m.player !== 'Raid') g.who.add(m.player); if (m.severity === 'High') g.hi = true; } else groups.set(m.mechanic, { m, n: 1, hi: m.severity === 'High', who: new Set(m.player !== 'Raid' ? [m.player] : []) }); }
-  const secOf = (name) => { for (const [id, x] of P) if (String(x.s.spell && x.s.spell[1]).toLowerCase() === String(name).toLowerCase() || x.s.title.toLowerCase().includes(String(name).toLowerCase())) return id; return null; };
+  const secOf = (name) => { for (const [id, x] of P) if (String(x.s.spell && x.s.spell[1]).toLowerCase() === String(name).toLowerCase() || (x.s.title + ' ' + (x.s.place || '')).toLowerCase().includes(String(name).toLowerCase())) return id; return null; };
   // (where a line's › goes: its own section, else the most important one that mentions it, Avoidable damage last)
   const secJ = [...P].map(([id, x]) => [id, JSON.stringify([x.s.rows, x.s.groups, x.s.summary]).toLowerCase()]);
   const secFor = (name) => secOf(name) || (secJ.filter(([, j]) => j.includes(String(name).toLowerCase())).map(([id]) => id).sort((a, b) => (a === 'avoid') - (b === 'avoid') || ix(a) - ix(b))[0] || null);

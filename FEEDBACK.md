@@ -259,6 +259,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 246: Mechanics headings are "Mechanic Name (Nickname)", and no more vague "results" (your notes)
+- [x] **Every boss's headings read "Mechanic Name (Nickname)"**, with a nickname of one or two words and nothing after it
+  (your style: "soaks", "beams", "heal absorbs", "adds"). 72 headings over all 8 bosses, for example "Tainted Blood (Heal
+  absorbs)", "Guillotine (Axe soaks)", "Dreadmarch (Mind control)", "Ravage (Frontal)", "Toxic Incubation (Beam)",
+  "Blightscale Wretch (Bubble)". What came after the colon is still in each section's own lines. The shared sections
+  (Deaths, Avoidable damage, Survival kit, Raid cooldowns, Interrupts) keep their names.
+- [x] **No more vague "results" counts:** each section counts what it lists, "all 3 Final Ascension casts went to plan",
+  "players in the well", "Doomscale sets", "bites", "eggs", "tethers", "Gloombomb checks" and so on.
+- [x] Fixed: Vashnik's Dripping Fangs and Ula'tek's Grasping Fangs share a section name, so Vashnik's summary counted
+  "tether results". Each now counts its own (Dripping Fangs, tethers).
+- [x] Nothing moved between phases: the old heading is kept out of sight for placing a section that has no times of
+  its own. Checked on The Coiled Altar and Ula'tek pulls.
+
 ## 2026-10-19, round 245: One pull or the whole night, always clear; a chime for a new pull (your notes)
 - [x] **A tag at the top of every tab says what you're looking at:** white "Pull 13 · the latest" (or "Pull 9 · 9 of 13")
   for one pull, gold "Whole night · 13 pulls" for the whole night, matching the card you picked. It shows on a phone too
