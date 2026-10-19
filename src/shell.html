@@ -1008,8 +1008,6 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 /* ---- the character card and the talents, the game's own way: the spec's own talent art behind them (Blizzard's, loaded from Wowhead like the
    icons; a plain dark panel when it can't load), dark panels, thin gold trim and gold corners. Behind the content, never in the way of a click ---- */
 .spc-hero > .spc-hl, .spc-hero > .spc-hf { position: relative; z-index: 3; }
-.spc-hero::before { content: ''; position: absolute; inset: 6px; border: 1px solid rgba(217,180,106,.36); border-radius: 3px; pointer-events: none; z-index: 2; }
-.spc-hero::after { content: ''; position: absolute; inset: 2px; pointer-events: none; z-index: 2; background: linear-gradient(#d9b46a,#d9b46a) top left / 26px 2px no-repeat, linear-gradient(#d9b46a,#d9b46a) top left / 2px 26px no-repeat, linear-gradient(#d9b46a,#d9b46a) top right / 26px 2px no-repeat, linear-gradient(#d9b46a,#d9b46a) top right / 2px 26px no-repeat, linear-gradient(#d9b46a,#d9b46a) bottom left / 26px 2px no-repeat, linear-gradient(#d9b46a,#d9b46a) bottom left / 2px 26px no-repeat, linear-gradient(#d9b46a,#d9b46a) bottom right / 26px 2px no-repeat, linear-gradient(#d9b46a,#d9b46a) bottom right / 2px 26px no-repeat; }
 .spc-hero .spc-fo { background: rgba(0,0,0,.55); border-color: rgba(217,180,106,.22); } .spc-hero .spc-fo:hover { background: rgba(20,16,10,.75); }
 .spc-av { display: inline-flex; border-radius: 50%; box-shadow: 0 0 0 2px #8a6a2c, 0 0 0 3px #000, 0 4px 12px rgba(0,0,0,.6); }
 .spc-build .tm { padding: 12px; border-radius: 6px; border: 1px solid #5e4a22; background: linear-gradient(rgba(6,6,8,.25), rgba(6,6,8,.45)), var(--sart, none) center / cover, #0f0e0c; box-shadow: inset 0 0 0 1px #000, inset 0 0 70px rgba(0,0,0,.8); }
@@ -1029,9 +1027,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .spc-chk { flex-wrap: wrap; gap: 6px !important; } .spc-chk > span { padding: 1px 7px; border-radius: 999px; font-size: 11.5px; background: rgba(69,193,92,.12); color: #9be2a8; } .spc-chk > span.no { background: rgba(255,255,255,.05); color: var(--muted); } .spc-chk > span span { padding: 0; background: none; color: inherit; }
 /* ---- Spec checks, the WoWAnalyzer way: a banner, the build, the groups, and a row per check (how it's judged beside what you did, each cast a box) ---- */
 .spc-v { --ok: #45c15c; --wa: #e8a23a; --ba: #e5534b; }
-.spc-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; margin: 6px 0 14px; padding: 26px 28px; border-radius: 6px; border: 1px solid #5e4a22;
-  background: linear-gradient(90deg, rgba(9,8,7,.94) 0%, rgba(9,8,7,.8) 38%, rgba(9,8,7,.5) 70%, rgba(9,8,7,.68) 100%), var(--sart, none) 70% 30% / cover, #0f0e0c;
-  box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px rgba(217,180,106,.28), inset 0 0 80px rgba(0,0,0,.85), 0 12px 32px rgba(0,0,0,.55); }
+.spc-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; margin: 6px 0 14px; padding: 22px 24px; border-radius: 12px; border: 1px solid var(--line);
+  background: linear-gradient(90deg, var(--panel) 0%, rgba(23,26,34,.92) 45%, rgba(23,26,34,.8) 100%), var(--sart, none) 70% 30% / cover, var(--panel); }
 /* (a spec frame on the banner: the class's metal band and ornaments, tinted for the spec; the spec art stays behind) */
 .spc-hero.spc-sf { overflow: visible; margin: 54px 0 52px; padding: 46px 58px 42px; border: 6px solid transparent; border-radius: 3px;
   background: linear-gradient(90deg, rgba(9,8,7,.94) 0%, rgba(9,8,7,.8) 38%, rgba(9,8,7,.5) 70%, rgba(9,8,7,.68) 100%) padding-box, radial-gradient(80% 60% at 50% 0, var(--sfg), transparent 70%) padding-box,
