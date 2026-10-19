@@ -3,6 +3,26 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
+- [ ] **A high-expectations raider's pass (your note, Oct 18): what would lose a serious Mythic player.** Walked a real
+  night (Adequate, Ula'tek Mythic, 6 wipes at 89–96% in P1, plus The Coiled Altar kill) on every tab, one pull and the
+  whole night, desktop and phone.
+  - **Trust breakers:** grades too kind and in two versions (the raid A and Mechanics S 98 on Players, but Mechanics B 81
+    on Recap, for the same night; "Report card" means two different things on those pages); grades that contradict their
+    own line ("Avoidable damage A: went wrong in 4 of 5 pulls", "Caustic Waves F" for mostly could-be-better); Power
+    Infusion advice that contradicts itself ("Simonebiles was the better pick" next to a ranking with Dwarfdude above
+    Simonebiles, and "next pull give it to Dwarfdude"); "Ula&#39;tek" shown raw on the night's Best pull tile.
+  - **Noise a raider tunes out:** "Spend your mana" for healers and "Drink your combat potion" on a 1:42 P1 wipe; resource
+    capping as the first thing to "Talk to" four DPS about on a wipe caused by mechanics; healing per second against top
+    parses on a short wipe; "Always be casting 77%: Good" for Mythic; the 0:00–0:05 pre-pull gap counted as idle; an
+    Interrupts tile saying "Nothing to kick"; two tiles that both say "No NSRT note".
+  - **Readability:** lines crammed with brackets ("Egg 1: broke into a Viper (Noxious Splash with Flahozinho) (picked up
+    at 1:35, held for 5 s) (and 1 more)"), full numbers like 5,090,214 instead of 5.1M, "went over the limit" without
+    saying what the limit is, "3 times: got hit 15 times".
+  - **First look:** a report opens on the night's last boss (Ula'tek, pull 6), not the boss you're progressing or killed.
+  - **Phone:** on Mechanics the problems start at the bottom of the first screen (Show one player and What went well
+    come first), and the maps in What went wrong are 63 pixels wide.
+  - **Already great:** opens in about a second; deaths explained with the defensive that was still ready; the wipe filter
+    is honest about what it left out; Rotation's "worth about 14.79M healing" fixes; "wipes lasted longer, 1:07 → 1:36".
 - [ ] **Assignments: when the roster doesn't match the note, offer to work out the stand-ins' assignments from the pull and
   fix the note (your note, Oct 18).** My take: solid, as an upgrade of what's there: This pull already offers "Make the
   new note" and guesses each stand-in from the same cooldown pressed, kicks, or the same role. The upgrade reads the whole
