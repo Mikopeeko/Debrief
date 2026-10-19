@@ -1768,8 +1768,37 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .sn-log { font-size: 12.5px; } span.sn-log { padding: 3px 9px; border: 1px solid var(--line); border-radius: 7px; }
 span.sn-log.on { border-color: rgba(230,180,80,.5); background: rgba(230,180,80,.06); }
 .sn-none { margin: 8px 0 0; }
-.nlib.sn-b .nl-h { margin-bottom: 2px; }
+/* (Stored notes: each boss a panel with a header band of its art, fading in from the right like the pull banner; the
+   notes below it as soft cards; each log a round chip with a small calendar) */
+.nlib.sn-b { padding: 0; overflow: hidden; margin-bottom: 14px; }
+.nlib.sn-b.cur { border-color: rgba(230,180,80,.4); }
+.sn-hd { position: relative; isolation: isolate; min-height: 104px; padding: 16px 16px 14px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); overflow: hidden; }
+.sn-art { position: absolute; inset: 0; z-index: -2; }
+.sn-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .8; filter: saturate(1.1) brightness(1.08);
+  -webkit-mask-image: linear-gradient(90deg, transparent 8%, rgba(0,0,0,.45) 38%, #000 72%); mask-image: linear-gradient(90deg, transparent 8%, rgba(0,0,0,.45) 38%, #000 72%); }
+.sn-art img.mdl { left: auto; right: -8px; width: 240px; height: 200%; top: -40%; object-fit: contain; opacity: .4; -webkit-mask-image: none; mask-image: none; }
+.sn-hd::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(0deg, rgba(12,14,19,.62), rgba(12,14,19,0) 72%), linear-gradient(90deg, rgba(23,26,34,.88), transparent 55%); }
+.sn-hd h3 { margin: 0; font: 700 23px/1.1 var(--head); color: #f3f5f9; text-shadow: 0 1px 8px rgba(0,0,0,.7); }
+.sn-st { margin-top: 4px; font-size: 13px; color: #c9ced7; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.sn-now { display: inline-block; margin-left: 10px; padding: 2px 9px; border-radius: 999px; font: 600 11.5px/1.5 var(--body); color: var(--gold-ink); background: var(--gold); vertical-align: 4px; text-shadow: none; }
+.sn-hd .nl-hb .btn { background: rgba(15,17,23,.72); backdrop-filter: blur(2px); }
+.sn-body { padding: 6px 14px 12px; }
+.sn-b .nl-r { background: rgba(255,255,255,.018); border-color: var(--line); border-radius: 10px; padding: 9px 12px; }
+.sn-b .nl-r.on { background: rgba(230,180,80,.07); border-color: rgba(230,180,80,.5); }
+.sn-b .nl-m b { font-size: 15px; }
+.sn-log { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px !important; }
+span.sn-log { padding: 3px 10px; }
+.sn-cal { flex: none; opacity: .75; }
+@media (max-width: 640px) { .sn-hd { min-height: 84px; padding: 12px; flex-wrap: wrap; align-items: flex-start; } .sn-hd h3 { font-size: 20px; } .sn-body { padding: 4px 10px 10px; } }
 .as-none { padding: 12px 14px; line-height: 1.5; }
+/* (the offer of a new note when the roster changed: gold, under the note bar) */
+.as-swap { padding: 12px 14px; border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.06); line-height: 1.5; }
+.as-swap .rsw-rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 2px; }
+.as-swap .rsw-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.as-swap .rsw-r b { min-width: 110px; }
+.as-swap select { background: var(--raised); border: 1px solid var(--line2); border-radius: 7px; color: var(--text); padding: 4px 8px; }
+.as-swap .rsw-b { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.as-swap .rsw-b .sub { flex: 1; min-width: 220px; }
 .as-none .sub { display: block; margin-top: 4px; }
 .as-none .as-why { margin: 6px 0 4px; padding-left: 20px; } .as-none .as-why li { margin: 2px 0; }
 .nt-ed .notebox { min-height: 160px; }
@@ -3459,7 +3488,7 @@ function buildTwinFangs(ev, r, h) {
     for (const s of strikes) {
       s.pts = h.snap(s.t); const sp = s.pts.filter((q) => s.who.includes(q.guid)).map((q) => [q.x, q.y]);
       const c = sp.length >= 2 ? mec(sp) : sp.length ? { x: sp[0][0], y: sp[0][1], r: 0 } : null;
-      s.ring = c ? { x: c.x, y: c.y, r: Math.max(FEAST_R, c.r), label: 'Ravenous Feast strike (~' + FEAST_R + ' yd)', ...mcol('Ravenous Feast') } : null;
+      s.ring = c ? { x: c.x, y: c.y, r: Math.max(FEAST_R, c.r), label: 'Ravenous Feast strike (~' + FEAST_R + ' yd)', ...mcol('Ravenous Feast'), fx: 'soak', at: s.t } : null;
     }
     // a death counts for the last strike that player soaked (strikes are ~1.5s apart)
     strikes.forEach((s, k) => { s.died = s.who.filter((g) => !strikes.slice(k + 1).some((z) => z.who.includes(g))).map((g) => diedNear(g, s.t, 3)).filter(Boolean); });
@@ -3761,7 +3790,7 @@ function buildTwinFangs(ev, r, h) {
   const ICHOR_LONG = 5;
   // the circle on each marked player: it follows them and shrinks (measured on 30 Mythic pulls: about 11 yd for the first
   // ~6s, then down to about 6 yd at 10s; the map draws it that way, ring.shrink = 'ichor')
-  const ichRings = (c) => c.tg.map((g) => ({ guid: g, t0: c.t, dur: 12, shrink: 'ichor', r: 11, label: 'Coiling Ichor', ...mcol('Coiling Ichor') }));
+  const ichRings = (c) => c.tg.map((g) => ({ guid: g, t0: c.t, dur: 12, shrink: 'ichor', r: 11, label: 'Coiling Ichor', ...mcol('Coiling Ichor'), fx: 'debuff' }));
   for (const c of ichCasts) for (const [g, o] of c.others) {
     // (only a long stand-in, and minor: damage only; the gore puddle is the carrier's to place)
     if (o.n < ICHOR_LONG) continue;
@@ -4008,10 +4037,10 @@ function buildEntombedSentinels(ev, r, h) {
     // about the same distance (median 7 yards just before the blast), so touching is another player stepping inside a
     // circle about 6 yards around its player. (Protovenom Eruption's 10 yards is the blast, shown on its own.) It does
     // nothing for about the first 1.5 s: players already next to each other still clear at about 1.6 s.
-    const pvRings = cr.map((x) => ({ guid: x.g, r: 6, ...mcol('Shifting Protovenom'), label: '', t0: x.on, dur: Math.max(0.5, (x.off ?? last) - x.on), legend: 'Shifting Protovenom, about 6 yd (measured from when circles clear and erupt)' }))
+    const pvRings = cr.map((x) => ({ guid: x.g, r: 6, ...mcol('Shifting Protovenom'), label: '', t0: x.on, dur: Math.max(0.5, (x.off ?? last) - x.on), fx: 'debuff', legend: 'Shifting Protovenom, about 6 yd (measured from when circles clear and erupt)' }))
       .concat(cr.filter((x) => x.mate && x.off != null).map((x) => ({ guid: x.g, r: 4, color: '#ffffff', fill: 'rgba(255,255,255,.22)', label: '', t0: x.off, dur: 1.2, cn: 'White flash', legend: 'cleared with a partner' })))
       // (an eruption's blast is 10 yd, its published radius, around the circle player it came from)
-      .concat(er.flatMap((q) => { const c = q.who.filter((g) => circles.includes(g)); return (c.length ? c : q.who.slice(0, 1)).map((g) => ({ guid: g, r: 10, ...mcol('Protovenom Eruption', 0.2), label: 'Eruption', t0: q.t - 0.1, dur: 1.6, legend: 'Protovenom Eruption (10 yd blast)' })); }));
+      .concat(er.flatMap((q) => { const c = q.who.filter((g) => circles.includes(g)); return (c.length ? c : q.who.slice(0, 1)).map((g) => ({ guid: g, r: 10, ...mcol('Protovenom Eruption', 0.2), label: 'Eruption', t0: q.t - 0.1, dur: 1.6, fx: 'burst', at: q.t, legend: 'Protovenom Eruption (10 yd blast)' })); }));
     const bad = er.length > 0 || cr.some((x) => x.d), warn = cr.some((x) => x.took > 6 || !x.mate);
     return { title: 'Protovenom ' + (i + 1), t, bad, warn,
       sub: pl(circles.length, 'circle') + ', ' + (cr.filter((x) => x.mate).length) + ' cleared in pairs' + (cr.some((x) => x.took != null) ? ', slowest ' + Math.max(...cr.map((x) => x.took || 0)).toFixed(1) + ' s' : '') + (er.length ? ', ' + pl(er.length, 'eruption') : ''),
@@ -4048,7 +4077,7 @@ function buildEntombedSentinels(ev, r, h) {
     // (an erupted droplet is flagged by the rule pack: Noxious Blast)
     const takers = [...per.values()].filter((o) => o.ts.length);
     // (the map: a green flash where each droplet was stepped on, blue for an immunity, red where the venom flying back hit)
-    const dRings = pk.map((e) => ({ guid: e.dst, r: 1.8, ...mcol('Toxic Droplets', 0.3), label: '', t0: e.t, dur: 1.2, cn: 'Lime flash', legend: 'stepped on a droplet' }))
+    const dRings = pk.map((e) => ({ guid: e.dst, r: 1.8, ...mcol('Toxic Droplets', 0.3), label: '', t0: e.t, dur: 1.2, fx: 'burst', at: e.t, cn: 'Lime flash', legend: 'stepped on a droplet' }))
       .concat(im.map((e) => ({ guid: e.dst, r: 1.8, color: '#6aa8ff', fill: 'rgba(106,168,255,.3)', label: '', t0: e.t, dur: 1.2, cn: 'Blue flash', legend: 'stepped on one with an immunity' })))
       .concat(lv.map((e) => ({ guid: e.dst, r: 2.2, color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', label: '', t0: e.t, dur: 1.2, cn: 'Red flash', legend: 'hit by Living Venom' })));
     return { title: 'Set ' + (i + 1) + (hard ? ' (before the intermission)' : ''), t, bad: blN.length > 0 || rows.some((x) => x[4].bad), warn: rows.some((x) => x[2].warn),
@@ -4092,7 +4121,7 @@ function buildEntombedSentinels(ev, r, h) {
     return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' of ' + need : ''), bad: !!few, sub: soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
       // (the soak: 7.5 yd around the marked player, its published radius, shown from 3 s before it lands)
       t1 != null ? { map: { t: t1, good: soak, goodLabel: 'soaked', goodAt: soak.map((g) => [g, t1]), pendLabel: 'in the soak (before it lands)', hl: tg ? [tg] : [], hlLabel: 'marked', title: 'Unstable Miasma ' + (i + 1) + ' at ' + h.fmtT(t1), pts: h.snap(t1), frames: frames(t1 - 3, t1 + 1.5),
-        rings: tg ? [{ guid: tg, r: 7.5, ...mcol('Unstable Miasma'), label: '7.5 yd', t0: t1 - 3.2, dur: 3.6, legend: 'Unstable Miasma soak (7.5 yd)' }] : [] } } : { txt: '' }];
+        rings: tg ? [{ guid: tg, r: 7.5, ...mcol('Unstable Miasma'), label: '7.5 yd', t0: t1 - 3.2, dur: 3.6, fx: 'soak', at: t1, legend: 'Unstable Miasma soak (7.5 yd)' }] : [] } } : { txt: '' }];
   });
   if (mRows.length) sections.push({ id: 'miasma', title: 'Unstable Miasma (big soak): enough soakers', spell: [ES.miCast, 'Unstable Miasma'],
     verdict: mRows.some((x) => x[3].bad || x[4].bad) ? 'bad' : 'good',
@@ -4127,7 +4156,7 @@ function buildEntombedSentinels(ev, r, h) {
     const mine = pools.filter((p) => p.t >= ph.start && p.t < ph.end); if (!mine.length) return null;
     const upTo = pools.filter((p) => p.t < ph.end), tm = Math.min(ph.end, dur) - 0.5;
     return { title: 'Cycle ' + (i + 1), t: ph.start + 0.01, sub: pl(mine.length, 'pool') + ' this cycle, ' + upTo.length + ' on the floor in all',
-      rows: [[{ txt: 'The floor at the end of the cycle', sub: 'every pool so far', dim: true }, { t: tm }, { txt: '' }, { map: { t: tm, title: 'Blood pools by the end of cycle ' + (i + 1), pts: h.snap(tm), rings: upTo.map((p) => ({ x: p.x, y: p.y, r: p.src === 'Bloodvenom Injection' ? 7 : 4, color: p.t >= ph.start ? '#e5534b' : '#8a3a36', fill: 'rgba(229,83,75,.18)', label: '' })) } }]]
+      rows: [[{ txt: 'The floor at the end of the cycle', sub: 'every pool so far', dim: true }, { t: tm }, { txt: '' }, { map: { t: tm, title: 'Blood pools by the end of cycle ' + (i + 1), pts: h.snap(tm), rings: upTo.map((p) => ({ x: p.x, y: p.y, fx: 'puddle', t0: p.t, r: p.src === 'Bloodvenom Injection' ? 7 : 4, color: p.t >= ph.start ? '#e5534b' : '#8a3a36', fill: 'rgba(229,83,75,.18)', label: '' })) } }]]
         .concat(mine.map((p) => [{ p: pname(p.g) }, { t: p.t }, { txt: p.src, dim: true }, { txt: '' }])) };
   }).filter(Boolean);
   // (info: shown, not judged, so it never says "clean")
@@ -4430,7 +4459,7 @@ function buildSszorak(ev, r, h) {
     const whole = [{ txt: 'Whole cast', sub: 'every marked player, on one map', dim: true }, { t: knock }, { txt: '' }, { txt: '' },
       { map: { t: knock, pendLabel: 'marked, before the launch', good: info.filter((o) => o.res === 'pair').map((o) => o.g), goodLabel: 'collided', goodAt: info.filter((o) => o.res === 'pair').map((o) => [o.g, o.q.t0]),
         bad: drift.map((o) => o.g).concat(byst.map((o) => o.g)), badLabel: 'drifted, or hit by a flying player', badAt: drift.map((o) => [o.g, o.q.t0 + 2.5]).concat(byst.map((o) => [o.g, knock])), links,
-        arrows: info.filter((o) => SZ_CW[o.id]).map((o) => ({ g: o.g, color: mcol('Raging Crosswinds').color, ang: SZ_CW[o.id][0] * Math.PI / 180, t0: (cwA.find((e) => e.dst === o.g && e.t >= t - 0.5) || { t }).t, t1: knock })), title: 'Raging Crosswinds ' + (i + 1) + ' at ' + T(t), pts: h.snap(knock), frames: frames(knock - 6, knock + 6) } }];
+        arrows: info.filter((o) => SZ_CW[o.id]).map((o) => ({ g: o.g, fx: 'wind', color: mcol('Raging Crosswinds').color, ang: SZ_CW[o.id][0] * Math.PI / 180, t0: (cwA.find((e) => e.dst === o.g && e.t >= t - 0.5) || { t }).t, t1: knock })), title: 'Raging Crosswinds ' + (i + 1) + ' at ' + T(t), pts: h.snap(knock), frames: frames(knock - 6, knock + 6) } }];
     return { title: 'Raging Crosswinds ' + (i + 1), t, bad: rows.some((q) => q[3].bad), warn: rows.some((q) => q[3].warn), sub: pl(gm.length, 'marked player') + ': ' + pl(info.filter((o) => o.mate).length / 2, 'pair') + ' collided' + (drift.length ? ', ' + drift.length + ' drifted' : '') + (imm.length ? ', ' + imm.length + ' not launched' : '') + (byst.length ? ', ' + pl(byst.length, 'bystander') + ' hit' : ''), rows: [whole].concat(rows) };
   }).filter((g) => g.rows.length > 1);
   if (cwGroups.length) sections.push({ id: 'crosswinds', title: 'Raging Crosswinds (arrows): collided in the air', spell: [SZ.cwCast, 'Raging Crosswinds'], verdict: cwGroups.some((g) => g.bad) ? 'bad' : cwGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -4554,7 +4583,7 @@ function buildNekzali(ev, r, h) {
   const ignAt = ev.find((e) => e.k === 'cast' && has(e, [NZ.ignition, NZ.ignitionCh]) && e.x != null);
   const W0 = ignAt ? { x: ignAt.x, y: ignAt.y } : { x: 0, y: 206.5 };
   const wellD = (p) => (p ? Math.hypot(p.x - W0.x, p.y - W0.y) : null);
-  const wellRing = { x: W0.x, y: W0.y, r: 15, ...mcol('Soulcoil Well', 0.12), label: '', legend: 'the Soulcoil Well (about 15 yd)' };
+  const wellRing = { x: W0.x, y: W0.y, r: 15, ...mcol('Soulcoil Well', 0.12), fx: 'zone', label: '', legend: 'the Soulcoil Well (about 15 yd)' };
   const spot = (x, y, color, legend, cn) => ({ x, y, r: 3, color, fill: color + '66', label: '', cn, legend });
 
   // ---- phases: P1, the intermission (Ritual of Awakening at 50%), P2 (Uncoiling) ----
@@ -4726,7 +4755,7 @@ function buildNekzali(ev, r, h) {
     const pyH = dmgId(NZ.pyre).filter((e) => e.t >= ritT && e.t <= iEnd + 5), pys = []; for (const e of pyH) { const p = pys[pys.length - 1]; if (p && e.t - p.t < 1) p.who.add(e.dst); else pys.push({ t: e.t, who: new Set([e.dst]) }); }
     // (the soak's 10 yards, centred on the players it hit, as the Spectral Coil map does: the log has no position for the Pyre itself)
     const pyreRing = (p) => { const sk = h.snap(p.t).filter((q) => p.who.has(q.guid)); if (!sk.length) return []; const cx = sk.reduce((v, q) => v + q.x, 0) / sk.length, cy = sk.reduce((v, q) => v + q.y, 0) / sk.length;
-      return [{ x: cx, y: cy, r: 10, label: '10 yd soak', ...mcol('Hungering Pyre'), legend: 'the soak, 10 yd (centred on its soakers)' }]; };
+      return [{ x: cx, y: cy, r: 10, label: '10 yd soak', ...mcol('Hungering Pyre'), fx: 'soak', at: p.t, legend: 'the soak, 10 yd (centred on its soakers)' }]; };
     pys.forEach((p, k) => {
       _nz.pyres.push({ i: k + 1, t: p.t, who: [...p.who].map(pname) });
       const died = r.deaths.filter((d) => d.t >= p.t - 0.2 && d.t <= p.t + 1 && /hungering pyre/i.test(d.ability || ''));
@@ -4910,7 +4939,7 @@ function buildVashnik(ev, r, h) {
         M(o.t, pname(o.g), 'Plague Wave', d ? 'High' : 'Medium', 'Hit by a Plague Wave' + (o.from ? ' from ' + pname(o.from) + '\'s Plague Froth' : '') + ' (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.');
         return [{ p: pname(o.g), sub: f.who.includes(o.g) ? 'had Plague Froth too' : '' }, { t: o.t }, d ? { txt: 'died', bad: true } : { txt: 'hit for ' + fmtM(o.amt), warn: true }, o.from ? { p: pname(o.from) } : { txt: '—', dim: true }, { txt: '' }];
       });
-      const arrows = f.ends.flatMap((x) => [0, 90, 180, 270].map((a) => ({ g: x.g, ang: a * Math.PI / 180, len: 30, color: mcol('Plague Froth').color, t0: x.t - 1.5, t1: x.t + 1 })));
+      const arrows = f.ends.flatMap((x) => [0, 90, 180, 270].map((a) => ({ g: x.g, ang: a * Math.PI / 180, len: 30, color: mcol('Plague Froth').color, t0: x.t - 1.5, t1: x.t + 1, fx: 'wave', at: x.t })));
       const whole = [{ txt: 'Whole cast', sub: 'the targets and their lines, on one map', dim: true }, { t: f.end }, { txt: '' }, { txt: '' },
         { map: { t: f.end, hl: f.who, hlLabel: 'had Plague Froth', arrowLabel: 'the four Plague Waves it sends out when it ends (about 30 yd)', bad: [...by.keys()], badLabel: 'hit by a Plague Wave', badAt: [...by.values()].map((o) => [o.g, o.t]), arrows, title: 'Plague Froth ' + (i + 1) + ' at ' + T(f.t), pts: h.snap(f.end), frames: frames(f.end - 3, f.end + 2) } }];
       return { title: 'Plague Froth ' + (i + 1) + ' (' + cyName(cycOf(f.t)) + ')', t: f.t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: pl(f.who.length, 'target') + ', ' + (by.size ? pl(by.size, 'player') + ' hit by a wave' : 'nobody hit by a wave'), rows: [whole].concat(rows) };
@@ -5118,7 +5147,7 @@ function buildLostExplorers(ev, r, h) {
       for (const d of died) M(d.t, d.player, 'Blink Nova', 'High', 'Died to Blink Nova.', 'Spread out for Blink Nova. Its target moves at least 20 yards from the melee and away from the raid.');
       return [{ p: pname(e.dst) }, { t: tm }, { txt: who.size ? fmtM(hits.reduce((s, x) => s + (x.raw || x.amt), 0) / who.size) + ' each on average' : '—', dim: !who.size }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
         { map: { t: tm, hl: [e.dst], hlLabel: 'Blink Nova target', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Blink Nova on ' + pname(e.dst) + ' at ' + T(tm), pts: h.snap(tm), frames: frames(tm - 4, tm + 1),
-          rings: [{ guid: e.dst, r: bR, t0: e.t, dur: tm - e.t + 1, label: 'Blink Nova', ...mcol('Blink Nova', 0.12), legend: '20 yards around the Blink Nova target, from the moment it was marked; the guides say to keep the raid outside it' }] } }];
+          rings: [{ guid: e.dst, r: bR, t0: e.t, dur: tm - e.t + 1, fx: 'burst', at: tm, label: 'Blink Nova', ...mcol('Blink Nova', 0.12), legend: '20 yards around the Blink Nova target, from the moment it was marked; the guides say to keep the raid outside it' }] } }];
     });
     if (rows.length) sections.push({ id: 'blink', title: 'Blink Nova (raid hit): spread, target away from the raid', spell: [LE.blink, 'Blink Nova'], verdict: rows.some((x) => x[3].bad) ? 'bad' : 'good',
       summary: pl(rows.length, 'Blink Nova') + '. It shows each one\'s target, what it cost the raid, and deaths to it.', cols: ['Target', 'When', 'Raid damage', 'Died', ''], rows });
@@ -5138,7 +5167,7 @@ function buildLostExplorers(ev, r, h) {
         for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split, and use a defensive if your health is low.');
         return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
           { map: { t: l.t, good: who, goodLabel: 'soaked the leap', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' at ' + T(l.t), pts: h.snap(l.t), frames: frames(l.t - 3, l.t + 1),
-            rings: (() => { const n = namaAt(l.t + 0.8); return n && tR ? [{ x: n.x, y: n.y, r: tR, t0: l.t - 0.2, dur: 1.4, label: 'Mighty Thud', ...mcol('Mighty Thud', 0.18), legend: 'where the leap landed; it hit players up to ' + tR + ' yd away (measured)' }] : []; })() } }];
+            rings: (() => { const n = namaAt(l.t + 0.8); return n && tR ? [{ x: n.x, y: n.y, r: tR, t0: l.t - 1.4, dur: 2.6, fx: 'impact', at: l.t, label: 'Mighty Thud', ...mcol('Mighty Thud', 0.18), legend: 'where the leap landed; it hit players up to ' + tR + ' yd away (measured)' }] : []; })() } }];
       });
       groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: rows.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
     }
@@ -5412,13 +5441,13 @@ function buildCoiledAltar(ev, r, h) {
     // transparent mint green circle with a "15 yd" label. Anyone the explosion clipped without carrying one gets an orange !
     if (mp.gloom) {
       const gb = gbAt(t);
-      mp.rings = (mp.rings || []).concat(gb.map((c) => ({ guid: c.g, r: 15, ...mcol('Gloombomb'), label: '15 yd', legend: 'Gloombomb explosion (15 yd around the carrier)' })));
+      mp.rings = (mp.rings || []).concat(gb.map((c) => ({ guid: c.g, r: 15, ...mcol('Gloombomb'), fx: 'burst', t0: c.s - 0.2, dur: c.e - c.s + 1, at: c.e, label: '15 yd', legend: 'Gloombomb explosion (15 yd around the carrier)' })));
       const cl = clipAt(t).filter((g) => !gb.some((c) => c.g === g));
       if (cl.length) { mp.warn = [...new Set((mp.warn || []).concat(cl))]; mp.warnLabel = 'clipped by a bomb they didn\'t carry'; }
     }
     const pur = carriersAt(t).map((c) => c.g), grn = greenAt(t).filter((g) => !pur.includes(g));
     if (!pur.length && !grn.length) return;
-    mp.rings = (mp.rings || []).concat(pur.map((g) => ({ guid: g, r: 6, color: '#b65cff', fill: 'rgba(182,92,255,.14)', label: '6 yd', legend: 'purple orb carrier (6 yd)' })), grn.map((g) => ({ guid: g, r: 5, color: '#5fd35f', fill: 'rgba(95,211,95,.12)', label: '5 yd', legend: 'green orb carrier (5 yd)' })));
+    mp.rings = (mp.rings || []).concat(pur.map((g) => ({ guid: g, r: 6, color: '#b65cff', fill: 'rgba(182,92,255,.14)', fx: 'debuff', label: '6 yd', legend: 'purple orb carrier (6 yd)' })), grn.map((g) => ({ guid: g, r: 5, color: '#5fd35f', fill: 'rgba(95,211,95,.12)', fx: 'debuff', label: '5 yd', legend: 'green orb carrier (5 yd)' })));
     const hit = [...new Set(ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && Math.abs(e.t - t) <= 1.5 && ((L(e.spell) === 'mutagenic venom' && !carriersAt(e.t).some((c) => c.g === e.dst)) || (L(e.spell) === 'volatile venom' && !carryingVV(e.dst, e.t)))).map((e) => e.dst))];
     if (hit.length) { mp.bad = [...new Set((mp.bad || []).concat(hit))]; mp.badLabel = mp.badLabel ? mp.badLabel + ' / hit by an orb carrier' : 'hit by an orb carrier\'s venom'; }
   };
@@ -5876,7 +5905,7 @@ function buildCoiledAltar(ev, r, h) {
     const all = s.who.concat(tgt && !s.who.includes(tgt) ? [tgt] : []);
     // The axe lands where the target stands and hits everyone within 9 yards (soakers come from the damage hits).
     const lp = tgt && h.snap(hit).find((p) => p.guid === tgt);
-    const ring = lp ? [{ x: lp.x, y: lp.y, r: GUILLOTINE_R, label: 'soak ' + GUILLOTINE_R + ' yd', ...mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }] : [];
+    const ring = lp ? [{ x: lp.x, y: lp.y, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }] : [];
     // outcome on the map: soakers who lived = right; soakers who died, or a target with no protection = wrong
     const diedG = r.deaths.filter((d) => s.died.includes(d.player) && Math.abs(d.t - hit) < 6).map((d) => d.guid);
     const wrong = diedG.concat(mythic && tgt && !tag(tgt) && !diedG.includes(tgt) ? [tgt] : []);
@@ -6001,7 +6030,7 @@ function buildCoiledAltar(ev, r, h) {
           // every orb inside the cone (an orb counts if its edge, ~2 yd, is inside)
           const REACH = REACH_OF[s.n] || 35;
           hit = ground.filter((o) => { const dd = Math.hypot(o.x - boss.x, o.y - boss.y); return dd <= REACH + 2 && (ang(o) <= CONE || dd * Math.sin(ang(o)) <= 2); });
-          cone = { x: boss.x, y: boss.y, dir, half: CONE, r: REACH };
+          cone = { x: boss.x, y: boss.y, dir, half: CONE, r: REACH, at: s.t };
         }
         const hp = hit.filter((o) => o.kind === 'porb').length, hg = hit.length - hp;
         const differ = cone && hit.length !== popped ? ' (stacks say ' + popped + ')' : '';
@@ -6067,7 +6096,7 @@ function buildCoiledAltar(ev, r, h) {
     if (!out.length && f.n === 'blighted sever') continue; // P3 frontals with no ghosts out are about orbs
     const tankG = (dmg(f.n).find((e) => e.t >= f.t - 0.5 && e.t <= f.t + 2 && role(e.dst) === 'tank') || {}).dst;
     const snap = h.snap(f.t), boss = snap.find((p) => p.guid === f.src) || snap.find((p) => p.kind === 'boss' && mal.includes(p.guid)), tk = snap.find((p) => p.guid === tankG);
-    const cone = boss && tk ? { x: boss.x, y: boss.y, dir: Math.atan2(tk.y - boss.y, tk.x - boss.x), half: Math.PI / 6, r: 45 } : null; // Soul Sever: 60 degrees, 45 yards (Wowhead)
+    const cone = boss && tk ? { x: boss.x, y: boss.y, dir: Math.atan2(tk.y - boss.y, tk.x - boss.x), half: Math.PI / 6, r: 45, at: f.t } : null; // Soul Sever: 60 degrees, 45 yards (Wowhead)
     const inCone = (g) => { if (!cone) return false; const x = g.pts[0][1] - cone.x, y = g.pts[0][2] - cone.y, d = Math.hypot(x, y); let a = Math.abs(Math.atan2(y, x) - cone.dir); if (a > Math.PI) a = 2 * Math.PI - a; return d <= cone.r + 2 && a <= cone.half; };
     const logged = (g) => { const ht = hitBy.get(g.guid); return ht != null && ht >= f.t - 0.5 && ht <= f.t + 1.5; };
     // Soul Sever hits are logged on every ghost; Blighted Sever's mostly aren't, so it also counts ghosts whose spawn spot is in the cone (an estimate)
@@ -6390,7 +6419,7 @@ function buildUlatek(ev, r, h) {
   const vipers = unitsNamed(/^Blightscale Viper$/), used = new Set(), eggRows = [];
   // (who held an egg when, for the maps (your note, Oct 18): a small green ring on each carrier from the moment they picked
   // it up until it came off, so a map shows who had an egg while a mechanic hit)
-  const eggC = mcol('Noxious Shell'), eggRings = (a, b) => carry.filter((c) => c.s < b && c.e > a).map((c) => ({ guid: c.g, r: 2, t0: c.s, dur: Math.max(0.3, c.e - c.s), label: '', color: eggC.color, fill: 'rgba(58,242,168,.28)', cn: 'Small green ring', legend: 'carrying an egg' }));
+  const eggC = mcol('Noxious Shell'), eggRings = (a, b) => carry.filter((c) => c.s < b && c.e > a).map((c) => ({ guid: c.g, r: 2, t0: c.s, dur: Math.max(0.3, c.e - c.s), label: '', color: eggC.color, fill: 'rgba(58,242,168,.28)', fx: 'debuff', cn: 'Small green ring', legend: 'carrying an egg' }));
   // (a Viper hatches within about half a second of its egg breaking: the nearest shell that came off in the second before,
   // or a carrier who died holding one; anything else was an egg on the ground or one the log doesn't tie to a player)
   for (const v of vipers) {
@@ -6412,17 +6441,17 @@ function buildUlatek(ev, r, h) {
     (c ? (vr) => { c.vrow = vr; } : (vr) => eggRows.push(vr))([{ t: v.t0 }, g ? { p: pname(g) } : { txt: 'nobody', dim: true }, { txt: cause, bad: true }, { txt: v.died != null ? 'killed ' + Math.round(v.died - v.t0) + 's later' : 'still up', dim: v.died != null },
       // (a Noxious Splash: the carriers who came within 3 yards of each other, each with their 3-yard circle, a moment before
       // it went off; any other Viper: who had the egg)
-      splashG ? { map: { t: Math.max(0, c.e - 0.15), hl: [g].concat(splashG), bad: [g].concat(splashG), badLabel: 'egg carriers within 3 yards', rings: [g].concat(splashG).map((x) => ({ guid: x, r: 3, label: '3 yd', ...mcol('Noxious Shell', 0.14), legend: 'a Noxious Shell, 3 yd (another carrier inside breaks both)' })),
+      splashG ? { map: { t: Math.max(0, c.e - 0.15), hl: [g].concat(splashG), bad: [g].concat(splashG), badLabel: 'egg carriers within 3 yards', rings: [g].concat(splashG).map((x) => ({ guid: x, r: 3, label: '3 yd', ...mcol('Noxious Shell', 0.14), fx: 'debuff', legend: 'a Noxious Shell, 3 yd (another carrier inside breaks both)' })),
         title: 'Noxious Splash at ' + T(c.e) + ': ' + (splashG.length ? andList([g].concat(splashG).map(pname)) + ' came within 3 yards' : pname(g) + '\'s egg (the other carrier isn\'t in the log)'), pts: posPts(Math.max(0, c.e - 0.15)), focus: ctrOf(posPts(Math.max(0, c.e - 0.15)), [g].concat(splashG), 8) } }
         // (any other Viper (your note, Oct 18: a map of what broke the egg): the carriers ringed, the seconds before it broke,
         // and its cause drawn: the Wretch's bubble the carrier was outside of for a Fester Burst, a red flash where a wave
         // hit the carrier, or the spot an egg on the ground broke)
         : (() => { const t = Math.max(0, (c ? c.e : v.t0) - 0.2), rings = eggRings(t - 5, t + 1.5);
           // (an egg on the ground whose Viper the log never placed: no map, since there's nothing true to draw (your rule))
-          if (!c) { const vp = [0.4, 1, 2, 3].map((d) => posPts(v.t0 + d, [v.g]).find((p) => p.guid === v.g)).find(Boolean); if (!vp) return { txt: '' }; rings.push({ x: vp.x, y: vp.y, r: 2.5, t0: v.t0 - 1, dur: 3, label: 'egg', ...mcol('Noxious Shell', 0.3), cn: 'Green circle', legend: 'an egg left on the ground broke here' }); }
+          if (!c) { const vp = [0.4, 1, 2, 3].map((d) => posPts(v.t0 + d, [v.g]).find((p) => p.guid === v.g)).find(Boolean); if (!vp) return { txt: '' }; rings.push({ x: vp.x, y: vp.y, r: 2.5, t0: v.t0 - 1, dur: 3, fx: 'puddle', label: 'egg', ...mcol('Noxious Shell', 0.3), cn: 'Green circle', legend: 'an egg left on the ground broke here' }); }
           else if (grE && ids(UL.fester).includes(grE.id)) { const me = posPts(grE.t).find((p) => p.guid === g), w = unitsNamed(/^Blightscale Wretch$/).filter((u) => u.t0 <= grE.t && (u.died == null || u.died >= grE.t - 1)).map((u) => ({ u, p: posPts(grE.t, [u.g]).find((q) => q.guid === u.g) })).filter((x) => x.p).sort((a, b) => (me ? Math.hypot(a.p.x - me.x, a.p.y - me.y) - Math.hypot(b.p.x - me.x, b.p.y - me.y) : 0))[0];
-            if (w) rings.push({ guid: w.u.g, r: 10, label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd: the carrier was outside it when Fester Burst hit' }); }
-          else if (grE) rings.push({ guid: g, r: 3, t0: grE.t - 0.1, dur: 1.2, label: '', color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', cn: 'Red flash', legend: grE.spell + ' hit the carrier here' });
+            if (w) rings.push({ guid: w.u.g, r: 10, fx: 'safe', label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd: the carrier was outside it when Fester Burst hit' }); }
+          else if (grE) rings.push({ guid: g, r: 3, t0: grE.t - 0.1, dur: 1.2, fx: 'burst', at: grE.t, label: '', color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', cn: 'Red flash', legend: grE.spell + ' hit the carrier here' });
           const extra = [v.g].concat(rings.filter((x) => x.guid && x.r >= 10).map((x) => x.guid)), p0 = posPts(t, extra);
           return { map: { t, hl: g ? [g] : [], bad: g ? [g] : [], badLabel: cause === 'died carrying it' ? 'died carrying the egg' : 'had the egg', title: 'Blightscale Viper at ' + T(v.t0) + ': ' + (g ? pname(g) + '\'s egg, ' : '') + cause, pts: p0, rings,
             frames: h.frames ? h.frames(Math.max(0, t - 5), Math.min(dur, v.t0 + 1.5), 0.25, extra) : undefined, focus: ctrOf(p0, g ? [g] : [], 14) || undefined } }; })()]);
@@ -6500,7 +6529,7 @@ function buildUlatek(ev, r, h) {
       // outside it marked)
       const at = hcUp ? posPts(c.t) : [], sp = at.filter((p) => soak.includes(p.guid)), ctr = sp.length ? { x: sp.reduce((s, p) => s + p.x, 0) / sp.length, y: sp.reduce((s, p) => s + p.y, 0) / sp.length } : null;
       const near = ctr ? at.filter((p) => p.kind === 'player' && !soak.includes(p.guid) && Math.hypot(p.x - ctr.x, p.y - ctr.y) <= 15).map((p) => p.guid) : [], diedG = died.map((d) => d.guid);
-      const mapC = ctr ? { map: { t: c.t, good: soak.filter((g) => !diedG.includes(g)), goodLabel: 'in the circle (soaked)', bad: diedG, badLabel: 'died to it', hl: near, hlLabel: 'near it, not in it', rings: [{ x: ctr.x, y: ctr.y, r: 10, label: '10 yd soak', ...mcol('Spectral Coils'), legend: 'the soak, 10 yd (centred on its soakers)' }], focus: { x: ctr.x, y: ctr.y, r: 13 },
+      const mapC = ctr ? { map: { t: c.t, good: soak.filter((g) => !diedG.includes(g)), goodLabel: 'in the circle (soaked)', bad: diedG, badLabel: 'died to it', hl: near, hlLabel: 'near it, not in it', rings: [{ x: ctr.x, y: ctr.y, r: 10, fx: 'soak', at: c.t, label: '10 yd soak', ...mcol('Spectral Coils'), legend: 'the soak, 10 yd (centred on its soakers)' }], focus: { x: ctr.x, y: ctr.y, r: 13 },
         title: 'Spectral Coil at ' + T(c.t) + ': ' + pl(soak.length, 'soaker') + (near.length ? ', ' + near.length + ' more within 5 yards of it' : ''), pts: at } } : { txt: '', dim: true };
       return [{ txt: '#' + (k + 1) }, { t: c.t }, hcUp ? { txt: String(soak.length), bad: none, warn: thin, sub: thin ? 'under ' + minSoak : '' } : { txt: 'not shown on Normal', dim: true }, { ps: soak.map(pname), none: hcUp ? 'nobody' : '' },
         { n: c.amt / Math.max(1, c.n), sub: 'each' }, { ps: died.map((d) => d.player), none: '—', bad: died.length > 0 }, mapC];
@@ -6590,7 +6619,7 @@ function buildUlatek(ev, r, h) {
       const bursts = ts.map((t) => { const hits = festHit.filter((e) => e.t >= t && e.t <= t + 6); return { land: hits.length ? hits[0].t : t + 2, out: [...new Set(hits.map((e) => e.dst))] }; }).sort((a, b) => b.out.length - a.out.length);
       const pick = bursts[0], mt = pick ? Math.max(0, pick.land - 0.3) : null, fr = pick && h.frames ? ((h.frames(mt, mt, 0.2, [x.g])[0] || { pts: [] }).pts) : [];
       const mapC = pick && fr.some((p) => p.guid === x.g) ? { map: { t: mt, bad: pick.out.filter((g) => role(g) !== 'tank'), badLabel: 'outside the bubble (hit)', hl: pick.out.filter((g) => role(g) === 'tank'), hlLabel: 'tank outside (not judged)',
-        rings: [{ guid: x.g, r: 10, label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd (inside is safe)' }], focus: ctrOf(fr, [x.g], 13), title: 'Fester Burst at ' + T(pick.land) + ': the Wretch\'s 10-yard bubble' + (pick.out.length ? ', ' + pl(pick.out.length, 'player') + ' outside' : ', everyone inside'), pts: fr } } : { txt: '', dim: true };
+        rings: [{ guid: x.g, r: 10, fx: 'safe', at: pick.land, label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd (inside is safe)' }], focus: ctrOf(fr, [x.g], 13), title: 'Fester Burst at ' + T(pick.land) + ': the Wretch\'s 10-yard bubble' + (pick.out.length ? ', ' + pl(pick.out.length, 'player') + ' outside' : ', everyone inside'), pts: fr } } : { txt: '', dim: true };
       return [{ t: x.t0 }, { txt: x.died != null ? 'killed after ' + Math.round(x.died - x.t0) + 's' : 'still up', dim: x.died == null }, { txt: pl(ts.length, 'bubble'), warn: late, sub: late ? 'kill it before the third' : '' }, { ps: outside.map(pname), none: 'nobody outside', warn: outside.length > 0, sub: outT ? pl(outT, 'tank') + ' outside (not judged)' : '' }, mapC];
     });
     if (wrRows.length) sections.push({ id: 'wretch', title: 'Blightscale Wretch (Stand in the bubble)', spell: S('fester burst'), mythicOnly: true, verdict: wrRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
@@ -6694,14 +6723,14 @@ function buildUlatek(ev, r, h) {
       if (bad) M(e.t, pname(e.dst), "Serpent's Bite", UL.biteCast, 'High', "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': ' + res + '.', 'Their soakers stand with them right away, and nobody with a bite takes extra damage before it clears.');
       // (the map: just before it cleared, every bite of this cast with its 7-yard leech circle, and who took the venom)
       const mt = Math.max(0, (end < dur ? end : e.t + 2) - 0.3);
-      const bmap = { map: { t: mt, hl: [e.dst], hlLabel: 'bitten', good: helpers, goodLabel: 'took the venom (now a Purge holder)', rings: set.map((x) => ({ guid: x.dst, r: 7, label: '7 yd', ...mcol("Serpent's Bite", 0.12), legend: 'leech range, 7 yd' })), title: "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': the 7-yard leech circles', pts: posPts(mt), focus: ctrOf(posPts(mt), set.map((x) => x.dst), 12) } };
+      const bmap = { map: { t: mt, hl: [e.dst], hlLabel: 'bitten', good: helpers, goodLabel: 'took the venom (now a Purge holder)', rings: set.map((x) => ({ guid: x.dst, r: 7, fx: 'debuff', label: '7 yd', ...mcol("Serpent's Bite", 0.12), legend: 'leech range, 7 yd' })), title: "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': the 7-yard leech circles', pts: posPts(mt), focus: ctrOf(posPts(mt), set.map((x) => x.dst), 12) } };
       return [{ t: e.t }, { p: pname(e.dst) }, { txt: res, bad, sub: end < dur && !bad ? 'after ' + Math.round(end - e.t) + 's' : '' }, bmap]; });
     const lastEnd = Math.max(...ends), bm = booms.filter((x) => x.t >= lastEnd + 3 && x.t <= lastEnd + 7.5), seenB = [];
     for (const e of bm) { if (seenB.some((t) => Math.abs(t - e.t) < 0.5)) continue; seenB.push(e.t);
       const hold = holdersAt(e.t), caught = [...new Set(bm.filter((x) => Math.abs(x.t - e.t) < 0.5 && !hold.has(x.dst)).map((x) => x.dst))];
       // (the map: each holder's burst a moment before it went off. Its size isn't published: about 12 yards, from where the
       // players it caught stood in a Mythic kill)
-      const pt = Math.max(0, e.t - 0.1), pmap = { map: { t: pt, hl: [...hold], hlLabel: 'held a Volatile Purge', bad: caught, badLabel: "caught in someone else's", rings: [...hold].map((x) => ({ guid: x, r: 12, label: '~12 yd', ...mcol('Volatile Purge', 0.1), legend: 'a Volatile Purge burst, about 12 yd' })),
+      const pt = Math.max(0, e.t - 0.1), pmap = { map: { t: pt, hl: [...hold], hlLabel: 'held a Volatile Purge', bad: caught, badLabel: "caught in someone else's", rings: [...hold].map((x) => ({ guid: x, r: 12, fx: 'burst', at: e.t, label: '~12 yd', ...mcol('Volatile Purge', 0.1), legend: 'a Volatile Purge burst, about 12 yd' })),
         title: 'Volatile Purge at ' + T(e.t) + ': each holder\'s burst (about 12 yards, measured from logs)', pts: posPts(pt), focus: ctrOf(posPts(pt), [...hold], 16) } };
       // (a Volatile Purge exploding on someone who wasn't holding one: not spread)
       for (const g of caught) { M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', "Caught in someone else's Volatile Purge at " + T(e.t) + '.', 'Spread before the Purges explode, 5 seconds after a bite is cleared.');
@@ -8119,6 +8148,10 @@ function analyze(item, text, opts) {
       // too; one whose drawn things aren't units in the log (orbs placed by the check) stays still, so they don't vanish)
       if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
         for (const mp of c && c.map ? [c.map] : c && c.maps ? c.maps.map((x) => x[1]) : []) { if (mp.frames || mp.t == null || !(mp.pts || []).length) continue;
+          // (a tank frontal into orbs or ghosts (Coiled Altar, your note, Oct 18): the players and bosses move, the orbs and ghosts
+          // the check placed stay where they were, so the cone can be seen coming out of the boss and popping them)
+          if (mp.cone && mp.cone.at != null) { const objs = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss');
+            mp.frames = framesAt(Math.max(0, mp.t - 3), Math.min(r.duration, mp.t + 1.6), 0.2).map((fr) => ({ t: fr.t, pts: fr.pts.filter((p) => !/venom stalker|virulent mutation|manifestation of dread/i.test(p.name)).concat(objs) })); continue; }
           const extra = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss'); if (!extra.every((p) => p.guid && r.positions.has(p.guid))) continue;
           mp.frames = framesAt(Math.max(0, mp.t - 4), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
       const drawsMech = (mp) => !!(mp.cone || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
@@ -10650,6 +10683,39 @@ function exampleNote(r) {
   const list = got.sort((a, b) => a.t - b.t).slice(0, 4).concat(miss.slice(0, 1)).sort((a, b) => a.t - b.t);
   return ['EncounterID:' + (r.item.id || 0) + ';Name:' + r.item.boss, '# An example note Debrief made from one pull: your healers\' cooldowns, at the times they pressed them, and one they didn\'t press.'].concat(list.map((x) => x.line)).join('\n');
 }
+// A note with one player's name swapped for another's, everywhere it's used (a reminder tag, a text line), as whole words
+const noteSwapName = (text, a, b) => String(text).replace(new RegExp('(^|[^\\p{L}])' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:-[\\p{L}\'’]+)?(?=$|[^\\p{L}])', 'giu'), (m, pre) => pre + b);
+// When the pull's players don't fully match the note (your note, Oct 18): offer a new note with this pull's players taking
+// the missing players' assignments; the old note stays as it is. Who takes whose place is a guess (a new player who pressed
+// a cooldown the note gives the missing one, else the next one left), and with more than one, each gets a pick-list.
+// "Not now" is remembered for that note and those missing players.
+const ROSTER_NO = 'wla-roster-no';
+const rosterNoKey = (n, away) => n.id + '|' + away.map((x) => x.toLowerCase()).sort().join(',');
+function rosterOffer(r, used) {
+  if (!used || used.example) return '';
+  const pn = (p) => p.name.split('-')[0], lc = (s) => String(s).toLowerCase();
+  const inPull = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name));
+  const away = noteNames(used.text).filter((n) => !inPull.some((p) => lc(pn(p)) === lc(n))), fresh = inPull.filter((p) => !noteHas(used.text, pn(p)));
+  if (!away.length || !fresh.length) return '';
+  let no = []; try { no = JSON.parse(store.get(ROSTER_NO) || '[]'); } catch (e) { no = []; }
+  const key = rosterNoKey(used, away); if (no.includes(key)) return '';
+  let rem = []; try { rem = (E.parseNote(used.text) || {}).reminders || []; } catch (e) { rem = []; }
+  const left = fresh.slice(), pick = new Map();
+  for (const a of away) { const ids = rem.filter((x) => x.spellid && x.tags.some((t) => lc(t.split('-')[0]) === lc(a))).map((x) => x.spellid);
+    const by = ids.length ? left.find((p) => ids.some((id) => ((p.castTimes && p.castTimes.get(id)) || []).length)) : null; if (by) { pick.set(a, by); left.splice(left.indexOf(by), 1); } }
+  for (const a of away) if (!pick.has(a) && left.length) pick.set(a, left.shift());
+  const pc = (p) => '<span class="nm" style="color:' + (p.color || 'inherit') + '">' + esc(pn(p)) + '</span>';
+  const one = away.length === 1 && fresh.length === 1;
+  const sel = (a) => '<select class="rsw-s" data-a="' + esc(a) + '" aria-label="Who takes the assignments of ' + esc(a) + '"><option value="">nobody, leave ' + esc(a) + ' in</option>' +
+    fresh.map((p) => '<option value="' + esc(pn(p)) + '"' + (pick.get(a) === p ? ' selected' : '') + '>' + esc(pn(p)) + '</option>').join('') + '</select>';
+  const body = one ? '<b>' + esc(away[0]) + "</b> isn't in this pull, and " + pc(fresh[0]) + " isn't in your note. Make a new note with " + pc(fresh[0]) + ' taking the assignments of ' + esc(away[0]) + '?' +
+      '<input type="hidden" class="rsw-s" data-a="' + esc(away[0]) + '" value="' + esc(pn(fresh[0])) + '">'
+    : plural(away.length, 'player') + ' in your note ' + (away.length === 1 ? "isn't" : "aren't") + ' in this pull. Pick who takes their assignments:<div class="rsw-rows">' +
+      away.map((a) => '<label class="rsw-r"><b>' + esc(a) + '</b><span class="sub">is replaced by</span>' + sel(a) + '</label>').join('') + '</div>';
+  return '<div class="panel as-swap"><div class="rsw-t"><b>This pull\'s players don\'t fully match your note.</b> ' + body + '</div>' +
+    '<div class="rsw-b"><button class="btn primary sm" type="button" id="rswMake">Make the new note</button><button class="btn sm" type="button" id="rswNo" data-k="' + esc(key) + '">Not now</button>' +
+    '<span class="sub">Your note stays as it is. The new one is saved next to it, and pulls with these players use it.</span></div></div>';
+}
 // The Assignments tab's two views (your note, Oct 18: a separate tab for the stored notes): This pull, and Stored notes
 const noteCount = () => E.PACKS.reduce((s, p) => s + notesOf(p.encounter).list.length, 0);
 const asViews = () => { const n = noteCount(), on = S.asView === 'notes';
@@ -10658,6 +10724,8 @@ const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.oncl
 // Stored notes: every saved note, the boss of the open pull first, then the rest in raid order; each with when it was saved
 // and the logs it goes with, each with its date and time: the log that's open (and which of its pulls use it), and every
 // saved night it fits (at least half its names there), newest first, a click opening that night
+// (the small calendar on a log's chip, drawn here)
+const SN_CAL = '<svg class="sn-cal" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 function storedNotes(only) {
   const r = S.rep, cur = r.item.boss, used = noteForRep(r), k0 = pullKey(r.item);
   const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur);
@@ -10670,9 +10738,9 @@ function storedNotes(only) {
   const logsOf = (n, b) => {
     const out = [];
     if (b === cur) { const bs = usedBy.get(n.id) || []; if (bs.length) { const f = bs.reduce((m, x) => ((x.wallMs || x.startMs || 0) < (m.wallMs || m.startMs || 0) ? x : m));
-      out.push('<span class="sn-log on">' + esc(day(f.wallMs || f.startMs)) + ' · ' + (bs.length === 1 ? 'pull ' : 'pulls ') + rng(bs.map((x) => x.pull)) + ' <span class="sub">(open now)</span></span>'); } }
+      out.push('<span class="sn-log on">' + SN_CAL + esc(day(f.wallMs || f.startMs)) + ' · ' + (bs.length === 1 ? 'pull ' : 'pulls ') + rng(bs.map((x) => x.pull)) + ' <span class="sub">(open now)</span></span>'); } }
     if (!n.example) { const sc = noteScan(n.text, b);
-      for (const o of sc.fits) { if (o.wcl && o.wcl.code === S.wclCode) continue; const l = esc(day(o.at)) + ' · ' + plural(o.pulls, 'pull') + ' · ' + o.hit + ' of ' + sc.names.length + ' names';
+      for (const o of sc.fits) { if (o.wcl && o.wcl.code === S.wclCode) continue; const l = SN_CAL + esc(day(o.at)) + ' · ' + plural(o.pulls, 'pull') + ' · ' + o.hit + ' of ' + sc.names.length + ' names';
         out.push(o.wcl ? '<button class="btn sm sn-log" type="button" data-nopen="' + esc(o.wcl.code + '|' + (o.wcl.fight || '')) + '" title="Open this night">' + l + '</button>' : '<span class="sn-log">' + l + ' <span class="sub">(a combat log on your PC)</span></span>'); } }
     return out.length ? '<div class="sn-logs"><span class="sub">Logs:</span>' + out.join('') + '</div>' : '<div class="sn-logs sub">No log goes with it yet. Nights it fits show here once they\'re saved to your progress.</div>';
   };
@@ -10683,9 +10751,14 @@ function storedNotes(only) {
       '<button class="btn sm" type="button" data-sndel="' + esc(b + '|' + n.id) + '" title="Remove this note" aria-label="Remove the note ' + esc(n.name) + '">' + NOTE_TRASH + '</button></div></div>'; };
   const NO = notesOf(cur), opt = (v, l) => '<option value="' + esc(v) + '">' + esc(l) + '</option>';
   const sel = NO.list.length > 1 ? '<div class="nl-foot"><label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label><span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.</span></div>' : '';
-  const panel = ([b, o]) => '<div class="panel nlib sn-b"><div class="nl-h"><span class="nb-t"><b>' + esc(b) + '</b>' + (b === cur ? ' <span class="sub">the boss of the pull that\'s open</span>' : ' <span class="sub">' + plural(o.list.length, 'note') + '</span>') + '</span>' +
+  // (each boss a panel with a header band: its banner art fading in from the right, as on the pull banner, or its model when
+  // there's no banner; loaded at runtime from Wowhead, never bundled, and gone if it doesn't load)
+  const artOf = (b) => (BOSS_HERO[b] ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[b][1] + '% 28%" onerror="this.remove()">'
+    : BOSS_ART[b] ? '<img class="mdl" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
+  const panel = ([b, o]) => '<div class="panel nlib sn-b' + (b === cur ? ' cur' : '') + '"><div class="sn-hd"><div class="sn-art" aria-hidden="true">' + artOf(b) + '</div>' +
+    '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div>' +
     '<span class="nl-hb">' + (b === cur ? '<button class="btn sm" type="button" id="noteNewBtn">Add a note</button>' : '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">Open ' + esc(b) + '</button>') + '</span></div>' +
-    (o.list.length ? o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + (b === cur ? sel : '') : '<p class="sub sn-none">No note for ' + esc(b) + ' yet.</p>') + '</div>';
+    '<div class="sn-body">' + (o.list.length ? o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + (b === cur ? sel : '') : '<p class="sub sn-none">No note for ' + esc(b) + ' yet. Add one, and it shows here with the logs it goes with.</p>') + '</div></div>';
   $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + '<p class="sub sn-lead">Your NSRT notes for every boss, saved in this browser, with the logs each one goes with.</p>' + bosses.map(panel).join('') + '</div>';
   bindAsViews(only);
   // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
@@ -10808,6 +10881,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     top += '<div class="panel nlib' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span><b>' + (ex ? 'An example note' : 'Your note: ' + esc(used.name)) + '</b>' + (kinds ? ' <span class="sub">' + kinds + '</span>' : '') + '</span></span>' +
       '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" id="noteNewBtn">Add a note</button>') + '</span></div>' +
       '<div class="nl-why sub">' + why + back + (NO.list.length > 1 ? ' <button class="btn sm" type="button" data-asv="notes">' + plural(NO.list.length, 'note') + ' for this boss</button>' : '') + '</div></div>';
+    top += rosterOffer(r, used);
   }
   if (a && a.error) top += '<div class="panel">Couldn\'t read the note: ' + esc(a.error) + '</div>';
   // (what the note just saved is for, from your saved logs: on top, until "Got it")
@@ -11278,6 +11352,17 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     S.noteScan = v ? { boss, id: sid, r: noteScan(v, boss) } : null; redo(); };
   if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
   bindAsViews(only);
+  // (the new note for a changed roster: the note with each missing player's name swapped for the one taking their place, named
+  // for what changed; this pull stops being pinned to the old note so the new one fits it)
+  if ($('#rswMake')) $('#rswMake').onclick = () => { if (!used) return; let t = used.text; const sw = [];
+    $$('#assignBox .rsw-s').forEach((x) => { if (x.value) { t = noteSwapName(t, x.dataset.a, x.value); sw.push(x.value); } });
+    if (!sw.length) return;
+    const o = notesOf(boss), dup = o.list.find((n) => noteNorm(n.text) === noteNorm(t));
+    if (!dup) { let nm = autoNoteName(t, [used], r), k = 2; const stem = nm; while (o.list.some((n) => n.name === nm)) nm = stem + ' (' + k++ + ')';
+      o.list.push({ id: 'n' + Date.now().toString(36), name: nm, text: t, saved: Date.now() }); }
+    if (o.byPull) delete o.byPull[pullKey(r.item)]; if (o.pick === used.id) o.pick = 'auto'; notesSave(boss, o); redo(); };
+  if ($('#rswNo')) $('#rswNo').onclick = () => { let no = []; try { no = JSON.parse(store.get(ROSTER_NO) || '[]'); } catch (e) { no = []; }
+    no.push($('#rswNo').dataset.k); store.set(ROSTER_NO, JSON.stringify(no.slice(-60))); assign(only); };
   // (a raid night a note fits: its pulls of the boss open from Warcraft Logs)
   $$('#assignBox [data-nopen]').forEach((x) => (x.onclick = async () => { const [code, fight] = x.dataset.nopen.split('|'); x.disabled = true; S.noteScan = null;
     try { await openWcl({ code, fight: +fight || null }, await wclCreds()); } catch (e) { x.disabled = false; x.title = e.message; } }));
@@ -12168,12 +12253,26 @@ function miniMap(mp, pmap) {
   const hasObj = new Set();
   s += MAP_DEFS;
   // tank frontal cone (from the boss toward the tank it hit), drawn to scale under everything else
+  // (like in game: bright at the boss and fading with distance. On a moving map (at: the moment it lands) it reaches out from
+  // the boss as a thin outline while it's cast, slashes bright when it lands, then fades)
+  const ftA = mp.ft, live = ftA != null;
   if (mp.cone) {
-    const c = mp.cone, cx = X(c), cy = Y(c), R = c.r * yd;
+    const c = mp.cone, cx = X(c), cy = Y(c), R0 = c.r * yd, el = live && c.at != null ? ftA - c.at : 0;
     // map space: x east, y north (screen y is flipped), so mirror the angle
-    const pt = (a) => (cx + R * Math.cos(a)).toFixed(1) + ' ' + (cy - R * Math.sin(a)).toFixed(1);
-    s += '<path d="M' + cx + ' ' + cy + ' L' + pt(c.dir - c.half) + ' A' + R + ' ' + R + ' 0 0 0 ' + pt(c.dir + c.half) + ' Z" fill="rgba(255,45,45,.30)" stroke="#000" stroke-opacity=".55" stroke-width="5" vector-effect="non-scaling-stroke"/>' + // dark halo so the edge reads on the light floor maps
-      '<path d="M' + cx + ' ' + cy + ' L' + pt(c.dir - c.half) + ' A' + R + ' ' + R + ' 0 0 0 ' + pt(c.dir + c.half) + ' Z" fill="none" stroke="#ff3b3b" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+    const wedge = (R) => { const pt = (a) => (cx + R * Math.cos(a)).toFixed(1) + ' ' + (cy - R * Math.sin(a)).toFixed(1); return 'M' + cx + ' ' + cy + ' L' + pt(c.dir - c.half) + ' A' + R + ' ' + R + ' 0 0 0 ' + pt(c.dir + c.half) + ' Z'; };
+    const lit = el < 0 ? 0 : el < 0.5 ? 1 : Math.max(0, 1 - (el - 0.5) / 1.1); // (the slash: full, then fading)
+    if (el >= -1.4 && (el < 0 || lit > 0)) {
+      if (el < 0) { const k = Math.min(1, (el + 1.4) / 1.2); // (being cast: the outline reaches out, the fill follows)
+        s += '<path d="' + wedge(R0) + '" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="' + wedge(R0) + '" fill="none" stroke="#ff3b3b" stroke-opacity=".8" stroke-width="1.6" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>' +
+          '<path d="' + wedge(R0 * k) + '" fill="rgba(255,45,45,.16)"/>';
+      } else {
+        const o = live ? lit : 1;
+        s += '<path d="' + wedge(R0) + '" fill="rgba(255,45,45,' + (0.18 * o).toFixed(2) + ')" stroke="#000" stroke-opacity="' + (0.55 * o).toFixed(2) + '" stroke-width="5" vector-effect="non-scaling-stroke"/>' + // dark halo so the edge reads on the light floor maps
+          '<path d="' + wedge(R0 * 0.66) + '" fill="rgba(255,60,45,' + (0.16 * o).toFixed(2) + ')"/><path d="' + wedge(R0 * 0.33) + '" fill="rgba(255,90,60,' + (0.2 * o).toFixed(2) + ')"/>' +
+          (live && el < 0.5 ? '<path d="' + wedge(R0) + '" fill="rgba(255,200,120,' + (0.3 * (1 - el / 0.5)).toFixed(2) + ')"/>' : '') +
+          '<path d="' + wedge(R0) + '" fill="none" stroke="#ff3b3b" stroke-opacity="' + o.toFixed(2) + '" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+      }
+    }
   }
   // mechanic circles (e.g. the Guillotine soak), drawn to scale under everything else
   // (a ring with a guid follows that unit; with t0 it only shows while active, and shrink 'ichor' is the Coiling Ichor
@@ -12192,10 +12291,47 @@ function miniMap(mp, pmap) {
     if (el >= 0) { s += ic(x, y, (el < 1.4 ? '<circle cx="' + x + '" cy="' + y + '" r="' + (8 + el * 26).toFixed(1) + '" fill="none" stroke="#b8f06a" stroke-opacity="' + (1 - el / 1.4).toFixed(2) + '" stroke-width="3"/>' : '') + cystSplat(x, y)); continue; }
     s += ic(x, y, cystBlob(x, y, c.ring || '#9aa0ac', c.n, 1.2) + (c.label ? '<text x="' + x + '" y="' + (y + 26) + '" class="ml" style="font-size:10px;font-weight:800" fill="' + (c.ring || '#e7e9ee') + '">' + esc(c.label) + '</text>' : ''));
   }
+  // each circle looks like its mechanic in game (fx, from the engine; at: the moment it lands or goes off):
+  // soak: fills from the middle as the hit comes, then slams down; impact: a target ring closing on the landing spot, then a
+  // shockwave; burst: a circle on a player whose edge turns faster near the end, then blasts outward; debuff: follows its
+  // player with a slowly turning edge; puddle: spreads out when it lands; zone: a standing area with a slow ripple; safe: a
+  // bubble with a shine. (Each moves one thing, softly, so a map with many circles stays calm)
+  const NS = ' vector-effect="non-scaling-stroke"';
+  const cir = (x, y, r, a) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + Math.max(0, r).toFixed(1) + '" ' + a + '/>';
+  const ringFx = (g, x, y, R, col, fill) => {
+    const fx = g.fx, at = g.at != null ? g.at : g.t0 != null ? g.t0 + (g.dur || 0) : mp.t, el = ftC - at;
+    const edge = (w, extra) => cir(x, y, R, 'fill="' + fill + '" stroke="' + col + '" stroke-width="' + w + '"' + (extra || '') + NS);
+    const shock = (p, k) => cir(x, y, R * (1 + (k || 0.35) * p), 'fill="none" stroke="' + col + '" stroke-opacity="' + (1 - p).toFixed(2) + '" stroke-width="3"' + NS);
+    if (fx === 'soak' || fx === 'impact') {
+      let o = '';
+      if (el < 0) { const k = Math.min(1, Math.max(0.06, 1 + el / 3));
+        o = edge(2) + cir(x, y, R * k, 'fill="' + col + '" fill-opacity=".22"');
+        if (fx === 'impact') o += cir(x, y, R * (1 + Math.min(1.2, -el * 0.9)), 'fill="none" stroke="' + col + '" stroke-opacity=".75" stroke-width="2" stroke-dasharray="5 4"' + NS);
+      } else if (el < 0.8) { const p = el / 0.8;
+        o = edge(2.6) + cir(x, y, R, 'fill="' + col + '" fill-opacity="' + (0.42 - 0.3 * p).toFixed(2) + '"') + shock(p);
+        if (fx === 'impact') for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + 0.3; o += '<line x1="' + (x + Math.cos(a) * R * 0.15).toFixed(1) + '" y1="' + (y + Math.sin(a) * R * 0.15).toFixed(1) + '" x2="' + (x + Math.cos(a) * R * (0.5 + 0.35 * p)).toFixed(1) + '" y2="' + (y + Math.sin(a) * R * (0.5 + 0.35 * p)).toFixed(1) + '" stroke="' + col + '" stroke-opacity="' + (1 - p).toFixed(2) + '" stroke-width="2"' + NS + '/>'; }
+      } else o = edge(1.6, ' stroke-opacity=".6"');
+      return o;
+    }
+    if (fx === 'burst') {
+      if (el >= 0.8) return '';
+      if (el >= 0) { const p = el / 0.8; return cir(x, y, R * (0.5 + 0.6 * p), 'fill="' + col + '" fill-opacity="' + (0.45 * (1 - p)).toFixed(2) + '"') + shock(p, 0.3); }
+      const near = el > -1.5, spin = (ftC * (near ? 34 : 10)) % 40;
+      return edge(2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-spin).toFixed(1) + '"' + (near ? ' fill-opacity="' + (0.65 + 0.35 * Math.abs(Math.sin(ftC * 9))).toFixed(2) + '"' : ''));
+    }
+    if (fx === 'debuff') return edge(g.dim ? 1.4 : 2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-(ftC * 8) % 40).toFixed(1) + '"');
+    if (fx === 'puddle') { const e = g.t0 != null && live ? ftA - g.t0 : 9, k = e < 0.9 ? 0.35 + 0.65 * (1 - Math.pow(1 - Math.max(0, e) / 0.9, 3)) : 1;
+      return cir(x, y, R * k, 'fill="' + fill + '" stroke="' + col + '" stroke-opacity=".7" stroke-width="1.5"' + NS) + cir(x, y, R * k * 0.6, 'fill="' + col + '" fill-opacity=".14"'); }
+    if (fx === 'zone') { const p = ((ftC % 3) + 3) % 3 / 3; return edge(1.8, ' stroke-opacity=".8"') + cir(x, y, R * (0.25 + 0.75 * p), 'fill="none" stroke="' + col + '" stroke-opacity="' + (0.5 * (1 - p)).toFixed(2) + '" stroke-width="1.5"' + NS); }
+    if (fx === 'safe') { const a0 = 3.6, a1 = 4.4, sh = '<path d="M' + (x + Math.cos(a0) * R * 0.78).toFixed(1) + ' ' + (y + Math.sin(a0) * R * 0.78).toFixed(1) + 'A' + (R * 0.78).toFixed(1) + ' ' + (R * 0.78).toFixed(1) + ' 0 0 1 ' + (x + Math.cos(a1) * R * 0.78).toFixed(1) + ' ' + (y + Math.sin(a1) * R * 0.78).toFixed(1) + '" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"' + NS + '/>';
+      return edge(el >= 0 && el < 0.7 ? 3 : 2) + sh + (el >= 0 && el < 0.7 ? shock(el / 0.7, 0.6) : ''); }
+    return null;
+  };
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
-    s += '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' +
+    const look = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null;
+    s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
       ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
   // spit lines (Corrosive Spit): add to its target while the aim is up; this row's add bright, the others dimmer
@@ -12206,6 +12342,16 @@ function miniMap(mp, pmap) {
     if (ft < a.t0 - 0.05 || ft > a.t1 + 0.05) continue; const p = byG.get(a.g); if (!p) continue;
     const L = a.len || 10, x0 = X(p), y0 = Y(p), x1 = X({ x: p.x + Math.cos(a.ang) * L, y: p.y + Math.sin(a.ang) * L }), y1 = Y({ x: p.x + Math.cos(a.ang) * L, y: p.y + Math.sin(a.ang) * L });
     const d = Math.hypot(x1 - x0, y1 - y0) || 1, ux = (x1 - x0) / d, uy = (y1 - y0) / d, hx = x1 - ux * 9, hy = y1 - uy * 9, col = a.color || '#7fd8ff';
+    // (Plague Wave, on a moving map: a faint dashed line while the Froth is up, then a wave racing out along it when it ends)
+    if (a.fx === 'wave' && live && a.at != null) { const el = ftA - a.at;
+      if (el < 0) { s += '<line x1="' + (x0 + ux * 8).toFixed(1) + '" y1="' + (y0 + uy * 8).toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="' + col + '" stroke-opacity=".55" stroke-width="1.6" stroke-dasharray="4 4"/>'; continue; }
+      const p = Math.min(1, el / 0.7), fade = el < 0.7 ? 1 : Math.max(0, 1 - (el - 0.7) / 0.8), fx1 = x0 + (x1 - x0) * p, fy1 = y0 + (y1 - y0) * p;
+      if (fade > 0) s += '<line x1="' + x0.toFixed(1) + '" y1="' + y0.toFixed(1) + '" x2="' + fx1.toFixed(1) + '" y2="' + fy1.toFixed(1) + '" stroke="' + col + '" stroke-opacity="' + (0.45 * fade).toFixed(2) + '" stroke-width="7" stroke-linecap="round"/>' +
+        (p < 1 ? cir(fx1, fy1, 6, 'fill="' + col + '" fill-opacity=".85" stroke="#000" stroke-width="1"') : '');
+      continue; }
+    // (Raging Crosswinds: wind chevrons drifting along the arrow, the way they'll be thrown)
+    if (a.fx === 'wind') for (let i = 0; i < 2; i++) { const u = ((ftC * 0.9 + i * 0.5) % 1 + 1) % 1, px = x0 + ux * 10 + (hx - x0 - ux * 10) * u, py = y0 + uy * 10 + (hy - y0 - uy * 10) * u, op = Math.sin(u * Math.PI);
+      s += '<path d="M' + (px - ux * 4 - uy * 4).toFixed(1) + ' ' + (py - uy * 4 + ux * 4).toFixed(1) + 'L' + px.toFixed(1) + ' ' + py.toFixed(1) + 'L' + (px - ux * 4 + uy * 4).toFixed(1) + ' ' + (py - uy * 4 - ux * 4).toFixed(1) + '" fill="none" stroke="#fff" stroke-opacity="' + (0.8 * op).toFixed(2) + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="translate(' + (uy * 7).toFixed(1) + ' ' + (-ux * 7).toFixed(1) + ')"/>'; }
     const head = 'M' + x1.toFixed(1) + ' ' + y1.toFixed(1) + 'L' + (hx - uy * 5).toFixed(1) + ' ' + (hy + ux * 5).toFixed(1) + 'L' + (hx + uy * 5).toFixed(1) + ' ' + (hy - ux * 5).toFixed(1) + 'Z';
     s += '<line x1="' + (x0 + ux * 8).toFixed(1) + '" y1="' + (y0 + uy * 8).toFixed(1) + '" x2="' + hx.toFixed(1) + '" y2="' + hy.toFixed(1) + '" stroke="#000" stroke-opacity=".7" stroke-width="5" stroke-linecap="round"/><path d="' + head + '" fill="#000" fill-opacity=".7" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>' +
       '<line x1="' + (x0 + ux * 8).toFixed(1) + '" y1="' + (y0 + uy * 8).toFixed(1) + '" x2="' + hx.toFixed(1) + '" y2="' + hy.toFixed(1) + '" stroke="' + col + '" stroke-width="2.5" stroke-linecap="round"/><path d="' + head + '" fill="' + col + '"/>';
@@ -12225,21 +12371,34 @@ function miniMap(mp, pmap) {
     const band = 'M' + (ax + nx).toFixed(1) + ' ' + (ay + ny).toFixed(1) + 'L' + (bx + nx).toFixed(1) + ' ' + (by + ny).toFixed(1) + 'L' + (bx - nx).toFixed(1) + ' ' + (by - ny).toFixed(1) + 'L' + (ax - nx).toFixed(1) + ' ' + (ay - ny).toFixed(1) + 'Z';
     s += '<path d="' + band + '" fill="' + col + '" fill-opacity="' + (fired ? 0.55 : dud ? 0.1 : l.on ? 0.3 : 0.18) + '" stroke="#000" stroke-opacity=".55" stroke-width="4" vector-effect="non-scaling-stroke"/>' +
       '<path d="' + band + '" fill="none" stroke="' + col + '" stroke-opacity="' + (l.on ? 1 : 0.6) + '" stroke-width="' + (l.on ? 2 : 1.4) + '"' + (dud ? ' stroke-dasharray="5 4"' : '') + ' vector-effect="non-scaling-stroke"/>';
+    // (while it aims, a brighter fill charges along the line from the add; the moment it fires, the line flashes)
+    if (!ended && !dud && l.t1 > l.t0) { const q = Math.min(1, Math.max(0, (ft - l.t0) / (l.t1 - l.t0))), cx1 = ax + (bx - ax) * q, cy1 = ay + (by - ay) * q;
+      s += '<path d="M' + (ax + nx).toFixed(1) + ' ' + (ay + ny).toFixed(1) + 'L' + (cx1 + nx).toFixed(1) + ' ' + (cy1 + ny).toFixed(1) + 'L' + (cx1 - nx).toFixed(1) + ' ' + (cy1 - ny).toFixed(1) + 'L' + (ax - nx).toFixed(1) + ' ' + (ay - ny).toFixed(1) + 'Z" fill="' + col + '" fill-opacity="' + (l.on ? 0.3 : 0.18) + '"/>'; }
+    if (fired && live && ft - l.t1 < 0.4) s += '<path d="' + band + '" fill="#fff" fill-opacity="' + (0.45 * (1 - (ft - l.t1) / 0.4)).toFixed(2) + '"/>';
   }
   // targeted mechanics on players: Coiling Ichor (circle size not published: shown as a marker ring) and the
   // Stone Breaker circle on the tank (to scale)
   const marksNow = (mp.marks || []).filter((m) => ft >= m.t0 - 0.05 && ft <= m.t1 + 0.05);
-  for (const m of marksNow.filter((x) => x.kind === 'stone')) { const q = byG.get(m.g); if (q) s += '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="' + m.r * yd + '" fill="rgba(255,150,40,.22)" stroke="#ff9628" stroke-width="2" stroke-dasharray="5 3" vector-effect="non-scaling-stroke"/>'; }
+  for (const m of marksNow.filter((x) => x.kind === 'stone')) { const q = byG.get(m.g); if (q) s += '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="' + m.r * yd + '" fill="rgba(255,150,40,.22)" stroke="#ff9628" stroke-width="2" stroke-dasharray="5 3" stroke-dashoffset="' + (-(ft * 8) % 32).toFixed(1) + '" vector-effect="non-scaling-stroke"/>'; }
   const hitSet = new Set(mp.hitOrbs || []), gHit = new Set(mp.ghostHit || []), gMiss = new Set(mp.ghostMiss || []);
+  const elS = live && mp.cone && mp.cone.at != null ? ftA - mp.cone.at : null; // (time since the frontal landed, on a moving map)
   for (const p of pts.filter((q) => OBJS[q.kind])) {
     hasObj.add(p.kind); const [col, label] = OBJS[p.kind];
+    if (elS != null && elS >= 0 && (hitSet.has(p.guid) || gHit.has(p.guid))) {
+      // (popped: a ring of its colour bursting out and a few sparks, then it's gone)
+      if (elS < 0.9) { const k = elS / 0.9, x = X(p), y = Y(p); let o = cir(x, y, 7 + 16 * k, 'fill="none" stroke="' + col + '" stroke-opacity="' + (1 - k).toFixed(2) + '" stroke-width="3"');
+        if (p.kind !== 'ghost') o += cir(x, y, 7 * (1 - k), 'fill="#fff" fill-opacity="' + (0.9 * (1 - k)).toFixed(2) + '"');
+        for (let i = 0; i < 6; i++) { const a = i * 1.047 + 0.5, d = 6 + 14 * k; o += cir(x + Math.cos(a) * d, y + Math.sin(a) * d, 1.8, 'fill="' + col + '" fill-opacity="' + (1 - k).toFixed(2) + '"'); }
+        s += ic(x, y, o); }
+      continue;
+    }
     let inner = p.kind === 'ghost'
       ? '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>'
       : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
     if (gHit.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="none" stroke="#45c15c" stroke-width="2.5"/>';
-    if (gMiss.has(p.guid)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
+    if (gMiss.has(p.guid) && !(elS != null && elS < 0)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
     s += ic(X(p), Y(p), inner);
   }
   // cast bars under an add's or boss's name, like in game (your note, Oct 18): gold while it casts something kickable, then
@@ -21715,6 +21874,37 @@ function homeTeams() {
 function bindHomeTeams() {
   $$('#homeTeams [data-g]').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); }));
 }
+// ---- "Start here" on the welcome page: someone new adds their team or their character first ----
+// Two choices (team or guild, or character) set the box's hint and where to find the link; either link works in the
+// same box, and a report link pasted here by mistake just opens that report.
+const HS_KIND = {
+  team: { ph: 'Paste your team or guild page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.' },
+  char: { ph: 'Paste your character page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your character\'s name, open it, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.' } };
+function homeStart() {
+  return '<section class="hs-start" id="hsStart"><div class="hs-k">Start here</div><h2>Add your team or your character</h2>' +
+    '<p class="hs-lead">Debrief brings in every raid night of the tier from Warcraft Logs, boss by boss, and new nights come in by themselves.</p>' +
+    '<div class="hs-pick" role="group" aria-label="What to add"><button type="button" class="on" data-k="team" aria-pressed="true">My team or guild</button><button type="button" data-k="char" aria-pressed="false">My character</button></div>' +
+    '<div class="fph-box"><input id="hsIn" placeholder="' + HS_KIND.team.ph + '" autocomplete="off" aria-label="Warcraft Logs team, guild or character link"><button class="btn primary" id="hsGo" type="button">Add</button></div>' +
+    '<div class="fp-msg" id="hsMsg"></div><p class="hs-how" id="hsHow">' + HS_KIND.team.how + '</p></section>';
+}
+function bindHomeStart() {
+  if (!$('#hsStart')) return;
+  const inp = $('#hsIn'), msg = $('#hsMsg');
+  $$('#hsStart .hs-pick button').forEach((b) => (b.onclick = () => {
+    $$('#hsStart .hs-pick button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    inp.placeholder = HS_KIND[b.dataset.k].ph; $('#hsHow').innerHTML = HS_KIND[b.dataset.k].how; inp.focus(); }));
+  const go = async () => {
+    const raw = inp.value;
+    if (!groupLink(raw) && WCL.parseLink(raw)) { openReportLink(raw, msg); return; } // (one night: open it)
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
+    try { const { g: ng, already } = await groupAdd(raw);
+      if (already) { progressPage(gName(ng) + ' is already on your list.', ng.gid); return; }
+      progressPage('Added ' + ng.name + '. Importing its nights…', ng.gid); progRun(ng); groupsBackfill();
+    } catch (e) { msg.style.color = ''; msg.textContent = e.message.replace(' (see "Which link?" below)', '. The line under this box says where to find it'); }
+  };
+  $('#hsGo').onclick = go;
+  inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+}
 // (the cards fill in once the saved pulls have loaded)
 const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); if (s) { s.outerHTML = homeTeams(); bindHomeTeams(); } groupsBackfill(); });
 function homeHosted() {
@@ -21724,6 +21914,7 @@ function homeHosted() {
   $('#main').innerHTML = '<div class="home fp fph">' + (teamsTop ? homeTeams() : '') +
     '<section class="fph-hero" id="fpStart"><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
+      (teamsTop ? '' : homeStart()) +
       '<div class="fph-main"><div class="fph-h">' + HICO.live + '<b>Live logging</b><span>during raid</span></div>' +
         '<div class="fph-box"><input id="hLive" placeholder="Paste your raid\'s live log link" autocomplete="off" aria-label="Warcraft Logs live log link"><button class="btn primary" id="hLiveGo">Go live</button></div><div class="fp-msg" id="hLiveMsg"></div>' +
         '<div class="fph-note">Each pull shows up here about a minute after it ends. <button class="linkbtn" id="hHow" type="button" aria-expanded="false">How to live log</button></div>' +
@@ -21840,37 +22031,6 @@ function charAff(g) {
   const parts = (g.guild ? ['‹' + g.guild + '›'] : []).concat(teams.filter((n) => n !== g.guild));
   return parts.length ? '<span class="ht-g">' + esc(parts.join(' · ')) + '</span>' : '';
 }
-// ---- "Start here" on the welcome page: someone new adds their team or their character first ----
-// Two choices (team or guild, or character) set the box's hint and where to find the link; either link works in the
-// same box, and a report link pasted here by mistake just opens that report.
-const HS_KIND = {
-  team: { ph: 'Paste your team or guild page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.' },
-  char: { ph: 'Paste your character page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your character\'s name, open it, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.' } };
-function homeStart() {
-  return '<section class="hs-start" id="hsStart"><div class="hs-k">Start here</div><h2>Add your team or your character</h2>' +
-    '<p class="hs-lead">Debrief brings in every raid night of the tier from Warcraft Logs, boss by boss, and new nights come in by themselves.</p>' +
-    '<div class="hs-pick" role="group" aria-label="What to add"><button type="button" class="on" data-k="team" aria-pressed="true">My team or guild</button><button type="button" data-k="char" aria-pressed="false">My character</button></div>' +
-    '<div class="fph-box"><input id="hsIn" placeholder="' + HS_KIND.team.ph + '" autocomplete="off" aria-label="Warcraft Logs team, guild or character link"><button class="btn primary" id="hsGo" type="button">Add</button></div>' +
-    '<div class="fp-msg" id="hsMsg"></div><p class="hs-how" id="hsHow">' + HS_KIND.team.how + '</p></section>';
-}
-function bindHomeStart() {
-  if (!$('#hsStart')) return;
-  const inp = $('#hsIn'), msg = $('#hsMsg');
-  $$('#hsStart .hs-pick button').forEach((b) => (b.onclick = () => {
-    $$('#hsStart .hs-pick button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
-    inp.placeholder = HS_KIND[b.dataset.k].ph; $('#hsHow').innerHTML = HS_KIND[b.dataset.k].how; inp.focus(); }));
-  const go = async () => {
-    const raw = inp.value;
-    if (!groupLink(raw) && WCL.parseLink(raw)) { openReportLink(raw, msg); return; } // (one night: open it)
-    msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
-    try { const { g: ng, already } = await groupAdd(raw);
-      if (already) { progressPage(gName(ng) + ' is already on your list.', ng.gid); return; }
-      progressPage('Added ' + ng.name + '. Importing its nights…', ng.gid); progRun(ng); groupsBackfill();
-    } catch (e) { msg.style.color = ''; msg.textContent = e.message.replace(' (see "Which link?" below)', '. The line under this box says where to find it'); }
-  };
-  $('#hsGo').onclick = go;
-  inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
-}
 // a team's card (the start screen and the teams page): bosses killed on each difficulty it pulled, its last night
 function teamCard(g, all, order, big) {
   const mine = all.filter(groupFilter(g)), last = mine.reduce((m, v) => Math.max(m, v.at), 0), nights = new Set(mine.map((v) => nightOf(v.at))).size;
@@ -21880,7 +22040,6 @@ function teamCard(g, all, order, big) {
     // (a team's World and US rank, once its page has read them)
     (g && g.rank && (g.rank.w || g.rank.r) ? '<span class="ht-g ht-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '') +
     '<span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g) + (g.faction ? ' · ' + esc(g.faction) : '')) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
-      (teamsTop ? '' : homeStart()) +
     '<span class="ht-d">' + (diffs || '<span>not imported yet</span>') + '</span><span class="ht-l">' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : g ? 'open to import its nights' : 'nothing saved yet') + '</span></span></button>';
 }
 // A team's card on the teams page: the art of the boss it's on now (or its last kill) faded in behind, its banner, name

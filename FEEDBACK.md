@@ -213,6 +213,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 229: Boss art on Stored notes, and a new note when the roster changed (your two notes)
+- [x] **Each boss on Stored notes has a header band with its art** (your note: nice background graphics, pleasing to the
+  eye): the boss's banner art fading in from the right, the same as the pull banner (its model when there's no banner),
+  the name big on the left, a gold "Open now" on the boss of the open pull, and its buttons on the band. The notes sit
+  under it as soft cards, and each log is a round chip with a small calendar. The art loads from Wowhead at runtime
+  (never bundled), and the band just stays plain if it doesn't load.
+- [x] **When the pull's players don't fully match your note, This pull offers a new note** (your note): "This pull's
+  players don't fully match your note. Optt isn't in this pull, and Xastral isn't in your note. Make a new note with
+  Xastral taking the assignments of Optt?" With more than one missing player, each gets a pick-list ("Optt is replaced
+  by …"). Debrief guesses who: a new player who pressed a cooldown the note gives the missing one (Xastral pressed Darkness,
+  Optt's cooldown), else the next one left.
+  - **Make the new note** saves a copy with the names swapped everywhere they're used (reminder tags and text lines),
+    named for what changed ("Mythic plan, Xastral for Optt"); your old note stays as it is, and this pull uses the new one.
+  - **Not now** hides the offer for that note and those missing players.
+- Checked on your guild's Coiled Altar kill: the guess, the new note and its name, This pull switching to it, and Not now;
+  test notes removed.
+
 ## 2026-10-18, round 228: A Stored notes tab on Assignments (your note)
 - [x] **Assignments has two tabs: This pull and Stored notes** (with how many notes you have). My take: right; notes are
   housekeeping, so This pull stays about the pull, and every boss's notes are in one place.

@@ -1622,6 +1622,39 @@ function exampleNote(r) {
   const list = got.sort((a, b) => a.t - b.t).slice(0, 4).concat(miss.slice(0, 1)).sort((a, b) => a.t - b.t);
   return ['EncounterID:' + (r.item.id || 0) + ';Name:' + r.item.boss, '# An example note Debrief made from one pull: your healers\' cooldowns, at the times they pressed them, and one they didn\'t press.'].concat(list.map((x) => x.line)).join('\n');
 }
+// A note with one player's name swapped for another's, everywhere it's used (a reminder tag, a text line), as whole words
+const noteSwapName = (text, a, b) => String(text).replace(new RegExp('(^|[^\\p{L}])' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:-[\\p{L}\'’]+)?(?=$|[^\\p{L}])', 'giu'), (m, pre) => pre + b);
+// When the pull's players don't fully match the note (your note, Oct 18): offer a new note with this pull's players taking
+// the missing players' assignments; the old note stays as it is. Who takes whose place is a guess (a new player who pressed
+// a cooldown the note gives the missing one, else the next one left), and with more than one, each gets a pick-list.
+// "Not now" is remembered for that note and those missing players.
+const ROSTER_NO = 'wla-roster-no';
+const rosterNoKey = (n, away) => n.id + '|' + away.map((x) => x.toLowerCase()).sort().join(',');
+function rosterOffer(r, used) {
+  if (!used || used.example) return '';
+  const pn = (p) => p.name.split('-')[0], lc = (s) => String(s).toLowerCase();
+  const inPull = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name));
+  const away = noteNames(used.text).filter((n) => !inPull.some((p) => lc(pn(p)) === lc(n))), fresh = inPull.filter((p) => !noteHas(used.text, pn(p)));
+  if (!away.length || !fresh.length) return '';
+  let no = []; try { no = JSON.parse(store.get(ROSTER_NO) || '[]'); } catch (e) { no = []; }
+  const key = rosterNoKey(used, away); if (no.includes(key)) return '';
+  let rem = []; try { rem = (E.parseNote(used.text) || {}).reminders || []; } catch (e) { rem = []; }
+  const left = fresh.slice(), pick = new Map();
+  for (const a of away) { const ids = rem.filter((x) => x.spellid && x.tags.some((t) => lc(t.split('-')[0]) === lc(a))).map((x) => x.spellid);
+    const by = ids.length ? left.find((p) => ids.some((id) => ((p.castTimes && p.castTimes.get(id)) || []).length)) : null; if (by) { pick.set(a, by); left.splice(left.indexOf(by), 1); } }
+  for (const a of away) if (!pick.has(a) && left.length) pick.set(a, left.shift());
+  const pc = (p) => '<span class="nm" style="color:' + (p.color || 'inherit') + '">' + esc(pn(p)) + '</span>';
+  const one = away.length === 1 && fresh.length === 1;
+  const sel = (a) => '<select class="rsw-s" data-a="' + esc(a) + '" aria-label="Who takes the assignments of ' + esc(a) + '"><option value="">nobody, leave ' + esc(a) + ' in</option>' +
+    fresh.map((p) => '<option value="' + esc(pn(p)) + '"' + (pick.get(a) === p ? ' selected' : '') + '>' + esc(pn(p)) + '</option>').join('') + '</select>';
+  const body = one ? '<b>' + esc(away[0]) + "</b> isn't in this pull, and " + pc(fresh[0]) + " isn't in your note. Make a new note with " + pc(fresh[0]) + ' taking the assignments of ' + esc(away[0]) + '?' +
+      '<input type="hidden" class="rsw-s" data-a="' + esc(away[0]) + '" value="' + esc(pn(fresh[0])) + '">'
+    : plural(away.length, 'player') + ' in your note ' + (away.length === 1 ? "isn't" : "aren't") + ' in this pull. Pick who takes their assignments:<div class="rsw-rows">' +
+      away.map((a) => '<label class="rsw-r"><b>' + esc(a) + '</b><span class="sub">is replaced by</span>' + sel(a) + '</label>').join('') + '</div>';
+  return '<div class="panel as-swap"><div class="rsw-t"><b>This pull\'s players don\'t fully match your note.</b> ' + body + '</div>' +
+    '<div class="rsw-b"><button class="btn primary sm" type="button" id="rswMake">Make the new note</button><button class="btn sm" type="button" id="rswNo" data-k="' + esc(key) + '">Not now</button>' +
+    '<span class="sub">Your note stays as it is. The new one is saved next to it, and pulls with these players use it.</span></div></div>';
+}
 // The Assignments tab's two views (your note, Oct 18: a separate tab for the stored notes): This pull, and Stored notes
 const noteCount = () => E.PACKS.reduce((s, p) => s + notesOf(p.encounter).list.length, 0);
 const asViews = () => { const n = noteCount(), on = S.asView === 'notes';
@@ -1630,6 +1663,8 @@ const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.oncl
 // Stored notes: every saved note, the boss of the open pull first, then the rest in raid order; each with when it was saved
 // and the logs it goes with, each with its date and time: the log that's open (and which of its pulls use it), and every
 // saved night it fits (at least half its names there), newest first, a click opening that night
+// (the small calendar on a log's chip, drawn here)
+const SN_CAL = '<svg class="sn-cal" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 function storedNotes(only) {
   const r = S.rep, cur = r.item.boss, used = noteForRep(r), k0 = pullKey(r.item);
   const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur);
@@ -1642,9 +1677,9 @@ function storedNotes(only) {
   const logsOf = (n, b) => {
     const out = [];
     if (b === cur) { const bs = usedBy.get(n.id) || []; if (bs.length) { const f = bs.reduce((m, x) => ((x.wallMs || x.startMs || 0) < (m.wallMs || m.startMs || 0) ? x : m));
-      out.push('<span class="sn-log on">' + esc(day(f.wallMs || f.startMs)) + ' · ' + (bs.length === 1 ? 'pull ' : 'pulls ') + rng(bs.map((x) => x.pull)) + ' <span class="sub">(open now)</span></span>'); } }
+      out.push('<span class="sn-log on">' + SN_CAL + esc(day(f.wallMs || f.startMs)) + ' · ' + (bs.length === 1 ? 'pull ' : 'pulls ') + rng(bs.map((x) => x.pull)) + ' <span class="sub">(open now)</span></span>'); } }
     if (!n.example) { const sc = noteScan(n.text, b);
-      for (const o of sc.fits) { if (o.wcl && o.wcl.code === S.wclCode) continue; const l = esc(day(o.at)) + ' · ' + plural(o.pulls, 'pull') + ' · ' + o.hit + ' of ' + sc.names.length + ' names';
+      for (const o of sc.fits) { if (o.wcl && o.wcl.code === S.wclCode) continue; const l = SN_CAL + esc(day(o.at)) + ' · ' + plural(o.pulls, 'pull') + ' · ' + o.hit + ' of ' + sc.names.length + ' names';
         out.push(o.wcl ? '<button class="btn sm sn-log" type="button" data-nopen="' + esc(o.wcl.code + '|' + (o.wcl.fight || '')) + '" title="Open this night">' + l + '</button>' : '<span class="sn-log">' + l + ' <span class="sub">(a combat log on your PC)</span></span>'); } }
     return out.length ? '<div class="sn-logs"><span class="sub">Logs:</span>' + out.join('') + '</div>' : '<div class="sn-logs sub">No log goes with it yet. Nights it fits show here once they\'re saved to your progress.</div>';
   };
@@ -1655,9 +1690,14 @@ function storedNotes(only) {
       '<button class="btn sm" type="button" data-sndel="' + esc(b + '|' + n.id) + '" title="Remove this note" aria-label="Remove the note ' + esc(n.name) + '">' + NOTE_TRASH + '</button></div></div>'; };
   const NO = notesOf(cur), opt = (v, l) => '<option value="' + esc(v) + '">' + esc(l) + '</option>';
   const sel = NO.list.length > 1 ? '<div class="nl-foot"><label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label><span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.</span></div>' : '';
-  const panel = ([b, o]) => '<div class="panel nlib sn-b"><div class="nl-h"><span class="nb-t"><b>' + esc(b) + '</b>' + (b === cur ? ' <span class="sub">the boss of the pull that\'s open</span>' : ' <span class="sub">' + plural(o.list.length, 'note') + '</span>') + '</span>' +
+  // (each boss a panel with a header band: its banner art fading in from the right, as on the pull banner, or its model when
+  // there's no banner; loaded at runtime from Wowhead, never bundled, and gone if it doesn't load)
+  const artOf = (b) => (BOSS_HERO[b] ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[b][1] + '% 28%" onerror="this.remove()">'
+    : BOSS_ART[b] ? '<img class="mdl" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
+  const panel = ([b, o]) => '<div class="panel nlib sn-b' + (b === cur ? ' cur' : '') + '"><div class="sn-hd"><div class="sn-art" aria-hidden="true">' + artOf(b) + '</div>' +
+    '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div>' +
     '<span class="nl-hb">' + (b === cur ? '<button class="btn sm" type="button" id="noteNewBtn">Add a note</button>' : '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">Open ' + esc(b) + '</button>') + '</span></div>' +
-    (o.list.length ? o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + (b === cur ? sel : '') : '<p class="sub sn-none">No note for ' + esc(b) + ' yet.</p>') + '</div>';
+    '<div class="sn-body">' + (o.list.length ? o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + (b === cur ? sel : '') : '<p class="sub sn-none">No note for ' + esc(b) + ' yet. Add one, and it shows here with the logs it goes with.</p>') + '</div></div>';
   $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + '<p class="sub sn-lead">Your NSRT notes for every boss, saved in this browser, with the logs each one goes with.</p>' + bosses.map(panel).join('') + '</div>';
   bindAsViews(only);
   // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
@@ -1780,6 +1820,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     top += '<div class="panel nlib' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span><b>' + (ex ? 'An example note' : 'Your note: ' + esc(used.name)) + '</b>' + (kinds ? ' <span class="sub">' + kinds + '</span>' : '') + '</span></span>' +
       '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" id="noteNewBtn">Add a note</button>') + '</span></div>' +
       '<div class="nl-why sub">' + why + back + (NO.list.length > 1 ? ' <button class="btn sm" type="button" data-asv="notes">' + plural(NO.list.length, 'note') + ' for this boss</button>' : '') + '</div></div>';
+    top += rosterOffer(r, used);
   }
   if (a && a.error) top += '<div class="panel">Couldn\'t read the note: ' + esc(a.error) + '</div>';
   // (what the note just saved is for, from your saved logs: on top, until "Got it")
@@ -2250,6 +2291,17 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     S.noteScan = v ? { boss, id: sid, r: noteScan(v, boss) } : null; redo(); };
   if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
   bindAsViews(only);
+  // (the new note for a changed roster: the note with each missing player's name swapped for the one taking their place, named
+  // for what changed; this pull stops being pinned to the old note so the new one fits it)
+  if ($('#rswMake')) $('#rswMake').onclick = () => { if (!used) return; let t = used.text; const sw = [];
+    $$('#assignBox .rsw-s').forEach((x) => { if (x.value) { t = noteSwapName(t, x.dataset.a, x.value); sw.push(x.value); } });
+    if (!sw.length) return;
+    const o = notesOf(boss), dup = o.list.find((n) => noteNorm(n.text) === noteNorm(t));
+    if (!dup) { let nm = autoNoteName(t, [used], r), k = 2; const stem = nm; while (o.list.some((n) => n.name === nm)) nm = stem + ' (' + k++ + ')';
+      o.list.push({ id: 'n' + Date.now().toString(36), name: nm, text: t, saved: Date.now() }); }
+    if (o.byPull) delete o.byPull[pullKey(r.item)]; if (o.pick === used.id) o.pick = 'auto'; notesSave(boss, o); redo(); };
+  if ($('#rswNo')) $('#rswNo').onclick = () => { let no = []; try { no = JSON.parse(store.get(ROSTER_NO) || '[]'); } catch (e) { no = []; }
+    no.push($('#rswNo').dataset.k); store.set(ROSTER_NO, JSON.stringify(no.slice(-60))); assign(only); };
   // (a raid night a note fits: its pulls of the boss open from Warcraft Logs)
   $$('#assignBox [data-nopen]').forEach((x) => (x.onclick = async () => { const [code, fight] = x.dataset.nopen.split('|'); x.disabled = true; S.noteScan = null;
     try { await openWcl({ code, fight: +fight || null }, await wclCreds()); } catch (e) { x.disabled = false; x.title = e.message; } }));
@@ -3140,12 +3192,26 @@ function miniMap(mp, pmap) {
   const hasObj = new Set();
   s += MAP_DEFS;
   // tank frontal cone (from the boss toward the tank it hit), drawn to scale under everything else
+  // (like in game: bright at the boss and fading with distance. On a moving map (at: the moment it lands) it reaches out from
+  // the boss as a thin outline while it's cast, slashes bright when it lands, then fades)
+  const ftA = mp.ft, live = ftA != null;
   if (mp.cone) {
-    const c = mp.cone, cx = X(c), cy = Y(c), R = c.r * yd;
+    const c = mp.cone, cx = X(c), cy = Y(c), R0 = c.r * yd, el = live && c.at != null ? ftA - c.at : 0;
     // map space: x east, y north (screen y is flipped), so mirror the angle
-    const pt = (a) => (cx + R * Math.cos(a)).toFixed(1) + ' ' + (cy - R * Math.sin(a)).toFixed(1);
-    s += '<path d="M' + cx + ' ' + cy + ' L' + pt(c.dir - c.half) + ' A' + R + ' ' + R + ' 0 0 0 ' + pt(c.dir + c.half) + ' Z" fill="rgba(255,45,45,.30)" stroke="#000" stroke-opacity=".55" stroke-width="5" vector-effect="non-scaling-stroke"/>' + // dark halo so the edge reads on the light floor maps
-      '<path d="M' + cx + ' ' + cy + ' L' + pt(c.dir - c.half) + ' A' + R + ' ' + R + ' 0 0 0 ' + pt(c.dir + c.half) + ' Z" fill="none" stroke="#ff3b3b" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+    const wedge = (R) => { const pt = (a) => (cx + R * Math.cos(a)).toFixed(1) + ' ' + (cy - R * Math.sin(a)).toFixed(1); return 'M' + cx + ' ' + cy + ' L' + pt(c.dir - c.half) + ' A' + R + ' ' + R + ' 0 0 0 ' + pt(c.dir + c.half) + ' Z'; };
+    const lit = el < 0 ? 0 : el < 0.5 ? 1 : Math.max(0, 1 - (el - 0.5) / 1.1); // (the slash: full, then fading)
+    if (el >= -1.4 && (el < 0 || lit > 0)) {
+      if (el < 0) { const k = Math.min(1, (el + 1.4) / 1.2); // (being cast: the outline reaches out, the fill follows)
+        s += '<path d="' + wedge(R0) + '" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="' + wedge(R0) + '" fill="none" stroke="#ff3b3b" stroke-opacity=".8" stroke-width="1.6" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>' +
+          '<path d="' + wedge(R0 * k) + '" fill="rgba(255,45,45,.16)"/>';
+      } else {
+        const o = live ? lit : 1;
+        s += '<path d="' + wedge(R0) + '" fill="rgba(255,45,45,' + (0.18 * o).toFixed(2) + ')" stroke="#000" stroke-opacity="' + (0.55 * o).toFixed(2) + '" stroke-width="5" vector-effect="non-scaling-stroke"/>' + // dark halo so the edge reads on the light floor maps
+          '<path d="' + wedge(R0 * 0.66) + '" fill="rgba(255,60,45,' + (0.16 * o).toFixed(2) + ')"/><path d="' + wedge(R0 * 0.33) + '" fill="rgba(255,90,60,' + (0.2 * o).toFixed(2) + ')"/>' +
+          (live && el < 0.5 ? '<path d="' + wedge(R0) + '" fill="rgba(255,200,120,' + (0.3 * (1 - el / 0.5)).toFixed(2) + ')"/>' : '') +
+          '<path d="' + wedge(R0) + '" fill="none" stroke="#ff3b3b" stroke-opacity="' + o.toFixed(2) + '" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+      }
+    }
   }
   // mechanic circles (e.g. the Guillotine soak), drawn to scale under everything else
   // (a ring with a guid follows that unit; with t0 it only shows while active, and shrink 'ichor' is the Coiling Ichor
@@ -3164,10 +3230,47 @@ function miniMap(mp, pmap) {
     if (el >= 0) { s += ic(x, y, (el < 1.4 ? '<circle cx="' + x + '" cy="' + y + '" r="' + (8 + el * 26).toFixed(1) + '" fill="none" stroke="#b8f06a" stroke-opacity="' + (1 - el / 1.4).toFixed(2) + '" stroke-width="3"/>' : '') + cystSplat(x, y)); continue; }
     s += ic(x, y, cystBlob(x, y, c.ring || '#9aa0ac', c.n, 1.2) + (c.label ? '<text x="' + x + '" y="' + (y + 26) + '" class="ml" style="font-size:10px;font-weight:800" fill="' + (c.ring || '#e7e9ee') + '">' + esc(c.label) + '</text>' : ''));
   }
+  // each circle looks like its mechanic in game (fx, from the engine; at: the moment it lands or goes off):
+  // soak: fills from the middle as the hit comes, then slams down; impact: a target ring closing on the landing spot, then a
+  // shockwave; burst: a circle on a player whose edge turns faster near the end, then blasts outward; debuff: follows its
+  // player with a slowly turning edge; puddle: spreads out when it lands; zone: a standing area with a slow ripple; safe: a
+  // bubble with a shine. (Each moves one thing, softly, so a map with many circles stays calm)
+  const NS = ' vector-effect="non-scaling-stroke"';
+  const cir = (x, y, r, a) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + Math.max(0, r).toFixed(1) + '" ' + a + '/>';
+  const ringFx = (g, x, y, R, col, fill) => {
+    const fx = g.fx, at = g.at != null ? g.at : g.t0 != null ? g.t0 + (g.dur || 0) : mp.t, el = ftC - at;
+    const edge = (w, extra) => cir(x, y, R, 'fill="' + fill + '" stroke="' + col + '" stroke-width="' + w + '"' + (extra || '') + NS);
+    const shock = (p, k) => cir(x, y, R * (1 + (k || 0.35) * p), 'fill="none" stroke="' + col + '" stroke-opacity="' + (1 - p).toFixed(2) + '" stroke-width="3"' + NS);
+    if (fx === 'soak' || fx === 'impact') {
+      let o = '';
+      if (el < 0) { const k = Math.min(1, Math.max(0.06, 1 + el / 3));
+        o = edge(2) + cir(x, y, R * k, 'fill="' + col + '" fill-opacity=".22"');
+        if (fx === 'impact') o += cir(x, y, R * (1 + Math.min(1.2, -el * 0.9)), 'fill="none" stroke="' + col + '" stroke-opacity=".75" stroke-width="2" stroke-dasharray="5 4"' + NS);
+      } else if (el < 0.8) { const p = el / 0.8;
+        o = edge(2.6) + cir(x, y, R, 'fill="' + col + '" fill-opacity="' + (0.42 - 0.3 * p).toFixed(2) + '"') + shock(p);
+        if (fx === 'impact') for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + 0.3; o += '<line x1="' + (x + Math.cos(a) * R * 0.15).toFixed(1) + '" y1="' + (y + Math.sin(a) * R * 0.15).toFixed(1) + '" x2="' + (x + Math.cos(a) * R * (0.5 + 0.35 * p)).toFixed(1) + '" y2="' + (y + Math.sin(a) * R * (0.5 + 0.35 * p)).toFixed(1) + '" stroke="' + col + '" stroke-opacity="' + (1 - p).toFixed(2) + '" stroke-width="2"' + NS + '/>'; }
+      } else o = edge(1.6, ' stroke-opacity=".6"');
+      return o;
+    }
+    if (fx === 'burst') {
+      if (el >= 0.8) return '';
+      if (el >= 0) { const p = el / 0.8; return cir(x, y, R * (0.5 + 0.6 * p), 'fill="' + col + '" fill-opacity="' + (0.45 * (1 - p)).toFixed(2) + '"') + shock(p, 0.3); }
+      const near = el > -1.5, spin = (ftC * (near ? 34 : 10)) % 40;
+      return edge(2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-spin).toFixed(1) + '"' + (near ? ' fill-opacity="' + (0.65 + 0.35 * Math.abs(Math.sin(ftC * 9))).toFixed(2) + '"' : ''));
+    }
+    if (fx === 'debuff') return edge(g.dim ? 1.4 : 2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-(ftC * 8) % 40).toFixed(1) + '"');
+    if (fx === 'puddle') { const e = g.t0 != null && live ? ftA - g.t0 : 9, k = e < 0.9 ? 0.35 + 0.65 * (1 - Math.pow(1 - Math.max(0, e) / 0.9, 3)) : 1;
+      return cir(x, y, R * k, 'fill="' + fill + '" stroke="' + col + '" stroke-opacity=".7" stroke-width="1.5"' + NS) + cir(x, y, R * k * 0.6, 'fill="' + col + '" fill-opacity=".14"'); }
+    if (fx === 'zone') { const p = ((ftC % 3) + 3) % 3 / 3; return edge(1.8, ' stroke-opacity=".8"') + cir(x, y, R * (0.25 + 0.75 * p), 'fill="none" stroke="' + col + '" stroke-opacity="' + (0.5 * (1 - p)).toFixed(2) + '" stroke-width="1.5"' + NS); }
+    if (fx === 'safe') { const a0 = 3.6, a1 = 4.4, sh = '<path d="M' + (x + Math.cos(a0) * R * 0.78).toFixed(1) + ' ' + (y + Math.sin(a0) * R * 0.78).toFixed(1) + 'A' + (R * 0.78).toFixed(1) + ' ' + (R * 0.78).toFixed(1) + ' 0 0 1 ' + (x + Math.cos(a1) * R * 0.78).toFixed(1) + ' ' + (y + Math.sin(a1) * R * 0.78).toFixed(1) + '" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"' + NS + '/>';
+      return edge(el >= 0 && el < 0.7 ? 3 : 2) + sh + (el >= 0 && el < 0.7 ? shock(el / 0.7, 0.6) : ''); }
+    return null;
+  };
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
-    s += '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' +
+    const look = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null;
+    s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
       ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
   // spit lines (Corrosive Spit): add to its target while the aim is up; this row's add bright, the others dimmer
@@ -3178,6 +3281,16 @@ function miniMap(mp, pmap) {
     if (ft < a.t0 - 0.05 || ft > a.t1 + 0.05) continue; const p = byG.get(a.g); if (!p) continue;
     const L = a.len || 10, x0 = X(p), y0 = Y(p), x1 = X({ x: p.x + Math.cos(a.ang) * L, y: p.y + Math.sin(a.ang) * L }), y1 = Y({ x: p.x + Math.cos(a.ang) * L, y: p.y + Math.sin(a.ang) * L });
     const d = Math.hypot(x1 - x0, y1 - y0) || 1, ux = (x1 - x0) / d, uy = (y1 - y0) / d, hx = x1 - ux * 9, hy = y1 - uy * 9, col = a.color || '#7fd8ff';
+    // (Plague Wave, on a moving map: a faint dashed line while the Froth is up, then a wave racing out along it when it ends)
+    if (a.fx === 'wave' && live && a.at != null) { const el = ftA - a.at;
+      if (el < 0) { s += '<line x1="' + (x0 + ux * 8).toFixed(1) + '" y1="' + (y0 + uy * 8).toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="' + col + '" stroke-opacity=".55" stroke-width="1.6" stroke-dasharray="4 4"/>'; continue; }
+      const p = Math.min(1, el / 0.7), fade = el < 0.7 ? 1 : Math.max(0, 1 - (el - 0.7) / 0.8), fx1 = x0 + (x1 - x0) * p, fy1 = y0 + (y1 - y0) * p;
+      if (fade > 0) s += '<line x1="' + x0.toFixed(1) + '" y1="' + y0.toFixed(1) + '" x2="' + fx1.toFixed(1) + '" y2="' + fy1.toFixed(1) + '" stroke="' + col + '" stroke-opacity="' + (0.45 * fade).toFixed(2) + '" stroke-width="7" stroke-linecap="round"/>' +
+        (p < 1 ? cir(fx1, fy1, 6, 'fill="' + col + '" fill-opacity=".85" stroke="#000" stroke-width="1"') : '');
+      continue; }
+    // (Raging Crosswinds: wind chevrons drifting along the arrow, the way they'll be thrown)
+    if (a.fx === 'wind') for (let i = 0; i < 2; i++) { const u = ((ftC * 0.9 + i * 0.5) % 1 + 1) % 1, px = x0 + ux * 10 + (hx - x0 - ux * 10) * u, py = y0 + uy * 10 + (hy - y0 - uy * 10) * u, op = Math.sin(u * Math.PI);
+      s += '<path d="M' + (px - ux * 4 - uy * 4).toFixed(1) + ' ' + (py - uy * 4 + ux * 4).toFixed(1) + 'L' + px.toFixed(1) + ' ' + py.toFixed(1) + 'L' + (px - ux * 4 + uy * 4).toFixed(1) + ' ' + (py - uy * 4 - ux * 4).toFixed(1) + '" fill="none" stroke="#fff" stroke-opacity="' + (0.8 * op).toFixed(2) + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="translate(' + (uy * 7).toFixed(1) + ' ' + (-ux * 7).toFixed(1) + ')"/>'; }
     const head = 'M' + x1.toFixed(1) + ' ' + y1.toFixed(1) + 'L' + (hx - uy * 5).toFixed(1) + ' ' + (hy + ux * 5).toFixed(1) + 'L' + (hx + uy * 5).toFixed(1) + ' ' + (hy - ux * 5).toFixed(1) + 'Z';
     s += '<line x1="' + (x0 + ux * 8).toFixed(1) + '" y1="' + (y0 + uy * 8).toFixed(1) + '" x2="' + hx.toFixed(1) + '" y2="' + hy.toFixed(1) + '" stroke="#000" stroke-opacity=".7" stroke-width="5" stroke-linecap="round"/><path d="' + head + '" fill="#000" fill-opacity=".7" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>' +
       '<line x1="' + (x0 + ux * 8).toFixed(1) + '" y1="' + (y0 + uy * 8).toFixed(1) + '" x2="' + hx.toFixed(1) + '" y2="' + hy.toFixed(1) + '" stroke="' + col + '" stroke-width="2.5" stroke-linecap="round"/><path d="' + head + '" fill="' + col + '"/>';
@@ -3197,21 +3310,34 @@ function miniMap(mp, pmap) {
     const band = 'M' + (ax + nx).toFixed(1) + ' ' + (ay + ny).toFixed(1) + 'L' + (bx + nx).toFixed(1) + ' ' + (by + ny).toFixed(1) + 'L' + (bx - nx).toFixed(1) + ' ' + (by - ny).toFixed(1) + 'L' + (ax - nx).toFixed(1) + ' ' + (ay - ny).toFixed(1) + 'Z';
     s += '<path d="' + band + '" fill="' + col + '" fill-opacity="' + (fired ? 0.55 : dud ? 0.1 : l.on ? 0.3 : 0.18) + '" stroke="#000" stroke-opacity=".55" stroke-width="4" vector-effect="non-scaling-stroke"/>' +
       '<path d="' + band + '" fill="none" stroke="' + col + '" stroke-opacity="' + (l.on ? 1 : 0.6) + '" stroke-width="' + (l.on ? 2 : 1.4) + '"' + (dud ? ' stroke-dasharray="5 4"' : '') + ' vector-effect="non-scaling-stroke"/>';
+    // (while it aims, a brighter fill charges along the line from the add; the moment it fires, the line flashes)
+    if (!ended && !dud && l.t1 > l.t0) { const q = Math.min(1, Math.max(0, (ft - l.t0) / (l.t1 - l.t0))), cx1 = ax + (bx - ax) * q, cy1 = ay + (by - ay) * q;
+      s += '<path d="M' + (ax + nx).toFixed(1) + ' ' + (ay + ny).toFixed(1) + 'L' + (cx1 + nx).toFixed(1) + ' ' + (cy1 + ny).toFixed(1) + 'L' + (cx1 - nx).toFixed(1) + ' ' + (cy1 - ny).toFixed(1) + 'L' + (ax - nx).toFixed(1) + ' ' + (ay - ny).toFixed(1) + 'Z" fill="' + col + '" fill-opacity="' + (l.on ? 0.3 : 0.18) + '"/>'; }
+    if (fired && live && ft - l.t1 < 0.4) s += '<path d="' + band + '" fill="#fff" fill-opacity="' + (0.45 * (1 - (ft - l.t1) / 0.4)).toFixed(2) + '"/>';
   }
   // targeted mechanics on players: Coiling Ichor (circle size not published: shown as a marker ring) and the
   // Stone Breaker circle on the tank (to scale)
   const marksNow = (mp.marks || []).filter((m) => ft >= m.t0 - 0.05 && ft <= m.t1 + 0.05);
-  for (const m of marksNow.filter((x) => x.kind === 'stone')) { const q = byG.get(m.g); if (q) s += '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="' + m.r * yd + '" fill="rgba(255,150,40,.22)" stroke="#ff9628" stroke-width="2" stroke-dasharray="5 3" vector-effect="non-scaling-stroke"/>'; }
+  for (const m of marksNow.filter((x) => x.kind === 'stone')) { const q = byG.get(m.g); if (q) s += '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="' + m.r * yd + '" fill="rgba(255,150,40,.22)" stroke="#ff9628" stroke-width="2" stroke-dasharray="5 3" stroke-dashoffset="' + (-(ft * 8) % 32).toFixed(1) + '" vector-effect="non-scaling-stroke"/>'; }
   const hitSet = new Set(mp.hitOrbs || []), gHit = new Set(mp.ghostHit || []), gMiss = new Set(mp.ghostMiss || []);
+  const elS = live && mp.cone && mp.cone.at != null ? ftA - mp.cone.at : null; // (time since the frontal landed, on a moving map)
   for (const p of pts.filter((q) => OBJS[q.kind])) {
     hasObj.add(p.kind); const [col, label] = OBJS[p.kind];
+    if (elS != null && elS >= 0 && (hitSet.has(p.guid) || gHit.has(p.guid))) {
+      // (popped: a ring of its colour bursting out and a few sparks, then it's gone)
+      if (elS < 0.9) { const k = elS / 0.9, x = X(p), y = Y(p); let o = cir(x, y, 7 + 16 * k, 'fill="none" stroke="' + col + '" stroke-opacity="' + (1 - k).toFixed(2) + '" stroke-width="3"');
+        if (p.kind !== 'ghost') o += cir(x, y, 7 * (1 - k), 'fill="#fff" fill-opacity="' + (0.9 * (1 - k)).toFixed(2) + '"');
+        for (let i = 0; i < 6; i++) { const a = i * 1.047 + 0.5, d = 6 + 14 * k; o += cir(x + Math.cos(a) * d, y + Math.sin(a) * d, 1.8, 'fill="' + col + '" fill-opacity="' + (1 - k).toFixed(2) + '"'); }
+        s += ic(x, y, o); }
+      continue;
+    }
     let inner = p.kind === 'ghost'
       ? '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>'
       : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
     if (gHit.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="none" stroke="#45c15c" stroke-width="2.5"/>';
-    if (gMiss.has(p.guid)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
+    if (gMiss.has(p.guid) && !(elS != null && elS < 0)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
     s += ic(X(p), Y(p), inner);
   }
   // cast bars under an add's or boss's name, like in game (your note, Oct 18): gold while it casts something kickable, then
@@ -12687,6 +12813,37 @@ function homeTeams() {
 function bindHomeTeams() {
   $$('#homeTeams [data-g]').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); }));
 }
+// ---- "Start here" on the welcome page: someone new adds their team or their character first ----
+// Two choices (team or guild, or character) set the box's hint and where to find the link; either link works in the
+// same box, and a report link pasted here by mistake just opens that report.
+const HS_KIND = {
+  team: { ph: 'Paste your team or guild page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.' },
+  char: { ph: 'Paste your character page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your character\'s name, open it, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.' } };
+function homeStart() {
+  return '<section class="hs-start" id="hsStart"><div class="hs-k">Start here</div><h2>Add your team or your character</h2>' +
+    '<p class="hs-lead">Debrief brings in every raid night of the tier from Warcraft Logs, boss by boss, and new nights come in by themselves.</p>' +
+    '<div class="hs-pick" role="group" aria-label="What to add"><button type="button" class="on" data-k="team" aria-pressed="true">My team or guild</button><button type="button" data-k="char" aria-pressed="false">My character</button></div>' +
+    '<div class="fph-box"><input id="hsIn" placeholder="' + HS_KIND.team.ph + '" autocomplete="off" aria-label="Warcraft Logs team, guild or character link"><button class="btn primary" id="hsGo" type="button">Add</button></div>' +
+    '<div class="fp-msg" id="hsMsg"></div><p class="hs-how" id="hsHow">' + HS_KIND.team.how + '</p></section>';
+}
+function bindHomeStart() {
+  if (!$('#hsStart')) return;
+  const inp = $('#hsIn'), msg = $('#hsMsg');
+  $$('#hsStart .hs-pick button').forEach((b) => (b.onclick = () => {
+    $$('#hsStart .hs-pick button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    inp.placeholder = HS_KIND[b.dataset.k].ph; $('#hsHow').innerHTML = HS_KIND[b.dataset.k].how; inp.focus(); }));
+  const go = async () => {
+    const raw = inp.value;
+    if (!groupLink(raw) && WCL.parseLink(raw)) { openReportLink(raw, msg); return; } // (one night: open it)
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
+    try { const { g: ng, already } = await groupAdd(raw);
+      if (already) { progressPage(gName(ng) + ' is already on your list.', ng.gid); return; }
+      progressPage('Added ' + ng.name + '. Importing its nights…', ng.gid); progRun(ng); groupsBackfill();
+    } catch (e) { msg.style.color = ''; msg.textContent = e.message.replace(' (see "Which link?" below)', '. The line under this box says where to find it'); }
+  };
+  $('#hsGo').onclick = go;
+  inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+}
 // (the cards fill in once the saved pulls have loaded)
 const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); if (s) { s.outerHTML = homeTeams(); bindHomeTeams(); } groupsBackfill(); });
 function homeHosted() {
@@ -12696,6 +12853,7 @@ function homeHosted() {
   $('#main').innerHTML = '<div class="home fp fph">' + (teamsTop ? homeTeams() : '') +
     '<section class="fph-hero" id="fpStart"><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
+      (teamsTop ? '' : homeStart()) +
       '<div class="fph-main"><div class="fph-h">' + HICO.live + '<b>Live logging</b><span>during raid</span></div>' +
         '<div class="fph-box"><input id="hLive" placeholder="Paste your raid\'s live log link" autocomplete="off" aria-label="Warcraft Logs live log link"><button class="btn primary" id="hLiveGo">Go live</button></div><div class="fp-msg" id="hLiveMsg"></div>' +
         '<div class="fph-note">Each pull shows up here about a minute after it ends. <button class="linkbtn" id="hHow" type="button" aria-expanded="false">How to live log</button></div>' +
@@ -12812,37 +12970,6 @@ function charAff(g) {
   const parts = (g.guild ? ['‹' + g.guild + '›'] : []).concat(teams.filter((n) => n !== g.guild));
   return parts.length ? '<span class="ht-g">' + esc(parts.join(' · ')) + '</span>' : '';
 }
-// ---- "Start here" on the welcome page: someone new adds their team or their character first ----
-// Two choices (team or guild, or character) set the box's hint and where to find the link; either link works in the
-// same box, and a report link pasted here by mistake just opens that report.
-const HS_KIND = {
-  team: { ph: 'Paste your team or guild page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your guild\'s name, open its page, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/guild/us/zuljin/wolfthorn</code>.' },
-  char: { ph: 'Paste your character page link', how: 'On <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a>, search your character\'s name, open it, and copy the address from the top of your browser. It looks like <code>warcraftlogs.com/character/us/thrall/yourname</code>.' } };
-function homeStart() {
-  return '<section class="hs-start" id="hsStart"><div class="hs-k">Start here</div><h2>Add your team or your character</h2>' +
-    '<p class="hs-lead">Debrief brings in every raid night of the tier from Warcraft Logs, boss by boss, and new nights come in by themselves.</p>' +
-    '<div class="hs-pick" role="group" aria-label="What to add"><button type="button" class="on" data-k="team" aria-pressed="true">My team or guild</button><button type="button" data-k="char" aria-pressed="false">My character</button></div>' +
-    '<div class="fph-box"><input id="hsIn" placeholder="' + HS_KIND.team.ph + '" autocomplete="off" aria-label="Warcraft Logs team, guild or character link"><button class="btn primary" id="hsGo" type="button">Add</button></div>' +
-    '<div class="fp-msg" id="hsMsg"></div><p class="hs-how" id="hsHow">' + HS_KIND.team.how + '</p></section>';
-}
-function bindHomeStart() {
-  if (!$('#hsStart')) return;
-  const inp = $('#hsIn'), msg = $('#hsMsg');
-  $$('#hsStart .hs-pick button').forEach((b) => (b.onclick = () => {
-    $$('#hsStart .hs-pick button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
-    inp.placeholder = HS_KIND[b.dataset.k].ph; $('#hsHow').innerHTML = HS_KIND[b.dataset.k].how; inp.focus(); }));
-  const go = async () => {
-    const raw = inp.value;
-    if (!groupLink(raw) && WCL.parseLink(raw)) { openReportLink(raw, msg); return; } // (one night: open it)
-    msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
-    try { const { g: ng, already } = await groupAdd(raw);
-      if (already) { progressPage(gName(ng) + ' is already on your list.', ng.gid); return; }
-      progressPage('Added ' + ng.name + '. Importing its nights…', ng.gid); progRun(ng); groupsBackfill();
-    } catch (e) { msg.style.color = ''; msg.textContent = e.message.replace(' (see "Which link?" below)', '. The line under this box says where to find it'); }
-  };
-  $('#hsGo').onclick = go;
-  inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
-}
 // a team's card (the start screen and the teams page): bosses killed on each difficulty it pulled, its last night
 function teamCard(g, all, order, big) {
   const mine = all.filter(groupFilter(g)), last = mine.reduce((m, v) => Math.max(m, v.at), 0), nights = new Set(mine.map((v) => nightOf(v.at))).size;
@@ -12852,7 +12979,6 @@ function teamCard(g, all, order, big) {
     // (a team's World and US rank, once its page has read them)
     (g && g.rank && (g.rank.w || g.rank.r) ? '<span class="ht-g ht-rk">' + (g.rank.w ? 'World #' + g.rank.w.toLocaleString('en-US') : '') + (g.rank.w && g.rank.r ? ' · ' : '') + (g.rank.r ? esc(g.rank.rn || 'Region') + ' #' + g.rank.r.toLocaleString('en-US') : '') + '</span>' : '') +
     '<span class="ht-k">' + (g ? (cls ? cls[0] : gKind(g) + (g.faction ? ' · ' + esc(g.faction) : '')) + (g.server ? ' · ' + esc(g.server) : '') : 'every pull on this PC, from all your teams and the logs opened here') + '</span>' +
-      (teamsTop ? '' : homeStart()) +
     '<span class="ht-d">' + (diffs || '<span>not imported yet</span>') + '</span><span class="ht-l">' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : g ? 'open to import its nights' : 'nothing saved yet') + '</span></span></button>';
 }
 // A team's card on the teams page: the art of the boss it's on now (or its last kill) faded in behind, its banner, name

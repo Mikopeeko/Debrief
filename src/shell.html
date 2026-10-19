@@ -1768,8 +1768,37 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .sn-log { font-size: 12.5px; } span.sn-log { padding: 3px 9px; border: 1px solid var(--line); border-radius: 7px; }
 span.sn-log.on { border-color: rgba(230,180,80,.5); background: rgba(230,180,80,.06); }
 .sn-none { margin: 8px 0 0; }
-.nlib.sn-b .nl-h { margin-bottom: 2px; }
+/* (Stored notes: each boss a panel with a header band of its art, fading in from the right like the pull banner; the
+   notes below it as soft cards; each log a round chip with a small calendar) */
+.nlib.sn-b { padding: 0; overflow: hidden; margin-bottom: 14px; }
+.nlib.sn-b.cur { border-color: rgba(230,180,80,.4); }
+.sn-hd { position: relative; isolation: isolate; min-height: 104px; padding: 16px 16px 14px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); overflow: hidden; }
+.sn-art { position: absolute; inset: 0; z-index: -2; }
+.sn-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .8; filter: saturate(1.1) brightness(1.08);
+  -webkit-mask-image: linear-gradient(90deg, transparent 8%, rgba(0,0,0,.45) 38%, #000 72%); mask-image: linear-gradient(90deg, transparent 8%, rgba(0,0,0,.45) 38%, #000 72%); }
+.sn-art img.mdl { left: auto; right: -8px; width: 240px; height: 200%; top: -40%; object-fit: contain; opacity: .4; -webkit-mask-image: none; mask-image: none; }
+.sn-hd::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(0deg, rgba(12,14,19,.62), rgba(12,14,19,0) 72%), linear-gradient(90deg, rgba(23,26,34,.88), transparent 55%); }
+.sn-hd h3 { margin: 0; font: 700 23px/1.1 var(--head); color: #f3f5f9; text-shadow: 0 1px 8px rgba(0,0,0,.7); }
+.sn-st { margin-top: 4px; font-size: 13px; color: #c9ced7; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.sn-now { display: inline-block; margin-left: 10px; padding: 2px 9px; border-radius: 999px; font: 600 11.5px/1.5 var(--body); color: var(--gold-ink); background: var(--gold); vertical-align: 4px; text-shadow: none; }
+.sn-hd .nl-hb .btn { background: rgba(15,17,23,.72); backdrop-filter: blur(2px); }
+.sn-body { padding: 6px 14px 12px; }
+.sn-b .nl-r { background: rgba(255,255,255,.018); border-color: var(--line); border-radius: 10px; padding: 9px 12px; }
+.sn-b .nl-r.on { background: rgba(230,180,80,.07); border-color: rgba(230,180,80,.5); }
+.sn-b .nl-m b { font-size: 15px; }
+.sn-log { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px !important; }
+span.sn-log { padding: 3px 10px; }
+.sn-cal { flex: none; opacity: .75; }
+@media (max-width: 640px) { .sn-hd { min-height: 84px; padding: 12px; flex-wrap: wrap; align-items: flex-start; } .sn-hd h3 { font-size: 20px; } .sn-body { padding: 4px 10px 10px; } }
 .as-none { padding: 12px 14px; line-height: 1.5; }
+/* (the offer of a new note when the roster changed: gold, under the note bar) */
+.as-swap { padding: 12px 14px; border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.06); line-height: 1.5; }
+.as-swap .rsw-rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 2px; }
+.as-swap .rsw-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.as-swap .rsw-r b { min-width: 110px; }
+.as-swap select { background: var(--raised); border: 1px solid var(--line2); border-radius: 7px; color: var(--text); padding: 4px 8px; }
+.as-swap .rsw-b { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.as-swap .rsw-b .sub { flex: 1; min-width: 220px; }
 .as-none .sub { display: block; margin-top: 4px; }
 .as-none .as-why { margin: 6px 0 4px; padding-left: 20px; } .as-none .as-why li { margin: 2px 0; }
 .nt-ed .notebox { min-height: 160px; }
