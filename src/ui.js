@@ -4747,6 +4747,17 @@ function bindNightMechC(pulls) {
 // Recap on the whole night (Oct 19, your call: "like someone's explaining the night to me"): the night's debrief (dbfNight) on
 // the left, and on the right what to sort before the next pull (the last pull's), Talk to, what the raid used tonight and the
 // missed assignments. Information only: nothing on Recap opens anything
+// (All pulls on Debriefing (your call, Oct 19: "Make this into a better graph showing boss health, like the other ones i use
+// throughout the website"): tonight's pulls as the team page's progress chart draws them, the best so far as a line and the
+// ground covered shaded, wide on a computer and its own size on a phone; a dot shows its pull on hover and opens it)
+function nightHpChart(b0, pulls) {
+  const list = pulls.map((b) => ({ at: b.wallMs || b.startMs, pull: b.pull, kill: !!b.kill, left: b.kill ? 0 : pullPct(b), label: pullLabel(b), dur: b.duration, go: 'pull:' + S.index.bosses.indexOf(b) })).filter((v) => v.at);
+  if (list.length < 2) return '';
+  const kill = list.find((v) => v.kill), known = list.filter((v) => v.left != null), best = kill || (known.length ? known.reduce((m, v) => (v.left < m.left ? v : m)) : null);
+  const col = kill ? '#ff8000' : best ? (PULL_Q.find(([lo]) => 100 - best.left >= lo) || [0, '#9d9d9d'])[1] : 'var(--line2)';
+  return '<div class="panel rc-hp" style="--ec:' + col + '"><h3 class="nh">Boss health, every pull <small>' + plural(list.length, 'pull') + ' tonight · lower is better' + (best ? ' · best: ' + (best.kill ? 'the kill' : 'pull ' + best.pull + ', ' + esc(best.label)) : '') + '</small></h3>' +
+    '<div class="rc-hp-w">' + progChart(list, b0.boss, [1160, 230]) + '</div><div class="rc-hp-n">' + progChart(list, b0.boss) + '</div></div>';
+}
 function nightRecap(o) {
   const { reps } = o, D = dbfNight(o);
   const lastR = reps.slice().sort((a, b) => a.item.pull - b.item.pull).pop(), cs = (lastR && lastR.combatants) || [];
@@ -4754,7 +4765,8 @@ function nightRecap(o) {
   const prep = lastR ? lpPrep(lastR, prepRows).replace(/<small>[^<]*<\/small>/, '<small>At the last pull (' + lastR.item.pull + ')</small>') : '';
   const talk = '<div class="panel lp-side-p lp-talk" id="nrTalk"><h3 class="nh"><span>Talk to</span><small>Mechanics and staying alive</small></h3><p class="sub">Working out each player\'s night…</p></div>';
   // (Debriefing on all pulls: the four blocks for the top, and the rest as small blocks for the bottom)
-  const more = '<div class="rc-mh"><b>More from all pulls</b><span class="sub">How far each pull got, the numbers, and what to sort before the next pull</span></div>' + (D.bars ? '<div class="rc-wide">' + D.bars + '</div>' : '') +
+  const hp = nightHpChart(o.b0, o.pulls) || D.bars || '';
+  const more = '<div class="rc-mh"><b>More from all pulls</b><span class="sub">Boss health every pull, the numbers, and what to sort before the next pull</span></div>' + (hp ? '<div class="rc-wide">' + hp + '</div>' : '') +
     '<div class="rc-cols">' + [prep, talk, rcNums(D.nums, 'early in the night against later'), lpUsedNight(reps), lpMissNight(reps)].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
   return { html: '<div class="lpv nrv dbf">' + D.top + '<div class="lp-cols"><div class="lp-main">' + D.lists + '</div><div class="lp-side">' + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>', parts: { cards: D.story + D.cards, more } }; // (the night, start to finish, sits above the four blocks (your call, Oct 19))
 }
@@ -16509,7 +16521,7 @@ function nightMerge(o) {
   box.insertAdjacentHTML('afterbegin', '<div class="lpv dbf rc-top">' + NR.parts.cards + '</div>'); box.insertAdjacentHTML('beforeend', '<section class="lpv dbf rc-more">' + NR.parts.more + '</section>');
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
-const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp, me: myPageView };
+const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();
