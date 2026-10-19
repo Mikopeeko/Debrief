@@ -3442,8 +3442,18 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .lpv .lp-talk::before { background: var(--gold); } .lpv .lp-pace.ok::before { background: #45c15c; } .lpv .lp-pace.warn::before { background: var(--lv-mod); } .lpv .lp-pace { border-left: 1px solid var(--line); }
 .lp-pis { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; } .lp-pic { display: inline-flex; align-items: center; gap: 5px; } .lp-pic .pi-ico, .lp-pic .pi-ico svg { width: 15px; height: 15px; margin: 0; }
 .lp-dgo { all: unset; cursor: pointer; border-radius: 4px; } .lp-dgo:hover { color: var(--gold); text-decoration: underline; } .lp-dgo:focus-visible { outline: 2px solid var(--gold); }
-.lpv .lp-dtile { --n: 1; margin: 0; } @media (min-width: 1101px) { .lp-tiles[data-n="2"] { --n: 2; } } @media (max-width: 640px) { .lp-tiles[data-n="2"] { --n: 2; } .lp-tiles[data-n="2"] > :last-child { grid-column: auto; } }
+.lpv .lp-dtile { --n: 1; margin: 0; } .lpv .lp-dtile[data-n="2"] { --n: 2; } .lpv .lp-dtile .pt-i { width: 30px; height: 30px; } @media (min-width: 1101px) { .lp-tiles[data-n="2"] { --n: 2; } } @media (max-width: 640px) { .lp-tiles[data-n="2"] { --n: 2; } .lp-tiles[data-n="2"] > :last-child { grid-column: auto; } }
 .lpv .lp-miss::before { background: var(--lv-maj); } .lpv .lp-miss h3 { font-size: 16px; } .lpv .lp-miss .lp-pr { grid-template-columns: 44px minmax(0, 1fr); padding: 4px 0; font-size: 13px; } .lpv .lp-miss .lp-pk { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+/* (Oct 19: the one player pick, a slim pill in the tab bar on every tab) */
+.op-pick { display: inline-flex; align-items: center; gap: 7px; flex: none; margin: 0 0 7px auto; height: 32px; padding: 0 6px 0 10px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line2); color: var(--muted); transition: border-color .15s, box-shadow .15s; }
+.op-pick:hover { border-color: var(--faint); } .op-pick:focus-within { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(230,180,80,.25); }
+.op-pick.on { border-color: rgba(230,180,80,.6); background: linear-gradient(90deg, rgba(230,180,80,.12), rgba(230,180,80,.03)), var(--raised); padding-left: 4px; }
+.op-pick > svg { width: 16px; height: 16px; flex: none; } .op-pick .av { width: 22px; height: 22px; flex: none; }
+.op-pick select { appearance: none; -webkit-appearance: none; border: 0; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2398a0ad' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 4px center; color: var(--text); font: 600 13.5px var(--body); padding: 0 18px 0 0; max-width: 170px; cursor: pointer; outline: none; }
+.op-pick select option, .op-pick select optgroup { color: var(--text); background: var(--panel); }
+.op-x { all: unset; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--muted); font-size: 12px; cursor: pointer; } .op-x:hover { background: rgba(255,255,255,.08); color: var(--text); } .op-x:focus-visible { outline: 2px solid var(--gold); }
+.tabbar .op-pick + .tb-id { margin-left: 8px; }
+@media (max-width: 1150px) { .tabbar .op-pick { margin-left: 0; } }
 .lp-kmiss { color: var(--lv-maj-t); font-weight: 600; }
 .lp-none { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; } .lp-none.ok { color: #7ee08f; font-weight: 600; }
 .lpv .lp-used .lp-pr { padding: 4px 0; font-size: 13px; } .lpv .lp-used h3 { font-size: 16px; } .lpv .lp-used .lp-pk { color: var(--muted); font-weight: 600; }
@@ -11512,9 +11522,10 @@ function renderMain() {
       const tab = (k) => { const l = name.get(k), soon = k === 'cmp' && CMP_OFF(), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
-      return TAB_ORDER.map(tab).join(''); })() + '</nav>' + tbPull() + '</div>' +
+      return TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Players', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
+  bindTopPick();
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
@@ -12875,12 +12886,29 @@ function onePick(ps0, cur, note, on) {
   const sel = '<select id="mechP" aria-label="Show one player"><option value="">Everyone</option>' + grp.map(([l, xs]) => '<optgroup label="' + l + '">' + xs.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</optgroup>').join('') + '</select>';
   return '<div class="panel mech-pick' + (on ? ' on' : '') + '"><label class="mp-l">' + SN_I.users + 'Show one player ' + sel + '</label>' + note + '</div>';
 }
+// (Oct 19, your ask: one slim player pick in the tab bar, the same on Recap, Mechanics, Assignments, Rotation, Graphs and Players, in
+// place of the box at the top of a page. It shows the pick of the page you're on (Rotation's player, Players' open page, or the shared
+// one); picking sets them all and draws the page again; ✕ goes back to everyone)
+const PICK_TABS = new Set(['live', 'audit', 'overview', 'rot', 'perf', 'player']);
+function topPick() {
+  if (!S.rep || !PICK_TABS.has(S.tab) || !S.rep.players) return '';
+  const ps = [...S.rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), role = (p) => p.role || 'dps';
+  const cur = S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.plSel : S.mechP, pc = cur ? ps.find((p) => p.name === cur) : null;
+  const grp = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'DPS']].map(([k, l]) => [l, ps.filter((p) => role(p) === k).sort((a, b) => a.name.localeCompare(b.name))]).filter(([, xs]) => xs.length);
+  return '<div class="op-pick' + (pc ? ' on' : '') + '" data-tt="Show one player: only their part, on every tab">' + (pc ? avatar(pc, true) : SN_I.users) +
+    '<select id="opP" aria-label="Show one player"' + (pc ? ' style="color:' + pc.color + '"' : '') + '>' + (S.tab === 'rot' ? '' : '<option value="">Everyone</option>') + grp.map(([l, xs]) => '<optgroup label="' + l + '">' + xs.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</optgroup>').join('') + '</select>' +
+    (pc && S.tab !== 'rot' ? '<button class="op-x" id="opPx" type="button" aria-label="Show everyone" title="Show everyone">✕</button>' : '') + '</div>';
+}
+function bindTopPick() {
+  const sel = $('#opP'), x = $('#opPx'); if (sel) sel.onchange = () => { setOneP(sel.value); if (S.tab === 'perf' && sel.value) S.perfLens = 'players'; renderMain(); };
+  if (x) x.onclick = () => { setOneP(null); renderMain(); };
+}
 const onePx = '<button class="btn sm" type="button" id="mechPx">Show everyone</button>';
 // (the line next to it when someone is picked: their face, what is shown, and Show everyone)
 const oneOn = (p, txt) => '<span class="mp-on">' + avatar(p, true) + '<span class="mp-msg">' + txt + '</span>' + onePx + '</span>';
 // (Graphs: each view keeps its own picked player, so the pick sets them all; Mechanics and Night summary read S.mechP)
 const PF_SELK = { dmg: 'perfSel', heal: 'perfSel', taken: 'perfSel', res: 'resSel', cast: 'castSel', cds: 'cdsSel', aura: 'auraSel', card: 'rcSel' };
-function setOneP(n) { n = n || null; S.mechP = n; for (const k of new Set(Object.values(PF_SELK))) S[k] = n; S.resPw = null; S.resMode = null; S._pfSeen = null; }
+function setOneP(n) { n = n || null; S.mechP = n; S.plSel = n; if (n) S.specSel = n; for (const k of new Set(Object.values(PF_SELK))) S[k] = n; S.resPw = null; S.resMode = null; S._pfSeen = null; }
 // (a Graphs view drawn again: a bar picked or closed on it since the last time becomes the pick; else it gets the pick)
 function pfOneSync(kind) { const k = PF_SELK[kind]; if (!k) return; const seen = S._pfSeen;
   if (seen && seen.k === k && (S[k] || null) !== seen.v) setOneP(S[k]); else if (S.mechP && !S[k]) S[k] = S.mechP; }
@@ -12934,7 +12962,7 @@ function audit() {
   // (the fight timeline panel was removed: the audit is organized by phase below instead)
   // (the page header already names the boss and difficulty; only a module note is worth a line here)
   let h = m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '';
-  h += mechPick(r, mp1);
+
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
   // the wipe filter as one quiet line: where this pull's audit stops (the setting itself is on the tab bar, just above)
@@ -14892,8 +14920,7 @@ async function night(part) {
   const rail = '<aside class="sum-rail">' + rcTop + (mCard ? '<div class="sum-rc-g">' + mCard + '</div>' : '') + (aCard ? '<div class="sum-rc-g">' + aCard + '</div>' : '') +
     '<nav class="sum-jump" aria-label="Jump to"><span class="pt-l">Jump to</span><a class="pt-go" href="#sum-prog">How far the night got</a>' + (gm ? '<a class="pt-go" href="#sum-mech">Mechanics</a>' : '') + '<a class="pt-go" href="#sum-asg">Assignments</a></nav></aside>';
   // (the picker on top, for the whole night)
-  const pickS = onePick([...pm.values()], S.mechP, one ? oneOn(pm.get(one), 'Showing <b style="color:' + pm.get(one).color + '">' + esc(one) + '</b> only: their mechanics, assignments and deaths in the ' + plural(oneD.length, 'pull') + ' they were in.')
-    : S.mechP ? '<span class="mp-on sub">' + esc(S.mechP) + " wasn't in these pulls, so everyone is shown. " + onePx + '</span>' : '<span class="sub">Pick a player to see only their part of the night: their mechanics, their assignments and their deaths.</span>', !!one);
+  const pickS = ''; // (the pick is in the tab bar now (Oct 19))
   const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, amber is minor, red is moderate or major, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
   // (Recap: the report cards, how far the night got and what kept going wrong; Mechanics and Assignments: their rows across
   // the pulls, with their report card on top)
@@ -15788,7 +15815,7 @@ function perf() {
   // (on top: the views as tabs, then one row with the phase switch, the wipe filter note and the search. No pull switch
   // here (your call, Oct 18): the pull cards at the top of the page pick the pull, or All pulls, and keep this view)
   void scopeSw; void vals;
-  let h = '<div class="pfv">' + (rot ? '' : pfPick(ps)) + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + (rot ? '' : pfFindBox()) + '</div></div>';
+  let h = '<div class="pfv">' + '' + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + (rot ? '' : pfFindBox()) + '</div></div>';
   if (counts) { view(h + countView(kind, [r], true, ucats, scats) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
   const rowsAll = R3[kind], total = sumOf(rowsAll), key = KEY[kind];
@@ -16233,7 +16260,7 @@ async function perfNight(r0, kind, scopeSw) {
   const counts = PERF_COUNTS.has(kind);
   const cutTxt = counts ? plural(reps.length, 'pull') + ', each up to its wipe filter' : (phSel ? '<b>' + esc(phSel) + '</b> in each pull that reached it' : plural(used.length, 'pull')) + ', each up to its wipe filter' + (short.length ? ' · pull ' + short.map((w) => w.r.item.pull).join(', ') + ' left out (under ' + MIN + 's)' : '');
   void vals;
-  let h = '<div class="pfv">' + (kind === 'spec' ? '' : pfPick([...pm.values()])) + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div>' + (kind === 'spec' ? '' : pfFindBox()) + '</div></div>';
+  let h = '<div class="pfv">' + '' + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(keys, phSel) : '') + '<div class="cutbar"><span class="cutnow">' + cutTxt + '</span></div>' + (kind === 'spec' ? '' : pfFindBox()) + '</div></div>';
   if (counts) { view(h + countView(kind, reps, false, ucats, scats) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons();
     const byP = new Map(reps.map((r) => [r.item.pull, r.item])); $$('#view .pfn-b').forEach((g) => (g.onclick = () => { const b = byP.get(+g.dataset.pull); if (!b) return; S.scope = 'pull'; select(b); })); return; }
@@ -24795,6 +24822,7 @@ function lpTalk(r) {
   for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; let g; try { g = plGrade(r, p, null, credit); } catch (e) { continue; }
     const f = g.fixes.find((z) => (z.crit || (z.gain || 0) >= 3) && !/potion/i.test(z.t) && z.key !== 'm|Assigned cooldown' && (!off || /^m\|/.test(z.key)));
     if (f && !(/^m\|/.test(f.key) === false && g.score != null && g.score >= 88)) list.push({ p, g, f }); } // (an A or S player isn't named for a casting tip alone)
+  if (S.mechP && list.some((x) => x.p.name === S.mechP)) list.splice(0, list.length, ...list.filter((x) => x.p.name === S.mechP)); // (one player picked: just them)
   if (!list.length) return '';
   list.sort((a, b) => (b.f.crit ? 1 : 0) - (a.f.crit ? 1 : 0) || b.f.gain - a.f.gain);
   return '<div class="panel lp-side-p lp-talk"><h3 class="nh"><span>Talk to</span><small>Each player\'s first thing to fix</small></h3>' +
@@ -24899,6 +24927,10 @@ async function lastPull() {
     extra.push(x.lv); wrong.push({ lv: x.lv, w: 0, map: mc ? mc.map || mc.maps[0][1] : null, go: ['audit', 'sec-' + id], ic: sIc(x.s), name: esc(shortT(x.s.title)), vn: shortT(x.s.title), tags: [tc ? T(tc.t) : '', bad.length > 1 ? bad.length + ' times' : ''],
       who: [...new Set(bad.flatMap((row) => row.filter((c) => c.bad && c.p).map((c) => c.p)))], what: bad.length ? esc(capS(((x.s.groups || []).find((g) => g.rows.includes(bad[0])) || { title: '' }).title.replace(/^(.+)$/, '$1: ') + rowText(x.s, bad[0]).replace(/^\d+:\d\d\s*/, ''))) : '', fix: '' }); }
   wrong.sort((a, b) => LVR[a.lv] - LVR[b.lv] || a.w - b.w);
+  // (one player picked in the tab bar: only the problems they were part of, and their death if they died)
+  const oneP = S.mechP && r.players && [...r.players.values()].some((p) => p.name === S.mechP) ? S.mechP : null;
+  if (oneP) { const od = ds.find((d) => d.player === oneP); for (let i = wrong.length - 1; i >= 0; i--) if (!(wrong[i].who || []).includes(oneP)) wrong.splice(i, 1);
+    if (od && od !== ds[0]) wrong.unshift({ lv: 'moderate', w: -1, map: deathMap(r, od), go: ['audit', 'sec-deaths'], ic: spellIcon(0, 'Deaths', true), name: esc(od.player) + ' died', vn: 'Deaths', tags: [T(od.t)], who: [od.player], what: od.ability ? 'To ' + mech(od.ability, od.abilityId) + '.' : '', fix: od.prevent && od.prevent[0] }); }
   const worse = [...P].filter(([id, x]) => { const q = Q.get(id); return q && x.st === 'bad' && q.st !== 'bad'; }).sort((a, b) => ix(a[0]) - ix(b[0])).map(([, x]) => shortT(x.s.title));
   // ---- what went well: a sentence or two, then the clean mechanics as small green tiles, as on Mechanics ----
   const well = [];
@@ -24923,10 +24955,11 @@ async function lastPull() {
   const go = (html, tab, sec, kind) => '<button class="pt-go lp-go" type="button" data-go="' + tab + '"' + (sec ? ' data-sec="' + sec + '"' : '') + (kind ? ' data-kind="' + kind + '"' : '') + ' title="Open ' + TNAME[tab] + '">' + html + '</button>';
   const cmp = (a, b) => (S1 ? lpDelta(a, b, true) : '');
   // (Oct 19, your call: no Mechanics tile (What went wrong has it), and Deaths sits at the top of the right column)
-  const dTile = '<div class="pts lp-tiles lp-dtile">' + go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length) + cmp(S0.deaths, S1 && S1.deaths), ds.length ? LVL_CLS.moderate : 'ok', ds.length ? ds[0].player + ' died first, at ' + T(ds[0].t) : 'Nobody died'), 'audit', 'sec-deaths') + '</div>';
+  // (Deaths and Interrupts side by side at the top of the right column (your call, Oct 19))
+  const dTile = '<div class="pts lp-tiles lp-dtile" data-n="' + (kicks || missedK ? 2 : 1) + '">' + go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length) + cmp(S0.deaths, S1 && S1.deaths), ds.length ? LVL_CLS.moderate : 'ok', ds.length ? ds[0].player + ' died first, at ' + T(ds[0].t) : 'Nobody died'), 'audit', 'sec-deaths') + (kicks || missedK ? go(plTile(plIco('ability_kick'), 'Interrupts', kicks + '<span> ' + (kicks === 1 ? 'kick' : 'kicks') + '</span>', missedK ? 'bad' : kicks ? 'ok' : 'na', missedK ? plural(missedK, 'cast') + ' got through' : kicks ? 'Every cast was kicked' : 'Nothing to kick'), 'audit', 'sec-kicks') : '') + '</div>';
   const tiles0 = '<div class="pts lp-tiles">' +
     (hasNote ? go(plTile(plIco('spell_holy_divinehymn'), 'Healing cooldowns', cdRows.length ? cdRows.length - cdMiss - cdLate + '<span> / ' + cdRows.length + ' on time</span>' + (S1 && S1.cdPct != null ? lpDelta(S0.cdPct, S1.cdPct, false, '%') : '') : '—', !cdRows.length ? 'na' : cdMiss ? 'bad' : cdLate ? 'warn' : 'ok', !cdRows.length ? (hasNote ? 'None were due this pull' : 'No NSRT note for this boss yet') : cdMiss || cdLate ? [cdMiss ? cdMiss + ' missed' : '', cdLate ? cdLate + ' late or early' : ''].filter(Boolean).join(' and ') : 'All on time'), 'overview') : '') +
-    (kicks || missedK ? go(plTile(plIco('ability_kick'), 'Interrupts', kicks + '<span> ' + (kicks === 1 ? 'kick' : 'kicks') + '</span>', missedK ? 'bad' : kicks ? 'ok' : 'na', missedK ? plural(missedK, 'cast') + ' got through' : kicks ? 'Every cast was kicked' : 'Nothing to kick'), 'audit', 'sec-kicks') : '') + '</div>', tiles = tiles0.replace('class="pts lp-tiles', 'data-n="' + (tiles0.match(/class="pt /g) || []).length + '" class="pts lp-tiles');
+    '' + '</div>', tiles = tiles0.replace('class="pts lp-tiles', 'data-n="' + (tiles0.match(/class="pt /g) || []).length + '" class="pts lp-tiles');
   // ---- one sentence under the tiles: how far it got, where the most trouble was, and what got worse ----
   const prog = it.kill ? (isKey ? '<b>The key was timed.</b> Nice work.' : '<b>The boss died.</b> Nice work.') : isBest ? '<b>Best pull of the night</b> so far, at ' + esc(lab(it, r, now)) + (bestLab ? ' (the best before it was ' + esc(bestLab) + ')' : '') + '.'
     : delta != null && delta > 0 ? '<b>Further than last pull</b>, from ' + esc(lab(prevItem, prev, was)) + ' to ' + esc(lab(it, r, now)) + '.' : delta != null && delta < 0 ? 'Not as far as last pull: ' + esc(lab(it, r, now)) + ', after ' + esc(lab(prevItem, prev, was)) + '.' : '';
@@ -24954,7 +24987,7 @@ async function lastPull() {
   const needNames = cs.some((c) => c.auras.some((a) => !a.name && a.ability));
   if (cs.length && !needNames) rows = prepRows();
   const side = dTile + lpPace(r, bestR, bestO && bestO.x.pull) + lpPrep(r, cs.length ? rows : false) + lpTalk(r) + lpUsed(r) + lpCds(r, cdRows) + lpMiss(r);
-  h += tiles + '<div class="lp-cols"><div class="lp-main">' + wellP + wP + '</div><div class="lp-side">' + side + '</div></div>';
+  h += (hasNote ? tiles : '') + '<div class="lp-cols"><div class="lp-main">' + wellP + wP + '</div><div class="lp-side">' + side + '</div></div>';
   if (!$('#view') || S.tab !== 'live' || S.rep !== r) return; // (another pull or tab was opened while this one was being read)
   view('<div class="lpv">' + h + '</div>'); refreshIcons();
   if ($('#lpLatest')) $('#lpLatest').onclick = () => select(same[same.length - 1]);

@@ -3442,8 +3442,18 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .lpv .lp-talk::before { background: var(--gold); } .lpv .lp-pace.ok::before { background: #45c15c; } .lpv .lp-pace.warn::before { background: var(--lv-mod); } .lpv .lp-pace { border-left: 1px solid var(--line); }
 .lp-pis { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; } .lp-pic { display: inline-flex; align-items: center; gap: 5px; } .lp-pic .pi-ico, .lp-pic .pi-ico svg { width: 15px; height: 15px; margin: 0; }
 .lp-dgo { all: unset; cursor: pointer; border-radius: 4px; } .lp-dgo:hover { color: var(--gold); text-decoration: underline; } .lp-dgo:focus-visible { outline: 2px solid var(--gold); }
-.lpv .lp-dtile { --n: 1; margin: 0; } @media (min-width: 1101px) { .lp-tiles[data-n="2"] { --n: 2; } } @media (max-width: 640px) { .lp-tiles[data-n="2"] { --n: 2; } .lp-tiles[data-n="2"] > :last-child { grid-column: auto; } }
+.lpv .lp-dtile { --n: 1; margin: 0; } .lpv .lp-dtile[data-n="2"] { --n: 2; } .lpv .lp-dtile .pt-i { width: 30px; height: 30px; } @media (min-width: 1101px) { .lp-tiles[data-n="2"] { --n: 2; } } @media (max-width: 640px) { .lp-tiles[data-n="2"] { --n: 2; } .lp-tiles[data-n="2"] > :last-child { grid-column: auto; } }
 .lpv .lp-miss::before { background: var(--lv-maj); } .lpv .lp-miss h3 { font-size: 16px; } .lpv .lp-miss .lp-pr { grid-template-columns: 44px minmax(0, 1fr); padding: 4px 0; font-size: 13px; } .lpv .lp-miss .lp-pk { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+/* (Oct 19: the one player pick, a slim pill in the tab bar on every tab) */
+.op-pick { display: inline-flex; align-items: center; gap: 7px; flex: none; margin: 0 0 7px auto; height: 32px; padding: 0 6px 0 10px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line2); color: var(--muted); transition: border-color .15s, box-shadow .15s; }
+.op-pick:hover { border-color: var(--faint); } .op-pick:focus-within { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(230,180,80,.25); }
+.op-pick.on { border-color: rgba(230,180,80,.6); background: linear-gradient(90deg, rgba(230,180,80,.12), rgba(230,180,80,.03)), var(--raised); padding-left: 4px; }
+.op-pick > svg { width: 16px; height: 16px; flex: none; } .op-pick .av { width: 22px; height: 22px; flex: none; }
+.op-pick select { appearance: none; -webkit-appearance: none; border: 0; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2398a0ad' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 4px center; color: var(--text); font: 600 13.5px var(--body); padding: 0 18px 0 0; max-width: 170px; cursor: pointer; outline: none; }
+.op-pick select option, .op-pick select optgroup { color: var(--text); background: var(--panel); }
+.op-x { all: unset; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--muted); font-size: 12px; cursor: pointer; } .op-x:hover { background: rgba(255,255,255,.08); color: var(--text); } .op-x:focus-visible { outline: 2px solid var(--gold); }
+.tabbar .op-pick + .tb-id { margin-left: 8px; }
+@media (max-width: 1150px) { .tabbar .op-pick { margin-left: 0; } }
 .lp-kmiss { color: var(--lv-maj-t); font-weight: 600; }
 .lp-none { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; } .lp-none.ok { color: #7ee08f; font-weight: 600; }
 .lpv .lp-used .lp-pr { padding: 4px 0; font-size: 13px; } .lpv .lp-used h3 { font-size: 16px; } .lpv .lp-used .lp-pk { color: var(--muted); font-weight: 600; }
