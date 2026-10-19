@@ -213,6 +213,19 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 224: Notes that find their own nights, and Ula'tek's names as instructions (the Discord session's work)
+- [x] **Each saved note lists the nights it fits:** under each note on Assignments, "Fits your saved logs:" with a button
+  for each saved raid night where at least half of the note's names were there, newest first. A click opens that night.
+- [x] **The note check after Save has "Open the pulls from <night>"**, so a note you just pasted takes you straight to
+  the pulls it's for.
+- [x] **The same note can't be saved twice for one boss:** saving one you already have shows "You already have this
+  note" instead (spacing and capitals don't count as a difference). Moving a note to its right boss skips a copy too.
+- [x] **Ula'tek's section names say what the raid has to do,** in your new style "Name (Short instruction)": "Grasping
+  Fangs (Tether breaks)", "Caustic Waves (Dodge waves)", "Eggs (No Vipers)". Checked on Heroic Ula'tek.
+- [x] Fixed: on Mechanics, opening a section while switching tabs logged an error in the background (a map trying to
+  draw after the page had moved on). Nothing visible broke, but it's gone now.
+- These went live with round 223's upload; this round adds the background fix.
+
 ## 2026-10-18, round 223: Damage into the adds, as plain as the other graphs (your note)
 - [x] **Graphs → Damage → Targets reads like the other views now:**
   - The chart is one line per target, in six colours that are easy to tell apart (blue, amber, purple, pink, teal,

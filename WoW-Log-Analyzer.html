@@ -11783,9 +11783,11 @@ function audit() {
   // (every mini map shows on its own (your note, Oct 18): no Map button, no drop-down. A map draws once its part of the
   // page is on screen (its mechanic opened, its pane picked), so a closed mechanic costs nothing; side by side when a row
   // has more than one)
+  // (a section opened or a pane picked after the page has moved on, like a tab switch, has no page to draw into: skip it)
   const drawMaps = () => {
+    const view = $('#view'); if (!view) return;
     const sets = new Map();
-    for (const b of $('#view').querySelectorAll('.mmb:not([data-shown])')) { if (!b.offsetParent) continue;
+    for (const b of view.querySelectorAll('.mmb:not([data-shown])')) { if (!b.offsetParent) continue;
       const tr = b.closest('tr'), box = tr || (b.closest('.md-d') && b.closest('.md-d').querySelector('.md-map')) || $('#mm-' + b.dataset.sec); if (!box) continue;
       b.dataset.shown = '1'; b.hidden = true; const l = sets.get(box) || []; l.push(b); sets.set(box, l); }
     for (const [el, bs] of sets) {
@@ -11801,7 +11803,7 @@ function audit() {
   const leadObs = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && e.target._lead) { leadObs.unobserve(e.target); e.target._lead(); } }, { threshold: 0.6 }) : null;
   drawMaps();
   wrThumbFit($('#view')); // (What went wrong's small maps)
-  $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open) drawMaps(); }));
+  $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open && d.isConnected) drawMaps(); }));
   $('#view').querySelectorAll('.md-i, .dd-r').forEach((b) => b.addEventListener('click', () => setTimeout(drawMaps, 0)));
 }
 // Fight audit panels shown as a list with a detail pane (the ones with many columns per row)
