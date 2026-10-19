@@ -4525,6 +4525,13 @@ function gradeAssign(reps) {
 }
 // (a whole-night tile's pulls as a strip of squares, one per pull: red went wrong, yellow-green could be better, green clean, grey
 // didn't come up; a square opens that pull (Oct 19, your ask: laid out to fit a night of 30 pulls))
+// (late in the night (Oct 19, your call: what's still going wrong late in the night comes first): the last third of the pulls it came
+// up in, 5 at least; how many of those went wrong, and the pull it was solved by when it went wrong earlier and never again since)
+function nightLate(ns, st) {
+  const j = ns.filter((n) => (st(n) || 'na') !== 'na'), K = Math.min(j.length, Math.max(5, Math.ceil(j.length / 3))), bad = (n) => st(n) === 'bad' || st(n) === 'warn';
+  const recent = j.slice(j.length - K).filter(bad).length, li = j.map(bad).lastIndexOf(true);
+  return { K, recent, solved: li >= 0 && !recent && li < j.length - 1 ? j[li + 1] : null };
+}
 const NPL_W = { bad: 'went wrong', warn: 'could be better', ok: 'clean', na: 'didn\'t come up' };
 const nplStrip = (ns, st) => '<span class="npl">' + ns.map((n) => { const k = st(n) || 'na'; return '<i class="npl-' + k + '" data-npq="' + n + '" title="' + esc('Pull ' + n + ': ' + NPL_W[k]) + '"></i>'; }).join('') + '</span>';
 // Mechanics on the whole night (Oct 19, your call: "a more condensed version" of a single pull's Mechanics): the same look, with
@@ -4544,13 +4551,14 @@ function nightMechC(o) {
   const LC = { major: 'bad', moderate: 'bad mod', minor: 'warn', clean: 'ok' }, LW = { major: '!!! Major', moderate: '!! Moderate', minor: '! Minor', clean: '✓ clean' };
   const worstOf = (r) => { const b = judged(r).filter((n) => stAt(r, n) === 'bad'), w = judged(r).filter((n) => stAt(r, n) === 'warn'); return r.v.worst || b.concat(w).sort((a, z) => z - a)[0] || judged(r)[judged(r).length - 1]; };
   const MAPS = [];
-  const tile = (r, big) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r);
+  const lateOf = (r) => r._late || (r._late = nightLate(pullNs, (n) => stAt(r, n)));
+  const tile = (r, big) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), L = lateOf(r);
     let mp = null; for (const n of [worst].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { mp = mapIn(n, r.x.id); if (mp) break; }
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
     return '<details class="panel secd st-' + LC[lv] + ' mcx-tile' + (big ? ' mcx-big' : '') + '" data-np="' + worst + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + (big ? '<span class="mcx-rib">Fix this first</span>' : '') +
       (mp ? '<span class="wr-map mcx-map">' + miniMap(mp, pm) + '</span>' : '') + '<span class="mcx-hd">' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span></span>' +
-      '<span class="mcx-ln"><span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + nplStrip(pullNs, (n) => stAt(r, n)) +
+      '<span class="mcx-ln">' + (L.solved ? '<span class="wr-tag nmc-solved">✓ solved by pull ' + L.solved + '</span>' : '<span class="wr-tag">' + L.recent + ' of the last ' + plural(L.K, 'pull') + '</span>') + '<span class="wr-tag">' + wN + ' of ' + judged(r).length + ' in all</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + nplStrip(pullNs, (n) => stAt(r, n)) +
       '<span class="mcx-s">' + esc(capS(r.v.txt)) + (r.v.trend ? '. ' + esc(capS(r.v.trend)) : '') + '.</span></span></summary></details>'; };
   const chip = (r) => '<details class="panel secd st-ok" data-np="' + (judged(r)[judged(r).length - 1] || '') + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ok">✓ clean</span></summary></details>';
   const ring = (l) => { const lv = l.map(lvOf), n = (k) => lv.filter((v) => v === k).length, tot = l.length; if (!tot) return ''; const C = 2 * Math.PI * 14;
@@ -4560,7 +4568,7 @@ function nightMechC(o) {
   const lvTxt = (o2) => { const w = ['major', 'moderate', 'minor'].filter((k) => o2[k]).map((k) => ({ major: '!!!', moderate: '!!', minor: '!' })[k] + ' ' + o2[k] + ' ' + k); return w.length ? w.join(' · ') : '✓ clean'; };
   // ---- each phase ----
   const phases = groups.map((g, i) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length); if (!l.length) return '';
-    const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || a.ord - b.ord), ok = l.filter((r) => lvOf(r) === 'clean');
+    const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => (!!lateOf(a).solved - !!lateOf(b).solved) || lateOf(b).recent / lateOf(b).K - lateOf(a).recent / lateOf(a).K || ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || a.ord - b.ord), ok = l.filter((r) => lvOf(r) === 'clean');
     const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id))), pl = pr.slice(); if (bigI > 0) pl.unshift(pl.splice(bigI, 1)[0]);
     const lv = cntL(l), lvl = lv.major ? 'major' : lv.moderate ? 'moderate' : lv.minor ? 'minor' : 'clean', m = String(g.name).match(/^P(\d+)/);
     return '<details class="phase mcx-ph" data-mst="' + lvl + '" open><summary><span class="mcx-pn">' + (m ? m[1] : /^intermission/i.test(g.name) ? 'Int' : /^whole/i.test(g.name) ? 'All' : i + 1) + '</span><b>' + esc(g.name) + '</b>' + ring(l) + '<span class="sst ' + LC[lvl] + '">' + lvTxt(lv) + '</span></summary>' +
@@ -4569,12 +4577,13 @@ function nightMechC(o) {
   const all = groups.flatMap((g) => g.list).filter((r) => !isInfo(r) && judged(r).length), probs = all.filter((r) => lvOf(r) !== 'clean');
   const tot = (k) => all.filter((r) => lvOf(r) === k).length;
   const X = (i) => ((i + 0.5) / N * 100).toFixed(2) + '%';
-  const lanes = probs.sort((a, b) => judged(b).filter((n) => stAt(b, n) !== 'ok').length - judged(a).filter((n) => stAt(a, n) !== 'ok').length).map((r) => { const nm = shortT(r.title), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length;
+  const lanes = probs.sort((a, b) => lateOf(b).recent / lateOf(b).K - lateOf(a).recent / lateOf(a).K || judged(b).filter((n) => stAt(b, n) !== 'ok').length - judged(a).filter((n) => stAt(a, n) !== 'ok').length).map((r) => { const nm = shortT(r.title), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length;
     return '<div class="mcx-lane"><span class="mcx-ll" title="' + esc(nm + ': went wrong in ' + wN + ' of ' + judged(r).length + ' pulls') + '">' + r.icon + '<span>' + esc((nm.match(/\(([^)]+)\)/) || [0, nm])[1]) + '</span><b>' + wN + '<i>/' + judged(r).length + '</i></b></span><div class="mcx-tr">' +
       pullNs.map((n, i) => { const st = stAt(r, n); if (st === 'na') return ''; const p = r.x.per.get(n), cls = st === 'bad' ? LC[tierOf(boss, r.x.id)] : st === 'warn' ? 'warn' : '';
         return st === 'ok' ? '<i class="mcx-okt" style="left:' + X(i) + '" title="' + esc('Pull ' + n + ': clean') + '"></i>' : '<a class="mcx-dot ' + cls + '" href="#" data-np="' + n + '" data-sec="sec-' + esc(r.x.id) + '" style="left:' + X(i) + '" title="' + esc('Pull ' + n + ' · ' + res(byPull.get(n)) + ': ' + ((p && p.lines && p.lines[0] && p.lines[0].txt) || (st === 'bad' ? 'went wrong' : 'could be better'))) + '"></a>'; }).join('') + '</div></div>'; }).join('');
   const axis = '<div class="mcx-ax2">' + pullNs.map((n, i) => '<span style="left:calc(var(--lw) + (100% - var(--lw)) * ' + ((i + 0.5) / N).toFixed(4) + ')">' + n + '</span>').join('') + '</div>';
-  const topP = probs[0], verdict = topP ? '<p class="mcx-verdict">Most trouble: <b>' + probs.slice(0, 2).map((r) => esc(shortT(r.title))).join('</b> and <b>') + '</b>, in ' + judged(topP).filter((n) => stAt(topP, n) !== 'ok').length + ' of ' + plural(N, 'pull') + '.' +
+  const lateL = probs.filter((r) => lateOf(r).recent), solvedL = probs.filter((r) => lateOf(r).solved), topP = probs[0];
+  const verdict = topP ? '<p class="mcx-verdict">' + (lateL.length ? 'Still going wrong late in the night: <b>' + lateL.slice(0, 2).map((r) => esc(shortT(r.title))).join('</b> and <b>') + '</b>.' : 'Nothing was still going wrong late in the night.') + (solvedL.length ? ' <span class="mcx-good">Solved during the night: ' + esc(solvedL.slice(0, 3).map((r) => shortT(r.title)).join(', ')) + '.</span>' : '') +
     (tot('clean') ? ' <span class="mcx-good">' + plural(tot('clean'), 'mechanic') + ' clean all night.</span>' : '') + '</p>' : '<p class="mcx-verdict"><span class="mcx-good">Every mechanic was clean all night.</span></p>';
   const strip = '<div class="mcx-strip">' + [['major', 'bad', 'Major'], ['moderate', 'bad mod', 'Moderate'], ['minor', 'warn', 'Minor'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + tot(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Each mechanic at its worst over ' + plural(N, 'pull') + (gm && !one ? ' · mechanics score ' + Math.round(gm.overall) + ' / 100' : '') + '.</span></div>';
   const head = '<div class="panel mcx-tl nmc-tl"><h3 class="nh">The night at a glance<small>A dot per pull where it went wrong. Click one to open that pull.</small></h3>' + verdict + (lanes ? '<div class="mcx-lanes nmc-lanes">' + lanes + axis + '</div>' : '') + strip + '</div>';
@@ -4607,19 +4616,22 @@ function nightRecap(o) {
   const wrong = [], causes = new Map();
   for (const r of wipesR) { const c = causeOf(r); if (!c) continue; const y = causes.get(c.label) || { c, n: 0, who: new Map(), last: null, ps: new Set() }; y.n++; y.ps.add(r.item.pull); if (c.who) y.who.set(c.who, (y.who.get(c.who) || 0) + 1); y.last = r; causes.set(c.label, y); }
   for (const y of [...causes.values()].sort((a, b) => b.n - a.n)) { if (y.n < 2 && wipesR.length > 2) continue;
-    const r = y.last, d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0], top = [...y.who].sort((u, v) => v[1] - u[1]);
+    const r = y.last, d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0], top = [...y.who].sort((u, v) => v[1] - u[1]), stC = (n) => (y.ps.has(n) ? 'bad' : byPull.get(n) && !byPull.get(n).item.kill ? 'ok' : 'na'), L = nightLate(pullNs, stC);
     wrong.push({ lv: y.n >= Math.max(3, wipesR.length / 3) ? 'major' : 'moderate', w: -1, n: r.item.pull, sec: 'sec-deaths', map: d && d.player === y.c.who ? deathMap(r, d) : null, ic: spellIcon(y.c.id || 0, y.c.label, true), name: mech(y.c.label, y.c.id), vn: y.c.label,
-      tags: [y.n + ' of ' + plural(wipesR.length, 'wipe'), 'latest: pull ' + r.item.pull], who: top.map(([n]) => n), what: 'It ended ' + y.n + ' of ' + plural(wipesR.length, 'wipe') + '.' + (top.length ? ' The first to die ' + (top.length === 1 ? 'was ' : 'were ') + top.slice(0, 3).map(([n, k]) => n + (k > 1 ? ' (' + k + ')' : '')).join(', ') + '.' : ''),
-      fix: fixFor([y.c.label]) || (d && d.prevent && d.prevent[0]) || '', st: (n) => (y.ps.has(n) ? 'bad' : byPull.get(n) && !byPull.get(n).item.kill ? 'ok' : 'na') }); }
-  const covered = new Set([...causes.keys()].map((k) => k.toLowerCase()));
+      late: L, tags: [L.solved ? 'solved by pull ' + L.solved : L.recent + ' of the last ' + plural(L.K, 'wipe'), y.n + ' of ' + plural(wipesR.length, 'wipe') + ' in all'], who: top.map(([n]) => n), what: 'It ended ' + y.n + ' of ' + plural(wipesR.length, 'wipe') + '.' + (top.length ? ' The first to die ' + (top.length === 1 ? 'was ' : 'were ') + top.slice(0, 3).map(([n, k]) => n + (k > 1 ? ' (' + k + ')' : '')).join(', ') + '.' : ''),
+      fix: fixFor([y.c.label]) || (d && d.prevent && d.prevent[0]) || '', st: stC }); }
+  const covered = new Set([...causes.keys()].map((k) => k.toLowerCase())); let mechN = 0, solvedN = 0;
   for (const x of mechL) { if (x.info || x.id === 'deaths') continue; const v = verdictOf(x.per); if (v.st !== 'bad' && v.st !== 'warn') continue;
     const nm = shortT(x.title), sp = x.spell && x.spell[1]; if (covered.has(String(sp || '').toLowerCase()) || covered.has(nm.toLowerCase())) continue;
+    // (a mechanic that's no longer going wrong late in the night is left to Mechanics (your call: Recap says what ended the wipes and what's still wrong))
+    const stM = (n) => (x.per.get(n) || {}).st || 'na', L = nightLate(pullNs, stM); mechN++; if (!L.recent) { if (L.solved) solvedN++; continue; }
     const ns = [...x.per].filter(([, p]) => p.st === 'bad' || p.st === 'warn').map(([n]) => n), worst = v.worst || ns[ns.length - 1];
     let mp = null; for (const n of [worst].concat(ns.slice().reverse())) { mp = mapIn(n, x.id); if (mp) break; }
     const who = new Map(); for (const p of x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     wrong.push({ lv: v.st === 'bad' ? tierOf(boss, x.id) : 'minor', w: 0, n: worst, sec: 'sec-' + x.id, map: mp, ic: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, sp || '', true), name: esc(nm), vn: nm,
-      tags: [ns.length + ' of ' + plural(v.j, 'pull'), worst ? 'worst: pull ' + worst : ''], who: [...who].sort((u, w) => w[1] - u[1]).map(([n]) => n), what: capS(v.txt) + '.' + (v.trend ? ' ' + capS(v.trend) + '.' : ''), fix: fixFor([sp, nm, x.title]), st: (n) => (x.per.get(n) || {}).st || 'na' }); }
-  wrong.sort((a, b) => LVR[a.lv] - LVR[b.lv] || a.w - b.w);
+      late: L, tags: [L.recent + ' of the last ' + plural(L.K, 'pull'), ns.length + ' of ' + plural(v.j, 'pull') + ' in all'], who: [...who].sort((u, w) => w[1] - u[1]).map(([n]) => n), what: capS(v.txt) + '.' + (v.trend ? ' ' + capS(v.trend) + '.' : ''), fix: fixFor([sp, nm, x.title]), st: stM }); }
+  // (what's still going wrong late first; a wipe cause solved earlier in the night last)
+  wrong.sort((a, b) => (!!a.late.solved - !!b.late.solved) || b.late.recent / b.late.K - a.late.recent / a.late.K || LVR[a.lv] - LVR[b.lv] || a.w - b.w);
   if (one) for (let i = wrong.length - 1; i >= 0; i--) if (!wrong[i].who.includes(one)) wrong.splice(i, 1);
   const MAPS = [], wTile = (x, big) => { const tg = x.tags.filter(Boolean), fs = x.who.map(face).filter(Boolean);
     return '<div class="rcp-w lv-' + x.lv + (big ? ' rcp-big' : '') + (x.map ? '' : ' rcp-nomap') + '" role="button" tabindex="0" data-npull="' + x.n + '" data-sec="' + esc(x.sec || '') + '" title="Open pull ' + x.n + ' on Mechanics">' +
@@ -4627,11 +4639,16 @@ function nightRecap(o) {
       '<div class="rcp-hd">' + x.ic + '<b>' + x.name + '</b>' + (fs.length ? '<span class="rcp-who">' + fs.slice(0, 3).join('') + (fs.length > 3 ? '<i>+' + (fs.length - 3) + '</i>' : '') + '</span>' : '') + '</div>' +
       '<div class="rcp-bd">' + (tg.length ? '<div class="rcp-tg">' + tg.map((t) => '<span class="wr-tag">' + esc(t) + '</span>').join('') + '</div>' : '') + (x.st ? nplStrip(pullNs, x.st) : '') + (x.what ? '<div class="rcp-wt">' + esc(x.what) + '</div>' : '') +
       (x.fix ? '<div class="rcp-fx"><b>Next pull:</b> ' + esc(x.fix) + '</div>' : '') + '</div>' + (big ? '<span class="rcp-rib">Fix this first</span>' : '') + '<span class="rcp-lv ' + x.lv + '">' + LVW[x.lv] + '</span></div>'; };
+  // (how far each pull got, a bar per pull across the top (your call, Oct 19); a bar opens that pull)
+  const pS = pulls.slice().sort((u, v) => u.pull - v.pull), hOf = (q) => (q.kill ? 100 : pullPct(q) != null ? Math.max(3, 100 - pullPct(q)) : 3), bestW = pS.filter((q) => !q.kill && pullPct(q) != null).reduce((m, q) => (!m || pullPct(q) < pullPct(m) ? q : m), null);
+  const progP = pS.length > 1 ? '<div class="panel npg"><h3 class="nh"><span>How far each pull got</span><small>' + (kill ? 'killed on pull ' + kill.pull : '') + (kill && bestW ? ' · ' : '') + (bestW ? 'best wipe: pull ' + bestW.pull + ', ' + esc(pullLabel(bestW)) : '') + ' · click a pull to open it</small></h3><div class="npg-bars">' +
+    pS.map((q) => '<button class="npg-b' + (q.kill ? ' kill' : q === bestW ? ' best' : '') + '" type="button" data-npull="' + q.pull + '" style="--h:' + hOf(q).toFixed(1) + '%;--c:' + (q.kill ? '#ff8000' : (PULL_Q.find(([lo]) => hOf(q) >= lo) || [0, '#9d9d9d'])[1]) + '" title="' + esc('Pull ' + q.pull + ': ' + pullLabel(q) + ', ' + T(q.duration || 0)) + '"><i></i><span>' + q.pull + '</span></button>').join('') + '</div></div>' : '';
   const lvCnt = (l) => l.reduce((m, v) => { m[v]++; return m; }, { major: 0, moderate: 0, minor: 0, clean: 0 });
   const lvHtml = (m) => ['major', 'moderate', 'minor'].filter((k) => m[k]).map((k) => '<span class="rcp-c ' + k + '">' + m[k] + ' ' + k + '</span>').join('<span class="rcp-sep"> · </span>');
   const bigI = wrong.findIndex((x) => x.map), wl = wrong.slice(); if (bigI > 0) wl.unshift(wl.splice(bigI, 1)[0]);
   const wP = '<div class="panel rcp-wp"><h3 class="nh"><span>What went wrong</span>' + (wrong.length ? '<span class="rcp-sum">' + lvHtml(lvCnt(wrong.map((x) => x.lv))) + '</span>' : hst('ok', 'nothing')) + '</h3>' +
-    (wl.length ? '<div class="rcp-grid">' + wl.map((x) => wTile(x, false)).join('') + '</div>' : '<p class="rcp-none">✓ Nothing kept going wrong tonight.</p>') + '</div>';
+    (wl.length ? '<div class="rcp-grid">' + wl.map((x) => wTile(x, false)).join('') + '</div>' : '<p class="rcp-none">✓ Nothing was still going wrong late in the night.</p>') +
+    (mechN ? '<button class="lp-dgo rcp-allm" type="button" data-go="audit">Every mechanic over the night is on Mechanics' + (solvedN ? ' (' + solvedN + ' solved earlier tonight)' : '') + ' ›</button>' : '') + '</div>';
   // ---- what went great ----
   const kicks = reps.reduce((s, r) => s + r.interrupts.filter((k) => k.t <= cutT(r) + 0.05).length, 0), missK = reps.reduce((s, r) => s + (r.missedKicks || []).filter((m) => m.t <= cutT(r) + 0.05).length, 0);
   const well = [].concat(kill ? ['<b>The boss died on pull ' + kill.pull + '.</b> Nice work.'] : bestP ? ['<b>Best pull: pull ' + bestP.pull + '</b>, at ' + esc(pullLabel(bestP)) + '.'] : [],
@@ -4653,7 +4670,7 @@ function nightRecap(o) {
   const prepRows = cs.length && !cs.some((c) => c.auras.some((a) => !a.name && a.ability)) ? cs.map((c) => { const p = [...lastR.players.values()].find((y) => y.name === c.name || (c.name && y.name.split('-')[0] === c.name.split('-')[0])); return p ? auditChar(c, p) : null; }).filter(Boolean) : false;
   const prep = lastR ? lpPrep(lastR, prepRows).replace(/<small>[^<]*<\/small>/, '<small>At the last pull (' + lastR.item.pull + ')</small>') : '';
   const talk = '<div class="panel lp-side-p lp-talk" id="nrTalk"><h3 class="nh"><span>Talk to</span><small>What each player should fix</small></h3><p class="sub">Working out each player\'s night…</p></div>';
-  const html = '<div class="lpv nrv"><div class="lp-cols"><div class="lp-main">' + wellP + wP + '</div><div class="lp-side">' + dTile + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>';
+  const html = '<div class="lpv nrv">' + progP + '<div class="lp-cols"><div class="lp-main">' + wellP + wP + '</div><div class="lp-side">' + dTile + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>';
   return { html, MAPS, pmap };
 }
 // (Talk to over the night: each player's first thing to fix, from every pull (the Report card's own work, so it opens quickly after))

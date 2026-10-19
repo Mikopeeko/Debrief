@@ -3733,6 +3733,16 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .npl { display: flex; flex-wrap: wrap; gap: 2px; margin: 2px 0 6px; } .npl i { width: 9px; height: 9px; border-radius: 2px; background: rgba(255,255,255,.08); cursor: pointer; }
 .npl i:hover { outline: 1px solid var(--text); } .npl .npl-bad { background: var(--lv-maj); } .npl .npl-warn { background: var(--lv-min); } .npl .npl-ok { background: rgba(69,193,92,.6); }
 .nmc .mcx-ln .npl { flex-basis: 100%; margin: 0; } .nmc details.secd.mcx-tile:not([open]):not(:has(.mcx-map)) .mcx-hd { padding-right: 96px; }
+/* (Oct 19: the whole night's progress bars on Recap, the link to every mechanic, and the solved tag) */
+.npg { margin: 0 0 14px; } .npg-bars { display: flex; align-items: flex-end; gap: 3px; height: 78px; }
+.npg-b { all: unset; flex: 1 1 0; min-width: 5px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; cursor: pointer; }
+.npg-b i { display: block; width: 100%; height: calc(var(--h) - 14px); min-height: 2px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 45%, transparent)); }
+.npg-b span { margin-top: 3px; font: 600 10px var(--body); color: var(--faint); line-height: 11px; } .npg-b:hover i { filter: brightness(1.25); } .npg-b:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.npg-b.best i { box-shadow: 0 0 0 2px var(--gold); } .npg-b.best span { color: var(--gold); } .npg-b.kill i { box-shadow: 0 0 12px rgba(255,128,0,.55); } .npg-b.kill span { color: #ff8000; }
+@media (max-width: 640px) { .npg-bars { gap: 2px; } .npg-b:not(:nth-child(5n)):not(:first-child):not(.kill):not(.best) span { visibility: hidden; } }
+.rcp-allm { display: block; margin: 12px 0 0; color: var(--muted); font: 600 13px var(--body); } .rcp-allm:hover { color: var(--gold); }
+.nmc details.secd.mcx-tile > summary > * { max-width: 100%; min-width: 0; box-sizing: border-box; } .nmc details.secd.mcx-tile .mcx-hd .sechd { min-width: 0; overflow: hidden; }
+.wr-tag.nmc-solved { color: #7ee08f; background: rgba(69,193,92,.12); }
 </style>
 
 
