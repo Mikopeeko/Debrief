@@ -9971,6 +9971,9 @@ function genRun(spec, D, reps, name, one) {
   const WIN0 = D.win && on(D.win) && (D.win.buffOnly ? per.some(({ p }) => (D.win.buffs || D.win.names || [D.win.n]).some((n) => p.buffs.has(n))) : pressed(D.win)) ? D.win : null;
   // (a key-spell target that depends on the hero tree: Devourer's Annihilator aims for 4 Collapsing Stars a window, Void-Scarred for 3)
   const WIN = WIN0 && WIN0.keyMinH ? { ...WIN0, keyMin: WIN0.keyMinH[heroN] != null ? WIN0.keyMinH[heroN] : WIN0.keyMin } : WIN0;
+  // (pairs: did one spell go with another, like Death Sweeps inside Essence Break, Shiv inside Kingsbane, Garrote after Vanish, Eye Beam already used
+  // before Metamorphosis, or each Secret Technique inside Shadow Dance. Kept when its spell (or buff) shows up over these pulls)
+  const pairs = (D.pairs || []).filter((q) => on(q) && (q.buf ? per.some(({ p }) => p.buffs.has(q.buf)) : pressedAny(q.a)));
   // (this boss's top players' numbers, for the checks whose bar follows them)
   const TB0 = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const winWith = WIN ? (WIN.with || []).map((g) => [].concat(g)).filter((g) => g.some(pressedAny)) : [];
@@ -9988,7 +9991,8 @@ function genRun(spec, D, reps, name, one) {
     const gMid = gs.length ? gs[Math.floor(gs.length * 0.35)] : 1.5, hasteF = D.gcd1 ? 1 : Math.max(1, Math.min(1.6, 1.5 / Math.max(0.75, gMid)));
     // (each spell pressed on cooldown and each big cooldown, against how often it could have been pressed)
     { const forced = castForced(r, p);
-      for (const q of rot.concat(cds)) { const n = lc(q.n), nms = nmsOf(q), ab = c.ab.filter((y) => nms.includes(lc(y.name))), a = ab[0], ts = ab.flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w);
+      // (one1: a spell the log shows more than once a press, like Secret Technique's clones, counts once)
+      for (const q of rot.concat(cds)) { const n = lc(q.n), nms = nmsOf(q), ab = c.ab.filter((y) => nms.includes(lc(y.name))), a = ab[0], ts = ab.flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w).filter((t, i, z) => !q.one1 || !i || t - z[i - 1] > 0.9);
         const ci = a && !q.fix ? cdInfo(a.id) : null; if (ci === undefined) wait++; const tc = (q.cdT || []).find(([tn]) => tal(tn)), tch = (q.chT || []).find(([tn]) => tal(tn));
         let cd = tc ? tc[1] : ci && ci.cd >= 4 ? ci.cd : q.cd, ch = Math.max(tch ? tch[1] : q.ch || 1, ci && !tch ? ci.ch || 1 : 1); if (q.h) cd /= hasteF; const ch0 = ch; if (ch === 1 && ts.some((t, i) => i && t - ts[i - 1] < 0.5 * cd)) ch = 2;
         if (ch === 1 && a && !q.noSeen) { const sc = seenCd(r, p, a.name, cd); if (sc) cd = sc; const mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i])); if (mg >= 0.75 * cd && mg < cd) cd = mg; }
@@ -10045,6 +10049,15 @@ function genRun(spec, D, reps, name, one) {
       s.winOut = { rate: outR, cpm: outCpm }; s.m.win = s.win.filter((w) => w.st !== 'ok').map((w) => [w.t, w.e]);
       // (rate: one spell's casts a minute inside the windows, like Devourer's Void Ray, which keeps Void Metamorphosis going)
       if (WIN.rate) s.wr = { n: sp.reduce((v, [a, e]) => v + inP(WIN.rate.n, a, e), 0), len: sp.reduce((v, [a, e]) => v + e - a, 0) }; }
+    // (pairs: each press of its spell (or each time its buff was up) is one window, from pre seconds before to dur (and post) seconds after; it counts when
+    // enough of the partner spells went in. inBuf instead: each press counts when that buff was up. A window the pull's end or a death cut short isn't judged)
+    s.pair = {};
+    // (a press the log shows more than once, like Secret Technique's clones, counts once)
+    for (const q of pairs) { const inP = (n, a, b) => (p.byName.get(lc(n)) || []).filter((t) => t >= a && t <= b && t <= t1).length, l = [], pr1 = (n) => (p.byName.get(lc(n)) || []).filter((u) => u <= t1).slice().sort((u, w) => u - w).filter((u, i, z) => !i || u - z[i - 1] > 0.9);
+      if (q.inBuf) { const bs = (p.buffs.get(q.inBuf) || { sp: [] }).sp; for (const t of pr1(q.a)) l.push({ a: t, e: t + 1, ok: bs.some(([a, e]) => t >= a - 0.3 && (e == null || t <= e + 0.3)) }); }
+      else { const sp = q.buf ? (p.buffs.get(q.buf) || { sp: [] }).sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)]) : pr1(q.a).map((t) => [t, Math.min(t1, t + (q.dur || 0))]);
+        for (const [a, e] of sp) { const n = q.b.reduce((v, nn) => v + inP(nn, a - (q.pre || 0), e + (q.post || 0)), 0), need = q.min || 1; if (n < need && (e + (q.post || 0) >= t1 - 1 || inDead(e) || inDead(a))) continue; l.push({ a, e, n, ok: n >= need }); } }
+      s.pair[q.k] = l; s.m['pr:' + q.k] = l.filter((w) => !w.ok).map((w) => [w.a, Math.max(w.e, w.a + 1)]); }
     // (a healer's mana: what was left at the kill, and any stretch spent out of it)
     if (D.mana) { const ml = (p.mana || []).filter(([t]) => t <= t1 + 1); s.mnOut = null; for (let i = 0; i < ml.length && !s.mnOut; i++) { if (ml[i][1] > 0.02 || ml[i][0] >= t1 - 15) continue; let j = i; while (j + 1 < ml.length && ml[j + 1][1] <= 0.02) j++; if (ml[j][0] - ml[i][0] >= 8) s.mnOut = [ml[i][0], ml[j][0]]; i = j; } if (r.item.kill && ml.length) s.mana = ml[ml.length - 1][1]; }
     s.dmgTot = sumIn(p.dmgS || [], 0, t1); s.healTot = sumIn(p.healS || [], 0, t1);
@@ -10139,12 +10152,20 @@ function genRun(spec, D, reps, name, one) {
   // (big cooldowns: the window cooldown's uses go with its windows, and the rest in their own block)
   if (WIN) { const q = cds.find((y) => lc(y.n) === lc(WIN.n)); if (q) cdLine(gW, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]); }
   const cdN = D.cdN || (WIN ? 'Other cooldowns' : 'Cooldowns'), gK = grp(cdN); for (const q of cds) if (!WIN || lc(q.n) !== lc(WIN.n)) cdLine(gK, { ...q, big: true }, q.ok || K.cds[0], q.warn || K.cds[1]);
+  // (pairs: the share of windows that had their partner in, in the block they belong to)
+  const pairL = pairs.filter((q) => rows.reduce((v, s) => v + ((s.pair[q.k] || []).length), 0) >= (q.minN || 2));
+  for (const q of pairL) { const l = rows.flatMap((s) => s.pair[q.k] || []), okN = l.filter((w) => w.ok).length, N = l.length, f = okN / N, okF = q.ok || 0.75, warnF = q.warn || 0.5, g = groups.find((x) => x.t === q.blk) || grp(q.blk);
+    add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.a || q.buf, q.label, okN + '<span>/' + N + '</span>', q.txt.replace('{ok}', N === okN && N > 1 ? 'All' : String(okN)).replace('{n}', String(N)), 'pr:' + q.k,
+      (q.why ? q.why + ' ' : '') + okP(okF) + ' The times listed are the ones that missed.');
+    if (f < okF && q.tip) g.l[g.l.length - 1].tip = q.tip; }
   // ---- the page ----
   const sl = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
   const LAYOUT = [['Rotation', [['Casting', ['abc']], [aplN, ['apl', 'rep'].concat(((D.apl && D.apl.levels) || []).map((L, i) => 'lv-' + i))], [rotN, rot.map((q) => sl('cd:' + lc(q.n)))], [procN, procs.map((q) => sl('p:' + q.n))], [dotN, dots.map((q) => sl('dot:' + q.n))]]]];
   if (res || D.mana) LAYOUT.push(['Resources', [res ? [res.n, ['res']] : null, D.mana ? ['Mana', ['mana']] : null].filter(Boolean)]);
   if (ups.length) { const ch = LAYOUT.find(([c]) => c === (D.upCh || 'Mitigation')), b = [upN, ups.map((q) => sl('up:' + q.n))]; if (ch && D.upFirst) ch[1].splice(1, 0, b); else if (ch) ch[1].push(b); else LAYOUT.push([D.upCh || 'Mitigation', [b]]); }
   LAYOUT.push(['Cooldowns', (WIN ? [[winN, ['win', 'wr', sl('cd:' + lc(WIN.n))]]] : []).concat([[cdN, cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n)).map((q) => sl('cd:' + lc(q.n)))]])]);
+  // (each pair goes into its block (a block already on the page, like the window's, or its own), in its chapter)
+  for (const q of pairL) { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Cooldowns')) || (LAYOUT.push([q.ch || 'Cooldowns', []]), LAYOUT[LAYOUT.length - 1]), b = ch[1].find((x) => x && x[0] === q.blk); if (b) b[1].push(sl('pr:' + q.k)); else ch[1].push([q.blk, [sl('pr:' + q.k)]]); }
   const L0 = D.lead || {}, MERGE = { Casting: { ic: D.ic, main: 'abc', lead: L0.abc || 'Keep casting. Time with nothing pressed is ' + (D.unitN === 'healing' ? 'healing' : 'damage') + ' you never do.' } };
   if (D.apl) MERGE[aplN] = { ic: D.apl.ic || D.ic, main: 'apl', lead: D.apl.lead || APL_LEAD };
   if (rot.length) MERGE[rotN] = { ic: rot[0].ic || rot[0].n, main: 'cd:' + lc(rot[0].n), lead: L0.rot || 'Press these whenever they\'re ready.' };
@@ -10156,7 +10177,8 @@ function genRun(spec, D, reps, name, one) {
   const cdO = cds.filter((q) => !WIN || lc(q.n) !== lc(WIN.n));
   if (WIN) MERGE[winN] = { ic: WIN.ic || WIN.n, main: 'win', lead: WIN.lead || (WIN.n + ' is your big window. ' + (winWith.length ? 'Press ' + andL(winWith.map(orL)) + ' with it, and keep casting all the way through' : 'Keep casting all the way through it') + (WIN.key ? ', fitting in as many ' + (WIN.key.many || WIN.key.names[0] + 's') + ' as you can' : '') + (WIN.dotsUp ? ', with your damage over time up before you press it' : '') + '.') };
   if (cdO.length) MERGE[cdN] = { ic: cdO[0].ic || cdO[0].n, main: 'cd:' + lc(cdO[0].n), lead: (WIN ? L0.cdsO || (D.unitN === 'healing' ? L0.cds : '') : L0.cds) || (WIN ? 'Press each of your other cooldowns as often as the fight allows.' : 'Press each of your big cooldowns as often as the fight allows.') };
-  const WT = { abc: 2, res: 2, mana: 2, apl: 3, win: 3 }; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
+  for (const q of pairL) if (!MERGE[q.blk]) MERGE[q.blk] = { ic: q.ic || q.a || q.buf, main: 'pr:' + q.k, lead: q.lead || '' };
+  const WT = { abc: 2, res: 2, mana: 2, apl: 3, win: 3 }; for (const q of pairL) WT['pr:' + q.k] = q.w || 2; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
   const LG = {}; for (const q of procs) LG['p:' + q.n] = { ok: 'Spent', bad: 'Wasted' };
   const TOPB = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const keyN = new Set([].concat(...rot.concat(cds, procs, dots, ups).map((q) => [q.n].concat(q.tal || []))).filter((n) => TAL && TAL.names.has(n)));
@@ -10451,20 +10473,23 @@ const GEN_SPECS = {
     rot: [{ n: 'Soul Immolation', cd: 30, ok: 0.8, warn: 0.65, why: 'Press Soul Immolation on cooldown.' }],
     procs: [{ n: 'Soulburst', use: ['Consume', 'Devour'], why: 'Soulburst, from your tier set, makes your next Consume (Devour in Void Metamorphosis) instant and explode. It\'s first on both priority lists, so spend it right away.' }],
     res: { ty: '17', n: 'Fury', outside: 'Collapsing Star', from: /^(?!Void Metamorphosis$)/, ok: 0.16, warn: 0.24, why: 'Outside Void Metamorphosis, Void Ray costs 100 Fury and has no cooldown, so press it as soon as you reach 100. Fury that comes in while you\'re full is lost. Inside Void Metamorphosis the Fury bar is a timer, so it isn\'t counted.' },
-    lead: { rot: 'Press Soul Immolation as soon as it\'s ready.', procs: 'Spend Soulburst right away.', res: 'Outside Void Metamorphosis, press Void Ray as soon as you reach 100 Fury.' } },
+    cds: [{ n: 'The Hunt', cd: 90, ok: 0.8, warn: 0.65, why: 'The Hunt is a big hit. Press it on cooldown, and as Annihilator, before Voidblade.' }, { n: 'Voidblade', cd: 30, ok: 0.75, warn: 0.6, why: 'Voidblade is a strong attack with a short cooldown. Press it whenever it\'s ready.' }],
+    lead: { rot: 'Press Soul Immolation as soon as it\'s ready.', procs: 'Spend Soulburst right away.', res: 'Outside Void Metamorphosis, press Void Ray as soon as you reach 100 Fury.', cdsO: 'Press The Hunt and Voidblade whenever they\'re ready.' } },
   'Assassination Rogue': { ic: 'Envenom', top: 'Assassination Rogues',
     win: { n: 'Deathmark', with: [['Kingsbane']], dur: 16, why: 'Deathmark doubles your bleeds and poisons. Kingsbane goes out with it.' },
     apl: { blk: 'Your priority', ok: 0.85, warn: 0.75, why: 'From the Wowhead guide and the SimulationCraft list Raidbots sims with: keep your bleeds up, spend at 5 combo points, and build with Mutilate.', list: [
       { s: 'Garrote', cd: 6, g: 1.5, if: { deb: 'Garrote', drem: 1.5, res: ['4', null, 4] }, why: 'Garrote was about to fall off', tip: 'Don\'t let Garrote drop. Refresh it before your builder when it\'s about to run out.' },
       { s: 'Rupture', if: { deb: 'Rupture', drem: 2, res: ['4', 5] }, why: 'you had 5 combo points and Rupture was about to fall off', tip: 'At 5 combo points, refresh Rupture first when it\'s about to run out.' },
       { s: 'Envenom', alt: ['Rupture'], if: { res: ['4', 5] }, why: 'you had 5 or more combo points', tip: 'At 5 or more combo points, spend them on Envenom before you build more.' },
-      { s: 'Mutilate', alt: ['Ambush', 'Fan of Knives', 'Shiv', 'Garrote', 'Envenom', 'Rupture', 'Crimson Tempest'] }], levels: [
+      { s: 'Mutilate', alt: ['Ambush', 'Fan of Knives', 'Garrote', 'Envenom', 'Rupture', 'Crimson Tempest'] }], levels: [
       { s: ['Envenom', 'Rupture'], ty: '4', min: 5, no: 'Darkest Night', ic: 'Envenom', label: 'Finishers at 5 or more combo points', what: 'Envenoms and Ruptures', at: 'at 5 or more combo points', why: 'The SimulationCraft list spends only at 5 or more combo points (or at full with Darkest Night).', tip: 'Build to 5 combo points before Envenom or Rupture.' }] }, gcd1: true, k: { abc: [0.6, 0.5] },
     abcWhy: 'Assassination is held back by Energy, not the global cooldown, so some quiet time is normal and the scale is gentler.',
     dots: [{ n: 'Rupture', why: 'Rupture is your main bleed. Keep it on the boss.' }, { n: 'Garrote', ok: 0.85, warn: 0.7, why: 'Garrote is your other bleed. Keep it on the boss.' }],
     ups: [{ n: 'Envenom', ok: 0.75, warn: 0.6, why: 'Envenom\'s buff powers many of your talents, like Rapid Injection. Keep it up without overflowing Energy or combo points.' }], upN: 'Envenom', upCh: 'Rotation',
     res: { ty: '4', n: 'Combo points', nl: 'combo points', why: 'Spend combo points on Envenom or Rupture before your builders would overflow them.' },
     cds: [{ n: 'Deathmark', cd: 120, ok: 0.85, warn: 0.7, why: 'Deathmark is your main cooldown. Press it as often as the fight allows, with your bleeds up.' }, { n: 'Kingsbane', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Kingsbane on cooldown, with Envenom up.' }],
+    procs: [{ n: 'Blindside', use: ['Ambush'], why: 'Blindside makes your next Ambush free and usable outside stealth. Spend it before it runs out.' }],
+    pairs: [{ k: 'van', a: 'Vanish', dur: 3, b: ['Garrote'], min: 1, tal: 'Improved Garrote', blk: 'Vanish', label: 'Garrote after Vanish', txt: '{ok} of your {n} Vanishes were followed by a Garrote.', why: 'With Improved Garrote, Vanish makes your next Garrote much stronger, so press it right after.', tip: 'Press Garrote right after Vanish.', lead: 'Follow each Vanish with an empowered Garrote.' }],
     lead: { abc: 'Energy, not the global cooldown, sets your pace. Spend it on the right button rather than pressing something every time you can.', dots: 'Keep Rupture and Garrote on the boss.', ups: 'Keep Envenom\'s buff up.', res: 'Don\'t overflow combo points.', cds: 'Use Deathmark and Kingsbane as often as the fight allows.' } },
   'Frost Death Knight': { ic: 'Obliterate', top: 'Frost Death Knights',
     win: { n: 'Pillar of Frost', key: { names: ['Obliterate'] }, dur: 12, why: 'Pillar of Frost is your burst. Fit as many Obliterates into it as you can.' },
@@ -10489,7 +10514,9 @@ const GEN_SPECS = {
     rot: [{ n: 'Eye Beam', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Eye Beam on cooldown.' }, { n: 'Blade Dance', names: ['Blade Dance', 'Death Sweep'], cd: 10, h: true, ok: 0.8, warn: 0.65, why: 'Press Blade Dance (Death Sweep in Metamorphosis) on cooldown. Keep enough Fury for it.' },
       { n: 'Immolation Aura', cd: 30, h: true, ok: 0.8, warn: 0.65, why: 'Press Immolation Aura on cooldown, for Fury and damage.' }, { n: 'Essence Break', cd: 40, ok: 0.85, warn: 0.7, why: 'Press Essence Break on cooldown, with Blade Dance and Chaos Strikes inside it.' }],
     res: { ty: '17', n: 'Fury', why: 'Spend Fury on Chaos Strike before it overflows, but keep enough for Blade Dance when it comes back.' },
-    cds: [{ n: 'Metamorphosis', cd: 120, ok: 0.8, warn: 0.6, why: 'Use Metamorphosis as often as the fight allows.' }],
+    cds: [{ n: 'Metamorphosis', cd: 120, ok: 0.8, warn: 0.6, why: 'Use Metamorphosis as often as the fight allows.' }, { n: 'The Hunt', cd: 90, ok: 0.8, warn: 0.65, why: 'The Hunt is a big hit that also boosts your damage. Press it on cooldown.' }],
+    pairs: [{ k: 'eb', a: 'Essence Break', dur: 4, post: 0.3, b: ['Death Sweep', 'Annihilation', 'Blade Dance', 'Chaos Strike'], min: 2, blk: 'Essence Break', ch: 'Rotation', label: 'Spenders inside Essence Break', txt: '{ok} of your {n} Essence Breaks had 2 or more Death Sweeps, Annihilations, Blade Dances or Chaos Strikes inside.', why: 'Essence Break makes your Chaos Strikes and Blade Dances hit much harder for 4 seconds. The guides fit 2 or more of them into each one.', tip: 'Have the Fury for two spenders before Essence Break, then press Death Sweep and Annihilation right after it.', lead: 'Fill each Essence Break with your spenders.' },
+      { k: 'meta', a: 'Metamorphosis', pre: 12, b: ['Eye Beam', 'Abyssal Gaze'], min: 1, ok: 0.6, warn: 0.35, blk: 'Metamorphosis', label: 'Eye Beam before Metamorphosis', txt: 'Before {ok} of your {n} Metamorphoses, you had already used Eye Beam.', why: 'With Chaotic Transformation, Metamorphosis resets Eye Beam and Blade Dance, so use them just before you press it. Pressing it with Eye Beam still ready wastes the reset.', tip: 'Press Eye Beam just before Metamorphosis, so the reset gives you another one right away.' }],
     lead: { rot: 'Press Blade Dance, Immolation Aura and Eye Beam on cooldown, with Chaos Strike in between.', res: 'Avoid wasting Fury, but keep enough for Blade Dance.', cds: 'Use Metamorphosis as often as the fight allows.' } },
   'Subtlety Rogue': { ic: 'Shadow Dance', top: 'Subtlety Rogues',
     win: { n: 'Shadow Blades', with: [['Shadow Dance']], dur: 16, why: 'Shadow Blades is your burst. Shadow Dance goes out with it.' },
@@ -10499,7 +10526,9 @@ const GEN_SPECS = {
       { s: 'Backstab', alt: ['Gloomblade', 'Shadowstrike', 'Shuriken Storm', "Goremaw's Bite", 'Shuriken Toss', 'Eviscerate', 'Black Powder', 'Coup de Grace', 'Secret Technique', 'Rupture'] }], levels: [
       { s: ['Eviscerate', 'Black Powder', 'Coup de Grace'], ty: '4', min: 6, ic: 'Eviscerate', label: 'Finishers at 6 or more combo points', what: 'finishers', at: 'at 6 or more combo points', why: 'The guide and the SimulationCraft list finish close to the maximum, at 6 or 7 combo points.', tip: 'Build to 6 or 7 combo points before a finisher.' }] }, gcd1: true, k: { abc: [0.6, 0.5] },
     abcWhy: 'Energy is your limit most of the time, and feeling starved outside cooldowns is normal, so the scale is gentler.',
-    rot: [{ n: 'Shadow Dance', cd: 20, chT: [['Double Dance', 2]], ok: 0.75, warn: 0.6, why: 'Shadow Dance goes with Secret Technique. Use it when Secret Technique is ready, and a second right after the first, with Shadow Blades.' }, { n: "Goremaw's Bite", cd: 45, ok: 0.85, warn: 0.7, why: "Goremaw's Bite on cooldown." }],
+    rot: [{ n: 'Shadow Dance', cd: 20, chT: [['Double Dance', 2]], ok: 0.75, warn: 0.6, why: 'Shadow Dance goes with Secret Technique. Use it when Secret Technique is ready, and a second right after the first, with Shadow Blades.' }, { n: "Goremaw's Bite", cd: 45, ok: 0.85, warn: 0.7, why: "Goremaw's Bite on cooldown." }, { n: 'Secret Technique', cd: 60, one1: true, ok: 0.8, warn: 0.65, why: 'Secret Technique is your strongest finisher. Use it on cooldown, inside Shadow Dance.' }],
+    procs: [{ n: 'Darkest Night', use: ['Eviscerate'], why: 'Darkest Night makes your next Eviscerate at full combo points much stronger. Spend it before it runs out.' }],
+    pairs: [{ k: 'stin', a: 'Secret Technique', inBuf: 'Shadow Dance', blk: 'Secret Technique in Shadow Dance', ch: 'Rotation', label: 'Secret Technique in Shadow Dance', ok: 0.85, warn: 0.7, txt: '{ok} of your {n} Secret Techniques went out inside Shadow Dance.', why: 'Shadow Dance boosts your finishers, so Secret Technique, your strongest one, belongs inside it.', tip: 'Save Secret Technique for Shadow Dance, and use it as your first finisher there.', lead: 'Line Secret Technique up with Shadow Dance.' }],
     res: { ty: '4', n: 'Combo points', nl: 'combo points', from: /^(Backstab|Gloomblade|Shadowstrike|Shuriken Storm|Shuriken Toss|Goremaw's Bite)$/, why: 'Finish at 6 or 7 combo points, before your builders would overflow them. Shadow Techniques\' automatic points aren\'t counted.' },
     cds: [{ n: 'Shadow Blades', cd: 90, ok: 0.85, warn: 0.7, why: 'Shadow Blades is your major cooldown. Use it with Shadow Dance, as often as the fight allows.' }],
     lead: { abc: 'Energy sets your pace. Some quiet time outside cooldowns is normal.', rot: 'Line everything up with Secret Technique. Press Shadow Dance when it\'s ready.', res: 'Finish at 6 or 7 combo points.', cds: 'Use Shadow Blades with Shadow Dance.' } },

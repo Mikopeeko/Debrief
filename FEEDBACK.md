@@ -239,6 +239,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 242: More checks for Havoc, Devourer, Assassination and Subtlety (your note: "seem very bare bones")
+- [x] **A new kind of check for every spec page: "did B go with A?"** Each press of one spell (or each time a buff was up)
+  is a window, and it counts when the partner spell went in. Used here for:
+  - **Havoc:** Spenders inside Essence Break (2 or more Death Sweeps, Annihilations, Blade Dances or Chaos Strikes in each),
+    and Eye Beam already used before Metamorphosis (Chaotic Transformation resets it). Plus **The Hunt** as a cooldown.
+  - **Subtlety:** Secret Technique on cooldown, and each Secret Technique inside Shadow Dance. Darkest Night spent on
+    Eviscerate (Deathstalker). Secret Technique's clones show in the log as extra casts, so presses under a second apart
+    count once.
+  - **Assassination:** Garrote after Vanish (Improved Garrote), and Blindside procs spent on Ambush.
+  - **Devourer:** a Cooldowns section with The Hunt and Voidblade.
+- [x] **Checked on top players, as before.** Where they land: Essence Break 75-100%, Eye Beam before Metamorphosis 67-100%
+  (2 of 3 counts as good), Secret Technique in Shadow Dance 89-100%, Garrote after Vanish 100%, The Hunt and Voidblade
+  95-100%.
+- **Left out after the check:** Shiv inside Kingsbane. Top players almost never do it (0 to 1 of 6), so my suggestion was
+  wrong. Shiv is also no longer judged by Assassination's priority list, since top players press it with their cooldowns.
+
 ## 2026-10-18, round 241: Getting around, smoother (your pick: my suggestions, Option B)
 - [x] **Back and Forward work inside Debrief.** Every page you open is a step: Home, the teams page, a team, a pull, its tab,
   one pull or the whole night. Before, Back always left the site. (A reload starts on Home, and Back from there goes to
