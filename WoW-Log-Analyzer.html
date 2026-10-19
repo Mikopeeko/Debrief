@@ -3440,6 +3440,9 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .lpv .lp-talk::before { background: var(--gold); } .lpv .lp-pace.ok::before { background: #45c15c; } .lpv .lp-pace.warn::before { background: var(--lv-mod); } .lpv .lp-pace { border-left: 1px solid var(--line); }
 .lp-pis { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; } .lp-pic { display: inline-flex; align-items: center; gap: 5px; } .lp-pic .pi-ico, .lp-pic .pi-ico svg { width: 15px; height: 15px; margin: 0; }
 .lp-dgo { all: unset; cursor: pointer; border-radius: 4px; } .lp-dgo:hover { color: var(--gold); text-decoration: underline; } .lp-dgo:focus-visible { outline: 2px solid var(--gold); }
+.lpv .lp-dtile { --n: 1; margin: 0; } @media (min-width: 1101px) { .lp-tiles[data-n="2"] { --n: 2; } } @media (max-width: 640px) { .lp-tiles[data-n="2"] { --n: 2; } .lp-tiles[data-n="2"] > :last-child { grid-column: auto; } }
+.lpv .lp-miss::before { background: var(--lv-maj); } .lpv .lp-miss h3 { font-size: 16px; } .lpv .lp-miss .lp-pr { grid-template-columns: 44px minmax(0, 1fr); padding: 4px 0; font-size: 13px; } .lpv .lp-miss .lp-pk { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.lp-kmiss { color: var(--lv-maj-t); font-weight: 600; }
 .lp-none { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; } .lp-none.ok { color: #7ee08f; font-weight: 600; }
 .lpv .lp-used .lp-pr { padding: 4px 0; font-size: 13px; } .lpv .lp-used h3 { font-size: 16px; } .lpv .lp-used .lp-pk { color: var(--muted); font-weight: 600; }
 @media (max-width: 1400px) { .rcp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rcp-w.rcp-big { grid-row: auto; } .rcp-big .wr-map.rcp-map, .rcp-big .wr-map.rcp-map svg.zmap { height: 240px !important; } }
@@ -10748,7 +10751,8 @@ function renderList() {
   bhCutBind(); // (the wipe filter sits behind its chip in the banner)
   if (bosses.some((b) => !b.wcl && !CACHE.has(b))) warmPulls();
   // (clicking one pull shows that pull on every tab; All pulls shows every pull of the boss: see setScope)
-  box.querySelectorAll('.pull').forEach((b) => (b.onclick = () => { setScope('pull'); select(ITEMS[+b.dataset.i]); }));
+  // (Recap shows only the whole night or the newest pull (your rule, Oct 19): an older pull picked on Recap opens on Mechanics)
+  box.querySelectorAll('.pull').forEach((b) => (b.onclick = () => { const it = ITEMS[+b.dataset.i]; if (S.tab === 'live' && cur.list && cur.list[cur.list.length - 1] !== it) S.tab = 'audit'; setScope('pull'); select(it); }));
   box.querySelectorAll('[data-all]').forEach((b) => (b.onclick = () => { if (S.scope === 'all') return; const keep = S.item && S.rep && cur.list.includes(S.item); setScope('all'); if (keep) renderMain(); else select(ITEMS[+b.dataset.all]); }));
   if (pk) {
     const pb = pkB, pop = pk.querySelector('.bp-pop'), nm = $('#bossHead .bh-name'); if (nm) nm.classList.toggle('pickable', !!pop);
@@ -10818,11 +10822,8 @@ function warmPulls() {
 // ---------- saved progress: your raid's pulls, across nights ----------
 // Each pull of your raid that gets analyzed is kept on this PC as a short summary (how far it got, its length, deaths, the
 // note's assignment results), so the next night on the same boss picks up the progress: the banner and Summary count the
-// earlier nights too. Which logs are your raid, decided on their own (it used to ask "Is this your raid?"): one where at
-// least half the players are on your team (the players of your saved raids, and of the teams and guilds you've added) is
-// yours, sitting a fight doesn't matter; with no team known yet, the first raid you open is, and its roster becomes your
-// team. One that's mostly other players is analyzed as usual but not saved, with a quiet "Save it" by the banner, and the
-// menu's Saved progress changes either way.
+// earlier nights too. Which logs save is decided on their own, never by hand (Oct 19): one with a character you imported in it,
+// or the raid of a team or guild you imported (see raidMine). Any other log is analyzed as usual but not saved.
 const HIST = (() => {
   let dbp = null, ready = null;
   const open = () => dbp || (dbp = new Promise((res) => { try { const rq = indexedDB.open('wla-history', 1); rq.onupgradeneeded = () => rq.result.createObjectStore('pulls'); rq.onsuccess = () => res(rq.result); rq.onerror = () => res(null); } catch (e) { res(null); } }));
@@ -10863,14 +10864,12 @@ function knownRoster() {
   if (gids.size) for (const v of HIST.mem.values()) if (pullGroups(v).some((x) => gids.has(x))) for (const n of v.players || []) s.add(n);
   ROSTER_C = { key, s }; return s;
 }
-// yes: said yes, at least half the players are on your team, or no team is known yet (the first raid you open); no: said
-// no, or mostly other players
+// (Oct 19, your rule: no saving by hand any more; a log saves by itself only when a character you imported is in it, or it's
+// the raid of a team or guild you imported (at least half its players are on it). With nothing imported, nothing is saved.
+// Where it shows is groupFilter's: a log with only your character in it is on that character's page, not the team's)
 function raidMine(r) {
-  if (!r) return null; const k = srcKey();
-  if (k && listGet(ALLOW_KEY).includes(k)) return true;
-  if (k && listGet(DENY_KEY).includes(k)) return false;
-  const tm = knownRoster(); if (!tm.size) return true;
-  const ns = rosterOf(r); return !!ns.length && ns.filter((n) => tm.has(n)).length / ns.length >= 0.5;
+  if (!r) return null; const v = { players: rosterOf(r) };
+  return !!v.players.length && groups().some((g) => groupFilter(g)(v));
 }
 const isMyRaid = (r) => raidMine(r) === true;
 // (the same pull from the log and from Warcraft Logs is one record: boss, difficulty and start time to 10 seconds)
@@ -10908,7 +10907,11 @@ function grTick() {
 // the saved nights on this boss before the night shown (a raid night is one date; tonight's pulls come from the log itself)
 function histFor(it) {
   const tn = nightOf(it.wallMs || it.startMs), by = new Map();
-  for (const v of HIST.mem.values()) { if (v.boss !== it.boss || v.diffId !== it.diffId) continue; const n = nightOf(v.at); if (n >= tn) continue; if (!by.has(n)) by.set(n, []); by.get(n).push(v); }
+  // (only the nights of the group this log is: your team's raid counts your team's nights, a log with just your character in it
+  // counts that character's (Oct 19: a pug isn't the team's progress))
+  const rr = S.realRep || S.rep, me = rr && rr.item === it ? { players: rosterOf(rr) } : null, gl = groups();
+  const gm = me && (gl.find((g) => g.kind !== 'char' && groupFilter(g)(me)) || gl.find((g) => g.kind === 'char' && groupFilter(g)(me))), inG = gm ? groupFilter(gm) : () => true;
+  for (const v of HIST.mem.values()) { if (v.boss !== it.boss || v.diffId !== it.diffId || !inG(v)) continue; const n = nightOf(v.at); if (n >= tn) continue; if (!by.has(n)) by.set(n, []); by.get(n).push(v); }
   const earlier = [...by].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([n, list]) => {
     list.sort((a, b) => a.at - b.at);
     const kill = list.find((x) => x.kill), known = list.filter((x) => x.left != null), best = kill || (known.length ? known.reduce((m, x) => (x.left < m.left ? x : m)) : null);
@@ -11099,20 +11102,17 @@ function acrossNights(b0, pulls) {
 // pulls. (It no longer asks "Is this your raid?" on its own: see raidMine.)
 function meBar(r) {
   if (!r || !r.item || r.item.kind !== 'boss') return '';
-  const st = raidMine(r), tm = team(), n = HIST.mem.size;
-  if (S.meOpen) return '<div class="panel mebar"><span class="mb-t"><b>Saved progress</b> <span class="sub">' + plural(n, 'pull') + ' saved on this PC · your team: ' + plural(tm.length, 'player') + ' · this log: ' + (st ? 'saved as your raid' : 'not saved') + '</span></span>' +
-    (st ? '<button class="btn" id="meNo">Not my raid</button>' : '<button class="btn primary" id="meYes">Save as my raid</button>') + '<button class="btn" id="meForget"' + (tm.length ? '' : ' disabled') + '>Forget my team</button><button class="btn" id="meClear"' + (n ? '' : ' disabled') + '>Clear saved pulls</button><button class="btn" id="meDone">Done</button></div>';
+  // (no Save or Not my raid buttons (your rule, Oct 19): a log saves by itself when your character or team is in it, see raidMine)
+  const st = raidMine(r), n = HIST.mem.size;
+  if (S.meOpen) return '<div class="panel mebar"><span class="mb-t"><b>Saved progress</b> <span class="sub">' + plural(n, 'pull') + ' saved on this PC · this log: ' + (st ? 'saved, your character or team is in it' : !groups().length ? 'not saved, import your character or team to save logs' : 'not saved, your character and team aren\'t in it') + '</span></span>' +
+    '<button class="btn" id="meClear"' + (n ? '' : ' disabled') + '>Clear saved pulls</button><button class="btn" id="meDone">Done</button></div>';
   return '';
 }
 function meSaved() { for (const rep of CACHE.values()) histSave(rep); renderMain(); }
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('#meYes, #meNo, #meLater, #meDone, #meClear, #meForget'); if (!t) return;
+  const t = e.target.closest('#meDone, #meClear'); if (!t) return;
   const k = srcKey();
-  if (t.id === 'meYes') { if (k) { listAdd(ALLOW_KEY, [k]); listDel(DENY_KEY, k); } if (S.rep) listAdd(TEAM_KEY, rosterOf(S.realRep || S.rep)); meSaved(); }
-  else if (t.id === 'meNo') { if (k) { listAdd(DENY_KEY, [k]); listDel(ALLOW_KEY, k); } renderMain(); }
-  else if (t.id === 'meLater') { try { sessionStorage.setItem('wla-me-later:' + k, '1'); } catch (x) { /* ignore */ } renderMain(); }
-  else if (t.id === 'meDone') { S.meOpen = false; renderMain(); }
-  else if (t.id === 'meForget') { if (confirm('Forget your team? The saved pulls stay; the next raid you open becomes your team.')) { store.set(TEAM_KEY, '[]'); renderMain(); } }
+  if (t.id === 'meDone') { S.meOpen = false; renderMain(); }
   else if (t.id === 'meClear') { if (confirm('Clear every saved pull on this PC? The log that\'s open stays; earlier nights are gone.')) HIST.clear().then(() => { for (const rep of CACHE.values()) histSave(rep); renderMain(); }); }
 });
 
@@ -11383,7 +11383,6 @@ function headerHtml(r, allMode) {
         : !prevItem && !it.run && !it.kill ? '<span class="sub">First pull on this boss tonight</span>' : '');
   }
   // (a log you said isn't your raid: one quiet line, with the way back)
-  if (!isKey && raidMine(S.realRep && S.rep === S.nightRep ? S.realRep : S.rep) === false) side += '<span class="sub">Not saved to your progress · <button class="lnk" id="meYes" type="button">Save it</button></span>';
   // the art on the right (fading into the panel), or the model render when there's none or it doesn't load
   const hero = !isKey && BOSS_HERO[it.boss];
   const art = (hero ? '<div class="bh-hero" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + hero[0] + '.jpg" alt="" style="--hx:' + Math.max(0, 50 - hero[1]) + '%" onerror="var h=this.closest(\'.fight\');if(h)h.classList.remove(\'hero\');this.parentNode.remove()"></div>' : '') + bossArt(isKey ? '' : it.boss);
@@ -19567,6 +19566,8 @@ function spcTipInit() {
   document.addEventListener('focusin', (e) => { const el = at(e); if (el) show(el); }); document.addEventListener('focusout', hide);
   document.addEventListener('touchstart', (e) => { const el = at(e); if (el) show(el); else hide(); }, { passive: true }); window.addEventListener('scroll', hide, { passive: true, capture: true });
 }
+// (on from the start, so the tabs' descriptions show on hover on every page, not only after a Rotation page (your ask, Oct 19))
+if (document.body) spcTipInit(); else document.addEventListener('DOMContentLoaded', spcTipInit);
 // (a box per cast; when every one is good, they fold away under the bar, a click to see them)
 const spcBoxes = (one, bx) => { if (!one || !bx.length) return ''; const h = '<div class="spc-bxs">' + bx.map((b) => '<button type="button" class="spc-bx ' + b.cls + '" data-mt="' + b.t.toFixed(2) + '" data-tt="' + esc(spcTipTxt(b.tip)) + '" aria-label="' + esc(b.tip) + '"></button>').join('') + '</div>';
   return (bx.length >= 8 && bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) || bx.length > 30 ? '<details class="spc-bxf"><summary>Show each one (' + bx.length + ')</summary>' + h + '</details>' : h; };
@@ -24742,7 +24743,7 @@ function lpPrep(r, rows) {
   if (noPot.length) lines.push(['bad', 'No potion', list(noPot)]);
   if (rows) for (const [k, l] of [['No flask', 'No flask'], ['No food buff', 'No food'], ['No weapon oil or stone', 'No weapon oil']]) { const ps = rows.filter((x) => x.issues.includes(k)).map((x) => x.p); if (ps.length) lines.push(['warn', l, list(ps)]); }
   const pi = PI_OFF() ? [] : [...piPull(r).priests.values()].filter((x) => x.plan).map((x) => ['pi', 'Power Infusion', lpWho(x.p) + ' gives it to ' + lpWho(x.plan.q) + (x.plan.cd ? '<span class="sub">, timed with their ' + esc(x.plan.cd.name) + '.</span>' : '.')]);
-  const has = Array.isArray(rows), ok = !lines.length ? '<div class="lp-pr ok"><span class="lp-pk">✓</span><span>' + (has ? 'Everyone drank a potion and had a flask, food and weapon oil.' : 'Everyone drank a potion.') + '</span></div>' : '';
+  const has = Array.isArray(rows), ok = !lines.length ?'<div class="lp-pr ok"><span class="lp-pk">✓</span><span>' + (has ? 'Everyone drank a potion and had a flask, food and weapon oil.' : 'Everyone drank a potion.') + '</span></div>' : '';
   return '<div class="panel lp-side-p lp-prep" id="lpPrep"><h3 class="nh"><span>Before the next pull</span><small>' + (has ? 'Potions during this pull, and flask, food and oil at its start' : rows === null ? 'Potions during this pull. Checking flasks and food…' : 'Potions during this pull') + '</small></h3>' + ok +
     lines.concat(pi).map(([st, k, v]) => '<div class="lp-pr ' + st + '"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
 }
@@ -24776,10 +24777,23 @@ function lpUsed(r) {
   // (each: how many were used, and who used none (your ask, Oct 19); a player counts once alive 20 s or more)
   const live = ps.filter((p) => until(p) >= 20), none = (l) => (l.length ? (l.length === live.length ? '<span class="lp-none">Nobody used one.</span>' : '<span class="lp-none"><span class="sub">None from </span>' + l.slice(0, 8).map(lpWho).join(', ') + (l.length > 8 ? '<span class="sub"> and ' + (l.length - 8) + ' more</span>' : '') + '</span>') : '<span class="lp-none ok">✓ Everyone used one.</span>');
   const dN = (p) => (p.defs || []).reduce((n, d) => n + inT(d.uses).length, 0), dU = live.reduce((n, p) => n + dN(p), 0), hsN = (p) => inT(p.cons.healthstone).length, hpN = (p) => inT(p.cons.healpot).length;
+  // (the kicks that landed, and who got them, most first; a click opens this pull's interrupts on Mechanics (your ask, Oct 19))
+  const kk = r.interrupts.filter((x) => x.t <= ct + 0.05), miss = (r.missedKicks || []).filter((m) => m.t <= ct + 0.05).length, kby = new Map(); for (const x of kk) kby.set(x.player, (kby.get(x.player) || 0) + 1);
+  const pm = new Map(ps.map((p) => [p.name, p])), kl = [...kby].sort((a, b) => b[1] - a[1]);
+  if (kk.length || miss) lines.push(['Interrupts', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-' + (r.module && r.module.kicksMerged ? 'addsets' : 'kicks') + '" title="Open the interrupts on Mechanics"><b>' + kk.length + '</b> kicked' + (miss ? '<span class="lp-kmiss">, ' + plural(miss, 'cast') + ' got through</span>' : '') + ' ›</button>' +
+    (kl.length ? '<span class="lp-none">' + kl.slice(0, 8).map(([n, c]) => (pm.get(n) ? lpWho(pm.get(n)) : esc(n)) + '<span class="sub"> ' + c + '</span>').join(', ') + (kl.length > 8 ? '<span class="sub"> and ' + (kl.length - 8) + ' more</span>' : '') + '</span>' : '')]);
   // (a click opens this pull's Survival kit on Mechanics, where each player's defensives are)
   lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Mechanics"><b>' + dU + '</b> used ›</button>' + none(live.filter((p) => (p.defs || []).length && !dN(p)))]);
   lines.push(['Healthstones', '<b>' + live.reduce((n, p) => n + hsN(p), 0) + '</b> used' + none(live.filter((p) => !hsN(p)))], ['Health potions', '<b>' + live.reduce((n, p) => n + hpN(p), 0) + '</b> used' + none(live.filter((p) => !hpN(p)))]);
   return '<div class="panel lp-side-p lp-used"><h3 class="nh"><span>Used this pull</span></h3>' + lines.map(([k, v]) => '<div class="lp-pr"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
+}
+// (Oct 19, your call: each assignment from your NSRT note that was missed, in a small box at the bottom of the right column; not the
+// minor slips, not the healing cooldowns (their own box); a click opens it on Assignments)
+function lpMiss(r) {
+  const ct = cutT(r), HCD = 'Assigned cooldown', pm = new Map([...r.players.values()].map((p) => [p.name, p]));
+  const nm = keptMistakes(r).filter((m) => m.fromNote && m.severity !== 'Low' && m.mechanic !== HCD && m.t <= ct + 0.05).sort((a, b) => a.t - b.t); if (!nm.length) return '';
+  return '<div class="panel lp-side-p lp-miss"><h3 class="nh"><span>Missed assignments</span>' + hst('bad', String(nm.length)) + '</h3>' + nm.slice(0, 6).map((m) => '<div class="lp-pr bad"><span class="lp-pk">' + (m.t != null ? T(m.t) : '') + '</span><button class="lp-dgo" type="button" data-go="overview" title="Open it on Assignments">' + (pm.get(m.player) ? lpWho(pm.get(m.player)) : esc(m.player)) + '<span class="sub"> · </span>' + esc(m.mechanic) + ' ›</button></div>').join('') +
+    (nm.length > 6 ? '<button class="lp-dgo sub lp-more" type="button" data-go="overview">And ' + (nm.length - 6) + ' more on Assignments ›</button>' : '') + '</div>';
 }
 // the healing cooldowns from the note that weren't on time, by name: when it was due, and when it was pressed (a missed one:
 // the nearest press within 90 s, if there was one)
@@ -24800,6 +24814,8 @@ async function lastPull() {
   const prg = (x, rep) => (x.wcl ? wclProg(x) : (rep || CACHE.has(x)) ? progressOf(rep || CACHE.get(x)) : null);
   const pct = (x, rep) => { if (x.kill) return 0; const rr = rep || (CACHE.has(x) ? CACHE.get(x) : null); if (usesPh) { const p = prg(x, rep); if (p) return p.left; } return x.endPct != null ? x.endPct : rr && rr.bossPct != null ? rr.bossPct : null; };
   const lab = (x, rep, v) => { const p = usesPh ? prg(x, rep) : null; return p ? p.label : v != null ? v.toFixed(1) + '%' : ''; };
+  // (only the newest pull has a recap: an older one picked here shows the newest instead)
+  if (!latest) { select(same[same.length - 1]); return; }
   view(loadCard('Putting the recap together', 'Comparing it with the last pull and your best…', null));
   let prev = null; if (prevItem) { try { prev = await getRep(prevItem); } catch (e) { /* no comparison */ } }
   if (S.rep !== r || S.tab !== 'live') return;
@@ -24814,7 +24830,7 @@ async function lastPull() {
   // ---- headline ----
   const delta = now != null && was != null ? was - now : null;
   const isBest = best != null && now != null && now < best;
-  let h = (!latest ? '<div class="nightload"><span>This is pull ' + it.pull + ', not the latest one.</span><button class="btn primary" id="lpLatest">Show the latest pull</button></div>' : ''); // (the banner on top shows the result and how it compares)
+  let h = ''; // (the banner on top shows the result and how it compares)
   // ---- what went wrong (Oct 19 remodel, your pick: the Mechanics look): a tile per problem with its map, its level and the fix for
   // the next pull; the highest level with a map leads, big, as "Fix this first" (so nothing shows twice). Healing cooldowns from the
   // note are kept apart: their own box ----
@@ -24862,23 +24878,19 @@ async function lastPull() {
   // (each level in its own colour: major red, moderate orange, minor yellow-green)
   const lvCnt = (l) => l.reduce((o, v) => { o[v]++; return o; }, { major: 0, moderate: 0, minor: 0, clean: 0 });
   const lvHtml = (o) => ['major', 'moderate', 'minor'].filter((k) => o[k]).map((k) => '<span class="rcp-c ' + k + '">' + o[k] + ' ' + k + '</span>').join('<span class="rcp-sep"> · </span>');
-  const gLv = lvCnt([...groups.values()].map((g) => g.lv).concat(extra)), gTop = lvlOf(gLv), gN = groups.size + extra.length;
   const TNAME = { audit: 'Mechanics', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs' };
   const go = (html, tab, sec, kind) => '<button class="pt-go lp-go" type="button" data-go="' + tab + '"' + (sec ? ' data-sec="' + sec + '"' : '') + (kind ? ' data-kind="' + kind + '"' : '') + ' title="Open ' + TNAME[tab] + '">' + html + '</button>';
   const cmp = (a, b) => (S1 ? lpDelta(a, b, true) : '');
-  const mTile = plTile(plIco('ability_creature_cursed_02'), 'Mechanics', (gN ? gN + '<span> ' + (gN === 1 ? 'mistake' : 'mistakes') + '</span>' : '0') + cmp(S0.probs, S1 && S1.probs), LVL_CLS[gTop], gN ? '@LV@' : 'Nothing went wrong')
-    .replace('title="@LV@"', 'title="' + esc(['major', 'moderate', 'minor'].filter((k) => gLv[k]).map((k) => gLv[k] + ' ' + k).join(' · ')) + '"').replace('@LV@', lvHtml(gLv));
+  // (Oct 19, your call: no Mechanics tile (What went wrong has it), and Deaths sits at the top of the right column)
+  const dTile = '<div class="pts lp-tiles lp-dtile">' + go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length) + cmp(S0.deaths, S1 && S1.deaths), ds.length ? LVL_CLS.moderate : 'ok', ds.length ? ds[0].player + ' died first, at ' + T(ds[0].t) : 'Nobody died'), 'audit', 'sec-deaths') + '</div>';
   const tiles0 = '<div class="pts lp-tiles">' +
-    go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds.length) + cmp(S0.deaths, S1 && S1.deaths), ds.length ? LVL_CLS.moderate : 'ok', ds.length ? ds[0].player + ' died first, at ' + T(ds[0].t) : 'Nobody died'), 'audit', 'sec-deaths') +
-    go(mTile, 'audit') +
-    go(plTile(plIco('inv_inscription_scroll'), 'Assignments', hasNote ? noteMiss.length + '<span> missed</span>' + (S1 && S1.hasNote ? cmp(S0.noteMiss, S1.noteMiss) : '') : '—', !hasNote ? 'na' : noteMiss.some((m) => m.severity === 'High') ? 'bad' : noteMiss.length || noteLow ? 'warn' : 'ok', !hasNote ? 'No NSRT note for this boss yet' : noteMiss.length ? 'By ' + plural(new Set(noteMiss.map((m) => m.player)).size, 'player') : noteLow ? noteLow + ' minor' : 'All followed'), 'overview') +
     (hasNote ? go(plTile(plIco('spell_holy_divinehymn'), 'Healing cooldowns', cdRows.length ? cdRows.length - cdMiss - cdLate + '<span> / ' + cdRows.length + ' on time</span>' + (S1 && S1.cdPct != null ? lpDelta(S0.cdPct, S1.cdPct, false, '%') : '') : '—', !cdRows.length ? 'na' : cdMiss ? 'bad' : cdLate ? 'warn' : 'ok', !cdRows.length ? (hasNote ? 'None were due this pull' : 'No NSRT note for this boss yet') : cdMiss || cdLate ? [cdMiss ? cdMiss + ' missed' : '', cdLate ? cdLate + ' late or early' : ''].filter(Boolean).join(' and ') : 'All on time'), 'overview') : '') +
     (kicks || missedK ? go(plTile(plIco('ability_kick'), 'Interrupts', kicks + '<span> ' + (kicks === 1 ? 'kick' : 'kicks') + '</span>', missedK ? 'bad' : kicks ? 'ok' : 'na', missedK ? plural(missedK, 'cast') + ' got through' : kicks ? 'Every cast was kicked' : 'Nothing to kick'), 'audit', 'sec-kicks') : '') + '</div>', tiles = tiles0.replace('class="pts lp-tiles', 'data-n="' + (tiles0.match(/class="pt /g) || []).length + '" class="pts lp-tiles');
   // ---- one sentence under the tiles: how far it got, where the most trouble was, and what got worse ----
   const prog = it.kill ? (isKey ? '<b>The key was timed.</b> Nice work.' : '<b>The boss died.</b> Nice work.') : isBest ? '<b>Best pull of the night</b> so far, at ' + esc(lab(it, r, now)) + (bestLab ? ' (the best before it was ' + esc(bestLab) + ')' : '') + '.'
     : delta != null && delta > 0 ? '<b>Further than last pull</b>, from ' + esc(lab(prevItem, prev, was)) + ' to ' + esc(lab(it, r, now)) + '.' : delta != null && delta < 0 ? 'Not as far as last pull: ' + esc(lab(it, r, now)) + ', after ' + esc(lab(prevItem, prev, was)) + '.' : '';
-  const trouble = wrong.length ? 'Most trouble: ' + wrong.slice(0, 2).map((x) => '<span class="rcp-c ' + x.lv + '">' + esc(x.vn) + '</span>').join(' and ') + '.' : '<span class="rcp-c ok">Nothing went wrong.</span>';
-  const verdict = '<p class="panel rcp-vd">' + [prog, trouble, worse.length ? 'Worse than last pull: <b>' + esc(lpAnd(worse)) + '</b>.' : ''].filter(Boolean).join(' ') + '</p>';
+  // (Oct 19, your call: no sentence under the tiles; how far it got leads What went great! when it's good news)
+  if (prog && !/^Not as far/.test(prog)) well.unshift(prog);
   // ---- the tiles: a click opens its tab at its mechanic; a click on the map plays that moment in place, across the box ----
   const LPM = [], LVW = { major: 'Major', moderate: 'Moderate', minor: 'Minor' };
   const face = (n) => { const p = pmap.get(n); return p ? avatar(p, true) : ''; };
@@ -24894,14 +24906,14 @@ async function lastPull() {
     (wl.length ? '<div class="rcp-grid">' + wl.map((x, i) => wTile(x, i === 0 && bigI >= 0 && wl.length > 1)).join('') + '</div>' : '<p class="rcp-none">✓ Nothing went wrong this pull.</p>') + '</div>';
   const okT = improved.map(([id, x]) => ({ id, x, up: true })).concat(clean.map(([id, x]) => ({ id, x })));
   const okTile = (o) => '<button class="rcp-ok" type="button" data-go="audit" data-sec="sec-' + o.id + '" title="Open Mechanics">' + sIc(o.x.s) + '<span><b>' + esc(shortT(o.x.s.title)) + '</b><small>✓ ' + (o.up ? 'fixed since last pull' : 'clean') + '</small></span></button>';
-  const wellP = well.length || okT.length ? '<div class="panel rcp-well"><h3 class="nh"><span>What went well</span>' + (okT.length ? hst('ok', okT.length + ' clean') : '') + '</h3>' +
+  const wellP = well.length || okT.length ? '<div class="panel rcp-well"><h3 class="nh"><span>What went great!</span>' + (okT.length ? hst('ok', okT.length + ' clean') : '') + '</h3>' +
     (well.length ? '<div class="rcp-wh"><span class="rcp-ck">✓</span><span>' + well.join(' ') + '</span></div>' : '') + (okT.length ? '<div class="rcp-oks">' + okT.map(okTile).join('') + '</div>' : '') + '</div>' : '';
   let rows = null; const cs = r.combatants || [];
   const prepRows = () => { const out = []; for (const c of cs) { const p = [...r.players.values()].find((y) => y.name === c.name || (c.name && y.name.split('-')[0] === c.name.split('-')[0])); if (p) out.push(auditChar(c, p)); } return out; };
   const needNames = cs.some((c) => c.auras.some((a) => !a.name && a.ability));
   if (cs.length && !needNames) rows = prepRows();
-  const side = lpPace(r, bestR, bestO && bestO.x.pull) + lpPrep(r, cs.length ? rows : false) + lpTalk(r) + lpUsed(r) + lpCds(r, cdRows);
-  h += tiles + verdict + '<div class="lp-cols"><div class="lp-main">' + wP + wellP + '</div><div class="lp-side">' + side + '</div></div>';
+  const side = dTile + lpPace(r, bestR, bestO && bestO.x.pull) + lpPrep(r, cs.length ? rows : false) + lpTalk(r) + lpUsed(r) + lpCds(r, cdRows) + lpMiss(r);
+  h += tiles + '<div class="lp-cols"><div class="lp-main">' + wellP + wP + '</div><div class="lp-side">' + side + '</div></div>';
   if (!$('#view') || S.tab !== 'live' || S.rep !== r) return; // (another pull or tab was opened while this one was being read)
   view('<div class="lpv">' + h + '</div>'); refreshIcons();
   if ($('#lpLatest')) $('#lpLatest').onclick = () => select(same[same.length - 1]);
@@ -24918,7 +24930,7 @@ async function lastPull() {
     box.querySelector('.rcp-x').onclick = () => { box.remove(); b.hidden = false; t.classList.remove('rcp-play'); }; };
     b.onclick = (e) => { e.stopPropagation(); play(); }; b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); play(); } }; });
   // (flasks and food: once their buffs' names are looked up, the box fills in)
-  if (cs.length && needNames) resolveCombatants(cs).then(() => { if (S.rep !== r || S.tab !== 'live') return; const el = $('#lpPrep'); if (el) { el.outerHTML = lpPrep(r, prepRows()); refreshIcons(); } }).catch(() => { /* (the potions are still shown) */ });
+  if (cs.length && needNames) resolveCombatants(cs).then(() => { if (S.rep !== r || S.tab !== 'live') return; const el = $('#lpPrep'); if (el) { el.outerHTML = lpPrep(r, prepRows()); refreshIcons(); $('#lpPrep [data-go]').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; renderMain(); window.scrollTo({ top: 0 }); })); } }).catch(() => { /* (the potions are still shown) */ });
 }
 const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp };
 
@@ -25621,7 +25633,7 @@ const PAGE_TIPS = {
   live: [
     { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its color shows how far it got, and orange is a kill.' },
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went fine; yellow-green is minor, orange moderate and red major. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
-    { sel: '#view .lp-main', t: 'What went wrong, and what went well', p: 'The worst problem is big, with its map: fix it first. Each box says what to do on the next pull; click its map to play the moment, or the box to open it. What went well is under it.' },
+    { sel: '#view .lp-main', t: 'What went great, and what went wrong', p: 'What the raid did well comes first. Then the worst problem, big with its map: fix it first. Each box says what to do on the next pull; click its map to play the moment, or the box to open it.' },
     { sel: '#view .lp-prep', t: 'Before the next pull', p: 'This shows who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it are the players to talk to, each with their one thing to fix.' },
     { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs under "This pull" dig deeper into it: every mechanic, your assignments, each player\'s rotation and the graphs. The tabs under "Whole night" cover every pull together and every player.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
