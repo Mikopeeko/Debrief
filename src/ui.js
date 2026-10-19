@@ -11363,15 +11363,15 @@ function cmpChips(rot, x) {
     // (the difference, from the first player's side: points for percentages and fractions, plain for counts; green or amber when the grades say who's better)
     const badge = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b); if (u == null || w == null || Math.abs(u - w) < 1e-9) return ''; const d = u - w, v = Math.abs(d), pt = /%|\//.test((plain(o.a) + ' ' + plain(o.b)).replace(/<[^>]+>/g, '')), sg = d > 0 ? '+' : '−'; // (the value's own text, not its markup)
       const t = pt ? sg + (v < 10 ? v.toFixed(1) : Math.round(v)) + ' pts' : v >= 1000 ? sg + C(v) : sg + (v < 10 && v % 1 ? v.toFixed(1) : Math.round(v)); const cl = o.st2 ? (RK[o.sa] > RK[o.sb] ? ' up' : ' dn') : '';
-      return '<span class="cmp-sxd' + (cl ? cl : ' nt') + '">' + t + '</span>'; };
-    const rowB = (v, n, col, st, mx, num) => '<div>' + mk(st) + '<span class="cmp-cbb">' + (num ? '<i style="width:' + (100 * (n || 0) / mx).toFixed(1) + '%;background:' + col + '"></i>' : '') + '</span><b>' + plain(v) + '</b></div>';
+      return '<span class="dl' + (cl ? cl : ' lv') + '">' + t + '</span>'; };
+    const gRow = (pl, col, v, n, mx, num, st, sub) => cbRow({ tag: 'div', cls: ' nb cmp-gr', k: '', p: pl, pcol: col, chips: st && RK[st] != null ? ' ' + mk(st) : '', segs: [[num ? 100 * (n || 0) / mx : 0, 'm']], v: plain(v), sub: sub || '' });
     const chip = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b), num = u != null && w != null, mx = Math.max(u || 0, w || 0) || 1;
-      return '<div class="cmp-sx cmp-sxr' + (o.d2 ? ' d2' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><span class="cmp-sxn"><span>' + esc(o.l2 || o.l) + '</span></span>' +
-        '<span class="cmp-sxb">' + rowB(o.a, u, colA, o.sa, mx, num) + rowB(o.b, w, colB, o.sb, mx, num) + '</span>' + (badge(o) || '<span class="cmp-sxd lv">same</span>') + '</div>'; };
+      return '<div class="cmp-grp cmp-gx' + (o.d2 ? ' d2' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><div class="cmp-lbl">' + esc(o.l2 || o.l) + '</div>' +
+        gRow(x.pA, colA, o.a, u, mx, num, o.sa, badge(o) || '<span class="dl lv">same</span>') + gRow(x.pB, colB, o.b, w, mx, num, o.sb, '') + '</div>'; };
     return '<details class="cmp-sec ' + (g.net > 0 ? 'ok' : g.net < 0 ? 'warn' : 'na') + '" data-s="' + esc(g.t) + '"' + (open ? ' open' : '') + '><summary class="cmp-sech">' +
       '<span class="cmp-secn">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.t) + '</b><span class="cmp-wd ' + (g.net > 0 ? 'up' : g.net < 0 ? 'dn' : '') + '">' + who + (g.nDf ? '<span class="cmp-secc"> · ' + g.nDf + ' of ' + g.items.length + ' apart</span>' : '') + '</span></span></span>' +
       '<span class="cmp-secm"><span class="cmp-vl">' + esc(g.main.label || g.main.k) + '</span>' + pair(g.main.v, g.mainB && g.mainB.v, g.stA, g.stB) + '</span></summary>' +
-      '<div class="cmp-secb">' + (() => { const dif = g.items.filter((o) => o.df), same = g.items.filter((o) => !o.df), grid = (l) => '<div class="cmp-sxs">' + l.map(chip).join('') + '</div>';
+      '<div class="cmp-secb">' + (() => { const dif = g.items.filter((o) => o.df), same = g.items.filter((o) => !o.df), grid = (l) => '<div class="cmp-gw">' + l.map(chip).join('') + '</div>';
         // (Oct 19, "make it really crisp, clean and readable": only the chips that differ; the ones that match wait behind a toggle)
         if (!g.items.length) return '<p class="sub" style="margin:0">Nothing more in this section.</p>';
         if (!dif.length) return grid(same);
@@ -11381,7 +11381,7 @@ function cmpChips(rot, x) {
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
       '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' to fix</i><i class="warn">! ' + o.warn + ' could be better</i><i class="ok">✓ ' + o.ok + ' good</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
-  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a row for the details.</small></h3>' +
+  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a chart for the details.</small></h3>' +
     '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>' +
     '<p class="cmp-wlead">' + Ln + ' did better in <b>' + (better ? plural(better, 'section') : 'no sections') + '</b> and worse in <b>' + (worse || 'none') + '</b>.</p>' +
     '<div class="cmp-key3"><span><i style="background:' + colA + '"></i>' + Ln + '</span><span><i style="background:' + colB + '"></i>' + Bn + '</span></div>' +
@@ -11965,7 +11965,7 @@ function cmpPair(r, p, rB, q, vs, lead) {
   // fight over time fold into More detail, closed until opened)
   // (Oct 19: the Rotation chips first, then the charts: the numbers, healing or damage a second spell by spell, and over the fight. Talent
   // differences, every Rotation check and the side-by-side bars fold into More detail)
-  const chips = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k) });
+  const chips = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k), pA: p, pB: q });
   const numbers = '<div class="panel"><h3>The numbers<small>Hover any card for both numbers.</small></h3><div class="cmp-cards">' + cards.filter(Boolean).map(cmpCard).join('') + '</div></div>';
   const spells = k === kq && q.specName === p.specName ? '<div class="panel"><h3>' + capS(U(k)) + ' a second, spell by spell<small>Where the ' + U(k) + ' came from</small></h3>' + cmpSpellRows({ ...A, name: me ? 'You' : p.name, rate: ra }, { ...B, rate: rb }) + '</div>' : '';
   // (Oct 19, "highlight the total HPS each player did somewhere in the beginning": both totals, large, in their colors, and the gap between them)
