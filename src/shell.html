@@ -2618,8 +2618,7 @@ html { scrollbar-gutter: stable; }
 .tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
 /* a little construction sign on the tabs still being built (your call, Oct 19: Compare and Players) */
 .tabbar .tab.tab-uc { background-image: repeating-linear-gradient(-45deg, #e6b450 0 5px, #1a1c22 5px 10px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }
-body[data-wip="1"] #view::before { content: "\1F6A7  Under construction: this tab is still being built, so things may change."; display: block; margin: 0 0 14px; padding: 10px 14px 10px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; color: #f6dc9a;
-  background: linear-gradient(rgba(26,28,34,.92), rgba(26,28,34,.92)) padding-box, repeating-linear-gradient(-45deg, #e6b450 0 10px, #1a1c22 10px 20px) border-box; border: 4px solid transparent; }
+.cz-slot { padding: 18px var(--gut) 0; } .cz-slot .cz-site { margin: 0; } .cz-slot + #view { padding-top: 14px; } /* (the building site on the tabs still being built, in place of the old line of text) */
 /* Rotation, under construction: a little building site across the top of every Rotation page (your idea, Oct 19); fewer workers on a phone */
 .cz-site { position: relative; display: flex; align-items: flex-end; gap: 12px; margin: 0 0 14px; padding: 0 0 8px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r);
   background: radial-gradient(ellipse 60% 90% at 78% 110%, rgba(230,180,80,.12), transparent 70%), linear-gradient(#151925, #10131a); }

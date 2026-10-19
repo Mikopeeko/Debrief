@@ -278,6 +278,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   itself (click it to switch boss), keep the pull cards right under it with All pulls as the first card, and drop the
   separate picker at the top. A few mockups to pick from first, like the Graphs controls.
 
+## 2026-10-19, round 263: The building site on Assignments, Players and Compare too (your note)
+- [x] The same building site (crane, workers, caution tape) now sits on top of the Assignments, Players and Compare tabs,
+  in place of the old line of text, with a note naming the tab: "Our crew is still building the Players tab. Everything
+  below works, but it may change." It stays put when a page redraws itself. Checked on desktop and phone.
+
 ## 2026-10-19, round 262: Rotation, under construction (your idea: construction workers building the site)
 - [x] A little building site across the top of every Rotation page, drawn in the page (no images): a crane swinging a steel beam,
   a worker waving it in, one hammering on the scaffolding, one carrying a plank past a cone and some bricks, and caution tape
