@@ -1093,9 +1093,34 @@ function myPageView() { const t = homeTarget(); if (!t) { myPageEmpty(); return;
   HIST.load().then(histTidy).then(() => { if (S.tab === 'me' && S.rep && $('#view')) renderProgress(); groupsBackfill(); }); }
 function myPageEmpty() { view('<section class="panel my-empty"><h2>My Page</h2><p class="sub">Add your team, guild or your own character from Warcraft Logs, and its bosses, raid nights and rankings show up here.</p><button class="btn primary" type="button" id="myAdd">Add a team or character</button></section>');
   const b = $('#myAdd'); if (b) b.onclick = () => gsStart(); }
-// (organized for the raid that's open: its boss's card first in Bosses, opened, with "Open now" and the pull; a raid night opened from here opens on Recap)
-function myPageInTab(root, g) { const it = S.item, grid = root.querySelector('.pc-grid'), c = it && grid ? [...grid.querySelectorAll('.pc-card[data-boss]')].find((x) => x.dataset.boss === it.boss) : null;
-  if (c) { grid.prepend(c); if (c.classList.contains('mini')) c.click(); const h = c.querySelector('.pc-h'), nb = h && (h.firstElementChild || h); if (nb && !h.querySelector('.pc-now')) nb.insertAdjacentHTML('beforeend', '<div><span class="pc-now">Open now' + (it.pull ? ' · pull ' + it.pull : '') + '</span></div>'); }
+// (My Page's flow (your call, Oct 19: "redesign that tab... same general idea, different flow"): who (your team, you), the whole raid at a glance (every
+// boss in raid order, coloured by how far you got, the open raid's boss marked), where you are now (the big chart), every boss (compact tiles in raid
+// order that open full width), then history (raid nights, since last raid). The team page's own parts are moved here, so their buttons keep working;
+// a raid night opened from here opens on the first tab)
+function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if (!pg || pg.querySelector('.my-flow')) return;
+  const q1 = (x) => pg.querySelector(x), it = S.item, ttl = q1('.pg-ttl'), grid = q1('.pc-grid'); if (!ttl || !grid) return;
+  const el = (cls, tag, html) => { const e = document.createElement(tag || 'section'); e.className = cls; if (html) e.innerHTML = html; return e; }, flow = el('my-flow', 'div');
+  // who: your team (name, rankings, difficulty) and you (your character and parses; "Which one is you?" when not picked yet)
+  const who = el('my-who'), team = el('panel my-team', 'div', '<div class="my-lab">Your team</div>'), you = q1('.pg-you'), again = q1('.pg-me-again');
+  team.append(ttl); if (q1('.pc-diffs')) team.append(q1('.pc-diffs')); who.append(team);
+  if (you || again) { const me = el('panel my-you', 'div', '<div class="my-lab">You</div>'); me.append(you || again); who.append(me); } else who.classList.add('my-one');
+  flow.append(who); if (q1('#pgRk')) flow.append(q1('#pgRk'));
+  // the whole raid at a glance
+  const order = (E.PACKS || []).map((p) => p.encounter), cards = [...grid.querySelectorAll('.pc-card[data-boss]')], byB = new Map(cards.map((c) => [c.dataset.boss, c]));
+  const notP = new Set([...pg.querySelectorAll('.pc-open .pc-chip')].map((x) => x.textContent.trim())), list = order.filter((b) => byB.has(b) || notP.has(b));
+  if (list.length) { const strip = el('my-strip', 'div'); strip.innerHTML = list.map((b) => { const c = byB.get(b), big = c ? ((c.querySelector('.pc-big') || {}).textContent || '').trim() : '', k = /^Killed/.test(big), pc = (big.match(/(\d+(?:\.\d+)?)%/) || [])[1];
+      const col = !c ? '' : k ? '#ff8000' : pc != null ? (PULL_Q.find(([lo]) => +pc >= lo) || [0, '#9d9d9d'])[1] : '#9d9d9d', on = it && it.boss === b;
+      return '<button type="button" class="my-chip' + (c ? '' : ' my-cn') + (k ? ' my-ck' : '') + (on ? ' my-open' : '') + '" data-b="' + esc(b) + '"' + (col ? ' style="--mc:' + col + '"' : '') + (c ? '' : ' disabled') + '><b>' + esc(b) + '</b><span>' + (k ? 'Killed' : pc != null ? pc + '%' : 'Not pulled yet') + (on ? ' · <i class="my-ot">open now</i>' : '') + '</span></button>'; }).join('');
+    const sec = el('my-raid', 'section', '<div class="my-h"><h2>The raid at a glance</h2><span class="sub">Every boss in order: orange is killed, the rest by how far you got.</span></div>'); sec.append(strip); flow.append(sec);
+    strip.addEventListener('click', (e) => { const b = e.target.closest('.my-chip'); const c = b && byB.get(b.dataset.b); if (!c) return; if (c.classList.contains('mini')) c.click(); window.scrollTo({ top: c.getBoundingClientRect().top + window.scrollY - 96, behavior: 'smooth' }); }); /* (clear of the pinned tab bar) */ }
+  // where you are now
+  if (q1('#pgNow')) flow.append(q1('#pgNow'));
+  // every boss, in raid order; the open raid's boss marked
+  const bs = q1('#pgBosses'); if (bs) { cards.sort((u, w) => order.indexOf(u.dataset.boss) - order.indexOf(w.dataset.boss)).forEach((c) => grid.append(c)); flow.append(bs);
+    const oc = it && byB.get(it.boss); if (oc) { oc.classList.add('my-opencard'); const h = oc.querySelector('.pc-h'), nb = h && (h.firstElementChild || h); if (nb && !h.querySelector('.pc-now')) nb.insertAdjacentHTML('beforeend', '<div><span class="pc-now">Open now' + (it.pull ? ' · pull ' + it.pull : '') + '</span></div>'); } }
+  // history
+  const hist = el('my-hist'); if (q1('#pgNights')) hist.append(q1('#pgNights')); if (q1('.pg-since')) hist.append(q1('.pg-since')); if (hist.children.length) flow.append(hist);
+  const msg = q1('#pgMsg'); if (msg) msg.after(flow); else pg.append(flow); for (const x of pg.querySelectorAll('.pg-top, .pg-cols')) x.remove();
   if (!root._meNav) { root._meNav = 1; root.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-code], #pnwGo, [data-act="open"]')) S.tab = 'live'; }, true); } }
 // (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
 function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
@@ -16484,7 +16509,7 @@ function nightMerge(o) {
   box.insertAdjacentHTML('afterbegin', '<div class="lpv dbf rc-top">' + NR.parts.cards + '</div>'); box.insertAdjacentHTML('beforeend', '<section class="lpv dbf rc-more">' + NR.parts.more + '</section>');
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
-const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp };
+const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp, me: myPageView };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();

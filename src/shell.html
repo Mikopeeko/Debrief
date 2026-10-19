@@ -2691,6 +2691,24 @@ html { scrollbar-gutter: stable; }
 .home.prog.pg-intab { padding-top: 18px; } .pg-intab-load { padding: 28px 4px; }
 .pc-now { display: inline-block; margin-top: 7px; padding: 2px 9px; border-radius: 10px; font: 700 12px/1.5 var(--body, inherit); color: #1a1408; background: var(--gold); vertical-align: middle; }
 .my-empty { max-width: 560px; margin: 24px auto; padding: 22px 24px; } .my-empty h2 { margin: 0 0 6px; } .my-empty .btn { margin-top: 12px; }
+/* My Page's flow (Oct 19): who, the raid at a glance, now, every boss, history */
+.pg-intab .my-flow { display: flex; flex-direction: column; gap: 20px; } .pg-intab #pgNow, .pg-intab #pgNights, .pg-intab #pgBosses, .pg-intab .pg-since { order: 0; } /* (the team page reorders these on a phone; My Page keeps its own order) */
+.pg-intab .my-who { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 14px; align-items: stretch; } .pg-intab .my-who.my-one { grid-template-columns: minmax(0, 1fr); }
+.pg-intab .my-team, .pg-intab .my-you { padding: 16px 18px; } .pg-intab .my-team .pc-diffs { margin-top: 14px; }
+.my-lab { font: 700 11px/1 var(--body, inherit); letter-spacing: .9px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.pg-intab .my-team > .pg-ttl { display: flex; align-items: center; } .pg-intab .my-team .ht-ban { margin-right: 14px; } .pg-intab .my-team .pg-tt { display: flex; flex-direction: column; }
+.pg-intab .my-you .pg-you { margin: 0; font-size: 15px; gap: 8px 10px; } .pg-intab .my-you .pg-you > .linkbtn { flex-basis: 100%; text-align: left; }
+.pg-intab .my-h { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin: 0 0 10px; } .pg-intab .my-h h2 { margin: 0; font-size: 18px; }
+.my-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.my-chip { display: flex; flex-direction: column; gap: 3px; min-width: 0; text-align: left; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); border-left: 4px solid var(--mc, var(--line2)); background: var(--raised); color: var(--text); cursor: pointer; font: inherit; }
+.my-chip:hover:not([disabled]) { border-color: var(--line2); border-left-color: var(--mc, var(--line2)); background: rgba(255,255,255,.04); }
+.my-chip b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .my-chip span { font-size: 12.5px; font-weight: 700; color: var(--mc, var(--muted)); }
+.my-chip.my-cn { opacity: .5; cursor: default; } .my-chip.my-cn span { color: var(--muted); font-weight: 500; }
+.my-chip.my-open { box-shadow: inset 0 0 0 1px var(--gold); } .my-chip .my-ot { font-style: normal; color: var(--gold); }
+.pg-intab .pc-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } .pg-intab .pc-grid .pc-card:not(.mini) { grid-column: 1 / -1; }
+.pg-intab .pc-card.my-opencard { box-shadow: inset 0 0 0 2px var(--gold); }
+.pg-intab .my-hist { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .pg-intab .my-who, .pg-intab .my-hist { grid-template-columns: minmax(0, 1fr); } .my-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
 /* a little construction sign on the tabs still being built (your call, Oct 19: Compare and Players) */
 .tabbar .tab.tab-uc { background-image: repeating-linear-gradient(-45deg, #e6b450 0 5px, #1a1c22 5px 10px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }

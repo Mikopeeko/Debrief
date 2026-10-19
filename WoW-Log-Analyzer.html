@@ -2691,6 +2691,24 @@ html { scrollbar-gutter: stable; }
 .home.prog.pg-intab { padding-top: 18px; } .pg-intab-load { padding: 28px 4px; }
 .pc-now { display: inline-block; margin-top: 7px; padding: 2px 9px; border-radius: 10px; font: 700 12px/1.5 var(--body, inherit); color: #1a1408; background: var(--gold); vertical-align: middle; }
 .my-empty { max-width: 560px; margin: 24px auto; padding: 22px 24px; } .my-empty h2 { margin: 0 0 6px; } .my-empty .btn { margin-top: 12px; }
+/* My Page's flow (Oct 19): who, the raid at a glance, now, every boss, history */
+.pg-intab .my-flow { display: flex; flex-direction: column; gap: 20px; } .pg-intab #pgNow, .pg-intab #pgNights, .pg-intab #pgBosses, .pg-intab .pg-since { order: 0; } /* (the team page reorders these on a phone; My Page keeps its own order) */
+.pg-intab .my-who { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 14px; align-items: stretch; } .pg-intab .my-who.my-one { grid-template-columns: minmax(0, 1fr); }
+.pg-intab .my-team, .pg-intab .my-you { padding: 16px 18px; } .pg-intab .my-team .pc-diffs { margin-top: 14px; }
+.my-lab { font: 700 11px/1 var(--body, inherit); letter-spacing: .9px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.pg-intab .my-team > .pg-ttl { display: flex; align-items: center; } .pg-intab .my-team .ht-ban { margin-right: 14px; } .pg-intab .my-team .pg-tt { display: flex; flex-direction: column; }
+.pg-intab .my-you .pg-you { margin: 0; font-size: 15px; gap: 8px 10px; } .pg-intab .my-you .pg-you > .linkbtn { flex-basis: 100%; text-align: left; }
+.pg-intab .my-h { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin: 0 0 10px; } .pg-intab .my-h h2 { margin: 0; font-size: 18px; }
+.my-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.my-chip { display: flex; flex-direction: column; gap: 3px; min-width: 0; text-align: left; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); border-left: 4px solid var(--mc, var(--line2)); background: var(--raised); color: var(--text); cursor: pointer; font: inherit; }
+.my-chip:hover:not([disabled]) { border-color: var(--line2); border-left-color: var(--mc, var(--line2)); background: rgba(255,255,255,.04); }
+.my-chip b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .my-chip span { font-size: 12.5px; font-weight: 700; color: var(--mc, var(--muted)); }
+.my-chip.my-cn { opacity: .5; cursor: default; } .my-chip.my-cn span { color: var(--muted); font-weight: 500; }
+.my-chip.my-open { box-shadow: inset 0 0 0 1px var(--gold); } .my-chip .my-ot { font-style: normal; color: var(--gold); }
+.pg-intab .pc-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } .pg-intab .pc-grid .pc-card:not(.mini) { grid-column: 1 / -1; }
+.pg-intab .pc-card.my-opencard { box-shadow: inset 0 0 0 2px var(--gold); }
+.pg-intab .my-hist { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .pg-intab .my-who, .pg-intab .my-hist { grid-template-columns: minmax(0, 1fr); } .my-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
 /* a little construction sign on the tabs still being built (your call, Oct 19: Compare and Players) */
 .tabbar .tab.tab-uc { background-image: repeating-linear-gradient(-45deg, #e6b450 0 5px, #1a1c22 5px 10px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }
@@ -3901,7 +3919,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rc-more { margin: 20px 0 6px; } .rc-mh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0 2px 10px; font: 700 16px var(--body); color: var(--text); } .rc-mh .sub { font-weight: 400; font-size: 13px; }
 .rc-wide { margin: 0 0 12px; } .rc-wide > .panel { margin: 0; }
 .rc-cols { columns: 3 300px; column-gap: 12px; } .rc-it { break-inside: avoid; margin: 0 0 12px; } .rc-it > .panel { margin: 0; }
-.rc-story { padding: 15px 16px 13px; } .rc-story p { font-size: 14.5px; line-height: 1.6; } .rc-story p + p { margin-top: 6px; }
+.rc-story { padding: 15px 16px 13px; } .rc-top > .rc-story { margin: 0 0 12px; } .rc-story p { font-size: 14.5px; line-height: 1.6; } .rc-story p + p { margin-top: 6px; }
 .rc-b { position: relative; overflow: hidden; padding-top: 17px; } .rc-b::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--line2); }
 .rc-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; margin-top: 4px; } .rc-nums .dbf-n > b { white-space: normal; overflow-wrap: anywhere; font-size: 18px; } .rc-nums .dbf-n:first-child { grid-column: auto; }
 @media (max-width: 640px) { .rc-cols { columns: 1; } }
@@ -3916,6 +3934,11 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .dbf-pg .npg-b { cursor: default; } .dbf-pg .npg-b:hover i { filter: none; }
 .dbf-ng { cursor: default; } .dbf-ng:hover { color: inherit; text-decoration: none; }
 @media (max-width: 1100px) { .dbf-4 { grid-template-columns: minmax(0, 1fr); } }
+/* (two cards a row, each as wide as its text needs (--dw, from dbfCardP), so the pair ends at about the same height) */
+@media (min-width: 1101px) { .dbf-4 { display: flex; flex-wrap: wrap; align-items: stretch; }
+  .dbf-4 > .dbf-c { flex: var(--dw, 1) 1 0; min-width: 0; max-width: 68%; } .dbf-4 > .dbf-c:only-child { max-width: none; }
+  .dbf-4 > .dbf-br { display: block; flex-basis: 100%; height: 0; margin-bottom: -12px; } }
+.dbf-br { display: none; }
 @media (max-width: 640px) { .dbf-short { padding: 15px 15px 13px; } .dbf-short p { font-size: 15.5px; } .dbf-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 2px; }
   .dbf-n { border-left: 0; border-top: 1px solid var(--line); padding: 8px 10px; } .dbf-n:nth-child(-n+2) { border-top: 0; } .dbf-n:nth-child(even) { border-left: 1px solid var(--line); } .dbf-n:last-child:nth-child(odd) { grid-column: 1 / -1; } .dbf-n > b { font-size: 21px; } }
 /* ---- Team of the night (rct-, Oct 19): the result banner, the team, and a rated card for every raider ---- */
@@ -11889,9 +11912,34 @@ function myPageView() { const t = homeTarget(); if (!t) { myPageEmpty(); return;
   HIST.load().then(histTidy).then(() => { if (S.tab === 'me' && S.rep && $('#view')) renderProgress(); groupsBackfill(); }); }
 function myPageEmpty() { view('<section class="panel my-empty"><h2>My Page</h2><p class="sub">Add your team, guild or your own character from Warcraft Logs, and its bosses, raid nights and rankings show up here.</p><button class="btn primary" type="button" id="myAdd">Add a team or character</button></section>');
   const b = $('#myAdd'); if (b) b.onclick = () => gsStart(); }
-// (organized for the raid that's open: its boss's card first in Bosses, opened, with "Open now" and the pull; a raid night opened from here opens on Recap)
-function myPageInTab(root, g) { const it = S.item, grid = root.querySelector('.pc-grid'), c = it && grid ? [...grid.querySelectorAll('.pc-card[data-boss]')].find((x) => x.dataset.boss === it.boss) : null;
-  if (c) { grid.prepend(c); if (c.classList.contains('mini')) c.click(); const h = c.querySelector('.pc-h'), nb = h && (h.firstElementChild || h); if (nb && !h.querySelector('.pc-now')) nb.insertAdjacentHTML('beforeend', '<div><span class="pc-now">Open now' + (it.pull ? ' · pull ' + it.pull : '') + '</span></div>'); }
+// (My Page's flow (your call, Oct 19: "redesign that tab... same general idea, different flow"): who (your team, you), the whole raid at a glance (every
+// boss in raid order, coloured by how far you got, the open raid's boss marked), where you are now (the big chart), every boss (compact tiles in raid
+// order that open full width), then history (raid nights, since last raid). The team page's own parts are moved here, so their buttons keep working;
+// a raid night opened from here opens on the first tab)
+function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if (!pg || pg.querySelector('.my-flow')) return;
+  const q1 = (x) => pg.querySelector(x), it = S.item, ttl = q1('.pg-ttl'), grid = q1('.pc-grid'); if (!ttl || !grid) return;
+  const el = (cls, tag, html) => { const e = document.createElement(tag || 'section'); e.className = cls; if (html) e.innerHTML = html; return e; }, flow = el('my-flow', 'div');
+  // who: your team (name, rankings, difficulty) and you (your character and parses; "Which one is you?" when not picked yet)
+  const who = el('my-who'), team = el('panel my-team', 'div', '<div class="my-lab">Your team</div>'), you = q1('.pg-you'), again = q1('.pg-me-again');
+  team.append(ttl); if (q1('.pc-diffs')) team.append(q1('.pc-diffs')); who.append(team);
+  if (you || again) { const me = el('panel my-you', 'div', '<div class="my-lab">You</div>'); me.append(you || again); who.append(me); } else who.classList.add('my-one');
+  flow.append(who); if (q1('#pgRk')) flow.append(q1('#pgRk'));
+  // the whole raid at a glance
+  const order = (E.PACKS || []).map((p) => p.encounter), cards = [...grid.querySelectorAll('.pc-card[data-boss]')], byB = new Map(cards.map((c) => [c.dataset.boss, c]));
+  const notP = new Set([...pg.querySelectorAll('.pc-open .pc-chip')].map((x) => x.textContent.trim())), list = order.filter((b) => byB.has(b) || notP.has(b));
+  if (list.length) { const strip = el('my-strip', 'div'); strip.innerHTML = list.map((b) => { const c = byB.get(b), big = c ? ((c.querySelector('.pc-big') || {}).textContent || '').trim() : '', k = /^Killed/.test(big), pc = (big.match(/(\d+(?:\.\d+)?)%/) || [])[1];
+      const col = !c ? '' : k ? '#ff8000' : pc != null ? (PULL_Q.find(([lo]) => +pc >= lo) || [0, '#9d9d9d'])[1] : '#9d9d9d', on = it && it.boss === b;
+      return '<button type="button" class="my-chip' + (c ? '' : ' my-cn') + (k ? ' my-ck' : '') + (on ? ' my-open' : '') + '" data-b="' + esc(b) + '"' + (col ? ' style="--mc:' + col + '"' : '') + (c ? '' : ' disabled') + '><b>' + esc(b) + '</b><span>' + (k ? 'Killed' : pc != null ? pc + '%' : 'Not pulled yet') + (on ? ' · <i class="my-ot">open now</i>' : '') + '</span></button>'; }).join('');
+    const sec = el('my-raid', 'section', '<div class="my-h"><h2>The raid at a glance</h2><span class="sub">Every boss in order: orange is killed, the rest by how far you got.</span></div>'); sec.append(strip); flow.append(sec);
+    strip.addEventListener('click', (e) => { const b = e.target.closest('.my-chip'); const c = b && byB.get(b.dataset.b); if (!c) return; if (c.classList.contains('mini')) c.click(); window.scrollTo({ top: c.getBoundingClientRect().top + window.scrollY - 96, behavior: 'smooth' }); }); /* (clear of the pinned tab bar) */ }
+  // where you are now
+  if (q1('#pgNow')) flow.append(q1('#pgNow'));
+  // every boss, in raid order; the open raid's boss marked
+  const bs = q1('#pgBosses'); if (bs) { cards.sort((u, w) => order.indexOf(u.dataset.boss) - order.indexOf(w.dataset.boss)).forEach((c) => grid.append(c)); flow.append(bs);
+    const oc = it && byB.get(it.boss); if (oc) { oc.classList.add('my-opencard'); const h = oc.querySelector('.pc-h'), nb = h && (h.firstElementChild || h); if (nb && !h.querySelector('.pc-now')) nb.insertAdjacentHTML('beforeend', '<div><span class="pc-now">Open now' + (it.pull ? ' · pull ' + it.pull : '') + '</span></div>'); } }
+  // history
+  const hist = el('my-hist'); if (q1('#pgNights')) hist.append(q1('#pgNights')); if (q1('.pg-since')) hist.append(q1('.pg-since')); if (hist.children.length) flow.append(hist);
+  const msg = q1('#pgMsg'); if (msg) msg.after(flow); else pg.append(flow); for (const x of pg.querySelectorAll('.pg-top, .pg-cols')) x.remove();
   if (!root._meNav) { root._meNav = 1; root.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-code], #pnwGo, [data-act="open"]')) S.tab = 'live'; }, true); } }
 // (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
 function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
@@ -15525,9 +15573,9 @@ function nightRecap(o) {
   const prep = lastR ? lpPrep(lastR, prepRows).replace(/<small>[^<]*<\/small>/, '<small>At the last pull (' + lastR.item.pull + ')</small>') : '';
   const talk = '<div class="panel lp-side-p lp-talk" id="nrTalk"><h3 class="nh"><span>Talk to</span><small>Mechanics and staying alive</small></h3><p class="sub">Working out each player\'s night…</p></div>';
   // (Debriefing on all pulls: the four blocks for the top, and the rest as small blocks for the bottom)
-  const more = '<div class="rc-mh"><b>More from all pulls</b><span class="sub">How far each pull got, the night start to finish, the numbers, and what to sort before the next pull</span></div>' + (D.bars ? '<div class="rc-wide">' + D.bars + '</div>' : '') +
-    '<div class="rc-cols">' + [prep, D.story, talk, rcNums(D.nums, 'early in the night against later'), lpUsedNight(reps), lpMissNight(reps)].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
-  return { html: '<div class="lpv nrv dbf">' + D.top + '<div class="lp-cols"><div class="lp-main">' + D.lists + '</div><div class="lp-side">' + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>', parts: { cards: D.cards, more } };
+  const more = '<div class="rc-mh"><b>More from all pulls</b><span class="sub">How far each pull got, the numbers, and what to sort before the next pull</span></div>' + (D.bars ? '<div class="rc-wide">' + D.bars + '</div>' : '') +
+    '<div class="rc-cols">' + [prep, talk, rcNums(D.nums, 'early in the night against later'), lpUsedNight(reps), lpMissNight(reps)].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
+  return { html: '<div class="lpv nrv dbf">' + D.top + '<div class="lp-cols"><div class="lp-main">' + D.lists + '</div><div class="lp-side">' + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>', parts: { cards: D.story + D.cards, more } }; // (the night, start to finish, sits above the four blocks (your call, Oct 19))
 }
 // (Talk to over the night: each player's first thing to fix, from every pull (the Report card's own work, so it opens quickly after))
 function nightTalkHtml(data) {
@@ -26940,7 +26988,9 @@ const dbfUs = (n) => (n === 1 ? 'one of us' : n + ' of us');
 // (Recap as a story (your call, Oct 19: "tell the stories about each pull, and the whole night instead of highlighting specific
 // errors. Like its debriefing"): each card is a short paragraph, at most four sentences; on one pull, the mechanics it names are
 // small links under it, to Breakdown)
-const dbfCardP = (k, t, l, links, none, extra) => '<div class="panel dbf-c dbf-' + k + '"><h3 class="nh"><span>' + t + '</span></h3>' +
+// (each card grows by how much it says, so a short card takes less of its row and the pair comes out about the same height)
+const dbfLen = (h) => String(h || '').replace(/<[^>]*>/g, '').length;
+const dbfCardP = (k, t, l, links, none, extra) => '<div class="panel dbf-c dbf-' + k + '" style="--dw:' + (80 + (l.length ? dbfLen(l.slice(0, 4).join(' ')) + 22 * ((links && links.length) || 0) : dbfLen(none)) + dbfLen(extra)) + '"><h3 class="nh"><span>' + t + '</span></h3>' +
   (l.length ? '<p class="dbf-p">' + l.slice(0, 4).join(' ') + '</p>' + (links && links.length ? '<div class="dbf-links">' + links.join('') + '</div>' : '') : '<p class="sub dbf-none">' + none + '</p>') + (extra || '') + '</div>';
 // (Debriefing: the one thing to fix first, at the foot of What didn't go well)
 const dbfNext = (lab, t) => (t ? '<p class="dbf-next"><b>' + lab + ':</b> ' + esc(t) + '</p>' : '');
@@ -27094,7 +27144,7 @@ function dbfPull(o) {
     if (cd2.length) Dn.push('Compared to last pull, ' + flow(cd2).replace(/^./, (s) => s.toLowerCase()));
   }
   const noPrev = B ? '' : it.pull > 1 ? 'The pulls before this were resets, so there\'s nothing to compare yet.' : 'This was our first pull, so there\'s nothing to compare yet.';
-  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing stood out as done right this pull.') + dbfCardP('bad', 'What didn\'t go well', W2, L2, 'Nothing went wrong. Do that again.', nx) +
+  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing stood out as done right this pull.') + dbfCardP('bad', 'What didn\'t go well', W2, L2, 'Nothing went wrong. Do that again.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, LU, noPrev || 'Nothing clearly improved since last pull.') + dbfCardP('down', 'What\'s getting worse', Dn, LD, noPrev || 'Nothing clearly got worse since last pull.') + '</div>';
   return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div><p>' + s1 + ' ' + (story || s2) + '</p>' + (focus ? '<p><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + '</div>' + nums, lists: four(''),
     // (Debriefing: the four blocks with "Next pull" in them, and the story on its own for the bottom)
@@ -27194,7 +27244,7 @@ function dbfNight(o) {
     const k1 = H1.reduce((t, x) => t + x.missK, 0), k2 = H2.reduce((t, x) => t + x.missK, 0); if (big(k1, k2)) (tr(k1, k2, true) ? U : Dn).push((k2 < k1 ? 'Fewer' : 'More') + ' casts are getting through our kicks: ' + nz(k2) + ' in the last ' + h + ' pulls, ' + (k2 < k1 ? 'down' : 'up') + ' from ' + nz(k1) + ' in the first ' + h + '.');
   }
   const short = n < 6 ? 'Not enough pulls yet to say what\'s changing.' : '';
-  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'Nothing kept going wrong. Keep it up.', nx) +
+  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'Nothing kept going wrong. Keep it up.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, null, short || 'Nothing is clearly improving yet.') + dbfCardP('down', 'What\'s getting worse', Dn, null, short || 'Nothing is clearly getting worse.') + '</div>';
   return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists: four(''),
     cards: four(dbfNext('Next time', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">The night, start to finish</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + '</div>', bars, nums };
@@ -27278,7 +27328,7 @@ function nightMerge(o) {
   box.insertAdjacentHTML('afterbegin', '<div class="lpv dbf rc-top">' + NR.parts.cards + '</div>'); box.insertAdjacentHTML('beforeend', '<section class="lpv dbf rc-more">' + NR.parts.more + '</section>');
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
-const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp };
+const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp, me: myPageView };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();
