@@ -1081,7 +1081,22 @@ const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true
 // no raid is open yet). With no team added yet, it starts the setup.
 const ME_TIP = 'Your team\'s page: every boss and raid night, with your rankings.';
 const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" data-t="me" role="tab" aria-selected="' + !!on + '" data-tt="' + esc(ME_TIP) + '" aria-description="' + esc(ME_TIP) + '">' + tabIco('me') + 'My Page</button><span class="tsep" aria-hidden="true"></span>';
-function openMyPage() { const t = homeTarget(); if (!t) { gsStart(); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); }
+// (in a raid, the tab; from a team's own page, back into the raid you came from on My Page; with no raid, your team's page)
+function openMyPage() { if (S.rep && $('#view')) { S.tab = 'me'; renderMain(); window.scrollTo(0, 0); return; }
+  if (PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)) { S.tab = 'me'; select(PROG_BACK); return; }
+  const t = homeTarget(); if (!t) { gsStart(); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); }
+// My Page in a raid: your team's page inside the tab, the raid staying open above it (your call, Oct 19). It opens on your team each time (your
+// character's page is a click away on it); with no team added yet, an invitation to add one
+function myPageView() { const t = homeTarget(); if (!t) { myPageEmpty(); return; }
+  S.progView = t.gid; S.progMine = false; S.pgRename = S.pgDel = S.pgEdit = false;
+  view('<div class="pg-intab-load muted">Opening ' + esc(gName(t)) + '…</div>');
+  HIST.load().then(histTidy).then(() => { if (S.tab === 'me' && S.rep && $('#view')) renderProgress(); groupsBackfill(); }); }
+function myPageEmpty() { view('<section class="panel my-empty"><h2>My Page</h2><p class="sub">Add your team, guild or your own character from Warcraft Logs, and its bosses, raid nights and rankings show up here.</p><button class="btn primary" type="button" id="myAdd">Add a team or character</button></section>');
+  const b = $('#myAdd'); if (b) b.onclick = () => gsStart(); }
+// (organized for the raid that's open: its boss's card first in Bosses, opened, with "Open now" and the pull; a raid night opened from here opens on Recap)
+function myPageInTab(root, g) { const it = S.item, grid = root.querySelector('.pc-grid'), c = it && grid ? [...grid.querySelectorAll('.pc-card[data-boss]')].find((x) => x.dataset.boss === it.boss) : null;
+  if (c) { grid.prepend(c); if (c.classList.contains('mini')) c.click(); const h = c.querySelector('.pc-h'), nb = h && (h.firstElementChild || h); if (nb && !h.querySelector('.pc-now')) nb.insertAdjacentHTML('beforeend', '<div><span class="pc-now">Open now' + (it.pull ? ' · pull ' + it.pull : '') + '</span></div>'); }
+  if (!root._meNav) { root._meNav = 1; root.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-code], #pnwGo, [data-act="open"]')) S.tab = 'live'; }, true); } }
 // (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
 function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
   return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = !back ? 'Open a raid night first' : off ? 'Under development' : TAB_TIP[k] || '';
@@ -1319,11 +1334,11 @@ function renderMain() {
       const tab = (k) => { const l = name.get(k), soon = k === 'cmp' && CMP_OFF(), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
-      return meTabHtml(false) + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
+      return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.dataset.t === 'me') { openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
@@ -16447,7 +16462,7 @@ function nightMerge(o) {
   box.insertAdjacentHTML('afterbegin', '<div class="lpv dbf rc-top">' + NR.parts.cards + '</div>'); box.insertAdjacentHTML('beforeend', '<section class="lpv dbf rc-more">' + NR.parts.more + '</section>');
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
-const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp };
+const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp, me: myPageView };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();
@@ -18008,11 +18023,13 @@ function rankChips(g) {
 }
 const youChips = (c) => (c && c.parse ? '<span class="pgc">' + esc(c.parse.spec) + ' <b>' + Math.floor(c.parse.best) + '</b> best · <b>' + Math.floor(c.parse.med) + '</b> median</span>' : '');
 function renderProgress(msg, msgErr) {
-  S.page = 'prog'; queueMicrotask(navNote); // (a step for Back, once the page is drawn)
+  // (inTab: drawn inside the My Page tab of the raid that's open, which stays a raid page (your call, Oct 19); otherwise the page of its own)
+  const inTab = !!(S.rep && S.tab === 'me' && $('#view')), ROOT = inTab ? $('#view') : $('#main');
+  if (!inTab) { S.page = 'prog'; queueMicrotask(navNote); } // (a step for Back, once the page is drawn)
   // (the teams page, unless a team (or everything saved) is picked)
   const gl = groups(), g = S.progView && S.progView !== '*' ? gl.find((x) => x.gid === S.progView) : null;
   // (no Your teams page any more (your call, Oct 19): with none picked, your team's page; with nothing added, the front page)
-  if (S.progView == null || (S.progView !== '*' && !g)) { const t = homeTarget(); if (t) { S.progView = t.gid; renderProgress(msg, msgErr); return; } S.progView = null; home(); return; }
+  if (S.progView == null || (S.progView !== '*' && !g)) { const t = homeTarget(); if (t) { S.progView = t.gid; renderProgress(msg, msgErr); return; } S.progView = null; if (inTab) { myPageEmpty(); return; } home(); return; }
   const P = mePair();
   if (g && P && g.gid === P.c.gid && !S.progMine) { S.progView = P.t.gid; renderProgress(msg, msgErr); return; } // (your character's page is your team's now)
   const you = g && P && g.gid === P.t.gid ? P.c : null, youC = you && you.cls && E.CLASSES[you.cls], mineOf = g && P && g.gid === P.c.gid ? P.t : null;
@@ -18091,7 +18108,7 @@ function renderProgress(msg, msgErr) {
   // (bosses not pulled on this difficulty yet: one small row under the cards, not empty cards)
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
   const legend = pullLegend();
-  const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
+  const back = !inTab && PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
   // ---- the page's parts (Oct 19): what you're on now, your raid nights, then every boss ----
   const wclOf = (v) => v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: null } : null);
   // (a night's report and the pull it opens on: its kill, else its best pull; none for a night only in your combat log)
@@ -18145,7 +18162,7 @@ function renderProgress(msg, msgErr) {
     (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '') + '</section>';
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
-  $('#main').innerHTML = pgTabBar(g) + '<div class="home prog pg-v2"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
+  ROOT.innerHTML = (inTab ? '' : pgTabBar(g)) + '<div class="home prog pg-v2' + (inTab ? ' pg-intab' : '') + '"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
     '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + liveStrip + meCard + sugg +
     (all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') +
@@ -18202,14 +18219,14 @@ function renderProgress(msg, msgErr) {
   if ($('#pgDelNo')) $('#pgDelNo').onclick = () => { S.pgDel = false; renderProgress(); };
   if ($('#pgDelOk')) $('#pgDelOk').onclick = async (ev) => { ev.currentTarget.disabled = true; const n = await groupRemove(g); S.pgDel = S.pgEdit = false; S.progView = null; renderProgress('Removed ' + gName(g) + (n ? ' and ' + plural(n, 'saved pull') : '') + '.'); };
   if ($('#pgBack')) $('#pgBack').onclick = () => select(PROG_BACK);
-  $('#main').querySelectorAll('.pc-diffs button').forEach((b) => { b.onclick = () => { store.set(PROG_DIFF_KEY, b.dataset.d); renderProgress(); }; });
+  ROOT.querySelectorAll('.pc-diffs button').forEach((b) => { b.onclick = () => { store.set(PROG_DIFF_KEY, b.dataset.d); renderProgress(); }; });
   // (a short card opens with a click anywhere on it; an open one closes from its top or its "Show less")
-  $('#main').querySelectorAll('.pc-card[data-boss]').forEach((c) => { const boss = c.dataset.boss, h = c.querySelector('.pc-h'), more = c.querySelector('.pc-more');
+  ROOT.querySelectorAll('.pc-card[data-boss]').forEach((c) => { const boss = c.dataset.boss, h = c.querySelector('.pc-h'), more = c.querySelector('.pc-more');
     const set = (on) => { S.pcOpen = S.pcOpen || new Set(); if (on) S.pcOpen.add(boss); else S.pcOpen.delete(boss); c.classList.toggle('mini', !on); h.setAttribute('aria-expanded', String(on)); if (more) more.textContent = on ? 'Show less ▴' : 'Chart and nights ▾'; };
     c.addEventListener('click', (e) => { if (c.classList.contains('mini')) set(true); else if (e.target.closest('.pc-h, .pc-more')) set(false); });
     h.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set(c.classList.contains('mini')); } }; });
   // a card's night menu: open that night's report at the boss, or save every pull of the boss that night on this PC
-  $('#main').querySelectorAll('.pc-card[data-boss]').forEach((c) => {
+  ROOT.querySelectorAll('.pc-card[data-boss]').forEach((c) => {
     const sel = c.querySelector('.pc-sel'), msgEl = c.querySelector('.pc-msg'), boss = c.dataset.boss, acts = c.querySelectorAll('[data-act]');
     const sync = () => { const wcl = !!sel.value; acts.forEach((b) => { b.disabled = !wcl; }); msgEl.textContent = wcl ? '' : 'This night is only in your combat log. Open the log itself to look at it.'; };
     sel.onchange = sync; sync();
@@ -18223,6 +18240,7 @@ function renderProgress(msg, msgErr) {
       } catch (e) { b.disabled = false; b.textContent = 'Save in full'; msgEl.textContent = e.message; }
     };
   });
+  if (inTab) myPageInTab(ROOT, g);
 }
 $('#brandHome').onclick = () => home();
 // Your teams, in the top bar on every page: a menu of your teams and your character (each with how far it is; the one
