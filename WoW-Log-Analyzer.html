@@ -3166,6 +3166,7 @@ details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212
 .brw-ct { display: flex; gap: 8px; align-items: center; } .brw-tm { color: var(--muted); font-size: 13px; margin: 2px 0 6px; }
 .brw-n b { font: 700 20px var(--head); } .brw-n .up { color: var(--good); } .brw-n .dn, .brw-dm .dn { color: var(--bad); } .brw-n span { display: block; font-size: 13px; }
 .brw-bar { height: 8px; border-radius: 4px; background: #6aa8ff; margin: 8px 0 3px; overflow: hidden; } .brw-bar i { display: block; height: 100%; background: var(--gold); }
+.brw-pl { margin-top: 8px; font-size: 13px; color: var(--muted); } .brw-pl .up { color: var(--good); } .brw-pl .dn { color: var(--warn); }
 .brw-bs { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); } .brw-dm { margin-top: 8px; font-size: 13px; color: var(--muted); } .brw-dm b { color: var(--text); font-weight: 600; }
 .mcx-refh { margin: 16px 0 8px; font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); } .mcx-ph > .mcx-refh:first-of-type { margin-top: 2px; }
 #view details.secd.mcx-tile:not([open]) { box-shadow: 0 6px 18px rgba(0,0,0,.35); } #view .mcx-refg > details.secd:not([open]) { box-shadow: none; }
@@ -13886,11 +13887,8 @@ function burstPanel(r, m, cut) {
   const W = [], A = BOSS_AMP[r.item.boss], SH = BOSS_SHIELD[r.item.boss];
   const LN = { 'Fury Of The Aspects': 'Fury of the Aspects', 'Time Warp': 'Time Warp', "Harrier'S Cry": "Harrier's Cry" }, wn = A ? (A.win || A.what).replace(/^the /, '') : '';
   for (const l of rcdData(r).lust || []) if (l.t < end - 3) { const nm = LN[l.name] || l.name; W.push({ kind: 'lust', a: l.t, e: Math.min(end, l.t + 40), name: nm, ic: nm, say: nm + ' (30% Haste for the raid)' }); }
-  if (A) { let l = [];
-    if (A.mine) { for (const p of r.players.values()) { const b = p.buffs.get(A.mine) || (p.debuffs && p.debuffs.get(A.mine)); if (b) for (const [a, e] of b.sp) l.push({ a, e: e == null ? end : e }); }
-      l.sort((u, v) => u.a - v.a); const mg = []; for (const w of l) { const z = mg[mg.length - 1]; if (z && w.a <= z.e + 2) z.e = Math.max(z.e, w.e); else mg.push({ ...w }); } l = mg; }
-    else l = (r.bossAuras || []).filter((w) => w.n === A.aura).map((w) => ({ a: w.a, e: w.e == null ? end : w.e }));
-    for (const w of l) if (w.a < end - 3) W.push({ kind: 'amp', a: w.a, e: Math.min(end, w.e), name: wn, ic: A.aura || A.mine, say: wn + ' (' + A.amp + ')' }); }
+  if (A && !A.lust) { const l = bossWins(A, r, null, end);
+    for (const w of l) if (w.a < end - 3) W.push({ kind: 'amp', a: w.a, e: Math.min(end, w.e), name: wn, ic: A.aura || A.mine || 'Bloodlust', say: wn + ' (' + A.amp + ')' }); }
   const shields = SH ? (r.bossAuras || []).filter((w) => w.n === SH.aura && w.a < end).map((w) => ({ a: w.a, e: Math.min(end, w.e == null ? end : w.e) })) : [];
   // (the raid's hardest 20 seconds, when it isn't already one of the windows above)
   { let best = null; for (let i = 0; i + 20 <= end; i++) { if (W.some((w) => i < w.e && i + 20 > w.a)) continue; let v = 0; for (let j = i; j < i + 20; j++) { const [x, y] = sec(j); v += x + y; } if (!best || v > best.v) best = { a: i, v }; }
@@ -13926,10 +13924,14 @@ function burstPanel(r, m, cut) {
     const dm = during(w), dead = (r.deaths || []).filter((q) => q.t >= w.a && q.t <= w.e).length, top = [...s.by.entries()].sort((u, v) => v[1] - u[1]).slice(0, 2).filter(([, v]) => v > (s.a + s.b) * 0.05);
     const with1 = W.filter((o) => o !== w && o.kind !== 'push' && o.a < w.e && o.e > w.a).map((o) => o.name);
     const bp = s.b + s.a ? Math.round(100 * s.b / (s.b + s.a)) : 0;
+    // (Bloodlust: when the guides use it on this boss, and whether ours matched)
+    const LP = w.kind === 'lust' && BOSS_LUST[r.item.boss], ph = LP && LP.phase ? ((r.module && r.module.phases) || []).find((q) => q.name === LP.phase) : null;
+    const met = !LP ? null : LP.pull ? w.a < 15 : LP.amp ? W.some((o) => o.kind === 'amp' && o.a < w.e && o.e > w.a) : ph ? w.a >= ph.start - 10 && w.a <= ph.start + 60 : null;
+    const plan = LP ? '<div class="brw-pl">The guides: Bloodlust ' + esc(LP.say) + (LP.also ? ' (' + esc(LP.also) + ')' : '') + '. ' + (met == null ? '' : met ? '<span class="up">Ours matched.</span>' : '<span class="dn">Ours was at ' + T(w.a) + '.</span>') + '</div>' : '';
     return '<div class="brw-c" style="border-top-color:' + COL[w.kind] + '"><div class="brw-ct">' + spellIcon(0, w.ic, true) + '<b>' + esc(w.say) + '</b></div><div class="brw-tm">' + T(w.a) + '–' + T(w.e) + ' · ' + Math.round(len) + ' seconds' + (with1.length ? ' · with ' + esc(andL(with1)) : '') + '</div>' +
       '<div class="brw-n"><b>' + C(d) + '</b> damage a second <span class="' + (x >= 1 ? 'up' : 'dn') + '">' + (x >= 1 ? x.toFixed(1) + ' times' : Math.round(100 * x) + '% of') + ' our usual</span></div>' +
       '<div class="brw-bar" title="' + esc('Boss ' + C(s.b) + ', adds ' + C(s.a)) + '"><i style="width:' + bp + '%"></i></div><div class="brw-bs"><span>Boss ' + bp + '%</span><span>Adds ' + (100 - bp) + '%' + (top.length ? ': ' + esc(top.map(([k]) => k).join(', ')) : '') + '</span></div>' +
-      '<div class="brw-dm">' + (dm.length ? 'Going on: <b>' + dm.map(esc).join('</b>, <b>') + '</b>' : 'No tracked mechanic in this window.') + (dead ? ' <span class="dn">' + plural(dead, 'death') + ' in it.</span>' : '') + '</div></div>'; }).join('');
+      plan + '<div class="brw-dm">' + (dm.length ? 'Going on: <b>' + dm.map(esc).join('</b>, <b>') + '</b>' : 'No tracked mechanic in this window.') + (dead ? ' <span class="dn">' + plural(dead, 'death') + ' in it.</span>' : '') + '</div></div>'; }).join('');
   return '<div class="panel brw" id="sec-burst"><h3 class="nh"><span>Burst windows</span><small>where the raid\'s damage went, and what was going on</small></h3>' + tiles + chart + key + (cards ? '<div class="brw-cs">' + cards + '</div>' : '') +
     '<details class="howit"><summary>How it works</summary><div>Every hit the raid landed, per second' + (cut ? ', up to the wipe filter' : '') + '. "Boss" is the boss and anything that shares its health; everything else is an add. Bloodlust counts as 40 seconds from the first press. "Our usual" is our damage a second the rest of the time, outside Bloodlust and the boss\'s windows' +
     (A ? '; ' + esc(A.what) + ' is read from the log' : '') + '. "Going on" lists the mechanics with a moment in the window (or 3 seconds before it). Nothing here is graded: Rotation grades each player\'s own cooldowns in these windows.</div></details></div>';
@@ -16811,6 +16813,7 @@ const ARENAS = {
   "Ula'tek": { f: '08.ulatek-ort-platform-v85.jpg', w: 2123, h: 1188, cx: 0, cy: 1554, s: 10.5 },
 };
 ARENAS['The Bargained Crown'] = ARENAS['The Coiled Altar'];
+ARENAS["Kith'ix"] = { w: 1700, h: 1500, cx: 3, cy: 1835, s: 10 }; // (the island the fight is on, about 170 by 150 yards, from where players stood on a Mythic kill)
 // ARENAS above is now only each boss's room box (the "Full arena" view); the art drawn is the floor map below.
 
 // The art: Blizzard's in-game floor maps (Wowhead's datamined copies, loaded at runtime, never bundled), placed with
@@ -16824,15 +16827,17 @@ const FLOORS = {
   2608: { img: 1290353, minX: 265, maxX: 885, minY: -802.5, maxY: 127.5 },
   2609: { img: 1290354, minX: 175, maxX: 940, minY: -113.75, maxY: 1033.75 },
   2610: { img: 1290355, minX: 980, maxX: 1755, minY: -581.25, maxY: 581.25 },
+  // (Kith'ix, Oct 19: Wowhead's mapper art for zone 17059, floor 1 (the cave), which is the whole map area; bounds from UiMapAssignment, build 12.1.5.70448)
+  2669: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/17059-1.jpg', whole: true, minX: 1510.4169921875, maxX: 2022.9169921875, minY: -393.75, maxY: 375 },
 };
 const BOSS_FLOOR = { "Nek'zali the Soulcoiler": 2606, 'The Twin Fangs': 2607, 'Entombed Sentinels': 2608, 'Vashnik the Malignant': 2608,
-  'The Lost Explorers': 2609, Sszorak: 2609, 'The Coiled Altar': 2610, 'The Bargained Crown': 2610, "Ula'tek": 2610 };
+  'The Lost Explorers': 2609, Sszorak: 2609, 'The Coiled Altar': 2610, 'The Bargained Crown': 2610, "Ula'tek": 2610, "Kith'ix": 2669 };
 // SVG <image> for the boss's floor map in map space (sx = x, sy = -y), or '' when there's no built-in map.
 function arenaImg(boss, c) {
   const f = FLOORS[BOSS_FLOOR[boss]]; if (!f) return '';
-  const wy = (f.maxY - f.minY) * 1024 / 1002, hy = (f.maxX - f.minX) * 768 / 668; // whole image, in yards
+  const wy = (f.maxY - f.minY) * (f.whole ? 1 : 1024 / 1002), hy = (f.maxX - f.minX) * (f.whole ? 1 : 768 / 668); // whole image, in yards
   const x = (-f.maxY - c.x0) * c.yd, y = (-f.maxX - c.y0) * c.yd;
-  return '<image href="https://wow.zamimg.com/uploads/screenshots/normal/' + f.img + '.png" preserveAspectRatio="none" x="' + x + '" y="' + y + '" width="' + wy * c.yd + '" height="' + hy * c.yd + '" opacity="0.95"/>';
+  return '<image href="' + (f.url || 'https://wow.zamimg.com/uploads/screenshots/normal/' + f.img + '.png') + '" preserveAspectRatio="none" x="' + x + '" y="' + y + '" width="' + wy * c.yd + '" height="' + hy * c.yd + '" opacity="0.95"/>';
 }
 
 // ---- user map image: stored per boss in this browser, positioned in world yards ----
@@ -20946,6 +20951,27 @@ const BOSS_AMP = {
   'The Coiled Altar': { aura: 'Ghastly Regeneration', what: "Zul'jan's Ghastly Regeneration", win: 'Ghastly Regeneration', amp: '100% more damage', lead: "When Malacrass binds himself to Zul'jan, Zul'jan takes 100% more damage for 35 seconds. Both guides put Bloodlust, potions and every cooldown here." },
   "Ula'tek": { aura: 'Rage of the Shackled', what: 'the Venomous Heart', win: 'Venomous Heart', amp: 'triple damage on the heart', lead: "In Rage of the Shackled, Ula'tek's Venomous Heart is open for 20 seconds and takes 200% more damage. Save your big cooldowns and potion for these windows, and hit the heart." },
   "Kith'ix": { mine: 'Luminous Grace', what: 'Last Light', amp: 'more damage', lead: "At 25%, Liadrin's Last Light gives the raid Luminous Grace: more damage and double healing until Kith'ix dies. You have about a minute before Eightfold Eclipse wipes the raid, so hold your 2-minute cooldowns and potion for it." } };
+// (your call, Oct 19: "always include burst windows and damage amps on bosses". Nek'zali has no amp, but P2 is the damage race the guides
+// save Bloodlust and cooldowns for; every other boss without a window uses the raid's Bloodlust)
+BOSS_AMP["Nek'zali the Soulcoiler"] = { phase: 'P2', what: 'P2', win: 'P2', amp: 'a race to her 100-energy enrage', how: 'P2 is a damage race: she gains energy until Uncoiled Rage at 100, so damage there matters most.',
+  lead: "P2 is a damage race to her enrage. A guide's plan: one 2-minute cooldown in the intermission, then Bloodlust, your second cooldown and your potion in P2." };
+// When the guides use Bloodlust on each boss (notes/Guides/Bosses): pull, a phase, or the boss's damage window
+const BOSS_LUST = { 'Entombed Sentinels': { pull: true, say: 'on the pull' }, 'The Lost Explorers': { pull: true, say: 'on the pull' }, 'Vashnik the Malignant': { pull: true, say: 'on the pull' },
+  Sszorak: { pull: true, say: 'on the pull' }, 'The Twin Fangs': { pull: true, say: 'on the pull' }, "Nek'zali the Soulcoiler": { phase: 'P2', say: 'in P2, the damage race (holding it 30 to 50 seconds to line up is fine)', also: 'one guide says the pull' },
+  'The Coiled Altar': { amp: true, say: "in Zul'jan's Ghastly Regeneration" }, "Ula'tek": { amp: true, say: 'for a Venomous Heart window', also: 'they differ on which one' },
+  "Kith'ix": { phase: 'P2 Last Light', say: 'in P2', also: 'a Mythic video guide uses it on the pull, to skip the third intermission' } };
+// (a boss with no window of its own: the raid's Bloodlust is its big damage moment)
+const LUST_AMP = (boss) => { const L = BOSS_LUST[boss]; return { lust: true, what: 'Bloodlust', win: 'Bloodlust', amp: '30% Haste', how: 'Bloodlust gives the whole raid 30% Haste for 40 seconds, so your big cooldown and potion are worth the most inside it.',
+  lead: (L ? 'Both guides use Bloodlust ' + L.say + ' on this boss. ' : '') + 'Your big cooldown and your potion are worth the most inside it: line them up with it.' }; };
+// A boss's windows in one pull: a debuff on the player (mine), a phase of the fight module, the boss's own aura, or the raid's Bloodlust
+function bossWins(A, r, p, t1) {
+  if (A.lust) return (rcdData(r).lust || []).map((l) => ({ a: l.t, e: Math.min(t1, l.t + 40) }));
+  if (A.phase) return ((r.module && r.module.phases) || []).filter((ph) => ph.name === A.phase && ph.start < t1).map((ph) => ({ a: ph.start, e: Math.min(t1, isFinite(ph.end) ? ph.end : t1) }));
+  if (A.mine) { if (p) return ((p.buffs.get(A.mine) || (p.debuffs && p.debuffs.get(A.mine)) || { sp: [] }).sp.map(([a, e]) => ({ a, e: e == null ? t1 : e })));
+    const l = []; for (const q of r.players.values()) { const b = q.buffs.get(A.mine) || (q.debuffs && q.debuffs.get(A.mine)); if (b) for (const [a, e] of b.sp) l.push({ a, e: e == null ? t1 : e }); }
+    l.sort((u, v) => u.a - v.a); const mg = []; for (const w of l) { const z = mg[mg.length - 1]; if (z && w.a <= z.e + 2) z.e = Math.max(z.e, w.e); else mg.push({ ...w }); } return mg; }
+  return (r.bossAuras || []).filter((w) => w.n === A.aura).map((w) => ({ a: w.a, e: w.e == null ? t1 : w.e }));
+}
 const BOSS_SHIELD = { 'Entombed Sentinels': { aura: 'Vitriolic Stasis', what: 'Vitriolic Stasis', lead: 'During Vitriolic Stasis, both Sentinels take 99% less damage for about 30 seconds while they balance their health. A burst cooldown pressed into it is wasted: press it after.' } };
 // Talent swaps the guides make for one boss (notes/Guides/Classes). take: talents a guide adds there, skip: ones it drops; hero: only for that hero tree.
 const BOSS_TAL = {
@@ -20973,16 +20999,16 @@ function bossRot(o) {
   const gOf = (r, p) => { for (const [g, y] of r.players) if (y === p) return g; return null; };
   const add = (g, c) => { g.l.push(c); out.keys.push(String(c.k).replace(/[^a-z0-9]+/gi, '-').toLowerCase()); };
   // (1) the boss's damage windows: your big cooldown and potion in each, and how hard you hit in it against the rest of the pull
-  const A = BOSS_AMP[boss];
+  const A = BOSS_AMP[boss] || LUST_AMP(boss);
   if (A && !isHeal) { const W = [];
-    for (const x of per) { const { r, p, t1 } = x, l = A.mine ? ((p.buffs.get(A.mine) || (p.debuffs && p.debuffs.get(A.mine)) || { sp: [] }).sp.map(([a, e]) => ({ a, e: e == null ? t1 : e }))) : (r.bossAuras || []).filter((w) => w.n === A.aura).map((w) => ({ a: w.a, e: w.e == null ? t1 : w.e }));
+    for (const x of per) { const { r, p, t1 } = x, l = bossWins(A, r, p, t1);
       for (const w of l) { if (w.a >= t1 - 3) continue; const e = Math.min(w.e, t1), len = Math.max(1, e - w.a), cd = HW ? (p.byName.get(lc(HW.n)) || []).some((u) => u < e && u + HW.len > w.a) : bigCdUp(p, w.a, e), pot = COMBAT_POTS.some((n) => (p.byName.get(n) || []).some((u) => u >= w.a - 30 && u <= e));
         const dIn = dmgIn(p, w.a, e), dAll = dmgIn(p, 0, t1), rest = Math.max(1, t1 - len); W.push({ pull: r.item.pull, a: w.a, e, cd, pot, dps: dIn / len, out: Math.max(0, dAll - dIn) / rest }); } }
     if (W.length) { const g = { t: 'Big damage moments', l: [] }; out.groups.push(g); const withCd = W.filter((w) => w.cd != null), nCd = withCd.filter((w) => w.cd).length, nPot = W.filter((w) => w.pot).length, wsN = o.WSAY || 'your big cooldown';
       const f = withCd.length ? nCd / withCd.length : null, st = A.graded === false || isTank || f == null ? 'na' : f >= 0.66 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', x = W.reduce((v, w) => v + w.dps, 0) / Math.max(1, W.reduce((v, w) => v + w.out, 0));
       add(g, { st, ic: o.WIC || 'Bloodlust', label: (A.graded === false ? 'Cooldowns in ' : 'Your cooldown in ') + A.what, v: f == null ? W.length + '<span> windows</span>' : nCd + '<span>/' + withCd.length + '</span>', k: 'boss:amp',
         sub: (f == null ? '' : 'Your ' + wsN + ' was up in ' + nCd + ' of ' + withCd.length + ' ' + (A.win || A.what) + (withCd.length === 1 ? ' window' : ' windows') + '. ') + 'You drank a combat potion in ' + nPot + ' of ' + W.length + '. In ' + (W.length === 1 ? 'that window' : 'those windows') + ' you did ' + (x >= 1 ? x.toFixed(1) + ' times as much damage a second as' : Math.round(100 * x) + '% of your damage a second from') + ' the rest of the pull.',
-        how: 'The boss takes ' + A.amp + ' in these windows, so damage there is worth more. Your big cooldown counts when it was up for any part of the window. A potion counts when you drank it up to 30 seconds before or during it.' + (isTank ? ' Tanks aren\'t graded on this.' : ''),
+        how: (A.how || 'The boss takes ' + A.amp + ' in these windows, so damage there is worth more.') + ' Your big cooldown counts when it was up for any part of the window. A potion counts when you drank it up to 30 seconds before or during it.' + (isTank ? ' Tanks aren\'t graded on this.' : ''),
         mo: W.map((w) => ({ pull: w.pull, a: w.a, b: w.e })), tip: st === 'warn' || st === 'bad' ? 'Line ' + wsN + ' up with ' + A.what + ': if it would come back just after, hold it a few seconds.' : '' });
       out.MERGE['Big damage moments'] = { ic: o.WIC || 'Bloodlust', main: 'boss:amp', lead: A.lead };
       out.WT['boss:amp'] = 2;
