@@ -253,6 +253,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 256: Reload keeps you where you were (your note: F5 sent you to the home page)
+- [x] **F5 or the refresh button now reopens the same page:** the same pull and tab, one pull or the whole night, the
+  player picked on Rotation, or the Teams page. This replaces the Oct 18 rule that every visit starts on the front page,
+  for reloads only: opening the site fresh, or your browser filling in your last address, still starts on the front page,
+  and a shared pull link still opens its pull.
+- [x] Rotation's name buttons fixed: their style name clashed with a progress bar's, which squashed them to 10 pixels on the
+  site. The tab also opens on your saved character when no one is saved as you yet.
+- Checked: reload on Rotation with Arsyn picked comes back to Arsyn on the same pull; a fresh visit opens the front page.
+
 ## 2026-10-19, round 255: Rotation opens on a player, no chart (your note: "it doesn't even need to be a chart")
 - [x] **The "Spec checks, checks in good shape" bar chart is gone.** Rotation now opens straight on one player's page:
   yours when you're in the pull (the character saved as you), otherwise the first player. Above it, every player's name as
