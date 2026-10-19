@@ -9097,11 +9097,11 @@ function specPage(o) {
   const TOPB = o.TOPB, TOPP = o.TOPP || new Set(), topT = (k) => (TOPB && TOPB[k] && (one || TOPP.has(k)) ? '<span class="spc-tp" title="' + esc(o.topTip || topWho(o.top, TOPB)) + '">' + esc(o.topL || 'Top players') + ': ' + TOPB[k] + '</span>' : '');
   const blk = (g, gi, info, vis) => { const gd = g.l.filter((c) => c.st !== 'na'), worst = gd.some((c) => c.st === 'bad') ? 'bad' : gd.some((c) => c.st === 'warn') ? 'warn' : gd.length ? 'ok' : 'na', main = g.l.find((c) => c.k === info.main) || g.l[0];
     return '<section class="spc-grp" id="spc-g-' + gi + '"><article class="spc-row spc-blk ' + worst + '"><header class="spc-rh">' + icB(info.ic) + '<div class="spc-rt"><h4>' + esc(g.t) + '</h4></div><div class="spc-rv">' + (main ? '<b class="cst-f ' + main.st + '">' + main.v + '</b>' : '') + '<span class="spc-bd ' + worst + '">' + BADGE[worst] + '</span></div></header>' +
-      '<div class="spc-rb"><div class="spc-rd">' + (info.lead ? '<p class="spc-lead">' + esc(info.lead) + '</p>' : '') + spcLines(vis, viz, topT, slug, info.ic, (c) => momT(c, 6)) + (info.det ? '<div class="spc-det">' + info.det + '</div>' : '') + '</div></div></article></section>'; };
+      '<div class="spc-rb"><div class="spc-rd' + (info.lead ? ' spc-2c' : '') + '">' + (info.lead ? '<p class="spc-lead">' + esc(info.lead) + '</p>' : '') + '<div class="spc-rr">' + spcTiles(vis, viz, topT, slug, (c) => momT(c, 6)) + (info.det ? '<div class="spc-det">' + info.det + '</div>' : '') + '</div></div></div></article></section>'; };
   const MERGE = o.MERGE || {};
   const blkOf = ({ g, gi }) => { const vis = g.l.filter((c) => SF === 'all' || c.st === SF); if (MERGE[g.t]) return vis.length || (SF === 'all' && MERGE[g.t].det) ? blk(g, gi, MERGE[g.t], vis) : '';
     if (!vis.length) return ''; const gd = g.l.filter((c) => c.st !== 'na'), ok = gd.filter((c) => c.st === 'ok').length;
-    return '<section class="spc-grp" id="spc-g-' + gi + '"><h3 class="spc-gt"><span>' + esc(g.t) + '</span><span class="spc-gs">' + (gd.length ? ok + ' of ' + gd.length + ' good' : '') + '</span>' + dots(g.l) + '</h3>' + vis.map(row).join('') + '</section>'; };
+    return '<section class="spc-grp" id="spc-g-' + gi + '"><h3 class="spc-gt"><span>' + esc(g.t) + '</span><span class="spc-gs">' + (gd.length ? ok + ' of ' + gd.length + ' good' : '') + '</span>' + dots(g.l) + '</h3>' + spcTiles(vis, viz, topT, slug, (c) => momT(c, 6)) + '</section>'; };
   // (each chapter opens with its name, over the first block it shows)
   let chOn = null; const body = groups.map((g, gi) => ({ g, gi })).filter(({ g }) => g.l.length || (MERGE[g.t] && MERGE[g.t].det && SF === 'all')).map((x) => { const h = blkOf(x); if (!h) return ''; const hd = x.g.ch && x.g.ch !== chOn ? '<h2 class="spc-chap"><span>' + esc(x.g.ch) + '</span></h2>' : ''; if (hd) chOn = x.g.ch; return hd + h; }).join('') || '<p class="muted">No checks match that filter.</p>';
   // (the menu: the blocks, grouped under their chapters)
@@ -9165,6 +9165,13 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
   for (const c of rest) { const v = vz(c), id = 'spc-r-' + slug(c.k); if (v) big.push(spcLine(c, top(c.k), id, v, bic)); else small.push(spcMini(c, top(c.k), id, tmo ? tmo(c) : '')); }
   if (small.length === 1) return rest.map((c) => { const v = vz(c); return spcLine(c, top(c.k), 'spc-r-' + slug(c.k), v || (tmo ? tmo(c) : ''), bic); }).join('') + (tbl ? spcTable(cdl, top, slug, tmo) : ''); // (a tile alone: a line, in its own place)
   return big.join('') + (tbl ? spcTable(cdl, top, slug, tmo) : '') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
+// The Rotation tab as sections of tiles (Oct 19, "make each and every rotation tab a similar design": a sentence of why on the left, the checks as
+// tiles on the right, the section's stat boxes and bars under them)
+const SPC_BW = { ok: 'Good', warn: 'Could be better', bad: 'To fix', na: 'Not graded' };
+const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1;
+  return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
+    '<b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-tlb ' + c.st + '">' + SPC_MK[c.st] + ' ' + SPC_BW[c.st] + '</span>' + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
+    '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';
 // (three or more cooldowns in a block: a compact table, a row each, with its mark, its name, a bar of its uses, the count, what it did each time and the top
 // raids'. A row opens in place to its sentence, how it's judged, its "Next time" and its moments; the ones to fix start open)
 const spcTable = (l, top, slug, tmo) => '<div class="spc-tbl">' + l.map((c) => { const hw = spcHw(c.k, c.how), m = String(c.v).match(/^(\d+)<span>\/(\d+)<\/span>$/), f = m && +m[2] ? Math.min(1, +m[1] / +m[2]) : null;
@@ -12067,7 +12074,9 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
     return '<div class="panel cmp-fixs"><h3>' + (me ? 'Your' : An + '\'s') + ' ' + (l.length === 1 ? 'biggest fix' : l.length + ' biggest fixes') + '<small>Against ' + Bn + ', the biggest first. Hover one for the numbers.</small></h3>' +
       '<p class="cmp-wlead">' + (tot >= gap * 0.95 ? 'Together ' + (l.length === 1 ? 'it adds' : 'these add') + ' up to more than the whole <b>' + C(gap) + '</b> ' + U(k) + ' a second between you (some overlap): this is where the gap is.' : 'Fix ' + (l.length === 1 ? 'this' : 'these') + ' and ' + (me ? 'you' : An) + ' close about <b>' + C(tot) + '</b> of the <b>' + C(gap) + '</b> ' + U(k) + ' a second between you.') + '</p><div class="cmp-fxs">' + l.map(card).join('') + '</div></div>'; })();
   const cdTl = cmpCdTimeline([{ r, p, name: nmO ? nmO.a : me ? 'You' : p.name, col: p.color }, { r: rB, p: q, name: nmO ? nmO.b : q.name, col: colB }], U(k));
-  return { vs, body: (lead || '') + hps + fixes + (chips || gapH) + cdTl + numbers + spells + sideBy + chart +
+  // (the biggest fixes panel is off: the side-by-side sections say it more clearly (your call, Oct 19))
+  // (the numbers cards and healing a second spell by spell are off: the side-by-side sections cover them (your call, Oct 19))
+  return { vs, body: (lead || '') + hps + (chips || gapH) + cdTl + sideBy + chart +
     cmpFold('more', 'More detail', 'Talent differences and every Rotation check. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '')) };
 }
 // (3) Your other pulls: this pull against another of the same player's pulls on this boss (the kill, else the one before), the same page.
