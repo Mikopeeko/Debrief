@@ -1636,6 +1636,13 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .wt h2 { margin: 0; font: 700 26px var(--head); color: #f6f7fa; } .wt > .sub { margin: 4px 40px 0 0; font-size: 14px; } .nd .fph-box { margin-top: 14px; } .nd .fp-msg { margin-top: 6px; } .nd .fph-alt { margin-top: 10px; }
 .nd { width: min(560px, 100%); margin: 0 auto; }
 @media (max-width: 640px) { .gs-go { width: 100%; max-width: 340px; } .gs .fph-box, .nd .fph-box { flex-direction: column; } .gs .fph-box .btn, .nd .fph-box .btn { width: 100%; } .wt { padding: 18px 16px; } .wt h2 { font-size: 23px; } }
+/* (Beta: a gold stamp tilted onto the top corner of the name, and the Discord invite as a quiet line under the logo) */
+.fph-name { position: relative; display: inline-block; }
+.fph-tag { position: absolute; top: -14px; right: -22px; padding: 4px 9px 3px; border-radius: 5px; background: var(--gold); color: #1a1407; font: 800 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; transform: rotate(12deg); box-shadow: 0 3px 12px rgba(0,0,0,.5), 0 0 0 2px rgba(15,18,24,.9); pointer-events: none; }
+.fph-disc { display: inline-flex; align-items: center; gap: 6px; margin: -6px 0 14px; color: #b9b2a2; font-size: 14px; text-decoration: none; }
+.fph-disc u { text-decoration: none; color: var(--gold); font-weight: 600; } .fph-disc i { font-style: normal; color: var(--gold); transition: transform .15s; }
+.fph-disc:hover u { text-decoration: underline; text-underline-offset: 3px; } .fph-disc:hover i { transform: translateX(3px); }
+@media (max-width: 760px) { .fph-tag { top: -12px; right: -18px; font-size: 10.5px; } .fph-disc { font-size: 13px; } }
 .fph-beta { display: inline-flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1px solid rgba(230,180,80,.35); background: rgba(230,180,80,.08); color: #e6d3a8; font-size: 13px; text-decoration: none; transition: border-color .15s, background .15s; }
 .fph-beta b { padding: 3px 10px; border-radius: 999px; background: var(--gold); color: #1a1407; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .fph-beta i { font-style: normal; color: var(--gold); transition: transform .15s; } .fph-beta:hover { border-color: var(--gold); background: rgba(230,180,80,.14); } .fph-beta:hover i { transform: translateX(3px); }

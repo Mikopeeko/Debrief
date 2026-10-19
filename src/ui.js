@@ -13463,7 +13463,8 @@ function homeHosted() {
   const tg = homeTarget();
   $('#main').innerHTML = '<div class="home fp fph">' +
     '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' +
-    '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<b>Debrief</b></div>' + (DISCORD_URL ? '<a class="fph-beta" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener"><b>Beta</b><span>Help shape Debrief: join our Discord</span><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
+    // (Beta as a gold stamp tilted onto the name's corner, and the Discord invite as a quiet line under it; your idea, Oct 19)
+    '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<span class="fph-name"><b>Debrief</b><span class="fph-tag">Beta</span></span></div>' + (DISCORD_URL ? '<a class="fph-disc" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Help shape Debrief: <u>join our Discord</u><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p><button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
