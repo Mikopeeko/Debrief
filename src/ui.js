@@ -12853,18 +12853,22 @@ function homeHosted() {
   const fp = fpParts();
   const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
   const teamsTop = groups().length > 0; // (your teams first once you have one; for someone new, the invite under the start box)
-  $('#main').innerHTML = '<div class="home fp fph">' + (teamsTop ? homeTeams() : '') +
+  // (the raid's art fades in behind the headline; the start box comes first, then the two other ways in side by side)
+  $('#main').innerHTML = '<div class="home fp fph">' +
+    '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' + (teamsTop ? homeTeams() : '') +
     '<section class="fph-hero" id="fpStart"><div class="fp-k">Mythic raid logs, pull by pull</div><h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       (teamsTop ? '' : homeStart()) +
-      '<div class="fph-main"><div class="fph-h">' + HICO.live + '<b>Live logging</b><span>during raid</span></div>' +
-        '<div class="fph-box"><input id="hLive" placeholder="Paste your raid\'s live log link" autocomplete="off" aria-label="Warcraft Logs live log link"><button class="btn primary" id="hLiveGo">Go live</button></div><div class="fp-msg" id="hLiveMsg"></div>' +
-        '<div class="fph-note">Each pull shows up here about a minute after it ends. <button class="linkbtn" id="hHow" type="button" aria-expanded="false">How to live log</button></div>' +
-        '<ol class="fph-how" id="hHowList" hidden><li>Whoever logs for the raid opens the Warcraft Logs uploader and starts <b>Live Log</b>.</li><li>Copy the live log\'s link (it\'s on warcraftlogs.com too, under your guild\'s reports).</li><li>Paste it above and keep this tab open during raid.</li></ol></div>' +
-      '<div class="fph-sec"><div class="fph-sl">Looking at a finished night?</div>' +
-        '<div class="fph-box sm"><input id="hWcl" placeholder="Paste any Warcraft Logs report link" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
-        '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or drop it anywhere on this page.</div></div></section>' +
-    '<section class="fph-prev"><h2>What you get</h2>' +
+      '<div class="fph-ways">' +
+        '<div class="fph-way"><div class="fph-h">' + HICO.live + '<b>Raiding right now?</b></div><p>Paste your raid\'s live log. Each pull shows up about a minute after it ends.</p>' +
+          '<div class="fph-box sm"><input id="hLive" placeholder="Live log link" autocomplete="off" aria-label="Warcraft Logs live log link"><button class="btn" id="hLiveGo">Go live</button></div><div class="fp-msg" id="hLiveMsg"></div>' +
+          '<button class="linkbtn fph-q" id="hHow" type="button" aria-expanded="false">How to live log</button>' +
+          '<ol class="fph-how" id="hHowList" hidden><li>Whoever logs for the raid opens the Warcraft Logs uploader and starts <b>Live Log</b>.</li><li>Copy the live log\'s link (it\'s on warcraftlogs.com too, under your guild\'s reports).</li><li>Paste it above and keep this tab open during raid.</li></ol></div>' +
+        '<div class="fph-way"><div class="fph-h">' + HICO.file + '<b>Looking at a finished night?</b></div><p>Paste any Warcraft Logs report, yours or anyone\'s.</p>' +
+          '<div class="fph-box sm"><input id="hWcl" placeholder="Report link" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn" id="hWclGo">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
+          '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or drop one on the page.</div></div>' +
+      '</div></section>' +
+    '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
