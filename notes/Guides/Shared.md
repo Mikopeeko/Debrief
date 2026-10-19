@@ -20,6 +20,11 @@ Rating per 1% at max level (Wowhead, Resto Druid): Crit 46, Haste 44, Mastery 46
 - Shared enchants: Empowered Hex of Leeching#243951 helm, Silvermoon's Mending#244021 shoulders, Arcanoweave Spellthread#240155 legs (casters),
   Shaladrassil's Roots#243983 boots.
 
+## Threat (Icy Veins, tank guides)
+Each enemy keeps its own threat table (no decay). To take aggro: 110% of the top threat in melee (8 yd), 130% at range. Tanks have +950% threat.
+Taunt: 6 s fixate (diminishing returns: each repeat −35%, min 1.1 s), sets you equal to the top threat, +800% threat while it lasts.
+Most self-healing gives no threat; healing potions do (split across enemies).
+
 ## Systems
 - Apex talents (new in Midnight): a 3-4 point capstone node in each spec tree.
 - Omnium Folio (12.0.7): five rune nodes after a quest chain; node 4 is the stat node. Small bonuses.
