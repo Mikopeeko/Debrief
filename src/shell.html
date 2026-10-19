@@ -3500,75 +3500,6 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .pl-det .rs-nums.pl7 { grid-template-columns: repeat(7, minmax(0, 1fr)); } .pl-det .rs-nums.pl7 .rs-n span i { font-style: normal; font-size: 11px; color: var(--faint); }
 @media (max-width: 1100px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-/* (Oct 19, Recap on the whole night as the night's story (your pick from the mockup): nst-* is its own) */
-.nst { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; } .nst > * { min-width: 0; }
-.nst .panel { margin: 0; }
-.nst-hero { position: relative; overflow: hidden; padding: 24px 28px 20px; border-radius: 18px; border: 1px solid var(--line2); background: radial-gradient(ellipse at 85% 0%, rgba(178,94,245,.18), transparent 55%), linear-gradient(180deg, #1b1c24, #14161d); }
-.nst-hero.kill { border-color: rgba(255,128,0,.38); background: radial-gradient(ellipse at 85% 0%, rgba(255,128,0,.22), transparent 55%), linear-gradient(180deg, #1d1a17, #151720); }
-.nst-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.nst-kick { font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: #c79bff; } .nst-hero.kill .nst-kick { color: #ff8000; }
-.nst-h { margin: 6px 0 4px; font: 800 44px/1.06 var(--head); letter-spacing: .01em; } .nst-k { color: #ff8000; } .nst-b { color: #c79bff; }
-.nst-dek { max-width: 860px; font-size: 16.5px; line-height: 1.5; color: #d5d0c6; }
-.nst-vs { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--line2); font-size: 14px; }
-.nst-vs s { color: var(--faint); } .nst-vs b { color: #ff8000; } .nst-hero:not(.kill) .nst-vs b { color: #c79bff; }
-.nst-stats { display: flex; flex-wrap: wrap; gap: 14px 28px; margin-top: 18px; }
-.nst-st b { display: block; font: 800 30px/1 var(--head); font-variant-numeric: tabular-nums; } .nst-st span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-.nst-g { font-style: normal; } .nst-st .g-S, .nst-st .g-A { color: #7ee08f; } .nst-st .g-B { color: #6aa8ff; } .nst-st .g-C { color: #f3c969; } .nst-st .g-D, .nst-st .g-F { color: #ff8f87; }
-.nst-ros { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); font-size: 14px; color: #cfcac0; }
-.nst-ros > svg { width: 18px; height: 18px; flex: none; color: var(--muted); } .nst-nm { font-weight: 700; }
-.nst-dc { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; border-radius: 10px; background: #5865f2; color: #fff; font: 700 14px var(--body); cursor: pointer; box-shadow: 0 6px 18px rgba(88,101,242,.35); }
-.nst-dc:hover { filter: brightness(1.08); } .nst-dc:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; } .nst-dc svg { width: 18px; height: 18px; }
-.nst-ta { display: block; width: 100%; height: 120px; margin-top: 10px; background: var(--raised); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 8px; font: 13px var(--body); }
-.nst-card { padding: 18px 20px; border-radius: 16px; } .nst-t { margin: 0; font: 800 22px var(--head); } .nst-s { margin: 2px 0 14px; }
-/* the pull-by-pull chart */
-.nst-arcw { overflow-x: auto; } .nst-arc { position: relative; min-width: 560px; height: 230px; padding-left: 38px; }
-.nst-grid i { position: absolute; left: 38px; right: 0; border-top: 1px dashed rgba(255,255,255,.07); } .nst-grid em { position: absolute; left: 0; font: 600 11px var(--body); color: var(--faint); font-style: normal; transform: translateY(50%); }
-.nst-grid { position: absolute; inset: 22px 0 24px 0; }
-.nst-bars { position: absolute; left: 38px; right: 0; top: 22px; bottom: 24px; }
-.nst-bar { all: unset; position: absolute; bottom: 0; min-width: 8px; border-radius: 6px 6px 2px 2px; cursor: pointer; background: linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 30%, transparent)); box-shadow: 0 0 14px color-mix(in srgb, var(--c) 30%, transparent); transform-origin: bottom; animation: nst-grow .7s cubic-bezier(.2,.8,.2,1) both; }
-.nst-bar:hover { filter: brightness(1.25); } .nst-bar:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.nst-bar i { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 700 11px var(--body); color: var(--muted); font-style: normal; white-space: nowrap; }
-.nst-bar.kill i { color: #ff8000; font-size: 12.5px; } .nst-bar.kill { animation: nst-grow .7s cubic-bezier(.2,.8,.2,1) both, nst-glow 2.4s ease-in-out 1.2s infinite; }
-.nst-bar i b { color: var(--gold); font-weight: 800; }
-@keyframes nst-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } } @keyframes nst-glow { 50% { box-shadow: 0 0 30px rgba(255,128,0,.75); } }
-.nst-sk { position: absolute; left: 50%; width: 14px; height: 14px; margin-bottom: -7px; transform: translateX(-50%); border-radius: 50%; background: #0f1117 url("https://wow.zamimg.com/images/wow/icons/small/inv_misc_bone_humanskull_01.jpg") center / cover; box-shadow: 0 0 0 2px #ff3b46; cursor: help; }
-.nst-brk { position: absolute; bottom: -4px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.07); } .nst-brk span { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 10.5px; color: var(--faint); white-space: nowrap; }
-.nst-ax { position: absolute; left: 38px; right: 0; bottom: 0; height: 18px; } .nst-ax span { position: absolute; font-size: 11.5px; color: var(--faint); transform: translateX(-50%); white-space: nowrap; } .nst-ax span:first-child { transform: none; } .nst-ax span:last-child { transform: translateX(-100%); }
-.nst-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; color: var(--muted); } .nst-leg i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; }
-/* moments */
-.nst-moms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.nst-mo { position: relative; overflow: hidden; border-radius: 14px; background: var(--raised); border: 1px solid var(--line2); cursor: pointer; transition: transform .15s, border-color .15s; }
-.nst-mo:hover { transform: translateY(-2px); border-color: var(--faint); } .nst-mo:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; } .nst-mo.play { grid-column: 1 / -1; transform: none; cursor: default; }
-.nst-mo .wr-map.nst-mmap, .nst-mo .wr-map.nst-mmap svg.zmap { width: 100% !important; height: 160px !important; } .nst-mo .wr-map.nst-mmap { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; transform: none !important; box-shadow: none !important; cursor: zoom-in; }
-.nst-mo .wr-map.nst-mmap::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 40px 10px rgba(10,11,15,.75); }
-.nst-nomap { display: grid; place-items: center; height: 160px; border-bottom: 1px solid var(--line); background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.06), transparent 60%); font: 800 28px var(--head); }
-.nst-tag { position: absolute; left: 10px; top: 10px; z-index: 3; padding: 3px 9px; border-radius: 6px; font: 800 11px var(--body); letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
-.nst-tag.or { background: #ff8000; color: #1a1006; } .nst-tag.gr { background: #45c15c; color: #06140a; } .nst-tag.pu { background: #a335ee; color: #fff; }
-.nst-play { position: absolute; right: 10px; top: 128px; z-index: 3; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font: 700 12px var(--body); pointer-events: none; }
-.nst-mo.play .nst-tag, .nst-mo.play .nst-play { display: none; }
-.nst-mb { padding: 12px 14px 14px; } .nst-mb b { font: 800 17px var(--head); } .nst-mb p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.45; color: #cfcac0; }
-.nst-anim { padding: 10px; background: #10131a; border-bottom: 1px solid var(--line); cursor: default; } .nst-x { margin: 0 0 8px; }
-/* the night in parts */
-.nst-chs { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 14px; }
-.nst-ch { all: unset; display: flex; flex-direction: column; gap: 2px; padding: 16px 16px 14px; border-radius: 14px; background: var(--raised); border: 1px solid var(--line2); cursor: pointer; transition: transform .15s, border-color .15s; }
-.nst-ch:hover { transform: translateY(-2px); border-color: var(--faint); } .nst-ch:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.nst-cn { font: 800 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); } .nst-ch > b { font: 800 19px var(--head); } .nst-ch .sub { font-size: 12.5px; }
-.nst-ch p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.45; color: #cfcac0; }
-.nst-ch.kill { border-color: rgba(255,128,0,.5); background: linear-gradient(180deg, rgba(255,128,0,.1), transparent 70%), var(--raised); } .nst-ch.kill .nst-cn { color: #ff8000; }
-/* the awards */
-.nst-aws { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.nst-aw { all: unset; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 10px 14px; text-align: center; border-radius: 14px; background: var(--raised); border: 1px solid var(--line2); cursor: pointer; transition: transform .15s, border-color .15s; }
-.nst-aw:hover { transform: translateY(-2px); border-color: var(--faint); } .nst-aw:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.nst-medal { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 6px; border-radius: 50%; font-size: 22px; background: radial-gradient(circle at 35% 30%, #f6dc9a, #b07a24); box-shadow: 0 0 18px rgba(230,180,80,.35); }
-.nst-at { font: 700 11.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); } .nst-aw > b { font: 800 18px var(--head); } .nst-aw .sub { font-size: 12.5px; }
-/* held back, next week */
-.nst-two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.nst-big { display: flex; gap: 14px; align-items: center; margin: 10px 0 6px; } .nst-big > b { flex: none; font: 800 38px/1 var(--head); color: #ff3b46; } .nst-big span { font-size: 14.5px; line-height: 1.45; }
-.nst-ul { margin: 10px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.5; } .nst-ul li { margin: 0 0 8px; } .nst-ul li.bad::marker { color: #ff3b46; } .nst-ul li.warn::marker { color: #d2df4a; } .nst-ul.ok li::marker { color: #7ee08f; }
-@media (prefers-reduced-motion: reduce) { .nst-bar, .nst-bar.kill { animation: none; } }
-@media (max-width: 1000px) { .nst-chs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nst-aws { grid-template-columns: repeat(3, minmax(0, 1fr)); } .nst-two { grid-template-columns: 1fr; } .nst-moms { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .nst-hero { padding: 18px 16px 16px; } .nst-top { flex-direction: column; } .nst-h { font-size: 32px; } .nst-dek { font-size: 15px; } .nst-st b { font-size: 24px; } .nst-stats { gap: 12px 20px; }
-  .nst-moms, .nst-chs { grid-template-columns: 1fr; } .nst-aws { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nst-card { padding: 14px; } .nst-arc { min-width: 520px; } }
 /* Mechanics on the whole night (Oct 19): Fix these first, Got it down, and every mechanic pull by pull under the boss's health */
 .wnm .wnm-sec { margin: 0 0 22px; } .wnm .wnm-sec > h3.nh { margin: 0 0 10px; }
 .wnm-fxs { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 14px; }
@@ -3697,6 +3628,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
   .wnm-t td[data-pull] { min-width: 22px; } .wnm-c { width: 16px; height: 16px; } .wnm-gp { padding: 12px 4px 10px 10px; }
   .wnm-fx .wr-map.wnm-map, .wnm-fx .wr-map.wnm-map svg.zmap { height: 150px !important; }
 }
+.fc-lock .fcard.pull { opacity: .32; filter: grayscale(1); cursor: not-allowed; box-shadow: none; transform: none; }
 </style>
 
 

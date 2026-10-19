@@ -3500,75 +3500,6 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 .pl-det .rs-nums.pl7 { grid-template-columns: repeat(7, minmax(0, 1fr)); } .pl-det .rs-nums.pl7 .rs-n span i { font-style: normal; font-size: 11px; color: var(--faint); }
 @media (max-width: 1100px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pl-det .rs-nums.pl7 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-/* (Oct 19, Recap on the whole night as the night's story (your pick from the mockup): nst-* is its own) */
-.nst { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; } .nst > * { min-width: 0; }
-.nst .panel { margin: 0; }
-.nst-hero { position: relative; overflow: hidden; padding: 24px 28px 20px; border-radius: 18px; border: 1px solid var(--line2); background: radial-gradient(ellipse at 85% 0%, rgba(178,94,245,.18), transparent 55%), linear-gradient(180deg, #1b1c24, #14161d); }
-.nst-hero.kill { border-color: rgba(255,128,0,.38); background: radial-gradient(ellipse at 85% 0%, rgba(255,128,0,.22), transparent 55%), linear-gradient(180deg, #1d1a17, #151720); }
-.nst-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.nst-kick { font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: #c79bff; } .nst-hero.kill .nst-kick { color: #ff8000; }
-.nst-h { margin: 6px 0 4px; font: 800 44px/1.06 var(--head); letter-spacing: .01em; } .nst-k { color: #ff8000; } .nst-b { color: #c79bff; }
-.nst-dek { max-width: 860px; font-size: 16.5px; line-height: 1.5; color: #d5d0c6; }
-.nst-vs { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--line2); font-size: 14px; }
-.nst-vs s { color: var(--faint); } .nst-vs b { color: #ff8000; } .nst-hero:not(.kill) .nst-vs b { color: #c79bff; }
-.nst-stats { display: flex; flex-wrap: wrap; gap: 14px 28px; margin-top: 18px; }
-.nst-st b { display: block; font: 800 30px/1 var(--head); font-variant-numeric: tabular-nums; } .nst-st span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-.nst-g { font-style: normal; } .nst-st .g-S, .nst-st .g-A { color: #7ee08f; } .nst-st .g-B { color: #6aa8ff; } .nst-st .g-C { color: #f3c969; } .nst-st .g-D, .nst-st .g-F { color: #ff8f87; }
-.nst-ros { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); font-size: 14px; color: #cfcac0; }
-.nst-ros > svg { width: 18px; height: 18px; flex: none; color: var(--muted); } .nst-nm { font-weight: 700; }
-.nst-dc { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; border-radius: 10px; background: #5865f2; color: #fff; font: 700 14px var(--body); cursor: pointer; box-shadow: 0 6px 18px rgba(88,101,242,.35); }
-.nst-dc:hover { filter: brightness(1.08); } .nst-dc:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; } .nst-dc svg { width: 18px; height: 18px; }
-.nst-ta { display: block; width: 100%; height: 120px; margin-top: 10px; background: var(--raised); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 8px; font: 13px var(--body); }
-.nst-card { padding: 18px 20px; border-radius: 16px; } .nst-t { margin: 0; font: 800 22px var(--head); } .nst-s { margin: 2px 0 14px; }
-/* the pull-by-pull chart */
-.nst-arcw { overflow-x: auto; } .nst-arc { position: relative; min-width: 560px; height: 230px; padding-left: 38px; }
-.nst-grid i { position: absolute; left: 38px; right: 0; border-top: 1px dashed rgba(255,255,255,.07); } .nst-grid em { position: absolute; left: 0; font: 600 11px var(--body); color: var(--faint); font-style: normal; transform: translateY(50%); }
-.nst-grid { position: absolute; inset: 22px 0 24px 0; }
-.nst-bars { position: absolute; left: 38px; right: 0; top: 22px; bottom: 24px; }
-.nst-bar { all: unset; position: absolute; bottom: 0; min-width: 8px; border-radius: 6px 6px 2px 2px; cursor: pointer; background: linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 30%, transparent)); box-shadow: 0 0 14px color-mix(in srgb, var(--c) 30%, transparent); transform-origin: bottom; animation: nst-grow .7s cubic-bezier(.2,.8,.2,1) both; }
-.nst-bar:hover { filter: brightness(1.25); } .nst-bar:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.nst-bar i { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 700 11px var(--body); color: var(--muted); font-style: normal; white-space: nowrap; }
-.nst-bar.kill i { color: #ff8000; font-size: 12.5px; } .nst-bar.kill { animation: nst-grow .7s cubic-bezier(.2,.8,.2,1) both, nst-glow 2.4s ease-in-out 1.2s infinite; }
-.nst-bar i b { color: var(--gold); font-weight: 800; }
-@keyframes nst-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } } @keyframes nst-glow { 50% { box-shadow: 0 0 30px rgba(255,128,0,.75); } }
-.nst-sk { position: absolute; left: 50%; width: 14px; height: 14px; margin-bottom: -7px; transform: translateX(-50%); border-radius: 50%; background: #0f1117 url("https://wow.zamimg.com/images/wow/icons/small/inv_misc_bone_humanskull_01.jpg") center / cover; box-shadow: 0 0 0 2px #ff3b46; cursor: help; }
-.nst-brk { position: absolute; bottom: -4px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.07); } .nst-brk span { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 10.5px; color: var(--faint); white-space: nowrap; }
-.nst-ax { position: absolute; left: 38px; right: 0; bottom: 0; height: 18px; } .nst-ax span { position: absolute; font-size: 11.5px; color: var(--faint); transform: translateX(-50%); white-space: nowrap; } .nst-ax span:first-child { transform: none; } .nst-ax span:last-child { transform: translateX(-100%); }
-.nst-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; color: var(--muted); } .nst-leg i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; }
-/* moments */
-.nst-moms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.nst-mo { position: relative; overflow: hidden; border-radius: 14px; background: var(--raised); border: 1px solid var(--line2); cursor: pointer; transition: transform .15s, border-color .15s; }
-.nst-mo:hover { transform: translateY(-2px); border-color: var(--faint); } .nst-mo:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; } .nst-mo.play { grid-column: 1 / -1; transform: none; cursor: default; }
-.nst-mo .wr-map.nst-mmap, .nst-mo .wr-map.nst-mmap svg.zmap { width: 100% !important; height: 160px !important; } .nst-mo .wr-map.nst-mmap { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; transform: none !important; box-shadow: none !important; cursor: zoom-in; }
-.nst-mo .wr-map.nst-mmap::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 40px 10px rgba(10,11,15,.75); }
-.nst-nomap { display: grid; place-items: center; height: 160px; border-bottom: 1px solid var(--line); background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.06), transparent 60%); font: 800 28px var(--head); }
-.nst-tag { position: absolute; left: 10px; top: 10px; z-index: 3; padding: 3px 9px; border-radius: 6px; font: 800 11px var(--body); letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
-.nst-tag.or { background: #ff8000; color: #1a1006; } .nst-tag.gr { background: #45c15c; color: #06140a; } .nst-tag.pu { background: #a335ee; color: #fff; }
-.nst-play { position: absolute; right: 10px; top: 128px; z-index: 3; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font: 700 12px var(--body); pointer-events: none; }
-.nst-mo.play .nst-tag, .nst-mo.play .nst-play { display: none; }
-.nst-mb { padding: 12px 14px 14px; } .nst-mb b { font: 800 17px var(--head); } .nst-mb p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.45; color: #cfcac0; }
-.nst-anim { padding: 10px; background: #10131a; border-bottom: 1px solid var(--line); cursor: default; } .nst-x { margin: 0 0 8px; }
-/* the night in parts */
-.nst-chs { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 14px; }
-.nst-ch { all: unset; display: flex; flex-direction: column; gap: 2px; padding: 16px 16px 14px; border-radius: 14px; background: var(--raised); border: 1px solid var(--line2); cursor: pointer; transition: transform .15s, border-color .15s; }
-.nst-ch:hover { transform: translateY(-2px); border-color: var(--faint); } .nst-ch:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.nst-cn { font: 800 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); } .nst-ch > b { font: 800 19px var(--head); } .nst-ch .sub { font-size: 12.5px; }
-.nst-ch p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.45; color: #cfcac0; }
-.nst-ch.kill { border-color: rgba(255,128,0,.5); background: linear-gradient(180deg, rgba(255,128,0,.1), transparent 70%), var(--raised); } .nst-ch.kill .nst-cn { color: #ff8000; }
-/* the awards */
-.nst-aws { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.nst-aw { all: unset; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 10px 14px; text-align: center; border-radius: 14px; background: var(--raised); border: 1px solid var(--line2); cursor: pointer; transition: transform .15s, border-color .15s; }
-.nst-aw:hover { transform: translateY(-2px); border-color: var(--faint); } .nst-aw:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.nst-medal { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 6px; border-radius: 50%; font-size: 22px; background: radial-gradient(circle at 35% 30%, #f6dc9a, #b07a24); box-shadow: 0 0 18px rgba(230,180,80,.35); }
-.nst-at { font: 700 11.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); } .nst-aw > b { font: 800 18px var(--head); } .nst-aw .sub { font-size: 12.5px; }
-/* held back, next week */
-.nst-two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.nst-big { display: flex; gap: 14px; align-items: center; margin: 10px 0 6px; } .nst-big > b { flex: none; font: 800 38px/1 var(--head); color: #ff3b46; } .nst-big span { font-size: 14.5px; line-height: 1.45; }
-.nst-ul { margin: 10px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.5; } .nst-ul li { margin: 0 0 8px; } .nst-ul li.bad::marker { color: #ff3b46; } .nst-ul li.warn::marker { color: #d2df4a; } .nst-ul.ok li::marker { color: #7ee08f; }
-@media (prefers-reduced-motion: reduce) { .nst-bar, .nst-bar.kill { animation: none; } }
-@media (max-width: 1000px) { .nst-chs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nst-aws { grid-template-columns: repeat(3, minmax(0, 1fr)); } .nst-two { grid-template-columns: 1fr; } .nst-moms { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .nst-hero { padding: 18px 16px 16px; } .nst-top { flex-direction: column; } .nst-h { font-size: 32px; } .nst-dek { font-size: 15px; } .nst-st b { font-size: 24px; } .nst-stats { gap: 12px 20px; }
-  .nst-moms, .nst-chs { grid-template-columns: 1fr; } .nst-aws { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nst-card { padding: 14px; } .nst-arc { min-width: 520px; } }
 /* Mechanics on the whole night (Oct 19): Fix these first, Got it down, and every mechanic pull by pull under the boss's health */
 .wnm .wnm-sec { margin: 0 0 22px; } .wnm .wnm-sec > h3.nh { margin: 0 0 10px; }
 .wnm-fxs { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 14px; }
@@ -3697,6 +3628,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
   .wnm-t td[data-pull] { min-width: 22px; } .wnm-c { width: 16px; height: 16px; } .wnm-gp { padding: 12px 4px 10px 10px; }
   .wnm-fx .wr-map.wnm-map, .wnm-fx .wr-map.wnm-map svg.zmap { height: 150px !important; }
 }
+.fc-lock .fcard.pull { opacity: .32; filter: grayscale(1); cursor: not-allowed; box-shadow: none; transform: none; }
 </style>
 
 
@@ -11005,15 +10937,16 @@ function renderList() {
     const nDone = kill ? 100 : best && pullPct(best) != null ? Math.max(3, 100 - pullPct(best)) : 0;
     const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '"><span class="fc-h"><b>Whole night</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><i class="fc-bar"><b style="width:' + nDone.toFixed(1) + '%"></b></i></button>' : '';
     // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
-    // (Report card shows the Whole night card alone, every other tab only the pulls, stretched across the row (your call, Oct 19))
-    const rcOnly = S.tab === 'player' && !!allC;
-    h = rcOnly ? '<div class="sg-row">' + allC + '</div>' : '<div class="sg-row"><div class="fwrap"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
+    // (on Report card the single pulls are greyed out and can't be picked: it's always the whole night (your call, Oct 19))
+    const lock = S.tab === 'player' && !!allC;
+    h = '<div class="sg-row">' + allC + '<div class="fwrap' + (lock ? ' fc-lock' : '') + '"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
   } else {
     // a Mythic+ key: the whole key, then each boss in it
     h = '<div class="sg-row"><div class="film keys">' + cur.list.map((b, i) => { const ok = b.kill || b.result === 'Timed';
       return '<button class="pull fcard' + (ok ? ' kill' : '') + (b === S.item ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--pc:' + (ok ? '#45c15c' : '#e5534b') + '"><span class="fc-h"><b>' + (i ? esc(b.boss) : '∑ Whole key') + '</b></span><span class="fc-p">' + esc(b.result) + ' · ' + T(b.duration) + '</span><i class="fc-bar"><b style="width:' + (ok ? 100 : 40) + '%"></b></i></button>'; }).join('') + '</div></div>';
   }
   box.innerHTML = h;
+  box.querySelectorAll('.fc-lock .pull').forEach((b) => { b.disabled = true; b.title = 'Report card is always the whole night'; });
   // the wipe filter: a card at the right end of a boss's pull cards (a Mythic+ key doesn't have one)
   bhCutBind(); // (the wipe filter sits behind its chip in the banner)
   if (bosses.some((b) => !b.wcl && !CACHE.has(b))) warmPulls();
@@ -11766,8 +11699,8 @@ function renderMain() {
   // (a Mythic+ key has no all-pulls view)
   if (S.tab === 'night') { S.tab = 'live'; S.scope = 'all'; } // (Night summary, from an old link or a saved spot: Recap on the whole night)
   if (single) S.scope = 'pull';
-  // (the Whole night card is on Report card only (your call, Oct 19): Report card is always the whole night, and every other tab one pull)
-  if (!single) S.scope = S.tab === 'player' ? 'all' : 'pull';
+  // (Report card is always the whole night (your call, Oct 19): the Whole night card shows on every tab, and on Report card the pulls are greyed out)
+  if (!single && S.tab === 'player') S.scope = 'all';
   const allMode = S.scope === 'all' && !single;
   const serious = allMode ? 0 : keptMistakes(r).filter((m) => m.severity === 'High' && m.mechanic !== 'Death').length;
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
@@ -14991,316 +14924,131 @@ function gradeAssign(reps) {
   for (const c of cats) c.letter = letterOf(c.score);
   return { cats, overall, letter: letterOf(overall) };
 }
-// Recap on the whole night (Oct 19, your pick from the mockup: "basically just a big summary of the entire evening", a little
-// different from the other tabs): a headline for the night with its numbers, last time against tonight and who came and went;
-// every pull on the clock as a bar as tall as how far it got (a skull where the first death came, the breaks between pulls);
-// three moments worth seeing again, with their maps; the night told in parts; the night's awards; what held the raid back and
-// what to bring next week; and a Copy for Discord button. Every bar, part, moment and name opens what it stands for.
-function nightStory(b0, pulls, reps, x) {
-  const byPull = new Map(reps.map((r) => [r.item.pull, r])), stOf = (b) => b.wallMs || b.startMs || 0, enOf = (b) => stOf(b) + (b.duration || 0) * 1000;
-  const fmt = (ms) => (pulls[0].wallMs ? wallClock(ms) : clock(ms)), kill = x.kill, ki = kill ? pulls.indexOf(kill) : -1, last = pulls[pulls.length - 1];
-  const wipes = ki >= 0 ? pulls.slice(0, ki) : pulls, bestW = wipes.filter((b) => pullPct(b) != null).reduce((m, b) => (!m || pullPct(b) < pullPct(m) ? b : m), null);
-  const hm = (s) => { s = Math.max(0, Math.round(s / 60)); return s >= 60 ? Math.floor(s / 60) + ' h ' + (s % 60) + ' m' : s + ' min'; };
+// Recap on the whole night (Oct 19, your call: "look exactly the same, no matter if it's on all nights or single night"): the
+// single pull's layout, filled with the whole night. Left: What went great! (how far it got, what got better, the mechanics clean
+// every pull) and What went wrong (a tile per wipe cause and per mechanic that kept going wrong, the worst big with its map, each
+// with what to do next time); right: Deaths and Interrupts, Before the next pull (the last pull's), Talk to (each player's first
+// thing to fix over the night), Used tonight and Missed assignments. A tile opens its worst pull on Mechanics.
+function nightRecap(o) {
+  const { b0, pulls, reps, mechL, verdictOf, kill, bestP, db, one } = o, boss = b0.boss, byPull = new Map(reps.map((r) => [r.item.pull, r]));
   const pmap = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && !pmap.has(p.name)) pmap.set(p.name, p);
-  const who = (n) => { const p = pmap.get(n); return p ? '<span class="nst-nm" style="color:' + p.color + '">' + esc(n) + '</span>' : '<b>' + esc(n) + '</b>'; };
-  const plain = (s) => String(s || '').replace(/<[^>]+>/g, '');
-  // ---- the headline ----
-  const t0 = stOf(pulls[0]), tEnd = enOf(kill || last), span = Math.max(1, (tEnd - t0) / 1000), onBoss = x.time;
-  const day = new Date(t0 - 6 * 3600e3).toLocaleDateString('en-US', { weekday: 'long' });
-  const cfg = PROGRESS[b0.boss], phI = (b) => { const p = pullProg(b); return cfg && p && p.phase ? cfg.phases.indexOf(p.phase) : -1; };
-  const top = cfg ? pulls.reduce((m, b) => Math.max(m, phI(b)), -1) : -1, firstTop = top > 0 ? pulls.find((b) => phI(b) === top && !b.kill) : null;
-  const causes = new Map(); for (const r of reps) { const c = causeOf(r); if (c) { const y = causes.get(c.label) || { label: c.label, id: c.id, n: 0, who: new Map() }; y.n++; if (c.who) y.who.set(c.who, (y.who.get(c.who) || 0) + 1); causes.set(c.label, y); } }
-  const topC = [...causes.values()].sort((a, b) => b.n - a.n)[0], nW = reps.filter((r) => !r.item.kill).length;
-  const deaths = reps.reduce((s, r) => s + keptDeaths(r).length, 0), kicks = reps.reduce((s, r) => s + r.interrupts.filter((k) => k.t <= cutT(r) + 0.05).length, 0);
-  const head = kill ? 'Down on pull ' + kill.pull + '. <span class="nst-k">Killed.</span>' : bestW ? 'Best pull: <span class="nst-b">' + esc(pullLabel(bestW)) + '.</span>' : plural(pulls.length, 'pull') + '.';
-  const dek = [kill ? (ki ? plural(ki, 'wipe') + ' to learn it.' : 'Killed on the first pull.') : plural(pulls.length, 'pull') + ' tonight, no kill yet.',
-    firstTop && cfg ? 'The raid first reached ' + cfg.phases[top] + ' on pull ' + firstTop.pull + '.' : '',
-    topC && topC.n >= 2 ? 'Most wipes ended on ' + topC.label + '.' : '',
-    kill ? 'Killed at ' + fmt(enOf(kill)) + '.' : bestW ? 'The closest was pull ' + bestW.pull + '.' : ''].filter(Boolean).join(' ');
-  const H = histFor(b0), lastN = H.earlier[H.earlier.length - 1];
-  const vs = lastN ? '<div class="nst-vs"><s>' + esc(lastN.label) + ': ' + esc(lastN.kill ? 'killed on pull ' + lastN.kill.pull : lastN.best ? 'best was ' + lastN.best.label : plural(lastN.list.length, 'pull')) + '</s> → <b>Tonight: ' + esc(kill ? 'killed' : bestW ? 'best ' + pullLabel(bestW) : plural(pulls.length, 'pull')) + '</b></div>' : '';
-  // (who came and went: the players of each pull against the one before it)
-  const rs = reps.slice().sort((a, b) => a.item.pull - b.item.pull), rosOf = (r) => new Set([...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => p.name)), ch = [];
-  for (let i = 1; i < rs.length; i++) { const a = rosOf(rs[i - 1]), b = rosOf(rs[i]), ins = [...b].filter((n) => !a.has(n)), outs = [...a].filter((n) => !b.has(n)); if (ins.length || outs.length) ch.push({ pull: rs[i].item.pull, ins, outs }); }
-  const n0 = rs.length ? rosOf(rs[0]).size : 0, chTxt = (c) => 'pull ' + c.pull + ': ' + [c.ins.length ? c.ins.slice(0, 3).map(who).join(', ') + ' in' : '', c.outs.length ? c.outs.slice(0, 3).map(who).join(', ') + ' out' : ''].filter(Boolean).join(', ');
-  const roster = !rs.length ? '' : '<div class="nst-ros">' + SN_I.users + (ch.length ? '<span><b>' + n0 + ' players.</b> Changes on ' + ch.slice(0, 3).map(chTxt).join('; ') + (ch.length > 3 ? '; and ' + plural(ch.length - 3, 'more change') : '') + '.</span>' : '<span><b>The same ' + n0 + ' players</b> all night.</span>') + '</div>';
-  const stat = (v, l, t) => '<div class="nst-st"' + (t ? ' title="' + esc(t) + '"' : '') + '><b>' + v + '</b><span>' + l + '</span></div>';
-  const grade = x.overall != null ? letterOf(x.overall) : null;
-  const hero = '<div class="nst-hero' + (kill ? ' kill' : '') + '"><div class="nst-top"><div class="nst-kick">' + esc(day) + ' night · ' + esc(b0.boss) + (b0.diff ? ' · ' + esc(b0.diff) : '') + '</div>' +
-    '<button class="nst-dc" type="button" id="nstCopy" title="Copies a short summary of the night, ready to paste in your raid\'s Discord">' + DC_SVG + '<span>Copy for Discord</span></button></div>' +
-    '<h2 class="nst-h">' + head + '</h2><div class="nst-dek">' + esc(dek) + '</div>' + vs +
-    '<div class="nst-stats">' + stat(pulls.length, 'pulls') + stat(T(onBoss), 'on the boss') + stat(hm(span), kill ? 'start to kill' : 'start to last pull') + stat(hm(Math.max(0, span - onBoss)), 'between pulls', 'Time from the end of one pull to the start of the next, added up') +
-    stat(deaths, 'deaths', 'Up to each wipe filter') + stat(kicks, 'kicks') + (grade ? stat('<em class="nst-g g-' + grade + '">' + grade + '</em>', 'night\'s grade', 'Mechanics' + (x.ga ? ' and assignments' : '') + ', ' + Math.round(x.overall) + ' / 100. Each player\'s grade is on Report card.') : '') + '</div>' + roster + '</div>';
-  // ---- every pull on the clock ----
-  const X = (ms) => (100 * (ms - t0) / Math.max(1, enOf(last) - t0)), hOf = (b) => (b.kill ? 100 : pullPct(b) != null ? Math.max(4, 100 - pullPct(b)) : 6);
-  const colOf = (b) => (b.kill ? '#ff8000' : (PULL_Q.find(([lo]) => hOf(b) >= lo) || [0, '#9d9d9d'])[1]);
-  const goOf = (b) => (b === last ? 'live' : 'audit');
-  const skull = (b) => { const r = byPull.get(b.pull); if (!r || b.kill) return ''; const d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0], c = causeOf(r); const t = c ? c.t : d ? d.t : null; if (t == null) return '';
-    const L = bossHpLine(r, r.duration, 5); let left = null; if (L) for (const [s, f] of L) { if (s > t + 0.01) break; left = f; }
-    const h = left != null ? Math.max(2, Math.min(96, 100 * (1 - left) / Math.max(1, hOf(b)) * 100)) : 50;
-    return '<span class="nst-sk" style="bottom:' + h.toFixed(1) + '%" title="' + esc('Pull ' + b.pull + ': ' + (d ? d.player + ' died first at ' + T(d.t) + (d.ability ? ' to ' + d.ability : '') : c.label + ' at ' + T(c.t))) + '"></span>'; };
-  const bars = pulls.map((b) => { const w = Math.max(1.4, 100 * (b.duration || 0) * 1000 / Math.max(1, enOf(last) - t0));
-    return '<button class="nst-bar' + (b.kill ? ' kill' : '') + (b === bestW && !kill ? ' best' : b === bestW ? ' best' : '') + '" type="button" data-np="' + pulls.indexOf(b) + '" style="left:' + X(stOf(b)).toFixed(2) + '%;width:' + w.toFixed(2) + '%;height:' + hOf(b).toFixed(1) + '%;--c:' + colOf(b) + ';animation-delay:' + (pulls.indexOf(b) * 0.05).toFixed(2) + 's" title="' + esc('Pull ' + b.pull + ' at ' + fmt(stOf(b)) + ': ' + pullLabel(b) + ', ' + T(b.duration || 0)) + '"><i>' + (b.kill ? 'Kill' : b === bestW ? b.pull + ' · <b>best</b>' : b.pull) + '</i>' + skull(b) + '</button>'; }).join('');
-  const breaks = pulls.slice(1).map((b, i) => { const g = (stOf(b) - enOf(pulls[i])) / 1000; if (g < 480) return ''; const a = X(enOf(pulls[i])), z = X(stOf(b)); return '<span class="nst-brk" style="left:' + a.toFixed(2) + '%;width:' + (z - a).toFixed(2) + '%"><span>' + Math.round(g / 60) + ' min break</span></span>'; }).join('');
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => '<span style="left:' + (f * 100) + '%">' + fmt(t0 + f * (enOf(last) - t0)) + '</span>').join('');
-  const grid = [25, 50, 75, 100].map((v) => '<i style="bottom:' + v + '%"></i><em style="bottom:' + v + '%">' + v + '%</em>').join('');
-  const arc = '<div class="panel nst-card"><h3 class="nst-t">The night, pull by pull</h3><div class="sub nst-s">Each bar is a pull on the clock, as tall as how much of the fight it got through. A skull marks where the first death came. Click a bar to open that pull.</div>' +
-    '<div class="nst-arcw"><div class="nst-arc"><div class="nst-grid">' + grid + '</div><div class="nst-bars">' + bars + breaks + '</div><div class="nst-ax">' + ticks + '</div></div></div>' +
-    '<div class="nst-leg">' + [['#9d9d9d', 'under 20%'], ['#f2f2f2', '20%+'], ['#2ee62e', '40%+'], ['#2e8cff', '60%+'], ['#b25ef5', '80%+'], ['#ff8000', 'kill']].map(([c, l]) => '<span><i style="background:' + c + '"></i>' + l + '</span>').join('') + '<span class="sub">of the fight done</span></div></div>';
-  // ---- moments worth seeing again ----
-  const MOM = [], used = new Set(), lastMap = (r) => { const l = modMaps(r); return l.length ? l[l.length - 1].map : null; };
-  if (bestW && byPull.get(bestW.pull)) { const r = byPull.get(bestW.pull), d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0];
-    MOM.push({ b: bestW, tag: 'Closest wipe', cls: 'pu', map: d ? deathMap(r, d) : lastMap(r), at: fmt(stOf(bestW)), h: 'Pull ' + bestW.pull + ': ' + pullLabel(bestW), p: d ? d.player + ' died first at ' + T(d.t) + (d.ability ? ' to ' + d.ability : '') + '.' : 'The furthest wipe of the night.' }); used.add(bestW); }
-  // (cleanest: the fewest mistakes and deaths a minute, a pull of 2 minutes or more, so a short pull that fell apart isn't picked)
-  { const mpm = (r) => (keptMistakes(r).filter((m) => m.mechanic !== 'Death' && m.severity !== 'Low').length + 2 * keptDeaths(r).length) / Math.max(1, Math.min(r.duration, cutT(r)) / 60);
-    const c = reps.filter((r) => r.duration >= 120 && !used.has(r.item) && !r.item.kill).sort((u, v) => mpm(u) - mpm(v) || v.duration - u.duration)[0];
-    if (c) { const n = keptMistakes(c).filter((m) => m.mechanic !== 'Death' && m.severity !== 'Low').length, dd = keptDeaths(c).length;
-      MOM.push({ b: c.item, tag: 'Cleanest pull', cls: 'gr', map: lastMap(c), at: fmt(stOf(c.item)), h: 'Pull ' + c.item.pull + ': ' + pullLabel(c.item), p: (n ? plural(n, 'mistake') : 'No mistakes') + ' in ' + T(Math.min(c.duration, cutT(c))) + ', and ' + plural(dd, 'death') + '.' }); used.add(c.item); } }
-  { const b = kill || last, r = byPull.get(b.pull); if (r && !used.has(b)) { const dd = keptDeaths(r).length, np = rosOf(r).size;
-    MOM.push({ b, tag: kill ? 'The kill' : 'Last pull', cls: 'or', map: lastMap(r), at: fmt(enOf(b)), h: kill ? 'The last moments' : 'Pull ' + b.pull + ': ' + pullLabel(b), p: kill ? b0.boss + ' died at ' + T(b.duration) + ' with ' + (np - dd) + ' of ' + np + ' alive.' : plural(dd, 'death') + ' in ' + T(b.duration) + '.' }); } }
-  const MAPS = [], mom = MOM.length ? '<div class="panel nst-card"><h3 class="nst-t">Moments of the night</h3><div class="sub nst-s">Worth seeing again. Click a map to play it, or the card to open that pull.</div><div class="nst-moms">' +
-    MOM.map((m) => '<div class="nst-mo" role="button" tabindex="0" data-np="' + pulls.indexOf(m.b) + '">' + (m.map ? '<div class="wr-map nst-mmap" role="button" tabindex="0" data-mi="' + (MAPS.push(m.map) - 1) + '" title="Play this moment">' + miniMap(m.map, pmap) + '</div>' : '<div class="nst-nomap"><b>' + esc(pullLabel(m.b)) + '</b></div>') +
-      '<span class="nst-tag ' + m.cls + '">' + esc(m.tag) + '</span>' + (m.map ? '<span class="nst-play">▶ ' + esc(m.at) + '</span>' : '') + '<div class="nst-mb"><b>' + esc(m.h) + '</b><p>' + esc(m.p) + '</p></div></div>').join('') + '</div></div>' : '';
-  // ---- the night in parts ----
-  const parts = [], k = wipes.length <= 2 ? 1 : Math.min(3, Math.ceil(wipes.length / 3));
-  for (let i = 0; i < k; i++) { const a = Math.floor(i * wipes.length / k), z = Math.floor((i + 1) * wipes.length / k); if (z > a) parts.push(wipes.slice(a, z)); }
-  let seen = -1; const chap = parts.map((g, i) => { const mx = cfg ? g.reduce((m, b) => Math.max(m, phI(b)), -1) : -1, best = g.filter((b) => pullPct(b) != null).reduce((m, b) => (!m || pullPct(b) < pullPct(m) ? b : m), null);
-    const cs = new Map(); for (const b of g) { const r = byPull.get(b.pull), c = r && causeOf(r); if (c) cs.set(c.label, (cs.get(c.label) || 0) + 1); } const tc = [...cs].sort((u, v) => v[1] - u[1])[0];
-    const ph = mx >= 0 ? cfg.phases[mx] : null, isNew = mx > seen; if (mx > seen) seen = mx;
-    const title = i === 0 ? 'Finding the way in' : g.includes(bestW) ? 'Closest yet' : ph && isNew ? 'Into ' + ph : ph ? 'Working on ' + ph : best ? 'Pushing to ' + pullLabel(best) : 'Working on it';
-    return { g, n: 'Part ' + (i + 1), title, when: 'Pulls ' + g[0].pull + (g.length > 1 ? '–' + g[g.length - 1].pull : '') + ' · ' + fmt(stOf(g[0])) + '–' + fmt(enOf(g[g.length - 1])),
-      p: [best ? 'Best: pull ' + best.pull + ' at ' + pullLabel(best) + '.' : '', tc && tc[1] >= 2 ? tc[0] + ' ended ' + tc[1] + ' of ' + g.length + '.' : tc ? 'Pulls ended on ' + [...cs.keys()].slice(0, 2).join(' and ') + '.' : ''].filter(Boolean).join(' ') }; });
-  if (kill) { const r = byPull.get(kill.pull), dd = r ? keptDeaths(r).length : 0, mk = r ? (r.missedKicks || []).length : 0;
-    chap.push({ g: [kill], n: 'The kill', title: 'Pull ' + kill.pull, kill: true, when: fmt(stOf(kill)) + ' · ' + T(kill.duration), p: plural(dd, 'death') + '.' + (r && r.interrupts.length && !mk ? ' Every kickable cast interrupted.' : '') }); }
-  const story = chap.length ? '<div class="panel nst-card"><h3 class="nst-t">The story of the night</h3><div class="sub nst-s">The night in parts, worked out from how far each pull got. Click one to open its first pull.</div><div class="nst-chs" style="--n:' + Math.min(4, chap.length) + '">' +
-    chap.map((c) => '<button class="nst-ch' + (c.kill ? ' kill' : '') + '" type="button" data-np="' + pulls.indexOf(c.g[0]) + '"><span class="nst-cn">' + esc(c.n) + '</span><b>' + esc(c.title) + '</b><span class="sub">' + esc(c.when) + '</span><p>' + esc(c.p) + '</p></button>').join('') + '</div></div>' : '';
-  // ---- the awards (filled in once every player is graded) ----
-  const awards = '<div class="panel nst-card" id="nstAw"><h3 class="nst-t">The night\'s awards</h3><div class="sub nst-s">Worked out from every pull. Click a name to open their page.</div><div class="nst-aws"><p class="sub">Working out the awards…</p></div></div>';
-  // ---- what held the raid back, and what to bring next week ----
-  const held = (topC && topC.n >= 2 ? '<div class="nst-big"><b>' + topC.n + ' of ' + nW + '</b><span>wipes started with <b>' + mech(topC.label, topC.id) + '</b>.' + (topC.who.size ? ' The first to die was mostly ' + who([...topC.who].sort((u, v) => v[1] - u[1])[0][0]) + '.' : '') + '</span></div>' : '') +
-    '<ul class="nst-ul">' + x.wrongS.filter((w) => !(topC && plain(w.html).startsWith(topC.label + ' ended'))).slice(0, 4).map((w) => '<li class="' + w.sev + '">' + w.html + '</li>').join('') + '</ul>';
-  const next = '<ul class="nst-ul ok">' + x.rightS.filter((h) => !/^<b>Killed on pull/.test(h)).slice(0, 5).map((h) => '<li>' + h + '</li>').join('') + '</ul>';
-  const two = '<div class="nst-two"><div class="panel nst-card"><h3 class="nst-t">What held us back</h3>' + held + '</div><div class="panel nst-card"><h3 class="nst-t">Bring to next week</h3>' + (x.rightS.filter((h) => !/^<b>Killed on pull/.test(h)).length ? next : '<p class="sub">Nothing was clean every pull yet.</p>') + '</div></div>';
-  // ---- the Discord summary (plain text, Discord's bold) ----
-  const discord = () => { const aw = (window._nstAw || []).map((a) => '• ' + a.t + ': ' + a.n + ' (' + a.why + ')').join('\n');
-    return ['**' + b0.boss + (b0.diff ? ' ' + b0.diff : '') + ', ' + day + ' night**', plain(head), dek, '', pulls.length + ' pulls · ' + T(onBoss) + ' on the boss · ' + deaths + ' deaths · ' + kicks + ' kicks' + (grade ? ' · grade ' + grade : ''),
-      topC && topC.n >= 2 ? 'Held us back: ' + topC.n + ' of ' + nW + ' wipes started with ' + topC.label + '.' : '', aw ? '\nAwards:\n' + aw : ''].filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n').trim(); };
-  return { html: '<div class="nst">' + hero + arc + mom + story + awards + two + '</div>', MAPS, pmap, discord };
-}
-const DC_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4.5A17 17 0 0 0 15.7 3l-.5 1a15.6 15.6 0 0 0-6.4 0l-.5-1A17 17 0 0 0 4 4.5C1.4 8.4.7 12.2 1 16a17 17 0 0 0 5.2 2.6l1.1-1.8a11 11 0 0 1-1.8-.9l.4-.3a12 12 0 0 0 12.2 0l.4.3c-.6.3-1.2.6-1.8.9l1.1 1.8A17 17 0 0 0 23 16c.4-4.4-.7-8.2-3-11.5zM8.5 13.7c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.9 2.2-1.9 2.2zm7 0c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.8 2.2-1.9 2.2z"/></svg>';
-// (the awards: the best grade of the night, the biggest rise, alive the most pulls, the most kicks, and no mistakes of their own)
-function nightAwards(data, reps) {
-  const R = data.filter((a) => a.ranked), out = [], kk = new Map(), dd = new Map(), inP = new Map();
-  for (const r of reps) { for (const k of r.interrupts) if (k.t <= cutT(r) + 0.05) kk.set(k.player, (kk.get(k.player) || 0) + 1); for (const d of keptDeaths(r)) dd.set(d.player, (dd.get(d.player) || 0) + 1); for (const p of r.players.values()) if (p.name) inP.set(p.name, (inP.get(p.name) || 0) + 1); }
-  const top = R.slice().sort((u, v) => v.score - u.score)[0]; if (top) out.push({ ic: '👑', t: 'Player of the night', p: top.p, n: top.p.name, why: letterOf(top.score) + ' grade over ' + plural(top.n, 'pull') });
-  const imp = R.filter((a) => a.trend != null && a.trend >= 3).sort((u, v) => v.trend - u.trend)[0]; if (imp) out.push({ ic: '📈', t: 'Most improved', p: imp.p, n: imp.p.name, why: '+' + Math.round(imp.trend) + ' from the first half of the night to the second' });
-  const iron = R.filter((a) => !dd.get(a.p.name)).sort((u, v) => (inP.get(v.p.name) || 0) - (inP.get(u.p.name) || 0) || v.score - u.score)[0] || R.slice().sort((u, v) => (dd.get(u.p.name) || 0) - (dd.get(v.p.name) || 0) || v.score - u.score)[0];
-  if (iron) { const d = dd.get(iron.p.name) || 0; out.push({ ic: '🛡️', t: 'Iron wall', p: iron.p, n: iron.p.name, why: d ? 'died only ' + (d === 1 ? 'once' : d + ' times') : 'never died, ' + plural(inP.get(iron.p.name) || 0, 'pull') }); }
-  const kc = [...kk].sort((u, v) => v[1] - u[1])[0], kp = kc && data.find((a) => a.p.name === kc[0]); if (kp) out.push({ ic: '✋', t: 'Kick captain', p: kp.p, n: kp.p.name, why: plural(kc[1], 'kick') });
-  const clean = R.filter((a) => !a.mistakes && a !== top).sort((u, v) => v.n - u.n || v.score - u.score)[0]; if (clean) out.push({ ic: '✨', t: 'Clean hands', p: clean.p, n: clean.p.name, why: 'no mistakes of their own in ' + plural(clean.n, 'pull') });
-  return out;
-}
-function bindNightStory(NS, pulls, reps, here) {
-  const last = pulls[pulls.length - 1];
-  // (a bar, a part or a moment: that pull, on Recap when it's the newest one, else on Mechanics)
-  const open = (i) => { const b = pulls[+i]; if (!b) return; S.scope = 'pull'; S.tab = b === last ? 'live' : 'audit'; select(b); };
-  $$('#view .nst [data-np]').forEach((el) => { el.onclick = () => open(el.dataset.np); if (el.tagName !== 'BUTTON') el.onkeydown = (e) => { if (e.target === el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(el.dataset.np); } }; });
-  wrThumbFit($('#view'));
-  // (a moment's map plays in place, across the row; Close map puts the picture back)
-  $$('#view .nst-mmap').forEach((m) => { const play = () => { const c = m.closest('.nst-mo'); if (c.classList.contains('play')) return; c.classList.add('play'); m.style.display = 'none';
-      const box = document.createElement('div'); box.className = 'nst-anim'; box.innerHTML = '<button class="btn sm nst-x" type="button">✕ Close map</button><div class="mm"></div>'; m.after(box);
-      const mm = box.querySelector('.mm'), mp = NS.MAPS[+m.dataset.mi]; mm.innerHTML = miniMap(mp, NS.pmap); bindZoom(mm); bindAnim(mm, mp, NS.pmap); hydrateMapIcons(mm); refreshIcons();
-      box.onclick = (e) => e.stopPropagation(); box.onkeydown = (e) => e.stopPropagation();
-      box.querySelector('.nst-x').onclick = () => { box.remove(); m.style.display = ''; c.classList.remove('play'); }; };
-    m.onclick = (e) => { e.stopPropagation(); play(); }; m.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); play(); } }; });
-  // (Copy for Discord: the summary as text, nothing is posted)
-  const cp = $('#nstCopy'); if (cp) cp.onclick = async () => { const t = NS.discord(); let ok = false; try { await navigator.clipboard.writeText(t); ok = true; } catch (e) { /* (no clipboard: the text in a box to copy by hand) */ }
-    if (!ok) { const ta = cp.closest('.nst-hero').querySelector('.nst-ta') || cp.closest('.nst-hero').appendChild(document.createElement('textarea')); ta.value = t; ta.className = 'nst-ta'; ta.select(); try { ok = document.execCommand('copy'); } catch (e) { /* ignore */ } }
-    const s = cp.querySelector('span'); s.textContent = ok ? 'Copied ✓' : 'Select and copy below'; setTimeout(() => { if (s.isConnected) s.textContent = 'Copy for Discord'; }, 2500); };
-  // (the awards: every player graded over the night, as on Report card; the same work, so Report card opens quickly after)
-  window._nstAw = [];
-  plData(reps, here).then((data) => { const box = $('#nstAw .nst-aws'); if (!data || !box || !here()) return;
-    const aw = nightAwards(data, reps); window._nstAw = aw.map((a) => ({ t: a.t, n: a.n, why: a.why }));
-    box.outerHTML = aw.length ? '<div class="nst-aws">' + aw.map((a) => '<button class="nst-aw" type="button" data-pn="' + esc(a.n) + '"><span class="nst-medal">' + a.ic + '</span><span class="nst-at">' + esc(a.t) + '</span><b style="color:' + (a.p.color || 'inherit') + '">' + esc(a.n) + '</b><span class="sub">' + esc(a.why) + '</span></button>').join('') + '</div>' : '<p class="sub">Not enough pulls for awards yet.</p>';
-    $$('#nstAw [data-pn]').forEach((b) => (b.onclick = () => { S.plSel = b.dataset.pn; S.plScroll = true; S.tab = 'player'; renderMain(); window.scrollTo({ top: 0 }); })); }).catch(() => { const box = $('#nstAw .nst-aws'); if (box) box.innerHTML = '<p class="sub">The awards couldn\'t be worked out.</p>'; });
-}
-// Mechanics on the whole night (your ask, Oct 19: "really outdated … surprise me"): mechanics only, and not Recap. Top to
-// bottom: Fix these first (the 2 or 3 mechanics that cost the most pulls, each with one sentence, how it went over the night,
-// the map from its worst pull and who was caught most), Got it down (what clicked during the night, and what was clean every
-// pull), then every mechanic pull by pull in one grid, its columns lined up under the boss's health at the end of each pull.
-// No letter grades: the night's mechanics score is one quiet line.
-function nightMech(o) {
-  const { groups, pullNs, byPull, mByPull, pm, one, res, gm } = o, N = pullNs.length;
-  const rows = groups.flatMap((g) => g.list), isInfo = (r) => r.x.info && r.v.st === 'na';
-  const stAt = (r, n) => { const p = r.x.per.get(n); return p ? p.st : 'na'; };
-  const judged = (r) => pullNs.filter((n) => stAt(r, n) !== 'na');
-  const cnt = (r) => { const j = judged(r); return { j, b: j.filter((n) => stAt(r, n) === 'bad'), w: j.filter((n) => stAt(r, n) === 'warn') }; };
-  // (it clicked: it went wrong in at least 2 pulls, then clean in every pull after the last one, at least 2 of them)
-  const clickOf = (r) => { const j = judged(r), last = j.map((n) => stAt(r, n) !== 'ok').lastIndexOf(true); if (last < 0 || j.length - 1 - last < 2) return null;
-    return j.slice(0, last + 1).filter((n) => stAt(r, n) !== 'ok').length >= 2 ? j[last + 1] : null; };
-  const name = (r) => '<span class="wnm-nmt">' + r.icon + '<b>' + esc(r.title) + '</b></span>';
-  const pullT = (n) => { const r = byPull.get(n); return 'Pull ' + n + ' · ' + res(r); };
-  // ---- Fix these first ----
-  const live = rows.filter((r) => !isInfo(r) && (r.v.st === 'bad' || r.v.st === 'warn')).map((r) => ({ r, c: cnt(r) }));
-  const ranked = live.sort((a, b) => b.c.b.length - a.c.b.length || b.c.w.length - a.c.w.length || a.r.ord - b.r.ord);
-  const fixL = (ranked.some((x) => x.c.b.length) ? ranked.filter((x) => x.c.b.length) : ranked).slice(0, 3);
-  // (the map of the worst moment in a pull: its first flagged row with a map, the worst problems first)
+  const LVR = { major: 0, moderate: 1, minor: 2, clean: 3 }, LVW = { major: 'Major', moderate: 'Moderate', minor: 'Minor' }, wipesR = reps.filter((r) => !r.item.kill);
+  const face = (n) => { const p = pmap.get(n); return p ? avatar(p, true) : ''; };
+  const fixFor = (names) => { const ks = names.filter(Boolean).map((n) => String(n).toLowerCase()); for (const r of reps.slice().reverse()) for (const m of keptMistakes(r)) if (m.fix && ks.some((k) => k === String(m.mechanic).toLowerCase() || k.includes(String(m.mechanic).toLowerCase()))) return m.fix; return ''; };
   const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
-  const mapIn = (n, id) => { const r = mByPull.get(n); if (!r || !r.module || r.module.error || !r.module.sections) return null; const s = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === id); if (!s) return null;
-    const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []));
-    for (const want of [(row) => row.some((c) => c.bad), (row) => row.some((c) => c.warn)]) for (const row of all) if (want(row)) { const m = rowMap(row); if (m) return m; }
-    return null; };
-  const trendS = (v) => (v.half < 3 ? '' : v.real ? '<div class="wnm-tr ' + (v.better ? 'up' : 'down') + '"><b>' + (v.better ? 'Getting better.' : 'Getting worse.') + '</b> It went wrong in ' + v.e + ' of the first ' + v.half + ' pulls and ' + v.l + ' of the last ' + v.half + '.</div>'
-    : '<div class="wnm-tr same"><b>About the same all night.</b> It went wrong in ' + v.e + ' of the first ' + v.half + ' pulls and ' + v.l + ' of the last ' + v.half + '.</div>');
-  const fixCard = ({ r, c }, i) => {
-    const sec = 'sec-' + r.x.id, bad = c.b.length, worst = r.v.worst || c.b.concat(c.w).sort((a, b) => b - a)[0];
-    // (the map: the worst pull's, else the latest pull where it went wrong that has one)
-    let mp = null, mpN = null; for (const n of [worst].concat(c.b.slice().reverse(), c.w.slice().reverse())) { mp = mapIn(n, r.x.id); if (mp) { mpN = n; break; } }
-    const say = bad ? 'Went wrong in ' + bad + ' of ' + plural(c.j.length, 'pull') + (c.w.length ? ', and could be better in ' + c.w.length + ' more' : '') + '.' : 'Could be better in ' + c.w.length + ' of ' + plural(c.j.length, 'pull') + '.';
-    const ck = clickOf(r);
-    const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
-    const top = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    return '<div class="wnm-fx st-' + (bad ? 'bad' : 'warn') + '"><div class="wnm-fx-n">' + (i + 1) + '</div>' +
-      '<div class="wnm-fx-h">' + name(r) + '</div><p class="wnm-fx-s">' + say + '</p>' +
-      (ck ? '<div class="wnm-tr up"><b>It clicked on pull ' + ck + '.</b> Clean in every pull since.</div>' : trendS(r.v)) +
-      (mp ? '<div class="wnm-fx-m"><div class="wr-map wnm-map" role="button" tabindex="0" data-open="' + mpN + '" data-tab="audit" data-sec="' + esc(sec) + '" title="Open pull ' + mpN + ' at this mechanic">' + miniMap(mp, pm) + '</div><span class="sub">Pull ' + mpN + (mpN === worst ? ', the worst one' : '') + '</span></div>' : '') +
-      (top.length ? '<div class="wnm-who"><span class="sub">Caught most</span>' + top.map(([n, k]) => { const p = pm.get(n); return '<span class="wnm-wp">' + avatar(p, true) + '<span style="color:' + p.color + '">' + esc(n.split('-')[0]) + '</span><b>' + k + '×</b></span>'; }).join('') + '</div>' : '') +
-      '<button class="btn sm wnm-go" type="button" data-open="' + worst + '" data-tab="audit" data-sec="' + esc(sec) + '">Open pull ' + worst + '</button></div>';
-  };
-  const fixH = '<div class="wnm-sec"><h3 class="nh">Fix these first <small>the mechanics that went wrong in the most pulls</small></h3>' +
-    (fixL.length ? '<div class="wnm-fxs" style="--n:' + fixL.length + '">' + fixL.map(fixCard).join('') + '</div>'
-      : '<div class="wnm-fx st-ok wnm-none"><div class="wnm-fx-h"><b>Nothing to fix.</b></div><p class="wnm-fx-s">Every mechanic was clean in every pull' + (one ? ' for ' + esc(one) : '') + '.</p></div>') + '</div>';
-  // ---- Got it down: what clicked during the night, and what was clean every pull ----
-  const clicked = rows.filter((r) => !isInfo(r)).map((r) => ({ r, n: clickOf(r) })).filter((x) => x.n).sort((a, b) => a.n - b.n);
-  const clean = rows.filter((r) => !isInfo(r) && r.v.st === 'ok' && judged(r).length >= 2);
-  const gotH = !clicked.length && !clean.length ? '' : '<div class="wnm-sec"><h3 class="nh">Got it down</h3><div class="wnm-got">' +
-    (clicked.length ? '<div class="wnm-gc"><div class="pt-l">Clicked tonight</div>' + clicked.map(({ r, n }) => '<div class="wnm-gl">' + name(r) + '<span class="sub">clean from pull ' + n + ' on, after going wrong in ' + judged(r).filter((q) => q < n && stAt(r, q) !== 'ok').length + ' pulls before it</span></div>').join('') + '</div>' : '') +
-    (clean.length ? '<div class="wnm-gc"><div class="pt-l">Clean every pull</div><div class="wnm-chips">' + clean.map((r) => '<span class="wnm-chip">' + r.icon + esc(shortT(r.title)) + '</span>').join('') + '</div></div>' : '') + '</div></div>';
-  // ---- the grid, under bars that climb: each pull's height is how far it got, the best wipe in gold, the kill full and green ----
-  const pct = (n) => { const r = byPull.get(n); return r ? pullPct(r.item) : null; };
-  const pcts = pullNs.map(pct).filter((v) => v != null), best = pcts.length ? Math.min(...pcts) : null;
-  const hp = '<tr class="wnm-hp"><th class="wnm-nm"><span class="pt-l">How far each pull got</span><span class="sub">taller is further</span></th>' + pullNs.map((n) => { const v = pct(n), r = byPull.get(n), k = r && r.item.kill;
-    return '<td data-pull="' + n + '"><button class="wnm-bar' + (k ? ' kill' : v != null && v === best ? ' best' : '') + '" type="button" data-open="' + n + '" data-tab="audit" title="' + esc(pullT(n)) + '">' + (k ? '<span class="wnm-k">✓</span>' : '<i style="height:' + (v == null ? 0 : Math.max(4, Math.round(100 - v))) + '%"></i>') + '</button></td>'; }).join('') + '<td></td></tr>' +
-    '<tr class="wnm-pn"><th class="wnm-nm"></th>' + pullNs.map((n) => { const r = byPull.get(n); return '<td data-pull="' + n + '" title="' + esc(pullT(n)) + '"><b>' + n + '</b>' + (r ? pullShort(r.item).split(' · ').map((x) => '<span>' + esc(x) + '</span>').join('') : '') + '</td>'; }).join('') + '<td class="wnm-n"><span class="sub">Wrong</span></td></tr>';
-  const cellT = (r, n) => { const p = r.x.per.get(n), st = p ? p.st : 'na';
-    return pullT(n) + ' · ' + (!p ? 'didn\'t come up' : st === 'na' ? 'didn\'t come up, or after the wipe filter' : st === 'ok' ? 'clean' : (p.nb ? p.nb + ' major' : '') + (p.nb && p.nw ? ', ' : '') + (p.nw ? p.nw + ' minor' : '') + (p.lines && p.lines[0] ? ': ' + p.lines[0].txt : '')); };
-  const rowH = (r) => { const c = cnt(r), ck = clickOf(r), wr = c.b.length + c.w.length;
-    return '<tr class="wnm-r" data-k="' + r.id + '"><th class="wnm-nm"><button class="wnm-tg" type="button" aria-expanded="false" title="Show the pulls that went wrong">' + name(r) + '</button></th>' +
-      pullNs.map((n) => '<td data-pull="' + n + '"><button class="wnm-c st-' + stAt(r, n) + (n === ck ? ' clk' : '') + '" type="button" data-open="' + n + '" data-tab="audit" data-sec="sec-' + esc(r.x.id) + '" title="' + esc(cellT(r, n) + (n === ck ? '. It clicked here: clean from this pull on.' : '')) + '"></button></td>').join('') +
-      '<td class="wnm-n">' + (!c.j.length ? '<span class="sub">–</span>' : wr ? '<b class="' + (c.b.length ? 'hotv' : 'warnv') + '">' + wr + '</b><span class="sub">/' + c.j.length + '</span>' : '<span class="okv">0</span><span class="sub">/' + c.j.length + '</span>') + '</td></tr>' +
-      '<tr class="wnm-d" hidden><td colspan="' + (N + 2) + '"><div class="wnm-db">' + r.body + '</div></td></tr>'; };
-  const body = groups.map((g) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length); return l.length ? '<tr class="wnm-ph"><th colspan="' + (N + 2) + '"><span>' + esc(g.name) + '</span></th></tr>' + l.map(rowH).join('') : ''; }).join('');
-  const never = rows.filter((r) => !isInfo(r) && !judged(r).length), info = rows.filter(isInfo);
-  const grid = '<div class="wnm-sec"><h3 class="nh">Every mechanic, pull by pull <small>hover a pull to light up its column; click a square to open that pull</small></h3>' +
-    '<div class="panel wnm-gp"><div class="wnm-scroll"><table class="wnm-t" style="--n:' + N + '"><thead>' + hp + '</thead><tbody>' + body + '</tbody></table></div>' +
-    '<div class="wnm-leg"><span><i class="wnm-c st-ok"></i>Clean</span><span><i class="wnm-c st-warn"></i>Could be better</span><span><i class="wnm-c st-bad"></i>Went wrong</span><span><i class="wnm-c st-na"></i>Didn\'t come up</span><span><i class="wnm-c st-ok clk"></i>Clicked: clean from here on</span></div></div>' +
-    (never.length ? '<p class="sub wnm-q">Didn\'t come up in these pulls: ' + esc(never.map((r) => shortT(r.title)).join(' · ')) + '</p>' : '') +
-    (info.length ? '<p class="sub wnm-q">Shown on each pull\'s Mechanics tab, not judged here: ' + esc(info.map((r) => shortT(r.title)).join(' · ')) + '</p>' : '') + '</div>';
-  const head = '<div class="sum-h" id="sum-mech"><h2>Mechanics, the whole night</h2><span class="sub">' + (one ? esc(one) + ', ' : '') + plural(N, 'pull') + ', each up to the wipe filter' +
-    (gm && !one ? ' · mechanics score ' + Math.round(gm.overall) + ' / 100' : '') + '</span></div>';
-  return head + (rows.length ? fixH + gotH + grid : '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>');
+  const mapIn = (n, id) => { const r = byPull.get(n); if (!r || !r.module || r.module.error || !r.module.sections) return null; const s = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === id); if (!s) return null;
+    const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])); for (const want of [(row) => row.some((c) => c.bad), (row) => row.some((c) => c.warn)]) for (const row of all) if (want(row)) { const m = rowMap(row); if (m) return m; } return null; };
+  // ---- what went wrong: what ended the wipes, then the mechanics that kept going wrong ----
+  const wrong = [], causes = new Map();
+  for (const r of wipesR) { const c = causeOf(r); if (!c) continue; const y = causes.get(c.label) || { c, n: 0, who: new Map(), last: null }; y.n++; if (c.who) y.who.set(c.who, (y.who.get(c.who) || 0) + 1); y.last = r; causes.set(c.label, y); }
+  for (const y of [...causes.values()].sort((a, b) => b.n - a.n).slice(0, 3)) { if (y.n < 2 && wipesR.length > 2) continue;
+    const r = y.last, d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0], top = [...y.who].sort((u, v) => v[1] - u[1]);
+    wrong.push({ lv: y.n >= Math.max(3, wipesR.length / 3) ? 'major' : 'moderate', w: -1, n: r.item.pull, sec: 'sec-deaths', map: d && d.player === y.c.who ? deathMap(r, d) : null, ic: spellIcon(y.c.id || 0, y.c.label, true), name: mech(y.c.label, y.c.id), vn: y.c.label,
+      tags: [y.n + ' of ' + plural(wipesR.length, 'wipe'), 'latest: pull ' + r.item.pull], who: top.map(([n]) => n), what: 'It ended ' + y.n + ' of ' + plural(wipesR.length, 'wipe') + '.' + (top.length ? ' The first to die ' + (top.length === 1 ? 'was ' : 'were ') + top.slice(0, 3).map(([n, k]) => n + (k > 1 ? ' (' + k + ')' : '')).join(', ') + '.' : ''),
+      fix: fixFor([y.c.label]) || (d && d.prevent && d.prevent[0]) || '' }); }
+  const covered = new Set([...causes.keys()].map((k) => k.toLowerCase()));
+  for (const x of mechL) { if (x.info || x.id === 'deaths') continue; const v = verdictOf(x.per); if (v.st !== 'bad' && v.st !== 'warn') continue;
+    const nm = shortT(x.title), sp = x.spell && x.spell[1]; if (covered.has(String(sp || '').toLowerCase()) || covered.has(nm.toLowerCase())) continue;
+    const ns = [...x.per].filter(([, p]) => p.st === 'bad' || p.st === 'warn').map(([n]) => n), worst = v.worst || ns[ns.length - 1];
+    let mp = null; for (const n of [worst].concat(ns.slice().reverse())) { mp = mapIn(n, x.id); if (mp) break; }
+    const who = new Map(); for (const p of x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
+    wrong.push({ lv: v.st === 'bad' ? tierOf(boss, x.id) : 'minor', w: 0, n: worst, sec: 'sec-' + x.id, map: mp, ic: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, sp || '', true), name: esc(nm), vn: nm,
+      tags: [ns.length + ' of ' + plural(v.j, 'pull'), worst ? 'worst: pull ' + worst : ''], who: [...who].sort((u, w) => w[1] - u[1]).map(([n]) => n), what: capS(v.txt) + '.' + (v.trend ? ' ' + capS(v.trend) + '.' : ''), fix: fixFor([sp, nm, x.title]) }); }
+  wrong.sort((a, b) => LVR[a.lv] - LVR[b.lv] || a.w - b.w);
+  if (one) for (let i = wrong.length - 1; i >= 0; i--) if (!wrong[i].who.includes(one)) wrong.splice(i, 1);
+  wrong.splice(8);
+  const MAPS = [], wTile = (x, big) => { const tg = x.tags.filter(Boolean), fs = x.who.map(face).filter(Boolean);
+    return '<div class="rcp-w lv-' + x.lv + (big ? ' rcp-big' : '') + (x.map ? '' : ' rcp-nomap') + '" role="button" tabindex="0" data-npull="' + x.n + '" data-sec="' + esc(x.sec || '') + '" title="Open pull ' + x.n + ' on Mechanics">' +
+      (x.map ? '<div class="wr-map rcp-map" role="button" tabindex="0" data-i="' + (MAPS.push(x.map) - 1) + '" title="Play this moment" aria-label="Play this moment">' + miniMap(x.map, pmap) + '</div>' : '') +
+      '<div class="rcp-hd">' + x.ic + '<b>' + x.name + '</b>' + (fs.length ? '<span class="rcp-who">' + fs.slice(0, 4).join('') + (fs.length > 4 ? '<i>+' + (fs.length - 4) + '</i>' : '') + '</span>' : '') + '</div>' +
+      '<div class="rcp-bd">' + (tg.length ? '<div class="rcp-tg">' + tg.map((t) => '<span class="wr-tag">' + esc(t) + '</span>').join('') + '</div>' : '') + (x.what ? '<div class="rcp-wt">' + esc(x.what) + '</div>' : '') +
+      (x.fix ? '<div class="rcp-fx"><b>Next pull:</b> ' + esc(x.fix) + '</div>' : '') + '</div>' + (big ? '<span class="rcp-rib">Fix this first</span>' : '') + '<span class="rcp-lv ' + x.lv + '">' + LVW[x.lv] + '</span></div>'; };
+  const lvCnt = (l) => l.reduce((m, v) => { m[v]++; return m; }, { major: 0, moderate: 0, minor: 0, clean: 0 });
+  const lvHtml = (m) => ['major', 'moderate', 'minor'].filter((k) => m[k]).map((k) => '<span class="rcp-c ' + k + '">' + m[k] + ' ' + k + '</span>').join('<span class="rcp-sep"> · </span>');
+  const bigI = wrong.findIndex((x) => x.map), wl = wrong.slice(); if (bigI > 0) wl.unshift(wl.splice(bigI, 1)[0]);
+  const wP = '<div class="panel rcp-wp"><h3 class="nh"><span>What went wrong</span>' + (wrong.length ? '<span class="rcp-sum">' + lvHtml(lvCnt(wrong.map((x) => x.lv))) + '</span>' : hst('ok', 'nothing')) + '</h3>' +
+    (wl.length ? '<div class="rcp-grid">' + wl.map((x, i) => wTile(x, i === 0 && bigI >= 0 && wl.length > 1)).join('') + '</div>' : '<p class="rcp-none">✓ Nothing kept going wrong tonight.</p>') + '</div>';
+  // ---- what went great ----
+  const kicks = reps.reduce((s, r) => s + r.interrupts.filter((k) => k.t <= cutT(r) + 0.05).length, 0), missK = reps.reduce((s, r) => s + (r.missedKicks || []).filter((m) => m.t <= cutT(r) + 0.05).length, 0);
+  const well = [].concat(kill ? ['<b>The boss died on pull ' + kill.pull + '.</b> Nice work.'] : bestP ? ['<b>Best pull: pull ' + bestP.pull + '</b>, at ' + esc(pullLabel(bestP)) + '.'] : [],
+    kicks && !missK ? ['<b>Every kickable cast was interrupted</b>, all night (' + kicks + ' kicks).'] : [], db ? db.better.map((t) => '<b>Getting better:</b> ' + t + '.') : []);
+  const okT = []; for (const x of mechL) { if (x.info || x.id === 'deaths') continue; const v = verdictOf(x.per); if (v.st === 'ok' && v.j >= 2) okT.push({ x, t: 'clean every pull' }); else if ((v.st === 'warn' || v.st === 'bad') && v.real && v.better) okT.push({ x, t: 'getting better', up: true }); }
+  const sIc = (s) => (GENERIC_SEC.test(s.title) ? spellIcon(0, s.title, true) : spellIcon(s.spell ? s.spell[0] : 0, s.spell ? s.spell[1] : s.title, true));
+  const wellP = well.length || okT.length ? '<div class="panel rcp-well"><h3 class="nh"><span>What went great!</span>' + (okT.length ? hst('ok', okT.filter((q) => !q.up).length + ' clean') : '') + '</h3>' +
+    (well.length ? '<div class="rcp-wh"><span class="rcp-ck">✓</span><span>' + well.join(' ') + '</span></div>' : '') +
+    (okT.length ? '<div class="rcp-oks">' + okT.map((q) => '<button class="rcp-ok" type="button" data-go="audit" title="Open Mechanics">' + sIc(q.x) + '<span><b>' + esc(shortT(q.x.title)) + '</b><small>✓ ' + q.t + '</small></span></button>').join('') + '</div>' : '') + '</div>' : '';
+  // ---- the right column ----
+  const ds = reps.reduce((s, r) => s + keptDeaths(r).length, 0), fd = new Map(); for (const r of reps) { const d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0]; if (d) fd.set(d.player, (fd.get(d.player) || 0) + 1); }
+  const fTop = [...fd].sort((a, b) => b[1] - a[1])[0];
+  const go = (html, tab, sec) => '<button class="pt-go lp-go" type="button" data-go="' + tab + '"' + (sec ? ' data-sec="' + sec + '"' : '') + '>' + html + '</button>';
+  const dTile = '<div class="pts lp-tiles lp-dtile" data-n="' + (kicks || missK ? 2 : 1) + '">' + go(plTile(plIco('inv_misc_bone_humanskull_01'), 'Deaths', String(ds), ds ? LVL_CLS.moderate : 'ok', ds ? (fTop ? fTop[0] + ' died first in ' + plural(fTop[1], 'pull') : plural(ds, 'death')) : 'Nobody died'), 'audit') +
+    (kicks || missK ? go(plTile(plIco('ability_kick'), 'Interrupts', kicks + '<span> ' + (kicks === 1 ? 'kick' : 'kicks') + '</span>', missK ? 'bad' : 'ok', missK ? plural(missK, 'cast') + ' got through' : 'Every cast was kicked'), 'audit') : '') + '</div>';
+  const lastR = reps.slice().sort((a, b) => a.item.pull - b.item.pull).pop(), cs = (lastR && lastR.combatants) || [];
+  const prepRows = cs.length && !cs.some((c) => c.auras.some((a) => !a.name && a.ability)) ? cs.map((c) => { const p = [...lastR.players.values()].find((y) => y.name === c.name || (c.name && y.name.split('-')[0] === c.name.split('-')[0])); return p ? auditChar(c, p) : null; }).filter(Boolean) : false;
+  const prep = lastR ? lpPrep(lastR, prepRows).replace(/<small>[^<]*<\/small>/, '<small>At the last pull (' + lastR.item.pull + ')</small>') : '';
+  const talk = '<div class="panel lp-side-p lp-talk" id="nrTalk"><h3 class="nh"><span>Talk to</span><small>What each player should fix</small></h3><p class="sub">Working out each player\'s night…</p></div>';
+  const html = '<div class="lpv nrv"><div class="lp-cols"><div class="lp-main">' + wellP + wP + '</div><div class="lp-side">' + dTile + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>';
+  return { html, MAPS, pmap };
 }
-// the grid: a pull's column lights up on hover; a mechanic's name opens the pulls that went wrong, in place
-function bindNightMech() {
-  const t = $('#view .wnm-t'); if (!t) return;
-  let on = null; const lit = (n) => { if (n === on) return; on = n; t.querySelectorAll('[data-pull]').forEach((c) => c.classList.toggle('hov', c.dataset.pull === n)); };
-  t.addEventListener('mouseover', (e) => { const c = e.target.closest('[data-pull]'); lit(c ? c.dataset.pull : null); });
-  t.addEventListener('mouseleave', () => lit(null));
-  const sc = $('#view .wnm-scroll'), fit = () => { if (sc) t.style.setProperty('--wnm-w', sc.clientWidth + 'px'); }; fit();
-  window.addEventListener('resize', fit);
-  t.querySelectorAll('.wnm-tg').forEach((b) => (b.onclick = () => { const tr = b.closest('tr'), d = tr.nextElementSibling, open = d.hidden; d.hidden = !open; tr.classList.toggle('open', open); b.setAttribute('aria-expanded', open); if (open) S.openSecs.add(tr.dataset.k); else S.openSecs.delete(tr.dataset.k); }));
-  t.querySelectorAll('tr.wnm-r').forEach((tr) => { if (S.openSecs.has(tr.dataset.k)) tr.querySelector('.wnm-tg').click(); });
-  $$('#view .wnm-map').forEach((m) => { hydrateMapIcons(m); m.onkeydown = (e) => { if (e.key === 'Enter') m.click(); }; });
-  wrThumbFit($('#view'));
+// (Talk to over the night: each player's first thing to fix, from every pull (the Report card's own work, so it opens quickly after))
+function nightTalkHtml(data) {
+  const list = []; for (const a of data) { if (!a.p || !a.p.name) continue; const f = (a.fixes || []).find((z) => (z.crit || (z.gain || 0) >= 1 || (z.rank || 0) >= 1) && !/potion/i.test(z.t) && z.key !== 'm|Assigned cooldown'); if (f && a.ranked !== false) list.push({ p: a.p, f }); }
+  const L = S.mechP && list.some((x) => x.p.name === S.mechP) ? list.filter((x) => x.p.name === S.mechP) : list;
+  L.sort((a, b) => (b.f.crit ? 1 : 0) - (a.f.crit ? 1 : 0) || (b.f.gain || 0) - (a.f.gain || 0));
+  if (!L.length) return '<h3 class="nh"><span>Talk to</span></h3><p class="sub">Nobody has a big thing to fix tonight.</p>';
+  return '<h3 class="nh"><span>Talk to</span><small>What each player should fix</small></h3>' + L.map(({ p, f }) => { const why = String(f.x || '').replace(/<[^>]+>/g, '').trim();
+    return '<div class="lp-tk lp-tk2">' + avatar(p, true) + '<div class="lp-tb"><div class="lp-th">' + lpWho(p) + '<span class="lp-tf' + (f.crit ? ' crit' : '') + '">' + esc(f.t) + (f.k > 1 ? '<span class="sub"> · ' + f.k + ' pulls</span>' : '') + '</span></div>' + (why ? '<div class="lp-tx">' + esc(why) + '</div>' : '') + '</div></div>'; }).join('');
 }
-// Mechanics on the whole night (your ask, Oct 19: "really outdated … surprise me"): mechanics only, and not Recap. Top to
-// bottom: Fix these first (the 2 or 3 mechanics that cost the most pulls, each with one sentence, how it went over the night,
-// the map from its worst pull and who was caught most), Got it down (what clicked during the night, and what was clean every
-// pull), then every mechanic pull by pull in one grid, its columns lined up under the boss's health at the end of each pull.
-// No letter grades: the night's mechanics score is one quiet line.
-function nightMech(o) {
-  const { groups, pullNs, byPull, mByPull, pm, one, res, gm } = o, N = pullNs.length;
-  const rows = groups.flatMap((g) => g.list), isInfo = (r) => r.x.info && r.v.st === 'na';
-  const stAt = (r, n) => { const p = r.x.per.get(n); return p ? p.st : 'na'; };
-  const judged = (r) => pullNs.filter((n) => stAt(r, n) !== 'na');
-  const cnt = (r) => { const j = judged(r); return { j, b: j.filter((n) => stAt(r, n) === 'bad'), w: j.filter((n) => stAt(r, n) === 'warn') }; };
-  // (it clicked: it went wrong in at least 2 pulls, then clean in every pull after the last one, at least 2 of them)
-  const clickOf = (r) => { const j = judged(r), last = j.map((n) => stAt(r, n) !== 'ok').lastIndexOf(true); if (last < 0 || j.length - 1 - last < 2) return null;
-    return j.slice(0, last + 1).filter((n) => stAt(r, n) !== 'ok').length >= 2 ? j[last + 1] : null; };
-  const name = (r) => '<span class="wnm-nmt">' + r.icon + '<b>' + esc(r.title) + '</b></span>';
-  const pullT = (n) => { const r = byPull.get(n); return 'Pull ' + n + ' · ' + res(r); };
-  // ---- Fix these first ----
-  const live = rows.filter((r) => !isInfo(r) && (r.v.st === 'bad' || r.v.st === 'warn')).map((r) => ({ r, c: cnt(r) }));
-  const ranked = live.sort((a, b) => b.c.b.length - a.c.b.length || b.c.w.length - a.c.w.length || a.r.ord - b.r.ord);
-  const fixL = (ranked.some((x) => x.c.b.length) ? ranked.filter((x) => x.c.b.length) : ranked).slice(0, 3);
-  // (the map of the worst moment in a pull: its first flagged row with a map, the worst problems first)
-  const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
-  const mapIn = (n, id) => { const r = mByPull.get(n); if (!r || !r.module || r.module.error || !r.module.sections) return null; const s = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === id); if (!s) return null;
-    const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []));
-    for (const want of [(row) => row.some((c) => c.bad), (row) => row.some((c) => c.warn)]) for (const row of all) if (want(row)) { const m = rowMap(row); if (m) return m; }
-    return null; };
-  const trendS = (v) => (v.half < 3 ? '' : v.real ? '<div class="wnm-tr ' + (v.better ? 'up' : 'down') + '"><b>' + (v.better ? 'Getting better.' : 'Getting worse.') + '</b> It went wrong in ' + v.e + ' of the first ' + v.half + ' pulls and ' + v.l + ' of the last ' + v.half + '.</div>'
-    : '<div class="wnm-tr same"><b>About the same all night.</b> It went wrong in ' + v.e + ' of the first ' + v.half + ' pulls and ' + v.l + ' of the last ' + v.half + '.</div>');
-  const fixCard = ({ r, c }, i) => {
-    const sec = 'sec-' + r.x.id, bad = c.b.length, worst = r.v.worst || c.b.concat(c.w).sort((a, b) => b - a)[0];
-    // (the map: the worst pull's, else the latest pull where it went wrong that has one)
-    let mp = null, mpN = null; for (const n of [worst].concat(c.b.slice().reverse(), c.w.slice().reverse())) { mp = mapIn(n, r.x.id); if (mp) { mpN = n; break; } }
-    const say = bad ? 'Went wrong in ' + bad + ' of ' + plural(c.j.length, 'pull') + (c.w.length ? ', and could be better in ' + c.w.length + ' more' : '') + '.' : 'Could be better in ' + c.w.length + ' of ' + plural(c.j.length, 'pull') + '.';
-    const ck = clickOf(r);
-    const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
-    const top = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    return '<div class="wnm-fx st-' + (bad ? 'bad' : 'warn') + '"><div class="wnm-fx-n">' + (i + 1) + '</div>' +
-      '<div class="wnm-fx-h">' + name(r) + '</div><p class="wnm-fx-s">' + say + '</p>' +
-      (ck ? '<div class="wnm-tr up"><b>It clicked on pull ' + ck + '.</b> Clean in every pull since.</div>' : trendS(r.v)) +
-      (mp ? '<div class="wnm-fx-m"><div class="wr-map wnm-map" role="button" tabindex="0" data-open="' + mpN + '" data-tab="audit" data-sec="' + esc(sec) + '" title="Open pull ' + mpN + ' at this mechanic">' + miniMap(mp, pm) + '</div><span class="sub">Pull ' + mpN + (mpN === worst ? ', the worst one' : '') + '</span></div>' : '') +
-      (top.length ? '<div class="wnm-who"><span class="sub">Caught most</span>' + top.map(([n, k]) => { const p = pm.get(n); return '<span class="wnm-wp">' + avatar(p, true) + '<span style="color:' + p.color + '">' + esc(n.split('-')[0]) + '</span><b>' + k + '×</b></span>'; }).join('') + '</div>' : '') +
-      '<button class="btn sm wnm-go" type="button" data-open="' + worst + '" data-tab="audit" data-sec="' + esc(sec) + '">Open pull ' + worst + '</button></div>';
-  };
-  const fixH = '<div class="wnm-sec"><h3 class="nh">Fix these first <small>the mechanics that went wrong in the most pulls</small></h3>' +
-    (fixL.length ? '<div class="wnm-fxs" style="--n:' + fixL.length + '">' + fixL.map(fixCard).join('') + '</div>'
-      : '<div class="wnm-fx st-ok wnm-none"><div class="wnm-fx-h"><b>Nothing to fix.</b></div><p class="wnm-fx-s">Every mechanic was clean in every pull' + (one ? ' for ' + esc(one) : '') + '.</p></div>') + '</div>';
-  // ---- Got it down: what clicked during the night, and what was clean every pull ----
-  const clicked = rows.filter((r) => !isInfo(r)).map((r) => ({ r, n: clickOf(r) })).filter((x) => x.n).sort((a, b) => a.n - b.n);
-  const clean = rows.filter((r) => !isInfo(r) && r.v.st === 'ok' && judged(r).length >= 2);
-  const gotH = !clicked.length && !clean.length ? '' : '<div class="wnm-sec"><h3 class="nh">Got it down</h3><div class="wnm-got">' +
-    (clicked.length ? '<div class="wnm-gc"><div class="pt-l">Clicked tonight</div>' + clicked.map(({ r, n }) => '<div class="wnm-gl">' + name(r) + '<span class="sub">clean from pull ' + n + ' on, after going wrong in ' + judged(r).filter((q) => q < n && stAt(r, q) !== 'ok').length + ' pulls before it</span></div>').join('') + '</div>' : '') +
-    (clean.length ? '<div class="wnm-gc"><div class="pt-l">Clean every pull</div><div class="wnm-chips">' + clean.map((r) => '<span class="wnm-chip">' + r.icon + esc(shortT(r.title)) + '</span>').join('') + '</div></div>' : '') + '</div></div>';
-  // ---- the grid, under bars that climb: each pull's height is how far it got, the best wipe in gold, the kill full and green ----
-  const pct = (n) => { const r = byPull.get(n); return r ? pullPct(r.item) : null; };
-  const pcts = pullNs.map(pct).filter((v) => v != null), best = pcts.length ? Math.min(...pcts) : null;
-  const hp = '<tr class="wnm-hp"><th class="wnm-nm"><span class="pt-l">How far each pull got</span><span class="sub">taller is further</span></th>' + pullNs.map((n) => { const v = pct(n), r = byPull.get(n), k = r && r.item.kill;
-    return '<td data-pull="' + n + '"><button class="wnm-bar' + (k ? ' kill' : v != null && v === best ? ' best' : '') + '" type="button" data-open="' + n + '" data-tab="audit" title="' + esc(pullT(n)) + '">' + (k ? '<span class="wnm-k">✓</span>' : '<i style="height:' + (v == null ? 0 : Math.max(4, Math.round(100 - v))) + '%"></i>') + '</button></td>'; }).join('') + '<td></td></tr>' +
-    '<tr class="wnm-pn"><th class="wnm-nm"></th>' + pullNs.map((n) => { const r = byPull.get(n); return '<td data-pull="' + n + '" title="' + esc(pullT(n)) + '"><b>' + n + '</b>' + (r ? pullShort(r.item).split(' · ').map((x) => '<span>' + esc(x) + '</span>').join('') : '') + '</td>'; }).join('') + '<td class="wnm-n"><span class="sub">Wrong</span></td></tr>';
-  const cellT = (r, n) => { const p = r.x.per.get(n), st = p ? p.st : 'na';
-    return pullT(n) + ' · ' + (!p ? 'didn\'t come up' : st === 'na' ? 'didn\'t come up, or after the wipe filter' : st === 'ok' ? 'clean' : (p.nb ? p.nb + ' major' : '') + (p.nb && p.nw ? ', ' : '') + (p.nw ? p.nw + ' minor' : '') + (p.lines && p.lines[0] ? ': ' + p.lines[0].txt : '')); };
-  const rowH = (r) => { const c = cnt(r), ck = clickOf(r), wr = c.b.length + c.w.length;
-    return '<tr class="wnm-r" data-k="' + r.id + '"><th class="wnm-nm"><button class="wnm-tg" type="button" aria-expanded="false" title="Show the pulls that went wrong">' + name(r) + '</button></th>' +
-      pullNs.map((n) => '<td data-pull="' + n + '"><button class="wnm-c st-' + stAt(r, n) + (n === ck ? ' clk' : '') + '" type="button" data-open="' + n + '" data-tab="audit" data-sec="sec-' + esc(r.x.id) + '" title="' + esc(cellT(r, n) + (n === ck ? '. It clicked here: clean from this pull on.' : '')) + '"></button></td>').join('') +
-      '<td class="wnm-n">' + (!c.j.length ? '<span class="sub">–</span>' : wr ? '<b class="' + (c.b.length ? 'hotv' : 'warnv') + '">' + wr + '</b><span class="sub">/' + c.j.length + '</span>' : '<span class="okv">0</span><span class="sub">/' + c.j.length + '</span>') + '</td></tr>' +
-      '<tr class="wnm-d" hidden><td colspan="' + (N + 2) + '"><div class="wnm-db">' + r.body + '</div></td></tr>'; };
-  const body = groups.map((g) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length); return l.length ? '<tr class="wnm-ph"><th colspan="' + (N + 2) + '"><span>' + esc(g.name) + '</span></th></tr>' + l.map(rowH).join('') : ''; }).join('');
-  const never = rows.filter((r) => !isInfo(r) && !judged(r).length), info = rows.filter(isInfo);
-  const grid = '<div class="wnm-sec"><h3 class="nh">Every mechanic, pull by pull <small>hover a pull to light up its column; click a square to open that pull</small></h3>' +
-    '<div class="panel wnm-gp"><div class="wnm-scroll"><table class="wnm-t" style="--n:' + N + '"><thead>' + hp + '</thead><tbody>' + body + '</tbody></table></div>' +
-    '<div class="wnm-leg"><span><i class="wnm-c st-ok"></i>Clean</span><span><i class="wnm-c st-warn"></i>Could be better</span><span><i class="wnm-c st-bad"></i>Went wrong</span><span><i class="wnm-c st-na"></i>Didn\'t come up</span><span><i class="wnm-c st-ok clk"></i>Clicked: clean from here on</span></div></div>' +
-    (never.length ? '<p class="sub wnm-q">Didn\'t come up in these pulls: ' + esc(never.map((r) => shortT(r.title)).join(' · ')) + '</p>' : '') +
-    (info.length ? '<p class="sub wnm-q">Shown on each pull\'s Mechanics tab, not judged here: ' + esc(info.map((r) => shortT(r.title)).join(' · ')) + '</p>' : '') + '</div>';
-  const head = '<div class="sum-h" id="sum-mech"><h2>Mechanics, the whole night</h2><span class="sub">' + (one ? esc(one) + ', ' : '') + plural(N, 'pull') + ', each up to the wipe filter' +
-    (gm && !one ? ' · mechanics score ' + Math.round(gm.overall) + ' / 100' : '') + '</span></div>';
-  return head + (rows.length ? fixH + gotH + grid : '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>');
+// (Used tonight: Used this pull, added up over the night's pulls)
+function lpUsedNight(reps) {
+  const lines = [], of = (n, m) => '<b>' + n + '</b><span class="sub"> of ' + m + '</span>', pm = new Map();
+  for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && !pm.has(p.name)) pm.set(p.name, p);
+  const W = (n) => (pm.get(n) ? lpWho(pm.get(n)) : esc(n));
+  if (!PI_OFF()) { const pr = new Map(); for (const r of reps) { const P = piPull(r), ct = cutT(r); for (const x of P.priests.values()) { const y = pr.get(x.p.name) || { used: 0, poss: 0, casts: [] }; y.used += x.used; y.poss += x.poss; y.casts.push(...P.casts.filter((c) => c.pr === x.p && c.t <= ct + 0.05).map((c) => ({ c, pull: r.item.pull }))); pr.set(x.p.name, y); } }
+    // (over the night, a line per player it went on: how many times, and how many were good, could be better or bad)
+    for (const [n, y] of pr) { const by = new Map(); for (const { c } of y.casts) { const z = by.get(c.tg.name) || { n: 0, ok: 0, warn: 0, bad: 0 }; z.n++; z[piTier(c)]++; by.set(c.tg.name, z); }
+      lines.push(['Power Infusion', W(n) + ' ' + of(y.used, y.poss) + (by.size ? '<span class="lp-pis">' + [...by].sort((a, b) => b[1].n - a[1].n).map(([t, z]) => '<span class="lp-pic" title="' + esc(z.n + ' on ' + t + ': ' + z.ok + ' good, ' + z.warn + ' could be better, ' + z.bad + ' bad') + '">' + W(t) + '<span class="sub"> ×' + z.n + '</span>' + ['ok', 'warn', 'bad'].filter((k) => z[k]).map((k) => '<span class="pi-ico">' + PI_ICON[k] + '</span><span class="sub">' + z[k] + '</span>').join('') + '</span>').join('') + '</span>' : '')]); } }
+  { const dr = new Map(); for (const r of reps) { const ct = cutT(r), ps = [...r.players.values()]; for (const p of ps) { if (p.cls !== 'DRUID' || !/balance/i.test(p.specName || '')) continue; const u = (p.byName.get('innervate') || []).filter((t) => t <= ct + 0.05), y = dr.get(p.name) || { n: 0, poss: 0, on: new Set() };
+      y.n += u.length; y.poss += Math.floor(Math.min(r.duration, ct) / 180) + 1; for (const t of u) { const q = ps.find((z) => ((z.buffs && z.buffs.get('Innervate')) || { sp: [] }).sp.some(([a]) => Math.abs(a - t) <= 1.5)); if (q) y.on.add(q.name); } dr.set(p.name, y); } }
+    for (const [n, y] of dr) lines.push(['Innervate', W(n) + ' ' + of(y.n, y.poss) + (y.on.size ? '<span class="sub"> on </span>' + [...y.on].map(W).join(', ') : '')]); }
+  const kby = new Map(); let kk = 0, miss = 0, dU = 0; const dN = new Map(), hs = new Map(), hp = new Map(), live = new Set(), hasD = new Set();
+  for (const r of reps) { const ct = cutT(r), C0 = perfContext(r), inT = (l) => (l || []).filter((t) => (t && t.t != null ? t.t : t) <= ct + 0.05);
+    for (const x of r.interrupts) if (x.t <= ct + 0.05) { kk++; kby.set(x.player, (kby.get(x.player) || 0) + 1); } miss += (r.missedKicks || []).filter((m) => m.t <= ct + 0.05).length;
+    for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; const x = C0.per.get(p.name); if (!x || Math.min(x.until, ct) < 20) continue; live.add(p.name); if ((p.defs || []).length) hasD.add(p.name);
+      const d = (p.defs || []).reduce((n, q) => n + inT(q.uses).length, 0); dU += d; dN.set(p.name, (dN.get(p.name) || 0) + d); hs.set(p.name, (hs.get(p.name) || 0) + inT(p.cons.healthstone).length); hp.set(p.name, (hp.get(p.name) || 0) + inT(p.cons.healpot).length); } }
+  const none = (l) => (l.length ? (l.length === live.size ? '<span class="lp-none">Nobody used one all night.</span>' : '<span class="lp-none"><span class="sub">None all night from </span>' + l.slice(0, 8).map(W).join(', ') + (l.length > 8 ? '<span class="sub"> and ' + (l.length - 8) + ' more</span>' : '') + '</span>') : '<span class="lp-none ok">✓ Everyone used one.</span>');
+  const kl = [...kby].sort((a, b) => b[1] - a[1]);
+  if (kk || miss) lines.push(['Interrupts', '<button class="lp-dgo" type="button" data-go="audit" title="Open the interrupts on Mechanics"><b>' + kk + '</b> kicked' + (miss ? '<span class="lp-kmiss">, ' + plural(miss, 'cast') + ' got through</span>' : '') + ' ›</button>' +
+    (kl.length ? '<span class="lp-none">' + kl.slice(0, 8).map(([n, c]) => W(n) + '<span class="sub"> ' + c + '</span>').join(', ') + (kl.length > 8 ? '<span class="sub"> and ' + (kl.length - 8) + ' more</span>' : '') + '</span>' : '')]);
+  const L = [...live], sum = (m) => [...m.values()].reduce((s, v) => s + v, 0);
+  lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" title="Open the defensives on Mechanics"><b>' + dU + '</b> used ›</button>' + none(L.filter((n) => hasD.has(n) && !dN.get(n)))]);
+  lines.push(['Healthstones', '<b>' + sum(hs) + '</b> used' + none(L.filter((n) => !hs.get(n)))], ['Health potions', '<b>' + sum(hp) + '</b> used' + none(L.filter((n) => !hp.get(n)))]);
+  return '<div class="panel lp-side-p lp-used"><h3 class="nh"><span>Used tonight</span><small>' + plural(reps.length, 'pull') + '</small></h3>' + lines.map(([k, v]) => '<div class="lp-pr"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
 }
-// the grid: a pull's column lights up on hover; a mechanic's name opens the pulls that went wrong, in place
-function bindNightMech() {
-  const t = $('#view .wnm-t'); if (!t) return;
-  let on = null; const lit = (n) => { if (n === on) return; on = n; t.querySelectorAll('[data-pull]').forEach((c) => c.classList.toggle('hov', c.dataset.pull === n)); };
-  t.addEventListener('mouseover', (e) => { const c = e.target.closest('[data-pull]'); lit(c ? c.dataset.pull : null); });
-  t.addEventListener('mouseleave', () => lit(null));
-  const sc = $('#view .wnm-scroll'), fit = () => { if (sc) t.style.setProperty('--wnm-w', sc.clientWidth + 'px'); }; fit();
-  window.addEventListener('resize', fit);
-  t.querySelectorAll('.wnm-tg').forEach((b) => (b.onclick = () => { const tr = b.closest('tr'), d = tr.nextElementSibling, open = d.hidden; d.hidden = !open; tr.classList.toggle('open', open); b.setAttribute('aria-expanded', open); if (open) S.openSecs.add(tr.dataset.k); else S.openSecs.delete(tr.dataset.k); }));
-  t.querySelectorAll('tr.wnm-r').forEach((tr) => { if (S.openSecs.has(tr.dataset.k)) tr.querySelector('.wnm-tg').click(); });
-  $$('#view .wnm-map').forEach((m) => { hydrateMapIcons(m); m.onkeydown = (e) => { if (e.key === 'Enter') m.click(); }; });
-  wrThumbFit($('#view'));
+// (Missed assignments over the night: each pull's misses from the note, latest first)
+function lpMissNight(reps) {
+  const HCD = 'Assigned cooldown', pm = new Map(), nm = [];
+  for (const r of reps) { for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p); for (const m of keptMistakes(r)) if (m.fromNote && m.severity !== 'Low' && m.mechanic !== HCD && m.t <= cutT(r) + 0.05) nm.push({ m, pull: r.item.pull }); }
+  if (!nm.length) return ''; nm.sort((a, b) => b.pull - a.pull || a.m.t - b.m.t);
+  return '<div class="panel lp-side-p lp-miss"><h3 class="nh"><span>Missed assignments</span>' + hst('bad', String(nm.length)) + '</h3>' + nm.slice(0, 8).map(({ m, pull }) => '<div class="lp-pr bad"><span class="lp-pk">Pull ' + pull + '</span><button class="lp-dgo" type="button" data-go="overview" title="Open Assignments">' + (pm.get(m.player) ? lpWho(pm.get(m.player)) : esc(m.player)) + '<span class="sub"> · </span>' + esc(m.mechanic) + ' ›</button></div>').join('') +
+    (nm.length > 8 ? '<button class="lp-dgo sub lp-more" type="button" data-go="overview">And ' + (nm.length - 8) + ' more on Assignments ›</button>' : '') + '</div>';
+}
+function bindNightRecap(NR, reps, pulls, here) {
+  const v = $('#view'); if (!v) return;
+  // (a tile: its worst pull on Mechanics, at its mechanic; the tabs' own links stay on the whole night)
+  const openP = (n, sec) => { const b = pulls.find((x) => x.pull === +n); if (!b) return; S.scope = 'pull'; S.tab = 'audit'; S.pendingSec = sec || null; select(b); };
+  v.querySelectorAll('.nrv [data-npull]').forEach((t) => { t.onclick = () => openP(t.dataset.npull, t.dataset.sec); t.onkeydown = (e) => { if (e.target === t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openP(t.dataset.npull, t.dataset.sec); } }; });
+  v.querySelectorAll('.nrv [data-go]').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; renderMain(); window.scrollTo({ top: 0 }); }));
+  wrThumbFit(v);
+  v.querySelectorAll('.nrv .rcp-map').forEach((b) => { const play = () => {
+    const t = b.closest('.rcp-w'); if (t.classList.contains('rcp-play')) return; t.classList.add('rcp-play'); b.style.display = 'none';
+    const mp = NR.MAPS[+b.dataset.i], box = document.createElement('div'); box.className = 'rcp-anim'; box.innerHTML = '<button class="btn rcp-x" type="button">✕ Close map</button><div class="mm"></div>'; b.after(box);
+    const mm = box.querySelector('.mm'); mm.innerHTML = miniMap(mp, NR.pmap); bindZoom(mm); bindAnim(mm, mp, NR.pmap); hydrateMapIcons(mm); refreshIcons();
+    box.onclick = (e) => e.stopPropagation(); box.onkeydown = (e) => e.stopPropagation();
+    box.querySelector('.rcp-x').onclick = () => { box.remove(); b.style.display = ''; t.classList.remove('rcp-play'); }; };
+    b.onclick = (e) => { e.stopPropagation(); play(); }; b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); play(); } }; });
+  plData(reps, here).then((data) => { const el = $('#nrTalk'); if (!data || !el || !here()) return; el.innerHTML = nightTalkHtml(data); refreshIcons(); })
+    .catch(() => { const el = $('#nrTalk'); if (el) el.innerHTML = '<h3 class="nh"><span>Talk to</span></h3><p class="sub">Couldn\'t work out each player\'s night.</p>'; });
 }
 async function night(part) {
   const it0 = S.item, tab0 = S.tab, here = () => S.item === it0 && S.tab === tab0 && S.scope === 'all';
@@ -15522,14 +15270,14 @@ async function night(part) {
   const aPart = secHead('sum-asg', 'Assignments, the whole night', hasNote ? 'every assignment in the NSRT note across the pulls' : '') +
     (!hasNote ? '<div class="panel noteempty"><div><b>No NSRT note for ' + esc(b0.boss) + ' yet.</b> <span class="sub">Add the one your raid is using on Assignments (pick a pull first) to check soaks, kicks, orbs and cooldowns across every pull.</span></div><button class="btn" id="sumNote">Open Assignments</button></div>'
       : (aCard || '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
-  // (Recap on the whole night for the raid: the night's story (nightStory); one player picked keeps their own card and lists)
-  const NS = !part && !one ? nightStory(b0, pulls, reps, { kill, time, overall, ga, wrongS, rightS }) : null;
+  // (Recap on the whole night: the single pull's layout with the night's data (nightRecap; your call, Oct 19))
+  const NR = !part ? nightRecap({ b0, pulls, reps, mechL: mech, verdictOf, kill, bestP, db, one }) : null;
   view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part wnm">' + nightMech({ groups: mGroups, pullNs, byPull, mByPull: new Map(mReps.map((r) => [r.item.pull, r])), pm, one, res, gm }) + '</div>'
     : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
-    : NS ? NS.html
+    : NR ? NR.html
     : '<div class="nsa sumv sum3">' + pickS + (one ? rcTop : nightGrade) + recapHp(b0, pulls) + fixSplit + progress + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Report card.</p></div>'));
   refreshIcons(); setHeadRes(); fitTrends();
-  if (NS) bindNightStory(NS, pulls, reps, here);
+  if (NR) bindNightRecap(NR, reps, pulls, here);
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };
   $$('#view .dots .d').forEach((b) => (b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); const d = b.closest('.dots'); open(b.dataset.pull, d.dataset.tab, d.dataset.sec); }));
