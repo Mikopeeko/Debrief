@@ -5287,6 +5287,8 @@ function analyze(item, text, opts) {
 
     switch (ev) {
       // a watched spell that missed a player (immune, Turtle, Cloak...): they were still in it, e.g. a Guillotine soaker
+      // a player's auto attack that missed an enemy still means they were in melee range (melee uptime)
+      case 'SWING_MISSED': { if (isPlayer(sg) && (parseInt(f[6], 16) & 0x40)) { const p = P(sg, sn); (p.swT || (p.swT = [])).push(t); } break; }
       case 'SPELL_MISSED': case 'SPELL_PERIODIC_MISSED': {
         if (f.length >= 12 && isPlayer(dg) && W(f[9], f[8])) modEv.push({ k: 'miss', t, dst: dg, spell: f[9], id: num(f[8]), how: f[11], src: sg });
         break;
@@ -5318,6 +5320,7 @@ function analyze(item, text, opts) {
           recap(dg, { t, heal: false, amount: base, src: shortName(sg, sn), spell, id, hp });
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
           const p = P(owner, pet ? null : sn);
+          if (swing && !pet) (p.swT || (p.swT = [])).push(t); // (their own auto attacks, for melee uptime; a Warcraft Logs miss comes as a hit of 0)
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
