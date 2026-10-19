@@ -1386,7 +1386,9 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
    All teams and Add. */
 .tbteams { position: relative; }
 /* the team page as one page (Oct 19): header, Now on beside Raid nights, every boss, then the rankings */
-.pg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .pg-chs, .pg-ych { display: contents; }
+.pgc-t { cursor: pointer; font: inherit; font-size: 13px; color: var(--gold); border-style: dashed; } .pgc-t:hover, .pgc-t[aria-expanded="true"] { border-color: var(--gold); border-style: solid; background: rgba(230,180,80,.08); }
+.pg-rkbox { margin-top: -8px; }
 .pgc { display: inline-flex; align-items: baseline; gap: 5px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line2); background: var(--raised); font-size: 13px; color: #c4c9d2; }
 .pgc b { color: #f3f5f9; font-weight: 700; } .pgc.gold { border-color: rgba(230,180,80,.55); background: rgba(230,180,80,.1); } .pgc.gold b { color: #f6dc9a; }
 .pg-v2 .pg-sum { margin-top: 6px; } .pg-v2 .pg-you { margin-top: 8px; }

@@ -289,6 +289,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **The Your teams page is gone** (your call: "this entire page can be removed now"). Every way to it goes to your
   team's page instead; the Your teams menu at the top is the switcher (its All teams line is gone), and "+ Add a team or
   character" runs the setup. "‹ All teams" left the team page.
+- [x] **Rankings up in the header** (your note: "randomly at the bottom"): chips for World, US, Zul'jin and Speed, and
+  "Holy 81 best · 75 median" on your line; "All rankings" opens the full panels in place under the header. The bottom
+  section is gone; your parse stays on each boss card. A reload on your own page now stays there.
 - [ ] **Next (your note): a comparison tab**, where the Top guilds go. Their code is kept for it (renderProgHub, topGuilds).
 
 ## 2026-10-19, round 256: Live now, your team's raid followed without a link (your idea)
