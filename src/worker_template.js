@@ -22,7 +22,6 @@ const TEAM_RANK_Q = __TEAM_RANK_Q__;
 const CHAR_LOOK_Q = __CHAR_LOOK_Q__;
 const TOPRANK_Q = __TOPRANK_Q__;
 const TOPAB_Q = __TOPAB_Q__;
-const TOPKILL_Q = __TOPKILL_Q__;
 const APP_HTML = __HTML__;
 /*TOPSPEC*/
 
