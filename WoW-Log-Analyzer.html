@@ -1858,6 +1858,12 @@ span.sn-log { padding: 3px 10px; }
 .sn-eico { width: 44px; height: 44px; flex: none; border-radius: 12px; display: grid; place-items: center; background: rgba(230,180,80,.1); color: var(--gold); }
 .sn-eico .sn-i { width: 24px; height: 24px; opacity: 1; }
 .as-views button { display: inline-flex; align-items: center; gap: 6px; }
+/* (Mechanics: the "Show one player" picker on top; gold when one player is picked) */
+.mech-pick { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; padding: 10px 14px; margin: 0 0 12px; }
+.mech-pick.on { border-color: rgba(230,180,80,.5); background: linear-gradient(90deg, rgba(230,180,80,.09), transparent 60%), var(--panel); }
+.mech-pick .mp-l { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; } .mech-pick .mp-l .sn-i { color: var(--gold); width: 16px; height: 16px; }
+.mech-pick select { background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; color: var(--text); padding: 6px 10px; min-width: 190px; font: inherit; font-weight: 500; }
+.mech-pick .mp-on { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 /* (refined: the title tile, a round portrait in each band, faces on the cards, a colour edge by difficulty, the gold pill) */
 .sn-top { align-items: center; justify-content: flex-start; gap: 14px; }
 .sn-tico { width: 46px; height: 46px; flex: none; border-radius: 13px; display: grid; place-items: center; color: var(--gold); background: linear-gradient(135deg, rgba(230,180,80,.22), rgba(230,180,80,.06)); border: 1px solid rgba(230,180,80,.35); }
@@ -11781,11 +11787,44 @@ function cutModule(m, t) {
 // ---------- fight audit (boss-specific modules) ----------
 // The one place for mechanical mistakes: boss mechanic sections (when the fight has a module), mistakes by
 // player from the rule packs, interrupts and NSRT assignments. Deaths and healing stay on their own tabs.
+// One player at a time on Mechanics (your note, Oct 18): only the rows about them, in every mechanic; mechanics with nothing
+// about them are left out, so the box on top lists only their problems. A row is about them when it names them (a player
+// cell, a list of players, its text) or its map marks them (ringed, ticked or crossed).
+function mechForPlayer(m, name, r) {
+  const p = [...r.players.values()].find((x) => x.name === name), g = p && p.guid, base = name.split('-')[0];
+  const re = new RegExp('(^|[^\\p{L}])' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu');
+  const inMap = (mp) => !!(mp && g && (['hl', 'bad', 'good', 'warn'].some((k) => (mp[k] || []).includes(g)) || (mp.goodAt || []).some((x) => x[0] === g) || (mp.badAt || []).some((x) => x[0] === g)));
+  const about = (row) => row.some((x) => x && (x.p === name || (x.ps || []).includes(name) || (x.pt || []).some((y) => y[0] === name) || (x.txt != null && re.test(String(x.txt))) || (x.sub != null && re.test(String(x.sub))) ||
+    inMap(x.map) || (x.maps || []).some((y) => inMap(y[1])) || (x.death && x.death.player === name)));
+  const worst = (rows) => (rows.some((row) => row.some((x) => x && x.bad)) ? 'bad' : rows.some((row) => row.some((x) => x && x.warn)) ? 'warn' : 'good');
+  let shown = 0, left = 0, rowsN = 0;
+  const sections = m.sections.map((sec) => {
+    if (!(sec.rows || []).length && !(sec.groups || []).length) return sec; // (a mechanic with no rows to sort: as it is)
+    const rows = (sec.rows || []).filter(about), groups = (sec.groups || []).map((gr) => { const rr = (gr.rows || []).filter(about); return { ...gr, rows: rr, bad: rr.some((row) => row.some((x) => x && x.bad)) }; }).filter((gr) => gr.rows.length);
+    if (!rows.length && !groups.length) { left++; return null; }
+    shown++; rowsN += rows.length + groups.reduce((t, gr) => t + gr.rows.length, 0);
+    return { ...sec, rows, groups, verdict: worst(rows.concat(...groups.map((gr) => gr.rows))) };
+  }).filter(Boolean);
+  return { m: { ...m, sections }, shown, left, rowsN };
+}
+// the picker on top of Mechanics: everyone, or one player (by role, then name; typing a name jumps to it)
+function mechPick(r, res) {
+  const ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), role = (p) => p.role || 'dps';
+  const grp = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'DPS']].map(([k, l]) => [l, ps.filter((p) => role(p) === k).sort((a, b) => a.name.localeCompare(b.name))]).filter(([, xs]) => xs.length);
+  const cur = S.mechP, pc = cur ? ps.find((p) => p.name === cur) : null;
+  const sel = '<select id="mechP" aria-label="Show one player"><option value="">Everyone</option>' + grp.map(([l, xs]) => '<optgroup label="' + l + '">' + xs.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</optgroup>').join('') + '</select>';
+  const note = pc && res ? '<span class="mp-on">' + avatar(pc, true) + '<span>Showing <b style="color:' + pc.color + '">' + esc(pc.name) + '</b> only: ' + plural(res.rowsN, 'row') + ' in ' + plural(res.shown, 'mechanic') + (res.left ? ', and ' + plural(res.left, 'mechanic') + ' with nothing about them left out.' : '.') + '</span><button class="btn sm" type="button" id="mechPx">Show everyone</button></span>'
+    : cur ? '<span class="mp-on sub">' + esc(cur) + " isn't in this pull, so everyone is shown. <button class=\"btn sm\" type=\"button\" id=\"mechPx\">Show everyone</button></span>"
+    : '<span class="sub">Pick a player to see only their part: their rows, their problems, and a gold ring on them on every map.</span>';
+  return '<div class="panel mech-pick' + (pc ? ' on' : '') + '"><label class="mp-l">' + SN_I.users + 'Show one player ' + sel + '</label>' + note + '</div>';
+}
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
   if (m0.error) { view('<div class="panel">The audit for this fight hit an error: ' + esc(m0.error) + '</div>'); return; }
   // deaths are one of the mechanics (split by phase like the rest); the old Deaths tab lives here now
-  const cut = cutInfo(r), { m, hidden } = cutModule({ ...m0, sections: m0.sections.concat(r.noDeathSec ? [] : [deathSection(r)]) }, cut ? cut.t : Infinity);
+  const cut = cutInfo(r), { m: mAll, hidden } = cutModule({ ...m0, sections: m0.sections.concat(r.noDeathSec ? [] : [deathSection(r)]) }, cut ? cut.t : Infinity);
+  // (one player at a time, when one is picked and is in this pull)
+  const mp1 = S.mechP && [...r.players.values()].some((x) => x.name === S.mechP) ? mechForPlayer(mAll, S.mechP, r) : null, m = mp1 ? mp1.m : mAll;
   const hiddenMk = cut ? r.mistakes.filter((x) => x.t > cut.t + 0.05 && x.mechanic !== 'Death').length : 0;
   // NSRT note: show each Guillotine assignment on its soak row (who was assigned but missing, who soaked unassigned)
   const qs = r.assign && !r.assign.error && m.sections.find((s) => s.id === 'soakq');
@@ -11808,6 +11847,7 @@ function audit() {
   // (the fight timeline panel was removed: the audit is organized by phase below instead)
   // (the page header already names the boss and difficulty; only a module note is worth a line here)
   let h = m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '';
+  h += mechPick(r, mp1);
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
   // the wipe filter as one quiet line: where this pull's audit stops (the setting itself is on the tab bar, just above)
@@ -11876,7 +11916,8 @@ function audit() {
     const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1; return { sev: b ? 'bad' : 'warn', html: name(s) + ' <span class="sub">' + esc(fp ? fp + (more > 0 ? ' (and ' + more + ' more)' : '') : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: thumb(s, probMap(s, b)) + '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
     // (and what went well keeps only its count, "10 tank frontals.", not what the section shows)
     const okSum = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/\bshows?\b/i.test(x)).join(' ');
-    const right = ord.filter((s) => tierT(s) === 2).map((s) => { const t = okSum(s.summary); return name(s) + (t ? ' <span class="sub">' + esc(t) + '</span>' : ''); });
+    // (one player picked: what went well counts their rows, not the raid's summary)
+    const right = ord.filter((s) => tierT(s) === 2).map((s) => { const t = mp1 ? plural((s.rows || []).length + (s.groups || []).reduce((n, g) => n + (g.rows || []).length, 0), 'row') + ' about ' + S.mechP + ', all fine.' : okSum(s.summary); return name(s) + (t ? ' <span class="sub">' + esc(t) + '</span>' : ''); });
     if (wrong.length || right.length) h += wrongRight(wrong, right, { none: 'Every mechanic went to plan.', moreWhere: 'below' });
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
@@ -12411,6 +12452,9 @@ function audit() {
   wrThumbFit($('#view')); // (What went wrong's small maps)
   $('#view').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open && d.isConnected) drawMaps(); }));
   $('#view').querySelectorAll('.md-i, .dd-r').forEach((b) => b.addEventListener('click', () => setTimeout(drawMaps, 0)));
+  // (the player picker: one player, or everyone again; the pick stays as you change pulls)
+  if ($('#mechP')) $('#mechP').onchange = () => { S.mechP = $('#mechP').value || null; audit(); refreshIcons(); };
+  if ($('#mechPx')) $('#mechPx').onclick = () => { S.mechP = null; audit(); refreshIcons(); };
 }
 // Fight audit panels shown as a list with a detail pane (the ones with many columns per row)
 const MD_SECS = new Set(['soakq', 'push', 'tankfront', 'shield', 'addsets']);
@@ -12796,15 +12840,17 @@ function miniMap(mp, pmap) {
   const okMark = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="9.5" fill="none" stroke="#2fd15a" stroke-width="2"/><circle cx="' + (x + 7.5) + '" cy="' + (y - 7.5) + '" r="4.5" fill="#2fd15a" stroke="#000" stroke-width="1"/><path d="M' + (x + 5.4) + ' ' + (y - 7.5) + 'l1.5 1.7l2.8-3.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
   const badMark = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="9.5" fill="none" stroke="#ff3b3b" stroke-width="2"/><circle cx="' + (x + 7.5) + '" cy="' + (y - 7.5) + '" r="4.5" fill="#ff3b3b" stroke="#000" stroke-width="1"/><path d="M' + (x + 5.9) + ' ' + (y - 9.1) + 'l3.2 3.2M' + (x + 9.1) + ' ' + (y - 9.1) + 'l-3.2 3.2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
   const warnMark = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="9.5" fill="none" stroke="#ff9f1c" stroke-width="2"/><circle cx="' + (x + 7.5) + '" cy="' + (y - 7.5) + '" r="4.5" fill="#ff9f1c" stroke="#000" stroke-width="1"/><path d="M' + (x + 7.5) + ' ' + (y - 10) + 'v3.2M' + (x + 7.5) + ' ' + (y - 5.3) + 'v.5" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>';
+  const meN = S.tab === 'audit' && S.mechP ? S.mechP : null; // (Mechanics showing one player: a gold ring on them on every map)
   for (const p of pts.filter((q) => q.kind === 'player')) {
-    const pl = pmap.get(p.name), col = pl ? pl.color : '#9aa0ac', on = hl.has(p.guid) || good.has(p.guid) || bad.has(p.guid) || warnS.has(p.guid), mark = badNow.has(p.guid) ? 'bad' : goodNow.has(p.guid) ? 'good' : warnS.has(p.guid) ? 'warn' : '';
+    const pl = pmap.get(p.name), col = pl ? pl.color : '#9aa0ac', me = !!meN && p.name === meN, on = me || hl.has(p.guid) || good.has(p.guid) || bad.has(p.guid) || warnS.has(p.guid), mark = badNow.has(p.guid) ? 'bad' : goodNow.has(p.guid) ? 'good' : warnS.has(p.guid) ? 'warn' : '';
     const tg = tagOf.get(p.guid);
-    s += ic(X(p), Y(p), playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
+    s += ic(X(p), Y(p), (me ? '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="12.5" fill="rgba(230,180,80,.14)" stroke="#e6b450" stroke-width="2.5"/>' : '') + playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
       (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : '') +
       (on ? '<text x="' + X(p) + '" y="' + (Y(p) - 15) + '" class="ml" fill="' + col + '">' + esc(p.name) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' : ''));
   }
   // legend inside the image: only what this map shows
   const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', 'Player (class icon)']];
+  if (meN && pts.some((q) => q.name === meN)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#e6b450" stroke-width="2.5"/>', 'Gold ring: ' + meN]);
   if ([...hl].some((g) => !good.has(g) && !bad.has(g))) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="2.5"/>', 'White ring: ' + (mp.hlLabel || 'player this is about')]);
   if (mp.goodAt && good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="1.5"/>', 'White ring: ' + (mp.pendLabel || 'not done yet')]);
   if (good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#2fd15a" stroke-width="2.5"/><path d="M' + (x - 3) + ' ' + y + 'l2 2.5l4-4.5" fill="none" stroke="#2fd15a" stroke-width="2"/>', 'Green ✓: ' + (mp.goodLabel || 'did it right') + (mp.goodAt ? ' (from the moment they do)' : '')]);

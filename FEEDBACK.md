@@ -213,6 +213,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 235: Mechanics, one player at a time (your note)
+- [x] **"Show one player" on top of Mechanics:** pick anyone from the list (tanks, healers, then DPS; typing a name jumps
+  to it) and Mechanics shows only their part: every mechanic keeps only the rows about them (a row that names them, lists
+  them, or whose map marks them), mechanics with nothing about them are left out, What went wrong lists only their
+  problems, and What went well counts their rows ("7 rows about Xastral, all fine"). A gold bar says "Showing Xastral only:
+  25 rows in 7 mechanics, and 5 mechanics with nothing about them left out", with **Show everyone**.
+- [x] **On every map they get a gold ring**, with their name, and the map's key says "Gold ring: Xastral".
+- [x] The pick stays as you change pulls; on a pull they weren't in, it says so and shows everyone.
+- Checked on The Coiled Altar (your guild's kill), The Lost Explorers, The Twin Fangs and Ula'tek, with no errors.
+
 ## 2026-10-18, round 234: Assignments, refined graphics (your note: the cards, and This pull's other parts)
 - [x] **Stored notes, refined:** a gold notes tile next to the "Stored notes" title; a round portrait of each boss in its
   band (a gold ring on the boss you have open); on each card, the class-icon faces of its players who are in this pull; a

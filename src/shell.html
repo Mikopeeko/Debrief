@@ -1858,6 +1858,12 @@ span.sn-log { padding: 3px 10px; }
 .sn-eico { width: 44px; height: 44px; flex: none; border-radius: 12px; display: grid; place-items: center; background: rgba(230,180,80,.1); color: var(--gold); }
 .sn-eico .sn-i { width: 24px; height: 24px; opacity: 1; }
 .as-views button { display: inline-flex; align-items: center; gap: 6px; }
+/* (Mechanics: the "Show one player" picker on top; gold when one player is picked) */
+.mech-pick { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; padding: 10px 14px; margin: 0 0 12px; }
+.mech-pick.on { border-color: rgba(230,180,80,.5); background: linear-gradient(90deg, rgba(230,180,80,.09), transparent 60%), var(--panel); }
+.mech-pick .mp-l { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; } .mech-pick .mp-l .sn-i { color: var(--gold); width: 16px; height: 16px; }
+.mech-pick select { background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; color: var(--text); padding: 6px 10px; min-width: 190px; font: inherit; font-weight: 500; }
+.mech-pick .mp-on { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 /* (refined: the title tile, a round portrait in each band, faces on the cards, a colour edge by difficulty, the gold pill) */
 .sn-top { align-items: center; justify-content: flex-start; gap: 14px; }
 .sn-tico { width: 46px; height: 46px; flex: none; border-radius: 13px; display: grid; place-items: center; color: var(--gold); background: linear-gradient(135deg, rgba(230,180,80,.22), rgba(230,180,80,.06)); border: 1px solid rgba(230,180,80,.35); }
