@@ -1853,18 +1853,18 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const chips = (ns, cls) => ns.length ? '<span class="chips">' + ns.map((n) => who(n, cls)).join('') + '</span>' : '<span class="sub">none</span>';
   // no note yet: a short how-to (your note, Oct 18: no other site does this, so explain it clearly): what it does, three
   // plain steps, a picture of the results, and a button to try it with an example made from this pull
-  // notes saved for this boss, but none fits this group (your rule, Oct 19): said plainly, with the closest note and why
-  // it didn't fit, and a way to use it anyway or add one for this group
+  // notes saved for this boss, but none has this pull's players (your notes, Oct 19: said plainly, "this is confusing"):
+  // one line and two buttons; the closest note and "Use it anyway" only when it's really close (1 to 3 players off)
   const miss = !text && !S.noteEdit && !only && r.noteMiss && NO.list.some((n) => !n.example) ? r.noteMiss : null;
   if (miss) {
-    const f = miss.fit, n = miss.note, when = n.saved ? ' <span class="sub">(saved ' + esc(new Date(n.saved).toLocaleDateString([], { month: 'short', day: 'numeric' })) + ')</span>' : '';
-    const why = f.enc === false ? "Its first line says it's for another fight." : !f.named ? "Debrief didn't find any player names in it." : 'It names ' + plural(f.named, 'player') + ', and ' + (f.found ? 'only ' + f.found : 'none') + ' of them ' + (f.found === 1 ? 'was' : 'were') + ' in this pull. Not here: ' + esc(goneL(f.gone || [])) + '.';
+    const f = miss.fit, n = miss.note, nN = NO.list.filter((x) => !x.example).length, g = f.gone || [];
+    const close = f.enc !== false && f.found >= 3 && g.length >= 1 && g.length <= 3;
+    const closeL = close ? '<p>' + esc(n.name) + ' is close: only ' + esc(andL(g)) + (g.length === 1 ? " wasn't" : " weren't") + ' here.</p>' : '';
     // (a note just imported says what it found on top, as when a note fits)
     const scB = S.noteScan && S.noteScan.boss === boss && S.noteScan.r ? noteScanBox(S.noteScan) : '';
-    $('#assignBox').innerHTML = asViews() + scB + '<div class="panel nmiss"><h3>No saved note matches this group</h3>' +
-      '<p class="ah-lead">A note is used on a pull only when every player it names was there, so it never lands on a pug or another raid. If a name is spelled differently from the game, fix it in the note.</p>' +
-      '<p>The closest is <b>' + esc(n.name) + '</b>' + when + '. ' + why + '</p>' +
-      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note for this group</button><button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use ' + esc(n.name) + ' anyway</button><button class="btn" type="button" data-asv="notes">See your notes</button></div></div>';
+    $('#assignBox').innerHTML = asViews() + scB + '<div class="panel nmiss"><h3>No note for this pull</h3>' +
+      '<p class="ah-lead">' + (nN === 1 ? 'Your saved note for ' + esc(boss) + " doesn't" : 'None of your ' + nN + ' saved notes for ' + esc(boss)) + " have this pull's players.</p>" + closeL +
+      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note</button>' + (close ? '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use it anyway</button>' : '') + '<button class="btn" type="button" data-asv="notes">See your notes</button></div></div>';
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
     $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[pullKey(r.item)] = b.dataset.nuse; notesSave(boss, o);
       for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }));
@@ -13375,7 +13375,7 @@ function homeHosted() {
   // (the raid's art fades in behind the headline; the start box comes first, then the two other ways in side by side)
   $('#main').innerHTML = '<div class="home fp fph">' +
     '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' + (teamsTop ? homeTeams() : '') +
-    '<section class="fph-hero" id="fpStart">' + (DISCORD_URL ? '<a class="fph-beta" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener"><b>Beta</b><span>Help shape Debrief: join our Discord</span><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
+    '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<b>Debrief</b></div>' + (DISCORD_URL ? '<a class="fph-beta" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener"><b>Beta</b><span>Help shape Debrief: join our Discord</span><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
       (teamsTop ? '' : homeStart()) +
       '<div class="fph-ways">' +

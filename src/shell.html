@@ -1537,7 +1537,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .fph-hero > .fp-k { display: inline-block; padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(230,180,80,.35); background: rgba(230,180,80,.08); font-size: 12.5px; letter-spacing: .04em; }
 .fph-hero h1 { margin-top: 16px; text-shadow: 0 4px 30px rgba(0,0,0,.65); }
 .fph-hero > * { animation: fphUp .7s cubic-bezier(.2,.7,.2,1) both; }
-.fph-hero > :nth-child(2) { animation-delay: .06s; } .fph-hero > :nth-child(3) { animation-delay: .12s; } .fph-hero > :nth-child(4) { animation-delay: .2s; } .fph-hero > :nth-child(5) { animation-delay: .3s; }
+.fph-hero > :nth-child(2) { animation-delay: .06s; } .fph-hero > :nth-child(3) { animation-delay: .12s; } .fph-hero > :nth-child(4) { animation-delay: .2s; } .fph-hero > :nth-child(5) { animation-delay: .3s; } .fph-hero > :nth-child(6) { animation-delay: .36s; } .fph-hero > :nth-child(7) { animation-delay: .42s; }
 @keyframes fphUp { from { opacity: 0; transform: translateY(14px); } }
 @keyframes fphArt { from { opacity: 0; transform: scale(1.06); } }
 .fph-hero .hs-start { max-width: 720px; margin-top: 34px; padding: 22px 22px 18px; background: linear-gradient(180deg, rgba(230,180,80,.11), rgba(230,180,80,0) 55%), rgba(22,25,33,.92);
@@ -1551,9 +1551,10 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .home.fph.over .fph-way:last-child .fph-box { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(230,180,80,.3); }
 .fph-ph { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .fph .fp-win { box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(230,180,80,.06); }
-@media (max-width: 760px) { .fph-bg { height: 520px; } .fph-ways { grid-template-columns: 1fr; } .fph-hero .hs-start { padding: 14px; } }
+@media (max-width: 760px) { .fph-logo { gap: 11px; margin-bottom: 16px; } .fph-logo .logo { width: 46px; height: 46px; } .fph-logo b { font-size: 31px; } .fph-bg { height: 520px; } .fph-ways { grid-template-columns: 1fr; } .fph-hero .hs-start { padding: 14px; } }
 @media (prefers-reduced-motion: reduce) { .fph-hero > *, .fph-bg img { animation: none; } }
 /* the Beta tag over the headline (a link to the Discord), and "See a real raid night" under the ways in */
+.fph-logo { display: inline-flex; align-items: center; gap: 14px; margin-bottom: 22px; } .fph-logo .logo { width: 60px; height: 60px; flex: none; filter: drop-shadow(0 6px 22px rgba(230,180,80,.28)); } .fph-logo b { font: 700 40px/1 var(--head); color: #f3f5f9; letter-spacing: .3px; text-shadow: 0 4px 30px rgba(0,0,0,.65); }
 .fph-beta { display: inline-flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1px solid rgba(230,180,80,.35); background: rgba(230,180,80,.08); color: #e6d3a8; font-size: 13px; text-decoration: none; transition: border-color .15s, background .15s; }
 .fph-beta b { padding: 3px 10px; border-radius: 999px; background: var(--gold); color: #1a1407; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .fph-beta i { font-style: normal; color: var(--gold); transition: transform .15s; } .fph-beta:hover { border-color: var(--gold); background: rgba(230,180,80,.14); } .fph-beta:hover i { transform: translateX(3px); }

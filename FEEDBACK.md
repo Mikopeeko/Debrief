@@ -262,6 +262,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Noticed: Frost Mage's burst is read from Icy Veins, which Wolfthorn's Frost Mage never pressed, so the tile shows "no burst
   cooldown pressed". Worth checking whether Frost's burst in Midnight is a different spell.
 
+## 2026-10-19, round 255: "No note for this pull", plainly (your note: "this is confusing")
+- [x] The panel when no saved note has a pull's players is one line and two buttons: "No note for this pull. None of
+  your 6 saved notes for The Coiled Altar have this pull's players." Add a note, See your notes.
+- [x] The closest note and Use it anyway only show when it's really close (1 to 3 players off): "Mythic plan, Oct 19 is
+  close: only Hobbz and Zaffia weren't here." The rule text and a 2-of-7 "closest" are gone.
+- [x] Checked on a real night, a far note and a close one; no errors.
+
 ## 2026-10-19, round 254: One note per roster, and an Add a note button (your notes)
 - [x] **No duplicate notes:** a new note for the exact same players as a saved note of that boss replaces it (keeping
   its name and its pulls) instead of being saved twice: "Updated your note "Mythic plan, Oct 19": it's for the same
