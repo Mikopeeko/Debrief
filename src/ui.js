@@ -1917,7 +1917,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   }
   const editing = S.noteEdit || !text;
   // (what Debrief checks in a note for this fight, in plain words; how to write those lines is folded in the editor)
-  const CHECKS = { 'The Coiled Altar': 'who kicks each Spiteful Soulcoiler, the Guillotine soaks, the orb lines, who CCs each mind control, the add curses, the ghost soaks in the intermission, and the cooldown reminders', 'The Twin Fangs': 'the Ravenous Feast groups and their order, the Broodling kick order, the globule CC groups, and the cooldown reminders' };
+  const CHECKS = { 'Nymrissa Wavecaller': 'who soaks each set of Frost Orbs (Orb Soak 1, 2, …) and the cooldown reminders', 'Entombed Sentinels': 'the Blood and Breath split and the cooldown reminders', Sszorak: 'the two Mutilate soak groups, the Serpent\'s Fury timer and the cooldown reminders', "Nek'zali the Soulcoiler": 'the Soulcoil Well groups, the Hungering Pyre soak list and the cooldown reminders', 'The Coiled Altar': 'who kicks each Spiteful Soulcoiler, the Guillotine soaks, the orb lines, who CCs each mind control, the add curses, the ghost soaks in the intermission, and the cooldown reminders', 'The Twin Fangs': 'the Ravenous Feast groups and their order, the Broodling kick order, the globule CC groups, and the cooldown reminders' };
   const checkedL = CHECKS[boss] || 'the cooldown reminders, and any line named Soak, Kick or Orbs', checked = 'On ' + esc(boss) + ', Debrief checks ' + checkedL + '.';
   const SYNTAX = { 'The Coiled Altar': 'Kick rotations go in the intstart … intend block (line 1 the unmarked add, line 2 the marked one, optional P3 lines). Guillotine and orb lines read like "Guillotine 1: Name Name". Mind-control CC: "1st CC on Mindcontrol: Name". Curses: "Curse Unmarked Add: Name". Ghost soaks: "Soak Ghost at {cross}: Name".', 'The Twin Fangs': 'The Feast groups, the Broodling kick areas and the globule CC groups are read from their labelled lines, as NSRT writes them.' };
   // The page: what went wrong this pull (a box on top), then the panels, then the quiet things as one line each (the
@@ -2099,6 +2099,19 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       vpanel('Sides', nw ? pill('warn', plural(nw, 'player') + ' on the other side') : pill('ok', 'no mistakes'),
         'This comes from the note\'s Blood and Breath split. Each group is on its boss in cycle 1 and on the other boss after every intermission. Who was on which boss comes from the Mark stacks each player picked up.',
         iss, 'Everyone was on their group\'s boss every cycle.', tbl, 'as-sides', icoWh('ability_creature_poison_05'));
+    }
+
+    // ---- Nymrissa: the note's Orb Soak sets, against who touched each set's Frost Orbs
+    if (B.ny && B.ny.rows.length) {
+      const NY = B.ny, bad = NY.rows.filter((x) => x.st === 'bad'), warn = NY.rows.filter((x) => x.st === 'warn');
+      const iss = bad.map((x) => issue('bad', x.did.length ? 'Set ' + x.i : x.want.map(nm).join(' and '), x.shatter ? 'an orb Shattered <span class="sub">(nobody touched it)</span>' : "didn't soak their set <span class=\"sub\">(" + (x.who.length ? 'soaked by ' + esc(x.who.join(', ')) : 'nobody soaked') + ')</span>', 'set ' + x.i))
+        .concat(warn.map((x) => issue('warn', x.extra.map(nm).join(' and '), 'soaked an orb in set ' + x.i + ' <span class="sub">(the note gives it to ' + esc(x.want.join(' and ')) + ')</span>', 'set ' + x.i)));
+      const tbl = '<table class="tbl"><thead><tr><th>Set</th><th>Assigned</th><th>Soaked</th><th>Result</th></tr></thead><tbody>' +
+        NY.rows.map((x) => '<tr><td class="tc"><b>' + x.i + '</b><div class="sub">' + T(x.t) + '</div></td><td>' + (x.want.length ? x.want.map(nm).join(', ') : '<span class="sub">none</span>') + '</td><td>' + (x.who.length ? x.who.map(nm).join(', ') : '<span class="sub">nobody</span>') + '</td><td>' +
+          (x.st === 'bad' ? pill('bad', x.shatter ? 'an orb Shattered' : 'not by the assigned') : x.st === 'warn' ? pill('warn', 'someone else helped') : x.st === 'na' ? pill('na', x.want.length ? 'the fight ended first' : 'not in the note') : pill('ok', 'soaked as planned')) + '</td></tr>').join('') + '</tbody></table>';
+      vpanel('Orb soaks', bad.length ? pill('bad', plural(bad.length, 'set') + ' missed') : warn.length ? pill('warn', plural(warn.length, 'set') + ' could be better') : pill('ok', 'no mistakes'),
+        "This comes from the note's Orb Soak lines: set N is the Nth Chilling Frost. Who soaked comes from the Frost Orb hits (an immunity counts).",
+        iss, 'Every set was soaked by its assigned players.', tbl, 'as-nyorbs', icoWh('spell_frost_frostbolt02'));
     }
 
     // ---- Sszorak: the two Mutilate groups, the Serpent's Fury timer, and the cyst poppers (shown, not judged)
@@ -2412,7 +2425,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   // the box on top: everything that went wrong this pull, worst first (or one green line when nothing did)
   let box = '';
   if (!only && a && !a.error) {
-    const any = a.soaks.length || a.orbs.length || a.kicks.length || B.feast || B.kicks || (B.ca && !B.ca.none) || B.orbcc || B.sides || (B.sz && (B.sz.mut || B.sz.timer)) || (B.nz && (B.nz.well || B.nz.pyre)) || a.mcCC || a.curses || (a.ghosts && a.ghosts.reached); // (mechanical assignments; healing cooldowns have their own panel)
+    const any = a.soaks.length || a.orbs.length || a.kicks.length || B.feast || B.kicks || (B.ca && !B.ca.none) || B.orbcc || B.sides || (B.ny && B.ny.rows.length) || (B.sz && (B.sz.mut || B.sz.timer)) || (B.nz && (B.nz.well || B.nz.pyre)) || a.mcCC || a.curses || (a.ghosts && a.ghosts.reached); // (mechanical assignments; healing cooldowns have their own panel)
     // (the same "What went wrong / What went right" pair as Latest pull and Mechanics; right: every assignment that was clean)
     const right = tiles.filter((t) => t.st === 'ok').map((t) => '<b>' + esc(t.label) + ':</b> ' + esc(t.txt));
     // (a line at a moment Mechanics has a map for, the same mechanic within a second or two, gets that small map; a click
@@ -3937,6 +3950,10 @@ function nsrtChecks(r) {
       if (!seen.length) { put('Sides', key, label, 'na', 'Not in this pull, or after the wipe filter', i); return; }
       put('Sides', key, label, off.length ? 'warn' : 'ok', off.length ? 'On the other boss in cycle' + (off.length > 1 ? 's ' : ' ') + off.map((x) => x.cycle).join(', ') : 'On their side every cycle', (k === 'Blood' ? 0 : 100) + i, off.length ? [n] : []);
     }); }
+  // Nymrissa: one check per Orb Soak set
+  const NYc = a.boss && a.boss.ny;
+  if (NYc && NYc.rows) for (const x of NYc.rows) { if (!ok(x.t) || x.st === 'na') continue;
+    put('Orb soaks', 'set' + x.i, 'Orb Soak ' + x.i + (x.want.length ? ' (' + x.want.join(', ') + ')' : ''), x.st, x.st === 'bad' ? (x.shatter ? 'An orb Shattered' : 'Not soaked by ' + x.want.join(' or ')) : x.st === 'warn' ? x.extra.join(', ') + ' soaked one too' : 'Soaked as planned', x.i, x.st === 'bad' ? x.missed : x.extra); }
   // Sszorak: the note's Mutilate groups, one check per Mutilate (someone from the other group in it, or 3+ of its own
   // group missing, could be better; one or two out is fine), and the Serpent's Fury timer, one check per pop
   const ZM = a.boss && a.boss.sz && a.boss.sz.mut;

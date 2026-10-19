@@ -490,6 +490,11 @@ const NZ = {
   soulcoiled: 1290361, rage: 1284034, // Soulcoiled, Uncoiled Rage (the enrage at 100 energy)
 };
 const NZ_IDS = Object.values(NZ).flat();
+// Nymrissa Wavecaller (Frost Orbs) spell IDs, read from a real Mythic kill on Warcraft Logs (Sep 16 2026): Chilling Frost
+// marks 3 players and drops a Frost Orb under each; whoever touches an orb takes Frost Orb (a hit, logged as immune for
+// someone in an immunity, and a debuff) and, on Mythic, sets off Frost Burst on the raid; an orb nobody touches Shatters.
+const NY = { chill: 1313393, orb: 1313448, burst: 1313450, shatter: 1313456 };
+const NY_IDS = Object.values(NY).flat();
 // Vashnik the Malignant spell IDs, read from real Mythic pulls on Warcraft Logs (Sep to Oct 2026). Matched by ID
 // (MODULES entry `ids`); the infusions and the rarer failures by name.
 const VS = {
@@ -597,6 +602,13 @@ const CA_CURSE = ['curse of tongues', 'curse of the satyr'];
 // (Metamorphosis is a Havoc damage cooldown under the same name, so it isn't treated as a defensive in soaks)
 const PERSONAL = [...new Set(Object.values(DEFENSIVES).flat().map((d) => d[0].toLowerCase()).filter((n) => n !== 'rallying cry' && n !== 'darkness' && n !== 'metamorphosis'))];
 const MODULES = [{
+  encounter: 'Nymrissa Wavecaller',
+  units: [],
+  spells: [], // (matched by ID only)
+  ids: NY_IDS,
+  focus: new Set(['Nymrissa Wavecaller']),
+  build: buildNymrissa,
+}, {
   encounter: 'The Coiled Altar',
   units: ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass', 'Spiteful Soulcoiler', 'Fragment of Malacrass', 'Coalesced Venom Stalker', 'Virulent Mutation', 'Manifestation of Dread'],
   spells: Object.keys(CA_IDS).concat(['noxious ground', 'defiled ground', 'volatile venom', 'toxic deluge', 'bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace',
@@ -1970,6 +1982,32 @@ function buildSszorak(ev, r, h) {
   ];
   return { _sz, diag, title: r.item.diff + ' audit: Sszorak', reached: inters.length ? 'After intermission ' + inters.length : 'Before the first intermission', phases: [], sectionGroups, marks, sections, mistakes,
     legend: 'Grouped the way the fight loops: the tank combo, the Venomous Surge cysts, Raging Crosswinds, Serpent\'s Fury (Mythic), the intermission, then deaths and avoidable damage.', note: '' };
+}
+
+// Nymrissa Wavecaller: who soaked each set of Frost Orbs (each Chilling Frost drops one orb under each player it marks;
+// touching an orb is the soak, and an immunity soaks it for free). It's the NSRT note's "Orb Soak N" check: set N is the
+// Nth Chilling Frost. A set that Shattered had an orb nobody touched.
+function buildNymrissa(ev, r, h) {
+  const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const dur = r.duration, pname = (g) => h.name(g), sections = [], mistakes = [];
+  const casts = ev.filter((e) => e.k === 'cast' && e.id === NY.chill).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 5);
+  // (a soak: a Frost Orb hit (damage, or immune) or its debuff on a player, from the cast until the next one)
+  const touch = ev.filter((e) => e.id === NY.orb && h.isPlayer(e.dst) && (e.k === 'dmg' || e.k === 'miss' || (e.k === 'aura' && (e.op === 'apply' || e.op === 'dose')))).sort((a, b) => a.t - b.t);
+  const shat = ev.filter((e) => e.id === NY.shatter).map((e) => e.t);
+  const _ny = { sets: [] };
+  const groups = casts.map((t, i) => {
+    const t1 = Math.min(dur, casts[i + 1] != null ? casts[i + 1] - 0.1 : t + 45), by = new Map();
+    for (const e of touch.filter((x) => x.t >= t && x.t <= t1)) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, imm: false, hits: [] }); if (e.k === 'miss' || (e.k === 'dmg' && !e.amt)) o.imm = true; if (e.k !== 'aura' && (!o.hits.length || e.t - o.hits[o.hits.length - 1] > 1.5)) o.hits.push(e.t); }
+    const who = [...by.values()].sort((a, b) => a.t - b.t), sh = shat.some((x) => x >= t && x <= t1 + 2);
+    const cut = !who.length && t + 20 > dur; // (the fight ended before this set's orbs were down)
+    _ny.sets.push({ i: i + 1, t, who: who.map((o) => pname(o.g)), shatter: sh, cut });
+    if (sh) mistakes.push({ t: shat.find((x) => x >= t), player: 'Raid', mechanic: 'Frost Orb', id: NY.shatter, severity: 'High', detail: 'An orb from set ' + (i + 1) + ' was left untouched and Shattered on the raid.', fix: 'Every orb needs a soaker. Assign one for each orb, and have a backup ready.' });
+    const rows = who.map((o) => [{ p: pname(o.g) }, { t: o.t }, { txt: o.imm ? 'immunity' : 'took the hit', dim: o.imm }]);
+    return { title: 'Set ' + (i + 1), t, bad: sh, warn: false, sub: sh ? 'an orb Shattered' : who.length ? pl(who.length, 'soaker') : cut ? 'the fight ended first' : 'nobody soaked', rows };
+  });
+  if (groups.length) sections.push({ id: 'orbs', title: 'Frost Orbs (Soaks)', place: 'Frost Orbs: soaked', spell: [NY.chill, 'Chilling Frost'], verdict: groups.some((g) => g.bad) ? 'bad' : 'good',
+    summary: pl(groups.length, 'set') + ' of Frost Orbs. It shows who soaked each set, and any orb that Shattered.', cols: ['Soaker', 'When', 'How'], groups, rows: [] });
+  return { _ny, diag: [], title: r.item.diff + ' audit: Nymrissa Wavecaller', reached: '', phases: [], marks: [], sections, mistakes, legend: 'The Frost Orb soaks, set by set.', note: '' };
 }
 
 function buildNekzali(ev, r, h) {
@@ -4478,6 +4516,7 @@ function checkAssignments(r, noteText) {
   try { if (r.item.boss === 'The Twin Fangs' && r.module && r.module._feasts) twinFangsAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Twin Fangs assignments: ' + e.message); }
   try { if (r.item.boss === 'Entombed Sentinels' && r.module && r.module._sides) sentinelsAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Entombed Sentinels assignments: ' + e.message); }
   try { if (r.item.boss === 'Sszorak' && r.module && r.module._sz) sszorakAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Sszorak assignments: ' + e.message); }
+  try { if (r.item.boss === 'Nymrissa Wavecaller' && r.module && r.module._ny) nymrissaAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Nymrissa assignments: ' + e.message); }
   try { if (r.item.boss === "Nek'zali the Soulcoiler" && r.module && r.module._nz) nekzaliAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Nek\'zali assignments: ' + e.message); }
   try { if (r.item.boss === 'The Coiled Altar') coiledAltarAssign(r, note, res, isName, P, realPh); } catch (e) { res.warnings.push('Couldn\'t check the Coiled Altar assignments: ' + e.message); }
   try { if (r.item.boss === 'The Coiled Altar') coiledAltarNote(r, note, res, isName, P, phaseOf); } catch (e) { res.warnings.push('Couldn\'t check the Coiled Altar CC and curse assignments: ' + e.message); }
@@ -4765,6 +4804,27 @@ function sszorakAssign(r, note, res, isName, P) {
     out.timer = { rows, triggers: tr && tr.lines.length ? tr.lines[0].names : [] };
   }
   res.boss = Object.assign(res.boss || {}, { sz: out });
+}
+
+// Nymrissa NSRT assignments: "Orb Soak N: names" (or "Soak orb" reminders, in time order), one per set of Frost Orbs.
+// Set N is soaked by its assigned players: none of them soaking it, or an orb that Shattered, is a miss; someone else
+// soaking an orb could be better (an orb they weren't planned for).
+function nymrissaAssign(r, note, res, isName, P) {
+  const Z = r.module._ny, want = [];
+  for (const ln of note.lines) { const m = /orb\s*soak\s*(\d+)/i.exec(ln.label); if (!m) continue; want[+m[1] - 1] = ln.words.filter(isName).map((n) => P(n).name); res.other = res.other.filter((o) => o.label !== ln.label); }
+  if (!want.length) note.reminders.filter((x) => /soak\s*orb|orb\s*soak/i.test(String(x.text || ''))).sort((a, b) => a.time - b.time).forEach((x, i) => { want[i] = x.tags.filter(isName).map((n) => P(n).name); });
+  if (!want.some((w) => w && w.length) || !Z.sets.length) return;
+  const deadAt = (n, t) => r.deaths.some((d) => d.player === n && d.t <= t);
+  const rows = Z.sets.map((s, i) => {
+    const w = want[i] || [], alive = w.filter((n) => !deadAt(n, s.t)), did = w.filter((n) => s.who.includes(n)), extra = s.who.filter((n) => !w.includes(n));
+    const st = !w.length || s.cut ? 'na' : s.shatter || (alive.length && !did.length) ? 'bad' : extra.length ? 'warn' : 'ok';
+    if (st === 'bad' && alive.length && !did.length) res.mistakes.push({ t: s.t, player: alive.join(', '), mechanic: 'Orb soak', id: 1313393, severity: 'Medium', fromNote: true,
+      detail: 'Orb Soak ' + s.i + ': ' + alive.join(' and ') + (alive.length > 1 ? ' were' : ' was') + ' assigned, but ' + (s.who.length ? s.who.join(', ') + ' soaked the orbs.' : 'nobody soaked.'), fix: 'Take your set\'s orbs: be ready at the reminder, with your immunity or defensive.' });
+    for (const n of extra) res.mistakes.push({ t: s.t, player: n, mechanic: 'Orb soak', id: 1313393, severity: 'Low', fromNote: true,
+      detail: 'Soaked an orb in set ' + s.i + ', which the note gives to ' + (w.join(' and ') || 'nobody') + '.', fix: 'Leave the orbs to the players the note assigns, unless one of them is dead.' });
+    return { i: s.i, t: s.t, want: w, who: s.who, did, extra, missed: alive.filter((n) => !did.includes(n)), shatter: s.shatter, st };
+  });
+  res.boss = Object.assign(res.boss || {}, { ny: { rows } });
 }
 
 // Nek'zali NSRT assignments: the Soulcoil Well groups (they take turns going into the well for each Drowned Echo, in the

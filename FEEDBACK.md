@@ -246,6 +246,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   itself (click it to switch boss), keep the pull cards right under it with All pulls as the first card, and drop the
   separate picker at the top. A few mockups to pick from first, like the Graphs controls.
 
+## 2026-10-19, round 261: Note checks for every boss with a note (your note: "make modules for the other notes")
+- [x] **Nymrissa, new:** a small fight module records who soaked each set of Frost Orbs (each Chilling Frost drops 3; a
+  Frost Orb hit is the soak, and an immunity counts), shown on Mechanics as "Frost Orbs (Soaks)" with any orb that
+  Shattered. On Assignments, the note's "Orb Soak 1, 2, …" lines are checked set by set: not soaked by the assigned
+  players is a miss, someone else soaking too could be better, and a set the fight ended before isn't judged.
+  Spell IDs from your Sep 16 Mythic kill (Chilling Frost 1313393, Frost Orb 1313448, Frost Burst 1313450).
+- [x] **Already there, checked with your own notes on real kills:** Entombed Sentinels (Blood/Breath sides, Sep 30),
+  Nek'zali (well groups and Pyre soak list, Sep 30), Sszorak (Mutilate groups and the Fury timer, Oct 1). All read your
+  notes' wording as written.
+- [x] The note editor's "Debrief checks …" line now names each boss's checks (it only knew two bosses).
+- [x] Not built: The Lost Explorers (your note only has a PERSONALS reminder), and Vashnik and Ula'tek (no notes yet).
+
 ## 2026-10-19, round 260: The Guillotine axe's eruption, 40 yards, 6 seconds after it lands (your note: "secondary radius")
 - [x] **What it is** (the dungeon journal, Wowhead, Method; checked in a real Mythic kill): 6.0 seconds after the axe
   lands, it erupts 40 yards around where it landed. Inside: Widow's Kiss (Death's Embrace for Grim Guillotine), which
