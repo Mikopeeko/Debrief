@@ -1887,6 +1887,8 @@ body:has(.home.fph) .brand p { display: none; }
 .pc-chart { display: block; width: 100%; height: auto; overflow: visible; } .pc-chart .tg { stroke: var(--line); stroke-width: 1; } .pc-chart .tl { fill: var(--muted); font-size: 11px; font-family: var(--body); }
 .pc-chart .tband { fill: rgba(255, 255, 255, .025); } .pc-chart .pcg0 { stop-color: var(--ec, #888); stop-opacity: 0; } .pc-chart .pcg1 { stop-color: var(--ec, #888); stop-opacity: .14; }
 .pc-chart line, .pc-chart polyline, .pc-chart circle { vector-effect: non-scaling-stroke; }
+.rc-hp { margin-bottom: 14px; } .rc-hp .nh { margin-bottom: 6px; } .rc-hp-n { display: none; }
+@media (max-width: 760px) { .rc-hp-w { display: none; } .rc-hp-n { display: block; } }
 .pc-chart .tline { fill: none; stroke: #6aa8ff; stroke-width: 1.6; stroke-linejoin: round; opacity: .75; } .pc-chart .tbest { fill: none; stroke: #45c15c; stroke-width: 1.6; stroke-dasharray: 5 4; } .pc-chart .pc-nl { stroke: var(--line2); stroke-dasharray: 3 4; }
 .pc-chart .pd { stroke: #0f1117; stroke-width: 1; } .pc-chart .pd:hover { r: 4.5px; } .pc-chart .pk { stroke: #0f1117; stroke-width: 1.5; } .pc-chart .pkh { fill: none; stroke: #ff8000; stroke-width: 1.5; opacity: .45; }
 .pc-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); } .pc-pick label { display: flex; align-items: center; gap: 8px; flex: 1 1 260px; min-width: 0; }
