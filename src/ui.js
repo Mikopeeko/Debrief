@@ -211,6 +211,8 @@ function wrongRight(wrong, right, o) {
   // (what went well: a strip across the top, its lines in two columns; left out when there's nothing to call out)
   const gPanel = right.length ? '<div class="panel probbox wr ok wr-good"><h3 class="nh">What went well' + hst('ok', plural(right.length, 'thing')) + '</h3><div class="wr-gl">' +
     right.map((x) => line(typeof x === 'string' ? { html: x } : x, 'ok')).join('') + '</div></div>' : '';
+  // (split: what went wrong and what went well side by side, wrong first, as on the whole night's Recap)
+  if (o.split) return '<div class="wr-wrap wr-split">' + wPanel + gPanel + '</div>';
   return '<div class="wr-wrap">' + gPanel + (o.rightTop ? '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + '</div></div>' : wPanel) + '</div>';
 }
 // (a mistake's sentence after a player's name reads on: "Kargaryen: their ghost touched another ghost")
@@ -4219,7 +4221,7 @@ function gradeBoss(reps) {
   const avg = (a) => a.reduce((s, x) => s + x, 0) / a.length, top = (m, n) => [...m].sort((a, b) => b[1] - a[1]).slice(0, n).map((x) => x[0]);
   const cats = [{ key: 'mech', label: 'Mechanics', score: avg(sc.mech), sub: nMist ? plural(nMist, 'mistake') + ', most from ' + top(nm, 2).join(' and ') : 'No mechanic mistakes' }];
   if (sawAvoid) cats.push({ key: 'avoid', label: 'Avoidable damage', score: avg(sc.avoid), sub: na.size ? 'Most lost to: ' + top(na, 2).join(', ') : 'Nothing worth flagging' });
-  cats.push({ key: 'death', label: 'Survival', score: avg(sc.death), sub: (potE ? 'combat or mana pot ' + Math.round(100 * potU / potE) + '% · ' : '') + plural(defReadyN, 'death') + ' with a defensive or self-heal ready' });
+  cats.push({ key: 'death', label: 'Survival', score: avg(sc.death), sub: (potE ? 'combat or mana pot ' + Math.min(100, Math.round(100 * potU / potE)) + '% · ' : '') + plural(defReadyN, 'death') + ' with a defensive or self-heal ready' });
   if (kick.total) cats.push({ key: 'kick', label: 'Interrupts', score: 100 * kick.landed / kick.total, sub: kick.landed + ' of ' + kick.total + ' kicked' });
   const wsum = cats.reduce((s, c) => s + CARD_W[c.key], 0), overall = cats.reduce((s, c) => s + c.score * CARD_W[c.key], 0) / wsum;
   for (const c of cats) c.letter = letterOf(c.score);
@@ -4710,6 +4712,18 @@ async function night(part) {
   const pickS = ''; // (the pick is in the tab bar now (Oct 19))
   const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, amber is minor, red is moderate or major, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
   // (Recap: the report cards, how far the night got and what kept going wrong; Mechanics and Assignments: their rows across
+  // Recap on the whole night (your ask, Oct 19: "re-organize"), top to bottom: one grade card (the night's grade and a tile
+  // per part, nothing twice: the kill and the pulls are in the banner), what went wrong beside what went well, then how far
+  // the night got. (The rail's second Mechanics card and its Jump to links are gone: Mechanics and Assignments are tabs.)
+  const nightGrade = overall == null ? '' : (() => {
+    const tiles = gm.cats.map((c) => plTile(gradeChip(c.letter), c.key === 'mech' ? 'Boss mechanics' : c.label, Math.round(c.score) + '<span> / 100</span>', gst(c.letter), c.sub, true, c.letter))
+      .concat(ga ? [plTile(gradeChip(ga.letter), 'Assignments', Math.round(ga.overall) + '<span> / 100</span>', gst(ga.letter), weakest(ga.cats), true, ga.letter)]
+        : [plTile(icoW('inv_inscription_scroll'), 'Assignments', '—', 'na', hasNote ? 'nothing from the note came up' : 'no NSRT note for this boss', true)]);
+    return '<div class="panel nc-rc2 sum-grade"><div class="rc-all" title="Grades go S, A, B, C, D and F, and each pull counts up to the wipe filter">' + gradeChip(letterOf(overall), true) + '<div><div class="pt-l">The night\'s grade</div><div class="rc-sc">' + Math.round(overall) + '<span> / 100</span></div><div class="sub">' +
+      (ga ? 'mechanics 60%, assignments 40%' : 'boss mechanics, avoidable damage, survival and interrupts') + ' · ' + plural(reps.length, 'pull') + ', each up to the wipe filter</div></div></div>' +
+      '<div class="pts rc-cats" style="--n:' + tiles.length + '">' + tiles.join('') + '</div></div>'; })();
+  const fixSplit = one ? wrongRight(wrongS, rightS, { split: true, sub: 'for ' + esc(one) + ', in the ' + plural(oneD.length, 'pull') + ' they were in', none: 'Nothing kept going wrong for ' + esc(one) + '.' })
+    : !db ? '' : wrongRight(wrongS, rightS, { split: true, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter', none: 'Nothing kept going wrong.' });
   // the pulls, with their report card on top)
   const mPart = gm ? secHead('sum-mech', 'Mechanics, the whole night', 'every mechanic across the pulls. Open one for the pulls that went wrong.') + (mCard || '') + (mHtml || '') : '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>';
   const aPart = secHead('sum-asg', 'Assignments, the whole night', hasNote ? 'every assignment in the NSRT note across the pulls' : '') +
@@ -4717,7 +4731,7 @@ async function night(part) {
       : (aCard || '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
   view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part">' + pickS + mPart + legend + '</div>'
     : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
-    : '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Report card.</p></div>' + rail + '</div>'));
+    : '<div class="nsa sumv sum3">' + pickS + (one ? rcTop : nightGrade) + fixSplit + progress + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Report card.</p></div>'));
   refreshIcons(); setHeadRes(); fitTrends();
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };

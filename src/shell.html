@@ -3470,6 +3470,19 @@ header.fight.bh .bh-s { color: #aeb4bf; } header.fight.bh .bh-s svg { opacity: .
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="icoShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs></svg>
 <div class="app">
+/* ---- Recap on the whole night (Oct 19): the grade card across the top, what went wrong beside what went well, then the chart ---- */
+.sumv.sum3 { display: block; }
+.sumv.sum3 > .sum-grade { margin: 0 0 14px; padding: 12px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.sum-grade .rc-all { min-width: 250px; border-radius: 12px; } .sum-grade .rc-all .sub { max-width: 200px; }
+.sum-grade .rc-cats { gap: 10px; } .sum-grade .pt { border-radius: 12px; }
+.wr-wrap.wr-split { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.wr-split > .wr-good { order: 0; margin: 0; } .wr-split .wr-good .wr-gl { display: block; }
+.wr-split > .panel:only-child { grid-column: 1 / -1; }
+.wr-split .wr .wr-t { white-space: normal; line-height: 1.4; } .wr-split .wr .pb-r { align-items: flex-start; } .wr-split .wr .pb-i { margin-top: 1px; }
+.sum-grade .pt-s { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; line-height: 1.35; }
+@media (max-width: 1100px) { .sum-grade .rc-all { min-width: 0; } .sum-grade .rc-cats { --n: 3 !important; } }
+@media (max-width: 640px) { .sum-grade .rc-cats { --n: 2 !important; } }
+@media (max-width: 1000px) { .wr-wrap.wr-split { grid-template-columns: minmax(0, 1fr); } }
   <header class="topbar" id="topbar">
     <div class="brand" id="brandHome" title="Home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="3" stroke-linejoin="round"/><path d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z" fill="none" stroke="#e6b450" stroke-width="4" stroke-linejoin="round"/><path d="m27 32.5 4 4 8.5-9.5" fill="none" stroke="#7ee08f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h1>Debrief</h1><p>Retail combat logs, read on your PC</p></div></div>
     <div class="bosspick" id="bossPick"></div>
