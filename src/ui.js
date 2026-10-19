@@ -10103,6 +10103,14 @@ const GEN_DEF = { abc: [0.8, 0.7], rot: [0.85, 0.7], cds: [0.8, 0.6], res: [0.05
 function genChecks(spec, D) { const T = genTuned(spec, D); return (reps, name, one) => genRun(spec, T, reps, name, one); }
 // a proc over one pull, up to t1, counted in uses, stacks and all: gained when it comes or a stack is added; used when a stack goes, or it ends with
 // one of its spells cast; wasted when it runs out, or when a new one comes while it's already at its top stack. One cut by a death or the end isn't judged.
+// when the boss was out of reach in a pull: stretches of 6 s or more, up to t1, when no player had any debuff of theirs on a boss
+// unit (an intermission, or the whole raid on another target). Kept on the pull, worked out once.
+function bossAway(r, bossG, t1) {
+  if (!r._bossOn) { const sp = []; for (const p of r.players.values()) { const open = new Map(); for (const [t, k, nm, g] of p.dotEv || []) { if (!bossG.has(g)) continue; const key = g + '|' + nm; if (k === 1) { if (!open.has(key)) open.set(key, t); } else if (open.has(key)) { sp.push([open.get(key), t]); open.delete(key); } } for (const [, a] of open) sp.push([a, Infinity]); }
+    sp.sort((u, w) => u[0] - w[0]); const un = []; for (const [a, b] of sp) { if (un.length && a <= un[un.length - 1][1] + 1) un[un.length - 1][1] = Math.max(un[un.length - 1][1], b); else un.push([a, b]); } r._bossOn = un; }
+  const out = []; let prev = null; for (const [a, b] of r._bossOn) { if (a >= t1) break; if (prev != null && a - prev >= 6) out.push([prev, a]); prev = prev == null ? b : Math.max(prev, b); }
+  if (prev != null && t1 - prev >= 6) out.push([prev, t1]); return out; // (before the first debuff is the pull's start, not the boss away)
+}
 function genProc(r, p, t1, q, inDead) {
   const b = p.buffs.get(q.n); if (!b) return null;
   const casts = []; for (const n of q.use) for (const t of p.byName.get(n.toLowerCase()) || []) casts.push([t, n.toLowerCase()]);
@@ -10190,8 +10198,11 @@ function genRun(spec, D, reps, name, one) {
         const tgt = bossG.size && mine.some((e) => bossG.has(e[3])) ? bossG : new Set([[...mine.reduce((m, e) => m.set(e[3], (m.get(e[3]) || 0) + 1), new Map())].sort((a, b) => b[1] - a[1])[0][0]]);
         const sp = [], open = new Map(); for (const [t, k, , g] of mine) { if (!tgt.has(g)) continue; if (k === 1) { if (!open.has(g)) open.set(g, t); } else if (open.has(g)) { sp.push([open.get(g), t]); open.delete(g); } }
         for (const [, a] of open) sp.push([a, t1]); sp.sort((u, w) => u[0] - w[0]); const un = []; for (const [a, b] of sp) { if (un.length && a <= un[un.length - 1][1]) un[un.length - 1][1] = Math.max(un[un.length - 1][1], b); else un.push([a, b]); }
-        const first = un.length ? un[0][0] : t1, upL = un.reduce((v, [a, b]) => v + Math.max(0, Math.min(b, t1) - a), 0), base = Math.max(1, alive - Math.min(first, 6));
-        s.dot[q.n] = { up: Math.min(1, upL / base), sp: un }; const gaps = []; let prev = Math.min(first, 6); for (const [a, b] of un) { if (a - prev >= 3 && !inDead(a)) gaps.push([prev, a]); prev = Math.max(prev, b); } if (t1 - prev >= 3 && !inDead(t1 - 1)) gaps.push([prev, t1]); s.m['dot:' + q.n] = gaps; } }
+        // (the boss out of reach: stretches of 6 s or more when nobody in the raid had anything on it, like an intermission or the raid
+        // on another target. They don't count against anyone: left out of the time, and a gap only counts its part outside them)
+        const away = tgt === bossG ? bossAway(r, bossG, t1) : [];
+        const first = un.length ? un[0][0] : t1, upL = un.reduce((v, [a, b]) => v + Math.max(0, Math.min(b, t1) - a), 0), awayT = away.reduce((v, [x, y]) => v + aliveSecs(r, p, x, y), 0), base = Math.max(1, alive - Math.min(first, 6) - awayT);
+        s.dot[q.n] = { up: Math.min(1, upL / base), sp: un }; const gaps = [], gap = (a, b) => { let x0 = a; for (const [x, y] of away) { if (y <= x0 || x >= b) continue; if (x - x0 >= 3) gaps.push([x0, x]); x0 = Math.max(x0, y); } if (b - x0 >= 3) gaps.push([x0, b]); }; let prev = Math.min(first, 6); for (const [a, b] of un) { if (a - prev >= 3 && !inDead(a)) gap(prev, a); prev = Math.max(prev, b); } if (t1 - prev >= 3 && !inDead(t1 - 1)) gap(prev, t1); s.m['dot:' + q.n] = gaps; } }
     // (a buff kept up on yourself: its share of the time you were alive)
     for (const q of ups) { const raw = (q.names || [q.n]).map((n) => p.buffs.get(n)).filter(Boolean).flatMap((b) => b.sp.filter(([a]) => a <= t1).map(([a, e]) => [a, e == null ? t1 : Math.min(e, t1)])).sort((u, w) => u[0] - w[0]), sp = [];
       for (const [a, e] of raw) { if (sp.length && a <= sp[sp.length - 1][1]) sp[sp.length - 1][1] = Math.max(sp[sp.length - 1][1], e); else sp.push([a, e]); } const upL = sp.reduce((v, [a, e]) => v + Math.max(0, e - a), 0);
@@ -12208,15 +12219,17 @@ function deaths() {
 // it in full; and over the night, how they did pull by pull, their best pull, the MVPs and who improved most. What the
 // other tabs already show in full (the survival kit, output) isn't repeated here.
 // (a fix that used to open the Report card opens the player's Spec checks page, since the Report card is gone)
-const PL_GO = { audit: 'Mechanics', card: 'Rotation', cast: 'Casts', res: 'Resources', prep: 'Their prep' };
-const PL_RC_GO = { act: 'cast', unf: 'cast', res: 'res' }; // (a Report card fix that has its own view)
+const PL_GO = { audit: 'Mechanics', card: 'Rotation', cast: 'Casts', res: 'Resources', prep: 'Their prep', surv: 'Survivability', util: 'Utility', cds: 'Cooldowns' };
+// (each staying alive and toolkit fix opens the Graphs view that shows it, on its own list there; a combat potion, or a fix no view
+// shows, gets no button)
+const PL_RC_GO = { act: 'cast', unf: 'cast', res: 'res', mana: 'res', cd: 'cds', defs: 'surv:def', tcd: 'surv:def', calls: 'surv:calls', kit: 'surv:stone', ext: 'util:ext', disp: 'util:disp', bres: 'util:bres', pot: 'none', out: 'none' };
 // one player's pull -> { mech, perf, prep, score, fixes: [{ key, t, x, gain, go }], mistakes, x }
 // a player's Rotation page for these pulls, when their spec has one (its 0 to 100 score and its checks), or null
 function rotOf(reps, p, one) { const f = SPEC_CHECKS[p.specName]; if (!f) return null; try { const x = f(reps, p.name, one); return x && x.score != null ? x : null; } catch (e) { return null; } }
 function plGrade(r, p, x, credit, rot) {
   const mm = keptMistakes(r).filter((m) => m.player === p.name && m.mechanic !== 'Death'), tank = p.role === 'tank';
-  const own = mm.filter((m) => !m.fromNote), lostOf = (m) => (m.severity === 'High' ? 14 : m.severity === 'Medium' ? 4 : tank && TANK_MECH.has(m.mechanic) ? 2 : 0);
-  // mechanics: 14 off per serious mistake, 4 per medium (and 2 per minor slip on a tank's own frontals); with NSRT
+  const own = mm.filter((m) => !m.fromNote), lostOf = (m) => (m.severity === 'High' ? 14 : m.severity === 'Medium' ? 4 : tank && TANK_MECH.has(m.mechanic) ? 2 : m.severity === 'Low' ? 1 : 0);
+  // mechanics: 14 off per serious mistake, 4 per medium, 1 per minor slip (2 on a tank's own frontals); with NSRT
   // assignments, 70% that and 30% the share of their assignments they did
   const mist = Math.max(0, 100 - own.reduce((s, m) => s + lostOf(m), 0)), c = credit.get(p.name), asS = c && c.of ? 100 * c.did / c.of : null, mech = asS == null ? mist : 0.7 * mist + 0.3 * asS;
   const card = cardOf(r, p), prep = x ? readyScore(x) : null;
@@ -12236,7 +12249,7 @@ function plGrade(r, p, x, credit, rot) {
   // the Report card's, as they are (their gain is on the card's 0 to 100; here it's half of the grade)
   // (with a Rotation page, the card's pressing-buttons fixes are left to Rotation, and the rest are scaled to their 20%)
   const wsAll = card ? RC_SEC.reduce((s, [k]) => s + (card.secs[k].sc != null ? W[k] : 0), 0) : 0;
-  for (const f of (card && card.fixes) || []) { if (rs != null && f.sec === 'btn') continue; fixes.push({ key: 'c|' + f.key, t: f.t, x: f.x, gain: rs != null ? (akW ? cW * f.gain * wsAll / akW : 0) : 0.5 * f.gain, go: PL_RC_GO[String(f.key).split('|')[0]] || 'card' }); }
+  for (const f of (card && card.fixes) || []) { if (rs != null && f.sec === 'btn') continue; fixes.push({ key: 'c|' + f.key, t: f.t, x: f.x, gain: rs != null ? (akW ? cW * f.gain * wsAll / akW : 0) : 0.5 * f.gain, go: PL_RC_GO[String(f.key).split('|')[0]] || 'none' }); }
   // Rotation's checks that weren't good, with its own "Next time" (a good one adds its share of the Rotation score, one that
   // could be better half of it)
   if (rs != null) for (const c of rot.checks) if ((c.st === 'bad' || c.st === 'warn') && c.share) fixes.push({ key: 'r|' + c.k, t: c.label, x: c.tip || c.sub || '', gain: rW * (c.st === 'bad' ? 100 : 50) * c.share, go: 'card' });
@@ -12304,7 +12317,7 @@ function plPage(data, reps, one) {
   const sortSw = '<div class="seg pl-sort" role="tablist" aria-label="Order"><button type="button" data-o="best"' + (worstFirst ? '' : ' class="on"') + '>Best first</button><button type="button" data-o="gain"' + (worstFirst ? ' class="on"' : '') + '>Most to gain first</button></div>';
   const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>Mechanics and Rotation count most. Prep only takes points off.' + (one ? ' On the right are mechanics and Rotation.' :' The arrows show the change through the night.') + '</small>' + roleChips(has) + '</h3>' + sortSw +
     (bars ? cbHead('Grade', one ? 'Mech · Rot' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
-  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious and 4 for each medium mistake of their own (a tank also loses 2 for a minor slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half, and an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Rotation</b>: their score out of 100 on the Rotation tab, the same checks and the same number. <b>Staying alive and toolkit</b>: defensives, potions, Healthstones, kicks, externals. <b>The grade</b> is 40% mechanics, 40% Rotation and 20% staying alive and toolkit. For a spec without a Rotation page, it\'s half mechanics and half how they played (casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive and toolkit). A player alive under 20 s is graded on mechanics. <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade, Rotation\'s checks that weren\'t good among them, with its "Next time". Without a Rotation page, a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
+  const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious mistake of their own, 4 for each medium one and 1 for each small slip (2 for a tank\'s slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half, and an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Rotation</b>: their score out of 100 on the Rotation tab, the same checks and the same number. <b>Staying alive and toolkit</b>: defensives, potions, Healthstones, kicks, externals. <b>The grade</b> is 40% mechanics, 40% Rotation and 20% staying alive and toolkit. For a spec without a Rotation page, it\'s half mechanics and half how they played (casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive and toolkit). A player alive under 20 s is graded on mechanics. <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade, Rotation\'s checks that weren\'t good among them, with its "Next time". Without a Rotation page, a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
   // (a picked player's page is full width, like Rotation's, with a Change player dropdown in its header; the list comes back with Show the raid)
   if (sel) return tiles + '<div class="pf-cols solo"><div class="panel pf-det pl-det">' + plPlayer(sel, one, reps, mvp.get(sel.p.name), data) + '</div></div>' + how;
   return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + plRaid(data, one, mvp, imp) + '</div></div>' + how;
@@ -12365,8 +12378,8 @@ function plPlayer(a, one, reps, mvpL, data) {
   // fix these first: the three biggest, then the rest folded
   const fx = a.fixes.filter((f) => (f.gain || 0) >= 0.5 || f.rank), top = fx.slice(0, 3), more = fx.slice(3);
   // (a button only where its tab is on: Rotation's for the spec fixes, Graphs' for Casts and Resources)
-  const go = (f) => ((f.go === 'card' ? SPEC_OFF() : (f.go === 'cast' || f.go === 'res') && PERF_OFF()) ? '' : '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(a.p.name) + '">' + (f.go === 'prep' ? 'Their prep ↓' : 'See it in ' + PL_GO[f.go]) + '</button>');
-  const pts = (f) => (f.gain >= 0.5 ? '<span class="rk-gain" title="About how much fixing it would add to their grade">+' + Math.max(1, Math.round(f.gain)) + ' points</span>' : '<span class="rk-gain tip">a tip</span>');
+  const go = (f) => { const g0 = String(f.go || 'none').split(':')[0]; return (g0 === 'none' || !PL_GO[g0] || (g0 === 'card' ? SPEC_OFF() : g0 !== 'audit' && g0 !== 'prep' && PERF_OFF())) ? '' : '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(a.p.name) + '">' + (g0 === 'prep' ? 'Their prep ↓' : 'See it in ' + PL_GO[g0]) + '</button>'; };
+  const pts = (f) => (f.gain >= 0.5 ? '<span class="rk-gain" title="About how much fixing it would add to their grade">+' + plural(Math.max(1, Math.round(f.gain)), 'point') + '</span>' : '<span class="rk-gain tip">a tip</span>');
   const fxRow = (f, i) => '<div class="rk-w"><span class="rk-wn">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b> ' + pts(f) + (!one && f.k > 1 ? ' <span class="sub">· in ' + f.k + ' of ' + a.n + ' pulls</span>' : '') + '<div class="rk-wx">' + esc(f.x) + '</div>' + go(f) + '</div></div>';
   h += '<div class="rk-work pl-work"><div class="rk-wh">' + (top.length ? 'Fix these first <span class="sub">biggest gain first' + (one ? '' : ', over ' + plural(a.n, 'pull')) + '</span>' : 'Nothing big to fix') + '</div>' +
     (top.length ? top.map(fxRow).join('') : '<div class="rk-wx">' + ckLine('ok', 'A clean ' + (one ? 'pull' : 'night') + ': nothing cost them points.') + '</div>') +
@@ -12388,7 +12401,7 @@ function plRaid(data, one, mvp, imp) {
   h += rsSec(one ? 'Best this pull' : 'MVPs of the night', 'by role' + (one ? '' : ', in half the pulls or more'), mv.length ? mv.map((a) => line('<span class="pl-mvp">' + esc(mvp.get(a.p.name)) + '</span> ' + who(a.p) + ' <span class="sub">' + esc(a.p.specName || '') + '</span>', '', '<span class="pl-g">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span>')).join('') : '<p class="sub" style="margin:0">Nobody was in enough pulls yet.</p>');
   if (!one) h += rsSec('Most improved', 'the later pulls against the first', imp.length ? imp.map((a) => line(who(a.p), letterOf(a.score) + ' ' + Math.round(a.score) + ' over the night', plTr(a.trend))).join('') : '<p class="sub" style="margin:0">Nobody rose 3 points or more yet.</p>');
   // (each player's first three fixes, counted by what they're called)
-  const cm = new Map(); for (const a of data) for (const f of a.fixes.filter((z) => (z.gain || 0) >= 1).slice(0, 3)) { const k = f.t.replace(/ ×\d+$/, ''); const o = cm.get(k) || { t: k, n: [], go: f.go }; o.n.push(a.p); cm.set(k, o); }
+  const cm = new Map(); for (const a of data) for (const f of a.fixes.filter((z) => (z.gain || 0) >= 1).slice(0, 3)) { const pot = /^c\|pot\|/.test(f.key) && !/Bloodlust/.test(f.t), k = pot ? 'Drink your combat or mana potion' : f.t.replace(/ ×\d+$/, ''); const o = cm.get(k) || { t: k, n: [], go: f.go }; o.n.push(a.p); cm.set(k, o); } // (a combat potion and a healer's combat or mana potion: one fix)
   const common = [...cm.values()].filter((o) => o.n.length >= 2).sort((u, v) => v.n.length - u.n.length).slice(0, 6);
   h += rsSec('What most players should fix', 'among each player\'s first three', common.length ? common.map((o) => line(esc(o.t), o.n.slice(0, 3).map((p) => p.name).join(', ') + (o.n.length > 3 ? ' and ' + (o.n.length - 3) + ' more' : ''), plural(o.n.length, 'player'))).join('') : '<p class="sub" style="margin:0">No fix that two or more players share.</p>');
   return h + '<p class="sub" style="margin:10px 0 0">Pick a player to open their page, with their grade, what to fix first, and their prep.</p>';
@@ -12514,6 +12527,7 @@ function pullNotes(x, s) {
   if (s.defReady) out.push(['bad', 'died with a defensive or self-heal ready', 'surv']);
   if (s.expect && !s.used) out.push(['bad', 'no combat or mana potion', 'surv']); else if (s.expect && s.used < s.expect) out.push(['warn', 'combat or mana potion ' + s.used + ' of ' + s.expect, 'surv']);
   if (s.kitReady) out.push(['bad', 'died with a Healthstone or potion unused', 'surv']);
+    else if (/^(surv|util|cds)/.test(g)) { const [k, cat] = g.split(':'); pfGo(k, nm, true); if (k === 'surv') S.survCat = cat; else if (k === 'util') S.utilCat = cat; }
   if (s.silent) out.push(['warn', s.tank ? plural(s.silent, 'dip') + ' under 15% with nothing pressed' : plural(s.silent, 'close call') + ' with nothing pressed', 'surv']);
   if (s.tank && s.cdPoss >= 2 && s.cdUsed / s.cdPoss < 0.4) out.push(['warn', 'big cooldowns used ' + s.cdUsed + ' of ' + s.cdPoss + ' times they were up', 'surv']);
   if (x) for (const t of x.tighten) out.push(['warn', t, 'ready']);
