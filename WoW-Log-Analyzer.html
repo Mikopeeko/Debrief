@@ -10925,8 +10925,8 @@ document.addEventListener('mouseover', (e) => {
     const d = await tipData(id);
     if (spCur !== el) return;
     spTip.querySelector('.spt-b').outerHTML = d && d.tooltip
-      ? '<div class="spt-b wh">' + cleanTip(d.tooltip) + '</div><div class="spt-f">Spell ' + id + ' · description from Wowhead</div>'
-      : '<div class="spt-b muted">Description unavailable (open the app from your PC, not the chat preview, so it can reach Wowhead).</div><div class="spt-f">Spell ' + id + '</div>';
+      ? '<div class="spt-b wh">' + cleanTip(d.tooltip) + '</div><div class="spt-f">Spell ' + id + ' · the game\'s description</div>'
+      : '<div class="spt-b muted">Description unavailable (open the app from your PC, not the chat preview, so it can load spell descriptions).</div><div class="spt-f">Spell ' + id + '</div>';
   }, 140);
 });
 document.addEventListener('mousemove', (e) => { if (spTip.style.display === 'block') placeTip(e); });
@@ -11977,6 +11977,39 @@ function renderMain() {
   refreshIcons(); S.page = 'pull'; navNote();
 }
 const view = (h) => { $('#view').innerHTML = h; };
+// ---------- No guide names on the page (your call, Oct 19: "remove the guide names from the pages and keep the text neutral") ----------
+// The checks are researched from written guides and simulations, but the page never names them: "both guides", "a guide" (or
+// "one guide" and "another guide" when two are in the same text), "the simulations". It's done as text appears on the page, so
+// text written later reads the same. Web addresses (icons load from Wowhead) are left alone; Warcraft Logs is the data, not a guide.
+const GUIDE_RE = /Wowhead|Icy Veins|SimulationCraft|Raidbots|Bloodmallet|WoWAnalyzer/;
+const GUIDE_CAP = /(^|[.!?]\s+)(a guide|one guide|another guide|both guides|the guides|the simulations|the simulation list|the leading guides)/g;
+function neutralGuides(t) {
+  if (!t || !GUIDE_RE.test(t)) return t;
+  let s = String(t)
+    .replace(/\b(?:the )?Wowhead, Icy Veins and (?:the )?SimulationCraft(?: (?:list|action list|APL))?/g, 'the guides and the simulations')
+    .replace(/\b(?:the )?Wowhead, Icy Veins and WoWAnalyzer guides?/g, 'the leading guides')
+    .replace(/\bthe (?:Wowhead and Icy Veins|Icy Veins and Wowhead) guides\b/g, 'both guides')
+    .replace(/\b(?:Wowhead and Icy Veins|Icy Veins and Wowhead)('s|')?/g, (m, p) => 'both guides' + (p ? '\'' : ''))
+    .replace(/\b(the )?SimulationCraft (list|action list|APL)(s?)(?: (?:that )?Raidbots sims with)?/g, (m, the, w, pl) => (the ? 'the ' : '') + 'simulation list' + pl)
+    .replace(/\b(?:the )?(?:SimulationCraft|Raidbots)\b/g, 'the simulations')
+    .replace(/\bBloodmallet's /g, 'the ').replace(/\bBloodmallet\b/g, 'the simulations')
+    .replace(/\bthe (Wowhead|Icy Veins) guides?\b/g, '$1')
+    .replace(/\bWoWAnalyzer\b/g, 'a log tool');
+  const names = [...new Set(s.match(/Wowhead|Icy Veins/g) || [])], word = (n) => (names.length < 2 ? 'a guide' : n === names[0] ? 'one guide' : 'another guide');
+  s = s.replace(/\b(Wowhead|Icy Veins)('s|'(?![a-z]))?/g, (m, n, p) => word(n) + (p ? '\'s' : ''));
+  return s.replace(GUIDE_CAP, (m, a, b) => a + b.charAt(0).toUpperCase() + b.slice(1));
+}
+const GUIDE_ATTR = ['Wowhead', 'Icy Veins', 'SimulationCraft', 'Raidbots', 'Bloodmallet', 'WoWAnalyzer'].flatMap((n) => ['title', 'aria-label', 'data-tip'].map((a) => '[' + a + '*="' + n + '"]')).join(',');
+function neutralDom(root) {
+  if (!root) return;
+  if (root.nodeType === 3) { if (GUIDE_RE.test(root.nodeValue)) root.nodeValue = neutralGuides(root.nodeValue); return; }
+  if (root.nodeType !== 1) return;
+  // (fast way out: most new content, like an animated map's next frame, names no guide)
+  if (!GUIDE_RE.test(root.textContent || '') && !(root.querySelector && root.querySelector(GUIDE_ATTR)) && !GUIDE_RE.test((root.getAttribute && (root.getAttribute('title') || root.getAttribute('data-tip'))) || '')) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let n = w.nextNode(); n; n = w.nextNode()) if (GUIDE_RE.test(n.nodeValue)) n.nodeValue = neutralGuides(n.nodeValue);
+  for (const el of [root, ...root.querySelectorAll('[title],[aria-label],[data-tip]')]) for (const a of ['title', 'aria-label', 'data-tip']) { const v = el.getAttribute && el.getAttribute(a); if (v && GUIDE_RE.test(v) && !/:\/\/|\.com/.test(v)) el.setAttribute(a, neutralGuides(v)); }
+}
+try { new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) neutralDom(n); }).observe(document.body, { childList: true, subtree: true }); neutralDom(document.body); } catch (e) { /* (never block the page) */ }
 const players = () => [...S.rep.players.values()];
 
 // ---------- overview ----------
