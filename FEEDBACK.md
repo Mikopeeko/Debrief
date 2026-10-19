@@ -201,13 +201,6 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Noticed: guides list Nymrissa Wavecaller and Kith'ix in The Venomous Abyss, but the app only knew 8 bosses (round 103).
 - [x] Check (from your question; done in round 140): older modules where a threshold came from what one of your kills looked like (Twin Fangs back-to-back soaks not flagged, the Barbed Bulwark 6 s). Re-check those against the guides.
 
-## 2026-10-18, round 230: Only real characters get replaced (your note)
-- [x] **The new-note offer only offers character names with an assignment** (your note: "everyone" doesn't get replaced).
-  NSRT reminder tags that mean a group (everyone, all, a role like healer or tank, a class, a raid group) aren't read as
-  players any more, so they're never offered for replacing, never listed as "in the note but not in this pull", and don't
-  count against a note when Debrief picks one for a pull. Checked with a note that tags everyone, healer and Optt: only
-  Optt is offered.
-
 ## 2026-10-18, round 201: Mechanics, plainer before launch (from my review)
 - **Each mechanic opens with one plain paragraph** instead of "Overall: … / Main problems: … / Could be tighter: …". For
   example: "Mostly fine, with a few things to tighten up (7 of 8 frontals were clean). Frontals off the orb plan (1) could
@@ -219,6 +212,13 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 230: Only real characters get replaced (your note)
+- [x] **The new-note offer only offers character names with an assignment** (your note: "everyone" doesn't get replaced).
+  NSRT reminder tags that mean a group (everyone, all, a role like healer or tank, a class, a raid group) aren't read as
+  players any more, so they're never offered for replacing, never listed as "in the note but not in this pull", and don't
+  count against a note when Debrief picks one for a pull. Checked with a note that tags everyone, healer and Optt: only
+  Optt is offered.
 
 ## 2026-10-18, round 229: Boss art on Stored notes, and a new note when the roster changed (your two notes)
 - [x] **Each boss on Stored notes has a header band with its art** (your note: nice background graphics, pleasing to the
