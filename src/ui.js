@@ -3409,7 +3409,7 @@ function miniMap(mp, pmap) {
   // (a short note after a name, e.g. Helical Toxins stacks; and lines joining two players for a moment, e.g. a pair)
   // (a tag can be for a stretch of time: [guid, text, from, to])
   const tagOf = new Map((mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)).map(([g, txt]) => [g, txt]));
-  for (const l of mp.links || []) { if (ft < l.t0 || ft > l.t1) continue; const a = byG.get(l.from), b = byG.get(l.to); if (!a || !b) continue;
+  for (const l of mp.links || []) { if (ft < l.t0 || ft > l.t1) continue; const a = byG.get(l.from), b = l.toPt || byG.get(l.to); if (!a || !b) continue;
     // (dash: a pointer, e.g. Nama to the mark he leaps to next: thin and dashed, starting just off the boss)
     if (l.dash) { const x0 = X(a), y0 = Y(a), x1 = X(b), y1 = Y(b), d = Math.hypot(x1 - x0, y1 - y0) || 1, sx0 = x0 + (x1 - x0) / d * 12, sy0 = y0 + (y1 - y0) / d * 12;
       s += '<line x1="' + sx0.toFixed(1) + '" y1="' + sy0.toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="#000" stroke-opacity=".5" stroke-width="4" stroke-linecap="round" stroke-dasharray="7 6" vector-effect="non-scaling-stroke"/><line x1="' + sx0.toFixed(1) + '" y1="' + sy0.toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="' + l.color + '" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 6" vector-effect="non-scaling-stroke"/>'; continue; }
