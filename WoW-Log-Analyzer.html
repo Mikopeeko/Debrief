@@ -10548,7 +10548,8 @@ document.addEventListener('click', async (e) => {
   if (ctType !== 'mouse' && ctCur !== el) { ctShow(el, e); return; } // (a phone: the first tap shows the box)
   const go = el.dataset.go; if (!go) return; e.preventDefault(); e.stopPropagation(); ctCur = null; spTip.style.display = 'none';
   // (from Summary, which is every pull, the pull opens on its own recap, Latest pull)
-  if (go.startsWith('pull:')) { const b = S.index && S.index.bosses[+go.slice(5)]; if (b) { S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } }
+  // (Recap has only the newest pull: an older one opens on Mechanics, as from the pull cards)
+  if (go.startsWith('pull:')) { const b = S.index && S.index.bosses[+go.slice(5)]; if (b) { const last = S.index.bosses.filter((x) => x.id === b.id && x.diffId === b.diffId).pop(); if (S.tab === 'live' && b !== last) S.tab = 'audit'; S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } }
   else if (go.startsWith('wcl:')) { const [code, f] = go.slice(4).split('|'); try { await openWcl({ code, fight: +f || null }, await wclCreds()); } catch (x) { console.warn('Open pull:', x && x.message); } }
 });
 function avatar(p, sm) {
@@ -14466,8 +14467,9 @@ function nightDebrief(pulls, reps) {
   const ppl = (m) => top(m, 3).map(([k, c]) => esc(k) + (c > 1 ? ' (' + c + ')' : '')).join(', ');
   const bump = (m, k, n) => m.set(k, (m.get(k) || 0) + (n || 1));
   const phaseAt = (r, t) => { const ph = r.module && !r.module.error && r.module.phases; if (!ph || !ph.length) return null; let n = null; for (const p of ph) if (t >= p.start - 0.5) n = p.name.split(' ')[0]; return /^(P\d|Intermission)$/.test(n || '') ? n : null; };
-// Recap's top strip (your ask, Oct 19): the boss's health at the end of every pull since the first one saved for this
-// team, earlier nights and tonight, as the Progress page draws it, only wide and short (a phone gets the Progress size)
+// Recap's top strip on a single pull (your ask, Oct 19): the boss's health at the end of every pull since the first one
+// saved for this team, earlier nights and tonight, as the Progress page draws it, only wide and short (a phone gets the
+// Progress size). The whole night shows How far the night got instead.
 function recapHp(b0, pulls) {
   const H = histFor(b0), now = pulls.map((b) => ({ at: b.wallMs || b.startMs, pull: b.pull, kill: !!b.kill, left: b.kill ? 0 : pullPct(b), label: pullLabel(b), dur: b.duration, go: 'pull:' + S.index.bosses.indexOf(b) }));
   const list = H.earlier.flatMap((x) => x.list).concat(now.filter((v) => v.at)); if (!list.length) return '';
@@ -25015,12 +25017,15 @@ async function lastPull() {
   const needNames = cs.some((c) => c.auras.some((a) => !a.name && a.ability));
   if (cs.length && !needNames) rows = prepRows();
   const side = dTile + lpPace(r, bestR, bestO && bestO.x.pull) + lpPrep(r, cs.length ? rows : false) + lpTalk(r) + lpUsed(r) + lpCds(r, cdRows) + lpMiss(r);
+  // (the boss's health every pull since the first one saved, on top: only here, not on the whole night, which has How far
+  // the night got (your call, Oct 19))
+  if (it.kind === 'boss' && !it.run && !isKey) h += recapHp(same[0], same);
   h += (hasNote ? tiles : '') + '<div class="lp-cols"><div class="lp-main">' + wellP + wP + '</div><div class="lp-side">' + side + '</div></div>';
   if (!$('#view') || S.tab !== 'live' || S.rep !== r) return; // (another pull or tab was opened while this one was being read)
   view('<div class="lpv">' + h + '</div>'); refreshIcons();
   if ($('#lpLatest')) $('#lpLatest').onclick = () => select(same[same.length - 1]);
   // (a tile: that tab, scrolled to its section; a problem tile also opens with Enter or Space)
-  $('#view').querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; if (b.dataset.kind) S.perfKind = b.dataset.kind; renderMain(); if (!b.dataset.sec) window.scrollTo({ top: 0 }); }));
+  $('#view').querySelectorAll('[data-go]:not(.thit)').forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; S.pendingSec = b.dataset.sec || null; if (b.dataset.kind) S.perfKind = b.dataset.kind; renderMain(); if (!b.dataset.sec) window.scrollTo({ top: 0 }); })); // (not the chart's dots: they open their pull)
   $('#view').querySelectorAll('.rcp-w').forEach((b) => (b.onkeydown = (e) => { if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); b.click(); } }));
   wrThumbFit($('#view'));
   // (a tile's map plays its moment in place, the tile across the box; Close map puts the picture back)
