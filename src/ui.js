@@ -1392,6 +1392,7 @@ function neutralGuides(t) {
     .replace(/\b(?:the )?Wowhead, Icy Veins and WoWAnalyzer guides?/g, 'the leading guides')
     .replace(/\bthe (?:Wowhead and Icy Veins|Icy Veins and Wowhead) guides\b/g, 'both guides')
     .replace(/\b(?:Wowhead and Icy Veins|Icy Veins and Wowhead)('s|')?/g, (m, p) => 'both guides' + (p ? '\'' : ''))
+    .replace(/\bSimulationCraft's priority list \(the one Raidbots sims with\)/g, 'the simulations\' priority list')
     .replace(/\b(the )?SimulationCraft (list|action list|APL)(s?)(?: (?:that )?Raidbots sims with)?/g, (m, the, w, pl) => (the ? 'the ' : '') + 'simulation list' + pl)
     .replace(/\b(?:the )?(?:SimulationCraft|Raidbots)\b/g, 'the simulations')
     .replace(/\bBloodmallet's /g, 'the ').replace(/\bBloodmallet\b/g, 'the simulations')
@@ -9811,7 +9812,103 @@ function tipNow(t) {
   if (h[1]) s = h[1].trim() + ', ' + s;
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+// ---- This boss: what only a log tool that knows the fight can say (your call, Oct 19: "make it really good and unique") ----
+// Each boss's windows from the guide library (notes/Guides/Bosses): when it takes more damage, said with the guides' own numbers,
+// and when it takes almost none. aura: the boss buff the log shows (r.bossAuras, from the engine), or a buff on you (mine).
+const BOSS_AMP = {
+  Sszorak: { aura: 'Dig In', what: 'Dig In', amp: '30% more damage', graded: false, lead: 'During Dig In, Sszorak takes 30% more damage for 25 seconds, about every 2 minutes. A guide warns not to hold a 2-minute cooldown so long that you lose a use over the fight: many specs press theirs in the back half of Dig In instead. So this one is shown, not graded.' },
+  'The Coiled Altar': { aura: 'Ghastly Regeneration', what: "Zul'jan's Ghastly Regeneration", win: 'Ghastly Regeneration', amp: '100% more damage', lead: "When Malacrass binds himself to Zul'jan, Zul'jan takes 100% more damage for 35 seconds. Both guides put Bloodlust, potions and every cooldown here." },
+  "Ula'tek": { aura: 'Rage of the Shackled', what: 'the Venomous Heart', win: 'Venomous Heart', amp: 'triple damage on the heart', lead: "In Rage of the Shackled, Ula'tek's Venomous Heart is open for 20 seconds and takes 200% more damage. Save your big cooldowns and potion for these windows, and hit the heart." },
+  "Kith'ix": { mine: 'Luminous Grace', what: 'Last Light', amp: 'more damage', lead: "At 25%, Liadrin's Last Light gives the raid Luminous Grace: more damage and double healing until Kith'ix dies. You have about a minute before Eightfold Eclipse wipes the raid, so hold your 2-minute cooldowns and potion for it." } };
+const BOSS_SHIELD = { 'Entombed Sentinels': { aura: 'Vitriolic Stasis', what: 'Vitriolic Stasis', lead: 'During Vitriolic Stasis, both Sentinels take 99% less damage for about 30 seconds while they balance their health. A burst cooldown pressed into it is wasted: press it after.' } };
+// Talent swaps the guides make for one boss (notes/Guides/Classes). take: talents a guide adds there, skip: ones it drops; hero: only for that hero tree.
+const BOSS_TAL = {
+  'Shadow Priest': {
+    Sszorak: [{ hero: 'Archon', take: ['Spectral Horrors'], skip: ['Psychic Link'], why: 'Sszorak is pure single target, so a guide drops Psychic Link for Spectral Horrors.' }],
+    'Entombed Sentinels': [{ hero: 'Archon', take: ['Spectral Horrors', "Idol of C'Thun"], skip: ['Descending Darkness', 'Crushing Void'], why: 'The two Sentinels stand 40 yards apart and Tentacle Slam cannot hit both, so a guide trades Descending Darkness and Crushing Void for Spectral Horrors and Idol of C\'Thun.' }],
+    'The Lost Explorers': [{ hero: 'Archon', take: ['Instilled Doubt', "Idol of C'Thun"], skip: ['Mastermind'], why: 'Three targets all fight: a guide leans into damage over time with Instilled Doubt and Idol of C\'Thun over Mastermind.' }],
+    "Ula'tek": [{ hero: 'Archon', take: ['Energy Compression'], skip: ['Sustained Potency'], why: "Lots of low-health adds, and Voidform lines up with the 20-second heart window with nothing to hit after: a guide takes Energy Compression over Sustained Potency." }] },
+  'Assassination Rogue': {
+    'Vashnik the Malignant': [{ take: ['Sudden Demise'], why: 'Frequent adds you have to swap to: a guide suggests Sudden Demise in place of the last Implacable point (about 2% less single-target damage).' }],
+    'The Twin Fangs': [{ take: ['Sudden Demise'], why: 'Frequent adds you have to swap to: a guide suggests Sudden Demise in place of the last Implacable point (about 2% less single-target damage).' }] },
+  'Survival Hunter': Object.fromEntries(['The Coiled Altar', "Ula'tek", 'The Twin Fangs'].map((b) => [b, [{ take: ['Two Against Many'], why: 'A guide takes Two Against Many (from Sic \'Em) for the cleave on this boss.' }]])),
+  'Beast Mastery Hunter': Object.fromEntries(['The Coiled Altar', "Ula'tek"].map((b) => [b, [{ take: ['Emergency Salve'], why: 'A guide takes Emergency Salve on this boss for its heavy raid damage.' }]])),
+  'Frost Mage': Object.fromEntries(['Entombed Sentinels', 'The Lost Explorers', 'Vashnik the Malignant', 'The Twin Fangs', 'The Coiled Altar', "Ula'tek", "Nek'zali the Soulcoiler"].map((b) => [b, [{ take: ['Splitting Ice'], why: 'Most of this raid has two or more targets to cleave, so a guide keeps Splitting Ice and Fractured Frost in the build.' }]])) };
+// A healer's raid cooldowns, read from their casts
+const HEAL_CD_BY = { 'Holy Paladin': ['Aura Mastery'], 'Restoration Druid': ['Tranquility'], 'Restoration Shaman': ['Spirit Link Totem', 'Healing Tide Totem'], 'Holy Priest': ['Divine Hymn'],
+  'Discipline Priest': ['Power Word: Barrier', 'Evangelism'], 'Mistweaver Monk': ['Revival', 'Restoral'], 'Preservation Evoker': ['Rewind', 'Dream Flight'] }; // (only the ones the guides save for a big hit: throughput cooldowns go on cooldown)
+const TANK_IDS = new Set([66, 73, 104, 250, 268, 581]);
+// (hand-built damage pages have no shared window: their big cooldown is read from casts, and is "up" for this long after a press)
+const HAND_WIN = { 266: { n: 'Summon Demonic Tyrant', len: 15 } };
+function bossRot(o) {
+  const HW = !(o.WNAMES || []).length && HAND_WIN[o.P0.specId]; if (HW) o = Object.assign({}, o, { WSAY: HW.n, WIC: HW.n, WNAMES: [HW.n] });
+  const { per, rows, one } = o, P0 = o.P0, boss = per[per.length - 1].r.item.boss, isHeal = HEAL_SPECS.has(P0.specId), isTank = TANK_IDS.has(P0.specId), out = { groups: [], MERGE: {}, WT: {}, VIZ: {}, keys: [] };
+  const lc = (n) => String(n).toLowerCase(), dmgIn = (p, a, e) => { let v = 0; const s = p.dmgS || []; for (let t = Math.max(0, Math.floor(a)); t < Math.min(s.length, Math.ceil(e)); t++) v += s[t] || 0; return v; };
+  const gOf = (r, p) => { for (const [g, y] of r.players) if (y === p) return g; return null; };
+  const add = (g, c) => { g.l.push(c); out.keys.push(String(c.k).replace(/[^a-z0-9]+/gi, '-').toLowerCase()); };
+  // (1) the boss's damage windows: your big cooldown and potion in each, and how hard you hit in it against the rest of the pull
+  const A = BOSS_AMP[boss];
+  if (A && !isHeal) { const W = [];
+    for (const x of per) { const { r, p, t1 } = x, l = A.mine ? ((p.buffs.get(A.mine) || (p.debuffs && p.debuffs.get(A.mine)) || { sp: [] }).sp.map(([a, e]) => ({ a, e: e == null ? t1 : e }))) : (r.bossAuras || []).filter((w) => w.n === A.aura).map((w) => ({ a: w.a, e: w.e == null ? t1 : w.e }));
+      for (const w of l) { if (w.a >= t1 - 3) continue; const e = Math.min(w.e, t1), len = Math.max(1, e - w.a), cd = HW ? (p.byName.get(lc(HW.n)) || []).some((u) => u < e && u + HW.len > w.a) : bigCdUp(p, w.a, e), pot = COMBAT_POTS.some((n) => (p.byName.get(n) || []).some((u) => u >= w.a - 30 && u <= e));
+        const dIn = dmgIn(p, w.a, e), dAll = dmgIn(p, 0, t1), rest = Math.max(1, t1 - len); W.push({ pull: r.item.pull, a: w.a, e, cd, pot, dps: dIn / len, out: Math.max(0, dAll - dIn) / rest }); } }
+    if (W.length) { const g = { t: 'Big damage moments', l: [] }; out.groups.push(g); const withCd = W.filter((w) => w.cd != null), nCd = withCd.filter((w) => w.cd).length, nPot = W.filter((w) => w.pot).length, wsN = o.WSAY || 'your big cooldown';
+      const f = withCd.length ? nCd / withCd.length : null, st = A.graded === false || isTank || f == null ? 'na' : f >= 0.66 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', x = W.reduce((v, w) => v + w.dps, 0) / Math.max(1, W.reduce((v, w) => v + w.out, 0));
+      add(g, { st, ic: o.WIC || 'Bloodlust', label: (A.graded === false ? 'Cooldowns in ' : 'Your cooldown in ') + A.what, v: f == null ? W.length + '<span> windows</span>' : nCd + '<span>/' + withCd.length + '</span>', k: 'boss:amp',
+        sub: (f == null ? '' : 'Your ' + wsN + ' was up in ' + nCd + ' of ' + withCd.length + ' ' + (A.win || A.what) + (withCd.length === 1 ? ' window' : ' windows') + '. ') + 'You drank a combat potion in ' + nPot + ' of ' + W.length + '. In ' + (W.length === 1 ? 'that window' : 'those windows') + ' you did ' + (x >= 1 ? x.toFixed(1) + ' times as much damage a second as' : Math.round(100 * x) + '% of your damage a second from') + ' the rest of the pull.',
+        how: 'The boss takes ' + A.amp + ' in these windows, so damage there is worth more. Your big cooldown counts when it was up for any part of the window. A potion counts when you drank it up to 30 seconds before or during it.' + (isTank ? ' Tanks aren\'t graded on this.' : ''),
+        mo: W.map((w) => ({ pull: w.pull, a: w.a, b: w.e })), tip: st === 'warn' || st === 'bad' ? 'Line ' + wsN + ' up with ' + A.what + ': if it would come back just after, hold it a few seconds.' : '' });
+      out.MERGE['Big damage moments'] = { ic: o.WIC || 'Bloodlust', main: 'boss:amp', lead: A.lead };
+      out.WT['boss:amp'] = 2;
+      out.VIZ['boss:amp'] = () => (one ? '<div class="spc-ws">' + W.map((w) => { const s0 = w.cd === false ? 'warn' : 'ok';
+        return '<div class="spc-w ' + s0 + '" role="button" tabindex="0" data-mt="' + w.a.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.a) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.e - w.a) + ' seconds</span></div><div class="spc-wv">' + C(w.dps) + '<span> damage a second</span></div><div class="spc-wo">Rest of the pull: ' + C(w.out) + '</div><div class="spc-wc spc-chk">' +
+          (w.cd == null ? '' : '<span class="' + (w.cd ? 'ok' : 'no') + '">' + (w.cd ? '✓ ' : '✕ ') + esc(wsN.charAt(0).toUpperCase() + wsN.slice(1)) + '</span>') + '<span class="' + (w.pot ? 'ok' : 'sub') + '">' + (w.pot ? '✓ Potion' : 'No potion') + '</span></div></div>'; }).join('') + '</div>' : ''); } }
+  // (2) the boss's shield: big cooldowns pressed while it took almost no damage
+  const SHd = BOSS_SHIELD[boss], WN = (o.WNAMES || []).map(lc);
+  if (SHd && !isHeal && WN.length) { const bad = [];
+    for (const x of per) { const { r, p, t1 } = x; for (const w of (r.bossAuras || []).filter((y) => y.n === SHd.aura)) { const e = w.e == null ? t1 : w.e; for (const n of WN) for (const t of p.byName.get(n) || []) if (t > w.a + 1 && t < e - 2) bad.push({ pull: r.item.pull, a: t, n }); } }
+    const nW = per.reduce((v, x) => v + (x.r.bossAuras || []).filter((y) => y.n === SHd.aura && y.a < x.t1).length, 0);
+    if (nW) { const g = out.groups.find((y) => y.t === 'Big damage moments') || (out.groups.push({ t: 'Big damage moments', l: [] }), out.groups[out.groups.length - 1]);
+      add(g, { st: !bad.length ? 'ok' : bad.length === 1 ? 'warn' : 'bad', ic: 'Vitriolic Stasis', label: 'Nothing wasted into ' + SHd.what, v: String(bad.length), k: 'boss:shield', dir: 'lo',
+        sub: bad.length ? 'You pressed ' + (o.WSAY || 'your big cooldown') + ' ' + plural(bad.length, 'time') + ' while the bosses took 99% less damage.' : 'Over ' + plural(nW, SHd.what + ' window') + ', you never pressed ' + (o.WSAY || 'your big cooldown') + ' into it.',
+        how: 'A press more than a second after it started and more than 2 seconds before it ended counts as wasted. The times listed are each one.', mo: bad.map((b) => ({ pull: b.pull, a: b.a })), tip: bad.length ? 'Hold ' + (o.WSAY || 'your big cooldown') + ' until ' + SHd.what + ' ends.' : '' });
+      out.WT['boss:shield'] = 1.5; if (!out.MERGE['Big damage moments']) out.MERGE['Big damage moments'] = { ic: 'Vitriolic Stasis', main: 'boss:shield', lead: SHd.lead }; } }
+  // (3) a healer: your healing cooldowns into the boss's big hits (stretches where the raid took twice its usual damage), named by what hit hardest
+  if (isHeal) { const hits = [], cds = [];
+    for (const x of per) { const { r, p, t1 } = x, s = r.takenS || [], g = gOf(r, p), N = Math.min(s.length, Math.floor(t1)); if (N < 30) continue;
+      const roll = []; for (let t = 0; t < N; t++) { let v = 0; for (let u = t; u < Math.min(N, t + 6); u++) v += s[u] || 0; roll.push(v); }
+      const srt = roll.filter((v) => v > 0).sort((a, b) => a - b), med = srt.length ? srt[srt.length >> 1] : 0; if (!med) continue; const thr = Math.max(1.3 * med, srt[Math.floor(0.85 * srt.length)]);
+      const spans = []; for (let t = 0; t < roll.length; t++) if (roll[t] >= thr) { const l = spans[spans.length - 1]; if (l && t <= l.b + 1) l.b = t + 6; else spans.push({ a: t, b: t + 6, pk: 0 }); }
+      for (const sp of spans) { sp.pk = Math.max(...roll.slice(sp.a, Math.min(roll.length, sp.b))) / med; const by = new Map(); for (let t = sp.a; t < Math.min(sp.b, (r.takenAbS || []).length); t++) for (const [n, v] of Object.entries((r.takenAbS || [])[t] || {})) by.set(n, (by.get(n) || 0) + (Array.isArray(v) ? v[1] : v));
+        sp.top = [...by].sort((u, w) => w[1] - u[1]).slice(0, 2).map(([n]) => n); }
+      const big = spans.slice().sort((u, w) => w.pk - u.pk).slice(0, 8).sort((u, w) => u.a - w.a);
+      const own = (HEAL_CD_BY[P0.specName] || []).flatMap((n) => (p.byName.get(n.toLowerCase()) || []).filter((t, i, z) => t <= t1 && (!i || t - z[i - 1] > 10)).map((t) => ({ t, cd: n }))), mine = own.sort((u, w) => u.t - w.t);
+      for (const sp of big) hits.push({ pull: r.item.pull, a: sp.a, b: sp.b, x: sp.pk, top: sp.top, cd: mine.filter((u) => u.t >= sp.a - 6 && u.t <= sp.b).map((u) => u.cd) });
+      for (const u of mine) cds.push({ pull: r.item.pull, t: u.t, cd: u.cd, inHit: spans.some((sp) => u.t >= sp.a - 6 && u.t <= sp.b) }); }
+    if (hits.length && cds.length) { const g = { t: 'The boss\'s big hits', l: [] }; out.groups.push(g); const nIn = cds.filter((c) => c.inHit).length, f = nIn / cds.length, cov = hits.filter((h) => h.cd.length).length;
+      add(g, { st: f >= 0.5 ? 'ok' : f >= 0.3 ? 'warn' : 'bad', ic: 'Aura Mastery', label: 'Cooldowns into the big hits', v: nIn + '<span>/' + cds.length + '</span>', k: 'boss:hits',
+        sub: nIn + ' of your ' + plural(cds.length, 'healing cooldown') + ' went out in the heaviest damage of the pull' + (one ? '' : 's') + '. The cards show the heaviest moments' + (one ? '' : ' of each pull') + ', and which of yours went out in each.',
+        how: 'A big hit is one of the heaviest stretches of the pull: 6 seconds in the top 15% for damage the raid took, and at least 1.3 times the usual. A cooldown counts when you pressed it up to 6 seconds before one or during it. Half or more is good, about what the top healers manage: a cooldown sent into a quiet moment is one you don\'t have when it hurts.',
+        mo: cds.filter((c) => !c.inHit).map((c) => ({ pull: c.pull, a: c.t })), tip: f < 0.5 ? 'Save your healing cooldowns for the boss\'s big hits. Learn when they come and press yours as they land.' : '' });
+      out.MERGE['The boss\'s big hits'] = { ic: 'Aura Mastery', main: 'boss:hits', lead: 'Every boss has a few moments that hurt far more than the rest. Your healing cooldowns are worth the most there, sent in just before the damage lands.' };
+      out.WT['boss:hits'] = 2;
+      out.VIZ['boss:hits'] = () => (one ? '<div class="spc-ws">' + hits.map((h) => '<div class="spc-w ' + (h.cd.length ? 'ok' : 'warn') + '" role="button" tabindex="0" data-mt="' + h.a.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(h.a) + '–' + T(h.b) + '</b><span class="sub">' + h.x.toFixed(1) + ' times the usual damage</span></div>' +
+        (h.top.length ? '<div class="spc-wo">Mostly ' + esc(andL(h.top)) + '</div>' : '') + '<div class="spc-wc spc-chk"><span class="' + (h.cd.length ? 'ok' : 'no') + '">' + (h.cd.length ? '✓ ' + esc(andL([...new Set(h.cd)])) : '✕ None of your cooldowns') + '</span></div></div>').join('') + '</div>' : ''); } }
+  // (4) talents a guide changes for this boss
+  const TB = ((BOSS_TAL[P0.specName] || {})[boss] || []).filter((q) => !q.hero || q.hero === o.heroN);
+  const TAL = o.TAL; if (TB.length && TAL) { const g = { t: 'Talents for this boss', l: [] }; out.groups.push(g);
+    for (const [i, q] of TB.entries()) { const miss = (q.take || []).filter((n) => !TAL.names.has(n)), keep = (q.skip || []).filter((n) => TAL.names.has(n)), n = miss.length + keep.length;
+      add(g, { st: n ? 'warn' : 'ok', ic: (q.take || q.skip)[0], label: 'A guide\'s swap: ' + andL((q.take || []).concat((q.skip || []).map((s) => 'no ' + s))), v: n ? n + '<span> to change</span>' : 'Done', k: 'boss:tal' + i,
+        sub: q.why + (n ? ' You ' + andL([miss.length ? 'don\'t have ' + andL(miss) : '', keep.length ? 'still have ' + andL(keep) : ''].filter(Boolean)) + '.' : ' You made the swap.'), how: 'Read from your talents in ' + (one ? 'this pull' : 'your latest pull') + '. A swap a guide suggests for this boss is a nudge, never a failure, so it can only be yellow.', mo: [],
+        tip: n ? andL([miss.length ? 'Take ' + andL(miss) : '', keep.length ? 'drop ' + andL(keep) : ''].filter(Boolean)) + ' before you pull this boss.' : '' });
+      out.WT['boss:tal' + i] = 0.5; }
+    out.MERGE['Talents for this boss'] = { ic: (TB[0].take || TB[0].skip)[0], main: 'boss:tal0', lead: 'Your guides change a few talents for this boss. Here is each swap and whether you made it.' }; }
+  return out;
+}
 function specPage(o) {
+  // (This boss: the boss's damage windows, its shield, its big hits for a healer, and its talent swaps, as a chapter of their own before Stats)
+  { let B; try { B = bossRot(o); } catch (e) { B = { groups: [], err: e }; } if (B.groups.length) { o.groups.push(...B.groups); Object.assign((o.MERGE = o.MERGE || {}), B.MERGE); Object.assign((o.WT = o.WT || {}), B.WT); Object.assign((o.VIZ = o.VIZ || {}), B.VIZ);
+    if (o.LAYOUT) { const ch = ['This boss', B.groups.map((g) => [g.t, g.l.map((c) => String(c.k).replace(/[^a-z0-9]+/gi, '-').toLowerCase())])], si = o.LAYOUT.findIndex(([n]) => n === 'Stats'); if (si >= 0) o.LAYOUT.splice(si, 0, ch); else o.LAYOUT.push(ch); } } }
   // (the layout every spec shares: its checks in chapters (Rotation, Resources, Cooldowns), each chapter's blocks in the spec's own order, a check
   // named by its key. One the layout doesn't name stays in a block of its own group's name, at the end: nothing is ever dropped)
   if (o.LAYOUT) { const sl = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase(), all = o.groups.flatMap((g) => g.l.map((c) => ({ c, t: g.t }))), used = new Set(), out = [];
@@ -9900,7 +9997,7 @@ function specPage(o) {
   const fr = null; // (the ornate spec frame, specFrame(P0), is off: the card is a plain panel like the site's other cards)
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
-    '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + '</h3><div class="spc-hs">' + esc(P0.specName || '') + (o.heroN ? ' · ' + esc(o.heroN) : '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
+    '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + (o.heroN ? '<span class="rot-herot">' + esc(o.heroN) + '</span>' : '') + '</h3><div class="spc-hs">' + esc(P0.specName || '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
     (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'Failed', cnt.bad, 'bad') + pill('warn', 'Some mistakes', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' +
     '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + tipNow(c.tip) : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
   const LP = per[per.length - 1];
@@ -11843,7 +11940,7 @@ function genRun(spec, D, reps, name, one) {
   const burst = winL.length && WIN ? (() => { const xs = winL.map((w) => w.x).filter((v) => v != null); const LB = Math.max(1, winL.reduce((v, w) => v + w.len, 0)); return xs.length ? { x: xs.reduce((v, y) => v + y, 0) / xs.length, n: xs.length, name: WSAY, dps: winL.reduce((v, w) => v + w.d, 0) / LB, out: winL.reduce((v, w) => v + (w.outR || 0) * w.len, 0) / LB } : null; })() : null;
   if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'win' && winL.length) { c.cards = winL.map(winCard); c.cardsL = 'Each ' + WSAY + ', side by side'; } if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log);
     const mq = MORE.find((q) => c.k === 'mw:' + q.k); if (mq && ((rows[0].more || {})[mq.k] || []).length) { c.cards = rows[0].more[mq.k].map((w) => moreCard(mq, w)); c.cardsL = 'Each ' + mq.n + ', side by side'; } }
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
+  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, burst, WSAY: WIN ? WSAY : '', WIC: WIN ? WIN.n : '', WNAMES: WIN ? (WIN.names || [WIN.n]) : [], tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
     TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win', 'wr'].concat(SPREAD.map((q) => 'sp:' + q.k), rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n))), top: D.top || spec + 's', topL: 'Top players', topH: 'The ' + (D.top || spec + 's') + ' who parsed 75 or higher in the fastest kills of this boss', pullT,
     src: 'Built with help from the Wowhead and Icy Veins guides and WoWAnalyzer\'s checks for ' + spec + ', and from what your talents do.', secIc: { 'Your pull at a glance': D.ic, 'Pull by pull': D.ic } });
   // (a priest's Power Infusion: the same cards and advice as Graphs' Power Infusion view, for this priest only, at the end

@@ -263,6 +263,15 @@ const noteId = (id, name) => { if (id && name && id !== 6603) { const k = String
 // spell name -> ID for what enemies cast, hit players with or put on them, as seen in the log: a boss ability named
 // anywhere in the app gets its tooltip, even one the rules and fight modules only know by name
 const ENEMY_SPELL = new Map();
+// The boss's own windows the Rotation tab grades cooldowns against (Oct 19, from the guide library's boss notes): when it takes
+// more damage (Dig In, Ghastly Regeneration, Rage of the Shackled) or almost none (Vitriolic Stasis). Kept on the pull as
+// r.bossAuras: [{ n, a, e }], one entry per window (the same aura on several units at once is one window).
+const BOSS_AURA_N = new Set(['dig in', 'ghastly regeneration', 'rage of the shackled', 'vitriolic stasis']);
+function bossAura(r, n, t, on) {
+  const l = r.bossAuras || (r.bossAuras = []), w = l.filter((x) => x.n === n).pop();
+  if (on) { if (!w || (w.e != null && t - w.e > 2)) l.push({ n, a: t, e: null }); else if (w.e != null) w.e = null; }
+  else if (w && w.e == null) w.e = t;
+}
 const ENEMY_EV = new Set(['SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'SPELL_MISSED', 'SPELL_PERIODIC_MISSED', 'SPELL_CAST_START', 'SPELL_CAST_SUCCESS', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_SUMMON']);
 const noteEnemy = (id, name) => { if (id && name && id !== 6603) { const k = String(name).toLowerCase(); if (!ENEMY_SPELL.has(k)) ENEMY_SPELL.set(k, id); } };
 const noteSchool = (id, hex) => { if (id && hex && !SCHOOL.has(id)) { const v = parseInt(hex, 16); if (v) SCHOOL.set(id, v); } };
@@ -5417,6 +5426,7 @@ function analyze(item, text, opts) {
         const pl = isPlayer(dg);
         mech.aura(t, pl ? P(dg, dn).name : dn, pl, num(f[8]), f[9], stacks);
         if (W(f[9], f[8])) modEv.push({ k: 'aura', op: ev === 'SPELL_AURA_APPLIED' ? 'apply' : 'dose', t, dst: dg, spell: f[9], id: num(f[8]), stacks, src: sg, own: owner }); // (own: the player behind a pet or totem)
+        if (!pl && ev === 'SPELL_AURA_APPLIED' && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, true);
         if (pl) { const sr = mech.get('stacks', num(f[8]), f[9]); if (sr) stackEv.push({ t, guid: dg, rule: sr, stacks, up: true, id: num(f[8]) }); }
         // (a buff on a player's demon that the spec checks read: Demonic Power's stacks are how many demons the Demonic Tyrant empowers)
         if (!pl && owner && f[11] === 'BUFF' && PET_AURA.has(f[9].toLowerCase())) { const q = P(owner, null); if (!q.petAur) q.petAur = []; if (q.petAur.length < 4000) q.petAur.push([t, f[9], stacks, dg]); }
@@ -5436,6 +5446,7 @@ function analyze(item, text, opts) {
       }
       case 'SPELL_AURA_REMOVED':
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
+        if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t);
           const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }

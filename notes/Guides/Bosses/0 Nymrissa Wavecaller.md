@@ -1,6 +1,6 @@
 # Nymrissa Wavecaller (listed by Mythic Trap as "Boss #1" of The Venomous Abyss)
 
-Read Oct 19 2026 from Mythic Trap only. Wowhead and Icy Veins list just 8 bosses (Nek'zali first) and don't mention her, so she may be a side or optional encounter, or added later. **Check before building anything for her.** Spell IDs come from Mythic Trap.
+Read Oct 19 2026 from Mythic Trap only. Wowhead and Icy Veins list just 8 bosses (Nek'zali first) and don't mention her, but she is real: Warcraft Logs lists her as encounter 3379 in The Venomous Abyss (zone 53), checked Oct 19 2026. Wowhead and Icy Veins had no guide for her yet. Spell IDs come from Mythic Trap.
 
 - Single phase, 6-minute enrage (**Unending Tides#1294867**).
 - **Alluring Bubble#1257717**: a bubble in the middle lures Murloc adds from several spots. Kill them before they reach it (they're empowered when it pops).
