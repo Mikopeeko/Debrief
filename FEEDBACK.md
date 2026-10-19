@@ -261,6 +261,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Noticed: Frost Mage's burst is read from Icy Veins, which Wolfthorn's Frost Mage never pressed, so the tile shows "no burst
   cooldown pressed". Worth checking whether Frost's burst in Midnight is a different spell.
 
+## 2026-10-19, round 253: Importing a note opens the pull it's for (your note)
+- [x] **A note isn't tied to the pull you have open.** On Assignments, paste a note: Debrief reads its boss from its first
+  line, finds the pull with its exact roster (the log you have open first, then the saved pulls of your teams and your
+  character) and opens it, from Warcraft Logs when it's another night. The note is saved under its own boss.
+- [x] The box on top says where it went: "Opened Thu, Oct 15, pull 12: the pull with this note's exact group."
+- [x] No pull anywhere has its group: it stays, saved for its boss, and says the closest pull and who wasn't there (one
+  message now, it repeated itself).
+- [x] A note's first line with its difficulty as a number (16) is read as Mythic for the saved-pull search.
+- [x] Checked on real reports: from another boss in the same log it jumped to The Coiled Altar pull 13; from another
+  guild's report it opened our Oct 15 night at pull 12; a different group's note stayed and said so; no errors.
+
 ## 2026-10-19, round 252: A note matches only the exact roster (your call)
 - [x] **None missing:** a note is used on a pull only when every player it names was in it (it allowed 2 missing).
 - [x] **Who wasn't there, by name:** "Not here: Zorbak, Quilla", so a misspelled name in the note is easy to spot, with

@@ -10974,7 +10974,8 @@ function noteScan(text, boss) {
   const encId = +hd.encounterid || 0, byId = encId ? saved.find((v) => +v.id === encId) : null;
   const known = new Set(E.PACKS.map((p) => p.encounter)), byName = hd.name && known.has(hd.name) ? hd.name : null;
   const nBoss = (byId && byId.boss) || byName || null, dif = hd.difficulty || null, forBoss = nBoss || boss;
-  const sameDif = (v) => !dif || String(v.diff || '').toLowerCase().slice(0, 3) === String(dif).toLowerCase().slice(0, 3);
+  const difW = { 14: 'normal', 15: 'heroic', 16: 'mythic' }[String(dif || '').trim()] || String(dif || '').toLowerCase();
+  const sameDif = (v) => !dif || String(v.diff || '').toLowerCase().slice(0, 3) === difW.slice(0, 3);
   const nights = new Map();
   // (the exact roster (your note, Oct 19): each saved pull on its own, matched by the same rule a pull uses to pick its
   // note, every one of the note's players there; a night fits when any of its pulls does. Each night keeps its first
@@ -10982,7 +10983,7 @@ function noteScan(text, boss) {
   for (const v of saved) { if (v.boss !== forBoss || !sameDif(v)) continue; const n = nightOf(v.at); let o = nights.get(n); if (!o) nights.set(n, o = { at: v.at, pulls: 0, ps: [], v, wcl: null, wAt: 0, hit: 0, closest: null }); o.pulls++; if (v.at < o.at) o.at = v.at;
     const inV = new Set((v.players || []).map(low)), f = rosterMatch(names, inV);
     if (f.found > o.hit) { o.hit = f.found; o.closest = v.pull; }
-    if (f.match) { o.ps.push(v.pull); if (v.wcl && v.wcl.code && (!o.wcl || v.at < o.wAt)) { o.wcl = v.wcl; o.wAt = v.at; } } }
+    if (f.match) { o.ps.push(v.pull); if (v.wcl && v.wcl.code && (!o.wcl || v.at < o.wAt)) { o.wcl = v.wcl; o.wAt = v.at; o.wPull = v.pull; } } }
   for (const o of nights.values()) { o.match = o.ps.length > 0; if (!o.match) o.wcl = null; }
   let best = null; for (const o of nights.values()) if (!best || o.match > best.match || (o.match === best.match && (o.hit > best.hit || (o.hit === best.hit && o.at > best.at)))) best = o;
   const everyone = new Set(); for (const v of saved) for (const p of v.players || []) everyone.add(low(p));
@@ -10997,21 +10998,26 @@ function noteScanBox(sc) {
   if (sc.moved) return '<div class="panel ah-exbar nscan"><span>' + (sc.from ? '<b>Moved here from ' + esc(sc.from) + '.</b> <span class="sub">The note is saved for ' + esc(sc.moved) + ' now, and its pulls use it.</span>'
     : '<b>Moved to ' + esc(sc.moved) + '.</b> <span class="sub">It\'s saved there now. Open a pull of ' + esc(sc.moved) + ' to see it in your list of notes.</span>') + '</span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
   const r = sc.r, out = [], fight = r.nBoss ? esc(r.nBoss) + (r.dif ? ' (' + esc(r.dif) + ')' : '') : '';
-  if (r.wrongBoss) out.push("Its first line says it's for " + fight + ', but you saved it on ' + esc(sc.boss) + '.');
+  if (sc.went) out.push('Opened ' + (sc.went.night ? esc(nightLabel(sc.went.night)) + ', ' : '') + 'pull ' + sc.went.pull + ': the pull with this note\'s exact group.');
+  if (sc.savedFor) out.push('Saved for ' + esc(sc.savedFor) + ', the boss its first line names.');
+  else if (r.wrongBoss && !sc.went) out.push("Its first line says it's for " + fight + ', but you saved it on ' + esc(sc.boss) + '.');
   else if (fight) out.push('It\'s for ' + fight + '.');
+  if (sc.openErr) out.push("Its night couldn't be opened: " + esc(sc.openErr));
   // (the exact roster (your note, Oct 19): the pulls of the open log it matches, by the same rule a pull uses to pick its
   // note, so it's used on those and no others; then your saved raid nights; with no match anywhere, the closest pull and why)
   const h = sc.here || {}, hp = h.pulls || [], c = h.cur, bn = esc(r.nBoss || sc.boss), N = r.names.length;
   const fitsHere = hp.length > 0;
   if (!r.wrongBoss && N) {
     if (fitsHere) out.push('It matches ' + pullRange(hp) + ' in the log you have open, so those pulls use it.' + (c && !c.match ? ' Not this pull: ' + esc(goneL(c.gone)) + (c.away === 1 ? " wasn't" : " weren't") + ' in it.' : ''));
-    else if (c) out.push("It doesn't match this pull" + (h.n > 1 ? ' or any other in the log you have open' : '') + ': ' + c.found + ' of its ' + plural(N, 'player') + (c.found === 1 ? ' was' : ' were') + " here, so it isn't used. Not here: " + esc(goneL(c.gone)) + '.');
+    else if (c) out.push("It doesn't match this pull" + (h.n > 1 ? ' or any other in the log you have open' : '') + ': ' + c.found + ' of its ' + plural(N, 'player') + (c.found === 1 ? ' was' : ' were') + " here, so it isn't used." + ((g) => (g.length ? ' Not here: ' + esc(goneL(g)) + '.' : ''))(c.gone.filter((n) => !(r.unknown || []).some((u) => u.toLowerCase() === n.toLowerCase()))));
   }
   const b0 = r.best;
   if (r.none) out.push("You don't have any saved logs yet, so it couldn't be checked against your raid nights.");
   else if (r.noPulls) out.push('None of your saved logs have ' + bn + (r.dif ? ' on ' + esc(r.dif) : '') + ' yet.');
   else if (b0 && b0.match && !(b0.wcl && b0.wcl.code === S.wclCode)) out.push('It matches your raid on ' + esc(nightLabel(b0.at)) + (r.team ? ' with ' + esc(r.team) : '') + ': ' + pullRange(b0.ps) + '.');
-  else if (!fitsHere && b0 && b0.hit && !b0.match) out.push('No saved pull has this group either. The closest is ' + esc(nightLabel(b0.at)) + ', pull ' + b0.closest + ': ' + b0.hit + ' of its ' + plural(N, 'player') + ' were there.');
+  // (the closest saved pull only when the open log said nothing, so the same miss isn't told twice)
+  else if (!fitsHere && !c && b0 && b0.hit && !b0.match) out.push('No saved pull has this group. The closest is ' + esc(nightLabel(b0.at)) + ', pull ' + b0.closest + ': ' + b0.hit + ' of its ' + plural(N, 'player') + (b0.hit === 1 ? ' was' : ' were') + ' there.');
+  else if (!fitsHere && c && !(b0 && b0.match)) out.push('No saved pull has this group either.');
   if (!r.none && r.unknown.length) out.push((r.unknown.length === 1 ? "1 name wasn't" : r.unknown.length + " names weren't") + ' in any of your saved logs: ' + esc(r.unknown.slice(0, 6).join(', ')) + (r.unknown.length > 6 ? ' and ' + (r.unknown.length - 6) + ' more' : '') + ". Check the spelling, and use character names (NSRT nicknames can't be matched yet).");
   else if (!r.none && !r.noPulls && r.names.length) out.push('Every name in it is in your saved logs.');
   const warn = r.wrongBoss || (!r.none && r.unknown.length) || (N && !fitsHere && !(r.best && r.best.match));
@@ -11271,13 +11277,16 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   if (miss) {
     const f = miss.fit, n = miss.note, when = n.saved ? ' <span class="sub">(saved ' + esc(new Date(n.saved).toLocaleDateString([], { month: 'short', day: 'numeric' })) + ')</span>' : '';
     const why = f.enc === false ? "Its first line says it's for another fight." : !f.named ? "Debrief didn't find any player names in it." : 'It names ' + plural(f.named, 'player') + ', and ' + (f.found ? 'only ' + f.found : 'none') + ' of them ' + (f.found === 1 ? 'was' : 'were') + ' in this pull. Not here: ' + esc(goneL(f.gone || [])) + '.';
-    $('#assignBox').innerHTML = asViews() + '<div class="panel nmiss"><h3>No saved note matches this group</h3>' +
+    // (a note just imported says what it found on top, as when a note fits)
+    const scB = S.noteScan && S.noteScan.boss === boss && S.noteScan.r ? noteScanBox(S.noteScan) : '';
+    $('#assignBox').innerHTML = asViews() + scB + '<div class="panel nmiss"><h3>No saved note matches this group</h3>' +
       '<p class="ah-lead">A note is used on a pull only when every player it names was there, so it never lands on a pug or another raid. If a name is spelled differently from the game, fix it in the note.</p>' +
       '<p>The closest is <b>' + esc(n.name) + '</b>' + when + '. ' + why + '</p>' +
       '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note for this group</button><button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use ' + esc(n.name) + ' anyway</button><button class="btn" type="button" data-asv="notes">See your notes</button></div></div>';
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
     $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[pullKey(r.item)] = b.dataset.nuse; notesSave(boss, o);
       for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }));
+    if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
     bindAsViews(only);
     return;
   }
@@ -11867,7 +11876,13 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   $$('#assignBox .pt-go').forEach((x) => (x.onclick = (e) => { e.preventDefault(); const id = x.getAttribute('href').slice(1), el = document.getElementById(id) || document.querySelector('#assignBox [id^="' + id + '-"]'); if (!el) return; if (el.tagName === 'DETAILS') el.open = true; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); }));
   // (saving: the note in the box replaces the one being edited, or becomes a new one; every pull of the boss is checked again)
   const redo = () => { S.noteEdit = false; S.noteEditId = null; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
-  const save = (asNew) => { if (!editN || asNew) S.asView = 'pull'; const v = $('#noteBox').value.trim(), nm = ($('#noteName').value || '').trim() || autoNoteName(v, NO.list.filter((n) => !editN || asNew || n.id !== editN.id), r), o = notesOf(boss);
+  // Importing a note (your note, Oct 19): it isn't tied to the pull that's open. Its boss comes from its first line, and the
+  // pull it's for is found by its exact roster: first in the log that's open, then in your saved pulls (your teams and your
+  // character), and that pull is opened (its report from Warcraft Logs when it's another night). The note is saved under its
+  // own boss, and only pulls with its exact roster use it. Editing a saved note keeps it where it is.
+  const save = async (asNew) => { if (!editN || asNew) S.asView = 'pull'; const v = $('#noteBox').value.trim();
+    const fresh = !editN || asNew, sc0 = v && fresh ? noteScan(v, boss) : null, tgt = (sc0 && sc0.nBoss) || boss, o = notesOf(tgt);
+    const nm = ($('#noteName').value || '').trim() || autoNoteName(v, o.list.filter((n) => !editN || asNew || n.id !== editN.id), tgt === boss ? r : null);
     // (the same note twice for one fight isn't saved: it says which saved note it already is)
     const dup = v && o.list.find((n) => !n.example && (asNew || !editN || n.id !== editN.id) && noteNorm(n.text) === noteNorm(v));
     if (dup) { S.noteScan = { boss, dup: dup.name }; S.noteEdit = false; S.noteEditId = null; assign(only); return; }
@@ -11876,14 +11891,30 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     else if (editN && !asNew) { const n = o.list.find((x) => x.id === editN.id); if (n) Object.assign(n, { name: nm, text: v, saved: Date.now(), example: false }); }
     else o.list.push({ id: sid = 'n' + Date.now().toString(36), name: asNew && editN && nm === editN.name ? nm + ' (copy)' : nm, text: v, saved: Date.now() });
     if (v) o.list = o.list.filter((n) => !n.example); // (your own note replaces the example)
-    if (o.pick !== 'auto' && !o.list.some((n) => n.id === o.pick)) o.pick = 'auto'; notesSave(boss, o);
-    // (then it's checked against your saved logs: its fight and its roster, shown on top)
-    if (v) { const sc = noteScan(v, boss), low = (p) => p.name.split('-')[0].toLowerCase(), here = { pulls: [], cur: null, n: 0 }, seen = new Set();
-      // (every pull of this boss in the log that's open, at this difficulty, opened or not (Warcraft Logs lists each one's
-      // players): which ones have the note's exact roster)
-      for (const b of S.index.bosses.filter((x) => x.boss === boss && x.diffId === r.item.diffId)) { const rr = CACHE.get(b), ro = rr ? [...rr.players.values()].filter((p) => p.name).map(low) : (b.roster || []).map((n) => n.split('-')[0].toLowerCase()); if (!ro.length) continue; here.n++;
-        const inB = new Set(ro); inB.forEach((x) => seen.add(x)); const f = rosterMatch(sc.names, inB); if (f.match) here.pulls.push(b.pull); if (rr === r) here.cur = f; }
-      sc.unknown = sc.unknown.filter((n) => !seen.has(n.toLowerCase())); S.noteScan = { boss, id: sid, r: sc, here }; } else S.noteScan = null; redo(); };
+    if (o.pick !== 'auto' && !o.list.some((n) => n.id === o.pick)) o.pick = 'auto'; notesSave(tgt, o);
+    if (!v) { S.noteScan = null; redo(); return; }
+    // (the open log first: every pull of the note's boss in it, opened or not (Warcraft Logs lists each one's players))
+    const sc = noteScan(v, tgt), low = (p) => p.name.split('-')[0].toLowerCase(), here = { pulls: [], items: [], cur: null, n: 0 }, seen = new Set();
+    const difOk = (x) => (tgt === boss ? x.diffId === r.item.diffId : true);
+    for (const b of S.index.bosses.filter((x) => x.boss === tgt && difOk(x))) { const rr = CACHE.get(b), ro = rr ? [...rr.players.values()].filter((p) => p.name).map(low) : (b.roster || []).map((n) => n.split('-')[0].toLowerCase()); if (!ro.length) continue; here.n++;
+      const inB = new Set(ro); inB.forEach((x) => seen.add(x)); const f = rosterMatch(sc.names, inB); if (f.match) { here.pulls.push(b.pull); here.items.push(b); } if (rr === r) here.cur = f; }
+    sc.unknown = sc.unknown.filter((n) => !seen.has(n.toLowerCase()));
+    S.noteEdit = false; S.noteEditId = null; S.tab = 'assign'; S.scope = 'pull';
+    for (const rep of CACHE.values()) if (rep.item.boss === tgt || rep.item.boss === boss) applyNote(rep);
+    const stay = here.cur && here.cur.match && tgt === boss;
+    if (!fresh || stay) { S.noteScan = { boss, id: sid, r: sc, here }; renderMain(); return; }
+    // (a pull in the open log has its exact roster: that pull opens, the latest one with it)
+    if (here.items.length) { const it = here.items[here.items.length - 1]; S.noteScan = { boss: tgt, id: sid, r: sc, here: { ...here, cur: null }, went: { pull: it.pull } }; select(it); return; }
+    // (else a saved night of your teams or your character: its report opens on the first pull with the note's roster)
+    const bn = sc.best;
+    if (bn && bn.match && bn.wcl) {
+      S.noteScan = { boss: tgt, id: sid, r: sc, here: null, went: { pull: bn.wPull, night: bn.at } };
+      if (bn.wcl.code === S.wclCode) { const it = S.index.bosses.find((x) => x.wcl && x.wcl.fight === bn.wcl.fight); if (it) { select(it); return; } }
+      const box = $('#noteLive'); if (box) box.textContent = 'Opening ' + nightLabel(bn.at) + ', pull ' + bn.wPull + '…';
+      try { await openWcl({ code: bn.wcl.code, fight: +bn.wcl.fight || null }, await wclCreds()); return; } catch (e) { S.noteScan.went = null; S.noteScan.openErr = e.message; }
+    }
+    // (no pull anywhere has its exact roster: it's saved for its boss, used nowhere yet, and the box says the closest and who wasn't there)
+    S.noteScan = { ...(S.noteScan || {}), boss, id: sid, r: sc, here, savedFor: tgt !== boss ? tgt : null }; renderMain(); };
   if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
   bindAsViews(only);
   // (the new note for a changed roster: the note with each missing player's name swapped for the one taking their place, named
