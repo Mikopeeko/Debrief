@@ -146,9 +146,29 @@ async function topKillsOf(run, v) {
     let d; try { d = await run(q, {}); } catch (e) { return []; }
     return ch.map(({ t, rank }, i) => { const x = d && d.reportData && d.reportData['k' + i], o = x && ppl(x.d, x.h); if (!o || !o.ppl.length) return null;
       const g = t.guild || o.guild || {}, sv = t.server || g.server || {};
-      return { rank, guild: g.name || '', server: sv.name || '', region: sv.region || '', dur: Math.round((t.duration || 0) / 1000), deaths: t.deaths != null ? t.deaths : o.deaths, code: t.report.code, fight: t.report.fightID, ppl: o.ppl }; }).filter(Boolean);
+      return { rank, gid: g.id || null, guild: g.name || '', server: sv.name || '', region: sv.region || '', dur: Math.round((t.duration || 0) / 1000), deaths: t.deaths != null ? t.deaths : o.deaths, code: t.report.code, fight: t.report.fightID, at: t.report.startTime || 0, ppl: o.ppl }; }).filter(Boolean);
   }));
   return { page: v.p || 1, more: !!R.hasMorePages, per, kills: got.flat() };
+}
+// How many pulls and nights a guild needed to kill a boss the first time: its reports of the boss's raid up to a day
+// after the kill in the rankings (that kill may be a later, faster one), every pull of the boss on that difficulty, the
+// same pull logged by two members counted once (starts within 20 s), and a night as a day (a raid past midnight stays
+// one night: days start at 06:00 UTC). v: { g: guild, e, d, t: the ranked kill's report start (ms) }
+const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime}}}}}`;
+const ENCZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
+async function guildProgOf(run, v) {
+  const z = await run(ENCZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
+  const at = [];
+  for (let p = 1; p <= 4; p++) {
+    const d = await run(GUILDPROG_Q, { g: v.g, z: zone, e: v.e, d: v.d, end: v.t + 86400000, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
+    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill });
+    if (!R.has_more_pages) break;
+  }
+  at.sort((a, b) => a.t - b.t);
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; continue; } pulls.push({ ...x }); }
+  const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null };
+  const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
+  return { pulls: k + 1, nights: days.size, kill: pulls[k].t, first: pulls[0].t };
 }
 // </topspec>
 async function topSpec(creds, v) {
@@ -156,8 +176,12 @@ async function topSpec(creds, v) {
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
-  if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p);
+  if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p + '&v=2'); // (v=2: answers with each guild's number)
   return topKillsOf((q, vars) => gql(creds, q, vars), v);
+}
+async function guildProg(creds, v) {
+  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t);
+  return guildProgOf((q, vars) => gql(creds, q, vars), v);
 }
 
 async function loadReport(creds, code, live) {
@@ -525,6 +549,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

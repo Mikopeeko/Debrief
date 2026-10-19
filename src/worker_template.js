@@ -135,6 +135,9 @@ const ROUTES = {
   // 20 kills of a boss from one page of the fastest, with who played what (Compare's "Raids like yours"), kept a day
   '/api/topkills': { age: 86400, run: (env, v) => topKillsOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), pg = parseInt(p.get('p'), 10) || 1; return e > 0 && [3, 4, 5].includes(d) && pg >= 1 && pg <= 40 ? { e, d, p: pg, n: 20 } : null; } },
+  // the pulls and nights a guild needed for its first kill of a boss (Compare): history, so kept a week
+  '/api/guildprog': { age: 604800, run: (env, v) => guildProgOf((q, vars) => gql(env, q, vars), v),
+    v: (p) => { const g = parseInt(p.get('g'), 10), e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), t = num(p.get('t')); return g > 0 && e > 0 && [3, 4, 5].includes(d) && t > 1.6e12 ? { g, e, d, t } : null; } },
   '/api/night': { q: () => NIGHT_Q, age: 600, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null),
     out: (d, v) => (d && d.reportData && d.reportData.report) || { error: 'Report ' + v.code + ' was not found or is private.', status: 404 } },
   '/api/deaths': { q: () => DEATHS_Q, age: 600, raw: true,

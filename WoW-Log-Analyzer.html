@@ -2950,6 +2950,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-kt { display: flex; flex-direction: column; text-align: right; font-variant-numeric: tabular-nums; } .cmp-kt .sub { font-size: 12px; }
 .cmp-kb { padding: 2px 0 16px; } .cmp-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-bottom: 12px; } .cmp-diff h4 { margin: 0 0 6px; font: 600 13.5px var(--body); color: var(--muted); }
 .cmp-ss { margin-bottom: 12px; }
+.cmp-prog { margin-bottom: 12px; padding: 10px 12px; background: var(--raised); border-radius: 8px; font-size: 14px; } .cmp-pr { display: flex; gap: 10px; } .cmp-pr + .cmp-pr { margin-top: 4px; } .cmp-prl { flex: 0 0 86px; color: var(--muted); }
 .cmp-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .cmp-go a.btn { color: var(--text); text-decoration: none; }
 @media (max-width: 640px) {
   .cmp-k > summary { grid-template-columns: 40px minmax(0, 1fr) auto; } .cmp-k > summary .cmp-m { grid-column: 2 / 4; grid-row: 2; } .cmp-k > summary .cmp-kt:last-child { display: none; }
@@ -9300,9 +9301,29 @@ async function topKillsOf(run, v) {
     let d; try { d = await run(q, {}); } catch (e) { return []; }
     return ch.map(({ t, rank }, i) => { const x = d && d.reportData && d.reportData['k' + i], o = x && ppl(x.d, x.h); if (!o || !o.ppl.length) return null;
       const g = t.guild || o.guild || {}, sv = t.server || g.server || {};
-      return { rank, guild: g.name || '', server: sv.name || '', region: sv.region || '', dur: Math.round((t.duration || 0) / 1000), deaths: t.deaths != null ? t.deaths : o.deaths, code: t.report.code, fight: t.report.fightID, ppl: o.ppl }; }).filter(Boolean);
+      return { rank, gid: g.id || null, guild: g.name || '', server: sv.name || '', region: sv.region || '', dur: Math.round((t.duration || 0) / 1000), deaths: t.deaths != null ? t.deaths : o.deaths, code: t.report.code, fight: t.report.fightID, at: t.report.startTime || 0, ppl: o.ppl }; }).filter(Boolean);
   }));
   return { page: v.p || 1, more: !!R.hasMorePages, per, kills: got.flat() };
+}
+// How many pulls and nights a guild needed to kill a boss the first time: its reports of the boss's raid up to a day
+// after the kill in the rankings (that kill may be a later, faster one), every pull of the boss on that difficulty, the
+// same pull logged by two members counted once (starts within 20 s), and a night as a day (a raid past midnight stays
+// one night: days start at 06:00 UTC). v: { g: guild, e, d, t: the ranked kill's report start (ms) }
+const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime}}}}}`;
+const ENCZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
+async function guildProgOf(run, v) {
+  const z = await run(ENCZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
+  const at = [];
+  for (let p = 1; p <= 4; p++) {
+    const d = await run(GUILDPROG_Q, { g: v.g, z: zone, e: v.e, d: v.d, end: v.t + 86400000, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
+    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill });
+    if (!R.has_more_pages) break;
+  }
+  at.sort((a, b) => a.t - b.t);
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; continue; } pulls.push({ ...x }); }
+  const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null };
+  const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
+  return { pulls: k + 1, nights: days.size, kill: pulls[k].t, first: pulls[0].t };
 }
 // </topspec>
 async function topSpec(creds, v) {
@@ -9310,8 +9331,12 @@ async function topSpec(creds, v) {
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
-  if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p);
+  if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p + '&v=2'); // (v=2: answers with each guild's number)
   return topKillsOf((q, vars) => gql(creds, q, vars), v);
+}
+async function guildProg(creds, v) {
+  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t);
+  return guildProgOf((q, vars) => gql(creds, q, vars), v);
 }
 
 async function loadReport(creds, code, live) {
@@ -9679,7 +9704,7 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -20923,14 +20948,38 @@ function cmpRaids(r, ps) {
     const bySpec = mine.map(({ p, k }) => { const th = x.ppl.filter((y) => y.c + '|' + y.s === k).sort((a, b) => b.a - a.a)[0]; if (!th) return null; const kk = cmpKind(p), v = cmpRate(r, p, kk);
       return '<tr><td><span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span> <span class="sub">' + esc(p.specName || '') + '</span></td><td>' + C(v) + '</td><td>' + esc(th.n) + ' <b>' + C(th.a) + '</b></td><td class="cmp-g">' + cmpGap(v, th.a) + '</td></tr>'; }).filter(Boolean);
     const link = 'https://www.warcraftlogs.com/reports/' + x.code + '#fight=' + x.fight;
-    return '<details class="cmp-k"><summary><span class="cmp-rk">#' + x.rank + '</span><span class="cmp-gn"><b>' + esc(x.guild || 'Unknown guild') + '</b><span class="sub">' + esc(x.server + (x.region ? '-' + x.region : '')) + '</span></span>' +
+    const gk = x.gid && x.at ? x.gid + '|' + x.at : null;
+    return '<details class="cmp-k"' + (S.cmpOpen && S.cmpOpen.has(x.code + x.fight) ? ' open' : '') + ' data-k="' + esc(x.code + x.fight) + '"' + (gk ? ' data-g="' + x.gid + '" data-at="' + x.at + '"' : '') + '><summary><span class="cmp-rk">#' + x.rank + '</span><span class="cmp-gn"><b>' + esc(x.guild || 'Unknown guild') + '</b><span class="sub">' + esc(x.server + (x.region ? '-' + x.region : '')) + '</span></span>' +
       '<span class="cmp-m"><b>' + x.same + '</b> of ' + x.of + ' specs the same<span class="cmp-mb"><i style="width:' + pct + '%"></i></span></span><span class="cmp-kt"><b>' + T(x.dur) + '</b><span class="sub">kill</span></span><span class="cmp-kt"><b>' + C(x.dps) + '</b><span class="sub">raid DPS</span></span></summary>' +
-      '<div class="cmp-kb"><div class="cmp-diff"><div><h4>They had, you didn\'t</h4>' + (they.join('') || '<span class="sub">Nothing: they had everything you had.</span>') + '</div><div><h4>You had, they didn\'t</h4>' + (you.join('') || '<span class="sub">Nothing.</span>') + '</div></div>' +
+      '<div class="cmp-kb">' + (gk ? '<div class="cmp-prog" data-gp="' + esc(gk) + '">' + cmpProgHtml(GPROG.get(gk)) + '</div>' : '') + '<div class="cmp-diff"><div><h4>They had, you didn\'t</h4>' + (they.join('') || '<span class="sub">Nothing: they had everything you had.</span>') + '</div><div><h4>You had, they didn\'t</h4>' + (you.join('') || '<span class="sub">Nothing.</span>') + '</div></div>' +
       (bySpec.length ? '<div class="cmp-scroll"><table class="cmp-vs cmp-ss"><thead><tr><th>Your player</th><th>This pull</th><th>Their best of that spec</th><th class="cmp-g">Yours vs theirs</th></tr></thead><tbody>' + bySpec.join('') + '</tbody></table></div>' : '') +
       '<div class="cmp-go"><a class="btn sm" href="' + link + '" target="_blank" rel="noopener">Open on Warcraft Logs</a><button class="btn sm" type="button" data-open="' + esc(link) + '">Open it here</button><span class="cmp-msg sub"></span></div></div></details>';
   }).join('');
   const note = '<p class="cmp-foot sub">' + (L.page > 1 ? 'Kills #' + ((L.page - 1) * 50 + 1) + ' to #' + ((L.page - 1) * 50 + ks.length) + ' by speed' : 'The 20 fastest kills') + ' of ' + esc(r.item.boss) + ' on Warcraft Logs. Raid DPS is everyone but the healers; yours this pull is <b>' + C(myDps) + '</b>' + (r.item.kill ? '' : ' (a wipe, so not quite the same thing)') + '. Damage and healing are a second while alive.</p>';
   return head + ctl + '<div class="panel cmp-list">' + (rowsH || '<p class="muted" style="margin:0">No guild by that name in these 20.</p>') + note + '</div>';
+}
+// How many pulls and nights a guild needed for its first kill (Warcraft Logs: only what they uploaded), next to your
+// raid's own, counted from the pulls of this boss saved in this browser (the nights you opened in Debrief).
+const GPROG = new Map();
+function gprogFor(r, g, at) {
+  const k = g + '|' + at; if (GPROG.has(k)) return GPROG.get(k);
+  GPROG.set(k, 'loading');
+  const done = (o) => { GPROG.set(k, o); const el = document.querySelector('#view [data-gp="' + k + '"]'); if (el) el.innerHTML = cmpProgHtml(o); };
+  WCL.guildProg(S.wclCreds, { g, e: r.item.id, d: WCL_DIFF_OF[r.item.diffId] || 5, t: at }).then((o) => done(o || { pulls: 0 })).catch((e) => { console.warn('Guild progress:', e && e.message); done({ err: true }); });
+  return 'loading';
+}
+function cmpMyProg(it) {
+  const hs = [...HIST.mem.values()].filter((h) => h.boss === it.boss && h.diffId === it.diffId && h.at).sort((a, b) => a.at - b.at); if (!hs.length) return null;
+  const k = hs.findIndex((h) => h.kill), upTo = k < 0 ? hs : hs.slice(0, k + 1), day = (t) => { const d = new Date(t - 6 * 3600000); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+  return { pulls: upTo.length, nights: new Set(upTo.map((h) => day(h.at))).size, kill: k >= 0 };
+}
+function cmpProgHtml(o) {
+  if (o == null || o === 'loading') return '<span class="sub">Counting their pulls before the first kill…</span>';
+  const me = S.rep && cmpMyProg(S.rep.item), date = (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const them = o.err ? '<span class="sub">Warcraft Logs didn\'t answer just now.</span>' : !o.kill ? '<span class="sub">Their earlier pulls aren\'t on Warcraft Logs under this guild.</span>'
+    : '<b>' + plural(o.pulls, 'pull') + '</b> over <b>' + plural(o.nights, 'night') + '</b> to their first kill <span class="sub">(' + date(o.first) + ' to ' + date(o.kill) + ', what they uploaded)</span>';
+  const mine = me ? '<b>' + plural(me.pulls, 'pull') + '</b> over <b>' + plural(me.nights, 'night') + '</b> ' + (me.kill ? 'to your first kill' : 'so far') + ' <span class="sub">(the nights opened in Debrief)</span>' : '';
+  return '<div class="cmp-pr"><span class="cmp-prl">They needed</span><span>' + them + '</span></div>' + (mine ? '<div class="cmp-pr"><span class="cmp-prl">You</span><span>' + mine + '</span></div>' : '');
 }
 function cmp() {
   const r = S.rep, ps = cmpPs(r), me = meOf();
@@ -20938,7 +20987,8 @@ function cmp() {
   if (!p) { view('<div class="panel"><p class="muted" style="margin:0">Nobody to compare in this pull.</p></div>'); return; }
   const mode = CMP_MODES.some(([k]) => k === S.cmpMode) ? S.cmpMode : 'top', all = S.scope === 'all' && r.item.kind === 'boss';
   const top = '<div class="panel cmp-head"><div class="seg" id="cmpMode">' + CMP_MODES.map(([k, l]) => '<button type="button" data-m="' + k + '"' + (k === mode ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' +
-    (mode !== 'raids' ? '<label class="cmp-l">Player ' + cmpSel('cmpMe', ps, p) + '</label>' : '') + (all ? '<span class="sub">Compare looks at one pull: pull ' + r.item.pull + '. Pick another in the pull strip.</span>' : '') + '</div>';
+    (mode !== 'raids' ? '<label class="cmp-l">Player ' + cmpSel('cmpMe', ps, p) + '</label>' : '') + (all ? (() => { const nr = nightResult(r.item), best = nr.pull && nr.pull !== r.item.pull ? nr.pull : null;
+      return '<span class="sub">Compare looks at one pull: pull ' + r.item.pull + '.</span>' + (best ? '<button class="btn sm" type="button" id="cmpBest" data-p="' + best + '">' + (nr.cls === 'good' ? 'Use the kill' : 'Use the best pull') + ' (pull ' + best + ')</button>' : ''); })() : '') + '</div>';
   const scrollY0 = window.scrollY;
   view('<div class="cmp">' + top + (mode === 'top' ? cmpTop(r, p) : mode === 'mate' ? cmpMate(r, p, ps) : cmpRaids(r, ps)) + '</div>');
   window.scrollTo({ top: scrollY0 });
@@ -20951,6 +21001,9 @@ function cmp() {
   v.querySelectorAll('#cmpSort button').forEach((b) => (b.onclick = () => { S.cmpSort = b.dataset.s; cmp(); }));
   const fd = $('#cmpFind'); if (fd) fd.oninput = () => { S.cmpFind = fd.value; clearTimeout(S._cmpT); S._cmpT = setTimeout(() => { cmp(); const e = $('#cmpFind'); if (e) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }, 250); };
   v.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => openReportLink(b.dataset.open, b.parentElement.querySelector('.cmp-msg'))));
+  v.querySelectorAll('details.cmp-k').forEach((d) => { const load = () => { if (d.open && d.dataset.g) { const o = gprogFor(r, +d.dataset.g, +d.dataset.at), el = d.querySelector('[data-gp]'); if (el) el.innerHTML = cmpProgHtml(o); } };
+    d.ontoggle = () => { S.cmpOpen = S.cmpOpen || new Set(); if (d.open) S.cmpOpen.add(d.dataset.k); else S.cmpOpen.delete(d.dataset.k); load(); }; load(); });
+  { const b = $('#cmpBest'); if (b) b.onclick = () => { const it = ITEMS.find((x) => x.kind === 'boss' && x.id === r.item.id && x.diffId === r.item.diffId && x.pull === +b.dataset.p); if (it) { setScope('pull'); select(it); } }; }
   refreshIcons();
 }
 // a parse as Warcraft Logs colours it

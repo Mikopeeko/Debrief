@@ -191,7 +191,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   Logs, from the fastest or around #100, #250 or #500, sorted by how many specs match your group, with a guild search;
   open one to see what they had that you didn't, each of your players against their best of the same spec, and open their
   log on Warcraft Logs or right here). Checked on the Ula'tek Mythic test kill, desktop and phone.
-  Not yet: Compare on the whole night (it uses the pull picked), and comparing your raid's whole group of pulls or nights.
+  **Then (Oct 19, "continue"):** opening a raid in Raids like yours also shows how many pulls and nights that guild needed
+  for its first kill (from what they uploaded to Warcraft Logs), next to yours (the nights opened in Debrief). On Whole
+  night, Compare offers "Use the kill (pull N)" (or the best pull) in one click.
 - [ ] **A Comparison tab (your note, Oct 19; this gathers the Compare notes below and the "comparison tab" note under the header):**
   its own tab with three ways to compare: (1) you against a teammate, (2) your raid against other raids with a similar
   group (the same classes and specs, or close), found by browsing or searching, and (3) you against the top players of
