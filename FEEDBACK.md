@@ -228,7 +228,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 ## 2026-10-18, round 236: Rotation is on the live site, for testing (your note)
 - [x] **Rotation is no longer greyed out on the website.** Its tab, the spec grades on Players and Pull recap, and the
   "See it in Rotation" buttons all show there now, like in the app on your PC.
-- [ ] A Discord post in #updates about it and why it needs testing (drafted for your OK).
+- [x] A Discord post in #updates about it and why it needs testing, with 5 sharp pictures of your Holy Paladin page
+  (posted by you, Oct 18). The text and pictures are in notes/Discord pictures/Rotation post.
 
 ## 2026-10-18, round 235: Mechanics, one player at a time (your note)
 - [x] **"Show one player" on top of Mechanics:** pick anyone from the list (tanks, healers, then DPS; typing a name jumps
