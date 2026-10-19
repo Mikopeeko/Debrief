@@ -262,6 +262,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Noticed: Frost Mage's burst is read from Icy Veins, which Wolfthorn's Frost Mage never pressed, so the tile shows "no burst
   cooldown pressed". Worth checking whether Frost's burst in Midnight is a different spell.
 
+## 2026-10-19, round 256: Add a note lives on Stored notes (your call)
+- [x] The main Assignments screen is back to Edit and Change note; Change note goes to Stored notes.
+- [x] Stored notes has one Add a note button at the top, beside its heading (it was inside the open boss's panel).
+- [x] Checked on a real night: both screens, and Add a note opens the note box; no errors.
+
 ## 2026-10-19, round 255: "No note for this pull", plainly (your note: "this is confusing")
 - [x] The panel when no saved note has a pull's players is one line and two buttons: "No note for this pull. None of
   your 6 saved notes for The Coiled Altar have this pull's players." Add a note, See your notes.
