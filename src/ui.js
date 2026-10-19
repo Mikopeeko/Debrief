@@ -9721,6 +9721,9 @@ function pevkChecks(reps, name, one) {
     { const sp = []; for (const q of r.players.values()) { const b = q.buffs.get('Echo'); if (!b) continue; if (q !== p && !(b.by && b.by.get(p.name))) continue; for (const [a, e] of b.sp) if (e != null && a <= t1 && e <= t1 - 0.5) sp.push([a, e]); }
       s.ecN = sp.length; s.ecBy = new Map(); s.ecLost = 0; s.m.ecl = [];
       for (const [a, e] of sp) { if (inDead(e)) continue; const k = usedBy(e); if (k && PEVK_ECHO_USE.includes(k)) s.ecBy.set(k, (s.ecBy.get(k) || 0) + 1); else if (!k && e - a >= 14) { s.ecLost++; s.m.ecl.push(e); BX('ecl', e, 'bad', T(e) + ': an Echo ran out'); } }
+      { const ends = []; for (const [a, e] of sp) { if (inDead(e)) continue; const k = usedBy(e); if (k && PEVK_ECHO_USE.includes(k)) ends.push([e, a, k]); } ends.sort((u, w) => u[0] - w[0]); const cl = [];
+        for (const [e, a, k] of ends) { const z = cl[cl.length - 1]; if (z && z.k === k && e - z.t <= 0.6) { z.n++; z.a = Math.min(z.a, a); } else cl.push({ t: e, a, k, n: 1 }); }
+        s.ramps = cl.filter((z) => z.n >= 3); }
       // (each Merithra's Blessing: how many Echoes it used up)
       s.mbE = pr("merithra's blessing").map((t) => sp.filter(([, e]) => Math.abs(e - t) <= 0.4).length); }
     // (Temporal Anomaly and Dream Breath, against their cooldowns)
@@ -9813,6 +9816,10 @@ function pevkChecks(reps, name, one) {
     { const hS = p.healS || [], L = (s.inf || []).reduce((v, q) => v + Math.max(0, (q.e || q.t + 15) - q.t), 0), inH = (s.inf || []).reduce((v, q) => v + (q.h || 0), 0), oR = (sumIn(hS, 0, t1) - inH) / Math.max(1, c.al - L);
       for (const q of s.inf || []) { q.a = q.t; q.e = q.e || Math.min(t1, q.t + 15); q.rate = (q.h || 0) / Math.max(1, q.e - q.t); q.outR = oR;
         winDetail(x, q, { names: ['Stasis', 'Stasis (Store)', 'Stasis (Release)', 'Dream Flight'], busy: s.busy, mana: true, procsWt: [['Essence Burst', (s.m['p:Essence Burst'] || []).filter((u) => typeof u === 'number')], ["Merithra's Blessing", (s.m["p:Merithra's Blessing"] || []).filter((u) => typeof u === 'number')]], setup: [{ n: 'Fire Breath', pre: 15 }] }); } }
+    { const hS = p.healS || [], tS = r.takenS || [], allH = sumIn(hS, 0, t1) / Math.max(1, c.al), usualT = sumIn(tS, 0, t1) / Math.max(1, t1), dbT = pr('dream breath'), taT = pr('temporal anomaly');
+      for (const z of s.ramps || []) { z.e = z.t; const z6 = Math.min(t1, z.t + 6); z.rate = sumIn(hS, z.t, z6) / Math.max(1, z6 - z.t); z.outR = allH; z.db = dbT.some((u) => u >= z.a - 4 && u <= z.t); z.ta = taT.some((u) => u >= z.a - 1 && u <= z.t);
+        z.dmgX = usualT > 0 ? (sumIn(tS, z.t - 1, z.t + 6) / 7) / usualT : null; z.heavy = z.dmgX != null && z.dmgX >= 1.15; winDetail(x, z, { names: [], busy: s.busy, mana: true }); }
+      s.m.rmb = (s.ramps || []).filter((z) => z.k !== "merithra's blessing").map((z) => z.t); s.m.rdb = (s.ramps || []).filter((z) => !z.db).map((z) => z.t); s.m.rhv = (s.ramps || []).filter((z) => !z.heavy).map((z) => z.t); }
     s.apl = aplPull(x, s, PEVK_APL, per, tal, ''); // (the rotation check: each cast against the priority list)
     rows.push(s); }
   // ---- the whole (one pull, or the night added up) ----
@@ -9860,6 +9867,14 @@ function pevkChecks(reps, name, one) {
   { const g = sum((s) => s.mb && s.mb.gained), u = sum((s) => s.mb && s.mb.used), ran = sum((s) => s.mb && s.mb.ran); if (g) add(gD, ran <= Math.max(1, mins / 4) ? 'ok' : ran <= Math.max(2, mins / 2) ? 'warn' : 'bad', "Merithra's Blessing", "Merithra's Blessing", ran ? ran + '<span> ran out</span>' : 'All<span> used</span>', 'You had ' + plural(g, 'Merithra\'s Blessing') + ', and used ' + u + (ran ? '. ' + ran + ' ran out.' : '. None ran out.') + (hvS('mb') >= 1000 ? ' They healed for ' + each(hvS('mb'), hvS('mbN')) + ', not counting the Reversions they left.' : ''), "p:Merithra's Blessing",
       'Merithra\'s Blessing, your apex talent, turns your next Reversion into a big bouncing heal. Dream Breath always grants one, and spending Essence can too. Getting a new one while you hold one is part of building Echoes, so that isn\'t counted, but letting one run out is. The times listed are each one that ran out.'); }
   // (Essence and Essence Burst)
+  { const rl = rows.flatMap((s) => s.ramps || []); if (rl.length) { const gR = grp('Ramps'), N = rl.length, avg = rl.reduce((v, z) => v + z.n, 0) / N, mb = rl.filter((z) => z.k === "merithra's blessing").length, db = rl.filter((z) => z.db).length, hv = rl.filter((z) => z.heavy).length;
+    add(gR, 'na', 'Echo', 'Ramps', String(N), 'You built ' + plural(N, 'ramp') + ' (3 or more Echoes spent at once), ' + avg.toFixed(1) + ' Echoes each on average.', 'ramp', 'Both guides: put out Echoes with Echo and Temporal Anomaly, then spend them all at once on one strong spell. Each card is one ramp: how long it took, what started it, what spent it, and the healing it did. It is not graded on its own.');
+    add(gR, mb / N >= 0.8 ? 'ok' : mb / N >= 0.6 ? 'warn' : 'bad', "Merithra's Blessing", "Ramps spent on Merithra's Blessing", mb + '<span>/' + N + '</span>', mb + ' of your ' + N + " ramps were spent on Merithra's Blessing.", 'rmb', "Both guides: in raid, almost every ramp is spent on Merithra's Blessing (Reversion in a pinch). 80% or more is good. The times listed are the others.");
+    if (mb / N < 0.8) gR.l[gR.l.length - 1].tip = "Spend your Echoes on Merithra's Blessing. Cast Dream Breath first, so you are sure to have it.";
+    add(gR, db / N >= 0.6 ? 'ok' : db / N >= 0.4 ? 'warn' : 'bad', 'Dream Breath', 'Ramps started with Dream Breath', db + '<span>/' + N + '</span>', db + ' of your ' + N + ' ramps had a Dream Breath in them.', 'rdb', "Icy Veins: plan each ramp around Dream Breath, because it guarantees Merithra's Blessing. Wowhead: cast Dream Breath after spending your Echoes, so it starts the next ramp. 60% or more is good. The times listed are the ramps without one.");
+    if (db / N < 0.6) gR.l[gR.l.length - 1].tip = 'Start each ramp with Dream Breath, right after your last payoff.';
+    add(gR, hv / N >= 0.5 ? 'ok' : hv / N >= 0.3 ? 'warn' : 'bad', 'Temporal Anomaly', 'Ramps spent into damage', hv + '<span>/' + N + '</span>', hv + ' of your ' + N + ' ramps were spent while the raid was taking heavy damage.', 'rhv', 'Wowhead: put out as many Echoes as you can before dangerous damage, then spend them all at once when it hits. A ramp counts as into damage when the raid took at least 1.15 times its usual damage in the 6 seconds after. Half or more is good. The times listed are the others.');
+    if (hv / N < 0.5) gR.l[gR.l.length - 1].tip = 'Hold your ramp until the damage lands, then spend it.'; } }
   const gS = grp('Essence and Essence Burst');
   { const capT = sum((s) => s.essCap), w = sum((s) => s.essW), sp = sum((s) => s.essSpent), f = w / Math.max(1, w + sp); if (rows.some((s) => s.essMax)) add(gS, f <= 0.08 ? 'ok' : f <= 0.18 ? 'warn' : 'bad', 'Echo', 'Essence at full', pct(f), 'You sat at full Essence for about ' + durW(capT) + ', about ' + Math.round(w) + ' Essence that never came, against ' + Math.round(sp) + ' you spent.', 'ess',
       'Essence keeps coming back on its own, but not while you\'re full, so time at full is Echoes lost. The log only shows your Essence when you cast, so Debrief works out the rest from your own refill pace. Spend it before you\'re full. The top players on this boss lose about 7%, so 8% or less is good. The times listed are the stretches of 2 seconds or more at full.'); }
@@ -9947,17 +9962,22 @@ function pevkChecks(reps, name, one) {
   const infCard = (q) => { const st = q.n >= 2.5 ? 'ok' : q.n >= 1.8 ? 'warn' : 'bad';
     return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '–' + T(q.e || q.t + 15) + '</b><span class="sub">' + plural(q.n, 'Emerald Blossom') + '</span></div>' +
       (q.rate != null ? '<div class="spc-wv">' + C(q.rate) + '<span> HPS</span></div>' + (q.outR > 0 ? '<div class="spc-wo">Rest of the pull: ' + C(q.outR) + '</div>' : '') : '') + '<div class="spc-wc spc-chk">' + winTagsHtml(q) + '</div>' + winLowerHtml(q) + '</div>'; };
+  const rampCard = (z) => { const st = z.k === "merithra's blessing" && z.heavy ? 'ok' : z.k === "merithra's blessing" || z.heavy ? 'warn' : 'bad', ck = (ok, t2) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t2) + '</span>';
+    return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + z.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(z.a) + '–' + T(z.t) + '</b><span class="sub">' + plural(z.n, 'Echo').replace('Echos', 'Echoes') + ' on ' + esc(spellNm(z.k)) + '</span></div>' +
+      '<div class="spc-wv">' + C(z.rate) + '<span> HPS, the 6 seconds after</span></div><div class="spc-wo">Rest of the pull: ' + C(z.outR) + '</div><div class="spc-wc spc-chk">' + ck(z.db, 'Dream Breath in it') + (z.ta ? ck(true, 'Temporal Anomaly in it') : '') + ck(z.heavy, z.heavy ? 'Into heavy damage' : 'Not into heavy damage') + '</div>' + winLowerHtml(z) + '</div>'; };
   const infW = rows.flatMap((s) => s.inf || []).map((q) => ({ t: q.t, e: q.e || q.t + 15 }));
   const VIZ = { apl: () => (one && rows.length === 1 && rows[0].apl && rows[0].apl.log ? aplWhere(rows[0].apl.log, infW, rows[0].len, { n: 'Inner Flame' }, { n: 'Essence' }) : aplViz(aplSl)), stc: () => { if (!one) return ''; const l = rows.flatMap((s) => s.st || []); if (!l.length) return ''; return '<div class="spc-ws">' + l.map((q) => { const ok = q.got.length && q.got.every((k) => goodSt.includes(k)), cb = ok && stCombo(q);
       return '<div class="spc-w ' + (ok ? 'ok' : 'bad') + '" role="button" tabindex="0" data-mt="' + q.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(q.t) + '</b><span class="sub">' + (cb ? 'The guide\'s combo' : ok ? 'Strong spells' : 'A weaker spell') + '</span></div><div class="spc-wv">' + (q.heal >= 1000 ? C(q.heal) : '—') + '<span> healing, about</span></div><div class="spc-wc">' + q.got.map((k) => '<span title="' + esc(spellNm(k)) + '">' + spellIcon(0, spellNm(k)) + '</span>').join('') + '</div></div>'; }).join('') + '</div>'; },
-    inf: () => { if (!one) return ''; const l = rows.flatMap((s) => s.inf || []); return l.length ? '<div class="spc-ws">' + l.map(infCard).join('') + '</div>' : ''; } };
+    inf: () => { if (!one) return ''; const l = rows.flatMap((s) => s.inf || []); return l.length ? '<div class="spc-ws">' + l.map(infCard).join('') + '</div>' : ''; },
+    ramp: () => { if (!one) return ''; const l = rows.flatMap((s) => s.ramps || []); return l.length ? '<div class="spc-ws">' + l.map(rampCard).join('') + '</div>' : ''; } };
   // (where the Echoes went, as a bar)
   { const by = new Map(); let lost = 0; for (const s of rows) { for (const [k, v] of s.ecBy) by.set(k, (by.get(k) || 0) + v); lost += s.ecLost; } const tot = [...by.values()].reduce((v, y) => v + y, 0) + lost; const g = groups.find((x) => x.t === 'Echo and Temporal Anomaly');
     if (tot && g) MERGE['Echo and Temporal Anomaly'].det = spcBarRow(0, 'Your Echoes', [...by].sort((a, b) => b[1] - a[1]).map(([k, v], i) => [spellNm(k), v, SPC_PC[i % SPC_PC.length]]).concat(lost ? [['ran out', lost, '', 'w']] : []), tot, plural(tot, 'Echo') .replace('Echos', 'Echoes')); }
   const SH = sharedChecks({ rows, per, D: PEVK_D, add, grp, heroN, spec: 'Preservation Evoker', gC, ic: 'Living Flame' });
   Object.assign(VIZ, SH.VIZ); Object.assign(MERGE, SH.MERGE); Object.assign(WT, SH.WT, { stl: 1, fbs: 1, 'win:cast': 1.5, 'win:proc': 1 });
-  if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log); if (c.k === 'inf' && (rows[0].inf || []).length) { c.cards = rows[0].inf.map(infCard); c.cardsL = 'Each Inner Flame, side by side'; } }
-  const LAYOUT = [['Rotation', [['Casting', ['abc', 'lfa'].concat(SH.keys.cast)], ['Your priority', ['apl']], ['Echo and Temporal Anomaly', ['ta', 'ecl', 'ecu', 'ecm']], ["Dream Breath and Merithra's Blessing", ['db', 'dbr', 'dbec', 'p-merithra-s-blessing']]]],
+  if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log); if (c.k === 'inf' && (rows[0].inf || []).length) { c.cards = rows[0].inf.map(infCard); c.cardsL = 'Each Inner Flame, side by side'; } if (c.k === 'ramp' && (rows[0].ramps || []).length) { c.cards = rows[0].ramps.map(rampCard); c.cardsL = 'Each ramp, side by side'; } }
+  MERGE.Ramps = { ic: 'Echo', main: 'ramp', lead: "Both guides: build Echoes with Echo and Temporal Anomaly, start the ramp with Dream Breath (it guarantees Merithra's Blessing), then spend them all at once on Merithra's Blessing when the damage hits." }; Object.assign(WT, { ramp: 0, rmb: 1.5, rdb: 1, rhv: 1 });
+  const LAYOUT = [['Rotation', [['Casting', ['abc', 'lfa'].concat(SH.keys.cast)], ['Your priority', ['apl']], ['Echo and Temporal Anomaly', ['ta', 'ecl', 'ecu', 'ecm']], ['Ramps', ['ramp', 'rmb', 'rdb', 'rhv']], ["Dream Breath and Merithra's Blessing", ['db', 'dbr', 'dbec', 'p-merithra-s-blessing']]]],
     ['Resources', [['Essence and Essence Burst', ['ess', 'p-essence-burst', 'te', 'ebh']], ['Mana', ['mana', 'som', 'mnx']]]],
     ['Cooldowns', [[stasisT ? 'Stasis and Inner Flame' : 'Dream Flight and Inner Flame', ['stc', 'stl', 'cd-stasis', 'cd-dream-flight', 'inf', 'fbs', 'win-cast', 'win-proc']], ['Other cooldowns', ['cd-tip-the-scales', 'cd-rewind', 'fbr', 'cd-util']]]]];
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
@@ -11512,13 +11532,47 @@ function specRows(reps, one) {
 }
 const specHead = (reps) => { const rows = specRows(reps, reps.length === 1); return { v: rows.length + '<span> ' + (rows.length === 1 ? 'player' : 'players') + '</span>', s: Object.keys(SPEC_CHECKS).length + ' specs: every one that\'s common in Mythic raids' }; };
 let SPC_REPS = [], SPC_AK = '';
+// Rotation, under construction (your idea, Oct 19): a little building site across the top of every Rotation page, drawn here
+// (no images): a crane swinging a steel beam, a worker waving it in, one hammering on the scaffolding, one carrying a plank, and
+// caution tape. The page under it works as before. On a phone the far side (cone, bricks, the plank carrier) is left out.
+function czMan(x, y, kind) {
+  const mo = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const rot = (v, d) => mo ? '<animateTransform attributeName="transform" type="rotate" values="' + v + '" dur="' + d + '" repeatCount="indefinite"/>' : '';
+  const walk = kind === 'carry', leg = (dx, s) => '<g><rect x="' + dx + '" y="-18" width="5" height="16" rx="2" fill="#34466e"/><rect x="' + (dx - 1) + '" y="-3" width="7.5" height="3.5" rx="1.5" fill="#4a3322"/>' +
+    (walk ? rot((s * 16) + ' ' + (dx + 2.5) + ' -18;' + (-s * 16) + ' ' + (dx + 2.5) + ' -18;' + (s * 16) + ' ' + (dx + 2.5) + ' -18', '.8s') : '') + '</g>';
+  const arm = kind === 'hammer' ? '<g><rect x="0" y="-34" width="13" height="4.5" rx="2" fill="#f08a24"/><circle cx="13" cy="-31.8" r="2.6" fill="#e2b48e"/><rect x="12" y="-44" width="2.2" height="13" rx="1" fill="#8a5a2b"/><rect x="8.5" y="-47.5" width="9" height="4.5" rx="1" fill="#9aa4b2"/>' + rot('-45 2 -32;12 2 -32;-45 2 -32', '.6s') + '</g>'
+    : kind === 'wave' ? '<g><rect x="0" y="-46" width="4.5" height="14" rx="2" fill="#f08a24"/><circle cx="2.2" cy="-47.5" r="2.6" fill="#e2b48e"/>' + rot('-18 2 -32;22 2 -32;-18 2 -32', '1.1s') + '</g>'
+    : kind === 'carry' ? '<rect x="1" y="-38" width="4.5" height="7" rx="2" fill="#f08a24"/><rect x="-25" y="-39" width="50" height="4.5" rx="1" fill="#b98a52" stroke="#8a6438" stroke-width=".8"/><circle cx="3.3" cy="-38" r="2.4" fill="#e2b48e"/>' : '';
+  const body = '<rect x="-2.5" y="-33" width="4.5" height="15" rx="2" fill="#c96d1c"/>' + leg(-6, 1) + leg(1, -1) +
+    '<rect x="-8" y="-35" width="16" height="18" rx="4" fill="#f08a24"/><rect x="-8" y="-28.5" width="16" height="2.6" fill="#f3efd6" opacity=".85"/><rect x="-8" y="-19.5" width="16" height="2.5" fill="#5a3b1e"/>' +
+    '<circle cx="1" cy="-41" r="5.5" fill="#e2b48e"/><circle cx="3.6" cy="-41.6" r=".8" fill="#2a2a2a"/><path d="M-5.5,-44 a6.5,6 0 0 1 13,0 z" fill="#ffc83a"/><rect x="-6.5" y="-45" width="16" height="2.4" rx="1.2" fill="#e6a923"/>' + arm;
+  return '<g transform="translate(' + x + ' ' + y + ')">' + body + '</g>';
+}
+function rotSite() {
+  const mo = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches), G = '#e6b450';
+  let tw = '', jb = ''; for (let y = 104; y > 18; y -= 10) tw += 'M44,' + y + ' L56,' + Math.max(18, y - 5) + ' L44,' + Math.max(18, y - 10) + ' ';
+  for (let x = 14; x < 224; x += 10) jb += 'M' + x + ',19 L' + (x + 5) + ',12 L' + (x + 10) + ',19 ';
+  const crane = '<rect x="36" y="100" width="28" height="5" fill="#6f6448"/><rect x="44" y="18" width="12" height="86" fill="none" stroke="' + G + '" stroke-width="2"/><path d="' + tw + '" fill="none" stroke="' + G + '" stroke-width="1.2"/>' +
+    '<path d="M44,12 L50,0 L56,12 M50,0 L18,12 M50,0 L205,12" fill="none" stroke="' + G + '" stroke-width="1.2"/><rect x="14" y="12" width="210" height="7" fill="none" stroke="' + G + '" stroke-width="1.6"/><path d="' + jb + '" fill="none" stroke="' + G + '" stroke-width="1"/>' +
+    '<rect x="14" y="19" width="22" height="11" rx="1" fill="#5d6472"/><rect x="56" y="19" width="14" height="12" rx="2" fill="' + G + '"/><rect x="60" y="21" width="7" height="5" rx="1" fill="#9fd0ff" opacity=".6"/><rect x="192" y="19" width="10" height="4" fill="#9aa4b2"/>' +
+    '<g><line x1="197" y1="23" x2="197" y2="58" stroke="#c9ced8" stroke-width="1.2"/><path d="M197,58 L172,66 M197,58 L222,66" stroke="#c9ced8" stroke-width="1"/><circle cx="197" cy="58" r="2" fill="#9aa4b2"/>' +
+    '<rect x="166" y="66" width="62" height="8" fill="#7f93ad"/><rect x="166" y="66" width="62" height="2" fill="#a7b8cc"/><rect x="166" y="72" width="62" height="2" fill="#5f7089"/>' + (mo ? '<animateTransform attributeName="transform" type="rotate" values="-4 197 23;4 197 23;-4 197 23" dur="5s" repeatCount="indefinite"/>' : '') + '</g>';
+  const scaf = '<path d="M252,104 L252,34 M306,104 L306,14 M358,104 L358,34" stroke="#8b93a3" stroke-width="3"/><path d="M252,104 L306,71 M306,104 L358,71 M252,66 L306,39 M306,66 L358,39" stroke="#6c7381" stroke-width="1.5"/>' +
+    '<rect x="246" y="66" width="118" height="5" rx="1" fill="#b98a52"/><rect x="246" y="34" width="118" height="5" rx="1" fill="#b98a52"/><path d="M324,66 L327,56 L339,56 L342,66 z" fill="#9aa4b2"/><rect x="323" y="54" width="20" height="3" rx="1" fill="#c9ced8"/>';
+  const far = '<g class="cz-far"><rect x="372" y="96" width="14" height="8" fill="#a8553a"/><rect x="387" y="96" width="14" height="8" fill="#a8553a"/><rect x="379" y="88" width="14" height="8" fill="#b9634a"/>' +
+    '<path d="M410,104 L417,82 L424,104 z" fill="#f08a24"/><rect x="413" y="91" width="8" height="3" fill="#f3efd6"/><rect x="406" y="102" width="22" height="3" rx="1" fill="#c96d1c"/>' +
+    '<g>' + (mo ? '<animateTransform attributeName="transform" type="translate" values="0 0;70 0;0 0" dur="12s" repeatCount="indefinite"/>' : '') +
+    '<g transform="translate(455 104)"><g>' + (mo ? '<animateTransform attributeName="transform" type="scale" values="1 1;-1 1" keyTimes="0;.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/>' : '') + czMan(0, 0, 'carry') + '</g></g></g></g>';
+  const svg = '<svg class="cz-svg" viewBox="0 0 540 112" aria-hidden="true" focusable="false"><rect x="0" y="104" width="540" height="8" fill="#232733"/>' + crane + scaf + czMan(140, 104, 'wave') + czMan(288, 34, 'hammer') + far + '</svg>';
+  return '<div class="cz-site" role="note"><div class="cz-note"><div class="cz-t">Under construction</div><p>Our crew is still building the Rotation pages. Everything below works, but the checks and their wording may change.</p></div><div class="cz-scene">' + svg + '</div></div>';
+}
 // (your call, Oct 19: no chart. The tab opens straight on one player's page, yours when you're in the pull (the character saved as
 // you), with their names above it as buttons grouped by role; a click swaps the page. Only the shown player's checks are worked out)
 function specView(reps, one) {
   SPC_REPS = reps;
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && SPEC_CHECKS[p.specName]) pm.set(p.name, p);
   const ps = [...pm.values()], me = meOf(), meN = me && pm.has(me.name) ? me.name : groups().filter((g) => g.kind === 'char').map((g) => g.name).find((n) => pm.has(n)) || null, byN = (a, b) => a.name.localeCompare(b.name);
-  if (!ps.length) return '<div class="panel"><p class="muted" style="margin:0">None of these players\' specs has a Rotation page yet. Rotation covers every spec that\'s common in Mythic raids.</p></div>';
+  if (!ps.length) return rotSite() + '<div class="panel"><p class="muted" style="margin:0">None of these players\' specs has a Rotation page yet. Rotation covers every spec that\'s common in Mythic raids.</p></div>';
   const ROLES = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']], inRole = (k) => ps.filter((p) => (p.role || 'dps') === k).sort(byN);
   if (!S.specSel || !pm.has(S.specSel)) S.specSel = meN || ROLES.flatMap(([k]) => inRole(k))[0].name;
   // (your pick, Oct 19: no buttons above the page; a "Change player" dropdown beside the player's name in its header, everyone
@@ -11528,7 +11582,7 @@ function specView(reps, one) {
   const x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one), x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
   const ak = S.specSel + '|' + (one ? (S.rep && S.rep.item ? S.rep.item.pull : '') : 'all'), an = ak !== SPC_AK ? ' spc-anim' : ''; SPC_AK = ak;
   const page = x ? '<div class="pf-inl pf-srcd spc-v' + an + '">' + x.html + '</div>' + (x.wait ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') : '<p class="muted" style="margin:10px 0 0">No Rotation page for ' + esc(S.specSel) + (one ? ' this pull' : ' over these pulls') + '.</p>';
-  return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
+  return rotSite() + '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
 }
 // The Casts view: one pull (a row of every cast per player, a bar per player against their spec's pace, the picked
 // player's spells and gaps) or the night (the same, added up). list: [{ r, w0, w1, end }]. Returns { html, head }.
