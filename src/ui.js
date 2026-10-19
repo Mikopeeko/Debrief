@@ -3844,7 +3844,17 @@ function miniMap(mp, pmap) {
   const bpts = mp.frames ? mp.frames.flatMap((f) => f.pts) : pts;
   const fx0r = Math.min(...bpts.map(sx)), fx1r = Math.max(...bpts.map(sx)), fy0r = Math.min(...bpts.map(sy)), fy1r = Math.max(...bpts.map(sy));
   // ("Zoom to mechanic" frames everyone, or the mechanic itself when the map names it: focus { x, y, r } in yards)
-  const fc = mp.focus, span = fc ? Math.max(30, fc.r * 3.2) : Math.max(fx1r - fx0r, fy1r - fy0r, 30), fcx = fc ? fc.x : (fx0r + fx1r) / 2, fcy = fc ? -fc.y : (fy0r + fy1r) / 2;
+  // (no focus named: frame the players the map is about (ringed, red, amber, green) and its circles, when there are some and they
+  // aren't already everyone; a soak's 8 players, not the 20 spread over the room (audit, Oct 19: tiles showed the whole room))
+  let fc = mp.focus;
+  if (!fc) { const inv = new Set([...(mp.hl || []), ...(mp.good || []), ...(mp.bad || []), ...(mp.warn || [])]), ip = (mp.pts && mp.pts.length ? mp.pts : bpts).filter((p) => inv.has(p.guid)); // (where they were at the map's key moment, not over the whole clip)
+    // (a circle counts with its size: one that follows a player is where they were)
+    const at0 = new Map((mp.pts && mp.pts.length ? mp.pts : bpts).map((p) => [p.guid, p]));
+    const rp = (mp.rings || []).filter((g) => (!g.guid || inv.has(g.guid)) && (g.t0 == null || mp.t == null || (mp.t >= g.t0 - 0.2 && mp.t <= g.t0 + (g.dur || 12)))).map((g) => { const q = g.x != null ? g : g.guid ? at0.get(g.guid) : null; return q ? { x: q.x, y: q.y, r: Math.min(15, g.r || 0) } : null; }) /* (a huge area, like a 40-yard blast, doesn't pull the view out to the room) */.filter(Boolean), all = ip.map((p) => ({ x: p.x, y: p.y, r: 0 })).concat(rp);
+    if (all.length && ip.length < new Set(bpts.filter((p) => p.kind === 'player').map((p) => p.guid)).size * 0.75) {
+      const x0 = Math.min(...all.map((p) => p.x - p.r)), x1 = Math.max(...all.map((p) => p.x + p.r)), y0 = Math.min(...all.map((p) => -p.y - p.r)), y1 = Math.max(...all.map((p) => -p.y + p.r));
+      fc = { x: (x0 + x1) / 2, y: -(y0 + y1) / 2, r: Math.max(8, Math.max(x1 - x0, y1 - y0) / 2.4) }; } }
+  const span = fc ? Math.max(30, fc.r * 3.2) : Math.max(fx1r - fx0r, fy1r - fy0r, 30), fcx = fc ? fc.x : (fx0r + fx1r) / 2, fcy = fc ? -fc.y : (fy0r + fy1r) / 2;
   const fx0 = fcx - span * 0.6, fy0 = fcy - span * 0.6, fs = span * 1.2; // focus square, in yards
   const W = 480, yd = W / fs; // svg units per yard (icons are sized for the focus view)
   const A = ARENAS[S.rep.item.boss];
@@ -4585,7 +4595,10 @@ function rowText(s, row) {
   const stems = (w) => [w, w.replace(/s$/, ''), w.replace(/es$/, ''), w.replace(/d$/, '')].filter((x) => x.length >= 3);
   const has = (lv, w) => stems(w).some((x) => new RegExp('(^|[^\\p{L}])' + x, 'u').test(lv));
   const label = (col, v) => { const w = col.toLowerCase(), lv = v.toLowerCase(), ws = w.split(/\s+/);
-    if (lv.startsWith(w)) return v; if (w === 'died') return has(lv, w) ? v : v + ' died';
+    if (lv.startsWith(w) || lv.includes(w)) return v; if (w === 'died') return has(lv, w) ? v : v + ' died';
+    // (a value that's already a phrase reads on its own: "died with it", not "Dispelled by died with it"; "still alive at the
+    // intermission", not "At the intermission still alive at the intermission")
+    if (ws.length > 1 && /^[a-z]/.test(v) && /\s/.test(v.trim())) return v;
     if (ws.length === 1) return has(lv, w) ? v : col + ' ' + v;
     return /^\d[\d.,]*\s+\S+$/.test(v) && has(lv, ws[0]) ? v + ' ' + ws.slice(1).join(' ') : col + ' ' + v; };
   const flat = (t) => String(t).replace(/\s*\(([^()]*)\)/g, ', $1');
