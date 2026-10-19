@@ -6,7 +6,12 @@ Every session that touches a spec, a rotation check, a boss module or coaching t
 
 - `Classes/<Spec>.md` — one file per spec: rotation (raid first), cooldowns and when to press them, talents and hero
   trees, stats, consumables, tier set, and where the two guides disagree.
-- `Bosses/<Boss>.md` — one file per boss: every mechanic on Heroic and Mythic, and how the guides solve it.
+- `Bosses/<n> <Boss>.md` — one file per boss (Venomous Abyss 1-8, Kith'ix 9, Nymrissa 0 = unconfirmed): every mechanic on
+  Normal/Heroic/Mythic and how the guides solve it. Boss sources: Wowhead (cheat sheet + journal), Icy Veins, Mythic Trap
+  (structured page data), and Tactyks' Mythic YouTube guides (read from the auto captions). The older `notes/<Boss> research.md`
+  files (Method guides + Wolfthorn's logs: spell IDs, timings, thresholds) are still the detail source for the fight modules.
+- How to read YouTube captions: open the video in the built-in browser, wait out the ad, mute, turn captions on through the
+  player API, then fetch the `timedtext` URL the player requested (it carries a token; a hand-built URL returns nothing).
 - `Shared.md` — facts that are the same for many specs (consumables, stat diminishing returns, Omnium Folio).
 
 Rules for these notes
