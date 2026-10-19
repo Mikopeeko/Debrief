@@ -15831,16 +15831,31 @@ const dbfTo = (d) => (!d.ability || d.ability === 'Melee' ? (d.killer && d.kille
 const dbfTimes = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
 // (the phase a label starts with, like "P2" in "P2 · Malacrass 66%": raid damage is only compared within the same phase)
 const dbfPhase = (lab) => { const m = String(lab || '').match(/^(P\d+|Int\w*)/i); return m ? m[1].toUpperCase() : ''; };
+// (Oct 19, your call: "as if you're the raid lead explaining what went wrong to the raid". "We" for the raid, a name and "you"
+// for one player's own death, and each problem with its fix: the first sentence of the mistake's own advice. The one thing to
+// fix first is the "Next pull" line at the top, and isn't repeated in the list)
+const dbfTip1 = (t) => { const x = String(t || '').replace(/<[^>]+>/g, '').trim(), m = x.match(/^.*?[.!?](?=\s|$)/); return (m ? m[0] : x).trim(); };
+// (each mechanic's fix from a set of pulls' mistakes, by its name in lower case: the player's own when there's one, else the
+// raid's most common one)
+const dbfFixer = (reps) => { const ms = reps.flatMap((r) => keptMistakes(r)).filter((m) => m.fix), lc = (x) => String(x || '').toLowerCase();
+  return (name, who) => { const k = lc(name); if (!k) return ''; const own = who && ms.find((x) => lc(x.mechanic) === k && x.player === who); if (own) return dbfTip1(own.fix);
+    const n = new Map(); for (const x of ms) if (lc(x.mechanic) === k) { const t = dbfTip1(x.fix); n.set(t, (n.get(t) || 0) + 1); } const top = [...n].sort((a, b) => b[1] - a[1])[0]; return top ? top[0] : ''; }; };
+// (a Mechanics section's name the mistakes use: its spell, else its title without the part in brackets)
+const dbfSecName = (s) => (s.spell && s.spell[1] ? s.spell[1] : shortT(s.title).replace(/\s*\(.*$/, ''));
+const dbfUs = (n) => (n === 1 ? 'one of us' : n + ' of us');
 function dbfPull(o) {
   const { r, prev, isKey, isBest, delta, cd, one } = o, A = dbfStats(r), B = prev ? dbfStats(prev) : null, it = r.item;
   const nowLab = o.nowLab || (A.label !== 'wipe' ? A.label : ''), prevLab = o.prevLab || (B && B.label !== 'wipe' ? B.label : 'a wipe');
   const pm = new Map(); for (const p of r.players.values()) if (p.name) pm.set(p.name, p); if (prev) for (const p of prev.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
-  const at = (d) => (d.ability || d.killer ? ' to ' + dbfTo(d) : '') + ' at ' + T(d.t);
+  // (the fixes come from this pull's mistakes first, then from the other pulls of this boss already read, so a death to something
+  // nobody got a mistake for this pull still gets its fix)
+  const others = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b !== it && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
+  const at = (d) => (d.ability || d.killer ? ' to ' + dbfTo(d) : '') + ' at ' + T(d.t), fix1 = dbfFixer([r]), fixAll = dbfFixer(others), fixFor = (n, w) => fix1(n, w) || fixAll(n, w);
   // ---- a reset: one line ----
   if (dbfReset(it)) {
-    const by = new Map(); for (const d of A.ds) { const k = dbfTo(d); by.set(k, (by.get(k) || 0) + 1); } const top = [...by].sort((x, y) => y[1] - x[1])[0];
-    const died = !A.ds.length ? '' : top && top[1] === A.ds.length ? ' ' + plural(A.ds.length, 'player') + ' died to ' + top[0] + '.' : ' ' + plural(A.ds.length, 'player') + ' died' + (top ? ', ' + top[1] + ' of them to ' + top[0] : '') + '.';
-    return { reset: true, top: '<div class="panel dbf-short"><div class="dbf-k">Pull ' + it.pull + '</div><p>A reset after ' + T(A.dur || it.duration || 0) + '.' + died + ' A reset isn\'t compared with other pulls, and its mistakes aren\'t counted.</p></div>', lists: '' };
+    const by = new Map(); for (const d of A.ds) { const k = dbfTo(d); by.set(k, (by.get(k) || 0) + 1); } const top = [...by].sort((x, y) => y[1] - x[1])[0], U = dbfUs(A.ds.length);
+    const died = !A.ds.length ? '' : top && top[1] === A.ds.length ? ' ' + U.charAt(0).toUpperCase() + U.slice(1) + ' died to ' + top[0] + '.' : ' ' + U.charAt(0).toUpperCase() + U.slice(1) + ' died' + (top ? ', ' + top[1] + ' to ' + top[0] : '') + '.';
+    return { reset: true, top: '<div class="panel dbf-short"><div class="dbf-k">Pull ' + it.pull + '</div><p>That was a reset after ' + T(A.dur || it.duration || 0) + '.' + died + ' It doesn\'t count, so we won\'t compare it with the other pulls.</p></div>', lists: '' };
   }
   const P = pullSections(r), Q = prev ? pullSections(prev) : new Map(), nm = (x) => esc(shortT(x.s.title)), LV = ['major', 'moderate', 'minor'];
   const bad = [...P].filter(([, x]) => !x.s.info && x.lv && x.lv !== 'clean').sort((a, b) => LV.indexOf(a[1].lv) - LV.indexOf(b[1].lv)), clean = [...P].filter(([, x]) => x.st === 'ok');
@@ -15851,9 +15866,9 @@ function dbfPull(o) {
   const gOf = (x) => [...gm.values()].find((y) => (x.s.spell && String(x.s.spell[1]).toLowerCase() === String(y.m.mechanic).toLowerCase()) || shortT(x.s.title).toLowerCase().includes(String(y.m.mechanic).toLowerCase()));
   const isAvoid = (x) => /avoidable/i.test(x.s.title || '');
   if (one) for (let i = bad.length - 1; i >= 0; i--) { const x = bad[i][1]; if (isAvoid(x)) { if (![...avoid.values()].some((y) => y.who.has(one))) bad.splice(i, 1); continue; } const g = gOf(x); if (!g || !g.who.has(one)) bad.splice(i, 1); }
-  // ---- the short version ----
-  const s1 = it.kill ? (isKey ? 'The key was timed.' : 'Killed on pull ' + it.pull + (it.pull > 1 ? ', after ' + plural(it.pull - 1, 'wipe') : '') + '.')
-    : (nowLab ? 'Wipe at <b>' + esc(nowLab) + '</b>' : 'Wipe after ' + T(A.dur)) + (isBest ? ', the best pull so far' : delta != null && delta > 0 ? ', further than the last pull' : delta != null && delta < 0 ? ', not as far as the last pull' : '') + '.';
+  // ---- the short version: how it ended, what broke it, and the one thing to fix next pull ----
+  const s1 = it.kill ? (isKey ? 'Key timed. Nice work, everyone.' : '<b>Boss down</b> on pull ' + it.pull + (it.pull > 1 ? ', after ' + plural(it.pull - 1, 'wipe') : '') + '. Nice work, everyone.')
+    : 'We wiped ' + (nowLab ? 'at <b>' + esc(nowLab) + '</b>' : 'after ' + T(A.dur)) + (isBest ? ', our best pull so far' : delta != null && delta > 0 ? ', further than last pull' : delta != null && delta < 0 ? ', not as far as last pull' : '') + '.';
   const raidCause = A.cause && !A.cause.who && (!A.first || A.cause.t <= A.first.t + 1) ? A.cause : null;
   // (a mass death, 4 or more within 5 seconds, reads as one: how many, when, and to what. When the first death was in one, that's
   // what broke the pull, and those deaths aren't "early" deaths)
@@ -15861,11 +15876,15 @@ function dbfPull(o) {
   for (const d of A.ds.filter(massOf)) { const w = waves[waves.length - 1]; if (w && d.t - w[w.length - 1].t <= 5) w.push(d); else waves.push([d]); }
   const waveTo = (w) => { const by = new Map(); for (const d of w) { const k = dbfTo(d); by.set(k, (by.get(k) || 0) + 1); } const top = [...by].sort((x, y) => y[1] - x[1])[0];
     return top[1] === w.length ? 'all to ' + top[0] : top[1] * 2 > w.length ? 'most to ' + top[0] : top[1] + ' of them to ' + top[0]; };
+  const topAb = (w) => { const by = new Map(); for (const d of w) if (d.ability) by.set(d.ability, (by.get(d.ability) || 0) + 1); const t = [...by].sort((x, y) => y[1] - x[1])[0]; return t ? t[0] : ''; };
   const w0 = !it.kill && !raidCause && A.first && massOf(A.first) ? waves.find((w) => w.includes(A.first)) : null;
-  const s2 = it.kill ? (A.ds.length ? plural(A.ds.length, 'player') + ' died along the way.' : 'Nobody died.')
-    : raidCause ? 'It went wrong when <b>' + mech(raidCause.label, raidCause.id) + '</b> went wrong at ' + T(raidCause.t) + '.'
-    : w0 ? 'It went wrong at ' + T(w0[0].t) + ', when ' + w0.length + ' died within seconds, ' + waveTo(w0) + '.'
-    : A.first ? 'It went wrong when ' + dbfWho(A.first.player, pm) + ' died' + at(A.first) + '.' : 'Nobody died before the wipe.';
+  const s2 = it.kill ? (A.ds.length ? (A.ds.length === 1 ? 'We lost one player' : 'We lost ' + A.ds.length + ' players') + ' along the way.' : 'Nobody died.')
+    : raidCause ? 'It fell apart at ' + T(raidCause.t) + ', when <b>' + mech(raidCause.label, raidCause.id) + '</b> went wrong.'
+    : w0 ? 'It fell apart at ' + T(w0[0].t) + ', when ' + dbfUs(w0.length) + ' died within seconds, ' + waveTo(w0) + '.'
+    : A.first ? 'It fell apart when ' + dbfWho(A.first.player, pm) + ' died' + at(A.first) + '.' : 'Nobody died before the wipe.';
+  const secFix = (x) => { if (isAvoid(x) && avoid.size) { const y = [...avoid.values()][0]; return fixFor(y.m.mechanic, one); } const g = gOf(x); return fixFor(g ? g.m.mechanic : dbfSecName(x.s), one); };
+  const focus = it.kill ? '' : (raidCause && fixFor(raidCause.label)) || (w0 && fixFor(topAb(w0))) || (A.first && fixFor(A.first.ability, A.first.player)) || (bad.length && secFix(bad[0][1])) || '';
+  const told = new Set([focus]), tip = (t) => { if (!t || told.has(t)) return ''; told.add(t); return ' ' + esc(t); }; // (each fix once, and never the "Next pull" one again)
   // ---- the numbers (against the last pull) ----
   const dlt = (a, b, lowGood, f) => (B == null || a == null || b == null || Math.abs(a - b) < 0.5 ? '' : dbfD((a > b ? '▲' : '▼') + f(Math.abs(a - b)), lowGood ? a < b : a > b));
   const samePh = B && dbfPhase(nowLab) === dbfPhase(o.prevLab || B.label) && A.end >= 60 && B.end >= 60;
@@ -15877,33 +15896,34 @@ function dbfPull(o) {
     dbfNum(A.kicks, 'kicks', A.missK ? dbfD(A.missK + ' got through', false) : '') + (cd && cd.n ? dbfNum(cd.ok + '<span> / ' + cd.n + '</span>', 'healing cooldowns on time') : '') + '</div>';
   // ---- what went well ----
   const well = [];
-  if (it.kill) well.push(isKey ? '<b>The key was timed.</b>' : '<b>The boss died.</b>');
-  else if (isBest) well.push('<b>The best pull so far.</b>');
-  if (!A.ds.length) well.push('<b>Nobody died</b>' + (it.kill ? '.' : ' before the end.'));
-  else if (!A.early.length && A.first) well.push('<b>No early deaths.</b> The first came at ' + T(A.first.t) + '.');
-  if (clean.length) { const c = clean.map(([, x]) => '<b>' + nm(x) + '</b>'); well.push('<b>Clean:</b> ' + (c.length > 6 ? c.slice(0, 6).join(', ') + ' and ' + (c.length - 6) + ' more' : lpAnd(c)) + '.'); }
-  if (A.kicks && !A.missK) well.push(A.kicks === 1 ? '<b>The one kickable cast was kicked.</b>' : '<b>All ' + A.kicks + ' kickable casts were kicked.</b>');
-  // ---- what didn't go well: at most five lines, worst first ----
-  const wrong = [];
+  if (it.kill) well.push(isKey ? '<b>Key timed.</b>' : '<b>Boss down.</b>');
+  else if (isBest) well.push('<b>Our best pull so far.</b>');
+  if (!A.ds.length) well.push('<b>Nobody died' + (it.kill ? '.' : ' until the wipe.') + '</b>');
+  else if (!A.early.length && A.first) well.push('<b>A clean start.</b> Nobody died until ' + T(A.first.t) + '.');
+  if (clean.length) { const c = clean.map(([, x]) => '<b>' + nm(x) + '</b>'); well.push('<b>We did these right:</b> ' + (c.length > 6 ? c.slice(0, 6).join(', ') + ' and ' + (c.length - 6) + ' more' : lpAnd(c)) + '.'); }
+  if (A.kicks && !A.missK) well.push(A.kicks === 1 ? '<b>The one kickable cast got kicked.</b>' : '<b>Every kickable cast got kicked</b> (' + A.kicks + ').');
+  // ---- what didn't go well: at most five lines, worst first, each with its fix ----
+  const wrong = [], you = (n) => dbfWho(n, pm) + ', you';
   const solo = !it.kill && A.first && !raidCause && !w0; // (the first death on its own line)
-  if (solo) wrong.push('<b>' + dbfWho(A.first.player, pm) + ' died first</b>' + at(A.first) + '.');
+  if (solo) wrong.push('<b>' + you(A.first.player) + ' died first</b>' + at(A.first) + '.' + tip(fixFor(A.first.ability, A.first.player)));
   const earlyO = A.early.filter((d) => (!solo || d !== A.first) && !massOf(d));
-  if (earlyO.length === 1) wrong.push('<b>' + dbfWho(earlyO[0].player, pm) + (solo ? ' also died early' : ' died early') + '</b>' + at(earlyO[0]) + '.');
+  if (earlyO.length === 1) wrong.push('<b>' + you(earlyO[0].player) + (solo ? ' also died early' : ' died early') + '</b>' + at(earlyO[0]) + '.' + tip(fixFor(earlyO[0].ability, earlyO[0].player)));
   else if (earlyO.length > 1) { const by = new Map(); for (const d of earlyO) { const k = dbfTo(d); if (!by.has(k)) by.set(k, []); by.get(k).push(d.player); }
     const L = [...by].sort((x, y) => y[1].length - x[1].length), parts = L.slice(0, 3).map(([to, ps]) => ps.length + ' to ' + to + (ps.length <= 2 ? ' (' + dbfNames(ps, pm, 2) + ')' : '')), restN = L.slice(3).reduce((s, x) => s + x[1].length, 0);
-    wrong.push('<b>' + earlyO.length + (solo ? ' more died early' : ' died early') + ':</b> ' + (restN ? parts.join(', ') + ' and ' + restN + ' to ' + (restN === 1 ? 'something else' : 'other things') : lpAnd(parts)) + '.'); }
-  for (const w of waves.slice().sort((a, b) => b.length - a.length).slice(0, 1)) wrong.push('<b>' + w.length + ' died within seconds</b> at ' + T(w[0].t) + ', ' + waveTo(w) + '.');
+    wrong.push('<b>' + earlyO.length + (solo ? ' more of us died early' : ' of us died early') + ':</b> ' + (restN ? parts.join(', ') + ' and ' + restN + ' to ' + (restN === 1 ? 'something else' : 'other things') : lpAnd(parts)) + '.'); }
+  for (const w of waves.slice().sort((a, b) => b.length - a.length).slice(0, 1)) wrong.push('<b>' + w.length + ' of us died within seconds</b> at ' + T(w[0].t) + ', ' + waveTo(w) + '.' + tip(fixFor(topAb(w))));
   const mLine = (x) => {
-    if (isAvoid(x) && avoid.size) { const parts = [...avoid.values()].filter((y) => !one || y.who.has(one)).map((y) => { const ps = [...y.who], died = ps.filter((p) => A.ds.some((d) => d.player === p && String(d.ability || '').toLowerCase() === String(y.m.mechanic).toLowerCase()));
+    if (isAvoid(x) && avoid.size) { const ys = [...avoid.values()].filter((y) => !one || y.who.has(one)), parts = ys.map((y) => { const ps = [...y.who], died = ps.filter((p) => A.ds.some((d) => d.player === p && String(d.ability || '').toLowerCase() === String(y.m.mechanic).toLowerCase()));
         return mech(y.m.mechanic, y.m.id) + (died.length ? ' killed ' + dbfNames(died, pm, 2) + (ps.length > died.length ? ' and hit ' + dbfNames(ps.filter((p) => !died.includes(p)), pm, 2) : '') : ' hit ' + (ps.length ? dbfNames(ps, pm, 3) : 'the raid')); });
-      return '<b>' + nm(x) + ':</b> ' + parts.slice(0, 2).join('; ') + (parts.length > 2 ? '; and ' + (parts.length - 2) + ' more' : '') + '.'; }
+      return '<b>' + nm(x) + ':</b> ' + (parts.length > 2 ? parts.slice(0, 2).join(', ') + ' and ' + (parts.length - 2) + ' more' : lpAnd(parts)) + '.' + (ys.length ? tip(fixFor(ys[0].m.mechanic, one)) : ''); }
     const g = gOf(x), rows = (x.s.rows || []).concat(...(x.s.groups || []).map((q) => q.rows || [])), nRows = rows.filter((row) => row.some((c) => c.bad || c.warn)).length, rw = g ? null : dbfRow(x.s);
-    const n = g ? g.n : Math.max(1, nRows), who = g ? [...g.who] : rw ? rw.who : [], raid = g && !g.who.size;
+    const n = g ? g.n : Math.max(1, nRows), who = g ? [...g.who] : rw ? rw.who : [], raid = g && !g.who.size, fx = tip(secFix(x));
+    if (raid) return (x.lv === 'major' ? 'We failed <b>' + nm(x) + '</b>' + (n > 1 ? ' ' + dbfTimes(n) : '') : 'We made ' + (n === 1 ? 'a mistake' : n + ' mistakes') + ' on <b>' + nm(x) + '</b>') + '.' + fx;
     const verb = x.lv === 'major' ? 'failed' + (n > 1 ? ' ' + dbfTimes(n) : '') : 'had ' + (n === 1 ? 'a mistake' : n + ' mistakes');
-    return '<b>' + nm(x) + '</b> ' + verb + (who.length ? ': ' + dbfNames(who, pm, 3) : raid ? ', for the whole raid' : '') + '.'; };
-  const oneD = one && A.ds.find((d) => d.player === one); if (oneD && oneD !== A.first && !earlyO.includes(oneD)) wrong.push('<b>' + dbfWho(one, pm) + ' died</b>' + at(oneD) + '.');
-  const tail = []; if (A.defReady.length) tail.push('<b>' + dbfNames(A.defReady, pm, 3) + '</b> died with a defensive still ready.');
-  if (A.missK) tail.push('<b>' + (A.missK === 1 ? 'A kickable cast got through.' : A.missK + ' kickable casts got through.') + '</b>');
+    return '<b>' + nm(x) + '</b> ' + verb + (who.length ? ' (' + dbfNames(who, pm, 3) + ')' : '') + '.' + fx; };
+  const oneD = one && A.ds.find((d) => d.player === one); if (oneD && oneD !== A.first && !earlyO.includes(oneD)) wrong.push('<b>' + you(one) + ' died</b>' + at(oneD) + '.' + tip(fixFor(oneD.ability, one)));
+  const tail = []; if (A.defReady.length) tail.push('<b>' + (A.defReady.length === 1 ? you(A.defReady[0]) : dbfNames(A.defReady, pm, 3)) + ' died with a defensive still ready.</b> Press it when you drop low.');
+  if (A.missK) tail.push('<b>' + (A.missK === 1 ? 'A kickable cast got through.' : A.missK + ' kickable casts got through.') + '</b> Check the kick order.');
   const room = Math.max(2, 5 - wrong.length - tail.length), shown = bad.slice(0, room);
   for (const [, x] of shown) wrong.push(mLine(x));
   wrong.push(...tail.slice(0, Math.max(0, 5 - wrong.length)));
@@ -15911,18 +15931,18 @@ function dbfPull(o) {
   // ---- better and worse than the last pull (the last one that wasn't a reset) ----
   const up = [], down = [];
   if (B) {
-    if (!it.kill && A.left != null && B.left != null && Math.abs(A.left - B.left) >= 1) (A.left < B.left ? up : down).push('<b>' + (A.left < B.left ? 'Further' : 'Not as far') + ':</b> ' + esc(nowLab) + ', after ' + esc(prevLab) + ' last pull.');
-    if (A.ds.length !== B.ds.length) (A.ds.length < B.ds.length ? up : down).push('<b>' + (A.ds.length < B.ds.length ? 'Fewer' : 'More') + ' deaths:</b> ' + A.ds.length + ', ' + (A.ds.length < B.ds.length ? 'down' : 'up') + ' from ' + B.ds.length + '.');
-    if (A.first && B.first && Math.abs(A.first.t - B.first.t) >= 10) (A.first.t > B.first.t ? up : down).push('<b>The first death came ' + (A.first.t > B.first.t ? 'later' : 'sooner') + ':</b> ' + T(A.first.t) + ' instead of ' + T(B.first.t) + '.');
-    if (samePh && B.dps && Math.abs(A.dps / B.dps - 1) >= 0.05) (A.dps > B.dps ? up : down).push('<b>' + Math.round(Math.abs(100 * (A.dps / B.dps - 1))) + '% ' + (A.dps > B.dps ? 'more' : 'less') + ' raid damage a second.</b>');
-    for (const [id, x] of P) { const q = Q.get(id); if (!q || x.s.info) continue; if (q.st !== 'ok' && q.st !== 'na' && x.st === 'ok') up.push('<b>' + nm(x) + '</b> was clean this time.'); else if (q.st === 'ok' && (x.st === 'bad' || x.st === 'warn')) down.push('<b>' + nm(x) + '</b> went wrong this time, after a clean last pull.'); }
-    if (A.missK !== B.missK) (A.missK < B.missK ? up : down).push('<b>' + (A.missK < B.missK ? 'Fewer' : 'More') + ' kickable casts got through:</b> ' + A.missK + ', against ' + B.missK + ' last pull.');
+    if (!it.kill && A.left != null && B.left != null && Math.abs(A.left - B.left) >= 1) (A.left < B.left ? up : down).push('<b>' + (A.left < B.left ? 'We got further:' : 'We didn\'t get as far:') + '</b> ' + esc(nowLab) + ', after ' + esc(prevLab) + ' last pull.');
+    if (A.ds.length !== B.ds.length) (A.ds.length < B.ds.length ? up : down).push('<b>We died ' + (A.ds.length < B.ds.length ? 'less' : 'more') + ':</b> ' + plural(A.ds.length, 'death') + ', ' + (A.ds.length < B.ds.length ? 'down' : 'up') + ' from ' + B.ds.length + '.');
+    if (A.first && B.first && Math.abs(A.first.t - B.first.t) >= 10) (A.first.t > B.first.t ? up : down).push('<b>' + (A.first.t > B.first.t ? 'We stayed alive longer:' : 'Someone died sooner:') + '</b> the first death came at ' + T(A.first.t) + ', not ' + T(B.first.t) + '.');
+    if (samePh && B.dps && Math.abs(A.dps / B.dps - 1) >= 0.05) (A.dps > B.dps ? up : down).push('<b>We did ' + Math.round(Math.abs(100 * (A.dps / B.dps - 1))) + '% ' + (A.dps > B.dps ? 'more' : 'less') + ' damage.</b>');
+    for (const [id, x] of P) { const q = Q.get(id); if (!q || x.s.info) continue; if (q.st !== 'ok' && q.st !== 'na' && x.st === 'ok') up.push('<b>We got ' + nm(x) + ' right</b> this time.'); else if (q.st === 'ok' && (x.st === 'bad' || x.st === 'warn')) down.push('<b>' + nm(x) + ' went wrong</b> this time, after a clean last pull.'); }
+    if (A.missK !== B.missK) (A.missK < B.missK ? up : down).push('<b>' + (A.missK < B.missK ? 'Fewer' : 'More') + ' casts got through our kicks:</b> ' + A.missK + ', ' + (A.missK < B.missK ? 'down' : 'up') + ' from ' + B.missK + '.');
   }
   const cap = (l) => (l.length > 4 ? l.slice(0, 4).concat(['<span class="sub">And ' + (l.length - 4) + ' more.</span>']) : l);
-  const noPrev = B ? '' : it.pull > 1 ? 'There\'s no earlier pull to compare with (the ones before were resets).' : 'This is the first pull, so there\'s nothing to compare with yet.';
-  return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div><p>' + [s1, s2].filter(Boolean).join(' ') + '</p></div>' + nums, lists:
-    '<div class="dbf-4">' + dbfCard('ok', 'What went well', well, 'Nothing stood out as clean this pull.') + dbfCard('bad', 'What didn\'t go well', wrong, 'Nothing went wrong this pull.') +
-    dbfCard('up', 'Better than the last pull', cap(up), noPrev || 'Nothing was clearly better than the last pull.') + dbfCard('down', 'Worse than the last pull', cap(down), noPrev || 'Nothing was clearly worse than the last pull.') + '</div>' };
+  const noPrev = B ? '' : it.pull > 1 ? 'The pulls before this were resets, so there\'s nothing to compare yet.' : 'This was our first pull, so there\'s nothing to compare yet.';
+  return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div><p>' + [s1, s2].filter(Boolean).join(' ') + '</p>' + (focus ? '<p><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + '</div>' + nums, lists:
+    '<div class="dbf-4">' + dbfCard('ok', 'What went well', well, 'Nothing stood out as done right this pull.') + dbfCard('bad', 'What didn\'t go well', wrong, 'Nothing went wrong. Do that again.') +
+    dbfCard('up', 'Better than the last pull', cap(up), noPrev || 'Nothing was clearly better than last pull.') + dbfCard('down', 'Worse than the last pull', cap(down), noPrev || 'Nothing was clearly worse than last pull.') + '</div>' };
 }
 // ---- the whole night ----
 function dbfNight(o) {
@@ -15941,9 +15961,11 @@ function dbfNight(o) {
   const causes = new Map(); for (const x of wip) { if (!x.cause) continue; const y = causes.get(x.cause.label) || { c: x.cause, n: 0, who: new Map(), e: 0, l: 0 }; y.n++; if (x.cause.who) y.who.set(x.cause.who, (y.who.get(x.cause.who) || 0) + 1); if (H1.includes(x)) y.e++; if (H2.includes(x)) y.l++; causes.set(x.cause.label, y); }
   const cs = [...causes.values()].sort((a, b) => b.n - a.n), topC = cs[0];
   // ---- the short version (your call, Oct 19: the result, then what broke it) ----
-  const s1 = kill ? '<b>Killed on pull ' + kill.pull + '</b>' + (kill.pull > 1 ? ', after ' + plural(kill.pull - 1, 'wipe') : '') + '.' :
-    'No kill yet after ' + plural(pulls.length, 'pull') + (nReset ? ' (' + nReset + ' of them ' + (nReset === 1 ? 'a reset' : 'resets') + ')' : '') + (bestW ? '. The best was pull ' + bestW.it.pull + ', at <b>' + esc(bestW.label) + '</b>.' : '.');
-  const s2 = topC && topC.n >= 2 ? ' Most wipes ended on <b>' + mech(topC.c.label, topC.c.id) + '</b> (' + topC.n + ' of ' + wip.length + ').' : '';
+  const s1 = kill ? '<b>We killed it on pull ' + kill.pull + '</b>' + (kill.pull > 1 ? ', after ' + plural(kill.pull - 1, 'wipe') : '') + '. Nice work, everyone.' :
+    '<b>No kill yet</b> after ' + plural(pulls.length, 'pull') + (nReset ? ' (' + nReset + ' of them ' + (nReset === 1 ? 'a reset' : 'resets') + ')' : '') + (bestW ? '. Our best was pull ' + bestW.it.pull + ', at <b>' + esc(bestW.label) + '</b>.' : '.');
+  const s2 = topC && topC.n >= 2 ? ' <b>' + mech(topC.c.label, topC.c.id) + '</b> ended most of our wipes (' + topC.n + ' of ' + wip.length + ').' : '';
+  // (each mechanic's fix from tonight's mistakes, and the one thing to fix first: what ended most wipes, else the worst mechanic)
+  const fixFor = dbfFixer(rs), mFix = (x) => fixFor(dbfSecName(x));
   // ---- how far each pull got (a picture only) ----
   const hOf = (q) => (q.kill ? 100 : pullPct(q) != null ? Math.max(3, 100 - pullPct(q)) : 3);
   const bars = pulls.length > 1 ? '<div class="panel npg dbf-pg"><h3 class="nh"><span>How far each pull got</span><small>' + (kill ? 'the kill in orange' : '') + (kill && bestW ? ' · ' : '') + (bestW ? 'the best wipe outlined in gold' : '') + '</small></h3><div class="npg-bars">' +
@@ -15970,44 +15992,46 @@ function dbfNight(o) {
     const who = new Map(); for (const [q, p] of x.per) if (pullNs.includes(q)) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     M.push({ x, v, j, wr, L, who, nm: esc(shortT(x.title)), lv: lvlJudge(null, j.filter((q) => stM(q) === 'bad').length, j.filter((q) => stM(q) === 'warn').length, j.length) }); }
   const LV = ['major', 'moderate', 'minor'];
+  const mW = M.filter((m) => m.L.recent).sort((a, b) => LV.indexOf(a.lv) - LV.indexOf(b.lv) || b.wr.length / b.j.length - a.wr.length / a.j.length);
+  const focus = kill ? '' : (topC && topC.n >= 2 && fixFor(topC.c.label, topC.c.who)) || (mW.length && mFix(mW[0].x)) || '';
+  const told = new Set([focus]), tip = (t) => { if (!t || told.has(t)) return ''; told.add(t); return ' ' + esc(t); }; // (each fix once, and never the "Next time" one again)
   // ---- what went well ----
   const well = [];
-  if (kill) well.push('<b>The boss died on pull ' + kill.pull + '.</b>');
-  if (bestW && !kill) well.push('<b>The best pull got to ' + esc(bestW.label) + '</b> (pull ' + bestW.it.pull + ').');
-  const cleanM = M.filter((m) => m.v.st === 'ok' && m.j.length >= 2); if (cleanM.length) well.push('<b>Clean all night:</b> ' + (cleanM.length > 4 ? cleanM.slice(0, 4).map((m) => m.nm).join(', ') + ' and ' + (cleanM.length - 4) + ' more' : lpAnd(cleanM.map((m) => m.nm))) + '.');
-  const kicksAll = S.reduce((s, x) => s + x.kicks, 0); if (kicksAll && !S.some((x) => x.missK)) well.push('<b>Every kickable cast was kicked</b> (' + plural(kicksAll, 'kick') + ').');
+  if (kill) well.push('<b>Boss down on pull ' + kill.pull + '.</b>');
+  if (bestW && !kill) well.push('<b>Our best pull got to ' + esc(bestW.label) + '</b> (pull ' + bestW.it.pull + ').');
+  const cleanM = M.filter((m) => m.v.st === 'ok' && m.j.length >= 2); if (cleanM.length) well.push('<b>We did these right all night:</b> ' + (cleanM.length > 4 ? cleanM.slice(0, 4).map((m) => m.nm).join(', ') + ' and ' + (cleanM.length - 4) + ' more' : lpAnd(cleanM.map((m) => m.nm))) + '.');
+  const kicksAll = S.reduce((s, x) => s + x.kicks, 0); if (kicksAll && !S.some((x) => x.missK)) well.push('<b>Every kickable cast got kicked</b>, all night (' + plural(kicksAll, 'kick') + ').');
   if (!earlyP && S.some((x) => x.end >= DBF_EARLY)) well.push('<b>Nobody died before ' + T(DBF_EARLY) + '</b>, all night.');
   // ---- what didn't go well (your call, Oct 19: 5 lines at most, deaths first; what, how often, who) ----
   const dL = [], mL = [], oL = [];
   for (const y of cs.slice(0, 2)) if (y.n >= 2 || wip.length <= 2) { const w = [...y.who].sort((u, v) => v[1] - u[1]), one = w.length && w[0][1] >= 2 && (w.length < 2 || w[0][1] > w[1][1]);
-    dL.push('<b>' + mech(y.c.label, y.c.id) + '</b> ended ' + (wip.length === 1 ? 'the wipe' : y.n + ' of ' + plural(wip.length, 'wipe')) + (!w.length ? '' : one ? ', mostly on ' + dbfWho(w[0][0], pm) : w.length <= 3 ? ' (' + dbfNames(w.map((x) => x[0]), pm, 3) + ')' : '') + '.'); }
+    dL.push('<b>' + mech(y.c.label, y.c.id) + '</b> ended ' + (wip.length === 1 ? 'our wipe' : y.n + ' of our ' + plural(wip.length, 'wipe')) + (!w.length ? '' : one ? ', mostly on ' + dbfWho(w[0][0], pm) : w.length <= 3 ? ' (' + dbfNames(w.map((x) => x[0]), pm, 3) + ')' : '') + '.' + tip(fixFor(y.c.label))); }
   if (earlyP >= Math.max(2, n * 0.3)) { const ew = new Map(); for (const x of S) for (const d of x.early) ew.set(d.player, (ew.get(d.player) || 0) + 1); dL.push('<b>Someone died before ' + T(DBF_EARLY) + '</b> in ' + earlyP + ' of ' + plural(n, 'pull') + mostly(ew) + '.'); }
-  const defR = S.reduce((s, x) => s + x.defReady.length, 0); if (defR >= 2) { const dw = new Map(); for (const x of S) for (const p of x.defReady) dw.set(p, (dw.get(p) || 0) + 1); dL.push('<b>Died with a defensive ready</b> ' + dbfTimes(defR) + mostly(dw) + '.'); }
-  const mW = M.filter((m) => m.L.recent).sort((a, b) => LV.indexOf(a.lv) - LV.indexOf(b.lv) || b.wr.length / b.j.length - a.wr.length / a.j.length);
+  const defR = S.reduce((s, x) => s + x.defReady.length, 0); if (defR >= 2) { const dw = new Map(); for (const x of S) for (const p of x.defReady) dw.set(p, (dw.get(p) || 0) + 1); dL.push('<b>We died with a defensive ready</b> ' + dbfTimes(defR) + mostly(dw) + '. Press it when you drop low.'); }
   for (const m of mW) mL.push('<b>' + m.nm + '</b> ' + (m.j.length === 1 ? 'went wrong' + (m.who.size ? ': ' + dbfNames([...m.who.keys()], pm, 3) : '') :
-    'went wrong ' + (m.wr.length < m.j.length ? 'in ' + m.wr.length + ' of ' + plural(m.j.length, 'pull') : m.j.length === n ? 'in every pull' : 'every time it came up (' + plural(m.j.length, 'pull') + ')') + mostly(m.who)) + '.');
-  const missAll = S.reduce((s, x) => s + x.missK, 0); if (missAll) oL.push('<b>' + plural(missAll, 'kickable cast') + ' got through.</b>');
+    'went wrong ' + (m.wr.length < m.j.length ? 'in ' + m.wr.length + ' of ' + plural(m.j.length, 'pull') : m.j.length === n ? 'in every pull' : 'every time it came up (' + plural(m.j.length, 'pull') + ')') + mostly(m.who)) + '.' + tip(mFix(m.x)));
+  const missAll = S.reduce((s, x) => s + x.missK, 0); if (missAll) oL.push('<b>' + plural(missAll, 'kickable cast') + ' got through.</b> Check the kick order.');
   const room = Math.max(2, 5 - dL.length - oL.length), wrong = dL.slice(0, 3).concat(mL.slice(0, room), oL);
   if (mL.length > room) wrong.push('<span class="sub">' + plural(mL.length - room, 'more mechanic') + ' went wrong. They\'re all on Mechanics.</span>');
   // ---- what got better and what got worse, from the first half of the night to the second ----
   const up = [], down = [], tr = (a, b, lowGood) => (lowGood ? b < a : b > a), E = 'early in the night', Lt = 'later';
   if (cmp) {
     const lf = (x) => (x.it.kill ? 0 : x.left), a1 = avg(H1, lf), a2 = avg(H2, lf);
-    if (a1 != null && a2 != null && Math.abs(a1 - a2) >= 2) (tr(a1, a2, true) ? up : down).push('<b>' + (a2 < a1 ? 'Further' : 'Not as far') + ':</b> the boss had ' + Math.round(a1) + '% left on average ' + E + ', ' + Math.round(a2) + '% ' + Lt + '.');
-    const d1 = avg(H1, (x) => x.ds.length), d2 = avg(H2, (x) => x.ds.length); if (Math.abs(d1 - d2) >= 0.5) (tr(d1, d2, true) ? up : down).push('<b>' + (d2 < d1 ? 'Fewer' : 'More') + ' deaths:</b> ' + d1.toFixed(1) + ' a pull ' + E + ', ' + d2.toFixed(1) + ' ' + Lt + '.');
-    const f1 = avg(H1, ft), f2 = avg(H2, ft); if (f1 != null && f2 != null && Math.abs(f1 - f2) >= 10) (tr(f1, f2, false) ? up : down).push('<b>The first death came ' + (f2 > f1 ? 'later' : 'sooner') + ':</b> ' + T(f1) + ' on average ' + E + ', ' + T(f2) + ' ' + Lt + '.');
+    if (a1 != null && a2 != null && Math.abs(a1 - a2) >= 2) (tr(a1, a2, true) ? up : down).push('<b>' + (a2 < a1 ? 'We got further:' : 'We didn\'t get as far:') + '</b> the boss had ' + Math.round(a1) + '% left on average ' + E + ', ' + Math.round(a2) + '% ' + Lt + '.');
+    const d1 = avg(H1, (x) => x.ds.length), d2 = avg(H2, (x) => x.ds.length); if (Math.abs(d1 - d2) >= 0.5) (tr(d1, d2, true) ? up : down).push('<b>We died ' + (d2 < d1 ? 'less' : 'more') + ':</b> ' + d1.toFixed(1) + ' a pull ' + E + ', ' + d2.toFixed(1) + ' ' + Lt + '.');
+    const f1 = avg(H1, ft), f2 = avg(H2, ft); if (f1 != null && f2 != null && Math.abs(f1 - f2) >= 10) (tr(f1, f2, false) ? up : down).push('<b>' + (f2 > f1 ? 'We stayed alive longer:' : 'Someone died sooner:') + '</b> the first death came at ' + T(f1) + ' on average ' + E + ', ' + T(f2) + ' ' + Lt + '.');
     const e1 = H1.filter((x) => x.early.length).length, e2 = H2.filter((x) => x.early.length).length; if (Math.abs(e1 - e2) >= 2) (tr(e1, e2, true) ? up : down).push('<b>' + (e2 < e1 ? 'Fewer' : 'More') + ' early deaths:</b> in ' + e1 + ' of the first ' + h + ' pulls, ' + e2 + ' of the last ' + h + '.');
-    if (dpsCmp && dpsCmp.a && Math.abs(dpsCmp.b / dpsCmp.a - 1) >= 0.05) (tr(dpsCmp.a, dpsCmp.b, false) ? up : down).push('<b>' + (dpsCmp.b > dpsCmp.a ? 'More' : 'Less') + ' raid damage:</b> ' + C(dpsCmp.a) + ' a second ' + E + ', ' + C(dpsCmp.b) + ' ' + Lt + (dpsCmp.ph !== 'all' ? ' (pulls that ended in ' + esc(dpsCmp.ph) + ')' : '') + '.');
+    if (dpsCmp && dpsCmp.a && Math.abs(dpsCmp.b / dpsCmp.a - 1) >= 0.05) (tr(dpsCmp.a, dpsCmp.b, false) ? up : down).push('<b>We did ' + (dpsCmp.b > dpsCmp.a ? 'more' : 'less') + ' damage:</b> ' + C(dpsCmp.a) + ' a second ' + E + ', ' + C(dpsCmp.b) + ' ' + Lt + (dpsCmp.ph !== 'all' ? ' (pulls that ended in ' + esc(dpsCmp.ph) + ')' : '') + '.');
     const big = (a, b) => Math.abs(a - b) >= Math.max(3, 0.25 * Math.max(a, b)); // (a real change, not 15 against 17)
-    const k1 = H1.reduce((s, x) => s + x.missK, 0), k2 = H2.reduce((s, x) => s + x.missK, 0); if (big(k1, k2)) (tr(k1, k2, true) ? up : down).push('<b>' + (k2 < k1 ? 'Fewer' : 'More') + ' casts got through:</b> ' + k1 + ' ' + E + ', ' + k2 + ' ' + Lt + '.');
-    const r1 = H1.reduce((s, x) => s + x.defReady.length, 0), r2 = H2.reduce((s, x) => s + x.defReady.length, 0); if (big(r1, r2)) (tr(r1, r2, true) ? up : down).push('<b>' + (r2 < r1 ? 'Fewer' : 'More') + ' deaths with a defensive ready:</b> ' + r1 + ' ' + E + ', ' + r2 + ' ' + Lt + '.');
+    const k1 = H1.reduce((s, x) => s + x.missK, 0), k2 = H2.reduce((s, x) => s + x.missK, 0); if (big(k1, k2)) (tr(k1, k2, true) ? up : down).push('<b>' + (k2 < k1 ? 'Fewer' : 'More') + ' casts got through our kicks:</b> ' + k1 + ' ' + E + ', ' + k2 + ' ' + Lt + '.');
+    const r1 = H1.reduce((s, x) => s + x.defReady.length, 0), r2 = H2.reduce((s, x) => s + x.defReady.length, 0); if (big(r1, r2)) (tr(r1, r2, true) ? up : down).push('<b>' + (r2 < r1 ? 'Fewer' : 'More') + ' of us died with a defensive ready:</b> ' + r1 + ' ' + E + ', ' + r2 + ' ' + Lt + '.');
     for (const y of cs) if (Math.abs(y.e - y.l) >= 2) (y.l < y.e ? up : down).push('<b>' + mech(y.c.label, y.c.id) + '</b> ended ' + (y.l < y.e ? 'fewer' : 'more') + ' wipes: ' + y.e + ' ' + E + ', ' + y.l + ' ' + Lt + '.');
-    for (const m of M) { if (m.L.solved) up.push('<b>' + m.nm + '</b> has been clean since pull ' + m.L.solved + '.'); else if (m.v.real) (m.v.better ? up : down).push('<b>' + m.nm + '</b> went wrong in ' + (m.v.better ? 'fewer' : 'more') + ' pulls: ' + m.v.e + ' of the first ' + m.v.half + ', ' + m.v.l + ' of the last ' + m.v.half + '.'); }
+    for (const m of M) { if (m.L.solved) up.push('<b>We fixed ' + m.nm + '.</b> It\'s been clean since pull ' + m.L.solved + '.'); else if (m.v.real) (m.v.better ? up : down).push('<b>' + m.nm + '</b> went wrong in ' + (m.v.better ? 'fewer' : 'more') + ' pulls: ' + m.v.e + ' of the first ' + m.v.half + ', ' + m.v.l + ' of the last ' + m.v.half + '.'); }
   }
   const cap = (l) => (l.length > 4 ? l.slice(0, 4).concat('<span class="sub">And ' + (l.length - 4) + ' more.</span>') : l);
   const short = n < 6 ? 'Not enough pulls yet to say what changed over the night.' : '';
-  return { top: '<div class="panel dbf-short"><div class="dbf-k">The night</div><p>' + s1 + s2 + '</p></div>' + bars + nums, lists:
-    '<div class="dbf-4">' + dbfCard('ok', 'What went well', well, 'Nothing was clean all night yet.') + dbfCard('bad', 'What didn\'t go well', wrong, 'Nothing kept going wrong.') +
+  return { top: '<div class="panel dbf-short"><div class="dbf-k">The night</div><p>' + s1 + s2 + '</p>' + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists:
+    '<div class="dbf-4">' + dbfCard('ok', 'What went well', well, 'Nothing was done right all night yet.') + dbfCard('bad', 'What didn\'t go well', wrong, 'Nothing kept going wrong. Keep it up.') +
     dbfCard('up', 'What got better over the night', cap(up), short || 'Nothing clearly got better from early in the night to later.') + dbfCard('down', 'What got worse over the night', cap(down), short || 'Nothing clearly got worse from early in the night to later.') + '</div>' };
 }
 // (Recap is information only: the side boxes' links to other tabs become plain text there)
