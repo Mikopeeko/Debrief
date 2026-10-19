@@ -11089,7 +11089,7 @@ function genRun(spec, D, reps, name, one) {
   // (a priest's Power Infusion: the same cards and advice as Graphs' Power Infusion view, for this priest only, at the end
   // of their page (your call, Oct 19: on both). Left out for a priest without it in these pulls)
   let piH = '';
-  if (/ Priest$/.test(spec) && !PI_OFF()) { const pv = piView(per.map((x) => x.r), one, name).html;
+  if (/ Priest$/.test(spec) && D.piView !== false && !PI_OFF()) { const pv = piView(per.map((x) => x.r), one, name).html;
     if (!/no priest cast it/.test(pv)) piH = '<section class="spc-card spc-pi"><header class="spc-ch"><span class="spc-ri">' + spellIcon(10060, 'Power Infusion', true) + '</span><div><h3>Power Infusion</h3><span class="sub">The same as Graphs › Power Infusion, for you only.</span></div></header>' + pv + '</section>'; }
   return { score: pg.score, checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html + piH, wait };
 }
@@ -11512,7 +11512,9 @@ const GEN_SPECS = {
     cds: [{ n: 'Shadow Blades', cd: 90, ok: 0.85, warn: 0.7, why: 'Shadow Blades is your major cooldown. Use it with Shadow Dance, as often as the fight allows.' }],
     lead: { abc: 'Energy sets your pace. Some quiet time outside cooldowns is normal.', rot: 'Line everything up with Secret Technique. Press Shadow Dance when it\'s ready.', res: 'Finish at 6 or 7 combo points.', cds: 'Use Shadow Blades with Shadow Dance.' } },
   'Shadow Priest': { ic: 'Mind Blast', top: 'Shadow Priests',
-    win: { n: 'Voidform', with: [['Power Infusion']], dotsUp: ['Vampiric Touch', 'Shadow Word: Pain'], dur: 20, why: 'Voidform is your burst. Power Infusion goes out with it, unless your raid gives it to someone else.' },
+    win: { n: 'Voidform', with: [['Power Infusion']], dotsUp: ['Vampiric Touch', 'Shadow Word: Pain'], dur: 20, why: 'Voidform is your burst. Both guides: cast Power Infusion right with it, so the two line up.' }, piView: false,
+    pairs: [{ k: 'pivf', a: 'Power Infusion', b: ['Voidform'], pre: 3, post: 3, orBuf: 'Voidform', blk: 'Voidform', ok: 0.85, warn: 0.6, label: 'Power Infusion with Voidform', txt: '{ok} of your {n} Power Infusions went out with your Voidform.', why: 'Wowhead: always put your own value from Power Infusion first, ahead of an ally\'s, and time it with your other big cooldowns. Icy Veins: sync Voidform and Power Infusion for your burst windows. One counts when you pressed it within 3 seconds of Voidform, or while Voidform was up.', tip: 'Press Power Infusion right after Voidform, every time.' }],
+    tgt: [{ k: 'pially', n: 'Power Infusion', want: 'other', tal: 'Twins of the Sun Priestess', blk: 'Voidform', ok: 0.85, warn: 0.6, w: 1, label: 'Power Infusion on an ally (Twins)', txt: '{ok} of your {n} Power Infusions went on an ally.', why: 'Icy Veins: with Twins of the Sun Priestess, cast Power Infusion on an ally, so you both get it. Time it for your own Voidform either way.', tip: 'With Twins of the Sun Priestess, cast Power Infusion on an ally during your Voidform.' }],
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, why: 'The list comes from the SimulationCraft list that Raidbots sims with, and from the Wowhead guide.', list: [
       { s: 'Shadow Word: Madness', alt: ['Devouring Plague'], if: { any: [{ buff: 'Mind Devourer' }, { resF: ['13', 0.65] }] }, why: 'it was free, or you were near full Insanity', tip: 'Spend Insanity on Shadow Word: Madness before it caps, and use Mind Devourer right away.' },
       { s: 'Mind Blast', cd: 9, h: true, alt: ['Void Blast', 'Void Volley', 'Tentacle Slam', 'Vampiric Touch', 'Shadow Word: Pain'], tip: 'Mind Blast comes before Mind Flay whenever it\'s ready.' },
@@ -11522,7 +11524,7 @@ const GEN_SPECS = {
     rot: [{ n: 'Mind Blast', cd: 9, h: true, chT: [['Thought Harvester', 2]], ok: 0.8, warn: 0.65, why: 'Mind Blast is your main builder. Keep it on cooldown.' }, { n: 'Void Torrent', cd: 30, ok: 0.85, warn: 0.7, why: 'Press Void Torrent on cooldown.' }, { n: 'Halo', cd: 60, ok: 0.85, warn: 0.7, why: 'Press Halo on cooldown.' }],
     procs: [{ n: 'Shadowy Insight', use: ['Mind Blast'], why: 'Shadowy Insight resets Mind Blast and makes it instant. Cast it.' }, { n: 'Mind Devourer', use: ['Shadow Word: Madness', 'Devouring Plague'], why: 'Mind Devourer makes your next spender free. Use it.' }],
     res: { ty: '13', n: 'Insanity', why: 'Spend Insanity on Shadow Word: Madness before it caps at 100.' },
-    cds: [{ n: 'Voidform', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Voidform as often as the fight allows.' }, { n: 'Power Infusion', cd: 120, ok: 0.8, warn: 0.6, why: 'Power Infusion as often as you can, on yourself or a teammate your raid picks.' }],
+    cds: [{ n: 'Voidform', cd: 120, ok: 0.85, warn: 0.7, why: 'Use Voidform as often as the fight allows.' }, { n: 'Power Infusion', cd: 120, ok: 0.85, warn: 0.6, why: 'Wowhead: make sure you always get the most uses possible out of Power Infusion, timed with your other big cooldowns.' }],
     lead: { dots: 'Keep your damage over time on the boss, and Shadow Word: Madness up as long as you can.', rot: 'Press your short cooldowns first, so you never lose a use.', procs: 'React to Shadowy Insight and Mind Devourer as they come.', res: 'Don\'t cap Insanity at 100.', cds: 'Use Voidform and Power Infusion as often as the fight allows.' } },
   'Windwalker Monk': { ic: 'Rising Sun Kick', top: 'Windwalker Monks',
     win: { n: 'Zenith', dur: 15, with: [['Fists of Fury'], ['Whirling Dragon Punch', 'Strike of the Windlord']], why: 'Zenith is your burst. Fists of Fury and your big hits (Whirling Dragon Punch or Strike of the Windlord) go out inside it.' },
