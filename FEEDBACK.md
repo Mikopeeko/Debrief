@@ -259,6 +259,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Noticed: Frost Mage's burst is read from Icy Veins, which Wolfthorn's Frost Mage never pressed, so the tile shows "no burst
   cooldown pressed". Worth checking whether Frost's burst in Midnight is a different spell.
 
+## 2026-10-19, round 251: A new note finds its own pulls, by the exact roster (your note)
+- [x] **Saving a note checks every pull of that boss in the log you have open,** opened or not (Warcraft Logs lists
+  each pull's players), and your saved raid nights, pull by pull, with the same rule a pull uses to pick its note. It
+  says which: "It matches pulls 1–13 in the log you have open, so those pulls use it", or "It doesn't match this pull
+  or any other in the log you have open: 3 of its 10 players were here, so it isn't used."
+- [x] It's only used on the pulls it matches, never just because it was pasted on the open pull. Saved nights it fits
+  show their pulls ("Oct 12 · pulls 2–8"), and the closest one when none fits.
+- [x] While pasting, the line under the box says whether it matches the open pull.
+- [x] Checked on a real night: the raid's note matched all 13 pulls, a different group's note matched none and the
+  pull kept its own note; no errors.
+
 ## 2026-10-19, round 250: Assignments, a note only goes on its own group (your rule)
 - [x] **Strict roster match:** a saved note is used on a pull only when all but 2 of the players it names were there
   (and at least 3 were). A pug or another raid never gets your note, even when it's your only note for that boss. A note

@@ -84,7 +84,7 @@ async function gql(creds, query, variables) {
 }
 
 const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name}
-  fights{id encounterID name difficulty kill startTime endTime size keystoneLevel fightPercentage bossPercentage lastPhase lastPhaseIsIntermission}
+  fights{id encounterID name difficulty kill startTime endTime size keystoneLevel fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
   masterData{actors{id name type subType server petOwner gameID} abilities{gameID name type}}}}}`;
 const EVENTS_Q = `query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){reportData{report(code:$code){
   events(fightIDs:$fid,startTime:$s,endTime:$e,limit:10000,includeResources:true){data nextPageTimestamp}}}}`;
@@ -151,6 +151,8 @@ async function loadReport(creds, code, live) {
       // (the phase it ended in, as the app names them: Warcraft Logs counts stages and intermissions apart, so its "phase 3"
       // is Stage Three, and that phase's boss health: the app's whole-encounter progress needs both)
       endPhase: f.kill || !f.lastPhase ? null : f.lastPhaseIsIntermission ? 'Intermission' : 'P' + f.lastPhase, endBoss: f.kill ? 0 : f.bossPercentage != null ? f.bossPercentage : null,
+      // (roster: the pull's players before it's opened, so a new note can be matched to every pull of the night)
+      roster: (f.friendlyPlayers || []).map((i) => (actors.get(i) || {}).name).filter(Boolean),
       pull: pulls[k], run: null, wallMs: rep.startTime + f.startTime, wcl: { code, fight: f.id, start: f.startTime, end: f.endTime, actors, abilities, encounterID: f.encounterID, rawDiff: diffId } };
   });
   // (endMs: the time of the report's last event, which keeps moving while someone live logs it)
