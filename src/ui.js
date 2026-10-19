@@ -14481,6 +14481,24 @@ function readyScore(x) {
   const en = [...x.ench.values()], miss = en.filter((e) => !e).length, r1 = en.filter((e) => e && e.rank === 1).length, empty = x.issues.filter((t) => /^Empty /.test(t)).length;
   return cons + Math.max(0, 40 - 8 * miss - 3 * r1 - 15 * empty - 5 * (x.emptySockets || 0) - (x.lowIlvl ? 10 : 0));
 }
+// Prep for the Report card grade (your ask, Oct 19: "everything, low quality against high quality"), 0 to 100 at the pull:
+// flask 25 (its rank isn't in the log: every rank of a flask has the same buff), food 20 (Hearty, which stays through a
+// death, in full; plain Well Fed 17), weapon oil or stone 15 (rank 1: 10), augment rune 5 (the current Ethereal one in
+// full, an older one 2), enchants 25 shared between the enchantable slots (rank 1 half, missing none), gem sockets 10
+// (5 off each empty one), and 15 off for each empty gear slot. items: what cost points, with how many.
+function prepScore(x) {
+  const items = [], lose = (t, n) => { if (n > 0) items.push({ t, n }); };
+  lose('No flask', x.flask ? 0 : 25);
+  const hearty = x.food && /hearty/i.test(x.food.name || ''); lose(x.food ? 'Plain food (Hearty food stays through a death)' : 'No food buff', x.food ? (hearty ? 0 : 3) : 20);
+  const r1Oil = x.temp && x.temp[2] === 1 && x.temp[1] === 1; lose(x.temp ? (r1Oil ? x.temp[0] + ' is rank 1' : '') : 'No weapon oil or stone', x.temp ? (r1Oil ? 5 : 0) : 15);
+  const newRune = x.rune && /ethereal/i.test(x.rune.name || ''); lose(x.rune ? (newRune ? '' : 'An older augment rune (' + x.rune.name + ')') : 'No augment rune', x.rune ? (newRune ? 0 : 3) : 5);
+  const en = [...x.ench.entries()], each = en.length ? 25 / en.length : 0, slotN = new Map(ENCHANT_SLOTS);
+  for (const [i, e] of en) { if (!e) lose('No ' + String(slotN.get(i) || 'gear').toLowerCase() + ' enchant', each); else if (e.rank === 1) lose((slotN.get(i) || 'An') + ' enchant is rank 1', each / 2); }
+  if (x.emptySockets) lose(plural(x.emptySockets, 'empty gem socket'), Math.min(10, 5 * x.emptySockets));
+  for (const t of x.issues.filter((s) => /^Empty /.test(s))) lose(t, 15);
+  const lost = items.reduce((s, o) => s + o.n, 0);
+  return { score: Math.max(0, 100 - lost), items };
+}
 // A potion drunk before the pull: its buff is on the player when the pull starts (the combatant line lists their buffs).
 // Matched by spell ID against the combat and mana potions anyone drank in the log, so it needs no name lookups.
 function prepotted(r, p) {
@@ -14831,24 +14849,6 @@ function charSheet(x, embed) { // (embed: inside the Player audit, titled "Gear 
 function surv() {
   const r = S.rep, ps = players();
   const stones = ps.reduce((s, p) => s + p.cons.healthstone.length, 0), hp = ps.reduce((s, p) => s + p.cons.healpot.length, 0), cp = ps.reduce((s, p) => s + p.cons.combatpot.length, 0);
-// Prep for the Report card grade (your ask, Oct 19: "everything, low quality against high quality"), 0 to 100 at the pull:
-// flask 25 (its rank isn't in the log: every rank of a flask has the same buff), food 20 (Hearty, which stays through a
-// death, in full; plain Well Fed 17), weapon oil or stone 15 (rank 1: 10), augment rune 5 (the current Ethereal one in
-// full, an older one 2), enchants 25 shared between the enchantable slots (rank 1 half, missing none), gem sockets 10
-// (5 off each empty one), and 15 off for each empty gear slot. items: what cost points, with how many.
-function prepScore(x) {
-  const items = [], lose = (t, n) => { if (n > 0) items.push({ t, n }); };
-  lose('No flask', x.flask ? 0 : 25);
-  const hearty = x.food && /hearty/i.test(x.food.name || ''); lose(x.food ? 'Plain food (Hearty food stays through a death)' : 'No food buff', x.food ? (hearty ? 0 : 3) : 20);
-  const r1Oil = x.temp && x.temp[2] === 1 && x.temp[1] === 1; lose(x.temp ? (r1Oil ? x.temp[0] + ' is rank 1' : '') : 'No weapon oil or stone', x.temp ? (r1Oil ? 5 : 0) : 15);
-  const newRune = x.rune && /ethereal/i.test(x.rune.name || ''); lose(x.rune ? (newRune ? '' : 'An older augment rune (' + x.rune.name + ')') : 'No augment rune', x.rune ? (newRune ? 0 : 3) : 5);
-  const en = [...x.ench.entries()], each = en.length ? 25 / en.length : 0, slotN = new Map(ENCHANT_SLOTS);
-  for (const [i, e] of en) { if (!e) lose('No ' + String(slotN.get(i) || 'gear').toLowerCase() + ' enchant', each); else if (e.rank === 1) lose((slotN.get(i) || 'An') + ' enchant is rank 1', each / 2); }
-  if (x.emptySockets) lose(plural(x.emptySockets, 'empty gem socket'), Math.min(10, 5 * x.emptySockets));
-  for (const t of x.issues.filter((s) => /^Empty /.test(s))) lose(t, 15);
-  const lost = items.reduce((s, o) => s + o.n, 0);
-  return { score: Math.max(0, 100 - lost), items };
-}
   const withDefs = r.deaths.filter((d) => d.available && d.available.some((a) => !/^(Healthstone|a healing potion)$/.test(a))).length;
   let h = '<div class="tiles">' + tile('Defensives used', Math.round(100 * r.defUse) + '%', 'of possible casts') +
     tile('Died with defensives ready', withDefs + ' of ' + r.deaths.length, 'deaths') +
