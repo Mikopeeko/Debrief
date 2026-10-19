@@ -2880,8 +2880,25 @@ function burstPanel(r, m, cut) {
     return '<div class="brw-c" style="border-top-color:' + COL[w.kind] + '"><div class="brw-ct">' + spellIcon(0, w.ic, true) + '<b>' + esc(w.say) + '</b></div><div class="brw-tm">' + T(w.a) + '–' + T(w.e) + ' · ' + Math.round(len) + ' seconds' + (with1.length ? ' · with ' + esc(andL(with1)) : '') + '</div>' +
       '<div class="brw-n"><b>' + C(d) + '</b> damage a second <span class="' + (x >= 1 ? 'up' : 'dn') + '">' + (x >= 1 ? x.toFixed(1) + ' times' : Math.round(100 * x) + '% of') + ' our usual</span></div>' +
       '<div class="brw-bar" title="' + esc('Boss ' + C(s.b) + ', adds ' + C(s.a)) + '"><i style="width:' + bp + '%"></i></div><div class="brw-bs"><span>Boss ' + bp + '%</span><span>Adds ' + (100 - bp) + '%' + (top.length ? ': ' + esc(top.map(([k]) => k).join(', ')) : '') + '</span></div>' +
+      (w.kind === 'amp' && A && A.graded === false ? '<div class="brw-pl">Shown, not graded: a guide warns not to hold a 2-minute cooldown so long that it costs you a use over the fight.</div>' : '') +
       plan + '<div class="brw-dm">' + (dm.length ? 'Going on: <b>' + dm.map(esc).join('</b>, <b>') + '</b>' : 'No tracked mechanic in this window.') + (dead ? ' <span class="dn">' + plural(dead, 'death') + ' in it.</span>' : '') + '</div></div>'; }).join('');
-  return '<div class="panel brw" id="sec-burst"><h3 class="nh"><span>Burst windows</span><small>where the raid\'s damage went, and what was going on</small></h3>' + tiles + chart + key + (cards ? '<div class="brw-cs">' + cards + '</div>' : '') +
+  // (your OK, Oct 19: a boss's shield is the opposite of a burst window: the long cooldowns (used about every 80 s or less often, from the
+  // player's own presses, so a 30-second cooldown coming back mid-shield isn't counted) pressed more than a second after it went up and
+  // more than 2 seconds before it ended)
+  let shieldCard = '';
+  if (SH && shields.length) {
+    const wasted = [];
+    for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name) || HEAL_SPECS.has(p.specId) || TANK_IDS.has(p.specId)) continue; const D = GEN_SPECS[p.specName], hw = HAND_WIN[p.specId]; /* (damage dealers only: healing into the shield isn't wasted) */
+      const names = [...new Set((D && D.win ? [].concat(D.win).map((w) => w.n) : []).concat(hw ? [hw.n] : []))];
+      for (const n of names) { const ts = ((p.byName && p.byName.get(String(n).toLowerCase())) || []).filter((t) => t <= end).slice().sort((a, b) => a - b); if (!ts.length) continue;
+        const gaps = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b), med = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 999; if (med < 80) continue;
+        for (const t of ts) if (shields.some((w) => t > w.a + 1 && t < w.e - 2)) wasted.push({ p, n, t }); } }
+    wasted.sort((a, b) => a.t - b.t);
+    shieldCard = '<div class="brw-c" style="border-top-color:#98a0ad"><div class="brw-ct">' + spellIcon(0, SH.aura, true) + '<b>' + esc(SH.what) + ' (99% less damage)</b></div><div class="brw-tm">' + plural(shields.length, 'shield') + ', ' + shields.map((w) => T(w.a)).join(', ') + '</div>' +
+      '<div class="brw-n"><b>' + wasted.length + '</b> big ' + (wasted.length === 1 ? 'cooldown' : 'cooldowns') + ' pressed into it <span class="' + (wasted.length ? 'dn' : 'up') + '">' + (wasted.length ? 'wasted: hold them until it ends' : 'none wasted') + '</span></div>' +
+      (wasted.length ? '<div class="brw-dm">' + wasted.slice(0, 8).map((x) => '<b>' + esc(x.p.name) + '</b> ' + esc(x.n) + ' at ' + T(x.t)).join(' · ') + (wasted.length > 8 ? ' · +' + (wasted.length - 8) + ' more' : '') + '</div>' : '') + '</div>';
+  }
+  return '<div class="panel brw" id="sec-burst"><h3 class="nh"><span>Burst windows</span><small>where the raid\'s damage went, and what was going on</small></h3>' + tiles + chart + key + (cards || shieldCard ? '<div class="brw-cs">' + cards + shieldCard + '</div>' : '') +
     '<details class="howit"><summary>How it works</summary><div>Every hit the raid landed, per second' + (cut ? ', up to the wipe filter' : '') + '. "Boss" is the boss and anything that shares its health; everything else is an add. Bloodlust counts as 40 seconds from the first press. "Our usual" is our damage a second the rest of the time, outside Bloodlust and the boss\'s windows' +
     (A ? '; ' + esc(A.what) + ' is read from the log' : '') + '. "Going on" lists the mechanics with a moment in the window (or 3 seconds before it). Nothing here is graded: Rotation grades each player\'s own cooldowns in these windows.</div></details></div>';
 }
@@ -3555,7 +3572,7 @@ function audit() {
     else h = wEnd >= 0 ? h.slice(0, wEnd) + grid + '</details>' : h.slice(0, refAt) + '<details class="phase mcx-ph" data-mst="' + (nb ? 'major' : 'clean') + '" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b><span class="sub">your kit, raid cooldowns, damage taken and kicks</span></summary>' + grid + '</details>'; } }
   // (your note, Oct 19: on a fight with a damage window or DPS check, the burst windows are a mechanic of their own, so they sit on the page
   // after the checklist; on the rest they're Bloodlust only, and wait in More)
-  if (!r.allPulls) { try { const A0 = BOSS_AMP[r.item.boss], bp = burstPanel(r, m, cut); if (A0 && !A0.lust) h += bp; else dbMore += bp; } catch (e) { console.error(e); } } // (never block the page)
+  if (!r.allPulls) { try { const A0 = BOSS_AMP[r.item.boss], bp = burstPanel(r, m, cut); if ((A0 && !A0.lust) || BOSS_SHIELD[r.item.boss]) h += bp; else dbMore += bp; } catch (e) { console.error(e); } } // (never block the page)
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
