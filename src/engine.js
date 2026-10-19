@@ -3887,7 +3887,7 @@ function buildUlatek(ev, r, h) {
       const died = r.deaths.find((d) => d.guid === c.g && d.t >= c.s && d.t <= Math.min(c.e, v.t0) + 0.6 && d.t >= v.t0 - 1.3), sp = splashes.find((e) => e.dst === c.g && Math.abs(e.t - c.e) <= 0.6), gr = greens.filter((e) => e.dst === c.g && e.t >= c.e - 0.7 && e.t <= c.e + 0.2).pop();
       if (!sp && !died) grE = gr || null;
       if (sp) { splashG = [...new Set(splashes.filter((e) => Math.abs(e.t - sp.t) <= 0.4 && e.dst !== c.g).map((e) => e.dst))]; const other = splashG.map(pname);
-        cause = 'Noxious Splash' + (other.length ? ' with ' + other.join(', ') : ''); fix = 'Carriers keep their own lanes and never come within 3 yards of each other.'; }
+        cause = 'Noxious Splash' + (other.length ? ', within 3 yards of ' + other.join(' and ') : ''); fix = 'Carriers keep their own lanes and never come within 3 yards of each other.'; }
       else if (died) { cause = 'died carrying it'; fix = 'An egg breaks into a Viper when its carrier dies. Carriers should get defensives and healing, and pass on the egg if they\'re low.'; }
       else if (gr) { cause = 'hit by ' + gr.spell; fix = 'Keep eggs away from anything green. Dodge the waves, and only take an egg into a Spectral Coil that is meant to pop it.'; }
       else { cause = 'broke in their hands'; fix = 'Anything green touching an egg or its carrier breaks it into a Viper.'; }
@@ -3939,8 +3939,8 @@ function buildUlatek(ev, r, h) {
   // would bury the list; an egg that broke is its Viper's line, with the map of what broke it)
   const eggRow = (c, k) => {
     const held = Math.max(0, Math.round(Math.min(c.e, dur) - c.s)), end = c.e >= dur - 0.3;
-    if (c.vrow) { const v = c.vrow; return [v[0], v[1], { ...v[2], txt: 'Egg ' + k + ': broke into a Viper (' + c.viper.cause + ')', sub: 'picked up at ' + T(c.s) + ', held for ' + held + ' s' }, { ...v[3], txt: 'Viper ' + v[3].txt }].concat(v.slice(4)); }
-    const how = c.viper ? 'broke into a Viper (' + c.viper.cause + ')' : c.pop ? 'popped in a Spectral Coil' : end ? 'still carried when the pull ended' : 'dropped at ' + T(c.e) + ' (no Viper)';
+    if (c.vrow) { const v = c.vrow; return [v[0], v[1], { ...v[2], txt: 'Egg ' + k + ' broke into a Viper: ' + c.viper.cause, sub: 'picked up at ' + T(c.s) + ', held for ' + held + ' s' }, { ...v[3], txt: 'Viper ' + v[3].txt }].concat(v.slice(4)); }
+    const how = c.viper ? 'broke into a Viper: ' + c.viper.cause : c.pop ? 'popped in a Spectral Coil' : end ? 'still carried when the pull ended' : 'dropped at ' + T(c.e) + ' (no Viper)';
     return [{ t: c.s }, { p: pname(c.g) }, { txt: 'Egg ' + k + ': ' + how, sub: 'picked up at ' + T(c.s) + ', held for ' + held + ' s' }, { txt: c.viper ? 'Viper at ' + T(c.viper.t) : '—', dim: !c.viper }];
   };
   const eggSub = (ups) => { const n = (f) => ups.filter(f).length, nV = n((c) => c.viper), nP = n((c) => !c.viper && c.pop), nE = n((c) => !c.viper && !c.pop && c.e >= dur - 0.3), nD = ups.length - nV - nP - nE;

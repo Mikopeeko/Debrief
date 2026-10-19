@@ -3,7 +3,7 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
-- [ ] **A high-expectations raider's pass (your note, Oct 18): what would lose a serious Mythic player.** Walked a real
+- [x] **A high-expectations raider's pass (your note, Oct 18; fixed in round 243): what would lose a serious Mythic player.** Walked a real
   night (Adequate, Ula'tek Mythic, 6 wipes at 89–96% in P1, plus The Coiled Altar kill) on every tab, one pull and the
   whole night, desktop and phone.
   - **Trust breakers:** grades too kind and in two versions (the raid A and Mechanics S 98 on Players, but Mechanics B 81
@@ -258,6 +258,31 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 243: Fixes from the high-expectations pass (your go: trust, noise, readability, first look, phone)
+- [x] **Grades follow their colour.** On the whole night's Mechanics and Assignments, a pull where a mechanic went wrong
+  counts 30 to 65, one that could be better 65 to 85, a clean one 90 or more. Ula'tek's night: Avoidable damage went
+  from A to C ("went wrong in 4 of 5 pulls"), Caustic Waves from F to D, the Wretch bubble from D to C.
+- [x] **One name per grade:** the whole night's top card on Recap is "Raid execution" (it was a second "Report card");
+  the Players page's "Mechanics" is "Own mechanics" (each player's own mistakes), so it no longer reads as a second,
+  different mechanics grade.
+- [x] **Power Infusion says which moment it means:** "With 3 or more enemies up then, Simonebiles would have gained…"; the
+  ranking says it's for a single target over the pull, and why a cast can name someone else.
+- [x] Fixed "Ula&#39;tek" on the night's Best pull tile.
+- [x] **Less noise on short wipes:** no potion is expected on a wipe under 2 minutes; a healer's mana left is only judged
+  on a kill or a pull of 4 minutes or more; healing or damage against the top parses only shows on kills (they're kills).
+- [x] **Talk to** no longer names an A or S player for a casting tip alone. The longest stretch with nothing pressed skips
+  the pull's first second (the pre-pull). Recap leaves out the Healing cooldowns tile without a note and the Interrupts
+  tile when there was nothing to kick.
+- [x] **Plainer lines:** "(3 players)" instead of "(3 times)" when it's 3 players; 5.09M instead of 5,090,214; "hit by
+  it too often 7 times (any hit counts: it can be dodged every time)" instead of "over the limit"; the egg lines read
+  "Egg 1 broke into a Viper: Noxious Splash, within 3 yards of Flahozinho".
+- [x] **A night opens on the boss you spent it on**: the one with the most pulls, on its kill (The Coiled Altar, pull 13,
+  for the Adequate night), not the last boss pulled. A night still being logged opens on its newest pull.
+- [x] **Phone:** What went wrong comes before What went well, the maps in its rows are 92 pixels (were 63), and the
+  player picker is one line.
+- [ ] Left as is, my call: "Always be casting 77%: Good" for Holy Paladin. Its bar came from the top players' numbers, so
+  I didn't move it without checking them again; say if you want that check.
 
 ## 2026-10-18, round 242: More checks for Havoc, Devourer, Assassination and Subtlety (your note: "seem very bare bones")
 - [x] **A new kind of check for every spec page: "did B go with A?"** Each press of one spell (or each time a buff was up)

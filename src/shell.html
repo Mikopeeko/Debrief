@@ -2771,6 +2771,15 @@ details.pf-dc > summary .sst { margin-left: auto; }
   .fight.bh .bh-side, .fight.bh .bh-k { display: none; } .bh-s { margin-top: 0; gap: 4px 12px; } .bh-s span:nth-child(n+3) { display: none; }
   .tabbar .tabs > .tab { padding-top: 9px; }
 }
+/* (Recap's tiles: as many columns as tiles on a computer, now that empty ones are left out) */
+@media (min-width: 1101px) { .lp-tiles[data-n="3"] { --n: 3; } .lp-tiles[data-n="4"] { --n: 4; } }
+/* (on a phone (your review, Oct 18): what went wrong before what went well, the maps in its rows bigger, and the player
+   picker one line) */
+@media (max-width: 640px) {
+  .wr-wrap { display: flex; flex-direction: column; } .wr-wrap > .wr-good { order: 2; margin-top: 10px; }
+  .wr-map, .wr-map svg.zmap { width: 92px !important; height: 92px !important; }
+  .mech-pick > .sub { display: none; } .mech-pick { padding: 8px 12px; } .mech-pick select { min-width: 0; flex: 1; } .mech-pick .mp-l { flex: 1; }
+}
 </style>
 </head>
 <body>
