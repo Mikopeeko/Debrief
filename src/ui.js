@@ -3370,17 +3370,20 @@ function audit() {
   // greyed behind a red line), and the totals; a dot opens its exact moment)
   h = h.replace(MT_TOP, () => { const ent = buckets.flatMap((l, i) => l.map((x) => ({ x, k: i }))).concat(whole.map((x) => ({ x, k: 'w' }))).filter(({ x }) => !x.s.info);
     const st = ({ x }) => lvlOf(phLv([x])), cnt = (k) => ent.filter((e) => st(e) === k).length;
-    const totals = '<div class="mcx-strip">' + [['major', 'bad', 'Failed'], ['minor', 'warn', 'Some mistakes'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + cnt(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
+    // (Oct 19, "make it better": the counts as small pills in the header, in the dots' own colours, so they're the legend too;
+    // a zero isn't shown)
+    const pills = '<span class="mcx-pills">' + [['major', 'bad', 'failed'], ['minor', 'warn', 'with mistakes'], ['clean', 'ok', 'done right']].filter(([k]) => cnt(k)).map(([k, c, w]) => '<span class="mcx-pill ' + c + '"><i></i><b>' + cnt(k) + '</b> ' + w + '</span>').join('') + '</span>';
     // (the verdict: the phase with the most trouble, a failed mechanic counting most, its worst mechanics, and the phases that went clean)
     const per = buckets.map((l, i) => ({ p: phs[i], l: l.filter((x) => !x.s.info) })).filter((y) => y.l.length).map((y) => { const o = phLv(y.l), rk = { major: 0, moderate: 1, minor: 2, clean: 3 };
       return { name: y.p.name, o, sc: o.major * 9 + o.minor, worst: y.l.filter((x) => st({ x }) !== 'clean').sort((u, v) => rk[st({ x: u })] - rk[st({ x: v })]).map((x) => x.s.title.split(': ')[0]) }; });
     const topP = per.slice().sort((u, v) => v.sc - u.sc)[0], clean = per.filter((y) => !y.sc);
     const verdict = topP && topP.sc && per.length > 1 ? '<p class="mcx-verdict">Most trouble was in <b>' + esc(topP.name) + '</b>: ' + lvlText(topP.o).replace('<span class="lvx-s"> · </span>', ', ') +
       (topP.worst.length ? ', led by <b>' + topP.worst.slice(0, 2).map(esc).join('</b> and <b>') + '</b>' : '') + '.' + (clean.length ? ' <span class="mcx-good">' + (clean.length > 1 ? 'Clean phases: ' : 'Clean phase: ') + esc(clean.map((y) => y.name).join(' and ')) + '.</span>' : '') + '</p>' : ''; // ("Clean phase: One Fang left.", not "One Fang left went clean." (Oct 19))
-    const head = '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake and each skull a death. Hover one for what happened, click it to open that moment.</small></h3>' + verdict;
+    void verdict; // (the sentence on top is gone: the four Debriefing blocks above say it)
+    const head = '<div class="panel mcx-tl mcx-tl2"><div class="mcx-th"><h3 class="nh">The pull at a glance<small>Click a dot to see that moment</small></h3>' + pills + '</div>';
     // (the whole pull to its last phase, or to its end when the wipe filter cut it short; one phase is enough: most prog wipes end in P1)
     const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end = Math.max(lastE, isFinite(r.duration) ? r.duration : 0);
-    if (!tp.length || !(end > 0)) return head + totals + '</div>';
+    if (!tp.length || !(end > 0)) return head + '</div>';
     const at = (t) => (100 * t / end).toFixed(2) + '%', X = (t) => 'calc(var(--lw) + (100% - var(--lw)) * ' + (t / end).toFixed(4) + ')';
     // (one lane per mechanic with a mistake, Deaths first, then the busiest; every moment is on its lane, the clean ones as faint ticks, so
     // "10 of 40" reads at a glance; dots closer than a hair are grouped into one with a count, in the worst colour, every one listed on hover)
@@ -3397,10 +3400,11 @@ function audit() {
     const ls = [...lanes.values()].filter((L) => nBadOf(L)).sort((u, v) => (u.s.id === 'deaths' ? -1 : v.s.id === 'deaths' ? 1 : nBadOf(v) - nBadOf(u)));
     const lIc = (s) => { const g = GENERIC_SEC.test(s.title); return spellIcon(g ? 0 : (s.spell && s.spell[0]) || 0, g ? s.title : (s.spell && s.spell[1]) || s.title); };
     const step = end > 900 ? 120 : 60, ticks = []; for (let t = step; t < end - step / 3; t += step) ticks.push(t);
-    const band = '<div class="mcx-lane mcx-phr"><span class="mcx-ll"></span><div class="mcx-bar">' + tp.filter(({ p }) => p.start < end).map(({ p }) => '<div class="mcx-seg" style="flex:' + (Math.min(p.end, end) - p.start) + '"><span>' + esc(p.name) + '</span></div>').join('') +
+    const band = '<div class="mcx-lane mcx-phr"><span class="mcx-ll"></span><div class="mcx-bar">' + tp.filter(({ p }) => p.start < end).map(({ p }) => '<div class="mcx-seg" style="flex:' + (Math.min(p.end, end) - p.start) + '"><span>' + esc(p.name) + ' <em>' + T(p.start) + '–' + T(Math.min(p.end, end)) + '</em></span></div>').join('') +
       (end - lastE > 1 ? '<div class="mcx-seg" style="flex:' + (end - lastE) + '"></div>' : '') + '</div></div>';
     const rows = ls.map((L) => { const nm = L.s.title.split(': ')[0], nb = nBadOf(L), na = L.s.id === 'deaths' ? nb : L.pts.length;
-      return '<div class="mcx-lane"><span class="mcx-ll" title="' + esc(nm + (na > nb ? ': ' + nb + ' of ' + na + ' went wrong' : '')) + '">' + lIc(L.s) + '<span>' + esc((nm.match(/\(([^)]+)\)/) || [0, nm])[1]) + '</span><b>' + nb + (na > nb ? '<i>/' + na + '</i>' : '') + '</b></span><div class="mcx-tr">' + okTicks(L) + dotsOf(L) + '</div></div>'; }).join('');
+      const sub = L.s.id === 'deaths' ? plural(nb, 'death') : na > nb ? nb + ' of ' + na + ' wrong' : plural(nb, 'mistake');
+      return '<div class="mcx-lane"><span class="mcx-ll" title="' + esc(nm + (na > nb ? ': ' + nb + ' of ' + na + ' went wrong' : '')) + '">' + lIc(L.s) + '<span class="mcx-lt"><span>' + esc((nm.match(/\(([^)]+)\)/) || [0, nm])[1]) + '</span><small>' + sub + '</small></span></span><div class="mcx-tr">' + okTicks(L) + dotsOf(L) + '</div></div>'; }).join('');
     // (where deaths pile up: 3 or more within 10 seconds is shaded; on a wipe the last pile runs to the end, "Wipe started")
     const dts = deaths.slice().sort((u, v) => u - v), cl = []; for (let i = 0; i < dts.length; i++) { let j = i; while (j + 1 < dts.length && dts[j + 1] - dts[i] <= 10) j++; if (j - i >= 2) { const c = cl[cl.length - 1]; if (c && dts[i] <= c.b + 10) c.b = Math.max(c.b, dts[j]); else cl.push({ a: dts[i], b: dts[j] }); } }
     const wipe = cl.map((c, i) => { const last = i === cl.length - 1 && !r.item.kill, n = dts.filter((t) => t >= c.a && t <= c.b).length, z = last ? end : Math.max(c.b, c.a + 3);
@@ -16478,7 +16482,7 @@ function nightMerge(o) {
   box.insertAdjacentHTML('afterbegin', '<div class="lpv dbf rc-top">' + NR.parts.cards + '</div>'); box.insertAdjacentHTML('beforeend', '<section class="lpv dbf rc-more">' + NR.parts.more + '</section>');
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
-const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp, me: myPageView };
+const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();

@@ -3139,6 +3139,23 @@ details.secd.mcx-tile.st-bad:not([open]):hover { box-shadow: 0 8px 26px rgba(212
    (3 or more in 10 seconds) shaded red, and on a wipe the last pile runs to the end as "Wipe started") */
 .mcx-okt { position: absolute; top: 50%; z-index: 2; width: 2px; height: 10px; margin: -5px 0 0 -1px; border-radius: 1px; background: rgba(255,255,255,.2); }
 .mcx-ll > b i { font-style: normal; font-weight: 500; opacity: .55; }
+/* (Oct 19, "make it better": The pull at a glance, cleaner. The counts as pills in the header, which are the legend too; each lane a
+   thin rail with every moment on it, green done right, yellow a mistake, red failed, skulls deaths; two-line labels; phases
+   with their time span; the part the wipe filter leaves out softer) */
+.mcx-tl2 { padding: 16px 20px 10px; } .mcx-th { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 14px; } .mcx-tl2 .mcx-th h3 { margin: 0; }
+.mcx-pills { display: flex; flex-wrap: wrap; gap: 6px; } .mcx-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; background: rgba(255,255,255,.05); font-size: 12.5px; color: var(--muted); }
+.mcx-pill i { width: 9px; height: 9px; border-radius: 50%; } .mcx-pill b { color: var(--text); font-weight: 700; } .mcx-pill.bad i { background: var(--lv-maj); } .mcx-pill.warn i { background: var(--lv-min); } .mcx-pill.ok i { background: #45c15c; }
+.mcx-tl2 .mcx-lanes { --lw: 190px; }
+.mcx-tl2 .mcx-lane { min-height: 40px; } .mcx-tl2 .mcx-lane + .mcx-lane:not(.mcx-phr) { border-top: 0; } .mcx-tl2 .mcx-tr { height: 40px; }
+.mcx-tl2 .mcx-tr::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: rgba(255,255,255,.06); }
+.mcx-tl2 .mcx-okt { width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: rgba(69,193,92,.6); }
+.mcx-lt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; } .mcx-lt > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; color: var(--text); } .mcx-lt small { font-size: 11.5px; color: var(--muted); }
+.mcx-tl2 .mcx-ll .icw { width: 22px; height: 22px; border-radius: 5px; }
+.mcx-tl2 .mcx-phr { margin-bottom: 6px; } .mcx-tl2 .mcx-phr .mcx-bar { height: 30px; } .mcx-tl2 .mcx-seg { background: rgba(232,185,35,.07); } .mcx-tl2 .mcx-seg:nth-child(even) { background: rgba(255,255,255,.045); }
+.mcx-tl2 .mcx-phr .mcx-seg span { top: 7px; font: 600 12px var(--body); color: var(--text); } .mcx-tl2 .mcx-seg em { font-style: normal; font-weight: 400; color: var(--muted); margin-left: 4px; }
+.mcx-tl2 .mcx-cut { border-left-color: rgba(229,83,75,.75); background: repeating-linear-gradient(135deg, rgba(10,11,15,.5) 0 6px, rgba(10,11,15,.3) 6px 12px); }
+.mcx-tl2 .mcx-pl { border-left-color: rgba(232,185,35,.28); }
+@media (max-width: 640px) { .mcx-tl2 { padding: 14px 14px 8px; } .mcx-tl2 .mcx-lanes { --lw: 30px; } .mcx-tl2 .mcx-lt { display: none; } .mcx-tl2 .mcx-lane, .mcx-tl2 .mcx-tr { min-height: 34px; height: 34px; } }
 .mcx-tr .mcx-dot.mcx-grp { width: 17px; height: 17px; margin: -8.5px 0 0 -8.5px; } .mcx-tr .mcx-dot.dead.mcx-grp { width: 19px; height: 19px; margin: -9.5px 0 0 -9.5px; }
 .mcx-dot.mcx-grp > i { position: absolute; top: -8px; right: -10px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: #0d0f14; box-shadow: 0 0 0 1px rgba(255,255,255,.35); color: #fff; font: 700 9.5px/15px var(--body); font-style: normal; text-align: center; }
 .mcx-wipe { position: absolute; top: 30px; bottom: 22px; z-index: 3; pointer-events: none; border-left: 2px solid var(--lv-maj); background: linear-gradient(90deg, rgba(212,17,30,.3), rgba(212,17,30,.08)); }
