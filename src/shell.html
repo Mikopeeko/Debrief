@@ -3719,6 +3719,17 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rcn-fix li::before { content:counter(f); flex:none; width:22px; height:22px; border-radius:7px; background:var(--gold); color:#1b1406; font:700 13px/22px var(--head); text-align:center; } .rcn-fix .pl-go { margin-top:6px; }
 @media (max-width:1100px) { .rcn-top { grid-template-columns:1fr; } .rcn-aw { grid-template-columns:repeat(2,1fr); } .rcn-dp { grid-template-columns:1fr; } }
 @media (max-width:700px) { .rcn-head { grid-template-columns:1fr; gap:12px; } .rcn-head h2 { font-size:26px; } .rcn-kpis { grid-template-columns:repeat(2,1fr); } .rcn-hide { display:none; } .rcn-pc { gap:3px; } .rcn-pdi .rcn-dl { grid-template-columns:1fr; } .rcn-aw { grid-template-columns:1fr; } .rcn-h .rcn-roles { margin-left:0; } }
+/* (Oct 19: the whole night, compact (your call): every issue from all pulls, in smaller tiles so it reads quickly) */
+.nrv .rcp-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.nrv .rcp-w .wr-map.rcp-map, .nrv .rcp-w .wr-map.rcp-map svg.zmap { height: 92px !important; }
+.nrv .rcp-hd { padding: 7px 10px; gap: 7px; } .rcp-hd > b { min-width: 72px; overflow-wrap: normal; } .rcp-who { flex: 0 1 auto; min-width: 0; overflow: hidden; } .nrv .rcp-hd > b { font-size: 14px; } .nrv .rcp-hd .icw.big, .nrv .rcp-hd .icw.big .ico { width: 22px; height: 22px; }
+.nrv .rcp-bd { padding: 7px 10px 9px; font-size: 12.5px; line-height: 1.4; } .nrv .rcp-tg { margin-bottom: 4px; } .nrv .rcp-wt { margin-bottom: 4px; }
+.nrv .rcp-lv { top: 7px; right: 7px; padding: 1px 8px; font-size: 11px; } .nrv .rcp-nomap .rcp-hd { padding-right: 80px; }
+.nrv .rcp-oks { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; } .nrv .rcp-ok { padding: 9px 10px 7px; gap: 9px; } .nrv .rcp-ok .icw.big, .nrv .rcp-ok .icw.big .ico { width: 26px; height: 26px; } .nrv .rcp-ok b { font-size: 13.5px; }
+.nmc .mcx-tiles { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.nmc details.secd.mcx-tile .wr-map.mcx-map, .nmc details.secd.mcx-tile .wr-map.mcx-map svg.zmap { height: 92px !important; }
+.nmc details.secd.mcx-tile:not([open]) .mcx-hd { padding: 7px 10px 6px; } .nmc details.secd.mcx-tile:not([open]) .mcx-hd .sechd b { font-size: 14px; }
+.nmc .mcx-ln { padding: 6px 10px 9px; font-size: 12.5px; } .nmc .mcx-s { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 
 

@@ -4552,7 +4552,7 @@ function nightMechC(o) {
     const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id))), pl = pr.slice(); if (bigI > 0) pl.unshift(pl.splice(bigI, 1)[0]);
     const lv = cntL(l), lvl = lv.major ? 'major' : lv.moderate ? 'moderate' : lv.minor ? 'minor' : 'clean', m = String(g.name).match(/^P(\d+)/);
     return '<details class="phase mcx-ph" data-mst="' + lvl + '" open><summary><span class="mcx-pn">' + (m ? m[1] : /^intermission/i.test(g.name) ? 'Int' : /^whole/i.test(g.name) ? 'All' : i + 1) + '</span><b>' + esc(g.name) + '</b>' + ring(l) + '<span class="sst ' + LC[lvl] + '">' + lvTxt(lv) + '</span></summary>' +
-      (pl.length ? '<div class="mcx-tiles">' + pl.map((r, k) => tile(r, k === 0 && bigI >= 0 && pl.length > 1)).join('') + '</div>' : '') + (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean all night</span>' + ok.map(chip).join('') + '</div>' : '') + '</details>'; }).join('');
+      (pl.length ? '<div class="mcx-tiles">' + pl.map((r) => tile(r, false)).join('') + '</div>' : '') + (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean all night</span>' + ok.map(chip).join('') + '</div>' : '') + '</details>'; }).join('');
   // ---- the night at a glance: a lane per mechanic that went wrong, a dot per pull ----
   const all = groups.flatMap((g) => g.list).filter((r) => !isInfo(r) && judged(r).length), probs = all.filter((r) => lvOf(r) !== 'clean');
   const tot = (k) => all.filter((r) => lvOf(r) === k).length;
@@ -4593,7 +4593,7 @@ function nightRecap(o) {
   // ---- what went wrong: what ended the wipes, then the mechanics that kept going wrong ----
   const wrong = [], causes = new Map();
   for (const r of wipesR) { const c = causeOf(r); if (!c) continue; const y = causes.get(c.label) || { c, n: 0, who: new Map(), last: null }; y.n++; if (c.who) y.who.set(c.who, (y.who.get(c.who) || 0) + 1); y.last = r; causes.set(c.label, y); }
-  for (const y of [...causes.values()].sort((a, b) => b.n - a.n).slice(0, 3)) { if (y.n < 2 && wipesR.length > 2) continue;
+  for (const y of [...causes.values()].sort((a, b) => b.n - a.n)) { if (y.n < 2 && wipesR.length > 2) continue;
     const r = y.last, d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0], top = [...y.who].sort((u, v) => v[1] - u[1]);
     wrong.push({ lv: y.n >= Math.max(3, wipesR.length / 3) ? 'major' : 'moderate', w: -1, n: r.item.pull, sec: 'sec-deaths', map: d && d.player === y.c.who ? deathMap(r, d) : null, ic: spellIcon(y.c.id || 0, y.c.label, true), name: mech(y.c.label, y.c.id), vn: y.c.label,
       tags: [y.n + ' of ' + plural(wipesR.length, 'wipe'), 'latest: pull ' + r.item.pull], who: top.map(([n]) => n), what: 'It ended ' + y.n + ' of ' + plural(wipesR.length, 'wipe') + '.' + (top.length ? ' The first to die ' + (top.length === 1 ? 'was ' : 'were ') + top.slice(0, 3).map(([n, k]) => n + (k > 1 ? ' (' + k + ')' : '')).join(', ') + '.' : ''),
@@ -4608,18 +4608,17 @@ function nightRecap(o) {
       tags: [ns.length + ' of ' + plural(v.j, 'pull'), worst ? 'worst: pull ' + worst : ''], who: [...who].sort((u, w) => w[1] - u[1]).map(([n]) => n), what: capS(v.txt) + '.' + (v.trend ? ' ' + capS(v.trend) + '.' : ''), fix: fixFor([sp, nm, x.title]) }); }
   wrong.sort((a, b) => LVR[a.lv] - LVR[b.lv] || a.w - b.w);
   if (one) for (let i = wrong.length - 1; i >= 0; i--) if (!wrong[i].who.includes(one)) wrong.splice(i, 1);
-  wrong.splice(4); // (condensed (your ask, Oct 19): the 4 that mattered most)
   const MAPS = [], wTile = (x, big) => { const tg = x.tags.filter(Boolean), fs = x.who.map(face).filter(Boolean);
     return '<div class="rcp-w lv-' + x.lv + (big ? ' rcp-big' : '') + (x.map ? '' : ' rcp-nomap') + '" role="button" tabindex="0" data-npull="' + x.n + '" data-sec="' + esc(x.sec || '') + '" title="Open pull ' + x.n + ' on Mechanics">' +
       (x.map ? '<div class="wr-map rcp-map" role="button" tabindex="0" data-i="' + (MAPS.push(x.map) - 1) + '" title="Play this moment" aria-label="Play this moment">' + miniMap(x.map, pmap) + '</div>' : '') +
-      '<div class="rcp-hd">' + x.ic + '<b>' + x.name + '</b>' + (fs.length ? '<span class="rcp-who">' + fs.slice(0, 4).join('') + (fs.length > 4 ? '<i>+' + (fs.length - 4) + '</i>' : '') + '</span>' : '') + '</div>' +
+      '<div class="rcp-hd">' + x.ic + '<b>' + x.name + '</b>' + (fs.length ? '<span class="rcp-who">' + fs.slice(0, 3).join('') + (fs.length > 3 ? '<i>+' + (fs.length - 3) + '</i>' : '') + '</span>' : '') + '</div>' +
       '<div class="rcp-bd">' + (tg.length ? '<div class="rcp-tg">' + tg.map((t) => '<span class="wr-tag">' + esc(t) + '</span>').join('') + '</div>' : '') + (x.what ? '<div class="rcp-wt">' + esc(x.what) + '</div>' : '') +
       (x.fix ? '<div class="rcp-fx"><b>Next pull:</b> ' + esc(x.fix) + '</div>' : '') + '</div>' + (big ? '<span class="rcp-rib">Fix this first</span>' : '') + '<span class="rcp-lv ' + x.lv + '">' + LVW[x.lv] + '</span></div>'; };
   const lvCnt = (l) => l.reduce((m, v) => { m[v]++; return m; }, { major: 0, moderate: 0, minor: 0, clean: 0 });
   const lvHtml = (m) => ['major', 'moderate', 'minor'].filter((k) => m[k]).map((k) => '<span class="rcp-c ' + k + '">' + m[k] + ' ' + k + '</span>').join('<span class="rcp-sep"> · </span>');
   const bigI = wrong.findIndex((x) => x.map), wl = wrong.slice(); if (bigI > 0) wl.unshift(wl.splice(bigI, 1)[0]);
   const wP = '<div class="panel rcp-wp"><h3 class="nh"><span>What went wrong</span>' + (wrong.length ? '<span class="rcp-sum">' + lvHtml(lvCnt(wrong.map((x) => x.lv))) + '</span>' : hst('ok', 'nothing')) + '</h3>' +
-    (wl.length ? '<div class="rcp-grid">' + wl.map((x, i) => wTile(x, i === 0 && bigI >= 0 && wl.length > 1)).join('') + '</div>' : '<p class="rcp-none">✓ Nothing kept going wrong tonight.</p>') + '</div>';
+    (wl.length ? '<div class="rcp-grid">' + wl.map((x) => wTile(x, false)).join('') + '</div>' : '<p class="rcp-none">✓ Nothing kept going wrong tonight.</p>') + '</div>';
   // ---- what went great ----
   const kicks = reps.reduce((s, r) => s + r.interrupts.filter((k) => k.t <= cutT(r) + 0.05).length, 0), missK = reps.reduce((s, r) => s + (r.missedKicks || []).filter((m) => m.t <= cutT(r) + 0.05).length, 0);
   const well = [].concat(kill ? ['<b>The boss died on pull ' + kill.pull + '.</b> Nice work.'] : bestP ? ['<b>Best pull: pull ' + bestP.pull + '</b>, at ' + esc(pullLabel(bestP)) + '.'] : [],
@@ -4629,8 +4628,8 @@ function nightRecap(o) {
   const wellP = well.length || okT.length ? '<div class="panel rcp-well"><h3 class="nh"><span>What went great!</span>' + (okT.length ? hst('ok', okT.filter((q) => !q.up).length + ' clean') : '') + '</h3>' +
     (well.length ? '<div class="rcp-wh"><span class="rcp-ck">✓</span><span>' + well.join(' ') + '</span></div>' : '') +
     // (condensed (your ask, Oct 19): the first 4, the rest counted)
-    (okT.length ? '<div class="rcp-oks">' + okT.slice(0, 4).map((q) => '<button class="rcp-ok" type="button" data-go="audit" title="Open Mechanics">' + sIc(q.x) + '<span><b>' + esc(shortT(q.x.title)) + '</b><small>✓ ' + q.t + '</small></span></button>').join('') +
-      (okT.length > 4 ? '<button class="rcp-ok" type="button" data-go="audit" title="Open Mechanics"><span><b>+' + (okT.length - 4) + ' more</b><small>on Mechanics</small></span></button>' : '') + '</div>' : '') + '</div>' : '';
+    (okT.length ? '<div class="rcp-oks">' + okT.map((q) => '<button class="rcp-ok" type="button" data-go="audit" title="Open Mechanics">' + sIc(q.x) + '<span><b>' + esc(shortT(q.x.title)) + '</b><small>✓ ' + q.t + '</small></span></button>').join('') +
+      '</div>' : '') + '</div>' : '';
   // ---- the right column ----
   const ds = reps.reduce((s, r) => s + keptDeaths(r).length, 0), fd = new Map(); for (const r of reps) { const d = keptDeaths(r).slice().sort((u, v) => u.t - v.t)[0]; if (d) fd.set(d.player, (fd.get(d.player) || 0) + 1); }
   const fTop = [...fd].sort((a, b) => b[1] - a[1])[0];
