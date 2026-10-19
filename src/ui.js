@@ -13905,6 +13905,58 @@ async function autoCheck(g) {
 }
 async function autoCheckAll() { for (const g0 of groups()) { const g = groups().find((x) => x.gid === g0.gid); if (g) await autoCheck(g); } }
 HIST.load().then(() => setTimeout(autoCheckAll, 4000));
+// ---- Live now (your idea, Oct 19): your team's raid, followed without pasting a link ----
+// While Debrief is open, your team's newest report is checked about every minute (your character's, with no team); one
+// that got something in the last 10 minutes is being logged live. Your team's page gets a "Live now" strip, and opens the
+// raid by itself if you're on that page when it's first seen; the Your teams button gets a red dot; any other page gets a
+// thin Follow live bar under the top bar (not over the raid itself or on the front page, and × hides it). All of it goes once the log goes quiet.
+const LIVE_NEW = 10 * 60e3;
+function liveWho() {
+  const P = mePair(); if (P) return P.t;
+  const gl = groups(), chars = gl.filter((g) => g.kind === 'char'), teams = gl.filter((g) => g.kind !== 'char'), cur = gl.find((g) => g.gid === store.get(GROUP_CUR));
+  return chars[0] || (teams.length === 1 ? teams[0] : cur) || null;
+}
+async function liveCheck() {
+  if (document.hidden || S.liveBusy) return;
+  const g = liveWho(); if (!g || !g.id) { liveSet(null); return; }
+  S.liveBusy = true; let r = null;
+  try { r = await WCL.latestReport(await wclCreds(), g); } catch (e) { return; /* (tried again in a minute) */ } finally { S.liveBusy = false; }
+  const now = Date.now(), on = r && r.endTime && now - r.endTime < LIVE_NEW && now - r.startTime < 14 * 3600e3;
+  liveSet(on ? { g, code: r.code, title: r.title || '', end: r.endTime } : null);
+}
+const liveHere = (x) => !!(x && $('#main .home.prog') && S.progView === x.g.gid);
+const liveAgo = (x) => { const m = Math.round((Date.now() - x.end) / 60000); return (x.title ? x.title + ' · ' : '') + 'updated ' + (m < 1 ? 'just now' : plural(m, 'minute') + ' ago'); };
+const LIVE_AUTO = 'wla-live-auto';
+function liveSet(x) {
+  const was = S.liveNow; S.liveNow = x;
+  const b = $('#tbProgBtn'); if (b) { b.classList.toggle('live', !!x); b.title = x ? gName(x.g) + ' is raiding now' : 'Your teams and your character: switch, see them all, or add one'; }
+  // (your team's page: the strip comes and goes with it, and its line keeps time)
+  if ($('#main .home.prog') && S.progView && !!$('#pgLive') !== liveHere(x)) renderProgress(($('#pgMsg') || {}).textContent || '');
+  else if (x && $('#pgLive .sub')) $('#pgLive .sub').textContent = liveAgo(x);
+  // (on your team's page as the raid is first seen: it opens, once per raid in this tab)
+  let seen = []; try { seen = JSON.parse(sessionStorage.getItem(LIVE_AUTO) || '[]'); } catch (e) { /* ignore */ }
+  if (x && (!was || was.code !== x.code) && liveHere(x) && !seen.includes(x.code) && S.wclCode !== x.code) {
+    try { sessionStorage.setItem(LIVE_AUTO, JSON.stringify(seen.concat(x.code).slice(-20))); } catch (e) { /* ignore */ }
+    liveFollow(); return; }
+  liveBar();
+}
+async function liveFollow() {
+  const x = S.liveNow; if (!x) return;
+  try { sessionStorage.setItem('wla-live', '1'); } catch (e) { /* ignore */ }
+  try { await openWcl({ code: x.code, fight: null }, await wclCreds(), true); } catch (e) { toast('<span>' + esc(e.message) + '</span>', 6000); }
+  liveBar();
+}
+function liveBar() {
+  const x = S.liveNow, show = x && S.liveHide !== x.code && !(S.wclCode === x.code && S.page === 'pull') && !liveHere(x) && S.page !== 'home'; // (not over the raid itself, nor on the front page)
+  let bar = $('#lvBar');
+  if (!show) { if (bar) bar.remove(); return; }
+  const html = '<span class="lv-dot" aria-hidden="true"></span><span class="lv-t"><b>' + esc(gName(x.g)) + ' is raiding now</b><span class="sub">' + esc(liveAgo(x)) + '</span></span><button class="btn primary" id="lvGo" type="button">Follow live</button><button class="lv-x" id="lvX" type="button" aria-label="Hide this">×</button>';
+  if (!bar) { bar = document.createElement('div'); bar.id = 'lvBar'; bar.className = 'lv-bar'; bar.setAttribute('role', 'status'); $('#topbar').insertAdjacentElement('afterend', bar); }
+  if (bar.dataset.h !== html) { bar.dataset.h = html; bar.innerHTML = html; $('#lvGo').onclick = liveFollow; $('#lvX').onclick = () => { S.liveHide = x.code; liveBar(); }; }
+}
+setTimeout(liveCheck, 6000); setInterval(liveCheck, 60e3);
+setInterval(() => { if (S.liveNow) liveBar(); }, 2000); // (the bar follows you from page to page)
+document.addEventListener('visibilitychange', () => { if (!document.hidden) liveCheck(); });
 // ---- a character's page: their Warcraft Logs rankings this tier ----
 // Their most played spec first (the spec most of their best parses are on), healing for a healer spec and damage
 // otherwise; switches for each spec of their class and for damage or healing; on the page's difficulty. The summary on top
@@ -14059,6 +14111,9 @@ function renderProgress(msg, msgErr) {
   // sit behind a small Edit button beside the name and only show when it's clicked (removing asks first and says how many
   // pulls go with it)
   const pgMsg = '<div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>';
+  // (your team raiding right now: Live now, one click to follow it)
+  const lv = S.liveNow && g && S.liveNow.g.gid === g.gid ? S.liveNow : null;
+  const liveStrip = lv ? '<section class="pg-live" id="pgLive"><span class="lv-dot" aria-hidden="true"></span><span class="lv-t"><b>Live now</b><span class="sub">' + esc(liveAgo(lv)) + '</span></span><button class="btn primary" id="pgLiveGo" type="button">Follow live</button></section>' : '';
   // (a character: the teams and guilds that logged their raid nights and aren't on the list yet (your note, Oct 18: asked
   // right away, from the first look at their reports), one row each)
   const rwAll = g && g.kind === 'char' && !g.raidsWithNo ? (g.raidsWithAll || (g.raidsWith ? [g.raidsWith] : [])).filter((t) => !groups().some((o) => o.kind !== 'char' && o.id === t.id)) : [];
@@ -14089,10 +14144,11 @@ function renderProgress(msg, msgErr) {
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '</div></div>' + sw + '</div>' + team + pgMsg + meCard + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (you && you.cls ? '<section class="panel pg-rank pg-rank-me" id="pgRankMe"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '</div></div>' + sw + '</div>' + team + pgMsg + liveStrip + meCard + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (you && you.cls ? '<section class="panel pg-rank pg-rank-me" id="pgRankMe"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
+  if ($('#pgLiveGo')) $('#pgLiveGo').onclick = liveFollow;
   $('#pgHub').onclick = () => { S.progView = null; S.progMine = false; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgMine')) $('#pgMine').onclick = () => { S.progMine = true; S.progView = you.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgTeamBack')) $('#pgTeamBack').onclick = () => { S.progMine = false; S.progView = mineOf.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };

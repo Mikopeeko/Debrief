@@ -260,6 +260,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   A click swaps the page. Only the shown player's checks are worked out, so it opens faster too.
 - Checked on Wolfthorn's Twin Fangs kill (opens on Flëxørçïst, Arsyn on a click), at phone width, with no errors.
 
+## 2026-10-19, round 256: Live now, your team's raid followed without a link (your idea)
+- [x] **While Debrief is open, your team's newest report is checked about every minute** (a new quick check on the site,
+  kept a minute and shared by everyone on the same team). A report that got something in the last 10 minutes is live.
+- [x] **Your team's page:** a red "Live now" strip under the team's name with Follow live. If you're on that page when the
+  raid is first seen, it opens by itself (once per raid in a tab).
+- [x] **Everywhere else** (not the front page, your call): a red dot on Your teams and a thin "Wolfthorn is raiding now ·
+  Follow live" bar under the top bar, not over the raid itself; × hides it. It all goes once the log goes quiet.
+- Tested on a copy that treated Thursday's raid as live: it opened by itself on Wolfthorn's page, and the bar, the strip,
+  the dot and × worked on desktop and phone. Needs someone live logging with the Warcraft Logs uploader, as before.
+
 ## 2026-10-19, round 254: One page for your team and you, and a one-button front page (your notes)
 - [x] **Your team and your character are one page now** ("it's giving me decision fatigue"). Wolfthorn's page has "You:
   Flëxørçïst · Paladin" under its name, the team's rankings and then yours, and your parse on each boss card. One card on

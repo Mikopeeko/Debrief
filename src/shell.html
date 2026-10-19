@@ -1385,6 +1385,17 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
    pages. Its menu: a row per team or character (banner, name, how far it is; the one whose page is up is ticked), then
    All teams and Add. */
 .tbteams { position: relative; }
+/* Live now (Oct 19): the red dot, the strip on your team's page, and the bar under the top bar */
+.tb-prog { position: relative; } .tb-prog.live::after { content: ''; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #ff4d4d; box-shadow: 0 0 0 2px var(--panel); animation: lvPulse 1.6s ease-in-out infinite; }
+.lv-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #ff4d4d; animation: lvPulse 1.6s ease-in-out infinite; }
+@keyframes lvPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,77,.55); } 70% { box-shadow: 0 0 0 7px rgba(255,77,77,0); } }
+.tb-prog.live::after { box-shadow: 0 0 0 2px var(--panel); }
+.lv-t { display: flex; flex-direction: column; min-width: 0; } .lv-t b { color: #f6f7fa; } .lv-t .sub { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-bar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 16px; background: linear-gradient(90deg, rgba(255,77,77,.12), rgba(230,180,80,.12)); border-bottom: 1px solid rgba(230,180,80,.35); }
+.lv-bar .btn { padding: 6px 14px; font-weight: 600; } .lv-x { width: 30px; height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; } .lv-x:hover { background: var(--raised); color: var(--text); }
+.pg-live { display: flex; align-items: center; gap: 14px; margin: 12px 0 0; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,77,77,.45); background: linear-gradient(90deg, rgba(255,77,77,.12), rgba(230,180,80,.06) 70%), var(--panel); }
+.pg-live .lv-t { flex: 1; } .pg-live .lv-t b { font: 700 17px var(--head); } .pg-live .btn { padding: 9px 18px; font-weight: 600; }
+@media (max-width: 560px) { .lv-bar { justify-content: flex-start; gap: 10px; padding: 8px 12px; } .lv-bar .lv-t { flex: 1; } .pg-live { flex-wrap: wrap; } .pg-live .btn { width: 100%; } }
 .tb-prog { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 9px 0 10px; border-radius: 9px; font-weight: 600; color: #f6dc9a; background: rgba(230, 180, 80, .08); border-color: rgba(230, 180, 80, .5); white-space: nowrap; }
 .tb-prog:hover, .tb-prog[aria-expanded="true"] { background: rgba(230, 180, 80, .15); border-color: var(--gold); }
 .tb-prog svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .tb-prog .chev { width: 15px; height: 15px; margin-left: -2px; }
