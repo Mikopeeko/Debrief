@@ -20932,14 +20932,14 @@ function cmpMyAb(r, p, k) {
   return all.map((a) => ({ name: a.name, id: a.id, share: a.total / tot, cpm: /: /.test(a.name) ? null : ((p.castAb.get(a.name) || {}).n || 0) / min }));
 }
 const cmpMsg = (t) => '<div class="panel"><p class="muted" style="margin:0">' + t + '</p></div>';
-const cmpNeedWcl = (what) => cmpMsg(what + ' come from Warcraft Logs. Open this pull from its Warcraft Logs link to see them.');
+const cmpNeedWcl = (what) => cmpMsg(what + ' show for raid bosses opened from a report link. Open this pull from its report link to see them.');
 // (1) the top 3 of the player's spec on this boss
 function cmpTop(r, p) {
   if (r.item.kind !== 'boss' || (!S.wclCreds && !WCL.HOSTED)) return cmpNeedWcl('The top players');
   const k = cmpKind(p), TS = topSpecFor(r, p, k), spn = p.specName || 'spec';
-  if (TS == null) return cmpMsg('Warcraft Logs has no rankings for ' + esc(spn) + 's here.');
-  if (TS === 'loading') return cmpMsg('Loading the top 3 ' + esc(spn) + 's on this boss from Warcraft Logs…');
-  if (!TS.n) return cmpMsg(TS.err ? 'Warcraft Logs didn\'t answer just now. Open the tab again in a minute.' : 'Warcraft Logs has no ranked ' + esc(spn) + 's on this boss yet.');
+  if (TS == null) return cmpMsg('There are no rankings for ' + esc(spn) + 's here.');
+  if (TS === 'loading') return cmpMsg('Loading the top 3 ' + esc(spn) + 's on this boss…');
+  if (!TS.n) return cmpMsg(TS.err ? 'The rankings didn\'t load just now. Open the tab again in a minute.' : 'There are no ranked ' + esc(spn) + 's on this boss yet.');
   const mine = cmpRate(r, p, k), avg = TS.who.reduce((s, w) => s + w.amount, 0) / TS.who.length, dur = TS.who.reduce((s, w) => s + w.dur, 0) / TS.who.length;
   const prs = r.item.kill ? parsesFor(r, k) : null, x = prs && prs.get(p.name), U = k === 'heal' ? 'healing' : 'damage', you = cmpIsMe(p);
   const tiles = '<div class="pts n4 cmp-pts">' +
@@ -20947,10 +20947,10 @@ function cmpTop(r, p) {
     plTile('', 'Top 3 average', C(avg), 'na', 'On their kills of this boss.', true) +
     plTile('', 'Fight length', T(perfContext(r).end), 'na', 'Their kills took ' + T(dur) + '.', true) +
     (x ? plTile('', 'Parse', String(Math.floor(x.pct)), x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', 'Better than ' + Math.floor(x.pct) + '% of ' + (you ? 'your' : 'their') + ' spec.')
-      : plTile('', 'Parse', '—', 'na', r.item.kill ? 'Warcraft Logs hasn\'t ranked this kill yet.' : 'Warcraft Logs only ranks kills.', true)) + '</div>';
+      : plTile('', 'Parse', '—', 'na', r.item.kill ? 'This kill isn\'t ranked yet.' : 'Only kills are ranked.', true)) + '</div>';
   // (the top 3 as bars, with this player among them, highlighted, where their number puts them)
   const wmx = Math.max(mine, ...TS.who.map((w) => w.amount)) || 1, list = TS.who.map((w, i) => ({ w, k: i + 1, a: w.amount })).concat([{ me: true, k: '', a: mine }]).sort((a, b) => b.a - a.a);
-  const who = '<div class="panel"><h3>The top 3 ' + esc(spn) + 's on this boss<small>From Warcraft Logs, with ' + (you ? 'you' : esc(p.name)) + ' among them</small></h3>' + cbHead('A second', 'Fight', '', '', 'Player') +
+  const who = '<div class="panel"><h3>The top 3 ' + esc(spn) + 's on this boss<small>The best of the spec, with ' + (you ? 'you' : esc(p.name)) + ' among them</small></h3>' + cbHead('A second', 'Fight', '', '', 'Player') +
     list.map((x) => (x.me ? cbRow({ tag: 'div', cls: ' nb on', k: '', p, segs: [[100 * x.a / wmx, 'm']], v: C(x.a), sub: T(perfContext(r).end), chips: '<span class="sub">this pull</span>' })
       : cbRow({ tag: 'div', cls: ' nb', k: x.k, color: p.color, segs: [[100 * x.a / wmx, 'm']], v: C(x.a), sub: T(x.w.dur), name: esc(x.w.name), chips: '<span class="sub">' + esc(x.w.server + (x.w.region ? '-' + x.w.region : '')) + '</span>' }))).join('') + '</div>';
   const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) }, B = { name: 'Top 3', col: 'var(--gold)', ab: TS.ab };
@@ -21003,8 +21003,8 @@ function cmpRaids(r, ps) {
   const ctl = '<div class="cmp-ctl"><div class="seg" id="cmpRange">' + CMP_RANGE.map(([p, l]) => '<button type="button" data-p="' + p + '"' + (p === pg ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' +
     '<div class="seg" id="cmpSort">' + [['like', 'Most like yours'], ['fast', 'Fastest']].map(([s, l]) => '<button type="button" data-s="' + s + '"' + ((S.cmpSort || 'like') === s ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' +
     '<input class="cmp-find" id="cmpFind" type="search" placeholder="Find a guild" value="' + esc(S.cmpFind || '') + '" aria-label="Find a guild"></div>';
-  if (L === 'loading') return ctl + cmpMsg('Loading 20 kills of ' + esc(r.item.boss) + ' from Warcraft Logs, with who played what…');
-  if (!L.kills.length) return ctl + cmpMsg(L.err ? 'Warcraft Logs didn\'t answer just now. Try again in a minute.' : 'There aren\'t that many kills yet. Pick a range nearer the top.');
+  if (L === 'loading') return ctl + cmpMsg('Loading 20 kills of ' + esc(r.item.boss) + ', with who played what…');
+  if (!L.kills.length) return ctl + cmpMsg(L.err ? 'The kills didn\'t load just now. Try again in a minute.' : 'There aren\'t that many kills yet. Pick a range nearer the top.');
   const myN = mine.length, myDps = ps.filter((p) => p.role !== 'healer').reduce((s, p) => s + cmpRate(r, p, 'dmg'), 0);
   const ks = L.kills.map((kl) => { const tc = cmpCount(kl.ppl.map((x) => x.c + '|' + x.s)); let same = 0; for (const [k, n] of myC) same += Math.min(n, tc.get(k) || 0);
     return { ...kl, tc, same, of: Math.max(myN, kl.ppl.length), dps: kl.ppl.filter((x) => x.r !== 'healer').reduce((s, x) => s + x.a, 0) }; });
@@ -21045,8 +21045,8 @@ function cmpProgHtml(o) {
   if (o == null || o === 'loading') return '<span class="sub">Counting their pulls before their first kill…</span>';
   const me = S.rep && cmpMyProg(S.rep.item), date = (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const box = (l, v, s) => '<div class="cmp-pv"><span class="cmp-lbl">' + l + '</span><b>' + v + '</b><span class="sub">' + s + '</span></div>';
-  const them = o.err ? box('They needed', '—', 'Warcraft Logs didn\'t answer just now.') : !o.kill ? box('They needed', '—', 'Their earlier pulls aren\'t on Warcraft Logs under this guild.')
-    : box('They needed', plural(o.pulls, 'pull') + ', ' + plural(o.nights, 'night'), 'From ' + date(o.first) + ' to their first kill on ' + date(o.kill) + '. Only what they uploaded counts.');
+  const them = o.err ? box('They needed', '—', 'Their pulls didn\'t load just now.') : !o.kill ? box('They needed', '—', 'Their earlier pulls weren\'t logged under this guild.')
+    : box('They needed', plural(o.pulls, 'pull') + ', ' + plural(o.nights, 'night'), 'From ' + date(o.first) + ' to their first kill on ' + date(o.kill) + '. Only the pulls they logged count.');
   const mine = me ? box(me.kill ? 'You needed' : 'You so far', plural(me.pulls, 'pull') + ', ' + plural(me.nights, 'night'), me.kill ? 'To your first kill, from the nights opened in Debrief.' : 'From the nights opened in Debrief.') : '';
   return them + mine;
 }
