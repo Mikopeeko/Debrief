@@ -15077,77 +15077,8 @@ function rcnFacts(c) {
     const b = [...br].sort((x, y) => y[1] - x[1])[0]; if (b && b[1] >= 2) moment('🔁', 'All night', 'Back on their feet', b[0], 'Brought back ' + plural(b[1], 'player') + ' with a battle res.', null); }
   return (c._rn = { reps, pulls, mech: [...mech.values()].filter((m) => m.pts > 0).sort((a, b) => b.pts - a.pts || b.tot - a.tot), pl, awards, moments, top, before, nowN, last, byName });
 }
-// the header: the night's grade and the nights before it, the numbers, and the player of the night
-function rcnHead(c, F) {
-  const data = c.data, raid = data.reduce((s, a) => s + a.score, 0) / data.length, it = F.reps[0].item, nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
-  const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0);
-  
-  const trend = F.before.length && F.nowN ? '<div class="rcn-trend"><span class="sub">Night grades on this boss:</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') +
-    '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + rcnDelta(F.nowN.raid - F.last.raid) + '<span class="sub" style="font-size:12px">(mechanics and Rotation, without prep)</span></div>' : '';
-  const kpi = (l, v, st, d) => '<div><small>' + l + '</small><b class="' + st + '">' + v + (d || '') + '</b></div>';
-  const lede = (it.kill || nr.cls === 'good' ? nr.big + '. ' : nr.big + ' after ' + plural(F.pulls.length, 'pull') + '. ') + (F.mech[0] ? F.mech[0].n + ' cost the raid the most points (' + plural(F.mech[0].tot, 'time') + ').' : 'No mechanic cost anyone points.') + (potE && potU / potE < 0.85 ? ' ' + plural(potE - potU, 'combat potion') + ' went undrunk.' : '');
-  const head = '<div class="rcn-head"><div>' + rcnMed(raid, 88) + '</div><div><span class="rcn-kick">Report card · ' + esc(it.diff || '') + ' · ' + esc(nightLabel(it.wallMs || it.startMs || Date.now())) + '</span><h2>' + esc(it.boss) + '</h2><p>' + esc(lede) + '</p>' + trend +
-    '<div class="rcn-kpis">' + kpi('Pulls', F.pulls.length, '') + kpi('Deaths that counted', deaths, deaths / F.pulls.length >= 4 ? 'warnv' : '') +
-    kpi('Combat potions used', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('Mistakes that cost points', mist, mist ? '' : 'okv') + '</div></div></div>';
-  const t = F.top, tp = t && F.pl.get(t.p.name);
-  const spot = t ? '<div class="rcn-spot" style="--c:' + t.p.color + '"><div class="rcn-av">' + avatar(t.p, true) + '</div><div><span class="rcn-kick">🏆 Player of the night</span><h3>' + esc(t.p.name) + '</h3><span class="sub">' + esc(t.p.specName || '') + ' · ' + letterOf(t.score) + ', ' + Math.round(t.score) + ' out of 100</span>' +
-    '<p>' + esc([t.mistakes ? plural(t.mistakes, 'mistake') + ' that cost points' : 'No mistakes that cost points', tp.deaths ? plural(tp.deaths, 'death') : 'no deaths', tp.expect ? 'a combat potion in ' + tp.used + ' of ' + tp.expect + ' pulls' : '', t.rot != null ? 'a Rotation score of ' + Math.round(t.rot) : ''].filter(Boolean).join(', ').replace(/^./, (s) => s.toUpperCase())) + '.</p>' +
-    '<div class="rcn-st">' + (tp.out != null ? '<div><b>' + C(tp.out) + '</b><small>' + (t.p.role === 'healer' ? 'healing' : 'damage') + ' a second</small></div>' : '') + '<div><b class="' + (tp.deaths ? '' : 'okv') + '">' + tp.deaths + '</b><small>deaths</small></div>' + (tp.expect ? '<div><b>' + tp.used + '/' + tp.expect + '</b><small>combat potions</small></div>' : '') + (tp.last != null ? '<div><b>' + rcnDelta(tp.last) + '</b><small>since last night</small></div>' : '') + '</div></div></div>' : '';
-  return '<section class="rcn-top' + (spot ? '' : ' one') + '">' + head + spot + '</section>';
-}
-function rcnAwards(F) {
-  if (!F.awards.length) return '';
-  return '<section class="rcn-sec"><h3 class="rcn-h">Tonight\'s awards<small>The best plays of the night, earned from the log.</small></h3><div class="rcn-aw" style="--n:' + Math.min(5, F.awards.length) + '">' +
-    F.awards.map((w) => '<div class="rcn-a" style="--c:' + w.a.p.color + '"><div class="rcn-ai">' + w.ic + '</div><small>' + esc(w.t) + '</small><b>' + esc(w.a.p.name) + '</b><p>' + esc(w.txt(w.a)) + '</p></div>').join('') + '</div></section>';
-}
-function rcnMoments(F) {
-  if (!F.moments.length) return '';
-  const col = (n) => { const a = n && F.byName.get(n); return a ? a.p.color : 'var(--gold)'; };
-  return '<section class="rcn-sec"><h3 class="rcn-h">Moments of the night<small>What stood out.</small></h3><div class="rcn-mo">' +
-    F.moments.map((m) => '<div class="rcn-m" style="--c:' + col(m.who) + '"><span class="rcn-mi">' + m.ic + '</span><small>' + esc(m.when) + '</small><b>' + esc(m.t) + '</b><p>' + (m.who ? '<span class="rcn-w">' + esc(m.who) + '</span>: ' : '') + esc(m.txt) + '</p></div>').join('') + '</div></section>';
-}
-// every pull: a bar each (taller got further), and a table row each; a row opens its deaths on a timeline
-function rcnPulls(F) {
-  const open = S.rcnPull;
-  // (each bar is the boss's health left at the end of the pull, so the bars come down toward the kill, which has none (your note, Oct 19))
-  const bars = '<div class="rcn-pc">' + F.pulls.map((q) => { const left = q.it.kill ? 0 : q.left == null ? null : q.left, cls = q.it.kill ? 'k' : left == null ? 'p2' : left >= 66 ? 'p1' : left >= 33 ? 'p2' : 'p3';
-    return '<button type="button" class="' + cls + (open === q.it.pull ? ' on' : '') + '" data-rcnp="' + q.it.pull + '" data-tt="' + esc('<b>Pull ' + q.it.pull + '</b><br>' + (q.it.kill ? 'Kill' : left == null ? 'Health left not known' : (left < 10 ? left.toFixed(1) : Math.round(left)) + '% of the boss left (' + esc(q.label) + ')') + '<br>' + plural(q.kept.length, 'death') + ' up to the wipe filter') + '">' +
-      (q.it.kill ? '<em>✓</em>' : '<i style="height:' + (left == null ? 0 : Math.max(3, left)) + '%"></i>') + '<span>' + q.it.pull + '</span></button>'; }).join('') + '</div>';
-  const row = (q) => { const f = q.first, fp = f && F.byName.get(f.player), on = open === q.it.pull, left = q.it.kill ? 0 : q.left == null ? null : q.left, kd = q.kept.length;
-    return '<tr class="rcn-pr' + (q.it.kill ? ' kill' : '') + (on ? ' on' : '') + '" data-rcnp="' + q.it.pull + '"><td><span class="rcn-ar">›</span><b class="rcn-pn">' + q.it.pull + '</b>' + q.moments.map((m) => '<span class="rcn-mm" data-tt="' + esc('<b>' + esc(m.t) + '</b><br>' + esc((m.who ? m.who + ': ' : '') + m.txt)) + '">' + m.ic + '</span>').join('') + '</td>' +
-      '<td><div class="rcn-hpw"><div class="rcn-hp"><i style="width:' + (left == null ? 0 : left) + '%"></i></div><span' + (q.it.kill ? ' class="okv"' : '') + '>' + (q.it.kill ? 'Killed' : left == null ? '—' : (left < 10 ? left.toFixed(1) : Math.round(left)) + '% left' + (q.phase ? '<small>' + esc(q.label) + '</small>' : '')) + '</span></div></td>' +
-      '<td class="rcn-b" data-tt="' + esc(plural(q.deaths.length, 'death') + ' in all; ' + kd + ' up to the wipe filter') + '">' + kd + '</td>' +
-      '<td class="rcn-hide">' + (f ? '<span class="nm" style="color:' + (fp ? fp.p.color : 'inherit') + '">' + esc(f.player) + '</span> <span class="sub">· ' + esc(f.ability || 'unknown') + ', ' + T(f.t) + '</span>' : '<span class="sub">Nobody died</span>') + '</td>' +
-      '<td class="rcn-hide' + (q.expect && q.used < q.expect ? ' warnv' : '') + '">' + (q.expect ? q.used + ' of ' + q.expect : '<span class="sub">—</span>') + '</td><td' + (q.it.kill ? ' class="okv rcn-b"' : '') + '>' + esc(q.ended) + '</td></tr>' +
-      (on ? '<tr class="rcn-pd"><td colspan="6">' + rcnPullDetail(F, q) + '</td></tr>' : ''); };
-  const cutN = deathCutN();
-  return '<section class="rcn-sec"><h3 class="rcn-h">Pull by pull<small>Each bar is the boss\'s health left when the pull ended: lower is better, and the kill has none. ' + (cutN ? 'Deaths count up to the ' + ordinal(cutN) + ' death (the wipe filter). ' : '') + 'Click a bar or a row to open that pull.</small></h3><div class="panel rcn-pp">' + bars +
-    '<div class="rcn-scroll"><table class="rcn-pt"><tr><th>Pull</th><th>Boss health left</th><th title="Up to the wipe filter">Deaths</th><th class="rcn-hide">Died first</th><th class="rcn-hide" title="Combat or mana potions drunk, of the ones each pull had room for">Combat potions</th><th>How it ended</th></tr>' + F.pulls.map(row).join('') + '</table></div></div></section>';
-}
-function rcnPullDetail(F, q) {
-  const len = Math.max(30, q.r.duration), ticks = []; for (let m = 60; m < len; m += 60) ticks.push(m);
-  const dots = q.deaths.map((d) => { const a = F.byName.get(d.player), col = a ? a.p.color : '#98a0ad', after = d.t > cutT(q.r) + 0.05;
-    return '<span class="rcn-dd' + (after ? ' late' : '') + '" style="left:' + (100 * d.t / len).toFixed(2) + '%;--c:' + col + '" data-tt="' + esc('<b>' + T(d.t) + ' · ' + esc(d.player) + '</b><br>' + esc(d.ability ? 'Killed by ' + d.ability : 'Died') + (after ? '<br><span class="sub">After the wipe filter: not counted</span>' : '')) + '">' + esc(String(d.player).charAt(0)) + '</span>'; }).join('');
-  const list = q.deaths.length ? '<div class="rcn-dl">' + q.deaths.map((d) => { const a = F.byName.get(d.player); return '<div><b>' + T(d.t) + '</b><span><span class="nm" style="color:' + (a ? a.p.color : 'inherit') + '">' + esc(d.player) + '</span> · ' + esc(d.ability || 'unknown') + '</span></div>'; }).join('') + '</div>' : '<p class="sub" style="margin:8px 0 0">Nobody died this pull.</p>';
-  return '<div class="rcn-pdi"><div class="rcn-pdh"><b>Pull ' + q.it.pull + (q.it.kill ? ', the kill' : ', ' + esc(q.label) + ' left') + '</b><span class="sub">Each circle is a death. Hover one for who and what.</span><button type="button" class="btn sm" data-rcngo="' + q.it.pull + '">Open this pull</button></div>' +
-    '<div class="rcn-tl">' + ticks.map((m) => '<i style="left:' + (100 * m / len).toFixed(2) + '%"><span>' + T(m) + '</span></i>').join('') + dots + '</div>' + list + '</div>';
-}
-// the mechanics scoreboard: each mechanic's count, pull by pull, whether it got better, and who it caught most
-function rcnMech(F) {
-  if (!F.mech.length) return '<section class="rcn-sec"><h3 class="rcn-h">Mechanics scoreboard</h3><div class="panel"><p class="sub" style="margin:0">No mechanic cost anyone points tonight.</p></div></section>';
-  const n = F.reps.length, rows = F.mech.slice(0, 10).map((m) => { const mx = Math.max(1, ...m.per), h = Math.max(1, Math.floor(n / 2)), avg = (l) => l.reduce((s, v) => s + v, 0) / Math.max(1, l.length), a = avg(m.per.slice(0, h)), b = avg(m.per.slice(n - h));
-    // (the trend in words, with the numbers: how many a pull in the first half of the night against the second (your note, Oct 19: the mini chart didn't read))
-    const f1 = (v) => (v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1)), k = m.tot >= 20 || m.sev === 'High' ? 'var(--bad)' : m.tot >= 8 ? 'var(--warn)' : 'var(--good)';
-    const tr = n < 4 ? '' : b < a * 0.6 ? '<span class="okv">▼ Fewer by the end</span><small>' + f1(a) + ' a pull early, ' + f1(b) + ' late</small>' : b > a * 1.4 && b - a >= 1 ? '<span class="hotv">▲ More by the end</span><small>' + f1(a) + ' a pull early, ' + f1(b) + ' late</small>' : '<span class="sub">Steady</span><small>about ' + f1((a + b) / 2) + ' a pull all night</small>';
-    const who = [...m.who].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([nm, v]) => { const a2 = F.byName.get(nm); return '<span style="--c:' + (a2 ? a2.p.color : 'inherit') + '"><b>' + esc(nm) + '</b> ' + v + '</span>'; }).join('');
-    return '<tr><td class="rcn-mn"><b>' + esc(m.n) + '</b>' + (m.fix ? '<small>' + esc(String(m.fix).split(/(?<=\.)\s/)[0]) + '</small>' : '') + '</td><td class="rcn-tot" style="color:' + k + '">' + m.tot + '</td>' +
-      // (a square a pull, the number in it how many times; darker is more, an empty square is none)
-      '<td><div class="rcn-sq" style="--k:' + k + ';--n:' + n + '">' + m.per.map((v, i) => '<i class="l' + (!v ? 0 : v / mx <= 0.34 ? 1 : v / mx <= 0.67 ? 2 : 3) + '" data-tt="' + esc('<b>Pull ' + F.reps[i].item.pull + '</b><br>' + (v ? plural(v, 'time') : 'Not once')) + '">' + (v || '') + '</i>').join('') + '</div></td><td class="rcn-trd">' + tr + '</td><td class="rcn-hide"><div class="rcn-who">' + who + '</div></td></tr>'; }).join('');
-  const cutN = deathCutN();
-  return '<section class="rcn-sec"><h3 class="rcn-h">Mechanics scoreboard<small>Every mechanic that cost points' + (cutN ? ', up to the wipe filter' : '') + ': how many times in all, how many each pull, and who it caught most.</small></h3><div class="panel rcn-pp rcn-scroll"><table class="rcn-ms"><tr><th>Mechanic</th><th>Times</th><th>Each pull · ' + F.reps[0].item.pull + ' to ' + F.reps[n - 1].item.pull + '</th><th>Trend</th><th class="rcn-hide">Most often</th></tr>' + rows + '</table></div></section>';
-}
 // one player's breakdown, under their row: mechanics, deaths, output pull by pull, cooldowns, prep, and what to fix first
-function rcnPlayer(c, F, a) {
+function rcnPlayer(c, F, a, side) {
   const pf = F.pl.get(a.p.name), nm = a.p.name;
   // their mistakes by mechanic, with the pulls
   const mm = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { const o = mm.get(m.mechanic) || { n: 0, pulls: new Set(), sev: m.severity, note: !!m.fromNote }; o.n++; o.pulls.add(g.r.item.pull); if (m.severity === 'High') o.sev = 'High'; mm.set(m.mechanic, o); }
@@ -15172,51 +15103,86 @@ function rcnPlayer(c, F, a) {
   const gear = S.rcnGear === nm && x;
   const top = '<div class="rcn-dt">' + rcnMed(a.score, 46) + '<div><b class="rcn-dn" style="color:' + a.p.color + '">' + esc(nm) + '</b><span class="sub">' + esc(a.p.specName || '') + ' · ' + Math.round(a.score) + ' out of 100 · ' + plural(a.n, 'pull') + (pf.last != null ? ' · ' + rcnDelta(pf.last) + ' since last night' : '') + '</span></div>' + (mine ? '<div class="rcn-mbs">' + mine + '</div>' : '') +
     (x ? '<button type="button" class="btn sm" data-rcngear="' + esc(nm) + '">' + (gear ? 'Back to their night' : 'Gear and stats') + '</button>' : '') + '</div>';
-  if (gear) return '<div class="rcn-det" style="--c:' + a.p.color + '">' + top + gearView(x) + '</div>';
+  if (gear) return '<div class="rcn-det' + (side ? ' rcn-sdp' : '') + '" style="--c:' + a.p.color + '">' + top + gearView(x) + '</div>';
+  if (side) { const tile = (k) => { const v = a[k]; return plTile(plGr(v), k === 'play' ? 'Rotation' : PL_PN[k], v == null ? '—' : Math.round(v) + '<span> / 100</span>', gBucket(v), v == null ? (k === 'asg' ? 'No note jobs' : 'Not judged') : RCN_WHY[k](a), true); };
+    return '<div class="rcn-det rcn-sdp" style="--c:' + a.p.color + '">' + top + '<div class="pts rcn-pts" style="--n:3">' + ['mech', 'play', 'surv', 'prep', 'asg', 'tool'].map(tile).join('') + '</div>' +
+      rsSec('Fix these first', 'the biggest gain first', fixes) + rsSec('Mechanics', 'over the night', mech) + rsSec('Deaths', plural(dd.length, 'death') + ' up to the wipe filter', deaths) +
+      rsSec((heal ? 'Healing' : 'Damage') + ' pull by pull', 'a second, against their best pull', out) + rsSec('Big cooldowns', 'pressed, of the times they could', cds) + rsSec('Prep', 'at the last pull', prep) + '</div>'; }
   return '<div class="rcn-det" style="--c:' + a.p.color + '">' + top + '<div class="rcn-dp">' +
     '<div class="rcn-dc"><h4>Mechanics<small>over the night</small></h4>' + mech + '<h4 class="s">Deaths<small>' + plural(dd.length, 'death') + '</small></h4>' + deaths + '</div>' +
     '<div class="rcn-dc"><h4>' + (heal ? 'Healing' : 'Damage') + ' pull by pull<small>a second, against their best pull</small></h4>' + out + '<h4 class="s">Big cooldowns<small>pressed, of the times they could</small></h4>' + cds + '</div>' +
     '<div class="rcn-dc"><h4>Prep<small>at the last pull</small></h4>' + prep + '<h4 class="s">Fix these first<small>the biggest gain first</small></h4>' + fixes + '</div></div></div>';
 }
-// the raid on one grid: a row a player, six coloured parts, output, deaths, potions and the night's trend
-const RCN_COLS = [['score', 'Grade', 'out of 100'], ['mech', 'Mechanics', '25%'], ['play', 'Rotation', '25%'], ['surv', 'Survival', '15%'], ['prep', 'Prep', '15%'], ['asg', 'Assignments', '10%'], ['tool', 'Toolkit', '10%'], ['out', 'Output', 'a second'], ['deaths', 'Deaths', 'over the night'], ['pots', 'Potions', 'combat, used'], ['trend', 'Trend', 'pull by pull']];
-function rcnGrid(c, F) {
-  const role = S.rcnRole || 'all', sortK = S.rcnSort || null, has = new Set(c.data.map((a) => a.p.role || 'dps'));
-  const list = c.data.filter((a) => role === 'all' || (a.p.role || 'dps') === role), pf = (a) => F.pl.get(a.p.name);
-  const val = { score: (a) => a.score, mech: (a) => a.mech, play: (a) => a.play, surv: (a) => a.surv, prep: (a) => a.prep, asg: (a) => a.asg, tool: (a) => a.tool, out: (a) => pf(a).out, deaths: (a) => -pf(a).deaths, pots: (a) => (pf(a).expect ? pf(a).used / pf(a).expect : -1), trend: (a) => a.trend };
-  const why = { mech: (a) => (a.mistakes ? plural(a.mistakes, 'mistake') + ' that cost points' : 'No mistakes that cost points'), play: (a) => (a.rot != null ? 'Their score on the Rotation tab' : 'How they pressed their buttons: casting, cooldowns, resources'), surv: () => 'Defensives, close calls, Healthstone and health potion', prep: () => 'Flask, food, weapon oil, rune, enchants and gems at the pull', asg: () => 'The share of their NSRT note jobs they did', tool: () => 'Combat or mana potion, and externals' };
-  const spark = (a) => { const s = a.per.map((g) => g.score); if (s.length < 2) return '<span class="sub">—</span>'; const lo = Math.min(...s), hi = Math.max(...s, lo + 10);
-    return '<svg class="rcn-tr" viewBox="0 0 70 22"><polyline fill="none" stroke="' + a.p.color + '" stroke-width="1.8" stroke-linejoin="round" points="' + s.map((v, i) => (i * 70 / (s.length - 1)).toFixed(1) + ',' + (20 - 18 * (v - lo) / (hi - lo)).toFixed(1)).join(' ') + '"/></svg>'; };
-  const row = (a) => { const x = pf(a), on = S.plSel === a.p.name, aw = F.awards.filter((w) => w.a === a).map((w) => '<span class="rcn-tro" data-tt="' + esc('<b>' + w.t + '</b><br>' + w.txt(w.a)) + '">' + w.ic + '</span>').join('') + (F.top === a ? '<span class="rcn-tro" data-tt="<b>Player of the night</b>">🏆</span>' : '');
-    return '<tr class="rcn-p' + (on ? ' on' : '') + '" data-pn="' + esc(a.p.name) + '"><td class="rcn-nm"><span class="rcn-ar">›</span>' + avatar(a.p, true) + '<span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span>' + aw + '<small>' + esc(a.p.specName || '') + '</small></td>' +
-      '<td data-tt="' + esc('<b>' + letterOf(a.score) + ', ' + Math.round(a.score) + ' out of 100</b>' + (x.last != null ? '<br>' + (x.last >= 0 ? 'Up ' : 'Down ') + Math.round(Math.abs(x.last)) + ' since last night (mechanics and Rotation)' : '')) + '">' + gradeChip(letterOf(a.score)) + ' <b class="rcn-sc">' + Math.round(a.score) + '</b>' + rcnDelta(x.last) + '</td>' +
-      ['mech', 'play', 'surv', 'prep', 'asg', 'tool'].map((k) => rcnCell(a[k], a[k] == null ? null : '<b>' + (k === 'play' ? 'Rotation' : PL_PN[k]) + ': ' + Math.round(a[k]) + '</b><br>' + why[k](a))).join('') +
-      '<td class="rcn-raw">' + (x.out == null ? '<span class="sub">—</span>' : C(x.out) + ' <span class="sub">' + (a.p.role === 'healer' ? 'HPS' : 'DPS') + '</span>') + '</td><td class="rcn-raw ' + (x.deaths > 2 ? 'hotv' : x.deaths ? 'warnv' : 'okv') + '">' + x.deaths + '</td>' +
-      '<td class="rcn-raw' + (x.expect && x.used < x.expect ? ' warnv' : '') + '">' + (x.expect ? x.used + '/' + x.expect : '<span class="sub">—</span>') + '</td><td data-tt="Their grade pull by pull">' + spark(a) + '</td></tr>' +
-      (on ? '<tr class="rcn-pd"><td colspan="' + (RCN_COLS.length + 1) + '">' + rcnPlayer(c, F, a) + '</td></tr>' : ''); };
-  let body = '';
-  if (sortK && val[sortK]) body = list.slice().sort((u, v) => (val[sortK](v) ?? -1e9) - (val[sortK](u) ?? -1e9)).map(row).join('');
-  else for (const [r, l] of [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']]) { const xs = list.filter((a) => (a.p.role || 'dps') === r); if (xs.length) body += '<tr class="rcn-rg"><td colspan="' + (RCN_COLS.length + 1) + '">' + l + '</td></tr>' + xs.sort((u, v) => v.score - u.score).map(row).join(''); }
-  const avg = (k) => { const v = list.map((a) => a[k]).filter((y) => y != null); return v.length ? v.reduce((s, y) => s + y, 0) / v.length : null; }, sc = avg('score');
-  body += '<tr class="rcn-avg"><td class="rcn-nm"><span class="rcn-ar"></span><span class="nm" style="color:var(--gold)">' + (role === 'all' ? 'The raid' : RCN_ROLES.find((x) => x[0] === role)[1]) + '</span><small>average</small></td><td>' + (sc == null ? '' : gradeChip(letterOf(sc)) + ' <b class="rcn-sc">' + Math.round(sc) + '</b>') + '</td>' + ['mech', 'play', 'surv', 'prep', 'asg', 'tool'].map((k) => rcnCell(avg(k))).join('') + '<td></td><td class="rcn-raw">' + list.reduce((s, a) => s + pf(a).deaths, 0) + '</td><td></td><td></td></tr>';
-  const head = '<tr><th>Player</th>' + RCN_COLS.map(([k, n, sm]) => '<th data-rcns="' + k + '" class="' + (sortK === k ? 'on' : '') + '" title="Sort by ' + n.toLowerCase() + '">' + n + (sortK === k ? ' ↓' : '') + '<small>' + sm + '</small></th>').join('') + '</tr>';
-  const roles = '<div class="seg rcn-roles">' + RCN_ROLES.filter(([k]) => k === 'all' || has.has(k)).map(([k, l]) => '<button type="button" data-rcnr="' + k + '"' + (role === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>';
-  return '<section class="rcn-sec"><h3 class="rcn-h">The raid on one grid<small>Each part out of 100. Hover a score for why, click a column to sort, click a player for their whole night.</small>' + roles + '</h3><div class="panel rcn-pp"><div class="rcn-scroll"><table class="rcn-hm">' + head + body + '</table></div>' +
-    '<div class="rcn-leg"><span><i style="background:' + rcnBg(95) + '"></i>85 and up</span><span><i style="background:' + rcnBg(78) + '"></i>72 to 84</span><span><i style="background:' + rcnBg(50) + '"></i>below 72</span><span>▲▼ the grade against last night on this boss</span></div></div></section>';
+// (what each part of the grade is, in a line)
+const RCN_WHY = { mech: (a) => (a.mistakes ? plural(a.mistakes, 'mistake') + ' that cost points' : 'No mistakes that cost points'), play: (a) => (a.rot != null ? 'Their score on the Rotation tab' : 'How they pressed their buttons: casting, cooldowns, resources'), surv: () => 'Defensives, close calls, Healthstone and health potion', prep: () => 'Flask, food, weapon oil, rune, enchants and gems at the pull', asg: () => 'The share of their NSRT note jobs they did', tool: () => 'Combat or mana potion, and externals' };
+// ---- Team of the night (your pick, Oct 19): the night's result as a banner, the best of each role as the night's team, and
+// a rated card for every raider; a card opens that player's whole night. Built only on the Report card; the grades are
+// plData's, unchanged. A card's colour is where they rank in the raid tonight (the top tenth legendary orange, then epic
+// purple, rare blue, uncommon green), so every night has a spread even when most grades sit close together.
+const RCT_TIER = [[0.1, '#ff8000', 'The best grades tonight'], [0.35, '#b25ef5', 'Near the top tonight'], [0.7, '#2e8cff', 'The middle of the raid tonight'], [1.01, '#2ee62e', 'The rest of the raid tonight']];
+const RCT_POS = { tank: 'Tank', healer: 'Healer', dps: 'DPS' };
+function rctFacts(c, F) {
+  if (F._rct) return F._rct;
+  const rank = c.data.slice().sort((u, v) => v.score - u.score), tier = new Map();
+  // (the same grade, the same colour: a player's place is where their grade first appears)
+  rank.forEach((a) => { const i = rank.findIndex((b) => Math.round(b.score) === Math.round(a.score)); tier.set(a.p.name, RCT_TIER.find(([f]) => i / rank.length < f)); });
+  // (output against their role, 60 to 99: the fastest of the role 99, the slowest 60)
+  const outR = new Map();
+  for (const r of ['tank', 'healer', 'dps']) { const l = c.data.filter((a) => (a.p.role || 'dps') === r && F.pl.get(a.p.name).out != null); if (!l.length) continue;
+    const v = l.map((a) => F.pl.get(a.p.name).out), lo = Math.min(...v), hi = Math.max(...v); for (const a of l) outR.set(a.p.name, Math.round(60 + 39 * (hi > lo ? (F.pl.get(a.p.name).out - lo) / (hi - lo) : 1))); }
+  return (F._rct = { rank, tier, outR });
+}
+function rctCard(c, F, a, sm) {
+  const T = rctFacts(c, F), pf = F.pl.get(a.p.name), [, q, tierTxt] = T.tier.get(a.p.name), role = a.p.role || 'dps';
+  const pot = pf.expect ? Math.round(100 * pf.used / pf.expect) : null;
+  const st = [['Mechanics', a.mech], ['Rotation', a.play], ['Survival', a.surv], ['Prep', a.prep], ['Potions', pot], [role === 'healer' ? 'Healing' : 'Damage', T.outR.get(a.p.name)]];
+  const why = { Mechanics: RCN_WHY.mech(a), Rotation: RCN_WHY.play(a), Survival: RCN_WHY.surv(a), Prep: RCN_WHY.prep(a), Potions: pf.expect ? 'Combat potions in ' + pf.used + ' of the ' + pf.expect + ' their pulls had room for' : 'No pull long enough to need one', Damage: 'Their damage a second against the other ' + (role === 'tank' ? 'tanks' : 'damage dealers') + ' tonight (fastest 99)', Healing: 'Their healing a second against the other healers tonight (fastest 99)' };
+  const aw = F.awards.filter((w) => w.a === a).map((w) => '<span data-tt="' + esc('<b>' + w.t + '</b><br>' + w.txt(w.a)) + '">' + w.ic + '</span>').join('') + (F.top === a ? '<span data-tt="<b>Player of the night</b>">🏆</span>' : '');
+  return '<button type="button" class="rct-cd' + (sm ? ' sm' : '') + '" data-rctp="' + esc(a.p.name) + '" style="--q:' + q + ';--c:' + a.p.color + '" aria-label="' + esc(a.p.name + ', ' + Math.round(a.score) + ' out of 100. Open their night') + '">' +
+    '<span class="rct-f"></span><span class="rct-in"></span><span class="rct-ov" data-tt="' + esc('<b>' + Math.round(a.score) + ' out of 100</b><br>' + tierTxt) + '"><b>' + Math.round(a.score) + '</b><span>' + RCT_POS[role] + '</span></span>' +
+    '<span class="rct-gr">' + gradeChip(letterOf(a.score)) + '</span>' + (aw ? '<span class="rct-aw">' + aw + '</span>' : '') +
+    '<img class="rct-pic" src="' + whIcon(pIcon(a.p)) + '" alt="" onerror="this.style.visibility=\'hidden\'"><span class="rct-nm">' + esc(a.p.name) + '</span>' +
+    '<span class="rct-st">' + st.map(([k, v]) => '<span class="' + (v != null && v < 70 ? 'lo' : '') + '" data-tt="' + esc('<b>' + k + ': ' + (v == null ? 'not judged' : Math.round(v)) + '</b><br>' + (why[k] || '')) + '"><b>' + (v == null ? '–' : Math.round(v)) + '</b><i>' + k + '</i></span>').join('') + '</span>' +
+    '<span class="rct-dd' + (pf.deaths >= 5 ? ' bad' : pf.deaths ? '' : ' ok') + '" data-tt="' + esc(plural(pf.deaths, 'death') + ' up to the wipe filter, over ' + plural(a.n, 'pull')) + '">' + (pf.deaths ? pf.deaths + ' ✕' : 'No deaths') + '</span></button>';
+}
+// the night's result: VICTORY (or the best pull), the raid grade, the numbers that sum up the night
+function rctBanner(c, F) {
+  const data = c.data, raid = data.reduce((s, a) => s + a.score, 0) / data.length, it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
+  const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0);
+  const kpi = (l, v, st) => '<div><b class="' + (st || '') + '">' + v + '</b><small>' + l + '</small></div>';
+  const trend = F.before.length && F.nowN ? '<div class="rct-tr"><span>Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + rcnDelta(F.nowN.raid - F.last.raid) + '</div>' : '';
+  return '<section class="rct-ban' + (kill ? ' win' : '') + '"><div class="rct-bw"><h2>' + (kill ? 'Victory' : esc(nr.big)) + '</h2><p><b>' + esc(it.boss) + '</b> · ' + esc(it.diff || '') + ' · ' + esc(nightLabel(it.wallMs || it.startMs || Date.now())) + ' · ' + (kill ? 'killed on pull ' + kill.it.pull : plural(F.pulls.length, 'pull')) + '</p></div>' +
+    '<div class="rct-bg">' + gradeChip(letterOf(raid), true) + '<small>Raid grade<br>' + Math.round(raid) + ' out of 100</small></div>' +
+    '<div class="rct-k">' + kpi('pulls', F.pulls.length) + kpi('deaths that counted', deaths, deaths / F.pulls.length >= 4 ? 'warnv' : '') + kpi('combat potions drunk', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('mistakes that cost points', mist, mist ? '' : 'okv') + '</div>' + trend + '</section>';
+}
+// the team: 2 tanks, 2 healers and 4 damage dealers, the best grades among those who died in a quarter of their pulls or fewer
+function rctTeam(c, F) {
+  const ok = (a) => F.pl.get(a.p.name).deaths <= Math.max(1, a.n / 4);
+  const pick = (r, n) => { const l = c.data.filter((a) => (a.p.role || 'dps') === r).sort((u, v) => v.score - u.score), good = l.filter(ok); return (good.length >= Math.min(n, l.length) ? good : l).slice(0, n); };
+  const line = (lab, l) => (l.length ? '<div class="rct-ll">' + lab + '</div><div class="rct-line">' + l.map((a) => rctCard(c, F, a)).join('') + '</div>' : '');
+  return '<section class="rct-sec"><h3 class="rct-h">Team of the night<small>The best of each role tonight, among players who stayed alive. Click a card for their whole night.</small></h3><div class="rct-pitch">' +
+    line('Damage dealers', pick('dps', 4)) + line('Healers', pick('healer', 2)) + line('Tanks', pick('tank', 2)) + '</div></section>';
+}
+function rctAll(c, F) {
+  const role = S.rcnRole || 'all', has = new Set(c.data.map((a) => a.p.role || 'dps')), list = rctFacts(c, F).rank.filter((a) => role === 'all' || (a.p.role || 'dps') === role);
+  const roles = '<div class="seg rct-roles">' + RCN_ROLES.filter(([k]) => k === 'all' || has.has(k)).map(([k, l]) => '<button type="button" data-rcnr="' + k + '"' + (role === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>';
+  const key = '<div class="rct-key">' + RCT_TIER.map(([, q, t]) => '<span><i style="background:' + q + '"></i>' + t.replace(/ (of the raid )?tonight$/, '') + '</span>').join('') + '<span>The big number is their grade out of 100. Hover any number for what it means.</span></div>';
+  return '<section class="rct-sec"><h3 class="rct-h">Every card<small>Everyone in the raid, best grade first. A card\'s colour is where they ranked tonight.</small>' + roles + '</h3>' +
+    '<div class="rct-all">' + list.map((a) => rctCard(c, F, a, true)).join('') + '</div>' + key + '</section>';
 }
 function rcnPage(c) {
-  const F = rcnFacts(c);
-  if (S.plSel && !c.data.some((a) => a.p.name === S.plSel)) S.plSel = null;
-  return '<div class="rcn">' + rcnHead(c, F) + rcnAwards(F) + rcnMoments(F) + rcnPulls(F) + rcnMech(F) + rcnGrid(c, F) + '</div>';
+  const F = rcnFacts(c), open = S.rctOpen && c.data.find((a) => a.p.name === S.rctOpen);
+  const ovl = open ? '<div class="rct-ovl" data-rctx="1"><div class="panel rct-ovp" role="dialog" aria-label="' + esc(open.p.name) + '\'s night"><button type="button" class="rct-x" data-rctx="1" aria-label="Close">×</button>' + rcnPlayer(c, F, open, true) + '</div></div>' : '';
+  return '<div class="rcn rct">' + rctBanner(c, F) + rctTeam(c, F) + rctAll(c, F) + ovl + '</div>';
 }
 function bindRcn(c) {
   const v = $('#plBody'), again = () => { const y = window.scrollY; player(); window.scrollTo({ top: y }); }; // (redrawn in place: the page stays where it was)
-  v.querySelectorAll('[data-rcnp]').forEach((b) => (b.onclick = () => { const n = +b.dataset.rcnp; S.rcnPull = S.rcnPull === n ? null : n; again(); }));
-  v.querySelectorAll('[data-rcngo]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); const it = c.reps.map((r) => r.item).find((x) => x.pull === +b.dataset.rcngo); if (it) { S.tab = 'live'; setScope('pull'); select(it); } }));
+  v.querySelectorAll('[data-rctp]').forEach((b) => (b.onclick = () => { S.rctOpen = b.dataset.rctp; S.rcnGear = null; again(); }));
+  v.querySelectorAll('[data-rctx]').forEach((b) => (b.onclick = (e) => { if (e.target !== b) return; S.rctOpen = null; S.rcnGear = null; again(); }));
   v.querySelectorAll('[data-rcnr]').forEach((b) => (b.onclick = () => { S.rcnRole = b.dataset.rcnr; again(); }));
-  v.querySelectorAll('[data-rcns]').forEach((b) => (b.onclick = () => { S.rcnSort = S.rcnSort === b.dataset.rcns ? null : b.dataset.rcns; again(); }));
-  v.querySelectorAll('tr.rcn-p[data-pn]').forEach((b) => (b.onclick = () => { S.plSel = S.plSel === b.dataset.pn ? null : b.dataset.pn; S.rcnGear = null; again(); }));
   v.querySelectorAll('[data-rcngear]').forEach((b) => (b.onclick = () => { S.rcnGear = S.rcnGear === b.dataset.rcngear ? null : b.dataset.rcngear; again(); }));
+  // (Escape closes an open card)
+  if (!window._rctKey) { window._rctKey = 1; document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.rctOpen && S.tab === 'player') { S.rctOpen = null; const y = window.scrollY; player(); window.scrollTo({ top: y }); } }); }
   spcTipInit();
 }
 // ---------- Player audit ----------
