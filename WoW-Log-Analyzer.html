@@ -3014,7 +3014,8 @@ details.pf-dc > summary .sst { margin-left: auto; }
 /* Healing a second, spell by spell: both players' bars and the difference */
 /* the two totals, large, at the top of Compare */
 /* (Compare's opening card, a face-off: each side's spec picture behind it (the left one mirrored), its spec icon and number, a gold badge with the gap, a tug of war bar) */
-.cmp-hps { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; padding: 22px 24px 18px; }
+.cmp-hps { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto) auto minmax(0, auto) minmax(0, 1fr); align-items: center; gap: 16px 36px; padding: 22px 24px 18px; }
+.cmp-hps > .cmp-hpn:first-child { grid-column: 2; } .cmp-hps > .cmp-hpm { grid-column: 3; } .cmp-hps > .cmp-hpr { grid-column: 4; } /* (both numbers beside the badge, the pictures' characters clear at the edges) */
 .cmp-hps::before, .cmp-hps::after { content: ''; position: absolute; top: 0; bottom: 0; width: 50%; pointer-events: none; background: linear-gradient(270deg, var(--panel) 0%, rgba(23,26,34,.6) 30%, rgba(23,26,34,.05) 75%), var(--artA, none) right center / cover no-repeat; }
 .cmp-hps::before { left: 0; transform: scaleX(-1); } .cmp-hps::after { right: 0; background-image: linear-gradient(270deg, var(--panel) 0%, rgba(23,26,34,.6) 30%, rgba(23,26,34,.05) 75%), var(--artB, none); } .cmp-hps > * { position: relative; z-index: 1; }
 .cmp-hpn { display: flex; align-items: center; gap: 14px; min-width: 0; } .cmp-hpn.cmp-hpr { flex-direction: row-reverse; text-align: right; } .cmp-hpn > div { display: flex; flex-direction: column; min-width: 0; } .cmp-hpr > div { align-items: flex-end; }
@@ -3023,7 +3024,7 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-hpm { width: 108px; height: 108px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(circle, #1d1a12 0%, #111 70%); box-shadow: 0 0 0 2px rgba(230,180,80,.7), 0 0 24px rgba(230,180,80,.25); }
 .cmp-hpm b { font: 800 26px/1 var(--head); color: var(--gold); } .cmp-hpm span { margin-top: 4px; padding: 0 10px; font-size: 11px; line-height: 1.25; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .cmp-hpbar { grid-column: 1 / -1; display: flex; gap: 3px; height: 10px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.3); } .cmp-hpbar i { display: block; min-width: 4px; }
-@media (max-width: 640px) { .cmp-hps { grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 14px 14px; } .cmp-hpm { grid-column: 1 / -1; grid-row: 2; justify-self: center; width: 88px; height: 88px; } .cmp-hpm b { font-size: 21px; }
+@media (max-width: 640px) { .cmp-hps { grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 14px 14px; } .cmp-hps > .cmp-hpn:first-child { grid-column: 1; grid-row: 1; } .cmp-hps > .cmp-hpr { grid-column: 2; grid-row: 1; } .cmp-hps > .cmp-hpm { grid-column: 1 / -1; grid-row: 2; justify-self: center; width: 88px; height: 88px; } .cmp-hpm b { font-size: 21px; }
   .cmp-hpv { font-size: 26px; } .cmp-hpi { width: 40px; height: 40px; border-radius: 10px; } .cmp-hpn { flex-direction: column; align-items: flex-start; gap: 8px; } .cmp-hpn.cmp-hpr { flex-direction: column; align-items: flex-end; } }
 /* Cooldowns over the fight: a lane a player, icons over the raid's damage */
 .cmp-cdt { display: flex; flex-direction: column; gap: 10px; } .cmp-cdl { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: center; gap: 14px; }
