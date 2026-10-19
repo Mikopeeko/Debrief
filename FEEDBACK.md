@@ -278,6 +278,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   itself (click it to switch boss), keep the pull cards right under it with All pulls as the first card, and drop the
   separate picker at the top. A few mockups to pick from first, like the Graphs controls.
 
+## 2026-10-19, round 264: Rotation marked under construction like the others (your note)
+- [x] The Rotation tab name gets the same little 🚧 sign and striped edge as Assignments, Players and Compare, and its
+  building site moved to the same spot as theirs, at the top of the page. Graphs, which shares Rotation's page, has none.
+
 ## 2026-10-19, round 263: The building site on Assignments, Players and Compare too (your note)
 - [x] The same building site (crane, workers, caution tape) now sits on top of the Assignments, Players and Compare tabs,
   in place of the old line of text, with a note naming the tab: "Our crew is still building the Players tab. Everything
