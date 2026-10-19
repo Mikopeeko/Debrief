@@ -2650,6 +2650,11 @@ html { scrollbar-gutter: stable; }
 /* (no pop-up descriptions on the tab names: they covered the page, and the names explain themselves) */
 .tabbar .tab::after { display: none !important; }
 /* (except a greyed-out tab's note, "Under development", on hover, or on a tap on a phone) */
+/* My Page (Oct 19): the first tab, set apart from the raid's tabs by a stronger line and a gold look */
+.tabbar .tab.tab-me { color: var(--gold); font-weight: 700; } .tabbar .tab.tab-me .tab-ic { opacity: 1; color: var(--gold); } .tabbar .tab.tab-me:hover { color: #f6dc9a; }
+.tabbar .tab.tab-me.on { border-bottom-color: var(--gold); background: rgba(230,180,80,.09); border-radius: 6px 6px 0 0; }
+.tabbar .tab-me + .tsep { width: 2px; margin: 10px 10px 8px; background: var(--line2); }
+.pg-tabbar { margin: 0 0 14px; } .pg-tabbar .tabs { padding: 0; }
 .tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
 /* a little construction sign on the tabs still being built (your call, Oct 19: Compare and Players) */
 .tabbar .tab.tab-uc { background-image: repeating-linear-gradient(-45deg, #e6b450 0 5px, #1a1c22 5px 10px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }
@@ -11783,7 +11788,7 @@ function nightResult(it) {
   return { cls: 'best', txt: best ? 'Best: ' + pullLabel(best.b) + ' (pull ' + best.b.pull + ')' : 'No kill yet', big: best ? 'Best: ' + pullLabel(best.b) : 'No kill yet', left: best ? best.v : null, pull: best ? best.b.pull : null };
 }
 // the tabs' icons (drawn here, no game art)
-const TAB_IC = { live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', cmp: 'scale' };
+const TAB_IC = { me: 'home', live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', cmp: 'scale' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
   cmp: 'One player side by side with the top players of their spec on this boss, with a teammate, or with raids that killed this boss with a group like yours.',
@@ -11795,7 +11800,7 @@ const TAB_TIP = {
   night: 'Every pull of this boss together. It shows report cards, how far you got, what to fix before the next raid, and each mechanic and assignment pull by pull.',
   player: 'Each player\'s page, for this pull or all pulls. It shows one grade from their mechanics and Rotation, what they should fix first, and their prep.',
 };
-const TICO = { clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
+const TICO = { home: '<path d="M3.5 11.5 12 4.5l8.5 7"/><path d="M6 10v9.5h4.5v-5h3v5H18V10"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
   target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>', chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
   bars: '<path d="M4 20h16"/><path d="M6.5 17v-5M11 17V7M15.5 17v-8M20 17v-3"/>',
   cycle: '<path d="M19 12a7 7 0 0 1-12 4.95M5 12a7 7 0 0 1 12-4.95"/><path d="M17.5 3.5v3.8h-3.8M6.5 20.5v-3.8h3.8"/>',
@@ -11803,6 +11808,18 @@ const TICO = { clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"
   scale: '<path d="M12 4v16M7 20h10M5 7h14"/><path d="M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
   users: '<circle cx="9" cy="8" r="3.3"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><path d="M15.5 4.8a3.3 3.3 0 0 1 0 6.4M17.5 14c2.1.7 3.5 2.8 3.5 5.5"/>' };
 const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true">' + (TICO[TAB_IC[k]] || '') + '</svg>';
+// My Page (your call, Oct 19): your team's page as the first tab, set apart from the raid's tabs by a line and its own gold look. In a raid it opens
+// your team's page; that page shows the same tabs with My Page lit, and the raid's tabs take you back into the raid you came from (greyed out when
+// no raid is open yet). With no team added yet, it starts the setup.
+const ME_TIP = 'Your team\'s page: every boss and raid night, with your rankings.';
+const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" data-t="me" role="tab" aria-selected="' + !!on + '" data-tt="' + esc(ME_TIP) + '" aria-description="' + esc(ME_TIP) + '">' + tabIco('me') + 'My Page</button><span class="tsep" aria-hidden="true"></span>';
+function openMyPage() { const t = homeTarget(); if (!t) { gsStart(); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); }
+// (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
+function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
+  return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = !back ? 'Open a raid night first' : off ? 'Under development' : TAB_TIP[k] || '';
+    return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + '</nav></div>'; }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pg-tabbar .tab'); if (!b) return; const k = b.dataset.t;
+  if (k === 'me') { if (!b.classList.contains('on')) openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = k; select(PROG_BACK); });
 // ---- the boss banner on top of every tab ----
 // One pull: which pull and boss, the result in big letters, when and how long, and on the right how it compares
 // (best of the night, further than the last pull) with a bar of the phases. All pulls: the night's best pull (or the
@@ -12033,11 +12050,11 @@ function renderMain() {
       const tab = (k) => { const l = name.get(k), soon = k === 'cmp' && CMP_OFF(), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
-      return TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
+      return meTabHtml(false) + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.dataset.t === 'me') { openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
@@ -28731,7 +28748,7 @@ function renderProgress(msg, msgErr) {
     (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '') + '</section>';
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
-  $('#main').innerHTML = '<div class="home prog pg-v2"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
+  $('#main').innerHTML = pgTabBar(g) + '<div class="home prog pg-v2"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
     '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + liveStrip + meCard + sugg +
     (all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') +

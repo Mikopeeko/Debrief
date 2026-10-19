@@ -2650,6 +2650,11 @@ html { scrollbar-gutter: stable; }
 /* (no pop-up descriptions on the tab names: they covered the page, and the names explain themselves) */
 .tabbar .tab::after { display: none !important; }
 /* (except a greyed-out tab's note, "Under development", on hover, or on a tap on a phone) */
+/* My Page (Oct 19): the first tab, set apart from the raid's tabs by a stronger line and a gold look */
+.tabbar .tab.tab-me { color: var(--gold); font-weight: 700; } .tabbar .tab.tab-me .tab-ic { opacity: 1; color: var(--gold); } .tabbar .tab.tab-me:hover { color: #f6dc9a; }
+.tabbar .tab.tab-me.on { border-bottom-color: var(--gold); background: rgba(230,180,80,.09); border-radius: 6px 6px 0 0; }
+.tabbar .tab-me + .tsep { width: 2px; margin: 10px 10px 8px; background: var(--line2); }
+.pg-tabbar { margin: 0 0 14px; } .pg-tabbar .tabs { padding: 0; }
 .tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
 /* a little construction sign on the tabs still being built (your call, Oct 19: Compare and Players) */
 .tabbar .tab.tab-uc { background-image: repeating-linear-gradient(-45deg, #e6b450 0 5px, #1a1c22 5px 10px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }
