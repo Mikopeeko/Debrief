@@ -78,8 +78,6 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   your spec, what you did well, and pieces of the Performance charts (conclusions, not the raw charts), until it reads like a
   top raider going through your logs. My take: one page that reads like a review, not one giant card; start with the damage
   or healing summary and "what you did well".
-- [ ] **Your call for launch (Oct 19): Spec checks on the live site?** They're still greyed out online; Performance's other
-  views are on.
 - [x] **Top players: fastest kills plus good parses (built in round 189, with your output-from-parses note):** the bars and "Top raids" marks now
   come from every player of the spec in the fastest Mythic kills (speed, not parses), so they show how players on the best
   teams play the real fight. My suggestion: keep the fastest kills but count only the players in them who also parsed well
@@ -87,11 +85,6 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   bars rest on less data. Holy Paladin's marks still come from an earlier set of 10 kills: move it to the same set.
 - [x] **Spec checks on every boss (my suggestion; done in round 189):** every bar and "Top raids" mark comes from Twin Fangs. The other bosses
   grade with default bars and no marks until the same top-raid check runs on them, starting with the boss you're progressing on.
-- [ ] **Rotation checks for the tanks, Havoc and Devourer (my suggestion):** WoWAnalyzer has lists for Protection Paladin and
-  Brewmaster; the rest from the guides, checked against the top players like the healers.
-  **Update (round 187):** every tank has one now (Protection Paladin and Brewmaster in round 186; Blood, Vengeance, Guardian
-  and Protection Warrior in round 187). Havoc's first list blamed the top players (its order bends around Fury and procs), so
-  it was taken out; Havoc and Devourer keep their cooldown and resource checks until a list holds up against the top players.
 - [x] **Performance greyed out on the live site until its vision is complete (your note, Oct 18):** it's incomplete and not
   clear what it's for yet, so the whole tab is off on the website for launch (round 186) and stays on your PC. To do: decide
   what Performance is for, then finish it before turning it back on. My take: agreed, launch with what's polished.
@@ -99,11 +92,6 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   before the raid test; I can mock up a few directions to pick from.
 - [ ] **Make the whole website look "fancy" (your note, Oct 18).** My take: goes with the brand work; do them together so the
   new look starts from the logo and colours.
-- [ ] **Spec-themed borders (your note, Oct 18):** fancier borders around a player's spec page (like the review header), in
-  good quality and matched to the spec's theme, never cheap or cartoony. My take: a good idea that goes with the brand and
-  "fancy" work. Do one border per class with a tint per spec (jade filigree for Monk, tinted for Mistweaver), not 40
-  separate designs. Draw them ourselves as clean vector ornaments (never Blizzard art), and mock up two or three classes
-  first so you can judge the quality before all 13 are made.
 - [x] **Saved NSRT notes (your note, Oct 18):** done in round 195. Save several notes, and pick the saved one that matches the pull's exact
   raid composition (or have Debrief pick it), or edit an existing note in place for small composition changes (swapping a
   name). My take: very useful for raid leaders, and it fits how notes change week to week. Matching by roster is the easy
@@ -938,9 +926,6 @@ Everything outside Spec checks now shows numbers and charts, with no verdicts (n
   one full-width list now; a player still opens in place. Kept: Buffs (it's where you pick a buff) and Damage into adds
   (its set-by-set panel is part of that view).
 - Utility and Survivability were plain already. Spec checks is unchanged.
-- [ ] **Power Infusion** still grades every cast (good / could be better / poor), shows "Biggest win: give it to X
-  instead", "Left on the table" and a plan for the next pull. Your call: keep that coaching as it is for now, and decide
-  when we look at Spec checks again.
 
 ## 2026-10-18, round 203: The Report card is gone (your call)
 Your direction for Performance: Spec checks stays as it is (it reviews each player's own play), and everything else
@@ -2191,8 +2176,6 @@ pulls). What was fixed, everywhere it showed up:
   none. A raid cooldown the note doesn't assign is fine at half its possible uses (it waits for the big damage).
   Cooldowns now weigh by the fight time they cover, so a missed 3-minute raid cooldown counts for more than one press of a
   1-minute one.
-- [ ] Noticed: Devourer, Midnight's new Demon Hunter spec, has no big cooldowns listed yet (its log data looked odd: The
-  Hunt logging every few seconds). Needs a look at a guide first. Alter Time logs twice per use (cast and return).
 
 ## 2026-10-17, round 124: Performance, the Report card (your goal: each player's own play, not mechanics)
 - [x] **Report card**, the first view in Performance (you gave me free rein): how well each player played their own
