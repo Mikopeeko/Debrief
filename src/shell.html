@@ -3034,6 +3034,13 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-cdm:not(.big) { width: 18px; height: 18px; margin: -9px 0 0 -9px; border-width: 1.5px; opacity: .85; } .cmp-cdm.big { width: 30px; height: 30px; margin: -15px 0 0 -15px; z-index: 2; } .cmp-cdm.big.hit { z-index: 3; } .cmp-cdm .icw { width: 100%; height: 100%; margin: 0; } .cmp-cdm .icw img, .cmp-cdm .icw svg { width: 100%; height: 100%; } .cmp-cdm:hover { transform: scale(1.25); z-index: 3; }
 .cmp-cdx { position: relative; height: 16px; margin-left: 184px; font-size: 11px; color: var(--faint); } .cmp-cdx span { position: absolute; transform: translateX(-50%); }
 @media (max-width: 640px) { .cmp-cdl { grid-template-columns: 1fr; gap: 4px; } .cmp-cdx { margin-left: 0; } }
+/* Compare: the slips side by side (each kind, both players' counts as bars), and each big window side by side */
+.cmp-slr { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 14px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); } .cmp-slr:first-of-type { border-top: 0; }
+.cmp-sls { font-size: 12.5px; line-height: 1.7; } .cmp-sls .icw { width: 16px; height: 16px; margin: 0 3px -3px 0; border-radius: 3px; overflow: hidden; display: inline-block; } .cmp-sls .icw img, .cmp-sls .icw svg { width: 100%; height: 100%; }
+.cmp-slv { display: grid; gap: 3px; } .cmp-slv > span { display: grid; grid-template-columns: 84px minmax(0, 1fr) 26px; align-items: center; gap: 6px; font-size: 11.5px; } .cmp-slv i { font-style: normal; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-slb { height: 8px; border-radius: 3px; background: rgba(255,255,255,.05); overflow: hidden; } .cmp-slb em { display: block; height: 100%; border-radius: 3px; } .cmp-slv b { text-align: right; font-variant-numeric: tabular-nums; }
+.cmp-wcr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 6px 0 10px; } .cmp-wcc { min-width: 0; } .cmp-wcc > .cmp-wsn { display: block; margin-bottom: 3px; }
+@media (max-width: 760px) { .cmp-slr { grid-template-columns: 1fr; gap: 4px; } .cmp-wcr { grid-template-columns: 1fr; } }
 /* the opener timeline (casts at their times, buff bars), the guide's steps; a window's lower half; the slips over the pull */
 .spc-otl { margin: 10px 0 6px; } .spc-otc { position: relative; border-bottom: 1px solid var(--line); } .spc-otp { position: absolute; top: 0; bottom: -4px; width: 2px; margin-left: -1px; background: var(--gold); opacity: .7; }
 .spc-oti { position: absolute; transform: translateX(-50%); width: 24px; height: 24px; } .spc-oti .icw { width: 24px; height: 24px; margin: 0; border-radius: 4px; overflow: hidden; } .spc-oti .icw img, .spc-oti .icw svg { width: 100%; height: 100%; }
