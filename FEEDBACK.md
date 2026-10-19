@@ -259,6 +259,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 248: Maps show each mechanic's spell icon (polish job 3, your go)
+- [x] **Every mechanic circle on the maps carries its spell's icon**, ringed in the circle's own colour (the colours were
+  already measured from each icon, so the two match, like in game): in the middle of an area to stay out of (a puddle, a
+  zone), and as a badge on the edge of a soak, a bubble or a circle on a player, since players stand in those. Drawn on
+  top, so the players' names can't hide it. Icons load from Wowhead at runtime, never bundled, and fade in when they arrive.
+- [x] Checked on The Coiled Altar (Guillotine, Grim Guillotine, Gloombomb: 31 icons on one pull), The Lost Explorers (Blink
+  Nova, Mighty Thud) and The Twin Fangs (Ravenous Feast, Coiling Ichor), with no errors.
+- [ ] Still open from the maps note: our own clean outline of each boss room (the floor art is soft, about 1 pixel per
+  yard). My take: worth doing for the boss you're progressing first; it needs each room's shape measured from logs.
+
 ## 2026-10-19, round 247: Power Infusion on the priest's own Rotation page too (your call: "duplicate it")
 - [x] **Every Holy and Shadow Priest's Rotation page ends with their Power Infusion:** the same cards as Graphs › Power
   Infusion, for that priest only: used X of Y, the "Next pull" line, the timeline, each cast and each stretch it sat ready

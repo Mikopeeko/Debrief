@@ -2790,6 +2790,8 @@ details.pf-dc > summary .sst { margin-left: auto; }
   .wr-map, .wr-map svg.zmap { width: 92px !important; height: 92px !important; }
   .mech-pick > .sub { display: none; } .mech-pick { padding: 8px 12px; } .mech-pick select { min-width: 0; flex: 1; } .mech-pick .mp-l { flex: 1; }
 }
+/* (a mechanic's spell icon on the maps: in the middle of a floor circle, a badge on the edge of one on a player) */
+.zmap .mic { opacity: 0; transition: opacity .25s; pointer-events: none; } .zmap .mic.on { opacity: .92; } .zmap .mic.edge.on { opacity: 1; }
 </style>
 </head>
 <body>

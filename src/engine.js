@@ -546,7 +546,7 @@ const MECH_COL = { 'Ravenous Feast': ['#f24224', 'Red'], 'Coiling Ichor': ['#f22
   'Plague Froth': ['#dbf231', 'Lime'], 'Hungering Pyre': ['#f2a924', 'Orange'], 'Soulcoil Well': ['#2cf2b5', 'Teal'], 'Blink Nova': ['#7a6df2', 'Violet'], 'Mighty Thud': ['#f2842f', 'Orange'],
   'Gloombomb': ['#da3df2', 'Purple'], 'Spectral Coils': ['#24f2cb', 'Teal'], 'Guillotine': ['#f24824', 'Red'], 'Grim Guillotine': ['#46f2d1', 'Teal'], 'Noxious Shell': ['#3af2a8', 'Green'], 'Fester Burst': ['#d8f22f', 'Lime'], "Serpent's Bite": ['#f23243', 'Red'],
   'Volatile Purge': ['#9ff224', 'Lime'] };
-const mcol = (n, a) => { const x = MECH_COL[n] || ['#e6b450', 'Gold'], h = x[0]; return { color: h, fill: 'rgba(' + [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(',') + ',' + (a == null ? 0.16 : a) + ')', cn: x[1] + ' circle' }; };
+const mcol = (n, a) => { const x = MECH_COL[n] || ['#e6b450', 'Gold'], h = x[0]; return { color: h, fill: 'rgba(' + [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(',') + ',' + (a == null ? 0.16 : a) + ')', cn: x[1] + ' circle', mn: n }; }; // (mn: the mechanic, for its spell icon on the map)
 // Smallest circle around points [[x, y], ...] (Welzl, fine for a handful of soakers): { x, y, r }.
 function mec(P) {
   const inC = (c, p) => Math.hypot(p[0] - c.x, p[1] - c.y) <= c.r + 1e-6;

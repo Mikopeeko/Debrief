@@ -3368,6 +3368,26 @@ function cystSplat(x, y) {
 // Each pull's cast bars (engine: r.castBars), by the casting unit, built once per pull
 const CB_IX = new WeakMap();
 const cbIndex = (r) => { let m = CB_IX.get(r); if (!m) { m = new Map(); for (const c of (r && r.castBars) || []) { if (!m.has(c.g)) m.set(c.g, []); m.get(c.g).push(c); } if (r) CB_IX.set(r, m); } return m; };
+// A mechanic's spell icon on the maps (your note, Oct 18: drawn the way it looks in game, with its icon): found by the
+// mechanic's name (the spell the log used for it), loaded at runtime from Wowhead like every icon, never bundled. The
+// first time a name is seen its icon is looked up, and the maps already drawn get it as soon as it arrives.
+const MAP_IC = new Map();
+function mapIconUrl(n) {
+  if (!n) return null; const k = String(n).toLowerCase(); if (MAP_IC.has(k)) return MAP_IC.get(k);
+  const id = sidOf(n); if (!id) { MAP_IC.set(k, null); return null; }
+  const c = store.get('wla-icon-' + id); if (c) { const url = c === '-' ? null : whIcon(c); MAP_IC.set(k, url); return url; }
+  MAP_IC.set(k, null);
+  Promise.resolve(iconName(id)).then((nm) => { const url = nm ? whIcon(nm) : null; MAP_IC.set(k, url); if (url) document.querySelectorAll('image.mic-i[data-mn="' + CSS.escape(k) + '"]').forEach((im) => { im.setAttribute('href', url); im.closest('.mic').classList.add('on'); }); });
+  return null;
+}
+// (in the middle of an area to stay out of (a puddle, a zone); a badge on the edge of a soak, a bubble or a circle on a
+// player, since players stand in those; only on circles big enough to hold it)
+function mapIcon(g, x, y, R) {
+  if (!g.mn || R < 10) return ''; const url = mapIconUrl(g.mn), k = String(g.mn).toLowerCase(), on = !!g.guid || !(g.fx === 'puddle' || g.fx === 'zone');
+  const sz = on ? 17 : Math.min(26, Math.max(15, R * 0.62)), cx = on ? x + (R + 6) * 0.71 : x, cy = on ? y - (R + 6) * 0.71 : y;
+  return '<g class="mic' + (url ? ' on' : '') + (on ? ' edge' : '') + '"><circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (sz / 2 + 1.6).toFixed(1) + '" fill="#0b0d12" stroke="' + (g.color || '#e6b450') + '" stroke-width="1.6"/>' +
+    '<image class="mic-i" data-mn="' + esc(k) + '"' + (url ? ' href="' + url + '"' : '') + ' x="' + (cx - sz / 2).toFixed(1) + '" y="' + (cy - sz / 2).toFixed(1) + '" width="' + sz.toFixed(1) + '" height="' + sz.toFixed(1) + '" clip-path="url(#pclip)" preserveAspectRatio="xMidYMid slice"><title>' + esc(g.mn) + '</title></image></g>';
+}
 function miniMap(mp, pmap) {
   const pts = mp.pts || [];
   if (!pts.length && !(mp.frames && mp.frames.some((f) => f.pts.length))) return '<p class="muted">No position data at this moment (needs Advanced Combat Logging).</p>';
@@ -3473,12 +3493,13 @@ function miniMap(mp, pmap) {
       return edge(el >= 0 && el < 0.7 ? 3 : 2) + sh + (el >= 0 && el < 0.7 ? shock(el / 0.7, 0.6) : ''); }
     return null;
   };
+  const micL = []; // (the mechanics' icons, drawn on top at the end)
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
     const look = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null;
     s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
-      ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
+      (micL.push(mapIcon(g, X(g), Y(g), g.r * yd)), '') + ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
   // spit lines (Corrosive Spit): add to its target while the aim is up; this row's add bright, the others dimmer
   const ft = mp.ft != null ? mp.ft : mp.t, byG = new Map(pts.map((p) => [p.guid, p]));
@@ -3635,7 +3656,7 @@ function miniMap(mp, pmap) {
   if (gMiss.size) leg.push([(x, y) => '<path d="M' + (x - 5) + ' ' + (y - 5) + 'l10 10M' + (x + 5) + ' ' + (y - 5) + 'l-10 10" stroke="#ff4d4d" stroke-width="2.5" stroke-linecap="round"/>', 'Red X: ghost the frontal missed']);
   if (gHit.size || gMiss.size) leg.push([(x, y) => '<text x="' + (x - 3) + '" y="' + (y + 4) + '" fill="#9aa0ac" font-size="11">i</text>', 'Ghosts shown where they spawned']);
   for (const g of (mp.rings || []).filter((x, i, a) => a.findIndex((y) => (y.legend || y.label || '') === (x.legend || x.label || '')) === i)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (g.fill || (g.color ? 'rgba(126,224,143,.2)' : 'rgba(230,180,80,.2)')) + '" stroke="' + (g.color || '#e6b450') + '" stroke-dasharray="3 2"/>', (g.cn ? g.cn + ': ' : g.color === '#b65cff' ? 'Purple circle: ' : g.color ? 'Green circle: ' : 'Gold circle: ') + (g.legend || g.label || 'mechanic area') + (g.shrink === 'ichor' ? ' (shrinks from ~11 yd)' : '')]);
-  s += '</svg>';
+  s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
   const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
   return '<div class="sub" style="margin:10px 0 6px">' + esc(mp.title) + '. Hover any icon for a name.' +
