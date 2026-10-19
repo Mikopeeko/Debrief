@@ -21106,22 +21106,25 @@ const cmpNumV = (v) => { const t = String(v == null ? '' : v).replace(/<[^>]+>/g
 function cmpChips(rot, x) {
   if (!rot || !rot.rows) return '';
   const { An, Bn, me, colA, colB, UN } = x, plain = (v) => String(v == null ? '–' : v);
-  const keep = rot.rows.filter((o) => { if (o.w) return true; const a = cmpNumV(o.c.v), b = cmpNumV(o.d.v); return a != null && b != null && Math.abs(a - b) >= 0.15 * Math.max(Math.abs(a), Math.abs(b), 1) && Math.abs(a - b) >= 2; });
+  const relOf = (o) => { const a = cmpNumV(o.c.v), b = cmpNumV(o.d.v); return a == null || b == null ? (String(o.c.v) === String(o.d.v) ? 0 : 0.01) : Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1); };
+  const keep = rot.rows.slice(); for (const o of keep) o.rel = relOf(o);
   if (!keep.length) return '<div class="panel"><h3>Rotation, side by side<small>The Rotation tab\'s checks, where you two differ</small></h3><p class="muted" style="margin:0">' + An + ' and ' + Bn + ' are graded the same on every Rotation check.</p></div>';
-  keep.sort((u, v) => v.w - u.w || (v.c.cost || 0) - (u.c.cost || 0) || (u.d.cost || 0) - (v.d.cost || 0));
+  // (the first player's better checks first, then their worse ones, then the ones graded the same (your call, Oct 19))
+  const grp = (o) => (o.w < 0 ? 0 : o.w > 0 ? 1 : 2);
+  keep.sort((u, v) => grp(u) - grp(v) || (grp(u) === 0 ? (v.d.cost || 0) - (u.d.cost || 0) : grp(u) === 1 ? (v.c.cost || 0) - (u.c.cost || 0) : v.rel - u.rel));
   const mk = (st) => '<i class="cmp-rm ' + st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[st] || '') + '</i>';
   const chip = (o) => { const a = cmpNumV(o.c.v), b = cmpNumV(o.d.v), num = a != null && b != null, mx = Math.max(a || 0, b || 0) || 1;
     const row = (n, col, c, v) => '<div class="cmp-rkr">' + mk(c.st) + '<span class="cmp-cbn" style="color:' + col + '">' + n + '</span>' + (num ? '<span class="cmp-cbb"><i style="width:' + (100 * (v || 0) / mx).toFixed(1) + '%;background:' + col + '"></i></span>' : '<span></span>') + '<b class="cmp-rkv">' + plain(c.v) + '</b></div>';
-    const who = o.w > 0 ? Bn + ' did better' : o.w < 0 ? (me ? 'You' : An) + ' did better' : 'Graded the same, numbers apart';
+    const who = o.w > 0 ? Bn + ' did better' : o.w < 0 ? (me ? 'You' : An) + ' did better' : o.rel >= 0.05 ? 'Graded the same, numbers apart' : 'About the same';
     const cost = o.w > 0 && (o.c.cost || 0) >= 20000 ? 'Cost ' + (me ? 'you' : An) + ' about ' + C(o.c.cost) + ' ' + UN + '.' : o.w < 0 && (o.d.cost || 0) >= 20000 ? 'Cost ' + Bn + ' about ' + C(o.d.cost) + ' ' + UN + '.' : '';
     const tip = o.w > 0 && o.c.tip ? String(o.c.tip).replace(/^Next time:\s*/i, '') : '';
     const tt = '<b>' + esc(o.c.label || o.c.k) + '</b><br>' + An + ': ' + plain(o.c.v) + (o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '') + '<br>' + Bn + ': ' + plain(o.d.v);
     return '<div class="cmp-card cmp-rk ' + (o.w > 0 ? 'warn' : o.w < 0 ? 'ok' : 'na') + '" data-tt="' + esc(tt) + '"><div class="cmp-wh">' + (o.c.ic ? spellIcon(0, o.c.ic) : '') + '<span><b>' + esc(o.c.label || o.c.k) + '</b><span class="cmp-wd ' + (o.w > 0 ? 'dn' : o.w < 0 ? 'up' : '') + '">' + who + '</span></span></div>' +
       row(An, colA, o.c, a) + row(Bn, colB, o.d, b) + (cost ? '<div class="cmp-ct">' + cost + '</div>' : '') + (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + '</div>' : '') + '</div>'; };
-  const top = keep.slice(0, S.cmpChipsAll ? 30 : 6), worse = keep.filter((o) => o.w > 0).length, better = keep.filter((o) => o.w < 0).length;
-  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>The Rotation tab\'s checks where you two differ, the biggest first. Hover one for the details.</small></h3>' +
-    '<p class="cmp-wlead">' + (worse ? (me ? 'You' : An) + ' did worse on <b>' + plural(worse, 'check') + '</b>' : (me ? 'You' : An) + ' did worse on none') + (better ? ' and better on <b>' + better + '</b>' : '') + '.</p>' +
-    '<div class="cmp-rcards">' + top.map(chip).join('') + '</div>' + (keep.length > 6 ? '<button class="btn sm cmp-more" type="button" id="cmpChipsAll">' + (S.cmpChipsAll ? 'Show fewer' : 'Show all ' + keep.length) + '</button>' : '') + '</div>';
+  const top = keep.slice(0, S.cmpChipsAll ? 40 : 12), worse = keep.filter((o) => o.w > 0).length, better = keep.filter((o) => o.w < 0).length;
+  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>The Rotation tab\'s checks, the biggest differences first. Hover one for the details.</small></h3>' +
+    '<p class="cmp-wlead">' + (me ? 'You' : An) + ' did better on <b>' + plural(better, 'check') + '</b> and worse on <b>' + worse + '</b>.</p>' +
+    '<div class="cmp-rcards">' + top.map(chip).join('') + '</div>' + (keep.length > 12 ? '<button class="btn sm cmp-more" type="button" id="cmpChipsAll">' + (S.cmpChipsAll ? 'Show fewer' : 'Show all ' + keep.length) + '</button>' : '') + '</div>';
 }
 // Hero talents (Oct 19, "check the hero talents, just to be safe"): each hero tree's talent names from the spec's tree,
 // a player's tree from their talents (or, when the log has none, from the spells they cast), and for the top raiders from
@@ -21685,8 +21688,9 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const big = (n, col, v, kk) => '<div class="cmp-hpn"><span style="color:' + col + '">' + n + '</span><b class="cmp-hpv" style="color:' + col + '">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second</span></div>';
   const gapPc = k === kq && ra && rb ? Math.abs(ra - rb) / Math.min(ra, rb) : null, hiN = ra >= rb ? (me ? 'You' : An) : Bn, verbH = k === 'heal' ? 'healed' : 'did';
   const hps = '<div class="panel cmp-hps">' + big(me ? 'You' : An, p.color, ra, k) + '<div class="cmp-hpm">' + (gapPc == null ? '<span class="sub">vs</span>' : gapPc < 0.02 ? '<b>About the same</b>' : '<b>' + hiN + ' ' + verbH + ' ' + Math.round(100 * gapPc) + '% more</b><span class="sub">' + C(Math.abs(ra - rb)) + ' a second</span>') + '</div>' + big(Bn, colB, rb, kq) + '</div>';
-  return { vs, body: (lead || '') + hps + (chips || gapH) + numbers + spells + chart +
-    cmpFold('more', 'More detail', 'Talent differences, every Rotation check and more bars side by side. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '') + '<div class="panel"><h3>Side by side<small>Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>') };
+  const sideBy = '<div class="panel"><h3>Side by side<small>Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>';
+  return { vs, body: (lead || '') + hps + (chips || gapH) + numbers + spells + sideBy + chart +
+    cmpFold('more', 'More detail', 'Talent differences and every Rotation check. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '')) };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
 // downloaded and read like one of your pulls, then the same page as Fellow raiders (your call, Oct 19: "both tabs set up
