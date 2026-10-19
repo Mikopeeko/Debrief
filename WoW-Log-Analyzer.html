@@ -1414,11 +1414,15 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .fcard.unk .fc-p { color: var(--faint); font-weight: 500; } .fcard.unk .fc-bar b { display: none; }
 .fcard.best { border-color: rgba(230,180,80,.6); } .fcard.best::after { content: '★'; position: absolute; top: 5px; right: 8px; font-size: 10px; color: #e6b450; } .fcard.best .fc-h span { margin-right: 12px; }
 .fcard.kill { border-color: rgba(255,128,0,.6); background: linear-gradient(180deg, rgba(255,128,0,.1), transparent 70%), var(--panel); } /* (a kill: legendary) */
-.fcard.sel { border-color: #f3f5f9; background: var(--raised); box-shadow: 0 0 0 1px #f3f5f9, 0 6px 18px rgba(0,0,0,.4); } .fcard.sel.dim { border-color: var(--line); background: var(--panel); box-shadow: none; }
-.fcard.fall { width: 128px; margin: 0; padding: 6px 10px 7px; border-radius: 9px; border-color: var(--line2); background: var(--panel); font: 400 12px var(--body); color: var(--text); }
-.fcard.fall .ap-i { color: var(--gold); font-weight: 800; } .fcard.fall .fc-p { color: #f3c969; }
-.fcard.fall.sel { border-color: var(--gold); background: rgba(230,180,80,.1); box-shadow: 0 0 0 1px rgba(230,180,80,.35); }
-@media (max-width: 640px) { .fcard.fall { width: 74px; padding: 6px 8px 7px; } .fcard.fall .fa-x, .fcard.fall .fc-s { display: none; } } /* (a phone: "∑ All", so the pulls keep their room) */
+.fcard.sel { border-color: #f3f5f9; background: var(--raised); box-shadow: 0 4px 12px rgba(0,0,0,.35); } .fcard.sel.dim { border-color: var(--line); background: var(--panel); box-shadow: none; }
+/* (Whole night: the same size, edge and three lines as a pull card, its top level with theirs, and a gold bar) */
+.fcard.fall { width: var(--fw, 114px); align-self: flex-start; margin: 2px 0 0; padding: 6px 9px 7px; border-radius: 9px; border-color: var(--line); background: var(--panel); font: 400 12px var(--body); color: var(--text); }
+.fcard.fall .ap-i { color: var(--gold); font-weight: 800; } .fcard.fall .fc-p { color: #f3c969; } .fcard.fall .fc-bar b { background: #e6b450; }
+.fcard.fall.sel { border-color: var(--gold); background: rgba(230,180,80,.1); box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+.fwrap.fit .fnav { display: none !important; }
+@media (max-width: 640px) { .fcard.fall .fa-x, .fcard.fall .fc-s { display: none; }
+  /* (a phone: Whole night and two pulls fit across exactly, all the same width) */
+  .film:not(.keys) > .fcard, .sg-row > .fcard.fall { width: calc((100vw - 44px) / 3); } } /* (a phone: "∑ All", so the pulls keep their room) */
 .film { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 1px 4px; scrollbar-width: none; } .film::-webkit-scrollbar { display: none; }
 .film.keys .fcard { width: auto; min-width: 150px; }
 .film.fl { -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px); mask-image: linear-gradient(90deg, transparent, #000 40px); }
@@ -9921,16 +9925,20 @@ function renderList() {
     // (each pull in WoW item-quality colours by how far through the whole encounter it got, all phases and bosses
     // together; a kill is legendary, and a wipe is never red)
     const card = (b) => {
-      const v = pullPct(b), done = b.kill ? 100 : v == null ? 0 : Math.max(3, 100 - v);
+      // (a pull that never moved the boss is a reset: said so, with an empty bar, not a "100%" that looks unread)
+      const v = pullPct(b), reset = !b.kill && v != null && v >= 99.95, done = b.kill ? 100 : v == null || reset ? 0 : Math.max(3, 100 - v);
       const col = pullCol(b) || '#6aa8ff', at = b.wallMs ? wallClock(b.wallMs) : clock(b.startMs);
-      const tip = 'Pull ' + b.pull + ' · ' + at + ' · ' + (b.kill ? 'kill' : v == null ? 'wipe' : 'wipe, ' + pullLabel(b)) + ' · ' + T(b.duration) + (b === best && !b.kill ? ' · best pull of the night' : '') +
-        (!b.kill && v != null ? ' · ' + Math.floor(100 - v) + '% of the encounter done' : ''); // (rounded down, like the colour steps)
-      return '<button class="pull fcard' + (b.kill ? ' kill' : '') + (b === best ? ' best' : '') + (v == null && !b.kill ? ' unk' : '') + (b === S.item ? ' sel' : '') + (allMode ? ' dim' : '') + '" type="button" data-i="' + add(b) + '" title="' + esc(tip) + '" style="--pc:' + col + '">' +
-        '<span class="fc-h"><b>Pull ' + b.pull + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + esc(v == null && !b.kill ? T(b.duration) : pullShort(b)) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
+      const tip = 'Pull ' + b.pull + ' · ' + at + ' · ' + (b.kill ? 'kill' : v == null ? 'wipe' : reset ? 'reset at 100%' : 'wipe, ' + pullLabel(b)) + ' · ' + T(b.duration) + (b === best && !b.kill ? ' · best pull of the night' : '') +
+        (!b.kill && v != null && !reset ? ' · ' + Math.floor(100 - v) + '% of the encounter done' : ''); // (rounded down, like the colour steps)
+      return '<button class="pull fcard' + (b.kill ? ' kill' : '') + (b === best ? ' best' : '') + ((v == null || reset) && !b.kill ? ' unk' : '') + (b === S.item ? ' sel' : '') + (allMode ? ' dim' : '') + '" type="button" data-i="' + add(b) + '" title="' + esc(tip) + '" style="--pc:' + col + '">' +
+        '<span class="fc-h"><b>Pull ' + b.pull + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + esc(reset ? 'Reset at 100%' : v == null && !b.kill ? T(b.duration) : pullShort(b)) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
     };
     // (an "All pulls" card at the left end, always in view (back on Oct 18, when the pull switch left Rotation and Graphs):
     // Rotation, Graphs and Players then show every pull of the boss together; the other tabs open Night summary)
-    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together, on every tab" aria-pressed="' + allMode + '"><span class="fc-h"><b>Whole night</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span></button>' : '';
+    // (the same three lines as a pull card (your pick, Oct 19): its name, how many pulls, and a gold bar of how far the
+    // night got, its kill or best pull)
+    const nDone = kill ? 100 : best && pullPct(best) != null ? Math.max(3, 100 - pullPct(best)) : 0;
+    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together, on every tab' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '"><span class="fc-h"><b>Whole night</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><i class="fc-bar"><b style="width:' + nDone.toFixed(1) + '%"></b></i></button>' : '';
     // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
     h = '<div class="sg-row">' + allC + '<div class="fwrap"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
   } else {
@@ -9961,7 +9969,9 @@ function renderList() {
     film.scrollLeft = sl != null ? sl : film.scrollWidth;
     if (sel) { const a = sel.offsetLeft - film.offsetLeft, w = film.clientWidth; if (a < film.scrollLeft || a + sel.offsetWidth > film.scrollLeft + w) film.scrollLeft = a - w / 2 + sel.offsetWidth / 2; }
     // (the arrows show only when there's more that way, and that edge of the cards fades out)
-    const navs = () => { const [l, r] = box.querySelectorAll('.fnav'), atL = film.scrollLeft <= 2, atR = film.scrollLeft + film.clientWidth >= film.scrollWidth - 2; if (l) l.hidden = atL; if (r) r.hidden = atR; film.classList.toggle('fl', !atL); film.classList.toggle('fr', !atR); };
+    const navs = () => { const [l, r] = box.querySelectorAll('.fnav'), atL = film.scrollLeft <= 2, atR = film.scrollLeft + film.clientWidth >= film.scrollWidth - 2; if (l) l.hidden = atL; if (r) r.hidden = atR; film.classList.toggle('fl', !atL); film.classList.toggle('fr', !atR);
+      // (every card in view: no arrows and no space kept for them, so Whole night sits right beside the first pull)
+      const fw = film.closest('.fwrap'); if (fw && film.scrollWidth <= film.clientWidth + 2 && !film.scrollLeft) fw.classList.add('fit'); };
     film.onscroll = navs; navs();
   }
 }
@@ -9969,11 +9979,13 @@ function renderList() {
 // cards, the newest at the right edge and no half card at the left
 function fitFilm() {
   const film = $('#strip .film:not(.keys)'); if (!film) return;
-  if (window.innerWidth < 761) { film.style.removeProperty('--fw'); return; }
-  const g = 6, cw = film.clientWidth - 2, n = Math.max(1, Math.floor((cw + g) / (114 + g)));
-  film.style.setProperty('--fw', ((cw - g * (n - 1)) / n).toFixed(2) + 'px');
+  // (set on the whole row, so the Whole night card is the same width as the pull cards; twice, since its width changes the room left)
+  const row = film.closest('.sg-row') || film, fw = film.closest('.fwrap'); if (fw) fw.classList.remove('fit');
+  if (window.innerWidth < 761) { row.style.removeProperty('--fw'); return; }
+  for (let i = 0; i < 2; i++) { const g = 6, cw = film.clientWidth - 2, n = Math.max(1, Math.floor((cw + g) / (114 + g)));
+    row.style.setProperty('--fw', ((cw - g * (n - 1)) / n).toFixed(2) + 'px'); }
 }
-{ let t = 0; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(fitFilm, 120); }); }
+{ let t = 0; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { fitFilm(); const f = $('#strip .film'); if (f && f.onscroll) f.onscroll(); }, 120); }); }
 // (a click anywhere else closes the boss picker)
 document.addEventListener('click', (e) => { const pop = $('#bhPk .bp-pop'); if (pop && !pop.hidden && !e.target.closest('#bhPk, .bh-pickb, .bh-name')) { pop.hidden = true; const b = $('#bossHead .bh-pickb'); if (b) b.setAttribute('aria-expanded', 'false'); } });
 // the top bar's menu: open a combat log, Warcraft Logs, the start screen

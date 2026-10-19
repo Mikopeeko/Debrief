@@ -1414,11 +1414,15 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .fcard.unk .fc-p { color: var(--faint); font-weight: 500; } .fcard.unk .fc-bar b { display: none; }
 .fcard.best { border-color: rgba(230,180,80,.6); } .fcard.best::after { content: '★'; position: absolute; top: 5px; right: 8px; font-size: 10px; color: #e6b450; } .fcard.best .fc-h span { margin-right: 12px; }
 .fcard.kill { border-color: rgba(255,128,0,.6); background: linear-gradient(180deg, rgba(255,128,0,.1), transparent 70%), var(--panel); } /* (a kill: legendary) */
-.fcard.sel { border-color: #f3f5f9; background: var(--raised); box-shadow: 0 0 0 1px #f3f5f9, 0 6px 18px rgba(0,0,0,.4); } .fcard.sel.dim { border-color: var(--line); background: var(--panel); box-shadow: none; }
-.fcard.fall { width: 128px; margin: 0; padding: 6px 10px 7px; border-radius: 9px; border-color: var(--line2); background: var(--panel); font: 400 12px var(--body); color: var(--text); }
-.fcard.fall .ap-i { color: var(--gold); font-weight: 800; } .fcard.fall .fc-p { color: #f3c969; }
-.fcard.fall.sel { border-color: var(--gold); background: rgba(230,180,80,.1); box-shadow: 0 0 0 1px rgba(230,180,80,.35); }
-@media (max-width: 640px) { .fcard.fall { width: 74px; padding: 6px 8px 7px; } .fcard.fall .fa-x, .fcard.fall .fc-s { display: none; } } /* (a phone: "∑ All", so the pulls keep their room) */
+.fcard.sel { border-color: #f3f5f9; background: var(--raised); box-shadow: 0 4px 12px rgba(0,0,0,.35); } .fcard.sel.dim { border-color: var(--line); background: var(--panel); box-shadow: none; }
+/* (Whole night: the same size, edge and three lines as a pull card, its top level with theirs, and a gold bar) */
+.fcard.fall { width: var(--fw, 114px); align-self: flex-start; margin: 2px 0 0; padding: 6px 9px 7px; border-radius: 9px; border-color: var(--line); background: var(--panel); font: 400 12px var(--body); color: var(--text); }
+.fcard.fall .ap-i { color: var(--gold); font-weight: 800; } .fcard.fall .fc-p { color: #f3c969; } .fcard.fall .fc-bar b { background: #e6b450; }
+.fcard.fall.sel { border-color: var(--gold); background: rgba(230,180,80,.1); box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+.fwrap.fit .fnav { display: none !important; }
+@media (max-width: 640px) { .fcard.fall .fa-x, .fcard.fall .fc-s { display: none; }
+  /* (a phone: Whole night and two pulls fit across exactly, all the same width) */
+  .film:not(.keys) > .fcard, .sg-row > .fcard.fall { width: calc((100vw - 44px) / 3); } } /* (a phone: "∑ All", so the pulls keep their room) */
 .film { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; padding: 2px 1px 4px; scrollbar-width: none; } .film::-webkit-scrollbar { display: none; }
 .film.keys .fcard { width: auto; min-width: 150px; }
 .film.fl { -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px); mask-image: linear-gradient(90deg, transparent, #000 40px); }

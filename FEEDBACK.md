@@ -303,6 +303,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Nothing moved between phases: the old heading is kept out of sight for placing a section that has no times of
   its own. Checked on The Coiled Altar and Ula'tek pulls.
 
+## 2026-10-19, round 246: The pull cards line up (your note: "something visually off about the cards")
+- [x] **Every card is the same size and edge:** Whole night was taller, wider and had a lighter edge; now it matches the
+  pull cards, with its top level with theirs, on desktop and phone.
+- [x] **Whole night has the same three lines:** its name, how many pulls, and a gold bar of how far the night got (full
+  for a kill, else the best pull).
+- [x] **No gap after Whole night** when every pull fits: the space kept for the ‹ arrow is gone until it's needed.
+- [x] **The picked card has a thin outline**, no extra ring, so it no longer looks bigger than the others.
+- [x] **A pull that never moved the boss says "Reset at 100%"** (grey, empty bar) instead of a bare "100%".
+- [x] On a phone, Whole night and two pulls fit across exactly. Checked on desktop and phone, no errors.
+
 ## 2026-10-19, round 245: One pull or the whole night, always clear; a chime for a new pull (your notes)
 - [x] **A tag at the top of every tab says what you're looking at:** white "Pull 13 · the latest" (or "Pull 9 · 9 of 13")
   for one pull, gold "Whole night · 13 pulls" for the whole night, matching the card you picked. It shows on a phone too
