@@ -3110,7 +3110,7 @@ function buildCoiledAltar(ev, r, h) {
     const cd = rcdCasts.filter((e) => e.t >= rd.t - 10 && e.t <= (rd.end ?? until)), cap = cd.length ? 10 : 5;
     const over = rd.peak > cap, way = rd.peak > cap + 2;
     if (over) M(rd.t, 'Raid', 'spirit erasure', way ? 'High' : 'Medium', 'The raid reached ' + rd.peak + ' Spirit Erasure stacks in soak round ' + (i + 1) + (cd.length ? ' (with raid cooldowns up)' : ' with no raid cooldown up') + '.', cd.length ? 'Even with cooldowns stacked, stop around 10 and let the stacks drop.' : 'Without cooldowns, stop at 3 to 5 stacks and let them drop. Save higher counts for when Darkness, Anti-Magic Zone or Spirit Link is down.');
-    return [{ txt: 'Round ' + (i + 1) }, { t: rd.t }, { txt: rd.peak + ' stacks', bad: way, warn: over, sub: cd.length ? 'cooldowns: ' + [...new Set(cd.map((e) => e.spell))].join(', ') : '' }, { txt: through ? through + ' got through' : 'none got through', bad: through > 0 && mythic, warn: through > 0 }];
+    return [{ txt: 'Round ' + (i + 1) }, { t: rd.t }, { txt: pl(rd.peak, 'stack'), bad: way, warn: over, sub: cd.length ? 'cooldowns: ' + [...new Set(cd.map((e) => e.spell))].join(', ') : '' }, { txt: through ? through + ' got through' : 'none got through', bad: through > 0 && mythic, warn: through > 0 }];
   });
   // Zul'jan's health when the intermission ends: under 35% is on pace for the kill
   const zjAtP3 = (() => { if (p3 == null || !r.hpUnits) return null; const u = [...r.hpUnits].find(([, x]) => /^Zul'jan$/.test(x.name)); if (!u) return null; let v = null; for (const [t, f] of u[1].samples) { if (t > p3) break; if (t >= inter) v = f; } return v == null ? null : Math.round(100 * v); })();
@@ -3748,6 +3748,9 @@ function buildCoiledAltar(ev, r, h) {
           }
           const lost = (a) => SS.filter((e) => e.dst === a.g && (e.op === 'rdose' || e.op === 'remove') && Math.abs(e.t - te) <= 0.6).length;
           const tag = (a) => { const mine = mineAdds.includes(a); const n = mine ? mineAdds.indexOf(a) + 1 : null; const mk = markerAt(r, a.g, te) > 0; return { mine, mk, label: mine ? 'Soulcoiler ' + n + ' (' + (mk ? 'marked' : 'unmarked') + ')' : 'a leftover add from set ' + (groups.findIndex((x) => a.t0 >= x.t - 2 && a.t0 <= x.t + 15) + 1) }; };
+          // (the last set of a phase: its shields don't need breaking (they break at the transition, and kicks are enough at the
+          // end of P3), so a bomb that misses its adds isn't a failure there, as the shield rows already say (scan, Oct 19))
+          const endSet = !(groups[k + 1] && phaseAt(groups[k + 1].t) === phaseAt(groups[k].t));
           const res = w.who.map((c) => {
             const pp = posOf(c, te); if (!pp) return { c, a: null, d: null };
             let best = null, bd = Infinity; for (const a of alive) { const ap = posOf(a.g, te); if (!ap) continue; const d = Math.hypot(ap[1] - pp[1], ap[2] - pp[2]); if (d < bd) { bd = d; best = a; } }
@@ -3773,7 +3776,7 @@ function buildCoiledAltar(ev, r, h) {
             // melee belongs on the unmarked add (only judged when the raid marked one of this set's adds)
             const wrongAdd = tg && tg.mine && role && mineAdds.some((a) => markerAt(r, a.g, te) > 0) && ((role === 'melee') === tg.mk);
             let what, bad = false, warn = false;
-            if (!x.a) { what = x.d != null ? 'missed the adds (' + x.d + ' yd from the nearest)' : 'no position logged'; bad = x.d != null; if (bad) M(te, pname(x.c), 'gloombomb', 'Medium', 'Their Gloombomb didn\'t land on an add in set ' + (k + 1) + ' (' + x.d + ' yd from the nearest Soulcoiler), so it didn\'t take a Spirit Shield stack off.', 'Take your Gloombomb to your add before it explodes. Melee take theirs to the unmarked add and ranged to the marked one, overlapping with your partner.'); }
+            if (!x.a) { what = x.d != null ? 'missed the adds (' + x.d + ' yd from the nearest)' + (endSet ? ', fine on the last set of the phase' : '') : 'no position logged'; bad = x.d != null && !endSet; if (bad) M(te, pname(x.c), 'gloombomb', 'Medium', 'Their Gloombomb didn\'t land on an add in set ' + (k + 1) + ' (' + x.d + ' yd from the nearest Soulcoiler), so it didn\'t take a Spirit Shield stack off.', 'Take your Gloombomb to your add before it explodes. Melee take theirs to the unmarked add and ranged to the marked one, overlapping with your partner.'); }
             else if (!tg.mine) { what = 'landed on ' + tg.label + ' (wasted)'; warn = true; M(te, pname(x.c), 'gloombomb', 'Low', 'Their Gloombomb in set ' + (k + 1) + ' landed on a leftover add from an earlier set instead of this set\'s.', 'Drop it on this set\'s adds. Kill leftovers before the next set.'); }
             else { what = 'hit ' + tg.label + (wrongAdd ? ', but ' + role + ' bombs go on the ' + (role === 'melee' ? 'unmarked' : 'marked') + ' add' : ''); warn = !!wrongAdd; if (wrongAdd) M(te, pname(x.c), 'gloombomb', 'Low', 'Dropped their Gloombomb on the ' + (tg.mk ? 'marked' : 'unmarked') + ' add in set ' + (k + 1) + ' as a ' + role + ' player.', 'Melee Gloombombs go on the unmarked (melee) add, ranged on the marked (ranged) add, so each add gets its pair.'); }
             g.rows.push([{ txt: 'Gloombomb' }, { t: te }, { p: pname(x.c), sub: role || (r.players.get(x.c) || {}).role || '' }, { txt: what, bad, warn },
@@ -3781,7 +3784,7 @@ function buildCoiledAltar(ev, r, h) {
           }
           const onMine = res.filter((y) => y.a && tag(y.a).mine).length;
           g.gb = (g.gb || []).concat([{ on: onMine, n: res.length, stacks }]);
-          if (onMine < Math.min(res.length, 2 * mineAdds.length) && res.length) g.warn = true;
+          if (!endSet && onMine < Math.min(res.length, 2 * mineAdds.length) && res.length) g.warn = true;
         }
         for (const g of gGroups) if (g.gb) g.sub = 'Gloombombs: ' + g.gb.map((x) => x.on + ' of ' + x.n + ' on this set\'s adds').join(', then ') + ' · ' + g.sub;
         for (const g of gGroups) { g.bad = g.bad || g.rows.some(isBad); g.warn = g.warn || g.rows.some((row) => row.some((c) => c.warn)); }

@@ -6997,7 +6997,7 @@ function buildCoiledAltar(ev, r, h) {
     const cd = rcdCasts.filter((e) => e.t >= rd.t - 10 && e.t <= (rd.end ?? until)), cap = cd.length ? 10 : 5;
     const over = rd.peak > cap, way = rd.peak > cap + 2;
     if (over) M(rd.t, 'Raid', 'spirit erasure', way ? 'High' : 'Medium', 'The raid reached ' + rd.peak + ' Spirit Erasure stacks in soak round ' + (i + 1) + (cd.length ? ' (with raid cooldowns up)' : ' with no raid cooldown up') + '.', cd.length ? 'Even with cooldowns stacked, stop around 10 and let the stacks drop.' : 'Without cooldowns, stop at 3 to 5 stacks and let them drop. Save higher counts for when Darkness, Anti-Magic Zone or Spirit Link is down.');
-    return [{ txt: 'Round ' + (i + 1) }, { t: rd.t }, { txt: rd.peak + ' stacks', bad: way, warn: over, sub: cd.length ? 'cooldowns: ' + [...new Set(cd.map((e) => e.spell))].join(', ') : '' }, { txt: through ? through + ' got through' : 'none got through', bad: through > 0 && mythic, warn: through > 0 }];
+    return [{ txt: 'Round ' + (i + 1) }, { t: rd.t }, { txt: pl(rd.peak, 'stack'), bad: way, warn: over, sub: cd.length ? 'cooldowns: ' + [...new Set(cd.map((e) => e.spell))].join(', ') : '' }, { txt: through ? through + ' got through' : 'none got through', bad: through > 0 && mythic, warn: through > 0 }];
   });
   // Zul'jan's health when the intermission ends: under 35% is on pace for the kill
   const zjAtP3 = (() => { if (p3 == null || !r.hpUnits) return null; const u = [...r.hpUnits].find(([, x]) => /^Zul'jan$/.test(x.name)); if (!u) return null; let v = null; for (const [t, f] of u[1].samples) { if (t > p3) break; if (t >= inter) v = f; } return v == null ? null : Math.round(100 * v); })();
@@ -7635,6 +7635,9 @@ function buildCoiledAltar(ev, r, h) {
           }
           const lost = (a) => SS.filter((e) => e.dst === a.g && (e.op === 'rdose' || e.op === 'remove') && Math.abs(e.t - te) <= 0.6).length;
           const tag = (a) => { const mine = mineAdds.includes(a); const n = mine ? mineAdds.indexOf(a) + 1 : null; const mk = markerAt(r, a.g, te) > 0; return { mine, mk, label: mine ? 'Soulcoiler ' + n + ' (' + (mk ? 'marked' : 'unmarked') + ')' : 'a leftover add from set ' + (groups.findIndex((x) => a.t0 >= x.t - 2 && a.t0 <= x.t + 15) + 1) }; };
+          // (the last set of a phase: its shields don't need breaking (they break at the transition, and kicks are enough at the
+          // end of P3), so a bomb that misses its adds isn't a failure there, as the shield rows already say (scan, Oct 19))
+          const endSet = !(groups[k + 1] && phaseAt(groups[k + 1].t) === phaseAt(groups[k].t));
           const res = w.who.map((c) => {
             const pp = posOf(c, te); if (!pp) return { c, a: null, d: null };
             let best = null, bd = Infinity; for (const a of alive) { const ap = posOf(a.g, te); if (!ap) continue; const d = Math.hypot(ap[1] - pp[1], ap[2] - pp[2]); if (d < bd) { bd = d; best = a; } }
@@ -7660,7 +7663,7 @@ function buildCoiledAltar(ev, r, h) {
             // melee belongs on the unmarked add (only judged when the raid marked one of this set's adds)
             const wrongAdd = tg && tg.mine && role && mineAdds.some((a) => markerAt(r, a.g, te) > 0) && ((role === 'melee') === tg.mk);
             let what, bad = false, warn = false;
-            if (!x.a) { what = x.d != null ? 'missed the adds (' + x.d + ' yd from the nearest)' : 'no position logged'; bad = x.d != null; if (bad) M(te, pname(x.c), 'gloombomb', 'Medium', 'Their Gloombomb didn\'t land on an add in set ' + (k + 1) + ' (' + x.d + ' yd from the nearest Soulcoiler), so it didn\'t take a Spirit Shield stack off.', 'Take your Gloombomb to your add before it explodes. Melee take theirs to the unmarked add and ranged to the marked one, overlapping with your partner.'); }
+            if (!x.a) { what = x.d != null ? 'missed the adds (' + x.d + ' yd from the nearest)' + (endSet ? ', fine on the last set of the phase' : '') : 'no position logged'; bad = x.d != null && !endSet; if (bad) M(te, pname(x.c), 'gloombomb', 'Medium', 'Their Gloombomb didn\'t land on an add in set ' + (k + 1) + ' (' + x.d + ' yd from the nearest Soulcoiler), so it didn\'t take a Spirit Shield stack off.', 'Take your Gloombomb to your add before it explodes. Melee take theirs to the unmarked add and ranged to the marked one, overlapping with your partner.'); }
             else if (!tg.mine) { what = 'landed on ' + tg.label + ' (wasted)'; warn = true; M(te, pname(x.c), 'gloombomb', 'Low', 'Their Gloombomb in set ' + (k + 1) + ' landed on a leftover add from an earlier set instead of this set\'s.', 'Drop it on this set\'s adds. Kill leftovers before the next set.'); }
             else { what = 'hit ' + tg.label + (wrongAdd ? ', but ' + role + ' bombs go on the ' + (role === 'melee' ? 'unmarked' : 'marked') + ' add' : ''); warn = !!wrongAdd; if (wrongAdd) M(te, pname(x.c), 'gloombomb', 'Low', 'Dropped their Gloombomb on the ' + (tg.mk ? 'marked' : 'unmarked') + ' add in set ' + (k + 1) + ' as a ' + role + ' player.', 'Melee Gloombombs go on the unmarked (melee) add, ranged on the marked (ranged) add, so each add gets its pair.'); }
             g.rows.push([{ txt: 'Gloombomb' }, { t: te }, { p: pname(x.c), sub: role || (r.players.get(x.c) || {}).role || '' }, { txt: what, bad, warn },
@@ -7668,7 +7671,7 @@ function buildCoiledAltar(ev, r, h) {
           }
           const onMine = res.filter((y) => y.a && tag(y.a).mine).length;
           g.gb = (g.gb || []).concat([{ on: onMine, n: res.length, stacks }]);
-          if (onMine < Math.min(res.length, 2 * mineAdds.length) && res.length) g.warn = true;
+          if (!endSet && onMine < Math.min(res.length, 2 * mineAdds.length) && res.length) g.warn = true;
         }
         for (const g of gGroups) if (g.gb) g.sub = 'Gloombombs: ' + g.gb.map((x) => x.on + ' of ' + x.n + ' on this set\'s adds').join(', then ') + ' · ' + g.sub;
         for (const g of gGroups) { g.bad = g.bad || g.rows.some(isBad); g.warn = g.warn || g.rows.some((row) => row.some((c) => c.warn)); }
@@ -13584,7 +13587,7 @@ function audit() {
     dmghost: { Result: 'ghost collisions or mind-control falls', '!Result': 'ghosts missed by Soul Sever' }, addsets: { Who: 'kicks before Gloombomb went out', Result: 'shields or adds not dealt with in time' },
     tankfront: { Stack: 'tanks taking too many stacks', 'Had up': 'second stacks without two externals', Result: 'tank deaths' }, shield: { Result: 'casts nobody kicked', Broken: 'shields not broken in time', '!Broken': 'shields broken with little time to kick' },
     defensives: { Survival: 'low survival kit scores', '!Survival': 'survival kits with room to improve', Defensives: 'dying with a defensive or self-heal still ready', 'Healthstone and health potion': 'dying with a Healthstone or health potion unused', 'Combat or mana potion': 'pulls without a combat or mana potion', 'Close calls': 'close calls with nothing pressed' },
-    inter: { 'Raid peak (3 to 5; up to 10 with cooldowns)': 'soak rounds going too high', 'Fragments to Zul\'jan': 'fragments reaching Zul\'jan' }, vf: { 'Removed after': 'slow Venomfang dispels' },
+    inter: { 'Raid peak (3 to 5; up to 10 with cooldowns)': 'soak rounds going too high', 'Fragments to Zul\'jan': 'fragments reaching Zul\'jan' }, vf: { 'Removed after': 'deaths with Venomfang on', '!Removed after': 'slow Venomfang dispels' }, gloom: { Result: 'Gloombombs that missed the adds', '!Result': 'Gloombombs on the wrong add' },
     push: { Timing: 'phase pushes off timing', 'Stacks / Lust / balance': 'transitions on too many stacks or without Lust', 'Cooldowns / damage': 'no raid cooldowns at the push' }, kicks: { Result: 'casts getting through' },
     eggs: { 'What happened': 'Vipers hatched', '!What happened': 'eggs picked up with Rancid Yolk on' }, coils: { Soakers: 'circles nobody soaked', '!Soakers': 'thin soaks', Died: 'deaths to Spectral Coils' }, tank: { Result: 'the raid punished for nobody tanking' },
     incub: { Wretch: 'venom reaching the Wretch' }, wretch: { '!Bubbles': 'Wretches alive for a third bubble', '!Outside the bubble': 'players outside a bubble' }, amps: { '!Boss health': 'windows behind pace' }, fangs: { Result: 'deaths while tethered', '!Broke': 'tethers never broken', '!Result': 'batches spread out or without a raid cooldown' }, doomscale: { Result: 'a hatched big egg or a long Revenge', '!Result': 'a Warden reaching its second gestation, or a short Revenge' }, bite: { Result: 'bites not cleared', '!Result': 'Purges not spread or held without a defensive' }, shriek: { Killed: 'adds left alive', '!Got off': 'adds that got their casts off' },
@@ -13625,7 +13628,8 @@ function audit() {
       // a row's theme: its flagged label (e.g. "Orb collision"), or the first flagged column in plain words
       // (a flagged label reads as a plural: "orb collisions"; one that isn't a noun, like "Exploded unsoaked", has its
       // own wording in LABEL_T)
-      const theme = (row, flag) => { const fi = firstI(row); if (fi >= 0 && row[fi][flag] && row[fi].txt && !row[fi].p) { const l = row[fi].txt.toLowerCase(); return LABEL_T[l] || (/s$/.test(l) ? l : l + 's'); }
+      // (a label starting with a spell's name keeps its capital: "Gloombomb clips", not "gloombomb clips")
+      const theme = (row, flag) => { const fi = firstI(row); if (fi >= 0 && row[fi][flag] && row[fi].txt && !row[fi].p) { const l0 = String(row[fi].txt), l = l0.toLowerCase(), w = sidOf(l0.split(' ')[0]) ? l0 : l; return LABEL_T[l] || (/s$/.test(w) ? w : w + 's'); }
         const i = row.findIndex((c, k) => k !== fi && c[flag] && !c.map); const col = s.cols[i] || ''; return (flag === 'warn' && T2['!' + col]) || T2[col] || (col ? col.toLowerCase() : 'other problems'); };
       // (avoidable damage: by what hit them, "Malevolent Resonance (2)", not by column)
       const tally = (list, flag) => { const m = new Map(); for (const x of list) { const k = s.id === 'avoid' && x.g ? x.g.title : theme(x.row, flag); m.set(k, (m.get(k) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
@@ -13669,8 +13673,8 @@ function audit() {
       if (s.id === 'avoid') { if (tb.length) say.push('The dangerous hits came from ' + listT(tb) + '.'); if (tw.length) say.push((tb.length ? 'Smaller hits came from ' : 'The hits came from ') + listT(tw) + '.'); }
       else if ((tb.length || badSets) && s.id !== 'waves') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
         (badSets ? (tb.length ? ' Also look at ' : 'Look at ') + setNames(badSetL) + hdr(badSets) : ''));
-      if ((tw.length || warnSets) && s.id !== 'waves' && s.id !== 'avoid') say.push((tw.length ? cap(listT(tw)) + ' could be tighter.' : '') +
-        (warnSets ? (tw.length ? ' So could ' + setNames(warnSetL) : setNames(warnSetL) + ' could be tighter') + hdr(warnSets) : ''));
+      // ("Smaller things to tighten up: slow dispels (7)", not "Slow dispels (7) could be tighter" (scan, Oct 19))
+      if ((tw.length || warnSets) && s.id !== 'waves' && s.id !== 'avoid') say.push('Smaller things to tighten up: ' + [tw.length ? listT(tw) : '', warnSets ? setNames(warnSetL) + hdr(warnSets).replace(/\.$/, '') : ''].filter(Boolean).join(', and ') + '.');
       const sev = badL.length || badSets ? (ratio >= 0.8 ? 'warn' : 'bad') : warnL.length || warnSets ? 'warn' : 'ok';
       return '<div class="msum"><p class="' + sev + '">' + esc(say.join(' ').replace(/\s+/g, ' ').trim()) + '</p></div>';
     }
@@ -14186,7 +14190,7 @@ function defenseSection(r) {
   const kitLead = (none === list.length ? 'Everyone was in good shape.' : none + ' of ' + list.length + ' players were in good shape.') + (kc.size ? ' The most common problems were ' + andList([...kc].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => KW[k] + ' (' + n + ')')) + '.' : '');
   return { id: 'defensives', title: 'Survival kit: defensives, Healthstones, potions', spell: [0, 'Shield Wall'], icon: 'inv_alchemy_70_red', verdict: low ? 'bad' : mid ? 'warn' : 'good',
     summary: (potN ? potOk + ' of ' + potN + ' players used their combat or mana potion; ' : '') + (defR ? plural(defR, 'death') + ' with a defensive or self-heal ready; ' : 'nobody died with a defensive or self-heal ready; ') + plural(nStone, 'Healthstone') + ' and ' + plural(nHp, 'health potion') + ' used. Each use\'s time is under its count.',
-    how: 'Each player\'s survival kit this pull, up to the wipe filter, scored out of 100: defensives 40 (dying with a personal defensive ready costs 50, a close call with nothing pressed costs 20: 5 seconds or more under 30%, or sitting low and then hit again; a quick dip or a near one-shot never counts), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts, and one is expected per pull, two if alive more than 5 minutes, and a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts. Defensives are matched by spell name with base cooldowns, so talented ones can be off by one.',
+    how: 'Each player\'s survival kit this pull, up to the wipe filter, scored out of 100: defensives 40 (dying with a personal defensive ready costs 50, a close call with nothing pressed costs 20: 5 seconds or more under 30%, or sitting low and then hit again; a quick dip or a near one-shot never counts), Healthstone and health potion 30 (the same, for them) and combat or mana potion 30 (they share one 5-minute cooldown, so a healer\'s mana potion counts, and you\'re expected to drink as many as fit: holding one for Bloodlust is fine, but one ready and unused for 5 minutes, or for the last minute of the pull, counts as missed; a pre-pot counts). One-shots aren\'t held against anyone. Tanks are scored differently: defensives 60, including how often they used their big cooldowns (80% of the uses they had is full marks), Healthstone and health potion 15, combat potion 25; for a tank only a dip under 15% with nothing pressed counts. Defensives are matched by spell name with base cooldowns, so talented ones can be off by one.',
     cols: ['Player', 'Survival', 'What to fix', ''], foldOk: 'were in good shape', lead: kitLead,
     rows: list.map(({ p, s }) => {
       const more = p.defs.map((x) => drow(spell(x.id, x.name), x.uses.length, x.possible, x.uses)).join('') +
@@ -14302,8 +14306,13 @@ function mapIcon(g, x, y, R) {
   return '<g class="mic' + (url ? ' on' : '') + (on ? ' edge' : '') + '"><circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (sz / 2 + 1.6).toFixed(1) + '" fill="#0b0d12" stroke="' + (g.color || '#e6b450') + '" stroke-width="1.6"/>' +
     '<image class="mic-i" data-mn="' + esc(k) + '"' + (url ? ' href="' + url + '"' : '') + ' x="' + (cx - sz / 2).toFixed(1) + '" y="' + (cy - sz / 2).toFixed(1) + '" width="' + sz.toFixed(1) + '" height="' + sz.toFixed(1) + '" clip-path="url(#pclip)" preserveAspectRatio="xMidYMid slice"><title>' + esc(g.mn) + '</title></image></g>';
 }
+// (The Coiled Altar's orb and ghost units, when a map's snapshot carries them as units, are drawn as orbs and ghosts, never
+// as labelled adds like "Coalesced Venom Stalker" (scan, Oct 19); each once)
+const MAP_OBJ_U = { 'coalesced venom stalker': 'orb', 'virulent mutation': 'porb', 'manifestation of dread': 'ghost' };
+const mapObjs = (l) => { const seen = new Set(); return l.map((p) => { const k = p.kind !== 'player' && p.kind !== 'boss' && MAP_OBJ_U[String(p.name || '').toLowerCase()]; return k ? { ...p, kind: k } : p; })
+  .filter((p) => !(MAP_OBJ_U[String(p.name || '').toLowerCase()] && p.guid) || (!seen.has(p.guid) && seen.add(p.guid))); };
 function miniMap(mp, pmap) {
-  const pts = mp.pts || [];
+  const pts = mapObjs(mp.pts || []);
   if (!pts.length && !(mp.frames && mp.frames.some((f) => f.pts.length))) return '<p class="muted">No position data at this moment (needs Advanced Combat Logging).</p>';
   const sx = (p) => p.x, sy = (p) => -p.y; // same orientation as mapPanel
   // animated maps keep one frame for every step: bounds come from all frames, not just the one drawn
@@ -18016,7 +18025,8 @@ function piSay(c, who) {
   else if (early) why.push(tn + ' used ' + esc(after.name) + ' at ' + T(c.t + after.dt) + '. Wait for it.');
   else if (noCd && (c.cdNames || []).length) why.push('Give it with ' + piOr(c.cdNames.map(esc)) + '.');
   if (healer) why.push(tn + ' is a healer, so it added no damage.');
-  else if (c.noSim || c.ratio == null) why.push('No sim for ' + esc(c.tg.specName || 'this spec') + ', so the gain is unknown.');
+  else if (c.noSim) why.push('No sim for ' + esc(c.tg.specName || 'this spec') + ', so the gain is unknown.');
+  else if (c.ratio == null) { /* (nobody to compare with: the pull ended moments later, so no "better pick" sentence) */ }
   else if (c.tgt.st !== 'ok') why.push(who(c.best) + ' would have gained ' + Math.round(100 * (c.vB / Math.max(1, c.vT) - 1)) + '% more' + (c.many ? ' with 3+ enemies up.' : '.'));
   else if (!why.length) why.push(c.best === c.tg ? tn + ' gains the most from it.' : 'Only ' + who(c.best) + ' would have gained a little more.');
   return { say, why: why.join(' ') };
@@ -20187,7 +20197,7 @@ function specPage(o) {
     tile('Parse', prs1 ? prsChip(prs1) : '<span class="sub">–</span>', prs1 ? esc(o.top) + ' on this boss' : one && !it.kill ? 'Warcraft Logs only ranks kills' : one ? 'not ranked' : 'one pull at a time', prs1 && prs1.amount ? 'Warcraft Logs\' own number for this kill is ' + C(prs1.amount) + ' a second, timed by its own clock for the fight.' : '') +
     // (no overhealing tile for a healer (your call, Oct 19): just the two tiles)
     (UN === 'healing' ? ''
-      : tile('Burst windows', B && B.dps != null ? C(B.dps) : B && B.x != null ? '×' + B.x.toFixed(1) : '<span class="sub">–</span>', B && B.x != null ? (B.dps != null ? 'DPS in ' : 'your usual damage, in ') + esc(B.name) : 'no burst cooldown pressed', B && B.x != null ? 'Your DPS inside your ' + B.name + ' windows (' + B.n + ')' + (B.out != null ? ', against ' + C(B.out) + ' the rest of the pull.' : ', against the rest of the pull.') : '')) + '</div>' : '';
+      : tile('Burst windows', B && B.dps != null ? C(B.dps) : B && B.x != null ? '×' + B.x.toFixed(1) : '<span class="sub">–</span>', B && B.x != null ? (B.dps != null ? 'DPS in ' : 'your usual damage, in ') + esc(B.name) : one ? 'no burst cooldown pressed' : 'one pull at a time', B && B.x != null ? 'Your DPS inside your ' + B.name + ' windows (' + B.n + ')' + (B.out != null ? ', against ' + C(B.out) + ' the rest of the pull.' : ', against the rest of the pull.') : '')) + '</div>' : '';
   // (what you did well: your good lines, the ones at or above the top players first, then the ones that count the most)
   const LOWB = /^(p:|res$|hp$|ssw$|ess$|mana$|mnx$|fol$|dbh$|ebh$|rgb$|jhs$|cm$|rep$|dbec$|tyc$|imp$)/, numV = (x) => { const t = String(x == null ? '' : x).replace(/<[^>]+>/g, '').trim(); let m; if ((m = t.match(/^(\d+(?:\.\d+)?)%$/))) return +m[1]; if ((m = t.match(/^(\d+)\s*\/\s*(\d+)$/))) return +m[2] ? 100 * m[1] / m[2] : null; if (/^All (spent|used)$/.test(t)) return 0; if ((m = t.match(/^(\d+(?:\.\d+)?)( wasted)?$/))) return +m[1]; return null; };
   const beats = (c) => { if (!TOPB || TOPB[c.k] == null) return false; const a = numV(c.v), b = numV(TOPB[c.k]); return a != null && b != null && (LOWB.test(c.k) ? a <= b : a >= b); };
@@ -21905,7 +21915,10 @@ function genRun(spec, D, reps, name, one) {
       const which = 'the guide opener for ' + (heroN ? heroN + ' on ' : '') + ((SQ.tgt || 1) > 1 ? 'two or more bosses' : 'one boss') + ' (' + (SQ.src || 'your guides') + ')';
       add(gO, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', OPEN.ic || D.ic, 'Opener, step by step', N === 1 ? hits + '<span>/' + nS + '</span>' : pct(f), N === 1 ? 'You followed ' + hits + ' of the ' + nS + ' steps of ' + which + ', in order.' + (miss.length ? ' Missed: ' + andL(miss.map(say)) + '.' : '') : 'Over your ' + N + ' pulls you followed ' + pct(f) + ' of the steps of your guide opener, in order.', 'open',
         (OPEN.why ? OPEN.why + ' ' : '') + 'Debrief matches your casts in the first ' + (OPEN.len || 15) + ' seconds against the guide opener, step by step and in order. Other casts in between are fine. A step meant for before the pull counts half when it comes after. ' + okP(okF));
-      const cc = gO.l[gO.l.length - 1]; if (f < okF) cc.tip = 'Follow the guide opener: ' + s0.openSteps.map(nm1).join(', then ') + '.';
+      // (steps in a row that take any of the same buttons read once: "3 of A, B, C or D, in any order", not the same list three times)
+      const tipL = []; for (const o of s0.openSteps) { const k = o.st.any ? o.st.any.join('|') : null, pv = tipL[tipL.length - 1]; if (k && pv && pv.k === k) pv.n++; else tipL.push({ k, o, n: 1 }); }
+      const tip1 = (x) => (x.n < 2 ? nm1(x.o) : x.n >= x.o.st.any.length ? andL(x.o.st.any) + ', in any order' : x.n + ' of ' + x.o.st.any.slice(0, -1).join(', ') + ' or ' + x.o.st.any[x.o.st.any.length - 1] + ', in any order');
+      const cc = gO.l[gO.l.length - 1]; if (f < okF) cc.tip = 'Follow the guide opener: ' + tipL.map(tip1).join(', then ') + '.';
       if (N === 1) cc.strip = { seq: s0.openSeq, steps: s0.openSteps, bars: openBars(per[per.length - 1].p), src: which, len: OPEN.len || 15 }; }
     const lx = rows.filter((s) => s.openD != null); if (lx.length) { const od = lx.reduce((v, s) => v + s.openD, 0) / lx.length, oa = lx.reduce((v, s) => v + s.openAll, 0) / lx.length;
       add(gO, 'na', OPEN.ic || D.ic, 'Opener ' + (UNW === 'healing' ? 'HPS' : 'DPS'), C(od), 'Your first ' + (OPEN.len || 15) + ' seconds averaged ' + C(od) + ' ' + (UNW === 'healing' ? 'HPS' : 'DPS') + (lx.length > 1 ? ' over your pulls' : '') + ', against ' + C(oa) + ' over the whole pull.', 'open:x',
@@ -25078,8 +25091,9 @@ function prepotted(r, p) {
 //  nothing pressed. Healthstone and health potion: 50 off for each death with one still available after sitting at or under
 //  35% for 2+ s (time to react), 20 for each judged close call with nothing pressed while one was unused. One-shots (healthy
 //  to dead in under 1.5 s) and bursts from high health aren't held against anyone.
-//  Combat or mana potion: they share one 5-minute cooldown, so a healer's mana potion counts. One is expected per pull and
-//  two when they were alive more than 5 minutes; one drunk before the pull counts. Not judged under 20 s alive.
+//  Combat or mana potion: they share one 5-minute cooldown, so a healer's mana potion counts. Expected: as many as fit given when
+//  they drank them (holding one for Bloodlust is fine; 5 minutes with one ready, or one ready for the pull's last minute, costs
+//  one); one drunk before the pull counts. Not judged under 20 s alive.
 // Tanks are judged differently: they sit low on purpose and healers cover it, but they're expected to keep their big
 // cooldowns rolling. Defensives 60, Healthstone and health potion 15, combat potion 25. Only a dip under 15% with nothing
 // pressed is a close call for a tank (10 off each, at most 40; 5 off the kit, at most 20). Cooldown use: the share of
@@ -25106,7 +25120,13 @@ function survivalOf(r, p) {
   const pots = p.cons.combatpot.concat(p.cons.manapot).filter((u) => u.t <= end + 0.05), pre = !pots.some((u) => u.t < 3) && prepotted(r, p);
   // (a wipe under 2 minutes doesn't expect a potion: early resets bury the real problems under potion names (your review, Oct 18))
   const shortW = !r.item.kill && Math.min(r.duration, cutT(r)) < 120;
-  const expect = end < 20 || shortW ? 0 : 1 + Math.floor(Math.max(0, end - 10) / 300), used = Math.min(pots.length + (pre ? 1 : 0), expect || 9);
+  // (how many fit, given when they drank them (scan, Oct 19): combat and mana potions share a 5-minute cooldown, so holding one
+  // for Bloodlust is fine. What costs one: 5 minutes or more with one ready and unused, or one ready for the last minute or more
+  // of the pull. One drunk before the pull counts as drunk at the pull)
+  const potFit = (() => { const us = pots.map((u) => u.t).sort((a, b) => a - b); if (pre) us.unshift(-1); let avail = 0, extra = 0;
+    for (const u of us) { const gap = u - avail; if (gap >= 300) extra += Math.floor(gap / 300); avail = Math.max(u, avail) + 300; }
+    const tail = end - avail; if (tail >= 60) extra += 1 + Math.floor((tail - 60) / 300); return us.length + extra; })();
+  const expect = end < 20 || shortW ? 0 : Math.max(1, potFit), used = Math.min(pots.length + (pre ? 1 : 0), expect || 9);
   const pot = expect ? 100 * Math.min(1, used / expect) : null;
   const W = tank ? [0.6, 0.15, 0.25] : [0.4, 0.3, 0.3];
   const score = pot == null ? (W[0] * def + W[1] * kit) / (W[0] + W[1]) : W[0] * def + W[1] * kit + W[2] * pot;
@@ -26292,7 +26312,7 @@ const dbfNum = (v, l, d) => '<div class="dbf-n"><b>' + v + '</b><span>' + l + '<
 const dbfCard = (k, t, l, none) => '<div class="panel dbf-c dbf-' + k + '"><h3 class="nh"><span>' + t + '</span></h3>' + (l.length ? '<ul class="dbf-l">' + l.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="sub dbf-none">' + none + '</p>') + '</div>';
 // (a mechanic's first row that went wrong (else could be better), in words, and who was in the rows that went wrong)
 const dbfRow = (s) => { const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])), bad = all.filter((row) => row.some((c) => c.bad)), row = bad[0] || all.find((row) => row.some((c) => c.warn)); if (!row) return null;
-  const g = (s.groups || []).find((q) => (q.rows || []).includes(row)); return { txt: (g && g.title ? g.title + ': ' : '') + rowText(s, row).replace(/^\d+:\d\d\s*/, ''), who: [...new Set((bad.length ? bad : [row]).flatMap((rr) => rr.filter((c) => (c.bad || c.warn) && c.p).map((c) => c.p)))] }; };
+  const g = (s.groups || []).find((q) => (q.rows || []).includes(row)); return { txt: (g && g.title ? g.title + ', ' : '') + rowText(s, row).replace(/^\d+:\d\d\s*/, ''), who: [...new Set((bad.length ? bad : [row]).flatMap((rr) => rr.filter((c) => (c.bad || c.warn) && c.p).map((c) => c.p)))] }; };
 // (a change: ▲ or ▼ in green when it's better, orange when it's worse)
 const dbfD = (txt, good) => '<span class="lp-d ' + (good ? 'up' : 'dn') + '">' + txt + '</span>';
 // ---- one pull ----
@@ -26347,13 +26367,15 @@ function dbfPull(o) {
   const up = [], down = [];
   if (B) {
     if (!it.kill && A.left != null && B.left != null && Math.abs(A.left - B.left) >= 1) (A.left < B.left ? up : down).push('<b>' + (A.left < B.left ? 'Further' : 'Not as far') + '</b> than the last pull: ' + esc(nowLab) + ', after ' + esc(prevLab) + '.');
-    if (A.ds.length !== B.ds.length) (A.ds.length < B.ds.length ? up : down).push('<b>' + plural(A.ds.length, 'death') + '</b>, ' + (A.ds.length < B.ds.length ? 'down' : 'up') + ' from ' + B.ds.length + '.');
+    // ("No deaths", not "0 deaths")
+    const n0 = (n, w) => (n ? plural(n, w) : 'No ' + w + 's');
+    if (A.ds.length !== B.ds.length) (A.ds.length < B.ds.length ? up : down).push('<b>' + n0(A.ds.length, 'death') + '</b>, ' + (A.ds.length < B.ds.length ? 'down' : 'up') + ' from ' + B.ds.length + '.');
     if (A.first && B.first && Math.abs(A.first.t - B.first.t) >= 10) (A.first.t > B.first.t ? up : down).push('<b>The first death came ' + (A.first.t > B.first.t ? 'later' : 'sooner') + '</b>: ' + T(A.first.t) + ', against ' + T(B.first.t) + '.');
-    if (A.early.length !== B.early.length && (A.early.length || B.early.length)) (A.early.length < B.early.length ? up : down).push('<b>' + plural(A.early.length, 'early death') + '</b>, against ' + B.early.length + ' last pull.');
+    if (A.early.length !== B.early.length && (A.early.length || B.early.length)) (A.early.length < B.early.length ? up : down).push('<b>' + n0(A.early.length, 'early death') + '</b>, against ' + B.early.length + ' last pull.');
     if (B.dps && Math.abs(A.dps / B.dps - 1) >= 0.05) (A.dps > B.dps ? up : down).push('<b>' + Math.round(Math.abs(100 * (A.dps / B.dps - 1))) + '% ' + (A.dps > B.dps ? 'more' : 'less') + ' raid damage a second</b> (' + C(A.dps) + ', against ' + C(B.dps) + ').');
     for (const [id, x] of P) { const q = Q.get(id); if (!q || x.s.info) continue; if (q.st !== 'ok' && q.st !== 'na' && x.st === 'ok') up.push('<b>' + nm(x) + '</b> was clean this time, after problems last pull.'); else if (q.st === 'ok' && (x.st === 'bad' || x.st === 'warn')) down.push('<b>' + nm(x) + '</b> went wrong this time, after a clean last pull.'); }
-    if (A.defReady.length !== B.defReady.length && (A.defReady.length || B.defReady.length)) (A.defReady.length < B.defReady.length ? up : down).push('<b>' + plural(A.defReady.length, 'death') + ' with a defensive ready</b>, against ' + B.defReady.length + ' last pull.');
-    if (A.missK !== B.missK) (A.missK < B.missK ? up : down).push('<b>' + plural(A.missK, 'kickable cast') + ' got through</b>, against ' + B.missK + ' last pull.');
+    if (A.defReady.length !== B.defReady.length && (A.defReady.length || B.defReady.length)) (A.defReady.length < B.defReady.length ? up : down).push('<b>' + n0(A.defReady.length, 'death') + ' with a defensive ready</b>, against ' + B.defReady.length + ' last pull.');
+    if (A.missK !== B.missK) (A.missK < B.missK ? up : down).push('<b>' + (A.missK ? plural(A.missK, 'kickable cast') + ' got through' : 'No kickable cast got through') + '</b>, against ' + B.missK + ' last pull.');
   }
   const noPrev = B ? '' : 'This is the first pull, so there\'s nothing to compare with yet.';
   return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div><p>' + [s1, s2, s3].filter(Boolean).join(' ') + '</p></div>' + nums, lists:
