@@ -118,7 +118,7 @@ async function topSpecOf(run, v) {
     const tot = dd.reduce((s, e) => s + (e.total || 0), 0) || 1, casts = new Map(kk.map((e) => [e.name, e.total || 0]));
     return { who: { name: t.name, server: t.server ? t.server.name : '', region: t.server ? t.server.region : '', amount: Math.round(t.amount), dur: Math.round(dur) },
       ab: dd.map((e) => ({ name: e.name, id: e.guid, share: (e.total || 0) / tot, hits: (e.hitCount || 0) + (e.tickCount || 0), crits: (e.critHitCount || 0) + (e.critTickCount || 0), total: e.total || 0, casts: casts.get(e.name) || 0, dur })) }; };
-  const got = (await Promise.all(top.map((t) => one(t).catch(() => null)))).filter(Boolean);
+  const all = (await Promise.all(top.map((t) => one(t).catch(() => null)))).filter(Boolean), got = all.slice(0, 3); // (the top 3 for Graphs; all of them, up to 8, for Compare)
   // (each spell over the players: share and casts a minute averaged (0 for one who didn't use it), crit and average hit over all their hits together)
   const by = new Map();
   for (const g of got) for (const a of g.ab) { let o = by.get(a.name); if (!o) by.set(a.name, o = { name: a.name, id: a.id, share: 0, cpm: 0, hits: 0, crits: 0, total: 0 });
@@ -126,7 +126,7 @@ async function topSpecOf(run, v) {
   return { n: got.length, who: got.map((g) => g.who), ab: [...by.values()].map((o) => ({ name: o.name, id: o.id, share: +o.share.toFixed(4), cpm: +o.cpm.toFixed(2), crit: o.hits ? +(o.crits / o.hits).toFixed(3) : null, avg: o.hits ? Math.round(o.total / o.hits) : null }))
     .sort((a, b) => b.share - a.share).slice(0, 30),
     // (each of them on their own too, for Compare's "against one top raider": their 25 biggest spells, the same numbers)
-    per: got.map((g) => ({ name: g.who.name, ab: g.ab.slice().sort((a, b) => b.share - a.share).slice(0, 25).map((a) => ({ name: a.name, id: a.id, share: +a.share.toFixed(4), cpm: +(60 * a.casts / a.dur).toFixed(2),
+    per: all.map((g) => ({ name: g.who.name, who: g.who, ab: g.ab.slice().sort((a, b) => b.share - a.share).slice(0, 25).map((a) => ({ name: a.name, id: a.id, share: +a.share.toFixed(4), cpm: +(60 * a.casts / a.dur).toFixed(2),
       crit: a.hits ? +(a.crits / a.hits).toFixed(3) : null, avg: a.hits ? Math.round(a.total / a.hits) : null })) })) };
 }
 // Kills of one boss, fastest first (Warcraft Logs' speed rankings, 50 a page), with who played what in each and their
@@ -175,7 +175,7 @@ async function guildProgOf(run, v) {
 }
 // </topspec>
 async function topSpec(creds, v) {
-  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=2'); // (v=2: with each player's own spells)
+  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=3'); // (v=3: the top 8, each with their own spells)
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {

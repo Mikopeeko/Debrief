@@ -11124,7 +11124,7 @@ function topSpecFor(r, p, kind) {
   if ((!S.wclCreds && !WCL.HOSTED) || r.item.kind !== 'boss' || !r.item.id || !p.specId || !E.SPECS[p.specId]) return null;
   const heal = kind === 'heal'; if (heal !== (p.role === 'healer')) return null;
   const [sn, cl] = E.SPECS[p.specId], v = { e: r.item.id, c: E.CLASSES[cl][0].replace(/ /g, ''), s: sn.replace(/ /g, ''), d: WCL_DIFF_OF[r.item.diffId] || 5, m: heal ? 'hps' : 'dps' };
-  const k = [v.e, v.d, v.c, v.s, v.m].join('|'); if (TOPSPEC.has(k)) return TOPSPEC.get(k);
+  v.n = 8; const k = [v.e, v.d, v.c, v.s, v.m].join('|'); if (TOPSPEC.has(k)) return TOPSPEC.get(k);
   TOPSPEC.set(k, 'loading');
   const done = (o) => { TOPSPEC.set(k, o); if (PF_TAB(S.tab) && S.tab !== 'rot' && S.rep === r && S.scope !== 'all' && S.perfKind === kind) perf(); else if (S.tab === 'cmp' && S.rep === r) cmp(); };
   WCL.topSpec(S.wclCreds, v).then((o) => done(o && o.n ? o : { n: 0 })).catch((e) => { console.warn('Top players:', e && e.message); done({ n: 0, err: true }); });
@@ -11242,6 +11242,7 @@ function cmpWhy(SA, SB, unit, spec) {
     const [H, L, h, l] = o.d >= 0 ? [SA, SB, o.a, o.b] : [SB, SA, o.b, o.a];
     const ht = spec && SA.hero && SB.hero && SA.hero !== SB.hero ? cmpHeroSpell(spec, o.x.name) : '';
     if (ht) return 'A ' + esc(ht) + ' hero talent. ' + esc(H.name) + ' plays ' + esc(ht) + ', ' + esc(L.name) + ' plays ' + esc(ht === SA.hero ? SB.hero : SA.hero) + '.';
+    const sn = nm(o.x).toLowerCase(); if (!l && H.tal && L.tal && H.tal.has(sn) && !L.tal.has(sn)) return 'A talent: ' + esc(H.name) + ' took ' + esc(nm(o.x)) + ', ' + esc(L.name) + ' didn\'t.';
     if (!l) return esc(H.name) + ' used it. ' + esc(L.name) + ' didn\'t.';
     if (h.cpm && l.cpm) { const castR = h.cpm / l.cpm, per = (x, v) => v * 60 / x.cpm, sizeR = per(h, o.d >= 0 ? o.va : o.vb) / per(l, o.d >= 0 ? o.vb : o.va);
       // (more than 3 times as much a cast is a different talent or setup, not bigger casts: say the share instead)
@@ -11287,6 +11288,25 @@ function cmpHeroBy(spec, names) { let best = '', n0 = 0; for (const [nm, set] of
 const cmpHeroOf = (r, p) => specHero(r, p) || cmpHeroBy(p.specName, [...p.castAb.keys(), ...p.healAb.keys(), ...p.dmgAb.keys()]);
 // (the hero tree a spell belongs to, or '')
 const cmpHeroSpell = (spec, name) => { const n = String(name).replace(/^[^:]+: /, '').toLowerCase(); for (const [nm, set] of cmpHeroSets(spec)) if (set.has(n)) return nm; return ''; };
+// (the picked top raiders' average, spell by spell: share and casts a minute averaged over them, 0 for one who didn't use
+// it; crit and average hit averaged over those who did)
+function cmpAvgAb(list) { const by = new Map(), n = list.length || 1;
+  for (const x of list) for (const t of x.ab) { const o = by.get(t.name) || { name: t.name, id: t.id, share: 0, cpm: 0, cs: 0, cn: 0, as: 0, an: 0 }; o.share += t.share / n; o.cpm += (t.cpm || 0) / n; if (t.crit != null) { o.cs += t.crit; o.cn++; } if (t.avg) { o.as += t.avg; o.an++; } by.set(t.name, o); }
+  return [...by.values()].map((o) => ({ name: o.name, id: o.id, share: o.share, cpm: o.cpm, crit: o.cn ? o.cs / o.cn : null, avg: o.an ? o.as / o.an : null })).sort((p, q) => q.share - p.share); }
+// Talent differences (your idea, Oct 19): the talents only one of two players took, and the ones both took at different
+// ranks, from the talents in the log. They can explain part of a gap. null when the log has no talents for one of them.
+function cmpTalents(r, p, q) {
+  const ta = talentsOf(r, p), tb = talentsOf(r, q); if (!ta || !tb) return null;
+  const only = (x, y) => [...x.names].filter(([n]) => !y.names.has(n)).map(([n, t]) => ({ n, id: t.id }));
+  const oa = only(ta, tb), ob = only(tb, ta), rk = [...ta.names].filter(([n, t]) => tb.names.has(n) && tb.names.get(n).rank !== t.rank).map(([n, t]) => ({ n, id: t.id, a: t.rank, b: tb.names.get(n).rank, max: t.max }));
+  const An = cmpIsMe(p) ? 'You' : esc(p.name), Bn = esc(q.name), li = (x) => '<span class="cmp-tal">' + spellIcon(x.id, x.n) + esc(x.n) + '</span>';
+  const col = (t, xs) => '<div class="cmp-col"><div class="cmp-lbl">' + t + '</div>' + (xs.length ? '<div class="cmp-tals">' + xs.map(li).join('') + '</div>' : '<p class="sub" style="margin:4px 0">None.</p>') + '</div>';
+  const html = '<div class="panel"><h3>Talent differences<small>Talents only one of them took. They can explain part of the gap.</small></h3>' +
+    (!oa.length && !ob.length && !rk.length ? '<p class="cmp-wlead" style="margin:0">Both took the same talents.</p>'
+      : cmpTwo(col('Only ' + An + ' took', oa), col('Only ' + Bn + ' took', ob)) +
+        (rk.length ? '<div class="cmp-lbl" style="margin-top:12px">Different ranks</div><div class="cmp-tals">' + rk.map((x) => '<span class="cmp-tal">' + spellIcon(x.id, x.n) + esc(x.n) + ' <span class="sub">' + An + ' ' + x.a + ', ' + Bn + ' ' + x.b + (x.max ? ' of ' + x.max : '') + '</span></span>').join('') + '</div>' : '')) + '</div>';
+  return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html };
+}
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
 const cmpLead = (A, a, B, b, verb) => (!a && !b ? '' : Math.abs(a - b) / Math.max(a, b) < 0.03 ? 'About the same.' : (a > b ? A : B) + ' ' + verb + ' ' + (Math.min(a, b) ? Math.round(100 * Math.abs(a - b) / Math.min(a, b)) + '% ' : '') + 'more.');
 // Over the fight: two players' healing or damage a second, 10 seconds at a time, as two lines; hover a stretch for both
@@ -11303,12 +11323,14 @@ function cmpLine(sides, end) {
 function cmpMate(r, p, ps) {
   const k = cmpKind(p), same = ps.filter((q) => q !== p && q.specName === p.specName);
   // (the same spec only (your call, Oct 19): the same spells, the same Rotation checks, so it compares like with like)
-  const hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(r, x);
-  const q = same.find((x) => x.name === S.cmpMate) || same.find((x) => hA && heroQ(x) === hA) || same[0]; // (the same hero tree first)
-  if (!q) return { vs: '<span class="sub">nobody else played ' + esc(p.specName || 'this spec') + '</span>', body: cmpMsg('Nobody else played ' + esc(p.specName || 'this spec') + ' in this pull. Pick another player above, or compare with the top raiders of the spec.') };
+  // (the same hero tree too (your call, Oct 19); a player whose tree can't be read is kept)
+  const hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(r, x), mates = same.filter((x) => !hA || !heroQ(x) || heroQ(x) === hA);
+  const q = mates.find((x) => x.name === S.cmpMate) || mates[0];
+  const what = esc(p.specName || 'this spec') + (hA ? ' with ' + esc(hA) : '');
+  if (!q) return { vs: '<span class="sub">nobody else played ' + what + '</span>', body: cmpMsg('Nobody else played ' + what + ' in this pull' + (same.length ? ' (' + same.map((x) => esc(x.name) + ' plays ' + esc(heroQ(x) || 'another hero tree')).join(', ') + ')' : '') + '. Pick another player above, or compare with the top raiders of the spec.') };
   const kq = cmpKind(q), pc = perfContext(r), U = (kk) => (kk === 'heal' ? 'healing' : 'damage'), cpm = (x) => x.casts / (cmpAlive(r, x) / 60);
   const ra = cmpRate(r, p, k), rb = cmpRate(r, q, kq);
-  const vs = avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', same, q, p, 'Change') + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + '</small>';
+  const vs = avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', mates, q, p, 'Change') + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + '</small>';
   const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) }, B = { name: q.name, col: q.color, ab: cmpMyAb(r, q, kq) };
   const topSp = (x, kk) => cmpMyAb(r, x, kk).sort((a, b) => b.share - a.share).slice(0, 8).map((a) => ({ name: String(a.name).replace(/^[^:]+: /, ''), id: a.id, v: a.share, txt: (100 * a.share).toFixed(1) + '%' }));
   const outDet = q.specName === p.specName ? '<p class="sub cmp-how">The bar is ' + esc(p.name) + '\'s share of their ' + U(k) + '. The white mark is ' + esc(q.name) + '\'s.</p>' + cmpSpellRows(A, B)
@@ -11366,10 +11388,11 @@ function cmpMate(r, p, ps) {
     { p: q, v: ohF(q), txt: pct(ohF(q)), tip: cmpTip(q.name, pct(ohF(q)) + ' of their healing was overhealing', '') }], cmpTwo(cmpList(esc(p.name), p.color, ohOf(p)), cmpList(esc(q.name), q.color, ohOf(q)))) : '';
   const chart = k === kq ? '<div class="panel"><h3>Over the fight<small>' + capS(U(k)) + ' a second, 10 seconds at a time. Hover for both numbers.</small></h3>' +
     cmpLine([{ name: p.name, col: p.color, arr: p[k === 'heal' ? 'healS' : 'dmgS'] || [] }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, arr: q[kq === 'heal' ? 'healS' : 'dmgS'] || [] }], pc.end) + '</div>' : '';
-  const whyM = k === kq ? cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: ra, ab: A.ab, hero: hA }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, rate: rb, ab: B.ab, hero: heroQ(q) }, k, p.specName) : '';
+  const tal = cmpTalents(r, p, q);
+  const whyM = k === kq ? cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: ra, ab: A.ab, hero: hA, tal: tal && tal.a }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, rate: rb, ab: B.ab, hero: heroQ(q), tal: tal && tal.b }, k, p.specName) : '';
   const rot = cmpRot(r, p, q);
   if (rot && rot.a != null && rot.b != null) cards.unshift({ ...two, label: 'Rotation score', a: rot.a, b: rot.b, fa: String(Math.round(rot.a)), fb: String(Math.round(rot.b)), gap: cmpGap(rot.a, rot.b), st: rot.a >= rot.b - 2 ? 'ok' : 'warn', txt: 'From the Rotation tab: how well each pressed their buttons.' });
-  return { vs, body: whyM + (rot ? rot.html : '') + cmpCards(cards) + chart +
+  return { vs, body: whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + cmpCards(cards) + chart +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + ohGroup + '</div></div>' };
 }
 // (2) Top raiders of your spec: one of the top 3 on this boss, or their average, picked like a teammate (Oct 19, "more
@@ -11383,16 +11406,21 @@ function cmpTop(r, p) {
   if (TS == null) return { vs: vs0('on this boss'), body: cmpMsg('There are no rankings for ' + esc(spn) + 's here.') };
   if (TS === 'loading') return { vs: vs0('loading…'), body: cmpMsg('Loading the top 3 ' + esc(spn) + 's on this boss…') };
   if (!TS.n) return { vs: vs0('on this boss'), body: cmpMsg(TS.err ? 'The rankings didn\'t load just now. Open the tab again in a minute.' : 'There are no ranked ' + esc(spn) + 's on this boss yet.') };
+  // (the top raiders on this player's hero tree (your call, Oct 19): of the top 8 fetched, the 3 best on the same tree, each
+  // one's tree read from the spells they cast; with none on it, the top 3 of any tree, and a note saying so)
+  const myHero = cmpHeroOf(r, p), tagged = TS.per && TS.per.length && TS.per[0].who ? TS.per.map((x, i) => ({ ...x, rank: i + 1, hero: cmpHeroBy(p.specName, x.ab.map((t) => t.name)) })) : null;
+  const onTree = tagged && myHero ? tagged.filter((x) => x.hero === myHero) : [], treeMiss = !!(tagged && myHero && !onTree.length), pick3 = tagged ? (onTree.length ? onTree : tagged).slice(0, 3) : null;
+  const W = pick3 ? { who: pick3.map((x) => x.who), per: pick3, ab: cmpAvgAb(pick3) } : { who: W.who, per: W.per, ab: W.ab }, rk = (i) => (W.per[i] && W.per[i].rank) || i + 1;
   const U = k === 'heal' ? 'healing' : 'damage', mine = cmpRate(r, p, k), end = perfContext(r).end, nm = (x) => String(x.name).replace(/^[^:]+: /, '');
-  const avg = TS.who.reduce((s, w) => s + w.amount, 0) / TS.who.length, dur = TS.who.reduce((s, w) => s + w.dur, 0) / TS.who.length;
+  const avg = W.who.reduce((s, w) => s + w.amount, 0) / W.who.length, dur = W.who.reduce((s, w) => s + w.dur, 0) / W.who.length;
   // (who: one of them (0, 1, 2), or their average ('avg'); the first one unless picked)
-  const per = TS.per || [], ix = S.cmpTopW === 'avg' || !per.length ? 'avg' : Math.min(per.length - 1, +S.cmpTopW || 0), w = ix === 'avg' ? null : TS.who[ix];
-  const B = w ? { name: w.name, label: esc(w.name), col: 'var(--gold)', ab: per[ix].ab, amount: w.amount, dur: w.dur, who: w.name } : { name: 'Top 3 average', label: 'the top 3', col: 'var(--gold)', ab: TS.ab, amount: avg, dur, who: 'The top 3', many: true };
+  const per = W.per, ix = S.cmpTopW === 'avg' || !per.length ? 'avg' : Math.min(per.length - 1, +S.cmpTopW || 0), w = ix === 'avg' ? null : W.who[ix];
+  const B = w ? { name: w.name, label: esc(w.name), col: 'var(--gold)', ab: per[ix].ab, amount: w.amount, dur: w.dur, who: w.name } : { name: 'Top 3 average', label: 'the top 3', col: 'var(--gold)', ab: W.ab, amount: avg, dur, who: 'The top 3', many: true };
   const Bc = w ? esc(w.name) : 'The top 3';
-  const pick = '<select class="rot-sel" id="cmpTopW" aria-label="Change"><option value="" selected disabled>Change</option>' + TS.who.map((x, i) => '<option value="' + i + '"' + (ix === i ? ' disabled' : '') + '>#' + (i + 1) + ' ' + esc(x.name) + '</option>').join('') +
+  const pick = '<select class="rot-sel" id="cmpTopW" aria-label="Change"><option value="" selected disabled>Change</option>' + W.who.map((x, i) => '<option value="' + i + '"' + (ix === i ? ' disabled' : '') + '>#' + rk(i) + ' ' + esc(x.name) + '</option>').join('') +
     '<option value="avg"' + (ix === 'avg' ? ' disabled' : '') + '>The top 3 average</option></select>';
   const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">' + (w ? esc(w.name) : 'The top 3 ' + esc(spn) + 's') + '</span>' + (per.length ? pick : '') +
-    '<small>' + (w ? '#' + (ix + 1) + ' ' + esc(spn) + ' on this boss' + (cmpHeroBy(p.specName, per[ix].ab.map((t) => t.name)) ? ', ' + esc(cmpHeroBy(p.specName, per[ix].ab.map((t) => t.name))) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) : 'Their average: ' + TS.who.map((x) => esc(x.name)).join(', ')) + '</small>';
+    '<small>' + (w ? '#' + rk(ix) + ' ' + esc(spn) + ' on this boss' + (cmpHeroBy(p.specName, per[ix].ab.map((t) => t.name)) ? ', ' + esc(cmpHeroBy(p.specName, per[ix].ab.map((t) => t.name))) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) : 'Their average: ' + W.who.map((x) => esc(x.name)).join(', ')) + '</small>';
   const prs = r.item.kill ? parsesFor(r, k) : null, x = prs && prs.get(p.name);
   const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) };
   const myAll = (() => { const by = new Map(); for (const a of (k === 'heal' ? p.healAb : p.dmgAb).values()) { const o = by.get(a.name) || { hits: 0, crits: 0, total: 0 }; o.hits += a.hits; o.crits += a.crits; o.total += a.total; by.set(a.name, o); } return by; })();
@@ -11406,7 +11434,7 @@ function cmpTop(r, p) {
   const bSide = { icon: cmpIcon('trophy', 'var(--gold)'), name: w ? esc(w.name) : 'Top 3 average', col: 'var(--gold)' }; // (gold for the top raiders' side, as before)
   const pair = (g, label, a, b, fa, fb, line, detail) => cmpGroup(g, label, [
     { p, v: a, txt: fa, sub: cmpGap(a, b), tip: cmpTip(p.name, fa + ' ' + line, cmpVs(a, b, B.label)) },
-    { ...bSide, v: b, txt: fb, tip: cmpTip(w ? w.name : 'The top 3 ' + spn + 's', fb + ' ' + line + (w ? '' : ', on average'), w ? '#' + (ix + 1) + ' on this boss' : TS.who.map((y) => y.name).join(', ')) }], detail);
+    { ...bSide, v: b, txt: fb, tip: cmpTip(w ? w.name : 'The top 3 ' + spn + 's', fb + ' ' + line + (w ? '' : ', on average'), w ? '#' + rk(ix) + ' on this boss' : W.who.map((y) => y.name).join(', ')) }], detail);
   const two = (fa, fb) => cmpTwo(cmpList(esc(p.name), p.color, fa), cmpList(B.many ? 'The top 3' : esc(B.name), 'var(--gold)', fb));
   const groups =
     pair('out', capS(U) + ' a second', mine, B.amount, C(mine), C(B.amount), U + ' a second',
@@ -11418,7 +11446,7 @@ function cmpTop(r, p) {
     (hitP.length ? pair('hit', 'Average hit, biggest spells', hitA, hitB, C(hitA), C(hitB), 'average hit of their ' + hitP.length + ' biggest spells',
       two(hitP.map(([a]) => ({ name: nm(a), id: a.id, v: a.avg, txt: C(a.avg) })), hitP.map(([, t]) => ({ name: nm(t), id: t.id, v: t.avg, txt: C(t.avg) })))) : '');
   // (where this player's number would place among the top 3)
-  const place = TS.who.filter((y) => y.amount > mine).length + 1;
+  const place = W.who.filter((y) => y.amount > mine).length + 1;
   // How they differ, as cards
   const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = B.many ? 'Top 3' : esc(B.name), gold = 'var(--gold)', duo = { na: An, nb: Bn, ca: p.color, cb: gold };
   const hit0 = hitP.length ? hitP[0] : null;
@@ -11433,7 +11461,8 @@ function cmpTop(r, p) {
     x ? { na: An, ca: p.color, label: 'Parse', a: x.pct, max: 100, fa: String(Math.floor(x.pct)), st: x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', txt: 'Better than ' + Math.floor(x.pct) + '% of ' + esc(spn) + 's on this boss.' } : null,
   ];
   const whyT = cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: mine, ab: A.ab, hero: cmpHeroOf(r, p) }, { name: B.many ? 'The top 3' : B.name, col: 'var(--gold)', rate: B.amount, ab: B.ab, hero: B.many ? '' : cmpHeroBy(p.specName, B.ab.map((t) => t.name)) }, k, p.specName);
-  return { vs, body: whyT + cmpCards(cards) +
+  const treeNote = treeMiss ? '<div class="panel"><p class="cmp-hnote" style="margin:0">None of the top ' + tagged.length + ' ' + esc(spn) + 's on this boss play ' + esc(myHero) + ', so these are the best of any hero tree. Some spells only one side has.</p></div>' : '';
+  return { vs, body: treeNote + whyT + cmpCards(cards) +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from

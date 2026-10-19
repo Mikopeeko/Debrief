@@ -131,7 +131,7 @@ const ROUTES = {
       return { look: m ? m[1] + '/character/' + m[2] + '/' + (+m[3] % 256) + '/' + m[3] : null }; } },
   // the top 3 players of a spec on a boss and their spells (Graphs' player card): a few queries in one, kept a day
   '/api/topspec': { age: 86400, run: (env, v) => topSpecOf((q, vars) => gql(env, q, vars), v),
-    v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), c = p.get('c') || '', s = p.get('s') || ''; return e > 0 && [3, 4, 5].includes(d) && /^[A-Za-z]{4,15}$/.test(c) && /^[A-Za-z]{3,20}$/.test(s) ? { e, c, s, d, m: p.get('m') === 'hps' ? 'hps' : 'dps', n: 3 } : null; } },
+    v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), c = p.get('c') || '', s = p.get('s') || ''; return e > 0 && [3, 4, 5].includes(d) && /^[A-Za-z]{4,15}$/.test(c) && /^[A-Za-z]{3,20}$/.test(s) ? { e, c, s, d, m: p.get('m') === 'hps' ? 'hps' : 'dps', n: 8 } : null; } }, // (8: Compare keeps the 3 best on your hero tree)
   // 20 kills of a boss from one page of the fastest, with who played what (Compare's "Raids like yours"), kept a day
   '/api/topkills': { age: 86400, run: (env, v) => topKillsOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), pg = parseInt(p.get('p'), 10) || 1; return e > 0 && [3, 4, 5].includes(d) && pg >= 1 && pg <= 40 ? { e, d, p: pg, n: 20 } : null; } },
