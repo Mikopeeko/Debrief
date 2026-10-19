@@ -259,6 +259,21 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 244: Graphs, a raider's review (your notes: raw data only; comparisons yes, coaching no)
+- [x] **Reviewed every Graphs view as an experienced raider.** Kept as they are: they're plain data, as you decided for
+  Graphs (Casts ranks presses, Survivability counts defensives, no verdicts). My suggestions that would have made Graphs
+  coach (avoidable damage there, casts-pace and defensive rankings) were dropped: that belongs on Rotation and Mechanics.
+- [x] **Links to the Mechanics side:** Damage taken ends with "Which abilities hit the raid, and how much of it was
+  avoidable, is on Mechanics ›", and Raid cooldowns with "Which big hits each raid cooldown covered is on Mechanics ›".
+  Each opens that Mechanics section in view.
+- [x] **Top 3 on the player card (Damage, and Healing for healers):** each spell's share for the 3 best of their spec on
+  this boss on Warcraft Logs, beside their own Share; hover for those players' casts a minute, crit and average hit. Spells
+  they press (once a minute or more, 3% or more of their output) that this player didn't are listed last as "not used".
+  Fetched once per spec and boss by the site (new /api/topspec, kept a day, about a second).
+- [ ] Open (your call): Power Infusion's view still gives advice ("Next pull: give it to..."). Move that advice to the
+  priest's Rotation page and keep only the facts on Graphs?
+- Noticed: Utility shows "Dispels 0" on Twin Fangs; either nothing there can be dispelled (then hide it) or dispels aren't read.
+
 ## 2026-10-18, round 243: Fixes from the high-expectations pass (your go: trust, noise, readability, first look, phone)
 - [x] **Grades follow their colour.** On the whole night's Mechanics and Assignments, a pull where a mechanic went wrong
   counts 30 to 65, one that could be better 65 to 85, a clean one 90 or more. Ula'tek's night: Avoidable damage went
