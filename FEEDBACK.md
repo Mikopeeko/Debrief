@@ -213,6 +213,22 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 228: A Stored notes tab on Assignments (your note)
+- [x] **Assignments has two tabs: This pull and Stored notes** (with how many notes you have). My take: right; notes are
+  housekeeping, so This pull stays about the pull, and every boss's notes are in one place.
+- [x] **Stored notes lists every note you saved, for every boss:** the boss of the open pull first, then the rest in raid
+  order, newest note first. Each note shows how many players it names and when it was saved, then **Logs:** with the date
+  and time of each log it goes with:
+  - the log that's open, with the pulls that use it ("Thu, Oct 15, 9:01 PM · pulls 3–12 (open now)"), and
+  - every raid night saved to your progress that it fits (at least half its names there), newest first, with how many
+    pulls and names ("Tue, Oct 13, 8:04 PM · 14 pulls · 18 of 20 names"); a click opens that night.
+  - A note with no log yet says so: nights it fits show up once they're saved to your progress.
+- [x] Each note has Use for this pull, Edit (it opens the editor on This pull) and the trash can (a second click confirms);
+  another boss's notes have "Open <boss>". "Every pull picks the note that fits it" is there too.
+- [x] **This pull is slimmer:** one line, "Your note: Mythic plan, Oct 18", with Edit, Add a note, why it's used, and "2
+  notes for this boss" to jump to Stored notes.
+- Checked with three test notes on two bosses, on desktop and phone; test notes removed.
+
 ## 2026-10-18, round 227: Assignments, easier to use (your note), and notes that name themselves (your note)
 - [x] **The top of the page says how the pull went.** The "What went wrong / What went well" box (the same as on Pull
   recap and Mechanics) now includes the healing cooldowns too: "Healing cooldowns: Xastral didn't press Darkness. 7:59".

@@ -1751,6 +1751,14 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .nlib .nl-lh { font-family: var(--head); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 2px; }
 .nlib .nl-r { padding: 6px 10px; margin-top: 5px; }
 .nlib .nl-in { margin-left: 8px; }
+/* (Assignments' two tabs, and Stored notes: one panel per boss, each note with the logs it goes with, dated) */
+.as-views { margin: 0 0 12px; }
+.sn-lead { margin: -4px 0 10px; }
+.sn-logs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.sn-log { font-size: 12.5px; } span.sn-log { padding: 3px 9px; border: 1px solid var(--line); border-radius: 7px; }
+span.sn-log.on { border-color: rgba(230,180,80,.5); background: rgba(230,180,80,.06); }
+.sn-none { margin: 8px 0 0; }
+.nlib.sn-b .nl-h { margin-bottom: 2px; }
 .as-none { padding: 12px 14px; line-height: 1.5; }
 .as-none .sub { display: block; margin-top: 4px; }
 .as-none .as-why { margin: 6px 0 4px; padding-left: 20px; } .as-none .as-why li { margin: 2px 0; }
@@ -10632,8 +10640,63 @@ function exampleNote(r) {
   const list = got.sort((a, b) => a.t - b.t).slice(0, 4).concat(miss.slice(0, 1)).sort((a, b) => a.t - b.t);
   return ['EncounterID:' + (r.item.id || 0) + ';Name:' + r.item.boss, '# An example note Debrief made from one pull: your healers\' cooldowns, at the times they pressed them, and one they didn\'t press.'].concat(list.map((x) => x.line)).join('\n');
 }
+// The Assignments tab's two views (your note, Oct 18: a separate tab for the stored notes): This pull, and Stored notes
+const noteCount = () => E.PACKS.reduce((s, p) => s + notesOf(p.encounter).list.length, 0);
+const asViews = () => { const n = noteCount(), on = S.asView === 'notes';
+  return '<div class="seg as-views" role="tablist" aria-label="Assignments"><button type="button" role="tab" data-asv="pull"' + (on ? '' : ' class="on"') + ' aria-selected="' + !on + '">This pull</button><button type="button" role="tab" data-asv="notes"' + (on ? ' class="on"' : '') + ' aria-selected="' + on + '">Stored notes' + (n ? '<span class="n">' + n + '</span>' : '') + '</button></div>'; };
+const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.onclick = () => { if (S.asView === b.dataset.asv || (!S.asView && b.dataset.asv === 'pull')) return; S.asView = b.dataset.asv; assign(only); refreshIcons(); }));
+// Stored notes: every saved note, the boss of the open pull first, then the rest in raid order; each with when it was saved
+// and the logs it goes with, each with its date and time: the log that's open (and which of its pulls use it), and every
+// saved night it fits (at least half its names there), newest first, a click opening that night
+function storedNotes(only) {
+  const r = S.rep, cur = r.item.boss, used = noteForRep(r), k0 = pullKey(r.item);
+  const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur);
+  const when = (t) => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const day = (t) => nightLabel(t) + ', ' + new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const rng = (ps) => { const v = [...new Set(ps)].sort((x, y) => x - y), out = []; for (let i = 0; i < v.length;) { let j = i; while (j + 1 < v.length && v[j + 1] === v[j] + 1) j++; out.push(i === j ? String(v[i]) : v[i] + '–' + v[j]); i = j + 1; } return out.join(', '); };
+  // (the open log's pulls of this boss that use each note: the ones opened so far)
+  const usedBy = new Map(), mine = S.index.bosses.filter((x) => x.boss === cur);
+  for (const b of mine) { const rr = CACHE.get(b); if (!rr) continue; const u = rr === r ? used : noteForRep(rr); if (u) { if (!usedBy.has(u.id)) usedBy.set(u.id, []); usedBy.get(u.id).push(b); } }
+  const logsOf = (n, b) => {
+    const out = [];
+    if (b === cur) { const bs = usedBy.get(n.id) || []; if (bs.length) { const f = bs.reduce((m, x) => ((x.wallMs || x.startMs || 0) < (m.wallMs || m.startMs || 0) ? x : m));
+      out.push('<span class="sn-log on">' + esc(day(f.wallMs || f.startMs)) + ' · ' + (bs.length === 1 ? 'pull ' : 'pulls ') + rng(bs.map((x) => x.pull)) + ' <span class="sub">(open now)</span></span>'); } }
+    if (!n.example) { const sc = noteScan(n.text, b);
+      for (const o of sc.fits) { if (o.wcl && o.wcl.code === S.wclCode) continue; const l = esc(day(o.at)) + ' · ' + plural(o.pulls, 'pull') + ' · ' + o.hit + ' of ' + sc.names.length + ' names';
+        out.push(o.wcl ? '<button class="btn sm sn-log" type="button" data-nopen="' + esc(o.wcl.code + '|' + (o.wcl.fight || '')) + '" title="Open this night">' + l + '</button>' : '<span class="sn-log">' + l + ' <span class="sub">(a combat log on your PC)</span></span>'); } }
+    return out.length ? '<div class="sn-logs"><span class="sub">Logs:</span>' + out.join('') + '</div>' : '<div class="sn-logs sub">No log goes with it yet. Nights it fits show here once they\'re saved to your progress.</div>';
+  };
+  const row = (n, b) => { const isCur = b === cur, on = isCur && used && used.id === n.id, nn = noteNames(n.text).length;
+    return '<div class="nl-r sn-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b>' + (n.example ? ' <span class="sub">(example)</span>' : '') +
+      '<span class="sub nl-in">' + [nn ? plural(nn, 'player') : '', n.saved ? 'saved ' + esc(when(n.saved)) : ''].filter(Boolean).join(' · ') + '</span>' + logsOf(n, b) + '</div>' +
+      '<div class="nl-b">' + (isCur ? (on ? '<span class="nl-this">✓ This pull</span>' : '<button class="btn sm" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>') + '<button class="btn sm" type="button" data-nedit="' + esc(n.id) + '">Edit</button>' : '') +
+      '<button class="btn sm" type="button" data-sndel="' + esc(b + '|' + n.id) + '" title="Remove this note" aria-label="Remove the note ' + esc(n.name) + '">' + NOTE_TRASH + '</button></div></div>'; };
+  const NO = notesOf(cur), opt = (v, l) => '<option value="' + esc(v) + '">' + esc(l) + '</option>';
+  const sel = NO.list.length > 1 ? '<div class="nl-foot"><label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label><span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.</span></div>' : '';
+  const panel = ([b, o]) => '<div class="panel nlib sn-b"><div class="nl-h"><span class="nb-t"><b>' + esc(b) + '</b>' + (b === cur ? ' <span class="sub">the boss of the pull that\'s open</span>' : ' <span class="sub">' + plural(o.list.length, 'note') + '</span>') + '</span>' +
+    '<span class="nl-hb">' + (b === cur ? '<button class="btn sm" type="button" id="noteNewBtn">Add a note</button>' : '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">Open ' + esc(b) + '</button>') + '</span></div>' +
+    (o.list.length ? o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + (b === cur ? sel : '') : '<p class="sub sn-none">No note for ' + esc(b) + ' yet.</p>') + '</div>';
+  $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + '<p class="sub sn-lead">Your NSRT notes for every boss, saved in this browser, with the logs each one goes with.</p>' + bosses.map(panel).join('') + '</div>';
+  bindAsViews(only);
+  // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
+  const redo = (b) => { for (const rep of CACHE.values()) if (rep.item.boss === b) applyNote(rep); renderMain(); };
+  if ($('#noteNewBtn')) $('#noteNewBtn').onclick = () => { S.asView = 'pull'; S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+  $$('#assignBox [data-nedit]').forEach((x) => (x.onclick = () => { S.asView = 'pull'; S.noteEdit = true; S.noteEditId = x.dataset.nedit; assign(only); }));
+  $$('#assignBox [data-nuse]').forEach((x) => (x.onclick = () => { const o = notesOf(cur); o.byPull = o.byPull || {}; o.byPull[k0] = x.dataset.nuse; notesSave(cur, o); redo(cur); }));
+  if ($('#notePick')) { $('#notePick').value = NO.pick || 'auto'; $('#notePick').onchange = () => { const o = notesOf(cur); o.pick = $('#notePick').value; notesSave(cur, o); redo(cur); }; }
+  // (the trash can: a second click removes the note from its boss)
+  $$('#assignBox [data-sndel]').forEach((x) => (x.onclick = () => {
+    if (!x.dataset.armed) { x.dataset.armed = '1'; x.innerHTML = NOTE_TRASH + ' Click again to remove'; x.classList.add('bad'); setTimeout(() => { if (x.isConnected) { delete x.dataset.armed; x.innerHTML = NOTE_TRASH; x.classList.remove('bad'); } }, 4000); return; }
+    const [b, id] = [x.dataset.sndel.slice(0, x.dataset.sndel.lastIndexOf('|')), x.dataset.sndel.slice(x.dataset.sndel.lastIndexOf('|') + 1)], o = notesOf(b);
+    o.list = o.list.filter((n) => n.id !== id); if (o.pick === id) o.pick = 'auto'; for (const [kk, v] of Object.entries(o.byPull || {})) if (v === id) delete o.byPull[kk]; notesSave(b, o); redo(b); }));
+  $$('#assignBox [data-nopen]').forEach((x) => (x.onclick = async () => { const [code, fight] = x.dataset.nopen.split('|'); x.disabled = true;
+    try { await openWcl({ code, fight: +fight || null }, await wclCreds()); } catch (e) { x.disabled = false; x.title = e.message; } }));
+  $$('#assignBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example), newest = l.slice().sort((p, q) => (q.saved || 0) - (p.saved || 0))[0];
+    x.disabled = true; S.asView = 'pull'; if (!(await noteGoBoss(to, newest && newest.text))) { S.asView = 'notes'; x.disabled = false; x.textContent = 'Open a pull of ' + to + ' first'; } }));
+}
 function assign(only) { // (only: just the note, for the all-pulls NSRT audit, which draws its own results)
   const r = S.rep, boss = r.item.boss, NO = notesOf(boss), used = noteForRep(r), text = used ? used.text : '', a = r.assign;
+  if (!only && S.asView === 'notes' && !S.noteEdit) return storedNotes(only);
   // (the note being edited: the one this pull uses, or a new one)
   const editN = S.noteEditId === 'new' ? null : (S.noteEditId && NO.list.find((n) => n.id === S.noteEditId)) || used, editT = editN ? editN.text : '';
   const pmap = new Map(players().map((p) => [p.name, p]));
@@ -10652,7 +10715,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const others = noteOthers(boss);
     const otherBar = others.length ? '<div class="panel nl-other" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="sub">No note for ' + esc(boss) + ' yet. Your notes for other bosses:</span>' +
       others.map(([b, l]) => '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">' + esc(b) + ' (' + l.length + ')</button>').join('') + '</div>' : '';
-    $('#assignBox').innerHTML = (S.noteScan && S.noteScan.boss === boss && S.noteScan.moved ? noteScanBox(S.noteScan) : '') + otherBar + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
+    $('#assignBox').innerHTML = (only ? '' : asViews()) + (S.noteScan && S.noteScan.boss === boss && S.noteScan.moved ? noteScanBox(S.noteScan) : '') + otherBar + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
       '<p class="ah-lead">Your raid\'s NSRT note says who soaks, who kicks, who takes the orbs and who presses which cooldown. Paste it here once, and Debrief checks every player against it on every pull. No other site does this.</p>' +
       '<ol class="ah-steps"><li><span><b>Get your raid\'s NSRT note.</b> Your raid leader shares it, or you can copy it from wowutils.</span></li>' +
       '<li><span><b>Paste it here and save.</b> It stays in this browser, so you only do this once for ' + esc(boss) + '. When the plan changes, paste the new one.</span></li>' +
@@ -10660,6 +10723,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       '<div class="ah-btns"><button class="btn primary" id="noteAdd">Add your NSRT note</button>' + (ex ? '<button class="btn" id="noteEx">Try it with an example</button>' : '') + '</div>' +
       (ex ? '<p class="sub ah-ex">The example is made from this pull. It gives your healers the cooldowns they really pressed, plus one they didn\'t, so you can see what a miss looks like.</p>' : '') + '</div>' + pic + '</div>';
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+    bindAsViews(only);
     if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
     $$('#assignBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example);
       x.disabled = true; S.noteScan = null; const newest = l.slice().sort((p, q) => (q.saved || 0) - (p.saved || 0))[0];
@@ -10733,8 +10797,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const ex = !!(used && used.example), why = ex ? "Made from this pull: your healers' cooldowns at the times they pressed them, plus one they didn't. Paste your raid's own note to check the real plan." : noteWhy(used) || 'Saved in this browser.';
     top += '<div class="panel nlib' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span><b>' + (ex ? 'An example note' : 'Your note: ' + esc(used.name)) + '</b>' + (kinds ? ' <span class="sub">' + kinds + '</span>' : '') + '</span></span>' +
       '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" id="noteNewBtn">Add a note</button>') + '</span></div>' +
-      '<div class="nl-why sub">' + why + back + '</div>' + (NO.list.length === 1 ? fitsOf(used) : '') +
-      (NO.list.length > 1 ? '<div class="nl-list"><div class="nl-lh">Your notes for ' + esc(boss) + '</div>' + NO.list.map(rowN).join('') + '<div class="nl-foot">' + sel + '<span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.' + later + '</span></div></div>' : '') + '</div>';
+      '<div class="nl-why sub">' + why + back + (NO.list.length > 1 ? ' <button class="btn sm" type="button" data-asv="notes">' + plural(NO.list.length, 'note') + ' for this boss</button>' : '') + '</div></div>';
   }
   if (a && a.error) top += '<div class="panel">Couldn\'t read the note: ' + esc(a.error) + '</div>';
   // (what the note just saved is for, from your saved logs: on top, until "Got it")
@@ -11184,7 +11247,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   tiles.sort((x, y) => ORDER.indexOf(x.id.slice(3)) - ORDER.indexOf(y.id.slice(3))); // (the tiles in fight order too)
   // (one row as wide as the tiles there are, up to 6: six tiles in a row of five left one alone on a second row)
   const tileRow = tiles.length >= 3 ? '<div class="pts as-tiles' + (tiles.length <= 4 ? ' four' : '') + ' an' + Math.min(6, tiles.length) + '">' + tiles.map((t) => '<a class="pt-go" href="#' + t.id + '">' + plTile(t.pic, t.label, t.v, t.st, t.txt) + '</a>').join('') + '</div>' : '';
-  $('#assignBox').innerHTML = '<div class="nsa">' + top + tileRow + box + h + (quiet.length ? '<div class="panel quiet"><div class="q-h">About the note</div>' + quiet.join('') + '</div>' : '') + '</div>';
+  $('#assignBox').innerHTML = '<div class="nsa">' + (only || editing ? '' : asViews()) + top + tileRow + box + h + (quiet.length ? '<div class="panel quiet"><div class="q-h">About the note</div>' + quiet.join('') + '</div>' : '') + '</div>';
   // (a tile opens its section if it's folded, then scrolls to it under the sticky tabs)
   $$('#assignBox details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
   wrThumbFit($('#assignBox')); $$('#assignBox [data-asec]').forEach((b) => onPress(b, () => { S.tab = 'audit'; S.pendingSec = b.dataset.asec; renderMain(); }));
@@ -11204,6 +11267,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     // (then it's checked against your saved logs: its fight and its roster, shown on top)
     S.noteScan = v ? { boss, id: sid, r: noteScan(v, boss) } : null; redo(); };
   if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
+  bindAsViews(only);
   // (a raid night a note fits: its pulls of the boss open from Warcraft Logs)
   $$('#assignBox [data-nopen]').forEach((x) => (x.onclick = async () => { const [code, fight] = x.dataset.nopen.split('|'); x.disabled = true; S.noteScan = null;
     try { await openWcl({ code, fight: +fight || null }, await wclCreds()); } catch (e) { x.disabled = false; x.title = e.message; } }));
