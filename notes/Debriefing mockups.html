@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Debriefing mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0f1117; --panel:#171a22; --raised:#1e222c; --line:#2a2f3b; --text:#ece8df; --muted:#98a0ad; --faint:#6c7381; --gold:#e6b450; --bad:#e5534b; --warn:#e8a23a; --good:#45c15c; --blue:#6aa8ff; --head:'Barlow Semi Condensed',sans-serif; --body:'Barlow',sans-serif; }
+* { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 var(--body); }
+header.top { padding:20px 16px 8px; max-width:1180px; margin:0 auto; } header.top h1 { font:700 26px var(--head); margin:0 0 4px; } header.top p { color:var(--muted); margin:0; }
+.pick { display:flex; gap:8px; flex-wrap:wrap; max-width:1180px; margin:12px auto 0; padding:0 16px; position:sticky; top:0; background:var(--bg); z-index:5; padding-bottom:10px; border-bottom:1px solid var(--line); }
+.pick button { background:var(--raised); color:var(--text); border:1px solid var(--line); border-radius:999px; padding:7px 14px; font:600 14px var(--body); cursor:pointer; } .pick button.on { background:var(--gold); color:#1b1406; border-color:var(--gold); }
+.opt { display:none; max-width:1180px; margin:0 auto; padding:16px; } .opt.on { display:block; }
+.why { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:10px; padding:12px 14px; margin-bottom:16px; color:var(--muted); font-size:14px; } .why b { color:var(--text); }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; }
+.h { font:700 13px var(--body); letter-spacing:.08em; text-transform:uppercase; color:var(--faint); margin:0 0 8px; }
+.big { font:700 30px var(--head); } .sub { color:var(--muted); font-size:13px; }
+.pill { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:3px 10px; font-size:13px; font-weight:600; }
+.p-bad { background:#3a1d1d; color:#ff8f88; } .p-warn { background:#3a2c16; color:#f5c06a; } .p-good { background:#17301e; color:#7fe08f; }
+.grid { display:grid; gap:12px; } .g3 { grid-template-columns:repeat(3,1fr); } .g2 { grid-template-columns:repeat(2,1fr); } .g4 { grid-template-columns:repeat(4,1fr); }
+@media (max-width:760px) { .g3,.g2,.g4 { grid-template-columns:1fr; } }
+.map { position:relative; border-radius:10px; overflow:hidden; background:linear-gradient(135deg,#b49a6a,#8c7650); aspect-ratio:16/9; }
+.map .floor { position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(0,0,0,.12) 23px 24px),repeating-linear-gradient(90deg,transparent 0 23px,rgba(0,0,0,.12) 23px 24px); }
+.map .ring { position:absolute; border-radius:50%; border:2px solid #ff5a4f; background:rgba(255,80,60,.25); }
+.map .dot { position:absolute; width:12px; height:12px; border-radius:50%; border:2px solid #111; }
+.map .lab { position:absolute; font:700 10px var(--body); color:#fff; text-shadow:0 0 3px #000,0 0 3px #000; white-space:nowrap; }
+.map .x { position:absolute; width:16px; height:16px; border-radius:50%; border:2px solid #ff3b3b; }
+.play { position:absolute; left:10px; bottom:8px; right:10px; display:flex; align-items:center; gap:8px; font:600 12px var(--body); color:#fff; }
+.play i { flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.35); position:relative; } .play i::after { content:''; position:absolute; left:0; top:0; bottom:0; width:38%; background:var(--gold); border-radius:2px; }
+.row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); } .row:last-child { border-bottom:0; }
+.row .t { width:44px; color:var(--muted); font-variant-numeric:tabular-nums; font-size:13px; } .row .n { flex:1; } .row .n b { font-weight:600; }
+.ic { width:28px; height:28px; border-radius:6px; flex:none; background:linear-gradient(135deg,#5b8a3a,#2c4a1c); border:1px solid #000; }
+.ic.red { background:linear-gradient(135deg,#a03a3a,#4a1c1c); } .ic.blue { background:linear-gradient(135deg,#3a6aa0,#1c2c4a); } .ic.gold { background:linear-gradient(135deg,#b08a3a,#4a3a1c); }
+.lane { position:relative; height:26px; border-radius:6px; background:var(--raised); margin:6px 0; } .lane span { position:absolute; top:7px; width:12px; height:12px; border-radius:50%; }
+.lane .lbl { position:absolute; left:8px; top:4px; font-size:12px; color:var(--muted); width:auto; height:auto; border-radius:0; }
+.ph { display:flex; gap:4px; margin:8px 0 4px; } .ph div { flex:1; text-align:center; font-size:11px; color:var(--muted); background:var(--raised); border-radius:4px; padding:3px 0; } .ph div.on { background:#2a2618; color:var(--gold); }
+.step { display:flex; gap:12px; } .step .num { width:30px; height:30px; flex:none; border-radius:50%; background:var(--gold); color:#1b1406; font:700 15px var(--head); display:grid; place-items:center; }
+.chip { display:inline-block; background:var(--raised); border-radius:6px; padding:2px 8px; font-size:12px; color:var(--muted); margin:2px 4px 2px 0; }
+.tile { background:var(--raised); border-radius:10px; padding:10px; } .tile .map { aspect-ratio:2/1; margin-bottom:8px; }
+.flag { width:10px; height:10px; border-radius:50%; display:inline-block; } .f-bad { background:var(--bad); } .f-warn { background:var(--warn); } .f-good { background:var(--good); }
+.side { display:grid; grid-template-columns:300px 1fr; gap:12px; } @media (max-width:860px) { .side { grid-template-columns:1fr; } }
+.list .it { display:flex; gap:10px; align-items:center; padding:9px 10px; border-radius:8px; cursor:pointer; } .list .it.on { background:#2a2618; box-shadow:inset 3px 0 0 var(--gold); } .list .it .n { flex:1; font-weight:600; font-size:14px; } .list .it .s { font-size:12px; color:var(--muted); }
+.note { color:var(--faint); font-size:12px; margin-top:6px; }
+.rate { margin-top:18px; } .rate li { margin:4px 0; color:var(--muted); } .rate b { color:var(--text); }
+</style></head><body>
+<header class="top"><h1>Debriefing: three directions</h1><p>Mockups with the Entombed Sentinels Mythic kill (pull 10). Pick one, or mix parts. Nothing here is built yet.</p></header>
+<div class="pick"><button class="on" data-o="a">A · Coach's whiteboard</button><button data-o="b">B · Replay</button><button data-o="c">C · Checklist</button></div>
+
+<!-- ============ A ============ -->
+<section class="opt on" id="o-a">
+<div class="why"><b>A · Coach's whiteboard.</b> The page answers three questions in order: <b>what killed us</b>, <b>what to fix next pull</b>, <b>what went fine</b>. The top three problems get big map cards with one sentence each. Everything else folds into a short list. One look tells the raid its plan for the next pull.</div>
+<div class="grid g4" style="margin-bottom:12px">
+  <div class="card"><div class="h">Result</div><div class="big" style="color:var(--good)">Kill</div><div class="sub">7:13 · after 9 wipes</div></div>
+  <div class="card"><div class="h">Deaths</div><div class="big">6</div><div class="sub">first at 2:31 (Dragooned)</div></div>
+  <div class="card"><div class="h">Mechanics</div><div class="big">3 <span class="sub">clean</span> · 7 <span class="sub">slips</span> · 1 <span class="sub" style="color:var(--bad)">failed</span></div><div class="sub">of 11</div></div>
+  <div class="card"><div class="h">Raid damage</div><div class="big">2.54M</div><div class="sub">17% less than pull 9</div></div>
+</div>
+<div class="h" style="margin-top:18px">Fix these next pull</div>
+<div class="grid g3">
+  <div class="card"><div class="map"><div class="floor"></div><div class="ring" style="left:54%;top:16%;width:22%;aspect-ratio:1"></div><div class="dot" style="left:60%;top:30%;background:#3fc77a"></div><div class="dot" style="left:64%;top:36%;background:#c69b6d"></div><div class="dot" style="left:58%;top:40%;background:#f48cba"></div><div class="lab" style="left:58%;top:12%">7 of 8</div><div class="play">▶ 4:56<i></i></div></div>
+    <p style="margin:10px 0 4px"><span class="pill p-warn">Some mistakes</span> <b>Unstable Miasma</b></p><p class="sub" style="margin:0">Soak 6 had 7 of 8. Mythic needs 8: one more body in the circle.</p></div>
+  <div class="card"><div class="map"><div class="floor"></div><div class="x" style="left:40%;top:44%"></div><div class="lab" style="left:36%;top:36%">Dragooned</div><div class="dot" style="left:70%;top:60%;background:#e05050"></div><div class="lab" style="left:66%;top:66%">Blood of Ula'tek</div><div class="play">▶ 2:31<i></i></div></div>
+    <p style="margin:10px 0 4px"><span class="pill p-bad">Failed</span> <b>Deaths</b></p><p class="sub" style="margin:0">Dragooned died to Mark of Blood with Ice Block ready. Press it under 30%.</p></div>
+  <div class="card"><div class="map"><div class="floor"></div><div class="dot" style="left:30%;top:30%;background:#69ccf0"></div><div class="dot" style="left:34%;top:34%;background:#a330c9"></div><div class="lab" style="left:24%;top:22%">Earthday ×3</div><div class="play">▶ 1:42<i></i></div></div>
+    <p style="margin:10px 0 4px"><span class="pill p-warn">Some mistakes</span> <b>Toxic Droplets</b></p><p class="sub" style="margin:0">Earthday took three at once. One at a time unless you have an immunity.</p></div>
+</div>
+<div class="grid g2" style="margin-top:12px">
+  <div class="card"><div class="h">Also slipped</div>
+    <div class="row"><div class="ic"></div><div class="n"><b>Shifting Protovenom</b> <span class="sub">2 eruptions, Earthday 8 s to clear</span></div><span class="flag f-warn"></span></div>
+    <div class="row"><div class="ic red"></div><div class="n"><b>Venom Coagulation</b> <span class="sub">add 3 alive at the intermission</span></div><span class="flag f-warn"></span></div>
+    <div class="row"><div class="ic blue"></div><div class="n"><b>Blighted Blood</b> <span class="sub">4 dispels over 9 s</span></div><span class="flag f-warn"></span></div>
+    <div class="row"><div class="ic gold"></div><div class="n"><b>Marks</b> <span class="sub">Jangokin took 8 of the other boss's</span></div><span class="flag f-warn"></span></div></div>
+  <div class="card"><div class="h">Went fine</div>
+    <div class="row"><div class="ic"></div><div class="n"><b>Helical Toxins</b> <span class="sub">every pair solved</span></div><span class="flag f-good"></span></div>
+    <div class="row"><div class="ic gold"></div><div class="n"><b>Boss balance</b> <span class="sub">never more than 3% apart</span></div><span class="flag f-good"></span></div>
+    <div class="row"><div class="ic blue"></div><div class="n"><b>Tanks</b> <span class="sub">swapped every time</span></div><span class="flag f-good"></span></div></div>
+</div>
+<div class="card" style="margin-top:12px"><div class="h">Next pull, in one line</div><p style="margin:0;font-size:16px">Eight in every Miasma, one droplet each, and press a defensive before 30%.</p></div>
+<p class="note">Every card opens in place to the full mechanic (all rows, every map). Burst windows, the kit and the numbers sit in one "More" drawer at the bottom.</p>
+</section>
+
+<!-- ============ B ============ -->
+<section class="opt" id="o-b">
+<div class="why"><b>B · Replay.</b> The pull plays back like a match replay. One big map on the left plays the whole fight. Under it, a timeline of every mechanic, with colored dots at each slip. Click a dot and the map jumps there. The right side reads out what's happening at that moment. Built for a raid lead going over the pull on stream or in voice.</div>
+<div class="side">
+  <div class="card">
+    <div class="map" style="aspect-ratio:4/3"><div class="floor"></div><div class="ring" style="left:44%;top:14%;width:24%;aspect-ratio:1"></div><div class="dot" style="left:52%;top:28%;background:#3fc77a"></div><div class="dot" style="left:56%;top:32%;background:#c69b6d"></div><div class="dot" style="left:30%;top:60%;background:#69ccf0"></div><div class="dot" style="left:70%;top:66%;background:#e05050"></div><div class="lab" style="left:66%;top:72%">Blood of Ula'tek</div><div class="lab" style="left:26%;top:66%">Breath of Ula'tek</div><div class="play">❚❚ 4:56<i></i> 7:13</div></div>
+    <div class="ph"><div>P1 cycle 1</div><div>Stasis</div><div>Cycle 2</div><div>Stasis</div><div class="on">Cycle 3</div><div>Stasis</div><div>Cycle 4</div></div>
+    <div class="lane"><span class="lbl">Deaths</span><span style="left:34%;background:var(--bad)"></span><span style="left:97%;background:var(--bad)"></span></div>
+    <div class="lane"><span class="lbl">Miasma</span><span style="left:12%;background:var(--good)"></span><span style="left:40%;background:var(--good)"></span><span style="left:68%;background:var(--warn);box-shadow:0 0 0 3px rgba(230,180,80,.5)"></span></div>
+    <div class="lane"><span class="lbl">Droplets</span><span style="left:20%;background:var(--warn)"></span><span style="left:46%;background:var(--warn)"></span><span style="left:52%;background:var(--warn)"></span></div>
+    <div class="lane"><span class="lbl">Protovenom</span><span style="left:30%;background:var(--warn)"></span><span style="left:71%;background:var(--warn)"></span></div>
+    <div class="lane"><span class="lbl">Bloodlust</span><span style="left:1%;width:9%;border-radius:4px;background:rgba(229,83,75,.5)"></span></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="h">4:56 · Unstable Miasma, soak 6</div><p style="margin:0 0 6px"><span class="pill p-warn">7 of 8 soakers</span></p><p class="sub" style="margin:0">Tyralien, Larryg, Ashdknight, Urgdragon, Shockabunga, Dragooned, Volkovod. Mythic needs 8.</p></div>
+    <div class="card"><div class="h">Around this moment</div>
+      <div class="row"><div class="t">4:50</div><div class="n">Toxic Droplets set 7 <span class="sub">clean</span></div></div>
+      <div class="row"><div class="t">4:54</div><div class="n">Bloodlust ended</div></div>
+      <div class="row"><div class="t">5:02</div><div class="n">Blighted Blood <span class="sub">dispelled in 9.8 s</span></div></div></div>
+    <div class="card"><div class="h">The pull</div><div class="grid g2"><div><div class="big" style="color:var(--good)">Kill</div><div class="sub">7:13</div></div><div><div class="big">6</div><div class="sub">deaths</div></div></div></div>
+  </div>
+</div>
+<p class="note">The map follows the selected moment; ◀ ▶ step to the previous or next slip. On a phone, the map sits on top and the timeline scrolls sideways.</p>
+</section>
+
+<!-- ============ C ============ -->
+<section class="opt" id="o-c">
+<div class="why"><b>C · Checklist.</b> Like a pre-flight checklist: every mechanic is one line in the order it happens, with the three flags. Problems open by default with their map; clean ones stay one line. Calm, short and the same on every boss, so raiders learn where to look.</div>
+<div class="card" style="margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center"><div class="big" style="color:var(--good)">Kill · 7:13</div><span class="pill p-good">3 clean</span><span class="pill p-warn">7 with slips</span><span class="pill p-bad">1 failed</span><span class="sub">6 deaths, first at 2:31</span></div>
+<div class="card">
+  <div class="step" style="margin-bottom:10px"><div class="num">1</div><div style="flex:1"><b>Every cycle</b> <span class="sub">things that happen on a loop</span></div></div>
+  <div class="row"><span class="flag f-good"></span><div class="ic"></div><div class="n"><b>Helical Toxins</b> <span class="sub">every pair solved, all 4 intermissions</span></div></div>
+  <div class="row"><span class="flag f-warn"></span><div class="ic red"></div><div class="n"><b>Unstable Miasma</b> <span class="sub">1 of 9 soaks short (7 of 8)</span></div><span class="sub">▾</span></div>
+  <div class="grid g2" style="padding:6px 0 12px 46px"><div class="map"><div class="floor"></div><div class="ring" style="left:40%;top:18%;width:26%;aspect-ratio:1"></div><div class="lab" style="left:44%;top:12%">Soak 6 · 7 of 8</div><div class="play">▶ 4:56<i></i></div></div><div class="sub">Soak 6 at 4:56: Tyralien, Larryg, Ashdknight, Urgdragon, Shockabunga, Dragooned, Volkovod.<br><br><b style="color:var(--text)">Fix:</b> Mythic needs 8 or more. Call one extra soaker for each Miasma.</div></div>
+  <div class="row"><span class="flag f-warn"></span><div class="ic"></div><div class="n"><b>Toxic Droplets</b> <span class="sub">Earthday took 3 at once</span></div><span class="sub">▸</span></div>
+  <div class="row"><span class="flag f-warn"></span><div class="ic blue"></div><div class="n"><b>Shifting Protovenom</b> <span class="sub">2 eruptions</span></div><span class="sub">▸</span></div>
+  <div class="step" style="margin:14px 0 10px"><div class="num">2</div><div style="flex:1"><b>Adds</b></div></div>
+  <div class="row"><span class="flag f-warn"></span><div class="ic red"></div><div class="n"><b>Venom Coagulation</b> <span class="sub">add 3 alive at the intermission</span></div><span class="sub">▸</span></div>
+  <div class="step" style="margin:14px 0 10px"><div class="num">3</div><div style="flex:1"><b>Tanks and the bosses</b></div></div>
+  <div class="row"><span class="flag f-good"></span><div class="ic blue"></div><div class="n"><b>Tanks</b> <span class="sub">swapped every time</span></div></div>
+  <div class="row"><span class="flag f-good"></span><div class="ic gold"></div><div class="n"><b>Boss balance</b> <span class="sub">never more than 3% apart</span></div></div>
+  <div class="step" style="margin:14px 0 10px"><div class="num">4</div><div style="flex:1"><b>Staying alive</b></div></div>
+  <div class="row"><span class="flag f-bad"></span><div class="ic red"></div><div class="n"><b>Deaths</b> <span class="sub">6; Dragooned with Ice Block ready</span></div><span class="sub">▸</span></div>
+  <div class="row"><span class="flag f-warn"></span><div class="ic"></div><div class="n"><b>Avoidable damage</b> <span class="sub">23 hits, Badbunny 3</span></div><span class="sub">▸</span></div>
+</div>
+<p class="note">The groups come from each boss's own rhythm (cycles, adds, tanks, staying alive), the way the guides teach the fight.</p>
+</section>
+
+<div class="opt on" style="display:block;padding-top:0"><div class="card rate"><div class="h">My take</div><ul>
+<li><b>A · Coach's whiteboard: amazing.</b> It's the closest to what a raid lead says after a pull, and it cuts the page to a third. It risks hiding the 4th to 10th problems, so the "Also slipped" list has to stay.</li>
+<li><b>B · Replay: solid, the most "wow".</b> It shows off the maps, which raiders love. It's the most work, and the weakest on a phone.</li>
+<li><b>C · Checklist: solid.</b> It's the easiest to learn and the calmest. It's the least exciting, and long fights make it long.</li>
+<li>A mix I'd suggest: <b>A's top</b> (four numbers, the three "Fix these" map cards, the next-pull line) and <b>C's checklist</b> under it, with B's replay one click away.</li></ul></div></div>
+<script>
+document.querySelectorAll('.pick button').forEach((b)=>b.onclick=()=>{document.querySelectorAll('.pick button').forEach((x)=>x.classList.toggle('on',x===b));document.querySelectorAll('section.opt').forEach((s)=>s.classList.toggle('on',s.id==='o-'+b.dataset.o));});
+{ const h=location.hash.slice(1); const b=document.querySelector('.pick button[data-o="'+h+'"]'); if(b) b.click(); }
+</script>
+</body></html>

@@ -2913,7 +2913,7 @@ function audit() {
   const vb = { good: ['b-good', 'Clean'], warn: ['b-med', 'Some mistakes'], bad: ['b-high', 'Problems'] };
   // (the fight timeline panel was removed: the audit is organized by phase below instead)
   // (the page header already names the boss and difficulty; only a module note is worth a line here)
-  let h = (r.allPulls ? '' : '<div id="rcTop" class="lpv dbf rc-top">' + (r._rc ? '' : '<div class="panel rc-wait sub">Putting the debrief together…</div>') + '</div>') + (m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '');
+  let h = (r.allPulls ? '' : '<!--db-top--><div id="rcTop" class="lpv dbf rc-top">' + (r._rc ? '' : '<div class="panel rc-wait sub">Putting the debrief together…</div>') + '</div>') + (m.note ? '<p class="muted" style="margin:0 0 10px">' + esc(m.note) + '</p>' : '');
 
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
@@ -3368,8 +3368,8 @@ function audit() {
     // "How it works" is folded away at the top of the opened section
     const lc = lvlCounts(s.id, nBad, nWarn, allRows.length), stc = !nBad && !nWarn ? (s.info ? 'na' : 'ok') : LVL_CLS[lvlOf(lc)], ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
     const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
-    let b = '<details class="panel secd st-' + stc + (ti ? ' mcx-tile' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti ? '<span class="mcx-hd">' : '') + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? '</span>' + tiLn : '') + '</summary><div class="secbody">' +
+    let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + secHead(s) +
+      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + '</summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -3435,9 +3435,10 @@ function audit() {
   // (its problem mechanics as tiles in a grid (info-only sections stay full rows), then the clean chips)
   // (the worst mechanic with a map leads its phase as a big tile, "Fix this first"; the rest small beside it)
   const bigFirst = (l) => { const rk = (t) => (!t.includes('class="wr-map mcx-map"') ? 9 : /st-bad mod/.test(t) ? 1 : /st-bad/.test(t) ? 0 : 2), i = l.reduce((b, t, j) => (rk(t) < rk(l[b]) ? j : b), 0); if (rk(l[i]) === 9) return l; const t = l[i].replace('mcx-tile', 'mcx-tile mcx-big').replace('<summary>', '<summary><span class="mcx-rib">Fix this first</span>'); return [t].concat(l.slice(0, i), l.slice(i + 1)); };
+  // (Oct 19, the Debriefing rebuild (your pick: the whiteboard's top and a checklist under it): each phase is a checklist, one line per
+  // mechanic, problems first, then the ones not judged, then the clean ones; a line opens in place to every row and map)
   const phaseBody = (list, key) => { const ok = list.filter(okSec), pr = list.filter((x) => !okSec(x) && !x.s.info), inf = list.filter((x) => !okSec(x) && x.s.info);
-    return (pr.length ? '<div class="mcx-tiles">' + bigFirst(pr.map((x) => secBlock(x, key, true))).join('') + '</div>' : '') + inf.map((x) => secBlock(x, key)).join('') +
-    (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean</span>' + ok.map((x) => secBlock(x, key)).join('') + '</div>' : ''); };
+    return '<div class="dbck">' + pr.map((x) => secBlock(x, key, 'line')).join('') + inf.map((x) => secBlock(x, key)).join('') + ok.map((x) => secBlock(x, key)).join('') + '</div>'; }; void bigFirst;
   // (a phase's banner (Oct 19, refined): a gold number, and a ring of how much of it was clean (green), could be better (amber) or had problems (red))
   const phNum = (n, i) => { const m = String(n).match(/^P(\d+)/); return '<span class="mcx-pn">' + (m ? m[1] : /^intermission/i.test(n) ? 'Int' : /^whole/i.test(n) ? 'All' : i != null ? i + 1 : '•') + '</span>'; };
   const phLv = (list) => list.filter((x) => !x.s.info).reduce((o, x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), c = lvlCounts(x.s.id, a.filter(isBadRow).length, a.filter(isWarnRow).length, a.length); o.major += c.major; o.moderate += c.moderate; o.minor += c.minor; return o; }, { major: 0, moderate: 0, minor: 0 });
@@ -3456,10 +3457,39 @@ function audit() {
     h += '<details class="phase mcx-ph" data-mst="' + lvlOf(phLv(list)) + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
       phRing(list) + '<span class="sst ' + LVL_CLS[lvlOf(phLv(list))] + '">' + lvlText(phLv(list)) + '</span></summary>' + phaseBody(list, i) + '</details>';
   });
-  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">mechanics not tied to one phase, your kit, raid cooldowns and damage taken</span>' + phRing(whole) + '</summary>' + phaseBody(whole, 'w') + '</details>';
+  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'mechanics not tied to one phase, your kit, raid cooldowns and damage taken' : 'deaths, avoidable damage and the mechanics not tied to one phase') + '</span>' + phRing(whole) + '</summary>' + phaseBody(whole, 'w') + '</details>';
   // (the top of the page (Oct 19, layout B, refined): one card with a plain verdict, the pull as lanes (one per mechanic with a mistake,
   // Deaths first as skulls; the phases as bands across the top with lines down through the lanes, minute marks, the wipe filter's cut
   // greyed behind a red line), and the totals; a dot opens its exact moment)
+  // (Oct 19, the Debriefing rebuild: the top is four numbers and the three mechanics to fix next pull, each with its map at its worst
+  // moment and one sentence; a card opens its mechanic in the checklist below. The recap's next-pull line follows it)
+  if (!r.allPulls && h.includes('<!--db-top-->')) {
+    let top = '';
+    try {
+      const it = r.item, endT = cut ? cut.t : r.duration, deaths = (r.deaths || []).filter((d) => d.t <= endT + 0.05), dS = r.dmgS || [];
+      let dmg = 0; for (let i = 0; i < Math.min(dS.length, Math.ceil(endT)); i++) dmg += dS[i] || 0;
+      const before = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && !b.kill).length;
+      const res = it.kill ? '<b class="dbr-ok">Kill</b>' : '<b>' + (it.endPct != null ? Math.round(it.endPct) + '%' : 'Wipe') + '</b>';
+      const resSub = T(r.duration) + (it.kill ? (before ? ' · after ' + plural(before, 'wipe') : ' · first try') : it.endPhase ? ' · wipe in ' + esc(it.endPhase) : ' · wipe');
+      const all = m.sections.filter((s) => !s.info && s.id !== 'kicks').map((s) => { const rs = s.rows.concat(...(s.groups || []).map((g) => g.rows)), nB = rs.filter(isBadRow).length, nW = rs.filter((row) => !isBadRow(row) && isWarnRow(row)).length, lc = lvlCounts(s.id, nB, nW, rs.length);
+        return { s, nB, nW, lc, lv: lvlOf(lc) }; });
+      const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
+      const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
+      top += '<div class="dbr-4">' + num('Result', res, resSub) + num('Deaths', '<b>' + deaths.length + '</b>', deaths.length ? 'first at ' + T(deaths[0].t) + ' (' + esc(deaths[0].player) + ')' : 'nobody died') +
+        num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> slips</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
+        num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '')) + '</div>';
+      // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
+      const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
+      const pick = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)).slice(0, 3);
+      if (pick.length && tileOf) {
+        top += '<div class="dbr-h">Fix ' + (pick.length === 1 ? 'this' : 'these') + ' next pull</div><div class="dbr-fx3">' + pick.map((x) => { const k = firstAt.has(x.s.id) ? firstAt.get(x.s.id) : 'w', ti = tileOf(x.s, x.s.rows, x.s.groups || [], k);
+          const nm = x.s.title.split(': ')[0], line = [ti.tag, ti.txt].filter(Boolean).join(' · ');
+          return '<a class="tlink dbr-fx st-' + LVL_CLS[x.lv] + '" href="#sec-' + esc(x.s.id) + '-' + k + '">' + (ti.map ? '<span class="wr-map mcx-map dbr-fxm">' + ti.map + '</span>' : ti.alt ? '<span class="dbr-fxm dbr-fxa">' + ti.alt + '</span>' : '') +
+            '<span class="dbr-fxb"><span class="sst ' + LVL_CLS[x.lv] + '">' + lvlText(x.lc, true) + '</span><b>' + esc(nm) + '</b><span class="dbr-fxt">' + esc(line) + (ti.more ? ' <span class="wr-plus">+' + ti.more + ' more</span>' : '') + '</span></span></a>'; }).join('') + '</div>';
+      } else if (all.length) top += '<div class="dbr-h">Every mechanic went clean</div>';
+    } catch (e) { console.error(e); top = ''; }
+    h = h.replace('<!--db-top-->', top ? '<section class="dbr-top">' + top + '</section>' : '');
+  }
   h = h.replace(MT_TOP, () => { const ent = buckets.flatMap((l, i) => l.map((x) => ({ x, k: i }))).concat(whole.map((x) => ({ x, k: 'w' }))).filter(({ x }) => !x.s.info);
     const st = ({ x }) => lvlOf(phLv([x])), cnt = (k) => ent.filter((e) => st(e) === k).length;
     // (Oct 19, "make it better": the counts as small pills in the header, in the dots' own colours, so they're the legend too;
@@ -3505,7 +3535,7 @@ function audit() {
       (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('The wipe filter: counted up to ' + T(cut.t) + ', the ' + ordinal(cut.n) + ' death. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
     const axis = '<div class="mcx-ax2">' + [0].concat(ticks, [end]).map((t, i, l) => '<span class="' + (i === 0 ? 'a0' : i === l.length - 1 ? 'a1' : '') + '" style="left:' + X(t) + '">' + T(t) + '</span>').join('') + '</div>';
     return head + '<div class="mcx-lanes">' + band + rows + wipe + over + axis + '</div></div>'; });
-  const refAt = h.length; // (where the reference panels start: they're gathered into one card below)
+  const refAt = h.length; let dbMore = ''; // (where the reference panels start: they're gathered into one card below)
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
@@ -3519,14 +3549,17 @@ function audit() {
   // under their own label, each opening in place across the card)
   { const ref = h.slice(refAt); if (ref) { const nb = (ref.match(/secd st-bad/g) || []).length;
     const grid = '<div class="mcx-refh">Your kit and the raid' + (cut ? ', up to the wipe filter' : '') + '</div><div class="mcx-refg">' + ref + '</div>', wEnd = whole.length ? h.lastIndexOf('</details>', refAt) : -1;
-    h = wEnd >= 0 ? h.slice(0, wEnd) + grid + '</details>' : h.slice(0, refAt) + '<details class="phase mcx-ph" data-mst="' + (nb ? 'major' : 'clean') + '" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b><span class="sub">your kit, raid cooldowns, damage taken and kicks</span></summary>' + grid + '</details>'; } }
-  if (!r.allPulls) { try { h += burstPanel(r, m, cut); } catch (e) { console.error(e); } } // (never block the page)
+    // (a single pull: the kit, raid cooldowns, damage taken and kicks go in the More drawer at the bottom with burst windows and the recap's extras (the Debriefing
+    // rebuild, Oct 19: this tab is the mechanics; the rest is one click away))
+    if (!r.allPulls) { h = h.slice(0, refAt); dbMore = grid; void wEnd; void nb; }
+    else h = wEnd >= 0 ? h.slice(0, wEnd) + grid + '</details>' : h.slice(0, refAt) + '<details class="phase mcx-ph" data-mst="' + (nb ? 'major' : 'clean') + '" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b><span class="sub">your kit, raid cooldowns, damage taken and kicks</span></summary>' + grid + '</details>'; } }
+  if (!r.allPulls) { try { dbMore += burstPanel(r, m, cut); } catch (e) { console.error(e); } } // (never block the page)
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
     m.diag.map((d) => '<tr' + (d.total ? '' : ' style="opacity:.55"') + '><td>' + spell(d.id, d.name) + (d.total ? '' : ' <span class="sub">not found</span>') + '</td><td class="r">' + d.cast + '</td><td class="r">' + d.dmg + '</td><td class="r">' + d.aura + '</td><td class="r">' + d.other + '</td></tr>').join('') +
     '</tbody></table><p class="muted" style="font-size:13px">A spell can legitimately be missing if the pull ended before it happened (for example, no intermission spells on a P1 wipe). If something you saw in the fight shows "not found", screenshot this table and send it to me.</p></details>';
-  if (!r.allPulls) h += '<section id="rcMore" class="lpv dbf rc-more"></section>';
+  if (!r.allPulls) h += '<details class="panel dbr-more"' + (S.openSecs.has('dbmore') ? ' open' : '') + ' data-k="dbmore"><summary><b>More from this pull</b><span class="sub">survival kit, raid cooldowns, damage taken, kicks, burst windows, before the next pull, who to talk to and the numbers</span></summary>' + dbMore + '<section id="rcMore" class="lpv dbf rc-more"></section></details>';
   view(h); recapInto(r);
   // applies on Enter or when you leave the box; keeps the cursor in the box while you type
   if ($('#kickBox')) kicks();
@@ -16594,7 +16627,9 @@ function dbfPull(o) {
     dbfCardP('up', 'What\'s improving', U, LU, noPrev || 'Nothing clearly improved since last pull.') + dbfCardP('down', 'What\'s getting worse', Dn, LD, noPrev || 'Nothing clearly got worse since last pull.') + '</div>';
   return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div><p>' + s1 + ' ' + (story || s2) + '</p>' + (focus ? '<p><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + '</div>' + nums, lists: four(''),
     // (Debriefing: the four blocks with "Next pull" in them, and the story on its own for the bottom)
-    cards: four(dbfNext('Next pull', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">' + (it.kill ? 'The kill, phase by phase' : 'The pull, phase by phase') + '</div><p>' + s1 + ' ' + (story || s2) + '</p></div>', nums };
+    cards: four(dbfNext('Next pull', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">' + (it.kill ? 'The kill, phase by phase' : 'The pull, phase by phase') + '</div><p>' + s1 + ' ' + (story || s2) + '</p></div>', nums,
+    // (the Debriefing rebuild, Oct 19: under the four numbers and the cards to fix, only the next pull's plan and what changed since the last one)
+    slim: focus || U.length || Dn.length ? '<div class="panel dbr-next">' + (focus ? '<p class="dbr-nx"><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
 }
 // ---- the whole night ----
 function dbfNight(o) {
@@ -16763,7 +16798,7 @@ async function recapInto(r) {
   const { D, parts } = x, it = r.item;
   const more = !parts ? '' : '<div class="rc-mh"><b>More from this pull</b><span class="sub">What to sort before the next pull, who to talk to, the pull phase by phase, and the numbers</span></div><div class="rc-cols">' +
     [parts.prep, D.story, parts.talk, rcNums(D.nums, 'against the last pull'), parts.pace, parts.used, parts.cds, parts.miss].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
-  const c = { key, top: D.reset ? D.story : D.cards, more }; void it;
+  const c = { key, top: D.reset ? D.story : D.slim != null ? D.slim : D.cards, more }; void it;
   if (fill(c)) r._rc = c;
   // (flasks and food: once their buffs' names are looked up, the box fills in)
   if (x.cs.length && x.needNames) resolveCombatants(x.cs).then(() => { if (S.rep !== r || S.tab !== 'audit') return; const el = $('#lpPrep'); if (el) { el.outerHTML = lpPrep(r, x.prepRows()); refreshIcons(); r._rc = null; } }).catch(() => { /* (the potions are still shown) */ });
