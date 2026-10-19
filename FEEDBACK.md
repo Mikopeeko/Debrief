@@ -205,6 +205,27 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 215: Easier on tanks in bad stuff; Heroic Anguished Cry checked
+- [x] **Tanks standing in bad stuff is only a note now (your note).** A tank hit by avoidable damage (a pool, a wave, a
+  circle) is a small note, "Tanks often take this on purpose, so it's only a note.", not a mistake. It's still a mistake
+  when it killed them, when they kept standing in it (6 or more hits, or twice what counts as bad for everyone else), or
+  when it's a tank mechanic (those rules judge tanks on purpose). In the Avoidable damage section their row says "tank
+  (only a note)" or "tank, kept standing in it". Checked on the test night: Living Venom, Plague Wave, Umbral Ejection,
+  Evil Eyes, Aftershock, Tempest and Caustic Claws on tanks became notes; Domideus taking Tempest 7 times stayed a mistake.
+- [x] **Heroic Ula'tek's Anguished Cry, checked (your screenshot).** Heroic runs it like Mythic: the Weakened Doomscale
+  casts it, it can be kicked, and good groups kick every one (your Heroic kill night: over 20 kicks, none got through).
+  So the Mythic rule judges Heroic pulls fairly. "Got off" only counts a cast that really finished; one stopped by a stun
+  or by the add dying isn't counted.
+- [x] **The yards were right.** On the Heroic kill night every kicker's spot and the add's were logged within half a
+  second of the cast (melee kickers stood 1-10 yards away, ranged 18-22). So "Icefrosting (31 yd)" meant Icefrosting
+  really stood 31 yards from the Doomscale. The pull in your screenshot isn't in the reports I have, so I couldn't open
+  that exact row.
+- [x] **The kick rotation now says when someone was too far for their kick:** "kick rotation: Xyron (45 yd), Bentwo
+  (53 yd, too far for Disrupt)". It uses the kick each player had been using on that add (Kick, Pummel and Rebuke reach
+  5 yards, Disrupt 10, Mind Freeze 15, Quell 25, Wind Shear and Silence 30, Counterspell and Counter Shot 40), with 8 yards
+  of slack for the add's size. A Warlock's kick comes from their pet, so it's never called too far. Yards only show when
+  both spots were logged in the last 3 seconds, so an old spot is never measured.
+
 ## 2026-10-18, round 214: Ula'tek egg maps; the first Discord posts
 - [x] **Every egg phase has a map (your note: show them picking the eggs up):** a row for each Call of the Serpent ("Call
   of the Serpent 2: 8 eggs picked up in 42 s", with who picked them up), and a map from the cast until the last pickup:
@@ -367,11 +388,11 @@ itself, or only dots?
   knows who carried each egg, when they picked it up, how long they held it, whether it was popped in a Spectral Coil as
   planned, and what broke the ones that became Vipers. Today the Eggs section lists only the problems and a count. My
   suggestion: list every egg (carrier, picked up at, held for, how it ended) with a map of the pickup.
-- [ ] **Check Heroic Ula'tek's Anguished Cry (your note, with a screenshot):** a row at 4:25 says "kick rotation:
+- [x] **Check Heroic Ula'tek's Anguished Cry (your note, with a screenshot), done in round 215:** a row at 4:25 says "kick rotation:
   Icefrosting (31 yd), got off". To check: whether Heroic runs Anguished Cry the same as Mythic (who casts it, when, and
   whether it can and must be kicked), so the Mythic rules aren't judging a Heroic pull, and whether 31 yards was really the
   kicker being out of range or the wrong add being measured.
-- [ ] **Go easier on tanks for standing in bad stuff (your note).** My take: strong; tanks often take hits on purpose
+- [x] **Go easier on tanks for standing in bad stuff (your note), done in round 215.** My take: strong; tanks often take hits on purpose
   (holding the boss in place) and can live through them, so flagging it is noise. My suggestion: a tank's hit from avoidable
   damage is only a small note, not a mistake, unless it's a tank mechanic, it killed them, or it was unusually big.
 

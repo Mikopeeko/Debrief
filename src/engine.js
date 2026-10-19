@@ -67,6 +67,11 @@ const INTERRUPTS = {
   DEMONHUNTER: [['Disrupt', 15, null]],
   EVOKER: [['Quell', 20, [1467, 1473]]],
 };
+// How far each interrupt reaches, in yards. Melee kicks reach 5 yards from the add's edge, so a big add can be kicked from
+// up to about 10 yards from its centre (Heroic Ula'tek: Doomscales kicked from 1-10 yd). Spell Lock and Axe Toss come from
+// the Warlock's pet, so the Warlock's own spot says nothing and they aren't listed.
+const KICK_REACH = { Pummel: 5, Rebuke: 5, "Avenger's Shield": 30, 'Counter Shot': 40, Muzzle: 5, Kick: 5, Silence: 30, 'Mind Freeze': 15,
+  'Wind Shear': 30, Counterspell: 40, 'Spear Hand Strike': 5, 'Skull Bash': 13, 'Solar Beam': 40, Disrupt: 10, Quell: 25 };
 const HEALERS = new Set([65, 105, 256, 257, 264, 270, 1468]);
 const TANKS = new Set([66, 73, 104, 250, 268, 581]);
 
@@ -2710,8 +2715,12 @@ const pl2e = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 // One "Avoidable damage" panel for a boss: a set per source (most harmful first), a row per player hit by it.
 // Hits are counted per touch (hits more than 1.5s apart), so a puddle or axe that ticks fast counts once per time
 // you walked into it. harm: High (dangerous: any hit is a problem), Medium (harmful), Low (minor). A death to it
-// is always red; tankOk sources list tanks without judging them.
+// is always red. Tanks (your note, Oct 18): they often take these on purpose, holding the boss in place, and can live
+// through them, so a tank's hits are listed but not judged, unless it killed them or they kept standing in it (at least
+// twice the hits that make anyone else red, and at least 6). A source that is a tank's own job to avoid sets tankJudged.
 const HARM = { High: 'Dangerous', Medium: 'Harmful', Low: 'Minor' };
+// (how many touches before a tank "kept standing in it": twice what makes anyone else red, and at least 6)
+const tankKept = (bad) => Math.max(6, 2 * (bad || 1));
 function avoidPanel(ev, r, h, list) {
   const L = (x) => String(x).toLowerCase(), groups = [];
   const DEF = { High: [1, 1], Medium: [2, 5], Low: [5, 10] };
@@ -2724,9 +2733,9 @@ function avoidPanel(ev, r, h, list) {
     for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [] }); x.ticks++; x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); } x.last = e.t; }
     const diedT = new Map(r.deaths.filter((d) => d.t <= cut + 0.05 && src.n.includes(L(d.ability || ''))).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
     const rows = [...per.values()].sort((a, b) => b.touches - a.touches || b.amt - a.amt).map((x) => {
-      const tank = src.tankOk && h.role(x.g) === 'tank', dd = died.has(x.g);
-      const bad = dd || (!tank && x.touches >= bA), warn = !bad && !tank && x.touches >= wA;
-      return [{ p: h.name(x.g), sub: tank ? 'tank (not judged)' : '' }, { txt: x.touches + (x.touches === 1 ? ' hit' : ' hits'), bad, warn, sub: x.ticks > x.touches ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
+      const tank = !src.tankJudged && h.role(x.g) === 'tank', dd = died.has(x.g), kept = tank && x.touches >= tankKept(bA);
+      const bad = dd || kept || (!tank && x.touches >= bA), warn = !bad && !tank && x.touches >= wA;
+      return [{ p: h.name(x.g), sub: tank ? (kept ? 'tank, kept standing in it' : 'tank (only a note)') : '' }, { txt: x.touches + (x.touches === 1 ? ' hit' : ' hits'), bad, warn, sub: x.ticks > x.touches ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
     });
     const nT = [...per.values()].reduce((s, x) => s + x.touches, 0), amt = [...per.values()].reduce((s, x) => s + x.amt, 0);
     // (the spell, for its icon and tooltip: the source's own, else what hit players most often under it, with its name)
@@ -2736,7 +2745,7 @@ function avoidPanel(ev, r, h, list) {
     return { title: src.label, t: null, harm: src.harm, spell: sid ? [sid, sname] : null, sub: HARM[src.harm] + ': ' + src.why + '. ' + pl2e(nT, 'hit') + ' on ' + pl2e(per.size, 'player') + ', for ' + compact(amt) + ' damage.',
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows, nT, amt, label: src.label,
       // for the Night summary report card: each player's touch times, so it can stop at the wipe filter
-      names: src.n, wA, bA, judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !!(src.tankOk && h.role(x.g) === 'tank'), ts: x.ts, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
+      names: src.n, wA, bA, judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !src.tankJudged && h.role(x.g) === 'tank' && x.touches < tankKept(bA), ts: x.ts, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
   };
   for (const src of list) {
     const all = ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && src.n.includes(L(e.spell)) && !(src.skip && src.skip(e))).sort((a, b) => a.t - b.t);
@@ -4843,6 +4852,7 @@ class Mech {
     for (const list of this.fails.values()) for (const f of list) out.push({ t: f.t, player: 'Raid', mechanic: f.r.name, id: f.id, severity: f.r.severity, pos: true,
       detail: f.r.name + ' went off and hit ' + f.hit.size + (f.hit.size === 1 ? ' player' : ' players') + ' for ' + Math.round(f.dmg).toLocaleString('en-US') + '.', fix: f.r.tip });
     for (const a of this.avoid.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.escalate && a.touches >= a.r.escalate.touches ? a.r.escalate.severity : a.r.severity, dmg: a.dmg, pos: true,
+      avoidRule: true, touches: a.touches, ruleIds: a.r.spellIds || [], tankJudged: !!a.r.tankJudged, // (for going easier on tanks, after roles are known)
       detail: (a.r.ticks ? 'Walked into it ' + (a.touches === 1 ? 'once' : a.touches === 2 ? 'twice' : a.touches + ' times') : 'Got hit ' + (a.hits === 1 ? 'once' : a.hits === 2 ? 'twice' : a.hits + ' times')) + (a.dmg >= 1 ? ', for ' + Math.round(a.dmg).toLocaleString('en-US') + ' avoidable damage.' : '.'), fix: a.r.tip });
     for (const a of this.debuffs.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity, pos: true,
       detail: 'Got ' + a.r.name + ' ' + (a.n === 1 ? 'once' : a.n === 2 ? 'twice' : a.n + ' times') + '.', fix: a.r.tip });
@@ -5300,7 +5310,15 @@ function analyze(item, text, opts) {
   survivability(r);
   r.mistakes = mech.build();
   // avoidable damage tanks are expected to take (their job puts them in it)
-  { const tankOf = new Set([...r.players.values()].filter((p) => p.role === 'tank').map((p) => p.name)); r.mistakes = r.mistakes.filter((m) => !(TANK_OK.has(m.mechanic) && tankOf.has(m.player))); }
+  { const tankOf = new Set([...r.players.values()].filter((p) => p.role === 'tank').map((p) => p.name)); r.mistakes = r.mistakes.filter((m) => !(TANK_OK.has(m.mechanic) && tankOf.has(m.player)));
+    // (going easier on tanks for standing in bad stuff (your note, Oct 18): they often take these hits on purpose, holding
+    // the boss in place, and can live through them. A tank's avoidable hit becomes a small note, not a mistake, unless it
+    // killed them, they kept standing in it (6 or more touches), or the rule is a tank's own job to avoid (tankJudged))
+    const L = (x) => String(x || '').toLowerCase();
+    for (const m of r.mistakes) { if (!m.avoidRule || m.tankJudged || !tankOf.has(m.player) || m.severity === 'Low') continue;
+      const died = r.deaths.some((d) => d.player === m.player && ((d.abilityId && m.ruleIds.includes(d.abilityId)) || L(d.ability) === L(m.mechanic)));
+      if (died || (m.touches || 1) >= tankKept(1)) continue;
+      m.severity = 'Low'; m.tankEase = true; m.detail = String(m.detail || '').replace(/\s*$/, '') + ' Tanks often take this on purpose, so it\'s only a note.'; } }
   kickReport(r, npcCasts, mech);
   stackReport(r, stackEv, hits, (opts && opts.overrides) || {});
   r.mistakes.sort((a, b) => a.t - b.t);
@@ -5382,10 +5400,14 @@ function analyze(item, text, opts) {
         // the per-add list holds the bare cast; the kick history is on the matching missed-kick entry
         const full = (r.missedKicks || []).find((x) => x.guid === u.guid && Math.abs(x.t - m.t) < 0.05) || {};
         const before = [...new Set((full.before || []).map((x) => x.player))];
-        // how far each kicker was from the add when it cast (most interrupts reach 40 yards or less)
-        const ap = addAt(u, t)[0], here = snapAt(t);
+        // how far each kicker was from the add when it cast (only from spots logged in the last 3 s), and whether that was
+        // beyond the reach of the kick they had been using (8 yards of slack for the add's size)
+        const pu = r.positions.get(u.guid), here = snapAt(t); let ap = null;
+        for (const p of pu ? pu.pts : []) { if (p[0] > t + 0.5) break; if (p[0] >= t - 3) ap = { x: p[1], y: p[2] }; }
         const dist = (n) => { const q = here.find((x) => x.name === n); return q && ap ? Math.round(Math.hypot(q.x - ap.x, q.y - ap.y)) : null; };
-        const rot = before.map((n) => { const dd = dist(n); return n + (dd != null ? ' (' + dd + ' yd)' : ''); });
+        const kickOf = new Map((full.before || []).map((x) => [x.player, x.by]));
+        const rot = before.map((n) => { const dd = dist(n), by = kickOf.get(n), far = dd != null && KICK_REACH[by] != null && dd > KICK_REACH[by] + 8;
+          return n + (dd != null ? ' (' + dd + ' yd' + (far ? ', too far for ' + by : '') + ')' : ''); });
         return [{ t }, { txt: m.spell }, { txt: before.length ? 'kick rotation: ' + rot.join(', ') : 'nobody kicked this add before', dim: !before.length }, { txt: 'got off', bad: true },
           { map: { t, hl: before.map((n) => guidOf.get(n)).filter(Boolean), hlLabel: 'had been kicking this add', badAdd: [u.guid], title: m.spell + ' got off from ' + u.label + ' at ' + fmtT(t), pts: snapAt(t).concat(addAt(u, t)) } }];
       });
