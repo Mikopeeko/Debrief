@@ -2918,58 +2918,52 @@ details.pf-dc > summary .sst { margin-left: auto; }
 /* (a mechanic's spell icon on the maps: in the middle of a floor circle, a badge on the edge of one on a player) */
 .zmap .mic { opacity: 0; transition: opacity .25s; pointer-events: none; } .zmap .mic.on { opacity: .92; } .zmap .mic.edge.on { opacity: 1; }
 /* Compare tab (Oct 19: the same pieces as the other tabs: the status line, Change player in the header, the tiles,
-   panels with a title and a short line beside it, and cards with an icon and a sentence, as on Rotation) */
+   panels with a title and a short line beside it, cards with an icon and a sentence as on Rotation, and every list as
+   the site's bar rows (cbRow), as on Graphs and Players: a bar in the class colour, a white mark for the other side) */
 .cmp-top { padding-bottom: 12px; } .cmp-top .seg { margin: 2px 0 0; }
 .cmp h3.cmp-mh { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; } .cmp h3.cmp-mh small { color: var(--faint); font-size: 12.5px; }
 .cmp h3 .rot-sel { display: inline-block; width: auto; max-width: 190px; min-width: 0; height: auto; margin: 0 0 0 2px; padding: 3px 26px 3px 10px; border: 1px solid var(--line2); border-radius: 999px; background-color: rgba(0,0,0,.3); color: var(--muted); font: 600 12px var(--body); cursor: pointer; appearance: auto; }
 .cmp .cutbar .btn { margin-left: auto; }
 .cmp-pts { margin-bottom: 14px; }
 .cmp-lbl { display: block; font: 700 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 0 0 7px; }
+.cmp-lbl span { margin-left: 6px; color: var(--muted); font-weight: 500; letter-spacing: 0; text-transform: none; font-size: 12px; }
+.cmp-lbl.cmp-pl { margin: 14px 0 4px; } .cmp-lbl.cmp-pl:first-of-type { margin-top: 2px; }
 .cmp-dg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .cmp-dc { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; background: rgba(0,0,0,.25); }
 .cmp-dc .icw { width: 30px; height: 30px; margin: 1px 0 0; flex: none; border-radius: 6px; overflow: hidden; } .cmp-dc .icw svg, .cmp-dc .icw img { width: 100%; height: 100%; }
 .cmp-dc > span { min-width: 0; } .cmp-dc b { display: block; font-size: 14px; } .cmp-dc .sub { display: block; font-size: 13px; line-height: 1.45; color: var(--muted); }
-.cmp-scroll { overflow-x: auto; }
-.cmp-t, .cmp-vs { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
-.cmp-t th, .cmp-vs thead th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12.5px; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.cmp-t tr.cmp-tw th { border-bottom: 0; padding-bottom: 0; font-size: 14px; } .cmp-t tr.cmp-tw .nm { font-weight: 600; }
-.cmp-t td, .cmp-vs td, .cmp-vs tbody th { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-.cmp-t tbody tr:last-child td, .cmp-vs tbody tr:last-child td, .cmp-vs tbody tr:last-child th { border-bottom: 0; }
-.cmp-vs tbody th { text-align: left; color: var(--muted); font-weight: 500; font-size: 13.5px; white-space: normal; }
-.cmp-vn { display: inline-flex; align-items: center; gap: 8px; } .cmp-vn > span { display: flex; flex-direction: column; line-height: 1.25; } .cmp-vn .nm { font-size: 14.5px; } .cmp-vn .sub { font-size: 12px; font-weight: 400; }
-.cmp-t td.an { min-width: 150px; } .cmp-t .cmp-sh { min-width: 130px; } .cmp-t td.cmp-sh { white-space: nowrap; } .cmp-t .cmp-n { text-align: right; width: 1%; white-space: nowrap; }
-.cmp-bar { display: inline-block; width: 70px; height: 6px; background: var(--line); border-radius: 3px; margin-right: 8px; vertical-align: middle; overflow: hidden; } .cmp-bar i { display: block; height: 100%; border-radius: 3px; }
-.cmp-g { text-align: right; white-space: nowrap; }
-.cmp-more { margin-top: 10px; }
-.cmp-who { display: flex; flex-direction: column; }
-.cmp-wr { display: grid; grid-template-columns: 28px minmax(0, 1fr) 90px 70px; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); } .cmp-wr:first-child { border-top: 0; }
+/* the bar rows' columns: spells (# | bar | theirs | the other side | casts a minute), spec by spec (bar | this pull | their
+   best | gap) and the raids (rank | bar | kill | raid DPS | specs matched) */
+.pf-row.cb.cmp-sr { grid-template-columns: 20px minmax(0, 1fr) 62px 62px 96px; }
+.cmp-sr .cb-in .icw { width: 18px; height: 18px; flex: none; margin: 0; border-radius: 3px; overflow: hidden; } .cmp-sr .cb-in .icw svg, .cmp-sr .cb-in .icw img { width: 100%; height: 100%; }
+.cmp-sr .cb-r { justify-content: flex-end; gap: 4px; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pf-row.cb.cmp-ssr { grid-template-columns: 0 minmax(0, 1fr) 64px 160px 56px; } .cmp-ssr .pf-k { visibility: hidden; } .cmp-ssr .cb-r { justify-content: flex-end; }
+.cmp-k > summary.pf-row.cb.cmp-kr { grid-template-columns: 30px minmax(0, 1fr) 56px 64px 44px; padding-top: 4px; padding-bottom: 4px; list-style: none; }
+.pf-row.cb.cb-h.cmp-kr { grid-template-columns: 30px minmax(0, 1fr) 56px 64px 44px; } .cmp-kr .cb-r { justify-content: flex-end; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cmp-k > summary::-webkit-details-marker { display: none; } .cmp-k[open] > summary { background: var(--raised); box-shadow: inset 3px 0 0 var(--gold); }
 .cmp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .cmp-chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 13px; background: var(--raised); border: 1px solid var(--line2); border-left: 3px solid var(--c); margin: 0 6px 6px 0; white-space: nowrap; }
 .cmp-chips .cmp-chip { margin: 0; }
+.cmp-more { margin-top: 10px; }
 .cmp-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 14px; } .cmp-ctl .seg { margin: 0; }
 .cmp-find { background: var(--panel); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 10px; font: inherit; min-width: 0; width: 180px; }
-.cmp-list { padding-bottom: 8px; } .cmp-list h3 { margin-bottom: 4px; }
-.cmp-k { border-top: 1px solid var(--line); } .cmp-k:first-of-type { border-top: 0; }
-.cmp-k > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 40px minmax(0, 1.4fr) minmax(0, 1.3fr) 80px 90px; align-items: center; gap: 10px; padding: 11px 6px; border-radius: 8px; }
-.cmp-k > summary::-webkit-details-marker { display: none; } .cmp-k > summary:hover { background: rgba(255,255,255,.03); } .cmp-k[open] > summary { background: rgba(230,180,80,.05); }
-.cmp-rk { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 600; }
-.cmp-gn { display: flex; flex-direction: column; min-width: 0; } .cmp-gn b, .cmp-gn .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cmp-gn .sub { font-size: 12px; }
-.cmp-m { font-size: 13.5px; color: var(--muted); } .cmp-m b { color: var(--text); }
-.cmp-mb { display: block; height: 5px; background: var(--line); border-radius: 3px; margin-top: 4px; overflow: hidden; } .cmp-mb i { display: block; height: 100%; background: var(--gold); }
-.cmp-kt { display: flex; flex-direction: column; text-align: right; font-variant-numeric: tabular-nums; } .cmp-kt .sub { font-size: 12px; }
-.cmp-kb { padding: 6px 6px 16px; }
+.cmp-list { padding-bottom: 8px; } .cmp-list h3 { margin-bottom: 8px; }
+.cmp-kb { padding: 10px 6px 16px 34px; }
 .cmp-prog { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
 .cmp-pv { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; } .cmp-pv .cmp-lbl { margin: 0; } .cmp-pv b { font: 700 20px/1.2 var(--head); } .cmp-pv .sub { font-size: 12.5px; }
 .cmp-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-bottom: 14px; }
-.cmp-ss { margin-bottom: 12px; }
-.cmp-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .cmp-go a.btn { color: var(--text); text-decoration: none; }
+.cmp-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 @media (max-width: 640px) {
-  .cmp-k > summary { grid-template-columns: 34px minmax(0, 1fr) auto; } .cmp-k > summary .cmp-m { grid-column: 2 / 4; grid-row: 2; } .cmp-k > summary .cmp-kt:last-child { display: none; }
-  .cmp-diff, .cmp-dg, .cmp-prog { grid-template-columns: 1fr; } .cmp-find { width: 100%; } .cmp-seg, .cmp-ctl .seg { width: 100%; } .cmp-bar { width: 44px; }
-  .cmp-wr { grid-template-columns: 24px minmax(0, 1fr) auto; } .cmp-wr .cmp-kt:last-child { display: none; }
+  .pf-row.cb.cmp-sr { grid-template-columns: 16px minmax(0, 1fr) 46px 58px; } .cmp-sr .cb-r { display: none; }
+  .cmp-kr .pf-nm .sub { display: none; }
+  .pf-row.cb.cmp-ssr { grid-template-columns: 0 minmax(0, 1fr) 50px 0 46px; } .cmp-ssr .cb-s { visibility: hidden; }
+  .cmp-k > summary.pf-row.cb.cmp-kr, .pf-row.cb.cb-h.cmp-kr { grid-template-columns: 24px minmax(0, 1fr) 42px 50px 34px; }
+  .cmp-kb { padding-left: 0; }
+  .cmp-diff, .cmp-dg, .cmp-prog { grid-template-columns: 1fr; } .cmp-find { width: 100%; } .cmp-top .seg, .cmp-ctl .seg { width: 100%; }
   .cmp .panel > h3:not(.cmp-mh) { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 </style>
+
 
 </head>
 <body>

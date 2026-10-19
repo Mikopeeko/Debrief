@@ -11191,17 +11191,18 @@ function cmpDiffs(A, B, unit) {
 }
 // Spells side by side: each spell's share of the player's damage or healing and its casts a minute, for two sides.
 // side: { name, col, ab }
+// (Oct 19 design pass: the site's own bar rows, as on Graphs: a bar a spell in the player's class colour for their share,
+// and a white mark where the other side's share sits; the numbers in the columns beside it)
 function cmpSpells(A, B, unit) {
   const rows = cmpPairs(A, B), top = rows.slice(0, S.cmpAllSp ? 40 : 10); if (!top.length) return '';
-  const mx = Math.max(...top.map(([a, b]) => Math.max(a ? a.share : 0, b ? b.share : 0))) || 1;
-  const cell = (x, col) => (x ? '<td class="cmp-sh"><span class="cmp-bar"><i style="width:' + (100 * x.share / mx).toFixed(1) + '%;background:' + col + '"></i></span><b>' + (100 * x.share).toFixed(1) + '%</b></td><td class="cmp-n">' + (x.cpm ? x.cpm.toFixed(1) : '<span class="sub">–</span>') + '</td>'
-    : '<td class="cmp-sh"><span class="sub">Not used</span></td><td class="cmp-n"><span class="sub">–</span></td>');
+  const mx = Math.max(...top.map(([a, b]) => Math.max(a ? a.share : 0, b ? b.share : 0))) || 1, pc = (x) => (100 * x.share).toFixed(1) + '%';
+  const cpm = (x) => (x && x.cpm ? x.cpm.toFixed(1) : '–');
   const more = rows.length > 10 ? '<button class="btn sm cmp-more" type="button" id="cmpAllSp">' + (S.cmpAllSp ? 'Show fewer' : 'Show all ' + Math.min(40, rows.length)) + '</button>' : '';
-  return '<div class="panel"><h3>Spells side by side<small>Share of their ' + (unit === 'heal' ? 'healing' : 'damage') + ', and casts a minute while alive</small></h3><div class="cmp-scroll"><table class="cmp-t"><thead>' +
-    '<tr class="cmp-tw"><th></th><th colspan="2"><span class="nm" style="color:' + A.col + '">' + esc(A.name) + '</span></th><th colspan="2"><span class="nm" style="color:' + B.col + '">' + esc(B.name) + '</span></th></tr>' +
-    '<tr><th>Spell</th><th class="cmp-sh">Share</th><th class="cmp-n">Casts a minute</th><th class="cmp-sh">Share</th><th class="cmp-n">Casts a minute</th></tr></thead><tbody>' +
-    top.map(([a, b]) => { const x = a || b; return '<tr><td class="an">' + spell(x.id, String(x.name).replace(/^[^:]+: /, '')) + '</td>' + cell(a, A.col) + cell(b, B.col) + '</tr>'; }).join('') +
-    '</tbody></table></div>' + more + '</div>';
+  return '<div class="panel"><h3>Spells side by side<small>The bar is ' + esc(A.name) + '\'s share of their ' + (unit === 'heal' ? 'healing' : 'damage') + '. The white mark is ' + esc(B.name === 'Top 3' ? 'the top 3' : B.name) + '\'s.</small></h3>' +
+    '<div class="pf-row cb nb cb-h cmp-sr"><span class="pf-k">#</span><span class="cb-hn">Spell</span><span class="cb-v">' + esc(A.name) + '</span><span class="cb-s">' + esc(B.name) + '</span><span class="cb-r">Casts a minute</span></div>' +
+    top.map(([a, b], i) => { const x = a || b, n = String(x.name).replace(/^[^:]+: /, '');
+      return cbRow({ tag: 'div', cls: ' nb cmp-sr', k: i + 1, color: A.col, segs: [[a ? 100 * a.share / mx : 0, 'm']], tick: b ? 100 * b.share / mx : null, icon: spellIcon(x.id, n), name: esc(n),
+        v: a ? pc(a) : '<span class="sub">Not used</span>', sub: b ? pc(b) : 'Not used', end: cpm(a) + ' <span class="sub">vs</span> ' + cpm(b) }); }).join('') + more + '</div>';
 }
 // a player's own spells, the same shape as the top players'
 function cmpMyAb(r, p, k) {
@@ -11227,8 +11228,11 @@ function cmpTop(r, p) {
     plTile('', 'Fight length', T(perfContext(r).end), 'na', 'Their kills took ' + T(dur) + '.', true) +
     (x ? plTile('', 'Parse', String(Math.floor(x.pct)), x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', 'Better than ' + Math.floor(x.pct) + '% of ' + (you ? 'your' : 'their') + ' spec.')
       : plTile('', 'Parse', '—', 'na', r.item.kill ? 'Warcraft Logs hasn\'t ranked this kill yet.' : 'Warcraft Logs only ranks kills.', true)) + '</div>';
-  const who = '<div class="panel"><h3>The top 3 ' + esc(spn) + 's on this boss<small>From Warcraft Logs, ranked by ' + U + ' a second</small></h3><div class="cmp-who">' +
-    TS.who.map((w, i) => '<div class="cmp-wr"><span class="cmp-rk">' + (i + 1) + '</span><span class="cmp-gn"><b>' + esc(w.name) + '</b><span class="sub">' + esc(w.server + (w.region ? '-' + w.region : '')) + '</span></span><span class="cmp-kt"><b>' + C(w.amount) + '</b><span class="sub">a second</span></span><span class="cmp-kt"><b>' + T(w.dur) + '</b><span class="sub">kill</span></span></div>').join('') + '</div></div>';
+  // (the top 3 as bars, with this player among them, highlighted, where their number puts them)
+  const wmx = Math.max(mine, ...TS.who.map((w) => w.amount)) || 1, list = TS.who.map((w, i) => ({ w, k: i + 1, a: w.amount })).concat([{ me: true, k: '', a: mine }]).sort((a, b) => b.a - a.a);
+  const who = '<div class="panel"><h3>The top 3 ' + esc(spn) + 's on this boss<small>From Warcraft Logs, with ' + (you ? 'you' : esc(p.name)) + ' among them</small></h3>' + cbHead('A second', 'Fight', '', '', 'Player') +
+    list.map((x) => (x.me ? cbRow({ tag: 'div', cls: ' nb on', k: '', p, segs: [[100 * x.a / wmx, 'm']], v: C(x.a), sub: T(perfContext(r).end), chips: '<span class="sub">this pull</span>' })
+      : cbRow({ tag: 'div', cls: ' nb', k: x.k, color: p.color, segs: [[100 * x.a / wmx, 'm']], v: C(x.a), sub: T(x.w.dur), name: esc(x.w.name), chips: '<span class="sub">' + esc(x.w.server + (x.w.region ? '-' + x.w.region : '')) + '</span>' }))).join('') + '</div>';
   const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) }, B = { name: 'Top 3', col: 'var(--gold)', ab: TS.ab };
   return tiles + cmpDiffs({ ...A, who: you ? 'You' : p.name }, { ...B, who: 'The top 3', many: true }, k) + cmpSpells(A, B, k) + who;
 }
@@ -11238,18 +11242,27 @@ function cmpMate(r, p, ps) {
   const q = ps.find((x) => x.name === S.cmpMate && x !== p) || same[0] || role.sort((a, b) => cmpRate(r, b, k) - cmpRate(r, a, k))[0] || ps.find((x) => x !== p);
   if (!q) return cmpMsg('Nobody else is in this pull.');
   const kq = cmpKind(q), mm = keptMistakes(r), mis = (x) => mm.filter((m) => m.player === x.name && m.mechanic !== 'Death'), pc = perfContext(r), you = cmpIsMe(p);
-  const died = (x) => { const y = pc.per.get(x.name); return y && y.died != null ? 'Died at ' + T(y.died) : 'Survived'; };
-  const cpm = (x) => (x.casts / (cmpAlive(r, x) / 60)).toFixed(1);
-  const mist = (x) => { const all = mis(x), hi = all.filter((m) => m.severity === 'High').length; return !all.length ? 'None' : hi && hi === all.length ? plural(hi, 'serious one') : hi ? hi + ' serious, ' + (all.length - hi) + ' minor' : plural(all.length, 'minor one'); };
-  const row = (l, a, b, gap) => '<tr><th>' + l + '</th><td>' + a + '</td><td>' + b + '</td><td class="cmp-g">' + (gap || '') + '</td></tr>';
-  const ra = cmpRate(r, p, k), rb = cmpRate(r, q, kq), U = (kk) => (kk === 'heal' ? 'Healing' : 'Damage');
-  const nmH = (x) => '<span class="cmp-vn">' + avatar(x, true) + '<span><span class="nm" style="color:' + x.color + '">' + esc(x.name) + '</span><span class="sub">' + esc(x.specName || '') + '</span></span></span>';
-  const t = '<div class="cmp-scroll"><table class="cmp-vs"><thead><tr><th></th><th>' + nmH(p) + '</th><th>' + nmH(q) + '</th><th class="cmp-g">Difference</th></tr></thead><tbody>' +
-    (k === kq ? row(U(k) + ' a second', C(ra), C(rb), cmpGap(ra, rb)) : row('Output a second', C(ra) + ' <span class="sub">' + U(k).toLowerCase() + '</span>', C(rb) + ' <span class="sub">' + U(kq).toLowerCase() + '</span>')) +
-    row('Mechanic mistakes', mist(p), mist(q)) + row('Avoidable damage taken', C(p.avoidable || 0), C(q.avoidable || 0)) + row('All damage taken', C(p.taken || 0), C(q.taken || 0)) +
-    row('Staying alive', died(p), died(q)) + row('Casts a minute', cpm(p), cpm(q)) + row('Interrupts', p.interrupts || 0, q.interrupts || 0) + row('Dispels', p.dispels || 0, q.dispels || 0) + '</tbody></table></div>';
+  // ("1 serious and 2 minor mistakes", "one minor mistake", "none")
+  const mist = (x) => { const all = mis(x), hi = all.filter((m) => m.severity === 'High').length, lo = all.length - hi; if (!all.length) return 'none'; const w = (n) => (n === 1 && all.length === 1 ? 'one' : String(n));
+    return (hi ? w(hi) + ' serious' : '') + (hi && lo ? ' and ' : '') + (lo ? w(lo) + ' minor' : '') + (all.length === 1 ? ' mistake' : ' mistakes'); };
+  const ra = cmpRate(r, p, k), rb = cmpRate(r, q, kq), U = (kk) => (kk === 'heal' ? 'healing' : 'damage');
+  // (Oct 19 design pass: the amounts as the site's bar rows, the two players one under the other in their class colours;
+  // the small counts as tiles, theirs in the sentence under yours)
+  const pair = (l, a, b, fa, fb, gap) => { const mx = Math.max(a, b) || 1; return '<div class="cmp-lbl cmp-pl">' + l + '</div>' +
+    cbRow({ tag: 'div', cls: ' nb', k: '', p, segs: [[100 * a / mx, 'm']], v: fa, sub: gap ? cmpGap(a, b) : '' }) + cbRow({ tag: 'div', cls: ' nb', k: '', p: q, segs: [[100 * b / mx, 'm']], v: fb, sub: '' }); };
+  const cpmN = (x) => x.casts / (cmpAlive(r, x) / 60);
+  const bars = (k === kq ? pair(capS(U(k)) + ' a second', ra, rb, C(ra), C(rb), true) : pair('Output a second', ra, rb, C(ra) + ' ' + U(k), C(rb) + ' ' + U(kq))) +
+    pair('Avoidable damage taken', p.avoidable || 0, q.avoidable || 0, C(p.avoidable || 0), C(q.avoidable || 0)) + pair('All damage taken', p.taken || 0, q.taken || 0, C(p.taken || 0), C(q.taken || 0)) +
+    pair('Casts a minute', cpmN(p), cpmN(q), cpmN(p).toFixed(1), cpmN(q).toFixed(1));
+  const nmis = (x) => mis(x).length, dA = pc.per.get(p.name), dB = pc.per.get(q.name), deadA = dA && dA.died != null, deadB = dB && dB.died != null;
+  const cnt = (n, one, many) => (n === 1 ? one : n + ' ' + many);
+  const tiles = '<div class="pts n4 cmp-pts">' +
+    plTile('', 'Mechanic mistakes', nmis(p) ? String(nmis(p)) : 'None', nmis(p) <= nmis(q) ? 'ok' : 'warn', q.name + ' made ' + mist(q) + '.') +
+    plTile('', 'Staying alive', deadA ? 'Died' : 'Alive', deadA && !deadB ? 'warn' : 'ok', (deadA ? 'At ' + T(dA.died) + '. ' : '') + q.name + (deadB ? ' died at ' + T(dB.died) + '.' : ' survived.')) +
+    plTile('', 'Interrupts', String(p.interrupts || 0), 'na', q.name + ' made ' + cnt(q.interrupts || 0, 'one', 'interrupts') + '.', true) +
+    plTile('', 'Dispels', String(p.dispels || 0), 'na', q.name + ' made ' + cnt(q.dispels || 0, 'one', 'dispels') + '.', true) + '</div>';
   const rel = q.specName === p.specName ? 'They play the same spec' : (q.role || 'dps') === (p.role || 'dps') ? 'They have the same role' : 'They have different roles';
-  const head = '<div class="panel"><h3 class="cmp-mh">Against ' + avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', ps, q, p, 'Change teammate') + '<small>' + rel + '. Both over the whole pull.</small></h3>' + t + '</div>';
+  const head = '<div class="panel"><h3 class="cmp-mh">Against ' + avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', ps, q, p, 'Change teammate') + '<small>' + rel + '. Both over the whole pull.</small></h3>' + bars + '</div>' + tiles;
   if (q.specName !== p.specName) return head;
   const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) }, B = { name: q.name, col: q.color, ab: cmpMyAb(r, q, kq) };
   return head + cmpDiffs({ ...A, who: you ? 'You' : p.name }, { ...B, who: q.name }, k) + cmpSpells(A, B, k);
@@ -11280,18 +11293,18 @@ function cmpRaids(r, ps) {
   const rowsH = shown.map((x) => {
     const pct = Math.round(100 * x.same / x.of), they = [...x.tc].filter(([k, n]) => n > (myC.get(k) || 0)).map(([k, n]) => cmpChip(k, n - (myC.get(k) || 0))), you = [...myC].filter(([k, n]) => n > (x.tc.get(k) || 0)).map(([k, n]) => cmpChip(k, n - (x.tc.get(k) || 0)));
     // (spec by spec: each of your players against the best of the same spec in that kill)
-    const bySpec = mine.map(({ p, k }) => { const th = x.ppl.filter((y) => y.c + '|' + y.s === k).sort((a, b) => b.a - a.a)[0]; if (!th) return null; const v = cmpRate(r, p, cmpKind(p));
-      return '<tr><td><span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span> <span class="sub">' + esc(p.specName || '') + '</span></td><td>' + C(v) + '</td><td>' + esc(th.n) + ' <b>' + C(th.a) + '</b></td><td class="cmp-g">' + cmpGap(v, th.a) + '</td></tr>'; }).filter(Boolean);
+    const bySpec = mine.map(({ p, k }) => { const th = x.ppl.filter((y) => y.c + '|' + y.s === k).sort((a, b) => b.a - a.a)[0]; if (!th) return null; const v = cmpRate(r, p, cmpKind(p)), mx = Math.max(v, th.a) || 1;
+      return cbRow({ tag: 'div', cls: ' nb cmp-ssr', k: '', p, segs: [[100 * v / mx, 'm']], tick: 100 * th.a / mx, v: C(v), sub: esc(th.n) + ' ' + C(th.a), end: cmpGap(v, th.a) }); }).filter(Boolean);
     const link = 'https://www.warcraftlogs.com/reports/' + x.code + '#fight=' + x.fight, gk = x.gid && x.at ? x.gid + '|' + x.at : null;
-    return '<details class="cmp-k"' + (S.cmpOpen && S.cmpOpen.has(x.code + x.fight) ? ' open' : '') + ' data-k="' + esc(x.code + x.fight) + '"' + (gk ? ' data-g="' + x.gid + '" data-at="' + x.at + '"' : '') + '><summary><span class="cmp-rk">' + x.rank + '</span><span class="cmp-gn"><b>' + esc(x.guild || 'Unknown guild') + '</b><span class="sub">' + esc(x.server + (x.region ? '-' + x.region : '')) + '</span></span>' +
-      '<span class="cmp-m"><b>' + x.same + '</b> of ' + x.of + ' specs match yours<span class="cmp-mb"><i style="width:' + pct + '%"></i></span></span><span class="cmp-kt"><b>' + T(x.dur) + '</b><span class="sub">kill</span></span><span class="cmp-kt"><b>' + C(x.dps) + '</b><span class="sub">raid DPS</span></span></summary>' +
+    return '<details class="cmp-k"' + (S.cmpOpen && S.cmpOpen.has(x.code + x.fight) ? ' open' : '') + ' data-k="' + esc(x.code + x.fight) + '"' + (gk ? ' data-g="' + x.gid + '" data-at="' + x.at + '"' : '') + '>' + cbRow({ tag: 'summary', cls: ' cmp-kr', k: x.rank, color: 'var(--gold)', segs: [[pct, 'm']], name: esc(x.guild || 'Unknown guild'), chips: '<span class="sub">' + esc(x.server + (x.region ? '-' + x.region : '')) + '</span>', v: T(x.dur), sub: C(x.dps), end: x.same + '/' + x.of }) + '' +
       '<div class="cmp-kb">' + (gk ? '<div class="cmp-prog" data-gp="' + esc(gk) + '">' + cmpProgHtml(GPROG.get(gk)) + '</div>' : '') + '<div class="cmp-diff"><div><div class="cmp-lbl">They had, you didn\'t</div>' + (they.join('') || '<span class="sub">Nothing. They had everything you had.</span>') + '</div><div><div class="cmp-lbl">You had, they didn\'t</div>' + (you.join('') || '<span class="sub">Nothing.</span>') + '</div></div>' +
-      (bySpec.length ? '<div class="cmp-lbl">Spec by spec</div><div class="cmp-scroll"><table class="cmp-vs cmp-ss"><thead><tr><th>Your player</th><th>This pull</th><th>Their best of that spec</th><th class="cmp-g">Difference</th></tr></thead><tbody>' + bySpec.join('') + '</tbody></table></div>' : '') +
-      '<div class="cmp-go"><a class="btn sm" href="' + link + '" target="_blank" rel="noopener">Open on Warcraft Logs</a><button class="btn sm" type="button" data-open="' + esc(link) + '">Open it here</button><span class="cmp-msg sub"></span></div></div></details>';
+      (bySpec.length ? '<div class="cmp-lbl">Spec by spec <span>The white mark is their best player of that spec.</span></div>' + cbHead('This pull', 'Their best', 'Gap', ' cmp-ssr', 'Your player') + bySpec.join('') : '') +
+      // (it opens on Debrief, never on another website: your rule, Oct 19)
+      '<div class="cmp-go"><button class="btn sm primary" type="button" data-open="' + esc(link) + '">Open this kill</button><span class="cmp-msg sub"></span></div></div></details>';
   }).join('');
   const rng = L.page > 1 ? 'Kills ' + ((L.page - 1) * 50 + 1) + ' to ' + ((L.page - 1) * 50 + ks.length) + ' by speed' : 'The 20 fastest kills';
-  return ctl + '<div class="panel cmp-list"><h3>' + rng + '<small>Your raid did ' + C(myDps) + ' DPS this pull' + (r.item.kill ? '' : ', a wipe') + '. Open a raid to see more.</small></h3>' +
-    (rowsH || '<p class="muted" style="margin:0">No guild by that name in these 20.</p>') + '</div>';
+  return ctl + '<div class="panel cmp-list"><h3>' + rng + '<small>Your raid did ' + C(myDps) + ' DPS this pull' + (r.item.kill ? '' : ', a wipe') + '. The bar shows how much of your group they share.</small></h3>' +
+    (rowsH ? cbHead('Kill', 'Raid DPS', 'Specs', ' cmp-kr', 'Guild') + rowsH : '<p class="muted" style="margin:0">No guild by that name in these 20.</p>') + '</div>';
 }
 // How many pulls and nights a guild needed for its first kill (Warcraft Logs: only what they uploaded), next to your
 // raid's own, counted from the pulls of this boss saved in this browser (the nights you opened in Debrief).

@@ -194,6 +194,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   **Then (Oct 19, "continue"):** opening a raid in Raids like yours also shows how many pulls and nights that guild needed
   for its first kill (from what they uploaded to Warcraft Logs), next to yours (the nights opened in Debrief). On Whole
   night, Compare offers "Use the kill (pull N)" (or the best pull) in one click.
+  **Design pass (Oct 19):** the same look as the rest of the site: the status line, Change player, the tiles, and every
+  list as the site's bar rows (as on Graphs and Players), with a white mark for the other side; a Biggest differences
+  section in plain sentences. **Your rule:** nothing opens on another website; a raid opens with "Open this kill" on
+  Debrief (the "Open on Warcraft Logs" button is gone).
 - [ ] **A Comparison tab (your note, Oct 19; this gathers the Compare notes below and the "comparison tab" note under the header):**
   its own tab with three ways to compare: (1) you against a teammate, (2) your raid against other raids with a similar
   group (the same classes and specs, or close), found by browsing or searching, and (3) you against the top players of
