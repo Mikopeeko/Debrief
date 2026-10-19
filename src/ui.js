@@ -2793,9 +2793,17 @@ function audit() {
       if (!mp) { const dead = s.id === 'deaths' ? rows.map((row) => row[0] && row[0].death).filter(Boolean) : [];
         const all = rows.map((row) => ({ row, t: rowT(row) })).concat(...groups.map((g) => g.rows.map((row) => ({ row, t: rowT(row) != null ? rowT(row) : g.t })))).filter((e) => e.t != null);
         if (dead.length) alt = '<span class="mcx-alt mcx-dd">' + dead.slice(0, 5).map((d) => '<span class="mcx-ddr"><i>' + T(d.t) + '</i>' + who(d.player) + '</span>').join('') + (dead.length > 5 ? '<span class="sub">+' + (dead.length - 5) + ' more</span>' : '') + '</span>';
+        // (Avoidable damage has no moments, only who walked into what: the players with the most hits as bars, tanks left out as on its page)
+        else if (s.id === 'avoid' && groups.length) { const by = new Map(); for (const g of groups) for (const row of g.rows) { if (!row[0] || !row[0].p || row[0].sub) continue; by.set(row[0].p, (by.get(row[0].p) || 0) + (parseInt(row[1] && row[1].txt, 10) || 0)); }
+          const top = [...by].filter(([, k]) => k > 0).sort((u, v) => v[1] - u[1]), mx = top.length ? top[0][1] : 1, tot = top.reduce((t, [, k]) => t + k, 0);
+          if (top.length) alt = '<span class="mcx-alt mcx-hb">' + top.slice(0, 4).map(([n, k]) => '<span class="mcx-hbr">' + who(n) + '<span class="mcx-hbb"><i style="width:' + Math.max(4, Math.round(100 * k / mx)) + '%"></i></span><b>' + k + '</b></span>').join('') +
+            '<span class="mcx-msx"><span>Most hits</span><span>' + plural(tot, 'hit') + ' in all</span></span></span>'; }
         else if (all.length) { const p = phs[key], fin = p && isFinite(p.end), a = fin ? p.start : Math.min(...all.map((e) => e.t)), z = fin ? p.end : Math.max(...all.map((e) => e.t)), span = Math.max(1, z - a);
           const sv = (row) => (row.some((c) => c.bad) ? 'bad' : row.some((c) => c.warn) ? 'warn' : 'ok');
-          alt = '<span class="mcx-alt mcx-ms"><span class="mcx-msb">' + all.map((e) => '<i class="' + sv(e.row) + '" style="left:' + Math.min(100, Math.max(0, 100 * (e.t - a) / span)).toFixed(1) + '%"></i>').join('') + '</span><span class="mcx-msx"><span>' + T(a) + '</span><span>' + plural(all.length, 'moment') + '</span><span>' + T(z) + '</span></span></span>'; } }
+          alt = '<span class="mcx-alt mcx-ms"><span class="mcx-msb">' + all.map((e) => '<i class="' + sv(e.row) + '" style="left:' + Math.min(100, Math.max(0, 100 * (e.t - a) / span)).toFixed(1) + '%"></i>').join('') + '</span><span class="mcx-msx"><span>' + T(a) + '</span><span>' + plural(all.length, 'moment') + '</span><span>' + T(z) + '</span></span></span>'; }
+        // (anything else with no map and no moments: its first few problems as short lines, so a tile is never blank)
+        if (!alt) { const pr = rows.map((row) => ({ row, g: null })).concat(...groups.map((g) => g.rows.map((row) => ({ row, g })))).filter(({ row }) => row.some((c) => c.bad || c.warn)).slice(0, 4);
+          if (pr.length) alt = '<span class="mcx-alt mcx-gl">' + pr.map(({ row, g }) => '<span class="mcx-gll ' + (row.some((c) => c.bad) ? 'bad' : 'warn') + '">' + esc((g ? gTitle(s, g.title) + ', ' : '') + rowText(s, row)) + '</span>').join('') + '</span>'; } }
       return { tag: tg.tag, txt: fp ? capS(tg.rest) : '', more: Math.max(0, b + w - 1), map: mp ? miniMap(mp, pmap) : '', alt }; };
     if (ord.length) h += MT_TOP;
   }
