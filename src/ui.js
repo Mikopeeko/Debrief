@@ -13382,32 +13382,42 @@ const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); 
 function homeHosted() {
   const fp = fpParts();
   const MODS = { live: 'What went wrong, what went well, what to fix first.', mech: 'Every mechanic checked, with maps of who stood where.', assign: 'Your NSRT note against what really happened.', summary: 'How far each pull got, and what ended them.' };
-  // (one front page for everyone (your notes, Oct 19): the logo and headline, one Start button, and a small line for a
-  // report link. Start walks someone new through adding their character and team; someone back picks where to go)
-  const back = groups().length > 0;
+  // (one front page for everyone (your notes, Oct 19): the logo and headline and one button. Someone new gets Start now,
+  // which walks them through adding their character and team; someone back gets Welcome Back!, straight to their page.
+  // One raid night opens from the menu, and a shared report link still opens by itself)
+  const tg = homeTarget();
   $('#main').innerHTML = '<div class="home fp fph">' +
     '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' +
     '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<b>Debrief</b></div>' + (DISCORD_URL ? '<a class="fph-beta" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener"><b>Beta</b><span>Help shape Debrief: join our Discord</span><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
-      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">Start now</button><p class="gs-cs">' + (back ? 'Pick up where you left off: your team, your character, or a raid night.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div>' +
-      '<div class="gs-link"><label class="gs-lt" for="hWcl">Already have a report link?</label><div class="fph-box sm"><input id="hWcl" placeholder="Paste a Warcraft Logs report or live log" autocomplete="off"><button class="btn" id="hWclGo" type="button">Open</button></div><div class="fp-msg" id="hWclMsg"></div>' +
-        '<div class="fph-alt">Or <button class="linkbtn" id="hFileGo" type="button">open a combat log</button> from this PC, or <button class="linkbtn" id="hDemo" type="button">see a real raid night</button>.</div><div class="fp-msg" id="hDemoMsg"></div></div></section>' +
+      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div></section>' +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + t + '</b><span>' + MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
         '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div></div></section>' +
     homeFoot() + '</div>';
-  $('#gsGo').onclick = () => (groups().length ? whereTo() : gsStart());
-  // (any report link: one still being logged turns live on by itself, see openWcl; a team or character page goes in Start)
-  const inp = $('#hWcl'), msg = $('#hWclMsg');
-  const go = () => { msg.style.color = ''; if (groupLink(inp.value)) { msg.textContent = 'That\'s a team or character page. Click Start now to add it.'; return; } if (!WCL.parseLink(inp.value)) { msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; } openReportLink(inp.value, msg); };
-  $('#hWclGo').onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
-  inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(); }, 50); // (a pasted link opens at once)
-  $('#hDemo').onclick = async () => { const b = $('#hDemo'), msg = $('#hDemoMsg'); b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Opening a Mythic night on Ula\'tek…';
-    try { await openWcl(WCL.parseLink(DEMO_REPORT), null, false); } catch (err) { if (document.body.contains(b)) { b.disabled = false; msg.style.color = ''; msg.textContent = err.message; } } };
-  $('#hFileGo').onclick = () => $('#fileIn').click();
+  $('#gsGo').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
   HIST.load().then(groupsBackfill);
   bindFront(true);
+}
+// (Welcome Back!'s page: the team you're on (picked with "Which one is you?", or the one you opened last), else your character)
+function homeTarget() {
+  const P = mePair(); if (P) return P.t;
+  const gl = groups(), me = meOf(), cur = store.get(GROUP_CUR), teams = gl.filter((g) => g.kind !== 'char');
+  return (me && me.team && teams.find((g) => g.gid === me.team)) || teams.find((g) => g.gid === cur) || teams[0] || gl[0] || null;
+}
+// You and your team, one page (your note, Oct 19: two pages with nearly the same bosses and nights were "decision
+// fatigue"): your character (the one picked with "Which one is you?" or added as yours, or your only one) and the team
+// you raid with (the one you picked yourself on, or one that logged your raid nights). Your character's own page is
+// still there, one link away, for every raid you were in with any group.
+function mePair() {
+  const me = meOf(), gl = groups(), chars = gl.filter((g) => g.kind === 'char'), teams = gl.filter((g) => g.kind !== 'char');
+  const c = (me && chars.find((g) => g.gid === me.char || g.name === me.name)) || (!me && chars.length === 1 ? chars[0] : null);
+  if (!c || !teams.length) return null;
+  const rw = (c.raidsWithAll || []).concat(c.raidsWith ? [c.raidsWith] : []);
+  const t = (me && me.team && teams.find((g) => g.gid === me.team)) || teams.find((g) => rw.some((r) => r.id === g.id))
+    || teams.find((g) => [...HIST.mem.values()].some((v) => pullGroups(v).includes(g.gid) && (v.players || []).includes(c.name)));
+  return t ? { c, t } : null;
 }
 // ---- the guided setup (your idea, Oct 19): Start now walks someone new through it, one question at a time ----
 // 1 Your character: what it brings in and where to find the link; then the teams Debrief finds in its raid nights ("You
@@ -13475,7 +13485,7 @@ function gsDraw() {
     const got = [cg, tg].filter(Boolean);
     body = got.length ? '<h2 id="gsT">You\'re set</h2><p>Debrief is bringing in your raid nights now. New ones come in by themselves after each raid.</p><div class="gs-got">' + got.map((x) => { const c = x.kind === 'char' && x.cls && E.CLASSES[x.cls];
         return '<div class="gs-gr">' + banner(x) + '<span><b' + (c ? ' style="color:' + c[1] + '"' : '') + '>' + esc(gName(x)) + '</b><span class="sub">' + (x.kind === 'char' ? 'your character' : 'your team') + '</span></span></div>'; }).join('') + '</div><p>Next, Debrief shows you where to click to go through a raid night, pull by pull.</p>'
-      : '<h2 id="gsT">That\'s all for now</h2><p>You can add your character or your team any time: click <b>Your teams</b> at the top of any page. To look at one raid night, paste its report link on the front page.</p>';
+      : '<h2 id="gsT">That\'s all for now</h2><p>You can add your character or your team any time: click <b>Your teams</b> at the top of any page. To look at one raid night, open the menu at the top and pick Open a report or log.</p>';
     nav = got.length ? btn('show', 'Show me', true) : btn('close', 'Done', true);
   }
   // (redrawn while it waits: the card doesn't slide in again, and the focus only moves when the question changes)
@@ -13503,7 +13513,7 @@ function gsAct(a) {
 }
 async function gsAdd(s) {
   const inp = $('#gsIn'), msg = $('#gsMsg'), b = $('#gsAdd'), raw = inp.value.trim(), want = s === 'char' ? 'character' : 'team or guild';
-  if (!groupLink(raw)) { msg.style.color = ''; msg.textContent = WCL.parseLink(raw) ? 'That\'s a report link, which is one raid night. Here, paste your ' + want + ' page. You can open the report from the front page after this.' : raw ? 'That doesn\'t look like a Warcraft Logs ' + want + ' page. The line under this box says where to find it.' : 'Paste the link first. The line under this box says where to find it.'; inp.focus(); return; }
+  if (!groupLink(raw)) { msg.style.color = ''; msg.textContent = WCL.parseLink(raw) ? 'That\'s a report link, which is one raid night. Here, paste your ' + want + ' page. You can open it from the menu at the top after this.' : raw ? 'That doesn\'t look like a Warcraft Logs ' + want + ' page. The line under this box says where to find it.' : 'Paste the link first. The line under this box says where to find it.'; inp.focus(); return; }
   b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
   try { const { g, already } = await groupAdd(raw); if (!GS) return;
     if (g.kind === 'char') { GS.char = g.gid; if (!meOf()) store.set(ME_KEY, JSON.stringify({ name: g.name, cls: g.cls || null, char: g.gid, at: Date.now() })); } else GS.team = g.gid;
@@ -13584,35 +13594,25 @@ function gsPlace() {
   const left = Math.max(12, Math.min(innerWidth - bw - 12, b.left + Math.min(24, b.width / 2) - 24));
   bub.style.top = top + 'px'; bub.style.left = left + 'px'; bub.dataset.side = side; bub.style.setProperty('--ax', Math.max(18, Math.min(bw - 18, b.left + Math.min(b.width / 2, 60) - left)) + 'px');
 }
-// ---- Start for someone back (your note, Oct 19): where to go ----
-// Your teams and your character as cards (how far each is), and a card to open one raid night (a report or live log link,
-// or a combat log from this PC); then All teams, and Add a team or character, which runs the setup.
-function whereTo() {
-  if ($('#wtD')) return;
-  HIST.load().then(() => {
-    if ($('#wtD')) return;
-    const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss)), me = meOf();
-    const cards = gl.filter((g) => g.kind !== 'char').concat(gl.filter((g) => g.kind === 'char')).map((g) => teamCard(g, all, order, false)).join('');
-    document.body.insertAdjacentHTML('beforeend', pgDlg('wt', '<section class="wt" id="wt"><button class="gs-x" id="wtX" type="button" aria-label="Close">×</button><h2 id="wtT">Where to?</h2><p class="sub">' + (me ? 'Welcome back, ' + esc(me.name) + '.' : 'Welcome back.') + ' Pick a team, your character, or one raid night.</p>' +
-      '<div class="wt-g">' + cards + '<div class="wt-night"><b>Open a raid night</b><span class="sub">Paste a Warcraft Logs report or live log link.</span><div class="fph-box sm"><input id="wtIn" placeholder="Report or live log link" autocomplete="off" aria-label="Warcraft Logs report or live log link"><button class="btn primary" id="wtGo" type="button">Open</button></div><div class="fp-msg" id="wtMsg"></div>' +
-        '<div class="fph-alt">Or <button class="linkbtn" id="wtFile" type="button">open a combat log</button> from this PC.</div></div></div>' +
-      '<div class="wt-f"><button class="linkbtn" id="wtAll" type="button">All teams</button><button class="linkbtn" id="wtAdd" type="button">+ Add a team or character</button></div></section>'));
-    const d = $('#wtD'), close = () => { d.remove(); document.removeEventListener('keydown', key, true); };
-    const key = (e) => { if (e.key === 'Escape' && document.body.contains(d)) { e.preventDefault(); e.stopPropagation(); close(); } };
-    document.addEventListener('keydown', key, true);
-    d.onclick = (e) => { if (e.target === d) close(); };
-    $('#wtX').onclick = close;
-    $$('#wt [data-g]').forEach((b) => (b.onclick = () => { close(); store.set(GROUP_CUR, b.dataset.g); progressPage(undefined, b.dataset.g); window.scrollTo(0, 0); }));
-    const inp = $('#wtIn'), msg = $('#wtMsg');
-    const go = async () => { msg.style.color = ''; if (groupLink(inp.value)) { msg.textContent = 'That\'s a team or character page. Add it with "Add a team or character" below.'; return; } if (!WCL.parseLink(inp.value)) { msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; }
-      await openReportLink(inp.value, msg); if (S.rep && document.body.contains(d)) close(); };
-    $('#wtGo').onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
-    inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(); }, 50);
-    $('#wtFile').onclick = () => { close(); $('#fileIn').click(); };
-    $('#wtAll').onclick = () => { close(); progressPage(); window.scrollTo(0, 0); };
-    $('#wtAdd').onclick = () => { close(); gsStart(); };
-    const f = d.querySelector('.ht-card'); if (f) f.focus({ preventScroll: true });
-  });
+// ---- one raid night, from the menu (the front page has only its one button): a report or live log link, a combat log
+// from this PC, or a real raid night to look at ----
+function nightDlg() {
+  if ($('#ndD')) return;
+  document.body.insertAdjacentHTML('beforeend', pgDlg('nd', '<section class="wt nd"><button class="gs-x" id="ndX" type="button" aria-label="Close">×</button><h2 id="ndT">Open a raid night</h2><p class="sub">Paste a Warcraft Logs report or live log link. A live log keeps up with the raid as it goes.</p>' +
+    '<div class="fph-box sm"><input id="ndIn" placeholder="Report or live log link" autocomplete="off" aria-label="Warcraft Logs report or live log link"><button class="btn primary" id="ndGo" type="button">Open</button></div><div class="fp-msg" id="ndMsg"></div>' +
+    '<div class="fph-alt">Or <button class="linkbtn" id="ndFile" type="button">open a combat log</button> from this PC, or <button class="linkbtn" id="ndDemo" type="button">see a real raid night</button>.</div></section>'));
+  const d = $('#ndD'), close = () => { d.remove(); document.removeEventListener('keydown', key, true); };
+  const key = (e) => { if (e.key === 'Escape' && document.body.contains(d)) { e.preventDefault(); e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', key, true); d.onclick = (e) => { if (e.target === d) close(); }; $('#ndX').onclick = close;
+  const inp = $('#ndIn'), msg = $('#ndMsg');
+  // (any report link: one still being logged turns live on by itself, see openWcl)
+  const go = async (raw) => { msg.style.color = ''; if (groupLink(raw)) { msg.textContent = 'That\'s a team or character page. Add it from Your teams at the top.'; return; } if (!WCL.parseLink(raw)) { msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; }
+    await openReportLink(raw, msg); if (S.rep && document.body.contains(d)) close(); };
+  $('#ndGo').onclick = () => go(inp.value); inp.onkeydown = (e) => { if (e.key === 'Enter') go(inp.value); };
+  inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(inp.value); }, 50); // (a pasted link opens at once)
+  $('#ndFile').onclick = () => { close(); $('#fileIn').click(); };
+  $('#ndDemo').onclick = () => go(DEMO_REPORT);
+  inp.focus();
 }
 // (said on the website when a file pick ends without a file: usually Chrome refusing the WoW folder)
 const BLOCKED_HINT = 'If Chrome said it can\'t open files in that folder, that\'s Chrome protecting Program Files, and a website can\'t get past it. Use a Warcraft Logs live log instead.';
@@ -13627,7 +13627,7 @@ const DIFF_ORDER = [[16, 'Mythic'], [15, 'Heroic'], [14, 'Normal'], [17, 'LFR']]
 let PROG_BACK = null;
 // (view: a team's gid to open its page, '*' for everything saved; left out, the teams page)
 function progressPage(msg, view) {
-  progLit(true); S.progView = view == null ? null : view; S.pgRename = S.pgDel = S.pgEdit = false; S.hubHome = false;
+  progLit(true); S.progView = view == null ? null : view; S.progMine = false; S.pgRename = S.pgDel = S.pgEdit = false; S.hubHome = false;
   if (S.item) PROG_BACK = S.item;
   S.item = null; S.rep = null;
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
@@ -13715,7 +13715,8 @@ function teamCard(g, all, order, big) {
 // and rank (a character: guild and parses); "Now on" that boss with its best; a strip of one square per boss on the
 // hardest difficulty it pulled (orange once killed, else the colour of its best pull); its kills on every difficulty;
 // and its nights. (i: its place in the row, for the cards coming in one after another)
-function hubCard(g, all, order, i) {
+// (you: your character, on your team's card)
+function hubCard(g, all, order, i, you) {
   const mine = all.filter(groupFilter(g)), cls = g.kind === 'char' && g.cls && E.CLASSES[g.cls], fac = g.kind !== 'char' && FACTION[g.faction];
   const col = cls ? cls[1] : fac ? fac[0] : 'var(--gold)', d = DIFF_ORDER.find(([x]) => mine.some((v) => v.diffId === x));
   const bestOf = (l) => l.filter((v) => v.left != null).reduce((m, v) => (!m || v.left < m.left ? v : m), null);
@@ -13741,7 +13742,7 @@ function hubCard(g, all, order, i) {
   // their class colour instead of the boss's art)
   const fig = lookFig(g, 'hc-mw');
   return '<button class="hc-card' + (fig ? ' has-fig' : '') + '" type="button" data-g="' + esc(g.gid) + '" style="--bc:' + col + ';--i:' + (i || 0) + '">' + (fig ? '' : art) + fig +
-    '<span class="hc-top">' + banner(g) + '<span class="hc-id"><span class="hc-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(gName(g)) + '</span>' + sub + '<span class="hc-k">' + esc(kind + (g.server ? ' · ' + g.server : '')) + '</span></span></span>' +
+    '<span class="hc-top">' + banner(g) + '<span class="hc-id"><span class="hc-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(gName(g)) + '</span>' + sub + '<span class="hc-k">' + esc(kind + (g.server ? ' · ' + g.server : '')) + '</span>' + (you ? '<span class="hc-you">With you: <b' + (you.cls && E.CLASSES[you.cls] ? ' style="color:' + E.CLASSES[you.cls][1] + '"' : '') + '>' + esc(gName(you)) + '</b></span>' : '') + '</span></span>' +
     now + (strip ? '<span class="hc-sw"><span class="hc-sl"><span>' + esc(d[1]) + '</span><b>' + kills + ' of ' + order.length + ' killed</b></span><span class="hc-strip" aria-hidden="true">' + strip + '</span></span>' : '') +
     (diffs ? '<span class="hc-diffs">' + diffs + '</span>' : '') +
     '<span class="hc-f"><span>' + (last ? plural(nights, 'night') + ' · last ' + esc(nightLabel(last)) : 'Its nights are being brought in') + '</span><span class="hc-go">Open ›</span></span></button>';
@@ -13794,7 +13795,7 @@ function topGuildsHtml(list) {
 function renderProgHub(msg, msgErr, asHome) {
   if (asHome == null) asHome = !!S.hubHome; S.hubHome = asHome;
   S.page = asHome ? 'home' : 'prog'; queueMicrotask(navNote); // (a step for Back, once the page is drawn)
-  const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
+  const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss)), P = mePair();
   const back = !asHome && PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
   // (the add card says exactly which link to paste: a team's or guild's page, or a character's, with what each looks like;
   // folded away behind "Which link?" once you have a team, open for someone adding their first)
@@ -13816,7 +13817,7 @@ function renderProgHub(msg, msgErr, asHome) {
   const hero = '<section class="pg-hero"><img class="pg-hero-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO["Kith'ix"][0] + '.jpg" alt="" onerror="this.remove()">' +
     '<div class="pg-ht"><span class="pg-kick">The Venomous Abyss</span><h1>Your teams</h1><p class="sub">' + (gl.length ? 'Pick a team or your character to see every boss and night, with your rankings.' : 'Add your team, guild or your own character from Warcraft Logs to see every raid night, boss by boss.') + '</p></div>' + stats + '</section>';
   $('#main').innerHTML = '<div class="home prog pg-hubp' + (asHome ? ' th-home' : '') + '">' + (asHome ? teamsBar() : back) + hero +
-    '<div class="pg-hub">' + (gl.length ? '<div class="hc-grid">' + gl.map((g, i) => hubCard(g, all, order, i)).join('') + '</div>' : '') + add +
+    '<div class="pg-hub">' + (gl.length ? '<div class="hc-grid">' + gl.filter((g) => !P || g.gid !== P.c.gid).map((g, i) => hubCard(g, all, order, i, P && g.gid === P.t.gid ? P.c : null)).join('') + '</div>' : '') + add +
     '<section class="pg-topg" id="pgTopG"><div class="tg-h"><h3>Top guilds</h3><span class="sub">See how the world\'s best and guilds at other ranks are doing. Add one to browse its nights like your own team. Ranks from Raider.IO, updated weekly.</span></div><div class="tg-body"><p class="sub">Loading the rankings…</p></div></section></div></div>';
   progLit(!asHome);
   if (asHome) bindTeamsBar(); else pageTips('hub');
@@ -13907,11 +13908,12 @@ HIST.load().then(() => setTimeout(autoCheckAll, 4000));
 // Hidden with one click (remembered on this PC).
 const HEAL_SPECS = new Set([65, 105, 256, 257, 264, 270, 1468]), RANK_CACHE = new Map(), RANK_OFF = 'wla-rank-off';
 const WCL_DIFF_OF = { 16: 5, 15: 4, 14: 3, 17: 1 };
-async function charRankPanel(g, diffId) {
-  const box = $('#pgRank'); if (!box || !g.cls) return;
-  const still = () => S.progView === g.gid && $('#pgRank') === box && document.body.contains(box);
+async function charRankPanel(g, diffId, bid, view) {
+  // (bid, view: the panel's box and the page it's on, for you on your team's page; left out, the character's own page)
+  const box = $('#' + (bid || 'pgRank')); if (!box || !g.cls) return;
+  const still = () => S.progView === (view || g.gid) && $('#' + (bid || 'pgRank')) === box && document.body.contains(box);
   if (store.get(RANK_OFF) === '1') { box.innerHTML = '<div class="pr-off"><span class="sub">Your Warcraft Logs rankings are hidden.</span> <button class="linkbtn" id="prShow" type="button">Show them</button></div>';
-    $('#prShow').onclick = () => { store.set(RANK_OFF, '0'); charRankPanel(g, diffId); }; return; }
+    $('#prShow').onclick = () => { store.set(RANK_OFF, '0'); charRankPanel(g, diffId, bid, view); }; return; }
   const d = WCL_DIFF_OF[diffId] || 5, specs = Object.entries(E.SPECS).filter(([, [, c]]) => c === g.cls).map(([id, [n]]) => ({ id: +id, n, heal: HEAL_SPECS.has(+id) }));
   box.innerHTML = '<div class="sub">Reading your rankings from Warcraft Logs…</div>';
   let creds = null; try { creds = await wclCreds(); } catch (e) { box.innerHTML = '<div class="sub">' + esc(e.message) + '</div>'; return; }
@@ -13942,9 +13944,9 @@ async function charRankPanel(g, diffId) {
     $$('#main .pc-card[data-boss]').forEach((c) => { const x = rows.find((q) => q.encounter.name === c.dataset.boss); const old = c.querySelector('.pc-rank'); if (old) old.remove();
       const html = '<div class="pc-rank"><span class="pr-l">Your parse</span>' + (x && x.rankPercent != null ? chip(x.rankPercent) + ' <span class="sub">best</span> ' + chip(x.medianPercent) + ' <span class="sub">median · ' + plural(x.totalKills || 0, 'kill') + (x.bestAmount ? ' · best ' + C(x.bestAmount) + '/s' : '') + '</span>' : '<span class="sub">no ranked kill as ' + esc(spec) + '</span>') + '</div>';
       const st = c.querySelector('.pc-stats'); if (st) st.insertAdjacentHTML('afterend', html); });
-    box.querySelectorAll('[data-rs]').forEach((b) => (b.onclick = () => { S.rankSpec = b.dataset.rs; S.rankMetric = null; charRankPanel(g, diffId); }));
-    box.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => { S.rankMetric = b.dataset.rm; charRankPanel(g, diffId); }));
-    $('#prHide').onclick = () => { store.set(RANK_OFF, '1'); $$('#main .pc-rank').forEach((x) => x.remove()); charRankPanel(g, diffId); };
+    box.querySelectorAll('[data-rs]').forEach((b) => (b.onclick = () => { S.rankSpec = b.dataset.rs; S.rankMetric = null; charRankPanel(g, diffId, bid, view); }));
+    box.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => { S.rankMetric = b.dataset.rm; charRankPanel(g, diffId, bid, view); }));
+    $('#prHide').onclick = () => { store.set(RANK_OFF, '1'); $$('#main .pc-rank').forEach((x) => x.remove()); charRankPanel(g, diffId, bid, view); };
   } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read your rankings: ' + esc(e.message) + '</div>'; }
 }
 // ---- a team's page: its Warcraft Logs rankings this tier (Mythic) ----
@@ -14004,6 +14006,9 @@ function renderProgress(msg, msgErr) {
   // (the teams page, unless a team (or everything saved) is picked)
   const gl = groups(), g = S.progView && S.progView !== '*' ? gl.find((x) => x.gid === S.progView) : null;
   if (S.progView == null || (S.progView !== '*' && !g)) { S.progView = null; renderProgHub(msg, msgErr); return; }
+  const P = mePair();
+  if (g && P && g.gid === P.c.gid && !S.progMine) { S.progView = P.t.gid; renderProgress(msg, msgErr); return; } // (your character's page is your team's now)
+  const you = g && P && g.gid === P.t.gid ? P.c : null, youC = you && you.cls && E.CLASSES[you.cls], mineOf = g && P && g.gid === P.c.gid ? P.t : null;
   const inG = groupFilter(g), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss) && inG(v));
   const diffs = DIFF_ORDER.filter(([d]) => all.some((v) => v.diffId === d));
   let cur = +(store.get(PROG_DIFF_KEY) || 0); if (!diffs.some(([d]) => d === cur)) cur = diffs.length ? diffs[0][0] : 16;
@@ -14079,12 +14084,14 @@ function renderProgress(msg, msgErr) {
   const back = PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
-  $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + meCard + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
+  $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + (you ? '<div class="pg-you">' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '</div></div>' + sw + '</div>' + team + pgMsg + meCard + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (you && you.cls ? '<section class="panel pg-rank pg-rank-me" id="pgRankMe"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
-  $('#pgHub').onclick = () => { S.progView = null; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
+  $('#pgHub').onclick = () => { S.progView = null; S.progMine = false; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
+  if ($('#pgMine')) $('#pgMine').onclick = () => { S.progMine = true; S.progView = you.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
+  if ($('#pgTeamBack')) $('#pgTeamBack').onclick = () => { S.progMine = false; S.progView = mineOf.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
   if ($('#pgSugg')) {
@@ -14115,6 +14122,7 @@ function renderProgress(msg, msgErr) {
   { const d = $('#pgMeD') || $('#pgSuggD'); if (d) { const skip = $('#pgMeNo') || $('#pgSuggNo'); d.onkeydown = (e) => { if (e.key === 'Escape') { e.preventDefault(); skip.click(); } };
     const f0 = d.querySelector('.me-c, [data-rwadd]'); if (f0 && !d.contains(document.activeElement)) f0.focus({ preventScroll: true }); } }
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
+  if (you && you.cls) charRankPanel(you, cur, 'pgRankMe', g.gid);
   // (the tips: not over a pop-up question, and not while a team just added is still bringing in its first nights, when the
   // page is mostly empty and the question can pop up any moment; they come once it's answered and the nights are in)
   if (!$('#pgMeD') && !$('#pgSuggD') && !(g && !g.last)) pageTips('team');
@@ -14161,11 +14169,11 @@ $('#brandHome').onclick = () => home();
   const where = (g, all, order) => { const mine = all.filter(groupFilter(g)), d = DIFF_ORDER.find(([x]) => mine.some((v) => v.diffId === x));
     return d ? order.filter((bo) => mine.some((v) => v.diffId === d[0] && v.boss === bo && v.kill)).length + '/' + order.length + ' ' + d[1] : ''; };
   const draw = () => { const order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss)), here = $('#main .home.prog') ? S.progView : null;
-    pop.innerHTML = groups().map((g) => { const c = g.kind === 'char' && g.cls && E.CLASSES[g.cls], on = here === g.gid, w = where(g, all, order), av = lookUrl(g, '-avatar.jpg');
+    const P = mePair(); pop.innerHTML = groups().filter((g) => !P || g.gid !== P.c.gid).map((g) => { const c = g.kind === 'char' && g.cls && E.CLASSES[g.cls], on = here === g.gid, w = where(g, all, order), av = lookUrl(g, '-avatar.jpg');
       // (a character: their face portrait in a ring of their class colour; the banner if it doesn't load)
       const pic = av ? '<span class="tbt-av" style="--bc:' + (c ? c[1] : 'var(--gold)') + '"><img src="' + av + '" alt="" onerror="this.parentNode.classList.add(\'nf\');this.remove()">' + banner(g) + '</span>' : banner(g);
       return '<button class="tbt-i' + (on ? ' on' : '') + '" type="button" role="menuitem" data-go="' + esc(g.gid) + '"' + (on ? ' aria-current="page"' : '') + '>' + pic +
-        '<span class="tbt-t"><b' + (c ? ' style="color:' + c[1] + '"' : '') + '>' + esc(gName(g)) + '</b><span>' + esc([c ? c[0] : gKind(g), w].filter(Boolean).join(' · ')) + '</span></span>' + (on ? '<span class="tbt-k" aria-hidden="true">✓</span>' : '') + '</button>'; }).join('') +
+        '<span class="tbt-t"><b' + (c ? ' style="color:' + c[1] + '"' : '') + '>' + esc(gName(g)) + '</b><span>' + esc([c ? c[0] : gKind(g), w, P && g.gid === P.t.gid ? 'with you' : ''].filter(Boolean).join(' · ')) + '</span></span>' + (on ? '<span class="tbt-k" aria-hidden="true">✓</span>' : '') + '</button>'; }).join('') +
       '<div class="tbt-f"><button class="tbt-a" type="button" role="menuitem" data-go="*">All teams</button><button class="tbt-a add" type="button" role="menuitem" data-go="+">+ Add a team or character</button></div>'; };
   const close = () => { pop.hidden = true; b.setAttribute('aria-expanded', 'false'); };
   const show = () => { draw(); pop.style.right = ''; pop.hidden = false; b.setAttribute('aria-expanded', 'true');
@@ -14202,7 +14210,7 @@ if (WCL.HOSTED && !window.WLA_DESKTOP && !tourDone()) store.set(TOUR_KEY, '1');
 if (!tourDone() && sharedLink) S.tourAfterPull = true;
 if (WCL.HOSTED) {
   $('#wclBtn').innerHTML = 'Open a report or log<span>paste a Warcraft Logs link, or pick a log on this PC</span>';
-  $('#wclBtn').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; home(); setTimeout(() => { const i = $('#hWcl'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } }, 60); };
+  $('#wclBtn').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; nightDlg(); };
   for (const id of ['#openBtn', '#tbSaved']) { const b = $(id); if (b) b.hidden = true; }
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;

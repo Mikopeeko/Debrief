@@ -253,6 +253,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 254: One page for your team and you, and a one-button front page (your notes)
+- [x] **Your team and your character are one page now** ("it's giving me decision fatigue"). Wolfthorn's page has "You:
+  Flëxørçïst · Paladin" under its name, the team's rankings and then yours, and your parse on each boss card. One card on
+  Your teams ("With you: Flëxørçïst") and one line in the Your teams menu. "See every raid you were in" opens your own
+  page (your nights with any group), with "Back to Wolfthorn". Someone with only a character keeps their own page.
+- [x] **The front page has one button:** Start now for someone new (no report link box), Welcome Back! for someone back,
+  straight to their team's page ("Straight to Wolfthorn."). Where to? is gone. One raid night opens from the menu's
+  "Open a report or log" (a pop-up with the link box, a combat log, or a real raid night); a shared report link still
+  opens by itself.
+
 ## 2026-10-19, round 253: A guided setup for new visitors, and Where to? for returning ones (your ideas)
 - [x] **One front page for everyone:** the logo, the headline, one **Start now** button, and a small "Already have a report
   link?" line (a report or live log, or a combat log, or see a real raid night). The two link boxes, the Start here box
