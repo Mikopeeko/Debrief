@@ -2546,30 +2546,36 @@ function buildLostExplorers(ev, r, h) {
       const who = new Set(hit.filter((e) => e.t >= t - 0.2 && e.t <= t + 0.8).map((e) => e.dst)), on = sp.filter((p) => who.has(p.guid));
       return c ? { x: c.x, y: c.y } : on.length ? { x: on.reduce((s, p) => s + p.x, 0) / on.length, y: on.reduce((s, p) => s + p.y, 0) / on.length } : null; };
     for (const c of clusters(leaps.map((t) => ({ t })), 6)) {
-      // (every leap's map plays the whole set: all three marks numbered in order, each filling as its leap comes, then
-      // slamming and leaving a crater (Aftershock), with a dashed line from Nama to the mark it leaps to next)
+      // (one map for the whole set (your note, Oct 18), on its own row above the leaps: all three marks numbered in order,
+      // each filling as its leap comes, then slamming and leaving a crater (Aftershock), with a dashed line from Nama to the
+      // mark he leaps to next)
       const spots = c.list.map((l) => spotOf(l.t)), c0 = c.list[0].t - 2.5, c1 = c.list[c.list.length - 1].t + 1.2;
       const boss = (h.snap(c0).find((p) => p.kind === 'boss' && /nama/i.test(p.name || '')) || {}).guid;
-      const setRings = (cur) => c.list.flatMap((l, k) => { const s = spots[k]; if (!s) return [];
+      const setRings = () => c.list.flatMap((l, k) => { const s = spots[k]; if (!s) return [];
         const base = { r: THUD_R, ...mcol('Mighty Thud', 0.16), cn: 'Orange circle', legend: 'a Mighty Thud mark, 6 yd: it fills as Nama\'s leap comes, then slams (numbered in leap order)' };
         // (each mark sits where its leap landed: the marked players hold their spots, and a mark that followed whoever stood
         // nearest jumped between players as they were knocked around)
-        return [{ ...base, x: s.x, y: s.y, t0: c0 - 1, dur: l.t - c0 + 1.8, fx: 'soak', at: l.t, label: String(k + 1), dim: k !== cur },
+        return [{ ...base, x: s.x, y: s.y, t0: c0 - 1, dur: l.t - c0 + 1.8, fx: 'soak', at: l.t, label: String(k + 1) },
         { x: s.x, y: s.y, r: THUD_R, color: '#a8662e', fill: 'rgba(120,70,30,.22)', fx: 'puddle', t0: l.t + 0.8, dur: 60, label: '', cn: 'Brown circle', legend: 'a crater a leap left (Aftershock: stay out of it)' }]; });
       const setLinks = boss ? c.list.map((l, k) => spots[k] ? { from: boss, toPt: { x: spots[k].x, y: spots[k].y }, t0: k ? c.list[k - 1].t + 0.3 : c0 - 1, t1: l.t - 0.1, color: '#f2842f', dash: true, legend: 'where Nama leaps next' } : null).filter(Boolean) : [];
       // (the log hardly updates Nama's position mid-set, so on the map he hops onto each mark as its leap lands)
       const setFrames = frames(c0, c1).map((f) => { const k = c.list.reduce((m, l, i) => (l.t <= f.t + 0.01 && spots[i] ? i : m), -1); if (k < 0 || !boss) return f;
         return { t: f.t, pts: f.pts.map((p) => (p.guid === boss ? { ...p, x: spots[k].x, y: spots[k].y } : p)) }; });
       const fc = spots.filter(Boolean), focus = fc.length ? (() => { const x = fc.reduce((s, p) => s + p.x, 0) / fc.length, y = fc.reduce((s, p) => s + p.y, 0) / fc.length; return { x, y, r: Math.max(8, ...fc.map((p) => Math.hypot(p.x - x, p.y - y) + 3)) }; })() : undefined;
+      const per = c.list.map((l) => ({ who: [...new Set(hit.filter((e) => e.t >= l.t - 0.2 && e.t <= l.t + 0.8).map((e) => e.dst))], died: deadBy(/mighty thud/i, l.t - 0.2, l.t + 1.5) }));
       const rows = c.list.map((l, k) => {
-        const who = [...new Set(hit.filter((e) => e.t >= l.t - 0.2 && e.t <= l.t + 0.8).map((e) => e.dst))], died = deadBy(/mighty thud/i, l.t - 0.2, l.t + 1.5);
+        const { who, died } = per[k];
         if (!who.length) M(l.t, 'Raid', 'Mighty Thud', 'High', 'Nobody was under Mighty Thud leap ' + (k + 1) + ': the whole raid took the full hit.', 'Line up away from Nama and soak all three leaps. Everyone takes the first, then gets knocked into the next.');
         for (const d of died) M(d.t, d.player, 'Mighty Thud', 'High', 'Died to Mighty Thud leap ' + (k + 1) + ' (' + pl(who.length, 'soaker') + ').', 'Bring more players into each leap so the hit is split, and use a defensive if your health is low.');
-        return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
-          { map: { t: l.t, good: who, goodLabel: 'soaked leap ' + (k + 1), goodAt: who.map((g) => [g, l.t]), pendLabel: 'under leap ' + (k + 1) + ', before it lands', bad: died.map((d) => d.guid), badLabel: 'died to it', title: 'Mighty Thud leap ' + (k + 1) + ' of ' + c.list.length + ' at ' + T(l.t), pts: h.snap(l.t), frames: setFrames,
-            rings: setRings(k), links: setLinks, focus } }];
+        return [{ txt: 'Leap ' + (k + 1) }, { t: l.t }, { txt: who.length ? pl(who.length, 'soaker') : 'nobody under it', bad: !who.length, warn: who.length > 0 && who.length < 5, sub: who.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
       });
-      groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: rows.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
+      // (the set's map: a green check on each player from the first leap they soaked)
+      const first = new Map(); per.forEach((p, k) => { for (const g of p.who) if (!first.has(g)) first.set(g, c.list[k].t); });
+      const allDied = per.flatMap((p) => p.died.map((d) => d.guid)), tEnd = c.list[c.list.length - 1].t + 0.3;
+      rows.unshift([{ txt: 'All ' + c.list.length + ' leaps', sub: 'the whole set, on one map', dim: true }, { t: c.t }, { txt: '' }, { txt: '' },
+        { map: { t: tEnd, good: [...first.keys()], goodLabel: 'soaked a leap', goodAt: [...first].map(([g, t]) => [g, t]), pendLabel: 'not under a leap yet', bad: allDied, badLabel: 'died to it',
+          title: 'Mighty Thud at ' + T(c.t) + ': all ' + c.list.length + ' leaps, in order', pts: h.snap(tEnd), frames: setFrames, rings: setRings(), links: setLinks, focus } }]);
+      const lr = rows.slice(1); groups.push({ title: 'Mighty Thud at ' + T(c.t), t: c.t, bad: lr.some((x) => x[2].bad || x[3].bad), warn: lr.some((x) => x[2].warn), sub: lr.map((x) => x[2].txt.replace(/ soakers?/, '')).join(', ') + ' soakers', rows });
     }
     if (groups.length) sections.push({ id: 'thud', title: 'Mighty Thud (leaps): every landing soaked', spell: [1296094, 'Mighty Thud'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
       summary: pl(groups.length, 'Mighty Thud') + '. It shows who was under each of the three leaps, and deaths to them.', cols: ['Leap', 'When', 'Soakers', 'Died', ''], groups, rows: [] });
