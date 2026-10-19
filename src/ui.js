@@ -7134,7 +7134,12 @@ function piReady(m, who) {
 // (a row: the time (and the pull, over the night), a dot, the sentence and its why under it, led by a coloured verdict
 // word so good, could be better and bad read at a glance (your note, Oct 19))
 const PI_VERDICT = { ok: 'Good.', warn: 'Could be better.', bad: 'Bad.' };
-const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
+// (your pick, Oct 19: a green check for good, a yellow warning sign for could be better, a big red X for bad)
+const PI_ICON = {
+  ok: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#45c15c"/><path d="M5.6 10.4l3 3 5.8-6.4" fill="none" stroke="#0f1a12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  warn: '<svg viewBox="0 0 20 20"><path d="M10 1.8L19 17.6H1z" fill="#f3c969" stroke="#f3c969" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 7.2v4.6" stroke="#1d1708" stroke-width="2.2" stroke-linecap="round"/><circle cx="10" cy="14.6" r="1.25" fill="#1d1708"/></svg>',
+  bad: '<svg viewBox="0 0 20 20"><path d="M3 3l14 14M17 3L3 17" stroke="#e5534b" stroke-width="4.2" stroke-linecap="round"/></svg>' };
+const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-ico" title="' + PI_VERDICT[tier].slice(0, -1) + '">' + PI_ICON[tier] + '</span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
 // a priest's pull as a strip: each Power Infusion gold, the stretches it sat ready green, the raid's downtime grey,
 // Bloodlust a line, and under them, in purple, when the player planned for it pressed their big cooldown
 function piStrip(d, x, casts, who) {

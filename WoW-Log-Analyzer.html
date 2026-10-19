@@ -2474,10 +2474,10 @@ span.sn-log { padding: 3px 10px; }
 .pi-ax { position: relative; height: 16px; margin: 0 0 2px; font-size: 11px; color: var(--faint); } .pi-ax span { position: absolute; transform: translateX(-50%); white-space: nowrap; } .pi-ax span:first-child { transform: none; }
 .pi-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 8px; font-size: 12.5px; color: var(--muted); } .pi-leg > span { display: inline-flex; align-items: center; gap: 6px; } .pi-leg .nm { font-weight: 600; }
 .pi-leg i { display: inline-block; width: 12px; height: 9px; border-radius: 2px; } .pi-leg i.pi-st { width: 4px; height: 10px; background: #b07cf0; } .pi-leg i.pi-sl { width: 2px; height: 11px; }
-.pi-c2 { display: grid; grid-template-columns: 52px 10px minmax(0, 1fr); gap: 4px 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.5; }
+.pi-c2 { display: grid; grid-template-columns: 52px 20px minmax(0, 1fr); gap: 4px 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.5; }
 .pi-t2 { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; } .pi-t2 .sub { display: block; font-size: 11.5px; font-weight: 500; }
-.pi-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); align-self: start; margin-top: 7px; } .pi-dot.ok { background: #45c15c; } .pi-dot.warn { background: #f3c969; } .pi-dot.bad { background: #e5534b; }
 .pi-s { min-width: 0; } .pi-s .nm { font-weight: 600; } .pi-w { display: block; margin-top: 2px; color: var(--muted); font-size: 13.5px; }
+.pi-ico { align-self: start; margin-top: 2px; width: 20px; height: 20px; } .pi-ico svg { display: block; width: 20px; height: 20px; }
 .pi-vd { font-weight: 700; } .pi-vd.ok { color: #45c15c; } .pi-vd.warn { color: #f3c969; } .pi-vd.bad { color: #e5534b; }
 .pi-l { margin-left: 4px; color: var(--gold); cursor: help; }
 .pi-okl { margin: 4px 0 2px; font-size: 14.5px; } .pi-okl .nm { font-weight: 600; } .pi-none { margin: 6px 0 0; }
@@ -2489,7 +2489,7 @@ span.sn-log { padding: 3px 10px; }
 .pi-bar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 13.5px; } .pi-bn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .pi-bn .nm { font-weight: 600; }
 .pi-gt { margin-left: 6px; color: var(--gold); font-size: 11px; font-weight: 700; }
 .pi-bt { height: 10px; border-radius: 3px; background: var(--line); overflow: hidden; } .pi-bt i { display: block; height: 100%; opacity: .75; } .pi-bar b { text-align: right; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
-@media (max-width: 560px) { .pi-c2 { grid-template-columns: 42px 9px minmax(0, 1fr); font-size: 14px; } .pi-bar { grid-template-columns: 100px minmax(0, 1fr) 50px; } }
+@media (max-width: 560px) { .pi-c2 { grid-template-columns: 42px 18px minmax(0, 1fr); font-size: 14px; } .pi-bar { grid-template-columns: 100px minmax(0, 1fr) 50px; } }
 /* Performance, Casts: every cast on one time line (a row per player, or per spell), the pace against each spec's sim */
 .cst .cst-hit { fill: transparent; } .cst-l.k { cursor: pointer; } .cst-l.k:hover .cst-hit { fill: rgba(255,255,255,.04); }
 .cst-t { fill: none; stroke-width: 1.3; opacity: .9; } .cst-n { font: 500 11px var(--body); } .cst-dd { fill: rgba(229,83,75,.12); }
@@ -17292,7 +17292,12 @@ function piReady(m, who) {
 // (a row: the time (and the pull, over the night), a dot, the sentence and its why under it, led by a coloured verdict
 // word so good, could be better and bad read at a glance (your note, Oct 19))
 const PI_VERDICT = { ok: 'Good.', warn: 'Could be better.', bad: 'Bad.' };
-const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-dot ' + tier + '"></span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
+// (your pick, Oct 19: a green check for good, a yellow warning sign for could be better, a big red X for bad)
+const PI_ICON = {
+  ok: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#45c15c"/><path d="M5.6 10.4l3 3 5.8-6.4" fill="none" stroke="#0f1a12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  warn: '<svg viewBox="0 0 20 20"><path d="M10 1.8L19 17.6H1z" fill="#f3c969" stroke="#f3c969" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 7.2v4.6" stroke="#1d1708" stroke-width="2.2" stroke-linecap="round"/><circle cx="10" cy="14.6" r="1.25" fill="#1d1708"/></svg>',
+  bad: '<svg viewBox="0 0 20 20"><path d="M3 3l14 14M17 3L3 17" stroke="#e5534b" stroke-width="4.2" stroke-linecap="round"/></svg>' };
+const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-ico" title="' + PI_VERDICT[tier].slice(0, -1) + '">' + PI_ICON[tier] + '</span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
 // a priest's pull as a strip: each Power Infusion gold, the stretches it sat ready green, the raid's downtime grey,
 // Bloodlust a line, and under them, in purple, when the player planned for it pressed their big cooldown
 function piStrip(d, x, casts, who) {
