@@ -184,7 +184,15 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   round 184.
 - [x] **Weights of the mechanical execution grades** (your note; a fairness pass in round 140): look again at how much each mechanic counts toward a
   player's or the raid's execution grade (what's weighted heavier, what lighter), and whether that's fair.
-- [ ] **Performance: a Compare option** (your note): put two things side by side somewhere in the Performance tab (for example
+- [ ] **A Comparison tab (your note, Oct 19; this gathers the Compare notes below and the "comparison tab" note under the header):**
+  its own tab with three ways to compare: (1) you against a teammate, (2) your raid against other raids with a similar
+  group (the same classes and specs, or close), found by browsing or searching, and (3) you against the top players of
+  your spec on the same boss. My take: **amazing** overall, and the order matters. Top players of your spec is the most
+  useful and the cheapest, since the app already pulls top players for the Rotation bars. A teammate is easy, the data is
+  already in your log. Browsing similar groups is **solid but the hardest**: Warcraft Logs can't search by group makeup,
+  so we'd pull a batch of top reports per boss and sort them by how close their classes and specs are to yours. Build it
+  in that order, one at a time.
+- [ ] **Performance: a Compare option** (your note; now part of the Comparison tab above): put two things side by side somewhere in the Performance tab (for example
   two players, a player against their own best pull, or this pull against an earlier one). Where it goes: part of the
   Performance talk.
   **Update (your note, Oct 17):** a comparison area: your logs against other logs (a top guild's on the same boss), and
@@ -328,7 +336,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Rankings up in the header** (your note: "randomly at the bottom"): chips for World, US, Zul'jin and Speed, and
   "Holy 81 best · 75 median" on your line; "All rankings" opens the full panels in place under the header. The bottom
   section is gone; your parse stays on each boss card. A reload on your own page now stays there.
-- [ ] **Next (your note): a comparison tab**, where the Top guilds go. Their code is kept for it (renderProgHub, topGuilds).
+- [ ] **Next (your note): a comparison tab** (see "A Comparison tab" in Next up), where the Top guilds go. Their code is kept for it (renderProgHub, topGuilds).
 
 ## 2026-10-19, round 256: Live now, your team's raid followed without a link (your idea)
 - [x] **While Debrief is open, your team's newest report is checked every 30 seconds** (your call; it was every minute;
