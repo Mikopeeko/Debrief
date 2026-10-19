@@ -14546,13 +14546,18 @@ function lpUsed(r) {
   const ct = cutT(r), C0 = perfContext(r), end = Math.min(ct, C0.end), ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), lines = [];
   const until = (p) => { const x = C0.per.get(p.name); return x ? Math.min(x.until, end) : end; }, inT = (l) => (l || []).filter((t) => (t && t.t != null ? t.t : t) <= ct + 0.05);
   const of = (n, m) => '<b>' + n + '</b><span class="sub"> of ' + m + '</span>';
-  if (!PI_OFF()) for (const x of piPull(r).priests.values()) { const on = [...new Set(piPull(r).casts.filter((c) => c.pr === x.p && c.tg !== x.p).map((c) => c.tg))];
-    lines.push(['Power Infusion', lpWho(x.p) + ' ' + of(x.used, x.poss) + (on.length ? '<span class="sub"> on </span>' + on.slice(0, 3).map(lpWho).join(', ') : '')]); }
-  for (const p of ps) { if (p.cls !== 'DRUID') continue; const u = inT(p.byName.get('innervate')); if (!u.length && !/restoration/i.test(p.specName || '')) continue;
-    lines.push(['Innervate', lpWho(p) + ' ' + of(u.length, Math.floor(until(p) / 180) + 1)]); }
+  // (each cast with its grade from the Power Infusion page: a green check good, a yellow warning sign could be better, a red X bad)
+  if (!PI_OFF()) for (const x of piPull(r).priests.values()) { const mine = piPull(r).casts.filter((c) => c.pr === x.p && c.t <= ct + 0.05);
+    lines.push(['Power Infusion', lpWho(x.p) + ' ' + of(x.used, x.poss) + (mine.length ? '<span class="lp-pis">' + mine.map((c) => { const tr = piTier(c); return '<span class="lp-pic" title="' + esc(T(c.t) + ' on ' + c.tg.name + ': ' + PI_VERDICT[tr]) + '"><span class="pi-ico">' + PI_ICON[tr] + '</span>' + lpWho(c.tg) + '</span>'; }).join('') + '</span>' : '')]); }
+  // (Innervate from a Balance Druid only, and who it went on: the player whose Innervate buff began with the cast (your call, Oct 19); a
+  // Restoration Druid's isn't listed)
+  for (const p of ps) { if (p.cls !== 'DRUID' || !/balance/i.test(p.specName || '')) continue; const u = inT(p.byName.get('innervate'));
+    const on = u.map((t) => ps.find((q) => ((q.buffs && q.buffs.get('Innervate')) || { sp: [] }).sp.some(([a]) => Math.abs(a - t) <= 1.5))).filter(Boolean);
+    lines.push(['Innervate', lpWho(p) + ' ' + of(u.length, Math.floor(until(p) / 180) + 1) + (on.length ? '<span class="sub"> on </span>' + [...new Set(on)].map(lpWho).join(', ') : '')]); }
   let dU = 0, dP = 0, dWho = 0, hs = 0, hp = 0;
   for (const p of ps) { let n = 0; for (const d of p.defs || []) { n += inT(d.uses).length; dP += Math.floor(until(p) / d.cd) + 1; } dU += n; if (n) dWho++; hs += inT(p.cons.healthstone).length; hp += inT(p.cons.healpot).length; }
-  if (dP) lines.push(['Defensives', '<b>' + dU + '</b> used<span class="sub">, by ' + plural(dWho, 'player') + ' (' + dP + ' possible)</span>']);
+  // (a click opens this pull's Survival kit on Mechanics, where each player's defensives are)
+  if (dP) lines.push(['Defensives', '<button class="lp-dgo" type="button" data-go="audit" data-sec="sec-defensives" title="Open the defensives on Mechanics"><b>' + dU + '</b> used<span class="sub">, by ' + plural(dWho, 'player') + ' (' + dP + ' possible)</span> ›</button>']);
   lines.push(['Healthstones', '<b>' + hs + '</b>'], ['Health potions', '<b>' + hp + '</b>']);
   return '<div class="panel lp-side-p lp-used"><h3 class="nh"><span>Used this pull</span></h3>' + lines.map(([k, v]) => '<div class="lp-pr"><span class="lp-pk">' + esc(k) + '</span><span>' + v + '</span></div>').join('') + '</div>';
 }
