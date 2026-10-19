@@ -15800,7 +15800,7 @@ function nightDlg() {
   const inp = $('#ndIn'), msg = $('#ndMsg');
   // (any report link: one still being logged turns live on by itself, see openWcl)
   const go = async (raw) => { msg.style.color = ''; if (groupLink(raw)) { msg.textContent = 'That\'s a team or character page. Add it from Your teams at the top.'; return; } if (!WCL.parseLink(raw)) { msg.textContent = 'That doesn\'t look like a Warcraft Logs report link.'; return; }
-    await openReportLink(raw, msg); if (S.rep && document.body.contains(d)) close(); };
+    const was = S.item; await openReportLink(raw, msg); if (S.item && S.item !== was && document.body.contains(d)) close(); }; // (closes once the night starts opening; its loading card shows under it)
   $('#ndGo').onclick = () => go(inp.value); inp.onkeydown = (e) => { if (e.key === 'Enter') go(inp.value); };
   inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(inp.value); }, 50); // (a pasted link opens at once)
   $('#ndFile').onclick = () => { close(); $('#fileIn').click(); };
