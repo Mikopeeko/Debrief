@@ -116,7 +116,7 @@ async function topSpecOf(run, v) {
     const d = await run(TOPAB_Q, { c: t.report.code, f: [t.report.fightID], x: "source.name = '" + nm + "' or source.owner.name = '" + nm + "'", t: v.m === 'hps' ? 'Healing' : 'DamageDone' });
     const rep = d.reportData.report, f = rep.fights[0], dur = Math.max(1, (f.endTime - f.startTime) / 1000), dd = P(rep.d).data.entries || [], kk = P(rep.k).data.entries || [];
     const tot = dd.reduce((s, e) => s + (e.total || 0), 0) || 1, casts = new Map(kk.map((e) => [e.name, e.total || 0]));
-    return { who: { name: t.name, server: t.server ? t.server.name : '', region: t.server ? t.server.region : '', amount: Math.round(t.amount), dur: Math.round(dur) },
+    return { who: { name: t.name, server: t.server ? t.server.name : '', region: t.server ? t.server.region : '', amount: Math.round(t.amount), dur: Math.round(dur), code: t.report.code, fight: t.report.fightID },
       ab: dd.map((e) => ({ name: e.name, id: e.guid, share: (e.total || 0) / tot, hits: (e.hitCount || 0) + (e.tickCount || 0), crits: (e.critHitCount || 0) + (e.critTickCount || 0), total: e.total || 0, casts: casts.get(e.name) || 0, dur })) }; };
   const all = (await Promise.all(top.map((t) => one(t).catch(() => null)))).filter(Boolean), got = all.slice(0, 3); // (the top 3 for Graphs; all of them, up to 8, for Compare)
   // (each spell over the players: share and casts a minute averaged (0 for one who didn't use it), crit and average hit over all their hits together)
@@ -175,7 +175,7 @@ async function guildProgOf(run, v) {
 }
 // </topspec>
 async function topSpec(creds, v) {
-  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=3'); // (v=3: the top 8, each with their own spells)
+  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=4'); // (v=4: the top 8, each with their own spells and their kill's report and fight)
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {

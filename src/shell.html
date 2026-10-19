@@ -2931,6 +2931,10 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-ico svg { width: 12px; height: 12px; fill: none; stroke: var(--c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .cmp .cutbar .btn { margin-left: auto; }
 .cmp-pts { margin-bottom: 14px; }
+/* a folded section (All the numbers): the title is the button, a small arrow before it */
+.cmp-fold > summary { list-style: none; cursor: pointer; } .cmp-fold > summary::-webkit-details-marker { display: none; }
+.cmp-fold > summary h3 { margin: 0; } .cmp-fold > summary h3::before { content: "\25B8"; color: var(--faint); font-size: .8em; margin-right: 2px; } .cmp-fold[open] > summary h3::before { content: "\25BE"; }
+.cmp-fold[open] > summary { margin-bottom: 12px; } .cmp-fold > summary:hover h3 { color: var(--gold); } .cmp-fold .cmp-lbl.cmp-sbl { margin: 18px 0 6px; }
 /* How they differ as cards: what it is, both numbers as two small bars in each side's colour, one short line; the edge as on the tiles */
 .cmp-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 .cmp-card { min-width: 0; padding: 10px 12px; background: var(--raised); border: 1px solid var(--line); border-left: 3px solid var(--line2); border-radius: 8px; } .cmp-card.ok { border-left-color: rgba(69,193,92,.8); } .cmp-card.warn { border-left-color: #e6b450; } .cmp-card.bad { border-left-color: #e5534b; }

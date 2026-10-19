@@ -2931,6 +2931,10 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-ico svg { width: 12px; height: 12px; fill: none; stroke: var(--c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .cmp .cutbar .btn { margin-left: auto; }
 .cmp-pts { margin-bottom: 14px; }
+/* a folded section (All the numbers): the title is the button, a small arrow before it */
+.cmp-fold > summary { list-style: none; cursor: pointer; } .cmp-fold > summary::-webkit-details-marker { display: none; }
+.cmp-fold > summary h3 { margin: 0; } .cmp-fold > summary h3::before { content: "\25B8"; color: var(--faint); font-size: .8em; margin-right: 2px; } .cmp-fold[open] > summary h3::before { content: "\25BE"; }
+.cmp-fold[open] > summary { margin-bottom: 12px; } .cmp-fold > summary:hover h3 { color: var(--gold); } .cmp-fold .cmp-lbl.cmp-sbl { margin: 18px 0 6px; }
 /* How they differ as cards: what it is, both numbers as two small bars in each side's colour, one short line; the edge as on the tiles */
 .cmp-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 .cmp-card { min-width: 0; padding: 10px 12px; background: var(--raised); border: 1px solid var(--line); border-left: 3px solid var(--line2); border-radius: 8px; } .cmp-card.ok { border-left-color: rgba(69,193,92,.8); } .cmp-card.warn { border-left-color: #e6b450; } .cmp-card.bad { border-left-color: #e5534b; }
@@ -9324,7 +9328,7 @@ async function topSpecOf(run, v) {
     const d = await run(TOPAB_Q, { c: t.report.code, f: [t.report.fightID], x: "source.name = '" + nm + "' or source.owner.name = '" + nm + "'", t: v.m === 'hps' ? 'Healing' : 'DamageDone' });
     const rep = d.reportData.report, f = rep.fights[0], dur = Math.max(1, (f.endTime - f.startTime) / 1000), dd = P(rep.d).data.entries || [], kk = P(rep.k).data.entries || [];
     const tot = dd.reduce((s, e) => s + (e.total || 0), 0) || 1, casts = new Map(kk.map((e) => [e.name, e.total || 0]));
-    return { who: { name: t.name, server: t.server ? t.server.name : '', region: t.server ? t.server.region : '', amount: Math.round(t.amount), dur: Math.round(dur) },
+    return { who: { name: t.name, server: t.server ? t.server.name : '', region: t.server ? t.server.region : '', amount: Math.round(t.amount), dur: Math.round(dur), code: t.report.code, fight: t.report.fightID },
       ab: dd.map((e) => ({ name: e.name, id: e.guid, share: (e.total || 0) / tot, hits: (e.hitCount || 0) + (e.tickCount || 0), crits: (e.critHitCount || 0) + (e.critTickCount || 0), total: e.total || 0, casts: casts.get(e.name) || 0, dur })) }; };
   const all = (await Promise.all(top.map((t) => one(t).catch(() => null)))).filter(Boolean), got = all.slice(0, 3); // (the top 3 for Graphs; all of them, up to 8, for Compare)
   // (each spell over the players: share and casts a minute averaged (0 for one who didn't use it), crit and average hit over all their hits together)
@@ -9383,7 +9387,7 @@ async function guildProgOf(run, v) {
 }
 // </topspec>
 async function topSpec(creds, v) {
-  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=3'); // (v=3: the top 8, each with their own spells)
+  if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=4'); // (v=4: the top 8, each with their own spells and their kill's report and fight)
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
@@ -10434,7 +10438,7 @@ const nightLabel = (ms) => new Date(ms - 6 * 3600e3).toLocaleDateString('en-US',
 let HIST_T = null;
 const histSoon = () => { clearTimeout(HIST_T); HIST_T = setTimeout(refreshHead, 400); };
 function histSave(r) {
-  const it = r && r.item; if (!it || it.kind !== 'boss' || it.run || !(it.wallMs || it.startMs) || !isMyRaid(r)) return;
+  const it = r && r.item; if (!it || it.kind !== 'boss' || it.run || it.foreign || !(it.wallMs || it.startMs) || !isMyRaid(r)) return; // (foreign: a top raider's kill, read for Compare)
   listAdd(TEAM_KEY, rosterOf(r)); // (the team follows the raid: new members join it as their pulls are saved)
   const pg = progressOf(r), d0 = r.deaths.slice().sort((a, b) => a.t - b.t)[0];
   let checks = []; try { checks = (nsrtChecks(r) || []).map((c) => ({ cat: c.cat, label: c.label, st: c.st })); } catch (e) { /* no note */ }
@@ -17666,11 +17670,12 @@ function talentsOf(r, p) {
 // a player's talents as the game shows them: the class tree, their hero tree and the spec tree side by side, each node where the game puts it,
 // lit when taken (with its rank) and dim when not, choices as octagons showing the side taken, passives round, the apex node larger, the
 // lines between taken nodes lit. Hover a node for its tooltip.
-// (Compare passes another player of the same spec to ring the talents where their picks differ, and one tree to draw: C, H or S)
-function talentTreeHtml(r, p, other, only) {
+// (Compare passes another player of the same spec, and their pull when it's another one, to ring the talents where their picks
+// differ, and one tree to draw: C, H or S)
+function talentTreeHtml(r, p, other, only, rOther) {
   const tr = treeOf(p.specName), c = (r.combatants || []).find((x) => x.name === p.name); if (!tr || !c || !c.talents || !c.talents.length) return '';
   const got = new Map(); for (const t of c.talents) got.set(+t.id, (got.get(+t.id) || 0) + (+t.rank || 1));
-  const co = other && (r.combatants || []).find((x) => x.name === other.name), gotO = new Map(); if (co && co.talents) for (const t of co.talents) gotO.set(+t.id, (gotO.get(+t.id) || 0) + (+t.rank || 1));
+  const co = other && ((rOther || r).combatants || []).find((x) => x.name === other.name), gotO = new Map(); if (co && co.talents) for (const t of co.talents) gotO.set(+t.id, (gotO.get(+t.id) || 0) + (+t.rank || 1));
   const dif = (n) => !!co && n.entries.map((e) => got.get(e.id) || 0).join() !== n.entries.map((e) => gotO.get(e.id) || 0).join();
   const sub = ((tr.nodes.find((n) => n.t === 'H' && n.entries.some((e) => got.has(e.id))) || {}).sub) || 0;
   const on = (n) => n.entries.some((e) => got.has(e.id)), rk = (n) => n.entries.reduce((v, e) => v + (got.get(e.id) || 0), 0);
@@ -21002,7 +21007,8 @@ function cmpCard(c) {
   return '<div class="cmp-card ' + (c.st || 'na') + '"' + (c.tip ? ' data-tt="' + esc(c.tip) + '"' : '') + '><div class="cmp-cl"><span>' + c.label + '</span>' + (c.gap || '') + '</div>' +
     bar(c.a, c.fa, c.ca, c.na) + (c.fb != null ? bar(c.b, c.fb, c.cb, c.nb) : '') + (c.txt ? '<div class="cmp-ct">' + c.txt + '</div>' : '') + '</div>';
 }
-const cmpCards = (cards) => '<div class="panel cmp-story"><h3>Overall<small>Everything else that adds up to the number a second</small></h3><div class="cmp-cards">' + cards.filter(Boolean).map(cmpCard).join('') + '</div></div>';
+const cmpNums = (cards, pairs) => cmpFold('nums', 'All the numbers', 'Everything else that adds up to the number a second, as cards and side-by-side bars. Click to open.',
+  '<div class="cmp-cards">' + cards.filter(Boolean).map(cmpCard).join('') + '</div><div class="cmp-lbl cmp-sbl">Side by side <span>Hover a bar for its numbers. Click a pair to see what is behind it.</span></div><div class="cmp-gw">' + pairs + '</div>');
 // What made the difference (Oct 19, "the most relevant information, what showed the biggest differences in HPS/DPS"):
 // a player's healing (or damage) a second is the sum of each spell's, so the gap between two players is the sum of each
 // spell's gap. The spells with the biggest gaps come first, each as a card with both numbers and where its gap comes
@@ -21038,9 +21044,9 @@ function cmpWhy(SA, SB, unit, spec) {
 }
 // Rotation side by side (your idea, Oct 19): both players' checks from the Rotation tab, the ones where the first player
 // did worse first, then by what they cost (the healing or damage Rotation works out each check lost). Same spec only.
-function cmpRot(r, p, q) {
+function cmpRot(r, p, q, rB) {
   const f = SPEC_CHECKS[p.specName]; if (!f || p.specName !== q.specName) return null;
-  let xa, xb; try { xa = f([r], p.name, true); xb = f([r], q.name, true); } catch (e) { console.warn('Compare, Rotation:', e && e.message); return null; }
+  let xa, xb; try { xa = f([r], p.name, true); xb = f([rB || r], q.name, true); } catch (e) { console.warn('Compare, Rotation:', e && e.message); return null; }
   if (!xa || !xb || !xa.checks || !xb.checks) return null;
   const bk = new Map(xb.checks.map((c) => [c.k, c])), RK = { bad: 0, warn: 1, ok: 2 }, UN = cmpKind(p) === 'heal' ? 'healing' : 'damage';
   const rows = xa.checks.filter((c) => RK[c.st] != null && bk.has(c.k) && RK[bk.get(c.k).st] != null).map((c) => { const d = bk.get(c.k); return { c, d, w: RK[d.st] - RK[c.st], cd: (c.cost || 0) - (d.cost || 0) }; })
@@ -21067,23 +21073,18 @@ function cmpHeroBy(spec, names) { let best = '', n0 = 0; for (const [nm, set] of
 const cmpHeroOf = (r, p) => specHero(r, p) || cmpHeroBy(p.specName, [...p.castAb.keys(), ...p.healAb.keys(), ...p.dmgAb.keys()]);
 // (the hero tree a spell belongs to, or '')
 const cmpHeroSpell = (spec, name) => { const n = String(name).replace(/^[^:]+: /, '').toLowerCase(); for (const [nm, set] of cmpHeroSets(spec)) if (set.has(n)) return nm; return ''; };
-// (the picked top raiders' average, spell by spell: share and casts a minute averaged over them, 0 for one who didn't use
-// it; crit and average hit averaged over those who did)
-function cmpAvgAb(list) { const by = new Map(), n = list.length || 1;
-  for (const x of list) for (const t of x.ab) { const o = by.get(t.name) || { name: t.name, id: t.id, share: 0, cpm: 0, cs: 0, cn: 0, as: 0, an: 0 }; o.share += t.share / n; o.cpm += (t.cpm || 0) / n; if (t.crit != null) { o.cs += t.crit; o.cn++; } if (t.avg) { o.as += t.avg; o.an++; } by.set(t.name, o); }
-  return [...by.values()].map((o) => ({ name: o.name, id: o.id, share: o.share, cpm: o.cpm, crit: o.cn ? o.cs / o.cn : null, avg: o.an ? o.as / o.an : null })).sort((p, q) => q.share - p.share); }
 // Talent differences (your idea, Oct 19): the talents only one of two players took, and the ones both took at different
 // ranks, from the talents in the log. They can explain part of a gap. null when the log has no talents for one of them.
-function cmpTalents(r, p, q, SA, SB) {
-  const ta = talentsOf(r, p), tb = talentsOf(r, q); if (!ta || !tb) return null;
+function cmpTalents(r, p, q, SA, SB, rB) {
+  rB = rB || r; const ta = talentsOf(r, p), tb = talentsOf(rB, q); if (!ta || !tb) return null;
   const An = cmpIsMe(p) ? 'You' : esc(p.name), Bn = esc(q.name), U = SA && SA.unit === 'heal' ? 'healing' : 'damage', tr = treeOf(p.specName);
   // (notes, talent spot by talent spot (your idea, Oct 19): what each different pick did in this pull. A talent that is a spell
   // shows what it did a second for the one who took it; a spot both filled differently is one note; a passive says so)
-  const gotOf = (x) => { const c = (r.combatants || []).find((y) => y.name === x.name), m = new Map(); for (const t of (c && c.talents) || []) m.set(+t.id, (m.get(+t.id) || 0) + (+t.rank || 1)); return m; };
+  const gotOf = (x) => { const c = ((x === q ? rB : r).combatants || []).find((y) => y.name === x.name), m = new Map(); for (const t of (c && c.talents) || []) m.set(+t.id, (m.get(+t.id) || 0) + (+t.rank || 1)); return m; };
   const gA = gotOf(p), gB = gotOf(q), key = (x) => String(x).replace(/^[^:]+: /, '').toLowerCase();
   const did = (side, who, nm) => { const t = side && side.ab && side.ab.find((y) => key(y.name) === key(nm)); if (!t || !t.share) return null;
     return { v: t.share * side.rate, txt: 'It did <b>' + C(t.share * side.rate) + '</b> ' + U + ' a second for ' + who + ', ' + Math.round(100 * t.share) + '% of their ' + U + '.' }; };
-  const pas = 'A passive talent: it changes other spells, so what it adds is spread across them. Hover it to read what it does.';
+  const pas = 'It did no ' + U + ' by itself: it makes other spells stronger, or helps in another way. Hover it to read what it does.';
   const notes = [];
   for (const n of (tr ? tr.nodes : [])) {
     if (n.free || (n.t === 'H' && !n.entries.some((x) => gA.has(x.id) || gB.has(x.id)))) continue;
@@ -21099,10 +21100,11 @@ function cmpTalents(r, p, q, SA, SB) {
   }
   notes.sort((u, v) => v.w - u.w); // (the ones that did the most first)
   // (each player's three trees in one row, the two players side by side, small: your note, Oct 19, "compact the trees")
-  const tx = talentTreeHtml(r, p, q), ty = talentTreeHtml(r, q, p), tRows = tx || ty ? '<div class="cmp-tt2"><div><div class="cmp-lbl">' + An + '</div>' + tx + '</div><div><div class="cmp-lbl">' + Bn + '</div>' + ty + '</div></div>' : '';
+  const tx = talentTreeHtml(r, p, q, null, rB), ty = talentTreeHtml(rB, q, p, null, r), tRows = tx || ty ? '<div class="cmp-tt2"><div><div class="cmp-lbl">' + An + '</div>' + tx + '</div><div><div class="cmp-lbl">' + Bn + '</div>' + ty + '</div></div>' : '';
   const trees = tRows ? '<details class="cmp-tdet"' + (S.cmpTreesShut ? '' : ' open') + '><summary>Both talent trees. A talent where their picks differ has a blue ring.</summary>' + tRows + '</details>' : '';
   const html = '<div class="panel"><h3>Talent differences<small>Each different pick, and what it did in this pull. The ones that did the most first.</small></h3>' +
-    (notes.length ? '<div class="cmp-tns">' + notes.map((o) => '<div class="cmp-tn"><span class="cmp-tni">' + o.icons + '</span><span><span class="cmp-tnh">' + o.h + '</span><span class="sub">' + o.s + '</span></span></div>').join('') + '</div>'
+    // (the 5 that did the most, the rest behind Show all)
+    (notes.length ? '<div class="cmp-tns">' + (S.cmpTalAll ? notes : notes.slice(0, 5)).map((o) => '<div class="cmp-tn"><span class="cmp-tni">' + o.icons + '</span><span><span class="cmp-tnh">' + o.h + '</span><span class="sub">' + o.s + '</span></span></div>').join('') + '</div>' + (notes.length > 5 ? '<button class="btn sm cmp-more" type="button" id="cmpTalAll">' + (S.cmpTalAll ? 'Show fewer' : 'Show all ' + notes.length) + '</button>' : '')
       : '<p class="cmp-wlead" style="margin:0">Both took the same talents.</p>') + trees + '</div>';
   return { a: new Set([...ta.names.keys()].map((n) => n.toLowerCase())), b: new Set([...tb.names.keys()].map((n) => n.toLowerCase())), html };
 }
@@ -21120,25 +21122,32 @@ function cmpLine(sides, end) {
 }
 // (1) Fellow raiders: a teammate from this pull
 function cmpMate(r, p, ps) {
-  const k = cmpKind(p), same = ps.filter((q) => q !== p && q.specName === p.specName);
+  const same = ps.filter((q) => q !== p && q.specName === p.specName);
   // (the same spec only (your call, Oct 19): the same spells, the same Rotation checks, so it compares like with like)
   // (the same hero tree too (your call, Oct 19); a player whose tree can't be read is kept)
   const hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(r, x), mates = same.filter((x) => !hA || !heroQ(x) || heroQ(x) === hA);
   const q = mates.find((x) => x.name === S.cmpMate) || mates[0];
   const what = esc(p.specName || 'this spec') + (hA ? ' with ' + esc(hA) : '');
   if (!q) return { vs: '<span class="sub">nobody else played ' + what + '</span>', body: cmpMsg('Nobody else played ' + what + ' in this pull' + (same.length ? ' (' + same.map((x) => esc(x.name) + ' plays ' + esc(heroQ(x) || 'another hero tree')).join(', ') + ')' : '') + '. Pick another player above, or compare with the top raiders of the spec.') };
-  const kq = cmpKind(q), pc = perfContext(r), U = (kk) => (kk === 'heal' ? 'healing' : 'damage'), cpm = (x) => x.casts / (cmpAlive(r, x) / 60);
-  const ra = cmpRate(r, p, k), rb = cmpRate(r, q, kq);
   const vs = avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', mates, q, p, 'Change') + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + '</small>';
-  const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) }, B = { name: q.name, col: q.color, ab: cmpMyAb(r, q, kq) };
-  const topSp = (x, kk) => cmpMyAb(r, x, kk).sort((a, b) => b.share - a.share).slice(0, 8).map((a) => ({ name: String(a.name).replace(/^[^:]+: /, ''), id: a.id, v: a.share, txt: (100 * a.share).toFixed(1) + '%' }));
+  return cmpPair(r, p, r, q, vs);
+}
+// The page for two players of the same spec, each read from their own pull (a teammate: this pull for both; a top raider:
+// their own kill), so Fellow raiders and Top raiders of your spec are set up the exact same way (your call, Oct 19).
+// rB: the second player's pull; lead: anything to show first (a note)
+function cmpPair(r, p, rB, q, vs, lead) {
+  const R = (x) => (x === q ? rB : r), k = cmpKind(p), hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(R(x), x);
+  const kq = cmpKind(q), pc = perfContext(r), U = (kk) => (kk === 'heal' ? 'healing' : 'damage'), cpm = (x) => x.casts / (cmpAlive(R(x), x) / 60);
+  const ra = cmpRate(r, p, k), rb = cmpRate(rB, q, kq);
+  const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) }, B = { name: q.name, col: q.color, ab: cmpMyAb(rB, q, kq) };
+  const topSp = (x, kk) => cmpMyAb(R(x), x, kk).sort((a, b) => b.share - a.share).slice(0, 8).map((a) => ({ name: String(a.name).replace(/^[^:]+: /, ''), id: a.id, v: a.share, txt: (100 * a.share).toFixed(1) + '%' }));
   const outDet = q.specName === p.specName ? '<p class="sub cmp-how">The bar is ' + esc(p.name) + '\'s share of their ' + U(k) + '. The white mark is ' + esc(q.name) + '\'s.</p>' + cmpSpellRows(A, B)
     : cmpTwo(cmpList(esc(p.name) + ', their ' + U(k), p.color, topSp(p, k)), cmpList(esc(q.name) + ', their ' + U(kq), q.color, topSp(q, kq)));
   // (healing: the overhealing is the faded end of the bar, as on Graphs; their share of all they healed)
   const ohF = (x) => (x.healing + x.overheal > 0 ? x.overheal / (x.healing + x.overheal) : 0), mxO = Math.max(ra * (k === 'heal' ? 1 / (1 - Math.min(0.9, ohF(p))) : 1), rb * (kq === 'heal' ? 1 / (1 - Math.min(0.9, ohF(q))) : 1)) || 1;
   const outSeg = (x, kk, v) => [[100 * v / mxO, 'm']].concat(kk === 'heal' && ohF(x) ? [[100 * v * ohF(x) / (1 - Math.min(0.9, ohF(x))) / mxO, 'oh']] : []);
   // (big cooldowns: the healing (or what they stopped) of each press this pull, from the same list as Graphs' Cooldowns)
-  const cdr = healCdRows(r, 0, pc.end), cdOf = (x) => { const m = new Map(); for (const c of cdr) if (c.p === x) { const o = m.get(c.cd) || { name: c.cd, id: c.id, n: 0, v: 0 }; o.n += c.ts ? c.ts.length : 1; o.v += c.v || 0; m.set(c.cd, o); } return [...m.values()].sort((a, b2) => b2.v - a.v); };
+  const cdOf = (x) => { const m = new Map(); for (const c of healCdRows(R(x), 0, perfContext(R(x)).end)) if (c.p === x) { const o = m.get(c.cd) || { name: c.cd, id: c.id, n: 0, v: 0 }; o.n += c.ts ? c.ts.length : 1; o.v += c.v || 0; m.set(c.cd, o); } return [...m.values()].sort((a, b2) => b2.v - a.v); };
   const cdA = cdOf(p), cdB = cdOf(q), cdT = (l) => l.reduce((t, c) => t + c.v, 0);
   const crit = (x, kk) => { let h = 0, c = 0; for (const a of (kk === 'heal' ? x.healAb : x.dmgAb).values()) { h += a.hits; c += a.crits; } return h ? c / h : null; };
   const ca = crit(p, k), cb = crit(q, kq), pct1 = (v) => (100 * v).toFixed(1) + '%';
@@ -21156,14 +21165,14 @@ function cmpMate(r, p, ps) {
     cmpGroup('cpm', 'Casts a minute', [
       { p, v: cpm(p), txt: cpm(p).toFixed(1), sub: cmpGap(cpm(p), cpm(q)), tip: cmpTip(p.name, cpm(p).toFixed(1) + ' casts a minute while alive', cmpVs(cpm(p), cpm(q), q.name)) },
       { p: q, v: cpm(q), txt: cpm(q).toFixed(1), tip: cmpTip(q.name, cpm(q).toFixed(1) + ' casts a minute while alive', cmpVs(cpm(q), cpm(p), p.name)) }],
-      cmpTwo(cmpList(esc(p.name) + ', casts a minute', p.color, cmpCasts(r, p)), cmpList(esc(q.name) + ', casts a minute', q.color, cmpCasts(r, q)))) +
+      cmpTwo(cmpList(esc(p.name) + ', casts a minute', p.color, cmpCasts(r, p)), cmpList(esc(q.name) + ', casts a minute', q.color, cmpCasts(rB, q)))) +
     // (crit: how often their healing or damage crit, all of it, then spell by spell)
     (ca != null && cb != null ? cmpGroup('crit', 'Crit chance', [
       { p, v: ca, txt: pct1(ca), sub: cmpGap(ca, cb), tip: cmpTip(p.name, pct1(ca) + ' of their ' + U(k) + ' crit', cmpVs(ca, cb, q.name)) },
       { p: q, v: cb, txt: pct1(cb), tip: cmpTip(q.name, pct1(cb) + ' of their ' + U(kq) + ' crit', cmpVs(cb, ca, p.name)) }],
       cmpTwo(cmpList(esc(p.name), p.color, critOf(p, k)), cmpList(esc(q.name), q.color, critOf(q, kq)))) : '');
   // How they differ, as cards: only what makes healing or damage a second
-  const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = esc(q.name), pct = (v) => Math.round(100 * v) + '%', xa = pc.per.get(p.name), xb = pc.per.get(q.name), heal2 = k === 'heal' && kq === 'heal';
+  const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = esc(q.name), pct = (v) => Math.round(100 * v) + '%', xa = pc.per.get(p.name), xb = perfContext(rB).per.get(q.name), heal2 = k === 'heal' && kq === 'heal';
   const two = { na: An, nb: Bn, ca: p.color, cb: q.color };
   const low = (x) => (x.healing - x.absorbs > 0 ? x.lowHeal / (x.healing - x.absorbs) : 0), shd = (x) => (x.healing > 0 ? x.absorbs / x.healing : 0);
   const cards = [
@@ -21186,83 +21195,50 @@ function cmpMate(r, p, ps) {
     { p, v: ohF(p), txt: pct(ohF(p)), tip: cmpTip(p.name, pct(ohF(p)) + ' of their healing was overhealing', '') },
     { p: q, v: ohF(q), txt: pct(ohF(q)), tip: cmpTip(q.name, pct(ohF(q)) + ' of their healing was overhealing', '') }], cmpTwo(cmpList(esc(p.name), p.color, ohOf(p)), cmpList(esc(q.name), q.color, ohOf(q)))) : '';
   const chart = k === kq ? '<div class="panel"><h3>Over the fight<small>' + capS(U(k)) + ' a second, 10 seconds at a time. Hover for both numbers.</small></h3>' +
-    cmpLine([{ name: p.name, col: p.color, arr: p[k === 'heal' ? 'healS' : 'dmgS'] || [] }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, arr: q[kq === 'heal' ? 'healS' : 'dmgS'] || [] }], pc.end) + '</div>' : '';
-  const tal = cmpTalents(r, p, q, { ab: A.ab, rate: ra, unit: k }, { ab: B.ab, rate: rb });
+    cmpLine([{ name: p.name, col: p.color, arr: p[k === 'heal' ? 'healS' : 'dmgS'] || [] }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, arr: q[kq === 'heal' ? 'healS' : 'dmgS'] || [] }], Math.max(pc.end, perfContext(rB).end)) + '</div>' : '';
+  const tal = cmpTalents(r, p, q, { ab: A.ab, rate: ra, unit: k }, { ab: B.ab, rate: rb }, rB);
   const whyM = k === kq ? cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: ra, ab: A.ab, hero: hA, tal: tal && tal.a }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, rate: rb, ab: B.ab, hero: heroQ(q), tal: tal && tal.b }, k, p.specName) : '';
-  const rot = cmpRot(r, p, q);
+  const rot = cmpRot(r, p, q, rB);
   if (rot && rot.a != null && rot.b != null) cards.unshift({ ...two, label: 'Rotation score', a: rot.a, b: rot.b, fa: String(Math.round(rot.a)), fb: String(Math.round(rot.b)), gap: cmpGap(rot.a, rot.b), st: rot.a >= rot.b - 2 ? 'ok' : 'warn', txt: 'From the Rotation tab: how well each pressed their buttons.' });
-  return { vs, body: whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + cmpCards(cards) + chart +
-    '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + ohGroup + '</div></div>' };
+  return { vs, body: (lead || '') + whyM + (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups + ohGroup) };
 }
-// (2) Top raiders of your spec: one of the top 3 on this boss, or their average, picked like a teammate (Oct 19, "more
-// like Fellow raiders"): the same header with a Change, the same How they differ, the same bar pairs in the class colour,
-// and the same drop-downs (two lists side by side). Casts a minute and crit count the spells that did the healing or
-// damage, the same way on both sides, so they compare fairly; crit is weighted by each spell's share.
+// (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
+// downloaded and read like one of your pulls, then the same page as Fellow raiders (your call, Oct 19: "both tabs set up
+// the exact same way"). Their kill is never saved as your raid.
+const TOPFIGHT = new Map();
+function topFightFor(r, w) {
+  if (!w || !w.code) return { err: 'This ranking has no kill to open. Open the tab again tomorrow.' };
+  const k = w.code + ':' + w.fight; if (TOPFIGHT.has(k)) return TOPFIGHT.get(k);
+  TOPFIGHT.set(k, 'loading');
+  (async () => { const rp = await WCL.loadReport(S.wclCreds, w.code), it = (rp.bosses || []).find((x) => x.wcl && x.wcl.fight === w.fight);
+    if (!it) throw new Error('That kill isn\'t in its report any more.'); it.foreign = true;
+    const r2 = await getRep(it), q = [...r2.players.values()].find((x) => x.name === w.name); if (!q) throw new Error(w.name + ' isn\'t in that kill.');
+    return { r: r2, q }; })()
+    .then((o) => TOPFIGHT.set(k, o), (e) => { console.warn('Top raider\'s kill:', e && e.message); TOPFIGHT.set(k, { err: 'Their kill didn\'t load just now. Open the tab again in a minute.' }); })
+    .finally(() => { if (S.tab === 'cmp' && S.rep === r) cmp(); });
+  return 'loading';
+}
 function cmpTop(r, p) {
   const spn = p.specName || 'spec', vs0 = (sub) => cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">The top ' + esc(spn) + 's</span><small>' + sub + '</small>';
   if (r.item.kind !== 'boss' || (!S.wclCreds && !WCL.HOSTED)) return { vs: vs0('on this boss'), body: cmpNeedWcl('The top raiders') };
   const k = cmpKind(p), TS = topSpecFor(r, p, k);
   if (TS == null) return { vs: vs0('on this boss'), body: cmpMsg('There are no rankings for ' + esc(spn) + 's here.') };
-  if (TS === 'loading') return { vs: vs0('loading…'), body: cmpMsg('Loading the top 3 ' + esc(spn) + 's on this boss…') };
+  if (TS === 'loading') return { vs: vs0('loading…'), body: cmpMsg('Loading the top ' + esc(spn) + 's on this boss…') };
   if (!TS.n) return { vs: vs0('on this boss'), body: cmpMsg(TS.err ? 'The rankings didn\'t load just now. Open the tab again in a minute.' : 'There are no ranked ' + esc(spn) + 's on this boss yet.') };
-  // (the top raiders on this player's hero tree (your call, Oct 19): of the top 8 fetched, the 3 best on the same tree, each
-  // one's tree read from the spells they cast; with none on it, the top 3 of any tree, and a note saying so)
-  const myHero = cmpHeroOf(r, p), tagged = TS.per && TS.per.length && TS.per[0].who ? TS.per.map((x, i) => ({ ...x, rank: i + 1, hero: cmpHeroBy(p.specName, x.ab.map((t) => t.name)) })) : null;
-  const onTree = tagged && myHero ? tagged.filter((x) => x.hero === myHero) : [], treeMiss = !!(tagged && myHero && !onTree.length), pick3 = tagged ? (onTree.length ? onTree : tagged).slice(0, 3) : null;
-  const W = pick3 ? { who: pick3.map((x) => x.who), per: pick3, ab: cmpAvgAb(pick3) } : { who: W.who, per: W.per, ab: W.ab }, rk = (i) => (W.per[i] && W.per[i].rank) || i + 1;
-  const U = k === 'heal' ? 'healing' : 'damage', mine = cmpRate(r, p, k), end = perfContext(r).end, nm = (x) => String(x.name).replace(/^[^:]+: /, '');
-  const avg = W.who.reduce((s, w) => s + w.amount, 0) / W.who.length, dur = W.who.reduce((s, w) => s + w.dur, 0) / W.who.length;
-  // (who: one of them (0, 1, 2), or their average ('avg'); the first one unless picked)
-  const per = W.per, ix = S.cmpTopW === 'avg' || !per.length ? 'avg' : Math.min(per.length - 1, +S.cmpTopW || 0), w = ix === 'avg' ? null : W.who[ix];
-  const B = w ? { name: w.name, label: esc(w.name), col: 'var(--gold)', ab: per[ix].ab, amount: w.amount, dur: w.dur, who: w.name } : { name: 'Top 3 average', label: 'the top 3', col: 'var(--gold)', ab: W.ab, amount: avg, dur, who: 'The top 3', many: true };
-  const Bc = w ? esc(w.name) : 'The top 3';
-  const pick = '<select class="rot-sel" id="cmpTopW" aria-label="Change"><option value="" selected disabled>Change</option>' + W.who.map((x, i) => '<option value="' + i + '"' + (ix === i ? ' disabled' : '') + '>#' + rk(i) + ' ' + esc(x.name) + '</option>').join('') +
-    '<option value="avg"' + (ix === 'avg' ? ' disabled' : '') + '>The top 3 average</option></select>';
-  const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">' + (w ? esc(w.name) : 'The top 3 ' + esc(spn) + 's') + '</span>' + (per.length ? pick : '') +
-    '<small>' + (w ? '#' + rk(ix) + ' ' + esc(spn) + ' on this boss' + (cmpHeroBy(p.specName, per[ix].ab.map((t) => t.name)) ? ', ' + esc(cmpHeroBy(p.specName, per[ix].ab.map((t) => t.name))) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) : 'Their average: ' + W.who.map((x) => esc(x.name)).join(', ')) + '</small>';
-  const prs = r.item.kill ? parsesFor(r, k) : null, x = prs && prs.get(p.name);
-  const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) };
-  const myAll = (() => { const by = new Map(); for (const a of (k === 'heal' ? p.healAb : p.dmgAb).values()) { const o = by.get(a.name) || { hits: 0, crits: 0, total: 0 }; o.hits += a.hits; o.crits += a.crits; o.total += a.total; by.set(a.name, o); } return by; })();
-  const myTot = [...myAll.values()].reduce((s, a) => s + a.total, 0) || 1;
-  const myCrit = [...myAll.values()].reduce((s, a) => s + (a.hits ? (a.total / myTot) * (a.crits / a.hits) : 0), 0), bCrit = B.ab.reduce((s, t) => s + (t.crit != null ? t.share * t.crit : 0), 0) / (B.ab.reduce((s, t) => s + (t.crit != null ? t.share : 0), 0) || 1);
-  const myCpm = A.ab.reduce((s, a) => s + (a.cpm || 0), 0), bCpm = B.ab.reduce((s, t) => s + (t.cpm || 0), 0), pc = (v) => (100 * v).toFixed(1) + '%';
-  // (average hit: the spells both use most, by share, each one's average hit, then averaged over those spells)
-  const hitP = cmpPairs(A, B).filter(([a, t]) => a && t && t.avg && (myAll.get(a.name) || {}).hits).slice(0, 5).map(([a, t]) => [{ ...a, avg: myAll.get(a.name).total / myAll.get(a.name).hits }, t]);
-  const hitA = hitP.reduce((s0, [a]) => s0 + a.avg, 0) / (hitP.length || 1), hitB = hitP.reduce((s0, [, t]) => s0 + t.avg, 0) / (hitP.length || 1);
-  const lst = (xs, f) => xs.slice().sort((a, b) => b.share - a.share).slice(0, 8).map(f).filter(Boolean);
-  const bSide = { icon: cmpIcon('trophy', 'var(--gold)'), name: w ? esc(w.name) : 'Top 3 average', col: 'var(--gold)' }; // (gold for the top raiders' side, as before)
-  const pair = (g, label, a, b, fa, fb, line, detail) => cmpGroup(g, label, [
-    { p, v: a, txt: fa, sub: cmpGap(a, b), tip: cmpTip(p.name, fa + ' ' + line, cmpVs(a, b, B.label)) },
-    { ...bSide, v: b, txt: fb, tip: cmpTip(w ? w.name : 'The top 3 ' + spn + 's', fb + ' ' + line + (w ? '' : ', on average'), w ? '#' + rk(ix) + ' on this boss' : W.who.map((y) => y.name).join(', ')) }], detail);
-  const two = (fa, fb) => cmpTwo(cmpList(esc(p.name), p.color, fa), cmpList(B.many ? 'The top 3' : esc(B.name), 'var(--gold)', fb));
-  const groups =
-    pair('out', capS(U) + ' a second', mine, B.amount, C(mine), C(B.amount), U + ' a second',
-      two(lst(A.ab, (a) => ({ name: nm(a), id: a.id, v: a.share, txt: pc(a.share) })), lst(B.ab, (t) => ({ name: nm(t), id: t.id, v: t.share, txt: pc(t.share) })))) +
-    pair('cpm', 'Casts a minute', myCpm, bCpm, myCpm.toFixed(1), bCpm.toFixed(1), 'casts a minute of the spells that did their ' + U,
-      two(A.ab.filter((a) => a.cpm).sort((a, b) => b.cpm - a.cpm).slice(0, 8).map((a) => ({ name: nm(a), id: a.id, v: a.cpm, txt: a.cpm.toFixed(1) })), B.ab.filter((t) => t.cpm).sort((a, b) => b.cpm - a.cpm).slice(0, 8).map((t) => ({ name: nm(t), id: t.id, v: t.cpm, txt: t.cpm.toFixed(1) })))) +
-    pair('crit', 'Crit chance', myCrit, bCrit, pc(myCrit), pc(bCrit), 'of their ' + U + ' crit, weighted by each spell',
-      two(lst(A.ab, (a) => { const o = myAll.get(a.name); return o && o.hits && o.crits ? { name: nm(a), id: a.id, v: o.crits / o.hits, txt: pc(o.crits / o.hits) } : null; }), lst(B.ab.filter((t) => t.crit), (t) => ({ name: nm(t), id: t.id, v: t.crit, txt: pc(t.crit) })))) + // (spells that can't crit, like Leech, left out)
-    (hitP.length ? pair('hit', 'Average hit, biggest spells', hitA, hitB, C(hitA), C(hitB), 'average hit of their ' + hitP.length + ' biggest spells',
-      two(hitP.map(([a]) => ({ name: nm(a), id: a.id, v: a.avg, txt: C(a.avg) })), hitP.map(([, t]) => ({ name: nm(t), id: t.id, v: t.avg, txt: C(t.avg) })))) : '');
-  // (where this player's number would place among the top 3)
-  const place = W.who.filter((y) => y.amount > mine).length + 1;
-  // How they differ, as cards
-  const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = B.many ? 'Top 3' : esc(B.name), gold = 'var(--gold)', duo = { na: An, nb: Bn, ca: p.color, cb: gold };
-  const hit0 = hitP.length ? hitP[0] : null;
-  const cards = [
-    { ...duo, label: capS(U) + ' a second', a: mine, b: B.amount, fa: C(mine), fb: C(B.amount), gap: cmpGap(mine, B.amount), st: cmpGapSt(mine, B.amount) === 'bad' ? 'warn' : cmpGapSt(mine, B.amount),
-      txt: cmpLead(An, mine, Bn, B.amount, k === 'heal' ? 'healed' : 'did') + ' ' + (place === 1 ? 'More than all of the top 3.' : place === 4 ? 'All of the top 3 did more.' : 'Would place ' + ordinal(place) + ' among them.') },
-    { ...duo, label: 'Casts a minute', a: myCpm, b: bCpm, fa: myCpm.toFixed(1), fb: bCpm.toFixed(1), gap: cmpGap(myCpm, bCpm), st: myCpm >= bCpm * 0.9 ? 'ok' : 'warn', txt: cmpLead(An, myCpm, Bn, bCpm, 'cast') + ' Counting the spells that did their ' + U + '.' },
-    { ...duo, label: 'Crit chance', a: myCrit, b: bCrit, fa: pc(myCrit), fb: pc(bCrit), gap: cmpGap(myCrit, bCrit), st: myCrit >= bCrit * 0.95 ? 'ok' : 'warn', txt: Math.abs(myCrit - bCrit) < 0.01 ? 'About the same.' : (myCrit > bCrit ? An : Bn) + ' crit more often.' },
-    hit0 ? { ...duo, label: 'Average hit, biggest spells', a: hitA, b: hitB, fa: C(hitA), fb: C(hitB), gap: cmpGap(hitA, hitB), st: hitA >= hitB * 0.95 ? 'ok' : 'warn',
-      txt: (Math.abs(hitA - hitB) / Math.max(hitA, hitB) < 0.03 ? 'About the same.' : (hitA > hitB ? An : Bn) + ' hit harder.') + ' ' + esc(nm(hit0[0])) + ': ' + C(hit0[0].avg) + ' against ' + C(hit0[1].avg) + '.' } : null,
-    { ...duo, label: 'Fight length', a: end, b: B.dur, fa: T(end), fb: T(B.dur), txt: Math.abs(end - B.dur) / B.dur < 0.05 ? 'About the same length.' : end > B.dur ? 'A longer fight usually means a lower number a second.' : 'A shorter fight.' },
-    x ? { na: An, ca: p.color, label: 'Parse', a: x.pct, max: 100, fa: String(Math.floor(x.pct)), st: x.pct >= 75 ? 'ok' : x.pct >= 50 ? 'warn' : 'bad', txt: 'Better than ' + Math.floor(x.pct) + '% of ' + esc(spn) + 's on this boss.' } : null,
-  ];
-  const whyT = cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: mine, ab: A.ab, hero: cmpHeroOf(r, p) }, { name: B.many ? 'The top 3' : B.name, col: 'var(--gold)', rate: B.amount, ab: B.ab, hero: B.many ? '' : cmpHeroBy(p.specName, B.ab.map((t) => t.name)) }, k, p.specName);
-  const treeNote = treeMiss ? '<div class="panel"><p class="cmp-hnote" style="margin:0">None of the top ' + tagged.length + ' ' + esc(spn) + 's on this boss play ' + esc(myHero) + ', so these are the best of any hero tree. Some spells only one side has.</p></div>' : '';
-  return { vs, body: treeNote + whyT + cmpCards(cards) +
-    '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>' };
+  // (the 3 best on this player's hero tree, of the top 8, each one's tree read from the spells they cast; with none on it,
+  // the 3 best of any tree, and a note saying so)
+  const myHero = cmpHeroOf(r, p), all = (TS.per || []).filter((x) => x.who).map((x, i) => ({ ...x, rank: i + 1, hero: cmpHeroBy(p.specName, x.ab.map((t) => t.name)) }));
+  const onTree = myHero ? all.filter((x) => x.hero === myHero) : [], treeMiss = !!(all.length && myHero && !onTree.length), pick3 = (onTree.length ? onTree : all).slice(0, 3);
+  if (!pick3.length) return { vs: vs0('on this boss'), body: cmpMsg('The rankings didn\'t load just now. Open the tab again in a minute.') };
+  const ix = Math.min(pick3.length - 1, +S.cmpTopW || 0), x = pick3[ix], w = x.who;
+  const pick = '<select class="rot-sel" id="cmpTopW" aria-label="Change"><option value="" selected disabled>Change</option>' + pick3.map((y, i) => '<option value="' + i + '"' + (i === ix ? ' disabled' : '') + '>#' + y.rank + ' ' + esc(y.who.name) + '</option>').join('') + '</select>';
+  const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">' + esc(w.name) + '</span>' + pick +
+    '<small>#' + x.rank + ' ' + esc(spn) + ' on this boss' + (x.hero ? ', ' + esc(x.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
+  const treeNote = treeMiss ? '<div class="panel"><p class="cmp-hnote" style="margin:0">None of the top ' + all.length + ' ' + esc(spn) + 's on this boss play ' + esc(myHero) + ', so these are the best of any hero tree. Some spells only one side has.</p></div>' : '';
+  const TF = topFightFor(r, w);
+  if (TF === 'loading') return { vs, body: treeNote + cmpMsg('Loading ' + esc(w.name) + '\'s whole kill, the same way a pull opens. The first time takes a few seconds…') };
+  if (TF.err) return { vs, body: treeNote + cmpMsg(esc(TF.err)) };
+  return cmpPair(r, p, TF.r, TF.q, vs, treeNote);
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from
 // the list; then it's your raid against theirs, the same page as the other two.
@@ -21356,12 +21332,14 @@ function cmp() {
   const v = $('#view');
   v.querySelectorAll('#cmpMode button').forEach((b) => (b.onclick = () => { S.cmpMode = b.dataset.m; S.cmpG = null; cmp(); }));
   const sel = (id, f) => { const e = $('#' + id); if (e) e.onchange = () => { if (!e.value) return; f(e.value); cmp(); }; };
-  sel('cmpMe', (nm) => { S.cmpMe = nm; if (S.cmpMate === nm) S.cmpMate = null; }); sel('cmpMate', (nm) => { S.cmpMate = nm; }); sel('cmpTopW', (v) => { S.cmpTopW = v === 'avg' ? 'avg' : +v; });
+  sel('cmpMe', (nm) => { S.cmpMe = nm; if (S.cmpMate === nm) S.cmpMate = null; }); sel('cmpMate', (nm) => { S.cmpMate = nm; }); sel('cmpTopW', (v) => { S.cmpTopW = +v; });
   // (a pair of bars: open its details under it, or close them)
   v.querySelectorAll('[data-cg]').forEach((b) => (b.onclick = () => { S.cmpG = S.cmpG === b.dataset.cg ? null : b.dataset.cg; cmp(); }));
   const all2 = $('#cmpAllSp'); if (all2) all2.onclick = () => { S.cmpAllSp = !S.cmpAllSp; cmp(); };
   { const b = $('#cmpRotAll'); if (b) b.onclick = () => { S.cmpRotAll = !S.cmpRotAll; cmp(); }; }
+  { const b = $('#cmpTalAll'); if (b) b.onclick = () => { S.cmpTalAll = !S.cmpTalAll; cmp(); }; }
   { const d = $('#view .cmp-tdet'); if (d) d.ontoggle = () => { S.cmpTreesShut = !d.open; }; }
+  v.querySelectorAll('details.cmp-fold').forEach((d) => (d.ontoggle = () => { S.cmpFolds = S.cmpFolds || new Set(); if (d.open) S.cmpFolds.add(d.dataset.f); else S.cmpFolds.delete(d.dataset.f); }));
   v.querySelectorAll('#cmpRange button').forEach((b) => (b.onclick = () => { S.cmpPage = +b.dataset.p; cmp(); }));
   v.querySelectorAll('#cmpSort button').forEach((b) => (b.onclick = () => { S.cmpSort = b.dataset.s; cmp(); }));
   const fd = $('#cmpFind'); if (fd) fd.oninput = () => { S.cmpFind = fd.value; clearTimeout(S._cmpT); S._cmpT = setTimeout(() => { cmp(); const e = $('#cmpFind'); if (e) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }, 250); };
