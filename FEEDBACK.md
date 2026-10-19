@@ -280,12 +280,16 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
     Top players: 3 to 6 of 4 to 6 windows right, 2.4 to 3.6 times their usual.
   - **Frost Mage:** burst is now read from Ray of Frost (the list no longer uses Icy Veins), for the Burst windows tile
     only: top players don't pair Ray of Frost with Frozen Orb or Flurry every time, so there's no graded window card.
-- [ ] **Still to build (solid):** Enhancement (Maelstrom Weapon at 5 or more), Retribution and Protection Paladin (spend
-  Hammer of Light; Wake of Ashes in Avenging Wrath; Consecration), Elemental (a spender after Lava Burst), Balance (spend
-  the free Starsurge and Starfall procs), Arcane (Barrage at 4 charges), Augmentation (Prescience up; Breath of Eons in Ebon
-  Might), Affliction (Malevolence and Dark Harvest with Darkglare), Arms (Demolish in Colossus Smash), Protection Warrior
-  (Revenge! procs), Vengeance (Spirit Bomb at 4 souls), Shadow (both dots up before Voidform), Restoration Shaman (Earth
-  Shield up). Also: Top players marks on the new checks, and a test on average players.
+- [x] **The solid ones, built and checked on 44 top players:** Arcane Barrage at 4 Arcane Charges (top players 100%),
+  Demolish inside Colossus Smash (Colossus Arms), Malevolence with Darkglare, both damage over time spells up before Voidform,
+  Master of the Elements spent (Elemental), Balance's free Starsurge and Starfall procs, Revenge! procs (Protection
+  Warrior), Consecration under a Protection Paladin (top players 58-98%, so 55% is good), Breath of Eons inside Ebon Might
+  (top players 100%).
+- Left out after the check or the logs: Enhancement's "spend at 5 Maelstrom Weapon" (top players only 52-76%, they spend
+  earlier on purpose), Dark Harvest with Darkglare (top players miss 1 in 3), Retribution's Hammer of Light (the top players
+  play Herald of the Sun and never use it), Prescience and Earth Shield uptime (they sit on other players, so the log can't
+  read them as your own), and Vengeance's Spirit Bomb (already in its priority list).
+- [ ] Later: Top players marks on the new checks, and a test on average players (parse 30-50).
 - Note: some top Frost Mages on Twin Fangs don't take Ray of Frost, so their tile says "no burst cooldown pressed".
 
 ## 2026-10-19, round 251: Rotation, three tiles at the top of every spec page (your idea: the player behind the keyboard)
