@@ -10,7 +10,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'overview', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, pullAlert: (b, o) => pullAlert(b, o), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
+if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -176,6 +176,20 @@ const MAP_STOP = new Set(['kicks', 'soaks', 'front', 'coold', 'assig', 'mecha', 
 const mapStems = (t) => new Set(String(t).replace(/<[^>]+>/g, ' ').toLowerCase().split(/[^a-z']+/).filter((w) => w.length >= 5).map((w) => w.slice(0, 5)).filter((w) => !MAP_STOP.has(w)));
 // (back: how far before the moment a row may start, for a mistake that comes at the end of its mechanic, like a globule
 // exploding seconds after its set)
+// (a map that draws the mechanic itself, not only where players stood: the same test the engine uses to drop maps)
+const drawsMap = (mp) => !!mp && !!(mp.cone || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
+  [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
+// The map for a death (Pull recap's first death): its own when that draws what killed them; else the fight check's map of
+// the same mechanic at that moment (Blink Nova's circle, a frontal's cone), with the player who died marked on it; else its
+// own (where they died, and the 5 seconds before).
+function deathMap(r, d) {
+  if (!d || drawsMap(d.map) || !d.ability) return d && d.map;
+  const fc = mapAt(r, d.t, d.ability, 3, 6); if (!fc || !drawsMap(fc.map)) return d.map;
+  const m = { ...fc.map, title: d.player + ' died to ' + d.ability + ' at ' + T(d.t) + ', on the map of the ' + fc.title.replace(/:.*$/, '') + ' check' };
+  if (!(m.bad || []).length) Object.assign(m, { bad: [d.guid], badLabel: 'died here' });
+  else if (!m.bad.includes(d.guid) && !(m.hl || []).length) Object.assign(m, { hl: [d.guid], hlLabel: 'died here' });
+  return m;
+}
 function mapAt(r, t, label, win, back) {
   if (t == null) return null; const want = mapStems(label); if (!want.size) return null; const w = win || 1.5, bk = Math.max(w, back || 0);
   const c = modMaps(r).filter((x) => x.t >= t - bk && x.t <= t + w && [...mapStems(x.title)].some((s) => want.has(s))).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
@@ -2952,8 +2966,9 @@ function miniMap(mp, pmap) {
   if (gAdd.size || bAdd.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="' + (gAdd.size ? '#2fd15a' : '#ff3b3b') + '" stroke-width="2.5"/>', gAdd.size ? 'Green ring: the add that was kicked' : 'Red ring: the add whose cast got off']);
   if (pts.some((q) => q.kind === 'add' && !(ADD_LOOK[q.name] || ADD_LOOK[String(q.name).replace(/ \(.*\)$/, '')]))) leg.push([(x, y) => '<rect x="' + (x - 4.5) + '" y="' + (y - 4.5) + '" width="9" height="9" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000"/>', 'Add' + (gAdd.size ? ' (green ring: kicked)' : bAdd.size ? ' (red ring: cast got off)' : '')]);
   if (pts.some((q) => q.kind === 'boss')) leg.push([(x, y) => bossCrest(x, y, 'Boss', 0.33), 'Boss (gold crest)']);
-  // (on an animated map the bar can show up later in the clip, so the key says so whenever this map's units cast)
-  if (cbShown || (mp.frames && pts.some((q) => (q.kind === 'add' || q.kind === 'boss') && cbs.has(q.guid)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" rx="1.5" fill="#05060a" stroke="#000"/><rect x="' + (x - 6.5) + '" y="' + (y - 2.5) + '" width="8" height="5" rx="1" fill="#f3c969"/>', 'Cast bar: gold while it casts, then green with who kicked it, or red when it went off']);
+  // (on an animated map the bar can show up later in the clip, so the key says so when a cast falls inside the clip)
+  const f0 = mp.frames && mp.frames.length ? mp.frames[0].t : null, f1 = f0 != null ? mp.frames[mp.frames.length - 1].t : null;
+  if (cbShown || (f0 != null && pts.some((q) => (q.kind === 'add' || q.kind === 'boss') && (cbs.get(q.guid) || []).some((c) => c.t0 <= f1 && c.t1 + 1.5 >= f0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" rx="1.5" fill="#05060a" stroke="#000"/><rect x="' + (x - 6.5) + '" y="' + (y - 2.5) + '" width="8" height="5" rx="1" fill="#f3c969"/>', 'Cast bar: gold while it casts, then green with who kicked it, or red when it went off']);
   for (const k of hasObj) leg.push([(x, y) => k === 'ghost' ? '<path d="M' + (x - 5) + ' ' + (y + 6) + 'v-6a5 5 0 0 1 10 0v6l-2.5-1.7-2.5 1.7-2.5-1.7z" fill="#e9eef7" stroke="#000"/>' : '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="url(#' + (k === 'porb' ? 'orbP' : 'orbG') + ')"/>', OBJS[k][1]]);
   if (mp.lines && mp.lines.length) leg.push([(x, y) => '<path d="M1 11L11 1L15 5L5 15Z" fill="rgba(159,242,109,.4)" stroke="#9ff26d" stroke-width="1.2"/>', 'Green band: Corrosive Spit aiming, from the add through its target and beyond. It only hurts the moment it fires (turns yellow); grey dashed = the add died before it fired, so it never hit anyone. About ' + SPIT_LEN + ' yd long, ' + SPIT_W + ' yd wide, measured from bystander hits']);
   for (const [nm, look] of Object.entries(ADD_LOOK)) if (pts.some((q) => q.kind === 'add' && q.name === nm) || (mp.frames && mp.frames.some((f) => f.pts.some((q) => q.name === nm)))) leg.push([(x, y) => addIcon(x, y, look, '', 6 / (look.r + 2.5)), look.legend || nm]);
@@ -11556,7 +11571,7 @@ async function lastPull() {
   let h = (!latest ? '<div class="nightload"><span>This is pull ' + it.pull + ', not the latest one.</span><button class="btn primary" id="lpLatest">Show the latest pull</button></div>' : ''); // (the banner on top shows the result and how it compares)
   // ---- what went wrong (healing cooldowns from the note are kept apart: their own box); each line opens its tab ----
   const HCD = 'Assigned cooldown', wrong = [], fixes = [];
-  if (ds.length) { const d = ds[0]; wrong.push({ sev: 'bad', w: 0, map: d.map, go: ['audit', 'sec-deaths'], html: '<b>' + esc(d.player) + ' died first</b>, at ' + T(d.t) + (d.ability ? ', to ' + mech(d.ability, d.abilityId) : '') + '.' + (ds.length > 1 ? ' <span class="sub">' + plural(ds.length, 'death') + ' in all.</span>' : '') }); if (d.prevent && d.prevent[0]) fixes.push({ w: 0, t: 'Keep ' + d.player + ' alive', x: d.prevent[0] }); }
+  if (ds.length) { const d = ds[0]; wrong.push({ sev: 'bad', w: 0, map: deathMap(r, d), go: ['audit', 'sec-deaths'], html: '<b>' + esc(d.player) + ' died first</b>, at ' + T(d.t) + (d.ability ? ', to ' + mech(d.ability, d.abilityId) : '') + '.' + (ds.length > 1 ? ' <span class="sub">' + plural(ds.length, 'death') + ' in all.</span>' : '') }); if (d.prevent && d.prevent[0]) fixes.push({ w: 0, t: 'Keep ' + d.player + ' alive', x: d.prevent[0] }); }
   const groups = new Map(); for (const m of ms.filter((m) => m.severity !== 'Low' && m.mechanic !== HCD)) { const g = groups.get(m.mechanic); if (g) { g.n++; if (m.player !== 'Raid') g.who.add(m.player); if (m.severity === 'High') g.hi = true; } else groups.set(m.mechanic, { m, n: 1, hi: m.severity === 'High', who: new Set(m.player !== 'Raid' ? [m.player] : []) }); }
   const secOf = (name) => { for (const [id, x] of P) if (String(x.s.spell && x.s.spell[1]).toLowerCase() === String(name).toLowerCase() || x.s.title.toLowerCase().includes(String(name).toLowerCase())) return id; return null; };
   // (where a line's › goes: its own section, else the most important one that mentions it, Avoidable damage last)

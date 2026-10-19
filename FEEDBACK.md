@@ -16,7 +16,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   what people remember about Debrief, so show them off. Three parts:
   1. Every mini map on Mechanics shows open, with no drop-down (done in round 209, with the tour leading with maps).
   2. Make them stand out on the mechanics where a map tells the story (soaks, spreads, baits, adds): a small map right in
-     "What went wrong" for that mechanic (done in round 210), and a map for the first death on Pull recap (next). The
+     "What went wrong" for that mechanic (done in round 210), and a map for the first death on Pull recap (done in round 218). The
      "Map" mark on rows was dropped: the maps show on their own now.
   3. **Cast bars on the maps (your note, Oct 18; done in round 217):** an add, boss or other enemy casting something that should be kicked
      (or that the note assigns a kick for) gets a cast bar under its nameplate, like in game. It fills as the cast goes,
@@ -209,6 +209,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 218: The first death's map on Pull recap
+- [x] **Pull recap's first death opens the map that draws what killed them.** Every death already had a map (where they
+  died, and the 5 seconds before). Now, when that map shows only players and the fight check has a map of the same
+  mechanic at that moment, Pull recap uses that one, with the player who died marked. Example from the test night:
+  "Chaztank died to Blink Nova at 0:17, on the map of the Blink Nova check", with the 20-yard circle drawn and a red ✕ on
+  them. Deaths whose own map already draws the mechanic (Deadly Venom, Noxious Ground, Toxic Incubation and others) keep it.
+- [x] A map's key only mentions cast bars when one shows up in that clip.
+
 ## 2026-10-18, round 217: Cast bars on the maps (your note)
 - [x] **Adds and bosses get a cast bar under their name, like in game,** whenever they cast something that should be
   kicked (any spell someone kicked that pull, or one the fight's rules say to kick). It fills in gold as the cast goes,
@@ -333,7 +341,7 @@ itself, or only dots?
   zoomed to the mechanic. Hover it on a computer and it grows to a big, clear map; click it and you go to the mechanic,
   where its full maps are already showing. On a phone it's a little smaller, and a tap goes to the mechanic.
 - [x] Power Infusion is on for the website (your call).
-- [ ] Next from the map notes: a map of the first death on Pull recap, when the death was about where someone stood.
+- [x] Next from the map notes: a map of the first death on Pull recap, when the death was about where someone stood (done in round 218).
   Sharper maps: draw our own clean outline of each boss room instead of the soft floor pictures (pulling Blizzard's art
   from the game files would break the "never bundle Blizzard art" rule). A "Map" mark on rows was dropped, since the maps
   now show on their own.
