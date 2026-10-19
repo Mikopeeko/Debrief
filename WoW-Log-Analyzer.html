@@ -1356,6 +1356,10 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .home-teams { margin: 26px 0 0; } .home > .home-teams:first-child { margin: 24px 0 0; } .home > .home-teams:first-child .ht-h h2 { font-size: 22px; }
 .home > .home-teams:first-child + .fp-top .fp-hero { padding-top: 0; } .home > .home-teams:first-child + .fph-hero { padding-top: 6px; } .ht-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; } .ht-h h2 { margin: 0; font: 600 20px var(--head); color: #f3f5f9; }
 .ht-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+/* (the website's front page: your teams in the middle, like the rest of the page (your note, Oct 18), however many there are) */
+.fph > .home-teams .ht-h { justify-content: center; }
+.fph > .home-teams .ht-row { grid-template-columns: repeat(auto-fit, minmax(250px, 310px)); justify-content: center; }
+@media (max-width: 560px) { .fph > .home-teams .ht-row { grid-template-columns: 1fr; } }
 .ht-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px 16px; text-align: left; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; cursor: pointer; transition: border-color .12s, background .12s; }
 .ht-card:hover { background: var(--raised); border-color: var(--line2); border-left-color: var(--gold); }
 .ht-n { font: 600 17px var(--head); color: #f3f5f9; } .ht-k { font-size: 12.5px; color: var(--muted); line-height: 1.4; }

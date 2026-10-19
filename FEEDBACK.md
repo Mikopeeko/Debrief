@@ -220,6 +220,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] **Fixed: the team names drawn as small boxes on top of the line under them, "Add a team" squeezed into a box, and a
   box around the "Holy · 81 best average" line.** An old talent tree, no longer drawn anywhere, used the same style names
   as the team cards. Its styles now only apply inside it.
+- [x] **Your teams sit in the middle of the front page**, lined up with the headline (your note). On a phone, one card a row.
 
 ## 2026-10-18, round 237: Show one player on Night summary and Graphs; the site always opens on the front page (your notes)
 - [x] **The "Show one player" pick is on Night summary and Graphs too**, and it's one pick: choosing someone on any of
