@@ -245,6 +245,11 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   Skip. One team: "You raid with Wolfthorn", with Add Wolfthorn.
 - [x] Both pop-ups need a choice or Skip (Escape skips too), and the page's tips wait until the question is answered.
 - [x] Tested on your Wolfthorn team and Flëxørçïst on the local copy (removed afterwards), on desktop and phone.
+- [x] **Walked through it as a brand-new visitor (your note)**, on a private copy of the website with no saved data: the
+  tour, Start here, add Wolfthorn, pick yourself; then the other way round, add Flëxørçïst, "You raid with Wolfthorn",
+  Add. Two fixes from it: the page's tips no longer open on top of the question (they wait until it's answered and the
+  team's first nights are in), and a character added as "My character" (or one that adds its team from the pop-up)
+  counts as you, so the team doesn't ask "Which one is you?" again.
 
 ## 2026-10-18, round 238: The website's front page is always the redesign (your note: "the entire front page looks wrong")
 - [x] **Everyone gets the redesigned front page now**: the raid art behind the headline, the Beta tag, the live log and

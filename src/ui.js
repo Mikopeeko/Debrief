@@ -12982,6 +12982,7 @@ function pageTips(k, force) {
   const t0 = Date.now(); let first = 0;
   const wait = () => {
     if (tipsPage() !== k) { TIPS_WAIT = null; return; } // (you've moved on: the tips wait for your next visit)
+    if ($('.pg-dim')) { TIPS_WAIT = null; return; } // (a pop-up question came up meanwhile: the tips wait until it's answered)
     const steps = PAGE_TIPS[k].filter((s) => tipVis(s.sel)), now = Date.now();
     if (steps.length && !first) first = now;
     const allUp = steps.length === PAGE_TIPS[k].length, firstUp = !!tipVis(PAGE_TIPS[k][0].sel);
@@ -13074,6 +13075,8 @@ function bindHomeStart() {
     if (!groupLink(raw) && WCL.parseLink(raw)) { openReportLink(raw, msg); return; } // (one night: open it)
     msg.style.color = 'var(--muted)'; msg.textContent = 'Finding it on Warcraft Logs…';
     try { const { g: ng, already } = await groupAdd(raw);
+      // ("Start here: My character" is your own: it's you, so a team you add later doesn't ask "Which one is you?")
+      if (ng.kind === 'char' && !meOf()) store.set(ME_KEY, JSON.stringify({ name: ng.name, cls: ng.cls || null, char: ng.gid, at: Date.now() }));
       if (already) { progressPage(gName(ng) + ' is already on your list.', ng.gid); return; }
       progressPage('Added ' + ng.name + '. Importing its nights…', ng.gid); progRun(ng); groupsBackfill();
     } catch (e) { msg.style.color = ''; msg.textContent = e.message.replace(' (see "Which link?" below)', '. The line under this box says where to find it'); }
@@ -13592,6 +13595,7 @@ function renderProgress(msg, msgErr) {
     // are read right after)
     $$('#pgSugg [data-rwadd]').forEach((x) => (x.onclick = async (ev) => { const b = ev.currentTarget; b.disabled = true;
       try { const { g: ng, already } = await groupAdd('https://www.warcraftlogs.com/guild/id/' + x.dataset.rwadd); store.set(GROUP_CUR, one ? ng.gid : g.gid);
+        if (!meOf()) store.set(ME_KEY, JSON.stringify({ name: g.name, cls: g.cls || null, char: g.gid, at: Date.now() })); // (their team, so this character is you: no "Which one is you?" on it)
         if (already) { renderProgress(gName(ng) + ' is already on your list.'); return; }
         groupsBackfill(); const busy = S.progBusy, later = busy ? ' Its nights come in right after ' + gName(groups().find((q) => q.gid === busy) || g) + '\'s.' : ' Importing its nights…';
         if (one) { S.progView = ng.gid; window.scrollTo(0, 0); }
@@ -13622,7 +13626,9 @@ function renderProgress(msg, msgErr) {
   { const d = $('#pgMeD') || $('#pgSuggD'); if (d) { const skip = $('#pgMeNo') || $('#pgSuggNo'); d.onkeydown = (e) => { if (e.key === 'Escape') { e.preventDefault(); skip.click(); } };
     const f0 = d.querySelector('.me-c, [data-rwadd]'); if (f0 && !d.contains(document.activeElement)) f0.focus({ preventScroll: true }); } }
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
-  if (!$('#pgMeD') && !$('#pgSuggD')) pageTips('team'); // (not over the pop-up question)
+  // (the tips: not over a pop-up question, and not while a team just added is still bringing in its first nights, when the
+  // page is mostly empty and the question can pop up any moment; they come once it's answered and the nights are in)
+  if (!$('#pgMeD') && !$('#pgSuggD') && !(g && !g.last)) pageTips('team');
   // (new nights: checked by themselves when the page opens, if not in the last 10 minutes; the line under the name says when)
   if (g && S.progBusy !== g.gid) autoCheck(g);
   // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)
