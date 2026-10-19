@@ -11675,8 +11675,9 @@ function cmpGapWhy(x) {
   // own shields count as that spell, and no reason is ever about overhealing)
   const mg = (x.book && x.book.merge) || {}, fold = (ab) => { const o = ab.map((z) => ({ ...z })); for (const [k, l] of Object.entries(mg)) { const t = o.find((z) => z.name === k); if (!t) continue;
     for (const n2 of l) { const i = o.findIndex((z) => z.name === n2); if (i >= 0) { t.share += o[i].share; t.plus = n2; o.splice(i, 1); } } } return o; };
+  const ahead = [];
   for (const [a, h] of cmpPairs({ ab: fold(lo.ab) }, { ab: fold(hi.ab) })) {
-    const va = a ? a.share * lo.rate : 0, vh = h ? h.share * hi.rate : 0, d = vh - va; if (d < 0.03 * hi.rate) continue;
+    const va = a ? a.share * lo.rate : 0, vh = h ? h.share * hi.rate : 0, d = vh - va; if (d <= -0.03 * hi.rate) ahead.push({ name: nm(a || h), v: -d }); if (d < 0.03 * hi.rate) continue;
     const y = a || h, name = String(y.name), both = a && h && a.cpm && h.cpm, perL = both ? va * 60 / a.cpm : 0, perH = both ? vh * 60 / h.cpm : 0;
     const plus = (a && a.plus) || (h && h.plus), withP = plus ? ' (with ' + esc(plus) + '\'s shields)' : '';
     const kind = !a ? 'only' : both && h.cpm / a.cpm >= (vh / Math.max(1, va)) / (h.cpm / a.cpm) ? 'casts' : both ? 'per' : 'more';
@@ -11715,6 +11716,8 @@ function cmpGapWhy(x) {
   // the playbook's own reasons; one that explains a spell above joins that line instead of repeating it
   if (x.book && x.book.extra) for (const e of x.book.extra(lo, hi, b, C)) { const t = e.merge && out.find((o) => e.merge.includes(o.key));
     if (t) { t.txt += ' ' + e.add; t.tip += '<br>' + e.tip; t.fix = e.fix || t.fix; t.split = e.split || t.split; } else out.push(e); }
+  // (only where the gap went: the spells. The rest is under More detail)
+  out.splice(0, out.length, ...out.filter((o) => o.real));
   if (!out.length) return '';
   out.sort((p, q) => q.v - p.v);
   const top = out.slice(0, 6), COLS = ['#e6b450', '#5aa9e6', '#7ee08f', '#c792ea', '#f07178', '#89ddff'];
@@ -11722,6 +11725,8 @@ function cmpGapWhy(x) {
   // (Oct 19, "make the comparisons even more visually clear, I'm a visual person, most WoW players are": the gap as one bar cut
   // into its reasons, each reason a card with its icon, both players' bars and the Try line; the numbers stay in the tooltips)
   const tot = Math.max(gap, top.reduce((t, o) => t + o.v, 0)), wOf = (o) => 100 * o.v / tot;
+  // (spells where the lower side did more, which closed part of the gap: said under the bar, so the numbers add up)
+  const aheadL = ahead.sort((p, q) => q.v - p.v).slice(0, 3), aheadT = aheadL.length ? '<p class="sub" style="margin:6px 0 0">' + capS(L) + ' did more with ' + aheadL.map((o) => b(esc(o.name)) + ' (+' + C(o.v) + ' a second)').join(aheadL.length === 2 ? ' and ' : ', ') + ', which closed part of the gap.</p>' : '';
   const gbar = '<div class="cmp-gbar">' + top.map((o, i) => '<span class="cmp-gseg" style="width:' + wOf(o).toFixed(1) + '%;background:' + o.col + '" data-tt="' + esc('<b>' + (i + 1) + '. ' + o.head + '</b><br>' + (o.real ? 'About ' : 'Roughly ') + C(o.v) + ' ' + U + ' a second of the gap') + '">' + (wOf(o) >= 9 ? '<b>' + (i + 1) + '</b>' + (wOf(o) >= 16 ? ' ' + o.head : '') : '') + '</span>').join('') +
     (tot > top.reduce((t, o) => t + o.v, 0) + 1 ? '<span class="cmp-gseg oth" style="flex:1" data-tt="Smaller things, each too small to name."></span>' : '') + '</div>';
   const pair = (o, x) => { const mx = Math.max(x.a || 0, x.b || 0) || 1, row = (n, col, v, fv) => '<div class="cmp-cb"><span class="cmp-cbn" style="color:' + col + '">' + esc(n) + '</span><span class="cmp-cbb"><i style="width:' + (100 * (v || 0) / mx).toFixed(1) + '%;background:' + col + '"></i></span><b>' + fv + '</b></div>';
@@ -11733,9 +11738,9 @@ function cmpGapWhy(x) {
     '<span><b>' + o.head + '</b>' + (o.v >= 0.01 * gap ? '<span class="cmp-wd dn">' + (o.real ? '' : 'about ') + C(o.v) + ' ' + U + ' a second</span>' : '') + '</span></div>' +
     '<div class="cmp-ct">' + o.txt + '</div>' + (o.bars || []).map((x) => pair(o, x)).join('') + (o.split ? split(o.split) : '') + (o.pills ? pills(o) : '') +
     (o.fix ? '<div class="cmp-try"><b>Try:</b> ' + o.fix + '</div>' : '') + '</div>';
-  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The biggest reasons first. Hover anything for the numbers.</small></h3><p class="cmp-wlead">' + H + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(pc(gap / Math.max(1, lo.rate)) + ' more') + ' than ' + L + ' (' + C(hi.rate) + ' a second, against ' + C(lo.rate) + '). Here is where the gap comes from:</p>' +
-    gbar + (x.builds ? '<p class="sub" style="margin:8px 0 0">' + x.builds + '</p>' : '') + '<div class="cmp-rcards">' + top.map(card).join('') + '</div>' +
-    (out.length > 6 ? '<p class="sub" style="margin:8px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in the sections below.</p>' : '') + '</div>';
+  return '<div class="panel cmp-story cmp-gap"><h3>Why the gap<small>The biggest reasons first. Hover anything for the numbers.</small></h3><p class="cmp-wlead">' + H + ' ' + (U === 'healing' ? 'healed' : 'did') + ' ' + b(pc(gap / Math.max(1, lo.rate)) + ' more') + ' than ' + L + ' (' + C(hi.rate) + ' a second, against ' + C(lo.rate) + '). Here is where it came from, spell by spell:</p>' +
+    gbar + aheadT + (x.builds ? '<p class="sub" style="margin:8px 0 0">' + x.builds + '</p>' : '') + '<div class="cmp-rcards">' + top.map(card).join('') + '</div>' +
+    (out.length > 6 ? '<p class="sub" style="margin:8px 0 0">' + plural(out.length - 6, 'smaller reason') + (out.length - 6 === 1 ? ' is' : ' are') + ' in All the numbers.</p>' : '') + '</div>';
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
 const cmpLead = (A, a, B, b, verb) => (!a && !b ? '' : Math.abs(a - b) / Math.max(a, b) < 0.03 ? 'About the same.' : A + ' ' + verb + ' ' + (b ? Math.round(100 * Math.abs(a - b) / b) + '% ' : '') + (a > b ? 'more' : 'less') + ' than ' + B + '.'); // (from the first side, the same way as the arrow)
@@ -11840,8 +11845,11 @@ function cmpPair(r, p, rB, q, vs, lead) {
   const gapH = k === kq ? cmpGapWhy({ lo: loA ? sA : sB, hi: loA ? sB : sA, U: U(k), end: pc.end, rot: rot && rot.rows, rotLo: loA ? 'A' : 'B', hits: tal && tal.hits, book: q.specName === p.specName ? specBook(p.specName) : null,
     builds: [tal && tal.bA && tal.bB && tal.bA.name && tal.bA.key !== tal.bB.key ? 'They play different builds (' + esc(tal.bA.name) + ' and ' + esc(tal.bB.name) + '), so some of the gap is the build. See Talent differences.' : '', gearL].filter(Boolean).join(' ') }) : '';
   // (no overhealing section: "overhealing is a very small concern for healers", Oct 19)
+  // (Oct 19: Compare is for the main differences and where they came from, so Why the gap stands alone; talents, Rotation's checks and the
+  // fight over time fold into More detail, closed until opened)
+  const more = (tal ? tal.html : '') + (rot ? rot.html : '') + chart;
   return { vs, body: (lead || '') + gapH + (gapH ? '' : whyM) + // (Why the gap's cards already show these spells)
-    (tal ? tal.html : '') + (rot ? rot.html : '') + chart + cmpNums(cards, groups) };
+     (gapH ? cmpFold('more', 'More detail', 'Talent differences, the Rotation checks and the fight over time. Click to open.', more) : more) + cmpNums(cards, groups) };
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
 // downloaded and read like one of your pulls, then the same page as Fellow raiders (your call, Oct 19: "both tabs set up
