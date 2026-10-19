@@ -2822,6 +2822,68 @@ function pfPick(ps) {
     : '<span class="sub">Pick a player to see them on every chart. The pick carries over to Debriefing.</span>';
   return onePick(ps, cur, note, !!pc);
 }
+// Burst windows (your call, Oct 19: "highlight burst phase dps and the mechanic it happened on, also boss damage and any relevant add
+// damage"): the raid's damage over the pull, boss and adds stacked, with Bloodlust, the boss's damage windows and its shield shaded;
+// then a card per window: damage a second against the rest of the pull, boss and adds in it, and the mechanics going on. Facts only, no grade.
+const BURST_BOSS_TOO = { "Ula'tek": ['Venomous Heart', 'Gore Rattle'] }; // (units that share the boss's health: their damage is boss damage)
+function burstPanel(r, m, cut) {
+  const S0 = r.dmgTS || [], end = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration, S0.length)); if (end < 20) return '';
+  const bossN = new Set((r.bossUnits || []).concat(BURST_BOSS_TOO[r.item.boss] || []));
+  const sec = (i) => { let b = 0, a = 0; const o = S0[i]; if (o) for (const k in o) { if (bossN.has(k)) b += o[k]; else a += o[k]; } return [b, a]; };
+  const sum = (a0, e0) => { let b = 0, a = 0; const by = new Map(); for (let i = Math.max(0, Math.floor(a0)); i < Math.min(end, Math.ceil(e0)); i++) { const [x, y] = sec(i); b += x; a += y; const o = S0[i]; if (o) for (const k in o) if (!bossN.has(k)) by.set(k, (by.get(k) || 0) + o[k]); } return { b, a, by }; };
+  const all = sum(0, end), tot = all.b + all.a; if (!tot) return '';
+  // the windows
+  const W = [], A = BOSS_AMP[r.item.boss], SH = BOSS_SHIELD[r.item.boss];
+  const LN = { 'Fury Of The Aspects': 'Fury of the Aspects', 'Time Warp': 'Time Warp', "Harrier'S Cry": "Harrier's Cry" }, wn = A ? (A.win || A.what).replace(/^the /, '') : '';
+  for (const l of rcdData(r).lust || []) if (l.t < end - 3) { const nm = LN[l.name] || l.name; W.push({ kind: 'lust', a: l.t, e: Math.min(end, l.t + 40), name: nm, ic: nm, say: nm + ' (30% Haste for the raid)' }); }
+  if (A) { let l = [];
+    if (A.mine) { for (const p of r.players.values()) { const b = p.buffs.get(A.mine) || (p.debuffs && p.debuffs.get(A.mine)); if (b) for (const [a, e] of b.sp) l.push({ a, e: e == null ? end : e }); }
+      l.sort((u, v) => u.a - v.a); const mg = []; for (const w of l) { const z = mg[mg.length - 1]; if (z && w.a <= z.e + 2) z.e = Math.max(z.e, w.e); else mg.push({ ...w }); } l = mg; }
+    else l = (r.bossAuras || []).filter((w) => w.n === A.aura).map((w) => ({ a: w.a, e: w.e == null ? end : w.e }));
+    for (const w of l) if (w.a < end - 3) W.push({ kind: 'amp', a: w.a, e: Math.min(end, w.e), name: wn, ic: A.aura || A.mine, say: wn + ' (' + A.amp + ')' }); }
+  const shields = SH ? (r.bossAuras || []).filter((w) => w.n === SH.aura && w.a < end).map((w) => ({ a: w.a, e: Math.min(end, w.e == null ? end : w.e) })) : [];
+  // (the raid's hardest 20 seconds, when it isn't already one of the windows above)
+  { let best = null; for (let i = 0; i + 20 <= end; i++) { if (W.some((w) => i < w.e && i + 20 > w.a)) continue; let v = 0; for (let j = i; j < i + 20; j++) { const [x, y] = sec(j); v += x + y; } if (!best || v > best.v) best = { a: i, v }; }
+    const say = W.length ? 'Our hardest 20 seconds outside ' + (W.every((w) => w.kind === 'lust') ? 'Bloodlust' : W.every((w) => w.kind === 'amp') ? wn : 'those windows') : 'Our hardest 20 seconds';
+    if (best) W.push({ kind: 'push', a: best.a, e: best.a + 20, name: say, ic: 'Avenging Wrath', say }); }
+  W.sort((u, v) => u.a - v.a);
+  // what was going on: each mechanic's moments, and the deaths
+  const rowT = (row) => { const c = row.find((x) => x.t != null); return c ? c.t : null; }, mech = [];
+  for (const s of m.sections || []) { if (s.id === 'deaths' || s.id === 'kicks' || s.info) continue; const nm = s.title.split(': ')[0], ts = []; if (A && A.aura && nm.toLowerCase().startsWith(A.aura.toLowerCase())) continue;
+    for (const row of s.rows || []) { const t = rowT(row); if (t != null) ts.push(t); } for (const g of s.groups || []) { if (g.t != null) ts.push(g.t); for (const row of g.rows || []) { const t = rowT(row); if (t != null) ts.push(t); } }
+    mech.push({ nm, ts }); }
+  const during = (w) => mech.map((x) => ({ nm: x.nm, n: x.ts.filter((t) => t >= w.a - 3 && t <= w.e).length })).filter((x) => x.n).sort((u, v) => v.n - u.n).slice(0, 3).map((x) => x.nm);
+  // the chart: 5-second steps, boss under adds
+  const st = 5, n = Math.ceil(end / st), pts = []; let mx = 1; for (let k = 0; k < n; k++) { let b = 0, a = 0, c = 0; for (let i = k * st; i < Math.min(end, (k + 1) * st); i++) { const [x, y] = sec(i); b += x; a += y; c++; } pts.push([b / c, a / c]); mx = Math.max(mx, (b + a) / c); }
+  const VW = 1000, VH = 150, xs = (t) => (VW * t / end).toFixed(1), ys = (v) => (VH - VH * v / mx * 0.9).toFixed(1), xk = (k) => xs(Math.min(end, k * st + st / 2));
+  const area = (f) => 'M0,' + VH + ' ' + pts.map((p, k) => 'L' + xk(k) + ',' + ys(f(p))).join(' ') + ' L' + VW + ',' + VH + ' Z';
+  const COL = { lust: '#e5534b', amp: '#e6b450', push: '#6aa8ff' };
+  const shade = shields.map((w) => '<rect x="' + xs(w.a) + '" y="0" width="' + (xs(w.e) - xs(w.a)).toFixed(1) + '" height="' + VH + '" fill="#98a0ad" fill-opacity=".14"><title>' + esc(SH.what + ' ' + T(w.a) + '–' + T(w.e) + ': the bosses take 99% less damage') + '</title></rect>').join('') +
+    W.map((w) => '<rect x="' + xs(w.a) + '" y="0" width="' + Math.max(2, xs(w.e) - xs(w.a)).toFixed(1) + '" height="' + VH + '" fill="' + COL[w.kind] + '" fill-opacity=".16" stroke="' + COL[w.kind] + '" stroke-opacity=".6" stroke-dasharray="3 3"><title>' + esc(w.say + ', ' + T(w.a) + '–' + T(w.e)) + '</title></rect>').join('');
+  const tick = []; for (let t = 60; t < end - 20; t += 60) tick.push('<line x1="' + xs(t) + '" x2="' + xs(t) + '" y1="0" y2="' + VH + '" stroke="#2a2f3b"/><text x="' + xs(t) + '" y="' + (VH + 14) + '" fill="#6c7381" font-size="12" text-anchor="middle">' + T(t) + '</text>');
+  const chart = '<svg class="brw-ch" viewBox="0 -4 ' + VW + ' ' + (VH + 22) + '" preserveAspectRatio="none" role="img" aria-label="The raid\'s damage a second over the pull">' + tick.join('') + shade +
+    '<path d="' + area((p) => p[0] + p[1]) + '" fill="#6aa8ff" fill-opacity=".55"/><path d="' + area((p) => p[0]) + '" fill="#e6b450" fill-opacity=".75"/></svg>';
+  const key = '<div class="brw-key"><span><i style="background:#e6b450"></i>Boss</span><span><i style="background:#6aa8ff"></i>Adds</span>' + (W.some((w) => w.kind === 'lust') ? '<span><i class="brw-kw" style="border-color:#e5534b"></i>Bloodlust</span>' : '') +
+    (W.some((w) => w.kind === 'amp') ? '<span><i class="brw-kw" style="border-color:#e6b450"></i>' + esc(wn) + '</span>' : '') + (W.some((w) => w.kind === 'push') ? '<span><i class="brw-kw" style="border-color:#6aa8ff"></i>Hardest 20 seconds</span>' : '') +
+    (shields.length ? '<span><i style="background:#98a0ad;opacity:.4"></i>' + esc(SH.what) + '</span>' : '') + '</div>';
+  // the boss and the adds, the whole pull
+  const pct = (v) => Math.round(100 * v / tot) + '%', adds = [...all.by.entries()].filter(([k, v]) => v > tot * 0.01).sort((u, v) => v[1] - u[1]).slice(0, 6);
+  const tiles = '<div class="brw-tiles"><div><b>' + C(tot / end) + '</b><span>raid damage a second</span></div><div><b>' + C(all.b / end) + '</b><span>into the boss (' + pct(all.b) + ')</span></div><div><b>' + C(all.a / end) + '</b><span>into adds (' + pct(all.a) + ')</span></div></div>' +
+    (adds.length ? '<div class="brw-adds"><span class="brw-al">Adds</span>' + adds.map(([k, v]) => '<span class="brw-ad"><b>' + esc(k) + '</b> ' + C(v) + ' <em>' + pct(v) + '</em></span>').join('') + '</div>' : '');
+  // a card per window, against our usual: the seconds outside Bloodlust and the boss's windows
+  let uN = 0, uV = 0; for (let i = 0; i < end; i++) { if (W.some((w) => w.kind !== 'push' && i >= w.a && i < w.e)) continue; const [x, y] = sec(i); uN++; uV += x + y; } const usual = uN >= 10 ? uV / uN : tot / end;
+  const cards = W.map((w) => { const len = Math.max(1, w.e - w.a), s = sum(w.a, w.e), d = (s.b + s.a) / len, x = d / Math.max(1, usual);
+    const dm = during(w), dead = (r.deaths || []).filter((q) => q.t >= w.a && q.t <= w.e).length, top = [...s.by.entries()].sort((u, v) => v[1] - u[1]).slice(0, 2).filter(([, v]) => v > (s.a + s.b) * 0.05);
+    const with1 = W.filter((o) => o !== w && o.kind !== 'push' && o.a < w.e && o.e > w.a).map((o) => o.name);
+    const bp = s.b + s.a ? Math.round(100 * s.b / (s.b + s.a)) : 0;
+    return '<div class="brw-c" style="border-top-color:' + COL[w.kind] + '"><div class="brw-ct">' + spellIcon(0, w.ic, true) + '<b>' + esc(w.say) + '</b></div><div class="brw-tm">' + T(w.a) + '–' + T(w.e) + ' · ' + Math.round(len) + ' seconds' + (with1.length ? ' · with ' + esc(andL(with1)) : '') + '</div>' +
+      '<div class="brw-n"><b>' + C(d) + '</b> damage a second <span class="' + (x >= 1 ? 'up' : 'dn') + '">' + (x >= 1 ? x.toFixed(1) + ' times' : Math.round(100 * x) + '% of') + ' our usual</span></div>' +
+      '<div class="brw-bar" title="' + esc('Boss ' + C(s.b) + ', adds ' + C(s.a)) + '"><i style="width:' + bp + '%"></i></div><div class="brw-bs"><span>Boss ' + bp + '%</span><span>Adds ' + (100 - bp) + '%' + (top.length ? ': ' + esc(top.map(([k]) => k).join(', ')) : '') + '</span></div>' +
+      '<div class="brw-dm">' + (dm.length ? 'Going on: <b>' + dm.map(esc).join('</b>, <b>') + '</b>' : 'No tracked mechanic in this window.') + (dead ? ' <span class="dn">' + plural(dead, 'death') + ' in it.</span>' : '') + '</div></div>'; }).join('');
+  return '<div class="panel brw" id="sec-burst"><h3 class="nh"><span>Burst windows</span><small>where the raid\'s damage went, and what was going on</small></h3>' + tiles + chart + key + (cards ? '<div class="brw-cs">' + cards + '</div>' : '') +
+    '<details class="howit"><summary>How it works</summary><div>Every hit the raid landed, per second' + (cut ? ', up to the wipe filter' : '') + '. "Boss" is the boss and anything that shares its health; everything else is an add. Bloodlust counts as 40 seconds from the first press. "Our usual" is our damage a second the rest of the time, outside Bloodlust and the boss\'s windows' +
+    (A ? '; ' + esc(A.what) + ' is read from the log' : '') + '. "Going on" lists the mechanics with a moment in the window (or 3 seconds before it). Nothing here is graded: Rotation grades each player\'s own cooldowns in these windows.</div></details></div>';
+}
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
   if (m0.error) { view('<div class="panel">The audit for this fight hit an error: ' + esc(m0.error) + '</div>'); return; }
@@ -3457,6 +3519,7 @@ function audit() {
   { const ref = h.slice(refAt); if (ref) { const nb = (ref.match(/secd st-bad/g) || []).length;
     const grid = '<div class="mcx-refh">Your kit and the raid' + (cut ? ', up to the wipe filter' : '') + '</div><div class="mcx-refg">' + ref + '</div>', wEnd = whole.length ? h.lastIndexOf('</details>', refAt) : -1;
     h = wEnd >= 0 ? h.slice(0, wEnd) + grid + '</details>' : h.slice(0, refAt) + '<details class="phase mcx-ph" data-mst="' + (nb ? 'major' : 'clean') + '" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b><span class="sub">your kit, raid cooldowns, damage taken and kicks</span></summary>' + grid + '</details>'; } }
+  if (!r.allPulls) { try { h += burstPanel(r, m, cut); } catch (e) { console.error(e); } } // (never block the page)
   // (the Data check is for checking the spell IDs on your PC, not for raiders: hidden on the website)
   if (m.diag && !window.WLA_HOSTED) h += '<details class="panel"><summary style="cursor:pointer"><b>Data check</b> <span class="muted">which tracked spells this pull contained, to confirm the module is reading the log correctly</span></summary>' +
     '<table class="tbl" style="margin-top:10px"><thead><tr><th>Spell</th><th class="r">Casts</th><th class="r">Damage hits</th><th class="r">Debuff events</th><th class="r">Other</th></tr></thead><tbody>' +
