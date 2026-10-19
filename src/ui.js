@@ -450,7 +450,7 @@ async function openFile(file) {
   } finally { setTimeout(() => (prog.style.display = 'none'), 400); }
   renderList();
   const all = S.index.bosses.concat(S.index.runs).sort((a, b) => a.startMs - b.startMs);
-  if (all.length) select(all[all.length - 1]);
+  if (all.length) { S.tab = 'live'; S.scope = 'all'; select(all[all.length - 1]); } // (a new log opens on Recap for the whole night)
   else $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>No raid pulls in this log</h2><p class="muted">The file opened, but it has no raid boss pulls (dungeons and Mythic+ keys are left out, because this site is for raids). Make sure combat logging was on during the raid.</p></div></div>';
 }
 
@@ -14752,7 +14752,7 @@ function wclPanel(msg, linkText) {
     const authFail = (err) => /refused the client/.test(err.message);
     if (!link) { $('#wMsg').textContent = "That doesn't look like a Warcraft Logs report link."; return; }
     $('#wMsg').textContent = 'Loading the report…'; $('#wGo').disabled = true;
-    try { await openWcl(link, creds); keepSecret(); }
+    try { await openWcl(link, creds, false, true); keepSecret(); }
     catch (err) {
       $('#wGo').disabled = false;
       if (!authFail(err)) { keepSecret(); $('#wMsg').textContent = err.message; return; }
@@ -14801,8 +14801,9 @@ if (!WCL.HOSTED && location.protocol === 'http:' && location.hostname === 'local
   }
 }
 
-// live: opened as a live log (Go live), so it's followed even before its first boss pull
-async function openWcl(link, creds, live) {
+// live: opened as a live log (Go live), so it's followed even before its first boss pull. fresh: a log someone just
+// imported (pasted a link, opened a night), which opens on Recap for the whole night (your call, Oct 19)
+async function openWcl(link, creds, live, fresh) {
   const rep = await WCL.loadReport(creds, link.code, live);
   if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); } // (opening a report stops watching the local log)
   S.file = null; S.wclCreds = creds; S.wclCode = link.code; CACHE.clear();
@@ -14831,6 +14832,7 @@ async function openWcl(link, creds, live) {
     setLive(true);
     if (still && !live && !wasLive) toast('<span><b>Live</b> This report is still being logged, so new pulls show up here as they end.</span>', 9000);
   }
+  if (fresh && !follow) { S.tab = 'live'; S.scope = 'all'; } // (a raid being logged now stays on its newest pull)
   select(pick);
 }
 // ---------- live logging ----------
@@ -15082,7 +15084,7 @@ function hostedPanel(msg) {
     const link = WCL.parseLink($('#hLink').value);
     if (!link) { $('#hMsg').textContent = "That doesn't look like a Warcraft Logs report link."; return; }
     $('#hMsg').textContent = 'Loading the report…'; $('#hGo').disabled = true;
-    try { await openWcl(link, null); } catch (err) { $('#hGo').disabled = false; $('#hMsg').textContent = err.message; }
+    try { await openWcl(link, null, false, true); } catch (err) { $('#hGo').disabled = false; $('#hMsg').textContent = err.message; }
   };
   $('#hGo').onclick = go;
   $('#hLink').onkeydown = (e) => { if (e.key === 'Enter') go(); };
@@ -15268,7 +15270,7 @@ function home() {
       let creds = null;
       if (!WCL.HOSTED) { const j = await fetch('/wcl/login').then((r) => r.json()).catch(() => ({})); if (!j.saved) { try { sessionStorage.setItem('wla-live', live ? '1' : ''); } catch (e) { /* ignore */ } wclPanel('Connect Warcraft Logs once, then click Load report.', raw); return; } creds = { id: j.id, secret: '' }; }
       try { sessionStorage.setItem('wla-live', live ? '1' : ''); } catch (e) { /* ignore */ }
-      await openWcl(link, creds, live);
+      await openWcl(link, creds, live, true);
     } catch (err) { msg.style.color = ''; msg.textContent = err.message; }
   };
   $('#hLiveGo').onclick = () => go('hLive', 'hLiveMsg', true);
@@ -15307,7 +15309,7 @@ async function openReportLink(raw, msg) {
     let creds = null;
     if (!WCL.HOSTED) { const j = await fetch('/wcl/login').then((r) => r.json()).catch(() => ({})); if (!j.saved) { wclPanel('Connect Warcraft Logs once, then click Load report.', raw); return; } creds = { id: j.id, secret: '' }; }
     try { sessionStorage.setItem('wla-live', ''); } catch (e) { /* ignore */ }
-    await openWcl(link, creds, false);
+    await openWcl(link, creds, false, true);
   } catch (err) { msg.style.color = ''; msg.textContent = err.message; }
 }
 // (the hero: the headline, one rounded box for any live log or report, and the other ways in as small links under it)
@@ -16524,7 +16526,7 @@ if (WCL.HOSTED) {
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
-  else if (sharedLink) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
+  else if (sharedLink) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
