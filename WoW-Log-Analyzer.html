@@ -1817,6 +1817,15 @@ span.sn-log { padding: 3px 10px; }
 .sn-cal { flex: none; opacity: .75; }
 @media (max-width: 640px) { .sn-hd { min-height: 84px; padding: 12px; flex-wrap: wrap; align-items: flex-start; } .sn-hd h3 { font-size: 20px; } .sn-body { padding: 4px 10px 10px; } }
 .as-none { padding: 12px 14px; line-height: 1.5; }
+/* (the note bar on This pull: "Your note" over its name, chips for what's in it; the editor's live line) */
+.nlib.nl-cur { background: linear-gradient(90deg, rgba(230,180,80,.07), transparent 55%), var(--panel); }
+.nl-cur .nl-tt { display: inline-flex; flex-direction: column; line-height: 1.2; margin-right: 4px; }
+.nl-cur .nl-k { font: 600 11px var(--head); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.nl-cur .nl-tt b { font: 700 17px/1.25 var(--head); color: var(--text); }
+.nl-chip { display: inline-block; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(255,255,255,.03); font-size: 12px; color: #c9ced7; white-space: nowrap; }
+.nt-live { margin-top: 6px; font-size: 13px; color: var(--muted); line-height: 1.45; } .nt-live b { color: var(--text); font-weight: 600; }
+.nt-warn { margin-top: 3px; color: var(--warn); }
+.ah-other { margin: 12px 0 0; } .ah-other .btn { margin-left: 6px; }
 /* (the offer of a new note when the roster changed: gold, under the note bar) */
 .as-swap { padding: 12px 14px; border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.06); line-height: 1.5; }
 .as-swap .rsw-rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 2px; }
@@ -10575,7 +10584,7 @@ function noteWhy(u) {
   if (!u) return '';
   if (u.how === 'pull') return 'You picked it for this pull.';
   if (u.how === 'all') return 'You set it for every pull.';
-  const f = u.fit || {}, names = f.of ? 'it names ' + f.hit + ' of its ' + f.of + ' players' : '';
+  const f = u.fit || {}, names = f.of ? 'it names ' + f.hit + " of this pull's " + f.of + ' players' : '';
   if (u.how === 'only') return f.dif === false ? "It's your only note for this boss, but its first line says another difficulty." : '';
   if (u.how === 'jobs' && u.rival) { const rv = esc(u.rival.name), rj = u.rival.jobs, n0 = (v) => (v ? v : 'none');
     return 'Picked for this pull: ' + names + ', ' + (u.rival.fit && u.rival.fit.hit === f.hit ? 'the same as ' : 'about as many as ') + rv + ', and more of its jobs got done: ' + n0(u.jobs.ok) + ' on time and ' + n0(u.jobs.bad) + ' missed, against ' + (rj ? n0(rj.ok) + ' on time and ' + n0(rj.bad) + ' missed' : 'none checked') + ' for ' + rv + '.'; }
@@ -10629,16 +10638,19 @@ function noteScanBox(sc) {
   const r = sc.r, out = [], fight = r.nBoss ? esc(r.nBoss) + (r.dif ? ' (' + esc(r.dif) + ')' : '') : '';
   if (r.wrongBoss) out.push("Its first line says it's for " + fight + ', but you saved it on ' + esc(sc.boss) + '.');
   else if (fight) out.push('It\'s for ' + fight + '.');
+  // (the pull that's open counts too, not only your saved logs; when the note fits it, that's enough, so no saved night is named)
+  const fitsHere = !!(sc.here && sc.here.of && sc.here.hit >= Math.max(1, Math.ceil(sc.here.of / 2)));
+  if (sc.here && sc.here.of && !r.wrongBoss) out.push(sc.here.hit + ' of its ' + plural(sc.here.of, 'player') + (sc.here.hit === 1 ? ' is' : ' are') + ' in the pull you have open.');
   const bn = esc(r.nBoss || sc.boss);
   if (r.none) out.push("You don't have any saved logs yet, so its names couldn't be checked. Add your team on the Teams page to check notes against your raid nights.");
   else if (r.noPulls) out.push('None of your saved logs have ' + bn + (r.dif ? ' on ' + esc(r.dif) : '') + ' yet, so its roster gets checked as you open its pulls.');
-  else if (r.best && r.best.hit) out.push('It names ' + plural(r.names.length, 'player') + ', and ' + r.best.hit + ' of them raided ' + bn + ' on ' + esc(nightLabel(r.best.at)) + (r.team ? ' with ' + esc(r.team) : '') + ' (' + plural(r.best.pulls, 'pull') + ').');
-  else if (r.names.length) out.push('None of its names were in your saved pulls of ' + bn + '.');
+  else if (!fitsHere && r.best && r.best.hit) out.push('It names ' + plural(r.names.length, 'player') + ', and ' + r.best.hit + ' of them raided ' + bn + ' on ' + esc(nightLabel(r.best.at)) + (r.team ? ' with ' + esc(r.team) : '') + ' (' + plural(r.best.pulls, 'pull') + ').');
+  else if (r.names.length && !(sc.here && sc.here.hit)) out.push('None of its names were in your saved pulls of ' + bn + '.');
   if (!r.none && r.unknown.length) out.push((r.unknown.length === 1 ? "1 name wasn't" : r.unknown.length + " names weren't") + ' in any of your saved logs: ' + esc(r.unknown.slice(0, 6).join(', ')) + (r.unknown.length > 6 ? ' and ' + (r.unknown.length - 6) + ' more' : '') + ". Check the spelling, and use character names (NSRT nicknames can't be matched yet).");
   else if (!r.none && !r.noPulls && r.names.length) out.push('Every name in it is in your saved logs.');
   const warn = r.wrongBoss || (!r.none && r.unknown.length);
   // (the night it fits best opens right from here, unless it's the report that's open now)
-  const b = r.best, open = !r.wrongBoss && b && b.hit && b.wcl && b.wcl.code !== S.wclCode ? '<button class="btn primary" type="button" data-nopen="' + esc(b.wcl.code + '|' + (b.wcl.fight || '')) + '">Open the pulls from ' + esc(nightLabel(b.at)) + '</button>' : '';
+  const b = r.best, open = !r.wrongBoss && !fitsHere && b && b.hit && b.wcl && b.wcl.code !== S.wclCode ? '<button class="btn primary" type="button" data-nopen="' + esc(b.wcl.code + '|' + (b.wcl.fight || '')) + '">Open the pulls from ' + esc(nightLabel(b.at)) + '</button>' : '';
   return '<div class="panel ah-exbar nscan"><span><b>' + (warn ? 'Check your note' : 'Your note is checked') + '</b> <span class="sub">' + out.join(' ') + '</span></span>' +
     (r.wrongBoss ? '<button class="btn primary" type="button" id="nscanMove">Move it to ' + esc(r.nBoss) + '</button>' : '') + open + '<button class="btn" type="button" id="nscanOk">Got it</button></div>';
 }
@@ -10669,7 +10681,8 @@ function autoNoteName(text, list, rep) {
   let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
   const DN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }, d0 = String(hd.difficulty || '').trim(), dif = DN[d0] || d0 || (rep && rep.item.diff) || '';
   const base = /^(mythic|heroic|normal)$/i.test(dif) ? capS(String(dif).toLowerCase()) + ' plan' : 'Plan';
-  const prev = list.filter((n) => !n.example).sort((x, y) => (y.saved || 0) - (x.saved || 0))[0];
+  const bN = noteNames(text).map((n) => n.toLowerCase()), common = (n) => noteNames(n.text).filter((x) => bN.includes(x.toLowerCase())).length;
+  const prev = list.filter((n) => !n.example).sort((x, y) => common(y) - common(x) || (y.saved || 0) - (x.saved || 0))[0];
   let tail = '';
   if (prev) {
     const A = noteNames(prev.text), B = noteNames(text), lc = (s) => s.toLowerCase(), aS = new Set(A.map(lc)), bS = new Set(B.map(lc));
@@ -10682,6 +10695,21 @@ function autoNoteName(text, list, rep) {
   let nm = (base + ', ' + tail).slice(0, 36), k = 2; const stem = nm;
   while (list.some((n) => n.name === nm)) nm = stem + ' (' + k++ + ')';
   return nm;
+}
+// What Debrief reads in a note as it's pasted (the editor's live line): its fight and difficulty, its reminders, its
+// assignment lines and its players (and how many are in the pull that's open), with a warning when it's for another boss
+// or has nothing Debrief can check
+function noteLiveHtml(text, boss, rep) {
+  const t = String(text || '').trim(); if (!t) return 'Paste the note, and this line says what Debrief reads in it before you save.';
+  let p = {}; try { p = E.parseNote(t) || {}; } catch (e) { return '<span class="nt-warn">Debrief couldn\'t read this note.</span>'; }
+  const hd = p.header || {}, sc = noteScan(t, boss), names = noteNames(t), dif = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }[hd.difficulty] || hd.difficulty || '';
+  const rem = (p.reminders || []).length, lines = (p.lines || []).filter((l) => l.words && l.words.length).length;
+  const inP = rep ? new Set([...rep.players.values()].filter((q) => q.name).map((q) => q.name.split('-')[0].toLowerCase())) : null, hit = inP ? names.filter((n) => inP.has(n.toLowerCase())).length : 0;
+  const parts = [sc.nBoss || hd.name || '', dif ? capS(String(dif).toLowerCase()) : '', rem ? plural(rem, 'cooldown reminder') : '', lines ? plural(lines, 'assignment line') : '', names.length ? plural(names.length, 'player') + (inP ? ' (' + hit + ' in this pull)' : '') : ''].filter(Boolean);
+  let warn = '';
+  if (sc.wrongBoss) warn += "<div class=\"nt-warn\">Its first line says it's for " + esc(sc.nBoss) + ', not ' + esc(boss) + '. Save it, and Debrief offers to move it there.</div>';
+  if (!rem && !lines) warn += "<div class=\"nt-warn\">Debrief didn't find any reminders or assignment lines in it. Paste the whole note from NSRT.</div>";
+  return '<b>Debrief reads:</b> ' + parts.map(esc).join(' · ') + warn;
 }
 function applyNote(rep) {
   rep.mistakes = rep.mistakes.filter((m) => !m.fromNote);
@@ -10771,7 +10799,7 @@ function storedNotes(only) {
     if (!n.example) { const sc = noteScan(n.text, b);
       for (const o of sc.fits) { if (o.wcl && o.wcl.code === S.wclCode) continue; const l = SN_CAL + esc(day(o.at)) + ' · ' + plural(o.pulls, 'pull') + ' · ' + o.hit + ' of ' + sc.names.length + ' names';
         out.push(o.wcl ? '<button class="btn sm sn-log" type="button" data-nopen="' + esc(o.wcl.code + '|' + (o.wcl.fight || '')) + '" title="Open this night">' + l + '</button>' : '<span class="sn-log">' + l + ' <span class="sub">(a combat log on your PC)</span></span>'); } }
-    return out.length ? '<div class="sn-logs"><span class="sub">Logs:</span>' + out.join('') + '</div>' : '<div class="sn-logs sub">No log goes with it yet. Nights it fits show here once they\'re saved to your progress.</div>';
+    return out.length ? '<div class="sn-logs"><span class="sub">Logs:</span>' + out.join('') + '</div>' : '<div class="sn-logs sub">No saved nights yet.</div>';
   };
   const row = (n, b) => { const isCur = b === cur, on = isCur && used && used.id === n.id, nn = noteNames(n.text).length;
     return '<div class="nl-r sn-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b>' + (n.example ? ' <span class="sub">(example)</span>' : '') +
@@ -10788,7 +10816,7 @@ function storedNotes(only) {
     '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div>' +
     '<span class="nl-hb">' + (b === cur ? '<button class="btn sm" type="button" id="noteNewBtn">Add a note</button>' : '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">Open ' + esc(b) + '</button>') + '</span></div>' +
     '<div class="sn-body">' + (o.list.length ? o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + (b === cur ? sel : '') : '<p class="sub sn-none">No note for ' + esc(b) + ' yet. Add one, and it shows here with the logs it goes with.</p>') + '</div></div>';
-  $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + '<p class="sub sn-lead">Your NSRT notes for every boss, saved in this browser, with the logs each one goes with.</p>' + bosses.map(panel).join('') + '</div>';
+  $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + '<p class="sub sn-lead">Your NSRT notes for every boss, saved in this browser. Under each one are its logs: the one you have open, and the raid nights saved to your progress that it fits (the Save it link on a pull saves it).</p>' + bosses.map(panel).join('') + '</div>';
   bindAsViews(only);
   // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
   const redo = (b) => { for (const rep of CACHE.values()) if (rep.item.boss === b) applyNote(rep); renderMain(); };
@@ -10827,12 +10855,13 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const others = noteOthers(boss);
     const otherBar = others.length ? '<div class="panel nl-other" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="sub">No note for ' + esc(boss) + ' yet. Your notes for other bosses:</span>' +
       others.map(([b, l]) => '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">' + esc(b) + ' (' + l.length + ')</button>').join('') + '</div>' : '';
-    $('#assignBox').innerHTML = (only ? '' : asViews()) + (S.noteScan && S.noteScan.boss === boss && S.noteScan.moved ? noteScanBox(S.noteScan) : '') + otherBar + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
+    $('#assignBox').innerHTML = (only ? '' : asViews()) + (S.noteScan && S.noteScan.boss === boss && S.noteScan.moved ? noteScanBox(S.noteScan) : '') + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
       '<p class="ah-lead">Your raid\'s NSRT note says who soaks, who kicks, who takes the orbs and who presses which cooldown. Paste it here once, and Debrief checks every player against it on every pull. No other site does this.</p>' +
       '<ol class="ah-steps"><li><span><b>Get your raid\'s NSRT note.</b> Your raid leader shares it, or you can copy it from wowutils.</span></li>' +
       '<li><span><b>Paste it here and save.</b> It stays in this browser, so you only do this once for ' + esc(boss) + '. When the plan changes, paste the new one.</span></li>' +
       '<li><span><b>Debrief checks it on every pull.</b> You see who did their job, who was late, and who missed it.</span></li></ol>' +
       '<div class="ah-btns"><button class="btn primary" id="noteAdd">Add your NSRT note</button>' + (ex ? '<button class="btn" id="noteEx">Try it with an example</button>' : '') + '</div>' +
+      (others.length ? '<p class="sub ah-other">You have notes for ' + (others.length === 1 ? esc(others[0][0]) : others.length + ' other bosses') + '. <button class="btn sm" type="button" data-asv="notes">See them in Stored notes</button></p>' : '') +
       (ex ? '<p class="sub ah-ex">The example is made from this pull. It gives your healers the cooldowns they really pressed, plus one they didn\'t, so you can see what a miss looks like.</p>' : '') + '</div>' + pic + '</div>';
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
     bindAsViews(only);
@@ -10884,7 +10913,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const swapD = swapRow ? '<details class="nt-more"><summary>Swap a player</summary>' + swapRow + '</details>' : '';
     const howTo = '<details class="nt-how"><summary>How to write it</summary><p class="sub">Paste the whole note from NSRT: its first line (EncounterID…), the reminder lines (time:…;ph:…;tag:…;spellid:…) and your text lines ("Guillotine 1: Name Name", "{skull} Kicks: Name Name"). ' + esc(SYNTAX[boss] || '') + ' Names must be character names; NSRT nicknames can\'t be matched yet.</p></details>';
     top += '<div class="panel nt-ed"><h3>' + (editN ? 'Edit ' + esc(editN.name) : 'Add your NSRT note') + ' <small>for ' + esc(boss) + ', saved in this browser</small></h3>' +
-      '<textarea id="noteBox" class="notebox" placeholder="Paste your raid\'s whole NSRT note here.">' + esc(editT) + '</textarea>' + swapD +
+      '<textarea id="noteBox" class="notebox" placeholder="Paste your raid\'s whole NSRT note here.">' + esc(editT) + '</textarea><div class="nt-live" id="noteLive" aria-live="polite"></div>' + swapD +
       '<div class="nt-name"><label for="noteName" class="sub">Name</label> <input id="noteName" type="text" maxlength="40" value="' + esc(editN ? editN.name : '') + '" placeholder="Leave it empty and Debrief names it, like Mythic plan, Oct 18"></div>' +
       '<div class="nt-btns"><button class="btn primary" id="noteSave">Save and check</button><button class="btn" id="noteCancel">Cancel</button><span class="nt-sp"></span>' + more + '</div>' +
       '<p class="sub nt-chk">' + checked + '</p>' + howTo + '</div>';
@@ -10906,10 +10935,14 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const back = used && (used.how === 'pull' || used.how === 'all') && NO.list.length > 1 ? ' <button class="btn sm" type="button" id="noteAuto">Pick it automatically again</button>' : '';
     const kinds = a && a.note ? [a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', a.note.lines.length ? plural(a.note.lines.length, 'assignment line') : ''].filter(Boolean).join(' and ') : '';
     const later = unopened ? ' ' + plural(unopened, 'pull') + ' of this boss ' + (unopened === 1 ? "isn't" : "aren't") + ' opened yet, so ' + (unopened === 1 ? "it isn't" : "they aren't") + ' counted here.' : '';
-    const ex = !!(used && used.example), why = ex ? "Made from this pull: your healers' cooldowns at the times they pressed them, plus one they didn't. Paste your raid's own note to check the real plan." : noteWhy(used) || 'Saved in this browser.';
-    top += '<div class="panel nlib' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span><b>' + (ex ? 'An example note' : 'Your note: ' + esc(used.name)) + '</b>' + (kinds ? ' <span class="sub">' + kinds + '</span>' : '') + '</span></span>' +
-      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" id="noteNewBtn">Add a note</button>') + '</span></div>' +
-      '<div class="nl-why sub">' + why + back + (NO.list.length > 1 ? ' <button class="btn sm" type="button" data-asv="notes">' + plural(NO.list.length, 'note') + ' for this boss</button>' : '') + '</div></div>';
+    const ex = !!(used && used.example), why = ex ? "Made from this pull: your healers' cooldowns at the times they pressed them, plus one they didn't. Paste your raid's own note to check the real plan." : noteWhy(used);
+    // (what's in it, as small chips: its difficulty, its reminders and its assignment lines)
+    let hdN = {}; try { hdN = (E.parseNote(used.text) || {}).header || {}; } catch (e) { hdN = {}; }
+    const difN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }[hdN.difficulty] || hdN.difficulty || '', linesN = a && a.note ? a.note.lines.filter((l) => l.words && l.words.length).length : 0;
+    const chipsN = [difN ? esc(capS(String(difN).toLowerCase())) : '', a && a.note && a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', linesN ? plural(linesN, 'assignment line') : ''].filter(Boolean);
+    top += '<div class="panel nlib nl-cur' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span class="nl-tt"><span class="nl-k">' + (ex ? 'Example note' : 'Your note') + '</span><b>' + esc(ex ? 'Made from this pull' : used.name) + '</b></span>' + chipsN.map((x) => '<span class="nl-chip">' + x + '</span>').join('') + '</span>' +
+      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button>' + (NO.list.length > 1 ? '<button class="btn sm" type="button" data-asv="notes">Change note</button>' : '') + '<button class="btn sm" type="button" id="noteNewBtn">Add a note</button>') + '</span></div>' +
+      (why || back ? '<div class="nl-why sub">' + why + back + '</div>' : '') + '</div>';
     top += rosterOffer(r, used);
   }
   if (a && a.error) top += '<div class="panel">Couldn\'t read the note: ' + esc(a.error) + '</div>';
@@ -11378,7 +11411,8 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     if (v) o.list = o.list.filter((n) => !n.example); // (your own note replaces the example)
     if (o.pick !== 'auto' && !o.list.some((n) => n.id === o.pick)) o.pick = 'auto'; notesSave(boss, o);
     // (then it's checked against your saved logs: its fight and its roster, shown on top)
-    S.noteScan = v ? { boss, id: sid, r: noteScan(v, boss) } : null; redo(); };
+    if (v) { const sc = noteScan(v, boss), inP = new Set([...r.players.values()].filter((p) => p.name).map((p) => p.name.split('-')[0].toLowerCase())), hit = sc.names.filter((n) => inP.has(n.toLowerCase())).length;
+      sc.unknown = sc.unknown.filter((n) => !inP.has(n.toLowerCase())); S.noteScan = { boss, id: sid, r: sc, here: { hit, of: sc.names.length } }; } else S.noteScan = null; redo(); };
   if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
   bindAsViews(only);
   // (the new note for a changed roster: the note with each missing player's name swapped for the one taking their place, named
@@ -11405,6 +11439,10 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     S.noteScan = { boss: to, moved: to, from: boss };
     noteGoBoss(to, n.text).then((went) => { if (!went) { S.noteScan = { boss, moved: to }; renderMain(); } }); };
   if ($('#noteSave')) $('#noteSave').onclick = () => save(false);
+  // (as you paste or type, a line under the box says what Debrief reads in it, and the name it would get)
+  if ($('#noteBox') && $('#noteLive')) { const up = () => { const v = $('#noteBox').value; $('#noteLive').innerHTML = noteLiveHtml(v, boss, r);
+      const nmI = $('#noteName'); if (nmI) nmI.placeholder = v.trim() ? 'Leave it empty to name it ' + autoNoteName(v, NO.list.filter((n) => !editN || n.id !== editN.id), r) : 'Leave it empty and Debrief names it'; };
+    $('#noteBox').addEventListener('input', up); up(); }
   if ($('#noteSaveNew')) $('#noteSaveNew').onclick = () => save(true);
   if ($('#noteCancel')) $('#noteCancel').onclick = () => { S.noteEdit = false; S.noteEditId = null; assign(only); refreshIcons(); };
   if ($('#noteDel')) $('#noteDel').onclick = () => { if (editN && confirm('Remove the note "' + editN.name + '" for ' + boss + '?')) { const o = notesOf(boss); o.list = o.list.filter((n) => n.id !== editN.id); if (o.pick === editN.id) o.pick = 'auto'; notesSave(boss, o); redo(); } };
@@ -12321,8 +12359,7 @@ function miniMap(mp, pmap) {
     s += ic(x, y, cystBlob(x, y, c.ring || '#9aa0ac', c.n, 1.2) + (c.label ? '<text x="' + x + '" y="' + (y + 26) + '" class="ml" style="font-size:10px;font-weight:800" fill="' + (c.ring || '#e7e9ee') + '">' + esc(c.label) + '</text>' : ''));
   }
   // each circle looks like its mechanic in game (fx, from the engine; at: the moment it lands or goes off):
-  // soak: fills from the middle as the hit comes, then slams down; impact: a target ring closing on the landing spot, then a
-  // shockwave; burst: a circle on a player whose edge turns faster near the end, then blasts outward; debuff: follows its
+  // soak: fills from the middle as the hit comes, then slams down; burst: a circle on a player whose edge turns faster near the end, then blasts outward; debuff: follows its
   // player with a slowly turning edge; puddle: spreads out when it lands; zone: a standing area with a slow ripple; safe: a
   // bubble with a shine. (Each moves one thing, softly, so a map with many circles stays calm)
   const NS = ' vector-effect="non-scaling-stroke"';
@@ -12331,14 +12368,12 @@ function miniMap(mp, pmap) {
     const fx = g.fx, at = g.at != null ? g.at : g.t0 != null ? g.t0 + (g.dur || 0) : mp.t, el = ftC - at;
     const edge = (w, extra) => cir(x, y, R, 'fill="' + fill + '" stroke="' + col + '" stroke-width="' + w + '"' + (extra || '') + NS);
     const shock = (p, k) => cir(x, y, R * (1 + (k || 0.35) * p), 'fill="none" stroke="' + col + '" stroke-opacity="' + (1 - p).toFixed(2) + '" stroke-width="3"' + NS);
-    if (fx === 'soak' || fx === 'impact') {
+    if (fx === 'soak') {
       let o = '';
       if (el < 0) { const k = Math.min(1, Math.max(0.06, 1 + el / 3));
         o = edge(2) + cir(x, y, R * k, 'fill="' + col + '" fill-opacity=".22"');
-        if (fx === 'impact') o += cir(x, y, R * (1 + Math.min(1.2, -el * 0.9)), 'fill="none" stroke="' + col + '" stroke-opacity=".75" stroke-width="2" stroke-dasharray="5 4"' + NS);
       } else if (el < 0.8) { const p = el / 0.8;
         o = edge(2.6) + cir(x, y, R, 'fill="' + col + '" fill-opacity="' + (0.42 - 0.3 * p).toFixed(2) + '"') + shock(p);
-        if (fx === 'impact') for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + 0.3; o += '<line x1="' + (x + Math.cos(a) * R * 0.15).toFixed(1) + '" y1="' + (y + Math.sin(a) * R * 0.15).toFixed(1) + '" x2="' + (x + Math.cos(a) * R * (0.5 + 0.35 * p)).toFixed(1) + '" y2="' + (y + Math.sin(a) * R * (0.5 + 0.35 * p)).toFixed(1) + '" stroke="' + col + '" stroke-opacity="' + (1 - p).toFixed(2) + '" stroke-width="2"' + NS + '/>'; }
       } else o = edge(1.6, ' stroke-opacity=".6"');
       return o;
     }
@@ -12458,7 +12493,8 @@ function miniMap(mp, pmap) {
       (bAdd.has(p.guid) ? '<path d="M' + (x - 4) + ' ' + (y - 4) + 'l8 8M' + (x + 4) + ' ' + (y - 4) + 'l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' : '') +
       '<text x="' + x + '" y="' + (y + 25) + '" class="ml">' + esc(p.name) + '</text>' + castBar(p.guid, x, y + 29));
   }
-  for (const p of pts.filter((q) => q.kind === 'boss')) s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name) + '<text x="' + X(p) + '" y="' + (Y(p) + 33) + '" class="ml" fill="#f3c969" style="font-size:13px;font-weight:800">' + esc(p.name) + '</text>' + castBar(p.guid, X(p), Y(p) + 38));
+  // (bosses a little over half the old size (your note, Oct 18: the big crests hid what was under them))
+  for (const p of pts.filter((q) => q.kind === 'boss')) s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name, 0.6) + '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' + castBar(p.guid, X(p), Y(p) + 26));
   for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(242,36,58,.16)" stroke="#f2243a" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);
@@ -12470,6 +12506,9 @@ function miniMap(mp, pmap) {
   // (a tag can be for a stretch of time: [guid, text, from, to])
   const tagOf = new Map((mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)).map(([g, txt]) => [g, txt]));
   for (const l of mp.links || []) { if (ft < l.t0 || ft > l.t1) continue; const a = byG.get(l.from), b = byG.get(l.to); if (!a || !b) continue;
+    // (dash: a pointer, e.g. Nama to the mark he leaps to next: thin and dashed, starting just off the boss)
+    if (l.dash) { const x0 = X(a), y0 = Y(a), x1 = X(b), y1 = Y(b), d = Math.hypot(x1 - x0, y1 - y0) || 1, sx0 = x0 + (x1 - x0) / d * 12, sy0 = y0 + (y1 - y0) / d * 12;
+      s += '<line x1="' + sx0.toFixed(1) + '" y1="' + sy0.toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="#000" stroke-opacity=".5" stroke-width="4" stroke-linecap="round" stroke-dasharray="7 6" vector-effect="non-scaling-stroke"/><line x1="' + sx0.toFixed(1) + '" y1="' + sy0.toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="' + l.color + '" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 6" vector-effect="non-scaling-stroke"/>'; continue; }
     s += '<line x1="' + X(a) + '" y1="' + Y(a) + '" x2="' + X(b) + '" y2="' + Y(b) + '" stroke="#000" stroke-opacity=".6" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/><line x1="' + X(a) + '" y1="' + Y(a) + '" x2="' + X(b) + '" y2="' + Y(b) + '" stroke="' + l.color + '" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'; }
   // (kept close to the icon: a thin ring just outside it and a small badge on its corner)
   const okMark = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="9.5" fill="none" stroke="#2fd15a" stroke-width="2"/><circle cx="' + (x + 7.5) + '" cy="' + (y - 7.5) + '" r="4.5" fill="#2fd15a" stroke="#000" stroke-width="1"/><path d="M' + (x + 5.4) + ' ' + (y - 7.5) + 'l1.5 1.7l2.8-3.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -12492,7 +12531,7 @@ function miniMap(mp, pmap) {
   // (the sample is the tag itself when it's a short word, like "Fury"; a number otherwise)
   if ((mp.tags || []).length) { const tw = String(mp.tags[0][1]), smp = tw.length <= 4 && !/^\d+$/.test(tw) ? tw : '3';
     leg.push([(x, y) => '<text x="' + x + '" y="' + (y + 4) + '" fill="#f3d48a" font-size="' + (smp.length > 1 ? 10 : 12) + '" font-weight="800" text-anchor="middle">' + esc(smp) + '</text>', mp.tagLabel || 'Number by a name']); }
-  for (const l of (mp.links || []).filter((x, i, a) => a.findIndex((y) => y.color === x.color) === i)) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 6) + '" y2="' + (y - 4) + '" stroke="' + l.color + '" stroke-width="3" stroke-linecap="round"/>', (l.color === '#2fd15a' ? 'Green line: ' : l.color === '#f3c969' ? 'Amber line: ' : l.color === '#ff5a4f' ? 'Red line: ' : 'Line: ') + (l.legend || '')]);
+  for (const l of (mp.links || []).filter((x, i, a) => a.findIndex((y) => y.color === x.color) === i)) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 6) + '" y2="' + (y - 4) + '" stroke="' + l.color + '" stroke-width="' + (l.dash ? 2 : 3) + '" stroke-linecap="round"' + (l.dash ? ' stroke-dasharray="3 3"' : '') + '/>', (l.dash ? 'Dashed line: ' : l.color === '#2fd15a' ? 'Green line: ' : l.color === '#f3c969' ? 'Amber line: ' : l.color === '#ff5a4f' ? 'Red line: ' : 'Line: ') + (l.legend || '')]);
   if (bad.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff3b3b" stroke-width="2.5"/><path d="M' + (x - 2.5) + ' ' + (y - 2.5) + 'l5 5M' + (x + 2.5) + ' ' + (y - 2.5) + 'l-5 5" stroke="#ff3b3b" stroke-width="2"/>', 'Red ✕: ' + (mp.badLabel || 'got it wrong')]);
   if (warnS.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff9f1c" stroke-width="2.5"/><path d="M' + x + ' ' + (y - 3) + 'v3M' + x + ' ' + (y + 2) + 'v.5" stroke="#ff9f1c" stroke-width="2" stroke-linecap="round"/>', 'Orange !: ' + (mp.warnLabel || 'needs a look')]);
   if (gAdd.size || bAdd.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="' + (gAdd.size ? '#2fd15a' : '#ff3b3b') + '" stroke-width="2.5"/>', gAdd.size ? 'Green ring: the add that was kicked' : 'Red ring: the add whose cast got off']);

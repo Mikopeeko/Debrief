@@ -213,6 +213,25 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 231: Assignments' new parts, easier and nicer (your note: just the new stuff)
+- [x] **The note bar on This pull:** "Your note" over its name, with small chips for what's in it (Mythic, 4 cooldown
+  reminders, 1 assignment line), and Edit, **Change note** (when you have more than one) and Add a note. The why reads
+  plainer: "Picked for this pull: it names 5 of this pull's 20 players, and it's for Mythic."
+- [x] **The editor says what it reads as you paste:** "Debrief reads: The Coiled Altar · Mythic · 4 cooldown reminders · 1
+  assignment line · 5 players (4 in this pull)", and warns before you save when the note is for another boss ("Its first
+  line says it's for Ula'tek, not The Coiled Altar. Save it, and Debrief offers to move it there.") or has nothing Debrief
+  can check. The name box shows the name it would get ("Leave it empty to name it Mythic plan, Optt for Xastral").
+- [x] **Names say what changed from the closest note** (the one with the most names in common), not just the newest.
+- [x] **The box after saving counts the pull you have open:** "It's for The Coiled Altar (Mythic). 4 of its 5 players are
+  in the pull you have open." When the note fits the open pull, it no longer adds a confusing line about another night, or
+  a button to open the night that's already open.
+- [x] **Stored notes:** one line on top explains the logs (the one you have open, and the nights saved to your progress
+  that a note fits, from the Save it link on a pull); a note without any just says "No saved nights yet".
+- [x] **The empty page:** the separate "Your notes for other bosses" bar is gone (Stored notes covers it); one line under
+  the buttons says "You have notes for The Coiled Altar. See them in Stored notes."
+- Checked on your guild's Coiled Altar kill and an Ula'tek pull, desktop and phone; test notes removed.
+- The site was built without the map work still in progress in another session (that stays on your PC until it's done).
+
 ## 2026-10-18, round 230: Only real characters get replaced (your note)
 - [x] **The new-note offer only offers character names with an assignment** (your note: "everyone" doesn't get replaced).
   NSRT reminder tags that mean a group (everyone, all, a role like healer or tank, a class, a raid group) aren't read as

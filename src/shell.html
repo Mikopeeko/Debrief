@@ -1817,6 +1817,15 @@ span.sn-log { padding: 3px 10px; }
 .sn-cal { flex: none; opacity: .75; }
 @media (max-width: 640px) { .sn-hd { min-height: 84px; padding: 12px; flex-wrap: wrap; align-items: flex-start; } .sn-hd h3 { font-size: 20px; } .sn-body { padding: 4px 10px 10px; } }
 .as-none { padding: 12px 14px; line-height: 1.5; }
+/* (the note bar on This pull: "Your note" over its name, chips for what's in it; the editor's live line) */
+.nlib.nl-cur { background: linear-gradient(90deg, rgba(230,180,80,.07), transparent 55%), var(--panel); }
+.nl-cur .nl-tt { display: inline-flex; flex-direction: column; line-height: 1.2; margin-right: 4px; }
+.nl-cur .nl-k { font: 600 11px var(--head); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.nl-cur .nl-tt b { font: 700 17px/1.25 var(--head); color: var(--text); }
+.nl-chip { display: inline-block; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(255,255,255,.03); font-size: 12px; color: #c9ced7; white-space: nowrap; }
+.nt-live { margin-top: 6px; font-size: 13px; color: var(--muted); line-height: 1.45; } .nt-live b { color: var(--text); font-weight: 600; }
+.nt-warn { margin-top: 3px; color: var(--warn); }
+.ah-other { margin: 12px 0 0; } .ah-other .btn { margin-left: 6px; }
 /* (the offer of a new note when the roster changed: gold, under the note bar) */
 .as-swap { padding: 12px 14px; border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.06); line-height: 1.5; }
 .as-swap .rsw-rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 2px; }
