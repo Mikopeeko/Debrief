@@ -2518,7 +2518,7 @@ details.phase > summary { margin-top: 24px; }
 .tabbar .tb-id { display: none; align-items: center; gap: 4px; flex: none; margin: 0 0 7px auto; }
 body.bh-off .tabbar .tb-id { display: inline-flex; }
 /* (desktop: always beside the tabs, so every tab says which pull it is; the ☰ only once the top bar is off screen) */
-@media (min-width: 761px) { .tabbar .tb-id { display: inline-flex; } body:not(.bh-off) .tabbar .tbp-menu { display: none; } }
+
 .tb-pull.one { border-color: #f3f5f9; background: rgba(243,245,249,.1); } .tb-pull.one b { color: #fff; }
 .tb-pull.all { border-color: var(--gold); background: rgba(230,180,80,.12); } .tb-pull.all b { color: #f3c969; }
 .tabbar .tb-id .tb-pull { margin: 0; max-width: 300px; }
@@ -2761,12 +2761,12 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .fight.bh h2.bh-name.pickable { cursor: pointer; } .fight.bh h2.bh-name.pickable:hover { color: #fff; text-decoration: underline; text-decoration-color: rgba(230,180,80,.6); text-underline-offset: 5px; }
 .bh-pk { position: relative; height: 0; margin: 0 max(var(--gmin), calc((100% - var(--wrap)) / 2)); z-index: 45; }
 .bh-pk .bp-pop { top: -10px; left: 14px; }
-.bh-cut { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(106,168,255,.55); background: rgba(106,168,255,.1); color: #cfe0ff; font: 600 12.5px var(--body); cursor: pointer; white-space: nowrap; }
-.bh-cut:hover, .bh-cut[aria-expanded="true"] { border-color: #8fb8ff; background: rgba(106,168,255,.18); }
-.bh-cut.off { border-color: var(--line2); background: var(--raised); color: var(--muted); }
-.bh-cut svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.bh-cutpop { display: flex; justify-content: flex-end; margin: 8px max(var(--gmin), calc((100% - var(--wrap)) / 2)) 0; } .bh-cutpop[hidden] { display: none; }
-.bh-cutpop #cutSide { margin: 0; flex-wrap: wrap; border-radius: 12px; padding: 8px 10px 8px 14px; }
+.bh-cut { display: inline-flex; } .bh-cut:empty { display: none; }
+.bh-cut #cutSide { margin: 0; gap: 6px; padding: 2px 4px 2px 10px; font-size: 12.5px; }
+.bh-cut #cutSide .cs-top { display: inline-flex; align-items: center; gap: 6px; } .bh-cut #cutSide .cs-top b { font-size: 12.5px; margin: 0; white-space: nowrap; } .bh-cut #cutSide .cs-ic { width: 13px; height: 13px; }
+.bh-cut #cutSide .cs-row { display: inline-flex; align-items: center; gap: 5px; } .bh-cut #cutSide .cs-b { width: 22px; height: 22px; font-size: 15px; } .bh-cut #cutSide .cs-step input { width: 28px; padding: 1px 0; font-size: 13px; } .bh-cut #cutSide .cutq { width: 18px; height: 18px; line-height: 16px; font-size: 11px; }
+.bh-cutpop { display: flex; margin: 8px max(var(--gmin), calc((100% - var(--wrap)) / 2)) 0; } .bh-cutpop[hidden] { display: none; }
+.bh-cutpop .cutwhy2 { position: static; width: auto; max-width: 560px; }
 .tabbar .tabs > .tab { padding-top: 12px; }
 .sum-part > .nc-rc2 { margin: 0 0 12px; }
 #view .who .nm { cursor: pointer; } #view .who .nm:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -10493,23 +10493,10 @@ function progBar(it, left, phase, col) {
     const f = w > 0 ? Math.max(0, Math.min(1, (done - lo) / w)) : done > lo + 0.01 || phase === p ? 1 : 0;
     return '<span title="' + esc(p) + '" style="flex:' + (w > 0 ? w.toFixed(1) + ' 1 0' : '0 0 26px') + '"><i style="width:' + Math.round(100 * f) + '%"></i><em>' + esc(p.replace('Intermission', 'Int')) + '</em></span>'; }).join('') + '</div>';
 }
-// which pull the tab is showing, on the right of the sticky tab bar (it stays in view while scrolling; a click goes back up)
-// The pinned bar's left end, shown once the banner has scrolled away (body.bh-off): the boss, the pull (with ‹ › to the
-// earlier and later pull of the boss) and its result, and the menu; clicking the pull goes back to the top. While the
-// banner is on screen it's hidden: the banner says the same thing.
-function tbPull(r, allMode) {
-  const it = r.item, isKey = it.kind === 'run' || !!it.run;
-  const same = S.index && S.index.bosses ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [], k = same.indexOf(it);
-  const nav = (d, lab) => { const to = k >= 0 ? same[k + d] : null; return '<button class="tbp-n" type="button" data-d="' + d + '" aria-label="' + lab + '"' + (to ? '' : ' disabled') + '>' + (d < 0 ? '‹' : '›') + '</button>'; };
-  const menu = '<button class="tbp-menu" type="button" aria-label="Open the menu" title="Menu">☰</button>';
-  let pill;
-  // (what every tab is showing, beside the tabs (your note, Oct 18: "include which pull they are looking at"): white for one
-  // pull, gold for the whole night, like the banner's tag and the picked card)
-  if (allMode) pill = '<button class="tb-pull all" type="button" title="Back to the top"><b>Whole night</b><span>' + plural(same.length, 'pull') + ' · ' + esc(it.boss) + '</span></button>';
-  else if (isKey) pill = '<button class="tb-pull" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill || it.result === 'Timed' ? 'ok' : 'bad') + '"></i><b>' + esc(it.boss) + '</b><span>' + esc(it.result || '') + ' · ' + T(r.duration) + '</span></button>';
-  else { const pg = progressOf(r);
-    pill = '<button class="tb-pull one" type="button" title="Back to the top"><i class="tbp-d ' + (it.kill ? 'ok' : 'bad') + '"></i><b>Pull ' + it.pull + '</b><span>' + (it.kill ? 'Kill' : 'Wipe' + (pg ? (pg.phase ? ' in ' : ' at ') + esc(pg.label) : '')) + ' · ' + esc(it.boss) + '</span></button>'; }
-  return '<div class="tb-id">' + (allMode || isKey ? pill : nav(-1, 'Earlier pull') + pill + nav(1, 'Later pull')) + menu + '</div>';
+// The pinned tab bar's right end, once the banner has scrolled away (body.bh-off): the menu. (The "Pull 13 · Wipe" or
+// "Whole night" tag and its ‹ › that sat here are gone (your call, Oct 19): the pull cards above the tabs say it.)
+function tbPull() {
+  return '<div class="tb-id"><button class="tbp-menu" type="button" aria-label="Open the menu" title="Menu">☰</button></div>';
 }
 // (the pinned bar's left end shows once the banner is off screen)
 if (typeof IntersectionObserver !== 'undefined') { const bhObs = new IntersectionObserver((es) => { for (const e of es) document.body.classList.toggle('bh-off', !e.isIntersecting); }); const bh = document.getElementById('bossHead'); if (bh) bhObs.observe(bh); }
@@ -10699,12 +10686,10 @@ function renderMain() {
       const tab = (k) => { const l = name.get(k), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>'; };
-      return TAB_ORDER.map(tab).join(''); })() + '</nav>' + tbPull(r, allMode) + '</div>' +
+      return TAB_ORDER.map(tab).join(''); })() + '</nav>' + tbPull() + '</div>' +
     '<section id="view"></section>';
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
-  { const tp = $('#main .tb-pull'); if (tp) tp.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }); }
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
-  $('#main').querySelectorAll('.tbp-n').forEach((b) => (b.onclick = () => { const same = S.index.bosses.filter((x) => x.id === it.id && x.diffId === it.diffId), to = same[same.indexOf(it) + +b.dataset.d]; if (to) select(to); }));
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
   // (the whole night: Recap is the night's summary, Mechanics and Assignments their rows across the pulls; Rotation, Graphs
@@ -22204,32 +22189,32 @@ $('#liveBtn').onclick = () => setLive(!LIVE.on);
 // The wipe filter control, made once; renderList moves it to the right end of the pull cards, as a card of its own: it
 // decides how far each wipe counts, on every tab.
 let CUT_NODE = null;
-// (its place (your pick, Oct 18): a chip in the boss banner, "Counting up to 2 deaths", that opens this control just under
-// the banner; it was a card among the pull cards, which are for picking a pull)
-function bhCutChip() { const n = deathCutN();
-  return '<button class="bh-cut' + (n ? '' : ' off') + '" type="button" id="bhCut" aria-expanded="' + !!S.cutOpen + '" title="The wipe filter: on a wipe, everything after that death is left out of every tab. Kills are never cut."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg>' + (n ? 'Counting up to ' + plural(n, 'death') : 'Wipe filter off') + CHEV + '</button>'; }
+// (its place: in the boss banner, the control itself, "Wipe filter ? stop at − 2 + deaths" (your call, Oct 19: one filter,
+// not a chip you click to open another one). Its "Why filter?" opens just under the banner, which clips what spills out.)
+function bhCutChip() { return '<span class="bh-cut" id="bhCut"></span>'; }
 function bhCutBind() {
-  if (!CUT_NODE) return; const pop = $('#bhCutPop'), b = $('#bhCut');
-  if (!pop || !b) { if (CUT_NODE.parentNode) CUT_NODE.parentNode.removeChild(CUT_NODE); return; }
-  if (CUT_NODE.parentNode !== pop) pop.appendChild(CUT_NODE);
-  pop.hidden = !S.cutOpen; b.setAttribute('aria-expanded', String(!!S.cutOpen));
-  b.onclick = (e) => { e.stopPropagation(); S.cutOpen = !S.cutOpen; pop.hidden = !S.cutOpen; b.setAttribute('aria-expanded', String(S.cutOpen)); };
+  if (!CUT_NODE) return; const slot = $('#bhCut'), pop = $('#bhCutPop');
+  if (!slot) { if (CUT_NODE.parentNode) CUT_NODE.parentNode.removeChild(CUT_NODE); return; }
+  if (CUT_NODE.parentNode !== slot) slot.appendChild(CUT_NODE);
+  const w = CUT_WHY_NODE; if (pop && w && w.parentNode !== pop) pop.appendChild(w); if (pop) pop.hidden = !w || w.hidden;
 }
-document.addEventListener('click', (e) => { if (!S.cutOpen || e.target.closest('#bhCut, #bhCutPop')) return; S.cutOpen = false; const p = $('#bhCutPop'), b = $('#bhCut'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); });
+let CUT_WHY_NODE = null;
 (function cutSide() {
   const el = $('#cutSide'); if (!el) return;
   CUT_NODE = el;
   // (its name and the ? on top, the number of deaths with − and + under it; the ? opens why)
   el.innerHTML = '<span class="cs-top" title="On a wipe, everything after that death is left out of every tab. Kills are never cut. 0 = off."><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><b>Wipe filter</b><button class="cutq" type="button" id="cutSideQ" aria-label="Why filter deaths?" aria-expanded="false">?</button></span>' +
     '<span class="cs-row"><span class="cs-l">stop at</span><span class="cs-step"><button type="button" class="cs-b" data-d="-1" aria-label="One fewer death">−</button><input id="cutSideIn" type="number" min="0" max="40" step="1" value="' + (deathCutN() || '') + '" placeholder="off" title="Type a number, then press Enter"><button type="button" class="cs-b" data-d="1" aria-label="One more death">+</button></span><span class="cs-l">deaths</span></span>' +
-    '<div class="cutwhy2" hidden><b>Why filter?</b> ' + esc(CUT_WHY.replace(/^Why filter\? /, '')) + '</div>';
+    '';
+  CUT_WHY_NODE = document.createElement('div'); CUT_WHY_NODE.className = 'cutwhy2'; CUT_WHY_NODE.hidden = true; CUT_WHY_NODE.innerHTML = '<b>Why filter?</b> ' + esc(CUT_WHY.replace(/^Why filter\? /, ''));
   // (off: the control turns grey, so it's plain when nothing is being cut)
   const inp = $('#cutSideIn'), go = () => { const n = Math.max(0, Math.min(40, Math.round(+inp.value || 0))); inp.value = n || ''; el.classList.toggle('off', !n); if (n === deathCutN()) return; store.set('wla-death-cut2', String(n)); if (S.rep) { renderMain(); refreshIcons(); } };
   el.classList.toggle('off', !deathCutN());
   inp.onchange = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
   el.querySelectorAll('.cs-b').forEach((b) => (b.onclick = () => { inp.value = Math.max(0, Math.min(40, (+inp.value || 0) + +b.dataset.d)); go(); }));
-  $('#cutSideQ').onclick = (e) => { e.stopPropagation(); const w = el.querySelector('.cutwhy2'); w.hidden = !w.hidden; $('#cutSideQ').setAttribute('aria-expanded', String(!w.hidden)); };
-  document.addEventListener('click', (e) => { const w = el.querySelector('.cutwhy2'); if (w && !w.hidden && !el.contains(e.target)) { w.hidden = true; $('#cutSideQ').setAttribute('aria-expanded', 'false'); } }); // (a click elsewhere closes it)
+  const whyShow = (on) => { const w = CUT_WHY_NODE, p = $('#bhCutPop'); w.hidden = !on; if (p) p.hidden = !on; $('#cutSideQ').setAttribute('aria-expanded', String(on)); };
+  $('#cutSideQ').onclick = (e) => { e.stopPropagation(); whyShow(CUT_WHY_NODE.hidden); };
+  document.addEventListener('click', (e) => { const w = CUT_WHY_NODE; if (w && !w.hidden && !el.contains(e.target) && !w.contains(e.target)) whyShow(false); }); // (a click elsewhere closes it)
 })();
 function hostedPanel(msg) {
   $('#main').innerHTML = '<div class="empty"><div class="drop" style="max-width:640px"><h2>Paste a Warcraft Logs link</h2>' +

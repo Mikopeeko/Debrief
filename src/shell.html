@@ -2518,7 +2518,7 @@ details.phase > summary { margin-top: 24px; }
 .tabbar .tb-id { display: none; align-items: center; gap: 4px; flex: none; margin: 0 0 7px auto; }
 body.bh-off .tabbar .tb-id { display: inline-flex; }
 /* (desktop: always beside the tabs, so every tab says which pull it is; the ☰ only once the top bar is off screen) */
-@media (min-width: 761px) { .tabbar .tb-id { display: inline-flex; } body:not(.bh-off) .tabbar .tbp-menu { display: none; } }
+
 .tb-pull.one { border-color: #f3f5f9; background: rgba(243,245,249,.1); } .tb-pull.one b { color: #fff; }
 .tb-pull.all { border-color: var(--gold); background: rgba(230,180,80,.12); } .tb-pull.all b { color: #f3c969; }
 .tabbar .tb-id .tb-pull { margin: 0; max-width: 300px; }
@@ -2761,12 +2761,12 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .fight.bh h2.bh-name.pickable { cursor: pointer; } .fight.bh h2.bh-name.pickable:hover { color: #fff; text-decoration: underline; text-decoration-color: rgba(230,180,80,.6); text-underline-offset: 5px; }
 .bh-pk { position: relative; height: 0; margin: 0 max(var(--gmin), calc((100% - var(--wrap)) / 2)); z-index: 45; }
 .bh-pk .bp-pop { top: -10px; left: 14px; }
-.bh-cut { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(106,168,255,.55); background: rgba(106,168,255,.1); color: #cfe0ff; font: 600 12.5px var(--body); cursor: pointer; white-space: nowrap; }
-.bh-cut:hover, .bh-cut[aria-expanded="true"] { border-color: #8fb8ff; background: rgba(106,168,255,.18); }
-.bh-cut.off { border-color: var(--line2); background: var(--raised); color: var(--muted); }
-.bh-cut svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.bh-cutpop { display: flex; justify-content: flex-end; margin: 8px max(var(--gmin), calc((100% - var(--wrap)) / 2)) 0; } .bh-cutpop[hidden] { display: none; }
-.bh-cutpop #cutSide { margin: 0; flex-wrap: wrap; border-radius: 12px; padding: 8px 10px 8px 14px; }
+.bh-cut { display: inline-flex; } .bh-cut:empty { display: none; }
+.bh-cut #cutSide { margin: 0; gap: 6px; padding: 2px 4px 2px 10px; font-size: 12.5px; }
+.bh-cut #cutSide .cs-top { display: inline-flex; align-items: center; gap: 6px; } .bh-cut #cutSide .cs-top b { font-size: 12.5px; margin: 0; white-space: nowrap; } .bh-cut #cutSide .cs-ic { width: 13px; height: 13px; }
+.bh-cut #cutSide .cs-row { display: inline-flex; align-items: center; gap: 5px; } .bh-cut #cutSide .cs-b { width: 22px; height: 22px; font-size: 15px; } .bh-cut #cutSide .cs-step input { width: 28px; padding: 1px 0; font-size: 13px; } .bh-cut #cutSide .cutq { width: 18px; height: 18px; line-height: 16px; font-size: 11px; }
+.bh-cutpop { display: flex; margin: 8px max(var(--gmin), calc((100% - var(--wrap)) / 2)) 0; } .bh-cutpop[hidden] { display: none; }
+.bh-cutpop .cutwhy2 { position: static; width: auto; max-width: 560px; }
 .tabbar .tabs > .tab { padding-top: 12px; }
 .sum-part > .nc-rc2 { margin: 0 0 12px; }
 #view .who .nm { cursor: pointer; } #view .who .nm:hover { text-decoration: underline; text-underline-offset: 3px; }

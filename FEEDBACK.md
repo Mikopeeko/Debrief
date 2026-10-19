@@ -247,6 +247,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 249: One wipe filter, and no tag beside the tabs (your notes)
+- [x] **The tag beside the tabs is gone** ("Pull 13 · Wipe" / "Whole night · 17 pulls" with ‹ ›). You hadn't noticed it:
+  the pull cards above the tabs already say which pull you're on. The ☰ menu still shows there once you scroll down.
+- [x] **One wipe filter:** the banner now has the filter itself, "Wipe filter ? stop at − 2 + deaths", instead of a
+  "Counting up to 2 deaths" chip that opened a second box. The ? opens "Why filter?" just under the banner.
+- [x] Checked on a real night, desktop and phone: − and + change every tab, the ? opens and closes, switching pulls
+  keeps it; no errors.
+
 ## 2026-10-19, round 248: Maps show each mechanic's spell icon (polish job 3, your go)
 - [x] **Every mechanic circle on the maps carries its spell's icon**, ringed in the circle's own colour (the colours were
   already measured from each icon, so the two match, like in game): in the middle of an area to stay out of (a puddle, a
