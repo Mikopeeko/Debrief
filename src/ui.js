@@ -14918,9 +14918,10 @@ function rcnFacts(c) {
   // ---- each pull ----
   const pulls = reps.map((r) => { const it = r.item, left = pullPct(it), pr = pullProg(it), dd = r.deaths.slice().sort((a, b) => a.t - b.t), kept = keptDeaths(r);
     let used = 0, expect = 0; for (const p of r.players.values()) { if (!byName.has(p.name)) continue; const s = sv(r, p); used += Math.min(s.used, s.expect); expect += s.expect; }
-    const ab = new Map(); for (const d of dd) if (d.ability) ab.set(d.ability, (ab.get(d.ability) || 0) + 1); const topAb = [...ab].sort((a, b) => b[1] - a[1])[0];
-    const ended = it.kill ? 'Kill' : topAb && topAb[1] >= 2 ? 'Most deaths to ' + topAb[0] + ' (' + topAb[1] + ')' : dd.length ? plural(dd.length, 'death') : 'A reset, nobody died';
-    return { r, it, left, phase: pr ? pr.phase : null, label: pullLabel(it), deaths: dd, kept, first: dd[0] || null, used, expect, ended, moments: [] }; });
+    // (how the wipe started: only the deaths up to the wipe filter, so a raid dying after it's already lost doesn't count (your rule, Oct 19))
+    const ks = kept.slice().sort((a, b) => a.t - b.t), abs = [...new Set(ks.map((d) => d.ability).filter(Boolean))];
+    const ended = it.kill ? 'Kill' : abs.length ? andList(abs) : ks.length ? plural(ks.length, 'death') : 'A reset, nobody died';
+    return { r, it, left, phase: pr ? pr.phase : null, label: pullLabel(it), deaths: dd, kept: ks, first: ks[0] || null, used, expect, ended, moments: [] }; });
   // ---- since the nights before: your raid's saved grades on this boss (no prep in them, so tonight is read the same way) ----
   const it0 = reps[0].item, tonight = nightOf(it0.wallMs || it0.startMs || Date.now()), nights = new Map();
   for (const v of HIST.mem.values()) { if (v.boss !== it0.boss || v.diffId !== it0.diffId || !v.gr) continue; const k = nightOf(v.at); if (!nights.has(k)) nights.set(k, []); nights.get(k).push(v); }
@@ -14973,14 +14974,14 @@ function rcnHead(c, F) {
   const trend = F.before.length && F.nowN ? '<div class="rcn-trend"><span class="sub">Night grades on this boss:</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') +
     '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + rcnDelta(F.nowN.raid - F.last.raid) + '<span class="sub" style="font-size:12px">(mechanics and Rotation, without prep)</span></div>' : '';
   const kpi = (l, v, st, d) => '<div><small>' + l + '</small><b class="' + st + '">' + v + (d || '') + '</b></div>';
-  const lede = (it.kill || nr.cls === 'good' ? nr.big + '. ' : nr.big + ' after ' + plural(F.pulls.length, 'pull') + '. ') + (F.mech[0] ? F.mech[0].n + ' cost the raid the most points (' + plural(F.mech[0].tot, 'time') + ').' : 'No mechanic cost anyone points.') + (potE && potU / potE < 0.85 ? ' ' + plural(potE - potU, 'potion') + ' went undrunk.' : '');
+  const lede = (it.kill || nr.cls === 'good' ? nr.big + '. ' : nr.big + ' after ' + plural(F.pulls.length, 'pull') + '. ') + (F.mech[0] ? F.mech[0].n + ' cost the raid the most points (' + plural(F.mech[0].tot, 'time') + ').' : 'No mechanic cost anyone points.') + (potE && potU / potE < 0.85 ? ' ' + plural(potE - potU, 'combat potion') + ' went undrunk.' : '');
   const head = '<div class="rcn-head"><div>' + rcnMed(raid, 88) + '</div><div><span class="rcn-kick">Report card · ' + esc(it.diff || '') + ' · ' + esc(nightLabel(it.wallMs || it.startMs || Date.now())) + '</span><h2>' + esc(it.boss) + '</h2><p>' + esc(lede) + '</p>' + trend +
     '<div class="rcn-kpis">' + kpi('Pulls', F.pulls.length, '') + kpi('Deaths that counted', deaths, deaths / F.pulls.length >= 4 ? 'warnv' : '') +
-    kpi('Potions used', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('Mistakes that cost points', mist, mist ? '' : 'okv') + '</div></div></div>';
+    kpi('Combat potions used', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('Mistakes that cost points', mist, mist ? '' : 'okv') + '</div></div></div>';
   const t = F.top, tp = t && F.pl.get(t.p.name);
   const spot = t ? '<div class="rcn-spot" style="--c:' + t.p.color + '"><div class="rcn-av">' + avatar(t.p, true) + '</div><div><span class="rcn-kick">🏆 Player of the night</span><h3>' + esc(t.p.name) + '</h3><span class="sub">' + esc(t.p.specName || '') + ' · ' + letterOf(t.score) + ', ' + Math.round(t.score) + ' out of 100</span>' +
-    '<p>' + esc([t.mistakes ? plural(t.mistakes, 'mistake') + ' that cost points' : 'No mistakes that cost points', tp.deaths ? plural(tp.deaths, 'death') : 'no deaths', tp.expect ? 'a potion in ' + tp.used + ' of ' + tp.expect + ' pulls' : '', t.rot != null ? 'a Rotation score of ' + Math.round(t.rot) : ''].filter(Boolean).join(', ').replace(/^./, (s) => s.toUpperCase())) + '.</p>' +
-    '<div class="rcn-st">' + (tp.out != null ? '<div><b>' + C(tp.out) + '</b><small>' + (t.p.role === 'healer' ? 'healing' : 'damage') + ' a second</small></div>' : '') + '<div><b class="' + (tp.deaths ? '' : 'okv') + '">' + tp.deaths + '</b><small>deaths</small></div>' + (tp.expect ? '<div><b>' + tp.used + '/' + tp.expect + '</b><small>potions</small></div>' : '') + (tp.last != null ? '<div><b>' + rcnDelta(tp.last) + '</b><small>since last night</small></div>' : '') + '</div></div></div>' : '';
+    '<p>' + esc([t.mistakes ? plural(t.mistakes, 'mistake') + ' that cost points' : 'No mistakes that cost points', tp.deaths ? plural(tp.deaths, 'death') : 'no deaths', tp.expect ? 'a combat potion in ' + tp.used + ' of ' + tp.expect + ' pulls' : '', t.rot != null ? 'a Rotation score of ' + Math.round(t.rot) : ''].filter(Boolean).join(', ').replace(/^./, (s) => s.toUpperCase())) + '.</p>' +
+    '<div class="rcn-st">' + (tp.out != null ? '<div><b>' + C(tp.out) + '</b><small>' + (t.p.role === 'healer' ? 'healing' : 'damage') + ' a second</small></div>' : '') + '<div><b class="' + (tp.deaths ? '' : 'okv') + '">' + tp.deaths + '</b><small>deaths</small></div>' + (tp.expect ? '<div><b>' + tp.used + '/' + tp.expect + '</b><small>combat potions</small></div>' : '') + (tp.last != null ? '<div><b>' + rcnDelta(tp.last) + '</b><small>since last night</small></div>' : '') + '</div></div></div>' : '';
   return '<section class="rcn-top' + (spot ? '' : ' one') + '">' + head + spot + '</section>';
 }
 function rcnAwards(F) {
@@ -14997,17 +14998,20 @@ function rcnMoments(F) {
 // every pull: a bar each (taller got further), and a table row each; a row opens its deaths on a timeline
 function rcnPulls(F) {
   const open = S.rcnPull;
-  const bars = '<div class="rcn-pc">' + F.pulls.map((q) => { const prog = q.it.kill ? 100 : q.left == null ? 0 : Math.max(4, 100 - q.left), cls = q.it.kill ? 'k' : prog >= 66 ? 'p3' : prog >= 33 ? 'p2' : 'p1';
-    return '<button type="button" class="' + cls + (open === q.it.pull ? ' on' : '') + '" data-rcnp="' + q.it.pull + '" data-tt="' + esc('<b>Pull ' + q.it.pull + '</b><br>' + (q.it.kill ? 'Kill' : esc(q.label) + ' left') + ', ' + plural(q.deaths.length, 'death')) + '"><i style="height:' + prog + '%"></i><span>' + q.it.pull + '</span></button>'; }).join('') + '</div>';
-  const row = (q) => { const f = q.first, fp = f && F.byName.get(f.player), on = open === q.it.pull, prog = q.it.kill ? 0 : q.left == null ? null : q.left;
+  // (each bar is the boss's health left at the end of the pull, so the bars come down toward the kill, which has none (your note, Oct 19))
+  const bars = '<div class="rcn-pc">' + F.pulls.map((q) => { const left = q.it.kill ? 0 : q.left == null ? null : q.left, cls = q.it.kill ? 'k' : left == null ? 'p2' : left >= 66 ? 'p1' : left >= 33 ? 'p2' : 'p3';
+    return '<button type="button" class="' + cls + (open === q.it.pull ? ' on' : '') + '" data-rcnp="' + q.it.pull + '" data-tt="' + esc('<b>Pull ' + q.it.pull + '</b><br>' + (q.it.kill ? 'Kill' : left == null ? 'Health left not known' : (left < 10 ? left.toFixed(1) : Math.round(left)) + '% of the boss left (' + esc(q.label) + ')') + '<br>' + plural(q.kept.length, 'death') + ' up to the wipe filter') + '">' +
+      (q.it.kill ? '<em>✓</em>' : '<i style="height:' + (left == null ? 0 : Math.max(3, left)) + '%"></i>') + '<span>' + q.it.pull + '</span></button>'; }).join('') + '</div>';
+  const row = (q) => { const f = q.first, fp = f && F.byName.get(f.player), on = open === q.it.pull, left = q.it.kill ? 0 : q.left == null ? null : q.left, kd = q.kept.length;
     return '<tr class="rcn-pr' + (q.it.kill ? ' kill' : '') + (on ? ' on' : '') + '" data-rcnp="' + q.it.pull + '"><td><span class="rcn-ar">›</span><b class="rcn-pn">' + q.it.pull + '</b>' + q.moments.map((m) => '<span class="rcn-mm" data-tt="' + esc('<b>' + esc(m.t) + '</b><br>' + esc((m.who ? m.who + ': ' : '') + m.txt)) + '">' + m.ic + '</span>').join('') + '</td>' +
-      '<td><div class="rcn-hpw"><div class="rcn-hp"><i style="width:' + (prog == null ? 0 : prog) + '%"></i></div><span' + (q.it.kill ? ' class="okv"' : '') + '>' + (q.it.kill ? 'Killed' : prog == null ? '—' : esc(q.label)) + '</span></div></td>' +
-      '<td class="' + (q.deaths.length >= 8 ? 'hotv' : q.deaths.length >= 5 ? 'warnv' : '') + ' rcn-b">' + q.deaths.length + '</td>' +
+      '<td><div class="rcn-hpw"><div class="rcn-hp"><i style="width:' + (left == null ? 0 : left) + '%"></i></div><span' + (q.it.kill ? ' class="okv"' : '') + '>' + (q.it.kill ? 'Killed' : left == null ? '—' : (left < 10 ? left.toFixed(1) : Math.round(left)) + '% left' + (q.phase ? '<small>' + esc(q.label) + '</small>' : '')) + '</span></div></td>' +
+      '<td class="rcn-b" data-tt="' + esc(plural(q.deaths.length, 'death') + ' in all; ' + kd + ' up to the wipe filter') + '">' + kd + '</td>' +
       '<td class="rcn-hide">' + (f ? '<span class="nm" style="color:' + (fp ? fp.p.color : 'inherit') + '">' + esc(f.player) + '</span> <span class="sub">· ' + esc(f.ability || 'unknown') + ', ' + T(f.t) + '</span>' : '<span class="sub">Nobody died</span>') + '</td>' +
       '<td class="rcn-hide' + (q.expect && q.used < q.expect ? ' warnv' : '') + '">' + (q.expect ? q.used + ' of ' + q.expect : '<span class="sub">—</span>') + '</td><td' + (q.it.kill ? ' class="okv rcn-b"' : '') + '>' + esc(q.ended) + '</td></tr>' +
       (on ? '<tr class="rcn-pd"><td colspan="6">' + rcnPullDetail(F, q) + '</td></tr>' : ''); };
-  return '<section class="rcn-sec"><h3 class="rcn-h">Pull by pull<small>Taller bars got further into the boss. Click a bar or a row to open that pull.</small></h3><div class="panel rcn-pp">' + bars +
-    '<div class="rcn-scroll"><table class="rcn-pt"><tr><th>Pull</th><th>Boss health left</th><th>Deaths</th><th class="rcn-hide">Died first</th><th class="rcn-hide">Potions</th><th>What ended it</th></tr>' + F.pulls.map(row).join('') + '</table></div></div></section>';
+  const cutN = deathCutN();
+  return '<section class="rcn-sec"><h3 class="rcn-h">Pull by pull<small>Each bar is the boss\'s health left when the pull ended: lower is better, and the kill has none. ' + (cutN ? 'Deaths count up to the ' + ordinal(cutN) + ' death (the wipe filter). ' : '') + 'Click a bar or a row to open that pull.</small></h3><div class="panel rcn-pp">' + bars +
+    '<div class="rcn-scroll"><table class="rcn-pt"><tr><th>Pull</th><th>Boss health left</th><th title="Up to the wipe filter">Deaths</th><th class="rcn-hide">Died first</th><th class="rcn-hide" title="Combat or mana potions drunk, of the ones each pull had room for">Combat potions</th><th>How it ended</th></tr>' + F.pulls.map(row).join('') + '</table></div></div></section>';
 }
 function rcnPullDetail(F, q) {
   const len = Math.max(30, q.r.duration), ticks = []; for (let m = 60; m < len; m += 60) ticks.push(m);
@@ -15021,11 +15025,15 @@ function rcnPullDetail(F, q) {
 function rcnMech(F) {
   if (!F.mech.length) return '<section class="rcn-sec"><h3 class="rcn-h">Mechanics scoreboard</h3><div class="panel"><p class="sub" style="margin:0">No mechanic cost anyone points tonight.</p></div></section>';
   const n = F.reps.length, rows = F.mech.slice(0, 10).map((m) => { const mx = Math.max(1, ...m.per), h = Math.max(1, Math.floor(n / 2)), avg = (l) => l.reduce((s, v) => s + v, 0) / Math.max(1, l.length), a = avg(m.per.slice(0, h)), b = avg(m.per.slice(n - h));
-    const k = m.tot >= 20 || m.sev === 'High' ? 'var(--bad)' : m.tot >= 8 ? 'var(--warn)' : 'var(--good)', tr = n < 4 ? '' : b < a * 0.6 ? '<span class="okv">▼ Got better through the night</span>' : b > a * 1.4 && b - a >= 1 ? '<span class="hotv">▲ Got worse late in the night</span>' : '<span class="sub">About the same all night</span>';
+    // (the trend in words, with the numbers: how many a pull in the first half of the night against the second (your note, Oct 19: the mini chart didn't read))
+    const f1 = (v) => (v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1)), k = m.tot >= 20 || m.sev === 'High' ? 'var(--bad)' : m.tot >= 8 ? 'var(--warn)' : 'var(--good)';
+    const tr = n < 4 ? '' : b < a * 0.6 ? '<span class="okv">▼ Fewer by the end</span><small>' + f1(a) + ' a pull early, ' + f1(b) + ' late</small>' : b > a * 1.4 && b - a >= 1 ? '<span class="hotv">▲ More by the end</span><small>' + f1(a) + ' a pull early, ' + f1(b) + ' late</small>' : '<span class="sub">Steady</span><small>about ' + f1((a + b) / 2) + ' a pull all night</small>';
     const who = [...m.who].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([nm, v]) => { const a2 = F.byName.get(nm); return '<span style="--c:' + (a2 ? a2.p.color : 'inherit') + '"><b>' + esc(nm) + '</b> ' + v + '</span>'; }).join('');
     return '<tr><td class="rcn-mn"><b>' + esc(m.n) + '</b>' + (m.fix ? '<small>' + esc(String(m.fix).split(/(?<=\.)\s/)[0]) + '</small>' : '') + '</td><td class="rcn-tot" style="color:' + k + '">' + m.tot + '</td>' +
-      '<td><div class="rcn-spk" style="--k:' + k + ';--n:' + n + '">' + m.per.map((v, i) => '<i style="height:' + Math.max(v ? 8 : 3, 100 * v / mx) + '%' + (v ? '' : ';opacity:.25') + '" data-tt="' + esc('<b>Pull ' + F.reps[i].item.pull + '</b><br>' + plural(v, 'time')) + '"></i>').join('') + '</div></td><td>' + tr + '</td><td class="rcn-hide"><div class="rcn-who">' + who + '</div></td></tr>'; }).join('');
-  return '<section class="rcn-sec"><h3 class="rcn-h">Mechanics scoreboard<small>Every mechanic that cost points: how often, pull by pull, and who it caught most.</small></h3><div class="panel rcn-pp rcn-scroll"><table class="rcn-ms"><tr><th>Mechanic</th><th>Times</th><th>Pull by pull</th><th>Trend</th><th class="rcn-hide">Most often</th></tr>' + rows + '</table></div></section>';
+      // (a square a pull, the number in it how many times; darker is more, an empty square is none)
+      '<td><div class="rcn-sq" style="--k:' + k + ';--n:' + n + '">' + m.per.map((v, i) => '<i class="l' + (!v ? 0 : v / mx <= 0.34 ? 1 : v / mx <= 0.67 ? 2 : 3) + '" data-tt="' + esc('<b>Pull ' + F.reps[i].item.pull + '</b><br>' + (v ? plural(v, 'time') : 'Not once')) + '">' + (v || '') + '</i>').join('') + '</div></td><td class="rcn-trd">' + tr + '</td><td class="rcn-hide"><div class="rcn-who">' + who + '</div></td></tr>'; }).join('');
+  const cutN = deathCutN();
+  return '<section class="rcn-sec"><h3 class="rcn-h">Mechanics scoreboard<small>Every mechanic that cost points' + (cutN ? ', up to the wipe filter' : '') + ': how many times in all, how many each pull, and who it caught most.</small></h3><div class="panel rcn-pp rcn-scroll"><table class="rcn-ms"><tr><th>Mechanic</th><th>Times</th><th>Each pull · ' + F.reps[0].item.pull + ' to ' + F.reps[n - 1].item.pull + '</th><th>Trend</th><th class="rcn-hide">Most often</th></tr>' + rows + '</table></div></section>';
 }
 // one player's breakdown, under their row: mechanics, deaths, output pull by pull, cooldowns, prep, and what to fix first
 function rcnPlayer(c, F, a) {
@@ -15060,7 +15068,7 @@ function rcnPlayer(c, F, a) {
     '<div class="rcn-dc"><h4>Prep<small>at the last pull</small></h4>' + prep + '<h4 class="s">Fix these first<small>the biggest gain first</small></h4>' + fixes + '</div></div></div>';
 }
 // the raid on one grid: a row a player, six coloured parts, output, deaths, potions and the night's trend
-const RCN_COLS = [['score', 'Grade', 'out of 100'], ['mech', 'Mechanics', '25%'], ['play', 'Rotation', '25%'], ['surv', 'Survival', '15%'], ['prep', 'Prep', '15%'], ['asg', 'Assignments', '10%'], ['tool', 'Toolkit', '10%'], ['out', 'Output', 'a second'], ['deaths', 'Deaths', 'over the night'], ['pots', 'Potions', 'used'], ['trend', 'Trend', 'pull by pull']];
+const RCN_COLS = [['score', 'Grade', 'out of 100'], ['mech', 'Mechanics', '25%'], ['play', 'Rotation', '25%'], ['surv', 'Survival', '15%'], ['prep', 'Prep', '15%'], ['asg', 'Assignments', '10%'], ['tool', 'Toolkit', '10%'], ['out', 'Output', 'a second'], ['deaths', 'Deaths', 'over the night'], ['pots', 'Potions', 'combat, used'], ['trend', 'Trend', 'pull by pull']];
 function rcnGrid(c, F) {
   const role = S.rcnRole || 'all', sortK = S.rcnSort || null, has = new Set(c.data.map((a) => a.p.role || 'dps'));
   const list = c.data.filter((a) => role === 'all' || (a.p.role || 'dps') === role), pf = (a) => F.pl.get(a.p.name);
