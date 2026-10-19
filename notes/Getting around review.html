@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting Around Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49; --text: #ece8df; --muted: #98a0ad; --faint: #6c7381;
+  --gold: #e6b450; --bad: #e5534b; --warn: #e8a23a; --good: #45c15c; --head: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', 'Segoe UI', system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1060px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font: 700 34px/1.1 var(--head); margin: 0 0 6px; } h2 { font: 700 24px/1.2 var(--head); margin: 44px 0 6px; } h3 { font: 600 18px/1.2 var(--head); margin: 0 0 8px; }
+.lead { color: var(--muted); max-width: 760px; margin: 0; } .sub { color: var(--muted); font-size: 13.5px; }
+.k { display: inline-block; font: 700 11px/1 var(--head); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 22px 0 0; }
+.sum div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; } .sum b { display: block; font: 700 26px var(--head); color: var(--gold); }
+.find { display: grid; gap: 8px; margin-top: 12px; }
+.f { display: grid; grid-template-columns: 30px 1fr; gap: 4px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.f .n { grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--head); background: rgba(230,180,80,.14); color: var(--gold); }
+.f .n.hi { background: rgba(229,83,75,.16); color: #ff8a83; }
+.f p { margin: 0; } .f .fix { color: var(--muted); font-size: 14px; } .f .fix b { color: #9be27a; font-weight: 600; }
+.tag { font: 700 10.5px/1 var(--head); letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 5px; margin-left: 6px; vertical-align: 2px; }
+.tag.big { background: rgba(229,83,75,.16); color: #ff8a83; } .tag.mid { background: rgba(232,162,58,.16); color: var(--warn); } .tag.sm { background: rgba(69,193,92,.14); color: #7ee08f; }
+/* mockups */
+.mk { margin-top: 14px; border: 1px solid var(--line2); border-radius: 14px; overflow: hidden; background: #0c0e13; }
+.mk-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 9px 14px; background: var(--raised); border-bottom: 1px solid var(--line); font: 600 14px var(--head); }
+.mk-h .sub { font-family: var(--body); font-weight: 400; }
+.mk-b { padding: 12px; display: grid; gap: 8px; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tb { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #151821; border: 1px solid var(--line); border-radius: 10px; }
+.logo { display: flex; align-items: center; gap: 7px; font: 700 16px var(--head); } .logo i { width: 18px; height: 20px; border-radius: 4px 4px 9px 9px; border: 2px solid var(--gold); }
+.pill { font: 600 13px var(--head); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line2); background: var(--raised); white-space: nowrap; }
+.pill.g { border-color: rgba(230,180,80,.5); color: var(--gold); } .pill.x { border-color: var(--bad); box-shadow: 0 0 0 2px rgba(229,83,75,.35); }
+.pill.dim { color: var(--faint); }
+.sp { flex: 1; }
+.ban { padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(230,180,80,.35); background: linear-gradient(90deg, rgba(230,180,80,.12), rgba(23,26,34,.9) 60%), #171a22; }
+.ban h4 { margin: 0; font: 700 22px var(--head); display: inline-flex; align-items: center; gap: 8px; } .ban h4 .car { font-size: 14px; color: var(--gold); border: 1px solid rgba(230,180,80,.5); border-radius: 6px; padding: 1px 6px; }
+.ban .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.kill { font: 700 12px var(--head); color: #ffb35c; border: 1px solid rgba(255,140,40,.5); border-radius: 999px; padding: 2px 9px; background: rgba(255,140,40,.12); }
+.strip { display: flex; gap: 6px; overflow: hidden; }
+.pc { flex: none; width: 92px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: #151821; font: 600 12.5px var(--head); }
+.pc small { display: block; color: var(--muted); font: 500 11px var(--body); } .pc.on { border-color: var(--gold); } .pc.all { width: 104px; border-color: rgba(230,180,80,.5); color: var(--gold); }
+.pc.x { border-color: var(--bad); box-shadow: 0 0 0 2px rgba(229,83,75,.35); } .pc.wf { width: 140px; border-color: rgba(100,150,255,.5); }
+.tabs { display: flex; gap: 4px 16px; flex-wrap: wrap; align-items: flex-end; border-bottom: 1px solid var(--line); padding: 2px 4px 0; }
+.tabs span { padding: 6px 2px 8px; font: 600 14px var(--head); color: var(--muted); border-bottom: 2px solid transparent; } .tabs span.on { color: var(--text); border-color: var(--gold); }
+.tabs em { font: 700 10px var(--head); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); font-style: normal; padding-bottom: 10px; }
+.tabs .x { color: #ff8a83; }
+.note { font-size: 12.5px; color: #ff8a83; } .note.ok { color: #7ee08f; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.menu { background: #151821; border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: grid; gap: 2px; }
+.menu div { padding: 6px 8px; border-radius: 6px; font: 600 14px var(--head); } .menu div small { display: block; font: 400 12px var(--body); color: var(--muted); }
+.menu .x { background: rgba(229,83,75,.1); } .menu .x::after { content: ' · repeat'; color: #ff8a83; font: 600 11px var(--body); }
+.menu .nw { background: rgba(69,193,92,.08); }
+.phone { width: 230px; height: 470px; margin: 0 auto; border: 2px solid var(--line2); border-radius: 26px; padding: 10px 8px; background: #0c0e13; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 5px; }
+.phone .blk { border-radius: 7px; font: 600 11px var(--head); color: var(--muted); display: grid; place-items: center; text-align: center; }
+.phone .nav { background: rgba(229,83,75,.12); border: 1px dashed rgba(229,83,75,.5); } .phone .nav.ok { background: rgba(230,180,80,.08); border-color: rgba(230,180,80,.4); }
+.phone .ct { background: rgba(69,193,92,.08); border: 1px dashed rgba(69,193,92,.45); flex: 1; }
+.phone .fold { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--faint); } .phone .fold span { position: absolute; right: 6px; top: -16px; font-size: 10px; color: var(--faint); }
+.opt { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; } .opt.rec { border-color: rgba(230,180,80,.6); box-shadow: 0 0 0 1px rgba(230,180,80,.15); }
+.opt ul { margin: 6px 0 0; padding-left: 18px; } .opt li { margin: 3px 0; }
+.take { margin-top: 16px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(230,180,80,.45); background: rgba(230,180,80,.07); }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } h1 { font-size: 28px; } }
+</style>
+</head>
+<body><div class="wrap">
+<span class="k">Polish job 1 · Oct 18</span>
+<h1>Getting around Debrief</h1>
+<p class="lead">I walked the website the way a raider would: the front page, a team, a raid night, every tab, the menus, and the same on a phone. Below is everything that made moving around slower or more confusing than it needs to be, then a smoother layout, drawn as mockups for you to pick from. Nothing is built yet.</p>
+<div class="sum"><div><b>16</b>rough spots</div><div><b>5</b>things repeat (two buttons, one place)</div><div><b>57%</b>of a phone's first screen is navigation</div><div><b>0</b>times Back stays in Debrief</div></div>
+
+<h2>What I found</h2>
+<p class="sub">Red numbers are the ones raiders hit on every visit.</p>
+
+<h3 style="margin-top:22px">Moving back and forth</h3>
+<div class="find">
+  <div class="f"><span class="n hi">1</span><p><b>The browser's Back button always leaves Debrief.</b> From any page (a pull, a tab, a team page), Back takes you to whatever site you were on before Debrief. On a phone, the back swipe does the same. <span class="tag big">every visit</span></p><p class="fix"><b>Fix:</b> every page you open is a step Back can return to: front page ← team page ← pull ← tab.</p></div>
+  <div class="f"><span class="n">2</span><p><b>Each page makes its own way back:</b> "‹ All teams", "‹ Back to The Coiled Altar, pull 13", the logo, "Start screen" in the menu.</p><p class="fix"><b>Fix:</b> with Back working, keep one small "‹ All teams" link on team pages and let the logo always mean Home.</p></div>
+</div>
+
+<h3 style="margin-top:22px">Picking the boss, the pull or the whole night</h3>
+<div class="find">
+  <div class="f"><span class="n hi">3</span><p><b>The boss is picked in three places:</b> the small "3 bosses · The Coiled Altar · Mythic" pill in the top bar, far from the big banner that also names the boss, and the "Also tonight" chips on Night summary. <span class="tag big">every visit</span></p><p class="fix"><b>Fix:</b> the boss name in the banner is the picker (click it to switch boss). The top-bar pill goes.</p></div>
+  <div class="f"><span class="n hi">4</span><p><b>"All pulls" means three different things.</b> The "∑ All pulls" card in the pull strip doesn't show all pulls of the tab you're on: it jumps to the Night summary tab, so the card and the tab are two buttons for one place. Graphs and Players also have their own "All pulls / Pull 13" switch inside them. <span class="tag big">every visit</span></p><p class="fix"><b>Fix:</b> one choice, in one place (see Option A and B below).</p></div>
+  <div class="f"><span class="n">5</span><p><b>The tabs are split into "This pull" and "Whole night",</b> but Graphs (in "This pull") can show the whole night, and Players (in "Whole night") can show one pull.</p><p class="fix"><b>Fix:</b> goes with 4.</p></div>
+  <div class="f"><span class="n">6</span><p><b>The wipe filter sits in the pull strip,</b> among the pull cards. It's a counting setting, not a way to move around, and on a phone it takes almost half the strip.</p><p class="fix"><b>Fix:</b> a small chip in the banner, "Counting up to 2 deaths ▾", that opens the same setting.</p></div>
+  <div class="f"><span class="n">7</span><p><b>"Live: off" shows on every report,</b> even a night that ended last week.</p><p class="fix"><b>Fix:</b> only show Live when the report is still being logged (Debrief already knows), or when you opened it with Go live.</p></div>
+</div>
+
+<h3 style="margin-top:22px">The ☰ menu</h3>
+<div class="find">
+  <div class="f"><span class="n">8</span><p><b>"Start screen" does what the Debrief logo does,</b> and the same page is called the start screen, the front page and home in different places.</p><p class="fix"><b>Fix:</b> drop it from the menu; call it Home everywhere.</p></div>
+  <div class="f"><span class="n">9</span><p><b>"Paste a link" and "Open combat log" repeat the front page's boxes</b> (and "Paste a link" is the only item with no line under it).</p><p class="fix"><b>Fix:</b> one item, "Open a report or log", for when you're deep in a pull and want another night.</p></div>
+  <div class="f"><span class="n">10</span><p><b>"Saved progress" ("which logs are your raid, saved pulls")</b> comes from the PC app's live logging. On the website, your teams do this, so it overlaps "Your teams" and confuses.</p><p class="fix"><b>Fix:</b> hide it on the website.</p></div>
+  <div class="f"><span class="n">11</span><p><b>"Tips for this page" and "Take the tour"</b> are two help items side by side.</p><p class="fix"><b>Fix:</b> one "Help" item: this page's tips, with the tour one click inside.</p></div>
+</div>
+
+<h3 style="margin-top:22px">Your teams</h3>
+<div class="find">
+  <div class="f"><span class="n">12</span><p><b>The add button has four names:</b> "+ Add a team or character", "Add a team or your character", "Add your team", "Add a team or character" (the box).</p><p class="fix"><b>Fix:</b> one wording everywhere: "Add a team or character".</p></div>
+  <div class="f"><span class="n">13</span><p><b>From a pull, there's no way to your team's page</b> unless the report was logged by a team on your list (the banner links to it only then), so you go through the Your teams menu.</p><p class="fix"><b>Fix:</b> fine once Back works (Back returns to the team page you came from); keep the banner link.</p></div>
+</div>
+
+<h3 style="margin-top:22px">On a phone</h3>
+<div class="find">
+  <div class="f"><span class="n hi">14</span><p><b>Navigation takes 463 of the 812 pixels of the first screen.</b> The top bar is three rows (logo; boss pill; Live, Your teams and ☰), then the banner, the pull strip and the tabs. Only three of the seven tabs fit, and the strip shows one pull card next to the wipe filter. <span class="tag big">every visit</span></p><p class="fix"><b>Fix:</b> one-row top bar, a shorter banner, the strip and tabs as single sliding rows: the page starts at about a third of the screen.</p></div>
+</div>
+
+<h3 style="margin-top:22px">Hidden ways around</h3>
+<div class="find">
+  <div class="f"><span class="n">15</span><p><b>Clicking a player's name anywhere opens them on the Players tab.</b> It's handy, but nothing shows it's clickable, so it surprises people (and gets in the way of selecting a name to copy).</p><p class="fix"><b>Fix:</b> a hover underline and pointer on names, and "Open on Players" in the name's hover box.</p></div>
+  <div class="f"><span class="n">16</span><p><b>What already works well, and stays:</b> Night summary's little squares open that pull on the right tab and row; Graphs' "See it in" buttons; Show one player carries across Mechanics, Night summary and Graphs.</p><p class="fix"><b>Keep.</b></p></div>
+</div>
+
+<h2>Today, at the top of a pull</h2>
+<div class="mk"><div class="mk-h">Desktop, today <span class="sub">red: the parts that repeat or don't belong</span></div><div class="mk-b">
+  <div class="tb"><span class="logo"><i></i>Debrief</span><span class="pill x">3 bosses · The Coiled Altar · Mythic ▾</span><span class="sp"></span><span class="pill x">Live: off</span><span class="pill g">🏆 Your teams ▾</span><span class="pill">☰</span></div>
+  <div class="ban"><h4>The Coiled Altar <span class="kill">✓ Kill</span></h4><div class="meta"><span>Pull 13 · Mythic</span><span style="color:#7ee08f">✓ Down after 12 wipes</span><span>10:24</span><span>20 players</span><span>6 deaths</span></div></div>
+  <div class="strip"><div class="pc all x">∑ All pulls<small>the whole night</small></div><div class="pc">Pull 9<small>P2 · 29%</small></div><div class="pc">Pull 10<small>P3 · 18%</small></div><div class="pc">Pull 11<small>Int</small></div><div class="pc">Pull 12<small>P3 · 22%</small></div><div class="pc on">Pull 13<small>Kill</small></div><div class="pc wf x">⚑ Wipe filter<small>stop at − 2 + deaths</small></div></div>
+  <div class="tabs"><em>This pull</em><span class="on">Pull recap</span><span>Mechanics</span><span>Assignments</span><span>Rotation</span><span class="x">Graphs*</span><em>Whole night</em><span class="x">Night summary</span><span class="x">Players*</span></div>
+  <p class="note">* has its own "All pulls / Pull 13" switch inside. The ∑ All pulls card opens Night summary, the same as its tab.</p>
+</div></div>
+
+<h2>Two ways to make it smooth</h2>
+<p class="lead">Either way, the quick fixes come along: Back works, the boss name is the picker, the wipe filter moves into the banner, Live only shows when it's live, the menu gets shorter, and the phone top shrinks. The difference is how you pick a pull or the whole night.</p>
+<div class="cols" style="margin-top:14px">
+  <div class="opt"><span class="k">Option A · smaller</span><h3>Keep the tabs, drop the repeats</h3>
+    <ul><li>The ∑ All pulls card goes; the Night summary tab is the one way to the whole night.</li><li>Graphs and Players keep their own All pulls switch.</li><li>Tabs stay in two groups, This pull and Whole night.</li></ul>
+    <p class="sub" style="margin-top:8px">About 1½ hours. Less change for people who already know the site.</p></div>
+  <div class="opt rec"><span class="k">Option B · my pick</span><h3>Pick a pull or the night, then a tab</h3>
+    <ul><li>The pull strip starts with a "Whole night" card. Whatever you pick there, every tab follows it.</li><li>Recap on the whole night is today's Night summary; Mechanics and Assignments show their rows across the pulls (Night summary's sections); Graphs, Rotation and Players their All pulls views.</li><li>One row of tabs, no groups, no switches inside tabs.</li></ul>
+    <p class="sub" style="margin-top:8px">About 3 hours. Mostly rewiring views that already exist.</p></div>
+</div>
+
+<div class="mk"><div class="mk-h">Option B, desktop <span class="sub">green: what changed</span></div><div class="mk-b">
+  <div class="tb"><span class="logo"><i></i>Debrief</span><span class="sp"></span><span class="pill g">🏆 Your teams ▾</span><span class="pill">☰</span></div>
+  <div class="ban"><h4>The Coiled Altar <span class="car">▾ 3 bosses tonight</span> <span class="kill">✓ Kill</span></h4><div class="meta"><span>Pull 13 · Mythic</span><span style="color:#7ee08f">✓ Down after 12 wipes</span><span>10:24</span><span>6 deaths</span><span class="pill" style="font-size:11.5px;padding:2px 8px">⚑ Counting up to 2 deaths ▾</span></div></div>
+  <div class="strip"><div class="pc all">Whole night<small>13 pulls</small></div><div class="pc">Pull 9<small>P2 · 29%</small></div><div class="pc">Pull 10<small>P3 · 18%</small></div><div class="pc">Pull 11<small>Int</small></div><div class="pc">Pull 12<small>P3 · 22%</small></div><div class="pc on">Pull 13<small>Kill</small></div></div>
+  <div class="tabs"><span class="on">Recap</span><span>Mechanics</span><span>Assignments</span><span>Rotation</span><span>Graphs</span><span>Players</span></div>
+  <p class="note ok">Pick "Whole night" and every tab shows all 13 pulls: Recap is today's Night summary. Pick Pull 13 and every tab shows that pull. Back steps through what you opened.</p>
+</div></div>
+
+<h2>The ☰ menu</h2>
+<div class="cols">
+  <div class="mk" style="margin:0"><div class="mk-h">Today <span class="sub">8 items</span></div><div class="mk-b"><div class="menu">
+    <div class="x">Open combat log<small>a WoWCombatLog file on this PC</small></div><div class="x">Paste a link</div><div class="x">Saved progress<small>which logs are your raid, saved pulls</small></div><div class="x">Start screen<small>live logging and other ways in</small></div><div>Tips for this page<small>where everything on this page is</small></div><div>Take the tour<small>a quick look at what Debrief does</small></div><div>Report a problem<small>sends it to us, with this page attached</small></div><div>Join the Discord<small>questions, feedback and news</small></div></div></div></div>
+  <div class="mk" style="margin:0"><div class="mk-h">Proposed <span class="sub">4 items</span></div><div class="mk-b"><div class="menu">
+    <div class="nw">Open a report or log<small>paste a Warcraft Logs link, or pick a log on this PC</small></div><div class="nw">Help<small>tips for this page, and the tour</small></div><div>Report a problem<small>sends it to us, with this page attached</small></div><div>Join the Discord<small>questions, feedback and news</small></div></div>
+    <p class="sub" style="margin:8px 2px 0">Home is the Debrief logo. Your teams has its own button. Saved progress stays only in the PC app.</p></div></div>
+</div>
+
+<h2>On a phone, the first screen</h2>
+<div class="cols">
+  <div class="mk" style="margin:0"><div class="mk-h">Today <span class="sub">463 of 812 pixels before the page</span></div><div class="mk-b">
+    <div class="phone"><div class="blk nav" style="height:20px">Debrief</div><div class="blk nav" style="height:20px">3 bosses · The Coiled Altar ▾</div><div class="blk nav" style="height:20px">Live · Your teams · ☰</div><div class="blk nav" style="height:104px">Banner: name, Kill, phases, details</div><div class="blk nav" style="height:40px">All · ‹ · (1 pull) · Wipe filter</div><div class="blk nav" style="height:36px">Pull recap · Mechanics · Assignm…</div><div class="blk ct">the page starts here</div><div class="fold" style="top:268px"><span>57% of the screen</span></div></div></div></div>
+  <div class="mk" style="margin:0"><div class="mk-h">Proposed <span class="sub">about 260 pixels</span></div><div class="mk-b">
+    <div class="phone"><div class="blk nav ok" style="height:22px">Debrief · 🏆 · ☰</div><div class="blk nav ok" style="height:46px">The Coiled Altar ▾ · ✓ Kill · ⚑ 2 deaths</div><div class="blk nav ok" style="height:34px">Whole night · Pull 9 · 10 · 11 · 12 · 13 ›</div><div class="blk nav ok" style="height:28px">Recap · Mechanics · Assignments ›</div><div class="blk ct">the page starts here</div><div class="fold" style="top:150px"><span>32% of the screen</span></div></div></div></div>
+</div>
+
+<div class="take"><b>My take: do Option B.</b> Today a raider has to learn three ideas of "all pulls" and three places to switch boss. With B there's one question at the top ("which pull, or the whole night?"), then the tabs. It's mostly rewiring views we already have, so the risk is low. Do the quick fixes first (Back, the menu, the phone top, Live, the wipe filter chip), since those help everyone right away, then the pull-or-night switch.</div>
+</div></body>
+</html>

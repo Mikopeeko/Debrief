@@ -15,6 +15,10 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   "Take the tour" could be one Help item. Plan: list every link and button that moves you somewhere (top bar, menu, front
   page, pull banner, team pages, "See it in" buttons), group them by where they go, mock up one tidier layout (each place
   reachable one clear way, the menu short) for your OK, then build it.
+  **Review written (Oct 18): notes/Getting around review.html**, 16 rough spots with mockups. The big ones: Back always
+  leaves Debrief; the boss is picked in three places; "All pulls" means three things; on a phone, navigation takes 57% of
+  the first screen. Option A (keep the tabs, drop the repeats) or Option B (my pick: pick a pull or the whole night, then
+  a tab). Waiting for your pick.
 - [x] **Adding a team or character fills in the rest (your note, Oct 18; done in round 239).** Add a team, and it asks which
   player is you (and adds your character page). Add a character, and it asks right away about the teams that logged
   your raid nights.
