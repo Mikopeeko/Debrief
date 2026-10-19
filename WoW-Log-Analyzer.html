@@ -15165,6 +15165,20 @@ function readyLines(x, night) {
     (night ? share(night.flask, 'Flask') + share(night.food, 'Food') + share(night.oil, 'Weapon oil or stone')
       : ckLine(x.flask ? 'ok' : 'bad', x.flask ? 'Flask' : 'No flask') + ckLine(x.food ? 'ok' : 'bad', x.food ? 'Food buff' : 'No food buff') + ckLine(x.temp ? 'ok' : 'bad', x.temp ? esc(x.temp[0]) : 'No weapon oil or stone'));
 }
+// (Report card's Their prep (your ask, Oct 19): the same checks as readyLines, as small chips in one line, each an icon, a few words and
+// a green check, a yellow ! or a red x)
+function prepChips(x) {
+  const miss = [...x.ench.entries()].filter(([, e]) => !e).map(([i]) => (ENCHANT_SLOTS.find(([j]) => j === i) || [0, 'item'])[1].toLowerCase()), r1 = [...x.ench.values()].filter((e) => e && e.rank === 1).length, nE = x.ench.size;
+  // (your rule: a green check when they have it, a yellow warning sign for a low-quality (rank 1) enchant, a red X when it's missing;
+  // the same three marks as Power Infusion)
+  const empty = x.issues.filter((t) => /^Empty /.test(t));
+  const c = (st, ic, txt, tip) => '<span class="pp-c ' + st + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '><img class="pp-i" src="' + whIcon(ic) + '" alt="" onerror="this.style.visibility=\'hidden\'"><span>' + txt + '</span><span class="pp-m">' + PI_ICON[st] + '</span></span>';
+  return '<div class="pp-chips">' + c(x.lowIlvl ? 'warn' : 'ok', 'inv_helmet_03', 'Item level ' + Math.round(x.ilvl), x.raidIlvl ? 'Raid median ' + Math.round(x.raidIlvl) : '') +
+    c(miss.length ? 'bad' : r1 ? 'warn' : 'ok', 'trade_engraving', miss.length ? 'No ' + esc(andList(miss)) + ' enchant' : r1 ? plural(r1, 'enchant') + ' at rank 1' : 'All ' + nE + ' enchants') +
+    c(x.emptySockets || empty.length ? 'bad' : 'ok', 'inv_misc_gem_variety_01', x.emptySockets ? plural(x.emptySockets, 'empty socket') : 'Gems') +
+    c(x.flask ? 'ok' : 'bad', PL_ICON.flask, x.flask ? 'Flask' : 'No flask') + c(x.food ? 'ok' : 'bad', PL_ICON.food, x.food ? 'Food' : 'No food') +
+    c(x.temp ? 'ok' : 'bad', PL_ICON.oil, x.temp ? esc(x.temp[0]) : 'No weapon oil') + '</div>';
+}
 function survLines(s) {
   return ckLine(s.expect ? (s.used >= s.expect ? 'ok' : s.used ? 'warn' : 'bad') : 'na', s.expect ? 'Combat or mana potion: ' + s.used + ' of ' + s.expect + (s.pre ? ' (' + (s.pre === true || s.pre === 1 ? 'pre-pot' : s.pre + ' pre-pots') + ')' : '') : 'Combat or mana potion: not judged (under 20 s alive)') +
     ckLine(s.kitReady ? 'bad' : 'ok', plural(s.stones, 'Healthstone') + ', ' + plural(s.hpots, 'health potion') + (s.kitReady ? ', and died with one unused' + (s.kitReady > 1 ? ' ' + s.kitReady + ' times' : '') : '')) +
@@ -24499,15 +24513,19 @@ function plPage(data, reps, one) {
   const sel = S.plSel ? data.find((a) => a.p.name === S.plSel) : null, avg = (f) => { const v = data.map(f).filter((x) => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
   // ---- the raid at a glance ----
   const lastX = data.map((a) => a.last.x).filter(Boolean), fullPrep = lastX.filter((x) => !x.issues.length).length, mist = data.reduce((s, a) => s + a.mistakes, 0);
+  // (who is missing what at the pull: their name and the things missing, shown under the tiles when Prep is clicked)
+  const missL = data.filter((a) => a.last.x && a.last.x.issues.length).sort((u, v) => v.last.x.issues.length - u.last.x.issues.length || u.p.name.localeCompare(v.p.name));
+  const prepL = S.plPrepOpen && missL.length ? '<div class="panel pl-prepl"><h3 class="nh"><span>Missing at the pull</span><small>' + (one ? 'this pull' : 'the last pull') + '</small></h3>' +
+    missL.map((a) => '<div class="lp-pr"><span class="lp-pk">' + lpWho(a.p) + '</span><span>' + esc(andList(a.last.x.issues.map((t, i) => (i ? t.charAt(0).toLowerCase() + t.slice(1) : t)))) + '</span></div>').join('') + '</div>' : '';
   const tile = (v, label, txt) => plTile(plGr(v), label, v == null ? '—' : Math.round(v) + '<span>/100</span>', gBucket(v), txt, true);
   const tiles = '<div class="pts n4">' + tile(avg((a) => a.score), 'Raid grade', plural(data.length, 'player') + (one ? '' : ' · ' + plural(reps.length, 'pull'))) + tile(avg((a) => a.mech), 'Own mechanics', mist ? 'each player\'s own mistakes: ' + plural(mist, 'mistake') + ' that cost points' : 'each player\'s own mistakes: none that cost points') +
     (data.some((a) => a.rot != null) ? tile(avg((a) => a.rot), 'Rotation', 'how each player played their spec, from the Rotation tab') : tile(avg((a) => a.perf), 'How they played', 'casting, cooldowns, resources, staying alive, their kit')) +
-    plTile(plIco(PL_ICON.ench), 'Prep', lastX.length ? fullPrep + '<span> / ' + lastX.length + '</span>' : '—', !lastX.length ? 'na' : fullPrep === lastX.length ? 'ok' : 'warn', !lastX.length ? 'no gear logged' : fullPrep === lastX.length ? 'everyone fully set up' + (one ? '' : ' at the last pull') : (lastX.length - fullPrep) + ' missing something' + (one ? '' : ' at the last pull'), true) + '</div>';
+    (fullPrep < lastX.length ? '<button class="pt-go pl-prepgo' + (S.plPrepOpen ? ' on' : '') + '" type="button" id="plPrepGo" aria-expanded="' + !!S.plPrepOpen + '" title="See who is missing what">' : '') + plTile(plIco(PL_ICON.ench), 'Prep', lastX.length ? fullPrep + '<span> / ' + lastX.length + '</span>' : '—', !lastX.length ? 'na' : fullPrep === lastX.length ? 'ok' : 'warn', !lastX.length ? 'no gear logged' : fullPrep === lastX.length ? 'everyone fully set up' + (one ? '' : ' at the last pull') : (lastX.length - fullPrep) + ' missing something' + (one ? '' : ' at the last pull') + ' ' + (S.plPrepOpen ? '▴' : '▾'), true) + (fullPrep < lastX.length ? '</button>' : '') + '</div>' + prepL;
   // ---- a row per player: their grade on the bar, the trend (all pulls) or their first fix's points (one pull) ----
   const bars = rows.map((a, i) => { const on = sel === a, m = mvp.get(a.p.name);
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pl-r', attrs: ' type="button" data-pn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, a.score), 'm']], v: '<span class="pl-g">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span>',
       sub: one ? '<span class="sub" title="' + (a.rot != null ? 'Mechanics · Rotation' : 'Mechanics · How they played') + '">' + Math.round(a.mech) + ' · ' + (a.rot != null ? Math.round(a.rot) : a.perf == null ? '—' : Math.round(a.perf)) + '</span>' : plTr(a.trend) || '<span class="sub">—</span>', chips: m ? ' <span class="pl-mvp">' + esc(m) + '</span>' : '' }); }).join('');
-  const sortSw = '<div class="seg pl-sort" role="tablist" aria-label="Order"><button type="button" data-o="best"' + (worstFirst ? '' : ' class="on"') + '>Best first</button><button type="button" data-o="gain"' + (worstFirst ? ' class="on"' : '') + '>Most to gain first</button></div>';
+  const sortSw = '';
   const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>Mechanics and Rotation count most. Prep only takes points off.' + (one ? ' On the right are mechanics and Rotation.' :' The arrows show the change through the night.') + '</small>' + roleChips(has) + '</h3>' + sortSw +
     (bars ? cbHead('Grade', one ? 'Mech · Rot' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
   const how = '<details class="howit"><summary>How it\'s graded</summary><div><b>Mechanics</b>: 100, less 14 for each serious mistake of their own, 4 for each medium one and 1 for each small slip (2 for a tank\'s slip on their own frontals). With NSRT note assignments, that\'s 70% and the share of their assignments they did is 30% (late or partly done counts half, and an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Rotation</b>: their score out of 100 on the Rotation tab, the same checks and the same number. <b>Staying alive and toolkit</b>: defensives, potions, Healthstones, kicks, externals. <b>The grade</b> is 40% mechanics, 40% Rotation and 20% staying alive and toolkit. For a spec without a Rotation page, it\'s half mechanics and half how they played (casting, big cooldowns, wasted resources, casts that didn\'t finish, staying alive and toolkit). A player alive under 20 s is graded on mechanics. <b>Prep</b>, from their gear and consumables at the pull, only takes points off: a quarter of what it\'s under 90. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade, Rotation\'s checks that weren\'t good among them, with its "Next time". Without a Rotation page, a casting pace under 85% of their spec\'s top players is added as a tip. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
@@ -24581,7 +24599,7 @@ function plPlayer(a, one, reps, mvpL, data) {
   if (!one) h += rsSec('Pull by pull', a.best ? 'best: pull ' + a.best.r.item.pull + ', ' + letterOf(a.best.score) + ' ' + Math.round(a.best.score) : '', '<div class="pl-pulls">' + a.per.map((g) => '<button type="button" class="nm-cell st-q-' + letterOf(g.score) + '" data-plpull="' + g.r.item.pull + '" data-pn="' + esc(a.p.name) + '" title="' + esc('Pull ' + g.r.item.pull + ' (' + pullLabel(g.r.item) + '): ' + letterOf(g.score) + ' ' + Math.round(g.score) + ' · mechanics ' + Math.round(g.mech) + (g.rot != null ? ', Rotation ' + Math.round(g.rot) : '') + (g.perf != null ? (g.rot != null ? ', staying alive and toolkit ' : ', how they played ') + Math.round(g.perf) : '') + (g.prepOff >= 1 ? ', prep −' + Math.round(g.prepOff) : '')) + '"></button>').join('') + '</div><p class="sub" style="margin:4px 0 0">Click a square to open that pull.</p>');
   // their prep: the latest pull's gear and buffs (and over the night, what was missed how often)
   const x = a.last.x;
-  let prep = x ? readyLines(x) : ckLine('na', 'No gear or buffs were logged for this player.');
+  let prep = x ? prepChips(x) : ckLine('na', 'No gear or buffs were logged for this player.');
   if (!one && x) { const miss = new Map(); for (const g of a.per) if (g.x) for (const t of g.x.issues.concat(g.x.tighten)) miss.set(t, (miss.get(t) || 0) + 1); const ml = [...miss].sort((u, v) => v[1] - u[1]).slice(0, 4); if (ml.length) prep += '<p class="sub" style="margin:6px 0 0">Over the night: ' + ml.map(([t, k]) => esc(t.toLowerCase()) + ' in ' + k + ' of ' + a.n).join(' · ') + '</p>'; }
   h += '<div id="plPrep">' + rsSec('Their prep', one ? 'at the pull' : 'at the last pull', prep) + (x ? '<button type="button" class="btn sm pl-gearb" data-pv="gear">See their gear and stats</button>' : '') + '</div>';
   return h;
@@ -24700,6 +24718,7 @@ function bindPlayers(c) {
   $$('#plBody .pl-r[data-pn]').forEach((b) => (b.onclick = () => { S.plSel = S.plSel === b.dataset.pn ? null : b.dataset.pn; S.plScroll = true; again(); }));
   $$('#plBody .pl-sel').forEach((s) => (s.onchange = () => { if (!s.value) return; S.plSel = s.value; again(); })); // (Change player)
   { const b = $('#plClose'); if (b) b.onclick = () => { S.plSel = null; again(); }; }
+  { const b = $('#plPrepGo'); if (b) b.onclick = () => { S.plPrepOpen = !S.plPrepOpen; again(); }; }
   $$('#plBody .pl-sort button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.plSort = b.dataset.o; again(); }));
   $$('#plBody [data-pv]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.plView = b.dataset.pv; again(); const d = $('.pl-det'); if (d && d.getBoundingClientRect().top < 60) { d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -64); } }));
   $$('#plBody .pf-rf button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.perfRole = b.dataset.r; again(); }));
@@ -24935,9 +24954,11 @@ function lpTalk(r) {
   if (S.mechP && list.some((x) => x.p.name === S.mechP)) list.splice(0, list.length, ...list.filter((x) => x.p.name === S.mechP)); // (one player picked: just them)
   if (!list.length) return '';
   list.sort((a, b) => (b.f.crit ? 1 : 0) - (a.f.crit ? 1 : 0) || b.f.gain - a.f.gain);
-  return '<div class="panel lp-side-p lp-talk"><h3 class="nh"><span>Talk to</span><small>Each player\'s first thing to fix</small></h3>' +
-    list.slice(0, 6).map(({ p, g, f }) => '<div class="lp-tk">' + avatar(p, true) + '<span class="lp-tn">' + lpWho(p) + '</span>' + (off || g.perf == null ? '' : gradeChip(letterOf(g.score))) + '<span class="lp-tf' + (f.crit ? ' crit' : '') + '">' + (/^m\|/.test(f.key) && !/^From the note/.test(f.t) ? '<span class="sub">Mechanic:</span> ' : '') + esc(f.t) + '</span></div>').join('') +
-    (list.length > 6 ? '<div class="sub lp-more">And ' + (list.length - 6) + ' more on Report card.</div>' : '') + '</div>';
+  // (Oct 19, your call: on one pull it's feedback, not a ranking: no grades, every player on the list, each with what to fix and why)
+  return '<div class="panel lp-side-p lp-talk"><h3 class="nh"><span>Talk to</span><small>What each player should fix</small></h3>' +
+    list.map(({ p, f }) => { const why = String(f.x || '').replace(/<[^>]+>/g, '').trim();
+      return '<div class="lp-tk lp-tk2">' + avatar(p, true) + '<div class="lp-tb"><div class="lp-th">' + lpWho(p) + '<span class="lp-tf' + (f.crit ? ' crit' : '') + '">' + (/^m\|/.test(f.key) && !/^From the note/.test(f.t) ? '<span class="sub">Mechanic:</span> ' : '') + esc(f.t) + '</span></div>' +
+        (why ? '<div class="lp-tx">' + esc(why) + '</div>' : '') + '</div></div>'; }).join('') + '</div>';
 }
 // what the raid pressed this pull, up to the wipe filter (your ask, Oct 19): each priest's Power Infusions (used of the uses they
 // had, and on whom), each Restoration Druid's Innervates, and the raid's defensives, Healthstones and health potions in all
