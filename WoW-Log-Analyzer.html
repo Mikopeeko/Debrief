@@ -2944,6 +2944,13 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-wh { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; } .cmp-wh .icw { width: 28px; height: 28px; flex: none; margin: 0; border-radius: 6px; overflow: hidden; } .cmp-wh .icw svg, .cmp-wh .icw img { width: 100%; height: 100%; }
 .cmp-wh > span { display: flex; flex-direction: column; min-width: 0; } .cmp-wh b { font-size: 14px; } .cmp-wd { font-size: 12.5px; font-weight: 600; } .cmp-wd.up { color: #7ee08f; } .cmp-wd.dn { color: #f3c969; }
 .cmp-ct b { color: var(--text); }
+/* Rotation side by side: a row a check, the two players's results with their marks; the edge yellow where the first player was behind */
+.cmp-rr { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 10px; padding: 7px 8px; border-top: 1px solid var(--line); border-left: 3px solid transparent; font-size: 13.5px; }
+.cmp-rr.warn { border-left-color: #e6b450; } .cmp-rr.ok { border-left-color: rgba(69,193,92,.8); } .cmp-rr.cmp-rh { border-top: 0; color: var(--faint); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding-bottom: 4px; }
+.cmp-rl { display: flex; align-items: center; gap: 8px; min-width: 0; } .cmp-rl .icw { width: 22px; height: 22px; flex: none; margin: 0; border-radius: 5px; overflow: hidden; } .cmp-rl .icw svg, .cmp-rl .icw img { width: 100%; height: 100%; } .cmp-rl > span { display: flex; flex-direction: column; min-width: 0; } .cmp-rl .sub { font-size: 12px; }
+.cmp-rv { display: flex; align-items: baseline; gap: 6px; min-width: 0; } .cmp-rv > span { min-width: 0; }
+.cmp-rm { font-style: normal; font-weight: 700; flex: none; width: 12px; } .cmp-rm.ok { color: #7ee08f; } .cmp-rm.warn { color: #f3c969; } .cmp-rm.bad { color: #ff8f87; }
+@media (max-width: 640px) { .cmp-rr { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, .8fr); gap: 6px; font-size: 12.5px; } }
 /* Over the fight: two lines, 10 seconds a point, a stretch on hover */
 .cmp-chart svg { display: block; width: 100%; height: auto; } .cmp-lg { stroke: var(--line); stroke-width: 1; } .cmp-lt { fill: var(--faint); font: 11px var(--body); text-anchor: middle; }
 .cmp-chart rect:hover { fill: rgba(255,255,255,.05); } .cmp-key2 { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-size: 12.5px; color: var(--muted); } .cmp-key2 i { display: inline-block; width: 14px; height: 3px; margin-right: 6px; border-radius: 2px; vertical-align: middle; }
@@ -20986,11 +20993,13 @@ function cmpWhy(SA, SB, unit) {
   const A0 = esc(SA.name), same = Math.abs(gap) / Math.max(SA.rate, SB.rate) < 0.02, lost = rows.filter((o) => o.d < 0), won = rows.filter((o) => o.d > 0).sort((p, q) => q.d - p.d);
   const head = same ? A0 + ' and ' + esc(SB.name) + ' ' + did + ' about the same a second. These spells are where they differ most.'
     : gap < 0 ? A0 + ' ' + did + ' <b>' + C(-gap) + ' less</b> a second than ' + esc(SB.name) + '.' + (lost.length ? ' The biggest gap is ' + esc(nm(lost[0].x)) + ', <b>' + C(-lost[0].d) + '</b> a second.' : '')
-    : A0 + ' ' + did + ' <b>' + C(gap) + ' more</b> a second than ' + esc(SB.name) + '.' + (won.length ? ' The biggest gap is ' + esc(nm(won[0].x)) + ', <b>' + C(won[0].d) + '</b> a second.' : '');
+    : A0 + ' ' + did + ' <b>' + C(gap) + ' more</b> a second than ' + esc(SB.name) + '.' + (lost.length ? ' Still, here is where ' + esc(SB.name) + ' did more.' : won.length ? ' The biggest gap is ' + esc(nm(won[0].x)) + ', <b>' + C(won[0].d) + '</b> a second.' : '');
   const why = (o) => {
     const [H, L, h, l] = o.d >= 0 ? [SA, SB, o.a, o.b] : [SB, SA, o.b, o.a];
     if (!l) return esc(H.name) + ' used it. ' + esc(L.name) + ' didn\'t.';
     if (h.cpm && l.cpm) { const castR = h.cpm / l.cpm, per = (x, v) => v * 60 / x.cpm, sizeR = per(h, o.d >= 0 ? o.va : o.vb) / per(l, o.d >= 0 ? o.vb : o.va);
+      // (more than 3 times as much a cast is a different talent or setup, not bigger casts: say the share instead)
+      if (castR < sizeR && sizeR > 3) return 'It made <b>' + Math.round(100 * h.share) + '%</b> of ' + esc(H.name) + '\'s ' + U + ' against <b>' + Math.round(100 * l.share) + '%</b> of ' + esc(L.name) + '\'s.';
       return castR >= sizeR ? esc(H.name) + ' cast it more: <b>' + h.cpm.toFixed(1) + '</b> times a minute against <b>' + l.cpm.toFixed(1) + '</b>.'
         : 'Each of ' + esc(H.name) + '\'s casts did ' + Math.round(100 * (sizeR - 1)) + '% more: <b>' + C(per(h, o.d >= 0 ? o.va : o.vb)) + '</b> against <b>' + C(per(l, o.d >= 0 ? o.vb : o.va)) + '</b>.'; }
     return 'It made <b>' + Math.round(100 * h.share) + '%</b> of ' + esc(H.name) + '\'s ' + U + ' against <b>' + Math.round(100 * l.share) + '%</b> of ' + esc(L.name) + '\'s.';
@@ -20999,6 +21008,27 @@ function cmpWhy(SA, SB, unit) {
     return '<div class="cmp-card cmp-why ' + (o.d >= 0 ? 'ok' : 'warn') + '"><div class="cmp-wh">' + spellIcon(o.x.id, nm(o.x)) + '<span><b>' + esc(nm(o.x)) + '</b><span class="cmp-wd ' + (o.d >= 0 ? 'up' : 'dn') + '">' + (SA.name === 'You' ? 'You ' : esc(SA.name) + ' ') + (o.d >= 0 ? 'gained ' : 'lost ') + C(Math.abs(o.d)) + ' a second here</span></span></div>' +
       bar(o.va, SA.col, SA.name) + bar(o.vb, SB.col, SB.name) + '<div class="cmp-ct">' + why(o) + '</div></div>'; }).join('');
   return '<div class="panel cmp-story"><h3>What made the difference<small>Where the ' + U + ' a second was lost first, then where it was gained</small></h3><p class="cmp-wlead">' + head + '</p><div class="cmp-cards">' + cards + '</div></div>';
+}
+// Rotation side by side (your idea, Oct 19): both players' checks from the Rotation tab, the ones where the first player
+// did worse first, then by what they cost (the healing or damage Rotation works out each check lost). Same spec only.
+function cmpRot(r, p, q) {
+  const f = SPEC_CHECKS[p.specName]; if (!f || p.specName !== q.specName) return null;
+  let xa, xb; try { xa = f([r], p.name, true); xb = f([r], q.name, true); } catch (e) { console.warn('Compare, Rotation:', e && e.message); return null; }
+  if (!xa || !xb || !xa.checks || !xb.checks) return null;
+  const bk = new Map(xb.checks.map((c) => [c.k, c])), RK = { bad: 0, warn: 1, ok: 2 }, UN = cmpKind(p) === 'heal' ? 'healing' : 'damage';
+  const rows = xa.checks.filter((c) => RK[c.st] != null && bk.has(c.k) && RK[bk.get(c.k).st] != null).map((c) => { const d = bk.get(c.k); return { c, d, w: RK[d.st] - RK[c.st], cd: (c.cost || 0) - (d.cost || 0) }; })
+    .sort((u, v) => v.w - u.w || v.cd - u.cd);
+  if (!rows.length) return null;
+  const me = cmpIsMe(p), An = me ? 'You' : esc(p.name), Bn = esc(q.name), mk = (st) => '<i class="cmp-rm ' + st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[st] || '') + '</i>';
+  const worse = rows.filter((o) => o.w > 0).length, better = rows.filter((o) => o.w < 0).length;
+  const row = (o) => '<div class="cmp-rr' + (o.w > 0 ? ' warn' : o.w < 0 ? ' ok' : '') + '"><span class="cmp-rl">' + (o.c.ic ? spellIcon(0, o.c.ic) : '') + '<span><b>' + esc(o.c.label || o.c.k) + '</b>' +
+    ((o.c.cost || 0) >= 20000 && o.w >= 0 ? '<span class="sub">Cost ' + (me ? 'you' : An) + ' about ' + C(o.c.cost) + ' ' + UN + '.</span>' : '') + '</span></span>' +
+    '<span class="cmp-rv">' + mk(o.c.st) + '<span>' + (o.c.v != null ? o.c.v : '') + '</span></span><span class="cmp-rv">' + mk(o.d.st) + '<span>' + (o.d.v != null ? o.d.v : '') + '</span></span></div>';
+  const top = S.cmpRotAll ? rows : rows.slice(0, 8);
+  const lead = (worse ? An + (me ? ' were' : ' was') + ' behind ' + Bn + ' on <b>' + plural(worse, 'check') + '</b>' : An + (me ? ' weren\'t' : ' wasn\'t') + ' behind ' + Bn + ' on any check') + (better ? ', and ahead on <b>' + better + '</b>.' : '.');
+  return { a: xa.score, b: xb.score, html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
+    '<p class="cmp-wlead">' + lead + '</p><div class="cmp-rr cmp-rh"><span>Check</span><span>' + An + '</span><span>' + Bn + '</span></div>' + top.map(row).join('') +
+    (rows.length > 8 ? '<button class="btn sm cmp-more" type="button" id="cmpRotAll">' + (S.cmpRotAll ? 'Show fewer' : 'Show all ' + rows.length) + '</button>' : '') + '</div>' };
 }
 // who did more, in a few words: "Drcornman healed 16% more." / "About the same."
 const cmpLead = (A, a, B, b, verb) => (!a && !b ? '' : Math.abs(a - b) / Math.max(a, b) < 0.03 ? 'About the same.' : (a > b ? A : B) + ' ' + verb + ' ' + (Math.min(a, b) ? Math.round(100 * Math.abs(a - b) / Math.min(a, b)) + '% ' : '') + 'more.');
@@ -21014,12 +21044,13 @@ function cmpLine(sides, end) {
 }
 // (1) Fellow raiders: a teammate from this pull
 function cmpMate(r, p, ps) {
-  const k = cmpKind(p), same = ps.filter((q) => q !== p && q.specName === p.specName), role = ps.filter((q) => q !== p && (q.role || 'dps') === (p.role || 'dps'));
-  const q = ps.find((x) => x.name === S.cmpMate && x !== p) || same[0] || role.sort((a, b) => cmpRate(r, b, k) - cmpRate(r, a, k))[0] || ps.find((x) => x !== p);
-  if (!q) return { vs: '<span class="sub">Nobody else is in this pull.</span>', body: '' };
+  const k = cmpKind(p), same = ps.filter((q) => q !== p && q.specName === p.specName);
+  // (the same spec only (your call, Oct 19): the same spells, the same Rotation checks, so it compares like with like)
+  const q = same.find((x) => x.name === S.cmpMate) || same[0];
+  if (!q) return { vs: '<span class="sub">nobody else played ' + esc(p.specName || 'this spec') + '</span>', body: cmpMsg('Nobody else played ' + esc(p.specName || 'this spec') + ' in this pull. Pick another player above, or compare with the top raiders of the spec.') };
   const kq = cmpKind(q), pc = perfContext(r), U = (kk) => (kk === 'heal' ? 'healing' : 'damage'), cpm = (x) => x.casts / (cmpAlive(r, x) / 60);
   const ra = cmpRate(r, p, k), rb = cmpRate(r, q, kq);
-  const vs = avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', ps, q, p, 'Change') + '<small>' + esc(q.specName || '') + '</small>';
+  const vs = avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + cmpSel('cmpMate', same, q, p, 'Change') + '<small>' + esc(q.specName || '') + '</small>';
   const A = { name: p.name, col: p.color, ab: cmpMyAb(r, p, k) }, B = { name: q.name, col: q.color, ab: cmpMyAb(r, q, kq) };
   const topSp = (x, kk) => cmpMyAb(r, x, kk).sort((a, b) => b.share - a.share).slice(0, 8).map((a) => ({ name: String(a.name).replace(/^[^:]+: /, ''), id: a.id, v: a.share, txt: (100 * a.share).toFixed(1) + '%' }));
   const outDet = q.specName === p.specName ? '<p class="sub cmp-how">The bar is ' + esc(p.name) + '\'s share of their ' + U(k) + '. The white mark is ' + esc(q.name) + '\'s.</p>' + cmpSpellRows(A, B)
@@ -21078,7 +21109,9 @@ function cmpMate(r, p, ps) {
   const chart = k === kq ? '<div class="panel"><h3>Over the fight<small>' + capS(U(k)) + ' a second, 10 seconds at a time. Hover for both numbers.</small></h3>' +
     cmpLine([{ name: p.name, col: p.color, arr: p[k === 'heal' ? 'healS' : 'dmgS'] || [] }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, arr: q[kq === 'heal' ? 'healS' : 'dmgS'] || [] }], pc.end) + '</div>' : '';
   const whyM = k === kq ? cmpWhy({ name: me ? 'You' : p.name, col: p.color, rate: ra, ab: A.ab }, { name: q.name, col: q.color === p.color ? '#e8e3d8' : q.color, rate: rb, ab: B.ab }, k) : '';
-  return { vs, body: whyM + cmpCards(cards) + chart +
+  const rot = cmpRot(r, p, q);
+  if (rot && rot.a != null && rot.b != null) cards.unshift({ ...two, label: 'Rotation score', a: rot.a, b: rot.b, fa: String(Math.round(rot.a)), fb: String(Math.round(rot.b)), gap: cmpGap(rot.a, rot.b), st: rot.a >= rot.b - 2 ? 'ok' : 'warn', txt: 'From the Rotation tab: how well each pressed their buttons.' });
+  return { vs, body: whyM + (rot ? rot.html : '') + cmpCards(cards) + chart +
     '<div class="panel cmp-pairs"><h3>Side by side<small>Hover a bar for its numbers. Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + ohGroup + '</div></div>' };
 }
 // (2) Top raiders of your spec: one of the top 3 on this boss, or their average, picked like a teammate (Oct 19, "more
@@ -21241,6 +21274,7 @@ function cmp() {
   // (a pair of bars: open its details under it, or close them)
   v.querySelectorAll('[data-cg]').forEach((b) => (b.onclick = () => { S.cmpG = S.cmpG === b.dataset.cg ? null : b.dataset.cg; cmp(); }));
   const all2 = $('#cmpAllSp'); if (all2) all2.onclick = () => { S.cmpAllSp = !S.cmpAllSp; cmp(); };
+  { const b = $('#cmpRotAll'); if (b) b.onclick = () => { S.cmpRotAll = !S.cmpRotAll; cmp(); }; }
   v.querySelectorAll('#cmpRange button').forEach((b) => (b.onclick = () => { S.cmpPage = +b.dataset.p; cmp(); }));
   v.querySelectorAll('#cmpSort button').forEach((b) => (b.onclick = () => { S.cmpSort = b.dataset.s; cmp(); }));
   const fd = $('#cmpFind'); if (fd) fd.oninput = () => { S.cmpFind = fd.value; clearTimeout(S._cmpT); S._cmpT = setTimeout(() => { cmp(); const e = $('#cmpFind'); if (e) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }, 250); };

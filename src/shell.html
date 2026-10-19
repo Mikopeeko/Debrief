@@ -2944,6 +2944,13 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .cmp-wh { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; } .cmp-wh .icw { width: 28px; height: 28px; flex: none; margin: 0; border-radius: 6px; overflow: hidden; } .cmp-wh .icw svg, .cmp-wh .icw img { width: 100%; height: 100%; }
 .cmp-wh > span { display: flex; flex-direction: column; min-width: 0; } .cmp-wh b { font-size: 14px; } .cmp-wd { font-size: 12.5px; font-weight: 600; } .cmp-wd.up { color: #7ee08f; } .cmp-wd.dn { color: #f3c969; }
 .cmp-ct b { color: var(--text); }
+/* Rotation side by side: a row a check, the two players's results with their marks; the edge yellow where the first player was behind */
+.cmp-rr { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 10px; padding: 7px 8px; border-top: 1px solid var(--line); border-left: 3px solid transparent; font-size: 13.5px; }
+.cmp-rr.warn { border-left-color: #e6b450; } .cmp-rr.ok { border-left-color: rgba(69,193,92,.8); } .cmp-rr.cmp-rh { border-top: 0; color: var(--faint); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding-bottom: 4px; }
+.cmp-rl { display: flex; align-items: center; gap: 8px; min-width: 0; } .cmp-rl .icw { width: 22px; height: 22px; flex: none; margin: 0; border-radius: 5px; overflow: hidden; } .cmp-rl .icw svg, .cmp-rl .icw img { width: 100%; height: 100%; } .cmp-rl > span { display: flex; flex-direction: column; min-width: 0; } .cmp-rl .sub { font-size: 12px; }
+.cmp-rv { display: flex; align-items: baseline; gap: 6px; min-width: 0; } .cmp-rv > span { min-width: 0; }
+.cmp-rm { font-style: normal; font-weight: 700; flex: none; width: 12px; } .cmp-rm.ok { color: #7ee08f; } .cmp-rm.warn { color: #f3c969; } .cmp-rm.bad { color: #ff8f87; }
+@media (max-width: 640px) { .cmp-rr { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, .8fr); gap: 6px; font-size: 12.5px; } }
 /* Over the fight: two lines, 10 seconds a point, a stretch on hover */
 .cmp-chart svg { display: block; width: 100%; height: auto; } .cmp-lg { stroke: var(--line); stroke-width: 1; } .cmp-lt { fill: var(--faint); font: 11px var(--body); text-anchor: middle; }
 .cmp-chart rect:hover { fill: rgba(255,255,255,.05); } .cmp-key2 { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-size: 12.5px; color: var(--muted); } .cmp-key2 i { display: inline-block; width: 14px; height: 3px; margin-right: 6px; border-radius: 2px; vertical-align: middle; }
