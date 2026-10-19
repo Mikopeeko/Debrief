@@ -2863,23 +2863,29 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .wr-wrap { display: flex; flex-direction: column; gap: 12px; margin: 0 0 14px; } .wr-wrap > .panel, .wr-wrap > .wr-cols { margin: 0; }
 .wr-good { border-color: rgba(69, 193, 92, .32); background: linear-gradient(180deg, rgba(69, 193, 92, .06), transparent 70%), var(--panel); }
 .wr-good .wr-gl { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 22px; }
-/* (Mechanics, tighter (Oct 19): what went well as chips (the detail on hover); each wrong thing an even two-line row with a coloured edge,
-   its moment and "+3 more" as tags, a small map that grows on hover; a phase's clean mechanics as chips that open in place) */
-.wr-tight .wr-good .wr-gl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-.wr-tight .wr-good .pb-r { padding: 4px 13px 4px 5px; border: 1px solid rgba(69,193,92,.35); border-radius: 999px; background: rgba(69,193,92,.08); font-size: 13px; }
-.wr-tight .wr-good .pb-r .pb-i, .wr-tight .wr-good .pb-r .sub { display: none; } .wr-tight .wr-good .wr-t { overflow: visible; }
-.wr-tight .wr-good .icw { width: 22px; height: 22px; margin-right: 7px; vertical-align: -6px; border-radius: 50%; overflow: hidden; }
-.wr-tight .probbox:not(.wr-good) .pb-r { gap: 12px; min-height: 58px; margin: 0 0 6px; padding: 7px 8px 7px 12px; border: 1px solid var(--line); border-left: 3px solid #e8a23a; border-radius: 10px; background: rgba(255,255,255,.02); }
-.wr-tight .probbox:not(.wr-good) .pb-r.bad { border-left-color: #e5534b; } .wr-tight .probbox:not(.wr-good) .pb-r.ok { border-left-color: #45c15c; }
-.wr-tight .probbox:not(.wr-good) .pb-i { display: none; } .wr-tight .probbox:not(.wr-good) .wr-t { flex: 1; min-width: 0; white-space: normal; }
-.wr-tight .probbox:not(.wr-good) .mwr-l .icw { width: 32px; height: 32px; margin-right: 9px; vertical-align: -10px; border-radius: 7px; overflow: hidden; }
-.wr-tight .wr-s2 { display: block; margin-top: 1px; padding-left: 41px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; line-height: 1.4; }
-.wr-tag { margin-left: 4px; padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--muted); font: 600 11px var(--body); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wr-plus { margin-left: 2px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
-.wr-tight .wr-map, .wr-tight .wr-map svg.zmap { width: 44px; height: 44px; } .wr-tight .wr-map { border-radius: 8px; }
-@media (hover: hover) { .wr-tight .wr-map:hover { transform: scale(5.5); } }
-.wr-tight .pb-r .btn.lp-gob { border: 0; background: none; color: var(--faint); font-size: 18px; padding: 2px 6px; } .wr-tight .pb-r .btn.lp-gob:hover { color: var(--text); }
-@media (max-width: 640px) { .wr-tight .wr-s2 { white-space: normal; padding-left: 0; margin-top: 3px; } .wr-tight .probbox:not(.wr-good) .pb-r { align-items: center; } }
+/* (Mechanics, layout B (Oct 19, your pick): the pull at a glance (one bar split into phases, a dot at each mistake), a totals strip, then per
+   phase its problem mechanics as tiles (the worst moment's map on top, name and status, the moment and "+3 more" as tags, one sentence),
+   opening in place across the whole row, and its clean mechanics as chips) */
+.mcx-tl { padding: 14px 18px 12px; } .mcx-tl h3 { margin: 0 0 10px; }
+.mcx-bar { position: relative; display: flex; height: 40px; border-radius: 8px; overflow: hidden; }
+.mcx-seg { position: relative; height: 100%; background: rgba(255,255,255,.045); border-right: 2px solid var(--bg); } .mcx-seg:last-of-type { border-right: 0; }
+.mcx-seg span { position: absolute; left: 8px; top: 4px; max-width: calc(100% - 12px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 11px var(--body); color: var(--faint); }
+.mcx-dot { position: absolute; bottom: 6px; z-index: 1; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--bg); transition: transform .12s; } .mcx-dot.bad { background: #e5534b; } .mcx-dot.warn { background: #e8a23a; } .mcx-dot:hover { transform: scale(1.5); z-index: 2; }
+.mcx-ax { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.mcx-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px; padding: 12px 18px; }
+.mcx-k { display: inline-flex; align-items: baseline; gap: 7px; font-size: 13px; color: var(--muted); } .mcx-k b { font: 800 26px/1 var(--head); } .mcx-k.bad b { color: #ff8f87; } .mcx-k.warn b { color: #f3c969; } .mcx-k.ok b { color: #7ee08f; }
+.mcx-lead { margin-left: auto; font-size: 12.5px; }
+.mcx-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin: 0 0 8px; } .mcx-tiles > details.secd { margin: 0; }
+details.secd.mcx-tile:not([open]) { overflow: hidden; border-radius: 12px; transition: transform .15s, border-color .15s; } details.secd.mcx-tile:not([open]):hover { transform: translateY(-2px); border-color: var(--line2); }
+details.secd.mcx-tile:not([open]) > summary { flex-direction: column; align-items: stretch; gap: 0; padding: 0; } details.secd.mcx-tile:not([open]) > summary::after { display: none; }
+details.secd.mcx-tile[open] { grid-column: 1 / -1; } details.secd.mcx-tile[open] .mcx-map, details.secd.mcx-tile[open] .mcx-ln { display: none; } details.secd.mcx-tile[open] .mcx-hd { display: contents; }
+.mcx-tile .wr-map.mcx-map, .mcx-tile .wr-map.mcx-map svg.zmap { width: 100% !important; height: 150px !important; } .mcx-tile .wr-map.mcx-map { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; transform: none !important; box-shadow: none !important; }
+.mcx-hd { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; } .mcx-hd .sst { margin-left: auto; font-size: 11.5px; text-align: right; } .mcx-hd .icw.big { width: 26px; height: 26px; margin-right: 8px; vertical-align: -8px; border-radius: 6px; overflow: hidden; }
+.mcx-ln { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 6px 12px 12px; }
+.mcx-s { flex-basis: 100%; margin-top: 2px; font-size: 12.5px; line-height: 1.45; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.wr-tag { padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--muted); font: 600 11px var(--body); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wr-plus { padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
+@media (max-width: 640px) { .mcx-tiles { grid-template-columns: 1fr; } .mcx-lead { margin-left: 0; flex-basis: 100%; } .mcx-seg span { display: none; } }
 .ph-ok { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 10px; border: 1px dashed rgba(69,193,92,.35); border-radius: 10px; }
 .ph-okh { margin-right: 2px; color: #7ee08f; font: 700 12.5px var(--body); }
 .ph-ok > details.secd { margin: 0; border-radius: 999px; border-color: rgba(69,193,92,.3); background: rgba(69,193,92,.06); box-shadow: none; }

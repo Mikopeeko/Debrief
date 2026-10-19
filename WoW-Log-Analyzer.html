@@ -2863,23 +2863,29 @@ details.pf-dc > summary .sst { margin-left: auto; }
 .wr-wrap { display: flex; flex-direction: column; gap: 12px; margin: 0 0 14px; } .wr-wrap > .panel, .wr-wrap > .wr-cols { margin: 0; }
 .wr-good { border-color: rgba(69, 193, 92, .32); background: linear-gradient(180deg, rgba(69, 193, 92, .06), transparent 70%), var(--panel); }
 .wr-good .wr-gl { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 22px; }
-/* (Mechanics, tighter (Oct 19): what went well as chips (the detail on hover); each wrong thing an even two-line row with a coloured edge,
-   its moment and "+3 more" as tags, a small map that grows on hover; a phase's clean mechanics as chips that open in place) */
-.wr-tight .wr-good .wr-gl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-.wr-tight .wr-good .pb-r { padding: 4px 13px 4px 5px; border: 1px solid rgba(69,193,92,.35); border-radius: 999px; background: rgba(69,193,92,.08); font-size: 13px; }
-.wr-tight .wr-good .pb-r .pb-i, .wr-tight .wr-good .pb-r .sub { display: none; } .wr-tight .wr-good .wr-t { overflow: visible; }
-.wr-tight .wr-good .icw { width: 22px; height: 22px; margin-right: 7px; vertical-align: -6px; border-radius: 50%; overflow: hidden; }
-.wr-tight .probbox:not(.wr-good) .pb-r { gap: 12px; min-height: 58px; margin: 0 0 6px; padding: 7px 8px 7px 12px; border: 1px solid var(--line); border-left: 3px solid #e8a23a; border-radius: 10px; background: rgba(255,255,255,.02); }
-.wr-tight .probbox:not(.wr-good) .pb-r.bad { border-left-color: #e5534b; } .wr-tight .probbox:not(.wr-good) .pb-r.ok { border-left-color: #45c15c; }
-.wr-tight .probbox:not(.wr-good) .pb-i { display: none; } .wr-tight .probbox:not(.wr-good) .wr-t { flex: 1; min-width: 0; white-space: normal; }
-.wr-tight .probbox:not(.wr-good) .mwr-l .icw { width: 32px; height: 32px; margin-right: 9px; vertical-align: -10px; border-radius: 7px; overflow: hidden; }
-.wr-tight .wr-s2 { display: block; margin-top: 1px; padding-left: 41px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; line-height: 1.4; }
-.wr-tag { margin-left: 4px; padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--muted); font: 600 11px var(--body); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wr-plus { margin-left: 2px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
-.wr-tight .wr-map, .wr-tight .wr-map svg.zmap { width: 44px; height: 44px; } .wr-tight .wr-map { border-radius: 8px; }
-@media (hover: hover) { .wr-tight .wr-map:hover { transform: scale(5.5); } }
-.wr-tight .pb-r .btn.lp-gob { border: 0; background: none; color: var(--faint); font-size: 18px; padding: 2px 6px; } .wr-tight .pb-r .btn.lp-gob:hover { color: var(--text); }
-@media (max-width: 640px) { .wr-tight .wr-s2 { white-space: normal; padding-left: 0; margin-top: 3px; } .wr-tight .probbox:not(.wr-good) .pb-r { align-items: center; } }
+/* (Mechanics, layout B (Oct 19, your pick): the pull at a glance (one bar split into phases, a dot at each mistake), a totals strip, then per
+   phase its problem mechanics as tiles (the worst moment's map on top, name and status, the moment and "+3 more" as tags, one sentence),
+   opening in place across the whole row, and its clean mechanics as chips) */
+.mcx-tl { padding: 14px 18px 12px; } .mcx-tl h3 { margin: 0 0 10px; }
+.mcx-bar { position: relative; display: flex; height: 40px; border-radius: 8px; overflow: hidden; }
+.mcx-seg { position: relative; height: 100%; background: rgba(255,255,255,.045); border-right: 2px solid var(--bg); } .mcx-seg:last-of-type { border-right: 0; }
+.mcx-seg span { position: absolute; left: 8px; top: 4px; max-width: calc(100% - 12px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 11px var(--body); color: var(--faint); }
+.mcx-dot { position: absolute; bottom: 6px; z-index: 1; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--bg); transition: transform .12s; } .mcx-dot.bad { background: #e5534b; } .mcx-dot.warn { background: #e8a23a; } .mcx-dot:hover { transform: scale(1.5); z-index: 2; }
+.mcx-ax { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.mcx-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px; padding: 12px 18px; }
+.mcx-k { display: inline-flex; align-items: baseline; gap: 7px; font-size: 13px; color: var(--muted); } .mcx-k b { font: 800 26px/1 var(--head); } .mcx-k.bad b { color: #ff8f87; } .mcx-k.warn b { color: #f3c969; } .mcx-k.ok b { color: #7ee08f; }
+.mcx-lead { margin-left: auto; font-size: 12.5px; }
+.mcx-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin: 0 0 8px; } .mcx-tiles > details.secd { margin: 0; }
+details.secd.mcx-tile:not([open]) { overflow: hidden; border-radius: 12px; transition: transform .15s, border-color .15s; } details.secd.mcx-tile:not([open]):hover { transform: translateY(-2px); border-color: var(--line2); }
+details.secd.mcx-tile:not([open]) > summary { flex-direction: column; align-items: stretch; gap: 0; padding: 0; } details.secd.mcx-tile:not([open]) > summary::after { display: none; }
+details.secd.mcx-tile[open] { grid-column: 1 / -1; } details.secd.mcx-tile[open] .mcx-map, details.secd.mcx-tile[open] .mcx-ln { display: none; } details.secd.mcx-tile[open] .mcx-hd { display: contents; }
+.mcx-tile .wr-map.mcx-map, .mcx-tile .wr-map.mcx-map svg.zmap { width: 100% !important; height: 150px !important; } .mcx-tile .wr-map.mcx-map { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; transform: none !important; box-shadow: none !important; }
+.mcx-hd { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; } .mcx-hd .sst { margin-left: auto; font-size: 11.5px; text-align: right; } .mcx-hd .icw.big { width: 26px; height: 26px; margin-right: 8px; vertical-align: -8px; border-radius: 6px; overflow: hidden; }
+.mcx-ln { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 6px 12px 12px; }
+.mcx-s { flex-basis: 100%; margin-top: 2px; font-size: 12.5px; line-height: 1.45; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.wr-tag { padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--muted); font: 600 11px var(--body); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wr-plus { padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--faint); font: 600 11px var(--body); white-space: nowrap; }
+@media (max-width: 640px) { .mcx-tiles { grid-template-columns: 1fr; } .mcx-lead { margin-left: 0; flex-basis: 100%; } .mcx-seg span { display: none; } }
 .ph-ok { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 10px; border: 1px dashed rgba(69,193,92,.35); border-radius: 10px; }
 .ph-okh { margin-right: 2px; color: #7ee08f; font: 700 12.5px var(--body); }
 .ph-ok > details.secd { margin: 0; border-radius: 999px; border-color: rgba(69,193,92,.3); background: rgba(69,193,92,.06); box-shadow: none; }
@@ -10146,8 +10152,7 @@ function wrongRight(wrong, right, o) {
   // (what went well: a strip across the top, its lines in two columns; left out when there's nothing to call out)
   const gPanel = right.length ? '<div class="panel probbox wr ok wr-good"><h3 class="nh">What went well' + hst('ok', plural(right.length, 'thing')) + '</h3><div class="wr-gl">' +
     right.map((x) => line(typeof x === 'string' ? { html: x } : x, 'ok')).join('') + '</div></div>' : '';
-  // (o.tight, Mechanics: what went well as chips, each wrong thing as an even two-line row with a coloured edge)
-  return '<div class="wr-wrap' + (o.tight ? ' wr-tight' : '') + '">' + gPanel + (o.rightTop ? '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + '</div></div>' : wPanel) + '</div>';
+  return '<div class="wr-wrap">' + gPanel + (o.rightTop ? '<div class="wr-cols"><div class="wr-l">' + wPanel + '</div><div class="wr-stack">' + o.rightTop + '</div></div>' : wPanel) + '</div>';
 }
 // (a mistake's sentence after a player's name reads on: "Kargaryen: their ghost touched another ghost")
 const lcLead = (d) => (/^(Their|They|Was|Were|Had|Took|Got|Gained|Died|Stood|Used|Soaked|Kicked|Picked|Cursed|Didn't|Never|Ran|Walked|Moved|Left|Missed|Is)\b/.test(d) ? d.charAt(0).toLowerCase() + d.slice(1) : d);
@@ -12694,6 +12699,7 @@ function audit() {
   const firstAt = new Map(); buckets.forEach((b, i) => b.forEach(({ s }) => { if (!firstAt.has(s.id)) firstAt.set(s.id, i); })); whole.forEach(({ s }) => { if (!firstAt.has(s.id)) firstAt.set(s.id, 'w'); });
   // One slim chip per mechanic: its status (red / amber / green) and problem count; click to open it.
   // (Mistakes by player was removed: every mistake is already on its mechanic's row.)
+  let tileOf = null; const MT_TOP = '<!--mt-top-->';
   {
     const cnt = (s) => { const all = s.rows.concat(...(s.groups || []).map((g) => g.rows)), b = all.filter((row) => row.some((c) => c.bad)).length;
       return { b, w: all.filter((row) => !row.some((c) => c.bad) && row.some((c) => c.warn)).length }; };
@@ -12720,17 +12726,13 @@ function audit() {
     const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
     const probMap = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
       for (const row of s.rows || []) if (want(row)) return rowMap(row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return rowMap(row); return null; };
-    const thumb = (s, mp) => (mp ? '<a class="wr-map tlink" href="' + href(s) + '" title="' + esc('See the map of ' + s.title.split(': ')[0]) + '" aria-label="' + esc('See the map of ' + s.title.split(': ')[0]) + '">' + miniMap(mp, pmap) + '</a>' : '');
-    // (Oct 19, "tighten its visual appeal": the moment ("Set 7, 9:47") and "+3 more" as small tags beside the name, the sentence on its own line)
+    // (Oct 19, layout B (your pick): no What went well / What went wrong boxes, where every problem showed twice; the totals strip and the
+    // pull's timeline go at the top (filled in once the phases are drawn), and each problem mechanic is a tile in its phase: its map, its
+    // worst moment and one sentence)
     const tagOf = (t) => { const m = String(t).match(/^([^:]{0,18}?\b\d+:\d\d)[,:]?\s*/); return m ? { tag: m[1], rest: t.slice(m[0].length) } : { tag: '', rest: t }; };
-    const wrong = ord.filter((s) => tierT(s) < 2).map((s) => { const { b, w } = cnt(s), fp = firstProb(s, b), more = b + w - 1, tg = tagOf(fp || '');
-      return { sev: b ? 'bad' : 'warn', html: name(s) + (tg.tag ? ' <span class="wr-tag">' + esc(tg.tag) + '</span>' : '') + (fp && more > 0 ? ' <span class="wr-plus">+' + more + ' more</span>' : '') +
-        ' <span class="sub wr-s2">' + esc(fp ? capS(tg.rest) : s.summary || (b ? pl2(b, 'problem') : w + ' could be better')) + '</span>', extra: thumb(s, probMap(s, b)) + '<a class="btn lp-gob tlink" href="' + href(s) + '" title="Go to it" aria-label="' + esc('Go to ' + s.title.split(': ')[0]) + '">›</a>' }; });
-    // (and what went well keeps only its count, "10 tank frontals.", not what the section shows)
-    const okSum = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/\bshows?\b/i.test(x)).join(' ');
-    // (one player picked: what went well counts their rows, not the raid's summary)
-    const right = ord.filter((s) => tierT(s) === 2).map((s) => { const t = mp1 ? plural((s.rows || []).length + (s.groups || []).reduce((n, g) => n + (g.rows || []).length, 0), 'row') + ' about ' + S.mechP + ', all fine.' : okSum(s.summary); return name(s) + (t ? ' <span class="sub">' + esc(t) + '</span>' : ''); });
-    if (wrong.length || right.length) h += wrongRight(wrong, right, { none: 'Every mechanic went to plan.', moreWhere: 'below', tight: true });
+    tileOf = (s, rows, groups) => { const x = { ...s, rows, groups }, { b, w } = cnt(x), fp = firstProb(x, b), tg = tagOf(fp || ''), mp = probMap(x, b);
+      return { tag: tg.tag, txt: fp ? capS(tg.rest) : '', more: Math.max(0, b + w - 1), map: mp ? miniMap(mp, pmap) : '' }; };
+    if (ord.length) h += MT_TOP;
   }
   // "What went wrong": a short synopsis built from this phase's flagged rows, e.g.
   // "2:08 Guillotine: In circle 5 / 6 · Target Xyron (no protection) · Died Chumfu"
@@ -13077,14 +13079,17 @@ function audit() {
   };
   // One collapsible block per mechanic (closed by default; open ones stay open while you click around)
   S.openSecs = S.openSecs || new Set(); S.openSets = S.openSets || new Set();
-  const secBlock = ({ s, rows, groups }, key) => {
+  // (tile: a problem mechanic drawn as a tile in its phase (Oct 19, layout B): its worst moment's map on top, then its name and status,
+  // the moment and "+3 more" as tags and one sentence; it opens in place across the whole row like any section)
+  const secBlock = ({ s, rows, groups }, key, tile) => {
     const sid = s.id + '-' + key, allRows = rows.concat(...groups.map((g) => g.rows)), nBad = allRows.filter(isBadRow).length, nWarn = allRows.filter(isWarnRow).length;
     const v = nBad ? (s.verdict === 'good' ? 'warn' : s.verdict) : nWarn ? 'warn' : (rows.length || groups.length ? 'good' : s.verdict);
     // the row: a coloured edge and one status line on the right (✕ problems, ! could be better, ✓ clean), like Assignments;
     // "How it works" is folded away at the top of the opened section
-    const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok';
-    let b = '<details class="panel secd st-' + stc + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span></summary><div class="secbody">' +
+    const stc = nBad ? 'bad' : nWarn ? 'warn' : s.info ? 'na' : 'ok', ti = tile && tileOf ? tileOf(s, rows, groups) : null;
+    const tiLn = ti && (ti.tag || ti.more || ti.txt) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
+    let b = '<details class="panel secd st-' + stc + (ti ? ' mcx-tile' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : '') + (ti ? '<span class="mcx-hd">' : '') + secHead(s) +
+      '<span class="sst ' + stc + '">' + (nBad ? '✕\u00a0' + pl2(nBad, 'problem') + (nWarn ? '<i> · ' + nWarn + ' could be better</i>' : '') : nWarn ? '!\u00a0' + nWarn + ' could be better' : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? '</span>' + tiLn : '') + '</summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -13147,7 +13152,9 @@ function audit() {
   // (Oct 19, "tighten its visual appeal": a phase's clean mechanics fold into one line of small chips after its problems; a chip
   // still opens its section in place, across the whole line)
   const okSec = (x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return !x.s.info && !a.some(isBadRow) && !a.some(isWarnRow); };
-  const phaseBody = (list, key) => { const ok = list.filter(okSec); return list.filter((x) => !okSec(x)).map((x) => secBlock(x, key)).join('') +
+  // (its problem mechanics as tiles in a grid (info-only sections stay full rows), then the clean chips)
+  const phaseBody = (list, key) => { const ok = list.filter(okSec), pr = list.filter((x) => !okSec(x) && !x.s.info), inf = list.filter((x) => !okSec(x) && x.s.info);
+    return (pr.length ? '<div class="mcx-tiles">' + pr.map((x) => secBlock(x, key, true)).join('') + '</div>' : '') + inf.map((x) => secBlock(x, key)).join('') +
     (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean</span>' + ok.map((x) => secBlock(x, key)).join('') + '</div>' : ''); };
   // phases, in fight order; each phase is a header with its mechanics, problems first
   buckets.forEach((list, i) => {
@@ -13162,6 +13169,19 @@ function audit() {
       '<span class="sst ' + (probs ? 'bad' : better ? 'warn' : 'ok') + '">' + (probs ? '✕\u00a0' + pl2(probs, 'problem') + (better ? '<i> · ' + better + ' could be better</i>' : '') : better ? '! ' + better + ' could be better' : '✓\u00a0clean') + '</span></summary>' + phaseBody(list, i) + '</details>';
   });
   if (whole.length) h += '<details class="phase" open><summary><b>Whole fight</b> <span class="sub">mechanics that aren\'t tied to one phase</span></summary>' + phaseBody(whole, 'w') + '</details>';
+  // (the top of the page (Oct 19, layout B): how many mechanics had problems, could be better or were clean, phase by phase, and the
+  // pull as one bar split into its phases with a dot at each mistake; hover a dot for what, click it to open that mechanic)
+  h = h.replace(MT_TOP, () => { const ent = buckets.flatMap((l, i) => l.map((x) => ({ x, k: i }))).concat(whole.map((x) => ({ x, k: 'w' }))).filter(({ x }) => !x.s.info);
+    const st = ({ x }) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return a.some(isBadRow) ? 'bad' : a.some(isWarnRow) ? 'warn' : 'ok'; };
+    const nB = ent.filter((e) => st(e) === 'bad').length, nW = ent.filter((e) => st(e) === 'warn').length, nO = ent.length - nB - nW;
+    const strip = '<div class="panel mcx-strip"><span class="mcx-k bad"><b>' + nB + '</b>with problems</span><span class="mcx-k warn"><b>' + nW + '</b>could be better</span><span class="mcx-k ok"><b>' + nO + '</b>clean</span><span class="mcx-lead sub">Counted phase by phase. Open a tile for every moment and the full map.</span></div>';
+    const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), end = cut ? Math.min(cut.t, tp.length ? tp[tp.length - 1].p.end : cut.t) : tp.length ? tp[tp.length - 1].p.end : 0;
+    if (tp.length < 2 || !(end > 0)) return strip;
+    const dots = []; for (const { x, k } of ent) { if (k === 'w') continue; const add = (row, t0) => { const t = rowT(row) != null ? rowT(row) : t0; if (t == null || t > end || !(isBadRow(row) || isWarnRow(row))) return;
+      dots.push('<a class="mcx-dot tlink ' + (isBadRow(row) ? 'bad' : 'warn') + '" href="#sec-' + x.s.id + '-' + k + '" style="left:' + (100 * t / end).toFixed(2) + '%" title="' + esc(T(t) + ' ' + x.s.title.split(': ')[0] + ': ' + rowText(x.s, row)) + '"></a>'); };
+      x.rows.forEach((row) => add(row, null)); x.groups.forEach((g) => g.rows.forEach((row) => add(row, g.t))); }
+    return '<div class="panel mcx-tl"><h3 class="nh">The pull at a glance<small>Each dot is a mistake. Hover one for what happened, click it to open that mechanic.</small></h3><div class="mcx-bar">' +
+      tp.filter(({ p }) => p.start < end).map(({ p }) => '<div class="mcx-seg" style="flex:' + (Math.min(p.end, end) - p.start) + '"><span>' + esc(p.name) + '</span></div>').join('') + dots.join('') + '</div><div class="mcx-ax"><span>0:00</span><span>' + T(end) + '</span></div></div>' + strip; });
   // Survival (the old Survivability tab): defensives per player, then potions and raid cooldowns for reference
   if (!r.noDeathSec) { const ds = defenseSection(r), info = (id, title, icon, sub, body) => '<details class="panel secd st-na" id="sec-' + id + '" data-k="' + id + '"' + (S.openSecs.has(id) ? ' open' : '') + '><summary><span class="sechd">' + spellIcon(0, icon, true) + '<b>' + esc(title) + '</b></span><span class="sst na">' + esc(sub) + '</span></summary><div class="secbody">' + body + '</div></details>';
     const nd = ds.rows.filter(isBadRow).length;
