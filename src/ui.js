@@ -16243,24 +16243,36 @@ function dbfPull(o) {
   // ---- what went well ----
   const W1 = [];
   if (!it.kill && isBest) W1.push('This was our best pull so far.'); else if (!it.kill && delta != null && delta > 0) W1.push('We got further than last pull.');
-  const okAll = clean.map(([, x]) => x).filter((x) => !x.s.info); if (okAll.length) W1.push('We got ' + nmL(okAll, 4) + ' right.');
-  if (!A.ds.length) W1.push(it.kill ? 'Nobody died.' : 'Nobody died before the wipe.'); else if (!A.early.length && A.first) W1.push('We had a clean start: nobody died until ' + T(A.first.t) + '.');
-  if (A.kicks && !A.missK) W1.push(A.kicks === 1 ? 'The one kickable cast got kicked.' : 'Every kickable cast got kicked.');
-  if (cd && cd.n && cd.ok === cd.n) W1.push('Every healing cooldown from the note went out on time.');
+  // (the cards read as a story too (your call, Oct 19): each one a few joined clauses, not a list of facts)
+  const flow = (l) => (l.length ? dbfCap(l.length < 3 ? l.join(', and ') : l.slice(0, -1).join(', ') + ', and ' + l[l.length - 1]) + '.' : '');
+  { const c = [], okAll = clean.map(([, x]) => x).filter((x) => !x.s.info);
+    if (!A.ds.length) c.push(it.kill ? 'nobody died' : 'nobody died before the wipe'); else if (!A.early.length && A.first) c.push('we had a clean start, with nobody dead until ' + T(A.first.t));
+    if (okAll.length) c.push('we handled ' + nmL(okAll, 3) + ' without a mistake');
+    if (A.kicks && !A.missK) c.push(A.kicks === 1 ? 'the one kickable cast got kicked' : 'every kickable cast got kicked');
+    if (cd && cd.n && cd.ok === cd.n) c.push('every healing cooldown from the note went out on time');
+    if (c.length) W1.push(flow(c)); }
   // ---- what didn't go well ----
   const W2 = [], L2 = [], fl = bad.filter(([, x]) => x.lv === 'major' || x.lv === 'moderate').map(([, x]) => x), mi = bad.filter(([, x]) => x.lv === 'minor').map(([, x]) => x);
-  if (fl.length || mi.length) W2.push((fl.length ? nmL(fl, 3) + ' failed' + (mi.length ? ', and ' + nmL(mi, 3) + ' had some mistakes' : '') : nmL(mi, 3) + ' had some mistakes') + '.');
+  // (when the pull had phases, the mistakes are told in order: "In P1 we slipped on A and B, then in P2 we failed C")
+  { const said = new Set(), parts = phs.length > 1 ? phs.map((p, k) => { const b = byPh[k].bad.filter((x) => !said.has(x)), w = byPh[k].warn.filter((x) => !said.has(x)); b.concat(w).forEach((x) => said.add(x)); if (!b.length && !w.length) return '';
+      return [esc(phN(p)), b.length ? 'failed ' + nmL(b, 2) + (w.length ? ' and slipped on ' + nmL(w, 2) : '') : 'slipped on ' + nmL(w, 3), b.length ? '' : nmL(w, 3)]; }).filter(Boolean) : [];
+    const rest = fl.concat(mi).filter((x) => !said.has(x));
+    // ("In P1 we slipped on Venomfang, then on Gloombombs in P2, and on Avoidable damage all pull long")
+    const sl = parts.length && parts[0][2]; // (the first verb was "slipped on", so later ones can say just "on")
+    if (parts.length) W2.push(parts.map(([ph, v, w], i) => (i ? (i === parts.length - 1 ? 'then ' : '') + (w && sl ? 'on ' + w : v) + ' in ' + ph : 'In ' + ph + ' we ' + v)).join(', ') + (rest.length ? ', and ' + (sl ? 'on ' : 'slipped on ') + nmL(rest, 2) + ' all pull long' : '') + '.');
+    else if (fl.length || mi.length) W2.push('We ' + (fl.length ? 'failed ' + nmL(fl, 3) + (mi.length ? ', and slipped on ' + nmL(mi, 3) : '') : 'slipped on ' + nmL(mi, 3)) + '.'); }
   for (const [id, x] of bad) L2.push(dbfGoL('sec-' + id + '-', esc(dbfPlain(x.s.title))));
   // (the first death, judged the way a raid lead would (your rule, Oct 19): avoidable, too fast to react to, or slow with something still ready)
   const avoidAb = new Set([r].concat(others).flatMap((x) => keptMistakes(x)).filter((q) => q.avoidRule).map((q) => String(q.mechanic).toLowerCase()));
   { const pk = E.PACKS.find((p) => p.encounter === it.boss); for (const x of (pk && pk.rules) || []) if (x.type === 'avoidable' && x.name) avoidAb.add(String(x.name).toLowerCase()); }
   const d0 = !it.kill && !raidCause && !w0 ? A.first : null;
   if (d0) { const who0 = dbfWho(d0.player, pm), kit = dbfKit(d0), av = ownM(d0) || avoidAb.has(String(d0.ability || '').toLowerCase());
-    W2.push(av ? who0 + '\'s death' + at(d0) + ' could have been avoided.' : dbfFast(d0) ? who0 + '\'s death' + at(d0) + ' was too fast to react to.' : kit.length ? who0 + ' died' + at(d0) + ' with ' + lpAnd(kit.slice(0, 2).map(esc)) + ' still ready.' : who0 + ' died' + at(d0) + ' with nothing left to press.'); }
+    W2.push('The wipe started when ' + who0 + ' died' + at(d0) + (av ? ', and that one could have been avoided.' : dbfFast(d0) ? ', too fast for anyone to react.' : kit.length ? ' with ' + lpAnd(kit.slice(0, 2).map(esc)) + ' still ready.' : ' with nothing left to press.')); }
   if (A.ds.length) L2.push(dbfGoL('sec-deaths-', 'Who died'));
   const drN = A.defReady.filter((p) => !A.ds.some((d) => d.player === p && ownM(d)) && (!d0 || p !== d0.player)).length;
-  if (drN) { W2.push(drN === 1 ? 'One of us died slowly with a defensive still ready.' : drN + ' of us died slowly with a defensive still ready.'); L2.push(dbfGoL('sec-defensives', 'Survival kit')); }
-  if (A.missK) { W2.push(A.missK === 1 ? 'A kickable cast got through.' : A.missK + ' kickable casts got through.'); L2.push(dbfGoL('sec-kicks', 'Interrupts')); }
+  { const c = []; if (drN) { c.push((drN === 1 ? 'one of us' : drN + ' of us') + ' died slowly with a defensive still ready'); L2.push(dbfGoL('sec-defensives', 'Survival kit')); }
+    if (A.missK) { c.push(A.missK === 1 ? 'a kickable cast got through' : A.missK + ' kickable casts got through'); L2.push(dbfGoL('sec-kicks', 'Interrupts')); }
+    if (c.length) W2.push((W2.length ? 'On top of that, ' : '') + flow(c).replace(/^./, (s) => (W2.length ? s.toLowerCase() : s))); }
   // ---- what's improving and what's getting worse: against the last real pull, and how far we got against the last three ----
   const U = [], Dn = [], LU = [], LD = [];
   const recent = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && !dbfReset(b)).slice(-3);
@@ -16268,14 +16280,18 @@ function dbfPull(o) {
     if (recent.every((b) => pullPct(it) < pullPct(b) - 0.5)) U.push('We\'re getting further: ' + (nowLab ? '<b>' + esc(nowLab) + '</b>' : 'further') + ' this time, after ' + labs + ' in the ' + nw + ' pulls before.');
     else if (recent.every((b) => pullPct(it) > pullPct(b) + 0.5)) Dn.push('We didn\'t get as far as any of the last ' + nw + ' pulls (' + labs + ').'); }
   if (B) {
-    if (!U.length && !Dn.length && !it.kill && A.left != null && B.left != null && Math.abs(A.left - B.left) >= 1) (A.left < B.left ? U : Dn).push((A.left < B.left ? 'We got further than last pull: ' : 'We didn\'t get as far as last pull: ') + esc(nowLab) + ', after ' + esc(prevLab) + '.');
-    if (Math.abs(A.ds.length - B.ds.length) >= 2) (A.ds.length < B.ds.length ? U : Dn).push('We lost ' + (A.ds.length < B.ds.length ? 'fewer' : 'more') + ' players: ' + A.ds.length + ', after ' + B.ds.length + ' last pull.');
-    if (A.first && B.first && Math.abs(A.first.t - B.first.t) >= 10) (A.first.t > B.first.t ? U : Dn).push((A.first.t > B.first.t ? 'We stayed alive longer: ' : 'Someone died sooner: ') + 'the first death came at ' + T(A.first.t) + ', not ' + T(B.first.t) + '.');
+    // (against the last pull, as one paragraph each: "Compared to last pull, we lost 3 players instead of 17, and ...")
+    const cu = [], cd2 = [], put = (good, t) => (good ? cu : cd2).push(t);
+    if (!U.length && !Dn.length && !it.kill && A.left != null && B.left != null && Math.abs(A.left - B.left) >= 1) put(A.left < B.left, (A.left < B.left ? 'we got further, to ' : 'we didn\'t get as far, only to ') + esc(nowLab) + ' after ' + esc(prevLab));
+    if (Math.abs(A.ds.length - B.ds.length) >= 2) put(A.ds.length < B.ds.length, 'we lost ' + A.ds.length + ' ' + (A.ds.length === 1 ? 'player' : 'players') + ' instead of ' + B.ds.length);
+    if (A.first && B.first && Math.abs(A.first.t - B.first.t) >= 10) put(A.first.t > B.first.t, 'the first death came ' + (A.first.t > B.first.t ? 'later' : 'sooner') + ', at ' + T(A.first.t) + ' instead of ' + T(B.first.t));
     const fixed = [], broke = []; for (const [id, x] of P) { const q = Q.get(id); if (!q || x.s.info) continue; if (q.st !== 'ok' && q.st !== 'na' && x.st === 'ok') fixed.push([id, x]); else if (q.st === 'ok' && (x.st === 'bad' || x.st === 'warn')) broke.push([id, x]); }
-    if (fixed.length) { U.push('We got ' + nmL(fixed.map((y) => y[1]), 3) + ' right this time, after mistakes last pull.'); for (const [id, x] of fixed) LU.push(dbfGoL('sec-' + id + '-', esc(dbfPlain(x.s.title)))); }
-    if (broke.length) { Dn.push(nmL(broke.map((y) => y[1]), 3) + ' went wrong this time, after going right last pull.'); for (const [id, x] of broke) LD.push(dbfGoL('sec-' + id + '-', esc(dbfPlain(x.s.title)))); }
-    if (samePh && B.dps && Math.abs(A.dps / B.dps - 1) >= 0.05) (A.dps > B.dps ? U : Dn).push('We did ' + Math.round(Math.abs(100 * (A.dps / B.dps - 1))) + '% ' + (A.dps > B.dps ? 'more' : 'less') + ' damage than last pull.');
-    if (A.missK !== B.missK && Math.max(A.missK, B.missK) >= 2) (A.missK < B.missK ? U : Dn).push((A.missK < B.missK ? 'Fewer' : 'More') + ' casts got through our kicks: ' + A.missK + ', after ' + B.missK + ' last pull.');
+    if (fixed.length) { cu.push(nmL(fixed.map((y) => y[1]), 3) + ' went right after giving us trouble last time'); for (const [id, x] of fixed) LU.push(dbfGoL('sec-' + id + '-', esc(dbfPlain(x.s.title)))); }
+    if (broke.length) { cd2.push(nmL(broke.map((y) => y[1]), 3) + ' went wrong after going right last time'); for (const [id, x] of broke) LD.push(dbfGoL('sec-' + id + '-', esc(dbfPlain(x.s.title)))); }
+    if (samePh && B.dps && Math.abs(A.dps / B.dps - 1) >= 0.05) put(A.dps > B.dps, 'we did ' + Math.round(Math.abs(100 * (A.dps / B.dps - 1))) + '% ' + (A.dps > B.dps ? 'more' : 'less') + ' damage');
+    if (A.missK !== B.missK && Math.max(A.missK, B.missK) >= 2) put(A.missK < B.missK, (A.missK < B.missK ? 'fewer' : 'more') + ' casts got through our kicks (' + A.missK + ' instead of ' + B.missK + ')');
+    if (cu.length) U.push('Compared to last pull, ' + flow(cu).replace(/^./, (s) => s.toLowerCase()));
+    if (cd2.length) Dn.push('Compared to last pull, ' + flow(cd2).replace(/^./, (s) => s.toLowerCase()));
   }
   const noPrev = B ? '' : it.pull > 1 ? 'The pulls before this were resets, so there\'s nothing to compare yet.' : 'This was our first pull, so there\'s nothing to compare yet.';
   const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing stood out as done right this pull.') + dbfCardP('bad', 'What didn\'t go well', W2, L2, 'Nothing went wrong. Do that again.', nx) +
