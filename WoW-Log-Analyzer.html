@@ -4561,6 +4561,19 @@ const VS = {
   totem: 1306820, malignance: 1304459, // Mythic: Malignant Totem (summoned at each Imbibe), Malignance (each totem's cast: it goes off at the next Imbibe)
 };
 const VS_IDS = Object.values(VS).flat();
+// Kith'ix (The Unbinding of Kith'ix, 12.1.5) spell IDs, read from a Mythic kill on Warcraft Logs (Oct 19 2026) and checked against
+// the guide library's boss notes. Matched by ID; Overwhelming Fear's dispels reach the module by name.
+const KX = {
+  swarm: [1301511, 1301668], frenzy: [1303260, 1303261], juices: 1302319, mindsting: 1304040, // Voidswarm (cast, its raid hit), Dark Frenzy (an add alive at the intermission), Digestive Juices (a Bomber Beetle popping), Mindsting (an egg hatched)
+  extinguish: 1304424, embrace: [1304526, 1304508], // Extinguish (the raid hit), Light's Embrace (the mote's buff: 90% less shadow damage)
+  horrors: 1304045, fear: 1304046, scream: 1304047, // Unspeakable Horrors (the mark), Overwhelming Fear (the fear), its scream when it's removed
+  devCast: 1304930, devHit: [1304946, 1304947], devastated: 1304948, voidscar: 1304950, appendage: 1303685, // tank: Dark Devastation, Devastated (+150% damage taken), the Voidscar puddle, Twisted Appendage
+  roar: [1302884, 1302914, 1302917], weave: [1302333, 1302334, 1302336], nightfall: [1302705, 1302727, 1302728], // the adds' Venom Roar (Hulk), Voidweave and Nightfall (Voidweaver)
+  suffocate: [1302951, 1303165, 1303257], radiance: [1314099, 1303169, 1303188], grasp: 1303406, fragment: 1308674, exhausted: 1307662, // intermission: Suffocating Darkness, Divine Radiance (its end), Abyssal Grasp, Eclipse Fragment
+  howl: 1301110, lastLight: [1305427, 1311977], grace: 1305428, eclipse: [1301479, 1305876], // P2: Stygian Howl, Last Light, Luminous Grace, Eightfold Eclipse
+  gate: [1308873, 1308874], nullify: [1308875, 1308876, 1308877], shards: 1308881, negation: 1318467, restab: [1318472, 1318473], // Null Gate, Nullify (stacks), Nullshards, Negation (tank) and Explosive Restabilization (a gate closed)
+};
+const KX_IDS = Object.values(KX).flat();
 // The Lost Explorers spell IDs, read from real Mythic pulls on Warcraft Logs (Sep to Oct 2026). Matched by ID (MODULES
 // entry `ids`); Blast Wave, Elemental Explosion and the death enrages (not in those pulls) by name.
 const LE = {
@@ -4726,6 +4739,14 @@ const MODULES = [{
   // (has to die, but on a timer, not on sight: between its second and third Fester Burst, so it isn't judged on switch speed)
   useful: ['Blightscale Wretch'],
   build: buildUlatek,
+}, {
+  encounter: "Kith'ix",
+  units: ['Venomous Hulk', 'Voidweaver', 'Bomber Beetle', 'Mindstinger Egg', 'Lady Liadrin', 'Liadrin'], // drawn on maps
+  spells: ['overwhelming fear'], // (dispels reach the module by name; the rest by ID)
+  ids: KX_IDS,
+  focus: new Set(["Kith'ix"]),
+  priority: ['Voidweaver', 'Bomber Beetle', 'Mindstinger Egg'],
+  build: buildKithix,
 }];
 // Every boss ability the rules and fight modules know, by encounter (spell IDs): each gets its spell tooltip wherever the
 // app names it, in a heading or in plain text (a rule's tip, a check's line), even when this log doesn't have it (its
@@ -6064,6 +6085,184 @@ function buildNymrissa(ev, r, h) {
   if (groups.length) sections.push({ id: 'orbs', title: 'Frost Orbs (Soaks)', place: 'Frost Orbs: soaked', spell: [NY.chill, 'Chilling Frost'], verdict: groups.some((g) => g.bad) ? 'bad' : 'good',
     summary: pl(groups.length, 'set') + ' of Frost Orbs. It shows who soaked each set, and any orb that Shattered.', cols: ['Soaker', 'When', 'How'], groups, rows: [] });
   return { _ny, diag: [], title: r.item.diff + ' audit: Nymrissa Wavecaller', reached: '', phases: [], marks: [], sections, mistakes, legend: 'The Frost Orb soaks, set by set.', note: '' };
+}
+
+// Kith'ix (Oct 19 2026, from the guide library's notes: Wowhead, Icy Veins, Mythic Trap and a Mythic video guide). P1 adds sets and
+// mechanics until his 100 energy, an intermission (Suffocating Darkness) each time, then P2 at 25%: Last Light and a one-minute DPS check.
+function buildKithix(ev, r, h) {
+  const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const dur = r.duration, diff = r.item.diff, mythic = diff === 'Mythic', heroic = mythic || diff === 'Heroic', pname = (g) => h.name(g), T = h.fmtT;
+  const fmtM = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
+  const mistakes = [], sections = [], marks = [];
+  const M = (t, player, mech, severity, detail, fix) => mistakes.push({ t, player, mechanic: mech, id: 0, severity, detail, fix });
+  const has = (e, ids) => [].concat(ids).includes(e.id);
+  const dmgId = (ids) => ev.filter((e) => e.k === 'dmg' && has(e, ids) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
+  const aur = (ids) => ev.filter((e) => e.k === 'aura' && has(e, ids)).sort((a, b) => a.t - b.t);
+  const gap = (l, g) => l.sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > g);
+  const castT = (ids, g) => gap(ev.filter((e) => e.k === 'cast' && has(e, ids)).map((e) => e.t), g || 3);
+  const clusters = (list, g) => { const out = []; for (const e of list) { const c = out[out.length - 1]; if (c && e.t - c.t1 < g) { c.t1 = e.t; c.list.push(e); } else out.push({ t: e.t, t1: e.t, list: [e] }); } return out; };
+  const diedNear = (g, t, w) => r.deaths.find((d) => d.guid === g && d.t >= t - 0.2 && d.t <= t + w);
+  const upAt = (list, g, t) => { let on = false; for (const e of list) { if (e.t > t) break; if (e.dst !== g) continue; on = e.op !== 'remove'; } return on; };
+
+  // ---- the phases: P1 until 100 energy, an intermission each time (Suffocating Darkness until Divine Radiance), P2 at Stygian Howl ----
+  const inter = castT(KX.suffocate, 20), rad = castT(KX.radiance, 20);
+  const howl = (castT([KX.howl]).concat(aur([KX.howl]).filter((e) => e.op === 'apply').map((e) => e.t)).sort((a, b) => a - b))[0] ?? null;
+  const phases = []; let t0 = 0, k = 1;
+  for (const a of inter.filter((x) => howl == null || x < howl)) { const b = rad.find((x) => x > a + 5 && x < a + 120) ?? Math.min(dur, howl ?? dur);
+    phases.push({ name: 'P1 (' + k + ')', start: t0, end: a }); phases.push({ name: 'Intermission ' + k, start: a, end: b }); t0 = b; k++; }
+  phases.push({ name: howl != null ? 'P1 (' + k + ')' : (k > 1 ? 'P1 (' + k + ')' : 'P1'), start: t0, end: howl ?? dur });
+  if (howl != null) phases.push({ name: 'P2 Last Light', start: howl, end: dur });
+  if (phases.length === 1) phases[0].name = 'P1';
+  inter.forEach((t, i) => marks.push({ t, label: 'Intermission ' + (i + 1), id: KX.suffocate[0], kind: 'phase' }));
+  if (howl != null) marks.push({ t: howl, label: 'P2', id: KX.howl, kind: 'phase' });
+  const phOf = (t) => { let n = phases[0].name; for (const p of phases) if (t >= p.start - 0.5) n = p.name; return n; };
+
+  // ---- 1. Voidswarm: each set of adds, all dead before the intermission (survivors get Dark Frenzy) ----
+  // (Voidswarm is logged as a 6-second buff on Kith'ix while he channels it, not as a cast)
+  const sets = gap(aur([KX.swarm[0]]).filter((e) => e.op === 'apply' && !h.isPlayer(e.dst)).map((e) => e.t).concat(castT([KX.swarm[0]], 20)), 20);
+  {
+    const ADD = ['Venomous Hulk', 'Voidweaver', 'Bomber Beetle', 'Mindstinger Egg'], die = ev.filter((e) => e.k === 'die' && ADD.includes(e.name));
+    const fr = aur(KX.frenzy).filter((e) => e.op === 'apply' && !h.isPlayer(e.dst)), hatch = clusters(dmgId([KX.mindsting]), 3);
+    const groups = sets.map((t, i) => {
+      const t1 = sets[i + 1] ?? dur, mine = die.filter((e) => e.t >= t && e.t < t1), rows = [];
+      for (const n of ADD) { const d = mine.filter((e) => e.name === n); if (!d.length) continue;
+        rows.push([{ txt: n === 'Mindstinger Egg' ? 'Mindstinger Eggs' : pl(d.length, n), sub: n === 'Mindstinger Egg' ? pl(d.length, 'egg') + ' killed' : '' }, { t: d[d.length - 1].t }, { txt: 'all dead ' + Math.round(d[d.length - 1].t - t) + ' s after the swarm' }, { txt: '' }]); }
+      const fz = [...new Set(fr.filter((e) => e.t >= t && e.t < t1).map((e) => e.dst))];
+      if (fz.length) { const at = fr.find((e) => e.t >= t).t; M(at, 'Raid', 'Dark Frenzy', 'High', pl(fz.length, 'add') + ' from set ' + (i + 1) + ' were still alive at the intermission and got Dark Frenzy (faster, crowd-control immune, pulsing raid damage).', 'Kill every add before Kith\'ix reaches 100 energy.');
+        rows.push([{ txt: 'Dark Frenzy' }, { t: at }, { txt: pl(fz.length, 'add') + ' still alive at the intermission', bad: true }, { txt: '' }]); }
+      const hs = hatch.filter((c) => c.t >= t && c.t < t1);
+      if (hs.length) { M(hs[0].t, 'Raid', 'Mindsting', 'Medium', pl(hs.length, 'Mindstinger egg') + ' from set ' + (i + 1) + ' hatched (stun and damage over time).', 'Kill the eggs before they hatch: drop them in the cleave on the Hulk and Voidweavers.');
+        rows.push([{ txt: 'Eggs hatched' }, { t: hs[0].t }, { txt: pl(hs.length, 'egg') + ' hatched', warn: true, sub: 'Mindsting' }, { txt: '' }]); }
+      rows.sort((a, b) => a[1].t - b[1].t);
+      return { title: 'Set ' + (i + 1) + ' (' + phOf(t) + ')', t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: fz.length ? pl(fz.length, 'add') + ' reached the intermission' : 'all dead in time', rows };
+    });
+    if (groups.length) sections.push({ id: 'kxadds', title: 'Voidswarm (Adds)', place: 'Voidswarm adds: all dead before the intermission', spell: [KX.swarm[0], 'Voidswarm'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'set') + ' of adds. It shows when each kind was dead, any that reached the intermission (Dark Frenzy)' + (heroic ? ' and any Mindstinger egg that hatched' : '') + '.', cols: ['Add', 'When', 'Result', ''], groups, rows: [] });
+  }
+
+  // ---- 2. Bomber Beetles: pop them one at a time (each pop puts a Digestive Juices stack on everyone nearby) ----
+  {
+    const ju = aur([KX.juices]).filter((e) => (e.op === 'apply' || e.op === 'dose') && h.isPlayer(e.dst)), pops = clusters(ju, 0.6);
+    const dj = r.deaths.filter((d) => /digestive juices/i.test(d.ability || ''));
+    const groups = sets.map((t, i) => {
+      const t1 = sets[i + 1] ?? dur, pp = pops.filter((c) => c.t >= t && c.t < t1); if (!pp.length) return null;
+      const rows = pp.map((c, j) => { const close = j && c.t - pp[j - 1].t1 < 3, n = new Set(c.list.map((e) => e.dst)).size, dead = dj.filter((d) => d.t >= c.t - 0.2 && d.t <= c.t + 8);
+        if (close) M(c.t, 'Raid', 'Bomber Beetle', 'Medium', 'Two Bomber Beetles popped within ' + (c.t - pp[j - 1].t1).toFixed(1) + ' s of each other: their Digestive Juices stacked on the raid.', 'Pop the beetles one at a time: grip or lead them into a player on purpose, a few seconds apart.');
+        if (dead.length) M(dead[0].t, 'Raid', 'Digestive Juices', 'High', pl(dead.length, 'player') + ' died to Digestive Juices.', 'Pop the beetles one at a time, and stay out of the middle while they are up.');
+        return [{ txt: 'Beetle ' + (j + 1) }, { t: c.t }, close ? { txt: (c.t - pp[j - 1].t1).toFixed(1) + ' s after the last one', warn: true, sub: 'popped together' } : { txt: j ? Math.round(c.t - pp[j - 1].t1) + ' s after the last one' : 'first pop' },
+          dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: pl(n, 'player') + ' got a stack', dim: true }]; });
+      return { title: 'Set ' + (i + 1) + ' beetles', t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn), sub: pl(pp.length, 'pop') + (rows.some((x) => x[2].warn) ? ', some together' : ', one at a time'), rows };
+    }).filter(Boolean);
+    if (groups.length) sections.push({ id: 'kxbeetle', title: 'Bomber Beetles (Pop one at a time)', place: 'Bomber Beetles: popped one at a time', spell: [KX.juices, 'Digestive Juices'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: 'Each beetle that pops (on a player, or after 30 seconds) puts a stacking Digestive Juices on the raid. It shows each pop, and any within 3 seconds of another.', cols: ['Beetle', 'When', 'Result', 'Notes'], groups, rows: [] });
+  }
+
+  // ---- 3. Extinguish: everyone grabs a Light's Embrace mote first (90% less shadow damage) ----
+  {
+    const emb = aur(KX.embrace).filter((e) => h.isPlayer(e.dst)), hit = dmgId([KX.extinguish]);
+    const groups = clusters(hit, 3).map((c, i) => {
+      const by = new Map(); for (const e of c.list) if (!by.has(e.dst)) by.set(e.dst, e);
+      const no = [...by.values()].filter((e) => !upAt(emb, e.dst, e.t + 0.05) && e.amt > 0);
+      const rows = no.map((e) => { const d = diedNear(e.dst, e.t, 2);
+        M(e.t, pname(e.dst), 'Extinguish', d ? 'High' : 'Medium', 'Took Extinguish without a Light\'s Embrace mote (' + fmtM(e.amt) + ')' + (d ? ', and died.' : '.'), 'Grab a Light\'s Embrace mote before Extinguish finishes casting. No mote left: use a defensive.');
+        return [{ p: pname(e.dst) }, { t: e.t }, { txt: 'no mote, took ' + fmtM(e.amt), bad: !!d, warn: !d }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]; });
+      return { title: 'Extinguish ' + (i + 1) + ' (' + phOf(c.t) + ')', t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: no.length ? pl(no.length, 'player') + ' without a mote' : 'everyone had a mote', rows };
+    });
+    if (groups.length) sections.push({ id: 'kxext', title: "Extinguish (Grab a mote)", place: "Extinguish: everyone holding Light's Embrace", spell: [KX.extinguish, 'Extinguish'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'Extinguish') + '. It shows who took it without a Light\'s Embrace mote (90% less shadow damage).', cols: ['Player', 'When', 'Result', 'Died'], groups, rows: [] });
+  }
+
+  // ---- 4. Unspeakable Horrors: run out, then dispel the fears one at a time (each dispel screams on the raid) ----
+  {
+    const fa = aur([KX.fear]).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), fr = aur([KX.fear]).filter((e) => e.op === 'remove' && h.isPlayer(e.dst));
+    const disp = ev.filter((e) => e.k === 'dispel' && /overwhelming fear/i.test(e.spell || '')), scr = dmgId([KX.scream]);
+    const groups = clusters(fa, 4).map((c, i) => {
+      const rows = c.list.map((e) => { const rm = fr.find((x) => x.dst === e.dst && x.t > e.t); return { g: e.dst, t: e.t, rm: rm ? rm.t : null, by: rm && disp.find((x) => x.dst === e.dst && Math.abs(x.t - rm.t) < 0.5) }; })
+        .sort((a, b) => (a.rm ?? 1e9) - (b.rm ?? 1e9)).map((o, j, l) => {
+          const near = o.rm != null && l.some((q) => q !== o && q.rm != null && Math.abs(q.rm - o.rm) < 1), sh = o.rm != null ? scr.filter((x) => x.t >= o.rm - 0.1 && x.t <= o.rm + 1) : [];
+          const dead = o.rm != null ? r.deaths.filter((d) => d.t >= o.rm - 0.2 && d.t <= o.rm + 2 && /overwhelming fear/i.test(d.ability || '')) : [];
+          if (dead.length) M(o.rm, 'Raid', 'Overwhelming Fear', 'High', pl(dead.length, 'player') + ' died to the scream as ' + pname(o.g) + '\'s fear came off.', 'Dispel the fears one at a time, with the feared player away from the group.');
+          return [{ p: pname(o.g) }, { t: o.rm ?? o.t }, o.rm == null ? { txt: 'still feared', dim: true } : { txt: (o.by ? 'dispelled' : 'came off') + ' after ' + (o.rm - o.t).toFixed(1) + ' s', sub: o.by ? 'by ' + o.by.src : '' },
+            dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : near ? { txt: 'within 1 s of another', warn: true, sub: 'two screams at once' } : { txt: sh.length ? 'scream hit ' + pl(new Set(sh.map((x) => x.dst)).size, 'player') : '—', dim: true }]; });
+      return { title: 'Unspeakable Horrors ' + (i + 1) + ' (' + phOf(c.t) + ')', t: c.t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[3].warn), sub: pl(rows.length, 'feared player'), rows };
+    });
+    if (groups.length) sections.push({ id: 'kxfear', title: 'Overwhelming Fear (Dispels)', place: 'Overwhelming Fear: dispelled one at a time', spell: [KX.fear, 'Overwhelming Fear'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'set') + ' of fears. Each dispel releases a scream on the raid, weaker with distance, so they go one at a time. It shows each dispel, and any two within a second of each other.', cols: ['Player', 'When', 'Result', 'Notes'], groups, rows: [] });
+  }
+
+  // ---- 5. tanks: a swap on every Dark Devastation (Devastated: +150% damage taken) ----
+  {
+    const da = aur([KX.devastated]).filter((e) => h.isPlayer(e.dst)), raidHit = dmgId(KX.devHit).filter((e) => h.role(e.dst) !== 'tank');
+    const rows = castT([KX.devCast], 5).map((t) => {
+      const on = da.find((e) => e.op === 'apply' && e.t >= t - 0.5 && e.t <= t + 8), again = on && da.some((e) => e.dst === on.dst && e.t < on.t - 1 && e.op !== 'remove') && upAt(da, on.dst, on.t - 0.3);
+      const by = raidHit.filter((e) => e.t >= t && e.t <= t + 8), d = on && diedNear(on.dst, on.t, 4);
+      if (again) M(on.t, pname(on.dst), 'Dark Devastation', 'High', 'Took Dark Devastation with Devastated still on (150% more damage taken).', 'Taunt-swap on every Dark Devastation.');
+      if (by.length) M(by[0].t, 'Raid', 'Dark Devastation', 'Medium', pl(new Set(by.map((e) => e.dst)).size, 'other player') + ' caught in the Dark Devastation circle.', 'The tank takes the 15-yard circle away from the raid.');
+      return [{ p: on ? pname(on.dst) : '?' }, { t: on ? on.t : t }, again ? { txt: 'took two in a row', bad: true } : { txt: 'swapped' }, d ? { txt: 'died', bad: true } : by.length ? { txt: pl(new Set(by.map((e) => e.dst)).size, 'other player') + ' hit', warn: true } : { txt: '—', dim: true }];
+    });
+    if (rows.length) sections.push({ id: 'kxtank', title: 'Dark Devastation (Tank swap)', place: 'Dark Devastation: a swap every time, away from the raid', spell: [KX.devCast, 'Dark Devastation'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : rows.some((x) => x[3].warn) ? 'warn' : 'good',
+      summary: pl(rows.length, 'Dark Devastation') + '. It shows which tank took each one, and anyone else the circle hit.', cols: ['Tank', 'When', 'Result', 'Notes'], rows });
+  }
+
+  // ---- 6. intermission: Abyssal Grasp (heal it off within 8 s or be pulled into the dark) and Eclipse Fragments ----
+  {
+    const ga = aur([KX.grasp]).filter((e) => h.isPlayer(e.dst)), rows = [];
+    for (const e of ga.filter((x) => x.op === 'apply')) { const rm = ga.find((x) => x.op === 'remove' && x.dst === e.dst && x.t > e.t), len = (rm ? rm.t : Math.min(dur, e.t + 8)) - e.t, d = diedNear(e.dst, e.t, 10);
+      if (len >= 7.5 || d) M(e.t, pname(e.dst), 'Abyssal Grasp', d ? 'High' : 'Medium', 'Abyssal Grasp stayed on for ' + len.toFixed(1) + ' s' + (d ? ', and they died.' : ' and pulled them into the dark.'), 'Heal off the absorb fast: a Healthstone or potion yourself, and healers on it.');
+      rows.push([{ p: pname(e.dst) }, { t: e.t }, { txt: 'removed after ' + len.toFixed(1) + ' s', bad: !!d || len >= 7.5, warn: !d && len >= 5 && len < 7.5 }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]); }
+    if (rows.length) sections.push({ id: 'kxgrasp', title: 'Abyssal Grasp (Heal it off)', place: 'Abyssal Grasp: healed off within 8 s', spell: [KX.grasp, 'Abyssal Grasp'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
+      summary: pl(rows.length, 'Abyssal Grasp') + ' in the intermissions. Its heal absorb has to be gone within 8 seconds, or it pulls the player into the dark.', cols: ['Player', 'When', 'Result', 'Died'], rows });
+    const fg = aur([KX.fragment]).filter((e) => (e.op === 'apply' || e.op === 'dose') && h.isPlayer(e.dst));
+    if (heroic && fg.length) { const groups = inter.map((t, i) => { const t1 = phases.find((p) => p.name === 'Intermission ' + (i + 1)); const end = t1 ? t1.end : t + 90, by = new Map();
+      for (const e of fg.filter((x) => x.t >= t && x.t <= end + 2)) { const o = by.get(e.dst) || { g: e.dst, t: e.t, n: 0, mx: 0 }; o.n += e.op === 'apply' ? 1 : 0; o.mx = Math.max(o.mx, e.stacks || 1); by.set(e.dst, o); }
+      const rows2 = [...by.values()].sort((a, b) => b.mx - a.mx).map((o) => { const d = diedNear(o.g, o.t, end - o.t + 3);
+        return [{ p: pname(o.g) }, { t: o.t }, { txt: o.mx + (o.mx === 1 ? ' stack' : ' stacks') }, d && /eclipse fragment/i.test(d.ability || '') ? { txt: 'died to it', bad: true } : { txt: '—', dim: true }]; });
+      return rows2.length ? { title: 'Intermission ' + (i + 1), t, bad: rows2.some((x) => x[3].bad), warn: rows2.some((x) => x[2].warn), sub: pl(rows2.length, 'player') + ' caught fragments', rows: rows2 } : null; }).filter(Boolean);
+      if (groups.length) sections.push({ id: 'kxfrag', title: 'Eclipse Fragments (Intercept)', place: 'Eclipse Fragments: intercepted before Liadrin', spell: [KX.fragment, 'Eclipse Fragment'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good', info: !groups.some((g) => g.bad || g.warn),
+        summary: 'Fragments float from the Voidscars to Liadrin; each one caught gives a stacking damage over time. It shows who caught them and how many stacks they reached. A guide has two soakers take turns on each scar.', cols: ['Player', 'First catch', 'Most stacks', 'Died'], groups, rows: [] }); }
+  }
+
+  // ---- 7. P2: Null Gates (Nullify stacks kill at 3 on Mythic) and Negation (the tank closes gates) ----
+  if (howl != null) {
+    const cap = mythic ? 3 : diff === 'Heroic' ? 5 : 6;
+    const nu = aur(KX.nullify).filter((e) => (e.op === 'apply' || e.op === 'dose') && h.isPlayer(e.dst)), by = new Map();
+    for (const e of nu) { const o = by.get(e.dst) || { g: e.dst, t: e.t, mx: 0 }; if ((e.stacks || 1) >= o.mx) { o.mx = e.stacks || 1; o.t = e.t; } by.set(e.dst, o); }
+    const rows = [...by.values()].filter((o) => o.mx >= cap || diedNear(o.g, o.t, 4)).sort((a, b) => b.mx - a.mx).map((o) => { const d = diedNear(o.g, o.t, 4);
+      if (d) M(o.t, pname(o.g), 'Nullify', 'High', 'Died with ' + o.mx + ' Nullify stacks.', 'Dodge the Nullshards the gates spray: ' + cap + ' stacks kill on ' + diff + '.');
+      return [{ p: pname(o.g) }, { t: o.t }, { txt: o.mx + ' of ' + cap + ' stacks', bad: !!d, warn: !d }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]; });
+    const ng = aur([KX.negation]).filter((e) => h.isPlayer(e.dst)), rs = clusters(dmgId(KX.restab), 1.5);
+    for (const e of ng.filter((x) => x.op === 'apply')) { const rm = ng.find((x) => x.op === 'remove' && x.dst === e.dst && x.t > e.t), end = rm ? rm.t : dur, n = rs.filter((c) => c.t >= e.t && c.t <= end + 1).length, need = mythic ? 3 : 1;
+      const dd = diedNear(e.dst, end - 0.3, 1.5);
+      if (n < need && rm) M(e.t, pname(e.dst), 'Negation', 'High', 'Negation ended' + (dd ? ' with their death' : '') + ' after closing ' + pl(n, 'Null Gate') + (mythic ? ' (Mythic needs 3).' : '.'), 'With Negation, run into the Null Gates to close them before it runs out, with a defensive for each Explosive Restabilization.');
+      rows.push([{ p: pname(e.dst), sub: 'Negation' }, { t: e.t }, { txt: pl(n, 'gate') + ' closed', bad: !!rm && n < need, warn: !rm && n < need }, dd ? { txt: 'died', bad: true } : { txt: '—', dim: true }]); }
+    if (rows.length) sections.push({ id: 'kxgate', title: 'Null Gates (Dodge the shards)', place: 'Null Gates: Nullify kept under ' + cap + ', gates closed', spell: [KX.gate[0], 'Null Gate'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
+      summary: 'Gates spray Nullshards; each hit is a Nullify stack, and ' + cap + ' kill on ' + diff + '. It shows who reached ' + cap + ' or died with stacks, and how many gates each Negation tank closed' + (mythic ? ' (3 on Mythic)' : '') + '.', cols: ['Player', 'When', 'Result', 'Died'], rows });
+    // ---- 8. the DPS check: Eightfold Eclipse, the 8th wipes the raid ----
+    const ec = clusters(dmgId(KX.eclipse), 2).filter((c) => c.t >= howl), n = ec.length, kill = r.item.kill;
+    if (n >= 8 && !kill) M(ec[7].t, 'Raid', 'Eightfold Eclipse', 'High', 'The eighth Eightfold Eclipse wiped the raid: Kith\'ix needed more damage in P2.', 'Save Bloodlust (or your 2-minute cooldowns), potions and every cooldown for P2.');
+    sections.push({ id: 'kxdps', title: 'Last Light (DPS check)', place: 'P2: Kith\'ix dead before the eighth Eclipse', spell: [KX.lastLight[0], 'Last Light'], verdict: n >= 8 && !kill ? 'bad' : n >= 7 ? 'warn' : 'good', info: kill && n < 7,
+      summary: 'P2 started at ' + T(howl) + '. Every Eightfold Eclipse hits the raid, and the eighth one wipes it.', cols: ['What', 'When', 'Result', ''],
+      rows: [[{ txt: 'P2 (Stygian Howl)' }, { t: howl }, { txt: T(howl) + ' into the pull' }, { txt: '' }], [{ txt: kill ? 'Kith\'ix died' : 'The pull ended' }, { t: dur }, { txt: (kill ? 'after ' : '') + n + ' of 8 Eclipses', bad: n >= 8 && !kill, warn: n === 7 }, { txt: Math.round(dur - howl) + ' s in P2', dim: true }]] });
+  }
+
+  // ---- 9. avoidable damage ----
+  const av = avoidPanel(ev, r, h, [
+    { n: ['twisted appendage'], label: 'Twisted Appendage', harm: 'Medium', why: 'the tentacle slam circles' },
+    { n: ['venom roar'], label: 'Venom Roar', harm: 'Medium', why: 'the Venomous Hulk\'s cone (it should face away)' },
+    { n: ['voidscar'], label: 'Voidscar', harm: 'Medium', why: 'walking into a Voidscar puddle (knockback)' },
+    { n: ['nullshards'], label: 'Nullshards', harm: 'Medium', why: 'the shards a Null Gate sprays (each one is a Nullify stack)' },
+  ]);
+  if (av) sections.push(av);
+
+  const diag = [['Voidswarm', KX.swarm[0]], ['Dark Frenzy', KX.frenzy[0]], ['Digestive Juices', KX.juices], ['Mindsting', KX.mindsting], ['Extinguish', KX.extinguish], ["Light's Embrace", KX.embrace[0]], ['Unspeakable Horrors', KX.horrors],
+    ['Overwhelming Fear', KX.fear], ['Fear scream', KX.scream], ['Dark Devastation', KX.devCast], ['Devastated', KX.devastated], ['Voidscar', KX.voidscar], ['Suffocating Darkness', KX.suffocate[0]], ['Divine Radiance', KX.radiance[1]], ['Abyssal Grasp', KX.grasp],
+    ['Eclipse Fragment', KX.fragment], ['Stygian Howl', KX.howl], ['Luminous Grace', KX.grace], ['Eightfold Eclipse', KX.eclipse[1]], ['Null Gate', KX.gate[0]], ['Nullify', KX.nullify[0]], ['Nullshards', KX.shards], ['Negation', KX.negation], ['Explosive Restabilization', KX.restab[0]]].map(([name, id]) => {
+    const c = { cast: 0, dmg: 0, aura: 0, other: 0 };
+    for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
+    return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
+  });
+  return { diag, title: diff + ' audit: Kith\'ix', reached: howl != null ? 'P2' : inter.length ? 'After intermission ' + inter.length : 'P1', phases, marks, sections, mistakes,
+    legend: 'By phase: the add sets, beetles, Extinguish, fears and tanks in P1, Abyssal Grasp and fragments in the intermissions, then the Null Gates and the DPS check in P2.', note: heroic ? '' : 'Heroic and Mythic checks (eggs, fragments) are hidden on this difficulty.' };
 }
 
 function buildNekzali(ev, r, h) {
