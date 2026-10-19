@@ -12943,7 +12943,7 @@ function hostedPanel(msg) {
 // On the website a pull's step also carries its shareable address, ?report=CODE&fight=N.
 let NAV_RESTORE = false, NAV_BOOT = true; // (the first page drawn after a load or reload takes over the step it was opened on, not a new one)
 function navState() {
-  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull' }; }
+  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull', sel: S.tab === 'rot' ? S.specSel || null : null }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView };
   if (S.page === 'home') return { nav: 1, v: 'h' };
   return null;
@@ -12954,7 +12954,8 @@ function navNote() {
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
   const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight : location.pathname) : location.pathname + location.search;
   const boot = NAV_BOOT; NAV_BOOT = false;
-  try { if (cur === k) return; if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
+  // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
+  try { if (cur === k) { if ((history.state.sel || null) !== (st.sel || null)) history.replaceState(st, '', url); return; } if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
 }
 async function navGo(st) {
   if (st.v === 'h') { home(); }
@@ -12965,7 +12966,7 @@ async function navGo(st) {
       b = S.index && S.index.bosses ? S.index.bosses.find((x) => x.wcl && x.wcl.code === st.code && x.wcl.fight === st.fight) : null; }
     else if (S.index && S.index.bosses && st.bi >= 0) b = S.index.bosses[st.bi];
     if (!b) { home(); return; }
-    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull';
+    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; if (st.sel) S.specSel = st.sel;
     if (S.item !== b || !S.rep) await select(b); else renderMain();
   }
   window.scrollTo(0, 0);
@@ -14261,9 +14262,13 @@ if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (
 // open pull, so it can be copied and shared, and a shared link still opens its report; but your own last report doesn't
 // open again: not on a reload, not with Back, and not when the browser fills in the last address you had)
 const RQ = new URLSearchParams(location.search), RNAV = ((performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {}).type;
-const backAgain = WCL.HOSTED && !!RQ.get('report') && (RNAV === 'reload' || RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report'));
+// (a reload, F5 or the refresh button, keeps you where you were (your call, Oct 19): the page's step from Back and Forward
+// (the pull, its tab, one pull or the whole night, or the teams page) opens again; a reload of a pull address with no step
+// opens that pull like a shared link)
+const reloadSt = WCL.HOSTED && RNAV === 'reload' && history.state && history.state.nav ? history.state : null;
+const backAgain = WCL.HOSTED && !!RQ.get('report') && RNAV !== 'reload' && (RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report'));
 if (backAgain) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
-const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain;
+const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain && !reloadSt;
 // (the website's welcome is the setup behind Start now (your idea, Oct 19), so the old tour doesn't open by itself there,
 // and a shared pull link gets that page's own tips; "Take the tour" in the menu still plays it)
 if (WCL.HOSTED && !window.WLA_DESKTOP && !tourDone()) store.set(TOUR_KEY, '1');
@@ -14274,7 +14279,8 @@ if (WCL.HOSTED) {
   for (const id of ['#openBtn', '#tbSaved']) { const b = $(id); if (b) b.hidden = true; }
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
-  if (sharedLink) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
+  if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
+  else if (sharedLink) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
