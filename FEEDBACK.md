@@ -3,7 +3,7 @@
 Running list of feedback on Adequate Audits. Newest round at the top; items are checked off when done.
 
 ## Next up (your order)
-- [ ] **Spruce up the Discord before launch (your note, Oct 18).** My take: right priority, it's the first place new
+- [x] **Spruce up the Discord before launch (your note, Oct 18; done: patch notes, FAQ, What is Debrief, welcome fixed).** My take: right priority, it's the first place new
   raiders land. Suggestions: a short "What is Debrief" post with three pictures (a map, What went wrong, the Assignments
   how-to); the first patch notes in #updates covering today's work (drafted for your OK first); a small pinned FAQ in the
   questions channel; tidier channel descriptions and emojis. Every post is shown to you before it goes up.
@@ -388,7 +388,7 @@ itself, or only dots?
 - [x] Checked: a pull card, the ‹ › arrows in the pinned bar and All pulls all keep you on the same tab, and Graphs on the
   same view (Casts stays Casts). Going to Rotation and back keeps Graphs' view. Players' "See it in Rotation" opens Rotation.
 - [x] The tips for Graphs (once more, since they changed) and new ones for Rotation; the tour's step is "Rotation and graphs".
-- [ ] **Power Infusion needs a rework (your note: difficult to read).** My take: agreed, it's the wordiest view left in
+- [x] **Power Infusion needs a rework (your note: difficult to read; done in rounds 208 and 209).** My take: agreed, it's the wordiest view left in
   Graphs and the only one that still coaches. Next: a few mockups to pick from, like the controls.
 - [ ] The Players tab's help text still mentions the old Report card and Performance (for when we look at Players).
 
