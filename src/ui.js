@@ -8395,7 +8395,7 @@ function hpalChecks(reps, name, one) {
   // "Judgment while Holy Shock was full" say it), Aura Mastery during Beacon of Virtue (the window boxes show it), Divine Toll during Avenging Wrath (its
   // cards show it), Devotion Aura's total (on the Aura Mastery line), Divine Toll's healing (its uses are what matters), and Holy Light overhealing when
   // your tier set means it isn't graded)
-  const DROP = new Set(['rev', 'lm', 'self', 'j', 'jio', 'am', 'awdt', 'dev', 'dth'].concat(tier4 ? ['hlo'] : [])); for (const g of groups) g.l = g.l.filter((c) => !DROP.has(c.k));
+  const DROP = new Set(['rev', 'lm', 'self', 'j', 'jio', 'am', 'awdt', 'dev', 'dth', 'p:Dawnlight'].concat(tier4 ? ['hlo'] : [])); for (const g of groups) g.l = g.l.filter((c) => !DROP.has(c.k));
   const LAYOUT = [['Rotation', [['Casting', ['abc']], ['Your priority', ['apl']], ['Holy Shock and Judgment', ['hs', 'ii', 'jhs', 'p-empyrean-legacy', 'p-awakening'].concat(virtue ? [] : ['dth'])], ['Infusion of Light and Flash of Light', ['p-infusion-of-light', 'fol', 'folb']]]],
     ['Resources', [['Holy Power', ['hp', 'ef', 'b5', 'p-divine-purpose', 'p-dawnlight']], ['Mana', ['mana', 'hlo', 'mnx']]]],
     ['Cooldowns', [['Beacon of Virtue', ['bv', 'act', 'dt', 'cd-divine-toll', 'dth', 'am']], [wingN, ['cd-' + wingN.toLowerCase().replace(/ /g, '-'), 'aw', 'awh', 'awdt', 'p-hand-of-divinity']], ['Aura Mastery', ['devam', 'cd-aura-mastery', 'dev']]]]];
@@ -8403,7 +8403,42 @@ function hpalChecks(reps, name, one) {
     tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use, Holy Shock at full charges, or Holy Power sitting at 5.',
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Holy Paladin, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Holy Shock and Infusion of Light count three times as much as most, and heals on yourself count half. A good check counts in full, and one that could be better counts half.',
     secIc: { 'Your pull at a glance': 'Avenging Wrath', 'Pull by pull': 'Holy Shock' } });
-  return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait };
+  // ---- the key numbers, for Compare (Oct 19: WoWAnalyzer's Holy Paladin pages as the model: a short why, the numbers as tiles, where things went
+  // as split bars, the mana line). Each tile: k, label, value, format, which way is better ('hi', 'lo', or none) ----
+  const io = procs.find((y) => y.n === 'Infusion of Light'), dp = procs.find((y) => y.n === 'Divine Purpose'), healTot = sum((s) => s.healTot) || 1;
+  const castN = (n) => per.reduce((v, { p }) => v + ((p.castAb.get(n) || {}).n || 0), 0), sp3 = (n) => hpSp.get(n) || [0, 0, 0];
+  const hpSpent = [...hpSp.values()].reduce((v, y) => v + y[1] * 3, 0), spHeal = ['Eternal Flame', 'Word of Glory', 'Light of Dawn'].reduce((v, n) => v + (heal.get(n) || 0), 0);
+  const alT = sum((s) => (s.abc != null ? s.abcL : 0)), acT = rows.reduce((v, s) => v + (s.abc != null ? s.abc * s.abcL : 0), 0);
+  const cdE = (n) => { const l = rows.map((s) => s.cdu && s.cdu[n]).filter(Boolean), u = l.reduce((v, y) => v + y.n, 0), ps = l.reduce((v, y) => v + y.poss, 0); return ps ? { u, ps, f: Math.min(1, u / ps) } : null; };
+  const P1 = (v) => (v == null ? '–' : Math.round(100 * v) + '%'), I1 = (v) => (v == null ? '–' : String(Math.round(v)));
+  const bvG = bwD ? bwD.bws.map((w) => bwD.bwG(w)) : [], gc = (g) => bvG.filter((y) => y === g).length, dN2 = sum((s) => s.dtN), dIn2 = sum((s) => s.dtIn), fB2 = sum((s) => s.folB), fBn2 = sum((s) => s.folBn);
+  const kl2 = rows.filter((s) => s.mana != null), bcn = (heal.get('Beacon of Light') || 0) + (heal.get('Beacon of the Savior') || 0);
+  const sumO = { sections: [
+    { t: 'Core', ic: 'Holy Shock', txt: 'Holy Shock is your main button: it builds Holy Power and brings Infusions of Light, so press it whenever a charge is ready. Then spend your Holy Power before you reach 5, on Eternal Flame unless it would mostly overheal.',
+      tiles: [{ k: 'hs', l: 'Holy Shock cast efficiency', v: hs ? hs.f : null, f: P1, b: 'hi', tip: 'Holy Shocks pressed, out of the most you could have.' },
+        { k: 'act', l: 'Active time', v: alT >= 10 ? acT / alT : null, f: P1, b: 'hi', tip: 'How much of the fight you spent casting.' },
+        { k: 'hph', l: 'Healing per Holy Power', v: hpSpent ? spHeal / hpSpent : null, f: (v) => (v == null ? '–' : C(v)), b: 'hi', tip: 'What your Eternal Flames, Words of Glory and Light of Dawns healed, for each Holy Power spent on them.' },
+        { k: 'hpm', l: 'Holy Power a minute', v: mins ? hpG / mins : null, f: (v) => (v == null ? '–' : v.toFixed(1)), b: 'hi', tip: 'Holy Power gained a minute.' },
+        { k: 'hpw', l: 'Holy Power wasted', v: hpW, f: I1, b: 'lo', tip: 'Holy Power gained while already at 5.' }],
+      splits: [{ l: 'Holy Power spent on', parts: [['Eternal Flame', sp3('Eternal Flame')[0] + sp3('Word of Glory')[0]], ['Light of Dawn', sp3('Light of Dawn')[0]], ['Shield of the Righteous', sp3('Shield of the Righteous')[0]]] },
+        { l: 'Holy Power came from', parts: ['Holy Shock', 'Divine Toll', 'Judgment', 'Flash of Light', 'Holy Light', 'Aura Mastery'].map((n) => [n, Math.max(0, ((hpSrc.get(n) || [0, 0])[0]) - ((hpSrc.get(n) || [0, 0])[1]))]).concat([['Wasted', hpW]]) },
+        { l: 'Fillers', parts: [['Flash of Light', castN('Flash of Light')], ['Holy Light', castN('Holy Light')]] }] },
+    { t: 'Procs', ic: 'Infusion of Light', txt: 'Holy Shock brings Infusion of Light: spend it on Flash of Light, on someone with a Beacon when you can. Divine Purpose makes your next spender free: spend it before it runs out.',
+      tiles: [{ k: 'iog', l: 'Infusions gained', v: io ? io.gained : null, f: I1, b: 'hi' }, { k: 'iow', l: 'Infusions wasted', v: io ? io.wasted : null, f: I1, b: 'lo' },
+        { k: 'fob', l: 'Infused Flash of Light on a Beacon', v: fBn2 ? fB2 / fBn2 : null, f: P1, b: 'hi', tip: 'Out of your Infused Flash of Lights, how many landed on someone with a Beacon (Moment of Compassion makes them heal 50% more).' },
+        { k: 'dpw', l: 'Divine Purpose wasted', v: dp ? dp.wasted : null, f: I1, b: 'lo' }],
+      splits: [{ l: 'Infusions spent on', parts: io ? [...io.by].map(([k2, v]) => [nm(k2), v]).concat([['Wasted', io.wasted]]) : [] }] },
+    { t: 'Beacons', ic: virtue ? 'Beacon of Virtue' : 'Beacon of Light', txt: virtue ? 'Beacon of Virtue copies your healing to five allies for 9 seconds. Use it close to every 15 seconds as damage lands, keep casting through it, and put Divine Toll and single-target heals into it.' : 'Your Beacons copy part of every direct heal. Put them on players who take damage, and heal others directly.',
+      tiles: [virtue && bv ? { k: 'bve', l: 'Beacon of Virtue cast efficiency', v: bv.f, f: P1, b: 'hi' } : null,
+        { k: 'bhs', l: 'Healing through Beacons', v: bcn / healTot, f: P1, b: 'hi', tip: 'The share of your healing your Beacons copied.' },
+        virtue && dN2 ? { k: 'dti', l: 'Divine Toll inside Beacon of Virtue', v: dIn2 / dN2, f: P1, b: 'hi' } : null].filter(Boolean),
+      splits: bvG.length ? [{ l: 'Beacon of Virtue windows', parts: [['Perfect', gc(3)], ['Good', gc(2)], ['Okay', gc(1)], ['Weak', gc(0)]], cols: ['#5aa9e6', '#45c15c', '#e6b450', '#e5534b'] }] : [] },
+    { t: 'Cooldowns', ic: wingN, txt: 'Your big cooldowns are a large part of your healing: use them close to on cooldown, and into heavy damage.',
+      tiles: [['divine toll', 'Divine Toll'], [wingN.toLowerCase(), wingN], ['aura mastery', 'Aura Mastery']].map(([n, l]) => { const e = cdE(n); return e ? { k: 'cd:' + n, l: l + ' efficiency', v: e.f, f: P1, b: 'hi', tip: 'Pressed ' + e.u + ' times out of a possible ' + e.ps + '.' } : null; }).filter(Boolean) },
+    { t: 'Mana', ic: 'Holy Light', txt: 'Mana left at the kill is healing you never did: Holy Light is how you spend it. Aim to run low near the end without running out early.',
+      tiles: [{ k: 'mk', l: 'Mana at the kill', v: kl2.length ? kl2[kl2.length - 1].mana : null, f: P1, b: 'lo' }], mana: one && rows[0] ? { pts: rows[0].mnL || [], end: rows[0].len } : null },
+  ] };
+  return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait, sum: sumO };
 }
 
 const s1 = (rows, k) => rows.reduce((v, s) => v + (s[k] || 0), 0);
@@ -11300,7 +11335,7 @@ function cmpRot(r, p, q, rB) {
     '<span class="cmp-rv"' + rtt(o.c, An) + '>' + mk(o.c.st) + '<span>' + (o.c.v != null ? o.c.v : '') + '</span></span><span class="cmp-rv"' + rtt(o.d, Bn) + '>' + mk(o.d.st) + '<span>' + (o.d.v != null ? o.d.v : '') + '</span></span></div>';
   const top = S.cmpRotAll ? rows : rows.slice(0, 8);
   const lead = (worse ? An + (me ? ' were' : ' was') + ' behind ' + Bn + ' on <b>' + plural(worse, 'check') + '</b>' : An + (me ? ' weren\'t' : ' wasn\'t') + ' behind ' + Bn + ' on any check') + (better ? ', and ahead on <b>' + better + '</b>.' : '.');
-  return { a: xa.score, b: xb.score, rows, ca: xa.checks, cb: xb.checks, ha: xa.html, hb: xb.html, html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
+  return { a: xa.score, b: xb.score, rows, ca: xa.checks, cb: xb.checks, ha: xa.html, hb: xb.html, sa: xa.sum, sb: xb.sum, html: '<div class="panel cmp-rot"><h3>Rotation side by side<small>The checks from the Rotation tab, where ' + (me ? 'you' : An) + ' did worse first</small></h3>' +
     '<p class="cmp-wlead">' + lead + '</p><div class="cmp-rr cmp-rh"><span>Check</span><span>' + An + '</span><span>' + Bn + '</span></div>' + top.map(row).join('') +
     (rows.length > 8 ? '<button class="btn sm cmp-more" type="button" id="cmpRotAll">' + (S.cmpRotAll ? 'Show fewer' : 'Show all ' + rows.length) + '</button>' : '') + '</div>' };
 }
@@ -11324,6 +11359,26 @@ function cmpFacts(html) {
 // (Oct 19, "the information is there, but it's very dense": each Rotation section a row, its main number as two bars in the header, then a
 // small chip for each check and each stat box in it, a gold edge on the ones where the two differ, the same numbers shown once; sections where
 // they differ open, the even ones folded closed (a section opened or closed stays that way))
+function cmpSumView(sa, sb, x, top) {
+  const { colA, colB } = x, Ln = x.me ? 'You' : x.An, Bn = x.Bn, PAL = ['#e6b450', '#5aa9e6', '#7ee08f', '#c792ea', '#f07178', '#89ddff', '#ffb86c'], WASTE = '#5c6270';
+  const tile = (ta, tb) => { const a = ta && ta.v, b = tb && tb.v, f = (ta || tb).f, okN = a != null && b != null, d = okN ? a - b : 0, win = !okN || Math.abs(d) < 1e-9 || !(ta || tb).b ? 0 : ((ta || tb).b === 'hi' ? d > 0 : d < 0) ? 1 : -1;
+    const close = okN && Math.abs(d) / Math.max(Math.abs(a), Math.abs(b), 1e-9) < 0.03;
+    return '<div class="cmp-wt' + (win && !close ? (win > 0 ? ' wa' : ' wb') : '') + '"' + ((ta || tb).tip ? ' data-tt="' + esc('<b>' + esc((ta || tb).l) + '</b><br>' + (ta || tb).tip) + '"' : '') + '><div class="cmp-wtl">' + esc((ta || tb).l) + '</div>' +
+      '<div class="cmp-wtv"><span><b style="color:' + colA + '">' + f(a) + '</b><i>' + Ln + '</i></span><span><b style="color:' + colB + '">' + f(b) + '</b><i>' + Bn + '</i></span></div>' +
+      (win && !close ? '<div class="cmp-wtw ' + (win > 0 ? 'up' : 'dn') + '">' + (win > 0 ? Ln : Bn) + (win > 0 && x.me ? ' do' : ' does') + ' better</div>' : okN ? '<div class="cmp-wtw">About the same</div>' : '') + '</div>'; };
+  const split = (pa, pb) => { const names = []; for (const [n, v] of (pa ? pa.parts : []).concat(pb ? pb.parts : [])) if (v > 0 && !names.includes(n)) names.push(n);
+    if (!names.length) return ''; const cols = (pa || pb).cols, colOf = (n, i) => (n === 'Wasted' ? WASTE : cols ? cols[(pa || pb).parts.findIndex((y) => y[0] === n)] : PAL[i % PAL.length]);
+    const row = (nmP, col, p) => { const m = new Map((p ? p.parts : []).map(([n, v]) => [n, v])), tot = names.reduce((v, n) => v + (m.get(n) || 0), 0);
+      return '<div class="cmp-wsr"><span class="cmp-wsn" style="color:' + col + '">' + nmP + '</span><span class="cmp-wsb">' + (tot ? names.map((n, i) => { const v = m.get(n) || 0, w = 100 * v / tot; return v ? '<i style="width:' + w.toFixed(1) + '%;background:' + colOf(n, i) + '" title="' + esc(n + ': ' + Math.round(w) + '%') + '">' + (w >= 12 ? Math.round(w) + '%' : '') + '</i>' : ''; }).join('') : '<em>none</em>') + '</span></div>'; };
+    return '<div class="cmp-wsp"><div class="cmp-wtl">' + esc((pa || pb).l) + '</div>' + row(Ln, colA, pa) + row(Bn, colB, pb) + '<div class="cmp-glegend">' + names.map((n, i) => '<span><i style="background:' + colOf(n, i) + '"></i>' + esc(n) + '</span>').join('') + '</div></div>'; };
+  const mana = (ma, mb) => { if (!ma || !mb || !ma.pts.length || !mb.pts.length) return ''; const W = 600, H = 140, line = (m, col) => '<polyline fill="none" stroke="' + col + '" stroke-width="2" points="' + m.pts.map(([t, v]) => (W * Math.min(1, t / Math.max(1, m.end))).toFixed(1) + ',' + (H - 4 - (H - 8) * Math.max(0, Math.min(1, v))).toFixed(1)).join(' ') + '"/>';
+    return '<div class="cmp-wsp"><div class="cmp-wtl">Mana over the fight, start to end</div><svg class="cmp-wmana" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none"><line x1="0" x2="' + W + '" y1="' + (H / 2) + '" y2="' + (H / 2) + '" class="cmp-lg"/>' + line(ma, colA) + line(mb, colB) + '</svg><div class="cmp-glegend"><span><i style="background:' + colA + '"></i>' + Ln + '</span><span><i style="background:' + colB + '"></i>' + Bn + '</span><span>Line: half your mana</span></div></div>'; };
+  const sec = (s1) => { const s2 = sb.sections.find((y) => y.t === s1.t) || { tiles: [], splits: [] }, keys = []; for (const t of s1.tiles.concat(s2.tiles)) if (t && !keys.includes(t.k)) keys.push(t.k);
+    const tl = keys.map((k2) => tile(s1.tiles.find((y) => y.k === k2), s2.tiles.find((y) => y.k === k2))).join('');
+    const sp = (s1.splits || []).map((p, i) => split(p, (s2.splits || []).find((y) => y.l === p.l) || (s2.splits || [])[i])).join('');
+    return '<section class="cmp-wsec"><div class="cmp-wsx"><h4>' + spellIcon(0, s1.ic) + esc(s1.t) + '</h4><p>' + esc(s1.txt) + '</p></div><div class="cmp-wsd"><div class="cmp-wts">' + tl + '</div>' + sp + (s1.mana || s2.mana ? mana(s1.mana, s2.mana) : '') + '</div></section>'; };
+  return '<div class="panel cmp-story"><h3>Rotation, side by side<small>The numbers that decide your healing. Hover a tile for what it means.</small></h3>' + (top || '') + sa.sections.map(sec).join('') + '</div>';
+}
 function cmpChips(rot, x) {
   if (!rot || !rot.ca || !rot.cb) return '';
   const { An, Bn, me, colA, colB } = x, plain = (v) => String(v == null ? '–' : v), RK = { bad: 0, warn: 1, ok: 2 }, bk = new Map(rot.cb.map((c) => [c.k, c]));
@@ -11349,6 +11404,18 @@ function cmpChips(rot, x) {
     for (const o of items) { o.st2 = o.sa && o.sb && RK[o.sa] != null && RK[o.sb] != null && o.sa !== o.sb; o.rel = relOf(o.a, o.b); o.d2 = o.st2 || o.rel >= 0.2; o.d1 = !o.d2 && o.rel >= 0.1; o.df = o.d2 || o.d1; }
     items.sort((u, v) => (v.df - u.df) || (v.st2 - u.st2) || v.rel - u.rel); g.items = items; g.nDf = items.filter((o) => o.df).length;
   }
+  // (the spec's playbook picks the rows: only the ones that matter, named clearly, in the right section)
+  const pick = x.book && x.book.cmpPick;
+  if (pick) {
+    for (const [lb, to] of Object.entries(pick.move || {})) { const from = secs.find((g) => g.items.some((o) => o.l === lb)), dst = secs.find((g) => g.t === to); if (!from || !dst || from === dst) continue; const i = from.items.findIndex((o) => o.l === lb); dst.items.push(from.items.splice(i, 1)[0]); }
+    for (const cb of pick.combine || []) { const g = secs.find((y) => y.t === cb.sec); if (!g) continue; const sp = g.items.find((o) => o.l === cb.spent), ga = g.items.find((o) => o.l === cb.gained); if (!sp || !ga) continue;
+      const one = (s1, g1) => { const u = cmpNumV(s1), w = cmpNumV(g1); return u == null || !w ? null : { t: Math.round(u) + ' of ' + Math.round(w), f: 100 * u / w }; }, A1 = one(sp.a, ga.a), B1 = one(sp.b, ga.b);
+      if (A1 || B1) g.items.push({ l: cb.as, a: A1 ? A1.t : null, b: B1 ? B1.t : null, na: A1 ? A1.f : null, nb: B1 ? B1.f : null, pt: true }); }
+    for (const g of secs) { const keep = pick.sections && pick.sections[g.t]; if (pick.titles && pick.titles[g.t]) g.tt = pick.titles[g.t]; if (!keep) continue;
+      g.items = keep.map(([lb, nm]) => { const o = g.items.find((y) => y.l === lb); return o ? { ...o, l: nm, l2: nm } : null; }).filter(Boolean);
+      for (const o of g.items) { o.st2 = o.sa && o.sb && RK[o.sa] != null && RK[o.sb] != null && o.sa !== o.sb; o.rel = o.na != null && o.nb != null ? Math.abs(o.na - o.nb) / Math.max(Math.abs(o.na), Math.abs(o.nb), 1) : relOf(o.a, o.b); o.d2 = o.st2 || o.rel >= 0.2; o.d1 = !o.d2 && o.rel >= 0.1; o.df = o.d2 || o.d1; }
+      g.items.sort((u, v) => (v.df - u.df) || (v.st2 - u.st2) || v.rel - u.rel); g.nDf = g.items.filter((o) => o.df).length; }
+  }
   const grp = (g) => (g.net > 0 ? 0 : g.net < 0 ? 1 : 2); secs.sort((u, v) => grp(u) - grp(v) || Math.abs(v.net) - Math.abs(u.net) || v.nDf - u.nDf);
   const mk = (st) => (st && RK[st] != null ? '<i class="cmp-rm ' + st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[st]) + '</i>' : '<i class="cmp-rm"></i>');
   // (two bars and two values, in the two players' colors; bars only when both are numbers)
@@ -11361,19 +11428,19 @@ function cmpChips(rot, x) {
     const bad = g.diff.filter((o) => o.w > 0).sort((u, v) => (v.c.cost || 0) - (u.c.cost || 0))[0], tip = bad && bad.c.tip ? String(bad.c.tip).replace(/^Next time:\s*/i, '') : '';
     const cost = bad && (bad.c.cost || 0) >= 20000 ? ' It cost ' + (x.nmO ? '' : (me ? 'you' : An) + ' ') + 'about ' + C(bad.c.cost) + ' ' + x.UN + '.' : '';
     // (the difference, from the first player's side: points for percentages and fractions, plain for counts; green or amber when the grades say who's better)
-    const badge = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b); if (u == null || w == null || Math.abs(u - w) < 1e-9) return ''; const d = u - w, v = Math.abs(d), pt = /%|\//.test((plain(o.a) + ' ' + plain(o.b)).replace(/<[^>]+>/g, '')), sg = d > 0 ? '+' : '−'; // (the value's own text, not its markup)
+    const badge = (o) => { const u = o.na != null ? o.na : cmpNumV(o.a), w = o.nb != null ? o.nb : cmpNumV(o.b); if (u == null || w == null || Math.abs(u - w) < 1e-9) return ''; const d = u - w, v = Math.abs(d), pt = o.pt || /%|\//.test((plain(o.a) + ' ' + plain(o.b)).replace(/<[^>]+>/g, '')), sg = d > 0 ? '+' : '−'; // (the value's own text, not its markup)
       const t = pt ? sg + (v < 10 ? v.toFixed(1) : Math.round(v)) + ' pts' : v >= 1000 ? sg + C(v) : sg + (v < 10 && v % 1 ? v.toFixed(1) : Math.round(v)); const cl = o.st2 ? (RK[o.sa] > RK[o.sb] ? ' up' : ' dn') : '';
       return '<span class="dl' + (cl ? cl : ' lv') + '">' + t + '</span>'; };
     const gRow = (pl, col, v, n, mx, num, st, sub) => cbRow({ tag: 'div', cls: ' nb cmp-gr', k: '', p: pl, pname: x.nmO ? (pl === x.pA ? An : Bn) : null, pcol: col, chips: st && RK[st] != null ? ' ' + mk(st) : '', segs: [[num ? 100 * (n || 0) / mx : 0, 'm']], v: plain(v), sub: sub || '' });
-    const chip = (o) => { const u = cmpNumV(o.a), w = cmpNumV(o.b), num = u != null && w != null, mx = Math.max(u || 0, w || 0) || 1;
+    const chip = (o) => { const u = o.na != null ? o.na : cmpNumV(o.a), w = o.nb != null ? o.nb : cmpNumV(o.b), num = u != null && w != null, mx = o.pt ? 100 : Math.max(u || 0, w || 0) || 1;
       return '<div class="cmp-grp cmp-gx' + (o.d2 ? ' d2' : '') + '" data-tt="' + esc('<b>' + esc(o.l) + '</b><br>' + Ln + ': ' + plain(o.a) + '<br>' + Bn + ': ' + plain(o.b) + (o.c && o.c.sub ? '<br><span class="sub">' + o.c.sub + '</span>' : '')) + '"><div class="cmp-lbl">' + esc(o.l2 || o.l) + '</div>' +
         gRow(x.pA, colA, o.a, u, mx, num, o.sa, badge(o) || '<span class="dl lv">same</span>') + gRow(x.pB, colB, o.b, w, mx, num, o.sb, '') + '</div>'; };
     return '<details class="cmp-sec ' + (g.net > 0 ? 'ok' : g.net < 0 ? 'warn' : 'na') + '" data-s="' + esc(g.t) + '"' + (open ? ' open' : '') + '><summary class="cmp-sech">' +
-      '<span class="cmp-secn">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.t) + '</b><span class="cmp-wd ' + (g.net > 0 ? 'up' : g.net < 0 ? 'dn' : '') + '">' + who + (g.nDf ? '<span class="cmp-secc"> · ' + g.nDf + ' of ' + g.items.length + ' apart</span>' : '') + '</span></span></span>' +
+      '<span class="cmp-secn">' + (g.ic ? spellIcon(0, g.ic) : '') + '<span><b>' + esc(g.tt || g.t) + '</b><span class="cmp-wd ' + (g.net > 0 ? 'up' : g.net < 0 ? 'dn' : '') + '">' + who + (g.nDf ? '<span class="cmp-secc"> · ' + g.nDf + ' of ' + g.items.length + ' apart</span>' : '') + '</span></span></span>' +
       '<span class="cmp-secm"><span class="cmp-vl">' + esc(g.main.label || g.main.k) + '</span>' + pair(g.main.v, g.mainB && g.mainB.v, g.stA, g.stB) + '</span></summary>' +
       '<div class="cmp-secb">' + (() => { const dif = g.items.filter((o) => o.df), same = g.items.filter((o) => !o.df), grid = (l) => '<div class="cmp-gw">' + l.map(chip).join('') + '</div>';
         // (Oct 19, "make it really crisp, clean and readable": only the chips that differ; the ones that match wait behind a toggle)
-        if (!g.items.length) return '<p class="sub" style="margin:0">Nothing more in this section.</p>';
+        if (!g.items.length) return '<p class="sub" style="margin:0">The number above is the whole section.</p>';
         if (!dif.length) return grid(same);
         return grid(dif) + (same.length ? '<details class="cmp-same"><summary>' + plural(same.length, 'more number') + ' that ' + (same.length === 1 ? 'matches' : 'match') + '</summary>' + grid(same) + '</details>' : ''); })() +
       (tip ? '<div class="cmp-try"><b>Try:</b> ' + tip + cost + '</div>' : '') + '</div></details>'; };
@@ -11381,6 +11448,7 @@ function cmpChips(rot, x) {
     return '<div class="cmp-rsu"><span class="cmp-rsn" style="color:' + col + '">' + n + '</span>' + (sc != null ? '<b style="color:' + col + '">' + Math.round(sc) + '</b><span class="sub">out of 100</span>' : '') +
       '<span class="cmp-rcnt"><i class="bad">✕ ' + o.bad + ' to fix</i><i class="warn">! ' + o.warn + ' could be better</i><i class="ok">✓ ' + o.ok + ' good</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
+  if (rot.sa && rot.sb && rot.sa.sections) return cmpSumView(rot.sa, rot.sb, x, '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>');
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a chart for the details.</small></h3>' +
     '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>' +
     '<p class="cmp-wlead">' + Ln + ' did better in <b>' + (better ? plural(better, 'section') : 'no sections') + '</b> and worse in <b>' + (worse || 'none') + '</b>.</p>' +
@@ -11683,6 +11751,23 @@ SPEC_BOOK['Holy Paladin'] = {
     'Divine Toll uses': 'Cast Divine Toll whenever it is ready, aimed at an ally.',
     'Always be casting': 'Always be casting something: even a small heal is better than none.',
   },
+  // Compare's Rotation rows (Oct 19, "Holy Paladin has so much useless information in there ... charts where you don't even say what you're
+  // talking about"): only these, under these names, in these sections; everything else is left out. [label on the Rotation page, name in Compare]
+  cmpPick: {
+    titles: { 'Infusion of Light and Flash of Light': 'Procs', 'Holy Shock and Judgment': 'Holy Shock' },
+    move: { 'Divine Purpose': 'Infusion of Light and Flash of Light' },
+    combine: [{ sec: 'Holy Power', spent: 'Spent', gained: 'Gained', as: 'Holy Power spent' }],
+    sections: {
+      'Holy Shock and Judgment': [['Judgment while Holy Shock was full', 'Judgment pressed while Holy Shock was full']],
+      'Holy Power': [['Eternal Flame over Light of Dawn', 'Holy Power spent on Eternal Flame'], ['Holy Power spent', 'Holy Power spent'], ['At 5 Holy Power', 'Time sitting at 5 Holy Power']],
+      'Infusion of Light and Flash of Light': [['Divine Purpose', 'Divine Purpose procs wasted'], ['Infused Flash of Light on a Beacon', 'Infused Flash of Light on a Beacon'], ['Infusion of Light: Judgment', 'Infusions spent on Judgment']],
+      'Beacon of Virtue': [['Divine Toll inside Beacon of Virtue', 'Divine Toll inside Beacon of Virtue'], ['Your Beacon of Virtue windows', 'Time casting during Beacon of Virtue'], ['Divine Toll uses', 'Divine Toll uses']],
+      Mana: [],
+      'Avenging Wrath': [['Avenging Wrath uses', 'Avenging Wrath uses']],
+      'Aura Mastery': [['Aura Mastery uses', 'Aura Mastery uses']],
+      Casting: [], 'Your priority': [],
+    },
+  },
   // a plain line for a spell whose healing comes from the others
   plain: { 'Beacon of Light': 'Your Beacons copy your other heals, so fixing the other cards raises this too.' },
   // more reasons for Why the gap, worked out from the log (lo: the side that did less)
@@ -11965,7 +12050,7 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
   // fight over time fold into More detail, closed until opened)
   // (Oct 19: the Rotation chips first, then the charts: the numbers, healing or damage a second spell by spell, and over the fight. Talent
   // differences, every Rotation check and the side-by-side bars fold into More detail)
-  const chips = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k), pA: p, pB: q, nmO });
+  const chips = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k), pA: p, pB: q, nmO, book: q.specName === p.specName ? specBook(p.specName) : null });
   const numbers = '<div class="panel"><h3>The numbers<small>Hover any card for both numbers.</small></h3><div class="cmp-cards">' + cards.filter(Boolean).map(cmpCard).join('') + '</div></div>';
   const spells = k === kq && q.specName === p.specName ? '<div class="panel"><h3>' + capS(U(k)) + ' a second, spell by spell<small>Where the ' + U(k) + ' came from</small></h3>' + cmpSpellRows({ ...A, name: nmO ? nmO.a : me ? 'You' : p.name, rate: ra }, { ...B, name: nmO ? nmO.b : q.name, rate: rb }) + '</div>' : '';
   // (Oct 19, "highlight the total HPS each player did somewhere in the beginning": both totals, large, in their colors, and the gap between them)
