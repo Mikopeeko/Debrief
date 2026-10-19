@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Players, Tactical look</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:ital,wght@0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tactical.css">
+<style>
+.sc { display: flex; align-items: center; gap: 10px; } .sc i { display: block; height: 5px; background: var(--gold); } .sc .tr { width: 120px; height: 5px; background: #232838; }
+.role { font: 700 12px var(--head); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.tbl tr:hover td { background: #171c27; }
+.mvp { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); } .mvp:first-of-type { border-top: 0; }
+.mvp .ic { width: 34px; height: 34px; flex: none; display: grid; place-items: center; background: var(--panel2); border: 1px solid var(--line2); font: 800 12px var(--head); color: var(--gold); }
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="brand"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="4"/><path d="M23 20h8c7 0 11 4.5 11 11s-4 11-11 11h-8Z" fill="none" stroke="#e6b450" stroke-width="4.5"/><path d="M28 32l3 3 6-7" fill="none" stroke="#45c15c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>DEBRIEF</span>
+  <span class="sp"></span><span class="btn-g">Your teams</span>
+  <span class="icon-b" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+</header>
+<main class="wrap" style="padding-bottom: 40px">
+  <section class="ban cut">
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap"><span class="ban-name">Ula'tek</span><span class="chip">3 bosses ▾</span><span class="res">Whole night · best 89%</span></div>
+      <div class="meta"><span>6 pulls · Mythic</span><span class="ok">Each pull went further than the one before, but one</span><span>11:52 in all</span><span>20 players</span></div>
+    </div>
+    <div class="art" style="height: 70px">[Boss art, as today]</div>
+  </section>
+  <nav class="strip" aria-label="Pulls">
+    <span class="pc all" style="outline: 2px solid var(--gold2); outline-offset: 2px"><b>Whole night</b><span>6 pulls</span></span>
+    <span class="pc"><b>Pull 1</b><span class="q-w">P1 · 96%</span></span>
+    <span class="pc"><b>Pull 2</b><span class="q-w">P1 · 94%</span></span>
+    <span class="pc"><b>Pull 3</b><span class="q-w">P1 · 93%</span></span>
+    <span class="pc"><b>Pull 4</b><span class="q-w">P1 · 95%</span></span>
+    <span class="pc"><b>Pull 5</b><span class="q-w">P1 · 92%</span></span>
+    <span class="pc"><b>Pull 6</b><span class="q-w">P1 · 89%</span></span>
+  </nav>
+  <nav class="tabs" aria-label="Tabs"><a class="tab" href="#">Recap</a><a class="tab" href="#">Mechanics<span class="cnt">5</span></a><a class="tab" href="#">Assignments</a><a class="tab" href="#">Rotation</a><a class="tab" href="#">Graphs</a><a class="tab on" href="#">Players</a></nav>
+
+  <div class="tiles" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 14px">
+    <div class="tile cut" style="border-top-color: #a335ee"><div class="k">Raid execution</div><div class="v">A <small>88</small></div><div class="s sub">How the raid did the fight together</div></div>
+    <div class="tile cut" style="border-top-color: #ff8a1f"><div class="k">Own mechanics</div><div class="v">S <small>98</small></div><div class="s sub">Each player's own jobs, averaged</div></div>
+    <div class="tile warn cut"><div class="k">Report card</div><div class="v">C <small>78</small></div><div class="s">Deaths and wipes pull it down</div></div>
+    <div class="tile cut"><div class="k">Prep</div><div class="v">14 <small>of 20</small></div><div class="s sub">had food, flask and weapon oil</div></div>
+  </div>
+
+  <div class="cols">
+    <section class="panel g cut" style="padding: 18px 12px 8px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 8px 8px"><h2 class="h2">Grades</h2><span class="sub" style="font-size: 13px">Click a name to open their page</span></div>
+      <table class="tbl">
+        <thead><tr><th style="width: 34px">#</th><th>Player</th><th>Role</th><th>Grade</th><th>Score</th><th>Since last night</th></tr></thead>
+        <tbody>
+          <tr><td class="faint">1</td><td class="nm c-war">Kissablekyle</td><td class="role">Top tank</td><td><span class="grade gS">S</span></td><td><div class="sc"><b>99</b><span class="tr"><i style="width: 99%"></i></span></div></td><td class="lv">level</td></tr>
+          <tr><td class="faint">2</td><td class="nm c-priest">Voidfel</td><td class="role">1st DPS</td><td><span class="grade gS">S</span></td><td><div class="sc"><b>98</b><span class="tr"><i style="width: 98%"></i></span></div></td><td class="dn">▼ 4</td></tr>
+          <tr><td class="faint">3</td><td class="nm c-mage">Dpsgoblin</td><td class="role">2nd DPS</td><td><span class="grade gS">S</span></td><td><div class="sc"><b>96</b><span class="tr"><i style="width: 96%"></i></span></div></td><td class="up">▲ 6</td></tr>
+          <tr><td class="faint">4</td><td class="nm c-sham">Eleithink</td><td class="role">3rd DPS</td><td><span class="grade gA">A</span></td><td><div class="sc"><b>93</b><span class="tr"><i style="width: 93%"></i></span></div></td><td class="lv">level</td></tr>
+          <tr><td class="faint">5</td><td class="nm c-druid">Windhat</td><td class="role"></td><td><span class="grade gA">A</span></td><td><div class="sc"><b>93</b><span class="tr"><i style="width: 93%"></i></span></div></td><td class="up">▲ 7</td></tr>
+          <tr><td class="faint">6</td><td class="nm c-hunter">Wallbears</td><td class="role"></td><td><span class="grade gA">A</span></td><td><div class="sc"><b>93</b><span class="tr"><i style="width: 93%"></i></span></div></td><td class="lv">level</td></tr>
+          <tr><td class="faint">7</td><td class="nm c-evo">Xastral</td><td class="role"></td><td><span class="grade gA">A</span></td><td><div class="sc"><b>89</b><span class="tr"><i style="width: 89%"></i></span></div></td><td class="up">▲ 4</td></tr>
+          <tr><td class="faint">8</td><td class="nm c-dh">Silithor</td><td class="role"></td><td><span class="grade gA">A</span></td><td><div class="sc"><b>88</b><span class="tr"><i style="width: 88%"></i></span></div></td><td class="up">▲ 3</td></tr>
+          <tr><td class="faint">9</td><td class="nm c-pal">Empshield</td><td class="role"></td><td><span class="grade gA">A</span></td><td><div class="sc"><b>88</b><span class="tr"><i style="width: 88%"></i></span></div></td><td class="lv">level</td></tr>
+          <tr><td class="faint">10</td><td class="nm c-monk">Kaawsclap</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>87</b><span class="tr"><i style="width: 87%"></i></span></div></td><td class="dn">▼ 4</td></tr>
+          <tr><td class="faint">11</td><td class="nm c-priest">Flahozinho</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>86</b><span class="tr"><i style="width: 86%"></i></span></div></td><td class="dn">▼ 4</td></tr>
+          <tr><td class="faint">12</td><td class="nm c-rogue">Simonebiles</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>86</b><span class="tr"><i style="width: 86%"></i></span></div></td><td class="up">▲ 7</td></tr>
+          <tr><td class="faint">13</td><td class="nm c-lock">Adamdlock</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>85</b><span class="tr"><i style="width: 85%"></i></span></div></td><td class="dn">▼ 6</td></tr>
+          <tr><td class="faint">14</td><td class="nm c-druid">Sennadra</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>85</b><span class="tr"><i style="width: 85%"></i></span></div></td><td class="up">▲ 3</td></tr>
+          <tr><td class="faint">15</td><td class="nm c-hunter">Kidsabeast</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>85</b><span class="tr"><i style="width: 85%"></i></span></div></td><td class="dn">▼ 2</td></tr>
+          <tr><td class="faint">16</td><td class="nm c-dk">Dwarfdude</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>85</b><span class="tr"><i style="width: 85%"></i></span></div></td><td class="up">▲ 3</td></tr>
+          <tr><td class="faint">17</td><td class="nm c-priest">Minii</td><td class="role">1st healer</td><td><span class="grade gB">B</span></td><td><div class="sc"><b>84</b><span class="tr"><i style="width: 84%"></i></span></div></td><td class="up">▲ 3</td></tr>
+          <tr><td class="faint">18</td><td class="nm c-sham">Eganog</td><td class="role">2nd healer</td><td><span class="grade gB">B</span></td><td><div class="sc"><b>80</b><span class="tr"><i style="width: 80%"></i></span></div></td><td class="up">▲ 3</td></tr>
+          <tr><td class="faint">19</td><td class="nm c-evo">Awokengodess</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>80</b><span class="tr"><i style="width: 80%"></i></span></div></td><td class="lv">level</td></tr>
+          <tr><td class="faint">20</td><td class="nm c-monk">Yookevo</td><td class="role"></td><td><span class="grade gB">B</span></td><td><div class="sc"><b>79</b><span class="tr"><i style="width: 79%"></i></span></div></td><td class="up">▲ 5</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <aside class="stack">
+      <section class="panel g cut"><h2 class="h2" style="margin-bottom: 4px">MVPs</h2>
+        <div class="mvp"><span class="ic">TANK</span><span><b class="c-war">Kissablekyle</b> <span class="grade gS" style="margin-left: 4px">S</span><div class="sub" style="font-size: 13px">No mechanic problems in all 6 pulls.</div></span></div>
+        <div class="mvp"><span class="ic">DPS</span><span><b class="c-priest">Voidfel</b> <span class="grade gS" style="margin-left: 4px">S</span><div class="sub" style="font-size: 13px">Most damage, and never hit by Caustic Waves.</div></span></div>
+        <div class="mvp"><span class="ic">HEAL</span><span><b class="c-priest">Minii</b> <span class="grade gB" style="margin-left: 4px">B</span><div class="sub" style="font-size: 13px">Covered the big hit at 1:10 with a raid cooldown on every pull.</div></span></div>
+      </section>
+      <section class="panel bad cut"><h2 class="h2" style="margin-bottom: 4px">What most players should fix</h2>
+        <div class="row"><span class="num">1</span><span><b>Caustic Waves (Dodge waves).</b> <span class="sub">11 players got hit on 3 or more pulls.</span></span></div>
+        <div class="row"><span class="num">2</span><span><b>Survival kit.</b> <span class="sub">13 players died without using a healthstone or a potion first.</span></span></div>
+        <div class="row"><span class="num">3</span><span><b>Eggs (No Vipers).</b> <span class="sub">Carriers came within 3 yards of each other on 4 of 6 pulls.</span></span></div>
+      </section>
+    </aside>
+  </div>
+</main>
+</body>
+</html>

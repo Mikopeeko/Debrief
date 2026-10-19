@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team page, Tactical look</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:ital,wght@0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tactical.css">
+<style>
+.tban { display: flex; align-items: center; gap: 24px; margin-top: 18px; padding: 22px 26px; background: var(--panel); border-top: 2px solid var(--gold); }
+.crest { width: 74px; height: 74px; flex: none; display: grid; place-items: center; background: var(--panel2); border: 1px solid var(--line2); font: italic 800 30px var(--head); color: var(--gold); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); }
+.rk { display: flex; gap: 10px; } .rk div { padding: 8px 14px; background: var(--panel2); border-top: 2px solid var(--blue); } .rk b { display: block; font: italic 800 22px/1.1 var(--head); } .rk span { font: 700 11px var(--head); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.bosses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.bc { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--panel); border-left: 3px solid var(--line2); }
+.bc .pic { width: 64px; height: 40px; flex: none; background: var(--panel2); display: grid; place-items: center; font-size: 10px; color: var(--faint); }
+.bc .n { flex: 1; font: 800 16px var(--head); text-transform: uppercase; letter-spacing: .02em; } .bc .w { font: 700 12px var(--head); letter-spacing: .1em; text-transform: uppercase; }
+.bc.kill { border-left-color: var(--kill); } .bc.kill .w { color: #ffb066; }
+.bc.none { opacity: .55; } .bc.none .w { color: var(--faint); }
+.prog { padding: 20px 22px; background: linear-gradient(90deg, rgba(230,180,80,.12), transparent 60%), var(--panel); border-left: 3px solid var(--gold); margin-bottom: 8px; }
+.pb { display: flex; height: 10px; margin: 12px 0 6px; background: #232838; } .pb i { background: var(--gold); }
+.night { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); } .night:first-of-type { border-top: 0; }
+.night .d { width: 70px; flex: none; font: 800 13px/1.2 var(--head); text-transform: uppercase; color: var(--gold2); }
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="brand"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="4"/><path d="M23 20h8c7 0 11 4.5 11 11s-4 11-11 11h-8Z" fill="none" stroke="#e6b450" stroke-width="4.5"/><path d="M28 32l3 3 6-7" fill="none" stroke="#45c15c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>DEBRIEF</span>
+  <span class="sp"></span><span class="btn-o">Open a report or log</span><span class="btn-g">Your teams</span>
+  <span class="icon-b" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+</header>
+<main class="wrap" style="padding-bottom: 40px">
+  <section class="tban cut">
+    <span class="crest">W</span>
+    <div style="flex: 1">
+      <div class="lab g">Team</div>
+      <div class="ban-name" style="margin: 2px 0 8px">Wolfthorn</div>
+      <div class="meta"><span>Alliance</span><span>Zul'jin (US)</span><span class="ok">You: Flëxørçïst, Holy Paladin</span></div>
+    </div>
+    <div class="rk"><div><b>7/10</b><span>Mythic</span></div><div><b>#1,455</b><span>World</span></div><div><b>#440</b><span>US</span></div><div><b>#38</b><span>Zul'jin</span></div></div>
+  </section>
+
+  <div class="cols" style="margin-top: 18px">
+    <div>
+      <div class="prog cut">
+        <div style="display: flex; align-items: baseline; gap: 12px"><span class="lab g">Working on</span><span class="sub" style="font-size: 13px">1 night so far · 32 pulls</span></div>
+        <div style="display: flex; align-items: baseline; gap: 14px; margin-top: 4px"><span style="font: italic 800 30px var(--head); text-transform: uppercase">The Coiled Altar</span><span class="res">Best: P2 · Malacrass 66%</span></div>
+        <div class="pb"><i style="width: 40%"></i></div>
+        <div class="sub" style="font-size: 13px">40% of the way through the fight on your best pull.</div>
+        <div style="display: flex; gap: 8px; margin-top: 14px"><span class="btn-g">Open the latest night</span><span class="btn-o">See every pull</span></div>
+      </div>
+      <div class="bosses">
+        <div class="bc kill"><span class="pic">[art]</span><span class="n">Nymrissa Wavecaller</span><span class="w">Killed</span></div>
+        <div class="bc kill"><span class="pic">[art]</span><span class="n">Nek'zali the Soulcoiler</span><span class="w">Killed</span></div>
+        <div class="bc kill"><span class="pic">[art]</span><span class="n">Entombed Sentinels</span><span class="w">Killed</span></div>
+        <div class="bc kill"><span class="pic">[art]</span><span class="n">Vashnik the Malignant</span><span class="w">Killed</span></div>
+        <div class="bc kill"><span class="pic">[art]</span><span class="n">The Lost Explorers</span><span class="w">Killed</span></div>
+        <div class="bc kill"><span class="pic">[art]</span><span class="n">Sszorak</span><span class="w">Killed</span></div>
+        <div class="bc kill"><span class="pic">[art]</span><span class="n">The Twin Fangs</span><span class="w">Killed</span></div>
+        <div class="bc" style="border-left-color: var(--gold)"><span class="pic">[art]</span><span class="n">The Coiled Altar</span><span class="w" style="color: var(--gold2)">66%</span></div>
+        <div class="bc none"><span class="pic">[art]</span><span class="n">Ula'tek</span><span class="w">Not pulled yet</span></div>
+        <div class="bc none"><span class="pic">[art]</span><span class="n">Kith'ix</span><span class="w">Not pulled yet</span></div>
+      </div>
+    </div>
+    <aside class="stack">
+      <section class="panel b cut"><h2 class="h2" style="margin-bottom: 6px">Raid nights</h2>
+        <div class="night"><span class="d">Sun<br>Oct 18</span><span style="flex: 1"><b>The Coiled Altar</b><div class="sub" style="font-size: 13px">32 pulls · best P2 · 66%</div></span><span class="btn-o" style="min-height: 32px; font-size: 12px">Open</span></div>
+        <div class="night"><span class="d">Wed<br>Sep 23</span><span style="flex: 1"><b>Nek'zali the Soulcoiler</b><div class="sub" style="font-size: 13px">Killed on pull 3 of the night</div></span><span class="btn-o" style="min-height: 32px; font-size: 12px">Open</span></div>
+        <div class="night"><span class="d">Sun<br>Sep 20</span><span style="flex: 1"><b>Vashnik the Malignant</b><div class="sub" style="font-size: 13px">Killed, then 9 pulls on Nek'zali</div></span><span class="btn-o" style="min-height: 32px; font-size: 12px">Open</span></div>
+      </section>
+      <section class="panel cut"><div class="lab g" style="margin-bottom: 6px">Your last raid</div>
+        <div class="row"><b class="c-pal" style="flex: 1">Flëxørçïst</b><span class="grade gA">A</span><span style="width: 140px" class="sub">Holy Paladin</span></div>
+        <div class="sub" style="font-size: 13px">Your first thing to fix: use Divine Toll before the 1:10 big hit, not after.</div>
+      </section>
+    </aside>
+  </div>
+</main>
+</body>
+</html>

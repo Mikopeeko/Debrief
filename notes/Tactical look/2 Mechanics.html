@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mechanics, Tactical look</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:ital,wght@0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tactical.css">
+<style>
+.sec { display: flex; align-items: center; gap: 14px; padding: 13px 18px; background: var(--panel); border-left: 3px solid var(--line2); }
+.sec + .sec { margin-top: 6px; }
+.sec.bad { border-left-color: var(--bad); } .sec.warn { border-left-color: var(--warn); } .sec.ok { border-left-color: var(--good); }
+.sec .t { flex: 1; font: 800 17px var(--head); text-transform: uppercase; letter-spacing: .02em; }
+.sec .r { font: 700 13px var(--head); letter-spacing: .06em; text-transform: uppercase; }
+.sec.bad .r { color: #ff8a83; } .sec.warn .r { color: #f0b85a; } .sec.ok .r { color: #7ee08f; }
+.ph { display: flex; align-items: baseline; gap: 12px; margin: 22px 0 10px; }
+.ph b { font: italic 800 22px var(--head); text-transform: uppercase; } .ph span { font: 700 13px var(--head); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.open { margin-top: 6px; padding: 18px; background: #121620; border-left: 3px solid var(--bad); display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; }
+.eg { width: 100%; border-collapse: collapse; font-size: 14px; } .eg th { text-align: left; padding: 6px 8px; font: 700 11px var(--head); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line2); } .eg td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.bad-t { color: #ff8a83; font-weight: 700; } .ok-t { color: #7ee08f; }
+.pick { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel); border-top: 2px solid var(--line2); margin-bottom: 14px; }
+.sel { min-width: 200px; padding: 8px 12px; border: 1px solid var(--line2); background: var(--panel2); color: var(--text); font: 600 14px var(--body); }
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="brand"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z" fill="#1b1f29" stroke="#e6b450" stroke-width="4"/><path d="M23 20h8c7 0 11 4.5 11 11s-4 11-11 11h-8Z" fill="none" stroke="#e6b450" stroke-width="4.5"/><path d="M28 32l3 3 6-7" fill="none" stroke="#45c15c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>DEBRIEF</span>
+  <span class="sp"></span><span class="btn-g">Your teams</span>
+  <span class="icon-b" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+</header>
+<main class="wrap" style="padding-bottom: 40px">
+  <section class="ban cut">
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap"><span class="ban-name">Ula'tek</span><span class="chip">3 bosses ▾</span><span class="res">Wipe · P1 · 89%</span></div>
+      <div class="meta"><span>Pull 6 · Mythic</span><span class="ok">Best pull tonight</span><span>2:06</span><span>20 players</span><span>2 deaths</span><span class="cutchip">Counting up to 2 deaths</span></div>
+    </div>
+    <div class="art" style="height: 70px">[Boss art, as today]</div>
+  </section>
+  <nav class="strip" aria-label="Pulls">
+    <span class="pc all"><b>Whole night</b><span>6 pulls</span></span>
+    <span class="pc"><b>Pull 1</b><span class="q-w">P1 · 96%</span></span>
+    <span class="pc"><b>Pull 2</b><span class="q-w">P1 · 94%</span></span>
+    <span class="pc"><b>Pull 3</b><span class="q-w">P1 · 93%</span></span>
+    <span class="pc"><b>Pull 4</b><span class="q-w">P1 · 95%</span></span>
+    <span class="pc"><b>Pull 5</b><span class="q-w">P1 · 92%</span></span>
+    <span class="pc on"><b>Pull 6</b><span class="q-w">P1 · 89%</span></span>
+  </nav>
+  <nav class="tabs" aria-label="Tabs"><a class="tab" href="#">Recap</a><a class="tab on" href="#">Mechanics<span class="cnt">2</span></a><a class="tab" href="#">Assignments</a><a class="tab" href="#">Rotation</a><a class="tab" href="#">Graphs</a><a class="tab" href="#">Players</a></nav>
+
+  <div class="pick cut"><span class="lab g">Show one player</span><span class="sel">Everyone ▾</span><span class="sub" style="font-size: 13px">Counted up to 1:42, the 2nd death (Flahozinho). 56 things after it are left out.</span></div>
+
+  <div class="ph"><b>Stage 1</b><span>2 problems · 3 could be better</span></div>
+  <div class="sec bad"><span class="mk bad">✕</span><span class="t">Eggs (No Vipers)</span><span class="r">2 problems</span></div>
+  <div class="open">
+    <div>
+      <div class="lab" style="margin-bottom: 6px">Call of the Serpent 1 · 0:30</div>
+      <div class="row" style="margin-bottom: 14px; padding: 8px; background: var(--panel2)"><span class="mk ok">✓</span><span>All 3 eggs were popped in a Spectral Coil. <span class="sub">Carriers: Kidsabeast, Silithor and Sennadra.</span></span></div>
+      <div class="lab" style="margin-bottom: 6px">Call of the Serpent 2 · 1:10</div>
+      <table class="eg">
+        <thead><tr><th>Time</th><th>Carrier</th><th>What happened</th><th>Viper</th></tr></thead>
+        <tbody>
+          <tr><td>1:35</td><td class="c-hunter nm">Wallbears</td><td><span class="bad-t">Egg 1 broke into a Viper:</span> Noxious Splash, within 3 yards of Flahozinho<div class="sub" style="font-size: 12px">picked up at 1:35, held for 5 s</div></td><td>1:40</td></tr>
+          <tr><td>1:36</td><td class="c-priest nm">Flahozinho</td><td><span class="bad-t">Egg 2 broke into a Viper:</span> Noxious Splash, within 3 yards of Wallbears<div class="sub" style="font-size: 12px">picked up at 1:36, held for 4 s</div></td><td>1:40</td></tr>
+          <tr><td>1:12</td><td class="c-mage nm">Dpsgoblin</td><td class="ok-t">Popped in a Spectral Coil</td><td class="faint">—</td></tr>
+        </tbody>
+      </table>
+      <div class="sub" style="font-size: 13px; margin-top: 10px"><b style="color: var(--text)">How to do it:</b> carriers keep their own lanes and never come within 3 yards of each other.</div>
+    </div>
+    <figure style="margin: 0">
+      <svg viewBox="0 0 380 300" role="img" aria-label="Map: two egg carriers within 3 yards of each other at 1:40" style="width: 100%; display: block; background: #0b0d12">
+        <rect x="40" y="20" width="300" height="260" fill="#1a1f19" stroke="#3a4152"/>
+        <circle cx="190" cy="150" r="46" fill="none" stroke="#3a4152" stroke-dasharray="4 4"/>
+        <circle cx="190" cy="150" r="10" fill="#e6b450" stroke="#000"/>
+        <circle cx="112" cy="92" r="20" fill="rgba(229,83,75,.18)" stroke="#e5534b" stroke-width="2"/>
+        <circle cx="104" cy="88" r="7" fill="#aad372" stroke="#000"/><circle cx="120" cy="96" r="7" fill="#f2f2f2" stroke="#000"/>
+        <text x="112" y="62" fill="#ff8a83" text-anchor="middle" style="font: 700 11px Barlow Semi Condensed">within 3 yd</text>
+        <circle cx="250" cy="210" r="6" fill="#3fc7eb" stroke="#000"/><circle cx="160" cy="220" r="6" fill="#c69b6d" stroke="#000"/><circle cx="230" cy="110" r="6" fill="#f48cba" stroke="#000"/><circle cx="140" cy="180" r="6" fill="#2e8cff" stroke="#000"/>
+        <circle cx="136" cy="102" r="10" fill="#14171f" stroke="#3af2a8" stroke-width="1.6"/><path d="M131 102h10M136 97v10" stroke="#3af2a8" stroke-width="1.6"/>
+      </svg>
+      <figcaption class="faint" style="font-size: 12px; margin-top: 6px">[The map, as today: the two carriers in red, the Viper's icon on the circle's edge]</figcaption>
+    </figure>
+  </div>
+  <div class="sec warn" style="margin-top: 6px"><span class="mk warn">!</span><span class="t">Caustic Waves (Dodge waves)</span><span class="r">3 could be better</span></div>
+  <div class="sec warn"><span class="mk warn">!</span><span class="t">Blightscale Wretch (Bubble)</span><span class="r">1 could be better</span></div>
+  <div class="sec ok"><span class="mk ok">✓</span><span class="t">Spectral Coils (Soak circles)</span><span class="r">Clean</span></div>
+  <div class="sec ok"><span class="mk ok">✓</span><span class="t">Toxic Incubation (Beam)</span><span class="r">Clean</span></div>
+  <div class="sec ok"><span class="mk ok">✓</span><span class="t">Tanks (Tail tanking)</span><span class="r">Clean</span></div>
+
+  <div class="ph"><b>Whole fight</b><span>1 problem · 13 could be better</span></div>
+  <div class="sec bad"><span class="mk bad">✕</span><span class="t">Avoidable damage</span><span class="r">2 problems</span></div>
+  <div class="sec warn"><span class="mk warn">!</span><span class="t">Survival kit</span><span class="r">1 problem · 13 could be better</span></div>
+  <div class="sec warn"><span class="mk warn">!</span><span class="t">Raid cooldowns</span><span class="r">1 of 2 big hits covered</span></div>
+</main>
+</body>
+</html>
