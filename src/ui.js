@@ -88,17 +88,20 @@ function pickIcon(id, name) {
 // and stays if it can't (for example inside the chat preview, which blocks outside images).
 const OFFICIAL = (n) => ['https://wow.zamimg.com/images/wow/icons/large/' + n + '.jpg', 'https://render.worldofwarcraft.com/us/icons/56/' + n + '.jpg'];
 const NAMES = new Map(), Q = []; let busy = 0;
+// (a lookup that found no icon is remembered for a day, then tried again, and one that failed (too many requests, the site down) isn't
+// remembered at all: a "no icon" kept for good left Dark Transformation's heading on the built-in skull for a player (Oct 19). An old
+// "no icon" saved without its time is tried again once)
 function iconName(id) {
   if (NAMES.has(id)) return NAMES.get(id);
-  const c = store.get('wla-icon-' + id);
-  const p = c ? Promise.resolve(c === '-' ? null : c) : new Promise((res) => { Q.push({ id, res }); pumpIcons(); });
+  const c = store.get('wla-icon-' + id), miss = !!c && c[0] === '-', fresh = miss && +c.slice(1) > Date.now() - 864e5;
+  const p = c && (!miss || fresh) ? Promise.resolve(miss ? null : c) : new Promise((res) => { Q.push({ id, res }); pumpIcons(); });
   NAMES.set(id, p); return p;
 }
 function pumpIcons() {
   while (busy < 6 && Q.length) {
     const { id, res } = Q.shift(); busy++;
     fetch('https://nether.wowhead.com/tooltip/spell/' + id).then((r) => (r.ok ? r.json() : null))
-      .then((j) => { const n = j && j.icon ? String(j.icon).toLowerCase() : null; store.set('wla-icon-' + id, n || '-'); res(n); })
+      .then((j) => { if (!j) { res(null); return; } const n = j.icon ? String(j.icon).toLowerCase() : null; store.set('wla-icon-' + id, n || '-' + Date.now()); res(n); })
       .catch(() => res(null)).finally(() => { busy--; pumpIcons(); });
   }
 }
@@ -3685,7 +3688,7 @@ const MAP_IC = new Map();
 function mapIconUrl(n) {
   if (!n) return null; const k = String(n).toLowerCase(); if (MAP_IC.has(k)) return MAP_IC.get(k);
   const id = sidOf(n); if (!id) { MAP_IC.set(k, null); return null; }
-  const c = store.get('wla-icon-' + id); if (c) { const url = c === '-' ? null : whIcon(c); MAP_IC.set(k, url); return url; }
+  const c = store.get('wla-icon-' + id); if (c && c[0] !== '-') { const url = whIcon(c); MAP_IC.set(k, url); return url; } // (a "no icon" goes through iconName, which tries it again after a day)
   MAP_IC.set(k, null);
   Promise.resolve(iconName(id)).then((nm) => { const url = nm ? whIcon(nm) : null; MAP_IC.set(k, url); if (url) document.querySelectorAll('image.mic-i[data-mn="' + CSS.escape(k) + '"]').forEach((im) => { im.setAttribute('href', url); im.closest('.mic').classList.add('on'); }); });
   return null;
@@ -10998,6 +11001,8 @@ function genRun(spec, D, reps, name, one) {
   // (this boss's top players' numbers, for the checks whose bar follows them)
   const TB0 = ((SPEC_TOP[spec] || {})[per[per.length - 1].r.item.boss + '|' + per[per.length - 1].r.item.diffId]) || null;
   const winWith = WIN ? (WIN.with || []).map((g) => [].concat(g)).filter((g) => g.some(pressedAny)) : [], WSET = WIN ? (WIN.setup || []).filter((q) => on(q) && [].concat(q.any || q.n).some(pressedAny)) : [];
+  // (dmgL: big buttons whose damage is shown, not graded; WIN.steps: more marks on each window card)
+  const DMGL = (D.dmgL || []).filter((q) => on(q) && pressedAny(q.n)), WSTEP = WIN ? (WIN.steps || []).filter(on) : [];
   const openBars = (p) => { const cols = ['#5aa9e6', '#e6b450', '#7ee08f', '#c792ea', '#e5534b'], L = (OPEN && OPEN.len) || 15, l = ((OPEN && OPEN.bars) || []).map((n) => ({ n, sp: (p.buffs.get(n) || { sp: [] }).sp })), lb = LUST_BUFFS.find((n) => p.buffs.has(n)); if (lb) l.push({ n: lb, sp: p.buffs.get(lb).sp }); return l.map((b, i) => ({ ...b, col: cols[i % cols.length] })).filter((b) => b.sp.some(([a]) => a < L)); };
   for (const x of per) { const { r, p, t1, c } = x, s = { pull: r.item.pull, kill: r.item.kill, len: t1, m: {}, bx: {}, cdu: {}, pr: {}, dot: {}, up: {} }, BX = (k, t, cls, tip) => (s.bx[k] = s.bx[k] || []).push([t, cls, tip]);
     const dead = deadSpans(r, p).map(([a, b]) => [a, b == null ? t1 : Math.min(b, t1)]).filter(([a, b]) => a < t1 && b > a), deadL = dead.reduce((v, [a, b]) => v + b - a, 0), alive = Math.max(1, t1 - deadL);
@@ -11196,6 +11201,22 @@ function genRun(spec, D, reps, name, one) {
     // (a healer's mana: what was left at the kill, and any stretch spent out of it)
     if (D.mana) { const ml = (p.mana || []).filter(([t]) => t <= t1 + 1); s.mnOut = null; for (let i = 0; i < ml.length && !s.mnOut; i++) { if (ml[i][1] > 0.02 || ml[i][0] >= t1 - 15) continue; let j = i; while (j + 1 < ml.length && ml[j + 1][1] <= 0.02) j++; if (ml[j][0] - ml[i][0] >= 8) s.mnOut = [ml[i][0], ml[j][0]]; i = j; } if (r.item.kill && ml.length) s.mana = ml[ml.length - 1][1]; }
     s.dmgTot = sumIn(p.dmgS || [], 0, t1); s.healTot = sumIn(p.healS || [], 0, t1);
+    // (what a big button did, each press (dmgL; your ask, Oct 19: "how much damage important abilities like Blightfall contributed"): its own damage
+    // by name, shared evenly between its presses, plus the hits it sets off under another name within a moment of each press (hits, within), like
+    // Blightfall's plagues erupting)
+    s.dmgL = {}; for (const q of DMGL) { const ts = (p.byName.get(lc(q.n)) || []).filter((u) => u <= t1).sort((u, w) => u - w), hs = q.hits ? new Set(q.hits.map(lc)) : null, ev = hs ? (p.dmgEv || []).filter((h) => hs.has(lc(h[1])) && h[3] > 0) : [];
+      const own = [...(p.dmgAb || new Map()).values()].filter((y) => lc(String(y.name)) === lc(q.n)).reduce((v, y) => v + (y.total || 0), 0), each = ts.map((u) => [u, own / Math.max(1, ts.length) + ev.filter((h) => h[0] >= u - 0.05 && h[0] <= u + (q.within || 0.6)).reduce((v, h) => v + h[3], 0)]);
+      s.dmgL[q.n] = { each, tot: each.reduce((v, [, d]) => v + d, 0) }; }
+    // (the window cards' steps (WIN.steps), shown, not graded: a spell's time into the window (at; buf: the press that spent this buff, like Reaping's
+    // free Soul Reaper), a pair check's verdict for the presses in it (pair), a spell right after another (after, within), a big button's damage (dmg))
+    // (a step looks up to the next window, 12 seconds at most past this one's end: Blightfall stays usable a few seconds after Dark Transformation)
+    if (WSTEP.length && s.win) s.win.forEach((w, wi) => { w.steps = WSTEP.map((q) => { const a = w.t, e = w.e, e2 = Math.min((s.win[wi + 1] || { t: Infinity }).t - 0.5, e + 12), cs0 = (n) => p.byName.get(lc(n)) || [];
+      if (q.dmg) { const d = (s.dmgL[q.dmg] || { each: [] }).each.filter(([u]) => u >= a - 0.5 && u <= e2).reduce((v, [, x]) => v + x, 0); return d >= 1000 ? { ok: null, txt: q.dmg + ' hit for ' + C(d) } : null; }
+      if (q.pair) { const l = (s.pair[q.pair] || []).filter((x) => x.a >= a - 0.5 && x.a <= e2), ok = l.length && l.every((x) => x.ok), late = l.some((x) => !x.ok && x.a > e + 0.5); return l.length ? { ok: !!ok, txt: ok ? q.lbl : late ? q.late || q.bad || q.lbl : q.bad || q.lbl } : { ok: false, txt: q.none || q.lbl }; }
+      if (q.after) { const u0 = cs0(q.after).filter((u) => u >= a - 0.5 && u <= e2); if (!u0.length) return null; const ok = u0.every((u) => cs0(q.n).some((v) => v > u && v <= u + (q.within || 3))); return { ok, txt: ok ? q.lbl : q.bad || q.lbl }; }
+      if (q.at) { const bs = q.buf ? (p.buffs.get(q.buf) || { sp: [] }).sp.find(([u]) => u >= a - 1 && u <= a + 3) : null, cs = cs0(q.n).filter((u) => (bs ? u >= bs[0] - 0.1 && u <= (bs[1] == null ? e : bs[1]) + 0.3 : u >= a - 0.5 && u <= e)).sort((u, v) => u - v);
+        const u = bs ? cs[cs.length - 1] : cs[0]; if (u == null) return { ok: false, txt: q.none || 'No ' + q.n }; const d = u - a; return { ok: d >= q.at[0] - 0.3 && d <= q.at[1] + 0.3, txt: q.n + ' ' + Math.max(0, Math.round(d)) + ' s in' }; }
+      return null; }).filter(Boolean); });
     rows.push(s); }
   // ---- the whole (one pull, or the night added up) ----
   const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%', mins = sum((s) => s.len) / 60, times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times'), orL = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' or ' + l[l.length - 1]);
@@ -11321,6 +11342,11 @@ function genRun(spec, D, reps, name, one) {
     add(g, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.a || q.buf, q.label, okN + '<span>/' + N + '</span>', q.txt.replace('{ok}', N === okN && N > 1 ? (q.txt.startsWith('{ok}') ? 'All' : 'all') : String(okN)).replace('{n}', String(N)), 'pr:' + q.k,
       (crit != null ? 'Your ' + [].concat(q.critOf).join(' and ') + ' hits crit ' + Math.round(100 * crit) + '% of the time. ' : '') + (q.why ? q.why + ' ' : '') + okP(okF) + ' The times listed are the ones that missed.');
     if (f < okF && q.tip) g.l[g.l.length - 1].tip = q.tip; }
+  // (big buttons' damage (dmgL), not graded: what each was worth, in all, each press, as a share of all your damage, and its biggest press)
+  for (const q of DMGL) { const l = rows.flatMap((s) => ((s.dmgL || {})[q.n] || { each: [] }).each.map(([u, d]) => ({ u, d, pull: s.pull }))), N = l.length, tot = l.reduce((v, x) => v + x.d, 0), all = rows.reduce((v, s) => v + (s.dmgTot || 0), 0); if (!N || tot < 1000) continue;
+    const blkN = q.blk || winN || cdN, g = groups.find((x) => x.t === blkN) || grp(blkN), big = q.hits && N > 1 ? l.slice().sort((x, y) => y.d - x.d)[0] : null, sh = all > 0 ? 100 * tot / all : null;
+    add(g, 'na', q.ic || q.n, q.label || q.n + ' damage', C(tot), 'You pressed ' + q.n + ' ' + times(N) + '. It did ' + C(tot) + ' damage' + (N > 1 ? ', ' + C(tot / N) + ' each' : '') + (sh != null ? ': ' + (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of all your damage' : '') + '.' + (big ? ' Your biggest was ' + C(big.d) + ', at ' + (one ? '' : 'pull ' + big.pull + ', ') + T(big.u) + '.' : ''), 'dm:' + q.n,
+      (q.why ? q.why + ' ' : '') + 'Not graded: it shows what the button was worth.' + (q.hits ? ' Its damage shows up in the log as ' + (q.hitsTxt || andL(q.hits)) + ', so Debrief adds up those hits in the moment after each press.' : '')); }
   // (the big window's set-up, graded (setOk): the share of windows with everything the guide wants before it; and, for a healer, into heavy damage)
   if (WIN && WIN.setOk && winL.length) { const G = WIN.setOk, l = winL.filter((w) => (w.setup || []).some((q) => !q.info)), N = l.length; if (N) { const okN = l.filter((w) => w.setup.every((q) => q.info || q.ok)).length, f = okN / N, okF = G.ok || 0.75, warnF = G.warn || 0.5, need = WSET.filter((q) => !q.info).map((q) => q.lbl || q.n + ' before');
     add(gW, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', WIN.ic || WIN.n, G.label || WIN.n + ' set up', okN + '<span>/' + N + '</span>', okN + ' of your ' + N + ' ' + (G.many || WIN.n + ' windows') + ' had ' + andL(need) + '.', 'win:set', (G.why ? G.why + ' ' : '') + okP(okF) + ' The times listed are the ones that missed something.');
@@ -11426,6 +11452,7 @@ function genRun(spec, D, reps, name, one) {
   // (each pair goes into its block (a block already on the page, like the window's, or its own), in its chapter)
   for (const q of pairL) { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Cooldowns')) || (LAYOUT.push([q.ch || 'Cooldowns', []]), LAYOUT[LAYOUT.length - 1]), b = ch[1].find((x) => x && x[0] === q.blk); if (b) b[1].push(sl('pr:' + q.k)); else ch[1].push([q.blk, [sl('pr:' + q.k)]]); }
   if (WIN) { const ch = LAYOUT.find(([c]) => c === 'Cooldowns'), b = ch && ch[1].find((x) => x && x[0] === winN); if (b) b[1].push('pot'); }
+  for (const q of DMGL) { const bn = q.blk || winN || cdN, ch = LAYOUT.find(([, bl]) => bl.some((x) => x && x[0] === bn)); if (ch) ch[1].find((x) => x && x[0] === bn)[1].push(sl('dm:' + q.n)); }
   for (const q of MORE.slice().reverse()) { const ch = LAYOUT.find(([c]) => c === 'Cooldowns'), b0 = ch && ch[1].find((x) => x && x[0] === q.blk); if (b0) b0[1].unshift(sl('mw:' + q.k), sl('mw:' + q.k + ':dmg')); else if (ch) ch[1].splice(WIN ? 1 : 0, 0, [q.blk, [sl('mw:' + q.k), sl('mw:' + q.k + ':dmg')]]); }
   for (const q of TGT) { const bn = q.blk || rotN, ch0 = LAYOUT.find(([, bl]) => bl.some((x) => x && x[0] === bn)); if (ch0) ch0[1].find((x) => x && x[0] === bn)[1].push(sl('tg:' + q.k)); else { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Rotation')); if (ch) ch[1].push([bn, [sl('tg:' + q.k)]]); } }
   for (const q of FRESH) { const ch = LAYOUT.find(([c]) => c === (q.ch || 'Rotation')), b = ch && ch[1].find((x) => x && x[0] === (q.blk || rotN)); if (b) b[1].push(sl('fr:' + q.k)); else if (ch) ch[1].push([q.blk || rotN, [sl('fr:' + q.k)]]); }
@@ -11453,7 +11480,7 @@ function genRun(spec, D, reps, name, one) {
   if (OPEN) MERGE.Opener = { ic: OPEN.ic || D.ic, main: 'open', lead: OPEN.lead || 'Start the pull with your cooldowns stacked.' };
   if (stv) MERGE['Your stats'] = { ic: 'Your stats', main: ST.goal ? 'st:goal' : 'st:order', lead: ST.lead || '' };
   const WT = { abc: 2, cpm: 0, cc: 1, clip: 1.5, res: 2, mana: 2, apl: 3, win: 3, open: 2, 'open:x': 0, 'win:cast': 1.5, 'win:dots': 1, 'win:res': 1, 'win:proc': 1, pot: 1, 'st:goal': 1, 'st:low': 1, 'st:order': 1, 'st:dr': 0.5 }; for (const q of pres) WT['pre:' + q.k] = q.w || 1; for (const q of pairL) WT['pr:' + q.k] = q.w || 2; for (const q of rot) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of cds) WT['cd:' + lc(q.n)] = q.w || 2; for (const q of procs) WT['p:' + q.n] = q.w || 1.5; for (const q of dots) WT['dot:' + q.n] = q.w || 2.5; for (const q of ups) WT['up:' + q.n] = q.w || 2.5;
-  Object.assign(WT, { 'win:set': 1.5, 'win:dmg': 1 }); for (const q of MORE) { WT['mw:' + q.k] = q.w || 2; WT['mw:' + q.k + ':dmg'] = 1; } for (const q of SPREAD) WT['sp:' + q.k] = 0; for (const q of FRESH) WT['fr:' + q.k] = q.w || 1.5; for (const q of TGT) WT['tg:' + q.k] = q.w || 1.5;
+  Object.assign(WT, { 'win:set': 1.5, 'win:dmg': 1 }); for (const q of DMGL) WT['dm:' + q.n] = 0; for (const q of MORE) { WT['mw:' + q.k] = q.w || 2; WT['mw:' + q.k + ':dmg'] = 1; } for (const q of SPREAD) WT['sp:' + q.k] = 0; for (const q of FRESH) WT['fr:' + q.k] = q.w || 1.5; for (const q of TGT) WT['tg:' + q.k] = q.w || 1.5;
   const LG = {}; for (const q of procs) LG['p:' + q.n] = { ok: 'Spent', bad: 'Wasted' };
   // (topNew: lines whose check changed after the top players were read, like the Death Knights' Runic Power on Oct 19; their old marks would compare
   // different things, so they're left out until the top players are read again)
@@ -11470,7 +11497,7 @@ function genRun(spec, D, reps, name, one) {
   // (one window's card: its time, what you did in it against your usual, what went in before and with it, then its lower half)
   const winCard = (w) => { const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
     return '<div class="spc-w ' + w.st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.len) + ' seconds</span></div>' +
-      '<div class="spc-wv">' + C(w.rate) + '<span> ' + (UNW === 'healing' ? 'HPS' : 'DPS') + '</span></div>' + (w.outR > 0 ? '<div class="spc-wo">Rest of the pull: ' + C(w.outR) + '</div>' : '') + '<div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) + (w.setup || []).filter((q) => !q.info || q.ok).map((q) => ck(q.ok, q.lbl || q.n + (q.post ? ' with it' : ' before'))).join('') + (WIN.dotsThrough ? ck(!(w.dotsShort || []).length, (w.dotsShort || []).length ? andL(w.dotsShort) + ' ran out in it' : 'Damage over time lasted') : '') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : '') +
+      '<div class="spc-wv">' + C(w.rate) + '<span> ' + (UNW === 'healing' ? 'HPS' : 'DPS') + '</span></div>' + (w.outR > 0 ? '<div class="spc-wo">Rest of the pull: ' + C(w.outR) + '</div>' : '') + '<div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) + (w.setup || []).filter((q) => !q.info || q.ok).map((q) => ck(q.ok, q.lbl || q.n + (q.post ? ' with it' : ' before'))).join('') + (w.steps || []).map((q) => (q.ok == null ? '<span class="sub">' + esc(q.txt) + '</span>' : ck(q.ok, q.txt))).join('') + (WIN.dotsThrough ? ck(!(w.dotsShort || []).length, (w.dotsShort || []).length ? andL(w.dotsShort) + ' ran out in it' : 'Damage over time lasted') : '') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : '') +
       (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + (w.heavy != null ? ck(w.heavy, w.heavy ? 'Into heavy damage' : 'Not into heavy damage') : '') + (w.cnt != null ? '<span class="sub">' + w.cnt + ' ' + esc(WIN.cnt.lbl) + ' out at the peak</span>' : '') + '</div>' + winMore(w) + '</div>'; };
   // (a card for one of the more windows: its time, its healing or damage against the rest of the pull, its key spell, what went in before it, then its lower half)
   const moreCard = (q, w) => { const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>', kn = q.key ? moreKn(q) : '';
@@ -12279,7 +12306,12 @@ const GEN_SPECS = {
       why: "Both guides' opener: Outbreak and Festering Strike (and Festering Scythe), then Army of the Dead and Dark Transformation together with your potion, trinket and racial, Putrefy, then Necrotic Coils (Death Coils) and Vampiric Strikes, a second Putrefy, and Soul Reaper about 6 to 7 seconds after Dark Transformation.",
       lead: 'Outbreak and Festering Strike, then Army of the Dead and Dark Transformation together, Putrefy and your Coils.' },
     stats: { low: 'versatility', order: [['crit'], ['mastery'], ['haste'], ['versatility']], orderWhy: 'Both guides, for both hero trees: Critical Strike, then Mastery, then Haste, Versatility last (Wowhead: as close to 0 as possible).', lowWhy: 'Both guides put Versatility last.', lead: 'Critical Strike, then Mastery and Haste, Versatility last.' },
-    win: { n: 'Dark Transformation', dur: 15, with: [['Putrefy']], why: 'Dark Transformation is your burst, every 45 seconds. Both guides: keep it lined up with Army of the Dead (Commander of the Dead), and use Putrefy as much as you can inside it.', lead: 'Dark Transformation with Army of the Dead, and Putrefy inside it.' },
+    win: { n: 'Dark Transformation', dur: 15, with: [['Putrefy']], why: 'Dark Transformation is your burst, every 45 seconds. Both guides: keep it lined up with Army of the Dead (Commander of the Dead), and use Putrefy as much as you can inside it. A guide, with Blightfall: Soul Reaper about 6 seconds in, Blightfall just before Soul Reaper ends, then Putrefy.',
+      steps: [{ n: 'Soul Reaper', buf: 'Reaping', at: [3, 10], none: 'Free Soul Reaper unused' }, { pair: 'blight', tal: 'Blightfall', lbl: 'Blightfall at the end', bad: 'Blightfall too early', late: 'Blightfall after it ended', none: 'No Blightfall' },
+        { n: 'Putrefy', after: 'Blightfall', within: 4, tal: 'Blightfall', lbl: 'Putrefy after Blightfall', bad: 'No Putrefy after Blightfall' }, { dmg: 'Blightfall', tal: 'Blightfall' }],
+      lead: 'Dark Transformation with Army of the Dead. Inside it: Soul Reaper about 6 seconds in, Blightfall at the end, then Putrefy.' },
+    dmgL: [{ n: 'Blightfall', tal: 'Blightfall', hits: ['Virulent Plague (Erupt)', 'Dread Plague (Erupt)'], within: 0.6, hitsTxt: 'your plagues erupting', why: 'Blightfall sets off all the damage your plagues had left, at once, and gives you a Putrefy charge.' },
+      { n: 'Soul Reaper', why: 'Soul Reaper: the free one Dark Transformation gives you (Reaping), and any under 35% health.' }, { n: 'Putrefy', why: 'Both guides: use Putrefy as much as you can inside Dark Transformation.' }],
     apl: { blk: 'Your priority', ok: 0.8, warn: 0.7, ctx: ['Sudden Doom', 'Forbidden Knowledge', 'Dark Transformation', 'Lesser Ghoul', 'Vampiric Strike'], ctxRes: '6', why: "The single-target priority from Wowhead, Icy Veins and the SimulationCraft list, for San'layn and Rider of the Apocalypse. Vampiric Strike counts as your Scourge Strike, and Necrotic Coil as your Death Coil.", list: [
       { s: 'Army of the Dead', cdq: true, cd: 90, hold: 10, tal: 'Army of the Dead', alt: ["Army of the Dead","Dark Transformation","Raise Dead","Mind Freeze","Death's Advance","Anti-Magic Shell","Icebound Fortitude","Death Pact","Lichborne","Chains of Ice","Death Grip","Asphyxiate","Blinding Sleet","Death Strike","Raise Ally","Anti-Magic Zone","Dark Command","Death and Decay","Blightfall","Outbreak","Soul Reaper","Putrefy","Graveyard","Berserking","Blood Fury"], why: 'Army of the Dead was ready', tip: 'Both guides: Army of the Dead on cooldown, every 90 seconds, with Dark Transformation.' },
       { s: 'Outbreak', alt: ["Army of the Dead","Dark Transformation","Raise Dead","Mind Freeze","Death's Advance","Anti-Magic Shell","Icebound Fortitude","Death Pact","Lichborne","Chains of Ice","Death Grip","Asphyxiate","Blinding Sleet","Death Strike","Raise Ally","Anti-Magic Zone","Dark Command","Death and Decay","Blightfall","Outbreak","Soul Reaper","Putrefy","Graveyard","Berserking","Blood Fury"], if: { nodeb: 'Virulent Plague' }, why: 'Virulent Plague was missing', tip: 'Both guides: Outbreak whenever your plagues are down. They make your Sudden Doom and Forbidden Knowledge.' },

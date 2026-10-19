@@ -5325,7 +5325,8 @@ function analyze(item, text, opts) {
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
           // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
-          if (DMG_EV.has(spell.toLowerCase())) { if (!p.dmgEv) p.dmgEv = []; if (p.dmgEv.length < 3000) p.dmgEv.push([t, spell, dg]); }
+          // (with the amount; and every "(Erupt)" hit, like the plagues Unholy's Blightfall sets off, so a press can be credited with them)
+          { const lsp = spell.toLowerCase(); if (!pet && (DMG_EV.has(lsp) || lsp.endsWith(' (erupt)'))) { if (!p.dmgEv) p.dmgEv = []; if (p.dmgEv.length < 6000) p.dmgEv.push([t, spell, dg, dealt]); } }
         }
         break;
       }
