@@ -257,6 +257,30 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   own when the boss leaves (only a bleed still on the boss and about to run out counts), and Subtlety's full combo points.
 - Note: Subtlety's list stays light, because most of its choices depend on things a log can't show.
 
+## 2026-10-18, round 240: Getting around, smoother (your pick: my suggestions, Option B)
+- [x] **Back and Forward work inside Debrief.** Every page you open is a step: Home, the teams page, a team, a pull, its tab,
+  one pull or the whole night. Before, Back always left the site. (A reload starts on Home, and Back from there goes to
+  the pull you were on.)
+- [x] **One row of tabs: Recap, Mechanics, Assignments, Rotation, Graphs, Players.** The pull strip starts with a "Whole
+  night" card, and every tab follows what you pick there: on the whole night, Recap is the night's report cards, how far
+  it got and what kept going wrong (what Night summary was); Mechanics and Assignments show their rows across the pulls;
+  Rotation, Graphs and Players their whole-night views. The "This pull / Whole night" groups, the Night summary tab and
+  the All pulls switch inside Players are gone.
+- [x] **The boss's name in the banner is the boss picker**, with "3 bosses" beside it when the log has more than one. The
+  small picker in the top bar and the "Also tonight" chips are gone.
+- [x] **The wipe filter is a chip in the banner**, "Counting up to 2 deaths", that opens the same control under it. It
+  was a card among the pull cards.
+- [x] **Live only shows for a night being logged now, or a few hours ago** (or a log followed on this PC), not on old nights.
+- [x] **The ☰ menu on the website is 4 items:** Open a report or log (Home with the report box ready), Help (this page's
+  tips, with "Take the tour" on the first one), Report a problem, Join the Discord. Start screen is the Debrief logo
+  (now called Home); Saved progress and Open combat log stay in the app on your PC.
+- [x] **On a phone:** the top bar is one row (the Your teams button shows just its trophy), the banner is shorter, and the
+  page starts at 339 of 812 pixels instead of 463.
+- [x] Player names in a pull look clickable (pointer and underline), and the add button says "Add a team or character"
+  everywhere.
+- [x] Tested on a real night (desktop and phone): Back and Forward through tabs, pulls and the whole night, the boss
+  picker, the wipe filter chip, every tab on the whole night; no errors.
+
 ## 2026-10-18, round 239: Add a team, pick yourself; add a character, add your teams (your notes)
 - [x] **Add a team, and a pop-up asks "Which one is you?"** as soon as its first night is read: the team's players in their
   class colours, most nights first. Picking yourself remembers you and adds your own character page too (found on your

@@ -318,7 +318,7 @@ document.addEventListener('click', async (e) => {
   if (ctType !== 'mouse' && ctCur !== el) { ctShow(el, e); return; } // (a phone: the first tap shows the box)
   const go = el.dataset.go; if (!go) return; e.preventDefault(); e.stopPropagation(); ctCur = null; spTip.style.display = 'none';
   // (from Summary, which is every pull, the pull opens on its own recap, Latest pull)
-  if (go.startsWith('pull:')) { const b = S.index && S.index.bosses[+go.slice(5)]; if (b) { if (S.tab === 'night') { S.tab = 'live'; S.scope = 'pull'; } select(b); window.scrollTo({ top: 0 }); } }
+  if (go.startsWith('pull:')) { const b = S.index && S.index.bosses[+go.slice(5)]; if (b) { S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } }
   else if (go.startsWith('wcl:')) { const [code, f] = go.slice(4).split('|'); try { await openWcl({ code, fight: +f || null }, await wclCreds()); } catch (x) { console.warn('Open pull:', x && x.message); } }
 });
 function avatar(p, sm) {
@@ -488,14 +488,18 @@ function renderList() {
   for (const r of runs) groups.push({ k: r.zone + ' +' + r.level, kind: 'run', run: r, list: [r].concat(r.bosses) });
   if (!groups.length) { box.innerHTML = ''; if (pick) pick.innerHTML = ''; return; }
   const cur = (S.item && groups.find((g) => g.list.includes(S.item))) || groups[groups.length - 1];
-  const allMode = S.scope === 'all' && S.tab !== 'live' && cur.kind === 'boss';
+  const allMode = S.scope === 'all' && cur.kind === 'boss';
   // the boss picker: a menu when there's more than one boss tonight, else just the name
   const gName = (g) => (g.kind === 'run' ? g.run.zone + ' +' + g.run.level : g.list[0].boss + ' · ' + g.list[0].diff);
   const gLast = (g) => (g.kind === 'run' ? g.run : g.list[g.list.length - 1]);
   // (a log with more than one boss: the switch says how many, in gold, so it's easy to spot)
-  if (pick) pick.innerHTML = groups.length > 1 ? '<button class="bp-b multi" type="button" aria-haspopup="true" aria-expanded="false" title="This log has ' + groups.length + ' bosses: pick one"><span class="bp-n">' + groups.length + ' bosses</span>' + esc(gName(cur)) + CHEV + '</button><div class="bp-pop" hidden>' +
-    groups.map((g) => '<button class="bp-i' + (g === cur ? ' on' : '') + '" type="button" data-last="' + add(gLast(g)) + '"><b>' + esc(gName(g)) + '</b><span>' + (g.kind === 'run' ? esc(g.run.result) + ' · ' + T(g.run.duration) : plural(g.list.length, 'pull') + (g.list.some((b) => b.kill) ? ' · killed' : '')) + '</span></button>').join('') + '</div>'
-    : '<span class="bp-l">' + esc(gName(cur)) + '</span>';
+  // the boss picker (your pick, Oct 18): the boss's name in the banner, with "3 bosses" beside it when the log has more
+  // than one; its list opens just under the banner (the top bar's picker is gone)
+  if (pick) pick.innerHTML = '';
+  const pk = $('#bhPk'), pkB = $('#bossHead .bh-pickb');
+  if (pk) pk.innerHTML = groups.length > 1 ? '<div class="bp-pop" hidden>' +
+    groups.map((g) => '<button class="bp-i' + (g === cur ? ' on' : '') + '" type="button" data-last="' + add(gLast(g)) + '"><b>' + esc(gName(g)) + '</b><span>' + (g.kind === 'run' ? esc(g.run.result) + ' · ' + T(g.run.duration) : plural(g.list.length, 'pull') + (g.list.some((b) => b.kill) ? ' · killed' : '')) + '</span></button>').join('') + '</div>' : '';
+  if (pkB) { pkB.hidden = groups.length < 2; pkB.innerHTML = '<span class="bp-n">' + groups.length + ' bosses</span>' + CHEV; pkB.title = 'This log has ' + groups.length + ' bosses: pick one'; }
   let h = '';
   if (cur.kind === 'boss') {
     const list = cur.list, kill = list.find((b) => b.kill), known = list.map((b) => [b, pullPct(b)]).filter(([, v]) => v != null);
@@ -512,7 +516,7 @@ function renderList() {
     };
     // (an "All pulls" card at the left end, always in view (back on Oct 18, when the pull switch left Rotation and Graphs):
     // Rotation, Graphs and Players then show every pull of the boss together; the other tabs open Night summary)
-    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together" aria-pressed="' + allMode + '"><span class="fc-h"><b><span class="ap-i">∑</span> All<span class="fa-x"> pulls</span></b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><span class="fc-s">the whole night</span></button>' : '';
+    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together, on every tab" aria-pressed="' + allMode + '"><span class="fc-h"><b>Whole night</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span></button>' : '';
     // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
     h = '<div class="sg-row">' + allC + '<div class="fwrap"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
   } else {
@@ -522,15 +526,16 @@ function renderList() {
   }
   box.innerHTML = h;
   // the wipe filter: a card at the right end of a boss's pull cards (a Mythic+ key doesn't have one)
-  if (CUT_NODE) { const row = cur.kind === 'boss' && box.querySelector('.sg-row'); if (row) row.appendChild(CUT_NODE); else if (CUT_NODE.parentNode) CUT_NODE.parentNode.removeChild(CUT_NODE); }
+  bhCutBind(); // (the wipe filter sits behind its chip in the banner)
   if (bosses.some((b) => !b.wcl && !CACHE.has(b))) warmPulls();
   // (clicking one pull shows that pull on every tab; All pulls shows every pull of the boss: see setScope)
   box.querySelectorAll('.pull').forEach((b) => (b.onclick = () => { setScope('pull'); select(ITEMS[+b.dataset.i]); }));
-  box.querySelectorAll('[data-all]').forEach((b) => (b.onclick = () => { if (S.scope === 'all' && S.tab !== 'live') return; const keep = S.item && S.rep && cur.list.includes(S.item); setScope('all'); if (keep) renderMain(); else select(ITEMS[+b.dataset.all]); }));
-  if (pick) {
-    const pb = pick.querySelector('.bp-b'), pop = pick.querySelector('.bp-pop');
+  box.querySelectorAll('[data-all]').forEach((b) => (b.onclick = () => { if (S.scope === 'all') return; const keep = S.item && S.rep && cur.list.includes(S.item); setScope('all'); if (keep) renderMain(); else select(ITEMS[+b.dataset.all]); }));
+  if (pk) {
+    const pb = pkB, pop = pk.querySelector('.bp-pop'), nm = $('#bossHead .bh-name'); if (nm) nm.classList.toggle('pickable', !!pop);
     if (pb && pop) pb.onclick = (e) => { e.stopPropagation(); pop.hidden = !pop.hidden; pb.setAttribute('aria-expanded', String(!pop.hidden)); };
-    pick.querySelectorAll('.bp-i').forEach((b) => (b.onclick = () => { if (pop) pop.hidden = true; setScope('pull'); select(ITEMS[+b.dataset.last]); }));
+    if (nm && pb && pop) nm.onclick = (e) => pb.onclick(e); // (the name itself opens it too)
+    pk.querySelectorAll('.bp-i').forEach((b) => (b.onclick = () => { if (pop) pop.hidden = true; select(ITEMS[+b.dataset.last]); })); // (the same tab, one pull or the whole night)
   }
   // keep the cards where they were (the newest in view the first time), the picked pull in view, and the mouse wheel
   // and the arrows scrolling them sideways
@@ -556,7 +561,7 @@ function fitFilm() {
 }
 { let t = 0; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(fitFilm, 120); }); }
 // (a click anywhere else closes the boss picker)
-document.addEventListener('click', (e) => { const pop = $('#bossPick .bp-pop'); if (pop && !pop.hidden && !e.target.closest('#bossPick')) { pop.hidden = true; const b = $('#bossPick .bp-b'); if (b) b.setAttribute('aria-expanded', 'false'); } });
+document.addEventListener('click', (e) => { const pop = $('#bhPk .bp-pop'); if (pop && !pop.hidden && !e.target.closest('#bhPk, .bh-pickb, .bh-name')) { pop.hidden = true; const b = $('#bossHead .bh-pickb'); if (b) b.setAttribute('aria-expanded', 'false'); } });
 // the top bar's menu: open a combat log, Warcraft Logs, the start screen
 {
   const b = $('#tbMenu'), pop = $('#tbMenuPop'), close = () => { pop.hidden = true; b.setAttribute('aria-expanded', 'false'); };
@@ -1007,8 +1012,10 @@ function bgFetch(item) {
 // (the fight audit), Assignments (the NSRT audit), Rotation (Spec checks, moved out of Performance: how each player
 // played their own spec) and Graphs (what was Performance: the raw numbers); "Whole night" has Night summary (always all
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
-const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['night', 'Night summary'], ['player', 'Players']];
-const TAB_GROUPS = [['This pull', ['live', 'audit', 'overview', 'rot', 'perf']], ['Whole night', ['night', 'player']]];
+// (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
+// whole night for every tab; Night summary is Recap on the whole night)
+const TABS = [['audit', 'Mechanics'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Players']];
+const TAB_ORDER = ['live', 'audit', 'overview', 'rot', 'perf', 'player'];
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -1016,9 +1023,7 @@ const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // own page. The pull cards pick it: a pull, or All pulls (which opens Summary, or the Player audit's all-pulls view).
 const OLD_ALL = { nightaudit: 1, nightassign: 1 }; // (the old all-pulls Mechanics and Assignments, e.g. in a saved resume: Summary has them now)
 function setScope(sc) {
-  S.scope = sc;
-  if (sc === 'all') { if (S.tab !== 'player' && !PF_TAB(S.tab)) S.tab = 'night'; }
-  else if (S.tab === 'night' || OLD_ALL[S.tab]) S.tab = 'audit';
+  S.scope = sc; // (every tab follows it: one pull, or the whole night)
 }
 // the header's result for all pulls: the kill, or the best pull so far
 function nightResult(it) {
@@ -1031,7 +1036,7 @@ function nightResult(it) {
 const TAB_IC = { live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
-  live: 'The pull that just ended, at a glance. It shows what went wrong and what to fix before the next pull, and follows live logging.',
+  live: 'The pull you picked, at a glance: what went wrong and what to fix before the next pull. It follows live logging. With Whole night picked, the night\'s report cards, how far it got and what kept going wrong.',
   overview: 'Your NSRT note, checked against this pull. It covers soaks, externals, orbs, kicks, mind control CC, curses and healing cooldowns, and shows who missed theirs.',
   audit: 'Every boss mechanic in this pull, phase by phase. It shows what went wrong and who was involved, with maps, plus deaths and survival.',
   rot: 'How each player played their own spec in this pull, checked against the guides: what they pressed and when, their cooldowns, their resources and their talents.',
@@ -1097,7 +1102,7 @@ function tbPull(r, allMode) {
 }
 // (the pinned bar's left end shows once the banner is off screen)
 if (typeof IntersectionObserver !== 'undefined') { const bhObs = new IntersectionObserver((es) => { for (const e of es) document.body.classList.toggle('bh-off', !e.isIntersecting); }); const bh = document.getElementById('bossHead'); if (bh) bhObs.observe(bh); }
-const isAllMode = () => !!(S.rep && S.scope === 'all' && S.tab !== 'live' && S.item && S.item.kind !== 'run' && !S.item.run);
+const isAllMode = () => !!(S.rep && S.scope === 'all' && S.item && S.item.kind !== 'run' && !S.item.run);
 // Each boss's banner art: Wowhead's guide header for the fight (the boss rendered over the raid's backdrop, 2992x1144),
 // loaded at runtime from its image server, never bundled; [image, where the boss sits across it in %, for the crop].
 // A boss without one (or when it doesn't load) gets the model render instead (bossArt).
@@ -1135,7 +1140,7 @@ function headerHtml(r, allMode) {
   const pk = E.PACKS.find((p) => p.encounter === it.boss), raid = pk ? pk.raid || 'The Venomous Abyss' : '';
   if (allMode) {
     const nr = nightResult(it), time = same.reduce((s, b) => s + (b.duration || 0), 0);
-    cls = nr.cls; left = nr.left; kick = ['All pulls', it.diff, raid]; big = nr.big + (nr.cls !== 'good' && nr.pull ? ' (pull ' + nr.pull + ')' : '');
+    cls = nr.cls; left = nr.left; kick = ['Whole night', it.diff, raid]; big = nr.big + (nr.cls !== 'good' && nr.pull ? ' (pull ' + nr.pull + ')' : '');
     stats = [['pulls', plural(same.length, 'pull')], ['timer', T(time) + ' on the boss']].concat(H.earlier.length ? [['moon', 'Night ' + (H.earlier.length + 1) + ' on this boss']] : []);
     if (H.earlier.length) side += nr.cls !== 'good' && nr.left != null && everBest != null && nr.left < everBest ? '<span class="nc-res ok">✓ Further than any night before</span>'
       : '<span class="sub">Before tonight, ' + (H.kill ? 'you killed it on ' + esc(H.kill.label) : H.best ? 'your best was ' + esc(H.best.label) : 'there was no result') + ', over ' + plural(H.pulls, 'pull') + ' in ' + plural(H.earlier.length, 'night') + '.</span>';
@@ -1171,12 +1176,12 @@ function headerHtml(r, allMode) {
   // (the team this raid is, linking to its Progress: "Wolfthorn · 7/10 Mythic ›")
   const tm = !isKey ? pullTeam(r || S.rep, it) : null, tmL = tm ? '<button class="bh-team" type="button" data-team="' + esc(tm.gid) + '" title="' + esc(tm.name) + '\'s progress, every boss and night">' + esc(tm.name) + ' · ' + tm.k + '/' + tm.of + ' ' + esc(tm.diff || '') + ' ›</button>' : '';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
-    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
+    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
     '<div class="bh-l2"><span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
-    '<span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span></div></div></header>';
+    '<span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + (isKey ? '' : bhCutChip()) + '</div></div></header>';
 }
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
-function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); }
+function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); renderList(); }
 const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
@@ -1259,27 +1264,27 @@ function renderMain() {
   const r = S.rep, it = r.item, single = it.kind === 'run' || !!it.run;
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
   if (S.tab === 'raid') S.tab = 'player'; // (the Raid audit is part of the Player audit now)
-  if (OLD_ALL[S.tab]) S.tab = 'night';
+  if (OLD_ALL[S.tab]) { S.tab = 'live'; S.scope = 'all'; }
   // (a jump into Spec checks from an old saved spot or link opens Rotation; Graphs then opens on its last view)
   if (S.tab === 'perf' && S.perfKind === 'spec') { S.tab = 'rot'; S.perfKind = null; }
   if ((S.tab === 'perf' && PERF_OFF()) || (S.tab === 'rot' && SPEC_OFF())) S.tab = 'live';
   if (!VIEWS[S.tab]) S.tab = 'overview';
   // Summary is all pulls; Latest pull, Assignments and Mechanics are one pull; the Player audit keeps its own switch.
   // (a Mythic+ key has no all-pulls view)
-  if (S.tab === 'night') S.scope = 'all'; else if (S.tab !== 'player' && !PF_TAB(S.tab)) S.scope = 'pull';
+  if (S.tab === 'night') { S.tab = 'live'; S.scope = 'all'; } // (Night summary, from an old link or a saved spot: Recap on the whole night)
   if (single) S.scope = 'pull';
-  const allMode = S.scope === 'all' && !single && S.tab !== 'live';
+  const allMode = S.scope === 'all' && !single;
   const serious = allMode ? 0 : keptMistakes(r).filter((m) => m.severity === 'High' && m.mechanic !== 'Death').length;
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
-  $('#bossHead').innerHTML = headerHtml(r, allMode) + meBar(r); // (and, when this log isn't known yet, "Is this your raid?")
+  $('#bossHead').innerHTML = headerHtml(r, allMode) + '<div class="bh-pk" id="bhPk"></div><div class="bh-cutpop" id="bhCutPop" hidden></div>' + meBar(r); // (and, when this log isn't known yet, "Is this your raid?")
   $('#main').innerHTML =
     // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
-    '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Pull recap']].concat(TABS));
+    '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
       const tab = (k) => { const l = name.get(k), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + '</button>'; };
-      return TAB_GROUPS.map(([g, ks]) => '<span class="tgrp" role="presentation"><b aria-hidden="true">' + g + '</b><span role="presentation">' + ks.map(tab).join('') + '</span></span>').join('<span class="tsep" aria-hidden="true"></span>'); })() + '</nav>' + tbPull(r, allMode) + '</div>' +
+      return TAB_ORDER.map(tab).join(''); })() + '</nav>' + tbPull(r, allMode) + '</div>' +
     '<section id="view"></section>';
   $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
   { const tp = $('#main .tb-pull'); if (tp) tp.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -1287,13 +1292,15 @@ function renderMain() {
   $('#main').querySelectorAll('.tbp-n').forEach((b) => (b.onclick = () => { const same = S.index.bosses.filter((x) => x.id === it.id && x.diffId === it.diffId), to = same[same.indexOf(it) + +b.dataset.d]; if (to) select(to); }));
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
-  VIEWS[S.tab]();
+  // (the whole night: Recap is the night's summary, Mechanics and Assignments their rows across the pulls; Rotation, Graphs
+  // and Players have their own whole-night views)
+  if (allMode && (S.tab === 'live' || S.tab === 'audit' || S.tab === 'overview')) night({ live: null, audit: 'mech', overview: 'asg' }[S.tab]); else VIEWS[S.tab]();
   // (opened from a Summary row: open that mechanic's or assignment's row on this pull and bring it into view)
   if (S.pendingSec) { const el = document.querySelector('#view [id^="' + CSS.escape(S.pendingSec) + '"]'); S.pendingSec = null;
     if (el) { if (el.tagName === 'DETAILS') { el.open = true; if (el.dataset.k) S.openSecs.add(el.dataset.k); } for (let e = el.parentElement; e; e = e.parentElement) if (e.tagName === 'DETAILS') e.open = true;
       // (again a moment later: a section that fills in when it opens makes the page longer only then)
       const to = () => window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); to(); setTimeout(to, 80); } }
-  refreshIcons();
+  refreshIcons(); S.page = 'pull'; navNote();
 }
 const view = (h) => { $('#view').innerHTML = h; };
 const players = () => [...S.rep.players.values()];
@@ -4195,8 +4202,8 @@ function gradeAssign(reps) {
   for (const c of cats) c.letter = letterOf(c.score);
   return { cats, overall, letter: letterOf(overall) };
 }
-async function night() {
-  const it0 = S.item, here = () => S.item === it0 && S.tab === 'night';
+async function night(part) {
+  const it0 = S.item, tab0 = S.tab, here = () => S.item === it0 && S.tab === tab0 && S.scope === 'all';
   // every boss pulled tonight (not Mythic+ key bosses), in the order first pulled; the one on screen is shown in full
   const groups = new Map();
   for (const b of S.index.bosses) { if (b.run) continue; const k = b.id + ':' + b.diffId; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
@@ -4393,9 +4400,16 @@ async function night() {
   // (the picker on top, for the whole night)
   const pickS = onePick([...pm.values()], S.mechP, one ? oneOn(pm.get(one), 'Showing <b style="color:' + pm.get(one).color + '">' + esc(one) + '</b> only: their mechanics, assignments and deaths in the ' + plural(oneD.length, 'pull') + ' they were in.')
     : S.mechP ? '<span class="mp-on sub">' + esc(S.mechP) + " wasn't in these pulls, so everyone is shown. " + onePx + '</span>' : '<span class="sub">Pick a player to see only their part of the night: their mechanics, their assignments and their deaths.</span>', !!one);
-  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + '<div class="nsa sumv sum2">' + pickS + (others.length ? '<div class="sum-others"><span class="sub">Also tonight</span>' + others.join('') + '</div>' : '') +
-    '<div class="sum-main">' + progress + fix + mSec + aSec +
-    '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, amber could be better, red means something went wrong, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull. Each player\'s grade and the MVPs of the night are on the Players tab.</p></div>' + rail + '</div>');
+  const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, amber could be better, red means something went wrong, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
+  // (Recap: the report cards, how far the night got and what kept going wrong; Mechanics and Assignments: their rows across
+  // the pulls, with their report card on top)
+  const mPart = gm ? secHead('sum-mech', 'Mechanics, the whole night', 'every mechanic across the pulls. Open one for the pulls that went wrong.') + (mCard || '') + (mHtml || '') : '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>';
+  const aPart = secHead('sum-asg', 'Assignments, the whole night', hasNote ? 'every assignment in the NSRT note across the pulls' : '') +
+    (!hasNote ? '<div class="panel noteempty"><div><b>No NSRT note for ' + esc(b0.boss) + ' yet.</b> <span class="sub">Add the one your raid is using on Assignments (pick a pull first) to check soaks, kicks, orbs and cooldowns across every pull.</span></div><button class="btn" id="sumNote">Open Assignments</button></div>'
+      : (aCard || '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
+  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part">' + pickS + mPart + legend + '</div>'
+    : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
+    : '<div class="nsa sumv sum2">' + pickS + '<div class="sum-main">' + progress + fix + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Mechanics and Assignments tabs, with Whole night picked. Each player\'s grade and the MVPs of the night are on Players.</p></div>' + rail + '</div>'));
   refreshIcons(); setHeadRes(); fitTrends();
   // opening a pull: its Mechanics or Assignments tab, scrolled to the row it came from
   const open = (n, tab, sec) => { const r = byPull.get(+n); if (!r) return; S.tab = tab || 'audit'; S.pendingSec = sec || null; S.scope = 'pull'; select(r.item); };
@@ -4403,13 +4417,14 @@ async function night() {
   $$('#view [data-open]').forEach((b) => (b.onclick = () => open(b.dataset.open, b.dataset.tab, b.dataset.sec)));
   $$('#view .nm-cell[data-pull]').forEach((b) => (b.onclick = () => open(b.dataset.pull, b.dataset.tab, b.dataset.sec)));
   $$('#view details.secd[data-k]').forEach((d) => (d.ontoggle = () => { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); }));
-  $$('#view .pt-go').forEach((x) => (x.onclick = (e) => { e.preventDefault(); const el = document.querySelector(x.getAttribute('href')); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); }));
+  $$('#view .pt-go').forEach((x) => (x.onclick = (e) => { e.preventDefault(); const el = document.querySelector(x.getAttribute('href')); if (el) { window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); return; }
+    const t = { '#sum-mech': 'audit', '#sum-asg': 'overview' }[x.getAttribute('href')]; if (t) { S.tab = t; renderMain(); window.scrollTo({ top: 0 }); } })); // (on Recap, Mechanics and Assignments are their own tabs)
   $$('#view .sum-ob').forEach((b) => (b.onclick = () => { const l = groups.get(b.dataset.boss); if (l) select(l[l.length - 1]); }));
   // list-and-detail: clicking a pull on the left shows its problems on the right
   $$('#view .md-i').forEach((b) => (b.onclick = () => { const md = b.closest('.md'); md.querySelectorAll('.md-i').forEach((x) => x.classList.toggle('on', x === b)); md.querySelectorAll('.md-d').forEach((d) => { d.hidden = d.dataset.i !== b.dataset.i; }); }));
-  if ($('#sumNote')) $('#sumNote').onclick = () => { S.tab = 'overview'; renderMain(); };
-  if ($('#nightAll')) $('#nightAll').onclick = () => { NIGHT_ALL = true; night(); };
-  bindOnePick(() => night());
+  if ($('#sumNote')) $('#sumNote').onclick = () => { S.tab = 'overview'; S.scope = 'pull'; renderMain(); };
+  if ($('#nightAll')) $('#nightAll').onclick = () => { NIGHT_ALL = true; night(part); };
+  bindOnePick(() => night(part));
   if ($('#sumOneP')) $('#sumOneP').onclick = () => { S.plSel = one; S.plScroll = true; S.tab = 'player'; renderMain(); };
 }
 
@@ -11972,7 +11987,7 @@ function player() {
   // (one pull or the whole night, switched on top of the page, next to the wipe filter's line)
   const sw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (v === 'night' ? ' class="on"' : '') + '>All pulls<span class="n">' + pulls.length + '</span></button><button data-v="pull"' + (v === 'pull' ? ' class="on"' : '') + '>Pull #' + it.pull + '<span class="n">' + (it.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   const cached = S.plData && S.plData.key === key ? S.plData : null;
-  view('<div class="plv"><div class="plhd">' + sw + cutLine + '</div><div id="plBody">' + (cached ? '' : v === 'night' ? loadCard('Reading the night', 'Reading tonight\'s pulls…', 0) : loadCard('Grading the players', 'Mechanics, the Report card and prep…', null)) + '</div></div>');
+  void sw; view('<div class="plv"><div class="plhd">' + cutLine + '</div><div id="plBody">' + (cached ? '' : v === 'night' ? loadCard('Reading the night', 'Reading tonight\'s pulls…', 0) : loadCard('Grading the players', 'Mechanics, the Report card and prep…', null)) + '</div></div>');
   $$('.plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   const still = () => S.tab === 'player' && S.rep && S.rep.item === it && $('#plBody');
   const draw = (c) => { const el = $('#plBody'); if (!el) return; el.innerHTML = (c.load || '') + plPage(c.data, c.reps, v === 'pull'); bindPlayers(c); refreshIcons(); fillItemNames(el);
@@ -12476,7 +12491,8 @@ const LIVE = { on: false, timer: null, seen: new Map(), last: 0, busy: false, en
 const LIVE_FRESH = 10 * 60e3, LIVE_IDLE = 45 * 60e3;
 function liveUi() {
   const bar = $('#liveBar'); if (!bar) return;
-  bar.hidden = !S.wclCode && !FH.dir;
+  // (your note, Oct 18: only for a night being logged now or a few hours ago, or a log followed on this PC; not last week's)
+  bar.hidden = !(LIVE.on || FH.dir || (S.wclCode && LIVE.endMs && Date.now() - LIVE.endMs < 3 * 3600e3));
   const b = $('#liveBtn'); b.textContent = LIVE.on ? 'Live: on' : 'Live: off'; b.classList.toggle('on', LIVE.on);
   // (short: when it last looked; the log's file name is in the tooltip)
   const lm = $('#liveMsg');
@@ -12647,7 +12663,7 @@ function setLive(on) {
   const was = LIVE.on;
   LIVE.on = on; clearInterval(LIVE.timer); LIVE.timer = null;
   // live logging opens on the Last pull recap; turning it off leaves that tab
-  if (on && !was) S.tab = 'live';
+  if (on && !was) { S.tab = 'live'; S.scope = 'pull'; }
   if (was !== on && S.rep && $('#view')) renderMain();
   if (on) { LIVE.changed = Date.now(); LIVE.timer = setInterval(liveTick, FH.dir ? 10000 : 30000); liveTick(); }
   try { sessionStorage.setItem('wla-live', on ? '1' : ''); } catch (e) { /* ignore */ }
@@ -12658,6 +12674,18 @@ $('#liveBtn').onclick = () => setLive(!LIVE.on);
 // The wipe filter control, made once; renderList moves it to the right end of the pull cards, as a card of its own: it
 // decides how far each wipe counts, on every tab.
 let CUT_NODE = null;
+// (its place (your pick, Oct 18): a chip in the boss banner, "Counting up to 2 deaths", that opens this control just under
+// the banner; it was a card among the pull cards, which are for picking a pull)
+function bhCutChip() { const n = deathCutN();
+  return '<button class="bh-cut' + (n ? '' : ' off') + '" type="button" id="bhCut" aria-expanded="' + !!S.cutOpen + '" title="The wipe filter: on a wipe, everything after that death is left out of every tab. Kills are never cut."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg>' + (n ? 'Counting up to ' + plural(n, 'death') : 'Wipe filter off') + CHEV + '</button>'; }
+function bhCutBind() {
+  if (!CUT_NODE) return; const pop = $('#bhCutPop'), b = $('#bhCut');
+  if (!pop || !b) { if (CUT_NODE.parentNode) CUT_NODE.parentNode.removeChild(CUT_NODE); return; }
+  if (CUT_NODE.parentNode !== pop) pop.appendChild(CUT_NODE);
+  pop.hidden = !S.cutOpen; b.setAttribute('aria-expanded', String(!!S.cutOpen));
+  b.onclick = (e) => { e.stopPropagation(); S.cutOpen = !S.cutOpen; pop.hidden = !S.cutOpen; b.setAttribute('aria-expanded', String(S.cutOpen)); };
+}
+document.addEventListener('click', (e) => { if (!S.cutOpen || e.target.closest('#bhCut, #bhCutPop')) return; S.cutOpen = false; const p = $('#bhCutPop'), b = $('#bhCut'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); });
 (function cutSide() {
   const el = $('#cutSide'); if (!el) return;
   CUT_NODE = el;
@@ -12688,10 +12716,43 @@ function hostedPanel(msg) {
   $('#hLink').onkeydown = (e) => { if (e.key === 'Enter') go(); };
   $('#hLink').onpaste = () => setTimeout(go, 50);
 }
+// Back and Forward (your note, Oct 18: Back always left Debrief). Every page you open is a step in the browser's history:
+// Home, the teams page, a team's page, a pull and its tab, one pull or the whole night. Each page records itself once it's
+// drawn (navNote: a new step, or the same step updated), and Back or Forward opens the page a step names again (navGo).
+// On the website a pull's step also carries its shareable address, ?report=CODE&fight=N.
+let NAV_RESTORE = false, NAV_BOOT = true; // (the first page drawn after a load or reload takes over the step it was opened on, not a new one)
+function navState() {
+  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull' }; }
+  if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView };
+  if (S.page === 'home') return { nav: 1, v: 'h' };
+  return null;
+}
+const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.tab, st.scope, st.g].join('|') : '');
+function navNote() {
+  const st = navState(); if (!st) return;
+  const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
+  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight : location.pathname) : location.pathname + location.search;
+  const boot = NAV_BOOT; NAV_BOOT = false;
+  try { if (cur === k) return; if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
+}
+async function navGo(st) {
+  if (st.v === 'h') { home(); }
+  else if (st.v === 'g') { progressPage(undefined, st.g); }
+  else if (st.v === 'p') {
+    let b = null;
+    if (st.code) { if (S.wclCode !== st.code || !S.index) { let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; } await openWcl({ code: st.code, fight: st.fight }, creds); }
+      b = S.index && S.index.bosses ? S.index.bosses.find((x) => x.wcl && x.wcl.code === st.code && x.wcl.fight === st.fight) : null; }
+    else if (S.index && S.index.bosses && st.bi >= 0) b = S.index.bosses[st.bi];
+    if (!b) { home(); return; }
+    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull';
+    if (S.item !== b || !S.rep) await select(b); else renderMain();
+  }
+  window.scrollTo(0, 0);
+}
+window.addEventListener('popstate', (e) => { const st = e.state; if (!st || !st.nav) return; NAV_RESTORE = true; Promise.resolve().then(() => navGo(st)).catch((err) => console.warn('Back:', err && err.message)).finally(() => { NAV_RESTORE = false; }); });
 // Shareable addresses: ?report=CODE&fight=N opens that report and pull directly.
 function syncUrl(item) {
   if (!WCL.HOSTED || !item || !item.wcl) return;
-  try { history.replaceState(null, '', '?report=' + item.wcl.code + '&fight=' + item.wcl.fight); } catch (e) { /* ignore */ }
   store.set('wla-last-report', item.wcl.code); // (so coming back to the site doesn't reopen it: see the start below)
 }
 
@@ -12765,7 +12826,7 @@ function home() {
   if (LIVE.on) setLive(false);
   FH.dir = null; liveUi(); // (no live button on the start screen)
   S.item = null; S.rep = null;
-  if (WCL.HOSTED && location.search) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ } // (the address is the front page again)
+  S.page = 'home'; navNote(); // (a step for Back; on the website the address is the front page again)
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; // (no banner or pull cards on the start screen)
   $('.brand p').textContent = WCL.HOSTED ? 'Paste a Warcraft Logs link or drop your own log' : 'Retail combat logs, read on your PC'; // (not the last report's name)
   // (the website: always the front page, with your teams on it once you have one (your note, Oct 18: everyone starts on
@@ -13023,9 +13084,9 @@ function runTips(k, steps) {
   const follow = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(place); };
   const finish = () => { store.set(TIPS_KEY(k), '1'); removeEventListener('scroll', follow, true); removeEventListener('resize', follow); document.removeEventListener('keydown', key, true); ov.classList.add('out'); setTimeout(() => ov.remove(), 220); };
   const draw = () => { const s = steps[i], last = i === steps.length - 1, e = tipVis(s.sel);
-    bub.innerHTML = '<div class="pt-k">' + (i + 1) + ' of ' + steps.length + '</div><b>' + esc(s.t) + '</b><p>' + esc(s.p) + '</p><div class="pt-nav">' + (i ? '<button class="btn" data-p="back" type="button">Back</button>' : '') +
+    bub.innerHTML = '<div class="pt-k">' + (i + 1) + ' of ' + steps.length + '</div><b>' + esc(s.t) + '</b><p>' + esc(s.p) + '</p><div class="pt-nav">' + (i ? '<button class="btn" data-p="back" type="button">Back</button>' : '<button class="linkbtn pt-tour" data-p="tour" type="button">Take the tour</button>') +
       '<button class="btn primary" data-p="' + (last ? 'done' : 'next') + '" type="button">' + (last ? 'Got it' : 'Next') + '</button></div>';
-    bub.querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => { const a = b.dataset.p; if (a === 'next') { i++; draw(); } else if (a === 'back') { i--; draw(); } else finish(); }));
+    bub.querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => { const a = b.dataset.p; if (a === 'next') { i++; draw(); } else if (a === 'back') { i--; draw(); } else if (a === 'tour') { finish(); startTour(0); } else finish(); }));
     bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in');
     if (e) { const b = e.getBoundingClientRect(); if (b.top < 70 || b.bottom > innerHeight - 40) e.scrollIntoView({ block: 'center' }); }
     place(); const f = bub.querySelector('.btn.primary'); if (f) f.focus(); };
@@ -13040,7 +13101,7 @@ function renderTeamsHome() {
   const last = gl.reduce((m, g) => Math.max(m, g.last || 0), 0), ago = last ? Math.max(0, Math.round((Date.now() - last) / 60000)) : null;
   $('#main').innerHTML = '<div class="home th-home2">' + teamsBar() +
     '<section class="th-teams"><div class="th-h"><h2>Your teams</h2>' + (ago != null ? '<span class="sub">' + (S.progBusy ? 'checking for new nights…' : 'checked ' + (ago < 1 ? 'just now' : ago < 60 ? plural(ago, 'minute') + ' ago' : ago < 1440 ? plural(Math.round(ago / 60), 'hour') + ' ago' : 'on ' + esc(nightLabel(last + 6 * 3600e3)))) + '</span>' : '') + '</div>' +
-      '<div class="tt-row">' + gl.map((g) => teamTile(g, all, order)).join('') + '<button class="tt-card tt-add" type="button" data-g="+"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a team</span><span class="tt-l">or your character</span></button></div></section>' +
+      '<div class="tt-row">' + gl.map((g) => teamTile(g, all, order)).join('') + '<button class="tt-card tt-add" type="button" data-g="+"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a team or character</span></button></div></section>' +
     homePreviews() + homeFoot() + '</div>';
   progLit(false); bindTeamsBar();
   $$('#main .tt-card').forEach((b) => (b.onclick = () => { const v = b.dataset.g; S.pgFocusAdd = v === '+'; progressPage(undefined, v === '+' ? null : v); window.scrollTo(0, 0); }));
@@ -13060,7 +13121,7 @@ function homeTeams() {
   const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
   // (an Add card always ends the row: the way to bring in a team, a guild or your own character)
   return '<section class="home-teams" id="homeTeams"><div class="ht-h"><h2>Your progress</h2></div><div class="ht-row">' + gl.map((g) => teamCard(g, all, order, false)).join('') +
-    '<button class="ht-card ht-add" type="button" data-g="+"><span class="ht-n">+ ' + (gl.length ? 'Add a team or character' : 'Add your team') + '</span><span class="ht-k">Your team, guild or character page from Warcraft Logs brings in every raid night of the tier, boss by boss.</span></button></div></section>';
+    '<button class="ht-card ht-add" type="button" data-g="+"><span class="ht-n">+ Add a team or character</span><span class="ht-k">Your team, guild or character page from Warcraft Logs brings in every raid night of the tier, boss by boss.</span></button></div></section>';
 }
 // (a team's card opens its page; "add" opens the teams page, ready to paste a link)
 function bindHomeTeams() {
@@ -13325,6 +13386,7 @@ function topGuildsHtml(list) {
 // (asHome: the home page: the slim bar for logs on top, titled "Your teams")
 function renderProgHub(msg, msgErr, asHome) {
   if (asHome == null) asHome = !!S.hubHome; S.hubHome = asHome;
+  S.page = asHome ? 'home' : 'prog'; queueMicrotask(navNote); // (a step for Back, once the page is drawn)
   const gl = groups(), order = E.PACKS.map((p) => p.encounter), all = [...HIST.mem.values()].filter((v) => order.includes(v.boss));
   const back = !asHome && PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK) ? '<button class="lnk pg-back" id="pgBack" type="button">‹ Back to ' + esc(PROG_BACK.boss) + (PROG_BACK.pull ? ', pull ' + PROG_BACK.pull : '') + '</button>' : '';
   // (the add card says exactly which link to paste: a team's or guild's page, or a character's, with what each looks like;
@@ -13518,6 +13580,7 @@ function sinceLast(list) {
     '<p class="sub" style="margin:8px 0 0">' + (lv ? plural(lv, 'player') + ' stayed about the same. ' : '') + 'The grade from Players (mechanics and Report card, each night\'s pulls averaged by time alive), without prep.</p></section>';
 }
 function renderProgress(msg, msgErr) {
+  S.page = 'prog'; queueMicrotask(navNote); // (a step for Back, once the page is drawn)
   // (the teams page, unless a team (or everything saved) is picked)
   const gl = groups(), g = S.progView && S.progView !== '*' ? gl.find((x) => x.gid === S.progView) : null;
   if (S.progView == null || (S.progView !== '*' && !g)) { S.progView = null; renderProgHub(msg, msgErr); return; }
@@ -13724,7 +13787,9 @@ if (backAgain) try { history.replaceState(null, '', location.pathname); } catch 
 const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain;
 if (!tourDone() && sharedLink) S.tourAfterPull = true;
 if (WCL.HOSTED) {
-  $('#wclBtn').textContent = 'Paste a link';
+  $('#wclBtn').innerHTML = 'Open a report or log<span>paste a Warcraft Logs link, or pick a log on this PC</span>';
+  $('#wclBtn').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; home(); setTimeout(() => { const i = $('#hWcl'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } }, 60); };
+  for (const id of ['#openBtn', '#tbSaved']) { const b = $(id); if (b) b.hidden = true; }
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
   if (sharedLink) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null).catch((err) => hostedPanel(err.message)); }
