@@ -22464,11 +22464,11 @@ function hostedPanel(msg) {
 let NAV_RESTORE = false, NAV_BOOT = true; // (the first page drawn after a load or reload takes over the step it was opened on, not a new one)
 function navState() {
   if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull', sel: S.tab === 'rot' ? S.specSel || null : null }; }
-  if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView };
+  if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
   return null;
 }
-const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.tab, st.scope, st.g].join('|') : '');
+const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.tab, st.scope, st.g, st.mine].join('|') : '');
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
@@ -22479,7 +22479,7 @@ function navNote() {
 }
 async function navGo(st) {
   if (st.v === 'h') { home(); }
-  else if (st.v === 'g') { progressPage(undefined, st.g); }
+  else if (st.v === 'g') { progressPage(undefined, st.g); if (st.mine) S.progMine = true; } // (set before the page draws)
   else if (st.v === 'p') {
     let b = null;
     if (st.code) { if (S.wclCode !== st.code || !S.index) { let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; } await openWcl({ code: st.code, fight: st.fight }, creds); }
