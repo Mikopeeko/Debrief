@@ -5847,6 +5847,72 @@ function roleChips() { return ''; }
 const resses = (n) => n + (n === 1 ? ' battle res' : ' battle resses');
 const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || { rows: [] }).rows.reduce((s, x) => s + x.n, 0);
   return { v: t('disp') + '<span> dispels</span> ' + t('ext') + '<span> externals</span>', s: resses(t('bres')) + ' · ' + t('cc') + ' crowd control' }; };
+// ---------- Graphs as bar graphs (your ask, Oct 19: "a tab full of bar graphs like warcraftlogs ... I want to be able to click on the bars, and it give
+// me more basic breakdown information, as well as tooltips when hovering over the bars") ----------
+// One board of cards, each a ranked list of players with bars in their class colour, the way Warcraft Logs draws its tables: damage done, healing
+// done, damage taken, avoidable damage taken, deaths, interrupts, dispels and casts a minute, up to the wipe filter. Hovering a bar shows its numbers;
+// clicking it opens that player's breakdown under it (their spells, the hits they took, their deaths, what they kicked or dispelled). The detailed
+// views (charts over time, resources, cooldowns, buffs) stay one click away under the board. One pull at a time; All pulls keeps its own view.
+let GB = null;
+function graphsBoard(r, end) {
+  const ps = players().filter((p) => p.name && !/^Player-/.test(p.name)), dur = Math.max(1, end), E1 = Math.ceil(end);
+  const sumTo = (arr) => { let s = 0; for (let i = 0; i < Math.min(arr.length, E1); i++) s += arr[i] || 0; return s; };
+  // (what hit a player, up to the wipe filter: per spell, its damage, hits, biggest and the avoidable part)
+  const takenBy = (p) => { const m = new Map(); (p.takenAbS || []).slice(0, E1).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { name: n, id: v[0], total: 0, hits: 0, big: 0, av: 0 }; x.total += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.av += v[4] || 0; m.set(n, x); } }); return [...m.values()]; };
+  const deaths = (p) => (r.deaths || []).filter((d) => d.guid === p.guid && d.t <= end + 0.05), kicks = (p) => (r.interrupts || []).filter((k) => k.guid === p.guid && k.t <= end + 0.05);
+  const disp = (p) => (p.dispL || []).filter((d) => d.t <= end + 0.05), castC = new Map(), castsOf = (p) => { if (!castC.has(p.name)) castC.set(p.name, castOf(r, p, 0, end)); return castC.get(p.name); };
+  const CARDS = [
+    { k: 'dmg', t: 'Damage done', ic: 'bars', rate: 'DPS', val: (p) => sumTo(p.dmgS || []) },
+    { k: 'heal', t: 'Healing done', ic: 'heart', rate: 'HPS', val: (p) => sumTo(p.healS || []) },
+    { k: 'taken', t: 'Damage taken', ic: 'shield', rate: 'a second', val: (p) => sumTo(p.takenS || []) },
+    { k: 'avoid', t: 'Avoidable damage taken', ic: 'warn', val: (p) => takenBy(p).reduce((v, x) => v + x.av, 0) },
+    { k: 'death', t: 'Deaths', ic: 'skull', count: true, val: (p) => deaths(p).length },
+    { k: 'kick', t: 'Interrupts', ic: 'kick', count: true, val: (p) => kicks(p).length },
+    { k: 'disp', t: 'Dispels', ic: 'disp', count: true, val: (p) => disp(p).length },
+    { k: 'cpm', t: 'Casts a minute', ic: 'cycle', cpm: true, val: (p) => { const c = castsOf(p); return c && c.al >= 10 ? 60 * c.n / c.al : 0; } }];
+  const fmtV = (q, v) => (q.count ? String(Math.round(v)) : q.cpm ? v.toFixed(1) : C(v));
+  const card = (q) => { const rows = ps.map((p) => ({ p, v: q.val(p) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); if (!rows.length) return '';
+    const mx = rows[0].v, tot = rows.reduce((v, x) => v + x.v, 0);
+    const head = q.count ? tot + ' in all' : q.cpm ? 'raid average ' + (tot / rows.length).toFixed(1) : C(tot) + (q.rate ? ' · ' + C(tot / dur) + ' ' + q.rate : '');
+    return '<section class="gb-card" data-k="' + q.k + '"><header class="gb-h"><b>' + esc(q.t) + '</b><span class="sub">' + esc(head) + '</span></header><div class="gb-rows">' + rows.map((x, i) => {
+      const col = x.p.color || '#9aa0ac', w = Math.max(1.5, 100 * x.v / mx), sh = tot > 0 ? 100 * x.v / tot : 0;
+      const tip = { n: x.p.name, s: x.p.specName || '', v: fmtV(q, x.v) + (q.count ? (x.v === 1 ? ' time' : ' times') : ''), r: q.rate ? C(x.v / dur) + ' ' + q.rate : '', sh: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of the raid', rk: '#' + (i + 1) + ' of ' + rows.length, t: q.t };
+      return '<div class="gb-row" role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '">' +
+        '<span class="gb-rk">' + (i + 1) + '</span>' + avatar(x.p, true) + '<span class="gb-n" style="color:' + col + '">' + esc(x.p.name) + '</span>' +
+        '<span class="gb-tr"><i class="gb-f" style="width:' + w.toFixed(1) + '%;background:' + col + '"></i></span><span class="gb-v">' + fmtV(q, x.v) + '</span>' +
+        '<span class="gb-r">' + (q.rate ? C(x.v / dur) : q.cpm ? '' : q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%') + '</span></div>'; }).join('') + '</div></section>'; };
+  // (a player's breakdown, built when their bar is clicked)
+  const abRows = (list, opt) => { const L = list.filter((y) => y.total > 0).sort((a, b) => b.total - a.total), tot = L.reduce((v, y) => v + y.total, 0); if (!L.length) return '<p class="sub">Nothing to show.</p>';
+    const mx = L[0].total; return '<div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(String(y.name).replace(/^[^:]+: /, '')) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + C(y.total) + '</span></span>' +
+      '<span class="gb-bx">' + Math.round(100 * y.total / tot) + '%' + (y.hits ? ' · ' + y.hits + (y.hits === 1 ? ' hit' : ' hits') : '') + (opt && opt.crit && y.hits ? ' · ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '') + (opt && opt.over && y.total + (y.over || 0) > 0 ? ' · ' + Math.round(100 * (y.over || 0) / (y.total + (y.over || 0))) + '% overheal' : '') + (opt && opt.big && y.big ? ' · biggest ' + C(y.big) : '') + '</span></div>').join('') + (L.length > 14 ? '<p class="sub">and ' + (L.length - 14) + ' more</p>' : '') + '</div>'; };
+  const cnt = (l, key) => { const m = new Map(); for (const x of l) { const n = key(x); m.set(n, (m.get(n) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
+  const BD = {
+    dmg: (p) => '<p class="gb-bh">Their damage by spell, over the whole pull.</p>' + abRows([...p.dmgAb.values()], { crit: true }),
+    heal: (p) => '<p class="gb-bh">Their healing by spell, over the whole pull.</p>' + abRows([...p.healAb.values()], { crit: true, over: true }),
+    taken: (p) => '<p class="gb-bh">What hit them.</p>' + abRows(takenBy(p), { big: true }),
+    avoid: (p) => '<p class="gb-bh">The avoidable hits they took.</p>' + abRows(takenBy(p).filter((x) => x.av > 0).map((x) => ({ ...x, total: x.av })), { big: true }),
+    death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + T(d.t) + ': ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' from ' + d.killer : '') : 'a melee hit from ' + (d.killer || 'an enemy')) + '</span></span></div>').join('') + '</div>',
+    kick: (p) => { const l = kicks(p); return '<p class="gb-bh">What they interrupted.</p><div class="gb-bt">' + cnt(l, (k) => k.spell || 'a cast').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div><p class="sub">With ' + esc(andL([...new Set(l.map((k) => k.by).filter(Boolean))])) + '.</p>'; },
+    disp: (p) => { const l = disp(p); return '<p class="gb-bh">What they dispelled.</p><div class="gb-bt">' + cnt(l, (d) => d.aura || 'an effect').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div>'; },
+    cpm: (p) => { const c = castsOf(p); if (!c) return ''; const mins = Math.max(1, c.al) / 60, L = c.ab.map((a) => ({ name: a.name, total: a.ts.length })).sort((a, b) => b.total - a.total), mx = L.length ? L[0].total : 1;
+      return '<p class="gb-bh">' + c.n + ' casts in ' + T(c.al) + ' alive.</p><div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(y.name) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + y.total + '</span></span><span class="gb-bx">' + (y.total / mins).toFixed(1) + ' a minute</span></div>').join('') + '</div>'; } };
+  GB = { BD, byName: new Map(ps.map((p) => [p.name, p])) };
+  const cards = CARDS.map(card).join('');
+  return '<div class="gb">' + '<p class="gb-note sub">Every player, ranked. Hover a bar for its numbers, click it for what made it up. ' + (end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
+    '<div class="gb-grid">' + cards + '</div>' +
+    '<button type="button" class="linkbtn gb-more" id="gbOld">More views: charts over time, resources, cooldowns, buffs and utility ›</button></div>';
+}
+// (the board's tooltip and clicks: one tip box that follows the pointer, and one open breakdown per card)
+{ let tipEl = null; const tipBox = () => tipEl || (tipEl = Object.assign(document.createElement('div'), { className: 'gb-tip', hidden: true }), document.body.appendChild(tipEl), tipEl);
+  document.addEventListener('mousemove', (e) => { const row = e.target.closest && e.target.closest('.gb-row'); const b = tipBox(); if (!row) { b.hidden = true; return; } let d; try { d = JSON.parse(row.dataset.tip); } catch (x) { return; }
+    b.innerHTML = '<b>' + esc(d.n) + '</b><span class="sub">' + esc(d.s) + '</span><div>' + esc(d.t) + ': <b>' + esc(d.v) + '</b></div>' + (d.r ? '<div>' + esc(d.r) + '</div>' : '') + (d.sh ? '<div>' + esc(d.sh) + '</div>' : '') + '<div class="sub">' + esc(d.rk) + ' · click for the breakdown</div>';
+    b.hidden = false; const W = b.offsetWidth, H = b.offsetHeight, x = Math.min(innerWidth - W - 8, e.clientX + 14), y = e.clientY + 16 + H > innerHeight ? e.clientY - H - 10 : e.clientY + 16; b.style.left = Math.max(8, x) + 'px'; b.style.top = y + 'px'; });
+  const open = (row) => { const card = row.closest('.gb-card'), was = row.classList.contains('on'); card.querySelectorAll('.gb-row.on').forEach((x) => { x.classList.remove('on'); x.setAttribute('aria-expanded', 'false'); const n = x.nextElementSibling; if (n && n.classList.contains('gb-bd')) n.remove(); });
+    if (was || !GB) return; const p = GB.byName.get(row.dataset.p), f = GB.BD[row.dataset.k]; if (!p || !f) return;
+    row.classList.add('on'); row.setAttribute('aria-expanded', 'true'); row.insertAdjacentHTML('afterend', '<div class="gb-bd">' + f(p) + '</div>'); refreshIcons(); if (tipEl) tipEl.hidden = true; };
+  document.addEventListener('click', (e) => { const row = e.target.closest && e.target.closest('.gb-row'); if (row) { open(row); return; }
+    if (e.target.closest && e.target.closest('#gbOld')) { S.pfOld = true; renderMain(); return; } if (e.target.closest && e.target.closest('#gbBack')) { S.pfOld = false; renderMain(); } });
+  document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('gb-row')) { e.preventDefault(); open(e.target); } }); }
 function perf() {
   // (Rotation is always Spec checks; Graphs opens on the view you last had, Damage the first time. S.perfKind is the
   // Graphs view only, so going to Rotation and back keeps it)
@@ -5859,6 +5925,8 @@ function perf() {
   const isBoss = r.item.kind === 'boss' && !r.item.run, nP = isBoss && S.index ? S.index.bosses.filter((b) => b.id === r.item.id && b.diffId === r.item.diffId).length : 0;
   const scopeSw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (S.scope === 'all' ? ' class="on"' : '') + '>All pulls<span class="n">' + nP + '</span></button><button data-v="pull"' + (S.scope === 'all' ? '' : ' class="on"') + '>Pull #' + r.item.pull + '<span class="n">' + (r.item.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   if (isBoss && S.scope === 'all') { perfNight(r, kind, scopeSw); return; }
+  // (Graphs opens on the bar graphs (your ask, Oct 19); the detailed views are one click away under them)
+  if (!rot && !S.pfOld) { view(graphsBoard(r, end)); refreshIcons(); return; }
   // the window: the whole pull or the picked phase, each up to the wipe filter
   const phs = ((r.module && !r.module.error && r.module.phases) || []).filter((q) => q.start < end - 1);
   const ph = S.perfPh ? phs.find((q) => pfPhK(q) === S.perfPh) || null : null;
@@ -5881,7 +5949,7 @@ function perf() {
   // (on top: the views as tabs, then one row with the phase switch, the wipe filter note and the search. No pull switch
   // here (your call, Oct 18): the pull cards at the top of the page pick the pull, or All pulls, and keep this view)
   void scopeSw; void vals;
-  let h = '<div class="pfv">' + '' + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + (rot ? '' : pfFindBox()) + '</div></div>';
+  let h = '<div class="pfv">' + (rot ? '' : '<button type="button" class="linkbtn gb-back" id="gbBack">‹ Back to the bar graphs</button>') + '<div class="pf-head">' + perfTabs(kind) + '<div class="pf-top">' + (!counts ? phaseChips(phs.map(pfPhK), ph ? pfPhK(ph) : null) : '') + cutLine + (rot ? '' : pfFindBox()) + '</div></div>';
   if (counts) { view(h + countView(kind, [r], true, ucats, scats) + '</div>'); bindPerf(); if (kind === 'card') bindReportCard(); refreshIcons(); return; }
   if (RV) { view(h + RV.html + '</div>'); bindPerf(); refreshIcons(); return; }
   const rowsAll = R3[kind], total = sumOf(rowsAll), key = KEY[kind];
