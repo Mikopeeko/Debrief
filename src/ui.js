@@ -9030,10 +9030,9 @@ function makeSpecFrame() {
       vars: ';--band:' + M.band + ';--fl2:' + hexA(T.glow, .45) + ';--sfg:' + hexA(T.glow, .16) + ';--acc:' + T.gem[1] };
   };
 }
-// (the banner's picture: the spec's own art from the game's spec picker, in a ring; the class icon when it doesn't load)
-const SPEC_THUMB = 'https://wow.zamimg.com/images/wow/TextureAtlas/live/spec-thumbnail-';
-function heroAvHd(p) { const c = String(p.cls || '').toLowerCase(), sp = String(p.specName || '').replace(/ (Death Knight|Demon Hunter|\w+)$/, '').replace(/[^a-z]/gi, '').toLowerCase();
-  return c && sp ? '<span class="spc-av spc-avhd"><img src="' + SPEC_THUMB + c + '-' + sp + '.webp" alt="" onerror="this.parentNode.classList.add(\'nohd\')">' + avatar(p) + '</span>' : heroAv(p); }
+// (the banner's picture: the spec's own icon from the game, shown near its real size (56px) so it stays sharp; the class icon when it doesn't load)
+function heroAvHd(p) { const ic = pIcon(p);
+  return ic ? '<span class="spc-av spc-avhd spc-avic"><img src="' + whIcon(ic) + '" alt="" onerror="this.parentNode.classList.add(\'nohd\')">' + avatar(p) + '</span>' : heroAv(p); }
 // ---- one spec's Spec checks page, shared: the banner (a score out of 100, the filter, what to work on first), the build, the groups (a block with a
 // line per check, or a row per check), each check's moments, boxes and strip, and the sections under them. Every spec's page uses this one.
 // o: { per, rows, groups, one, P0, heroN, bg, TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TOPP, top, tl, pullT, src, ringTip, secIc }

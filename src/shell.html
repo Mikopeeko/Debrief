@@ -1053,6 +1053,9 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 @media (max-width: 760px) { .spc-hero.spc-sf { margin: 44px 0 44px; padding: 38px 14px 32px; } .sf-o.tl, .sf-o.tr, .sf-o.bl, .sf-o.br { width: 118px; height: 118px; }
   .sf-o.cr { width: 220px; height: 70px; top: -38px; left: calc(50% - 110px); } .sf-o.cl, .sf-o.cR { display: none; } .sf-o.cb { bottom: -44px; }
   .spc-hero .spc-hn > span.spc-avhd { width: 46px; height: 46px; } }
+/* (the spec icon in place of the portrait: a rounded square with a thin class-coloured edge, near the icon's own 56px so it stays sharp) */
+.spc-hero .spc-hn > span.spc-avhd.spc-avic { width: 60px; height: 60px; border-radius: 12px; box-shadow: 0 0 0 2px var(--cc), 0 0 0 3px #000, 0 4px 14px rgba(0,0,0,.6); }
+.spc-avic img { border-radius: 12px; } @media (max-width: 760px) { .spc-hero .spc-hn > span.spc-avhd.spc-avic { width: 46px; height: 46px; border-radius: 10px; } .spc-avic img { border-radius: 10px; } }
 .spc-hl { position: relative; display: flex; align-items: center; gap: 20px; min-width: 0; }
 .spc-rw { position: relative; flex: none; width: 116px; height: 116px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.45)); } .spc-ring { width: 100%; height: 100%; overflow: visible; }
 .spc-ring circle { fill: none; stroke-width: 8; stroke-linecap: round; } .spc-ring .bg { stroke: rgba(255,255,255,.07); } .spc-ring .ok { stroke: var(--ok); } .spc-ring .warn { stroke: var(--wa); } .spc-ring .bad { stroke: var(--ba); }
