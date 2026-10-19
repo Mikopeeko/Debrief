@@ -65,9 +65,9 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   5. **Drawings that look like the real mechanic (your note, Oct 18):** when we can, each mechanic is drawn the way it looks
      in game, in its colour (a green venom puddle, a purple shadow circle) with its spell's icon at the centre (loaded at
      play time like every icon, never bundled). My take: good; people recognise a mechanic by its look faster than by a label.
-  4. Sharper maps (the older note further down): the floor art is about 1 pixel per yard, which is why it looks soft. My
-     take: draw our own clean outline of each boss room (walls, platforms, edges), starting with the progression boss;
-     pulling Blizzard's art from the game files would break the "never bundle Blizzard art" rule.
+  4. ~~Sharper maps: our own clean outline of each boss room.~~ **Declined (your call, Oct 19): keep the boss platform
+     picture as it is.** A mockup (notes/Room outline mockup - The Coiled Altar.jpg) showed the plain outline loses the
+     look of the room.
 - [x] **A short how-to on the Assignments tab (your note, Oct 18; done in round 211):** it's basically empty until a note is pasted, and no
   other website does this, so it needs explaining clearly to stand out. My take: strong, an empty page loses people. My
   suggestion: when no note is pasted yet, the page shows three plain steps (copy your raid's NSRT note, paste it here,
@@ -281,8 +281,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   top, so the players' names can't hide it. Icons load from Wowhead at runtime, never bundled, and fade in when they arrive.
 - [x] Checked on The Coiled Altar (Guillotine, Grim Guillotine, Gloombomb: 31 icons on one pull), The Lost Explorers (Blink
   Nova, Mighty Thud) and The Twin Fangs (Ravenous Feast, Coiling Ichor), with no errors.
-- [ ] Still open from the maps note: our own clean outline of each boss room (the floor art is soft, about 1 pixel per
-  yard). My take: worth doing for the boss you're progressing first; it needs each room's shape measured from logs.
+- [x] Room outlines: declined after a mockup (your call, Oct 19: "I want to see the boss platform, leave that as it is").
+  The maps keep the room picture.
 
 ## 2026-10-19, round 247: Power Infusion on the priest's own Rotation page too (your call: "duplicate it")
 - [x] **Every Holy and Shadow Priest's Rotation page ends with their Power Infusion:** the same cards as Graphs › Power
