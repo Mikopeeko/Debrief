@@ -26495,7 +26495,7 @@ function dbfStats(r) {
     def += (p.defs || []).reduce((n, d) => n + inT(d.uses).length, 0); hs += inT(p.cons.healthstone).length; hp += inT(p.cons.healpot).length;
     if ((r.item.kill || end >= 120) && !p.cons.combatpot.concat(p.cons.manapot || []).some((u) => u.t <= ct + 0.05) && !prepotted(r, p)) noPot.push(p.name); }
   // (not the deaths in a mass wipe, 4 or more within 5 seconds, where a defensive wouldn't have saved anyone)
-  const defReady = ds.filter((d) => d.react !== false && (d.available || []).some((a) => !/^(Healthstone|a healing potion)$/i.test(a)) && ds.filter((x) => Math.abs(x.t - d.t) <= 5).length < 4).map((d) => d.player);
+  const defReady = ds.filter((d) => !dbfFast(d) && (d.available || []).some((a) => !/^(Healthstone|a healing potion)$/i.test(a)) && ds.filter((x) => Math.abs(x.t - d.t) <= 5).length < 4).map((d) => d.player);
   const kicks = r.interrupts.filter((k) => k.t <= ct + 0.05).length, missK = (r.missedKicks || []).filter((m) => m.t <= ct + 0.05).length;
   return (r._dbf = { ct, r, it: r.item, left: r.item.kill ? 0 : pullPct(r.item), label: pullLabel(r.item), dur: r.duration, end, ds, first: ds[0] || null, early, dps: dmg / Math.max(1, end), def, hs, hp, noPot, defReady, kicks, missK, cause: causeOf(r) });
 }
@@ -26524,7 +26524,9 @@ const dbfPhase = (lab) => { const m = String(lab || '').match(/^(P\d+|Int\w*)/i)
 // (Oct 19, your call: "as if you're the raid lead explaining what went wrong to the raid". "We" for the raid, a name and "you"
 // for one player's own death, and each problem with its fix: the first sentence of the mistake's own advice. The one thing to
 // fix first is the "Next pull" line at the top, and isn't repeated in the list)
-const dbfTip1 = (t) => { const x = String(t || '').replace(/<[^>]+>/g, '').trim(), m = x.match(/^.*?[.!?](?=\s|$)/); return (m ? m[0] : x).trim(); };
+// (a very short first sentence is often only the setup, "Only you can see your ghost on Mythic.", so the next one comes with it)
+const dbfTip1 = (t) => { const x = String(t || '').replace(/<[^>]+>/g, '').trim(), m = x.match(/^.*?[.!?](?=\s|$)/); if (!m) return x; const a = m[0].trim();
+  if (a.length < 40 && x.length <= 140) { const m2 = x.slice(m[0].length).match(/^\s*.*?[.!?](?=\s|$)/); if (m2) return (a + ' ' + m2[0].trim()).trim(); } return a; };
 // (each mechanic's fix from a set of pulls' mistakes, by its name in lower case: the player's own when there's one, else the
 // raid's most common one)
 const dbfFixer = (reps) => { const ms = reps.flatMap((r) => keptMistakes(r)).filter((m) => m.fix), lc = (x) => String(x || '').toLowerCase();
@@ -26533,6 +26535,11 @@ const dbfFixer = (reps) => { const ms = reps.flatMap((r) => keptMistakes(r)).fil
 // (a Mechanics section's name the mistakes use: its spell, else its title without the part in brackets)
 const dbfSecName = (s) => (s.spell && s.spell[1] ? s.spell[1] : shortT(s.title).replace(/\s*\(.*$/, ''));
 const dbfUs = (n) => (n === 1 ? 'one of us' : n + ' of us');
+// (was a death theirs to save? (your rule, Oct 19: "if it was within like 1-2 seconds, probably not, if it was slowly over a few
+// or several seconds and they had things in their kit, yea probably"). Fast: 2 seconds or less from healthy to dead, nothing to
+// press. Slow: longer than that, so a defensive, Healthstone or potion still ready was a choice)
+const dbfFast = (d) => d.react === false || (d.window > 0 && d.window <= 2);
+const dbfKit = (d) => (d.available || []).map((a) => (a === 'Healthstone' ? 'a Healthstone' : a === 'a healing potion' ? 'a health potion' : a));
 function dbfPull(o) {
   const { r, prev, isKey, isBest, delta, cd, one } = o, A = dbfStats(r), B = prev ? dbfStats(prev) : null, it = r.item;
   const nowLab = o.nowLab || (A.label !== 'wipe' ? A.label : ''), prevLab = o.prevLab || (B && B.label !== 'wipe' ? B.label : 'a wipe');
@@ -26573,7 +26580,11 @@ function dbfPull(o) {
     : w0 ? 'It fell apart at ' + T(w0[0].t) + ', when ' + dbfUs(w0.length) + ' died within seconds, ' + waveTo(w0) + '.'
     : A.first ? 'It fell apart when ' + dbfWho(A.first.player, pm) + ' died' + at(A.first) + '.' : 'Nobody died before the wipe.';
   const secFix = (x) => { if (isAvoid(x) && avoid.size) { const y = [...avoid.values()][0]; return fixFor(y.m.mechanic, one); } const g = gOf(x); return fixFor(g ? g.m.mechanic : dbfSecName(x.s), one); };
-  const focus = it.kill ? '' : (raidCause && fixFor(raidCause.label)) || (w0 && fixFor(topAb(w0))) || (A.first && fixFor(A.first.ability, A.first.player)) || (bad.length && secFix(bad[0][1])) || '';
+  // (a death's own mistake: one of theirs in the 10 seconds before it, the one on what killed them first)
+  // (a minor one counts too when it's on what killed them, like walking into an axe)
+  const ownM = (d) => { const ab = String(d.ability || '').toLowerCase(), l = keptMistakes(r).filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5 && (m.severity !== 'Low' || String(m.mechanic).toLowerCase() === ab));
+    return l.find((m) => String(m.mechanic).toLowerCase() === ab) || l[0] || null; };
+  const focus = it.kill ? '' : (raidCause && fixFor(raidCause.label)) || (w0 && fixFor(topAb(w0))) || (A.first && ownM(A.first) && ownM(A.first).fix && dbfTip1(ownM(A.first).fix)) || (bad.length && secFix(bad[0][1])) || '';
   const told = new Set([focus]), tip = (t) => { if (!t || told.has(t)) return ''; told.add(t); return ' ' + esc(t); }; // (each fix once, and never the "Next pull" one again)
   // ---- the numbers (against the last pull) ----
   const dlt = (a, b, lowGood, f) => (B == null || a == null || b == null || Math.abs(a - b) < 0.5 ? '' : dbfD((a > b ? '▲' : '▼') + f(Math.abs(a - b)), lowGood ? a < b : a > b));
@@ -26593,11 +26604,22 @@ function dbfPull(o) {
   if (clean.length) { const c = clean.map(([, x]) => '<b>' + nm(x) + '</b>'); well.push('<b>We did these right:</b> ' + (c.length > 6 ? c.slice(0, 6).join(', ') + ' and ' + (c.length - 6) + ' more' : lpAnd(c)) + '.'); }
   if (A.kicks && !A.missK) well.push(A.kicks === 1 ? '<b>The one kickable cast got kicked.</b>' : '<b>Every kickable cast got kicked</b> (' + A.kicks + ').');
   // ---- what didn't go well: at most five lines, worst first, each with its fix ----
-  const wrong = [], you = (n) => dbfWho(n, pm) + ', you';
+  const wrong = [], you = (n) => dbfWho(n, pm) + ', you', said = new Set();
+  // (why a death happened, as the raid lead says it: their own mistake's fix; then how fast it was. Under 2 seconds isn't on them
+  // unless it was their mistake; slower with something still ready, it was theirs to save)
+  // (dying to something avoidable, like an axe, is never "not on you", even when no mistake was logged for it this time)
+  const avoidAb = new Set([r].concat(others).flatMap((x) => keptMistakes(x)).filter((q) => q.avoidRule).map((q) => String(q.mechanic).toLowerCase()));
+  const avTip = new Map(); { const pk = E.PACKS.find((p) => p.encounter === it.boss); for (const x of (pk && pk.rules) || []) if (x.type === 'avoidable' && x.name) { avoidAb.add(String(x.name).toLowerCase()); if (x.tip) avTip.set(String(x.name).toLowerCase(), x.tip); } } // (and the boss's avoidable spells)
+  const why = (d) => { const av = avoidAb.has(String(d.ability || '').toLowerCase()), m = ownM(d) || (av ? { fix: fixFor(d.ability, d.player) || avTip.get(String(d.ability || '').toLowerCase()) || '' } : null), fx = m && m.fix ? tip(dbfTip1(m.fix)) : '', sec = d.window > 0 ? Math.max(3, Math.round(d.window)) : 0, kit = dbfKit(d);
+    if (dbfFast(d)) return m ? fx : ' It took under 2 seconds, so that one\'s not on you.';
+    if (!sec) return fx;
+    if (kit.length) { said.add(d.player); const k = lpAnd(kit.slice(0, 3).map(esc));
+      return m ? fx + ' You ' + (fx ? 'also ' : '') + 'had ' + sec + ' seconds, with ' + k + ' ready.' : ' It took ' + sec + ' seconds, and you still had ' + k + '. Use ' + (kit.length > 1 ? 'them' : 'it') + ' when you drop low.'; }
+    return m ? fx : ' It took ' + sec + ' seconds, and you had nothing left to press.'; };
   const solo = !it.kill && A.first && !raidCause && !w0; // (the first death on its own line)
-  if (solo) wrong.push('<b>' + you(A.first.player) + ' died first</b>' + at(A.first) + '.' + tip(fixFor(A.first.ability, A.first.player)));
+  if (solo) wrong.push('<b>' + you(A.first.player) + ' died first</b>' + at(A.first) + '.' + why(A.first));
   const earlyO = A.early.filter((d) => (!solo || d !== A.first) && !massOf(d));
-  if (earlyO.length === 1) wrong.push('<b>' + you(earlyO[0].player) + (solo ? ' also died early' : ' died early') + '</b>' + at(earlyO[0]) + '.' + tip(fixFor(earlyO[0].ability, earlyO[0].player)));
+  if (earlyO.length === 1) wrong.push('<b>' + you(earlyO[0].player) + (solo ? ' also died early' : ' died early') + '</b>' + at(earlyO[0]) + '.' + why(earlyO[0]));
   else if (earlyO.length > 1) { const by = new Map(); for (const d of earlyO) { const k = dbfTo(d); if (!by.has(k)) by.set(k, []); by.get(k).push(d.player); }
     const L = [...by].sort((x, y) => y[1].length - x[1].length), parts = L.slice(0, 3).map(([to, ps]) => ps.length + ' to ' + to + (ps.length <= 2 ? ' (' + dbfNames(ps, pm, 2) + ')' : '')), restN = L.slice(3).reduce((s, x) => s + x[1].length, 0);
     wrong.push('<b>' + earlyO.length + (solo ? ' more of us died early' : ' of us died early') + ':</b> ' + (restN ? parts.join(', ') + ' and ' + restN + ' to ' + (restN === 1 ? 'something else' : 'other things') : lpAnd(parts)) + '.'); }
@@ -26611,8 +26633,9 @@ function dbfPull(o) {
     if (raid) return (x.lv === 'major' ? 'We failed <b>' + nm(x) + '</b>' + (n > 1 ? ' ' + dbfTimes(n) : '') : 'We made ' + (n === 1 ? 'a mistake' : n + ' mistakes') + ' on <b>' + nm(x) + '</b>') + '.' + fx;
     const verb = x.lv === 'major' ? 'failed' + (n > 1 ? ' ' + dbfTimes(n) : '') : 'had ' + (n === 1 ? 'a mistake' : n + ' mistakes');
     return '<b>' + nm(x) + '</b> ' + verb + (who.length ? ' (' + dbfNames(who, pm, 3) + ')' : '') + '.' + fx; };
-  const oneD = one && A.ds.find((d) => d.player === one); if (oneD && oneD !== A.first && !earlyO.includes(oneD)) wrong.push('<b>' + you(one) + ' died</b>' + at(oneD) + '.' + tip(fixFor(oneD.ability, one)));
-  const tail = []; if (A.defReady.length) tail.push('<b>' + (A.defReady.length === 1 ? you(A.defReady[0]) : dbfNames(A.defReady, pm, 3)) + ' died with a defensive still ready.</b> Press it when you drop low.');
+  const oneD = one && A.ds.find((d) => d.player === one); if (oneD && oneD !== A.first && !earlyO.includes(oneD)) wrong.push('<b>' + you(one) + ' died</b>' + at(oneD) + '.' + why(oneD));
+  // (not a player whose line already said it, or who died to their own mistake: the mistake is the reason, not the button)
+  const dr = A.defReady.filter((p) => !said.has(p) && !A.ds.some((d) => d.player === p && ownM(d))), tail = []; if (dr.length) tail.push('<b>' + (dr.length === 1 ? you(dr[0]) : dbfNames(dr, pm, 3)) + ' died slowly with a defensive still ready.</b> Use it when you drop low.');
   if (A.missK) tail.push('<b>' + (A.missK === 1 ? 'A kickable cast got through.' : A.missK + ' kickable casts got through.') + '</b> Check the kick order.');
   const room = Math.max(2, 5 - wrong.length - tail.length), shown = bad.slice(0, room);
   for (const [, x] of shown) wrong.push(mLine(x));
@@ -26697,7 +26720,7 @@ function dbfNight(o) {
   for (const y of cs.slice(0, 2)) if (y.n >= 2 || wip.length <= 2) { const w = [...y.who].sort((u, v) => v[1] - u[1]), one = w.length && w[0][1] >= 2 && (w.length < 2 || w[0][1] > w[1][1]);
     dL.push('<b>' + mech(y.c.label, y.c.id) + '</b> ended ' + (wip.length === 1 ? 'our wipe' : y.n + ' of our ' + plural(wip.length, 'wipe')) + (!w.length ? '' : one ? ', mostly on ' + dbfWho(w[0][0], pm) : w.length <= 3 ? ' (' + dbfNames(w.map((x) => x[0]), pm, 3) + ')' : '') + '.' + tip(fixFor(y.c.label))); }
   if (earlyP >= Math.max(2, n * 0.3)) { const ew = new Map(); for (const x of S) for (const d of x.early) ew.set(d.player, (ew.get(d.player) || 0) + 1); dL.push('<b>Someone died before ' + T(DBF_EARLY) + '</b> in ' + earlyP + ' of ' + plural(n, 'pull') + mostly(ew) + '.'); }
-  const defR = S.reduce((s, x) => s + x.defReady.length, 0); if (defR >= 2) { const dw = new Map(); for (const x of S) for (const p of x.defReady) dw.set(p, (dw.get(p) || 0) + 1); dL.push('<b>We died with a defensive ready</b> ' + dbfTimes(defR) + mostly(dw) + '. Press it when you drop low.'); }
+  const defR = S.reduce((s, x) => s + x.defReady.length, 0); if (defR >= 2) { const dw = new Map(); for (const x of S) for (const p of x.defReady) dw.set(p, (dw.get(p) || 0) + 1); dL.push('<b>We died slowly with a defensive still ready</b> ' + dbfTimes(defR) + mostly(dw) + '. Use it when you drop low.'); }
   for (const m of mW) mL.push('<b>' + m.nm + '</b> ' + (m.j.length === 1 ? 'went wrong' + (m.who.size ? ': ' + dbfNames([...m.who.keys()], pm, 3) : '') :
     'went wrong ' + (m.wr.length < m.j.length ? 'in ' + m.wr.length + ' of ' + plural(m.j.length, 'pull') : m.j.length === n ? 'in every pull' : 'every time it came up (' + plural(m.j.length, 'pull') + ')') + mostly(m.who)) + '.' + tip(mFix(m.x)));
   const missAll = S.reduce((s, x) => s + x.missK, 0); if (missAll) oL.push('<b>' + plural(missAll, 'kickable cast') + ' got through.</b> Check the kick order.');
