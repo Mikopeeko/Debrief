@@ -213,6 +213,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 225: Your notes for other bosses, and "Move it" takes you there (the Discord session's fix)
+- [x] **The empty Assignments page lists the notes you saved for other bosses:** "No note for Ula'tek yet. Your notes for
+  other bosses: The Coiled Altar (1)". A click goes to that boss: a pull of it in the report that's open (the same
+  difficulty first), or else the saved night its note fits best. Each boss keeps its own notes, so before this a note saved
+  under another boss seemed to vanish.
+- [x] **"Move it to <boss>" now takes you there,** to that boss's Assignments with "Moved here from …" and its note list
+  (it used to stay on the old boss, so the moved note never showed). If that boss isn't in any open or saved log, you stay
+  put and the box says to open a pull of it.
+- Checked: the bar on an empty Ula'tek page, and its button landing on The Coiled Altar's list; the test note is removed.
+- Notes live in the browser and site where they were saved: one saved on the live site won't show on your PC's copy, and
+  the other way round.
+
 ## 2026-10-18, round 224: Notes that find their own nights, and Ula'tek's names as instructions (the Discord session's work)
 - [x] **Each saved note lists the nights it fits:** under each note on Assignments, "Fits your saved logs:" with a button
   for each saved raid night where at least half of the note's names were there, newest first. A click opens that night.

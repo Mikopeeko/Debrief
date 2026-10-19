@@ -10518,7 +10518,8 @@ function noteScan(text, boss) {
 // (the box on top of Assignments after a note is saved: one plain line per finding, and a way to move a note pasted on the wrong boss)
 function noteScanBox(sc) {
   if (sc.dup) return '<div class="panel ah-exbar nscan"><span><b>You already have this note</b> <span class="sub">It\'s the same as "' + esc(sc.dup) + '", which you saved for ' + esc(sc.boss) + ', so it wasn\'t saved again.</span></span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
-  if (sc.moved) return '<div class="panel ah-exbar nscan"><span><b>Moved to ' + esc(sc.moved) + '.</b> <span class="sub">The note is saved for ' + esc(sc.moved) + ' now, and its pulls use it from there.</span></span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
+  if (sc.moved) return '<div class="panel ah-exbar nscan"><span>' + (sc.from ? '<b>Moved here from ' + esc(sc.from) + '.</b> <span class="sub">The note is saved for ' + esc(sc.moved) + ' now, and its pulls use it.</span>'
+    : '<b>Moved to ' + esc(sc.moved) + '.</b> <span class="sub">It\'s saved there now. Open a pull of ' + esc(sc.moved) + ' to see it in your list of notes.</span>') + '</span><button class="btn" type="button" id="nscanOk">Got it</button></div>';
   const r = sc.r, out = [], fight = r.nBoss ? esc(r.nBoss) + (r.dif ? ' (' + esc(r.dif) + ')' : '') : '';
   if (r.wrongBoss) out.push("Its first line says it's for " + fight + ', but you saved it on ' + esc(sc.boss) + '.');
   else if (fight) out.push('It\'s for ' + fight + '.');
@@ -10535,6 +10536,17 @@ function noteScanBox(sc) {
   return '<div class="panel ah-exbar nscan"><span><b>' + (warn ? 'Check your note' : 'Your note is checked') + '</b> <span class="sub">' + out.join(' ') + '</span></span>' +
     (r.wrongBoss ? '<button class="btn primary" type="button" id="nscanMove">Move it to ' + esc(r.nBoss) + '</button>' : '') + open + '<button class="btn" type="button" id="nscanOk">Got it</button></div>';
 }
+// (going to another boss's notes: a pull of it in the report that's open, the same difficulty first; else the saved
+// night its note fits best, from Warcraft Logs. false when neither is there)
+async function noteGoBoss(to, text) {
+  const here = S.index ? S.index.bosses.filter((b) => b.boss === to) : [];
+  if (here.length) { const d = S.item && S.item.diffId; select(here.filter((b) => b.diffId === d).pop() || here[here.length - 1]); return true; }
+  const f = text ? noteScan(text, to).best : null;
+  if (f && f.hit && f.wcl) { try { await openWcl({ code: f.wcl.code, fight: +f.wcl.fight || null }, await wclCreds()); return true; } catch (e) { return false; } }
+  return false;
+}
+// (the bosses you've saved notes for, other than this one, for the empty Assignments page: your notes are kept per boss)
+const noteOthers = (boss) => E.PACKS.map((p) => p.encounter).filter((b) => b !== boss).map((b) => [b, notesOf(b).list.filter((n) => !n.example)]).filter(([, l]) => l.length);
 // (a saved note's matching raid nights, newest first: a click opens that night's pulls of the boss from Warcraft Logs)
 function noteFits(text, boss) {
   const r = noteScan(text, boss); if (r.none || r.wrongBoss || !r.names.length) return '';
@@ -10590,7 +10602,11 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       '<div class="ah-r warn"><span>!</span><span>' + dot('#ff7c0a') + '<b style="color:#ff7c0a">Brakk</b> pressed Tranquility at 2:16, 9 seconds late.</span></div>' +
       '<div class="ah-r bad"><span>✕</span><span>' + dot('#c41e3a') + '<b style="color:#c41e3a">Seren</b> didn\'t kick the add on their turn.</span></div></div>';
     // (a note just moved to another boss leaves this one empty: the box saying where it went stays on top)
-    $('#assignBox').innerHTML = (S.noteScan && S.noteScan.boss === boss && S.noteScan.moved ? noteScanBox(S.noteScan) : '') + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
+    // (and the notes you saved for other bosses, since each boss keeps its own: a click goes to that boss)
+    const others = noteOthers(boss);
+    const otherBar = others.length ? '<div class="panel nl-other" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="sub">No note for ' + esc(boss) + ' yet. Your notes for other bosses:</span>' +
+      others.map(([b, l]) => '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">' + esc(b) + ' (' + l.length + ')</button>').join('') + '</div>' : '';
+    $('#assignBox').innerHTML = (S.noteScan && S.noteScan.boss === boss && S.noteScan.moved ? noteScanBox(S.noteScan) : '') + otherBar + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
       '<p class="ah-lead">Your raid\'s NSRT note says who soaks, who kicks, who takes the orbs and who presses which cooldown. Paste it here once, and Debrief checks every player against it on every pull. No other site does this.</p>' +
       '<ol class="ah-steps"><li><span><b>Get your raid\'s NSRT note.</b> Your raid leader shares it, or you can copy it from wowutils.</span></li>' +
       '<li><span><b>Paste it here and save.</b> It stays in this browser, so you only do this once for ' + esc(boss) + '. When the plan changes, paste the new one.</span></li>' +
@@ -10599,6 +10615,9 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       (ex ? '<p class="sub ah-ex">The example is made from this pull. It gives your healers the cooldowns they really pressed, plus one they didn\'t, so you can see what a miss looks like.</p>' : '') + '</div>' + pic + '</div>';
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
     if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
+    $$('#assignBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example);
+      x.disabled = true; S.noteScan = null; const newest = l.slice().sort((p, q) => (q.saved || 0) - (p.saved || 0))[0];
+      if (!(await noteGoBoss(to, newest && newest.text))) x.textContent = 'Open a pull of ' + to + ' to see them'; }));
     if ($('#noteEx')) $('#noteEx').onclick = () => { const o = notesOf(boss); o.list.push({ id: 'nex' + Date.now().toString(36), name: 'Example', text: ex, saved: Date.now(), example: true }); notesSave(boss, o);
       S.noteEdit = false; S.noteEditId = null; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
     return;
@@ -11117,7 +11136,10 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const o = notesOf(boss), n = o.list.find((x) => x.id === sc.id); if (!n) return;
     o.list = o.list.filter((x) => x.id !== sc.id); if (o.pick === sc.id) o.pick = 'auto'; notesSave(boss, o);
     const o2 = notesOf(to); if (!o2.list.some((x) => noteNorm(x.text) === noteNorm(n.text))) o2.list.push(n); notesSave(to, o2);
-    S.noteScan = { boss, moved: to }; for (const rep of CACHE.values()) if (rep.item.boss === boss || rep.item.boss === to) applyNote(rep); renderMain(); };
+    for (const rep of CACHE.values()) if (rep.item.boss === boss || rep.item.boss === to) applyNote(rep);
+    // (then you go there, so the note shows in that boss's list: a pull of it in this report, or the night it fits best)
+    S.noteScan = { boss: to, moved: to, from: boss };
+    noteGoBoss(to, n.text).then((went) => { if (!went) { S.noteScan = { boss, moved: to }; renderMain(); } }); };
   if ($('#noteSave')) $('#noteSave').onclick = () => save(false);
   if ($('#noteSaveNew')) $('#noteSaveNew').onclick = () => save(true);
   if ($('#noteCancel')) $('#noteCancel').onclick = () => { S.noteEdit = false; S.noteEditId = null; assign(only); refreshIcons(); };
