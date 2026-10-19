@@ -5374,7 +5374,7 @@ function perf() {
   const head = cbHead(addsOn ? 'Damage' : { dmg: 'DPS', heal: 'HPS', taken: 'Per sec' }[kind], { heal: 'Overheal' }[kind] || 'Share', prs ? 'Parse' : '', rowCls);
   const ttl = addsOn ? 'Damage into adds' : bossOn ? 'Damage ' + onBossW : { dmg: 'Damage done', heal: 'Healing done', taken: 'Damage taken' }[kind];
   h += '<div class="pf-cols' + (kind === 'heal' || !addsOn ? ' solo' : '') + '"><div class="panel pf-bars"><h3 class="nh"><span>' + ttl + '</span><small>' + (addsOn ? 'total over ' + span + ' · ' + esc(AD.label) : 'per second over ' + span) + (kind === 'heal' ? ', with overhealing faded' : '') + '</small>' + tgtSw + roleChips(has) + '</h3>' + (bars ? head + bars : '<p class="muted">Nothing recorded.</p>') + '</div>' +
-    (kind === 'heal' || !addsOn ? '' : '<div class="panel pf-det">' + AD.panel() + '</div>') + '</div>' + (PERF_HOW[kind] || '');
+    (kind === 'heal' || !addsOn ? '' : '<div class="panel pf-det">' + AD.panel() + '</div>') + '</div>' + (kind === 'taken' ? mechGo('dsrc', 'Which abilities hit the raid, and how much of it was avoidable, is on Mechanics') : '') + (PERF_HOW[kind] || '');
   view(h + '</div>');
   bindPerf();
   refreshIcons();
@@ -5895,7 +5895,7 @@ function hcdView(reps, one) {
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pf-hrow', attrs: ' type="button" data-hc="' + esc(a.key) + '" aria-pressed="' + on + '"', k: i + 1, icon: spellIcon(a.id, a.cd), name: esc(CD_SHORT[a.cd] || a.cd), color: a.p.color,
       chips: '<span class="pf-cdw">' + esc(a.p.name) + '</span>', segs: [[Math.max(1, 100 * a.v / mx), 'm']], v: hcdPre(a.kind) + C(a.v), sub: String(a.n) }) + (on ? '<div class="pf-inl pf-srcd">' + hcdDetail(a, one) + '</div>' : ''); }).join('');
   const left = '<div class="panel pf-bars"><h3 class="nh"><span>Raid cooldowns</span><small>what each healing or raid cooldown did' + (one ? ', up to the wipe filter' : ' over the night') + '</small></h3>' +
-    (bars ? cbHead('Amount', 'Presses', '', ' pf-hrow', 'Cooldown') + bars : '<p class="muted" style="margin:10px 0 0">No healing or raid cooldowns were pressed.</p>') + '</div>';
+    (bars ? cbHead('Amount', 'Presses', '', ' pf-hrow', 'Cooldown') + bars : '<p class="muted" style="margin:10px 0 0">No healing or raid cooldowns were pressed.</p>') + (one ? mechGo('sv-cds', 'Which big hits each raid cooldown covered is on Mechanics') : '') + '</div>';
   // ---- the right: what they did in all, each player's, and the ones that make a healer stronger ----
   const line = (l, v) => '<div class="pf-sl"><span>' + l + '</span><span>' + v + '</span></div>';
   const kinds = (T4.heal ? line('Healed', '<b>' + C(T4.heal) + '</b> <span class="sub">' + Math.round(100 * T4.heal / Math.max(1, all)) + '% of all healing</span>') : '') + (T4.off ? line('Damage taken off', '<b>~' + C(T4.off) + '</b>') : '') +
@@ -10989,7 +10989,11 @@ function spcTlBind() {
   if (!window._spcTlDoc) { window._spcTlDoc = 1; document.addEventListener('mousedown', (e) => { const x = $('#view .spc-tl'); if (x && x.classList.contains('pin') && !(e.target.closest && e.target.closest('.spc-tl, .spc-mo, .spc-w'))) { x.classList.remove('pin'); const a = x.querySelector('.tl-hv'), b = x.querySelector('.tl-tip'); if (a) a.hidden = true; if (b) b.hidden = true; if (x._unpin) x._unpin(); } }); }
   w._unpin = () => { pinned = false; };
 }
+// a link from Graphs to the Mechanics section that has the mechanics side of it (Graphs is each player's own play, plain
+// data; what hit the raid and which big hits the raid cooldowns covered are on Mechanics, round 148)
+const mechGo = (sec, txt) => '<p class="pf-mgo"><button class="btn sm" type="button" data-mgo="' + sec + '">' + esc(txt) + ' ›</button></p>';
 function bindPerf() {
+  $$('#view [data-mgo]').forEach((b) => (b.onclick = () => { S.pendingSec = 'sec-' + b.dataset.mgo; S.tab = 'audit'; renderMain(); }));
   // (the shared player pick: what this view has picked now, so a bar picked or closed since can become the pick; and its
   // buttons, which also open Damage and Healing on the players list)
   { const k = S.tab === 'rot' ? null : PF_SELK[S.perfKind]; S._pfSeen = k ? { k, v: S[k] || null } : null;
