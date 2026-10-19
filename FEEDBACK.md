@@ -253,6 +253,23 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 252: Rotation, the missing-checks review (your note: a pass over every spec)
+- [x] **Reviewed all 30 shared spec pages against the SimulationCraft lists.** 3 amazing gaps, 13 solid additions, a few
+  lackluster ones skipped. The three amazing ones are built and checked on 24 top players:
+  - **Unholy Death Knight:** a Dark Transformation window, with Apocalypse and Putrefy inside it. Top players: every window
+    right, 2.0 to 2.7 times their usual damage.
+  - **Windwalker Monk:** a Zenith window, with Fists of Fury and Whirling Dragon Punch or Strike of the Windlord inside it.
+    Top players: 3 to 6 of 4 to 6 windows right, 2.4 to 3.6 times their usual.
+  - **Frost Mage:** burst is now read from Ray of Frost (the list no longer uses Icy Veins), for the Burst windows tile
+    only: top players don't pair Ray of Frost with Frozen Orb or Flurry every time, so there's no graded window card.
+- [ ] **Still to build (solid):** Enhancement (Maelstrom Weapon at 5 or more), Retribution and Protection Paladin (spend
+  Hammer of Light; Wake of Ashes in Avenging Wrath; Consecration), Elemental (a spender after Lava Burst), Balance (spend
+  the free Starsurge and Starfall procs), Arcane (Barrage at 4 charges), Augmentation (Prescience up; Breath of Eons in Ebon
+  Might), Affliction (Malevolence and Dark Harvest with Darkglare), Arms (Demolish in Colossus Smash), Protection Warrior
+  (Revenge! procs), Vengeance (Spirit Bomb at 4 souls), Shadow (both dots up before Voidform), Restoration Shaman (Earth
+  Shield up). Also: Top players marks on the new checks, and a test on average players.
+- Note: some top Frost Mages on Twin Fangs don't take Ray of Frost, so their tile says "no burst cooldown pressed".
+
 ## 2026-10-19, round 251: Rotation, three tiles at the top of every spec page (your idea: the player behind the keyboard)
 - [x] **Under the player's name, three small tiles** replace the old line of output text, on every spec page (the four hand-built
   ones and the shared module): **Damage a second** (Healing for healers) with the top parses under it, **Parse** (Warcraft Logs'
