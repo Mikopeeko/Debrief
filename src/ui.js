@@ -2966,7 +2966,7 @@ function bindAnim(box, mp, pmap, still) {
   // Playback is drawn every screen refresh (~60 fps) at real-time speed, blending each unit's position between the
   // 0.2s frames (the log itself records positions about every 0.5s, so this smooths movement, it doesn't add detail).
   const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t;
-  let ft = t0, raf = null, last = 0, drawn = -1, until = null; // (until: a lead-up stops on the key moment)
+  let ft = t0, raf = null, last = 0, drawn = -1, until = null, spd = 1; // (until: a lead-up stops on the key moment; spd: how fast it plays)
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;
     const a = fr[i], b = fr[Math.min(i + 1, fr.length - 1)], w = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
@@ -2986,13 +2986,13 @@ function bindAnim(box, mp, pmap, still) {
   const step = (now) => {
     if (!box.isConnected) return stop();
     const dt = last ? (now - last) / 1000 : 0; last = now;
-    if (until != null && ft + dt >= until) { show(until); until = null; return stop(); }
-    show(ft + dt);
+    if (until != null && ft + dt * spd >= until) { show(until); until = null; spd = 1; return stop(); }
+    show(ft + dt * spd);
     if (ft >= t1) return stop();
     raf = requestAnimationFrame(step);
   };
   const play = () => { if (ft >= t1) ft = t0; btn.textContent = '❚❚ Pause'; last = 0; raf = requestAnimationFrame(step); };
-  btn.onclick = () => { until = null; if (raf) stop(); else play(); };
+  btn.onclick = () => { until = null; spd = 1; if (raf) stop(); else play(); };
   rng.oninput = () => { stop(); show(fr[+rng.value].t); };
   if (!still) { show(t0); play(); return; }
   // (the key moment: the frame closest to the map's own snapshot)
@@ -3001,7 +3001,8 @@ function bindAnim(box, mp, pmap, still) {
   show(fr[bi].t); stop();
   // (the lead-up, once it's on screen: from the clip's start to the key moment, then it holds there (your note, Oct 18:
   // the seconds before show why, above all for a death))
-  box._lead = () => { if (raf || bi === 0) return; ft = t0; until = fr[bi].t; show(t0); play(); };
+  // (a long lead-up, like an egg phase's half a minute of pickups, plays faster: about 8 seconds at most; Play is real time)
+  box._lead = () => { if (raf || bi === 0) return; ft = t0; until = fr[bi].t; spd = Math.max(1, (until - t0) / 8); show(t0); play(); };
 }
 // Zoom and pan for miniMap: wheel zooms around the cursor, drag pans, double-click goes back to the mechanic.
 // Icons are counter-scaled so they keep their size on screen; the scale bar follows the zoom.

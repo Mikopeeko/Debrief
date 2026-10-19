@@ -6302,14 +6302,18 @@ function buildUlatek(ev, r, h) {
   for (const c of carry) c.pop = c.e < dur && coilPop(c);
   const splashes = dmgId(UL.splash), greens = dmgId([UL.wave, UL.thrash, UL.incubHit, UL.fester]);
   const vipers = unitsNamed(/^Blightscale Viper$/), used = new Set(), eggRows = [];
+  // (who held an egg when, for the maps (your note, Oct 18): a small green ring on each carrier from the moment they picked
+  // it up until it came off, so a map shows who had an egg while a mechanic hit)
+  const eggC = mcol('Noxious Shell'), eggRings = (a, b) => carry.filter((c) => c.s < b && c.e > a).map((c) => ({ guid: c.g, r: 2, t0: c.s, dur: Math.max(0.3, c.e - c.s), label: '', color: eggC.color, fill: 'rgba(58,242,168,.28)', cn: 'Small green ring', legend: 'carrying an egg' }));
   // (a Viper hatches within about half a second of its egg breaking: the nearest shell that came off in the second before,
   // or a carrier who died holding one; anything else was an egg on the ground or one the log doesn't tie to a player)
   for (const v of vipers) {
     let c = carry.filter((x) => !used.has(x) && !x.pop && x.e <= v.t0 + 0.3 && x.e >= v.t0 - 1).sort((a, b) => Math.abs(v.t0 - a.e) - Math.abs(v.t0 - b.e))[0];
     if (!c) { const d = r.deaths.find((x) => x.t <= v.t0 + 0.3 && x.t >= v.t0 - 1 && carry.some((y) => !used.has(y) && y.g === x.guid && y.s <= x.t && y.e >= x.t - 0.1)); if (d) c = carry.find((y) => !used.has(y) && y.g === d.guid && y.s <= d.t && y.e >= d.t - 0.1); }
-    let cause, fix, g = null, splashG = null;
+    let cause, fix, g = null, splashG = null, grE = null;
     if (c) { used.add(c); g = c.g;
       const died = r.deaths.find((d) => d.guid === c.g && d.t >= c.s && d.t <= Math.min(c.e, v.t0) + 0.6 && d.t >= v.t0 - 1.3), sp = splashes.find((e) => e.dst === c.g && Math.abs(e.t - c.e) <= 0.6), gr = greens.filter((e) => e.dst === c.g && e.t >= c.e - 0.7 && e.t <= c.e + 0.2).pop();
+      if (!sp && !died) grE = gr || null;
       if (sp) { splashG = [...new Set(splashes.filter((e) => Math.abs(e.t - sp.t) <= 0.4 && e.dst !== c.g).map((e) => e.dst))]; const other = splashG.map(pname);
         cause = 'Noxious Splash' + (other.length ? ' with ' + other.join(', ') : ''); fix = 'Carriers keep their own lanes and never come within 3 yards of each other.'; }
       else if (died) { cause = 'died carrying it'; fix = 'An egg breaks into a Viper when its carrier dies. Carriers should get defensives and healing, and pass on the egg if they\'re low.'; }
@@ -6322,7 +6326,18 @@ function buildUlatek(ev, r, h) {
       // it went off; any other Viper: who had the egg)
       splashG ? { map: { t: Math.max(0, c.e - 0.15), hl: [g].concat(splashG), bad: [g].concat(splashG), badLabel: 'egg carriers within 3 yards', rings: [g].concat(splashG).map((x) => ({ guid: x, r: 3, label: '3 yd', ...mcol('Noxious Shell', 0.14), legend: 'a Noxious Shell, 3 yd (another carrier inside breaks both)' })),
         title: 'Noxious Splash at ' + T(c.e) + ': ' + (splashG.length ? andList([g].concat(splashG).map(pname)) + ' came within 3 yards' : pname(g) + '\'s egg (the other carrier isn\'t in the log)'), pts: posPts(Math.max(0, c.e - 0.15)), focus: ctrOf(posPts(Math.max(0, c.e - 0.15)), [g].concat(splashG), 8) } }
-        : { map: { t: Math.max(0, (c ? c.e : v.t0) - 0.4), hl: g ? [g] : [], bad: g ? [g] : [], badLabel: 'had the egg', title: 'Blightscale Viper at ' + T(v.t0) + (g ? ' (' + pname(g) + ')' : ''), pts: snap(Math.max(0, (c ? c.e : v.t0) - 0.4)) } }]);
+        // (any other Viper (your note, Oct 18: a map of what broke the egg): the carriers ringed, the seconds before it broke,
+        // and its cause drawn: the Wretch's bubble the carrier was outside of for a Fester Burst, a red flash where a wave
+        // hit the carrier, or the spot an egg on the ground broke)
+        : (() => { const t = Math.max(0, (c ? c.e : v.t0) - 0.2), rings = eggRings(t - 5, t + 1.5);
+          // (an egg on the ground whose Viper the log never placed: no map, since there's nothing true to draw (your rule))
+          if (!c) { const vp = [0.4, 1, 2, 3].map((d) => posPts(v.t0 + d, [v.g]).find((p) => p.guid === v.g)).find(Boolean); if (!vp) return { txt: '' }; rings.push({ x: vp.x, y: vp.y, r: 2.5, t0: v.t0 - 1, dur: 3, label: 'egg', ...mcol('Noxious Shell', 0.3), cn: 'Green circle', legend: 'an egg left on the ground broke here' }); }
+          else if (grE && ids(UL.fester).includes(grE.id)) { const me = posPts(grE.t).find((p) => p.guid === g), w = unitsNamed(/^Blightscale Wretch$/).filter((u) => u.t0 <= grE.t && (u.died == null || u.died >= grE.t - 1)).map((u) => ({ u, p: posPts(grE.t, [u.g]).find((q) => q.guid === u.g) })).filter((x) => x.p).sort((a, b) => (me ? Math.hypot(a.p.x - me.x, a.p.y - me.y) - Math.hypot(b.p.x - me.x, b.p.y - me.y) : 0))[0];
+            if (w) rings.push({ guid: w.u.g, r: 10, label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd: the carrier was outside it when Fester Burst hit' }); }
+          else if (grE) rings.push({ guid: g, r: 3, t0: grE.t - 0.1, dur: 1.2, label: '', color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', cn: 'Red flash', legend: grE.spell + ' hit the carrier here' });
+          const extra = [v.g].concat(rings.filter((x) => x.guid && x.r >= 10).map((x) => x.guid)), p0 = posPts(t, extra);
+          return { map: { t, hl: g ? [g] : [], bad: g ? [g] : [], badLabel: cause === 'died carrying it' ? 'died carrying the egg' : 'had the egg', title: 'Blightscale Viper at ' + T(v.t0) + ': ' + (g ? pname(g) + '\'s egg, ' : '') + cause, pts: p0, rings,
+            frames: h.frames ? h.frames(Math.max(0, t - 5), Math.min(dur, v.t0 + 1.5), 0.25, extra) : undefined, focus: ctrOf(p0, g ? [g] : [], 14) || undefined } }; })()]);
   }
   // (Mythic: a carrier whose egg just popped has Rancid Yolk; picking up another egg during it hurts more)
   if (mythic) {
@@ -6330,13 +6345,28 @@ function buildUlatek(ev, r, h) {
     // (an egg picked up with Rancid Yolk still on: its Noxious Shell does 200% more damage, which kills anyone but a tank)
     for (const c of carry) if (yw.some((y) => y.g === c.g && c.s > y.s + 0.2 && c.s < y.e)) { const tk = role(c.g) === 'tank', diedW = !tk && r.deaths.some((d) => d.guid === c.g && d.t >= c.s && d.t <= c.e + 0.6);
       M(c.s, pname(c.g), 'Rancid Yolk', UL.yolk, diedW ? 'High' : tk ? 'Low' : 'Medium', 'Picked up an egg at ' + T(c.s) + ' with Rancid Yolk still on (its Noxious Shell does 200% more damage' + (tk ? ').' : '; enough to kill anyone but a tank, and the egg hatches a Viper when its carrier dies).'), 'Wait for Rancid Yolk to drop before picking up another egg, or leave that egg to someone else.');
-      eggRows.push([{ t: c.s }, { p: pname(c.g) }, { txt: 'picked up an egg with Rancid Yolk still on' + (tk ? ' (tank)' : diedW ? ' and died with it' : ''), bad: diedW, warn: !diedW }, { txt: '—', dim: true }]);
+      // (its map: where they picked it up, Rancid Yolk still on, and the seconds before)
+      const yp = posPts(c.s).find((q) => q.guid === c.g), yr = eggRings(c.s - 4, c.s + 2).concat(yp ? [{ x: yp.x, y: yp.y, r: 1.3, t0: c.s - 0.1, dur: 4, label: '', color: eggC.color, fill: 'rgba(58,242,168,.7)', cn: 'Green dot', legend: 'where the egg was picked up' }] : []);
+      eggRows.push([{ t: c.s }, { p: pname(c.g) }, { txt: 'picked up an egg with Rancid Yolk still on' + (tk ? ' (tank)' : diedW ? ' and died with it' : ''), bad: diedW, warn: !diedW }, { txt: '—', dim: true },
+        { map: { t: c.s + 0.2, hl: [c.g], bad: diedW ? [c.g] : [], badLabel: 'died with it', warn: diedW ? [] : [c.g], warnLabel: 'picked it up with Rancid Yolk still on', title: pname(c.g) + ' picked up an egg at ' + T(c.s) + ' with Rancid Yolk still on', pts: posPts(c.s + 0.2), rings: yr,
+          frames: h.frames ? h.frames(Math.max(0, c.s - 4), Math.min(dur, c.s + 2), 0.25, []) : undefined, focus: ctrOf(posPts(c.s + 0.2), [c.g], 14) || undefined } }]);
     }
   }
   // (Stage 2: eggs picked up with Blight Vein still on, right after the tether break, are counted but not flagged: on
   // Mythic kills every carrier does it, and a carrier who then dies shows up as the Viper's cause above)
   let veinN = 0;
   if (hcUp) { const vh = stackHist(UL.vein); for (const c of carry) if (stackAt(vh, c.g, c.s) >= 2) veinN++; }
+  // (each egg phase (your note, Oct 18): from Call of the Serpent until the last egg is picked up, everyone moving in, a
+  // green dot where each egg was picked up (each carrier ticked from that moment), and a small ring on each carrier after)
+  cots.forEach((t, i) => { const nx = cots[i + 1] != null ? cots[i + 1] : dur, ups = carry.filter((c) => c.s >= t - 1 && c.s < Math.min(nx, t + 45)); if (!ups.length) return;
+    const last = Math.max(...ups.map((c) => c.s)), t1 = Math.min(dur, last + 2);
+    const spots = ups.map((c) => { const p = posPts(c.s).find((q) => q.guid === c.g); return p ? { x: p.x, y: p.y, r: 1.3, t0: c.s - 0.1, dur: t1 - c.s + 3, label: '', color: eggC.color, fill: 'rgba(58,242,168,.7)', cn: 'Green dot', legend: 'where an egg was picked up' } : null; }).filter(Boolean);
+    eggRows.push([{ t }, { txt: 'the raid' }, { txt: 'Call of the Serpent ' + (i + 1) + ': ' + pl(ups.length, 'egg') + ' picked up in ' + Math.max(1, Math.round(last - t)) + ' s', sub: andList([...new Set(ups.map((c) => pname(c.g)))]) }, { txt: '—', dim: true },
+      { map: { t: last, good: [...new Set(ups.map((c) => c.g))], goodLabel: 'picked up an egg', goodAt: ups.map((c) => [c.g, c.s]), title: 'Call of the Serpent ' + (i + 1) + ' at ' + T(t) + ': every egg picked up', pts: posPts(last), rings: spots.concat(eggRings(t, t1)),
+        // ("Zoom to mechanic": around the spots the eggs were picked up)
+        focus: spots.length ? (() => { const cx = spots.reduce((s, p) => s + p.x, 0) / spots.length, cy = spots.reduce((s, p) => s + p.y, 0) / spots.length; return { x: cx, y: cy, r: Math.max(10, ...spots.map((p) => Math.hypot(p.x - cx, p.y - cy) + 6)) }; })() : undefined,
+        frames: h.frames ? h.frames(Math.max(0, t - 1), t1, 0.25, []) : undefined } }]);
+  });
   eggRows.sort((a, b) => a[0].t - b[0].t);
   // (a baseline row at the first pickup, so a pull whose Vipers all came after the wipe filter still reads clean up to it)
   if (carry.length) eggRows.unshift([{ t: carry[0].s }, { txt: 'the raid' }, { txt: pl(carry.length, 'egg') + ' carried' + (vipers.length ? '' : ', none broke into a Viper'), sub: veinN ? veinN + ' picked up with Blight Vein still on (fine unless the carrier dies)' : '' }, { txt: '—', dim: true }]);
@@ -11802,7 +11832,7 @@ function bindAnim(box, mp, pmap, still) {
   // Playback is drawn every screen refresh (~60 fps) at real-time speed, blending each unit's position between the
   // 0.2s frames (the log itself records positions about every 0.5s, so this smooths movement, it doesn't add detail).
   const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t;
-  let ft = t0, raf = null, last = 0, drawn = -1, until = null; // (until: a lead-up stops on the key moment)
+  let ft = t0, raf = null, last = 0, drawn = -1, until = null, spd = 1; // (until: a lead-up stops on the key moment; spd: how fast it plays)
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;
     const a = fr[i], b = fr[Math.min(i + 1, fr.length - 1)], w = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
@@ -11822,13 +11852,13 @@ function bindAnim(box, mp, pmap, still) {
   const step = (now) => {
     if (!box.isConnected) return stop();
     const dt = last ? (now - last) / 1000 : 0; last = now;
-    if (until != null && ft + dt >= until) { show(until); until = null; return stop(); }
-    show(ft + dt);
+    if (until != null && ft + dt * spd >= until) { show(until); until = null; spd = 1; return stop(); }
+    show(ft + dt * spd);
     if (ft >= t1) return stop();
     raf = requestAnimationFrame(step);
   };
   const play = () => { if (ft >= t1) ft = t0; btn.textContent = '❚❚ Pause'; last = 0; raf = requestAnimationFrame(step); };
-  btn.onclick = () => { until = null; if (raf) stop(); else play(); };
+  btn.onclick = () => { until = null; spd = 1; if (raf) stop(); else play(); };
   rng.oninput = () => { stop(); show(fr[+rng.value].t); };
   if (!still) { show(t0); play(); return; }
   // (the key moment: the frame closest to the map's own snapshot)
@@ -11837,7 +11867,8 @@ function bindAnim(box, mp, pmap, still) {
   show(fr[bi].t); stop();
   // (the lead-up, once it's on screen: from the clip's start to the key moment, then it holds there (your note, Oct 18:
   // the seconds before show why, above all for a death))
-  box._lead = () => { if (raf || bi === 0) return; ft = t0; until = fr[bi].t; show(t0); play(); };
+  // (a long lead-up, like an egg phase's half a minute of pickups, plays faster: about 8 seconds at most; Play is real time)
+  box._lead = () => { if (raf || bi === 0) return; ft = t0; until = fr[bi].t; spd = Math.max(1, (until - t0) / 8); show(t0); play(); };
 }
 // Zoom and pan for miniMap: wheel zooms around the cursor, drag pans, double-click goes back to the mechanic.
 // Icons are counter-scaled so they keep their size on screen; the scale bar follows the zoom.

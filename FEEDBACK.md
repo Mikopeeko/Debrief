@@ -200,6 +200,24 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 214: Ula'tek egg maps; the first Discord posts
+- [x] **Every egg phase has a map (your note: show them picking the eggs up):** a row for each Call of the Serpent ("Call
+  of the Serpent 2: 8 eggs picked up in 42 s", with who picked them up), and a map from the cast until the last pickup:
+  everyone moving in, a green dot where each egg was picked up, a ✓ on each carrier from that moment, and a small green
+  ring on each carrier while they hold it. "Zoom to mechanic" frames the pickups.
+- [x] **Each egg failure's map draws its cause (your note):** every map of a Viper rings the egg carriers and plays the
+  5 seconds before. An egg broken by a wave gets a red flash where it hit the carrier; a Fester Burst shows the Wretch's
+  10-yard bubble the carrier was outside of; an egg left on the ground marks the spot it broke (and has no map when the
+  log never placed the Viper, so nothing false is drawn); a Noxious Splash keeps its 3-yard circles. A Rancid Yolk pickup
+  (Mythic) gets a map too: where they picked up the egg with Rancid Yolk still on.
+- [x] **Long lead-ups play faster:** a lead-up longer than about 8 seconds (an egg phase is half a minute) speeds up so it
+  takes about 8 seconds; ▶ Play still runs it at real speed.
+- [x] **Discord:** the first patch notes are posted in #updates, and the FAQ is posted in #questions (tagged Getting
+  started) and pinned. Held: the "What is Debrief" post for #start-here, which needs its three pictures attached (this
+  browser can't attach files).
+- [ ] Your call: the pinned welcome in #start-here still says "the Performance tab is still being built, so it's greyed
+  out" (it's Graphs now, and on), and #questions still has a "Performance" tag. Both can be updated.
+
 ## 2026-10-18, round 213: Map drawings in their icon's colour (your note)
 - [x] **Each ground mechanic is drawn in the main colour of its own spell icon**, measured from the icon itself, so a
   circle on the map matches the icon in its row and in game. The key's colour words follow ("Purple circle: Gloombomb").
