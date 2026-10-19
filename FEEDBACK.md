@@ -213,6 +213,18 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-18, round 233: Stored notes as cards (your note: pleasing on the eyes)
+- [x] **Each note is a card**, two side by side on a wide screen and one per row on a phone: its difficulty as a badge in
+  its WoW colour (Mythic orange, Heroic purple, Normal green), its name big, small icons for how many players it names
+  and when it was saved, its logs as date chips (or "No saved nights yet"), and a footer with **Use for this pull** and
+  icon buttons for Edit, Copy and the trash can. A card lifts a little under the mouse; the note this pull uses glows gold
+  with "✓ This pull".
+- [x] **A "Stored notes" title strip** on top says how many notes for how many bosses, in place of the long sentence.
+- [x] **The tabs have small icons** (This pull, Stored notes), and a boss with no note yet shows a small notes drawing
+  with "No note for The Coiled Altar yet".
+- Checked with four test notes on three bosses, desktop and phone; test notes removed. (Built without the map work still
+  in progress in another session.)
+
 ## 2026-10-18, round 232: Notes: pick one and see it, add them on Stored notes, swaps show the jobs, copy for NSRT (your notes)
 - [x] **Picking a note takes you to it** (your note): "Use for this pull" on Stored notes goes to This pull with that note
   in use, at the top of the tab.

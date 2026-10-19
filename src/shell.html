@@ -1815,6 +1815,38 @@ span.sn-log.on { border-color: rgba(230,180,80,.5); background: rgba(230,180,80,
 .sn-log { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px !important; }
 span.sn-log { padding: 3px 10px; }
 .sn-cal { flex: none; opacity: .75; }
+/* (Stored notes as cards: a title strip, then each boss's band and its notes in a grid; each card a difficulty badge in
+   its WoW colour, the name, small icons, date chips and icon buttons; the note in use glows gold) */
+.sn-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 2px 0 14px; }
+.sn-top h2 { margin: 0; font: 700 24px/1.1 var(--head); color: var(--text); }
+.sn-top .sub { margin-top: 5px; max-width: 780px; }
+.sn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 8px; }
+.sn-card { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 12px 14px 10px; border: 1px solid var(--line); border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.012)); transition: border-color .15s, transform .15s, box-shadow .15s; }
+.sn-card:hover { border-color: var(--line2); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,.28); }
+.sn-card.on { border-color: rgba(230,180,80,.6); background: linear-gradient(180deg, rgba(230,180,80,.11), rgba(230,180,80,.03)); box-shadow: 0 0 0 1px rgba(230,180,80,.14), 0 8px 24px rgba(230,180,80,.09); }
+.sn-ch { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sn-nm { font: 700 16px/1.25 var(--head); color: var(--text); }
+.sn-dif { font: 700 10.5px/1 var(--head); text-transform: uppercase; letter-spacing: .08em; padding: 4px 7px; border-radius: 6px; border: 1px solid; }
+.sn-dif.m { color: #ff9b3d; border-color: rgba(255,128,0,.45); background: rgba(255,128,0,.12); }
+.sn-dif.h { color: #c37cff; border-color: rgba(163,53,238,.5); background: rgba(163,53,238,.14); }
+.sn-dif.n { color: #5fe35f; border-color: rgba(30,255,0,.35); background: rgba(30,255,0,.08); }
+.sn-dif.l { color: #6aa8ff; border-color: rgba(0,112,221,.45); background: rgba(0,112,221,.12); }
+.sn-this { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--gold); white-space: nowrap; }
+.sn-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.sn-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.sn-i { width: 14px; height: 14px; flex: none; opacity: .85; }
+.sn-card .sn-logs { margin-top: 0; }
+.sn-logs.none { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--faint); }
+.sn-cf { display: flex; align-items: center; gap: 6px; margin-top: 3px; padding-top: 9px; border-top: 1px solid var(--line); }
+.sn-sp { flex: 1; }
+.sn-ib { padding: 5px 8px; display: inline-flex; align-items: center; gap: 5px; }
+.sn-ib svg { width: 15px; height: 15px; }
+.sn-empty { display: flex; gap: 12px; align-items: center; padding: 12px 2px 6px; }
+.sn-eico { width: 44px; height: 44px; flex: none; border-radius: 12px; display: grid; place-items: center; background: rgba(230,180,80,.1); color: var(--gold); }
+.sn-eico .sn-i { width: 24px; height: 24px; opacity: 1; }
+.as-views button { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 640px) { .sn-grid { grid-template-columns: 1fr; } .sn-top h2 { font-size: 21px; } }
 @media (max-width: 640px) { .sn-hd { min-height: 84px; padding: 12px; flex-wrap: wrap; align-items: flex-start; } .sn-hd h3 { font-size: 20px; } .sn-body { padding: 4px 10px 10px; } }
 .as-none { padding: 12px 14px; line-height: 1.5; }
 /* (the note bar on This pull: "Your note" over its name, chips for what's in it; the editor's live line) */

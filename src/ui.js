@@ -1709,10 +1709,17 @@ function rosterOffer(r, used) {
     '<div class="rsw-b"><button class="btn primary sm" type="button" id="rswMake">Make the new note</button><button class="btn sm" type="button" id="rswNo" data-k="' + esc(key) + '">Not now</button>' +
     '<span class="sub">Your note stays as it is. The new one is saved next to it, and pulls with these players use it.</span></div></div>';
 }
+// Small line icons for Assignments (drawn here, no game art)
+const snSvg = (p) => '<svg class="sn-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+const SN_I = { users: snSvg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.3 3.3 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.5 5.2"/>'),
+  clock: snSvg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'), pen: snSvg('<path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4"/>'),
+  copy: snSvg('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>'),
+  pull: snSvg('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/>'),
+  notes: snSvg('<path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7"/><path d="M7 4a3 3 0 0 0-3 3v1h3M7 4v13a3 3 0 0 0 3 3"/><path d="M11 9h6M11 13h6M11 17h3"/>') };
 // The Assignments tab's two views (your note, Oct 18: a separate tab for the stored notes): This pull, and Stored notes
 const noteCount = () => E.PACKS.reduce((s, p) => s + notesOf(p.encounter).list.length, 0);
 const asViews = (ed) => { const n = noteCount(), on = !!ed || S.asView === 'notes';
-  return '<div class="seg as-views" role="tablist" aria-label="Assignments"><button type="button" role="tab" data-asv="pull"' + (on ? '' : ' class="on"') + ' aria-selected="' + !on + '">This pull</button><button type="button" role="tab" data-asv="notes"' + (on ? ' class="on"' : '') + ' aria-selected="' + on + '">Stored notes' + (n ? '<span class="n">' + n + '</span>' : '') + '</button></div>'; };
+  return '<div class="seg as-views" role="tablist" aria-label="Assignments"><button type="button" role="tab" data-asv="pull"' + (on ? '' : ' class="on"') + ' aria-selected="' + !on + '">' + SN_I.pull + 'This pull</button><button type="button" role="tab" data-asv="notes"' + (on ? ' class="on"' : '') + ' aria-selected="' + on + '">' + SN_I.notes + 'Stored notes' + (n ? '<span class="n">' + n + '</span>' : '') + '</button></div>'; };
 const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.onclick = () => { if (!S.noteEdit && (S.asView === b.dataset.asv || (!S.asView && b.dataset.asv === 'pull'))) return; S.noteEdit = false; S.noteEditId = null; S.asView = b.dataset.asv; assign(only); refreshIcons(); }));
 // Stored notes: every saved note, the boss of the open pull first, then the rest in raid order; each with when it was saved
 // and the logs it goes with, each with its date and time: the log that's open (and which of its pulls use it), and every
@@ -1735,14 +1742,19 @@ function storedNotes(only) {
     if (!n.example) { const sc = noteScan(n.text, b);
       for (const o of sc.fits) { if (o.wcl && o.wcl.code === S.wclCode) continue; const l = SN_CAL + esc(day(o.at)) + ' · ' + plural(o.pulls, 'pull') + ' · ' + o.hit + ' of ' + sc.names.length + ' names';
         out.push(o.wcl ? '<button class="btn sm sn-log" type="button" data-nopen="' + esc(o.wcl.code + '|' + (o.wcl.fight || '')) + '" title="Open this night">' + l + '</button>' : '<span class="sn-log">' + l + ' <span class="sub">(a combat log on your PC)</span></span>'); } }
-    return out.length ? '<div class="sn-logs"><span class="sub">Logs:</span>' + out.join('') + '</div>' : '<div class="sn-logs sub">No saved nights yet.</div>';
+    return out.length ? '<div class="sn-logs">' + out.join('') + '</div>' : '<div class="sn-logs none">' + SN_CAL + 'No saved nights yet</div>';
   };
-  const row = (n, b) => { const isCur = b === cur, on = isCur && used && used.id === n.id, nn = noteNames(n.text).length;
-    return '<div class="nl-r sn-r' + (on ? ' on' : '') + '"><span class="nl-dot" aria-hidden="true"></span><div class="nl-m"><b>' + esc(n.name) + '</b>' + (n.example ? ' <span class="sub">(example)</span>' : '') +
-      '<span class="sub nl-in">' + [nn ? plural(nn, 'player') : '', n.saved ? 'saved ' + esc(when(n.saved)) : ''].filter(Boolean).join(' · ') + '</span>' + logsOf(n, b) + '</div>' +
-      '<div class="nl-b">' + (isCur ? (on ? '<span class="nl-this">✓ This pull</span>' : '<button class="btn sm" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>') + '<button class="btn sm" type="button" data-nedit="' + esc(n.id) + '">Edit</button>' : '') +
-      '<button class="btn sm" type="button" data-ncopy="' + esc(b + '|' + n.id) + '" title="Copy the note, to paste into NSRT in game">Copy</button>' +
-      '<button class="btn sm" type="button" data-sndel="' + esc(b + '|' + n.id) + '" title="Remove this note" aria-label="Remove the note ' + esc(n.name) + '">' + NOTE_TRASH + '</button></div></div>'; };
+  // (each note a card (your note, Oct 18: pleasing on the eyes): its difficulty as a badge in its WoW colour, its name, how many
+  // players and when it was saved, its logs as date chips, and its buttons at the bottom (Use for this pull, then icons))
+  const DIF = { mythic: ['Mythic', 'm'], heroic: ['Heroic', 'h'], normal: ['Normal', 'n'], lfr: ['LFR', 'l'] };
+  const difOf = (n) => { let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (e) { hd = {}; } return DIF[String({ 14: 'normal', 15: 'heroic', 16: 'mythic', 17: 'lfr' }[hd.difficulty] || hd.difficulty || '').toLowerCase()] || null; };
+  const row = (n, b) => { const isCur = b === cur, on = isCur && used && used.id === n.id, nn = noteNames(n.text).length, d = difOf(n), nm = esc(n.name);
+    return '<div class="sn-card' + (on ? ' on' : '') + '"><div class="sn-ch">' + (d ? '<span class="sn-dif ' + d[1] + '">' + d[0] + '</span>' : '') + '<b class="sn-nm">' + nm + '</b>' + (n.example ? '<span class="sub">example</span>' : '') + (on ? '<span class="sn-this">✓ This pull</span>' : '') + '</div>' +
+      '<div class="sn-meta">' + (nn ? '<span>' + SN_I.users + plural(nn, 'player') + '</span>' : '') + (n.saved ? '<span>' + SN_I.clock + 'saved ' + esc(when(n.saved)) + '</span>' : '') + '</div>' + logsOf(n, b) +
+      '<div class="sn-cf">' + (isCur && !on ? '<button class="btn sm primary" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>' : '') + '<span class="sn-sp"></span>' +
+      (isCur ? '<button class="btn sm sn-ib" type="button" data-nedit="' + esc(n.id) + '" title="Edit this note" aria-label="Edit the note ' + nm + '">' + SN_I.pen + '</button>' : '') +
+      '<button class="btn sm sn-ib" type="button" data-ncopy="' + esc(b + '|' + n.id) + '" title="Copy the note, to paste into NSRT in game" aria-label="Copy the note ' + nm + '">' + SN_I.copy + '</button>' +
+      '<button class="btn sm sn-ib" type="button" data-sndel="' + esc(b + '|' + n.id) + '" title="Remove this note" aria-label="Remove the note ' + nm + '">' + NOTE_TRASH + '</button></div></div>'; };
   const NO = notesOf(cur), opt = (v, l) => '<option value="' + esc(v) + '">' + esc(l) + '</option>';
   const sel = NO.list.length > 1 ? '<div class="nl-foot"><label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label><span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.</span></div>' : '';
   // (each boss a panel with a header band: its banner art fading in from the right, as on the pull banner, or its model when
@@ -1752,8 +1764,10 @@ function storedNotes(only) {
   const panel = ([b, o]) => '<div class="panel nlib sn-b' + (b === cur ? ' cur' : '') + '"><div class="sn-hd"><div class="sn-art" aria-hidden="true">' + artOf(b) + '</div>' +
     '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div>' +
     '<span class="nl-hb">' + (b === cur ? '<button class="btn sm" type="button" id="noteNewBtn">Add a note</button>' : '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">Open ' + esc(b) + '</button>') + '</span></div>' +
-    '<div class="sn-body">' + (o.list.length ? o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + (b === cur ? sel : '') : '<p class="sub sn-none">No note for ' + esc(b) + ' yet. Add one, and it shows here with the logs it goes with.</p>') + '</div></div>';
-  $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + '<p class="sub sn-lead">Your NSRT notes for every boss, saved in this browser. Under each one are its logs: the one you have open, and the raid nights saved to your progress that it fits (the Save it link on a pull saves it).</p>' + bosses.map(panel).join('') + '</div>';
+    '<div class="sn-body">' + (o.list.length ? '<div class="sn-grid">' + o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + '</div>' + (b === cur ? sel : '')
+      : '<div class="sn-empty"><span class="sn-eico">' + SN_I.notes + '</span><div><b>No note for ' + esc(b) + ' yet</b><div class="sub">Add your raid\'s NSRT note, and it shows here with the logs it goes with.</div></div></div>') + '</div></div>';
+  $('#assignBox').innerHTML = '<div class="nsa">' + asViews() + (() => { const nN = bosses.reduce((t, [, o]) => t + o.list.length, 0), nB = bosses.filter(([, o]) => o.list.length).length;
+    return '<div class="sn-top"><div><h2>Stored notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ' for ' + (nB === 1 ? '1 boss' : nB + ' bosses') + ', saved in this browser. ' : '') + 'Each note shows its logs: the one you have open, and the raid nights saved to your progress (the Save it link on a pull).</div></div></div>'; })() + bosses.map(panel).join('') + '</div>';
   bindAsViews(only);
   // (Add a note, Edit and Use for this pull work on the open pull's boss, back on This pull)
   const redo = (b) => { for (const rep of CACHE.values()) if (rep.item.boss === b) applyNote(rep); renderMain(); };
