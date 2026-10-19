@@ -184,6 +184,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   round 184.
 - [x] **Weights of the mechanical execution grades** (your note; a fairness pass in round 140): look again at how much each mechanic counts toward a
   player's or the raid's execution grade (what's weighted heavier, what lighter), and whether that's fair.
+- [x] **Built (Oct 19): a Compare tab** after Players, one pull, with three views: **Top players of your spec** (your damage
+  or healing a second against the top 3 on this boss, fight length, your parse, and every spell's share and casts a minute
+  side by side), **A teammate** (pick anyone: output, mechanic mistakes, avoidable damage, deaths, casts a minute, kicks,
+  dispels; spells side by side when they play the same spec) and **Raids like yours** (20 kills of this boss from Warcraft
+  Logs, from the fastest or around #100, #250 or #500, sorted by how many specs match your group, with a guild search;
+  open one to see what they had that you didn't, each of your players against their best of the same spec, and open their
+  log on Warcraft Logs or right here). Checked on the Ula'tek Mythic test kill, desktop and phone.
+  Not yet: Compare on the whole night (it uses the pull picked), and comparing your raid's whole group of pulls or nights.
 - [ ] **A Comparison tab (your note, Oct 19; this gathers the Compare notes below and the "comparison tab" note under the header):**
   its own tab with three ways to compare: (1) you against a teammate, (2) your raid against other raids with a similar
   group (the same classes and specs, or close), found by browsing or searching, and (3) you against the top players of

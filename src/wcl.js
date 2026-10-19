@@ -126,10 +126,38 @@ async function topSpecOf(run, v) {
   return { n: got.length, who: got.map((g) => g.who), ab: [...by.values()].map((o) => ({ name: o.name, id: o.id, share: +o.share.toFixed(4), cpm: +o.cpm.toFixed(2), crit: o.hits ? +(o.crits / o.hits).toFixed(3) : null, avg: o.hits ? Math.round(o.total / o.hits) : null }))
     .sort((a, b) => b.share - a.share).slice(0, 30) };
 }
+// Kills of one boss, fastest first (Warcraft Logs' speed rankings, 50 a page), with who played what in each and their
+// damage (healers: healing) a second, for Compare's "Raids like yours". 20 kills from the page asked for; each kill's
+// players come from its own rankings (small: no gear), 5 kills a request. v: { e, d, p: page }
+const TOPKILL_Q = `query($e:Int!,$d:Int!,$p:Int){worldData{encounter(id:$e){fightRankings(difficulty:$d,metric:speed,page:$p)}}}`;
+async function topKillsOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
+  const fr = await run(TOPKILL_Q, { e: v.e, d: v.d, p: v.p || 1 }), R = P(fr && fr.worldData && fr.worldData.encounter && fr.worldData.encounter.fightRankings) || {};
+  const all = R.rankings || [], per = all.length, top = all.map((t, i) => ({ t, rank: ((v.p || 1) - 1) * 50 + i + 1 }))
+    .filter(({ t }) => t.report && /^[A-Za-z0-9]{8,32}$/.test(t.report.code) && t.report.fightID > 0).slice(0, v.n || 20);
+  const chunks = []; for (let i = 0; i < top.length; i += 5) chunks.push(top.slice(i, i + 5));
+  const ppl = (d, h) => { const D = ((P(d) || {}).data || [])[0], H = ((P(h) || {}).data || [])[0]; if (!D || !D.roles) return null;
+    const hps = new Map(((H && H.roles && H.roles.healers && H.roles.healers.characters) || []).map((c) => [c.name, c.amount]));
+    const out = []; for (const [rk, role] of [['tanks', 'tank'], ['healers', 'healer'], ['dps', 'dps']]) for (const c of (D.roles[rk] && D.roles[rk].characters) || [])
+      out.push({ n: c.name, c: c.class, s: c.spec, r: role, a: Math.round(role === 'healer' ? hps.get(c.name) || 0 : c.amount || 0) });
+    return { ppl: out, guild: D.guild || null, deaths: D.deaths }; };
+  const got = await Promise.all(chunks.map(async (ch) => {
+    const q = 'query{reportData{' + ch.map(({ t }, i) => { const f = t.report.fightID | 0; return 'k' + i + ':report(code:"' + t.report.code + '"){d:rankings(fightIDs:[' + f + '],playerMetric:dps) h:rankings(fightIDs:[' + f + '],playerMetric:hps)}'; }).join(' ') + '}}';
+    let d; try { d = await run(q, {}); } catch (e) { return []; }
+    return ch.map(({ t, rank }, i) => { const x = d && d.reportData && d.reportData['k' + i], o = x && ppl(x.d, x.h); if (!o || !o.ppl.length) return null;
+      const g = t.guild || o.guild || {}, sv = t.server || g.server || {};
+      return { rank, guild: g.name || '', server: sv.name || '', region: sv.region || '', dur: Math.round((t.duration || 0) / 1000), deaths: t.deaths != null ? t.deaths : o.deaths, code: t.report.code, fight: t.report.fightID, ppl: o.ppl }; }).filter(Boolean);
+  }));
+  return { page: v.p || 1, more: !!R.hasMorePages, per, kills: got.flat() };
+}
 // </topspec>
 async function topSpec(creds, v) {
   if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m);
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
+}
+async function topKills(creds, v) {
+  if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p);
+  return topKillsOf((q, vars) => gql(creds, q, vars), v);
 }
 
 async function loadReport(creds, code, live) {
@@ -497,6 +525,6 @@ function translate(item, events) {
   return out.join('\n');
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, topSpec, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
