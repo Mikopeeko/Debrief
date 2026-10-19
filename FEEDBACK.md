@@ -15,7 +15,7 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   "Take the tour" could be one Help item. Plan: list every link and button that moves you somewhere (top bar, menu, front
   page, pull banner, team pages, "See it in" buttons), group them by where they go, mock up one tidier layout (each place
   reachable one clear way, the menu short) for your OK, then build it.
-- [ ] **Adding a team or character fills in the rest (your note, Oct 18; being built now).** Add a team, and it asks which
+- [x] **Adding a team or character fills in the rest (your note, Oct 18; done in round 239).** Add a team, and it asks which
   player is you (and adds your character page). Add a character, and it asks right away about the teams that logged
   your raid nights.
 - [ ] **Discord: example posts and how-to's in the channels (your note, Oct 18).** My take: good; empty channels put people
@@ -234,6 +234,17 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - Checked on The Coiled Altar, Sszorak and Vashnik, with no errors.
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
+
+## 2026-10-18, round 239: Add a team, pick yourself; add a character, add your teams (your notes)
+- [x] **Add a team, and a pop-up asks "Which one is you?"** as soon as its first night is read: the team's players in their
+  class colours, most nights first. Picking yourself remembers you and adds your own character page too (found on your
+  own server, like Flëxørçïst on Thrall while Wolfthorn is on Zul'jin); it's read right after the team. Skip stops asking
+  on that team, and a small "Which one is you?" link stays on its page for later.
+- [x] **Add a character, and a pop-up asks "Are you on these teams?"** right away, from the first look at their reports:
+  every team or guild that logged 2 or more of their raid nights this tier and isn't on your list yet, each with Add, and
+  Skip. One team: "You raid with Wolfthorn", with Add Wolfthorn.
+- [x] Both pop-ups need a choice or Skip (Escape skips too), and the page's tips wait until the question is answered.
+- [x] Tested on your Wolfthorn team and Flëxørçïst on the local copy (removed afterwards), on desktop and phone.
 
 ## 2026-10-18, round 238: The website's front page is always the redesign (your note: "the entire front page looks wrong")
 - [x] **Everyone gets the redesigned front page now**: the raid art behind the headline, the Beta tag, the live log and

@@ -1552,6 +1552,28 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .pg-sg-ic { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%; background: rgba(230,180,80,.15); color: var(--gold); font-size: 22px; font-weight: 600; }
 .pg-sg-t { flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px; } .pg-sg-t b { font: 600 16px var(--head); color: #f3f5f9; } .pg-sg-t .sub { font-size: 13px; }
 .pg-sg-b { display: flex; align-items: center; gap: 12px; }
+/* ("Which one is you?" on a team, and "Are you on these teams?" on a character, with a row per team) */
+.pg-sugg .pg-sg-ic .sn-i { width: 18px; height: 18px; opacity: 1; }
+.pg-me { align-items: flex-start; } .pg-me .pg-sg-t { flex: 1 1 0; min-width: 240px; }
+.me-l { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.me-c { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 6px; border-radius: 999px; border: 1px solid var(--line2); background: var(--raised); color: var(--cc, var(--text)); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .12s, background .12s; }
+.me-c:hover, .me-c:focus-visible { border-color: var(--cc, var(--gold)); background: #242936; outline: none; }
+.me-c.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(230,180,80,.3); }
+.me-c img { width: 20px; height: 20px; border-radius: 50%; }
+.me-c .me-k { color: var(--faint); font-size: 11.5px; font-weight: 500; }
+.me-c:disabled { cursor: default; opacity: .7; } .me-c.on:disabled { opacity: 1; }
+.pg-sg-l { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.pg-sg-r { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 7px 10px; border-radius: 9px; background: rgba(0,0,0,.18); }
+.pg-sg-r .sub { flex: 1; font-size: 12.5px; }
+/* (the two questions as pop-ups over the page: pick, or Skip) */
+.pg-dim { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 16px; background: rgba(5,7,10,.66); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: pgDim .2s ease-out both; }
+.pg-dlg { width: min(680px, 100%); max-height: calc(100vh - 32px); overflow: auto; border-radius: 16px; animation: fphUp .25s cubic-bezier(.2,.7,.2,1) both; }
+.pg-dlg .pg-sugg { margin: 0; padding: 20px; background: linear-gradient(180deg, rgba(230,180,80,.1), rgba(230,180,80,0) 60%), #171a22; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.pg-dlg .pg-sg-t b { font-size: 19px; }
+.pg-dlg .pg-sg-b { width: 100%; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--line); }
+.pg-me-again { margin: -4px 0 10px; }
+@keyframes pgDim { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pg-dim, .pg-dlg { animation: none; } }
 .fph-prev { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 1100px; margin: 0 auto; } .fph-prev h2 { margin: 0; font: 700 24px var(--head); color: #f3f5f9; text-align: center; }
 .fph .fp-prev { flex: none; } .fph .fp-mods button { flex: 1 1 200px; }
 @media (max-width: 760px) {

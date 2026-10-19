@@ -762,12 +762,12 @@ async function wclCreds() {
 }
 // (one import at a time across tabs: two tabs importing at once each only knew their own saves and kept a pull twice)
 const IMPORT_LOCK = 'wla-team-import';
-async function teamImport(g, onStep) {
+async function teamImport(g, onStep, onFound) {
   const lk = +(store.get(IMPORT_LOCK) || 0); if (Date.now() - lk < 90e3) throw new Error('An import is already running in another tab. Try again when it finishes.');
   store.set(IMPORT_LOCK, String(Date.now()));
-  try { return await teamImportRun(g, onStep); } finally { store.set(IMPORT_LOCK, '0'); }
+  try { return await teamImportRun(g, onStep, onFound); } finally { store.set(IMPORT_LOCK, '0'); }
 }
-async function teamImportRun(g0, onStep) {
+async function teamImportRun(g0, onStep, onFound) {
   await HIST.load();
   const g = g0 && groups().find((x) => x.gid === g0.gid); if (!g || !g.id) throw new Error('Add your team first.');
   const creds = await wclCreds(), ch = g.kind === 'char'; g.done = g.done || {};
@@ -781,7 +781,9 @@ async function teamImportRun(g0, onStep) {
   // and half of them), for "You raid with …" on their page)
   if (ch) { const tally = {}; let n = 0;
     for (const x of list) if (x.zone && TIER_RE.test(x.zone.name) && x.guild && x.guild.id) { n++; (tally[x.guild.id] = tally[x.guild.id] || { id: x.guild.id, name: x.guild.name, n: 0 }).n++; }
-    const top = Object.values(tally).sort((a, b) => b.n - a.n)[0]; g.raidsWith = top && top.n >= 2 && top.n * 2 >= n ? { ...top, of: n } : null; }
+    const top = Object.values(tally).sort((a, b) => b.n - a.n)[0]; g.raidsWith = top && top.n >= 2 && top.n * 2 >= n ? { ...top, of: n } : null;
+    // (every team or guild that logged 2 or more of them, asked about on their page right away (your note, Oct 18))
+    g.raidsWithAll = Object.values(tally).filter((t) => t.n >= 2).sort((a, b) => b.n - a.n).slice(0, 4).map((t) => ({ ...t, of: n })); groupPut(g); if (onFound && g.raidsWithAll.length) onFound(); }
   // (a boss new to the tier since the last import, like Nymrissa and Kith'ix: every report is read again for its pulls;
   // pulls already saved are skipped)
   const bossKey = [...tierBoss].join('|'); if (g.bosses !== bossKey) { g.done = {}; g.bosses = bossKey; }
@@ -820,6 +822,10 @@ async function teamImportRun(g0, onStep) {
       }
       // (a team's players are your raid: later logs with them are saved on their own; a character's groups aren't)
       if (!ch) listAdd(TEAM_KEY, [...new Set(night.pulls.filter((p) => tierBoss.has(p.boss)).flatMap((p) => p.players))]);
+      // (a team's players: how many nights each raided, their class and server, for "Which one is you?" on its page)
+      if (!ch && night.who) { const inN = new Set(night.pulls.filter((p) => tierBoss.has(p.boss)).flatMap((p) => p.players)); g.members = g.members || {};
+        for (const nm of inN) { const wh = night.who[nm] || [], m = g.members[nm] || (g.members[nm] = { n: 0 }); m.n++; if (wh[0]) { m.cls = wh[0]; g.memV = 1; } if (wh[1]) m.srv = wh[1]; }
+        if (onFound && inN.size && !S.meTold) { S.meTold = true; groupPut(g); onFound(); } }
       g.done[x.code] = x.endTime; groupPut(g);
     }
   }
@@ -13347,13 +13353,41 @@ function renderProgHub(msg, msgErr, asHome) {
 // bringing in a team's nights: the steps show on its page; when it ends, the page you're on is redrawn only if it's that
 // team's page or the teams page (an import keeps going if you leave)
 // (quiet: the automatic check: no message when nothing is new, and none if another tab is already checking)
+// You (your note, Oct 18): the character you picked on a team ("Which one is you?"), kept in this browser
+const ME_KEY = 'wla-me';
+// (a question on a team's or character's page as a pop-up: pick, or Skip)
+const pgDlg = (id, inner) => '<div class="pg-dim" id="' + id + 'D"><div class="pg-dlg" role="dialog" aria-modal="true" aria-labelledby="' + id + 'T">' + inner + '</div></div>';
+const meOf = () => { try { const m = JSON.parse(store.get(ME_KEY) || 'null'); return m && m.name ? m : null; } catch (e) { return null; } };
+const srvSlug = (x) => String(x || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
+// (a team's players, most nights first: from its saved raid nights, with the class and server the import kept; the regulars
+// (2 nights or more) when there are 8 or more of them)
+function teamMembers(g) {
+  const nights = new Map(); for (const v of HIST.mem.values()) if (pullGroups(v).includes(g.gid)) { const k = nightOf(v.at); for (const n of v.players || []) { let x = nights.get(n); if (!x) nights.set(n, x = new Set()); x.add(k); } }
+  const mem = g.members || {}, l = [...nights].map(([name, x]) => ({ name, n: x.size, cls: (mem[name] || {}).cls || null, srv: (mem[name] || {}).srv || null }));
+  for (const [name, m] of Object.entries(mem)) if (!nights.has(name) && m.n) l.push({ name, n: m.n, cls: m.cls || null, srv: m.srv || null });
+  l.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+  const reg = l.filter((m) => m.n >= 2); return (reg.length >= 8 ? reg : l).slice(0, 40);
+}
+// (a team brought in before players' classes were kept: one of its nights is read again for them, once)
+async function meBackfill(g) {
+  if (g.memV === 1 || S.meBf) return; S.meBf = true;
+  try { const v = [...HIST.mem.values()].filter((x) => pullGroups(x).includes(g.gid) && x.wcl).sort((a, b) => b.at - a.at)[0]; if (!v) return;
+    const night = await WCL.nightPulls(await wclCreds(), v.wcl.code), x = groups().find((q) => q.gid === g.gid); if (!x || !night.who) return;
+    x.members = x.members || {}; let got = 0;
+    for (const [n, wh] of Object.entries(night.who)) { if (!wh[0]) continue; const m = x.members[n] || (x.members[n] = { n: 0 }); m.cls = wh[0]; if (wh[1]) m.srv = wh[1]; got++; }
+    if (got) { x.memV = 1; groupPut(x); if (S.progView === x.gid && $('#pgMe')) renderProgress(); }
+  } catch (e) { /* (tried again next time) */ } finally { S.meBf = false; }
+}
 async function progRun(g, quiet) {
   const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
   const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
   S.progBusy = g.gid; say(g.last ? 'Checking for new nights…' : 'Bringing in every night of the tier…');
-  try { const res = await teamImport(g, say); S.progBusy = null; done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date, with no new reports.') +
+  S.meTold = false; const found = () => { if (onIt()) renderProgress(($('#pgMsg') || {}).textContent || ''); };
+  try { const res = await teamImport(g, say, found); S.progBusy = null; done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date, with no new reports.') +
     (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy). They\'ll be tried again next time.' : '')); }
   catch (e) { S.progBusy = null; if (quiet && /already running|Connect Warcraft Logs/.test(e.message)) { done(''); return; } done(e.message, true); }
+  // (a team or character added while this one was being read, like your own page picked on a team: it's read next)
+  setTimeout(() => { const nx = groups().find((x) => !x.last && x.gid !== g.gid); if (nx && !S.progBusy) autoCheck(nx); }, 400);
 }
 // New nights come in by themselves: each team (and your character) is checked when the app opens, and its page checks
 // again when you open it, if it hasn't been checked in the last 10 minutes. One at a time, quietly.
@@ -13515,10 +13549,21 @@ function renderProgress(msg, msgErr) {
   // sit behind a small Edit button beside the name and only show when it's clicked (removing asks first and says how many
   // pulls go with it)
   const pgMsg = '<div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>';
-  // (a character whose raid nights were mostly logged by one team or guild that isn't on the list yet: one card to add it too)
-  const rw = g && g.kind === 'char' && !g.raidsWithNo && g.raidsWith, sugg = rw && !groups().some((o) => o.kind !== 'char' && o.id === rw.id) ?
-    '<section class="pg-sugg" id="pgSugg"><span class="pg-sg-ic" aria-hidden="true">+</span><div class="pg-sg-t"><b>You raid with ' + esc(rw.name) + '</b><span class="sub">' + rw.n + ' of your ' + rw.of + ' raid nights this tier were logged by them. Add them too to see the whole team\'s progress.</span></div>' +
-      '<div class="pg-sg-b"><button class="btn primary" id="pgSuggAdd" type="button">Add ' + esc(rw.name) + '</button><button class="linkbtn" id="pgSuggNo" type="button">Not now</button></div></section>' : '';
+  // (a character: the teams and guilds that logged their raid nights and aren't on the list yet (your note, Oct 18: asked
+  // right away, from the first look at their reports), one row each)
+  const rwAll = g && g.kind === 'char' && !g.raidsWithNo ? (g.raidsWithAll || (g.raidsWith ? [g.raidsWith] : [])).filter((t) => !groups().some((o) => o.kind !== 'char' && o.id === t.id)) : [];
+  const one = rwAll.length === 1 ? rwAll[0] : null;
+  const sugg = rwAll.length ? pgDlg('pgSugg', '<section class="pg-sugg" id="pgSugg"><span class="pg-sg-ic" aria-hidden="true">+</span><div class="pg-sg-t"><b id="pgSuggT">' + (one ? 'You raid with ' + esc(one.name) : 'Are you on these teams?') + '</b><span class="sub">' +
+      (one ? one.n + ' of your ' + one.of + ' raid nights this tier were logged by them. Add them too to see the whole team\'s progress.' : 'They logged your raid nights this tier. Add the ones you raid with to see the whole team\'s progress.') + '</span>' +
+      (one ? '' : '<div class="pg-sg-l">' + rwAll.map((t) => '<div class="pg-sg-r"><b>' + esc(t.name) + '</b><span class="sub">' + t.n + ' of your ' + t.of + ' raid nights</span><button class="btn sm" type="button" data-rwadd="' + t.id + '">Add</button></div>').join('') + '</div>') + '</div>' +
+      '<div class="pg-sg-b">' + (one ? '<button class="btn primary" type="button" data-rwadd="' + one.id + '">Add ' + esc(one.name) + '</button>' : '') + '<button class="btn" id="pgSuggNo" type="button">Skip</button></div></section>') : '';
+  // (a team: "Which one is you?" (your note, Oct 18) until you've picked yourself on a team, or said you're not on this one;
+  // its players with their class, most nights first. Picking one adds your own character page too)
+  const meL = g && g.kind !== 'char' && !g.meNo && !meOf() ? teamMembers(g) : [];
+  const meCard = meL.length ? pgDlg('pgMe', '<section class="pg-sugg pg-me" id="pgMe"><span class="pg-sg-ic" aria-hidden="true">' + SN_I.users + '</span><div class="pg-sg-t"><b id="pgMeT">Which one is you?</b><span class="sub">Pick your character. Debrief adds your own page too, with every raid you were in.</span>' +
+      '<div class="me-l">' + meL.map((m) => { const k = m.cls && E.CLASSES[m.cls]; return '<button class="me-c" type="button" data-me="' + esc(m.name) + '"' + (k ? ' style="--cc:' + k[1] + '"' : '') + '>' + (k ? '<img src="' + whIcon('classicon_' + k[2]) + '" alt="" onerror="this.remove()">' : '') + '<span class="me-n">' + esc(m.name) + '</span><span class="me-k">' + plural(m.n, 'night') + '</span></button>'; }).join('') + '</div></div>' +
+      '<div class="pg-sg-b"><button class="btn" id="pgMeNo" type="button">Skip</button></div></section>')
+    : g && g.kind !== 'char' && g.meNo && !meOf() && teamMembers(g).length ? '<div class="pg-me-again"><button class="linkbtn" id="pgMeAgain" type="button">Which one is you?</button></div>' : '';
   const only = g ? groupOnly(g) : 0;
   const info = !g ? '' : '<div class="sub pg-info">' + (g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][0] + ' · your character' : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') + (g.label && g.label !== g.name ? ' · ' + esc(g.name) + ' on Warcraft Logs' : '') + ' · ' + (S.progBusy === g.gid ? 'checking for new nights…' : lastTxt(g)) + '</div>';
   const editing = S.pgEdit || S.pgRename || S.pgDel;
@@ -13534,7 +13579,7 @@ function renderProgress(msg, msgErr) {
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   $('#main').innerHTML = '<div class="home prog"><div class="pg-links"><button class="lnk pg-back" id="pgHub" type="button">‹ All teams</button>' + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + '<div class="sub">The Venomous Abyss' + (list.length ? ' · ' + diffName + ': ' + killedOn(cur) + ' of ' + order.length + ' bosses killed, ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') : '') + '</div>' + info + '</div></div>' + sw + '</div>' + team + pgMsg + meCard + sugg + (g && (g.kind !== 'char' || g.cls) ? '<section class="panel pg-rank" id="pgRank"></section>' : '') + (g && g.kind !== 'char' ? sinceLast(list) : '') +
     (all.length ? legend + '<div class="pc-grid">' + order.filter((boss) => !open.includes(boss)).map((boss) => card(boss, list.filter((v) => v.boss === boss))).join('') + '</div>' +
         (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '')
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') + '</div>';
@@ -13543,14 +13588,41 @@ function renderProgress(msg, msgErr) {
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
   if ($('#pgSugg')) {
     $('#pgSuggNo').onclick = () => { g.raidsWithNo = true; groupPut(g); renderProgress(); };
-    $('#pgSuggAdd').onclick = async (ev) => { const b = ev.currentTarget; b.disabled = true;
-      try { const { g: ng, already } = await groupAdd('https://www.warcraftlogs.com/guild/id/' + rw.id); S.progView = ng.gid; window.scrollTo(0, 0);
+    // (Add: one team opens its page; with several, you stay here to add the others. While another import runs, its nights
+    // are read right after)
+    $$('#pgSugg [data-rwadd]').forEach((x) => (x.onclick = async (ev) => { const b = ev.currentTarget; b.disabled = true;
+      try { const { g: ng, already } = await groupAdd('https://www.warcraftlogs.com/guild/id/' + x.dataset.rwadd); store.set(GROUP_CUR, one ? ng.gid : g.gid);
         if (already) { renderProgress(gName(ng) + ' is already on your list.'); return; }
-        renderProgress('Added ' + ng.name + '. Importing its nights…'); progRun(ng); groupsBackfill();
-      } catch (e) { b.disabled = false; const m = $('#pgMsg'); if (m) { m.textContent = e.message; m.classList.add('err'); } } };
+        groupsBackfill(); const busy = S.progBusy, later = busy ? ' Its nights come in right after ' + gName(groups().find((q) => q.gid === busy) || g) + '\'s.' : ' Importing its nights…';
+        if (one) { S.progView = ng.gid; window.scrollTo(0, 0); }
+        renderProgress('Added ' + ng.name + '.' + (one ? later : ' It\'s on All teams.' + (busy ? '' : ' Importing its nights…'))); if (!busy) progRun(ng);
+      } catch (e) { b.disabled = false; const m = $('#pgMsg'); if (m) { m.textContent = e.message; m.classList.add('err'); } } }));
   }
+  // ("Which one is you?": you're remembered, and your own character page is added (found by name and server); "not on this team"
+  // stops asking on this team)
+  if ($('#pgMe')) {
+    if (g.memV !== 1) meBackfill(g);
+    $('#pgMeNo').onclick = () => { g.meNo = true; groupPut(g); renderProgress(); };
+    $$('#pgMe [data-me]').forEach((b) => (b.onclick = async () => {
+      const m = teamMembers(g).find((x) => x.name === b.dataset.me); if (!m) return;
+      $$('#pgMe button').forEach((x) => (x.disabled = true)); b.classList.add('on');
+      store.set(ME_KEY, JSON.stringify({ name: m.name, cls: m.cls, team: g.gid, at: Date.now() }));
+      const reg = ((g.server || '').match(/\((\w{2})\)\s*$/) || [])[1], srv = m.srv || (g.server || '').replace(/\s*\(\w{2}\)\s*$/, '');
+      let note = "Got it: you're " + m.name + '.';
+      if (reg && srv) {
+        try { const { g: cg, already } = await groupAdd('https://www.warcraftlogs.com/character/' + reg.toLowerCase() + '/' + srvSlug(srv) + '/' + encodeURIComponent(m.name));
+          note += already ? ' Your own page was already on your list.' : ' Your own page is on All teams now, with every raid you were in.';
+          if (!already) { groupsBackfill(); if (!S.progBusy) progRun(cg, true); } }
+        catch (e) { note += " Warcraft Logs didn't find your own page, so add it from All teams when you like."; }
+      }
+      store.set(GROUP_CUR, g.gid); renderProgress(note);
+    }));
+  }
+  if ($('#pgMeAgain')) $('#pgMeAgain').onclick = () => { g.meNo = false; groupPut(g); renderProgress(); };
+  { const d = $('#pgMeD') || $('#pgSuggD'); if (d) { const skip = $('#pgMeNo') || $('#pgSuggNo'); d.onkeydown = (e) => { if (e.key === 'Escape') { e.preventDefault(); skip.click(); } };
+    const f0 = d.querySelector('.me-c, [data-rwadd]'); if (f0 && !d.contains(document.activeElement)) f0.focus({ preventScroll: true }); } }
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
-  pageTips('team');
+  if (!$('#pgMeD') && !$('#pgSuggD')) pageTips('team'); // (not over the pop-up question)
   // (new nights: checked by themselves when the page opens, if not in the last 10 minutes; the line under the name says when)
   if (g && S.progBusy !== g.gid) autoCheck(g);
   // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)

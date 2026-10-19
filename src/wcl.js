@@ -134,7 +134,7 @@ const TEAM_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){guildDa
 const TEAM_REPORTS_Q = `query($id:Int!,$page:Int!){reportData{reports(guildID:$id,limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guildTag{name}}}}}`;
 const NIGHT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime
   fights(killType:Encounters){id encounterID name difficulty kill startTime endTime size fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
-  masterData{actors(type:"Player"){id name}}}}}`;
+  masterData{actors(type:"Player"){id name subType server}}}}}`;
 const DEATHS_Q = `query($code:String!,$s:Float!,$e:Float!){reportData{report(code:$code){events(startTime:$s,endTime:$e,dataType:Deaths,limit:10000){data nextPageTimestamp}}}}`;
 const DIFF_NAME = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR' };
 function parseTeamLink(s) {
@@ -233,7 +233,9 @@ async function nightPulls(creds, code) {
       endPhase: f.kill || !f.lastPhase ? null : f.lastPhaseIsIntermission ? 'Intermission' : 'P' + f.lastPhase,
       players: [...mine].map((i) => names.get(i)).filter(Boolean), deaths: dd.length, first: dd.length ? names.get(dd[0].targetID) || null : null };
   });
-  return { title: rep.title, pulls };
+  // (each player's class, as the game's token like PALADIN or DEATHKNIGHT, and server: for "Which one is you?" on a team)
+  const who = {}; for (const a of rep.masterData.actors || []) if (a.name) who[a.name] = [a.subType ? String(a.subType).toUpperCase().replace(/\s+/g, '') : null, a.server || null];
+  return { title: rep.title, pulls, who };
 }
 
 // ---------- pull downloads: saved on this PC, fetched in parallel time slices ----------
