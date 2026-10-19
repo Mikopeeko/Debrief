@@ -253,6 +253,14 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
 - [x] Still open from the review: shorter small print on the phase headers, and a section-by-section pass on the other
   six bosses. The six-boss pass was done in round 202.
 
+## 2026-10-19, round 258: Assignments is one page (your note: "combined into just the one assignments tab")
+- [x] **No more This pull / Stored notes sub-tabs.** Top to bottom: the note for this pull (or "No note for this
+  pull"), its results, then "Your saved notes" with Add a note at the top of that section.
+- [x] The open boss's notes are shown open; other bosses fold to one line ("Ula'tek · 2 notes").
+- [x] Change note and See your notes scroll down to your saved notes instead of switching views.
+- [x] Checked on a real night: the page, the fold, Change note, Add a note, Edit from the saved notes, and the no-note
+  page; no errors.
+
 ## 2026-10-19, round 256: Reload keeps you where you were (your note: F5 sent you to the home page)
 - [x] **F5 or the refresh button now reopens the same page:** the same pull and tab, one pull or the whole night, the
   player picked on Rotation, or the Teams page. This replaces the Oct 18 rule that every visit starts on the front page,
