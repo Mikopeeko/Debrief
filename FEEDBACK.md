@@ -90,7 +90,8 @@ Running list of feedback on Adequate Audits. Newest round at the top; items are 
   what Performance is for, then finish it before turning it back on. My take: agreed, launch with what's polished.
 - [ ] **Parked (your call, Oct 19: "not a huge fan of any of them, let's leave it as it is for right now").** The site keeps
   today's logo and look. **You lean toward look B, Tactical** (your note): a later round starts from it. None of the three
-  logos landed. Brand mockups made (Oct 19): https://claude.ai/artifact/UibNV8WFcjzjsz1dpmCCBc. Three logo
+  logos landed. Tactical drafts of 5 pages (Oct 19, notes/Tactical look): "I don't hate it, but it's not my favorite. Keep
+  it as an option." So it stays one option for a future rebrand, not the plan. Brand mockups made (Oct 19): https://claude.ai/artifact/UibNV8WFcjzjsz1dpmCCBc. Three logo
   directions next to today's (A The Crest, B The Marker, C The Pull Line) and two looks, A Raid-ready (Cinzel, gold frames)
   and B Tactical (sharp cut corners, condensed caps), on the front page and on a pull. My pick: logo A with look A.
 - [ ] **A better, fancier logo and brand (your note, Oct 18).** My take: worth doing before Debrief is promoted widely, not
