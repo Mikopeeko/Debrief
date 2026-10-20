@@ -4057,6 +4057,16 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rgx-lg { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 12.5px; color: var(--text); } .rgx-lg span { display: inline-flex; align-items: center; gap: 5px; } .rgx-lg u { display: inline-block; width: 9px; height: 9px; border-radius: 2px; } .rgx-lg b { color: var(--muted); font-weight: 600; }
 .rgx-n { margin: 8px 2px 0; }
 @media (max-width: 760px) { .rgx-g { grid-template-columns: 1fr 1fr; } .spc-chs { display: none; } }
+/* Rotation, the A+B mockup (Oct 19): talents in the card, blocks without boxes */
+.spc-htal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; width: 100%; margin-top: 12px; padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(217,180,106,.28); background: rgba(8,8,10,.55); color: var(--muted); font: 500 13px var(--body); text-align: left; cursor: pointer; }
+.spc-htal:hover { border-color: rgba(217,180,106,.6); } .spc-htal > b { color: var(--gold); font: 700 13px var(--head); letter-spacing: .4px; }
+.spc-htal[aria-expanded="true"] .spc-tso { display: none; } .spc-htal[aria-expanded="true"] .spc-tsc { display: inline; }
+.spc-bl2 > details.spc-all > summary { display: none !important; } .spc-bl2:not(:has(details[open])) { display: none; } .spc-bl2 { padding: 12px; }
+.spc-grp.spc-gx2 { margin: 18px 0 0; } .spc-gh2 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0 2px 8px; }
+.spc-gh2 > b { font: 700 14px var(--head); color: var(--text); letter-spacing: .2px; } .spc-gh2 .icw, .spc-gh2 > img { align-self: center; }
+.spc-gl2 { flex: 1 1 320px; min-width: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); } .spc-gh2 .spc-dots { align-self: center; margin-left: auto; }
+.spc-dt2 { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line); }
+@media (max-width: 760px) { .spc-gl2 { flex-basis: 100%; } }
 </style>
 
 
