@@ -322,9 +322,13 @@ async function runInbox(env) {
             await dc(env, '/channels/' + to + '/messages', { method: 'POST', body: { content: head + text, allowed_mentions: men } });
           } else {
             const name = String(o.title || ('Report #' + n)).replace(/\s+/g, ' ').slice(0, 95);
-            const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men } } });
+            const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men, components: REVIEW_ROW } } });
             if (n > 0) { reviews[n] = t.id; revDirty = true; }
           }
+        } else if (o.op === 'buttons' && /^\d{17,20}$/.test(String(o.thread || ''))) {
+          // (adds the answer buttons to a #bug-review post written before they existed: its first message, which is the bot's)
+          const th = await dc(env, '/channels/' + o.thread).catch(() => null);
+          if (th && th.parent_id === REVIEW_FORUM) await dc(env, '/channels/' + th.id + '/messages/' + th.id, { method: 'PATCH', body: { components: REVIEW_ROW } });
         } else if ((o.op === 'ping' || o.op === 'ask') && text) {
           let ch = thread[n];
           if (!ch) { if (!mod) mod = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'moderator-only') || {}).id; ch = mod; }
@@ -448,6 +452,48 @@ async function runReplies(env, all) {
   if (dirty) await env.DEBRIEF_KV.put('dc-revseen', JSON.stringify(seen));
   if (inbox.length !== start) await env.DEBRIEF_KV.put('review-inbox', JSON.stringify(inbox.slice(-200)));
 }
+// Buttons on #bug-review posts (the user's pick, Oct 20: one tap instead of emoji). Discord sends each click to
+// /api/discord (the app's Interactions Endpoint URL), signed with the app's key; only the owner's clicks count. A click
+// answers at once ("Got it"), goes to review-inbox like a reply, and Not a bug / In progress / Done set the tag.
+const DISCORD_PUBLIC_KEY = 'caa9d8119f10d1ccc3c143f39c5745765810d77d587ae0bf7af836adc0a62123'; // (the app's public key, not a secret)
+const BUTTONS = [['fix', 'Fix it', 3, 'fix it', null], ['look', 'Look again', 1, 'look into it again', null], ['notbug', 'Not a bug', 2, 'not a bug, close it', 'Not a bug'],
+  ['prog', 'In progress', 2, 'in progress', 'In progress'], ['done', 'Done', 2, 'done', 'Done']];
+const REVIEW_ROW = [{ type: 1, components: BUTTONS.map(([id, label, style]) => ({ type: 2, style, label, custom_id: 'rv:' + id })) }];
+const hex = (s) => new Uint8Array(s.match(/../g).map((h) => parseInt(h, 16)));
+async function discordSigned(req, body) {
+  const sig = req.headers.get('X-Signature-Ed25519'), ts = req.headers.get('X-Signature-Timestamp');
+  if (!sig || !ts || !/^[0-9a-f]{128}$/.test(sig)) return false;
+  try {
+    const key = await crypto.subtle.importKey('raw', hex(DISCORD_PUBLIC_KEY), { name: 'Ed25519' }, false, ['verify']);
+    return await crypto.subtle.verify('Ed25519', key, hex(sig), new TextEncoder().encode(ts + body));
+  } catch (e) {
+    const key = await crypto.subtle.importKey('raw', hex(DISCORD_PUBLIC_KEY), { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' }, false, ['verify']);
+    return crypto.subtle.verify('NODE-ED25519', key, hex(sig), new TextEncoder().encode(ts + body));
+  }
+}
+async function discordClick(req, env, ctx) {
+  const body = await req.text();
+  if (!(await discordSigned(req, body))) return new Response('Bad signature', { status: 401 });
+  const i = JSON.parse(body), reply = (content, eph) => json({ type: 4, data: { content, flags: eph ? 64 : 0, allowed_mentions: { parse: [] } } });
+  if (i.type === 1) return json({ type: 1 }); // (Discord's check that this address answers)
+  const b = BUTTONS.find((x) => i.type === 3 && i.data && i.data.custom_id === 'rv:' + x[0]); if (!b) return reply('That button isn\'t used any more.', true);
+  const who = (i.member && i.member.user) || i.user || {};
+  if (who.id !== OWNER) return reply('Only the owner can answer reviews.', true);
+  const thread = i.channel_id;
+  ctx.waitUntil((async () => {
+    const reviews = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {}, issue = +(Object.entries(reviews).find(([, t]) => t === thread) || [0])[0] || 0;
+    const inbox = (await env.DEBRIEF_KV.get('review-inbox', 'json')) || [];
+    inbox.push({ thread, issue, title: (i.channel && i.channel.name) || '', kind: 'button', text: b[3], at: new Date().toISOString() });
+    await env.DEBRIEF_KV.put('review-inbox', JSON.stringify(inbox.slice(-200)));
+    if (b[4] && env.DISCORD_BOT_TOKEN) {
+      const forum = await dc(env, '/channels/' + REVIEW_FORUM), th = await dc(env, '/channels/' + thread);
+      const drop = ['In progress', 'Done', 'Not a bug'].map((n) => tagOf(forum.available_tags, n)), id = tagOf(forum.available_tags, b[4]);
+      const keep = new Set((th.applied_tags || []).filter((x) => !drop.includes(x))); if (id) keep.add(id);
+      await dc(env, '/channels/' + thread, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } });
+    }
+  })().catch((err) => console.warn('Click:', err && err.message)));
+  return reply(b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll do it at the next check (10 am or 6 pm). For sooner, tell me in the Claude app.');
+}
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
@@ -536,6 +582,7 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/wcl-me') return req.method === 'POST' ? wclSignIn(req) : json({ error: 'Sign in from the website.' }, 405);
     if (url.pathname === '/api/bug') return req.method === 'POST' ? fileBug(req, env, url) : json({ error: 'Send reports with the website\'s form.' }, 405);
