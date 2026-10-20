@@ -137,6 +137,9 @@ const ROUTES = {
   // one page (100) of a spec's rankings on a boss, slimmed (Compare's "Search for a player"), kept a day
   '/api/specrank': { age: 86400, run: (env, v) => specRanksOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), c = p.get('c') || '', s = p.get('s') || '', pg = parseInt(p.get('p'), 10) || 1; return e > 0 && [3, 4, 5].includes(d) && /^[A-Za-z]{4,15}$/.test(c) && /^[A-Za-z]{3,20}$/.test(s) && pg >= 1 && pg <= 20 ? { e, c, s, d, m: p.get('m') === 'hps' ? 'hps' : 'dps', p: pg } : null; } },
+  // one ranked player's spells on their kill (Compare's "Top 100 average"): a kill doesn't change, so kept a week
+  '/api/plab': { age: 604800, run: (env, v) => playerAbOf((q, vars) => gql(env, q, vars), v),
+    v: (p) => { const c = p.get('c') || '', f = parseInt(p.get('f'), 10), n = p.get('n') || ''; return CODE.test(c) && f > 0 && n.length >= 2 && n.length <= 24 && !/["\\]/.test(n) ? { c, f, n, m: p.get('m') === 'hps' ? 'hps' : 'dps' } : null; } },
   // 20 kills of a boss from one page of the fastest, with who played what (Compare's "Raids like yours"), kept a day
   '/api/topkills': { age: 86400, run: (env, v) => topKillsOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), pg = parseInt(p.get('p'), 10) || 1; return e > 0 && [3, 4, 5].includes(d) && pg >= 1 && pg <= 40 ? { e, d, p: pg, n: 20 } : null; } },
@@ -559,6 +562,27 @@ async function discordClick(req, env, ctx) {
   })().catch((err) => console.warn('Click:', err && err.message)));
   return reply(b[0] === 'done' || b[0] === 'notbug' ? 'Got it: marked **' + b[4] + '**. The reporter hears about it, and both posts close in 24 hours.' : b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
 }
+// #new-features (the user's ask, Oct 20: "a channel just for new feature alerts, to highlight them better"): each New
+// features card (h) on the newest Patch notes day is posted there once, as its own gold card, and published to followers.
+function newestFeatures() {
+  const i = APP_HTML.indexOf('const PATCH_NOTES = ['); if (i < 0) return null;
+  const s = APP_HTML.slice(i, i + 30000), m = /\{ d: '(\d{4}-\d\d-\d\d)'/.exec(s); if (!m) return null;
+  const day = s.slice(m.index, (s.indexOf('\n  { d: \'', m.index + 5) + 1 || s.length) - 1), hs = day.split(' n: [')[0], un = (x) => x.replace(/\\'/g, "'").replace(/\\"/g, '"');
+  return { d: m[1], feats: [...hs.matchAll(/\{ t: '((?:[^'\\]|\\.)*)', d: '((?:[^'\\]|\\.)*)' \}/g)].map((x) => ({ t: un(x[1]), d: un(x[2]) })) };
+}
+async function runFeatures(env) {
+  const nf = newestFeatures(); if (!nf || !nf.feats.length) return;
+  const posted = (await env.DEBRIEF_KV.get('feat-posted', 'json')) || [], fresh = nf.feats.filter((f) => !posted.includes(nf.d + '|' + f.t)).slice(0, 5); if (!fresh.length) return;
+  const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'new-features') || {}).id; if (!ch) return;
+  const day = new Date(nf.d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  for (const f of fresh) {
+    const msg = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body: { allowed_mentions: { parse: [] },
+      embeds: [{ title: '✨ ' + f.t, description: f.d + '\n\n🔗 [Try it on Debrief](' + SITE + ')', color: 0xE6B450, footer: { text: 'New on Debrief · ' + day } }] } });
+    posted.push(nf.d + '|' + f.t);
+    if (msg && msg.id) await dc(env, '/channels/' + ch + '/messages/' + msg.id + '/crosspost', { method: 'POST' }).catch(() => {}); // (to servers that follow it)
+  }
+  await env.DEBRIEF_KV.put('feat-posted', JSON.stringify(posted.slice(-300)));
+}
 // Kill feed (the user's pick, Oct 20): a guild signs up with /killfeed add <its Warcraft Logs link>; every 30 minutes
 // Claudette reads each signed-up guild's newest report and posts in #kill-feed the first time it kills each Mythic boss
 // (one post per boss per guild, counted from sign-up, so farm kills don't repeat). KV killfeed: [{id, name, by, seen, done}].
@@ -664,6 +688,7 @@ async function discordJobs(env, now) {
   await runReplies(env, all).catch((err) => console.warn('Replies:', err && err.message));
   await ensureCommands(env).catch((err) => console.warn('Commands:', err && err.message));
   await runKillFeed(env, now).catch((err) => console.warn('Kill feed:', err && err.message));
+  await runFeatures(env).catch((err) => console.warn('Features:', err && err.message));
   await runQuestions(env, all).catch((err) => console.warn('Questions:', err && err.message));
   await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
   await runDigest(env, now, all);
