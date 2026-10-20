@@ -267,11 +267,27 @@ async function runBugs(env) {
     const th = await dc(env, '/channels/' + tid).catch(() => null); if (!th) continue;
     const keep = new Set((th.applied_tags || []).filter((id) => id !== working)), done = tagOf(tags, nope ? 'Can\'t reproduce' : 'Fixed'); if (done) keep.add(done);
     await dc(env, '/channels/' + tid, { method: 'PATCH', body: { archived: false, applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
-    await say(env, tid, nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
-      : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>').catch(() => {});
+    // (the user's rule, Oct 20: the reporter is tagged on their own #bug-reports post, the owner in the #bug-review post,
+    // and both posts are closed 24 hours later)
+    const first = await dc(env, '/channels/' + tid + '/messages/' + tid).catch(() => null), uid = first && first.author && !first.author.bot && first.author.id !== OWNER ? first.author.id : null;
+    await dc(env, '/channels/' + tid + '/messages', { method: 'POST', body: { content: (uid ? '<@' + uid + '> ' : '') + (nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
+      : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>'), allowed_mentions: { parse: [], users: uid ? [uid] : [] } } }).catch(() => {});
     st.fixed = [...(st.fixed || []), [tid, Date.now(), nope ? 0 : 1]].slice(-50);
     if (!nope) await bugHunter(env, tid).catch((err) => console.warn('Bug Hunter:', err && err.message));
+    const rt = ((await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {})[n];
+    if (rt) {
+      const rf = await dc(env, '/channels/' + REVIEW_FORUM).catch(() => null), rth = await dc(env, '/channels/' + rt).catch(() => null);
+      if (rf && rth) { const drop = ['In progress', 'Done', 'Not a bug', 'Needs your call'].map((x) => tagOf(rf.available_tags, x)), id = tagOf(rf.available_tags, nope ? 'Not a bug' : 'Done');
+        const k = new Set((rth.applied_tags || []).filter((x) => !drop.includes(x))); if (id) k.add(id);
+        await dc(env, '/channels/' + rt, { method: 'PATCH', body: { archived: false, applied_tags: [...k].slice(0, 5) } }).catch(() => {}); }
+      await dc(env, '/channels/' + rt + '/messages', { method: 'POST', body: { content: '<@' + OWNER + '> ' + (nope ? 'Closed as not a bug.' : '✅ Done: this one is fixed.') + ' ' + (uid ? 'The reporter was tagged on their post.' : 'Its post was updated.') + ' Both posts close in 24 hours.', allowed_mentions: { parse: [], users: [OWNER] } } }).catch(() => {});
+    }
+    st.arch = [...(st.arch || []), [tid, Date.now()], ...(rt ? [[rt, Date.now()]] : [])].slice(-200);
   }
+  // (posts whose 24 hours after done are up get closed: archived and locked, so they leave the channel lists)
+  const due = (st.arch || []).filter(([, at]) => Date.now() - at > 864e5);
+  for (const [id] of due) await dc(env, '/channels/' + id, { method: 'PATCH', body: { archived: true, locked: true } }).catch((err) => console.warn('Archive:', id, err && err.message));
+  if (due.length) { st.arch = st.arch.filter(([, at]) => Date.now() - at <= 864e5); dirty = true; }
   if (st.open.length !== still.length) st.open = still;
   if (dirty) await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st));
   return all;
@@ -522,6 +538,12 @@ async function discordClick(req, env, ctx) {
     const inbox = (await env.DEBRIEF_KV.get('review-inbox', 'json')) || [];
     inbox.push({ thread, issue, title: (i.channel && i.channel.name) || '', kind: 'button', text: b[3], at: new Date().toISOString() });
     await env.DEBRIEF_KV.put('review-inbox', JSON.stringify(inbox.slice(-200)));
+    // (Done / Not a bug finish it: the report is closed on GitHub, so the next run tags the reporter and the owner and closes
+    // both posts 24 hours later; a review post with no report just closes in 24 hours)
+    if (b[0] === 'done' || b[0] === 'notbug') {
+      if (issue > 0 && env.GITHUB_TOKEN) await gh(env, '/issues/' + issue, { method: 'PATCH', body: { state: 'closed', state_reason: b[0] === 'done' ? 'completed' : 'not_planned' } }).catch(() => {});
+      else { const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); } }
+    }
     if (b[4] && env.DISCORD_BOT_TOKEN) {
       const forum = await dc(env, '/channels/' + REVIEW_FORUM), th = await dc(env, '/channels/' + thread);
       const drop = ['In progress', 'Done', 'Not a bug'].map((n) => tagOf(forum.available_tags, n)), id = tagOf(forum.available_tags, b[4]);
@@ -529,7 +551,7 @@ async function discordClick(req, env, ctx) {
       await dc(env, '/channels/' + thread, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } });
     }
   })().catch((err) => console.warn('Click:', err && err.message)));
-  return reply(b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
+  return reply(b[0] === 'done' || b[0] === 'notbug' ? 'Got it: marked **' + b[4] + '**. The reporter hears about it, and both posts close in 24 hours.' : b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
 }
 // Kill feed (the user's pick, Oct 20): a guild signs up with /killfeed add <its Warcraft Logs link>; every 30 minutes
 // Claudette reads each signed-up guild's newest report and posts in #kill-feed the first time it kills each Mythic boss
