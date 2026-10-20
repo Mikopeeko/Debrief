@@ -15821,10 +15821,17 @@ function cmpFindP(r, p, ps) {
     if (TF.err) return { vs, body: cmpMsg(esc(TF.err)) };
     return cmpPair(r, p, TF.r, TF.q, vs, '', null, { ctl: again, rank: '#' + w.rank, sub: esc(w.server + (w.region ? '-' + w.region : '')) }); }
   const o = specRanksFor(r, p); if (o && !o.pages && !o.err) specRanksMore(r, o);
-  const box = '<div class="panel cmp-srch"><h3>Search for a player<small>Anyone who plays your spec and hero tree. Pick one to compare yourself with them.</small></h3>' +
-    '<input class="cmp-find cmp-srchq" id="cmpQ" type="search" placeholder="Type a name" value="' + esc(S.cmpQ || '') + '" aria-label="Search for a player" autocomplete="off" spellcheck="false">' +
-    '<div class="cmp-srchl" id="cmpQR">' + cmpFindRes(r, p, ps) + '</div></div>';
-  return { vs: '<span class="sub">a player you search for</span>', body: box };
+  // (Oct 20, "we forgot to do a design revamp on this page": the same face-off header as a comparison, you on the left with your number, an
+  // empty "Pick a player" spot on the right, and the search box in the same panel)
+  const k = cmpKind(p), hA = cmpHeroOf(r, p), me = cmpIsMe(p);
+  const face = (seg, ctlA) => '<div class="panel cmp-hps cmp-hpf" style="--artA:' + specArt(p) + ';--artB:none"><div class="cmp-hseg">' + seg + '</div>' +
+    '<div class="cmp-hpn" style="--c:' + p.color + '">' + (pIcon(p) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(p)) + '" alt="" onerror="this.remove()">' : '') + '<div><span class="cmp-hpt"><span class="cmp-hpw">' + (me ? 'You' : esc(p.name)) + '</span>' + ctlA + '</span>' +
+    (hA ? '<span class="cmp-hph">' + esc(hA) + '</span>' : '') + '<b class="cmp-hpv">' + C(cmpRate(r, p, k)) + '</b><span class="sub">' + (k === 'heal' ? 'healing' : 'damage') + ' a second</span></div></div>' +
+    '<div class="cmp-hpm"><b>vs</b></div>' +
+    '<div class="cmp-hpn cmp-hpr cmp-hpe" style="--c:var(--gold)"><span class="cmp-hpi cmp-hpx">?</span><div><span class="cmp-hpw">Pick a player</span><span class="sub">Anyone who plays ' + esc(spn) + (hA ? ' with ' + esc(hA) : '') + '</span></div></div>' +
+    '<div class="cmp-hsr"><input class="cmp-find cmp-srchq" id="cmpQ" type="search" placeholder="Type a name" value="' + esc(S.cmpQ || '') + '" aria-label="Search for a player" autocomplete="off" spellcheck="false">' +
+    '<div class="cmp-srchl" id="cmpQR">' + cmpFindRes(r, p, ps) + '</div></div></div>';
+  return { vs: '<span class="sub">a player you search for</span>', body: '', face };
 }
 // The page for two players of the same spec, each read from their own pull (a teammate: this pull for both; a top raider:
 // their own kill), so Search for a player and Top raiders of your spec are set up the exact same way (your call, Oct 19).
@@ -16113,7 +16120,33 @@ function cmpAvgTop(r, p, k, n, A, rl, myHero, mine, pick, lead) {
   const face = (seg, ctlA) => '<div class="panel cmp-hps cmp-hpf" style="--artA:' + specArt(p) + ';--artB:' + specArt(p) + '"><div class="cmp-hseg">' + seg + '</div>' + big(esc(An), p.color, mine, false, ctlA) + '<div class="cmp-hpm">' + badge + '</div>' +
     big(nm, GOLD, A.v, true, pick, A.n + ' ' + esc(spn) + 's') + tug + '</div>';
   const note = '<div class="panel"><p class="cmp-hnote" style="margin:0">' + nm + ' is ' + (A.n < n ? 'all ' + A.n + ' ' + esc(spn) + 's ranked on this boss so far (fewer than ' + n + ')' : 'the top ' + n + ' ' + esc(spn) + 's on this boss') + ', ranked by ' + U + ' a second (the same order as their parses). The spells come from ' + ok.length + ' of them, spread through the group' + (pool === on ? ', all playing ' + esc(myHero) : '') + '. An average isn\'t one real player, so there\'s no opener or burst windows here. Pick a player under Change to see those.</p></div>';
-  return { vs, face, body: lead + (why || cmpMsg('Your spells line up with theirs: no spell is more than 2% apart.')) + note };
+  // (Oct 20, "top raiders of my spec don't have any details below this": the same "How they play it differently" tiles as against one
+  // player, from the group: the talents most of them take, the spell mix, casts a minute and big cooldown uses; times can't be averaged)
+  const two = { na: esc(An), nb: nm, ca: p.color, cb: GOLD }, out = [], pcx = (v) => (100 * v).toFixed(v < 0.1 ? 1 : 0) + '%';
+  const tile = (label, txt) => '<div class="cmp-card na"><div class="cmp-cl"><span>' + label + '</span></div><div class="cmp-ct">' + txt + '</div></div>';
+  { const tr = treeOf(p.specName), c = (r.combatants || []).find((y) => y.name === p.name), mineT = new Set(((c && c.talents) || []).map((t) => +t.id)), grp = pool.filter((y) => y.tal && y.tal.length);
+    if (tr && mineT.size && grp.length >= 5) { const has = grp.map((y) => new Set(y.tal)), sh = (id) => has.filter((s) => s.has(id)).length / has.length, lack = [], extra = [];
+      for (const nd of tr.nodes) { if (nd.free) continue; for (const e of nd.entries) { if (!e.name) continue; const s = sh(e.id);
+        if (s >= 0.75 && !mineT.has(e.id)) lack.push({ e, s }); else if (s <= 0.25 && mineT.has(e.id)) extra.push({ e, s }); } }
+      const nmL = (l) => l.sort((a, b) => (b.s - a.s) || 0).slice(0, 3).map((o) => '<b>' + esc(o.e.name) + '</b> (' + Math.round(100 * o.s) + '%)').join(', ');
+      extra.sort((a, b) => a.s - b.s);
+      out.push(tile('Build', (lack.length ? 'Most of them take ' + nmL(lack) + '. ' + (me ? 'You don\'t' : esc(An) + ' doesn\'t') + '.' : (me ? 'You take' : esc(An) + ' takes') + ' what most of them take.') +
+        (extra.length ? ' ' + (me ? 'You take' : esc(An) + ' takes') + ' ' + extra.slice(0, 3).map((o) => '<b>' + esc(o.e.name) + '</b> (' + Math.round(100 * o.s) + '% of them)').join(', ') + '.' : '') +
+        '<br><span class="sub">From the talents of ' + grp.length + ' of them' + (pool === on ? ' on ' + esc(myHero) : '') + '.</span>')); } }
+  // (spell mix: the two spells whose part of the total differs most)
+  cmpPairs({ ab: [...mm.values()] }, { ab: theirs }).map(([a, b2]) => ({ x: a || b2, sa: a ? a.share : 0, sb: b2 ? b2.share : 0 })).filter((o) => Math.abs(o.sa - o.sb) >= 0.015)
+    .sort((u, v) => Math.abs(v.sa - v.sb) - Math.abs(u.sa - u.sb)).slice(0, 2).forEach((o) => { const n2 = String(o.x.name).replace(/^[^:]+: /, '');
+      out.push(cmpCard({ ...two, label: spellIcon(o.x.id, n2) + ' ' + esc(n2), a: o.sa, b: o.sb, fa: pcx(o.sa), fb: pcx(o.sb), st: 'na', txt: 'A bigger part of ' + (o.sb > o.sa ? nm + '\'s' : me ? 'your' : esc(An) + '\'s') + ' ' + U + '.' })); });
+  // (casts a minute, and each big cooldown's uses every 5 minutes, theirs from every spell they cast)
+  const okC = ok.filter((o) => o.cast && o.cast.length), myCpm = castOf(r, p, 0, perfContext(r).end, true).cpm;
+  if (okC.length) { const th = okC.reduce((t, o) => t + o.cast.reduce((u, x) => u + x.n, 0) / Math.max(1, o.dur) * 60, 0) / okC.length;
+    out.push(cmpCard({ ...two, label: 'Casts a minute', a: myCpm, b: th, fa: myCpm.toFixed(1), fb: th.toFixed(1), st: 'na', txt: cmpLead(esc(An), myCpm, nm, th, 'cast') }));
+    const end = perfContext(r).end || r.duration || 1;
+    (PERF_CDS[p.specName] || []).filter(([, cd]) => cd >= 90).map(([n2]) => n2).slice(0, 3).forEach((n2) => { const lo = n2.toLowerCase(), mine2 = (p.byName.get(lo) || []).filter((t) => t <= end).length * 300 / end;
+      const th2 = okC.reduce((t, o) => t + ((o.cast.find((x) => String(x.name).toLowerCase() === lo) || {}).n || 0) * 300 / Math.max(1, o.dur), 0) / okC.length; if (!mine2 && !th2) return;
+      out.push(cmpCard({ ...two, label: spellIcon(E.SPELLID.get(lo) || 0, n2) + ' ' + esc(n2), a: mine2, b: th2, fa: mine2.toFixed(1), fb: th2.toFixed(1), st: 'na', txt: 'Uses every 5 minutes.' })); }); }
+  const diffs = out.length ? '<div class="panel"><h3>How they play it differently<small>Side by side, no grades. Their cooldown times and openers are on the one-player pages: pick a player under Change.</small></h3><div class="cmp-cards">' + out.join('') + '</div></div>' : '';
+  return { vs, face, body: lead + diffs + (why || cmpMsg('Your spells line up with theirs: no spell is more than 2% apart.')) + note };
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from
 // the list; then it's your raid against theirs, the same page as the other two.

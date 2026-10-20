@@ -189,7 +189,8 @@ async function playerAbOf(run, v) {
   const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x), nm = String(v.n).replace(/'/g, "\\'");
   const d = await run(TOPAB_Q, { c: v.c, f: [v.f], x: "source.name = '" + nm + "' or source.owner.name = '" + nm + "'", t: v.m === 'hps' ? 'Healing' : 'DamageDone' });
   const rep = d.reportData.report, f = rep.fights[0], dd = P(rep.d).data.entries || [], kk = P(rep.k).data.entries || [], casts = new Map(kk.map((e) => [e.name, e.total || 0]));
-  return { dur: Math.round(Math.max(1, (f.endTime - f.startTime) / 1000)), ab: dd.map((e) => ({ name: e.name, id: e.guid, total: e.total || 0, casts: casts.get(e.name) || 0 })) };
+  return { dur: Math.round(Math.max(1, (f.endTime - f.startTime) / 1000)), ab: dd.map((e) => ({ name: e.name, id: e.guid, total: e.total || 0, casts: casts.get(e.name) || 0 })),
+    cast: kk.map((e) => ({ name: e.name, id: e.guid, n: e.total || 0 })) }; // (every spell they cast, cooldowns too, for casts a minute and cooldown uses)
 }
 // </topspec>
 async function topSpec(creds, v) {
@@ -205,7 +206,7 @@ async function specRanks(creds, v) {
   return specRanksOf((q, vars) => gql(creds, q, vars), v);
 }
 async function playerAb(creds, v) {
-  if (HOSTED) return api('/api/plab?c=' + v.c + '&f=' + v.f + '&n=' + encodeURIComponent(v.n) + '&m=' + v.m);
+  if (HOSTED) return api('/api/plab?c=' + v.c + '&f=' + v.f + '&n=' + encodeURIComponent(v.n) + '&m=' + v.m + '&v=2'); // (v=2: with every spell they cast)
   return playerAbOf((q, vars) => gql(creds, q, vars), v);
 }
 async function guildProg(creds, v) {
