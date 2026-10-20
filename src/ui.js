@@ -4241,6 +4241,7 @@ const MAP_DEFS = '<defs><clipPath id="pclip" clipPathUnits="objectBoundingBox"><
   '<radialGradient id="orbP" cx=".35" cy=".32" r=".75"><stop offset="0" stop-color="#fbf0ff"/><stop offset=".3" stop-color="#c47bff"/><stop offset="1" stop-color="#3d0f66"/></radialGradient></defs>';
 // Player marker: spec icon in a class-colored ring (a plain dot when the class is unknown).
 function playerDot(x, y, pl, r, attrs, title) {
+  if (pl && pl.glyph && typeof gdzGlyph === 'function') return gdzGlyph(x, y, pl, r, attrs, title); /* (Boss guides: role tokens) */
   const col = pl ? pl.color : '#9aa0ac';
   const icon = pIcon(pl) ? 'https://wow.zamimg.com/images/wow/icons/large/' + pIcon(pl) + '.jpg' : null;
   return '<g' + (attrs || '') + '><circle cx="' + x + '" cy="' + y + '" r="' + (r + 1.2) + '" fill="' + col + '" stroke="#000" stroke-width="1"/>' +
@@ -4355,6 +4356,7 @@ function miniMap(mp, pmap) {
   const OBJS = { orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
+  if (mp.room) s += '<defs><clipPath id="' + mp.room.id + '"><rect x="' + X({ x: mp.room.x0 }) + '" y="' + Y({ y: mp.room.y1 }) + '" width="' + (mp.room.x1 - mp.room.x0) * yd + '" height="' + (mp.room.y1 - mp.room.y0) * yd + '"/></clipPath></defs>'; /* (a guide's room outline: wall pools are cut at the wall) */
   for (const w of mp.wmarks || []) s += ic(X(w), Y(w), gdzMarkSvg(w.k, X(w), Y(w))); /* (a guide's raid markers on the floor (guides.js)) */
   // tank frontal cone (from the boss toward the tank it hit), drawn to scale under everything else
   // (like in game: bright at the boss and fading with distance. On a moving map (at: the moment it lands) it reaches out from
@@ -4437,7 +4439,7 @@ function miniMap(mp, pmap) {
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
-    const look = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null;
+    const look0 = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null, look = look0 != null && g.clip && mp.room ? '<g clip-path="url(#' + mp.room.id + ')">' + look0 + '</g>' : look0;
     s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
       (micL.push(mapIcon(g, X(g), Y(g), g.r * yd)), '') + ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
@@ -4503,7 +4505,7 @@ function miniMap(mp, pmap) {
       continue;
     }
     let inner = p.kind === 'ghost'
-      ? '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>'
+      ? (mp.gdzLook ? gdzGhost(X(p), Y(p), label) : '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>')
       : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow) && !(mp.lateHit && !(elP != null && elP >= -1.4))) /* (a guide's map rings them only while the frontal is cast) */ inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
@@ -4531,7 +4533,9 @@ function miniMap(mp, pmap) {
   const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []), addRes = [];
   // (more than two of the same add: their names only on hover, so a pack doesn't bury the map in labels (map audit, Oct 19))
   const addBase = (n) => String(n).replace(/ (.*)$/, ''), addN = new Map(); for (const q of pts) if (q.kind === 'add') addN.set(addBase(q.name), (addN.get(addBase(q.name)) || 0) + 1);
+  if (mp.gdzLook) for (const p of pts.filter((q) => q.kind === 'axe')) s += ic(X(p), Y(p), gdzAxe(X(p), Y(p), ft)); /* (a guide's rolling axes) */
   for (const p of pts.filter((q) => q.kind === 'add')) {
+    if (mp.gdzLook) { const tk = gdzAddToken(p, X(p), Y(p)); if (tk) { s += ic(X(p), Y(p), tk + castBar(p.guid, X(p), Y(p) + 20)); continue; } } /* (a guide's own add shapes) */
     const x = X(p), y = Y(p), ring = gAdd.has(p.guid) ? '#2fd15a' : bAdd.has(p.guid) ? '#ff3b3b' : null, crowd = !ring && addN.get(addBase(p.name)) > 2;
     if (ring) addRes.push({ x, y, ly: y + 22, w: 140, pri: -1, html: '' }, { x, y, ly: y + 34, w: 140, pri: -1, html: '' }); // (its name and kick tag: no other name prints over them)
     const look = ADD_LOOK[p.name] || ADD_LOOK[String(p.name).replace(/ \(.*\)$/, '')]; // (kick maps name adds like "Spiteful Soulcoiler (Set 1 #2)")
@@ -4544,7 +4548,7 @@ function miniMap(mp, pmap) {
   }
   // (bosses a little over half the old size (your note, Oct 18: the big crests hid what was under them))
   // (a boss's name joins the players' names below, so two bosses stood together don't print over each other (map audit, Oct 19))
-  const bossL = []; for (const p of pts.filter((q) => q.kind === 'boss')) { s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name, 0.6) + castBar(p.guid, X(p), Y(p) + 26)); bossL.push({ x: X(p), y: Y(p), ly: Y(p) + 18, w: String(p.name).length * 6.6, pri: 0.5, html: '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' }); }
+  const bossL = []; for (const p of pts.filter((q) => q.kind === 'boss')) { s += ic(X(p), Y(p), (mp.gdzLook ? gdzBossToken(X(p), Y(p), p.name) : bossCrest(X(p), Y(p), p.name, 0.6)) + castBar(p.guid, X(p), Y(p) + 26)); bossL.push({ x: X(p), y: Y(p), ly: Y(p) + 18, w: String(p.name).length * 6.6, pri: 0.5, html: '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' }); }
   for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(242,36,58,.16)" stroke="#f2243a" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);

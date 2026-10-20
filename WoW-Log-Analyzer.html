@@ -15844,6 +15844,7 @@ const MAP_DEFS = '<defs><clipPath id="pclip" clipPathUnits="objectBoundingBox"><
   '<radialGradient id="orbP" cx=".35" cy=".32" r=".75"><stop offset="0" stop-color="#fbf0ff"/><stop offset=".3" stop-color="#c47bff"/><stop offset="1" stop-color="#3d0f66"/></radialGradient></defs>';
 // Player marker: spec icon in a class-colored ring (a plain dot when the class is unknown).
 function playerDot(x, y, pl, r, attrs, title) {
+  if (pl && pl.glyph && typeof gdzGlyph === 'function') return gdzGlyph(x, y, pl, r, attrs, title); /* (Boss guides: role tokens) */
   const col = pl ? pl.color : '#9aa0ac';
   const icon = pIcon(pl) ? 'https://wow.zamimg.com/images/wow/icons/large/' + pIcon(pl) + '.jpg' : null;
   return '<g' + (attrs || '') + '><circle cx="' + x + '" cy="' + y + '" r="' + (r + 1.2) + '" fill="' + col + '" stroke="#000" stroke-width="1"/>' +
@@ -15958,6 +15959,7 @@ function miniMap(mp, pmap) {
   const OBJS = { orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
+  if (mp.room) s += '<defs><clipPath id="' + mp.room.id + '"><rect x="' + X({ x: mp.room.x0 }) + '" y="' + Y({ y: mp.room.y1 }) + '" width="' + (mp.room.x1 - mp.room.x0) * yd + '" height="' + (mp.room.y1 - mp.room.y0) * yd + '"/></clipPath></defs>'; /* (a guide's room outline: wall pools are cut at the wall) */
   for (const w of mp.wmarks || []) s += ic(X(w), Y(w), gdzMarkSvg(w.k, X(w), Y(w))); /* (a guide's raid markers on the floor (guides.js)) */
   // tank frontal cone (from the boss toward the tank it hit), drawn to scale under everything else
   // (like in game: bright at the boss and fading with distance. On a moving map (at: the moment it lands) it reaches out from
@@ -16040,7 +16042,7 @@ function miniMap(mp, pmap) {
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
-    const look = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null;
+    const look0 = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null, look = look0 != null && g.clip && mp.room ? '<g clip-path="url(#' + mp.room.id + ')">' + look0 + '</g>' : look0;
     s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
       (micL.push(mapIcon(g, X(g), Y(g), g.r * yd)), '') + ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
@@ -16106,7 +16108,7 @@ function miniMap(mp, pmap) {
       continue;
     }
     let inner = p.kind === 'ghost'
-      ? '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>'
+      ? (mp.gdzLook ? gdzGhost(X(p), Y(p), label) : '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>')
       : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow) && !(mp.lateHit && !(elP != null && elP >= -1.4))) /* (a guide's map rings them only while the frontal is cast) */ inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
@@ -16134,7 +16136,9 @@ function miniMap(mp, pmap) {
   const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []), addRes = [];
   // (more than two of the same add: their names only on hover, so a pack doesn't bury the map in labels (map audit, Oct 19))
   const addBase = (n) => String(n).replace(/ (.*)$/, ''), addN = new Map(); for (const q of pts) if (q.kind === 'add') addN.set(addBase(q.name), (addN.get(addBase(q.name)) || 0) + 1);
+  if (mp.gdzLook) for (const p of pts.filter((q) => q.kind === 'axe')) s += ic(X(p), Y(p), gdzAxe(X(p), Y(p), ft)); /* (a guide's rolling axes) */
   for (const p of pts.filter((q) => q.kind === 'add')) {
+    if (mp.gdzLook) { const tk = gdzAddToken(p, X(p), Y(p)); if (tk) { s += ic(X(p), Y(p), tk + castBar(p.guid, X(p), Y(p) + 20)); continue; } } /* (a guide's own add shapes) */
     const x = X(p), y = Y(p), ring = gAdd.has(p.guid) ? '#2fd15a' : bAdd.has(p.guid) ? '#ff3b3b' : null, crowd = !ring && addN.get(addBase(p.name)) > 2;
     if (ring) addRes.push({ x, y, ly: y + 22, w: 140, pri: -1, html: '' }, { x, y, ly: y + 34, w: 140, pri: -1, html: '' }); // (its name and kick tag: no other name prints over them)
     const look = ADD_LOOK[p.name] || ADD_LOOK[String(p.name).replace(/ \(.*\)$/, '')]; // (kick maps name adds like "Spiteful Soulcoiler (Set 1 #2)")
@@ -16147,7 +16151,7 @@ function miniMap(mp, pmap) {
   }
   // (bosses a little over half the old size (your note, Oct 18: the big crests hid what was under them))
   // (a boss's name joins the players' names below, so two bosses stood together don't print over each other (map audit, Oct 19))
-  const bossL = []; for (const p of pts.filter((q) => q.kind === 'boss')) { s += ic(X(p), Y(p), bossCrest(X(p), Y(p), p.name, 0.6) + castBar(p.guid, X(p), Y(p) + 26)); bossL.push({ x: X(p), y: Y(p), ly: Y(p) + 18, w: String(p.name).length * 6.6, pri: 0.5, html: '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' }); }
+  const bossL = []; for (const p of pts.filter((q) => q.kind === 'boss')) { s += ic(X(p), Y(p), (mp.gdzLook ? gdzBossToken(X(p), Y(p), p.name) : bossCrest(X(p), Y(p), p.name, 0.6)) + castBar(p.guid, X(p), Y(p) + 26)); bossL.push({ x: X(p), y: Y(p), ly: Y(p) + 18, w: String(p.name).length * 6.6, pri: 0.5, html: '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' }); }
   for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(242,36,58,.16)" stroke="#f2243a" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);
@@ -31089,7 +31093,7 @@ const GDZ_ROLE = {
 const GDZ_RAID = ['t1', 't2', 'h1', 'h2', 'h3', 'h4', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'];
 const gdzName = (id) => GDZ_ROLE[id[0]][0] + ' ' + id.slice(1);
 function gdzPmap() {
-  const m = new Map(); for (const id of GDZ_RAID) { const [, color, icon] = GDZ_ROLE[id[0]]; m.set(gdzName(id), { name: gdzName(id), color, specIcon: icon }); }
+  const m = new Map(); for (const id of GDZ_RAID) { const [, color, icon] = GDZ_ROLE[id[0]]; m.set(gdzName(id), { name: gdzName(id), color, specIcon: icon, glyph: id[0] }); }
   return m;
 }
 // where member i of n stands in a loose clump of radius r (a sunflower spiral, so clumps look natural and never overlap)
@@ -31171,7 +31175,7 @@ function gdzKit(boss, len) {
         const t1 = how === 'land' ? (g.at != null ? g.at + 0.4 : g.t0 + 3) : how === 'dur' ? g.t0 + (g.dur || 3) : g.t0 + how;
         const at0 = g.guid ? posRaw(g.guid, g.t0) : [g.x - A.cx, g.y - A.cy]; if (!at0) continue;
         // (one label for a cluster: a second one with the same words close by at the same time is left out)
-        if (calls.some((c) => c.text === text && Math.abs(c.t0 - g.t0) < 1.5 && c._p && Math.hypot(c._p[0] - at0[0], c._p[1] - at0[1]) < 16)) continue;
+        if (calls.some((c) => c.text === text && Math.abs(c.t0 - g.t0) < 1.5 && c._p && (text === 'Purple: keep clear' || Math.hypot(c._p[0] - at0[0], c._p[1] - at0[1]) < 16))) continue; /* (the purple warning once per orb set) */
         calls.push({ t0: g.t0, t1, text, color, on: g.guid, x: g.guid ? undefined : g.x, y: g.guid ? undefined : g.y, _p: at0 }); }
       for (const g of rings) { const col = GDZ_BADGE[g.cn]; if (!col || !g.guid || g.t0 == null) continue;
         calls.push({ kind: 'badge', name: g.cn, color: col, on: g.guid, t0: g.t0, t1: g.at != null ? g.at + 0.3 : g.t0 + (g.dur || 3) }); }
@@ -31184,7 +31188,7 @@ function gdzKit(boss, len) {
         if (c.to && /^t\d$/.test(c.to) && (lastTo ? lastTo !== c.to : c.to !== 't1')) calls.push({ t0: c.at - 1.9, t1: c.at - 0.4, text: 'Taunt', color: '#5aa0ff', ink: '#fff', on: c.to }); lastTo = c.to; }
       for (const [g, l] of Object.entries(k.cbars)) for (const b of l) if (b.end === 'kick') calls.push({ t0: b.t0, t1: b.t1, text: 'Kick', color: '#2fd15a', on: g });
       const f = o.focus || { x: 0, y: 0, r: 20 }, quiet = !!o.quiet; // (quiet: no names or rings on players, for the whole fight)
-      return { boss, title: o.title || '', wmarks: k.wmarks.map((w) => ({ k: w.k, x: X(w.x), y: Y(w.y) })), frames, pts: frames[0].pts, t: 0, rings, cones, callouts: calls, pauses: k.pauses.slice().sort((a, b) => a.t - b.t), links: k.links, arrows: k.arrows, tags: quiet ? [] : k.tags, cbars: k.cbars,
+      return { boss, title: o.title || '', wmarks: k.wmarks.map((w) => ({ k: w.k, x: X(w.x), y: Y(w.y) })), frames, pts: frames[0].pts, t: 0, gdzLook: true, room: GDZ_ROOM[boss] ? { id: 'gdzRoom' + (++GDZ_ROOM_N), x0: A.cx - GDZ_ROOM[boss], x1: A.cx + GDZ_ROOM[boss], y0: A.cy - GDZ_ROOM[boss], y1: A.cy + GDZ_ROOM[boss] } : null, rings, cones, callouts: calls, pauses: k.pauses.slice().sort((a, b) => a.t - b.t), links: k.links, arrows: k.arrows, tags: quiet ? [] : k.tags, cbars: k.cbars,
         hl: quiet ? [] : [...k.hl], good: quiet ? [] : k.good, goodAt: !quiet && k.goodAt.length ? k.goodAt : null, bad: quiet ? [] : k.bad, badAt: !quiet && k.badAt.length ? k.badAt : null,
         hitOrbs: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind !== 'ghost')), ghostHit: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind === 'ghost')),
         focus: { x: X(f.x), y: Y(f.y), r: f.r }, steps: k.steps.slice().sort((a, b) => a[0] - b[0]), playerLabel: 'Player (role icon: tank, healer, melee, ranged)', spd: o.spd || 1,
@@ -31287,6 +31291,41 @@ const GDZ_CALL = { 'Toxic Deluge': ['Dodge', 'land'], Guillotine: ['Soak here ·
   'Purple circles': ['Dodge', 'land', '#e07bff'], Defilement: ['Stay out', 3, '#8fd16a'], 'Raid cooldowns': ['Stack · raid cooldowns', 'dur', '#b9a6ff'], "Purple orb's ring": ['Purple: keep clear', 2.4, '#c49bff'], 'Noxious Ground': ['Avoid', 3, '#8fd16a'] };
 
 const GDZ_BADGE = { Venomfang: '#7cf07c', Dreadmarch: '#c49bff', Gloombomb: '#e07bff', Guillotine: '#ff8a6a' };
+
+// ---- the guides' own icons (drawn here; boss portraits load at runtime from Wowhead, never bundled) ----
+// a room's half-width in yards, for pools that pour in from a wall (they're cut at the wall)
+const GDZ_ROOM = { 'The Coiled Altar': 52 }; let GDZ_ROOM_N = 0;
+const GDZ_GLYPH = { t: 'M0 -6.4L5.2 -4.3V0C5.2 3.6 2.7 5.6 0 6.7C-2.7 5.6 -5.2 3.6 -5.2 0V-4.3Z', h: 'M-1.9 -6.2H1.9V-1.9H6.2V1.9H1.9V6.2H-1.9V1.9H-6.2V-1.9H-1.9Z', r: 'M1.6 -6.8L-4.2 1H-0.6L-1.6 6.8L4.2 -1H0.6Z' };
+function gdzGlyph(x, y, pl, r, attrs, title) { // a role token: the role's colour, a dark face and a white sign (shield, cross, swords, bolt)
+  const R = r + 3, k = (R - 2.4) / 7.4, c = pl.color, g = pl.glyph; attrs = String(attrs || '').replace(/opacity:0?.6/, 'opacity:.9'); /* (solid enough to read at a glance) */
+  const sign = g === 'm' ? '<path d="M-5 5L5 -5M-5 -5L5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M-6.5 3.5L-3.5 6.5M3.5 6.5L6.5 3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>' : '<path d="' + GDZ_GLYPH[g] + '" fill="#fff"/>';
+  return '<g' + (attrs || '') + '><circle cx="' + (x + 0.8) + '" cy="' + (y + 1.2) + '" r="' + (R + 0.4) + '" fill="#000" fill-opacity=".45"/><circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="' + c + '" stroke="#0b0d12" stroke-width="1.4"/>' +
+    '<circle cx="' + x + '" cy="' + y + '" r="' + (R - 1.6) + '" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/><g transform="translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ')" style="color:' + c + '">' + sign.replace(/#fff/g, '#10131a') + '</g>' + (title ? '<title>' + esc(title) + '</title>' : '') + '</g>';
+}
+const GDZ_ART = { "Zul'jan": 142472, Malacrass: 142140, 'Hex Lord Malacrass': 142140 };
+function gdzBossToken(x, y, name) { // a boss: a gold ring with their portrait (or a skull while it loads)
+  const d = GDZ_ART[name], R = 13;
+  return '<circle cx="' + (x + 1) + '" cy="' + (y + 1.5) + '" r="' + (R + 3) + '" fill="#000" fill-opacity=".5"/><circle cx="' + x + '" cy="' + y + '" r="' + (R + 2.5) + '" fill="#e6b450" stroke="#3a2a08" stroke-width="1.4"/><circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="#2a1d0d"/>' +
+    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" fill="#e6b450">☠</text>' +
+    (d ? '<image href="' + artUrl(d) + '" x="' + (x - R) + '" y="' + (y - R) + '" width="' + 2 * R + '" height="' + 2 * R + '" clip-path="url(#pclip)" preserveAspectRatio="xMidYMin slice"/>' : '') +
+    '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="none" stroke="#fff3c4" stroke-opacity=".6" stroke-width="1"/><title>' + esc(name) + '</title>';
+}
+function gdzGhost(x, y, label) { // a ghost: a pale wisp with dark eyes
+  return '<g><ellipse cx="' + x + '" cy="' + (y + 8) + '" rx="6" ry="1.8" fill="#000" fill-opacity=".35"/><path d="M' + (x - 7) + ' ' + (y + 7) + 'V' + (y - 1) + 'A7 7 0 0 1 ' + (x + 7) + ' ' + (y - 1) + 'V' + (y + 7) + 'L' + (x + 4.7) + ' ' + (y + 4.6) + 'L' + (x + 2.3) + ' ' + (y + 7) + 'L' + x + ' ' + (y + 4.6) + 'L' + (x - 2.3) + ' ' + (y + 7) + 'L' + (x - 4.7) + ' ' + (y + 4.6) + 'Z" fill="#eef1ff" stroke="#6d58b8" stroke-width="1.3"/>' +
+    '<ellipse cx="' + (x - 2.4) + '" cy="' + (y - 1) + '" rx="1.4" ry="2" fill="#2b1e52"/><ellipse cx="' + (x + 2.4) + '" cy="' + (y - 1) + '" rx="1.4" ry="2" fill="#2b1e52"/><title>' + esc(label || 'Ghost') + '</title></g>';
+}
+function gdzAddToken(p, x, y) { // a fragment: a purple flame
+  if (!/Fragment of Malacrass/.test(p.name)) return '';
+  return '<circle cx="' + x + '" cy="' + y + '" r="10" fill="#b65cff" fill-opacity=".22"/><path d="M' + x + ' ' + (y - 9) + 'C' + (x + 4) + ' ' + (y - 4) + ' ' + (x + 6.5) + ' ' + (y - 1) + ' ' + (x + 6.5) + ' ' + (y + 2.5) + 'A6.5 6.5 0 0 1 ' + (x - 6.5) + ' ' + (y + 2.5) + 'C' + (x - 6.5) + ' ' + (y - 1) + ' ' + (x - 4) + ' ' + (y - 4) + ' ' + x + ' ' + (y - 9) + 'Z" fill="#9b4dff" stroke="#2a0d4d" stroke-width="1.2"/>' +
+    '<path d="M' + x + ' ' + (y - 3) + 'C' + (x + 2) + ' ' + y + ' ' + (x + 3) + ' ' + (y + 1.5) + ' ' + (x + 3) + ' ' + (y + 3) + 'A3 3 0 0 1 ' + (x - 3) + ' ' + (y + 3) + 'C' + (x - 3) + ' ' + (y + 1.5) + ' ' + (x - 2) + ' ' + y + ' ' + x + ' ' + (y - 3) + 'Z" fill="#e6c7ff"/><title>' + esc(p.name) + '</title>';
+}
+function gdzAxe(x, y, ft) { // a rolling axe: a spinning double blade
+  const a = ((ft || 0) * 400) % 360;
+  return '<g transform="rotate(' + a.toFixed(0) + ' ' + x + ' ' + y + ')"><circle cx="' + x + '" cy="' + y + '" r="9" fill="#ff9628" fill-opacity=".18"/>' +
+    '<path d="M' + (x - 1.2) + ' ' + (y - 8) + 'H' + (x + 1.2) + 'V' + (y + 8) + 'H' + (x - 1.2) + 'Z" fill="#6b4a2a"/>' +
+    '<path d="M' + (x + 1) + ' ' + (y - 7) + 'C' + (x + 8) + ' ' + (y - 7) + ' ' + (x + 8) + ' ' + (y - 1) + ' ' + (x + 1) + ' ' + (y - 1) + 'Z" fill="#d9dde6" stroke="#2b2f38" stroke-width="1"/>' +
+    '<path d="M' + (x - 1) + ' ' + (y + 7) + 'C' + (x - 8) + ' ' + (y + 7) + ' ' + (x - 8) + ' ' + (y + 1) + ' ' + (x - 1) + ' ' + (y + 1) + 'Z" fill="#d9dde6" stroke="#2b2f38" stroke-width="1"/></g><title>Axegrinder</title>';
+}
 
 // ---- the guides: one per boss, filled in below (GDZ[boss] = { ... }) ----
 // { sum: one line, facts: [[label, value, only 'h'/'m']], phases: [{ id, name, sum, mechs: [{ name, what, do: [..], note, map: (d) => mp }], tiles: [{ name, do, note }] }],
@@ -31507,8 +31546,8 @@ function gdzCaSimOverlay(k, rt2sim, end) {
   // (Noxious Ground, measured from the 198 hits on the Mythic kill (your note, Oct 20: they were far too small): after the
   // first Fangs the pools sit at the west and east walls, about 20 yards across from each; after the second they reach about 35
   // yards in, squeezing the raid into the middle. The first pool gives way to the bigger one)
-  [[-40, 18], [40, -18]].forEach(([x, y]) => { k.ring({ x, y, r: 20, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(85) + 0.8 - (rt2sim(0) + 2.6), color: '#5fd35f', fill: 'rgba(95,211,95,.2)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' });
-    k.ring({ x, y, r: 35, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85) - 0.8, color: '#5fd35f', fill: 'rgba(95,211,95,.16)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' }); });
+  [[-52, 18, 18], [52, -18, 21]].forEach(([x, y, r1]) => { k.ring({ x, y, r: r1, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(85) + 0.8 - (rt2sim(0) + 2.6), color: '#5fd35f', fill: 'rgba(95,211,95,.2)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' });
+    k.ring({ x, y: y * 0.5, r: r1 === 18 ? 28 : 34, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85) - 0.8, color: '#5fd35f', fill: 'rgba(95,211,95,.16)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' }); });
 }
 // ---- What goes wrong (your idea, Oct 20): each mechanic's map can also play a mistake and what it costs ----
 // a raid-wide hit: a red blast over the room and a red label, and the players it kills marked
