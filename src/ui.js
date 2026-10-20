@@ -1492,7 +1492,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
-    'Boss guides: Debriefing's mechanics have a How to do it link to the guide, your role is ringed on the maps, and Your job shows your lines from your raid's note.',
+    'Boss guides: each Debriefing mechanic has a How to do it link to the guide, your role is ringed on the maps, and Your job shows your lines from your raid note.',
     'Boss guides: Putting it all together has a Read it version, the whole fight in order with what overlaps, coloured by how dangerous it is.',
     'Build from roster: change any job in a drafted note with tonight\'s players, add jobs of your own, and see who has no job yet. Cancel now sits at the top of the draft.',
     'Maps play at real speed (they were sped up), every boss now has its portrait, and maps open inside the room picture.',
