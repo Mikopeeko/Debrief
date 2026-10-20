@@ -5,7 +5,9 @@ name = "debrief"
 main = "online/worker.js"
 compatibility_date = "2026-09-01"
 workers_dev = true
-preview_urls = false
+# (practice links on (your OK, Oct 20): `npx wrangler versions upload --preview-alias <name>` gives a practice copy at
+# https://<name>-debrief.james-m-nemecek.workers.dev to try before it goes live; deploying keeps them on)
+preview_urls = true
 # (keep what's set on the Cloudflare settings page: an upload must never remove the Warcraft Logs client ID)
 keep_vars = true
 
