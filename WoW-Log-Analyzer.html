@@ -13009,7 +13009,7 @@ const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with the buttons that jump into it)
-const PERF_OFF = () => false;
+const PERF_OFF = () => !!window.WLA_HOSTED; /* (greyed out on the website again Oct 20 while you plan its rebuild (your call); on in the app on your PC) */
 // (Power Infusion, one of Graphs' views, was greyed out on the website until its rework; on everywhere since Oct 18
 // (your call). Set this back to () => !!window.WLA_HOSTED to grey it out there again, with its plan line on Pull recap)
 const PI_OFF = () => false;
@@ -13018,7 +13018,7 @@ const PI_OFF = () => false;
 const SPEC_OFF = () => false;
 // (Compare was greyed out on the website with "Coming soon" over it while each spec's playbook was built; on everywhere again Oct 19.
 // Set this to () => !!window.WLA_HOSTED to hide it on the website again)
-const CMP_OFF = () => false;
+const CMP_OFF = () => !!window.WLA_HOSTED; /* (hidden on the website again Oct 20 while you plan its rebuild (your call); on in the app on your PC) */
 // (Guides (the animated boss guides, src/guides.js) are greyed out on the website with "Coming soon" until you say to show them;
 // they're on in the app on your PC (localhost) for review. Set this to () => false to show them everywhere)
 const GDZ_OFF = () => false; /* (on everywhere since Oct 20, your call; () => !!window.WLA_HOSTED greys it out on the website again) */
@@ -19021,13 +19021,14 @@ const viewSw = (key, list, cur) => pfViewSw('<div class="seg pf-vsw" role="tabli
 // (open another Graphs view on one player: their cooldowns, buffs or defensives; their spec checks are on Rotation)
 function pfGo(k, n, quiet) {
   if (k === 'spec') { S.specSel = n; S.tab = 'rot'; if (!quiet) { renderMain(); window.scrollTo({ top: 0 }); } return; }
+  if (PERF_OFF()) return; /* (Graphs is greyed out on the website) */
   const moved = S.tab !== 'perf'; S.tab = 'perf';
   S.perfKind = k === 'debuffs' ? 'aura' : k;
   if (k === 'spec') S.specSel = n; else if (k === 'cds') { S.cdView = 'use'; S.cdsSel = n; } else if (k === 'aura' || k === 'debuffs') { S.auraView = k === 'debuffs' ? 'debuffs' : 'buffs'; S.auraQ = ''; S.auraSel = n; } else if (k === 'surv') { S.survCat = 'def'; S.survSel = n; } else if (k === 'util') S.utilSel = n;
   else if (k === 'res') { S.resSel = n; S.resPw = null; S.resMode = null; } else if (k === 'cast') S.castSel = n; else { S.perfSel = n; S.perfLens = 'players'; }
   if (quiet) return; if (moved) renderMain(); else perf(); window.scrollTo({ top: 0 });
 }
-const pfGoRow = (n, list) => '<div class="rk-go pf-go"><span class="sub">See it in</span>' + list.map(([k, l]) => '<button class="btn" type="button" data-pgo="' + k + '" data-pgn="' + esc(n) + '">' + l + '</button>').join('') + '</div>';
+const pfGoRow = (n, list) => (list = list.filter(([k]) => (k === 'spec' ? !SPEC_OFF() : !PERF_OFF()))).length === 0 ? '' : '<div class="rk-go pf-go"><span class="sub">See it in</span>' + list.map(([k, l]) => '<button class="btn" type="button" data-pgo="' + k + '" data-pgn="' + esc(n) + '">' + l + '</button>').join('') + '</div>';
 const presses = (n) => (n === 1 ? '1 press' : n + ' presses');
 const cdLen = (s) => (s >= 60 ? (s % 60 ? (s / 60).toFixed(1) : s / 60) + ' min' : s + 's');
 // ---- Performance: Cooldowns ----
