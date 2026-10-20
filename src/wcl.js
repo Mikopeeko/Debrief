@@ -568,7 +568,7 @@ function* translateSteps(item, events) {
         add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + ',DEBUFF');
         break;
       case 'death': {
-        add(e, 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + dst(e) + ',0');
+        add(e, 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + dst(e) + ',' + (e.feign ? 1 : 0)); // (Feign Death: Warcraft Logs marks it; the engine skips it (Oct 20: a hunter's 16 "deaths"))
         const a = actors.get(e.targetID), k = e.targetID + ':' + (e.targetInstance || 1);
         if (a && a.type !== 'Player' && a.type !== 'Pet' && !dead.has(k)) dead.set(k, e.timestamp); // (its number's next life starts after this)
         break; }

@@ -1503,6 +1503,8 @@ const PATCH_NOTES = [
     'Pull counts are right when two raiders log the same night: each pull counts once on the progress graph, in time on the boss and in the night counts, even when their logs start a few seconds apart.',
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
     'Bold words look crisp now: the site loads its real bold letters instead of faking them.',
+    'Hunters\' Feign Death no longer counts as a death on Warcraft Logs nights, so deaths, Survival and the wipe filter are right for hunters.',
+    'Mechanics show misses and slips apart ("went wrong" and "a little off"), the two mechanics scores say what each one measures, and the Report card\'s first fix matches its subject.',
     'A death to Sever now shows the frontal\'s cone on its map.',
     'An NSRT note that only has a kick order now works on its pull.',
     'Debriefing\'s badges line up in one column.',
@@ -5425,7 +5427,9 @@ function nightMechC(o) {
   const worstOf = (r) => { const b = judged(r).filter((n) => stAt(r, n) === 'bad'), w = judged(r).filter((n) => stAt(r, n) === 'warn'); return r.v.worst || b.concat(w).sort((a, z) => z - a)[0] || judged(r)[judged(r).length - 1]; };
   const MAPS = [];
   const lateOf = (r) => r._late || (r._late = nightLate(pullNs, (n) => stAt(r, n)));
-  const factsOf = (r) => { let R = 0, Wr = 0; for (const p of r.x.per.values()) { if (p.st === 'na') continue; R += p.nR || 0; Wr += (p.nb || 0) + (p.nw || 0); } return { R, Wr }; };
+  const factsOf = (r) => { let R = 0, Wr = 0, Bd = 0; for (const p of r.x.per.values()) { if (p.st === 'na') continue; R += p.nR || 0; Wr += (p.nb || 0) + (p.nw || 0); Bd += p.nb || 0; } return { R, Wr, Bd, Sl: Wr - Bd }; };
+  // (what went wrong, misses and slips apart (Oct 20): "73 of 90 went wrong" on a yellow line read like a fail when they were all just a little off)
+  const wrTags = (F) => (F.Bd ? '<span class="wr-tag">' + F.Bd + ' of ' + F.R + ' went wrong</span>' : '') + (F.Sl ? '<span class="wr-tag">' + F.Sl + (F.Bd ? '' : ' of ' + F.R) + ' a little off</span>' : '');
   const bars = (r) => '<span class="npc">' + pullNs.map((n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', h = !p || st === 'na' || p.sc == null ? 0 : Math.max(8, p.sc); return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + h.toFixed(0) + '%" title="' + esc('Pull ' + n + ': ' + (st === 'na' ? 'didn\'t come up' : Math.round(p.sc) + '% done right' + (p.nb + p.nw ? ', ' + (p.nb + p.nw) + ' went wrong' : ''))) + '"></i>'; }).join('') + '</span>';
   const whoTop = (r) => { if (one) return ''; const m = new Map(); for (const p of r.x.per.values()) for (const w of p.who || []) m.set(w, (m.get(w) || 0) + 1); return [...m].filter(([n]) => pm.has(n)).sort((u, v) => v[1] - u[1]).slice(0, 3).map(([n, k]) => '<span style="color:' + pm.get(n).color + '">' + esc(n.split('-')[0]) + '</span> ' + k).join(', '); };
   const tile = (r, big) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), L = lateOf(r), F = factsOf(r);
@@ -5434,7 +5438,7 @@ function nightMechC(o) {
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
     return '<details class="panel secd st-' + LC[lv] + ' mcx-tile' + (big ? ' mcx-big' : '') + '" data-np="' + worst + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + (big ? '<span class="mcx-rib">Fix this first</span>' : '') +
       (mp ? '<span class="wr-map mcx-map">' + miniMap(mp, pm) + '</span>' : '') + '<span class="mcx-hd">' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span></span>' +
-      '<span class="mcx-ln"><span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span><span class="wr-tag">' + F.Wr + ' of ' + F.R + ' went wrong</span><span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '') +
+      '<span class="mcx-ln"><span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span>' + wrTags(F) + '<span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '') +
       '</span></summary></details>'; };
   const chip = (r) => '<details class="panel secd st-ok" data-np="' + (judged(r)[judged(r).length - 1] || '') + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ok">✓ clean</span></summary></details>';
   void tile; void chip;
@@ -5446,7 +5450,7 @@ function nightMechC(o) {
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
     const facts = ok ? '<span class="mcx-s">Clean in ' + (judged(r).length === 1 ? 'the one pull it came up in' : judged(r).length === 2 ? 'both pulls it came up in' : 'all ' + judged(r).length + ' pulls it came up in') + '</span>' + bars(r)
-      : '<span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span><span class="wr-tag">' + F.Wr + ' of ' + F.R + ' went wrong</span><span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '');
+      : '<span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span>' + wrTags(F) + '<span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '');
     return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
       '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
       '<div class="nml-f">' + facts + '</div>' + (r.body || '') + '</div></details>'; };
@@ -5477,7 +5481,7 @@ function nightMechC(o) {
   // (the headline: the mechanics that went wrong in the most pulls (Oct 19: in place of "Most results gone wrong: Sever 3 of 10"))
   const wN = (q) => judged(q).filter((n) => stAt(q, n) !== 'ok').length, top3 = probs.slice().sort((u, v) => wN(v) - wN(u) || wN(v) / judged(v).length - wN(u) / judged(u).length).slice(0, 3);
   const verdict = top3.length ? '<p class="mcx-verdict">Wrong in the most pulls: ' + lpAnd(top3.map((q, i) => '<b>' + esc(shortT(q.title)) + '</b> in ' + wN(q) + ' of ' + judged(q).length + (i ? '' : ' pulls'))) + '.' + (tot('clean') ? ' <span class="mcx-good">' + plural(tot('clean'), 'mechanic') + ' done right every time.</span>' : '') + '</p>' : '<p class="mcx-verdict"><span class="mcx-good">Every mechanic was done right in every pull.</span></p>';
-  const strip = '<div class="mcx-strip">' + [['major', 'bad', 'Failed'], ['minor', 'warn', 'Some mistakes'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + tot(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Over ' + plural(N, 'pull') + ', a mechanic is red when it failed in half of them or more.' + (gm && !one ? ' Mechanics score: ' + Math.round(gm.overall) + ' / 100.' : '') + '</span></div>';
+  const strip = '<div class="mcx-strip">' + [['major', 'bad', 'Failed'], ['minor', 'warn', 'Some mistakes'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + tot(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Over ' + plural(N, 'pull') + ', a mechanic is red when it failed in half of them or more.' + (gm && !one ? ' Raid mechanics score: ' + Math.round(gm.overall) + ' / 100 (the raid\'s results on each mechanic; the Report card\'s Mechanics scores each raider\'s own mistakes).' : '') + '</span></div>';
   const head = '<div class="panel mcx-tl nmc-tl"><h3 class="nh">All pulls at a glance<small>A dot per pull where it went wrong. Click one to open that pull.</small></h3>' + verdict + (lanes ? '<div class="mcx-lanes nmc-lanes">' + lanes + axis + '</div>' : '') + strip + '</div>';
   // ---- the top (Oct 19, the Debriefing rebuild on All pulls: the single pull's look with the night's data): four numbers, then the
   // three mechanics that kept going wrong, each with its map at its worst pull and one sentence; a card opens its line below ----
@@ -16800,6 +16804,9 @@ function rctAll(c, F) {
 // raid and each individual raider, ranked on various values across the website"): the night as a banner with the raid's grade, the raid's
 // report card (each subject averaged, with tonight's best), every raider in one list ranked by any subject, and the picked raider's report
 // card beside it (their grade, their place in each subject, their best and their room to grow). Built on plData's grades, unchanged.
+// (Report card's "First fix": one that belongs to the subject that needs it (Oct 20: Output said "No augment rune"))
+const RCB_FIX = { mech: (f) => /^m\|/.test(f.key || ''), play: (f) => /^(r\||pace)/.test(f.key || ''), out: (f) => /^(r\||pace)/.test(f.key || ''), prep: (f) => /^p\|/.test(f.key || ''),
+  pot: (f) => /potion/i.test(f.t || ''), surv: (f) => /defensive|healthstone|health potion/i.test((f.t || '') + ' ' + (f.x || '')) };
 const RCB_SUBJ = [['mech', 'Mechanics', 'spell_holy_borrowedtime', 'Mistakes on the boss\'s mechanics'], ['play', 'Rotation', 'spell_nature_lightning', 'The Rotation tab\'s score, or how they pressed their buttons'],
   ['surv', 'Survival', 'spell_holy_ardentdefender', 'Defensives, close calls, Healthstone and health potion'], ['prep', 'Prep', 'inv_alchemy_90_flask_green', 'Flask, food, weapon oil, rune, enchants and gems'],
   ['pot', 'Potions', 'inv_alchemy_70_red', 'A combat or mana potion in each pull with room for one'], ['out', 'Output', 'ability_warrior_innerrage', 'Damage or healing a second against the others in their role tonight (fastest 99)']];
@@ -16848,7 +16855,7 @@ function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.fin
 function rcbSide(c, F) {
   const B = rcbFacts(c, F), x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
   const subs = RCB_SUBJ.filter(([k]) => x[k] != null).map(([k, l, ic]) => { const r = B.rk[k].m.get(x); return { k, l, ic, v: x[k], r }; });
-  const best = subs.slice().sort((u, v) => u.r - v.r || v.v - u.v)[0], low = subs.slice().sort((u, v) => u.v - v.v)[0], fix = (a.fixes || []).find((f) => (f.gain || 0) >= 0.5);
+  const best = subs.slice().sort((u, v) => u.r - v.r || v.v - u.v)[0], low = subs.slice().sort((u, v) => u.v - v.v)[0], fix = (a.fixes || []).find((f) => (f.gain || 0) >= 0.5 && (RCB_FIX[low ? low.k : ''] || (() => false))(f));
   const aw = F.awards.filter((w) => w.a === a).map((w) => '<span class="rcn-mb" data-tt="' + esc(w.txt(w.a)) + '"><i>' + w.ic + '</i>' + esc(w.t) + '</span>').join('') + (F.top === a ? '<span class="rcn-mb"><i>' + emoIc('🏆') + '</i>Player of the night</span>' : '');
   return '<aside class="rcb-yp" style="--cc:' + p.color + ';--sart:' + specArt(p) + '"><div class="rcb-k">Report card</div>' +
     '<div class="rcb-yph"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + '</div></div></div>' +
