@@ -337,6 +337,9 @@ async function runInbox(env) {
             const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men, components: REVIEW_ROW } } });
             if (n > 0) { reviews[n] = t.id; revDirty = true; }
           }
+        } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed'].includes(o.channel)) {
+          // (a post in a Community channel, e.g. the weekly raid tip; only those channels)
+          const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === o.channel) || {}).id; if (ch) await say(env, ch, text);
         } else if (o.op === 'buttons' && /^\d{17,20}$/.test(String(o.thread || ''))) {
           // (adds the answer buttons to a #bug-review post written before they existed: its first message, which is the bot's)
           const th = await dc(env, '/channels/' + o.thread).catch(() => null);
@@ -503,6 +506,13 @@ async function discordClick(req, env, ctx) {
   if (!(await discordSigned(req, body))) return new Response('Bad signature', { status: 401 });
   const i = JSON.parse(body), reply = (content, eph) => json({ type: 4, data: { content, flags: eph ? 64 : 0, allowed_mentions: { parse: [] } } });
   if (i.type === 1) return json({ type: 1 }); // (Discord's check that this address answers)
+  if (i.type === 2 && i.data && i.data.name === 'killfeed') { // (a slash command: answered "thinking…" at once, then filled in)
+    ctx.waitUntil((async () => {
+      let msg; try { msg = await killfeedCommand(env, i); } catch (err) { msg = 'Something went wrong. Please try again in a minute.'; console.warn('Killfeed:', err && err.message); }
+      await fetch('https://discord.com/api/v10/webhooks/' + APP_ID + '/' + i.token + '/messages/@original', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: msg, allowed_mentions: { parse: [] } }) });
+    })());
+    return json({ type: 5 });
+  }
   const b = BUTTONS.find((x) => i.type === 3 && i.data && i.data.custom_id === 'rv:' + x[0]); if (!b) return reply('That button isn\'t used any more.', true);
   const who = (i.member && i.member.user) || i.user || {};
   if (who.id !== OWNER) return reply('Only the owner can answer reviews.', true);
@@ -520,6 +530,64 @@ async function discordClick(req, env, ctx) {
     }
   })().catch((err) => console.warn('Click:', err && err.message)));
   return reply(b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
+}
+// Kill feed (the user's pick, Oct 20): a guild signs up with /killfeed add <its Warcraft Logs link>; every 30 minutes
+// Claudette reads each signed-up guild's newest report and posts in #kill-feed the first time it kills each Mythic boss
+// (one post per boss per guild, counted from sign-up, so farm kills don't repeat). KV killfeed: [{id, name, by, seen, done}].
+const APP_ID = '1562104625094467614';
+const KILLS_Q = 'query($code:String!){reportData{report(code:$code){code title fights{id encounterID name difficulty kill startTime endTime}}}}';
+async function ensureCommands(env) {
+  if ((await env.DEBRIEF_KV.get('dc-cmds')) === 'v1') return;
+  await dc(env, '/applications/' + APP_ID + '/guilds/' + GUILD + '/commands', { method: 'PUT', body: [{ name: 'killfeed', description: 'Post your guild\'s Mythic kills in #kill-feed', options: [
+    { type: 1, name: 'add', description: 'Add your guild', options: [{ type: 3, name: 'guild', description: 'Your guild\'s Warcraft Logs link (warcraftlogs.com/guild/...)', required: true }] },
+    { type: 1, name: 'remove', description: 'Stop posting a guild', options: [{ type: 3, name: 'guild', description: 'The guild\'s Warcraft Logs link or name', required: true }] },
+    { type: 1, name: 'list', description: 'Show the guilds in the kill feed' }] }] });
+  await env.DEBRIEF_KV.put('dc-cmds', 'v1');
+}
+// (a Warcraft Logs guild link: /guild/id/123 or /guild/us/server-slug/Guild%20Name)
+async function guildFrom(env, s) {
+  s = String(s || '').trim(); let m = /guild\/id\/(\d+)/i.exec(s) || /^(\d{3,9})$/.exec(s), v;
+  if (m) v = { id: +m[1] }; else if ((m = /guild\/([a-z]{2})\/([a-z0-9-]+)\/([^/?#]+)/i.exec(s))) v = { reg: m[1].toLowerCase(), srv: m[2].toLowerCase(), name: decodeURIComponent(m[3]).replace(/\+/g, ' ') };
+  else return null;
+  const g = ((await gql(env, TEAM_INFO_Q, v)) || {}).guildData; return g && g.guild ? { id: g.guild.id, name: g.guild.name } : null;
+}
+async function killfeedCommand(env, i) {
+  const sub = (i.data.options || [])[0] || {}, arg = ((sub.options || [])[0] || {}).value, who = ((i.member && i.member.user) || i.user || {}).id;
+  const list = (await env.DEBRIEF_KV.get('killfeed', 'json')) || [];
+  if (sub.name === 'list') return list.length ? 'Guilds in the kill feed: ' + list.map((g) => '**' + g.name + '**').join(', ') + '.' : 'No guilds in the kill feed yet. Add yours with /killfeed add.';
+  const g = await guildFrom(env, arg).catch(() => null);
+  if (sub.name === 'remove') {
+    const at = list.findIndex((x) => (g && x.id === g.id) || x.name.toLowerCase() === String(arg).trim().toLowerCase()); if (at < 0) return 'That guild isn\'t in the kill feed.';
+    const [x] = list.splice(at, 1); await env.DEBRIEF_KV.put('killfeed', JSON.stringify(list)); return 'Removed **' + x.name + '** from the kill feed.';
+  }
+  if (!g) return 'I couldn\'t find that guild. Paste its Warcraft Logs link, like https://www.warcraftlogs.com/guild/id/123456.';
+  if (list.some((x) => x.id === g.id)) return '**' + g.name + '** is already in the kill feed. 🎉';
+  if (list.length >= 100) return 'The kill feed is full right now. Please ask a moderator.';
+  const latest = (((await gql(env, TEAM_LATEST_Q, { id: g.id }).catch(() => null)) || {}).reportData || {}).reports;
+  list.push({ id: g.id, name: g.name, by: who, seen: latest && latest.data && latest.data[0] ? latest.data[0].code + ':' + latest.data[0].endTime : '', done: [] });
+  await env.DEBRIEF_KV.put('killfeed', JSON.stringify(list));
+  return 'Added **' + g.name + '** to the kill feed! 🎉 From now on, the first time they kill each Mythic boss, it goes in <#' + ((await kfChannel(env)) || '') + '>.';
+}
+async function kfChannel(env) { return ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'kill-feed') || {}).id || null; }
+async function runKillFeed(env, now) {
+  if (new Date(now).getUTCMinutes() % 30 >= 10) return; // (every 30 minutes is plenty, and spares Warcraft Logs)
+  const list = (await env.DEBRIEF_KV.get('killfeed', 'json')) || []; if (!list.length) return;
+  let dirty = false, ch = null;
+  for (const g of list.slice(0, 60)) {
+    try {
+      const r = ((((await gql(env, TEAM_LATEST_Q, { id: g.id })) || {}).reportData || {}).reports || {}).data || []; if (!r[0]) continue;
+      const key = r[0].code + ':' + r[0].endTime; if (key === g.seen) continue;
+      g.seen = key; dirty = true;
+      const rep = ((await gql(env, KILLS_Q, { code: r[0].code })) || {}).reportData.report, fights = (rep && rep.fights) || [];
+      for (const f of fights.filter((x) => x.kill && x.difficulty === 5 && x.encounterID && !g.done.includes(x.encounterID))) {
+        g.done.push(f.encounterID);
+        const pull = fights.filter((x) => x.encounterID === f.encounterID && x.difficulty === 5 && x.startTime <= f.startTime).length;
+        if (!ch) ch = await kfChannel(env); if (!ch) return;
+        await say(env, ch, '🎉 **' + g.name + '** killed **Mythic ' + f.name + '**!' + (pull > 1 ? ' Pull ' + pull + ' tonight' : ' First pull of the night') + ', a ' + mss(f.endTime - f.startTime) + ' fight.\n' + SITE + '/?report=' + rep.code + '&fight=' + f.id);
+      }
+    } catch (err) { console.warn('Kill feed:', g.name, err && err.message); }
+  }
+  if (dirty) await env.DEBRIEF_KV.put('killfeed', JSON.stringify(list));
 }
 // Bug Hunter (the user's pick, Oct 20): when a reported bug is fixed, its reporter gets the Bug Hunter role (needs Claudette
 // to have Manage Roles, above that role) and a thank-you in their post; a second fix just gets the thanks.
@@ -566,6 +634,8 @@ async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
   await runReplies(env, all).catch((err) => console.warn('Replies:', err && err.message));
+  await ensureCommands(env).catch((err) => console.warn('Commands:', err && err.message));
+  await runKillFeed(env, now).catch((err) => console.warn('Kill feed:', err && err.message));
   await runQuestions(env, all).catch((err) => console.warn('Questions:', err && err.message));
   await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
   await runDigest(env, now, all);
