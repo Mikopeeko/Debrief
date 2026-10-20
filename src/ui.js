@@ -1163,9 +1163,12 @@ function myAltsAct(c, mine) {
   if (S.yuOpen) open(true);
   return act;
 }
-// (a character of yours with no raids this tier: a friendly card saying so, and a way back to the one you came from)
+// (a character of yours with no raids this tier: a friendly card saying so, and a way home to your main, the character
+// who raids with one of your teams (your note, Oct 20: two alts with no raids sent you back and forth between them))
+const charTeamed = (c) => { const ts = groups().filter((g) => g.kind !== 'char'), rw = (c.raidsWithAll || []).concat(c.raidsWith ? [c.raidsWith] : []);
+  return ts.some((t) => rw.some((r) => r.id === t.id)) || ts.some((t) => [...HIST.mem.values()].some((v) => pullGroups(v).includes(t.gid) && (v.players || []).includes(c.name))); };
 function pgEmptyCard(c) {
-  const me = meOf(), o = groups().filter((x) => x.kind === 'char' && x.gid !== c.gid), back = o.find((x) => me && x.gid === me.prev) || o[0];
+  const me = meOf(), o = groups().filter((x) => x.kind === 'char' && x.gid !== c.gid), back = o.find(charTeamed) || o.find((x) => me && x.gid === me.prev) || o[0];
   return '<section class="panel pg-empty" id="pgEmpty"><h2>No raids for ' + esc(gName(c)) + ' this tier yet</h2><p class="sub">When ' + esc(gName(c)) + ' raids The Venomous Abyss and the night is logged on Warcraft Logs, their bosses, raid nights and rankings show up here by themselves.</p>' +
     (back ? '<button class="btn primary" type="button" data-mesw="' + esc(back.gid) + '">‹ Back to ' + esc(gName(back)) + '</button>' : '') + '</section>';
 }
