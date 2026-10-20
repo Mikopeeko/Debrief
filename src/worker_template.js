@@ -293,7 +293,7 @@ async function runDigest(env, now, all) {
 //   bug's thread (#moderator-only for a site report), { op: 'ask', issue, text } replies there without a tag,
 //   { op: 'close', issue, reason: 'completed' | 'not_planned', note } closes the issue (the post hears back next run),
 //   { op: 'review', issue, title, text, tags, important } opens (or adds to) that report's post in #bug-review, the
-//   owner's private forum, tagging the owner only when important (then 'ping' adds a tagged line to it).
+//   owner's private forum, always tagging the owner ('ping' adds a line to it; thread names a post with no report).
 const OWNER = '195320918929571840'; // (the user's Discord id, the one tagged)
 async function runInbox(env) {
   const st = (await env.DEBRIEF_KV.get('dc-bugs', 'json')) || { t: {} }, thread = {};
@@ -308,14 +308,18 @@ async function runInbox(env) {
         if (o.op === 'close' && n > 0) {
           if (text) await gh(env, '/issues/' + n + '/comments', { method: 'POST', body: { body: text } });
           await gh(env, '/issues/' + n, { method: 'PATCH', body: { state: 'closed', state_reason: o.reason === 'not_planned' ? 'not_planned' : 'completed' } });
-        } else if ((o.op === 'review' || (o.op === 'ping' && reviews[n])) && text) {
-          // (#bug-review, the owner's private forum: one post per report, the check's findings; a later job adds to it)
+        } else if ((o.op === 'review' || (o.op === 'ping' && (reviews[n] || o.thread))) && text) {
+          // (#bug-review, the owner's private forum: one post per report, the check's findings; a later job adds to it, found
+          // by its report's number or, for a post with no report, by its own id in thread (only a post in that forum))
           if (!rev) { rev = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'bug-review') || null); if (!rev) continue; }
           const tagIds = (Array.isArray(o.tags) ? o.tags : []).map((t) => tagOf(rev.available_tags, String(t))).filter(Boolean).slice(0, 5);
-          const loud = o.op === 'ping' || !!o.important, head = loud ? '<@' + OWNER + '> ' : '', men = { parse: [], users: loud ? [OWNER] : [] };
-          if (reviews[n]) {
-            await dc(env, '/channels/' + reviews[n], { method: 'PATCH', body: tagIds.length ? { archived: false, applied_tags: tagIds } : { archived: false } }).catch(() => {});
-            await dc(env, '/channels/' + reviews[n] + '/messages', { method: 'POST', body: { content: head + text, allowed_mentions: men } });
+          // (every post and update tags the owner, so each one shows in their channel list: the user's call, Oct 20)
+          const head = '<@' + OWNER + '> ', men = { parse: [], users: [OWNER] };
+          let to = reviews[n] || null;
+          if (!to && /^\d{17,20}$/.test(String(o.thread || ''))) { const th = await dc(env, '/channels/' + o.thread).catch(() => null); if (th && th.parent_id === rev.id) to = th.id; }
+          if (to) {
+            await dc(env, '/channels/' + to, { method: 'PATCH', body: tagIds.length ? { archived: false, applied_tags: tagIds } : { archived: false } }).catch(() => {});
+            await dc(env, '/channels/' + to + '/messages', { method: 'POST', body: { content: head + text, allowed_mentions: men } });
           } else {
             const name = String(o.title || ('Report #' + n)).replace(/\s+/g, ' ').slice(0, 95);
             const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men } } });
