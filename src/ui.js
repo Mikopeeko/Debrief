@@ -738,7 +738,7 @@ function groups() {
 const groupsSet = (l) => store.set(GROUPS_KEY, JSON.stringify(l));
 const groupPut = (g) => { const l = groups(), i = l.findIndex((x) => x.gid === g.gid); if (i < 0) l.push(g); else l[i] = g; groupsSet(l); };
 const groupCur = () => { const l = groups(), c = store.get(GROUP_CUR); return c === '*' ? null : l.find((g) => g.gid === c) || l[0] || null; };
-const gName = (g) => g.label || g.name;
+const gName = (g) => (g.kind === 'char' ? g.label || g.name : g.name); // (a team always shows its Warcraft Logs name: teams can't be renamed (your call, Oct 20))
 const gKind = (g) => (g.kind === 'char' ? 'character' : g.kind);
 // (a character's pictures from Blizzard: s '-main-raw.png' for the full-body render, '-avatar.jpg' for the face portrait)
 const lookUrl = (g, s) => (g && g.kind === 'char' && g.look ? WCL.RENDER + g.look + s : '');
@@ -1373,6 +1373,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
     'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
+    'Team names always match Warcraft Logs now. Teams can\'t be renamed; Edit on a team removes it.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
@@ -18305,7 +18306,7 @@ const PAGE_TIPS = {
     { sel: '#pgNights', t: 'Raid nights', p: 'Every raid night, newest first, with how far you got. Click one to go through it pull by pull.' },
     { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Each card shows a boss\'s result and totals. Click one for the chart of every pull and its nights.' },
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
-    { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
+    { sel: '#pgEdit', t: 'Edit', p: 'Remove this team.' }],
 };
 const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 2, team: 2 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
@@ -19320,7 +19321,7 @@ function renderProgress(msg, msgErr) {
   const team = !g || !editing ? '' : '<section class="pg-team pg-edit">' +
       (S.pgRename ? '<div class="pg-mn"><input class="pg-ren" id="pgRenIn" value="' + esc(gName(g)) + '" aria-label="Name" maxlength="40"><button class="btn" id="pgRenOk" type="button">Save</button><button class="linkbtn" id="pgRenNo" type="button">Cancel</button></div>'
         : S.pgDel ? '<div class="pg-ma del"><span>Remove ' + esc(gName(g)) + (only ? ' and the ' + plural(only, 'pull') + ' only it brought in' : '') + '? This can\'t be undone.</span><button class="btn danger" id="pgDelOk" type="button">Remove</button><button class="linkbtn" id="pgDelNo" type="button">Keep</button></div>'
-        : '<div class="pg-ma"><span class="sub">' + esc(gName(g)) + ':</span><button class="btn" id="pgRen" type="button">Rename</button><button class="btn danger-o" id="pgDel" type="button">Remove</button><button class="linkbtn" id="pgEditNo" type="button">Done</button></div>') + '</section>';
+        : '<div class="pg-ma"><span class="sub">' + esc(gName(g)) + ':</span>' + (g.kind === 'char' ? '<button class="btn" id="pgRen" type="button">Rename</button>' : '') + '<button class="btn danger-o" id="pgDel" type="button">Remove</button><button class="linkbtn" id="pgEditNo" type="button">Done</button></div>') + '</section>';
   const sw = diffs.length > 1 ? '<div class="pc-diffs" role="group" aria-label="Difficulty">' + diffs.map(([d, nm]) => '<button type="button" data-d="' + d + '" aria-pressed="' + (d === cur) + '"' + (d === cur ? ' class="on"' : '') + '>' + nm + '<span>' + killedOn(d) + '/' + order.length + '</span></button>').join('') + '</div>' : '';
   // (bosses not pulled on this difficulty yet: one small row under the cards, not empty cards)
   const open = order.filter((boss) => !list.some((v) => v.boss === boss));
