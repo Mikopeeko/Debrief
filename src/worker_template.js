@@ -354,8 +354,14 @@ async function runInbox(env) {
             if (n > 0) { reviews[n] = t.id; revDirty = true; }
           }
         } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed'].includes(o.channel)) {
-          // (a post in a Community channel, e.g. the weekly raid tip; only those channels)
-          const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === o.channel) || {}).id; if (ch) await say(env, ch, text);
+          // (a post in a Community channel, e.g. the weekly raid tip; only those channels. With a title it's a gold card
+          // (an embed: no link preview under it); replaceLast edits Claudette's newest post there instead of adding one)
+          const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === o.channel) || {}).id; if (!ch) continue;
+          const body = o.title ? { content: '', embeds: [{ title: String(o.title).slice(0, 250), description: String(o.text).slice(0, 4000), color: 0xE6B450, footer: o.footer ? { text: String(o.footer).slice(0, 200) } : undefined }], allowed_mentions: { parse: [] } }
+            : { content: text, flags: 4, allowed_mentions: { parse: [] } };
+          const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
+          if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
+          else await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body });
         } else if (o.op === 'buttons' && /^\d{17,20}$/.test(String(o.thread || ''))) {
           // (adds the answer buttons to a #bug-review post written before they existed: its first message, which is the bot's)
           const th = await dc(env, '/channels/' + o.thread).catch(() => null);
