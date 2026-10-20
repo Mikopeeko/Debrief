@@ -6452,16 +6452,6 @@ function arenaHi(boss, c) {
   return '<image href="' + u + '" preserveAspectRatio="none" x="' + ((A.cx - w / 2 - c.x0) * c.yd) + '" y="' + ((-A.cy - h / 2 - c.y0) * c.yd) + '" width="' + w * c.yd + '" height="' + h * c.yd + '"/>';
 }
 
-// (maps in the Boss guides look (your call, Oct 20): RaidPlan's sharp top-down render of the room on top, at the scale ARENAS gives it,
-// which a real kill confirms (every player position sits inside its floor). Loaded at runtime, never bundled; the game's floor map is
-// drawn first, so it still shows if the render doesn't load)
-const ARENA_HI = { 'The Coiled Altar': 'https://cdn.raidplan.io/raid/wow.venomabyss/map/07.bargained-ort-v108.jpg' };
-function arenaHi(boss, c) {
-  const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = ARENA_HI[b]; if (!A || !u || !A.f) return '';
-  const w = A.w / A.s, h = A.h / A.s;
-  return '<image href="' + u + '" preserveAspectRatio="none" x="' + ((A.cx - w / 2 - c.x0) * c.yd) + '" y="' + ((-A.cy - h / 2 - c.y0) * c.yd) + '" width="' + w * c.yd + '" height="' + h * c.yd + '"/>';
-}
-
 // ---- user map image: stored per boss in this browser, positioned in world yards ----
 let MAPCTX = null, ALIGN = false;
 function mapImg(boss) { try { return JSON.parse(store.get('wla-map-' + boss) || 'null'); } catch (e) { return null; } }
