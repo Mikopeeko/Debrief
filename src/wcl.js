@@ -442,7 +442,14 @@ function stamp(ms) {
 }
 const q = (s) => '"' + String(s).replace(/"/g, "'") + '"';
 
-function translate(item, events) {
+// (translateSteps writes the lines in steps, stopping every few thousand events: translate runs it straight through and
+// joins the lines; translateAsync lets the page breathe (pause) every ~30 ms and hands back the lines, for analyzeAsync)
+function translate(item, events) { const g = translateSteps(item, events); let s; do s = g.next(); while (!s.done); return s.value.join('\n'); }
+async function translateAsync(item, events, pause) {
+  const g = translateSteps(item, events); let t = Date.now();
+  for (;;) { const s = g.next(); if (s.done) return s.value; if (Date.now() - t > 30) { await pause(); t = Date.now(); } }
+}
+function* translateSteps(item, events) {
   const w = item.wcl, actors = w.actors, abil = w.abilities, out = [];
   // Warcraft Logs numbers the copies of an add 1, 2, 3... and gives a new copy the number of one that has died, so two
   // adds can share a number (read on Nek'zali's Restless Amani). A number starts a new life with its first event over a
@@ -485,7 +492,9 @@ function translate(item, events) {
   // pets first, so their damage is credited to their owner
   for (const a of actors.values()) if (a.type === 'Pet' && a.petOwner != null)
     out.push(stamp(w.start) + 'SPELL_SUMMON,' + unit(a.petOwner) + ',' + unit(a.id) + ',0,"Summon",0x1');
+  let n = 0;
   for (const e of events) {
+    if (!(++n & 4095)) yield;
     const ab = e.abilityGameID; curT = e.timestamp;
     switch (e.type) {
       case 'combatantinfo': {
@@ -566,9 +575,9 @@ function translate(item, events) {
     }
   }
   out.push(stamp(w.end) + 'ENCOUNTER_END,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',' + (item.kill ? 1 : 0) + ',' + Math.round((w.end - w.start)));
-  return out.join('\n');
+  return out;
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

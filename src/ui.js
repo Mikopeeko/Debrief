@@ -966,15 +966,20 @@ function getRep(item) {
   if (!INFLIGHT.has(item)) INFLIGHT.set(item, readRep(item).finally(() => INFLIGHT.delete(item)));
   return INFLIGHT.get(item);
 }
+// (reading a pull in short steps (your note, Oct 19: "my loading screen when big log files load lags horribly"): the engine stops
+// every ~30 ms so the page can draw (the dancer keeps dancing, the bar fills); one pull is read at a time, while downloads still run three at once)
+let AN_Q = Promise.resolve();
+const anPause = () => new Promise((r) => setTimeout(r, 0));
+const analyzeSoft = (item, text, opts) => { const run = AN_Q.then(() => E.analyzeAsync(item, text, opts, anPause)); AN_Q = run.catch(() => {}); return run; };
 async function readRep(item) {
   if (CACHE.has(item)) return CACHE.get(item);
   let text;
   if (item.wcl) {
     const st = () => document.getElementById('loadmsg');
     const events = await WCL.loadEvents(S.wclCreds, item, (n) => { if (S.item === item && st()) st().textContent = 'Downloading ' + item.boss + ' pull ' + item.pull + ' from Warcraft Logs: ' + n.toLocaleString('en-US') + ' events…'; });
-    text = WCL.translate(item, events);
+    text = WCL.translateAsync ? await WCL.translateAsync(item, events, anPause) : WCL.translate(item, events); /* (the lines, written in steps so the page can draw) */
   } else text = FH.dir ? await fhText(item.startByte, item.endByte) : await S.file.slice(item.startByte, item.endByte).text();
-  const rep = E.analyze(item, text, { packs: S.packs, overrides: overrides() });
+  const rep = E.analyzeAsync ? await analyzeSoft(item, text, { packs: S.packs, overrides: overrides() }) : E.analyze(item, text, { packs: S.packs, overrides: overrides() });
   // Raid audit: each player's gear (with enchants) and buffs at the pull, straight from Warcraft Logs
   if (item.wcl) {
     const evs = await WCL.loadEvents(S.wclCreds, item);

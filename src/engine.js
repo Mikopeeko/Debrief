@@ -5392,7 +5392,15 @@ function resAt(p, f, a, t) {
     if (l && l[1] === c && l[2] === m && l[3] === sp && t - l[0] < 2) continue; if (rs.pts.length < 8000) rs.pts.push([t, c, m, sp]); }
 }
 
-function analyze(item, text, opts) {
+// (analyzeSteps is the reading itself, in steps: it stops every couple of thousand lines and between its later passes.
+// analyze runs it straight through; analyzeAsync lets the page breathe (pause) every ~30 ms, so a long pull doesn't freeze
+// the page for seconds. Same code, same result. `text` may also be the log's lines, already split)
+function analyze(item, text, opts) { const g = analyzeSteps(item, text, opts); let s; do s = g.next(); while (!s.done); return s.value; }
+async function analyzeAsync(item, text, opts, pause) {
+  const g = analyzeSteps(item, text, opts); let t = Date.now();
+  for (;;) { const s = g.next(); if (s.done) return s.value; if (Date.now() - t > 30) { await pause(); t = Date.now(); } }
+}
+function* analyzeSteps(item, text, opts) {
   const packs = (opts && opts.packs) || PACKS;
   const r = { item, players: new Map(), deaths: [], mistakes: [], insights: [], interrupts: [],
     dmgS: [], healS: [], takenS: [], bossS: [], bossPct: null, duration: 0,
@@ -5463,8 +5471,9 @@ function analyze(item, text, opts) {
     const last = l[l.length - 1]; if (last && t - last[0] < 0.25) { if (fr < last[1]) last[1] = fr; } else l.push([t, fr]);
   };
 
-  const lines = text.split('\n');
+  const lines = typeof text === 'string' ? text.split('\n') : text;
   for (let li = 0; li < lines.length; li++) {
+    if (!(li & 2047)) yield;
     let line = lines[li];
     if (!line) continue;
     if (line.charCodeAt(line.length - 1) === 13) line = line.slice(0, -1);
@@ -5750,6 +5759,7 @@ function analyze(item, text, opts) {
     }
   }
 
+  yield;
   r.duration = Math.max(1, item.duration > 0 ? item.duration : lastT);
   // Boss units: enemies named like the encounter; otherwise (councils like The Twin Fangs) the
   // biggest-health enemies, i.e. everything within half the health pool of the largest one.
@@ -5786,8 +5796,8 @@ function analyze(item, text, opts) {
   }
   for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
 
-  survivability(r);
-  r.mistakes = mech.build();
+  yield; survivability(r);
+  yield; r.mistakes = mech.build();
   // avoidable damage tanks are expected to take (their job puts them in it)
   { const tankOf = new Set([...r.players.values()].filter((p) => p.role === 'tank').map((p) => p.name)); r.mistakes = r.mistakes.filter((m) => !(TANK_OK.has(m.mechanic) && tankOf.has(m.player)));
     // (going easier on tanks for standing in bad stuff (your note, Oct 18): they often take these hits on purpose, holding
@@ -5798,7 +5808,7 @@ function analyze(item, text, opts) {
       const died = r.deaths.some((d) => d.player === m.player && ((d.abilityId && m.ruleIds.includes(d.abilityId)) || L(d.ability) === L(m.mechanic)));
       if (died || (m.touches || 1) >= tankKept(1)) continue;
       m.severity = 'Low'; m.tankEase = true; m.detail = String(m.detail || '').replace(/\s*$/, '') + ' Tanks often take this on purpose, so it\'s only a note.'; } }
-  kickReport(r, npcCasts, mech, npcStarts);
+  yield; kickReport(r, npcCasts, mech, npcStarts);
   stackReport(r, stackEv, hits, (opts && opts.overrides) || {});
   r.mistakes.sort((a, b) => a.t - b.t);
   for (const d of r.deaths) {
@@ -5850,6 +5860,7 @@ function analyze(item, text, opts) {
     }
     return out;
   };
+  yield;
   if (mod) {
     const helpers = { name: (g) => (r.players.get(g) || {}).name || g, role: (g) => (r.players.get(g) || {}).role, isPlayer, fmtT, unitName: (g) => unitNames.get(g), compact, snap: snapAt, frames: framesAt };
     try {
@@ -5858,6 +5869,7 @@ function analyze(item, text, opts) {
     }
     catch (err) { r.module = { title: mod.encounter + ' audit', error: String(err && err.message || err), sections: [], phases: [], marks: [] }; }
   }
+  yield; /* (a breath after the fight's own checks, the longest step) */
   r.priority = (mod && mod.priority) || []; // (the adds that have to die, for the Performance tab)
   r.useful = (mod && mod.useful) || []; // (adds that have to die on a timer: useful damage, no switch speed)
   r.focus = mod && mod.focus ? [...mod.focus] : []; // (the boss and what shares its health)
@@ -5962,6 +5974,7 @@ function analyze(item, text, opts) {
   // Animated maps for the pull recap (and the Fight audit): every mistake map gets animation frames from 4s before to 2s
   // after; every death gets one of the last 5 seconds. (Skipped when the log has no positions.) A mistake with no map of
   // its own no longer gets one of just the player (see above)
+  yield;
   if (r.positions && r.positions.size) {
     try {
       for (const m of r.mistakes) {
@@ -6001,7 +6014,7 @@ function analyze(item, text, opts) {
     } catch (e) { console.error(e); } // (maps are extra: never block the pull)
   }  r.hasPack = mech.packs.length > 0;
   r.packSources = mech.packs.flatMap((p) => p.sources).join('; ');
-  try { explainDeaths(r); } catch (e) { console.error(e); for (const d of r.deaths) { d.why = d.why || []; d.prevent = d.prevent || []; } } // never block the pull
+  yield; try { explainDeaths(r); } catch (e) { console.error(e); for (const d of r.deaths) { d.why = d.why || []; d.prevent = d.prevent || []; } } // never block the pull
   insights(r);
   return r;
 }
@@ -6437,7 +6450,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
