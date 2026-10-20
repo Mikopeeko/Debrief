@@ -506,8 +506,16 @@ const NZ_IDS = Object.values(NZ).flat();
 // someone in an immunity, and a debuff) and, on Mythic, sets off Frost Burst on the raid; an orb nobody touches Shatters.
 const NY = { chill: 1313393, orb: 1313448, burst: 1313450, shatter: 1313456,
   // (audit Oct 19, from a top Mythic kill: Water Jet, the tank's beam (cast, the tank's debuff, its hits), and Lingering Frost, the ice puddles)
-  jet: 1281951, jetTank: 1258901, jetHit: [1271458, 1260637], frost: 1257654 };
+  jet: 1281951, jetTank: 1258901, jetHit: [1271458, 1260637], frost: 1257654,
+  // (Oct 20, from the guild's Mythic pulls: the murloc sets. Alluring Bubble is the boss's cast and the aura on every murloc it
+  // lures (gone when it dies, kept by one that reaches the bubble), Waterfog Shield the Frostscale's own aura, Pulsing Tides
+  // the Berserker that a popped bubble lets out (its buff, its raid pulses))
+  bubble: 1257717, lure: 1260012, shield: 1273091, berserk: 1258894, tides: 1271380,
+  // (Swirling Whirlpools (cast, hits), Pop! (the bubble bursting: raid hit), Wild Bite (the sharks, in the water), Abyssal Rain (cast, damage over time))
+  whirl: 1258673, whirlHit: 1258677, popHit: 1266340, bite: 1265425, rain: 1260837, rainDot: 1260843 };
 const NY_IDS = Object.values(NY).flat();
+// (raid cooldowns, by name, for the Abyssal Rain check)
+const NY_RAIDCD = ['darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace'];
 // Vashnik the Malignant spell IDs, read from real Mythic pulls on Warcraft Logs (Sep to Oct 2026). Matched by ID
 // (MODULES entry `ids`); the infusions and the rarer failures by name.
 const VS = {
@@ -579,7 +587,7 @@ const MECH_COL = { 'Ravenous Feast': ['#f24224', 'Red'], 'Coiling Ichor': ['#f22
   'Protovenom Eruption': ['#d6f25a', 'Lime'], 'Toxic Droplets': ['#d2f230', 'Lime'], 'Unstable Miasma': ['#f23724', 'Red'], 'Viscous Cyst': ['#d8f22f', 'Lime'], 'Raging Crosswinds': ['#dfe6f2', 'White'],
   'Plague Froth': ['#dbf231', 'Lime'], 'Hungering Pyre': ['#f2a924', 'Orange'], 'Soulcoil Well': ['#2cf2b5', 'Teal'], 'Blink Nova': ['#7a6df2', 'Violet'], 'Mighty Thud': ['#f2842f', 'Orange'],
   'Gloombomb': ['#da3df2', 'Purple'], 'Spectral Coils': ['#24f2cb', 'Teal'], 'Guillotine': ['#f24824', 'Red'], 'Grim Guillotine': ['#46f2d1', 'Teal'], "Widow's Kiss": ['#9ff26d', 'Green'], "Death's Embrace": ['#a35cf2', 'Purple'], 'Noxious Shell': ['#3af2a8', 'Green'], 'Fester Burst': ['#d8f22f', 'Lime'], "Serpent's Bite": ['#f23243', 'Red'],
-  'Volatile Purge': ['#9ff224', 'Lime'] };
+  'Volatile Purge': ['#9ff224', 'Lime'], 'Frost Orb': ['#7cd4f2', 'Ice blue'] };
 const mcol = (n, a) => { const x = MECH_COL[n] || ['#e6b450', 'Gold'], h = x[0]; return { color: h, fill: 'rgba(' + [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(',') + ',' + (a == null ? 0.16 : a) + ')', cn: x[1] + ' circle', mn: n }; }; // (mn: the mechanic, for its spell icon on the map)
 // Smallest circle around points [[x, y], ...] (Welzl, fine for a handful of soakers): { x, y, r }.
 function mec(P) {
@@ -630,7 +638,7 @@ const PERSONAL = [...new Set(Object.values(DEFENSIVES).flat().map((d) => d[0].to
 const MODULES = [{
   encounter: 'Nymrissa Wavecaller',
   units: [],
-  spells: [], // (matched by ID only)
+  spells: NY_RAIDCD, // (the mechanics are matched by ID; the names are the raid cooldowns)
   ids: NY_IDS,
   focus: new Set(['Nymrissa Wavecaller']),
   build: buildNymrissa,
@@ -2029,24 +2037,119 @@ function buildSszorak(ev, r, h) {
 // Nth Chilling Frost. A set that Shattered had an orb nobody touched.
 function buildNymrissa(ev, r, h) {
   const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  const dur = r.duration, pname = (g) => h.name(g), sections = [], mistakes = [];
+  const dur = r.duration, pname = (g) => h.name(g), T = h.fmtT, sections = [], mistakes = [];
+  const M = (t, player, mech, id, severity, detail, fix) => mistakes.push({ t, player, mechanic: mech, id, severity, detail, fix });
+  const has = (e, ids) => [].concat(ids).includes(e.id);
+  const dmgId = (ids) => ev.filter((e) => e.k === 'dmg' && has(e, ids) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
+  const aur = (ids) => ev.filter((e) => e.k === 'aura' && has(e, ids)).sort((a, b) => a.t - b.t);
+  const clusters = (list, g) => { const out = []; for (const e of list) { const c = out[out.length - 1]; if (c && e.t - c.t1 < g) { c.t1 = e.t; c.list.push(e); } else out.push({ t: e.t, t1: e.t, list: [e] }); } return out; };
+  const diedTo = (re, t0, t1) => r.deaths.filter((d) => d.t >= t0 && d.t <= t1 && re.test(d.ability || ''));
+  const frames = (t0, t1) => h.frames(Math.max(0, t0), Math.min(dur, t1), 0.25);
+  const posAt = (g, t) => (((h.frames(t, t, 0.2)[0] || { pts: h.snap(t) }).pts) || []).find((p) => p.guid === g);
   const casts = ev.filter((e) => e.k === 'cast' && e.id === NY.chill).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 5);
+  const setEnd = (i, t) => Math.min(dur, casts[i + 1] != null ? casts[i + 1] - 0.1 : t + 45);
   // (a soak: a Frost Orb hit (damage, or immune) or its debuff on a player, from the cast until the next one)
   const touch = ev.filter((e) => e.id === NY.orb && h.isPlayer(e.dst) && (e.k === 'dmg' || e.k === 'miss' || (e.k === 'aura' && (e.op === 'apply' || e.op === 'dose')))).sort((a, b) => a.t - b.t);
   const shat = ev.filter((e) => e.id === NY.shatter).map((e) => e.t);
+  const marked = aur([NY.chill]).filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
+  // (Mythic: each orb soaked sets off one Frost Burst on the whole raid, all its hits within a quarter second; two soaks at the
+  // same moment hit everyone twice. The soaker is whoever the orb hit at that moment (its later ticks come every 2 s).)
+  // (a tick can land a moment from someone else's soak: only the hits closest to the burst count)
+  const bursts = clusters(dmgId([NY.burst]), 0.25).map((c) => { const n = new Set(c.list.map((e) => e.dst)).size, near = touch.filter((e) => e.k !== 'aura' && Math.abs(e.t - c.t) <= 0.25), dt = Math.min(9, ...near.map((e) => Math.abs(e.t - c.t)));
+    return { t: c.t, k: Math.max(1, Math.round(c.list.length / Math.max(1, n))), who: [...new Set(near.filter((e) => Math.abs(e.t - c.t) <= dt + 0.05).map((e) => e.dst))] }; });
   const _ny = { sets: [] };
   const groups = casts.map((t, i) => {
-    const t1 = Math.min(dur, casts[i + 1] != null ? casts[i + 1] - 0.1 : t + 45), by = new Map();
-    for (const e of touch.filter((x) => x.t >= t && x.t <= t1)) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, imm: false, hits: [] }); if (e.k === 'miss' || (e.k === 'dmg' && !e.amt)) o.imm = true; if (e.k !== 'aura' && (!o.hits.length || e.t - o.hits[o.hits.length - 1] > 1.5)) o.hits.push(e.t); }
-    const who = [...by.values()].sort((a, b) => a.t - b.t), sh = shat.some((x) => x >= t && x <= t1 + 2);
+    const t1 = setEnd(i, t), by = new Map();
+    for (const e of touch.filter((x) => x.t >= t && x.t <= t1)) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, imm: false, hits: [], n: 0 }); if ((e.k === 'miss' && /immune/i.test(e.how || '')) || (e.k === 'dmg' && !e.amt && !e.raw)) o.imm = true; /* (Warcraft Logs writes an immunity as a hit of 0; a hit a shield fully absorbed isn't one) */ if (e.k !== 'aura' && (!o.hits.length || e.t - o.hits[o.hits.length - 1] > 1.5)) o.hits.push(e.t); }
+    const bs = bursts.filter((b) => b.t >= t && b.t <= t1);
+    for (const b of bs) for (const g of b.who) { const o = by.get(g); if (o) o.n++; }
+    const who = [...by.values()].sort((a, b) => a.t - b.t), shT = shat.find((x) => x >= t && x <= t1 + 2), sh = shT != null;
     const cut = !who.length && t + 20 > dur; // (the fight ended before this set's orbs were down)
     _ny.sets.push({ i: i + 1, t, who: who.map((o) => pname(o.g)), shatter: sh, cut });
-    if (sh) mistakes.push({ t: shat.find((x) => x >= t), player: 'Raid', mechanic: 'Frost Orb', id: NY.shatter, severity: 'High', detail: 'An orb from set ' + (i + 1) + ' was left untouched and Shattered on the raid.', fix: 'Every orb needs a soaker. Assign one for each orb, and have a backup ready.' });
-    const rows = who.map((o) => [{ p: pname(o.g) }, { t: o.t }, { txt: o.imm ? 'immunity' : 'took the hit', dim: o.imm }]);
-    return { title: 'Set ' + (i + 1), t, bad: sh, warn: false, sub: sh ? 'an orb Shattered' : who.length ? pl(who.length, 'soaker') : cut ? 'the fight ended first' : 'nobody soaked', rows };
+    if (sh) M(shT, 'Raid', 'Frost Orb', NY.shatter, 'High', 'An orb from set ' + (i + 1) + ' was left untouched and Shattered on the raid.', 'Every orb needs a soaker. Assign one for each orb, and have a backup ready.');
+    const mk = [...new Set(marked.filter((e) => e.t >= t - 0.5 && e.t <= t + 2).map((e) => e.dst))], nOrbs = bs.reduce((s, b) => s + b.k, 0);
+    // (the map: who was marked, then each soaker turning green as they take their first orb; an ice-blue flash on each soak, and a dot where it was)
+    const last = Math.max(t + 6, ...who.map((o) => o.t), ...bs.map((b) => b.t));
+    const rings = bs.flatMap((b) => b.who.map((g) => ({ guid: g, r: 1.8, ...mcol('Frost Orb', 0.3), label: '', t0: b.t, dur: 1.2, fx: 'burst', at: b.t, cn: 'Ice blue flash', legend: 'soaked an orb' })))
+      .concat(bs.flatMap((b) => b.who.map((g) => { const q = posAt(g, b.t); return q ? { x: q.x, y: q.y, r: 1.6, ...mcol('Frost Orb', 0.45), label: '', t0: b.t, dur: 600, fx: 'puddle', cn: 'Ice blue dot', legend: 'where an orb was soaked' } : null; }).filter(Boolean)));
+    const rows = who.map((o) => [{ p: pname(o.g) }, { t: o.t }, { txt: o.n ? pl(o.n, 'orb') : o.hits.length ? pl(o.hits.length, 'orb') : 'soaked', sub: o.imm ? 'with an immunity' : '' }, { txt: '' }]);
+    if (sh) rows.push([{ txt: 'Shattered', bad: true }, { t: shT }, { txt: 'an orb nobody touched blew up on the raid', bad: true }, { txt: '' }]);
+    if (who.length) rows.unshift([{ txt: 'Whole set', sub: 'every soak, on one map', dim: true }, { t }, { txt: nOrbs ? pl(nOrbs, 'orb') + ' in all' : '', dim: true },
+      { map: { t: last, hl: mk, hlLabel: 'marked (dropped the orbs)', good: who.map((o) => o.g), goodLabel: 'soaked', goodAt: who.map((o) => [o.g, o.t]), pendLabel: 'hasn\'t soaked yet', title: 'Frost Orbs set ' + (i + 1) + ' at ' + T(t), pts: h.snap(last), rings, frames: frames(t, last + 1) } }]);
+    return { title: 'Set ' + (i + 1), t, bad: sh, warn: false, sub: sh ? 'an orb Shattered' : who.length ? (nOrbs ? pl(nOrbs, 'orb') + ' soaked by ' : '') + pl(who.length, 'player') + (mk.length ? ' (' + mk.length + ' marked)' : '') : cut ? 'the fight ended first' : 'nobody soaked', rows };
   });
   if (groups.length) sections.push({ id: 'orbs', title: 'Frost Orbs (Soak every orb)', place: 'Frost Orbs: soaked', spell: [NY.chill, 'Chilling Frost'], verdict: groups.some((g) => g.bad) ? 'bad' : 'good',
-    summary: pl(groups.length, 'set') + ' of Frost Orbs. It shows who soaked each set, and any orb that Shattered.', cols: ['Soaker', 'When', 'How'], groups, rows: [] });
+    summary: pl(groups.length, 'set') + ' of Frost Orbs. Chilling Frost marks players and drops orbs under them. It shows who soaked each set and how many orbs each took, on a map, and any orb that Shattered.', cols: ['Soaker', 'When', 'Orbs', ''], groups, rows: [] });
+  // ---- Frost Burst (Mythic): every soak hits the whole raid, so the orbs go one at a time ----
+  { const bGroups = casts.map((t, i) => {
+      const t1 = setEnd(i, t), bs = bursts.filter((b) => b.t >= t && b.t <= t1); if (!bs.length) return null;
+      let close = 0;
+      const rows = bs.map((b, j) => {
+        const gp = j ? b.t - bs[j - 1].t : null, tog = b.k > 1 || (gp != null && gp < 1), dead = diedTo(/frost burst/i, b.t - 0.1, b.t + 1);
+        if (tog) close++;
+        if (dead.length) M(b.t, 'Raid', 'Frost Burst', NY.burst, 'High', pl(dead.length, 'player') + ' died to Frost Burst' + (tog ? ', with two orbs soaked at once.' : '.'), 'Soak the orbs one at a time, a second or more apart, so the healers can top the raid up between bursts.');
+        return [b.who.length === 1 ? { p: pname(b.who[0]), sub: b.k > 1 ? b.k + ' orbs at once' : '' } : { txt: b.who.length ? b.who.map(pname).join(', ') : 'an orb', sub: b.k > 1 ? b.k + ' orbs at once' : '' }, { t: b.t },
+          b.k > 1 ? { txt: 'at the same moment as another', warn: true } : gp == null ? { txt: 'first soak', dim: true } : { txt: gp.toFixed(1) + ' s after the last one', warn: gp < 1 },
+          dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }];
+      });
+      if (close) M(bs[0].t, 'Raid', 'Frost Burst', NY.burst, 'Low', 'In orb set ' + (i + 1) + ', ' + pl(close, 'soak') + ' came less than a second after another: the raid took Frost Bursts back to back.', 'Soak the orbs one at a time, a second or more apart.');
+      const n = bs.reduce((s, b) => s + b.k, 0);
+      return { title: 'Set ' + (i + 1), t, bad: rows.some((x) => x[3].bad), warn: close > 0, sub: pl(n, 'soak') + (close ? ', ' + close + ' too close to another' : ', one at a time'), rows };
+    }).filter(Boolean);
+    if (bGroups.length) sections.push({ id: 'nyburst', title: 'Frost Burst (Soak one at a time)', place: 'Frost Burst: orbs soaked one at a time', spell: [NY.burst, 'Frost Burst'], verdict: bGroups.some((g) => g.bad) ? 'bad' : bGroups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: 'Every orb soaked sets off Frost Burst on the whole raid, so soak them one at a time. It shows each soak, the time since the one before (under a second is too close) and anyone who died to it.', cols: ['Soaker', 'When', 'Since the last soak', 'Died'], groups: bGroups, rows: [] }); }
+  // ---- the murloc sets: Alluring Bubble lures 17 Shorerunners and 2 Frostscales to the middle. A murloc that gets there comes out as a
+  // Bubblefin Berserker when the bubble pops (Pulsing Tides on the raid). Each murloc's Alluring Bubble aura ends when it dies; one that
+  // reaches the bubble keeps it (the log has no death for these murlocs). They take about 30 s to get there. ----
+  { const shieldOn = new Set(aur([NY.shield]).map((e) => e.dst)), mur = new Map();
+    for (const e of aur([NY.lure]).filter((x) => !h.isPlayer(x.dst))) { let u = mur.get(e.dst); if (!u && e.op === 'apply') mur.set(e.dst, u = { g: e.dst, t: e.t, name: (h.unitName && h.unitName(e.dst)) || '', died: null }); if (u && e.op === 'remove' && u.died == null) u.died = e.t; }
+    const isScale = (u) => /frostscale/i.test(u.name) || shieldOn.has(u.g);
+    // (a Frostscale can die with its Alluring Bubble still on: its Waterfog Shield ends at its death too)
+    for (const e of aur([NY.shield]).filter((x) => x.op === 'remove')) { const u = mur.get(e.dst); if (u && e.t >= u.t && (u.died == null || e.t < u.died)) u.died = e.t; }
+    const pops = clusters(dmgId([NY.popHit]), 5).map((c) => c.t), tides = dmgId([NY.tides]);
+    const bers = new Map(); for (const e of aur([NY.berserk]).filter((x) => !h.isPlayer(x.dst))) { let b = bers.get(e.dst); if (!b && e.op === 'apply') bers.set(e.dst, b = { g: e.dst, t: e.t, died: null }); if (b && e.op === 'remove' && b.died == null) b.died = e.t; }
+    const mSets = clusters([...mur.values()].sort((a, b) => a.t - b.t), 15).map((c, i) => {
+      const t = c.t, runners = c.list.filter((u) => !isScale(u)), scales = c.list.filter(isScale);
+      const reached = c.list.filter((u) => u.died == null && dur - u.t > 33), up = c.list.filter((u) => u.died == null && dur - u.t <= 33);
+      return { i, t, runners, scales, reached, up, pop: pops.find((p) => p > t + 20) ?? null, bers: [] };
+    });
+    // (each Berserker belongs to the latest set before its pop that had murlocs get through)
+    for (const b of bers.values()) { const s = mSets.filter((x) => x.reached.length && x.pop != null && Math.abs(x.pop - b.t) < 5).pop(); if (s) s.bers.push(b); }
+    const addGroups = mSets.map((s) => {
+      const rows = [], deadR = s.runners.filter((u) => u.died != null), lastR = Math.max(s.t, ...deadR.map((u) => u.died));
+      if (deadR.length) rows.push([{ txt: pl(s.runners.length, 'Shorerunner'), sub: 'the small murlocs' }, { t: lastR }, deadR.length === s.runners.length ? { txt: 'all dead ' + Math.round(lastR - s.t) + ' s after they came' } : { txt: deadR.length + ' of ' + s.runners.length + ' killed', dim: true }, { txt: '' }]);
+      if (s.reached.length) {
+        const popped = s.pop != null && s.pop <= dur;
+        M(popped ? s.pop : s.t + 30, 'Raid', 'Alluring Bubble', NY.bubble, popped ? 'High' : 'Medium', pl(s.reached.length, 'murloc') + ' from set ' + (s.i + 1) + ' reached the bubble' + (popped ? ' and came out as a Berserker when it popped.' : '.'), 'Kill every murloc before it reaches the bubble: Frostscales first, then cleave the Shorerunners down, with stuns and slows on the ones that slip past.');
+        rows.push([{ txt: 'Reached the bubble' }, { t: popped ? s.pop : dur }, { txt: pl(s.reached.length, 'murloc') + ' got there', bad: popped, warn: !popped }, { txt: popped ? 'the bubble popped at ' + T(s.pop) : 'the pull ended before it popped', dim: true }]);
+      }
+      if (s.up.length) rows.push([{ txt: 'Still up at the end', dim: true }, { t: dur }, { txt: pl(s.up.length, 'murloc') + ' still alive when the pull ended', dim: true }, { txt: '' }]);
+      // (the Berserkers from one pop on one row: when the last one died, the raid pulses and any deaths)
+      if (s.bers.length) {
+        const b0 = Math.min(...s.bers.map((b) => b.t)), alive = s.bers.some((b) => b.died == null), end = alive ? dur : Math.max(...s.bers.map((b) => b.died)), life = end - b0;
+        const dead = diedTo(/pulsing tides/i, b0, end + 3), np = clusters(tides.filter((e) => e.t >= b0 && e.t <= end + 1), 1).length;
+        if (dead.length) M(dead[0].t, 'Raid', 'Pulsing Tides', NY.tides, 'High', pl(dead.length, 'player') + ' died to Pulsing Tides from the Bubblefin Berserker' + (s.bers.length > 1 ? 's.' : '.'), 'Kill a Berserker the moment it comes out: it pulses the whole raid every 3 seconds.');
+        rows.push([{ txt: s.bers.length > 1 ? s.bers.length + ' Bubblefin Berserkers' : 'Bubblefin Berserker' }, { t: b0 }, alive ? { txt: 'still alive when the pull ended', bad: true } : { txt: 'killed in ' + Math.round(life) + ' s', warn: life > 10 && !dead.length },
+          dead.length ? { txt: (dead.length > 4 ? pl(dead.length, 'player') : dead.map((d) => d.player).join(', ')) + ' died', bad: true } : { txt: 'pulsed the raid ' + pl(np, 'time'), dim: true }]);
+      }
+      return { title: 'Set ' + (s.i + 1), t: s.t, bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)),
+        sub: s.reached.length ? pl(s.reached.length, 'murloc') + ' reached the bubble' : s.up.length ? 'the pull ended first' : 'all dead in ' + Math.round(lastR - s.t) + ' s', rows };
+    });
+    if (addGroups.length) sections.push({ id: 'nyadds', title: 'Murloc sets (Kill them before the bubble)', place: 'Murlocs: all dead before they reach the bubble', spell: [NY.bubble, 'Alluring Bubble'], verdict: addGroups.some((g) => g.bad) ? 'bad' : addGroups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(addGroups.length, 'set') + ' of murlocs. Any murloc that reaches the bubble comes out as a Bubblefin Berserker when it pops, and the Berserker pulses the whole raid. It shows when each set was dead, any murlocs that got through, and how fast a Berserker died.', cols: ['Murlocs', 'When', 'Result', 'Notes'], groups: addGroups, rows: [] });
+    // ---- Bubblefin Frostscales (Mythic): Waterfog Shield gives nearby murlocs 99% less damage taken, so they die first ----
+    const scGroups = mSets.filter((s) => s.scales.length).map((s) => {
+      const rows = s.scales.map((u, k) => {
+        const end = u.died ?? dur, life = end - u.t, still = s.runners.filter((x) => x.died == null || x.died > end).length, late = u.died != null && life > 20;
+        if (late) M(u.died, 'Raid', 'Waterfog Shield', NY.shield, 'Low', 'A Bubblefin Frostscale in set ' + (s.i + 1) + ' lived ' + Math.round(life) + ' s, shielding the murlocs near it.', 'Kill the Frostscales first, then cleave the Shorerunners.');
+        return [{ txt: 'Frostscale ' + (k + 1) }, { t: end }, u.died != null ? { txt: 'dead ' + Math.round(life) + ' s after it came', warn: late } : s.reached.length ? { txt: 'alive as murlocs reached the bubble', bad: true } : { txt: 'still alive when the pull ended', dim: true },
+          { txt: still ? still + ' of ' + s.runners.length + ' Shorerunners still up' : 'every Shorerunner already dead', dim: true }];
+      });
+      return { title: 'Set ' + (s.i + 1), t: s.t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: rows.some((x) => x[2].bad || x[2].warn) ? 'a Frostscale lived too long' : s.scales.some((u) => u.died == null) ? 'the pull ended first' : 'Frostscales down fast', rows };
+    });
+    if (scGroups.length) sections.push({ id: 'nyscale', title: 'Bubblefin Frostscales (Kill them first)', place: 'Frostscales: killed first', spell: [NY.shield, 'Waterfog Shield'], verdict: scGroups.some((g) => g.bad) ? 'bad' : scGroups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: 'Each set brings 2 Frostscales. Their Waterfog Shield makes the murlocs near them take 99% less damage, so they die first. It shows how long each one lived (over 20 seconds is slow) and how many Shorerunners were still up when it died.', cols: ['Frostscale', 'Died', 'Result', 'Notes'], groups: scGroups, rows: [] });
+  }
   // ---- Water Jet: the tank's beam (+20% per tick), so the tanks swap on every one ----
   { const jt = ev.filter((e) => e.k === 'aura' && e.id === NY.jetTank && e.op === 'apply' && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t).filter((e, i, a) => !i || e.t - a[i - 1].t > 3);
     const rows = jt.map((e, i) => { const again = i && jt[i - 1].dst === e.dst, d = r.deaths.find((x) => x.guid === e.dst && x.t >= e.t && x.t <= e.t + 6);
@@ -2054,12 +2157,47 @@ function buildNymrissa(ev, r, h) {
       return [{ p: pname(e.dst) }, { t: e.t }, again ? { txt: 'took two in a row', warn: true } : { txt: i ? 'swapped' : 'first' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]; });
     if (rows.length) sections.push({ id: 'nyjet', title: 'Water Jet (Swap every jet)', place: 'Water Jet: a tank swap every time', spell: [NY.jet, 'Water Jet'], verdict: rows.some((x) => x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
       summary: pl(rows.length, 'Water Jet') + '. It shows which tank took each one. Aim the beam over the ice puddles: it clears them.', cols: ['Tank', 'When', 'Result', 'Died'], rows }); }
+  // ---- Abyssal Rain: a raid hit and a long damage over time, about 5 s after the orbs go out; cover each one with a raid cooldown ----
+  { const rains = ev.filter((e) => e.k === 'cast' && e.id === NY.rain).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
+    const rc = firstCasts(ev.filter((e) => e.k === 'pcast' && NY_RAIDCD.includes(String(e.spell).toLowerCase()))), dot = dmgId([NY.rainDot]);
+    const rows = rains.map((t, i) => {
+      const cds = rc.filter((e) => e.t >= t - 3 && e.t <= t + 10), amt = dot.filter((e) => e.t >= t && e.t <= t + 15).reduce((s, e) => s + (e.amt || 0), 0), dead = diedTo(/abyssal rain/i, t, t + 20);
+      if (dead.length) M(dead[0].t, 'Raid', 'Abyssal Rain', NY.rain, 'High', pl(dead.length, 'player') + ' died to Abyssal Rain ' + (i + 1) + (cds.length ? '.' : ', with no raid cooldown on it.'), 'Plan a raid cooldown for each Abyssal Rain (it lands about 5 seconds after the orbs go out), and use a personal defensive if you soak during it.');
+      return [{ txt: 'Rain ' + (i + 1), sub: amt ? h.compact(amt) + ' damage on the raid' : '' }, { t }, cds.length ? { txt: cds.map((e) => e.spell + ' (' + pname(e.src) + ')').join(', ') } : { txt: 'none', dim: !dead.length, warn: !!dead.length },
+        dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }];
+    });
+    if (rows.length) sections.push({ id: 'nyrain', title: 'Abyssal Rain (Cover it with cooldowns)', place: 'Abyssal Rain: covered, nobody died', spell: [NY.rain, 'Abyssal Rain'], verdict: rows.some((x) => x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
+      summary: pl(rows.length, 'Abyssal Rain') + '. Each one hits the raid and leaves a long damage over time about 5 seconds after the orbs go out, and makes Nymrissa hit harder for the rest of the fight. It shows the raid cooldowns used on each one (from 3 seconds before to 10 seconds after) and anyone who died to it.', cols: ['Rain', 'When', 'Raid cooldowns', 'Died'], rows }); }
+  // ---- Swirling Whirlpools and Pop!: stand in the one gap as the whirlpools surge in; when they reach the bubble it pops and knocks
+  // everyone back, and anyone pushed into the water is bitten by the sharks (Wild Bite) ----
+  { const pops = clusters(dmgId([NY.popHit]), 5).map((c) => c.t), wh = dmgId([NY.whirlHit]);
+    const bite = ev.filter((e) => e.id === NY.bite && h.isPlayer(e.dst) && (e.k === 'dmg' || (e.k === 'aura' && e.op === 'apply'))).sort((a, b) => a.t - b.t);
+    const groups = pops.map((p, i) => {
+      const t0 = Math.max(0, i ? pops[i - 1] + 15 : 0, p - 20), wi = new Map(), bi = new Map();
+      for (const e of wh.filter((x) => x.t >= t0 && x.t <= p + 1)) if (!wi.has(e.dst)) wi.set(e.dst, e.t);
+      for (const e of bite.filter((x) => x.t >= p - 1 && x.t <= p + 12)) if (!bi.has(e.dst)) bi.set(e.dst, e.t);
+      const who = [...new Set([...wi.keys(), ...bi.keys()])];
+      const rows = who.map((g) => {
+        const tw = wi.get(g), tb = bi.get(g), t1 = tw ?? tb, d = r.deaths.find((x) => x.guid === g && x.t >= t1 - 0.2 && x.t <= p + 15 && /whirlpool|wild bite|pop!/i.test(x.ability || ''));
+        if (d) M(d.t, pname(g), tb != null ? 'Wild Bite' : 'Swirling Whirlpools', tb != null ? NY.bite : NY.whirlHit, 'High', 'Died to ' + d.ability + ' at Pop! ' + (i + 1) + '.', tb != null ? 'Stand where Pop!\'s knockback keeps you on land, and get out of the water at once.' : 'Find the one gap in the whirlpools and stand in it before they surge in.');
+        return [{ p: pname(g) }, { t: t1 }, { txt: [tw != null ? 'hit by a whirlpool' : '', tb != null ? 'knocked into the water' : ''].filter(Boolean).join(' and '), warn: !d }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
+      }).sort((a, b) => a[1].t - b[1].t);
+      // (the map: a red flash on each whirlpool hit, a blue one on each shark bite, everyone moving from 12 s before the pop)
+      const rings = [...wi].map(([g, at]) => ({ guid: g, r: 2.2, color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', label: '', t0: at, dur: 1.5, cn: 'Red flash', legend: 'hit by a whirlpool' }))
+        .concat([...bi].map(([g, at]) => ({ guid: g, r: 2.2, color: '#6aa8ff', fill: 'rgba(106,168,255,.3)', label: '', t0: at, dur: 3, cn: 'Blue flash', legend: 'knocked into the water (Wild Bite)' })));
+      if (who.length) rows.unshift([{ txt: 'Whole pop', sub: 'where everyone stood, on one map', dim: true }, { t: p }, { txt: '' }, { txt: '' },
+        { map: { t: p + 0.5, bad: who, badLabel: 'hit by a whirlpool or knocked into the water', badAt: who.map((g) => [g, wi.get(g) ?? bi.get(g)]), title: 'Pop! ' + (i + 1) + ' at ' + T(p), pts: h.snap(p + 0.5), rings, frames: frames(p - 12, p + 8) } }]);
+      return { title: 'Pop! ' + (i + 1), t: p, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn), sub: who.length ? [wi.size ? pl(wi.size, 'player') + ' hit by the whirlpools' : '', bi.size ? pl(bi.size, 'player') + ' knocked into the water' : ''].filter(Boolean).join(', ') : 'everyone found the gap and stayed dry', rows };
+    });
+    if (groups.length) sections.push({ id: 'nypop', title: 'Whirlpools and Pop! (Find the gap, stay dry)', place: 'Swirling Whirlpools and Pop!: in the gap, out of the water', spell: [NY.whirl, 'Swirling Whirlpools'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: pl(groups.length, 'Pop!').replace('Pop!s', 'pops') + '. Whirlpools form at the edges and surge to the middle, leaving one gap. When they reach the bubble it pops and knocks everyone back, and anyone pushed into the water is bitten by the sharks (Wild Bite). It shows who the whirlpools hit and who ended up in the water, with a map of each pop.', cols: ['Player', 'When', 'What happened', 'Died', ''], groups, rows: [] }); }
   const av = avoidPanel(ev, r, h, [
+    { n: ['swirling whirlpools'], label: 'Swirling Whirlpools', harm: 'Medium', why: 'standing outside the gap as the whirlpools surged in' },
     { n: ['water jet'], label: 'Water Jet', harm: 'Medium', why: 'standing in the tank\'s beam', skip: (e) => h.role(e.dst) === 'tank' },
     { n: ['lingering frost'], label: 'Lingering Frost', harm: 'Low', why: 'standing on an ice puddle' },
   ]);
   if (av) sections.push(av);
-  return { _ny, diag: [], title: r.item.diff + ' audit: Nymrissa Wavecaller', reached: '', phases: [], marks: [], sections, mistakes, legend: 'The Frost Orb soaks set by set, the tank swaps, then avoidable damage.', note: '' };
+  return { _ny, diag: [], title: r.item.diff + ' audit: Nymrissa Wavecaller', reached: '', phases: [], marks: [], sections, mistakes, legend: 'The murloc sets and their Frostscales, the Frost Orb soaks and their bursts, the tank swaps, Abyssal Rain, the whirlpools and Pop!, then avoidable damage.', note: '' };
 }
 
 // Kith'ix (Oct 19 2026, from the guide library's notes: Wowhead, Icy Veins, Mythic Trap and a Mythic video guide). P1 adds sets and

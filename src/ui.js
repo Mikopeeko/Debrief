@@ -1356,6 +1356,7 @@ const PATCH_NOTES = [
     'Patch notes: this page, so you can see what changed and when.',
     'A calmer, tidier look: one set of text sizes, corners and spacing across every page.',
     'Compare: the loading screen now shows each step and how far along it is while another player\'s kill downloads.',
+    'Nymrissa gets her full Debriefing: murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, and the whirlpools and Pop!',
   ], f: [
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
   ] },
@@ -3282,6 +3283,10 @@ function audit() {
     crosswinds: { Result: 'deaths after the launch', '!Result': 'players who drifted or got hit by a launched player' },
     fury: { Result: 'enrages', '!Result': 'Furies popped as Dig In ended' }, virulence: { Result: 'deaths to a Virulence clip', '!Result': 'Virulence clips' },
     winds: { Cyst: 'winds with no cyst popped', Died: 'deaths in the winds', '!Cyst': 'a spare cyst left up' },
+    // (Nymrissa)
+    nyadds: { Result: 'sets with murlocs reaching the bubble', '!Result': 'murlocs getting through as the pull ended, or a slow Berserker kill', Notes: 'deaths to a Berserker' }, nyscale: { Result: 'Frostscales alive as murlocs got through', '!Result': 'Frostscales living over 20 s' },
+    nyburst: { Died: 'deaths to Frost Burst', '!Since the last soak': 'soaks too close to another' }, nyrain: { Died: 'deaths to Abyssal Rain', '!Raid cooldowns': 'deadly Rains with no raid cooldown' },
+    nypop: { Died: 'deaths to the whirlpools or the sharks', '!What happened': 'players hit by a whirlpool or knocked into the water' },
     // (Nek'zali)
     amani: { Result: 'Amani reaching the well', '!Shield': 'shields never broken' }, ignition: { Result: 'players hit by two circles', '!Result': 'players hit by a circle or carrying Ritual Burn', Died: 'deaths in Ignition' },
     depths: { Result: 'Curses that got off or deaths in the well', '!Result': 'Swirling Spirit hits', '!Who': 'going in with Soul Exhaustion' }, rend: { Removed: 'deaths with Essence Rend', '!Puddle': 'puddles in the way' },
@@ -3308,7 +3313,7 @@ function audit() {
     incub: { Wretch: 'venom reaching the Wretch' }, wretch: { '!Bubbles': 'Wretches alive for a third bubble', '!Outside the bubble': 'players outside a bubble' }, amps: { '!Boss health': 'windows behind pace' }, fangs: { Result: 'deaths while tethered', '!Broke': 'tethers never broken', '!Result': 'batches spread out or without a raid cooldown' }, doomscale: { Result: 'a hatched big egg or a long Revenge', '!Result': 'a Warden reaching its second gestation, or a short Revenge' }, bite: { Result: 'bites not cleared', '!Result': 'Purges not spread or held without a defensive' }, shriek: { Killed: 'adds left alive', '!Got off': 'adds that got their casts off' },
   };
   // (row labels that don't read as a plural noun on their own)
-  const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets', 'erupted on the raid': 'droplets erupting on the raid' };
+  const LABEL_T = { 'exploded unsoaked': 'globules exploding unsoaked', 'whole set': 'whole sets', 'erupted on the raid': 'droplets erupting on the raid', 'reached the bubble': 'sets with murlocs reaching the bubble', 'whole pop': 'whole pops', shattered: 'orbs that Shattered' };
   const SNOUN = { boxes: 'boxes', united: 'United Defenses', ascension: 'Final Ascension casts', gloom: 'Gloombomb checks', frostfire: 'debuffs', blink: 'Blink Novas', thud: 'leaps', bomb: 'bombs', tankstacks: 'tank stretches', venoms: 'adds', fangs: 'Dripping Fangs', totems: 'totem checks', froth: 'players', bile: 'Catalysts', infect: 'infections', imbibe: 'Imbibes', amani: 'Amani', ignition: 'Ignition checks', depths: 'well trips', rend: 'puddles', barrage: 'Barrages', ritual: 'intermission checks', invoke: 'Invokes', energy: 'feeds', ravage: 'Ravages', mutilate: 'soaks', tempest: 'players', cysts: 'cysts', crosswinds: 'players', fury: 'Furies', virulence: 'players', winds: 'winds', helix: 'pairings', protovenom: 'circles', droplets: 'soakers', coag: 'adds', miasma: 'soaks', blighted: 'debuffs', pools: 'pools', marks: 'players', balance: 'intermissions', tanks: 'cycles', bulwark: 'barriers', ichor: 'casts', soakq: 'soaks', push: 'transitions', tankfront: 'frontals', vf: 'debuffs', kicks: 'casts', founts: 'Feasts', twins: 'bosses', addsets: 'adds and kicks', dmghost: 'Dreadmarch checks', inter: 'soak rounds', shield: 'shields', deaths: 'deaths', eggs: 'eggs', coils: 'circles', tank: 'tank checks', incub: 'Toxic Incubations', wretch: 'Wretches', amps: 'damage windows', fangsT: 'tethers', doomscale: 'Doomscale sets', bite: 'bites', shriek: 'adds' };
   const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
   const synopsis = (s, rows, groups) => {
@@ -3904,6 +3909,8 @@ const IMPORTANCE = {
   'The Lost Explorers': ['boxes', 'ascension', 'frostfire', 'thud', 'united', 'bomb', 'blink', 'tankstacks', 'avoid'],
   "Nek'zali the Soulcoiler": ['ritual', 'amani', 'depths', 'energy', 'ignition', 'rend', 'barrage', 'invoke', 'avoid'],
   "Ula'tek": ['eggs', 'coils', 'waves', 'tank', 'incub', 'wretch', 'amps', 'fangs', 'doomscale', 'kicks', 'bite', 'shriek', 'avoid'],
+  // (the Mythic wipes: murlocs reaching the bubble (Berserker), Frost Bursts stacked during Abyssal Rain, sharks after Pop!)
+  'Nymrissa Wavecaller': ['nyadds', 'nyburst', 'orbs', 'nypop', 'nyrain', 'nyscale', 'nyjet', 'avoid'],
 };
 // Each mechanic's tier (Oct 19, your rule): what failing it does. Major likely wipes the raid, Moderate could kill one or a few players,
 // Minor makes the fight harder. A mistake (red) takes its mechanic's tier; a slip (amber) is always Minor. Deaths are Moderate, Avoidable
@@ -3917,6 +3924,7 @@ const TIERS = {
   'The Lost Explorers': { major: ['boxes', 'ascension', 'frostfire', 'thud'], minor: [] },
   "Nek'zali the Soulcoiler": { major: ['ritual', 'amani', 'depths', 'energy'], minor: [] },
   "Ula'tek": { major: ['eggs', 'coils', 'waves', 'tank'], minor: ['kicks', 'shriek'] },
+  'Nymrissa Wavecaller': { major: ['nyadds', 'nyburst', 'orbs'], minor: ['nyscale'] },
 };
 const tierOf = (boss, id) => { if (id === 'avoid') return 'minor'; const t = TIERS[boss]; return t && t.major.includes(id) ? 'major' : t && t.minor.includes(id) ? 'minor' : 'moderate'; };
 // Three flags (Oct 19, your call: "4 is too much"): green, done right; yellow, mostly right with some mistakes; red, failed. A
