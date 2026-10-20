@@ -12302,7 +12302,7 @@ function bgFetch(item) {
 // whole night for every tab; Night summary is Recap on the whole night)
 const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
-const WIP_TABS = new Set(['overview', 'rot', 'player', 'cmp']);
+const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
 const TAB_ORDER = ['audit', 'overview', 'rot', 'perf', 'player', 'cmp']; // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
