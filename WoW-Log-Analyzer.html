@@ -12816,13 +12816,18 @@ const noteKey = (boss) => 'wla-note-' + boss;
 // Saved notes: several per boss, each with a name (raids change their note as the roster changes week to week). A pull uses the one you pick,
 // or with "Pick by roster" (the default) the one that names the most of that pull's players, the newest on a tie. A note saved before this
 // is the first one. Kept in this browser, like the single note was.
-const notesKey = (boss) => 'wla-notes-' + boss;
-function notesOf(boss) {
-  let o = null; try { o = JSON.parse(store.get(notesKey(boss)) || 'null'); } catch (e) { o = null; }
-  if (!o || !Array.isArray(o.list)) { const old = store.get(noteKey(boss)); o = { list: old ? [{ id: 'n1', name: 'Note 1', text: old, saved: Date.now() }] : [], pick: 'auto' }; }
+// (Oct 19, your notes: "save the note with the log so anytime I open the log the note opens with it", "only one per log": a note is kept
+// under the log it was added on (a Warcraft Logs report, or your own log file's night) and the boss; a log has one note per boss)
+const logIdOf = (it) => { it = it || S.item; if (!it) return 'none'; if (it.wcl && it.wcl.code) return 'wcl:' + it.wcl.code; return 'log:' + ((S.file && S.file.name) || 'live') + ':' + nightOf(it.wallMs || it.startMs || 0); };
+const notesKey = (boss, it) => 'wla-lognote-' + logIdOf(it) + '|' + boss;
+function notesOf(boss, it) {
+  let o = null; try { o = JSON.parse(store.get(notesKey(boss, it)) || 'null'); } catch (e) { o = null; }
+  if (!o || !Array.isArray(o.list)) o = { list: [], pick: 'auto' };
   return o;
 }
-function notesSave(boss, o) { if (o.list.length) store.set(notesKey(boss), JSON.stringify(o)); else localStorage.removeItem(notesKey(boss)); localStorage.removeItem(noteKey(boss)); }
+// (one note per log (your rule, Oct 19): saving keeps the newest one only, so a log never has two)
+function notesSave(boss, o) { if (o.list.length > 1) { const keep = o.list.slice().sort((a, b) => (b.saved || 0) - (a.saved || 0))[0]; o.list = [keep]; }
+  o.pick = 'auto'; o.byPull = {}; if (o.list.length) store.set(notesKey(boss), JSON.stringify(o)); else localStorage.removeItem(notesKey(boss)); }
 // (a note's roster match: how many of the pull's players it names, as whole words)
 const noteHas = (text, name) => new RegExp('(^|[^\\p{L}])' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu').test(text);
 const noteScore = (text, rep) => [...rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name) && noteHas(text, p.name.split('-')[0])).length;
@@ -12847,7 +12852,9 @@ const noteJobs = (res) => { if (!res || res.error) return null; const cds = (res
   const ok = cds.filter((x) => x.status === 'on time').length, bad = (res.mistakes || []).filter((m) => m.severity !== 'Low').length; return { ok, bad, score: ok - bad }; };
 const NFIT = new WeakMap(); // (each pull's automatic pick, kept until a note is saved, added or removed)
 function noteForRep(rep) {
-  const o = notesOf(rep.item.boss); if (!o.list.length) return null;
+  const o = notesOf(rep.item.boss, rep.item); if (!o.list.length) return null;
+  // (the log's one note, used when it's a perfect match: every player it names was in this pull, and it's for this boss; the roster is the log's own)
+  { const n = o.list[0], fit = noteFit(n.text, rep); if (n.example || fit.match) { rep.noteMiss = null; return { ...n, auto: false, how: 'log', fit }; } rep.noteMiss = { note: n, fit }; return null; }
   const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) { rep.noteMiss = null; return { ...one, auto: false, how: 'pull' }; }
   const ck = o.pick + '#' + o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) { rep.noteMiss = had.miss; return had.v; }
   // (only the notes that pass the roster match (or the example) can be used; with none, the pull has no note, and noteMiss
@@ -12878,6 +12885,7 @@ function noteForRep(rep) {
 // (why a pull uses its note, in one plain sentence)
 function noteWhy(u) {
   if (!u) return '';
+  if (u.how === 'log') return 'Saved with this log.';
   if (u.how === 'pull') return 'You picked it for this pull.';
   if (u.how === 'all') return 'You set it for every pull.';
   const f = u.fit || {}, names = f.of ? 'it names ' + f.hit + " of this pull's " + f.of + ' players' : '';
@@ -13090,7 +13098,8 @@ const noteSwapName = (text, a, b) => String(text).replace(new RegExp('(^|[^\\p{L
 // "Not now" is remembered for that note and those missing players.
 const ROSTER_NO = 'wla-roster-no';
 const rosterNoKey = (n, away) => n.id + '|' + away.map((x) => x.toLowerCase()).sort().join(',');
-function rosterOffer(r, used) {
+function rosterOffer(r, used) { return ''; /* (your note, Oct 19: the roster comes from the log, no stand-in picking) */ }
+function rosterOffer0(r, used) {
   if (!used || used.example) return '';
   const pn = (p) => p.name.split('-')[0], lc = (s) => String(s).toLowerCase();
   const inPull = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name));
@@ -13152,7 +13161,8 @@ const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.oncl
 // saved night it fits (at least half its names there), newest first, a click opening that night
 // (the small calendar on a log's chip, drawn here)
 const SN_CAL = '<svg class="sn-cal" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-function storedNotes() {
+function storedNotes() { return ''; /* (one note per log (Oct 19): no list of saved notes) */ }
+function storedNotes0() {
   const r = S.rep, cur = r.item.boss, used = noteForRep(r);
   const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur);
   const when = (t) => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -13237,13 +13247,13 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
   const miss = !text && !S.noteEdit && !only && r.noteMiss && NO.list.some((n) => !n.example) ? r.noteMiss : null;
   if (miss) {
     const f = miss.fit, n = miss.note, nN = NO.list.filter((x) => !x.example).length, g = f.gone || [];
-    const close = f.enc !== false && f.found >= 3 && g.length >= 1 && g.length <= 3;
+    const close = false; /* (a perfect match only (your rule, Oct 19)) */
     const closeL = close ? '<p>' + esc(n.name) + ' is close: only ' + esc(andL(g)) + (g.length === 1 ? " wasn't" : " weren't") + ' here.</p>' : '';
     // (a note just imported says what it found on top, as when a note fits)
     const scB = S.noteScan && S.noteScan.boss === boss && S.noteScan.r ? noteScanBox(S.noteScan) : '';
     $('#assignBox').innerHTML = scB + '<div class="panel nmiss"><h3>No note for this pull</h3>' +
-      '<p class="ah-lead">' + (nN === 1 ? 'Your saved note for ' + esc(boss) + " doesn't" : 'None of your ' + nN + ' saved notes for ' + esc(boss)) + " have this pull's players.</p>" + closeL +
-      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Add a note</button>' + (close ? '<button class="btn" type="button" data-nuse="' + esc(n.id) + '">Use it anyway</button>' : '') + '<button class="btn" type="button" data-asv="notes">See your notes</button></div></div>' + storedNotes();
+      '<p class="ah-lead">' + (f.enc === false ? 'The note saved with this log is for another boss.' : 'The note saved with this log isn\'t a perfect match for this pull: ' + esc(andL(g)) + (g.length === 1 ? ' isn\'t' : ' aren\'t') + ' in it.') + ' A note is used only when every player it names is in the pull.</p>' + closeL +
+      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Replace the note</button></div></div>';
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
     $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[pullKey(r.item)] = b.dataset.nuse; notesSave(boss, o);
       for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }));
