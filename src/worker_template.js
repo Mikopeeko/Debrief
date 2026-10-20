@@ -471,10 +471,11 @@ async function runQuestions(env, all) {
 // for the twice-a-day check, which acts on them. Reactions: ✅ fix it, 👀 look again, ❌ not a bug, ⏳ in progress, 🏁 done
 // (⏳, 🏁 and ❌ also set the post's tag at once). A reply or ✅ / 👀 gets a short "got it".
 const REVIEW_FORUM = '1562143289304424578';
+const DRAFTS_FORUM = '1562225772134015106'; // (#post-drafts: the owner's private forum for #new-features drafts, apart from bugs)
 const REACTS = { '✅': ['fix it', null], '👀': ['look into it again', null], '❌': ['not a bug, close it', 'Not a bug'], '⏳': ['in progress', 'In progress'], '🏁': ['done', 'Done'] };
 const GOT_IT = 'Got it! I\'ll pick this up within about 15 minutes (while your PC is on).';
 async function runReplies(env, all) {
-  const posts = all.filter((t) => t.parent_id === REVIEW_FORUM); if (!posts.length) return;
+  const posts = all.filter((t) => t.parent_id === REVIEW_FORUM || t.parent_id === DRAFTS_FORUM); if (!posts.length) return;
   const seen = (await env.DEBRIEF_KV.get('dc-revseen', 'json')) || {}, reviews = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {};
   const issueOf = {}; for (const [n, tid] of Object.entries(reviews)) issueOf[tid] = +n;
   const inbox = (await env.DEBRIEF_KV.get('review-inbox', 'json')) || [], start = inbox.length; let dirty = false, forum = null;
@@ -627,7 +628,7 @@ async function featDraft(env, o) {
   const body = { content: '<@' + OWNER + '> **Draft for #new-features.** Here\'s how it will look. Tap **Post it** to publish, **Change it** and reply with what to change, or **Skip**.', allowed_mentions: { parse: [], users: [OWNER] }, embeds: [featEmbed(dr)], components: FEAT_ROW };
   const old = o.thread && drafts[o.thread] ? o.thread : null;
   if (old) { await dc(env, '/channels/' + old, { method: 'PATCH', body: { archived: false } }).catch(() => {}); await dcFiles(env, '/channels/' + old + '/messages/' + old, 'PATCH', body, dr.images); drafts[old] = dr; }
-  else { const t = await dcFiles(env, '/channels/' + REVIEW_FORUM + '/threads', 'POST', { name: ('📣 Feature post: ' + dr.t).slice(0, 95), message: body }, dr.images); drafts[t.id] = dr; }
+  else { const t = await dcFiles(env, '/channels/' + DRAFTS_FORUM + '/threads', 'POST', { name: ('📣 ' + dr.t).slice(0, 95), message: body }, dr.images); drafts[t.id] = dr; }
   await env.DEBRIEF_KV.put('feat-drafts', JSON.stringify(drafts));
 }
 // (Post it: into #new-features, replacing the short card for the same feature if there is one, then published to followers)
