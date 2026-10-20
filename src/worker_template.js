@@ -821,6 +821,14 @@ async function myReports(req, env) {
     return json({ reports: l.map((r) => ({ code: r.code, title: r.title, startTime: r.startTime, vis: r.visibility, zone: r.zone ? r.zone.name : '' })) });
   } catch (e) { return json({ error: 'Couldn\'t get your logs from Warcraft Logs.' }, 502); }
 }
+// (Live now: your own newest uploads, private ones too, so Debrief follows your log before anyone else's on the team.
+// Yours alone, so not kept for others; your account number comes back so the page can spot your log in the team's list.)
+async function myLive(req, env) {
+  const s = await sessOf(req, env); if (!s || !s.uid) return json({ error: 'Not signed in.' }, 401);
+  try { const d = await gql(env, 'query($uid:Int){reportData{reports(userID:$uid,limit:3){data{code title startTime endTime owner{id name}}}}}', { uid: s.uid }, s.t);
+    return json({ uid: s.uid, reports: (((d || {}).reportData || {}).reports || {}).data || [] });
+  } catch (e) { return json({ error: 'Couldn\'t get your logs from Warcraft Logs.' }, 502); }
+}
 async function wclSignIn(req, env) {
   let b = null; try { b = await req.json(); } catch (e) { /* not JSON */ }
   if (!b || typeof b.code !== 'string' || typeof b.verifier !== 'string' || b.code.length > 4000 || b.verifier.length > 200) return json({ error: 'That sign-in is missing something.' }, 400);
@@ -867,6 +875,7 @@ export default {
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
     if (url.pathname === '/api/myreports') return myReports(req, env);
+    if (url.pathname === '/api/mylive') return myLive(req, env);
     if (url.pathname === '/api/wcl-me') return req.method === 'POST' ? wclSignIn(req, env) : json({ error: 'Sign in from the website.' }, 405);
     if (url.pathname === '/api/bug') return req.method === 'POST' ? fileBug(req, env, url) : json({ error: 'Send reports with the website\'s form.' }, 405);
     if (route) {

@@ -1530,6 +1530,7 @@ const PATCH_NOTES = [
     'NSRT notes: nicknames linked once, and your notes listed with when each was last used.',
     'Nymrissa: every check has a How it works note.',
   ], f: [
+    'Live now follows your own log first. When several raiders log the same night, Debrief picks the one you uploaded, then your team\'s, and never a stranger\'s.',
     'My Page: picking another of your characters now brings in their logs and makes My Page theirs, with their rankings and bosses. Tap your main to switch back.',
     'Pull counts are right when two raiders log the same night: each pull counts once on the progress graph, in time on the boss and in the night counts, even when their logs start a few seconds apart.',
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
@@ -20130,13 +20131,29 @@ function liveWho() {
   const gl = groups(), chars = gl.filter((g) => g.kind === 'char'), teams = gl.filter((g) => g.kind !== 'char'), cur = gl.find((g) => g.gid === store.get(GROUP_CUR));
   return chars[0] || (teams.length === 1 ? teams[0] : cur) || null;
 }
+// Whose log (your rule, Oct 20): your own first, then your team's, never a stranger's. Several raiders can log the same
+// night: one you uploaded wins; with none of yours, the team's freshest (and it stays on the one it's showing). Signed in
+// with Warcraft Logs, it also sees your own uploads that aren't filed under the team, private ones too. A character with
+// no team only counts logs they uploaded or their guild's, not a pug leader's.
+const liveFresh = (r, now) => !!(r && r.endTime && now - r.endTime < LIVE_NEW && now - r.startTime < 14 * 3600e3);
+function liveMine() { // (the signed-in Warcraft Logs account, when it owns the character set up on Home)
+  const me = WCL.HOSTED ? wclMe() : null; if (!me) return null;
+  const P = mePair(), c = P ? P.c : groups().find((g) => g.kind === 'char');
+  return c && (me.chars || []).some((x) => x.id === c.id) ? me : null;
+}
 async function liveCheck() {
   if (document.hidden || S.liveBusy) return;
   const g = liveWho(); if (!g || !g.id) { liveSet(null); return; }
-  S.liveBusy = true; let r = null;
-  try { r = await WCL.latestReport(await wclCreds(), g); } catch (e) { return; /* (tried again in a minute) */ } finally { S.liveBusy = false; }
-  const now = Date.now(), on = r && r.endTime && now - r.endTime < LIVE_NEW && now - r.startTime < 14 * 3600e3;
-  liveSet(on ? { g, code: r.code, title: r.title || '', end: r.endTime } : null);
+  S.liveBusy = true; const now = Date.now(), me = liveMine(), cur = S.liveNow && S.liveNow.code; let pick = null;
+  const own = (r) => !!(r && r.owner && ((S.liveUid && r.owner.id === S.liveUid) || (me && me.name && r.owner.name === me.name)));
+  try {
+    if (me && S.liveSigned !== false) try { const r = await fetch('/api/mylive', { cache: 'no-store' }); if (r.status === 401) S.liveSigned = false; else if (r.ok) { const j = await r.json(); S.liveUid = j.uid || null; pick = (j.reports || []).find((x) => liveFresh(x, now)) || null; } } catch (e) { /* the team's list below */ }
+    if (!pick) {
+      const rs = (await WCL.latestReports(await wclCreds(), g)).filter((r) => liveFresh(r, now) && (g.kind !== 'char' || own(r) || (g.guild && r.guild && r.guild.name === g.guild)));
+      pick = rs.sort((a, b) => (own(b) - own(a)) || ((b.code === cur) - (a.code === cur)) || b.endTime - a.endTime)[0] || null;
+    }
+  } catch (e) { return; /* (tried again in 30 seconds) */ } finally { S.liveBusy = false; }
+  liveSet(pick ? { g, code: pick.code, title: pick.title || '', end: pick.endTime, mine: own(pick) } : null);
 }
 const liveHere = (x) => !!(x && $('#main .home.prog') && S.progView === x.g.gid);
 const liveAgo = (x) => { const m = Math.round((Date.now() - x.end) / 60000); return (x.title ? x.title + ' · ' : '') + 'updated ' + (m < 1 ? 'just now' : plural(m, 'minute') + ' ago'); };

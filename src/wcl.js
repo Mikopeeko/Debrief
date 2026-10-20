@@ -276,13 +276,14 @@ async function teamReports(creds, id) {
 // reports are listed 100 a page, newest first. (Hosted: the site has a route for each.)
 const CHAR_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){characterData{character(id:$id,name:$name,serverSlug:$srv,serverRegion:$reg){id name classID guilds{id name} server{name slug region{slug}}}}}`;
 const CHAR_REPORTS_Q = `query($id:Int!,$page:Int!){characterData{character(id:$id){recentReports(limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guild{id name}}}}}}`;
-// (the newest report only, for "Live now" on your team's page: the site keeps it 30 seconds, not ten minutes)
-const TEAM_LATEST_Q = `query($id:Int!){reportData{reports(guildID:$id,limit:1){data{code title startTime endTime zone{id name}}}}}`;
-const CHAR_LATEST_Q = `query($id:Int!){characterData{character(id:$id){recentReports(limit:1){data{code title startTime endTime zone{id name} guild{id name}}}}}}`;
-async function latestReport(creds, g) {
+// (the newest few reports, for "Live now" on your team's page: the site keeps them 30 seconds, not ten minutes. A few, with
+// who uploaded each, because several raiders can log the same night and yours should win)
+const TEAM_LATEST_Q = `query($id:Int!){reportData{reports(guildID:$id,limit:5){data{code title startTime endTime zone{id name} owner{id name}}}}}`;
+const CHAR_LATEST_Q = `query($id:Int!){characterData{character(id:$id){recentReports(limit:5){data{code title startTime endTime zone{id name} guild{id name} owner{id name}}}}}}`;
+async function latestReports(creds, g) {
   const ch = g.kind === 'char', rr = HOSTED ? await api('/api/' + (ch ? 'charlatest' : 'teamlatest') + '?id=' + g.id)
     : ch ? ((await gql(creds, CHAR_LATEST_Q, { id: g.id })).characterData.character || {}).recentReports : (await gql(creds, TEAM_LATEST_Q, { id: g.id })).reportData.reports;
-  return ((rr && rr.data) || [])[0] || null;
+  return (rr && rr.data) || [];
 }
 function parseCharLink(s) {
   s = String(s || '').trim();
@@ -591,6 +592,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
