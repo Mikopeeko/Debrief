@@ -614,8 +614,9 @@ async function dcFiles(env, path, method, payload, keys) {
     const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)), name = 'shot' + (k + 1) + (/^\/9j/.test(b64) ? '.jpg' : '.png');
     fd.append('files[' + atts.length + ']', new Blob([bin], { type: /\.jpg$/.test(name) ? 'image/jpeg' : 'image/png' }), name); atts.push({ id: atts.length, filename: name });
   }
-  const p = { ...payload, attachments: atts };
-  if (p.embeds && p.embeds[0] && atts[0]) { p.embeds[0].image = { url: 'attachment://' + atts[0].filename }; for (const a of atts.slice(1)) p.embeds.push({ url: SITE, image: { url: 'attachment://' + a.filename } }); p.embeds[0].url = SITE; }
+  // (a new forum post carries its message inside payload.message: the pictures go in that message's card, as in the real post)
+  const p = { ...payload }, m = p.message ? (p.message = { ...p.message }) : p; m.attachments = atts;
+  if (m.embeds && m.embeds[0] && atts[0]) { m.embeds[0].image = { url: 'attachment://' + atts[0].filename }; for (const a of atts.slice(1)) m.embeds.push({ url: SITE, image: { url: 'attachment://' + a.filename } }); m.embeds[0].url = SITE; }
   fd.append('payload_json', JSON.stringify(p));
   const r = await fetch('https://discord.com/api/v10' + path, { method, body: fd, headers: { Authorization: 'Bot ' + env.DISCORD_BOT_TOKEN, 'User-Agent': 'DiscordBot (' + SITE + ', 1)' } });
   if (!r.ok) throw new Error('Discord answered ' + r.status + ' on ' + path + ': ' + (await r.text().catch(() => '')).slice(0, 200));
