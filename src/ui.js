@@ -1441,6 +1441,7 @@ const PATCH_NOTES = [
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
+    'Debriefing maps: players show as role icons in their class colour, and on The Coiled Altar the maps show the Fangs puddles where they really were, the bosses\' portraits, and a short pause at each frontal.',
     'Boss guides: in the Coiled Altar simulation, the raid now stands in the lane between the second set of puddles, each axe soak has its own group, and a dashed line shows who is looking at their ghost.',
     'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
     'Team names always match Warcraft Logs now. Teams can\'t be renamed; Edit on a team removes it.',
@@ -4391,7 +4392,32 @@ function mapIcon(g, x, y, R) {
 const MAP_OBJ_U = { 'coalesced venom stalker': 'orb', 'virulent mutation': 'porb', 'manifestation of dread': 'ghost' };
 const mapObjs = (l) => { const seen = new Set(); return l.map((p) => { const k = p.kind !== 'player' && p.kind !== 'boss' && MAP_OBJ_U[String(p.name || '').toLowerCase()]; return k ? { ...p, kind: k } : p; })
   .filter((p) => !(MAP_OBJ_U[String(p.name || '').toLowerCase()] && p.guid) || (!seen.has(p.guid) && seen.add(p.guid))); };
+// Debriefing maps in the Boss guides look (your call, Oct 20). Every boss: players drawn as the guides' role tokens (shield, cross, swords,
+// bolt) in their class colour. The Coiled Altar also gets the guides' boss and ghost tokens, the room's walls, the Fangs pools as they
+// really were in this pull (when, from the log; how big, from real kills), and a short freeze at each frontal. Still the pull's own data.
+const LOOK_PM = new WeakMap(), LOOK_MP = new WeakMap();
+function lookPmap(pmap) {
+  if (!pmap || typeof pmap.get !== 'function' || [...pmap.values()].some((p) => p && p.glyph)) return pmap; if (LOOK_PM.has(pmap)) return LOOK_PM.get(pmap);
+  const out = new Map([...pmap].map(([k, p]) => [k, p ? { ...p, glyph: p.role === 'tank' ? 't' : p.role === 'healer' ? 'h' : MELEE_DPS.has(p.specId) ? 'm' : 'r' } : p]));
+  LOOK_PM.set(pmap, out); return out;
+}
+function mapLook(mp) {
+  if (!mp || mp._look || mp.gdzLook || !Array.isArray(mp.pools)) return mp; if (LOOK_MP.has(mp)) return LOOK_MP.get(mp); /* (only The Coiled Altar's maps carry pools) */
+  const A = ARENAS['The Coiled Altar'], W = 52, fr = mp.frames && mp.frames.length ? mp.frames : null, w0 = fr ? fr[0].t : mp.t, w1 = fr ? fr[fr.length - 1].t : mp.t;
+  const rings = (mp.rings || []).slice(), pauses = (mp.pauses || []).slice();
+  for (const p of mp.pools) if (w0 != null && p.t0 <= w1 + 0.1 && p.t1 >= w0 - 0.1) for (const dx of [-W, W])
+    rings.push({ x: A.cx + dx, y: A.cy, r: p.r, clip: true, fx: 'puddle', t0: p.t0, dur: p.t1 - p.t0, color: '#c4f03c', fill: 'rgba(52,128,30,.4)', cn: 'Noxious Ground', legend: 'Fangs pools, as they were in this pull' });
+  // (key moments: each frontal holds for a moment with what it hit)
+  if (fr) { (mp.cones || []).forEach((c, i, all) => { if (c.at == null || c.at <= w0 || c.at >= w1) return;
+      pauses.push({ t: c.at, dur: 2.4, text: (all.length > 1 ? 'Frontal ' + (i + 1) : 'The frontal') + ' lands: the orbs inside the cone pop.' }); });
+    if (mp.cone && (mp.ghostHit || mp.ghostMiss)) { const t = mp.cone.at != null ? mp.cone.at : mp.t, h = (mp.ghostHit || []).length, m = (mp.ghostMiss || []).length;
+      if (t > w0 && t < w1) pauses.push({ t, dur: 2.4, text: 'Soul Sever lands: ' + h + ' of ' + (h + m) + ' ghosts in it.' }); } }
+  const out = { ...mp, _look: true, gdzLook: true, rings, pauses: pauses.sort((a, b) => a.t - b.t), room: { id: 'caRoom', x0: A.cx - W, x1: A.cx + W, y0: A.cy - W, y1: A.cy + W } };
+  LOOK_MP.set(mp, out); return out;
+}
+let MAP_RN = 0;
 function miniMap(mp, pmap) {
+  mp = mapLook(mp); pmap = lookPmap(pmap);
   const pts = mapObjs(mp.pts || []);
   if (!pts.length && !(mp.frames && mp.frames.some((f) => f.pts.length))) return '<p class="muted">No position data at this moment (needs Advanced Combat Logging).</p>';
   const sx = (p) => p.x, sy = (p) => -p.y; // same orientation as mapPanel
@@ -4436,7 +4462,8 @@ function miniMap(mp, pmap) {
   const OBJS = { orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
-  if (mp.room) s += '<defs><clipPath id="' + mp.room.id + '"><rect x="' + X({ x: mp.room.x0 }) + '" y="' + Y({ y: mp.room.y1 }) + '" width="' + (mp.room.x1 - mp.room.x0) * yd + '" height="' + (mp.room.y1 - mp.room.y0) * yd + '"/></clipPath></defs>'; /* (a guide's room outline: wall pools are cut at the wall) */
+  const RID = mp.room ? mp.room.id + '-' + (++MAP_RN) : null;
+  if (mp.room) s += '<defs><clipPath id="' + RID + '"><rect x="' + X({ x: mp.room.x0 }) + '" y="' + Y({ y: mp.room.y1 }) + '" width="' + (mp.room.x1 - mp.room.x0) * yd + '" height="' + (mp.room.y1 - mp.room.y0) * yd + '"/></clipPath></defs>'; /* (a guide's room outline: wall pools are cut at the wall) */
   for (const w of mp.wmarks || []) s += ic(X(w), Y(w), gdzMarkSvg(w.k, X(w), Y(w))); /* (a guide's raid markers on the floor (guides.js)) */
   // tank frontal cone (from the boss toward the tank it hit), drawn to scale under everything else
   // (like in game: bright at the boss and fading with distance. On a moving map (at: the moment it lands) it reaches out from
@@ -4519,7 +4546,7 @@ function miniMap(mp, pmap) {
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
-    const look0 = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null, look = look0 != null && g.clip && mp.room ? '<g clip-path="url(#' + mp.room.id + ')">' + look0 + '</g>' : look0;
+    const look0 = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null, look = look0 != null && g.clip && mp.room ? '<g clip-path="url(#' + RID + ')">' + look0 + '</g>' : look0;
     s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
       (micL.push(mapIcon(g, X(g), Y(g), g.r * yd)), '') + ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
@@ -4665,7 +4692,7 @@ function miniMap(mp, pmap) {
   // (a guide's map (liveLeg): the key lists only what's on the map at this moment, and changes as it plays)
   const LL = !!(mp.liveLeg && live), lm = LL ? { ...mp, rings: (mp.rings || []).filter((g) => ringAt(g)), tags: (mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)), links: (mp.links || []).filter((l) => ft >= l.t0 && ft <= l.t1), arrows: (mp.arrows || []).filter((a) => ft >= a.t0 - 0.05 && ft <= a.t1 + 0.05), frames: null } : mp,
     cNow = LL ? CONES.filter((c) => c.at == null || (ftA - c.at >= -1.4 && ftA - c.at < 1.6)) : CONES;
-  const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', mp.playerLabel || 'Player (class icon)']];
+  const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', mp.playerLabel || 'Player (role icon, class colour)']];
   if (meN && pts.some((q) => q.name === meN)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#e6b450" stroke-width="2.5"/>', 'Gold ring: ' + meN]);
   if ([...hl].some((g) => !good.has(g) && !bad.has(g))) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="2.5"/>', 'White ring: ' + (mp.hlLabel || 'player this is about')]);
   if (mp.goodAt && good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="1.5"/>', 'White ring: ' + (mp.pendLabel || 'not done yet')]);
@@ -4713,6 +4740,7 @@ function miniMap(mp, pmap) {
 // map's contents in place, so zoom and pan stay where they are.
 // (still: a map shown on its own with the page holds on its key moment until ▶ Play, so many maps don't all play at once)
 function bindAnim(box, mp, pmap, still) {
+  mp = mapLook(mp); pmap = lookPmap(pmap);
   if (!mp.frames || !mp.frames.length) return;
   const svg = box.querySelector('svg.zmap'), rng = box.querySelector('.zrange'), btn = box.querySelector('.zplay'), lab = box.querySelector('.ztime');
   if (!svg || !rng) return;
@@ -4723,7 +4751,8 @@ function bindAnim(box, mp, pmap, still) {
   // the outcome before the next loop, rests while it's off screen, and a long clip plays faster: about 12 seconds a loop)
   const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t, spd = mp.spd || Math.max(1, (t1 - t0) / 12) /* (a guide's whole-fight map sets its own, slower speed) */, HOLD = 1.2;
   let ft = t0, raf = null, last = 0, lastDraw = 0, drawn = -1, paused = false, seen = !still, held = 0;
-  const PZ = mp.pauses || [], pzDone = new Set(); let pzLeft = 0; /* (a guide's freezes: the map holds at a key moment while the raid lead explains (Oct 20)) */
+  const PZ = mp.pauses || [], pzDone = new Set(); let pzLeft = 0;
+  if (PZ.length && !box._onPause && typeof gdzPauseUi === 'function') { gdzCss(); const zb = box.querySelector('.zbox'); if (zb) box._onPause = gdzPauseUi(zb, 'Key moment'); } /* (a Debriefing map's freezes say what happened) */ /* (a guide's freezes: the map holds at a key moment while the raid lead explains (Oct 20)) */
   const pzEnd = () => { pzLeft = 0; if (box._onPause) box._onPause(null); };
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;

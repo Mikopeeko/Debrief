@@ -759,8 +759,8 @@ GDZ['The Coiled Altar'].m.roles = {
 
 // ---- the page ----
 // the note shown while a map is frozen at a key moment: the raid lead's words, and a bar running down until it plays on
-function gdzPauseUi(zbox) {
-  const el = document.createElement('div'); el.className = 'gdz-vpause'; el.innerHTML = '<b>⏸ Raid lead</b><span></span><i></i>'; zbox.appendChild(el);
+function gdzPauseUi(zbox, label) {
+  const el = document.createElement('div'); el.className = 'gdz-vpause'; el.innerHTML = '<b>⏸ ' + (label || 'Raid lead') + '</b><span></span><i></i>'; zbox.appendChild(el);
   return (p) => { if (!p) { el.classList.remove('on'); return; } el.querySelector('span').textContent = p.text; const bar = el.querySelector('i'); bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = 'gdzBar ' + (p.dur || 3.6) + 's linear forwards'; el.classList.add('on'); };
 }
 // Boss guides as a page of its own (your call, Oct 20: in the menu, not a tab, open to anyone without a report or sign-in).

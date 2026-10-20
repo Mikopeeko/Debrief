@@ -3273,6 +3273,14 @@ function avoidPanel(ev, r, h, list) {
     summary: 'Every avoidable damage source this pull, most harmful first: ' + ['High', 'Medium', 'Low'].map((k) => by(k) ? by(k) + ' ' + HARM[k].toLowerCase() : '').filter(Boolean).join(', ') + ' hits. A hit is one time walking into it.',
     cols: ['Player', 'Hits', 'Damage taken', 'Died'], rows: [], groups };
 }
+// (The Coiled Altar: when each Fangs cast's pools were down, from the cast to the last Noxious Ground hit after it. Sizes from 9 Mythic
+// kills (Oct 20): the first cast's pools reach about 28 yards from the middle of the west and east walls, later ones about 48)
+function caPools(ev) {
+  const casts = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === 1282487).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
+  const hits = ev.filter((e) => e.k === 'dmg' && e.id === 1283290).map((e) => e.t);
+  return casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
+    return { t0: +(t + 0.8).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 28) + 0.5).toFixed(2), r: i ? 48 : 28 }; });
+}
 function buildCoiledAltar(ev, r, h) {
   const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const mythic = r.item.diff === 'Mythic';
@@ -6048,6 +6056,7 @@ function* analyzeSteps(item, text, opts) {
     const helpers = { name: (g) => (r.players.get(g) || {}).name || g, role: (g) => (r.players.get(g) || {}).role, isPlayer, fmtT, unitName: (g) => unitNames.get(g), compact, snap: snapAt, frames: framesAt };
     try {
       r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
+      if (mod.encounter === 'The Coiled Altar') r.module.pools = caPools(modEv); // (for the maps: the Fangs pools as they really were)
       for (const s of r.module.sections) s.how = (HOW[mod.encounter] || {})[s.id] || ''; // short strategy note per mechanic
     }
     catch (err) { r.module = { title: mod.encounter + ' audit', error: String(err && err.message || err), sections: [], phases: [], marks: [] }; }
@@ -6195,6 +6204,10 @@ function* analyzeSteps(item, text, opts) {
         if (c.maps) { c.maps = c.maps.filter(([, mp]) => drawsMech(mp)); if (!c.maps.length) delete c.maps; } }
       for (const m of r.mistakes) if (m.map && m.mechanic !== 'Death' && !drawsMech(m.map)) delete m.map;
       for (const d of r.deaths) if (!d.map) d.map = { t: d.t, hl: [d.guid], bad: [d.guid], badLabel: 'died here', title: d.player + ' died at ' + fmtT(d.t) + (d.ability ? ' to ' + d.ability : ''), pts: snapAt(Math.max(0, d.t - 0.3)), frames: framesAt(Math.max(0, d.t - 5), d.t + 0.4, 0.2) };
+      // (The Coiled Altar: every map carries the pull's Fangs pools, so it draws them wherever it's shown)
+      if (r.module && r.module.pools) { const P = r.module.pools, tag = (m) => { if (m && !m.pools) m.pools = P; };
+        for (const sec of r.module.sections || []) for (const row of (sec.rows || []).concat(...(sec.groups || []).map((g) => g.rows || []))) for (const c of row) { if (!c) continue; tag(c.map); (c.maps || []).forEach(([, mp]) => tag(mp)); }
+        r.mistakes.forEach((m) => tag(m.map)); r.deaths.forEach((d) => tag(d.map)); }
     } catch (e) { console.error(e); } // (maps are extra: never block the pull)
   }  r.hasPack = mech.packs.length > 0;
   r.packSources = mech.packs.flatMap((p) => p.sources).join('; ');
