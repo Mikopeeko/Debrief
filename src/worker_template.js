@@ -324,7 +324,8 @@ async function runDigest(env, now, all) {
 //   bug's thread (#moderator-only for a site report), { op: 'ask', issue, text } replies there without a tag,
 //   { op: 'close', issue, reason: 'completed' | 'not_planned', note } closes the issue (the post hears back next run),
 //   { op: 'review', issue, title, text, tags, important } opens (or adds to) that report's post in #bug-review, the
-//   owner's private forum, always tagging the owner ('ping' adds a line to it; thread names a post with no report).
+//   owner's private forum, always tagging the owner ('ping' adds a line to it; thread names a post with no report),
+//   { op: 'drop-draft', thread } deletes a #post-drafts draft that's already posted (only a post in that forum).
 const OWNER = '195320918929571840'; // (the user's Discord id, the one tagged)
 async function runInbox(env) {
   const st = (await env.DEBRIEF_KV.get('dc-bugs', 'json')) || { t: {} }, thread = {};
@@ -356,6 +357,9 @@ async function runInbox(env) {
             const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men, components: REVIEW_ROW } } });
             if (n > 0) { reviews[n] = t.id; revDirty = true; }
           }
+        } else if (o.op === 'drop-draft' && /^\d{17,20}$/.test(String(o.thread || ''))) {
+          const th = await dc(env, '/channels/' + o.thread).catch(() => null);
+          if (th && th.parent_id === DRAFTS_FORUM) await dc(env, '/channels/' + o.thread, { method: 'DELETE' });
         } else if (o.op === 'draft' && text) {
           await featDraft(env, o); // (a #new-features post for the owner's OK, with Post it / Change it / Skip)
         } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed'].includes(o.channel)) {
@@ -546,7 +550,7 @@ async function discordClick(req, env, ctx) {
     const act = i.data.custom_id.slice(3), thread = i.channel_id;
     if (act === 'post') {
       ctx.waitUntil((async () => { let msg; try { msg = await featPublish(env, thread); } catch (err) { msg = 'That didn\'t post: ' + (err && err.message || 'unknown error').slice(0, 150); }
-        await fetch('https://discord.com/api/v10/webhooks/' + APP_ID + '/' + i.token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: msg, allowed_mentions: { parse: [] } }) }); })());
+        if (msg) await fetch('https://discord.com/api/v10/webhooks/' + APP_ID + '/' + i.token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: msg, allowed_mentions: { parse: [] } }) }); })());
       return json({ type: 5 });
     }
     ctx.waitUntil((async () => {
@@ -641,6 +645,9 @@ async function featPublish(env, thread) {
   if (!prev && msg && msg.id) await dc(env, '/channels/' + ch + '/messages/' + msg.id + '/crosspost', { method: 'POST' }).catch(() => {});
   delete drafts[thread]; await env.DEBRIEF_KV.put('feat-drafts', JSON.stringify(drafts));
   for (const k of dr.images || []) await env.DEBRIEF_KV.delete(k).catch(() => {});
+  // (once it's posted, the draft is deleted: the user's call, Oct 20; if Discord won't, it closes in 24 hours instead)
+  const gone = await dc(env, '/channels/' + thread, { method: 'DELETE' }).then(() => true).catch((err) => { console.warn('Draft delete:', thread, err && err.message); return false; });
+  if (gone) return '';
   const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); }
   return 'Posted in <#' + ch + '>! 🎉 ' + (prev ? 'It replaced the short card.' : 'Followers get it too.') + ' This draft closes in 24 hours.';
 }
