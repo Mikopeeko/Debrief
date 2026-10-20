@@ -12340,6 +12340,7 @@ function histSave(r) {
     ...(it.wcl ? { wcl: { code: it.wcl.code, fight: it.wcl.fight } } : (HIST.mem.get(histKey(it)) || {}).wcl ? { wcl: HIST.mem.get(histKey(it)).wcl } : {}),
     ...((HIST.mem.get(histKey(it)) || {}).gr ? { gr: HIST.mem.get(histKey(it)).gr } : {}) });
   histGrades(r); histSoon();
+  { const v = HIST.mem.get(histKey(it)); if (v && [...HIST.mem.values()].some((o) => o.k !== v.k && samePull(o, v))) histTidySoon(); }
 }
 // each player's grade that pull (mechanics and Report card, as on Players, without prep: that needs their gear looked up),
 // kept with the pull so the Progress page can say who got better since the last raid: { name: [grade, seconds alive,
@@ -12494,10 +12495,10 @@ async function teamImportRun(g0, onStep, onFound) {
       for (const p of night.pulls) {
         if (!tierBoss.has(p.boss) || (ch && !(p.players || []).includes(g.name))) continue; // (a character: only the pulls they were in)
         pulls++;
-        // (a pull already saved: it's this team's too)
-        const have = all.find((v) => v.boss === p.boss && v.diffId === p.diffId && Math.abs(v.at - p.at) < 15000);
-        if (have) { const gs = pullGroups(have); if (!gs.includes(g.gid)) { have.groups = gs.concat(g.gid); await HIST.put(have); } dup++; continue; }
+        // (a pull already saved, also from another raider's log of the same night: it's this team's too)
         const pg = !p.kill && PROGRESS[p.boss] ? wclProg({ boss: p.boss, endPhase: p.endPhase, endBoss: p.endBoss }) : null;
+        const have = all.find((v) => samePull(v, { boss: p.boss, diffId: p.diffId, at: p.at, dur: p.dur, kill: p.kill, left: p.kill ? 0 : pg ? pg.left : p.endPct, wcl: { code: x.code } }));
+        if (have) { const gs = pullGroups(have); if (!gs.includes(g.gid)) { have.groups = gs.concat(g.gid); await HIST.put(have); } dup++; continue; }
         const v = { k: histKey({ boss: p.boss, diffId: p.diffId, wallMs: p.at }), v: 1, boss: p.boss, diff: p.diff, diffId: p.diffId, id: p.id, at: p.at, pull: 0, kill: p.kill, dur: p.dur,
           left: p.kill ? 0 : pg ? pg.left : p.endPct, label: p.kill ? 'Kill' : pg ? pg.label : p.endPct != null ? p.endPct.toFixed(1) + '%' : 'Wipe',
           deaths: p.deaths, first: p.first, players: p.players, checks: [], src: 'wcl:' + x.code, wcl: { code: x.code, fight: p.fight }, team: true, groups: [g.gid], utc: true, saved: Date.now() };
@@ -12517,21 +12518,39 @@ async function teamImportRun(g0, onStep, onFound) {
   g.last = Date.now(); g.reports = reps.length; groupPut(g); histSoon();
   return { reports: todo.length - failed, pulls, added, dup, failed };
 }
-// Saved pulls kept tidy: the same pull twice (same boss and difficulty, starting within 15 seconds) is kept once (the one
-// from your own log, with the note's checks, over a Warcraft Logs summary), and in a night that came from Warcraft Logs every
-// pull is numbered by its place in the whole night (your log may have started a few pulls late).
+// The same pull saved twice: same boss and difficulty, and either starting within 15 seconds, or from two different logs
+// within 5 minutes with the same length (to a second and a half) and the same result. Each log's start time comes from that
+// player's own PC clock, so two raiders' logs of one night can be half a minute or more apart (Scooty and Dash's Coiled Altar
+// night, Oct 15: 20 seconds, so every pull counted twice; a Sszorak night: 41 seconds).
+const pullSrc = (v) => (v.wcl && v.wcl.code ? 'wcl:' + v.wcl.code : v.src || '');
+function samePull(a, b) {
+  if (a.boss !== b.boss || a.diffId !== b.diffId) return false;
+  const gap = Math.abs(a.at - b.at); if (gap < 15000) return true;
+  if (gap >= 300000 || pullSrc(a) === pullSrc(b) || !a.dur || !b.dur || Math.abs(a.dur - b.dur) > 1.5 || !!a.kill !== !!b.kill) return false;
+  return !!a.kill || (a.left != null && b.left != null && Math.abs(a.left - b.left) < 0.5);
+}
+// (a pull just opened that another log already saved: tidied a moment later, so it still counts once)
+let TIDY_T = null;
+const histTidySoon = () => { clearTimeout(TIDY_T); TIDY_T = setTimeout(() => histTidy().then((n) => { if (n) histSoon(); }), 1500); };
+// Saved pulls kept tidy: the same pull twice (see samePull) is kept once (the one from your own log, with the note's checks,
+// over a Warcraft Logs summary), and in a night that came from Warcraft Logs every pull is numbered by its place in the whole
+// night (your log may have started a few pulls late).
 async function histTidy() {
   const all = [...(await HIST.reload()).values()], score = (v) => (/^log:/.test(v.src || '') ? 4 : 0) + ((v.checks || []).length ? 2 : 0) + (v.team ? 0 : 1);
   const byB = new Map(); for (const v of all) { const k = v.boss + '|' + v.diffId; if (!byB.has(k)) byB.set(k, []); byB.get(k).push(v); }
   const gone = new Set();
-  for (const list of byB.values()) { list.sort((a, b) => a.at - b.at); let keep = list[0];
-    for (let i = 1; i < list.length; i++) { const b = list[i]; if (b.at - keep.at >= 15000) { keep = b; continue; }
+  // (each pull kept so far remembers which logs it came from: a third log of the same night can join it, never a second
+  // pull from a log it already has)
+  for (const list of byB.values()) { list.sort((a, b) => a.at - b.at); const seen = [];
+    for (const b of list) { const m = seen.slice().reverse().find((x) => b.at - x.v.at < 300000 && samePull(x.v, b) && (Math.abs(b.at - x.v.at) < 15000 || !x.srcs.has(pullSrc(b))));
+      if (!m) { seen.push({ v: b, srcs: new Set([pullSrc(b)]) }); continue; }
+      const keep = m.v; m.srcs.add(pullSrc(b));
       const drop = score(b) > score(keep) ? keep : b, kept = drop === keep ? b : keep; gone.add(drop.k); await HIST.del(drop.k);
       // (the kept copy keeps the report link, and the teams either copy came in with)
       const ug = [...new Set(pullGroups(kept).concat(pullGroups(drop)))], more = ug.length > pullGroups(kept).length;
       if (more) kept.groups = ug;
       if ((!kept.wcl && drop.wcl) || more) { if (!kept.wcl && drop.wcl) kept.wcl = drop.wcl; await HIST.put(kept); }
-      keep = kept; } }
+      m.v = kept; } }
   const byN = new Map(); for (const v of all) { if (gone.has(v.k)) continue; const k = nightOf(v.at) + '|' + v.boss + '|' + v.diffId; if (!byN.has(k)) byN.set(k, []); byN.get(k).push(v); }
   for (const list of byN.values()) { if (!list.some((v) => v.team)) continue; list.sort((a, b) => a.at - b.at); for (let i = 0; i < list.length; i++) if (list[i].pull !== i + 1) { list[i].pull = i + 1; await HIST.put(list[i]); } }
   return gone.size;
@@ -13092,6 +13111,7 @@ const PATCH_NOTES = [
     'NSRT notes: nicknames linked once, and your notes listed with when each was last used.',
     'Nymrissa: every check has a How it works note.',
   ], f: [
+    'Pull counts are right when two raiders log the same night: each pull counts once on the progress graph, in time on the boss and in the night counts, even when their logs start a few seconds apart.',
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
     'Bold words look crisp now: the site loads its real bold letters instead of faking them.',
     'A death to Sever now shows the frontal\'s cone on its map.',
