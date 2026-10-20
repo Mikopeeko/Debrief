@@ -1134,28 +1134,54 @@ function myPageEmpty() { view('<section class="panel my-empty"><h2>My Page</h2><
 // their parse colours, your buttons, your other characters, and "Add your other characters" (from Warcraft Logs when
 // you're signed in with it, else sign in or type one), opening in place under the buttons.
 const yuPc = (v) => (v >= 100 ? '#e5cc80' : v >= 99 ? '#e268a8' : v >= 95 ? '#ff8000' : v >= 75 ? '#a335ee' : v >= 50 ? '#0070ff' : v >= 25 ? '#1eff00' : '#9d9d9d');
-function myCardsDress(team, meCard) {
+function myCardsDress(team, meCard, g) {
   if (team) { team.classList.add('tm2'); const gold = team.querySelector('.pgc.gold'), m = gold ? gold.textContent.match(/(\d+)\s*\/\s*(\d+)/) : null;
     if (m && +m[2] && !gold.querySelector('.tm-bar')) gold.insertAdjacentHTML('beforeend', '<i class="tm-bar" aria-hidden="true">' + Array.from({ length: +m[2] }, (_, i) => '<i' + (i < +m[1] ? ' class="on"' : '') + '></i>').join('') + '</i>'); }
-  const pyou = meCard && meCard.querySelector('.pg-you'), P = mePair(); if (!pyou || !P) return;
+  // (a character picked on My Page with no team of theirs added: My Page is their own page, with the same switch and Add under its name)
+  const pyou = meCard && meCard.querySelector('.pg-you'), P0 = mePair(), solo = !P0 && g && g.kind === 'char' && team ? g : null, P = P0 && pyou ? P0 : solo ? { c: solo } : null; if (!P) return;
+  if (solo) { const act = myAltsAct(P.c, null); team.append(act); return; }
   meCard.classList.add('yu2');
   // (your parses as two tiles; the chips are redrawn when the rankings come in, so they're dressed again each time)
   const chips = pyou.querySelector('#pgYouChips'), tiles = () => { const ch = chips && chips.querySelector('.pgc'); if (!ch || chips.querySelector('.yu-tiles')) return;
     const sp = (ch.textContent.match(/^\s*([^\d]+?)\s+\d/) || [])[1], bs = [...ch.querySelectorAll('b')].map((b) => +b.textContent.replace(/[^\d.]/g, ''));
     if (bs.length >= 2 && bs.every((v) => !isNaN(v))) ch.outerHTML = '<span class="yu-tiles">' + [[bs[0], 'best'], [bs[1], 'median']].map(([v, l]) => '<span class="yu-t" style="--pc:' + yuPc(v) + '"><b>' + Math.round(v) + '</b><em>' + (sp ? esc(sp) + ' ' : '') + l + '</em></span>').join('') + '</span>'; };
   tiles(); if (chips && !chips._yu) { chips._yu = new MutationObserver(tiles); chips._yu.observe(chips, { childList: true }); }
-  const mine = pyou.querySelector('#pgMine'), alts = groups().filter((x) => x.kind === 'char' && x.gid !== P.c.gid);
+  pyou.after(myAltsAct(P.c, pyou.querySelector('#pgMine')));
+}
+// (your other characters, each a switch, and "Add your other characters" under you on My Page)
+function myAltsAct(c, mine) {
+  const alts = groups().filter((x) => x.kind === 'char' && x.gid !== c.gid);
   const act = document.createElement('div'); act.className = 'yu-act';
   act.innerHTML = (alts.length ? '<div class="yu-alts"><span class="sub">Your other characters</span>' + alts.map((x) => { const k = x.cls && E.CLASSES[x.cls];
       return '<button class="me-c" type="button" data-yalt="' + esc(x.gid) + '"' + (k ? ' style="--cc:' + k[1] + '"' : '') + '>' + (k ? '<img src="' + whIcon('classicon_' + k[2]) + '" alt="">' : '') + esc(gName(x)) + '</button>'; }).join('') + '</div>' : '') +
     '<div class="yu-btns"><button class="btn" id="yuAdd" type="button" aria-expanded="false">+ Add your other characters</button></div><div class="yu-panel" id="yuPanel" hidden></div>';
   if (mine) { mine.classList.add('btn'); mine.classList.remove('linkbtn'); act.querySelector('.yu-btns').prepend(mine); }
-  pyou.after(act);
-  act.querySelectorAll('[data-yalt]').forEach((b) => (b.onclick = () => { S.progMine = true; S.progView = b.dataset.yalt; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); }));
+  act.querySelectorAll('[data-yalt]').forEach((b) => (b.onclick = () => meSwitch(b.dataset.yalt)));
   const btn = act.querySelector('#yuAdd'), panel = act.querySelector('#yuPanel');
   const open = (on) => { panel.hidden = !on; btn.setAttribute('aria-expanded', on); S.yuOpen = on; if (on) yuPanel(panel); };
   btn.onclick = () => open(panel.hidden);
   if (S.yuOpen) open(true);
+  return act;
+}
+// (a character of yours with no raids this tier: a friendly card saying so, and a way back to the one you came from)
+function pgEmptyCard(c) {
+  const me = meOf(), o = groups().filter((x) => x.kind === 'char' && x.gid !== c.gid), back = o.find((x) => me && x.gid === me.prev) || o[0];
+  return '<section class="panel pg-empty" id="pgEmpty"><h2>No raids for ' + esc(gName(c)) + ' this tier yet</h2><p class="sub">When ' + esc(gName(c)) + ' raids The Venomous Abyss and the night is logged on Warcraft Logs, their bosses, raid nights and rankings show up here by themselves.</p>' +
+    (back ? '<button class="btn primary" type="button" data-mesw="' + esc(back.gid) + '">‹ Back to ' + esc(gName(back)) + '</button>' : '') + '</section>';
+}
+// Picking another of your characters on My Page (bug, Oct 20: it only switched the view, with nothing imported): they
+// become you, so My Page is theirs (your team's page with them as You, or their own page when no team of theirs is added),
+// with their rankings, spec art and bosses. One not brought in yet is imported right away, the same as adding your first
+// character, with a loading card while it works; another import running is paused and picked up right after.
+function meSwitch(gid) {
+  const c = groups().find((x) => x.gid === gid); if (!c) return;
+  const was = meOf(), prev = was && was.char !== c.gid ? was.char || (groups().find((x) => x.kind === 'char' && x.name === was.name) || {}).gid : was && was.prev;
+  store.set(ME_KEY, JSON.stringify({ name: c.name, cls: c.cls || null, char: c.gid, pick: 1, prev: prev || null, at: Date.now() })); store.set(GROUP_CUR, c.gid);
+  if (!c.last && S.progBusy !== c.gid) { S.meLoad = c.gid; S.meLdLine = null;
+    if (!S.progBusy) progRun(c, true); else { S.importNext = c.gid; S.importYield = S.progBusy; } }
+  else if (S.progBusy === c.gid) S.meLoad = c.gid;
+  const t = homeTarget(); S.progMine = false; S.progView = t ? t.gid : c.gid; S.pgRename = S.pgDel = S.pgEdit = false; S.yuOpen = false; S.myBoss = null;
+  HIST.load().then(() => { renderProgress(); groupsBackfill(); }); window.scrollTo(0, 0);
 }
 function yuPanel(panel) {
   const me = WCL.HOSTED ? wclMe() : null, has = (id) => groups().some((x) => x.gid === 'c' + id);
@@ -1168,7 +1194,7 @@ function yuPanel(panel) {
   const msg = panel.querySelector('#yuMsg');
   const add = async (url, b) => { if (b) b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Adding it from Warcraft Logs…';
     try { const { g, already } = await groupAdd(url); msg.style.color = ''; msg.textContent = already ? esc(gName(g)) + ' was already added.' : '';
-      if (!already) { S.yuOpen = true; HIST.load().then(() => { renderProgress(); groupsBackfill(); }); } }
+      if (!already) meSwitch(g.gid); } /* (added: it's you now, and its nights come in) */
     catch (e) { msg.style.color = 'var(--bad)'; msg.textContent = String(e.message || e); if (b) b.disabled = false; } };
   panel.querySelectorAll('[data-yc]').forEach((b) => (b.onclick = () => { const c = cs[+b.dataset.yc]; if (c) add('https://www.warcraftlogs.com/character/' + String(c.reg || 'us').toLowerCase() + '/' + c.slug + '/' + encodeURIComponent(c.n.toLowerCase()), b); }));
   const sign = panel.querySelector('#yuSign'); if (sign) sign.onclick = () => { sign.disabled = true; try { sessionStorage.setItem('wla-wcl-after', 'alts'); } catch (e) { /* storage off */ } wclSignIn(); };
@@ -1179,18 +1205,18 @@ function yuPanel(panel) {
 }
 const MY_LAY2 = () => true; // (My Page: your team and You side by side at the top (your call, Oct 20))
 function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if (!pg || pg.querySelector('.my-flow')) return;
-  const q1 = (x) => pg.querySelector(x), it = S.item, ttl = q1('.pg-ttl'), grid = q1('.pc-grid'); if (!ttl || !grid) return;
+  const q1 = (x) => pg.querySelector(x), it = S.item, ttl = q1('.pg-ttl'), grid = q1('.pc-grid'); if (!ttl) return; /* (no grid: a character with no pulls yet, still drawn as My Page) */
   const el = (cls, tag, html) => { const e = document.createElement(tag || 'section'); e.className = cls; if (html) e.innerHTML = html; return e; }, flow = el('my-flow', 'div');
   // who: your team (name, rankings, difficulty) and you (your character and parses; "Which one is you?" when not picked yet)
   // (mockup A, your pick (Oct 19): your team across the top, the boss you're on as a banner, the raid as picture cards, then you beside the raid nights)
-  const who = el('my-who my-one'), team = el('panel my-team', 'div', '<div class="my-lab">Your team</div>'), you = q1('.pg-you'), again = q1('.pg-me-again');
+  const who = el('my-who my-one'), team = el('panel my-team', 'div', '<div class="my-lab">' + (g && g.kind === 'char' ? 'You' : 'Your team') + '</div>'), you = q1('.pg-you'), again = q1('.pg-me-again');
   team.append(ttl); if (q1('.pc-diffs')) team.append(q1('.pc-diffs')); who.append(team);
   let meCard = null; if (you || again) { meCard = el('panel my-you' + (you ? ' my-youa' : ''), 'div', '<div class="my-lab">You</div>'); if (you && you.style.getPropertyValue('--sart')) meCard.style.setProperty('--sart', you.style.getPropertyValue('--sart')); meCard.append(you || again); }
-  flow.append(who); if (q1('#pgRk')) flow.append(q1('#pgRk'));
+  flow.append(who); if (q1('#meLdBox')) flow.append(q1('#meLdBox')); /* (a character you just picked, still coming in) */ if (q1('#pgEmpty')) flow.append(q1('#pgEmpty')); if (q1('#pgRk')) flow.append(q1('#pgRk'));
   if (q1('#pgNow')) flow.append(q1('#pgNow')); /* (the boss you're on, right under your team) */
   { const hwp = hwMyPanel(); if (hwp) flow.append(hwp); } /* (your homework's top three, under the boss you're on) */
   // the whole raid at a glance
-  const order = (E.PACKS || []).map((p) => p.encounter), cards = [...grid.querySelectorAll('.pc-card[data-boss]')], byB = new Map(cards.map((c) => [c.dataset.boss, c]));
+  const order = (E.PACKS || []).map((p) => p.encounter), cards = grid ? [...grid.querySelectorAll('.pc-card[data-boss]')] : [], byB = new Map(cards.map((c) => [c.dataset.boss, c]));
   const notP = new Set([...pg.querySelectorAll('.pc-open .pc-chip')].map((x) => x.textContent.trim())), list = order.filter((b) => byB.has(b) || notP.has(b));
   if (list.length) { const strip = el('my-strip my-bcs', 'div'), short = (b) => b.replace(/^The /, '').replace(/ the .*$/, '');
     strip.innerHTML = list.map((b, i) => { const c = byB.get(b), big = c ? ((c.querySelector('.pc-big') || {}).textContent || '').trim() : '', k = /^Killed/.test(big), pc = (big.match(/(\d+(?:\.\d+)?)%/) || [])[1];
@@ -1217,7 +1243,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
   // every boss, in raid order; the open raid's boss marked
   const bs = q1('#pgBosses'); if (bs) { cards.sort((u, w) => order.indexOf(u.dataset.boss) - order.indexOf(w.dataset.boss)).forEach((c) => { if (!c.closest('.my-bxp')) grid.append(c); }); /* (the list itself isn't shown: its cards open under the picture cards) */
     const oc = it && byB.get(it.boss); if (oc) { oc.classList.add('my-opencard'); const h = oc.querySelector('.pc-h'), nb = h && (h.firstElementChild || h); if (nb && !h.querySelector('.pc-now')) nb.insertAdjacentHTML('beforeend', '<div><span class="pc-now">Open now' + (it.pull ? ' · pull ' + it.pull : '') + '</span></div>'); } }
-  myCardsDress(team, meCard);
+  myCardsDress(team, meCard, g);
   // history
   const row = el('my-hist my-row2'); if (meCard) { if (MY_LAY2()) { who.append(meCard); who.classList.remove('my-one'); flow.classList.add('my-lay2'); } else row.append(meCard); } if (q1('#pgNights')) row.append(q1('#pgNights')); if (row.children.length) { flow.append(row); if (row.children.length === 1) row.classList.add('my-one1'); }
   if (q1('.pg-since')) flow.append(q1('.pg-since'));
@@ -1464,6 +1490,7 @@ const PATCH_NOTES = [
     'NSRT notes: nicknames linked once, and your notes listed with when each was last used.',
     'Nymrissa: every check has a How it works note.',
   ], f: [
+    'My Page: picking another of your characters now brings in their logs and makes My Page theirs, with their rankings and bosses. Tap your main to switch back.',
     'Pull counts are right when two raiders log the same night: each pull counts once on the progress graph, in time on the boss and in the night counts, even when their logs start a few seconds apart.',
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
     'Bold words look crisp now: the site loads its real bold letters instead of faking them.',
@@ -18669,6 +18696,8 @@ function homeHosted() {
 function homeTarget() {
   const P = mePair(); if (P) return P.t;
   const gl = groups(), me = meOf(), cur = store.get(GROUP_CUR), teams = gl.filter((g) => g.kind !== 'char');
+  // (a character you picked on My Page with no team of theirs added: My Page is their own page)
+  const pk = me && me.pick && gl.find((g) => g.gid === me.char); if (pk) return pk;
   return (me && me.team && teams.find((g) => g.gid === me.team)) || teams.find((g) => g.gid === cur) || teams[0] || gl[0] || null;
 }
 // You and your team, one page (your note, Oct 19: two pages with nearly the same bosses and nights were "decision
@@ -19223,15 +19252,21 @@ async function meBackfill(g) {
   } catch (e) { /* (tried again next time) */ } finally { S.meBf = false; }
 }
 async function progRun(g, quiet) {
-  const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
-  const done = (m, err) => { if (onIt()) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
+  const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { if (S.meLoad === g.gid) { S.meLdLine = t; loadSet('#meLd', t); } const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
+  // (a character picked on My Page (meSwitch): its loading card goes and My Page is drawn again, wherever it shows)
+  const done = (m, err) => { const ml = S.meLoad === g.gid; if (ml) S.meLoad = S.meLdLine = null; if (onIt()) renderProgress(m, err); else if (ml && $('.home.prog')) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
   S.progBusy = g.gid; say(g.last ? 'Checking for new nights…' : 'Bringing in every night of the tier…');
   S.meTold = false; const found = () => { if (onIt()) renderProgress(($('#pgMsg') || {}).textContent || ''); };
   try { const res = await teamImport(g, say, found); S.progBusy = null; if (res.paused) done(''); else done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date, with no new reports.') +
     (res.failed ? ' ' + plural(res.failed, 'report') + ' couldn\'t be read (private, or Warcraft Logs was busy). They\'ll be tried again next time.' : '')); }
-  catch (e) { S.progBusy = null; if (quiet && /already running|Connect Warcraft Logs/.test(e.message)) { done(''); return; } done(e.message, true); }
+  catch (e) { S.progBusy = null;
+    // (a character picked on My Page while another tab imports: its card waits, and it's tried again in a few seconds)
+    if (S.meLoad === g.gid && /already running/.test(e.message)) { say('Another tab is bringing in nights. ' + gName(g) + '\'s come right after.'); setTimeout(() => { if (S.meLoad === g.gid && !S.progBusy) progRun(g, true); }, 8000); return; }
+    if (quiet && /already running|Connect Warcraft Logs/.test(e.message)) { done(''); return; } done(e.message, true); }
   // (a team or character added while this one was being read, like your own page picked on a team: it's read next)
-  setTimeout(() => { const nx = groups().find((x) => !x.last && x.gid !== g.gid); if (nx && !S.progBusy) autoCheck(nx); }, 400);
+  // (a character picked on My Page while this one was being read goes first)
+  setTimeout(() => { const pk = S.importNext && groups().find((x) => x.gid === S.importNext && x.gid !== g.gid); if (pk && !S.progBusy) { S.importNext = null; progRun(pk, true); return; }
+    const nx = groups().find((x) => !x.last && x.gid !== g.gid); if (nx && !S.progBusy) autoCheck(nx); }, 400);
 }
 // New nights come in by themselves: each team (and your character) is checked when the app opens, and its page checks
 // again when you open it, if it hasn't been checked in the last 10 minutes. One at a time, quietly.
@@ -19466,6 +19501,9 @@ function renderProgress(msg, msgErr) {
   // sit behind a small Edit button beside the name and only show when it's clicked (removing asks first and says how many
   // pulls go with it)
   const pgMsg = '<div class="pg-msg' + (msgErr ? ' err' : '') + '" id="pgMsg">' + esc(msg || '') + '</div>';
+  // (a character you picked on My Page, still being brought in: a loading card, its line following the import)
+  const ldC = S.meLoad && [you, g].find((x) => x && x.gid === S.meLoad);
+  const meLd = ldC ? '<section class="pg-meld" id="meLdBox"><div id="meLd">' + loadCard('Bringing in ' + gName(ldC) + '\'s raid nights', S.meLdLine || (S.importNext === ldC.gid ? 'Starting in a moment…' : 'Looking for ' + gName(ldC) + '\'s reports…')) + '</div></section>' : '';
   // (your team raiding right now: Live now, one click to follow it)
   const lv = S.liveNow && g && S.liveNow.g.gid === g.gid ? S.liveNow : null;
   const liveStrip = lv ? '<section class="pg-live" id="pgLive"><span class="lv-dot" aria-hidden="true"></span><span class="lv-t"><b>Live now</b><span class="sub">' + esc(liveAgo(lv)) + '</span></span><button class="btn primary" id="pgLiveGo" type="button">Follow live</button></section>' : '';
@@ -19552,8 +19590,9 @@ function renderProgress(msg, msgErr) {
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   ROOT.innerHTML = (inTab ? '' : pgTabBar(g)) + '<div class="home prog pg-v2' + (inTab ? ' pg-intab' : '') + '"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you"' + (you.cls && you.parse && youC ? ' style="--sart:' + specArt({ cls: you.cls, specName: you.parse.spec + ' ' + youC[0] }) + '"' : '') + '>' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + liveStrip + meCard + sugg +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you"' + (you.cls && you.parse && youC ? ' style="--sart:' + specArt({ cls: you.cls, specName: you.parse.spec + ' ' + youC[0] }) + '"' : '') + '>' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + meLd + liveStrip + meCard + sugg +
     (all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
+      : ldC && ldC.gid === g.gid ? '' : g && g.kind === 'char' && g.last ? pgEmptyCard(g)
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') +
     '</div>';
   // (a raid night, or Now on's last night: that report, on its kill or best pull)
@@ -19562,6 +19601,7 @@ function renderProgress(msg, msgErr) {
   if ($('#pgRkT')) $('#pgRkT').onclick = () => { S.pgRkOpen = !S.pgRkOpen; const bx = $('#pgRk'), t = $('#pgRkT'); if (bx) bx.hidden = !S.pgRkOpen; t.setAttribute('aria-expanded', String(S.pgRkOpen)); t.textContent = 'All rankings ' + (S.pgRkOpen ? '▴' : '▾'); };
   if ($('#pgLiveGo')) $('#pgLiveGo').onclick = liveFollow;
   if ($('#pgMine')) $('#pgMine').onclick = () => { S.progMine = true; S.progView = you.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
+  ROOT.querySelectorAll('[data-mesw]').forEach((b) => (b.onclick = () => meSwitch(b.dataset.mesw)));
   if ($('#pgTeamBack')) $('#pgTeamBack').onclick = () => { S.progMine = false; S.progView = mineOf.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
