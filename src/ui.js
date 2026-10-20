@@ -1441,6 +1441,7 @@ const PATCH_NOTES = [
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
+    'Boss guides: in the Coiled Altar simulation, the raid now stands in the lane between the second set of puddles, each axe soak has its own group, and a dashed line shows who is looking at their ghost.',
     'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
     'Team names always match Warcraft Logs now. Teams can\'t be renamed; Edit on a team removes it.',
     'My Page looks better: your team card shows its rankings as tiles with a bar of bosses killed, your card shows your parses in their colours, and you can add your other characters from Warcraft Logs.',
