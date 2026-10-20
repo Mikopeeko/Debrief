@@ -4158,6 +4158,15 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .my-chip.my-bc .my-tag { font: 700 12px var(--body); font-style: normal; padding: 2px 8px; border-radius: 4px; color: #1b1406; background: var(--mc, #9d9d9d); } .my-chip.my-bc .my-bx { font-size: 12px; font-weight: 500; color: #c3c8d2; }
 .my-chip.my-bc.kill { border-color: rgba(230,180,80,.55); } .my-chip.my-bc.kill .my-bn { background: linear-gradient(#f0cf86, #b88b3a); color: #1a1408; } .my-chip.my-bc.kill .my-tag { background: #e6b450; }
 .my-chip.my-bc.prog { border-color: var(--mc); box-shadow: 0 0 0 1px var(--mc), 0 0 18px color-mix(in srgb, var(--mc) 30%, transparent); } .my-chip.my-bc.prog .my-bn { background: var(--mc); color: #0b0d12; }
+/* My Page's difficulty switch (Oct 20): gold outline, a Difficulty label, the picked one in gold; a copy above the boss cards, and a label on each card */
+.pg-intab .pc-diffs { align-items: center; border-color: rgba(230,180,80,.5); background: linear-gradient(180deg, rgba(230,180,80,.10), rgba(230,180,80,.03)); box-shadow: 0 0 0 3px rgba(230,180,80,.07); }
+.pg-intab .pc-diffs .my-dlab { flex: none; padding: 0 6px 0 10px; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.pg-intab .pc-diffs button { color: #d9dde5; font: 700 15px var(--head); }
+.pg-intab .pc-diffs button:not(.on):hover { background: rgba(230,180,80,.12); color: #fff; }
+.pg-intab .pc-diffs button.on { background: var(--gold); color: #17130a; box-shadow: 0 2px 10px rgba(230,180,80,.35); } .pg-intab .pc-diffs button.on span { color: rgba(23,19,10,.7); }
+.my-raid .my-dsw { margin: 0 0 12px; } .my-raid .my-dsw button { flex: 1 1 0; }
+.my-dtag { position: absolute; top: 8px; right: 8px; z-index: 2; padding: 2px 7px; border-radius: 6px; background: rgba(10,12,17,.8); border: 1px solid rgba(230,180,80,.45); color: #f0cf86; font: 700 11px var(--body); font-style: normal; letter-spacing: .04em; text-transform: uppercase; }
+@media (max-width: 760px) { .my-raid .my-dsw .my-dlab { display: none; } .my-raid .my-dsw button { padding: 6px 4px; } }
 .my-chip.my-bc.lock { opacity: .7; } .my-chip.my-bc.lock .my-bcbg { filter: grayscale(1) brightness(.45); } .my-chip.my-bc.lock .my-tag { color: var(--muted); background: rgba(255,255,255,.08); }
 .my-chip.my-bc.my-open { outline: 2px solid var(--gold); outline-offset: -2px; } .my-chip.my-bc:hover:not([disabled]) { border-color: var(--gold); background: #0d0f14; }
 .pg-intab .my-row2 { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } .pg-intab .my-row2.my-one1 { grid-template-columns: minmax(0, 1fr); }

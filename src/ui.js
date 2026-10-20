@@ -1132,6 +1132,14 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
         (H ? '<img class="my-bcbg" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 25%" onerror="this.remove()">' : '') + '<i class="my-bcsh"></i><i class="my-bn">' + (i + 1) + '</i>' +
         '<span class="my-bcb"><b>' + esc(short(b)) + '</b><em class="my-tag">' + (k ? 'Killed' + (kd ? ' ' + esc(kd) : '') : pc != null ? pc + '%' : 'Not pulled yet') + (on ? ' · open now' : '') + '</em>' + (pl ? '<small class="my-bx">' + pl + (+pl === 1 ? ' pull' : ' pulls') + (tm ? ' · ' + esc(tm) : '') + '</small>' : '') + '</span></button>'; }).join('');
     const sec = el('panel my-raid', 'section', '<div class="my-h"><h2>The raid</h2><span class="sub">' + list.length + ' bosses in order: gold is killed, the rest by how far you got. Click one for its chart and its nights, to open any of them.</span></div>'), slot = el('my-bxp', 'div'); sec.append(strip, slot); flow.append(sec);
+    // (the difficulty switch again, right above the boss cards, with a Difficulty label on both, and each card saying which
+    // difficulty it shows (your idea, Oct 20: the one up top was easy to miss, so people forgot to swap))
+    { const o = team.querySelector('.pc-diffs'); if (o) { const on = o.querySelector('button.on'), dn = on ? (DIFF_ORDER.find(([d]) => d === +on.dataset.d) || [0, ''])[1] : '';
+        if (!o.querySelector('.my-dlab')) o.insertAdjacentHTML('afterbegin', '<span class="my-dlab">Difficulty</span>');
+        const cl = o.cloneNode(true); cl.classList.add('my-dsw'); cl.querySelectorAll('button').forEach((bb) => { bb.onclick = () => { const ob = o.querySelector('button[data-d="' + bb.dataset.d + '"]'), top = cl.getBoundingClientRect().top; if (!ob) return; ob.click();
+          /* (the page redraws: keep this bar where it was on screen, not back at the top) */ let n = 0; const keep = () => { const nb = document.querySelector('.my-dsw'); if (nb && nb !== cl) window.scrollBy(0, nb.getBoundingClientRect().top - top); else if (n++ < 60) requestAnimationFrame(keep); }; requestAnimationFrame(keep); }; });
+        strip.before(cl); /* (inside the raid's box, a bar right on top of the cards) */
+        if (dn) strip.querySelectorAll('.my-bc').forEach((c) => c.insertAdjacentHTML('beforeend', '<i class="my-dtag">' + dn + '</i>')); } }
     // (one set of boss cards (your note, Oct 19): a card opens its boss under the row, its chart of every pull and its nights to open; a second click closes it)
     const openB = (b, scroll) => { const c = byB.get(b), was = slot.firstElementChild === c; slot.replaceChildren(); strip.querySelectorAll('.my-chip').forEach((x) => x.classList.remove('my-sel')); S.myBoss = null; if (!c || was) return;
       slot.append(c); S.myBoss = b; const chip = strip.querySelector('.my-chip[data-b="' + CSS.escape(b) + '"]'); if (chip) chip.classList.add('my-sel'); if (c.classList.contains('mini')) c.click();
@@ -1357,6 +1365,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names.
 const PATCH_NOTES = [
   { d: '2026-10-20', n: [
+    'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
     'A new logo: the Debrief shield, now in polished gold.',
