@@ -420,8 +420,11 @@ function gdzCaSimOverlay(k, rt2sim, end) {
     for (let t = t0 + i * 3; t <= end; t += 2) { const a = a0 + (t - t0) * w; k.obj(id, 'axe', t, Math.cos(a) * 44, Math.sin(a) * 44); }
     k.show(id, t0 + i * 3, end).ring({ on: id, r: 3, fx: 'zone', t0: t0 + i * 3, dur: end, color: '#ff9628', cn: 'Axegrinder', legend: 'rolling axe: knocks you back' }); });
   const p2 = rt2sim(177);
-  [[0, 42], [0, -42]].forEach(([x, y], i) => { k.ring({ x, y, r: 6, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: p2 - rt2sim(0) - 2.6, color: '#5fd35f', fill: 'rgba(95,211,95,.2)', cn: 'Noxious Ground', legend: 'puddles from Fangs: stay out' });
-    k.ring({ x, y, r: 10, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85), color: '#5fd35f', fill: 'rgba(95,211,95,.14)', cn: 'Noxious Ground' }); });
+  // (Noxious Ground, measured from the 198 hits on the Mythic kill (your note, Oct 20: they were far too small): after the
+  // first Fangs the pools sit at the west and east walls, about 20 yards across from each; after the second they reach about 35
+  // yards in, squeezing the raid into the middle. The first pool gives way to the bigger one)
+  [[-40, 18], [40, -18]].forEach(([x, y]) => { k.ring({ x, y, r: 20, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(85) + 0.8 - (rt2sim(0) + 2.6), color: '#5fd35f', fill: 'rgba(95,211,95,.2)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' });
+    k.ring({ x, y, r: 35, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85) - 0.8, color: '#5fd35f', fill: 'rgba(95,211,95,.16)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' }); });
 }
 // ---- What goes wrong (your idea, Oct 20): each mechanic's map can also play a mistake and what it costs ----
 // a raid-wide hit: a red blast over the room and a red label, and the players it kills marked
