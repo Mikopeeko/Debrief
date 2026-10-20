@@ -4333,6 +4333,20 @@ button.rcb-tr { cursor: pointer; } button.rcb-tr:nth-of-type(even) { background:
 .rcb-ypn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .rcb-ypn > div { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px; background: rgba(10,12,17,.6); border: 1px solid var(--line); } .rcb-ypn b { font-size: 13px; } .rcb-ypn small { font-size: 12px; color: var(--faint); line-height: 1.35; }
 .rcb-open { width: 100%; }
 @media (max-width: 1100px) { .rcb-2 { grid-template-columns: minmax(0, 1fr); } .rcb-yp { position: static; } .rcb-subs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Report card: the night in short and the picked raider's night (your pick, Oct 20, mockup B) */
+.rcw-strip { display: flex; gap: 16px; align-items: flex-start; margin: 0 0 16px; padding: 14px 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); }
+.rcw-q { flex: none; padding-top: 3px; font: 700 12px/1.2 var(--head); letter-spacing: 1.4px; text-transform: uppercase; color: var(--gold); white-space: nowrap; }
+.rcw-strip p { flex: 1; min-width: 0; margin: 0; font-size: 15px; line-height: 1.55; color: var(--text); } .rcw-strip p b { color: #fff; }
+.rcw-nx { color: var(--gold); font-weight: 600; } .rcw-nx b { color: var(--gold); }
+.rcw-you { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 22px; margin: 0 0 16px; padding: 16px 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--cc); }
+.rcw-hd { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin: 8px 0; } .rcw-hd img { width: 34px; height: 34px; border-radius: 50%; } .rcw-hd .nm { font: 700 22px/1 var(--head); } .rcw-hd .sub { display: inline-flex; align-items: center; gap: 6px; }
+.rcw-you p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--text); } .rcw-you > div > .rcw-nx { margin-top: 10px; font-size: 14px; }
+.rcw-l h5 { margin: 0 0 8px; font: 700 15px var(--head); } .rcw-l.g h5 { color: var(--good); } .rcw-l.w h5 { color: var(--warn); }
+.rcw-l ul { margin: 0; padding: 0; list-style: none; } .rcw-l li { position: relative; margin: 0 0 7px; padding-left: 16px; font-size: 14px; line-height: 1.45; color: var(--text); }
+.rcw-l li::before { content: ''; position: absolute; left: 2px; top: 7px; width: 7px; height: 7px; border-radius: 50%; } .rcw-l.g li::before { background: var(--good); } .rcw-l.w li::before { background: var(--warn); }
+.rcw-l p { margin: 0; font-size: 14px; }
+@media (max-width: 1100px) { .rcw-you { grid-template-columns: 1fr 1fr; } .rcw-you > div:first-child { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .rcw-strip { flex-direction: column; gap: 6px; } .rcw-you { grid-template-columns: 1fr; gap: 14px; } }
 @media (max-width: 760px) { .rcb-ban { grid-template-columns: 1fr; padding: 18px; } .rcb-ban h2 { font-size: 32px; } .rcb-subs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rcb-tbl { overflow-x: auto; } .rcb-tr { min-width: 640px; } }
 /* the loading dancer on its own layers (Oct 19): the browser animates them itself, so they keep moving while a pull is being read */
 .ld-stage { position: relative; width: 92px; height: 104px; }

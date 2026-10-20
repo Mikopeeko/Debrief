@@ -1488,6 +1488,7 @@ const PATCH_NOTES = [
     { t: 'Debriefing levels up', d: 'Dots show how each mechanic went on your last pulls, numbers in colour, a Next pull line on every mechanic, phase timing against your best pull, and Copy for Discord.' },
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
+    { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
     'Boss guides: pick Learn the fight or Quick, and your role. Your steps are marked, with the fight on a timeline, your job and what wipes us at the top, and small maps in Quick that open big.',
     'My Page is now called Home.',
@@ -16996,11 +16997,68 @@ function rcbSide(c, F) {
     '<div class="rcb-ypn">' + (best ? '<div><span class="rcb-k gold">Best tonight</span><b>' + best.l + ' · ' + Math.round(best.v) + '</b><small>#' + best.r + ' of ' + B.rk[best.k].n + ' in the raid.</small></div>' : '') +
       (low ? '<div><span class="rcb-k">Room to grow</span><b>' + low.l + ' · ' + Math.round(low.v) + '</b><small>#' + low.r + ' of ' + B.rk[low.k].n + ' in the raid' + (fix ? '. First fix: ' + esc(fix.t) : '') + '.</small></div>' : '') + '</div>' +
     '<button type="button" class="btn rcb-open" data-rctp="' + esc(p.name) + '">Open their whole night ›</button></aside>'; }
+// ---- The night in short, and the picked raider's night (your pick, Oct 20, mockup B): a raid lead's few sentences under the banner, and
+// one raider's went well / work on above the roster. Written from the night's own numbers (F and plData), nothing graded again.
+const rcwOr = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' or ' + l[l.length - 1]);
+function rcwNight(c, F) {
+  const P = F.pulls, n = P.length, kill = P.find((q) => q.it.kill), wip = P.filter((q) => !q.it.kill), M = [...F.mech.values()];
+  const best = wip.filter((q) => q.left != null).sort((u, v) => u.left - v.left)[0];
+  const s = [kill ? '<b>We killed it on pull ' + kill.it.pull + '</b>' + (wip.length ? ', after ' + plural(wip.length, 'wipe') : '') + '.' : '<b>No kill yet</b> after ' + plural(n, 'pull') + (best ? '. Our best was pull ' + best.it.pull + ', at <b>' + esc(best.label) + '</b>.' : '.')];
+  // (early against late: the first third of the night against the last, once there are 6 pulls)
+  const k = n >= 6 ? Math.ceil(n / 3) : 0;
+  if (k) { const dp = (l) => l.reduce((t, q) => t + q.kept.length, 0) / l.length, a = dp(P.slice(0, k)), b = dp(P.slice(n - k));
+    const fixed = M.filter((o) => o.per.slice(0, k).filter(Boolean).length >= 2 && !o.per.slice(n - k).some(Boolean)).sort((u, v) => v.pts - u.pts).slice(0, 2).map((o) => esc(o.n));
+    if (b <= a * 0.8) s.push('We got steadier all night: deaths fell from ' + a.toFixed(1) + ' a pull early on to ' + b.toFixed(1) + ' late' + (fixed.length ? ', and ' + andList(fixed) + ' got cleaned up.' : '.'));
+    else if (b >= a * 1.25 && b - a >= 1) s.push('We got sloppier late: deaths rose from ' + a.toFixed(1) + ' a pull early on to ' + b.toFixed(1) + '.' + (fixed.length ? ' ' + andList(fixed) + ' did get cleaned up.' : ''));
+    else if (fixed.length) s.push(andList(fixed) + ' got cleaned up as the night went on.'); }
+  const every = n >= 3 ? M.filter((o) => o.per.every(Boolean)).sort((u, v) => v.pts - u.pts).slice(0, 2) : [];
+  if (every.length) s.push(andList(every.map((o) => esc(o.n))) + ' went wrong in every pull.');
+  // (the one thing for next time: the mechanic that cost the most points late in the night)
+  const late = (o) => o.per.slice(k ? n - k : 0).reduce((t, v) => t + v, 0), foc = M.filter((o) => late(o) > 0).sort((u, v) => v.pts * late(v) / v.tot - u.pts * late(u) / u.tot)[0];
+  const nx = foc ? '<span class="rcw-nx">Next ' + (kill ? 'week' : 'pull') + ': <b>' + esc(foc.n) + '</b>. ' + esc(dbfTip1(foc.fix) || 'It cost us the most points late in the night.') + '</span>' : '';
+  return '<section class="rcw-strip"><span class="rcw-q">The night, in short</span><p>' + s.join(' ') + (nx ? ' ' + nx : '') + '</p></section>'; }
+function rcwRaider(c, F) {
+  const B = rcbFacts(c, F), x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, nm = p.name, pf = F.pl.get(nm), L = letterOf(x.score), n = a.n;
+  const pullsN = a.per.map((g) => g.r.item.pull), lateP = pullsN[Math.floor(pullsN.length * 2 / 3)] || 0, midP = pullsN[Math.floor((pullsN.length - 1) / 2)] || 0;
+  // their mistakes by mechanic, their deaths with a defensive still ready, their big cooldowns
+  const mm = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { const o = mm.get(m.mechanic) || { t: m.mechanic, n: 0, pulls: new Set(), fix: '' }; o.n++; o.pulls.add(g.r.item.pull); if (!o.fix && m.fix) o.fix = m.fix; mm.set(m.mechanic, o); }
+  const dd = []; for (const g of a.per) for (const d of keptDeaths(g.r)) if (d.player === nm) dd.push(d);
+  const defs = dd.map((d) => (d.available || []).filter((y) => !/^(Healthstone|a healing potion)$/.test(y))).filter((l) => l.length), dfc = new Map(); for (const z of defs.flat()) dfc.set(z, (dfc.get(z) || 0) + 1); const defN = [...dfc].sort((u, v) => v[1] - u[1]).map((z) => z[0]); /* (the one they had ready most often first) */
+  const cdm = new Map(); for (const g of a.per) { const C0 = perfContext(g.r), y = C0.per.get(g.p.name); if (!y) continue; for (const cd of bigCds(g.r, g.p, Math.max(0, Math.min(y.until, C0.end)), C0.lust)) { const o = cdm.get(cd.name) || { name: cd.name, used: 0, poss: 0 }; o.used += cd.used; o.poss += cd.poss; cdm.set(cd.name, o); } }
+  const RL = { out: (p.role || 'dps') === 'healer' ? 'Healing' : 'Damage' }, lab = (k, l) => RL[k] || l;
+  const subs = RCB_SUBJ.filter(([k0]) => x[k0] != null).map(([k0, l]) => ({ k: k0, l: lab(k0, l), v: x[k0], r: B.rk[k0].m.get(x), N: B.rk[k0].n }));
+  const top = subs.filter((y) => y.r <= 3).sort((u, v) => u.r - v.r || v.v - u.v), low = subs.filter((y) => y.r > y.N / 2).sort((u, v) => u.v - v.v)[0];
+  const worstM = [...mm.values()].filter((o) => o.n >= 2).sort((u, v) => v.n - u.n)[0];
+  // ---- went well ----
+  const W = top.slice(0, 2).map((y) => y.l + ' ' + Math.round(y.v) + ', #' + y.r + ' of ' + y.N + ' in the raid');
+  if (!pf.deaths) W.push('No deaths that counted in ' + plural(n, 'pull'));
+  const cdG = [...cdm.values()].filter((o) => o.poss >= 3 && o.used / o.poss >= 0.85 && !RAID_CD_N.has(o.name.toLowerCase())).sort((u, v) => v.poss - u.poss)[0];
+  if (cdG) W.push(esc(cdG.name) + ' pressed ' + o2(cdG.used, cdG.poss));
+  const cleaned = [...mm.values()].filter((o) => Math.max(...o.pulls) <= midP && pullsN.filter((q) => q > Math.max(...o.pulls)).length >= 3).sort((u, v) => v.n - u.n)[0];
+  if (cleaned) W.push(esc(cleaned.t) + ': clean since pull ' + pullsN.find((q) => q > Math.max(...cleaned.pulls)));
+  if (!mm.size) W.push('No mechanic mistakes that cost points');
+  function o2(u, v) { return u + ' of the ' + v + ' times you could'; }
+  // ---- work on ----
+  const X = []; if (defs.length) X.push(plural(defs.length, 'death') + ' with ' + esc(rcwOr(defN.slice(0, 2))) + ' ready');
+  if (worstM) { const mx = Math.max(...worstM.pulls); X.push(esc(worstM.t) + ' got you in ' + plural(worstM.pulls.size, 'pull') + (mx >= lateP ? ', still in pull ' + mx : '')); }
+  const lowFix = low && (a.fixes || []).find((f) => (f.gain || 0) >= 0.5 && (RCB_FIX[low.k] || (() => false))(f));
+  if (low) X.push(low.l + ' #' + low.r + ' of ' + low.N + ' in the raid' + (lowFix ? '. First fix: ' + esc(lowFix.t) : ''));
+  for (const f of (a.fixes || []).filter((z) => (z.gain || 0) >= 0.5)) { if (X.length >= 3) break; if (f === lowFix || (defs.length && RCB_FIX.surv(f)) || (worstM && f.key === 'm|' + worstM.t)) continue; X.push(esc(f.t) + (f.k > 1 ? ' (in ' + f.k + ' of ' + n + ' pulls)' : '')); }
+  // ---- the short version and the one thing for next pull ----
+  const tone = { S: 'An outstanding night', A: 'Strong night', B: 'Good night', C: 'A decent night with room to grow', D: 'A tough night', F: 'A rough night' }[L] || 'Your night';
+  const issue = defs.length >= 2 ? (defs.length === dd.length ? 'all ' + dd.length + ' of your deaths' : defs.length + ' of your ' + plural(dd.length, 'death')) + ' came with a defensive still ready' : worstM && worstM.n >= 3 ? esc(worstM.t) + ' caught you in ' + plural(worstM.pulls.size, 'pull') : low ? 'your ' + low.l.toLowerCase() + ' is where the points are' : '';
+  const s2 = (top[0] ? 'Your ' + top[0].l.toLowerCase() + ' was #' + top[0].r + ' in the raid' + (issue ? ', but ' + issue : '') : issue ? capS(issue) : 'Nothing big cost you points') + '.';
+  const nf = (a.fixes || [])[0], next = defs.length >= 2 ? 'when your health keeps dropping, press ' + esc(defN[0]) + '.' : worstM && worstM.fix ? esc(worstM.t) + ': ' + esc(dbfTip1(worstM.fix)) : nf && (nf.gain || 0) >= 0.5 ? esc(nf.t) + '. ' + esc(dbfTip1(nf.x)) : '';
+  const li = (l) => '<ul>' + l.slice(0, 3).map((t) => '<li>' + capS(t) + '</li>').join('') + '</ul>';
+  return '<section class="rcw-you" style="--cc:' + p.color + '"><div><div class="rcb-k">Their night</div><div class="rcw-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><b class="nm" style="color:' + p.color + '">' + esc(nm) + '</b><span class="sub">' + esc(p.specName || '') + ' · ' + gradeChip(L) + ' #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + '</span></div>' +
+    '<p>' + tone + '. ' + s2 + '</p>' + (next ? '<div class="rcw-nx">Next pull: ' + next + '</div>' : '') + '</div>' +
+    '<div class="rcw-l g"><h5>Went well</h5>' + (W.length ? li(W) : '<p class="sub">Nothing stood out yet. The first fixes are on the right.</p>') + '</div>' +
+    '<div class="rcw-l w"><h5>Work on</h5>' + (X.length ? li(X) : '<p class="okv">Nothing that cost points. A clean night.</p>') + '</div></section>'; }
 function rcnPage(c) {
   const F = rcnFacts(c), open = S.rctOpen && c.data.find((a) => a.p.name === S.rctOpen);
   const ovl = open ? '<div class="rct-ovl" data-rctx="1"><div class="panel rct-ovp" role="dialog" aria-label="' + esc(open.p.name) + '\'s night"><button type="button" class="rct-x" data-rctx="1" aria-label="Close">×</button>' + rcnPlayer(c, F, open, true) + '</div></div>' : '';
   // (mockup B (your pick, Oct 19): the night, the raid's report card, then the ranked roster with the picked raider's report card beside it)
-  return '<div class="rcn rct rcb">' + rcbBanner(c, F) + rcbRaid(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
+  return '<div class="rcn rct rcb">' + rcbBanner(c, F) + rcwNight(c, F) + rcbRaid(c, F) + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
 }
 function bindRcn(c) {
   const v = $('#plBody'), again = () => { const y = window.scrollY; player(); window.scrollTo({ top: y }); }; // (redrawn in place: the page stays where it was)
