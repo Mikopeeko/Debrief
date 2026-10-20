@@ -16094,16 +16094,80 @@ function rctAll(c, F) {
   return '<section class="rct-sec"><h3 class="rct-h">Every card<small>Everyone in the raid, best grade first. A card\'s colour is where they ranked tonight.</small>' + roles + '</h3>' +
     '<div class="rct-all">' + list.map((a) => rctCard(c, F, a, true)).join('') + '</div>' + key + '</section>';
 }
+// ---- Report card, mockup B "Ranked roster" (your pick, Oct 19: "where raiders go at the end of the night ... report cards for the whole
+// raid and each individual raider, ranked on various values across the website"): the night as a banner with the raid's grade, the raid's
+// report card (each subject averaged, with tonight's best), every raider in one list ranked by any subject, and the picked raider's report
+// card beside it (their grade, their place in each subject, their best and their room to grow). Built on plData's grades, unchanged.
+const RCB_SUBJ = [['mech', 'Mechanics', 'spell_holy_borrowedtime', 'Mistakes on the boss\'s mechanics'], ['play', 'Rotation', 'spell_nature_lightning', 'The Rotation tab\'s score, or how they pressed their buttons'],
+  ['surv', 'Survival', 'spell_holy_ardentdefender', 'Defensives, close calls, Healthstone and health potion'], ['prep', 'Prep', 'inv_alchemy_70_flask', 'Flask, food, weapon oil, rune, enchants and gems'],
+  ['pot', 'Potions', 'inv_alchemy_70_red', 'A combat or mana potion in each pull with room for one'], ['out', 'Output', 'ability_warrior_innerrage', 'Damage or healing a second against the others in their role tonight (fastest 99)']];
+const rcbQ = (v) => (v == null ? '' : v >= 95 ? 'q5' : v >= 85 ? 'q4' : v >= 75 ? 'q3' : v >= 50 ? 'q2' : 'q1');
+const rcbV = (v) => '<span class="rcb-v ' + rcbQ(v) + '">' + (v == null ? '–' : Math.round(v)) + '</span>';
+const rcbIc = (n) => '<img class="rcb-si" src="' + whIcon(n) + '" alt="" onerror="this.style.visibility=\'hidden\'">';
+const rcbRing = (v, px) => { const C = 2 * Math.PI * 34, L = letterOf(v); return '<span class="rcb-ring" style="width:' + px + 'px;height:' + px + 'px"><svg viewBox="0 0 80 80"><circle r="34" cx="40" cy="40" class="bg"/><circle r="34" cx="40" cy="40" class="fg g-' + L + '" stroke-dasharray="' + (C * Math.max(0, Math.min(100, v)) / 100).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 40 40)"/></svg><span><b class="g-' + L + '">' + L + '</b><small>' + Math.round(v) + ' out of 100</small></span></span>'; };
+// (each raider's numbers for the page: the six subjects, deaths, and their place in each)
+function rcbFacts(c, F) {
+  if (F._rcb) return F._rcb;
+  const T = rctFacts(c, F), rows = c.data.map((a) => { const pf = F.pl.get(a.p.name); return { a, role: a.p.role || 'dps', score: a.score, mech: a.mech, play: a.play, surv: a.surv, prep: a.prep, pot: pf.expect ? 100 * pf.used / pf.expect : null, out: T.outR.get(a.p.name), deaths: pf.deaths }; });
+  const rankIn = (k, l) => { const m = new Map(), s0 = l.filter((x) => x[k] != null).sort((u, v) => v[k] - u[k]); s0.forEach((x) => m.set(x, s0.findIndex((y) => Math.round(y[k]) === Math.round(x[k])) + 1)); return { m, n: s0.length }; };
+  const rk = {}; for (const k of ['score'].concat(RCB_SUBJ.map(([k]) => k))) rk[k] = rankIn(k, rows);
+  const rkRole = {}; for (const r of ['tank', 'healer', 'dps']) rkRole[r] = rankIn('score', rows.filter((x) => x.role === r));
+  return (F._rcb = { rows, rk, rkRole }); }
+// the night: the boss's art, the result, the numbers, and the raid's grade as a ring
+function rcbBanner(c, F) {
+  const data = c.data, raid = data.reduce((s, a) => s + a.score, 0) / data.length, it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
+  const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0), H = BOSS_HERO[it.boss];
+  const kpi = (l, v, st) => '<span><b class="' + (st || '') + '">' + v + '</b>' + l + '</span>';
+  const trend = F.before.length && F.nowN ? '<div class="rct-tr rcb-tr"><span>Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + rcnDelta(F.nowN.raid - F.last.raid) + '</div>' : '';
+  return '<section class="rcb-ban' + (kill ? ' win' : '') + '">' + (H ? '<img class="rcb-banbg" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" style="object-position:' + H[1] + '% 30%" onerror="this.remove()">' : '') + '<i class="rcb-bansh"></i>' +
+    '<div class="rcb-banl"><div class="rcb-k">End of night · ' + esc(nightLabel(it.wallMs || it.startMs || Date.now())) + '</div><h2>' + esc(it.boss) + '</h2><div class="sub">' + esc(it.diff || '') + ' · ' + (kill ? 'killed on pull ' + kill.it.pull : plural(F.pulls.length, 'pull') + ' · best pull ' + esc(String(nr.big).replace(/^Best:\s*/, ''))) + '</div>' +
+    '<div class="rcb-bst">' + kpi('pulls', F.pulls.length) + kpi('deaths that counted', deaths, deaths / F.pulls.length >= 4 ? 'warnv' : '') + kpi('combat potions drunk', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('mistakes that cost points', mist, mist ? '' : 'okv') + kpi('raiders graded', data.length) + '</div>' + trend + '</div>' +
+    '<div class="rcb-banr">' + rcbRing(raid, 136) + '<div class="sub">Raid grade</div></div></section>'; }
+// the raid's report card: each subject averaged over the raid, its letter, and tonight's best
+function rcbRaid(c, F) {
+  const B = rcbFacts(c, F);
+  return '<section class="panel rcb-sec"><div class="rcb-sh"><h3>The raid\'s report card</h3><span class="sub">each subject averaged over the ' + B.rows.length + ' raiders, with tonight\'s best</span></div><div class="rcb-subs">' +
+    RCB_SUBJ.map(([k, l, ic, why]) => { const l0 = B.rows.filter((x) => x[k] != null); if (!l0.length) return ''; const av = l0.reduce((s, x) => s + x[k], 0) / l0.length, top = l0.slice().sort((u, v) => v[k] - u[k])[0], L = letterOf(av);
+      return '<div class="rcb-st" data-tt="' + esc(why) + '"><div class="rcb-sth">' + rcbIc(ic) + '<span>' + l + '</span>' + gradeChip(L) + '</div><b class="' + rcbQ(av) + '">' + Math.round(av) + '</b><div class="rcb-bar"><i class="' + rcbQ(av) + '" style="width:' + Math.max(2, Math.round(av)) + '%"></i></div><span class="sub">Best: <b class="nm" style="color:' + top.a.p.color + '">' + esc(top.a.p.name) + '</b> ' + Math.round(top[k]) + '</span></div>'; }).join('') + '</div></section>'; }
+// every raider in one list, ranked by grade or by any subject; a row picks that raider for the card beside it
+function rcbTable(c, F) {
+  const B = rcbFacts(c, F), role = S.rcnRole || 'all', sk = S.rcbSort || 'score', has = new Set(B.rows.map((x) => x.role)), me = meOf(), sel = rcbSel(c, F);
+  const list = B.rows.filter((x) => role === 'all' || x.role === role).sort((u, v) => (v[sk] == null ? -1 : v[sk]) - (u[sk] == null ? -1 : u[sk]) || v.score - u.score);
+  const roles = '<div class="seg rct-roles">' + RCN_ROLES.filter(([k]) => k === 'all' || has.has(k)).map(([k, l]) => '<button type="button" data-rcnr="' + k + '"' + (role === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>';
+  const cols = [['score', 'Grade']].concat(RCB_SUBJ.map(([k, l]) => [k, l]));
+  const head = '<div class="rcb-tr rcb-th"><span>#</span><span>Raider</span>' + cols.map(([k, l]) => '<button type="button" data-rcbs="' + k + '"' + (sk === k ? ' class="on"' : '') + '>' + l + (sk === k ? ' ▾' : '') + '</button>').join('') + '<span>Deaths</span></div>';
+  const rows = list.map((x, i) => { const p = x.a.p, L = letterOf(x.score), n = (sk === 'score' ? B.rk.score : B.rk[sk]).m.get(x) || i + 1;
+    return '<button type="button" class="rcb-tr' + (sel === x ? ' sel' : '') + (me && me.name === p.name ? ' me' : '') + '" data-rcbp="' + esc(p.name) + '"><i class="rcb-rk' + (n <= 3 ? ' r' + n : '') + '">' + n + '</i><span class="rcb-who"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 1px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><span><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><small>' + esc(p.specName || '') + '</small></span></span>' +
+      '<span class="rcb-g">' + gradeChip(L) + Math.round(x.score) + '</span>' + RCB_SUBJ.map(([k]) => '<span>' + rcbV(x[k]) + '</span>').join('') + '<span class="rcb-d">' + (x.deaths ? x.deaths : '<em>none</em>') + '</span></button>'; }).join('');
+  return '<section class="panel rcb-sec rcb-tbl"><div class="rcb-sh"><h3>Ranked roster</h3><span class="sub">ranked by ' + (sk === 'score' ? 'grade' : RCB_SUBJ.find(([k]) => k === sk)[1].toLowerCase()) + ' · click a column to rank by it, a raider for their report card</span>' + roles + '</div>' + head + rows + '</section>'; }
+// (the raider on the card: the one you picked, else you, else the top of the raid)
+function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.find((x) => x.a.p.name === S.rcbSel) || (me && B.rows.find((x) => x.a.p.name === me.name)) || B.rows.slice().sort((u, v) => v.score - u.score)[0]; }
+// the picked raider's report card: their grade, their place in the raid and in their role, each subject with its place, their best and their room to grow
+function rcbSide(c, F) {
+  const B = rcbFacts(c, F), x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
+  const subs = RCB_SUBJ.filter(([k]) => x[k] != null).map(([k, l, ic]) => { const r = B.rk[k].m.get(x); return { k, l, ic, v: x[k], r }; });
+  const best = subs.slice().sort((u, v) => u.r - v.r || v.v - u.v)[0], low = subs.slice().sort((u, v) => u.v - v.v)[0], fix = (a.fixes || []).find((f) => (f.gain || 0) >= 0.5);
+  const aw = F.awards.filter((w) => w.a === a).map((w) => '<span class="rcn-mb" data-tt="' + esc(w.txt(w.a)) + '"><i>' + w.ic + '</i>' + esc(w.t) + '</span>').join('') + (F.top === a ? '<span class="rcn-mb"><i>🏆</i>Player of the night</span>' : '');
+  return '<aside class="rcb-yp" style="--cc:' + p.color + ';--sart:' + specArt(p) + '"><div class="rcb-k">Report card</div>' +
+    '<div class="rcb-yph"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + '</div></div></div>' +
+    '<div class="rcb-ypg">' + rcbRing(x.score, 118) + '</div><div class="rcb-yprk"><b>#' + B.rk.score.m.get(x) + '</b> of ' + B.rk.score.n + ' in the raid · <b>#' + rkR.m.get(x) + '</b> of ' + rkR.n + ' ' + RN[x.role] + '</div>' + (aw ? '<div class="rcn-mbs rcb-aw">' + aw + '</div>' : '') +
+    '<div class="rcb-ypl">' + subs.map((y) => '<div data-tt="' + esc(RCB_SUBJ.find(([k]) => k === y.k)[3]) + '">' + rcbIc(y.ic) + '<span>' + y.l + '</span>' + rcbV(y.v) + '<em class="' + (y.r <= 3 ? 'top' : '') + '">#' + y.r + '</em></div>').join('') + '</div>' +
+    '<div class="rcb-ypn">' + (best ? '<div><span class="rcb-k gold">Best tonight</span><b>' + best.l + ' · ' + Math.round(best.v) + '</b><small>#' + best.r + ' of ' + B.rk[best.k].n + ' in the raid.</small></div>' : '') +
+      (low ? '<div><span class="rcb-k">Room to grow</span><b>' + low.l + ' · ' + Math.round(low.v) + '</b><small>#' + low.r + ' of ' + B.rk[low.k].n + ' in the raid' + (fix ? '. First fix: ' + esc(fix.t) : '') + '.</small></div>' : '') + '</div>' +
+    '<button type="button" class="btn rcb-open" data-rctp="' + esc(p.name) + '">Open their whole night ›</button></aside>'; }
 function rcnPage(c) {
   const F = rcnFacts(c), open = S.rctOpen && c.data.find((a) => a.p.name === S.rctOpen);
   const ovl = open ? '<div class="rct-ovl" data-rctx="1"><div class="panel rct-ovp" role="dialog" aria-label="' + esc(open.p.name) + '\'s night"><button type="button" class="rct-x" data-rctx="1" aria-label="Close">×</button>' + rcnPlayer(c, F, open, true) + '</div></div>' : '';
-  return '<div class="rcn rct">' + rctBanner(c, F) + rctTeam(c, F) + rctAll(c, F) + ovl + '</div>';
+  // (mockup B (your pick, Oct 19): the night, the raid's report card, then the ranked roster with the picked raider's report card beside it)
+  return '<div class="rcn rct rcb">' + rcbBanner(c, F) + rcbRaid(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
 }
 function bindRcn(c) {
   const v = $('#plBody'), again = () => { const y = window.scrollY; player(); window.scrollTo({ top: y }); }; // (redrawn in place: the page stays where it was)
   v.querySelectorAll('[data-rctp]').forEach((b) => (b.onclick = () => { S.rctOpen = b.dataset.rctp; S.rcnGear = null; again(); }));
   v.querySelectorAll('[data-rctx]').forEach((b) => (b.onclick = (e) => { if (e.target !== b) return; S.rctOpen = null; S.rcnGear = null; again(); }));
   v.querySelectorAll('[data-rcnr]').forEach((b) => (b.onclick = () => { S.rcnRole = b.dataset.rcnr; again(); }));
+  v.querySelectorAll('[data-rcbs]').forEach((b) => (b.onclick = () => { S.rcbSort = b.dataset.rcbs; again(); }));
+  v.querySelectorAll('[data-rcbp]').forEach((b) => (b.onclick = () => { S.rcbSel = b.dataset.rcbp; again(); }));
   v.querySelectorAll('[data-rcngear]').forEach((b) => (b.onclick = () => { S.rcnGear = S.rcnGear === b.dataset.rcngear ? null : b.dataset.rcngear; again(); }));
   // (Escape closes an open card)
   if (!window._rctKey) { window._rctKey = 1; document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.rctOpen && S.tab === 'player') { S.rctOpen = null; const y = window.scrollY; player(); window.scrollTo({ top: y }); } }); }
