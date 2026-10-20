@@ -1365,6 +1365,8 @@ const PI_OFF = () => false;
 const SPEC_OFF = () => false;
 // (Compare was greyed out on the website with "Coming soon" over it while each spec's playbook was built; on everywhere again Oct 19.
 // Set this to () => !!window.WLA_HOSTED to hide it on the website again)
+const GB_DRAWER = true; /* (Oct 20 test: Graphs' bars open one drawer per player, plan option A; false brings back the one-breakdown board and its More views) */
+const CMP_GAP_VIEW = true; /* (Oct 20 test: Compare as "the gap" page, plan option A; false brings back the Oct 19 page) */
 const CMP_OFF = () => !!window.WLA_HOSTED; /* (hidden on the website again Oct 20 while you plan its rebuild (your call); on in the app on your PC) */
 // (Guides (the animated boss guides, src/guides.js) are greyed out on the website with "Coming soon" until you say to show them;
 // they're on in the app on your PC (localhost) for review. Set this to () => false to show them everywhere)
@@ -5070,6 +5072,20 @@ const gradeChip = (l, big) => '<span class="grade g-' + l + (big ? ' big' : '') 
 // their own, and says what got better or worse from the first half of the night to the second. Everything counts each
 // pull up to its wipe filter.
 const pullTime = (b) => (b.wallMs ? wallClock(b.wallMs) : clock(b.startMs));
+// Recap on the whole night, under the night's grade (your call, Oct 19): the boss's health at the end of every pull since
+// the first one saved for this team, earlier nights and tonight, as the Progress page draws it, only wide and short (a
+// phone gets the Progress size)
+function recapHp(b0, pulls) {
+  const H = histFor(b0), now = pulls.map((b) => ({ at: b.wallMs || b.startMs, pull: b.pull, kill: !!b.kill, left: b.kill ? 0 : pullPct(b), label: pullLabel(b), dur: b.duration, go: 'pull:' + S.index.bosses.indexOf(b) }));
+  const list0 = H.earlier.flatMap((x) => x.list).concat(now.filter((v) => v.at)).sort((a, b) => a.at - b.at); if (!list0.length) return '';
+  // (it ends at the first kill (your call, Oct 19): progression stops there, so farm pulls after it aren't drawn)
+  const k1 = list0.findIndex((v) => v.kill), list = k1 >= 0 ? list0.slice(0, k1 + 1) : list0;
+  const kill = list.find((v) => v.kill), known = list.filter((v) => v.left != null), best = kill || (known.length ? known.reduce((m, v) => (v.left < m.left ? v : m)) : null);
+  const col = kill ? '#ff8000' : best ? (PULL_Q.find(([lo]) => 100 - best.left >= lo) || [0, '#9d9d9d'])[1] : 'var(--line2)';
+  const nN = new Set(list.map((v) => nightOf(v.at))).size;
+  return '<div class="panel rc-hp" style="--ec:' + col + '"><h3 class="nh">Boss health, every pull <small>' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' · lower is better' + (best ? ' · best: ' + esc(best.label) : '') + '</small></h3>' +
+    '<div class="rc-hp-w">' + progChart(list, b0.boss, [1160, 132]) + '</div><div class="rc-hp-n">' + progChart(list, b0.boss) + '</div></div>';
+}
 function nightTimeline(pulls) {
   const cfg = pulls[0] && PROGRESS[pulls[0].boss], kill = pulls.find((b) => b.kill);
   const known = pulls.filter((b) => pullPct(b) != null), best = kill || (known.length ? known.reduce((m, b) => (pullPct(b) < pullPct(m) ? b : m)) : null);
@@ -5088,20 +5104,6 @@ function nightDebrief(pulls, reps) {
   const ppl = (m) => top(m, 3).map(([k, c]) => esc(k) + (c > 1 ? ' (' + c + ')' : '')).join(', ');
   const bump = (m, k, n) => m.set(k, (m.get(k) || 0) + (n || 1));
   const phaseAt = (r, t) => { const ph = r.module && !r.module.error && r.module.phases; if (!ph || !ph.length) return null; let n = null; for (const p of ph) if (t >= p.start - 0.5) n = p.name.split(' ')[0]; return /^(P\d|Intermission)$/.test(n || '') ? n : null; };
-// Recap on the whole night, under the night's grade (your call, Oct 19): the boss's health at the end of every pull since
-// the first one saved for this team, earlier nights and tonight, as the Progress page draws it, only wide and short (a
-// phone gets the Progress size)
-function recapHp(b0, pulls) {
-  const H = histFor(b0), now = pulls.map((b) => ({ at: b.wallMs || b.startMs, pull: b.pull, kill: !!b.kill, left: b.kill ? 0 : pullPct(b), label: pullLabel(b), dur: b.duration, go: 'pull:' + S.index.bosses.indexOf(b) }));
-  const list0 = H.earlier.flatMap((x) => x.list).concat(now.filter((v) => v.at)).sort((a, b) => a.at - b.at); if (!list0.length) return '';
-  // (it ends at the first kill (your call, Oct 19): progression stops there, so farm pulls after it aren't drawn)
-  const k1 = list0.findIndex((v) => v.kill), list = k1 >= 0 ? list0.slice(0, k1 + 1) : list0;
-  const kill = list.find((v) => v.kill), known = list.filter((v) => v.left != null), best = kill || (known.length ? known.reduce((m, v) => (v.left < m.left ? v : m)) : null);
-  const col = kill ? '#ff8000' : best ? (PULL_Q.find(([lo]) => 100 - best.left >= lo) || [0, '#9d9d9d'])[1] : 'var(--line2)';
-  const nN = new Set(list.map((v) => nightOf(v.at))).size;
-  return '<div class="panel rc-hp" style="--ec:' + col + '"><h3 class="nh">Boss health, every pull <small>' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' · lower is better' + (best ? ' · best: ' + esc(best.label) : '') + '</small></h3>' +
-    '<div class="rc-hp-w">' + progChart(list, b0.boss, [1160, 132]) + '</div><div class="rc-hp-n">' + progChart(list, b0.boss) + '</div></div>';
-}
   const fix = [], better = [], worse = [], trendOk = half >= 3, np = Math.max(1, reps.reduce((s, r) => s + r.players.size, 0) / Math.max(1, reps.length));
   // 1) what ended the wipes (each wipe's first death, or a serious raid-wide failure just before it)
   const causes = new Map();
@@ -6439,6 +6441,16 @@ function arenaImg(boss, c) {
   return '<image href="' + (f.url || 'https://wow.zamimg.com/uploads/screenshots/normal/' + f.img + '.png') + '" preserveAspectRatio="none" x="' + x + '" y="' + y + '" width="' + wy * c.yd + '" height="' + hy * c.yd + '" opacity="0.95"/>';
 }
 
+// (maps in the Boss guides look (your call, Oct 20): RaidPlan's sharp top-down render of the room on top, at the scale ARENAS gives it,
+// which a real kill confirms (every player position sits inside its floor). Loaded at runtime, never bundled; the game's floor map is
+// drawn first, so it still shows if the render doesn't load)
+const ARENA_HI = { 'The Coiled Altar': 'https://cdn.raidplan.io/raid/wow.venomabyss/map/07.bargained-ort-v108.jpg' };
+function arenaHi(boss, c) {
+  const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = ARENA_HI[b]; if (!A || !u || !A.f) return '';
+  const w = A.w / A.s, h = A.h / A.s;
+  return '<image href="' + u + '" preserveAspectRatio="none" x="' + ((A.cx - w / 2 - c.x0) * c.yd) + '" y="' + ((-A.cy - h / 2 - c.y0) * c.yd) + '" width="' + w * c.yd + '" height="' + h * c.yd + '"/>';
+}
+
 // ---- user map image: stored per boss in this browser, positioned in world yards ----
 let MAPCTX = null, ALIGN = false;
 function mapImg(boss) { try { return JSON.parse(store.get('wla-map-' + boss) || 'null'); } catch (e) { return null; } }
@@ -6705,13 +6717,13 @@ function graphsBoard(r, end, NP) {
   const card = (q) => { const rows = ps.map((p) => ({ p, v: q.val(p) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); if (!rows.length) return '';
     const mx = rows[0].v, tot = rows.reduce((v, x) => v + x.v, 0);
     const head = q.count ? tot + ' in all' : q.cpm ? 'raid average ' + (tot / rows.length).toFixed(1) : C(tot) + (q.rate ? ' · ' + C(tot / dur) + ' ' + q.rate : '');
-    return '<section class="gb-card" data-k="' + q.k + '"><header class="gb-h"><b>' + esc(q.t) + '</b><span class="sub">' + esc(head) + '</span></header><div class="gb-rows">' + rows.map((x, i) => {
-      const col = x.p.color || '#9aa0ac', w = Math.max(1.5, 100 * x.v / mx), sh = tot > 0 ? 100 * x.v / tot : 0;
+    // (Oct 20, "consistent with the rest of the website": a panel with the site's header, and the site's bar rows (cbRow), as on Rotation and Report card)
+    const hv = q.count ? 'Times' : q.cpm ? 'A minute' : 'Total', hs = q.rate ? (q.rate === 'a second' ? 'Per sec' : q.rate) : q.count || q.cpm ? '' : 'Share';
+    return '<section class="panel pf-bars gb-card" data-k="' + q.k + '"><h3 class="nh"><span>' + esc(q.t) + '</span><small>' + esc(head) + '</small></h3>' + cbHead(hv, hs) + '<div class="gb-rows">' + rows.map((x, i) => {
+      const w = Math.max(1.5, 100 * x.v / mx), sh = tot > 0 ? 100 * x.v / tot : 0;
       const tip = { n: x.p.name, s: (x.p.specName || '') + (night ? ' · in ' + x.p.__pulls + ' of ' + NP.length + ' pulls' : ''), v: fmtV(q, x.v) + (q.count ? (x.v === 1 ? ' time' : ' times') : ''), r: q.rate ? C(x.v / pDur(x.p)) + ' ' + q.rate : '', sh: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of the raid', rk: '#' + (i + 1) + ' of ' + rows.length, t: q.t };
-      return '<div class="gb-row" role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '">' +
-        '<span class="gb-rk">' + (i + 1) + '</span>' + avatar(x.p, true) + '<span class="gb-n" style="color:' + col + '">' + esc(x.p.name) + '</span>' +
-        '<span class="gb-tr"><i class="gb-f" style="width:' + w.toFixed(1) + '%;background:' + col + '"></i></span><span class="gb-v">' + fmtV(q, x.v) + '</span>' +
-        '<span class="gb-r">' + (q.rate ? C(x.v / pDur(x.p)) : q.cpm ? '' : q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%') + '</span></div>'; }).join('') + '</div></section>'; };
+      return cbRow({ tag: 'div', cls: ' gb-row', attrs: ' role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '"', k: i + 1, p: x.p, segs: [[w, 'm']], v: fmtV(q, x.v),
+        sub: q.rate ? C(x.v / pDur(x.p)) : q.cpm || q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%' }); }).join('') + '</div></section>'; };
   // (a player's breakdown, built when their bar is clicked)
   const abRows = (list, opt) => { const L = list.filter((y) => y.total > 0).sort((a, b) => b.total - a.total), tot = L.reduce((v, y) => v + y.total, 0); if (!L.length) return '<p class="sub">Nothing to show.</p>';
     const mx = L[0].total; return '<div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(String(y.name).replace(/^[^:]+: /, '')) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + C(y.total) + '</span></span>' +
@@ -6727,7 +6739,26 @@ function graphsBoard(r, end, NP) {
     disp: (p) => { const l = disp(p); return '<p class="gb-bh">What they dispelled.</p><div class="gb-bt">' + cnt(l, (d) => d.aura || 'an effect').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div>'; },
     cpm: (p) => { const c = castsOf(p); if (!c) return ''; const mins = Math.max(1, c.al) / 60, L = c.ab.map((a) => ({ name: a.name, total: a.ts.length })).sort((a, b) => b.total - a.total), mx = L.length ? L[0].total : 1;
       return '<p class="gb-bh">' + c.n + ' casts in ' + T(c.al) + ' alive.</p><div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(y.name) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + y.total + '</span></span><span class="gb-bx">' + (y.total / mins).toFixed(1) + ' a minute</span></div>').join('') + '</div>'; } };
-  GB = { BD, byName: new Map(ps.map((p) => [p.name, p])) };
+  // (Oct 20, "try a": one drawer per player instead of the separate views. A click on any bar opens it under the name, with a tab per part,
+  // all in the same look; the card clicked picks the first tab. GB_DRAWER = false brings back the one-breakdown version)
+  const REPS = night ? NP.map((it) => it.r) : [r]; let cdC = null, auC = null;
+  const cdsOf = (p) => { if (!cdC) { cdC = new Map(); try { for (const a of cdUseRows(REPS, !night)) cdC.set(a.p.name, a); } catch (e) { /* (no cooldowns tab then) */ } } return cdC.get(p.name); };
+  const aurOf = (p) => { if (!auC) { auC = new Map(); try { for (const x of auraRows(REPS, false).rows) for (const w of x.who) { const l = auC.get(w.p.name) || []; l.push({ x, w, always: auraAlways(x.name, w.f) }); auC.set(w.p.name, l); } } catch (e) { /* (no buffs tab then) */ } } const l = auC.get(p.name); return l && l.length ? { p, l } : null; };
+  const DTABS = [
+    ['dmg', 'Damage', (p) => (sumTo(p.dmgS || []) > 0 ? BD.dmg(p) : '')],
+    ['heal', 'Healing', (p) => (sumTo(p.healS || []) > 0 && (p.role === 'healer' || sumTo(p.healS || []) >= 0.15 * sumTo(p.dmgS || [])) ? BD.heal(p) : '')], /* (a DPS's small self-heals don't get a tab) */
+    ['cpm', 'Casts', (p) => { const c = castsOf(p); return c && c.n ? BD.cpm(p) : ''; }],
+    ['cds', 'Cooldowns', (p) => { const a = cdsOf(p); return a ? '<p class="gb-bh">Their big cooldowns: each press, and the time each one sat ready.</p>' + cdDetail(a, !night) : ''; }],
+    ['aura', 'Buffs', (p) => { const a = aurOf(p); return a ? auraMine(a, false, false) : ''; }],
+    ['taken', 'Damage taken', (p) => (sumTo(p.takenS || []) > 0 ? BD.taken(p) : '')],
+    ['death', 'Deaths', (p) => (deaths(p).length ? '<p class="gb-bh">How they died.</p>' + BD.death(p) : '')], /* (each its own tab (your call, Oct 20)) */
+    ['kick', 'Interrupts', (p) => (kicks(p).length ? BD.kick(p) : '')],
+    ['disp', 'Dispels', (p) => (disp(p).length ? BD.disp(p) : '')]];
+  const K0 = { dmg: 'dmg', heal: 'heal', taken: 'taken', death: 'death', kick: 'kick', disp: 'disp', cpm: 'cpm' };
+  const drawer = (p, k) => { const L = DTABS.map(([tk, l, fn]) => [tk, l, fn(p)]).filter((x) => x[2]); if (!L.length) return '<p class="sub">Nothing to show.</p>'; const cur = L.find((x) => x[0] === (K0[k] || k)) || L[0];
+    return '<div class="gb-dtabs" role="tablist" aria-label="' + esc(p.name) + '">' + L.map(([tk, l]) => '<button type="button" role="tab" class="gb-dtab' + (tk === cur[0] ? ' on' : '') + '" aria-selected="' + (tk === cur[0]) + '" data-dt="' + tk + '">' + esc(l) + '</button>').join('') + '</div>' +
+      '<div class="gb-dbody">' + cur[2].replace(/<div class="rk-go pf-go">[\s\S]*?<\/div>/g, '') /* (a view's own "See it in" row: the tabs say it here) */ + '</div><div class="gb-dmore"><span class="sub">More on ' + esc(p.name) + ':</span>' + [['res', 'Resources'], ['surv', 'Defensives'], ['util', 'Utility']].map(([k2, l]) => '<button type="button" class="btn sm" data-gpgo="' + k2 + '" data-pgn="' + esc(p.name) + '">' + l + ' ›</button>').join('') + '</div>'; };
+  GB = { BD, drawer: GB_DRAWER ? drawer : null, byName: new Map(ps.map((p) => [p.name, p])) };
   const byK = new Map(CARDS.map((q) => [q.k, card(q)]));
   // ---- more chart types (your ask, Oct 19: "various types of charts (that are fitting for the data)"): lines over time for when, donuts for who,
   // stacked bars for how it split, a heatmap for who took damage when, and a timeline of the raid's events. Every part has a tip box on hover. ----
@@ -6757,14 +6788,14 @@ function graphsBoard(r, end, NP) {
   // (stacked bars: each player's total split in two or three parts)
   const stack = (rows, parts) => { const L = rows.filter((x) => x.s.some((v) => v > 0)).sort((u, w) => w.s.reduce((v, y) => v + y, 0) - u.s.reduce((v, y) => v + y, 0)); if (!L.length) return '';
     const mx = Math.max(1, ...L.map((x) => x.s.reduce((v, y) => v + y, 0)));
-    return '<div class="gb-rows">' + L.map((x, i) => { const tot = x.s.reduce((v, y) => v + y, 0);
-      return '<div class="gb-srow"' + gt([x.p.name].concat(parts.map((q, k) => q.n + ': ' + C(x.s[k]) + ' (' + pctS(tot ? x.s[k] / tot : 0) + ')'))) + '><span class="gb-rk">' + (i + 1) + '</span>' + avatar(x.p, true) + '<span class="gb-n" style="color:' + (x.p.color || '#9aa0ac') + '">' + esc(x.p.name) + '</span>' +
-        '<span class="gb-tr">' + (() => { let left = 0; return parts.map((q, k) => { const w = 100 * x.s[k] / mx, h = '<i class="gb-f" style="left:' + left.toFixed(2) + '%;width:' + w.toFixed(2) + '%;background:' + (q.col === '@cls' ? x.p.color || '#9aa0ac' : q.col) + (q.op ? ';opacity:' + q.op : '') + '"></i>'; left += w; return h; }).join(''); })() + '</span><span class="gb-v">' + C(tot) + '</span><span class="gb-r">' + pctS(tot ? x.s[0] / tot : 0) + '</span></div>'; }).join('') +
-      '</div><div class="gb-leg">' + parts.map((q) => '<span><i style="background:' + (q.col === '@cls' ? '#9aa0ac' : q.col) + (q.op ? ';opacity:' + q.op : '') + '"></i>' + esc(q.n) + '</span>').join('') + '<span class="sub">The right column is the ' + esc(String(parts[0].n).toLowerCase()) + ' share.</span></div>'; };
+    // (the site's bar rows: the first part in the class colour, the second faded, as overhealing is everywhere else)
+    return cbHead('Total', esc(parts[0].n)) + '<div class="gb-rows">' + L.map((x, i) => { const tot = x.s.reduce((v, y) => v + y, 0);
+      return cbRow({ tag: 'div', cls: ' nb', attrs: gt([x.p.name].concat(parts.map((q, k) => q.n + ': ' + C(x.s[k]) + ' (' + pctS(tot ? x.s[k] / tot : 0) + ')'))), k: i + 1, p: x.p, segs: parts.map((q, k) => [100 * x.s[k] / mx, k ? 'oh' : 'm']), v: C(tot), sub: pctS(tot ? x.s[0] / tot : 0) }); }).join('') +
+      '</div><div class="gb-leg">' + parts.map((q, k) => '<span><i class="' + (k ? 'gb-lo' : 'gb-lm') + '"></i>' + esc(q.n) + '</span>').join('') + '<span class="sub">The right column is the ' + esc(String(parts[0].n).toLowerCase()) + ' share.</span></div>'; };
   // (plain ranked bars for things that aren't players: spells, sources)
   const bars = (l, fmt) => { const L = l.filter((x) => x.v > 0).sort((u, w) => w.v - u.v).slice(0, 12); if (!L.length) return ''; const mx = L[0].v, tot = l.reduce((v, x) => v + Math.max(0, x.v), 0);
-    return '<div class="gb-rows">' + L.map((x, i) => '<div class="gb-srow gb-xrow"' + gt([x.n + (x.who ? ' (' + x.who + ')' : '')].concat(x.more || [], [pctS(x.v / tot) + ' of all of it'])) + '><span class="gb-rk">' + (i + 1) + '</span>' + spIc(x.ic || x.n) + '<span class="gb-n"' + (x.col ? ' style="color:' + x.col + '"' : '') + '>' + esc(x.n) + (x.who ? '<small>' + esc(x.who) + '</small>' : '') + '</span>' +
-      '<span class="gb-tr"><i class="gb-f" style="width:' + Math.max(1.5, 100 * x.v / mx).toFixed(1) + '%;background:' + (x.col || '#6aa8ff') + '"></i></span><span class="gb-v">' + (fmt ? fmt(x.v) : C(x.v)) + '</span><span class="gb-r">' + pctS(x.v / tot) + '</span></div>').join('') + '</div>'; };
+    return cbHead('Total', 'Share', '', '', 'Spell') + '<div class="gb-rows">' + L.map((x, i) => cbRow({ tag: 'div', cls: ' nb gb-xr', attrs: gt([x.n + (x.who ? ' (' + x.who + ')' : '')].concat(x.more || [], [pctS(x.v / tot) + ' of all of it'])), k: i + 1, color: x.col || '#6aa8ff', icon: spIc(x.ic || x.n), name: esc(x.n),
+      chips: x.who ? '<span class="sub">' + esc(x.who) + '</span>' : '', segs: [[Math.max(1.5, 100 * x.v / mx), 'm']], v: fmt ? fmt(x.v) : C(x.v), sub: pctS(x.v / tot) })).join('') + '</div>'; };
   // (a heatmap: a row per player, a column per 10 seconds, brighter for more damage taken; a red outline where they died)
   const heat = () => { const HS = end > 360 ? 10 : 5, NH = Math.max(1, Math.ceil(end / HS));
     const rows = ps.map((p) => { const a = new Array(NH).fill(0); (p.takenS || []).forEach((v, i) => { if (i < E1) a[Math.min(NH - 1, Math.floor(i / HS))] += v || 0; }); return { p, a, tot: a.reduce((v, x) => v + x, 0) }; }).filter((x) => x.tot > 0).sort((u, w) => w.tot - u.tot); if (!rows.length) return '';
@@ -6792,7 +6823,7 @@ function graphsBoard(r, end, NP) {
   const spellTop = ps.flatMap((p) => [...(p.dmgAb || new Map()).values()].map((y) => ({ n: String(y.name), ic: String(y.name).replace(/^[^:]+: /, ''), who: p.name, col: p.color, v: y.total, more: [y.hits + (y.hits === 1 ? ' hit' : ' hits') + (y.hits ? ', ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '')] })));
   const takenSrc = (() => { const m = new Map(); for (const p of ps) (p.takenAbS || []).slice(0, E1).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { n, v: 0, hits: 0, big: 0, who: new Set() }; x.v += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.who.add(p.name); m.set(n, x); } }); return [...m.values()].map((x) => ({ n: x.n, v: x.v, more: [x.hits + ' hits on ' + x.who.size + (x.who.size === 1 ? ' player' : ' players'), 'biggest hit ' + C(x.big)] })); })();
   const healOver = ps.map((p) => ({ p, s: [p.healing || 0, p.overheal || 0] }));
-  const ch = (t, sub, body, wide) => (body ? '<section class="gb-card gb-ch' + (wide ? ' wide' : '') + '"><header class="gb-h"><b>' + esc(t) + '</b><span class="sub">' + esc(sub || '') + '</span></header><div class="gb-cb">' + body + '</div></section>' : '');
+  const ch = (t, sub, body, wide) => (body ? '<section class="panel pf-bars gb-card gb-ch' + (wide ? ' wide' : '') + '"><h3 class="nh"><span>' + esc(t) + '</span><small>' + esc(sub || '') + '</small></h3><div class="gb-cb">' + body + '</div></section>' : '');
   // (All pulls: damage and healing a second for each pull, side by side (a click opens the pull), and each pull's deaths on its own lane)
   const pullBars = () => { const L = NP.map((it) => { const rr = it.r, s1 = (a) => { let v = 0; for (let i = 0; i < Math.min((a || []).length, Math.ceil(it.end)); i++) v += a[i] || 0; return v; }; return { it, d: s1(rr.dmgS) / it.end, h: s1(rr.healS) / it.end, dn: (rr.deaths || []).filter((x) => x.t <= it.end + 0.05).length }; }), mx = Math.max(1, ...L.flatMap((x) => [x.d, x.h]));
     return '<div class="gb-pb">' + L.map((x) => { const itm = x.it.r.item; return '<button type="button" class="gb-pbar' + (itm.kill ? ' kill' : '') + '" data-gpull="' + itm.pull + '"' + gt(['Pull ' + itm.pull + ': ' + (itm.kill ? 'kill' : pullLabel(itm)), 'Length ' + T(x.it.end), 'Damage ' + C(x.d) + ' a second', 'Healing ' + C(x.h) + ' a second', x.dn + (x.dn === 1 ? ' death' : ' deaths'), 'Click to open this pull']) + '><span class="gb-pc"><i class="d" style="height:' + (100 * x.d / mx).toFixed(1) + '%"></i><i class="h" style="height:' + (100 * x.h / mx).toFixed(1) + '%"></i></span><b>' + itm.pull + '</b><small>' + esc(itm.kill ? 'Kill' : pullLabel(itm)) + '</small></button>'; }).join('') + '</div>' +
@@ -6814,7 +6845,7 @@ function graphsBoard(r, end, NP) {
     '<p class="gb-note sub">Hover any bar for its numbers, and click a player\'s bar for what made it up. ' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter.' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
     SECS.map(([id, t, sub, body]) => '<section class="gb-sec" id="gbs-' + id + '"><div class="gb-sh"><h3>' + esc(t) + '</h3><span class="sub">' + esc(sub) + '</span></div><div class="gb-grid">' + body + '</div></section>').join('') +
     // (the detailed views, each a button of its own: Power Infusion first (your note, Oct 19: "dont remove the power infusion stuff, i like that"))
-    '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survival'], ['cast', 'Casts'], ['dmg', 'Charts over time']].filter(([k]) => k !== 'pi' || !PI_OFF()).map(([k, l]) => '<button type="button" class="gb-pv" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>';
+    '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['aura', 'Buffs'], ['util', 'Utility'], ['surv', 'Survival'], ['cast', 'Casts'], ['dmg', 'Charts over time']].filter(([k]) => (k !== 'pi' || !PI_OFF()) && (!GB_DRAWER || k === 'pi' || k === 'dmg')).map(([k, l]) => '<button type="button" class="gb-pv" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>';
 }
 // (the board's tooltip and clicks: one tip box that follows the pointer, and one open breakdown per card)
 { let tipEl = null; const tipBox = () => tipEl || (tipEl = Object.assign(document.createElement('div'), { className: 'gb-tip', hidden: true }), document.body.appendChild(tipEl), tipEl);
@@ -6824,9 +6855,12 @@ function graphsBoard(r, end, NP) {
     b.innerHTML = '<b>' + esc(d.n) + '</b><span class="sub">' + esc(d.s) + '</span><div>' + esc(d.t) + ': <b>' + esc(d.v) + '</b></div>' + (d.r ? '<div>' + esc(d.r) + '</div>' : '') + (d.sh ? '<div>' + esc(d.sh) + '</div>' : '') + '<div class="sub">' + esc(d.rk) + ' · click for the breakdown</div>'; }
     b.hidden = false; const W = b.offsetWidth, H = b.offsetHeight, x = Math.min(innerWidth - W - 8, e.clientX + 14), y = e.clientY + 16 + H > innerHeight ? e.clientY - H - 10 : e.clientY + 16; b.style.left = Math.max(8, x) + 'px'; b.style.top = y + 'px'; });
   const open = (row) => { const card = row.closest('.gb-card'), was = row.classList.contains('on'); card.querySelectorAll('.gb-row.on').forEach((x) => { x.classList.remove('on'); x.setAttribute('aria-expanded', 'false'); const n = x.nextElementSibling; if (n && n.classList.contains('gb-bd')) n.remove(); });
-    if (was || !GB) return; const p = GB.byName.get(row.dataset.p), f = GB.BD[row.dataset.k]; if (!p || !f) return;
-    row.classList.add('on'); row.setAttribute('aria-expanded', 'true'); row.insertAdjacentHTML('afterend', '<div class="gb-bd">' + f(p) + '</div>'); refreshIcons(); if (tipEl) tipEl.hidden = true; };
+    if (was || !GB) return; const p = GB.byName.get(row.dataset.p), f = GB.drawer ? (q) => GB.drawer(q, row.dataset.k) : GB.BD[row.dataset.k]; if (!p || !f) return;
+    row.classList.add('on'); row.setAttribute('aria-expanded', 'true'); row.insertAdjacentHTML('afterend', '<div class="gb-bd' + (GB.drawer ? ' gb-dr' : '') + '">' + f(p) + '</div>'); refreshIcons(); if (tipEl) tipEl.hidden = true; };
   document.addEventListener('click', (e) => { const row = e.target.closest && e.target.closest('.gb-row'); if (row) { open(row); return; }
+    const dr = e.target.closest && e.target.closest('.gb-dr'), dt = dr && e.target.closest('.gb-dtab, #pfAuraMore'), dRow = dr && dr.previousElementSibling; /* (the drawer: a tab, or Show all on Buffs) */
+    if (dt && GB && GB.drawer && dRow) { const p = GB.byName.get(dRow.dataset.p); if (!p) return; if (dt.id === 'pfAuraMore') S.auraMore = !S.auraMore; else dRow.dataset.dk = dt.dataset.dt; dr.innerHTML = GB.drawer(p, dRow.dataset.dk || dRow.dataset.k); refreshIcons(); return; }
+    const gg = dr && e.target.closest('[data-gpgo]'); if (gg) { pfGo(gg.dataset.gpgo, gg.dataset.pgn); return; }
     const gp = e.target.closest && e.target.closest('.gb-pbar[data-gpull]'); if (gp && S.rep && S.index) { const it = S.rep.item, b = S.index.bosses.find((x) => x.id === it.id && x.diffId === it.diffId && String(x.pull) === gp.dataset.gpull); if (b) { S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } return; }
     const gs = e.target.closest && e.target.closest('.gb-nav [data-gs]'); if (gs) { const t = document.getElementById('gbs-' + gs.dataset.gs); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - 70, behavior: 'smooth' }); return; }
     const pv = e.target.closest && e.target.closest('.gb-pv'); if (pv) { S.pfOld = true; S.perfKind = pv.dataset.pv; window.scrollTo({ top: 0 }); renderMain(); return; }
@@ -14493,7 +14527,9 @@ function cmpSumView(sa, sb, x, top) {
     const sp = (s1.splits || []).map((p) => split(p, (s2.splits || []).find((y) => y.l === p.l))).join('');
     const so = s1.strip || s2.strip ? '<div class="cmp-wsp"><div class="cmp-wtl">The first ' + ((s1.strip || s2.strip).len || 15) + ' seconds</div>' + [[Ln, colA, s1.strip], [Bn, colB, s2.strip]].map(([nm, col, st]) => '<div class="cmp-wop"><span class="cmp-wsn" style="color:' + col + '">' + nm + '</span>' + (st ? openTlHtml(st.seq, st.bars, st.len) : '<span class="sub">No opener to show</span>') + '</div>').join('') + '</div>' : '';
     const sr = (s1.cpmL || s2.cpmL ? listRows('Casts a minute, spell by spell', s1.cpmL || [], s2.cpmL || []) : '') + (s1.slips || s2.slips ? slipRows(s1.slips || [], s2.slips || []) : ''), cr = s1.cards || s2.cards ? cardRows(s1.cards || [], s2.cards || [], s1.cardsL || s2.cardsL) : '';
+    if (x.hi) return so || cr ? '<section class="cmp-wsec"><div class="cmp-wsx"><h4>' + spellIcon(0, s1.ic) + esc(s1.t) + '</h4><p>' + esc(s1.txt) + '</p></div><div class="cmp-wsd">' + so + cr + '</div></section>' : ''; /* (the gap page: only the opener strips and the window cards) */
     return '<section class="cmp-wsec"><div class="cmp-wsx"><h4>' + spellIcon(0, s1.ic) + esc(s1.t) + '</h4><p>' + esc(s1.txt) + '</p></div><div class="cmp-wsd"><div class="cmp-wts">' + tl + '</div>' + so + sr + cr + sp + (s1.mana || s2.mana ? mana(s1.mana, s2.mana) : '') + '</div></section>'; };
+  if (x.hi) { const h = sa.sections.map(sec).join(''); return h ? '<div class="panel cmp-story"><h3>Your big moments, side by side<small>The opener and each burst window, next to theirs. Hover for the details.</small></h3>' + h + '</div>' : ''; }
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>The numbers that decide your ' + (/^(Holy|Restoration|Discipline|Mistweaver|Preservation)/.test((x.pA || {}).specName || '') ? 'healing' : /^(Protection|Guardian|Blood|Brewmaster|Vengeance)/.test((x.pA || {}).specName || '') ? 'tanking' : 'damage') + '. Hover a tile for what it means.</small></h3>' + (top || '') + sa.sections.map(sec).join('') + '</div>';
 }
 function cmpChips(rot, x) {
@@ -14566,6 +14602,7 @@ function cmpChips(rot, x) {
       '<span class="cmp-rcnt"><i class="bad">' + o.bad + ' failed</i><i class="warn">' + o.warn + ' with mistakes</i><i class="ok">✓ ' + o.ok + ' clean</i></span></div>'; };
   const better = secs.filter((g) => g.net > 0).length, worse = secs.filter((g) => g.net < 0).length;
   if (rot.sa && rot.sb && rot.sa.sections) return cmpSumView(rot.sa, rot.sb, x, '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>');
+  if (x.hi) return ''; /* (the gap page's big moments need the section view) */
   return '<div class="panel cmp-story"><h3>Rotation, side by side<small>Each section of the Rotation tab, where you two differ first. Hover a chart for the details.</small></h3>' +
     '<div class="cmp-rsum">' + side(Ln, colA, rot.a, rot.ca) + side(Bn, colB, rot.b, rot.cb) + '</div>' +
     '<p class="cmp-wlead">' + Ln + ' did better in <b>' + (better ? plural(better, 'section') : 'no sections') + '</b> and worse in <b>' + (worse || 'none') + '</b>.</p>' +
@@ -15016,7 +15053,7 @@ function cmpGapWhy(x) {
   }
   // casting less often
   if (lo.cpm && hi.cpm && hi.cpm > lo.cpm * 1.08) out.push({ v: lo.rate * (hi.cpm / lo.cpm - 1) * 0.5, head: 'Casting', bars: [{ l: 'Casts a minute', a: lo.cpm, b: hi.cpm, fa: n1(lo.cpm), fb: n1(hi.cpm) }], txt: capS(L) + ' cast ' + b(pc(1 - lo.cpm / hi.cpm) + ' less often') + ' than ' + H + '.',
-    tip: 'Casts a minute (real presses, as Rotation counts them): ' + lo.cpm.toFixed(1) + ' against ' + hi.cpm.toFixed(1) + '.', fix: 'Always be casting something: even a small heal is better than none.' });
+    tip: 'Casts a minute (real presses, as Rotation counts them): ' + lo.cpm.toFixed(1) + ' against ' + hi.cpm.toFixed(1) + '.', fix: U === 'healing' ? 'Always be casting something: even a small heal is better than none.' : 'Always be casting something: keep pressing a button, even while you move.' });
   // fewer crits (a crit does double)
   if (lo.crit != null && hi.crit != null && hi.crit - lo.crit > 0.02) out.push({ v: lo.rate * (hi.crit - lo.crit), head: 'Critical strikes', bars: [{ l: 'Critical strikes', a: lo.crit, b: hi.crit, fa: pc(lo.crit), fb: pc(hi.crit) }], txt: capS(Hp) + ' ' + sp + ' were critical strikes more often: ' + b(pc(hi.crit)) + ', against ' + b(pc(lo.crit)) + '. A critical strike ' + (U === 'healing' ? 'heals' : 'hits') + ' for double.',
     tip: 'Worth about ' + C(lo.rate * (hi.crit - lo.crit)) + ' a second. It comes mostly from gear and talents.' });
@@ -15105,13 +15142,16 @@ function cmpFindRes(r, p, ps) {
   const res = mates.filter((x) => hit(x.name)).map((x) => ({ src: 'mate', name: x.name, x }))
     .concat(q ? ranked.filter((w) => hit(w.name) || (q.includes('-') && plainL(w.name + '-' + w.server).includes(q))).map((w) => ({ src: 'rank', name: w.name, w })) : [])
     .sort((a, b) => starts(b.name) - starts(a.name) || (a.src === 'mate' ? 0 : 1) - (b.src === 'mate' ? 0 : 1) || (a.w ? a.w.rank : 0) - (b.w ? b.w.rank : 0));
+  // (Oct 20, "if I just type in Flexorcist, it should still be able to find" him: a name not in the pages read so far keeps the search going
+  // down the rankings on its own, 3 pages at a time, up to the top 2,000; each page redraws the matches)
+  if (q.length >= 3 && !res.length && o && o.more && !o.busy && !o.err) { o.want = Math.max(o.want, Math.min(20, o.pages + 3)); specRanksMore(r, o); }
   const shown = res.slice(0, 30); S._cmpRes = shown;
   const row = (x, i) => { const w = x.w, m = x.x;
     return '<button class="cmp-srchr" type="button" data-pk="' + i + '"><span class="cmp-srchn">' + (m ? avatar(m, true) : cmpIcon('trophy', 'var(--gold)')) + '<span class="nm" style="color:' + p.color + '">' + esc(x.name) + '</span>' +
       '<span class="sub">' + (m ? 'In this pull' + (heroQ(m) ? ', ' + esc(heroQ(m)) : '') : '#' + w.rank + ' on this boss' + (w.hero ? ', ' + esc(w.hero) : '') + ' · ' + esc(w.server + (w.region ? '-' + w.region : '')) + (w.guild ? ' · ' + esc(w.guild) : '')) + '</span></span>' +
       '<span class="cmp-srchv">' + C(m ? cmpRate(r, m, cmpKind(m)) : w.amount) + '<span class="sub"> ' + unit + ' a second</span></span></button>'; };
   const head = !q && mates.length ? '<div class="cmp-lbl">In this pull</div>' : '';
-  const none = q && !res.length ? '<p class="muted cmp-srchm">Nobody named "' + esc(String(S.cmpQ).trim()) + '" plays ' + what + (o ? ' in this pull or in the top ' + o.list.length + ' on this boss.' : ' in this pull.') +
+  const none = q && !res.length && !(o && o.busy) ? '<p class="muted cmp-srchm">Nobody named "' + esc(String(S.cmpQ).trim()) + '" plays ' + what + (o ? ' in this pull or in the top ' + o.list.length + ' on this boss.' : ' in this pull.') +
     (other ? ' ' + (other === 1 ? 'One player by that name plays' : other + ' players by that name play') + ' another hero tree.' : '') + '</p>' : '';
   const more = !q || !o ? '' : o.busy ? '<p class="sub cmp-srchm">Looking through the rankings… ' + o.list.length + ' so far.</p>'
     : o.err ? '<p class="sub cmp-srchm">The rankings didn\'t load just now. Try again in a minute.</p>'
@@ -15226,8 +15266,10 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
   // (Oct 19, "highlight the total HPS each player did somewhere in the beginning": both totals, large, in their colors, and the gap between them)
   // (Oct 19, "more interesting, it starts the page": a face-off, each side's spec icon over its spec picture, the gap in a gold badge between
   // them, and a tug of war bar along the bottom, each side as long as its number)
+  // (each side's hero tree as a tag under the name; rt: the second player, read from their own pull)
+  const hh = (pl, rt) => { try { return cmpHeroOf(rt ? rB : r, pl) || ''; } catch (e) { return ''; } };
   const big = (n, col, v, kk, pl, rt) => '<div class="cmp-hpn' + (rt ? ' cmp-hpr' : '') + '" style="--c:' + col + '">' + (pIcon(pl) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(pl)) + '" alt="" onerror="this.remove()">' : '') +
-    '<div><span class="cmp-hpw">' + n + '</span><b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second</span></div></div>';
+    '<div><span class="cmp-hpw">' + n + '</span>' + (hh(pl, rt) ? '<span class="cmp-hph">' + esc(hh(pl, rt)) + '</span>' : '') + '<b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second</span></div></div>';
   const gapPc = k === kq && ra && rb ? Math.abs(ra - rb) / Math.min(ra, rb) : null, hiN = ra >= rb ? (me ? 'You' : An) : Bn, verbH = k === 'heal' ? 'healed' : 'did';
   const badge = gapPc == null ? '<b>vs</b>' : gapPc < 0.02 ? '<b>=</b><span>About the same</span>' : '<b>+' + Math.round(100 * gapPc) + '%</b><span>' + hiN + ' ' + verbH + ' more</span>';
   const tug = k === kq && ra > 0 && rb > 0 ? '<div class="cmp-hpbar"><i style="flex:' + ra + ';background:' + p.color + '"></i><i style="flex:' + rb + ';background:' + colB + '"></i></div>' : '';
@@ -15236,15 +15278,20 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
   const sideBy = '<div class="panel"><h3>Side by side<small>Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>';
   // (Oct 19, "I want players to use this tab to make themselves better": the 3 things costing the first player the most against this one, each
   // with what it's worth a second, one plain line and the Try; the rest of the page is the evidence)
-  const fixes = (() => { if (!GX || !GX.items || !loA) return ''; const l = GX.items.filter((o) => o.fix && o.v > 0).slice(0, 3); if (!l.length) return '';
+  const fixes = (() => { if (!GX || !GX.items || !loA) return ''; const cast1 = GX.items.some((o) => o.fix && o.v > 0 && o.head === 'Casting'), l = GX.items.filter((o) => o.fix && o.v > 0 && !(cast1 && /always be casting|^casting$/i.test(String(o.head).replace(/<[^>]+>/g, '')) && o.head !== 'Casting')).slice(0, 3); /* (Rotation's Always be casting says the same as Casting: one card) */ if (!l.length) return '';
     const tot = l.reduce((t, o) => t + o.v, 0), gap = rb - ra, Ln = me ? 'You' : An;
     const card = (o, i) => '<div class="cmp-fix"' + (o.tip ? ' data-tt="' + esc(o.tip) + '"' : '') + '><div class="cmp-fxh"><span class="cmp-fxn">' + (i + 1) + '</span>' + (o.icon || '') + '<b>' + o.head + '</b><span class="cmp-fxv">+' + C(o.v) + '<span> a second</span></span></div>' +
       '<p>' + (o.pills ? Ln + ': <b>' + o.pills[0] + '</b>. ' + Bn + ': <b>' + o.pills[1] + '</b>.' : o.txt) + '</p><div class="cmp-try"><b>Try:</b> ' + o.fix + '</div></div>';
     return '<div class="panel cmp-fixs"><h3>' + (me ? 'Your' : An + '\'s') + ' ' + (l.length === 1 ? 'biggest fix' : l.length + ' biggest fixes') + '<small>Against ' + Bn + ', the biggest first. Hover one for the numbers.</small></h3>' +
-      '<p class="cmp-wlead">' + (tot >= gap * 0.95 ? 'Together ' + (l.length === 1 ? 'it adds' : 'these add') + ' up to more than the whole <b>' + C(gap) + '</b> ' + U(k) + ' a second between you (some overlap): this is where the gap is.' : 'Fix ' + (l.length === 1 ? 'this' : 'these') + ' and ' + (me ? 'you' : An) + ' close about <b>' + C(tot) + '</b> of the <b>' + C(gap) + '</b> ' + U(k) + ' a second between you.') + '</p><div class="cmp-fxs">' + l.map(card).join('') + '</div></div>'; })();
+      '<p class="cmp-wlead">' + (tot >= gap * 0.95 ? 'Together ' + (l.length === 1 ? 'it adds' : 'these add') + ' up to more than the whole <b>' + C(gap) + '</b> ' + U(k) + ' a second between you (some overlap): this is where the gap is.' : 'Fix ' + (l.length === 1 ? 'this' : 'these') + ' and ' + (me ? 'you close' : An + ' closes') + ' about <b>' + C(tot) + '</b> of the <b>' + C(gap) + '</b> ' + U(k) + ' a second between you.') + '</p><div class="cmp-fxs">' + l.map(card).join('') + '</div></div>'; })();
   const cdTl = cmpCdTimeline([{ r, p, name: nmO ? nmO.a : me ? 'You' : p.name, col: p.color }, { r: rB, p: q, name: nmO ? nmO.b : q.name, col: colB }], U(k));
   // (the biggest fixes panel is off: the side-by-side sections say it more clearly (your call, Oct 19))
   // (the numbers cards and healing a second spell by spell are off: the side-by-side sections cover them (your call, Oct 19))
+  // (Oct 20, "try a": the gap page. The face-off, then the biggest fixes (or Why the gap when there's nothing to fix), then the opener and
+  // burst windows side by side; every other section waits in one fold. CMP_GAP_VIEW = false brings back the Oct 19 page)
+  if (CMP_GAP_VIEW) { const hi = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k), pA: p, pB: q, nmO, book: q.specName === p.specName ? specBook(p.specName) : null, hi: true });
+    return { vs, body: (lead || '') + hps + (fixes || gapH) + hi +
+      cmpFold('all', 'Every check, side by side', 'The whole Rotation page next to theirs, cooldowns over the fight, the numbers and talents. Click to open.', (fixes ? gapH : '') + (chips || '') + cdTl + sideBy + chart + (tal ? tal.html : '') + (rot ? rot.html : '')) }; }
   return { vs, body: (lead || '') + hps + (chips || gapH) + cdTl + sideBy + chart +
     cmpFold('more', 'More detail', 'Talent differences and every Rotation check. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '')) };
 }

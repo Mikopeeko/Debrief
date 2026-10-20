@@ -963,6 +963,24 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .gb-v { text-align: right; font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; } .gb-tr .gb-v { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #f2f2f2; text-shadow: 0 1px 2px rgba(0,0,0,.9); }
 .gb-r { text-align: right; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .gb-bd { margin: 2px 12px 8px 52px; padding: 8px 10px; border-left: 2px solid var(--gold); background: rgba(255,255,255,.025); border-radius: 0 8px 8px 0; }
+/* (Oct 20 test: the player drawer, a tab per part) */
+/* (the drawer looks like every other opened row on the site (.pf-inl), its tabs like the site's switches (.seg)) */
+.gb-bd.gb-dr { margin: -2px 0 8px 26px; padding: 12px 14px 14px; background: var(--raised); border: 1px solid rgba(230,180,80,.4); border-top: 0; border-radius: 0 0 12px 12px; animation: rcIn .18s ease-out; min-width: 0; }
+.gb-dtabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; margin: 0 0 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.gb-dtab { font: 500 13px var(--body); padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
+.gb-dtab:hover { color: var(--text); } .gb-dtab.on { background: var(--raised); color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); }
+/* (Oct 20, "consistent with the rest of the website": Graphs' cards are the site's panels, its bars the site's bar rows) */
+.gb-grid > .panel.gb-card { margin: 0; overflow: visible; background: var(--panel); border-radius: var(--r); }
+.gb-card .gb-rows { padding: 0; } .gb-card.gb-ch .gb-cb { padding: 0; }
+.gb-sh h3 { font: 600 18px var(--head); letter-spacing: 0; }
+.gb-leg i.gb-lm { background: rgba(154,160,172,.45); } .gb-leg i.gb-lo { background: rgba(154,160,172,.14); }
+.gb-bt .gb-tr { height: 18px; background: rgba(255,255,255,.035); } .gb-bt .gb-f { opacity: .34; }
+.gb-nav button, .gb-pv { background: var(--raised); border: 1px solid var(--line2); color: var(--text); border-radius: 8px; padding: 6px 12px; font-size: 13px; }
+.gb-nav button:hover, .gb-pv:hover { border-color: var(--gold); color: var(--gold); }
+.pf-row.cb.gb-xr .cb-in .icw, .pf-row.cb.gb-xr .cb-in svg.ico, .pf-row.cb.gb-xr .cb-in img.oi { width: 18px; height: 18px; flex: none; }
+.gb-dbody { min-height: 40px; } .gb-dbody .pf-sec { margin: 0; }
+.gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+@media (max-width: 640px) { .gb-bd.gb-dr { margin: 4px 0 10px; padding: 8px; } }
 .gb-bh { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
 .gb-bt { display: grid; gap: 4px; }
 .gb-br { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: 12px; }
