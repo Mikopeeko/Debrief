@@ -395,7 +395,7 @@ const GDZ_CA_BEATS = {
       k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 5.5).at(0, ['m5', 'm6', 'm7'], 0, -8, 4.5).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
         .at(0, 'r1', -38, -34).at(0, 'r2', -38, 34).at(0, 'r3', 38, -34).at(0, 'r4', 38, 34).at(0, ['r5', 'r6', 'r7'], 4, 24, 4);
       k.step(0.2).step(2.4); } },
-  fangs: { name: 'Fangs of the Coiled Altar (Avoid the puddles)', do: ['Fangs again: raid damage, and the puddles at the sides grow bigger. Keep out of them.'],
+  fangs: { name: 'Fangs of the Coiled Altar (Avoid the puddles)', do: ['Fangs again: this time the pools pour in from both side walls and meet in the middle. The raid takes damage for about 25 seconds, so healers get ready.'],
     run(o) { const k = gdzKit('The Coiled Altar', 3.5); gdzCaBoss(k, 0); k.cast('zj', 'Fangs of the Coiled Altar', 0, 1.6); k.step(0.2); } },
   venomfang: { name: 'Venomfang (Dispel fast)', do: ['Venomfang: two players are poisoned. Healers dispel it fast (Poison Cleansing Totem does it on its own).'],
     run(o) { const k = gdzKit('The Coiled Altar', 4); gdzCaBoss(k, o.ph || 0); const v = o.on || ['m3', 'r6'];
@@ -462,11 +462,12 @@ function gdzCaSimOverlay(k, rt2sim, end) {
     for (let t = t0 + i * 3; t <= end; t += 2) { const a = a0 + (t - t0) * w; k.obj(id, 'axe', t, Math.cos(a) * 44, Math.sin(a) * 44); }
     k.show(id, t0 + i * 3, end).ring({ on: id, r: 3, fx: 'zone', t0: t0 + i * 3, dur: end, color: '#ff9628', cn: 'Axegrinder', legend: 'rolling axe: knocks you back' }); });
   const p2 = rt2sim(177);
-  // (Noxious Ground, measured from the 198 hits on the Mythic kill (your note, Oct 20: they were far too small): after the
-  // first Fangs the pools sit at the west and east walls, about 20 yards across from each; after the second they reach about 35
-  // yards in, squeezing the raid into the middle. The first pool gives way to the bigger one)
-  [[-52, 0, 22], [52, 0, 22]].forEach(([x, y, r1]) => /* (from the exact middle of each side wall (your note, Oct 20)) */ { k.ring({ x, y, r: r1, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(85) + 0.8 - (rt2sim(0) + 2.6), color: '#c4f03c', fill: 'rgba(52,128,30,.5)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' });
-    k.ring({ x, y, r: 32, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85) - 0.8, color: '#c4f03c', fill: 'rgba(52,128,30,.46)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' }); });
+  // (Noxious Ground, measured from about 1,600 hits on 11 Mythic kills (your notes, Oct 20: from the exact middle of each side, equal
+  // sizes): each pool pours from the middle of the west or east wall. After the first Fangs it reaches to about 14 yards short of
+  // the centre; after the second it reaches the centre, meeting the other pool around the boss. Each hurts for about 28 seconds, then fades)
+  const W = 52, life = 28;
+  [[-W, 0], [W, 0]].forEach(([x, y]) => { k.ring({ x, y, r: W - 14, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(life) - rt2sim(0) - 2.6, color: '#c4f03c', fill: 'rgba(52,128,30,.5)', cn: 'Noxious Ground', legend: 'pools from Fangs: the second cast reaches the middle' });
+    k.ring({ x, y, r: W, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: rt2sim(85 + life) - rt2sim(85) - 0.8, color: '#c4f03c', fill: 'rgba(52,128,30,.46)', cn: 'Noxious Ground', legend: 'pools from Fangs: the second cast reaches the middle' }); });
 }
 // ---- What goes wrong (your idea, Oct 20): each mechanic's map can also play a mistake and what it costs ----
 // a raid-wide hit: a red blast over the room and a red label, and the players it kills marked
@@ -593,7 +594,7 @@ GDZ['The Coiled Altar'] = {
           } },
       ],
       tiles: [
-        { name: 'Fangs of the Coiled Altar (Avoid the puddles)', do: 'Raid damage each cast, and the altar\'s mouths spit big green puddles at the sides that grow every cast. Stay out of them. The tank takes extra poison from his next hits.' },
+        { name: 'Fangs of the Coiled Altar (Avoid the puddles)', do: 'Raid damage each cast, and big poison pools pour in from the middle of both side walls for about 25 seconds. The first ones stop short of the boss; the second ones meet in the middle, so the raid takes damage and healers plan for it. The tank takes extra poison from his next hits.' },
         { name: 'Axegrinder (Dodge the axes)', do: 'Axes roll around the room for 3 minutes and knock you back. They kill a lot of melee. If you must pick, stand in a puddle rather than in an axe.', m: { do: 'Axes roll around at random and never go away; three or four can sit in melee at once. Ranged: stay out of melee. Pick a puddle over an axe, and don\'t get knocked into a purple orb.' } },
         { name: 'Venomfang (Dispel fast)', do: 'A poison on players. Dispel it quickly. Poison Cleansing Totem handles it on its own.' },
         { only: 'm', name: 'Into phase 2 (Stack cooldowns)', spell: 'Venom Rupture', do: 'You go in with 9 to 11 orb stacks. Group up in a spot clear of axes, and use Darkness, Anti-Magic Zone and Spirit Link Totem. Stay inside until the stacks drop. Kill Zul\'jan around the pools.' },
