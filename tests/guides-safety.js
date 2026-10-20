@@ -28,6 +28,10 @@ window.gdzSafety = () => {
         // (bombs never stack on each other: they overlap only on the add)
         inside.filter((p) => bombers.has(p.guid) && p.guid !== g.guid).forEach((p) => out.push(label + ': ' + p.name + ' stands in another Gloombomb at ' + fmt(g.at))); }
     }
+    // Noxious Ground pools: nobody standing in one from 2 s after it pours in until it fades
+    const poolHit = new Set();
+    for (const g of mp.rings || []) { if (g.cn !== 'Noxious Ground' || g.t0 == null) continue;
+      for (const f of mp.frames.filter((q) => q.t >= g.t0 + 2 && q.t <= g.t0 + g.dur)) for (const p of pl(f)) if (Math.hypot(p.x - g.x, p.y - g.y) < g.r - 0.5 && !poolHit.has(p.guid + g.t0)) { poolHit.add(p.guid + g.t0); out.push(label + ': ' + p.name + ' stands in a Noxious Ground pool at ' + fmt(f.t)); } }
     // players and carried orbs moving faster than a player can run (about 7 yd/s; over 12 yd/s across half a second looks like a teleport)
     const fast = new Set();
     for (let i = 2; i < mp.frames.length; i++) { const a = mp.frames[i - 2], b = mp.frames[i], am = new Map(a.pts.map((p) => [p.guid, p]));
