@@ -13269,6 +13269,7 @@ const PATCH_NOTES = [
     'Hunters\' Feign Death no longer counts as a death on Warcraft Logs nights, so deaths, Survival and the wipe filter are right for hunters.',
     'Mechanics show misses and slips apart ("went wrong" and "a little off"), the two mechanics scores say what each one measures, and the Report card\'s first fix matches its subject.',
     'Report card: a death with a defensive still ready now counts against Survival (one-shots never do), the grade letters are a little stricter, and Homework\'s examples say which pull they\'re from.',
+    'Report card and Homework read the whole night by themselves, Rotation asks you to pick a raider when you\'re not in the night, and a check under the top players says Close to the top instead of Clean.',
     'New to raiding? Raid words like soak, kick, frontal and P2 have a dotted underline: hover one to see what it means.',
     'A death to Sever now shows the frontal\'s cone on its map.',
     'An NSRT note that only has a kick order now works on its pull.',
@@ -22714,9 +22715,13 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
 // tiles on the right, the section's stat boxes and bars under them)
 const SPC_BW = { ok: 'Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' };
 // (a tile with burst-window cards in it starts open on every spec page, clean or not (your call, Oct 19): the cards are the part players read most)
+// (under the top players on a higher-is-better check (Oct 20): "Close to the top" in yellow, not Clean)
+const spcUnder = (c, top) => { if (c.st !== 'ok' || !SPC_UP.has(c.k)) return false; const t = String(top(c.k) || '').replace(/<[^>]+>/g, ''), tv = parseFloat(t.slice(t.indexOf(':') + 1)), mv = parseFloat(String(c.v).replace(/<[^>]+>/g, ''));
+  return /%/.test(t) && isFinite(tv) && isFinite(mv) && mv < tv - 1; };
+const SPC_UP = new Set(['apl', 'abc']);
 const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1 || (c.k === 'apl' && c.st !== 'ok') || String(v || '').includes('class="spc-w ');
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
-    '<b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>' + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
+    '<b class="cst-f ' + c.st + '">' + c.v + '</b>' + (spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>') + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
     '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';
 // (three or more cooldowns in a block: a compact table, a row each, with its mark, its name, a bar of its uses, the count, what it did each time and the top
 // raids'. A row opens in place to its sentence, how it's judged, its "Next time" and its moments; the ones to fix start open)
@@ -25974,6 +25979,10 @@ function specView(reps, one) {
   const ps = [...pm.values()], me = meOf(), meN = me && pm.has(me.name) ? me.name : groups().filter((g) => g.kind === 'char').map((g) => g.name).find((n) => pm.has(n)) || null, byN = (a, b) => a.name.localeCompare(b.name);
   if (!ps.length) return '<div class="panel"><p class="muted" style="margin:0">None of these players\' specs has a Rotation page yet. Rotation covers every spec that\'s common in Mythic raids.</p></div>';
   const ROLES = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']], inRole = (k) => ps.filter((p) => (p.role || 'dps') === k).sort(byN);
+  // (you're not in these pulls (Oct 20): pick a raider, as on Homework, instead of opening on the first name in the list)
+  if ((!S.specSel || !pm.has(S.specSel)) && !meN) return '<section class="panel hwk"><div class="hwk-h"><h2>Rotation</h2><label class="hwk-who"><span class="sub">Showing</span><select class="rot-sel" aria-label="Change player"><option value="" selected disabled>Pick a raider…</option>' +
+    ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<optgroup label="' + l + '">' + l2.map((x) => '<option value="' + esc(x.name) + '">' + esc(x.name) + ' · ' + esc(x.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') +
+    '</select></label></div><p class="sub" style="margin:0">' + (me ? esc(me.name) + ' isn\'t in these pulls. Pick a raider to see their Rotation.' : 'Pick a raider to see how they pressed their buttons.') + '</p></section>';
   if (!S.specSel || !pm.has(S.specSel)) S.specSel = meN || ROLES.flatMap(([k]) => inRole(k))[0].name;
   // (your pick, Oct 19: no buttons above the page; a "Change player" dropdown beside the player's name in its header, everyone
   // grouped by role inside it)
@@ -28844,7 +28853,7 @@ function player() {
   if (cached) { draw(cached); return; }
   const grade = (reps, load) => plData(reps, still).then((data) => { if (!data || !still()) return; S.plData = { key, reps, data, load, wait: data.some((a) => a.wait) }; draw(S.plData); if (v === 'night') setHeadRes(); });
   if (v === 'pull') { grade([r], ''); return; }
-  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Reading the night', line, of ? k / of : 0); })
+  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Reading the night', line, of ? k / of : 0); }, true) /* (the whole night, by itself (Oct 20): no grade on part of a night) */
     .then((got) => { if (!got || !still()) return; grade(got.reps, loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll')); });
 }
 // ---------- Homework (your call, Oct 20): one raider's to-do list for this boss, from the whole night ----------
@@ -28906,7 +28915,7 @@ function hw() {
     const s = $('#hwkSel'); if (s) s.onchange = () => { if (!s.value) return; S.hwSel = s.value; draw(c); };
     el.querySelectorAll('#plAll').forEach((b) => (b.onclick = () => { NIGHT_ALL = true; S.plData = null; hw(); })); };
   if (cached) { draw(cached); return; }
-  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Making your homework', line, of ? k / of : 0); })
+  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Making your homework', line, of ? k / of : 0); }, true) /* (the whole night, by itself (Oct 20)) */
     .then((got) => { if (!got || !still()) return; return plData(got.reps, still).then((data) => { if (!data || !still()) return; S.plData = { key, reps: got.reps, data, load: loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll'), wait: data.some((a) => a.wait) }; draw(S.plData); setHeadRes(); }); });
 }
 // (My Page: your homework's top three from the last boss you opened, and a button to the tab when that raid is open)
