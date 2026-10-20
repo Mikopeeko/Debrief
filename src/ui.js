@@ -1491,6 +1491,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Build from roster: change any job in a drafted note with tonight\'s players, add jobs of your own, and see who has no job yet. Cancel now sits at the top of the draft.',
     'Maps play at real speed (they were sped up), every boss now has its portrait, and maps open inside the room picture.',
     'Draft a note from your pulls: Debrief writes down who did each job over the night (The Coiled Altar and The Twin Fangs), with how sure it is.',
     'Swap players spots a raider on another character (like a Warrior main on their Paladin) and leaves out class buttons the new character can\'t press.',
@@ -2475,7 +2476,7 @@ function ndzSwapView(r) {
       (x.a ? '<div class="sub ndz-swj">' + esc(x.a) + (gone.includes(x.a) ? ' isn\'t in this pull. Jobs: ' : '\'s jobs: ') + (jobs.length ? esc(jobs.slice(0, 6).join(' · ')) + (jobs.length > 6 ? ' and ' + (jobs.length - 6) + ' more' : '') : 'none found in the note') + '</div>' : '') +
       (x.a && x.b ? ndzCantH(text, x.a, pOf(x.b)) : '') + '</div>'; };
   const ready = W.rows.filter((x) => x.a && x.b && x.a !== x.b);
-  box.innerHTML = '<div class="panel ndz ndz-sw"><div class="ndz-hd"><h3>Swap players in your note</h3>' + ndzPill() + '</div>' +
+  box.innerHTML = '<div class="panel ndz ndz-sw"><div class="ndz-hd"><h3>Swap players in your note</h3>' + ndzPill() + ndzTop() + '</div>' +
     '<p class="ah-lead">Pick who\'s out and who\'s in. Every line they\'re on changes: kicks, soaks, groups and cooldowns. Then save it and copy it into NSRT in game.</p>' +
     '<p class="sub ndz-swn">' + (ready.some((x) => fresh.some((p) => pn(p) === x.b)) ? 'Someone new is coming in, so this saves a note for tonight\'s group. Your original note stays for the old group.' : 'These players are all in the note already, so your note is updated.') + '</p>' +
     '<div class="sub ndz-swn">Note: <b>' + esc(used.name) + '</b></div>' + W.rows.map(row).join('') +
@@ -2592,14 +2593,14 @@ function ndzSugView(r) {
   const secs = [...new Set(rows.map((x) => x.sec))];
   const line = (x) => '<label class="ndz-r ndz-sr ' + (x.tag === 'kept' ? 'sure' : 'likely') + '"><input type="checkbox" data-ndzsi="' + x.i + '"' + (x.on ? ' checked' : '') + '><span class="ndz-l">' + esc(x.label) + '</span><span class="ndz-ns">' + x.names.map(chip).join('') + '</span><span class="ndz-c">' + TAG[x.tag] + ' ' + esc(x.why) + '</span></label>';
   const nS = rows.filter((x) => x.tag !== 'kept').length;
-  box.innerHTML = '<div class="panel ndz"><div class="ndz-hd"><h3>Draft a note from your pulls</h3>' + ndzPill() + '</div>' + ndzSteps(2) +
+  box.innerHTML = '<div class="panel ndz"><div class="ndz-hd"><h3>Draft a note from your pulls</h3>' + ndzPill() + ndzTop() + '</div>' + ndzSteps(2) +
     '<p class="ah-lead">Debrief kept every job your raid already did well, and filled the rest from tonight\'s classes and the fight\'s plan (' + plural(nS, 'suggestion') + '). Each line says why. Untick anything you don\'t like, then save it or copy it for the game.</p>' +
     (D.sugErr ? '<p class="sub">Couldn\'t suggest everything: ' + esc(D.sugErr) + '</p>' : '') +
     '<div class="ndz-key"><span class="sure"><b>Kept</b> your raid did it this way in most pulls</span><span class="likely"><b>Suggested</b> picked from classes and the plan</span></div>' +
     secs.map((s) => '<div class="ndz-sec"><h4>' + esc(s) + '</h4>' + rows.filter((x) => x.sec === s).map(line).join('') + '</div>').join('') +
     (d.fill.length ? '<div class="ndz-sec ndz-fill"><h4>For you to fill in</h4><ul>' + d.fill.map((f) => '<li>' + esc(f).replace(/\{(\w+)\}/g, (m, k) => capS(k)) + '</li>').join('') + '</ul></div>' : '') +
     '<details class="ndz-sec"><summary>The note as it will be saved</summary><pre class="ndz-pre" id="ndzText"></pre></details>' +
-    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSave">Save and copy for the game</button><button class="btn" type="button" id="ndzNo">Cancel</button></div></div>';
+    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSave">Save and copy for the game</button><button class="btn" type="button" data-ndzroster="1">Build from roster</button><button class="btn" type="button" id="ndzNo">Cancel</button></div></div>';
   const txt = () => ndzText({ ...d, rows }), show = () => { $('#ndzText').textContent = txt(); };
   show(); $$('#assignBox [data-ndzsi]').forEach((c) => (c.onchange = () => { rows[+c.dataset.ndzsi].on = c.checked; show(); }));
   ndzStepsBind(r);
@@ -2675,6 +2676,50 @@ function ndzBossCards(r) { const cur = r.item.boss, pick = S.ndzPick || cur, lis
       '<span class="ndz-bct"><b>' + esc(b) + '</b><span class="sub">' + (n ? plural(n, 'note') : 'No notes') + (b === cur ? ' · open now' : '') + '</span></span></button>'; };
   return '<div class="panel ndz-bcs"><div class="ndz-thead"><span class="ndz-ttl">Your saved notes</span><span class="sub">Saved in this browser. Pick a boss to see its notes.</span></div><div class="ndz-bcg">' + list.map(card).join('') + '</div></div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzpick]'); if (!b || !S.rep) return; S.ndzPick = b.dataset.ndzpick; assign(); });
+// ---- Build from roster (Oct 20, your idea): hand-edit a draft with tonight's players ----
+// From the draft (step 1) or the suggestions (step 2): every job shows its players as chips (× removes one, + Add picks from this
+// pull's roster), + Add a job adds a line of your own, and the roster on the side shows who has no job yet. The note keeps NSRT's
+// format: kick lines stay in the kick block, cooldown reminders keep their time with the new names as their tag.
+const ndzTop = () => '<span class="ndz-hdb">' + (S.noteDraft && S.noteDraft.d && S.noteDraft.step !== 3 ? '<button class="btn sm" type="button" data-ndzroster="1">Build from roster</button>' : '') + '<button class="btn sm" type="button" data-ndzx="1">Cancel</button></span>';
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzx]'); if (!b || !S.rep) return; S.noteDraft = null; S.noteSwap = null; assign(); window.scrollTo({ top: 0 }); });
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzroster]'); if (!b || !S.noteDraft || !S.noteDraft.d) return; const D = S.noteDraft;
+  const src = D.step === 2 && D.sug ? D.sug : D.d.rows;
+  D.edit = src.filter((x) => x.on && x.names.length).map((x) => ({ sec: x.sec, label: x.label, names: x.names.map((y) => ({ n: y.n })), kick: x.kick, rem: x.rem ? { ...x.rem } : null, head: x.head, on: true }));
+  D.editFrom = D.step; D.step = 3; assign(); window.scrollTo({ top: 0 }); });
+function ndzEditView(r) {
+  const D = S.noteDraft, d = D.d, box = $('#assignBox'); if (!box) return; const rows = D.edit;
+  const ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), RO = { tank: 0, healer: 1, dps: 2 }, pn = (p) => p.name.split('-')[0];
+  ps.sort((a, b) => (RO[a.role] ?? 3) - (RO[b.role] ?? 3) || pn(a).localeCompare(pn(b)));
+  const col = (n) => { const p = ps.find((q) => pn(q) === n); return p ? p.color : 'inherit'; }, RW = { tank: 'Tanks', healer: 'Healers', dps: 'DPS' };
+  const cnt = new Map(ps.map((p) => [pn(p), 0])); for (const x of rows) for (const y of x.names) cnt.set(y.n, (cnt.get(y.n) || 0) + 1);
+  const addSel = (i) => '<select class="ndz-eadd" data-i="' + i + '" aria-label="Add a player to this job"><option value="">+ Add</option>' +
+    ['tank', 'healer', 'dps'].map((ro) => '<optgroup label="' + RW[ro] + '">' + ps.filter((p) => p.role === ro && !rows[i].names.some((y) => y.n === pn(p))).map((p) => '<option value="' + esc(pn(p)) + '">' + esc(pn(p)) + '</option>').join('') + '</optgroup>').join('') + '</select>';
+  const secs = [...new Set(rows.map((x) => x.sec || 'Your jobs'))];
+  const line = (x, i) => '<div class="ndz-er"><span class="ndz-l">' + (x.custom ? '<input class="ndz-elab" data-i="' + i + '" value="' + esc(x.label) + '" placeholder="Job name, like Dreadmarch stack" aria-label="Job name">' : esc(x.label)) + '</span>' +
+    '<span class="ndz-ns">' + x.names.map((y, j) => '<span class="ndz-p"><span class="nm" style="color:' + col(y.n) + '">' + esc(y.n) + '</span><button class="ndz-ex" type="button" data-i="' + i + '" data-j="' + j + '" aria-label="Remove ' + esc(y.n) + '">×</button></span>').join('') + addSel(i) + '</span>' +
+    '<button class="ndz-ex ndz-exr" type="button" data-row="' + i + '" aria-label="Remove this job" title="Remove this job">Remove</button></div>';
+  const roster = '<aside class="ndz-ros"><div class="ndz-ch">Tonight\'s roster</div>' + ['tank', 'healer', 'dps'].map((ro) => { const l = ps.filter((p) => p.role === ro); return l.length ? '<div class="ndz-rg"><div class="sub">' + RW[ro] + '</div>' + l.map((p) => { const c = cnt.get(pn(p)) || 0;
+    return '<div class="ndz-rr' + (c ? '' : ' none') + '"><span class="nm" style="color:' + p.color + '">' + esc(pn(p)) + '</span><span class="sub">' + (c ? plural(c, 'job') : 'no job yet') + '</span></div>'; }).join('') + '</div>' : ''; }).join('') + '</aside>';
+  box.innerHTML = '<div class="panel ndz"><div class="ndz-hd"><h3>Build from roster</h3>' + ndzPill() + ndzTop() + '</div>' +
+    '<p class="ah-lead">Your draft, ready to change. Remove anyone with ×, add tonight\'s players with + Add, or add a job of your own. Then save it and copy it for the game.</p>' +
+    '<div class="ndz-eg"><div>' + secs.map((s) => '<div class="ndz-sec"><h4>' + esc(s) + '</h4>' + rows.map((x, i) => ((x.sec || 'Your jobs') === s ? line(x, i) : '')).join('') + '</div>').join('') +
+    '<button class="btn sm ndz-eaddj" type="button" id="ndzAddJob">+ Add a job</button></div>' + roster + '</div>' +
+    '<details class="ndz-sec"><summary>The note as it will be saved</summary><pre class="ndz-pre" id="ndzText"></pre></details>' +
+    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSave">Save and copy for the game</button><button class="btn" type="button" id="ndzBack">Back to the draft</button><button class="btn" type="button" data-ndzx="1">Cancel</button></div></div>';
+  // (cooldown reminders are tagged with whoever is on the line now)
+  const sync = () => rows.forEach((x) => { if (x.rem) x.rem.tag = x.names.map((y) => y.n).join(' '); });
+  const txt = () => { sync(); return ndzText({ ...d, rows: rows.filter((x) => x.names.length && x.label.trim()) }); };
+  $('#ndzText').textContent = txt();
+  $$('#assignBox .ndz-eadd').forEach((s) => (s.onchange = () => { if (!s.value) return; rows[+s.dataset.i].names.push({ n: s.value }); ndzEditView(r); }));
+  $$('#assignBox .ndz-ex[data-j]').forEach((b) => (b.onclick = () => { rows[+b.dataset.i].names.splice(+b.dataset.j, 1); ndzEditView(r); }));
+  $$('#assignBox .ndz-exr').forEach((b) => (b.onclick = () => { rows.splice(+b.dataset.row, 1); ndzEditView(r); }));
+  $$('#assignBox .ndz-elab').forEach((x) => (x.oninput = () => { rows[+x.dataset.i].label = x.value; $('#ndzText').textContent = txt(); }));
+  $('#ndzAddJob').onclick = () => { rows.push({ sec: 'Your jobs', label: '', names: [], custom: true, on: true }); ndzEditView(r); const l = $$('#assignBox .ndz-elab'); if (l.length) l[l.length - 1].focus(); };
+  $('#ndzBack').onclick = () => { D.step = D.editFrom || 1; assign(); };
+  $('#ndzSave').onclick = async () => { const t = txt(), f0 = noteFit(t, r), name = 'Built from roster'; S.noteDraft = null;
+    if (f0.gone.length) { S.notePend = { boss: d.boss, text: t, name, ratio: noteRatio(f0), found: f0.found, named: f0.named }; assign(); return; }
+    const made = noteSaveText(d.boss, t, name, r), ok = await copyText(t); S.noteMade = { boss: d.boss, id: made.id, name: made.name, swaps: [], copied: ok }; renderMain(); };
+}
 // ---- Draft a note from your pulls (TEST, Oct 20: on the local copy only, not the live site, until you say) ----
 // Reads every pull of this boss and difficulty in the log and writes an NSRT note of who did which job (kick orders, soak
 // groups, orb carriers, CC order, curses, raid cooldowns). A job done in most pulls is the assignment; a one-off is a mistake
@@ -2854,8 +2899,9 @@ async function ndzStart(r, step) {
 }
 function ndzView(r) {
   const D = S.noteDraft, box = $('#assignBox'); if (!box) return;
+  if (D.d && D.step === 3 && D.edit) { ndzEditView(r); return; }
   if (D.d && D.step === 2 && NDZ_SUG.has(D.d.boss)) { ndzSugView(r); return; }
-  const top = '<div class="ndz-hd"><h3>Draft a note from your pulls</h3>' + ndzPill() + '</div>';
+  const top = '<div class="ndz-hd"><h3>Draft a note from your pulls</h3>' + ndzPill() + ndzTop() + '</div>';
   if (D.busy) { box.innerHTML = '<div class="panel ndz">' + top + '<p class="ah-lead" id="ndzLoad">Reading pull ' + D.done + ' of ' + D.of + '…</p></div>'; return; }
   if (D.err || !D.d || !D.d.n) { box.innerHTML = '<div class="panel ndz">' + top + '<p class="ah-lead">Couldn\'t draft a note' + (D.err ? ': ' + esc(D.err) : ': no pulls of this boss could be read') + '.</p><div class="ah-btns"><button class="btn" type="button" id="ndzNo">Back</button></div></div>'; $('#ndzNo').onclick = () => { S.noteDraft = null; assign(); }; return; }
   const d = D.d, pm = new Map(players().map((p) => [ndzNm(p.name), p]));
@@ -2872,7 +2918,7 @@ function ndzView(r) {
     ndzSteps(1) + secs.map((s) => '<div class="ndz-sec"><h4>' + esc(s) + '</h4>' + d.rows.filter((x) => x.sec === s).map(row).join('') + '</div>').join('') +
     (d.fill.length ? '<div class="ndz-sec ndz-fill"><h4>For you to fill in</h4><p class="sub">The log shows what people did, not where they were told to stand or who makes the calls. Add these to the note yourself:</p><ul>' + d.fill.map((f) => '<li>' + esc(f).replace(/\{(\w+)\}/g, (m, k) => capS(k)) + '</li>').join('') + '</ul></div>' : '') +
     '<details class="ndz-sec"><summary>The note as it will be saved</summary><pre class="ndz-pre" id="ndzText"></pre></details>' +
-    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSave">Save the note</button><button class="btn" type="button" id="ndzCopy">Copy for the game</button><button class="btn" type="button" id="ndzNo">Cancel</button><span class="sub" id="ndzMsg"></span></div></div>';
+    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSave">Save the note</button><button class="btn" type="button" id="ndzCopy">Copy for the game</button><button class="btn" type="button" data-ndzroster="1">Build from roster</button><button class="btn" type="button" id="ndzNo">Cancel</button><span class="sub" id="ndzMsg"></span></div></div>';
   const txt = () => ndzText(d), show = () => { $('#ndzText').textContent = txt(); };
   show(); $$('#assignBox [data-ndzi]').forEach((c) => (c.onchange = () => { d.rows[+c.dataset.ndzi].on = c.checked; show(); }));
   $('#ndzCopy').onclick = () => copyBtn($('#ndzCopy'), txt()); ndzStepsBind(r);
