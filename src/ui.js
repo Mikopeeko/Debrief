@@ -16035,10 +16035,26 @@ function cmpTop(r, p) {
     (far.length ? '<optgroup label="Further down">' + far.map((o) => '<option value="r' + o.n + '"' + (fk === o ? ' disabled' : '') + '>Around #' + o.n + ': ' + esc(o.y.name) + ' (#' + o.y.rank + ')</option>').join('') + '</optgroup>' : RK && RK.busy ? '<optgroup label="Further down"><option disabled>Loading more of the rankings…</option></optgroup>' : '') +
     (avl.length ? '<optgroup label="Averages">' + avl.map((n) => '<option value="a' + n + '"' + (avK === n ? ' disabled' : '') + '>Top ' + n + ' average</option>').join('') + '</optgroup>' : '') + '</select>';
   // (Where you stand: your number over the whole fight, as the rankings count it, next to the average of the top 5, 50, 200 and 500)
-  const lad = [5, 50, 100, 200, 500].map((n) => ({ n, a: avg(n) })).filter((o) => o.a);
-  const stand = lad.length && mine > 0 ? (() => { const L = [{ me: true, v: mine }].concat(lad.map((o) => ({ n: o.n, v: o.a.v, cnt: o.a.n }))).sort((a, b) => b.v - a.v), mx = L[0].v || 1, U = k === 'heal' ? 'healing' : 'damage';
+  // (Oct 20, "keep adding those rungs until there's ranks below him": past the top 500, rungs of 1,000, 1,500 and 2,000 until two are
+  // below you or the rankings run out, reading further down the rankings for them; and your own spot, "about #742", by your name)
+  const lv = [5, 50, 100, 200, 500];
+  for (const n of [1000, 1500, 2000]) {
+    if (!(mine > 0) || lv.filter((m) => { const a = avg(m); return a && a.v < mine; }).length >= 2) break;
+    if (RK && !RK.more && !RK.busy && rl.length < lv[lv.length - 1] * 1.2) break; /* (few further down: the last rung already has nearly all of them) */
+    if (RK && RK.more) { RK.want = Math.max(RK.want, Math.min(20, n / 100)); specRanksMore(r, RK); }
+    lv.push(n);
+  }
+  const lad = lv.map((n) => ({ n, a: avg(n) })).filter((o) => o.a), at = rl.find((y) => y.amount <= mine);
+  // (still fewer than two rungs below you: the hundreds ranked below you, "Ranks 401-500 average", as many as it takes)
+  for (let s = at ? Math.ceil(at.rank / 100) * 100 + 1 : 0, i = 0; at && mine > 0 && i < 2 && lad.filter((o) => o.a.v < mine).length < 2; s += 100, i++) {
+    if (RK && RK.more && rl.length < s + 99) { RK.want = Math.max(RK.want, Math.min(20, Math.ceil((s + 99) / 100))); specRanksMore(r, RK); break; }
+    const l = rl.filter((y) => y.rank >= s && y.rank < s + 100); if (!l.length) break;
+    lad.push({ band: [s, l[l.length - 1].rank], a: { v: l.reduce((t, y) => t + y.amount, 0) / l.length, n: l.length } });
+  }
+  const myAt = !(mine > 0) ? '' : at ? 'about #' + at.rank.toLocaleString('en-US') : RK && !RK.more && rl.length ? 'below all ' + rl.length.toLocaleString('en-US') + ' ranked' : '';
+  const stand = lad.length && mine > 0 ? (() => { const L = [{ me: true, v: mine }].concat(lad.map((o) => ({ n: o.n, band: o.band, v: o.a.v, cnt: o.a.n }))).sort((a, b) => b.v - a.v), mx = L[0].v || 1, U = k === 'heal' ? 'healing' : 'damage';
     return '<div class="panel pf-bars"><h3 class="nh"><span>Where you stand</span><small>' + capS(U) + ' a second over the whole fight, as the rankings count it, next to the average ' + esc(spn) + ' at each level' + (RK && RK.busy ? '. Loading more…' : '') + '</small></h3>' + cbHead('A second', 'Gap', '', '', 'Who') +
-      L.map((o, i) => cbRow({ tag: 'div', cls: ' nb', k: i + 1, color: o.me ? p.color : '#e6b450', icon: o.me ? avatar(p, true) : cmpIcon('trophy', 'var(--gold)'), name: o.me ? (cmpIsMe(p) ? 'You' : esc(p.name)) : 'Top ' + o.n + ' average', chips: o.me || o.cnt >= o.n ? '' : '<span class="sub">(' + o.cnt + ' so far)</span>',
+      L.map((o, i) => cbRow({ tag: 'div', cls: ' nb', k: i + 1, color: o.me ? p.color : '#e6b450', icon: o.me ? avatar(p, true) : cmpIcon('trophy', 'var(--gold)'), name: o.me ? (cmpIsMe(p) ? 'You' : esc(p.name)) : o.band ? 'Ranks ' + o.band[0].toLocaleString('en-US') + '–' + o.band[1].toLocaleString('en-US') + ' average' : 'Top ' + o.n.toLocaleString('en-US') + ' average', chips: o.me ? (myAt ? '<span class="sub">(' + myAt + ' on this boss)</span>' : '') : o.band || o.cnt >= o.n ? '' : '<span class="sub">(' + (RK && !RK.more ? 'all ' + o.cnt.toLocaleString('en-US') + ' ranked' : o.cnt.toLocaleString('en-US') + ' so far') + ')</span>',
         segs: [[100 * o.v / mx, 'm']], v: C(o.v), sub: o.me ? '' : (mine >= o.v ? '<span class="dl up">▲ ' + Math.round(100 * (mine / o.v - 1)) + '%</span>' : '<span class="dl dn">▼ ' + Math.round(100 * (1 - mine / o.v)) + '%</span>') })).join('') + '</div>'; })() : '';
   const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">' + esc(w.name) + '</span>' + pick +
     '<small>#' + x.rank + ' ' + esc(spn) + ' on this boss' + (x.hero ? ', ' + esc(x.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
