@@ -1354,6 +1354,7 @@ const PATCH_NOTES = [
   { d: '2026-10-20', n: [
     'Patch notes: this page, so you can see what changed and when.',
     'A calmer, tidier look: one set of text sizes, corners and spacing across every page.',
+    'Compare: the loading screen now shows each step and how far along it is while another player\'s kill downloads.',
   ], f: [
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
   ] },
@@ -13902,6 +13903,12 @@ function cmpMyAb(r, p, k) {
   return all.map((a) => ({ name: a.name, id: a.id, share: a.total / tot, oh: k === 'heal' && a.total + a.over > 0 ? a.over / (a.total + a.over) : null, cpm: /: /.test(a.name) ? null : ((p.castAb.get(a.name) || {}).n || 0) / min }));
 }
 const cmpMsg = (t) => '<div class="panel"><p class="muted" style="margin:0">' + t + '</p></div>';
+// (Oct 20, "proper loading graphics" on Compare: the site's loading card, one dancer per wait even when the page redraws; its line and bar
+// move in place as each step finishes, and the card is let go once the wait is over)
+const CMP_LD = new Map();
+const cmpLoad = (key, title, line, frac) => { let o = CMP_LD.get(key); if (!o) CMP_LD.set(key, o = { html: loadCard(title, line, frac == null ? null : frac), line, frac }); return '<div class="cmp-ld" data-ld="' + esc(key) + '">' + o.html + '</div>'; };
+const cmpLoadSet = (key, line, frac) => { const o = CMP_LD.get(key); if (!o) return; o.line = line; if (frac != null) o.frac = frac; document.querySelectorAll('.cmp-ld').forEach((el) => { if (el.dataset.ld === key) loadSet(el, line, frac); }); };
+const cmpLoadEnd = (key) => CMP_LD.delete(key);
 const cmpNeedWcl = (what) => cmpMsg(what + ' show for raid bosses opened from a report link. Open this pull from its report link to see them.');
 // ---- the page, built only from the site's own pieces (Oct 19, "the chart styles aren't cohesive, no tooltips, no
 // click to drop down"): the player header as on Players ("Name vs Name", each with Change), the tiles, then a panel of
@@ -14702,7 +14709,7 @@ function cmpFindP(r, p, ps) {
   if (pk && pk.src === 'rank') { const w = pk.w;
     const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:' + p.color + '">' + esc(w.name) + '</span>' + again + '<small>#' + w.rank + ' ' + esc(spn) + ' on this boss' + (w.hero ? ', ' + esc(w.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
     const TF = topFightFor(r, w);
-    if (TF === 'loading') return { vs, body: cmpMsg('Loading ' + esc(w.name) + '\'s kill, the same way a pull opens. The first time takes a few seconds…') };
+    if (TF === 'loading') return { vs, body: cmpTfLoad(w) };
     if (TF.err) return { vs, body: cmpMsg(esc(TF.err)) };
     return cmpPair(r, p, TF.r, TF.q, vs); }
   const o = specRanksFor(r, p); if (o && !o.pages && !o.err) specRanksMore(r, o);
@@ -14831,7 +14838,11 @@ function cmpSelf(r, p) {
   const opts = '<select class="rot-sel" id="cmpSelfP" aria-label="Change the pull">' + others.map((x) => '<option value="' + x.pull + '"' + (x === pick ? ' selected' : '') + '>Pull ' + x.pull + (x.kill ? ' (kill)' : '') + '</option>').join('') + '</select>';
   const vs = avatar(p, true) + ' <span class="nm" style="color:' + p.color + '">Pull ' + pick.pull + (pick.kill ? ', the kill' : '') + '</span>' + opts;
   const r2 = CACHE.get(pick);
-  if (!r2) { getRep(pick).then(() => { if (S.tab === 'cmp' && S.cmpMode === 'self') cmp(); }).catch(() => {}); return { vs, body: cmpMsg('Reading pull ' + pick.pull + '…') }; }
+  if (!r2) { const lk = 'self:' + ITEMS.indexOf(pick), first = !CMP_LD.has(lk), two = !!pick.wcl && (!first || !INFLIGHT.has(pick)); /* (already being read in the background: no steps to show) */
+    const card = cmpLoad(lk, 'Opening pull ' + pick.pull, two ? 'Step 1 of 2: downloading pull ' + pick.pull + '…' : 'Reading pull ' + pick.pull + '…', two ? 0 : null);
+    getRep(pick).then(() => { cmpLoadEnd(lk); if (S.tab === 'cmp' && S.cmpMode === 'self') cmp(); }).catch(() => cmpLoadEnd(lk));
+    if (first && two) WCL.loadEvents(S.wclCreds, pick, (n) => cmpLoadSet(lk, 'Step 1 of 2: downloading pull ' + pick.pull + ', ' + n.toLocaleString('en-US') + ' events…', 0)).then(() => cmpLoadSet(lk, 'Step 2 of 2: reading pull ' + pick.pull + '…', 0.5), () => {});
+    return { vs, body: card }; }
   const q = [...r2.players.values()].find((x) => x.name === p.name);
   if (!q) return { vs, body: cmpMsg(esc(p.name) + ' isn\'t in pull ' + pick.pull + '.') };
   return cmpPair(r, p, r2, q, vs, '', { a: 'Pull ' + r.item.pull + (r.item.kill ? ' (kill)' : ''), b: 'Pull ' + pick.pull + (pick.kill ? ' (kill)' : '') });
@@ -14844,20 +14855,25 @@ function topFightFor(r, w) {
   if (!w || !w.code) return { err: 'This ranking has no kill to open. Open the tab again tomorrow.' };
   const k = w.code + ':' + w.fight; if (TOPFIGHT.has(k)) return TOPFIGHT.get(k);
   TOPFIGHT.set(k, 'loading');
+  // (the loading card's three steps: their report, their kill's download (the events so far), then reading it like a pull)
+  const lk = 'tf:' + k, step = (n, t) => cmpLoadSet(lk, 'Step ' + n + ' of 3: ' + t, (n - 1) / 3);
   (async () => { const rp = await WCL.loadReport(S.wclCreds, w.code), it = (rp.bosses || []).find((x) => x.wcl && x.wcl.fight === w.fight);
     if (!it) throw new Error('That kill isn\'t in its report any more.'); it.foreign = true;
-    const r2 = await getRep(it), q = [...r2.players.values()].find((x) => x.name === w.name); if (!q) throw new Error(w.name + ' isn\'t in that kill.');
+    step(2, 'downloading their kill…'); const rd = getRep(it);
+    if (it.wcl && !CACHE.has(it)) WCL.loadEvents(S.wclCreds, it, (n) => step(2, 'downloading their kill, ' + n.toLocaleString('en-US') + ' events…')).then(() => step(3, 'reading their kill…'), () => {});
+    const r2 = await rd, q = [...r2.players.values()].find((x) => x.name === w.name); if (!q) throw new Error(w.name + ' isn\'t in that kill.');
     return { r: r2, q }; })()
     .then((o) => TOPFIGHT.set(k, o), (e) => { console.warn('Top raider\'s kill:', e && e.message); TOPFIGHT.set(k, { err: 'Their kill didn\'t load just now. Open the tab again in a minute.' }); })
-    .finally(() => { if (S.tab === 'cmp' && S.rep === r) cmp(); });
+    .finally(() => { cmpLoadEnd(lk); if (S.tab === 'cmp' && S.rep === r) cmp(); });
   return 'loading';
 }
+const cmpTfLoad = (w) => cmpLoad('tf:' + w.code + ':' + w.fight, 'Loading ' + w.name + '\'s kill', 'Step 1 of 3: finding their report…', 0);
 function cmpTop(r, p) {
   const spn = p.specName || 'spec', vs0 = (sub) => cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">The top ' + esc(spn) + 's</span><small>' + sub + '</small>';
   if (r.item.kind !== 'boss' || (!S.wclCreds && !WCL.HOSTED)) return { vs: vs0('on this boss'), body: cmpNeedWcl('The top raiders') };
   const k = cmpKind(p), TS = topSpecFor(r, p, k);
   if (TS == null) return { vs: vs0('on this boss'), body: cmpMsg('There are no rankings for ' + esc(spn) + 's here.') };
-  if (TS === 'loading') return { vs: vs0('loading…'), body: cmpMsg('Loading the top ' + esc(spn) + 's on this boss…') };
+  if (TS === 'loading') return { vs: vs0('loading…'), body: cmpLoad('ts:' + r.item.id + '|' + r.item.diffId + '|' + spn + '|' + k, 'Finding the top ' + spn + 's', 'Looking up the rankings on this boss…', null) };
   if (!TS.n) return { vs: vs0('on this boss'), body: cmpMsg(TS.err ? 'The rankings didn\'t load just now. Open the tab again in a minute.' : 'There are no ranked ' + esc(spn) + 's on this boss yet.') };
   // (the 3 best on this player's hero tree, of the top 8, each one's tree read from the spells they cast; with none on it,
   // the 3 best of any tree, and a note saying so)
@@ -14870,7 +14886,7 @@ function cmpTop(r, p) {
     '<small>#' + x.rank + ' ' + esc(spn) + ' on this boss' + (x.hero ? ', ' + esc(x.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
   const treeNote = treeMiss ? '<div class="panel"><p class="cmp-hnote" style="margin:0">None of the top ' + all.length + ' ' + esc(spn) + 's on this boss play ' + esc(myHero) + ', so these are the best of any hero tree. Some spells only one side has.</p></div>' : '';
   const TF = topFightFor(r, w);
-  if (TF === 'loading') return { vs, body: treeNote + cmpMsg('Loading ' + esc(w.name) + '\'s whole kill, the same way a pull opens. The first time takes a few seconds…') };
+  if (TF === 'loading') return { vs, body: treeNote + cmpTfLoad(w) };
   if (TF.err) return { vs, body: treeNote + cmpMsg(esc(TF.err)) };
   return cmpPair(r, p, TF.r, TF.q, vs, treeNote);
 }
@@ -14918,7 +14934,7 @@ function cmpRaids(r, ps) {
   const ctl = '<div class="cmp-ctl"><div class="seg" id="cmpRange">' + CMP_RANGE.map(([p, l]) => '<button type="button" data-p="' + p + '"' + (p === pg ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' +
     '<div class="seg" id="cmpSort">' + [['like', 'Most like yours'], ['fast', 'Fastest']].map(([s, l]) => '<button type="button" data-s="' + s + '"' + ((S.cmpSort || 'like') === s ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' +
     '<input class="cmp-find" id="cmpFind" type="search" placeholder="Find a guild" value="' + esc(S.cmpFind || '') + '" aria-label="Find a guild"></div>';
-  if (L === 'loading') return { vs: vsPick, body: ctl + cmpMsg('Loading 20 kills of ' + esc(r.item.boss) + ', with who played what…') };
+  if (L === 'loading') return { vs: vsPick, body: ctl + cmpLoad('tk:' + r.item.id + '|' + r.item.diffId + '|' + pg, 'Finding other raids\' kills', 'Loading 20 kills of ' + r.item.boss + ', with who played what…', null) };
   if (!L.kills.length) return { vs: vsPick, body: ctl + cmpMsg(L.err ? 'The kills didn\'t load just now. Try again in a minute.' : 'There aren\'t that many kills yet. Pick a range nearer the top.') };
   const ks = L.kills.map(match), f = plainL(String(S.cmpFind || '').trim());
   const shown = ks.filter((x) => !f || plainL(x.guild).includes(f) || plainL(x.server).includes(f)).sort((S.cmpSort || 'like') === 'fast' ? (a, b) => a.rank - b.rank : (a, b) => b.same / b.of - a.same / a.of || a.rank - b.rank);
@@ -14962,6 +14978,7 @@ function cmp() {
   const ae = document.activeElement, qAt = ae && ae.id === 'cmpQ' ? ae.selectionStart : null;
   const scrollY0 = window.scrollY;
   view('<div class="cmp">' + line + head + (o.body || '') + '</div>');
+  document.querySelectorAll('.cmp-ld').forEach((el) => { const x = CMP_LD.get(el.dataset.ld); if (x && x.line) loadSet(el, x.line, x.frac); }); /* (a redraw keeps how far a wait has got) */
   if (qAt != null) { const e = $('#cmpQ'); if (e) { e.focus(); e.setSelectionRange(qAt, qAt); } }
   window.scrollTo({ top: scrollY0 });
   spcTipInit();
