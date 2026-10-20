@@ -152,7 +152,7 @@ function svgIcon(id, name, big) {
 // A mechanic name as text with the spell tooltip on hover (the ID comes from the log when only the name is known)
 function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
 // A status on the right of a heading or bar, in the same words and marks on every tab: ✕ a problem, ! could be better, ✓ fine
-const hst = (st, txt) => '<span class="sst ' + st + '">' + (st === 'ok' ? '✓\u00a0' : '') + esc(txt).replace(/\bmajor\b/gi, '<span class="lv-maj">MAJOR</span>') + '</span>'; // (the mark stays with its first word)
+const hst = (st, txt) => '<span class="sst ' + st + '">' + (st === 'ok' ? '✓\u00a0' : '') + esc(txt === 'clean' ? 'Clean' : txt).replace(/\bmajor\b/gi, '<span class="lv-maj">MAJOR</span>') + '</span>'; // (the mark stays with its first word)
 // "all 3 done", but just "done" for one (never "all 1 done")
 const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all ' + n + ' ' + many);
 // "What went well" first, then "What went wrong", the same on Latest pull and Summary: what the raid did well leads (a strip
@@ -3242,7 +3242,7 @@ function audit() {
     avoid: { 'Stir the Depths steps': 'players stepping into Stir the Depths water again and again', '!Stir the Depths steps': 'a step into Stir the Depths water', 'Sanguine Storm hits': 'players taking repeated Sanguine Storm hits', '!Sanguine Storm hits': 'a single Sanguine Storm hit' },
     deaths: { 'Killed by': 'deaths', 'Still had ready': 'dying with a defensive or self-heal still ready' },
     orbs: { 'Orbs popped': 'Deluges with too many orbs at once', '!Orbs popped': 'Deluges off the orb plan', Result: 'Deluges that went wrong' }, soakq: { 'In circle': 'short-handed soaks', Target: 'targets without an external', Died: 'deaths in the soak', Soakers: 'soak assignment mix-ups' },
-    dmghost: { Result: 'ghost collisions or mind-control falls', '!Result': 'ghosts missed by Soul Sever' }, addsets: { Who: 'kicks before Gloombomb went out', Result: 'shields or adds not dealt with in time' },
+    dmghost: { Result: 'ghost collisions or mind-control falls', '!Result': 'ghosts missed by Soul Sever' }, addsets: { Result: 'Wails that got off or adds still up', '!Result': 'kicks before Gloombomb went out or slow adds' },
     tankfront: { Stack: 'tanks taking too many stacks', 'Had up': 'second stacks without two externals', Result: 'tank deaths' }, shield: { Result: 'casts nobody kicked', Broken: 'shields not broken in time', '!Broken': 'shields broken with little time to kick' },
     defensives: { Survival: 'low survival kit scores', '!Survival': 'survival kits with room to improve', Defensives: 'dying with a defensive or self-heal still ready', 'Healthstone and health potion': 'dying with a Healthstone or health potion unused', 'Combat or mana potion': 'pulls without a combat or mana potion', 'Close calls': 'close calls with nothing pressed' },
     inter: { 'Raid peak (3 to 5; up to 10 with cooldowns)': 'soak rounds going too high', 'Fragments to Zul\'jan': 'fragments reaching Zul\'jan' }, vf: { 'Removed after': 'deaths with Venomfang on', '!Removed after': 'slow Venomfang dispels' }, gloom: { Result: 'Gloombombs that missed the adds', '!Result': 'Gloombombs on the wrong add' },
@@ -3321,6 +3321,12 @@ function audit() {
         // (Ula'tek's Caustic Waves: every row is a hit, so say how many and on whom, not "0 of 6 were clean")
         const pw = new Set(all.map((x) => (x.row[1].ps || [])[0])).size, dw = all.filter((x) => x.row[4] && x.row[4].bad).length;
         lead = n ? plural(n, 'wave hit') + ' on ' + plural(pw, 'player') + (dw ? ', and ' + (dw === 1 ? 'one ended in a death' : dw + ' ended in deaths') : '') + '. Each row says which wave it was.' : 'Nobody was hit by Caustic Waves.';
+      } else if (s.id === 'addsets') {
+        const isA = (x) => /^Soulcoiler \d+$/.test(x.row[0].txt || ''), ad = all.filter(isA), kk = all.filter((x) => !isA(x));
+        const up = ad.filter((x) => isBadRow(x.row)).length, slow = ad.filter((x) => isWarnRow(x.row)).length, off = kk.filter((x) => isBadRow(x.row)).length, W = (n) => n + (n === 1 ? ' Wail of Terror' : ' Wails of Terror');
+        lead = (up ? plural(up, 'add') + (up === 1 ? ' was' : ' were') + ' still up when it shouldn\'t be' : 'All ' + plural(ad.length, 'add') + ' died in time') + (slow ? ', and ' + slow + ' had an early kick or a slow kill' : '') + '. ' +
+          (off ? W(off) + ' got off, out of ' + kk.length + '.' : kk.length ? 'Every Wail of Terror was kicked (' + kk.length + ').' : '');
+        if (!up && !slow && !off) lead = 'Clean. ' + lead;
       } else lead = !badL.length && !warnL.length && !badSets && !warnSets ? (n > 2 ? 'Clean, all ' + n + ' ' + noun + ' went to plan.' : n === 2 ? 'Clean, both ' + noun + ' went to plan.' : n === 1 ? 'Clean, the only ' + sing(noun) + ' went to plan.' : 'Clean.')
         // (one result: say it, not "0 of 1"; none clean: "neither Barrage was clean", not "0 of 2 Barrages were clean")
         : n === 1 ? (badL.length || badSets ? 'The only ' + sing(noun) + ' went wrong.' : 'The only ' + sing(noun) + ' could be better.')
@@ -3335,10 +3341,10 @@ function audit() {
       const tb = tally(badL, 'bad'), tw = tally(warnL, 'warn'), say = [lead], hdr = (k) => ' (see ' + (k === 1 ? 'its' : 'their') + ' header).';
       // (avoidable damage is by source, so say where the hits came from; the same source can be in both)
       if (s.id === 'avoid') { if (tb.length) say.push('The dangerous hits came from ' + listT(tb) + '.'); if (tw.length) say.push((tb.length ? 'Smaller hits came from ' : 'The hits came from ') + listT(tw) + '.'); }
-      else if ((tb.length || badSets) && s.id !== 'waves' && s.id !== 'froth') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
+      else if ((tb.length || badSets) && s.id !== 'waves' && s.id !== 'froth' && s.id !== 'eggs' && s.id !== 'addsets') say.push((tb.length ? 'The main ' + (tb.length === 1 ? 'problem was ' : 'problems were ') + listT(tb) + '.' : '') +
         (badSets ? (tb.length ? ' Also look at ' : 'Look at ') + setNames(badSetL) + hdr(badSets) : ''));
       // ("Smaller things to tighten up: slow dispels (7)", not "Slow dispels (7) could be tighter" (scan, Oct 19))
-      if ((tw.length || warnSets) && s.id !== 'waves' && s.id !== 'froth' && s.id !== 'avoid') say.push('Smaller things to tighten up: ' + [tw.length ? listT(tw) : '', warnSets ? setNames(warnSetL) + hdr(warnSets).replace(/\.$/, '') : ''].filter(Boolean).join(', and ') + '.');
+      if ((tw.length || warnSets) && s.id !== 'waves' && s.id !== 'froth' && s.id !== 'avoid' && s.id !== 'addsets') say.push('Smaller things to tighten up: ' + [tw.length ? listT(tw) : '', warnSets ? setNames(warnSetL) + hdr(warnSets).replace(/\.$/, '') : ''].filter(Boolean).join(', and ') + '.');
       const sev = badL.length || badSets ? (ratio >= 0.8 ? 'warn' : 'bad') : warnL.length || warnSets ? 'warn' : 'ok';
       return '<div class="msum"><p class="' + sev + '">' + esc(say.join(' ').replace(/\s+/g, ' ').trim()) + '</p></div>';
     }
@@ -3518,7 +3524,7 @@ function audit() {
     const lc = lvlCounts(s.id, nBad, nWarn, allRows.length), stc = !nBad && !nWarn ? (s.info ? 'na' : 'ok') : LVL_CLS[lvlOf(lc)], ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
     const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + '</summary><div class="secbody">' +
+      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + '</summary><div class="secbody">' +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -3625,7 +3631,7 @@ function audit() {
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
       top += '<div class="dbr-4">' + num('Result', res, resSub) + num('Deaths', '<b>' + deaths.length + '</b>', deaths.length ? 'first at ' + T(deaths[0].t) + ' (' + esc(deaths[0].player) + ')' : 'nobody died') +
-        num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> slips</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
+        num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> with mistakes</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
         num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '')) + '</div>';
       // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
       const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
@@ -4959,7 +4965,7 @@ function nightMechC(o) {
   const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
   const mapIn = (n, id) => { const r = mByPull.get(n); if (!r || !r.module || r.module.error || !r.module.sections) return null; const s = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === id); if (!s) return null;
     const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])); for (const want of [(row) => row.some((c) => c.bad), (row) => row.some((c) => c.warn)]) for (const row of all) if (want(row)) { const m = rowMap(row); if (m) return m; } return null; };
-  const LC = LVL_CLS, LW = { major: '✕ Failed', moderate: '✕ Failed', minor: '! Some mistakes', clean: '✓ clean' };
+  const LC = LVL_CLS, LW = { major: '✕ Failed', moderate: '✕ Failed', minor: '! Some mistakes', clean: '✓ Clean' };
   const worstOf = (r) => { const b = judged(r).filter((n) => stAt(r, n) === 'bad'), w = judged(r).filter((n) => stAt(r, n) === 'warn'); return r.v.worst || b.concat(w).sort((a, z) => z - a)[0] || judged(r)[judged(r).length - 1]; };
   const MAPS = [];
   const lateOf = (r) => r._late || (r._late = nightLate(pullNs, (n) => stAt(r, n)));
@@ -5028,7 +5034,7 @@ function nightMechC(o) {
     top += '<div class="dbr-4">' + num('Pulls', '<b>' + pulls.length + '</b>', durH(onBoss) + ' on the boss' + (reps.length < pulls.length ? ' · ' + reps.length + ' read' : '')) +
       (kill ? num('Kill', '<b class="dbr-ok">Pull ' + kill.pull + '</b>', kill.pull > 1 ? 'after ' + plural(kill.pull - 1, 'wipe') : 'first try') : num('Best pull', '<b>' + (bestP ? esc(pullShort(bestP)) : '—') + '</b>', bestP ? 'pull ' + bestP.pull + ' · ' + esc(pullLabel(bestP)) : 'no result yet')) +
       num('Deaths', '<b>' + nD + '</b>', reps.length ? (nD / reps.length).toFixed(1) + ' a pull' + (one ? ', ' + esc(one.split('-')[0]) : '') : '') +
-      num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> slips</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic') + ', over ' + plural(N, 'pull')) + '</div>';
+      num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> with mistakes</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic') + ', over ' + plural(N, 'pull')) + '</div>';
     // (the three to fix: failed first, then the ones wrong in the most pulls, then the boss's most important)
     const imp = IMPORTANCE[boss] || [], ix = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1 };
     const pick = probs.slice().sort((a, b) => rk[lvOf(a)] - rk[lvOf(b)] || wN(b) - wN(a) || ix(a.x.id) - ix(b.x.id)).slice(0, 3);
