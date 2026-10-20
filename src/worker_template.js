@@ -270,6 +270,7 @@ async function runBugs(env) {
     await say(env, tid, nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
       : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>').catch(() => {});
     st.fixed = [...(st.fixed || []), [tid, Date.now(), nope ? 0 : 1]].slice(-50);
+    if (!nope) await bugHunter(env, tid).catch((err) => console.warn('Bug Hunter:', err && err.message));
   }
   if (st.open.length !== still.length) st.open = still;
   if (dirty) await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st));
@@ -520,6 +521,47 @@ async function discordClick(req, env, ctx) {
   })().catch((err) => console.warn('Click:', err && err.message)));
   return reply(b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
 }
+// Bug Hunter (the user's pick, Oct 20): when a reported bug is fixed, its reporter gets the Bug Hunter role (needs Claudette
+// to have Manage Roles, above that role) and a thank-you in their post; a second fix just gets the thanks.
+async function bugHunter(env, tid) {
+  const m = await dc(env, '/channels/' + tid + '/messages/' + tid), uid = m && m.author && !m.author.bot && m.author.id;
+  if (!uid || uid === OWNER) return;
+  const role = (await dc(env, '/guilds/' + GUILD + '/roles')).find((r) => r.name === 'Bug Hunter'); if (!role) return;
+  const mem = await dc(env, '/guilds/' + GUILD + '/members/' + uid).catch(() => null); if (!mem) return;
+  if ((mem.roles || []).includes(role.id)) { await say(env, tid, 'Thanks again, Bug Hunter! 🏅'); return; }
+  await dc(env, '/guilds/' + GUILD + '/members/' + uid + '/roles/' + role.id, { method: 'PUT' });
+  await dc(env, '/channels/' + tid + '/messages', { method: 'POST', body: { content: '<@' + uid + '> You\'ve earned the **Bug Hunter** role 🏅 for helping make Debrief better. Thank you!', allowed_mentions: { parse: [], users: [uid] } } });
+}
+// Link previews (the user's pick, Oct 20): when Discord (or another app) fetches a Debrief link to show a preview, it gets a
+// small page with the pull's boss, pull number and result, and the Debrief banner (site-assets/og.png); people get the app.
+const PREVIEW_BOTS = /Discordbot|Twitterbot|Slackbot|facebookexternalhit|TelegramBot|WhatsApp|LinkedInBot|redditbot|Embedly|Applebot/i;
+const DIFF_NAME = { 1: 'LFR', 2: 'LFR', 3: 'Normal', 4: 'Heroic', 5: 'Mythic' };
+const mss = (ms) => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+async function previewPage(env, url) {
+  let title = 'Debrief: every pull, explained', desc = 'Free Mythic raid log reviews: every mechanic, death and rotation, pull by pull.';
+  const code = url.searchParams.get('report'), fid = parseInt(url.searchParams.get('fight'), 10);
+  if (code && CODE.test(code)) {
+    try {
+      const rep = ((await gql(env, REPORT_Q, { code })) || {}).reportData.report, bosses = (rep.fights || []).filter((f) => f.encounterID);
+      const f = fid ? bosses.find((x) => x.id === fid) : null;
+      if (f) {
+        const n = bosses.filter((x) => x.encounterID === f.encounterID && x.difficulty === f.difficulty && x.startTime <= f.startTime).length, len = mss(f.endTime - f.startTime);
+        title = ((DIFF_NAME[f.difficulty] || '') + ' ' + f.name + ' · Pull ' + n).trim();
+        desc = (f.kill ? '🎉 Kill in ' + len + '!' : 'Wipe at ' + (f.fightPercentage != null ? Math.round(f.fightPercentage) + '%' : '?') + ' after ' + len + (f.lastPhase > 1 ? ', in phase ' + f.lastPhase : '') + '.') +
+          ' See every mechanic, death and player on Debrief.';
+      } else if (bosses.length) {
+        const kills = bosses.filter((x) => x.kill).length, names = [...new Set(bosses.map((x) => x.name))];
+        title = (rep.title || 'A raid night') + ' · Debrief';
+        desc = bosses.length + ' pulls on ' + names.slice(0, 3).join(', ') + (names.length > 3 ? ' and more' : '') + (kills ? ', ' + kills + ' kill' + (kills > 1 ? 's' : '') : '') + '. Every pull, explained.';
+      }
+    } catch (e) { /* (a private or missing report: the plain Debrief card) */ }
+  }
+  const a = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  return '<!doctype html><html><head><meta charset="utf-8"><title>' + a(title) + '</title>' +
+    '<meta property="og:site_name" content="Debrief"><meta property="og:title" content="' + a(title) + '"><meta property="og:description" content="' + a(desc) + '">' +
+    '<meta property="og:url" content="' + a(url.toString()) + '"><meta property="og:image" content="' + SITE + '/og.png"><meta name="twitter:card" content="summary_large_image">' +
+    '<meta name="theme-color" content="#e6b450"></head><body><a href="' + a(url.toString()) + '">' + a(title) + '</a></body></html>';
+}
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
@@ -662,6 +704,7 @@ export default {
         return json({ error: String(err && err.message || err) }, 502);
       }
     }
+    if (PREVIEW_BOTS.test(req.headers.get('User-Agent') || '')) return new Response(await previewPage(env, url), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' } });
     return new Response(appHtml(env), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
   },
 };

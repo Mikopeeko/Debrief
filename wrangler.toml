@@ -17,3 +17,7 @@ crons = ["*/10 * * * *"]
 [[kv_namespaces]]
 binding = "DEBRIEF_KV"
 id = "5f5a92a1ea294fb888dea9dc5d7a2aa8"
+
+# Plain files served as they are, before the Worker: og.png is the picture on Debrief link previews (Discord and others).
+[assets]
+directory = "./site-assets"
