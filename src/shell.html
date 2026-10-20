@@ -4316,6 +4316,12 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .dbck > details.secd > summary::after { order: 5; } /* (the open arrow stays at the far right) */
 .dbck:has(.dbd-dots) > details.secd > summary:not(:has(> .dbd-dots)) > .sst { margin-right: 254px; } /* (a line with no dots, like Deaths, keeps the same badge column) */
 @media (max-width: 760px) { .dbck > details.secd > summary > .sst { min-width: 0; margin-right: 0 !important; } .dbck > details.secd > summary > .dbd-dots { order: 20; width: auto; flex: 1 1 100%; } }
+/* NSRT notes, round 2 (Oct 20): the match warning, the three choices for another group's note, nicknames, suggested picks, warnings */
+.rsw-warn { margin: 8px 0; padding: 8px 12px; border-radius: 8px; background: rgba(255,213,74,.08); border: 1px solid rgba(255,213,74,.3); color: var(--lv-min-t); font-size: 13.5px; }
+.rsw-opts { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; } .rsw-opts > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .rsw-opts .btn { min-width: 210px; }
+.rsw-nk { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 0; cursor: pointer; } .rsw-why { color: var(--gold); }
+.rsw-w { margin-top: 4px; font-size: 13px; color: var(--lv-min-t); }
+@media (max-width: 600px) { .rsw-opts .btn { min-width: 0; width: 100%; } }
 </style>
 
 

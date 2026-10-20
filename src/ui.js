@@ -1363,6 +1363,7 @@ const PATCH_NOTES = [
     'Debriefing: Copy for Discord, a link straight to one mechanic, a Next pull line on each mechanic, and phase timing against your best pull.',
     'Every boss\'s mechanics reworded: titles that say what to do, plain numbers instead of shorthand, and the same badge words everywhere.',
     'NSRT notes: add a note on any pull. Each group of players keeps its own note, and it opens by itself on every pull with them. A note that names someone who isn\'t there asks who takes their jobs first.',
+    'NSRT notes: suggested picks with a reason for each, warnings for a wrong role or a player picked twice, nicknames linked once, a note for another group saved for that group or filled with tonight\'s raid, and your notes listed with when each was last used.',
     'Nymrissa gets her full Debriefing: murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, and the whirlpools and Pop!',
     'Nymrissa: Frost Burst and Frostscale checks now judged against the fastest Mythic kills, and every check has a How it works note.',
   ], f: [
@@ -1757,7 +1758,16 @@ const pullKey = (it) => String(Math.round((it.wallMs || it.startMs || 0) / 10000
 // note's first line (its boss and difficulty), then its roster (the pull's players it names, less half a point for each name
 // it gives who isn't there), and when two notes fit the roster about as well, the one whose jobs were done that pull
 // (cooldowns on time, kicks and soaks followed), so an old and a new plan for the same players each get their own pulls.
+// (nicknames (Oct 20): NSRT notes can call a player by a nickname; linked once on the swap screen, the note keeps it and the checks read the player)
+const NICK_KEY = 'wla-nicks';
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-nnew]'); if (!b || !S.rep) return; S.notePend = null; S.noteEdit = true; S.noteEditId = 'new'; S.tab = 'overview'; renderMain(); });
+const nicksGet = () => { try { return JSON.parse(store.get(NICK_KEY) || '{}') || {}; } catch (e) { return {}; } };
+const nickSet = (nick, name) => { const m = nicksGet(); m[String(nick).toLowerCase()] = name; store.set(NICK_KEY, JSON.stringify(m)); };
+const noteResolve = (text) => { const m = nicksGet(), ks = Object.keys(m); let t = String(text || ''); for (const k of ks) t = noteSwapName(t, k, m[k]); return t; };
+// (how much of a note's roster is in a pull: its share of named players who are there)
+const noteRatio = (f) => (f && f.named ? f.found / f.named : 0);
 function noteFit(text, rep) {
+  text = noteResolve(text);
   let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
   const enc = hd.encounterid && rep.item.id ? +hd.encounterid === +rep.item.id : null;
   const dif = hd.difficulty && rep.item.diff ? String(rep.item.diff).toLowerCase().slice(0, 3) === String(hd.difficulty).toLowerCase().slice(0, 3) : null;
@@ -1791,7 +1801,7 @@ function noteForRep(rep) {
     const near = fs.filter((x) => x.f.roster >= fs[0].f.roster - 0.25);
     let how = fs.length > 1 && fs[0].f.roster > fs[1].f.roster ? 'roster' : 'newest';
     if (near.length > 1) {
-      for (const x of near) { try { x.res = E.checkAssignments(rep, x.n.text); } catch (e) { x.res = { error: e.message }; } x.j = noteJobs(x.res); }
+      for (const x of near) { try { x.res = E.checkAssignments(rep, noteResolve(x.n.text)); } catch (e) { x.res = { error: e.message }; } x.j = noteJobs(x.res); }
       const js = (x) => (x.j ? x.j.score : -1e9);
       near.sort((a, b) => js(b) - js(a) || b.f.roster - a.f.roster || (b.n.saved || 0) - (a.n.saved || 0));
       if (js(near[0]) > js(near[1])) how = 'jobs'; else how = near[0].f.roster > near[1].f.roster ? 'roster' : 'newest';
@@ -1973,7 +1983,8 @@ function applyNote(rep) {
   if (!text) return;
   // (the automatic pick may have checked this note already, to compare notes: that result is used as it is)
   if (pick.res && !pick.res.error) rep.assign = pick.res;
-  else { try { rep.assign = E.checkAssignments(rep, text); } catch (e) { rep.assign = { error: e.message }; return; } }
+  else { try { rep.assign = E.checkAssignments(rep, noteResolve(text)); } catch (e) { rep.assign = { error: e.message }; return; } }
+  if (!pick.example) noteUsedAt(rep.item.boss, pick.id, rep.item.wallMs || rep.item.startMs || 0); /* (for the notes list: the last night it was used) */
   for (const m of rep.assign.mistakes) rep.mistakes.push({ ...m, fromNote: true });
   rep.mistakes.sort((a, b) => a.t - b.t);
 }
@@ -2022,11 +2033,20 @@ function noteSaveText(boss, text, name, r) { const o = notesOf(boss), key = nmSe
 function bindSwap(r, used, mode, only) { const boss = r.item.boss, b = $('#rswMake'); if (!b) return;
   b.onclick = () => { let t = used.text; const sw = [], sels = $$('#assignBox .rsw-s'), msg = $('#rswMsg');
     if ([...sels].some((x) => !x.value)) { if (msg) msg.textContent = 'Pick who takes each missing player\'s jobs first.'; return; }
-    sels.forEach((x) => { t = noteSwapName(t, x.dataset.a, x.value); sw.push([x.dataset.a, x.value]); });
+    const nk = new Set($$('#assignBox .rsw-nkc').filter((c) => c.checked).map((c) => c.dataset.a));
+    sels.forEach((x) => { if (nk.has(x.dataset.a)) { nickSet(x.dataset.a, x.value); return; } t = noteSwapName(t, x.dataset.a, x.value); sw.push([x.dataset.a, x.value]); });
     const same = notesOf(boss).list.find((n) => !n.example && n.id !== used.id && nmSetOf(n.text) === nmSetOf(t) && noteNorm(n.text) !== noteNorm(t));
     if (same && !b.dataset.ok) { b.dataset.ok = '1'; b.textContent = 'Replace it'; if (msg) msg.textContent = 'You already have a note for exactly these players (' + same.name + '). Saving replaces it.'; return; }
     const made = noteSaveText(boss, t, mode === 'paste' ? used.name : null, r); S.notePend = null; S.noteMade = { boss, id: made.id, name: made.name, swaps: sw }; renderMain(); };
   const back = $('#rswBack'); if (back) back.onclick = () => { S.notePend = null; assign(only); };
+  // (warnings as you pick: the same player for two missing players, or someone of another role)
+  const RWn = { tank: 'a tank', healer: 'a healer', dps: 'DPS' };
+  const check = () => { const sels = [...$$('#assignBox .rsw-s')].filter((x) => x.tagName === 'SELECT');
+    for (const x of sels) { const row = x.closest('.rsw-one'), w = row && row.querySelector('.rsw-w'); if (!w) continue; const out = [];
+      const twice = sels.find((y) => y !== x && y.value && y.value === x.value); if (twice) out.push(x.value + ' is also picked for ' + twice.dataset.a + '.');
+      const o = x.selectedOptions[0], ar = row.dataset.ar, pr = o && o.dataset.r; if (x.value && ar && pr && ar !== pr) out.push(x.dataset.a + ' is ' + (RWn[ar] || ar) + ', ' + x.value + ' is ' + (RWn[pr] || pr) + '.');
+      w.textContent = out.join(' '); w.hidden = !out.length; } };
+  $$('#assignBox select.rsw-s').forEach((x) => (x.onchange = check)); check();
   const del = $('#rswDel'); if (del) del.onclick = () => { if (!del.dataset.armed) { del.dataset.armed = '1'; del.textContent = 'Click again to delete'; del.classList.add('bad'); return; }
     const o = notesOf(boss); o.list = o.list.filter((n) => n.id !== used.id); notesSave(boss, o); for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }; }
 // When the pull's players don't fully match the note (your note, Oct 18): offer a new note with this pull's players taking
@@ -2038,7 +2058,7 @@ const rosterNoKey = (n, away) => n.id + '|' + away.map((x) => x.toLowerCase()).s
 function rosterOffer(r, used) { return ''; /* (your note, Oct 19: the roster comes from the log, no stand-in picking) */ }
 // (Oct 20, your call: a note that doesn't fully match the pull can't be saved as it is: pick who takes each missing player's jobs,
 // and that version is saved for this group. mode 'paste': a note just added; 'miss': a saved note for another group of players)
-function rosterSwap(r, used, mode) {
+function rosterSwap(r, used, mode, ratio) {
   if (!used) return '';
   const pn0 = (p) => p.name.split('-')[0], lc0 = (s) => String(s).toLowerCase(), inP = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name));
   const away0 = noteNames(used.text).filter((n) => !inP.some((p) => lc0(pn0(p)) === lc0(n)));
@@ -2048,6 +2068,7 @@ function rosterSwap(r, used, mode) {
     : '<b>None of your notes for ' + esc(r.item.boss) + ' fits this group.</b> The closest is ' + esc(used.name || 'your note') + ': pick who takes the jobs of the ' + plural(away0.length, 'player') + ' who ' + (away0.length === 1 ? "isn't" : "aren't") + ' here, and a note for this group is saved next to it.';
   h = h.replace(/<div class="rsw-t"><b>[^<]*<\/b> /, '<div class="rsw-t">' + lead + ' ');
   h = h.replace(/\d+ players? in your note (?:isn't|aren't) in this pull\. Pick who takes their assignments:/, ''); /* (the lead already says it) */
+  if (ratio != null && ratio < 0.8) h = h.replace('<div class="rsw-rows">', '<div class="rsw-warn">A lot of players changed: ' + plural(away0.length, 'player') + ' in this note ' + (away0.length === 1 ? 'isn\'t' : 'aren\'t') + ' here. Is this the right note for this group? The picks below are suggestions; check each one.</div><div class="rsw-rows">');
   return h.replace(/<button class="btn sm" type="button" id="rswNo"[^>]*>Not now<\/button><span class="sub">[^<]*<\/span>/, (mode === 'paste' ? '<button class="btn sm" type="button" id="rswBack">Cancel</button>' : '<button class="btn sm" type="button" id="rswDel">Delete ' + esc(used.name || 'that note') + '</button>') + '<span class="sub" id="rswMsg"></span>')
     .replace('>Make the new note<', '>' + (mode === 'paste' ? 'Save the note' : 'Save a note for this group') + '<');
 }
@@ -2081,16 +2102,28 @@ function rosterOffer0(r, used, forced) {
   for (const a of away) { if (pick.has(a)) continue; const L = jobs.get(a).lines.join(' ').toLowerCase();
     const want = /kick|interrupt/.test(L) ? (p) => kicked.has(p.name) : /tank/.test(L) ? (p) => p.role === 'tank' : /heal/.test(L) ? (p) => p.role === 'healer' : null;
     if (want) take(a, left.find(want)); }
-  for (const a of away) if (!pick.has(a) && left.length) take(a, left[0]);
+  // (Oct 20: each pick says why; then someone with the missing player's role; with everyone already in the note, the one with the fewest jobs)
+  const why = new Map(), kn = new Map(); for (const k of r.interrupts || []) kn.set(k.player, (kn.get(k.player) || 0) + 1);
+  const roleOfN = (a) => { for (const rep of CACHE.values()) for (const p of rep.players.values()) if (p.name && lc(pn(p)) === lc(a)) return p.role || null; return null; };
+  const RW = { tank: 'a tank', healer: 'a healer', dps: 'DPS' }, jobsN = (p) => noteNames(used.text).filter((n) => lc(n) === lc(pn(p))).length;
+  for (const [a, p] of pick) { const ids = jobs.get(a).cds.map((c) => c.id).filter(Boolean), L = jobs.get(a).lines.join(' ').toLowerCase();
+    why.set(a, ids.length && ids.some((id) => ((p.castTimes && p.castTimes.get(id)) || []).length) ? 'pressed the same cooldown this pull' : /kick|interrupt/.test(L) && kn.get(p.name) ? 'kicked ' + plural(kn.get(p.name), 'time') + ' this pull' : RW[p.role] ? RW[p.role] + ', like the job needs' : 'free this pull'); }
+  for (const a of away) { if (pick.has(a)) continue; const ro = roleOfN(a); if (ro) { take(a, left.find((p) => p.role === ro)); if (pick.has(a)) why.set(a, 'also ' + (RW[ro] || ro)); } }
+  if (forced) left.sort((x, y) => jobsN(x) - jobsN(y));
+  for (const a of away) if (!pick.has(a) && left.length) { take(a, left[0]); why.set(a, jobsN(pick.get(a)) ? 'has the fewest jobs in the note' : 'free this pull'); }
+  const roleA = new Map(away.map((a) => [a, roleOfN(a)]));
   const jobsOf = (a) => { const l = jobs.get(a).cds.map((c) => c.txt).concat(jobs.get(a).lines); return l.length ? esc(l.slice(0, 5).join(' · ')) + (l.length > 5 ? ' and ' + (l.length - 5) + ' more' : '') : 'named in the note'; };
   const pc = (p) => '<span class="nm" style="color:' + (p.color || 'inherit') + '">' + esc(pn(p)) + '</span>';
   const one = away.length === 1 && fresh.length === 1 && !forced;
   const sel = (a) => '<select class="rsw-s" data-a="' + esc(a) + '" aria-label="Who takes the assignments of ' + esc(a) + '"><option value="">' + (forced ? 'Pick a player…' : 'nobody, leave ' + esc(a) + ' in') + '</option>' +
-    fresh.map((p) => '<option value="' + esc(pn(p)) + '"' + (pick.get(a) === p ? ' selected' : '') + '>' + esc(pn(p)) + '</option>').join('') + '</select>';
+    fresh.map((p) => '<option value="' + esc(pn(p)) + '" data-r="' + esc(p.role || '') + '"' + (pick.get(a) === p ? ' selected' : '') + '>' + esc(pn(p)) + (p.role ? ' (' + (p.role === 'dps' ? 'DPS' : p.role) + ')' : '') + '</option>').join('') +
+    (forced ? (() => { const rest = inPull.filter((p) => !fresh.includes(p)); return rest.length ? '<optgroup label="Already in the note">' + rest.map((p) => '<option value="' + esc(pn(p)) + '" data-r="' + esc(p.role || '') + '">' + esc(pn(p)) + (p.role ? ' (' + (p.role === 'dps' ? 'DPS' : p.role) + ')' : '') + '</option>').join('') + '</optgroup>' : ''; })() : '') + '</select>';
   const body = one ? '<b>' + esc(away[0]) + "</b> isn't in this pull, and " + pc(fresh[0]) + " isn't in your note. Make a new note with " + pc(fresh[0]) + ' taking the assignments of ' + esc(away[0]) + '?' + '<div class="rsw-jobs sub">' + esc(away[0]) + "'s jobs: " + jobsOf(away[0]) + '</div>' +
       '<input type="hidden" class="rsw-s" data-a="' + esc(away[0]) + '" value="' + esc(pn(fresh[0])) + '">'
     : plural(away.length, 'player') + ' in your note ' + (away.length === 1 ? "isn't" : "aren't") + ' in this pull. Pick who takes their assignments:<div class="rsw-rows">' +
-      away.map((a) => '<div class="rsw-one"><label class="rsw-r"><b>' + esc(a) + '</b><span class="sub">is replaced by</span>' + sel(a) + '</label><div class="rsw-jobs sub">' + esc(a) + "'s jobs: " + jobsOf(a) + '</div></div>').join('') + '</div>';
+      away.map((a) => '<div class="rsw-one" data-ar="' + esc(roleA.get(a) || '') + '"><label class="rsw-r"><b>' + esc(a) + '</b>' + (roleA.get(a) ? '<span class="sub">(' + (roleA.get(a) === 'dps' ? 'DPS' : roleA.get(a)) + ')</span>' : '') + '<span class="sub">is replaced by</span>' + sel(a) + '</label>' +
+        (forced ? '<label class="rsw-nk sub"><input type="checkbox" class="rsw-nkc" data-a="' + esc(a) + '"> it\'s a nickname for this player</label>' : '') +
+        '<div class="rsw-jobs sub">' + esc(a) + "'s jobs: " + jobsOf(a) + (why.get(a) && pick.get(a) ? ' · <span class="rsw-why">Suggested ' + esc(pn(pick.get(a))) + ': ' + esc(why.get(a)) + '</span>' : '') + '</div><div class="rsw-w" hidden></div></div>').join('') + '</div>';
   return '<div class="panel as-swap"><div class="rsw-t"><b>This pull\'s players don\'t fully match your note.</b> ' + body + '</div>' +
     '<div class="rsw-b"><button class="btn primary sm" type="button" id="rswMake">Make the new note</button><button class="btn sm" type="button" id="rswNo" data-k="' + esc(key) + '">Not now</button>' +
     '<span class="sub">Your note stays as it is. The new one is saved next to it, and pulls with these players use it.</span></div></div>';
@@ -2114,7 +2147,9 @@ const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.oncl
 // saved night it fits (at least half its names there), newest first, a click opening that night
 // (the small calendar on a log's chip, drawn here)
 const SN_CAL = '<svg class="sn-cal" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-function storedNotes() { return ''; /* (one note per log (Oct 19): no list of saved notes) */ }
+function storedNotes() { return storedNotes0(); } /* (back, Oct 20: one note per group, so the list shows them all; no editing, no manual pick) */
+// (the night a note was last used on, for the list)
+function noteUsedAt(boss, id, t) { if (!t) return; const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n || (n.lastUsed && n.lastUsed >= t)) return; n.lastUsed = t; try { store.set(notesKey(boss), JSON.stringify(o)); } catch (e) { /* storage off */ } }
 function storedNotes0() {
   const r = S.rep, cur = r.item.boss, used = noteForRep(r);
   const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur);
@@ -2142,13 +2177,12 @@ function storedNotes0() {
     // (the faces of its players who are in this pull, as on the meters)
     const faces = isCur ? [...new Set(noteNames(n.text).map((x) => x.toLowerCase()))].map((x) => byNm.get(x)).filter(Boolean) : [];
     return '<div class="sn-card' + (on ? ' on' : '') + (d ? ' d' + d[1] : '') + '"><div class="sn-ch">' + (d ? '<span class="sn-dif ' + d[1] + '">' + d[0] + '</span>' : '') + '<b class="sn-nm">' + nm + '</b>' + (n.example ? '<span class="sub">example</span>' : '') + (on ? '<span class="sn-this">✓ This pull</span>' : '') + '</div>' +
-      '<div class="sn-meta">' + (nn ? '<span>' + SN_I.users + plural(nn, 'player') + '</span>' : '') + (n.saved ? '<span>' + SN_I.clock + 'saved ' + esc(when(n.saved)) + '</span>' : '') + '</div>' + (faces.length ? '<div class="sn-faces">' + faces.slice(0, 12).map((p) => '<span class="sn-face" title="' + esc(p.name) + '">' + avatar(p, true) + '</span>').join('') + (faces.length > 12 ? '<span class="sub">+' + (faces.length - 12) + '</span>' : '') + '</div>' : '') + logsOf(n, b) +
-      '<div class="sn-cf">' + (isCur && !on ? '<button class="btn sm primary" type="button" data-nuse="' + esc(n.id) + '">Use for this pull</button>' : '') + '<span class="sn-sp"></span>' +
-      (isCur ? '<button class="btn sm sn-ib" type="button" data-nedit="' + esc(n.id) + '" title="Edit this note" aria-label="Edit the note ' + nm + '">' + SN_I.pen + '</button>' : '') +
+      '<div class="sn-meta">' + (nn ? '<span>' + SN_I.users + plural(nn, 'player') + '</span>' : '') + (n.saved ? '<span>' + SN_I.clock + 'saved ' + esc(when(n.saved)) + '</span>' : '') + (n.lastUsed ? '<span>' + SN_CAL + 'last used ' + esc(nightLabel(n.lastUsed)) + '</span>' : '') + '</div>' + (faces.length ? '<div class="sn-faces">' + faces.slice(0, 12).map((p) => '<span class="sn-face" title="' + esc(p.name) + '">' + avatar(p, true) + '</span>').join('') + (faces.length > 12 ? '<span class="sub">+' + (faces.length - 12) + '</span>' : '') + '</div>' : '') + logsOf(n, b) +
+      '<div class="sn-cf"><span class="sn-sp"></span>' + /* (Oct 20: a note is used where its players are, and never edited: no Use or Edit) */
       '<button class="btn sm sn-ib" type="button" data-ncopy="' + esc(b + '|' + n.id) + '" title="Copy the note, to paste into NSRT in game" aria-label="Copy the note ' + nm + '">' + SN_I.copy + '</button>' +
       '<button class="btn sm sn-ib" type="button" data-sndel="' + esc(b + '|' + n.id) + '" title="Remove this note" aria-label="Remove the note ' + nm + '">' + NOTE_TRASH + '</button></div></div>'; };
   const NO = notesOf(cur), opt = (v, l) => '<option value="' + esc(v) + '">' + esc(l) + '</option>';
-  const sel = NO.list.length > 1 ? '<div class="nl-foot"><label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label><span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.</span></div>' : '';
+  const sel = false ? '<div class="nl-foot"><label class="nl-pk sub">Every pull <select id="notePick" class="nt-pick" aria-label="How each pull picks its note">' + opt('auto', 'picks the note that fits it') + NO.list.map((n) => '<option value="' + esc(n.id) + '"' + (NO.pick === n.id ? ' selected' : '') + '>uses ' + esc(n.name) + '</option>').join('') + '</select></label><span class="sub">Each pull picks the note that fits it best: its difficulty, then its players, then whose jobs got done.</span></div>' : '';
   // (each boss a panel with a header band: its banner art fading in from the right, as on the pull banner, or its model when
   // there's no banner; loaded at runtime from Wowhead, never bundled, and gone if it doesn't load)
   const artOf = (b) => (BOSS_HERO[b] ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[b][1] + '% 28%" onerror="this.remove()">'
@@ -2162,7 +2196,7 @@ function storedNotes0() {
     '<div class="sn-body">' + (o.list.length ? '<div class="sn-grid">' + o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + '</div>' + (b === cur ? sel : '')
       : '<div class="sn-empty"><span class="sn-eico">' + SN_I.notes + '</span><div><b>No note for ' + esc(b) + ' yet</b><div class="sub">Add your raid\'s NSRT note, and it shows here with the logs it goes with.</div></div></div>') + '</div></div>';
   const nN = bosses.reduce((t, [, o]) => t + o.list.length, 0);
-  return '<section class="sn-all" id="snBox"><div class="sn-top"><span class="sn-tico" aria-hidden="true">' + SN_I.notes + '</span><div><h2>Your saved notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ', saved in this browser. ' : '') + 'Each note shows the nights it goes with.</div></div><button class="btn primary" type="button" id="noteNewBtn" style="margin-left:auto;flex:none">Add a note</button></div>' + bosses.map(fold).join('') + '</section>';
+  return '<section class="sn-all" id="snBox"><div class="sn-top"><span class="sn-tico" aria-hidden="true">' + SN_I.notes + '</span><div><h2>Your saved notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ', saved in this browser. ' : '') + 'Each note shows the nights it goes with.</div></div><button class="btn primary" type="button" data-nnew="1" style="margin-left:auto;flex:none">Add a note</button></div>' + bosses.map(fold).join('') + '</section>';
 }
 // (the saved notes' buttons, bound after the rest of the page so theirs win: Add, Edit, Use for this pull, Copy, remove, open a night)
 function storedNotesBind(only) {
@@ -2198,8 +2232,18 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
   // plain steps, a picture of the results, and a button to try it with an example made from this pull
   // notes saved for this boss, but none has this pull's players (your notes, Oct 19: said plainly, "this is confusing"):
   // one line and two buttons; the closest note and "Use it anyway" only when it's really close (1 to 3 players off)
+  if (S.notePend && S.notePend.boss === boss && !S.noteEdit && S.notePend.ratio != null && S.notePend.ratio < 0.5 && !S.notePend.fill) { const N = S.notePend;
+    // (Oct 20: most of the note's players aren't here, so it's another group's note: saved as it is for its own players, filled with
+    // tonight's group (every name suggested, each checked), or not saved)
+    $('#assignBox').innerHTML = (only ? '' : asViews()) + '<div class="panel as-swap"><div class="rsw-t"><b>Only ' + N.found + ' of the ' + N.named + ' players in this note ' + (N.found === 1 ? 'is' : 'are') + ' in this pull.</b> It looks like another group\'s note.</div>' +
+      '<div class="rsw-opts"><div><button class="btn primary sm" type="button" id="ngKeep">Save it for that group</button><span class="sub">Saved as it is. It opens by itself on pulls where its own players are.</span></div>' +
+      '<div><button class="btn sm" type="button" id="ngFill">Fill it with tonight\'s group</button><span class="sub">Your note\'s jobs, with a suggested player from this pull for each name. You check every pick before it\'s saved.</span></div>' +
+      '<div><button class="btn sm" type="button" id="ngNo">Cancel</button><span class="sub">Nothing is saved.</span></div></div></div>';
+    $('#ngKeep').onclick = () => { const made = noteSaveText(boss, N.text, N.name, r); S.notePend = null; S.noteMade = { boss, id: made.id, name: made.name, swaps: [] }; renderMain(); };
+    $('#ngFill').onclick = () => { S.notePend = { ...N, fill: true }; assign(only); };
+    $('#ngNo').onclick = () => { S.notePend = null; assign(only); }; bindAsViews(only); return; }
   if (S.notePend && S.notePend.boss === boss && !S.noteEdit) { const P = { id: 'pend', name: S.notePend.name, text: S.notePend.text };
-    $('#assignBox').innerHTML = (only ? '' : asViews()) + (rosterSwap(r, P, 'paste') || '<div class="panel">This note fits this pull now.</div>'); bindSwap(r, P, 'paste', only); bindAsViews(only); return; }
+    $('#assignBox').innerHTML = (only ? '' : asViews()) + (rosterSwap(r, P, 'paste', S.notePend.ratio) || '<div class="panel">This note fits this pull now.</div>'); bindSwap(r, P, 'paste', only); bindAsViews(only); return; }
   const miss = !text && !S.noteEdit && !only && r.noteMiss && NO.list.some((n) => !n.example) ? r.noteMiss : null;
   if (miss) {
     const f = miss.fit, n = miss.note, nN = NO.list.filter((x) => !x.example).length, g = f.gone || [];
@@ -2207,7 +2251,11 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     const closeL = close ? '<p>' + esc(n.name) + ' is close: only ' + esc(andL(g)) + (g.length === 1 ? " wasn't" : " weren't") + ' here.</p>' : '';
     // (a note just imported says what it found on top, as when a note fits)
     const scB = S.noteScan && S.noteScan.boss === boss && S.noteScan.r ? noteScanBox(S.noteScan) : '';
-    const swp = rosterSwap(r, miss.note, 'miss'); if (swp) { $('#assignBox').innerHTML = scB + (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + swp; bindSwap(r, miss.note, 'miss', only); bindAsViews(only); return; }
+    const mr = noteRatio(miss.fit);
+    if (mr < 0.8) { $('#assignBox').innerHTML = scB + (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + '<div class="panel nmiss"><h3>No note for this group</h3><p class="ah-lead">None of your notes for ' + esc(boss) + ' has this pull\'s players. The closest, ' + esc(miss.note.name) + ', has ' + miss.fit.found + ' of its ' + miss.fit.named + ' players here.</p>' +
+        '<div class="ah-btns"><button class="btn primary" type="button" data-nnew="1">Add a note</button><button class="btn" type="button" id="ngFill2">Fill ' + esc(miss.note.name) + ' with this group</button></div></div>' + storedNotes();
+      $('#ngFill2').onclick = () => { S.notePend = { boss, text: miss.note.text, name: null, ratio: mr, found: miss.fit.found, named: miss.fit.named, fill: true }; assign(only); }; storedNotesBind(only); bindAsViews(only); return; }
+    const swp = rosterSwap(r, miss.note, 'miss', mr); if (swp) { $('#assignBox').innerHTML = scB + (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + swp; bindSwap(r, miss.note, 'miss', only); bindAsViews(only); return; }
     $('#assignBox').innerHTML = scB + '<div class="panel nmiss"><h3>No note for this pull</h3>' +
       '<p class="ah-lead">' + (f.enc === false ? 'The note saved with this log is for another boss.' : 'The note saved with this log isn\'t a perfect match for this pull: ' + esc(andL(g)) + (g.length === 1 ? ' isn\'t' : ' aren\'t') + ' in it.') + ' A note is used only when every player it names is in the pull.</p>' + closeL +
       '<div class="ah-btns"><button class="btn" type="button" id="noteAdd">' + NOTE_TRASH + ' Delete the note</button><span class="sub">Then you can import the right one.</span></div></div>';
@@ -2317,7 +2365,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     const difN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }[hdN.difficulty] || hdN.difficulty || '', linesN = a && a.note ? a.note.lines.filter((l) => l.words && l.words.length).length : 0;
     const chipsN = [difN ? esc(capS(String(difN).toLowerCase())) : '', a && a.note && a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', linesN ? plural(linesN, 'assignment line') : ''].filter(Boolean);
     top += '<div class="panel nlib nl-cur' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span class="nl-tt"><span class="nl-k">' + (ex ? 'Example note' : 'Your note') + '</span><b>' + esc(ex ? 'Made from this pull' : used.name) + '</b></span>' + chipsN.map((x) => '<span class="nl-chip">' + x + '</span>').join('') + '</span>' +
-      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" id="noteNewBtn">+ Add a note</button><button class="btn sm" type="button" data-ndel="' + esc(used.id) + '">' + NOTE_TRASH + ' Delete note</button>') + '</span></div>' + /* (your rule, Oct 19: a note is glued to its log; no editing or changing it, only deleting) */
+      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nnew="1">+ Add a note</button><button class="btn sm" type="button" data-ndel="' + esc(used.id) + '">' + NOTE_TRASH + ' Delete note</button>') + '</span></div>' + /* (your rule, Oct 19: a note is glued to its log; no editing or changing it, only deleting) */
       (why || back ? '<div class="nl-why sub">' + why + back + '</div>' : '') + '</div>';
     top += rosterOffer(r, used);
     if (S.noteMade && S.noteMade.boss === boss) top += noteMadeBox(S.noteMade);
@@ -2842,7 +2890,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     // (the same note twice for one fight isn't saved: it says which saved note it already is)
     const dup = v && o.list.find((n) => !n.example && (asNew || !editN || n.id !== editN.id) && noteNorm(n.text) === noteNorm(v));
     if (dup) { S.noteScan = { boss, dup: dup.name }; S.noteEdit = false; S.noteEditId = null; assign(only); return; }
-    if (fresh && v && tgt === boss) { const f0 = noteFit(v, r); if (f0.enc !== false && f0.gone.length) { S.notePend = { boss, text: v, name: nm }; S.noteEdit = false; S.noteEditId = null; S.asView = 'pull'; S.noteScan = null; assign(only); return; } } /* (Oct 20: swap first) */
+    if (fresh && v && tgt === boss) { const f0 = noteFit(v, r); if (f0.enc !== false && f0.gone.length) { S.notePend = { boss, text: v, name: nm, ratio: noteRatio(f0), found: f0.found, named: f0.named }; S.noteEdit = false; S.noteEditId = null; S.asView = 'pull'; S.noteScan = null; assign(only); return; } } /* (Oct 20: swap first) */
     // (one note per roster (your note, Oct 19): a new note for the exact same players as a saved one of this boss replaces
     // it, keeping its name and its pulls, rather than being saved twice)
     const nmSet = (t) => noteNames(t).map((x) => x.toLowerCase()).sort().join('|'), key = fresh && v ? nmSet(v) : '';
