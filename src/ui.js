@@ -1494,6 +1494,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Live now pops up on your screen with a soft chime when your log or your team\'s goes live. Follow live opens it on Debriefing.',
     'Boss guides: Axegrinder gets its own map. The boss throws 5 axes, anyone they fly into is knocked back, then they roll around at random and hurt anyone they touch. Both throws are on the fight timeline, with a band showing when the axes are out.',
     'Boss guides: the video shows first with the fight list following along, Your job has a fresh look, and each part has a Something wrong here? link to report a mistake.',
     'Boss guides: each Debriefing mechanic has a How to do it link to the guide, your role is ringed on the maps, and Your job shows your lines from your raid note.',
@@ -20169,11 +20170,33 @@ function liveSet(x) {
   if (x && (!was || was.code !== x.code) && liveHere(x) && !seen.includes(x.code) && S.wclCode !== x.code) {
     try { sessionStorage.setItem(LIVE_AUTO, JSON.stringify(seen.concat(x.code).slice(-20))); } catch (e) { /* ignore */ }
     liveFollow(); return; }
-  liveBar();
+  liveBar(); livePop();
+}
+// (your idea, Oct 20: a pop-up in the middle of the screen when your log or your team's goes live, with a soft chime. Once
+// per raid in this tab; not while you're already following it, or over another window. Follow live opens Debriefing.)
+const LIVE_POP = 'wla-live-pop';
+function livePop() {
+  const x = S.liveNow; if (!x || $('#lvPop') || S.wclCode === x.code || document.body.classList.contains('touring')) return;
+  let seen = []; try { seen = JSON.parse(sessionStorage.getItem(LIVE_POP) || '[]'); } catch (e) { /* ignore */ }
+  if (seen.includes(x.code)) return;
+  try { sessionStorage.setItem(LIVE_POP, JSON.stringify(seen.concat(x.code).slice(-20))); } catch (e) { /* ignore */ }
+  const el = document.createElement('div'); el.id = 'lvPop'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'lvpT');
+  el.innerHTML = '<div class="tr-card lvp-card"><div class="lvp-k"><span class="lv-dot" aria-hidden="true"></span>Live now</div>' +
+    '<h2 id="lvpT">' + (x.mine ? 'Your log is live' : esc(gName(x.g)) + ' is raiding now') + '</h2><p class="lvp-sub">' + esc(liveAgo(x)) + '</p>' +
+    '<p>Follow along and each pull shows up on Debriefing about a minute after it ends, with a soft chime.</p>' +
+    '<div class="tr-nav"><span></span><div><button class="btn" type="button" id="lvpNo">Not now</button><button class="btn primary" type="button" id="lvpGo">Follow live</button></div></div></div>';
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const close = () => { document.removeEventListener('keydown', key, true); document.body.classList.remove('touring'); el.classList.add('out'); setTimeout(() => el.remove(), 260); };
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', key, true);
+  el.onclick = (e) => { if (e.target === el) close(); };
+  $('#lvpNo').onclick = close; $('#lvpGo').onclick = () => { close(); liveFollow(); };
+  $('#lvpGo').focus(); pullChime(false);
 }
 async function liveFollow() {
   const x = S.liveNow; if (!x) return;
   try { sessionStorage.setItem('wla-live', '1'); } catch (e) { /* ignore */ }
+  S.tab = 'audit'; S.scope = 'pull'; // (live logs open on Debriefing, your call, Oct 20)
   try { await openWcl({ code: x.code, fight: null }, await wclCreds(), true); } catch (e) { toast('<span>' + esc(e.message) + '</span>', 6000); }
   liveBar();
 }
