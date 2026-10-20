@@ -12853,12 +12853,9 @@ function myAltsAct(c, mine) {
   if (S.yuOpen) open(true);
   return act;
 }
-// (a character of yours with no raids this tier: a friendly card saying so, and a way home to your main, the character
-// who raids with one of your teams (your note, Oct 20: two alts with no raids sent you back and forth between them))
-const charTeamed = (c) => { const ts = groups().filter((g) => g.kind !== 'char'), rw = (c.raidsWithAll || []).concat(c.raidsWith ? [c.raidsWith] : []);
-  return ts.some((t) => rw.some((r) => r.id === t.id)) || ts.some((t) => [...HIST.mem.values()].some((v) => pullGroups(v).includes(t.gid) && (v.players || []).includes(c.name))); };
+// (a character of yours with no raids this tier: a friendly card saying so, and a way back to the one you came from)
 function pgEmptyCard(c) {
-  const me = meOf(), o = groups().filter((x) => x.kind === 'char' && x.gid !== c.gid), back = o.find(charTeamed) || o.find((x) => me && x.gid === me.prev) || o[0];
+  const me = meOf(), o = groups().filter((x) => x.kind === 'char' && x.gid !== c.gid), back = o.find((x) => me && x.gid === me.prev) || o[0];
   return '<section class="panel pg-empty" id="pgEmpty"><h2>No raids for ' + esc(gName(c)) + ' this tier yet</h2><p class="sub">When ' + esc(gName(c)) + ' raids The Venomous Abyss and the night is logged on Warcraft Logs, their bosses, raid nights and rankings show up here by themselves.</p>' +
     (back ? '<button class="btn primary" type="button" data-mesw="' + esc(back.gid) + '">‹ Back to ' + esc(gName(back)) + '</button>' : '') + '</section>';
 }
@@ -13163,6 +13160,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
     'The Coiled Altar maps (Boss guides and Debriefing) now use a much sharper picture of the room.',
+    'Debriefing maps on every Venomous Abyss boss now use the same sharp picture of the room, lined up with real Mythic kills.',
     'Debriefing maps: players show as role icons in their class colour, and on The Coiled Altar the maps show the Fangs puddles where they really were, the bosses\' portraits, and a short pause at each frontal.',
     'Boss guides: in the Coiled Altar simulation, the raid now stands in the lane between the second set of puddles, each axe soak has its own group, and a dashed line shows who is looking at their ghost.',
     'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
@@ -16175,7 +16173,7 @@ function miniMap(mp, pmap) {
   const startVB = A ? fullVB : focusVB;
   let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
   // the boss's arena map (built in), or a room image the user added on the Interrupts map
-  const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd }) + (mp.gdzLook ? arenaHi(MB, { x0, y0, yd }) : '');
+  const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd }) + arenaHi(MB, { x0, y0, yd }); /* (the sharp render on every boss that has one, Oct 20) */
   const mi = arena || mp.noArena ? null : mapImg(MB);
   s += arena;
   if (mi) s += '<image href="' + mi.src + '" preserveAspectRatio="none" opacity="' + mi.op + '"' + imgAttrs(mi, { x0, y0, yd }) + '/>';
@@ -18123,7 +18121,7 @@ function playerTip(r, p, pos, d, t, isK) {
 // player paths line up with platform edges, the Nek'zali well and the Twin Fangs triangle.
 const ARENAS = {
   "Nek'zali the Soulcoiler": { f: '01.nakzali-ort-v105.jpg', w: 2181, h: 1221, cx: 0, cy: 198, s: 11 },
-  'Entombed Sentinels': { f: '02.sentinels-ort-v108.jpg', w: 2123, h: 1188, cx: 375, cy: 710, s: 11 },
+  'Entombed Sentinels': { f: '02.sentinels-ort-v108.jpg', w: 2123, h: 1188, cx: 371, cy: 710, s: 11 }, // (Oct 20: 4 yd east, so a Mythic kill reaches both gem alcoves and no further)
   'Vashnik the Malignant': { f: '03.vashnik-ort-enter-v180.jpg', w: 2448, h: 1371, cx: 320, cy: 446, s: 11 },
   'The Lost Explorers': { f: '04.lostexplorers-ort-v112.jpg', w: 2448, h: 1371, cx: -470, cy: 698, s: 11 },
   Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 387, s: 11 },
@@ -18165,7 +18163,9 @@ function arenaImg(boss, c) {
 // (maps in the Boss guides look (your call, Oct 20): RaidPlan's sharp top-down render of the room on top, at the scale ARENAS gives it,
 // which a real kill confirms (every player position sits inside its floor). Loaded at runtime, never bundled; the game's floor map is
 // drawn first, so it still shows if the render doesn't load)
-const ARENA_HI = { 'The Coiled Altar': 'https://cdn.raidplan.io/raid/wow.venomabyss/map/07.bargained-ort-v108.jpg' };
+// (Oct 20, your call: on every Venomous Abyss boss, each checked against a Mythic kill laid over its render (the guild's, or a top
+// guild's for Sszorak, Twin Fangs and Ula'tek): everyone stands on the floor. Nymrissa and Kith'ix have no render and keep the floor map)
+const ARENA_HI = Object.fromEntries(Object.entries(ARENAS).filter(([b, a]) => a.f && b !== 'The Bargained Crown').map(([b, a]) => [b, 'https://cdn.raidplan.io/raid/wow.venomabyss/map/' + a.f]));
 function arenaHi(boss, c) {
   const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = ARENA_HI[b]; if (!A || !u || !A.f) return '';
   const w = A.w / A.s, h = A.h / A.s, x = (A.cx - w / 2 - c.x0) * c.yd, y = (-A.cy - h / 2 - c.y0) * c.yd, W = w * c.yd, H = h * c.yd, B = 4000 * c.yd;
