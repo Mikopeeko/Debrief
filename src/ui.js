@@ -1125,7 +1125,7 @@ const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true
 // your team's page; that page shows the same tabs with My Page lit, and the raid's tabs take you back into the raid you came from (greyed out when
 // no raid is open yet). With no team added yet, it starts the setup.
 const ME_TIP = 'Your team\'s page: every boss and raid night, with your rankings.';
-const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" data-t="me" role="tab" aria-selected="' + !!on + '" data-tt="' + esc(ME_TIP) + '" aria-description="' + esc(ME_TIP) + '">' + tabIco('me') + 'My Page</button><span class="tsep" aria-hidden="true"></span>';
+const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" data-t="me" role="tab" aria-selected="' + !!on + '" data-tt="' + esc(ME_TIP) + '" aria-description="' + esc(ME_TIP) + '">' + tabIco('me') + 'Home</button><span class="tsep" aria-hidden="true"></span>';
 // (in a raid, the tab; from a team's own page, back into the raid you came from on My Page; with no raid, your team's page)
 function openMyPage() { { const h = meHomeChar(); if (h) meSwitch(h.gid, true); } if (S.rep && $('#view')) { S.tab = 'me'; renderMain(); window.scrollTo(0, 0); return; }
   if (PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)) { S.tab = 'me'; select(PROG_BACK); return; }
@@ -1136,7 +1136,7 @@ function myPageView() { const t = homeTarget(); if (!t) { myPageEmpty(); return;
   S.progView = t.gid; S.progMine = false; S.pgRename = S.pgDel = S.pgEdit = false;
   view('<div class="pg-intab-load muted">Opening ' + esc(gName(t)) + '…</div>');
   HIST.load().then(histTidy).then(() => { if (S.tab === 'me' && S.rep && $('#view')) renderProgress(); groupsBackfill(); }); }
-function myPageEmpty() { view('<section class="panel my-empty"><h2>My Page</h2><p class="sub">Add your team, guild or your own character from Warcraft Logs, and its bosses, raid nights and rankings show up here.</p><button class="btn primary" type="button" id="myAdd">Add a team or character</button></section>');
+function myPageEmpty() { view('<section class="panel my-empty"><h2>Home</h2><p class="sub">Add your team, guild or your own character from Warcraft Logs, and its bosses, raid nights and rankings show up here.</p><button class="btn primary" type="button" id="myAdd">Add a team or character</button></section>');
   const b = $('#myAdd'); if (b) b.onclick = () => gsStart(); }
 // (My Page's flow (your call, Oct 19: "redesign that tab... same general idea, different flow"): who (your team, you), the whole raid at a glance (every
 // boss in raid order, coloured by how far you got, the open raid's boss marked), where you are now (the big chart), every boss (compact tiles in raid
@@ -1427,7 +1427,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { me: 'My Page', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework', gdz: 'Guides' };
+const TAB_NAME = { me: 'Home', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework', gdz: 'Guides' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -1489,6 +1489,7 @@ const PATCH_NOTES = [
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
+    'My Page is now called Home.',
     'Maps open on the full arena, with small + and − buttons to zoom (or use the mouse wheel), a tidier play bar and a clearer key.',
     'The Coiled Altar maps (Boss guides and Debriefing) now use a much sharper picture of the room.',
     'Debriefing maps on every Venomous Abyss boss now use the same sharp picture of the room, lined up with real Mythic kills.',
@@ -18562,7 +18563,7 @@ const TOUR = [
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
   { t: 'Rotation and graphs', p: 'Rotation goes through how each player played their own spec, the way a top player of it would. Graphs has the raw numbers, like Warcraft Logs but easier to read: damage, healing, casts, resources, cooldowns and more. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
-  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs to see every raid night, boss by boss, with your rankings. New nights come in by themselves, and My Page, the first tab, takes you there.',
+  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs to see every raid night, boss by boss, with your rankings. New nights come in by themselves, and Home, the first tab, takes you there.',
     art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
 ];
 function startTour(at) {

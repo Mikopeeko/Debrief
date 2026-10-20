@@ -409,7 +409,7 @@ const QA_FAQ = [
   { re: /\b(open|load|upload|import|add|get)\b[^?]{0,40}\b(log|logs|raid|report|pull)\b|warcraft ?logs link|combat ?log/i,
     a: 'Paste your raid\'s Warcraft Logs link into the box on the front page (or open the menu ☰ and pick **Open a report or log**). You can also pick your own WoWCombatLog.txt file from your PC, or drop it anywhere on the page.' },
   { re: /\blive\b|during (the )?raid|while (we|i) raid|real.?time/i,
-    a: 'Yes. Someone in your raid needs to live log to Warcraft Logs. Add your team on **My Page**, and while Debrief is open it spots your team\'s raid by itself: each new pull shows up about 15 to 30 seconds after Warcraft Logs has it, with a soft chime.' },
+    a: 'Yes. Someone in your raid needs to live log to Warcraft Logs. Add your team on **Home**, and while Debrief is open it spots your team\'s raid by itself: each new pull shows up about 15 to 30 seconds after Warcraft Logs has it, with a soft chime.' },
   { re: /(no|missing|empty|blank|don.?t see)\b[^?]{0,30}\bmaps?\b|\bmaps?\b[^?]{0,30}\b(missing|empty|blank|not show|don.?t show)|advanced combat log/i,
     a: 'Maps need player positions, which come from **Advanced Combat Logging**. Whoever logs the raid should turn it on in game: Options, Network, Advanced Combat Logging. Pulls logged without it still get every other check.' },
   { re: /\bnsrt\b|northern sky|\b(raid )?note\b/i,
@@ -821,7 +821,7 @@ export default {
         let r = null, err = null; try { r = await run(); } catch (e) { err = e; }
         if (hasC && !route.run && (err || (r && r.out && r.out.error))) { const s2 = await sessOf(req, env); if (s2) { try { return send(await run(s2.t), true); } catch (e2) { /* the first answer stands */ } } }
         if (err) throw err;
-        if (!hasC && r.out && r.out.error && url.pathname === '/api/report') r.out.error += ' If it\'s your log or your guild\'s, sign in with Warcraft Logs (Start now, or My Page) to open it.';
+        if (!hasC && r.out && r.out.error && url.pathname === '/api/report') r.out.error += ' If it\'s your log or your guild\'s, sign in with Warcraft Logs (Start now, or Home) to open it.';
         return send(r, false);
       } catch (err) {
         return json({ error: String(err && err.message || err) }, 502);
