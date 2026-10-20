@@ -206,7 +206,7 @@ async function dc(env, path, opt = {}, tries = 0) {
   const r = await fetch('https://discord.com/api/v10' + path, { method: opt.method || 'GET', body: opt.body ? JSON.stringify(opt.body) : undefined,
     headers: { Authorization: 'Bot ' + env.DISCORD_BOT_TOKEN, 'Content-Type': 'application/json', 'User-Agent': 'DiscordBot (' + SITE + ', 1)' } });
   if (r.status === 429 && tries < 3) { const j = await r.json().catch(() => ({})); await new Promise((ok) => setTimeout(ok, Math.min(5000, (j.retry_after || 1) * 1000))); return dc(env, path, opt, tries + 1); }
-  if (!r.ok) throw new Error('Discord answered ' + r.status + ' on ' + path);
+  if (!r.ok) throw new Error('Discord answered ' + r.status + ' on ' + path + ': ' + (await r.text().catch(() => '')).slice(0, 200));
   return r.status === 204 ? null : r.json();
 }
 async function gh(env, path, opt = {}) {
@@ -221,7 +221,7 @@ const tagOf = (tags, name) => { const t = (tags || []).find((x) => x.name.toLowe
 const AREAS = [['Assignments', /\b(nsrt|notes?|assignments?|assigned)\b/i], ['Rotation', /\b(rotation|talents?|opener|priority|burst window)\b/i],
   ['Graphs', /\b(graphs?|charts?|meters?|dps|hps)\b/i], ['Teams', /\b(team|guild|rankings?|my page|character|roster|raid nights?)\b/i],
   ['Mechanics', /\b(soaks?|maps?|mechanics?|debriefing|wipe|deaths?|kicks?|interrupts?|avoidable|frontal|nymrissa|kith'?ix|ula'?tek|vashnik|nek'?zali|explorers|sszorak|guillotine|coiled altar|twin fangs|sentinels)\b/i]];
-const areasIn = (s) => AREAS.filter(([, re]) => re.test(s)).map(([a]) => a);
+const areasIn = (s) => AREAS.map(([a, re]) => [a, (s.match(new RegExp(re.source, 'gi')) || []).length]).filter(([, n]) => n).sort((x, y) => y[1] - x[1]).map(([a]) => a); // (most words first)
 async function runBugs(env) {
   let st = await env.DEBRIEF_KV.get('dc-bugs', 'json'), dirty = false;
   const act = await dc(env, '/guilds/' + GUILD + '/threads/active'), all = act.threads || [];
@@ -314,7 +314,7 @@ async function fileIdea(req, env, url) {
     const t = await dc(env, '/channels/' + FORUM_IDEAS + '/threads', { method: 'POST', body: { name: first.length > 90 ? first.slice(0, 89) + '…' : first, applied_tags: tag ? [tag] : [],
       message: { content: text + '\n\n*Sent from the website' + (name ? ' by ' + name.replace(/[@*_`~|]/g, '') : '') + '. React with 👍 if you want it too.*', allowed_mentions: { parse: [] } } } });
     return json({ ok: true, url: 'https://discord.com/channels/' + GUILD + '/' + t.id });
-  } catch (err) { return json({ error: 'The idea couldn\'t be sent right now. Please try again in a minute.' }, 502); }
+  } catch (err) { console.warn('Idea:', err && err.message); return json({ error: 'The idea couldn\'t be sent right now. Please try again in a minute.' }, 502); }
 }
 
 // Patch notes to Discord: every 10 minutes (the cron in wrangler.toml), when the site's newest Patch notes day hasn't
