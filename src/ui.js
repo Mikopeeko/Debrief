@@ -1484,7 +1484,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-20', h: [
-    { t: 'Assignments, rebuilt', d: 'Its own tab again, just for notes: draft a note from your pulls, let Debrief suggest the rest by class (The Coiled Altar first), swap players in one go and copy it for the game. Results stay on Debriefing.' },
+    { t: 'Assignments, in development', d: 'A tab just for making notes is on the way: draft a note from your pulls, let Debrief suggest the rest by class, swap players in one go and copy it for the game. It\'s greyed out until it\'s ready. Adding your NSRT note from Debriefing works as usual.' },
     { t: 'Boss guides', d: 'Animated maps that show how each fight works on Heroic and Mythic, with the key moments frozen and explained, a mistake view and a full-fight simulation. In the menu (☰), open to anyone. The Coiled Altar is first.' },
     { t: 'Your NSRT note, inside Debriefing', d: 'Each job now sits on the mechanic it\'s about. Add a note on any pull: every group of players keeps its own, with suggested picks, warnings for a wrong role, and who takes the jobs of anyone missing.' },
     { t: 'Debriefing levels up', d: 'Dots show how each mechanic went on your last pulls, numbers in colour, a Next pull line on every mechanic, phase timing against your best pull, and Copy for Discord.' },
