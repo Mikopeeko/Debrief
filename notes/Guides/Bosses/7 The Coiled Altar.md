@@ -45,7 +45,7 @@ Orbs per Sever and orbs left at the transition; Venom Rupture stacks; purple orb
 
 ## Mythic plan in detail (Tactyks video re-read Oct 20, captions + the RaidPlan pages shown in it)
 Their RaidPlan is drawn with the room's doors left and right; the Guides map turns it so those doors sit north/south like the
-floor art (plan top = west). Markers in their plan: X on the entrance side (centre of that wall), moon and skull in its two
+floor art with plan top = SOUTH (the entrance side). Checked Oct 20: on two kills Sever hit the tank south of Zul'jan first (0:23), then north (0:40), so the triangles point at the doors and the Noxious Ground pools (side walls) stay clear of them. Markers in their plan: X on the entrance side (centre of that wall), moon and skull in its two
 corners, star and square in the far corners, diamond in the middle of the far wall, orange circle on a side wall.
 - **P1 orbs**: 5 purple carriers, hard-assigned: 2 Warlocks (one per entrance corner, each takes the purple nearest it), 2 Mages
   (far side), the off-tank floats (goes wherever a purple is awkward; Divine Steed etc.). Entrance side always gets the first
@@ -80,3 +80,9 @@ corners, star and square in the far corners, diamond in the middle of the far wa
   Off-tank takes the first P3 frontal. Gloombomb with no adds: run to the edge. Next sets: around the orange and diamond markers, orange first (two by orange).
   Kill Zul'jan before the pool cast about 1 minute after the 2nd shield; Malacrass at 7-8% when Zul'jan dies is fine — don't over-damage Malacrass.
   Last frontals hit 0-1 orbs. Last adds: just keep kicks, no Gloombombs needed.
+
+## Noxious Ground, measured (Oct 20, 11 Mythic kills from Warcraft Logs, ~1,600 hits, positions of 380k samples)
+- Pools pour from the exact middle of the west and east walls (log coordinates: boss at the room centre 0,1158; x east, y north).
+- First Fangs (0:00): reaches to about 14 yd short of the centre; hits for ~25-30 s, then fades.
+- Second Fangs (~1:25): reaches the centre; the two pools meet around the boss; hits for ~25-30 s. The raid can't fully dodge it.
+- Players' outermost positions over whole fights: about ±40-46 yd from the centre (beyond that = mind-controlled players falling).

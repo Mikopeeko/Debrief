@@ -31110,27 +31110,30 @@ function gdzKit(boss, len) {
   if (GDZ_SEG) { GDZ_SEG.next(len); return GDZ_SEG.kit; }
   const U = new Map(), A = ARENAS[boss] || { cx: 0, cy: 0 }, k = { pauses: [], calls: [], wmarks: [], rings: [], cones: [], links: [], arrows: [], tags: [], cbars: {}, steps: [], hl: new Set(), good: [], goodAt: [], bad: [], badAt: [] };
   // seg: the stretch being written (T: its start, pre: its own names for orbs, adds and bosses, w: its window); players carry on
-  const seg = { T: 0, pre: '', w: null }, isP = (id) => /^[thmr]\d$/.test(id), P = (id) => (id == null || isP(id) ? id : seg.pre + id), TT = (t) => (t == null ? t : t + seg.T);
+  const seg = { T: 0, pre: '', w: null, rot: 0 }, RO = (x, y) => { if (!seg.rot || x == null || y == null) return [x, y]; const a = seg.rot * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return [Math.round((x * c - y * sn) * 1000) / 1000, Math.round((x * sn + y * c) * 1000) / 1000]; },
+    RI = (p) => { if (!seg.rot || !p) return p; const a = -seg.rot * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return [p[0] * c - p[1] * sn, p[0] * sn + p[1] * c]; }, isP = (id) => /^[thmr]\d$/.test(id), P = (id) => (id == null || isP(id) ? id : seg.pre + id), TT = (t) => (t == null ? t : t + seg.T);
   const unit = (id, kind, name) => { if (!U.has(id)) U.set(id, { id, kind, name: name || (kind === 'player' ? gdzName(id) : String(id).replace(/^s\d+:/, '')), path: [], from: seg.w && kind !== 'player' ? seg.w[0] : -1, to: seg.w && kind !== 'player' ? seg.w[1] : Infinity }); return U.get(id); };
   const put = (u, t, x, y, fixed) => { u.path.push([t, x, y, !!fixed]); u.path.sort((a, b) => a[0] - b[0]); };
   const posRaw = (id, t) => { const u = U.get(id); if (!u || !u.path.length) return null; const p = u.path; if (t <= p[0][0]) return [p[0][1], p[0][2]];
     for (let i = 0; i < p.length - 1; i++) if (t <= p[i + 1][0]) { const a = p[i], b = p[i + 1], w = b[0] > a[0] ? (t - a[0]) / (b[0] - a[0]) : 1; return [a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w]; }
     const z = p[p.length - 1]; return [z[1], z[2]]; };
   const kit = {
-    posAt: (id, t) => posRaw(P(id), TT(t)),
+    posAt: (id, t) => RI(posRaw(P(id), TT(t))), // (in the layout's own frame, so a turned layout reads back what it wrote)
+    // (turn the layout that follows by deg (counterclockwise): a plan drawn one way round, fitted to the room)
+    rot(deg) { seg.rot = deg || 0; return kit; },
     // one player (id like 'm3') at a spot at a moment; or a group of players in a clump around a spot
-    at(t, ids, x, y, spread, fixed) { ids = [].concat(ids); ids.forEach((id, i) => { const [dx, dy] = spread ? gdzSpot(i, ids.length, spread) : [0, 0]; put(unit(id, 'player'), TT(t), x + dx, y + dy, fixed); }); return kit; },
+    at(t, ids, x, y, spread, fixed) { ids = [].concat(ids); ids.forEach((id, i) => { const [dx, dy] = spread ? gdzSpot(i, ids.length, spread) : [0, 0]; const q0 = RO(x + dx, y + dy); put(unit(id, 'player'), TT(t), q0[0], q0[1], fixed); }); return kit; },
     // the same players stay where they are until t (so the next move starts then, not from the start)
     hold(t, ids) { for (const id of [].concat(ids)) { const p = posRaw(id, TT(t)); if (p) put(unit(id, 'player'), TT(t), p[0], p[1], true); } return kit; }, /* (a hold is a wait: the speed limit never moves it earlier) */
-    boss(id, name, t, x, y) { put(unit(P(id), 'boss', name), TT(t), x, y); return kit; },
-    add(id, name, t, x, y) { put(unit(P(id), 'add', name), TT(t), x, y); return kit; },
+    boss(id, name, t, x, y) { const q0 = RO(x, y); put(unit(P(id), 'boss', name), TT(t), q0[0], q0[1]); return kit; },
+    add(id, name, t, x, y) { const q0 = RO(x, y); put(unit(P(id), 'add', name), TT(t), q0[0], q0[1]); return kit; },
     // orbs ('orb' green, 'porb' purple) and ghosts ('ghost'): from when they appear, until they're gone
-    obj(id, kind, t, x, y) { put(unit(P(id), kind), TT(t), x, y); return kit; },
+    obj(id, kind, t, x, y) { const q0 = RO(x, y); put(unit(P(id), kind), TT(t), q0[0], q0[1]); return kit; },
     show(id, from, to) { const u = U.get(P(id)); if (u) { if (from != null) u.from = TT(from); if (to != null) u.to = TT(to); } return kit; },
     // a circle: fixed (x, y) or on a unit (on), from t0 for dur seconds; fx as in miniMap (soak, burst, debuff, puddle, zone, safe); at: when it goes off
-    ring(o) { k.rings.push({ ...o, on: P(o.on), t0: TT(o.t0), at: TT(o.at) }); return kit; },
+    ring(o) { const q0 = RO(o.x, o.y); k.rings.push({ ...o, x: q0[0], y: q0[1], on: P(o.on), t0: TT(o.t0), at: TT(o.at) }); return kit; },
     // a frontal from a unit toward another unit (or a direction in degrees, east = 0, counterclockwise), landing at 'at'; hit: orbs or ghosts it removes
-    cone(o) { k.cones.push({ ...o, from: P(o.from), to: P(o.to), at: TT(o.at), hit: (o.hit || []).map(P) }); return kit; },
+    cone(o) { k.cones.push({ ...o, deg: o.deg != null ? o.deg + seg.rot : o.deg, from: P(o.from), to: P(o.to), at: TT(o.at), hit: (o.hit || []).map(P) }); return kit; },
     link(o) { k.links.push({ ...o, from: P(o.from), to: P(o.to), t0: TT(o.t0), t1: TT(o.t1) }); return kit; },
     arrow(o) { k.arrows.push({ ...o, g: P(o.g), t0: TT(o.t0), t1: TT(o.t1), at: TT(o.at) }); return kit; },
     tag(id, text, from, to) { k.tags.push([P(id), text, TT(from), TT(to)]); return kit; },
@@ -31138,20 +31141,20 @@ function gdzKit(boss, len) {
     // the numbered steps beside the map, each lit while it plays
     step(t, text) { k.steps.push([TT(t), text]); return kit; },
     // a raid marker on the floor (square, triangle, diamond, cross, star, circle, moon, skull), as the plan placed it
-    wmark(kind, x, y) { if (!k.wmarks.some((w) => w.k === kind && w.x === x && w.y === y)) k.wmarks.push({ k: kind, x, y }); return kit; },
-    pause(t, text, o) { o = o || {}; k.pauses.push({ t: TT(t), text, dur: o.dur || 3.6 }); if (o.r) k.calls.push({ kind: 'spot', on: P(o.on), x: o.x, y: o.y, r: o.r, t0: TT(t) - 0.002, t1: TT(t) + 0.002 }); return kit; },
+    wmark(kind, x0, y0) { const [x, y] = RO(x0, y0); if (!k.wmarks.some((w) => w.k === kind && w.x === x && w.y === y)) k.wmarks.push({ k: kind, x, y }); return kit; },
+    pause(t, text, o) { o = o || {}; k.pauses.push({ t: TT(t), text, dur: o.dur || 3.6 }); if (o.r) { const q0 = RO(o.x, o.y); k.calls.push({ kind: 'spot', on: P(o.on), x: q0[0], y: q0[1], r: o.r, t0: TT(t) - 0.002, t1: TT(t) + 0.002 }); } return kit; },
     dispel(from, to, t) { k.calls.push({ kind: 'beam', from: P(from), on: P(to), t0: TT(t), t1: TT(t) + 0.9, color: '#7cf07c' }); return kit; },
-    call(t0, t1, text, o) { o = o || {}; k.calls.push({ t0: TT(t0), t1: TT(t1), text, on: P(o.on), x: o.x, y: o.y, color: o.color, ink: o.ink }); return kit; },
+    call(t0, t1, text, o) { o = o || {}; const q0 = RO(o.x, o.y); k.calls.push({ t0: TT(t0), t1: TT(t1), text, on: P(o.on), x: q0[0], y: q0[1], color: o.color, ink: o.ink }); return kit; },
     ring1(ids) { for (const id of [].concat(ids)) k.hl.add(P(id)); return kit; },
     ok(id, t) { k.good.push(P(id)); if (t != null) k.goodAt.push([P(id), TT(t)]); return kit; },
     oops(id, t) { k.bad.push(P(id)); if (t != null) k.badAt.push([P(id), TT(t)]); return kit; },
     raid: GDZ_RAID,
     // (Putting it all together: start the next stretch at T, n-th of the fight)
-    seg(T, n, segLen) { seg.T = T; seg.pre = 's' + n + ':'; seg.w = [T, T + segLen]; return kit; },
+    seg(T, n, segLen) { seg.T = T; seg.pre = 's' + n + ':'; seg.w = [T, T + segLen]; seg.rot = 0; return kit; },
     stepCount: () => k.steps.length,
     takeFocus() { const f0 = kit._foc; kit._foc = null; return f0 || null; },
     done(o) {
-      if (GDZ_SEG && GDZ_SEG.kit === kit && !(o && o.final)) { if (o && o.focus) kit._foc = o.focus; return kit; } // (a stretch of the whole fight: the whole is built once, at the end)
+      if (GDZ_SEG && GDZ_SEG.kit === kit && !(o && o.final)) { if (o && o.focus) { const q0 = RO(o.focus.x, o.focus.y); kit._foc = { x: q0[0], y: q0[1], r: o.focus.r }; } return kit; } // (a stretch of the whole fight: the whole is built once, at the end)
       o = o || {}; const X = (x) => A.cx + x, Y = (y) => A.cy + y, frames = [], L = o.len || len;
       // (a running pace (your note, Oct 20: icons almost teleported on long moves): when a move would need more than about 8.5 yards a
       // second, the player sets off earlier from the spot they were standing on, so they still arrive on time. Several passes, as an
@@ -31187,7 +31190,7 @@ function gdzKit(boss, len) {
         calls.push({ t0: c.at - 1.4, t1: c.at + 0.3, text: 'Frontal', color: '#ff5a4f', ink: '#fff', on: c.from });
         if (c.to && /^t\d$/.test(c.to) && (lastTo ? lastTo !== c.to : c.to !== 't1')) calls.push({ t0: c.at - 1.9, t1: c.at - 0.4, text: 'Taunt', color: '#5aa0ff', ink: '#fff', on: c.to }); lastTo = c.to; }
       for (const [g, l] of Object.entries(k.cbars)) for (const b of l) if (b.end === 'kick') calls.push({ t0: b.t0, t1: b.t1, text: 'Kick', color: '#2fd15a', on: g });
-      const f = o.focus || { x: 0, y: 0, r: 20 }, quiet = !!o.quiet; // (quiet: no names or rings on players, for the whole fight)
+      const f0 = o.focus || { x: 0, y: 0, r: 20 }, fq = RO(f0.x, f0.y), f = { x: fq[0], y: fq[1], r: f0.r }, quiet = !!o.quiet; // (quiet: no names or rings on players, for the whole fight)
       return { boss, title: o.title || '', wmarks: k.wmarks.map((w) => ({ k: w.k, x: X(w.x), y: Y(w.y) })), frames, pts: frames[0].pts, t: 0, gdzLook: true, room: GDZ_ROOM[boss] ? { id: 'gdzRoom' + (++GDZ_ROOM_N), x0: A.cx - GDZ_ROOM[boss], x1: A.cx + GDZ_ROOM[boss], y0: A.cy - GDZ_ROOM[boss], y1: A.cy + GDZ_ROOM[boss] } : null, rings, cones, callouts: calls, pauses: k.pauses.slice().sort((a, b) => a.t - b.t), links: k.links, arrows: k.arrows, tags: quiet ? [] : k.tags, cbars: k.cbars,
         hl: quiet ? [] : [...k.hl], good: quiet ? [] : k.good, goodAt: !quiet && k.goodAt.length ? k.goodAt : null, bad: quiet ? [] : k.bad, badAt: !quiet && k.badAt.length ? k.badAt : null,
         hitOrbs: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind !== 'ghost')), ghostHit: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind === 'ghost')),
@@ -31210,12 +31213,12 @@ function gdzWhole(boss, G, D) {
     if (e.beat) { const b = (G.beats || {})[e.beat]; if (!b) return null; b.run(e.o || {}); return { name: b.name, texts: b.do || [] }; }
     const m = e.m || (byId[e.mech] || {}).m; if (!m || !m.map) return null; m.map(D, e.o); return { name: m.name, texts: m.do || [] };
   };
-  const main = { kit, next(len) { kit.seg(T, n, len); main.len = len; } };
+  const main = { kit, next(len) { kit.seg(T, n, len); kit.rot(G.simRot || 0); main.len = len; } };
   try {
     for (const e of list) {
       // (where everyone starts the scene, found by playing it on its own first, so the walk there gets the time it needs at a
       // running pace of about 8 yards a second, never less than the usual short gap)
-      if (prevLen != null) { GDZ_SEG = null; const pk = gdzKit(boss, 1); GDZ_SEG = { kit: pk, next(len) { pk.seg(0, 0, len); } }; let need = GAP;
+      if (prevLen != null) { GDZ_SEG = null; const pk = gdzKit(boss, 1); GDZ_SEG = { kit: pk, next(len) { pk.seg(0, 0, len); pk.rot(G.simRot || 0); } }; let need = GAP;
         try { if (play(e)) for (const id of GDZ_RAID) { const a = kit.posAt(id, prevLen), b = pk.posAt(id, 0); if (a && b) need = Math.max(need, Math.hypot(b[0] - a[0], b[1] - a[1]) / 8); } } catch (er) { /* (a scene that can't be probed keeps the usual gap) */ }
         T += need; }
       GDZ_SEG = main; n++; main.len = 0; const s0 = kit.stepCount(), got = play(e); if (!got) { if (prevLen != null) T -= 0; continue; } const { name, texts } = got;
@@ -31355,7 +31358,7 @@ function gdzCaRaid(k, skip) {
 }
 // The Mythic plan's raid markers (turned so the room's doors are north and south, like the floor art): the X marks the entrance
 // side (west here), moon and skull its corners, star and square the far corners, diamond the far wall, the circle a side wall
-function gdzCaMarks(k) { k.wmark('cross', -46, 0).wmark('moon', -44, -44).wmark('skull', -44, 44).wmark('star', 44, -44).wmark('square', 44, 44).wmark('diamond', 48, 14).wmark('circle', 20, 47); return k; }
+function gdzCaMarks(k) { k.rot(90); /* (the plan is drawn entrance-west; the room's entrance side is south: Sever hits the tank south first, then north (Oct 20, two kills)) */ k.wmark('cross', -46, 0).wmark('moon', -44, -44).wmark('skull', -44, 44).wmark('star', 44, -44).wmark('square', 44, 44).wmark('diamond', 48, 14).wmark('circle', 20, 47); return k; }
 const GDZ_CA_M = {
   // P1: purples at the far end of each frontal's triangle, greens between them and the boss; the entrance side first
   orbs() {
@@ -31603,7 +31606,7 @@ const GDZ_CA_FAIL = {
       k.step(0.5).step(3.6).step(4.1); k.pause(3.2, 'Stop. Those two ghosts are drifting into each other. When they touch, both players die.', { x: 39, y: 30, r: 7 }); return k.done({ title: 'Mistake: two ghosts touch', focus: { x: 36, y: 30, r: 12 }, badLabel: 'dies' }); } },
   bombs: { name: 'Bombs stacked together', what: 'Two bomb carriers stand on the same spot, next to the melee. Every bomb hits everyone around it.',
     do: ['Both melee bombs run to the same spot, right next to the melee.', 'The bombs go off together.', 'They hit each other and the melee around them, twice.'],
-    map: () => { const k = gdzKit('The Coiled Altar', 8), MA = [24, 8]; k.boss('hm', 'Malacrass', 0, 18, 20).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
+    map: () => { const k = gdzKit('The Coiled Altar', 8).rot(90), MA = [24, 8]; k.boss('hm', 'Malacrass', 0, 18, 20).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
       k.at(0, 't1', 24, 26).at(0, ['m3', 'm4', 'm5', 'm6', 'm7'], 18, 14, 4).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -6, 4, 6).at(0, ['m1', 'm2'], 18, 28, 2);
       ['m1', 'm2'].forEach((id) => { k.ring({ on: id, r: 15, fx: 'burst', t0: 0.5, at: 4.5, dur: 4.3, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them' }); k.hold(0.6, id).at(3.2, id, 20, 11); });
       k.call(4.7, 7.8, 'Hit 6 players', { x: 20, y: 18, color: '#ff3b3b', ink: '#fff' }); ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'].forEach((id, i) => k.oops(id, 4.7 + i * 0.15));
@@ -31630,7 +31633,7 @@ const GDZ_CA_FAIL = {
 GDZ['The Coiled Altar'] = {
   sum: 'Zul\'jan first, then Hex Lord Malacrass, then both at once. Orbs go to the front for the frontal, axes get soaked by five, and ghosts get led into the frontal too.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
-  m: { sim: GDZ_CA_SIM, beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs must never touch another orb, every axe\'s soakers are planned, ghosts must never touch, and bombs go on the adds. This follows a plan that killed it, with its markers; your raid may mark the room its own way.' },
+  m: { simRot: 90, sim: GDZ_CA_SIM, beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs must never touch another orb, every axe\'s soakers are planned, ghosts must never touch, and bombs go on the adds. This follows a plan that killed it, with its markers; your raid may mark the room its own way.' },
   facts: [['Phases', '3 + intermission'], ['Bloodlust', 'Intermission'], ['Healers', '5', 'm'], ['Hardest part', 'Orbs and ghosts', 'h'], ['Hardest part', 'Purple orbs', 'm']],
   phases: [
     { id: 'p1', name: 'Phase 1: Zul\'jan', sum: 'One boss. Gather the orbs in front of him, soak the axes, and dodge the axes rolling around the room.',
