@@ -215,8 +215,9 @@ const GDZ_CALL = { 'Toxic Deluge': ['Dodge', 'land'], Guillotine: ['Soak here ·
 const GDZ_BADGE = { 'Corrupted Toxin': '#8fd16a', Venomfang: '#7cf07c', Dreadmarch: '#c49bff', Gloombomb: '#e07bff', Guillotine: '#ff8a6a' };
 
 // ---- the guides' own icons (drawn here; boss portraits load at runtime from Wowhead, never bundled) ----
-// a room's half-width in yards, for pools that pour in from a wall (they're cut at the wall)
-const GDZ_ROOM = { 'The Coiled Altar': 52 }; let GDZ_ROOM_N = 0;
+// a room's half-width in yards, for pools that pour in from a wall (they're cut at the floor's edge: on The Coiled Altar about 46 yards
+// from the middle, where every player position of a kill stops; the pools themselves are centred on the wall statues, 52 out)
+const GDZ_ROOM = { 'The Coiled Altar': 46 }; let GDZ_ROOM_N = 0;
 const GDZ_GLYPH = { t: 'M0 -6.4L5.2 -4.3V0C5.2 3.6 2.7 5.6 0 6.7C-2.7 5.6 -5.2 3.6 -5.2 0V-4.3Z', h: 'M-1.9 -6.2H1.9V-1.9H6.2V1.9H1.9V6.2H-1.9V1.9H-6.2V-1.9H-1.9Z', r: 'M1.6 -6.8L-4.2 1H-0.6L-1.6 6.8L4.2 -1H0.6Z' };
 function gdzGlyph(x, y, pl, r, attrs, title) { // a role token: the role's colour, a dark face and a white sign (shield, cross, swords, bolt)
   const R = r + 3, k = (R - 2.4) / 7.4, c = pl.color, g = pl.glyph; attrs = String(attrs || '').replace(/opacity:0?.6/, 'opacity:.9'); /* (solid enough to read at a glance) */
@@ -274,7 +275,7 @@ function gdzCarry(k, who, obj, kind, tAppear, ox, oy, tp, dx, dy, td, back) {
 // everyone else on the far side of the boss, Warlocks at the entrance end and Mages at the far end
 function gdzCaLane(k, t) {
   k.at(t, 't1', 5, 0).at(t, 't2', -3, 1.5).at(t, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 11, 0, 4).at(t, ['h1', 'h2', 'h3', 'h4'], 20, 0, 4).at(t, ['r5', 'r6', 'r7'], 27, 0, 3)
-    .at(t, 'r1', -38, -6).at(t, 'r2', -38, 6).at(t, 'r3', 44, -2).at(t, 'r4', 44, 2);
+    .at(t, 'r1', -38, -6).at(t, 'r2', -38, 6).at(t, 'r3', 41, -2).at(t, 'r4', 41, 2);
   return k;
 }
 function gdzCaRaid(k, skip) {
@@ -284,7 +285,7 @@ function gdzCaRaid(k, skip) {
 }
 // The Mythic plan's raid markers (turned so the room's doors are north and south, like the floor art): the X marks the entrance
 // side (west here), moon and skull its corners, star and square the far corners, diamond the far wall, the circle a side wall
-function gdzCaMarks(k) { k.rot(90); /* (the plan is drawn entrance-west; the room's entrance side is south: Sever hits the tank south first, then north (Oct 20, two kills)) */ k.wmark('cross', -46, 0).wmark('moon', -44, -44).wmark('skull', -44, 44).wmark('star', 44, -44).wmark('square', 44, 44).wmark('diamond', 48, 14).wmark('circle', 20, 47); return k; }
+function gdzCaMarks(k) { k.rot(90); /* (the plan is drawn entrance-west; the room's entrance side is south: Sever hits the tank south first, then north (Oct 20, two kills)) */ k.wmark('cross', -42, 0).wmark('moon', -40, -40).wmark('skull', -40, 40).wmark('star', 40, -40).wmark('square', 40, 40).wmark('diamond', 42, 13).wmark('circle', 19, 42); return k; } /* (on the floor's edge, which ends about 43 yards out) */
 const GDZ_CA_AXES = {
   1: { tg: 'r3', grp: ['m5', 'm6', 'r6', 'r5', 'r7', 'h3'], tags: [['r5', 'Turtle'], ['r7', 'Turtle'], ['m6', 'Feint'], ['r6', 'Disp.']], hl: ['r5', 'r7'], title: 'Guillotine on Mythic: the first soak', hlLabel: 'axe target and the Hunters', tagLabel: 'What they press (Hunters keep Turtle for soak 2)',
     pause: 'Freeze. A big first soak, 6 or 7. The Hunters are in it so they can\'t be picked for the next axe; they\'ll Turtle that one.' },
@@ -384,7 +385,7 @@ const GDZ_CA_M = {
   ghosts() {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 13)), SQ = [41, 39];
     k.boss('hm', 'Malacrass', 0, 6, 4).boss('hm', 'Malacrass', 3, 22, 22);
-    k.at(0, 't1', 10, 4).at(3, 't1', 28, 24).hold(7, 't1').at(9.6, 't1', 47, 42).at(0, 't2', 2, 8).at(3, 't2', 14, 20)
+    k.at(0, 't1', 10, 4).at(3, 't1', 28, 24).hold(7, 't1').at(9.6, 't1', 42, 38).at(0, 't2', 2, 8).at(3, 't2', 14, 20)
       .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 6, 12, 5).at(3, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 18, 28, 5).at(0, ['h1', 'h3', 'h4'], -8, 14, 4).at(3, ['h1', 'h3', 'h4'], 6, 30, 4)
       .at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -6, -6, 6).at(3, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], 4, 12, 6);
     k.at(0, 'r5', 16, 30).at(0, 'm4', 22, 28).at(0, 'h2', 10, 36);

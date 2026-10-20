@@ -1443,6 +1443,7 @@ const PATCH_NOTES = [
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
+    'The Coiled Altar maps (Boss guides and Debriefing) now use a much sharper picture of the room.',
     'Debriefing maps: players show as role icons in their class colour, and on The Coiled Altar the maps show the Fangs puddles where they really were, the bosses\' portraits, and a short pause at each frontal.',
     'Boss guides: in the Coiled Altar simulation, the raid now stands in the lane between the second set of puddles, each axe soak has its own group, and a dashed line shows who is looking at their ghost.',
     'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
@@ -4414,7 +4415,7 @@ function mapLook(mp) {
       pauses.push({ t: c.at, dur: 2.4, text: (all.length > 1 ? 'Frontal ' + (i + 1) : 'The frontal') + ' lands: the orbs inside the cone pop.' }); });
     if (mp.cone && (mp.ghostHit || mp.ghostMiss)) { const t = mp.cone.at != null ? mp.cone.at : mp.t, h = (mp.ghostHit || []).length, m = (mp.ghostMiss || []).length;
       if (t > w0 && t < w1) pauses.push({ t, dur: 2.4, text: 'Soul Sever lands: ' + h + ' of ' + (h + m) + ' ghosts in it.' }); } }
-  const out = { ...mp, _look: true, gdzLook: true, rings, pauses: pauses.sort((a, b) => a.t - b.t), room: { id: 'caRoom', x0: A.cx - W, x1: A.cx + W, y0: A.cy - W, y1: A.cy + W } };
+  const out = { ...mp, _look: true, gdzLook: true, rings, pauses: pauses.sort((a, b) => a.t - b.t), room: { id: 'caRoom', x0: A.cx - 46, x1: A.cx + 46, y0: A.cy - 46, y1: A.cy + 46 } }; /* (the floor's edge) */
   LOOK_MP.set(mp, out); return out;
 }
 let MAP_RN = 0;
@@ -4454,7 +4455,7 @@ function miniMap(mp, pmap) {
   const startVB = A ? fullVB : focusVB;
   let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
   // the boss's arena map (built in), or a room image the user added on the Interrupts map
-  const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd });
+  const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd }) + (mp.gdzLook ? arenaHi(MB, { x0, y0, yd }) : '');
   const mi = arena || mp.noArena ? null : mapImg(MB);
   s += arena;
   if (mi) s += '<image href="' + mi.src + '" preserveAspectRatio="none" opacity="' + mi.op + '"' + imgAttrs(mi, { x0, y0, yd }) + '/>';
@@ -6439,6 +6440,16 @@ function arenaImg(boss, c) {
   const wy = (f.maxY - f.minY) * (f.whole ? 1 : 1024 / 1002), hy = (f.maxX - f.minX) * (f.whole ? 1 : 768 / 668); // whole image, in yards
   const x = (-f.maxY - c.x0) * c.yd, y = (-f.maxX - c.y0) * c.yd;
   return '<image href="' + (f.url || 'https://wow.zamimg.com/uploads/screenshots/normal/' + f.img + '.png') + '" preserveAspectRatio="none" x="' + x + '" y="' + y + '" width="' + wy * c.yd + '" height="' + hy * c.yd + '" opacity="0.95"/>';
+}
+
+// (maps in the Boss guides look (your call, Oct 20): RaidPlan's sharp top-down render of the room on top, at the scale ARENAS gives it,
+// which a real kill confirms (every player position sits inside its floor). Loaded at runtime, never bundled; the game's floor map is
+// drawn first, so it still shows if the render doesn't load)
+const ARENA_HI = { 'The Coiled Altar': 'https://cdn.raidplan.io/raid/wow.venomabyss/map/07.bargained-ort-v108.jpg' };
+function arenaHi(boss, c) {
+  const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = ARENA_HI[b]; if (!A || !u || !A.f) return '';
+  const w = A.w / A.s, h = A.h / A.s;
+  return '<image href="' + u + '" preserveAspectRatio="none" x="' + ((A.cx - w / 2 - c.x0) * c.yd) + '" y="' + ((-A.cy - h / 2 - c.y0) * c.yd) + '" width="' + w * c.yd + '" height="' + h * c.yd + '"/>';
 }
 
 // (maps in the Boss guides look (your call, Oct 20): RaidPlan's sharp top-down render of the room on top, at the scale ARENAS gives it,
