@@ -13240,7 +13240,7 @@ const SPEC_OFF = () => false;
 // Set this to () => !!window.WLA_HOSTED to hide it on the website again)
 const GB_DRAWER = true; /* (Oct 20 test: Graphs' bars open one drawer per player, plan option A; false brings back the one-breakdown board and its More views) */
 const CMP_GAP_VIEW = true; /* (Oct 20 test: Compare as "the gap" page, plan option A; false brings back the Oct 19 page) */
-const CMP_OFF = () => !!window.WLA_HOSTED; /* (hidden on the website again Oct 20 while you plan its rebuild (your call); on in the app on your PC) */
+const CMP_OFF = () => false; /* (on the website again Oct 20 after its rebuild, "enable the compare tab on live"; () => !!window.WLA_HOSTED hides it there) */
 // (Guides (the animated boss guides, src/guides.js) are greyed out on the website with "Coming soon" until you say to show them;
 // they're on in the app on your PC (localhost) for review. Set this to () => false to show them everywhere)
 const GDZ_OFF = () => false; /* (on everywhere since Oct 20, your call; () => !!window.WLA_HOSTED greys it out on the website again) */
@@ -13310,6 +13310,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-20', h: [
+    { t: 'Compare is back', d: 'Put yourself next to the #1 player of your spec, someone around #50 to #500, or the average of the top 100, 200 or 500. See where you stand, how they play it differently, and the spells where the gap is.' },
     { t: 'Assignments, in development', d: 'A tab just for making notes is on the way: draft a note from your pulls, let Debrief suggest the rest by class, swap players in one go and copy it for the game. It\'s greyed out until it\'s ready. Adding your NSRT note from Debriefing works as usual.' },
     { t: 'Boss guides', d: 'Animated maps that show how each fight works on Heroic and Mythic, with the key moments frozen and explained, a mistake view and a full-fight simulation. In the menu (☰), open to anyone. The Coiled Altar is first.' },
     { t: 'Your NSRT note, inside Debriefing', d: 'Each job now sits on the mechanic it\'s about. Add a note on any pull: every group of players keeps its own, with suggested picks, warnings for a wrong role, and who takes the jobs of anyone missing.' },
