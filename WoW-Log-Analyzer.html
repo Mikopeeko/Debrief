@@ -4292,6 +4292,30 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .hwk-ok { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; } .hwk-ok span { font-size: 13px; color: #7ee08f; background: var(--good-bg); padding: 3px 10px; border-radius: 20px; }
 .hwk-clean { margin: 0; color: #7ee08f; } .hwk-how { margin: 12px 0 0; font-size: 12px; }
 @media (max-width: 760px) { .hwk-3 { grid-template-columns: 1fr; } .hwk-who { margin-left: 0; } .hwk-h > .btn { margin-left: 0; } }
+/* Debriefing extras (Oct 20): pull-by-pull dots, Copy for Discord, a link to one mechanic, the Next pull line, phase timing */
+.dbd-dots { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding-left: 10px; } .dbn-tag + .dbd-dots { margin-left: 8px; }
+.dbd-dots i { width: 10px; height: 10px; border-radius: 50%; display: block; cursor: pointer; } .dbd-dots i:hover { transform: scale(1.3); }
+.dbd-dots i.dbd-bad { background: var(--lv-maj-t); } .dbd-dots i.dbd-warn { background: var(--lv-min-t); } .dbd-dots i.dbd-ok { background: #45c15c; }
+.dbd-dots i.dbd-na { border: 1.5px solid var(--line2); } .dbd-dots i.dbd-nl { border: 1.5px dashed var(--line2); opacity: .6; }
+.dbd-dots i.dbd-now { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--text); cursor: default; } .dbd-dots i.dbd-now:hover { transform: none; }
+.dbd-dots small { font-size: 12px; margin-left: 6px; white-space: nowrap; } .dbd-dots small.dbd-up { color: #7ee08f; } .dbd-dots small.dbd-dn { color: var(--lv-maj-t); }
+.dbd-lk { display: flex; justify-content: flex-end; margin: -2px 0 6px; }
+.dbd-next { margin: 12px 0 2px; padding: 8px 12px; border-radius: 8px; background: rgba(230,180,80,.07); border: 1px solid rgba(230,180,80,.25); font-size: 14px; } .dbd-next b { color: var(--gold); }
+.dbd-acts { display: flex; justify-content: flex-end; margin: 0 0 8px; } .dbd-copy { color: var(--gold); border-color: rgba(230,180,80,.55); background: rgba(230,180,80,.08); }
+.btn.dbd-done { color: #7ee08f; border-color: rgba(126,224,143,.5); }
+.dbd-ph { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 10px 14px; } .dbd-phh { font: 700 13px var(--head); letter-spacing: .6px; text-transform: uppercase; color: var(--muted); width: 100%; }
+.dbd-phh .sub { text-transform: none; letter-spacing: 0; font-weight: 400; } .dbd-phr { font-size: 14px; }
+.pill-s { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 20px; color: var(--muted); background: var(--raised); } .pill-s.warn { color: var(--lv-min-t); background: rgba(255,213,74,.1); } .pill-s.ok { color: #7ee08f; background: var(--good-bg); }
+@media (max-width: 760px) { details.secd > summary:has(.dbd-dots) { flex-wrap: wrap; } .dbd-dots { order: 20; flex-basis: 100%; margin: 6px 0 0; padding-left: 0; } .dbd-dots small { margin-left: 4px; } }
+/* (Oct 20, your note: the badges sat at different spots) every mechanic line keeps its badge in one column on the right: a note tag before it, the dots after it at a fixed width (clean lines too) */
+.dbck > details.secd > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.dbck > details.secd > summary > .sst { order: 3; margin-left: auto; min-width: 124px; justify-content: center; text-align: center; }
+.dbck > details.secd > summary > .dbn-tag { order: 2; margin-left: auto; }
+.dbck > details.secd > summary:has(> .dbn-tag) > .sst { margin-left: 0; }
+.dbck > details.secd > summary > .dbd-dots { order: 4; margin-left: 0; padding-left: 4px; width: 250px; flex: none; }
+.dbck > details.secd > summary::after { order: 5; } /* (the open arrow stays at the far right) */
+.dbck:has(.dbd-dots) > details.secd > summary:not(:has(> .dbd-dots)) > .sst { margin-right: 254px; } /* (a line with no dots, like Deaths, keeps the same badge column) */
+@media (max-width: 760px) { .dbck > details.secd > summary > .sst { min-width: 0; margin-right: 0 !important; } .dbck > details.secd > summary > .dbd-dots { order: 20; width: auto; flex: 1 1 100%; } }
 </style>
 
 
@@ -12892,9 +12916,16 @@ const PATCH_NOTES = [
     'Patch notes: this page, so you can see what changed and when.',
     'A calmer, tidier look: one set of text sizes, corners and spacing across every page.',
     'Compare: the loading screen now shows each step and how far along it is while another player\'s kill downloads.',
+    'Assignments now lives inside Debriefing: your NSRT note\'s jobs sit on the mechanic they\'re about, and By player shows each raider\'s jobs.',
+    'Debriefing: dots on every mechanic show how it went on your last pulls of the boss.',
+    'Debriefing: Copy for Discord, a link straight to one mechanic, a Next pull line on each mechanic, and phase timing against your best pull.',
+    'Every boss\'s mechanics reworded: titles that say what to do, plain numbers instead of shorthand, and the same badge words everywhere.',
     'Nymrissa gets her full Debriefing: murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, and the whirlpools and Pop!',
   ], f: [
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
+    'A death to Sever now shows the frontal\'s cone on its map.',
+    'An NSRT note that only has a kick order now works on its pull.',
+    'Debriefing\'s badges line up in one column.',
   ] },
   { d: '2026-10-19', t: 'A big one', n: [
     'Compare: line up a pull against the top 3 players of your spec on that boss, or against a teammate.',
@@ -14663,10 +14694,50 @@ function dbnPlayers(NJ, r, pmap) {
     ((a.unknownNames || []).length ? '<p class="sub" style="margin:10px 2px 0">In the note but not in this pull: ' + esc(a.unknownNames.join(', ')) + '.</p>' : ''); }
 // (the switch and the note bar's button)
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-dbv], [data-dbnote]'); if (!b) return; if (b.dataset.dbv) { if (S.dbView === b.dataset.dbv) return; S.dbView = b.dataset.dbv; const y = window.scrollY; renderMain(); window.scrollTo({ top: y }); } else { S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); } });
+// ---- Debriefing extras (Oct 20, your OK on the mockups) ----
+// (this boss's pulls up to the one on screen, the last 8; each with its read report when it's been opened on this PC, so
+// nothing new downloads for the dots)
+function dbdAcross(r) { const it = r.item, ps = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull <= it.pull).sort((a, b) => a.pull - b.pull).slice(-8);
+  const pulls = ps.map((b) => ({ b, r: b === it ? r : CACHE.get(b) || null })); let ma = new Map();
+  try { ma = new Map(mechAcross(pulls.map((p) => p.r).filter(Boolean)).map((x) => [x.id, x])); } catch (e) { console.error(e); }
+  return { pulls, ma }; }
+const DBD_W = { ok: 'clean', warn: 'some mistakes', bad: 'failed', na: 'didn\'t come up', nl: 'not opened yet on this PC' };
+// (a mechanic's dots: one a pull, the pull on screen ringed, and a few words when there's a story: failing pulls in a row, fixed, always clean)
+function dbdDots(id, DD) { if (!DD || DD.pulls.length < 2 || id === 'deaths') return ''; const x = DD.ma.get(id); if (!x) return ''; /* (Deaths has its own list; a mechanic with no grades has no dots) */
+  const sts = DD.pulls.map((p) => (!p.r ? 'nl' : x && x.per.get(p.b.pull) ? x.per.get(p.b.pull).st : 'na')), j = sts.filter((s) => s === 'ok' || s === 'warn' || s === 'bad');
+  let run = 0; for (let i = sts.length - 1; i >= 0; i--) { if (sts[i] === 'bad') run++; else if (sts[i] === 'na' || sts[i] === 'nl') continue; else break; }
+  const lastW = sts.map((s, i) => (s === 'bad' || s === 'warn' ? i : -1)).filter((i) => i >= 0).pop(), after = lastW != null ? sts.slice(lastW + 1).filter((s) => s === 'ok').length : 0;
+  const note = run >= 3 ? ['dn', 'failed ' + run + ' pulls running'] : j.length >= 3 && j.every((s) => s === 'ok') ? ['up', 'clean every pull'] : lastW != null && after >= 2 ? ['up', 'fixed since pull ' + DD.pulls[lastW + 1].b.pull] : null;
+  return '<span class="dbd-dots" title="This mechanic on your last pulls of this boss">' + DD.pulls.map((p, i) => '<i class="dbd-' + sts[i] + (i === sts.length - 1 ? ' dbd-now' : '') + '" data-dbdp="' + p.b.pull + '" data-dbds="' + esc(id) + '" title="' + esc('Pull ' + p.b.pull + ': ' + DBD_W[sts[i]]) + '"></i>').join('') +
+    (note ? '<small class="dbd-' + note[0] + '">' + note[1] + '</small>' : '') + '</span>'; }
+// (the Next pull line: the mechanic's own fix, the one its mistakes give most this pull)
+function dbdNext(s, fixF, r) { const k = dbfSecName(s), t = String(s.title || '').toLowerCase(); let x = fixF(k) || (s.spell && s.spell[1] ? fixF(s.spell[1]) : '');
+  if (!x) { const m = keptMistakes(r).find((q) => q.fix && q.mechanic && q.mechanic !== 'Death' && t.includes(String(q.mechanic).toLowerCase())); if (m) x = dbfTip1(m.fix); }
+  return x; }
+// (a link that opens Debrief on this pull with this mechanic open: Warcraft Logs reports only, since a log on this PC can't be shared)
+const dbdLinkOf = (r, id) => (r.item.wcl && r.item.wcl.code ? location.origin + location.pathname + '?report=' + encodeURIComponent(r.item.wcl.code) + '&fight=' + r.item.wcl.fight + '&m=' + encodeURIComponent(id) : '');
+// (phase timing against the best pull tonight: each phase's start, sooner or later, when that pull has been opened on this PC)
+function dbdPhases(r) { const it = r.item; if (it.kill || it.kind === 'run') return '';
+  const others = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b !== it && !b.kill && pullPct(b) != null);
+  const best = others.sort((a, b) => pullPct(a) - pullPct(b))[0], br = best && CACHE.get(best); if (!br || !br.module || !r.module) return '';
+  const P = (r.module.phases || []).slice(1), Q = br.module.phases || [], rows = P.map((p) => { const q = Q.find((x) => x.name === p.name); return q ? { n: p.name, a: p.start, b: q.start } : null; }).filter(Boolean);
+  if (!rows.length) return '';
+  const say = (d) => (Math.abs(d) < 1 ? 'about the same' : T(Math.abs(d)).replace(/^0:/, '') + ' s ' + (d > 0 ? 'later' : 'sooner')).replace(/(\d+):(\d+) s /, '$1:$2 ');
+  return '<div class="panel dbd-ph"><div class="dbd-phh">Phases against your best pull <span class="sub">pull ' + best.pull + ', ' + esc(pullLabel(best)) + '</span></div>' +
+    rows.map((x) => { const d = x.a - x.b, c = Math.abs(d) < 1 ? '' : d > 0 ? 'warn' : 'ok'; return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> ' + T(x.a) + ' <span class="sub">(best ' + T(x.b) + ')</span> <span class="pill-s ' + c + '">' + say(d) + '</span></span>'; }).join('') + '</div>'; }
+// (Copy for Discord: a short after-pull note, made when the page is drawn; the Next pull line is read from the page at the click)
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-dbdp], [data-dbcopy], [data-dblink]'); if (!t) return;
+  if (t.dataset.dbdp) { e.preventDefault(); e.stopPropagation(); const r = S.rep; if (!r) return; const b = ((S.index && S.index.bosses) || []).find((x) => x.id === r.item.id && x.diffId === r.item.diffId && x.pull === +t.dataset.dbdp); if (!b || b === r.item) return;
+    S.scope = 'pull'; S.tab = 'audit'; S.pendingSec = 'sec-' + t.dataset.dbds; select(b); return; }
+  const done = (msg) => { const o = t.textContent; t.textContent = msg; t.classList.add('dbd-done'); setTimeout(() => { t.textContent = o; t.classList.remove('dbd-done'); }, 1800); };
+  const copy = (txt, msg) => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => done(msg), () => { window.prompt('Copy this:', txt); }); };
+  if (t.dataset.dbcopy) { const nx = (document.querySelector('.dbr-nx') || {}).textContent || ''; copy((S.dbCopy || '') + (nx ? '\n' + nx.replace(/^Next pull:\s*/, '**Next pull:** ') : ''), '✓ Copied, paste it in Discord'); }
+  else if (t.dataset.dblink) { e.preventDefault(); e.stopPropagation(); copy(t.dataset.dblink, '✓ Link copied'); } });
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
   if (m0.error) { view('<div class="panel">The audit for this fight hit an error: ' + esc(m0.error) + '</div>'); return; }
   // deaths are one of the mechanics (split by phase like the rest); the old Deaths tab lives here now
+  const DD = r.allPulls ? null : dbdAcross(r), fixF = dbfFixer([r]); /* (the dots and the Next pull lines (Oct 20)) */
   const cut = cutInfo(r), { m: mAll, hidden } = cutModule({ ...m0, sections: m0.sections.concat(r.noDeathSec ? [] : [deathSection(r)]) }, cut ? cut.t : Infinity);
   // (one player at a time, when one is picked and is in this pull)
   const mp1 = S.mechP && [...r.players.values()].some((x) => x.name === S.mechP) ? mechForPlayer(mAll, S.mechP, r) : null, m = mp1 ? mp1.m : mAll;
@@ -14855,7 +14926,7 @@ function audit() {
     fury: { Result: 'enrages', '!Result': 'Furies popped as Dig In ended' }, virulence: { Result: 'deaths to a Virulence clip', '!Result': 'Virulence clips' },
     winds: { Cyst: 'winds with no cyst popped', Died: 'deaths in the winds', '!Cyst': 'a spare cyst left up' },
     // (Nymrissa)
-    nyadds: { Result: 'sets with murlocs reaching the bubble', '!Result': 'murlocs getting through as the pull ended, or a slow Berserker kill', Notes: 'deaths to a Berserker' }, nyscale: { Result: 'Frostscales alive as murlocs got through', '!Result': 'Frostscales living over 20 s' },
+    nyadds: { Result: 'sets with murlocs reaching the bubble', '!Result': 'murlocs getting through as the pull ended, or a slow Berserker kill', Notes: 'deaths to a Berserker' }, nyscale: { Result: 'Frostscales alive as murlocs got through', '!Result': 'Frostscales living over 25 s' },
     nyburst: { Died: 'deaths to Frost Burst', '!Since the last soak': 'soaks too close to another' }, nyrain: { Died: 'deaths to Abyssal Rain', '!Raid cooldowns': 'deadly Rains with no raid cooldown' },
     nypop: { Died: 'deaths to the whirlpools or the sharks', '!What happened': 'players hit by a whirlpool or knocked into the water' },
     // (Nek'zali)
@@ -15157,7 +15228,7 @@ function audit() {
     const lc = lvlCounts(s.id, nBad, nWarn, allRows.length), stc = !nBad && !nWarn ? (s.info ? 'na' : 'ok') : LVL_CLS[lvlOf(lc)], ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
     const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + dbnTag(jobs) + '</summary><div class="secbody">' + dbnBox(jobs) +
+      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + dbnTag(jobs) + dbdDots(s.id, DD) + '</summary><div class="secbody">' + (dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<div class="dbd-lk"><button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button></div>' : '') + dbnBox(jobs) +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -15215,6 +15286,7 @@ function audit() {
     let extra = s.extra;
     if (s.id === 'vf') extra = null; // (the chart above already shows dispels per player)
     if (extra) b += '<div style="margin-top:12px"><div class="sub" style="margin-bottom:6px">' + esc(extra.title) + '</div><span class="chips">' + extra.items.map((i) => '<span class="chipn">' + who(i.p) + '<b>' + i.n + '</b></span>').join('') + '</span></div>';
+    if ((nBad || nWarn) && !r.allPulls && s.id !== 'deaths') { const nx = dbdNext(s, fixF, r); if (nx) b += '<div class="dbd-next"><b>Next pull:</b> ' + esc(nx) + '</div>'; }
     return b + '</div></details>';
   };
   // (Oct 19, "tighten its visual appeal": a phase's clean mechanics fold into one line of small chips after its problems; a chip
@@ -15276,6 +15348,10 @@ function audit() {
         num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '')) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
       if (NJ) top = top.replace('<div class="dbr-4">', '<div class="dbr-4 dbn-five">');
       top = dbnBar(NJ, r) + top;
+      { const lab = it.kill ? 'kill' : 'wipe' + (it.endPhase ? ' in ' + it.endPhase : '') + (it.endPct != null ? ' at ' + Math.round(it.endPct) + '%' : '');
+        const L = ['**Pull ' + it.pull + ' · ' + it.boss + ' ' + (it.diff || '') + ' · ' + lab + '**'];
+        S.dbCopy = L; S.dbCopyD = deaths; }
+      top = '<div class="dbd-acts"><button type="button" class="btn sm dbd-copy" data-dbcopy="1">Copy for Discord</button></div>' + top;
       // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
       const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
       const pick = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)).slice(0, 3);
@@ -15285,6 +15361,12 @@ function audit() {
           return '<a class="tlink dbr-fx st-' + LVL_CLS[x.lv] + '" href="#sec-' + esc(x.s.id) + '-' + k + '">' + (ti.map ? '<span class="wr-map mcx-map dbr-fxm">' + ti.map + '</span>' : ti.alt ? '<span class="dbr-fxm dbr-fxa">' + ti.alt + '</span>' : '') +
             '<span class="dbr-fxb"><span class="sst ' + LVL_CLS[x.lv] + '">' + lvlText(x.lc, true) + '</span><b>' + esc(nm) + '</b><span class="dbr-fxt">' + esc(line) + (ti.more ? ' <span class="wr-plus">+' + ti.more + ' more</span>' : '') + '</span></span></a>'; }).join('') + '</div>';
       } else if (all.length) top += '<div class="dbr-h">Every mechanic went clean</div>';
+      { const mk = { major: '❌', moderate: '❌', minor: '⚠️' }, L = S.dbCopy || [];
+        for (const x of pick) { if (x.s.id === 'deaths') continue; const k = firstAt.has(x.s.id) ? firstAt.get(x.s.id) : 'w', ti = tileOf ? tileOf(x.s, x.s.rows, x.s.groups || [], k) : {}, line = [ti.tag, ti.txt].filter(Boolean).join(' · ');
+          L.push(mk[x.lv] + ' **' + x.s.title.split(': ')[0].replace(/\s*\(.*$/, '') + '**' + (line ? ': ' + line : '')); }
+        const ds = S.dbCopyD || []; if (ds.length) L.push('💀 ' + ds.slice(0, 6).map((d) => d.player + ' ' + T(d.t) + (d.ability ? ' (' + d.ability + ')' : '')).join(', ') + (ds.length > 6 ? ' and ' + (ds.length - 6) + ' more' : ''));
+        S.dbCopy = L.join('\n'); }
+      top += dbdPhases(r);
     } catch (e) { console.error(e); top = ''; }
     h = h.replace('<!--db-top-->', top ? '<section class="dbr-top">' + top + '</section>' : '');
   }
@@ -30806,7 +30888,7 @@ if (WCL.HOSTED) {
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
-  else if (sharedLink) { hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
+  else if (sharedLink) { if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
