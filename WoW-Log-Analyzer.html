@@ -18138,8 +18138,11 @@ function arenaImg(boss, c) {
 const ARENA_HI = { 'The Coiled Altar': 'https://cdn.raidplan.io/raid/wow.venomabyss/map/07.bargained-ort-v108.jpg' };
 function arenaHi(boss, c) {
   const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = ARENA_HI[b]; if (!A || !u || !A.f) return '';
-  const w = A.w / A.s, h = A.h / A.s;
-  return '<image href="' + u + '" preserveAspectRatio="none" x="' + ((A.cx - w / 2 - c.x0) * c.yd) + '" y="' + ((-A.cy - h / 2 - c.y0) * c.yd) + '" width="' + w * c.yd + '" height="' + h * c.yd + '"/>';
+  const w = A.w / A.s, h = A.h / A.s, x = (A.cx - w / 2 - c.x0) * c.yd, y = (-A.cy - h / 2 - c.y0) * c.yd, W = w * c.yd, H = h * c.yd, B = 4000 * c.yd;
+  // (outside the render: the map's dark background, not the floor map's edge showing through)
+  const bg = (rx, ry, rw, rh) => '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#0b0d12"/>';
+  return bg(x - B, y - B, W + 2 * B, B) + bg(x - B, y + H, W + 2 * B, B) + bg(x - B, y, B, H) + bg(x + W, y, B, H) +
+    '<image href="' + u + '" preserveAspectRatio="none" x="' + x + '" y="' + y + '" width="' + W + '" height="' + H + '"/>';
 }
 
 // ---- user map image: stored per boss in this browser, positioned in world yards ----
