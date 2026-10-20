@@ -1476,6 +1476,7 @@ const PATCH_NOTES = [
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
+    'Maps open on the full arena, with small + and − buttons to zoom (or use the mouse wheel), a tidier play bar and a clearer key.',
     'The Coiled Altar maps (Boss guides and Debriefing) now use a much sharper picture of the room.',
     'Debriefing maps on every Venomous Abyss boss now use the same sharp picture of the room, lined up with real Mythic kills.',
     'Debriefing maps: players show as role icons in their class colour, and on The Coiled Altar the maps show the Fangs puddles where they really were, the bosses\' portraits, and a short pause at each frontal.',
@@ -4484,7 +4485,11 @@ function miniMap(mp, pmap) {
   const x0 = Math.min(ax0, fx0), y0 = Math.min(ay0, fy0), x1 = Math.max(ax1, fx0 + fs), y1 = Math.max(ay1, fy0 + fs);
   const X = (p) => (sx(p) - x0) * yd, Y = (p) => (sy(p) - y0) * yd, hl = new Set(mp.hl || []);
   const FW = (x1 - x0) * yd, FH = (y1 - y0) * yd, fside = Math.max(FW, FH);
-  const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = A ? [((ax0 + ax1) / 2 - x0) * yd - Math.max(ax1 - ax0, ay1 - ay0) * yd / 2, ((ay0 + ay1) / 2 - y0) * yd - Math.max(ax1 - ax0, ay1 - ay0) * yd / 2, Math.max(ax1 - ax0, ay1 - ay0) * yd, Math.max(ax1 - ax0, ay1 - ay0) * yd] : [0, 0, fside, fside];
+  // (the full arena, where maps open: a square on the room's shorter side, widened to keep everyone on the map in view (Oct 20))
+  const acx = (ax0 + ax1) / 2, acy = (ay0 + ay1) / 2; let aside = Math.min(ax1 - ax0, ay1 - ay0);
+  for (const p of bpts) aside = Math.max(aside, 2 * Math.max(Math.abs(sx(p) - acx), Math.abs(sy(p) - acy)) + 12);
+  aside = Math.min(aside, Math.max(ax1 - ax0, ay1 - ay0)); /* (never wider than the whole room box: a stray position can't pull it far out) */
+  const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = mp.room ? [(mp.room.x0 - 5 - x0) * yd, (-mp.room.y1 - 5 - y0) * yd, (mp.room.x1 - mp.room.x0 + 10) * yd, (mp.room.x1 - mp.room.x0 + 10) * yd] : A ? [(acx - x0) * yd - aside * yd / 2, (acy - y0) * yd - aside * yd / 2, aside * yd, aside * yd] : [0, 0, fside, fside];
   const ic = (x, y, inner) => '<g class="ic" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>';
   // opens on the whole arena when there is one; "Zoom to mechanic" (or double-click) goes in
   const startVB = A ? fullVB : focusVB;
@@ -4769,10 +4774,10 @@ function miniMap(mp, pmap) {
   void mi; void arena;
   return '<div class="sub" style="margin:10px 0 6px">' + esc(mp.title) + '. Hover any icon for a name.' +
     (mp.note ? '<div style="margin-top:4px;font-weight:600;color:var(--text)">' + esc(mp.note) + '</div>' : '') + '</div>' +
-    '<div class="zwrap" style="max-width:560px"><div class="zbar">' + (A ? '<button class="btn zfull" type="button">Full arena</button><button class="btn zfocus on" type="button">Zoom to mechanic</button>' : '') +
-    '<span class="sub">Scroll to zoom, drag to move, double-click to switch views</span></div>' +
-    '<div class="zbox">' + s + '<div class="zscale"><i></i><span>10 yards</span></div><div class="znorth">N ↑</div></div>' +
-    (mp.frames ? '<div class="zanim"><button class="btn zplay" type="button">❚❚ Pause</button><input class="zrange" type="range" min="0" max="' + (mp.frames.length - 1) + '" value="0" step="1"><span class="ztime sub"></span></div>' : '') + legend + '</div>';
+    '<div class="zwrap" style="max-width:560px"><div class="zbar"></div>' + /* (empty and hidden unless a page adds its own buttons, like a guide's Follow the action) */
+    '<div class="zbox">' + s + '<div class="zscale"><i></i><span>10 yards</span></div><div class="znorth">N ↑</div>' +
+    '<div class="zctl"><button type="button" class="zin" title="Zoom in (or scroll)" aria-label="Zoom in">+</button><button type="button" class="zout" title="Zoom out" aria-label="Zoom out">−</button></div>' +
+    (mp.frames ? '<div class="zanim"><button class="btn zplay" type="button">❚❚ Pause</button><input class="zrange" type="range" min="0" max="' + (mp.frames.length - 1) + '" value="0" step="1"><span class="ztime sub"></span></div>' : '') + '</div>' + legend + '</div>'; /* (the play bar is inside the map's box: over its bottom, like a video's) */
 }
 // Animated map (mp.frames): plays once from the first frame, then the slider scrubs. Each frame redraws the
 // map's contents in place, so zoom and pan stay where they are.
@@ -4848,10 +4853,9 @@ function bindZoom(box) {
   const svg = box.querySelector('svg.zmap'); if (!svg) return;
   const focus = svg.dataset.focus.split(',').map(Number), full = svg.dataset.full.split(',').map(Number), yd = +svg.dataset.yd;
   const bar = box.querySelector('.zscale i');
-  const hasArena = !!box.querySelector('.zfull');
-  // (starts zoomed to the mechanic, like the tile thumbnails (Oct 19: on the whole arena a spit line or a soak circle looked
-  // tiny); "Full arena" shows the room)
-  let vb = focus.slice(); void hasArena;
+  const hasArena = svg.dataset.full !== svg.dataset.focus;
+  // (opens on the full arena (your call, Oct 20); scroll, the + and − buttons or a double-click zoom in. The small tiles stay zoomed in (wrThumbFit))
+  let vb = (hasArena ? full : focus).slice();
   const apply = () => {
     svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
     const k = vb[2] / 480; // 1 at the mechanic view
@@ -4876,6 +4880,10 @@ function bindZoom(box) {
   const fb = box.querySelector('.zfocus'), ub = box.querySelector('.zfull');
   if (fb) fb.onclick = () => { vb = focus.slice(); apply(); };
   if (ub) ub.onclick = () => { vb = full.slice(); apply(); };
+  // (the corner buttons, for a mouse or touchpad without a scroll wheel: zoom about the middle of the view)
+  const zc = (f) => { const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2, nw = Math.min(Math.max(vb[2] * f, 40), Math.max(full[2], focus[2]) * 1.3); vb = [cx - nw / 2, cy - nw / 2, nw, nw]; apply(); };
+  const zi = box.querySelector('.zin'), zo = box.querySelector('.zout');
+  if (zi) zi.onclick = () => zc(1 / 1.4); if (zo) zo.onclick = () => zc(1.4);
   apply();
 }
 function phaseBar(r, m) {

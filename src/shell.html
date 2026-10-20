@@ -676,6 +676,35 @@ details[id^="sec-"] { scroll-margin-top: 96px; } /* (a jump to a mechanic lands 
 .znorth { position: absolute; right: 10px; top: 8px; font-size: 12px; color: #d8dce5; pointer-events: none; text-shadow: 0 1px 2px #000; }
 .zleg { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 10px; border-top: 1px solid var(--line); font-size: 12px; color: #d8dce5; }
 .zleg > span { display: inline-flex; align-items: center; gap: 6px; } .zleg > span > span { display: inline; }
+/* map controls (Oct 20): a toolbar on top with one switch for the views, a player bar and a tidy key underneath */
+.zwrap { border-radius: 12px; }
+.zbar { gap: 8px; padding: 8px 10px; background: #141821; }
+.zbar:empty { display: none; }
+.zbar .btn { padding: 5px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 600; line-height: 1.25; background: transparent; border: 1px solid transparent; color: var(--muted); }
+.zbar > .btn { border-color: var(--line2); } .zbar .btn:hover { color: var(--text); }
+.zbar .btn.on { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.zctl { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.zctl button { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--line2); background: rgba(11,13,18,.8); color: #e6e9ef; font: 700 17px/1 system-ui, sans-serif; cursor: pointer; }
+.zctl button:hover { border-color: var(--gold); color: var(--gold); }
+.znorth { top: 10px; right: 10px; padding: 2px 8px; border-radius: 999px; background: rgba(11,13,18,.72); font-weight: 700; text-shadow: none; }
+.zscale { left: 10px; bottom: 10px; padding: 4px 8px 5px; border-radius: 6px; background: rgba(11,13,18,.72); text-shadow: none; } .zscale i { box-shadow: none; }
+.zanim { gap: 12px; padding: 10px 12px; background: #141821; border-top: 1px solid var(--line); }
+.zanim .zplay { flex: none; min-width: 88px; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; background: rgba(230,180,80,.14); border-color: rgba(230,180,80,.5); color: var(--gold); }
+.zanim .zplay:hover { background: rgba(230,180,80,.24); border-color: var(--gold); }
+.zanim .zrange { accent-color: var(--gold); cursor: pointer; }
+.zanim .ztime { flex: none; min-width: 56px; padding: 3px 8px; border-radius: 6px; background: #0b0d12; border: 1px solid var(--line); color: #d8dce5; font-size: 12.5px; text-align: center; }
+.zleg { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 16px; padding: 10px 12px 12px; background: #10131a; color: var(--muted); }
+.zleg::before { content: 'Key'; grid-column: 1 / -1; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+.zleg > span { align-items: flex-start; line-height: 1.35; } .zleg svg { flex: none; margin-top: 1px; }
+@media (max-width: 560px) { .zanim .zplay { min-width: 0; } .zleg { grid-template-columns: 1fr; } }
+/* (with a mouse: the play bar over the bottom of the map, shown while the mouse is on it, like a video player; the scale and zoom buttons step up out of its way) */
+@media (hover: hover) and (pointer: fine) {
+  .zbox .zanim { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 10px; background: linear-gradient(rgba(8,9,13,0), rgba(8,9,13,.92) 55%); border-top: 0; opacity: 0; transform: translateY(6px); transition: opacity .18s, transform .18s; pointer-events: none; }
+  .zbox:hover .zanim, .zbox:focus-within .zanim { opacity: 1; transform: none; pointer-events: auto; }
+  .zbox .zscale, .zbox .zctl { transition: bottom .18s; } .zbox:hover .zscale, .zbox:hover .zctl, .zbox:focus-within .zscale, .zbox:focus-within .zctl { bottom: 60px; }
+}
+/* (on a phone the bar stays under the map, inside its box: the scale and zoom buttons sit above it) */
+@media not all and (hover: hover) and (pointer: fine) { .zbox:has(> .zanim) .zscale, .zbox:has(> .zanim) .zctl { bottom: 62px; } }
 .map g.pl.k > circle { stroke: #fff; stroke-width: 1.5; }
 .map .ml { fill: #ece8df; font-size: 12px; text-anchor: middle; font-weight: 600; paint-order: stroke; stroke: #0f1117; stroke-width: 3px; }
 .map .ml.dim { fill: #8a92a6; font-weight: 500; } .map .ml.hot { fill: #ff8f87; font-size: 13px; }

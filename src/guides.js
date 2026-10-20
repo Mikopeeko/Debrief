@@ -841,7 +841,7 @@ function gdzView() {
     fb.onclick = () => { follow = !follow; fb.classList.toggle('on', follow); if (follow) { camC = -1; } };
     svg.addEventListener('pointerdown', () => { if (follow) { follow = false; fb.classList.remove('on'); if (tw) cancelAnimationFrame(tw); } });
     svg.addEventListener('wheel', () => { if (follow) { follow = false; fb.classList.remove('on'); } }, { passive: true });
-    for (const b of box.querySelectorAll('.zfull, .zfocus')) b.addEventListener('click', () => { follow = false; fb.classList.remove('on'); });
+    for (const b of box.querySelectorAll('.zfull, .zfocus, .zin, .zout')) b.addEventListener('click', () => { follow = false; fb.classList.remove('on'); });
     // full screen, for watching it like a video
     const fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn gdz-fs'; fs.textContent = '⛶ Full screen'; zbar.appendChild(fs);
     fs.onclick = () => { const el = art.querySelector('.gdz-mapc'); if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen(); };
@@ -876,7 +876,7 @@ function gdzView() {
     // (each step lights while it plays; clicking one jumps the map there)
     if (lis.length && st.length) {
       // (on a phone the list sits under the map, out of view: the step playing also shows as a caption right under the map)
-      const cap = document.createElement('div'); cap.className = 'gdz-cap'; (box.querySelector('.zanim') || box).after(cap);
+      const cap = document.createElement('div'); cap.className = 'gdz-cap'; (box.querySelector('.zbox') || box).after(cap); /* (under the map: the play bar is inside it now) */
       let cur = -1; box._onFrame = (ft) => { let j = -1; st.forEach(([t], q) => { if (ft >= t - 0.01) j = q; }); if (j !== cur) { cur = j; lis.forEach((li, q) => { li.classList.toggle('on', q === j); li.classList.toggle('past', q < j); });
         cap.innerHTML = j < 0 ? '' : '<i>' + (j + 1) + '</i><span>' + esc((m.do || [])[j] || '') + '</span>'; } };
       lis.forEach((li, q) => { if (!st[q]) return; li.classList.add('go'); li.onclick = () => { const rng = box.querySelector('.zrange'); if (!rng) return; let fi = 0; mp.frames.forEach((f, z) => { if (f.t <= st[q][0] + 0.3) fi = z; }); rng.value = fi; rng.dispatchEvent(new Event('input')); }; });
@@ -991,6 +991,7 @@ function gdzCss() {
 .gdz-mm .zbox { container-type: inline-size; }
 .gdz-vpause { position: absolute; top: 12%; left: 50%; transform: translate(-50%, -8px); width: min(86%, 560px); background: rgba(8,9,13,.94); border: 2px solid var(--gold); border-radius: .6em; padding: .55em .9em .7em; font-size: clamp(12px, 2.6cqw, 21px); color: #fff; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; box-shadow: 0 8px 26px rgba(0,0,0,.55); z-index: 2; overflow: hidden; }
 .gdz-vpause.on { opacity: 1; transform: translate(-50%, 0); }
+@media (hover: hover) and (pointer: fine) { .gdz-vlow { transition: bottom .18s; } .zbox:hover .gdz-vlow, .zbox:focus-within .gdz-vlow { bottom: 60px; } } /* (the caption steps up out of the play bar's way) */
 .gdz-vpause b { display: block; color: var(--gold); font: 800 .75em var(--head); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .15em; }
 .gdz-vpause span { font-family: var(--body); line-height: 1.35; }
 .gdz-vpause i { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--gold); transform-origin: left; }
