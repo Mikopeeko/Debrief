@@ -15238,13 +15238,13 @@ function cmpFindP(r, p, ps) {
   const pk = S.cmpPick && S.cmpPick.me === p.name && S.cmpPick.boss === bossK ? S.cmpPick : null;
   const again = '<button class="btn sm" type="button" id="cmpPickX">Search again</button>';
   if (pk && pk.src === 'mate') { const q = ps.find((x) => x.name === pk.name);
-    if (q) return cmpPair(r, p, r, q, avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + again + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + ', in this pull</small>'); }
+    if (q) return cmpPair(r, p, r, q, avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + again + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + ', in this pull</small>', '', null, { ctl: again, sub: 'in this pull' }); }
   if (pk && pk.src === 'rank') { const w = pk.w;
     const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:' + p.color + '">' + esc(w.name) + '</span>' + again + '<small>#' + w.rank + ' ' + esc(spn) + ' on this boss' + (w.hero ? ', ' + esc(w.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
     const TF = topFightFor(r, w);
     if (TF === 'loading') return { vs, body: cmpTfLoad(w) };
     if (TF.err) return { vs, body: cmpMsg(esc(TF.err)) };
-    return cmpPair(r, p, TF.r, TF.q, vs); }
+    return cmpPair(r, p, TF.r, TF.q, vs, '', null, { ctl: again, rank: '#' + w.rank, sub: esc(w.server + (w.region ? '-' + w.region : '')) }); }
   const o = specRanksFor(r, p); if (o && !o.pages && !o.err) specRanksMore(r, o);
   const box = '<div class="panel cmp-srch"><h3>Search for a player<small>Anyone who plays your spec and hero tree. Pick one to compare yourself with them.</small></h3>' +
     '<input class="cmp-find cmp-srchq" id="cmpQ" type="search" placeholder="Type a name" value="' + esc(S.cmpQ || '') + '" aria-label="Search for a player" autocomplete="off" spellcheck="false">' +
@@ -15254,7 +15254,7 @@ function cmpFindP(r, p, ps) {
 // The page for two players of the same spec, each read from their own pull (a teammate: this pull for both; a top raider:
 // their own kill), so Search for a player and Top raiders of your spec are set up the exact same way (your call, Oct 19).
 // rB: the second player's pull; lead: anything to show first (a note)
-function cmpPair(r, p, rB, q, vs, lead, nmO) {
+function cmpPair(r, p, rB, q, vs, lead, nmO, vb) {
   const R = (x) => (x === q ? rB : r), k = cmpKind(p), hA = cmpHeroOf(r, p), heroQ = (x) => cmpHeroOf(R(x), x);
   const kq = cmpKind(q), pc = perfContext(r), U = (kk) => (kk === 'heal' ? 'healing' : 'damage'), cpm = (x) => castOf(R(x), x, 0, perfContext(R(x)).end, true).cpm; // (real presses, as Rotation counts them)
   const ra = cmpRate(r, p, k), rb = cmpRate(rB, q, kq), colB = q.color === p.color ? '#e8e3d8' : q.color; // (two of the same class: the second in white)
@@ -15342,13 +15342,18 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
   // them, and a tug of war bar along the bottom, each side as long as its number)
   // (each side's hero tree as a tag under the name; rt: the second player, read from their own pull)
   const hh = (pl, rt) => { try { return cmpHeroOf(rt ? rB : r, pl) || ''; } catch (e) { return ''; } };
-  const big = (n, col, v, kk, pl, rt) => '<div class="cmp-hpn' + (rt ? ' cmp-hpr' : '') + '" style="--c:' + col + '">' + (pIcon(pl) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(pl)) + '" alt="" onerror="this.remove()">' : '') +
-    '<div><span class="cmp-hpw">' + n + '</span>' + (hh(pl, rt) ? '<span class="cmp-hph">' + esc(hh(pl, rt)) + '</span>' : '') + '<b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second</span></div></div>';
+  // (ct: the side's Change control, rank badge and small line, when the face-off is also the page's header)
+  const big = (n, col, v, kk, pl, rt, ct) => '<div class="cmp-hpn' + (rt ? ' cmp-hpr' : '') + '" style="--c:' + col + '">' + (pIcon(pl) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(pl)) + '" alt="" onerror="this.remove()">' : '') +
+    '<div><span class="cmp-hpt">' + (ct && ct.rank ? '<span class="cmp-hrk">' + ct.rank + '</span>' : '') + '<span class="cmp-hpw">' + n + '</span>' + (ct && ct.ctl ? ct.ctl : '') + '</span>' + (hh(pl, rt) ? '<span class="cmp-hph">' + esc(hh(pl, rt)) + '</span>' : '') +
+    '<b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + (kk === 'heal' ? 'healing' : 'damage') + ' a second' + (ct && ct.sub ? ' · ' + ct.sub : '') + '</span></div></div>';
   const gapPc = k === kq && ra && rb ? Math.abs(ra - rb) / Math.min(ra, rb) : null, hiN = ra >= rb ? (me ? 'You' : An) : Bn, verbH = k === 'heal' ? 'healed' : 'did';
   const badge = gapPc == null ? '<b>vs</b>' : gapPc < 0.02 ? '<b>=</b><span>About the same</span>' : '<b>+' + Math.round(100 * gapPc) + '%</b><span>' + hiN + ' ' + verbH + ' more</span>';
   const tug = k === kq && ra > 0 && rb > 0 ? '<div class="cmp-hpbar"><i style="flex:' + ra + ';background:' + p.color + '"></i><i style="flex:' + rb + ';background:' + colB + '"></i></div>' : '';
-  const hps = '<div class="panel cmp-hps" style="--artA:' + specArt(p) + ';--artB:' + specArt(q) + '">' + big(me ? 'You' : An, p.color, ra, k, p) +
-    '<div class="cmp-hpm"' + (gapPc != null && gapPc >= 0.02 ? ' data-tt="' + esc(hiN + ' ' + verbH + ' ' + C(Math.abs(ra - rb)) + ' a second more.') + '"' : '') + '>' + badge + '</div>' + big(Bn, colB, rb, kq, q, true) + tug + '</div>';
+  // (Oct 20, "I like A": the face-off is also the page's header, the mode tabs on top and each side's Change by its name; seg and ctlA
+  // come from cmp(), vb (the second side's Change, rank and line) from whoever opened this pair)
+  const face = (seg, ctlA) => '<div class="panel cmp-hps' + (seg ? ' cmp-hpf' : '') + '" style="--artA:' + specArt(p) + ';--artB:' + specArt(q) + '">' + (seg ? '<div class="cmp-hseg">' + seg + '</div>' : '') + big(me ? 'You' : An, p.color, ra, k, p, false, ctlA ? { ctl: ctlA } : null) +
+    '<div class="cmp-hpm"' + (gapPc != null && gapPc >= 0.02 ? ' data-tt="' + esc(hiN + ' ' + verbH + ' ' + C(Math.abs(ra - rb)) + ' a second more.') + '"' : '') + '>' + badge + '</div>' + big(Bn, colB, rb, kq, q, true, seg ? vb : null) + tug + '</div>';
+  const hps = face('', '');
   const sideBy = '<div class="panel"><h3>Side by side<small>Click a pair to see what is behind it.</small></h3><div class="cmp-gw">' + groups + '</div></div>';
   // (Oct 19, "I want players to use this tab to make themselves better": the 3 things costing the first player the most against this one, each
   // with what it's worth a second, one plain line and the Try; the rest of the page is the evidence)
@@ -15387,7 +15392,7 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
     if (iA && iB) out.push(cmpCard({ ...two, label: 'Item level', a: iA, b: iB, fa: String(Math.round(iA)), fb: String(Math.round(iB)), st: 'na', txt: Math.abs(iA - iB) < 3 ? 'About the same gear.' : (iA > iB ? An : Bn) + ' had better gear.' }));
     return '<div class="panel"><h3>How they play it differently<small>Side by side, no grades. ' + (me ? 'Your' : An + '\'s') + ' own checks are on the Rotation tab.</small></h3><div class="cmp-cards">' + out.join('') + '</div></div>'; })();
   if (CMP_GAP_VIEW) { const hi = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k), pA: p, pB: q, nmO, book: q.specName === p.specName ? specBook(p.specName) : null, hi: true });
-    return { vs, body: (lead || '') + hps + diffs + cdTl + hi +
+    return { vs, face: vb ? face : null, body: (lead || '') + (vb ? '' : hps) + diffs + cdTl + hi +
       cmpFold('all', 'Every check, side by side', 'The biggest fixes, the whole Rotation page next to theirs, the numbers and talents. Click to open.', (fixes || '') + gapH + (chips || '') + sideBy + chart + (tal ? tal.html : '') + (rot ? rot.html : '')) }; }
   return { vs, body: (lead || '') + hps + (chips || gapH) + cdTl + sideBy + chart +
     cmpFold('more', 'More detail', 'Talent differences and every Rotation check. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '')) };
@@ -15408,7 +15413,7 @@ function cmpSelf(r, p) {
     return { vs, body: card }; }
   const q = [...r2.players.values()].find((x) => x.name === p.name);
   if (!q) return { vs, body: cmpMsg(esc(p.name) + ' isn\'t in pull ' + pick.pull + '.') };
-  return cmpPair(r, p, r2, q, vs, '', { a: 'Pull ' + r.item.pull + (r.item.kill ? ' (kill)' : ''), b: 'Pull ' + pick.pull + (pick.kill ? ' (kill)' : '') });
+  return cmpPair(r, p, r2, q, vs, '', { a: 'Pull ' + r.item.pull + (r.item.kill ? ' (kill)' : ''), b: 'Pull ' + pick.pull + (pick.kill ? ' (kill)' : '') }, { ctl: opts });
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
 // downloaded and read like one of your pulls, then the same page as Fellow raiders (your call, Oct 19: "both tabs set up
@@ -15469,7 +15474,7 @@ function cmpTop(r, p) {
   const lead = (fk ? '' : treeNote) + stand, TF = topFightFor(r, w);
   if (TF === 'loading') return { vs, body: lead + cmpTfLoad(w) };
   if (TF.err) return { vs, body: lead + cmpMsg(esc(TF.err)) };
-  return cmpPair(r, p, TF.r, TF.q, vs, lead);
+  return cmpPair(r, p, TF.r, TF.q, vs, lead, null, { ctl: pick, rank: '#' + x.rank, sub: esc(w.server + (w.region ? '-' + w.region : '')) });
 }
 // (Oct 20, "the average of the top 100, top 200, and top 500 players ... based on the parses, not the speed of the kill": you against the
 // average player of your spec in that group. The number is every ranked player's damage (or healing) a second, as the rankings count it
@@ -15509,13 +15514,15 @@ function cmpAvgTop(r, p, k, n, A, rl, myHero, mine, pick, lead) {
   const why = cmpWhy({ name: An, col: p.color, rate: mine, ab: [...mm.values()], hero: '' }, { name: nm, col: GOLD, rate: A.v, ab: theirs.sort((a, b) => b.share - a.share), hero: '' }, k, p.specName);
   // (the face-off, as with one player: your number, the gap in the badge, theirs, and the tug of war bar)
   const ic = pIcon(p) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(p)) + '" alt="" onerror="this.remove()">' : '';
-  const big = (n2, col, v, rt) => '<div class="cmp-hpn' + (rt ? ' cmp-hpr' : '') + '" style="--c:' + col + '">' + ic + '<div><span class="cmp-hpw">' + n2 + '</span><b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + U + ' a second</span></div></div>';
+  const big = (n2, col, v, rt, ctl, sub) => '<div class="cmp-hpn' + (rt ? ' cmp-hpr' : '') + '" style="--c:' + col + '">' + ic + '<div><span class="cmp-hpt"><span class="cmp-hpw">' + n2 + '</span>' + (ctl || '') + '</span><b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + U + ' a second' + (sub ? ' · ' + sub : '') + '</span></div></div>';
   const gp = mine > 0 && A.v > 0 ? Math.abs(mine - A.v) / Math.min(mine, A.v) : null, hiN = mine >= A.v ? An : nm;
   const badge = gp == null ? '<b>vs</b>' : gp < 0.02 ? '<b>=</b><span>About the same</span>' : '<b>+' + Math.round(100 * gp) + '%</b><span>' + esc(hiN) + ' ' + (k === 'heal' ? 'healed' : 'did') + ' more</span>';
   const tug = mine > 0 ? '<div class="cmp-hpbar"><i style="flex:' + mine + ';background:' + p.color + '"></i><i style="flex:' + A.v + ';background:' + GOLD + '"></i></div>' : '';
-  const hps = '<div class="panel cmp-hps" style="--artA:' + specArt(p) + ';--artB:' + specArt(p) + '">' + big(esc(An), p.color, mine, false) + '<div class="cmp-hpm">' + badge + '</div>' + big(nm, GOLD, A.v, true) + tug + '</div>';
+  // (the face-off is also the page's header, as with one player)
+  const face = (seg, ctlA) => '<div class="panel cmp-hps cmp-hpf" style="--artA:' + specArt(p) + ';--artB:' + specArt(p) + '"><div class="cmp-hseg">' + seg + '</div>' + big(esc(An), p.color, mine, false, ctlA) + '<div class="cmp-hpm">' + badge + '</div>' +
+    big(nm, GOLD, A.v, true, pick, A.n + ' ' + esc(spn) + 's') + tug + '</div>';
   const note = '<div class="panel"><p class="cmp-hnote" style="margin:0">' + nm + ' is ' + (A.n < n ? 'all ' + A.n + ' ' + esc(spn) + 's ranked on this boss so far (fewer than ' + n + ')' : 'the top ' + n + ' ' + esc(spn) + 's on this boss') + ', ranked by ' + U + ' a second (the same order as their parses). The spells come from ' + ok.length + ' of them, spread through the group' + (pool === on ? ', all playing ' + esc(myHero) : '') + '. An average isn\'t one real player, so there\'s no opener or burst windows here. Pick a player under Change to see those.</p></div>';
-  return { vs, body: lead + hps + (why || cmpMsg('Your spells line up with theirs: no spell is more than 2% apart.')) + note };
+  return { vs, face, body: lead + (why || cmpMsg('Your spells line up with theirs: no spell is more than 2% apart.')) + note };
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from
 // the list; then it's your raid against theirs, the same page as the other two.
@@ -15600,7 +15607,9 @@ function cmp() {
   const n = (rl) => ps.filter((x) => (x.role || 'dps') === rl).length;
   const who = mode === 'raids' ? cmpIcon('users', 'var(--blue)') + ' <span class="nm" style="color:var(--blue)">Your raid</span><small>' + plural(n('tank'), 'tank') + ', ' + plural(n('healer'), 'healer') + ' and ' + n('dps') + ' DPS</small>'
     : avatar(p, true) + ' <span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>' + cmpSel('cmpMe', ps, p, null, 'Change') + '<small>' + esc(p.specName || '') + (cmpHeroOf(r, p) ? ', ' + esc(cmpHeroOf(r, p)) : '') + '</small>';
-  const head = '<div class="panel cmp-head"><div class="seg cmp-seg" id="cmpMode" role="tablist">' + CMP_MODES.map(([k, l]) => '<button type="button" data-m="' + k + '"' + (k === mode ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' +
+  const seg = '<div class="seg cmp-seg" id="cmpMode" role="tablist">' + CMP_MODES.map(([k, l]) => '<button type="button" data-m="' + k + '"' + (k === mode ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>';
+  // (Oct 20, "I like A": once two players are side by side, the face-off is the header: the tabs on top, each name once with its Change)
+  const head = o.face ? o.face(seg, cmpSel('cmpMe', ps, p, null, 'Change')) : '<div class="panel cmp-head">' + seg +
     '<h3 class="cmp-vh"><span class="cmp-who">' + who + '</span><span class="cmp-vs">vs</span><span class="cmp-who">' + o.vs + '</span></h3></div>';
   const ae = document.activeElement, qAt = ae && ae.id === 'cmpQ' ? ae.selectionStart : null;
   const scrollY0 = window.scrollY;
