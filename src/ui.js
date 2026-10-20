@@ -1492,6 +1492,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Boss guides: Debriefing's mechanics have a How to do it link to the guide, your role is ringed on the maps, and Your job shows your lines from your raid's note.',
     'Boss guides: Putting it all together has a Read it version, the whole fight in order with what overlaps, coloured by how dangerous it is.',
     'Build from roster: change any job in a drafted note with tonight\'s players, add jobs of your own, and see who has no job yet. Cancel now sits at the top of the draft.',
     'Maps play at real speed (they were sped up), every boss now has its portrait, and maps open inside the room picture.',
@@ -4487,7 +4488,7 @@ function audit() {
     const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + secHead(s) +
       '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + dbnTag(jobs) + dbdDots(s.id, DD) + '</summary><div class="secbody">' + (dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<div class="dbd-lk"><button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button></div>' : '') + dbnBox(jobs) +
-      (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
+      (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + (typeof gdzHowTo === 'function' ? gdzHowTo(s.id) : '') /* (a link to this mechanic in the Boss guide, Oct 20) */ + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
