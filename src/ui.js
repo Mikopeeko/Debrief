@@ -949,7 +949,10 @@ let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
   const tip = LOAD_TIPS[Math.floor(Math.random() * LOAD_TIPS.length)];
-  return '<div class="ld" role="status" aria-live="polite"><svg class="ld-d ld-' + DANCERS[k][0] + '" viewBox="0 0 80 90" aria-hidden="true"><ellipse class="ld-sh" cx="40" cy="84" rx="17" ry="3.5"/><g class="ld-body">' + DANCERS[k][2]() + '</g></svg><div class="ld-cap">' + esc(DANCERS[k][1]) + '</div>' +
+  // (the dancer on layers of its own (Oct 19, "still lagging on loading screen a bit"): the body's bob, each arm's wave and the shadow are
+  // animated by the browser itself, so they keep moving while a pull is being read; only small touches (a flame, a tongue) are drawn by the page)
+  const arms = []; const body = DANCERS[k][2]().replace(/<g class="ld-a([lr])" style="transform-origin:([\d.]+)px ([\d.]+)px">([\s\S]*?)<\/g>/g, (m, d, x, y, inner) => { arms.push('<svg class="ld-arm ld-arm' + d + '" viewBox="0 0 80 90" aria-hidden="true" style="transform-origin:' + (100 * x / 80).toFixed(2) + '% ' + (100 * y / 90).toFixed(2) + '%">' + inner + '</svg>'); return ''; });
+  return '<div class="ld" role="status" aria-live="polite"><div class="ld-stage" aria-hidden="true"><i class="ld-shd ld-' + DANCERS[k][0] + '"></i><div class="ld-dw ld-' + DANCERS[k][0] + '">' + arms.join('') + '<svg class="ld-d" viewBox="0 0 80 90"><g class="ld-body">' + body + '</g></svg></div></div><div class="ld-cap">' + esc(DANCERS[k][1]) + '</div>' +
     '<div class="ld-t">' + esc(title) + '</div><div class="ld-l"' + (id ? ' id="' + id + '"' : '') + '>' + esc(line || '') + '</div>' +
     '<div class="ld-b' + (frac == null ? ' ind' : '') + '"><i' + (frac == null ? '' : ' style="width:' + (100 * frac).toFixed(1) + '%"') + '></i></div><div class="ld-tip"><b>Tip</b> · ' + esc(tip) + '</div></div>';
 }

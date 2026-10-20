@@ -4132,6 +4132,14 @@ button.rcb-tr { cursor: pointer; } button.rcb-tr:nth-of-type(even) { background:
 .rcb-open { width: 100%; }
 @media (max-width: 1100px) { .rcb-2 { grid-template-columns: minmax(0, 1fr); } .rcb-yp { position: static; } .rcb-subs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .rcb-ban { grid-template-columns: 1fr; padding: 18px; } .rcb-ban h2 { font-size: 30px; } .rcb-subs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rcb-tbl { overflow-x: auto; } .rcb-tr { min-width: 640px; } }
+/* the loading dancer on its own layers (Oct 19): the browser animates them itself, so they keep moving while a pull is being read */
+.ld-stage { position: relative; width: 92px; height: 104px; }
+.ld-dw { position: absolute; inset: 0; transform-origin: 50% 91%; will-change: transform; animation: ldBob .6s ease-in-out infinite; }
+.ld-dw > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ld-dw .ld-body { animation: none !important; }
+.ld-arm { will-change: transform; animation: ldArmL .6s ease-in-out infinite; } .ld-armr { animation-name: ldArmR; }
+.ld-dw.ld-void { animation: ldFloat 1.2s ease-in-out infinite; } .ld-dw.ld-murloc { animation: ldHop .6s ease-in-out infinite; } .ld-dw.ld-snake { animation: ldSway 1s ease-in-out infinite; }
+.ld-shd { position: absolute; left: 50%; bottom: 3px; width: 39px; height: 8px; margin-left: -19.5px; border-radius: 50%; background: rgba(0,0,0,.45); will-change: transform, opacity; animation: ldSh .6s ease-in-out infinite; } .ld-shd.ld-void { animation-duration: 1.2s; }
 </style>
 
 
@@ -12166,7 +12174,10 @@ let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
   const tip = LOAD_TIPS[Math.floor(Math.random() * LOAD_TIPS.length)];
-  return '<div class="ld" role="status" aria-live="polite"><svg class="ld-d ld-' + DANCERS[k][0] + '" viewBox="0 0 80 90" aria-hidden="true"><ellipse class="ld-sh" cx="40" cy="84" rx="17" ry="3.5"/><g class="ld-body">' + DANCERS[k][2]() + '</g></svg><div class="ld-cap">' + esc(DANCERS[k][1]) + '</div>' +
+  // (the dancer on layers of its own (Oct 19, "still lagging on loading screen a bit"): the body's bob, each arm's wave and the shadow are
+  // animated by the browser itself, so they keep moving while a pull is being read; only small touches (a flame, a tongue) are drawn by the page)
+  const arms = []; const body = DANCERS[k][2]().replace(/<g class="ld-a([lr])" style="transform-origin:([\d.]+)px ([\d.]+)px">([\s\S]*?)<\/g>/g, (m, d, x, y, inner) => { arms.push('<svg class="ld-arm ld-arm' + d + '" viewBox="0 0 80 90" aria-hidden="true" style="transform-origin:' + (100 * x / 80).toFixed(2) + '% ' + (100 * y / 90).toFixed(2) + '%">' + inner + '</svg>'); return ''; });
+  return '<div class="ld" role="status" aria-live="polite"><div class="ld-stage" aria-hidden="true"><i class="ld-shd ld-' + DANCERS[k][0] + '"></i><div class="ld-dw ld-' + DANCERS[k][0] + '">' + arms.join('') + '<svg class="ld-d" viewBox="0 0 80 90"><g class="ld-body">' + body + '</g></svg></div></div><div class="ld-cap">' + esc(DANCERS[k][1]) + '</div>' +
     '<div class="ld-t">' + esc(title) + '</div><div class="ld-l"' + (id ? ' id="' + id + '"' : '') + '>' + esc(line || '') + '</div>' +
     '<div class="ld-b' + (frac == null ? ' ind' : '') + '"><i' + (frac == null ? '' : ' style="width:' + (100 * frac).toFixed(1) + '%"') + '></i></div><div class="ld-tip"><b>Tip</b> · ' + esc(tip) + '</div></div>';
 }
