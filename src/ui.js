@@ -1363,6 +1363,7 @@ const PATCH_NOTES = [
     'Debriefing: Copy for Discord, a link straight to one mechanic, a Next pull line on each mechanic, and phase timing against your best pull.',
     'Every boss\'s mechanics reworded: titles that say what to do, plain numbers instead of shorthand, and the same badge words everywhere.',
     'Nymrissa gets her full Debriefing: murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, and the whirlpools and Pop!',
+    'Nymrissa: Frost Burst and Frostscale checks now judged against the fastest Mythic kills, and every check has a How it works note.',
   ], f: [
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
     'A death to Sever now shows the frontal\'s cone on its map.',
@@ -6186,9 +6187,11 @@ const FLOORS = {
   2610: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/16915-4.jpg', whole: true, minX: 980, maxX: 1755, minY: -581.25, maxY: 581.25 },
   // (Kith'ix, Oct 19: Wowhead's mapper art for zone 17059, floor 1 (the cave), which is the whole map area; bounds from UiMapAssignment, build 12.1.5.70448)
   2669: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/17059-1.jpg', whole: true, minX: 1510.4169921875, maxX: 2022.9169921875, minY: -393.75, maxY: 375 },
+  // (Nymrissa, Oct 20: The Tidebound Grotto is UiMap 2632 in the logs; Wowhead's mapper art for its area 16671 (the island in the water); bounds from UiMapAssignment, build 12.1.7.70424)
+  2632: { url: 'https://wow.zamimg.com/images/wow/maps/enus/original/16671-0.jpg', whole: true, minX: 4610.419921875, maxX: 4939.580078125, minY: -12325, maxY: -11831.299804688 },
 };
 const BOSS_FLOOR = { "Nek'zali the Soulcoiler": 2606, 'The Twin Fangs': 2607, 'Entombed Sentinels': 2608, 'Vashnik the Malignant': 2608,
-  'The Lost Explorers': 2609, Sszorak: 2609, 'The Coiled Altar': 2610, 'The Bargained Crown': 2610, "Ula'tek": 2610, "Kith'ix": 2669 };
+  'The Lost Explorers': 2609, Sszorak: 2609, 'The Coiled Altar': 2610, 'The Bargained Crown': 2610, "Ula'tek": 2610, "Kith'ix": 2669, 'Nymrissa Wavecaller': 2632 };
 // SVG <image> for the boss's floor map in map space (sx = x, sy = -y), or '' when there's no built-in map.
 function arenaImg(boss, c) {
   const f = FLOORS[BOSS_FLOOR[boss]]; if (!f) return '';
