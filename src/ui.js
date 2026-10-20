@@ -1045,10 +1045,10 @@ function bgFetch(item) {
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
-const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['hw', 'Homework'], ['cmp', 'Compare']];
+const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['hw', 'Homework'], ['gdz', 'Guides'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
-const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'hw', 'cmp']; /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
+const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'hw', 'gdz', 'cmp']; /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -1066,9 +1066,10 @@ function nightResult(it) {
   return { cls: 'best', txt: best ? 'Best: ' + pullLabel(best.b) + ' (pull ' + best.b.pull + ')' : 'No kill yet', big: best ? 'Best: ' + pullLabel(best.b) : 'No kill yet', left: best ? best.v : null, pull: best ? best.b.pull : null };
 }
 // the tabs' icons (drawn here, no game art)
-const TAB_IC = { me: 'home', live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', hw: 'check', cmp: 'scale' };
+const TAB_IC = { me: 'home', live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', hw: 'check', gdz: 'book', cmp: 'scale' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
+  gdz: 'How each boss works, phase by phase: every mechanic in plain words, what to do, an animated map, and notes for tanks, healers and DPS.',
   cmp: 'One player side by side with the top players of their spec on this boss, with a teammate, or with raids that killed this boss with a group like yours.',
   live: 'The pull you picked, at a glance: what went wrong and what to fix before the next pull. It follows live logging.',
   overview: 'Your NSRT note, checked against this pull. It covers soaks, externals, orbs, kicks, mind control CC, curses and healing cooldowns, and shows who missed theirs.',
@@ -1084,6 +1085,7 @@ const TICO = { check: '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><p
   bars: '<path d="M4 20h16"/><path d="M6.5 17v-5M11 17V7M15.5 17v-8M20 17v-3"/>',
   cycle: '<path d="M19 12a7 7 0 0 1-12 4.95M5 12a7 7 0 0 1 12-4.95"/><path d="M17.5 3.5v3.8h-3.8M6.5 20.5v-3.8h3.8"/>',
   trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>',
+  book: '<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/>',
   scale: '<path d="M12 4v16M7 20h10M5 7h14"/><path d="M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
   users: '<circle cx="9" cy="8" r="3.3"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><path d="M15.5 4.8a3.3 3.3 0 0 1 0 6.4M17.5 14c2.1.7 3.5 2.8 3.5 5.5"/>' };
 const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true">' + (TICO[TAB_IC[k]] || '') + '</svg>';
@@ -1146,7 +1148,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
   if (!root._meNav) { root._meNav = 1; root.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-code], #pnwGo, [data-act="open"]')) S.tab = 'live'; }, true); } }
 // (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
 function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
-  return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = !back ? 'Open a raid night first' : off ? 'Under development' : TAB_TIP[k] || '';
+  return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = !back ? 'Open a raid night first' : off ? 'Under development' : TAB_TIP[k] || '';
     return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + '</nav></div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pg-tabbar .tab'); if (!b) return; const k = b.dataset.t;
   if (k === 'me') { if (!b.classList.contains('on')) openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = k; select(PROG_BACK); });
@@ -1287,6 +1289,9 @@ const SPEC_OFF = () => false;
 // (Compare was greyed out on the website with "Coming soon" over it while each spec's playbook was built; on everywhere again Oct 19.
 // Set this to () => !!window.WLA_HOSTED to hide it on the website again)
 const CMP_OFF = () => false;
+// (Guides (the animated boss guides, src/guides.js) are greyed out on the website with "Coming soon" until you say to show them;
+// they're on in the app on your PC (localhost) for review. Set this to () => false to show them everywhere)
+const GDZ_OFF = () => !!window.WLA_HOSTED;
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
 // ---- "Report a problem" (your note, Oct 18): a short form that files the problem on the project's private GitHub,
@@ -1297,7 +1302,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { me: 'My Page', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework' };
+const TAB_NAME = { me: 'My Page', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework', gdz: 'Guides' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -1509,7 +1514,7 @@ function renderMain() {
   if (OLD_ALL[S.tab]) { S.tab = 'live'; S.scope = 'all'; }
   // (a jump into Spec checks from an old saved spot or link opens Rotation; Graphs then opens on its last view)
   if (S.tab === 'perf' && S.perfKind === 'spec') { S.tab = 'rot'; S.perfKind = null; }
-  if ((S.tab === 'perf' && PERF_OFF()) || (S.tab === 'rot' && SPEC_OFF()) || (S.tab === 'cmp' && CMP_OFF())) S.tab = 'live';
+  if ((S.tab === 'perf' && PERF_OFF()) || (S.tab === 'rot' && SPEC_OFF()) || (S.tab === 'cmp' && CMP_OFF()) || (S.tab === 'gdz' && GDZ_OFF())) S.tab = 'live';
   if (!VIEWS[S.tab]) S.tab = 'overview';
   // Summary is all pulls; Latest pull, Assignments and Mechanics are one pull; the Player audit keeps its own switch.
   // (a Mythic+ key has no all-pulls view)
@@ -1526,7 +1531,7 @@ function renderMain() {
     // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
-      const tab = (k) => { const l = name.get(k), soon = k === 'cmp' && CMP_OFF(), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
+      const tab = (k) => { const l = name.get(k), soon = (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview') ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
@@ -4317,7 +4322,7 @@ function miniMap(mp, pmap) {
   const span = fc ? Math.max(30, fc.r * 3.2) : Math.max(fx1r - fx0r, fy1r - fy0r, 30), fcx = fc ? fc.x : (fx0r + fx1r) / 2, fcy = fc ? -fc.y : (fy0r + fy1r) / 2;
   const fx0 = fcx - span * 0.6, fy0 = fcy - span * 0.6, fs = span * 1.2; // focus square, in yards
   const W = 480, yd = W / fs; // svg units per yard (icons are sized for the focus view)
-  const A = ARENAS[S.rep.item.boss];
+  const MB = mp.boss || S.rep.item.boss, A = ARENAS[MB]; /* (a guide's map names its boss: Guides shows every boss, not just this pull's) */
   // world frame: the arena image plus the focus area
   const ax0 = A ? A.cx - A.w / A.s / 2 : fx0, ay0 = A ? -A.cy - A.h / A.s / 2 : fy0, ax1 = A ? ax0 + A.w / A.s : fx0 + fs, ay1 = A ? ay0 + A.h / A.s : fy0 + fs;
   const x0 = Math.min(ax0, fx0), y0 = Math.min(ay0, fy0), x1 = Math.max(ax1, fx0 + fs), y1 = Math.max(ay1, fy0 + fs);
@@ -4329,8 +4334,8 @@ function miniMap(mp, pmap) {
   const startVB = A ? fullVB : focusVB;
   let s = '<svg viewBox="' + startVB.join(' ') + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
   // the boss's arena map (built in), or a room image the user added on the Interrupts map
-  const arena = arenaImg(S.rep.item.boss, { x0, y0, yd });
-  const mi = arena ? null : mapImg(S.rep.item.boss);
+  const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd });
+  const mi = arena || mp.noArena ? null : mapImg(MB);
   s += arena;
   if (mi) s += '<image href="' + mi.src + '" preserveAspectRatio="none" opacity="' + mi.op + '"' + imgAttrs(mi, { x0, y0, yd }) + '/>';
   for (let g = 0; g <= (x1 - x0); g += 10) s += '<line x1="' + g * yd + '" x2="' + g * yd + '" y1="0" y2="' + FH + '" class="mg" vector-effect="non-scaling-stroke"/>';
@@ -4339,6 +4344,7 @@ function miniMap(mp, pmap) {
   const OBJS = { orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
+  for (const w of mp.wmarks || []) s += ic(X(w), Y(w), gdzMarkSvg(w.k, X(w), Y(w))); /* (a guide's raid markers on the floor (guides.js)) */
   // tank frontal cone (from the boss toward the tank it hit), drawn to scale under everything else
   // (like in game: bright at the boss and fading with distance. On a moving map (at: the moment it lands) it reaches out from
   // the boss as a thin outline while it's cast, slashes bright when it lands, then fades)
@@ -4488,7 +4494,7 @@ function miniMap(mp, pmap) {
     let inner = p.kind === 'ghost'
       ? '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>'
       : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
-    if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
+    if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow) && !(mp.lateHit && !(elP != null && elP >= -1.4))) /* (a guide's map rings them only while the frontal is cast) */ inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
     if (gHit.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="none" stroke="#45c15c" stroke-width="2.5"/>';
     if (gMiss.has(p.guid) && !(elS != null && elS < 0)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
@@ -4496,7 +4502,7 @@ function miniMap(mp, pmap) {
   }
   // cast bars under an add's or boss's name, like in game (your note, Oct 18): gold while it casts something kickable, then
   // for a moment green with the kicker's name when it's kicked, red when it went off, grey when something else stopped it
-  const cbs = cbIndex(S.rep); let cbShown = false;
+  const cbs = mp.cbars ? new Map(Object.entries(mp.cbars)) : cbIndex(S.rep); let cbShown = false; /* (a guide's scripted cast bars, by unit) */
   const castBar = (g, x, y) => {
     const l = cbs.get(g); if (!l) return ''; let c = null;
     for (const q of l) { if (q.t0 - 0.05 > ft) break; if (ft <= q.t1 + 1.5) c = q; }
@@ -4561,7 +4567,7 @@ function miniMap(mp, pmap) {
   }
   { const put = []; for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.ly - n.ly) < 12)) continue; put.push(n); s += ic(n.x, n.y, n.html); } }
   // legend inside the image: only what this map shows
-  const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', 'Player (class icon)']];
+  const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', mp.playerLabel || 'Player (class icon)']];
   if (meN && pts.some((q) => q.name === meN)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#e6b450" stroke-width="2.5"/>', 'Gold ring: ' + meN]);
   if ([...hl].some((g) => !good.has(g) && !bad.has(g))) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="2.5"/>', 'White ring: ' + (mp.hlLabel || 'player this is about')]);
   if (mp.goodAt && good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="1.5"/>', 'White ring: ' + (mp.pendLabel || 'not done yet')]);
@@ -4569,7 +4575,7 @@ function miniMap(mp, pmap) {
   if ((mp.cysts || []).length) leg.push([(x, y) => cystBlob(x, y, '#2fd15a', null, 0.62), 'Viscous Cyst: its number, and what it was used for']);
   if ((mp.arrows || []).length) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 3) + '" y2="' + (y - 2) + '" stroke="' + (mp.arrows[0].color || '#7fd8ff') + '" stroke-width="2.5" stroke-linecap="round"/><path d="M' + (x + 7) + ' ' + (y - 5) + 'l-6 0.5l3 4z" fill="' + (mp.arrows[0].color || '#7fd8ff') + '"/>', 'Arrow: ' + (mp.arrowLabel || 'the way Raging Crosswinds will launch them')]);
   // (the sample is the tag itself when it's a short word, like "Fury"; a number otherwise)
-  if ((mp.tags || []).length) { const tw = String(mp.tags[0][1]), smp = tw.length <= 4 && !/^\d+$/.test(tw) ? tw : '3';
+  if ((mp.tags || []).length) { const tw = String(mp.tags[0][1]), smp = tw.length <= (mp.lateHit ? 6 : 4) &&!/^\d+$/.test(tw) ? tw : '3';
     leg.push([(x, y) => '<text x="' + x + '" y="' + (y + 4) + '" fill="#f3d48a" font-size="' + (smp.length > 1 ? 10 : 12) + '" font-weight="800" text-anchor="middle">' + esc(smp) + '</text>', mp.tagLabel || 'Number by a name']); }
   for (const l of (mp.links || []).filter((x, i, a) => a.findIndex((y) => y.color === x.color) === i)) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 6) + '" y2="' + (y - 4) + '" stroke="' + l.color + '" stroke-width="' + (l.dash ? 2 : 3) + '" stroke-linecap="round"' + (l.dash ? ' stroke-dasharray="3 3"' : '') + '/>', (l.dash ? 'Dashed line: ' : l.color === '#2fd15a' ? 'Green line: ' : l.color === '#f3c969' ? 'Amber line: ' : l.color === '#ff5a4f' ? 'Red line: ' : 'Line: ') + (l.legend || '')]);
   if (bad.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff3b3b" stroke-width="2.5"/><path d="M' + (x - 2.5) + ' ' + (y - 2.5) + 'l5 5M' + (x + 2.5) + ' ' + (y - 2.5) + 'l-5 5" stroke="#ff3b3b" stroke-width="2"/>', 'Red ✕: ' + (mp.badLabel || 'got it wrong')]);
@@ -4615,7 +4621,7 @@ function bindAnim(box, mp, pmap, still) {
   // 0.2s frames (the log itself records positions about every 0.5s, so this smooths movement, it doesn't add detail).
   // (your note, Oct 19: every map plays from start to finish and starts over, until it's closed. It holds a moment on
   // the outcome before the next loop, rests while it's off screen, and a long clip plays faster: about 12 seconds a loop)
-  const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t, spd = Math.max(1, (t1 - t0) / 12), HOLD = 1.2;
+  const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t, spd = mp.spd || Math.max(1, (t1 - t0) / 12) /* (a guide's whole-fight map sets its own, slower speed) */, HOLD = 1.2;
   let ft = t0, raf = null, last = 0, lastDraw = 0, drawn = -1, paused = false, seen = !still, held = 0;
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;
@@ -4632,6 +4638,7 @@ function bindAnim(box, mp, pmap, still) {
     if (drawn !== i) { rng.value = i; drawn = i; }
     lab.textContent = T(ft) + '.' + String(Math.floor((ft % 1) * 10));
     if (box._zoomApply) box._zoomApply();
+    if (box._onFrame) box._onFrame(ft); /* (Guides: the step being played lights up beside the map) */
   };
   let obs = null;
   const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; btn.textContent = '▶ Play'; };
@@ -17519,7 +17526,7 @@ function nightMerge(o) {
   { const d = box.querySelector('details.dbr-more'); if (d) d.ontoggle = () => { if (d.open) S.openSecs.add('dbmore-n'); else S.openSecs.delete('dbmore-n'); }; }
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
-const VIEWS = { audit, overview, night, player, hw, perf, rot: perf, live: lastPull, cmp, me: myPageView };
+const VIEWS = { audit, overview, night, player, hw, perf, rot: perf, live: lastPull, cmp, gdz: gdzView, me: myPageView };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();
@@ -19435,4 +19442,5 @@ if (WCL.HOSTED) {
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
 // (?patchnotes, the link in the Discord's patch-notes post, opens the Patch notes page over the front page)
 if (RQ.has('patchnotes')) { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } setTimeout(openPatchNotes, 900); }
+/*GUIDES*/ // (the build puts src/guides.js here, inside this file's scope)
 })();

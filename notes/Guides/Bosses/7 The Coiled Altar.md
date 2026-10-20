@@ -42,3 +42,41 @@ Both bosses; all P1 and P2 mechanics at once (Defilement replaces Fangs: heal-ab
 
 ## What a log can check (the existing module covers much of this)
 Orbs per Sever and orbs left at the transition; Venom Rupture stacks; purple orb collisions; Guillotine soaker counts and Executions; Widow's Kiss hits; Axegrinder hits; Dreadmarch shield breaks/deaths off the edge; ghosts reaching players; Gravebound deaths; Eternal Nightfall shield break time; Wail of Terror interrupts; Fragments reaching Zul'jan; boss HP gap in P3.
+
+## Mythic plan in detail (Tactyks video re-read Oct 20, captions + the RaidPlan pages shown in it)
+Their RaidPlan is drawn with the room's doors left and right; the Guides map turns it so those doors sit north/south like the
+floor art (plan top = west). Markers in their plan: X on the entrance side (centre of that wall), moon and skull in its two
+corners, star and square in the far corners, diamond in the middle of the far wall, orange circle on a side wall.
+- **P1 orbs**: 5 purple carriers, hard-assigned: 2 Warlocks (one per entrance corner, each takes the purple nearest it), 2 Mages
+  (far side), the off-tank floats (goes wherever a purple is awkward; Divine Steed etc.). Entrance side always gets the first
+  frontal, so set it up first; they liked 3 purples on one side and 2 on the other, not strict. Everyone else: greens only —
+  first move greens out of purple carriers' paths, then build a triangle (pyramid) of greens in front of the boss. Purples go at
+  the far end of the triangle, up to two markers that show the frontal's reach from the middle; pull the boss a bit off centre
+  if they're further back. 5-6 orbs per frontal (7 is healable, never 8+); every orb is one stack, purple or green.
+  Warlocks wait for greens on their path to be picked up before Demonic Circle-porting. Carrying a green past a carried purple is allowed.
+  Off-tank taunts right before every Sever (2 stacks survivable only with 2 externals; avoid in P1). Time Spiral (2 Evokers) for the orb runners.
+- **P1 Guillotine**: 2 in P1, 3 in P3. Gate INTO the soak (Warlock gate to the back corner), never out: orbs spawn on the path right after.
+  Externals + Zephyr on the target. Soak 1 = 6-7 players: everyone who'll immune soak 2 must be in soak 1 (so they can't be
+  targeted for soak 2), plus tanky ones (Shadow Dispersion, Warrior walls since P1 is physical, Rogue Feint). Soak 2 = exactly 5:
+  both tanks (personals), both Hunters (Turtle), and the target gets Blessing of Protection (physical). Walk out (lots of time).
+  P3: hit is magic → Rogue can immune too (Cloak), Spellwarding on the target or a Paladin Bubble; last P3 soak: throw everyone free in (over-send).
+- **End of P1**: hold damage when ahead; second-to-last frontal hits only 2-3 orbs, the last hits none (orbs blow when Zul'jan dies).
+  Drag him to the middle; kill around the pools. Transition at 9-11 stacks: group in a spot clear of axes, Darkness + AMZ + Spirit Link, stay till stacks drop.
+- **P2**: Dreadmarch always on the square marker (everyone stacks there); selected players (arrow over head) press the cancel macro.
+  Freed players stand still until ghosts spawn (they spawn where you are). Air-horn sound on fixate; stare at your ghost at once.
+  Boss tank moves to diamond or circle so one frontal hits the most ghosts; players whose ghost is outside may let it creep in;
+  a missed ghost is walked back toward square for the next frontal. One tank (Blood DK) took every P2 frontal: defensive on odd, defensive + 2 externals on even.
+  Adds: one ranged add, one melee add (marked = ranged kicks, unmarked = melee kicks; one player marks and calls). Plan rules: an add at moon is
+  always ranged, one beside the stack spot always melee; skull add: melee if the other is moon, ranged if square/star; star add: melee if the other is moon/skull, ranged if square.
+  Kick as soon as the Gloombomb cast appears so the add stands still; the melee add's 2nd kick must be a melee. Gloombomb = best personal of the phase.
+  Off-tank (after kicks) taunts the boss back to square so the mages hit the Dreadmarch shields. Every even set has Eternal Nightfall:
+  assign cooldowns per shield (they used Trueshot, Incarnation, Avatar, Dark Glare), pool damage; shield is priority, adds die before the next set.
+  End of P2: hold damage; stare at your ghost and it vanishes at the transition; knockback at the transition (stay off the edge).
+- **Intermission**: mobile healers spread to areas, the two priests near melee, off-tank soaks far ones; the Aug and Hunters/Warlocks
+  on one side. 3-5 stacks then let them drop, about 5 times; then stack cooldowns in the middle and go 7-10. One early spirit
+  spawns on the inner ring. Under 35% on Zul'jan = kill territory.
+- **P3**: play on the star/square side; guillotines: 1st at star, 2nd and 3rd at square. Orb carriers: both Mages, off-tank, Evoker healer.
+  Greens may be missed, purples never (they blow at the pools). First P3 frontal takes ALL purples in a diamond in the middle; greens cleared out of the middle to one side, lined up (P3 frontal is bigger).
+  Off-tank takes the first P3 frontal. Gloombomb with no adds: run to the edge. Next sets: around the orange and diamond markers, orange first (two by orange).
+  Kill Zul'jan before the pool cast about 1 minute after the 2nd shield; Malacrass at 7-8% when Zul'jan dies is fine — don't over-damage Malacrass.
+  Last frontals hit 0-1 orbs. Last adds: just keep kicks, no Gloombombs needed.
