@@ -1368,6 +1368,7 @@ const PATCH_NOTES = [
     'Nymrissa: Frost Burst and Frostscale checks now judged against the fastest Mythic kills, and every check has a How it works note.',
   ], f: [
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
+    'Bold words look crisp now: the site loads its real bold letters instead of faking them.',
     'A death to Sever now shows the frontal\'s cone on its map.',
     'An NSRT note that only has a kick order now works on its pull.',
     'Debriefing\'s badges line up in one column.',
