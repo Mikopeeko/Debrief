@@ -12902,7 +12902,7 @@ const SPEC_OFF = () => false;
 const CMP_OFF = () => false;
 // (Guides (the animated boss guides, src/guides.js) are greyed out on the website with "Coming soon" until you say to show them;
 // they're on in the app on your PC (localhost) for review. Set this to () => false to show them everywhere)
-const GDZ_OFF = () => !!window.WLA_HOSTED;
+const GDZ_OFF = () => false; /* (on everywhere since Oct 20, your call; () => !!window.WLA_HOSTED greys it out on the website again) */
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
 // ---- "Report a problem" (your note, Oct 18): a short form that files the problem on the project's private GitHub,
@@ -12968,6 +12968,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names.
 const PATCH_NOTES = [
   { d: '2026-10-20', n: [
+    'Guides: a new tab that teaches each boss with animated maps, Heroic and Mythic, with a mistake view and a full-fight simulation. The Coiled Altar is first.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
@@ -31055,7 +31056,8 @@ if (WCL.HOSTED) {
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
-  else if (sharedLink) { if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
+  else if (sharedLink) { if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
+    if (qp.get('tab') === 'gdz') { S.tab = 'gdz'; if (qp.get('d') === 'm' || qp.get('d') === 'h') S.gdzDiff = qp.get('d'); } /* (a link straight to Guides, Heroic or Mythic (Oct 20)) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
