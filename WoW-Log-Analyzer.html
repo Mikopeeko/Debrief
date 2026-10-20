@@ -13260,6 +13260,7 @@ const PATCH_NOTES = [
     'Bold words look crisp now: the site loads its real bold letters instead of faking them.',
     'Hunters\' Feign Death no longer counts as a death on Warcraft Logs nights, so deaths, Survival and the wipe filter are right for hunters.',
     'Mechanics show misses and slips apart ("went wrong" and "a little off"), the two mechanics scores say what each one measures, and the Report card\'s first fix matches its subject.',
+    'Report card: a death with a defensive still ready now counts against Survival (one-shots never do), the grade letters are a little stricter, and Homework\'s examples say which pull they\'re from.',
     'New to raiding? Raid words like soak, kick, frontal and P2 have a dotted underline: hover one to see what it means.',
     'A death to Sever now shows the frontal\'s cone on its map.',
     'An NSRT note that only has a kick order now works on its pull.',
@@ -16821,7 +16822,7 @@ function causeOf(r) {
 // audit tab and isn't counted here. Avoidable damage: a player who took a dangerous avoidable hit loses that whole pull's
 // score (100 points), a harmful-but-survivable one costs 40; the pull's score is the raid's average (the Fight audit's
 // "Avoidable damage" panel decides which hits are dangerous or harmful). Survival: the raid's average survival kit score (survivalOf). Interrupts: share of the kickable casts that were kicked. The overall grade weights them 30 / 30 / 25 / 15.
-const GRADES = [['S', 95], ['A', 88], ['B', 78], ['C', 65], ['D', 50], ['F', 0]];
+const GRADES = [['S', 97], ['A', 92], ['B', 84], ['C', 72], ['D', 55], ['F', 0]]; // (stricter on Oct 20, the top-raider pass: 17 of 20 raiders were A or S on a 52-death night)
 const letterOf = (s) => GRADES.find(([, min]) => s >= min)[0];
 const CARD_W = { mech: 30, avoid: 30, death: 25, kick: 15 };
 function gradeBoss(reps) {
@@ -28061,6 +28062,11 @@ function cardOf(r, p) {
     add('btn', { k: 'out', label: role === 'healer' ? 'Healing' : 'Damage', sc: null, w: 0, num: x.ps, nt: 'C', unit: ' per second alive', html: (role === 'healer' ? 'Healing' : 'Damage') + ' <b>' + C(x.ps) + '</b> per second alive ' + prsChip(px) + '<span class="sub"> · ' + ordinal(rank) + ' of ' + ranked.length + ' ' + (role === 'healer' ? 'healers' : 'DPS') + ' (median ' + C(C0.roleMed[role]) + '), shown for reference and not graded</span>' });
   }
   // ---- Staying alive: their own defensives and kit (deaths are on Mechanics) ----
+  // (and a death with a defensive still ready (Oct 20, the top-raider pass: Survival read 100 next to 6 deaths). One-shots,
+  // healthy to dead in under 1.5 s, never count: survivalOf leaves them out)
+  add('alive', { k: 'dready', label: 'Died with a defensive still ready', sc: Math.max(0, 100 - 40 * sv.defReady), w: 35, num: sv.defReady, nt: 'sum', word: 'death',
+    html: sv.defReady ? '<b>' + plural(sv.defReady, 'death') + '</b> with a defensive still ready' : 'No deaths with a defensive still ready',
+    fix: sv.defReady ? { t: 'Press a defensive before you die', x: 'You died with a defensive still ready. When your health drops and keeps dropping, press it: that is what it\'s for.' } : null });
   add('alive', { k: 'calls', label: 'Close calls with nothing pressed', sc: Math.max(0, 100 - 30 * sv.silent), w: 25, num: sv.silent, nt: 'sum', word: 'close call',
     html: sv.silent ? '<b>' + plural(sv.silent, 'close call') + '</b> ' + (role === 'tank' ? 'under 15%' : 'under 30%') + ' health with nothing pressed' + (sv.calls > sv.silent ? '<span class="sub"> · ' + (sv.calls - sv.silent) + ' more answered</span>' : '') : sv.calls ? plural(sv.calls, 'close call') + ' under 30% health, each one answered' : 'No close calls under 30% health',
     fix: sv.silent ? { t: 'React when you drop low', x: (sv.silent === 1 ? 'Once' : sv.silent + ' times') + ' you stayed under 30% health for 5 seconds or more, or sat low and then took another hit' + (role === 'tank' ? ' under 15%' : '') + ', and pressed nothing: no defensive, Healthstone or potion. When you sit low, press something before the next hit.' } : null });
@@ -28842,6 +28848,8 @@ function hwItems(a) {
       fixed: n >= 4 && !on.slice(n - tail).some(Boolean), cat, id }); }
   return out;
 }
+// (a fix's example comes from one pull; on the all-pulls view it says so instead of "this pull" (Oct 20))
+const hwOne = (o, x) => (o.n > 1 && /\bthis pull\b/i.test(x) ? 'In one pull: ' + x.charAt(0).toLowerCase() + x.slice(1).replace(/\bthis pull\b/gi, 'that pull') : x);
 const hwIc = (o, sm) => '<i class="hwk-ic' + (sm ? ' sm' : '') + '">' + (o.id ? spellIcon(o.id, o.t) : plIco(o.cat[1])) + '</i>';
 const hwWhen = (o) => (o.n === 1 ? 'This pull' : 'In ' + o.k + ' of ' + o.n + ' pulls' + (o.k <= 5 && o.k < o.n ? ' (' + (o.k === 1 ? 'pull ' : 'pulls ') + andList(o.pulls.map(String)) + ')' : ''));
 const hwTr = (o) => (o.tr === 'up' ? '<span class="hwk-tr up">▲ getting better</span>' : o.tr === 'dn' ? '<span class="hwk-tr dn">▼ getting worse</span>' : '');
@@ -28857,7 +28865,7 @@ function hwPage(c) {
   if (a.mech != null && a.mech >= 95 && !todo.some((o) => o.mech)) good.push('✓ No boss mistakes');
   if (!dd.length) good.push('✓ No deaths that counted'); if (a.prep != null && a.prep >= 95) good.push('✓ Ready at the pull');
   const card = (o, i) => '<div class="hwk-c ' + o.sev + '"><div class="hwk-ct"><span class="hwk-n">' + (i + 1) + '</span>' + hwIc(o) + '<b>' + esc(o.t) + '</b></div>' +
-    '<p>' + esc(o.mech ? o.det || o.x : o.x) + '</p>' + (o.mech && o.x && o.det ? '<div class="hwk-fix"><span>Next pull:</span> ' + esc(o.x) + '</div>' : '') +
+    '<p>' + esc(hwOne(o, o.mech ? o.det || o.x : o.x)) + '</p>' + (o.mech && o.x && o.det ? '<div class="hwk-fix"><span>Next pull:</span> ' + esc(o.x) + '</div>' : '') +
     '<div class="hwk-ft"><span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span><span class="sub">' + esc(hwWhen(o)) + '</span>' + hwTr(o) + '</div></div>';
   const mini = (o) => '<div class="hwk-m">' + hwIc(o, true) + '<span><b>' + esc(o.t) + '</b><span class="sub"> · ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span></span>' + hwTr(o) + '<span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span></div>';
   const head = '<div class="hwk-h"><h2>' + (me && base(a.p.name) === base(me.name) ? 'Your homework' : esc(a.p.name) + '\'s homework') + '</h2><span class="sub"><b style="color:' + (a.p.color || 'inherit') + '">' + esc(a.p.name) + '</b> · ' + esc(a.p.specName || '') + ' · ' + esc(it.boss) + ' ' + esc(it.diff || '') + ' · ' + plural(a.n, 'pull') + (dd.length ? ' · ' + plural(dd.length, 'death') : '') + '</span>' + sel + '</div>';
