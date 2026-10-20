@@ -26,6 +26,9 @@ Edit files in src/, run `python build.py` inside src/, refresh the browser tab o
 - The Warcraft Logs key lives only in Cloudflare: WCL_CLIENT_ID (a variable) and WCL_CLIENT_SECRET (a secret), set by the user on the
   Worker's settings page. Never ask for, type or repeat the secret.
 - After each round: build, commit, push, and deploy, so the site always matches GitHub.
+- Patch notes live only on the site (the menu's Patch notes page; no Discord posts written by hand). With each round a raider
+  would notice, add a short plain line to `PATCH_NOTES` in src/ui.js: under today's date in n (New) or f (Fixed), or a new
+  date at the top. A new day posts itself to the Discord's #patch-notes (@everyone + link) within 10 minutes of the deploy.
 
 ## Version control
 - Private GitHub repo: https://github.com/Mikopeeko/Debrief (branch `main`). Git is at `C:\Program Files\Git\cmd\git.exe`.
