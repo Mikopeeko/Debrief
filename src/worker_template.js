@@ -235,7 +235,7 @@ async function runBugs(env) {
     const areas = areasIn(t.name + ' ' + text), who = m && m.author ? (m.author.global_name || m.author.username) : 'someone';
     const body = text.replace(/@/g, '@​').split(/\r?\n/).map((l) => '> ' + l).join('\n') + '\n\n**From:** ' + who.replace(/@/g, '@​') + ' on Discord' +
       (tagNames.length ? '\n**Tags:** ' + tagNames.join(', ') : '') + (files.length ? '\n**Pictures:**\n' + files.map((u) => '- ' + u).join('\n') : '') +
-      '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from #bug-reports by the Debrief bot. Closing this issue tells the post it\'s fixed._';
+      '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from #bug-reports by Claudette (the Debrief bot).Closing this issue tells the post it\'s fixed._';
     const issue = await gh(env, '/issues', { method: 'POST', body: { title: '[discord] ' + t.name.slice(0, 90), body, labels: ['bug', 'discord', ...areas.map((a) => a.toLowerCase())] } });
     st.t[t.id] = issue.number; st.open.push([t.id, issue.number]);
     // (tags: Working on it, plus the area its words point to when they only picked Website)
@@ -387,7 +387,7 @@ async function announcePatch(env) {
   const day = new Date(p.d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
   const content = '@everyone New patch notes on Debrief for ' + day + (p.t ? ': **' + p.t + '**' : '') + '. See what\'s new and what we fixed: ' + SITE + '/?patchnotes';
   const r = await fetch(env.DISCORD_PATCH_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, username: 'Debrief', allowed_mentions: { parse: ['everyone'] } }) });
+    body: JSON.stringify({ content, username: 'Claude Van Patch', allowed_mentions: { parse: ['everyone'] } }) }); // (the user's call: bots get funny Claude names)
   if (r.ok) await env.DEBRIEF_KV.put('patch-announced', p.d);
 }
 
