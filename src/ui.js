@@ -1447,6 +1447,41 @@ function openPatchNotes() {
   el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x, .rp-open')) close(); };
   setTimeout(() => { const x = el.querySelector('.pnz-x'); if (x) x.focus(); }, 60);
 }
+// Suggest an idea (the menu, on the website once the Discord bot is set up): a short form that opens a post in the
+// Discord's #suggestions, under the part of the site it's about
+const IDEAS_ON = () => !!window.WLA_IDEAS;
+function openIdea() {
+  if ($('#idzBox')) return;
+  const el = document.createElement('div'); el.id = 'idzBox'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Suggest an idea');
+  const areas = ['Website', 'Mechanics', 'Assignments', 'Rotation', 'Graphs', 'Teams'];
+  el.innerHTML = '<form class="tr-card rp-card" novalidate><h2>Suggest an idea</h2><p>What would make Debrief better for you or your raid? Your idea goes up in #suggestions on our Discord, where others can add a 👍.</p>' +
+    '<label class="rp-l">Your idea<textarea id="idzText" rows="5" maxlength="1800" placeholder="For example: Show how long each player stood in the puddles."></textarea></label>' +
+    '<label class="rp-l">Which part of Debrief is it about?<select id="idzArea" class="idz-sel">' + areas.map((a) => '<option>' + a + '</option>').join('') + '</select></label>' +
+    '<label class="rp-l">Your name or Discord name <span>(optional)</span><input id="idzName" maxlength="60" autocomplete="nickname"></label>' +
+    '<input id="idzWeb" class="rp-hp" tabindex="-1" autocomplete="off" aria-hidden="true"><p class="rp-msg" id="idzMsg" role="status"></p>' +
+    '<div class="tr-nav"><span></span><div><button class="btn" type="button" id="idzCancel">Cancel</button><button class="btn primary" type="submit" id="idzSend">Send</button></div></div></form>';
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  const close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); };
+  document.addEventListener('keydown', key, true);
+  el.onclick = (e) => { if (e.target === el) close(); };
+  $('#idzCancel').onclick = close;
+  const form = el.querySelector('form'), msg = $('#idzMsg'), send = $('#idzSend');
+  form.onsubmit = async (e) => {
+    e.preventDefault(); const text = $('#idzText').value.trim();
+    if (text.length < 10) { msg.className = 'rp-msg bad'; msg.textContent = 'Please say a little more about your idea.'; $('#idzText').focus(); return; }
+    send.disabled = true; send.textContent = 'Sending…'; msg.className = 'rp-msg'; msg.textContent = '';
+    try {
+      const r = await fetch('/api/idea', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, area: $('#idzArea').value, name: $('#idzName').value.trim(), website: $('#idzWeb').value }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || 'The idea couldn\'t be sent (' + r.status + ').');
+      form.innerHTML = '<h2>Thank you!</h2><p>Your idea is up in #suggestions on our Discord.' + (j.url ? ' <a href="' + esc(j.url) + '" target="_blank" rel="noopener">See it there</a>, and follow along as others weigh in.' : '') + '</p>' +
+        '<div class="tr-nav"><span></span><div><button class="btn primary" type="button" id="idzDone">Done</button></div></div>';
+      $('#idzDone').onclick = close; $('#idzDone').focus();
+    } catch (err) { send.disabled = false; send.textContent = 'Send'; msg.className = 'rp-msg bad'; msg.textContent = err.message; }
+  };
+  setTimeout(() => { const t = $('#idzText'); if (t) t.focus(); }, 60);
+}
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
   progLit(false);
@@ -19158,6 +19193,7 @@ if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };
 if ($('#tbPatch')) $('#tbPatch').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openPatchNotes(); };
+if ($('#tbIdea') && IDEAS_ON()) { $('#tbIdea').hidden = false; $('#tbIdea').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openIdea(); }; }
 // (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
 // (a visit always starts on the front page, with the team and character pick (your call, Oct 18). The address keeps the
 // open pull, so it can be copied and shared, and a shared link still opens its report; but your own last report doesn't

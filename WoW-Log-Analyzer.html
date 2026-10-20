@@ -3266,6 +3266,8 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .rp-l textarea, .rp-l input { width: 100%; box-sizing: border-box; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line2); border-radius: 8px; color: var(--text); font: 400 14px/1.45 var(--body); resize: vertical; }
 .rp-l textarea:focus, .rp-l input:focus { outline: none; border-color: var(--gold); } .rp-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .rp-card .rp-att { margin-top: 12px; font-size: 13px; color: var(--faint); } .rp-card .rp-msg:empty { display: none; } .rp-card .rp-msg.bad { color: #ff8f87; } .rp-card a { color: var(--gold); }
+/* Suggest an idea (from the menu): the Report a problem card, plus a pick of which part of Debrief it's about */
+.idz-sel { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line2); border-radius: 8px; color: var(--text); font: 400 14px var(--body); } .idz-sel:focus { outline: none; border-color: var(--gold); }
 /* Patch notes (from the menu): one card over the page, a fold per day with New and Fixed lists */
 .pnz-wrap { align-items: start; overflow-y: auto; } .pnz-sheet { width: min(760px, 100%); margin: 4vh auto; padding: 22px 24px 16px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
 .pnz-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -4263,7 +4265,7 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 15 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><button class="tbm-i" id="tbIdea" type="button" hidden>Suggest an idea<span>posts it in #suggestions on our Discord</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>
@@ -12935,6 +12937,41 @@ function openPatchNotes() {
   document.addEventListener('keydown', key, true);
   el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x, .rp-open')) close(); };
   setTimeout(() => { const x = el.querySelector('.pnz-x'); if (x) x.focus(); }, 60);
+}
+// Suggest an idea (the menu, on the website once the Discord bot is set up): a short form that opens a post in the
+// Discord's #suggestions, under the part of the site it's about
+const IDEAS_ON = () => !!window.WLA_IDEAS;
+function openIdea() {
+  if ($('#idzBox')) return;
+  const el = document.createElement('div'); el.id = 'idzBox'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Suggest an idea');
+  const areas = ['Website', 'Mechanics', 'Assignments', 'Rotation', 'Graphs', 'Teams'];
+  el.innerHTML = '<form class="tr-card rp-card" novalidate><h2>Suggest an idea</h2><p>What would make Debrief better for you or your raid? Your idea goes up in #suggestions on our Discord, where others can add a 👍.</p>' +
+    '<label class="rp-l">Your idea<textarea id="idzText" rows="5" maxlength="1800" placeholder="For example: Show how long each player stood in the puddles."></textarea></label>' +
+    '<label class="rp-l">Which part of Debrief is it about?<select id="idzArea" class="idz-sel">' + areas.map((a) => '<option>' + a + '</option>').join('') + '</select></label>' +
+    '<label class="rp-l">Your name or Discord name <span>(optional)</span><input id="idzName" maxlength="60" autocomplete="nickname"></label>' +
+    '<input id="idzWeb" class="rp-hp" tabindex="-1" autocomplete="off" aria-hidden="true"><p class="rp-msg" id="idzMsg" role="status"></p>' +
+    '<div class="tr-nav"><span></span><div><button class="btn" type="button" id="idzCancel">Cancel</button><button class="btn primary" type="submit" id="idzSend">Send</button></div></div></form>';
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  const close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); };
+  document.addEventListener('keydown', key, true);
+  el.onclick = (e) => { if (e.target === el) close(); };
+  $('#idzCancel').onclick = close;
+  const form = el.querySelector('form'), msg = $('#idzMsg'), send = $('#idzSend');
+  form.onsubmit = async (e) => {
+    e.preventDefault(); const text = $('#idzText').value.trim();
+    if (text.length < 10) { msg.className = 'rp-msg bad'; msg.textContent = 'Please say a little more about your idea.'; $('#idzText').focus(); return; }
+    send.disabled = true; send.textContent = 'Sending…'; msg.className = 'rp-msg'; msg.textContent = '';
+    try {
+      const r = await fetch('/api/idea', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, area: $('#idzArea').value, name: $('#idzName').value.trim(), website: $('#idzWeb').value }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || 'The idea couldn\'t be sent (' + r.status + ').');
+      form.innerHTML = '<h2>Thank you!</h2><p>Your idea is up in #suggestions on our Discord.' + (j.url ? ' <a href="' + esc(j.url) + '" target="_blank" rel="noopener">See it there</a>, and follow along as others weigh in.' : '') + '</p>' +
+        '<div class="tr-nav"><span></span><div><button class="btn primary" type="button" id="idzDone">Done</button></div></div>';
+      $('#idzDone').onclick = close; $('#idzDone').focus();
+    } catch (err) { send.disabled = false; send.textContent = 'Send'; msg.className = 'rp-msg bad'; msg.textContent = err.message; }
+  };
+  setTimeout(() => { const t = $('#idzText'); if (t) t.focus(); }, 60);
 }
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
@@ -30647,6 +30684,7 @@ if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };
 if ($('#tbPatch')) $('#tbPatch').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openPatchNotes(); };
+if ($('#tbIdea') && IDEAS_ON()) { $('#tbIdea').hidden = false; $('#tbIdea').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openIdea(); }; }
 // (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
 // (a visit always starts on the front page, with the team and character pick (your call, Oct 18). The address keeps the
 // open pull, so it can be copied and shared, and a shared link still opens its report; but your own last report doesn't

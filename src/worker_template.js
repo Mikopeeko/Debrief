@@ -184,13 +184,138 @@ async function fileBug(req, env, url) {
     return json({ ok: true, n: j.number || null });
   } catch (err) { return json({ error: 'The report couldn\'t be sent right now. Please try again in a minute.' }, 502); }
 }
-// (the page, with the report form switched on once the GitHub key is set)
-let HTML_REPORT = null;
-const appHtml = (env) => (env.GITHUB_TOKEN ? HTML_REPORT || (HTML_REPORT = APP_HTML.replace('window.WLA_HOSTED = true;', 'window.WLA_HOSTED = true; window.WLA_REPORT = true;')) : APP_HTML);
+// (the page, with the report form switched on once the GitHub key is set, and Suggest an idea once the Discord bot's is)
+const HTML_FLAGS = {};
+const appHtml = (env) => { const k = (env.GITHUB_TOKEN ? 'r' : '') + (env.DISCORD_BOT_TOKEN ? 'i' : '');
+  return HTML_FLAGS[k] || (HTML_FLAGS[k] = APP_HTML.replace('window.WLA_HOSTED = true;', 'window.WLA_HOSTED = true;' + (env.GITHUB_TOKEN ? ' window.WLA_REPORT = true;' : '') + (env.DISCORD_BOT_TOKEN ? ' window.WLA_IDEAS = true;' : ''))); };
 
 // (the pull downloads also answer at /api/fightlog: ad blockers' tracking lists block addresses ending in "/api/events",
 // which broke the site in a browser with one; /api/events stays for pages and desktop apps still asking there)
 ROUTES['/api/fightlog'] = ROUTES['/api/events'];
+
+// The Discord bot ("Debrief", in the Debrief server). Needs the DISCORD_BOT_TOKEN secret (the bot's key, with the
+// Message Content intent on) and DEBRIEF_KV. Every 10 minutes (the cron):
+// - each new #bug-reports post becomes an issue on the project's GitHub (the same list Report a problem fills), gets the
+//   Working on it tag, a short "got it" reply, an area tag when it only had Website, and a question when it has no pull;
+// - when that issue is closed, the post gets Fixed (or Can't reproduce) and a reply saying so;
+// - once a day (9 am Central) a summary goes to #moderator-only: new bugs and ideas, unanswered questions, look-alikes.
+// "Suggest an idea" on the site (/api/idea) opens a post in #suggestions.
+const GUILD = '1561476082643771394', FORUM_BUGS = '1561538061366599782', FORUM_IDEAS = '1561481557959643156', FORUM_QS = '1561477989919891588';
+const snowAt = (id) => Number((BigInt(id) >> 22n) + 1420070400000n);
+async function dc(env, path, opt = {}, tries = 0) {
+  const r = await fetch('https://discord.com/api/v10' + path, { method: opt.method || 'GET', body: opt.body ? JSON.stringify(opt.body) : undefined,
+    headers: { Authorization: 'Bot ' + env.DISCORD_BOT_TOKEN, 'Content-Type': 'application/json', 'User-Agent': 'DiscordBot (' + SITE + ', 1)' } });
+  if (r.status === 429 && tries < 3) { const j = await r.json().catch(() => ({})); await new Promise((ok) => setTimeout(ok, Math.min(5000, (j.retry_after || 1) * 1000))); return dc(env, path, opt, tries + 1); }
+  if (!r.ok) throw new Error('Discord answered ' + r.status + ' on ' + path);
+  return r.status === 204 ? null : r.json();
+}
+async function gh(env, path, opt = {}) {
+  const r = await fetch('https://api.github.com/repos/' + BUG_REPO + path, { method: opt.method || 'GET', body: opt.body ? JSON.stringify(opt.body) : undefined,
+    headers: { Authorization: 'Bearer ' + env.GITHUB_TOKEN, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'debrief-site', 'Content-Type': 'application/json' } });
+  if (!r.ok) throw new Error('GitHub answered ' + r.status + ' on ' + path);
+  return r.json();
+}
+const say = (env, ch, content) => dc(env, '/channels/' + ch + '/messages', { method: 'POST', body: { content, allowed_mentions: { parse: [] } } });
+const tagOf = (tags, name) => { const t = (tags || []).find((x) => x.name.toLowerCase() === name.toLowerCase()); return t ? t.id : null; };
+// (which part of the site a post is about, from its words: for the tag and the GitHub label)
+const AREAS = [['Assignments', /\b(nsrt|notes?|assignments?|assigned)\b/i], ['Rotation', /\b(rotation|talents?|opener|priority|burst window)\b/i],
+  ['Graphs', /\b(graphs?|charts?|meters?|dps|hps)\b/i], ['Teams', /\b(team|guild|rankings?|my page|character|roster|raid nights?)\b/i],
+  ['Mechanics', /\b(soaks?|maps?|mechanics?|debriefing|wipe|deaths?|kicks?|interrupts?|avoidable|frontal|nymrissa|kith'?ix|ula'?tek|vashnik|nek'?zali|explorers|sszorak|guillotine|coiled altar|twin fangs|sentinels)\b/i]];
+const areasIn = (s) => AREAS.filter(([, re]) => re.test(s)).map(([a]) => a);
+async function runBugs(env) {
+  let st = await env.DEBRIEF_KV.get('dc-bugs', 'json'), dirty = false;
+  const act = await dc(env, '/guilds/' + GUILD + '/threads/active'), all = act.threads || [];
+  const posts = all.filter((t) => t.parent_id === FORUM_BUGS && !(t.flags & 2)); // (not the pinned how-to)
+  if (!st) { st = { t: {}, open: [], fixed: [] }; for (const t of posts) st.t[t.id] = 0; await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); return all; } // (first run: posts from before the bot stay as they are)
+  const forum = await dc(env, '/channels/' + FORUM_BUGS), tags = forum.available_tags || [], working = tagOf(tags, 'Working on it');
+  for (const t of posts.filter((x) => !(x.id in st.t)).slice(0, 5)) {
+    st.t[t.id] = 0; dirty = true;
+    const m = await dc(env, '/channels/' + t.id + '/messages/' + t.id).catch(() => null), text = (m && m.content) || '';
+    const files = ((m && m.attachments) || []).map((a) => a.url), tagNames = (t.applied_tags || []).map((id) => (tags.find((x) => x.id === id) || {}).name).filter(Boolean);
+    const areas = areasIn(t.name + ' ' + text), who = m && m.author ? (m.author.global_name || m.author.username) : 'someone';
+    const body = text.replace(/@/g, '@​').split(/\r?\n/).map((l) => '> ' + l).join('\n') + '\n\n**From:** ' + who.replace(/@/g, '@​') + ' on Discord' +
+      (tagNames.length ? '\n**Tags:** ' + tagNames.join(', ') : '') + (files.length ? '\n**Pictures:**\n' + files.map((u) => '- ' + u).join('\n') : '') +
+      '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from #bug-reports by the Debrief bot. Closing this issue tells the post it\'s fixed._';
+    const issue = await gh(env, '/issues', { method: 'POST', body: { title: '[discord] ' + t.name.slice(0, 90), body, labels: ['bug', 'discord', ...areas.map((a) => a.toLowerCase())] } });
+    st.t[t.id] = issue.number; st.open.push([t.id, issue.number]);
+    // (tags: Working on it, plus the area its words point to when they only picked Website)
+    const keep = new Set(t.applied_tags || []); if (working) keep.add(working);
+    const onlySite = tagNames.every((n) => ['website', 'working on it'].includes(n.toLowerCase()));
+    if (onlySite && areas.length) { const a = tagOf(tags, areas[0]); if (a) keep.add(a); }
+    await dc(env, '/channels/' + t.id, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
+    const noPull = !/https?:\/\/|pull\s*#?\d+|\bp\d+\b/i.test(text) && !files.length;
+    await say(env, t.id, 'Thanks, got it! This is on our list now, and we\'ll post here when it\'s fixed.' +
+      (noPull ? '\nTo help us find it fast: which pull was it? Paste the Debrief or Warcraft Logs link, or say the boss and pull number. A screenshot helps too.' : ''));
+  }
+  // (closed on GitHub: Fixed, or Can't reproduce when it was closed as not planned)
+  const still = [];
+  for (const [tid, n] of st.open) {
+    const is = await gh(env, '/issues/' + n).catch(() => null);
+    if (!is || is.state !== 'closed') { still.push([tid, n]); continue; }
+    dirty = true; const nope = is.state_reason === 'not_planned';
+    const th = await dc(env, '/channels/' + tid).catch(() => null); if (!th) continue;
+    const keep = new Set((th.applied_tags || []).filter((id) => id !== working)), done = tagOf(tags, nope ? 'Can\'t reproduce' : 'Fixed'); if (done) keep.add(done);
+    await dc(env, '/channels/' + tid, { method: 'PATCH', body: { archived: false, applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
+    await say(env, tid, nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
+      : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>').catch(() => {});
+    st.fixed = [...(st.fixed || []), [tid, Date.now(), nope ? 0 : 1]].slice(-50);
+  }
+  if (st.open.length !== still.length) st.open = still;
+  if (dirty) await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st));
+  return all;
+}
+// (two titles that share most of their words: maybe the same bug)
+const words = (s) => new Set(s.toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').split(' ').filter((w) => w.length > 2 && !/^(the|and|for|not|but|with|when|was|are|isn't|doesn't|on|in|it|my|of)$/.test(w)));
+const alike = (a, b) => { const x = words(a), y = words(b); if (!x.size || !y.size) return 0; let n = 0; for (const w of x) if (y.has(w)) n++; return n / Math.min(x.size, y.size); };
+async function runDigest(env, now, all) {
+  const d = new Date(now), day = d.toISOString().slice(0, 10);
+  if (d.getUTCHours() !== 14 || (await env.DEBRIEF_KV.get('dc-digest')) === day) return;
+  await env.DEBRIEF_KV.put('dc-digest', day);
+  const chans = await dc(env, '/guilds/' + GUILD + '/channels'), mod = chans.find((c) => c.name === 'moderator-only'); if (!mod) return;
+  const since = now - 864e5, link = (t) => '<#' + t.id + '>';
+  const bugs = all.filter((t) => t.parent_id === FORUM_BUGS && !(t.flags & 2)), ideas = all.filter((t) => t.parent_id === FORUM_IDEAS && !(t.flags & 2));
+  const newBugs = bugs.filter((t) => snowAt(t.id) > since), newIdeas = ideas.filter((t) => snowAt(t.id) > since);
+  const quiet = all.filter((t) => t.parent_id === FORUM_QS && !(t.flags & 2) && !t.message_count && snowAt(t.id) < now - 36e5);
+  const st = (await env.DEBRIEF_KV.get('dc-bugs', 'json')) || { open: [], fixed: [] };
+  const fixed = (st.fixed || []).filter(([, at]) => at > since);
+  const pairs = []; for (let i = 0; i < bugs.length; i++) for (let j = i + 1; j < bugs.length; j++) if (alike(bugs[i].name, bugs[j].name) >= 0.6) pairs.push(link(bugs[i]) + ' and ' + link(bugs[j]));
+  const sec = (h, a) => (a.length ? '\n**' + h + '**\n' + a.slice(0, 10).map((x) => '• ' + x).join('\n') + (a.length > 10 ? '\n• and ' + (a.length - 10) + ' more' : '') : '');
+  let msg = '**Good morning! Here\'s the last day on the Discord.**' +
+    sec('New bug reports (' + newBugs.length + ')', newBugs.map(link)) + sec('New ideas (' + newIdeas.length + ')', newIdeas.map((t) => link(t) + (t.message_count ? ' · ' + t.message_count + ' replies' : ''))) +
+    sec('Questions nobody has answered yet', quiet.map(link)) + sec('Maybe the same bug', pairs) + sec('Closed since yesterday', fixed.map(([tid, , ok]) => '<#' + tid + '>' + (ok ? ' (fixed)' : ' (couldn\'t reproduce)'))) +
+    '\nBugs still open: **' + (st.open || []).length + '**';
+  if (!newBugs.length && !newIdeas.length && !quiet.length && !fixed.length) msg = '**Good morning!** A quiet day: no new bugs, ideas or unanswered questions. Bugs still open: **' + (st.open || []).length + '**';
+  await say(env, mod.id, msg.slice(0, 1990));
+}
+async function discordJobs(env, now) {
+  if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
+  const all = await runBugs(env);
+  await runDigest(env, now, all);
+}
+// "Suggest an idea" (the site's form): a new post in #suggestions, under the area picked. Same limits as Report a problem.
+async function fileIdea(req, env, url) {
+  if (!env.DISCORD_BOT_TOKEN) return json({ error: 'Ideas aren\'t switched on yet.' }, 503);
+  if (req.headers.get('Origin') !== url.origin) return json({ error: 'Ideas can only be sent from the Debrief website.' }, 403);
+  let b; try { b = await req.json(); } catch (e) { return json({ error: 'That idea was empty.' }, 400); }
+  if (!b || typeof b !== 'object') return json({ error: 'That idea was empty.' }, 400);
+  if (b.website) return json({ ok: true });
+  const text = String(b.text || '').trim().slice(0, 1800), name = String(b.name || '').trim().slice(0, 60), area = String(b.area || '').slice(0, 30);
+  if (text.length < 10) return json({ error: 'Please say a little more about your idea.' }, 400);
+  const ip = req.headers.get('CF-Connecting-IP') || 'x', now = Date.now();
+  let w = bugSeen.get('i' + ip); if (!w || now - w.t > 600000) { w = { t: now, n: 0 }; bugSeen.set('i' + ip, w); }
+  if (w.n >= 3) return json({ error: 'You\'ve sent a few ideas just now. Please wait a few minutes before sending another.' }, 429);
+  if (now - bugHour.t > 3600000) bugHour = { t: now, n: 0 };
+  if (bugHour.n >= 40) return json({ error: 'A lot came in just now. Please try again in a little while.' }, 429);
+  w.n++; bugHour.n++;
+  try {
+    const forum = await dc(env, '/channels/' + FORUM_IDEAS), tags = forum.available_tags || [];
+    const tag = tagOf(tags, area) || tagOf(tags, 'Website') || (tags[0] && tags[0].id);
+    const first = text.split(/\r?\n/)[0].replace(/\s+/g, ' ');
+    const t = await dc(env, '/channels/' + FORUM_IDEAS + '/threads', { method: 'POST', body: { name: first.length > 90 ? first.slice(0, 89) + '…' : first, applied_tags: tag ? [tag] : [],
+      message: { content: text + '\n\n*Sent from the website' + (name ? ' by ' + name.replace(/[@*_`~|]/g, '') : '') + '. React with 👍 if you want it too.*', allowed_mentions: { parse: [] } } } });
+    return json({ ok: true, url: 'https://discord.com/channels/' + GUILD + '/' + t.id });
+  } catch (err) { return json({ error: 'The idea couldn\'t be sent right now. Please try again in a minute.' }, 502); }
+}
 
 // Patch notes to Discord: every 10 minutes (the cron in wrangler.toml), when the site's newest Patch notes day hasn't
 // been announced yet, post one line with @everyone and a link that opens the page. Needs the DISCORD_PATCH_WEBHOOK
@@ -214,10 +339,11 @@ async function announcePatch(env) {
 }
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(announcePatch(env)); },
+  async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now())]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/bug') return req.method === 'POST' ? fileBug(req, env, url) : json({ error: 'Send reports with the website\'s form.' }, 405);
     if (route) {
       const v = route.v(url.searchParams);
