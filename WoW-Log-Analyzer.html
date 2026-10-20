@@ -3266,6 +3266,20 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .rp-l textarea, .rp-l input { width: 100%; box-sizing: border-box; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line2); border-radius: 8px; color: var(--text); font: 400 14px/1.45 var(--body); resize: vertical; }
 .rp-l textarea:focus, .rp-l input:focus { outline: none; border-color: var(--gold); } .rp-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .rp-card .rp-att { margin-top: 12px; font-size: 13px; color: var(--faint); } .rp-card .rp-msg:empty { display: none; } .rp-card .rp-msg.bad { color: #ff8f87; } .rp-card a { color: var(--gold); }
+/* Patch notes (from the menu): one card over the page, a fold per day with New and Fixed lists */
+.pnz-wrap { align-items: start; overflow-y: auto; } .pnz-sheet { width: min(760px, 100%); margin: 4vh auto; padding: 22px 24px 16px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.pnz-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.pnz-top h2 { margin: 0; font: 700 28px/1.1 var(--head); color: var(--text); } .pnz-top p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.pnz-x { flex: none; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raised); color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; } .pnz-x:hover { color: var(--text); border-color: var(--gold); }
+.pnz-day { border-top: 1px solid var(--line); }
+.pnz-day > summary { list-style: none; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; padding: 14px 0; cursor: pointer; } .pnz-day > summary::-webkit-details-marker { display: none; }
+.pnz-day > summary::before { content: '\25B8'; width: 12px; color: var(--gold); } .pnz-day[open] > summary::before { content: '\25BE'; }
+.pnz-d { font: 600 20px var(--head); color: var(--text); } .pnz-t { color: var(--gold); font: 600 12px var(--body); letter-spacing: .08em; text-transform: uppercase; } .pnz-c { margin-left: auto; color: var(--faint); font-size: 13px; }
+.pnz-g { margin: 0 0 14px 22px; } .pnz-g ul { margin: 0; padding-left: 18px; } .pnz-g li { margin: 6px 0; font-size: 15px; line-height: 1.45; color: var(--text); } .pnz-g li::marker { color: var(--faint); }
+.pnz-h { display: inline-block; margin: 0 0 4px; padding: 2px 10px; border-radius: 999px; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; }
+.pnz-h.new { background: var(--good-bg); color: #7ee08f; } .pnz-h.fix { background: rgba(106,168,255,.14); color: var(--blue); }
+.pnz-foot { margin: 4px 0 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; } .pnz-foot a { color: var(--gold); }
+@media (max-width: 600px) { .tour.pnz-wrap { padding: 0; } .pnz-sheet { margin: 0; min-height: 100%; border: 0; border-radius: 0; padding: 16px; } .pnz-g { margin-left: 4px; } .pnz-c { width: 100%; margin-left: 22px; } }
 /* page tips: the page dimmed except a bright window around one spot (a gold ring that breathes), and a bubble beside it */
 .ptip { position: fixed; inset: 0; z-index: 8900; animation: tr-fade .25s ease-out both; } .ptip.out { animation: tr-fade-out .2s ease-in forwards; }
 .pt-hole { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(6, 8, 12, .74); outline: 2px solid var(--gold); outline-offset: 0; pointer-events: none; transition: left .3s cubic-bezier(.2, .8, .2, 1), top .3s cubic-bezier(.2, .8, .2, 1), width .3s cubic-bezier(.2, .8, .2, 1), height .3s cubic-bezier(.2, .8, .2, 1); animation: pt-ring 1.8s ease-in-out infinite; }
@@ -4229,7 +4243,7 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 15 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>
@@ -12640,6 +12654,103 @@ function openReport() {
     }
   };
   setTimeout(() => { const t = $('#rpText'); if (t) t.focus(); }, 60);
+}
+// Patch notes (the menu's "Patch notes" page): newest first, one entry a day. To add a round, put a line under the
+// newest date's n (New) or f (Fixed), or add a new date at the top. t is an optional headline for the day.
+// Plain player-facing words: no code terms, no guide or site names.
+const PATCH_NOTES = [
+  { d: '2026-10-20', n: [
+    'Patch notes: this page, so you can see what changed and when.',
+    'A calmer, tidier look: one set of text sizes, corners and spacing across every page.',
+  ], f: [
+    'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
+  ] },
+  { d: '2026-10-19', t: 'A big one', n: [
+    'Compare: line up a pull against the top 3 players of your spec on that boss, or against a teammate.',
+    'My Page: your team and your character on one page. The boss you\'re on, your raid nights, every boss and your rankings up top.',
+    'Live now: while Debrief is open, it spots your team\'s raid by itself and plays a soft chime when a new pull comes in.',
+    'Debriefing (was Mechanics): each pull reads like a raid lead\'s debrief, with a checklist of what went right and wrong.',
+    'Burst windows on every boss: what the raid did with its big cooldowns, and where Bloodlust should go.',
+    'Kith\'ix gets its full Debriefing: adds, beetles, Extinguish, fears, tanks, Abyssal Grasp, fragments, Null Gates and the phase 2 damage check.',
+    'Nymrissa: Frost Orb soaks checked set by set, plus tank and avoidable damage checks.',
+    'Guillotine: the eruption after the axe lands is drawn on the maps and checked.',
+    'Rotation: every raid spec redone in full. What to have on before the pull, the opener step by step, and the priority.',
+    'Rotation: a This boss chapter, your hero talents as a small gold tag, and your boss and add damage.',
+    'Report card: the night\'s raiders ranked, each graded on mechanics, Rotation, staying alive, prep, assignments and toolkit.',
+    'Assignments: your NSRT note is saved with its log and only used on pulls with that exact group. Paste a note and Debrief opens the pull it\'s for.',
+    'Pick one player from the tab bar, and every tab shows just them.',
+    'Graphs: a board of bar graphs, for one pull or all pulls.',
+    'Start now walks new visitors through adding their character and team. Just open a log lets you look without saving anything.',
+    'Reload, Back and Forward keep you where you were.',
+    'Logs save by themselves when your character or team is in them.',
+  ], f: [
+    'Big logs no longer freeze the page while they load.',
+    'Debriefing on all pulls showed a blank page for a while.',
+    'Report card got stuck on "Reading tonight\'s pull".',
+    'See a real raid night on the front page works again.',
+    'Fewer false flags: every boss checked against top Mythic kills.',
+    'Maps: pools stay put, frontals and adds stay in view, and names no longer pile up.',
+    'Opening a raid night: the pop-up now closes as soon as the night starts loading.',
+    'Rotation no longer counts a damage over time against you while nobody could reach the boss.',
+    'Healers are no longer flagged for overhealing.',
+    'The menu showed items that should have been hidden.',
+  ] },
+  { d: '2026-10-18', t: 'Beta opens', n: [
+    'Debrief opens to beta testers from our Discord. Report a problem is in the menu.',
+    'Rotation: checks for every raid spec, with burst windows and Next time tips.',
+    'Graphs: damage, healing and more as bar graphs you can hover and click.',
+    'Maps that look like the mechanics: soaks fill and slam, bombs burst, puddles spread and frontals slash, each with its spell icon.',
+    'Cast bars on enemies: green with the kicker\'s name when kicked, red when the cast went off.',
+    'A small map on each What went wrong line.',
+    'Mighty Thud: one map plays all three leaps in order.',
+    'Ula\'tek: every egg on its own line, grouped by egg phase.',
+    'Show one player: only their mistakes, with a gold ring on them on every map.',
+    'Assignments: save several NSRT notes, and each pull picks the one that fits it.',
+    'Getting around: one row of tabs, a boss picker in the banner, and Back and Forward work.',
+    'A new front page with a Start here box for new visitors.',
+  ], f: [
+    'Less noise on short wipes: no potion or mana reminders, and a night opens on the boss you spent it on.',
+    'Tanks standing in bad stuff get a note, not a mistake.',
+    'Kick rotation says who was too far away to kick.',
+    'Grades always match their colour.',
+    'First-visit tips wait until you\'ve answered the pop-up question.',
+  ] },
+  { d: '2026-10-17', n: [
+    'Fight checks for Nek\'zali, Vashnik and The Lost Explorers.',
+    'Team pages with world, region and server rankings, and a page for your character.',
+    'A report card for every player: one grade and what to fix first.',
+    'Power Infusion: the best target and timing for each cast.',
+    'The first spec pages: Holy Paladin, Restoration Druid and Preservation Evoker.',
+    'Loading screens with dancers, and pulls that download in the background.',
+    'A new home page, a first-visit tour and tips on each page.',
+    'Hover a chart to see its breakdown, click it for more.',
+  ], f: [
+    'Downloads on the website try again by themselves, and work with ad blockers.',
+    'A healing cooldown used within 5 seconds of its moment counts as on time.',
+    'Long nights no longer slow the page down over time.',
+    'Fixes for Twin Fangs and The Coiled Altar on Heroic.',
+  ] },
+  { d: '2026-10-16', t: 'The website goes live', n: [
+    'Debrief is on the web: open a raid from its Warcraft Logs link, no download needed.',
+    'Follow a raid live: new pulls show up while you play.',
+  ] },
+];
+function openPatchNotes() {
+  if ($('#pnzBox')) return;
+  const el = document.createElement('div'); el.id = 'pnzBox'; el.className = 'tour pnz-wrap'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Patch notes');
+  const day = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const list = (h, c, a) => a && a.length ? '<div class="pnz-g"><h4 class="pnz-h ' + c + '">' + h + '</h4><ul>' + a.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '';
+  const cnt = (p) => [p.n && p.n.length ? p.n.length + ' new' : '', p.f && p.f.length ? p.f.length + ' fixed' : ''].filter(Boolean).join(' · ');
+  el.innerHTML = '<div class="panel pnz-sheet"><div class="pnz-top"><div><h2>Patch notes</h2><p>What\'s new on Debrief and what we fixed, newest first.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
+    PATCH_NOTES.map((p, i) => '<details class="pnz-day"' + (!i ? ' open' : '') + '><summary><span class="pnz-d">' + day(p.d) + '</span>' + (p.t ? '<span class="pnz-t">' + esc(p.t) + '</span>' : '') +
+      '<span class="pnz-c">' + cnt(p) + '</span></summary>' + list('New', 'new', p.n) + list('Fixed', 'fix', p.f) + '</details>').join('') +
+    '<p class="pnz-foot">' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p></div>';
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  const close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); };
+  document.addEventListener('keydown', key, true);
+  el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x, .rp-open')) close(); };
+  setTimeout(() => { const x = el.querySelector('.pnz-x'); if (x) x.focus(); }, 60);
 }
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
 function renderMain() {
@@ -30186,6 +30297,7 @@ if ($('#tbReport') && REPORT_ON()) { $('#tbReport').hidden = false; $('#tbReport
 if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };
+if ($('#tbPatch')) $('#tbPatch').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openPatchNotes(); };
 // (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
 // (a visit always starts on the front page, with the team and character pick (your call, Oct 18). The address keeps the
 // open pull, so it can be copied and shared, and a shared link still opens its report; but your own last report doesn't
