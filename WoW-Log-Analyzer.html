@@ -30307,8 +30307,8 @@ async function wclSignBack() {
   try { p = JSON.parse(sessionStorage.getItem(WCL_SIGN.pk) || 'null'); sessionStorage.removeItem(WCL_SIGN.pk); } catch (e) { /* storage off */ }
   try { history.replaceState(null, '', '/'); } catch (e) { /* ignore */ }
   let after = null; try { after = sessionStorage.getItem('wla-wcl-after'); sessionStorage.removeItem('wla-wcl-after'); } catch (e) { /* storage off */ }
-  if (after === 'alts') { if (code && p && p.st === st) try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json(); if (r.ok && j && j.chars) store.set(WCL_SIGN.key, JSON.stringify(j)); } catch (e) { /* the panel offers typing */ }
-    S.yuOpen = true; openMyPage(); return; }
+  if (after === 'alts' || after === 'night') { if (code && p && p.st === st) try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json(); if (r.ok && j && j.chars) store.set(WCL_SIGN.key, JSON.stringify(j)); } catch (e) { /* the panel offers typing */ }
+    if (after === 'night') { nightDlg(); return; } S.yuOpen = true; openMyPage(); return; }
   gsStart(); if (!GS) return;
   if (!code || !p || p.st !== st) { GS.note = WCL_CB.get('error') ? 'Sign-in was cancelled. You can try again, or type your character below.' : 'That sign-in didn\'t finish. Try again, or type your character below.'; gsDraw(); return; }
   GS.signing = true; gsDraw();
@@ -30525,7 +30525,8 @@ function nightDlg() {
   // (signed in with Warcraft Logs (Oct 20): the logs you uploaded, private ones too, one tap each)
   const mine = $('#ndMine'); if (mine) fetch('/api/myreports').then((r) => r.json()).then((j) => { if (!document.body.contains(mine)) return; const l = (j && j.reports) || [];
     mine.innerHTML = '<div class="nd-mh">Your logs on Warcraft Logs</div>' + (l.length ? '<div class="nd-ml">' + l.slice(0, 10).map((x) => '<button class="nd-mr" type="button" data-code="' + esc(x.code) + '"><span><b>' + esc(x.title || x.code) + '</b><span class="sub">' + esc(new Date(x.startTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })) + (x.zone ? ' · ' + esc(x.zone) : '') + '</span></span>' + (x.vis && x.vis !== 'public' ? '<em>' + (x.vis === 'private' ? 'Private' : 'Unlisted') + '</em>' : '') + '</button>').join('') + '</div>'
-      : '<div class="sub">' + esc(j && j.error ? j.error : 'You haven\'t uploaded any logs yet.') + '</div>');
+      : '<div class="sub">' + esc(j && j.error ? j.error : 'You haven\'t uploaded any logs yet.') + '</div>' + (j && j.error && /sign in/i.test(j.error) ? '<button class="btn primary" id="ndSign" type="button" style="margin-top:8px">Sign in again</button>' : ''));
+    const again = $('#ndSign'); if (again) again.onclick = () => { again.disabled = true; try { sessionStorage.setItem('wla-wcl-after', 'night'); } catch (e) { /* storage off */ } wclSignIn(); };
     mine.querySelectorAll('[data-code]').forEach((b) => (b.onclick = () => go('https://www.warcraftlogs.com/reports/' + b.dataset.code))); }).catch(() => mine.remove());
   inp.focus();
 }
