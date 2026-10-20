@@ -3232,6 +3232,10 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // ---- Debriefing extras (Oct 20, your OK on the mockups) ----
 // (this boss's pulls up to the one on screen, the last 8; each with its read report when it's been opened on this PC, so
 // nothing new downloads for the dots)
+// (Raid damage against the pull before, when it's been opened on this PC: a small green or red arrow, never a colour on the number)
+function dbdVsLast(r, now) { const it = r.item, prev = ((S.index && S.index.bosses) || []).find((b) => b.id === it.id && b.diffId === it.diffId && b.pull === it.pull - 1), pr = prev && CACHE.get(prev); if (!pr) return '';
+  const c = cutInfo(pr), end = c ? c.t : pr.duration, dS = pr.dmgS || []; let d = 0; for (let i = 0; i < Math.min(dS.length, Math.ceil(end)); i++) d += dS[i] || 0; const was = d / Math.max(1, end); if (!was) return '';
+  const p = Math.round(100 * (now - was) / was); return Math.abs(p) < 1 ? '<span class="dbd-dd">same as pull ' + prev.pull + '</span>' : '<span class="dbd-dd ' + (p > 0 ? 'up' : 'dn') + '">' + (p > 0 ? '▲ ' : '▼ ') + Math.abs(p) + '% ' + (p > 0 ? 'more' : 'less') + ' than pull ' + prev.pull + '</span>'; }
 function dbdAcross(r) { const it = r.item, ps = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull <= it.pull).sort((a, b) => a.pull - b.pull).slice(-8);
   const pulls = ps.map((b) => ({ b, r: b === it ? r : CACHE.get(b) || null })); let ma = new Map();
   try { ma = new Map(mechAcross(pulls.map((p) => p.r).filter(Boolean)).map((x) => [x.id, x])); } catch (e) { console.error(e); }
@@ -3872,15 +3876,15 @@ function audit() {
       const it = r.item, endT = cut ? cut.t : r.duration, deaths = (r.deaths || []).filter((d) => d.t <= endT + 0.05), dS = r.dmgS || [];
       let dmg = 0; for (let i = 0; i < Math.min(dS.length, Math.ceil(endT)); i++) dmg += dS[i] || 0;
       const before = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && !b.kill).length;
-      const res = it.kill ? '<b class="dbr-ok">Kill</b>' : '<b>' + (it.endPct != null ? Math.round(it.endPct) + '%' : 'Wipe') + '</b>';
+      const pc0 = pullCol(it), res = '<b' + (pc0 ? ' style="color:' + pc0 + '"' : '') + '>' + (it.kill ? 'Kill' : it.endPct != null ? Math.round(it.endPct) + '%' : 'Wipe') + '</b>'; /* (the pull's progress colour, as its card) */
       const resSub = T(r.duration) + (it.kill ? (before ? ' · after ' + plural(before, 'wipe') : ' · first try') : it.endPhase ? ' · wipe in ' + esc(it.endPhase) : ' · wipe');
       const all = m.sections.filter((s) => !s.info && s.id !== 'kicks').map((s) => { const rs = s.rows.concat(...(s.groups || []).map((g) => g.rows)), nB = rs.filter(isBadRow).length, nW = rs.filter((row) => !isBadRow(row) && isWarnRow(row)).length, lc = lvlCounts(s.id, nB, nW, rs.length);
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
       top += '<div class="dbr-4">' + num('Result', res, resSub) + num('Deaths', '<b>' + deaths.length + '</b>', deaths.length ? 'first at ' + T(deaths[0].t) + ' (' + esc(deaths[0].player) + ')' : 'nobody died') +
-        num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> with mistakes</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
-        num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '')) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
+        num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
+        num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '') + dbdVsLast(r, dmg / Math.max(1, endT))) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
       if (NJ) top = top.replace('<div class="dbr-4">', '<div class="dbr-4 dbn-five">');
       top = dbnBar(NJ, r) + top;
       { const lab = it.kill ? 'kill' : 'wipe' + (it.endPhase ? ' in ' + it.endPhase : '') + (it.endPct != null ? ' at ' + Math.round(it.endPct) + '%' : '');
@@ -5297,7 +5301,7 @@ function nightMechC(o) {
     top += '<div class="dbr-4">' + num('Pulls', '<b>' + pulls.length + '</b>', durH(onBoss) + ' on the boss' + (reps.length < pulls.length ? ' · ' + reps.length + ' read' : '')) +
       (kill ? num('Kill', '<b class="dbr-ok">Pull ' + kill.pull + '</b>', kill.pull > 1 ? 'after ' + plural(kill.pull - 1, 'wipe') : 'first try') : num('Best pull', '<b>' + (bestP ? esc(pullShort(bestP)) : '—') + '</b>', bestP ? 'pull ' + bestP.pull + ' · ' + esc(pullLabel(bestP)) : 'no result yet')) +
       num('Deaths', '<b>' + nD + '</b>', reps.length ? (nD / reps.length).toFixed(1) + ' a pull' + (one ? ', ' + esc(one.split('-')[0]) : '') : '') +
-      num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> with mistakes</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic') + ', over ' + plural(N, 'pull')) + '</div>';
+      num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic') + ', over ' + plural(N, 'pull')) + '</div>';
     // (the three to fix: failed first, then the ones wrong in the most pulls, then the boss's most important)
     const imp = IMPORTANCE[boss] || [], ix = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1 };
     const pick = probs.slice().sort((a, b) => rk[lvOf(a)] - rk[lvOf(b)] || wN(b) - wN(a) || ix(a.x.id) - ix(b.x.id)).slice(0, 3);
