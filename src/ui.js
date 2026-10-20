@@ -1494,6 +1494,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Boss guides: Axegrinder gets its own map. The boss throws 5 axes, anyone they fly into is knocked back, then they roll around at random and hurt anyone they touch. Both throws are on the fight timeline, with a band showing when the axes are out.',
     'Boss guides: the video shows first with the fight list following along, Your job has a fresh look, and each part has a Something wrong here? link to report a mistake.',
     'Boss guides: each Debriefing mechanic has a How to do it link to the guide, your role is ringed on the maps, and Your job shows your lines from your raid note.',
     'Boss guides: Putting it all together has a Read it version, the whole fight in order with what overlaps, coloured by how dangerous it is.',
