@@ -1110,6 +1110,55 @@ function myPageEmpty() { view('<section class="panel my-empty"><h2>My Page</h2><
 // boss in raid order, coloured by how far you got, the open raid's boss marked), where you are now (the big chart), every boss (compact tiles in raid
 // order that open full width), then history (raid nights, since last raid). The team page's own parts are moved here, so their buttons keep working;
 // a raid night opened from here opens on the first tab)
+// ---- My Page's two top cards, dressed up (your call, Oct 20: "make both nicer") ----
+// Your team: the crest bigger, the progress and rankings as tiles, a bar of bosses killed. You: your parses as tiles in
+// their parse colours, your buttons, your other characters, and "Add your other characters" (from Warcraft Logs when
+// you're signed in with it, else sign in or type one), opening in place under the buttons.
+const yuPc = (v) => (v >= 100 ? '#e5cc80' : v >= 99 ? '#e268a8' : v >= 95 ? '#ff8000' : v >= 75 ? '#a335ee' : v >= 50 ? '#0070ff' : v >= 25 ? '#1eff00' : '#9d9d9d');
+function myCardsDress(team, meCard) {
+  if (team) { team.classList.add('tm2'); const gold = team.querySelector('.pgc.gold'), m = gold ? gold.textContent.match(/(\d+)\s*\/\s*(\d+)/) : null;
+    if (m && +m[2] && !gold.querySelector('.tm-bar')) gold.insertAdjacentHTML('beforeend', '<i class="tm-bar" aria-hidden="true">' + Array.from({ length: +m[2] }, (_, i) => '<i' + (i < +m[1] ? ' class="on"' : '') + '></i>').join('') + '</i>'); }
+  const pyou = meCard && meCard.querySelector('.pg-you'), P = mePair(); if (!pyou || !P) return;
+  meCard.classList.add('yu2');
+  // (your parses as two tiles; the chips are redrawn when the rankings come in, so they're dressed again each time)
+  const chips = pyou.querySelector('#pgYouChips'), tiles = () => { const ch = chips && chips.querySelector('.pgc'); if (!ch || chips.querySelector('.yu-tiles')) return;
+    const sp = (ch.textContent.match(/^\s*([^\d]+?)\s+\d/) || [])[1], bs = [...ch.querySelectorAll('b')].map((b) => +b.textContent.replace(/[^\d.]/g, ''));
+    if (bs.length >= 2 && bs.every((v) => !isNaN(v))) ch.outerHTML = '<span class="yu-tiles">' + [[bs[0], 'best'], [bs[1], 'median']].map(([v, l]) => '<span class="yu-t" style="--pc:' + yuPc(v) + '"><b>' + Math.round(v) + '</b><em>' + (sp ? esc(sp) + ' ' : '') + l + '</em></span>').join('') + '</span>'; };
+  tiles(); if (chips && !chips._yu) { chips._yu = new MutationObserver(tiles); chips._yu.observe(chips, { childList: true }); }
+  const mine = pyou.querySelector('#pgMine'), alts = groups().filter((x) => x.kind === 'char' && x.gid !== P.c.gid);
+  const act = document.createElement('div'); act.className = 'yu-act';
+  act.innerHTML = (alts.length ? '<div class="yu-alts"><span class="sub">Your other characters</span>' + alts.map((x) => { const k = x.cls && E.CLASSES[x.cls];
+      return '<button class="me-c" type="button" data-yalt="' + esc(x.gid) + '"' + (k ? ' style="--cc:' + k[1] + '"' : '') + '>' + (k ? '<img src="' + whIcon('classicon_' + k[2]) + '" alt="">' : '') + esc(gName(x)) + '</button>'; }).join('') + '</div>' : '') +
+    '<div class="yu-btns"><button class="btn" id="yuAdd" type="button" aria-expanded="false">+ Add your other characters</button></div><div class="yu-panel" id="yuPanel" hidden></div>';
+  if (mine) { mine.classList.add('btn'); mine.classList.remove('linkbtn'); act.querySelector('.yu-btns').prepend(mine); }
+  pyou.after(act);
+  act.querySelectorAll('[data-yalt]').forEach((b) => (b.onclick = () => { S.progMine = true; S.progView = b.dataset.yalt; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); }));
+  const btn = act.querySelector('#yuAdd'), panel = act.querySelector('#yuPanel');
+  const open = (on) => { panel.hidden = !on; btn.setAttribute('aria-expanded', on); S.yuOpen = on; if (on) yuPanel(panel); };
+  btn.onclick = () => open(panel.hidden);
+  if (S.yuOpen) open(true);
+}
+function yuPanel(panel) {
+  const me = WCL.HOSTED ? wclMe() : null, has = (id) => groups().some((x) => x.gid === 'c' + id);
+  const cs = me ? (me.chars || []).slice().sort((a, b) => b.id - a.id) : [];
+  panel.innerHTML = (me ? '<p class="sub">Signed in as <b>' + esc(me.name || 'you') + '</b>. Tap a character to add it.</p><div class="me-l">' + cs.map((c, i) => { const k = E.CLASSES[WCL_CLS[c.cls]], on = has(c.id);
+        return '<button class="me-c' + (on ? ' yu-on' : '') + '" type="button" data-yc="' + i + '"' + (on ? ' disabled' : '') + (k ? ' style="--cc:' + k[1] + '"' : '') + '>' + (k ? '<img src="' + whIcon('classicon_' + k[2]) + '" alt="">' : '') + esc(c.n) + (on ? ' ✓' : '') + '</button>'; }).join('') + '</div>'
+      : WCL.HOSTED ? '<button class="btn primary" id="yuSign" type="button">Sign in with Warcraft Logs</button><p class="sub">Brings in all your characters to pick from.</p>' : '') +
+    (WCL.HOSTED ? '<div class="gs-or"><span>' + (me ? 'not listed? type it' : 'or type it') + '</span></div>' : '') +
+    '<div class="gs-nm"><input id="yuName" placeholder="Character name" autocomplete="off" aria-label="Character name"><input id="yuRealm" placeholder="Realm, like Thrall" autocomplete="off" aria-label="Realm"><select id="yuReg" aria-label="Region"><option>US</option><option>EU</option><option>KR</option><option>TW</option></select><button class="btn primary" id="yuFind" type="button">Add</button></div><div class="fp-msg" id="yuMsg"></div>';
+  const msg = panel.querySelector('#yuMsg');
+  const add = async (url, b) => { if (b) b.disabled = true; msg.style.color = 'var(--muted)'; msg.textContent = 'Adding it from Warcraft Logs…';
+    try { const { g, already } = await groupAdd(url); msg.style.color = ''; msg.textContent = already ? esc(gName(g)) + ' was already added.' : '';
+      if (!already) { S.yuOpen = true; HIST.load().then(() => { renderProgress(); groupsBackfill(); }); } }
+    catch (e) { msg.style.color = 'var(--bad)'; msg.textContent = String(e.message || e); if (b) b.disabled = false; } };
+  panel.querySelectorAll('[data-yc]').forEach((b) => (b.onclick = () => { const c = cs[+b.dataset.yc]; if (c) add('https://www.warcraftlogs.com/character/' + String(c.reg || 'us').toLowerCase() + '/' + c.slug + '/' + encodeURIComponent(c.n.toLowerCase()), b); }));
+  const sign = panel.querySelector('#yuSign'); if (sign) sign.onclick = () => { sign.disabled = true; try { sessionStorage.setItem('wla-wcl-after', 'alts'); } catch (e) { /* storage off */ } wclSignIn(); };
+  const go = () => { const nm = panel.querySelector('#yuName').value.trim(), rl = panel.querySelector('#yuRealm').value.trim(); if (!nm || !rl) { msg.style.color = ''; msg.textContent = 'Type the character\'s name and realm.'; return; }
+    const slug = rl.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
+    add('https://www.warcraftlogs.com/character/' + panel.querySelector('#yuReg').value.toLowerCase() + '/' + slug + '/' + encodeURIComponent(nm.toLowerCase()), panel.querySelector('#yuFind')); };
+  panel.querySelector('#yuFind').onclick = go; ['#yuName', '#yuRealm'].forEach((k) => { panel.querySelector(k).onkeydown = (e) => { if (e.key === 'Enter') go(); }; });
+}
+const MY_LAY2 = () => true; // (My Page: your team and You side by side at the top (your call, Oct 20))
 function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if (!pg || pg.querySelector('.my-flow')) return;
   const q1 = (x) => pg.querySelector(x), it = S.item, ttl = q1('.pg-ttl'), grid = q1('.pc-grid'); if (!ttl || !grid) return;
   const el = (cls, tag, html) => { const e = document.createElement(tag || 'section'); e.className = cls; if (html) e.innerHTML = html; return e; }, flow = el('my-flow', 'div');
@@ -1149,8 +1198,9 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
   // every boss, in raid order; the open raid's boss marked
   const bs = q1('#pgBosses'); if (bs) { cards.sort((u, w) => order.indexOf(u.dataset.boss) - order.indexOf(w.dataset.boss)).forEach((c) => { if (!c.closest('.my-bxp')) grid.append(c); }); /* (the list itself isn't shown: its cards open under the picture cards) */
     const oc = it && byB.get(it.boss); if (oc) { oc.classList.add('my-opencard'); const h = oc.querySelector('.pc-h'), nb = h && (h.firstElementChild || h); if (nb && !h.querySelector('.pc-now')) nb.insertAdjacentHTML('beforeend', '<div><span class="pc-now">Open now' + (it.pull ? ' · pull ' + it.pull : '') + '</span></div>'); } }
+  myCardsDress(team, meCard);
   // history
-  const row = el('my-hist my-row2'); if (meCard) row.append(meCard); if (q1('#pgNights')) row.append(q1('#pgNights')); if (row.children.length) { flow.append(row); if (row.children.length === 1) row.classList.add('my-one1'); }
+  const row = el('my-hist my-row2'); if (meCard) { if (MY_LAY2()) { who.append(meCard); who.classList.remove('my-one'); flow.classList.add('my-lay2'); } else row.append(meCard); } if (q1('#pgNights')) row.append(q1('#pgNights')); if (row.children.length) { flow.append(row); if (row.children.length === 1) row.classList.add('my-one1'); }
   if (q1('.pg-since')) flow.append(q1('.pg-since'));
   const msg = q1('#pgMsg'); if (msg) msg.after(flow); else pg.append(flow); for (const x of pg.querySelectorAll('.pg-top, .pg-cols')) x.remove();
   if (!root._meNav) { root._meNav = 1; root.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-code], #pnwGo, [data-act="open"]')) S.tab = 'live'; }, true); } }
@@ -1374,6 +1424,9 @@ const PATCH_NOTES = [
   ], n: [
     'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
     'Team names always match Warcraft Logs now. Teams can\'t be renamed; Edit on a team removes it.',
+    'My Page looks better: your team card shows its rankings as tiles with a bar of bosses killed, your card shows your parses in their colours, and you can add your other characters from Warcraft Logs.',
+    'My Page: the Now on chart shows only the part of the fight you\'ve reached, with tiles for pulls, nights and time; raid nights show the boss and a stripe for kills.',
+    'My Page: your card sits beside your team at the top, and raid nights use the full width.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
@@ -18572,6 +18625,9 @@ async function wclSignBack() {
   const code = WCL_CB.get('code'), st = WCL_CB.get('state'); let p = null;
   try { p = JSON.parse(sessionStorage.getItem(WCL_SIGN.pk) || 'null'); sessionStorage.removeItem(WCL_SIGN.pk); } catch (e) { /* storage off */ }
   try { history.replaceState(null, '', '/'); } catch (e) { /* ignore */ }
+  let after = null; try { after = sessionStorage.getItem('wla-wcl-after'); sessionStorage.removeItem('wla-wcl-after'); } catch (e) { /* storage off */ }
+  if (after === 'alts') { if (code && p && p.st === st) try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json(); if (r.ok && j && j.chars) store.set(WCL_SIGN.key, JSON.stringify(j)); } catch (e) { /* the panel offers typing */ }
+    S.yuOpen = true; openMyPage(); return; }
   gsStart(); if (!GS) return;
   if (!code || !p || p.st !== st) { GS.note = WCL_CB.get('error') ? 'Sign-in was cancelled. You can try again, or type your character below.' : 'That sign-in didn\'t finish. Try again, or type your character below.'; gsDraw(); return; }
   GS.signing = true; gsDraw();
@@ -18811,16 +18867,19 @@ const durH = (s) => (s >= 3600 ? Math.floor(s / 3600) + 'h ' + String(Math.round
 // is further; multi-phase fights in stage bands sized by their share of the encounter), one line per pull plus the best
 // so far, nights split by a dashed line, a kill as an orange dot
 // (wh: [width, height] of the drawing, for Recap's wide strip; a pull's own `go` opens it in this night instead)
-function progChart(list, boss, wh) {
+function progChart(list, boss, wh, zoom) {
   const W = wh ? wh[0] : 560, H = wh ? wh[1] : 160, L = 34, R = 10, Tp = 8, B = 22, n = list.length;
-  const X = (i) => L + (n <= 1 ? (W - L - R) / 2 : (i * (W - L - R)) / (n - 1)), Y = (v) => Tp + ((100 - v) / 100) * (H - Tp - B);
+  // (zoom, for My Page's Now on card (Oct 20): only the part of the fight reached, so a P2 boss has no empty P3 row)
+  const lefts = list.filter((v) => !v.kill && v.left != null).map((v) => v.left), fl = zoom && lefts.length && !list.some((v) => v.kill) ? Math.max(0, Math.floor((Math.min(...lefts) - 12) / 5) * 5) : 0;
+  const X = (i) => L + (n <= 1 ? (W - L - R) / 2 : (i * (W - L - R)) / (n - 1)), Y = (v) => Tp + ((100 - Math.max(v, fl)) / (100 - fl)) * (H - Tp - B);
   const cfg = PROGRESS[boss] && !PROGRESS[boss].pool ? PROGRESS[boss] : null;
   let s = '<svg class="pc-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="How far each pull got, every night">';
   // (stage bands: every other one faintly shaded, so the stages read at a glance)
   if (cfg) { let g = 100, k = 0; s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(g) + '" y2="' + Y(g) + '" class="tg"/>';
-    for (const p of cfg.phases) { const w = 100 * phShare(cfg, p); if (w <= 0) continue;
-      if (k++ % 2) s += '<rect x="' + L + '" y="' + Y(g).toFixed(1) + '" width="' + (W - L - R) + '" height="' + (Y(g - w) - Y(g)).toFixed(1) + '" class="tband"/>';
-      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(g - w) + '" y2="' + Y(g - w) + '" class="tg"/><text x="' + (L - 6) + '" y="' + (Y(g - w / 2) + 4) + '" class="tl" text-anchor="end">' + p + '</text>'; g -= w; } }
+    for (const p of cfg.phases) { const w = 100 * phShare(cfg, p); if (w <= 0) continue; if (g <= fl) { g -= w; continue; } /* (below the zoom: left out) */
+      const lo = Math.max(g - w, fl);
+      if (k++ % 2) s += '<rect x="' + L + '" y="' + Y(g).toFixed(1) + '" width="' + (W - L - R) + '" height="' + (Y(lo) - Y(g)).toFixed(1) + '" class="tband"/>';
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(lo) + '" y2="' + Y(lo) + '" class="tg"/><text x="' + (L - 6) + '" y="' + (Y((g + lo) / 2) + 4) + '" class="tl" text-anchor="end">' + p + '</text>'; g -= w; } }
   else for (const g of [0, 50, 100]) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(g) + '" y2="' + Y(g) + '" class="tg"/><text x="' + (L - 6) + '" y="' + (Y(g) + 4) + '" class="tl" text-anchor="end">' + g + '%</text>';
   // (nights: a dashed line where one ends, its date under its pulls when there's room; "nr" dates are hidden on a phone,
   // where the text is bigger)
@@ -19217,9 +19276,9 @@ async function teamRankPanel(g) {
 function sinceLast(list) {
   const nights = new Map(); for (const v of list) { if (!v.gr) continue; const k = nightOf(v.at); if (!nights.has(k)) nights.set(k, []); nights.get(k).push(v); }
   const ks = [...nights.keys()].sort(), ttl = '<h3 class="nh"><span>Since last raid</span>';
-  if (ks.length < 2) return '<section class="panel pg-since">' + ttl + '</h3><p class="sub" style="margin:0">' + (ks.length ? 'Each player\'s grade is saved with every pull read here, from ' + esc(nightLabel(nights.get(ks[0])[0].at)) + ' on. After the next raid night, this shows who got better and who slipped.' : 'Each player\'s grade is saved with every pull of your raid read here. After two raid nights, this shows who got better and who slipped.') + '</p></section>';
+  if (ks.length < 2) return ''; // (hidden until there are two nights to compare on the same boss (Oct 20): an empty box made the page look unfinished)
   const B = nights.get(ks[ks.length - 1]), inB = new Set(B.map((v) => v.boss)), kA = ks.slice(0, -1).reverse().find((k) => nights.get(k).some((v) => inB.has(v.boss)));
-  if (!kA) return '<section class="panel pg-since">' + ttl + '</h3><p class="sub" style="margin:0">Each player\'s grade is saved with every pull read here. This shows who got better once your raid has two nights on the same boss.</p></section>';
+  if (!kA) return ''; // (hidden until there are two nights to compare on the same boss (Oct 20): an empty box made the page look unfinished)
   const A = nights.get(kA), inA = new Set(A.map((v) => v.boss)), shared = [...inB].filter((b) => inA.has(b));
   const avgs = (l) => { const m = new Map(); for (const v of l.filter((x) => shared.includes(x.boss))) for (const [n, [sc, u, cls]] of Object.entries(v.gr)) { const w = Math.max(20, u || 0), y = m.get(n) || { s: 0, w: 0, k: 0, cls }; y.s += sc * w; y.w += w; y.k++; y.cls = cls || y.cls; m.set(n, y); }
     return new Map([...m].filter(([, y]) => y.k >= 2).map(([n, y]) => [n, { v: y.s / y.w, cls: y.cls }])); };
@@ -19343,8 +19402,9 @@ function renderProgress(msg, msgErr) {
   const pnRow = (n) => { const kill = n.main.l.some((v) => v.kill), d = dayOf(n.at), others = n.by.filter((x) => x !== n.main).map((x) => x.boss), killO = n.kills.filter((b) => b !== n.main.boss);
     const sub = plural(n.main.l.length, 'pull') + (kill ? ', killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ', best ' + n.nb.label : '') +
       (others.length ? ' · also ' + (killO.length ? 'killed ' + (killO.length === 1 ? killO[0] : killO.length + ' more') : others.length === 1 ? others[0] : others.length + ' more bosses') : ''); // (short: one boss by name, more as a count)
-    return '<button class="pn-row" type="button"' + (n.op ? ' data-code="' + esc(n.op.code) + '" data-fight="' + esc(String(n.op.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '>' +
+    return '<button class="pn-row' + (kill ? ' pn-k' : '') + '" type="button"' + (n.op ? ' data-code="' + esc(n.op.code) + '" data-fight="' + esc(String(n.op.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '>' +
       '<span class="pn-d"><b>' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</b><span>' + esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span></span>' +
+      (BOSS_HERO[n.main.boss] ? '<img class="pn-th" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[n.main.boss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[n.main.boss][1] + '% 25%" onerror="this.remove()">' : '') +
       '<span class="pn-b"><b>' + esc(n.main.boss) + '</b><span class="sub">' + esc(sub) + '</span></span>' +
       '<span class="pn-r" style="color:' + (kill ? '#ff8000' : n.nb ? qc(n.nb) : 'var(--muted)') + '">' + (kill ? 'Kill' : n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%' : '—') + '</span><span class="pn-go" aria-hidden="true">›</span></button>'; };
   const PN_MAX = 6;
@@ -19363,9 +19423,10 @@ function renderProgress(msg, msgErr) {
     const col = bk.length ? '#ff8000' : nb ? qc(nb) : 'var(--muted)';
     nowHtml = '<section class="pg-now" id="pgNow" style="--ec:' + col + '">' + (BOSS_HERO[nowBoss] ? '<img class="pnw-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[nowBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[nowBoss][1] + '% 20%" onerror="this.remove()">' : '') +
       '<div class="pnw-t"><div><span class="pnw-k">' + (openB ? 'Now on' : 'Last kill') + ' · ' + esc(diffName) + '</span><h2>' + esc(nowBoss) + '</h2><span class="sub">' +
-        esc((bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label : 'No result yet') + ' · ' + plural(pr.length, 'pull') + (bk.length ? ' to the kill' : '') + ' over ' + plural(nts, 'night') + ' · ' + durH(time)) + '</span></div>' +
+        esc(bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label : 'No result yet') + '</span>' +
+        '<div class="pnw-tiles">' + [[bk.length ? 'Pulls to the kill' : 'Pulls', pr.length], ['Nights', nts], ['Time on the boss', durH(time)]].map(([l, v]) => '<span class="pnw-ti"><em>' + l + '</em><b>' + esc(String(v)) + '</b></span>').join('') + '</div></div>' +
         '<div class="pnw-big" style="color:' + col + '">' + (bk.length ? 'Killed' : nb && nb.left != null ? Math.floor(100 - nb.left) + '%' : '—') + (bk.length ? '' : '<span>of the encounter</span>') + '</div></div>' +
-      progChart(pr, nowBoss) +
+      progChart(pr, nowBoss, [1000, 210], true) +
       (lastOp ? '<div class="pnw-b"><button class="btn primary" id="pnwGo" type="button" data-code="' + esc(lastOp.code) + '" data-fight="' + esc(String(lastOp.fight)) + '">Open the last night</button><span class="sub">' + esc(nightLabel(lastN.at)) + ' · ' + plural(lastL.length, 'pull') + ' on ' + esc(nowBoss) + '</span></div>' : '') + '</section>';
   }
   // (the header's standing: kills on this difficulty, and the team's World and region rank once its rankings have been read;

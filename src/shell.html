@@ -1473,6 +1473,17 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .pg-now h2 { margin: 2px 0 4px; font: 700 32px/1.1 var(--head); color: #f6f7fa; text-shadow: 0 2px 14px rgba(0,0,0,.6); } .pg-now .sub { font-size: 14px; color: #c4c9d2; }
 .pnw-big { flex: none; text-align: right; font: 700 40px/1 var(--head); text-shadow: 0 2px 14px rgba(0,0,0,.6); } .pnw-big span { display: block; margin-top: 4px; font: 500 12px var(--body); color: var(--muted); }
 .pg-now .pc-chart { display: block; width: 100%; margin-top: 14px; }
+/* My Page layout (Oct 20): team and You side by side at the top; raid nights full width in two columns; on a phone team, Now on, then You */
+.pg-intab .my-lay2 #pgNights .pn-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+@media (max-width: 760px) { .pg-intab .my-lay2 #pgNights .pn-list { grid-template-columns: minmax(0, 1fr); }
+  .pg-intab .my-lay2 > .my-who { display: contents; } .pg-intab .my-lay2 > * { order: 3 !important; } .pg-intab .my-lay2 .my-team { order: 0 !important; } .pg-intab .my-lay2 > #pgNow { order: 1 !important; } .pg-intab .my-lay2 .my-you { order: 2 !important; } }
+/* My Page round 2 (Oct 20): Now on tiles, raid night pictures and kill stripes */
+.pnw-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.pnw-ti { display: flex; flex-direction: column; gap: 3px; min-width: 92px; padding: 8px 12px; border-radius: 10px; background: rgba(10,12,17,.6); border: 1px solid rgba(255,255,255,.08); }
+.pnw-ti em { font: 600 10.5px var(--body); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); } .pnw-ti b { font: 700 20px/1 var(--head); color: #f3f5f9; }
+.pn-th { flex: none; width: 64px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,.08); }
+.pn-row.pn-k { border-left: 3px solid #ff8000; background: linear-gradient(90deg, rgba(255,128,0,.12), transparent 45%), var(--bg); }
+@media (max-width: 560px) { .pn-th { width: 48px; height: 32px; } .pnw-ti { min-width: 0; flex: 1 1 28%; } }
 .pnw-b { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; } .pnw-b .btn { padding: 10px 18px; font-weight: 600; } .pnw-b .sub { font-size: 13px; }
 .pg-nights { margin: 0; padding: 16px 16px 12px; } .pg-nights .pg-sh { margin-bottom: 10px; } .pg-nights .pg-sh .sub { font-size: 13px; }
 .pn-list { display: flex; flex-direction: column; gap: 6px; }
@@ -4181,6 +4192,35 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .my-chip.my-bc.my-open { outline: 2px solid var(--gold); outline-offset: -2px; } .my-chip.my-bc:hover:not([disabled]) { border-color: var(--gold); background: #0d0f14; }
 .pg-intab .my-row2 { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } .pg-intab .my-row2.my-one1 { grid-template-columns: minmax(0, 1fr); }
 .pg-intab .my-youa { position: relative; overflow: hidden; border-radius: 16px; border-color: color-mix(in srgb, var(--cc, #e6b450) 35%, var(--line)); background: linear-gradient(180deg, rgba(14,12,16,.7), rgba(14,12,16,.94)), var(--sart, none) center 30% / cover, var(--panel); min-height: 200px; }
+/* My Page's top cards, Oct 20: Your team (tm2) and You (yu2) */
+.pg-intab .my-team.tm2 { position: relative; padding: 20px 24px 18px; background: radial-gradient(620px 280px at 0% 0%, rgba(44,95,168,.34), transparent 62%), radial-gradient(520px 260px at 100% 0%, rgba(230,180,80,.10), transparent 60%), var(--panel); }
+.pg-intab .tm2 > .pg-ttl { align-items: flex-start; }
+.pg-intab .tm2 .pg-ttl > .ht-ban { flex: none; transform: scale(1.5); transform-origin: top left; margin: 6px 52px 30px 2px; filter: drop-shadow(0 8px 20px rgba(44,95,168,.5)); }
+.pg-intab .tm2 .pg-tt h1 { display: flex; align-items: center; gap: 12px; font-size: 42px; line-height: 1; letter-spacing: .3px; }
+.pg-intab .tm2 .pg-editb { position: absolute; top: 16px; right: 18px; }
+.pg-intab .tm2 .pg-chips { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin-top: 16px; }
+.pg-intab .tm2 .pg-chs { display: contents; }
+.pg-intab .tm2 .pg-chips .pgc { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; min-width: 96px; padding: 9px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(10,12,17,.45); color: var(--muted); font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; }
+.pg-intab .tm2 .pg-chips .pgc b { font: 700 22px/1 var(--head); letter-spacing: 0; text-transform: none; color: #f3f5f9; }
+.pg-intab .tm2 .pg-chips .pgc.gold { min-width: 150px; border-color: rgba(230,180,80,.55); background: linear-gradient(180deg, rgba(230,180,80,.16), rgba(230,180,80,.04)); color: #f0cf86; }
+.pg-intab .tm2 .pg-chips .pgc.gold b { font-size: 28px; color: #f6dc9a; }
+.tm-bar { display: flex; gap: 3px; width: 100%; margin-top: 5px; } .tm-bar i { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); } .tm-bar i.on { background: linear-gradient(90deg, #f0cf86, #e6b450); box-shadow: 0 0 6px rgba(230,180,80,.5); }
+.pg-intab .tm2 .pg-chips .pgc-t { flex-direction: row; align-items: center; min-width: 0; border-style: dashed; background: none; color: var(--gold); font: 600 13px var(--body); letter-spacing: 0; text-transform: none; cursor: pointer; }
+.pg-intab .tm2 .pg-sum { margin-top: 14px; font-size: 14px; color: #c3c8d2; } .pg-intab .tm2 .pg-info { font-size: 12.5px; color: var(--faint); }
+.pg-intab .my-youa.yu2 .pg-you { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 26px; row-gap: 12px; }
+.pg-intab .yu2 .pg-you .ht-ban { grid-row: 1 / span 2; transform: scale(1.7); transform-origin: center; margin: 18px 20px 18px 14px; filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--cc, #e6b450) 45%, transparent)); }
+.pg-intab .yu2 .pg-you > span:not(.ht-ban):not(.pg-ych) { font-size: 16px; color: #c3c8d2; } .pg-intab .yu2 .pg-you > span:not(.ht-ban):not(.pg-ych) b { font-size: 36px; line-height: 1; }
+.yu-tiles { display: flex; flex-wrap: wrap; gap: 10px; }
+.yu-t { display: flex; flex-direction: column; gap: 2px; min-width: 96px; padding: 8px 14px; border-radius: 12px; background: rgba(10,12,17,.62); border: 1px solid color-mix(in srgb, var(--pc) 50%, transparent); box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--pc) 60%, transparent); }
+.pg-intab .yu2 .yu-t b { font: 700 30px/1 var(--head); color: var(--pc); }
+.yu-t em { font: 600 11px var(--body); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.yu-act { position: relative; margin-top: 18px; } .yu-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.yu-alts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 14px; } .yu-alts > .sub { margin-right: 4px; font-size: 13px; } .yu-alts .me-c img { width: 20px; height: 20px; border-radius: 50%; }
+.yu-panel { margin-top: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(230,180,80,.35); background: rgba(10,12,17,.78); }
+.yu-panel > .sub { margin: 0 0 4px; font-size: 13.5px; } .yu-panel .me-l { max-height: 200px; overflow-y: auto; padding: 2px; } .yu-panel .me-c img { width: 20px; height: 20px; border-radius: 50%; }
+.yu-panel .me-c.yu-on { opacity: .55; cursor: default; } .yu-panel #yuSign { margin-bottom: 6px; }
+@media (max-width: 760px) { .pg-intab .tm2 .pg-tt h1 { font-size: 32px; } .pg-intab .tm2 > .pg-ttl { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; } .pg-intab .tm2 .pg-tt { display: contents; } .pg-intab .tm2 .pg-tt > :not(h1) { grid-column: 1 / -1; } .pg-intab .tm2 .pg-ttl > .ht-ban { transform: scale(1.2); margin: 6px 22px 10px 4px; } .pg-intab .tm2 .pg-chips .pgc { min-width: 0; flex: 1 1 40%; }
+  .pg-intab .yu2 .pg-you > span:not(.ht-ban):not(.pg-ych) b { font-size: 28px; } .pg-intab .yu2 .pg-you .ht-ban { margin: 10px 14px 10px 8px; transform: scale(1.4); } }
 .pg-intab .my-youa .pg-you { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; font-size: 18px; } .pg-intab .my-youa .pg-you .ht-ban { transform: scale(1.25); transform-origin: left center; margin-bottom: 4px; }
 .pg-intab .my-youa .pg-you b { font: 700 28px var(--head); } .pg-intab .my-youa .pg-ych .pgc { font-size: 15px; padding: 8px 14px; background: rgba(10,12,17,.6); } .pg-intab .my-youa .pg-ych .pgc b { font-size: 22px; }
 @media (max-width: 1000px) { .my-bcs.my-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
