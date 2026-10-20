@@ -8,3 +8,12 @@ workers_dev = true
 preview_urls = false
 # (keep what's set on the Cloudflare settings page: an upload must never remove the Warcraft Logs client ID)
 keep_vars = true
+
+# Patch notes to Discord: every 10 minutes the Worker checks for a new Patch notes day and posts it to #patch-notes
+# (needs the DISCORD_PATCH_WEBHOOK secret, set in Cloudflare). DEBRIEF_KV remembers the last day announced.
+[triggers]
+crons = ["*/10 * * * *"]
+
+[[kv_namespaces]]
+binding = "DEBRIEF_KV"
+id = "5f5a92a1ea294fb888dea9dc5d7a2aa8"

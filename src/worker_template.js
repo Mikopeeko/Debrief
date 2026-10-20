@@ -192,7 +192,29 @@ const appHtml = (env) => (env.GITHUB_TOKEN ? HTML_REPORT || (HTML_REPORT = APP_H
 // which broke the site in a browser with one; /api/events stays for pages and desktop apps still asking there)
 ROUTES['/api/fightlog'] = ROUTES['/api/events'];
 
+// Patch notes to Discord: every 10 minutes (the cron in wrangler.toml), when the site's newest Patch notes day hasn't
+// been announced yet, post one line with @everyone and a link that opens the page. Needs the DISCORD_PATCH_WEBHOOK
+// secret (the #patch-notes channel's webhook link) and the DEBRIEF_KV store, which remembers the last day announced.
+// One post a day at most: lines added later the same day go on the page quietly.
+const SITE = 'https://debrief.james-m-nemecek.workers.dev';
+function newestNotes() {
+  const i = APP_HTML.indexOf('const PATCH_NOTES = ['); if (i < 0) return null;
+  const m = /\{ d: '(\d{4}-\d\d-\d\d)'(?:, t: '((?:[^'\\]|\\.)*)')?/.exec(APP_HTML.slice(i, i + 4000));
+  return m ? { d: m[1], t: m[2] ? m[2].replace(/\\'/g, "'") : '' } : null;
+}
+async function announcePatch(env) {
+  if (!env.DISCORD_PATCH_WEBHOOK || !env.DEBRIEF_KV) return;
+  const p = newestNotes(); if (!p) return;
+  const last = await env.DEBRIEF_KV.get('patch-announced'); if (last && last >= p.d) return;
+  const day = new Date(p.d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const content = '@everyone New patch notes on Debrief for ' + day + (p.t ? ': **' + p.t + '**' : '') + '. See what\'s new and what we fixed: ' + SITE + '/?patchnotes';
+  const r = await fetch(env.DISCORD_PATCH_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content, username: 'Debrief', allowed_mentions: { parse: ['everyone'] } }) });
+  if (r.ok) await env.DEBRIEF_KV.put('patch-announced', p.d);
+}
+
 export default {
+  async scheduled(ev, env, ctx) { ctx.waitUntil(announcePatch(env)); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });

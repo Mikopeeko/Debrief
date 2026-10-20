@@ -19087,4 +19087,6 @@ if (WCL.HOSTED) {
   else home();
 } else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
+// (?patchnotes, the link in the Discord's patch-notes post, opens the Patch notes page over the front page)
+if (RQ.has('patchnotes')) { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } setTimeout(openPatchNotes, 900); }
 })();
