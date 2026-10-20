@@ -287,9 +287,45 @@ async function runDigest(env, now, all) {
   if (!newBugs.length && !newIdeas.length && !quiet.length && !fixed.length) msg = '**Good morning!** A quiet day: no new bugs, ideas or unanswered questions. Bugs still open: **' + (st.open || []).length + '**';
   await say(env, mod.id, msg.slice(0, 1990));
 }
+// The twice-a-day bug check (a Claude task on the user's PC) talks to the bot through KV only, so it needs no keys:
+// - gh-inbox: the open issues (number, title, body, labels, Discord thread), refreshed every run when they change;
+// - dc-ops: jobs it leaves, done on the next run then cleared: { op: 'ping', issue, text } tags the owner in that
+//   bug's thread (#moderator-only for a site report), { op: 'ask', issue, text } replies there without a tag,
+//   { op: 'close', issue, reason: 'completed' | 'not_planned', note } closes the issue (the post hears back next run).
+const OWNER = '195320918929571840'; // (the user's Discord id, the one tagged)
+async function runInbox(env) {
+  const st = (await env.DEBRIEF_KV.get('dc-bugs', 'json')) || { t: {} }, thread = {};
+  for (const [tid, n] of Object.entries(st.t || {})) if (n) thread[n] = tid;
+  const ops = await env.DEBRIEF_KV.get('dc-ops', 'json');
+  if (Array.isArray(ops) && ops.length) {
+    await env.DEBRIEF_KV.delete('dc-ops'); let mod = null;
+    for (const o of ops.slice(0, 20)) {
+      try {
+        const n = parseInt(o.issue, 10), text = String(o.text || o.note || '').slice(0, 1800);
+        if (o.op === 'close' && n > 0) {
+          if (text) await gh(env, '/issues/' + n + '/comments', { method: 'POST', body: { body: text } });
+          await gh(env, '/issues/' + n, { method: 'PATCH', body: { state: 'closed', state_reason: o.reason === 'not_planned' ? 'not_planned' : 'completed' } });
+        } else if ((o.op === 'ping' || o.op === 'ask') && text) {
+          let ch = thread[n];
+          if (!ch) { if (!mod) mod = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'moderator-only') || {}).id; ch = mod; }
+          if (!ch) continue;
+          if (thread[n]) await dc(env, '/channels/' + ch, { method: 'PATCH', body: { archived: false } }).catch(() => {});
+          const ping = o.op === 'ping';
+          await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body: { content: (ping ? '<@' + OWNER + '> ' : '') + (!thread[n] && n ? '(Report #' + n + ') ' : '') + text,
+            allowed_mentions: { parse: [], users: ping ? [OWNER] : [] } } });
+        }
+      } catch (err) { console.warn('Job:', o && o.op, err && err.message); }
+    }
+  }
+  const open = await gh(env, '/issues?state=open&per_page=50').catch(() => null); if (!open) return;
+  const list = open.filter((i) => !i.pull_request).map((i) => ({ n: i.number, title: i.title, body: String(i.body || '').slice(0, 3000),
+    labels: (i.labels || []).map((l) => l.name), at: i.created_at, comments: i.comments, thread: thread[i.number] || null }));
+  const s = JSON.stringify(list); if (s !== (await env.DEBRIEF_KV.get('gh-inbox'))) await env.DEBRIEF_KV.put('gh-inbox', s);
+}
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
+  await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
   await runDigest(env, now, all);
 }
 // "Suggest an idea" (the site's form): a new post in #suggestions, under the area picked. Same limits as Report a problem.
