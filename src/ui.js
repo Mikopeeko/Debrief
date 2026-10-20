@@ -1080,7 +1080,7 @@ function bgFetch(item) {
 const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['hw', 'Homework'], ['gdz', 'Guides'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
-const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'hw', 'cmp']; /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
+const TAB_ORDER = ['audit', 'overview', 'rot', 'perf', 'player', 'hw', 'cmp']; /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -1483,6 +1483,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-20', h: [
+    { t: 'Assignments, rebuilt', d: 'Its own tab again, just for notes: draft a note from your pulls, let Debrief suggest the rest by class (The Coiled Altar first), swap players in one go and copy it for the game. Results stay on Debriefing.' },
     { t: 'Boss guides', d: 'Animated maps that show how each fight works on Heroic and Mythic, with the key moments frozen and explained, a mistake view and a full-fight simulation. In the menu (☰), open to anyone. The Coiled Altar is first.' },
     { t: 'Your NSRT note, inside Debriefing', d: 'Each job now sits on the mechanic it\'s about. Add a note on any pull: every group of players keeps its own, with suggested picks, warnings for a wrong role, and who takes the jobs of anyone missing.' },
     { t: 'Debriefing levels up', d: 'Dots show how each mechanic went on your last pulls, numbers in colour, a Next pull line on every mechanic, phase timing against your best pull, and Copy for Discord.' },
@@ -1490,6 +1491,10 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Draft a note from your pulls: Debrief writes down who did each job over the night (The Coiled Altar and The Twin Fangs), with how sure it is.',
+    'Swap players spots a raider on another character (like a Warrior main on their Paladin) and leaves out class buttons the new character can\'t press.',
+    'Assignments shows who does what for every player, and your saved notes as small boss cards.',
+    'A short tutorial on the Assignments tab, any time from Show me how.',
     'Every map shows bosses the Boss guides way: a gold ring with their portrait.',
     'Boss guides: pick Learn the fight or Quick, and your role. Your steps are marked, with the fight on a timeline, your job and what wipes us at the top, and small maps in Quick that open big.',
     'My Page is now called Home.',
@@ -1685,7 +1690,7 @@ function renderMain() {
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
       const tab = (k) => { const l = name.get(k), soon = (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
-        return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview') ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+        return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview' && !TAB_ORDER.includes('overview')) ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
@@ -1749,7 +1754,7 @@ function overview() {
   // happened" and the progression chart were taken off this tab)
   const r = S.rep;
   if (r.item.kind !== 'boss') { view('<div class="panel"><p class="muted" style="margin:0">Assignments are for raid bosses. They compare a Northern Sky Raid Tools note with what happened in the pull.</p></div>'); return; }
-  view('<div id="assignBox" class="assignbox"></div>');
+  view((NDZ_ON() ? ndzTools(r) : '') + '<div id="assignBox" class="assignbox"></div>');
   assign();
 }function tile(l, v, s) { return '<div class="tile"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s">' + esc(s) + '</div></div>'; }
 
@@ -2179,7 +2184,7 @@ const copyBtn = (b, text) => copyText(text).then((ok) => { const was = b.dataset
 // so the whole raid gets the change
 function noteMadeBox(m) {
   const sw = (m.swaps || []).map(([a, b]) => esc(b) + ' takes the place of ' + esc(a)).join(', ');
-  return '<div class="panel as-made"><div><b>Saved your new note, ' + esc(m.name) + '.</b> ' + (sw ? capS(sw) + '. ' : '') + 'Copy it and paste it into NSRT in game, so the whole raid gets the change.</div>' +
+  return '<div class="panel as-made"><div><b>Saved your new note, ' + esc(m.name) + '.</b> ' + (sw ? capS(sw) + '. ' : '') + (m.dropped && m.dropped.length ? 'Left out: ' + esc(andL(m.dropped)) + '. ' : '') + (m.copied ? 'It\'s copied: paste it into NSRT in game (Shared Notes, then Import), so the whole raid gets the change.' : 'Copy it and paste it into NSRT in game, so the whole raid gets the change.') + '</div>' +
     '<div class="rsw-b"><button class="btn primary sm" type="button" id="nmCopy">Copy the note</button><button class="btn sm" type="button" id="nmOk">Got it</button></div></div>';
 }
 // A note with one player's name swapped for another's, everywhere it's used (a reminder tag, a text line), as whole words
@@ -2194,6 +2199,8 @@ function bindSwap(r, used, mode, only) { const boss = r.item.boss, b = $('#rswMa
     if ([...sels].some((x) => !x.value)) { if (msg) msg.textContent = 'Pick who takes each missing player\'s jobs first.'; return; }
     const nk = new Set($$('#assignBox .rsw-nkc').filter((c) => c.checked).map((c) => c.dataset.a));
     sels.forEach((x) => { if (nk.has(x.dataset.a)) { nickSet(x.dataset.a, x.value); return; } t = noteSwapName(t, x.dataset.a, x.value); sw.push([x.dataset.a, x.value]); });
+    $$('#assignBox .rsw-altc').forEach((c) => { const s0 = [...sels].find((x) => x.dataset.a === c.dataset.a); if (c.checked && s0 && s0.value) altSet(c.dataset.a, s0.value); });
+    t = ndzClassCut(t, sw, r, used.text);
     const same = notesOf(boss).list.find((n) => !n.example && n.id !== used.id && nmSetOf(n.text) === nmSetOf(t) && noteNorm(n.text) !== noteNorm(t));
     if (same && !b.dataset.ok) { b.dataset.ok = '1'; b.textContent = 'Replace it'; if (msg) msg.textContent = 'You already have a note for exactly these players (' + same.name + '). Saving replaces it.'; return; }
     const made = noteSaveText(boss, t, mode === 'paste' ? used.name : null, r); S.notePend = null; S.noteMade = { boss, id: made.id, name: made.name, swaps: sw }; renderMain(); };
@@ -2245,7 +2252,7 @@ function rosterOffer0(r, used, forced) {
   let rem = []; try { rem = (E.parseNote(used.text) || {}).reminders || []; } catch (e) { rem = []; }
   const idName = new Map(); for (const [n, id] of E.SPELLID) if (!idName.has(id)) idName.set(id, n.replace(/\b\w/g, (ch) => ch.toUpperCase()));
   const phW = (ph) => (Number.isInteger(+ph) ? 'P' + +ph : 'the intermission'), isA = (t, a) => lc(String(t).split('-')[0]) === lc(a);
-  const cdJobs = (a) => rem.filter((x) => x.tags.some((t) => isA(t, a))).map((x) => ({ id: x.spellid, txt: (x.spellid ? x.text || idName.get(x.spellid) || 'a cooldown' : x.text || 'a reminder') + ' (' + phW(x.ph) + ', ' + T(x.time) + ')' }));
+  const cdJobs = (a) => rem.filter((x) => x.tags.some((t) => isA(t, a))).map((x) => ({ id: x.spellid, txt: (x.spellid ? x.text || idName.get(x.spellid) || ndzSpellNm(x.spellid) || 'a cooldown' : x.text || 'a reminder') + ' (' + phW(x.ph) + ', ' + T(x.time) + ')' }));
   const lineJobs = (a) => { const out = [];
     for (const raw of String(used.text).split(/\r?\n/)) { const ln = raw.trim(); if (!ln || /^EncounterID:/i.test(ln) || /(^|;)\s*time:/i.test(ln)) continue;
       const ci = ln.indexOf(':'); if (ci < 0) continue;
@@ -2270,6 +2277,11 @@ function rosterOffer0(r, used, forced) {
   for (const a of away) { if (pick.has(a)) continue; const ro = roleOfN(a); if (ro) { take(a, left.find((p) => p.role === ro)); if (pick.has(a)) why.set(a, 'also ' + (RW[ro] || ro)); } }
   if (forced) left.sort((x, y) => jobsN(x) - jobsN(y));
   for (const a of away) if (!pick.has(a) && left.length) { take(a, left[0]); why.set(a, jobsN(pick.get(a)) ? 'has the fewest jobs in the note' : 'free this pull'); }
+  // (same player, another character (your idea, Oct 20): a link you confirmed picks that character; one missing player and one new one,
+  // or a new player with the missing one's role, is offered as a likely swap, with a box to confirm it)
+  const altQ = new Map(); for (const a of away) { const al = altOf(a, inPull.map(pn)), p = al ? inPull.find((q) => lc(pn(q)) === lc(al)) : null;
+    if (p) { const was = [...pick].find(([x, q]) => q === p && x !== a); if (was) pick.delete(was[0]); pick.set(a, p); why.set(a, 'the same player on another character'); altQ.set(a, 'known'); continue; }
+    const q = pick.get(a), ra = roleOfN(a); if (q && ((away.length === 1 && fresh.length === 1) || (ra && q.role === ra))) altQ.set(a, 'maybe'); }
   const roleA = new Map(away.map((a) => [a, roleOfN(a)]));
   const jobsOf = (a) => { const l = jobs.get(a).cds.map((c) => c.txt).concat(jobs.get(a).lines); return l.length ? esc(l.slice(0, 5).join(' · ')) + (l.length > 5 ? ' and ' + (l.length - 5) + ' more' : '') : 'named in the note'; };
   const pc = (p) => '<span class="nm" style="color:' + (p.color || 'inherit') + '">' + esc(pn(p)) + '</span>';
@@ -2282,7 +2294,8 @@ function rosterOffer0(r, used, forced) {
     : plural(away.length, 'player') + ' in your note ' + (away.length === 1 ? "isn't" : "aren't") + ' in this pull. Pick who takes their assignments:<div class="rsw-rows">' +
       away.map((a) => '<div class="rsw-one" data-ar="' + esc(roleA.get(a) || '') + '"><label class="rsw-r"><b>' + esc(a) + '</b>' + (roleA.get(a) ? '<span class="sub">(' + (roleA.get(a) === 'dps' ? 'DPS' : roleA.get(a)) + ')</span>' : '') + '<span class="sub">is replaced by</span>' + sel(a) + '</label>' +
         (forced ? '<label class="rsw-nk sub"><input type="checkbox" class="rsw-nkc" data-a="' + esc(a) + '"> it\'s a nickname for this player</label>' : '') +
-        '<div class="rsw-jobs sub">' + esc(a) + "'s jobs: " + jobsOf(a) + (why.get(a) && pick.get(a) ? ' · <span class="rsw-why">Suggested ' + esc(pn(pick.get(a))) + ': ' + esc(why.get(a)) + '</span>' : '') + '</div><div class="rsw-w" hidden></div></div>').join('') + '</div>';
+        (altQ.get(a) && pick.get(a) ? ndzAltBox(a, pick.get(a), altQ.get(a)) : '') +
+        '<div class="rsw-jobs sub">' + esc(a) + "'s jobs: " + jobsOf(a) + (why.get(a) && pick.get(a) ? ' · <span class="rsw-why">Suggested ' + esc(pn(pick.get(a))) + ': ' + esc(why.get(a)) + '</span>' : '') + '</div>' + ndzCantH(used.text, a, pick.get(a)) + '<div class="rsw-w" hidden></div></div>').join('') + '</div>';
   return '<div class="panel as-swap"><div class="rsw-t"><b>This pull\'s players don\'t fully match your note.</b> ' + body + '</div>' +
     '<div class="rsw-b"><button class="btn primary sm" type="button" id="rswMake">Make the new note</button><button class="btn sm" type="button" id="rswNo" data-k="' + esc(key) + '">Not now</button>' +
     '<span class="sub">Your note stays as it is. The new one is saved next to it, and pulls with these players use it.</span></div></div>';
@@ -2306,12 +2319,12 @@ const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.oncl
 // saved night it fits (at least half its names there), newest first, a click opening that night
 // (the small calendar on a log's chip, drawn here)
 const SN_CAL = '<svg class="sn-cal" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-function storedNotes() { return storedNotes0(); } /* (back, Oct 20: one note per group, so the list shows them all; no editing, no manual pick) */
+function storedNotes() { return NDZ_ON() && S.rep ? ndzBossCards(S.rep) + storedNotes0(S.ndzPick || S.rep.item.boss) : storedNotes0(); } /* (back, Oct 20: one note per group, so the list shows them all; no editing, no manual pick) */
 // (the night a note was last used on, for the list)
 function noteUsedAt(boss, id, t) { if (!t) return; const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n || (n.lastUsed && n.lastUsed >= t)) return; n.lastUsed = t; try { store.set(notesKey(boss), JSON.stringify(o)); } catch (e) { /* storage off */ } }
-function storedNotes0() {
+function storedNotes0(pick) {
   const r = S.rep, cur = r.item.boss, used = noteForRep(r);
-  const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur);
+  const order = [cur].concat(E.PACKS.map((p) => p.encounter).filter((b) => b !== cur)), bosses = order.map((b) => [b, notesOf(b)]).filter(([b, o]) => o.list.length || b === cur || b === pick);
   const when = (t) => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const day = (t) => nightLabel(t) + ', ' + new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const rng = (ps) => { const v = [...new Set(ps)].sort((x, y) => x - y), out = []; for (let i = 0; i < v.length;) { let j = i; while (j + 1 < v.length && v[j + 1] === v[j] + 1) j++; out.push(i === j ? String(v[i]) : v[i] + '–' + v[j]); i = j + 1; } return out.join(', '); };
@@ -2347,7 +2360,7 @@ function storedNotes0() {
   const artOf = (b) => (BOSS_HERO[b] ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[b][1] + '% 28%" onerror="this.remove()">'
     : BOSS_ART[b] ? '<img class="mdl" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
   // (other bosses fold to one line, "Ula'tek · 2 notes"; the open boss is shown open)
-  const fold = ([b, o]) => (b === cur ? panel([b, o]) : '<details class="sn-fold"><summary><b>' + esc(b) + '</b><span class="sub">' + plural(o.list.length, 'note') + '</span></summary>' + panel([b, o]) + '</details>');
+  const fold = ([b, o]) => (b === cur || b === pick ? panel([b, o]) : '<details class="sn-fold"><summary><b>' + esc(b) + '</b><span class="sub">' + plural(o.list.length, 'note') + '</span></summary>' + panel([b, o]) + '</details>');
   const panel = ([b, o]) => '<div class="panel nlib sn-b' + (b === cur ? ' cur' : '') + '"><div class="sn-hd"><div class="sn-art" aria-hidden="true">' + artOf(b) + '</div>' +
     '<div class="sn-who"><span class="sn-por" aria-hidden="true">' + (BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy"' + (ART_ZOOM[b] ? ' style="--az:' + (1.25 * ART_ZOOM[b]).toFixed(2) + '"' : '') + ' onerror="this.remove()">' : '') + '</span>' +
     '<div class="sn-tt"><h3>' + esc(b) + (b === cur ? '<span class="sn-now">Open now</span>' : '') + '</h3><div class="sn-st">' + (o.list.length ? plural(o.list.length, 'note') : 'No note yet') + '</div></div></div>' +
@@ -2355,7 +2368,7 @@ function storedNotes0() {
     '<div class="sn-body">' + (o.list.length ? '<div class="sn-grid">' + o.list.slice().sort((x, y) => (y.saved || 0) - (x.saved || 0)).map((n) => row(n, b)).join('') + '</div>' + (b === cur ? sel : '')
       : '<div class="sn-empty"><span class="sn-eico">' + SN_I.notes + '</span><div><b>No note for ' + esc(b) + ' yet</b><div class="sub">Add your raid\'s NSRT note, and it shows here with the logs it goes with.</div></div></div>') + '</div></div>';
   const nN = bosses.reduce((t, [, o]) => t + o.list.length, 0);
-  return '<section class="sn-all" id="snBox"><div class="sn-top"><span class="sn-tico" aria-hidden="true">' + SN_I.notes + '</span><div><h2>Your saved notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ', saved in this browser. ' : '') + 'Each note shows the nights it goes with.</div></div><button class="btn primary" type="button" data-nnew="1" style="margin-left:auto;flex:none">Add a note</button></div>' + bosses.map(fold).join('') + '</section>';
+  return '<section class="sn-all" id="snBox"><div class="sn-top"><span class="sn-tico" aria-hidden="true">' + SN_I.notes + '</span><div><h2>Your saved notes</h2><div class="sub">' + (nN ? plural(nN, 'note') + ', saved in this browser. ' : '') + 'Each note shows the nights it goes with.</div></div><button class="btn primary" type="button" data-nnew="1" style="margin-left:auto;flex:none">Add a note</button></div>' + (pick ? bosses.filter(([b]) => b === pick) : bosses).map(fold).join('') + '</section>';
 }
 // (the saved notes' buttons, bound after the rest of the page so theirs win: Add, Edit, Use for this pull, Copy, remove, open a night)
 function storedNotesBind(only) {
@@ -2379,9 +2392,501 @@ function storedNotesBind(only) {
   $$('#snBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example), newest = l.slice().sort((p, q) => (q.saved || 0) - (p.saved || 0))[0];
     x.disabled = true; S.asView = 'pull'; if (!(await noteGoBoss(to, newest && newest.text))) { S.asView = 'notes'; x.disabled = false; x.textContent = 'Open a pull of ' + to + ' first'; } }));
 }
+// ---- Same player, another character (Oct 20, your idea): a raider who plays an alt tonight ----
+// A note can name someone's main while they played another character. The swap screen offers the likely match (a link you
+// confirmed before, else one missing player and one new one, or a new player with the missing one's role), and ticking
+// "same player" remembers it, so later nights fill the swap in by themselves. A class button the new character can't
+// press (Rallying Cry on a Paladin) is left out of the new note and said so, instead of showing as missed every pull.
+const ALT_KEY = 'wla-alts'; // (groups of character names that are one player, lower case)
+const altsGet = () => { try { const v = JSON.parse(store.get(ALT_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+const altOf = (a, names) => { const la = String(a).toLowerCase(), g = altsGet().find((x) => x.includes(la)); return g ? names.find((n) => n.toLowerCase() !== la && g.includes(n.toLowerCase())) || null : null; };
+const altSet = (a, b) => { const gs = altsGet(), la = String(a).toLowerCase(), lb = String(b).toLowerCase(); let g = gs.find((x) => x.includes(la) || x.includes(lb)); if (!g) gs.push(g = []);
+  for (const n of [la, lb]) if (!g.includes(n)) g.push(n); try { store.set(ALT_KEY, JSON.stringify(gs)); } catch (e) { /* storage off */ } };
+// (a spell's class: whoever pressed it in any opened pull)
+const ndzSpellCls = (id) => { for (const rep of CACHE.values()) for (const p of rep.players.values()) if (p.cls && p.castTimes && (p.castTimes.get(id) || []).length) return p.cls; return null; };
+const ndzClsName = (c) => (c && E.CLASSES[c] ? E.CLASSES[c][0] : '');
+// The reminders a note gives player a (by name) that character p's class can't press: [{ id, name, cls }]
+function ndzCant(text, a, p) {
+  if (!p || !p.cls) return []; let rem = []; try { rem = (E.parseNote(text) || {}).reminders || []; } catch (e) { rem = []; }
+  const la = String(a).toLowerCase(), out = [];
+  for (const x of rem) { if (!x.spellid || !x.tags.some((t) => t.split('-')[0].toLowerCase() === la) || out.some((o) => o.id === x.spellid)) continue;
+    const c = ndzSpellCls(x.spellid); if (c && c !== p.cls) out.push({ id: x.spellid, name: x.text || ndzSpellNm(x.spellid) || 'a cooldown', cls: ndzClsName(c) }); }
+  return out;
+}
+const ndzSpellNm = (id) => { for (const rep of CACHE.values()) for (const p of rep.players.values()) for (const c of (p.castAb ? p.castAb.values() : [])) if (c && c.id === id && c.name) return c.name;
+  for (const [n, v] of E.SPELLID) if (v === id) return n.replace(/\b\w/g, (ch) => ch.toUpperCase()); return ''; };
+// (the swap screen's line under a row: what the new character can't press)
+function ndzCantH(text, a, p) { const l = ndzCant(text, a, p); if (!l.length) return ''; const nm = esc(p.name.split('-')[0]), one = l.length === 1;
+  return '<div class="ndz-cantbox"><span class="ndz-ic" aria-hidden="true">!</span><span><b>' + esc(andL([...new Set(l.map((x) => x.name))])) + (one ? ' is a ' + esc(l[0].cls) + ' button.' : ' are other classes\' buttons.') + '</b> ' + nm + ' is a ' + esc(ndzClsName(p.cls)) + ' and can\'t press ' + (one ? 'it' : 'them') + ', so ' + (one ? 'it\'s' : 'they\'re') + ' left out of the new note.</span></div>'; }
+// (the swap screen's box for a likely character swap: plain question, one big tick)
+function ndzAltBox(a, p, kind) { const nm = esc(p.name.split('-')[0]), A = esc(a), spec = p.specName ? ' (' + esc(p.specName) + ')' : '';
+  if (kind === 'known') return '<div class="ndz-altbox known"><span class="ndz-ic" aria-hidden="true">✓</span><div><b>' + nm + ' is ' + A + ' on another character.</b> You told Debrief before, so ' + nm + ' takes ' + A + '\'s jobs.' +
+    '<label class="ndz-altyes"><input type="checkbox" class="rsw-altc" data-a="' + A + '" checked> Same player (untick if that\'s wrong)</label></div></div>';
+  return '<div class="ndz-altbox"><span class="ndz-ic" aria-hidden="true">?</span><div><b>Is ' + nm + ' the same raider as ' + A + '?</b> ' + A + ' isn\'t here tonight and ' + nm + spec + ' is new, so it may be the same person on another character.' +
+    '<label class="ndz-altyes"><input type="checkbox" class="rsw-altc" data-a="' + A + '"> Yes, same player. Remember it for next time</label></div></div>'; }
+// Saving: the swapped names' class buttons the new character can't press come out of the note (only reminders for that
+// player alone); what came out is listed in the "Saved" box
+let NDZ_DROPPED = [];
+function ndzClassCut(t, sw, r, orig) {
+  NDZ_DROPPED = [];
+  for (const [a, b] of sw) {
+    const p = [...r.players.values()].find((q) => q.name && q.name.split('-')[0] === b), cut = ndzCant(orig, a, p); if (!cut.length) continue;
+    const ids = new Set(cut.map((c) => c.id)), lb = String(b).toLowerCase();
+    t = t.split(/\r?\n/).filter((ln) => { if (!/(^|;)\s*time:/i.test(ln)) return true; const id = +((ln.match(/(?:^|;)\s*spellid:(\d+)/i) || [])[1] || 0), tag = ((ln.match(/(?:^|;)\s*tag:([^;]*)/i) || [])[1] || '').trim().split(/\s+/);
+      return !(ids.has(id) && tag.length && tag.every((w) => w.split('-')[0].toLowerCase() === lb)); }).join('\n');
+    for (const c of cut) NDZ_DROPPED.push(c.name + ' (a ' + c.cls + ' button) for ' + b);
+  }
+  return t;
+}
+// ---- Quick swaps (Oct 20, your ask): swap players in the note this pull uses, then save it for this group and copy it for the game ----
+// The button sits on the Debriefing note bar. Rows start with each note player who isn't in this pull and a suggestion (a confirmed
+// alt, else a new player of the same role, else the next new one); more rows can be added for anyone. Every line a player is on
+// changes. Class buttons the new character can't press are left out, like on the other swap screen. The original note stays.
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzsw]'); if (!b || !S.rep || !NDZ_ON()) return;
+  const u0 = noteForRep(S.rep); S.noteSwap = { boss: S.rep.item.boss, id: u0 ? u0.id : null, rows: null }; S.noteDraft = null; S.noteEdit = false; S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); });
+// (a note player's jobs, in short: their lines' labels and their reminders' spells or texts)
+function ndzJobsOf(text, a) { let n = {}; try { n = E.parseNote(text) || {}; } catch (e) { n = {}; } const la = String(a).toLowerCase(), out = [];
+  const add = (s) => { if (s && !out.includes(s)) out.push(s); };
+  for (const ln of n.lines || []) if (!/^invitelist$/i.test(ln.label) && ln.words.some((w) => w.split('-')[0].toLowerCase() === la)) add(ln.label || 'a line');
+  for (const x of n.reminders || []) if (x.tags.some((t) => t.split('-')[0].toLowerCase() === la)) add(x.text || ndzSpellNm(x.spellid) || 'a cooldown');
+  return out; }
+function ndzSwapView(r) {
+  const box = $('#assignBox'); if (!box) return; const W = S.noteSwap, boss = r.item.boss;
+  const o = notesOf(boss), used = (W.id && o.list.find((n) => n.id === W.id)) || noteForRep(r);
+  if (!used) { S.noteSwap = null; assign(); return; }
+  const text = used.text, pn = (p) => p.name.split('-')[0], lc = (s) => String(s).toLowerCase(), nk = nicksGet();
+  const inP = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).sort((a, b) => pn(a).localeCompare(pn(b)));
+  const here = (n) => inP.some((p) => lc(pn(p)) === lc(n) || lc(pn(p)) === lc(nk[lc(n)] || ''));
+  const names = noteNames(text), gone = names.filter((n) => !here(n)), fresh = inP.filter((p) => !noteHas(noteResolve(text), pn(p)));
+  if (!W.rows) { const left = fresh.slice(); W.rows = gone.map((a) => { const al = altOf(a, inP.map(pn)); let p = al ? inP.find((q) => lc(pn(q)) === lc(al)) : null;
+      if (!p) { let ro = null; for (const rep of CACHE.values()) for (const q of rep.players.values()) if (!ro && q.name && lc(pn(q)) === lc(a)) ro = q.role; p = (ro && left.find((q) => q.role === ro)) || left[0] || null; }
+      if (p && left.includes(p)) left.splice(left.indexOf(p), 1); return { a, b: p ? pn(p) : '' }; });
+    if (!W.rows.length) W.rows.push({ a: '', b: '' }); }
+  const RW = { tank: 'tank', healer: 'healer', dps: 'DPS' }, lab = (p) => esc(pn(p)) + (p.role ? ' (' + (RW[p.role] || p.role) + ')' : '');
+  const optA = (v) => '<option value="">Who\'s out…</option>' + (gone.length ? '<optgroup label="Not in this pull">' + gone.map((n) => '<option' + (n === v ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</optgroup>' : '') +
+    '<optgroup label="In this pull">' + names.filter((n) => !gone.includes(n)).map((n) => '<option' + (n === v ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</optgroup>';
+  const optB = (v) => '<option value="">Who\'s in…</option>' + (fresh.length ? '<optgroup label="New tonight (not in the note)">' + fresh.map((p) => '<option value="' + esc(pn(p)) + '"' + (pn(p) === v ? ' selected' : '') + '>' + lab(p) + '</option>').join('') + '</optgroup>' : '') +
+    '<optgroup label="Already in the note">' + inP.filter((p) => !fresh.includes(p)).map((p) => '<option value="' + esc(pn(p)) + '"' + (pn(p) === v ? ' selected' : '') + '>' + lab(p) + '</option>').join('') + '</optgroup>';
+  const pOf = (n) => inP.find((p) => pn(p) === n);
+  const row = (x, i) => { const jobs = x.a ? ndzJobsOf(text, x.a) : [];
+    return '<div class="ndz-swr"><div class="ndz-swl"><select class="ndz-swa" data-i="' + i + '" aria-label="Who\'s out">' + optA(x.a) + '</select><span class="ndz-arrow" aria-hidden="true">→</span><select class="ndz-swb" data-i="' + i + '" aria-label="Who\'s in">' + optB(x.b) + '</select>' +
+      (W.rows.length > 1 ? '<button class="btn sm ndz-swx" type="button" data-i="' + i + '" aria-label="Remove this swap">✕</button>' : '') + '</div>' +
+      (x.a ? '<div class="sub ndz-swj">' + esc(x.a) + (gone.includes(x.a) ? ' isn\'t in this pull. Jobs: ' : '\'s jobs: ') + (jobs.length ? esc(jobs.slice(0, 6).join(' · ')) + (jobs.length > 6 ? ' and ' + (jobs.length - 6) + ' more' : '') : 'none found in the note') + '</div>' : '') +
+      (x.a && x.b ? ndzCantH(text, x.a, pOf(x.b)) : '') + '</div>'; };
+  const ready = W.rows.filter((x) => x.a && x.b && x.a !== x.b);
+  box.innerHTML = '<div class="panel ndz ndz-sw"><div class="ndz-hd"><h3>Swap players in your note</h3>' + ndzPill() + '</div>' +
+    '<p class="ah-lead">Pick who\'s out and who\'s in. Every line they\'re on changes: kicks, soaks, groups and cooldowns. Then save it and copy it into NSRT in game.</p>' +
+    '<p class="sub ndz-swn">' + (ready.some((x) => fresh.some((p) => pn(p) === x.b)) ? 'Someone new is coming in, so this saves a note for tonight\'s group. Your original note stays for the old group.' : 'These players are all in the note already, so your note is updated.') + '</p>' +
+    '<div class="sub ndz-swn">Note: <b>' + esc(used.name) + '</b></div>' + W.rows.map(row).join('') +
+    '<button class="btn sm" type="button" id="ndzSwAdd">+ Another swap</button>' +
+    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSwSave"' + (ready.length ? '' : ' disabled') + '>Save and copy for the game</button><button class="btn" type="button" id="ndzSwNo">Cancel</button><span class="sub">' + (ready.length ? plural(ready.length, 'swap') + ' ready.' : 'Pick who\'s out and who\'s in.') + '</span></div></div>';
+  $$('#assignBox .ndz-swa').forEach((s) => (s.onchange = () => { W.rows[+s.dataset.i].a = s.value; ndzSwapView(r); }));
+  $$('#assignBox .ndz-swb').forEach((s) => (s.onchange = () => { W.rows[+s.dataset.i].b = s.value; ndzSwapView(r); }));
+  $$('#assignBox .ndz-swx').forEach((b) => (b.onclick = () => { W.rows.splice(+b.dataset.i, 1); ndzSwapView(r); }));
+  $('#ndzSwAdd').onclick = () => { W.rows.push({ a: '', b: '' }); ndzSwapView(r); };
+  $('#ndzSwNo').onclick = () => { S.noteSwap = null; assign(); };
+  // (two players trading places works too: names go through a stand-in first, so A→B and B→A don't undo each other)
+  $('#ndzSwSave').onclick = async () => { let t = text; const sw = ready.map((x) => [x.a, x.b]), tok = (i) => 'Ndzswapq' + String.fromCharCode(97 + i);
+    sw.forEach(([a], i) => { t = noteSwapName(t, a, tok(i)); }); sw.forEach(([, b], i) => { t = noteSwapName(t, tok(i), b); });
+    t = ndzClassCut(t, sw, r, text);
+    const made = noteSaveText(boss, t, null, r), ok = await copyText(t);
+    S.noteSwap = null; S.noteMade = { boss, id: made.id, name: made.name, swaps: sw, dropped: NDZ_DROPPED.slice(), copied: ok }; renderMain(); };
+}
+// ---- Suggest the rest (Oct 20, your idea): step 2 of the draft ----
+// Every job the raid already did well in its pulls is kept as it is ("Kept"). Jobs nobody did, or did too thinly, are filled from
+// the pull's classes, specs and roles and the fight's plan ("Suggested"), each with a short reason. Rules for The Coiled Altar,
+// approved Oct 20 (notes/Guides/Draft a note from your pulls - how it works.md): kicks by melee or ranged add, Guillotine soaks
+// with immunities first, a Blessing of Protection and Zephyr for the target, purple orbs to Warlocks, Mages and the off-tank,
+// mind-control CC by class, curses to Warlocks, healing cooldowns as pressed, DPS cooldowns split across the Nightfall shields.
+const NDZ_SUG = new Set(['The Coiled Altar']);
+const NDZ_MELEE = new Set([66, 70, 71, 72, 73, 103, 104, 250, 251, 252, 255, 259, 260, 261, 263, 268, 269, 577, 581]);
+const NDZ_IMMUNE = { HUNTER: 'Aspect of the Turtle', PALADIN: 'Divine Shield', MAGE: 'Ice Block' }; // (P1's Guillotine is physical)
+const NDZ_IMMUNE3 = { ...NDZ_IMMUNE, ROGUE: 'Cloak of Shadows' }; // (P3's Grim Guillotine is magic)
+const NDZ_WALL = { WARRIOR: 'Die by the Sword', PRIEST: 'Dispersion', DEATHKNIGHT: 'Icebound Fortitude', SHAMAN: 'Astral Shift', EVOKER: 'Obsidian Scales', DRUID: 'Barkskin', MONK: 'Fortifying Brew', DEMONHUNTER: 'Blur', ROGUE: 'Feint', WARLOCK: 'Unending Resolve' };
+const NDZ_CC = [['MONK', 'Ring of Peace'], ['WARRIOR', 'Shockwave'], ['DRUID', "Ursol's Vortex"], ['DEMONHUNTER', 'Chaos Nova'], ['SHAMAN', 'Capacitor Totem'], ['DEATHKNIGHT', "Gorefiend's Grasp"], ['PALADIN', 'Hammer of Justice']];
+const NDZ_BIG = { 62: 'Arcane Surge', 63: 'Combustion', 64: 'Icy Veins', 253: 'Bestial Wrath', 254: 'Trueshot', 255: 'Coordinated Assault', 265: 'Summon Darkglare', 266: 'Summon Demonic Tyrant', 267: 'Summon Infernal',
+  71: 'Avatar', 72: 'Avatar', 102: 'Incarnation', 103: 'Incarnation', 258: 'Voidform', 262: 'Ascendance', 263: 'Ascendance', 251: 'Pillar of Frost', 252: 'Army of the Dead', 259: 'Deathmark', 260: 'Adrenaline Rush', 261: 'Shadow Blades',
+  269: 'Invoke Xuen', 577: 'Metamorphosis', 1467: 'Dragonrage', 70: 'Avenging Wrath' };
+// (the Mythic Eternal Nightfall shields, from the raid addon's own timeline: seconds into P2 and P3)
+const NDZ_SHIELDS = [[2, 70, 1], [2, 155, 2], [3, 38, 1], [3, 134, 2]];
+function ndzSuggest(d, r) {
+  const pl = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => ({ n: p.name.split('-')[0], cls: p.cls, sid: p.specId, spec: p.specName || '', role: p.role, melee: NDZ_MELEE.has(+p.specId) || p.role === 'tank' }));
+  const P = (n) => pl.find((p) => p.n === n), out = [], good = (x) => x && x.names.length && x.lv !== 'unsure';
+  const kickOf = (p) => ((E.INTERRUPTS[p.cls] || []).find((k) => !k[2] || k[2].includes(+p.sid)) || null);
+  const keptWhy = (x) => 'your raid did it this way in ' + x.got + ' of ' + plural(x.of, x.unit || 'pull');
+  const row = (x, sec, label, names, tag, why, extra) => out.push({ sec, label, names, tag, why, on: true, kick: x && x.kick, rem: x && x.rem, head: x && x.head, ...extra });
+  const keep = (x) => row(x, x.sec, x.label, x.names.map((y) => ({ n: y.n })), 'kept', keptWhy(x));
+  const find = (lab) => d.rows.find((x) => x.label === lab);
+  // tanks: the one who tanked most is the boss tank; the other is the off-tank (purple orbs, a soak)
+  const tanks = pl.filter((p) => p.role === 'tank'), off = tanks[1] || null;
+
+  // (purple orb carriers are busy: they're picked last for extra jobs; with no orb line yet, Warlocks and Mages will carry them)
+  const orbs = good(find('Purple Orbs')) ? find('Purple Orbs').names.map((y) => y.n) : pl.filter((p) => p.cls === 'WARLOCK' || p.cls === 'MAGE').map((p) => p.n), busy = (p) => orbs.includes(p.n);
+  // 1) kicks: the unmarked add is the melee add, the marked add the ranged add; at least 3 kickers each, short kicks first
+  const kicking = new Set(d.rows.filter((x) => x.kick && good(x)).flatMap((x) => x.names.map((y) => y.n)));
+  for (const [key, lab, melee] of [['P20', 'Unmarked add', true], ['P21', 'Marked add', false]]) {
+    const k = d.rows.find((x) => x.kick === key), have = good(k) ? k.names.map((y) => ({ n: y.n })) : [], add = [];
+    if (have.length < 3) for (const p of pl.filter((q) => !kicking.has(q.n) && q.role !== 'tank' && kickOf(q)).sort((a, b) => (b.melee === melee) - (a.melee === melee) || busy(a) - busy(b) || kickOf(a)[1] - kickOf(b)[1])) {
+      if (have.length + add.length >= 4 || (p.melee !== melee && have.length + add.length >= 3)) break; add.push({ n: p.n, why: kickOf(p)[0] + ' (' + kickOf(p)[1] + ' s)' }); kicking.add(p.n); }
+    row({ kick: key }, 'Kicks', lab, have.concat(add), add.length ? (have.length ? 'mix' : 'sug') : 'kept',
+      add.length ? (have.length ? 'only ' + plural(have.length, 'kicker') + ' in your pulls. Added ' : '') + (melee ? 'melee kicks, so the add stands still' : 'ranged kicks for the ranged add') + ': ' + add.map((a) => a.why).join(', ') : keptWhy(k));
+  }
+
+  for (const x of d.rows.filter((y) => /^P3[01]$/.test(y.kick || '') && good(y))) keep(x);
+  // 2) Guillotine soaks. Soak 2 is exactly 5 with the axe's target: tanks, then immunities, then walls. Soak 1 (6-7): the
+  //    immunity players again (they can't be picked for soak 2 while immune), then walls. P3 is magic: Cloak of Shadows counts.
+  const fill = (want, pool, why) => { const res = []; for (const p of pool) { if (res.length >= want) break; if (!res.some((x) => x.n === p.n)) res.push({ n: p.n, why: why(p) }); } return res; };
+  const imm = (p, T) => T[p.cls] && p.role !== 'tank', wall = (p) => NDZ_WALL[p.cls];
+  const soakRow = (lab, want, pool, why, note) => { const k = find(lab); if (good(k) && k.names.length >= want - 1) return keep(k); const have = good(k) ? k.names.map((y) => ({ n: y.n })) : [];
+    const add = fill(want - have.length, pool.filter((p) => !have.some((h) => h.n === p.n)), why); row(k, 'Guillotine soaks', lab, have.concat(add), have.length ? 'mix' : 'sug', note + ': ' + add.map((a) => a.n + ' (' + a.why + ')').join(', ')); };
+  soakRow('Guillotine 2', 4, tanks.concat(pl.filter((p) => imm(p, NDZ_IMMUNE)), pl.filter((p) => p.role !== 'tank' && wall(p) && !orbs.includes(p.n))), (p) => (p.role === 'tank' ? 'tank' : NDZ_IMMUNE[p.cls] || wall(p)), 'exactly 5 with the target');
+  soakRow('Guillotine 1', 7, pl.filter((p) => imm(p, NDZ_IMMUNE)).concat(pl.filter((p) => p.role !== 'tank' && wall(p) && !orbs.includes(p.n))), (p) => NDZ_IMMUNE[p.cls] || wall(p), 'immunities first, then strong walls');
+  for (const k of [1, 2, 3]) { const lab = 'P3 Guillotine ' + k, x = find(lab); if (!x && k > 2) continue;
+    const prev = (out.find((o) => o.label === 'P3 Guillotine ' + (k - 1)) || { names: [] }).names.map((y) => y.n), ok = (p) => !busy(p) && (imm(p, NDZ_IMMUNE3) || !prev.includes(p.n));
+    soakRow(lab, 5, pl.filter((p) => imm(p, NDZ_IMMUNE3) && ok(p)).concat(pl.filter((p) => p.role !== 'tank' && wall(p) && ok(p))), (p) => NDZ_IMMUNE3[p.cls] || wall(p), 'P3\'s hit is magic, so Cloak of Shadows counts too'); }
+  // the target's help: Blessing of Protection (a Paladin who isn't tanking, healers first) and Zephyr (an Evoker; 2 minutes, so one per drop)
+  const pals = pl.filter((p) => p.cls === 'PALADIN').sort((a, b) => (a.role === 'tank') - (b.role === 'tank') || (b.role === 'healer') - (a.role === 'healer')), evo = pl.filter((p) => p.cls === 'EVOKER');
+  for (const k of [1, 2]) {
+    const x = find('External Guillotine ' + k); if (good(x)) keep(x);
+    else { const taken = [1, 2].filter((j) => j !== k).flatMap((j) => { const y = find('External Guillotine ' + j); return good(y) ? y.names.map((q) => q.n) : (out.find((o) => o.label === 'External Guillotine ' + j) || { names: [] }).names.map((q) => q.n); });
+      const p = pals.find((q) => !taken.includes(q.n)); if (p) row(x, 'Guillotine soaks', 'External Guillotine ' + k, [{ n: p.n }], 'sug', 'Blessing of Protection stops P1\'s physical hit' + (taken.length ? '. ' + andL(taken) + '\'s is used on the other drop (5-minute cooldown)' : '')); }
+    const z = find('Zephyr Guillotine ' + k); if (good(z)) keep(z);
+    else if (evo.length) row(z, 'Guillotine soaks', 'Zephyr Guillotine ' + k, [{ n: evo[(k - 1) % evo.length].n }], 'sug', 'Zephyr cuts the damage for everyone soaking' + (evo.length > 1 ? '; two Evokers take turns (2-minute cooldown)' : ''));
+  }
+
+  // 3) purple orbs: Warlocks (gateway, circle), Mages, the off-tank, then a mobile healer (Evoker)
+  { const x = find('Purple Orbs'); if (good(x) && x.names.length >= 4) keep(x);
+    else { const have = good(x) ? x.names.map((y) => ({ n: y.n })) : [], pool = pl.filter((p) => p.cls === 'WARLOCK').concat(pl.filter((p) => p.cls === 'MAGE'), off ? [off] : [], pl.filter((p) => p.cls === 'EVOKER' && p.role === 'healer'));
+      const add = fill(5 - have.length, pool.filter((p) => !have.some((h) => h.n === p.n)), (p) => (p.cls === 'WARLOCK' ? 'gateway and circle' : p.cls === 'MAGE' ? 'Blink and Ice Block' : p.role === 'tank' ? 'off-tank, free between frontals' : 'mobile healer'));
+      row(x, 'Orbs, mind controls, curses', 'Purple Orbs', have.concat(add), have.length ? 'mix' : 'sug', 'purples are hard-assigned: ' + add.map((a) => a.n + ' (' + a.why + ')').join(', ')); } }
+
+  // 4) the CC order on mind controls: keep what worked, then add by class until there are 4
+  { const ORD = ['1st', '2nd', '3rd', '4th', '5th', '6th'], have = [];
+    for (const o of ORD) { const x = find(o + ' CC on Mindcontrol'); if (good(x)) have.push({ x, n: x.names[0].n }); }
+    have.forEach((h, i) => row(h.x, 'Orbs, mind controls, curses', ORD[i] + ' CC on Mindcontrol', [{ n: h.n }], 'kept', keptWhy(h.x)));
+    let i = have.length; for (const [c, sp] of NDZ_CC) { if (i >= 4) break; for (const p of pl.filter((q) => q.cls === c && q.role !== 'tank' && !have.some((h) => h.n === q.n))) { if (i >= 4) break;
+      row(null, 'Orbs, mind controls, curses', ORD[i] + ' CC on Mindcontrol', [{ n: p.n }], 'sug', sp + (i >= 3 ? ', as a backup' : '')); have.push({ n: p.n }); i++; } } }
+
+  // 5) curses: one Warlock per add
+  { const locks = pl.filter((p) => p.cls === 'WARLOCK'); let li = 0;
+    for (const lab of ['Curse Unmarked Add', 'Curse Raid-Marked Add']) { const x = find(lab); if (good(x)) { keep(x); continue; }
+      const p = locks.find((q) => !out.some((o) => /^Curse/.test(o.label) && o.names.some((y) => y.n === q.n))) || locks[li++]; if (p) row(x, 'Orbs, mind controls, curses', lab, [{ n: p.n }], 'sug', 'Curse of Tongues slows the add\'s casts'); } }
+
+  // 6) cooldowns: the healing and raid cooldowns as your raid pressed them, then DPS cooldowns split across the Nightfall shields
+  for (const x of d.rows.filter((y) => y.rem && good(y))) keep(x);
+  { const dps = pl.filter((p) => p.role === 'dps' && NDZ_BIG[+p.sid]), half = [dps.filter((_, i) => i % 2 === 0), dps.filter((_, i) => i % 2 === 1)];
+    if (dps.length >= 2) for (const [ph, t, k] of NDZ_SHIELDS) { const g = half[k - 1].slice(0, 4); if (!g.length) continue;
+      row({ rem: { time: t, ph, tag: g.map((p) => p.n).join(' '), id: null, text: 'DPS cooldown for the Nightfall shield' } }, 'Cooldowns', 'P' + ph + ' Nightfall shield ' + k, g.map((p) => ({ n: p.n, why: NDZ_BIG[+p.sid] })), 'sug',
+        'big damage cooldowns (' + g.map((p) => NDZ_BIG[+p.sid]).join(', ') + '). The two shields are too close for one 2-minute cooldown, so each half of the DPS takes one'); } }
+  // (one heading per kind of job, in fight order, whether a line was kept or suggested)
+  const SEC = { 'Kick orders': 'Kicks', 'Soak groups': 'Guillotine soaks', Orbs: 'Orbs, mind controls, curses', 'Mind controls': 'Orbs, mind controls, curses', Curses: 'Orbs, mind controls, curses' }, ORDER = ['Kicks', 'Guillotine soaks', 'Orbs, mind controls, curses', 'Cooldowns'];
+  return out.map((x, k) => ({ ...x, sec: SEC[x.sec] || x.sec, k })).sort((a, b) => ORDER.indexOf(a.sec) - ORDER.indexOf(b.sec) || a.k - b.k).map((x, i) => ({ ...x, i }));
+}
+function ndzSugView(r) {
+  const D = S.noteDraft, d = D.d, box = $('#assignBox'); if (!box) return;
+  if (!D.sug) { try { D.sug = ndzSuggest(d, r); } catch (e) { D.sug = []; D.sugErr = e.message; } }
+  const rows = D.sug, pm = new Map(players().map((p) => [p.name.split('-')[0], p]));
+  const chip = (y) => { const p = pm.get(y.n); return '<span class="ndz-p' + (y.why ? ' sug' : '') + '"' + (y.why ? ' title="' + esc(y.why) + '"' : '') + '><span class="nm" style="color:' + (p ? p.color : 'inherit') + '">' + esc(y.n) + '</span></span>'; };
+  const TAG = { kept: '<span class="ndz-tag kept">Kept</span>', sug: '<span class="ndz-tag sug">Suggested</span>', mix: '<span class="ndz-tag kept">Kept</span><span class="ndz-tag sug">+ Suggested</span>' };
+  const secs = [...new Set(rows.map((x) => x.sec))];
+  const line = (x) => '<label class="ndz-r ndz-sr ' + (x.tag === 'kept' ? 'sure' : 'likely') + '"><input type="checkbox" data-ndzsi="' + x.i + '"' + (x.on ? ' checked' : '') + '><span class="ndz-l">' + esc(x.label) + '</span><span class="ndz-ns">' + x.names.map(chip).join('') + '</span><span class="ndz-c">' + TAG[x.tag] + ' ' + esc(x.why) + '</span></label>';
+  const nS = rows.filter((x) => x.tag !== 'kept').length;
+  box.innerHTML = '<div class="panel ndz"><div class="ndz-hd"><h3>Draft a note from your pulls</h3>' + ndzPill() + '</div>' + ndzSteps(2) +
+    '<p class="ah-lead">Debrief kept every job your raid already did well, and filled the rest from tonight\'s classes and the fight\'s plan (' + plural(nS, 'suggestion') + '). Each line says why. Untick anything you don\'t like, then save it or copy it for the game.</p>' +
+    (D.sugErr ? '<p class="sub">Couldn\'t suggest everything: ' + esc(D.sugErr) + '</p>' : '') +
+    '<div class="ndz-key"><span class="sure"><b>Kept</b> your raid did it this way in most pulls</span><span class="likely"><b>Suggested</b> picked from classes and the plan</span></div>' +
+    secs.map((s) => '<div class="ndz-sec"><h4>' + esc(s) + '</h4>' + rows.filter((x) => x.sec === s).map(line).join('') + '</div>').join('') +
+    (d.fill.length ? '<div class="ndz-sec ndz-fill"><h4>For you to fill in</h4><ul>' + d.fill.map((f) => '<li>' + esc(f).replace(/\{(\w+)\}/g, (m, k) => capS(k)) + '</li>').join('') + '</ul></div>' : '') +
+    '<details class="ndz-sec"><summary>The note as it will be saved</summary><pre class="ndz-pre" id="ndzText"></pre></details>' +
+    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSave">Save and copy for the game</button><button class="btn" type="button" id="ndzNo">Cancel</button></div></div>';
+  const txt = () => ndzText({ ...d, rows }), show = () => { $('#ndzText').textContent = txt(); };
+  show(); $$('#assignBox [data-ndzsi]').forEach((c) => (c.onchange = () => { rows[+c.dataset.ndzsi].on = c.checked; show(); }));
+  ndzStepsBind(r);
+  $('#ndzNo').onclick = () => { S.noteDraft = null; assign(); };
+  $('#ndzSave').onclick = async () => { const t = txt(), f0 = noteFit(t, r), name = 'Suggested from ' + plural(d.n, 'pull'); S.noteDraft = null;
+    if (f0.gone.length) { S.notePend = { boss: d.boss, text: t, name, ratio: noteRatio(f0), found: f0.found, named: f0.named }; assign(); return; }
+    const made = noteSaveText(d.boss, t, name, r), ok = await copyText(t); S.noteMade = { boss: d.boss, id: made.id, name: made.name, swaps: [], copied: ok }; renderMain(); };
+}
+// (the two steps at the top of the draft, for bosses that have suggestions)
+const ndzSteps = (on) => (S.noteDraft && S.noteDraft.d && NDZ_SUG.has(S.noteDraft.d.boss) ? '<div class="ndz-steps"><button type="button" class="' + (on === 1 ? 'on' : '') + '" data-ndzstep="1">1. What you did</button><button type="button" class="' + (on === 2 ? 'on' : '') + '" data-ndzstep="2">2. Suggest the rest</button></div>' : '');
+const ndzStepsBind = (r) => $$('#assignBox [data-ndzstep]').forEach((b) => (b.onclick = () => { S.noteDraft.step = +b.dataset.ndzstep; assign(); }));
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzsg]'); if (!b || !S.rep || !NDZ_ON()) return; S.tab = 'overview'; S.noteEdit = false; renderMain(); window.scrollTo({ top: 0 }); ndzStart(S.rep, 2); });
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndztip]'); if (b) pageTips('overview', true); });
+// (the Assignments tab's tools, test copy (Oct 20, your calls: organized, a tutorial, then refined). With a note: a slim header
+// (Note tools · Test version · Show me how) over three cards. With no note, the how-to below has everything, so nothing here.)
+const ndzHead = (title) => '<div class="ndz-thead"><span class="ndz-ttl">' + title + '</span>' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></div>';
+function ndzTools(r) { const u0 = noteForRep(r), b = r.item.boss, B = (attr, l) => '<button class="btn sm" type="button" ' + attr + '>' + l + '</button>';
+  if (!u0) return '';
+  return '<div class="ndz-tools">' + ndzHead('Note tools') + '<div class="ndz-cards">' +
+    '<div class="ndz-card ndz-c1"><div class="ndz-ch">Your note</div><div class="ndz-cs"><b>' + esc(u0.name) + '</b>' + (u0.example ? ' (an example)' : '') + '. ' + esc(noteWhy(u0) || 'Checked on this pull.') + '</div><div class="ndz-cb">' + B('data-dbncopy="1"', 'Copy for the game') + B('data-nnew="1"', 'Add another note') + B('data-ndzdel="1"', 'Delete note') + '</div></div>' +
+    '<div class="ndz-card ndz-c2"><div class="ndz-ch">Make a note</div><div class="ndz-cs">From what your raid did' + (NDZ_SUG.has(b) ? ', or suggested by class' : '') + '.</div><div class="ndz-cb">' + (NDZ_FILL[b] ? B('data-ndz="1"', 'Draft from your pulls') : '<span class="sub">Not ready for this boss yet.</span>') + (NDZ_SUG.has(b) ? B('data-ndzsg="1"', 'Suggest assignments') : '') + '</div></div>' +
+    '<div class="ndz-card ndz-c3"><div class="ndz-ch">Change it</div><div class="ndz-cs">Someone out tonight? Swap them in one go.</div><div class="ndz-cb">' + B('data-ndzsw="1"', 'Swap players') + '</div></div>' +
+    '</div></div>'; }
+// (no note yet: one box, two ways in, the example on the right)
+function ndzHow(boss, ex, others, pic) { const B = (attr, l, cls) => '<button class="btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '>' + l + '</button>';
+  return '<div class="panel ndz-start"><div class="ndz-sh"><div><h3>Check your raid\'s plan, every pull</h3><p class="ah-lead">Your NSRT note says who soaks, who kicks, who takes the orbs and who presses which cooldown. Debrief checks every player against it.</p></div>' +
+    '<div class="ndz-shr">' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></div></div>' +
+    '<div class="ndz-sgrid"><div class="ndz-picks">' +
+    '<div class="ndz-pick ndz-pick1"><div class="ndz-ch">Have a note?</div><p>Paste the note your raid leader shares. It\'s saved for this group and opens by itself on every pull with them.</p><div class="ndz-cb">' + B('id="noteAdd"', 'Add your NSRT note', 'primary') + '</div></div>' +
+    '<div class="ndz-pick ndz-pick2"><div class="ndz-ch">No note yet?</div><p>Debrief writes one from what your raid did' + (NDZ_SUG.has(boss) ? ', or suggests one from your classes' : '') + '. You check it, then copy it into the game.</p><div class="ndz-cb">' +
+      (NDZ_FILL[boss] ? B('data-ndz="1"', 'Draft from your pulls') : '<span class="sub">Not ready for this boss yet.</span>') + (NDZ_SUG.has(boss) ? B('data-ndzsg="1"', 'Suggest assignments') : '') + '</div></div>' +
+    '</div>' + pic + '</div>' +
+    '<div class="sub ndz-sfoot">' + [ex ? '<button class="ndz-link" type="button" id="noteEx">Try it with an example</button> made from this pull' : '', others.length ? 'You have notes for ' + (others.length === 1 ? esc(others[0][0]) : others.length + ' other bosses') + ': <a class="ndz-link" href="#snBox" onclick="document.getElementById(\'snBox\').scrollIntoView({ behavior: \'smooth\' }); return false;">see them below</a>' : ''].filter(Boolean).join(' · ') + '</div></div>'; }
+// (Delete note on the card: a second click to be sure, then the note row's own delete, which is hidden under the cards)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzdel]'); if (!b) return;
+  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again to delete'; b.classList.add('bad'); setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Delete note'; b.classList.remove('bad'); } }, 4000); return; }
+  const h = $('#assignBox .nl-cur [data-ndel]') || $('#assignBox [data-ndel]'); if (h) { h.click(); h.click(); } });
+// (Who does what: each player's jobs from the note: kick lines, labelled lines (with their section), and reminders grouped by
+// spell or text with their times)
+function ndzWho(text, boss) {
+  const jobs = new Map(), add = (n, j) => { const k = String(n).split('-')[0]; if (!k || /^(everyone|all|raid|tanks?|healers?|dps|melee|ranged|group\d)$/i.test(k)) return; if (!jobs.has(k)) jobs.set(k, []); const l = jobs.get(k); if (!l.includes(j)) l.push(j); };
+  const KL = boss === 'The Coiled Altar' ? ['Kicks: unmarked add', 'Kicks: marked add', 'P3 kicks: unmarked add', 'P3 kicks: marked add', 'P3 set 2 kicks: unmarked add', 'P3 set 2 kicks: marked add'] : [];
+  let inInt = false, kn = 0, head = null; const rem = new Map();
+  for (const raw of String(text || '').split(/\r?\n/)) { const ln = raw.trim(); if (!ln || /^EncounterID:/i.test(ln) || /^#|^--/.test(ln)) continue;
+    if (/^intstart$/i.test(ln)) { inInt = true; continue; } if (/^intend$/i.test(ln)) { inInt = false; continue; }
+    if (/^transitionstart$/i.test(ln) || /^transitionend$/i.test(ln)) continue;
+    if (inInt) { kn++; const lab = KL[kn - 1] || 'Kick line ' + kn; ln.split(/\s+/).forEach((w, i) => add(w, lab + ' (#' + (i + 1) + ')')); continue; }
+    if (/(^|;)\s*time:/i.test(ln)) { const f = {}; for (const kv of ln.split(';')) { const i = kv.indexOf(':'); if (i > 0) f[kv.slice(0, i).trim().toLowerCase()] = kv.slice(i + 1).trim(); }
+      const what = f.text || ndzSpellNm(+f.spellid) || 'a cooldown', ph = +f.ph || 1, t = +f.time || 0, when = (ph % 1 ? 'Int ' : 'P' + ph + ' ') + T(t);
+      for (const n of String(f.tag || '').split(/\s+/).filter(Boolean)) { const k = n.split('-')[0] + '|' + what; if (!rem.has(k)) rem.set(k, { n, what, at: [] }); rem.get(k).at.push(when); } continue; }
+    const body = ln.replace(/\{[^}]*\}/g, ' '), ci = body.indexOf(':');
+    if (ci < 0) { head = ln.split(/ - | and /)[0].split(/\s+/).slice(0, 2).join(' '); continue; }
+    const label = body.slice(0, ci).trim(); if (/^invitelist$/i.test(label)) continue;
+    const words = body.slice(ci + 1).split(/[\s,]+/).map((w) => w.replace(/[()[\]."]/g, '')).filter((w) => w.length >= 2 && /^\p{Lu}/u.test(w));
+    words.forEach((w) => add(w, (head ? head + ': ' : '') + label));
+  }
+  for (const x of rem.values()) add(x.n, x.what + ' (' + (x.at.length > 3 ? x.at.slice(0, 3).join(', ') + ' +' + (x.at.length - 3) : x.at.join(', ')) + ')');
+  return jobs;
+}
+function ndzWhoH(r, used) {
+  const jobs = ndzWho(used.text, r.item.boss), ps = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), RO = { tank: 0, healer: 1, dps: 2 };
+  const nk = nicksGet(), keyOf = (p) => p.name.split('-')[0], find = (n) => ps.find((p) => keyOf(p).toLowerCase() === n.toLowerCase() || keyOf(p).toLowerCase() === String(nk[n.toLowerCase()] || '').toLowerCase());
+  const rows = []; for (const [n, j] of jobs) { const p = find(n); rows.push({ n: p ? keyOf(p) : n, p, j }); }
+  for (const p of ps) if (!rows.some((x) => x.p === p)) rows.push({ n: keyOf(p), p, j: [] });
+  rows.sort((a, b) => (RO[a.p ? a.p.role : 'dps'] ?? 3) - (RO[b.p ? b.p.role : 'dps'] ?? 3) || (b.j.length > 0) - (a.j.length > 0) || a.n.localeCompare(b.n));
+  const row = (x) => '<div class="ndz-wr"><span class="ndz-wn"><span class="nm" style="color:' + (x.p ? x.p.color : 'inherit') + '">' + esc(x.n) + '</span>' + (x.p ? '' : '<span class="sub"> not in this pull</span>') + '</span><span class="ndz-wj">' + (x.j.length ? x.j.map((j) => '<span class="ndz-wc">' + esc(j) + '</span>').join('') : '<span class="sub">No jobs in the note</span>') + '</span></div>';
+  return '<div class="panel ndz-who"><div class="ndz-thead"><span class="ndz-ttl">Who does what</span><span class="sub">From ' + esc(used.name) + '</span></div><div class="ndz-wl">' + rows.map(row).join('') + '</div></div>';
+}
+// (saved notes by boss, test copy (Oct 20, your ask): a small card per boss, in raid order; clicking one shows its notes below)
+function ndzBossCards(r) { const cur = r.item.boss, pick = S.ndzPick || cur, list = E.PACKS.map((p) => p.encounter).filter((b, i, a) => a.indexOf(b) === i);
+  const card = (b) => { const n = notesOf(b).list.filter((x) => !x.example).length;
+    return '<button class="ndz-bc' + (b === pick ? ' on' : '') + (n ? '' : ' none') + '" type="button" data-ndzpick="' + esc(b) + '"><span class="ndz-bcp" aria-hidden="true">' + (BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>' +
+      '<span class="ndz-bct"><b>' + esc(b) + '</b><span class="sub">' + (n ? plural(n, 'note') : 'No notes') + (b === cur ? ' · open now' : '') + '</span></span></button>'; };
+  return '<div class="panel ndz-bcs"><div class="ndz-thead"><span class="ndz-ttl">Your saved notes</span><span class="sub">Saved in this browser. Pick a boss to see its notes.</span></div><div class="ndz-bcg">' + list.map(card).join('') + '</div></div>'; }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzpick]'); if (!b || !S.rep) return; S.ndzPick = b.dataset.ndzpick; assign(); });
+// ---- Draft a note from your pulls (TEST, Oct 20: on the local copy only, not the live site, until you say) ----
+// Reads every pull of this boss and difficulty in the log and writes an NSRT note of who did which job (kick orders, soak
+// groups, orb carriers, CC order, curses, raid cooldowns). A job done in most pulls is the assignment; a one-off is a mistake
+// or someone covering. Each line keeps how sure it is ("in 9 of 11 pulls"); lines under half start unticked. Positions and
+// calls the log can't show are listed for the raid leader to fill in. Research: notes/Guides/NSRT assignments by boss.md.
+const NDZ_ON = () => true; /* (live for everyone since Oct 20, your call; () => !WCL.HOSTED hides it on the site again) */
+const ndzPill = () => (WCL.HOSTED ? '' : '<span class="ndz-test">Test version</span>'); // (the PC copy still says it's a test)
+const NDZ_FILL = { 'The Coiled Altar': ['Who marks the ranged Spiteful Soulcoiler (one player marks and calls it)', 'Where the raid stacks for Dreadmarch (for example the {square} marker)', 'Which corner each purple orb carrier takes, and where the orb triangle goes', 'Guillotine soak spots, and who gates into them', 'Intermission ghost soak spots (who stands at which marker)', 'Damage cooldowns for each Eternal Nightfall shield'],
+  'The Twin Fangs': ['Where each Feast group stands for its strike, and who calls the knockback side', 'Tainted Blood orbs: which group soaks first (the group knocked right, usually)', 'Tank swaps on Caustic Deluge and Blood Torrent, and the tanks\' defensives', 'Which side each Broodling set spawns on after the first two (the raid lead calls it)'] };
+// (bosses NSRT treats as one phase: reminder times count from the pull)
+const NDZ_ONEPH = new Set(['The Twin Fangs']);
+const ndzPulls = (r) => ((S.index || {}).bosses || []).filter((b) => !b.run && b.boss === r.item.boss && b.diff === r.item.diff);
+const ndzNm = (n) => String(n || '').split('-')[0];
+// (how sure a line is: green "sure" in 8 of 10 pulls or more, yellow "likely" in half or more, red "unsure" below that; a job
+// seen in fewer than 3 pulls is never more than likely, and one seen in a single pull is unsure unless the draft is from one kill)
+const ndzLv = (got, of, one) => (!of || (of < 2 && !one) ? 'unsure' : got / of >= 0.8 && of >= 3 ? 'sure' : got / of >= 0.5 ? 'likely' : 'unsure');
+function ndzDraft(reps) {
+  reps = reps.filter((r) => r.module && !r.module.error);
+  const N = reps.length, boss = reps[0].item.boss, rows = [];
+  // the roster: players in at least half the pulls
+  const seen = new Map(); for (const r of reps) for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; const k = ndzNm(p.name); seen.set(k, (seen.get(k) || 0) + 1); }
+  const roster = [...seen].filter(([, n]) => n >= N / 2).map(([k]) => k);
+  const here = (r, n) => [...r.players.values()].some((p) => ndzNm(p.name) === n);
+  // (alive at t: no death before t, or a battle res after it: they did something again)
+  const alive = (r, n, t) => { const p = [...r.players.values()].find((q) => ndzNm(q.name) === n); if (!p) return false; const ds = r.deaths.filter((x) => x.player === p.name && x.t < t); if (!ds.length) return true; const last = Math.max(...ds.map((x) => x.t)); return [...p.castTimes.values()].some((ts) => ts.some((x) => x > last + 1 && x <= t + 5)); };
+  const phOf = (r, k) => (r.module.phases || []).find((p) => p.name.startsWith(k)) || null;
+  // tally[slot][name] = { got, of, rank: [] }: in how many pulls the slot came up while they were there and alive, and in how many they did it
+  const tally = () => new Map(), bump = (T, slot, n, did, rank) => { let s = T.get(slot); if (!s) T.set(slot, s = new Map()); let x = s.get(n); if (!x) s.set(n, x = { got: 0, of: 0, rank: [] }); x.of++; if (did) { x.got++; if (rank != null) x.rank.push(rank); } };
+  // each player goes to the one slot of a group they did most (a soak group, an add): exclusive jobs
+  const pickOne = (T, slots) => { const out = new Map(slots.map((s) => [s, []]));
+    for (const n of roster) { let best = null; for (const s of slots) { const x = T.get(s) && T.get(s).get(n); if (x && x.got && (!best || x.got / x.of > best.x.got / best.x.of)) best = { s, x }; } if (best) out.get(best.s).push({ n, ...best.x }); }
+    return out; };
+  const mean = (a) => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : 99);
+  const line = (sec, label, list, extra) => { const inn = list.filter((x) => x.got / x.of >= 0.5), some = list.filter((x) => x.got / x.of < 0.5 && x.got);
+    if (!inn.length && !some.length) return; // (a line is as sure as its least sure name)
+    const wk = (inn.length ? inn : some).slice().sort((a, b) => (inn.length ? a.got / a.of - b.got / b.of : b.got - a.got))[0], got = wk.got, of = wk.of;
+    rows.push({ sec, label, names: inn, some, got, of, lv: inn.length ? ndzLv(got, of, N === 1) : 'unsure', ...extra }); };
+
+  if (boss === 'The Coiled Altar') {
+  // 1) kick orders for the Spiteful Soulcoilers: line 1 the unmarked add, line 2 the marked one (NSRT's intstart block);
+  //    P3 gets its own pair when the kickers changed there. Order: each player's average place among that add's kickers.
+  const KT = { P2: tally(), P3: tally() }, kickPulls = { P2: 0, P3: 0 };
+  for (const r of reps) {
+    const p3 = phOf(r, 'P3'), units = (r.kickUnits || []).filter((u) => /soulcoiler/i.test(u.name || ''));
+    for (const ph of ['P2', 'P3']) {
+      const us = units.filter((u) => (ph === 'P3') === !!(p3 && u.spawn >= p3.start - 1)); if (!us.length) continue; kickPulls[ph]++;
+      const did = { unmarked: new Map(), marked: new Map() };
+      for (const u of us) { const k = u.marker > 0 || u.kicked.some((x) => x.marker > 0) ? 'marked' : 'unmarked', order = [];
+        for (const x of u.kicked.slice().sort((a, b) => a.t - b.t)) { const n = ndzNm(x.player); if (!order.includes(n)) order.push(n); }
+        order.forEach((n, i) => { const m = did[k]; if (!m.has(n)) m.set(n, []); m.get(n).push(i + 1); }); }
+      const t0 = Math.min(...us.map((u) => u.spawn));
+      for (const n of roster) { if (!alive(r, n, t0)) continue; for (const k of ['unmarked', 'marked']) { const rk = did[k].get(n); bump(KT[ph], k, n, !!rk, rk ? mean(rk) : null); } }
+    }
+  }
+  const kick = {};
+  for (const ph of ['P2', 'P3']) { if (!kickPulls[ph]) continue; const o = pickOne(KT[ph], ['unmarked', 'marked']);
+    kick[ph] = ['unmarked', 'marked'].map((k) => o.get(k).filter((x) => x.got >= Math.max(1, Math.ceil(kickPulls[ph] * 0.25))).sort((a, b) => mean(a.rank) - mean(b.rank))); }
+  const sameKicks = kick.P2 && kick.P3 && kick.P2.every((l, i) => l.map((x) => x.n).filter((n) => kick.P3[i].some((y) => y.n === n)).length >= Math.min(l.length, kick.P3[i].length) - 1);
+  for (const ph of ['P2', 'P3']) { if (!kick[ph] || (ph === 'P3' && (sameKicks || !kick.P2 || kickPulls.P3 < 2))) continue;
+    kick[ph].forEach((l, i) => line('Kick orders', (ph === 'P3' ? 'P3 · ' : '') + (i ? 'Marked add' : 'Unmarked add'), l, { kick: ph + i })); }
+
+  // 2) Guillotine soak groups (P1) and Grim Guillotine (P3), each drop's soakers minus the axe's target (the game picks them)
+  for (const grim of [false, true]) {
+    const GT = tally(), slots = new Set(); let pulls = 0;
+    for (const r of reps) { const list = r.module._soaks.filter((s) => s.grim === grim); if (list.some((s) => s.landed !== false)) pulls++;
+      list.forEach((s, i) => { if (s.landed === false) return; slots.add(i + 1);
+        for (const n of roster) { if (n === ndzNm(s.target) || !alive(r, n, s.hit)) continue; bump(GT, i + 1, n, s.who.some((w) => ndzNm(w) === n)); } }); }
+    // (not one group each: players with an immunity soak both drops on purpose, so a player goes in every drop they soaked in most pulls)
+    for (const k of [...slots].sort()) line('Soak groups', (grim ? 'P3 Guillotine ' : 'Guillotine ') + k, [...(GT.get(k) || new Map())].map(([n, x]) => ({ n, ...x })).filter((x) => x.got).sort((a, b) => b.got / b.of - a.got / a.of));
+    // the external on each drop's target, and Zephyr for it
+    if (!grim) for (const k of [...slots].sort()) {
+      const XT = tally(), ZT = tally();
+      for (const r of reps) { const s = r.module._soaks.filter((x) => !x.grim)[k - 1]; if (!s || s.landed === false) continue;
+        for (const n of roster) { if (!alive(r, n, s.hit)) continue; bump(XT, 'x', n, s.ext.some((e) => ndzNm(e.who) === n)); bump(ZT, 'z', n, (s.zep || []).some((w) => ndzNm(w) === n)); } }
+      const top = (T) => [...(T.get(T.keys().next().value) || new Map())].map(([n, x]) => ({ n, ...x })).filter((x) => x.got).sort((a, b) => b.got - a.got).slice(0, 2);
+      line('Soak groups', 'External Guillotine ' + k, top(XT)); line('Soak groups', 'Zephyr Guillotine ' + k, top(ZT));
+    }
+  }
+
+  // 3) purple orb carriers (Mythic): Mutagenic Venom on a player is a purple pickup
+  { const OT = tally(); for (const r of reps) { const pk = r.module._orbPicks ? r.module._orbPicks.purple : []; if (!pk.length) continue;
+      for (const n of roster) if (here(r, n)) bump(OT, 'p', n, pk.some((x) => ndzNm(x.n) === n)); }
+    if (OT.size) line('Orbs', 'Purple Orbs', [...OT.get('p')].map(([n, x]) => ({ n, ...x })).filter((x) => x.got).sort((a, b) => b.got / b.of - a.got / a.of)); }
+
+  // 4) the CC order on Dreadmarch's mind controls: who CCs, in the order they usually go
+  { const CT = tally(); for (const r of reps) { const dm = (r.module._dm || []).filter((d) => d.mc && d.mc.length); if (!dm.length) continue;
+      const rk = new Map(); for (const d of dm) { const seq = []; for (const c of d.cc) { const n = ndzNm(c.who); if (c.main && !seq.includes(n)) seq.push(n); } seq.forEach((n, i) => { if (!rk.has(n)) rk.set(n, []); rk.get(n).push(i + 1); }); }
+      for (const n of roster) if (here(r, n)) bump(CT, 'cc', n, rk.has(n), rk.has(n) ? mean(rk.get(n)) : null); }
+    const l = CT.size ? [...CT.get('cc')].map(([n, x]) => ({ n, ...x })).filter((x) => x.got / x.of >= 0.5).sort((a, b) => mean(a.rank) - mean(b.rank)).slice(0, 6) : [];
+    const ORD = ['1st', '2nd', '3rd', '4th', '5th', '6th']; l.forEach((x, i) => line('Mind controls', ORD[i] + ' CC on Mindcontrol', [x])); }
+
+  // 5) curses on the adds (Tongues and the like), unmarked and marked
+  { const UT = tally(); for (const r of reps) { const sets = r.module._addSets || []; if (!sets.length) continue;
+      const by = { unmarked: new Set(), marked: new Set() }; for (const s of sets) for (const a of s.adds) for (const c of a.curses) by[a.marked ? 'marked' : 'unmarked'].add(ndzNm(c.who));
+      if (!by.unmarked.size && !by.marked.size) continue;
+      for (const n of roster) if (here(r, n)) for (const k of ['unmarked', 'marked']) bump(UT, k, n, by[k].has(n)); }
+    const o = pickOne(UT, ['unmarked', 'marked']); line('Curses', 'Curse Unmarked Add', o.get('unmarked')); line('Curses', 'Curse Raid-Marked Add', o.get('marked')); }
+
+  }
+
+  if (boss === 'The Twin Fangs') {
+  // TF 1) Ravenous Feast: three groups, one per strike (Feasted: one hit per player), the same group on the same strike each Feast
+  { const FT = tally(); let any = false;
+    for (const r of reps) for (const f of r.module._feasts || []) f.strikes.forEach((st, k) => { any = true;
+      for (const n of roster) { if (!alive(r, n, st.t)) continue; bump(FT, k + 1, n, st.who.some((w) => ndzNm(w) === n)); } });
+    if (any) { const o = pickOne(FT, [1, 2, 3]); for (const k of [1, 2, 3]) line('Feast groups', 'Group ' + k, o.get(k).sort((a, b) => b.got / b.of - a.got / a.of), { head: 'Ravenous Feast Soaks', unit: 'Feast' }); } }
+
+  // TF 2) Broodling kicks by side: each Broodling's side is where it stood at its first kick; the order is each player's
+  //    average place among that side's kickers in a set
+  { const BT = tally(); let pulls = 0;
+    for (const r of reps) { const side = r.module.kickSide, units = (r.kickUnits || []).filter((u) => /broodling/i.test(u.name || '') && u.kicked.length); if (!side || !units.length) continue; pulls++;
+      const where = (u, t) => { const pu = r.positions.get(u.guid); let b = null, bd = 5; for (const p of pu ? pu.pts : []) { const d = Math.abs(p[0] - t); if (d <= bd) { bd = d; b = p; } } return b ? side(b[1], b[2]) : null; };
+      const did = { left: new Map(), right: new Map() }, order = new Map();
+      for (const u of units.slice().sort((a, b) => a.spawn - b.spawn)) { const k = u.kicked.slice().sort((a, b) => a.t - b.t)[0], sd = where(u, k.t); if (!sd) continue;
+        const key = (u.wave || 0) + '|' + sd; if (!order.has(key)) order.set(key, []); const seq = order.get(key);
+        for (const x of u.kicked) { const n = ndzNm(x.player); if (!seq.includes(n)) seq.push(n); } }
+      for (const [key, seq] of order) { const sd = key.split('|')[1]; seq.forEach((n, i) => { if (!did[sd].has(n)) did[sd].set(n, []); did[sd].get(n).push(i + 1); }); }
+      const t0 = Math.min(...units.map((u) => u.spawn));
+      for (const n of roster) { if (!alive(r, n, t0)) continue; for (const sd of ['left', 'right']) { const rk = did[sd].get(n); bump(BT, sd, n, !!rk, rk ? mean(rk) : null); } } }
+    if (pulls) { const o = pickOne(BT, ['left', 'right']);
+      for (const sd of ['left', 'right']) line('Broodling kicks', sd === 'left' ? 'Left' : 'Right', o.get(sd).filter((x) => x.got >= Math.max(1, Math.ceil(pulls * 0.25))).sort((a, b) => mean(a.rank) - mean(b.rank)), { head: 'Broodling Kicks - Area Assign', side: sd }); } }
+
+  // TF 3) globule CC: one group on odd sets, the other on even sets
+  { const GT = tally(); let any = false;
+    for (const r of reps) { const sets = r.module._globSets || [], cc = r.module._globCC || []; if (!sets.length) continue;
+      const by = { odd: new Set(), even: new Set() }, had = { odd: false, even: false };
+      for (const st of sets) { const k = st.i % 2 === 0 ? 'odd' : 'even'; had[k] = true; for (const c of cc) if (c.t >= st.t - 6 && c.t <= st.end + 4) by[k].add(ndzNm(c.who)); }
+      if (!by.odd.size && !by.even.size) continue; any = true;
+      for (const n of roster) if (here(r, n)) for (const k of ['odd', 'even']) if (had[k]) bump(GT, k, n, by[k].has(n)); }
+    if (any) { const o = pickOne(GT, ['odd', 'even']); line('Globule CC', 'Odd sets', o.get('odd'), { head: 'Caustic Deluge Orb CC' }); line('Globule CC', 'Even sets', o.get('even'), { head: 'Caustic Deluge Orb CC' }); } }
+  }
+
+  // 6) raid cooldowns as timed reminders: the same cooldown, by the same player, at about the same time into the same phase
+  //    in most of the pulls that got that far. NSRT counts time from each phase's start; the intermission is x.5.
+  const nsPh = (r) => { if (NDZ_ONEPH.has(boss)) return [{ name: 'P1', start: 0, end: r.duration, ph: 1 }]; const all = r.module.phases || []; let real = 0; return all.map((p) => { if (/intermission/i.test(p.name)) return { ...p, ph: real + 0.5 }; real++; return { ...p, ph: real }; }); };
+  const cds = new Map(); // key player|spell|ph -> points
+  for (const [ri, r] of reps.entries()) { const phs = nsPh(r);
+    for (const p of r.players.values()) { const n = ndzNm(p.name); if (!roster.includes(n)) continue;
+      for (const sp of Object.keys(RCD_CD)) { const ts = (p.byName.get(sp.toLowerCase()) || []).slice().sort((a, b) => a - b).filter((t, i, a) => i === 0 || t - a[i - 1] > 2); if (!ts.length) continue;
+        const id = (p.castAb.get(sp) || {}).id || E.SPELLID.get(sp.toLowerCase()); if (!id) continue;
+        for (const t of ts) { let ph = phs[0]; for (const x of phs) if (t >= x.start) ph = x; const k = n + '|' + sp + '|' + ph.ph; if (!cds.has(k)) cds.set(k, { n, sp, id, ph: ph.ph, pts: [] }); cds.get(k).pts.push({ ri, rel: t - ph.start }); } } } }
+  for (const c of cds.values()) {
+    const pts = c.pts.sort((a, b) => a.rel - b.rel), groups = []; for (const x of pts) { const g = groups[groups.length - 1]; if (g && x.rel - g[0].rel <= 15) g.push(x); else groups.push([x]); }
+    for (let i = groups.length - 1; i > 0; i--) { const a = groups[i - 1], b = groups[i], pa = new Set(a.map((x) => x.ri));
+      if (b[0].rel - a[a.length - 1].rel <= 25 && !b.some((x) => pa.has(x.ri))) { a.push(...b); groups.splice(i, 1); } }
+    for (const g of groups) { const pulls = new Set(g.map((x) => x.ri)), med = g.map((x) => x.rel).sort((a, b) => a - b)[g.length >> 1];
+      // (out of the pulls that reached that moment of that phase with the player there)
+      const of = reps.filter((r) => { const ph = nsPh(r).find((x) => x.ph === c.ph); return ph && ph.start + med <= Math.min(ph.end != null ? ph.end : r.duration, r.duration) && here(r, c.n); }).length;
+      if (pulls.size < 2 && N > 1) continue;
+      const time = Math.max(0, Math.round(med));
+      rows.push({ sec: 'Cooldowns', label: c.sp + (c.ph % 1 ? ', intermission ' : ', P' + c.ph + ' ') + T(time), names: [{ n: c.n, got: pulls.size, of: Math.max(of, pulls.size) }], some: [], got: pulls.size, of: Math.max(of, pulls.size), lv: ndzLv(pulls.size, Math.max(of, pulls.size), N === 1), rem: { time, ph: c.ph, tag: c.n, id: c.id, text: c.sp } }); }
+  }
+  // (cooldowns in the order they come up: by phase, then time)
+  const cdRows = rows.filter((x) => x.rem).sort((p, q) => p.rem.ph - q.rem.ph || p.rem.time - q.rem.time); rows.splice(rows.length - cdRows.length, cdRows.length, ...cdRows);
+  rows.forEach((x, i) => { x.i = i; x.on = x.lv !== 'unsure' && x.names.length > 0; });
+  return { boss, diff: reps[0].item.diff, id: reps[0].item.id, n: N, rows, fill: NDZ_FILL[boss] || [], roster };
+}
+// The note's text from the ticked lines, in NSRT's format (the kick block is read by the addon; the other lines in the words
+// Debrief's Assignments page reads, so the saved note checks every pull with no extra work)
+function ndzText(d) {
+  const on = d.rows.filter((x) => x.on && x.names.length), out = ['EncounterID:' + (d.id || 0) + ';Difficulty:' + d.diff + ';Name:' + d.boss];
+  const k = (key) => on.find((x) => x.kick === key), ks = ['P20', 'P21', 'P30', 'P31'].map(k);
+  if (ks.some(Boolean)) { out.push('intstart'); for (const x of ks.slice(0, ks[2] || ks[3] ? 4 : 2)) out.push(x ? x.names.map((y) => y.n).join(' ') : ''); out.push('intend'); }
+  let head = null; for (const x of on) if (!x.kick && !x.rem) { if (x.head && x.head !== head) out.push(x.head); head = x.head || null; out.push(x.label + ': ' + x.names.map((y) => y.n).join(' ')); }
+  for (const x of on) if (x.rem) out.push('time:' + x.rem.time + ';ph:' + x.rem.ph + ';tag:' + x.rem.tag + (x.rem.id ? ';spellid:' + x.rem.id : '') + ';text:' + x.rem.text + ';');
+  return out.join('\n');
+}
+// Reading every pull of the boss (each one is downloaded and read once, then kept), then drafting
+async function ndzStart(r, step) {
+  const items = ndzPulls(r), boss = r.item.boss; S.noteDraft = { boss, busy: true, done: 0, of: items.length }; assign();
+  const reps = [];
+  for (const it of items) { try { reps.push(await getRep(it)); } catch (e) { /* (a pull that won't load is left out) */ }
+    if (S.noteDraft && S.noteDraft.boss === boss) { S.noteDraft.done++; const el = $('#ndzLoad'); if (el) el.textContent = 'Reading pull ' + S.noteDraft.done + ' of ' + items.length + '…'; } }
+  if (!S.noteDraft || S.noteDraft.boss !== boss) return;
+  try { S.noteDraft = { boss, d: ndzDraft(reps), step: step || 1 }; } catch (e) { S.noteDraft = { boss, err: e.message }; }
+  if (S.rep && S.rep.item.boss === boss) assign();
+}
+function ndzView(r) {
+  const D = S.noteDraft, box = $('#assignBox'); if (!box) return;
+  if (D.d && D.step === 2 && NDZ_SUG.has(D.d.boss)) { ndzSugView(r); return; }
+  const top = '<div class="ndz-hd"><h3>Draft a note from your pulls</h3>' + ndzPill() + '</div>';
+  if (D.busy) { box.innerHTML = '<div class="panel ndz">' + top + '<p class="ah-lead" id="ndzLoad">Reading pull ' + D.done + ' of ' + D.of + '…</p></div>'; return; }
+  if (D.err || !D.d || !D.d.n) { box.innerHTML = '<div class="panel ndz">' + top + '<p class="ah-lead">Couldn\'t draft a note' + (D.err ? ': ' + esc(D.err) : ': no pulls of this boss could be read') + '.</p><div class="ah-btns"><button class="btn" type="button" id="ndzNo">Back</button></div></div>'; $('#ndzNo').onclick = () => { S.noteDraft = null; assign(); }; return; }
+  const d = D.d, pm = new Map(players().map((p) => [ndzNm(p.name), p]));
+  const nmH = (x, dim) => { const p = pm.get(x.n); return '<span class="ndz-p' + (dim ? ' dim' : '') + '"><span class="nm" style="color:' + (p ? p.color : 'inherit') + '">' + esc(x.n) + '</span><i>' + x.got + '/' + x.of + '</i></span>'; };
+  const LV = { sure: 'Sure', likely: 'Likely', unsure: 'Unsure' };
+  const why = (x) => (x.side ? 'kicked Broodlings on this side' : x.sec === 'Feast groups' ? 'soaked this strike' : x.sec === 'Globule CC' ? 'CC\'d globules on these sets' : x.kick ? 'kicked this add' : x.rem ? 'pressed it then' : x.sec === 'Orbs' ? 'carried a purple orb' : x.sec === 'Mind controls' ? 'CC\'d a mind control' : x.sec === 'Curses' ? 'cursed this add' : /^External/.test(x.label) ? 'put an external on the target' : /^Zephyr/.test(x.label) ? 'cast Zephyr for it' : 'soaked it');
+  const secs = [...new Set(d.rows.map((x) => x.sec))];
+  const row = (x) => '<label class="ndz-r ' + x.lv + '"><input type="checkbox" data-ndzi="' + x.i + '"' + (x.on ? ' checked' : '') + (x.names.length ? '' : ' disabled') + '><span class="ndz-l">' + esc(x.label.replace(/\{(\w+)\}/g, (m, k) => capS(k))) + '</span>' +
+    '<span class="ndz-ns">' + (x.names.length ? x.names.map((y) => nmH(y)).join('') : '<span class="sub">nobody did it in half the pulls</span>') + (x.some.length ? '<span class="ndz-some">sometimes: ' + x.some.map((y) => nmH(y, true)).join('') + '</span>' : '') + '</span>' +
+    '<span class="ndz-c"><b>' + LV[x.lv] + '</b> ' + (x.names.length ? (x.names.length > 1 ? 'everyone listed ' : '') + esc(why(x)) + ' in ' + (x.names.length > 1 ? 'at least ' : '') + x.got + ' of ' + plural(x.of, x.unit || 'pull') : '') + '</span></label>';
+  box.innerHTML = '<div class="panel ndz">' + top +
+    '<p class="ah-lead">Debrief read ' + plural(d.n, 'pull') + ' of ' + esc(d.boss) + ' (' + esc(d.diff) + ') and wrote down who did each job. A job someone did in most pulls is their assignment; a one-off is a mistake or someone covering. Untick anything that\'s wrong, then save it or copy it for the game.</p>' +
+    '<div class="ndz-key"><span class="sure"><b>Sure</b> in 8 of 10 pulls or more</span><span class="likely"><b>Likely</b> in half or more</span><span class="unsure"><b>Unsure</b> less than half: left out unless you tick it</span></div>' +
+    ndzSteps(1) + secs.map((s) => '<div class="ndz-sec"><h4>' + esc(s) + '</h4>' + d.rows.filter((x) => x.sec === s).map(row).join('') + '</div>').join('') +
+    (d.fill.length ? '<div class="ndz-sec ndz-fill"><h4>For you to fill in</h4><p class="sub">The log shows what people did, not where they were told to stand or who makes the calls. Add these to the note yourself:</p><ul>' + d.fill.map((f) => '<li>' + esc(f).replace(/\{(\w+)\}/g, (m, k) => capS(k)) + '</li>').join('') + '</ul></div>' : '') +
+    '<details class="ndz-sec"><summary>The note as it will be saved</summary><pre class="ndz-pre" id="ndzText"></pre></details>' +
+    '<div class="ah-btns"><button class="btn primary" type="button" id="ndzSave">Save the note</button><button class="btn" type="button" id="ndzCopy">Copy for the game</button><button class="btn" type="button" id="ndzNo">Cancel</button><span class="sub" id="ndzMsg"></span></div></div>';
+  const txt = () => ndzText(d), show = () => { $('#ndzText').textContent = txt(); };
+  show(); $$('#assignBox [data-ndzi]').forEach((c) => (c.onchange = () => { d.rows[+c.dataset.ndzi].on = c.checked; show(); }));
+  $('#ndzCopy').onclick = () => copyBtn($('#ndzCopy'), txt()); ndzStepsBind(r);
+  $('#ndzNo').onclick = () => { S.noteDraft = null; assign(); };
+  // (saving: a note that names someone who isn't in this pull goes through the swap screen first, like a pasted note)
+  $('#ndzSave').onclick = () => { const t = txt(), f0 = noteFit(t, r), name = 'Drafted from ' + plural(d.n, 'pull'); S.noteDraft = null;
+    if (f0.gone.length) { S.notePend = { boss: d.boss, text: t, name, ratio: noteRatio(f0), found: f0.found, named: f0.named }; assign(); return; }
+    const made = noteSaveText(d.boss, t, name, r); S.noteMade = { boss: d.boss, id: made.id, name: made.name, swaps: [] }; renderMain(); };
+}
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndz]'); if (!b || !S.rep || !NDZ_ON()) return; S.tab = 'overview'; S.noteEdit = false; renderMain(); window.scrollTo({ top: 0 }); ndzStart(S.rep); });
 function assign(only, capture) { // (only: just the note, for the all-pulls NSRT audit, which draws its own results; capture: just the jobs, for Debriefing)
   const r = S.rep, boss = r.item.boss, NO = notesOf(boss), used = noteForRep(r), text = used ? used.text : '', a = r.assign;
   if (capture && !text) return null; /* (Debriefing asks for the jobs only: no note, nothing to show) */
+  if (S.noteSwap && S.noteSwap.boss === boss && !S.noteEdit && !only && !capture && NDZ_ON()) { ndzSwapView(r); return; }
+  if (S.noteDraft && S.noteDraft.boss === boss && !S.noteEdit && !only && !capture && NDZ_ON()) { ndzView(r); return; } /* (Draft a note from your pulls: test, local only) */
   // (the note being edited: the one this pull uses, or a new one)
   const editN = S.noteEditId === 'new' ? null : (S.noteEditId && NO.list.find((n) => n.id === S.noteEditId)) || used, editT = editN ? editN.text : '';
   const pmap = new Map(players().map((p) => [p.name, p]));
@@ -2412,7 +2917,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     const scB = S.noteScan && S.noteScan.boss === boss && S.noteScan.r ? noteScanBox(S.noteScan) : '';
     const mr = noteRatio(miss.fit);
     if (mr < 0.8) { $('#assignBox').innerHTML = scB + (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + '<div class="panel nmiss"><h3>No note for this group</h3><p class="ah-lead">None of your notes for ' + esc(boss) + ' has this pull\'s players. The closest, ' + esc(miss.note.name) + ', has ' + miss.fit.found + ' of its ' + miss.fit.named + ' players here.</p>' +
-        '<div class="ah-btns"><button class="btn primary" type="button" data-nnew="1">Add a note</button><button class="btn" type="button" id="ngFill2">Fill ' + esc(miss.note.name) + ' with this group</button></div></div>' + storedNotes();
+        '<div class="ah-btns"><button class="btn primary" type="button" data-nnew="1">Add a note</button><button class="btn" type="button" id="ngFill2">Fill ' + esc(miss.note.name) + ' with this group</button>' + (NDZ_ON() && NDZ_FILL[boss] ? '<button class="btn" type="button" data-ndz="1">Draft a note from these pulls</button>' : '') + '</div></div>' + storedNotes();
       $('#ngFill2').onclick = () => { S.notePend = { boss, text: miss.note.text, name: null, ratio: mr, found: miss.fit.found, named: miss.fit.named, fill: true }; assign(only); }; storedNotesBind(only); bindAsViews(only); return; }
     const swp = rosterSwap(r, miss.note, 'miss', mr); if (swp) { $('#assignBox').innerHTML = scB + (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + swp; bindSwap(r, miss.note, 'miss', only); bindAsViews(only); return; }
     $('#assignBox').innerHTML = scB + '<div class="panel nmiss"><h3>No note for this pull</h3>' +
@@ -2438,15 +2943,16 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     const others = noteOthers(boss);
     const otherBar = others.length ? '<div class="panel nl-other" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="sub">No note for ' + esc(boss) + ' yet. Your notes for other bosses:</span>' +
       others.map(([b, l]) => '<button class="btn sm" type="button" data-nboss="' + esc(b) + '">' + esc(b) + ' (' + l.length + ')</button>').join('') + '</div>' : '';
-    $('#assignBox').innerHTML = (only ? '' : asViews()) + (S.noteScan && S.noteScan.boss === boss && (S.noteScan.moved || S.noteScan.r) ? noteScanBox(S.noteScan) : '') + '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
+    $('#assignBox').innerHTML = (only ? '' : asViews()) + (S.noteScan && S.noteScan.boss === boss && (S.noteScan.moved || S.noteScan.r) ? noteScanBox(S.noteScan) : '') + (NDZ_ON() ? ndzHow(boss, ex, others, pic) + storedNotes() : '<div class="panel as-how"><div class="ah-main"><h3>Check your raid\'s plan, pull by pull</h3>' +
       '<p class="ah-lead">Your raid\'s NSRT note says who soaks, who kicks, who takes the orbs and who presses which cooldown. Paste it here once, and Debrief checks every player against it on every pull. No other site does this.</p>' +
       '<ol class="ah-steps"><li><span><b>Get your raid\'s NSRT note.</b> Your raid leader shares it, or you can copy it from wowutils.</span></li>' +
       '<li><span><b>Paste it here and save.</b> It stays in this browser, so you only do this once for ' + esc(boss) + '. When the plan changes, paste the new one.</span></li>' +
       '<li><span><b>Debrief checks it on every pull.</b> You see who did their job, who was late, and who missed it.</span></li></ol>' +
-      '<div class="ah-btns"><button class="btn primary" id="noteAdd">Add your NSRT note</button>' + (ex ? '<button class="btn" id="noteEx">Try it with an example</button>' : '') + '</div>' +
+      '<div class="ah-btns"><button class="btn primary" id="noteAdd">Add your NSRT note</button>' + (NDZ_ON() && NDZ_FILL[boss] ? '<button class="btn" type="button" data-ndz="1">Draft a note from these pulls</button>' : '') + (ex ? '<button class="btn" id="noteEx">Try it with an example</button>' : '') + '</div>' +
       (others.length ? '<p class="sub ah-other">You have notes for ' + (others.length === 1 ? esc(others[0][0]) : others.length + ' other bosses') + '. <button class="btn sm" type="button" data-asv="notes">See them in Stored notes</button></p>' : '') +
-      (ex ? '<p class="sub ah-ex">The example is made from this pull. It gives your healers the cooldowns they really pressed, plus one they didn\'t, so you can see what a miss looks like.</p>' : '') + '</div>' + pic + '</div>';
+      (ex ? '<p class="sub ah-ex">The example is made from this pull. It gives your healers the cooldowns they really pressed, plus one they didn\'t, so you can see what a miss looks like.</p>' : '') + '</div>' + pic + '</div>');
     $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+    if (NDZ_ON()) storedNotesBind(only);
     bindAsViews(only);
     if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
     $$('#assignBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example);
@@ -2456,6 +2962,12 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
       S.noteEdit = false; S.noteEditId = null; for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
     return;
   }
+  if (text && !S.noteEdit && !only && !capture && NDZ_ON()) { /* (test copy, your call Oct 20: this tab is for making and importing notes; the results are on Debriefing) */
+    $('#assignBox').innerHTML = (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + '<div class="panel ndz-res"><span>This pull\'s results against <b>' + esc(used.name) + '</b> are on Debriefing.</span><button class="btn sm" type="button" id="ndzToDb">Open Debriefing</button></div>' + storedNotes();
+    storedNotesBind(only); if ($('#ndzToDb')) $('#ndzToDb').onclick = () => { S.tab = 'audit'; renderMain(); window.scrollTo({ top: 0 }); };
+    if ($('#nmCopy')) $('#nmCopy').onclick = () => { const m = S.noteMade, n = m && notesOf(m.boss).list.find((x) => x.id === m.id); if (n) copyBtn($('#nmCopy'), n.text); };
+    if ($('#nmOk')) $('#nmOk').onclick = () => { S.noteMade = null; assign(only); };
+    return; }
   const editing = S.noteEdit || !text;
   // (what Debrief checks in a note for this fight, in plain words; how to write those lines is folded in the editor)
   const CHECKS = { 'Nymrissa Wavecaller': 'who soaks each set of Frost Orbs (Orb Soak 1, 2, …) and the cooldown reminders', 'Entombed Sentinels': 'the Blood and Breath split and the cooldown reminders', Sszorak: 'the two Mutilate soak groups, the Serpent\'s Fury timer and the cooldown reminders', "Nek'zali the Soulcoiler": 'the Soulcoil Well groups, the Hungering Pyre soak list and the cooldown reminders', 'The Coiled Altar': 'who kicks each Spiteful Soulcoiler, the Guillotine soaks, the orb lines, who CCs each mind control, the add curses, the ghost soaks in the intermission, and the cooldown reminders', 'The Twin Fangs': 'the Ravenous Feast groups and their order, the Broodling kick order, the globule CC groups, and the cooldown reminders' };
@@ -3354,11 +3866,11 @@ const dbnBox = (jobs) => (jobs && jobs.length ? '<div class="dbn-box"><div class
 const dbnOnly = (o) => '<details class="panel secd st-' + o.st + ' dbr-line dbn-line" id="dbn-' + esc(o.id) + '" data-k="dbn-' + esc(o.id) + '"' + (S.openSecs.has('dbn-' + o.id) ? ' open' : '') + '><summary><span class="sechd">' + (o.icon || '') + '<b>' + o.title + '</b></span><span class="dbn-from">' + emoIc('📜') + ' From your note</span>' + (o.txtHtml != null ? '<span class="sst ' + o.st + '">' + o.txtHtml + '</span>' : hst(o.st, o.txt || DBN_W[o.st])) + '</summary><div class="secbody">' + (o.how ? '<details class="howit"><summary>How it works</summary><div>' + o.how + '</div></details>' : '') + (o.body || '') + '</div></details>';
 // (the note bar under the top: which note, players it names who weren't here, and the way to change it)
 function dbnBar(NJ, r) {
-  if (!NJ) { const has = notesOf(r.item.boss).list.length; return '<div class="dbn-bar dbn-none"><span>' + emoIc('📜') + ' <b>' + (has ? 'None of your notes for ' + esc(r.item.boss) + ' fits this group' : 'No NSRT note for ' + esc(r.item.boss) + ' yet') + '</b><span class="sub">' + (has ? 'swap in who\'s here to make one for this group' : 'add your raid\'s note to check who did their job') + '</span></span><button type="button" class="btn sm" data-dbnote="1">' + (has ? 'Swap players' : 'Add your NSRT note') + '</button></div>'; }
+  if (!NJ) { const has = notesOf(r.item.boss).list.length; return '<div class="dbn-bar dbn-none"><span>' + emoIc('📜') + ' <b>' + (has ? 'None of your notes for ' + esc(r.item.boss) + ' fits this group' : 'No NSRT note for ' + esc(r.item.boss) + ' yet') + '</b><span class="sub">' + (has ? 'swap in who\'s here to make one for this group' : 'add your raid\'s note to check who did their job') + '</span></span><button type="button" class="btn sm" data-dbnote="1">' + (has ? 'Swap players' : 'Add your NSRT note') + '</button>' + (NDZ_ON() && NDZ_FILL[r.item.boss] ? '<button type="button" class="btn sm" data-ndz="1">Draft a note from these pulls</button>' : '') + '</div>'; }
   const a = NJ.a || {}, gone = a.unknownNames || [], nm = NJ.used ? NJ.used.name : 'Your note';
   return '<div class="dbn-bar"><span>' + emoIc('📜') + ' <b>' + esc(nm) + '</b><span class="sub">' + plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + esc(NJ.checkedL) + '</span></span>' +
     (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '') +
-    '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button><button type="button" class="btn sm" data-dbnote="1">See the note</button></div>'; }
+    '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button><button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open Assignments' : 'See the note') + '</button></div>'; }
 // (Note jobs, the fifth number: the jobs that came up this pull, and how many were done)
 function dbnNum(NJ, num) { const j = NJ.secs.filter((o) => o.st !== 'na'), ok = j.filter((o) => o.st === 'ok').length, bad = j.filter((o) => o.st === 'bad').length, warn = j.length - ok - bad;
   return num('Note jobs', j.length ? '<b>' + ok + '</b><em> of ' + j.length + ' done</em>' : '<b>–</b>', j.length ? (bad || warn ? [bad ? bad + ' missed' : '', warn ? warn + ' with slips' : ''].filter(Boolean).join(' · ') : 'every job done') : 'none came up this pull').replace('class="dbr-n"', 'class="dbr-n dbn-n"'); }
@@ -18677,6 +19189,12 @@ const PAGE_TIPS = {
     { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig deeper: every mechanic, your assignments, each player\'s rotation and the graphs. Report card grades every player over all pulls.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
+    { sel: '#view .ndz-pick1', t: 'Have a note?', p: 'Paste the NSRT note your raid leader shares. Debrief checks it on every pull with these players.' },
+    { sel: '#view .ndz-pick2', t: 'No note yet?', p: 'Debrief can write one from what your raid did over the night. Check it, then copy it into the game.' },
+    { sel: '#view .ndz-c1', t: 'Your note', p: 'The NSRT note this pull is checked against. Add your raid\'s note once and Debrief checks it on every pull. Copy for the game puts it back into NSRT.' },
+    { sel: '#view .ndz-c2', t: 'Make a note', p: 'No note? Draft one from what your raid did over the night. On some bosses, Suggest fills the gaps from your raid\'s classes and the fight\'s plan.' },
+    { sel: '#view .ndz-c3', t: 'Change it', p: 'Someone out tonight? Swap players: pick who\'s out and who\'s in, then save it and copy it for the game.' },
+    { sel: '#view .ndz-how', t: 'See this again', p: 'Show me how plays these tips again any time.' },
     { sel: '#assignBox .as-how, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note here, or try the example first. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
     { sel: '#view .as-tiles', t: 'Each assignment at a glance', p: 'Red went wrong, green was done. Click one to jump straight to it.' }],
   audit: [
@@ -18709,7 +19227,7 @@ const PAGE_TIPS = {
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Remove this team.' }],
 };
-const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 2, team: 2 }; // (bumped when a page's tips change, so they show once more)
+const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 3, team: 2 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
 const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
