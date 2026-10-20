@@ -10,7 +10,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'live', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost') window.__wla = { S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
+if (location.hostname === 'localhost') window.__wla = { gsStart: () => gsStart(), S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -813,7 +813,7 @@ async function teamImportRun(g0, onStep, onFound) {
   // pulls already saved are skipped)
   const bossKey = [...tierBoss].join('|'); if (g.bosses !== bossKey) { g.done = {}; g.bosses = bossKey; }
   const reps = list.filter((x) => x.startTime >= since && (ch ? (x.zone && TIER_RE.test(x.zone.name)) || x.guild : !/alt/i.test((x.guildTag || {}).name || '')));
-  const todo = reps.filter((x) => g.done[x.code] !== x.endTime).sort((a, b) => a.startTime - b.startTime);
+  const todo = reps.filter((x) => g.done[x.code] !== x.endTime).sort((a, b) => b.startTime - a.startTime); /* (newest first (Oct 19): a first visit shows where the team is now, like Mythic, within seconds, not its first Heroic weeks) */
   let added = 0, dup = 0, pulls = 0, failed = 0;
   // (a report another of your teams already read in full isn't downloaded again: its saved pulls are this one's too, for a
   // character the ones they were in)
@@ -7933,7 +7933,7 @@ const PI_ICON = {
   ok: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#45c15c"/><path d="M5.6 10.4l3 3 5.8-6.4" fill="none" stroke="#0f1a12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   warn: '<svg viewBox="0 0 20 20"><path d="M10 1.8L19 17.6H1z" fill="#f3c969" stroke="#f3c969" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 7.2v4.6" stroke="#1d1708" stroke-width="2.2" stroke-linecap="round"/><circle cx="10" cy="14.6" r="1.25" fill="#1d1708"/></svg>',
   bad: '<svg viewBox="0 0 20 20"><path d="M3 3l14 14M17 3L3 17" stroke="#e5534b" stroke-width="4.2" stroke-linecap="round"/></svg>' };
-const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up">⚡</span>' : '') + '</span><span class="pi-ico" title="' + PI_VERDICT[tier].slice(0, -1) + '">' + PI_ICON[tier] + '</span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
+const piRow = (time, tier, s, lust) => '<div class="pi-c2 nolk"><span class="pi-t2">' + time + (lust ? '<span class="pi-l" title="Bloodlust was up"><img class="emo-ic" src="' + whIcon('spell_nature_bloodlust') + '" alt="Bloodlust"></span>' : '') + '</span><span class="pi-ico" title="' + PI_VERDICT[tier].slice(0, -1) + '">' + PI_ICON[tier] + '</span><span class="pi-s">' + s.say + '<span class="pi-w"><b class="pi-vd ' + tier + '">' + PI_VERDICT[tier] + '</b>' + (s.why ? ' ' + s.why : '') + '</span></span></div>';
 // a priest's pull as a strip: each Power Infusion gold, the stretches it sat ready green, the raid's downtime grey,
 // Bloodlust a line, and under them, in purple, when the player planned for it pressed their big cooldown
 function piStrip(d, x, casts, who) {
@@ -16005,6 +16005,10 @@ function plRaid(data, one, mvp, imp) {
 // bar chart and a table; a row opens that pull's deaths on a timeline), the mechanics scoreboard, and the raid on one grid
 // (a player's six parts as coloured cells; a row opens everything behind their grade). Built on plData's grades: nothing is
 // graded again here, and the fields Recap reads (fixes, ranked, score, trend, mistakes, n) stay as they are.
+// (Oct 19 polish: the awards and moments show WoW icons, not emoji, so they sit with the spell icons around them)
+const EMO_IC = { '🛡️': 'ability_warrior_shieldwall', '✨': 'spell_holy_divineshield', '✋': 'ability_kick', '💚': 'spell_holy_heal', '📈': 'spell_holy_borrowedtime', '🧪': 'inv_alchemy_70_red',
+  '🐣': 'inv_misc_bone_skull_02', '⚡': 'spell_nature_lightning', '🏆': 'inv_misc_trophy_argent', '🎯': 'ability_hunter_markedfordeath', '🎖️': 'spell_holy_powerwordshield', '🔁': 'spell_nature_reincarnation' };
+const emoIc = (e) => (EMO_IC[e] ? '<img class="emo-ic" src="' + whIcon(EMO_IC[e]) + '" alt="" onerror="this.style.visibility=\'hidden\'">' : e);
 const RCN_ROLES = [['all', 'Everyone'], ['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'DPS']];
 const rcnBg = (v) => { if (v == null) return 'transparent'; const a = v >= 85 ? [69, 193, 92] : v >= 72 ? [232, 162, 58] : [255, 90, 82], k = 0.45 + 0.55 * Math.min(1, Math.abs(v - 72) / 25 + 0.3); return 'rgba(' + a.join(',') + ',' + k.toFixed(2) + ')'; };
 const rcnCell = (v, tip) => '<td' + (tip ? ' data-tt="' + esc(tip) + '"' : '') + '>' + (v == null ? '<span class="sub">–</span>' : '<span class="rcn-cell" style="background:' + rcnBg(v) + '">' + Math.round(v) + '</span>') + '</td>';
@@ -16042,7 +16046,7 @@ function rcnFacts(c) {
   // ---- the awards: each from the log, and left out when nobody earned it ----
   const ranked = data.filter((a) => a.ranked), best = (l, f) => l.slice().sort((u, v) => f(v) - f(u))[0];
   const kicks = new Map(); for (const r of reps) for (const k of r.interrupts || []) if (byName.has(k.player)) kicks.set(k.player, (kicks.get(k.player) || 0) + 1);
-  const awards = [], award = (ic, t, a, txt) => { if (a) awards.push({ ic, t, a, txt }); };
+  const awards = [], award = (ic, t, a, txt) => { if (a) awards.push({ ic: emoIc(ic), t, a, txt }); };
   // (the player of the night: the best grade among those who died in a quarter of their pulls or fewer, so the spotlight never
   // goes to someone the raid watched die all night)
   const top = best(ranked.filter((a) => pl.get(a.p.name).deaths <= Math.max(1, a.n / 4)), (a) => a.score) || best(ranked, (a) => a.score);
@@ -16053,7 +16057,7 @@ function rcnFacts(c) {
   award('📈', 'Most Improved', best(data.filter((a) => a.trend != null && a.trend >= 3), (a) => a.trend), (a) => 'Their grade rose ' + Math.round(a.trend) + ' points from the first pulls to the last.');
   const prepped = ranked.filter((a) => a.prep != null && a.prep >= 98 && pl.get(a.p.name).expect && pl.get(a.p.name).used >= pl.get(a.p.name).expect); award('🧪', 'Never Forgot', best(prepped, (a) => a.score), () => 'Fully prepared at every pull, and a potion in every pull that had room for one.');
   // ---- moments: things that stood out, each on the pull it happened ----
-  const moments = [], moment = (ic, when, t, who, txt, pull) => { moments.push({ ic, when, t, who, txt, pull }); if (pull) { const q = pulls.find((x) => x.it.pull === pull); if (q) q.moments.push(moments[moments.length - 1]); } };
+  const moments = [], moment = (ic, when, t, who, txt, pull) => { moments.push({ ic: emoIc(ic), when, t, who, txt, pull }); if (pull) { const q = pulls.find((x) => x.it.pull === pull); if (q) q.moments.push(moments[moments.length - 1]); } };
   { const f = pulls.find((q) => q.first); if (f) moment('🐣', 'Pull ' + f.it.pull + ' · ' + T(f.first.t), 'First death of the night', f.first.player, (f.first.ability ? f.first.ability : 'Down') + ', ' + T(f.first.t) + ' in.', f.it.pull); }
   { let far = null; const seen = new Set(); for (const q of pulls) { if (q.left == null || q.it.kill) continue; if (far == null) { far = q.left; if (q.phase) seen.add(q.phase); continue; }
     if (q.left < far) { if (q.phase && !seen.has(q.phase)) moment('⚡', 'Pull ' + q.it.pull, 'First look at ' + q.phase, null, 'Further than any pull before it: ' + q.label + ' left.', q.it.pull); far = q.left; } if (q.phase) seen.add(q.phase); } }
@@ -16088,7 +16092,7 @@ function rcnPlayer(c, F, a, side) {
   const PLGO = (f) => { const g0 = String(f.go || 'none').split(':')[0]; return (g0 === 'none' || !PL_GO[g0] || (g0 === 'card' ? SPEC_OFF() : g0 !== 'audit' && g0 !== 'prep' && PERF_OFF())) ? '' : '<button type="button" class="btn sm pl-go" data-plgo="' + f.go + '" data-pn="' + esc(nm) + '">' + (g0 === 'prep' ? 'Their prep' : 'See it in ' + PL_GO[g0]) + '</button>'; };
   const fx = a.fixes.filter((f) => (f.gain || 0) >= 0.5 || f.rank).slice(0, 4);
   const fixes = fx.length ? '<ol class="rcn-fix">' + fx.map((f) => '<li><div><b>' + esc(f.t) + '</b> ' + (f.gain >= 0.5 ? '<span class="rk-gain">+' + plural(Math.max(1, Math.round(f.gain)), 'point') + '</span>' : '') + (f.k > 1 ? ' <span class="sub">· in ' + f.k + ' of ' + a.n + ' pulls</span>' : '') + '<div class="rk-wx">' + esc(f.x) + '</div>' + PLGO(f) + '</div></li>').join('') + '</ol>' : '<p class="okv" style="margin:0">✓ A clean night: nothing cost them points.</p>';
-  const mine = F.awards.filter((w) => w.a === a).map((w) => '<span class="rcn-mb"><i>' + w.ic + '</i>' + esc(w.t) + '</span>').join('') + F.moments.filter((m) => m.who === nm).map((m) => '<span class="rcn-mb" data-tt="' + esc(m.txt) + '"><i>' + m.ic + '</i>' + esc(m.t) + '</span>').join('') + (F.top === a ? '<span class="rcn-mb"><i>🏆</i>Player of the night</span>' : '');
+  const mine = F.awards.filter((w) => w.a === a).map((w) => '<span class="rcn-mb"><i>' + w.ic + '</i>' + esc(w.t) + '</span>').join('') + F.moments.filter((m) => m.who === nm).map((m) => '<span class="rcn-mb" data-tt="' + esc(m.txt) + '"><i>' + m.ic + '</i>' + esc(m.t) + '</span>').join('') + (F.top === a ? '<span class="rcn-mb"><i>' + emoIc('🏆') + '</i>Player of the night</span>' : '');
   const gear = S.rcnGear === nm && x;
   const top = '<div class="rcn-dt">' + rcnMed(a.score, 46) + '<div><b class="rcn-dn" style="color:' + a.p.color + '">' + esc(nm) + '</b><span class="sub">' + esc(a.p.specName || '') + ' · ' + Math.round(a.score) + ' out of 100 · ' + plural(a.n, 'pull') + (pf.last != null ? ' · ' + rcnDelta(pf.last) + ' since last night' : '') + '</span></div>' + (mine ? '<div class="rcn-mbs">' + mine + '</div>' : '') +
     (x ? '<button type="button" class="btn sm" data-rcngear="' + esc(nm) + '">' + (gear ? 'Back to their night' : 'Gear and stats') + '</button>' : '') + '</div>';
@@ -16126,7 +16130,7 @@ function rctCard(c, F, a, sm) {
   const pot = pf.expect ? Math.round(100 * pf.used / pf.expect) : null;
   const st = [['Mechanics', a.mech], ['Rotation', a.play], ['Survival', a.surv], ['Prep', a.prep], ['Potions', pot], [role === 'healer' ? 'Healing' : 'Damage', T.outR.get(a.p.name)]];
   const why = { Mechanics: RCN_WHY.mech(a), Rotation: RCN_WHY.play(a), Survival: RCN_WHY.surv(a), Prep: RCN_WHY.prep(a), Potions: pf.expect ? 'Combat potions in ' + pf.used + ' of the ' + pf.expect + ' their pulls had room for' : 'No pull long enough to need one', Damage: 'Their damage a second against the other ' + (role === 'tank' ? 'tanks' : 'damage dealers') + ' tonight (fastest 99)', Healing: 'Their healing a second against the other healers tonight (fastest 99)' };
-  const aw = F.awards.filter((w) => w.a === a).map((w) => '<span data-tt="' + esc('<b>' + w.t + '</b><br>' + w.txt(w.a)) + '">' + w.ic + '</span>').join('') + (F.top === a ? '<span data-tt="<b>Player of the night</b>">🏆</span>' : '');
+  const aw = F.awards.filter((w) => w.a === a).map((w) => '<span data-tt="' + esc('<b>' + w.t + '</b><br>' + w.txt(w.a)) + '">' + w.ic + '</span>').join('') + (F.top === a ? '<span data-tt="<b>Player of the night</b>">' + emoIc('🏆') + '</span>' : '');
   return '<button type="button" class="rct-cd' + (sm ? ' sm' : '') + '" data-rctp="' + esc(a.p.name) + '" style="--q:' + q + ';--c:' + a.p.color + '" aria-label="' + esc(a.p.name + ', ' + Math.round(a.score) + ' out of 100. Open their night') + '">' +
     '<span class="rct-f"></span><span class="rct-in"></span><span class="rct-ov" data-tt="' + esc('<b>' + Math.round(a.score) + ' out of 100</b><br>' + tierTxt) + '"><b>' + Math.round(a.score) + '</b><span>' + RCT_POS[role] + '</span></span>' +
     '<span class="rct-gr">' + gradeChip(letterOf(a.score)) + '</span>' + (aw ? '<span class="rct-aw">' + aw + '</span>' : '') +
@@ -16164,7 +16168,7 @@ function rctAll(c, F) {
 // report card (each subject averaged, with tonight's best), every raider in one list ranked by any subject, and the picked raider's report
 // card beside it (their grade, their place in each subject, their best and their room to grow). Built on plData's grades, unchanged.
 const RCB_SUBJ = [['mech', 'Mechanics', 'spell_holy_borrowedtime', 'Mistakes on the boss\'s mechanics'], ['play', 'Rotation', 'spell_nature_lightning', 'The Rotation tab\'s score, or how they pressed their buttons'],
-  ['surv', 'Survival', 'spell_holy_ardentdefender', 'Defensives, close calls, Healthstone and health potion'], ['prep', 'Prep', 'inv_alchemy_70_flask', 'Flask, food, weapon oil, rune, enchants and gems'],
+  ['surv', 'Survival', 'spell_holy_ardentdefender', 'Defensives, close calls, Healthstone and health potion'], ['prep', 'Prep', 'inv_alchemy_90_flask_green', 'Flask, food, weapon oil, rune, enchants and gems'],
   ['pot', 'Potions', 'inv_alchemy_70_red', 'A combat or mana potion in each pull with room for one'], ['out', 'Output', 'ability_warrior_innerrage', 'Damage or healing a second against the others in their role tonight (fastest 99)']];
 const rcbQ = (v) => (v == null ? '' : v >= 95 ? 'q5' : v >= 85 ? 'q4' : v >= 75 ? 'q3' : v >= 50 ? 'q2' : 'q1');
 const rcbV = (v) => '<span class="rcb-v ' + rcbQ(v) + '">' + (v == null ? '–' : Math.round(v)) + '</span>';
@@ -16212,7 +16216,7 @@ function rcbSide(c, F) {
   const B = rcbFacts(c, F), x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
   const subs = RCB_SUBJ.filter(([k]) => x[k] != null).map(([k, l, ic]) => { const r = B.rk[k].m.get(x); return { k, l, ic, v: x[k], r }; });
   const best = subs.slice().sort((u, v) => u.r - v.r || v.v - u.v)[0], low = subs.slice().sort((u, v) => u.v - v.v)[0], fix = (a.fixes || []).find((f) => (f.gain || 0) >= 0.5);
-  const aw = F.awards.filter((w) => w.a === a).map((w) => '<span class="rcn-mb" data-tt="' + esc(w.txt(w.a)) + '"><i>' + w.ic + '</i>' + esc(w.t) + '</span>').join('') + (F.top === a ? '<span class="rcn-mb"><i>🏆</i>Player of the night</span>' : '');
+  const aw = F.awards.filter((w) => w.a === a).map((w) => '<span class="rcn-mb" data-tt="' + esc(w.txt(w.a)) + '"><i>' + w.ic + '</i>' + esc(w.t) + '</span>').join('') + (F.top === a ? '<span class="rcn-mb"><i>' + emoIc('🏆') + '</i>Player of the night</span>' : '');
   return '<aside class="rcb-yp" style="--cc:' + p.color + ';--sart:' + specArt(p) + '"><div class="rcb-k">Report card</div>' +
     '<div class="rcb-yph"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + '</div></div></div>' +
     '<div class="rcb-ypg">' + rcbRing(x.score, 118) + '</div><div class="rcb-yprk"><b>#' + B.rk.score.m.get(x) + '</b> of ' + B.rk.score.n + ' in the raid · <b>#' + rkR.m.get(x) + '</b> of ' + rkR.n + ' ' + RN[x.role] + '</div>' + (aw ? '<div class="rcn-mbs rcb-aw">' + aw + '</div>' : '') +
@@ -17731,7 +17735,7 @@ const TOUR = [
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
   { t: 'Rotation and graphs', p: 'Rotation goes through how each player played their own spec, the way a top player of it would. Graphs has the raw numbers, like Warcraft Logs but easier to read: damage, healing, casts, resources, cooldowns and more. Hover any chart for its numbers.',
     art: () => '<div class="tr-perf tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:86%;--c:#3FC7EB"></i><i style="--w:77%;--c:#B44BE0"></i><i style="--w:69%;--c:#AAD372"></i><i style="--w:58%;--c:#F48CBA"></i></div>' },
-  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs to see every raid night, boss by boss, with your rankings. New nights come in by themselves, and "Your teams" at the top of every page takes you there.',
+  { t: 'Your team\'s progress', p: 'Add your team, guild or your own character from Warcraft Logs to see every raid night, boss by boss, with your rankings. New nights come in by themselves, and My Page, the first tab, takes you there.',
     art: () => '<div class="tr-prog"><span class="tr-strip">' + [1, 1, 1, 1, 1, 1, 1, 0, 0, 0].map((k, i) => '<i class="' + (k ? 'k' : '') + '" style="--d:' + (i * 0.12).toFixed(2) + 's"></i>').join('') + '</span><span class="tr-pl">7/10 Mythic · now on The Coiled Altar, best 40%</span></div>' },
 ];
 function startTour(at) {
@@ -18001,7 +18005,11 @@ function gsDraw() {
   let body = '', nav = '', key = s;
   if (s === 'char') {
     body = cg ? '<h2 id="gsT">Your character</h2><p class="gs-ok">✓ ' + esc(gName(cg)) + ' is added.</p>'
-      : '<h2 id="gsT">Add your character?</h2><p>Your character\'s page on Warcraft Logs brings in every raid night you were in this tier, with any group, and your own rankings. Debrief also finds the teams you raid with.</p>' + box(HS_KIND.char.ph) + '<p class="hs-how">' + HS_KIND.char.how + '</p>';
+      : '<h2 id="gsT">Add your character?</h2><p>Your character\'s page on Warcraft Logs brings in every raid night you were in this tier, with any group, and your own rankings. Debrief also finds the teams you raid with.</p>' +
+        // (Oct 19, new-visitor fix: type your name and realm; pasting a Warcraft Logs link is still there, folded under it)
+        '<div class="gs-nm"><input id="gsName" placeholder="Character name" autocomplete="off" aria-label="Character name"><input id="gsRealm" placeholder="Realm, like Thrall" autocomplete="off" aria-label="Realm">' +
+        '<select id="gsReg" aria-label="Region"><option>US</option><option>EU</option><option>KR</option><option>TW</option></select><button class="btn primary" id="gsFind" type="button">Find me</button></div>' +
+        '<div class="fp-msg gs-msg" id="gsMsg"></div><details class="gs-link"><summary>Or paste your Warcraft Logs link</summary>' + box(HS_KIND.char.ph).replace('<div class="fp-msg gs-msg" id="gsMsg"></div>', '') + '<p class="hs-how">' + HS_KIND.char.how + '</p></details>';
     nav = cg ? btn('next', 'Next', true) : btn('skip', 'Skip');
   } else if (s === 'found') {
     // (the teams and guilds that logged 2 or more of their raid nights: read in the first seconds of bringing them in)
@@ -18042,6 +18050,13 @@ function gsDraw() {
     '<div class="tr-nav"><span>' + (GS.back.length && s !== 'done' ? btn('back', 'Back') : '') + '</span><div>' + nav + '</div></div></div>';
   el.querySelectorAll('[data-gs]').forEach((b) => (b.onclick = () => gsAct(b.dataset.gs)));
   const inp = $('#gsIn'); if (inp) { $('#gsAdd').onclick = () => gsAdd(s); inp.onkeydown = (e) => { if (e.key === 'Enter') gsAdd(s); }; }
+  // (your name and realm (Oct 19): made into your Warcraft Logs character address, then added as if you'd pasted it; the realm is written the way the
+  // address writes it: small letters, no apostrophes or accents, dashes for spaces, so "Zul'jin" is "zuljin")
+  if ($('#gsFind')) { const go = () => { const nm = $('#gsName').value.trim(), rl = $('#gsRealm').value.trim(), msg = $('#gsMsg');
+      if (!nm || !rl) { msg.style.color = ''; msg.textContent = 'Type your character\'s name and realm.'; return; }
+      const slug = rl.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
+      $('#gsIn').value = 'https://www.warcraftlogs.com/character/' + $('#gsReg').value.toLowerCase() + '/' + slug + '/' + encodeURIComponent(nm.toLowerCase()); gsAdd(s); };
+    $('#gsFind').onclick = go; ['#gsName', '#gsRealm'].forEach((k) => { $(k).onkeydown = (e) => { if (e.key === 'Enter') go(); }; }); }
   el.querySelectorAll('[data-rw]').forEach((b) => (b.onclick = () => gsRw(b)));
   el.querySelectorAll('[data-me]').forEach((b) => (b.onclick = () => gsMe(b)));
   if (fresh) { const f = inp || el.querySelector('.me-c, .btn.primary') || el.querySelector('[data-gs="skip"], [data-gs="meno"]'); if (f) f.focus({ preventScroll: true }); }
@@ -18529,7 +18544,10 @@ async function charRankPanel(g, diffId, bid, view) {
     const as = ((z && z.allStars) || []).slice().sort((a, b) => (b.points || 0) - (a.points || 0))[0];
     // (their most played spec's averages, kept for their tile on the home page)
     if (spec === g.mainSpec && ranked.length && z.bestPerformanceAverage != null) { const x = groups().find((q) => q.gid === g.gid); if (x) { x.parse = { spec, best: z.bestPerformanceAverage, med: z.medianPerformanceAverage || 0, d }; groupPut(x);
-      const c = $(bid === 'pgRankMe' ? '#pgYouChips' : '#pgRkChips'); if (c && still()) c.innerHTML = youChips(x); } }
+      const c = $(bid === 'pgRankMe' ? '#pgYouChips' : '#pgRkChips'); if (c && still()) c.innerHTML = youChips(x);
+      // (your card's spec art (Oct 19): your spec is known once your rankings arrive, so the art goes in then too)
+      if (bid === 'pgRankMe' && still() && x.cls && x.parse && E.CLASSES[x.cls]) { const sa = specArt({ cls: x.cls, specName: x.parse.spec + ' ' + E.CLASSES[x.cls][0] }), yu = $('.pg-you'), card = yu && yu.closest('.my-you');
+        if (yu) yu.style.setProperty('--sart', sa); if (card) { card.classList.add('my-youa'); card.style.setProperty('--sart', sa); } } } }
     const chip = (v) => (v == null ? '<span class="sub">—</span>' : prsChip({ pct: v }));
     const sw = '<div class="pr-sw"><div class="seg" role="group" aria-label="Spec">' + specs.map((x) => '<button type="button" data-rs="' + esc(x.n) + '"' + (x.n === spec ? ' class="on"' : '') + '>' + esc(x.n) + (x.n === g.mainSpec ? ' <span class="sub">most played</span>' : '') + '</button>').join('') + '</div>' +
       '<div class="seg" role="group" aria-label="Damage or healing"><button type="button" data-rm="dps"' + (metric === 'dps' ? ' class="on"' : '') + '>Damage</button>' + (specs.some((x) => x.heal) ? '<button type="button" data-rm="hps"' + (metric === 'hps' ? ' class="on"' : '') + '>Healing</button>' : '') + '</div></div>';
