@@ -5337,8 +5337,8 @@ function newPlayer(guid) {
 }
 function addAb(m, name, id, amt, over, crit) {
   let a = m.get(name);
-  if (!a) m.set(name, a = { name, id, total: 0, over: 0, hits: 0, crits: 0 });
-  a.total += amt; a.over += over; a.hits++; if (crit) a.crits++;
+  if (!a) m.set(name, a = { name, id, total: 0, over: 0, hits: 0, crits: 0, max: 0 });
+  a.total += amt; a.over += over; a.hits++; if (crit) a.crits++; if (amt > a.max) a.max = amt;
 }
 // battle resses and externals: who they went on (the Performance tab's Utility view)
 const HELP_CAST = new Set(['rebirth', 'raise ally', 'intercession', 'soulstone', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue', 'power infusion']);
