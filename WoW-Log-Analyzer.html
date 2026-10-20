@@ -3237,6 +3237,10 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 @media (max-width: 640px) { .mcx-wipe span { display: none; } .mcx-okt { height: 8px; margin-top: -4px; } }
 /* (Oct 19, "make MAJOR all caps and bold": the word MAJOR wherever a level is written, and Rotation's MAJOR label and button, bold) */
 .lv-maj { font-weight: 800; letter-spacing: .04em; } .spc-bd.bad, .spc-tlb.bad, .spc-pill.bad { font-weight: 800; letter-spacing: .02em; }
+/* (Oct 19: the hero tree as a small gold tag in the player's title, on Rotation by the name and on Compare's face-off under each name) */
+.rot-herot, .cmp-hph { display: inline-block; padding: 2px 9px; border-radius: 6px; font: 700 12px var(--body); letter-spacing: .03em; color: #f1d38c; background: rgba(230,180,80,.12); box-shadow: inset 0 0 0 1px rgba(230,180,80,.4); text-shadow: none; white-space: nowrap; }
+.rot-herot { margin-left: 10px; vertical-align: 4px; } .cmp-hph { align-self: flex-start; margin: 3px 0 2px; font-size: 11px; } .cmp-hpr .cmp-hph { align-self: flex-end; }
+@media (max-width: 640px) { .rot-herot { display: table; margin: 4px 0 0; vertical-align: 0; } }
 .tr-mech { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-mech .tp-chips > span { font-size: 13px; }
 .tr-perf { width: 100%; gap: 8px; } .tr-perf i { height: 12px; }
 .tr-prog { display: flex; flex-direction: column; gap: 12px; width: 100%; } .tr-strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; } .tr-strip i { height: 14px; border-radius: 3px; background: #252a35; }
