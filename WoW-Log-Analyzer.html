@@ -13092,7 +13092,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
   if (!root._meNav) { root._meNav = 1; root.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-code], #pnwGo, [data-act="open"]')) S.tab = 'live'; }, true); } }
 // (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
 function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
-  return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = !back ? 'Open a raid night first' : off ? 'Under development' : TAB_TIP[k] || '';
+  return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || (k === 'overview' && ASG_OFF()), tt = !back ? 'Open a raid night first' : k === 'overview' && off ? 'In Development' : off ? 'Under development' : TAB_TIP[k] || '';
     return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + '</nav></div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pg-tabbar .tab'); if (!b) return; const k = b.dataset.t;
   if (k === 'me') { const h = meHomeChar(); if (h) { meSwitch(h.gid); return; } if (!b.classList.contains('on')) openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = k; select(PROG_BACK); });
@@ -13223,6 +13223,7 @@ const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with the buttons that jump into it)
+const ASG_OFF = () => !!window.WLA_HOSTED; /* (the Assignments tab is greyed out on the website, "In Development" (your call, Oct 20); on in the app on your PC) */
 const PERF_OFF = () => !!window.WLA_HOSTED; /* (greyed out on the website again Oct 20 while you plan its rebuild (your call); on in the app on your PC) */
 // (Power Infusion, one of Graphs' views, was greyed out on the website until its rework; on everywhere since Oct 18
 // (your call). Set this back to () => !!window.WLA_HOSTED to grey it out there again, with its plan line on Pull recap)
@@ -13512,7 +13513,7 @@ function renderMain() {
     // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
-      const tab = (k) => { const l = name.get(k), soon = (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
+      const tab = (k) => { const l = name.get(k), soon = (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || (k === 'overview' && ASG_OFF()) || soon, tt = soon ? 'Coming soon' : k === 'overview' && off ? 'In Development' : off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview' && !TAB_ORDER.includes('overview')) ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
