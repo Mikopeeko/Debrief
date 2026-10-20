@@ -11327,6 +11327,14 @@ async function specRanksOf(run, v) {
     guild: t.guild ? t.guild.name : '', amount: Math.round(t.amount || 0), code: t.report.code, fight: t.report.fightID, tal: (t.talents || []).map((x) => x.talentID).filter(Boolean) }));
   return { page: v.p || 1, more: !!R.hasMorePages, list };
 }
+// One ranked player's spells on their kill, for Compare's "Top 100 average" (the page reads a few players spread through
+// the group and averages them): each spell's total and casts, and the fight's length. v: { c: report code, f: fight, n: name, m }
+async function playerAbOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x), nm = String(v.n).replace(/'/g, "\\'");
+  const d = await run(TOPAB_Q, { c: v.c, f: [v.f], x: "source.name = '" + nm + "' or source.owner.name = '" + nm + "'", t: v.m === 'hps' ? 'Healing' : 'DamageDone' });
+  const rep = d.reportData.report, f = rep.fights[0], dd = P(rep.d).data.entries || [], kk = P(rep.k).data.entries || [], casts = new Map(kk.map((e) => [e.name, e.total || 0]));
+  return { dur: Math.round(Math.max(1, (f.endTime - f.startTime) / 1000)), ab: dd.map((e) => ({ name: e.name, id: e.guid, total: e.total || 0, casts: casts.get(e.name) || 0 })) };
+}
 // </topspec>
 async function topSpec(creds, v) {
   if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=4'); // (v=4: the top 8, each with their own spells and their kill's report and fight)
@@ -11339,6 +11347,10 @@ async function topKills(creds, v) {
 async function specRanks(creds, v) {
   if (HOSTED) return api('/api/specrank?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&p=' + v.p);
   return specRanksOf((q, vars) => gql(creds, q, vars), v);
+}
+async function playerAb(creds, v) {
+  if (HOSTED) return api('/api/plab?c=' + v.c + '&f=' + v.f + '&n=' + encodeURIComponent(v.n) + '&m=' + v.m);
+  return playerAbOf((q, vars) => gql(creds, q, vars), v);
 }
 async function guildProg(creds, v) {
   if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t);
@@ -11722,7 +11734,7 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
+root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReport };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -26865,7 +26877,7 @@ function cmpGapWhy(x) {
   // Rotation checks the lower side did worse on, with what Rotation works out they cost
   for (const o of x.rot || []) { const lw = x.rotLo === 'A' ? o.w > 0 : o.w < 0; if (!lw || /overheal/i.test((o.c && (o.c.label || o.c.k)) || '')) continue; const c = x.rotLo === 'A' ? o.c : o.d, d2 = x.rotLo === 'A' ? o.d : o.c;
     out.push({ v: (c.cost || 0) / Math.max(1, x.end) || 0.01 * hi.rate, head: esc(c.label || c.k), icon: c.id ? spellIcon(c.id, c.label || c.k) : '', pills: [c.v != null ? c.v : '?', d2.v != null ? d2.v : '?'], txt: 'A check from the Rotation tab, where ' + L + ' did worse.',
-      tip: 'A check from the Rotation tab.' + ((c.cost || 0) >= 20000 ? ' Rotation puts the cost at about ' + C(c.cost / Math.max(1, x.end)) + ' a second.' : ''), fix: (x.book && x.book.rotFix && x.book.rotFix[c.label]) || 'The Rotation tab shows this one cast by cast.' }); }
+      tip: 'A check from the Rotation tab.' + ((c.cost || 0) >= 20000 ? ' Rotation puts the cost at about ' + C(c.cost / Math.max(1, x.end)) + ' a second.' : ''), fix: (x.book && x.book.rotFix && x.book.rotFix[c.label]) || (c.tip ? capS(String(c.tip).replace(/^Next time:\s*/i, '')) : 'Open it on the Rotation tab to see it cast by cast.') }); }
   // talents only the higher side took that make the spells where the gap is stronger
   for (const o of x.hits || []) if (o.used) continue; else if (o.H === hi.nRaw && o.j.ts.length && !o.j.own) out.push({ v: 0.2 * o.j.w, head: esc(o.j.e.name), txt: 'Only ' + H + ' took this talent. It makes ' + esc(o.j.ts.join(' and ')) + ' stronger.', tip: 'A talent difference: see Talent differences.' });
     else if (o.H === hi.nRaw && o.j.own) out.push({ v: o.j.own, head: esc(o.j.e.name), txt: 'Only ' + H + ' took this talent. It ' + (U === 'healing' ? 'healed for ' : 'did ') + b(C(o.j.own)) + ' a second by itself.', tip: 'A talent difference: see Talent differences.' });
@@ -27091,9 +27103,32 @@ function cmpPair(r, p, rB, q, vs, lead, nmO) {
   // (the numbers cards and healing a second spell by spell are off: the side-by-side sections cover them (your call, Oct 19))
   // (Oct 20, "try a": the gap page. The face-off, then the biggest fixes (or Why the gap when there's nothing to fix), then the opener and
   // burst windows side by side; every other section waits in one fold. CMP_GAP_VIEW = false brings back the Oct 19 page)
+  // (Oct 20, "it's very similar to the Rotation tab": Compare leads with what the other player does differently, with no grades (Rotation
+  // grades your own play): build, spell mix, casting, big cooldown timing and gear, each a small tile, then the cooldowns over the fight)
+  const diffs = (() => {
+    const pcx = (v) => (100 * v).toFixed(v < 0.1 ? 1 : 0) + '%', an = me ? 'you' : An, out = [], same = q.specName === p.specName;
+    const tile = (label, txt) => '<div class="cmp-card na"><div class="cmp-cl"><span>' + label + '</span></div><div class="cmp-ct">' + txt + '</div></div>';
+    // (the build: hero tree, the playbook's build name, and the talents only one of them took that change the number a second)
+    const hB = heroQ(q), bl = [];
+    if (hA && hB && hA !== hB) bl.push(An + (me ? ' play ' : ' plays ') + '<b>' + esc(hA) + '</b>, ' + Bn + ' plays <b>' + esc(hB) + '</b>.');
+    if (tal && tal.bA && tal.bB && tal.bA.name && tal.bA.key !== tal.bB.key) bl.push(An + ': <b>' + esc(tal.bA.name) + '</b>. ' + Bn + ': <b>' + esc(tal.bB.name) + '</b>.');
+    const only = (isA) => (tal && tal.hits ? tal.hits.filter((o) => (o.sH.ab === A.ab) === isA).slice(0, 3).map((o) => '<b>' + esc(o.j.e.name) + '</b>') : []), oB = only(false), oA = only(true);
+    if (oB.length) bl.push('Only ' + Bn + ' took ' + oB.join(', ') + '.'); if (oA.length) bl.push('Only ' + an + ' took ' + oA.join(', ') + '.');
+    if (tal && same) out.push(tile('Build', bl.length ? bl.join(' ') : 'The same talents, where it matters for ' + U(k) + '.'));
+    // (spell mix: the two spells whose part of the total differs most)
+    if (k === kq && same) cmpPairs(A, B).map(([a, b2]) => ({ x: a || b2, sa: a ? a.share : 0, sb: b2 ? b2.share : 0 })).filter((o) => Math.abs(o.sa - o.sb) >= 0.015)
+      .sort((u, v) => Math.abs(v.sa - v.sb) - Math.abs(u.sa - u.sb)).slice(0, 2).forEach((o) => { const n = String(o.x.name).replace(/^[^:]+: /, '');
+        out.push(cmpCard({ ...two, label: spellIcon(o.x.id, n) + ' ' + esc(n), a: o.sa, b: o.sb, fa: pcx(o.sa), fb: pcx(o.sb), st: 'na', txt: 'A bigger part of ' + (o.sb > o.sa ? Bn + '\'s' : me ? 'your' : An + '\'s') + ' ' + U(k) + '.' })); });
+    out.push(cmpCard({ ...two, label: 'Casts a minute', a: cpm(p), b: cpm(q), fa: cpm(p).toFixed(1), fb: cpm(q).toFixed(1), st: 'na', txt: cmpLead(An, cpm(p), Bn, cpm(q), 'cast') }));
+    // (big cooldowns, 90 seconds or longer: when each of them pressed it)
+    if (same) { const at = (x, n) => (x.byName.get(n.toLowerCase()) || []).filter((t) => t <= perfContext(R(x)).end), ls = (l) => (l.length ? l.slice(0, 6).map(T).join(', ') + (l.length > 6 ? '…' : '') : 'never');
+      (PERF_CDS[p.specName] || []).filter(([, c]) => c >= 90).map(([n]) => n).filter((n) => at(p, n).length || at(q, n).length).slice(0, 2)
+        .forEach((n) => out.push(tile(spellIcon(E.SPELLID.get(n.toLowerCase()) || 0, n) + ' ' + esc(n), An + ': <b>' + ls(at(p, n)) + '</b><br>' + Bn + ': <b>' + ls(at(q, n)) + '</b>'))); }
+    if (iA && iB) out.push(cmpCard({ ...two, label: 'Item level', a: iA, b: iB, fa: String(Math.round(iA)), fb: String(Math.round(iB)), st: 'na', txt: Math.abs(iA - iB) < 3 ? 'About the same gear.' : (iA > iB ? An : Bn) + ' had better gear.' }));
+    return '<div class="panel"><h3>How they play it differently<small>Side by side, no grades. ' + (me ? 'Your' : An + '\'s') + ' own checks are on the Rotation tab.</small></h3><div class="cmp-cards">' + out.join('') + '</div></div>'; })();
   if (CMP_GAP_VIEW) { const hi = cmpChips(rot, { An, Bn, me, colA: p.color, colB, UN: U(k), pA: p, pB: q, nmO, book: q.specName === p.specName ? specBook(p.specName) : null, hi: true });
-    return { vs, body: (lead || '') + hps + (fixes || gapH) + hi +
-      cmpFold('all', 'Every check, side by side', 'The whole Rotation page next to theirs, cooldowns over the fight, the numbers and talents. Click to open.', (fixes ? gapH : '') + (chips || '') + cdTl + sideBy + chart + (tal ? tal.html : '') + (rot ? rot.html : '')) }; }
+    return { vs, body: (lead || '') + hps + diffs + cdTl + hi +
+      cmpFold('all', 'Every check, side by side', 'The biggest fixes, the whole Rotation page next to theirs, the numbers and talents. Click to open.', (fixes || '') + gapH + (chips || '') + sideBy + chart + (tal ? tal.html : '') + (rot ? rot.html : '')) }; }
   return { vs, body: (lead || '') + hps + (chips || gapH) + cdTl + sideBy + chart +
     cmpFold('more', 'More detail', 'Talent differences and every Rotation check. Click to open.', (tal ? tal.html : '') + (rot ? rot.html : '')) };
 }
@@ -27148,15 +27183,79 @@ function cmpTop(r, p) {
   const myHero = cmpHeroOf(r, p), all = (TS.per || []).filter((x) => x.who).map((x, i) => ({ ...x, rank: i + 1, hero: cmpHeroBy(p.specName, x.ab.map((t) => t.name)) }));
   const onTree = myHero ? all.filter((x) => x.hero === myHero) : [], treeMiss = !!(all.length && myHero && !onTree.length), pick3 = (onTree.length ? onTree : all).slice(0, 3);
   if (!pick3.length) return { vs: vs0('on this boss'), body: cmpMsg('The rankings didn\'t load just now. Open the tab again in a minute.') };
-  const ix = Math.min(pick3.length - 1, +S.cmpTopW || 0), x = pick3[ix], w = x.who;
-  const pick = '<select class="rot-sel" id="cmpTopW" aria-label="Change"><option value="" selected disabled>Change</option>' + pick3.map((y, i) => '<option value="' + i + '"' + (i === ix ? ' disabled' : '') + '>#' + y.rank + ' ' + esc(y.who.name) + '</option>').join('') + '</select>';
+  // (Oct 20, "pick names in various ranges of performance, and ... averages of like top 5, top 50, top 200, top 500": the menu adds one player
+  // around #50, #200 and #500 (on your hero tree when one is near), and Where you stand puts you next to each average, read from the rankings)
+  const RK = specRanksFor(r, p); if (RK) { RK.want = Math.max(RK.want, 6); specRanksMore(r, RK); }
+  const rl = RK ? RK.list : [], near = (n) => { const l = rl.filter((y) => Math.abs(y.rank - n) <= Math.max(5, n * 0.1)); if (!l.length) return null; if (l.some((y) => y.hero === undefined)) l.forEach((y) => { if (y.hero === undefined) y.hero = cmpHeroTal(p.specName, y.tal); });
+    const on = myHero ? l.filter((y) => y.hero === myHero) : []; return (on.length ? on : l).sort((a, b) => Math.abs(a.rank - n) - Math.abs(b.rank - n))[0]; };
+  const far = [50, 200, 500].map((n) => ({ n, y: near(n) })).filter((o) => o.y), key = String(S.cmpTopW == null ? 't0' : /^\d+$/.test(String(S.cmpTopW)) ? 't' + S.cmpTopW : S.cmpTopW);
+  const avK = /^a\d+$/.test(key) ? +key.slice(1) : 0, fk = far.find((o) => key === 'r' + o.n), ix = fk || avK ? -1 : Math.min(pick3.length - 1, +key.slice(1) || 0);
+  const x = fk ? { who: fk.y, rank: fk.y.rank, hero: fk.y.hero || '' } : pick3[Math.max(0, ix)], w = x.who;
+  const mineT = (k === 'heal' ? p.healS : p.dmgS) || [], mine = mineT.reduce((t, v2) => t + (v2 || 0), 0) / Math.max(1, r.duration), avg = (n) => { const l = rl.filter((y) => y.rank <= n); return l.length >= Math.min(n, 5) && (n <= rl.length || !RK.more) ? { v: l.reduce((t, y) => t + y.amount, 0) / l.length, n: l.length } : null; };
+  const avl = [100, 200, 500].filter((n) => avg(n)); // (Oct 20: "the average of the top 100, top 200 and top 500", as a choice in the menu)
+  const pick = '<select class="rot-sel" id="cmpTopW" aria-label="Change"><option value="" selected disabled>Change</option><optgroup label="The best">' + pick3.map((y, i) => '<option value="t' + i + '"' + (i === ix ? ' disabled' : '') + '>#' + y.rank + ' ' + esc(y.who.name) + '</option>').join('') + '</optgroup>' +
+    (far.length ? '<optgroup label="Further down">' + far.map((o) => '<option value="r' + o.n + '"' + (fk === o ? ' disabled' : '') + '>Around #' + o.n + ': ' + esc(o.y.name) + ' (#' + o.y.rank + ')</option>').join('') + '</optgroup>' : RK && RK.busy ? '<optgroup label="Further down"><option disabled>Loading more of the rankings…</option></optgroup>' : '') +
+    (avl.length ? '<optgroup label="Averages">' + avl.map((n) => '<option value="a' + n + '"' + (avK === n ? ' disabled' : '') + '>Top ' + n + ' average</option>').join('') + '</optgroup>' : '') + '</select>';
+  // (Where you stand: your number over the whole fight, as the rankings count it, next to the average of the top 5, 50, 200 and 500)
+  const lad = [5, 50, 100, 200, 500].map((n) => ({ n, a: avg(n) })).filter((o) => o.a);
+  const stand = lad.length && mine > 0 ? (() => { const L = [{ me: true, v: mine }].concat(lad.map((o) => ({ n: o.n, v: o.a.v, cnt: o.a.n }))).sort((a, b) => b.v - a.v), mx = L[0].v || 1, U = k === 'heal' ? 'healing' : 'damage';
+    return '<div class="panel pf-bars"><h3 class="nh"><span>Where you stand</span><small>' + capS(U) + ' a second over the whole fight, as the rankings count it, next to the average ' + esc(spn) + ' at each level' + (RK && RK.busy ? '. Loading more…' : '') + '</small></h3>' + cbHead('A second', 'Gap', '', '', 'Who') +
+      L.map((o, i) => cbRow({ tag: 'div', cls: ' nb', k: i + 1, color: o.me ? p.color : '#e6b450', icon: o.me ? avatar(p, true) : cmpIcon('trophy', 'var(--gold)'), name: o.me ? (cmpIsMe(p) ? 'You' : esc(p.name)) : 'Top ' + o.n + ' average', chips: o.me || o.cnt >= o.n ? '' : '<span class="sub">(' + o.cnt + ' so far)</span>',
+        segs: [[100 * o.v / mx, 'm']], v: C(o.v), sub: o.me ? '' : (mine >= o.v ? '<span class="dl up">▲ ' + Math.round(100 * (mine / o.v - 1)) + '%</span>' : '<span class="dl dn">▼ ' + Math.round(100 * (1 - mine / o.v)) + '%</span>') })).join('') + '</div>'; })() : '';
   const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">' + esc(w.name) + '</span>' + pick +
     '<small>#' + x.rank + ' ' + esc(spn) + ' on this boss' + (x.hero ? ', ' + esc(x.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
   const treeNote = treeMiss ? '<div class="panel"><p class="cmp-hnote" style="margin:0">None of the top ' + all.length + ' ' + esc(spn) + 's on this boss play ' + esc(myHero) + ', so these are the best of any hero tree. Some spells only one side has.</p></div>' : '';
-  const TF = topFightFor(r, w);
-  if (TF === 'loading') return { vs, body: treeNote + cmpTfLoad(w) };
-  if (TF.err) return { vs, body: treeNote + cmpMsg(esc(TF.err)) };
-  return cmpPair(r, p, TF.r, TF.q, vs, treeNote);
+  if (avK) return cmpAvgTop(r, p, k, avK, avg(avK), rl, myHero, mine, pick, stand);
+  const lead = (fk ? '' : treeNote) + stand, TF = topFightFor(r, w);
+  if (TF === 'loading') return { vs, body: lead + cmpTfLoad(w) };
+  if (TF.err) return { vs, body: lead + cmpMsg(esc(TF.err)) };
+  return cmpPair(r, p, TF.r, TF.q, vs, lead);
+}
+// (Oct 20, "the average of the top 100, top 200, and top 500 players ... based on the parses, not the speed of the kill": you against the
+// average player of your spec in that group. The number is every ranked player's damage (or healing) a second, as the rankings count it
+// (the rankings are ordered by that number, the same order as parses); the spells are 8 of them spread through the group (on your hero
+// tree when 8 are), read from their kills and averaged. No opener or burst windows: an average isn't one real player)
+const PLAB = new Map();
+function plabFor(w, m, done) {
+  const k = w.code + ':' + w.fight + ':' + w.name; if (PLAB.has(k)) return PLAB.get(k);
+  PLAB.set(k, 'loading');
+  WCL.playerAb(S.wclCreds, { c: w.code, f: w.fight, n: w.name, m }).then((o) => PLAB.set(k, o && o.ab && o.ab.length ? o : { err: true }), (e) => { console.warn('Player spells:', e && e.message); PLAB.set(k, { err: true }); }).finally(done);
+  return 'loading';
+}
+function cmpAvgTop(r, p, k, n, A, rl, myHero, mine, pick, lead) {
+  const spn = p.specName || 'spec', U = k === 'heal' ? 'healing' : 'damage', nm = 'Top ' + n + ' average', GOLD = '#e6b450';
+  const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">' + nm + '</span>' + pick + '<small>' + (A ? A.n + ' ' + esc(spn) + 's, ranked by ' + U + ' a second' : 'loading the rankings…') + '</small>';
+  if (!A) return { vs, body: lead + cmpLoad('rk:' + n, 'Reading the rankings', 'Finding the top ' + n + ' ' + spn + 's…', null) };
+  const band = rl.filter((y) => y.rank <= n && y.code); band.forEach((y) => { if (y.hero === undefined) y.hero = cmpHeroTal(p.specName, y.tal); });
+  const on = myHero ? band.filter((y) => y.hero === myHero) : [], pool = on.length >= 8 ? on : band, N = Math.min(8, pool.length);
+  const picks = Array.from({ length: N }, (_, i) => pool[Math.floor((i + 0.5) * pool.length / N)]), m = k === 'heal' ? 'hps' : 'dps', lk = 'avg:' + n + ':' + spn;
+  const got = () => picks.map((w) => PLAB.get(w.code + ':' + w.fight + ':' + w.name));
+  const step = () => { const done = got().filter((o) => o && o !== 'loading').length; if (done < N) return cmpLoadSet(lk, 'Read ' + done + ' of ' + N + ' players\' spells…', done / N); cmpLoadEnd(lk); if (S.tab === 'cmp' && S.rep === r) cmp(); };
+  picks.forEach((w) => plabFor(w, m, step));
+  const g = got(), ok = g.filter((o) => o && o !== 'loading' && !o.err);
+  if (g.some((o) => o === 'loading')) return { vs, body: lead + cmpLoad(lk, 'Reading the ' + nm.toLowerCase(), 'Reading ' + N + ' players\' spells, spread through the top ' + n + '…', 0) };
+  if (!ok.length) return { vs, body: lead + cmpMsg('Their spells didn\'t load just now. Open the tab again in a minute.') };
+  // (each spell: its share of each player's total and its casts a minute, averaged over the players read, 0 for one who didn't use it)
+  const by = new Map();
+  for (const o of ok) { const tot = o.ab.reduce((t, a) => t + (a.total || 0), 0) || 1, min = Math.max(1, o.dur) / 60;
+    for (const a of o.ab) { let x = by.get(a.name); if (!x) by.set(a.name, x = { name: a.name, id: a.id, share: 0, cpm: 0 }); x.share += (a.total || 0) / tot / ok.length; x.cpm += (a.casts || 0) / min / ok.length; } }
+  const me = cmpIsMe(p), An = me ? 'You' : p.name;
+  // (your spells counted the way the rankings count theirs: an Overload inside its spell ("Elemental Blast Overload" in Elemental Blast),
+  // and each pet as one line, named as theirs is ("Ancestor: Lava Burst" in Call of the Ancestors, "Primal Storm Elemental: Stormfury"
+  // in Primal Storm Elemental))
+  const theirs = [...by.values()], petTo = (pet) => { const l = pet.toLowerCase(); return theirs.find((t) => t.name.toLowerCase() === l) || theirs.find((t) => t.name.toLowerCase().includes(l)) || null; };
+  const mm = new Map(); for (const a of cmpMyAb(r, p, k)) { const pm = String(a.name).match(/^([^:]+): /), t = pm ? petTo(pm[1]) : null, nm2 = pm ? (t ? t.name : pm[1]) : String(a.name).replace(/ Overload$/, '');
+    const o = mm.get(nm2); if (o) { o.share += a.share; if (!pm && a.cpm) o.cpm = Math.max(o.cpm || 0, a.cpm); } else mm.set(nm2, { name: nm2, id: t ? t.id : a.id, share: a.share, cpm: pm ? null : a.cpm || null }); }
+  const why = cmpWhy({ name: An, col: p.color, rate: mine, ab: [...mm.values()], hero: '' }, { name: nm, col: GOLD, rate: A.v, ab: theirs.sort((a, b) => b.share - a.share), hero: '' }, k, p.specName);
+  // (the face-off, as with one player: your number, the gap in the badge, theirs, and the tug of war bar)
+  const ic = pIcon(p) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(p)) + '" alt="" onerror="this.remove()">' : '';
+  const big = (n2, col, v, rt) => '<div class="cmp-hpn' + (rt ? ' cmp-hpr' : '') + '" style="--c:' + col + '">' + ic + '<div><span class="cmp-hpw">' + n2 + '</span><b class="cmp-hpv">' + C(v) + '</b><span class="sub">' + U + ' a second</span></div></div>';
+  const gp = mine > 0 && A.v > 0 ? Math.abs(mine - A.v) / Math.min(mine, A.v) : null, hiN = mine >= A.v ? An : nm;
+  const badge = gp == null ? '<b>vs</b>' : gp < 0.02 ? '<b>=</b><span>About the same</span>' : '<b>+' + Math.round(100 * gp) + '%</b><span>' + esc(hiN) + ' ' + (k === 'heal' ? 'healed' : 'did') + ' more</span>';
+  const tug = mine > 0 ? '<div class="cmp-hpbar"><i style="flex:' + mine + ';background:' + p.color + '"></i><i style="flex:' + A.v + ';background:' + GOLD + '"></i></div>' : '';
+  const hps = '<div class="panel cmp-hps" style="--artA:' + specArt(p) + ';--artB:' + specArt(p) + '">' + big(esc(An), p.color, mine, false) + '<div class="cmp-hpm">' + badge + '</div>' + big(nm, GOLD, A.v, true) + tug + '</div>';
+  const note = '<div class="panel"><p class="cmp-hnote" style="margin:0">' + nm + ' is ' + (A.n < n ? 'all ' + A.n + ' ' + esc(spn) + 's ranked on this boss so far (fewer than ' + n + ')' : 'the top ' + n + ' ' + esc(spn) + 's on this boss') + ', ranked by ' + U + ' a second (the same order as their parses). The spells come from ' + ok.length + ' of them, spread through the group' + (pool === on ? ', all playing ' + esc(myHero) : '') + '. An average isn\'t one real player, so there\'s no opener or burst windows here. Pick a player under Change to see those.</p></div>';
+  return { vs, body: lead + hps + (why || cmpMsg('Your spells line up with theirs: no spell is more than 2% apart.')) + note };
 }
 // (3) Similar raid groups: kills of this boss, 20 at a time, sorted by how many of your specs they share. Pick one from
 // the list; then it's your raid against theirs, the same page as the other two.
@@ -27253,7 +27352,7 @@ function cmp() {
   const v = $('#view');
   v.querySelectorAll('#cmpMode button').forEach((b) => (b.onclick = () => { S.cmpMode = b.dataset.m; S.cmpG = null; cmp(); }));
   const sel = (id, f) => { const e = $('#' + id); if (e) e.onchange = () => { if (!e.value) return; f(e.value); cmp(); }; };
-  sel('cmpMe', (nm) => { S.cmpMe = nm; if (S.cmpMate === nm) S.cmpMate = null; }); sel('cmpMate', (nm) => { S.cmpMate = nm; }); sel('cmpTopW', (v) => { S.cmpTopW = +v; }); sel('cmpSelfP', (v) => { S.cmpSelfP = +v; });
+  sel('cmpMe', (nm) => { S.cmpMe = nm; if (S.cmpMate === nm) S.cmpMate = null; }); sel('cmpMate', (nm) => { S.cmpMate = nm; }); sel('cmpTopW', (v) => { S.cmpTopW = v; }); sel('cmpSelfP', (v) => { S.cmpSelfP = +v; });
   // (a pair of bars: open its details under it, or close them)
   v.querySelectorAll('[data-cg]').forEach((b) => (b.onclick = () => { S.cmpG = S.cmpG === b.dataset.cg ? null : b.dataset.cg; cmp(); }));
   const all2 = $('#cmpAllSp'); if (all2) all2.onclick = () => { S.cmpAllSp = !S.cmpAllSp; cmp(); };
