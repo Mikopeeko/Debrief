@@ -440,38 +440,21 @@ async function fileIdea(req, env, url) {
 const SITE = 'https://debrief.james-m-nemecek.workers.dev';
 function newestNotes() {
   const i = APP_HTML.indexOf('const PATCH_NOTES = ['); if (i < 0) return null;
-  const m = /\{ d: '(\d{4}-\d\d-\d\d)'(?:, t: '((?:[^'\\]|\\.)*)')?/.exec(APP_HTML.slice(i, i + 4000));
-  return m ? { d: m[1], t: m[2] ? m[2].replace(/\\'/g, "'") : '' } : null;
-}
-// Sign in with Warcraft Logs (Oct 20): the page sends the code Warcraft Logs gave it and its PKCE verifier; this trades them
-// for a token with the sign-in key (a public one, no secret), asks who it is, and sends back only the name, characters and
-// guilds. The token isn't kept or sent on.
-const WCL_SIGN_ID = '01a15a39-b1bf-7242-8b34-414c13c35511';
-async function wclSignIn(req) {
-  let b = null; try { b = await req.json(); } catch (e) { /* not JSON */ }
-  if (!b || typeof b.code !== 'string' || typeof b.verifier !== 'string' || b.code.length > 4000 || b.verifier.length > 200) return json({ error: 'That sign-in is missing something.' }, 400);
-  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
-  try {
-    const t = await fetch('https://www.warcraftlogs.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ grant_type: 'authorization_code', client_id: WCL_SIGN_ID, redirect_uri: SITE + '/auth/wcl/callback', code: b.code, code_verifier: b.verifier }) });
-    const tj = await t.json().catch(() => ({}));
-    if (!tj.access_token) return json({ error: 'Warcraft Logs didn\'t accept that sign-in.' }, 400);
-    const q = '{ userData { currentUser { name characters { id name classID server { name slug region { slug } } } guilds { id name server { name region { slug } } } } } }';
-    const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tj.access_token }, body: JSON.stringify({ query: q }) });
-    const u = (((await r.json().catch(() => ({}))).data || {}).userData || {}).currentUser;
-    if (!u) return json({ error: 'Warcraft Logs didn\'t send your characters.' }, 502);
-    const reg = (s) => (s && s.region && s.region.slug) || '';
-    return json({ name: u.name, at: Date.now(),
-      chars: (u.characters || []).map((c) => ({ id: c.id, n: c.name, cls: c.classID, srv: c.server ? c.server.name : '', slug: c.server ? c.server.slug : '', reg: reg(c.server) })),
-      guilds: (u.guilds || []).map((g) => ({ id: g.id, n: g.name, srv: g.server ? g.server.name : '', reg: reg(g.server) })) });
-  } catch (e) { return json({ error: 'Couldn\'t reach Warcraft Logs.' }, 502); }
+  const s = APP_HTML.slice(i, i + 20000), m = /\{ d: '(\d{4}-\d\d-\d\d)'(?:, t: '((?:[^'\\]|\\.)*)')?/.exec(s);
+  if (!m) return null;
+  // (the day's New features, by their titles, for the post: { t: '...', d: '...' } cards before its n: list)
+  const day = s.slice(m.index, (s.indexOf('\n  { d: \'', m.index + 5) + 1 || s.length) - 1), hs = day.split(' n: [')[0];
+  const feats = [...hs.matchAll(/\{ t: '((?:[^'\\]|\\.)*)', d: /g)].map((x) => x[1].replace(/\\'/g, "'"));
+  return { d: m[1], t: m[2] ? m[2].replace(/\\'/g, "'") : '', feats };
 }
 async function announcePatch(env) {
   if (!env.DISCORD_PATCH_WEBHOOK || !env.DEBRIEF_KV) return;
   const p = newestNotes(); if (!p) return;
   const last = await env.DEBRIEF_KV.get('patch-announced'); if (last && last >= p.d) return;
   const day = new Date(p.d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
-  const content = '@everyone New patch notes on Debrief for ' + day + (p.t ? ': **' + p.t + '**' : '') + '. See what\'s new and what we fixed: ' + SITE + '/?patchnotes';
+  const content = '@everyone New patch notes on Debrief for ' + day + (p.t ? ': **' + p.t + '**' : '') + '.' +
+    (p.feats && p.feats.length ? '\n**New features:**\n' + p.feats.slice(0, 8).map((f) => '✨ ' + f).join('\n') + '\n' : ' ') +
+    'See everything that\'s new and what we fixed: ' + SITE + '/?patchnotes';
   const r = await fetch(env.DISCORD_PATCH_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content, username: 'Claude Van Patch', allowed_mentions: { parse: ['everyone'] } }) }); // (the user's call: bots get funny Claude names)
   if (r.ok) await env.DEBRIEF_KV.put('patch-announced', p.d);
@@ -483,7 +466,6 @@ export default {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
-    if (url.pathname === '/api/wcl-me') return req.method === 'POST' ? wclSignIn(req) : json({ error: 'Sign in from the website.' }, 405);
     if (url.pathname === '/api/bug') return req.method === 'POST' ? fileBug(req, env, url) : json({ error: 'Send reports with the website\'s form.' }, 405);
     if (route) {
       const v = route.v(url.searchParams);

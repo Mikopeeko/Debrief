@@ -1360,14 +1360,18 @@ function openReport() {
   };
   setTimeout(() => { const t = $('#rpText'); if (t) t.focus(); }, 60);
 }
-// Patch notes (the menu's "Patch notes" page): newest first, one entry a day. To add a round, put a line under the
-// newest date's n (New) or f (Fixed), or add a new date at the top. t is an optional headline for the day.
-// Plain player-facing words: no code terms, no guide or site names.
+// Patch notes (the menu's "Patch notes" page): newest first, one entry a day. Each day: h, the New features (the big
+// things raiders will love, a card each: { t: short title, d: one or two sentences }), then n (Improvements) and f (Bug
+// fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
+// Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-20', n: [
-    'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
-    'Boss guides: the maps now freeze at the key moments, with the important spot lit up and a short note from the raid lead.',
-    'Boss guides, in the menu (☰): how each fight works with animated maps, Heroic and Mythic, a mistake view and a full-fight simulation. Anyone can open them. The Coiled Altar is first.',
+  { d: '2026-10-20', h: [
+    { t: 'Boss guides', d: 'Animated maps that show how each fight works on Heroic and Mythic, with the key moments frozen and explained, a mistake view and a full-fight simulation. In the menu (☰), open to anyone. The Coiled Altar is first.' },
+    { t: 'Your NSRT note, inside Debriefing', d: 'Each job now sits on the mechanic it\'s about. Add a note on any pull: every group of players keeps its own, with suggested picks, warnings for a wrong role, and who takes the jobs of anyone missing.' },
+    { t: 'Debriefing levels up', d: 'Dots show how each mechanic went on your last pulls, numbers in colour, a Next pull line on every mechanic, phase timing against your best pull, and Copy for Discord.' },
+    { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
+    { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
+  ], n: [
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
@@ -1375,17 +1379,10 @@ const PATCH_NOTES = [
     'Patch notes: this page, so you can see what changed and when.',
     'A calmer, tidier look: one set of text sizes, corners and spacing across every page.',
     'Compare: the loading screen now shows each step and how far along it is while another player\'s kill downloads.',
-    'Assignments now lives inside Debriefing: your NSRT note\'s jobs sit on the mechanic they\'re about, and By player shows each raider\'s jobs.',
-    'Debriefing: dots on every mechanic show how it went on your last pulls of the boss.',
-    'Debriefing: Copy for Discord, a link straight to one mechanic, a Next pull line on each mechanic, and phase timing against your best pull.',
+    'Debriefing: By player shows each raider\'s note jobs, and any mechanic has its own link to share.',
     'Every boss\'s mechanics reworded: titles that say what to do, plain numbers instead of shorthand, and the same badge words everywhere.',
-    'NSRT notes: add a note on any pull. Each group of players keeps its own note, and it opens by itself on every pull with them. A note that names someone who isn\'t there asks who takes their jobs first.',
-    'NSRT notes: suggested picks with a reason for each, warnings for a wrong role or a player picked twice, nicknames linked once, a note for another group saved for that group or filled with tonight\'s raid, and your notes listed with when each was last used.',
-    'Nymrissa gets her full Debriefing: murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, and the whirlpools and Pop!',
-    'Nymrissa: Frost Burst and Frostscale checks now judged against the fastest Mythic kills, and every check has a How it works note.',
-    'Debriefing: numbers in colour. Mechanics show green, yellow or red (zeros in grey), the result is in the pull\'s progress colour, and Raid damage has an arrow against the pull before.',
-    'Suggest an idea, in the menu (☰): your idea goes straight to #suggestions on our Discord, where others can add a 👍.',
-    'Bug reports on our Discord now get a reply from our bot, Claudette, and hear back by themselves when the bug is fixed.',
+    'NSRT notes: nicknames linked once, and your notes listed with when each was last used.',
+    'Nymrissa: every check has a How it works note.',
   ], f: [
     'Small fixes for first-time visitors, found by walking through the whole site as a new raider.',
     'Bold words look crisp now: the site loads its real bold letters instead of faking them.',
@@ -1469,10 +1466,11 @@ function openPatchNotes() {
   const el = document.createElement('div'); el.id = 'pnzBox'; el.className = 'tour pnz-wrap'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Patch notes');
   const day = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   const list = (h, c, a) => a && a.length ? '<div class="pnz-g"><h4 class="pnz-h ' + c + '">' + h + '</h4><ul>' + a.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '';
-  const cnt = (p) => [p.n && p.n.length ? p.n.length + ' new' : '', p.f && p.f.length ? p.f.length + ' fixed' : ''].filter(Boolean).join(' · ');
+  const hl = (a) => a && a.length ? '<div class="pnz-g"><h4 class="pnz-h feat">New features</h4><div class="pnz-hl">' + a.map((x) => '<div class="pnz-card"><b>' + esc(x.t) + '</b><span>' + esc(x.d) + '</span></div>').join('') + '</div></div>' : '';
+  const cnt = (p) => [p.h && p.h.length ? p.h.length + ' new feature' + (p.h.length > 1 ? 's' : '') : '', p.n && p.n.length ? p.n.length + (p.h ? ' improvement' + (p.n.length > 1 ? 's' : '') : ' new') : '', p.f && p.f.length ? p.f.length + (p.h ? ' fix' + (p.f.length > 1 ? 'es' : '') : ' fixed') : ''].filter(Boolean).join(' · ');
   el.innerHTML = '<div class="panel pnz-sheet"><div class="pnz-top"><div><h2>Patch notes</h2><p>What\'s new on Debrief and what we fixed, newest first.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
     PATCH_NOTES.map((p, i) => '<details class="pnz-day"' + (!i ? ' open' : '') + '><summary><span class="pnz-d">' + day(p.d) + '</span>' + (p.t ? '<span class="pnz-t">' + esc(p.t) + '</span>' : '') +
-      '<span class="pnz-c">' + cnt(p) + '</span></summary>' + list('New', 'new', p.n) + list('Fixed', 'fix', p.f) + '</details>').join('') +
+      '<span class="pnz-c">' + cnt(p) + '</span></summary>' + hl(p.h) + list(p.h ? 'Improvements' : 'New', 'new', p.n) + list(p.h ? 'Bug fixes' : 'Fixed', 'fix', p.f) + '</details>').join('') +
     '<p class="pnz-foot">' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p></div>';
   document.body.appendChild(el); document.body.classList.add('touring');
   const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
