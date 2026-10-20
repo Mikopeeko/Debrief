@@ -1048,7 +1048,7 @@ function bgFetch(item) {
 const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['hw', 'Homework'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
-const TAB_ORDER = ['audit', 'overview', 'rot', 'perf', 'player', 'hw', 'cmp']; // (Recap is merged into Debriefing (Oct 19))
+const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'hw', 'cmp']; /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -1072,7 +1072,7 @@ const TAB_TIP = {
   cmp: 'One player side by side with the top players of their spec on this boss, with a teammate, or with raids that killed this boss with a group like yours.',
   live: 'The pull you picked, at a glance: what went wrong and what to fix before the next pull. It follows live logging.',
   overview: 'Your NSRT note, checked against this pull. It covers soaks, externals, orbs, kicks, mind control CC, curses and healing cooldowns, and shows who missed theirs.',
-  audit: 'Every boss mechanic in this pull, phase by phase. It shows what went wrong and who was involved, with maps, plus deaths and survival.',
+  audit: 'Every boss mechanic in this pull, phase by phase, with your NSRT note\'s jobs inside each one. It shows what went wrong and who was involved, with maps, plus deaths and survival.',
   rot: 'How each player played their own spec in this pull, checked against the guides: what they pressed and when, their cooldowns, their resources and their talents.',
   perf: 'The raw numbers for this pull, player by player and over time: damage, healing, damage taken, casts, resources, cooldowns, buffs and utility. The phases, boss mechanics, Bloodlust and deaths are marked on the charts.',
   night: 'Every pull of this boss together. It shows report cards, how far you got, what to fix before the next raid, and each mechanic and assignment pull by pull.',
@@ -1478,7 +1478,7 @@ function renderMain() {
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
       const tab = (k) => { const l = name.get(k), soon = k === 'cmp' && CMP_OFF(), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || soon, tt = soon ? 'Coming soon' : off ? 'Under development' : TAB_TIP[k] || '';
-        return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+        return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview') ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && serious ? '<span class="cnt">' + serious + '</span>' : '') + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
@@ -1766,8 +1766,11 @@ const NOTE_WORDS = new Set(['soak', 'soaks', 'kick', 'kicks', 'orb', 'orbs', 'gr
 // (NSRT reminder tags that are a group, not a character: everyone, a role, a class or spec, a raid group)
 const NOTE_TAGS = /^(everyone|all|raid|me|tanks?|healers?|heals|dps|melee|ranged|casters?|group\d*|grp\d*|g\d|warriors?|paladins?|hunters?|rogues?|priests?|deathknights?|dks?|shamans?|mages?|warlocks?|monks?|druids?|demonhunters?|dhs?|evokers?)$/i;
 function noteNames(text) {
-  const out = new Set();
+  const out = new Set(); let inInt = false;
   for (const raw of String(text || '').split(/\r?\n/)) { const ln = raw.trim(); if (!ln || /^EncounterID:/i.test(ln)) continue;
+    // (a kick block between intstart and intend is names only, one rotation a line, no label)
+    if (/^intstart$/i.test(ln)) { inInt = true; continue; } if (/^intend$/i.test(ln)) { inInt = false; continue; }
+    if (inInt) { for (const w of ln.replace(/\{[^}]*\}/g, ' ').split(/[\s,;]+/)) { const t = w.replace(/[()[\]."]/g, '').split('-')[0]; if (t.length >= 2 && /^\p{Lu}/u.test(t) && /^[\p{L}'-]+$/u.test(t) && !NOTE_WORDS.has(t.toLowerCase())) out.add(t); } continue; }
     // (a reminder's tags: only character names; NSRT's raid-wide tags (everyone, a role, a class, a group) aren't anyone (your note, Oct 18))
     if (/(^|;)\s*time:/i.test(ln)) { const m = ln.match(/(?:^|;)\s*tag:([^;]*)/i); if (m) m[1].split(/\s+/).filter(Boolean).map((w) => w.split('-')[0]).filter((w) => !NOTE_TAGS.test(w) && !NOTE_WORDS.has(w.toLowerCase())).forEach((w) => out.add(w)); continue; }
     const body = ln.replace(/\{[^}]*\}/g, ' '), ci = body.indexOf(':');
@@ -2099,8 +2102,9 @@ function storedNotesBind(only) {
   $$('#snBox [data-nboss]').forEach((x) => (x.onclick = async () => { const to = x.dataset.nboss, l = notesOf(to).list.filter((n) => !n.example), newest = l.slice().sort((p, q) => (q.saved || 0) - (p.saved || 0))[0];
     x.disabled = true; S.asView = 'pull'; if (!(await noteGoBoss(to, newest && newest.text))) { S.asView = 'notes'; x.disabled = false; x.textContent = 'Open a pull of ' + to + ' first'; } }));
 }
-function assign(only) { // (only: just the note, for the all-pulls NSRT audit, which draws its own results)
+function assign(only, capture) { // (only: just the note, for the all-pulls NSRT audit, which draws its own results; capture: just the jobs, for Debriefing)
   const r = S.rep, boss = r.item.boss, NO = notesOf(boss), used = noteForRep(r), text = used ? used.text : '', a = r.assign;
+  if (capture && !text) return null; /* (Debriefing asks for the jobs only: no note, nothing to show) */
   // (the note being edited: the one this pull uses, or a new one)
   const editN = S.noteEditId === 'new' ? null : (S.noteEditId && NO.list.find((n) => n.id === S.noteEditId)) || used, editT = editN ? editN.text : '';
   const pmap = new Map(players().map((p) => [p.name, p]));
@@ -2715,6 +2719,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
       list.sort((x, y) => x.ord - y.ord).map(secRow).join('') + '</details>'; };
   PHS.forEach((p, k) => { const list = secs.filter((o) => o.ph === k); if (list.length) h += phaseBlock(esc(p.name), isFinite(p.end) ? T(p.start) + '–' + T(p.end) : '', list); });
   { const list = secs.filter((o) => o.ph === 'w'); if (list.length) h += phaseBlock('Whole fight', PHS.length ? 'assignments that aren\'t tied to one phase' : '', list); }
+  if (capture) return { secs, PHS, a, used, checkedL }; /* (Debriefing's merge (Oct 19): the job sections, before anything is drawn) */
   // (one player picked in the tab bar (Oct 19): only the assignments that name them; their lines are kept and the others' hidden
   // once the page is drawn, below)
   const oneP = S.mechP && [...r.players.values()].some((p) => p.name === S.mechP) ? S.mechP : null, oneS = oneP ? oneP.split('-')[0] : '';
@@ -3035,6 +3040,57 @@ function burstPanel(r, m, cut) {
     '<details class="howit"><summary>How it works</summary><div>Every hit the raid landed, per second' + (cut ? ', up to the wipe filter' : '') + '. "Boss" is the boss and anything that shares its health; everything else is an add. Bloodlust counts as 40 seconds from the first press. "Our usual" is our damage a second the rest of the time, outside Bloodlust and the boss\'s windows' +
     (A ? '; ' + esc(A.what) + ' is read from the log' : '') + '. "Going on" lists the mechanics with a moment in the window (or 3 seconds before it). Nothing here is graded: Rotation grades each player\'s own cooldowns in these windows.</div></details></div>';
 }
+// ---- your NSRT note on Debriefing (Oct 19, "merge my assignments tab into debriefing", mockup A with C's switch) ----
+const DBN_W = { ok: 'done', warn: 'some missed', bad: 'missed', na: 'not judged' };
+// (a job's words for matching it to a mechanic line: its spell, else its title, without the small words)
+const dbnWords = (t) => String(t || '').toLowerCase().replace(/<[^>]+>/g, ' ').split(/[^a-z']+/).filter((w) => w.length >= 4 && !/^(kick|kicks|team|teams|soak|soaks|cooldown|cooldowns|healing|from|note|your|assignments?|with|each|first|second|third|line|lines)$/.test(w));
+function dbnMatch(jobs, buckets, whole, only) {
+  const secText = (x) => (x.s.title + ' ' + ((x.s.spell && x.s.spell[1]) || '') + ' ' + (x.s.tip || '') + ' ' + x.s.id).toLowerCase();
+  for (const o of jobs) { const k = o.ph === 'hcd' ? 'w' : o.ph, pool = (typeof k === 'number' ? buckets[k] || [] : whole).concat(typeof k === 'number' ? whole : buckets.flat());
+    const ws = dbnWords(o.tip || o.title), kick = /kick/i.test(plainOf(o.title)), x = (kick && pool.find((y) => y.s.id === 'kicks')) || pool.find((y) => ws.some((w) => secText(y).includes(w))); /* (a kick job goes on Interrupts, or on the mechanic its adds are in, like the Soulcoiler adds) */
+    if (o.ph === 'hcd' && !/^Healing cooldowns/.test(o.title)) o.title = 'Healing cooldowns (' + o.title + ')'; /* (a reminder group is named by its phase: say what it is) */
+    if (x && o.ph !== 'hcd') (x.jobs = x.jobs || []).push(o); else { if (!only.has(k)) only.set(k, []); only.get(k).push(o); } } }
+// (the tag in a mechanic line: how its note jobs went)
+const dbnSt = (l) => (l.some((o) => o.st === 'bad') ? 'bad' : l.some((o) => o.st === 'warn') ? 'warn' : l.some((o) => o.st === 'ok') ? 'ok' : 'na');
+const dbnTag = (jobs) => (jobs && jobs.length ? '<span class="dbn-tag st-' + dbnSt(jobs) + '" title="From your note"><i>' + emoIc('📜') + '</i>' + esc(plainOf(jobs.length === 1 ? jobs[0].txt || DBN_W[jobs[0].st] : jobs.filter((o) => o.st === 'ok').length + ' of ' + jobs.length + ' jobs done')) + '</span>' : '');
+// (the box at the top of an opened line: each note job, its result in a line, and Assignments' own rows for it)
+const dbnBox = (jobs) => (jobs && jobs.length ? '<div class="dbn-box"><div class="dbn-h">' + emoIc('📜') + ' From your note</div>' + jobs.map((o) => '<div class="dbn-job st-' + o.st + '"><div class="dbn-jh">' + (o.icon || '') + '<b>' + o.title + '</b>' + (o.sub ? '<span class="sub">' + o.sub + '</span>' : '') + (o.txtHtml != null ? '<span class="sst ' + o.st + '">' + o.txtHtml + '</span>' : hst(o.st, o.txt || DBN_W[o.st])) + '</div>' + (o.body || '') + '</div>').join('') + '</div>' : '');
+// (a job with no mechanic line of its own: a line of its own, marked From your note)
+const dbnOnly = (o) => '<details class="panel secd st-' + o.st + ' dbr-line dbn-line" id="dbn-' + esc(o.id) + '" data-k="dbn-' + esc(o.id) + '"' + (S.openSecs.has('dbn-' + o.id) ? ' open' : '') + '><summary><span class="sechd">' + (o.icon || '') + '<b>' + o.title + '</b></span><span class="dbn-from">' + emoIc('📜') + ' From your note</span>' + (o.txtHtml != null ? '<span class="sst ' + o.st + '">' + o.txtHtml + '</span>' : hst(o.st, o.txt || DBN_W[o.st])) + '</summary><div class="secbody">' + (o.how ? '<details class="howit"><summary>How it works</summary><div>' + o.how + '</div></details>' : '') + (o.body || '') + '</div></details>';
+// (the note bar under the top: which note, players it names who weren't here, and the way to change it)
+function dbnBar(NJ, r) {
+  if (!NJ) { const has = notesOf(r.item.boss).list.length; return '<div class="dbn-bar dbn-none"><span>' + emoIc('📜') + ' <b>' + (has ? 'The note saved with this log isn\'t a perfect match for this pull' : 'No NSRT note for ' + esc(r.item.boss) + ' yet') + '</b><span class="sub">' + (has ? 'it names players who aren\'t here, so it isn\'t used' : 'add your raid\'s note to check who did their job') + '</span></span><button type="button" class="btn sm" data-dbnote="1">' + (has ? 'See the note' : 'Add your NSRT note') + '</button></div>'; }
+  const a = NJ.a || {}, gone = a.unknownNames || [], nm = NJ.used ? NJ.used.name : 'Your note';
+  return '<div class="dbn-bar"><span>' + emoIc('📜') + ' <b>' + esc(nm) + '</b><span class="sub">' + plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + esc(NJ.checkedL) + '</span></span>' +
+    (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '') +
+    '<button type="button" class="btn sm" data-dbnote="1">See the note</button></div>'; }
+// (Note jobs, the fifth number: the jobs that came up this pull, and how many were done)
+function dbnNum(NJ, num) { const j = NJ.secs.filter((o) => o.st !== 'na'), ok = j.filter((o) => o.st === 'ok').length, bad = j.filter((o) => o.st === 'bad').length, warn = j.length - ok - bad;
+  return num('Note jobs', j.length ? '<b>' + ok + '</b><em> of ' + j.length + ' done</em>' : '<b>–</b>', j.length ? (bad || warn ? [bad ? bad + ' missed' : '', warn ? warn + ' with slips' : ''].filter(Boolean).join(' · ') : 'every job done') : 'none came up this pull').replace('class="dbr-n"', 'class="dbr-n dbn-n"'); }
+// By player: each raider's jobs in the note this pull, with how each went: the cooldown reminders by their result, the lines
+// Debrief checks by the mistakes it found for them, and the lines it doesn't check yet as not judged; missed jobs first
+function dbnPlayers(NJ, r, pmap) {
+  const a = NJ.a || {}, note = a.note || { lines: [], reminders: [] }, here = new Map([...r.players.values()].filter((p) => p.name).map((p) => [p.name.toLowerCase(), p.name]));
+  const per = new Map(), job = (n, j) => { if (!per.has(n)) per.set(n, []); per.get(n).push(j); }, unchecked = new Set((a.other || []).map((o) => o.label));
+  const mist = (a.mistakes || []).slice(), used = new Set();
+  for (const ln of note.lines) { if (/^invitelist$/i.test(ln.label)) continue; const lab = ln.label || (ln.raw && ln.words.length && ln.words.every((w) => here.has(String(w).toLowerCase()) || /^[A-Z]/.test(w)) ? 'Kick order' : ln.raw);
+    for (const w of ln.words) { const n = here.get(String(w).toLowerCase()); if (!n) continue;
+      const mine = mist.map((x, i) => [x, i]).filter(([x, i]) => !used.has(i) && x.player === n && ((ln.label && String(x.detail || '').toLowerCase().includes(String(ln.label).toLowerCase())) || String(x.mechanic || '').toLowerCase() === lab.toLowerCase()));
+      const mm = mine.length ? mine[0][0] : null; mine.forEach(([, i]) => used.add(i)); const more = mine.length > 1 ? ' (' + mine.length + ' times)' : '';
+      job(n, { t: lab, st: mm ? (mine.some(([x]) => x.severity !== 'Low') ? 'bad' : 'warn') : unchecked.has(ln.label) ? 'na' : 'ok', x: mm ? mm.detail + more : unchecked.has(ln.label) ? 'not checked yet' : '' }); } }
+  for (const c of a.cds || []) job(c.player, { t: (c.spell || 'Spell ' + c.spellid) + ' at ' + T(c.expected != null ? c.expected : c.time), st: c.status === 'on time' ? 'ok' : c.status === 'missed' ? 'bad' : /late|early/.test(c.status) ? 'warn' : 'na', x: c.status === 'on time' ? 'on time' : c.delta != null ? Math.abs(c.delta).toFixed(0) + ' s ' + c.status : c.status });
+  { const left = new Map(); mist.forEach((x, i) => { if (used.has(i) || x.mechanic === 'Assigned cooldown' || !here.has(String(x.player).toLowerCase())) return; const k = x.player + '|' + x.mechanic, o = left.get(k); if (o) { o.n++; if (x.severity !== 'Low') o.bad = true; } else left.set(k, { x, n: 1, bad: x.severity !== 'Low' }); });
+    for (const { x, n, bad } of left.values()) job(x.player, { t: x.mechanic, st: bad ? 'bad' : 'warn', x: x.detail + (n > 1 ? ' (' + n + ' times)' : '') }); }
+  const one = S.mechP && per.has(S.mechP) ? S.mechP : null, MK = { ok: '✓', warn: '!', bad: '✕', na: '–' }, rk = { bad: 0, warn: 1, ok: 2, na: 3 };
+  const list = [...per].filter(([n]) => !one || n === one).map(([n, l]) => ({ n, l: l.sort((x, y) => rk[x.st] - rk[y.st]), bad: l.filter((j) => j.st === 'bad').length, warn: l.filter((j) => j.st === 'warn').length, ok: l.filter((j) => j.st === 'ok').length }))
+    .sort((x, y) => y.bad - x.bad || y.warn - x.warn || x.n.localeCompare(y.n));
+  if (!list.length) return '<div class="panel as-none"><b>' + (one ? esc(one) + ' had nothing assigned in your note this pull.' : 'Nobody in this pull is named in your note.') + '</b></div>';
+  return '<div class="dbn-pcs">' + list.map((c) => { const p = pmap.get(c.n), col = p ? p.color : '#ddd', of = c.ok + c.warn + c.bad;
+    return '<article class="dbn-pc" style="--cc:' + col + '"><div class="dbn-pch">' + (p ? avatar(p, true) : '') + '<b style="color:' + col + '">' + esc(c.n) + '</b><span class="sub">' + esc(p ? p.specName || '' : '') + '</span><span class="dbn-pcn ' + (c.bad ? 'bad' : c.warn ? 'warn' : 'ok') + '">' + (of ? c.ok + '/' + of : '–') + '</span></div>' +
+      c.l.map((j) => '<div class="dbn-pj st-' + j.st + '"><i>' + MK[j.st] + '</i><span>' + esc(j.t) + '</span>' + (j.x ? '<small>' + esc(j.x) + '</small>' : '') + '</div>').join('') + '</article>'; }).join('') + '</div>' +
+    ((a.unknownNames || []).length ? '<p class="sub" style="margin:10px 2px 0">In the note but not in this pull: ' + esc(a.unknownNames.join(', ')) + '.</p>' : ''); }
+// (the switch and the note bar's button)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-dbv], [data-dbnote]'); if (!b) return; if (b.dataset.dbv) { if (S.dbView === b.dataset.dbv) return; S.dbView = b.dataset.dbv; const y = window.scrollY; renderMain(); window.scrollTo({ top: y }); } else { S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); } });
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
   if (m0.error) { view('<div class="panel">The audit for this fight hit an error: ' + esc(m0.error) + '</div>'); return; }
@@ -3517,7 +3573,7 @@ function audit() {
   S.openSecs = S.openSecs || new Set(); S.openSets = S.openSets || new Set();
   // (tile: a problem mechanic drawn as a tile in its phase (Oct 19, layout B): its worst moment's map on top, then its name and status,
   // the moment and "+3 more" as tags and one sentence; it opens in place across the whole row like any section)
-  const secBlock = ({ s, rows, groups }, key, tile) => {
+  const secBlock = ({ s, rows, groups, jobs }, key, tile) => {
     const sid = s.id + '-' + key, allRows = rows.concat(...groups.map((g) => g.rows)), nBad = allRows.filter(isBadRow).length, nWarn = allRows.filter(isWarnRow).length;
     const v = nBad ? (s.verdict === 'good' ? 'warn' : s.verdict) : nWarn ? 'warn' : (rows.length || groups.length ? 'good' : s.verdict);
     // the row: a coloured edge and one status line on the right (✕ problems, ! could be better, ✓ clean), like Assignments;
@@ -3525,7 +3581,7 @@ function audit() {
     const lc = lvlCounts(s.id, nBad, nWarn, allRows.length), stc = !nBad && !nWarn ? (s.info ? 'na' : 'ok') : LVL_CLS[lvlOf(lc)], ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
     const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + secHead(s) +
-      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + '</summary><div class="secbody">' +
+      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + dbnTag(jobs) + '</summary><div class="secbody">' + dbnBox(jobs) +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
@@ -3601,6 +3657,11 @@ function audit() {
   const phRing = (list) => { const l = list.filter((x) => !x.s.info), lv = l.map((x) => lvlOf(phLv([x]))), n = (k) => lv.filter((v) => v === k).length, tot = l.length; if (!tot) return '';
     const C = 2 * Math.PI * 14, seg = (k, off, col) => (n(k) ? '<circle r="14" cx="18" cy="18" fill="none" stroke="' + col + '" stroke-width="5" stroke-dasharray="' + (C * n(k) / tot).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-C * off / tot).toFixed(2) + '" transform="rotate(-90 18 18)"/>' : '');
     return '<span class="mcx-ring" title="' + n('clean') + ' of ' + plural(tot, 'mechanic') + ' clean"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg('clean', 0, '#45c15c') + seg('minor', n('clean'), '#e8b923') + seg('major', n('clean') + n('minor'), '#d4111e') + '</svg><span><b>' + n('clean') + '/' + tot + '</b>clean</span></span>'; };
+  // (your note's jobs (Oct 19, mockup A with C's switch): each job goes on the mechanic line it's about, in its phase; a job with no line of its
+  // own gets one, marked From your note; healing cooldown reminders go in Whole fight)
+  let NJ = null; if (!r.allPulls && r.assign && !r.assign.error) { try { NJ = assign(false, true); } catch (e) { console.error(e); NJ = null; } }
+  const nOnly = new Map(); if (NJ && NJ.secs.length) dbnMatch(NJ.secs, buckets, whole, nOnly);
+  const h0 = h.length, withOnly = (html, k) => (nOnly.get(k) || []).length ? html.replace(/<\/div>$/, nOnly.get(k).map(dbnOnly).join('') + '</div>') : html;
   // phases, in fight order; each phase is a header with its mechanics, problems first
   buckets.forEach((list, i) => {
     if (!list.length) return;
@@ -3611,9 +3672,12 @@ function audit() {
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
     h += '<details class="phase mcx-ph" data-mst="' + lvlOf(phLv(list)) + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
-      phRing(list) + '<span class="sst ' + LVL_CLS[lvlOf(phLv(list))] + '">' + lvlText(phLv(list)) + '</span></summary>' + phaseBody(list, i) + '</details>';
+      phRing(list) + '<span class="sst ' + LVL_CLS[lvlOf(phLv(list))] + '">' + lvlText(phLv(list)) + '</span></summary>' + withOnly(phaseBody(list, i), i) + '</details>';
   });
-  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'mechanics not tied to one phase, your kit, raid cooldowns and damage taken' : 'deaths, avoidable damage and the mechanics not tied to one phase') + '</span>' + phRing(whole) + '</summary>' + phaseBody(whole, 'w') + '</details>';
+  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'mechanics not tied to one phase, your kit, raid cooldowns and damage taken' : 'deaths, avoidable damage and the mechanics not tied to one phase') + '</span>' + phRing(whole) + '</summary>' + withOnly(phaseBody(whole, 'w'), 'w') + '</details>';
+  // (the switch (Oct 19): By mechanic is the page above; By player turns the note around, a card per raider with their jobs this pull)
+  if (NJ) { const sw = '<div class="dbn-seg" role="group" aria-label="Show"><button type="button" data-dbv="mech"' + (S.dbView === 'player' ? '' : ' class="on"') + '>By mechanic</button><button type="button" data-dbv="player"' + (S.dbView === 'player' ? ' class="on"' : '') + '>By player</button><span class="sub">' + (S.dbView === 'player' ? 'each raider\'s jobs in your note, missed first' : 'your note\'s jobs sit on the mechanic they\'re about') + '</span></div>';
+    h = h.slice(0, h0) + sw + (S.dbView === 'player' ? dbnPlayers(NJ, r, pmap) : h.slice(h0)); }
   // (the top of the page (Oct 19, layout B, refined): one card with a plain verdict, the pull as lanes (one per mechanic with a mistake,
   // Deaths first as skulls; the phases as bands across the top with lines down through the lanes, minute marks, the wipe filter's cut
   // greyed behind a red line), and the totals; a dot opens its exact moment)
@@ -3633,7 +3697,9 @@ function audit() {
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
       top += '<div class="dbr-4">' + num('Result', res, resSub) + num('Deaths', '<b>' + deaths.length + '</b>', deaths.length ? 'first at ' + T(deaths[0].t) + ' (' + esc(deaths[0].player) + ')' : 'nobody died') +
         num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> with mistakes</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
-        num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '')) + '</div>';
+        num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '')) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
+      if (NJ) top = top.replace('<div class="dbr-4">', '<div class="dbr-4 dbn-five">');
+      top = dbnBar(NJ, r) + top;
       // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
       const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
       const pick = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)).slice(0, 3);
@@ -16131,7 +16197,7 @@ function plRaid(data, one, mvp, imp) {
 // (a player's six parts as coloured cells; a row opens everything behind their grade). Built on plData's grades: nothing is
 // graded again here, and the fields Recap reads (fixes, ranked, score, trend, mistakes, n) stay as they are.
 // (Oct 19 polish: the awards and moments show WoW icons, not emoji, so they sit with the spell icons around them)
-const EMO_IC = { '🛡️': 'ability_warrior_shieldwall', '✨': 'spell_holy_divineshield', '✋': 'ability_kick', '💚': 'spell_holy_heal', '📈': 'spell_holy_borrowedtime', '🧪': 'inv_alchemy_70_red',
+const EMO_IC = { '📜': 'inv_scroll_03', '🛡️': 'ability_warrior_shieldwall', '✨': 'spell_holy_divineshield', '✋': 'ability_kick', '💚': 'spell_holy_heal', '📈': 'spell_holy_borrowedtime', '🧪': 'inv_alchemy_70_red',
   '🐣': 'inv_misc_bone_skull_02', '⚡': 'spell_nature_lightning', '🏆': 'inv_misc_trophy_argent', '🎯': 'ability_hunter_markedfordeath', '🎖️': 'spell_holy_powerwordshield', '🔁': 'spell_nature_reincarnation' };
 const emoIc = (e) => (EMO_IC[e] ? '<img class="emo-ic" src="' + whIcon(EMO_IC[e]) + '" alt="" onerror="this.style.visibility=\'hidden\'">' : e);
 const RCN_ROLES = [['all', 'Everyone'], ['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'DPS']];
