@@ -313,7 +313,7 @@ const GDZ_CA_M = {
     k.at(0, 't1', 22, -6).at(0, 't2', 26, 0).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 20, -14, 4).at(0, ['h1', 'h2', 'h3'], 28, -22, 4).at(0, ['r1', 'r2', 'r5', 'r6', 'r7'], 30, 14, 5);
     k.at(0, ['r3', 'r4'], 4, 6, 3).at(0, 'h4', -6, -24);
     const PU = [['r3', -6, 22, 0, -6, 2, 12], ['r4', -24, 10, -8, 1, -12, 20], ['t2', 6, -30, -8, -13, 0, 0], ['h4', -14, -32, -16, -6, -6, -30]], GR = [['m1', -10, -8, -4, -34], ['m2', -2, 2, 4, -34], ['m3', -20, -18, -12, -34]];
-    PU.concat(GR).forEach(([x, y]) => k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#5fd35f', cn: 'Toxic Deluge' }));
+    PU.concat(GR).forEach(([, x, y], i) => k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: i < PU.length ? '#b65cff' : '#5fd35f', cn: 'Toxic Deluge' }));
     GR.forEach(([w, x, y, tx, ty], i) => { k.hold(2.2, w); gdzCarry(k, w, 'g' + i, 'orb', 3, x, y, 3.6 + i * 0.3, tx, ty, 7.4 + i * 0.3, null); k.show('g' + i, 3, 16); });
     PU.forEach(([w, x, y, tx, ty, ex, ey], i) => { k.hold(3, w); gdzCarry(k, w, 'p' + i, 'porb', 3, x, y, 4.4 + i * 0.4, tx, ty, 7.6 + i * 0.3, null); k.show('p' + i, 3, 14.6);
       k.ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 3, dur: 10.8, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' }); if (w !== 't2') k.at(12, w, ex, ey); }); /* (each carrier steps out of the frontal to its own spot) */
@@ -639,13 +639,26 @@ GDZ['The Coiled Altar'].m.roles = {
 };
 
 // ---- the page ----
+// Boss guides as a page of its own (your call, Oct 20: in the menu, not a tab, open to anyone without a report or sign-in).
+// Coming from a pull, a button takes you back to it.
+let GDZ_BACK = null;
+function openGuides(boss, d) {
+  if (S.page === 'pull' && S.item) GDZ_BACK = { item: S.item, tab: S.tab, scope: S.scope };
+  if (typeof LIVE !== 'undefined' && LIVE.on) setLive(false);
+  if (boss && GDZ[boss]) S.gdzBoss = boss; if (d === 'm' || d === 'h') S.gdzDiff = d; else if (!S.gdzDiff) S.gdzDiff = 'm';
+  S.item = null; S.rep = null; S.page = 'guides';
+  $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
+  $('#main').innerHTML = '<div class="gdz-pagetop">' + (GDZ_BACK && S.index ? '<button type="button" class="btn gdz-back">‹ Back to your pull</button>' : '') + '<div><div class="gdz-kick">Debrief</div><h1>Boss guides</h1><p>How each fight works: the plan in plain words, animated maps, what goes wrong, and the whole fight played out.</p></div></div><section id="view"></section>';
+  const bk = $('#main .gdz-back'); if (bk) bk.onclick = () => { const g = GDZ_BACK; GDZ_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
+  gdzView(); navNote(); window.scrollTo(0, 0);
+}
 function gdzView() {
   gdzCss();
   const have = GDZ_ORDER.filter((b) => GDZ[b]);
   if (!S.gdzBoss || !GDZ[S.gdzBoss]) S.gdzBoss = S.rep && S.rep.item && GDZ[S.rep.item.boss] ? S.rep.item.boss : have[0];
   // Heroic or Mythic: each its own guide (your call, Oct 20: positions change a lot between them). It opens on the open pull's
   // difficulty. A part can be one difficulty only (only: 'h' / 'm') or change on one (h: { .. } / m: { .. } over the shared fields).
-  if (!S.gdzDiff) S.gdzDiff = S.rep && S.rep.item && S.rep.item.diffId === 16 ? 'm' : 'h';
+  if (!S.gdzDiff) S.gdzDiff = S.rep && S.rep.item && S.rep.item.diffId !== 16 ? 'h' : 'm';
   const D = S.gdzDiff, own = (o) => (!o || (o.only && o.only !== D) ? null : Object.assign({}, o, o[D] || {}));
   const boss = S.gdzBoss, G0 = GDZ[boss], G = G0 && own(G0);
   if (G) { G.phases = G.phases.map(own).filter(Boolean).map((p) => ({ ...p, mechs: (p.mechs || []).map(own).filter(Boolean), tiles: (p.tiles || []).map(own).filter(Boolean) })); G.facts = (G.facts || []).filter((x) => !x[2] || x[2] === D); }
@@ -673,8 +686,8 @@ function gdzView() {
     '<article class="gdz-m gdz-whole"><div class="gdz-mapc"><div class="gdz-mm" data-w="1"></div></div><div class="gdz-mt"><ol class="gdz-chaps"></ol></div></article></section>' : '';
   view('<div class="gdz">' + pick + head + phNav + keyRow + G.phases.map(sec).join('') + whole + roles + '<p class="gdz-foot">' + (D === 'm' ? 'Mythic' : 'Heroic') + ' guide. ' + (G.source ? 'Based on ' + esc(G.source) + ', in our own words.' : 'From the guides, in our own words.') + ' The maps are examples of where to stand, not a real pull.</p></div>');
   const root = document.querySelector('#view .gdz');
-  root.querySelectorAll('.gdz-pb:not(.soon)').forEach((b) => (b.onclick = () => { S.gdzBoss = b.dataset.b; gdzView(); window.scrollTo({ top: Math.min(window.scrollY, (document.querySelector('#view').getBoundingClientRect().top + window.scrollY) - 70) }); }));
-  root.querySelectorAll('.gdz-diff button').forEach((b) => (b.onclick = () => { if (b.dataset.d === D) return; S.gdzDiff = b.dataset.d; const y = window.scrollY; gdzView(); window.scrollTo({ top: y }); }));
+  root.querySelectorAll('.gdz-pb:not(.soon)').forEach((b) => (b.onclick = () => { S.gdzBoss = b.dataset.b; gdzView(); if (S.page === 'guides') navNote(); window.scrollTo({ top: Math.min(window.scrollY, (document.querySelector('#view').getBoundingClientRect().top + window.scrollY) - 70) }); }));
+  root.querySelectorAll('.gdz-diff button').forEach((b) => (b.onclick = () => { if (b.dataset.d === D) return; S.gdzDiff = b.dataset.d; const y = window.scrollY; gdzView(); window.scrollTo({ top: y }); if (S.page === 'guides') navNote(); }));
   root.querySelectorAll('.gdz-phc').forEach((a) => (a.onclick = (e) => { e.preventDefault(); const el = document.getElementById(a.getAttribute('href').slice(1)); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' }); }));
   // the maps: built when they're first near the screen, then played by the Debriefing's own player
   const pmap = gdzPmap();
@@ -766,6 +779,9 @@ function gdzCss() {
   const st = document.createElement('style'); st.id = 'gdz-css';
   st.textContent = `
 .gdz { display: flex; flex-direction: column; gap: 18px; padding-bottom: 30px; }
+.gdz-pagetop { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin: 18px 0 16px; }
+.gdz-pagetop h1 { font: 800 32px/1.1 var(--head); margin: 2px 0 4px; }
+.gdz-pagetop p { margin: 0; color: var(--muted); max-width: 640px; }
 .gdz-pick { display: flex; flex-wrap: wrap; gap: 6px; }
 .gdz-pb { background: var(--panel); border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .gdz-pb:hover:not(.soon) { color: var(--text); border-color: var(--line2); }

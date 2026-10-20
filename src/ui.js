@@ -1048,7 +1048,7 @@ function bgFetch(item) {
 const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['hw', 'Homework'], ['gdz', 'Guides'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
-const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'hw', 'gdz', 'cmp']; /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
+const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'hw', 'cmp']; /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -1365,7 +1365,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names.
 const PATCH_NOTES = [
   { d: '2026-10-20', n: [
-    'Guides: a new tab that teaches each boss with animated maps, Heroic and Mythic, with a mistake view and a full-fight simulation. The Coiled Altar is first.',
+    'Boss guides, in the menu (☰): how each fight works with animated maps, Heroic and Mythic, a mistake view and a full-fight simulation. Anyone can open them. The Coiled Altar is first.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
@@ -1524,7 +1524,7 @@ function renderMain() {
   if (OLD_ALL[S.tab]) { S.tab = 'live'; S.scope = 'all'; }
   // (a jump into Spec checks from an old saved spot or link opens Rotation; Graphs then opens on its last view)
   if (S.tab === 'perf' && S.perfKind === 'spec') { S.tab = 'rot'; S.perfKind = null; }
-  if ((S.tab === 'perf' && PERF_OFF()) || (S.tab === 'rot' && SPEC_OFF()) || (S.tab === 'cmp' && CMP_OFF()) || (S.tab === 'gdz' && GDZ_OFF())) S.tab = 'live';
+  if ((S.tab === 'perf' && PERF_OFF()) || (S.tab === 'rot' && SPEC_OFF()) || (S.tab === 'cmp' && CMP_OFF()) || S.tab === 'gdz') S.tab = 'live';
   if (!VIEWS[S.tab]) S.tab = 'overview';
   // Summary is all pulls; Latest pull, Assignments and Mechanics are one pull; the Player audit keeps its own switch.
   // (a Mythic+ key has no all-pulls view)
@@ -17638,6 +17638,7 @@ if (!WCL.HOSTED && location.protocol === 'http:' && location.hostname === 'local
   }).catch(() => {}), 2000);
   window.addEventListener('beforeunload', rememberView);
   let last = null; try { last = JSON.parse(sessionStorage.getItem(RESUME) || 'null'); } catch (e) { /* ignore */ }
+  if (new URLSearchParams(location.search).has('guides')) last = null; // (a Boss guides address opens the guides, not the last pull)
   if (last && last.helper) {
     // the live combat log: follow it again (once this script has finished loading), then reopen the same pull
     S.tab = last.tab || 'live'; S.scope = last.scope || 'pull';
@@ -17951,19 +17952,21 @@ function navState() {
   if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull', sel: S.tab === 'rot' ? S.specSel || null : null }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
+  if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
   return null;
 }
 const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.tab, st.scope, st.g, st.mine].join('|') : '');
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight : location.pathname) : location.pathname + location.search;
+  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : location.pathname) : location.pathname + location.search;
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
   try { if (cur === k) { if ((history.state.sel || null) !== (st.sel || null)) history.replaceState(st, '', url); return; } if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
 }
 async function navGo(st) {
   if (st.v === 'h') { home(); }
+  else if (st.v === 'gd') { openGuides(st.b, st.d); }
   else if (st.v === 'g') { progressPage(undefined, st.g); if (st.mine) S.progMine = true; } // (set before the page draws)
   else if (st.v === 'p') {
     let b = null;
@@ -19429,6 +19432,7 @@ if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (
 // ("Tips for this page": the page's tips again; on a page without its own, the tour)
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };
 if ($('#tbPatch')) $('#tbPatch').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openPatchNotes(); };
+if ($('#tbGuides')) $('#tbGuides').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openGuides(); }; // (Boss guides: anyone, no report or sign-in needed)
 if ($('#tbIdea') && IDEAS_ON()) { $('#tbIdea').hidden = false; $('#tbIdea').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openIdea(); }; }
 // (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
 // (a visit always starts on the front page, with the team and character pick (your call, Oct 18). The address keeps the
@@ -19453,10 +19457,12 @@ if (WCL.HOSTED) {
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
+  else if (qp.has('guides')) setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
   else if (sharedLink) { if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
-    if (qp.get('tab') === 'gdz') { S.tab = 'gdz'; if (qp.get('d') === 'm' || qp.get('d') === 'h') S.gdzDiff = qp.get('d'); } /* (a link straight to Guides, Heroic or Mythic (Oct 20)) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
+    if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
-} else if (!$('#main').innerHTML.trim()) home();
+} else if (RQ.has('guides')) setTimeout(() => openGuides(RQ.get('boss'), RQ.get('d')), 0);
+else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
 // (?patchnotes, the link in the Discord's patch-notes post, opens the Patch notes page over the front page)
 if (RQ.has('patchnotes')) { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } setTimeout(openPatchNotes, 900); }
