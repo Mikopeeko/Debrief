@@ -1372,6 +1372,7 @@ const PATCH_NOTES = [
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
+    'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
