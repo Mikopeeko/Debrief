@@ -223,13 +223,26 @@ function wrongRight(wrong, right, o) {
 // (a mistake's sentence after a player's name reads on: "Kargaryen: their ghost touched another ghost")
 const lcLead = (d) => (/^(Their|They|Was|Were|Had|Took|Got|Gained|Died|Stood|Used|Soaked|Kicked|Picked|Cursed|Didn't|Never|Ran|Walked|Moved|Left|Missed|Is)\b/.test(d) ? d.charAt(0).toLowerCase() + d.slice(1) : d);
 // A Fight audit section header: icon and title with the mechanic's spell tooltip, plus the section's summary of this pull
+// ---- raid words, explained on hover (Oct 20, the new-raider pass): a dotted underline and a plain sentence ----
+const GLOSS = {
+  soak: 'Stand in it on purpose. The damage is split between everyone standing in it, so each person takes less.',
+  kick: 'Interrupt: stop an enemy\'s cast with your interrupt button before it finishes.', interrupt: 'Stop an enemy\'s cast with your interrupt button before it finishes.',
+  frontal: 'An attack that hits everything in front of the boss. Only the tank stands in front.', dispel: 'Remove a harmful effect from a player with a dispel spell.',
+  adds: 'Extra enemies that join the fight.', intermission: 'A short break between phases, often with its own mechanics.', int: 'Intermission: a short break between phases, often with its own mechanics.',
+  p: 'A phase of the fight. Bosses change what they do in each phase: P1 is the first, P2 the second, and so on.',
+  wipe: 'When the whole raid dies and the pull is lost.', parse: 'How your damage or healing ranked against everyone else who played your spec on this boss, from 0 to 100.',
+  'nsrt note': 'Your raid\'s plan, written in the Northern Sky Raid Tools addon: who does which job on each mechanic.', 'wipe filter': 'On a wipe, everything after this many deaths is left out, because the pull was already lost. Kills always count in full.' };
+const GLOSS_RE = /\b(soaks?|soaked|kicks?|interrupts?|frontals?|dispels?|adds|intermission|Int|P[1-4]|wipes?|parses?|NSRT note|wipe filter)\b/gi;
+const glossKey = (w) => { const l = w.toLowerCase(); return l === 'adds' ? 'adds' : /^p[1-4]$/.test(l) ? 'p' : l === 'int' ? 'int' : l === 'wipe filter' || l === 'nsrt note' ? l : l.replace(/(ed|s)$/, '').replace(/^frontal$/, 'frontal'); };
+// (an escaped bit of text with its raid words underlined; only text between tags, never inside one)
+const glossify = (html) => String(html).replace(/(^|>)([^<]+)/g, (m, a, t) => a + t.replace(GLOSS_RE, (w) => { const d = GLOSS[glossKey(w)]; return d ? '<abbr class="gl" data-tt="' + esc(d) + '">' + w + '</abbr>' : w; }));
 function secHead(s) {
-  if (s.icon) return '<span class="sechd"><span class="icw big">' + svgIcon(0, s.title, true) + '<img class="oi" data-icon="' + esc(s.icon) + '" alt=""></span><b>' + esc(s.title) + '</b></span>'; // (its own icon, no spell tooltip)
+  if (s.icon) return '<span class="sechd"><span class="icw big">' + svgIcon(0, s.title, true) + '<img class="oi" data-icon="' + esc(s.icon) + '" alt=""></span><b>' + glossify(esc(s.title)) + '</b></span>'; // (its own icon, no spell tooltip)
   // (a heading for a kind of thing, not one spell, like Avoidable damage or Deaths: its own icon and our explanation, never
   // a spell's tooltip, even when the module gave it one boss ability's icon)
   const generic = GENERIC_SEC.test(s.title) || GENERIC_SEC.test((s.spell && s.spell[1]) || ''), name = generic ? s.title : (s.spell && s.spell[1]) || s.title, id = generic ? 0 : (s.spell && s.spell[0]) || sidOf(name);
-  if (!id && !s.summary) return '<span class="sechd">' + spellIcon(id, name, true) + '<b>' + esc(s.title) + '</b></span>';
-  return '<span class="sp sechd" data-sid="' + id + '" data-sn="' + esc(name) + '" data-ex="' + esc(s.summary || '') + '">' + spellIcon(id, name, true) + '<b>' + esc(s.title) + '</b></span>';
+  if (!id && !s.summary) return '<span class="sechd">' + spellIcon(id, name, true) + '<b>' + glossify(esc(s.title)) + '</b></span>';
+  return '<span class="sp sechd" data-sid="' + id + '" data-sn="' + esc(name) + '" data-ex="' + esc(s.summary || '') + '">' + spellIcon(id, name, true) + '<b>' + glossify(esc(s.title)) + '</b></span>';
 }
 function spell(id, name, big) {
   if (!id && name) id = sidOf(name);
@@ -524,7 +537,7 @@ function renderList() {
       const tip = 'Pull ' + b.pull + ' · ' + at + ' · ' + (b.kill ? 'kill' : v == null ? 'wipe' : reset ? 'reset at 100%' : 'wipe, ' + pullLabel(b)) + ' · ' + T(b.duration) + (b === best && !b.kill ? ' · best pull of the night' : '') +
         (!b.kill && v != null && !reset ? ' · ' + Math.floor(100 - v) + '% of the encounter done' : ''); // (rounded down, like the colour steps)
       return '<button class="pull fcard' + (b.kill ? ' kill' : '') + (b === best ? ' best' : '') + ((v == null || reset) && !b.kill ? ' unk' : '') + (b === S.item ? ' sel' : '') + (allMode ? ' dim' : '') + '" type="button" data-i="' + add(b) + '" title="' + esc(tip) + '" style="--pc:' + col + '">' +
-        '<span class="fc-h"><b>Pull ' + b.pull + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + esc(reset ? 'Reset at 100%' : v == null && !b.kill ? T(b.duration) : pullShort(b)) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
+        '<span class="fc-h"><b>Pull ' + b.pull + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + glossify(esc(reset ? 'Reset at 100%' : v == null && !b.kill ? T(b.duration) : pullShort(b))) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
     };
     // (an "All pulls" card at the left end, always in view (back on Oct 18, when the pull switch left Rotation and Graphs):
     // Rotation, Graphs and Players then show every pull of the boss together; the other tabs open Night summary)
@@ -1505,6 +1518,7 @@ const PATCH_NOTES = [
     'Bold words look crisp now: the site loads its real bold letters instead of faking them.',
     'Hunters\' Feign Death no longer counts as a death on Warcraft Logs nights, so deaths, Survival and the wipe filter are right for hunters.',
     'Mechanics show misses and slips apart ("went wrong" and "a little off"), the two mechanics scores say what each one measures, and the Report card\'s first fix matches its subject.',
+    'New to raiding? Raid words like soak, kick, frontal and P2 have a dotted underline: hover one to see what it means.',
     'A death to Sever now shows the frontal\'s cone on its map.',
     'An NSRT note that only has a kick order now works on its pull.',
     'Debriefing\'s badges line up in one column.',
@@ -18219,8 +18233,8 @@ const LOGO = '<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="
 // The front page's preview: an app-like window with four views (Pull recap, Mechanics, Rotation, Assignments; your call,
 // Oct 19: Rotation in, Night summary out, since Night summary is now Pull recap on the whole night).
 // All made-up example data and names, drawn in code (no game art).
-const FP_SCENES = [['live', 'Recap'], ['mech', 'Debriefing'], ['rot', 'Rotation'], ['assign', 'Assignments']];
-const FP_MODS = { live: 'What went well, what didn\'t, and what changed since the last pull.', mech: 'Every mechanic checked, with maps of who stood where.', rot: 'Your own casts and cooldowns, checked like a coach would.', assign: 'Your NSRT note against what really happened.' };
+const FP_SCENES = [['live', 'Your pull'], ['mech', 'Mechanics'], ['rot', 'Rotation'], ['assign', 'Your NSRT note']]; // (named by what they show; the tabs are Debriefing and Rotation (Oct 20))
+const FP_MODS = { live: 'What went well, what didn\'t, and what to fix first. In the Debriefing tab.', mech: 'Every mechanic checked, with maps of who stood where. In the Debriefing tab.', rot: 'Your own casts and cooldowns, checked like a coach would. In the Rotation tab.', assign: 'Your raid\'s plan in your NSRT note, against what really happened. In the Debriefing tab.' };
 function fpParts() {
   const mark = { bad: '✕', warn: '!', ok: '✓' };
   const r = (k, html, who) => '<div class="fp-r ' + k + '"><i>' + mark[k] + '</i><span>' + html + '</span>' + (who ? '<span class="fp-who">' + who + '</span>' : '') + '</div>';
@@ -18652,8 +18666,8 @@ function fpbChecks(name) {
   });
 }
 const fpbRaid = (name) => { const pk = E.PACKS.find((p) => p.encounter === name); return (pk && pk.raid) || 'The Venomous Abyss'; };
-const fphBosses = () => '<section class="fpb"><div class="fp-k">Boss by boss</div><h2>Every Mythic boss this season</h2>' +
-  '<p>All eight in The Venomous Abyss, plus Nymrissa Wavecaller and Kith\'ix. Each one has its own checks: the mechanics, the soaks, the assignments and the deaths.</p>' +
+const fphBosses = () => '<section class="fpb"><div class="fp-k">Boss by boss</div><h2>Every boss this season</h2>' +
+  '<p>All eight in The Venomous Abyss, plus Nymrissa Wavecaller and Kith\'ix. Each one has its own checks on every difficulty, LFR to Mythic: the mechanics, the soaks, the assignments and the deaths.</p>' +
   '<div class="fpb-grid">' + FPB_ORDER.filter((b) => BOSS_HERO[b]).map((b, i) => '<button class="fpb-card" type="button" data-i="' + i + '" aria-expanded="false" style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg);background-position:50% ' + BOSS_HERO[b][1] + '%"><span><i>' + esc(fpbRaid(b)) + '</i><b>' + esc(b) + '</b></span></button>').join('') + '</div></section>';
 function bindFphBosses() {
   const grid = $('.fpb-grid'); if (!grid) return;
@@ -18678,7 +18692,7 @@ function bindFphBosses() {
   };
 }
 // (the footer: the logo once more, and the places people look for at the bottom of a page)
-const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '<div><b>Debrief</b><span>Built by raiders for Mythic progression in The Venomous Abyss.</span></div></div><nav>' +
+const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '<div><b>Debrief</b><span>Built by raiders, for every raid team from LFR to Mythic.</span></div></div><nav>' +
   '<button type="button" id="fphPatch">Patch notes</button><button type="button" id="fphTour">Take the tour</button>' +
   (DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join our Discord</a>' : '') +
   (REPORT_ON() ? '<a href="#" class="rp-open">Report a problem</a>' : '') + '</nav></footer>';
