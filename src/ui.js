@@ -1431,6 +1431,7 @@ window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e
 const TAB_NAME = { me: 'Home', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework', gdz: 'Guides' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
+  if (S.page === 'guides') c.page = 'Boss guides'; if (S.rpAbout) c.about = S.rpAbout; /* (a guide's Something wrong here?: which part) */
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
   if (it && it.wcl) c.report = 'https://www.warcraftlogs.com/reports/' + it.wcl.code + '#fight=' + it.wcl.fight; else if (S.wclCode) c.report = 'https://www.warcraftlogs.com/reports/' + S.wclCode; else if (S.file) c.report = 'a combat log file';
   if (typeof LIVE !== 'undefined' && LIVE.on) c.live = 'yes';
@@ -1445,10 +1446,10 @@ document.addEventListener('click', (e) => { const a = e.target.closest && e.targ
 function openReport() {
   if ($('#rpBox')) return;
   const c = reportCtx(), el = document.createElement('div'); el.id = 'rpBox'; el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Report a problem');
-  const att = [c.page, c.boss ? c.boss + (c.pull ? ', pull ' + c.pull : '') : null, c.report && /^http/.test(c.report) ? 'the Warcraft Logs report' : null].filter(Boolean).join(', ');
+  S.rpAbout = null; const att = [c.about || c.page, c.boss ? c.boss + (c.pull ? ', pull ' + c.pull : '') : null, c.report && /^http/.test(c.report) ? 'the Warcraft Logs report' : null].filter(Boolean).join(', ');
   const disc = DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">our Discord</a>' : '';
   el.innerHTML = '<form class="tr-card rp-card" novalidate><h2>Report a problem</h2><p>Tell us what looks wrong or didn\'t work. It goes straight onto our to-do list, and we read every one.</p>' +
-    '<label class="rp-l">What went wrong?<textarea id="rpText" rows="5" maxlength="4000" placeholder="For example: Debriefing says I missed the soak at 2:10, but I was in the circle."></textarea></label>' +
+    '<label class="rp-l">What went wrong?<textarea id="rpText" rows="5" maxlength="4000" placeholder="' + (c.about ? 'For example: after the hotfix the axe needs 6 people, not 5.' : 'For example: Debriefing says I missed the soak at 2:10, but I was in the circle.') + '"></textarea></label>' +
     '<label class="rp-l">Your name or Discord name <span>(optional, so we can ask you about it)</span><input id="rpName" maxlength="60" autocomplete="nickname"></label>' +
     '<input id="rpWeb" class="rp-hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
     '<p class="rp-att">Sent with it: ' + esc(att) + ', and your browser and screen size, so we can see what you saw.</p><p class="rp-msg" id="rpMsg" role="status"></p>' +
@@ -1493,6 +1494,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Boss guides: the video shows first with the fight list following along, Your job has a fresh look, and each part has a Something wrong here? link to report a mistake.',
     'Boss guides: each Debriefing mechanic has a How to do it link to the guide, your role is ringed on the maps, and Your job shows your lines from your raid note.',
     'Boss guides: Putting it all together has a Read it version, the whole fight in order with what overlaps, coloured by how dangerous it is.',
     'Build from roster: change any job in a drafted note with tonight\'s players, add jobs of your own, and see who has no job yet. Cancel now sits at the top of the draft.',
