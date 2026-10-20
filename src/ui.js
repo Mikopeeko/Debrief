@@ -17655,7 +17655,6 @@ const PAGE_TIPS = {
     { sel: '#pgNights', t: 'Raid nights', p: 'Every raid night, newest first, with how far you got. Click one to go through it pull by pull.' },
     { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Each card shows a boss\'s result and totals. Click one for the chart of every pull and its nights.' },
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
-    { sel: '#tbProgBtn', t: 'Switch team', p: 'Your teams are in this menu at the top. Switch to another one, or add one.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Rename this team, or remove it.' }],
 };
 const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 2, team: 2 }; // (bumped when a page's tips change, so they show once more)
@@ -18688,7 +18687,9 @@ function renderProgress(msg, msgErr) {
       } catch (e) { b.disabled = false; b.textContent = 'Save in full'; msgEl.textContent = e.message; }
     };
   });
-  if (inTab) myPageInTab(ROOT, g);
+  // (Welcome Back! (your note, Oct 19): your own team's page opens as My Page, the same layout as the tab)
+  const homeT = !inTab && g ? homeTarget() : null;
+  if (inTab || (homeT && homeT.gid === g.gid)) { if (!inTab) { const pg = ROOT.querySelector('.home.prog'); if (pg) pg.classList.add('pg-intab'); } myPageInTab(ROOT, g); }
 }
 $('#brandHome').onclick = () => home();
 // Your teams, in the top bar on every page: a menu of your teams and your character (each with how far it is; the one
