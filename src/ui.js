@@ -18582,7 +18582,7 @@ async function wclSignBack() {
 }
 // (step 1: the sign-in button, or once signed in, your characters to tap; newest first)
 function gsSignHtml() {
-  if (!WCL.HOSTED || !store.get('wla-signin-test')) return ''; /* (TEST GATE: removed once a real sign-in works) */
+  if (!WCL.HOSTED) return '';
   const me = wclMe();
   if (!me) return '<button class="btn primary gs-sign" id="gsSign" type="button">Sign in with Warcraft Logs</button><p class="gs-sub">One click: Warcraft Logs asks you to allow it, then sends you back here with your characters and guilds. No password is shared with Debrief.</p><div class="gs-or"><span>or type it</span></div>';
   const cs = (me.chars || []).slice().sort((a, b) => b.id - a.id);
