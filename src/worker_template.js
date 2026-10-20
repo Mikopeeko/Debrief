@@ -235,9 +235,18 @@ async function runBugs(env) {
     const areas = areasIn(t.name + ' ' + text), who = m && m.author ? (m.author.global_name || m.author.username) : 'someone';
     const body = text.replace(/@/g, '@​').split(/\r?\n/).map((l) => '> ' + l).join('\n') + '\n\n**From:** ' + who.replace(/@/g, '@​') + ' on Discord' +
       (tagNames.length ? '\n**Tags:** ' + tagNames.join(', ') : '') + (files.length ? '\n**Pictures:**\n' + files.map((u) => '- ' + u).join('\n') : '') +
-      '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from #bug-reports by Claudette (the Debrief bot).Closing this issue tells the post it\'s fixed._';
+      '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from #bug-reports by Claudette (the Debrief bot). Closing this issue tells the post it\'s fixed._';
     const issue = await gh(env, '/issues', { method: 'POST', body: { title: '[discord] ' + t.name.slice(0, 90), body, labels: ['bug', 'discord', ...areas.map((a) => a.toLowerCase())] } });
     st.t[t.id] = issue.number; st.open.push([t.id, issue.number]);
+    // (and a post in the owner's #bug-review with the answer buttons, tagging them: nothing is looked into until they press
+    // one (the user's call, Oct 20: "just wait for me to react with the button presses"))
+    try {
+      const quote = text.split(/\r?\n/).map((l) => '> ' + l).join('\n').slice(0, 1200);
+      const rp = await dc(env, '/channels/' + REVIEW_FORUM + '/threads', { method: 'POST', body: { name: t.name.slice(0, 95),
+        message: { content: '<@' + OWNER + '> **New bug report** from ' + who.replace(/[@*_`~|]/g, '') + ' (<#' + t.id + '>):\n' + quote + (files.length ? '\n(' + files.length + ' picture' + (files.length > 1 ? 's' : '') + ' in the post)' : '') +
+          '\n\nTap **Look into it** and I\'ll investigate, or **Fix it** if it\'s clear.', allowed_mentions: { parse: [], users: [OWNER] }, components: REVIEW_ROW } } });
+      const revs = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {}; revs[issue.number] = rp.id; await env.DEBRIEF_KV.put('dc-reviews', JSON.stringify(revs));
+    } catch (err) { console.warn('Review post:', err && err.message); }
     // (tags: Working on it, plus the area its words point to when they only picked Website)
     const keep = new Set(t.applied_tags || []); if (working) keep.add(working);
     const onlySite = tagNames.every((n) => ['website', 'working on it'].includes(n.toLowerCase()));
@@ -346,6 +355,21 @@ async function runInbox(env) {
   const list = open.filter((i) => !i.pull_request).map((i) => ({ n: i.number, title: i.title, body: String(i.body || '').slice(0, 3000),
     labels: (i.labels || []).map((l) => l.name), at: i.created_at, comments: i.comments, thread: thread[i.number] || null }));
   const s = JSON.stringify(list); if (s !== (await env.DEBRIEF_KV.get('gh-inbox'))) await env.DEBRIEF_KV.put('gh-inbox', s);
+  // (a new report from the site's Report a problem form also gets a #bug-review post with the buttons; the first run only
+  // notes the ones already open)
+  let siteSeen = await env.DEBRIEF_KV.get('dc-siteseen', 'json');
+  if (!siteSeen) { await env.DEBRIEF_KV.put('dc-siteseen', JSON.stringify(list.map((i) => i.n))); return; }
+  const revs = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {}, fresh = list.filter((i) => /^\[site\]/.test(i.title) && !siteSeen.includes(i.n) && !revs[i.n]).slice(0, 3);
+  for (const i of fresh) {
+    siteSeen.push(i.n);
+    try {
+      const rp = await dc(env, '/channels/' + REVIEW_FORUM + '/threads', { method: 'POST', body: { name: i.title.replace(/^\[site\]\s*/, '').slice(0, 95),
+        message: { content: '<@' + OWNER + '> **New bug report** from the website\'s Report a problem form:\n' + i.body.split(/\r?\n/).filter((l) => /^>/.test(l)).join('\n').slice(0, 1200) +
+          '\n\nTap **Look into it** and I\'ll investigate, or **Fix it** if it\'s clear.', allowed_mentions: { parse: [], users: [OWNER] }, components: REVIEW_ROW } } });
+      revs[i.n] = rp.id;
+    } catch (err) { console.warn('Site review post:', err && err.message); }
+  }
+  if (fresh.length) { await env.DEBRIEF_KV.put('dc-siteseen', JSON.stringify(siteSeen.slice(-500))); await env.DEBRIEF_KV.put('dc-reviews', JSON.stringify(revs)); }
 }
 // #questions answers (the user's call, Oct 20: "both"): each new question gets one reply from Claudette. A common question
 // gets the FAQ's answer (free); anything else goes to Claude (needs the ANTHROPIC_API_KEY secret), which answers only from
@@ -415,7 +439,7 @@ async function runQuestions(env, all) {
 // (⏳, 🏁 and ❌ also set the post's tag at once). A reply or ✅ / 👀 gets a short "got it".
 const REVIEW_FORUM = '1562143289304424578';
 const REACTS = { '✅': ['fix it', null], '👀': ['look into it again', null], '❌': ['not a bug, close it', 'Not a bug'], '⏳': ['in progress', 'In progress'], '🏁': ['done', 'Done'] };
-const GOT_IT = 'Got it! I\'ll pick this up at the next check (10 am or 6 pm). For sooner, tell me in the Claude app.';
+const GOT_IT = 'Got it! I\'ll pick this up within about 15 minutes (while your PC is on).';
 async function runReplies(env, all) {
   const posts = all.filter((t) => t.parent_id === REVIEW_FORUM); if (!posts.length) return;
   const seen = (await env.DEBRIEF_KV.get('dc-revseen', 'json')) || {}, reviews = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {};
@@ -456,7 +480,7 @@ async function runReplies(env, all) {
 // /api/discord (the app's Interactions Endpoint URL), signed with the app's key; only the owner's clicks count. A click
 // answers at once ("Got it"), goes to review-inbox like a reply, and Not a bug / In progress / Done set the tag.
 const DISCORD_PUBLIC_KEY = 'caa9d8119f10d1ccc3c143f39c5745765810d77d587ae0bf7af836adc0a62123'; // (the app's public key, not a secret)
-const BUTTONS = [['fix', 'Fix it', 3, 'fix it', null], ['look', 'Look again', 1, 'look into it again', null], ['notbug', 'Not a bug', 2, 'not a bug, close it', 'Not a bug'],
+const BUTTONS = [['fix', 'Fix it', 3, 'fix it', null], ['look', 'Look into it', 1, 'look into it', null], ['notbug', 'Not a bug', 2, 'not a bug, close it', 'Not a bug'],
   ['prog', 'In progress', 2, 'in progress', 'In progress'], ['done', 'Done', 2, 'done', 'Done']];
 const REVIEW_ROW = [{ type: 1, components: BUTTONS.map(([id, label, style]) => ({ type: 2, style, label, custom_id: 'rv:' + id })) }];
 const hex = (s) => new Uint8Array(s.match(/../g).map((h) => parseInt(h, 16)));
@@ -492,7 +516,7 @@ async function discordClick(req, env, ctx) {
       await dc(env, '/channels/' + thread, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } });
     }
   })().catch((err) => console.warn('Click:', err && err.message)));
-  return reply(b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll do it at the next check (10 am or 6 pm). For sooner, tell me in the Claude app.');
+  return reply(b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
 }
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
