@@ -291,20 +291,36 @@ async function runDigest(env, now, all) {
 // - gh-inbox: the open issues (number, title, body, labels, Discord thread), refreshed every run when they change;
 // - dc-ops: jobs it leaves, done on the next run then cleared: { op: 'ping', issue, text } tags the owner in that
 //   bug's thread (#moderator-only for a site report), { op: 'ask', issue, text } replies there without a tag,
-//   { op: 'close', issue, reason: 'completed' | 'not_planned', note } closes the issue (the post hears back next run).
+//   { op: 'close', issue, reason: 'completed' | 'not_planned', note } closes the issue (the post hears back next run),
+//   { op: 'review', issue, title, text, tags, important } opens (or adds to) that report's post in #bug-review, the
+//   owner's private forum, tagging the owner only when important (then 'ping' adds a tagged line to it).
 const OWNER = '195320918929571840'; // (the user's Discord id, the one tagged)
 async function runInbox(env) {
   const st = (await env.DEBRIEF_KV.get('dc-bugs', 'json')) || { t: {} }, thread = {};
   for (const [tid, n] of Object.entries(st.t || {})) if (n) thread[n] = tid;
   const ops = await env.DEBRIEF_KV.get('dc-ops', 'json');
   if (Array.isArray(ops) && ops.length) {
-    await env.DEBRIEF_KV.delete('dc-ops'); let mod = null;
+    await env.DEBRIEF_KV.delete('dc-ops'); let mod = null, rev = null, revDirty = false;
+    const reviews = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {};
     for (const o of ops.slice(0, 20)) {
       try {
         const n = parseInt(o.issue, 10), text = String(o.text || o.note || '').slice(0, 1800);
         if (o.op === 'close' && n > 0) {
           if (text) await gh(env, '/issues/' + n + '/comments', { method: 'POST', body: { body: text } });
           await gh(env, '/issues/' + n, { method: 'PATCH', body: { state: 'closed', state_reason: o.reason === 'not_planned' ? 'not_planned' : 'completed' } });
+        } else if ((o.op === 'review' || (o.op === 'ping' && reviews[n])) && text) {
+          // (#bug-review, the owner's private forum: one post per report, the check's findings; a later job adds to it)
+          if (!rev) { rev = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'bug-review') || null); if (!rev) continue; }
+          const tagIds = (Array.isArray(o.tags) ? o.tags : []).map((t) => tagOf(rev.available_tags, String(t))).filter(Boolean).slice(0, 5);
+          const loud = o.op === 'ping' || !!o.important, head = loud ? '<@' + OWNER + '> ' : '', men = { parse: [], users: loud ? [OWNER] : [] };
+          if (reviews[n]) {
+            await dc(env, '/channels/' + reviews[n], { method: 'PATCH', body: tagIds.length ? { archived: false, applied_tags: tagIds } : { archived: false } }).catch(() => {});
+            await dc(env, '/channels/' + reviews[n] + '/messages', { method: 'POST', body: { content: head + text, allowed_mentions: men } });
+          } else {
+            const name = String(o.title || ('Report #' + n)).replace(/\s+/g, ' ').slice(0, 95);
+            const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men } } });
+            if (n > 0) { reviews[n] = t.id; revDirty = true; }
+          }
         } else if ((o.op === 'ping' || o.op === 'ask') && text) {
           let ch = thread[n];
           if (!ch) { if (!mod) mod = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'moderator-only') || {}).id; ch = mod; }
@@ -316,6 +332,7 @@ async function runInbox(env) {
         }
       } catch (err) { console.warn('Job:', o && o.op, err && err.message); }
     }
+    if (revDirty) await env.DEBRIEF_KV.put('dc-reviews', JSON.stringify(reviews));
   }
   const open = await gh(env, '/issues?state=open&per_page=50').catch(() => null); if (!open) return;
   const list = open.filter((i) => !i.pull_request).map((i) => ({ n: i.number, title: i.title, body: String(i.body || '').slice(0, 3000),
