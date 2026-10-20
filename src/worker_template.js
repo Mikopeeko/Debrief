@@ -39,10 +39,10 @@ async function getToken(env) {
   token = { v: j.access_token, exp: Date.now() + Math.max(60, (j.expires_in || 3600) - 300) * 1000 };
   return token.v;
 }
-async function gql(env, query, variables) {
-  const r = await fetch('https://www.warcraftlogs.com/api/v2/client', {
+async function gql(env, query, variables, ut) {
+  const r = await fetch('https://www.warcraftlogs.com/api/v2/' + (ut ? 'user' : 'client'), {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + (await getToken(env)), 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + (ut || await getToken(env)), 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
   });
   if (r.status === 429) throw new Error('Warcraft Logs is rate limiting this site right now. Try again in a few minutes.');
@@ -52,10 +52,10 @@ async function gql(env, query, variables) {
   return j.data;
 }
 // the same request, its reply kept as text (not parsed): an error reply is short, so only a short one is looked inside
-async function gqlText(env, query, variables) {
-  const r = await fetch('https://www.warcraftlogs.com/api/v2/client', {
+async function gqlText(env, query, variables, ut) {
+  const r = await fetch('https://www.warcraftlogs.com/api/v2/' + (ut ? 'user' : 'client'), {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + (await getToken(env)), 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + (ut || await getToken(env)), 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
   });
   if (r.status === 429) throw new Error('Warcraft Logs is rate limiting this site right now. Try again in a few minutes.');
@@ -85,6 +85,8 @@ function fair(ip) {
 const CODE = /^[A-Za-z0-9]{8,32}$/;
 const num = (v) => { const n = parseFloat(v); return n === n ? n : null; };
 // every route: what it needs from the address, its query and variables, how long to keep the answer, and what to return
+// (lists of nights that use a signed-in person's pass, so their private nights come in)
+const USER_LISTS = new Set(['/api/teamreports', '/api/charreports', '/api/teamlatest', '/api/charlatest']);
 const ROUTES = {
   // (short: a report being live logged keeps getting new pulls, and following one live asks every 15 seconds)
   '/api/report': { q: () => REPORT_Q, v: (p) => (CODE.test(p.get('code') || '') ? { code: p.get('code') } : null), age: (p) => (p.get('live') ? 15 : 120),
@@ -569,7 +571,23 @@ function newestNotes() {
 // for a token with the sign-in key (a public one, no secret), asks who it is, and sends back only the name, characters and
 // guilds. The token isn't kept or sent on.
 const WCL_SIGN_ID = '01a15a39-b1bf-7242-8b34-414c13c35511';
-async function wclSignIn(req) {
+// ---- the remembered sign-in (Oct 20): a random session number in a cookie only the server can read (HttpOnly), with the
+// Warcraft Logs pass kept behind it in KV for up to 30 days. It opens private logs (yours, your guild's) and brings in a
+// team's private nights. Signing out deletes both.
+const SESS_DAYS = 30;
+const cookieOf = (req, k) => { const m = (req.headers.get('Cookie') || '').match(new RegExp('(?:^|;\\s*)' + k + '=([a-f0-9]{48})')); return m ? m[1] : null; };
+async function sessOf(req, env) { const id = cookieOf(req, 'dbs'); if (!id || !env.DEBRIEF_KV) return null; const s = await env.DEBRIEF_KV.get('sess:' + id, 'json').catch(() => null); return s && s.t && s.exp > Date.now() ? s : null; }
+const sessCookie = (id, secs) => 'dbs=' + id + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + Math.max(0, Math.round(secs));
+async function signOut(req, env) { const id = cookieOf(req, 'dbs'); if (id && env.DEBRIEF_KV) await env.DEBRIEF_KV.delete('sess:' + id).catch(() => {}); const res = json({ ok: true }); res.headers.append('Set-Cookie', sessCookie('0'.repeat(48), 0)); return res; }
+// (Your logs: the reports you uploaded, private ones too, newest first)
+async function myReports(req, env) {
+  const s = await sessOf(req, env); if (!s || !s.uid) return json({ error: 'Sign in with Warcraft Logs again to see your logs.' }, 401);
+  try { const d = await gql(env, 'query($uid:Int){reportData{reports(userID:$uid,limit:25){data{code title startTime visibility zone{name}}}}}', { uid: s.uid }, s.t);
+    const l = (((d || {}).reportData || {}).reports || {}).data || [];
+    return json({ reports: l.map((r) => ({ code: r.code, title: r.title, startTime: r.startTime, vis: r.visibility, zone: r.zone ? r.zone.name : '' })) });
+  } catch (e) { return json({ error: 'Couldn\'t get your logs from Warcraft Logs.' }, 502); }
+}
+async function wclSignIn(req, env) {
   let b = null; try { b = await req.json(); } catch (e) { /* not JSON */ }
   if (!b || typeof b.code !== 'string' || typeof b.verifier !== 'string' || b.code.length > 4000 || b.verifier.length > 200) return json({ error: 'That sign-in is missing something.' }, 400);
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
@@ -578,14 +596,19 @@ async function wclSignIn(req) {
       body: new URLSearchParams({ grant_type: 'authorization_code', client_id: WCL_SIGN_ID, redirect_uri: SITE + '/auth/wcl/callback', code: b.code, code_verifier: b.verifier }) });
     const tj = await t.json().catch(() => ({}));
     if (!tj.access_token) return json({ error: 'Warcraft Logs didn\'t accept that sign-in.' }, 400);
-    const q = '{ userData { currentUser { name characters { id name classID server { name slug region { slug } } } guilds { id name server { name region { slug } } } } } }';
+    const q = '{ userData { currentUser { id name characters { id name classID server { name slug region { slug } } } guilds { id name server { name region { slug } } } } } }';
     const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tj.access_token }, body: JSON.stringify({ query: q }) });
     const u = (((await r.json().catch(() => ({}))).data || {}).userData || {}).currentUser;
     if (!u) return json({ error: 'Warcraft Logs didn\'t send your characters.' }, 502);
     const reg = (s) => (s && s.region && s.region.slug) || '';
-    return json({ name: u.name, at: Date.now(),
+    const out = { name: u.name, at: Date.now(),
       chars: (u.characters || []).map((c) => ({ id: c.id, n: c.name, cls: c.classID, srv: c.server ? c.server.name : '', slug: c.server ? c.server.slug : '', reg: reg(c.server) })),
-      guilds: (u.guilds || []).map((g) => ({ id: g.id, n: g.name, srv: g.server ? g.server.name : '', reg: reg(g.server) })) });
+      guilds: (u.guilds || []).map((g) => ({ id: g.id, n: g.name, srv: g.server ? g.server.name : '', reg: reg(g.server) })) };
+    const res = json(out);
+    if (env.DEBRIEF_KV) { const a = new Uint8Array(24); crypto.getRandomValues(a); const id = [...a].map((x) => x.toString(16).padStart(2, '0')).join(''), secs = Math.min(SESS_DAYS * 86400, tj.expires_in || 86400);
+      await env.DEBRIEF_KV.put('sess:' + id, JSON.stringify({ t: tj.access_token, uid: u.id, name: u.name, exp: Date.now() + secs * 1000 }), { expirationTtl: Math.max(60, secs) });
+      res.headers.append('Set-Cookie', sessCookie(id, secs)); }
+    return res;
   } catch (e) { return json({ error: 'Couldn\'t reach Warcraft Logs.' }, 502); }
 }
 async function announcePatch(env) {
@@ -608,27 +631,33 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
-    if (url.pathname === '/api/wcl-me') return req.method === 'POST' ? wclSignIn(req) : json({ error: 'Sign in from the website.' }, 405);
+    if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
+    if (url.pathname === '/api/myreports') return myReports(req, env);
+    if (url.pathname === '/api/wcl-me') return req.method === 'POST' ? wclSignIn(req, env) : json({ error: 'Sign in from the website.' }, 405);
     if (url.pathname === '/api/bug') return req.method === 'POST' ? fileBug(req, env, url) : json({ error: 'Send reports with the website\'s form.' }, 405);
     if (route) {
       const v = route.v(url.searchParams);
       if (!v) return json({ error: "That request is missing something (a report code, fight or time range)." }, 400);
+      // (signed in with Warcraft Logs (Oct 20): a team's or character's list of nights uses your pass, so private nights come in
+      // too; anything else tries the site's key first (shared through the cache), then your pass when it's private. An answer
+      // got with your pass is never cached or shared)
+      const hasC = !!cookieOf(req, 'dbs'), mine = hasC && USER_LISTS.has(url.pathname), sess = mine ? await sessOf(req, env) : null;
       const cache = caches.default, key = new Request(url.toString(), { method: 'GET' });
-      const hit = await cache.match(key);
-      if (hit) return hit;
+      if (!sess) { const hit = await cache.match(key); if (hit) return hit; }
       if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
+      const age = typeof route.age === 'function' ? route.age(url.searchParams) : route.age;
+      const run = async (ut) => (route.raw ? { raw: await gqlText(env, route.q(), v, ut) } : { out: route.run ? await route.run(env, v) : route.out(route.text ? await gqlText(env, route.q(), v, ut) : await gql(env, route.q(), v, ut), v) });
+      const send = (r, priv) => {
+        if (r.raw != null) { const res = new Response(r.raw, { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': priv ? 'private, no-store' : 'public, max-age=' + age } }); if (!priv) ctx.waitUntil(cache.put(key, res.clone())); return res; }
+        if (r.out && r.out.error) return json({ error: r.out.error }, r.out.status || 400);
+        const res = priv ? json(r.out, 200) : json(r.out, 200, age); if (!priv) ctx.waitUntil(cache.put(key, res.clone())); return res; };
       try {
-        const age = typeof route.age === 'function' ? route.age(url.searchParams) : route.age;
-        if (route.raw) {
-          const res = new Response(await gqlText(env, route.q(), v), { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=' + age } });
-          ctx.waitUntil(cache.put(key, res.clone()));
-          return res;
-        }
-        const out = route.run ? await route.run(env, v) : route.out(route.text ? await gqlText(env, route.q(), v) : await gql(env, route.q(), v), v);
-        if (out && out.error) return json({ error: out.error }, out.status || 400);
-        const res = json(out, 200, age);
-        ctx.waitUntil(cache.put(key, res.clone()));
-        return res;
+        if (sess) return send(await run(sess.t), true);
+        let r = null, err = null; try { r = await run(); } catch (e) { err = e; }
+        if (hasC && !route.run && (err || (r && r.out && r.out.error))) { const s2 = await sessOf(req, env); if (s2) { try { return send(await run(s2.t), true); } catch (e2) { /* the first answer stands */ } } }
+        if (err) throw err;
+        if (!hasC && r.out && r.out.error && url.pathname === '/api/report') r.out.error += ' If it\'s your log or your guild\'s, sign in with Warcraft Logs (Start now, or My Page) to open it.';
+        return send(r, false);
       } catch (err) {
         return json({ error: String(err && err.message || err) }, 502);
       }

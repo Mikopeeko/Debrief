@@ -1446,6 +1446,7 @@ const PATCH_NOTES = [
     'My Page looks better: your team card shows its rankings as tiles with a bar of bosses killed, your card shows your parses in their colours, and you can add your other characters from Warcraft Logs.',
     'My Page: the Now on chart shows only the part of the fight you\'ve reached, with tiles for pulls, nights and time; raid nights show the boss and a stripe for kills.',
     'My Page: your card sits beside your team at the top, and raid nights use the full width.',
+    'Private logs: sign in with Warcraft Logs and your private logs open too, your team\'s private nights come in, and Open a raid night lists your own logs.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
     'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
@@ -18743,7 +18744,7 @@ function gsDraw() {
   el.querySelectorAll('[data-rw]').forEach((b) => (b.onclick = () => gsRw(b)));
   el.querySelectorAll('[data-me]').forEach((b) => (b.onclick = () => gsMe(b)));
   if ($('#gsSign')) $('#gsSign').onclick = () => { $('#gsSign').disabled = true; wclSignIn(); };
-  if ($('#gsSignOut')) $('#gsSignOut').onclick = () => { try { localStorage.removeItem(WCL_SIGN.key); } catch (e) { /* storage off */ } GS.note = ''; gsDraw(); };
+  if ($('#gsSignOut')) $('#gsSignOut').onclick = () => { fetch('/api/signout', { method: 'POST' }).catch(() => {}); try { localStorage.removeItem(WCL_SIGN.key); } catch (e) { /* storage off */ } GS.note = ''; gsDraw(); };
   el.querySelectorAll('[data-wch]').forEach((b) => (b.onclick = () => { const c = (wclMe().chars || []).slice().sort((x, y) => y.id - x.id)[+b.dataset.wch]; if (!c || !$('#gsIn')) return;
     $('#gsIn').value = 'https://www.warcraftlogs.com/character/' + String(c.reg || 'us').toLowerCase() + '/' + c.slug + '/' + encodeURIComponent(c.n.toLowerCase()); gsAdd('char'); }));
   el.querySelectorAll('[data-wg]').forEach((b) => (b.onclick = () => { if (!$('#gsIn')) return; $('#gsIn').value = 'https://www.warcraftlogs.com/guild/id/' + b.dataset.wg; gsAdd('team'); }));
@@ -18849,6 +18850,7 @@ function nightDlg() {
   if ($('#ndD')) return;
   document.body.insertAdjacentHTML('beforeend', pgDlg('nd', '<section class="wt nd"><button class="gs-x" id="ndX" type="button" aria-label="Close">×</button><h2 id="ndT">Open a raid night</h2><p class="sub">Paste a Warcraft Logs report or live log link. A live log keeps up with the raid as it goes.</p>' +
     '<div class="fph-box sm"><input id="ndIn" placeholder="Report or live log link" autocomplete="off" aria-label="Warcraft Logs report or live log link"><button class="btn primary" id="ndGo" type="button">Open</button></div><div class="fp-msg" id="ndMsg"></div>' +
+    (WCL.HOSTED && wclMe() ? '<div class="nd-mine" id="ndMine"><div class="nd-mh">Your logs on Warcraft Logs</div><div class="sub">Loading…</div></div>' : '') +
     '<div class="fph-alt">Or <button class="linkbtn" id="ndFile" type="button">open a combat log</button> from this PC, or <button class="linkbtn" id="ndDemo" type="button">see a real raid night</button>.</div></section>'));
   const d = $('#ndD'), close = () => { d.remove(); document.removeEventListener('keydown', key, true); };
   const key = (e) => { if (e.key === 'Escape' && document.body.contains(d)) { e.preventDefault(); e.stopPropagation(); close(); } };
@@ -18861,6 +18863,11 @@ function nightDlg() {
   inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(inp.value); }, 50); // (a pasted link opens at once)
   $('#ndFile').onclick = () => { close(); $('#fileIn').click(); };
   $('#ndDemo').onclick = () => go(DEMO_REPORT);
+  // (signed in with Warcraft Logs (Oct 20): the logs you uploaded, private ones too, one tap each)
+  const mine = $('#ndMine'); if (mine) fetch('/api/myreports').then((r) => r.json()).then((j) => { if (!document.body.contains(mine)) return; const l = (j && j.reports) || [];
+    mine.innerHTML = '<div class="nd-mh">Your logs on Warcraft Logs</div>' + (l.length ? '<div class="nd-ml">' + l.slice(0, 10).map((x) => '<button class="nd-mr" type="button" data-code="' + esc(x.code) + '"><span><b>' + esc(x.title || x.code) + '</b><span class="sub">' + esc(new Date(x.startTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })) + (x.zone ? ' · ' + esc(x.zone) : '') + '</span></span>' + (x.vis && x.vis !== 'public' ? '<em>' + (x.vis === 'private' ? 'Private' : 'Unlisted') + '</em>' : '') + '</button>').join('') + '</div>'
+      : '<div class="sub">' + esc(j && j.error ? j.error : 'You haven\'t uploaded any logs yet.') + '</div>');
+    mine.querySelectorAll('[data-code]').forEach((b) => (b.onclick = () => go('https://www.warcraftlogs.com/reports/' + b.dataset.code))); }).catch(() => mine.remove());
   inp.focus();
 }
 // (said on the website when a file pick ends without a file: usually Chrome refusing the WoW folder)
