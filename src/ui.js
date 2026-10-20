@@ -4779,7 +4779,8 @@ function miniMap(mp, pmap) {
     '<div class="zwrap" style="max-width:560px"><div class="zbar"></div>' + /* (empty and hidden unless a page adds its own buttons, like a guide's Follow the action) */
     '<div class="zbox">' + s + '<div class="zscale"><i></i><span>10 yards</span></div><div class="znorth">N ↑</div>' +
     '<div class="zctl"><button type="button" class="zin" title="Zoom in (or scroll)" aria-label="Zoom in">+</button><button type="button" class="zout" title="Zoom out" aria-label="Zoom out">−</button></div>' +
-    (mp.frames ? '<div class="zanim"><button class="btn zplay" type="button">❚❚ Pause</button><input class="zrange" type="range" min="0" max="' + (mp.frames.length - 1) + '" value="0" step="1"><span class="ztime sub"></span></div>' : '') + '</div>' + legend + '</div>'; /* (the play bar is inside the map's box: over its bottom, like a video's) */
+    (mp.frames ? '<div class="zanim"><button class="btn zplay" type="button">❚❚ Pause</button><input class="zrange" type="range" min="0" max="' + (mp.frames.length - 1) + '" value="0" step="1"><span class="ztime sub"></span></div>' : '') +
+    '<div class="zkey"><button type="button" class="zkeyb" aria-expanded="false">Key</button>' + legend + '</div></div></div>'; /* (the play bar and the key are inside the map's box: the bar over its bottom like a video's, the key behind a button by N) */
 }
 // Animated map (mp.frames): plays once from the first frame, then the slider scrubs. Each frame redraws the
 // map's contents in place, so zoom and pan stay where they are.
@@ -4886,6 +4887,8 @@ function bindZoom(box) {
   const zc = (f) => { const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2, nw = Math.min(Math.max(vb[2] * f, 40), Math.max(full[2], focus[2]) * 1.3); vb = [cx - nw / 2, cy - nw / 2, nw, nw]; apply(); };
   const zi = box.querySelector('.zin'), zo = box.querySelector('.zout');
   if (zi) zi.onclick = () => zc(1 / 1.4); if (zo) zo.onclick = () => zc(1.4);
+  // (the Key button: hovering opens the key; a click or tap keeps it open until the next one)
+  const kb = box.querySelector('.zkeyb'); if (kb) kb.onclick = () => { const o = kb.parentElement.classList.toggle('open'); kb.setAttribute('aria-expanded', String(o)); };
   apply();
 }
 function phaseBar(r, m) {
