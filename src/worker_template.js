@@ -356,6 +356,8 @@ async function runInbox(env) {
             const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men, components: REVIEW_ROW } } });
             if (n > 0) { reviews[n] = t.id; revDirty = true; }
           }
+        } else if (o.op === 'draft' && text) {
+          await featDraft(env, o); // (a #new-features post for the owner's OK, with Post it / Change it / Skip)
         } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed'].includes(o.channel)) {
           // (a post in a Community channel, e.g. the weekly raid tip; only those channels. With a title it's a gold card
           // (an embed: no link preview under it); replaceLast edits Claudette's newest post there instead of adding one)
@@ -538,6 +540,20 @@ async function discordClick(req, env, ctx) {
     })());
     return json({ type: 5 });
   }
+  if (i.type === 3 && i.data && /^fp:/.test(i.data.custom_id || '')) { // (a #new-features draft's buttons)
+    const who = ((i.member && i.member.user) || i.user || {}).id; if (who !== OWNER) return reply('Only the owner can answer drafts.', true);
+    const act = i.data.custom_id.slice(3), thread = i.channel_id;
+    if (act === 'post') {
+      ctx.waitUntil((async () => { let msg; try { msg = await featPublish(env, thread); } catch (err) { msg = 'That didn\'t post: ' + (err && err.message || 'unknown error').slice(0, 150); }
+        await fetch('https://discord.com/api/v10/webhooks/' + APP_ID + '/' + i.token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: msg, allowed_mentions: { parse: [] } }) }); })());
+      return json({ type: 5 });
+    }
+    ctx.waitUntil((async () => {
+      if (act === 'change') { const inbox = (await env.DEBRIEF_KV.get('review-inbox', 'json')) || []; inbox.push({ thread, issue: 0, title: (i.channel && i.channel.name) || '', kind: 'button', text: 'change the feature post (see the owner\'s reply in this thread)', at: new Date().toISOString() }); await env.DEBRIEF_KV.put('review-inbox', JSON.stringify(inbox.slice(-200))); }
+      if (act === 'skip') { const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); } }
+    })().catch(() => {}));
+    return reply(act === 'change' ? 'Got it! Reply here with what to change, and I\'ll redo the draft within about 15 minutes.' : 'Skipped. This draft closes in 24 hours.');
+  }
   const b = BUTTONS.find((x) => i.type === 3 && i.data && i.data.custom_id === 'rv:' + x[0]); if (!b) return reply('That button isn\'t used any more.', true);
   const who = (i.member && i.member.user) || i.user || {};
   if (who.id !== OWNER) return reply('Only the owner can answer reviews.', true);
@@ -568,20 +584,64 @@ function newestFeatures() {
   const i = APP_HTML.indexOf('const PATCH_NOTES = ['); if (i < 0) return null;
   const s = APP_HTML.slice(i, i + 30000), m = /\{ d: '(\d{4}-\d\d-\d\d)'/.exec(s); if (!m) return null;
   const day = s.slice(m.index, (s.indexOf('\n  { d: \'', m.index + 5) + 1 || s.length) - 1), hs = day.split(' n: [')[0], un = (x) => x.replace(/\\'/g, "'").replace(/\\"/g, '"');
-  return { d: m[1], feats: [...hs.matchAll(/\{ t: '((?:[^'\\]|\\.)*)', d: '((?:[^'\\]|\\.)*)' \}/g)].map((x) => ({ t: un(x[1]), d: un(x[2]) })) };
+  const ns = (day.split(' n: [')[1] || '').split('], f: [')[0];
+  return { d: m[1], feats: [...hs.matchAll(/\{ t: '((?:[^'\\]|\\.)*)', d: '((?:[^'\\]|\\.)*)' \}/g)].map((x) => ({ t: un(x[1]), d: un(x[2]) })),
+    lines: [...ns.matchAll(/^\s*'((?:[^'\\]|\\.)*)',?\s*$/gm)].map((x) => un(x[1])) };
 }
+// (changed the same day, the user's vision: each feature gets a proper post (a short story, screenshots, how to use it, tips),
+// shown to the owner first as a draft in #bug-review with Post it / Change it / Skip. So a new feature only goes into the
+// KV feat-queue here; the PC's watcher writes the draft and queues a 'draft' job; Post it publishes it.)
 async function runFeatures(env) {
-  const nf = newestFeatures(); if (!nf || !nf.feats.length) return;
-  const posted = (await env.DEBRIEF_KV.get('feat-posted', 'json')) || [], fresh = nf.feats.filter((f) => !posted.includes(nf.d + '|' + f.t)).slice(0, 5); if (!fresh.length) return;
-  const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'new-features') || {}).id; if (!ch) return;
-  const day = new Date(nf.d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
-  for (const f of fresh) {
-    const msg = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body: { allowed_mentions: { parse: [] },
-      embeds: [{ title: '✨ ' + f.t, description: f.d + '\n\n🔗 [Try it on Debrief](' + SITE + ')', color: 0xE6B450, footer: { text: 'New on Debrief · ' + day } }] } });
-    posted.push(nf.d + '|' + f.t);
-    if (msg && msg.id) await dc(env, '/channels/' + ch + '/messages/' + msg.id + '/crosspost', { method: 'POST' }).catch(() => {}); // (to servers that follow it)
+  const nf = newestFeatures(); if (!nf) return;
+  const posted = (await env.DEBRIEF_KV.get('feat-posted', 'json')) || [], fresh = nf.feats.filter((f) => !posted.includes(nf.d + '|' + f.t));
+  const lines = (nf.lines || []).filter((l) => !posted.includes(nf.d + '|n|' + l)); if (!fresh.length && !lines.length) return;
+  const q = (await env.DEBRIEF_KV.get('feat-queue', 'json')) || [];
+  for (const f of fresh) { posted.push(nf.d + '|' + f.t); q.push({ day: nf.d, t: f.t, d: f.d, kind: 'new', status: 'new' }); }
+  // (an Improvements line: the writer judges it: a big upgrade, a move or merge, or a removal for good gets a post; else none)
+  for (const l of lines) { posted.push(nf.d + '|n|' + l); q.push({ day: nf.d, t: l, kind: 'judge', status: 'new' }); }
+  await env.DEBRIEF_KV.put('feat-queue', JSON.stringify(q.slice(-150))); await env.DEBRIEF_KV.put('feat-posted', JSON.stringify(posted.slice(-600)));
+}
+// (a Discord message with pictures: payload_json plus files; the pictures are kept in KV as base64 by the watcher)
+async function dcFiles(env, path, method, payload, keys) {
+  const fd = new FormData(); const atts = [];
+  for (let k = 0; k < (keys || []).length; k++) {
+    const b64 = await env.DEBRIEF_KV.get(keys[k]); if (!b64) continue;
+    const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)), name = 'shot' + (k + 1) + (/^\/9j/.test(b64) ? '.jpg' : '.png');
+    fd.append('files[' + atts.length + ']', new Blob([bin], { type: /\.jpg$/.test(name) ? 'image/jpeg' : 'image/png' }), name); atts.push({ id: atts.length, filename: name });
   }
-  await env.DEBRIEF_KV.put('feat-posted', JSON.stringify(posted.slice(-300)));
+  const p = { ...payload, attachments: atts };
+  if (p.embeds && p.embeds[0] && atts[0]) { p.embeds[0].image = { url: 'attachment://' + atts[0].filename }; for (const a of atts.slice(1)) p.embeds.push({ url: SITE, image: { url: 'attachment://' + a.filename } }); p.embeds[0].url = SITE; }
+  fd.append('payload_json', JSON.stringify(p));
+  const r = await fetch('https://discord.com/api/v10' + path, { method, body: fd, headers: { Authorization: 'Bot ' + env.DISCORD_BOT_TOKEN, 'User-Agent': 'DiscordBot (' + SITE + ', 1)' } });
+  if (!r.ok) throw new Error('Discord answered ' + r.status + ' on ' + path + ': ' + (await r.text().catch(() => '')).slice(0, 200));
+  return r.json();
+}
+const FEAT_ROW = [{ type: 1, components: [{ type: 2, style: 3, label: 'Post it', custom_id: 'fp:post' }, { type: 2, style: 1, label: 'Change it', custom_id: 'fp:change' }, { type: 2, style: 2, label: 'Skip', custom_id: 'fp:skip' }] }];
+// (the user's rules for #new-features, Oct 20: new features get a full spotlight; big upgrades a shorter blurb; moved or
+// merged things say where they are now; things removed for good say so; hidden-for-now things and small fixes: no post)
+const FEAT_KIND = { new: '✨ ', upgrade: '⬆️ ', moved: '📦 ', removed: '👋 ' };
+const featEmbed = (dr) => ({ title: (FEAT_KIND[dr.kind] || '✨ ') + dr.t, description: String(dr.text).slice(0, 4000), color: 0xE6B450, footer: { text: dr.footer || 'New on Debrief' } });
+// (the 'draft' job: a new draft post in #bug-review, or, with thread, the same draft redone in place after Change it)
+async function featDraft(env, o) {
+  const drafts = (await env.DEBRIEF_KV.get('feat-drafts', 'json')) || {}, dr = { t: String(o.feat || o.title || 'New feature').slice(0, 90), kind: FEAT_KIND[o.kind] ? o.kind : 'new', text: String(o.text || ''), footer: o.footer, images: Array.isArray(o.images) ? o.images.slice(0, 4) : [] };
+  const body = { content: '<@' + OWNER + '> **Draft for #new-features.** Here\'s how it will look. Tap **Post it** to publish, **Change it** and reply with what to change, or **Skip**.', allowed_mentions: { parse: [], users: [OWNER] }, embeds: [featEmbed(dr)], components: FEAT_ROW };
+  const old = o.thread && drafts[o.thread] ? o.thread : null;
+  if (old) { await dc(env, '/channels/' + old, { method: 'PATCH', body: { archived: false } }).catch(() => {}); await dcFiles(env, '/channels/' + old + '/messages/' + old, 'PATCH', body, dr.images); drafts[old] = dr; }
+  else { const t = await dcFiles(env, '/channels/' + REVIEW_FORUM + '/threads', 'POST', { name: ('📣 Feature post: ' + dr.t).slice(0, 95), message: body }, dr.images); drafts[t.id] = dr; }
+  await env.DEBRIEF_KV.put('feat-drafts', JSON.stringify(drafts));
+}
+// (Post it: into #new-features, replacing the short card for the same feature if there is one, then published to followers)
+async function featPublish(env, thread) {
+  const drafts = (await env.DEBRIEF_KV.get('feat-drafts', 'json')) || {}, dr = drafts[thread]; if (!dr) return 'I couldn\'t find that draft any more.';
+  const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'new-features') || {}).id; if (!ch) return 'I couldn\'t find #new-features.';
+  const body = { content: '', allowed_mentions: { parse: [] }, embeds: [featEmbed(dr)] };
+  const prev = ((await dc(env, '/channels/' + ch + '/messages?limit=50').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID && m.embeds && m.embeds[0] && m.embeds[0].title.replace(/^\S+\s/, '') === dr.t);
+  const msg = prev ? await dcFiles(env, '/channels/' + ch + '/messages/' + prev.id, 'PATCH', body, dr.images) : await dcFiles(env, '/channels/' + ch + '/messages', 'POST', body, dr.images);
+  if (!prev && msg && msg.id) await dc(env, '/channels/' + ch + '/messages/' + msg.id + '/crosspost', { method: 'POST' }).catch(() => {});
+  delete drafts[thread]; await env.DEBRIEF_KV.put('feat-drafts', JSON.stringify(drafts));
+  for (const k of dr.images || []) await env.DEBRIEF_KV.delete(k).catch(() => {});
+  const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); }
+  return 'Posted in <#' + ch + '>! 🎉 ' + (prev ? 'It replaced the short card.' : 'Followers get it too.') + ' This draft closes in 24 hours.';
 }
 // Kill feed (the user's pick, Oct 20): a guild signs up with /killfeed add <its Warcraft Logs link>; every 30 minutes
 // Claudette reads each signed-up guild's newest report and posts in #kill-feed the first time it kills each Mythic boss
