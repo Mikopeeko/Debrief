@@ -1489,6 +1489,7 @@ const PATCH_NOTES = [
     { t: 'Nymrissa, fully covered', d: 'Murloc sets, Frostscales, Frost Burst, orb maps, Abyssal Rain, the whirlpools and Pop!, all judged against the fastest Mythic kills.' },
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
   ], n: [
+    'Boss guides: pick Learn the fight or Quick, and your role. Your steps are marked, with the fight on a timeline, your job and what wipes us at the top, and small maps in Quick that open big.',
     'My Page is now called Home.',
     'Maps open on the full arena, with small + and − buttons to zoom (or use the mouse wheel), a tidier play bar and a clearer key.',
     'The Coiled Altar maps (Boss guides and Debriefing) now use a much sharper picture of the room.',
