@@ -3825,7 +3825,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
   .wnm-fx .wr-map.wnm-map, .wnm-fx .wr-map.wnm-map svg.zmap { height: 150px !important; }
 }
 /* Report card: the single pulls greyed out, since it's always the whole night (Oct 19) */
-.fc-lock .fcard.pull { opacity: .32; filter: grayscale(1); cursor: not-allowed; box-shadow: none; transform: none; }
+.fc-lock .fcard.pull { opacity: .6; filter: grayscale(.7); cursor: not-allowed; box-shadow: none; transform: none; }
 /* (Oct 19: a new build waits for you instead of reloading the page mid-load) */
 .upd-pill { position: fixed; right: 18px; bottom: 18px; z-index: 9000; display: inline-flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; border-radius: 999px; border: 1px solid var(--line2); background: var(--raised); color: var(--text); font: 600 14px var(--body); box-shadow: 0 10px 28px rgba(0,0,0,.45); cursor: pointer; }
 .upd-pill b { padding: 4px 12px; border-radius: 999px; background: var(--gold); color: var(--gold-ink); font-weight: 700; } .upd-pill:hover { border-color: var(--faint); } .upd-pill:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -4227,6 +4227,26 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .dbr-4 > .dbr-n { border-color: rgba(255,255,255,.05); background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 70%), var(--panel); }
 .spc-tl { border-color: rgba(255,255,255,.05); } .spc-tl:hover { border-color: rgba(255,255,255,.14); }
 .dbr-fx { border-color: rgba(255,255,255,.06); }
+/* Homework (Oct 20, mockup B): the three things worth the most as big cards, the smaller ones folded, what you fixed as green ticks */
+.hwk-h { display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; margin-bottom: 14px; } .hwk-h h2 { margin: 0; font: 700 22px/1.1 var(--head); }
+.hwk-h > .btn, .hwk-who { margin-left: auto; } .hwk-who { display: flex; align-items: center; gap: 8px; } .hwk-who select { background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 5px 8px; max-width: 220px; }
+.hwk-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hwk-c { background: var(--raised); border-radius: 10px; padding: 14px; border-top: 3px solid var(--line2); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.hwk-c.bad { border-top-color: var(--lv-maj-t); } .hwk-c.warn { border-top-color: var(--lv-min-t); }
+.hwk-ct { display: flex; gap: 10px; align-items: center; } .hwk-ct b { font: 700 17px/1.2 var(--head); }
+.hwk-n { font: 700 34px/1 var(--head); color: var(--gold); flex: none; }
+.hwk-ic { flex: none; display: inline-flex; } .hwk-ic img, .hwk-ic .pt-i { width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 0 0 1px #000a; margin: 0; }
+.hwk-ic.sm img, .hwk-ic.sm .pt-i { width: 22px; height: 22px; }
+.hwk-c p { margin: 0; color: var(--muted); font-size: 14px; } .hwk-fix { font-size: 14px; } .hwk-fix span { color: var(--gold); font-weight: 600; }
+.hwk-ft { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: auto; padding-top: 2px; } .hwk-ft .sub { font-size: 12px; }
+.hwk-pill { font-size: 12px; font-weight: 600; padding: 1px 9px; border-radius: 20px; white-space: nowrap; }
+.hwk-pill.bad { color: var(--lv-maj-t); background: rgba(255,59,70,.12); } .hwk-pill.warn { color: var(--lv-min-t); background: rgba(255,213,74,.1); }
+.hwk-tr { font-size: 12px; white-space: nowrap; } .hwk-tr.up { color: #7ee08f; } .hwk-tr.dn { color: var(--lv-maj-t); }
+.hwk-more { margin-top: 14px; } .hwk-more summary { cursor: pointer; color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+.hwk-m { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 14px; } .hwk-m > span:nth-child(2) { flex: 1; min-width: 0; } .hwk-m b { font-weight: 600; }
+.hwk-ok { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; } .hwk-ok span { font-size: 13px; color: #7ee08f; background: var(--good-bg); padding: 3px 10px; border-radius: 20px; }
+.hwk-clean { margin: 0; color: #7ee08f; } .hwk-how { margin: 12px 0 0; font-size: 12px; }
+@media (max-width: 760px) { .hwk-3 { grid-template-columns: 1fr; } .hwk-who { margin-left: 0; } .hwk-h > .btn { margin-left: 0; } }
 </style>
 
 

@@ -197,7 +197,9 @@ function deathMap(r, d) {
 }
 function mapAt(r, t, label, win, back) {
   if (t == null) return null; const want = mapStems(label); if (!want.size) return null; const w = win || 1.5, bk = Math.max(w, back || 0);
-  const c = modMaps(r).filter((x) => x.t >= t - bk && x.t <= t + w && [...mapStems(x.title)].some((s) => want.has(s))).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
+  // (a map that plays several frontals (a Deluge's Severs) counts at each cone's own time, not just its row's)
+  const tOf = (x) => [x.t].concat((x.map.cones || []).map((c0) => c0.at).filter((v) => v != null)).sort((a, b) => Math.abs(a - t) - Math.abs(b - t))[0];
+  const c = modMaps(r).filter((x) => { const tt = tOf(x); return tt >= t - bk && tt <= t + w && [...mapStems(x.title)].some((s) => want.has(s)); }).sort((a, b) => Math.abs(tOf(a) - t) - Math.abs(tOf(b) - t))[0];
   return c || null;
 }
 // One line per item (the worst wrong first; at most five, the rest counted), its time on the right, the whole line on hover.
@@ -508,7 +510,7 @@ function renderList() {
   const pk = $('#bhPk'), pkB = $('#bossHead .bh-pickb');
   if (pk) pk.innerHTML = groups.length > 1 ? '<div class="bp-pop" hidden>' +
     groups.map((g) => '<button class="bp-i' + (g === cur ? ' on' : '') + '" type="button" data-last="' + add(gLast(g)) + '"><b>' + esc(gName(g)) + '</b><span>' + (g.kind === 'run' ? esc(g.run.result) + ' · ' + T(g.run.duration) : plural(g.list.length, 'pull') + (g.list.some((b) => b.kill) ? ' · killed' : '')) + '</span></button>').join('') + '</div>' : '';
-  if (pkB) { pkB.hidden = groups.length < 2; pkB.innerHTML = '<span class="bp-n">' + groups.length + ' bosses</span>' + CHEV; pkB.title = 'This log has ' + groups.length + ' bosses: pick one'; }
+  if (pkB) { pkB.hidden = groups.length < 2; pkB.innerHTML = '<span class="bp-n">Change boss</span>' + CHEV; pkB.title = 'This log has ' + groups.length + ' bosses: pick one'; }
   let h = '';
   if (cur.kind === 'boss') {
     const list = cur.list, kill = list.find((b) => b.kill), known = list.map((b) => [b, pullPct(b)]).filter(([, v]) => v != null);
@@ -532,7 +534,7 @@ function renderList() {
     const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '"><span class="fc-h"><b>All pulls</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><i class="fc-bar"><b style="width:' + nDone.toFixed(1) + '%"></b></i></button>' : '';
     // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
     // (on Report card the single pulls are greyed out and can't be picked: it's always the whole night (your call, Oct 19))
-    const lock = S.tab === 'player' && !!allC;
+    const lock = (S.tab === 'player' || S.tab === 'hw') && !!allC;
     h = '<div class="sg-row">' + allC + '<div class="fwrap' + (lock ? ' fc-lock' : '') + '"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
   } else {
     // a Mythic+ key: the whole key, then each boss in it
@@ -540,7 +542,7 @@ function renderList() {
       return '<button class="pull fcard' + (ok ? ' kill' : '') + (b === S.item ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--pc:' + (ok ? '#45c15c' : '#e5534b') + '"><span class="fc-h"><b>' + (i ? esc(b.boss) : '∑ Whole key') + '</b></span><span class="fc-p">' + esc(b.result) + ' · ' + T(b.duration) + '</span><i class="fc-bar"><b style="width:' + (ok ? 100 : 40) + '%"></b></i></button>'; }).join('') + '</div></div>';
   }
   box.innerHTML = h;
-  box.querySelectorAll('.fc-lock .pull').forEach((b) => { b.disabled = true; b.title = 'Report card always shows all pulls'; });
+  box.querySelectorAll('.fc-lock .pull').forEach((b) => { b.disabled = true; b.title = 'This tab always covers every pull'; });
   // the wipe filter: a card at the right end of a boss's pull cards (a Mythic+ key doesn't have one)
   bhCutBind(); // (the wipe filter sits behind its chip in the banner)
   if (bosses.some((b) => !b.wcl && !CACHE.has(b))) warmPulls();
@@ -1043,10 +1045,10 @@ function bgFetch(item) {
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
-const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['cmp', 'Compare']];
+const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['hw', 'Homework'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
-const TAB_ORDER = ['audit', 'overview', 'rot', 'perf', 'player', 'cmp']; // (Recap is merged into Debriefing (Oct 19))
+const TAB_ORDER = ['audit', 'overview', 'rot', 'perf', 'player', 'hw', 'cmp']; // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -1064,7 +1066,7 @@ function nightResult(it) {
   return { cls: 'best', txt: best ? 'Best: ' + pullLabel(best.b) + ' (pull ' + best.b.pull + ')' : 'No kill yet', big: best ? 'Best: ' + pullLabel(best.b) : 'No kill yet', left: best ? best.v : null, pull: best ? best.b.pull : null };
 }
 // the tabs' icons (drawn here, no game art)
-const TAB_IC = { me: 'home', live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', cmp: 'scale' };
+const TAB_IC = { me: 'home', live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', hw: 'check', cmp: 'scale' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
   cmp: 'One player side by side with the top players of their spec on this boss, with a teammate, or with raids that killed this boss with a group like yours.',
@@ -1074,9 +1076,10 @@ const TAB_TIP = {
   rot: 'How each player played their own spec in this pull, checked against the guides: what they pressed and when, their cooldowns, their resources and their talents.',
   perf: 'The raw numbers for this pull, player by player and over time: damage, healing, damage taken, casts, resources, cooldowns, buffs and utility. The phases, boss mechanics, Bloodlust and deaths are marked on the charts.',
   night: 'Every pull of this boss together. It shows report cards, how far you got, what to fix before the next raid, and each mechanic and assignment pull by pull.',
+  hw: 'Your own to-do list for this boss from every pull tonight: the three things worth the most first, what to do next pull, and what you already fixed.',
   player: 'Each player\'s page, for this pull or all pulls. It shows one grade from their mechanics and Rotation, what they should fix first, and their prep.',
 };
-const TICO = { home: '<path d="M3.5 11.5 12 4.5l8.5 7"/><path d="M6 10v9.5h4.5v-5h3v5H18V10"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
+const TICO = { check: '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8"/>', home: '<path d="M3.5 11.5 12 4.5l8.5 7"/><path d="M6 10v9.5h4.5v-5h3v5H18V10"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
   target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>', chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
   bars: '<path d="M4 20h16"/><path d="M6.5 17v-5M11 17V7M15.5 17v-8M20 17v-3"/>',
   cycle: '<path d="M19 12a7 7 0 0 1-12 4.95M5 12a7 7 0 0 1 12-4.95"/><path d="M17.5 3.5v3.8h-3.8M6.5 20.5v-3.8h3.8"/>',
@@ -1115,6 +1118,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
   let meCard = null; if (you || again) { meCard = el('panel my-you' + (you ? ' my-youa' : ''), 'div', '<div class="my-lab">You</div>'); if (you && you.style.getPropertyValue('--sart')) meCard.style.setProperty('--sart', you.style.getPropertyValue('--sart')); meCard.append(you || again); }
   flow.append(who); if (q1('#pgRk')) flow.append(q1('#pgRk'));
   if (q1('#pgNow')) flow.append(q1('#pgNow')); /* (the boss you're on, right under your team) */
+  { const hwp = hwMyPanel(); if (hwp) flow.append(hwp); } /* (your homework's top three, under the boss you're on) */
   // the whole raid at a glance
   const order = (E.PACKS || []).map((p) => p.encounter), cards = [...grid.querySelectorAll('.pc-card[data-boss]')], byB = new Map(cards.map((c) => [c.dataset.boss, c]));
   const notP = new Set([...pg.querySelectorAll('.pc-open .pc-chip')].map((x) => x.textContent.trim())), list = order.filter((b) => byB.has(b) || notP.has(b));
@@ -1225,7 +1229,7 @@ function headerHtml(r, allMode) {
   if (allMode) {
     const nr = nightResult(it), time = same.reduce((s, b) => s + (b.duration || 0), 0);
     cls = nr.cls; left = nr.left; kick = [it.diff, raid]; big = nr.big + (nr.cls !== 'good' && nr.pull ? ' (pull ' + nr.pull + ')' : '');
-    stats = [['pulls', plural(same.length, 'pull')], ['timer', T(time) + ' on the boss']].concat(H.earlier.length ? [['moon', 'Night ' + (H.earlier.length + 1) + ' on this boss']] : []);
+    stats = [['timer', durH(time) + ' on the boss']] /* (the pull count is on the All pulls chip beside it, so it isn't said twice; hours as 1h 27m (your note, Oct 20)) */.concat(H.earlier.length ? [['moon', 'Night ' + (H.earlier.length + 1) + ' on this boss']] : []);
     if (H.earlier.length) side += nr.cls !== 'good' && nr.left != null && everBest != null && nr.left < everBest ? '<span class="nc-res ok">✓ Further than any night before</span>'
       : '<span class="sub">Before tonight, ' + (H.kill ? 'you killed it on ' + esc(H.kill.label) : H.best ? 'your best was ' + esc(H.best.label) : 'there was no result') + ', over ' + plural(H.pulls, 'pull') + ' in ' + plural(H.earlier.length, 'night') + '.</span>';
   } else if (isKey) {
@@ -1293,7 +1297,7 @@ const REPORT_ON = () => !!window.WLA_REPORT;
 const RECENT_ERR = [], keepErr = (m) => { RECENT_ERR.push(String(m).slice(0, 200)); if (RECENT_ERR.length > 5) RECENT_ERR.shift(); };
 window.addEventListener('error', (e) => keepErr((e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')));
 window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e.reason && e.reason.message) || e.reason)));
-const TAB_NAME = { me: 'My Page', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card' };
+const TAB_NAME = { me: 'My Page', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
@@ -1462,7 +1466,7 @@ function renderMain() {
   if (S.tab === 'live') S.tab = 'audit'; // (Recap is merged into Debriefing (your call, Oct 19))
   if (single) S.scope = 'pull';
   // (Report card is always the whole night (your call, Oct 19): the Whole night card shows on every tab, and on Report card the pulls are greyed out)
-  if (!single && S.tab === 'player') S.scope = 'all';
+  if (!single && (S.tab === 'player' || S.tab === 'hw')) S.scope = 'all'; /* (Homework is the whole night too) */
   const allMode = S.scope === 'all' && !single;
   const serious = allMode ? 0 : keptMistakes(r).filter((m) => m.severity === 'High' && m.mechanic !== 'Death').length;
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
@@ -16433,6 +16437,76 @@ function player() {
   bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Reading the night', line, of ? k / of : 0); })
     .then((got) => { if (!got || !still()) return; grade(got.reps, loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll')); });
 }
+// ---------- Homework (your call, Oct 20): one raider's to-do list for this boss, from the whole night ----------
+// (mockup B, your pick: the three things worth the most as big cards, the smaller ones folded, and what they fixed during
+// the night as green ticks. Built on the Report card's grades (plData, the same cache), so nothing is graded twice: a fix's
+// title, its why and its worth are the Report card's own. A boss mistake gets a "Next pull" line, the mechanic's own fix)
+const HW_CAT = { audit: ['The boss', 'spell_shadow_plaguecloud'], asg: ['The note', 'inv_inscription_scroll'], card: ['Your buttons', 'spell_holy_borrowedtime'], cast: ['Your buttons', 'spell_holy_borrowedtime'], res: ['Your buttons', 'spell_holy_borrowedtime'], cds: ['Your buttons', 'spell_holy_borrowedtime'], surv: ['Staying alive', 'spell_holy_ardentdefender'], util: ['Your toolkit', 'inv_misc_enggizmos_swissarmy'], prep: ['Prep', 'inv_alchemy_90_flask_green'] };
+const HW_KEY = 'wla-hw';
+function hwItems(a) {
+  const n = a.n, nm = a.p.name, tail = Math.max(3, Math.ceil(n / 3)), h = Math.floor(n / 2), out = [];
+  for (const f of a.fixes) { if ((f.gain || 0) < 0.5 && !(f.rank > 0)) continue;
+    const on = a.per.map((g) => g.fixes.some((q) => q.key === f.key)), pulls = a.per.filter((g, i) => on[i]).map((g) => g.r.item.pull), k = pulls.length; if (!k) continue;
+    const e = on.slice(0, h).filter(Boolean).length, l = on.slice(n - h).filter(Boolean).length, mech = String(f.key).startsWith('m|');
+    const g0 = String(f.go || 'none').split(':')[0], cat = /^c\|pot\|/.test(f.key) ? HW_CAT.util : HW_CAT[g0] || (mech ? HW_CAT.audit : HW_CAT.card); /* (potions are the toolkit, not buttons) */
+    // (a boss mistake: its spell's icon, and what happened the last time)
+    let id = 0, det = ''; if (mech) { const mn = f.key.slice(2); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic === mn) { if (m.id) id = m.id; if (m.detail) det = m.detail; } }
+    out.push({ f, t: String(f.t).replace(/ ×\d+$/, ''), mech, det, x: f.x || '', k, n, pulls, sev: k / n >= 0.5 ? 'bad' : 'warn', tr: n >= 4 && k >= 3 && e !== l ? (l < e ? 'up' : 'dn') : null,
+      fixed: n >= 4 && !on.slice(n - tail).some(Boolean), cat, id }); }
+  return out;
+}
+const hwIc = (o, sm) => '<i class="hwk-ic' + (sm ? ' sm' : '') + '">' + (o.id ? spellIcon(o.id, o.t) : plIco(o.cat[1])) + '</i>';
+const hwWhen = (o) => (o.n === 1 ? 'This pull' : 'In ' + o.k + ' of ' + o.n + ' pulls' + (o.k <= 5 && o.k < o.n ? ' (' + (o.k === 1 ? 'pull ' : 'pulls ') + andList(o.pulls.map(String)) + ')' : ''));
+const hwTr = (o) => (o.tr === 'up' ? '<span class="hwk-tr up">▲ getting better</span>' : o.tr === 'dn' ? '<span class="hwk-tr dn">▼ getting worse</span>' : '');
+function hwPage(c) {
+  const it = S.rep.item, me = meOf(), base = (s) => String(s || '').split('-')[0].toLowerCase();
+  const pick = S.hwSel || (me && me.name), a = pick ? c.data.find((x) => x.p.name === pick) || c.data.find((x) => base(x.p.name) === base(pick)) : null;
+  const opts = c.data.slice().sort((u, v) => u.p.name.localeCompare(v.p.name)).map((x) => '<option value="' + esc(x.p.name) + '"' + (a && x === a ? ' selected' : '') + '>' + esc(x.p.name) + (me && base(x.p.name) === base(me.name) ? ' (you)' : '') + '</option>').join('');
+  const sel = '<label class="hwk-who"><span class="sub">Showing</span><select id="hwkSel">' + (a ? '' : '<option value="">Pick a raider…</option>') + opts + '</select></label>';
+  if (!a) return '<section class="panel hwk"><div class="hwk-h"><h2>Your homework</h2>' + sel + '</div><p class="sub" style="margin:0">' + (me ? esc(me.name) + ' isn\'t in these pulls. Pick a raider to see their homework.' : 'Pick yourself to see your homework for ' + esc(it.boss) + '.') + '</p></section>';
+  const all = hwItems(a), todo = all.filter((o) => !o.fixed), top = todo.slice(0, 3), rest = todo.slice(3, 9), fixed = all.filter((o) => o.fixed);
+  const dd = []; for (const g of a.per) for (const d of keptDeaths(g.r)) if (d.player === a.p.name) dd.push(d);
+  const good = fixed.map((o) => '✓ ' + o.t + ' (fixed)');
+  if (a.mech != null && a.mech >= 95 && !todo.some((o) => o.mech)) good.push('✓ No boss mistakes');
+  if (!dd.length) good.push('✓ No deaths that counted'); if (a.prep != null && a.prep >= 95) good.push('✓ Ready at the pull');
+  const card = (o, i) => '<div class="hwk-c ' + o.sev + '"><div class="hwk-ct"><span class="hwk-n">' + (i + 1) + '</span>' + hwIc(o) + '<b>' + esc(o.t) + '</b></div>' +
+    '<p>' + esc(o.mech ? o.det || o.x : o.x) + '</p>' + (o.mech && o.x && o.det ? '<div class="hwk-fix"><span>Next pull:</span> ' + esc(o.x) + '</div>' : '') +
+    '<div class="hwk-ft"><span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span><span class="sub">' + esc(hwWhen(o)) + '</span>' + hwTr(o) + '</div></div>';
+  const mini = (o) => '<div class="hwk-m">' + hwIc(o, true) + '<span><b>' + esc(o.t) + '</b><span class="sub"> · ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span></span>' + hwTr(o) + '<span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span></div>';
+  const head = '<div class="hwk-h"><h2>' + (me && base(a.p.name) === base(me.name) ? 'Your homework' : esc(a.p.name) + '\'s homework') + '</h2><span class="sub"><b style="color:' + (a.p.color || 'inherit') + '">' + esc(a.p.name) + '</b> · ' + esc(a.p.specName || '') + ' · ' + esc(it.boss) + ' ' + esc(it.diff || '') + ' · ' + plural(a.n, 'pull') + (dd.length ? ' · ' + plural(dd.length, 'death') : '') + '</span>' + sel + '</div>';
+  const body = top.length ? '<div class="hwk-3">' + top.map(card).join('') + '</div>' + (rest.length ? '<details class="hwk-more" open><summary>' + plural(rest.length, 'smaller thing') + '</summary>' + rest.map(mini).join('') + '</details>' : '')
+    : '<p class="hwk-clean">Nothing to work on from these pulls. Keep it up.</p>';
+  hwSave(a, top, it);
+  return '<section class="panel hwk">' + head + body + (good.length ? '<div class="hwk-ok">' + good.map((t) => '<span>' + esc(t) + '</span>').join('') + '</div>' : '') +
+    '<p class="sub hwk-how">From every pull of this boss tonight, up to the wipe filter, biggest gain first. Red came up in half the pulls or more. Something you stopped doing in your last pulls moves to the green ticks.</p></section>';
+}
+// (your top three, kept for My Page: only your own, the latest boss you opened)
+function hwSave(a, top, it) { const me = meOf(); if (!me || String(a.p.name).split('-')[0].toLowerCase() !== String(me.name).split('-')[0].toLowerCase()) return;
+  store.set(HW_KEY, JSON.stringify({ name: a.p.name, boss: it.boss, diff: it.diff || '', n: a.n, at: Date.now(), code: (S.rep && S.rep.item && (S.rep.item.code || '')) || '', items: top.map((o) => ({ t: o.t, x: o.mech && o.det ? o.x : '', w: o.mech ? o.det || o.x : o.x, sev: o.sev, cat: o.cat, id: o.id, when: hwWhen(o) })) })); }
+function hw() {
+  const r = S.rep, it = r.item;
+  if (it.kind === 'run') { view('<section class="panel hwk"><h2>Homework</h2><p class="sub" style="margin:0">Homework covers raid bosses. Open a raid boss to see it.</p></section>'); return; }
+  const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId), key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':night:';
+  const cached = S.plData && S.plData.key === key ? S.plData : null;
+  view('<div class="plv"><div id="plBody">' + (cached ? '' : loadCard('Making your homework', 'Reading tonight\'s pulls…', 0)) + '</div></div>');
+  const still = () => S.tab === 'hw' && S.rep && S.rep.item === it && $('#plBody');
+  const draw = (c) => { const el = $('#plBody'); if (!el) return; el.innerHTML = (c.load || '') + hwPage(c); refreshIcons();
+    const s = $('#hwkSel'); if (s) s.onchange = () => { if (!s.value) return; S.hwSel = s.value; draw(c); };
+    el.querySelectorAll('#plAll').forEach((b) => (b.onclick = () => { NIGHT_ALL = true; S.plData = null; hw(); })); };
+  if (cached) { draw(cached); return; }
+  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Making your homework', line, of ? k / of : 0); })
+    .then((got) => { if (!got || !still()) return; return plData(got.reps, still).then((data) => { if (!data || !still()) return; S.plData = { key, reps: got.reps, data, load: loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll'), wait: data.some((a) => a.wait) }; draw(S.plData); setHeadRes(); }); });
+}
+// (My Page: your homework's top three from the last boss you opened, and a button to the tab when that raid is open)
+function hwMyPanel() { let o = null; try { o = JSON.parse(store.get(HW_KEY) || 'null'); } catch (e) { o = null; } const me = meOf();
+  if (!o || !o.items || !me || String(o.name).split('-')[0].toLowerCase() !== String(me.name).split('-')[0].toLowerCase()) return null;
+  const open = S.rep && S.rep.item && S.rep.item.boss === o.boss && S.rep.item.kind !== 'run';
+  const sec = document.createElement('section'); sec.className = 'panel hwk hwk-my';
+  sec.innerHTML = '<div class="hwk-h"><h2>Your homework</h2><span class="sub">' + esc(o.boss) + ' ' + esc(o.diff) + ' · ' + plural(o.n, 'pull') + ' · ' + esc(new Date(o.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span>' + (open ? '<button type="button" class="btn sm" id="hwkGo">Open Homework</button>' : '') + '</div>' +
+    (o.items.length ? '<div class="hwk-3">' + o.items.map((x, i) => '<div class="hwk-c ' + x.sev + '"><div class="hwk-ct"><span class="hwk-n">' + (i + 1) + '</span><i class="hwk-ic">' + (x.id ? spellIcon(x.id, x.t) : plIco(x.cat[1])) + '</i><b>' + esc(x.t) + '</b></div><p>' + esc(x.w) + '</p>' + (x.x ? '<div class="hwk-fix"><span>Next pull:</span> ' + esc(x.x) + '</div>' : '') + '<div class="hwk-ft"><span class="hwk-pill ' + x.sev + '">' + esc(x.cat[0]) + '</span><span class="sub">' + esc(x.when) + '</span></div></div>').join('') + '</div>'
+      : '<p class="hwk-clean">Nothing to work on from your last boss. Keep it up.</p>');
+  const b = sec.querySelector('#hwkGo'); if (b) b.onclick = () => { S.tab = 'hw'; renderMain(); window.scrollTo(0, 0); };
+  return sec; }
 // Players: a row picks a player (again, or Show the raid, for everyone); the order and role switches; a fix's link opens
 // the tab that shows it with that player; a pull's square opens that pull here
 function bindPlayers(c) {
@@ -17153,7 +17227,7 @@ function nightMerge(o) {
   { const d = box.querySelector('details.dbr-more'); if (d) d.ontoggle = () => { if (d.open) S.openSecs.add('dbmore-n'); else S.openSecs.delete('dbmore-n'); }; }
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
-const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp, me: myPageView };
+const VIEWS = { audit, overview, night, player, hw, perf, rot: perf, live: lastPull, cmp, me: myPageView };
 
 // ---------- Warcraft Logs reports ----------
 $('#wclBtn').onclick = () => wclPanel();
