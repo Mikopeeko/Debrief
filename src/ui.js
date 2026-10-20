@@ -1365,6 +1365,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names.
 const PATCH_NOTES = [
   { d: '2026-10-20', n: [
+    'Boss guides: the maps now freeze at the key moments, with the important spot lit up and a short note from the raid lead.',
     'Boss guides, in the menu (☰): how each fight works with animated maps, Heroic and Mythic, a mistake view and a full-fight simulation. Anyone can open them. The Coiled Altar is first.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
     'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
@@ -4611,7 +4612,7 @@ function miniMap(mp, pmap) {
   if ((gHit.size || gMiss.size) && !LL) leg.push([(x, y) => '<text x="' + (x - 3) + '" y="' + (y + 4) + '" fill="#9aa0ac" font-size="11">i</text>', 'Ghosts shown where they spawned']);
   for (const g of (lm.rings || []).filter((x, i, a) => a.findIndex((y) => (y.legend || y.label || '') === (x.legend || x.label || '')) === i)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (g.fill || (g.color ? 'rgba(126,224,143,.2)' : 'rgba(230,180,80,.2)')) + '" stroke="' + (g.color || '#e6b450') + '" stroke-dasharray="3 2"/>', (g.cn ? g.cn + ': ' : g.color === '#b65cff' ? 'Purple circle: ' : g.color ? 'Green circle: ' : 'Gold circle: ') + (g.legend || g.label || 'mechanic area') + (g.shrink === 'ichor' ? ' (shrinks from ~11 yd)' : '')]);
   { const atU = (g) => { const q = byG.get(g); return q ? [X(q), Y(q)] : null; }; /* (a guide's pop-up labels, debuff icons and dispel beams, on top (guides.js)) */
-    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue; s += c.kind === 'beam' ? gdzCallSvg(c, X(p), Y(p), ft, atU) : ic(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
+    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue; s += c.kind === 'beam' || c.kind === 'spot' ? gdzCallSvg(c, X(p), Y(p), ft, atU, yd) : ic(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
   s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
   const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
@@ -4638,6 +4639,8 @@ function bindAnim(box, mp, pmap, still) {
   // the outcome before the next loop, rests while it's off screen, and a long clip plays faster: about 12 seconds a loop)
   const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t, spd = mp.spd || Math.max(1, (t1 - t0) / 12) /* (a guide's whole-fight map sets its own, slower speed) */, HOLD = 1.2;
   let ft = t0, raf = null, last = 0, lastDraw = 0, drawn = -1, paused = false, seen = !still, held = 0;
+  const PZ = mp.pauses || [], pzDone = new Set(); let pzLeft = 0; /* (a guide's freezes: the map holds at a key moment while the raid lead explains (Oct 20)) */
+  const pzEnd = () => { pzLeft = 0; if (box._onPause) box._onPause(null); };
   const at = (t) => {
     let i = 0; while (i < fr.length - 2 && fr[i + 1].t <= t) i++;
     const a = fr[i], b = fr[Math.min(i + 1, fr.length - 1)], w = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
@@ -4664,13 +4667,16 @@ function bindAnim(box, mp, pmap, still) {
     if (!seen) { last = 0; return; } // (off screen: rests, and picks up where it was when it's back)
     // (at most a tenth of a second at a time, so coming back to the browser tab doesn't jump to the end)
     const dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
-    if (ft >= t1) { held += dt; if (held >= HOLD) { held = 0; ft = t0; drawn = -1; show(t0); lastDraw = now; } }
-    else { const nt = Math.min(t1, ft + dt * spd); if (nt >= t1 || now - lastDraw >= 33) { show(nt); lastDraw = now; } else ft = nt; } // (about 30 frames a second)
+    if (pzLeft > 0) { pzLeft -= dt; if (pzLeft <= 0) pzEnd(); raf = requestAnimationFrame(step); return; }
+    if (ft >= t1) { held += dt; if (held >= HOLD) { held = 0; ft = t0; drawn = -1; pzDone.clear(); show(t0); lastDraw = now; } }
+    else { const nt0 = Math.min(t1, ft + dt * spd), pz = PZ.find((p) => p.t > ft - 1e-6 && p.t <= nt0 && !pzDone.has(p));
+      if (pz) { pzDone.add(pz); show(pz.t); lastDraw = now; pzLeft = pz.dur || 3.6; if (box._onPause) box._onPause(pz); raf = requestAnimationFrame(step); return; }
+      const nt = nt0; if (nt >= t1 || now - lastDraw >= 33) { show(nt); lastDraw = now; } else ft = nt; } // (about 30 frames a second)
     raf = requestAnimationFrame(step);
   };
   const play = () => { paused = false; btn.textContent = '❚❚ Pause'; last = 0; if (!raf) raf = requestAnimationFrame(step); };
   btn.onclick = () => { if (paused) { if (ft >= t1) { ft = t0; held = 0; } play(); } else { paused = true; stop(); } };
-  rng.oninput = () => { paused = true; stop(); show(fr[+rng.value].t); };
+  rng.oninput = () => { paused = true; stop(); if (pzLeft > 0) pzEnd(); const t = fr[+rng.value].t; pzDone.clear(); for (const p of PZ) if (p.t < t - 0.01) pzDone.add(p); show(t); };
   // (it moves only while most of it is on screen)
   if (typeof IntersectionObserver !== 'undefined') {
     obs = new IntersectionObserver((es) => { for (const e of es) { const was = seen; seen = e.isIntersecting;
