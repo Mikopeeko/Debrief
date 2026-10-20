@@ -31060,7 +31060,7 @@ if (WCL.HOSTED) {
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
-  else if (qp.has('guides')) setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
+  else if (qp.has('guides') || qp.get('tab') === 'gdz') setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
   else if (sharedLink) { if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
     if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
