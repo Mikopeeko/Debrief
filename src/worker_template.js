@@ -405,9 +405,53 @@ async function runQuestions(env, all) {
   }
   if (dirty) await env.DEBRIEF_KV.put('dc-qs', JSON.stringify(seen));
 }
+// The owner's answers in #bug-review (the user's ask, Oct 20: "how will you know if I want you to fix it? I replied to the
+// pings"): every run, their new replies in a review post, and their reactions on its first post, go to KV review-inbox
+// for the twice-a-day check, which acts on them. Reactions: ✅ fix it, 👀 look again, ❌ not a bug, ⏳ in progress, 🏁 done
+// (⏳, 🏁 and ❌ also set the post's tag at once). A reply or ✅ / 👀 gets a short "got it".
+const REVIEW_FORUM = '1562143289304424578';
+const REACTS = { '✅': ['fix it', null], '👀': ['look into it again', null], '❌': ['not a bug, close it', 'Not a bug'], '⏳': ['in progress', 'In progress'], '🏁': ['done', 'Done'] };
+const GOT_IT = 'Got it! I\'ll pick this up at the next check (10 am or 6 pm). For sooner, tell me in the Claude app.';
+async function runReplies(env, all) {
+  const posts = all.filter((t) => t.parent_id === REVIEW_FORUM); if (!posts.length) return;
+  const seen = (await env.DEBRIEF_KV.get('dc-revseen', 'json')) || {}, reviews = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {};
+  const issueOf = {}; for (const [n, tid] of Object.entries(reviews)) issueOf[tid] = +n;
+  const inbox = (await env.DEBRIEF_KV.get('review-inbox', 'json')) || [], start = inbox.length; let dirty = false, forum = null;
+  for (const t of posts) {
+    const s = seen[t.id] || (seen[t.id] = { m: t.last_message_id || t.id, r: [] }), item = { thread: t.id, issue: issueOf[t.id] || 0, title: t.name };
+    if (!s.r) s.r = [];
+    try {
+      // (new replies by the owner since the last run)
+      if (t.last_message_id && t.last_message_id !== s.m) {
+        const msgs = (await dc(env, '/channels/' + t.id + '/messages?after=' + s.m + '&limit=50')).reverse();
+        s.m = t.last_message_id; dirty = true;
+        const mine = msgs.filter((m) => m.author && m.author.id === OWNER && (m.content || '').trim());
+        for (const m of mine) inbox.push({ ...item, kind: 'reply', text: m.content.slice(0, 1500), at: m.timestamp });
+        if (mine.length) { const g = await say(env, t.id, GOT_IT); if (g && g.id) s.m = g.id; }
+      }
+      // (the owner's reactions on the post's first message)
+      const first = await dc(env, '/channels/' + t.id + '/messages/' + t.id).catch(() => null);
+      for (const r of (first && first.reactions) || []) {
+        const e = r.emoji && r.emoji.name; if (!REACTS[e] || s.r.includes(e)) continue;
+        const who = await dc(env, '/channels/' + t.id + '/messages/' + t.id + '/reactions/' + encodeURIComponent(e) + '?limit=25').catch(() => []);
+        if (!who.some((u) => u.id === OWNER)) continue;
+        s.r.push(e); dirty = true; const [meaning, tag] = REACTS[e];
+        inbox.push({ ...item, kind: 'reaction', emoji: e, text: meaning, at: new Date().toISOString() });
+        if (tag) {
+          if (!forum) forum = await dc(env, '/channels/' + REVIEW_FORUM);
+          const id = tagOf(forum.available_tags, tag), keep = new Set((t.applied_tags || []).filter((x) => !['In progress', 'Done', 'Not a bug'].map((n) => tagOf(forum.available_tags, n)).includes(x)));
+          if (id) { keep.add(id); await dc(env, '/channels/' + t.id, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } }).catch(() => {}); }
+        } else { const g = await say(env, t.id, GOT_IT); if (g && g.id) s.m = g.id; }
+      }
+    } catch (err) { console.warn('Replies:', t.id, err && err.message); }
+  }
+  if (dirty) await env.DEBRIEF_KV.put('dc-revseen', JSON.stringify(seen));
+  if (inbox.length !== start) await env.DEBRIEF_KV.put('review-inbox', JSON.stringify(inbox.slice(-200)));
+}
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
+  await runReplies(env, all).catch((err) => console.warn('Replies:', err && err.message));
   await runQuestions(env, all).catch((err) => console.warn('Questions:', err && err.message));
   await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
   await runDigest(env, now, all);
