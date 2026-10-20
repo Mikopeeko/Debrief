@@ -226,10 +226,15 @@ function gdzGlyph(x, y, pl, r, attrs, title) { // a role token: the role's colou
     '<circle cx="' + x + '" cy="' + y + '" r="' + (R - 1.6) + '" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/><g transform="translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ')" style="color:' + c + '">' + sign.replace(/#fff/g, '#10131a') + '</g>' + (title ? '<title>' + esc(title) + '</title>' : '') + '</g>';
 }
 const GDZ_ART = { "Zul'jan": 142472, Malacrass: 142140, 'Hex Lord Malacrass': 142140 };
+// (a boss's portrait by name: Zul'jan and Malacrass, a boss named like its encounter, and the one boss of a council or pair whose
+// render the site already uses (BOSS_ART); the others get the skull on their own colour until we have theirs)
+const GDZ_ART_MORE = { "Blood of Ula'tek": 143436, 'Scrollsage Iku': 144892, Ithraz: 141309, Vashnik: 141675, "Nek'zali, the Soulcoiler": 142077 };
+const gdzArtOf = (n) => GDZ_ART[n] || GDZ_ART_MORE[n] || (typeof BOSS_ART !== 'undefined' && BOSS_ART[n] ? BOSS_ART[n][0] : null);
 function gdzBossToken(x, y, name) { // a boss: a gold ring with their portrait (or a skull while it loads)
-  const d = GDZ_ART[name], R = 13;
-  return '<circle cx="' + (x + 1) + '" cy="' + (y + 1.5) + '" r="' + (R + 3) + '" fill="#000" fill-opacity=".5"/><circle cx="' + x + '" cy="' + y + '" r="' + (R + 2.5) + '" fill="#e6b450" stroke="#3a2a08" stroke-width="1.4"/><circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="#2a1d0d"/>' +
-    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" fill="#e6b450">☠</text>' +
+  let hs = 0; for (const c of String(name)) hs = (hs * 31 + c.charCodeAt(0)) >>> 0;
+  const d = gdzArtOf(name), R = 13, bg = d ? '#2a1d0d' : ['#2f5f3a', '#7a2333', '#33508f', '#6a3f9a', '#8a5a22'][hs % 5];
+  return '<circle cx="' + (x + 1) + '" cy="' + (y + 1.5) + '" r="' + (R + 3) + '" fill="#000" fill-opacity=".5"/><circle cx="' + x + '" cy="' + y + '" r="' + (R + 2.5) + '" fill="#e6b450" stroke="#3a2a08" stroke-width="1.4"/><circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="' + bg + '"/>' +
+    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" fill="' + (d ? '#e6b450' : '#f1ead8') + '">☠</text>' +
     (d ? '<image href="' + artUrl(d) + '" x="' + (x - R) + '" y="' + (y - R) + '" width="' + 2 * R + '" height="' + 2 * R + '" clip-path="url(#pclip)" preserveAspectRatio="xMidYMin slice"/>' : '') +
     '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="none" stroke="#fff3c4" stroke-opacity=".6" stroke-width="1"/><title>' + esc(name) + '</title>';
 }

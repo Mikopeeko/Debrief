@@ -1490,6 +1490,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Every map shows bosses the Boss guides way: a gold ring with their portrait.',
     'Boss guides: pick Learn the fight or Quick, and your role. Your steps are marked, with the fight on a timeline, your job and what wipes us at the top, and small maps in Quick that open big.',
     'My Page is now called Home.',
     'Maps open on the full arena, with small + and − buttons to zoom (or use the mouse wheel), a tidier play bar and a clearer key.',
@@ -4721,7 +4722,7 @@ function miniMap(mp, pmap) {
   }
   // (bosses a little over half the old size (your note, Oct 18: the big crests hid what was under them))
   // (a boss's name joins the players' names below, so two bosses stood together don't print over each other (map audit, Oct 19))
-  const bossL = []; for (const p of pts.filter((q) => q.kind === 'boss')) { s += ic(X(p), Y(p), (mp.gdzLook ? gdzBossToken(X(p), Y(p), p.name) : bossCrest(X(p), Y(p), p.name, 0.6)) + castBar(p.guid, X(p), Y(p) + 26)); bossL.push({ x: X(p), y: Y(p), ly: Y(p) + 18, w: String(p.name).length * 6.6, pri: 0.5, html: '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' }); }
+  const bossL = []; for (const p of pts.filter((q) => q.kind === 'boss')) { s += ic(X(p), Y(p), (typeof gdzBossToken === 'function' ? gdzBossToken(X(p), Y(p), p.name) : bossCrest(X(p), Y(p), p.name, 0.6)) /* (every map: the guides' boss token, Oct 20) */ + castBar(p.guid, X(p), Y(p) + 26)); bossL.push({ x: X(p), y: Y(p), ly: Y(p) + 18, w: String(p.name).length * 6.6, pri: 0.5, html: '<text x="' + X(p) + '" y="' + (Y(p) + 22) + '" class="ml" fill="#f3c969" style="font-size:11px;font-weight:800">' + esc(p.name) + '</text>' }); }
   for (const m of marksNow.filter((x) => x.kind === 'ichor')) { const q = byG.get(m.g); if (q) s += ic(X(q), Y(q), '<circle cx="' + X(q) + '" cy="' + Y(q) + '" r="17" fill="rgba(242,36,58,.16)" stroke="#f2243a" stroke-width="2.5" stroke-dasharray="4 3"><title>Coiling Ichor target</title></circle>'); }
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);
@@ -4773,7 +4774,7 @@ function miniMap(mp, pmap) {
   if (warnS.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#ff9f1c" stroke-width="2.5"/><path d="M' + x + ' ' + (y - 3) + 'v3M' + x + ' ' + (y + 2) + 'v.5" stroke="#ff9f1c" stroke-width="2" stroke-linecap="round"/>', 'Orange !: ' + (mp.warnLabel || 'needs a look')]);
   if (gAdd.size || bAdd.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="' + (gAdd.size ? '#2fd15a' : '#ff3b3b') + '" stroke-width="2.5"/>', gAdd.size ? 'Green ring: the add that was kicked' : 'Red ring: the add whose cast got off']);
   if (pts.some((q) => q.kind === 'add' && !(ADD_LOOK[q.name] || ADD_LOOK[String(q.name).replace(/ \(.*\)$/, '')]))) leg.push([(x, y) => '<rect x="' + (x - 4.5) + '" y="' + (y - 4.5) + '" width="9" height="9" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000"/>', 'Add' + (gAdd.size ? ' (green ring: kicked)' : bAdd.size ? ' (red ring: cast got off)' : '')]);
-  if (pts.some((q) => q.kind === 'boss')) leg.push([(x, y) => bossCrest(x, y, 'Boss', 0.33), 'Boss (gold crest)']);
+  if (pts.some((q) => q.kind === 'boss')) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6.5" fill="#e6b450" stroke="#3a2a08"/><circle cx="' + x + '" cy="' + y + '" r="4.6" fill="#2a1d0d"/>', 'Boss (gold ring, with their portrait)']);
   // (on an animated map the bar can show up later in the clip, so the key says so when a cast falls inside the clip)
   const f0 = mp.frames && mp.frames.length ? mp.frames[0].t : null, f1 = f0 != null ? mp.frames[mp.frames.length - 1].t : null;
   if (cbShown || (!LL && f0 != null && pts.some((q) => (q.kind === 'add' || q.kind === 'boss') && (cbs.get(q.guid) || []).some((c) => c.t0 <= f1 && c.t1 + 1.5 >= f0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" rx="1.5" fill="#05060a" stroke="#000"/><rect x="' + (x - 6.5) + '" y="' + (y - 2.5) + '" width="8" height="5" rx="1" fill="#f3c969"/>', 'Cast bar: gold while it casts, then green with who kicked it, or red when it went off']);
