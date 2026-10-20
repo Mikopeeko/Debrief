@@ -27,20 +27,20 @@ const gdzSpot = (i, n, r) => { if (n <= 1) return [0, 0]; const a = i * 2.39996,
 let GDZ_SEG = null;
 function gdzKit(boss, len) {
   if (GDZ_SEG) { GDZ_SEG.next(len); return GDZ_SEG.kit; }
-  const U = new Map(), A = ARENAS[boss] || { cx: 0, cy: 0 }, k = { wmarks: [], rings: [], cones: [], links: [], arrows: [], tags: [], cbars: {}, steps: [], hl: new Set(), good: [], goodAt: [], bad: [], badAt: [] };
+  const U = new Map(), A = ARENAS[boss] || { cx: 0, cy: 0 }, k = { calls: [], wmarks: [], rings: [], cones: [], links: [], arrows: [], tags: [], cbars: {}, steps: [], hl: new Set(), good: [], goodAt: [], bad: [], badAt: [] };
   // seg: the stretch being written (T: its start, pre: its own names for orbs, adds and bosses, w: its window); players carry on
   const seg = { T: 0, pre: '', w: null }, isP = (id) => /^[thmr]\d$/.test(id), P = (id) => (id == null || isP(id) ? id : seg.pre + id), TT = (t) => (t == null ? t : t + seg.T);
   const unit = (id, kind, name) => { if (!U.has(id)) U.set(id, { id, kind, name: name || (kind === 'player' ? gdzName(id) : String(id).replace(/^s\d+:/, '')), path: [], from: seg.w && kind !== 'player' ? seg.w[0] : -1, to: seg.w && kind !== 'player' ? seg.w[1] : Infinity }); return U.get(id); };
-  const put = (u, t, x, y) => { u.path.push([t, x, y]); u.path.sort((a, b) => a[0] - b[0]); };
+  const put = (u, t, x, y, fixed) => { u.path.push([t, x, y, !!fixed]); u.path.sort((a, b) => a[0] - b[0]); };
   const posRaw = (id, t) => { const u = U.get(id); if (!u || !u.path.length) return null; const p = u.path; if (t <= p[0][0]) return [p[0][1], p[0][2]];
     for (let i = 0; i < p.length - 1; i++) if (t <= p[i + 1][0]) { const a = p[i], b = p[i + 1], w = b[0] > a[0] ? (t - a[0]) / (b[0] - a[0]) : 1; return [a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w]; }
     const z = p[p.length - 1]; return [z[1], z[2]]; };
   const kit = {
     posAt: (id, t) => posRaw(P(id), TT(t)),
     // one player (id like 'm3') at a spot at a moment; or a group of players in a clump around a spot
-    at(t, ids, x, y, spread) { ids = [].concat(ids); ids.forEach((id, i) => { const [dx, dy] = spread ? gdzSpot(i, ids.length, spread) : [0, 0]; put(unit(id, 'player'), TT(t), x + dx, y + dy); }); return kit; },
+    at(t, ids, x, y, spread, fixed) { ids = [].concat(ids); ids.forEach((id, i) => { const [dx, dy] = spread ? gdzSpot(i, ids.length, spread) : [0, 0]; put(unit(id, 'player'), TT(t), x + dx, y + dy, fixed); }); return kit; },
     // the same players stay where they are until t (so the next move starts then, not from the start)
-    hold(t, ids) { for (const id of [].concat(ids)) { const p = posRaw(id, TT(t)); if (p) put(unit(id, 'player'), TT(t), p[0], p[1]); } return kit; },
+    hold(t, ids) { for (const id of [].concat(ids)) { const p = posRaw(id, TT(t)); if (p) put(unit(id, 'player'), TT(t), p[0], p[1], true); } return kit; }, /* (a hold is a wait: the speed limit never moves it earlier) */
     boss(id, name, t, x, y) { put(unit(P(id), 'boss', name), TT(t), x, y); return kit; },
     add(id, name, t, x, y) { put(unit(P(id), 'add', name), TT(t), x, y); return kit; },
     // orbs ('orb' green, 'porb' purple) and ghosts ('ghost'): from when they appear, until they're gone
@@ -58,6 +58,8 @@ function gdzKit(boss, len) {
     step(t, text) { k.steps.push([TT(t), text]); return kit; },
     // a raid marker on the floor (square, triangle, diamond, cross, star, circle, moon, skull), as the plan placed it
     wmark(kind, x, y) { if (!k.wmarks.some((w) => w.k === kind && w.x === x && w.y === y)) k.wmarks.push({ k: kind, x, y }); return kit; },
+    dispel(from, to, t) { k.calls.push({ kind: 'beam', from: P(from), on: P(to), t0: TT(t), t1: TT(t) + 0.9, color: '#7cf07c' }); return kit; },
+    call(t0, t1, text, o) { o = o || {}; k.calls.push({ t0: TT(t0), t1: TT(t1), text, on: P(o.on), x: o.x, y: o.y, color: o.color, ink: o.ink }); return kit; },
     ring1(ids) { for (const id of [].concat(ids)) k.hl.add(P(id)); return kit; },
     ok(id, t) { k.good.push(P(id)); if (t != null) k.goodAt.push([P(id), TT(t)]); return kit; },
     oops(id, t) { k.bad.push(P(id)); if (t != null) k.badAt.push([P(id), TT(t)]); return kit; },
@@ -65,9 +67,19 @@ function gdzKit(boss, len) {
     // (Putting it all together: start the next stretch at T, n-th of the fight)
     seg(T, n, segLen) { seg.T = T; seg.pre = 's' + n + ':'; seg.w = [T, T + segLen]; return kit; },
     stepCount: () => k.steps.length,
+    takeFocus() { const f0 = kit._foc; kit._foc = null; return f0 || null; },
     done(o) {
-      if (GDZ_SEG && GDZ_SEG.kit === kit && !(o && o.final)) return kit; // (a stretch of the whole fight: the whole is built once, at the end)
+      if (GDZ_SEG && GDZ_SEG.kit === kit && !(o && o.final)) { if (o && o.focus) kit._foc = o.focus; return kit; } // (a stretch of the whole fight: the whole is built once, at the end)
       o = o || {}; const X = (x) => A.cx + x, Y = (y) => A.cy + y, frames = [], L = o.len || len;
+      // (a running pace (your note, Oct 20: icons almost teleported on long moves): when a move would need more than about 8.5 yards a
+      // second, the player sets off earlier from the spot they were standing on, so they still arrive on time. Several passes, as an
+      // earlier start can make the move before it the rushed one. Anything still too quick is left as written)
+      const VMAX = 8.5;
+      for (const u of U.values()) { if (u.kind !== 'player' || u.path.length < 3) continue; const p = u.path;
+        for (let pass = 0; pass < 4; pass++) for (let i = 1; i < p.length - 1; i++) {
+          const a = p[i], b = p[i + 1], d = Math.hypot(b[1] - a[1], b[2] - a[2]), need = d / VMAX; if (b[0] - a[0] >= need - 1e-6) continue;
+          const prev = p[i - 1], still = Math.hypot(prev[1] - a[1], prev[2] - a[2]) < 0.3; if (!still || a[3]) continue; /* (a fixed key: not before then, e.g. an orb that hasn't landed) */
+          a[0] = Math.max(prev[0], b[0] - need); } }
       for (let t = 0; t <= L + 1e-6; t += 0.25) {
         const pts = [];
         for (const u of U.values()) { if (t < u.from || t > u.to || !u.path.length) continue; const p = posRaw(u.id, t); pts.push({ guid: u.id, name: u.name, kind: u.kind, x: X(p[0]), y: Y(p[1]) }); }
@@ -76,11 +88,28 @@ function gdzKit(boss, len) {
       const cones = k.cones.map((c) => { const p = posRaw(c.from, c.at), q = c.to ? posRaw(c.to, c.at) : null, dir = q ? Math.atan2(q[1] - p[1], q[0] - p[0]) : (c.deg || 0) * Math.PI / 180;
         return { x: X(p[0]), y: Y(p[1]), r: c.r || 30, half: (c.width || 60) * Math.PI / 360, dir, at: c.at, hit: c.hit || [] }; });
       const rings = k.rings.map((g) => ({ ...g, x: g.x != null ? X(g.x) : undefined, y: g.y != null ? Y(g.y) : undefined, guid: g.on, cn: g.cn }));
+      const calls = k.calls.map((c) => ({ ...c, x: c.x != null ? X(c.x) : undefined, y: c.y != null ? Y(c.y) : undefined }));
+      for (const g of rings) { const R0 = GDZ_CALL[g.cn]; if (!R0 || g.t0 == null) continue; const [text, how, color] = R0;
+        const t1 = how === 'land' ? (g.at != null ? g.at + 0.4 : g.t0 + 3) : how === 'dur' ? g.t0 + (g.dur || 3) : g.t0 + how;
+        const at0 = g.guid ? posRaw(g.guid, g.t0) : [g.x - A.cx, g.y - A.cy]; if (!at0) continue;
+        // (one label for a cluster: a second one with the same words close by at the same time is left out)
+        if (calls.some((c) => c.text === text && Math.abs(c.t0 - g.t0) < 1.5 && c._p && Math.hypot(c._p[0] - at0[0], c._p[1] - at0[1]) < 16)) continue;
+        calls.push({ t0: g.t0, t1, text, color, on: g.guid, x: g.guid ? undefined : g.x, y: g.guid ? undefined : g.y, _p: at0 }); }
+      for (const g of rings) { const col = GDZ_BADGE[g.cn]; if (!col || !g.guid || g.t0 == null) continue;
+        calls.push({ kind: 'badge', name: g.cn, color: col, on: g.guid, t0: g.t0, t1: g.at != null ? g.at + 0.3 : g.t0 + (g.dur || 3) }); }
+      for (const b of calls.filter((c) => c.kind === 'beam')) { const bd = calls.find((c) => c.kind === 'badge' && c.on === b.on && c.t0 <= b.t0 && c.t1 >= b.t0);
+        if (bd) { bd.pop = b.t0 + 0.25; bd.t1 = b.t0 + 0.7; }
+        calls.push({ t0: b.t0 + 0.3, t1: b.t0 + 1.3, text: 'Dispelled', color: '#2fd15a', on: b.on }); }
+      for (const c of calls) if (c.text === 'Dispel') { const b = calls.find((q) => q.kind === 'beam' && q.on === c.on && q.t0 >= c.t0 && q.t0 <= c.t1 + 0.5); if (b) c.t1 = b.t0 + 0.2; }
+      let lastTo = null; for (const c of k.cones.slice().sort((a, b) => a.at - b.at)) {
+        calls.push({ t0: c.at - 1.4, t1: c.at + 0.3, text: 'Frontal', color: '#ff5a4f', ink: '#fff', on: c.from });
+        if (c.to && /^t\d$/.test(c.to) && (lastTo ? lastTo !== c.to : c.to !== 't1')) calls.push({ t0: c.at - 1.9, t1: c.at - 0.4, text: 'Taunt', color: '#5aa0ff', ink: '#fff', on: c.to }); lastTo = c.to; }
+      for (const [g, l] of Object.entries(k.cbars)) for (const b of l) if (b.end === 'kick') calls.push({ t0: b.t0, t1: b.t1, text: 'Kick', color: '#2fd15a', on: g });
       const f = o.focus || { x: 0, y: 0, r: 20 }, quiet = !!o.quiet; // (quiet: no names or rings on players, for the whole fight)
-      return { boss, title: o.title || '', wmarks: k.wmarks.map((w) => ({ k: w.k, x: X(w.x), y: Y(w.y) })), frames, pts: frames[0].pts, t: 0, rings, cones, links: k.links, arrows: k.arrows, tags: quiet ? [] : k.tags, cbars: k.cbars,
+      return { boss, title: o.title || '', wmarks: k.wmarks.map((w) => ({ k: w.k, x: X(w.x), y: Y(w.y) })), frames, pts: frames[0].pts, t: 0, rings, cones, callouts: calls, links: k.links, arrows: k.arrows, tags: quiet ? [] : k.tags, cbars: k.cbars,
         hl: quiet ? [] : [...k.hl], good: quiet ? [] : k.good, goodAt: !quiet && k.goodAt.length ? k.goodAt : null, bad: quiet ? [] : k.bad, badAt: !quiet && k.badAt.length ? k.badAt : null,
         hitOrbs: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind !== 'ghost')), ghostHit: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind === 'ghost')),
-        focus: { x: X(f.x), y: Y(f.y), r: f.r }, steps: k.steps.slice().sort((a, b) => a[0] - b[0]), playerLabel: 'Player (role icon: tank, healer, melee, ranged)', spd: o.spd,
+        focus: { x: X(f.x), y: Y(f.y), r: f.r }, steps: k.steps.slice().sort((a, b) => a[0] - b[0]), playerLabel: 'Player (role icon: tank, healer, melee, ranged)', spd: o.spd || 1,
         lateHit: true, liveLeg: true, hlLabel: o.hlLabel, goodLabel: o.goodLabel, badLabel: o.badLabel, tagLabel: o.tagLabel, noArena: !!o.noArena };
     },
   };
@@ -93,27 +122,35 @@ function gdzWhole(boss, G, D) {
   const GAP = 1.2, kit = gdzKit(boss, 1), caps = [], chaps = [], byId = {};
   G.phases.forEach((p, pi) => (p.mechs || []).forEach((m) => { if (m.id) byId[m.id] = { m, pi }; }));
   const list = G.sim || G.phases.flatMap((p, pi) => (p.mechs || []).filter((m) => m.map).map((m) => ({ mech: m.id || null, m, ph: pi })));
-  let T = 0, n = 0;
-  GDZ_SEG = { kit, next(len) { kit.seg(T, n, len); GDZ_SEG.len = len; } };
+  let T = 0, n = 0, prevLen = null;
+  // (one scene: a short scene of the guide, or one of its mechanic maps; returns its name and steps, or null)
+  const play = (e) => {
+    if (e.beat) { const b = (G.beats || {})[e.beat]; if (!b) return null; b.run(e.o || {}); return { name: b.name, texts: b.do || [] }; }
+    const m = e.m || (byId[e.mech] || {}).m; if (!m || !m.map) return null; m.map(D, e.o); return { name: m.name, texts: m.do || [] };
+  };
+  const main = { kit, next(len) { kit.seg(T, n, len); main.len = len; } };
   try {
     for (const e of list) {
-      n++; GDZ_SEG.len = 0; const s0 = kit.stepCount(); let name, texts;
-      if (e.beat) { const b = (G.beats || {})[e.beat]; if (!b) continue; b.run(e.o || {}); name = b.name; texts = b.do || []; }
-      else { const m = e.m || (byId[e.mech] || {}).m; if (!m || !m.map) continue; m.map(D, e.o); name = m.name; texts = m.do || []; }
-      const len = GDZ_SEG.len || 4, ph = e.ph != null ? e.ph : 0;
+      // (where everyone starts the scene, found by playing it on its own first, so the walk there gets the time it needs at a
+      // running pace of about 8 yards a second, never less than the usual short gap)
+      if (prevLen != null) { GDZ_SEG = null; const pk = gdzKit(boss, 1); GDZ_SEG = { kit: pk, next(len) { pk.seg(0, 0, len); } }; let need = GAP;
+        try { if (play(e)) for (const id of GDZ_RAID) { const a = kit.posAt(id, prevLen), b = pk.posAt(id, 0); if (a && b) need = Math.max(need, Math.hypot(b[0] - a[0], b[1] - a[1]) / 8); } } catch (er) { /* (a scene that can't be probed keeps the usual gap) */ }
+        T += need; }
+      GDZ_SEG = main; n++; main.len = 0; const s0 = kit.stepCount(), got = play(e); if (!got) { if (prevLen != null) T -= 0; continue; } const { name, texts } = got;
+      const len = main.len || 4, ph = e.ph != null ? e.ph : 0;
       if (G.simAdd) G.simAdd(kit, e);
       kit.hold(len, GDZ_RAID); // (everyone holds still to the end of the scene, then walks to the next one's spots in the gap)
-      chaps.push({ t: T, len, rt: e.at, ph: ph + 1, phase: G.phases[ph] ? G.phases[ph].name : '', name: e.label || name });
+      chaps.push({ t: T, len, rt: e.at, ph: ph + 1, phase: G.phases[ph] ? G.phases[ph].name : '', name: e.label || name, foc: kit.takeFocus() });
       for (let j = s0; j < kit.stepCount(); j++) caps.push({ t: 0, j: j - s0, c: chaps.length - 1, text: texts[j - s0] || '' });
-      T += len + GAP;
+      T += len; prevLen = len;
     }
   } finally { GDZ_SEG = null; }
-  const end = T - GAP;
+  const end = T;
   // (real clock to simulation time, for what runs through the whole fight)
   const rt2sim = (rt) => { let i = 0; while (i < chaps.length - 1 && chaps[i + 1].rt <= rt) i++; const c = chaps[i], nx = chaps[i + 1];
     return c.t + (nx && nx.rt > c.rt ? Math.min(1, Math.max(0, (rt - c.rt) / (nx.rt - c.rt))) : 0) * c.len; };
   if (G.sim && G.simOverlay) { kit.seg(0, 'ov', end + 1); G.simOverlay(kit, rt2sim, end); }
-  const mp = kit.done({ final: true, len: end, title: 'The whole fight', focus: { x: 0, y: 0, r: 30 }, quiet: true, spd: G.sim ? 2 : 1.4 });
+  const mp = kit.done({ final: true, len: end, title: 'The whole fight', focus: { x: 0, y: 0, r: 30 }, quiet: true, spd: G.sim ? 1.5 : 1.4 }); /* (a reading pace: the video's captions need time) */
   mp.steps.forEach(([t], i) => { if (caps[i]) caps[i].t = t; });
   // (the real clock at a moment of the simulation, for the captions)
   const clock = (ft) => { let i = 0; while (i < chaps.length - 1 && chaps[i + 1].t <= ft) i++; const c = chaps[i], nx = chaps[i + 1];
@@ -137,6 +174,39 @@ function gdzMarkSvg(kind, x, y) {
   return '<g opacity=".95">' + g + '<title>' + esc(n) + ' marker</title></g>';
 }
 
+// A pop-up label on a map, like the text on a video guide: a bold pill above the spot it's about, with a pointer; it pops in
+// and fades out (c: { text, color, t0, t1 }, ft: the moment drawn)
+function gdzCallSvg(c, x, y, ft, at) {
+  if (c.kind === 'badge') { // (the debuff's own icon on the player's shoulder; it bursts away when it's dispelled)
+    const bx = x + 11, by = y - 11, col = c.color || '#7cf07c', url = mapIconUrl(c.name), k0 = String(c.name).toLowerCase();
+    if (c.pop != null && ft >= c.pop) { const p = Math.min(1, (ft - c.pop) / 0.4); return '<circle cx="' + bx + '" cy="' + by + '" r="' + (8 + 12 * p).toFixed(1) + '" fill="none" stroke="#fff" stroke-opacity="' + (1 - p).toFixed(2) + '" stroke-width="2.5"/>' +
+      [0, 1, 2, 3, 4, 5].map((i) => { const a = i * 1.047 + 0.3, d = 6 + 13 * p; return '<circle cx="' + (bx + Math.cos(a) * d).toFixed(1) + '" cy="' + (by + Math.sin(a) * d).toFixed(1) + '" r="1.8" fill="' + col + '" fill-opacity="' + (1 - p).toFixed(2) + '"/>'; }).join(''); }
+    const el = ft - c.t0, k = el < 0.2 ? 0.5 + 2.5 * el : 1, pulse = 0.55 + 0.45 * Math.abs(Math.sin(ft * 3));
+    return '<g class="mic' + (url ? ' on' : '') + '" transform="translate(' + bx + ' ' + by + ') scale(' + k.toFixed(2) + ') translate(' + -bx + ' ' + -by + ')">' +
+      '<circle cx="' + bx + '" cy="' + by + '" r="10.5" fill="' + col + '" fill-opacity="' + (0.25 * pulse).toFixed(2) + '"/><circle cx="' + bx + '" cy="' + by + '" r="8" fill="#0b0d12" stroke="' + col + '" stroke-width="2"/>' +
+      '<image class="mic-i" data-mn="' + esc(k0) + '"' + (url ? ' href="' + url + '"' : '') + ' x="' + (bx - 6.5) + '" y="' + (by - 6.5) + '" width="13" height="13" clip-path="url(#pclip)" preserveAspectRatio="xMidYMid slice"><title>' + esc(c.name) + '</title></image></g>';
+  }
+  if (c.kind === 'beam') { // (a healer's dispel: a bright line shoots from the healer to the target, then fades)
+    const h = at && at(c.from); if (!h) return ''; const el = ft - c.t0, p = Math.min(1, el / 0.25), o = el < 0.6 ? 1 : Math.max(0, 1 - (el - 0.6) / 0.3);
+    const x1 = h[0] + (x - h[0]) * p, y1 = h[1] + (y - h[1]) * p, col = c.color || '#7cf07c', NS = ' vector-effect="non-scaling-stroke"';
+    return '<g opacity="' + o.toFixed(2) + '"><line x1="' + h[0] + '" y1="' + h[1] + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="' + col + '" stroke-opacity=".35" stroke-width="9" stroke-linecap="round"' + NS + '/>' +
+      '<line x1="' + h[0] + '" y1="' + h[1] + '" x2="' + x1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="#fff" stroke-width="2.2" stroke-linecap="round"' + NS + '/>' +
+      (p >= 1 ? '<circle cx="' + x + '" cy="' + y + '" r="' + (6 + 10 * Math.min(1, (el - 0.25) / 0.35)).toFixed(1) + '" fill="' + col + '" fill-opacity="' + (0.35 * o).toFixed(2) + '"/>' : '') + '</g>';
+  }
+  const el = ft - c.t0, left = c.t1 - ft, k = el < 0.25 ? 0.55 + 1.8 * el : 1, o = left < 0.3 ? Math.max(0, left / 0.3) : 1;
+  const col = c.color || '#f3c969', ink = c.ink || '#14100a', t = String(c.text).toUpperCase(), w = t.length * 7.4 + 20, h = 21, by = y - 16 - h;
+  return '<g transform="translate(' + x + ' ' + y + ') scale(' + k.toFixed(2) + ') translate(' + -x + ' ' + -y + ')" opacity="' + o.toFixed(2) + '">' +
+    '<path d="M' + (x - 6) + ' ' + (by + h - 1) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 6) + ' ' + (by + h - 1) + 'Z" fill="' + col + '" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<rect x="' + (x - w / 2) + '" y="' + by + '" width="' + w + '" height="' + h + '" rx="5" fill="' + col + '" stroke="#000" stroke-width="1.4"/>' +
+    '<text x="' + x + '" y="' + (by + 15) + '" text-anchor="middle" style="font:800 12.5px var(--head,sans-serif);letter-spacing:.04em" fill="' + ink + '">' + esc(t) + '</text></g>';
+}
+// the labels the maps put up by themselves, by mechanic (cn): what to do, and how long it shows (land: until it goes off; a number: seconds)
+const GDZ_CALL = { 'Toxic Deluge': ['Dodge', 'land'], Guillotine: ['Soak here · 5+', 'land', '#ff8a6a'], "Widow's Kiss": ['Get 40 yards away', 'land', '#9ff26d'], Gloombomb: ['To your add', 'land', '#e07bff'],
+  Venomfang: ['Dispel', 'dur', '#7cf07c'], Dreadmarch: ['Mind controlled', 3, '#c49bff'], 'Spirit Erasure': ['Stop it', 'land', '#c49bff'], 'Veil of Twilight': ['Burst the shield', 'dur', '#e07bff'],
+  'Purple circles': ['Dodge', 'land', '#e07bff'], Defilement: ['Stay out', 3, '#8fd16a'], 'Raid cooldowns': ['Stack · raid cooldowns', 'dur', '#b9a6ff'], "Purple orb's ring": ['Purple: keep clear', 2.4, '#c49bff'], 'Noxious Ground': ['Avoid', 3, '#8fd16a'] };
+
+const GDZ_BADGE = { Venomfang: '#7cf07c', Dreadmarch: '#c49bff', Gloombomb: '#e07bff', Guillotine: '#ff8a6a' };
+
 // ---- the guides: one per boss, filled in below (GDZ[boss] = { ... }) ----
 // { sum: one line, facts: [[label, value, only 'h'/'m']], phases: [{ id, name, sum, mechs: [{ name, what, do: [..], note, map: (d) => mp }], tiles: [{ name, do, note }] }],
 //   (any part: only: 'h' or 'm' for one difficulty; h: { .. } / m: { .. } to change fields on that difficulty)
@@ -146,11 +216,13 @@ const GDZ_ORDER = ['Nymrissa Wavecaller', "Nek'zali the Soulcoiler", 'Entombed S
 const GDZ_CACHE = new Map(); // (a map's frames are built once per visit)
 // a carried object: the carrier walks to it, picks it up at tp, walks it to (dx, dy) by td, and the object rides along
 function gdzCarry(k, who, obj, kind, tAppear, ox, oy, tp, dx, dy, td, back) {
-  const t1 = Math.max(tAppear + 0.2, tp - 1.6), from = k.posAt(who, t1) || [ox, oy]; // (they set off once the orb is there, never into a circle still landing)
-  k.obj(obj, kind, tAppear, ox, oy).obj(obj, kind, tp, ox, oy).obj(obj, kind, td, dx, dy).show(obj, tAppear);
-  k.at(t1, who, from[0], from[1]).at(tp, who, ox, oy).at(td, who, dx + 1.5, dy + 1.5);
-  if (back) k.at(td + 1.8, who, back[0], back[1]);
-  k.ring1(who).tag(who, 'orb', tp, td);
+  // (they set off once the orb is there, never into a circle still landing, and move at a running pace: a long way takes longer)
+  const V = 8, t1 = Math.max(tAppear + 0.2, tp - 1.6), from = k.posAt(who, t1) || [ox, oy];
+  const ta = Math.max(tp, t1 + Math.hypot(ox - from[0], oy - from[1]) / V), tb = Math.max(td, ta + Math.hypot(dx - ox, dy - oy) / V);
+  k.obj(obj, kind, tAppear, ox, oy).obj(obj, kind, ta, ox, oy).obj(obj, kind, tb, dx, dy).show(obj, tAppear);
+  k.at(t1, who, from[0], from[1], 0, true).at(ta, who, ox, oy).at(tb, who, dx + 1.5, dy + 1.5);
+  if (back) k.at(tb + Math.max(1.8, Math.hypot(back[0] - dx, back[1] - dy) / V), who, back[0], back[1]);
+  k.ring1(who).tag(who, 'orb', ta, tb); return tb;
 }
 
 // ===== The Coiled Altar (from notes/Guides/Bosses/7 The Coiled Altar.md; Mythic from its "Mythic plan in detail" section) =====
@@ -167,27 +239,27 @@ function gdzCaMarks(k) { k.wmark('cross', -46, 0).wmark('moon', -44, -44).wmark(
 const GDZ_CA_M = {
   // P1: purples at the far end of each frontal's triangle, greens between them and the boss; the entrance side first
   orbs() {
-    const k = gdzCaMarks(gdzKit('The Coiled Altar', 18));
+    const k = gdzCaMarks(gdzKit('The Coiled Altar', 26.5));
     k.boss('zj', 'Zul\'jan', 0, 0, 0);
     k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 4).at(0, ['m5', 'm6', 'm7'], 0, -8, 3).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
       .at(0, 'r1', -38, -34).at(0, 'r2', -38, 34).at(0, 'r3', 38, -34).at(0, 'r4', 38, 34).at(0, ['r5', 'r6', 'r7'], 4, 24, 4);
-    k.hold(8, 't2').at(9.2, 't2', -6, 0).hold(10.4, 't2'); /* (the off-tank's taunt spot first, so its orb run starts from there) */
+    k.hold(10.6, 't2').at(11.8, 't2', -6, 0).hold(13.6, 't2'); /* (the off-tank's taunt spot first, so its orb run starts from there) */
     // purples: the two Warlocks (entrance corners) and the two Mages (far corners) take the one nearest their corner; the off-tank the awkward one
-    const PU = [['r1', -36, -22, -31, -5, 4.2, 7], ['r2', -34, 24, -31, 5, 4.6, 7.4], ['r3', 34, -26, 31, -10, 9.5, 12.5], ['r4', 30, 30, 31, 10, 10, 13], ['t2', 46, 2, 31, 0, 12, 14.2]];
+    const PU = [['r1', -36, -22, -31, -5, 4.2, 7], ['r2', -34, 24, -31, 5, 4.6, 7.4], ['r3', 34, -26, 31, 0, 9.5, 12.5], ['r4', 30, 30, 31, 10, 10, 13], ['t2', 40, -14, 31, -10, 15.2, 19]];
     PU.forEach(([w, x, y, tx, ty, tp, td], i) => { k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#b65cff', cn: 'Toxic Deluge', legend: 'circle lands and leaves an orb' });
       if (w !== 't2') k.at(tp - 1.4, w, k.posAt(w, 0)[0], k.posAt(w, 0)[1]);
-      gdzCarry(k, w, 'p' + i, 'porb', 3, x, y, tp, tx, ty, td, null); k.show('p' + i, 3, i < 2 ? 11 : 17.4);
-      k.ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 3, dur: i < 2 ? 7 : 13.5, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' }); });
-    k.at(7.6, 'r1', -38, -20).at(7.9, 'r2', -38, 20).at(13.6, 'r3', 34, -27).at(14, 'r4', 34, 27).at(15.4, 't2', 22, -16);
+      gdzCarry(k, w, 'p' + i, 'porb', 3, x, y, tp, tx, ty, td, null); k.show('p' + i, 3, i < 2 ? 14.2 : 25.4);
+      k.ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 3, dur: i < 2 ? 10.2 : 22.4, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' }); });
+    k.at(9, 'r1', -38, -20).at(9.3, 'r2', -38, 20).at(15, 'r3', 40, 24).at(15.4, 'r4', 38, 32).at(22.8, 't2', 30, -23);
     // greens: moved out of the purple carriers' way first, then into each triangle
-    const GR = [['m5', -14, -24, -20, -3, 3.4, 6.4], ['h1', -20, 30, -20, 3, 3.6, 6.6], ['r5', -6, 34, -25, 0, 3.8, 7], ['m6', -26, -36, -24, -6, 4, 7.4], ['m1', 18, 18, 22, -3, 9.6, 12.6], ['h3', 16, -30, 22, 3, 10, 13]];
-    GR.forEach(([w, x, y, tx, ty, tp, td], i) => { k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#5fd35f', cn: 'Toxic Deluge' }); const back = k.posAt(w, 0);
-      if (tp > 8) k.hold(tp - 1.6, w); gdzCarry(k, w, 'g' + i, 'orb', 3, x, y, tp, tx, ty, td, back); k.show('g' + i, 3, i < 4 ? 11 : 17.4); });
+    const GR = [['m5', -14, -24, -20, -3, 3.4, 6.4], ['h1', -20, 30, -20, 3, 3.6, 6.6], ['r5', -6, 34, -25, 0, 3.8, 7], ['m6', -16, -30, -24, -6, 4, 7.4], ['m1', 18, 18, 22, -3, 9.6, 12.6], ['h3', 16, -30, 22, 3, 10, 13]];
+    GR.forEach(([w, x, y, tx, ty, tp, td], i) => { k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#5fd35f', cn: 'Toxic Deluge' }); const back = [tx + (tx < 0 ? 8 : -8), ty < 0 ? -18 : 18]; /* (a step to the side of the triangle, clear of the frontal) */
+      if (tp > 8) k.hold(tp - 1.6, w); gdzCarry(k, w, 'g' + i, 'orb', 3, x, y, tp, tx, ty, td, back); k.show('g' + i, 3, i < 4 ? 14.2 : 25.4); });
     // the off-tank taunts and takes the entrance frontal, then runs for the last purple; the boss tank taunts back for the far side
-    k.cast('zj', 'Sever', 8.6, 10.2).cone({ from: 'zj', to: 't2', at: 10.2, r: 35, hit: ['p0', 'p1', 'g0', 'g1', 'g2', 'g3'] });
-    k.hold(14.6, 't1').at(15.4, 't1', 6, 0);
-    k.cast('zj', 'Sever', 15, 16.6).cone({ from: 'zj', to: 't1', at: 16.6, r: 35, hit: ['p2', 'p3', 'p4', 'g4', 'g5'] });
-    k.ring1(['r1', 'r2', 'r3', 'r4', 't2', 't1']).step(1).step(3.2).step(4).step(8.6).step(11).step(15);
+    k.cast('zj', 'Sever', 11.8, 13.4).cone({ from: 'zj', to: 't2', at: 13.4, r: 35, hit: ['p0', 'p1', 'g0', 'g1', 'g2', 'g3'] });
+    k.hold(22.8, 't1').at(23.6, 't1', 6, 0);
+    k.cast('zj', 'Sever', 23, 24.6).cone({ from: 'zj', to: 't1', at: 24.6, r: 35, hit: ['p2', 'p3', 'p4', 'g4', 'g5'] });
+    k.ring1(['r1', 'r2', 'r3', 'r4', 't2', 't1']).step(1).step(3.2).step(4).step(11.8).step(14.2).step(23);
     return k.done({ title: 'Toxic Deluge on Mythic: two triangles', focus: { x: 0, y: 0, r: 28 }, tagLabel: 'Carrying an orb', hlLabel: 'purple carriers and tanks' });
   },
   // P1 axes: soak 1 is everyone who'll immune soak 2, plus tanky players; soak 2 is exactly five, with immunities
@@ -196,12 +268,12 @@ const GDZ_CA_M = {
     // (written for the moon corner; another corner mirrors the raid's spots and the way out, so everyone ends 40 yards from it)
     const fx = C[0] > 0 ? -1 : 1, fy = C[1] > 0 ? -1 : 1, at = (t, ids, x, y, sp) => k.at(t, ids, x * fx, y * fy, sp);
     k.boss('zj', 'Zul\'jan', 0, 0, 0); at(0, 't1', 5, 0); at(0, 't2', -2, 6); at(0, ['m1', 'm2', 'm3', 'm4', 'm7'], 0, 8, 4); at(0, ['h1', 'h2', 'h4'], -6, 22, 3); at(0, ['r1', 'r2', 'r4'], 4, 24, 4);
-    at(0, 'r3', -20, -12); at(0, grp, 6, -14, 5);
+    at(0, 'r3', -20, -12); at(0, grp, -14, -20, 5);
     k.ring({ on: 'r3', r: 9, fx: 'soak', t0: 1, at: 6, dur: 5.8, color: '#f24824', cn: 'Guillotine', legend: '9-yard soak' });
-    k.hold(1, 'r3').at(3.4, 'r3', C[0], C[1]); grp.forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 7, 4.5); k.hold(1.6, id).at(4.6, id, C[0] + dx, C[1] + dy); });
+    k.hold(1, 'r3').at(4.2, 'r3', C[0], C[1]); grp.forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 7, 4.5); k.hold(1.2, id).at(4.8, id, C[0] + dx, C[1] + dy); });
     k.tag('r5', 'Turtle', 1, 13).tag('r7', 'Turtle', 1, 13).tag('m6', 'Feint', 1, 13).tag('r6', 'Disp.', 1, 13);
     k.ring({ x: C[0], y: C[1], r: 40, fx: 'burst', t0: 6, at: 12, dur: 6.6, color: '#9ff26d', cn: 'Widow\'s Kiss', legend: 'erupts 40 yards around the spot, 6 s after' });
-    ['r3'].concat(grp).forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, 7, 6); k.hold(6.3, id); at(11, id, 10 + dx, 12 + dy); });
+    ['r3'].concat(grp).forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, 7, 6); k.hold(6.3, id); at(11, id, -6 + dx, -6 + dy); });
     k.ring1(['r3', 'r5', 'r7']).step(1).step(2).step(6).step(6.4).step(11);
     return k.done({ title: 'Guillotine on Mythic: the first soak', focus: { x: -14, y: -14, r: 24 }, hlLabel: 'axe target and the Hunters', goodLabel: 'in the soak', tagLabel: 'What they press (Hunters keep Turtle for soak 2)' });
   },
@@ -209,16 +281,16 @@ const GDZ_CA_M = {
   ghosts() {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 13)), SQ = [41, 39];
     k.boss('hm', 'Malacrass', 0, 6, 4).boss('hm', 'Malacrass', 3, 22, 22);
-    k.at(0, 't1', 10, 4).at(3, 't1', 28, 24).hold(8, 't1').at(9.6, 't1', 47, 42).at(0, 't2', 2, 8).at(3, 't2', 14, 20)
+    k.at(0, 't1', 10, 4).at(3, 't1', 28, 24).hold(7, 't1').at(9.6, 't1', 47, 42).at(0, 't2', 2, 8).at(3, 't2', 14, 20)
       .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 6, 12, 5).at(3, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 18, 28, 5).at(0, ['h1', 'h3', 'h4'], -8, 14, 4).at(3, ['h1', 'h3', 'h4'], 6, 30, 4)
       .at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -6, -6, 6).at(3, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], 4, 12, 6);
-    k.at(0, 'r5', -18, 4).at(0, 'm4', 2, -10).at(0, 'h2', -12, 20);
+    k.at(0, 'r5', 16, 30).at(0, 'm4', 22, 28).at(0, 'h2', 10, 36);
     const mc = ['r5', 'm4', 'h2'];
     mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); k.tag(id, 'MC', 1, 6); const [dx, dy] = gdzSpot(i, 3, 2.5); k.hold(1, id).at(4.4, id, SQ[0] + dx, SQ[1] + dy).hold(6.4, id); });
     // (they land around their player and are frozen on the spot by being looked at; the two outside the cone are let creep in)
     const G = [[34, 40], [37, 32], [44, 44], [43, 31], [31, 34], [26, 44]], IN = { 5: [30, 38], 2: [42, 38] };
     G.forEach(([x, y], q) => { const g = 'g' + q; k.obj(g, 'ghost', 6.2, x, y).show(g, 6.2, 12); if (IN[q]) k.obj(g, 'ghost', 8, x, y).obj(g, 'ghost', 9.6, IN[q][0], IN[q][1]); });
-    mc.forEach((id, i) => k.at(8.6, id, 18 - i * 3, 36 + i * 3));
+    mc.forEach((id, i) => k.at(9.4, id, 18 - i * 3, 36 + i * 3));
     k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'] });
     k.ring1(mc.concat('t1')).step(1).step(2).step(6.2).step(8).step(11);
     return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players and the boss tank', tagLabel: 'Mind controlled, with a shield' });
@@ -226,28 +298,28 @@ const GDZ_CA_M = {
   bombs() {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)), RA = [-32, -28], MA = [24, 8];
     k.boss('hm', 'Malacrass', 0, 18, 20).add('ar', 'Spiteful Soulcoiler', 0, RA[0], RA[1]).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
-    k.at(0, 't1', 24, 26).at(0, 't2', 10, 22).at(0, ['m3', 'm4', 'm5', 'm6', 'm7'], 14, 26, 5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r3', 'r4', 'r5', 'r6', 'r7'], -4, 12, 6);
-    k.at(0, ['m1', 'm2'], 18, 28, 2).at(0, ['r1', 'r2'], -6, 4, 2);
+    k.at(0, 't1', 24, 26).at(0, 't2', 10, 22).at(0, ['m3', 'm4', 'm5', 'm6', 'm7'], 14, 31, 5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r3', 'r4', 'r5', 'r6', 'r7'], -4, 12, 6);
+    k.at(0, ['m1', 'm2'], 18, 28, 2).at(0, ['r1', 'r2'], -16, -10, 2);
     [['r1', RA, -1], ['r2', RA, 1], ['m1', MA, -1], ['m2', MA, 1]].forEach(([id, a, s]) => { k.ring({ on: id, r: 15, fx: 'burst', t0: 1, at: 6, dur: 5, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them' });
-      k.hold(1.4, id).at(4.4, id, a[0] + s * 1.5, a[1] + 1.5).hold(6.6, id).at(8.4, id, k.posAt(id, 0)[0], k.posAt(id, 0)[1]); });
+      k.hold(1.4, id).at(4.4, id, a[0] + s * 8, a[1]).hold(6.6, id) /* (opposite sides of the add: the circles overlap on it, like a Venn diagram) */.at(9.6, id, k.posAt(id, 0)[0], k.posAt(id, 0)[1]); });
     k.cast('ar', 'Wail of Terror', 0.5, 1.2, 'kick', 'Ranged 3').cast('am', 'Wail of Terror', 0.6, 1.3, 'kick', 'Ranged 4').cast('am', 'Wail of Terror', 7.6, 8.8, 'kick', 'Melee 3');
     k.ring1(['r1', 'r2', 'm1', 'm2']).step(1).step(1.6).step(6).step(7.6);
     return k.done({ title: 'Gloombombs on the adds', focus: { x: -4, y: -2, r: 20 }, hlLabel: 'players with a Gloombomb' });
   },
   // P3: one frontal takes every purple in a diamond; greens go to one side, lined up
   diamond() {
-    const k = gdzCaMarks(gdzKit('The Coiled Altar', 13));
+    const k = gdzCaMarks(gdzKit('The Coiled Altar', 16));
     k.boss('zj', 'Zul\'jan', 0, 16, -6).boss('hm', 'Malacrass', 0, 19, -2);
-    k.at(0, 't1', 22, -6).at(0, 't2', 26, 0).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 20, -14, 4).at(0, ['h1', 'h2', 'h3', 'h4'], 28, -22, 4).at(0, ['r1', 'r2', 'r5', 'r6', 'r7'], 30, 14, 5);
-    k.at(0, ['r3', 'r4'], 4, 6, 3).at(0, 'h4', 8, -14);
-    const PU = [['r3', -6, 22, 0, -6, 2, 12], ['r4', -24, 10, -8, 1, -12, 20], ['t2', 6, -30, -8, -13, 0, 0], ['h4', -14, -32, -16, -6, -6, -30]], GR = [['m1', -10, -8, -8, 26], ['m2', -2, 2, -16, 26], ['h1', -20, -18, 0, 26]];
+    k.at(0, 't1', 22, -6).at(0, 't2', 26, 0).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 20, -14, 4).at(0, ['h1', 'h2', 'h3'], 28, -22, 4).at(0, ['r1', 'r2', 'r5', 'r6', 'r7'], 30, 14, 5);
+    k.at(0, ['r3', 'r4'], 4, 6, 3).at(0, 'h4', -6, -24);
+    const PU = [['r3', -6, 22, 0, -6, 2, 12], ['r4', -24, 10, -8, 1, -12, 20], ['t2', 6, -30, -8, -13, 0, 0], ['h4', -14, -32, -16, -6, -6, -30]], GR = [['m1', -10, -8, -4, -34], ['m2', -2, 2, 4, -34], ['m3', -20, -18, -12, -34]];
     PU.concat(GR).forEach(([x, y]) => k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#5fd35f', cn: 'Toxic Deluge' }));
-    GR.forEach(([w, x, y, tx, ty], i) => { const back = k.posAt(w, 0); k.hold(2.2, w); gdzCarry(k, w, 'g' + i, 'orb', 3, x, y, 3.6 + i * 0.3, tx, ty, 7.4 + i * 0.3, back); k.show('g' + i, 3, 13); });
-    PU.forEach(([w, x, y, tx, ty, ex, ey], i) => { k.hold(3, w); gdzCarry(k, w, 'p' + i, 'porb', 3, x, y, 4.4 + i * 0.4, tx, ty, 7.6 + i * 0.3, null); k.show('p' + i, 3, 11.6);
-      k.ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 3, dur: 7.8, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' }); if (w !== 't2') k.at(9.2, w, ex, ey); }); /* (each carrier steps out of the frontal to its own spot) */
-    k.hold(9.4, 't2').at(10, 't2', 10, -6);
-    k.cast('zj', 'Blighted Sever', 9.4, 10.6).cone({ from: 'zj', to: 't2', at: 10.6, r: 45, hit: ['p0', 'p1', 'p2', 'p3'] });
-    k.ring1(['r3', 'r4', 't2', 'h4']).step(1).step(3.4).step(4.4).step(9.4);
+    GR.forEach(([w, x, y, tx, ty], i) => { k.hold(2.2, w); gdzCarry(k, w, 'g' + i, 'orb', 3, x, y, 3.6 + i * 0.3, tx, ty, 7.4 + i * 0.3, null); k.show('g' + i, 3, 16); });
+    PU.forEach(([w, x, y, tx, ty, ex, ey], i) => { k.hold(3, w); gdzCarry(k, w, 'p' + i, 'porb', 3, x, y, 4.4 + i * 0.4, tx, ty, 7.6 + i * 0.3, null); k.show('p' + i, 3, 14.6);
+      k.ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 3, dur: 10.8, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' }); if (w !== 't2') k.at(12, w, ex, ey); }); /* (each carrier steps out of the frontal to its own spot) */
+    k.hold(10.4, 't2').at(12.6, 't2', 10, -6);
+    k.cast('zj', 'Blighted Sever', 12.4, 13.6).cone({ from: 'zj', to: 't2', at: 13.6, r: 45, hit: ['p0', 'p1', 'p2', 'p3'] });
+    k.ring1(['r3', 'r4', 't2', 'h4']).step(1).step(3.4).step(4.4).step(12.4);
     return k.done({ title: 'Phase 3 on Mythic: the purple diamond', focus: { x: 2, y: 4, r: 21 }, tagLabel: 'Carrying an orb', hlLabel: 'purple carriers' });
   },
   // the intermission: mobile healers and the off-tank spread to cover the room; stops of 3-5 with a pause, then 7-10 under cooldowns
@@ -259,7 +331,7 @@ const GDZ_CA_M = {
     const F = [[-46, 26, 'h1', 2.4], [44, 30, 'h3', 2.6], [-12, 12, 'm2', 2.2], [46, -24, 'h4', 5.6], [-44, -28, 't2', 5.8], [10, -46, 'm5', 6], [-16, 48, 'r2', 10], [16, 48, 'r6', 10.2], [-48, 2, 'r1', 10.4], [48, 4, 'r4', 10.6], [-10, -48, 'm6', 10.8], [30, -44, 'r7', 11]];
     F.forEach(([x, y, who, ts], i) => { const id = 'f' + i, tgt = [x * (i === 2 ? 0.6 : 0.55), y * (i === 2 ? 0.6 : 0.55)], sa = k.posAt(who, 0);
       k.add(id, 'Fragment of Malacrass', 0, x, y).add(id, 'Fragment of Malacrass', ts, tgt[0], tgt[1]).show(id, 0, ts + 0.1);
-      k.at(ts - 2, who, sa[0], sa[1]).at(ts, who, tgt[0], tgt[1]).at(ts + 2, who, sa[0], sa[1]);
+      const wk = Math.max(3.2, Math.hypot(tgt[0] - sa[0], tgt[1] - sa[1]) / 8); k.at(ts - wk, who, sa[0], sa[1]).at(ts, who, tgt[0], tgt[1]).at(ts + wk, who, sa[0], sa[1]);
       k.ring({ on: who, r: 3, fx: 'burst', t0: ts - 1.1, at: ts, dur: 1.3, color: '#b65cff', cn: 'Spirit Erasure', legend: 'a stop: hits the whole raid, +20% for 2 s' }).ring1(who); });
     k.tag('h2', 'CDs', 8.4, 14).tag('m1', 'CDs', 8.4, 14);
     k.step(0).step(1).step(2.2).step(5.6).step(10);
@@ -289,13 +361,13 @@ const GDZ_CA_BEATS = {
   venomfang: { name: 'Venomfang (Dispel fast)', do: ['Venomfang: two players are poisoned. Healers dispel it fast (Poison Cleansing Totem does it on its own).'],
     run(o) { const k = gdzKit('The Coiled Altar', 4); gdzCaBoss(k, o.ph || 0); const v = o.on || ['m3', 'r6'];
       v.forEach((id, i) => { k.ring({ on: id, r: 2.6, fx: 'debuff', t0: 0.2, dur: 2.4 + i * 0.3, color: '#7cf07c', cn: 'Venomfang', legend: 'poison: dispel it fast' });
-        k.link({ from: i ? 'h3' : 'h1', to: id, t0: 2.4 + i * 0.3, t1: 3.1 + i * 0.3, color: '#2fd15a', legend: 'a healer dispels the poison' }); });
+        k.dispel(i ? 'h3' : 'h1', id, 2.4 + i * 0.3); });
       k.step(0.2); } },
   transition: { name: 'Into phase 2 (Stack cooldowns)', do: ['End of phase 1: hold damage. The second-to-last frontal pops only 2 or 3 orbs and the last one hits none.', 'Kill Zul\'jan around the pools. Everyone stacks in a spot clear of axes: Darkness, Anti-Magic Zone and Spirit Link Totem for the 9 to 11 stacks.'],
-    run() { const k = gdzKit('The Coiled Altar', 7); gdzCaBoss(k, 0);
-      k.hold(1.5, k.raid).at(3.6, k.raid.filter((x) => x[0] !== 't'), -8, 14, 7).at(3.6, ['t1', 't2'], 3, 2, 2);
-      k.ring({ x: -8, y: 14, r: 9, fx: 'zone', t0: 3.8, dur: 3.2, color: '#9a7bff', cn: 'Raid cooldowns', legend: 'Darkness, Anti-Magic Zone, Spirit Link Totem' });
-      k.step(0.2).step(3.6); } },
+    run() { const k = gdzKit('The Coiled Altar', 10); gdzCaBoss(k, 0);
+      k.hold(1.5, k.raid).at(6.4, k.raid.filter((x) => x[0] !== 't'), -8, 14, 7).at(6.4, ['t1', 't2'], 3, 2, 2);
+      k.ring({ x: -8, y: 14, r: 9, fx: 'zone', t0: 6.6, dur: 3.2, color: '#9a7bff', cn: 'Raid cooldowns', legend: 'Darkness, Anti-Magic Zone, Spirit Link Totem' });
+      k.step(0.2).step(6.4); } },
   nightfall: { name: 'Eternal Nightfall (Break the shield)', do: ['Eternal Nightfall: Malacrass shields himself and starts a cast that wipes the raid. Everyone bursts the shield with the cooldowns saved for it.', 'Shield broken: the cast stops. Now dodge the purple circles.'],
     run(o) { const k = gdzKit('The Coiled Altar', 7); const ph = o.ph || 1; gdzCaBoss(k, ph); const b = ph === 1 ? [22, 22] : [16, 4];
       k.ring({ on: 'hm', r: 4, fx: 'zone', t0: 0.3, dur: 4.4, color: '#c45cff', cn: 'Veil of Twilight', legend: 'the shield: break it to stop the cast' });
@@ -303,21 +375,21 @@ const GDZ_CA_BEATS = {
       [[-6, 6], [4, -14], [-20, -6], [10, 18]].forEach(([dx, dy], i) => k.ring({ x: b[0] + dx - 8, y: b[1] + dy - 10, r: 5, fx: 'soak', t0: 4.6, at: 6.4, dur: 2.2, color: '#c45cff', cn: 'Purple circles', legend: 'dodge them' }));
       k.step(0.3).step(4.8); } },
   p2end: { name: 'Into the intermission', do: ['End of phase 2: hold damage. Keep looking at your ghost and it vanishes at the transition. The transition knocks you back: stay off the edge.'],
-    run() { const k = gdzKit('The Coiled Altar', 4.5); gdzCaBoss(k, 1); k.hold(1, k.raid).at(3.6, k.raid.filter((x) => x[0] !== 't'), 0, 4, 10).at(3.6, ['t1', 't2'], 6, 8, 2); k.step(0.2); } },
+    run() { const k = gdzKit('The Coiled Altar', 7); gdzCaBoss(k, 1); k.hold(1, k.raid).at(5.6, k.raid.filter((x) => x[0] !== 't'), 0, 4, 10).at(5.6, ['t1', 't2'], 6, 8, 2); k.step(0.2); } },
   defile: { name: 'Defilement (Tanks swap)', do: ['Defilement replaces Fangs: ground that puts heal absorbs on you, and a poison on the tank. The other tank taunts.'],
     run() { const k = gdzKit('The Coiled Altar', 5); gdzCaBoss(k, 3);
       [[-24, 30], [26, -32], [-34, -14]].forEach(([x, y]) => k.ring({ x, y, r: 6, fx: 'puddle', t0: 0.6, dur: 60, color: '#4f8f2a', fill: 'rgba(79,143,42,.25)', cn: 'Defilement', legend: 'heal-absorb ground: stay out' }));
       k.hold(2, ['t1', 't2']).at(3.4, 't2', 8, -4).at(3.4, 't1', 18, -10); k.step(0.3); } },
   p3orbs: { name: 'Toxic Deluge (Circle side first)', do: ['More orbs. This set goes by the circle marker first, with two purples at the tip.', 'The off-tank taunts and the frontal pops them. Greens elsewhere can wait; purples can\'t.'],
-    run() { const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)); gdzCaBoss(k, 3);
-      const PU = [['r3', 26, 40, 22, 28], ['r4', -4, 38, 12, 30]], GR = [['m2', 8, 14, 14, 20], ['h1', 30, 10, 19, 19]];
+    run() { const k = gdzCaMarks(gdzKit('The Coiled Altar', 14.5)); gdzCaBoss(k, 3);
+      const PU = [['r3', 30, 16, 22, 28], ['r4', 15, 6, 12, 30]], GR = [['m2', 6, 16, 19, 21]];
       PU.concat(GR).forEach(([, x, y], i) => k.ring({ x, y, r: 5, fx: 'soak', t0: 0.6, at: 2.4, dur: 2.4, color: i < 2 ? '#b65cff' : '#5fd35f', cn: 'Toxic Deluge' }));
-      PU.forEach(([w, x, y, tx, ty], i) => { k.hold(2, w); gdzCarry(k, w, 'p' + i, 'porb', 2.4, x, y, 3.2 + i * 0.4, tx, ty, 6.4 + i * 0.3, null); k.show('p' + i, 2.4, 10.4);
-        k.ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 2.4, dur: 7, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' }); k.at(7.6, w, i ? -12 : 40, i ? 24 : 16); });
-      GR.forEach(([w, x, y, tx, ty], i) => { const back = k.posAt(w, 0); k.hold(2, w); gdzCarry(k, w, 'g' + i, 'orb', 2.4, x, y, 3 + i * 0.3, tx, ty, 6 + i * 0.3, back); k.show('g' + i, 2.4, 10.4); });
-      k.hold(6.6, 't2').at(7.8, 't2', 15, 10);
-      k.cast('zj', 'Blighted Sever', 7.8, 9.2).cone({ from: 'zj', to: 't2', at: 9.2, r: 45, hit: ['p0', 'p1', 'g0', 'g1'] });
-      k.step(0.6).step(7.8); } },
+      PU.forEach(([w, x, y, tx, ty], i) => { k.hold(2, w); const tb = gdzCarry(k, w, 'p' + i, 'porb', 2.4, x, y, 3.2 + i * 0.4, tx, ty, 6.4 + i * 0.3, null); k.show('p' + i, 2.4, 13.6);
+        k.ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 2.4, dur: 10.2, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' }); const ex = i ? -12 : 40, ey = i ? 24 : 16; k.at(tb + 0.2 + Math.hypot(ex - tx, ey - ty) / 8, w, ex, ey); });
+      GR.forEach(([w, x, y, tx, ty], i) => { const back = k.posAt(w, 0); k.hold(2, w); gdzCarry(k, w, 'g' + i, 'orb', 2.4, x, y, 3 + i * 0.3, tx, ty, 6 + i * 0.3, back); k.show('g' + i, 2.4, 13.6); });
+      k.hold(9.8, 't2').at(11.6, 't2', 15, 10);
+      k.cast('zj', 'Blighted Sever', 11, 12.4).cone({ from: 'zj', to: 't2', at: 12.4, r: 45, hit: ['p0', 'p1', 'g0'] });
+      k.step(0.6).step(11); } },
   kill: { name: 'The kill', do: ['Kill Zul\'jan before his pool cast, about a minute after the second shield, or every orb left blows up. Malacrass at 7 or 8% when Zul\'jan dies is fine: don\'t over-damage him.'],
     run() { const k = gdzKit('The Coiled Altar', 5); gdzCaBoss(k, 3); k.step(0.3); } },
 };
@@ -351,6 +423,83 @@ function gdzCaSimOverlay(k, rt2sim, end) {
   [[0, 42], [0, -42]].forEach(([x, y], i) => { k.ring({ x, y, r: 6, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: p2 - rt2sim(0) - 2.6, color: '#5fd35f', fill: 'rgba(95,211,95,.2)', cn: 'Noxious Ground', legend: 'puddles from Fangs: stay out' });
     k.ring({ x, y, r: 10, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85), color: '#5fd35f', fill: 'rgba(95,211,95,.14)', cn: 'Noxious Ground' }); });
 }
+// ---- What goes wrong (your idea, Oct 20): each mechanic's map can also play a mistake and what it costs ----
+// a raid-wide hit: a red blast over the room and a red label, and the players it kills marked
+function gdzFailBlast(k, t, text, x, y, who, cn) {
+  k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: t - 0.4, at: t, dur: 1, color: '#ff3b3b', cn: cn || 'Raid hit', legend: 'it hits the whole raid' });
+  k.call(t + 0.2, t + 4, text, { x, y, color: '#ff3b3b', ink: '#fff' });
+  (who || []).forEach((id, i) => k.oops(id, t + 0.4 + i * 0.25));
+}
+const GDZ_CA_FAIL = {
+  orbsH: { name: 'Too many orbs in one frontal', what: 'Nine orbs in one Sever: the raid takes nine hits at once and the healers can\'t keep up.',
+    do: ['The raid piles 9 orbs in front of the boss.', 'Sever pops all 9 at once.', 'Nine Venom Ruptures hit everyone together. People die.'],
+    map: () => { const k = gdzKit('The Coiled Altar', 8); k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k); k.at(0, 't2', 0, 2).at(0, 't1', 6, 6); const ids = [];
+      for (let i = 0; i < 9; i++) { const [dx, dy] = gdzSpot(i, 9, 6); k.obj('o' + i, 'orb', 0, dx, -15 + dy).show('o' + i, 0, 5.2); ids.push('o' + i); }
+      k.cast('zj', 'Sever', 2.4, 4).cone({ from: 'zj', to: 't2', at: 4, r: 35, hit: ids });
+      gdzFailBlast(k, 4.4, '9 hits at once', 0, 18, ['h2', 'r4', 'm3'], 'Venom Rupture ×9');
+      k.step(0.3).step(2.4).step(4.4); return k.done({ title: 'Mistake: too many orbs', focus: { x: 0, y: 0, r: 20 }, badLabel: 'dies to the raid damage' }); } },
+  orbsM: { name: 'A purple touches a green', what: 'A purple carrier walks too close to a green orb on the ground. The purple ring touches it and the raid wipes.',
+    do: ['A purple carrier takes a shortcut past a green orb on the ground.', 'The purple ring touches the green.', 'About 20 Venom Ruptures at once. The raid wipes.'],
+    map: () => { const k = gdzCaMarks(gdzKit('The Coiled Altar', 8.5)); k.boss('zj', 'Zul\'jan', 0, 0, 0);
+      k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 4).at(0, ['m5', 'm6', 'm7'], 0, -8, 3).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
+        .at(0, 'r1', -34, -24).at(0, 'r2', -38, 34).at(0, 'r3', 38, -34).at(0, 'r4', 38, 34).at(0, ['r5', 'r6', 'r7'], 4, 24, 4);
+      k.obj('g0', 'orb', 0, -24, -6).show('g0', 0, 4.6);
+      gdzCarry(k, 'r1', 'p0', 'porb', 0, -36, -20, 0.8, -26, -9, 3.6, null); k.show('p0', 0, 4.6);
+      k.ring({ on: 'p0', r: 3.5, fx: 'debuff', t0: 0, dur: 4.4, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' });
+      gdzFailBlast(k, 4.4, 'Wipe', -25, 0, GDZ_RAID, 'Venom Rupture ×20');
+      k.step(0.3).step(3.6).step(4.4); return k.done({ title: 'Mistake: purple touches green', focus: { x: -14, y: -6, r: 18 }, badLabel: 'dead' }); } },
+  axe: { name: 'Only 3 in the soak', what: 'The axe needs at least 5 inside. With 3, it hits the whole raid instead (Execution).',
+    do: ['The axe target walks to the corner, but only 2 players join them.', 'The axe lands with 3 inside, not 5.', 'Execution: a big hit on the whole raid, and people die.'],
+    map: () => { const k = gdzKit('The Coiled Altar', 9), C = [36, -36]; k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k, ['r3', 'm5', 'm6']);
+      k.at(0, 'r3', 24, -14).at(0, ['m5', 'm6'], 14, -10, 2);
+      k.ring({ on: 'r3', r: 9, fx: 'soak', t0: 0.5, at: 4.5, dur: 4.3, color: '#f24824', cn: 'Guillotine', legend: '9-yard soak, 5 or more inside' });
+      k.hold(0.5, 'r3').at(3, 'r3', C[0], C[1]); ['m5', 'm6'].forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 3, 3); k.hold(0.5, id).at(3.6, id, C[0] + dx, C[1] + dy); });
+      gdzFailBlast(k, 4.6, 'Only 3: Execution', 14, -16, ['h2', 'r1', 'm2'], 'Execution');
+      k.step(0.5).step(4.5).step(4.8); return k.done({ title: 'Mistake: too few soakers', focus: { x: 16, y: -12, r: 24 }, badLabel: 'dies to Execution' }); } },
+  dmH: { name: 'A ghost reaches its player', what: 'A ghost moves whenever its player looks away. If it reaches them, they\'re mind controlled again.',
+    do: ['A freed player turns away from their ghost to run.', 'The ghost catches up and touches them.', 'Mind controlled again: back to the stack spot, with a fresh shield to break.'],
+    map: () => { const k = gdzKit('The Coiled Altar', 8); k.boss('hm', 'Malacrass', 0, 0, 10);
+      k.at(0, 't1', 0, 3).at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 0, 16, 6).at(0, ['h1', 'h3', 'h4'], 15, 14, 4).at(0, ['r1', 'r3', 'r4', 'r5', 'r6', 'r7'], 20, 0, 7).at(0, 'r2', -16, -12);
+      k.obj('g0', 'ghost', 0, -22, -18).obj('g0', 'ghost', 1, -22, -18).obj('g0', 'ghost', 4, -10, -6).show('g0', 0, 4.2);
+      k.hold(1, 'r2').at(4, 'r2', -10, -6);
+      k.ring({ on: 'r2', r: 3, fx: 'debuff', t0: 4.2, dur: 3.6, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled again' });
+      k.call(4.4, 7.8, 'Mind controlled again', { on: 'r2', color: '#ff3b3b', ink: '#fff' });
+      k.step(0.5).step(4).step(4.4); return k.done({ title: 'Mistake: a ghost reaches its player', focus: { x: -10, y: -6, r: 14 } }); } },
+  dmM: { name: 'Two ghosts touch', what: 'On Mythic only you can see your ghost. If two ghosts touch each other, both of their players die.',
+    do: ['Two freed players stand close and let their ghosts drift.', 'The two ghosts touch.', 'Both players die.'],
+    map: () => { const k = gdzCaMarks(gdzKit('The Coiled Altar', 8)); k.boss('hm', 'Malacrass', 0, 22, 22);
+      k.at(0, 't1', 28, 24).at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 18, 28, 5).at(0, ['h1', 'h3', 'h4'], 6, 30, 4).at(0, ['r1', 'r3', 'r4', 'r6', 'r7'], 4, 12, 6).at(0, 'r5', 40, 38).at(0, 'm4', 36, 33);
+      k.obj('g0', 'ghost', 0, 44, 32).obj('g0', 'ghost', 1, 44, 32).obj('g0', 'ghost', 3.6, 40.5, 30.5).show('g0', 0, 4.2);
+      k.obj('g1', 'ghost', 0, 34, 26).obj('g1', 'ghost', 1, 34, 26).obj('g1', 'ghost', 3.6, 39, 30).show('g1', 0, 4.2);
+      k.ring({ x: 39.8, y: 30.2, r: 4, fx: 'burst', t0: 3.2, at: 3.8, dur: 0.8, color: '#c49bff', cn: 'Malevolent Resonance', legend: 'two ghosts touching' });
+      k.call(4, 7.6, 'Both players die', { x: 40, y: 36, color: '#ff3b3b', ink: '#fff' }); k.oops('r5', 4.2); k.oops('m4', 4.2);
+      k.step(0.5).step(3.6).step(4.1); return k.done({ title: 'Mistake: two ghosts touch', focus: { x: 36, y: 30, r: 12 }, badLabel: 'dies' }); } },
+  bombs: { name: 'Bombs stacked together', what: 'Two bomb carriers stand on the same spot, next to the melee. Every bomb hits everyone around it.',
+    do: ['Both melee bombs run to the same spot, right next to the melee.', 'The bombs go off together.', 'They hit each other and the melee around them, twice.'],
+    map: () => { const k = gdzKit('The Coiled Altar', 8), MA = [24, 8]; k.boss('hm', 'Malacrass', 0, 18, 20).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
+      k.at(0, 't1', 24, 26).at(0, ['m3', 'm4', 'm5', 'm6', 'm7'], 18, 14, 4).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -6, 4, 6).at(0, ['m1', 'm2'], 18, 28, 2);
+      ['m1', 'm2'].forEach((id) => { k.ring({ on: id, r: 15, fx: 'burst', t0: 0.5, at: 4.5, dur: 4.3, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them' }); k.hold(0.6, id).at(3.2, id, 20, 11); });
+      k.call(4.7, 7.8, 'Hit 6 players', { x: 20, y: 18, color: '#ff3b3b', ink: '#fff' }); ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'].forEach((id, i) => k.oops(id, 4.7 + i * 0.15));
+      k.step(0.5).step(4.5).step(4.8); return k.done({ title: 'Mistake: bombs stacked', focus: { x: 18, y: 14, r: 14 }, badLabel: 'hit by a Gloombomb' }); } },
+  frags: { name: 'A fragment gets through', what: 'Nobody steps in front of a fragment and it reaches Zul\'jan. Each one that gets through heals him about 10%.',
+    do: ['A fragment walks in from the edge and nobody covers it.', 'It reaches Zul\'jan.', 'He heals about 10%. Two or three of these and the burn fails.'],
+    map: () => { const k = gdzKit('The Coiled Altar', 8); k.boss('zj', 'Zul\'jan', 0, 0, 0);
+      k.at(0, 't1', -3, 0).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 0, 0, 9).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], 6, 10, 10).at(0, ['h1', 'h2', 'h3', 'h4'], 14, -10, 6).at(0, 't2', 20, 20);
+      k.add('f0', 'Fragment of Malacrass', 0, -44, -28).add('f0', 'Fragment of Malacrass', 4.2, -3, -2).show('f0', 0, 4.3);
+      k.ring({ on: 'zj', r: 6, fx: 'burst', t0: 3.8, at: 4.4, dur: 0.8, color: '#45d16b', cn: 'Fragment heals Zul\'jan', legend: 'about 10% health back' });
+      k.call(4.5, 7.8, '+10% health', { on: 'zj', color: '#ff3b3b', ink: '#fff' });
+      k.step(0.3).step(4.2).step(4.5); return k.done({ title: 'Mistake: a fragment gets through', focus: { x: -12, y: -6, r: 18 } }); } },
+  diamond: { name: 'A purple left behind', what: 'A purple orb isn\'t in the frontal and nobody moves it. When the next Toxic Deluge lands, it blows up and wipes the raid.',
+    do: ['One purple sits outside the diamond.', 'The frontal pops the others but misses it.', 'The next Toxic Deluge lands and the leftover purple blows up: wipe.'],
+    map: () => { const k = gdzCaMarks(gdzKit('The Coiled Altar', 9)); k.boss('zj', 'Zul\'jan', 0, 16, -6).boss('hm', 'Malacrass', 0, 19, -2);
+      k.at(0, 't1', 22, -6).at(0, 't2', 10, -6).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 20, -14, 4).at(0, ['h1', 'h2', 'h3', 'h4'], 28, -22, 4).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], 30, 14, 5);
+      [[0, -6], [-8, 1], [-8, -13]].forEach(([x, y], i) => k.obj('p' + i, 'porb', 0, x, y).show('p' + i, 0, 3.4)); k.obj('p3', 'porb', 0, -20, 22).show('p3', 0, 6.4);
+      k.cast('zj', 'Blighted Sever', 1, 2.4).cone({ from: 'zj', to: 't2', at: 2.4, r: 45, hit: ['p0', 'p1', 'p2'] });
+      k.call(3, 5.6, 'Missed one', { x: -20, y: 26, color: '#ff9f1c' });
+      k.ring({ x: -30, y: -20, r: 5, fx: 'soak', t0: 4.4, at: 6.2, dur: 2.2, color: '#5fd35f', cn: 'Toxic Deluge' });
+      gdzFailBlast(k, 6.4, 'Wipe', -20, 18, GDZ_RAID, 'Purple orb explodes');
+      k.step(0.3).step(2.4).step(6.4); return k.done({ title: 'Mistake: a purple left behind', focus: { x: -4, y: 4, r: 20 }, badLabel: 'dead' }); } },
+};
 GDZ['The Coiled Altar'] = {
   sum: 'Zul\'jan first, then Hex Lord Malacrass, then both at once. Orbs go to the front for the frontal, axes get soaked by five, and ghosts get led into the frontal too.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
@@ -360,40 +509,40 @@ GDZ['The Coiled Altar'] = {
     { id: 'p1', name: 'Phase 1: Zul\'jan', sum: 'One boss. Gather the orbs in front of him, soak the axes, and dodge the axes rolling around the room.',
       m: { sum: 'One boss in the middle. Two orb triangles, one each side, popped by alternating frontals; two axe soaks.' },
       mechs: [
-        { id: 'orbs', name: 'Toxic Deluge (Carry orbs to the front)', spell: 'Coalesced Venom', what: 'Green circles land around the room and each leaves an orb that pulses damage on the raid. The tank frontal, Sever, pops orbs, and every pop hits the whole raid.',
-          do: ['Step out of the green circles as they land.', 'Each circle leaves a green orb. Orbs hurt the raid until they are popped.', 'Step on an orb to carry it for 5 seconds, then it drops. Bring every orb to the pile in front of the boss.', 'The other tank taunts just before Sever, so the boss turns with the orbs in front of it.', 'Sever pops every orb in its cone. Pop about 5 or 6 at a time (never more than 7).'],
+        { id: 'orbs', fail: GDZ_CA_FAIL.orbsH, name: 'Toxic Deluge (Carry orbs to the front)', spell: 'Coalesced Venom', what: 'Green circles drop around the room and each one leaves an orb. Orbs hurt the raid until they\'re popped. Sever, the tank frontal, pops them, and every pop hits the whole raid.',
+          do: ['Circles incoming: step out before they land.', 'Each circle leaves a green orb. The longer orbs sit, the more the raid takes.', 'Run over an orb to grab it. It drops after 5 seconds. Bring every orb to the pile in front of the boss.', 'Off-tank: taunt right before Sever so the boss faces the pile.', 'Sever pops the pile. Aim for 5 or 6 orbs. Never more than 7.'],
           note: 'Each pop also adds a stack of damage over time to the whole raid, so don\'t pop too many at once.',
-          m: { name: 'Toxic Deluge (Two triangles, purples at the tip)', what: 'Green and purple orbs land. If a purple orb\'s ring touches any other orb, carried or on the ground, the raid wipes. Each frontal pops one triangle of orbs: purples at the far end, greens between them and the boss.',
-            do: ['Circles land, then the orbs appear. Purple orbs are hard-assigned: two Warlocks (entrance corners), two Mages (far corners) and the off-tank.', 'Everyone else moves green orbs out of the purple carriers\' way first. Greens only, never a purple.', 'Build the entrance side first: purples at the far end of the triangle, up to the marker line, greens between them and the boss.', 'The off-tank taunts just before Sever and pops the whole entrance triangle: 5 or 6 orbs, never more than 7.', 'Now the far side: the off-tank grabs the last, awkward purple and the greens fill in.', 'The boss tank taunts back and takes the second Sever over the far triangle.'],
+          m: { fail: GDZ_CA_FAIL.orbsM, name: 'Toxic Deluge (Two triangles, purples at the tip)', what: 'Green and purple orbs drop. If a purple\'s ring touches any other orb, on the ground or carried, the raid wipes. Each frontal pops one triangle: purples at the far tip, greens between them and the boss.',
+            do: ['Circles incoming. Purple carriers: the two Warlocks take the entrance corners, the two Mages the far corners, and the off-tank grabs the awkward one.', 'Everyone else: clear the greens out of the purple carriers\' way first. Greens only. Never touch a purple.', 'Entrance side first: purples go to the tip, up to the marker line. Greens fill in between them and the boss.', 'Off-tank: taunt right before Sever and pop the whole entrance triangle. 5 or 6 orbs, never more than 7.', 'Now the far side. The off-tank brings the last purple and the raid fills in the greens.', 'Boss tank: taunt back and take the second Sever through the far triangle.'],
             plan: ['The entrance side always gets the first frontal, so set that side up first. Three purples on one side and two on the other worked, but don\'t force it.', 'Each Warlock takes the purple nearest their corner; the Mages wait and Blink in only if needed, because the off-tank is the safer runner.', 'Warlocks: wait until greens on your path are picked up before you teleport, or you\'ll run a purple into them.', 'The two side markers show how far the frontal reaches from the middle. Drop orbs at or inside that line; if some are further back, pull the boss a little off centre.', 'You may run a carried green past a carried purple. A green on the ground must never touch a purple\'s ring.', 'Every orb is one stack, purple or green. 5 or 6 per frontal; 7 is healable; never more.', 'Tanks: avoid a second Sever stack in phase 1 (it needs two externals). Two Evokers\' Time Spiral resets the runners\' movement abilities.', 'End of the phase: when ahead, hold damage. The second-to-last frontal hits only 2 or 3 orbs and the last one hits none, because every orb left blows up when Zul\'jan dies.'],
             note: 'Carrying an orb gives Tainted Blood (its damage around you goes up 200% for 10 seconds), so take turns carrying.' },
           map: (d) => {
             if (d === 'm') return GDZ_CA_M.orbs();
-            const k = gdzKit('The Coiled Altar', 13);
+            const k = gdzKit('The Coiled Altar', 16);
             k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k);
-            const spots = [[-32, -16], [26, -12], [-34, 16], [32, 22], [-10, -30], [12, -32]], who = ['r2', 'r6', 'r3', 'm6', 'r4', 'r5'];
+            const spots = [[-32, -16], [26, -12], [-31, -4], [32, -2], [-10, -30], [12, -32]], who = ['r2', 'r6', 'r3', 'r7', 'r4', 'r5'];
             spots.forEach(([x, y]) => k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#5fd35f', cn: 'Toxic Deluge', legend: 'circle lands and leaves an orb' }));
-            spots.forEach(([x, y], i) => { const [dx, dy] = gdzSpot(i, 6, 4.5), back = k.posAt(who[i], 0); gdzCarry(k, who[i], 'o' + i, 'orb', 3, x, y, 3.4 + i * 0.35, dx, -15 + dy, 6 + i * 0.2, back); k.show('o' + i, 3, 11); });
-            k.at(8.4, 't2', 7, 7).at(9.4, 't2', 0, 2).at(8.4, 't1', 0, 3).at(9.4, 't1', 6, 6);
-            k.cast('zj', 'Sever', 8.6, 10.2).cone({ from: 'zj', to: 't2', at: 10.2, r: 35, hit: ['o0', 'o1', 'o2', 'o3', 'o4', 'o5'] }).ring1(['t1', 't2']);
-            k.step(1).step(3).step(3.4).step(8.4).step(10.2);
+            spots.forEach(([x, y], i) => { const [dx, dy] = gdzSpot(i, 6, 4.5), back = [dx < 0 ? -18 : 18, -12]; /* (then a step to the side, clear of the frontal) */ gdzCarry(k, who[i], 'o' + i, 'orb', 3, x, y, 3.4 + i * 0.35, dx, -15 + dy, 6 + i * 0.2, back); k.show('o' + i, 3, 14.4); });
+            k.at(11.8, 't2', 7, 7).at(12.8, 't2', 0, 2).at(11.8, 't1', 0, 3).at(12.8, 't1', 6, 6);
+            k.cast('zj', 'Sever', 12, 13.6).cone({ from: 'zj', to: 't2', at: 13.6, r: 35, hit: ['o0', 'o1', 'o2', 'o3', 'o4', 'o5'] }).ring1(['t1', 't2']);
+            k.step(1).step(3).step(3.4).step(11.8).step(13.6);
             return k.done({ title: 'Toxic Deluge and Sever', focus: { x: 0, y: -4, r: 17 }, tagLabel: 'Carrying an orb', hlLabel: 'orb carriers and tanks' });
           } },
-        { id: 'axe', name: 'Guillotine (Two groups take turns)', what: 'An axe drops on a player. Everyone inside its 9-yard circle shares the hit; with fewer than 5 inside, it hits the whole raid. Six seconds after it lands, it erupts 40 yards around the spot.',
-          do: ['The player with the axe walks to a corner, away from the raid.', 'Their soak group joins them: at least 5 players inside the circle.', 'The axe lands and the damage is split between everyone inside.', 'Now run: the spot erupts 40 yards around it 6 seconds later (Widow\'s Kiss).', 'Everyone is clear. Walk or use a speed boost. Gateway into a soak, never out of one (orbs land on the path).'],
+        { id: 'axe', fail: GDZ_CA_FAIL.axe, name: 'Guillotine (Two groups take turns)', what: 'An axe drops on a player. Everyone in its 9-yard circle splits the hit; with too few inside, it hits the whole raid. Six seconds after it lands, the spot erupts 40 yards out.',
+          do: ['Axe on you? Walk to a corner, away from the raid.', 'Soak group: get in with them. Bring at least 5 to be safe.', 'The axe lands and the damage is split between everyone inside.', 'Now run. The spot erupts 40 yards out 6 seconds later (Widow\'s Kiss).', 'Everyone\'s clear. Walk or use a speed boost. Gateway into a soak, never out of one: orbs spawn on the path.'],
           note: 'Soaking leaves Guillotined (the next axe hits you 500% harder), so two soak groups take turns: group 1 takes this axe, group 2 the next.',
-          m: { note: null, name: 'Guillotine (Planned soakers, immunities on the second)', what: 'An axe drops on a player; 5 or more must share its 9-yard circle, then everyone gets 40 yards away before it erupts. On Mythic, soaking leaves you Guillotined for the rest of the fight, so every soak is planned.',
-            do: ['The axe target is gated into the back corner. Externals and a Zephyr go on them.', 'Soak 1 is big (6 or 7): everyone who will immune soak 2, plus tanky players with a defensive.', 'The axe lands and the damage is split. Players with the debuff can\'t be picked for the next axe.', 'Walk out of the 40-yard eruption. There is plenty of time; gate in, never out.', 'Soak 2 is exactly five: both tanks with a defensive, both Hunters in Turtle, and Blessing of Protection on the target.'],
+          m: { note: null, name: 'Guillotine (Planned soakers, immunities on the second)', what: 'An axe drops on a player. At least 5 must share its 9-yard circle, then everyone gets 40 yards away before it erupts. On Mythic, soaking marks you for the rest of the fight, so every soak is planned.',
+            do: ['Axe target: you get gated into the back corner. Externals and a Zephyr go on you.', 'The first soak is big, 6 or 7: everyone who immunes the second axe, plus tanky players with a defensive.', 'The axe lands and the damage is split. Anyone marked can\'t be picked for the next axe.', 'Walk out of the 40 yards. There\'s plenty of time. Gate in, never out.', 'The second soak is exactly 5: both tanks with a defensive, both Hunters in Turtle, and Blessing of Protection on the target.'],
             plan: ['Phase 1 has two axes; phase 3 has three.', 'Why the Hunters soak the first axe: anyone carrying the debuff can\'t be targeted, so a Hunter can\'t be picked for axe 2 and leave the soak one short.', 'Good soak 1 extras: Shadow Priest (Dispersion), a Warrior (walls work well, the phase 1 axe is physical), a Rogue (Feint).', 'Phase 1 axes are physical: Blessing of Protection on the target works. Phase 3 axes are magic: a Rogue\'s Cloak and Blessing of Spellwarding (or a Paladin\'s Bubble) work instead, and big externals go on the target.', 'In phase 3 the first axe goes to the star marker, the second and third to the square.', 'Last axe of phase 3: send everyone who is free of the debuff. Five is the minimum and four wipes, so over-send.'] },
           map: (d, o) => {
             if (d === 'm') return GDZ_CA_M.axe(o);
             const k = gdzKit('The Coiled Altar', 13), C = [36, -36], grp = ['m5', 'm6', 'r6', 'h3'];
             k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k, ['r3'].concat(grp));
-            k.at(0, 'r3', 20, 0).at(0, ['m5', 'm6'], 6, 18, 2).at(0, 'r6', 22, 6).at(0, 'h3', 16, 14);
+            k.at(0, 'r3', 24, -14).at(0, ['m5', 'm6'], 14, -10, 2).at(0, 'r6', 20, -8).at(0, 'h3', 12, -16);
             k.ring({ on: 'r3', r: 9, fx: 'soak', t0: 1, at: 6, dur: 5.8, color: '#f24824', cn: 'Guillotine', legend: '9-yard soak, 5 or more inside' });
-            k.hold(1, 'r3').at(3.2, 'r3', C[0], C[1]); grp.forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 5, 4); k.hold(2, id).at(4.6, id, C[0] + dx, C[1] + dy); });
+            k.hold(1, 'r3').at(3.2, 'r3', C[0], C[1]); grp.forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 5, 4); k.hold(1.2, id).at(4.6, id, C[0] + dx, C[1] + dy); });
             k.ring({ x: C[0], y: C[1], r: 40, fx: 'burst', t0: 6, at: 12, dur: 6.6, color: '#9ff26d', cn: 'Widow\'s Kiss', legend: 'erupts 40 yards around the spot, 6 s after' });
-            ['r3'].concat(grp).forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, 5, 5); k.hold(6.3, id).at(10.6, id, -4 + dx, 6 + dy); });
+            ['r3'].concat(grp).forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, 5, 5); k.hold(6.3, id).at(11, id, 2 + dx, -2 + dy); });
             k.ring1(['r3']).step(1).step(2.4).step(6).step(6.4).step(11);
             return k.done({ title: 'Guillotine', focus: { x: 16, y: -14, r: 26 }, hlLabel: 'player with the axe', goodLabel: 'in the soak' });
           } },
@@ -407,11 +556,11 @@ GDZ['The Coiled Altar'] = {
     { id: 'p2', name: 'Phase 2: Malacrass', sum: 'Hex Lord Malacrass takes over. Mind controls, ghosts led into the frontal, bombs, adds, and a shield to break.',
       m: { sum: 'Malacrass. Mind controls always stack on the square marker, ghosts get frozen apart and swept by the frontal, bombs go on the adds, and every second set brings the shield.' },
       mechs: [
-        { id: 'dm', name: 'Dreadmarch (Stack them, then pile the ghosts)', spell: 'Dreadmarch', what: 'A few players are mind controlled and walk toward the edge with a big shield on them. When they\'re free, two ghosts chase each of them. A ghost only moves while its target isn\'t looking at it.',
-          do: ['A few players are mind controlled and start walking toward the edge.', 'Bring them to the set spot, stun or root them there, and break their shields. They press a macro to cancel speed boosts and shields.', 'Once free, they stand still until their ghosts spawn: two each.', 'Lead your ghosts into one pile in front of the boss, then turn and look at them so they freeze.', 'Soul Sever, the tank frontal, removes every ghost in its cone. Anyone it hits must pick up their 3 Soul Fragments or die.'],
+        { id: 'dm', fail: GDZ_CA_FAIL.dmH, name: 'Dreadmarch (Stack them, then pile the ghosts)', spell: 'Dreadmarch', what: 'A few players get mind controlled and walk toward the edge with a big shield on. When they break free, two ghosts chase each of them. A ghost only moves while its target isn\'t looking at it.',
+          do: ['A few players are mind controlled and start walking to the edge.', 'The raid brings them to the set spot, stuns or roots them there and breaks their shields. Mind controlled? Press your cancel macro.', 'Once free, stand still until your ghosts spawn: two each.', 'Lead your ghosts into one pile in front of the boss, then turn and look at them so they freeze.', 'Soul Sever, the tank frontal, wipes out every ghost in it. Hit by it? Pick up your 3 Soul Fragments or you die.'],
           note: 'A ghost that reaches its player mind controls them again.',
-          m: { name: 'Dreadmarch (Stack on square, freeze your ghosts)', what: 'A few players are mind controlled with a big shield. When freed, two ghosts chase each of them. Only you can see your ghosts, and two ghosts touching kills both of their players.',
-            do: ['A few players get the arrow over their head: they press the cancel macro, and everyone stacks on the square marker.', 'Stun or root them on the square (Ring of Peace, Leg Sweep, Shockwave, Ursol\'s Vortex, Mass Grip, Chaos Nova) and break the shields.', 'Freed players stand still: the ghosts spawn where you stand, so they land near the square. Look at yours at once.', 'Ghosts stay frozen apart. Only someone whose ghost is outside the frontal lets it creep into the cone.', 'The boss tank steps toward the diamond or the circle, whichever lines Soul Sever up with the most ghosts, and the frontal wipes them out.'],
+          m: { fail: GDZ_CA_FAIL.dmM, name: 'Dreadmarch (Stack on square, freeze your ghosts)', what: 'A few players get mind controlled with a big shield. When freed, two ghosts chase each of them. Only you can see your ghosts, and two ghosts touching kills both players.',
+            do: ['Arrow over your head? Press the cancel macro. The raid stacks on the square marker.', 'The raid stuns or roots them on the square (Ring of Peace, Leg Sweep, Shockwave, Ursol\'s Vortex, Mass Grip, Chaos Nova) and breaks the shields.', 'Freed? Stand still. Your ghosts spawn where you stand, so they land near the square. Look at yours right away.', 'Keep your ghosts frozen and apart. Only if yours is outside the frontal, let it creep in.', 'Boss tank: step toward the diamond or the circle so Soul Sever hits the most ghosts. The frontal wipes them out.'],
             plan: ['The cancel macro removes your speed boosts and shields (Power Word: Shield, Void Shield and the like) so the stack can break you out fast. Press it only if you were picked.', 'Put an air-horn sound alert on the ghost fixate, so you turn and look right away.', 'A ghost the frontal missed is fine: walk it back toward the square for the next one.', 'One tank took every phase 2 frontal: a defensive on the odd ones, a defensive and two externals on the even ones. The stacks fall off before the third.', 'After the kicks, the other tank taunts the boss back to the square, so the Mages can hit the shields on the mind controls.', 'End of the phase: if your ghost is still up, keep looking at it and it vanishes at the transition. The transition knocks you back: stay off the edge.'],
             note: 'Kicking Wail of Terror shows every ghost to everyone for a moment.' },
           map: (d) => {
@@ -424,13 +573,13 @@ GDZ['The Coiled Altar'] = {
             mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); k.tag(id, 'MC', 1, 6); const [dx, dy] = gdzSpot(i, 3, 2); k.hold(1, id).at(4.2, id, SP[0] + dx, SP[1] + dy).hold(6.6, id); });
             mc.forEach((id, i) => { for (let j = 0; j < 2; j++) { const g = 'g' + i + j, p = k.posAt(id, 6), a = (i * 2 + j) * 1.1, q = i * 2 + j; k.obj(g, 'ghost', 6, p[0] + Math.cos(a) * 6, p[1] + Math.sin(a) * 6).show(g, 6, 12);
               const [ex, ey] = gdzSpot(q, 6, 4); k.obj(g, 'ghost', 7, p[0] + Math.cos(a) * 6, p[1] + Math.sin(a) * 6).obj(g, 'ghost', 9.6, ex, -13 + ey); } });
-            mc.forEach((id, i) => { k.at(8.2, id, -3 + i * 3, -16).at(9.3, id, -14 + i * 2, -7 + i); });
+            mc.forEach((id, i) => { k.at(8.2, id, -3 + i * 3, -16).at(9.8, id, -14 + i * 2, -7 + i); });
             k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g00', 'g01', 'g10', 'g11', 'g20', 'g21'] });
             k.ring1(mc).step(1).step(2).step(6).step(7).step(11);
             return k.done({ title: 'Dreadmarch and Soul Sever', focus: { x: -4, y: -4, r: 18 }, hlLabel: 'mind-controlled players', tagLabel: 'Mind controlled, with a shield' });
           } },
-        { id: 'bombs', only: 'm', name: 'Gloombomb (Drop it on your add)', what: 'The two Spiteful Soulcoiler adds have a shield that blocks almost all damage until 2 Gloombombs hit each one. Each time, 2 ranged and 2 melee get a bomb that explodes 15 yards around them.',
-          do: ['Bombs go out: kick the adds as soon as the Gloombomb cast appears, so they stand still.', 'Ranged bombs walk to the ranged add, melee bombs to the melee add. Everyone else stays 15 yards away. Use your best defensive: this hit is huge.', 'The bombs go off on the adds and break their shields. Now kill them.', 'Kick every Wail of Terror. The melee add\'s second kick must come from a melee player.'],
+        { id: 'bombs', fail: GDZ_CA_FAIL.bombs, only: 'm', name: 'Gloombomb (Drop it on your add)', what: 'The two Soulcoiler adds take almost no damage until 2 Gloombombs hit each one. Every time, 2 ranged and 2 melee get a bomb that explodes 15 yards around them.',
+          do: ['Bombs are out. Kick the adds the moment the Gloombomb cast shows, so they stand still.', 'Ranged bombs go to the ranged add, melee bombs to the melee add, one on each side of it. Everyone else stays 15 yards away. Bombs: use your best defensive.', 'The bombs go off on the adds and break their shields. Now kill them.', 'Kick every Wail of Terror. The melee add\'s second kick has to be a melee.'],
           plan: ['One add is the ranged add and the other the melee add. One player marks the ranged add and calls where both are: marked means ranged kicks, unmarked means melee kicks.', 'Which is which, by where they spawn (the plan\'s rule): an add at the moon is always ranged; an add beside the stack spot is always melee.', 'Skull add: melee if the other is at the moon, ranged if the other is at the square or star. Star add: melee if the other is at the moon or skull, ranged if the other is at the square.', 'Every second set of adds is followed by Eternal Nightfall, so the adds must die before the next set but the shield comes first.', 'The last set before the intermission doesn\'t need bombs: their shields break at the transition. Just keep kicking.'],
           map: () => GDZ_CA_M.bombs() },
       ],
@@ -442,10 +591,10 @@ GDZ['The Coiled Altar'] = {
       ] },
     { id: 'int', name: 'Intermission: Soulbinding', sum: 'Zul\'jan comes back healing himself but taking double damage. Bloodlust here.',
       mechs: [
-        { id: 'frags', name: 'Fragments of Malacrass (Stop them in turns)', what: 'Zul\'jan heals 2% a second for 35 seconds but takes double damage. Fragments walk to him and each one that arrives heals him about 10%. Stopping one hits the whole raid.',
-          do: ['Zul\'jan heals himself but takes double damage. Use Bloodlust, potions and every cooldown.', 'Fragments spawn around the room and walk toward him.', 'Step in their path to stop them. Each one you stop hits the whole raid (Spirit Erasure).', 'Stop them a couple at a time, spread out, with healing cooldowns ready.'],
-          m: { name: 'Fragments of Malacrass (3 to 5, then 7 to 10)', what: 'Zul\'jan heals 2% a second but takes double damage. Each fragment that reaches him heals him about 10%, nearly a wipe. Each stop hits the raid and makes the next one 20% stronger for 2 seconds.',
-            do: ['Bloodlust, potions and every cooldown. You held damage at the end of phase 2 for this.', 'Fragments spawn at the edges, and one sneaky one on the inner ring. Mobile healers and the off-tank cover their areas; the rest circle the boss.', 'Stop 3 to 5, then let the stacks fall off.', 'Again: 3 to 5, wait, and repeat (about five times).', 'Near the end, stack raid cooldowns in the middle and stop 7 to 10 at once.'],
+        { id: 'frags', fail: GDZ_CA_FAIL.frags, name: 'Fragments of Malacrass (Stop them in turns)', what: 'Zul\'jan comes back healing 2% a second for 35 seconds, but he takes double damage. Fragments walk to him, and each one that gets there heals him about 10%. Stopping one hits the whole raid.',
+          do: ['Zul\'jan is healing but takes double damage. Bloodlust, potions, everything.', 'Fragments spawn around the room and walk toward him.', 'Step in their path to stop them. Each stop hits the whole raid (Spirit Erasure).', 'Stop a couple at a time, spread out, with healing cooldowns ready.'],
+          m: { name: 'Fragments of Malacrass (3 to 5, then 7 to 10)', what: 'Zul\'jan heals 2% a second but takes double damage. Each fragment that reaches him heals him about 10%, close to a wipe. Each stop hits the raid and makes the next one 20% stronger for 2 seconds.',
+            do: ['Bloodlust, potions, every cooldown. The raid held damage at the end of phase 2 for this.', 'Fragments spawn at the edges, plus one sneaky one on the inner ring. Mobile healers and the off-tank cover their areas; the rest of the raid circles the boss.', 'Stop 3 to 5, then let the stacks drop.', 'Again: 3 to 5, wait, repeat. About five rounds.', 'Near the end, the raid stacks cooldowns in the middle and stops 7 to 10 at once.'],
             plan: ['Spots: the mobile healers spread to the four sides, the priests stay near the melee (they\'re less mobile), and the off-tank soaks far fragments.', 'The Augmentation Evoker, the Hunters and the Warlocks stand together on one side, so the Augmentation buffs land on the right people for the burn.', 'Melee play defence: you\'re the most mobile, so make sure none get in.', 'Getting Zul\'jan under about 35% here puts you in kill range.'] },
           map: (d) => {
             if (d === 'm') return GDZ_CA_M.frags();
@@ -456,7 +605,7 @@ GDZ['The Coiled Altar'] = {
             const T = [3.6, 3.8, 5.6, 5.8, 7.6, 7.8, 9.6, 9.8], W = ['r1', 'm6', 'r2', 'm7', 'h1', 'r4', 'm3', 'r6'];
             F.forEach(([x, y], i) => { const id = 'f' + i, who = W[i], ts = T[i], tgt = [x * 0.45, 6 + (y - 6) * 0.45];
               k.add(id, 'Fragment of Malacrass', 0, x, y).add(id, 'Fragment of Malacrass', ts, tgt[0], tgt[1]).show(id, 0, ts + 0.1);
-              const sa = k.posAt(who, 0); k.at(ts - 2.2, who, sa[0], sa[1]).at(ts, who, tgt[0], tgt[1]).at(ts + 2.2, who, sa[0], sa[1]);
+              const sa = k.posAt(who, 0), wk = Math.max(3.2, Math.hypot(tgt[0] - sa[0], tgt[1] - sa[1]) / 8); k.at(ts - wk, who, sa[0], sa[1]).at(ts, who, tgt[0], tgt[1]).at(ts + wk, who, sa[0], sa[1]);
               k.ring({ on: who, r: 3, fx: 'burst', t0: ts - 1.2, at: ts, dur: 1.4, color: '#b65cff', cn: 'Spirit Erasure', legend: 'a stop: hits the whole raid' }).ring1(who); });
             k.step(0).step(1).step(3.6).step(5.6);
             return k.done({ title: 'Fragments of Malacrass', focus: { x: 0, y: 4, r: 18 }, hlLabel: 'players stopping a fragment' });
@@ -465,8 +614,8 @@ GDZ['The Coiled Altar'] = {
     { id: 'p3', name: 'Phase 3: Coiled Union', sum: 'Both bosses at once, with everything from phases 1 and 2 together.',
       m: { sum: 'Both bosses, everything at once. Play on the star and square side; purples are all that matter; kill Zul\'jan before his next pool cast.' },
       mechs: [
-        { id: 'diamond', only: 'm', name: 'Blighted Sever (All purples in one diamond)', what: 'The frontal is bigger now and hits orbs and ghosts. The first one takes every purple orb at once, set out in a diamond; green orbs go to one side.',
-          do: ['Orbs land. Orb carriers now: both Mages, the off-tank and the Evoker healer.', 'Everyone clears green orbs out of the middle and lines them up on one side. A missed green is survivable; a missed purple wipes.', 'The carriers build a diamond of purples in the middle, each well clear of the others. Use a purple that\'s already in place.', 'The off-tank takes the first phase 3 frontal and aims it through the whole diamond.'],
+        { id: 'diamond', fail: GDZ_CA_FAIL.diamond, only: 'm', name: 'Blighted Sever (All purples in one diamond)', what: 'The frontal is bigger now and hits orbs and ghosts. The first one takes every purple at once, set out in a diamond. Greens go to one side.',
+          do: ['Orbs are down. Carriers now: both Mages, the off-tank and the Evoker healer.', 'Everyone else: clear the greens out of the middle and line them up on one side. A missed green is fine. A missed purple wipes.', 'Carriers build the purple diamond in the middle, each one well clear of the others. Use a purple that\'s already in place.', 'Off-tank: take the first phase 3 frontal and aim it through the whole diamond.'],
           plan: ['Gloombomb with no adds up: just run to the edge of the room, away from the raid. Speed boosts help.', 'The next orb sets are built around the circle and diamond markers: the circle side gets its frontal first (two purples by the circle).', 'Damage: kill Zul\'jan before his pool cast, about a minute after the second shield, because every orb blows up then. Malacrass at 7 or 8% when Zul\'jan dies is fine. Don\'t over-damage Malacrass.', 'The last frontals hit 0 or 1 orbs. The last adds just need kicks.', 'Axes in phase 3: the first at the star marker, the second and third at the square.'],
           map: () => GDZ_CA_M.diamond() },
       ],
@@ -509,7 +658,7 @@ function gdzView() {
   const keyRow = '<div class="gdz-key">' + Object.entries(GDZ_ROLE).map(([, [n, c, ic]]) => '<span><img src="https://wow.zamimg.com/images/wow/icons/medium/' + ic + '.jpg" alt="" style="border-color:' + c + '">' + n + '</span>').join('') + '<span class="gdz-keyn">On the maps. Positions are examples.</span></div>';
   let mi = 0; const maps = [];
   const sec = (p, i) => '<section class="gdz-sec" id="gdz-' + p.id + '"><div class="gdz-sh"><i>' + (i + 1) + '</i><div><h3>' + esc(p.name) + '</h3><p>' + esc(p.sum) + '</p></div></div>' +
-    (p.mechs || []).map((m) => { const n = mi++; maps.push(m); return '<article class="gdz-m">' + (m.map ? '<div class="gdz-mapc"><div class="gdz-mm" data-i="' + n + '"></div></div>' : '') +
+    (p.mechs || []).map((m) => { const n = mi++; maps.push(m); return '<article class="gdz-m">' + (m.map ? '<div class="gdz-mapc">' + (m.fail ? '<div class="gdz-mode" data-i="' + n + '"><button type="button" class="on" data-v="ok">✓ The right way</button><button type="button" data-v="bad">✕ Show a mistake</button></div>' : '') + '<div class="gdz-mm" data-i="' + n + '"></div></div>' : '') +
       '<div class="gdz-mt"><h4>' + spellIcon(0, m.spell || m.name.replace(/ \(.*$/, '')) + '<span>' + esc(m.name) + '</span></h4><p class="gdz-what">' + esc(m.what) + '</p>' +
       (m.do && m.do.length ? '<ol class="gdz-steps" data-i="' + n + '">' + m.do.map((d, j) => '<li data-j="' + j + '"><span>' + esc(d) + '</span></li>').join('') + '</ol>' : '') +
       (m.plan && m.plan.length ? '<details class="gdz-plan"><summary>Full plan <span>' + m.plan.length + ' details: who, where and when</span></summary><ul>' + m.plan.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></details>' : '') +
@@ -521,7 +670,7 @@ function gdzView() {
   // showing up as it plays and a chapter per mechanic to jump to
   const hasMaps = G.phases.some((p) => (p.mechs || []).some((m) => m.map));
   const whole = hasMaps ? '<section class="gdz-sec" id="gdz-all"><div class="gdz-sh"><i>★</i><div><div class="gdz-kick">Animated simulation</div><h3>Putting it all together</h3><p>' + (G.sim ? 'The whole fight in the order of a real kill, every mechanic down to the dispels and taunts. Quiet stretches are cut; the time shown is the real fight clock. Pick a moment to jump there.' : 'The whole fight on one map, start to finish. Each step shows up as it happens; pick a chapter to jump there.') + '</p></div></div>' +
-    '<article class="gdz-m gdz-whole"><div class="gdz-mapc"><div class="gdz-mm" data-w="1"></div></div><div class="gdz-mt"><div class="gdz-now"></div><ol class="gdz-chaps"></ol></div></article></section>' : '';
+    '<article class="gdz-m gdz-whole"><div class="gdz-mapc"><div class="gdz-mm" data-w="1"></div></div><div class="gdz-mt"><ol class="gdz-chaps"></ol></div></article></section>' : '';
   view('<div class="gdz">' + pick + head + phNav + keyRow + G.phases.map(sec).join('') + whole + roles + '<p class="gdz-foot">' + (D === 'm' ? 'Mythic' : 'Heroic') + ' guide. ' + (G.source ? 'Based on ' + esc(G.source) + ', in our own words.' : 'From the guides, in our own words.') + ' The maps are examples of where to stand, not a real pull.</p></div>');
   const root = document.querySelector('#view .gdz');
   root.querySelectorAll('.gdz-pb:not(.soon)').forEach((b) => (b.onclick = () => { S.gdzBoss = b.dataset.b; gdzView(); window.scrollTo({ top: Math.min(window.scrollY, (document.querySelector('#view').getBoundingClientRect().top + window.scrollY) - 70) }); }));
@@ -533,18 +682,46 @@ function gdzView() {
     const key = boss + '|' + D + '|whole'; let W = GDZ_CACHE.get(key);
     if (!W) { try { W = gdzWhole(boss, G, D); } catch (e) { console.error(e); box.innerHTML = '<p class="muted">This map could not be drawn.</p>'; return; } GDZ_CACHE.set(key, W); }
     box.innerHTML = miniMap(W.mp, pmap); bindZoom(box); hydrateMapIcons(box);
-    const art = box.closest('.gdz-m'), now = art.querySelector('.gdz-now'), ol = art.querySelector('.gdz-chaps'), clk = (t) => (t == null ? '' : Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'));
+    const art = box.closest('.gdz-m'), ol = art.querySelector('.gdz-chaps'), zb = box.querySelector('.zbox'), svg = box.querySelector('svg.zmap'), clk = (t) => (t == null ? '' : Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'));
     // (the scenes, under their phase, each with its real time when there is one)
     let lastPh = 0; ol.innerHTML = W.chaps.map((c, i) => (c.ph !== lastPh ? ((lastPh = c.ph), '<li class="gdz-chh">' + esc(c.phase) + '</li>') : '') +
       '<li data-c="' + i + '"><i>' + (W.real ? clk(c.rt) : c.ph) + '</i><span><b>' + esc(c.name) + '</b></span></li>').join('');
-    const lis = [...ol.querySelectorAll('li[data-c]')], cap = document.createElement('div'); cap.className = 'gdz-cap'; (box.querySelector('.zanim') || box).after(cap);
-    let cur = '';
+    const lis = [...ol.querySelectorAll('li[data-c]')];
+    // the video layer over the map, like a guide video: a badge with the phase and the fight clock, a title card at the start and at
+    // each phase, and a lower-third caption (the mechanic's instruction big, the step under it with its key words lit)
+    const vid = document.createElement('div'); vid.className = 'gdz-vid'; vid.innerHTML = '<div class="gdz-vchip"></div><div class="gdz-vcard"></div><div class="gdz-vlow"><div class="gdz-vlk"></div><div class="gdz-vlt"></div><div class="gdz-vls"></div></div>'; zb.appendChild(vid);
+    const vchip = vid.querySelector('.gdz-vchip'), vcard = vid.querySelector('.gdz-vcard'), vlow = vid.querySelector('.gdz-vlow');
+    const KEYW = /\b(dodge|soak|run|dispel|dispels|taunt|taunts|kick|stack|stacks|look|burst|break|stop|never|carry|pop|pops|spread|walk|step out|hold|kill|swap|stand still|wipes?|dies?|die|bloodlust|cooldowns?|defensive|purples?|greens?)\b|\b\d+(?:\s?(?:to|or)\s?\d+)?(?:\s?(?:yards?|seconds?|%|orbs?))?/gi;
+    const lit = (t) => esc(t).replace(KEYW, (m) => '<em>' + m + '</em>');
+    // the camera: glides to each scene's own view as it starts; dragging the map stops it until Follow is pressed again
+    const zbar = box.querySelector('.zbar'), o = (svg.dataset.o || '0,0').split(',').map(Number), yd = +svg.dataset.yd, A = ARENAS[boss] || { cx: 0, cy: 0 };
+    const camVB = (f) => { const span = Math.max(30, f.r * 3.2), fx0 = (A.cx + f.x) - span * 0.6, fy0 = -(A.cy + f.y) - span * 0.6; return [(fx0 - o[0]) * yd, (fy0 - o[1]) * yd, span * 1.2 * yd, span * 1.2 * yd]; };
+    let follow = true, camC = -1, tw = null; const cur0 = () => svg.getAttribute('viewBox').split(/[ ,]+/).map(Number);
+    const glide = (to) => { const fr = cur0(), t0 = performance.now(); if (tw) cancelAnimationFrame(tw); const st = (now) => { const p = Math.min(1, (now - t0) / 900), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      box._zoomTo(fr.map((v, i) => v + (to[i] - v) * e)); if (p < 1 && follow) tw = requestAnimationFrame(st); }; tw = requestAnimationFrame(st); };
+    const fb = document.createElement('button'); fb.type = 'button'; fb.className = 'btn gdz-follow on'; fb.textContent = '🎥 Follow the action'; zbar.prepend(fb);
+    fb.onclick = () => { follow = !follow; fb.classList.toggle('on', follow); if (follow) { camC = -1; } };
+    svg.addEventListener('pointerdown', () => { if (follow) { follow = false; fb.classList.remove('on'); if (tw) cancelAnimationFrame(tw); } });
+    svg.addEventListener('wheel', () => { if (follow) { follow = false; fb.classList.remove('on'); } }, { passive: true });
+    for (const b of box.querySelectorAll('.zfull, .zfocus')) b.addEventListener('click', () => { follow = false; fb.classList.remove('on'); });
+    // full screen, for watching it like a video
+    const fs = document.createElement('button'); fs.type = 'button'; fs.className = 'btn gdz-fs'; fs.textContent = '⛶ Full screen'; zbar.appendChild(fs);
+    fs.onclick = () => { const el = art.querySelector('.gdz-mapc'); if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen(); };
+    let cur = '', lastPhase = -1;
     box._onFrame = (ft) => {
       let j = -1, c = 0; W.caps.forEach((q, i) => { if (ft >= q.t - 0.01) j = i; }); W.chaps.forEach((q, i) => { if (ft >= q.t - 0.01) c = i; });
       const q = j >= 0 && W.caps[j].c === c ? W.caps[j] : null, ch = W.chaps[c], rt = W.real ? clk(W.clock(ft)) : '';
-      now.innerHTML = '<div class="gdz-nowph">' + esc(ch.phase) + (rt ? ' <span>· ' + rt + '</span>' : '') + '</div><h4>' + esc(ch.name) + '</h4>' + (q ? '<p><i>' + (q.j + 1) + '</i><span>' + esc(q.text) + '</span></p>' : '<p class="gdz-nowwait">Getting into position…</p>');
+      vchip.innerHTML = '<b>' + esc(ch.phase.replace(/:.*$/, '')) + '</b>' + (rt ? '<span>' + rt + '</span>' : '');
+      // (title cards: the fight's at the start, then each phase's as it begins)
+      const phStart = W.chaps.find((x) => x.ph === ch.ph).t, card = ft < 3 ? 0 : ft - phStart < 2.6 && ch.ph > 1 ? ch.ph : -1;
+      if (card !== lastPhase) { lastPhase = card; vcard.classList.toggle('on', card >= 0);
+        if (card === 0) vcard.innerHTML = '<small>' + esc(D === 'm' ? 'Mythic guide' : 'Heroic guide') + '</small><h3>' + esc(boss) + '</h3><p>' + esc(W.chaps.length + ' moments, in the order of a real kill') + '</p>';
+        else if (card > 0) vcard.innerHTML = '<small>' + esc('Phase ' + card) + '</small><h3>' + esc(ch.phase.replace(/^[^:]*:\s*/, '')) + '</h3>'; }
+      if (follow && c !== camC) { camC = c; glide(camVB(ch.foc || { x: 0, y: 0, r: 26 })); }
       const k2 = j + '|' + c; if (k2 === cur) return; cur = k2;
-      cap.innerHTML = (rt ? '<em>' + rt + '</em>' : '') + (q ? '<span><b>' + esc(ch.name.replace(/ \(.*$/, '')) + ':</b> ' + esc(q.text) + '</span>' : '<span><b>' + esc(ch.name) + '</b></span>');
+      const big = (ch.name.match(/\(([^)]*)\)/) || [])[1] || ch.name, small = ch.name.replace(/\s*\(.*$/, '');
+      vlow.classList.remove('in'); void vlow.offsetWidth; vlow.classList.add('in');
+      vlow.children[0].textContent = big === ch.name ? '' : small; vlow.children[1].textContent = big; vlow.children[2].innerHTML = q ? lit(q.text) : '';
       lis.forEach((li, i) => { li.classList.toggle('on', i === c); li.classList.toggle('past', i < c); });
       // (the list keeps the scene playing in view, inside its own box, without moving the page)
       const on = lis[c]; if (on && ol.scrollHeight > ol.clientHeight) { const top = on.offsetTop; if (top < ol.scrollTop || top > ol.scrollTop + ol.clientHeight - 40) ol.scrollTop = Math.max(0, top - 60); }
@@ -553,20 +730,30 @@ function gdzView() {
     bindAnim(box, W.mp, pmap, true);
   };
   const mount = (box) => {
-    if (box._on) return; box._on = 1; if (box.dataset.w) { mountWhole(box); return; } const m = maps[+box.dataset.i], key = boss + '|' + D + '|' + m.name;
+    if (box._on) return; box._on = 1; if (box.dataset.w) { mountWhole(box); return; } const m0 = maps[+box.dataset.i], bad = box.dataset.v === 'bad' && m0.fail, m = bad ? m0.fail : m0, key = boss + '|' + D + '|' + (bad ? 'fail|' : '') + m0.name;
     let mp = GDZ_CACHE.get(key); if (!mp) { try { mp = m.map(D); } catch (e) { console.error(e); box.innerHTML = '<p class="muted">This map could not be drawn.</p>'; return; } GDZ_CACHE.set(key, mp); }
     box.innerHTML = miniMap(mp, pmap); bindZoom(box); hydrateMapIcons(box);
-    const ol = root.querySelector('.gdz-steps[data-i="' + box.dataset.i + '"]'), lis = ol ? [...ol.children] : [], st = mp.steps || [];
+    const ol = root.querySelector('.gdz-steps[data-i="' + box.dataset.i + '"]'), lis = ol ? [...ol.querySelectorAll('li')] : [], st = mp.steps || [];
     // (each step lights while it plays; clicking one jumps the map there)
     if (lis.length && st.length) {
       // (on a phone the list sits under the map, out of view: the step playing also shows as a caption right under the map)
       const cap = document.createElement('div'); cap.className = 'gdz-cap'; (box.querySelector('.zanim') || box).after(cap);
       let cur = -1; box._onFrame = (ft) => { let j = -1; st.forEach(([t], q) => { if (ft >= t - 0.01) j = q; }); if (j !== cur) { cur = j; lis.forEach((li, q) => { li.classList.toggle('on', q === j); li.classList.toggle('past', q < j); });
-        cap.innerHTML = j < 0 ? '' : '<i>' + (j + 1) + '</i><span>' + esc(m.do[j] || '') + '</span>'; } };
+        cap.innerHTML = j < 0 ? '' : '<i>' + (j + 1) + '</i><span>' + esc((m.do || [])[j] || '') + '</span>'; } };
       lis.forEach((li, q) => { if (!st[q]) return; li.classList.add('go'); li.onclick = () => { const rng = box.querySelector('.zrange'); if (!rng) return; let fi = 0; mp.frames.forEach((f, z) => { if (f.t <= st[q][0] + 0.3) fi = z; }); rng.value = fi; rng.dispatchEvent(new Event('input')); }; });
     }
     bindAnim(box, mp, pmap, true);
   };
+  root.querySelectorAll('.gdz-mode').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
+    const i = sw.dataset.i, m0 = maps[+i], box = sw.parentElement.querySelector('.gdz-mm'), art = sw.closest('.gdz-m'), ol = art.querySelector('.gdz-steps'), v = bt.dataset.v;
+    if (box.dataset.v === v || (!box.dataset.v && v === 'ok')) return;
+    sw.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === bt)); box.dataset.v = v;
+    const old = art.querySelector('.gdz-failnote'); if (old) old.remove();
+    const list = v === 'bad' ? m0.fail.do : m0.do;
+    if (ol) { ol.innerHTML = list.map((d, j) => '<li data-j="' + j + '"><span>' + esc(d) + '</span></li>').join(''); ol.classList.toggle('gdz-bad', v === 'bad');
+      if (v === 'bad') ol.insertAdjacentHTML('beforebegin', '<div class="gdz-failnote"><b>Mistake: ' + esc(m0.fail.name) + '</b>' + esc(m0.fail.what) + '</div>'); }
+    box._on = 0; box._onFrame = null; box.innerHTML = ''; mount(box);
+  })));
   const boxes = [...root.querySelectorAll('.gdz-mm')];
   if (typeof IntersectionObserver !== 'undefined') { const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); mount(e.target); } }, { rootMargin: '300px 0px' }); boxes.forEach((b) => io.observe(b)); }
   else boxes.forEach(mount);
@@ -641,6 +828,28 @@ function gdzCss() {
 .gdz-plan summary span { font: 400 13px var(--body); color: var(--muted); }
 .gdz-plan ul { margin: 0; padding: 0 14px 12px 32px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 .gdz-whole .gdz-mt { display: flex; flex-direction: column; gap: 12px; }
+.gdz-whole .zbox { container-type: inline-size; overflow: hidden; }
+.gdz-vid { position: absolute; inset: 0; pointer-events: none; font-family: var(--head); }
+.gdz-vchip { position: absolute; top: 3%; left: 3%; display: flex; gap: .6em; align-items: center; background: rgba(8,9,13,.82); border: 1px solid rgba(230,180,80,.6); border-radius: 999px; padding: .25em .8em; font-size: clamp(11px, 2.6cqw, 22px); color: #fff; }
+.gdz-vchip b { color: var(--gold); letter-spacing: .06em; text-transform: uppercase; } .gdz-vchip span { font-variant-numeric: tabular-nums; }
+.gdz-vcard { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(ellipse at center, rgba(8,9,13,.9) 0%, rgba(8,9,13,.65) 55%, rgba(8,9,13,0) 100%); opacity: 0; transform: scale(1.06); transition: opacity .45s, transform .6s; }
+.gdz-vcard.on { opacity: 1; transform: none; }
+.gdz-vcard small { color: var(--gold); font-weight: 800; letter-spacing: .2em; text-transform: uppercase; font-size: clamp(11px, 2.6cqw, 22px); }
+.gdz-vcard h3 { margin: .1em 0; font-size: clamp(24px, 8cqw, 72px); font-weight: 800; color: #fff; text-shadow: 0 3px 18px rgba(0,0,0,.8); line-height: 1.05; }
+.gdz-vcard p { margin: 0; color: #d8d2c4; font-family: var(--body); font-size: clamp(11px, 2.4cqw, 20px); }
+.gdz-vlow { position: absolute; left: 3%; right: 3%; bottom: 3%; background: linear-gradient(90deg, rgba(8,9,13,.94), rgba(8,9,13,.82)); border-left: .35em solid var(--gold); border-radius: .5em; padding: .5em .8em .55em; font-size: clamp(11px, 2.5cqw, 22px); color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+.gdz-vlow.in { animation: gdzLow .45s ease-out; }
+@keyframes gdzLow { from { transform: translateY(20%); opacity: 0; } to { transform: none; opacity: 1; } }
+.gdz-vlk { color: var(--gold); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: .72em; }
+.gdz-vlk:empty { display: none; }
+.gdz-vlt { font-weight: 800; font-size: 1.35em; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; }
+.gdz-vls { font-family: var(--body); font-size: .9em; line-height: 1.3; margin-top: .2em; color: #e9e4d8; }
+.gdz-vls:empty { display: none; }
+.gdz-vls em { font-style: normal; font-weight: 800; color: #ffd36a; }
+.gdz-follow.on { border-color: var(--gold); color: var(--gold); }
+.gdz-mapc:fullscreen { background: #000; display: flex; align-items: center; justify-content: center; padding: 1vh 1vw; }
+.gdz-mapc:fullscreen .gdz-mm { width: min(100%, 92vh); }
+.gdz-mapc:fullscreen .zleg, .gdz-mapc:fullscreen .zbar .sub { display: none; }
 .gdz-now { background: rgba(230,180,80,.08); border: 1px solid rgba(230,180,80,.45); border-radius: 10px; padding: 14px 16px; min-height: 150px; }
 .gdz-nowph { font: 700 12px var(--head); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
 .gdz-now h4 { font: 700 21px/1.25 var(--head); margin: 2px 0 8px; }
@@ -661,6 +870,14 @@ function gdzCss() {
 .gdz-chaps li.past { color: var(--text); }
 .gdz-chaps li.on { background: rgba(230,180,80,.1); border-color: rgba(230,180,80,.45); color: var(--text); }
 .gdz-chaps li.on i { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.gdz-mode { display: flex; gap: 4px; margin-bottom: 8px; background: var(--raised); border: 1px solid var(--line2); border-radius: 999px; padding: 3px; width: fit-content; }
+.gdz-mode button { background: none; border: 0; border-radius: 999px; padding: 4px 14px; font: 700 13.5px var(--head); color: var(--muted); cursor: pointer; }
+.gdz-mode button[data-v="ok"].on { background: var(--good); color: #0b1a0f; }
+.gdz-mode button[data-v="bad"].on { background: var(--bad); color: #fff; }
+.gdz-failnote { background: var(--bad-bg); border: 1px solid rgba(229,83,75,.55); border-radius: 8px; padding: 9px 12px; margin: 0 0 10px; font-size: 14px; }
+.gdz-failnote b { display: block; color: #ff8a80; font: 700 15px var(--head); margin-bottom: 2px; }
+.gdz-steps.gdz-bad li.on { background: rgba(229,83,75,.12); border-color: rgba(229,83,75,.5); }
+.gdz-steps.gdz-bad li.on::before { background: var(--bad); color: #fff; border-color: var(--bad); }
 .gdz-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
 .gdz-tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
 .gdz-tile h5 { font: 700 16px/1.25 var(--head); margin: 0 0 4px; display: flex; align-items: center; gap: 7px; }

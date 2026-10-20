@@ -4341,7 +4341,7 @@ function miniMap(mp, pmap) {
   const ic = (x, y, inner) => '<g class="ic" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>';
   // opens on the whole arena when there is one; "Zoom to mechanic" (or double-click) goes in
   const startVB = A ? fullVB : focusVB;
-  let s = '<svg viewBox="' + startVB.join(' ') + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
+  let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
   // the boss's arena map (built in), or a room image the user added on the Interrupts map
   const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd });
   const mi = arena || mp.noArena ? null : mapImg(MB);
@@ -4609,6 +4609,8 @@ function miniMap(mp, pmap) {
   if (gMiss.size && cNow.length) leg.push([(x, y) => '<path d="M' + (x - 5) + ' ' + (y - 5) + 'l10 10M' + (x + 5) + ' ' + (y - 5) + 'l-10 10" stroke="#ff4d4d" stroke-width="2.5" stroke-linecap="round"/>', 'Red X: ghost the frontal missed']);
   if ((gHit.size || gMiss.size) && !LL) leg.push([(x, y) => '<text x="' + (x - 3) + '" y="' + (y + 4) + '" fill="#9aa0ac" font-size="11">i</text>', 'Ghosts shown where they spawned']);
   for (const g of (lm.rings || []).filter((x, i, a) => a.findIndex((y) => (y.legend || y.label || '') === (x.legend || x.label || '')) === i)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (g.fill || (g.color ? 'rgba(126,224,143,.2)' : 'rgba(230,180,80,.2)')) + '" stroke="' + (g.color || '#e6b450') + '" stroke-dasharray="3 2"/>', (g.cn ? g.cn + ': ' : g.color === '#b65cff' ? 'Purple circle: ' : g.color ? 'Green circle: ' : 'Gold circle: ') + (g.legend || g.label || 'mechanic area') + (g.shrink === 'ichor' ? ' (shrinks from ~11 yd)' : '')]);
+  { const atU = (g) => { const q = byG.get(g); return q ? [X(q), Y(q)] : null; }; /* (a guide's pop-up labels, debuff icons and dispel beams, on top (guides.js)) */
+    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue; s += c.kind === 'beam' ? gdzCallSvg(c, X(p), Y(p), ft, atU) : ic(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
   s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
   const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
@@ -4657,7 +4659,7 @@ function bindAnim(box, mp, pmap, still) {
   const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; btn.textContent = '▶ Play'; };
   const step = (now) => {
     raf = null;
-    if (!box.isConnected) { if (obs) obs.disconnect(); return; } // (closed: done for good)
+    if (!box.isConnected || !svg.isConnected) { if (obs) obs.disconnect(); return; } // (closed, or the map was swapped for another: done for good)
     if (!seen) { last = 0; return; } // (off screen: rests, and picks up where it was when it's back)
     // (at most a tenth of a second at a time, so coming back to the browser tab doesn't jump to the end)
     const dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
@@ -4701,6 +4703,7 @@ function bindZoom(box) {
     if (f) { const atFull = vb[2] >= full[2] * 0.95; f.classList.toggle('on', !atFull); u.classList.toggle('on', atFull); }
   };
   const toSvg = (e) => { const r = svg.getBoundingClientRect(); return [vb[0] + (e.clientX - r.left) / r.width * vb[2], vb[1] + (e.clientY - r.top) / r.height * vb[3]]; };
+  box._zoomTo = (v) => { vb = v.slice(); apply(); }; /* (a guide's simulation moves the camera to each scene) */
   box._zoomApply = apply; // animated maps redraw the contents and re-apply the icon scale
   svg.addEventListener('wheel', (e) => {
     e.preventDefault();

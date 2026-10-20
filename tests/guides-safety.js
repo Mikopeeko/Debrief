@@ -14,13 +14,25 @@ window.gdzSafety = () => {
       for (const p of pl(f)) { const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy); if (d < 1 || d > c.r) continue;
         let a = Math.atan2(dy, dx) - c.dir; while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI;
         if (Math.abs(a) <= c.half && p.guid[0] !== 't') { const kk = 'cone' + c.at + p.guid; if (!bad0.has(kk)) { bad0.add(kk); out.push(label + ': ' + p.name + ' in the frontal at ' + fmt(f.t)); } } } }
+    // every orb or ghost a frontal pops must really be inside it when it lands
+    for (const c of mp.cones || []) { const f = near(mp, c.at);
+      for (const id of c.hit || []) { const p = f.pts.find((q) => q.guid === id); if (!p) { out.push(label + ': ' + id + ' popped at ' + fmt(c.at) + ' but not on the map'); continue; }
+        const dx = p.x - c.x, dy = p.y - c.y; let a = Math.atan2(dy, dx) - c.dir; while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI;
+        if (Math.hypot(dx, dy) > c.r + 1 || Math.abs(a) > c.half + 0.05) out.push(label + ': ' + id + ' popped at ' + fmt(c.at) + ' but outside the frontal'); } }
     for (const g of mp.rings || []) {
       if (g.at == null) continue; const f = near(mp, g.at), cen = g.guid ? f.pts.find((q) => q.guid === g.guid) : { x: g.x, y: g.y }; if (!cen) continue;
       const inside = pl(f).filter((p) => Math.hypot(p.x - cen.x, p.y - cen.y) < g.r - 0.3);
       if (g.cn === 'Toxic Deluge') inside.forEach((p) => out.push(label + ': ' + p.name + ' under a Toxic Deluge circle at ' + fmt(g.at)));
       if (g.cn === "Widow's Kiss") inside.forEach((p) => out.push(label + ': ' + p.name + " inside Widow's Kiss at " + fmt(g.at)));
-      if (g.cn === 'Gloombomb') { const bombers = new Set((mp.rings || []).filter((x) => x.cn === 'Gloombomb').map((x) => x.guid)); inside.filter((p) => !bombers.has(p.guid)).forEach((p) => out.push(label + ': ' + p.name + ' hit by a Gloombomb at ' + fmt(g.at))); }
+      if (g.cn === 'Gloombomb') { const bombers = new Set((mp.rings || []).filter((x) => x.cn === 'Gloombomb').map((x) => x.guid)); inside.filter((p) => !bombers.has(p.guid)).forEach((p) => out.push(label + ': ' + p.name + ' hit by a Gloombomb at ' + fmt(g.at)));
+        // (bombs never stack on each other: they overlap only on the add)
+        inside.filter((p) => bombers.has(p.guid) && p.guid !== g.guid).forEach((p) => out.push(label + ': ' + p.name + ' stands in another Gloombomb at ' + fmt(g.at))); }
     }
+    // players and carried orbs moving faster than a player can run (about 7 yd/s; over 12 yd/s across half a second looks like a teleport)
+    const fast = new Set();
+    for (let i = 2; i < mp.frames.length; i++) { const a = mp.frames[i - 2], b = mp.frames[i], am = new Map(a.pts.map((p) => [p.guid, p]));
+      for (const p of b.pts) { if (p.kind !== 'player') continue; const q = am.get(p.guid); if (!q) continue; const v = Math.hypot(p.x - q.x, p.y - q.y) / (b.t - a.t);
+        if (v > 12 && !fast.has(p.guid + Math.floor(b.t))) { fast.add(p.guid + Math.floor(b.t)); fast.add(p.guid + (Math.floor(b.t) + 1)); out.push(label + ': ' + p.name + ' moves ' + Math.round(v) + ' yd/s at ' + fmt(b.t)); } } }
     // purple rings and ghosts, every frame
     const bad = new Set();
     mp.frames.forEach((f, fi) => { const prev = mp.frames[Math.max(0, fi - 1)], moved = (p) => { const q = prev.pts.find((z) => z.guid === p.guid); return q && Math.hypot(q.x - p.x, q.y - p.y) > 0.05; };
