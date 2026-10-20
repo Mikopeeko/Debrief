@@ -1658,8 +1658,8 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .home.fph { position: relative; isolation: isolate; }
 .fph-bg { position: absolute; left: 0; right: 0; top: 0; height: 660px; z-index: -1; overflow: hidden; pointer-events: none;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 50%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 50%, transparent 100%); }
-.fph-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: .3; filter: saturate(.9); animation: fphArt 1.8s ease-out both; }
-.fph-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 55% 60% at 50% 32%, rgba(12,14,19,.6), rgba(12,14,19,.1) 75%), linear-gradient(90deg, var(--bg), transparent 22%, transparent 78%, var(--bg)); }
+.fph-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: .62; filter: saturate(1.05) contrast(1.06); animation: fphArt 1.8s ease-out both; }
+.fph-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 34% 52% at 50% 40%, rgba(12,14,19,.86), rgba(12,14,19,.35) 72%, rgba(12,14,19,.1)), linear-gradient(180deg, rgba(12,14,19,.2), transparent 30%, transparent 62%, var(--bg)), linear-gradient(90deg, var(--bg), transparent 14%, transparent 86%, var(--bg)); }
 .fph-hero > .fp-k { display: inline-block; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(230,180,80,.35); background: rgba(230,180,80,.08); font-size: 13px; letter-spacing: .04em; }
 .fph-hero h1 { margin-top: 16px; text-shadow: 0 4px 30px rgba(0,0,0,.65); }
 .fph-hero > * { animation: fphUp .7s cubic-bezier(.2,.7,.2,1) both; }
@@ -1726,7 +1726,50 @@ body:has(.home.fph) .brand p { display: none; }
 .fph-prev.fp-auto .fp-mods button.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold); transform-origin: left; animation: fpTick 7s linear both; }
 .fph-prev.fp-auto:hover .fp-mods button.on::after { animation-play-state: paused; }
 @keyframes fpTick { from { transform: scaleX(0); } }
-.fph .fp-stage { display: grid; min-height: 0; } .fph .fp-scene { display: flex; grid-area: 1 / 1; visibility: hidden; } .fph .fp-scene.on { visibility: visible; }
+.fph .fp-stage { min-height: 0; }
+/* Front page, Oct 20: every boss this season (a card opens to its checks), the trust line, one logo at a time, the footer */
+.fph-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin: 14px auto 0; padding: 0; list-style: none; }
+.fph-trust li { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: #c9ced8; }
+.fph-trust svg { width: 15px; height: 15px; flex: none; fill: none; stroke: #5fdc7a; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+body:has(.home.fph) .topbar .brand { transition: opacity .25s, transform .25s; }
+body:has(.home.fph):not(.fph-past) .topbar .brand { opacity: 0; transform: translateY(-4px); pointer-events: none; }
+.fpb { width: 100%; max-width: 1100px; margin: 0 auto; text-align: center; }
+.fpb h2 { margin: 6px 0; font: 700 26px/1.15 var(--head); color: #f3f5f9; }
+.fpb > p { margin: 0 auto 18px; max-width: 580px; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.fpb-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; text-align: left; }
+.fpb-card { position: relative; aspect-ratio: 16 / 9; padding: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #151821 center / cover no-repeat; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: transform .15s, border-color .15s, box-shadow .15s; }
+.fpb-card:hover { transform: translateY(-2px); border-color: rgba(230,180,80,.55); }
+.fpb-card.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 8px 24px rgba(230,180,80,.18); }
+.fpb-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,12,17,0) 35%, rgba(10,12,17,.92)); }
+.fpb-card span { position: absolute; left: 12px; right: 12px; bottom: 9px; z-index: 1; }
+.fpb-card i { display: block; overflow: hidden; font: 600 11px var(--body); font-style: normal; color: var(--gold); white-space: nowrap; text-overflow: ellipsis; }
+.fpb-card b { display: block; font: 700 17px/1.15 var(--head); color: #f3f5f9; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+.fpb-det { grid-column: 1 / -1; position: relative; overflow: hidden; padding: 20px 22px 18px; border-radius: 12px; border: 1px solid rgba(230,180,80,.4); background: var(--panel); animation: fpbOpen .22s ease-out; }
+.fpb-det::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 150px; background: var(--bimg) var(--bpos) / cover no-repeat; opacity: .28; -webkit-mask-image: linear-gradient(180deg, #000, transparent); mask-image: linear-gradient(180deg, #000, transparent); pointer-events: none; }
+.fpb-det > * { position: relative; }
+@keyframes fpbOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.fpb-dh { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.fpb-dh i { font: 600 12px var(--body); font-style: normal; color: var(--gold); }
+.fpb-dh h3 { margin: 2px 0 4px; font: 700 24px/1.1 var(--head); color: #f3f5f9; }
+.fpb-dh p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.fpb-x { flex: none; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--raised); color: var(--text); font-size: 15px; cursor: pointer; }
+.fpb-x:hover { border-color: var(--gold); }
+.fpb-det ul { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+.fpb-det li { padding: 10px 12px; border-radius: 9px; background: rgba(15,17,23,.75); border: 1px solid var(--line); border-left: 3px solid var(--gold); }
+.fpb-det li b { font: 700 15px var(--head); color: #f3f5f9; }
+.fpb-det li em { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: rgba(230,180,80,.12); color: var(--gold); font: 600 11px var(--body); font-style: normal; vertical-align: 2px; }
+.fpb-det li span { display: block; margin-top: 3px; color: #c9ced8; font-size: 14px; line-height: 1.45; }
+.fpb-more { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
+.fpb-act { margin-top: 14px; }
+.fph-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; width: 100%; max-width: 1100px; margin: 0 auto; padding: 22px 4px 8px; border-top: 1px solid var(--line); box-sizing: border-box; }
+.fph-fb { display: flex; align-items: center; gap: 10px; } .fph-fb .logo { width: 30px; height: 30px; flex: none; }
+.fph-fb b { font: 700 19px var(--head); color: #f3f5f9; } .fph-fb span { display: block; font-size: 12.5px; color: var(--muted); }
+.fph-foot nav { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-left: auto; }
+.fph-foot nav a, .fph-foot nav button { padding: 0; border: 0; background: none; color: #c9ced8; font: 14px var(--body); text-decoration: none; cursor: pointer; }
+.fph-foot nav a:hover, .fph-foot nav button:hover { color: var(--gold); }
+@media (max-width: 760px) { .fpb-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } .fpb-card b { font-size: 15px; } .fpb h2 { font-size: 22px; }
+  .fpb-det { padding: 16px; } .fpb-det ul { grid-template-columns: 1fr; } .fph-foot nav { margin-left: 0; } }
+@media (prefers-reduced-motion: reduce) { .fpb-det { animation: none; } }
 .fph-end { width: 100%; max-width: 1100px; margin: 0 auto; padding: 34px 28px 32px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 16px; text-align: center;
   background: radial-gradient(ellipse 60% 90% at 50% 0%, rgba(230,180,80,.10), transparent 70%), var(--panel); }
 .fph-end h2 { margin: 0; font: 700 24px var(--head); color: #f3f5f9; }

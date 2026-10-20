@@ -1352,6 +1352,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names.
 const PATCH_NOTES = [
   { d: '2026-10-20', n: [
+    'The front page shows every Mythic boss this season. Click one to see what Debrief checks on it.',
+    'A fuller front page: the boss art shows through, a short line on what it costs (nothing), the example fits each view, and a proper footer.',
     'A new logo: the Debrief shield, now in polished gold.',
     'Patch notes: this page, so you can see what changed and when.',
     'A calmer, tidier look: one set of text sizes, corners and spacing across every page.',
@@ -18225,6 +18227,53 @@ function bindHomeStart() {
 }
 // (the cards fill in once the saved pulls have loaded)
 const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); if (s) { s.outerHTML = homeTeams(); bindHomeTeams(); } groupsBackfill(); });
+// ---- the website's front page, Oct 20 (your OK): every boss this season, each card opening to what Debrief checks on it ----
+// (season order: Nymrissa Wavecaller first, the eight in The Venomous Abyss, Kith'ix last)
+const FPB_ORDER = ['Nymrissa Wavecaller', "Nek'zali the Soulcoiler", 'The Twin Fangs', 'Entombed Sentinels', 'Vashnik the Malignant', 'The Lost Explorers', 'Sszorak', 'The Coiled Altar', "Ula'tek", "Kith'ix"];
+const FPB_KIND = { avoidable: 'Who got hit', raidFail: 'Raid mistake', interrupt: 'Kicks', debuff: 'Who got it', stacks: 'Stacks', bossBuff: 'Boss buff' };
+// (each check's line is the instruction in its tip; these few tips start with what went wrong, so they get their own)
+const FPB_DO = { 'Unending Tides': 'Kill Nymrissa before her enrage floods the raid.', 'Relic Rupture': 'Keep popping the boxes on the 2-stack rhythm so none ruptures.' };
+const FPB_VERB = /^(Kill|Soak|Stand|Get|Step|Stay|Dodge|Spread|Keep|Interrupt|Kick|Feed|Dispel|Avoid|Don't|Walk|Move|Use|Drop|Face|Save|Clear|Tank|Swap|Switch)\b/;
+function fpbChecks(name) {
+  const pk = E.PACKS.find((p) => p.encounter === name), seen = new Set();
+  return (pk ? pk.rules : []).filter((r) => !seen.has(r.name) && seen.add(r.name)).map((r) => {
+    const s = (r.tip || '').split(/(?<=[.?])\s+(?=[A-Z])/);
+    return { n: r.name, k: FPB_KIND[r.type] || 'Check', t: FPB_DO[r.name] || (s.find((x) => FPB_VERB.test(x)) || s[0] || '').trim() };
+  });
+}
+const fpbRaid = (name) => { const pk = E.PACKS.find((p) => p.encounter === name); return (pk && pk.raid) || 'The Venomous Abyss'; };
+const fphBosses = () => '<section class="fpb"><div class="fp-k">Boss by boss</div><h2>Every Mythic boss this season</h2>' +
+  '<p>All eight in The Venomous Abyss, plus Nymrissa Wavecaller and Kith\'ix. Each one has its own checks: the mechanics, the soaks, the assignments and the deaths.</p>' +
+  '<div class="fpb-grid">' + FPB_ORDER.filter((b) => BOSS_HERO[b]).map((b, i) => '<button class="fpb-card" type="button" data-i="' + i + '" aria-expanded="false" style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg);background-position:50% ' + BOSS_HERO[b][1] + '%"><span><i>' + esc(fpbRaid(b)) + '</i><b>' + esc(b) + '</b></span></button>').join('') + '</div></section>';
+function bindFphBosses() {
+  const grid = $('.fpb-grid'); if (!grid) return;
+  const list = FPB_ORDER.filter((b) => BOSS_HERO[b]);
+  grid.onclick = (e) => {
+    const x = e.target.closest('.fpb-x'), card = e.target.closest('.fpb-card');
+    if (e.target.closest('#fpbLog')) { nightDlg(); return; }
+    if (!x && !card) return;
+    const open = grid.querySelector('.fpb-card.on'), det = grid.querySelector('.fpb-det');
+    if (det) det.remove();
+    if (open) { open.classList.remove('on'); open.setAttribute('aria-expanded', 'false'); }
+    if (x || open === card) { if (x && open) open.focus(); return; }
+    const cards = [...grid.querySelectorAll('.fpb-card')], i = cards.indexOf(card), b = list[i];
+    const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+    const after = cards[Math.min(cards.length - 1, Math.floor(i / cols) * cols + cols - 1)];
+    card.classList.add('on'); card.setAttribute('aria-expanded', 'true');
+    after.insertAdjacentHTML('afterend', '<div class="fpb-det" role="region" aria-label="' + esc(b) + '" style="--bimg:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg);--bpos:50% ' + BOSS_HERO[b][1] + '%">' +
+      '<div class="fpb-dh"><div><i>' + esc(fpbRaid(b)) + '</i><h3>' + esc(b) + '</h3><p>What Debrief checks on every pull of this boss.</p></div><button class="fpb-x" type="button" aria-label="Close">✕</button></div>' +
+      '<ul>' + fpbChecks(b).map((r) => '<li><b>' + esc(r.n) + '</b> <em>' + esc(r.k) + '</em><span>' + esc(r.t) + '</span></li>').join('') + '</ul>' +
+      '<p class="fpb-more">Plus every death, every kick, the raid cooldowns and the jobs in your NSRT note, with a map of who stood where.</p>' +
+      '<div class="fpb-act"><button class="btn primary" id="fpbLog" type="button">Open a log of this boss</button></div></div>');
+  };
+}
+// (the footer: the logo once more, and the places people look for at the bottom of a page)
+const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '<div><b>Debrief</b><span>Built by raiders for Mythic progression in The Venomous Abyss.</span></div></div><nav>' +
+  '<button type="button" id="fphPatch">Patch notes</button><button type="button" id="fphTour">Take the tour</button>' +
+  (DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join our Discord</a>' : '') +
+  (REPORT_ON() ? '<a href="#" class="rp-open">Report a problem</a>' : '') + '</nav></footer>';
+// (one logo at a time on the front page: the top bar's shows once the big one has scrolled away)
+addEventListener('scroll', () => { const l = $('.fph-logo'); document.body.classList.toggle('fph-past', !l || l.getBoundingClientRect().bottom < 60); }, { passive: true });
 function homeHosted() {
   const fp = fpParts();
   // (one front page for everyone (your notes, Oct 19): the logo and headline and one button. Someone new gets Start now,
@@ -18236,7 +18285,10 @@ function homeHosted() {
     // (Beta as a gold stamp tilted onto the name's corner, and the Discord invite as a quiet line under it; your idea, Oct 19)
     '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<span class="fph-name"><b>Debrief</b><span class="fph-tag">Beta</span></span></div>' + (DISCORD_URL ? '<a class="fph-disc" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Help shape Debrief: <u>join our Discord</u><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
       '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
-      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p><button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
+      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p>' +
+        '<ul class="fph-trust">' + ['Free', 'No account needed', 'Warcraft Logs or your own combat log', 'Your own log stays on your PC'].map((t) => '<li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' + t + '</li>').join('') + '</ul>' +
+        '<button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
+    fphBosses() +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + FP_ICO[k] + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
@@ -18248,10 +18300,13 @@ function homeHosted() {
       '<li><b>Raid with logs on</b><span>Turn on Warcraft Logs live logging, or upload your log after the raid.</span></li>' +
       '<li><b>Read the debrief</b><span>Between pulls, see what went wrong and what to fix first.</span></li></ol>' +
       '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo2" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button></div></section>' +
-    homeFoot() + '</div>';
+    fphFoot() + '</div>';
   $('#gsGo').onclick = $('#gsGo2').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
   // (one log or live log, nothing added: no character, no team, no setup; the menu's Open a report or log window)
   $('#gsJust').onclick = nightDlg;
+  bindFphBosses();
+  $('#fphPatch').onclick = openPatchNotes; $('#fphTour').onclick = () => startTour(0);
+  document.body.classList.remove('fph-past');
   HIST.load().then(groupsBackfill);
   bindFront(true);
 }
