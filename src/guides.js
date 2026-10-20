@@ -228,7 +228,9 @@ function gdzGlyph(x, y, pl, r, attrs, title) { // a role token: the role's colou
 const GDZ_ART = { "Zul'jan": 142472, Malacrass: 142140, 'Hex Lord Malacrass': 142140 };
 // (a boss's portrait by name: Zul'jan and Malacrass, a boss named like its encounter, and the one boss of a council or pair whose
 // render the site already uses (BOSS_ART); the others get the skull on their own colour until we have theirs)
-const GDZ_ART_MORE = { "Blood of Ula'tek": 143436, 'Scrollsage Iku': 144892, Ithraz: 141309, Vashnik: 141675, "Nek'zali, the Soulcoiler": 142077 };
+// (the rest of each council and pair, and Ula'tek's two linked bosses: NPC IDs from real Mythic reports, display IDs from their Wowhead pages)
+const GDZ_ART_MORE = { "Blood of Ula'tek": 143436, "Breath of Ula'tek": 143437, 'Scrollsage Iku': 144892, 'First Mate Nama': 144893, 'Trader Gebbo': 144894, "Mor'zahi": 143824,
+  Ithraz: 141309, Vexhul: 140993, 'Gore Rattle': 141466, 'Venomous Heart': 145052, Vashnik: 141675, "Nek'zali, the Soulcoiler": 142077 };
 const gdzArtOf = (n) => GDZ_ART[n] || GDZ_ART_MORE[n] || (typeof BOSS_ART !== 'undefined' && BOSS_ART[n] ? BOSS_ART[n][0] : null);
 function gdzBossToken(x, y, name) { // a boss: a gold ring with their portrait (or a skull while it loads)
   let hs = 0; for (const c of String(name)) hs = (hs * 31 + c.charCodeAt(0)) >>> 0;

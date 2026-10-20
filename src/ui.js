@@ -1491,6 +1491,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Maps play at real speed (they were sped up), every boss now has its portrait, and maps open inside the room picture.',
     'Draft a note from your pulls: Debrief writes down who did each job over the night (The Coiled Altar and The Twin Fangs), with how sure it is.',
     'Swap players spots a raider on another character (like a Warrior main on their Paladin) and leaves out class buttons the new character can\'t press.',
     'Assignments shows who does what for every player, and your saved notes as small boss cards.',
@@ -5025,6 +5026,7 @@ function miniMap(mp, pmap) {
   const acx = (ax0 + ax1) / 2, acy = (ay0 + ay1) / 2; let aside = Math.min(ax1 - ax0, ay1 - ay0);
   for (const p of bpts) aside = Math.max(aside, 2 * Math.max(Math.abs(sx(p) - acx), Math.abs(sy(p) - acy)) + 12);
   aside = Math.min(aside, Math.max(ax1 - ax0, ay1 - ay0)); /* (never wider than the whole room box: a stray position can't pull it far out) */
+  if (A && A.f) aside = Math.min(ax1 - ax0, ay1 - ay0); /* (a room picture: open inside it, never past its edge (your screenshot, Oct 20); − zooms out further) */
   const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = mp.room ? [(rcx - rside / 2 - x0) * yd, (rcy - rside / 2 - y0) * yd, rside * yd, rside * yd] : A ? [(acx - x0) * yd - aside * yd / 2, (acy - y0) * yd - aside * yd / 2, aside * yd, aside * yd] : [0, 0, fside, fside];
   const ic = (x, y, inner) => '<g class="ic" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>';
   // opens on the whole arena when there is one; "Zoom to mechanic" (or double-click) goes in
@@ -5329,7 +5331,7 @@ function bindAnim(box, mp, pmap, still) {
   // 0.2s frames (the log itself records positions about every 0.5s, so this smooths movement, it doesn't add detail).
   // (your note, Oct 19: every map plays from start to finish and starts over, until it's closed. It holds a moment on
   // the outcome before the next loop, rests while it's off screen, and a long clip plays faster: about 12 seconds a loop)
-  const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t, spd = mp.spd || Math.max(1, (t1 - t0) / 12) /* (a guide's whole-fight map sets its own, slower speed) */, HOLD = 1.2;
+  const fr = mp.frames, t0 = fr[0].t, t1 = fr[fr.length - 1].t, spd = mp.spd || 1 /* (real time (your note, Oct 20: players moved far too fast; clips were squeezed into about 12 seconds); a guide's whole-fight map sets its own) */, HOLD = 1.2;
   let ft = t0, raf = null, last = 0, lastDraw = 0, drawn = -1, paused = false, seen = !still, held = 0;
   const PZ = mp.pauses || [], pzDone = new Set(); let pzLeft = 0;
   if (PZ.length && !box._onPause && typeof gdzPauseUi === 'function') { gdzCss(); const zb = box.querySelector('.zbox'); if (zb) box._onPause = gdzPauseUi(zb, 'Key moment'); } /* (a Debriefing map's freezes say what happened) */ /* (a guide's freezes: the map holds at a key moment while the raid lead explains (Oct 20)) */
