@@ -4861,6 +4861,19 @@ function nightMechC(o) {
       '<span class="mcx-ln"><span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span><span class="wr-tag">' + F.Wr + ' of ' + F.R + ' went wrong</span><span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '') +
       '</span></summary></details>'; };
   const chip = (r) => '<details class="panel secd st-ok" data-np="' + (judged(r)[judged(r).length - 1] || '') + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ok">✓ clean</span></summary></details>';
+  void tile; void chip;
+  // (Oct 19, the Debriefing rebuild on All pulls (the single pull's checklist with the night's data): one line per mechanic with its
+  // facts and a square per pull; it opens in place to its map at the worst pull, the trend, who was flagged most and each pull that
+  // went wrong (each with Open this pull). A square opens that pull)
+  const mapAt = (r) => { for (const n of [worstOf(r)].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { const mp = mapIn(n, r.x.id); if (mp) return { mp, n }; } return null; };
+  const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id, ok = lv === 'clean', M = ok ? null : mapAt(r);
+    const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
+    const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
+    const facts = ok ? '<span class="mcx-s">Clean in ' + (judged(r).length === 1 ? 'the one pull it came up in' : judged(r).length === 2 ? 'both pulls it came up in' : 'all ' + judged(r).length + ' pulls it came up in') + '</span>' + bars(r)
+      : '<span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span><span class="wr-tag">' + F.Wr + ' of ' + F.R + ' went wrong</span><span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '');
+    return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
+      '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
+      '<div class="nml-f">' + facts + '</div>' + (r.body || '') + '</div></details>'; };
   const ring = (l) => { const lv = l.map(lvOf), n = (k) => lv.filter((v) => v === k).length, tot = l.length; if (!tot) return ''; const C = 2 * Math.PI * 14;
     const seg = (k, off, col) => (n(k) ? '<circle r="14" cx="18" cy="18" fill="none" stroke="' + col + '" stroke-width="5" stroke-dasharray="' + (C * n(k) / tot).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-C * off / tot).toFixed(2) + '" transform="rotate(-90 18 18)"/>' : '');
     return '<span class="mcx-ring" title="' + n('clean') + ' of ' + plural(tot, 'mechanic') + ' clean all night"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg('clean', 0, '#45c15c') + seg('minor', n('clean'), '#e8b923') + seg('major', n('clean') + n('minor'), '#d4111e') + '</svg><span><b>' + n('clean') + '/' + tot + '</b>clean</span></span>'; };
@@ -4869,10 +4882,10 @@ function nightMechC(o) {
   // ---- each phase ----
   const phases = groups.map((g, i) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length); if (!l.length) return '';
     const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || factsOf(b).Wr - factsOf(a).Wr || a.ord - b.ord), ok = l.filter((r) => lvOf(r) === 'clean');
-    const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id))), pl = pr.slice(); if (bigI > 0) pl.unshift(pl.splice(bigI, 1)[0]);
+    const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id))), pl = pr.slice(); void bigI; /* (a checklist keeps its order: failed first, then slips) */
     const lv = cntL(l), lvl = lv.major ? 'major' : lv.moderate ? 'moderate' : lv.minor ? 'minor' : 'clean', m = String(g.name).match(/^P(\d+)/);
     return '<details class="phase mcx-ph" data-mst="' + lvl + '" open><summary><span class="mcx-pn">' + (m ? m[1] : /^intermission/i.test(g.name) ? 'Int' : /^whole/i.test(g.name) ? 'All' : i + 1) + '</span><b>' + esc(g.name) + '</b>' + ring(l) + '<span class="sst ' + LC[lvl] + '">' + lvTxt(lv) + '</span></summary>' +
-      (pl.length ? '<div class="mcx-tiles">' + pl.map((r) => tile(r, false)).join('') + '</div>' : '') + (ok.length ? '<div class="ph-ok"><span class="ph-okh">✓ Clean all night</span>' + ok.map(chip).join('') + '</div>' : '') + '</details>'; }).join('');
+      '<div class="dbck">' + pl.map(line).join('') + ok.map(line).join('') + '</div></details>'; }).join('');
   // ---- the night at a glance: a lane per mechanic that went wrong, a dot per pull ----
   const all = groups.flatMap((g) => g.list).filter((r) => !isInfo(r) && judged(r).length), probs = all.filter((r) => lvOf(r) !== 'clean');
   const tot = (k) => all.filter((r) => lvOf(r) === k).length;
@@ -4890,7 +4903,29 @@ function nightMechC(o) {
   const verdict = top3.length ? '<p class="mcx-verdict">Wrong in the most pulls: ' + lpAnd(top3.map((q, i) => '<b>' + esc(shortT(q.title)) + '</b> in ' + wN(q) + ' of ' + judged(q).length + (i ? '' : ' pulls'))) + '.' + (tot('clean') ? ' <span class="mcx-good">' + plural(tot('clean'), 'mechanic') + ' done right every time.</span>' : '') + '</p>' : '<p class="mcx-verdict"><span class="mcx-good">Every mechanic was done right in every pull.</span></p>';
   const strip = '<div class="mcx-strip">' + [['major', 'bad', 'Failed'], ['minor', 'warn', 'Some mistakes'], ['clean', 'ok', 'Clean']].map(([k, c, w]) => '<span class="mcx-k ' + c + '"><b>' + tot(k) + '</b>' + w + '</span>').join('') + '<span class="mcx-lead sub">Over ' + plural(N, 'pull') + ', a mechanic is red when it failed in half of them or more.' + (gm && !one ? ' Mechanics score: ' + Math.round(gm.overall) + ' / 100.' : '') + '</span></div>';
   const head = '<div class="panel mcx-tl nmc-tl"><h3 class="nh">All pulls at a glance<small>A dot per pull where it went wrong. Click one to open that pull.</small></h3>' + verdict + (lanes ? '<div class="mcx-lanes nmc-lanes">' + lanes + axis + '</div>' : '') + strip + '</div>';
-  return { html: head + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
+  // ---- the top (Oct 19, the Debriefing rebuild on All pulls: the single pull's look with the night's data): four numbers, then the
+  // three mechanics that kept going wrong, each with its map at its worst pull and one sentence; a card opens its line below ----
+  let top = '';
+  try {
+    const reps = o.reps || [], pulls = o.pulls || [], kill = o.kill, bestP = o.bestP, onBoss = pulls.reduce((s, b) => s + (b.duration || 0), 0);
+    const isMe = (d) => !one || d.player === one || String(d.player).split('-')[0] === one.split('-')[0];
+    const nD = reps.reduce((s, r) => s + keptDeaths(r).filter(isMe).length, 0), nC = tot('clean'), nM = tot('minor'), nF = all.length - nC - nM;
+    const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
+    top += '<div class="dbr-4">' + num('Pulls', '<b>' + pulls.length + '</b>', durH(onBoss) + ' on the boss' + (reps.length < pulls.length ? ' · ' + reps.length + ' read' : '')) +
+      (kill ? num('Kill', '<b class="dbr-ok">Pull ' + kill.pull + '</b>', kill.pull > 1 ? 'after ' + plural(kill.pull - 1, 'wipe') : 'first try') : num('Best pull', '<b>' + (bestP ? esc(pullShort(bestP)) : '—') + '</b>', bestP ? 'pull ' + bestP.pull + ' · ' + esc(pullLabel(bestP)) : 'no result yet')) +
+      num('Deaths', '<b>' + nD + '</b>', reps.length ? (nD / reps.length).toFixed(1) + ' a pull' + (one ? ', ' + esc(one.split('-')[0]) : '') : '') +
+      num('Mechanics', '<b>' + nC + '</b><em> clean</em> <b class="dbr-w">' + nM + '</b><em> slips</em> <b class="dbr-b">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic') + ', over ' + plural(N, 'pull')) + '</div>';
+    // (the three to fix: failed first, then the ones wrong in the most pulls, then the boss's most important)
+    const imp = IMPORTANCE[boss] || [], ix = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1 };
+    const pick = probs.slice().sort((a, b) => rk[lvOf(a)] - rk[lvOf(b)] || wN(b) - wN(a) || ix(a.x.id) - ix(b.x.id)).slice(0, 3);
+    if (pick.length) top += '<div class="dbr-h">Fix ' + (pick.length === 1 ? 'this' : 'these') + ' next raid</div><div class="dbr-fx3">' + pick.map((r) => { const lv = lvOf(r), M = mapAt(r), L = lateOf(r), worst = worstOf(r);
+      const txt = 'Wrong in ' + wN(r) + ' of ' + plural(judged(r).length, 'pull') + (L.recent ? ', ' + L.recent + ' of the last ' + L.K : '') + (worst ? ' · worst: pull ' + worst : '');
+      return '<a class="dbr-fx nml-go st-' + LC[lv] + '" href="#nml-' + esc(r.x.id) + '" data-nml="nml-' + esc(r.x.id) + '">' + (M ? '<span class="wr-map mcx-map dbr-fxm">' + miniMap(M.mp, pm) + '</span>' : '<span class="dbr-fxm dbr-fxs" data-sec="sec-' + esc(r.x.id) + '">' + bars(r) + '</span>') +
+        '<span class="dbr-fxb"><span class="sst ' + LC[lv] + '">' + LW[lv] + '</span><b>' + esc(shortT(r.title).split(' (')[0]) + '</b><span class="dbr-fxt">' + esc(txt) + '</span></span></a>'; }).join('') + '</div>';
+    else if (all.length) top += '<div class="dbr-h">Every mechanic went clean in every pull</div>';
+  } catch (e) { console.error(e); top = ''; }
+  const hp = o.b0 && o.pulls ? nightHpChart(o.b0, o.pulls) : '';
+  return { html: (top ? '<section class="dbr-top">' + top + '</section>' : '') + '<div class="dbr-slot"></div>' + hp + head + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
 }
 // (a tile, a chip or a dot: that pull's Mechanics at the mechanic)
 function bindNightMechC(pulls) {
@@ -4899,6 +4934,10 @@ function bindNightMechC(pulls) {
   v.querySelectorAll('.nmc [data-np]').forEach((el) => { const go = (e) => { e.preventDefault(); open(el.dataset.np, el.dataset.sec); };
     if (el.tagName === 'DETAILS') { const sm = el.querySelector('summary'); sm.onclick = go; } else el.onclick = go; });
   v.querySelectorAll('.nmc [data-npq]').forEach((q) => (q.onclick = (e) => { e.preventDefault(); e.stopPropagation(); const t = q.closest('[data-sec]'); open(q.dataset.npq, t ? t.dataset.sec : null); }));
+  // (a Fix card opens its mechanic's line in the checklist, in place)
+  v.querySelectorAll('.nmc a[data-nml]').forEach((a) => (a.onclick = (e) => { e.preventDefault(); const d = document.getElementById(a.dataset.nml); if (!d) return; d.open = true; if (d.dataset.k) S.openSecs.add(d.dataset.k);
+    setTimeout(() => window.scrollTo({ top: d.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' }), 30); }));
+  v.querySelectorAll('.nmc details.nml').forEach((d) => d.addEventListener('toggle', () => { if (d.open) wrThumbFit(d); }));
   wrThumbFit(v);
 }
 // Recap on the whole night (Oct 19, your call: "like someone's explaining the night to me"): the night's debrief (dbfNight) on
@@ -4925,7 +4964,9 @@ function nightRecap(o) {
   const hp = nightHpChart(o.b0, o.pulls) || D.bars || '';
   const more = '<div class="rc-mh"><b>More from all pulls</b><span class="sub">Boss health every pull, the numbers, and what to sort before the next pull</span></div>' + (hp ? '<div class="rc-wide">' + hp + '</div>' : '') +
     '<div class="rc-cols">' + [prep, talk, rcNums(D.nums, 'early in the night against later'), lpUsedNight(reps), lpMissNight(reps)].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
-  return { html: '<div class="lpv nrv dbf">' + D.top + '<div class="lp-cols"><div class="lp-main">' + D.lists + '</div><div class="lp-side">' + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>', parts: { cards: D.story + D.cards, more } }; // (the night, start to finish, sits above the four blocks (your call, Oct 19))
+  // (the Debriefing rebuild on All pulls (Oct 19): the boss health chart sits on the page, so the drawer holds the rest)
+  const drawer = '<div class="rc-wide">' + D.story + '</div><div class="rc-wide">' + D.lists + '</div><div class="rc-cols">' + [prep, talk, rcNums(D.nums, 'early in the night against later'), lpUsedNight(reps), lpMissNight(reps)].filter(Boolean).map((b) => '<div class="rc-it">' + b + '</div>').join('') + '</div>';
+  return { html: '<div class="lpv nrv dbf">' + D.top + '<div class="lp-cols"><div class="lp-main">' + D.lists + '</div><div class="lp-side">' + prep + talk + lpUsedNight(reps) + lpMissNight(reps) + '</div></div></div>', parts: { cards: D.story + D.cards, more, slim: D.slim, drawer } }; // (the night, start to finish, sits above the four blocks (your call, Oct 19))
 }
 // (Talk to over the night: each player's first thing to fix, from every pull (the Report card's own work, so it opens quickly after))
 function nightTalkHtml(data) {
@@ -5183,8 +5224,6 @@ async function night(part) {
     '<nav class="sum-jump" aria-label="Jump to"><span class="pt-l">Jump to</span><a class="pt-go" href="#sum-prog">How far the night got</a>' + (gm ? '<a class="pt-go" href="#sum-mech">Mechanics</a>' : '') + '<a class="pt-go" href="#sum-asg">Assignments</a></nav></aside>';
   // (the picker on top, for the whole night)
   const pickS = ''; // (the pick is in the tab bar now (Oct 19))
-  const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, yellow had some mistakes, red failed, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
-  // (Recap: the report cards, how far the night got and what kept going wrong; Mechanics and Assignments: their rows across
   // Recap on the whole night (your ask, Oct 19: "re-organize"), top to bottom: one grade card (the night's grade and a tile
   // per part, nothing twice: the kill and the pulls are in the banner), what went wrong beside what went well, then how far
   // the night got. (The rail's second Mechanics card and its Jump to links are gone: Mechanics and Assignments are tabs.)
@@ -5197,14 +5236,16 @@ async function night(part) {
       '<div class="pts rc-cats" style="--n:' + tiles.length + '">' + tiles.join('') + '</div></div>'; })();
   const fixSplit = one ? wrongRight(wrongS, rightS, { split: true, sub: 'for ' + esc(one) + ', in the ' + plural(oneD.length, 'pull') + ' they were in', none: 'Nothing kept going wrong for ' + esc(one) + '.' })
     : !db ? '' : wrongRight(wrongS, rightS, { split: true, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter', none: 'Nothing kept going wrong.' });
+  const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, yellow had some mistakes, red failed, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
+  // (Recap: the report cards, how far the night got and what kept going wrong; Mechanics and Assignments: their rows across
   // the pulls, with their report card on top)
-  const mPart = gm ? secHead('sum-mech', 'Mechanics, the whole night', 'every mechanic across the pulls. Open one for the pulls that went wrong.') + (mCard || '') + (mHtml || '') : '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>';
-  const aPart = secHead('sum-asg', 'Assignments, the whole night', hasNote ? 'every assignment in the NSRT note across the pulls' : '') +
+  const mPart = gm ? secHead('sum-mech', 'Mechanics, all pulls', 'every mechanic across the pulls. Open one for the pulls that went wrong.') + (mCard || '') + (mHtml || '') : '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for ' + esc(b0.boss) + ' aren\'t built yet.</p></div>';
+  const aPart = secHead('sum-asg', 'Assignments, all pulls', hasNote ? 'every assignment in the NSRT note across the pulls' : '') +
     (!hasNote ? '<div class="panel noteempty"><div><b>No NSRT note for ' + esc(b0.boss) + ' yet.</b> <span class="sub">Add the one your raid is using on Assignments (pick a pull first) to check soaks, kicks, orbs and cooldowns across every pull.</span></div><button class="btn" id="sumNote">Open Assignments</button></div>'
       : (aCard || '') + (aHtml || '<div class="panel"><p class="muted" style="margin:0">None of the note\'s assignments came up in these pulls.</p></div>'));
   // (Recap on the whole night: the single pull's layout with the night's data (nightRecap; your call, Oct 19))
   const NR = !part ? nightRecap({ b0, pulls, reps, mechL: mech, verdictOf, kill, bestP, db, one }) : null;
-  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part nmc">' + nightMechC({ groups: mGroups, pullNs, byPull, mByPull: new Map(mReps.map((r) => [r.item.pull, r])), pm, one, res, gm, boss: b0.boss }).html + '</div>'
+  view(loadBar(reps.length, pulls.length, got.skipped, 'nightAll') + (part === 'mech' ? '<div class="nsa sumv sum-part nmc">' + nightMechC({ groups: mGroups, pullNs, byPull, mByPull: new Map(mReps.map((r) => [r.item.pull, r])), pm, one, res, gm, boss: b0.boss, reps, pulls, kill, bestP, b0 }).html + '</div>'
     : part === 'asg' ? '<div class="nsa sumv sum-part">' + pickS + aPart + legend + '</div>'
     : NR ? NR.html
     : '<div class="nsa sumv sum3">' + pickS + (one ? rcTop : nightGrade) + recapHp(b0, pulls) + fixSplit + progress + '<p class="muted" style="font-size:13px">Every mechanic and assignment across the pulls is on the Debriefing and Assignments tabs, with All pulls picked. Each player\'s grade and the MVPs of the night are on Report card.</p></div>'));
@@ -10025,14 +10066,17 @@ function bossRot(o) {
   const gOf = (r, p) => { for (const [g, y] of r.players) if (y === p) return g; return null; };
   const add = (g, c) => { g.l.push(c); out.keys.push(String(c.k).replace(/[^a-z0-9]+/gi, '-').toLowerCase()); };
   // (1) the boss's damage windows: your big cooldown and potion in each, and how hard you hit in it against the rest of the pull
-  const A = BOSS_AMP[boss] || LUST_AMP(boss);
+  let A = BOSS_AMP[boss] || LUST_AMP(boss);
   if (A && !isHeal) { const W = [];
+    // (your note, Oct 19: "add burst phases appropriate for the boss again": when the boss's own window never came up in these pulls (wipes before
+    // it, like Zul'jan's Ghastly Regeneration), your Bloodlust windows stand in, so the Cooldowns chapter always has its burst phase)
+    for (let pass = 0; pass < 2 && !W.length; pass++) { if (pass) { if (A.lust) break; const A0 = A, L = LUST_AMP(boss); A = Object.assign(L, { lead: A0.what + ' didn\'t come up in ' + (one ? 'this pull' : 'these pulls') + ', so your Bloodlust windows stand in for it. ' + L.lead }); }
     for (const x of per) { const { r, p, t1 } = x, l = bossWins(A, r, p, t1);
       for (const w of l) { if (w.a >= t1 - 3) continue; const e = Math.min(w.e, t1), len = Math.max(1, e - w.a), cd = HW ? (p.byName.get(lc(HW.n)) || []).some((u) => u < e && u + HW.len > w.a) : bigCdUp(p, w.a, e), pot = COMBAT_POTS.some((n) => (p.byName.get(n) || []).some((u) => u >= w.a - 30 && u <= e));
-        const dIn = dmgIn(p, w.a, e), dAll = dmgIn(p, 0, t1), rest = Math.max(1, t1 - len); W.push({ pull: r.item.pull, a: w.a, e, cd, pot, dps: dIn / len, out: Math.max(0, dAll - dIn) / rest }); } }
+        const dIn = dmgIn(p, w.a, e), dAll = dmgIn(p, 0, t1), rest = Math.max(1, t1 - len); W.push({ pull: r.item.pull, a: w.a, e, cd, pot, dps: dIn / len, out: Math.max(0, dAll - dIn) / rest }); } } }
     if (W.length) { const g = { t: 'Big damage moments', l: [] }; out.groups.push(g); const withCd = W.filter((w) => w.cd != null), nCd = withCd.filter((w) => w.cd).length, nPot = W.filter((w) => w.pot).length, wsN = o.WSAY || 'your big cooldown';
       const f = withCd.length ? nCd / withCd.length : null, st = A.graded === false || isTank || f == null ? 'na' : f >= 0.66 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', x = W.reduce((v, w) => v + w.dps, 0) / Math.max(1, W.reduce((v, w) => v + w.out, 0));
-      add(g, { st, ic: o.WIC || 'Bloodlust', label: (A.graded === false ? 'Cooldowns in ' : 'Your cooldown in ') + A.what, v: f == null ? W.length + '<span> windows</span>' : nCd + '<span>/' + withCd.length + '</span>', k: 'boss:amp',
+      add(g, { st, ic: o.WIC || 'Bloodlust', label: (A.graded === false ? 'Cooldowns in ' : 'Your cooldown in ') + A.what, v: f == null ? W.length + '<span> ' + (W.length === 1 ? 'window' : 'windows') + '</span>' : nCd + '<span>/' + withCd.length + '</span>', k: 'boss:amp',
         sub: (f == null ? '' : 'Your ' + wsN + ' was up in ' + nCd + ' of ' + withCd.length + ' ' + (A.win || A.what) + (withCd.length === 1 ? ' window' : ' windows') + '. ') + 'You drank a combat potion in ' + nPot + ' of ' + W.length + '. In ' + (W.length === 1 ? 'that window' : 'those windows') + ' you did ' + (x >= 1 ? x.toFixed(1) + ' times as much damage a second as' : Math.round(100 * x) + '% of your damage a second from') + ' the rest of the pull.',
         how: (A.how || 'The boss takes ' + A.amp + ' in these windows, so damage there is worth more.') + ' Your big cooldown counts when it was up for any part of the window. A potion counts when you drank it up to 30 seconds before or during it.' + (isTank ? ' Tanks aren\'t graded on this.' : ''),
         mo: W.map((w) => ({ pull: w.pull, a: w.a, b: w.e })), tip: st === 'warn' || st === 'bad' ? 'Line ' + wsN + ' up with ' + A.what + ': if it would come back just after, hold it a few seconds.' : '' });
@@ -16906,7 +16950,9 @@ function dbfNight(o) {
   const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'Nothing kept going wrong. Keep it up.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, null, short || 'Nothing is clearly improving yet.') + dbfCardP('down', 'What\'s getting worse', Dn, null, short || 'Nothing is clearly getting worse.') + '</div>';
   return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists: four(''),
-    cards: four(dbfNext('Next time', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">The night, start to finish</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + '</div>', bars, nums };
+    cards: four(dbfNext('Next time', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">The night, start to finish</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + '</div>', bars, nums,
+    // (the Debriefing rebuild on All pulls, Oct 19: under the four numbers and the cards to fix, the next raid's plan and what changed through the night)
+    slim: focus || U.length || Dn.length ? '<div class="panel dbr-next">' + (focus ? '<p class="dbr-nx"><b>Next time:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
 }
 // (Recap is information only: the side boxes' links to other tabs become plain text there)
 function dbfNoGo(el) { if (!el) return; el.querySelectorAll('button.lp-dgo').forEach((b) => { const x = document.createElement('span'); x.className = b.className + ' dbf-ng'; x.innerHTML = b.innerHTML.replace(/\s*›\s*$/, ''); b.replaceWith(x); }); }
@@ -16984,7 +17030,13 @@ async function recapInto(r) {
 // (all pulls: the night's four blocks on top of its facts, and the rest at the bottom)
 function nightMerge(o) {
   const box = $('#view .nmc'); if (!box) return; let NR = null; try { NR = nightRecap(o); } catch (e) { NR = null; } if (!NR || !NR.parts) return;
-  box.insertAdjacentHTML('afterbegin', '<div class="lpv dbf rc-top">' + NR.parts.cards + '</div>'); box.insertAdjacentHTML('beforeend', '<section class="lpv dbf rc-more">' + NR.parts.more + '</section>');
+  // (Oct 19, the Debriefing rebuild on All pulls: under the four numbers and the cards to fix, only the next raid's plan and what changed
+  // through the night; the night's story, the four blocks, the numbers and the side boxes go in the More from all pulls drawer at the bottom)
+  const slot = box.querySelector('.dbr-slot');
+  if (slot && NR.parts.slim != null) slot.outerHTML = '<div class="lpv dbf">' + NR.parts.slim + '</div>'; else box.insertAdjacentHTML('afterbegin', '<div class="lpv dbf rc-top">' + NR.parts.cards + '</div>');
+  box.insertAdjacentHTML('beforeend', NR.parts.drawer ? '<details class="panel dbr-more" data-k="dbmore-n"' + (S.openSecs.has('dbmore-n') ? ' open' : '') + '><summary><b>More from all pulls</b><span class="sub">the night start to finish, what went well and what didn\'t, the numbers, what to sort before the next pull, who to talk to, what the raid used and missed assignments</span></summary><section class="lpv dbf rc-more">' + NR.parts.drawer + '</section></details>'
+    : '<section class="lpv dbf rc-more">' + NR.parts.more + '</section>');
+  { const d = box.querySelector('details.dbr-more'); if (d) d.ontoggle = () => { if (d.open) S.openSecs.add('dbmore-n'); else S.openSecs.delete('dbmore-n'); }; }
   refreshIcons(); bindNightRecap(NR, o.reps, o.pulls, o.here);
 }
 const VIEWS = { audit, overview, night, player, perf, rot: perf, live: lastPull, cmp, me: myPageView };

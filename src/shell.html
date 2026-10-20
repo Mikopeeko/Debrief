@@ -3191,6 +3191,18 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 @media (max-width: 900px) { .dbr-4 { grid-template-columns: repeat(2, 1fr); } .dbr-fx .dbr-fxm, .dbr-fx .dbr-fxm svg.zmap, .dbr-fx .dbr-fxa, .dbr-fx .dbr-fxa > .mcx-alt { height: 140px !important; } }
 @media (max-width: 1099px) { .tabbar .tabs { scrollbar-width: none; } .tabbar .tabs::-webkit-scrollbar { display: none; } }
 @media (max-width: 600px) { .dbr-fx3 { grid-template-columns: 1fr; } .dbr-n b { font-size: 24px; } }
+/* (Oct 19, the Debriefing rebuild on All pulls: the same top and checklist; a line's facts sit on one row with a bar per pull, and open in place) */
+.nmc .dbr-top + .lpv.dbf > .panel.dbr-next, .nmc .lpv.dbf > .panel.dbr-next { margin: 0 0 12px; }
+.nmc .dbr-fx .dbr-fxs { display: flex; align-items: flex-end; padding: 16px 14px 12px; box-sizing: border-box; background: rgba(255,255,255,.02); }
+.nmc .dbr-fx .dbr-fxs .npc { height: 100%; }
+.nmc .dbck > details.nml .mcx-ln .nmc-big, .nmc .dbck > details.nml .mcx-ln .nmc-who { flex-basis: auto; } .nmc .dbck > details.nml .mcx-ln .nmc-big b { font-size: 17px; }
+.nmc .dbck > details.nml .mcx-ln .npc { flex: 0 1 240px; height: 18px; margin-left: auto; } .nmc .dbck > details.nml .mcx-ln .mcx-who .icw { width: 18px; height: 18px; }
+.nmc .dbck > details.nml .mcx-ln .mcx-s { -webkit-line-clamp: unset; display: inline; }
+.nml-map { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; } .nml-map .wr-map.mcx-map { width: 340px; max-width: 100%; height: 190px; display: block; border-radius: 10px; overflow: hidden; }
+.nml-map .wr-map.mcx-map svg.zmap { width: 100% !important; height: 190px !important; max-width: none !important; display: block; }
+.nml-f { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 10px; font-size: 13px; color: var(--muted); } .nml-f .npc { height: 30px; }
+.nmc .dbr-more { margin-top: 12px; } .nmc .dbr-more .rc-more { margin: 0; }
+@media (max-width: 600px) { .nmc .dbck > details.nml .mcx-ln .npc { flex-basis: 100%; margin-left: 0; } }
 .brw .nh small { margin-left: 8px; font: 400 13px var(--body); color: var(--muted); text-transform: none; letter-spacing: 0; }
 .brw-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; } .brw-tiles > div { flex: 1 1 140px; background: var(--raised); border-radius: 8px; padding: 8px 12px; }
 .brw-tiles b { display: block; font: 700 22px var(--head); } .brw-tiles span { color: var(--muted); font-size: 13px; }
