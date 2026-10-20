@@ -1114,7 +1114,7 @@ const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true
 const ME_TIP = 'Your team\'s page: every boss and raid night, with your rankings.';
 const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" data-t="me" role="tab" aria-selected="' + !!on + '" data-tt="' + esc(ME_TIP) + '" aria-description="' + esc(ME_TIP) + '">' + tabIco('me') + 'My Page</button><span class="tsep" aria-hidden="true"></span>';
 // (in a raid, the tab; from a team's own page, back into the raid you came from on My Page; with no raid, your team's page)
-function openMyPage() { if (S.rep && $('#view')) { S.tab = 'me'; renderMain(); window.scrollTo(0, 0); return; }
+function openMyPage() { { const h = meHomeChar(); if (h) meSwitch(h.gid, true); } if (S.rep && $('#view')) { S.tab = 'me'; renderMain(); window.scrollTo(0, 0); return; }
   if (PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)) { S.tab = 'me'; select(PROG_BACK); return; }
   const t = homeTarget(); if (!t) { gsStart(); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); }
 // My Page in a raid: your team's page inside the tab, the raid staying open above it (your call, Oct 19). It opens on your team each time (your
@@ -1176,7 +1176,10 @@ function pgEmptyCard(c) {
 // become you, so My Page is theirs (your team's page with them as You, or their own page when no team of theirs is added),
 // with their rankings, spec art and bosses. One not brought in yet is imported right away, the same as adding your first
 // character, with a loading card while it works; another import running is paused and picked up right after.
-function meSwitch(gid) {
+// (the My Page tab is home (your note, Oct 20): on an alt with no team of theirs, it brings back your main, the character on your team)
+function meHomeChar() { const me = meOf(), cur = me && groups().find((g) => g.gid === me.char); if (!cur || charTeamed(cur)) return null;
+  return groups().find((g) => g.kind === 'char' && g.gid !== cur.gid && charTeamed(g)) || null; }
+function meSwitch(gid, noDraw) {
   const c = groups().find((x) => x.gid === gid); if (!c) return;
   const was = meOf(), prev = was && was.char !== c.gid ? was.char || (groups().find((x) => x.kind === 'char' && x.name === was.name) || {}).gid : was && was.prev;
   store.set(ME_KEY, JSON.stringify({ name: c.name, cls: c.cls || null, char: c.gid, pick: 1, prev: prev || null, at: Date.now() })); store.set(GROUP_CUR, c.gid);
@@ -1184,6 +1187,7 @@ function meSwitch(gid) {
     if (!S.progBusy) progRun(c, true); else { S.importNext = c.gid; S.importYield = S.progBusy; } }
   else if (S.progBusy === c.gid) S.meLoad = c.gid;
   const t = homeTarget(); S.progMine = false; S.progView = t ? t.gid : c.gid; S.pgRename = S.pgDel = S.pgEdit = false; S.yuOpen = false; S.myBoss = null;
+  if (noDraw) return;
   HIST.load().then(() => { renderProgress(); groupsBackfill(); }); window.scrollTo(0, 0);
 }
 function yuPanel(panel) {
@@ -1257,7 +1261,7 @@ function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index &&
   return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()), tt = !back ? 'Open a raid night first' : off ? 'Under development' : TAB_TIP[k] || '';
     return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + '</nav></div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pg-tabbar .tab'); if (!b) return; const k = b.dataset.t;
-  if (k === 'me') { if (!b.classList.contains('on')) openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = k; select(PROG_BACK); });
+  if (k === 'me') { const h = meHomeChar(); if (h) { meSwitch(h.gid); return; } if (!b.classList.contains('on')) openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = k; select(PROG_BACK); });
 // ---- the boss banner on top of every tab ----
 // One pull: which pull and boss, the result in big letters, when and how long, and on the right how it compares
 // (best of the night, further than the last pull) with a bar of the phases. All pulls: the night's best pull (or the
@@ -1664,7 +1668,7 @@ function renderMain() {
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } if (b.dataset.t === 'me') { const h = meHomeChar(); if (h) meSwitch(h.gid, true); } S.tab = b.dataset.t; renderMain(); }));
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
