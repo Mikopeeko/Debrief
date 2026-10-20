@@ -31175,7 +31175,7 @@ function gdzKit(boss, len) {
         const t1 = how === 'land' ? (g.at != null ? g.at + 0.4 : g.t0 + 3) : how === 'dur' ? g.t0 + (g.dur || 3) : g.t0 + how;
         const at0 = g.guid ? posRaw(g.guid, g.t0) : [g.x - A.cx, g.y - A.cy]; if (!at0) continue;
         // (one label for a cluster: a second one with the same words close by at the same time is left out)
-        if (calls.some((c) => c.text === text && Math.abs(c.t0 - g.t0) < 1.5 && c._p && (text === 'Purple: keep clear' || Math.hypot(c._p[0] - at0[0], c._p[1] - at0[1]) < 16))) continue; /* (the purple warning once per orb set) */
+        if (calls.some((c) => c.text === text && Math.abs(c.t0 - g.t0) < 1.5 && c._p && (text === 'Purple: keep clear' || text === 'Dodge' || Math.hypot(c._p[0] - at0[0], c._p[1] - at0[1]) < 16))) continue; /* (the purple warning once per orb set) */
         calls.push({ t0: g.t0, t1, text, color, on: g.guid, x: g.guid ? undefined : g.x, y: g.guid ? undefined : g.y, _p: at0 }); }
       for (const g of rings) { const col = GDZ_BADGE[g.cn]; if (!col || !g.guid || g.t0 == null) continue;
         calls.push({ kind: 'badge', name: g.cn, color: col, on: g.guid, t0: g.t0, t1: g.at != null ? g.at + 0.3 : g.t0 + (g.dur || 3) }); }
@@ -31361,7 +31361,7 @@ const GDZ_CA_M = {
   orbs() {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 26.5));
     k.boss('zj', 'Zul\'jan', 0, 0, 0);
-    k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 4).at(0, ['m5', 'm6', 'm7'], 0, -8, 3).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
+    k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 5.5).at(0, ['m5', 'm6', 'm7'], 0, -8, 4.5).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
       .at(0, 'r1', -38, -34).at(0, 'r2', -38, 34).at(0, 'r3', 38, -34).at(0, 'r4', 38, 34).at(0, ['r5', 'r6', 'r7'], 4, 24, 4);
     k.hold(10.6, 't2').at(11.8, 't2', -6, 0).hold(13.6, 't2'); /* (the off-tank's taunt spot first, so its orb run starts from there) */
     // purples: the two Warlocks (entrance corners) and the two Mages (far corners) take the one nearest their corner; the off-tank the awkward one
@@ -31473,7 +31473,7 @@ function gdzCaBoss(k, ph) {
 const GDZ_CA_BEATS = {
   start: { name: 'The pull', do: ['The boss tank takes Zul\'jan to the middle. Warlocks wait at the entrance corners, Mages at the far corners, the rest around the boss.', 'Fangs of the Coiled Altar: raid damage, and the altar spits green puddles at the sides. Stay out of them.'],
     run() { const k = gdzCaMarks(gdzKit('The Coiled Altar', 5)); gdzCaBoss(k, 0);
-      k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 4).at(0, ['m5', 'm6', 'm7'], 0, -8, 3).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
+      k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 5.5).at(0, ['m5', 'm6', 'm7'], 0, -8, 4.5).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
         .at(0, 'r1', -38, -34).at(0, 'r2', -38, 34).at(0, 'r3', 38, -34).at(0, 'r4', 38, 34).at(0, ['r5', 'r6', 'r7'], 4, 24, 4);
       k.step(0.2).step(2.4); } },
   fangs: { name: 'Fangs of the Coiled Altar (Avoid the puddles)', do: ['Fangs again: raid damage, and the puddles at the sides grow bigger. Keep out of them.'],
@@ -31546,8 +31546,8 @@ function gdzCaSimOverlay(k, rt2sim, end) {
   // (Noxious Ground, measured from the 198 hits on the Mythic kill (your note, Oct 20: they were far too small): after the
   // first Fangs the pools sit at the west and east walls, about 20 yards across from each; after the second they reach about 35
   // yards in, squeezing the raid into the middle. The first pool gives way to the bigger one)
-  [[-52, 18, 18], [52, -18, 21]].forEach(([x, y, r1]) => { k.ring({ x, y, r: r1, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(85) + 0.8 - (rt2sim(0) + 2.6), color: '#5fd35f', fill: 'rgba(95,211,95,.2)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' });
-    k.ring({ x, y: y * 0.5, r: r1 === 18 ? 28 : 34, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85) - 0.8, color: '#5fd35f', fill: 'rgba(95,211,95,.16)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' }); });
+  [[-52, 18, 18], [52, -18, 21]].forEach(([x, y, r1]) => { k.ring({ x, y, r: r1, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(85) + 0.8 - (rt2sim(0) + 2.6), color: '#c4f03c', fill: 'rgba(52,128,30,.5)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' });
+    k.ring({ x, y: y * 0.5, r: r1 === 18 ? 28 : 34, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: p2 - rt2sim(85) - 0.8, color: '#c4f03c', fill: 'rgba(52,128,30,.46)', cn: 'Noxious Ground', legend: 'pools from Fangs: they grow each cast, stay out' }); });
 }
 // ---- What goes wrong (your idea, Oct 20): each mechanic's map can also play a mistake and what it costs ----
 // a raid-wide hit: a red blast over the room and a red label, and the players it kills marked
@@ -31567,7 +31567,7 @@ const GDZ_CA_FAIL = {
   orbsM: { name: 'A purple touches a green', what: 'A purple carrier walks too close to a green orb on the ground. The purple ring touches it and the raid wipes.',
     do: ['A purple carrier takes a shortcut past a green orb on the ground.', 'The purple ring touches the green.', 'About 20 Venom Ruptures at once. The raid wipes.'],
     map: () => { const k = gdzCaMarks(gdzKit('The Coiled Altar', 8.5)); k.boss('zj', 'Zul\'jan', 0, 0, 0);
-      k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 4).at(0, ['m5', 'm6', 'm7'], 0, -8, 3).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
+      k.at(0, 't1', 5, 0).at(0, 't2', -2, 6).at(0, ['m1', 'm2', 'm3', 'm4'], 0, 8, 5.5).at(0, ['m5', 'm6', 'm7'], 0, -8, 4.5).at(0, ['h1', 'h2'], -6, 22, 3).at(0, ['h3', 'h4'], 6, -22, 3)
         .at(0, 'r1', -34, -24).at(0, 'r2', -38, 34).at(0, 'r3', 38, -34).at(0, 'r4', 38, 34).at(0, ['r5', 'r6', 'r7'], 4, 24, 4);
       k.obj('g0', 'orb', 0, -24, -6).show('g0', 0, 4.6);
       gdzCarry(k, 'r1', 'p0', 'porb', 0, -36, -20, 0.8, -26, -9, 3.6, null); k.show('p0', 0, 4.6);
@@ -31985,12 +31985,12 @@ function gdzCss() {
 .gdz-vcard small { color: var(--gold); font-weight: 800; letter-spacing: .2em; text-transform: uppercase; font-size: clamp(11px, 2.6cqw, 22px); }
 .gdz-vcard h3 { margin: .1em 0; font-size: clamp(24px, 8cqw, 72px); font-weight: 800; color: #fff; text-shadow: 0 3px 18px rgba(0,0,0,.8); line-height: 1.05; }
 .gdz-vcard p { margin: 0; color: #d8d2c4; font-family: var(--body); font-size: clamp(11px, 2.4cqw, 20px); }
-.gdz-vlow { position: absolute; left: 3%; right: 3%; bottom: 3%; background: linear-gradient(90deg, rgba(8,9,13,.94), rgba(8,9,13,.82)); border-left: .35em solid var(--gold); border-radius: .5em; padding: .5em .8em .55em; font-size: clamp(11px, 2.5cqw, 22px); color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+.gdz-vlow { position: absolute; left: 2%; right: auto; max-width: 84%; bottom: 2%; background: linear-gradient(90deg, rgba(8,9,13,.94), rgba(8,9,13,.82)); border-left: .35em solid var(--gold); border-radius: .5em; padding: .35em .7em .4em; font-size: clamp(10px, 2cqw, 17px); color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.45); }
 .gdz-vlow.in { animation: gdzLow .45s ease-out; }
 @keyframes gdzLow { from { transform: translateY(20%); opacity: 0; } to { transform: none; opacity: 1; } }
 .gdz-vlk { color: var(--gold); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: .72em; }
 .gdz-vlk:empty { display: none; }
-.gdz-vlt { font-weight: 800; font-size: 1.35em; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; }
+.gdz-vlt { font-weight: 800; font-size: 1.2em; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; }
 .gdz-vls { font-family: var(--body); font-size: .9em; line-height: 1.3; margin-top: .2em; color: #e9e4d8; }
 .gdz-vls:empty { display: none; }
 .gdz-vls em { font-style: normal; font-weight: 800; color: #ffd36a; }
