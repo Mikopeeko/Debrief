@@ -2016,8 +2016,10 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const scB = S.noteScan && S.noteScan.boss === boss && S.noteScan.r ? noteScanBox(S.noteScan) : '';
     $('#assignBox').innerHTML = scB + '<div class="panel nmiss"><h3>No note for this pull</h3>' +
       '<p class="ah-lead">' + (f.enc === false ? 'The note saved with this log is for another boss.' : 'The note saved with this log isn\'t a perfect match for this pull: ' + esc(andL(g)) + (g.length === 1 ? ' isn\'t' : ' aren\'t') + ' in it.') + ' A note is used only when every player it names is in the pull.</p>' + closeL +
-      '<div class="ah-btns"><button class="btn primary" type="button" id="noteAdd">Replace the note</button></div></div>';
-    $('#noteAdd').onclick = () => { S.noteEdit = true; S.noteEditId = 'new'; assign(only); };
+      '<div class="ah-btns"><button class="btn" type="button" id="noteAdd">' + NOTE_TRASH + ' Delete the note</button><span class="sub">Then you can import the right one.</span></div></div>';
+    // (a note is glued to its log (your rule, Oct 19): the only way out is deleting it, with a second click to be sure)
+    $('#noteAdd').onclick = () => { const b = $('#noteAdd'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.innerHTML = NOTE_TRASH + ' Click again to delete'; b.classList.add('bad'); return; }
+      const o = notesOf(boss); o.list = []; notesSave(boss, o); for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); };
     $$('#assignBox [data-nuse]').forEach((b) => (b.onclick = () => { const o = notesOf(boss); o.byPull = o.byPull || {}; o.byPull[pullKey(r.item)] = b.dataset.nuse; notesSave(boss, o);
       for (const rep of CACHE.values()) if (rep.item.boss === boss) applyNote(rep); renderMain(); }));
     if ($('#nscanOk')) $('#nscanOk').onclick = () => { S.noteScan = null; assign(only); };
@@ -2121,7 +2123,7 @@ function assign(only) { // (only: just the note, for the all-pulls NSRT audit, w
     const difN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }[hdN.difficulty] || hdN.difficulty || '', linesN = a && a.note ? a.note.lines.filter((l) => l.words && l.words.length).length : 0;
     const chipsN = [difN ? esc(capS(String(difN).toLowerCase())) : '', a && a.note && a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', linesN ? plural(linesN, 'assignment line') : ''].filter(Boolean);
     top += '<div class="panel nlib nl-cur' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span class="nl-tt"><span class="nl-k">' + (ex ? 'Example note' : 'Your note') + '</span><b>' + esc(ex ? 'Made from this pull' : used.name) + '</b></span>' + chipsN.map((x) => '<span class="nl-chip">' + x + '</span>').join('') + '</span>' +
-      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nedit="' + esc(used.id) + '">Edit</button><button class="btn sm" type="button" data-asv="notes">Change note</button>') + '</span></div>' +
+      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-ndel="' + esc(used.id) + '">' + NOTE_TRASH + ' Delete note</button>') + '</span></div>' + /* (your rule, Oct 19: a note is glued to its log; no editing or changing it, only deleting) */
       (why || back ? '<div class="nl-why sub">' + why + back + '</div>' : '') + '</div>';
     top += rosterOffer(r, used);
     if (S.noteMade && S.noteMade.boss === boss) top += noteMadeBox(S.noteMade);
@@ -13567,7 +13569,8 @@ function czMan(x, y, kind) {
     '<circle cx="1" cy="-41" r="5.5" fill="#e2b48e"/><circle cx="3.6" cy="-41.6" r=".8" fill="#2a2a2a"/><path d="M-5.5,-44 a6.5,6 0 0 1 13,0 z" fill="#ffc83a"/><rect x="-6.5" y="-45" width="16" height="2.4" rx="1.2" fill="#e6a923"/>' + arm;
   return '<g transform="translate(' + x + ' ' + y + ')">' + body + '</g>';
 }
-function rotSite(what, chg) {
+function rotSite(what, chg) { return ''; /* (your note, Oct 19: "remove under construction banner") */ }
+function rotSite0(what, chg) {
   const mo = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches), G = '#e6b450';
   let tw = '', jb = ''; for (let y = 104; y > 18; y -= 10) tw += 'M44,' + y + ' L56,' + Math.max(18, y - 5) + ' L44,' + Math.max(18, y - 10) + ' ';
   for (let x = 14; x < 224; x += 10) jb += 'M' + x + ',19 L' + (x + 5) + ',12 L' + (x + 10) + ',19 ';

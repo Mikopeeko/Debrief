@@ -4152,6 +4152,26 @@ button.rcb-tr { cursor: pointer; } button.rcb-tr:nth-of-type(even) { background:
 .ld-arm { will-change: transform; animation: ldArmL .6s ease-in-out infinite; } .ld-armr { animation-name: ldArmR; }
 .ld-dw.ld-void { animation: ldFloat 1.2s ease-in-out infinite; } .ld-dw.ld-murloc { animation: ldHop .6s ease-in-out infinite; } .ld-dw.ld-snake { animation: ldSway 1s ease-in-out infinite; }
 .ld-shd { position: absolute; left: 50%; bottom: 3px; width: 39px; height: 8px; margin-left: -19.5px; border-radius: 50%; background: rgba(0,0,0,.45); will-change: transform, opacity; animation: ldSh .6s ease-in-out infinite; } .ld-shd.ld-void { animation-duration: 1.2s; }
+/* Debriefing + your NSRT note (Oct 19, mockup A with C's switch) */
+.dbn-tag { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; color: var(--muted); border: 1px solid rgba(230,180,80,.35); background: rgba(230,180,80,.06); white-space: nowrap; }
+.dbn-tag i { font-style: normal; font-size: 12px; } .dbn-tag.st-ok { color: var(--good); } .dbn-tag.st-warn { color: var(--warn); border-color: rgba(232,162,58,.5); } .dbn-tag.st-bad { color: var(--bad); border-color: rgba(229,83,75,.5); }
+.dbn-box { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(230,180,80,.3); background: linear-gradient(180deg, rgba(230,180,80,.06), transparent 60%); }
+.dbn-h { font: 700 12px var(--head); letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+.dbn-job + .dbn-job { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); } .dbn-jh { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 6px; } .dbn-jh b { color: var(--text); }
+.dbn-from { margin-left: 8px; font-size: 12px; color: var(--gold); }
+.dbn-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 10px; padding: 9px 14px; border-radius: 12px; border: 1px solid rgba(230,180,80,.35); background: linear-gradient(90deg, rgba(230,180,80,.09), transparent 55%), var(--panel); }
+.dbn-bar > span:first-child { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; } .dbn-bar b { color: var(--text); } .dbn-bar .btn { margin-left: auto; }
+.dbn-gone { font-size: 12.5px; color: var(--warn); padding: 3px 10px; border-radius: 999px; background: rgba(232,162,58,.1); }
+.dbr-4.dbn-five { grid-template-columns: repeat(5, minmax(0, 1fr)); } .dbn-n { border-color: rgba(230,180,80,.4) !important; } .dbn-n .dbr-k { color: var(--gold); }
+.dbn-seg { display: flex; align-items: center; gap: 6px; margin: 14px 0 10px; } .dbn-seg button { font: 600 13.5px var(--body); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line2); background: none; color: var(--muted); cursor: pointer; }
+.dbn-seg button.on { color: var(--gold); border-color: rgba(230,180,80,.55); background: rgba(230,180,80,.1); } .dbn-seg .sub { margin-left: 6px; }
+.dbn-pcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.dbn-pc { padding: 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--cc) 30%, var(--line)); background: radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--cc) 14%, transparent), transparent 60%), var(--raised); }
+.dbn-pch { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin-bottom: 8px; } .dbn-pch b { font: 700 17px var(--head); } .dbn-pcn { margin-left: auto; font: 800 18px var(--head); } .dbn-pcn.ok { color: var(--good); } .dbn-pcn.warn { color: var(--warn); } .dbn-pcn.bad { color: var(--bad); }
+.dbn-pj { display: grid; grid-template-columns: 18px 1fr; gap: 0 6px; padding: 4px 0; font-size: 13px; color: var(--text); border-top: 1px solid var(--line); } .dbn-pj i { font-style: normal; font-weight: 800; } .dbn-pj small { grid-column: 2; color: var(--faint); font-size: 11.5px; line-height: 1.35; }
+.dbn-pj.st-ok i { color: var(--good); } .dbn-pj.st-warn i { color: var(--warn); } .dbn-pj.st-bad i { color: var(--bad); } .dbn-pj.st-na { color: var(--muted); } .dbn-pj.st-na i { color: var(--faint); }
+@media (max-width: 900px) { .dbr-4.dbn-five { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dbn-tag { margin-left: 0; } }
+.cz-slot:empty { display: none; } /* (the Under construction banner is gone (Oct 19): no gap where it was) */
 </style>
 
 
