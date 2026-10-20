@@ -4071,6 +4071,29 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .spc-gl2 { flex: 1 1 320px; min-width: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); } .spc-gh2 .spc-dots { align-self: center; margin-left: auto; }
 .spc-dt2 { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line); }
 @media (max-width: 760px) { .spc-gl2 { flex-basis: 100%; } }
+/* My Page, mockup A "Command center" (your pick, Oct 19): the team across the top, the boss you're on as a banner, the raid as picture cards, you beside the raid nights */
+.pg-intab .my-team { background: radial-gradient(ellipse at 0% 0%, rgba(44,95,168,.28), transparent 55%), var(--panel); border-radius: 14px; }
+.pg-intab .my-team .pg-tt h1 { font-size: 30px; }
+.pg-intab #pgNow { min-height: 230px; padding: 24px 26px 18px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--ec) 45%, transparent); border-left: 4px solid var(--ec); box-shadow: 0 18px 40px rgba(0,0,0,.4); }
+.pg-intab #pgNow .pnw-art { opacity: .38; -webkit-mask-image: linear-gradient(90deg, transparent 5%, #000 60%); mask-image: linear-gradient(90deg, transparent 5%, #000 60%); }
+.pg-intab #pgNow h2 { font-size: 42px; } .pg-intab #pgNow .pnw-big { font-size: 60px; } .pg-intab #pgNow .pnw-k { color: var(--ec); }
+.my-bcs.my-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.my-chip.my-bc { position: relative; overflow: hidden; isolation: isolate; height: 128px; padding: 0; justify-content: flex-end; border: 1px solid var(--line); border-left: 1px solid var(--line); border-radius: 10px; background: #0d0f14; }
+.my-bcbg { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transform: scale(1.05); transition: transform .3s; } .my-chip.my-bc:hover .my-bcbg { transform: scale(1.12); }
+.my-bcsh { position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(10,12,17,.96) 18%, rgba(10,12,17,.2) 78%); }
+.my-bn { position: absolute; top: 8px; left: 8px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; font: 800 12px var(--head); font-style: normal; background: rgba(10,12,17,.75); color: var(--muted); }
+.my-bcb { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 0 10px 9px; } .my-chip.my-bc b { font: 700 16px var(--head); color: #fff; text-shadow: 0 1px 4px #000; max-width: 100%; }
+.my-chip.my-bc .my-tag { font: 700 11px var(--body); font-style: normal; padding: 2px 7px; border-radius: 5px; color: #1b1406; background: var(--mc, #9d9d9d); } .my-chip.my-bc .my-bx { font-size: 11.5px; font-weight: 500; color: #c3c8d2; }
+.my-chip.my-bc.kill { border-color: rgba(230,180,80,.55); } .my-chip.my-bc.kill .my-bn { background: linear-gradient(#f0cf86, #b88b3a); color: #1a1408; } .my-chip.my-bc.kill .my-tag { background: #e6b450; }
+.my-chip.my-bc.prog { border-color: var(--mc); box-shadow: 0 0 0 1px var(--mc), 0 0 18px color-mix(in srgb, var(--mc) 30%, transparent); } .my-chip.my-bc.prog .my-bn { background: var(--mc); color: #0b0d12; }
+.my-chip.my-bc.lock { opacity: .7; } .my-chip.my-bc.lock .my-bcbg { filter: grayscale(1) brightness(.45); } .my-chip.my-bc.lock .my-tag { color: var(--muted); background: rgba(255,255,255,.08); }
+.my-chip.my-bc.my-open { outline: 2px solid var(--gold); outline-offset: -2px; } .my-chip.my-bc:hover:not([disabled]) { border-color: var(--gold); background: #0d0f14; }
+.pg-intab .my-row2 { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } .pg-intab .my-row2.my-one1 { grid-template-columns: minmax(0, 1fr); }
+.pg-intab .my-youa { position: relative; overflow: hidden; border-radius: 14px; border-color: color-mix(in srgb, var(--cc, #e6b450) 35%, var(--line)); background: linear-gradient(180deg, rgba(14,12,16,.7), rgba(14,12,16,.94)), var(--sart, none) center 30% / cover, var(--panel); min-height: 200px; }
+.pg-intab .my-youa .pg-you { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; font-size: 18px; } .pg-intab .my-youa .pg-you .ht-ban { transform: scale(1.25); transform-origin: left center; margin-bottom: 4px; }
+.pg-intab .my-youa .pg-you b { font: 700 26px var(--head); } .pg-intab .my-youa .pg-ych .pgc { font-size: 15px; padding: 8px 14px; background: rgba(10,12,17,.6); } .pg-intab .my-youa .pg-ych .pgc b { font-size: 22px; }
+@media (max-width: 1000px) { .my-bcs.my-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .my-bcs.my-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } .my-chip.my-bc { height: 104px; } .pg-intab #pgNow h2 { font-size: 30px; } .pg-intab #pgNow .pnw-big { font-size: 40px; } .pg-intab .my-row2 { grid-template-columns: minmax(0, 1fr); } }
 </style>
 
 
