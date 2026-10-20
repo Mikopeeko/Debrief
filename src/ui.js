@@ -4501,11 +4501,13 @@ function miniMap(mp, pmap) {
   const x0 = Math.min(ax0, fx0), y0 = Math.min(ay0, fy0), x1 = Math.max(ax1, fx0 + fs), y1 = Math.max(ay1, fy0 + fs);
   const X = (p) => (sx(p) - x0) * yd, Y = (p) => (sy(p) - y0) * yd, hl = new Set(mp.hl || []);
   const FW = (x1 - x0) * yd, FH = (y1 - y0) * yd, fside = Math.max(FW, FH);
+  // (a room with walls (The Coiled Altar): its floor, edge to edge, but never past the room picture's own top and bottom (no dark band))
+  const rside = mp.room ? Math.min(mp.room.x1 - mp.room.x0, A && A.f ? A.h / A.s : Infinity) : 0, rcx = mp.room ? (mp.room.x0 + mp.room.x1) / 2 : 0, rcy = mp.room ? -(mp.room.y0 + mp.room.y1) / 2 : 0;
   // (the full arena, where maps open: a square on the room's shorter side, widened to keep everyone on the map in view (Oct 20))
   const acx = (ax0 + ax1) / 2, acy = (ay0 + ay1) / 2; let aside = Math.min(ax1 - ax0, ay1 - ay0);
   for (const p of bpts) aside = Math.max(aside, 2 * Math.max(Math.abs(sx(p) - acx), Math.abs(sy(p) - acy)) + 12);
   aside = Math.min(aside, Math.max(ax1 - ax0, ay1 - ay0)); /* (never wider than the whole room box: a stray position can't pull it far out) */
-  const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = mp.room ? [(mp.room.x0 - 5 - x0) * yd, (-mp.room.y1 - 5 - y0) * yd, (mp.room.x1 - mp.room.x0 + 10) * yd, (mp.room.x1 - mp.room.x0 + 10) * yd] : A ? [(acx - x0) * yd - aside * yd / 2, (acy - y0) * yd - aside * yd / 2, aside * yd, aside * yd] : [0, 0, fside, fside];
+  const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = mp.room ? [(rcx - rside / 2 - x0) * yd, (rcy - rside / 2 - y0) * yd, rside * yd, rside * yd] : A ? [(acx - x0) * yd - aside * yd / 2, (acy - y0) * yd - aside * yd / 2, aside * yd, aside * yd] : [0, 0, fside, fside];
   const ic = (x, y, inner) => '<g class="ic" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>';
   // opens on the whole arena when there is one; "Zoom to mechanic" (or double-click) goes in
   const startVB = A ? fullVB : focusVB;
