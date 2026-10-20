@@ -4055,7 +4055,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rgx-src { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line); } .rgx-src .rgx-h { margin-bottom: 8px; font-weight: 600; }
 .rgx-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,.05); } .rgx-bar i { display: block; height: 100%; } .rgx-bar i + i { box-shadow: inset 1px 0 0 rgba(0,0,0,.5); } .rgx-rest { background: #4a4a52; }
 .rgx-lg { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 12.5px; color: var(--text); } .rgx-lg span { display: inline-flex; align-items: center; gap: 5px; } .rgx-lg u { display: inline-block; width: 9px; height: 9px; border-radius: 2px; } .rgx-lg b { color: var(--muted); font-weight: 600; }
-.rgx-n { margin: 8px 2px 0; }
+.rgx-n { margin: 8px 2px 0; } .rgx-i { width: 18px; height: 18px; border-radius: 3px; flex: none; } .rgx-c.rgx-boss { border-left-color: #d9534f; } .rgx-c.rgx-add { border-left-color: #8fd18a; }
 @media (max-width: 760px) { .rgx-g { grid-template-columns: 1fr 1fr; } .spc-chs { display: none; } }
 /* Rotation, the A+B mockup (Oct 19): talents in the card, blocks without boxes */
 .spc-htal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; width: 100%; margin-top: 12px; padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(217,180,106,.28); background: rgba(8,8,10,.55); color: var(--muted); font: 500 13px var(--body); text-align: left; cursor: pointer; }
@@ -21318,7 +21318,7 @@ function specPage(o) {
 }
 // (a few words under each chapter's name on the Rotation tab)
 const SPC_CHS = { Rotation: 'casting, your priority and your procs', Resources: 'what you built and what you wasted', Cooldowns: 'your big buttons over the pull, and the boss\'s windows',
-  'Start of the pull': 'before the pull and the first seconds', Mitigation: 'your active mitigation and defensives','This boss': 'talents for this fight', Stats: 'your gear\'s stats', 'Gear and extras': 'what your trinkets, enchants and potion added, and your biggest hit' };
+  'Start of the pull': 'before the pull and the first seconds', Mitigation: 'your active mitigation and defensives','This boss': 'talents for this fight', Stats: 'your gear\'s stats', 'Gear and extras': 'boss and add damage, what your trinkets, enchants and potion added, and your biggest hit' };
 // (points in each of a player's talent trees: class, hero, spec)
 const talentSum = (r, p) => { const tr = treeOf(p.specName), c = (r.combatants || []).find((x) => x.name === p.name); if (!tr || !c || !c.talents || !c.talents.length) return null;
   const got = new Map(); for (const t of c.talents) got.set(+t.id, (got.get(+t.id) || 0) + (+t.rank || 1));
@@ -21360,7 +21360,17 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
     if (pots.length) { pN += pots.length; pNm = pNm || pots[0].name; pId = pId || pots[0].id; } }
   const potC = heal ? '' : pN && pinT >= 5 && poutT >= 10 ? card(spellIcon(pId, pNm), 'Your potion\'s window', C(pin / pinT) + '<small> a second</small>', (pout ? '×' + (pin / pinT / (pout / poutT)).toFixed(1) + ' the rest of the pull, ' : '') + 'in the 30 seconds after ' + esc(pNm || 'your potion') + (pN > 1 ? ' (' + pN + ' potions)' : '') + '. Your cooldowns and Bloodlust count too, so line them up.')
     : card('<img class="rgx-i" src="' + whIcon('inv_alchemy_70_red') + '" alt="">', 'Your potion\'s window', '<span class="sub">none</span>', 'No combat potion' + (one ? ' this pull' : ' in these pulls') + '. One adds a lot of damage, best inside your biggest cooldown.', 'rgx-no');
-  return '<div class="rgx-g">' + gSum + gearC.join('') + bigC + potC + '</div>' + split +
+  // (boss and adds (your idea, Oct 19): your damage on the boss (and the units that share its health) and on everything else, the adds you hit most,
+  // and the raid's damage dealers' share on adds next to yours. Damage dealers and tanks; facts, not graded)
+  let bD = 0, aD = 0, rB = 0, rA = 0; const adds = new Map();
+  if (!heal) for (const x of per) { const r = x.r, bn = new Set((r.bossUnits || []).concat(BURST_BOSS_TOO[(r.item || {}).boss] || [])); if (!bn.size) continue;
+    for (const [n, v] of x.p.dmgT || []) { if (bn.has(n)) bD += v; else { aD += v; adds.set(n, (adds.get(n) || 0) + v); } }
+    for (const q of r.players.values()) if (q.role === 'dps' && q.dmgT) for (const [n, v] of q.dmgT) { if (bn.has(n)) rB += v; else rA += v; } }
+  const dT = bD + aD, aF = dT ? aD / dT : 0, rF = rB + rA ? rA / (rB + rA) : null, pc2 = (v) => (v >= 0.1 ? Math.round(100 * v) : (100 * v).toFixed(1)) + '%';
+  const topA = [...adds].sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const bossC = dT >= 1000 ? card('<img class="rgx-i" src="' + whIcon('achievement_boss_generic_01') + '" alt="">', 'Boss damage', C(bD), pc2(1 - aF) + ' of your damage · ' + C(bD / dur) + ' a second' + (aD < dT * 0.01 ? '<br>All of it went on the boss.' : ''), 'rgx-boss') : '';
+  const addC = dT >= 1000 && aD >= dT * 0.01 ? card('<img class="rgx-i" src="' + whIcon('inv_misc_monsterhorn_03') + '" alt="">', 'Add damage', C(aD), pc2(aF) + ' of your damage' + (rF != null ? ' · the raid\'s damage dealers: ' + pc2(rF) : '') + (topA.length ? '<br>' + esc(topA.map(([n, v]) => n + ' ' + C(v)).join(', ')) : ''), 'rgx-add') : '';
+  return '<div class="rgx-g">' + bossC + addC + gSum + gearC.join('') + bigC + potC + '</div>' + split +
     (gl.length ? '' : '<p class="sub rgx-n">No trinket, weapon or enchant effects did ' + W + ' you can see in the log' + (one ? ' this pull' : '') + '. Stat trinkets only show as stats.</p>'); };
 // (who a spec page's "Top players" marks come from, said in full)
 const topWho = (top, TOPB) => 'The middle of the ' + (TOPB && TOPB.n ? TOPB.n + ' ' : '') + top + ' who parsed 75 or higher in the fastest Mythic kills of this boss on Warcraft Logs';
