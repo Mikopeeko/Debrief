@@ -1365,6 +1365,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names.
 const PATCH_NOTES = [
   { d: '2026-10-20', n: [
+    'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
     'Boss guides: the maps now freeze at the key moments, with the important spot lit up and a short note from the raid lead.',
     'Boss guides, in the menu (☰): how each fight works with animated maps, Heroic and Mythic, a mistake view and a full-fight simulation. Anyone can open them. The Coiled Altar is first.',
     'My Page: the Mythic, Heroic, Normal and LFR switch now stands out, sits right on top of the boss cards too, and each card says which difficulty it shows.',
@@ -18552,6 +18553,50 @@ function gsClose(then) {
 const gsFind = (gid) => (gid ? groups().find((x) => x.gid === gid) : null);
 const gsGo = (step) => { GS.back.push(GS.step); GS.step = step; GS.wait = 0; gsDraw(); };
 const gsTo = (step) => { GS.step = step; GS.wait = 0; gsDraw(); }; // (moving on by itself: Back skips the step it left)
+// ---- Sign in with Warcraft Logs (your idea, Oct 20): one click, Warcraft Logs asks "Allow?", and Debrief gets back your
+// characters and guilds, so setup is a tap instead of typing. It uses its own key on your Warcraft Logs account (a public one,
+// no secret); the Worker trades Warcraft Logs' code for the list and keeps nothing. The list is remembered on this browser
+const WCL_SIGN = { id: '01a15a39-b1bf-7242-8b34-414c13c35511', key: 'wla-wcl-me', pk: 'wla-wcl-pkce' };
+const WCL_CB = location.pathname === '/auth/wcl/callback' ? new URLSearchParams(location.search) : null;
+const WCL_CLS = [null, 'DEATHKNIGHT', 'DRUID', 'HUNTER', 'MAGE', 'MONK', 'PALADIN', 'PRIEST', 'ROGUE', 'SHAMAN', 'WARLOCK', 'WARRIOR', 'DEMONHUNTER', 'EVOKER'];
+const wclMe = () => { try { return JSON.parse(store.get(WCL_SIGN.key) || 'null'); } catch (e) { return null; } };
+const b64u = (a) => btoa(String.fromCharCode(...a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function wclSignIn() {
+  const rnd = (n) => { const a = new Uint8Array(n); crypto.getRandomValues(a); return b64u(a); };
+  const v = rnd(48), st = rnd(12), ch = b64u(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v))));
+  try { sessionStorage.setItem(WCL_SIGN.pk, JSON.stringify({ v, st })); } catch (e) { /* storage off */ }
+  location.href = 'https://www.warcraftlogs.com/oauth/authorize?' + new URLSearchParams({ client_id: WCL_SIGN.id, redirect_uri: location.origin + '/auth/wcl/callback', response_type: 'code', code_challenge: ch, code_challenge_method: 'S256', state: st });
+}
+// (back from Warcraft Logs: the setup opens again and fills in your characters while the Worker fetches them)
+async function wclSignBack() {
+  const code = WCL_CB.get('code'), st = WCL_CB.get('state'); let p = null;
+  try { p = JSON.parse(sessionStorage.getItem(WCL_SIGN.pk) || 'null'); sessionStorage.removeItem(WCL_SIGN.pk); } catch (e) { /* storage off */ }
+  try { history.replaceState(null, '', '/'); } catch (e) { /* ignore */ }
+  gsStart(); if (!GS) return;
+  if (!code || !p || p.st !== st) { GS.note = WCL_CB.get('error') ? 'Sign-in was cancelled. You can try again, or type your character below.' : 'That sign-in didn\'t finish. Try again, or type your character below.'; gsDraw(); return; }
+  GS.signing = true; gsDraw();
+  try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json();
+    if (!r.ok || !j || !j.chars) throw new Error((j && j.error) || 'Warcraft Logs didn\'t send your characters.');
+    store.set(WCL_SIGN.key, JSON.stringify(j));
+  } catch (e) { if (GS) GS.note = String(e.message || e) + ' You can try again, or type your character below.'; }
+  if (GS) { GS.signing = false; gsDraw(); }
+}
+// (step 1: the sign-in button, or once signed in, your characters to tap; newest first)
+function gsSignHtml() {
+  if (!WCL.HOSTED || !store.get('wla-signin-test')) return ''; /* (TEST GATE: removed once a real sign-in works) */
+  const me = wclMe();
+  if (!me) return '<button class="btn primary gs-sign" id="gsSign" type="button">Sign in with Warcraft Logs</button><p class="gs-sub">One click: Warcraft Logs asks you to allow it, then sends you back here with your characters and guilds. No password is shared with Debrief.</p><div class="gs-or"><span>or type it</span></div>';
+  const cs = (me.chars || []).slice().sort((a, b) => b.id - a.id);
+  return '<p class="gs-who">Signed in as <b>' + esc(me.name || 'you') + '</b> · <button class="linkbtn" id="gsSignOut" type="button">Sign out</button></p>' +
+    (cs.length ? '<p>Which one is you?</p><div class="me-l gs-wch">' + cs.map((c, i) => { const k = E.CLASSES[WCL_CLS[c.cls]];
+      return '<button class="me-c" type="button" data-wch="' + i + '"' + (k ? ' style="--cc:' + k[1] + '"' : '') + '>' + (k ? '<img src="' + whIcon('classicon_' + k[2]) + '" alt="">' : '') + esc(c.n) + '<span class="sub">' + esc(c.srv || '') + '</span></button>'; }).join('') + '</div><div class="gs-or"><span>not listed? type it</span></div>'
+      : '<p class="gs-note">Your Warcraft Logs account has no characters on it yet. Type yours below, or claim it on Warcraft Logs first.</p>');
+}
+// (step 2: your guilds from Warcraft Logs, one tap each)
+function gsGuildsHtml() {
+  const me = WCL.HOSTED ? wclMe() : null, gs = me ? (me.guilds || []).filter((x) => !groups().some((o) => o.kind !== 'char' && o.id === x.id)) : [];
+  return gs.length ? '<p>Your guilds on Warcraft Logs:</p><div class="gs-rw">' + gs.map((x) => '<div class="gs-rwr"><span><b>' + esc(x.n) + '</b><span class="sub">' + esc((x.srv || '') + (x.reg ? ' (' + x.reg + ')' : '')) + '</span></span><button class="btn" type="button" data-wg="' + x.id + '">Add</button></div>').join('') + '</div><div class="gs-or"><span>or paste a link</span></div>' : '';
+}
 function gsDraw() {
   const el = $('#gs'); if (!el || !GS) return; clearTimeout(GS.t);
   const s = GS.step, n = s === 'char' || s === 'found' ? 0 : s === 'done' ? 2 : 1, cg = gsFind(GS.char), tg = gsFind(GS.team);
@@ -18600,6 +18645,10 @@ function gsDraw() {
       : '<h2 id="gsT">That\'s all for now</h2><p>You can add your character or your team any time: click <b>Your teams</b> at the top of any page. To look at one raid night, open the menu at the top and pick Open a report or log.</p>';
     nav = got.length ? btn('show', 'Show me', true) : btn('close', 'Done', true);
   }
+  // (Sign in with Warcraft Logs: its button or your characters on step 1, your guilds on step 2)
+  if (s === 'char' && !cg) body = GS.signing ? '<h2 id="gsT">Signing you in</h2><p>Getting your characters and guilds from Warcraft Logs.</p>' + dots
+    : (GS.note ? '<p class="gs-note">' + esc(GS.note) + '</p>' : '') + body.replace('<div class="gs-nm">', gsSignHtml() + '<div class="gs-nm">');
+  if (s === 'team' && !tg) body = body.replace('<div class="fph-box">', gsGuildsHtml() + '<div class="fph-box">');
   // (redrawn while it waits: the card doesn't slide in again, and the focus only moves when the question changes)
   const fresh = GS.drawn !== key; GS.drawn = key;
   el.innerHTML = '<div class="tr-card gs-card' + (fresh ? '' : ' gs-re') + '"><button class="gs-x" data-gs="close" type="button" aria-label="Close the setup">×</button><div class="tr-bar">' + GS_STEPS.map((_, j) => '<i' + (j <= n ? ' class="on"' : '') + '></i>').join('') + '</div>' +
@@ -18616,6 +18665,11 @@ function gsDraw() {
     $('#gsFind').onclick = go; ['#gsName', '#gsRealm'].forEach((k) => { $(k).onkeydown = (e) => { if (e.key === 'Enter') go(); }; }); }
   el.querySelectorAll('[data-rw]').forEach((b) => (b.onclick = () => gsRw(b)));
   el.querySelectorAll('[data-me]').forEach((b) => (b.onclick = () => gsMe(b)));
+  if ($('#gsSign')) $('#gsSign').onclick = () => { $('#gsSign').disabled = true; wclSignIn(); };
+  if ($('#gsSignOut')) $('#gsSignOut').onclick = () => { try { localStorage.removeItem(WCL_SIGN.key); } catch (e) { /* storage off */ } GS.note = ''; gsDraw(); };
+  el.querySelectorAll('[data-wch]').forEach((b) => (b.onclick = () => { const c = (wclMe().chars || []).slice().sort((x, y) => y.id - x.id)[+b.dataset.wch]; if (!c || !$('#gsIn')) return;
+    $('#gsIn').value = 'https://www.warcraftlogs.com/character/' + String(c.reg || 'us').toLowerCase() + '/' + c.slug + '/' + encodeURIComponent(c.n.toLowerCase()); gsAdd('char'); }));
+  el.querySelectorAll('[data-wg]').forEach((b) => (b.onclick = () => { if (!$('#gsIn')) return; $('#gsIn').value = 'https://www.warcraftlogs.com/guild/id/' + b.dataset.wg; gsAdd('team'); }));
   if (fresh) { const f = inp || el.querySelector('.me-c, .btn.primary') || el.querySelector('[data-gs="skip"], [data-gs="meno"]'); if (f) f.focus({ preventScroll: true }); }
 }
 function gsAct(a) {
@@ -19479,6 +19533,7 @@ if (WCL.HOSTED) {
 else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
 // (?patchnotes, the link in the Discord's patch-notes post, opens the Patch notes page over the front page)
+if (WCL_CB) setTimeout(wclSignBack, 300); // (back from Sign in with Warcraft Logs)
 if (RQ.has('patchnotes')) { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } setTimeout(openPatchNotes, 900); }
 /*GUIDES*/ // (the build puts src/guides.js here, inside this file's scope)
 })();
