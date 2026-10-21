@@ -413,6 +413,10 @@ button.ndz-rct { width: 100%; padding: 0; border: 0; background: none; color: va
 /* audit fold */ .ndz-bfd > summary { cursor: pointer; list-style: none; } .ndz-bfd > summary::-webkit-details-marker { display: none; } .ndz-bfch { display: inline-block; margin-left: 6px; font-style: normal; transition: transform .15s; } .ndz-bfd[open] .ndz-bfch { transform: rotate(180deg); } .ndz-bfd:not([open]) > summary { margin-bottom: 0; } .ndz-bfsrc { margin: 4px 0 10px; font-size: 12.5px; }
 /* roster panel */ .ndz-drg { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 2px 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--line); } .ndz-drg:first-of-type { border-top: 0; }
 .ndz-drl { font: 700 11px var(--body); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); } .ndz-drn { display: flex; flex-wrap: wrap; gap: 3px 12px; } .ndz-rn { font-weight: 700; font-size: 13.5px; cursor: default; }
+/* plan only */ .ndz-pbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; margin: 0 0 12px; } .ndz-pbl { font: 600 13px var(--body); color: var(--muted); }
+.ndz-pbar select { font: 700 16px var(--head); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raised); color: var(--text); } .ndz-pbar select + select { font: 600 13.5px var(--body); }
+.ndz-pbx { flex-basis: 100%; font-size: 12.5px; } .ndz-pdb { margin: -2px 0 14px; font-size: 13.5px; } .ndz-pdb a { color: var(--gold); text-decoration: none; } .ndz-pdb a:hover { text-decoration: underline; } .dbn-gone.ndz-allhere { color: #7ee08f; }
+#assignBox:has(> .ndz-sw) { position: fixed; inset: 0; z-index: 880; overflow-y: auto; overscroll-behavior: contain; padding: 36px 16px 48px; background: rgba(8,9,12,.74); backdrop-filter: blur(3px); } #assignBox > .ndz-sw { max-width: 940px; margin: 0 auto; box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(230,180,80,.25); } body:has(#assignBox > .ndz-sw) { overflow: hidden; }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
@@ -14536,7 +14540,7 @@ const bindAsViews = (only) => $$('#assignBox [data-asv]').forEach((b) => (b.oncl
 // saved night it fits (at least half its names there), newest first, a click opening that night
 // (the small calendar on a log's chip, drawn here)
 const SN_CAL = '<svg class="sn-cal" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-function storedNotes() { return NDZ_ON() && S.rep ? ndzBossCards(S.rep) + storedNotes0(S.ndzPick || S.rep.item.boss) : storedNotes0(); } /* (back, Oct 20: one note per group, so the list shows them all; no editing, no manual pick) */
+function storedNotes() { return NDZ_ON() && S.rep ? ((b) => NDZ_NEW() && !notesOf(b).list.some((n) => !n.example) ? '' : storedNotes0(b))(S.ndzPick || S.rep.item.boss) : storedNotes0(); } /* (no plan for the boss yet: the No plan panel already says so) */ /* (back, Oct 20: one note per group, so the list shows them all; no editing, no manual pick) */
 // (the night a note was last used on, for the list)
 function noteUsedAt(boss, id, t) { if (!t) return; const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n || (n.lastUsed && n.lastUsed >= t)) return; n.lastUsed = t; try { store.set(notesKey(boss), JSON.stringify(o)); } catch (e) { /* storage off */ } }
 function storedNotes0(pick) {
@@ -14708,7 +14712,7 @@ document.addEventListener('click', async (e) => { const b = e.target.closest && 
 // alt, else a new player of the same role, else the next new one); more rows can be added for anyone. Every line a player is on
 // changes. Class buttons the new character can't press are left out, like on the other swap screen. The original note stays.
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzsw]'); if (!b || !S.rep || !NDZ_ON()) return;
-  const u0 = noteForRep(S.rep); S.noteSwap = { boss: S.rep.item.boss, id: u0 ? u0.id : null, rows: null }; S.noteDraft = null; S.noteEdit = false; S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); });
+  const u0 = noteForRep(S.rep); S.noteSwap = { boss: S.rep.item.boss, id: u0 ? u0.id : (((S.rep.noteMiss || {}).note || {}).id || null), rows: null, from: S.tab }; /* (from Debriefing: it goes back there after) */ S.noteDraft = null; S.noteEdit = false; S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); });
 // (a note player's jobs, in short: their lines' labels and their reminders' spells or texts)
 function ndzJobsOf(text, a) { let n = {}; try { n = E.parseNote(text) || {}; } catch (e) { n = {}; } const la = String(a).toLowerCase(), out = [];
   const add = (s) => { if (s && !out.includes(s)) out.push(s); };
@@ -14749,13 +14753,13 @@ function ndzSwapView(r) {
   $$('#assignBox .ndz-swb').forEach((s) => (s.onchange = () => { W.rows[+s.dataset.i].b = s.value; ndzSwapView(r); }));
   $$('#assignBox .ndz-swx').forEach((b) => (b.onclick = () => { W.rows.splice(+b.dataset.i, 1); ndzSwapView(r); }));
   $('#ndzSwAdd').onclick = () => { W.rows.push({ a: '', b: '' }); ndzSwapView(r); };
-  $('#ndzSwNo').onclick = () => { S.noteSwap = null; assign(); };
+  $('#ndzSwNo').onclick = () => { const fr = W.from; S.noteSwap = null; if (fr === 'audit') { S.tab = 'audit'; renderMain(); } else assign(); };
   // (two players trading places works too: names go through a stand-in first, so A→B and B→A don't undo each other)
   $('#ndzSwSave').onclick = async () => { let t = text; const sw = ready.map((x) => [x.a, x.b]), tok = (i) => 'Ndzswapq' + String.fromCharCode(97 + i);
     sw.forEach(([a], i) => { t = noteSwapName(t, a, tok(i)); }); sw.forEach(([, b], i) => { t = noteSwapName(t, tok(i), b); });
     t = ndzClassCut(t, sw, r, text);
     const made = noteSaveText(boss, t, null, r), ok = await copyText(t);
-    S.noteSwap = null; S.noteMade = { boss, id: made.id, name: made.name, swaps: sw, dropped: NDZ_DROPPED.slice(), moved: NDZ_MOVED.slice(), copied: ok }; renderMain(); };
+    const fr = W.from; S.noteSwap = null; S.noteMade = { boss, id: made.id, name: made.name, swaps: sw, dropped: NDZ_DROPPED.slice(), moved: NDZ_MOVED.slice(), copied: ok }; if (fr === 'audit') S.tab = 'audit'; renderMain(); };
 }
 // ---- Suggest the rest (Oct 20, your idea): step 2 of the draft ----
 // Every job the raid already did well in its pulls is kept as it is ("Kept"). Jobs nobody did, or did too thinly, are filled from
@@ -14895,7 +14899,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 const ndzHead = (title) => '<div class="ndz-thead"><span class="ndz-ttl">' + title + '</span>' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></div>';
 function ndzTools(r) { const u0 = noteForRep(r), b = r.item.boss, B = (attr, l) => '<button class="btn sm" type="button" ' + attr + '>' + l + '</button>';
   NDZ_PLANON = null; if (S.ndzPick && S.ndzPickRep && S.ndzPickRep !== b) { S.ndzPick = null; S.ndzPlanId = null; } /* (a pick made on another boss's night is forgotten) */
-  if (NDZ_NEW() && S.ndzPick && (S.ndzPick !== b || S.ndzPlanId)) return ndzPlanBoard(r, S.ndzPick); /* (Plan view: the picked boss's note, no pull needed) */
+  if (NDZ_NEW()) return ndzPlanBoard(r, S.ndzPick || b); /* (Assignments is the plan only, version A: a boss's note, never the open log) */
   if (!u0) return NDZ_NEW() && r.noteMiss && notesOf(b).list.some((n) => !n.example) ? ndzBoard(r, null) : ''; /* (notes for this boss, none fitting this pull: Get started still leads) */ if (NDZ_NEW()) return ndzBoard(r, u0); /* (the makeover, test copy) */
   return '<div class="ndz-tools">' + ndzHead('Note tools') + '<div class="ndz-cards">' +
     '<div class="ndz-card ndz-c1"><div class="ndz-ch">Your note</div><div class="ndz-cs"><b>' + esc(u0.name) + '</b>' + (u0.example ? ' (an example)' : '') + '. ' + esc(noteWhy(u0) || 'Checked on this pull.') + '</div><div class="ndz-cb">' + B('data-dbncopy="1"', 'Copy for the game') + B('data-nnew="1"', 'Add another note') + B('data-ndzdel="1"', 'Delete note') + '</div></div>' +
@@ -16382,7 +16386,7 @@ function ndzDash(r, u0, st, lines, go, tlk, how, more, fixBtn, opt) { opt = opt 
   const tUt = offG.length ? '<b>Not on your roster</b><br>' + offG.join('<br>') : '<b>All of it</b><br>Your roster brings every utility on the list.', tKick = '<b>' + plural(K.n, 'kick') + '</b><br>' + K.m + ' melee · ' + K.rg + ' ranged' + (K.none.length ? '<br>No kick: ' + esc(andL(K.none)) : '');
   const tHit = reds.length ? '<b>No raid cooldown near</b><br>' + reds.map((h) => (h.ph % 1 ? 'Int ' : 'P' + h.ph + ' ') + mmss(h.rel) + ' · ' + esc(h.hit)).join('<br>') : '<b>Every big hit has a raid cooldown</b><br>From the fastest ' + esc(D.diff) + ' kills.';
   const head = '<div class="panel ndz-dhd">' + (H ? '<span class="ndz-dth" style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg);background-position:' + H[1] + '% 28%" aria-hidden="true"></span>' : '') +
-    '<div class="ndz-dtt"><b>' + esc(b) + '</b><span class="ndz-dpl">' + esc(D.diff) + '</span>' + (opt.plan ? '<span class="ndz-dpl ndz-dpn" data-tt="' + esc('<b>Planning</b><br>This note on its own: no pull of ' + esc(b) + ' needed. Boss timings come from the fastest kills.') + '">Plan · no pulls needed</span>' : '') + '<div class="sub">' + esc(u0.name) + ' · ' + plural(A.ps.length, 'raider') + ' · ' + plural(D.cds.length, 'cooldown') + '</div></div>' +
+    '<div class="ndz-dtt"><b>' + esc(b) + '</b><span class="ndz-dpl">' + esc(D.diff) + '</span>' + '' + '<div class="sub">' + esc(u0.name) + ' · ' + plural(A.ps.length, 'raider') + ' · ' + plural(D.cds.length, 'cooldown') + '</div></div>' +
     '<span class="ndz-dring" style="--p:' + pct + '" data-tt="' + esc('<b>' + pct + '% ready</b><br>Raiders with a job, raid buffs' + (D.hits.length ? ' and big hits covered' : '') + ', averaged') + '"><span>' + pct + '%</span></span>' +
     '<span class="ndz-dtks">' + tk(!JN.idle.length, JN.jobs + ' of ' + JN.n + ' have a job', true, tJob) + tk(!au.miss, au.miss ? plural(au.miss, 'buff') + ' missing' : 'Every buff', false, tBuff) + tkn(au.have + '/' + au.of + ' utility', tUt) + tkn(plural(K.n, 'kick'), tKick) +
     (D.hits.length ? tk(!unc, unc ? plural(unc, 'big hit') + ' uncovered' : 'Big hits covered', false, tHit) : '') + (late.length ? tk(false, plural(late.length, 'cooldown') + ' not ready', false, '<b>Planned before it\'s back</b><br>' + late.map((c) => esc(c.who) + '\'s ' + esc(ndzSpellNm(c.id) || 'cooldown') + ' at ' + (c.ph % 1 ? 'Int ' : 'P' + c.ph + ' ') + mmss(c.t)).join('<br>')) : '') + '</span>' +
@@ -16397,10 +16401,14 @@ function ndzDashWho(r, used) { const el = $('#ndzDashWho'); if (!el || !NDZ_NEW(
 // ---- Plan view (Oct 20, your OK): pick any boss's card, or Plan view on a saved note, and that note fills the page (roster
 // audit, kicks, timeline, who does what) from the note and the fastest kills alone, so you can plan a boss before your first pull.
 let NDZ_PLANON = null;
-function ndzPlanBoard(r, pb) { const l = notesOf(pb).list.filter((n) => !n.example).sort((a, b) => (b.saved || 0) - (a.saved || 0)), n = (S.ndzPlanId && l.find((x) => x.id === S.ndzPlanId)) || l[0];
-  const B = (attr, lab, cls) => '<button class="btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '>' + lab + '</button>', back = B('data-ndzpick="' + esc(r.item.boss) + '"', '← ' + esc(r.item.boss)), nb = 'data-ndzbuild="1" data-ndzbuildboss="' + esc(pb) + '"';
+function ndzPlanBoard(r, pb) { const l = notesOf(pb).list.filter((n) => !n.example).sort((a, b) => (b.saved || 0) - (a.saved || 0)), n = (S.ndzPlanId && l.find((x) => x.id === S.ndzPlanId)) || (pb === r.item.boss && ((u) => u && l.find((x) => x.id === u.id))(noteForRep(r))) || l[0];
+  const bosses = E.PACKS.map((p) => p.encounter).filter((x, i, a) => a.indexOf(x) === i), cnt = (x) => notesOf(x).list.filter((q) => !q.example).length;
+  const pick = '<div class="panel ndz-pbar"><label class="ndz-pbl" for="ndzPbBoss">Plan for</label><select id="ndzPbBoss" data-ndzpbs="1">' + bosses.map((x) => '<option value="' + esc(x) + '"' + (x === pb ? ' selected' : '') + '>' + esc(x) + (cnt(x) ? ' · ' + plural(cnt(x), 'note') : '') + '</option>').join('') + '</select>' +
+    (l.length > 1 ? '<select data-ndzpns="1" aria-label="Which note">' + l.map((x) => '<option value="' + esc(x.id) + '"' + (n && x.id === n.id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select>' : '') +
+    '<span class="sub ndz-pbx">Your plan for this boss. It doesn\'t use your logs. Debriefing checks it against your pulls.</span></div>';
+  const B = (attr, lab, cls) => '<button class="btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '>' + lab + '</button>', back = '', nb = 'data-ndzbuild="1" data-ndzbuildboss="' + esc(pb) + '"';
   NDZ_PLANON = { boss: pb };
-  if (!n) return '<div class="panel ndz-plan0"><div><b>' + esc(pb) + '</b><div class="sub">No note for this boss yet. Make one, then plan it here before your first pull.</div></div><span class="ndz-cb">' + B(nb, 'New note', 'primary') + back + '</span></div>';
+  if (!n) return pick + '<div class="panel ndz-plan0"><div><b>No plan for ' + esc(pb) + ' yet</b><div class="sub">Make one step by step, paste one you already have' + (pb === r.item.boss ? ', or let Debrief fill the jobs for your roster' : '') + '.</div></div><span class="ndz-cb">' + B(nb, 'Get started →', 'primary') + B('data-ndzwiz="1"', '📋 Import note') + (pb === r.item.boss ? B('data-ndzplan="1"', '👥 Plan with a roster') : '') + '</span></div>';
   const names = ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]))];
   let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (e) { hd = {}; }
   const pr = ndzPlanRep({ pick: pb, diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic', on: new Set(names) }, ndzSpecs());
@@ -16409,7 +16417,14 @@ function ndzPlanBoard(r, pb) { const l = notesOf(pb).list.filter((n) => !n.examp
   const L = st.ro ? st.roIdle : [], lines = L.length ? '<div class="ndz-hl warn"><span class="ndz-ic" aria-hidden="true">!</span><span><b>' + plural(L.length, 'raider') + ' in this note with no job:</b> ' + esc(andL(L)) + '. Give them one in the note, or leave them free.</span></div>' : '';
   const how = '<span class="ndz-hdb">' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></span>';
   let who = ''; try { who = ndzWhoH(pr, n); } catch (e) { try { who = '<div class="panel ndz-who ndz-rcards nolk">' + ndzAbil(pr, st, null) + '</div>'; } catch (x) { who = ''; } }
-  return ndzDash(pr, n, st, lines, B(nb, 'New note'), '', how, '', '', { plan: { key: pb + '|' + n.id, back } }).replace('<div id="ndzDashWho"></div>', '<div id="ndzDashWho">' + who + '</div>'); }
+  const toDb = pb === r.item.boss && r.duration ? '<div class="ndz-pdb"><a href="#" data-ndzdb="1">See how your pulls went against this plan →</a></div>' : '';
+  return pick + ndzDash(pr, n, st, lines, B(nb, 'New note'), '', how, '', '', { plan: { key: pb + '|' + n.id, back } }).replace('<div id="ndzDashWho"></div>', '<div id="ndzDashWho">' + who + '</div>') + toDb; }
+// (the pickers: another boss, or another note for it)
+document.addEventListener('change', (e) => { const s = e.target.closest && e.target.closest('[data-ndzpbs], [data-ndzpns]'); if (!s || !S.rep) return; if (s.dataset.ndzpbs) { S.ndzPick = s.value; S.ndzPlanId = null; } else S.ndzPlanId = s.value; S.ndzPickRep = S.rep.item.boss; renderMain(); });
+// (Debriefing's note bar: who from the plan is here tonight, and who's missing)
+function ndzPlanHere(NJ, r) { const u = NJ && NJ.used; if (!u) return ''; const names = ndzNoteRoster(u) || [...new Set(noteNames(noteResolve(u.text)).map((x) => String(x).split('-')[0]))]; if (!names.length) return '';
+  const here = new Set(ndzIn(r).map((p) => ndzPn(p).toLowerCase())), miss = names.filter((x) => !here.has(String(x).toLowerCase())), k = names.length - miss.length;
+  return '<span class="dbn-gone' + (miss.length ? '' : ' ndz-allhere') + '">' + k + ' of ' + plural(names.length, 'planned raider') + ' ' + (k === 1 ? 'is' : 'are') + ' here tonight' + (miss.length ? '. Missing: ' + esc(andL(miss.slice(0, 6))) + (miss.length > 6 ? ' and ' + (miss.length - 6) + ' more' : '') + '.' : '.') + '</span>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzpcopy]'); if (!b) return; const k = b.dataset.ndzpcopy, i = k.lastIndexOf('|'), n = notesOf(k.slice(0, i)).list.find((x) => x.id === k.slice(i + 1)); if (n) copyBtn(b, n.text); });
 // (Cover it: the suggested cooldown goes into the note, 2 s before the hit; Undo puts the note back as it was)
 const ndzNoteSet = (boss, id, text) => { const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n) return false; n.text = text; notesSave(boss, o); for (const rep of CACHE.values()) if (rep.item.boss === boss) { try { applyNote(rep); } catch (x) { /* (checked on the next look) */ } } return true; };
@@ -17882,11 +17897,11 @@ const dbnBox = (jobs) => (jobs && jobs.length ? '<div class="dbn-box"><div class
 const dbnOnly = (o) => '<details class="panel secd st-' + o.st + ' dbr-line dbn-line" id="dbn-' + esc(o.id) + '" data-k="dbn-' + esc(o.id) + '"' + (S.openSecs.has('dbn-' + o.id) ? ' open' : '') + '><summary><span class="sechd">' + (o.icon || '') + '<b>' + o.title + '</b></span><span class="dbn-from">' + emoIc('📜') + ' From your note</span>' + (o.txtHtml != null ? '<span class="sst ' + o.st + '">' + o.txtHtml + '</span>' : hst(o.st, o.txt || DBN_W[o.st])) + '</summary><div class="secbody">' + (o.how ? '<details class="howit"><summary>How it works</summary><div>' + o.how + '</div></details>' : '') + (o.body || '') + '</div></details>';
 // (the note bar under the top: which note, players it names who weren't here, and the way to change it)
 function dbnBar(NJ, r) {
-  if (!NJ) { const has = notesOf(r.item.boss).list.length; return '<div class="dbn-bar dbn-none"><span>' + emoIc('📜') + ' <b>' + (has ? 'None of your notes for ' + esc(r.item.boss) + ' fits this group' : 'No NSRT note for ' + esc(r.item.boss) + ' yet') + '</b><span class="sub">' + (has ? 'swap in who\'s here to make one for this group' : 'add your raid\'s note to check who did their job') + '</span></span><button type="button" class="btn sm" data-dbnote="1">' + (has ? 'Swap players' : 'Add your NSRT note') + '</button>' + (NDZ_ON() && NDZ_FILL[r.item.boss] ? '<button type="button" class="btn sm" data-ndz="1">Draft a note from these pulls</button>' : '') + '</div>'; }
+  if (!NJ) { if (ASG_OFF()) return ''; /* (Assignments greyed out: nowhere to add a note) */ const has = notesOf(r.item.boss).list.length; return '<div class="dbn-bar dbn-none"><span>' + emoIc('📜') + ' <b>' + (has ? 'None of your notes for ' + esc(r.item.boss) + ' fits this group' : 'No NSRT note for ' + esc(r.item.boss) + ' yet') + '</b><span class="sub">' + (has ? 'swap in who\'s here to make one for this group' : 'add your raid\'s note to check who did their job') + '</span></span><button type="button" class="btn sm" ' + (has && NDZ_ON() && r.noteMiss ? 'data-ndzsw="1"' : 'data-dbnote="1"') + '>' + (has ? 'Swap players' : 'Add your NSRT note') + '</button>' + (NDZ_ON() && NDZ_FILL[r.item.boss] ? '<button type="button" class="btn sm" data-ndz="1">Draft a note from these pulls</button>' : '') + '</div>'; }
   const a = NJ.a || {}, gone = a.unknownNames || [], nm = NJ.used ? NJ.used.name : 'Your note';
   return '<div class="dbn-bar"><span>' + emoIc('📜') + ' <b>' + esc(nm) + '</b><span class="sub">' + plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + esc(NJ.checkedL) + '</span></span>' +
-    (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '') +
-    '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button><button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open Assignments' : 'See the note') + '</button></div>'; }
+    (NDZ_ON() && !ASG_OFF() ? ndzPlanHere(NJ, r) : (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '')) +
+    (NDZ_ON() && !ASG_OFF() ? '<button type="button" class="btn sm" data-ndzsw="1">Swap players</button>' : '') + '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button>' + (ASG_OFF() ? '' : '<button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open the plan' : 'See the note') + '</button>') + '</div>'; }
 // (Note jobs, the fifth number: the jobs that came up this pull, and how many were done)
 function dbnNum(NJ, num) { const j = NJ.secs.filter((o) => o.st !== 'na'), ok = j.filter((o) => o.st === 'ok').length, bad = j.filter((o) => o.st === 'bad').length, warn = j.length - ok - bad;
   return num('Note jobs', j.length ? '<b>' + ok + '</b><em> of ' + j.length + ' done</em>' : '<b>–</b>', j.length ? (bad || warn ? [bad ? bad + ' missed' : '', warn ? warn + ' with slips' : ''].filter(Boolean).join(' · ') : 'every job done') : 'none came up this pull').replace('class="dbr-n"', 'class="dbr-n dbn-n"'); }
