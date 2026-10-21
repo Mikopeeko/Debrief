@@ -325,7 +325,8 @@ async function runDigest(env, now, all) {
 //   { op: 'close', issue, reason: 'completed' | 'not_planned', note } closes the issue (the post hears back next run),
 //   { op: 'review', issue, title, text, tags, important } opens (or adds to) that report's post in #bug-review, the
 //   owner's private forum, always tagging the owner ('ping' adds a line to it; thread names a post with no report),
-//   { op: 'drop-draft', thread } deletes a #post-drafts draft that's already posted (only a post in that forum).
+//   { op: 'drop-draft', thread } deletes a #post-drafts draft that's already posted (only a post in that forum),
+//   { op: 'relink' } swaps the old workers.dev address for debriefme.io in Claudette's own posts and in channel topics.
 const OWNER = '195320918929571840'; // (the user's Discord id, the one tagged)
 async function runInbox(env) {
   const st = (await env.DEBRIEF_KV.get('dc-bugs', 'json')) || { t: {} }, thread = {};
@@ -362,15 +363,19 @@ async function runInbox(env) {
           if (th && th.parent_id === DRAFTS_FORUM) await dc(env, '/channels/' + o.thread, { method: 'DELETE' });
         } else if (o.op === 'draft' && text) {
           await featDraft(env, o); // (a #new-features post for the owner's OK, with Post it / Change it / Skip)
-        } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed'].includes(o.channel)) {
-          // (a post in a Community channel, e.g. the weekly raid tip; only those channels. With a title it's a gold card
-          // (an embed: no link preview under it); replaceLast edits Claudette's newest post there instead of adding one)
-          const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === o.channel) || {}).id; if (!ch) continue;
-          const body = o.title ? { content: '', embeds: [{ title: String(o.title).slice(0, 250), description: String(o.text).slice(0, 4000), color: 0xE6B450, footer: o.footer ? { text: String(o.footer).slice(0, 200) } : undefined }], allowed_mentions: { parse: [] } }
-            : { content: text, flags: 4, allowed_mentions: { parse: [] } };
+        } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed', 'announcments'].includes(o.channel)) {
+          // (a post in a Community channel, e.g. the weekly raid tip, or in #announcments; only those channels. With a title it's a
+          // gold card (an embed: no link preview under it); replaceLast edits Claudette's newest post there instead of adding one;
+          // everyone pings @everyone (#announcments only, when the user asked for it), and an announcement goes out to followers)
+          const c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === o.channel), ch = c && c.id; if (!ch) continue;
+          const all = !!o.everyone && o.channel === 'announcments', men = { parse: all ? ['everyone'] : [] };
+          const body = o.title ? { content: all ? '@everyone' : '', embeds: [{ title: String(o.title).slice(0, 250), description: String(o.text).slice(0, 4000), url: o.url ? String(o.url) : undefined, color: 0xE6B450, footer: o.footer ? { text: String(o.footer).slice(0, 200) } : undefined }], allowed_mentions: men }
+            : { content: (all ? '@everyone ' : '') + text, flags: 4, allowed_mentions: men };
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
-          else await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body });
+          else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'relink') {
+          await env.DEBRIEF_KV.put('relink-todo', JSON.stringify({ todo: null, n: 0 })); // (the rest happens in relink(), a batch a run)
         } else if (o.op === 'buttons' && /^\d{17,20}$/.test(String(o.thread || ''))) {
           // (adds the answer buttons to a #bug-review post written before they existed: its first message, which is the bot's)
           const th = await dc(env, '/channels/' + o.thread).catch(() => null);
@@ -652,6 +657,36 @@ async function featPublish(env, thread) {
   const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); }
   return 'Posted in <#' + ch + '>! 🎉 ' + (prev ? 'It replaced the short card.' : 'Followers get it too.') + ' This draft closes in 24 hours.';
 }
+// The move to debriefme.io (the user's OK, Oct 20): Claudette's own posts and the channel topics that name the old address
+// get the new one. Started by the relink job (KV relink-todo); each run does up to 20 channels or posts (newest 50 messages
+// each), so it never runs long. A card's pictures stay inside it; posts in closed forum posts are opened, fixed and closed again.
+async function relink(env) {
+  const st = await env.DEBRIEF_KV.get('relink-todo', 'json'); if (!st) return;
+  const OLD = 'https://debrief.james-m-nemecek.workers.dev', swap = (s) => (typeof s === 'string' ? s.split(OLD).join(SITE) : s);
+  if (!st.todo) {
+    const chans = await dc(env, '/guilds/' + GUILD + '/channels');
+    for (const c of chans) if (c.topic && c.topic.includes(OLD)) await dc(env, '/channels/' + c.id, { method: 'PATCH', body: { topic: swap(c.topic) } }).catch((err) => console.warn('Relink topic:', c.id, err && err.message));
+    st.todo = chans.filter((c) => c.type === 0 || c.type === 5).map((c) => [c.id, 0]);
+    const act = await dc(env, '/guilds/' + GUILD + '/threads/active').catch(() => ({ threads: [] }));
+    st.todo.push(...(act.threads || []).map((t) => [t.id, 0]));
+    for (const f of chans.filter((c) => c.type === 15)) { const ar = await dc(env, '/channels/' + f.id + '/threads/archived/public?limit=50').catch(() => ({ threads: [] })); st.todo.push(...(ar.threads || []).map((t) => [t.id, t.thread_metadata && t.thread_metadata.locked ? 2 : 1])); }
+  }
+  for (const [id, closed] of st.todo.splice(0, 20)) {
+    const msgs = ((await dc(env, '/channels/' + id + '/messages?limit=50').catch(() => [])) || []).filter((m) => m.author && m.author.id === APP_ID && JSON.stringify([m.content, m.embeds]).includes(OLD));
+    if (!msgs.length) continue;
+    if (closed) await dc(env, '/channels/' + id, { method: 'PATCH', body: { archived: false } }).catch(() => {});
+    for (const m of msgs) {
+      const files = new Map((m.attachments || []).map((a) => [a.url.split('?')[0], a.filename]));
+      const embeds = (m.embeds || []).filter((e) => e.type === 'rich').map((e) => { const img = e.image && e.image.url, f = img && files.get(img.split('?')[0]);
+        return { title: e.title, description: swap(e.description), url: swap(e.url), color: e.color, footer: e.footer ? { text: swap(e.footer.text) } : undefined, fields: e.fields, author: e.author ? { name: e.author.name, url: swap(e.author.url) } : undefined, image: img ? { url: f ? 'attachment://' + f : img } : undefined }; });
+      await dc(env, '/channels/' + id + '/messages/' + m.id, { method: 'PATCH', body: { content: swap(m.content || ''), embeds, attachments: (m.attachments || []).map((a) => ({ id: a.id })), allowed_mentions: { parse: [] } } })
+        .then(() => st.n++).catch((err) => console.warn('Relink:', id, m.id, err && err.message));
+    }
+    if (closed) await dc(env, '/channels/' + id, { method: 'PATCH', body: closed === 2 ? { archived: true, locked: true } : { archived: true } }).catch(() => {});
+  }
+  if (st.todo.length) await env.DEBRIEF_KV.put('relink-todo', JSON.stringify(st));
+  else { await env.DEBRIEF_KV.delete('relink-todo'); console.log('Relink: done,', st.n, 'posts changed'); }
+}
 // Kill feed (the user's pick, Oct 20): a guild signs up with /killfeed add <its Warcraft Logs link>; every 30 minutes
 // Claudette reads each signed-up guild's newest report and posts in #kill-feed the first time it kills each Mythic boss
 // (one post per boss per guild, counted from sign-up, so farm kills don't repeat). KV killfeed: [{id, name, by, seen, done}].
@@ -760,6 +795,7 @@ async function discordJobs(env, now) {
   await runFeatures(env).catch((err) => console.warn('Features:', err && err.message));
   await runQuestions(env, all).catch((err) => console.warn('Questions:', err && err.message));
   await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
+  await relink(env).catch((err) => console.warn('Relink:', err && err.message));
   await runDigest(env, now, all);
 }
 // "Suggest an idea" (the site's form): a new post in #suggestions, under the area picked. Same limits as Report a problem.
