@@ -4085,9 +4085,8 @@ const ndzIsRaidCd = (id) => NDZ_RCD_IDS.has(+id) || RCD_CD[ndzSpellNm(+id)] != n
 // (whose roster the page audits: the raiders picked for the note, else NSRT's invitelist, else tonight's raiders)
 // (a raider Debrief hasn't seen yet: their class, and spec when certain, from the cooldowns the note gives them)
 function ndzAuditPlayers(r, u0) { const A = ndzAuditPlayers0(r, u0); if (!r.duration && u0 && !ndzNoteRoster(u0)) A.who = plural(A.ps.length, 'raider') + ' in this note'; /* (plan view: no "tonight") */ if (!u0 || !A.ps.some((p) => !p.cls)) return A;
-  const by = new Map(); for (const g of NDZ_BUFFS) for (const [, cl, specs, sid] of g[2]) if (cl.length === 1) by.set(+sid, { cls: cl[0], sid: specs && specs.length === 1 ? specs[0] : 0 });
-  const NH = ndzNoteHas(noteResolve(u0.text));
-  for (const p of A.ps) { if (p.cls) continue; for (const id of NH.get(String(p.n).toLowerCase()) || []) { const g = by.get(+id); if (g) { p.cls = g.cls; if (g.sid) p.sid = g.sid; break; } } }
+  const IC = ndzInferCls(noteResolve(u0.text));
+  for (const p of A.ps) { if (p.cls) continue; const g = IC.get(String(p.n).toLowerCase()); if (g) { p.cls = g.cls; if (g.sid) p.sid = g.sid; } }
   A.unknown = A.ps.filter((p) => !p.cls).map((p) => p.n); return A; }
 function ndzAuditPlayers0(r, u0) { const ps = ndzIn(r), ro = ndzNoteRoster(u0);
   if (ro) { const here = new Map(ps.map((p) => [ndzPn(p).toLowerCase(), p])), sp = ndzSpecs();
@@ -4095,10 +4094,17 @@ function ndzAuditPlayers0(r, u0) { const ps = ndzIn(r), ro = ndzNoteRoster(u0);
   return { ps: ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), who: plural(ps.length, 'raider') + ' in ' + (r.item.pull ? 'Pull ' + r.item.pull : 'this pull') }; } /* (say where they come from) */
 // (the roster audit as rows: a kind and its count, then its icons)
 // (who the note gives each spell to: name -> spell IDs; a cooldown the note assigns counts as brought, whatever spec Debrief last saw)
-const ndzNoteHas = (text) => { const m = new Map(); for (const x of ndzRems(text)) for (const t of x.tags) { const k = String(t).split('-')[0].toLowerCase(); if (!m.has(k)) m.set(k, new Set()); m.get(k).add(+x.spellid); } return m; };
+const ndzNoteHas = (text) => { const m = new Map(); for (const x of ndzRems(text)) { const sn = String(ndzSpellNm(+x.spellid) || x.text || '').toLowerCase(); for (const t of x.tags) { const k = String(t).split('-')[0].toLowerCase(); if (!m.has(k)) m.set(k, new Set()); m.get(k).add(+x.spellid); if (sn) m.get(k).add('n:' + sn); } } return m; }; /* (by number and by name: one spell can have two numbers) */
+const ndzHasSp = (set, sid, nm) => !!set && (set.has(+sid) || set.has('n:' + String(nm || '').toLowerCase()));
+// (a raider Debrief hasn't seen yet: their class, and spec when certain, from the cooldowns the note gives them: the Roster
+// audit's one-class spells first, then the site's spec cooldown list)
+function ndzInferCls(text) { const one = new Map(); for (const g of NDZ_BUFFS) for (const [nm, cl, specs, sid] of g[2]) if (cl.length === 1) { const v = { cls: cl[0], sid: specs && specs.length === 1 ? specs[0] : 0 }; one.set(+sid, v); one.set('n:' + nm.toLowerCase(), v); }
+  const byCls = new Map(Object.entries(E.CLASSES).map(([k, v]) => [String(v[0]).toLowerCase(), k])), bySpec = new Map();
+  for (const [spec, l] of Object.entries(PERF_CDS)) { const c = [...byCls.keys()].find((x) => spec.toLowerCase().endsWith(' ' + x)); if (!c) continue; for (const [sn] of l) { const k = 'n:' + sn.toLowerCase(), was = bySpec.get(k); bySpec.set(k, was && was.cls !== byCls.get(c) ? { cls: '?' } : { cls: byCls.get(c), sid: 0 }); } }
+  const out = new Map(); for (const [who, set] of ndzNoteHas(text)) { let g = null; for (const k of set) { g = one.get(k) || null; if (g) break; } if (!g) for (const k of set) { const s = bySpec.get(k); if (s && s.cls !== '?') { g = s; break; } } if (g) out.set(who, g); } return out; }
 function ndzAuditRows(players, noteHas) { let miss = 0, have = 0, of = 0, needN = 0; const missL = [], offL = [];
   const rows = NDZ_BUFFS.map(([lab, kind, list]) => { let n = 0;
-    const ic = list.map(([nm, cl, specs, sid]) => { const mine = players.filter((p) => cl.includes(p.cls)), viaNote = noteHas ? players.filter((p) => (noteHas.get(String(p.n).toLowerCase()) || new Set()).has(+sid)).map((p) => p.n) : [];
+    const ic = list.map(([nm, cl, specs, sid]) => { const mine = players.filter((p) => cl.includes(p.cls)), viaNote = noteHas ? players.filter((p) => ndzHasSp(noteHas.get(String(p.n).toLowerCase()), sid, nm)).map((p) => p.n) : [];
       const yes0 = mine.filter((p) => !specs || (p.sid && specs.includes(+p.sid))).map((p) => p.n), yes = [...new Set(yes0.concat(viaNote))], noteOnly = viaNote.filter((n) => !yes0.includes(n)), maybe = specs ? mine.filter((p) => !p.sid && !yes.includes(p.n)).map((p) => p.n) : [];
       if (yes.length) n++; if (kind === 'need') { needN++; if (!yes.length) { miss++; missL.push(nm + ' (' + cl.map(ndzClsName).filter(Boolean).join(' or ') + ')'); } } else { of++; if (yes.length) have++; else offL.push([lab, nm]); }
       const st = yes.length ? 'ok' : maybe.length ? 'maybe' : kind === 'need' ? 'no' : 'off';
@@ -4144,12 +4150,12 @@ function ndzTlData(r, u0, text, players) {
   const NH = ndzNoteHas(text), RC = NDZ_BUFFS.filter(([lab]) => /^(healer|raid) cooldowns$/i.test(lab)).flatMap(([, , l]) => l).filter(([nm]) => nm !== 'Devotion Aura'), TIER = (nm) => (/^(Spirit Link Totem|Aura Mastery|Power Word: Barrier|Rallying Cry|Darkness|Anti-Magic Zone)$/.test(nm) ? 0 : /^(Tranquility|Revival|Divine Hymn|Rewind)$/.test(nm) ? 1 : 2), cnt = (n) => cds.filter((c) => c.who.toLowerCase() === String(n).toLowerCase()).length;
   const sugg = []; /* (suggestions so far count as planned) */
   for (const h of hits.slice().sort((a, b) => a.ph - b.ph || a.rel - b.rel)) { if (h.c !== 'red') continue; const t = Math.max(0, Math.round(h.rel - 2)), when = { ph: h.ph, t }, opts = [];
-    for (const p of players) for (const [nm, cl, specs, sid] of RC) { if (!((cl.includes(p.cls) && (!specs || (p.sid && specs.includes(+p.sid)))) || (NH.get(String(p.n).toLowerCase()) || new Set()).has(+sid))) continue;
+    for (const p of players) for (const [nm, cl, specs, sid] of RC) { if (!((cl.includes(p.cls) && (!specs || (p.sid && specs.includes(+p.sid)))) || ndzHasSp(NH.get(String(p.n).toLowerCase()), sid, nm))) continue;
       const cd = ndzRech(sid) || 180, free = cds.concat(sugg).filter((c) => c.who.toLowerCase() === String(p.n).toLowerCase() && +c.id === +sid).every((c) => { const g = gapFast(c, when); return g == null || Math.abs(g) >= cd; });
       if (free) opts.push({ who: p.n, id: +sid, name: nm, t, ph: h.ph, cd, k: cnt(p.n), tier: TIER(nm) }); }
     opts.sort((a, b) => a.tier - b.tier || a.k - b.k || a.cd - b.cd || a.who.localeCompare(b.who)); h.fix = opts[0] || null; if (h.fix) sugg.push({ who: h.fix.who, id: h.fix.id, ph: h.fix.ph, t: h.fix.t }); }
   const col = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p.color])), sp = ndzSpecs();
-  return { boss, diff, cds, hits, phs, mech, dmg, dmgK, noteId: (u0 && u0.id) || null, color: (n) => col.get(n.toLowerCase()) || (sp[n.toLowerCase()] || {}).color || 'inherit', fast: !!sd }; }
+  return { boss, diff, cds, hits, phs, mech, dmg, dmgK, noteId: (u0 && u0.id) || null, color: (n) => { const k = n.toLowerCase(), c = col.get(k), s = (sp[k] || {}).color, p = players.find((q) => String(q.n).toLowerCase() === k); return (c && c !== 'inherit' && c) || (s && s !== 'inherit' && s) || (p && p.cls && (E.CLASSES[p.cls] || [])[1]) || 'inherit'; }, fast: !!sd }; }
 let NDZ_TL = null, NDZ_TLV = null; /* (NDZ_TLV: the phase on show, for pointing at the chart) */
 function ndzTimelineH(D) {
   if (!D || !D.phs.length) return '<div class="ndz-cth"><b>Cooldowns</b></div><p class="sub">No cooldown reminders in this note yet.</p>';
@@ -4248,6 +4254,7 @@ function ndzPlanBoard(r, pb) { const l = notesOf(pb).list.filter((n) => !n.examp
   const names = ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]))];
   let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (e) { hd = {}; }
   const pr = ndzPlanRep({ pick: pb, diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic', on: new Set(names) }, ndzSpecs());
+  { const IC = ndzInferCls(noteResolve(n.text)); for (const p of pr.players.values()) { if (p.cls) continue; const g = IC.get(String(p.name).toLowerCase()); if (g) { p.cls = g.cls; p.color = (E.CLASSES[g.cls] || [])[1] || p.color; if (g.sid) p.specId = g.sid; } } } /* (raiders not seen yet: their class from the note) */
   let st; try { st = ndzStatus(pr, n); } catch (e) { const text = noteResolve(n.text); st = { text, pairs: [], gaps: [], idle: [], ps: ndzIn(pr), who: ndzWho(text, pb), jobs: ndzIn(pr).length, ro: names, roIdle: [] }; }
   const L = st.ro ? st.roIdle : [], lines = L.length ? '<div class="ndz-hl warn"><span class="ndz-ic" aria-hidden="true">!</span><span><b>' + plural(L.length, 'raider') + ' in this note with no job:</b> ' + esc(andL(L)) + '. Give them one in the note, or leave them free.</span></div>' : '';
   const how = '<span class="ndz-hdb">' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></span>';
