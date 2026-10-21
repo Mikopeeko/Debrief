@@ -373,6 +373,12 @@ details.secd .secbody { padding: 0 16px 14px; }
 
 .tbl tr.gok td > b { background: #45c15c; } .tbl tr.gbad td > b { background: #ff6b63; }
 .live { display: flex; align-items: center; gap: 8px; padding: 0 16px 12px; flex-wrap: wrap; } #liveBtn.on { border-color: #e5534b; color: #ff9a93; } #liveBtn.on::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #e5534b; margin-right: 6px; animation: lp 1.4s infinite; } @keyframes lp { 50% { opacity: .25; } }
+/* the quiet "reading pulls in the background" note, bottom left (Oct 20) */
+.bgread { position: fixed; left: 14px; bottom: 14px; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 6px 11px; border-radius: 999px; background: rgba(26,30,40,.92); border: 1px solid #3a3f4d; color: #aab1c0; font-size: 12px; pointer-events: none; transition: opacity .4s; }
+.bgread[hidden] { display: none; }
+.bgread i { width: 8px; height: 8px; border-radius: 50%; background: #d8b45a; animation: bgreadP 1.4s ease-in-out infinite; }
+@keyframes bgreadP { 50% { opacity: .3; } }
+@media (max-width: 760px) { .bgread { left: 8px; bottom: 8px; font-size: 11px; } .bgread .bgread-l { display: none; } body:has(.toast) .bgread { display: none; } }
 .toast { position: fixed; right: 18px; bottom: 18px; z-index: 50; background: #1a1e28; border: 1px solid #3a3f4d; border-left: 4px solid #e5534b; border-radius: 8px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
 /* the live "new pull" card: big, in the middle of the screen, gone by itself after a few seconds (hover holds it) */
 .np-card { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 60; width: min(420px, calc(100vw - 32px)); box-sizing: border-box;

@@ -624,6 +624,7 @@ function warmPulls() {
     for (const b of idx.bosses.slice().reverse()) {
       if (S.index !== idx) break;
       if (b.wcl || CACHE.has(b)) continue;
+      if (CACHE.size >= cacheCap()) break; /* (the memory limit: see cacheTrim) */
       await new Promise((r) => setTimeout(r, 600));
       if (S.index !== idx) break;
       try { await getRep(b); } catch (e) { /* skip a pull that fails */ }
@@ -1003,7 +1004,7 @@ function loadSet(where, line, frac) {
 // (a pull asked for twice at once, e.g. by the background reader and a click, is only read once)
 const INFLIGHT = new Map();
 function getRep(item) {
-  if (CACHE.has(item)) return Promise.resolve(CACHE.get(item));
+  if (CACHE.has(item)) { const r = CACHE.get(item); CACHE.delete(item); CACHE.set(item, r); return Promise.resolve(r); } /* (to the back of the line: the memory limit lets go of the oldest first) */
   if (!INFLIGHT.has(item)) INFLIGHT.set(item, readRep(item).finally(() => INFLIGHT.delete(item)));
   return INFLIGHT.get(item);
 }
@@ -1035,7 +1036,7 @@ async function readRep(item) {
   // when the Raid audit opens)
   if (!item.wcl && rep.combatantsRaw && rep.combatantsRaw.length) rep.combatants = rep.combatantsRaw.filter((c) => rep.players.has(c.guid)).map((c) => ({ name: rep.players.get(c.guid).name, gear: c.gear, auras: c.auras, self: c.guid, stats: c.stats, talents: c.talents || [] }));
   applyNote(rep);
-  CACHE.set(item, rep);
+  CACHE.set(item, rep); cacheTrim();
   histSave(rep);
   return rep;
 }
@@ -1071,19 +1072,19 @@ function bgFetch(item) {
   // and it holds off while a loading screen is up: that's you waiting on something)
   // (then each one is read too (your OK, Oct 20: "load in the background and stay loaded"), one at a time in short steps, so
   // Report card, Homework and All pulls open at once; it stops at the memory limit, and a small note shows how far it is)
-  let k = 0; const n = list.length;
+  let k = 0; const n = list.length; bgNote(0, 0);
   (async () => { for (const b of list) { if (tok !== BG_TOK || S.index !== idx) return;
     while (document.querySelector('#main .ld') && tok === BG_TOK) await new Promise((r) => setTimeout(r, 1500));
-    if (tok !== BG_TOK || CACHE.size >= cacheCap()) break; k++; if (CACHE.has(b)) continue; bgNote(k, n);
+    if (tok !== BG_TOK || [...CACHE.keys()].filter((x) => x.id === item.id && x.diffId === item.diffId).length >= cacheCap()) break; k++; /* (other bosses' pulls make room: see cacheTrim) */ if (CACHE.has(b)) continue; bgNote(k, n);
     try { if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(1500, pages * 700))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; break; }
     if (tok !== BG_TOK || S.index !== idx) break;
     try { await getRep(b); } catch (e) { /* skip a pull that fails */ }
-    await new Promise((r) => setTimeout(r, 250)); } })().finally(() => { if (tok === BG_TOK) bgNote(0, 0); });
+    if (tok !== BG_TOK) break; await new Promise((r) => setTimeout(r, 250)); } })().finally(() => { if (tok === BG_TOK) bgNote(0, 0); });
 }
 function bgNote(k, n) { let el = document.getElementById('bgRead');
   if (!n) { if (el) el.hidden = true; return; }
   if (!el) { el = document.createElement('div'); el.id = 'bgRead'; el.className = 'bgread'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-  el.hidden = false; el.innerHTML = '<i></i>Reading this boss\'s pulls in the background · ' + k + ' of ' + n; }
+  el.hidden = false; el.innerHTML = '<i></i>Reading <span class="bgread-l">this boss\'s </span>pulls<span class="bgread-l"> in the background</span> · ' + k + ' of ' + n; }
 // The memory limit: a read pull takes ~25-30 MB, so the site keeps about 40 on a computer and 14 on a phone. Past that, the
 // pulls you looked at longest ago, on other bosses, are let go (they read again from this PC, without a new download).
 const cacheCap = () => { try { return (matchMedia('(pointer: coarse)').matches || (navigator.deviceMemory && navigator.deviceMemory <= 4)) ? 14 : 40; } catch (e) { return 40; } };
@@ -1508,6 +1509,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-20', h: [
+    { t: 'Switching is instant', d: 'Once a pull opens, the rest of that boss\'s pulls are read quietly in the background, and they stay read. Changing tabs, going back to a boss or opening the same log again no longer reloads it.' },
     { t: 'Saves, for healers', d: 'Every healer\'s Rotation page now counts the raiders you saved: they dropped under 30% health and your healing brought them back. Open it to see who, when and with which heals. Your saves show on the Report card too.' },
     { t: 'Compare is back', d: 'Put yourself next to the #1 player of your spec, someone around #50 to #500, or the average of the top 100, 200 or 500. See where you stand, how they play it differently, and the spells where the gap is.' },
     { t: 'Assignments, in development', d: 'A tab just for making notes is on the way: draft a note from your pulls, let Debrief suggest the rest by class, swap players in one go and copy it for the game. It\'s greyed out until it\'s ready. Adding your NSRT note from Debriefing works as usual.' },
@@ -2177,6 +2179,7 @@ function noteLiveHtml(text, boss, rep) {
   return '<b>Debrief reads:</b> ' + parts.map(esc).join(' · ') + warn;
 }
 function applyNote(rep) {
+  rep.noteVer = (rep.noteVer || 0) + 1; /* (the night's grades are worked out again after a note change: see plData) */
   rep.mistakes = rep.mistakes.filter((m) => !m.fromNote);
   rep.assign = null;
   const pick = noteForRep(rep), text = pick ? pick.text : null; rep.noteUsed = pick ? { id: pick.id, name: pick.name, auto: pick.auto } : null;
@@ -17334,7 +17337,18 @@ function plGrade(r, p, x, credit, rot) {
 }
 // every player over one pull or several: each grade and fix averaged over their pulls (by time alive), the trend through
 // the night, their best pull. Gear and buffs need their names looked up first.
+// (each night's grades are remembered for the visit (your OK, Oct 20: "logs stay loaded"), so going back to a boss or a tab
+// shows them at once; worked out again when the pulls, the wipe filter or a note change)
+const PL_MEMO = [];
+const plMemoOk = (m, reps) => m.cut === deathCutN() && m.reps.length === reps.length && m.reps.every((r, i) => r === reps[i] && m.ver[i] === (r.noteVer || 0));
 async function plData(reps, still) {
+  for (let i = PL_MEMO.length - 1; i >= 0; i--) if (!PL_MEMO[i].reps.every((r) => CACHE.get(r.item) === r)) PL_MEMO.splice(i, 1); /* (a log closed or a pull let go: its grades go too) */
+  const m = PL_MEMO.find((x) => plMemoOk(x, reps)); if (m) return m.data;
+  const data = await plData1(reps, still);
+  if (data && !data.some((a) => a.wait)) { PL_MEMO.unshift({ reps: reps.slice(), ver: reps.map((r) => r.noteVer || 0), cut: deathCutN(), data }); PL_MEMO.length = Math.min(PL_MEMO.length, 8); }
+  return data;
+}
+async function plData1(reps, still) {
   { const all = reps.flatMap((r) => r.combatants || []); if (all.length) { if (needsLookup(all)) { await resolveCombatants(all); if (!still()) return null; } await resolveSockets(all); if (!still()) return null; } }
   const acc = new Map(), named = new Map();
   for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name)) named.set(p.guid, p);
@@ -18791,7 +18805,13 @@ if (!WCL.HOSTED && location.protocol === 'http:' && location.hostname === 'local
 async function openWcl(link, creds, live, fresh) {
   const rep = await WCL.loadReport(creds, link.code, live);
   if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); } // (opening a report stops watching the local log)
-  S.file = null; S.wclCreds = creds; S.wclCode = link.code; CACHE.clear();
+  // (the same log opened again (a pull from a note, a team page, the menu): the pulls already read stay read (your OK, Oct 20),
+  // so it opens at once; a pull still growing on a live log is read again)
+  if (S.wclCode === link.code && !S.file && S.index) { const was = new Map(S.index.bosses.filter((b) => b.wcl && (CACHE.has(b) || INFLIGHT.has(b))).map((b) => [b.wcl.fight, b]));
+    rep.bosses = rep.bosses.map((b) => { const o = b.wcl && was.get(b.wcl.fight); return o && o.wcl.end === b.wcl.end && o.wcl.start === b.wcl.start ? o : b; });
+    const keep = new Set(rep.bosses); for (const k of [...CACHE.keys()]) if (!keep.has(k)) CACHE.delete(k); }
+  else CACHE.clear();
+  S.file = null; S.wclCreds = creds; S.wclCode = link.code;
   S.index = { bosses: rep.bosses, runs: [] };
   $('.brand p').textContent = 'Warcraft Logs: ' + (rep.title || link.code);
   renderList();
