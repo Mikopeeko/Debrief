@@ -405,6 +405,10 @@ button.ndz-rct { width: 100%; padding: 0; border: 0; background: none; color: va
 /* assignments polish 3 */ .ndz-unk { color: var(--warn); cursor: help; }
 /* timeline align */ .ndz-ctc, .ndz-ctm { transform: none !important; } .ndz-ctd, .ndz-ctmb { border-radius: 5px !important; } .ndz-ctd { border-left: 1px solid color-mix(in srgb, var(--c) 75%, transparent) !important; } .ndz-ctmb { border-left: 1px solid rgba(229,83,75,.5) !important; } .ndz-ctd.late { border-left: 1.5px solid var(--bad) !important; }
 /* timeline icon centre */ .ndz-ctc, .ndz-ctm { display: flex !important; line-height: 0 !important; } .ndz-ctc { top: 4px !important; }
+/* picker class colors */ .ndz-eadd option, .ndz-eadd optgroup, #ndzBcdW option, #ndzBcdS option { background: #171a22; color: #ece8df; font-weight: 600; } .ndz-eadd option[value=''], #ndzBcdW option[value=''] { color: #98a0ad; }
+/* builder pop-up */ #assignBox:has(> .ndz-build) { position: fixed; inset: 0; z-index: 880; overflow-y: auto; overscroll-behavior: contain; padding: 36px 16px 48px; background: rgba(8,9,12,.74); backdrop-filter: blur(3px); }
+#assignBox > .ndz-build { max-width: 940px; margin: 0 auto; box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(230,180,80,.25); } body:has(#assignBox > .ndz-build) { overflow: hidden; }
+@media (max-width: 640px) { #assignBox:has(> .ndz-build) { padding: 12px 8px 40px; } }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }

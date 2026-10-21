@@ -405,6 +405,10 @@ button.ndz-rct { width: 100%; padding: 0; border: 0; background: none; color: va
 /* assignments polish 3 */ .ndz-unk { color: var(--warn); cursor: help; }
 /* timeline align */ .ndz-ctc, .ndz-ctm { transform: none !important; } .ndz-ctd, .ndz-ctmb { border-radius: 5px !important; } .ndz-ctd { border-left: 1px solid color-mix(in srgb, var(--c) 75%, transparent) !important; } .ndz-ctmb { border-left: 1px solid rgba(229,83,75,.5) !important; } .ndz-ctd.late { border-left: 1.5px solid var(--bad) !important; }
 /* timeline icon centre */ .ndz-ctc, .ndz-ctm { display: flex !important; line-height: 0 !important; } .ndz-ctc { top: 4px !important; }
+/* picker class colors */ .ndz-eadd option, .ndz-eadd optgroup, #ndzBcdW option, #ndzBcdS option { background: #171a22; color: #ece8df; font-weight: 600; } .ndz-eadd option[value=''], #ndzBcdW option[value=''] { color: #98a0ad; }
+/* builder pop-up */ #assignBox:has(> .ndz-build) { position: fixed; inset: 0; z-index: 880; overflow-y: auto; overscroll-behavior: contain; padding: 36px 16px 48px; background: rgba(8,9,12,.74); backdrop-filter: blur(3px); }
+#assignBox > .ndz-build { max-width: 940px; margin: 0 auto; box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(230,180,80,.25); } body:has(#assignBox > .ndz-build) { overflow: hidden; }
+@media (max-width: 640px) { #assignBox:has(> .ndz-build) { padding: 12px 8px 40px; } }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
@@ -13662,6 +13666,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'New note opens the note builder as a guided pop-up, one step at a time, and the player lists show everyone in their class color.',
     'Get started on Assignments now opens the guided note builder: one page per mechanic, with suggested picks and why.',
     'Plan view on Assignments: pick any boss\'s card (or Plan view on a saved note) to plan it before your first pull, no logs needed.',
     'The cooldown timeline flags a cooldown planned before it\'s back, and Cover it adds a ready raid cooldown for any big hit with none, in one click (with Undo).',
@@ -14602,6 +14607,8 @@ const altSet = (a, b) => { const gs = altsGet(), la = String(a).toLowerCase(), l
 // (a spell's class: whoever pressed it in any opened pull)
 const ndzSpellCls = (id) => { for (const rep of CACHE.values()) for (const p of rep.players.values()) if (p.cls && p.castTimes && (p.castTimes.get(id) || []).length) return p.cls; return null; };
 const ndzClsName = (c) => (c && E.CLASSES[c] ? E.CLASSES[c][0] : '');
+// (a player's class color for a picker's option; plain text when the class isn't known)
+const ndzOptCol = (p) => { const c = (p && p.color && p.color !== 'inherit' && p.color) || (p && p.cls && (E.CLASSES[p.cls] || [])[1]); return c || '#ece8df'; };
 // The reminders a note gives player a (by name) that character p's class can't press: [{ id, name, cls }]
 function ndzCant(text, a, p) {
   if (!p || !p.cls) return []; let rem = []; try { rem = (E.parseNote(text) || {}).reminders || []; } catch (e) { rem = []; }
@@ -14872,7 +14879,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // (Note tools · Test version · Show me how) over three cards. With no note, the how-to below has everything, so nothing here.)
 const ndzHead = (title) => '<div class="ndz-thead"><span class="ndz-ttl">' + title + '</span>' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></div>';
 function ndzTools(r) { const u0 = noteForRep(r), b = r.item.boss, B = (attr, l) => '<button class="btn sm" type="button" ' + attr + '>' + l + '</button>';
-  NDZ_PLANON = null; if (NDZ_NEW() && S.noteBuild) return ''; /* (the Note builder open: it's the page, nothing above it) */ if (S.ndzPick && S.ndzPickRep && S.ndzPickRep !== b) { S.ndzPick = null; S.ndzPlanId = null; } /* (a pick made on another boss's night is forgotten) */
+  NDZ_PLANON = null; if (S.ndzPick && S.ndzPickRep && S.ndzPickRep !== b) { S.ndzPick = null; S.ndzPlanId = null; } /* (a pick made on another boss's night is forgotten) */
   if (NDZ_NEW() && S.ndzPick && (S.ndzPick !== b || S.ndzPlanId)) return ndzPlanBoard(r, S.ndzPick); /* (Plan view: the picked boss's note, no pull needed) */
   if (!u0) return NDZ_NEW() && r.noteMiss && notesOf(b).list.some((n) => !n.example) ? ndzBoard(r, null) : ''; /* (notes for this boss, none fitting this pull: Get started still leads) */ if (NDZ_NEW()) return ndzBoard(r, u0); /* (the makeover, test copy) */
   return '<div class="ndz-tools">' + ndzHead('Note tools') + '<div class="ndz-cards">' +
@@ -14950,7 +14957,7 @@ function ndzEditView(r) {
   const col = (n) => { const p = ps.find((q) => pn(q) === n); return p ? p.color : 'inherit'; }, RW = { tank: 'Tanks', healer: 'Healers', dps: 'DPS' };
   const cnt = new Map(ps.map((p) => [pn(p), 0])); for (const x of rows) for (const y of x.names) cnt.set(y.n, (cnt.get(y.n) || 0) + 1);
   const addSel = (i) => '<select class="ndz-eadd" data-i="' + i + '" aria-label="Add a player to this job"><option value="">+ Add</option>' +
-    ['tank', 'healer', 'dps'].map((ro) => '<optgroup label="' + RW[ro] + '">' + ps.filter((p) => p.role === ro && !rows[i].names.some((y) => y.n === pn(p))).map((p) => '<option value="' + esc(pn(p)) + '">' + esc(pn(p)) + '</option>').join('') + '</optgroup>').join('') + '</select>';
+    ['tank', 'healer', 'dps'].map((ro) => '<optgroup label="' + RW[ro] + '">' + ps.filter((p) => p.role === ro && !rows[i].names.some((y) => y.n === pn(p))).map((p) => '<option value="' + esc(pn(p)) + '" style="color:' + ndzOptCol(p) + '">' + esc(pn(p)) + '</option>').join('') + '</optgroup>').join('') + '</select>';
   const secs = [...new Set(rows.map((x) => x.sec || 'Your jobs'))];
   const line = (x, i) => '<div class="ndz-er"><span class="ndz-l">' + (x.custom ? '<input class="ndz-elab" data-i="' + i + '" value="' + esc(x.label) + '" placeholder="Job name, like Dreadmarch stack" aria-label="Job name">' : esc(x.label)) + '</span>' +
     '<span class="ndz-ns">' + x.names.map((y, j) => '<span class="ndz-p"><span class="nm" style="color:' + col(y.n) + '">' + esc(y.n) + '</span><button class="ndz-ex" type="button" data-i="' + i + '" data-j="' + j + '" aria-label="Remove ' + esc(y.n) + '">×</button></span>').join('') + addSel(i) + '</span>' +
@@ -15448,7 +15455,7 @@ function ndzBuildView(r) {
       return '<div class="ndz-bs"><div class="ndz-bsh"><b>' + esc(sl.label) + '</b><span class="sub' + (short ? ' ndz-warnt' : '') + '">' + cnt + (sl.want ? (sl.approx ? ' · about ' + sl.want : ' of ' + sl.want) : '') + (sl.order ? ' · in kick order' : '') + '</span></div><div class="ndz-abn">' +
         v.n.map((n, i) => { const twice = pg.exclusive && inPage.get(n) > 1;
           return '<span class="ndz-p' + (twice ? ' warn' : '') + '">' + (sl.order ? '<i>' + (i + 1) + '</i>' : '') + '<span class="nm" style="color:' + col(n) + '">' + esc(n) + '</span>' + (sl.order && i ? '<button class="ndz-ex" type="button" data-bup="' + esc(k + '|' + i) + '" aria-label="Move up">↑</button>' : '') + '<button class="ndz-ex" type="button" data-bx="' + esc(k + '|' + i) + '" aria-label="Remove ' + esc(n) + '">×</button></span>'; }).join('') +
-        '<select class="ndz-eadd" data-badd="' + esc(k) + '" aria-label="Add a player"><option value="">+ Add</option>' + ps.filter((p) => !v.n.includes(p.name)).map((p) => '<option value="' + esc(p.name) + '">' + esc(p.name) + ' (' + esc(p.specName || p.role) + ')</option>').join('') + '</select></div>' + (v.why ? '<div class="ndz-bwhy"><span class="ndz-bsg' + (v.src ? ' src' : '') + '">' + (v.src ? NDZ_SRC_TAG[v.src] : 'Suggested') + '</span>' + esc(v.why.charAt(0).toUpperCase() + v.why.slice(1)) + '</div>' : '') + '</div>'; };
+        '<select class="ndz-eadd" data-badd="' + esc(k) + '" aria-label="Add a player"><option value="">+ Add</option>' + ps.filter((p) => !v.n.includes(p.name)).map((p) => '<option value="' + esc(p.name) + '" style="color:' + ndzOptCol(p) + '">' + esc(p.name) + ' (' + esc(p.specName || p.role) + ')</option>').join('') + '</select></div>' + (v.why ? '<div class="ndz-bwhy"><span class="ndz-bsg' + (v.src ? ' src' : '') + '">' + (v.src ? NDZ_SRC_TAG[v.src] : 'Suggested') + '</span>' + esc(v.why.charAt(0).toUpperCase() + v.why.slice(1)) + '</div>' : '') + '</div>'; };
     const twice = pg.exclusive ? [...inPage].filter(([, c]) => c > 1).map(([n]) => n) : [], none = pg.exclusive ? ps.filter((p) => !inPage.has(p.name)).map((p) => p.name) : [];
     h = top(esc(pg.title)) + prog + '<div class="ndz-bexp"><div class="ndz-abh">' + (ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)) + '<b>' + esc(pg.title) + '</b></div><p>' + esc(pg.explain) + '</p><p class="ndz-btip">💡 ' + esc(pg.tip) + '</p>' + (B.diff === 'Heroic' && (NDZ_HEROIC[B.pick] || {})[pg.key] ? '<p class="ndz-bhero"><b>On Heroic:</b> ' + esc(NDZ_HEROIC[B.pick][pg.key]) + '</p>' : '') + '</div>' +
       (pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? '<div class="ndz-bwhyb ndz-bempty"><b>✏️ Your pick</b><p>Add players with + Add, or press Fill in suggested picks to see who Debrief would pick and why.</p></div>' : '') +
@@ -15467,7 +15474,7 @@ function ndzBuildView(r) {
         '<select class="ndz-eadd" data-bcdw="' + i + '"><option value="">Who?</option>' + ps.map((p) => '<option value="' + esc(p.name) + '"' + (c.who === p.name ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</select>' + (clash(c, i) ? '<span class="ndz-rcn">not back from cooldown yet</span>' : '') +
         '<button class="ndz-ex" type="button" data-bcdx="' + i + '">Remove</button></span>' + (c.why ? '<span class="ndz-cdwhy sub">' + esc(c.why) + '</span>' : '') + '</div>').join('') : '<p class="sub">No cooldowns yet. Add the big ones below.</p>') + '</div>' +
       '<div class="ndz-pd ndz-badd"><span class="sub">Add:</span><select id="ndzBcdP"><option value="1">P1</option><option value="2">P2</option><option value="2.5">Intermission</option><option value="3">P3</option></select><input id="ndzBcdT" class="ndz-elab" style="width:70px" placeholder="1:30" aria-label="Time into the phase">' +
-      '<select id="ndzBcdS">' + RCD.map((n) => '<option>' + esc(n) + '</option>').join('') + '</select><select id="ndzBcdW"><option value="">Who?</option>' + ps.map((p) => '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>').join('') + '</select>' + btn('id="ndzBcdAdd"', '+ Add', 'sm') + '</div>' + foot('Review →', true); }
+      '<select id="ndzBcdS">' + RCD.map((n) => '<option>' + esc(n) + '</option>').join('') + '</select><select id="ndzBcdW"><option value="">Who?</option>' + ps.map((p) => '<option value="' + esc(p.name) + '" style="color:' + ndzOptCol(p) + '">' + esc(p.name) + '</option>').join('') + '</select>' + btn('id="ndzBcdAdd"', '+ Add', 'sm') + '</div>' + foot('Review →', true); }
   else { const text = ndzBuildText(B), st = { text, pairs: [], gaps: [], ps: [...B.pr.players.values()] };
     const sugName = B.diff + ' plan, ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); /* (a new note's own name, not a swap name against an older note) */
     B.ideas = ndzNameIdeas(B, sugName); if (B.name == null) B.name = B.ideas[0]; /* (a name that tells this roster apart; 🎲 goes through the ideas) */
@@ -15479,8 +15486,9 @@ function ndzBuildView(r) {
       '<details class="ndz-sec"><summary>The note as it will be saved</summary><pre class="ndz-pre">' + esc(text) + '</pre></details>' +
       '<div class="ndz-pd ndz-dcrow">' + btn('data-ndzdc="build"', '💬 Copy for Discord', 'sm') + '<span class="sub">The note as one picture, everyone in their class color, to post before the pull.</span></div>' +
       foot('Save and copy for the game', true); }
-  box.innerHTML = '<div class="panel ndz ndz-build">' + h + '</div>';
-  const redraw = () => { const y = window.scrollY; ndzBuildView(r); window.scrollTo({ top: y }); };
+  box.innerHTML = '<div class="panel ndz ndz-build" role="dialog" aria-modal="true" aria-label="Note builder">' + h + '</div>'; /* (shown as a pop-up over the page: CSS on #assignBox) */
+  if (B._st !== B.step) { box.scrollTop = 0; B._st = B.step; } /* (a new step starts at its top) */
+  const redraw = () => { const y = window.scrollY, by = box.scrollTop, same = B._st === B.step; ndzBuildView(r); window.scrollTo({ top: y }); if (same) box.scrollTop = by; };
   $('#ndzBX').onclick = () => { S.noteBuild = null; renderMain(); }; /* (the dashboard comes back) */
   if ($('#ndzBBack')) $('#ndzBBack').onclick = () => { B.step--; redraw(); };
   $$('#assignBox [data-bpp]').forEach((c) => (c.onchange = () => { if (c.checked) B.on.add(c.dataset.bpp); else B.on.delete(c.dataset.bpp); B.pages = null; redraw(); }));
