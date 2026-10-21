@@ -263,3 +263,21 @@ ndz-roster.js, ndz-comp.js) and tested in the private copy (scratchpad/clean, se
    two Evokers on Ula'tek/Twin Fangs/Sszorak/Kith'ix). Picks core raiders to that shape: whoever sat out last time first,
    then who's been there most, with a nudge for a class the raid still lacks. Heroic: everyone (up to 30). It says why and
    who sits out (and that a role is short when the core roster can't fill it).
+7. **Raid buffs and utility** (the user: "a full list of class utility"): the buff row became rows by kind: Buffs, Debuffs
+   (missing = red), Healer cooldowns, Raid cooldowns, Externals, Immunities, Movement, Utility (nobody = greyed, since you
+   rarely have all). Spec-only spells (Pain Suppression, Tranquility…) need that spec; a raider whose spec Debrief hasn't
+   seen is a maybe (amber). Every entry has its spell ID, so icons load without a log. Header: buffs missing · N of 36 utility.
+8. **Roster audit** (the user's name for it): eight small cards with counts (6/6 ✓, 3/7) in two rows, plus a full-width
+   **Kicks** card: every raider's interrupt, melee and ranged side by side, shortest cooldown first (tanks are melee; healers
+   none but a Resto Shaman; +1 on Prot Paladin / Prot Warrior; "No kick:" line). It audits the raiders picked for the note:
+   the Note builder saves the ticked raiders with the note (note.roster); else NSRT's invitelist line; else tonight's raiders.
+9. **Missing-buff alert**: Start on the builder's roster page with a raid buff or debuff missing shows which, who on the
+   roster brings it but isn't ticked, and Fix the roster / Continue anyway (asked once per roster).
+10. **Assignments on one screen** (the user's pick: layout A of the drafts in notes/Assignments spruce mockups): with a note
+   set, the board is a slim header (boss art, boss, note, raiders, cooldowns; a ready ring = raiders with a job, raid buffs and
+   big hits covered, averaged; ticks; Get started, Copy for the game, Discord, Debriefing →, All tools), what to fix if anything,
+   then two columns: Roster audit rows and Kicks (one icon size, 22px) | the cooldown timeline (the note's reminders, a row per
+   raider, a phase at a time; the fastest kills' big hits as diamonds: red no raid cooldown 6 s before to 4 s after, amber a
+   healer's own burst only) and Who does what (its cooldown list folded, since the timeline shows them). ndz-dash.js.
+   Still to do: the boss's mechanics on the timeline (a switch, off by default; each boss's timings from top kills) and the
+   share-as-image picture.

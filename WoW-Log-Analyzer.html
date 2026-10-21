@@ -338,6 +338,47 @@ button.ndz-rct { width: 100%; padding: 0; border: 0; background: none; color: va
 .ndz-chkl { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; } .ndz-chki { padding: 4px 10px; border: 1px solid var(--line2); border-radius: 999px; background: var(--raised); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; } .ndz-chki:hover, .ndz-chki:focus-visible { border-color: #f3c06a; } .ndz-chk .sub { margin: 4px 0 0; font-size: 12.5px; }
 .ndz-satg { padding: 1px 7px; border-radius: 999px; background: rgba(243,192,106,.14); color: #f3c06a; font-size: 11.5px; font-weight: 600; white-space: nowrap; } .ndz-satl { margin: 4px 0 8px; padding: 7px 12px; border-left: 3px solid #f3c06a; border-radius: 6px; background: rgba(243,192,106,.07); font-size: 13.5px; }
 .ndz-bhero { margin: 8px 0 0; padding: 6px 10px; border-left: 3px solid #7aa7ff; border-radius: 6px; background: rgba(122,167,255,.08); font-size: 13.5px; } .ndz-bhero b { color: #a9c4ff; }
+.ndz-ugrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(244px, 1fr)); gap: 8px; margin-top: 4px; }
+.ndz-ug { padding: 8px 10px 10px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.025); }
+.ndz-ugh { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin: 0 0 7px; } .ndz-ugl { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ndz-ugc { font-size: 12px; font-weight: 700; color: var(--faint); } .ndz-ugc.ok { color: #7ee08f; } .ndz-ugc.bad { color: #ff8f87; } .ndz-ugc.have { color: var(--text); }
+.ndz-ugi { display: flex; flex-wrap: wrap; gap: 6px; } .ndz-ugi .ndz-bfi { width: 26px; height: 26px; border-radius: 6px; outline-width: 1.5px; }
+.ndz-ugi .ndz-bfi .icw, .ndz-ugi .ndz-bfi .icw .ico, .ndz-ugi .ndz-bfi img.oi { width: 26px !important; height: 26px !important; border-radius: 5px; }
+.ndz-bfi.maybe { outline-color: rgba(243,192,106,.9); } .ndz-bfi.off { outline-color: transparent; opacity: .26; filter: grayscale(1); }
+@media (max-width: 560px) { .ndz-ugrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; } .ndz-ug { padding: 7px 8px 8px; } .ndz-ugi { gap: 5px; }
+  .ndz-ugi .ndz-bfi, .ndz-ugi .ndz-bfi .icw, .ndz-ugi .ndz-bfi .icw .ico, .ndz-ugi .ndz-bfi img.oi { width: 24px !important; height: 24px !important; } }
+.ndz-ugk { grid-column: 1 / -1; } .ndz-kcols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 22px; } .ndz-kh { margin: 0 0 5px; font-size: 11.5px; color: var(--muted); } .ndz-kh b { color: var(--text); }
+.ndz-kcol ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 4px 12px; margin: 0; padding: 0; list-style: none; }
+.ndz-kk { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 2px 0; font-size: 13px; } .ndz-kk .icw { flex: none; } .ndz-kk .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ndz-kk.maybe { opacity: .7; }
+.ndz-kcd { margin-left: auto; padding-left: 6px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; } .ndz-kp { font-style: normal; font-size: 10.5px; font-weight: 700; color: #7ee08f; } .ndz-knone { margin: 6px 0 0; font-size: 12px; }
+@media (max-width: 560px) { .ndz-kcols { gap: 6px 10px; } .ndz-kcol ul { grid-template-columns: minmax(0, 1fr); } .ndz-kk { gap: 4px; font-size: 12.5px; } .ndz-kcd { padding-left: 3px; } .ndz-kk .icw, .ndz-kk .icw .ico, .ndz-kk img.oi { width: 17px !important; height: 17px !important; } }
+.ndz-raw { font-weight: 500; color: var(--muted); }
+.ndz-bal { margin: 6px 0 4px; padding-left: 18px; font-size: 13.5px; } .ndz-bal li { margin: 2px 0; }
+.ndz-dash { display: grid; gap: 10px; margin: 0 0 12px; } .ndz-dhd { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 14px; }
+.ndz-dth { width: 96px; height: 52px; flex: none; border-radius: 8px; background-size: cover; } .ndz-dtt { min-width: 150px; } .ndz-dtt b { font: 800 22px/1.1 var(--head); } .ndz-dtt .sub { font-size: 12.5px; }
+.ndz-dpl { margin-left: 7px; padding: 1px 8px; border-radius: 999px; font: 700 11px var(--body); background: rgba(230,180,80,.14); color: var(--gold); vertical-align: 3px; }
+.ndz-dring { width: 48px; height: 48px; flex: none; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--gold) calc(var(--p) * 1%), rgba(255,255,255,.08) 0); } .ndz-dring > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--panel); font: 800 13px var(--head); }
+.ndz-dtks { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 280px; } .ndz-dtk { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border: 1px solid var(--line2); border-radius: 999px; background: rgba(255,255,255,.04); font-size: 12.5px; } .ndz-dtk i { font-style: normal; font-weight: 800; }
+.ndz-dtk.ok { border-color: rgba(69,193,92,.45); } .ndz-dtk.ok i { color: #7ee08f; } .ndz-dtk.warn { border-color: rgba(243,192,106,.55); } .ndz-dtk.warn i { color: #f3c06a; } .ndz-dtk.bad { border-color: rgba(229,83,75,.55); background: rgba(229,83,75,.08); } .ndz-dtk.bad i { color: #ff8f87; }
+.ndz-dact { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .ndz-dhd .ndz-hdb { margin-left: auto; } .ndz-dal { padding: 8px 14px; }
+.ndz-dgrid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 10px; align-items: start; } .ndz-dcol { display: grid; gap: 10px; min-width: 0; } .ndz-dpan { padding: 10px 12px; }
+.ndz-dph { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px; } .ndz-dph b { font: 700 16px var(--head); } .ndz-dph .sub { font-size: 12px; text-align: right; }
+.ndz-dag { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px; align-items: center; margin: 0 0 6px; } .ndz-dagl { font: 700 10.5px/1.15 var(--head); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); } .ndz-dagl em { display: block; font-style: normal; color: var(--faint); } .ndz-dagl em.ok { color: #7ee08f; } .ndz-dagl em.bad { color: #ff8f87; }
+.ndz-dagi { display: flex; flex-wrap: wrap; gap: 6px; } .ndz-dagi .ndz-bfi { width: 22px; height: 22px; border-radius: 5px; outline-width: 1.5px; } .ndz-dagi .ndz-bfi .icw, .ndz-dagi .ndz-bfi .icw .ico, .ndz-dagi .ndz-bfi img.oi, .ndz-dkr .icw, .ndz-dkr .icw .ico, .ndz-dkr img.oi { width: 22px !important; height: 22px !important; border-radius: 5px; }
+.ndz-dkc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 12px; } .ndz-dkh { margin: 0 0 4px; font: 700 10.5px var(--head); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.ndz-dkr { display: flex; align-items: center; gap: 6px; min-width: 0; height: 28px; font-size: 13px; } .ndz-dkr .icw { flex: none; margin: 0 !important; } .ndz-dkr b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; } .ndz-dkr i { font-style: normal; font-size: 10.5px; font-weight: 800; color: #7ee08f; }
+.ndz-dkr span { margin-left: auto; padding-left: 4px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; } .ndz-dkr.maybe { opacity: .7; } .ndz-dkn { margin: 6px 0 0; font-size: 12px; }
+.ndz-dtl { --ctw: 110px; } .ndz-cth { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; } .ndz-cth > b { font: 700 16px var(--head); } .ndz-cth > .sub { margin-left: auto; font-size: 12px; }
+.ndz-ctt { display: flex; gap: 3px; } .ndz-ctt button { height: 26px; padding: 0 10px; border: 1px solid var(--line2); border-radius: 7px; background: var(--raised); color: var(--muted); font: 600 12px var(--body); cursor: pointer; } .ndz-ctt button.on { border-color: rgba(230,180,80,.5); background: rgba(230,180,80,.14); color: var(--gold); } .ndz-ctred { font-style: normal; color: var(--bad); }
+.ndz-ctb { position: relative; } .ndz-ctl { display: grid; grid-template-columns: var(--ctw) minmax(0, 1fr); align-items: center; height: 27px; border-top: 1px solid var(--line); } .ndz-ctl.hits { height: 34px; border-top: 0; } .ndz-ctw { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12.5px var(--body); } .ndz-ctl.hits .ndz-ctw { color: var(--muted); font-size: 11.5px; font-weight: 500; }
+.ndz-ctr { position: relative; height: 100%; } .ndz-ctc { position: absolute; top: 4px; transform: translateX(-50%); } .ndz-ctc .icw, .ndz-ctc .icw .ico, .ndz-ctc img.oi { width: 19px !important; height: 19px !important; margin: 0 !important; border-radius: 4px; }
+.ndz-cthit { position: absolute; bottom: 3px; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); } .ndz-cthit em { margin-bottom: 2px; font-style: normal; font-size: 10px; color: var(--faint); } .ndz-cthit i { width: 11px; height: 11px; border-radius: 2px; background: var(--good); } .ndz-cthit.amber i { background: var(--warn); } .ndz-cthit.red i { background: var(--bad); }
+.ndz-ctv { position: absolute; top: 34px; bottom: 0; border-left: 1px dashed rgba(229,83,75,.5); pointer-events: none; } .ndz-ctv.amber { border-color: rgba(232,162,58,.45); } .ndz-ctv.green { border-color: rgba(69,193,92,.22); }
+.ndz-cta { position: relative; height: 16px; margin-left: var(--ctw); border-top: 1px solid var(--line2); } .ndz-cta span { position: absolute; top: 1px; transform: translateX(-50%); font-size: 10.5px; color: var(--faint); }
+.ndz-ctu { margin-top: 8px; padding: 6px 10px; border-left: 3px solid var(--bad); border-radius: 5px; background: rgba(229,83,75,.07); font-size: 13px; } .ndz-ctu.ok { border-color: var(--good); background: rgba(69,193,92,.06); } .ndz-ctu.ok b { color: #7ee08f; }
+#ndzDashWho .ndz-who { margin: 0; } details.ndz-abcd > summary { cursor: pointer; list-style: none; } details.ndz-abcd > summary::-webkit-details-marker { display: none; } details.ndz-abcd > summary::before { content: '▸ '; color: var(--muted); } details.ndz-abcd[open] > summary::before { content: '▾ '; }
+@media (max-width: 980px) { .ndz-dgrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .ndz-dth { display: none; } .ndz-dtl { --ctw: 74px; } .ndz-ctw { font-size: 11.5px; } .ndz-dact .btn { height: 30px; padding: 0 9px; font-size: 12.5px; } }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
@@ -13485,7 +13526,7 @@ const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with the buttons that jump into it)
-const ASG_OFF = () => !!window.WLA_HOSTED; /* (the Assignments tab is greyed out on the website, "In Development" (your call, Oct 20); on in the app on your PC) */
+const ASG_OFF = () => false; /* (live since Oct 20, your call; () => !!window.WLA_HOSTED greys it on the website again) */
 const PERF_OFF = () => !!window.WLA_HOSTED; /* (greyed out on the website again Oct 20 while you plan its rebuild (your call); on in the app on your PC) */
 // (Power Infusion, one of Graphs' views, was greyed out on the website until its rework; on everywhere since Oct 18
 // (your call). Set this back to () => !!window.WLA_HOSTED to grey it out there again, with its plan line on Pull recap)
@@ -13572,7 +13613,7 @@ const PATCH_NOTES = [
     { t: 'Switching is instant', d: 'Once a pull opens, the rest of that boss\'s pulls are read quietly in the background, and they stay read. Changing tabs, going back to a boss or opening the same log again no longer reloads it.' },
     { t: 'Saves, for healers', d: 'Every healer\'s Rotation page now counts the raiders you saved: they dropped under 30% health and your healing brought them back. Open it to see who, when and with which heals. Your saves show on the Report card too.' },
     { t: 'Compare is back', d: 'Put yourself next to the #1 player of your spec, someone around #50 to #500, or the average of the top 100, 200 or 500. See where you stand, how they play it differently, and the spells where the gap is.' },
-    { t: 'Assignments, in development', d: 'A tab just for making notes is on the way: draft a note from your pulls, let Debrief suggest the rest by class, swap players in one go and copy it for the game. It\'s greyed out until it\'s ready. Adding your NSRT note from Debriefing works as usual.' },
+    { t: 'Assignments is here', d: 'Build your raid\'s note step by step, with suggested picks and why for every boss. See your roster\'s buffs, utility and kicks, every cooldown on a timeline against the boss\'s biggest hits, and copy it for the game or Discord.' },
     { t: 'Boss guides', d: 'Animated maps that show how each fight works on Heroic and Mythic, with the key moments frozen and explained, a mistake view and a full-fight simulation. In the menu (☰), open to anyone. The Coiled Altar is first.' },
     { t: 'Your NSRT note, inside Debriefing', d: 'Each job now sits on the mechanic it\'s about. Add a note on any pull: every group of players keeps its own, with suggested picks, warnings for a wrong role, and who takes the jobs of anyone missing.' },
     { t: 'Debriefing levels up', d: 'Dots show how each mechanic went on your last pulls, numbers in colour, a Next pull line on every mechanic, phase timing against your best pull, and Copy for Discord.' },
@@ -13580,6 +13621,8 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Debriefing checks your note\'s dispel, grip and kick jobs: who did each one.',
+    'Making a note: pick a suggested roster shaped like the fastest kills, see who sat out last time, and get warned if a raid buff is missing.',
     'Live now pops up on your screen with a soft chime when your log or your team\'s goes live. Follow live opens it on Debriefing, which wears a red Live badge while you follow.',
     'While you follow live, the pull row ends with a Next pull card, right where the next pull will show up.',
     'Boss guides: Axegrinder gets its own map. The boss throws 5 axes, anyone they fly into is knocked back, then they roll around at random and hurt anyone they touch. Both throws are on the fight timeline, with a band showing when the axes are out.',
@@ -14395,7 +14438,7 @@ function rosterOffer0(r, used, forced) {
       away.map((a) => '<div class="rsw-one" data-ar="' + esc(roleA.get(a) || '') + '"><label class="rsw-r"><b>' + esc(a) + '</b>' + (roleA.get(a) ? '<span class="sub">(' + (roleA.get(a) === 'dps' ? 'DPS' : roleA.get(a)) + ')</span>' : '') + '<span class="sub">is replaced by</span>' + sel(a) + '</label>' +
         (forced ? '<label class="rsw-nk sub"><input type="checkbox" class="rsw-nkc" data-a="' + esc(a) + '"> it\'s a nickname for this player</label>' : '') +
         (altQ.get(a) && pick.get(a) ? ndzAltBox(a, pick.get(a), altQ.get(a)) : '') +
-        '<div class="rsw-jobs sub">' + esc(a) + "'s jobs: " + jobsOf(a) + (why.get(a) && pick.get(a) ? ' · <span class="rsw-why">Suggested ' + esc(pn(pick.get(a))) + ': ' + esc(why.get(a)) + '</span>' : '') + '</div>' + ndzCantH(used.text, a, pick.get(a), r) + '<div class="rsw-w" hidden></div></div>').join('') + '</div>';
+        '<div class="rsw-jobs sub">' + esc(a) + "'s jobs: " + jobsOf(a) + (why.get(a) && pick.get(a) ? ' · <span class="rsw-why">Suggested ' + esc(pn(pick.get(a))) + ': ' + esc(why.get(a)) + '</span>' : '') + '</div>' + ndzCantH(used.text, a, pick.get(a)) + '' + ndzCantH(used.text, a, pick.get(a), r) + '<div class="rsw-w" hidden></div></div>').join('') + '</div>';
   return '<div class="panel as-swap"><div class="rsw-t"><b>This pull\'s players don\'t fully match your note.</b> ' + body + '</div>' +
     '<div class="rsw-b"><button class="btn primary sm" type="button" id="rswMake">Make the new note</button><button class="btn sm" type="button" id="rswNo" data-k="' + esc(key) + '">Not now</button>' +
     '<span class="sub">Your note stays as it is. The new one is saved next to it, and pulls with these players use it.</span></div></div>';
@@ -14947,7 +14990,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // B: a status board on top ("Is your note ready for tonight?", what to fix, Fix it for me, Copy for the game) and three tiles.
 // D: adding a note opens a short guided pop-up (paste, boss, who's in tonight, gaps, save) that catches problems before saving.
 // C: Who does what as raider cards by role, with problems marked on the player.
-const NDZ_NEW = () => !WCL.HOSTED;
+const NDZ_NEW = () => true; /* (live for everyone since Oct 20, your call; () => !WCL.HOSTED keeps it to the app on your PC again) */
 const ndzRole = { tank: 'Tanks', healer: 'Healers', dps: 'DPS' };
 const ndzPn = (p) => p.name.split('-')[0];
 const ndzIn = (r) => [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name));
@@ -14977,9 +15020,10 @@ function ndzBoard(r, u0) {
     (g.cov ? B('data-ndzgap="' + esc([g.a, g.b, g.c.id, g.cov.n, g.cov.sid].join('|')) + '"', 'Give it to ' + esc(g.cov.n), 'sm') : '') + '</div>').join('') +
     (st.idle.length ? '<div class="ndz-hl warn"><span class="ndz-ic" aria-hidden="true">!</span><span><b>' + plural(st.idle.length, 'raider') + ' with no job:</b> ' + esc(andL(st.idle.map(ndzPn))) + '. Give them one with Build from roster, or leave them free.</span></div>' : '') +
     st.pairs.map(([a, x]) => '<div class="ndz-hl"><span class="ndz-ic okc" aria-hidden="true">✓</span><span>' + esc(a) + ' is playing ' + esc(x) + ' tonight (same raider), so ' + esc(x) + ' has ' + esc(a) + '\'s jobs.</span></div>').join('');
+  if (NDZ_NEW()) return ndzDash(r, u0, st, lines, B('data-ndzbuild="1"', 'New note', ''), B('data-ndzsw="1"', 'Swap players', ''), how, '', fixable.length ? B('data-ndzfix="1"', 'Fix it for me', 'sm') : ''); /* (one screen, your pick; New note, not Get started; no All tools) */
   return '<div class="panel ndz-hero ' + (ok ? 'ok' : 'warn') + '"><span class="ndz-hbig" aria-hidden="true">' + (ok ? '✓' : '!') + '</span><div><h2>' + (ok ? 'Your note is ready for tonight' : 'Your note is almost ready: ' + plural(n, 'thing') + ' to fix') + '</h2>' +
     '<div class="sub"><b>' + esc(u0.name) + '</b> · ' + st.jobs + ' of ' + st.ps.length + ' raiders have a job · <a href="#" data-ndzdb="1">tonight\'s results are on Debriefing</a></div>' + lines +
-    '<div class="ndz-cb ndz-hb">' + go + B('data-dbncopy="1"', 'Copy for the game', 'big') + B('data-ndzdc="cur"', '💬 Copy for Discord') + tlk + '</div></div>' + how + '</div>' + ndzBuffBox(r) + more((fixable.length ? B('data-ndzfix="1"', 'Fix it for me', 'sm') : '') + B('data-ndzsw="1"', 'Swap players', 'sm') + B('data-ndzdel="1"', 'Delete note', 'sm'));
+    '<div class="ndz-cb ndz-hb">' + go + B('data-dbncopy="1"', 'Copy for the game', 'big') + B('data-ndzdc="cur"', '💬 Copy for Discord') + tlk + '</div></div>' + how + '</div>' + ndzBuffBox(r, u0) + more((fixable.length ? B('data-ndzfix="1"', 'Fix it for me', 'sm') : '') + B('data-ndzsw="1"', 'Swap players', 'sm') + B('data-ndzdel="1"', 'Delete note', 'sm'));
 }
 document.addEventListener('click', (e) => { const g = e.target.closest && e.target.closest('[data-ndzgo]'); if (g) { const el = document.getElementById(g.dataset.ndzgo); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
   const d = e.target.closest && e.target.closest('[data-ndzdb]'); if (d && S.rep) { e.preventDefault(); S.tab = 'audit'; renderMain(); window.scrollTo({ top: 0 }); } });
@@ -15003,7 +15047,7 @@ function ndzCards(r, used) {
   const ps = st.ps.slice().filter((p) => !one || ndzPn(p) === one).sort((a, b) => ndzPn(a).localeCompare(ndzPn(b)));
   const pick = one ? '<span class="ndz-me">Showing <b>' + esc(one) + '</b> only <button class="btn sm" type="button" data-ndzme="">Show everyone</button></span>' : ''; /* (your call: no Just one raider picker) */
   const view = S.ndzWhoV || 'ab', sw = '<span class="ndz-seg"><button type="button" data-ndzwv="ab" class="' + (view === 'ab' ? 'on' : '') + '">By ability</button><button type="button" data-ndzwv="rd" class="' + (view === 'rd' ? 'on' : '') + '">By raider</button></span>';
-  if (view === 'ab') return '<div class="panel ndz-who ndz-rcards nolk' + (one ? ' focus' : '') + '"><div class="ndz-thead"><span class="ndz-ttl">Who does what</span>' + sw + pick + '</div>' + ndzAbil(r, st, one) + '</div>';
+  if (view === 'ab') return '<div class="panel ndz-who ndz-rcards nolk' + (one ? ' focus' : '') + '"><div class="ndz-thead"><span class="ndz-ttl">Who does what</span>' + sw + pick + '</div>' + ndzAbil(r, st, one, !!$('#ndzDashWho')) + '</div>'; /* (on the one-screen page the timeline shows the cooldowns: the list is folded) */
   return '<div class="panel ndz-who ndz-rcards nolk"><div class="ndz-thead"><span class="ndz-ttl">Who does what</span>' + sw + pick + (one ? '' : '<button class="btn sm" type="button" data-ndzall="1">' + (S.ndzAllOpen ? 'Close all' : 'Open all') + '</button>') + '<span class="ndz-lg"><span class="ndz-tg k-soak">Soak</span><span class="ndz-tg k-kick">Kick</span><span class="ndz-tg k-cc">CC and orbs</span><span class="ndz-tg k-cd">Cooldown</span></span></div>' +
     ['tank', 'healer', 'dps'].map((ro) => { const l = ps.filter((p) => p.role === ro); return l.length ? '<div class="ndz-grp">' + ndzRole[ro] + '</div><div class="ndz-rcg">' + l.map(card).join('') + '</div>' : ''; }).join('') + '</div>';
 }
@@ -15112,7 +15156,7 @@ const ndzSecIcon = (t, boss) => { const k = String(t || '').toLowerCase().trim()
 { const go = () => { let t = 0; new MutationObserver((ms) => { if (t) return; if (!ms.some((m) => [...m.addedNodes].some((n) => n.nodeType === 1 && (n.matches('img.oi') || n.querySelector('img.oi:not([data-done])'))))) return;
     t = setTimeout(() => { t = 0; try { hydrateIcons(); } catch (e) { /* (icons stay as their stand-ins) */ } }, 60); }).observe(document.body, { childList: true, subtree: true }); };
   if (document.body) go(); else document.addEventListener('DOMContentLoaded', go); }
-function ndzAbil(r, st, one) {
+function ndzAbil(r, st, one, fold) {
   const ps = st.ps, byN = new Map(ps.map((p) => [ndzPn(p).toLowerCase(), p])), altBy = new Map(st.pairs.map(([a, x]) => [x.toLowerCase(), a])), gapAt = new Set(st.gaps.map((g) => g.c.id + '|' + g.b.toLowerCase()));
   const chip = (n, i) => { const p = byN.get(n.toLowerCase()), al = altBy.get(n.toLowerCase());
     return '<span class="ndz-ac' + (one && n.toLowerCase() === one.toLowerCase() ? ' me' : '') + '">' + (i ? '<i>' + i + '</i>' : '') + '<span class="nm" style="color:' + (p ? p.color : 'inherit') + '">' + esc(n) + '</span>' + (al ? '<span class="sub"> for ' + esc(al) + '</span>' : '') + '</span>'; };
@@ -15136,8 +15180,8 @@ function ndzAbil(r, st, one) {
   const iconFor = (t) => { const pi = ndzSecIcon(t, r && r.item && r.item.boss); if (pi) return pi; const w = t.split(/\s+/); for (let i = w.length; i > 0; i--) { const n = w.slice(0, i).join(' '); if (sidOf(n)) return spIc(n); } return spellIcon(0, t); };
   const secH = (x) => '<div class="ndz-ab"><div class="ndz-abh">' + iconFor(x.title) + '<b>' + esc(x.title) + '</b></div>' + x.rows.map((rw) => '<div class="ndz-abr"><span class="ndz-abl">' + esc(rw.l) + '</span><span class="ndz-abn">' + rw.n.map((n, i) => chip(n, x.kick && rw.n.length > 1 ? i + 1 : 0)).join('') + '</span></div>').join('') + '</div>';
   cds.sort((a, b) => a.ph - b.ph || a.t - b.t); if (one) cds.splice(0, cds.length, ...cds.filter((c) => c.who.some((w) => w.toLowerCase() === one.toLowerCase())));
-  const cdH = cds.length ? '<div class="ndz-ab ndz-abcd"><div class="ndz-abh"><b>Cooldowns, in fight order</b></div>' + cds.map((c) => { const gap = c.who.some((w) => gapAt.has(c.id + '|' + w.toLowerCase()));
-    return '<div class="ndz-abr' + (gap ? ' warn' : '') + '"><span class="ndz-abt">' + (c.ph % 1 ? 'Int ' : 'P' + c.ph + ' ') + T(c.t) + '</span><span class="ndz-abn">' + spellIcon(c.id, c.nm) + '<span class="ndz-cdn">' + esc(c.nm) + '</span>' + c.who.map((n) => chip(n, 0)).join('') + (gap ? '<span class="ndz-rcn"> can\'t be pressed on this character</span>' : '') + '</span></div>'; }).join('') + '</div>' : '';
+  const cdH = cds.length ? (fold ? '<details class="ndz-ab ndz-abcd"><summary class="ndz-abh"><b>Cooldowns as a list</b> <span class="sub">' + cds.length + ', in fight order</span></summary>' : '<div class="ndz-ab ndz-abcd"><div class="ndz-abh"><b>Cooldowns, in fight order</b></div>') + cds.map((c) => { const gap = c.who.some((w) => gapAt.has(c.id + '|' + w.toLowerCase()));
+    return '<div class="ndz-abr' + (gap ? ' warn' : '') + '"><span class="ndz-abt">' + (c.ph % 1 ? 'Int ' : 'P' + c.ph + ' ') + T(c.t) + '</span><span class="ndz-abn">' + spellIcon(c.id, c.nm) + '<span class="ndz-cdn">' + esc(c.nm) + '</span>' + c.who.map((n) => chip(n, 0)).join('') + (gap ? '<span class="ndz-rcn"> can\'t be pressed on this character</span>' : '') + '</span></div>'; }).join('') + (fold ? '</details>' : '</div>') : '';
   return '<div class="ndz-abg">' + secs.map(secH).join('') + '</div>' + cdH;
 }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzwv]'); if (!b || !S.rep) return; S.ndzWhoV = b.dataset.ndzwv; const y = window.scrollY; assign(); window.scrollTo({ top: y }); });
@@ -15150,7 +15194,7 @@ document.addEventListener('change', (e) => { const t = e.target.closest && e.tar
 // The first time each day you're on Debriefing for a boss with no note (none used and none saved for it), a small card asks if
 // you want to add one and why. Add my note opens the note window; Not now asks again tomorrow; Don't ask again stops it for good.
 // It waits for the tour and page tips to close, and never shows twice in a day.
-const NDZ_ASK_ON = () => !WCL.HOSTED;
+const NDZ_ASK_ON = () => true; /* (live since Oct 20) */
 const NDZ_ASK_DAY = 'wla-ndz-ask-day', NDZ_ASK_NEVER = 'wla-ndz-ask-never';
 const ndzToday = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
 function ndzAskCheck() {
@@ -15236,7 +15280,7 @@ function ndzBSp(B) { const sp = { ...ndzSpecs() }, tg = ndzBTeams().find((g) => 
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzbuild]'); if (!b || !S.rep) return; for (const rep of CACHE.values()) ndzSpecSave(rep);
   const eb = b.dataset.noteboss, en = eb && notesOf(eb).list.find((x) => x.id === b.dataset.noteid); /* (Edit in the Note builder: that note) */
   if (en) { let hd = {}; try { hd = (E.parseNote(en.text) || {}).header || {}; } catch (x) { hd = {}; } const names = [...new Set(noteNames(noteResolve(en.text)).map((x) => String(x).split('-')[0]))];
-    S.noteBuild = { boss: S.rep.item.boss, pick: eb, diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic', on: new Set(names), team: ndzBTeamDef(S.rep), roles: {}, step: 0, sel: null, cds: null, src: 'note', noteId: en.id, editName: en.name, name: en.name, draft: null };
+    S.noteBuild = { boss: S.rep.item.boss, pick: eb, diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic', on: new Set(ndzNoteRoster(en) || names), team: ndzBTeamDef(S.rep), roles: {}, step: 0, sel: null, cds: null, src: 'note', noteId: en.id, editName: en.name, name: en.name, draft: null };
     S.noteDraft = null; S.noteSwap = null; S.notePlan = null; S.noteEdit = false; S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); return; }
   S.noteBuild = { boss: S.rep.item.boss, pick: NDZ_BUILD[S.rep.item.boss] ? S.rep.item.boss : 'The Coiled Altar', diff: /heroic/i.test(S.rep.item.diff) ? 'Heroic' : 'Mythic', on: new Set(), team: ndzBTeamDef(S.rep), roles: {}, step: 0, sel: null, cds: null, src: ndzSrcDef(S.rep, b.dataset.ndzbuild), draft: null };
   S.noteDraft = null; S.noteSwap = null; S.notePlan = null; S.noteEdit = false; S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); });
@@ -15335,11 +15379,11 @@ function ndzBuildView(r) {
       (B.rosterSug && B.rosterSug.key === B.pick + '|' + B.diff ? '<div class="ndz-bwhyb ndz-rsug"><b>✨ Suggested roster</b>' + B.rosterSug.why.map((x) => '<p>' + esc(x) + '</p>').join('') + (B.rosterSug.out.length ? '<p class="sub">Sitting out: ' + esc(andL(B.rosterSug.out.map((x) => x.n + ' (' + x.why + ')'))) + '.</p>' : '') + '<p class="sub">Change anyone below.</p></div>' : '') +
       ['tank', 'melee', 'healer', 'ranged', 'dps'].map((ro) => { const kind = (x) => (!x.s ? null : x.s.role === 'tank' || x.s.role === 'healer' ? x.s.role : x.s.guess ? 'dps' : NDZ_MELEE.has(+x.s.sid) ? 'melee' : 'ranged'); const l = ppl.filter((x) => kind(x) === ro); return l.length ? '<div class="ndz-ppg"><div class="ndz-ch">' + ({ tank: 'Tanks', melee: 'Melee', healer: 'Healers', ranged: 'Ranged', dps: 'DPS, spec not seen yet' })[ro] + '</div><div class="ndz-ppl">' + l.map(chip).join('') + '</div></div>' : ''; }).join('') +
       (ppl.some((x) => !x.s) ? '<div class="ndz-ppg"><div class="ndz-ch">Class not known yet</div><div class="ndz-ppl">' + ppl.filter((x) => !x.s).map(chip).join('') + '</div></div>' : '') +
-      (B.on.size ? ndzBuffs([...B.on].map((n) => ({ n, cls: (sp[n.toLowerCase()] || {}).cls }))) : '') + /* (raid buffs for the ticked raiders) */
+      (B.on.size ? ndzBuffs([...B.on].map((n) => { const s = sp[n.toLowerCase()] || {}; return { n, cls: s.cls, sid: s.guess ? 0 : s.sid }; })) : '') + /* (raid buffs for the ticked raiders) */
       '<div class="ndz-bwcl"><b>Filling in?</b> <span class="sub">Add someone from Warcraft Logs by name and realm.</span><div class="ndz-pd ndz-badd">' +
       '<input id="ndzBwN" placeholder="Name" aria-label="Character name"><input id="ndzBwS" placeholder="Realm" aria-label="Realm" value="' + esc(B.realm || '') + '"><select id="ndzBwR" aria-label="Region">' + ['US', 'EU', 'KR', 'TW'].map((g) => '<option' + ((B.reg || 'US') === g ? ' selected' : '') + '>' + g + '</option>').join('') + '</select>' +
       '<select id="ndzBwRole" aria-label="Role"><option value="dps">DPS</option><option value="healer">Healer</option><option value="tank">Tank</option></select>' + btn('id="ndzBwGo"', 'Find and add', 'sm primary') + '</div><div id="ndzBwMsg" class="sub" role="status"></div></div>' +
-      '</div>' + foot('Start →', false); }
+      '</div>' + ndzBuffAskH(B, r) + foot('Start →', false); }
   else if (B.step <= pages.length) { const pg = pages[B.step - 1], ps = [...B.pr.players.values()].sort((a, b) => ({ tank: 0, healer: 1, dps: 2 })[a.role] - ({ tank: 0, healer: 1, dps: 2 })[b.role] || a.name.localeCompare(b.name));
     const col = (n) => (B.pr.players.get(n) || {}).color || 'inherit', inPage = new Map(); for (const sl of pg.slots) for (const n of B.sel[pg.key + '|' + sl.label].n) inPage.set(n, (inPage.get(n) || 0) + 1);
     const slotH = (sl) => { const k = pg.key + '|' + sl.label, v = B.sel[k], cnt = v.n.length, short = sl.want && cnt < (sl.approx ? sl.want - 1 : sl.want); /* (an even split is about right, give or take one) */
@@ -15400,6 +15444,8 @@ function ndzBuildView(r) {
     try { const info = await WCL.charInfo(await wclCreds(), { name: nm, srv: rl.toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-'), reg: rg }); const k = info.name.toLowerCase(), ex = ndzExtra();
       ex[k] = { n: info.name, cls: info.cls, role: ro, srv: rl, reg: rg }; store.set(NDZ_EXTRA, JSON.stringify(ex)); B.roles[k] = ro; B.on.add(info.name); B.pages = null; redraw(); }
     catch (e) { msg.textContent = 'Couldn\'t find ' + nm + ' on ' + rl + ' (' + rg + '). Check the spelling and the realm.'; } };
+  if ($('#ndzBuffFix')) $('#ndzBuffFix').onclick = () => { B.buffAsk = null; redraw(); const g = $('#assignBox .ndz-ppg'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  if ($('#ndzBuffGo')) $('#ndzBuffGo').onclick = () => { B.buffOk = [...B.on].sort().join('|'); B.buffAsk = null; $('#ndzBNext').click(); };
   if ($('#ndzBNone')) $('#ndzBNone').onclick = () => { B.on = new Set(); B.pages = null; redraw(); };
   if ($('#ndzBSugR')) $('#ndzBSugR').onclick = () => { const g = ndzRosterSug(B, r); B.on = new Set(g.on); B.pages = null; B.rosterSug = { key: B.pick + '|' + B.diff, why: g.why, out: g.out }; redraw(); };
   const sel = (k) => B.sel[k];
@@ -15418,9 +15464,10 @@ function ndzBuildView(r) {
     const t = m[3] != null ? +m[3] : +m[1] * 60 + +m[2], nm = $('#ndzBcdS').value; B.cds.push({ ph: +$('#ndzBcdP').value, t, id: E.SPELLID.get(nm.toLowerCase()) || null, text: nm, who: $('#ndzBcdW').value }); redraw(); };
   $('#ndzBNext').onclick = async () => {
     if (B.step === 0) { { const [a, b] = ndzSize(B), n = B.on.size; if (n < a || n > b) { const m = box.querySelector('.ndz-wfoot .sub'); m.textContent = B.diff + (a === b ? ' needs exactly ' + a + ' raiders' : ' needs ' + a + '-' + b + ' raiders') + ': ' + (n < a ? 'tick ' + (a - n) + ' more.' : 'untick ' + (n - b) + '.'); m.classList.add('ndz-warnt'); return; } } if (!ndzSrcOk(B, r, B.src)) { B.src = 'sug'; B.pages = null; } if (B.src === 'pulls' && !B.draft) { $('#ndzBNext').disabled = true; await ndzSrcLoad(B, r, box); if (S.noteBuild !== B) return; B.pages = null; } if (B.src !== 'note' && B.fill == null) { const m = box.querySelector('.ndz-wfoot .sub'); m.textContent = 'Choose how the pages start, above.'; m.classList.add('ndz-warnt'); return; }
+    { const key = [...B.on].sort().join('|'); if (B.buffOk !== key && ndzMissBuffs(ndzBRoster(B)).length) { B.buffAsk = key; redraw(); const el = $('#ndzBuffAsk'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } } /* (a raid buff missing: ask first) */
     if (!B.pages) { ndzBuildStart(B); if (B.fill === false && B.src !== 'note') { for (const k of Object.keys(B.sel)) B.sel[k] = { n: [], why: '' }; B.cdsSug = B.cds; B.cds = []; } } B.step = 1; redraw(); window.scrollTo({ top: 0 }); return; }
     if (B.step < total - 1) { B.step++; redraw(); window.scrollTo({ top: 0 }); return; }
-    const t = ndzBuildText(B), nm = ($('#ndzBName') || {}).value || '', boss = B.pick, made = B.noteId && notesOf(boss).list.some((x) => x.id === B.noteId) ? ndzNoteUpdate(boss, B.noteId, t, nm.trim()) : noteSaveText(boss, t, nm.trim() || null, r), ok = await copyText(t);
+    const t = ndzBuildText(B), nm = ($('#ndzBName') || {}).value || '', boss = B.pick, made = B.noteId && notesOf(boss).list.some((x) => x.id === B.noteId) ? ndzNoteUpdate(boss, B.noteId, t, nm.trim()) : noteSaveText(boss, t, nm.trim() || null, r), ok = await copyText(t); ndzRosterKeep(boss, made, B); /* (the ticked raiders, kept with the note for its roster audit) */
     S.noteBuild = null; S.ndzPick = boss; S.noteMade = { boss: r.item.boss, planBoss: boss !== r.item.boss ? boss : null, id: made.id, name: made.name + (boss !== r.item.boss ? ' for ' + boss : ''), swaps: [], copied: ok }; renderMain(); window.scrollTo({ top: 0 }); };
 }
 // ---- Get started (Oct 20, your idea: "make the note section a guided thing"; test copy only, behind NDZ_NEW) ----
@@ -15851,7 +15898,7 @@ const NDZ_PICKS = {
 // apart. Test copy only.
 function ndzNoteView(boss, id) {
   const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n) return;
-  const text = noteResolve(n.text), sp = ndzSpecs(), names = [...new Set(noteNames(text).map((x) => String(x).split('-')[0]))];
+  const text = noteResolve(n.text), sp = ndzSpecs(), ro = ndzNoteRoster(n), names = ro || [...new Set(noteNames(text).map((x) => String(x).split('-')[0]))]; /* (the roster picked for it, when saved) */
   let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
   const diff = /mythic|16/i.test(String(hd.difficulty || '')) ? 'Mythic' : /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : '';
   const pr = ndzPlanRep({ pick: boss, diff: diff || 'Mythic', on: new Set(names) }, sp), st = { text, pairs: [], gaps: [], ps: [...pr.players.values()] };
@@ -15862,8 +15909,8 @@ function ndzNoteView(boss, id) {
   let box = $('#ndzNoteView'); if (!box) { box = document.createElement('div'); box.id = 'ndzNoteView'; box.className = 'ndz-wiz ndz-nv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); document.body.appendChild(box); document.body.classList.add('ndz-modal'); }
   box.setAttribute('aria-label', n.name);
   box.innerHTML = '<div class="ndz-wbox ndz-nvbox"><div class="ndz-whead"><span class="sub">' + esc(boss) + (diff ? ' · ' + diff : '') + (n.saved ? ' · saved ' + esc(new Date(n.saved).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) : '') + '</span><button class="ndz-ex" type="button" id="ndzNvX" aria-label="Close">✕</button></div>' +
-    '<h2>' + esc(n.name) + '</h2><p class="sub">' + plural(names.length, 'player') + ' in this note.</p>' +
-    '<div class="ndz-sec"><h4>Roster</h4>' + (roster || '<p class="sub">No player names in this note.</p>') + (names.length ? ndzBuffs(names.map((x) => ({ n: x, cls: (info(x) || {}).cls }))) : '') + '</div>' +
+    '<h2>' + esc(n.name) + '</h2><p class="sub">' + (ro ? plural(names.length, 'raider') + ' picked for this note.' : plural(names.length, 'player') + ' in this note.') + '</p>' +
+    '<div class="ndz-sec"><h4>Roster</h4>' + (roster || '<p class="sub">No player names in this note.</p>') + (names.length ? ndzBuffs(names.map((x) => ({ n: x, cls: (info(x) || {}).cls, sid: (info(x) || {}).sid }))) : '') + '</div>' +
     '<div class="ndz-sec"><h4>Who does what</h4><div class="panel ndz-who ndz-rcards nolk">' + ndzAbil(pr, st, null) + '</div></div>' +
     '<div class="ndz-wfoot"><button class="btn" type="button" id="ndzNvClose">Close</button><span class="sub" id="ndzNvMsg"></span><span class="ndz-cb">' + (NDZ_BUILD[boss] && S.rep ? '<button class="btn" type="button" id="ndzNvEdit" data-ndzbuild="note" data-noteboss="' + esc(boss) + '" data-noteid="' + esc(id) + '">✏️ Edit in the Note builder</button>' : '') + '<button class="btn" type="button" data-ndzdc="' + esc(boss + '|' + id) + '">💬 Copy for Discord</button><button class="btn primary" type="button" id="ndzNvCopy">Copy for the game</button></span></div></div>';
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide')) document.body.classList.remove('ndz-modal'); };
@@ -15874,24 +15921,74 @@ function ndzNoteView(boss, id) {
 document.addEventListener('click', (e) => { if (!NDZ_NEW()) return; const c = e.target.closest && e.target.closest('.sn-card'); if (!c || e.target.closest('button, a, select, input, summary, .sn-logs, .sn-log')) return;
   const k = c.querySelector('[data-ncopy]'); if (!k) return; const [boss, id] = k.dataset.ncopy.split('|'); ndzNoteView(boss, id); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ndzNoteView')) { $('#ndzNoteView').remove(); if (!$('#ndzWiz') && !$('#ndzGuide')) document.body.classList.remove('ndz-modal'); } });
-// ---- Raid buffs (Oct 20, your ask: show that all the buffs are accounted for) ----
-// Which raid buffs, damage-taken debuffs and key utility a roster brings, by class: covered ones are green with who brings
-// them, missing ones are flagged. Shown on the saved-note view and on the Note builder's roster page (updates as you tick).
+// ---- Raid buffs and utility (Oct 20, your ask: every buff accounted for; then the full class utility list) ----
+// What a roster brings, by class (and spec, where only one spec has it): the raid buffs and damage-taken debuffs (missing ones
+// are flagged red), then healer raid cooldowns, other raid cooldowns, externals, immunities, movement and utility (what's
+// there is green, what nobody brings is greyed: you rarely have all of them). Someone whose spec Debrief hasn't seen yet
+// counts as a maybe (amber) for a spec's spell. Shown on the saved-note view, the Note builder's roster page and Assignments.
+// [label, 'need' (flag what's missing) or 'have', [[name, classes, specs or 0, spell ID for the icon]]]
 const NDZ_BUFFS = [
-  ['Buffs', [['Arcane Intellect', ['MAGE']], ['Power Word: Fortitude', ['PRIEST']], ['Battle Shout', ['WARRIOR']], ['Mark of the Wild', ['DRUID']], ['Skyfury', ['SHAMAN']], ['Blessing of the Bronze', ['EVOKER']]]],
-  ['Debuffs', [['Mystic Touch', ['MONK']], ['Chaos Brand', ['DEMONHUNTER']], ['Hunter\'s Mark', ['HUNTER']]]],
-  ['Utility', [['Bloodlust', ['SHAMAN', 'MAGE', 'HUNTER', 'EVOKER']], ['Battle res', ['DRUID', 'DEATHKNIGHT', 'WARLOCK', 'PALADIN'], 'Rebirth'], ['Devotion Aura', ['PALADIN']], ['Demonic Gateway', ['WARLOCK']]]],
+  ['Buffs', 'need', [['Arcane Intellect', ['MAGE'], 0, 1459], ['Power Word: Fortitude', ['PRIEST'], 0, 21562], ['Battle Shout', ['WARRIOR'], 0, 6673], ['Mark of the Wild', ['DRUID'], 0, 1126], ['Skyfury', ['SHAMAN'], 0, 462854], ['Blessing of the Bronze', ['EVOKER'], 0, 364342]]],
+  ['Debuffs', 'need', [['Mystic Touch', ['MONK'], 0, 8647], ['Chaos Brand', ['DEMONHUNTER'], 0, 1490], ['Hunter\'s Mark', ['HUNTER'], 0, 257284]]],
+  ['Healer cooldowns', 'have', [['Tranquility', ['DRUID'], [105], 740], ['Revival', ['MONK'], [270], 115310], ['Divine Hymn', ['PRIEST'], [257], 64843], ['Power Word: Barrier', ['PRIEST'], [256], 62618], ['Rewind', ['EVOKER'], [1468], 363534], ['Spirit Link Totem', ['SHAMAN'], [264], 98008], ['Aura Mastery', ['PALADIN'], [65], 31821]]],
+  ['Raid cooldowns', 'have', [['Rallying Cry', ['WARRIOR'], 0, 97462], ['Darkness', ['DEMONHUNTER'], 0, 196718], ['Anti-Magic Zone', ['DEATHKNIGHT'], 0, 51052], ['Zephyr', ['EVOKER'], 0, 374227], ['Vampiric Embrace', ['PRIEST'], [258], 15286], ['Devotion Aura', ['PALADIN'], 0, 465]]],
+  ['Externals', 'have', [['Pain Suppression', ['PRIEST'], [256], 33206], ['Guardian Spirit', ['PRIEST'], [257], 47788], ['Ironbark', ['DRUID'], [105], 102342], ['Life Cocoon', ['MONK'], [270], 116849], ['Time Dilation', ['EVOKER'], [1468], 357170], ['Blessing of Sacrifice', ['PALADIN'], 0, 6940], ['Power Infusion', ['PRIEST'], 0, 10060]]],
+  ['Immunities', 'have', [['Divine Shield', ['PALADIN'], 0, 642], ['Blessing of Protection', ['PALADIN'], 0, 1022], ['Ice Block', ['MAGE'], 0, 45438], ['Aspect of the Turtle', ['HUNTER'], 0, 186265], ['Cloak of Shadows', ['ROGUE'], 0, 31224]]],
+  ['Movement', 'have', [['Stampeding Roar', ['DRUID'], 0, 106898], ['Time Spiral', ['EVOKER'], 0, 374968], ['Demonic Gateway', ['WARLOCK'], 0, 111771], ['Blessing of Freedom', ['PALADIN'], 0, 1044], ['Wind Rush Totem', ['SHAMAN'], 0, 192077]]],
+  ['Utility', 'have', [['Bloodlust', ['SHAMAN', 'MAGE', 'HUNTER', 'EVOKER'], 0, 2825], ['Battle res', ['DRUID', 'DEATHKNIGHT', 'WARLOCK', 'PALADIN'], 0, 20484], ['Mass Dispel', ['PRIEST'], 0, 32375], ['Innervate', ['DRUID'], 0, 29166], ['Poison Cleansing Totem', ['SHAMAN'], 0, 383013], ['Gorefiend\'s Grasp', ['DEATHKNIGHT'], [250], 108199]]],
 ];
-// (players: [{ n, cls }]) -> the checklist
-function ndzBuffs(players) {
+// (players: [{ n, cls, sid }]; sid when Debrief has seen their spec) -> the checklist
+function ndzBuffs(players, who) {
   setTimeout(() => { try { hydrateIcons(); } catch (e) { /* (icons stay as their stand-ins) */ } }, 60); /* (the icons load after the box is on the page) */
-  const by = (cl) => players.filter((p) => cl.includes(p.cls)).map((p) => p.n); let miss = 0;
-  const icons = NDZ_BUFFS.map(([, list]) => list.map(([nm, cl, ic]) => { const who = by(cl); if (!who.length) miss++; const t = nm + ': ' + (who.length ? who.join(', ') : 'nobody brings it');
-    return '<span class="ndz-bfi ' + (who.length ? 'ok' : 'no') + '" title="' + esc(t) + '" aria-label="' + esc(t) + '" role="img">' + spIc(ic || nm) + '</span>'; }).join('')).join('<span class="ndz-bfsep" aria-hidden="true"></span>');
-  return '<div class="ndz-bfs"><div class="ndz-bfh"><b>Raid buffs</b><span class="sub">' + (miss ? miss + ' missing' : 'All accounted for ✓') + '</span></div><div class="ndz-bfrow">' + icons + '</div></div>';
+  let miss = 0, have = 0, of = 0;
+  // (a small card per kind: its name and a count ("6/6 ✓", "3/7"), then the icons; side by side, so it fits in a couple of rows)
+  const cards = NDZ_BUFFS.map(([lab, kind, list]) => { let n = 0;
+    const ic = list.map(([nm, cl, specs, sid]) => {
+      const mine = players.filter((p) => cl.includes(p.cls)), yes = mine.filter((p) => !specs || (p.sid && specs.includes(+p.sid))).map((p) => p.n), maybe = specs ? mine.filter((p) => !p.sid).map((p) => p.n) : [];
+      const st = yes.length ? 'ok' : maybe.length ? 'maybe' : kind === 'need' ? 'no' : 'off';
+      if (yes.length) n++; if (kind === 'need') { if (!yes.length) miss++; } else { of++; if (yes.length) have++; }
+      const t = nm + ': ' + (yes.length ? yes.join(', ') : maybe.length ? 'maybe ' + maybe.join(', ') + ' (spec not seen yet)' : 'nobody brings it');
+      return '<span class="ndz-bfi ' + st + '" title="' + esc(t) + '" aria-label="' + esc(t) + '" role="img">' + spellIcon(sid, nm) + '</span>'; }).join('');
+    const full = n === list.length, cs = kind === 'need' ? (full ? 'ok' : 'bad') : n ? 'have' : 'none';
+    return '<div class="ndz-ug"><div class="ndz-ugh"><span class="ndz-ugl">' + esc(lab) + '</span><span class="ndz-ugc ' + cs + '">' + n + '/' + list.length + (kind === 'need' && full ? ' ✓' : '') + '</span></div><div class="ndz-ugi">' + ic + '</div></div>'; }).join('');
+  const K = ndzKickCard(players);
+  return '<div class="ndz-bfs"><div class="ndz-bfh"><b>Roster audit<span class="ndz-raw"> · ' + esc(who || plural(players.length, 'raider')) + '</span></b><span class="sub">' + (miss ? plural(miss, 'buff') + ' missing' : 'Every buff ✓') + ' · ' + have + ' of ' + of + ' utility · ' + plural(K.n, 'kick') + '</span></div><div class="ndz-ugrid">' + cards + K.html + '</div></div>';
+}
+// (the kicks card, your ask: every raider's interrupt, melee and ranged side by side, the shortest cooldown first; tanks are
+// melee; healers have none except a Restoration Shaman. A spec Debrief hasn't seen yet is a maybe, with the class's usual kick.)
+const NDZ_KICK_ID = { Pummel: 6552, Rebuke: 96231, "Avenger's Shield": 31935, 'Counter Shot': 147362, Muzzle: 187707, Kick: 1766, Silence: 15487, 'Mind Freeze': 47528, 'Wind Shear': 57994, Counterspell: 2139, 'Spell Lock': 19647, 'Axe Toss': 89766, 'Spear Hand Strike': 116705, 'Skull Bash': 106839, 'Solar Beam': 78675, Disrupt: 183752, Quell: 351338 };
+function ndzKickCard(players) {
+  const col = (c) => (E.CLASSES[c] || [])[1] || 'inherit', grp = { melee: [], ranged: [] }, none = [];
+  for (const p of players) { if (!p.cls) continue; const sid = +p.sid || 0, ks = E.INTERRUPTS[p.cls] || [];
+    const k = sid ? ks.find((x) => !x[2] || x[2].includes(sid)) : ks.find((x) => !x[2]) || ks[0];
+    const healer = sid ? ['65', '105', '256', '257', '270', '1468'].includes(String(sid)) : false; /* (healers can't kick, except a Restoration Shaman) */
+    if (!k || healer) { none.push(p.n); continue; }
+    const melee = sid ? NDZ_MELEE.has(sid) : ['WARRIOR', 'ROGUE', 'DEATHKNIGHT', 'DEMONHUNTER', 'PALADIN', 'MONK'].includes(p.cls);
+    grp[melee ? 'melee' : 'ranged'].push({ n: p.n, cls: p.cls, k: k[0], cd: k[1], maybe: !sid, plus: NDZ_KICK_PLUS[sid] || '' }); }
+  const li = (x) => '<li class="ndz-kk' + (x.maybe ? ' maybe' : '') + '" title="' + esc(x.n + ': ' + x.k + ', every ' + x.cd + ' s' + (x.maybe ? ' (spec not seen yet)' : '') + (x.plus ? '. ' + x.plus : '')) + '">' + spellIcon(NDZ_KICK_ID[x.k] || 0, x.k) +
+    '<span class="nm" style="color:' + col(x.cls) + '">' + esc(x.n) + '</span>' + (x.plus ? '<i class="ndz-kp">+1</i>' : '') + '<span class="ndz-kcd">' + x.cd + 's</span></li>';
+  const list = (k, lab) => { const l = grp[k].sort((a, b) => a.cd - b.cd || a.n.localeCompare(b.n)); return '<div class="ndz-kcol"><div class="ndz-kh">' + lab + ' <b>' + l.length + '</b></div>' + (l.length ? '<ul>' + l.map(li).join('') + '</ul>' : '<p class="sub">None</p>') + '</div>'; };
+  const n = grp.melee.length + grp.ranged.length;
+  return { n, html: '<div class="ndz-ug ndz-ugk"><div class="ndz-ugh"><span class="ndz-ugl">Kicks</span><span class="ndz-ugc have">' + n + '</span></div><div class="ndz-kcols">' + list('melee', 'Melee') + list('ranged', 'Ranged') + '</div>' +
+    (none.length ? '<p class="sub ndz-knone">No kick: ' + esc(andL(none)) + '.</p>' : '') + '</div>' };
 }
 // (the main notes page: tonight's raiders, the players in this pull)
-function ndzBuffBox(r) { const ps = ndzIn(r); return ps.length ? '<div class="panel ndz-bfp">' + ndzBuffs(ps.map((p) => ({ n: ndzPn(p), cls: p.cls }))).replace('<b>Raid buffs</b>', '<b>Raid buffs tonight</b>') + '</div>' : ''; }
+function ndzBuffBox(r, u0) { const ps = ndzIn(r), ro = ndzNoteRoster(u0); /* (the note's own roster when it has one, else tonight's raiders) */
+  if (ro) { const here = new Map(ps.map((p) => [ndzPn(p).toLowerCase(), p])), sp = ndzSpecs(); const l = ro.map((n) => { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()]; return p ? { n: ndzPn(p), cls: p.cls, sid: p.specId } : { n, cls: s ? s.cls : null, sid: s ? s.sid : 0 }; });
+    return '<div class="panel ndz-bfp">' + ndzBuffs(l, plural(l.length, 'raider') + ' picked for ' + u0.name) + '</div>'; }
+  return ps.length ? '<div class="panel ndz-bfp">' + ndzBuffs(ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), 'tonight\'s ' + ps.length + ' raiders') + '</div>' : ''; }
+// (the raiders picked for a note: saved with it by the Note builder, else NSRT's invitelist line, else none)
+function ndzNoteRoster(n) { if (!n) return null; if (n.roster && n.roster.length) return n.roster.slice();
+  const m = /^\s*invitelist\s*:(.*)$/im.exec(String(n.text || '')); if (!m) return null; const l = [...new Set(m[1].split(/[\s,;]+/).map((w) => w.split('-')[0]).filter((w) => w && /^\p{L}/u.test(w)))]; return l.length ? l : null; }
+function ndzRosterKeep(boss, made, B) { try { const o = notesOf(boss), x = o.list.find((q) => q.id === made.id); if (x) { x.roster = [...B.on].map((n) => String(n).split('-')[0]); notesSave(boss, o); } } catch (e) { /* (the note is saved anyway) */ } }
+// (Start on the roster page with a raid buff missing: which ones, who on your roster brings them, then Fix the roster or Continue anyway)
+function ndzBRoster(B) { const sp = ndzBSp(B); return [...B.on].map((n) => { const s = sp[n.toLowerCase()] || {}; return { n, cls: s.cls, sid: s.guess ? 0 : s.sid }; }); }
+function ndzMissBuffs(players) { const out = []; for (const [, kind, list] of NDZ_BUFFS) if (kind === 'need') for (const [nm, cl] of list) if (!players.some((p) => cl.includes(p.cls))) out.push({ nm, cl }); return out; }
+function ndzBuffAskH(B, r) { const key = [...B.on].sort().join('|'); if (B.buffAsk !== key) return ''; const miss = ndzMissBuffs(ndzBRoster(B)); if (!miss.length) return '';
+  const sp = ndzBSp(B), bench = [...ndzBNames(B, r).values()].filter((n) => !B.on.has(n));
+  const line = (m) => { const can = bench.filter((n) => m.cl.includes((sp[n.toLowerCase()] || {}).cls)).slice(0, 3); return '<li><b>' + esc(m.nm) + '</b> <span class="sub">(' + esc(m.cl.map(ndzClsName).join(' or ')) + ')</span>' + (can.length ? ': ' + esc(andL(can)) + (can.length > 1 ? ' aren\'t' : ' isn\'t') + ' ticked' : ': nobody on your roster brings it') + '</li>'; };
+  return '<div class="ndz-chk warn" id="ndzBuffAsk" role="alert"><b>⚠ This roster is missing ' + plural(miss.length, 'raid buff') + '</b><ul class="ndz-bal">' + miss.map(line).join('') + '</ul><div class="ndz-pd"><button class="btn sm" type="button" id="ndzBuffFix">Fix the roster</button><button class="btn sm primary" type="button" id="ndzBuffGo">Continue anyway</button></div></div>'; }
+
 // ---- Copy for Discord (Oct 20, your OK): the note as a post raiders can read, not NSRT's lines. The boss and difficulty
 // as a heading, each part of the note under its own small heading, names after a bold label (kick orders with arrows),
 // raid markers as emoji, then each player's cooldowns by phase and time. Reminders that repeat a job the text lines
@@ -16053,13 +16150,96 @@ const NDZ_COMP = {
   'Ula\'tek': { Mythic: { n: 20, size: 20, T: 2, H: 4, M: 5.45, R: 8.55, cls: { DEATHKNIGHT: 2.2, PALADIN: 1.2, PRIEST: 2.1, EVOKER: 2.5, DRUID: 1.5, HUNTER: 1.5, MAGE: 1.85, MONK: 1, ROGUE: 1.25, SHAMAN: 1.25, WARLOCK: 1.35, WARRIOR: 1.2, DEMONHUNTER: 1.1 } } },
   'Kith\'ix': { Mythic: { n: 20, size: 22.75, T: 2.25, H: 4.3, M: 6.4, R: 9.8, cls: { DEATHKNIGHT: 2.65, PALADIN: 1.5, PRIEST: 1.95, SHAMAN: 1.75, EVOKER: 2.25, DRUID: 1.8, HUNTER: 1.8, MAGE: 1.9, MONK: 1.25, ROGUE: 1.25, WARLOCK: 1.85, WARRIOR: 1.55, DEMONHUNTER: 1.25 } } },
 };
+// ---- Assignments on one screen (Oct 20, your pick: layout A of the one-screen drafts) ----
+// With a note set: a slim header (the boss, the note, a ready ring, quick ticks, the buttons), what to fix if anything, then
+// two columns: the roster audit and kicks on the left (icons one size), the cooldown timeline and Who does what on the right.
+// The timeline is the note's cooldown reminders, one row per raider, a phase at a time, with the raid's biggest hits from the
+// fastest kills on top: red when no raid cooldown is pressed 6 s before to 4 s after, amber when only a healer's own burst is.
+// Test copy only (NDZ_NEW). The boss's own mechanics on the timeline come later (each boss's timings, from top kills).
+const NDZ_RCD_IDS = new Set([31821, 64843, 115310, 363534, 740, 98008, 62618, 108280, 51052, 97462, 196718, 374227, 15286, 265202, 359816]);
+const ndzIsRaidCd = (id) => NDZ_RCD_IDS.has(+id) || RCD_CD[ndzSpellNm(+id)] != null;
+// (whose roster the page audits: the raiders picked for the note, else NSRT's invitelist, else tonight's raiders)
+function ndzAuditPlayers(r, u0) { const ps = ndzIn(r), ro = ndzNoteRoster(u0);
+  if (ro) { const here = new Map(ps.map((p) => [ndzPn(p).toLowerCase(), p])), sp = ndzSpecs();
+    return { ps: ro.map((n) => { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()]; return p ? { n: ndzPn(p), cls: p.cls, sid: p.specId } : { n, cls: s ? s.cls : null, sid: s ? s.sid : 0 }; }), who: plural(ro.length, 'raider') + ' picked for ' + u0.name }; }
+  return { ps: ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), who: 'tonight\'s ' + ps.length + ' raiders' }; }
+// (the roster audit as rows: a kind and its count, then its icons)
+function ndzAuditRows(players) { let miss = 0, have = 0, of = 0, needN = 0;
+  const rows = NDZ_BUFFS.map(([lab, kind, list]) => { let n = 0;
+    const ic = list.map(([nm, cl, specs, sid]) => { const mine = players.filter((p) => cl.includes(p.cls)), yes = mine.filter((p) => !specs || (p.sid && specs.includes(+p.sid))).map((p) => p.n), maybe = specs ? mine.filter((p) => !p.sid).map((p) => p.n) : [];
+      if (yes.length) n++; if (kind === 'need') { needN++; if (!yes.length) miss++; } else { of++; if (yes.length) have++; }
+      const st = yes.length ? 'ok' : maybe.length ? 'maybe' : kind === 'need' ? 'no' : 'off';
+      return '<span class="ndz-bfi ' + st + '" data-tt="' + esc('<b>' + esc(nm) + '</b><br>' + (yes.length ? esc(yes.join(', ')) : maybe.length ? 'maybe ' + esc(maybe.join(', ')) + ' (spec not seen yet)' : 'nobody brings it')) + '">' + spellIcon(sid, nm) + '</span>'; }).join('');
+    return '<div class="ndz-dag"><span class="ndz-dagl">' + esc(lab) + '<em class="' + (kind === 'need' ? (n === list.length ? 'ok' : 'bad') : '') + '">' + n + '/' + list.length + '</em></span><span class="ndz-dagi">' + ic + '</span></div>'; }).join('');
+  return { html: rows, miss, have, of, needN }; }
+// (each raider's kick: melee and ranged, the shortest cooldown first; healers have none but a Restoration Shaman)
+function ndzKickGroups(players) { const grp = { melee: [], ranged: [] }, none = [];
+  for (const p of players) { if (!p.cls) continue; const sid = +p.sid || 0, ks = E.INTERRUPTS[p.cls] || [], k = sid ? ks.find((x) => !x[2] || x[2].includes(sid)) : ks.find((x) => !x[2]) || ks[0];
+    if (!k || (sid && [65, 105, 256, 257, 270, 1468].includes(sid))) { none.push(p.n); continue; }
+    const melee = sid ? NDZ_MELEE.has(sid) : ['WARRIOR', 'ROGUE', 'DEATHKNIGHT', 'DEMONHUNTER', 'PALADIN', 'MONK'].includes(p.cls);
+    grp[melee ? 'melee' : 'ranged'].push({ n: p.n, cls: p.cls, k: k[0], cd: k[1], maybe: !sid, plus: NDZ_KICK_PLUS[sid] || '' }); }
+  for (const g of Object.values(grp)) g.sort((a, b) => a.cd - b.cd || a.n.localeCompare(b.n)); return { grp, none, n: grp.melee.length + grp.ranged.length }; }
+function ndzKickRows(players) { const K = ndzKickGroups(players), col = (c) => (E.CLASSES[c] || [])[1] || 'inherit';
+  const li = (x) => '<div class="ndz-dkr' + (x.maybe ? ' maybe' : '') + '" data-tt="' + esc('<b>' + esc(x.n) + '</b><br>' + esc(x.k) + ', every ' + x.cd + ' s' + (x.maybe ? ' (spec not seen yet)' : '') + (x.plus ? '<br>' + esc(x.plus) : '')) + '">' + spellIcon(NDZ_KICK_ID[x.k] || 0, x.k) +
+    '<b style="color:' + col(x.cls) + '">' + esc(x.n) + '</b>' + (x.plus ? '<i>+1</i>' : '') + '<span>' + x.cd + 's</span></div>';
+  const c = (k, lab) => '<div><div class="ndz-dkh">' + lab + ' · ' + K.grp[k].length + '</div>' + (K.grp[k].length ? K.grp[k].map(li).join('') : '<p class="sub">None</p>') + '</div>';
+  return { n: K.n, html: '<div class="ndz-dkc">' + c('melee', 'Melee') + c('ranged', 'Ranged') + '</div>' + (K.none.length ? '<p class="sub ndz-dkn">No kick: ' + esc(andL(K.none)) + '.</p>' : '') }; }
+// (the timeline's data: the note's cooldowns by raider and phase, the fastest kills' big hits, each phase's length)
+function ndzTlData(r, u0, text, players) {
+  let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
+  const boss = r.item.boss, diff = /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : /mythic|16/i.test(String(hd.difficulty || '')) ? 'Mythic' : r.item.diff || 'Mythic';
+  const ok = new Set(players.map((p) => String(p.n).toLowerCase())), cds = [];
+  for (const x of ndzRems(text)) { if (NDZ_DC_JOB.test(x.text || '')) continue; for (const t of x.tags) { const n = String(t).split('-')[0]; if (ok.has(n.toLowerCase())) cds.push({ ph: x.ph, t: x.time, who: n, id: x.spellid }); } }
+  const SD = NDZ_CDSTART[boss] || {}, sd = SD[diff] || SD.Mythic || SD.Heroic || null, hits = sd ? sd.pk.map(([ph, rel, vk, hit]) => ({ ph, rel, v: vk, hit })) : [];
+  const phs = [...new Set(cds.map((c) => c.ph).concat(sd ? sd.phs.map((p) => p.ph) : []))].sort((a, b) => a - b).map((ph) => { const p0 = sd && sd.phs.find((q) => q.ph === ph);
+    return { ph, len: Math.max(p0 ? p0.len : 0, ...cds.filter((c) => c.ph === ph).map((c) => c.t + 15), ...hits.filter((h) => h.ph === ph).map((h) => h.rel + 10), 60) }; });
+  const cover = (h) => { const near = cds.filter((c) => c.ph === h.ph && c.t >= h.rel - 6 && c.t <= h.rel + 4); return near.some((c) => ndzIsRaidCd(c.id)) ? 'green' : near.length ? 'amber' : 'red'; };
+  for (const h of hits) h.c = cover(h);
+  const col = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p.color])), sp = ndzSpecs();
+  return { boss, diff, cds, hits, phs, color: (n) => col.get(n.toLowerCase()) || (sp[n.toLowerCase()] || {}).color || 'inherit', fast: !!sd }; }
+let NDZ_TL = null;
+function ndzTimelineH(D) {
+  if (!D || !D.phs.length) return '<div class="ndz-cth"><b>Cooldowns</b></div><p class="sub">No cooldown reminders in this note yet.</p>';
+  const cur = D.phs.some((p) => p.ph === S.ndzTlPh) ? S.ndzTlPh : D.phs[0].ph, len = D.phs.find((p) => p.ph === cur).len, x = (t) => (100 * t / len).toFixed(3) + '%';
+  const phN = (p) => (p % 1 ? 'Intermission' : NDZ_ONEPH.has(D.boss) && D.phs.length === 1 ? 'Fight' : 'P' + p), mmss = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
+  const cds = D.cds.filter((c) => c.ph === cur), hits = D.hits.filter((h) => h.ph === cur), who = [...new Set(D.cds.map((c) => c.who))].filter((n) => cds.some((c) => c.who === n)), maxV = Math.max(1, ...D.hits.map((h) => h.v));
+  const tabs = D.phs.length > 1 ? '<span class="ndz-ctt">' + D.phs.map((p) => '<button type="button" data-ndztl="' + p.ph + '" class="' + (p.ph === cur ? 'on' : '') + '">' + (p.ph % 1 ? 'Int' : phN(p.ph)) + (D.hits.some((h) => h.ph === p.ph && h.c === 'red') ? ' <i class="ndz-ctred" aria-label="has an uncovered big hit">●</i>' : '') + '</button>').join('') + '</span>' : '';
+  const W = { red: 'No raid cooldown here', amber: 'Only a healer\'s own burst', green: 'Covered by a raid cooldown' };
+  const hl = hits.length ? '<div class="ndz-ctl hits"><span class="ndz-ctw">Big hits</span><span class="ndz-ctr">' + hits.map((h) => '<span class="ndz-cthit ' + h.c + '" style="left:' + x(h.rel) + '" data-tt="' + esc('<b>' + esc(h.hit) + '</b> at ' + mmss(h.rel) + '<br>' + W[h.c] + ' · about ' + (h.v / 1000).toFixed(1) + 'M damage a second in the fastest ' + D.diff + ' kills') + '"><em>' + mmss(h.rel) + '</em><i style="transform:rotate(45deg) scale(' + (0.75 + 0.5 * h.v / maxV).toFixed(2) + ')"></i></span>').join('') + '</span></div>' : '';
+  const lanes = who.map((n) => '<div class="ndz-ctl"><span class="ndz-ctw" style="color:' + D.color(n) + '">' + esc(n) + '</span><span class="ndz-ctr">' + cds.filter((c) => c.who === n).sort((a, b) => a.t - b.t).map((c, i, a) => { const d = a.slice(0, i).filter((q) => Math.abs(q.t - c.t) < 4).length, nm = ndzSpellNm(c.id) || 'Spell ' + c.id;
+    return '<span class="ndz-ctc" style="left:' + x(c.t) + (d ? ';margin-left:' + d * 11 + 'px' : '') + '" data-tt="' + esc('<b>' + esc(nm) + '</b> · ' + esc(n) + '<br>' + phN(cur) + ' ' + mmss(c.t) + (ndzIsRaidCd(c.id) ? ' · raid cooldown' : '')) + '">' + spellIcon(c.id, nm) + '</span>'; }).join('') + '</span></div>').join('');
+  const vl = hits.map((h) => '<span class="ndz-ctv ' + h.c + '" style="left:calc(var(--ctw) + (100% - var(--ctw)) * ' + (h.rel / len).toFixed(4) + ')"></span>').join('');
+  let ax = ''; const step = len > 150 ? 30 : 15; for (let t = 0; t <= len; t += step) ax += '<span style="left:' + x(t) + '">' + mmss(t) + '</span>';
+  const u = hits.filter((h) => h.c === 'red');
+  return '<div class="ndz-cth"><b>Cooldowns</b>' + tabs + '<span class="sub">' + plural(D.cds.length, 'reminder') + '</span></div><div class="ndz-ctb">' + hl + lanes + vl + '</div><div class="ndz-cta">' + ax + '</div>' +
+    (!D.fast ? '' : u.length ? '<div class="ndz-ctu bad"><b>' + plural(u.length, 'big hit') + ' in ' + (cur % 1 ? 'the intermission' : phN(cur)) + ' with no raid cooldown:</b> ' + esc(u.map((h) => h.hit + ' at ' + mmss(h.rel)).join(', ')) + '. Move one there, or add one.</div>' : hits.length ? '<div class="ndz-ctu ok"><b>✓ Every big hit in ' + (cur % 1 ? 'the intermission' : phN(cur)) + ' has a raid cooldown.</b></div>' : ''); }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndztl]'); if (!b || !NDZ_TL) return; S.ndzTlPh = +b.dataset.ndztl; const el = $('#ndzTl'); if (el) el.innerHTML = ndzTimelineH(NDZ_TL); });
+// (the page: header, what to fix, the two columns; Who does what is put in its slot by assign())
+function ndzDash(r, u0, st, lines, go, tlk, how, more, fixBtn) { try { spcTipInit(); } catch (e) { /* (tooltips stay off) */ }
+  const A = ndzAuditPlayers(r, u0), au = ndzAuditRows(A.ps), K = ndzKickRows(A.ps), D = NDZ_TL = ndzTlData(r, u0, st.text, A.ps), b = r.item.boss;
+  const unc = D.hits.filter((h) => h.c === 'red').length, parts = [st.ps.length ? st.jobs / st.ps.length : 1, au.needN ? (au.needN - au.miss) / au.needN : 1].concat(D.hits.length ? [D.hits.filter((h) => h.c !== 'red').length / D.hits.length] : []);
+  const pct = Math.round(100 * parts.reduce((s, v) => s + v, 0) / parts.length), H = BOSS_HERO[b];
+  const tk = (ok, txt, warn) => '<span class="ndz-dtk ' + (ok ? 'ok' : warn ? 'warn' : 'bad') + '"><i>' + (ok ? '✓' : '!') + '</i>' + txt + '</span>', tkn = (txt) => '<span class="ndz-dtk">' + txt + '</span>';
+  const head = '<div class="panel ndz-dhd">' + (H ? '<span class="ndz-dth" style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg);background-position:' + H[1] + '% 28%" aria-hidden="true"></span>' : '') +
+    '<div class="ndz-dtt"><b>' + esc(b) + '</b><span class="ndz-dpl">' + esc(D.diff) + '</span><div class="sub">' + esc(u0.name) + ' · ' + plural(A.ps.length, 'raider') + ' · ' + plural(D.cds.length, 'cooldown') + '</div></div>' +
+    '<span class="ndz-dring" style="--p:' + pct + '" data-tt="' + esc('<b>' + pct + '% ready</b><br>Raiders with a job, raid buffs' + (D.hits.length ? ' and big hits covered' : '') + ', averaged') + '"><span>' + pct + '%</span></span>' +
+    '<span class="ndz-dtks">' + tk(!st.idle.length, st.jobs + ' of ' + st.ps.length + ' have a job', true) + tk(!au.miss, au.miss ? plural(au.miss, 'buff') + ' missing' : 'Every buff') + tkn(au.have + '/' + au.of + ' utility') + tkn(plural(K.n, 'kick')) +
+    (D.hits.length ? tk(!unc, unc ? plural(unc, 'big hit') + ' uncovered' : 'Big hits covered') : '') + '</span>' +
+    '<span class="ndz-dact">' + go + '<button class="btn" type="button" data-dbncopy="1">Copy for the game</button><button class="btn" type="button" data-ndzdc="cur">💬 Discord</button><button class="btn" type="button" data-ndzdb="1">Debriefing →</button>' + tlk + '</span>' + how + '</div>';
+  const fix = lines ? '<div class="panel ndz-dal">' + lines + (fixBtn || '') + '</div>' : '';
+  return '<div class="ndz-dash">' + head + fix + more + '<div class="ndz-dgrid"><div class="ndz-dcol">' +
+    '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Roster audit</b><span class="sub">' + esc(A.who) + '</span></div>' + au.html + '</div>' +
+    '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Kicks</b><span class="sub">' + plural(K.n, 'player') + '</span></div>' + K.html + '</div></div>' +
+    '<div class="ndz-dcol"><div class="panel ndz-dpan ndz-dtl" id="ndzTl">' + ndzTimelineH(D) + '</div><div id="ndzDashWho"></div></div></div></div>'; }
+// (assign() puts Who does what in the page's slot, folded list of cooldowns included; '' when the page isn't showing)
+function ndzDashWho(r, used) { const el = $('#ndzDashWho'); if (!el || !NDZ_NEW()) return ''; el.innerHTML = ndzWhoH(r, used); return ' '; }
 // ---- Draft a note from your pulls (TEST, Oct 20: on the local copy only, not the live site, until you say) ----
 // Reads every pull of this boss and difficulty in the log and writes an NSRT note of who did which job (kick orders, soak
 // groups, orb carriers, CC order, curses, raid cooldowns). A job done in most pulls is the assignment; a one-off is a mistake
 // or someone covering. Each line keeps how sure it is ("in 9 of 11 pulls"); lines under half start unticked. Positions and
 // calls the log can't show are listed for the raid leader to fill in. Research: notes/Guides/NSRT assignments by boss.md.
 const NDZ_ON = () => true; /* (live for everyone since Oct 20, your call; () => !WCL.HOSTED hides it on the site again) */
-const ndzPill = () => (WCL.HOSTED ? '' : '<span class="ndz-test">Test version</span>'); // (the PC copy still says it's a test)
+const ndzPill = () => ''; /* (live since Oct 20: no Test version pill) */
 const NDZ_FILL = { 'The Coiled Altar': ['Who marks the ranged Spiteful Soulcoiler (one player marks and calls it)', 'Where the raid stacks for Dreadmarch (for example the {square} marker)', 'Which corner each purple orb carrier takes, and where the orb triangle goes', 'Guillotine soak spots, and who gates into them', 'Intermission ghost soak spots (who stands at which marker)', 'Damage cooldowns for each Eternal Nightfall shield'],
   'The Twin Fangs': ['Where each Feast group stands for its strike, and who calls the knockback side', 'Tainted Blood orbs: which group soaks first (the group knocked right, usually)', 'Tank swaps on Caustic Deluge and Blood Torrent, and the tanks\' defensives', 'Which side each Broodling set spawns on after the first two (the raid lead calls it)'] };
 // (bosses NSRT treats as one phase: reminder times count from the pull)
@@ -16346,7 +16526,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     return;
   }
   if (text && !S.noteEdit && !only && !capture && NDZ_ON()) { /* (test copy, your call Oct 20: this tab is for making and importing notes; the results are on Debriefing) */
-    $('#assignBox').innerHTML = (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + '<div class="panel ndz-res"><span>This pull\'s results against <b>' + esc(used.name) + '</b> are on Debriefing.</span><button class="btn sm" type="button" id="ndzToDb">Open Debriefing</button></div>' + ndzWhoH(r, used) + storedNotes();
+    $('#assignBox').innerHTML = (S.noteMade && S.noteMade.boss === boss ? noteMadeBox(S.noteMade) : '') + (ndzDashWho(r, used) || '<div class="panel ndz-res"><span>This pull\'s results against <b>' + esc(used.name) + '</b> are on Debriefing.</span><button class="btn sm" type="button" id="ndzToDb">Open Debriefing</button></div>' + ndzWhoH(r, used)) + storedNotes();
     storedNotesBind(only); if ($('#ndzToDb')) $('#ndzToDb').onclick = () => { S.tab = 'audit'; renderMain(); window.scrollTo({ top: 0 }); };
     if ($('#nmCopy')) $('#nmCopy').onclick = () => { const m = S.noteMade, n = m && notesOf(m.boss).list.find((x) => x.id === m.id); if (n) copyBtn($('#nmCopy'), n.text); };
     if ($('#nmOk')) $('#nmOk').onclick = () => { S.noteMade = null; assign(only); };
@@ -32751,6 +32931,9 @@ const PAGE_TIPS = {
     { sel: '.tabbar .tabs', t: 'Go deeper', p: 'The tabs dig deeper: every mechanic, your assignments, each player\'s rotation and the graphs. Report card grades every player over all pulls.' },
     { sel: '#cutSide', t: 'The wipe filter', p: 'On a wipe, stop counting after a set number of deaths, so the last seconds of a wipe don\'t pile up mistakes.' }],
   overview: [
+    { sel: '#view .ndz-dhd', t: 'Tonight at a glance', p: 'Your note for this boss: how ready it is, what\'s missing, and the buttons to copy it for the game or Discord. New note starts another one.' },
+    { sel: '#view .ndz-dgrid .ndz-dpan', t: 'Roster audit', p: 'Every raid buff, raid cooldown, external, immunity and kick your roster brings. Greyed ones are missing. Point at an icon to see who brings it.' },
+    { sel: '#ndzTl', t: 'Cooldowns', p: 'Each raider\'s cooldowns from the note, a phase at a time. The diamonds are the boss\'s biggest hits: red means no raid cooldown is there.' },
     { sel: '#view .ndz-hero', t: 'Start here', p: 'The top says if tonight\'s note is ready. Press Get started and Debrief walks you through it: add your note, make a new one, or change tonight\'s.' },
     { sel: '#view .ndz-tlk', t: 'All tools', p: 'Know what you want? Every tool is here too: draft from your pulls, the Note builder, swap players and your saved notes.' },
     { sel: '#view .ndz-rcards', t: 'Who does what', p: 'Every raider\'s jobs from the note. Anyone with a problem, like no job yet, is marked.' },
