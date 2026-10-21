@@ -524,6 +524,10 @@ function renderList() {
   if (pk) pk.innerHTML = groups.length > 1 ? '<div class="bp-pop" hidden>' +
     groups.map((g) => '<button class="bp-i' + (g === cur ? ' on' : '') + '" type="button" data-last="' + add(gLast(g)) + '"><b>' + esc(gName(g)) + '</b><span>' + (g.kind === 'run' ? esc(g.run.result) + ' · ' + T(g.run.duration) : plural(g.list.length, 'pull') + (g.list.some((b) => b.kill) ? ' · killed' : '')) + '</span></button>').join('') + '</div>' : '';
   if (pkB) { pkB.hidden = groups.length < 2; pkB.innerHTML = '<span class="bp-n">Change boss</span>' + CHEV; pkB.title = 'This log has ' + groups.length + ' bosses: pick one'; }
+  // (your pick, Oct 20: while you follow a live log, one more card at the end of the newest boss's pulls, where the next pull
+  // lands; it turns into the real pull about a minute after that pull ends)
+  const fcNext = (list) => { const last = bosses.filter((b) => !b.run).pop(); if (!LIVE.on || !last || list[list.length - 1] !== last) return '';
+    return '<div class="fcard fc-next" title="Following live: the next pull shows up here about a minute after it ends"><span class="fc-h"><b>' + (last.kill ? 'Next boss' : 'Pull ' + (last.pull + 1)) + '</b><span class="fc-lv">Live</span></span><span class="fc-p">Waiting for it…</span><i class="fc-bar"><b></b></i></div>'; };
   let h = '';
   if (cur.kind === 'boss') {
     const list = cur.list, kill = list.find((b) => b.kill), known = list.map((b) => [b, pullPct(b)]).filter(([, v]) => v != null);
@@ -548,7 +552,7 @@ function renderList() {
     // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
     // (on Report card the single pulls are greyed out and can't be picked: it's always the whole night (your call, Oct 19))
     const lock = (S.tab === 'player' || S.tab === 'hw') && !!allC;
-    h = '<div class="sg-row">' + allC + '<div class="fwrap' + (lock ? ' fc-lock' : '') + '"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
+    h = '<div class="sg-row">' + allC + '<div class="fwrap' + (lock ? ' fc-lock' : '') + '"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + fcNext(list) + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
   } else {
     // a Mythic+ key: the whole key, then each boss in it
     h = '<div class="sg-row"><div class="film keys">' + cur.list.map((b, i) => { const ok = b.kill || b.result === 'Timed';
@@ -1495,6 +1499,7 @@ const PATCH_NOTES = [
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
     'Live now pops up on your screen with a soft chime when your log or your team\'s goes live. Follow live opens it on Debriefing, which wears a red Live badge while you follow.',
+    'While you follow live, the pull row ends with a Next pull card, right where the next pull will show up.',
     'Boss guides: Axegrinder gets its own map. The boss throws 5 axes, anyone they fly into is knocked back, then they roll around at random and hurt anyone they touch. Both throws are on the fight timeline, with a band showing when the axes are out.',
     'Boss guides: the video shows first with the fight list following along, Your job has a fresh look, and each part has a Something wrong here? link to report a mistake.',
     'Boss guides: each Debriefing mechanic has a How to do it link to the guide, your role is ringed on the maps, and Your job shows your lines from your raid note.',

@@ -1633,6 +1633,13 @@ abbr.gl { text-decoration: underline dotted rgba(230,180,80,.65); text-underline
 .pg-live .lv-t { flex: 1; } .pg-live .lv-t b { font: 700 18px var(--head); } .pg-live .btn { padding: 10px 18px; font-weight: 600; }
 .tab-lv { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 7px 1px 6px; border-radius: 999px; background: rgba(229,83,75,.16); border: 1px solid rgba(229,83,75,.5); color: #ff9a93; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; line-height: 16px; }
 .tab-lv::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #ff4d4d; animation: lvPulse 1.6s ease-in-out infinite; }
+.fcard.fc-next { border: 1px dashed rgba(229,83,75,.6); background: linear-gradient(160deg, rgba(229,83,75,.10), transparent 70%), var(--panel); cursor: default; }
+.fc-next .fc-h span.fc-lv { display: inline-flex; align-items: center; gap: 4px; color: #ff9a93; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.fc-next .fc-lv::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #ff4d4d; animation: lvPulse 1.6s ease-in-out infinite; }
+.fc-next .fc-p { color: var(--muted); font-weight: 500; }
+.fc-next .fc-bar b { width: 35%; background: linear-gradient(90deg, transparent, #ff6b63, transparent); animation: fcNx 1.8s ease-in-out infinite; }
+@keyframes fcNx { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
+@media (prefers-reduced-motion: reduce) { .fc-next .fc-bar b { animation: none; width: 100%; opacity: .4; } }
 .lvp-card { width: min(440px, 100%); border-color: rgba(255,77,77,.45); background: linear-gradient(160deg, rgba(255,77,77,.10), rgba(230,180,80,.05) 60%), var(--panel); }
 .lvp-k { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #ff9a93; }
 .lvp-card p.lvp-sub { margin-top: 4px; font-size: 14px; color: var(--muted); }
