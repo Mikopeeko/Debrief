@@ -1211,6 +1211,97 @@ function pgEmptyCard(c) {
   return '<section class="panel pg-empty" id="pgEmpty"><h2>No raids for ' + esc(gName(c)) + ' this tier yet</h2><p class="sub">When ' + esc(gName(c)) + ' raids The Venomous Abyss and the night is logged on Warcraft Logs, their bosses, raid nights and rankings show up here by themselves.</p>' +
     (back ? '<button class="btn primary" type="button" data-mesw="' + esc(back.gid) + '">‹ Back to ' + esc(gName(back)) + '</button>' : '') + '</section>';
 }
+// ---- a character's own page (your call, Oct 21: "the report card, but a Warcraft Logs summary, no homework", plus "a
+// way to find logs for all pulls on that character, like Warcraft Logs' character page but better"; built from the site's
+// own parts: tiles, parse chips, night rows, the segment switch) ----
+// Your summary: best and median average, bosses killed, kills, All-stars (the parses filled in when the rankings come);
+// then a row per boss with its parses, kills, fastest kill and best throughput; a click finds that boss's pulls below.
+const chpCol = (v) => (v.kill ? '#ff8000' : v.left != null ? (PULL_Q.find(([lo]) => 100 - v.left >= lo) || [0, '#9d9d9d'])[1] : 'var(--muted)');
+function chpHtml(g, list, order, diffName) {
+  // (kill order (your call, Oct 21): the boss you killed first at the top, then the rest by when they died, unkilled last in raid order)
+  const fk = (b) => { const k = list.filter((v) => v.boss === b && v.kill).sort((a, c) => a.at - c.at)[0]; return k ? k.at : Infinity; };
+  S.chpOrder = order.map((b, i) => [b, fk(b), i]).sort((a, c) => a[1] - c[1] || a[2] - c[2]).map((x) => x[0]);
+  const byB = S.chpOrder.map((b) => ({ b, l: list.filter((v) => v.boss === b) })).filter((x) => x.l.length), kills = list.filter((v) => v.kill).length;
+  const best = (l) => l.find((v) => v.kill) || l.filter((v) => v.left != null).sort((a, c) => a.left - c.left)[0];
+  const tile = (id, label, v, s) => '<div class="pt na" id="' + id + '"><div class="pt-t"><div class="pt-l">' + label + '</div><div class="pt-v">' + v + '</div><div class="pt-s na">' + s + '</div></div></div>';
+  const sum = '<section class="panel chp-sum"><div class="pg-sh"><h2>Your summary</h2><span class="sub">' + esc(diffName) + ' · The Venomous Abyss</span></div>' +
+    '<div class="pts pr-sum" id="chpTiles">' + tile('chpTb', 'Best average', '…', 'your best parse on each boss') + tile('chpTm', 'Median average', '…', 'your typical parse') +
+      tile('chpTk', 'Bosses killed', byB.filter((x) => x.l.some((v) => v.kill)).length + '<span>/' + order.length + '</span>', esc(diffName)) + tile('chpTn', 'Kills', String(kills), plural(list.length, 'pull') + ' in all') + tile('chpTa', 'All-stars', '…', 'points this tier') + '</div>' +
+    '<div class="chp-tbl" role="table" aria-label="Your parses by boss"><div class="chp-tr chp-th" role="row"><span>Boss</span><span>Best</span><span class="chp-x">Median</span><span>Kills</span><span class="chp-x">Fastest</span><span class="chp-x" id="chpThA">Best</span><span class="chp-x">Result</span></div>' +
+    byB.map(({ b, l }) => { const k = l.filter((v) => v.kill), bv = best(l), H = BOSS_HERO[b];
+      return '<button class="chp-tr' + (k.length ? ' chp-k' : '') + '" type="button" role="row" data-chb="' + esc(b) + '" title="See your pulls on ' + esc(b) + '">' +
+        '<span class="chp-bo">' + (H ? '<img class="pn-th" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 25%" onerror="this.remove()">' : '') + '<b>' + esc(b) + '</b></span>' +
+        '<span class="chp-pb" data-chp="' + esc(b) + '"><span class="sub">…</span></span>' +
+        '<span class="chp-x" data-chm="' + esc(b) + '"><span class="sub">—</span></span><span class="num" data-chk="' + esc(b) + '">' + k.length + '</span>' +
+        '<span class="chp-x num" data-chf="' + esc(b) + '">—</span><span class="chp-x num" data-cha="' + esc(b) + '">—</span>' +
+        '<span class="chp-x chp-re" style="color:' + (bv ? chpCol(bv) : 'var(--muted)') + '">' + (k.length ? 'Killed' : bv && bv.left != null ? Math.floor(100 - bv.left) + '%' : '—') + '</span></button>'; }).join('') + '</div></section>';
+  const F = S.chpF || (S.chpF = { q: '', b: '', r: '', so: 'new', show: 5 });
+  const find = '<section class="panel chp-find" id="chpFind"><div class="pg-sh"><h2>Every pull you were in</h2><span class="sub" id="chpCnt"></span></div>' +
+    '<div class="chp-fb"><input id="chpQ" type="search" placeholder="Search a boss or a night, like Ula or Oct 13" aria-label="Search your pulls" value="' + esc(F.q) + '">' +
+      '<select id="chpB" aria-label="Boss"><option value="">All bosses</option>' + byB.map(({ b }) => '<option' + (F.b === b ? ' selected' : '') + '>' + esc(b) + '</option>').join('') + '</select>' +
+      '<div class="seg" id="chpR" role="group" aria-label="Show">' + [['', 'All'], ['k', 'Kills'], ['w', 'Wipes'], ['d', 'You died first']].map(([k, n]) => '<button type="button" data-r="' + k + '"' + (F.r === k ? ' class="on"' : '') + '>' + n + '</button>').join('') + '</div>' +
+      '<select id="chpSo" aria-label="Order"><option value="new">Newest first</option><option value="far"' + (F.so === 'far' ? ' selected' : '') + '>Furthest wipes first</option><option value="fast"' + (F.so === 'fast' ? ' selected' : '') + '>Fastest kills first</option></select></div>' +
+    '<div id="chpList"></div><button class="linkbtn pn-more" id="chpMore" type="button" hidden>Show more nights</button></section>';
+  return sum + find;
+}
+function chpBind(g, list) {
+  const F = S.chpF, wclOf = (v) => v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: null } : null);
+  const row = (v) => { const w = wclOf(v), dd = new Date(v.at - 6 * 3600e3);
+    return '<button class="pn-row' + (v.kill ? ' pn-k' : '') + '" type="button"' + (w ? ' data-code="' + esc(w.code) + '" data-fight="' + esc(String(w.fight != null ? w.fight : '')) + '"' : ' disabled title="This pull is only in your combat log"') + '>' +
+      '<span class="pn-d"><b>' + (v.pull ? 'Pull ' + v.pull : esc(dd.toLocaleDateString('en-US', { weekday: 'short' }))) + '</b><span>' + esc(new Date(v.at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })) + '</span></span>' +
+      '<span class="pn-b"><b>' + esc(v.boss) + '</b><span class="sub">' + esc([v.dur ? T(v.dur) : '', v.deaths != null ? plural(v.deaths, 'death') : '', v.first ? 'first: ' + (v.first === g.name ? 'you' : v.first) : ''].filter(Boolean).join(' · ')) + '</span></span>' +
+      '<span class="chp-ph">' + progBar({ boss: v.boss }, v.kill ? 0 : v.left, null, chpCol(v)) + '</span>' +
+      '<span class="pn-r" style="color:' + chpCol(v) + '">' + (v.kill ? 'Kill' : v.left != null ? Math.floor(100 - v.left) + '%' : esc(v.label || 'Wipe')) + '</span><span class="pn-go" aria-hidden="true">›</span></button>'; };
+  const openBind = (sel) => $$(sel + ' [data-code]').forEach((b) => (b.onclick = async () => { b.disabled = true; try { await openWcl({ code: b.dataset.code, fight: +b.dataset.fight || null }, await wclCreds()); } catch (e) { b.disabled = false; toast('<span>' + esc(e.message) + '</span>', 6000); } }));
+  const draw = () => { const q = F.q.trim().toLowerCase();
+    let l = list.filter((v) => (!F.b || v.boss === F.b) && (!F.r || (F.r === 'k' ? v.kill : F.r === 'w' ? !v.kill : v.first === g.name)) && (!q || (v.boss + ' ' + nightLabel(v.at)).toLowerCase().includes(q)));
+    $('#chpCnt').textContent = plural(l.length, 'pull') + ' · ' + plural(l.filter((v) => v.kill).length, 'kill');
+    let html = '';
+    if (F.so === 'new') { const ns = new Map(); for (const v of l.slice().sort((a, b) => b.at - a.at)) { const k = nightOf(v.at); if (!ns.has(k)) ns.set(k, []); ns.get(k).push(v); }
+      html = [...ns.values()].slice(0, F.show).map((ps) => { ps.sort((a, b) => a.at - b.at); return '<div class="chp-nh"><b>' + esc(nightLabel(ps[0].at)) + '</b><span class="sub">' + plural(ps.length, 'pull') + ' · ' + plural(ps.filter((v) => v.kill).length, 'kill') + '</span></div><div class="pn-list">' + ps.map(row).join('') + '</div>'; }).join('');
+      $('#chpMore').hidden = ns.size <= F.show; }
+    else { l = l.filter((v) => (F.so === 'fast' ? v.kill : !v.kill)).sort(F.so === 'fast' ? (a, b) => (a.dur || 1e9) - (b.dur || 1e9) : (a, b) => (a.left ?? 101) - (b.left ?? 101));
+      html = '<div class="pn-list">' + l.slice(0, 25).map(row).join('') + '</div>'; $('#chpMore').hidden = true; }
+    $('#chpList').innerHTML = html || '<p class="muted">No pulls match. Try another boss, or clear the search.</p>';
+    openBind('#chpList'); };
+  $('#chpQ').oninput = (e) => { F.q = e.target.value; F.show = 5; draw(); };
+  $('#chpB').onchange = (e) => { F.b = e.target.value; F.show = 5; draw(); };
+  $('#chpSo').onchange = (e) => { F.so = e.target.value; draw(); };
+  $$('#chpR button').forEach((b) => (b.onclick = () => { F.r = b.dataset.r; $$('#chpR button').forEach((x) => x.classList.toggle('on', x === b)); F.show = 5; draw(); }));
+  $('#chpMore').onclick = () => { F.show += 5; draw(); };
+  // (a boss's row opens in place (your note, Oct 21): its kill logs, newest first, each opening that kill; with no kill yet,
+  // its furthest pulls; a second click closes it)
+  S.chpOpen = S.chpOpen || new Set();
+  const dd = (b) => { const ks = list.filter((v) => v.boss === b && v.kill).sort((x, y) => y.at - x.at), ws = ks.length ? [] : list.filter((v) => v.boss === b && v.left != null).sort((x, y) => x.left - y.left).slice(0, 5);
+    return '<div class="chp-dd" data-chd="' + esc(b) + '"><div class="sub chp-ddh">' + (ks.length ? plural(ks.length, 'kill') + ', newest first. Click one to open it.' : 'No kill yet. Your furthest pulls:') + '</div><div class="pn-list">' + (ks.length ? ks : ws).map((v) => row(v).replace('<span class="pn-d"><b>', '<span class="pn-d"><b>' + esc(new Date(v.at - 6 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</b><b hidden>')).join('') + '</div></div>'; };
+  const tog = (r, on) => { const b = r.dataset.chb, nx = r.nextElementSibling, open = nx && nx.dataset && nx.dataset.chd === b;
+    if (open && !on) { nx.remove(); S.chpOpen.delete(b); r.classList.remove('chp-on'); r.setAttribute('aria-expanded', 'false'); return; }
+    if (!open) { r.insertAdjacentHTML('afterend', dd(b)); openBind('[data-chd="' + CSS.escape(b) + '"]'); } S.chpOpen.add(b); r.classList.add('chp-on'); r.setAttribute('aria-expanded', 'true'); };
+  $$('.chp-tbl [data-chb]').forEach((r) => { r.setAttribute('aria-expanded', 'false'); r.onclick = () => tog(r, !r.classList.contains('chp-on')); if (S.chpOpen.has(r.dataset.chb)) tog(r, true); });
+  // (your class's art behind your name, for your spec once it's known)
+  chpArt(g); draw();
+}
+// (your spec's art behind your name: your most played spec, else your class's first, until your rankings say)
+function chpArt(g) { const top = $('.home.prog .pg-top'), k = g.cls && E.CLASSES[g.cls]; if (!top || !k) return;
+  const sp = (g.parse && g.parse.spec) || g.mainSpec || (Object.values(E.SPECS).find(([, c]) => c === g.cls) || [])[0]; if (!sp) return;
+  top.classList.add('chp-art'); top.style.setProperty('--sart', specArt({ cls: g.cls, specName: sp + ' ' + k[0] })); top.style.setProperty('--cc', k[1]); }
+// (the rankings, once read: the summary's tiles, and in each boss's row its best and median parse, ranked kills, fastest kill
+// and best throughput, all as numbers (no bars, your call); the table is in kill order)
+function chpFill(g, z, rows, as, metric) {
+  if (!$('#chpTiles')) return; const chip = (v) => (v == null ? '<span class="sub">—</span>' : prsChip({ pct: v }));
+  const set = (id, v) => { const e = $('#' + id + ' .pt-v'); if (e) e.innerHTML = v; };
+  set('chpTb', z.bestPerformanceAverage != null ? chip(z.bestPerformanceAverage) : '—'); set('chpTm', z.medianPerformanceAverage != null ? chip(z.medianPerformanceAverage) : '—');
+  set('chpTa', as ? Math.round(as.points) + '<span> pts</span>' : '—'); if (as && as.rank && as.rank !== '-') { const s = $('#chpTa .pt-s'); if (s) s.textContent = 'Rank ' + Number(as.rank).toLocaleString('en-US') + ' of ' + Number(as.total || 0).toLocaleString('en-US'); }
+  { const th = $('#chpThA'); if (th) th.textContent = metric === 'hps' ? 'Best HPS' : 'Best DPS'; }
+  const q = (k, b) => $('[data-' + k + '="' + CSS.escape(b) + '"]');
+  $$('.chp-tbl [data-chp]').forEach((pb) => { const b = pb.dataset.chp, x = rows.find((r) => r.encounter && r.encounter.name === b);
+    if (!x || x.rankPercent == null) { pb.innerHTML = '<span class="sub">' + (rows.length ? 'no ranked kill' : '—') + '</span>'; return; }
+    pb.innerHTML = chip(x.rankPercent);
+    const m = q('chm', b), kk = q('chk', b), fs = q('chf', b), am = q('cha', b);
+    if (m) m.innerHTML = chip(x.medianPercent); if (kk && x.totalKills) kk.textContent = x.totalKills;
+    if (fs && x.fastestKill) fs.textContent = T(Math.round(x.fastestKill / 1000)); if (am && x.bestAmount) am.textContent = C(x.bestAmount); });
+  chpArt(g);
+}
 // (a team or character whose nights are coming in for the first time (your note, Oct 21: an empty dark page said so): the
 // site's loading card with the real progress, "Reading Tue, Oct 13 (3 of 12)…", kept up to date by progRun; the page
 // swaps to the full Home by itself when it's done)
@@ -1523,6 +1614,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-21', h: [
+    { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
@@ -22472,7 +22564,7 @@ async function charRankPanel(g, diffId, bid, view) {
   const box = $('#' + (bid || 'pgRank')); if (!box || !g.cls) return;
   const still = () => S.progView === (view || g.gid) && $('#' + (bid || 'pgRank')) === box && document.body.contains(box);
   if (store.get(RANK_OFF) === '1') { box.innerHTML = '<div class="pr-off"><span class="sub">Your Warcraft Logs rankings are hidden.</span> <button class="linkbtn" id="prShow" type="button">Show them</button></div>';
-    $('#prShow').onclick = () => { store.set(RANK_OFF, '0'); charRankPanel(g, diffId, bid, view); }; return; }
+    $('#prShow').onclick = () => { store.set(RANK_OFF, '0'); charRankPanel(g, diffId, bid, view); }; if (!bid) chpFill(g, {}, [], null, 'dps'); return; }
   const d = WCL_DIFF_OF[diffId] || 5, specs = Object.entries(E.SPECS).filter(([, [, c]]) => c === g.cls).map(([id, [n]]) => ({ id: +id, n, heal: HEAL_SPECS.has(+id) }));
   box.innerHTML = '<div class="sub">Reading your rankings from Warcraft Logs…</div>';
   let creds = null; try { creds = await wclCreds(); } catch (e) { box.innerHTML = '<div class="sub">' + esc(e.message) + '</div>'; return; }
@@ -22486,6 +22578,7 @@ async function charRankPanel(g, diffId, bid, view) {
     const z = await get(metric, spec); if (!still()) return;
     const rows = ((z && z.rankings) || []).filter((x) => x.encounter), ranked = rows.filter((x) => x.rankPercent != null);
     const as = ((z && z.allStars) || []).slice().sort((a, b) => (b.points || 0) - (a.points || 0))[0];
+    if (!bid) chpFill(g, z || {}, rows, as, metric); /* (a character's own page: its summary tiles, boss rows and bar chart) */
     // (their most played spec's averages, kept for their tile on the home page)
     if (spec === g.mainSpec && ranked.length && z.bestPerformanceAverage != null) { const x = groups().find((q) => q.gid === g.gid); if (x) { x.parse = { spec, best: z.bestPerformanceAverage, med: z.medianPerformanceAverage || 0, d }; groupPut(x);
       const c = $(bid === 'pgRankMe' ? '#pgYouChips' : '#pgRkChips'); if (c && still()) c.innerHTML = youChips(x);
@@ -22510,7 +22603,7 @@ async function charRankPanel(g, diffId, bid, view) {
     box.querySelectorAll('[data-rs]').forEach((b) => (b.onclick = () => { S.rankSpec = b.dataset.rs; S.rankMetric = null; charRankPanel(g, diffId, bid, view); }));
     box.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => { S.rankMetric = b.dataset.rm; charRankPanel(g, diffId, bid, view); }));
     $('#prHide').onclick = () => { store.set(RANK_OFF, '1'); $$('#main .pc-rank').forEach((x) => x.remove()); charRankPanel(g, diffId, bid, view); };
-  } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read your rankings: ' + esc(e.message) + '</div>'; }
+  } catch (e) { if (still()) box.innerHTML = '<div class="sub">Couldn\'t read your rankings: ' + esc(e.message) + '</div>'; if (!bid && still()) chpFill(g, {}, [], null, 'dps'); }
 }
 // ---- a team's page: its Warcraft Logs rankings this tier (Mythic) ----
 // Progress (how far it got, and how soon) world, in its region (US) and on its server, then speed; each number in Warcraft
@@ -22721,6 +22814,7 @@ function renderProgress(msg, msgErr) {
   ROOT.innerHTML = (inTab ? '' : pgTabBar(g)) + '<div class="home prog pg-v2' + (inTab ? ' pg-intab' : '') + '"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
     '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you"' + (you.cls && you.parse && youC ? ' style="--sart:' + specArt({ cls: you.cls, specName: you.parse.spec + ' ' + youC[0] }) + '"' : '') + '>' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + meLd + liveStrip + meCard + sugg +
     (g && !g.last && !all.length && !ldC && !msgErr && S.progBusy === g.gid ? impCard(g) /* (its first nights coming in, an import really running: a loading card, not an empty page) */
+      : all.length && g && g.kind === 'char' ? chpHtml(g, list, order, diffName) /* (a character's own page: their summary and every pull) */
       : all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
       : ldC && ldC.gid === g.gid ? '' : g && g.kind === 'char' && g.last ? pgEmptyCard(g)
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') +
@@ -22762,6 +22856,7 @@ function renderProgress(msg, msgErr) {
   if ($('#pgMeAgain')) $('#pgMeAgain').onclick = () => { g.meNo = false; groupPut(g); renderProgress(); };
   { const d = $('#pgMeD') || $('#pgSuggD'); if (d) { const skip = $('#pgMeNo') || $('#pgSuggNo'); d.onkeydown = (e) => { if (e.key === 'Escape') { e.preventDefault(); skip.click(); } };
     const f0 = d.querySelector('.me-c, [data-rwadd]'); if (f0 && !d.contains(document.activeElement)) f0.focus({ preventScroll: true }); } }
+  if ($('#chpFind')) chpBind(g, list);
   if (g && g.kind === 'char') charRankPanel(g, cur); else if (g) teamRankPanel(g);
   if (you && you.cls) charRankPanel(you, cur, 'pgRankMe', g.gid);
   // (the tips: not over a pop-up question, and not while a team just added is still bringing in its first nights, when the

@@ -1806,6 +1806,32 @@ abbr.gl { text-decoration: underline dotted rgba(230,180,80,.65); text-underline
 .pn-b { flex: 1; min-width: 0; display: flex; flex-direction: column; } .pn-b b { font-size: 14px; color: #f3f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pn-b .sub { font-size: 13px; line-height: 1.35; }
 .pn-r { flex: none; font: 700 16px var(--head); } .pn-go { flex: none; font-size: 18px; color: var(--faint); } .pn-row:hover .pn-go { color: var(--gold); }
 .pn-more { margin-top: 10px; padding: 0; font-size: 13px; }
+/* A character's own page (Oct 21): your summary (tiles, a row per boss with its parses) and every pull you were in, with a
+   search, a boss pick, Kills / Wipes / You died first and an order; your spec's art behind your name */
+.chp-sum, .chp-find { margin-top: 20px; } .chp-sum .pr-sum { margin: 0 0 14px; } .chp-sum .pt-v span { font-size: 15px; color: var(--muted); }
+.chp-fb { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; } .chp-fb .seg { margin: 0; }
+.chp-fb input, .chp-fb select { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.chp-fb input { flex: 1 1 220px; min-width: 0; } .chp-fb input:focus, .chp-fb select:focus { border-color: var(--gold); outline: none; }
+.chp-find .pn-d { width: 58px; } .chp-find .pn-r { min-width: 44px; text-align: right; } .chp-ph { flex: none; width: 200px; } .chp-ph .phb { margin: 0; }
+@media (max-width: 640px) { .chp-ph { display: none; } }
+/* the boss table (Oct 21): one row per boss in kill order, its numbers (best and median parse, kills, fastest, best throughput); a row
+   opens in place to show that boss's kill logs */
+.chp-tbl { display: flex; flex-direction: column; gap: 6px; }
+.chp-tr { display: grid; grid-template-columns: minmax(220px, 2fr) 64px 64px 56px 72px 88px 72px; align-items: center; gap: 14px; width: 100%; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.chp-tr:not(.chp-th):hover, .chp-tr.chp-on { border-color: var(--gold); background: #1a1e28; } .chp-tr.chp-k { border-left: 3px solid #ff8000; }
+.chp-th { cursor: default; background: none; border-color: transparent; padding-top: 0; padding-bottom: 0; font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.chp-bo { display: flex; align-items: center; gap: 12px; min-width: 0; } .chp-bo b { font-size: 14px; color: #f3f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chp-pb .prs, .chp-tr .prs { font-size: 15px; line-height: 24px; min-width: 36px; }
+.chp-tr .num { font-variant-numeric: tabular-nums; } .chp-re { font: 700 15px var(--head); text-align: right; }
+.chp-dd { margin: -2px 0 6px 24px; padding: 10px 12px; border-left: 2px solid var(--gold); } .chp-ddh { margin: 0 0 8px; } .chp-dd .pn-row.pn-k .chp-ph { display: none; } .chp-dd .pn-d { width: 58px; }
+@media (max-width: 760px) { .chp-tr { grid-template-columns: minmax(0, 1fr) 56px 40px; gap: 10px; } .chp-tr .chp-x { display: none; } .chp-bo .pn-th { display: none; } .chp-bo b { white-space: normal; line-height: 1.2; } .chp-dd { margin-left: 8px; } }
+.chp-nh { display: flex; align-items: baseline; gap: 10px; margin: 16px 0 8px; } .chp-nh b { font: 700 16px var(--head); color: var(--gold); }
+.home.prog .pg-top.chp-art { padding: 24px 26px; border: 1px solid var(--line); border-radius: 16px; box-shadow: inset 0 3px 0 var(--cc, var(--gold));
+  background: linear-gradient(100deg, #12151c 30%, rgba(18,21,28,.7) 56%, rgba(18,21,28,.3)), var(--sart, none) right 30% / cover no-repeat, #12151c; }
+@media (max-width: 640px) { .home.prog .pg-top.chp-art { padding: 18px 16px; background: linear-gradient(180deg, rgba(18,21,28,.55), #12151c 85%), var(--sart, none) center 25% / cover no-repeat, #12151c; } }
+@media (max-width: 640px) {
+  .chp-fb select, .chp-fb .seg { flex: 1 1 100%; } .chp-sum .pr-sum { --n: 2; } }
 .pg-v2 .pg-since { margin: 0; }
 .pg-rk2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px; align-items: start; } .pg-v2 .pg-rank-me { margin-top: 0; }
 @media (max-width: 1100px) {
