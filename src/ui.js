@@ -1647,6 +1647,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game: the settings window now looks and feels like this website: a header bar, a big title, tabs along the top and everything in rounded panels, bigger and easier to read.',
     'Debrief in game: a short tutorial the first time you log in (four steps: what it is, what happens after a boss pull, your recap, and /dmo for settings).',
     'Debrief in game: cleaner settings with ten plain pages, Simple, Medium and Heavy as cards to click, one "Show my recap as" choice, and your recap card beside the window as a live preview.',
     'Debrief in game: type /dmo ("Debrief me open") to open its settings.',
