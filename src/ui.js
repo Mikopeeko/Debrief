@@ -1650,6 +1650,9 @@ const PATCH_NOTES = [
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
     'Our Discord is easy to find: a Discord button in the top bar on every page, and a Join the Discord box on the front page.',
+    'Debrief in game: practise on a training dummy. Hit it, stop, and you get a Practice recap with your rotation tips (whoever runs the PC app presses Ctrl+V as usual).',
+    'Debrief in game: the addon takes the colour of the class you\'re playing. Turn it off in /dmo > Look to pick your own colour.',
+    'Debrief in game: the real Debrief logo in the addon and on the PC app.',
     'Debrief in game has its own page in the menu: both downloads, who needs the addon and who needs the PC app, what happens after a pull, pictures of every part, and the handy commands.',
     'Debrief in game: the settings window now looks and feels like this website: a header bar, a big title, tabs along the top and everything in rounded panels, bigger and easier to read.',
     'Debrief in game: a short tutorial the first time you log in (four steps: what it is, what happens after a boss pull, your recap, and /dmo for settings).',

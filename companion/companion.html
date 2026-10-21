@@ -223,7 +223,8 @@ const engineReady = new Promise((ok, no) => {
 
 // ---------- combat log: pulls ----------
 const L = { files: [], name: null, size: 0, done: 0, ix: null, items: [], live: false, waiting: false, reps: new Map(), sent: new Set(), busy: Promise.resolve() };
-const DIFFN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic' };
+const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic' };
+const DUMMY = 990001; // (a practice pull on a training dummy, made by the scanner)
 
 async function loadLogs() {
   let x;
@@ -257,7 +258,7 @@ async function scanMore(first) {
   if (name !== L.name) return [];
   const before = new Set(L.items.filter((b) => b.endByte).map((b) => b.startByte));
   for (const it of x.items) L.ix.line(it.t, it.o, it.e);
-  L.done = x.done; L.size = x.size;
+  L.done = x.done; L.size = x.size; L.dummy = !!x.dummy;
   L.items = L.ix.peek().bosses.filter((b) => !b.skip);
   renderPulls();
   return first ? [] : L.items.filter((b) => b.endByte && !before.has(b.startByte));
@@ -282,9 +283,9 @@ async function waitLoop() {
   L.waiting = true;
   while (L.live) {
     let x;
-    try { x = await j('/wait?name=' + encodeURIComponent(L.name) + '&size=' + L.size); } catch (e) { stat('Lost the companion: ' + e.message, 'err'); await new Promise((r) => setTimeout(r, 3000)); continue; }
+    try { x = await j('/wait?name=' + encodeURIComponent(L.name) + '&size=' + L.size + (L.dummy ? '&quick=1' : '')); } catch (e) { stat('Lost the companion: ' + e.message, 'err'); await new Promise((r) => setTimeout(r, 3000)); continue; }
     if (x.newfile) { await loadLogs(); continue; } // (a newer log: switch to it and keep watching)
-    if (x.size !== L.size) {
+    if (x.size !== L.size || L.dummy) {
       try {
         const fresh = await scanMore(false);
         if (fresh.length && $('auto').checked) send(fresh[fresh.length - 1], false);
@@ -313,13 +314,39 @@ async function readText(b) {
 function progress(f) { const bar = $('bar'); bar.hidden = f == null; if (f != null) bar.firstElementChild.style.width = Math.round(f * 100) + '%'; }
 async function analyze(b) {
   if (L.reps.has(b.startByte) && L.reps.get(b.startByte).rep) return L.reps.get(b.startByte).rep;
-  const E = W.E, text = await readText(b);
+  const E = W.E, text = b.id === DUMMY ? withSpecs(await readText(b), E) : await readText(b);
   await new Promise((r) => setTimeout(r, 30));
   const rep = E.analyze(b, text, { packs: (W.S && W.S.packs) || E.PACKS, overrides: {} });
+  if (b.id === DUMMY) rep.combatantsRaw = []; // (no gear or stats on a dummy: WoW only writes them at a boss pull)
   if (rep.combatantsRaw && rep.combatantsRaw.length) rep.combatants = rep.combatantsRaw.filter((c) => rep.players.has(c.guid)).map((c) => ({ name: rep.players.get(c.guid).name, gear: c.gear, auras: c.auras, self: c.guid, stats: c.stats, talents: c.talents || [] }));
   const pr = W.progressOf ? W.progressOf(rep) : null;
   L.reps.set(b.startByte, { rep, pct: b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : null, prog: pr });
   return rep;
+}
+
+// ---------- training dummies: your spec from the buttons you pressed ----------
+// (WoW writes your spec only when a boss pull starts, so on a dummy Debrief works it out from your casts, then adds the line it needs)
+const SIG = { 71: ['Mortal Strike', 'Overpower'], 72: ['Bloodthirst', 'Rampage', 'Raging Blow'], 73: ['Shield Slam', 'Revenge'], 65: ['Holy Shock', 'Holy Light', 'Light of Dawn'],
+  66: ["Avenger's Shield", 'Shield of the Righteous'], 70: ["Templar's Verdict", 'Final Verdict', 'Blade of Justice', 'Wake of Ashes'], 253: ['Kill Command', 'Barbed Shot', 'Cobra Shot'],
+  254: ['Aimed Shot', 'Rapid Fire'], 255: ['Raptor Strike', 'Wildfire Bomb', 'Mongoose Bite'], 259: ['Mutilate', 'Envenom'], 260: ['Sinister Strike', 'Between the Eyes', 'Pistol Shot', 'Dispatch'],
+  261: ['Shadowstrike', 'Backstab', 'Shadow Dance'], 256: ['Penance', 'Power Word: Radiance'], 257: ['Holy Word: Serenity', 'Prayer of Healing'], 258: ['Mind Flay', 'Devouring Plague', 'Vampiric Touch'],
+  250: ['Heart Strike', 'Marrowrend', 'Blood Boil'], 251: ['Obliterate', 'Frost Strike', 'Howling Blast'], 252: ['Festering Strike', 'Scourge Strike', 'Clawing Shadows'],
+  262: ['Lava Burst', 'Earth Shock', 'Elemental Blast'], 263: ['Stormstrike', 'Lava Lash', 'Crash Lightning'], 264: ['Riptide', 'Healing Wave', 'Chain Heal'],
+  62: ['Arcane Blast', 'Arcane Barrage', 'Arcane Missiles'], 63: ['Fireball', 'Pyroblast', 'Fire Blast'], 64: ['Frostbolt', 'Flurry', 'Ice Lance', 'Glacial Spike'],
+  265: ['Agony', 'Unstable Affliction', 'Malefic Rapture'], 266: ["Hand of Gul'dan", 'Call Dreadstalkers', 'Demonbolt'], 267: ['Chaos Bolt', 'Incinerate', 'Conflagrate'],
+  268: ['Keg Smash', 'Breath of Fire'], 270: ['Renewing Mist', 'Enveloping Mist'], 269: ['Fists of Fury', 'Strike of the Windlord'], 102: ['Starsurge', 'Starfire'],
+  103: ['Shred', 'Rake', 'Ferocious Bite'], 104: ['Mangle', 'Ironfur', 'Maul'], 105: ['Lifebloom', 'Rejuvenation', 'Wild Growth'], 577: ['Chaos Strike', 'Eye Beam', 'Blade Dance'],
+  581: ['Soul Cleave', 'Fracture', 'Spirit Bomb'], 1467: ['Disintegrate', 'Pyre'], 1468: ['Echo', 'Reversion', 'Dream Breath'], 1473: ['Ebon Might', 'Eruption', 'Prescience'] };
+function withSpecs(text, E) {
+  const casts = new Map(), re = /  SPELL_CAST_SUCCESS,(Player-[^,]+),"[^"]*",[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,\d+,"([^"]*)"/g; let m;
+  while ((m = re.exec(text))) { if (!casts.has(m[1])) casts.set(m[1], new Set()); casts.get(m[1]).add(m[2]); }
+  const ts = (text.match(/^[^\n]*?(?=  )/) || [''])[0], add = [];
+  for (const [guid, names] of casts) {
+    let best = 0, score = 0;
+    for (const [id, sig] of Object.entries(SIG)) { if (!E.SPECS || !E.SPECS[id]) continue; const sc = sig.reduce((a, n, i) => a + (names.has(n) ? (i === 0 ? 3 : 1) : 0), 0); if (sc > score) { score = sc; best = +id; } }
+    if (best) add.push(ts + '  COMBATANT_INFO,' + guid + ',0,' + new Array(22).fill(0).join(',') + ',' + best + ',0');
+  }
+  return add.length ? add.join('\n') + '\n' + text : text;
 }
 
 // ---------- the recap: what goes to the game ----------

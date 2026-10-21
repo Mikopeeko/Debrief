@@ -75,9 +75,17 @@ local function decode(code)
     end
   end
   if not m.h then return nil, "That code has no pull in it. Copy it again from Debrief Companion." end
+  m.h.practice = m.h.diff == "Practice" -- (a training dummy: no kill or wipe)
   return m
 end
 
+-- how a pull's result reads (Kill, Wipe at 24%, or Practice), and its colours: text, fill, outline
+local function resultOf(h, long)
+  if h.practice or h.diff == "Practice" then return "Practice", COL.muted, COL.raised, COL.line2 end
+  if h.kill then return "Kill", COL.goodT, COL.goodBg, "2b5a36" end
+  if long then return "Wipe" .. (h.pct ~= "" and ("  ·  " .. h.pct .. "%") or ""), COL.badT, COL.badBg, "6a2f2b" end
+  return (h.pct ~= "" and (h.pct .. "%") or "Wipe"), COL.badT, COL.badBg, "6a2f2b"
+end
 -- (a pull to try the card with: a real Heroic Ula'tek kill with made-up names; /debrief demo shows it)
 local SAMPLE = [==[DBF1^H~Ula'tek~Heroic~3~1~0~7:30~~6^P~Ironvow~PALADIN~Protection Paladin~tank~DPS~148k~-13~2~171k~2~~ability_paladin_shieldofthetemplar^S~Ironvow~warn~389539~Opener, step by step: 3 of 4. Missed: step 1, Hand of Reckoning (not in your opener).^S~Ironvow~warn~~Stat order: Crit › Mastery › Haste › Vers. Yours: Critical Strike 1,198, then Mastery 1,041, then Haste 979, then Versatility 0.^N~Ironvow~Follow the guide opener: Hand of Reckoning, then 3 of Avenger's Shield, Sentinel, Avenging Wrath or Divine Toll, in any order.^P~Lumensong~PALADIN~Holy Paladin~healer~HPS~333k~5~2~317k~2~1st of 4 healers~spell_holy_holybolt^S~Lumensong~warn~200025~Beacon of Virtue: 63%. It sat ready for 168 seconds.^S~Lumensong~warn~223819~Divine Purpose: 4 wasted. 2 were lost to a Divine Toll pressed while you still held one.^S~Lumensong~bad~82326~Mana at the kill: 60%. About a few more Holy Lights were left in it.^N~Lumensong~Press Beacon of Virtue as the damage goes out, close to every 15 seconds. From 0:52, it sat ready for 36 seconds.^P~Dawnmender~PALADIN~Holy Paladin~healer~HPS~316k~13~2~280k~2~2nd of 4 healers~spell_holy_holybolt^S~Dawnmender~warn~223819~Divine Purpose: 6 wasted. 3 were lost to a Divine Toll pressed while you still held one.^S~Dawnmender~warn~31821~Cooldowns into the big hits: 1 of 3. 1 of your 3 healing cooldowns went out in the heaviest damage of the pull.^S~Dawnmender~warn~31884~Casting in Avenging Wrath: 83%. You were casting for 83% of your Avenging Wrath windows.^B~Dawnmender~dead~1286835~You died at 3:50 to Necrotic Vapors.^N~Dawnmender~Spend Divine Purpose before it runs out, or before a new one replaces it. Your first wasted one was at 2:50.^P~Thornroot~DRUID~Restoration Druid~healer~HPS~281k~-1~2~284k~2~3rd of 4 healers~spell_nature_healingtouch^S~Thornroot~warn~391528~Convoke the Spirits uses: 6 of 8. It sat ready for 2 minutes in all.^S~Thornroot~bad~48438~Mana at the kill: 58%. About 13 more Wild Growths were left in it at the kill.^S~Thornroot~warn~263725~Clearcasting: 11 wasted. 9 were replaced by a new one while you still had it.^N~Thornroot~Press Convoke the Spirits a little sooner each time it comes back.^P~Arcspark~MAGE~Arcane Mage~dps~DPS~275k~31~2~210k~2~3rd of 21 DPS~spell_holy_magicalsentry^S~Arcspark~warn~30451~Rotation priority: 77% of your casts were the best button to press.^S~Arcspark~warn~30451~Always be casting: 72%. Your longest stretch with nothing pressed was 6 seconds, at 3:22, while you were moving.^S~Arcspark~warn~321507~Touch of the Magi on cooldown: 8 of 10. It sat ready, unused, for 2 minutes in all.^N~Arcspark~With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first. Not in Arcane Soul, where each Barrage gives you Clearcasting and Salvo back.^P~Frostwhisper~MAGE~Frost Mage~dps~DPS~156k~-36~2~244k~2~17th of 21 DPS~spell_frost_frostbolt02^S~Frostwhisper~bad~116~Always be casting: 70%. Your longest stretch with nothing pressed was 5 seconds, at 1:52, while you were moving.^S~Frostwhisper~bad~190446~Brain Freeze: 3 wasted. You got 24 procs.^S~Frostwhisper~warn~269748~Ray of Frost on cooldown: 6 of 8. It sat ready, unused, for 21 seconds in all.^B~Frostwhisper~dead~1301007~You died at 4:20 to Unchecked Rage.^N~Frostwhisper~Press something every global cooldown. When you have to move, use an instant spell instead of stopping.^R~warn~1292403~Caustic Waves~5 players. @Moonquill, @Mistpalm, @Grimshade, @Voidfang and 1 more. Dodge the venom waves from Ula'tek and her tail.^R~bad~1301007~Unchecked Rage~1 time. Nobody was in melee of Ula'tek, so she hit the raid.^D~2:44~Hawkfeather~HUNTER~6603~Melee^D~2:46~Stonefist~WARRIOR~6603~Melee^D~3:50~Dawnmender~PALADIN~1286835~Necrotic Vapors^D~3:53~Jadewind~MONK~6603~Melee^X~+2 more by 7:30.^Q~Kill! Next time: Dodge the venom waves from Ula'tek and her tail.^Z]==]
 
@@ -443,9 +451,9 @@ function render()
     local b, k = chips[i], first + i - 1
     local q = DB.pulls[k]
     if q and (DB.show or {}).chips ~= false then
-      local kill = q.h.kill
-      b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. (kill and "Kill" or (q.h.pct ~= "" and (q.h.pct .. "%") or "Wipe")))
-      chipColors(b, kill and COL.goodBg or COL.badBg, k == DB.cur and COL.gold or (kill and COL.goodBg or COL.badBg), kill and COL.goodT or COL.badT)
+      local rt, rc, rb = resultOf(q.h)
+      b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt)
+      chipColors(b, rb, k == DB.cur and COL.gold or rb, rc)
       b:SetWidth(b.t:GetStringWidth() + 20)
       b:ClearAllPoints()
       if i == 1 then b:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -110) else b:SetPoint("LEFT", chips[i - 1], "RIGHT", 6, 0) end
@@ -455,9 +463,9 @@ function render()
   end
   bossT:SetText("")
   resT:SetText(h.boss); resT:SetWidth(W - PAD * 2 - 110)
-  pill.t:SetText(h.kill and "Kill" or ("Wipe" .. (h.pct ~= "" and ("  ·  " .. h.pct .. "%") or "")))
-  pill.t:SetTextColor(rgb(h.kill and COL.goodT or COL.badT)); pill:SetWidth(pill.t:GetStringWidth() + 22)
-  rounded(pill.fillT, "fill", 5, h.kill and COL.goodBg or COL.badBg, 1); rounded(pill.lineT, "line", 5, h.kill and "2b5a36" or "6a2f2b", 1)
+  local rt, rc, rb, rl = resultOf(h, true)
+  pill.t:SetText(rt); pill.t:SetTextColor(rgb(rc)); pill:SetWidth(pill.t:GetStringWidth() + 22)
+  rounded(pill.fillT, "fill", 5, rb, 1); rounded(pill.lineT, "line", 5, rl, 1)
   local meta = { h.diff, "Pull " .. h.pull, h.dur }
   if h.where ~= "" then meta[#meta + 1] = h.where end
   meta[#meta + 1] = h.deaths .. (h.deaths == "1" and " death" or " deaths")
@@ -591,7 +599,8 @@ end
 do
 -- ---------- style, goals, combat, the mini bar, raid chat and the big window ----------
 local function accentHex()
-  if DB.accent == "class" then local _, c = UnitClass("player"); return classHex(c) end
+  -- (the colour of the class you're playing, unless you turn it off; a Priest's white is softened so text stays readable)
+  if DB.classTheme ~= false or DB.accent == "class" then local _, c = UnitClass("player"); if c then local hx = classHex(c); return hx == "ffffff" and "e8e4da" or hx end end
   return ACCENTS[DB.accent or "gold"] or "e6b450"
 end
 -- (accent colour, colour-blind colours, glass)
@@ -601,7 +610,7 @@ function Debrief_ApplyStyle()
   local cb = DB.colorblind
   FLAG.ok = cb and "4aa3ff" or COL.good; FLAG.bad = cb and "ff9f1a" or COL.bad; FLAG.warn = cb and "f2e35b" or COL.warn
   for _, b in pairs(tabs) do fill(b.u, COL.gold) end
-  rounded(paste.lineT, "line", 8, COL.gold, 0.55)
+  rounded(paste.lineT, "line", 8, COL.gold, 0.55); rounded(toast.lineT, "line", 8, COL.gold, 0.55)
   rounded(card.fillT, "fill", 8, COL.bg, DB.cardStyle == "glass" and math.min(DB.alpha or 0.97, 0.8) or (DB.alpha or 0.97))
   if big then rounded(big.fillT, "fill", 8, COL.bg, DB.cardStyle == "glass" and 0.86 or 0.98) end
 end
@@ -640,7 +649,7 @@ function Debrief_PostRaid(m)
   local h = m.h
   local ch = IsInGroup(2) and "INSTANCE_CHAT" or (IsInRaid() and "RAID") or (IsInGroup() and "PARTY") or nil
   local function clean(s) return ((s or ""):gsub("@", ""):gsub("|", "")) end
-  local lines = { "Debrief: " .. h.boss .. " pull " .. h.pull .. ", " .. (h.kill and "kill" or ("wipe at " .. h.pct .. "%")) .. " (" .. h.dur .. ", " .. h.deaths .. " deaths)" }
+  local lines = { "Debrief: " .. h.boss .. " pull " .. h.pull .. ", " .. (h.practice and "practice on a training dummy" or (h.kill and "kill" or ("wipe at " .. h.pct .. "%"))) .. " (" .. h.dur .. ", " .. h.deaths .. " deaths)" }
   if DB.postMistakes ~= false then
     local t = {}; for i, r in ipairs(m.raid.bad) do if i <= 3 then t[#t + 1] = r[3] end end
     if #t > 0 then lines[#lines + 1] = "Top mistakes: " .. table.concat(t, ", ") end
@@ -678,9 +687,9 @@ miniShow = function()
   CUR = m
   local P = pickWho(m)
   mT:SetText("Pull " .. m.h.pull)
-  mChip.t:SetText(m.h.kill and "Kill" or (m.h.pct ~= "" and (m.h.pct .. "%") or "Wipe"))
-  mChip.t:SetTextColor(rgb(m.h.kill and COL.goodT or COL.badT)); mChip:SetWidth(mChip.t:GetStringWidth() + 16)
-  rounded(mChip.fillT, "fill", 5, m.h.kill and COL.goodBg or COL.badBg, 1); rounded(mChip.lineT, "line", 5, m.h.kill and COL.goodBg or COL.badBg, 1)
+  local rt, rc, rb = resultOf(m.h)
+  mChip.t:SetText(rt); mChip.t:SetTextColor(rgb(rc)); mChip:SetWidth(mChip.t:GetStringWidth() + 16)
+  rounded(mChip.fillT, "fill", 5, rb, 1); rounded(mChip.lineT, "line", 5, rb, 1)
   local parts = {}
   if P then
     local d = P.d and ((P.d >= 0 and ("  |cff7ee08f+" .. P.d .. "%|r") or ("  |cffff8f87" .. P.d .. "%|r"))) or ""
@@ -860,8 +869,9 @@ bigRender = function()
     local b = bBTN(side); b:SetPoint("TOPLEFT", 0, -sy); b:SetSize(SIDE - 14, 26)
     if i == DB.cur then local hl = bRT(side, "BACKGROUND"); hl:SetPoint("TOPLEFT", 0, -sy); hl:SetSize(SIDE - 14, 26); rounded(hl, "fill", 5, "2a2618", 1); local e = bTEX(side); e:SetPoint("TOPLEFT", 0, -(sy + 3)); e:SetSize(2, 20); fill(e, COL.gold) end
     local n = bFS(side, "body", 13, COL.faint); n:SetPoint("TOPLEFT", 10, -(sy + 6)); n:SetText("Pull " .. q.h.pull)
-    local c = bFS(side, "bold", 11.5, q.h.kill and COL.goodT or COL.badT); c:SetPoint("TOPLEFT", 74, -(sy + 6)); c:SetText(q.h.kill and "Kill" or (q.h.pct ~= "" and (q.h.pct .. "%") or "Wipe"))
-    local cb = bRT(side, "BORDER"); cb:SetPoint("TOPLEFT", 68, -(sy + 4)); cb:SetSize(c:GetStringWidth() + 12, 18); rounded(cb, "fill", 5, q.h.kill and COL.goodBg or COL.badBg, 1)
+    local qt, qc, qb = resultOf(q.h)
+    local c = bFS(side, "bold", 11.5, qc); c:SetPoint("TOPLEFT", 74, -(sy + 6)); c:SetText(qt)
+    local cb = bRT(side, "BORDER"); cb:SetPoint("TOPLEFT", 68, -(sy + 4)); cb:SetSize(c:GetStringWidth() + 12, 18); rounded(cb, "fill", 5, qb, 1)
     local d = bFS(side, "body", 12, COL.muted); d:SetJustifyH("RIGHT"); d:SetPoint("TOPRIGHT", side, "TOPLEFT", SIDE - 26, -(sy + 6)); d:SetText(q.h.dur)
     b:SetScript("OnClick", function() DB.cur = i; DB.who = nil; bigRender(); if card:IsShown() then render() end end)
     b:SetScript("OnEnter", function() n:SetTextColor(rgb(COL.text)) end); b:SetScript("OnLeave", function() n:SetTextColor(rgb(COL.faint)) end)
@@ -871,8 +881,8 @@ bigRender = function()
   -- right: the fight header
   local y = 0
   local t = bFS(bm, "head", 26, COL.text); t:SetPoint("TOPLEFT", 0, -y); t:SetText("Pull " .. h.pull)
-  local pl = bRT(bm, "BACKGROUND"); local pt = bFS(bm, "bold", 13.5, h.kill and COL.goodT or COL.badT); pt:SetText(h.kill and "Kill" or ("Wipe  ·  " .. h.pct .. "%"))
-  pl:SetPoint("LEFT", t, "RIGHT", 12, -1); pl:SetSize(pt:GetStringWidth() + 24, 26); rounded(pl, "fill", 5, h.kill and COL.goodBg or COL.badBg, 1); pt:SetPoint("CENTER", pl, "CENTER", 0, 0)
+  local pl = bRT(bm, "BACKGROUND"); local ht, hc, hb2 = resultOf(h, true); local pt = bFS(bm, "bold", 13.5, hc); pt:SetText(ht)
+  pl:SetPoint("LEFT", t, "RIGHT", 12, -1); pl:SetSize(pt:GetStringWidth() + 24, 26); rounded(pl, "fill", 5, hb2, 1); pt:SetPoint("CENTER", pl, "CENTER", 0, 0)
   local night = nightOf(m)
   local minP = 101; for _, q in ipairs(night) do local p = tonumber(q.h.pct) or 101; if not q.h.kill and p < minP then minP = p end end
   local note = h.kill and "A kill" or ((tonumber(h.pct) or 101) <= minP and "Closest pull tonight" or nil)
@@ -1363,10 +1373,11 @@ local function buildOptions()
   page("look")
   local function classCol() local _, c = UnitClass("player"); return classHex(c) end
   panel("Colours", "the card beside this window changes as you click", "INV_Misc_Gem_Variety_02")
-  swatches("Accent colour", "Tabs, switches and the Next pull box. The second one is your class colour.", {
+  switch("Match my class colour", "Debrief takes the colour of the class you're playing.", function() return DB.classTheme ~= false end, function(v) DB.classTheme = v end, true)
+  swatches("Or pick a colour", "When class colours are off.", {
     { "gold", "Debrief gold", ACCENTS.gold }, { "class", "Your class colour", classCol }, { "frost", "Frost", ACCENTS.frost },
     { "fel", "Fel", ACCENTS.fel }, { "crimson", "Crimson", ACCENTS.crimson }, { "violet", "Void", ACCENTS.violet },
-  }, function() return DB.accent or "gold" end, function(v) DB.accent = v end)
+  }, function() return DB.accent or "gold" end, function(v) DB.accent = v; DB.classTheme = false end)
   segment("Card style", "Soft panels, see-through glass, or flat.", { { "panels", "Panels" }, { "glass", "Glass" }, { "flat", "Flat" } },
     function() return DB.cardStyle or "panels" end, function(v) DB.cardStyle = v end, true)
   switch("Colour-blind colours", "Blue for good, orange for bad.", function() return DB.colorblind == true end, function(v) DB.colorblind = v end, true)
@@ -1645,7 +1656,7 @@ SlashCmdList.DEBRIEF = function(msg)
 end
 
 local ev = CreateFrame("Frame")
-ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("CHAT_MSG_ADDON"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("CHAT_MSG_ADDON"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED")
 -- (combat logging on in raids, so nobody has to type /combatlog; Advanced Combat Logging too. Debrief Companion reads the log)
 local weLog, logPending = false, false
 autoLog = function()
@@ -1661,6 +1672,9 @@ autoLog = function()
   elseif weLog and LoggingCombat() then LoggingCombat(false); weLog = false end
 end
 -- (test mode: the box also comes up after any fight and when you log in, so the whole thing can be tried on a training dummy)
+-- (a training dummy: any target named "... Dummy" that isn't a player)
+local onDummy = false
+local function isDummy(u) local n = UnitExists and UnitExists(u) and not UnitIsPlayer(u) and UnitName(u); return n and n:find("Dummy") ~= nil end
 local function testBox(delay)
   if not (DB and DB.testMode and C_Timer) then return end
   C_Timer.After(delay, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
@@ -1670,15 +1684,28 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DB then onAddonMessage(arg, a2, a3, a4) end
   elseif e == "PLAYER_REGEN_DISABLED" then
     Debrief_CombatStart()
+    onDummy = isDummy("target")
     if toast:IsShown() then toast:Hide() end -- (a new pull: the prompt for the last one goes away)
   elseif e == "PLAYER_REGEN_ENABLED" then
     Debrief_CombatEnd()
     if pendingShow then pendingShow = false; showCard() end
     testBox(1.5)
+    -- (a training dummy fight: whoever runs Debrief Companion gets the prompt too, a few seconds after the last hit)
+    if onDummy and DB and (DB.pasted or DB.hasApp) and DB.autoBox ~= false and not DB.testMode and C_Timer then
+      onDummy = false
+      C_Timer.After(3, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
+    end
     if logPending then logPending = false; autoLog() end
   elseif e == "PLAYER_ENTERING_WORLD" then
     if arg or a2 then testBox(4) end -- (on login or /reload, not every loading screen)
     if C_Timer then C_Timer.After(2, autoLog) end
+  elseif e == "PLAYER_TARGET_CHANGED" then
+    if InCombatLockdown() and isDummy("target") then onDummy = true end
+    -- (practising on a dummy: the combat log goes on, so Debrief Companion can read it)
+    if isDummy("target") and DB and DB.autoLog ~= false and (DB.hasApp or DB.pasted) and LoggingCombat and not LoggingCombat() then
+      if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
+      LoggingCombat(true); say("combat log is on for your practice. Hit the dummy, stop, and Debrief asks \"See your recap?\".")
+    end
   elseif e == "ZONE_CHANGED_NEW_AREA" then
     if C_Timer then C_Timer.After(2, autoLog) end
   elseif e == "ENCOUNTER_END" then
