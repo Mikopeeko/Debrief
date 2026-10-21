@@ -13647,6 +13647,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Get started on Assignments now opens the guided note builder: one page per mechanic, with suggested picks and why.',
     'Plan view on Assignments: pick any boss\'s card (or Plan view on a saved note) to plan it before your first pull, no logs needed.',
     'The cooldown timeline flags a cooldown planned before it\'s back, and Cover it adds a ready raid cooldown for any big hit with none, in one click (with Undo).',
     'The cooldown timeline has a raid damage scale on the side (1M/s, 2M/s…).',
@@ -15053,7 +15054,7 @@ function ndzBoard(r, u0) {
     '<div class="ndz-tile ndz-tsaved"><span class="ndz-tem" aria-hidden="true">📋</span><b>Saved notes</b><span class="sub">Every boss\'s notes, in this browser.</span><div class="ndz-cb">' + B('data-ndzgo="snBox"', 'See them', 'sm') + B('data-ndzwiz="1"', 'Add a note', 'sm') + '</div></div></div>';
   const how = '<span class="ndz-hdb">' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></span>';
   // (Get started leads; every other button and the tiles wait behind All tools)
-  const go = B('data-ndzguide="1"', 'Get started <span aria-hidden="true">→</span>', 'primary big ndz-gbtn'), tlk = '<button class="ndz-tlk" type="button" data-ndztools="1" aria-expanded="' + !!S.ndzTools + '">All tools <span aria-hidden="true">' + (S.ndzTools ? '▴' : '▾') + '</span></button>';
+  const go = B('data-ndzbuild="1" data-ndzbuildboss="' + esc(b) + '"', 'Get started <span aria-hidden="true">→</span>', 'primary big ndz-gbtn') /* (straight into the guided Note builder, a page per mechanic) */, tlk = '<button class="ndz-tlk" type="button" data-ndztools="1" aria-expanded="' + !!S.ndzTools + '">All tools <span aria-hidden="true">' + (S.ndzTools ? '▴' : '▾') + '</span></button>';
   const more = (x) => (S.ndzTools ? '<div class="ndz-tmore"><div class="ndz-cb">' + x + '</div>' + tiles + '</div>' : '');
   if (!u0) return '<div class="panel ndz-hero none"><span class="ndz-hbig" aria-hidden="true">📝</span><div><h2>No note for tonight yet</h2><div class="sub">Your NSRT note says who soaks, who kicks and who presses which cooldown. Debrief checks every raider against it on every pull.</div>' +
     '<div class="ndz-cb ndz-hb">' + go + tlk + '</div></div>' + how + '</div>' + ndzBuffBox(r) + more(B('data-ndzwiz="1"', 'Add your NSRT note', 'sm') + B('data-ndzbuild="1"', 'Build one step by step', 'sm'));
