@@ -1576,6 +1576,8 @@ const CMP_OFF = () => false; /* (on the website again Oct 20 after its rebuild, 
 // they're on in the app on your PC (localhost) for review. Set this to () => false to show them everywhere)
 const GDZ_OFF = () => false; /* (on everywhere since Oct 20, your call; () => !!window.WLA_HOSTED greys it out on the website again) */
 // (the Debrief Discord's invite link: the menu's "Join the Discord" and the start page's line show once it's set)
+// (Discord's own logo, for the top bar button and the front page box (Oct 21))
+const DISC_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>';
 const DISCORD_URL = 'https://discord.gg/qyVKJ2hB2b'; // (never expires, no use limit; lands in #general)
 // ---- "Report a problem" (your note, Oct 18): a short form that files the problem on the project's private GitHub,
 // through the website's own server (so nobody needs a GitHub account), with this page attached: the tab, boss, pull,
@@ -1647,6 +1649,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Our Discord is easy to find: a Discord button in the top bar on every page, and a Join the Discord box on the front page.',
     'Debrief in game has its own page in the menu: both downloads, who needs the addon and who needs the PC app, what happens after a pull, pictures of every part, and the handy commands.',
     'Debrief in game: the settings window now looks and feels like this website: a header bar, a big title, tabs along the top and everything in rounded panels, bigger and easier to read.',
     'Debrief in game: a short tutorial the first time you log in (four steps: what it is, what happens after a boss pull, your recap, and /dmo for settings).',
@@ -22230,6 +22233,10 @@ const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '
   (REPORT_ON() ? '<a href="#" class="rp-open">Report a problem</a>' : '') + '</nav></footer>';
 // (one logo at a time on the front page: the top bar's shows once the big one has scrolled away)
 addEventListener('scroll', () => { const l = $('.fph-logo'); document.body.classList.toggle('fph-past', !l || l.getBoundingClientRect().bottom < 60); }, { passive: true });
+// (the Discord box on the front page, under the boss cards (Oct 21, your ask))
+const fphDiscord = () => DISCORD_URL ? '<section class="fph-dc"><div class="fph-dc-ico">' + DISC_SVG + '</div><div class="fph-dc-t"><h2>Join the raiders shaping Debrief</h2>' +
+  '<p>Get the patch notes first, report a bug and hear when it\'s fixed, and tell us what to build next.</p></div>' +
+  '<a class="fph-dc-go" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">' + DISC_SVG + 'Join the Discord</a></section>' : '';
 function homeHosted() {
   const fp = fpParts();
   // (one front page for everyone (your notes, Oct 19): the logo and headline and one button. Someone new gets Start now,
@@ -22244,7 +22251,7 @@ function homeHosted() {
       '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p>' +
         '<ul class="fph-trust">' + ['Free', 'No account needed', 'Warcraft Logs or your own combat log', 'Your own log stays on your PC'].map((t) => '<li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' + t + '</li>').join('') + '</ul>' +
         '<button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
-    fphBosses() +
+    fphBosses() + fphDiscord() +
     '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
       '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + FP_ICO[k] + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
       '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
@@ -23324,6 +23331,7 @@ $('#brandHome').onclick = () => home();
   }
 }
 if ($('#tbHome')) $('#tbHome').onclick = () => home();
+if ($('#tbDisc') && DISCORD_URL) { const a = $('#tbDisc'); a.href = DISCORD_URL; a.innerHTML = DISC_SVG + '<span>Discord</span>'; a.hidden = false; } /* (the top bar's Discord button (Oct 21)) */
 if ($('#tbDiscord') && DISCORD_URL) { $('#tbDiscord').href = DISCORD_URL; $('#tbDiscord').hidden = false; $('#tbDiscord').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; }; }
 if ($('#tbReport') && REPORT_ON()) { $('#tbReport').hidden = false; $('#tbReport').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openReport(); }; }
 if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; startTour(0); };
