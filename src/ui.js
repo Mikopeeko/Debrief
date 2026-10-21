@@ -1664,6 +1664,7 @@ const PATCH_NOTES = [
     'Boss guides, Entombed Sentinels: the whole-fight video plays two full rounds (each with its intermission and tank swap) before the Same again card.',
     'Boss guides, Ula\'tek: nobody stands in the poison water any more. Every spot is checked against the platform in the room picture (its glowing rim counts as poison), on the intact platform, the side ledges and the broken quarters. Walks still cross the venom where the fight really does.',
     'Boss guides, Entombed Sentinels: the maps use the platform\'s real edges (about 50 yards out, not 40): the bosses sit deeper in the gem corners, 60 yards apart, and the puddles line the real walls and the corner nook.',
+    'Boss guides, Entombed Sentinels: the Blood Venom puddles, the tank\'s big one too, land smaller and swell to full size over a few seconds, as they do in the game.',
     'Boss guides, Entombed Sentinels: the red puddles drop where the raid plan puts them and stay for the rest of the fight, on every map and in the video. Blighted Blood, where each boss stands and where the puddles go have their own maps, and so do Evil Eyes on The Lost Explorers.',
     'Boss guides: the whole-fight videos now play the entire fight, every cast and set, for Vashnik, Sszorak, Nymrissa, Kith\'ix, Nek\'zali, Entombed Sentinels and The Lost Explorers on Mythic, and Kith\'ix and Entombed Sentinels on Heroic.',
     'Boss guides, Ula\'tek: the Heroic whole-fight video now plays the entire fight, pull to kill, on a real Heroic kill\'s clock (with a timed Read it and fight length), and the Mythic one shows both Mephitic Thrashes.',
@@ -7615,7 +7616,7 @@ function miniMap(mp, pmap) {
       return edge(2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-spin).toFixed(1) + '"' + (near ? ' fill-opacity="' + (0.65 + 0.35 * Math.abs(Math.sin(ftC * 9))).toFixed(2) + '"' : ''));
     }
     if (fx === 'debuff') return edge(g.dim ? 1.4 : 2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-(ftC * 8) % 40).toFixed(1) + '"');
-    if (fx === 'puddle') { const e = g.t0 != null && live ? ftA - g.t0 : 9, k = e < 0.9 ? 0.35 + 0.65 * (1 - Math.pow(1 - Math.max(0, e) / 0.9, 3)) : 1;
+    if (fx === 'puddle') { const e = g.t0 != null && live ? ftA - g.t0 : 9, gT = g.growT || 4, k = (e < 0.9 ? 0.35 + 0.65 * (1 - Math.pow(1 - Math.max(0, e) / 0.9, 3)) : 1) * (g.grow && e < gT ? g.grow + (1 - g.grow) * (1 - Math.pow(1 - Math.max(0, e) / gT, 2)) : 1); /* (a guide's puddle can land smaller and swell to full size) */
       return cir(x, y, R * k, 'fill="' + fill + '" stroke="' + col + '" stroke-opacity=".7" stroke-width="1.5"' + NS) + cir(x, y, R * k * 0.6, 'fill="' + col + '" fill-opacity=".14"'); }
     if (fx === 'zone') { const p = ((ftC % 3) + 3) % 3 / 3; return edge(1.8, ' stroke-opacity=".8"') + cir(x, y, R * (0.25 + 0.75 * p), 'fill="none" stroke="' + col + '" stroke-opacity="' + (0.5 * (1 - p)).toFixed(2) + '" stroke-width="1.5"' + NS); }
     if (fx === 'safe') { const a0 = 3.6, a1 = 4.4, sh = '<path d="M' + (x + Math.cos(a0) * R * 0.78).toFixed(1) + ' ' + (y + Math.sin(a0) * R * 0.78).toFixed(1) + 'A' + (R * 0.78).toFixed(1) + ' ' + (R * 0.78).toFixed(1) + ' 0 0 1 ' + (x + Math.cos(a1) * R * 0.78).toFixed(1) + ' ' + (y + Math.sin(a1) * R * 0.78).toFixed(1) + '" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"' + NS + '/>';
