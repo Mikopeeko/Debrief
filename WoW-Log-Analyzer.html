@@ -1075,6 +1075,8 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .gb-nav button:hover, .gb-pv:hover { border-color: var(--gold); color: var(--gold); }
 .pf-row.cb.gb-xr .cb-in .icw, .pf-row.cb.gb-xr .cb-in svg.ico, .pf-row.cb.gb-xr .cb-in img.oi { width: 18px; height: 18px; flex: none; }
 .gb-dbody { min-height: 40px; } .gb-dbody .pf-sec { margin: 0; }
+.gb-hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+.gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
 @media (max-width: 640px) { .gb-bd.gb-dr { margin: 4px 0 10px; padding: 8px; } }
 .gb-bh { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
@@ -19235,12 +19237,40 @@ function graphsBoard(r, end, NP) {
   const REPS = night ? NP.map((it) => it.r) : [r]; let cdC = null, auC = null;
   const cdsOf = (p) => { if (!cdC) { cdC = new Map(); try { for (const a of cdUseRows(REPS, !night)) cdC.set(a.p.name, a); } catch (e) { /* (no cooldowns tab then) */ } } return cdC.get(p.name); };
   const aurOf = (p) => { if (!auC) { auC = new Map(); try { for (const x of auraRows(REPS, false).rows) for (const w of x.who) { const l = auC.get(w.p.name) || []; l.push({ x, w, always: auraAlways(x.name, w.f) }); auC.set(w.p.name, l); } } catch (e) { /* (no buffs tab then) */ } } const l = auC.get(p.name); return l && l.length ? { p, l } : null; };
+  // (Oct 20, "what other graphs should we put in": Defensives, Help from others, Resources and Potions and healthstones, each from the
+  // player's own pull (or every pull of the night), plain numbers like the rest of Graphs)
+  const ENDS = night ? NP.map((it) => it.end) : [end], partsOf = (p) => REPS.map((rr, i) => ({ rr, e: ENDS[i], pull: rr.item.pull, q: [...rr.players.values()].find((y) => y.name === p.name) })).filter((x) => x.q);
+  const atL = (l) => l.map((u) => (night ? 'pull ' + u.pull + ' ' : '') + T(u.t)).join(', '), lRow = (nm, fr, v, sub) => '<div class="gb-br"><span class="gb-bn">' + spIc(nm) + '<span>' + esc(nm) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * Math.min(1, fr || 0)).toFixed(1) + '%"></i><span class="gb-v">' + v + '</span></span><span class="gb-bx">' + (sub || '') + '</span></div>'; /* (Oct 20, "make sure the style of graphs you use stays mostly consistent": every list tab uses the spell lists' bar row) */
+  const potsTab = (p) => { const P = partsOf(p); if (!P.length) return ''; const K = [['healthstone', 'Healthstone', 6262], ['healpot', 'Healing or defensive potion', 0], ['combatpot', 'Combat potion', 0], ['manapot', 'Mana potion', 0], ['utilpot', 'Other potion', 0]];
+    const got = K.map(([k, l, id]) => { const u = P.flatMap(({ q, e, pull }) => ((q.cons || {})[k] || []).filter((x) => x.t <= e + 0.05).map((x) => ({ ...x, pull }))); return { l, id: (u[0] && u[0].id) || id, u }; });
+    const show = got.filter((g, i) => g.u.length || i === 0 || i === 2); if (!show.some((g) => g.u.length) && !P.some(({ rr }) => [...rr.players.values()].some((y) => y.cls === 'WARLOCK'))) return ''; /* (with a Warlock in the raid, "none used" is worth seeing) */
+    return '<p class="gb-bh">What they used, and when.</p><div class="gb-bt">' + show.map((g, i, a) => lRow(g.l, g.u.length / Math.max(1, ...a.map((y) => y.u.length)), String(g.u.length), g.u.length ? 'at ' + atL(g.u) : 'none used')).join('') + '</div>'; };
+  const defTab = (p) => { const m = new Map(); for (const { q, e, pull } of partsOf(p)) for (const d of q.defs || []) { const o = m.get(d.name) || { name: d.name, id: d.id, cd: d.cd, u: [], poss: 0 }; o.u.push(...(d.uses || []).filter((t) => t <= e + 0.05).map((t) => ({ t, pull }))); o.poss += d.possible || 0; m.set(d.name, o); }
+    const L = [...m.values()].sort((a, b) => b.u.length - a.u.length || a.name.localeCompare(b.name)); if (!L.length) return '';
+    return '<p class="gb-bh">Their own defensives: how often they pressed each one, and when.</p><div class="gb-bt">' + L.map((o) => lRow(o.name, o.poss ? o.u.length / o.poss : 0, o.u.length + (o.poss ? ' of ' + o.poss : ''), o.u.length ? 'at ' + atL(o.u) : 'not pressed')).join('') + '</div>'; };
+  const HELP_N = new Set(EXT_N.concat(['power infusion', 'innervate', 'source of magic', 'blessing of freedom', 'ebon might', 'prescience', 'blistering scales', 'shifting sands', 'symbiotic relationship', 'spatial paradox', 'tiger\'s lust', 'dreamwalker\'s embrace']));
+  const helpTab = (p) => { const skip = new Set(LUST_BUFFS.map((n) => n.toLowerCase()).concat([...AURA_SKIP], [...RAID_BUFF_N])), m = new Map();
+    for (const { rr, q, e, pull } of partsOf(p)) { const healN = new Set(); for (const y of rr.players.values()) for (const a of (y.healAb || new Map()).values()) healN.add(String(a.name).replace(/^[^:]+: /, '').toLowerCase());
+      for (const b of (q.buffs || new Map()).values()) { const ln = String(b.name).toLowerCase(), from = [...(b.by || new Map())].filter(([g]) => g && g !== p.name); if (!from.length || skip.has(ln) || healN.has(ln) || !HELP_N.has(ln)) continue; /* (only real help, not side effects of others' spells) */
+        let up = 0, n = 0; for (const [a, c] of b.sp) { if (a > e) continue; up += Math.max(0, Math.min(c == null ? e : c, e) - Math.max(0, a)); n++; } if (!n) continue;
+        const o = m.get(b.name) || { name: b.name, id: b.id, up: 0, time: 0, n: 0, from: new Map(), ext: EXT_N.includes(ln) || ln === 'power infusion' }; o.up += up; o.n += n; for (const [g, k] of from) o.from.set(g, (o.from.get(g) || 0) + (+k || 1)); m.set(b.name, o); } }
+    const tot = partsOf(p).reduce((v, x) => v + x.e, 0), L = [...m.values()].sort((a, b) => b.ext - a.ext || b.n - a.n).slice(0, 14); if (!L.length) return '';
+    return '<p class="gb-bh">Buffs other players put on them: who gave each one, how many times, and how long they had it.</p><div class="gb-bt">' + L.map((o) => lRow(o.name, o.up / Math.max(1, tot), Math.round(100 * o.up / Math.max(1, tot)) + '%', (o.n === 1 ? 'once' : o.n + ' times') + ' · from ' + [...o.from].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([g]) => esc(g)).join(', '))).join('') + '</div>'; };
+  const resTab = (p) => { const P = partsOf(p); if (!P.length) return ''; const q0 = P[P.length - 1].q, tys = [...new Set((q0.spendL || []).map((c) => c.ty))].filter((ty) => ty !== '0'); if (manaUser(q0)) tys.unshift('0');
+    const out = tys.map((ty) => { let x = null; try { x = resRows(P.map(({ rr, e }) => ({ r: rr, w0: 0, w1: e, end: e })), ty).find((y) => y.p.name === p.name); } catch (e2) { x = null; } return x ? resDetail(x, ty, !night).replace(/<button[\s\S]*?<\/button>/g, '').replace(/<p class="sub" style="margin:10px 0 0">Click their bar again[\s\S]*?<\/p>$/, '') : ''; }).filter(Boolean);
+    return out.join('<hr class="gb-hr">'); };
   const DTABS = [
     ['dmg', 'Damage', (p) => (sumTo(p.dmgS || []) > 0 ? BD.dmg(p) : '')],
     ['heal', 'Healing', (p) => (sumTo(p.healS || []) > 0 && (p.role === 'healer' || sumTo(p.healS || []) >= 0.15 * sumTo(p.dmgS || [])) ? BD.heal(p) : '')], /* (a DPS's small self-heals don't get a tab) */
     ['cpm', 'Casts', (p) => { const c = castsOf(p); return c && c.n ? BD.cpm(p) : ''; }],
     ['cds', 'Cooldowns', (p) => { const a = cdsOf(p); return a ? '<p class="gb-bh">Their big cooldowns: each press, and the time each one sat ready.</p>' + cdDetail(a, !night) : ''; }],
-    ['aura', 'Buffs', (p) => { const a = aurOf(p); return a ? auraMine(a, false, false) : ''; }],
+    ['def', 'Defensives', defTab],
+    ['aura', 'Buffs', (p) => { const a = aurOf(p); if (!a) return ''; const sh = a.l.filter((y) => !y.always).sort((u, w) => w.w.f - u.w.f || w.w.n - u.w.n), alw = a.l.filter((y) => y.always), LIM = S.auraMore ? sh.length : 14;
+      return '<p class="gb-bh">Their buffs, the longest up first.</p><div class="gb-bt">' + sh.slice(0, LIM).map((y) => lRow(y.x.name, y.w.f, Math.round(100 * y.w.f) + '%', (y.w.n === 1 ? 'once' : y.w.n + ' times') + (y.w.from.size ? ' · ' + auraFrom(y.w.from) : ''))).join('') + '</div>' +
+        (sh.length > 14 ? '<button class="btn sm pf-srmore" id="pfAuraMore" type="button">' + (S.auraMore ? 'Show fewer' : 'Show all ' + sh.length) + '</button>' : '') + (alw.length ? '<p class="sub pf-more" title="' + esc(alw.map((y) => y.x.name).join(', ')) + '">+' + alw.length + ' up the whole time (raid buffs, flasks, food, passives)</p>' : ''); }],
+    ['help', 'Help from others', helpTab],
+    ['res', 'Resources', resTab],
+    ['pots', 'Potions and healthstones', potsTab],
     ['taken', 'Damage taken', (p) => (sumTo(p.takenS || []) > 0 ? BD.taken(p) : '')],
     ['death', 'Deaths', (p) => (deaths(p).length ? '<p class="gb-bh">How they died.</p>' + BD.death(p) : '')], /* (each its own tab (your call, Oct 20)) */
     ['kick', 'Interrupts', (p) => (kicks(p).length ? BD.kick(p) : '')],
@@ -19248,7 +19278,7 @@ function graphsBoard(r, end, NP) {
   const K0 = { dmg: 'dmg', heal: 'heal', taken: 'taken', death: 'death', kick: 'kick', disp: 'disp', cpm: 'cpm' };
   const drawer = (p, k) => { const L = DTABS.map(([tk, l, fn]) => [tk, l, fn(p)]).filter((x) => x[2]); if (!L.length) return '<p class="sub">Nothing to show.</p>'; const cur = L.find((x) => x[0] === (K0[k] || k)) || L[0];
     return '<div class="gb-dtabs" role="tablist" aria-label="' + esc(p.name) + '">' + L.map(([tk, l]) => '<button type="button" role="tab" class="gb-dtab' + (tk === cur[0] ? ' on' : '') + '" aria-selected="' + (tk === cur[0]) + '" data-dt="' + tk + '">' + esc(l) + '</button>').join('') + '</div>' +
-      '<div class="gb-dbody">' + cur[2].replace(/<div class="rk-go pf-go">[\s\S]*?<\/div>/g, '') /* (a view's own "See it in" row: the tabs say it here) */ + '</div><div class="gb-dmore"><span class="sub">More on ' + esc(p.name) + ':</span>' + [['res', 'Resources'], ['surv', 'Defensives'], ['util', 'Utility']].map(([k2, l]) => '<button type="button" class="btn sm" data-gpgo="' + k2 + '" data-pgn="' + esc(p.name) + '">' + l + ' ›</button>').join('') + '</div>'; };
+      '<div class="gb-dbody">' + cur[2].replace(/<div class="rk-go pf-go">[\s\S]*?<\/div>/g, '') /* (a view's own "See it in" row: the tabs say it here) */ + '</div><div class="gb-dmore"><span class="sub">More on ' + esc(p.name) + ':</span>' + [['util', 'Utility']].map(([k2, l]) => '<button type="button" class="btn sm" data-gpgo="' + k2 + '" data-pgn="' + esc(p.name) + '">' + l + ' ›</button>').join('') + '</div>'; };
   GB = { BD, drawer: GB_DRAWER ? drawer : null, byName: new Map(ps.map((p) => [p.name, p])) };
   const byK = new Map(CARDS.map((q) => [q.k, card(q)]));
   // ---- more chart types (your ask, Oct 19: "various types of charts (that are fitting for the data)"): lines over time for when, donuts for who,
