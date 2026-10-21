@@ -1662,6 +1662,7 @@ const PATCH_NOTES = [
     'Debriefing maps for Vashnik, Sszorak, Entombed Sentinels and Nek\'zali: the room picture now sits where the game has it (it was turned or a few yards off), so everyone\'s dots line up with the room.',
     'Debriefing maps for The Twin Fangs: the room picture sat 12 yards too far south. It now lines up with the game, so everyone\'s dots are on the walkway.',
     'Boss guides, The Coiled Altar: the raid markers and the Dreadmarch ghosts now sit on the platform, not past its edge.',
+    'Boss guides: the captions under the whole-fight video show apostrophes properly again (some showed a code instead).',
   ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },
