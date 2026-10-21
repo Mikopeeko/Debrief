@@ -1108,7 +1108,7 @@ local OW, OP, SIDEW = 760, 22, 196 -- (window width, side padding, the menu on t
 local PW = OW - SIDEW -- (a page's width)
 local function buildOptions()
   opt = CreateFrame("Frame", "DebriefOptions", UIParent)
-  opt:SetSize(OW, 600); opt:SetPoint("CENTER", -250, 20); opt:SetFrameStrata("DIALOG"); opt:SetClampedToScreen(true); opt:Hide()
+  opt:SetSize(OW, 640); opt:SetPoint("CENTER", -250, 20); opt:SetFrameStrata("DIALOG"); opt:SetClampedToScreen(true); opt:Hide()
   skin(opt, 8, COL.bg, 0.98, COL.line2, 1, true)
   opt:SetMovable(true); opt:EnableMouse(true); opt:RegisterForDrag("LeftButton")
   opt:SetScript("OnDragStart", opt.StartMoving); opt:SetScript("OnDragStop", opt.StopMovingOrSizing)
@@ -1123,25 +1123,24 @@ local function buildOptions()
   local sbg = opt:CreateTexture(nil, "BACKGROUND", nil, -5); sbg:SetPoint("TOPLEFT", 1, -53); sbg:SetPoint("BOTTOMLEFT", 1, 1); sbg:SetWidth(SIDEW - 1); fill(sbg, "13161d", 0.7)
   local sl = opt:CreateTexture(nil, "ARTWORK"); sl:SetPoint("TOPLEFT", SIDEW, -53); sl:SetPoint("BOTTOMLEFT", SIDEW, 1); sl:SetWidth(1); fill(sl, COL.line)
   local MENU = {
-    { "The card" }, { "card", "What it shows" }, { "raid", "Raid view" }, { "look", "Size and font" }, { "style", "Style" },
-    { "Other views" }, { "big", "Big window" }, { "mini", "Mini bar" },
-    { "Extras" }, { "goals", "Goals" }, { "lead", "Raid lead" }, { "after", "After a pull" }, { "pulls", "Saved pulls" },
+    { "layout", "Layout" }, { "look", "Look" }, { "after", "After a pull" }, { "views", "Big window and mini bar" }, { "raid", "Raid view" },
+    { "chat", "Raid chat" }, { "goals", "Goals" }, { "app", "PC app" }, { "pulls", "Saved pulls" }, { "help", "Help" },
   }
-  local TITLES = { card = "What the card shows", raid = "Raid view", look = "Size and font", style = "Style", big = "Big window", mini = "Mini bar",
-    goals = "Goals", lead = "Raid lead", after = "After a pull", pulls = "Saved pulls" }
+  local TITLES = { layout = "Layout", look = "Look", after = "After a pull", views = "Big window and mini bar", raid = "Raid view", chat = "Raid chat",
+    goals = "Goals", app = "PC app", pulls = "Saved pulls", help = "Help" }
   local NOTES = {
-    card = "Pick how much the card shows, then fine-tune it below.",
+    layout = "How much your recap shows. Click one, then fine-tune it below.",
+    look = "Colours, sizes and font. The card beside this window changes as you click.",
+    after = "What happens when your recap arrives.",
+    views = "Two other ways to see your recap: everything at once, or one slim line.",
     raid = "The whole raid's pull: the biggest mistakes, with names, and who died.",
-    look = "Changes show on the card beside this window.",
-    style = "Make it yours. The card beside this window changes as you click.",
-    big = "Everything at once: tonight's pulls, your numbers over the night and how far each pull got.",
-    mini = "One slim line after each pull instead of the card. Click it for the full card.",
-    goals = "Set the number you're chasing. The card and the mini bar show how close you got.",
-    lead = "One click puts the pull's recap in raid chat, for everyone without Debrief.",
-    after = "What happens when a boss pull ends.",
-    pulls = "Debrief keeps your pulls between sessions. Click one on the card or in the big window.",
+    chat = "One click puts the pull's recap in raid chat, for everyone without Debrief.",
+    goals = "Set the number you're chasing. Your recap shows how close you got.",
+    app = "Only for whoever runs Debrief Companion on their PC.",
+    pulls = "Debrief keeps your pulls between sessions.",
+    help = "Commands, the tutorial and a sample recap.",
   }
-  local pages, navBtns, cur = {}, {}, "card"
+  local pages, navBtns, cur = {}, {}, "layout"
   local pTitle = opt:CreateFontString(nil, "OVERLAY"); setFont(pTitle, "head", 19); pTitle:SetPoint("TOPLEFT", SIDEW + OP, -70); pTitle:SetTextColor(rgb(COL.text))
   local pNote = opt:CreateFontString(nil, "OVERLAY"); setFont(pNote, "body", 13); pNote:SetPoint("TOPLEFT", SIDEW + OP, -96); pNote:SetWidth(PW - OP * 2); pNote:SetJustifyH("LEFT"); pNote:SetTextColor(rgb(COL.faint))
   local function showPage(k)
@@ -1168,7 +1167,7 @@ local function buildOptions()
       b:SetScript("OnEnter", function() if cur ~= key then b.t:SetTextColor(rgb(COL.text)) end end)
       b:SetScript("OnLeave", function() if cur ~= key then b.t:SetTextColor(rgb(COL.muted)) end end)
       navBtns[key] = b
-      local p = CreateFrame("Frame", nil, opt); p:SetPoint("TOPLEFT", SIDEW, -120); p:SetSize(PW, 440); p:Hide()
+      local p = CreateFrame("Frame", nil, opt); p:SetPoint("TOPLEFT", SIDEW, -120); p:SetSize(PW, 500); p:Hide()
       pages[key] = p
       ny = ny + 32
     end
@@ -1256,88 +1255,91 @@ local function buildOptions()
   end
   local function S() DB.show = DB.show or {}; return DB.show end
 
-  -- What the card shows: Simple / Medium / Heavy on top as one segmented control, then each part
-  page("card")
-  local seg = CreateFrame("Frame", nil, P); seg:SetPoint("TOPLEFT", OP, -6); seg:SetSize(PW - OP * 2, 34); skin(seg, 5, "13161d", 1, COL.line2, 1)
-  local SW = (PW - OP * 2 - 8) / 3
-  local pbs = {}
+  -- Layout: how much the card shows, as three cards to click, then a few fine-tune rows
+  page("layout")
+  local CW3 = (PW - OP * 2 - 20) / 3
+  local pcs = {}
+  local PDESC = { simple = "Your numbers, your top slip and the next pull.", medium = "Your numbers, 3 slips, your boss mistakes and the next pull.", heavy = "Everything, on a wider card." }
   for i, k in ipairs({ "simple", "medium", "heavy" }) do
-    local b = CreateFrame("Button", nil, seg); b:SetSize(SW, 26); b:SetPoint("TOPLEFT", 4 + (i - 1) * SW, -4)
-    skin(b, 5, COL.gold, 1, COL.gold, 1)
-    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 13.5); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(PRESET_NAME[k])
+    local b = CreateFrame("Button", nil, P); b:SetSize(CW3, 82); b:SetPoint("TOPLEFT", OP + (i - 1) * (CW3 + 10), -4)
+    skin(b, 8, COL.raised, 1, COL.line2, 1)
+    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "head", 17); b.t:SetPoint("TOPLEFT", 12, -10); b.t:SetText(PRESET_NAME[k])
+    b.d = b:CreateFontString(nil, "OVERLAY"); setFont(b.d, "body", 12); b.d:SetPoint("TOPLEFT", 12, -33); b.d:SetWidth(CW3 - 24); b.d:SetJustifyH("LEFT"); b.d:SetText(PDESC[k])
     b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings() end)
-    b:SetScript("OnEnter", function() if DB.preset ~= k then b.t:SetTextColor(rgb(COL.text)) end end)
-    b:SetScript("OnLeave", function() if DB.preset ~= k then b.t:SetTextColor(rgb(COL.muted)) end end)
-    pbs[k] = b
+    b:SetScript("OnEnter", function() if DB.preset ~= k then rounded(b.lineT, "line", 8, COL.faint, 1) end end)
+    b:SetScript("OnLeave", function() if DB.preset ~= k then rounded(b.lineT, "line", 8, COL.line2, 1) end end)
+    pcs[k] = b
   end
-  local qs = P:CreateFontString(nil, "OVERLAY"); setFont(qs, "body", 12.5); qs:SetPoint("TOPLEFT", OP, -48); qs:SetWidth(PW - OP * 2); qs:SetJustifyH("LEFT"); qs:SetTextColor(rgb(COL.faint))
-  local DESC = { simple = "Your numbers, your top slip and the next pull. Quick to read between pulls.",
-    medium = "Your numbers, 3 rotation slips, your boss mistakes and the next pull. The everyday choice.",
-    heavy = "Everything, on a wider card: 5 slips, 3 boss lines, 5 raid mistakes and 8 deaths." }
   refreshers[#refreshers + 1] = function()
-    for k, b in pairs(pbs) do
+    for k, b in pairs(pcs) do
       local on = DB.preset == k
-      rounded(b.fillT, "fill", 5, COL.gold, on and 1 or 0); rounded(b.lineT, "line", 5, COL.gold, on and 1 or 0)
-      b.t:SetTextColor(rgb(on and "1b1406" or COL.muted))
+      rounded(b.fillT, "fill", 8, on and COL.gold or COL.raised, on and 0.12 or 1); rounded(b.lineT, "line", 8, on and COL.gold or COL.line2, 1)
+      b.t:SetTextColor(rgb(on and COL.gold or COL.text)); b.d:SetTextColor(rgb(on and COL.soft or COL.faint))
     end
-    qs:SetText(DB.preset and DESC[DB.preset] or "Your own mix, from the settings below.")
   end
-  y = 70
-  switch("Compact", "Just your numbers and the next pull.", function() return DB.compact == true end, function(v) DB.compact = v end)
-  switch("Your damage or healing", "With vs last pull, your best and your place.", function() return S().tile ~= false end, function(v) S().tile = v end)
-  stepper("Rotation lines", "Your biggest slips, worst first. 0 hides them.", 0, 5, function() return S().rotation == false and 0 or (DB.maxSlips or 3) end, function(v) S().rotation = v > 0; if v > 0 then DB.maxSlips = v end end)
-  stepper("Boss mechanics lines", "Your own mistakes on the pull. 0 hides them.", 0, 3, function() return S().boss == false and 0 or (DB.maxBoss or 2) end, function(v) S().boss = v > 0; if v > 0 then DB.maxBoss = v end end)
-  switch("Boss mechanics first", "Show them above your rotation.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
-  switch("Next pull", "One thing to try next time.", function() return S().next ~= false end, function(v) S().next = v end)
-  switch("Pull chips", "Your last pulls along the top of the card.", function() return S().chips ~= false end, function(v) S().chips = v end)
+  y = 98
+  switch("Your damage or healing", "Against your last pull, your best and your place.", function() return S().tile ~= false end, function(v) S().tile = v end)
+  stepper("Rotation tips", "Your biggest slips, worst first. 0 hides them.", 0, 5, function() return S().rotation == false and 0 or (DB.maxSlips or 3) end, function(v) S().rotation = v > 0; if v > 0 then DB.maxSlips = v end end)
+  stepper("Boss mistakes", "Your own mistakes on the pull. 0 hides them.", 0, 3, function() return S().boss == false and 0 or (DB.maxBoss or 2) end, function(v) S().boss = v > 0; if v > 0 then DB.maxBoss = v end end)
+  switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
+  switch("Next pull tip", "One thing to try next time.", function() return S().next ~= false end, function(v) S().next = v end)
+  switch("Your last pulls along the top", "Click one to look at it again.", function() return S().chips ~= false end, function(v) S().chips = v end)
+  switch("Only what went wrong", "Hide the lines you did right.", function() return DB.onlyBad == true end, function(v) DB.onlyBad = v end, true)
 
-  page("raid")
-  switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
-  stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
-  stepper("Deaths listed", "Who died first, and to what.", 1, 8, function() return DB.maxDied or 4 end, function(v) DB.maxDied = v end)
-  switch("Send my pastes to my group", "Raiders with Debrief get their card by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
-
+  -- Look
   page("look")
-  choice("Card width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
-  choice("Font", nil, FONT_CHOICES, function() return DB.font or "debrief" end, function(v) DB.font = v end, true)
-  pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
-  pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
-  pslider("Background", "How solid the card is.", 0.6, 1, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end)
-
-  page("style")
   local function classCol() local _, c = UnitClass("player"); return classHex(c) end
-  choice("Accent colour", "Tabs, switches, the Next pull box.", {
+  choice("Accent colour", "Tabs, switches and the Next pull box.", {
     { "gold", "Debrief gold", ACCENTS.gold }, { "class", "Your class colour", classCol }, { "frost", "Frost", ACCENTS.frost },
     { "fel", "Fel", ACCENTS.fel }, { "crimson", "Crimson", ACCENTS.crimson }, { "violet", "Void", ACCENTS.violet },
   }, function() return DB.accent or "gold" end, function(v) DB.accent = v end, true)
   choice("Card style", "Soft panels, see-through glass, or flat.", { { "panels", "Panels" }, { "glass", "Glass" }, { "flat", "Flat" } },
     function() return DB.cardStyle or "panels" end, function(v) DB.cardStyle = v end, true)
-  switch("Only what went wrong", "Hide the lines you did right.", function() return DB.onlyBad == true end, function(v) DB.onlyBad = v end, true)
+  pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
+  pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
+  choice("Card width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
+  choice("Font", nil, FONT_CHOICES, function() return DB.font or "debrief" end, function(v) DB.font = v end, true)
+  pslider("Background", "How solid the card is.", 0.6, 1, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end)
   switch("Colour-blind colours", "Blue for good, orange for bad.", function() return DB.colorblind == true end, function(v) DB.colorblind = v end, true)
-  switch("Lock in place", "The card and bars can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
+
+  -- After a pull
+  page("after")
+  choice("Show my recap as", "The card, one slim bar, or the big window.", { { "card", "The card" }, { "mini", "Mini bar" }, { "big", "Big window" } },
+    function() return DB.mini and "mini" or (DB.bigDefault and "big" or "card") end, function(v) DB.mini = (v == "mini"); DB.bigDefault = (v == "big") end, true)
+  switch("Open it by itself", "When your recap arrives.", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
+  switch("Sound", "A soft sound when it opens.", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
   switch("Hide during combat", "Back when the fight ends.", function() return DB.hideCombat ~= false end, function(v) DB.hideCombat = v end, true)
   choice("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "After 30 s" }, { 60, "After 60 s" }, { 120, "After 2 min" } },
     function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
+  switch("Lock in place", "The card and bars can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
 
-  page("big")
-  switch("Open the big window after a pull", "Instead of the card.", function() return DB.bigDefault == true end, function(v) DB.bigDefault = v; if v then DB.mini = false end end, true)
-  switch("Your numbers tonight", "A line of your damage or healing, pull by pull.", function() return DB.bigLine ~= false end, function(v) DB.bigLine = v end, true)
-  switch("Progress tonight", "How far each pull got, the closest one marked.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
-  pslider("Window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
-  buttons({ { "Open the big window", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); big:Show(); bigRender() end, 180 } })
-  local bn = P:CreateFontString(nil, "OVERLAY"); setFont(bn, "body", 12.5); bn:SetPoint("TOPLEFT", OP, -(y + 12)); bn:SetTextColor(rgb(COL.faint))
-  bn:SetText("Also: the Expand button on the card, or /debrief big.")
+  -- Big window and mini bar
+  page("views")
+  switch("Your numbers tonight", "Big window: a line of your damage or healing, pull by pull.", function() return DB.bigLine ~= false end, function(v) DB.bigLine = v end, true)
+  switch("Progress tonight", "Big window: how far each pull got.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
+  pslider("Big window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
+  pslider("Mini bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
+  buttons({ { "Open the big window", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); big:Show(); bigRender() end, 180 },
+    { "Show the mini bar", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); miniShow() end, 160 } })
+  local vn = P:CreateFontString(nil, "OVERLAY"); setFont(vn, "body", 12.5); vn:SetPoint("TOPLEFT", OP, -(y + 12)); vn:SetWidth(PW - OP * 2); vn:SetJustifyH("LEFT"); vn:SetTextColor(rgb(COL.faint))
+  vn:SetText("Pick which one opens after a pull in After a pull. The Expand button on the card opens the big window any time.")
 
-  page("mini")
-  switch("Use the mini bar", "One slim line after each pull, not the card.", function() return DB.mini == true end, function(v) DB.mini = v; if v then DB.bigDefault = false end end, true)
-  pslider("Bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
-  buttons({ { "Show the mini bar", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); miniShow() end, 170 },
-    { "Move it back", function() DB.miniPos = nil; mini:ClearAllPoints(); mini:SetPoint("CENTER", 0, -220) end, 130 } })
-  local mn = P:CreateFontString(nil, "OVERLAY"); setFont(mn, "body", 12.5); mn:SetPoint("TOPLEFT", OP, -(y + 12)); mn:SetWidth(PW - OP * 2); mn:SetJustifyH("LEFT"); mn:SetTextColor(rgb(COL.faint))
-  mn:SetText("It shows the pull, your number against your last pull, how many slips and your goal. Drag it anywhere.")
+  -- Raid view
+  page("raid")
+  switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
+  stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
+  stepper("Deaths listed", "Who died first, and to what.", 1, 8, function() return DB.maxDied or 4 end, function(v) DB.maxDied = v end)
 
+  -- Raid chat
+  page("chat")
+  switch("Top mistakes", "The three biggest, by name.", function() return DB.postMistakes ~= false end, function(v) DB.postMistakes = v end, true)
+  switch("First deaths", "Who died first, and to what.", function() return DB.postDeaths == true end, function(v) DB.postDeaths = v end, true)
+  switch("Next pull tip", "The one thing to try next time.", function() return DB.postNext ~= false end, function(v) DB.postNext = v end, true)
+  switch("Post by itself after each pull", "Only when you lead or assist.", function() return DB.autoPost == true end, function(v) DB.autoPost = v end, true)
+  buttons({ { "Post the last pull now", function() Debrief_PostRaid() end, 190 } })
+
+  -- Goals
   page("goals")
-  -- (the first + starts from your own number on your latest pull, rounded, so it's a few clicks, not fifty)
   local function lastOf(role)
     for i = #DB.pulls, 1, -1 do local p = youIn(DB.pulls[i]); if p and ((p.role == "healer") == (role == "healer")) then return parseK(p.v) end end
   end
@@ -1349,39 +1351,47 @@ local function buildOptions()
   end
   local fmtK = function(v) return v == 0 and "Off" or (v .. "k") end
   local g1, s1 = goalStep("goalDps", "dps")
-  stepper("Damage goal", "Your DPS target, in thousands. 0 is off.", 0, 3000, g1, s1, fmtK, true, 10)
+  stepper("Damage goal", "Your DPS target, in thousands.", 0, 3000, g1, s1, fmtK, true, 10)
   local g2, s2 = goalStep("goalHps", "healer")
-  stepper("Healing goal", "Your HPS target, in thousands. 0 is off.", 0, 3000, g2, s2, fmtK, true, 10)
+  stepper("Healing goal", "Your HPS target, in thousands.", 0, 3000, g2, s2, fmtK, true, 10)
   local gn = P:CreateFontString(nil, "OVERLAY"); setFont(gn, "body", 12.5); gn:SetPoint("TOPLEFT", OP, -(y + 16)); gn:SetWidth(PW - OP * 2); gn:SetJustifyH("LEFT"); gn:SetTextColor(rgb(COL.faint))
-  gn:SetText("The first + starts a little above your latest pull. Your card gets a goal bar (green once you reach it), the mini bar a goal %, and the big window a Goal tile.")
+  gn:SetText("The first + starts a little above your latest pull. Your card gets a goal bar that turns green once you reach it.")
 
-  page("lead")
-  switch("Top mistakes", "The three biggest, by name.", function() return DB.postMistakes ~= false end, function(v) DB.postMistakes = v end, true)
-  switch("First deaths", "Who died first, and to what.", function() return DB.postDeaths == true end, function(v) DB.postDeaths = v end, true)
-  switch("Next pull", "The one thing to try next time.", function() return DB.postNext ~= false end, function(v) DB.postNext = v end, true)
-  switch("Post by itself after each pull", "Only when you lead or assist, and only your own paste.", function() return DB.autoPost == true end, function(v) DB.autoPost = v end, true)
-  buttons({ { "Post the last pull now", function() Debrief_PostRaid() end, 190 } })
-
-  page("after")
-  switch("Open the card by itself", "When your pull arrives from the group.", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
-  switch("Ask after boss pulls", "For whoever runs Debrief Companion.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
-  switch("Small prompt, not the paste box", "\"See your recap? Press Ctrl+V\" and nothing else.", function() return DB.prompt ~= false end, function(v) DB.prompt = v end, true)
-  switch("Ready for Ctrl+V", "Any other key closes it so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
-  switch("Sound", "A soft sound when a card arrives.", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
+  -- PC app (only for whoever runs Debrief Companion)
+  page("app")
+  switch("Ask after boss pulls", "\"See your recap? Press Ctrl+V\" after each boss pull.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
+  switch("Small prompt, not the paste box", "Just the prompt, nothing to click.", function() return DB.prompt ~= false end, function(v) DB.prompt = v end, true)
+  switch("Ready for Ctrl+V", "Any other key lets go so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
+  switch("Send my recaps to the raid", "Raiders with Debrief get theirs by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
   switch("Combat log in raids", "Turns on by itself, so nobody forgets.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
 
+  -- Saved pulls
   page("pulls")
   stepper("Keep", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
   local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 13); pc:SetPoint("TOPLEFT", OP, -(y + 14)); pc:SetTextColor(rgb(COL.muted))
   refreshers[#refreshers + 1] = function() local n = #DB.pulls; pc:SetText(n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) end
   y = y + 30
-  buttons({ { "Show a demo", function() SlashCmdList.DEBRIEF("demo") end }, { "Move card back", function() SlashCmdList.DEBRIEF("reset") end },
-    { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
+  buttons({ { "Move card back", function() SlashCmdList.DEBRIEF("reset") end }, { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
+
+  -- Help
+  page("help")
+  buttons({ { "Show the tutorial", function() opt:Hide(); Debrief_Tutorial() end, 170 }, { "Show a sample recap", function() SlashCmdList.DEBRIEF("demo") end, 170 } })
+  y = y + 10
+  local HELP = {
+    { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
+    { "/debrief paste", "paste a recap by hand" }, { "/debrief post", "the pull in raid chat" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
+  }
+  for _, h in ipairs(HELP) do
+    local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 13.5); c:SetPoint("TOPLEFT", OP, -(y + 8)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
+    local d = P:CreateFontString(nil, "OVERLAY"); setFont(d, "body", 13.5); d:SetPoint("TOPLEFT", OP + 150, -(y + 8)); d:SetTextColor(rgb(COL.soft)); d:SetText(h[2])
+    local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", OP, -(y + 32)); ln:SetPoint("TOPRIGHT", -OP, -(y + 32)); ln:SetHeight(1); fill(ln, COL.line, 0.6)
+    y = y + 32
+  end
 
   local ft = opt:CreateFontString(nil, "OVERLAY"); setFont(ft, "body", 11.5); ft:SetPoint("BOTTOMLEFT", 20, 14); ft:SetWidth(SIDEW - 30); ft:SetJustifyH("LEFT"); ft:SetTextColor(rgb(COL.faint))
-  ft:SetText("Saves as you go\nVersion " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
-  opt:SetHeight(600)
-  showPage("card")
+  ft:SetText("Saves as you go\n/dmo opens this\nVersion " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
+  opt:SetHeight(640)
+  showPage("layout")
   Debrief_RefreshOptions()
 end
 function Debrief_ToggleOptions()
@@ -1390,7 +1400,19 @@ function Debrief_ToggleOptions()
   if opt:IsShown() then opt:Hide(); return end
   Debrief_RefreshOptions(); opt:Show()
   -- (the card beside it, so every change shows at once: the last pull, or the demo when there's none yet)
-  if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") else card:Show(); render() end
+  if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end
+  -- (the preview: your recap card, attached to the right of this window, changing as you click; back in its own place when you close)
+  mini:Hide(); big:Hide(); card:Show(); render()
+  card:ClearAllPoints(); card:SetPoint("TOPLEFT", opt, "TOPRIGHT", 16, -22)
+  if not opt.prev then
+    opt.prev = opt:CreateFontString(nil, "OVERLAY"); setFont(opt.prev, "bold", 12.5); opt.prev:SetTextColor(rgb(COL.gold))
+    opt.prev:SetText("PREVIEW  ·  changes as you click")
+    opt:HookScript("OnHide", function()
+      card:ClearAllPoints()
+      if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
+    end)
+  end
+  opt.prev:ClearAllPoints(); opt.prev:SetPoint("BOTTOMLEFT", card, "TOPLEFT", 2, 7)
 end
 function Debrief_OnAddonCompartmentClick() Debrief_ToggleOptions() end
 -- (in WoW's own Options > AddOns list too)
@@ -1403,6 +1425,72 @@ local function registerSettings()
   local b = CreateFrame("Button", nil, p, "UIPanelButtonTemplate"); b:SetSize(200, 26); b:SetPoint("TOPLEFT", 16, -80); b:SetText("Open Debrief settings")
   b:SetScript("OnClick", function() if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end; if not (opt and opt:IsShown()) then Debrief_ToggleOptions() end end)
   local cat = Settings.RegisterCanvasLayoutCategory(p, "Debrief"); Settings.RegisterAddOnCategory(cat)
+end
+
+-- ---------- the tutorial: four short steps the first time you log in (/debrief tutorial or Help shows it again) ----------
+do
+  local TW = 500
+  local tut = CreateFrame("Frame", "DebriefTutorial", UIParent); tut:SetSize(TW, 300); tut:SetPoint("CENTER", 0, 60); tut:SetFrameStrata("DIALOG"); tut:SetClampedToScreen(true); tut:Hide()
+  skin(tut, 8, COL.bg, 0.98, COL.line2, 1, true)
+  tut:SetMovable(true); tut:EnableMouse(true); tut:RegisterForDrag("LeftButton")
+  tut:SetScript("OnDragStart", tut.StartMoving); tut:SetScript("OnDragStop", tut.StopMovingOrSizing)
+  tinsert(UISpecialFrames, "DebriefTutorial")
+  local lg = tut:CreateTexture(nil, "ARTWORK"); lg:SetSize(18, 20); lg:SetPoint("TOPLEFT", 18, -15); lg:SetTexture(MEDIA .. "Media\\logo")
+  local tt = tut:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 19); tt:SetPoint("LEFT", lg, "RIGHT", 8, 0); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief")
+  local stepT = tut:CreateFontString(nil, "OVERLAY"); setFont(stepT, "body", 13); stepT:SetPoint("LEFT", tt, "RIGHT", 10, -1); stepT:SetTextColor(rgb(COL.muted))
+  local cl = closeButton(tut); cl:SetPoint("TOPRIGHT", -10, -12)
+  local hl = tut:CreateTexture(nil, "ARTWORK"); hl:SetPoint("TOPLEFT", 1, -50); hl:SetPoint("TOPRIGHT", -1, -50); hl:SetHeight(1); fill(hl, COL.line)
+  -- the step's number in a soft gold circle, its title and its words
+  local circ = tut:CreateTexture(nil, "ARTWORK"); circ:SetTexture(SLICE .. "dot"); circ:SetSize(44, 44); circ:SetPoint("TOPLEFT", 22, -72)
+  local num = tut:CreateFontString(nil, "OVERLAY"); setFont(num, "head", 22); num:SetPoint("CENTER", circ, "CENTER", 0, 0)
+  local title = tut:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 22); title:SetPoint("TOPLEFT", 82, -70); title:SetWidth(TW - 104); title:SetJustifyH("LEFT"); title:SetTextColor(rgb(COL.text))
+  local body = tut:CreateFontString(nil, "OVERLAY"); setFont(body, "body", 14); body:SetPoint("TOPLEFT", 82, -100); body:SetWidth(TW - 104); body:SetJustifyH("LEFT"); body:SetJustifyV("TOP"); body:SetTextColor(rgb(COL.soft))
+  if body.SetSpacing then body:SetSpacing(3) end
+  -- step 2's picture: the prompt you'll see after a boss pull
+  local demoT = CreateFrame("Frame", nil, tut); demoT:SetSize(300, 50); skin(demoT, 8, COL.bg, 1, COL.gold, 0.55)
+  local dl = demoT:CreateTexture(nil, "ARTWORK"); dl:SetSize(16, 18); dl:SetPoint("LEFT", 12, 0); dl:SetTexture(MEDIA .. "Media\\logo")
+  local dt = demoT:CreateFontString(nil, "OVERLAY"); setFont(dt, "head", 16); dt:SetPoint("TOPLEFT", 38, -8); dt:SetTextColor(rgb(COL.text)); dt:SetText("See your recap?")
+  local ds = demoT:CreateFontString(nil, "OVERLAY"); setFont(ds, "body", 12); ds:SetPoint("TOPLEFT", 38, -28); ds:SetTextColor(rgb(COL.muted)); ds:SetText("Press Ctrl+V after the chime.")
+  local dk = CreateFrame("Frame", nil, demoT); dk:SetSize(60, 24); dk:SetPoint("RIGHT", -12, 0); skin(dk, 5, COL.gold, 1, COL.gold, 1)
+  dk.t = dk:CreateFontString(nil, "OVERLAY"); setFont(dk.t, "bold", 12.5); dk.t:SetPoint("CENTER", 0, 0); dk.t:SetTextColor(rgb("1b1406")); dk.t:SetText("Ctrl+V")
+  -- an extra button inside a step (Show me a sample, Open settings)
+  local extra = optButton(tut, "", 170, false)
+  -- the bottom: dots, Back, Next
+  local dots = {}
+  for i = 1, 4 do local d = tut:CreateTexture(nil, "ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetSize(8, 8); d:SetPoint("BOTTOMLEFT", 22 + (i - 1) * 14, 24); dots[i] = d end
+  local nextB = optButton(tut, "Next", 96, true); nextB:SetPoint("BOTTOMRIGHT", -18, 16)
+  local backB = optButton(tut, "Back", 80, false); backB:SetPoint("RIGHT", nextB, "LEFT", -8, 0)
+  local STEPS = {
+    { "Welcome to Debrief", "Your pull recap, right here in WoW, a few seconds after every boss pull: your numbers, your biggest slips, your boss mistakes and one thing to try next pull." },
+    { "After a boss pull", "If you run Debrief Companion on your PC, this pops up after each boss pull: press Ctrl+V and your recap opens.\nEveryone else does nothing. Your recap opens by itself.", "prompt" },
+    { "Your recap", "Me is your own pull. Raid view shows the raid's biggest mistakes and who died. Use the arrows to look at anyone, and Expand for the big window with the whole night.", "sample" },
+    { "Make it yours", "Type /dmo any time for the settings: Simple, Medium or Heavy, colours and sizes, the mini bar or the big window, goals and raid chat.", "settings" },
+  }
+  local cur = 1
+  local function done() DB.tutorialDone = true; tut:Hide() end
+  local function show(i)
+    cur = i
+    local s = STEPS[i]
+    stepT:SetText("Step " .. i .. " of " .. #STEPS)
+    circ:SetVertexColor(rgb(COL.gold)); circ:SetAlpha(0.16); num:SetTextColor(rgb(COL.gold)); num:SetText(i)
+    title:SetText(s[1]); body:SetText(s[2])
+    local by = 100 + body:GetStringHeight() + 16
+    demoT:SetShown(s[3] == "prompt"); extra:SetShown(s[3] == "sample" or s[3] == "settings")
+    if s[3] == "prompt" then demoT:ClearAllPoints(); demoT:SetPoint("TOPLEFT", 82, -by); by = by + 50 + 16 end
+    if extra:IsShown() then
+      extra.t:SetText(s[3] == "sample" and "Show me a sample" or "Open the settings")
+      extra:ClearAllPoints(); extra:SetPoint("TOPLEFT", 82, -by); by = by + 28 + 16
+      extra:SetScript("OnClick", function() if s[3] == "sample" then SlashCmdList.DEBRIEF("demo") else done(); Debrief_ToggleOptions() end end)
+    end
+    for k, d in ipairs(dots) do d:SetVertexColor(rgb(k == i and COL.gold or COL.line2)) end
+    backB:SetShown(i > 1); nextB.t:SetText(i == #STEPS and "Done" or "Next")
+    tut:SetHeight(math.max(260, by + 56))
+  end
+  nextB:SetScript("OnClick", function() if cur >= #STEPS then done() else show(cur + 1) end end)
+  backB:SetScript("OnClick", function() if cur > 1 then show(cur - 1) end end)
+  cl:SetScript("OnClick", done)
+  tut:SetScript("OnHide", function() if DB then DB.tutorialDone = true end end)
+  function Debrief_Tutorial() if not DB then return end; show(1); tut:Show() end
 end
 
 -- ---------- opening it: key, slash command ----------
@@ -1446,6 +1534,7 @@ SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "options" or msg == "config" or msg == "settings" or msg == "o" then Debrief_ToggleOptions()
   elseif msg == "paste" or msg == "p" then Debrief_OpenPaste()
+  elseif msg == "tutorial" or msg == "tour" then Debrief_Tutorial()
   elseif msg == "big" or msg == "b" then Debrief_ToggleBig()
   elseif msg == "mini" then DB.mini = not DB.mini; if DB.mini then DB.bigDefault = false end; say("mini bar " .. (DB.mini and "on: one slim line after each pull, click it for the card." or "off: the card after each pull.")); if DB.mini and #DB.pulls > 0 then card:Hide(); miniShow() else mini:Hide() end
   elseif msg == "post" then Debrief_PostRaid()
@@ -1461,7 +1550,7 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
   elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief post: the pull in raid chat. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief post: the pull in raid chat. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
@@ -1522,6 +1611,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
     Debrief_ApplyStyle()
+    -- (the first time: the tutorial, a few seconds after you're in the world)
+    if not DB.tutorialDone and C_Timer then C_Timer.After(6, function() if not InCombatLockdown() and not DB.tutorialDone then Debrief_Tutorial() end end) end
     -- (a key to start with: Ctrl+Shift+D opens the paste box, if nothing else uses it; change it in Options > Keybindings > AddOns)
     if not DB.keySet and not InCombatLockdown() and GetBindingAction and GetBindingAction("CTRL-SHIFT-D") == "" then
       if SetBinding("CTRL-SHIFT-D", "DEBRIEF_PASTE") then SaveBindings(GetCurrentBindingSet()) end

@@ -23,7 +23,9 @@ $addV = ((Get-Content (Join-Path $here 'addon\Debrief\Debrief.toc')) -match '^##
 # the app's files
 $app = Join-Path $work 'app'; New-Item -ItemType Directory -Force -Path $app | Out-Null
 foreach ($f in 'companion.ps1', 'companion.html', 'recap.js', 'Start Debrief.vbs', 'debrief.ico', 'version.txt') { Copy-Item -LiteralPath (Join-Path $here $f) -Destination $app }
-Copy-Item -LiteralPath (Join-Path $root 'WoW-Log-Analyzer.html') -Destination (Join-Path $app 'Debrief.html')
+# (the engine: DBF_ENGINE names a clean, committed build; otherwise the one in this folder, which may hold unfinished work)
+$engine = if ($env:DBF_ENGINE) { $env:DBF_ENGINE } else { Join-Path $root 'WoW-Log-Analyzer.html' }
+Copy-Item -LiteralPath $engine -Destination (Join-Path $app 'Debrief.html')
 Copy-Item -LiteralPath (Join-Path $here 'addon') -Destination (Join-Path $app 'addon') -Recurse
 $appZip = Join-Path $dist 'app.zip'; if (Test-Path $appZip) { Remove-Item $appZip -Force }
 New-Zip $app $appZip ''
