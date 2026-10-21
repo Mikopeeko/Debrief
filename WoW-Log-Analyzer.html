@@ -1076,6 +1076,9 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .pf-row.cb.gb-xr .cb-in .icw, .pf-row.cb.gb-xr .cb-in svg.ico, .pf-row.cb.gb-xr .cb-in img.oi { width: 18px; height: 18px; flex: none; }
 .gb-dbody { min-height: 40px; } .gb-dbody .pf-sec { margin: 0; }
 .gb-hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+/* (Oct 20: pick up to 3 graphs; a picked button is lit in gold, the picked graphs sit side by side) */
+.gb-pkn button.on { border-color: var(--gold); color: var(--gold); background: rgba(230,180,80,.1); }
+.gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
 @media (max-width: 640px) { .gb-bd.gb-dr { margin: 4px 0 10px; padding: 8px; } }
@@ -12960,9 +12963,28 @@ function bgFetch(item) {
   list.sort((a, b) => (b === next) - (a === next) || idx.bosses.indexOf(b) - idx.bosses.indexOf(a));
   // (paced to about 85 requests a minute, under half the site's fair share of 180, so what you ask for never waits on it;
   // and it holds off while a loading screen is up: that's you waiting on something)
+  // (then each one is read too (your OK, Oct 20: "load in the background and stay loaded"), one at a time in short steps, so
+  // Report card, Homework and All pulls open at once; it stops at the memory limit, and a small note shows how far it is)
+  let k = 0; const n = list.length;
   (async () => { for (const b of list) { if (tok !== BG_TOK || S.index !== idx) return;
     while (document.querySelector('#main .ld') && tok === BG_TOK) await new Promise((r) => setTimeout(r, 1500));
-    try { if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(1500, pages * 700))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; return; } } })();
+    if (tok !== BG_TOK || CACHE.size >= cacheCap()) break; k++; if (CACHE.has(b)) continue; bgNote(k, n);
+    try { if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(1500, pages * 700))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; break; }
+    if (tok !== BG_TOK || S.index !== idx) break;
+    try { await getRep(b); } catch (e) { /* skip a pull that fails */ }
+    await new Promise((r) => setTimeout(r, 250)); } })().finally(() => { if (tok === BG_TOK) bgNote(0, 0); });
+}
+function bgNote(k, n) { let el = document.getElementById('bgRead');
+  if (!n) { if (el) el.hidden = true; return; }
+  if (!el) { el = document.createElement('div'); el.id = 'bgRead'; el.className = 'bgread'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.hidden = false; el.innerHTML = '<i></i>Reading this boss\'s pulls in the background · ' + k + ' of ' + n; }
+// The memory limit: a read pull takes ~25-30 MB, so the site keeps about 40 on a computer and 14 on a phone. Past that, the
+// pulls you looked at longest ago, on other bosses, are let go (they read again from this PC, without a new download).
+const cacheCap = () => { try { return (matchMedia('(pointer: coarse)').matches || (navigator.deviceMemory && navigator.deviceMemory <= 4)) ? 14 : 40; } catch (e) { return 40; } };
+function cacheTrim() {
+  const cap = cacheCap(), it = S.item; if (CACHE.size <= cap) return;
+  for (const k of [...CACHE.keys()]) { if (CACHE.size <= cap) break; if (k === it || (it && k.id === it.id && k.diffId === it.diffId)) continue;
+    const r = CACHE.get(k); CACHE.delete(k); for (let i = PL_MEMO.length - 1; i >= 0; i--) if (PL_MEMO[i].reps.includes(r)) PL_MEMO.splice(i, 1); }
 }
 
 // ---------- main frame ----------
@@ -18986,8 +19008,8 @@ function arenaImg(boss, c) {
 // (Oct 20, your call: on every Venomous Abyss boss, each checked against a Mythic kill laid over its render (the guild's, or a top
 // guild's for Sszorak, Twin Fangs and Ula'tek): everyone stands on the floor. Nymrissa and Kith'ix have no render and keep the floor map)
 const ARENA_HI = Object.fromEntries(Object.entries(ARENAS).filter(([b, a]) => a.f && b !== 'The Bargained Crown').map(([b, a]) => [b, 'https://cdn.raidplan.io/raid/wow.venomabyss/map/' + a.f]));
-function arenaHi(boss, c) {
-  const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = ARENA_HI[b]; if (!A || !u || !A.f) return '';
+function arenaHi(boss, c, art) { /* (art: another render of the same room, e.g. Ula'tek's broken platform; 'none' for the floor map only) */
+  const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = art ? 'https://cdn.raidplan.io/raid/wow.venomabyss/map/' + art : ARENA_HI[b]; if (art === 'none' || !A || !u || !A.f) return '';
   const w = A.w / A.s, h = A.h / A.s, x = (A.cx - w / 2 - c.x0) * c.yd, y = (-A.cy - h / 2 - c.y0) * c.yd, W = w * c.yd, H = h * c.yd, B = 4000 * c.yd;
   // (outside the render: the map's dark background, not the floor map's edge showing through)
   const bg = (rx, ry, rw, rh) => '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#0b0d12"/>';
@@ -19413,6 +19435,18 @@ function graphsBoard(r, end, NP) {
     ['taken', 'Damage taken', (night ? 'All pulls added up. ' : '') + 'Click a bar for what hit that player.', byK.get('taken') + ch('What hit the raid', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
     ['util', 'Deaths and utility', 'Who died, kicked and dispelled.', (byK.get('death') || '') + (byK.get('kick') || '') + (byK.get('disp') || '')],
     ['cast', 'Casting', 'How busy everyone was' + (night ? ', all pulls.' : '.'), byK.get('cpm') || '']].filter((x) => x[3]);
+  // (Oct 20, "one graph at a time with them all listed at the top, but let people select up to 3 of them to view at a time": a button per
+  // graph; the picked ones (Damage done the first time) side by side, a 4th pick drops the oldest. GB_PICK = false brings back the sections)
+  if (GB_PICK) { const GR = [['dmg', 'Damage done', byK.get('dmg')], ['tgt', 'Boss or adds', ch('Boss or adds', 'Damage into the boss and into everything else' + (night ? ALLP : ', over the whole pull'), stack(bossAdds, [{ n: 'Boss', col: '@cls' }, { n: 'Adds and others', col: '@cls', op: 0.35 }]))],
+      ['spells', 'Biggest damage spells', ch('Biggest damage spells', 'The single spells that did the most, raid-wide' + ALLP, bars(spellTop))], ['heal', 'Healing done', byK.get('heal')],
+      ['oh', 'Healing and overhealing', ch('Healing and overhealing', 'Healing that landed, and what was more than needed' + (night ? ALLP : ', over the whole pull'), stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
+      ['taken', 'Damage taken', byK.get('taken')], ['src', 'What hit the raid', ch('What hit the raid', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
+      ['death', 'Deaths', byK.get('death')], ['kick', 'Interrupts', byK.get('kick')], ['disp', 'Dispels', byK.get('disp')], ['cpm', 'Casts a minute', byK.get('cpm')]].filter((x) => x[2]);
+    let pk = (S.gbPick || ['dmg']).filter((k) => GR.some((x) => x[0] === k)); if (!pk.length && GR.length) pk = [GR[0][0]];
+    return '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</nav>' +
+      '<p class="gb-note sub">Pick up to 3 graphs to see side by side. Hover any bar for its numbers, and click a player\'s bar for what made it up. ' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter.' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
+      '<div class="gb-grid gb-pkg n' + pk.length + '">' + pk.map((k) => GR.find((x) => x[0] === k)[2]).join('') + '</div>' +
+      '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['dmg', 'Charts over time']].filter(([k]) => k !== 'pi' || !PI_OFF()).map(([k, l]) => '<button type="button" class="gb-pv" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>'; }
   return '<div class="gb"><nav class="gb-nav" aria-label="Sections">' + SECS.map(([id, t]) => '<button type="button" data-gs="' + id + '">' + esc(t) + '</button>').join('') + '</nav>' +
     '<p class="gb-note sub">Hover any bar for its numbers, and click a player\'s bar for what made it up. ' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter.' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
     SECS.map(([id, t, sub, body]) => '<section class="gb-sec" id="gbs-' + id + '"><div class="gb-sh"><h3>' + esc(t) + '</h3><span class="sub">' + esc(sub) + '</span></div><div class="gb-grid">' + body + '</div></section>').join('') +
