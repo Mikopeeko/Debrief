@@ -47,35 +47,73 @@ public static class DbfScan {
 }
 '@
 
+
+# Finding WoW and putting the addon in (used at start and by the window). Kept as text so every worker can load it.
+$commonText = @'
+function Find-Retail {
+  param($here)
+  foreach ($own in (Join-Path $here 'logs-path.txt'), (Join-Path (Split-Path $here -Parent) 'logs-path.txt')) {
+    if (Test-Path $own) { $d = (Get-Content $own -Raw).Trim(); if ($d -and (Test-Path $d)) { return (Split-Path $d -Parent) } }
+  }
+  $cands = @()
+  foreach ($k in 'HKLM:\SOFTWARE\WOW6432Node\Blizzard Entertainment\World of Warcraft', 'HKLM:\SOFTWARE\Blizzard Entertainment\World of Warcraft', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\World of Warcraft', 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\World of Warcraft') {
+    try { $p = Get-ItemProperty $k -ErrorAction Stop; foreach ($v in $p.InstallPath, $p.InstallLocation) { if ($v) { $cands += [string]$v } } } catch {}
+  }
+  foreach ($drv in (Get-PSDrive -PSProvider FileSystem).Root) {
+    foreach ($sub in 'Program Files (x86)\World of Warcraft', 'Program Files\World of Warcraft', 'World of Warcraft', 'Games\World of Warcraft', 'Games\Blizzard\World of Warcraft', 'Blizzard\World of Warcraft', 'Battle.net\World of Warcraft', 'Program Files (x86)\Battle.net\World of Warcraft', 'Blizzard Games\World of Warcraft') { $cands += (Join-Path $drv $sub) }
+  }
+  foreach ($c in $cands) {
+    $c = $c.TrimEnd('\')
+    if ((Split-Path $c -Leaf) -eq '_retail_' -and (Test-Path -LiteralPath $c)) { return $c }
+    $r = Join-Path $c '_retail_'; if (Test-Path -LiteralPath $r) { return $r }
+  }
+  return $null
+}
+function Find-LogsDir {
+  param($here)
+  $r = Find-Retail $here; if (-not $r) { return $null }
+  $l = Join-Path $r 'Logs'; if (-not (Test-Path -LiteralPath $l)) { try { New-Item -ItemType Directory -Force -Path $l | Out-Null } catch {} }
+  return $l
+}
+function Install-Addon {
+  param($here)
+  $src = Join-Path $here 'addon\Debrief'
+  if (-not (Test-Path -LiteralPath $src)) { return '' }
+  $r = Find-Retail $here
+  if (-not $r) { return "Couldn't find WoW to install the addon. Copy the folder addon\Debrief (next to this app) into World of Warcraft\_retail_\Interface\AddOns yourself, or paste your WoW folder in the Companion window." }
+  $dst = Join-Path $r 'Interface\AddOns\Debrief'
+  $v = ((Get-Content -LiteralPath (Join-Path $src 'Debrief.toc')) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', ''
+  $same = (Test-Path -LiteralPath (Join-Path $dst 'Debrief.lua')) -and ((Get-FileHash -LiteralPath (Join-Path $dst 'Debrief.lua')).Hash -eq (Get-FileHash -LiteralPath (Join-Path $src 'Debrief.lua')).Hash)
+  if ($same) { return "The Debrief addon (version $v) is installed in $dst" }
+  try {
+    New-Item -ItemType Directory -Force -Path $dst | Out-Null
+    Copy-Item -Path (Join-Path $src '*') -Destination $dst -Recurse -Force
+    return "Installed the Debrief addon (version $v) in $dst. If WoW is open, type /reload."
+  } catch { return "Couldn't install the addon in $dst (" + $_.Exception.Message + "). Copy the folder addon\Debrief (next to this app) there yourself." }
+}
+'@
+. ([ScriptBlock]::Create($commonText))
+
 $listener = New-Object Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
 try { $listener.Start() } catch { Write-Host "Debrief Companion is already running (port $port in use). Opening its window."; Start-Process "http://localhost:$port/"; exit }
 Write-Host "Debrief Companion is running at http://localhost:$port"
 Write-Host "Keep this window open during raid. Close it to stop."
+$wow = Find-Retail $here
+Write-Host ""
+if ($wow) { Write-Host "WoW found: $wow" } else { Write-Host "WoW not found yet: paste your WoW folder in the Companion window." }
+Write-Host (Install-Addon $here)
 
 $handler = {
-  param($ctx, $here)
+  param($ctx, $here, $commonText)
+  . ([ScriptBlock]::Create($commonText))
   $ErrorActionPreference = 'Stop'
   $req = $ctx.Request; $res = $ctx.Response
   function Send($res, [byte[]]$bytes, $type) { $res.ContentType = $type; $res.ContentLength64 = $bytes.Length; $res.OutputStream.Write($bytes, 0, $bytes.Length) }
   function SendJson($res, $obj) { Send $res ([Text.Encoding]::UTF8.GetBytes(($obj | ConvertTo-Json -Compress -Depth 5))) 'application/json' }
-  function Find-LogsDir {
-    foreach ($own in (Join-Path $here 'logs-path.txt'), (Join-Path (Split-Path $here -Parent) 'logs-path.txt')) {
-      if (Test-Path $own) { $d = (Get-Content $own -Raw).Trim(); if ($d -and (Test-Path $d)) { return $d } }
-    }
-    foreach ($k in 'HKLM:\SOFTWARE\WOW6432Node\Blizzard Entertainment\World of Warcraft', 'HKLM:\SOFTWARE\Blizzard Entertainment\World of Warcraft') {
-      try { $ip = (Get-ItemProperty $k -ErrorAction Stop).InstallPath; if ($ip) { foreach ($d in (Join-Path $ip 'Logs'), (Join-Path $ip '_retail_\Logs'), (Join-Path (Split-Path $ip -Parent) '_retail_\Logs')) { if (Test-Path $d) { return $d } } } } catch {}
-    }
-    foreach ($drv in (Get-PSDrive -PSProvider FileSystem).Root) {
-      foreach ($sub in 'Program Files (x86)\World of Warcraft\_retail_\Logs', 'Program Files\World of Warcraft\_retail_\Logs', 'World of Warcraft\_retail_\Logs', 'Games\World of Warcraft\_retail_\Logs', 'Blizzard\World of Warcraft\_retail_\Logs', 'Battle.net\World of Warcraft\_retail_\Logs') {
-        $d = Join-Path $drv $sub; if (Test-Path $d) { return $d }
-      }
-    }
-    return $null
-  }
   function Find-Log($name) {
     if ($name -notmatch '^(Archive-)?WoWCombatLog[^\\/:*?"<>|]*\.txt$') { throw 'Not a combat log.' }
-    $d = Find-LogsDir; if (-not $d) { throw 'No WoW Logs folder found.' }
+    $d = Find-LogsDir $here; if (-not $d) { throw 'No WoW Logs folder found.' }
     foreach ($p in (Join-Path $d $name), (Join-Path (Join-Path $d 'warcraftlogsarchive') $name)) { if (Test-Path -LiteralPath $p) { return $p } }
     throw 'That combat log is gone.'
   }
@@ -94,7 +132,7 @@ $handler = {
       Send $res ([IO.File]::ReadAllBytes($f)) 'text/html; charset=utf-8'
     }
     elseif ($req.HttpMethod -eq 'GET' -and $path -eq '/logs') {
-      $d = Find-LogsDir
+      $d = Find-LogsDir $here
       if (-not $d) { SendJson $res @{ error = 'nodir' } }
       else {
         $files = @()
@@ -122,7 +160,7 @@ $handler = {
     }
     elseif ($req.HttpMethod -eq 'GET' -and $path -eq '/wait') {
       # waits (up to 25 s) for the combat log to grow, or for a newer combat log to appear
-      $d = Find-LogsDir; $name = $q['name']; $size = [long]$q['size']; $t0 = Get-Date
+      $d = Find-LogsDir $here; $name = $q['name']; $size = [long]$q['size']; $t0 = Get-Date
       $out = @{ size = $size; name = $name }
       while (((Get-Date) - $t0).TotalSeconds -lt 25) {
         $f = Get-ChildItem -LiteralPath $d -Filter 'WoWCombatLog*.txt' -File | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
@@ -152,22 +190,7 @@ $handler = {
     }
     elseif ($req.HttpMethod -eq 'GET' -and $path -eq '/addon') {
       # puts the Debrief addon into WoW's AddOns folder (or updates it), so nobody has to copy folders by hand
-      $src = Join-Path $here 'addon\Debrief'; $d = Find-LogsDir; $msg = ''
-      if (-not (Test-Path $src)) { $msg = '' }
-      elseif (-not $d) { $msg = "Couldn't find WoW to install the addon. Copy the addon's Debrief folder into World of Warcraft\_retail_\Interface\AddOns." }
-      else {
-        $dst = Join-Path (Split-Path $d -Parent) 'Interface\AddOns\Debrief'
-        $v = ((Get-Content -LiteralPath (Join-Path $src 'Debrief.toc')) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', ''
-        $same = (Test-Path (Join-Path $dst 'Debrief.lua')) -and ((Get-FileHash (Join-Path $dst 'Debrief.lua')).Hash -eq (Get-FileHash (Join-Path $src 'Debrief.lua')).Hash)
-        if ($same) { $msg = "The Debrief addon is installed in WoW (version $v)." }
-        else {
-          try {
-            New-Item -ItemType Directory -Force -Path $dst | Out-Null
-            Copy-Item -Path (Join-Path $src '*') -Destination $dst -Recurse -Force
-            $msg = "Installed the Debrief addon in WoW (version $v). If WoW is open, type /reload."
-          } catch { $msg = "Couldn't install the addon (" + $_.Exception.Message + "). Copy the addon's Debrief folder into " + (Split-Path $dst -Parent) + "." }
-        }
-      }
+      $msg = Install-Addon $here
       SendJson $res @{ msg = $msg }
     }
     elseif ($req.HttpMethod -eq 'POST' -and $path -eq '/folder') {
@@ -201,7 +224,7 @@ $jobs = New-Object Collections.ArrayList
 while ($listener.IsListening) {
   $ctx = $listener.GetContext()
   $ps = [PowerShell]::Create(); $ps.RunspacePool = $pool
-  [void]$ps.AddScript($handler).AddArgument($ctx).AddArgument($here)
+  [void]$ps.AddScript($handler).AddArgument($ctx).AddArgument($here).AddArgument($commonText)
   [void]$jobs.Add(@{ ps = $ps; h = $ps.BeginInvoke() })
   foreach ($j in @($jobs)) { if ($j.h.IsCompleted) { try { $j.ps.EndInvoke($j.h) } catch {}; $j.ps.Dispose(); $jobs.Remove($j) } }
 }
