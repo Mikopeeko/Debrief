@@ -410,6 +410,7 @@ button.ndz-rct { width: 100%; padding: 0; border: 0; background: none; color: va
 #assignBox > .ndz-build { max-width: 940px; margin: 0 auto; box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(230,180,80,.25); } body:has(#assignBox > .ndz-build) { overflow: hidden; }
 @media (max-width: 640px) { #assignBox:has(> .ndz-build) { padding: 12px 8px 40px; } }
 /* builder questions */ .ndz-bdiff { gap: 8px; } .ndz-bdiff .btn { min-width: 120px; min-height: 44px; font-size: 15px; }
+/* audit fold */ .ndz-bfd > summary { cursor: pointer; list-style: none; } .ndz-bfd > summary::-webkit-details-marker { display: none; } .ndz-bfch { display: inline-block; margin-left: 6px; font-style: normal; transition: transform .15s; } .ndz-bfd[open] .ndz-bfch { transform: rotate(180deg); } .ndz-bfd:not([open]) > summary { margin-bottom: 0; } .ndz-bfsrc { margin: 4px 0 10px; font-size: 12.5px; }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
@@ -13667,6 +13668,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'A simpler Assignments page with no note yet: Get started, Import note and Plan with a roster, and the Roster audit as one line that opens. It says whose raiders it\'s showing.',
     'The note builder asks one thing at a time: which boss, which difficulty, how each page starts, and who\'s raiding.',
     'Assignments always has an Import note button, to paste an NSRT note you already have.',
     'New note opens the note builder as a guided pop-up, one step at a time, and the player lists show everyone in their class color.',
@@ -15082,7 +15084,7 @@ function ndzBoard(r, u0) {
   const go = B('data-ndzbuild="1" data-ndzbuildboss="' + esc(b) + '"', 'Get started <span aria-hidden="true">→</span>', 'primary big ndz-gbtn') /* (straight into the guided Note builder, a page per mechanic) */, tlk = '<button class="ndz-tlk" type="button" data-ndztools="1" aria-expanded="' + !!S.ndzTools + '">All tools <span aria-hidden="true">' + (S.ndzTools ? '▴' : '▾') + '</span></button>';
   const more = (x) => (S.ndzTools ? '<div class="ndz-tmore"><div class="ndz-cb">' + x + '</div>' + tiles + '</div>' : '');
   if (!u0) return '<div class="panel ndz-hero none"><span class="ndz-hbig" aria-hidden="true">📝</span><div><h2>No note for tonight yet</h2><div class="sub">Your NSRT note says who soaks, who kicks and who presses which cooldown. Debrief checks every raider against it on every pull.</div>' +
-    '<div class="ndz-cb ndz-hb">' + go + B('data-ndzwiz="1"', '📋 Import note', 'big') + tlk + '</div></div>' + how + '</div>' + ndzBuffBox(r) + more(B('data-ndzwiz="1"', 'Add your NSRT note', 'sm') + B('data-ndzbuild="1"', 'Build one step by step', 'sm'));
+    '<div class="ndz-cb ndz-hb">' + go + B('data-ndzwiz="1"', '📋 Import note', 'big') + B('data-ndzplan="1"', '👥 Plan with a roster', 'big') + '</div></div>' + how + '</div>' + ndzBuffBox(r); /* (All tools is gone, your call: its buttons repeated these three) */
   const st = ndzStatus(r, u0), fixable = st.gaps.filter((g) => g.cov), n = st.gaps.length + (st.idle.length ? 1 : 0), ok = !n;
   const lines = st.gaps.map((g) => '<div class="ndz-hl warn"><span class="ndz-ic" aria-hidden="true">!</span><span><b>' + esc(g.c.name) + ' at ' + esc(g.when) + ' has no one.</b> ' + esc(g.a) + ' is on ' + esc(g.b) + ' (' + esc(ndzClsName(g.p.cls)) + ')' + (g.cov ? '; ' + esc(g.cov.n) + ' could take it (' + esc(g.cov.why) + ').' : '.') + '</span>' +
     (g.cov ? B('data-ndzgap="' + esc([g.a, g.b, g.c.id, g.cov.n, g.cov.sid].join('|')) + '"', 'Give it to ' + esc(g.cov.n), 'sm') : '') + '</div>').join('') +
@@ -15988,7 +15990,7 @@ function ndzNoteView(boss, id) {
     '<h2>' + esc(n.name) + '</h2><p class="sub">' + (ro ? plural(names.length, 'raider') + ' picked for this note.' : plural(names.length, 'player') + ' in this note.') + '</p>' +
     '<div class="ndz-sec"><h4>Roster</h4>' + (roster || '<p class="sub">No player names in this note.</p>') + (names.length ? ndzBuffs(names.map((x) => ({ n: x, cls: (info(x) || {}).cls, sid: (info(x) || {}).sid }))) : '') + '</div>' +
     '<div class="ndz-sec"><h4>Who does what</h4><div class="panel ndz-who ndz-rcards nolk">' + ndzAbil(pr, st, null) + '</div></div>' +
-    '<div class="ndz-wfoot"><button class="btn" type="button" id="ndzNvClose">Close</button><span class="sub" id="ndzNvMsg"></span><span class="ndz-cb">' + (NDZ_BUILD[boss] && S.rep ? '<button class="btn" type="button" id="ndzNvEdit" data-ndzbuild="note" data-noteboss="' + esc(boss) + '" data-noteid="' + esc(id) + '">✏️ Edit in the Note builder</button>' : '') + '<button class="btn" type="button" data-ndzplan="' + esc(boss + '|' + id) + '" data-tt="' + esc('<b>Plan view</b><br>This note as the whole Assignments page: roster audit, kicks and the cooldown timeline, no pull needed.') + '">📋 Plan view</button><button class="btn" type="button" data-ndzdc="' + esc(boss + '|' + id) + '">💬 Copy for Discord</button><button class="btn primary" type="button" id="ndzNvCopy">Copy for the game</button></span></div></div>';
+    '<div class="ndz-wfoot"><button class="btn" type="button" id="ndzNvClose">Close</button><span class="sub" id="ndzNvMsg"></span><span class="ndz-cb">' + (NDZ_BUILD[boss] && S.rep ? '<button class="btn" type="button" id="ndzNvEdit" data-ndzbuild="note" data-noteboss="' + esc(boss) + '" data-noteid="' + esc(id) + '">✏️ Edit in the Note builder</button>' : '') + '<button class="btn" type="button" data-ndzplanv="' + esc(boss + '|' + id) + '" data-tt="' + esc('<b>Plan view</b><br>This note as the whole Assignments page: roster audit, kicks and the cooldown timeline, no pull needed.') + '">📋 Plan view</button><button class="btn" type="button" data-ndzdc="' + esc(boss + '|' + id) + '">💬 Copy for Discord</button><button class="btn primary" type="button" id="ndzNvCopy">Copy for the game</button></span></div></div>';
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide')) document.body.classList.remove('ndz-modal'); };
   $('#ndzNvX').onclick = close; $('#ndzNvClose').onclick = close; if ($('#ndzNvEdit')) $('#ndzNvEdit').addEventListener('click', close); /* (the builder opens behind it) */ box.onclick = (e) => { if (e.target === box) close(); };
   $('#ndzNvCopy').onclick = async () => { const ok = await copyText(n.text); $('#ndzNvMsg').textContent = ok ? '✓ Copied. Paste it into NSRT in game.' : 'Your browser didn\'t allow copying.'; };
@@ -15996,7 +15998,7 @@ function ndzNoteView(boss, id) {
 }
 document.addEventListener('click', (e) => { if (!NDZ_NEW()) return; const c = e.target.closest && e.target.closest('.sn-card'); if (!c || e.target.closest('button, a, select, input, summary, .sn-logs, .sn-log')) return;
   const k = c.querySelector('[data-ncopy]'); if (!k) return; const [boss, id] = k.dataset.ncopy.split('|'); ndzNoteView(boss, id); });
-document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzplan]'); if (!b || !S.rep) return; const k = b.dataset.ndzplan, i = k.lastIndexOf('|');
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzplanv]'); if (!b || !S.rep) return; const k = b.dataset.ndzplanv, i = k.lastIndexOf('|'); /* (its own tag: data-ndzplan is Plan with a roster) */
   S.ndzPick = k.slice(0, i); S.ndzPlanId = k.slice(i + 1); S.ndzPickRep = S.rep.item.boss; const m = $('#ndzNoteView'); if (m) m.remove(); if (!$('#ndzWiz') && !$('#ndzGuide')) document.body.classList.remove('ndz-modal'); S.tab = 'overview'; renderMain(); window.scrollTo({ top: 0 }); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ndzNoteView')) { $('#ndzNoteView').remove(); if (!$('#ndzWiz') && !$('#ndzGuide')) document.body.classList.remove('ndz-modal'); } });
 // ---- Raid buffs and utility (Oct 20, your ask: every buff accounted for; then the full class utility list) ----
@@ -16016,7 +16018,7 @@ const NDZ_BUFFS = [
   ['Utility', 'have', [['Bloodlust', ['SHAMAN', 'MAGE', 'HUNTER', 'EVOKER'], 0, 2825], ['Battle res', ['DRUID', 'DEATHKNIGHT', 'WARLOCK', 'PALADIN'], 0, 20484], ['Mass Dispel', ['PRIEST'], 0, 32375], ['Innervate', ['DRUID'], 0, 29166], ['Poison Cleansing Totem', ['SHAMAN'], 0, 383013], ['Gorefiend\'s Grasp', ['DEATHKNIGHT'], [250], 108199]]],
 ];
 // (players: [{ n, cls, sid }]; sid when Debrief has seen their spec) -> the checklist
-function ndzBuffs(players, who) {
+function ndzBuffs(players, who, opt) { const fold = !!(opt && opt.fold); /* (opt.fold: one line that opens; opt.note: where the raiders come from) */
   setTimeout(() => { try { hydrateIcons(); } catch (e) { /* (icons stay as their stand-ins) */ } }, 60); /* (the icons load after the box is on the page) */
   let miss = 0, have = 0, of = 0;
   // (a small card per kind: its name and a count ("6/6 ✓", "3/7"), then the icons; side by side, so it fits in a couple of rows)
@@ -16030,7 +16032,7 @@ function ndzBuffs(players, who) {
     const full = n === list.length, cs = kind === 'need' ? (full ? 'ok' : 'bad') : n ? 'have' : 'none';
     return '<div class="ndz-ug"><div class="ndz-ugh"><span class="ndz-ugl">' + esc(lab) + '</span><span class="ndz-ugc ' + cs + '">' + n + '/' + list.length + (kind === 'need' && full ? ' ✓' : '') + '</span></div><div class="ndz-ugi">' + ic + '</div></div>'; }).join('');
   const K = ndzKickCard(players);
-  return '<div class="ndz-bfs"><div class="ndz-bfh"><b>Roster audit<span class="ndz-raw"> · ' + esc(who || plural(players.length, 'raider')) + '</span></b><span class="sub">' + (miss ? plural(miss, 'buff') + ' missing' : 'Every buff ✓') + ' · ' + have + ' of ' + of + ' utility · ' + plural(K.n, 'kick') + '</span></div><div class="ndz-ugrid">' + cards + K.html + '</div></div>';
+  return (fold ? '<details class="ndz-bfs ndz-bfd"><summary class="ndz-bfh">' : '<div class="ndz-bfs"><div class="ndz-bfh">') + '<b>Roster audit<span class="ndz-raw"> · ' + esc(who || plural(players.length, 'raider')) + '</span></b><span class="sub">' + (miss ? plural(miss, 'buff') + ' missing' : 'Every buff ✓') + ' · ' + have + ' of ' + of + ' utility · ' + plural(K.n, 'kick') + (fold ? ' <i class="ndz-bfch" aria-hidden="true">▾</i>' : '') + '</span>' + (fold ? '</summary>' : '</div>') + (opt && opt.note ? '<p class="sub ndz-bfsrc">' + esc(opt.note) + '</p>' : '') + '<div class="ndz-ugrid">' + cards + K.html + '</div>' + (fold ? '</details>' : '</div>');
 }
 // (the kicks card, your ask: every raider's interrupt, melee and ranged side by side, the shortest cooldown first; tanks are
 // melee; healers have none except a Restoration Shaman. A spec Debrief hasn't seen yet is a maybe, with the class's usual kick.)
@@ -16054,7 +16056,7 @@ function ndzKickCard(players) {
 function ndzBuffBox(r, u0) { const ps = ndzIn(r), ro = ndzNoteRoster(u0); /* (the note's own roster when it has one, else tonight's raiders) */
   if (ro) { const here = new Map(ps.map((p) => [ndzPn(p).toLowerCase(), p])), sp = ndzSpecs(); const l = ro.map((n) => { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()]; return p ? { n: ndzPn(p), cls: p.cls, sid: p.specId } : { n, cls: s ? s.cls : null, sid: s ? s.sid : 0 }; });
     return '<div class="panel ndz-bfp">' + ndzBuffs(l, plural(l.length, 'raider') + ' picked for ' + u0.name) + '</div>'; }
-  return ps.length ? '<div class="panel ndz-bfp">' + ndzBuffs(ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), 'tonight\'s ' + ps.length + ' raiders') + '</div>' : ''; }
+  return ps.length ? '<div class="panel ndz-bfp">' + ndzBuffs(ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), plural(ps.length, 'raider') + ' in ' + (r.item.pull ? 'Pull ' + r.item.pull : 'this pull'), { fold: !u0, note: 'These are the raiders in the pull you have open, since there\'s no note yet. Make or import a note, and its roster is used instead.' }) + '</div>' : ''; }
 // (the raiders picked for a note: saved with it by the Note builder, else NSRT's invitelist line, else none)
 function ndzNoteRoster(n) { if (!n) return null; if (n.roster && n.roster.length) return n.roster.slice();
   const m = /^\s*invitelist\s*:(.*)$/im.exec(String(n.text || '')); if (!m) return null; const l = [...new Set(m[1].split(/[\s,;]+/).map((w) => w.split('-')[0]).filter((w) => w && /^\p{L}/u.test(w)))]; return l.length ? l : null; }
@@ -16221,7 +16223,7 @@ function ndzAuditPlayers(r, u0) { const A = ndzAuditPlayers0(r, u0); if (!r.dura
 function ndzAuditPlayers0(r, u0) { const ps = ndzIn(r), ro = ndzNoteRoster(u0);
   if (ro) { const here = new Map(ps.map((p) => [ndzPn(p).toLowerCase(), p])), sp = ndzSpecs();
     return { ps: ro.map((n) => { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()]; return p ? { n: ndzPn(p), cls: p.cls, sid: p.specId } : { n, cls: s ? s.cls : null, sid: s ? s.sid : 0 }; }), who: plural(ro.length, 'raider') + ' picked for ' + u0.name }; }
-  return { ps: ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), who: 'tonight\'s ' + ps.length + ' raiders' }; }
+  return { ps: ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), who: plural(ps.length, 'raider') + ' in ' + (r.item.pull ? 'Pull ' + r.item.pull : 'this pull') }; } /* (say where they come from) */
 // (the roster audit as rows: a kind and its count, then its icons)
 // (who the note gives each spell to: name -> spell IDs; a cooldown the note assigns counts as brought, whatever spec Debrief last saw)
 const ndzNoteHas = (text) => { const m = new Map(); for (const x of ndzRems(text)) for (const t of x.tags) { const k = String(t).split('-')[0].toLowerCase(); if (!m.has(k)) m.set(k, new Set()); m.get(k).add(+x.spellid); } return m; };
@@ -33321,7 +33323,7 @@ const PAGE_TIPS = {
     { sel: '#view .ndz-dgrid .ndz-dpan', t: 'Roster audit', p: 'Every raid buff, raid cooldown, external, immunity and kick your roster brings. Greyed ones are missing. Point at an icon to see who brings it.' },
     { sel: '#ndzTl', t: 'Cooldowns', p: 'Each raider\'s cooldowns from the note, a phase at a time. The diamonds are the boss\'s biggest hits: red means no raid cooldown is there.' },
     { sel: '#view .ndz-hero', t: 'Start here', p: 'The top says if tonight\'s note is ready. Press Get started and Debrief walks you through it: add your note, make a new one, or change tonight\'s.' },
-    { sel: '#view .ndz-tlk', t: 'All tools', p: 'Know what you want? Every tool is here too: draft from your pulls, the Note builder, swap players and your saved notes.' },
+    { sel: '#view .ndz-hb [data-ndzplan]', t: 'Plan with a roster', p: 'Pick who\'s in tonight, and Debrief fills every job by class. You can change anyone after.' },
     { sel: '#view .ndz-rcards', t: 'Who does what', p: 'Every raider\'s jobs from the note. Anyone with a problem, like no job yet, is marked.' },
     { sel: '#view .ndz-pick1', t: 'Have a note?', p: 'Paste the NSRT note your raid leader shares. Debrief checks it on every pull with these players.' },
     { sel: '#view .ndz-pick2', t: 'No note yet?', p: 'Debrief can write one from what your raid did over the night. Check it, then copy it into the game.' },
