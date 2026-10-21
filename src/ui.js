@@ -1179,13 +1179,29 @@ function myCardsDress(team, meCard, g) {
   // (a character picked on My Page with no team of theirs added: My Page is their own page, with the same switch and Add under its name)
   const pyou = meCard && meCard.querySelector('.pg-you'), P0 = mePair(), solo = !P0 && g && g.kind === 'char' && team ? g : null, P = P0 && pyou ? P0 : solo ? { c: solo } : null; if (!P) return;
   if (solo) { const act = myAltsAct(P.c, null); team.append(act); return; }
-  meCard.classList.add('yu2');
+  meCard.classList.add('yu2', 'yu3');
+  // (the character page's look (your call, Oct 21): your name big in your class colour with "Holy Paladin · Thrall (US)"
+  // under it, your averages as big numbers in their parse colours, your spec's art behind, and "See your summary" for the
+  // way to your own page)
+  { const k = P.c.cls && E.CLASSES[P.c.cls], nm = [...pyou.children].find((e) => !e.classList.contains('ht-ban') && !e.classList.contains('pg-ych') && e.tagName === 'SPAN'), sp = (P.c.parse && P.c.parse.spec) || P.c.mainSpec;
+    if (nm) nm.innerHTML = '<b' + (k ? ' style="color:' + k[1] + '"' : '') + '>' + esc(gName(P.c)) + '</b><em class="yu-ln">' + esc([(sp ? sp + ' ' : '') + (k ? k[0] : ''), P.c.server].filter((x) => x && x.trim()).join(' · ')) + '</em>';
+    const mn = pyou.querySelector('#pgMine'); if (mn) { mn.textContent = 'See your summary ›'; mn.classList.add('primary'); } if (k) meCard.style.setProperty('--cc', k[1]); }
   // (your parses as two tiles; the chips are redrawn when the rankings come in, so they're dressed again each time)
   const chips = pyou.querySelector('#pgYouChips'), tiles = () => { const ch = chips && chips.querySelector('.pgc'); if (!ch || chips.querySelector('.yu-tiles')) return;
     const sp = (ch.textContent.match(/^\s*([^\d]+?)\s+\d/) || [])[1], bs = [...ch.querySelectorAll('b')].map((b) => +b.textContent.replace(/[^\d.]/g, ''));
-    if (bs.length >= 2 && bs.every((v) => !isNaN(v))) ch.outerHTML = '<span class="yu-tiles">' + [[bs[0], 'best'], [bs[1], 'median']].map(([v, l]) => '<span class="yu-t" style="--pc:' + yuPc(v) + '"><b>' + Math.round(v) + '</b><em>' + (sp ? esc(sp) + ' ' : '') + l + '</em></span>').join('') + '</span>'; };
+    if (bs.length >= 2 && bs.every((v) => !isNaN(v))) ch.outerHTML = '<span class="yu-tiles">' + [[bs[0], 'Best average'], [bs[1], 'Median average']].map(([v, l]) => '<span class="yu-t" style="--pc:' + yuPc(v) + '"><b>' + Math.floor(v) + '</b><em>' + l + '</em></span>').join('') + '</span>'; };
   tiles(); if (chips && !chips._yu) { chips._yu = new MutationObserver(tiles); chips._yu.observe(chips, { childList: true }); }
   pyou.after(myAltsAct(P.c, pyou.querySelector('#pgMine')));
+  pyou.insertAdjacentHTML('afterend', yuProg(P.c));
+}
+// (the You card's middle (your call, Oct 21): your progression this tier, bosses you killed on Mythic and on Heroic; once
+// you've killed the final boss (the last in raid order, Kith'ix) on that difficulty, Cutting Edge or Ahead of the Curve instead)
+function yuProg(c) {
+  const order = (E.PACKS || []).map((p) => p.encounter), fin = order[order.length - 1], mine = [...HIST.mem.values()].filter((v) => v.kill && (v.players || []).includes(c.name));
+  const tile = (diffId, name, ach, cls) => { const ks = mine.filter((v) => v.diffId === diffId), n = order.filter((b) => ks.some((v) => v.boss === b)).length, f = ks.filter((v) => v.boss === fin).sort((x, y) => x.at - y.at)[0];
+    return f ? '<span class="yu-bt yu-ach ' + cls + '"><em>' + name + ' · ' + n + '/' + order.length + '</em><b>' + ach + '</b><span>' + esc(fin) + ' killed ' + esc(new Date(f.at - 6 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span></span>'
+      : '<span class="yu-bt"><em>' + name + '</em><b>' + n + '<i>/' + order.length + '</i></b><span>' + (n ? n + (n === 1 ? ' boss' : ' bosses') + ' killed' : 'no kills yet') + '</span></span>'; };
+  return '<div class="yu-x"><div class="yu-bw">' + tile(16, 'Mythic', 'CE', 'yu-ce') + tile(15, 'Heroic', 'AOTC', 'yu-aotc') + '</div></div>';
 }
 // (your other characters, each a switch, and "Add your other characters" under you on My Page)
 function myAltsAct(c, mine) {
@@ -1629,6 +1645,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Home: your You card has a new look, with your Mythic and Heroic progress (AOTC and CE once you earn them) and a See your summary button.',
     'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
     'Copy the address to share exactly what you see: the link keeps the tab, one pull or all pulls, and the player you picked, and it opens straight there for a friend, no sign-in needed.',
@@ -22904,7 +22921,7 @@ function renderProgress(msg, msgErr) {
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   ROOT.innerHTML = (inTab ? '' : pgTabBar(g)) + '<div class="home prog pg-v2' + (inTab ? ' pg-intab' : '') + '"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
-    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you"' + (you.cls && you.parse && youC ? ' style="--sart:' + specArt({ cls: you.cls, specName: you.parse.spec + ' ' + youC[0] }) + '"' : '') + '>' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + meLd + liveStrip + meCard + sugg +
+    '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you"' + (you.cls && you.parse && youC ? ' style="--sart:' + specArt({ cls: you.cls, specName: you.parse.spec + ' ' + youC[0] }) + '"' : '') + '>' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See your summary ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + meLd + liveStrip + meCard + sugg +
     (g && !g.last && !all.length && !ldC && !msgErr && S.progBusy === g.gid ? impCard(g) /* (its first nights coming in, an import really running: a loading card, not an empty page) */
       : all.length && g && g.kind === 'char' ? chpHtml(g, list, order, diffName) /* (a character's own page: their summary and every pull) */
       : all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'

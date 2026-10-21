@@ -4601,6 +4601,20 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .pg-intab .yu2 .yu-t b { font: 700 30px/1 var(--head); color: var(--pc); }
 .yu-t em { font: 600 11px var(--body); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .yu-act { position: relative; margin-top: 18px; } .yu-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+/* the You card in the character page's look (Oct 21): your spec's art fading into the panel, your name big in your class
+   colour with your spec and server under it, your averages as big numbers in their parse colours, the buttons at the foot */
+.pg-intab .my-youa.yu3 { display: flex; flex-direction: column; box-shadow: inset 0 3px 0 var(--cc, var(--gold));
+  background: linear-gradient(180deg, rgba(18,21,28,.2) 0%, rgba(18,21,28,.72) 52%, #12151c 82%), var(--sart, none) center 22% / cover no-repeat, #12151c; }
+.pg-intab .yu3 .pg-you > span:not(.ht-ban):not(.pg-ych) { display: flex; flex-direction: column; gap: 6px; } .pg-intab .yu3 .pg-you > span:not(.ht-ban):not(.pg-ych) b { font-size: 38px; }
+.yu3 .yu-ln { font: 500 15px var(--body); font-style: normal; color: #c3c8d2; }
+.pg-intab .yu3 .yu-t { min-width: 120px; padding: 10px 16px; background: rgba(12,14,19,.72); border: 1px solid var(--line); box-shadow: none; } .pg-intab .yu3 .yu-t b { font-size: 34px; }
+.yu3 .yu-t em { text-transform: none; letter-spacing: 0; font-size: 13px; }
+.yu-x { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.yu-bw { display: flex; flex-wrap: wrap; gap: 10px; } .yu-bw:empty { display: none; }
+.yu-bt { flex: 1 1 140px; display: flex; flex-direction: column; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(12,14,19,.72); }
+.yu-bt em { font: 600 11px var(--body); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); } .yu-bt b { font: 700 28px/1.1 var(--head); } .yu-bt span { font-size: 13px; color: #c3c8d2; } .yu-bt b i { font-style: normal; font-size: 18px; color: var(--muted); }
+.yu-ach b { font-size: 30px; line-height: 1.1; letter-spacing: .02em; } .yu-ce { border-color: color-mix(in srgb, #ff8000 55%, transparent); } .yu-ce b { color: #ff8000; } .yu-aotc { border-color: color-mix(in srgb, #a335ee 55%, transparent); } .yu-aotc b { color: #b981f5; }
+.pg-intab .yu3 .yu-act { margin-top: auto; padding-top: 18px; } .yu3 .yu-btns #pgMine { font-weight: 600; }
 .yu-alts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 14px; } .yu-alts > .sub { margin-right: 4px; font-size: 13px; } .yu-alts .me-c img { width: 20px; height: 20px; border-radius: 50%; }
 .yu-panel { margin-top: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(230,180,80,.35); background: rgba(10,12,17,.78); }
 .yu-panel > .sub { margin: 0 0 4px; font-size: 13.5px; } .yu-panel .me-l { max-height: 200px; overflow-y: auto; padding: 2px; } .yu-panel .me-c img { width: 20px; height: 20px; border-radius: 50%; }
