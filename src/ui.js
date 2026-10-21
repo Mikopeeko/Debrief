@@ -1649,6 +1649,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'The front page is new: an example pull next to the headline, big boss cards you can swipe through, a night from first wipe to the kill, and the Discord easier to find.',
     'Debrief in game: the recap shows much more about the boss. The Raid view has a Boss mechanics list, one line for each mechanic in green, yellow or red with what went wrong, and your own card shows up to 5 of your boss mistakes, your avoidable damage and where you rank, and your kicks and dispels.',
     'Debrief in game: Advanced Combat Logging switches on by itself when you log in.',
     'Our Discord is easy to find: a Discord button in the top bar on every page, and a Join the Discord box on the front page.',
@@ -22215,11 +22216,13 @@ const fphBosses = () => '<section class="fpb"><div class="fp-k">Boss by boss</di
 function bindFphBosses() {
   const grid = $('.fpb-grid'); if (!grid) return;
   const list = FPB_ORDER.filter((b) => BOSS_HERO[b]);
-  grid.onclick = (e) => {
+  // (A + C's cards sit in a row you swipe through (Oct 21): a boss's checks open under the row)
+  const rail = grid.classList.contains('fpx-rail'), host = rail ? grid.parentElement : grid, slot = rail ? $('#fpxDet') : null;
+  host.onclick = (e) => {
     const x = e.target.closest('.fpb-x'), card = e.target.closest('.fpb-card');
     if (e.target.closest('#fpbLog')) { nightDlg(); return; }
     if (!x && !card) return;
-    const open = grid.querySelector('.fpb-card.on'), det = grid.querySelector('.fpb-det');
+    const open = grid.querySelector('.fpb-card.on'), det = host.querySelector('.fpb-det');
     if (det) det.remove();
     if (open) { open.classList.remove('on'); open.setAttribute('aria-expanded', 'false'); }
     if (x || open === card) { if (x && open) open.focus(); return; }
@@ -22227,11 +22230,12 @@ function bindFphBosses() {
     const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
     const after = cards[Math.min(cards.length - 1, Math.floor(i / cols) * cols + cols - 1)];
     card.classList.add('on'); card.setAttribute('aria-expanded', 'true');
-    after.insertAdjacentHTML('afterend', '<div class="fpb-det" role="region" aria-label="' + esc(b) + '" style="--bimg:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg);--bpos:50% ' + BOSS_HERO[b][1] + '%">' +
+    (slot || after).insertAdjacentHTML(slot ? 'beforeend' : 'afterend', '<div class="fpb-det" role="region" aria-label="' + esc(b) + '" style="--bimg:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg);--bpos:50% ' + BOSS_HERO[b][1] + '%">' +
       '<div class="fpb-dh"><div><i>' + esc(fpbRaid(b)) + '</i><h3>' + esc(b) + '</h3><p>What Debrief checks on every pull of this boss.</p></div><button class="fpb-x" type="button" aria-label="Close">✕</button></div>' +
       '<ul>' + fpbList(b).map((r) => '<li><b>' + esc(r.n) + '</b>' + (r.k ? ' <em>' + esc(r.k) + '</em>' : '') + '<span>' + esc(r.t) + '</span></li>').join('') + '</ul>' +
       '<p class="fpb-more">' + esc(fpbMore(b)) + '</p>' +
       '<div class="fpb-act"><button class="btn primary" id="fpbLog" type="button">Open a log of this boss</button></div></div>');
+    if (slot) { const d = slot.lastElementChild, rc = d.getBoundingClientRect(); if (rc.bottom > innerHeight) d.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
   };
 }
 // (the footer: the logo once more, and the places people look for at the bottom of a page)
@@ -22250,34 +22254,64 @@ function homeHosted() {
   // (one front page for everyone (your notes, Oct 19): the logo and headline and one button. Someone new gets Start now,
   // which walks them through adding their character and team; someone back gets Welcome Back!, straight to their page.
   // One raid night opens from the menu, and a shared report link still opens by itself)
-  const tg = homeTarget();
-  $('#main').innerHTML = '<div class="home fp fph">' +
-    '<div class="fph-bg" aria-hidden="true"><img src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg" alt="" onerror="this.remove()"></div>' +
-    // (Beta as a gold stamp tilted onto the name's corner, and the Discord invite as a quiet line under it; your idea, Oct 19)
-    '<section class="fph-hero" id="fpStart"><div class="fph-logo">' + LOGO + '<span class="fph-name"><b>Debrief</b><span class="fph-tag">Beta</span></span></div>' + (DISCORD_URL ? '<a class="fph-disc" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Help shape Debrief: <u>join our Discord</u><i aria-hidden="true">›</i></a>' : '<div class="fp-k">Mythic raid logs, pull by pull</div>') + '<h1>Every pull, explained.</h1>' +
-      '<p class="fp-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
-      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button><p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p>' +
+  // (the front page as A + C (your pick, Oct 21): the headline beside an example pull, on the boss's art; the bosses as big
+  // cards you swipe through, each opening its checks; a bold Discord band; a night from first wipe to the kill; the three
+  // views beside their examples; and the steps with the button again. The Discord also gets a bar across the top)
+  const tg = homeTarget(), demoBtn = (id) => '<button class="linkbtn fpx-link" id="' + id + '" type="button">See a real raid night ›</button>';
+  const win = (k) => '<div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
+    '<div class="fp-stage"><div class="fp-scene on" data-s="' + k + '">' + fp.scenes[k] + '</div></div></div>';
+  const row = (k, kick, h, p, li, flip) => '<div class="fpx-row' + (flip ? ' flip' : '') + '"><div class="fpx-txt"><div class="fp-k">' + kick + '</div><h3>' + h + '</h3><p>' + p + '</p>' +
+    (li ? '<ul>' + li.map((t) => '<li>' + t + '</li>').join('') + '</ul>' : '') + '</div><div class="fpx-ex">' + win(k) + '</div></div>';
+  const bar = (n, w, t, fix, kill) => '<div class="fpx-bar"><b>Pull ' + n + '</b><div class="fpx-tr"><i' + (kill ? ' class="kill"' : '') + ' style="width:' + w + '%"></i><em>' + t + '</em></div><span' + (kill ? ' class="fx"' : '') + '>' + fix + '</span></div>';
+  const art = (b) => 'url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg)';
+  $('#main').innerHTML = '<div class="home fp fph fpx">' +
+    (DISCORD_URL && store.get('wla-fpx-bar') !== 'off' ? '<div class="fpx-dbar" id="fpxBar"><div class="fpx-in">' + DISC_SVG +
+      '<span class="fpx-dbl"><b>Debrief is in beta.</b> Join our Discord to get the patch notes first and tell us what to build next.</span><span class="fpx-dbs"><b>Debrief is in beta.</b> Help shape it.</span>' +
+      '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join the Discord ›</a></div><button type="button" id="fpxBarX" aria-label="Hide this">×</button></div>' : '') +
+    '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '"><div class="fpx-in fpx-hg">' +
+      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season one · The Venomous Abyss</span>' +
+        '<h1>Every pull, <span>explained.</span></h1>' +
+        '<p class="fpx-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
+        '<div class="fpx-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button>' + demoBtn('fpDemo') +
+        '<p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div>' +
+        '<div class="fp-msg fp-note" id="fpDemoMsg"></div>' +
         '<ul class="fph-trust">' + ['Free', 'No account needed', 'Warcraft Logs or your own combat log', 'Your own log stays on your PC'].map((t) => '<li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' + t + '</li>').join('') + '</ul>' +
-        '<button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div></section>' +
-    fphBosses() + fphDiscord() +
-    '<section class="fph-prev"><div class="fph-ph"><div class="fp-k">Example raid night</div><h2>What you get</h2></div>' +
-      '<div class="fp-mods">' + FP_SCENES.map(([k, t], i) => '<button type="button" data-s="' + k + '"' + (i ? '' : ' class="on"') + '><b>' + FP_ICO[k] + t + '</b><span>' + FP_MODS[k] + '</span></button>').join('') + '</div>' +
-      '<div class="fp-prev" id="fpPrev"><div class="fp-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
-        '<div class="fp-stage">' + FP_SCENES.map(([k], i) => '<div class="fp-scene' + (i ? '' : ' on') + '" data-s="' + k + '">' + fp.scenes[k] + '</div>').join('') + '</div></div>' +
-        '<div class="fp-note">Made-up example. <button class="linkbtn" id="fpDemo" type="button">See a real raid night ›</button></div><div class="fp-msg fp-note" id="fpDemoMsg"></div></div></section>' +
-    // (the close: how it works in three steps, and the same button again, so nobody scrolls back up to start)
-    '<section class="fph-end"><h2>How it works</h2><ol class="fph-steps">' +
+        '<button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div>' +
+      '<div class="fpx-shot">' + win('live') + '<div class="fpx-pin p1"><b>✓</b> Every mechanic checked</div><div class="fpx-pin p2"><b>!</b> What to fix first</div></div>' +
+    '</div></section>' +
+    '<section class="fpx-sec fpb fpx-bosses"><div class="fpx-in"><div class="fpx-rh"><div><div class="fp-k">Boss by boss</div><h2>Pick your boss</h2>' +
+        '<p>All ten this season, each with its own checks, LFR to Mythic. Pick one to see what Debrief checks.</p></div>' +
+        '<div class="fpx-arr"><button type="button" data-d="-1" aria-label="Back">‹</button><button type="button" data-d="1" aria-label="More bosses">›</button></div></div>' +
+      '<div class="fpb-grid fpx-rail">' + FPB_ORDER.filter((b) => BOSS_HERO[b]).map((b, i) => '<button class="fpb-card fpx-card" type="button" data-i="' + i + '" aria-expanded="false" style="background-image:' + art(b) + '"><span><i>' + esc(fpbRaid(b)) + '</i><b>' + esc(b) + '</b><em>See what\'s checked ›</em></span></button>').join('') + '</div>' +
+      '<div class="fpx-det" id="fpxDet"></div></div></section>' +
+    (DISCORD_URL ? '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-dbig"><div class="fpx-dbi">' + DISC_SVG + '</div><div class="fpx-dbt"><div class="fp-k">Our Discord</div><h2>Help shape Debrief</h2>' +
+      '<p>Get the patch notes the day they land, report a bug and hear when it\'s fixed, and tell us what to build next.</p></div>' +
+      '<a class="fpx-dbgo" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">' + DISC_SVG + 'Join the Discord</a></div></div></section>' : '') +
+    '<section class="fpx-sec"><div class="fpx-in fpx-night"><div><div class="fp-k">Between pulls</div><h2>From first wipe to the kill</h2>' +
+        '<p>After every pull, Debrief says what to fix first. Fix it, pull again, and watch the boss go lower each time.</p>' + demoBtn('fpDemo2') + '<div class="fp-msg fp-note" id="fpDemoMsg2"></div></div>' +
+      '<div class="fpx-chart"><h4><span>The Coiled Altar · Mythic</span><span>Example</span></h4>' +
+        bar(15, 29, 'P1 · 71%', 'Fix: Dreadmarch, stand still') + bar(16, 41, 'P1 · 59%', 'Fix: Guillotine, soak with 5') + bar(17, 48, 'P2 · 52%', 'Fix: save cooldowns for the shield') +
+        bar(18, 66, 'P2 · 34%', 'Fix: kick order, set 2') + bar(19, 100, 'Kill', 'Clean. Well done.', true) + '</div></div></section>' +
+    '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">What you get</div><h2>The whole night, made simple</h2></div>' +
+      row('mech', 'Debriefing', 'Every mechanic, done right or not', 'Each soak, kick and frontal gets a green, yellow or red flag, with the players and the time.', ['Who was missing from a soak', 'Who got clipped, and by what', 'A map of who stood where']) +
+      row('rot', 'Rotation', 'Your buttons, checked like a coach would', 'Plain sentences that say what to press instead, for every raid spec.', ['Cooldowns lined up with the fight', 'What each big button did'], true) +
+      row('assign', 'Your NSRT note', 'The plan, next to what happened', 'Bring your raid note and see who did their job: kicks in order, soaks, crowd control.') +
+    '</div></section>' +
+    '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-end"><h2>Ready for raid night?</h2><p>Set up once, then every pull explains itself.</p><ol class="fph-steps">' +
       '<li><b>Add your team</b><span>Your character and your team\'s Warcraft Logs page. It takes about a minute.</span></li>' +
       '<li><b>Raid with logs on</b><span>Turn on Warcraft Logs live logging, or upload your log after the raid.</span></li>' +
       '<li><b>Read the debrief</b><span>Between pulls, see what went wrong and what to fix first.</span></li></ol>' +
-      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo2" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button></div></section>' +
-    fphFoot() + '</div>';
+      '<div class="gs-cta"><button class="btn primary gs-go" id="gsGo2" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button></div></div></div></section>' +
+    '<div class="fpx-in">' + fphFoot() + '</div></div>';
   $('#gsGo').onclick = $('#gsGo2').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
   // (one log or live log, nothing added: no character, no team, no setup; the menu's Open a report or log window)
   $('#gsJust').onclick = nightDlg;
   bindFphBosses();
   $('#fphPatch').onclick = openPatchNotes; $('#fphTour').onclick = () => startTour(0);
-  document.body.classList.remove('fph-past');
+  document.body.classList.toggle('fph-past', !$('.fph-logo')); // (A + C has no big logo: the top bar's shows from the start)
+  { const d2 = $('#fpDemo2'); if (d2) d2.onclick = () => openReportLink(DEMO_REPORT, $('#fpDemoMsg2')); }
+  { const x = $('#fpxBarX'); if (x) x.onclick = () => { store.set('wla-fpx-bar', 'off'); const b = $('#fpxBar'); if (b) b.remove(); }; }
+  { const rail = $('.fpx-rail'); document.querySelectorAll('.fpx-arr button').forEach((b) => { b.onclick = () => rail.scrollBy({ left: +b.dataset.d * Math.max(260, rail.clientWidth * 0.8), behavior: 'smooth' }); }); }
   HIST.load().then(groupsBackfill);
   bindFront(true);
 }
