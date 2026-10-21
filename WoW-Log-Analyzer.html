@@ -13900,6 +13900,7 @@ const PATCH_NOTES = [
     'Boss guides, The Coiled Altar: Grim Guillotine in phase 3 has its own map now, with all three axes in order (star, then square, then square).',
     'Boss guides: more mechanics have their own maps: on The Coiled Altar the Fangs pools, Venomfang, Eternal Nightfall, the add kicks, Defilement and (Heroic) Gloombomb; on Ula\'tek her dive.',
     'Boss guides: Nymrissa\'s Abyssal Rain and Lingering Frost, and Kith\'ix\'s Commanding Presence and Divine Radiance, have their own maps now.',
+    'Boss guides: the pop-up labels on the maps never hang off the edge any more, in the whole-fight videos or when you zoom in.',
     'Boss guides, Entombed Sentinels: the red puddles drop where the raid plan puts them and stay for the rest of the fight, on every map and in the video. Blighted Blood, where each boss stands and where the puddles go have their own maps, and so do Evil Eyes on The Lost Explorers.',
     'Boss guides: the whole-fight videos now play the entire fight, every cast and set, for Vashnik, Sszorak, Nymrissa, Kith\'ix, Nek\'zali, Entombed Sentinels and The Lost Explorers on Mythic, and Kith\'ix and Entombed Sentinels on Heroic.',
     'Boss guides, Ula\'tek: the Heroic whole-fight video now plays the entire fight, pull to kill, on a real Heroic kill\'s clock (with a timed Read it and fight length), and the Mythic one shows both Mephitic Thrashes.',
@@ -19763,6 +19764,7 @@ function miniMap(mp, pmap) {
   if (A && A.f && !mp.gdzLook) aside = Math.min(ax1 - ax0, ay1 - ay0); else if (A && A.f) { const sh = Math.min(ax1 - ax0, ay1 - ay0), lg = Math.max(ax1 - ax0, ay1 - ay0); let need = 0; for (const p of bpts) need = Math.max(need, 2 * Math.max(Math.abs(sx(p) - acx), Math.abs(sy(p) - acy)) + 12); aside = need > sh ? Math.min(need, lg) : sh; } /* (a wide room (Ula'tek's ledges, Oct 21): wider when players stand outside the square; dark bands are fine) */ /* (a room picture: open inside it, never past its edge (your screenshot, Oct 20); − zooms out further) */
   const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = mp.fullAt ? [(mp.fullAt.x - mp.fullAt.r - x0) * yd, (-mp.fullAt.y - mp.fullAt.r - y0) * yd, 2 * mp.fullAt.r * yd, 2 * mp.fullAt.r * yd] : mp.room ? [(rcx - rside / 2 - x0) * yd, (rcy - rside / 2 - y0) * yd, rside * yd, rside * yd] : A ? [(acx - x0) * yd - aside * yd / 2, (acy - y0) * yd - aside * yd / 2, aside * yd, aside * yd] : [0, 0, fside, fside];
   const ic = (x, y, inner) => '<g class="ic" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>';
+  const icl = (x, y, inner) => '<g class="ic icl" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>'; /* (a label: kept inside the map's edges, see bindZoom) */
   // opens on the whole arena when there is one; "Zoom to mechanic" (or double-click) goes in
   const startVB = A ? fullVB : focusVB;
   let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-zmax="' + (mp.gdzLook && A && A.f ? (Math.max(A.w, A.h) / A.s * yd * 1.05).toFixed(1) : 0) + '" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
@@ -20101,7 +20103,7 @@ function miniMap(mp, pmap) {
   if ((gHit.size || gMiss.size) && !LL) leg.push([(x, y) => '<text x="' + (x - 3) + '" y="' + (y + 4) + '" fill="#9aa0ac" font-size="11">i</text>', 'Ghosts shown where they spawned']);
   for (const g of (lm.rings || []).filter((x, i, a) => a.findIndex((y) => (y.legend || y.label || '') === (x.legend || x.label || '')) === i)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (g.fill || (g.color ? 'rgba(126,224,143,.2)' : 'rgba(230,180,80,.2)')) + '" stroke="' + (g.color || '#e6b450') + '" stroke-dasharray="3 2"/>', (g.cn ? g.cn + ': ' : g.color === '#b65cff' ? 'Purple circle: ' : g.color ? 'Green circle: ' : 'Gold circle: ') + (g.legend || g.label || 'mechanic area') + (g.shrink === 'ichor' ? ' (shrinks from ~11 yd)' : '')]);
   { const atU = (g) => { const q = byG.get(g); return q ? [X(q), Y(q)] : null; }; /* (a guide's pop-up labels, debuff icons and dispel beams, on top (guides.js)) */
-    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue; s += c.kind === 'beam' || c.kind === 'spot' ? gdzCallSvg(c, X(p), Y(p), ft, atU, yd) : ic(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
+    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue; s += c.kind === 'beam' || c.kind === 'spot' ? gdzCallSvg(c, X(p), Y(p), ft, atU, yd) : icl(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
   s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
   const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
@@ -20196,6 +20198,12 @@ function bindZoom(box) {
     svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
     const k = vb[2] / 480; // 1 at the mechanic view
     for (const g of svg.querySelectorAll('g.ic')) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); }
+    // (labels that would hang off an edge slide in just enough to show in full)
+    const SR = svg.getBoundingClientRect(); if (SR.width) { const u = vb[2] / SR.width, m = 4;
+      for (const g of svg.querySelectorAll('g.icl')) { const b = g.getBoundingClientRect(); if (!b.width) continue; let dx = 0, dy = 0;
+        if (b.width < SR.width - 2 * m) { if (b.left < SR.left + m) dx = SR.left + m - b.left; else if (b.right > SR.right - m) dx = SR.right - m - b.right; }
+        if (b.top < SR.top + m) dy = SR.top + m - b.top; else if (b.bottom > SR.bottom - m) dy = SR.bottom - m - b.bottom;
+        if (dx || dy) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + (x + dx * u).toFixed(2) + ' ' + (y + dy * u).toFixed(2) + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); } } }
     const w = svg.getBoundingClientRect().width || 480; if (bar) bar.style.width = (10 * yd * w / vb[2]).toFixed(1) + 'px';
     const f = box.querySelector('.zfocus'), u = box.querySelector('.zfull');
     if (f) { const atFull = vb[2] >= full[2] * 0.95; f.classList.toggle('on', !atFull); u.classList.toggle('on', atFull); }
