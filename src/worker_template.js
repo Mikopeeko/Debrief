@@ -233,34 +233,39 @@ async function runBugs(env) {
   let st = await env.DEBRIEF_KV.get('dc-bugs', 'json'), dirty = false;
   const act = await dc(env, '/guilds/' + GUILD + '/threads/active'), all = act.threads || [];
   const posts = all.filter((t) => t.parent_id === FORUM_BUGS && !(t.flags & 2)); // (not the pinned how-to)
-  if (!st) { st = { t: {}, open: [], fixed: [] }; for (const t of posts) st.t[t.id] = 0; await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); return all; } // (first run: posts from before the bot stay as they are)
+  const ideaPosts = all.filter((t) => t.parent_id === FORUM_IDEAS && !(t.flags & 2)); // (#suggestions: the same way, Oct 21)
+  if (!st) { st = { t: {}, open: [], fixed: [], ideasSeen: true }; for (const t of [...posts, ...ideaPosts]) st.t[t.id] = 0; await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); return all; } // (first run: posts from before the bot stay as they are)
   const forum = await dc(env, '/channels/' + FORUM_BUGS), tags = forum.available_tags || [], working = tagOf(tags, 'Working on it');
-  for (const t of posts.filter((x) => !(x.id in st.t)).slice(0, 5)) {
+  const iforum = await dc(env, '/channels/' + FORUM_IDEAS).catch(() => null), itags = (iforum && iforum.available_tags) || [];
+  if (!st.ideasSeen) { for (const t of ideaPosts) st.t[t.id] = 0; st.ideasSeen = true; dirty = true; } // (ideas from before the bot handled them stay as they are)
+  for (const t of [...posts, ...ideaPosts].filter((x) => !(x.id in st.t)).slice(0, 5)) {
+    const idea = t.parent_id === FORUM_IDEAS, ftags = idea ? itags : tags, working = tagOf(ftags, 'Working on it') || (idea ? tagOf(ftags, 'Under review') : undefined);
     st.t[t.id] = 0; dirty = true;
     const m = await dc(env, '/channels/' + t.id + '/messages/' + t.id).catch(() => null), text = (m && m.content) || '';
-    const files = ((m && m.attachments) || []).map((a) => a.url), tagNames = (t.applied_tags || []).map((id) => (tags.find((x) => x.id === id) || {}).name).filter(Boolean);
-    const areas = areasIn(t.name + ' ' + text), who = m && m.author ? (m.author.global_name || m.author.username) : 'someone';
+    const files = ((m && m.attachments) || []).map((a) => a.url), tagNames = (t.applied_tags || []).map((id) => (ftags.find((x) => x.id === id) || {}).name).filter(Boolean);
+    const areas = areasIn(t.name + ' ' + text), who = m && m.author ? (idea && m.author.bot ? 'the website form' : (m.author.global_name || m.author.username)) : 'someone';
     const body = text.replace(/@/g, '@​').split(/\r?\n/).map((l) => '> ' + l).join('\n') + '\n\n**From:** ' + who.replace(/@/g, '@​') + ' on Discord' +
       (tagNames.length ? '\n**Tags:** ' + tagNames.join(', ') : '') + (files.length ? '\n**Pictures:**\n' + files.map((u) => '- ' + u).join('\n') : '') +
-      '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from #bug-reports by Claudette (the Debrief bot). Closing this issue tells the post it\'s fixed._';
-    const issue = await gh(env, '/issues', { method: 'POST', body: { title: '[discord] ' + t.name.slice(0, 90), body, labels: ['bug', 'discord', ...areas.map((a) => a.toLowerCase())] } });
+      '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from ' + (idea ? '#suggestions' : '#bug-reports') + ' by Claudette (the Debrief bot). Closing this issue tells the post it\'s ' + (idea ? 'built, or not planned' : 'fixed') + '._';
+    const issue = await gh(env, '/issues', { method: 'POST', body: { title: (idea ? '[discord idea] ' : '[discord] ') + t.name.slice(0, 90), body, labels: [idea ? 'idea' : 'bug', 'discord', ...areas.map((a) => a.toLowerCase())] } });
     st.t[t.id] = issue.number; st.open.push([t.id, issue.number]);
     // (and a post in the owner's #bug-review with the answer buttons, tagging them: nothing is looked into until they press
     // one (the user's call, Oct 20: "just wait for me to react with the button presses"))
     try {
       const quote = text.split(/\r?\n/).map((l) => '> ' + l).join('\n').slice(0, 1200);
-      const rp = await dc(env, '/channels/' + REVIEW_FORUM + '/threads', { method: 'POST', body: { name: t.name.slice(0, 95),
-        message: { content: '<@' + OWNER + '> **New bug report** from ' + who.replace(/[@*_`~|]/g, '') + ' (<#' + t.id + '>):\n' + quote + (files.length ? '\n(' + files.length + ' picture' + (files.length > 1 ? 's' : '') + ' in the post)' : '') +
-          '\n\nTap **Look into it** and I\'ll investigate, or **Fix it** if it\'s clear.', allowed_mentions: { parse: [], users: [OWNER] }, components: REVIEW_ROW } } });
+      const ideaTag = idea ? tagOf(((await dc(env, '/channels/' + REVIEW_FORUM)).available_tags) || [], 'Idea') : null;
+      const rp = await dc(env, '/channels/' + REVIEW_FORUM + '/threads', { method: 'POST', body: { name: t.name.slice(0, 95), applied_tags: ideaTag ? [ideaTag] : [],
+        message: { content: '<@' + OWNER + '> ' + (idea ? '**New idea**' : '**New bug report**') + ' from ' + who.replace(/[@*_`~|]/g, '') + ' (<#' + t.id + '>):\n' + quote + (files.length ? '\n(' + files.length + ' picture' + (files.length > 1 ? 's' : '') + ' in the post)' : '') +
+          '\n\n' + (idea ? 'Tap **Think it through** and I\'ll look at how we\'d build it, or **Build it** if you want it.' : 'Tap **Look into it** and I\'ll investigate, or **Fix it** if it\'s clear.'), allowed_mentions: { parse: [], users: [OWNER] }, components: idea ? IDEA_ROW : REVIEW_ROW } } });
       const revs = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {}; revs[issue.number] = rp.id; await env.DEBRIEF_KV.put('dc-reviews', JSON.stringify(revs));
     } catch (err) { console.warn('Review post:', err && err.message); }
     // (tags: Working on it, plus the area its words point to when they only picked Website)
     const keep = new Set(t.applied_tags || []); if (working) keep.add(working);
     const onlySite = tagNames.every((n) => ['website', 'working on it'].includes(n.toLowerCase()));
-    if (onlySite && areas.length) { const a = tagOf(tags, areas[0]); if (a) keep.add(a); }
+    if (onlySite && areas.length) { const a = tagOf(ftags, areas[0]); if (a) keep.add(a); }
     await dc(env, '/channels/' + t.id, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
     const noPull = !/https?:\/\/|pull\s*#?\d+|\bp\d+\b/i.test(text) && !files.length;
-    await say(env, t.id, 'Thanks, got it! This is on our list now, and we\'ll post here when it\'s fixed.' +
+    await say(env, t.id, idea ? 'Thanks for the idea! It\'s on our list now. Tap 👍 on it if you want it too, and we\'ll post here if we build it.' : 'Thanks, got it! This is on our list now, and we\'ll post here when it\'s fixed.' +
       (noPull ? '\nTo help us find it fast: which pull was it? Paste the Debrief or Warcraft Logs link, or say the boss and pull number. A screenshot helps too.' : ''));
   }
   // (closed on GitHub: Fixed, or Can't reproduce when it was closed as not planned)
@@ -270,22 +275,23 @@ async function runBugs(env) {
     if (!is || is.state !== 'closed') { still.push([tid, n]); continue; }
     dirty = true; const nope = is.state_reason === 'not_planned';
     const th = await dc(env, '/channels/' + tid).catch(() => null); if (!th) continue;
-    const keep = new Set((th.applied_tags || []).filter((id) => id !== working)), done = tagOf(tags, nope ? 'Can\'t reproduce' : 'Fixed'); if (done) keep.add(done);
+    const idea = th.parent_id === FORUM_IDEAS, ftags = idea ? itags : tags, wk = idea ? (tagOf(ftags, 'Working on it') || tagOf(ftags, 'Under review')) : working;
+    const keep = new Set((th.applied_tags || []).filter((id) => id !== wk)), done = idea ? (nope ? tagOf(ftags, 'Not planned') : (tagOf(ftags, 'Built') || tagOf(ftags, 'Done') || tagOf(ftags, 'Planned'))) : tagOf(tags, nope ? 'Can\'t reproduce' : 'Fixed'); if (done) keep.add(done);
     await dc(env, '/channels/' + tid, { method: 'PATCH', body: { archived: false, applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
     // (the user's rule, Oct 20: the reporter is tagged on their own #bug-reports post, the owner in the #bug-review post,
     // and both posts are closed 24 hours later)
     const first = await dc(env, '/channels/' + tid + '/messages/' + tid).catch(() => null), uid = first && first.author && !first.author.bot && first.author.id !== OWNER ? first.author.id : null;
-    await dc(env, '/channels/' + tid + '/messages', { method: 'POST', body: { content: (uid ? '<@' + uid + '> ' : '') + (nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
+    await dc(env, '/channels/' + tid + '/messages', { method: 'POST', body: { content: (uid ? '<@' + uid + '> ' : '') + (idea ? (nope ? 'Thanks for the idea! We\'re not going to build this one right now, but we read every one.' : 'We built it! 🎉 It\'s in the latest update. Thanks for the idea. See what changed: <' + SITE + '/?patchnotes>') : nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
       : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>'), allowed_mentions: { parse: [], users: uid ? [uid] : [] } } }).catch(() => {});
-    st.fixed = [...(st.fixed || []), [tid, Date.now(), nope ? 0 : 1]].slice(-50);
-    if (!nope) await bugHunter(env, tid).catch((err) => console.warn('Bug Hunter:', err && err.message));
+    if (!idea) st.fixed = [...(st.fixed || []), [tid, Date.now(), nope ? 0 : 1]].slice(-50);
+    if (!nope && !idea) await bugHunter(env, tid).catch((err) => console.warn('Bug Hunter:', err && err.message));
     const rt = ((await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {})[n];
     if (rt) {
       const rf = await dc(env, '/channels/' + REVIEW_FORUM).catch(() => null), rth = await dc(env, '/channels/' + rt).catch(() => null);
       if (rf && rth) { const drop = ['In progress', 'Done', 'Not a bug', 'Needs your call'].map((x) => tagOf(rf.available_tags, x)), id = tagOf(rf.available_tags, nope ? 'Not a bug' : 'Done');
         const k = new Set((rth.applied_tags || []).filter((x) => !drop.includes(x))); if (id) k.add(id);
         await dc(env, '/channels/' + rt, { method: 'PATCH', body: { archived: false, applied_tags: [...k].slice(0, 5) } }).catch(() => {}); }
-      await dc(env, '/channels/' + rt + '/messages', { method: 'POST', body: { content: '<@' + OWNER + '> ' + (nope ? 'Closed as not a bug.' : '✅ Done: this one is fixed.') + ' ' + (uid ? 'The reporter was tagged on their post.' : 'Its post was updated.') + ' Both posts close in 24 hours.', allowed_mentions: { parse: [], users: [OWNER] } } }).catch(() => {});
+      await dc(env, '/channels/' + rt + '/messages', { method: 'POST', body: { content: '<@' + OWNER + '> ' + (nope ? (idea ? 'Closed as not planned.' : 'Closed as not a bug.') : (idea ? '✅ Done: this idea is built.' : '✅ Done: this one is fixed.')) + ' ' + (uid ? 'The reporter was tagged on their post.' : 'Its post was updated.') + ' Both posts close in 24 hours.', allowed_mentions: { parse: [], users: [OWNER] } } }).catch(() => {});
     }
     st.arch = [...(st.arch || []), [tid, Date.now()], ...(rt ? [[rt, Date.now()]] : [])].slice(-200);
   }
@@ -542,6 +548,9 @@ const DISCORD_PUBLIC_KEY = 'caa9d8119f10d1ccc3c143f39c5745765810d77d587ae0bf7af8
 const BUTTONS = [['fix', 'Fix it', 3, 'fix it', null], ['look', 'Look into it', 1, 'look into it', null], ['notbug', 'Not a bug', 2, 'not a bug, close it', 'Not a bug'],
   ['prog', 'In progress', 2, 'in progress', 'In progress'], ['done', 'Done', 2, 'done', 'Done']];
 const REVIEW_ROW = [{ type: 1, components: BUTTONS.map(([id, label, style]) => ({ type: 2, style, label, custom_id: 'rv:' + id })) }];
+// (an idea's review post: the same buttons and answers, worded for ideas)
+const IDEA_LABELS = { fix: 'Build it', look: 'Think it through', notbug: 'Not now' };
+const IDEA_ROW = [{ type: 1, components: BUTTONS.map(([id, label, style]) => ({ type: 2, style, label: IDEA_LABELS[id] || label, custom_id: 'rv:' + id })) }];
 const hex = (s) => new Uint8Array(s.match(/../g).map((h) => parseInt(h, 16)));
 async function discordSigned(req, body) {
   const sig = req.headers.get('X-Signature-Ed25519'), ts = req.headers.get('X-Signature-Timestamp');
