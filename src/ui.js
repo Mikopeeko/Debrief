@@ -1690,6 +1690,8 @@ const PATCH_NOTES = [
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
     'Debrief in game: the PC app\'s desktop icon no longer goes blank after the app updates itself (it showed an empty picture after today\'s new logo).',
+    'Debrief in game: clicking the PC app\'s desktop icon now brings its window to the front. It could open behind your other windows, so it looked like nothing happened.',
+    'Debrief in game: on some PCs the desktop icon showed a "Can not find script file" message instead of opening the app. The icon now starts the app directly.',
     'When Warcraft Logs is down, the site now says so and asks you to try again in a few minutes (it used to say the site\'s key was rejected).',
     'Debriefing maps for Vashnik, Sszorak, Entombed Sentinels and Nek\'zali: the room picture now sits where the game has it (it was turned or a few yards off), so everyone\'s dots line up with the room.',
     'Debriefing maps for The Twin Fangs: the room picture sat 12 yards too far south. It now lines up with the game, so everyone\'s dots are on the walkway.',

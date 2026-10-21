@@ -25,18 +25,19 @@ try {
   $lines += $addon
 
   # 4. a Debrief icon on the desktop and in the Start menu
+  # (they start PowerShell directly, hidden and minimized: on some PCs Windows Script Host "can not find" Start Debrief.vbs)
   $ws = New-Object -ComObject WScript.Shell
-  $target = Join-Path $env:WINDIR 'System32\wscript.exe'
-  $vbs = Join-Path $dst 'Start Debrief.vbs'
+  $target = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+  $args1 = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + (Join-Path $dst 'companion.ps1') + '"'
   foreach ($dir in [Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs')) {
     $lnk = $ws.CreateShortcut((Join-Path $dir 'Debrief Companion.lnk'))
-    $lnk.TargetPath = $target; $lnk.Arguments = '"' + $vbs + '"'; $lnk.WorkingDirectory = $dst
+    $lnk.TargetPath = $target; $lnk.Arguments = $args1; $lnk.WorkingDirectory = $dst; $lnk.WindowStyle = 7
     $lnk.IconLocation = (Join-Path $dst 'debrief.ico') + ',0'; $lnk.Description = 'Debrief Companion: your pull recap in WoW'
     $lnk.Save()
   }
 
   # 5. start it (the installer never asks for admin rights, so this runs as you)
-  Start-Process -FilePath $target -ArgumentList ('"' + $vbs + '"')
+  Start-Process -FilePath $target -ArgumentList $args1 -WindowStyle Hidden
   $ok = $addon -match 'installed in'
   $msg = "Debrief is installed.`n`n" + $addon + "`n`nIt starts with Windows by itself, quietly, and there's a Debrief icon on your desktop. In WoW, type /reload if it was open.`nAfter each boss pull Debrief asks `"See your recap?`": press Ctrl+V."
   if ($env:DBF_SILENT) { Write-Host $msg } else { [void][System.Windows.Forms.MessageBox]::Show($msg, 'Debrief', 'OK', $(if ($ok) { 'Information' } else { 'Warning' })) }
