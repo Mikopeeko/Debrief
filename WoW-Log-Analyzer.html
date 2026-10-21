@@ -14857,7 +14857,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // (Note tools · Test version · Show me how) over three cards. With no note, the how-to below has everything, so nothing here.)
 const ndzHead = (title) => '<div class="ndz-thead"><span class="ndz-ttl">' + title + '</span>' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></div>';
 function ndzTools(r) { const u0 = noteForRep(r), b = r.item.boss, B = (attr, l) => '<button class="btn sm" type="button" ' + attr + '>' + l + '</button>';
-  NDZ_PLANON = null; if (S.ndzPick && S.ndzPickRep && S.ndzPickRep !== b) { S.ndzPick = null; S.ndzPlanId = null; } /* (a pick made on another boss's night is forgotten) */
+  NDZ_PLANON = null; if (NDZ_NEW() && S.noteBuild) return ''; /* (the Note builder open: it's the page, nothing above it) */ if (S.ndzPick && S.ndzPickRep && S.ndzPickRep !== b) { S.ndzPick = null; S.ndzPlanId = null; } /* (a pick made on another boss's night is forgotten) */
   if (NDZ_NEW() && S.ndzPick && (S.ndzPick !== b || S.ndzPlanId)) return ndzPlanBoard(r, S.ndzPick); /* (Plan view: the picked boss's note, no pull needed) */
   if (!u0) return NDZ_NEW() && r.noteMiss && notesOf(b).list.some((n) => !n.example) ? ndzBoard(r, null) : ''; /* (notes for this boss, none fitting this pull: Get started still leads) */ if (NDZ_NEW()) return ndzBoard(r, u0); /* (the makeover, test copy) */
   return '<div class="ndz-tools">' + ndzHead('Note tools') + '<div class="ndz-cards">' +
@@ -15466,7 +15466,7 @@ function ndzBuildView(r) {
       foot('Save and copy for the game', true); }
   box.innerHTML = '<div class="panel ndz ndz-build">' + h + '</div>';
   const redraw = () => { const y = window.scrollY; ndzBuildView(r); window.scrollTo({ top: y }); };
-  $('#ndzBX').onclick = () => { S.noteBuild = null; assign(); };
+  $('#ndzBX').onclick = () => { S.noteBuild = null; renderMain(); }; /* (the dashboard comes back) */
   if ($('#ndzBBack')) $('#ndzBBack').onclick = () => { B.step--; redraw(); };
   $$('#assignBox [data-bpp]').forEach((c) => (c.onchange = () => { if (c.checked) B.on.add(c.dataset.bpp); else B.on.delete(c.dataset.bpp); B.pages = null; redraw(); }));
   $$('#assignBox [data-bpb]').forEach((x) => (x.onclick = () => { B.pick = x.dataset.bpb; B.pages = null; redraw(); }));
