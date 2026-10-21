@@ -1655,6 +1655,7 @@ const PATCH_NOTES = [
     'Boss guides: more mechanics have their own maps: on The Coiled Altar the Fangs pools, Venomfang, Eternal Nightfall, the add kicks, Defilement and (Heroic) Gloombomb; on Ula\'tek her dive.',
     'Boss guides: Nymrissa\'s Abyssal Rain and Lingering Frost, and Kith\'ix\'s Commanding Presence and Divine Radiance, have their own maps now.',
     'Boss guides: the pop-up labels on the maps never hang off the edge any more, in the whole-fight videos or when you zoom in.',
+    'Boss guides: whole-fight videos of fights that loop play the cycle once, then a Same again card says what repeats and when, and the video picks up where things change. Vashnik\'s video went from 15 minutes to 6, Entombed Sentinels\' from 14 to 4. The written version still lists every cast.',
     'Boss guides, Entombed Sentinels: the red puddles drop where the raid plan puts them and stay for the rest of the fight, on every map and in the video. Blighted Blood, where each boss stands and where the puddles go have their own maps, and so do Evil Eyes on The Lost Explorers.',
     'Boss guides: the whole-fight videos now play the entire fight, every cast and set, for Vashnik, Sszorak, Nymrissa, Kith\'ix, Nek\'zali, Entombed Sentinels and The Lost Explorers on Mythic, and Kith\'ix and Entombed Sentinels on Heroic.',
     'Boss guides, Ula\'tek: the Heroic whole-fight video now plays the entire fight, pull to kill, on a real Heroic kill\'s clock (with a timed Read it and fight length), and the Mythic one shows both Mephitic Thrashes.',

@@ -13901,6 +13901,7 @@ const PATCH_NOTES = [
     'Boss guides: more mechanics have their own maps: on The Coiled Altar the Fangs pools, Venomfang, Eternal Nightfall, the add kicks, Defilement and (Heroic) Gloombomb; on Ula\'tek her dive.',
     'Boss guides: Nymrissa\'s Abyssal Rain and Lingering Frost, and Kith\'ix\'s Commanding Presence and Divine Radiance, have their own maps now.',
     'Boss guides: the pop-up labels on the maps never hang off the edge any more, in the whole-fight videos or when you zoom in.',
+    'Boss guides: whole-fight videos of fights that loop play the cycle once, then a Same again card says what repeats and when, and the video picks up where things change. Vashnik\'s video went from 15 minutes to 6, Entombed Sentinels\' from 14 to 4. The written version still lists every cast.',
     'Boss guides, Entombed Sentinels: the red puddles drop where the raid plan puts them and stay for the rest of the fight, on every map and in the video. Blighted Blood, where each boss stands and where the puddles go have their own maps, and so do Evil Eyes on The Lost Explorers.',
     'Boss guides: the whole-fight videos now play the entire fight, every cast and set, for Vashnik, Sszorak, Nymrissa, Kith\'ix, Nek\'zali, Entombed Sentinels and The Lost Explorers on Mythic, and Kith\'ix and Entombed Sentinels on Heroic.',
     'Boss guides, Ula\'tek: the Heroic whole-fight video now plays the entire fight, pull to kill, on a real Heroic kill\'s clock (with a timed Read it and fight length), and the Mythic one shows both Mephitic Thrashes.',
@@ -35666,10 +35667,17 @@ function gdzKit(boss, len) {
 function gdzWhole(boss, G, D) {
   const GAP = 1.2, kit = gdzKit(boss, 1), caps = [], chaps = [], byId = {};
   G.phases.forEach((p, pi) => (p.mechs || []).forEach((m) => { if (m.id) byId[m.id] = { m, pi }; }));
-  const list = G.sim || G.phases.flatMap((p, pi) => (p.mechs || []).filter((m) => m.map).map((m) => ({ mech: m.id || null, m, ph: pi })));
+  const list0 = G.sim || G.phases.flatMap((p, pi) => (p.mechs || []).filter((m) => m.map).map((m) => ({ mech: m.id || null, m, ph: pi })));
+  // (a fight that loops (your idea, Oct 21): the cycle plays once, then a card says it repeats while the clock runs ahead; the written version keeps every cast)
+  const list = [], repE = new Map(); for (const e of list0) { const sk = (G.simSkip || []).find((q) => e.at >= q.from && e.at < q.to); if (!sk) { list.push(e); continue; } if (!repE.has(sk)) { const r = { at: sk.from, ph: e.ph, repeat: sk, skipped: [] }; repE.set(sk, r); list.push(r); } repE.get(sk).skipped.push(e); }
   let T = 0, n = 0, prevLen = null;
   // (one scene: a short scene of the guide, or one of its mechanic maps; returns its name and steps, or null)
   const play = (e) => {
+    if (e.repeat) { const k = gdzKit(boss, 5);
+      // (what the skipped stretch leaves on the floor for the rest of the fight (Sentinels' puddles) is laid down during the card)
+      if (GDZ_SEG === main) { const keep = []; for (const ee of e.skipped || []) { GDZ_SEG = null; const pk = gdzKit(boss, 1); GDZ_SEG = { kit: pk, next(len) { pk.seg(0, 0, len); pk.rot(G.simRot || 0); } }; try { play(ee); } catch (er) { /* (a scene that can't be played leaves nothing) */ } GDZ_SEG = main; for (const r of pk.peek().rings) if (r.dur >= 300 && r.x != null && !r.on) keep.push(r); }
+        k.rot(0); keep.forEach((r, j) => k.ring({ x: r.x, y: r.y, r: r.r, fx: r.fx, t0: 0.6 + Math.min(3.6, j * 0.05), dur: r.dur, color: r.color, fill: r.fill, cn: r.cn, legend: r.legend, label: false })); }
+      k.step(0.3); return { name: e.repeat.label || 'The cycle repeats', texts: ['Skipping ahead to ' + Math.floor(e.repeat.to / 60) + ':' + String(Math.floor(e.repeat.to % 60)).padStart(2, '0') + '.'] }; }
     if (e.beat) { const b = (G.beats || {})[e.beat]; if (!b) return null; b.run(e.o || {}); return { name: b.name, texts: b.do || [] }; }
     const m = e.m || (byId[e.mech] || {}).m; if (!m || !m.map) return null; m.map(D, e.o); return { name: m.name, texts: (e.o && e.o.do) || m.do || [] }; /* (a scene played a different way, e.g. the second axe soak, brings its own captions) */
   };
@@ -35685,7 +35693,7 @@ function gdzWhole(boss, G, D) {
       const len = main.len || 4, ph = e.ph != null ? e.ph : 0;
       if (G.simAdd) G.simAdd(kit, e);
       kit.hold(len, GDZ_RAID); // (everyone holds still to the end of the scene, then walks to the next one's spots in the gap)
-      chaps.push({ t: T, len, rt: e.at, ph: ph + 1, phase: G.phases[ph] ? G.phases[ph].name : '', name: e.label || name, foc: kit.takeFocus() });
+      chaps.push({ t: T, len, rt: e.at, ph: ph + 1, phase: G.phases[ph] ? G.phases[ph].name : '', name: e.label || name, foc: kit.takeFocus(), rep: e.repeat ? e.repeat.text : null });
       for (let j = s0; j < kit.stepCount(); j++) caps.push({ t: 0, j: j - s0, c: chaps.length - 1, text: texts[j - s0] || '' });
       T += len; prevLen = len;
     }
@@ -36388,7 +36396,7 @@ GDZ['The Coiled Altar'] = {
   },
   sum: 'Zul\'jan first, then Hex Lord Malacrass, then both at once. Orbs go to the front for the frontal, axes get soaked by five, and ghosts get led into the frontal too.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
-  m: { simRot: 90, sim: GDZ_CA_SIM, simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, simBands: [{ t0: 15, t1: 100, n: 5 }, { t0: 100, t1: 195, n: 10 }, { t0: 195, t1: 280, n: 5 }], simAlways: ['Axegrinder: 5 axes roll around the room from 0:14, 10 from 1:39, and the last ones vanish around 4:40. Step out of their way: every touch hurts.', 'From phase 3, Defilement ground stays down: stay out of it.'], beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs must never touch another orb, every axe\'s soakers are planned, ghosts must never touch, and bombs go on the adds. This follows a plan that killed it, with its markers; your raid may mark the room its own way.' },
+  m: { simRot: 90, sim: GDZ_CA_SIM, simSkip: [{ from: 267, to: 352, label: "The cycle repeats", text: "The same cycle plays again: two Dreadmarch and add sets, then Eternal Nightfall (5:32)." }], simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, simBands: [{ t0: 15, t1: 100, n: 5 }, { t0: 100, t1: 195, n: 10 }, { t0: 195, t1: 280, n: 5 }], simAlways: ['Axegrinder: 5 axes roll around the room from 0:14, 10 from 1:39, and the last ones vanish around 4:40. Step out of their way: every touch hurts.', 'From phase 3, Defilement ground stays down: stay out of it.'], beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs must never touch another orb, every axe\'s soakers are planned, ghosts must never touch, and bombs go on the adds. This follows a plan that killed it, with its markers; your raid may mark the room its own way.' },
   facts: [['Phases', '3 + intermission'], ['Bloodlust', 'Intermission'], ['Healers', '5', 'm'], ['Hardest part', 'Orbs and ghosts', 'h'], ['Hardest part', 'Purple orbs', 'm']],
   phases: [
     { id: 'p1', name: 'Phase 1: Zul\'jan', sum: 'One boss. Gather the orbs in front of him, soak the axes, and dodge the axes rolling around the room.',
@@ -37541,7 +37549,7 @@ GDZ['Entombed Sentinels'] = {
     'Blighted Blood (Dispel it fast)': ['', 'h', ''], 'Where each boss stands (Clean floor every round)': ['t', 't', '', '', ''], 'Where the puddles go (Along the walls)': ['', 't', '', '', ''],
   },
   sum: 'Two bosses, two halves of the raid. Breath goes into the corner by the green gem, Blood into the corner by the red gem, 40+ yards apart. Stay with yours, keep the floor clean of red puddles, and make 4 at every intermission. As each one ends, the tanks taunt-swap the bosses, and then it\'s rinse and repeat: the same round again, a little further along the walls.',
-  m: { sim: SE_SIM, simDur: SE_DUR, simSev: SE_SEV, beats: SE_BEATS,
+  m: { sim: SE_SIM, simSkip: [{ from: 71, to: 387, label: 'The round repeats (rounds 2 to 4)', text: 'Three more rounds play the same way: an add, Toxic Droplets, Unstable Miasma, Shifting Protovenom and Blighted Blood, then the Make 4 intermission and a tank swap (2:29, 4:12, 6:01). Each round leaves more puddles on the walls.' }], simDur: SE_DUR, simSev: SE_SEV, beats: SE_BEATS,
     simAlways: ['Every round after the first is rinse and repeat: the same order of events, the bosses swapped, a little further along the walls.', 'Stay with your boss: never inside 40 yards of the other one.', 'Red puddles stay down a long time: drop every new one next to the old ones, along the walls, and keep the middle clean.', 'After every intermission the tanks swap bosses: your half stays put and the other boss comes to you.'],
     source: 'Tactyks\' Mythic Sentinels video', sum: 'Mistakes now kill: two droplets at once, a hit from a venom line, a short red soak. Shifting Protovenom puts circles on eight players, and at the intermission the numbers hide after a few seconds. Clean play matters more than damage.' },
   facts: [['Bosses', '2, split raid'], ['Bloodlust', 'On pull'], ['Healers', '4', 'm'], ['Hardest part', 'Making 4 at the intermissions'], ['Fight length', 'About 4 minutes, 2 intermissions', 'h'], ['Fight length', 'About 7 minutes, 4 intermissions', 'm']],
@@ -37610,7 +37618,7 @@ GDZ['Entombed Sentinels'].m.roles = {
   d: ['Stay with your boss: never in range of both.', 'Every add dies fast: ranged on both halves hit it from max range. The second one dies before the intermission.', 'Red half: 8 or more in every soak, then puddles along the wall.', 'Intermission: players with a 1 jump and ping, players with a 3 find a pinger, players with a 2 go under a boss.', 'Droplets: step off the line between your droplet and Breath.'],
 };
 
-GDZ['Entombed Sentinels'].h = { sim: SE_SIM_H, simDur: SE_DUR, simSev: SE_SEV, beats: SE_BEATS_H,
+GDZ['Entombed Sentinels'].h = { sim: SE_SIM_H, simSkip: [{ from: 69, to: 166, label: 'The round repeats', text: 'The round plays again: an add, Toxic Droplets, Unstable Miasma and Blighted Blood, then the second Make 4 intermission (2:26) and a tank swap.' }], simDur: SE_DUR, simSev: SE_SEV, beats: SE_BEATS_H,
   simAlways: ['Every round after the first is rinse and repeat: the same order of events, the bosses swapped, a little further along the walls.', 'Stay with your boss: never inside 40 yards of the other one.', 'Red puddles stay down all fight: drop every new one next to the old ones, along the walls, and keep the middle clean.', 'After every intermission the tanks swap bosses: your half stays put and the other boss comes to you.'] };
 
 // (the whole-fight video's scenes that bring their own words: top up each one's lines with the card's remaining lines, so every step mark
@@ -37877,7 +37885,7 @@ GDZ['Nek\'zali the Soulcoiler'] = {
     'Hungering Pyre (Dead centre on a body pile)': ['t', 'td', '', 'd'], 'Invoke (The circles move)': ['', '', '', 'dh'],
   },
   sum: 'Everything turns around the well in the middle. Keep every add out of it, take Essence Rend to the edge, and let a tank run Possession Barrage away from you. At 50% kill her two Echoes and burn every body pile with their pyres, then Bloodlust and race her to the end.',
-  m: { sim: NZ_SIM, simDur: NZ_DUR, simSev: NZ_SEV, beats: NZ_BEATS,
+  m: { sim: NZ_SIM, simSkip: [{ from: 73, to: 145, label: 'Phase 1 repeats', text: 'The same cycle plays again: Soulcoil Ignition, Essence Rend, Possession Barrage, Grasping Depths and Restless Amani, until she reaches 50%.' }, { from: 227, to: 295, label: 'The same again', text: 'Another Echo of Jawae, Hungering Pyres, Grasping Depths and Restless Amani, until phase two.' }], simDur: NZ_DUR, simSev: NZ_SEV, beats: NZ_BEATS,
     simAlways: ['No add may reach the well: each one hits the raid and gives her 5 energy.', 'Essence Rend circles stay all fight: drop them at the edge, behind the raid.', 'Grasping Depths comes twice in each part of the fight (phase one, the intermission, phase two): the two hit squads take turns.', 'Every body pile you make in phase one gets burned in the intermission.'],
     source: 'Tactyks\' Mythic Nek\'zali video', sum: 'Hit squads: twice in every part of the fight the well pulls the raid in until a squad of 4 DPS and a healer goes down, kicks the Drowned Echo\'s curse and kills it. Invoke silences anyone casting.' },
   facts: [['Phases', '2 + intermission at 50%'], ['Bloodlust', 'Phase two'], ['Healers', '4', 'm'], ['Hardest part', 'Adds reaching the well'], ['Fight length', 'About 4 minutes', 'h'], ['Fight length', 'About 7 minutes', 'm']],
@@ -38237,7 +38245,7 @@ GDZ['Vashnik the Malignant'] = {
     'Plague Froth, second set (Clean up the last totems)': ['', '', ''], 'Malignant Catalyst (Someone in every bile)': ['', 'd', ''], 'Infections (Walk out, dispel a few at a time)': ['', 'h', '', 'h'], 'Dripping Fangs (Swap on every one)': ['t', '', 't'],
   },
   sum: "Hold Vashnik by the Shadow fountain for every Imbibe, so it's always Shadow and Flame and never Blood. Grip the adds in and kill the two Burning Venoms apart, soak every bile, dispel the fire infections a few at a time, and keep your Plague Froth waves off the raid.",
-  m: { sim: VA_SIM, simDur: VA_DUR, simSev: VA_SEV, beats: VA_BEATS,
+  m: { sim: VA_SIM, simSkip: [{ from: 104, to: 356, label: 'The cycle repeats (Imbibes 2 to 4)', text: 'Imbibe 2, 3 and 4 (1:44, 3:08, 4:32) play the same 84-second cycle: the venoms, Plague Froth, two biles, two infection sets and Dripping Fangs. Each Imbibe hits harder.' }], simDur: VA_DUR, simSev: VA_SEV, beats: VA_BEATS,
     simAlways: ['Every Imbibe from the same spot by the Shadow fountain: Shadow and Flame, never Blood.', 'Burning Venoms die 9 to 10 seconds apart.', 'Dripping Fangs about every 28 seconds: the tanks swap every time.', 'Biles and infections come twice per Imbibe; the second infections land about 13 seconds before the next Imbibe.', 'Every totem hit before the next Imbibe. One left is survivable, two wipe.', 'Five healers: the infusions stack to five, so the healing check is the hard part.'],
     source: 'Tactyks\' Mythic Vashnik video', sum: "Hold Vashnik by the Shadow fountain for every Imbibe, so it's always Shadow and Flame and never Blood. Each Imbibe raises about two dozen Malignant Totems, and only Plague Froth waves destroy them: one line across the lawn (the open ground where they stand), then clean up. Three Burning Venoms die apart, and Exploding Infection ramps until it is dispelled.",
     roles: {
@@ -38492,7 +38500,7 @@ GDZ['Sszorak'] = {
     'Venomous Surge (Cysts to the markers)': ['', 'd', 't', 'h'], 'Raging Crosswinds (Collide with a partner)': ['', 'd', 'd'], 'Dig In (Three winds, three cysts, then the exit)': ['', '', '', 'd', ''],
   },
   sum: "One boss on a loop: the tank combo (Apex Predator), Venomous Surge and Raging Crosswinds, twice, then Dig In and its three winds. The first combo before each Dig In at the entrance side, the second at the exit side, the winds and Dig In in the middle. Tornadoes kill more raids than anything else here.",
-  m: { sim: SZ_SIM, simDur: SZ_DUR, simSev: SZ_SEV, beats: SZ_BEATS,
+  m: { sim: SZ_SIM, simSkip: [{ from: 129, to: 355, label: 'The loop repeats (to the third Dig In)', text: 'Two more loops play the same way: two tank combos with Tempest, Fury, Surge and Crosswinds, then Dig In (the second at 3:47). The third Dig In ends the fight.' }], simDur: SZ_DUR, simSev: SZ_SEV, beats: SZ_BEATS,
     simAlways: ['Tornadoes: step off, never greed. Call them when they pass through the boss.', 'Each Mutilate on one group, the next on the other.', "Tempest comes once in every Apex Predator, in a random place in the order (never first or last).", "Serpent's Fury: 14 in the circle right after every tank combo, or the raid dies at 100 rage.", 'Every loop is rinse and repeat: entrance side, exit side, then Dig In.'],
     source: "Tactyks' Mythic Sszorak video", sum: "One boss on a loop: the tank combo (Apex Predator), Venomous Surge and Raging Crosswinds, twice, then Dig In and its three winds. On Mythic his rage climbs all fight and a wipe comes at 100: the farthest player is marked, and stacking 14 players on them right after each tank combo resets it. Everyone in the stack gets Virulence and spreads. Crosswinds has four directions. Tornadoes kill more raids than anything else here.",
     roles: {
@@ -38823,7 +38831,7 @@ GDZ['The Twin Fangs'] = {
     'Ravenous Feast (Three groups, one hit each)': ['', '', '', ''], 'Submerge (Let the beam pass, then follow it)': ['', '', '', ''],
   },
   sum: 'Two bosses, three platforms, two sets on each, then a Submerge to the next. Everything adds venom stacks and too many kills you, so the fight is about stack control: soak globules on pace, kill the Spawns before they Spit twice, dodge the waves and beams. Kill both together.',
-  m: { sim: TF_SIM, simDur: TF_DUR, simSev: TF_SEV, beats: TF_BEATS,
+  m: { sim: TF_SIM, simSkip: [{ from: 160, to: 315, label: 'Platform 2 (the same two sets)', text: 'Platform 2 plays the same two sets on the next corner (stack pace: about 3), then the second Submerge at 4:51.' }], simDur: TF_DUR, simSev: TF_SEV, beats: TF_BEATS,
     roles: {
       t: ['Both beams at once: your biggest defensives.', 'Stone Breaker: step into each slam in order; swap after each set.', 'Stir the Depths: look back and call where each set of waves comes from.', 'Protection Paladins: the Broodlings at the tip, then fill in.', 'Ravenous Feast: one of you in the right group, one in the left, then straight back to your boss.'],
       h: ['Blood Torrent is the biggest tank damage: externals.', 'Coiling Ichor ramps: heal the last ticks.', 'Ravenous Feast: each Tainted Blood orb leaves a heal absorb on its soakers: heal it off.'],
@@ -39217,7 +39225,7 @@ GDZ['Nymrissa Wavecaller'] = {
     'Water Jet (Sweep the ice, swap every cast)': ['t', 't', '', 't'], 'Swirling Whirlpools (Everyone in the gap)': ['', 't', '', ''], 'Pop! (Land on the island, not in the water)': ['', 'h', ''],
   },
   sum: 'One loop every 110 seconds, rinse and repeat: kill the murlocs before they reach her bubble, drop and soak the Frost Orbs with care, get into the whirlpools\' gap and land safely after the Pop. She gets stronger with every Abyssal Rain, so the fight ramps up.',
-  m: { sim: NY_SIM, simDur: NY_DUR, simSev: NY_SEV, beats: NY_BEATS,
+  m: { sim: NY_SIM, simSkip: [{ from: 128, to: 342, label: 'The loop repeats (Pops 2 and 3)', text: 'The same 110-second loop plays twice more: murloc sets, Water Jets, Chilling Frost orbs, two Abyssal Rains, then the whirlpools and Pop! (3:47 and 5:37). She gets 5% stronger with every Abyssal Rain.' }], simDur: NY_DUR, simSev: NY_SEV, beats: NY_BEATS,
     roles: {
       t: ['Walk her to the big pack each set, then back to the quarter.', 'Death Knight tank: grip the Frostscale out of the pack.', 'Swap on every Water Jet; sweep it across the ice.', 'Leftover orbs: two each at most.'],
       h: ['Abyssal Rain: four raid hits and a long DoT; she gets 5% stronger every cast.', 'Every orb soak hits the raid: a cooldown on every set.', 'The Pop: a raid cooldown.'],
@@ -39629,9 +39637,9 @@ GDZ["Kith'ix"] = {
     'Null Gate (Drop it at your role\'s spot)': ['', '', '', ''], 'Negation (Into the gates in time)': ['t', 't', 't'],
   },
   sum: 'Lady Liadrin, your ally in the middle of the room, backs you up all fight. Phase one repeats until 25%: adds (kill them away from him, beetles one at a time), Extinguish (grab her orbs), fears and tank circles, then an intermission inside her barrier. Phase two is a one-minute race: drop your Null Gate at your spot and dodge the shards.',
-  h: { sim: KX_SIM_H, simDur: KX_DUR_H, simSev: KX_SEV, beats: KX_BEATS_H,
+  h: { sim: KX_SIM_H, simSkip: [{ from: 114, to: 177, label: 'The cycle repeats', text: 'The cycle plays once more: adds and Voidswarm, Dark Devastation, Extinguish and the fear, then the second intermission (2:41).' }], simDur: KX_DUR_H, simSev: KX_SEV, beats: KX_BEATS_H,
     simAlways: ['The middle stays empty while adds are up: root the beetles, one player steps on each, one at a time.', 'Bloodlust at 25%, in phase two.', 'Phase two: about a minute before the eighth Eclipse.'] },
-  m: { sim: KX_SIM, simDur: KX_DUR, simSev: KX_SEV, beats: KX_BEATS,
+  m: { sim: KX_SIM, simSkip: [{ from: 115, to: 224, label: 'The cycle repeats', text: 'The cycle plays once more: adds and Voidswarm, Dark Devastation, Extinguish and the fear, then the second intermission in her barrier and Divine Radiance (3:30).' }], simDur: KX_DUR, simSev: KX_SEV, beats: KX_BEATS,
     roles: {
       t: ['Off tank: the Hulk onto a Voidweaver, faced out (Venom Roar knocks back).', 'Dark Devastation: out to the drop spot with a defensive; swap every cast.', 'Phase two: Negation: taunt at once and run into three Null Gates within 12 seconds.', 'Intermission: the tank without the Dark Devastation debuff soaks most fragments.'],
       h: ['Fears: dispel one at a time, the healer first.', 'Abyssal Grasp: clear the absorbs within 8 seconds.', 'Phase two: if you get a Null Gate, drop it to the west; keep the raid up through the shards.', 'Raid cooldowns when the fears and Abyssal Grasp overlap.'],
@@ -40198,7 +40206,7 @@ function gdzView() {
   // Putting it all together (your idea, Oct 20): every map of this guide joined in fight order on one map, with each step
   // showing up as it plays and a chapter per mechanic to jump to
   const hasMaps = G.phases.some((p) => (p.mechs || []).some((m) => m.map));
-  const whole = hasMaps ? '<section class="gdz-sec" id="gdz-all"><div class="gdz-sh"><i>★</i><div><div class="gdz-kick">Animated simulation</div><h3>Putting it all together</h3><p>' + (G.sim ? 'The whole fight in the order of a real kill. Quiet stretches are cut; the time shown is the real fight clock. Pick a moment to jump there.' : 'The whole fight on one map, start to finish. Each step shows up as it happens; pick a chapter to jump there.') + '</p></div></div>' +
+  const whole = hasMaps ? '<section class="gdz-sec" id="gdz-all"><div class="gdz-sh"><i>★</i><div><div class="gdz-kick">Animated simulation</div><h3>Putting it all together</h3><p>' + (G.sim ? 'The whole fight in the order of a real kill. Quiet stretches are cut, and a loop that repeats plays once; the time shown is the real fight clock. Pick a moment to jump there.' : 'The whole fight on one map, start to finish. Each step shows up as it happens; pick a chapter to jump there.') + '</p></div></div>' +
     '<div class="gdz-wtog" role="tablist"><button type="button" data-v="watch" class="on">▶ Watch it</button><button type="button" data-v="read">☰ Read it</button></div>' +
     '<article class="gdz-m gdz-whole"><div class="gdz-mapc"><div class="gdz-mm" data-w="1"></div></div><div class="gdz-mt"><ol class="gdz-chaps"></ol></div></article>' + gdzFightText(G, D) + '</section>' : '';
   view('<div class="gdz">' + pick + head + phNav + keyRow + G.phases.map(sec).join('') + whole + roles + '<p class="gdz-foot">' + (D === 'm' ? 'Mythic' : 'Heroic') + ' guide. ' + (G.source ? 'Based on ' + esc(G.source) + ', in our own words.' : 'From the guides, in our own words.') + ' The maps are examples of where to stand, not a real pull.</p></div>');
@@ -40252,8 +40260,8 @@ function gdzView() {
       const q = j >= 0 && W.caps[j].c === c ? W.caps[j] : null, ch = W.chaps[c], rt = W.real ? clk(W.clock(ft)) : '';
       vchip.innerHTML = '<b>' + esc(ch.phase.replace(/:.*$/, '')) + '</b>' + (rt ? '<span>' + rt + '</span>' : '');
       // (title cards: the fight's at the start, then each phase's as it begins)
-      const phStart = W.chaps.find((x) => x.ph === ch.ph).t, card = ft < 3 ? 0 : ft - phStart < 2.6 && ch.ph > 1 ? ch.ph : -1;
-      if (card !== lastPhase) { lastPhase = card; vcard.classList.toggle('on', card >= 0);
+      const phStart = W.chaps.find((x) => x.ph === ch.ph).t, card = ch.rep && ft - ch.t < ch.len - 0.2 ? 'r' + c : ft < 3 ? 0 : ft - phStart < 2.6 && ch.ph > 1 ? ch.ph : -1;
+      if (card !== lastPhase) { lastPhase = card; vcard.classList.toggle('on', typeof card === 'string' || card >= 0); if (typeof card === 'string') vcard.innerHTML = '<small>Same again</small><h3>' + esc(ch.name.replace(/ [(].*$/, '')) + '</h3><p>' + esc(ch.rep) + '</p>';
         if (card === 0) vcard.innerHTML = '<small>' + esc(D === 'm' ? 'Mythic guide' : 'Heroic guide') + '</small><h3>' + esc(boss) + '</h3><p>' + esc(W.chaps.length + ' moments, in the order of a real kill') + '</p>';
         else if (card > 0) vcard.innerHTML = '<small>' + esc('Phase ' + card) + '</small><h3>' + esc(ch.phase.replace(/^[^:]*:\s*/, '')) + '</h3>'; }
       if (follow && c !== camC) { camC = c; glide(camVB(ch.foc || { x: 0, y: 0, r: 26 }, c)); }
