@@ -3728,6 +3728,127 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .pnz-card b { font: 700 18px/1.2 var(--head); color: var(--text); } .pnz-card span { font-size: 14px; line-height: 1.45; color: var(--muted); }
 .pnz-h.new { background: var(--good-bg); color: #7ee08f; } .pnz-h.fix { background: rgba(106,168,255,.14); color: var(--blue); }
 .pnz-foot { margin: 4px 0 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; } .pnz-foot a { color: var(--gold); }
+/* Debrief in game (the menu's page, ?ingame): the downloads, who needs what, the three steps after a pull, pictures and commands */
+.igm { display: flex; flex-direction: column; gap: 44px; }
+.igm-top { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 4px; }
+.igm-top h1 { font: 800 32px/1.1 var(--head); margin: 0; }
+.igm-hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px 36px; align-items: center; margin-top: -24px; padding: 32px 36px; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
+  background: radial-gradient(90% 120% at 100% 0%, rgba(230,180,80,.13), transparent 60%), linear-gradient(180deg, #181b24, #13161d); }
+.igm-kick { font: 700 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.igm-hero h2 { font: 800 40px/1.05 var(--head); margin: 6px 0 10px; }
+.igm-lead { margin: 0 0 16px; max-width: 580px; color: #d6d1c6; font-size: 17px; line-height: 1.5; }
+.igm-gets { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; padding: 0; }
+.igm-gets li { display: inline-flex; align-items: center; gap: 8px; padding: 5px 13px 5px 11px; border-radius: 999px; background: rgba(230,180,80,.08); border: 1px solid rgba(230,180,80,.26); font-size: 14px; font-weight: 600; }
+.igm-gets li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.igm-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.igm-btn { display: inline-flex; align-items: center; gap: 12px; min-height: 54px; padding: 8px 20px 8px 16px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raised); color: var(--text); font: 700 16px/1.2 var(--body); text-decoration: none; }
+.igm-btn > svg { flex: none; width: 20px; height: 20px; }
+.igm-btn > span { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.igm-btn small { font: 600 12.5px/1.3 var(--body); opacity: .72; }
+.igm-btn:hover { border-color: var(--gold); }
+.igm-btn.gold { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.igm-btn.gold:hover { filter: brightness(1.07); }
+.igm-warn { display: flex; align-items: flex-start; gap: 10px; max-width: 580px; margin: 16px 0 0; padding: 10px 14px; border-radius: 8px; background: rgba(106,168,255,.07); border: 1px solid rgba(106,168,255,.24); color: var(--muted); font-size: 14px; line-height: 1.45; }
+.igm-warn b { color: var(--text); font-weight: 600; }
+.igm-warn > svg { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--blue); }
+.igm-ver { margin: 10px 0 0; color: var(--faint); font-size: 13px; }
+.igm-phone { display: none; }
+.igm-art { position: relative; justify-self: center; width: 290px; }
+.igm-art img { display: block; width: 100%; height: 440px; object-fit: cover; object-position: top; border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,.55);
+  -webkit-mask-image: linear-gradient(#000 70%, transparent 98%); mask-image: linear-gradient(#000 70%, transparent 98%); }
+.igm-art .igm-toast { position: absolute; left: -34px; right: 10px; bottom: 40px; }
+.igm-toast { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px; background: #171a22; border: 1px solid rgba(230,180,80,.55); box-shadow: 0 12px 30px rgba(0,0,0,.55); }
+.igm-toast > svg { flex: none; width: 26px; height: 26px; }
+.igm-toast > span { display: flex; flex-direction: column; min-width: 0; color: var(--muted); font-size: 12.5px; line-height: 1.3; }
+.igm-toast b { color: var(--text); font: 700 15px var(--body); }
+.igm-toast kbd { margin-left: auto; padding: 4px 9px; border-radius: 6px; background: var(--gold); color: var(--gold-ink); font: 700 13px var(--body); white-space: nowrap; }
+.igm-sh { margin: 0 0 16px; }
+.igm-sh h2 { margin: 0 0 4px; font: 700 26px/1.15 var(--head); }
+.igm-sh p { margin: 0; color: var(--muted); }
+.igm-who { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.igm-wc { display: flex; flex-direction: column; gap: 10px; padding: 20px 22px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); }
+.igm-wc.one { border-color: rgba(230,180,80,.36); background: linear-gradient(135deg, rgba(230,180,80,.08), rgba(230,180,80,.01) 60%), var(--panel); }
+.igm-wh { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
+.igm-wh > svg { flex: none; width: 44px; height: 44px; padding: 9px; border-radius: 10px; background: var(--raised); color: var(--text); }
+.igm-wc.one .igm-wh > svg { background: rgba(230,180,80,.15); color: var(--gold); }
+.igm-tag { font: 700 12px var(--head); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.igm-wc.one .igm-tag { color: var(--gold); }
+.igm-wh h3 { margin: 1px 0 0; font: 700 23px/1.1 var(--head); }
+.igm-wc p { margin: 0; color: #d6d1c6; }
+.igm-wc p.igm-how { color: var(--muted); font-size: 14px; }
+.igm-wc code { padding: 1px 6px; border-radius: 4px; background: var(--raised); border: 1px solid var(--line); color: #d6d1c6; font-size: 12.5px; overflow-wrap: anywhere; }
+.igm-wc .igm-btn { align-self: flex-start; min-height: 46px; margin-top: auto; font-size: 15px; }
+.igm-steps { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; }
+.igm-steps li { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 18px 20px 20px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); }
+.igm-steps li > i { display: grid; place-items: center; width: 32px; height: 32px; margin-bottom: 4px; border-radius: 50%; background: rgba(230,180,80,.15); color: var(--gold); font: 800 16px var(--head); font-style: normal; }
+.igm-steps li > b { font: 700 19px/1.2 var(--head); }
+.igm-steps li > span { color: var(--muted); font-size: 14.5px; }
+.igm-steps li + li::before { content: ''; position: absolute; left: -13px; top: 30px; width: 7px; height: 7px; border-top: 2px solid var(--gold); border-right: 2px solid var(--gold); transform: rotate(45deg); opacity: .75; }
+.igm-steps .igm-toast { margin-top: 8px; box-shadow: none; }
+.igm-all { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 14px 18px; border-radius: var(--r); background: var(--good-bg); border: 1px solid rgba(69,193,92,.35); color: #cfe9d4; }
+.igm-all > svg { flex: none; width: 24px; height: 24px; color: var(--good); }
+.igm-all b { color: #fff; }
+.igm-gal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.igm-shot { display: flex; flex-direction: column; min-width: 0; padding: 0; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); overflow: hidden; color: var(--text); font: inherit; text-align: left; cursor: zoom-in; }
+.igm-shot:hover { border-color: var(--line2); }
+.igm-thumb { display: block; aspect-ratio: 16 / 10; padding: 10px; background: #0e1410; overflow: hidden; }
+.igm-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; transition: transform .2s ease; }
+.igm-shot:hover .igm-thumb img { transform: scale(1.03); }
+.igm-cap { display: flex; flex-direction: column; gap: 2px; padding: 11px 14px 13px; border-top: 1px solid var(--line); }
+.igm-cap b { font: 700 16px/1.25 var(--head); }
+.igm-cap span { color: var(--muted); font-size: 13.5px; line-height: 1.4; }
+.igm-cap em { margin-top: 8px; color: var(--faint); font-size: 13px; font-style: normal; }
+.igm-shot.feat { grid-column: 1 / -1; flex-direction: row; }
+.igm-shot.feat .igm-thumb { flex: 1 1 auto; aspect-ratio: auto; height: 420px; padding: 14px; }
+.igm-shot.feat .igm-cap { flex: 0 0 300px; justify-content: center; gap: 6px; padding: 22px 24px; border-top: 0; border-left: 1px solid var(--line); }
+.igm-shot.feat .igm-cap b { font-size: 24px; }
+.igm-shot.feat .igm-cap span { font-size: 15px; }
+.igm-cmds { display: flex; flex-direction: column; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); overflow: hidden; }
+.igm-cmd { display: flex; align-items: center; gap: 16px; min-width: 0; padding: 12px 18px; border: 0; border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.igm-cmd + .igm-cmd { border-top: 1px solid var(--line); }
+.igm-cmd:hover { background: rgba(255,255,255,.025); }
+.igm-cmd code { flex: none; min-width: 170px; padding: 4px 10px; border-radius: 6px; background: var(--raised); border: 1px solid var(--line2); color: var(--gold); font: 600 14px ui-monospace, Consolas, monospace; }
+.igm-cmd > span { flex: 1; min-width: 0; font-size: 15px; }
+.igm-cmd em { flex: none; color: var(--faint); font-size: 12.5px; font-style: normal; font-weight: 600; }
+.igm-cmd:hover em { color: var(--gold); }
+.igm-cmd.ok { background: rgba(69,193,92,.07); } .igm-cmd.ok em { color: var(--good); }
+.igm-foot { margin: -12px 0 0; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+.igm-foot a { color: var(--gold); }
+.igm-lb { position: fixed; inset: 0; z-index: 9100; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 24px; background: rgba(6,8,12,.93); backdrop-filter: blur(4px); animation: igmFade .15s ease-out; }
+.igm-lb figure { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; max-width: min(1400px, calc(100vw - 170px)); margin: 0; }
+.igm-lb img { display: block; max-width: 100%; max-height: calc(100vh - 150px); border-radius: 10px; border: 1px solid var(--line2); background: #0e1410; }
+.igm-lb figcaption { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 640px; text-align: center; }
+.igm-lb figcaption b { font: 700 20px var(--head); }
+.igm-lb figcaption span { color: var(--muted); font-size: 14px; }
+.igm-lb figcaption em { color: var(--faint); font-size: 12.5px; font-style: normal; }
+.igm-lbn { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line2); background: var(--raised); color: var(--text); font-size: 28px; line-height: 1; cursor: pointer; }
+.igm-lbn:hover, .igm-lbx:hover { border-color: var(--gold); }
+.igm-lbx { position: absolute; top: 14px; right: 16px; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raised); color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+body.igm-lbon { overflow: hidden; }
+@keyframes igmFade { from { opacity: 0; } }
+@media (max-width: 980px) {
+  .igm-hero { grid-template-columns: minmax(0, 1fr) 260px; padding: 28px; }
+  .igm-art { width: 250px; } .igm-art img { height: 400px; }
+  .igm-gal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .igm-shot.feat { flex-direction: column; } .igm-shot.feat .igm-thumb { height: auto; aspect-ratio: 16 / 10; } .igm-shot.feat .igm-cap { flex: none; border-left: 0; border-top: 1px solid var(--line); padding: 14px 16px 16px; }
+}
+@media (max-width: 760px) {
+  .igm { gap: 36px; }
+  .igm-hero { grid-template-columns: 1fr; margin-top: -20px; padding: 24px 20px; }
+  .igm-art { width: min(270px, 100%); } .igm-art img { height: 360px; } .igm-art .igm-toast { left: -12px; right: -12px; }
+  .igm-who, .igm-steps { grid-template-columns: 1fr; }
+  .igm-steps li + li::before { left: 50%; top: -12px; margin-left: -4px; transform: rotate(135deg); }
+}
+@media (max-width: 600px) {
+  .igm-top h1 { font-size: 28px; }
+  .igm-hero h2 { font-size: 31px; } .igm-lead { font-size: 16px; }
+  .igm-btn { width: 100%; }
+  .igm-phone { display: block; margin: 10px 0 0; color: var(--muted); font-size: 13.5px; }
+  .igm-gal { gap: 10px; } .igm-thumb { padding: 6px; } .igm-cap { padding: 9px 11px 11px; } .igm-cap span { display: none; } .igm-shot.feat .igm-cap span { display: block; font-size: 14px; } .igm-shot.feat .igm-cap b { font-size: 20px; }
+  .igm-cmd { flex-wrap: wrap; gap: 6px; padding: 11px 14px; } .igm-cmd code { min-width: 0; } .igm-cmd > span { flex-basis: 100%; font-size: 14px; } .igm-cmd em { display: none; }
+  .igm-lb { flex-direction: column; padding: 60px 10px 84px; } .igm-lb figure { max-width: 100%; } .igm-lb img { max-height: calc(100vh - 230px); }
+  .igm-lbn { position: absolute; bottom: 20px; } .igm-lbn.prev { left: calc(50% - 62px); } .igm-lbn.next { right: calc(50% - 62px); }
+}
 @media (max-width: 600px) { .tour.pnz-wrap { padding: 0; } .pnz-sheet { margin: 0; min-height: 100%; border: 0; border-radius: 0; padding: 16px; } .pnz-g { margin-left: 4px; } .pnz-c { width: 100%; margin-left: 22px; } }
 /* page tips: the page dimmed except a bright window around one spot (a gold ring that breathes), and a bubble beside it */
 .ptip { position: fixed; inset: 0; z-index: 8900; animation: tr-fade .25s ease-out both; } .ptip.out { animation: tr-fade-out .2s ease-in forwards; }
@@ -4833,7 +4954,7 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 15 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPlan" type="button">Plan<span>rosters and notes for every boss</span></button><button class="tbm-i" id="tbGuides" type="button">Boss guides<span>how each fight works, with animated maps</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><button class="tbm-i" id="tbIdea" type="button" hidden>Suggest an idea<span>posts it in #suggestions on our Discord</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPlan" type="button">Plan<span>rosters and notes for every boss</span></button><button class="tbm-i" id="tbGuides" type="button">Boss guides<span>how each fight works, with animated maps</span></button><button class="tbm-i" id="tbInGame" type="button">Debrief in game<span>your pull recap inside WoW, and the download</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><button class="tbm-i" id="tbIdea" type="button" hidden>Suggest an idea<span>posts it in #suggestions on our Discord</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>

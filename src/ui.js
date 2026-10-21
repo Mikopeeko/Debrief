@@ -1588,7 +1588,7 @@ window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e
 const TAB_NAME = { me: 'Home', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework', gdz: 'Guides' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
-  if (S.page === 'guides') c.page = 'Boss guides'; if (S.rpAbout) c.about = S.rpAbout; /* (a guide's Something wrong here?: which part) */
+  if (S.page === 'guides') c.page = 'Boss guides'; if (S.page === 'ingame') c.page = 'Debrief in game'; if (S.rpAbout) c.about = S.rpAbout; /* (a guide's Something wrong here?: which part) */
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
   if (it && it.wcl) c.report = 'https://www.warcraftlogs.com/reports/' + it.wcl.code + '#fight=' + it.wcl.fight; else if (S.wclCode) c.report = 'https://www.warcraftlogs.com/reports/' + S.wclCode; else if (S.file) c.report = 'a combat log file';
   if (typeof LIVE !== 'undefined' && LIVE.on) c.live = 'yes';
@@ -1647,6 +1647,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game has its own page in the menu: both downloads, who needs the addon and who needs the PC app, what happens after a pull, pictures of every part, and the handy commands.',
     'Debrief in game: the settings window now looks and feels like this website: a header bar, a big title, tabs along the top and everything in rounded panels, bigger and easier to read.',
     'Debrief in game: a short tutorial the first time you log in (four steps: what it is, what happens after a boss pull, your recap, and /dmo for settings).',
     'Debrief in game: cleaner settings with ten plain pages, Simple, Medium and Heavy as cards to click, one "Show my recap as" choice, and your recap card beside the window as a live preview.',
@@ -1861,6 +1862,89 @@ function openPatchNotes() {
   document.addEventListener('keydown', key, true);
   el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x, .rp-open')) close(); };
   setTimeout(() => { const x = el.querySelector('.pnz-x'); if (x) x.focus(); }, 60);
+}
+// Debrief in game (the menu's "Debrief in game" page, ?ingame on the website; Oct 21): the addon and the PC app, with the
+// downloads, who needs what, what happens after a pull, pictures and the handy commands. Open to anyone, no report or sign-in.
+// The downloads are the site's own files (site-assets/companion): the app updates itself from latest.json there, so this page
+// only links to them. The pictures are in site-assets/companion/shots.
+const IGM_URL = () => (WCL.HOSTED ? '/companion/' : 'https://debriefme.io/companion/');
+const IGM_SHOTS = [
+  ['big-window.jpg', 'Big window', 'Every pull of the night: your numbers pull by pull, how far each pull got, and what the raid needs to clean up. Press Expand on your card, or type /debrief big.'],
+  ['simple-medium-heavy.png', 'Simple, Medium or Heavy', 'Pick how much your card shows, from a quick read to everything.'],
+  ['raid-view.png', 'Raid view', 'The raid\'s biggest mistakes and who died. Use the arrows to look at anyone\'s pull.'],
+  ['settings.png', 'Settings', 'Type /dmo. Your card sits beside it and changes as you click.'],
+  ['mini-bar.png', 'Mini bar', 'One slim line after each pull instead of the card. Click it for the full card.'],
+  ['card-sizes.png', 'Card sizes', 'Make the card smaller or bigger.'],
+  ['tutorial.png', 'First-time tutorial', 'Four short steps the first time you log in.'],
+];
+const IGM_CMDS = [['/dmo', 'Opens the settings.'], ['/debrief', 'Shows or hides your card.'], ['/debrief big', 'Opens the big window with the whole night.'], ['/debrief demo', 'Shows a sample card, to try it before raid.'], ['/debrief tutorial', 'Plays the tutorial again.']];
+// (the site's own logo, the same as the top bar's; its colours are the lgf* gradients at the top of the page)
+const IGM_LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// (the "See your recap?" prompt, drawn as it looks in the game)
+const igmToast = () => '<div class="igm-toast" aria-hidden="true">' + IGM_LOGO + '<span><b>See your recap?</b>Press Ctrl+V after the chime.</span><kbd>Ctrl+V</kbd></div>';
+let IGM_BACK = null;
+function openInGame() {
+  if (S.page === 'pull' && S.item) IGM_BACK = { item: S.item, tab: S.tab, scope: S.scope };
+  if (LIVE.on) setLive(false);
+  progLit(false);
+  S.item = null; S.rep = null; S.page = 'ingame';
+  $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
+  const U = IGM_URL(), dlIc = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const btn = (gold, f, t, sub) => '<a class="igm-btn' + (gold ? ' gold' : '') + '" href="' + U + f + '" download>' + dlIc + '<span>' + t + (sub ? '<small>' + sub + '</small>' : '') + '</span></a>';
+  const one = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4.5 20.5c.8-3.8 3.8-6 7.5-6s6.7 2.2 7.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const all = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="16.5" cy="8.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M2 19.5c.6-3 2.9-4.8 6-4.8s5.4 1.8 6 4.8M13.6 15c.9-.2 1.9-.3 2.9-.3 3.1 0 5.4 1.8 6 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  const shot = (s, i) => '<button type="button" class="igm-shot' + (i ? '' : ' feat') + '" data-i="' + i + '" aria-label="' + esc(s[1]) + ': see it big"><span class="igm-thumb"><img src="' + U + 'shots/' + s[0] + '" alt="' + esc(s[1]) + '" loading="lazy"></span><span class="igm-cap"><b>' + esc(s[1]) + '</b><span>' + esc(s[2]) + '</span>' + (i ? '' : '<em>Click any picture to see it big.</em>') + '</span></button>';
+  $('#main').innerHTML = '<section id="view" class="igm-page"><div class="igm">' +
+    '<div class="igm-top">' + (IGM_BACK && S.index ? '<button type="button" class="btn igm-back">‹ Back to your pull</button>' : '') + '<h1>Debrief in game</h1></div>' +
+    '<header class="igm-hero"><div class="igm-hin"><div class="igm-kick">An addon and a small PC app</div><h2>Your pull recap, inside WoW</h2>' +
+      '<p class="igm-lead">A few seconds after every boss pull, your recap opens right in the game, and the whole raid gets theirs too.</p>' +
+      '<ul class="igm-gets" aria-label="What you get">' + ['Your numbers', 'Your biggest slips', 'Your boss mistakes', 'Who died', 'One thing to try next pull'].map((x) => '<li>' + x + '</li>').join('') + '</ul>' +
+      '<div class="igm-cta">' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.4 MB · the PC app and the addon in one click') + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.2 MB') + '</div>' +
+      '<p class="igm-warn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>If Windows says <b>"Windows protected your PC"</b>, click <b>More info</b>, then <b>Run anyway</b>. The app is new and isn\'t signed yet.</span></p>' +
+      '<p class="igm-ver">The app keeps itself and the addon up to date.</p>' +
+      '<p class="igm-phone">On your phone? The downloads are for a Windows PC: open debriefme.io/?ingame there.</p></div>' +
+      '<div class="igm-art"><img src="' + U + 'shots/card.png" alt="A recap card in the game: the boss, your healing, your rotation slips, your boss mistakes and the next pull tip">' + igmToast() + '</div></header>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>Who needs what</h2><p>Everyone gets the addon. Only one person runs the PC app.</p></div><div class="igm-who">' +
+      '<div class="igm-wc"><div class="igm-wh">' + all + '<div><div class="igm-tag">Everyone in the raid</div><h3>The addon</h3></div></div>' +
+        '<p>Shows your recap after every boss pull. It opens by itself when the pull comes in, so there\'s nothing to press.</p>' +
+        '<p class="igm-how">Unzip it into <code>World of Warcraft\\_retail_\\Interface\\AddOns</code>. Or take the Windows download, which puts it in for you.</p>' + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.2 MB') + '</div>' +
+      '<div class="igm-wc one"><div class="igm-wh">' + one + '<div><div class="igm-tag">One person in the raid</div><h3>The PC app</h3></div></div>' +
+        '<p>Reads the combat log after each boss pull and gets the recap ready. That person presses Ctrl+V in game, and the addon shares it with everyone.</p>' +
+        '<p class="igm-how">Pick someone who\'s there every raid night, like the raid leader. Run Debrief-Setup.exe: it puts in the addon too, starts with Windows and turns the combat log on for you in raids.</p>' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.4 MB') + '</div>' +
+    '</div></section>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>After every boss pull</h2><p>Three steps, a few seconds.</p></div><ol class="igm-steps">' +
+      '<li><i>1</i><b>The pull ends</b><span>Kill or wipe, the app reads it from the combat log.</span></li>' +
+      '<li><i>2</i><b>The app chimes and copies the recap</b><span>You hear a short chime on the PC with the app.</span></li>' +
+      '<li><i>3</i><b>Press Ctrl+V in WoW</b><span>When it asks "See your recap?", press Ctrl+V and your recap opens.</span>' + igmToast() + '</li></ol>' +
+      '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Everyone else does nothing.</b> Their recap opens by itself.</span></div></section>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The card, the raid view, the big window and the settings.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW. Click one to copy it.</p></div><div class="igm-cmds">' +
+      IGM_CMDS.map(([c, d]) => '<button type="button" class="igm-cmd" data-c="' + esc(c) + '"><code>' + esc(c) + '</code><span>' + esc(d) + '</span><em>Copy</em></button>').join('') + '</div></section>' +
+    '<p class="igm-foot">Debrief in game is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
+  '</div></section>';
+  const root = $('#main .igm');
+  const bk = root.querySelector('.igm-back'); if (bk) bk.onclick = () => { const g = IGM_BACK; IGM_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
+  root.querySelectorAll('.igm-shot').forEach((b) => (b.onclick = () => igmLightbox(+b.dataset.i)));
+  root.querySelectorAll('.igm-cmd').forEach((b) => (b.onclick = () => { const em = b.querySelector('em'), ok = () => { b.classList.add('ok'); em.textContent = 'Copied'; setTimeout(() => { b.classList.remove('ok'); em.textContent = 'Copy'; }, 1400); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(b.dataset.c).then(ok, () => {}); }));
+  // (the version numbers, from the same file the app updates itself from)
+  fetch(U + 'latest.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { const v = root.querySelector('.igm-ver');
+    if (v && j && j.version) v.textContent = 'App ' + j.version + (j.addon ? ' and addon ' + j.addon : '') + '. The app keeps itself and the addon up to date.'; }).catch(() => {});
+  navNote(); window.scrollTo(0, 0);
+}
+// a picture big, over the page: arrows (or a swipe) for the next one, Esc or a click outside to close
+function igmLightbox(i) {
+  const n = IGM_SHOTS.length, U = IGM_URL() + 'shots/', el = document.createElement('div');
+  el.className = 'igm-lb'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Pictures');
+  el.innerHTML = '<button class="igm-lbx" type="button" aria-label="Close">×</button><button class="igm-lbn prev" type="button" aria-label="Previous picture">‹</button><figure><img alt=""><figcaption><b></b><span></span><em></em></figcaption></figure><button class="igm-lbn next" type="button" aria-label="Next picture">›</button>';
+  const img = el.querySelector('img'), cap = el.querySelector('figcaption');
+  const show = (j) => { i = (j + n) % n; const s = IGM_SHOTS[i]; img.src = U + s[0]; img.alt = s[1]; cap.querySelector('b').textContent = s[1]; cap.querySelector('span').textContent = s[2]; cap.querySelector('em').textContent = (i + 1) + ' of ' + n; };
+  const key = (e) => { const k = { Escape: 0, ArrowLeft: -1, ArrowRight: 1 }[e.key]; if (k == null) return; e.preventDefault(); e.stopPropagation(); if (k) show(i + k); else close(); };
+  const close = () => { document.removeEventListener('keydown', key, true); el.remove(); document.body.classList.remove('igm-lbon'); const t = document.querySelector('.igm-shot[data-i="' + i + '"]'); if (t) t.focus(); };
+  el.onclick = (e) => { if (e.target === el || e.target.closest('.igm-lbx')) close(); else if (e.target.closest('.prev')) show(i - 1); else if (e.target.closest('.next')) show(i + 1); };
+  let tx = null; el.addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; }, { passive: true });
+  el.addEventListener('touchend', (e) => { if (tx == null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1)); }, { passive: true });
+  document.addEventListener('keydown', key, true); document.body.appendChild(el); document.body.classList.add('igm-lbon'); show(i); el.querySelector('.igm-lbx').focus();
 }
 // Suggest an idea (the menu, on the website once the Discord bot is set up): a short form that opens a post in the
 // Discord's #suggestions, under the part of the site it's about
@@ -21620,13 +21704,14 @@ function navState() {
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
+  if (S.page === 'ingame') return { nav: 1, v: 'ig' };
   return null;
 }
 const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.tab, st.scope, st.g, st.mine].join('|') : '');
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : location.pathname) : location.pathname + location.search;
+  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : location.pathname) : location.pathname + location.search;
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
   try { if (cur === k) { if ((history.state.sel || null) !== (st.sel || null)) history.replaceState(st, '', url); return; } if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
@@ -21634,6 +21719,7 @@ function navNote() {
 async function navGo(st) {
   if (st.v === 'h') { home(); }
   else if (st.v === 'gd') { openGuides(st.b, st.d); }
+  else if (st.v === 'ig') { openInGame(); }
   else if (st.v === 'g') { progressPage(undefined, st.g); if (st.mine) S.progMine = true; } // (set before the page draws)
   else if (st.v === 'p') {
     let b = null;
@@ -23245,6 +23331,7 @@ if ($('#tbTour')) $('#tbTour').onclick = () => { const p = $('#tbMenuPop'); if (
 if ($('#tbTips')) $('#tbTips').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; const k = tipsPage(); if (k && PAGE_TIPS[k]) pageTips(k, true); else startTour(0); };
 if ($('#tbPatch')) $('#tbPatch').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openPatchNotes(); };
 if ($('#tbGuides')) $('#tbGuides').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openGuides(); }; // (Boss guides: anyone, no report or sign-in needed)
+if ($('#tbInGame')) $('#tbInGame').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openInGame(); }; // (Debrief in game: anyone, no report or sign-in needed)
 if ($('#tbIdea') && IDEAS_ON()) { $('#tbIdea').hidden = false; $('#tbIdea').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openIdea(); }; }
 // (the first-visit tour: a shared pull link opens that pull first and the tour comes once it's on screen; otherwise right away)
 // (a visit always starts on the front page, with the team and character pick (your call, Oct 18). The address keeps the
@@ -23270,12 +23357,14 @@ if (WCL.HOSTED) {
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
   else if (qp.has('plan')) setTimeout(() => { if (ASG_OFF()) home(); else { planPage(); window.scrollTo(0, 0); } }, 0); /* (a ?plan address opens the Plan tab) */
+  else if (qp.has('ingame')) setTimeout(openInGame, 0); /* (a ?ingame address opens the Debrief in game page) */
   else if (qp.has('guides') || qp.get('tab') === 'gdz') setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
   else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
     if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
     if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (RQ.has('guides')) setTimeout(() => openGuides(RQ.get('boss'), RQ.get('d')), 0);
+else if (RQ.has('ingame')) setTimeout(openInGame, 0);
 else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
 // (?patchnotes, the link in the Discord's patch-notes post, opens the Patch notes page over the front page)
