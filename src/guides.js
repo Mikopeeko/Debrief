@@ -117,7 +117,7 @@ function gdzKit(boss, len) {
         return { x: X(p[0]), y: Y(p[1]), r: c.r || 30, half: (c.width || 60) * Math.PI / 360, dir, at: c.at, hit: c.hit || [], soak: !!c.soak }; }); /* (soak: a frontal the raid stands in on purpose) */
       const rings = k.rings.map((g) => ({ ...g, x: g.x != null ? X(g.x) : undefined, y: g.y != null ? Y(g.y) : undefined, guid: g.on, cn: g.cn }));
       const calls = k.calls.map((c) => ({ ...c, x: c.x != null ? X(c.x) : undefined, y: c.y != null ? Y(c.y) : undefined }));
-      for (const g of rings) { const R0 = GDZ_CALL[g.cn]; if (!R0 || g.t0 == null) continue; const [text, how, color] = R0;
+      for (const g of rings) { const R0 = g.label === false ? null : g.label ? [g.label, 'land', g.color] : GDZ_CALL[g.cn]; if (!R0 || g.t0 == null) continue; const [text, how, color] = R0; /* (a circle's own label, or none) */
         const t1 = how === 'land' ? (g.at != null ? g.at + 0.4 : g.t0 + 3) : how === 'dur' ? g.t0 + (g.dur || 3) : g.t0 + how;
         const at0 = g.guid ? posRaw(g.guid, g.t0) : [g.x - A.cx, g.y - A.cy]; if (!at0) continue;
         // (one label for a cluster: a second one with the same words close by at the same time is left out)
@@ -490,7 +490,7 @@ const GDZ_CA_M = {
   // Heroic, Gloombomb: marked players explode 15 yards around them; they run away from everyone first
   gloomH() {
     const L = 11, k = GDZ_CA_M.home2(gdzKit('The Coiled Altar', L), ['r1', 'm3']), MK = [['r1', [3, 2], [-24, -18]], ['m3', [17, 24], [34, -10]]];
-    MK.forEach(([id, p, q]) => { k.at(0, id, p[0], p[1]); k.ring({ on: id, r: 15, fx: 'burst', t0: 0.6, at: 6, dur: 5.4, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them' }); k.hold(1, id).at(5.6, id, q[0], q[1]).hold(6.4, id).at(10.8, id, p[0], p[1]); });
+    MK.forEach(([id, p, q]) => { k.at(0, id, p[0], p[1]); k.ring({ on: id, r: 15, fx: 'burst', t0: 0.6, at: 6, dur: 5.4, color: '#da3df2', cn: 'Gloombomb', label: 'Run out: away from everyone', legend: 'explodes 15 yards around them' }); k.hold(1, id).at(5.6, id, q[0], q[1]).hold(6.4, id).at(10.8, id, p[0], p[1]); });
     k.ring1(MK.map((x) => x[0])).step(0.6).step(1.2).step(6);
     k.pause(5.6, 'Freeze. Both marked players are well away from everyone, so the blast hits nobody else.', { x: 4, y: 4, r: 30 });
     return k.done({ title: 'Gloombomb: run out', focus: { x: 6, y: 6, r: 32 }, hlLabel: 'the marked players' });
@@ -514,7 +514,7 @@ const GDZ_CA_M = {
   // Defilement (phase 3): heal-absorb ground in place of Fangs, and Corrupted Toxin on the tank: the other tank taunts
   defile() {
     const L = 6, k = gdzKit('The Coiled Altar', L); k.rot(90); gdzCaBoss(k, 3);
-    [[-24, 30], [4, -34], [-34, -14]].forEach(([x, y]) => k.ring({ x, y, r: 6, fx: 'puddle', t0: 0.6, dur: L, color: '#4f8f2a', fill: 'rgba(79,143,42,.25)', cn: 'Defilement', legend: 'heal-absorb ground: stay out' }));
+    [[-24, 30], [4, -34], [-34, -14]].forEach(([x, y]) => k.ring({ x, y, r: 6, fx: 'puddle', t0: 0.6, dur: L, color: '#4f8f2a', fill: 'rgba(79,143,42,.42)', cn: 'Defilement', legend: 'heal-absorb ground: stay out' }));
     k.ring({ on: 't1', r: 2.8, fx: 'debuff', t0: 1.4, dur: 2.8, color: '#8fd16a', cn: 'Corrupted Toxin', legend: 'poison on the tank: the other tank taunts' }); k.call(1.9, 3.4, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' });
     k.hold(2, ['t1', 't2']).at(3.4, 't2', 16, -4).at(3.4, 't1', 9, -3);
     k.ring1(['t1', 't2']).step(0.6).step(1.9);
@@ -709,7 +709,7 @@ const GDZ_CA_BEATS = {
     run() { const k = gdzKit('The Coiled Altar', 7); gdzCaBoss(k, 1); k.hold(1, k.raid).at(5.6, k.raid.filter((x) => x[0] !== 't'), 0, 4, 10).at(5.6, ['t1', 't2'], 6, 8, 2); k.step(0.2); } },
   defile: { name: 'Defilement (Tanks swap)', do: ['Defilement replaces Fangs: ground that puts heal absorbs on you, and a poison on the tank. The other tank taunts.'],
     run() { const k = gdzKit('The Coiled Altar', 5); gdzCaBoss(k, 3);
-      [[-24, 30], [26, -32], [-34, -14]].forEach(([x, y]) => k.ring({ x, y, r: 6, fx: 'puddle', t0: 0.6, dur: 60, color: '#4f8f2a', fill: 'rgba(79,143,42,.25)', cn: 'Defilement', legend: 'heal-absorb ground: stay out' }));
+      [[-24, 30], [26, -32], [-34, -14]].forEach(([x, y]) => k.ring({ x, y, r: 6, fx: 'puddle', t0: 0.6, dur: 60, color: '#4f8f2a', fill: 'rgba(79,143,42,.42)', cn: 'Defilement', legend: 'heal-absorb ground: stay out' }));
       k.ring({ on: 't1', r: 2.8, fx: 'debuff', t0: 0.8, dur: 2.8, color: '#8fd16a', cn: 'Corrupted Toxin', legend: 'poison on the tank: the other tank taunts' }); k.call(1.9, 3.2, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' });
       k.hold(2, ['t1', 't2']).at(3.4, 't2', 8, -4).at(3.4, 't1', 18, -10); k.step(0.3); } },
   p3orbs: { name: 'Toxic Deluge (Circle side first)', do: ['More orbs. This set goes by the circle marker first, with two purples at the tip.', 'The off-tank taunts and the frontal pops them. Greens elsewhere can wait; purples can\'t.'],
