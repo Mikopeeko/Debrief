@@ -1483,7 +1483,7 @@ local function buildOptions()
   panelEnd()
   panel("Your raid", nil, "Ability_Warrior_RallyingCry")
   switch("Send my recaps to the raid", "Raiders with Debrief get theirs by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
-  switch("Combat log in raids", "Turns on by itself, so nobody forgets.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
+  switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
   panelEnd()
 
   -- Saved pulls
@@ -1666,7 +1666,7 @@ SlashCmdList.DEBRIEF = function(msg)
     -- (the built-in sample pull: the card with no paste, not sent to the group)
     local m = decode(SAMPLE)
     if m then addPull(m); paste:Hide(); showCard(); say("showing a sample Heroic Ula'tek kill (made-up names). Use the arrows to see other players.") end
-  elseif msg == "log" then DB.autoLog = (DB.autoLog == false); say("combat log in raids " .. (DB.autoLog ~= false and "turns on by itself." or "is up to you (/combatlog).")); autoLog()
+  elseif msg == "log" then DB.autoLog = (DB.autoLog == false); say("combat log " .. (DB.autoLog ~= false and "and Advanced Combat Logging stay on while Debrief is loaded." or "is up to you (/combatlog).")); autoLog()
   elseif msg == "focus" then DB.autoFocus = (DB.autoFocus == false); say("paste box ready for Ctrl+V after a pull " .. (DB.autoFocus ~= false and "on." or "off: click it first."))
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
@@ -1677,19 +1677,17 @@ end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("CHAT_MSG_ADDON"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED")
--- (combat logging on in raids, so nobody has to type /combatlog; Advanced Combat Logging too. Debrief Companion reads the log)
-local weLog, logPending = false, false
+-- (the combat log and Advanced Combat Logging stay on whenever Debrief is loaded, everywhere, so nobody has to type /combatlog.
+-- Debrief Companion reads the log. /debrief log or Settings > PC app turns this off.)
+local weLog, logPending, logSaid = false, false, false
 autoLog = function()
   if not DB or DB.autoLog == false or not LoggingCombat then return end
   if InCombatLockdown() then logPending = true; return end
-  local inInst, kind = IsInInstance()
-  if inInst and kind == "raid" then
-    if not LoggingCombat() then
-      if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
-      LoggingCombat(true); weLog = true
-      say("combat log is on for this raid. /debrief log turns this off.")
-    end
-  elseif weLog and LoggingCombat() then LoggingCombat(false); weLog = false end
+  if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
+  if not LoggingCombat() then
+    LoggingCombat(true); weLog = true
+    if not logSaid then logSaid = true; say("combat log and Advanced Combat Logging are on. Debrief keeps them on (/debrief log turns this off).") end
+  end
 end
 -- (test mode: the box also comes up after any fight and when you log in, so the whole thing can be tried on a training dummy)
 -- (a training dummy: any target named "... Dummy" that isn't a player)
@@ -1744,7 +1742,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     registerSettings()
     reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
     Debrief_ApplyStyle()
-    if DB.testMode == nil then DB.testMode = false end -- (/debrief test turns it on: the box after every fight)
+    if DB.testMode == nil then DB.testMode = false end
+    autoLog() -- (/debrief test turns it on: the box after every fight)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
     Debrief_ApplyStyle()

@@ -1,6 +1,6 @@
 {
-    "addon":  "0.4.8",
+    "addon":  "0.4.9",
     "url":  "https://debriefme.io/companion/app.zip",
-    "version":  "0.6.0",
-    "sha256":  "180A6C414D196E300CDDF46B4845D0B9017725F2BC583071B6479F7290256484"
+    "version":  "0.6.1",
+    "sha256":  "955D72231F58506D2781B30B1BA25C672750AFD8D665D8A303A427A16E67E710"
 }
