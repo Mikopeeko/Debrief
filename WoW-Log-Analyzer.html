@@ -13661,6 +13661,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-21', n: [
+    'Copy the address to share exactly what you see: the link keeps the tab, one pull or all pulls, and the player you picked, and it opens straight there for a friend, no sign-in needed.',
     'The Coiled Altar: a slow Venomfang dispel is a small slip, never a fail, and Dreadmarch\'s fails are falls off the edge, ghosts touching and Gravebound deaths, with the small stuff left out.',
     'Every pull says its result the same way, like P3 · 22%, with how much of the fight was done.',
     'Fix these next raid now leads with what costs pulls: real misses on the boss\'s dangerous mechanics first, small slips last.',
@@ -33115,8 +33116,13 @@ function hostedPanel(msg) {
 // drawn (navNote: a new step, or the same step updated), and Back or Forward opens the page a step names again (navGo).
 // On the website a pull's step also carries its shareable address, ?report=CODE&fight=N.
 let NAV_RESTORE = false, NAV_BOOT = true; // (the first page drawn after a load or reload takes over the step it was opened on, not a new one)
+// (the player picked on the tab you're on, for the address (Oct 21): Rotation's player, the Report card's raider, Homework's
+// raider, or Debriefing's one-player view)
+const navSel = () => (S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.rcbSel : S.tab === 'hw' ? S.hwSel : S.tab === 'audit' ? S.mechP : null) || null;
+// (and back: a link's or a step's player goes onto its tab)
+function navApplySel(tab, p) { if (!p) return; if (tab === 'rot') S.specSel = p; else if (tab === 'player') S.rcbSel = p; else if (tab === 'hw') S.hwSel = p; else if (tab === 'audit') setOneP(p); }
 function navState() {
-  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull', sel: S.tab === 'rot' ? S.specSel || null : null }; }
+  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull', sel: navSel() }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
@@ -33126,7 +33132,7 @@ const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.tab, st.scope, 
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : location.pathname) : location.pathname + location.search;
+  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : location.pathname) : location.pathname + location.search;
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
   try { if (cur === k) { if ((history.state.sel || null) !== (st.sel || null)) history.replaceState(st, '', url); return; } if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
@@ -33141,11 +33147,12 @@ async function navGo(st) {
       b = S.index && S.index.bosses ? S.index.bosses.find((x) => x.wcl && x.wcl.code === st.code && x.wcl.fight === st.fight) : null; }
     else if (S.index && S.index.bosses && st.bi >= 0) b = S.index.bosses[st.bi];
     if (!b) { home(); return; }
-    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; if (st.sel) S.specSel = st.sel;
+    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; navApplySel(S.tab, st.sel);
     if (S.item !== b || !S.rep) await select(b); else renderMain();
   }
   window.scrollTo(0, 0);
 }
+setInterval(() => { if (S.page !== 'pull' || !history.state || !history.state.nav) return; const st = navState(); if (st && navKey(st) === navKey(history.state) && (history.state.sel || null) !== (st.sel || null)) navNote(); }, 1000);
 window.addEventListener('popstate', (e) => { const st = e.state; if (!st || !st.nav) return; NAV_RESTORE = true; Promise.resolve().then(() => navGo(st)).catch((err) => console.warn('Back:', err && err.message)).finally(() => { NAV_RESTORE = false; }); });
 // Shareable addresses: ?report=CODE&fight=N opens that report and pull directly.
 function syncUrl(item) {
@@ -34751,7 +34758,7 @@ const RQ = new URLSearchParams(location.search), RNAV = ((performance.getEntries
 // (the pull, its tab, one pull or the whole night, or the teams page) opens again; a reload of a pull address with no step
 // opens that pull like a shared link)
 const reloadSt = WCL.HOSTED && RNAV === 'reload' && history.state && history.state.nav ? history.state : null;
-const backAgain = WCL.HOSTED && !!RQ.get('report') && RNAV !== 'reload' && (RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report'));
+const backAgain = WCL.HOSTED && !!RQ.get('report') && !RQ.get('tab') && RNAV !== 'reload' && (RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report')); // (a link with its tab (Oct 21) always opens)
 if (backAgain) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
 const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain && !reloadSt;
 // (the website's welcome is the setup behind Start now (your idea, Oct 19), so the old tour doesn't open by itself there,
@@ -34766,7 +34773,8 @@ if (WCL.HOSTED) {
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') hostedPanel('Loading the report…'); NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
   else if (qp.has('guides') || qp.get('tab') === 'gdz') setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
-  else if (sharedLink) { if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
+  else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
+    if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
     if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
 } else if (RQ.has('guides')) setTimeout(() => openGuides(RQ.get('boss'), RQ.get('d')), 0);
