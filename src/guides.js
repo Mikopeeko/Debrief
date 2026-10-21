@@ -460,6 +460,17 @@ const GDZ_CA_M = {
     k.ring1([tg].concat(V.hl)).step(1).step(2).step(6).step(6.4).step(11);
     k.pause(5.6, V.pause, { x: C[0], y: C[1], r: 11 }); return k.done({ title: V.title, focus: { x: C[0] * 0.37, y: C[1] * 0.37, r: 24 }, hlLabel: V.hlLabel, goodLabel: 'in the soak', tagLabel: V.tagLabel });
   },
+  // P3, Grim Guillotine: the three magic axes in order on one map (the first at the star, the next two at the square), each soak played
+  // the way phase 1's axe map plays it, a short walk between them
+  grim() {
+    const L = 53, kit = gdzKit('The Coiled Altar', L), chaps = []; let T = 0;
+    GDZ_SEG = { kit, next(len) { kit.seg(T, chaps.length, len); } };
+    try { [['g1', [35, -35]], ['g2', [35, 35]], ['g3', [35, 35]]].forEach(([soak, at]) => { GDZ_CA_M.axe({ soak, at }); kit.hold(13, GDZ_RAID); chaps.push({ t: T, len: 13 }); T += 20; }); } /* (everyone holds still to the end of each axe, then walks to the next one) */
+    finally { GDZ_SEG = null; }
+    kit.bridge(chaps); kit.seg(0, 'gx', L); const K = kit.peek(), seen = new Set(); K.steps.length = 0; K.wmarks = K.wmarks.filter((w) => { const q = w.k + w.x + ',' + w.y; if (seen.has(q)) return false; seen.add(q); return true; });
+    kit.step(1).step(6).step(21).step(26).step(41).step(46);
+    return kit.done({ title: 'Grim Guillotine: star, then square, then square', focus: { x: 0, y: 22, r: 30 }, hlLabel: 'axe targets and the immunities', goodLabel: 'in the soak', tagLabel: 'What they press' });
+  },
   // P2: everyone stacks the mind controls on the square; ghosts land around them and get frozen apart; the frontal sweeps them
   ghosts() {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 13)), SQ = [35, 33]; /* (by the square, on the stone: the ghosts land around the stack and must stay on the platform) */
@@ -783,6 +794,7 @@ GDZ['The Coiled Altar'] = {
     'Dreadmarch (Stack them, then pile the ghosts)': ['', '', '', '', 't'], 'Dreadmarch (Stack on square, freeze your ghosts)': ['', 'd', '', '', 't'],
     'Gloombomb (Drop it on your add)': ['td', 'd', 'd', 'td'], 'Fragments of Malacrass (Stop them in turns)': ['d', '', '', 'h'], 'Fragments of Malacrass (3 to 5, then 7 to 10)': ['d', 'ht', '', '', 'h'],
     'Blighted Sever (All purples in one diamond)': ['dth', 'dh', 'dth', 't'], 'Axegrinder (Dodge the axes)': ['td', '', '', ''],
+    'Grim Guillotine (Soak with 5, then run)': ['', '', '', '', ''], 'Grim Guillotine (Star, then square)': ['', '', '', '', '', ''],
   },
   sum: 'Zul\'jan first, then Hex Lord Malacrass, then both at once. Orbs go to the front for the frontal, axes get soaked by five, and ghosts get led into the frontal too.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
@@ -904,12 +916,17 @@ GDZ['The Coiled Altar'] = {
           do: ['Orbs are down. Carriers now: both Mages, the off-tank and the Evoker healer.', 'Everyone else: clear the greens out of the middle and line them up on one side. A missed green is fine. A missed purple wipes.', 'Carriers build the purple diamond in the middle, each one well clear of the others. Use a purple that\'s already in place.', 'Off-tank: take the first phase 3 frontal and aim it through the whole diamond.'],
           plan: ['Gloombomb with no adds up: just run to the edge of the room, away from the raid. Speed boosts help.', 'The next orb sets are built around the circle and diamond markers: the circle side gets its frontal first (two purples by the circle).', 'Damage: kill Zul\'jan before his pool cast, about a minute after the second shield, because every orb blows up then. Malacrass at 7 or 8% when Zul\'jan dies is fine. Don\'t over-damage Malacrass.', 'The last frontals hit 0 or 1 orbs. The last adds just need kicks.', 'Axes in phase 3: the first at the star marker, the second and third at the square.'],
           map: () => GDZ_CA_M.diamond() },
+        { id: 'grim', spell: 'Grim Guillotine', name: 'Grim Guillotine (Soak with 5, then run)', what: 'Phase 1\'s axe again, now shadow damage. An axe drops on a player, at least 5 share its 9-yard circle, then everyone gets 40 yards away before the spot erupts.',
+          do: ['Axe on you? Walk to a corner, away from the raid.', 'Five or more get in with you.', 'The axe lands and the damage is split between everyone inside.', 'Now run: the spot erupts 40 yards out 6 seconds later.', 'Everyone\'s clear. Gate into a soak, never out of one.'],
+          m: { name: 'Grim Guillotine (Star, then square)', what: 'Three axes in phase 3, now magic. At least 5 share each 9-yard circle, then everyone gets 40 yards away. Soaking marks you for the rest of the fight, so each axe uses different players: the first at the star, the next two at the square.',
+            do: ['Axe 1 goes to the star marker. The target walks there and gets big externals.', 'Five who have never soaked share it, then everyone walks out of the 40 yards.', 'Axe 2 goes to the square. Players who already soaked go in with Cloak, Bubble or Blessing of Spellwarding.', 'Exactly five share it, then walk out.', 'Axe 3 goes to the square again. Send everyone still free of the debuff, plus anyone with an immunity.', 'Five is the minimum and four wipes, so send six.'],
+            plan: ['These axes are magic: a Rogue\'s Cloak, a Paladin\'s Bubble or Blessing of Spellwarding lets a player who already soaked take one. Blessing of Protection doesn\'t work here.', 'Big externals on every axe target.', 'Gate into a soak, never out of one: orbs spawn on the path.'] },
+          map: (d) => { if (d === 'm') return GDZ_CA_M.grim(); const ax = GDZ['The Coiled Altar'].phases.flatMap((p) => p.mechs || []).find((x) => x.id === 'axe'), mp = ax.map('h'); if (mp && mp.frames) mp.title = 'Grim Guillotine'; return mp; } },
       ],
       tiles: [
         { name: 'Soulbound (Kill them together)', do: 'When one boss dies, the other gets 500% stronger. Keep their health close and kill them at the same time.', m: { do: 'When one dies the other gets 500% stronger. Kill Zul\'jan first, before his pool cast, with Malacrass around 7 to 8%.' } },
         { only: 'h', name: 'Blighted Sever (Orbs and ghosts)', do: 'The frontal now hits orbs and ghosts both, and anyone it hits gets Gravebound: pick up your Soul Fragments.' },
         { name: 'Defilement (Tanks swap)', do: 'Replaces Fangs: ground that puts heal absorbs on you, and a poison on the tank that forces swaps.' },
-        { name: 'Grim Guillotine (Soak with 5, then run)', do: 'The axe again, now shadow damage. Same plan: five inside, then 40 yards away.', m: { name: 'Grim Guillotine (Star, then square)', do: 'Three axes, now magic. The first goes to the star, the next two to the square. The second uses Cloak, Spellwarding or Bubble; on the last, send everyone without the debuff.' } },
       ] },
   ],
   roles: {
