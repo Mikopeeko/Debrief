@@ -1647,6 +1647,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game: type /dmo ("Debrief me open") to open its settings.',
     'Debrief in game: whoever runs the PC app gets the "See your recap?" prompt from their very first boss pull, and the app now starts with Windows, quietly, so nobody forgets to open it before raid.',
     'Debrief in game: after a boss pull you now get a small "See your recap? Press Ctrl+V" prompt instead of the paste box. Press too early and it tells you to wait for the chime.',
     'Boss guides, The Coiled Altar: in the whole fight the raid now sidesteps the rolling axes instead of standing in them.',

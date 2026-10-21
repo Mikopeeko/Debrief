@@ -1438,6 +1438,9 @@ BINDING_HEADER_DEBRIEF = "Debrief"
 BINDING_NAME_DEBRIEF_PASTE = "Paste a pull recap"
 BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
 
+-- (/dmo, "Debrief me open": the settings, in three letters)
+SLASH_DEBRIEFMO1 = "/dmo"
+SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
 SLASH_DEBRIEF1 = "/debrief"
 SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
@@ -1458,7 +1461,7 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
   elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/debrief options: your settings. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief post: the pull in raid chat. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief post: the pull in raid chat. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
