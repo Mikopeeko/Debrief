@@ -799,15 +799,6 @@ const SITE = 'https://debriefme.io';
 // first try on Oct 20 went out before the .io registry knew the name, so anyone marked moved then gets carried over again).
 // The old address still answers /api/, /wcl/ and /auth/ itself, so pages left open there keep working.
 const OLD_SITE = 'https://debrief.james-m-nemecek.workers.dev', HOME_HOST = 'debriefme.io';
-// (only once debriefme.io answers on the internet: a new .io name can take hours to reach everyone, and sending people to it
-// before then would leave them on a page that doesn't open; the padlock comes a little after the name. So it opens a file
-// there, every 5 minutes, and switches itself on once that works)
-let homeSeen = { t: 0, ok: false };
-async function homeLive() {
-  if (homeSeen.ok || Date.now() - homeSeen.t < 300000) return homeSeen.ok;
-  let ok = false; try { ok = (await fetch(SITE + '/og.png', { method: 'HEAD' })).ok; } catch (e) { /* not reachable (no name or no padlock yet): ask again later */ }
-  homeSeen = { t: Date.now(), ok }; return ok;
-}
 function moveHome(req, url) {
   const to = SITE + url.pathname + url.search;
   if (url.hostname !== new URL(OLD_SITE).hostname || /(?:^|;\s*)dbmoved=2/.test(req.headers.get('Cookie') || '') || req.headers.get('Sec-Fetch-Mode') !== 'navigate')
@@ -931,7 +922,7 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
-    if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname) && await homeLive()) return moveHome(req, url);
+    if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
