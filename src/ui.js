@@ -1229,7 +1229,7 @@ function chpHtml(g, list, order, diffName) {
       tile('chpTk', 'Bosses killed', byB.filter((x) => x.l.some((v) => v.kill)).length + '<span>/' + order.length + '</span>', esc(diffName)) + tile('chpTn', 'Kills', String(kills), plural(list.length, 'pull') + ' in all') + tile('chpTa', 'All-stars', '…', 'points this tier') + '</div>' +
     '<div class="chp-tbl" role="table" aria-label="Your parses by boss"><div class="chp-tr chp-th" role="row"><span>Boss</span><span>Best</span><span class="chp-x">Median</span><span>Kills</span><span class="chp-x">Fastest</span><span class="chp-x" id="chpThA">Best</span><span class="chp-x">Result</span></div>' +
     byB.map(({ b, l }) => { const k = l.filter((v) => v.kill), bv = best(l), H = BOSS_HERO[b];
-      return '<button class="chp-tr' + (k.length ? ' chp-k' : '') + '" type="button" role="row" data-chb="' + esc(b) + '" title="See your pulls on ' + esc(b) + '">' +
+      return '<button class="chp-tr" type="button" role="row" data-chb="' + esc(b) + '" title="See your pulls on ' + esc(b) + '">' +
         '<span class="chp-bo">' + (H ? '<img class="pn-th" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 25%" onerror="this.remove()">' : '') + '<b>' + esc(b) + '</b></span>' +
         '<span class="chp-pb" data-chp="' + esc(b) + '"><span class="sub">…</span></span>' +
         '<span class="chp-x" data-chm="' + esc(b) + '"><span class="sub">—</span></span><span class="num" data-chk="' + esc(b) + '">' + k.length + '</span>' +
@@ -1258,12 +1258,20 @@ function chpBind(g, list) {
     $('#chpCnt').textContent = plural(l.length, 'pull') + ' · ' + plural(l.filter((v) => v.kill).length, 'kill');
     let html = '';
     if (F.so === 'new') { const ns = new Map(); for (const v of l.slice().sort((a, b) => b.at - a.at)) { const k = nightOf(v.at); if (!ns.has(k)) ns.set(k, []); ns.get(k).push(v); }
-      html = [...ns.values()].slice(0, F.show).map((ps) => { ps.sort((a, b) => a.at - b.at); return '<div class="chp-nh"><b>' + esc(nightLabel(ps[0].at)) + '</b><span class="sub">' + plural(ps.length, 'pull') + ' · ' + plural(ps.filter((v) => v.kill).length, 'kill') + '</span></div><div class="pn-list">' + ps.map(row).join('') + '</div>'; }).join('');
+      // (each night one line that opens to its pulls (your pick, Oct 21): all folded at first; a search, a boss or a
+      // Kills / Wipes / You died first opens them all)
+      if (!S.chpNOpen) S.chpNOpen = new Set(); const every = !!(q || F.b || F.r);
+      html = [...ns.entries()].slice(0, F.show).map(([nk, ps]) => { ps.sort((a, b) => a.at - b.at); const ks = ps.filter((v) => v.kill), bo = [...new Set(ps.map((v) => v.boss))], bp = ks[0] || ps.filter((v) => v.left != null).sort((a, c) => a.left - c.left)[0], open = every || S.chpNOpen.has(nk), d = new Date(ps[0].at - 6 * 3600e3);
+        return '<button class="pn-row chp-nr' + (ks.length ? ' pn-k' : '') + (open ? ' chp-on' : '') + '" type="button" data-chn="' + nk + '" aria-expanded="' + open + '"><span class="pn-d"><b>' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</b><span>' + esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span></span>' +
+          '<span class="pn-b"><b>' + esc(bo.length > 1 ? bo[0] + ' + ' + (bo.length - 1) + ' more' : bo[0]) + '</b><span class="sub">' + plural(ps.length, 'pull') + ' · ' + plural(ks.length, 'kill') + '</span></span>' +
+          '<span class="pn-r" style="color:' + (bp ? chpCol(bp) : 'var(--muted)') + '">' + (ks.length ? 'Kill' : bp && bp.left != null ? Math.floor(100 - bp.left) + '%' : '—') + '</span><span class="pn-go" aria-hidden="true">' + (open ? '▴' : '▾') + '</span></button>' +
+          (open ? '<div class="pn-list chp-nl">' + ps.map(row).join('') + '</div>' : ''); }).join('');
       $('#chpMore').hidden = ns.size <= F.show; }
     else { l = l.filter((v) => (F.so === 'fast' ? v.kill : !v.kill)).sort(F.so === 'fast' ? (a, b) => (a.dur || 1e9) - (b.dur || 1e9) : (a, b) => (a.left ?? 101) - (b.left ?? 101));
       html = '<div class="pn-list">' + l.slice(0, 25).map(row).join('') + '</div>'; $('#chpMore').hidden = true; }
     $('#chpList').innerHTML = html || '<p class="muted">No pulls match. Try another boss, or clear the search.</p>';
-    openBind('#chpList'); };
+    openBind('#chpList');
+    $$('#chpList [data-chn]').forEach((b) => (b.onclick = () => { const k = b.dataset.chn; if (S.chpNOpen.has(k)) S.chpNOpen.delete(k); else S.chpNOpen.add(k); draw(); })); };
   $('#chpQ').oninput = (e) => { F.q = e.target.value; F.show = 5; draw(); };
   $('#chpB').onchange = (e) => { F.b = e.target.value; F.show = 5; draw(); };
   $('#chpSo').onchange = (e) => { F.so = e.target.value; draw(); };
@@ -1284,21 +1292,25 @@ function chpBind(g, list) {
 // (your spec's art behind your name: your most played spec, else your class's first, until your rankings say)
 function chpArt(g) { const top = $('.home.prog .pg-top'), k = g.cls && E.CLASSES[g.cls]; if (!top || !k) return;
   const sp = (g.parse && g.parse.spec) || g.mainSpec || (Object.values(E.SPECS).find(([, c]) => c === g.cls) || [])[0]; if (!sp) return;
-  top.classList.add('chp-art'); top.style.setProperty('--sart', specArt({ cls: g.cls, specName: sp + ' ' + k[0] })); top.style.setProperty('--cc', k[1]); }
+  top.classList.add('chp-art'); top.style.setProperty('--sart', specArt({ cls: g.cls, specName: sp + ' ' + k[0] })); top.style.setProperty('--cc', k[1]);
+  // (the line under your name, short (your pick, Oct 21): "Holy Paladin · Thrall (US)"; while your nights come in it keeps its progress)
+  const inf = top.querySelector('.pg-info'); if (inf && !inf.querySelector('#pgImpP')) inf.textContent = sp + ' ' + k[0] + (g.server ? ' · ' + g.server : ''); }
 // (the rankings, once read: the summary's tiles, and in each boss's row its best and median parse, ranked kills, fastest kill
 // and best throughput, all as numbers (no bars, your call); the table is in kill order)
 function chpFill(g, z, rows, as, metric) {
   if (!$('#chpTiles')) return; const chip = (v) => (v == null ? '<span class="sub">—</span>' : prsChip({ pct: v }));
   const set = (id, v) => { const e = $('#' + id + ' .pt-v'); if (e) e.innerHTML = v; };
-  set('chpTb', z.bestPerformanceAverage != null ? chip(z.bestPerformanceAverage) : '—'); set('chpTm', z.medianPerformanceAverage != null ? chip(z.medianPerformanceAverage) : '—');
+  // (numbers in their parse colours, big in the tiles (your pick, Oct 21), no pills)
+  const big = (v) => (v == null ? '—' : '<b class="chp-big" style="color:' + yuPc(v) + '">' + Math.floor(v) + '</b>'), num = (v) => (v == null ? '<span class="sub">—</span>' : '<b class="chp-n" style="color:' + yuPc(v) + '">' + Math.floor(v) + '</b>');
+  set('chpTb', big(z.bestPerformanceAverage)); set('chpTm', big(z.medianPerformanceAverage));
   set('chpTa', as ? Math.round(as.points) + '<span> pts</span>' : '—'); if (as && as.rank && as.rank !== '-') { const s = $('#chpTa .pt-s'); if (s) s.textContent = 'Rank ' + Number(as.rank).toLocaleString('en-US') + ' of ' + Number(as.total || 0).toLocaleString('en-US'); }
   { const th = $('#chpThA'); if (th) th.textContent = metric === 'hps' ? 'Best HPS' : 'Best DPS'; }
   const q = (k, b) => $('[data-' + k + '="' + CSS.escape(b) + '"]');
   $$('.chp-tbl [data-chp]').forEach((pb) => { const b = pb.dataset.chp, x = rows.find((r) => r.encounter && r.encounter.name === b);
-    if (!x || x.rankPercent == null) { pb.innerHTML = '<span class="sub">' + (rows.length ? 'no ranked kill' : '—') + '</span>'; return; }
-    pb.innerHTML = chip(x.rankPercent);
+    if (!x || x.rankPercent == null) { pb.innerHTML = '<span class="sub" title="No ranked kill yet">—</span>'; return; }
+    pb.innerHTML = num(x.rankPercent);
     const m = q('chm', b), kk = q('chk', b), fs = q('chf', b), am = q('cha', b);
-    if (m) m.innerHTML = chip(x.medianPercent); if (kk && x.totalKills) kk.textContent = x.totalKills;
+    if (m) m.innerHTML = num(x.medianPercent); if (kk && x.totalKills) kk.textContent = x.totalKills;
     if (fs && x.fastestKill) fs.textContent = T(Math.round(x.fastestKill / 1000)); if (am && x.bestAmount) am.textContent = C(x.bestAmount); });
   chpArt(g);
 }
@@ -1617,6 +1629,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
     'Copy the address to share exactly what you see: the link keeps the tab, one pull or all pulls, and the player you picked, and it opens straight there for a friend, no sign-in needed.',
     'The Coiled Altar: a slow Venomfang dispel is a small slip, never a fail, and Dreadmarch\'s fails are falls off the edge, ghosts touching and Gravebound deaths, with the small stuff left out.',
