@@ -1522,6 +1522,11 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-21', n: [
+    'Every pull says its result the same way, like P3 · 22%, with how much of the fight was done.',
+    'Fix these next raid now leads with what costs pulls: real misses on the boss\'s dangerous mechanics first, small slips last.',
+    'Phases against your best pull show how long each phase took, so you can see which one was slow.',
+    'The front page\'s boss cards list every mechanic Debriefing checks on that boss.',
+    'Rotation\'s Work on these first no longer leads with gear and stats.',
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ] },
   { d: '2026-10-20', h: [
@@ -5795,11 +5800,16 @@ const dbdLinkOf = (r, id) => (r.item.wcl && r.item.wcl.code ? location.origin + 
 function dbdPhases(r) { const it = r.item; if (it.kill || it.kind === 'run') return '';
   const others = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b !== it && !b.kill && pullPct(b) != null);
   const best = others.sort((a, b) => pullPct(a) - pullPct(b))[0], br = best && CACHE.get(best); if (!br || !br.module || !r.module) return '';
-  const P = (r.module.phases || []).slice(1), Q = br.module.phases || [], rows = P.map((p) => { const q = Q.find((x) => x.name === p.name); return q ? { n: p.name, a: p.start, b: q.start } : null; }).filter(Boolean);
+  // (each phase's length against the best pull (Oct 21, the world-first pass: start times alone hid which phase was slow); the phase the
+  // pull ended in says when it was reached and how long the raid lasted in it)
+  const P = r.module.phases || [], Q = br.module.phases || [], len = (L, i, end) => (i + 1 < L.length ? L[i + 1].start : end) - L[i].start;
+  const rows = P.map((p, i) => { const j = Q.findIndex((x) => x.name === p.name); if (j < 0) return null; return { n: p.name, last: i === P.length - 1, at: p.start, bat: Q[j].start, a: len(P, i, r.duration), b: j + 1 < Q.length ? len(Q, j, br.duration) : null }; }).filter(Boolean);
   if (!rows.length) return '';
-  const say = (d) => (Math.abs(d) < 1 ? 'about the same' : T(Math.abs(d)).replace(/^0:/, '') + ' s ' + (d > 0 ? 'later' : 'sooner')).replace(/(\d+):(\d+) s /, '$1:$2 ');
+  const say = (d) => (Math.abs(d) < 3 ? 'about the same' : T(Math.abs(d)) + (d > 0 ? ' slower' : ' faster'));
   return '<div class="panel dbd-ph"><div class="dbd-phh">Phases against your best pull <span class="sub">pull ' + best.pull + ', ' + esc(pullLabel(best)) + '</span></div>' +
-    rows.map((x) => { const d = x.a - x.b, c = Math.abs(d) < 1 ? '' : d > 0 ? 'warn' : 'ok'; return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> ' + T(x.a) + ' <span class="sub">(best ' + T(x.b) + ')</span> <span class="pill-s ' + c + '">' + say(d) + '</span></span>'; }).join('') + '</div>'; }
+    rows.map((x) => { if (x.last) return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> reached at ' + T(x.at) + ' <span class="sub">(best ' + T(x.bat) + ')</span>, then ' + T(x.a) + ' in it before the wipe</span>';
+      if (x.b == null) return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> took ' + T(x.a) + ' <span class="sub">(the best pull ended in it)</span></span>';
+      const d = x.a - x.b, c = Math.abs(d) < 3 ? '' : d > 0 ? 'warn' : 'ok'; return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> took ' + T(x.a) + ' <span class="sub">(best ' + T(x.b) + ')</span> <span class="pill-s ' + c + '">' + say(d) + '</span></span>'; }).join('') + '</div>'; }
 // (Copy for Discord: a short after-pull note, made when the page is drawn; the Next pull line is read from the page at the click)
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-dbdp], [data-dbcopy], [data-dblink]'); if (!t) return;
   if (t.dataset.dbdp) { e.preventDefault(); e.stopPropagation(); const r = S.rep; if (!r) return; const b = ((S.index && S.index.bosses) || []).find((x) => x.id === r.item.id && x.diffId === r.item.diffId && x.pull === +t.dataset.dbdp); if (!b || b === r.item) return;
@@ -6412,8 +6422,8 @@ function audit() {
       const it = r.item, endT = cut ? cut.t : r.duration, deaths = (r.deaths || []).filter((d) => d.t <= endT + 0.05), dS = r.dmgS || [];
       let dmg = 0; for (let i = 0; i < Math.min(dS.length, Math.ceil(endT)); i++) dmg += dS[i] || 0;
       const before = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && !b.kill).length;
-      const pc0 = pullCol(it), res = '<b' + (pc0 ? ' style="color:' + pc0 + '"' : '') + '>' + (it.kill ? 'Kill' : it.endPct != null ? Math.round(it.endPct) + '%' : 'Wipe') + '</b>'; /* (the pull's progress colour, as its card) */
-      const resSub = T(r.duration) + (it.kill ? (before ? ' · after ' + plural(before, 'wipe') : ' · first try') : it.endPhase ? ' · wipe in ' + esc(it.endPhase) : ' · wipe');
+      const pc0 = pullCol(it), res = '<b' + (pc0 ? ' style="color:' + pc0 + '"' : '') + '>' + esc(pullShort(it)) + '</b>'; /* (the pull's progress colour and words, as its card (Oct 21: it said 10% where the card said P3 · 22%)) */
+      const resSub = T(r.duration) + (it.kill ? (before ? ' · after ' + plural(before, 'wipe') : ' · first try') : ' · wipe' + (it.endPct != null ? ' · ' + Math.round(100 - it.endPct) + '% of the fight done' : ''));
       const all = m.sections.filter((s) => !s.info && s.id !== 'kicks').map((s) => { const rs = s.rows.concat(...(s.groups || []).map((g) => g.rows)), nB = rs.filter(isBadRow).length, nW = rs.filter((row) => !isBadRow(row) && isWarnRow(row)).length, lc = lvlCounts(s.id, nB, nW, rs.length);
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
@@ -6423,13 +6433,13 @@ function audit() {
         num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '') + dbdVsLast(r, dmg / Math.max(1, endT))) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
       if (NJ) top = top.replace('<div class="dbr-4">', '<div class="dbr-4 dbn-five">');
       top = dbnBar(NJ, r) + top;
-      { const lab = it.kill ? 'kill' : 'wipe' + (it.endPhase ? ' in ' + it.endPhase : '') + (it.endPct != null ? ' at ' + Math.round(it.endPct) + '%' : '');
+      { const lab = it.kill ? 'kill' : 'wipe at ' + pullShort(it) + (it.endPct != null ? ' (' + Math.round(100 - it.endPct) + '% of the fight done)' : '');
         const L = ['**Pull ' + it.pull + ' · ' + it.boss + ' ' + (it.diff || '') + ' · ' + lab + '**'];
         S.dbCopy = L; S.dbCopyD = deaths; }
       top = '<div class="dbd-acts"><button type="button" class="btn sm dbd-copy" data-dbcopy="1">Copy for Discord</button></div>' + top;
       // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
       const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
-      const pick = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)).slice(0, 3);
+      const pick = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || (b.nB > 0) - (a.nB > 0) || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)).slice(0, 3); /* (real misses before slips (Oct 21)) */
       if (pick.length && tileOf) {
         top += '<div class="dbr-h">Fix ' + (pick.length === 1 ? 'this' : 'these') + ' next pull</div><div class="dbr-fx3">' + pick.map((x) => { const k = firstAt.has(x.s.id) ? firstAt.get(x.s.id) : 'w', ti = tileOf(x.s, x.s.rows, x.s.groups || [], k);
           const nm = x.s.title.split(': ')[0], line = [ti.tag, ti.txt].filter(Boolean).join(' · ');
@@ -7901,7 +7911,11 @@ function nightMechC(o) {
       num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic') + ', over ' + plural(N, 'pull')) + '</div>';
     // (the three to fix: failed first, then the ones wrong in the most pulls, then the boss's most important)
     const imp = IMPORTANCE[boss] || [], ix = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1 };
-    const pick = probs.slice().sort((a, b) => rk[lvOf(a)] - rk[lvOf(b)] || wN(b) - wN(a) || ix(a.x.id) - ix(b.x.id)).slice(0, 3);
+    // (Oct 21, the world-first pass: ranked by what costs pulls, not how often. Pulls with a real miss count in full, pulls with only slips
+    // a fifth, the boss's dangers weigh more (IMPORTANCE), and one done right in the last 4 pulls drops down. Venomfang, all slips, fell to the bottom)
+    const badP = (r) => [...r.x.per.values()].filter((q) => q.st !== 'na' && (q.nb || 0) > 0).length, recent = (r) => judged(r).slice(-4).filter((n) => stAt(r, n) !== 'ok').length;
+    const fxScore = (r) => (badP(r) + 0.2 * Math.max(0, wN(r) - badP(r))) * (1 + (ix(r.x.id) < 99 && imp.length ? (imp.length - ix(r.x.id)) / imp.length : 0)) * (recent(r) ? 1 : 0.3);
+    const pick = probs.slice().sort((a, b) => rk[lvOf(a)] - rk[lvOf(b)] || fxScore(b) - fxScore(a) || ix(a.x.id) - ix(b.x.id)).slice(0, 3);
     if (pick.length) top += '<div class="dbr-h">Fix ' + (pick.length === 1 ? 'this' : 'these') + ' next raid</div><div class="dbr-fx3">' + pick.map((r) => { const lv = lvOf(r), M = mapAt(r), L = lateOf(r), worst = worstOf(r);
       const txt = 'Wrong in ' + wN(r) + ' of ' + plural(judged(r).length, 'pull') + (L.recent ? ', ' + L.recent + ' of the last ' + L.K : '') + (worst ? ' · worst: pull ' + worst : '');
       return '<a class="dbr-fx nml-go st-' + LC[lv] + '" href="#nml-' + esc(r.x.id) + '" data-nml="nml-' + esc(r.x.id) + '">' + (M ? '<span class="wr-map mcx-map dbr-fxm">' + miniMap(M.mp, pm) + '</span>' : '<span class="dbr-fxm dbr-fxs" data-sec="sec-' + esc(r.x.id) + '">' + bars(r) + '</span>') +
@@ -13277,7 +13291,7 @@ function specPage(o) {
   const ring = '<svg class="spc-ring" viewBox="0 0 80 80" aria-hidden="true"><circle r="34" cx="40" cy="40" class="bg"/><g transform="rotate(-90 40 40)">' + arc(wS('ok'), 'ok') + arc(wS('warn'), 'warn') + arc(wS('bad'), 'bad') + '</g></svg>';
   const pill = (f, l, n, cls) => '<button type="button" class="spc-pill ' + cls + (SF === f ? ' on' : '') + '" data-sf="' + f + '" aria-pressed="' + (SF === f) + '">' + l + ' <b>' + n + '</b></button>';
   const it = per[per.length - 1].r.item, meta = one ? esc(it.boss || '') + ', pull ' + it.pull + ' (' + esc(pullLabel(it)) + ')' : rows.length + ' pulls of ' + esc(it.boss || '');
-  const focus = checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
+  const focus = checks.filter((c) => (c.st === 'bad' || c.st === 'warn') && !/^st:/.test(String(c.k || ''))).sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
   // (your output: damage, or healing for a healer, a second over the pull (or the night's pulls, wipes included), as Warcraft Logs counts it: all of it over the
   // fight's length; on a kill, your parse, and how far you are from the middle of the top 100 parses for your spec on this boss, said as a gap)
   const outK = UN === 'healing' ? 'healS' : 'dmgS', outT = per.reduce((v, x) => v + ((x.p[outK] || []).reduce((w, y) => w + (y || 0), 0)), 0), durT = per.reduce((v, x) => v + Math.max(1, x.r.duration || x.end || x.t1), 0), outR = outT / durT;
@@ -21364,6 +21378,12 @@ const FPB_KIND = { avoidable: 'Who got hit', raidFail: 'Raid mistake', interrupt
 // (each check's line is the instruction in its tip; these few tips start with what went wrong, so they get their own)
 const FPB_DO = { 'Unending Tides': 'Kill Nymrissa before her enrage floods the raid.', 'Relic Rupture': 'Keep popping the boxes on the 2-stack rhythm so none ruptures.' };
 const FPB_VERB = /^(Kill|Soak|Stand|Get|Step|Stay|Dodge|Spread|Keep|Interrupt|Kick|Feed|Dispel|Avoid|Don't|Walk|Move|Use|Drop|Face|Save|Clear|Tank|Swap|Switch)\b/;
+// (Oct 21, the world-first pass: a boss card listed only its rule-pack checks (3 for The Coiled Altar) while Debriefing checks 10;
+// these are Debriefing's own mechanic lines, read from each fight module, in its order)
+const FPB_MECH = {"Nymrissa Wavecaller":["Frost Orbs (Soak every orb)","Frost Burst (Soak one at a time)","Murloc sets (Kill them before the bubble)","Bubblefin Frostscales (Kill them first)","Water Jet (Swap every jet)","Abyssal Rain (Cover it with cooldowns)","Whirlpools and Pop! (Find the gap, stay dry)"],"The Twin Fangs":["Twin balance (Kill them together)","Eternal Venom (Stay under the limit)","Ravenous Feast (Soak in groups of 4)","Tainted Blood (Heal the absorbs off)","Caustic Globules (One soak each)","Barbed Bulwark (CC breaks it)","Stone Breaker (Tank catches the circles)"],"Entombed Sentinels":["Helical Toxins (Pair up and solve)","Shifting Protovenom (Clear circles in pairs)","Toxic Droplets (Step on one each)","Venom Coagulation (Kill before the intermission)","Unstable Miasma (Soak with 8)","Blighted Blood (Dispel fast)","Blood pools (Keep the floor clear)","Boss balance (Keep them even)","Tanks (Swap at each intermission)"],"Nek'zali the Soulcoiler":["Restless Amani (Kill before the well)","Soulcoil Ignition (Dodge the circles)","Grasping Depths (Kill the Echo, kick the Curse)","Essence Rend (Dispel at the side)","Possession Barrage (Tank steps away)","Intermission (Soak the Pyres)","Invoke (Stop casting)"],"The Lost Explorers":["Boxes (Pop early)","United Defense (Keep the bosses apart)","Final Ascension (Feed a fish in time)","Frostfire Volley (Swap patches)","Blink Nova (Target runs out)","Mighty Thud (Soak every leap)","Explosive Surprise (Bounce over the wave)","Tank stacks (Swap before too many)"],"Vashnik the Malignant":["Imbibe (Fountains drained)","Living Venoms (Kill one at a time)","Malignant Totems (Clear before the next Imbibe)","Plague Froth (Aim the lines at totems)","Catalytic Bile (Soak every bile)","Adaptive Infection (Dispel one at a time)","Dripping Fangs (Tanks swap)"],"Sszorak":["Ravage (Tanks swap)","Mutilate (Soak in two groups)","Tempest (Dodge the tornadoes)","Venomous Surge (Save cysts for the winds)","Intermission (A cyst for each wind)","Raging Crosswinds (Collide in the air)","Virulence (Spread out)"],"Ula'tek":["Eggs (No Vipers)","Spectral Coils (Soak circles)","Caustic Waves (Dodge waves)","Tanks (Tail tanking)","Toxic Incubation (Beam)","Blightscale Wretch (Bubble)","Rage of the Shackled (Damage windows)","Grasping Fangs (Tether breaks)","Wardens and Doomscales (Big adds)","Shriekers and Rawlings (Adds)"],"Kith'ix":["Voidswarm (Kill before the intermission)","Bomber Beetles (Pop one at a time)","Overwhelming Fear (Dispel one at a time)","Dark Devastation (Tank swap)","Abyssal Grasp (Heal it off)","Eclipse Fragments (Catch them in turns)","Null Gates (Dodge the shards)","Last Light (Kill before the 8th Eclipse)"],"The Coiled Altar":["Venom orbs (Into the frontals)","Tank frontals (Defensives on stack 2)","Guillotine (Soak with 5)","Phase changes (Push on time)","Dreadmarch (Stack, then stand still)","Soulcoiler adds (Kick and kill)","Gloombombs (Drop them on the adds)","Eternal Nightfall (Break and kick)","Intermission (Stop the fragments)","Venomfang (Dispel fast)"]};
+const fpbList = (b) => (FPB_MECH[b] ? FPB_MECH[b].map((t) => { const m = /^(.*?) \((.*)\)$/.exec(t) || [0, t, '']; return { n: m[1], k: '', t: m[2] ? m[2] + '.' : '' }; }) : fpbChecks(b));
+const fpbMore = (b) => { const pk = E.PACKS.find((q) => q.encounter === b), av = pk ? [...new Set(pk.rules.filter((q) => q.type === 'avoidable').map((q) => q.name))] : [];
+  return 'Plus ' + (av.length ? 'avoidable damage (' + andList(av) + '), ' : '') + 'every death, every kick, the raid cooldowns and the jobs in your NSRT note, with a map of who stood where.'; };
 function fpbChecks(name) {
   const pk = E.PACKS.find((p) => p.encounter === name), seen = new Set();
   return (pk ? pk.rules : []).filter((r) => !seen.has(r.name) && seen.add(r.name)).map((r) => {
@@ -21392,8 +21412,8 @@ function bindFphBosses() {
     card.classList.add('on'); card.setAttribute('aria-expanded', 'true');
     after.insertAdjacentHTML('afterend', '<div class="fpb-det" role="region" aria-label="' + esc(b) + '" style="--bimg:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg);--bpos:50% ' + BOSS_HERO[b][1] + '%">' +
       '<div class="fpb-dh"><div><i>' + esc(fpbRaid(b)) + '</i><h3>' + esc(b) + '</h3><p>What Debrief checks on every pull of this boss.</p></div><button class="fpb-x" type="button" aria-label="Close">✕</button></div>' +
-      '<ul>' + fpbChecks(b).map((r) => '<li><b>' + esc(r.n) + '</b> <em>' + esc(r.k) + '</em><span>' + esc(r.t) + '</span></li>').join('') + '</ul>' +
-      '<p class="fpb-more">Plus every death, every kick, the raid cooldowns and the jobs in your NSRT note, with a map of who stood where.</p>' +
+      '<ul>' + fpbList(b).map((r) => '<li><b>' + esc(r.n) + '</b>' + (r.k ? ' <em>' + esc(r.k) + '</em>' : '') + '<span>' + esc(r.t) + '</span></li>').join('') + '</ul>' +
+      '<p class="fpb-more">' + esc(fpbMore(b)) + '</p>' +
       '<div class="fpb-act"><button class="btn primary" id="fpbLog" type="button">Open a log of this boss</button></div></div>');
   };
 }
