@@ -1522,6 +1522,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Point anywhere on the cooldown timeline to see that moment: the time, the raid\'s damage, the boss\'s mechanics and which cooldowns are up.',
     'The cooldown timeline now shows how long each cooldown and boss mechanic lasts, with the raid\'s damage drawn behind it, from the fastest kills.',
     'Boss mechanics on the cooldown timeline: switch it on to see when each mechanic hits in the fastest kills, next to your cooldowns.',
     'Copy for Discord now copies your note as one picture, everyone in their class color, ready to paste.',
@@ -1567,6 +1568,7 @@ const PATCH_NOTES = [
     'NSRT notes: nicknames linked once, and your notes listed with when each was last used.',
     'Nymrissa: every check has a How it works note.',
   ], f: [
+    'A note\'s Aura Mastery (and other cooldowns no one had pressed in your logs yet) showed as a spell number on Assignments.',
     'Live now follows your own log first. When several raiders log the same night, Debrief picks the one you uploaded, then your team\'s, and never a stranger\'s.',
     'My Page: picking another of your characters now brings in their logs and makes My Page theirs, with their rankings and bosses. Tap your main to switch back.',
     'Pull counts are right when two raiders log the same night: each pull counts once on the progress graph, in time on the boss and in the night counts, even when their logs start a few seconds apart.',
@@ -2462,7 +2464,8 @@ function ndzCant(text, a, p) {
   return out;
 }
 const ndzSpellNm = (id) => { for (const rep of CACHE.values()) for (const p of rep.players.values()) for (const c of (p.castAb ? p.castAb.values() : [])) if (c && c.id === id && c.name) return c.name;
-  for (const [n, v] of E.SPELLID) if (v === id) return n.replace(/\b\w/g, (ch) => ch.toUpperCase()); return ''; };
+  for (const [n, v] of E.SPELLID) if (v === id) return n.replace(/\b\w/g, (ch) => ch.toUpperCase());
+  for (const g of (typeof NDZ_BUFFS !== 'undefined' ? NDZ_BUFFS : [])) for (const x of g[2]) if (+x[3] === +id) return x[0]; /* (the Roster audit's list) */ return ''; };
 // (the swap screen's line under a row: what the new character can't press)
 function ndzCantH(text, a, p, r) { const l = ndzCant(text, a, p); if (!l.length) return ''; const nm = esc(p.name.split('-')[0]), one = l.length === 1;
   // (who could take each one instead: picked by default, or leave it out)
@@ -4081,7 +4084,7 @@ function ndzTlData(r, u0, text, players) {
   for (const h of hits) h.c = cover(h);
   const col = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p.color])), sp = ndzSpecs();
   return { boss, diff, cds, hits, phs, mech, dmg, color: (n) => col.get(n.toLowerCase()) || (sp[n.toLowerCase()] || {}).color || 'inherit', fast: !!sd }; }
-let NDZ_TL = null;
+let NDZ_TL = null, NDZ_TLV = null; /* (NDZ_TLV: the phase on show, for pointing at the chart) */
 function ndzTimelineH(D) {
   if (!D || !D.phs.length) return '<div class="ndz-cth"><b>Cooldowns</b></div><p class="sub">No cooldown reminders in this note yet.</p>';
   const cur = D.phs.some((p) => p.ph === S.ndzTlPh) ? S.ndzTlPh : D.phs[0].ph, len = D.phs.find((p) => p.ph === cur).len, x = (t) => (100 * t / len).toFixed(3) + '%';
@@ -4111,10 +4114,29 @@ function ndzTimelineH(D) {
   const pk = dv && dv.length ? Math.max(...dv) : 0, key = '<div class="ndz-ctk">' + (bg ? '<span><i class="a"></i>Raid damage taken' + (pk ? ' (up to ' + (pk >= 1000 ? (pk / 1000).toFixed(1) + 'M' : Math.round(pk) + 'K') + ' a second)' : '') + '</span>' : '') +
     (D.cds.some((c) => c.dur) ? '<span><i class="b"></i>How long a cooldown lasts</span>' : '') + (ms.some((m) => m.dur) ? '<span><i class="c"></i>How long a mechanic lasts</span>' : '') + (D.fast ? '<span class="sub">Boss timings from the fastest ' + esc(D.diff) + ' kills</span>' : '') + '</div>';
   const sw = D.mech.length ? '<label class="ndz-ctsw"><input type="checkbox" data-ndztlb="1"' + (bon ? ' checked' : '') + '> Boss mechanics</label>' : '';
-  return '<div class="ndz-cth"><b>Cooldowns</b>' + tabs + '<span class="sub">' + plural(D.cds.length, 'reminder') + '</span>' + sw + '</div><div class="ndz-ctb">' + bg + hl + ml + lanes + vl + mvl + '</div><div class="ndz-cta">' + ax + '</div>' + key +
+  NDZ_TLV = { len, sv, dmax, top, cds, hits, ms, ph: cur % 1 ? 'Intermission' : phN(cur), color: D.color };
+  return '<div class="ndz-cth"><b>Cooldowns</b>' + tabs + '<span class="sub">' + plural(D.cds.length, 'reminder') + '</span>' + sw + '</div><div class="ndz-ctb">' + bg + hl + ml + lanes + vl + mvl + '<span class="ndz-ctx" hidden></span><span class="ndz-ctxd" hidden></span><div class="ndz-ctq" hidden></div></div><div class="ndz-cta">' + ax + '</div>' + key +
     (!D.fast ? '' : u.length ? '<div class="ndz-ctu bad"><b>' + plural(u.length, 'big hit') + ' in ' + (cur % 1 ? 'the intermission' : phN(cur)) + ' with no raid cooldown:</b> ' + esc(u.map((h) => h.hit + ' at ' + mmss(h.rel)).join(', ')) + '. Move one there, or add one.</div>' : hits.length ? '<div class="ndz-ctu ok"><b>✓ Every big hit in ' + (cur % 1 ? 'the intermission' : phN(cur)) + ' has a raid cooldown.</b></div>' : ''); }
 document.addEventListener('mouseover', (e) => { const t = e.target.closest && e.target.closest('#ndzTl [data-mi]'), box = $('#ndzTl'); if (!box) return; const k = t ? t.dataset.mi : null; if (box._mi === k) return; box._mi = k;
   box.querySelectorAll('.ndz-ctmh.on').forEach((x) => x.classList.remove('on')); if (k != null) { const h = box.querySelector('.ndz-ctmh[data-mh="' + k + '"]'); if (h) h.classList.add('on'); } });
+// (pointing at the chart: a line at the mouse, a dot on the damage curve, and what's going on at that moment)
+const ndzTlHover = (e) => { const b = e.target.closest && e.target.closest('#ndzTl .ndz-ctb');
+  if (!b) { if (ndzTlHover.on) { ndzTlHover.on = false; const box = $('#ndzTl'); if (box) box.querySelectorAll('.ndz-ctx, .ndz-ctxd, .ndz-ctq').forEach((x) => (x.hidden = true)); } return; }
+  const q = b.querySelector('.ndz-ctq'), ln = b.querySelector('.ndz-ctx'), dot = b.querySelector('.ndz-ctxd'), tr = b.querySelector('.ndz-ctr'), V = NDZ_TLV; if (!q || !ln || !dot || !tr || !V) return;
+  const R = b.getBoundingClientRect(), T = tr.getBoundingClientRect(), x = e.clientX - T.left; ndzTlHover.on = true;
+  if (x < 0 || x > T.width) { q.hidden = ln.hidden = dot.hidden = true; return; }
+  const t = V.len * x / T.width, lx = e.clientX - R.left, mm = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'), fm = (k) => (k >= 1000 ? (k / 1000).toFixed(1) + 'M' : Math.round(k) + 'K');
+  ln.hidden = false; ln.style.left = lx + 'px';
+  const v = V.sv && t < V.sv.length * 2 ? V.sv[Math.floor(t / 2)] : null;
+  if (v != null) { dot.hidden = false; dot.style.left = lx + 'px'; dot.style.top = (V.top + (R.height - V.top) * (100 - 94 * v / V.dmax) / 100) + 'px'; } else dot.hidden = true;
+  if (e.target.closest('[data-tt]')) { q.hidden = true; return; } /* (an icon's own tooltip is showing) */
+  const ms = [...new Set(V.ms.filter((m) => (m.dur ? t >= m.rel && t <= m.rel + m.dur : Math.abs(t - m.rel) <= 1.5)).map((m) => m.label))];
+  const up = V.cds.filter((c) => t >= c.t && t <= c.t + Math.max(c.dur, 1.5)), hit = V.hits.find((h) => Math.abs(h.rel - t) <= 3), col = (n) => (V.color(n) === 'inherit' ? 'var(--gold)' : V.color(n));
+  q.innerHTML = '<div class="t">' + mm(t) + ' <span>' + esc(V.ph) + '</span></div>' + (v != null ? '<div>Raid damage: <b>' + fm(v) + '</b> a second</div>' : '') +
+    (hit ? '<div class="h ' + hit.c + '">Big hit: ' + esc(hit.hit) + (hit.c === 'red' ? ' (no raid cooldown)' : '') + '</div>' : '') + (ms.length ? '<div class="m">Boss: ' + esc(ms.join(', ')) + '</div>' : '') +
+    (up.length ? up.map((c) => '<div class="c"><i style="background:' + col(c.who) + '"></i>' + esc(ndzSpellNm(c.id) || 'Cooldown') + ' · <b style="color:' + col(c.who) + '">' + esc(c.who) + '</b></div>').join('') : '<div class="n">No cooldowns up</div>');
+  q.hidden = false; const w = q.offsetWidth; q.style.left = Math.max(4, Math.min(R.width - w - 4, lx + 14 + w > R.width ? lx - w - 14 : lx + 14)) + 'px'; };
+document.addEventListener('pointermove', ndzTlHover); document.addEventListener('pointerdown', ndzTlHover);
 // (the Boss mechanics switch: off at first, remembered in this browser)
 const ndzTlBossOn = () => (S.ndzTlBoss != null ? S.ndzTlBoss : (() => { try { return store.get('wla-ndz-tlboss') === '1'; } catch (e) { return false; } })());
 document.addEventListener('change', (e) => { const c = e.target.closest && e.target.closest('[data-ndztlb]'); if (!c || !NDZ_TL) return; S.ndzTlBoss = c.checked; try { store.set('wla-ndz-tlboss', c.checked ? '1' : '0'); } catch (x) { /* (just this visit) */ } const el = $('#ndzTl'); if (el) el.innerHTML = ndzTimelineH(NDZ_TL); });
