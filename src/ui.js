@@ -1540,6 +1540,7 @@ const PATCH_NOTES = [
     'Maps open on the full arena, with small + and − buttons to zoom (or use the mouse wheel), a tidier play bar and a clearer key.',
     'The Coiled Altar maps (Boss guides and Debriefing) now use a much sharper picture of the room.',
     'Debriefing maps on every Venomous Abyss boss now use the same sharp picture of the room, lined up with real Mythic kills.',
+    'Ula\'tek maps show the whole room, so phase 2 on the side ledges is on the map, with everyone standing where they really were.',
     'Debriefing maps: players show as role icons in their class colour, and on The Coiled Altar the maps show the Fangs puddles where they really were, the bosses\' portraits, and a short pause at each frontal.',
     'Boss guides: in the Coiled Altar simulation, the raid now stands in the lane between the second set of puddles, each axe soak has its own group, and a dashed line shows who is looking at their ghost.',
     'Sign in with Warcraft Logs: one click in Start now brings in your characters and guilds, so you tap yours instead of typing it.',
@@ -8357,7 +8358,7 @@ const ARENAS = {
   Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 387, s: 11 },
   'The Twin Fangs': { f: '06.twinfangs-ort-v140.jpg', w: 2448, h: 1371, cx: 0, cy: 612, s: 10 }, // re-fit on 5 pulls: corners stay on the platform
   'The Coiled Altar': { f: '07.bargained-ort-v108.jpg', w: 2448, h: 1371, cx: 0, cy: 1158, s: 15 },
-  "Ula'tek": { f: '08.ulatek-ort-platform-v85.jpg', w: 2123, h: 1188, cx: 0, cy: 1554, s: 10.5 },
+  "Ula'tek": { f: '08.ulatek-ort-fullbreak-v185.jpg', w: 2448, h: 1371, cx: -2.5, cy: 1553.1, s: 7.5 }, // (Oct 20, your note: the whole room, so phase 2 on the east and west ledges is on the map. Fitted to the game's own floor map (UiMap 2610, placed by its world bounds): its platform (about 81 yd across) and both ledges' steps line up with the render; on a Mythic and a Heroic kill phases 1 and 3 stay on the platform and phase 2 and the Doomscale Wardens on the stone ledges. Was the platform only: 08.ulatek-ort-platform-v85.jpg, w 2123, h 1188, cx 0, cy 1554, s 10.5)
 };
 ARENAS['The Bargained Crown'] = ARENAS['The Coiled Altar'];
 ARENAS["Kith'ix"] = { w: 1700, h: 1500, cx: 3, cy: 1835, s: 10 }; // (the island the fight is on, about 170 by 150 yards, from where players stood on a Mythic kill)
