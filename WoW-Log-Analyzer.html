@@ -13570,7 +13570,7 @@ const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with the buttons that jump into it)
-const ASG_OFF = () => false; /* (live since Oct 20, your call; () => !!window.WLA_HOSTED greys it on the website again) */
+const ASG_OFF = () => !!window.WLA_HOSTED; /* (greyed out on the website again, Oct 21, your call; on in the app on your PC. () => false puts it back live) */
 const PERF_OFF = () => !!window.WLA_HOSTED; /* (greyed out on the website again Oct 20 while you plan its rebuild (your call); on in the app on your PC) */
 // (Power Infusion, one of Graphs' views, was greyed out on the website until its rework; on everywhere since Oct 18
 // (your call). Set this back to () => !!window.WLA_HOSTED to grey it out there again, with its plan line on Pull recap)
