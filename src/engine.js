@@ -4953,11 +4953,103 @@ function checkAssignments(r, noteText) {
   try { if (r.item.boss === "Nek'zali the Soulcoiler" && r.module && r.module._nz) nekzaliAssign(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the Nek\'zali assignments: ' + e.message); }
   try { if (r.item.boss === 'The Coiled Altar') coiledAltarAssign(r, note, res, isName, P, realPh); } catch (e) { res.warnings.push('Couldn\'t check the Coiled Altar assignments: ' + e.message); }
   try { if (r.item.boss === 'The Coiled Altar') coiledAltarNote(r, note, res, isName, P, phaseOf); } catch (e) { res.warnings.push('Couldn\'t check the Coiled Altar CC and curse assignments: ' + e.message); }
+  try { if (root.NDZ_JOBS && root.NDZ_JOBS()) noteJobsCheck(r, note, res, isName, P); } catch (e) { res.warnings.push('Couldn\'t check the dispel, grip and kick jobs: ' + e.message); }
   res.unknownNames = [...res.unknownNames].slice(0, 20);
   for (const m of res.mistakes) m.fromNote = true; // (every miss here comes from the note: Mechanics leaves them to Assignments)
   return res;
 }
 
+// Note jobs Debrief checks on any boss (Oct 20, the test copy only until it goes live: ui.js turns it on with
+// window.NDZ_JOBS). Lines no other check read: dispel jobs (who removed the boss's debuff), grips, slows, Banish and
+// Freedom (who pressed them), and the intstart kick teams on bosses without their own kick check (Ula'tek: each line
+// is one side's team, and each Doomscale belongs to the team that kicked it most). A kick line named after an add
+// ("Iku Kicks") counts only the kicks on that add. Lines read here leave "Lines Debrief doesn't check yet".
+const JOB_DISPEL = { "Nek'zali the Soulcoiler": 'Essence Rend', 'Vashnik the Malignant': 'Exploding Infection', 'Entombed Sentinels': 'Blighted Blood', "Kith'ix": 'Overwhelming Fear', 'The Lost Explorers': 'Icebound Flames' };
+const JOB_PRESS = [
+  { re: /grip/i, kind: 'grip', what: 'grips', none: 'pressed no grip', fix: 'Grip strays into the cleave as they come. Say so in voice when your grip is on cooldown.', spells: /^(Death Grip|Gorefiend's Grasp|Abomination Limb|Ursol's Vortex|Sigil of Chains|Ring of Peace)$/i },
+  { re: /slow/i, kind: 'slow', what: 'slows', none: 'pressed no slow', fix: 'Slow the adds as they walk in, so they die before they get anywhere.', spells: /^(Binding Shot|Chains of Ice|Typhoon|Ring of Frost|Earthgrab Totem|Earthbind Totem|Landslide|Shadowfury|Leg Sweep|Frost Nova|Ursol's Vortex|Sigil of Chains|Mass Entanglement|Tar Trap)$/i },
+  { re: /banish/i, kind: 'banish', what: 'Banish', none: 'never cast Banish', fix: 'Banish the add the note gives you, and cast it again before it breaks.', spells: /^Banish$/i },
+  { re: /freedom/i, kind: 'freedom', what: 'Blessing of Freedom', none: 'never cast Blessing of Freedom', fix: 'Put Blessing of Freedom on the tank as soon as they\'re slowed.', spells: /^Blessing of Freedom$/i },
+];
+const andJ = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1]);
+const JOB_KICKADD = { "Ula'tek": /doomscale/i };
+function noteJobsCheck(r, note, res, isName, P) {
+  const left = new Set(res.other.map((o) => o.raw)), ps = [...r.players.values()], byN = new Map(ps.map((p) => [norm(p.name), p]));
+  const dl = [], pl = [], intL = []; let head = '', blk = false;
+  for (const ln of note.lines) {
+    const w = ln.raw.trim().toLowerCase();
+    if (w === 'intstart') { blk = true; continue; } if (w === 'intend') { blk = false; continue; }
+    const names = [...new Set(ln.words.filter(isName).map((n) => P(n).name))];
+    if (blk) { if (left.has(ln.raw) && names.length) intL.push({ raw: ln.raw, names }); continue; }
+    if (!names.length) { head = ln.raw; continue; }
+    if (!left.has(ln.raw)) continue;
+    if (/dispel/i.test(ln.label + ' ' + head)) dl.push({ label: ln.label || head, head, raw: ln.raw, names });
+    else { const j = JOB_PRESS.find((x) => x.re.test(ln.label)); if (j) pl.push({ label: ln.label, raw: ln.raw, names, j }); }
+  }
+  const done = new Set([...dl, ...pl, ...intL].map((l) => l.raw)); res.other = res.other.filter((o) => !done.has(o.raw));
+  const out = res.jobs = { dispels: null, presses: [], teams: null };
+  const alive = (n, t) => !deadAt(r, n, t);
+  // -- dispels: the debuff the heading names when the pull had it, else the boss's known one
+  if (dl.length) {
+    const all = ps.flatMap((p) => (p.dispL || []).filter((d) => !d.foe).map((d) => Object.assign({ who: p.name }, d)));
+    const want = [String(dl[0].head || '').replace(/\bdispels?\b/ig, '').trim(), JOB_DISPEL[r.item.boss]].filter(Boolean);
+    const aura = want.find((a) => all.some((d) => String(d.aura).toLowerCase() === a.toLowerCase())) || JOB_DISPEL[r.item.boss] || want[0] || 'the debuff';
+    const hits = all.filter((d) => String(d.aura).toLowerCase() === aura.toLowerCase()).sort((a, b) => a.t - b.t);
+    const roleOf = (on) => { const p = byN.get(norm(on)); if (!p) return null; if (p.role === 'healer' || p.role === 'tank') return p.role; return JOB_MELEE.has(p.specId) ? 'melee' : 'ranged'; };
+    const assigned = [...new Set(dl.flatMap((l) => l.names))];
+    const rows = dl.map((l) => {
+      const ro = (/\b(healer|melee|ranged|tank)s?\b/i.exec(l.label) || [])[1], mine = ro ? hits.filter((d) => roleOf(d.on) === ro.toLowerCase()) : hits;
+      const by = new Map(); for (const d of mine) by.set(d.who, (by.get(d.who) || 0) + 1);
+      const backup = /backup|back-up|spare/i.test(l.label), did = l.names.reduce((s, n) => s + (by.get(n) || 0), 0);
+      const others = [...by].filter(([n]) => !l.names.includes(n)).map(([n, k]) => ({ who: n, n: k }));
+      const st = !mine.length ? 'na' : did || backup ? 'ok' : 'warn';
+      return { label: l.label, role: ro ? ro.toLowerCase() : null, names: l.names, by, of: mine.length, did, backup, others, st, first: mine.length ? mine[0].t : null };
+    });
+    for (const x of rows) if (x.st === 'warn') for (const n of x.names) if (alive(n, x.first)) res.mistakes.push({ t: x.first, player: n, mechanic: 'Dispel job', id: 0, severity: 'Low', fromNote: true,
+      detail: 'Was on ' + aura + ' dispels (' + x.label + ') but didn\'t dispel any' + (x.others.length ? ': ' + andJ(x.others.map((o) => o.who)) + ' did them.' : '.'), fix: 'Dispel your marked players as soon as they\'re in place, so nobody else has to leave their spot or spend a global on it.' });
+    const by = new Map(); for (const d of hits) by.set(d.who, (by.get(d.who) || 0) + 1);
+    out.dispels = { aura, n: hits.length, rows, outside: [...by].filter(([n]) => !assigned.includes(n)).map(([n, k]) => ({ who: n, n: k })) };
+  }
+  // -- grips, slows, Banish, Freedom: who pressed them. Nobody pressing one isn't judged (the adds may not have needed
+  // it); someone on the job pressing none while others did is a slip
+  for (const l of pl) {
+    const cnt = (p) => { const sp = p ? [...p.castAb.values()].filter((c) => l.j.spells.test(c.name)) : []; return { n: sp.reduce((s, c) => s + c.n, 0), sp: [...new Set(sp.map((c) => c.name))], t0: Math.min(Infinity, ...sp.flatMap((c) => p.castTimes.get(c.id) || [])) }; };
+    const per = l.names.map((n) => Object.assign({ who: n }, cnt(byN.get(norm(n)))));
+    const others = ps.filter((p) => !l.names.includes(p.name)).map((p) => Object.assign({ who: p.name }, cnt(p))).filter((x) => x.n);
+    const any = per.some((x) => x.n) || others.length, idle = per.filter((x) => !x.n).map((x) => x.who), t0 = Math.min(...per.concat(others).map((x) => x.t0));
+    out.presses.push({ label: l.label, kind: l.j.kind, what: l.j.what, per, others, st: !any ? 'na' : idle.length ? 'warn' : 'ok', idle });
+    if (any) for (const n of idle) if (alive(n, t0)) res.mistakes.push({ t: isFinite(t0) ? t0 : 0, player: n, mechanic: 'Note job', id: 0, severity: 'Low', fromNote: true,
+      detail: 'Was on ' + l.label + ' but ' + l.j.none + ' this pull' + (others.length ? '; ' + andJ(others.map((x) => x.who)) + ' did.' : '.'), fix: l.j.fix });
+  }
+  // -- intstart kick teams (bosses without their own kick check): each add belongs to the team that kicked it most
+  if (intL.length) {
+    const re = JOB_KICKADD[r.item.boss], units = (r.kickUnits || []).filter((u) => (!re || re.test(u.name || '')) && (u.kicked.length || u.missed.length));
+    const nmT = r.item.boss === "Ula'tek" && intL.length === 2 ? ['Left team', 'Right team'] : intL.map((x, i) => 'Kick line ' + (i + 1));
+    const teams = intL.map((l, i) => ({ label: nmT[i], names: l.names, adds: [], by: new Map(), outside: new Map(), missed: 0 })), loose = [];
+    for (const u of units) {
+      const score = teams.map((tm) => u.kicked.filter((k) => tm.names.includes(k.player)).length), best = Math.max(0, ...score), k = best ? score.indexOf(best) : -1;
+      if (k < 0) { if (u.missed.length) loose.push({ name: u.label || u.name, missed: u.missed.length, t: u.missed[0].t }); continue; }
+      const tm = teams[k]; tm.adds.push(u.label || u.name); tm.missed += u.missed.length; if (u.missed.length && tm.firstMiss == null) tm.firstMiss = u.missed[0].t;
+      for (const x of u.kicked) { const m = tm.names.includes(x.player) ? tm.by : tm.outside; m.set(x.player, (m.get(x.player) || 0) + 1); }
+    }
+    for (const tm of teams) { tm.idle = tm.names.filter((n) => !tm.by.has(n)); tm.st = !tm.adds.length ? 'na' : tm.missed ? 'bad' : tm.outside.size ? 'warn' : 'ok';
+      if (tm.missed) for (const n of tm.idle) if (alive(n, tm.firstMiss)) res.mistakes.push({ t: tm.firstMiss, player: n, mechanic: 'Kick assignment', id: 0, severity: 'Low', fromNote: true,
+        detail: 'Was on the ' + tm.label.toLowerCase() + ' but landed no kicks, and ' + tm.missed + ' cast' + (tm.missed > 1 ? 's' : '') + ' got through on that side.', fix: 'Watch your side\'s add and take your turn in the kick order.' }); }
+    for (const x of loose) res.mistakes.push({ t: x.t, player: 'Raid', mechanic: 'Kick assignment', id: 0, severity: 'Low', fromNote: true, detail: x.name + ': ' + x.missed + ' cast' + (x.missed > 1 ? 's' : '') + ' got through and no kick team kicked it.', fix: 'Each add has a team from the note. Make sure every add has its team in range.' });
+    out.teams = { teams, loose, adds: units.length, t: units.length ? Math.min(...units.map((u) => u.spawn || 0)) : null };
+  }
+  // -- a kick line named after an add ("Iku Kicks"): only the kicks on that add count
+  for (const k of res.kicks) {
+    if (k.mark) continue; const ws = String(k.label).toLowerCase().split(/[^a-z']+/).filter((x) => x.length > 3 && !/^(kick|kicks|interrupt|interrupts|team|order)$/.test(x));
+    const us = (r.kickUnits || []).filter((u) => ws.some((x) => String(u.name || '').toLowerCase().split(/\s+/).includes(x))); if (!us.length) continue;
+    const by = new Map(); for (const u of us) for (const x of u.kicked) by.set(x.player, (by.get(x.player) || 0) + 1);
+    Object.assign(k, { by, idle: k.assigned.filter((n) => !by.has(n)), outside: [...by.keys()].filter((n) => !k.assigned.includes(n)), missed: us.reduce((s, u) => s + u.missed.length, 0), add: us[0].name });
+    const was = 'Was on the ' + (k.label || 'kick') + ' rotation'; res.mistakes = res.mistakes.filter((m) => !(m.mechanic === 'Kick assignment' && String(m.detail).startsWith(was))); /* (the general check counted every add's casts) */
+    const t0 = Math.min(...us.flatMap((u) => u.missed.map((x) => x.t)));
+    if (k.missed) for (const n of k.idle) if (alive(n, t0)) res.mistakes.push({ t: t0, player: n, mechanic: 'Kick assignment', id: 0, severity: 'Low', fromNote: true, detail: was + ' but landed no kicks, and ' + k.missed + ' ' + k.add + ' cast' + (k.missed > 1 ? 's' : '') + ' got through.', fix: 'Take your turn in the kick order on ' + k.add + '.' });
+  }
+}
+const JOB_MELEE = new Set([71, 72, 73, 70, 66, 250, 251, 252, 259, 260, 261, 268, 269, 577, 581, 103, 104, 263, 255]);
 // A spell's name for a note reminder: the player's own cast of it, else anyone's in the pull, else any name the log used
 // for that ID (so a reminder that wasn't pressed still reads "Zephyr", not a number)
 function spellNameOf(r, p, id) {
