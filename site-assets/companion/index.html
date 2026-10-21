@@ -1,0 +1,69 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Debrief in game</title>
+<meta name="description" content="Your pull recap inside World of Warcraft, a few seconds after every boss pull.">
+<meta property="og:title" content="Debrief in game"><meta property="og:description" content="Your pull recap inside World of Warcraft, a few seconds after every boss pull."><meta property="og:image" content="https://debriefme.io/og.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0f1116; --panel:#171a22; --deep:#13161d; --raised:#1e222c; --line:#2a2f3b; --line2:#353b49; --text:#ece8df; --soft:#d6d1c6; --muted:#98a0ad; --faint:#6c7381; --gold:#e6b450;
+  --head:'Barlow Semi Condensed','Arial Narrow',sans-serif; --body:'Barlow','Segoe UI',sans-serif; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:500 15px/1.55 var(--body); }
+a { color:var(--gold); }
+.wrap { max-width:880px; margin:0 auto; padding:0 16px 60px; }
+header { display:flex; align-items:center; gap:10px; height:60px; border-bottom:1px solid var(--line); margin-bottom:34px; }
+header a.home { display:flex; align-items:center; gap:9px; color:var(--text); text-decoration:none; font:700 20px var(--head); }
+header .back { margin-left:auto; color:var(--muted); font-weight:600; text-decoration:none; font-size:14px; } header .back:hover { color:var(--text); }
+.logo { width:20px; height:22px; }
+h1 { font:700 40px/1.05 var(--head); margin:0 0 10px; letter-spacing:.2px; }
+.lead { color:var(--soft); font-size:17px; max-width:620px; margin:0 0 24px; }
+.cta { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:10px; }
+.btn { display:inline-flex; align-items:center; gap:10px; height:46px; padding:0 20px; border-radius:6px; font:700 15.5px var(--body); text-decoration:none; border:1px solid var(--line2); background:var(--raised); color:var(--text); }
+.btn.gold { background:var(--gold); border-color:var(--gold); color:#1b1406; } .btn:hover { filter:brightness(1.08); }
+.btn small { font-weight:600; opacity:.7; font-size:12.5px; }
+.note { color:var(--faint); font-size:13px; margin:0 0 30px; }
+.shot { width:100%; border:1px solid var(--line2); border-radius:8px; display:block; margin:0 0 36px; }
+h2 { font:700 22px var(--head); margin:0 0 14px; }
+.steps { display:grid; gap:12px; margin:0 0 34px; padding:0; list-style:none; counter-reset:s; }
+.steps li { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px 14px 56px; position:relative; counter-increment:s; }
+.steps li::before { content:counter(s); position:absolute; left:16px; top:14px; width:26px; height:26px; border-radius:50%; background:rgba(230,180,80,.14); color:var(--gold); font:700 14px/26px var(--body); text-align:center; }
+.steps b { color:var(--text); } .steps span { color:var(--muted); display:block; font-size:14px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin:0 0 34px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+.card h3 { margin:0 0 4px; font:700 16px var(--head); } .card p { margin:0; color:var(--muted); font-size:14px; }
+.box { background:var(--deep); border:1px solid var(--line2); border-radius:6px; padding:14px 16px; color:var(--muted); font-size:14px; margin:0 0 30px; }
+.box b { color:var(--text); }
+code { background:var(--raised); border:1px solid var(--line); border-radius:4px; padding:1px 6px; font-size:13px; color:var(--soft); }
+footer { color:var(--faint); font-size:13px; border-top:1px solid var(--line); padding-top:16px; }
+@media (max-width:560px) { h1 { font-size:32px; } .btn { width:100%; justify-content:center; } }
+</style></head><body><div class="wrap">
+<header><a class="home" href="/"><svg class="logo" viewBox="0 0 20 22"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".45" stop-color="#e6b450"/><stop offset="1" stop-color="#8a5f12"/></linearGradient></defs><path d="M10 1 L18.5 4 V10.5 C18.5 15.6 14.8 19.3 10 21 C5.2 19.3 1.5 15.6 1.5 10.5 V4 Z" fill="url(#g)" stroke="#2a1e06" stroke-width=".8"/><path d="M7 6.5 H10.6 C13.3 6.5 14.6 8.4 14.6 11 C14.6 13.6 13.3 15.5 10.6 15.5 H7 Z M9.2 8.4 V13.6 H10.5 C11.7 13.6 12.4 12.6 12.4 11 C12.4 9.4 11.7 8.4 10.5 8.4 Z" fill="#2a1e06"/></svg>Debrief</a><a class="back" href="/">Back to Debrief</a></header>
+
+<h1>Debrief in game</h1>
+<p class="lead">Your pull recap inside World of Warcraft, a few seconds after every boss pull: your numbers, your top rotation slips, your boss mistakes, who died and one thing to try next pull.</p>
+<div class="cta">
+  <a class="btn gold" href="Debrief-Setup.exe" download>Download for Windows <small>2.2 MB</small></a>
+  <a class="btn" href="Debrief-addon.zip" download>Just the addon <small>0.2 MB</small></a>
+</div>
+<p class="note">Version 0.4.0. The app keeps itself and the addon up to date.</p>
+
+<img class="shot" src="big-window.jpg" alt="The Debrief big window: saved pulls on the left, the pull in detail on the right">
+
+<h2>How to set it up</h2>
+<ol class="steps">
+  <li><b>Run Debrief-Setup.exe.</b><span>One click: it installs the app and the WoW addon. If Windows says "Windows protected your PC", click More info, then Run anyway. The app is new and isn't signed yet.</span></li>
+  <li><b>Raid as normal.</b><span>The app sits quietly in the background and reads your combat log after each boss pull. The addon turns combat logging on for you in raids.</span></li>
+  <li><b>When a pull ends, press Ctrl+V.</b><span>A small box pops up in game, ready for Ctrl+V. Your card opens, and everyone in the raid with the addon gets theirs by itself.</span></li>
+</ol>
+
+<div class="box"><b>Only one person in the raid needs the app.</b> Everyone else just needs the addon: download <a href="Debrief-addon.zip" download>Debrief-addon.zip</a> and unzip it into <code>World of Warcraft\_retail_\Interface\AddOns</code>.</div>
+
+<h2>What you get</h2>
+<div class="grid">
+  <div class="card"><h3>Your card</h3><p>Your damage or healing against your last pull and your best, your biggest slips and your boss mistakes.</p></div>
+  <div class="card"><h3>Raid view</h3><p>The raid's biggest mistakes with names, who died first and to what, and the Next pull line.</p></div>
+  <div class="card"><h3>Big window</h3><p>Every pull of the night, your numbers pull by pull, and how far each pull got.</p></div>
+  <div class="card"><h3>Make it yours</h3><p>Simple, Medium or Heavy; accent colours, mini bar, goals, and one-click posting to raid chat for raid leads.</p></div>
+</div>
+
+<footer>Type <code>/debrief demo</code> in game to see a sample card, and <code>/debrief options</code> for the settings.</footer>
+</div></body></html>

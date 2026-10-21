@@ -30,3 +30,7 @@ desktop.ini
 ~$*
 
 notes/Discord pictures/
+
+# (the Debrief in game downloads are served by the site, so every deploy must have them: kept in git)
+!site-assets/companion/*.exe
+!site-assets/companion/*.zip

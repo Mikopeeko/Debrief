@@ -19,7 +19,7 @@ Copy-Item -LiteralPath (Join-Path $here 'addon') -Destination (Join-Path $app 'a
 $appZip = Join-Path $dist 'app.zip'; if (Test-Path $appZip) { Remove-Item $appZip -Force }
 Compress-Archive -Path (Join-Path $app '*') -DestinationPath $appZip
 $sha = (Get-FileHash $appZip -Algorithm SHA256).Hash
-@{ version = $appV; url = 'https://debriefme.io/companion/app.zip'; sha256 = $sha; addon = $addV } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $dist 'latest.json') -Encoding UTF8
+@{ version = $appV; url = 'https://debriefme.io/companion/app.zip'; sha256 = $sha; addon = $addV } | ConvertTo-Json | ForEach-Object { [IO.File]::WriteAllText((Join-Path $dist 'latest.json'), $_, (New-Object Text.UTF8Encoding $false)) } # (no BOM: the updater reads it as JSON)
 
 # the addon alone (CurseForge)
 $addZip = Join-Path $dist ("Debrief-addon-$addV.zip"); if (Test-Path $addZip) { Remove-Item $addZip -Force }
@@ -78,5 +78,12 @@ $sedPath = Join-Path $work 'setup.sed'; Set-Content -LiteralPath $sedPath -Value
 $p = Start-Process -FilePath (Join-Path $env:WINDIR 'System32\iexpress.exe') -ArgumentList '/N', '/Q', $sedPath -Wait -PassThru
 if (-not (Test-Path $exe)) { throw "IExpress didn't make the installer (exit $($p.ExitCode))." }
 Remove-Item -Recurse -Force $work
+# (the website serves these at debriefme.io/companion/: the download page, the installer, the addon and the updater's files)
+$site = Join-Path $here '..site-assetscompanion'
+if (Test-Path $site) {
+  Copy-Item -LiteralPath $exe, (Join-Path $dist 'app.zip'), (Join-Path $dist 'latest.json') -Destination $site -Force
+  Copy-Item -LiteralPath (Join-Path $dist ('Debrief-addon-' + $addV + '.zip')) -Destination (Join-Path $site 'Debrief-addon.zip') -Force
+  (Get-Content -LiteralPath (Join-Path $site 'index.html') -Raw) -replace 'Version [0-9.]+.', ('Version ' + $addV + '.') | ForEach-Object { [IO.File]::WriteAllText((Join-Path $site 'index.html'), $_, (New-Object Text.UTF8Encoding $false)) }
+}
 "app $appV, addon $addV"
 Get-ChildItem $dist | Select-Object Name, @{ n = 'KB'; e = { [int]($_.Length / 1KB) } } | Format-Table -AutoSize | Out-String
