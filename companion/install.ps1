@@ -38,7 +38,7 @@ try {
   # 5. start it (the installer never asks for admin rights, so this runs as you)
   Start-Process -FilePath $target -ArgumentList ('"' + $vbs + '"')
   $ok = $addon -match 'installed in'
-  $msg = "Debrief is installed.`n`n" + $addon + "`n`nA Debrief icon is on your desktop. In WoW, type /reload if it was open.`nAfter each boss pull the Debrief box pops up: press Ctrl+V."
+  $msg = "Debrief is installed.`n`n" + $addon + "`n`nIt starts with Windows by itself, quietly, and there's a Debrief icon on your desktop. In WoW, type /reload if it was open.`nAfter each boss pull Debrief asks `"See your recap?`": press Ctrl+V."
   if ($env:DBF_SILENT) { Write-Host $msg } else { [void][System.Windows.Forms.MessageBox]::Show($msg, 'Debrief', 'OK', $(if ($ok) { 'Information' } else { 'Warning' })) }
 }
 catch {

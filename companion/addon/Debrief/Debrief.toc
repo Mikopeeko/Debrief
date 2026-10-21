@@ -1,11 +1,12 @@
 ## Interface: 120000, 120001, 120005, 120007, 120100, 120101, 120102, 120105, 120107
 ## Title: Debrief
-## Notes: Your pull recap in game. After a pull, press Ctrl+Shift+D and paste the code from Debrief Companion.
+## Notes: Your pull recap in game, a few seconds after every boss pull.
 ## Author: Debrief
-## Version: 0.4.1
+## Version: 0.4.2
 ## SavedVariables: DebriefDB
 ## AddonCompartmentFunc: Debrief_OnAddonCompartmentClick
 ## Category: Combat
 ## IconTexture: Interface\AddOns\Debrief\Media\logo
 
+Companion.lua
 Debrief.lua

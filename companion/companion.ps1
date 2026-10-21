@@ -87,10 +87,14 @@ function Install-Addon {
   if (Test-Path -LiteralPath $dtoc) { $have = ((Get-Content -LiteralPath $dtoc) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', '' }
   # (never replace a newer copy, say one CurseForge installed)
   $newer = $false; try { $newer = [bool]$have -and ([version]$have -ge [version]$v) } catch { $newer = ($have -eq $v) }
-  if ($newer) { return "The Debrief addon (version $have) is installed in $dst" }
+  # (tells the addon this PC runs the app, so the "See your recap?" prompt comes from your very first boss pull; written every start,
+  # so it's back after CurseForge updates the addon)
+  $flag = { try { Set-Content -LiteralPath (Join-Path $dst 'Companion.lua') -Value "-- Written by Debrief Companion: the app is on this PC.`r`nDEBRIEF_HAS_APP = true" -Encoding ASCII } catch {} }
+  if ($newer) { & $flag; return "The Debrief addon (version $have) is installed in $dst" }
   try {
     New-Item -ItemType Directory -Force -Path $dst | Out-Null
     Copy-Item -Path (Join-Path $src '*') -Destination $dst -Recurse -Force
+    & $flag
     return "Installed the Debrief addon (version $v) in $dst. If WoW is open, type /reload."
   } catch { return "Couldn't install the addon in $dst (" + $_.Exception.Message + "). Copy the folder addon\Debrief (next to this app) there yourself." }
 }
@@ -123,7 +127,22 @@ if (-not $InstallOnly -and -not $env:DBF_NO_UPDATE -and (Update-App)) {
   Start-Process powershell -ArgumentList $a -WindowStyle Hidden; exit
 }
 
-if ($InstallOnly) { Write-Host (Install-Addon $here); exit }
+# ---------- start with Windows: a quiet shortcut in your Startup folder, so the app is always running on raid night ----------
+# (made once: delete it from your Startup folder and it stays gone)
+function Set-Autostart {
+  if ($here -notlike ($env:LOCALAPPDATA + '*')) { return }
+  $mark = Join-Path $here 'autostart-set'
+  if (Test-Path -LiteralPath $mark) { return }
+  try {
+    $ws = New-Object -ComObject WScript.Shell
+    $l = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Startup')) 'Debrief Companion.lnk'))
+    $l.TargetPath = Join-Path $env:WINDIR 'System32\wscript.exe'; $l.Arguments = '"' + (Join-Path $here 'Start Debrief.vbs') + '" /quiet'
+    $l.WorkingDirectory = $here; $l.IconLocation = (Join-Path $here 'debrief.ico') + ',0'; $l.Description = 'Debrief Companion, started quietly with Windows'
+    $l.Save()
+    Set-Content -LiteralPath $mark -Value 'The Start with Windows shortcut was made once. Delete it from your Startup folder to stop it.'
+  } catch {}
+}
+if ($InstallOnly) { Set-Autostart; Write-Host (Install-Addon $here); exit }
 
 $listener = New-Object Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
@@ -134,6 +153,7 @@ $wow = Find-Retail $here
 Write-Host ""
 if ($wow) { Write-Host "WoW found: $wow" } else { Write-Host "WoW not found yet: paste your WoW folder in the Companion window." }
 Write-Host (Install-Addon $here)
+Set-Autostart
 
 $handler = {
   param($ctx, $here, $commonText, $listener)

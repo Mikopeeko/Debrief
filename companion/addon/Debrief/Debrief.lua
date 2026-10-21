@@ -1501,13 +1501,14 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if C_Timer then C_Timer.After(2, autoLog) end
   elseif e == "ENCOUNTER_END" then
     -- (for whoever runs Debrief Companion: the paste box comes up by itself a few seconds after a boss pull, ready for Ctrl+V)
-    if DB and (DB.pasted or DB.testMode) and DB.autoBox ~= false and C_Timer then
+    if DB and (DB.pasted or DB.hasApp or DB.testMode) and DB.autoBox ~= false and C_Timer then
       C_Timer.After(4, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
     end
   elseif e == "ADDON_LOADED" and arg == ADDON then
     DebriefDB = DebriefDB or {}
     DB = DebriefDB
     DB.pulls = DB.pulls or {}
+    if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC: ask after every boss pull from the first one)
     if DB.raidAlways == nil then DB.raidAlways = true end
     DB.show = DB.show or {}
     if DB.preset == nil and DB.maxSlips == nil and DB.compact == nil then DB.preset = "medium" end
@@ -1523,6 +1524,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if SetBinding("CTRL-SHIFT-D", "DEBRIEF_PASTE") then SaveBindings(GetCurrentBindingSet()) end
       DB.keySet = true
     end
-    say("ready. After a pull: press Ctrl+Shift+D (or /debrief paste), then Ctrl+V." .. (DB.testMode and " Test mode is on: /debrief demo shows a sample card." or ""))
+    if DB.hasApp or DB.pasted then say("ready. After each boss pull Debrief asks \"See your recap?\": press Ctrl+V." .. (DB.testMode and " Test mode is on: /debrief demo shows a sample card." or ""))
+    else say("ready. Your recap opens by itself after boss pulls when someone in your group runs Debrief Companion. /debrief demo shows a sample.") end
   end
 end)

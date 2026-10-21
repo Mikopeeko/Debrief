@@ -8,6 +8,15 @@ $root = Split-Path -Parent $here
 $dist = Join-Path $here 'dist'
 $work = Join-Path $env:TEMP ('debrief-build-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Force -Path $dist, $work | Out-Null
+# (zips with "/" in their paths: Windows' Compress-Archive writes "\", which CurseForge and Mac tools read as part of a file name)
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+function New-Zip($srcDir, $zipPath, $prefix) {
+  if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
+  $base = (Resolve-Path -LiteralPath $srcDir).Path.TrimEnd('\')
+  $z = [IO.Compression.ZipFile]::Open($zipPath, 'Create')
+  try { Get-ChildItem -LiteralPath $base -Recurse -File | ForEach-Object { [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, $_.FullName, $prefix + $_.FullName.Substring($base.Length + 1).Replace('\', '/'), 'Optimal') } }
+  finally { $z.Dispose() }
+}
 $appV = (Get-Content (Join-Path $here 'version.txt') -Raw).Trim()
 $addV = ((Get-Content (Join-Path $here 'addon\Debrief\Debrief.toc')) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', ''
 
@@ -17,13 +26,13 @@ foreach ($f in 'companion.ps1', 'companion.html', 'recap.js', 'Start Debrief.vbs
 Copy-Item -LiteralPath (Join-Path $root 'WoW-Log-Analyzer.html') -Destination (Join-Path $app 'Debrief.html')
 Copy-Item -LiteralPath (Join-Path $here 'addon') -Destination (Join-Path $app 'addon') -Recurse
 $appZip = Join-Path $dist 'app.zip'; if (Test-Path $appZip) { Remove-Item $appZip -Force }
-Compress-Archive -Path (Join-Path $app '*') -DestinationPath $appZip
+New-Zip $app $appZip ''
 $sha = (Get-FileHash $appZip -Algorithm SHA256).Hash
 @{ version = $appV; url = 'https://debriefme.io/companion/app.zip'; sha256 = $sha; addon = $addV } | ConvertTo-Json | ForEach-Object { [IO.File]::WriteAllText((Join-Path $dist 'latest.json'), $_, (New-Object Text.UTF8Encoding $false)) } # (no BOM: the updater reads it as JSON)
 
 # the addon alone (CurseForge)
 $addZip = Join-Path $dist ("Debrief-addon-$addV.zip"); if (Test-Path $addZip) { Remove-Item $addZip -Force }
-Compress-Archive -Path (Join-Path $here 'addon\Debrief') -DestinationPath $addZip
+New-Zip (Join-Path $here 'addon\Debrief') $addZip 'Debrief/'
 
 # the one-press installer
 $pay = Join-Path $work 'payload'; New-Item -ItemType Directory -Force -Path $pay | Out-Null

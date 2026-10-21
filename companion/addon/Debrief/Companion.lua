@@ -1,0 +1,2 @@
+-- Debrief Companion (the PC app) rewrites this file when it's on this PC, so Debrief asks "See your recap?" from your first boss pull.
+-- Without the app it stays like this, and your recap still arrives by itself from whoever in your group runs it.
