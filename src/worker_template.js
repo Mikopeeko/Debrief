@@ -366,14 +366,22 @@ async function runInbox(env) {
         } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed', 'announcments'].includes(o.channel)) {
           // (a post in a Community channel, e.g. the weekly raid tip, or in #announcments; only those channels. With a title it's a
           // gold card (an embed: no link preview under it); replaceLast edits Claudette's newest post there instead of adding one;
-          // everyone pings @everyone (#announcments only, when the user asked for it), and an announcement goes out to followers)
+          // everyone pings @everyone (#announcments only, when the user asked for it, and at most once a day so it's never
+          // overused: the user's condition, Oct 20), and an announcement goes out to followers)
           const c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === o.channel), ch = c && c.id; if (!ch) continue;
-          const all = !!o.everyone && o.channel === 'announcments', men = { parse: all ? ['everyone'] : [] };
+          const lastAll = Number(await env.DEBRIEF_KV.get('everyone-at')) || 0;
+          const all = !!o.everyone && o.channel === 'announcments' && Date.now() - lastAll > 864e5, men = { parse: all ? ['everyone'] : [] };
           const body = o.title ? { content: all ? '@everyone' : '', embeds: [{ title: String(o.title).slice(0, 250), description: String(o.text).slice(0, 4000), url: o.url ? String(o.url) : undefined, color: 0xE6B450, footer: o.footer ? { text: String(o.footer).slice(0, 200) } : undefined }], allowed_mentions: men }
             : { content: (all ? '@everyone ' : '') + text, flags: 4, allowed_mentions: men };
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
-          else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+          else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (all) await env.DEBRIEF_KV.put('everyone-at', String(Date.now())); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'allow-announce') {
+          // (the user's OK, Oct 20: Claudette's own role may see, post, show cards and ping @everyone in #announcments; nothing else)
+          const c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === 'announcments'); if (!c) continue;
+          const role = ((await dc(env, '/guilds/' + GUILD + '/roles')) || []).find((r) => r.tags && r.tags.bot_id === APP_ID); if (!role) continue;
+          const put = (allow) => dc(env, '/channels/' + c.id + '/permissions/' + role.id, { method: 'PUT', body: { type: 0, allow: String(allow), deny: '0' } });
+          await put(1024 + 2048 + 16384 + 131072).catch(async (err) => { console.warn('Announce rights: no @everyone:', err && err.message); await put(1024 + 2048 + 16384); });
         } else if (o.op === 'repic' && o.feat && o.text) {
           // (puts a #new-features card back together with its pictures, uploaded again from KV, the way Post it makes it)
           const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'new-features') || {}).id; if (!ch) continue;
