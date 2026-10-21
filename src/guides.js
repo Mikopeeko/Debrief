@@ -1356,6 +1356,21 @@ Object.assign(UX_M, {
   // Circling Prey: she smashes the quarter she's on: a huge hit and a knockback within 13 yards, a smaller hit on everyone else. Everyone
   // moves one quarter counter-clockwise before it lands (personal defensives for the second and third), and she comes up at the next corner.
   // (fail: a melee stays on her quarter)
+  // Phase 3, Mother's Wrath: the same knockback and bites on the broken platform, from the corner of the quarter she's on; her tank walks
+  // straight back into the red circle in front of her, and the tanks swap at her next waves cast
+  wrath3(fail, d, o) {
+    o = o || {}; const q = o.q || 'NE', b = UL_PB[q], c = UL_PL[q], L = 11, k = gdzKit(UX, L); k.art(0, UL_BROKEN); uxB3(k, 0, q); uxP3(k, 0, q);
+    const P = (f) => [c[0] + (b[0] - c[0]) * f, c[1] + (b[1] - c[1]) * f], RC = P(0.72), KB = P(0.2), T0 = k.posAt('t1', 0);
+    k.cast('ul', 'Mother\'s Wrath', 0.2, 5.2); k.ring({ x: RC[0], y: RC[1], r: 5, fx: 'zone', t0: 0.8, dur: 7.6, color: '#ff4a4a', fill: 'rgba(255,60,60,.18)', cn: 'Mother\'s Wrath', legend: 'her reach: her tank must be inside when the bites start' });
+    k.hold(0.9, 't1').at(1.4, 't1', KB[0] + 2, KB[1] - 2); k.call(0.9, 2.4, 'Knocked back', { on: 't1', color: '#ff8a8a', ink: '#200a0a' });
+    k.hold(2, 't1').at(4.8, 't1', RC[0], RC[1]); k.call(3.6, 5.2, 'Big defensive', { on: 't1', color: '#5aa0ff', ink: '#fff' });
+    for (let i = 0; i < 5; i++) k.ring({ on: 't1', r: 2.6, fx: 'burst', t0: 5.2 + i * 0.6 - 0.2, at: 5.2 + i * 0.6, dur: 0.4, color: '#ff4a4a', cn: 'Bite', legend: 'a bite: Stone Venom and Hobbled' });
+    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: 55% slower (Blessing of Freedom helps); Stone Venom stacks' });
+    k.hold(8.4, 't1').at(10.8, 't1', T0[0], T0[1]); k.call(8.6, 10.6, 'Swap at her waves cast', { on: 't2', color: '#5aa0ff', ink: '#fff' });
+    k.ring1(['t1', 't2']).step(0.2).step(0.9).step(4.8).step(8.6);
+    k.pause(4.9, 'The same Mother\'s Wrath on the broken platform: knocked back, her tank walks straight back into the red circle in front of her and takes the bites.', { x: RC[0], y: RC[1], r: 8 });
+    return k.done({ title: 'Mother\'s Wrath on the broken platform', focus: { x: (b[0] + c[0]) / 2, y: (b[1] + c[1]) / 2, r: 24 }, art: UL_BROKEN, hlLabel: 'the tanks' });
+  },
   prey(fail, d, o) {
     o = o || {}; const q = o.q || 'NE', n = UX_NEXT[q], L = 12, k = gdzKit(UX, L); k.art(0, UL_BROKEN); uxB3(k, 0, q); uxP3(k, 0, q);
     k.cast('ul', 'Circling Prey', 0.6, 8.2); k.ring({ x: UL_PC[q][0], y: UL_PC[q][1], r: 22, fx: 'zone', t0: 0.6, dur: 7.8, color: '#ff4a4a', fill: 'rgba(255,60,60,.12)', cn: 'Circling Prey', legend: 'Circling Prey: this quarter is destroyed' });
@@ -1469,12 +1484,12 @@ const UX_SIM = [
   { at: 72, mech: 'wretch', ph: 0, label: 'Blightscale Wretch 2' }, { at: 77, beat: 'dive', ph: 0 },
   { at: 92, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 2', o: { rot: 90 } }, { at: 102, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 2', o: { rot: 90 } }, { at: 107, mech: 'waves', ph: 0, label: 'Caustic Waves 2 (The hardest set)', o: { rot: 90 } },
   { at: 130, mech: 'coils', ph: 0, label: 'Spectral Coils 2', o: { rot: 90 } }, { at: 139, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
-  { at: 173, mech: 'warden', ph: 1 }, { at: 195, mech: 'fangs', ph: 1 }, { at: 240, mech: 'doomscales', ph: 1 }, { at: 288, mech: 'heart2', ph: 1 },
+  { at: 173, mech: 'warden', ph: 1 }, { at: 195, mech: 'fangs', ph: 1 }, { at: 248, mech: 'doomscales', ph: 1 }, { at: 288, mech: 'heart2', ph: 1 },
   { at: 319, mech: 'intcoils', ph: 2 },
-  { at: 377, mech: 'clutches', ph: 3, label: 'Slithering Clutches 1 (Grip them in)', o: { q: 'NE' } }, { at: 397, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
+  { at: 377, mech: 'clutches', ph: 3, label: 'Slithering Clutches 1 (Grip them in)', o: { q: 'NE' } }, { at: 382, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 3', o: { q: 'NE' } }, { at: 397, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
   { at: 407, mech: 'clutches', ph: 3, label: 'Slithering Clutches 2', o: { q: 'NE' } }, { at: 432, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } },
-  { at: 461, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } }, { at: 483, mech: 'prey', ph: 3, label: 'Circling Prey 2 (Gate to the third quarter)', o: { q: 'NW' } },
-  { at: 505, mech: 'clutches', ph: 3, label: 'Slithering Clutches 3 (Two grips, two Shriekers)', o: { q: 'SW' } }, { at: 544, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
+  { at: 461, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } }, { at: 467, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 4', o: { q: 'NW' } }, { at: 483, mech: 'prey', ph: 3, label: 'Circling Prey 2 (Gate to the third quarter)', o: { q: 'NW' } },
+  { at: 505, mech: 'clutches', ph: 3, label: 'Slithering Clutches 3 (Two grips, two Shriekers)', o: { q: 'SW' } }, { at: 535, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 5', o: { q: 'SW' } }, { at: 544, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
   { at: 565, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 3 (The last set)', o: { q: 'SE' } }, { at: 577, beat: 'kill', ph: 3 },
 ];
 // (Heroic, on our two Heroic kills' clock: she comes up at the edge after the dive, so the rest of phase 1 is turned like Mythic's;
@@ -1486,25 +1501,25 @@ const UX_SIM_H = [
   { at: 87, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 2', o: { rot: 90 } }, { at: 94, mech: 'waves', ph: 0, label: 'Caustic Waves 2', o: { rot: 90 } },
   { at: 114, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 3', o: { rot: 90 } }, { at: 118, mech: 'coils', ph: 0, label: 'Spectral Coils 2', o: { rot: 90 } },
   { at: 129, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
-  { at: 176, mech: 'warden', ph: 1 }, { at: 189, mech: 'fangs', ph: 1 }, { at: 225, mech: 'doomscales', ph: 1 }, { at: 278, mech: 'heart2', ph: 1 },
+  { at: 176, mech: 'warden', ph: 1 }, { at: 189, mech: 'fangs', ph: 1 }, { at: 214, mech: 'doomscales', ph: 1 }, { at: 278, mech: 'heart2', ph: 1 },
   { at: 309, mech: 'intcoils', ph: 2 },
-  { at: 367, mech: 'clutches', ph: 3, label: 'Call of the Serpent 1', o: { q: 'NE' } }, { at: 387, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
+  { at: 367, mech: 'clutches', ph: 3, label: 'Call of the Serpent 1', o: { q: 'NE' } }, { at: 372, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 4', o: { q: 'NE' } }, { at: 387, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
   { at: 397, mech: 'clutches', ph: 3, label: 'Call of the Serpent 2', o: { q: 'NE' } }, { at: 422, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } },
-  { at: 442, mech: 'clutches', ph: 3, label: 'Call of the Serpent 3', o: { q: 'NW' } }, { at: 458, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } },
+  { at: 442, mech: 'clutches', ph: 3, label: 'Call of the Serpent 3', o: { q: 'NW' } }, { at: 447, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 5', o: { q: 'NW' } }, { at: 458, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } },
   { at: 473, mech: 'prey', ph: 3, label: 'Circling Prey 2', o: { q: 'NW' } }, { at: 495, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 3', o: { q: 'SW' } },
-  { at: 502, mech: 'clutches', ph: 3, label: 'Call of the Serpent 4', o: { q: 'SW' } }, { at: 534, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
+  { at: 502, mech: 'clutches', ph: 3, label: 'Call of the Serpent 4', o: { q: 'SW' } }, { at: 523, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 6', o: { q: 'SW' } }, { at: 534, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
   { at: 555, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 4 (The last set)', o: { q: 'SE' } }, { at: 588, beat: 'kill', ph: 3 },
 ];
 // (how long each part lasts on the real clock, for the written version's overlaps; how bad a miss is: 3 can wipe, 2 can kill, 1 minor)
-const UX_DUR = { 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 15, 'm:doomscales': 49, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 };
-const UX_SEV = { 'm:eggs': 3, 'm:wretch': 2, 'm:wrath': 1, 'm:coils': 2, 'm:waves': 3, 'm:thrash': 1, 'm:heart': 2, 'm:warden': 2, 'm:fangs': 3, 'm:doomscales': 3, 'm:heart2': 2, 'm:intcoils': 3, 'm:clutches': 3, 'm:bite': 3, 'm:prey': 2, 'b:start': 1, 'b:dive': 2, 'b:kill': 1 };
+const UX_DUR = { 'm:wrath3': 8, 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 15, 'm:doomscales': 49, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 };
+const UX_SEV = { 'm:wrath3': 1, 'm:eggs': 3, 'm:wretch': 2, 'm:wrath': 1, 'm:coils': 2, 'm:waves': 3, 'm:thrash': 1, 'm:heart': 2, 'm:warden': 2, 'm:fangs': 3, 'm:doomscales': 3, 'm:heart2': 2, 'm:intcoils': 3, 'm:clutches': 3, 'm:bite': 3, 'm:prey': 2, 'b:start': 1, 'b:dive': 2, 'b:kill': 1 };
 GDZ['Ula\'tek'] = {
   upd: ['12.1', 'Oct 21, 2026'],
   stepRoles: {
     'Call of the Serpent (Break, carry, spread)': ['', 'd', 'd', 'd'], 'Blightscale Wretch (Soak its venom, then the bubble)': ['', 't', '', ''],
     'Mother\'s Wrath (Run back in)': ['t', 't', 't', 't'], 'Mephitic Thrash (Get 35 yards away)': ['', '', ''], 'She dives (Watch the bubbles)': ['', '', 't'],
     'Doomscale Warden (Pull it across, cleave, kick)': ['', 't', '', 'd'], 'Grasping Fangs (One break, then five together)': ['', '', 'd', 'h'],
-    'Slithering Clutches (Grip them in)': ['', 't', 't', 't'], 'Serpent\'s Bite (Three soakers, stacked)': ['', '', 'h', ''],
+    'Slithering Clutches (Grip them in)': ['', 't', 't', 't'], 'Mother\'s Wrath (Taunt swap)': ['t', 't', 't', 't'], 'Serpent\'s Bite (Three soakers, stacked)': ['', '', 'h', ''],
   },
   sum: 'A long fight on a set clock. Phase 1: carry eggs, soak the coils, dodge her waves, burn her heart. Phase 2: the raid splits onto the two side ledges. Then the platform shatters and the last phase moves from quarter to quarter.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
@@ -1633,10 +1648,13 @@ GDZ['Ula\'tek'] = {
           do: ['Circling Prey: she\'s about to destroy the quarter she\'s on.', 'Everyone moves one quarter counter-clockwise.', 'It lands: personals for the second and third.', 'She comes up at the next corner.'],
           m: { plan: ['A raid cooldown waits on each new quarter (Anti-Magic Zone, Anti-Magic Zone, Spirit Link Totem).', 'The third quarter is short: a Warlock gate to the fourth makes it easy.', 'Waves in this phase come from behind: turn your camera to see them coming.'] },
           map: (d, o) => UX_M.prey(false, d, o) },
+        { id: 'wrath3', spell: 'Mother\'s Wrath', name: 'Mother\'s Wrath (Taunt swap)', what: 'The same knockback on her tank, now from the corner of the quarter she\'s on. Her tank walks straight back into the red circle in front of her before the bites start, and the tanks swap at her next waves cast.',
+          do: ['Mother\'s Wrath: a 5-second cast on her tank.', 'Knocked back: walk straight back into the red circle in front of her.', 'Inside before the bites start, with a big defensive.', 'The other tank taunts her back at her next waves cast.'],
+          m: { what: 'The same knockback on her tank, from the corner of the quarter she\'s on. Her tank walks straight back into the red circle in front of her before the bites start. The tank without Stone Venom soaks the spectral venom on the Wretch, then taunts her back before the next Mother\'s Wrath; the other tank takes the Wretch.' },
+          map: (d, o) => UX_M.wrath3(false, d, o) },
       ],
       tiles: [
         { name: 'Caustic Waves (Watch behind you)', do: 'Her waves still come in this phase, from behind. Watch for them, step out, then spread back out.' },
-        { name: 'Mother\'s Wrath (Taunt swap)', do: 'The knockback on the tank. The tank without the debuff taunts her back before the next one.', m: { do: 'The tank without Stone Venom soaks the spectral venom on the Wretch, then taunts her back before the next Mother\'s Wrath; the other tank takes the Wretch.' } },
         { only: 'm', name: 'Blightscale Wretch (Again on quarter 2)', do: 'A Wretch comes back on the second quarter. Its bubble right after the second break overlaps the red circles: the reds stack inside it.' },
         { name: 'Blightscale Shrieker (Kick and tank)', do: 'Kick its Vicious Echoes (a raid stun and a stacking DoT; never let it reach 2 stacks) and tank it to the boss.', m: { do: 'Two Shriekers come with the last clutches: half the raid kicks each. Kill them around their enrage.' } },
         { name: 'The last burn (Jump off at the end)', do: 'Rage of the Shackled one more time (9:27 on Heroic, 9:37 on Mythic). If she\'s nearly dead as it ends, jump off behind her: the venom hurts, but you dodge the slam and live a few seconds longer. Use a normal potion here.' },
