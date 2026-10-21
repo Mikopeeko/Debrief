@@ -12,6 +12,9 @@ in the style of Warcraft Logs + WoWAnalyzer + Wipefest. Built for Mythic raid pr
 - src/ui.js — all rendering (tabs: Overview, Fight audit, Assignments, Progression, Mistakes, meters, Survivability, Interrupts, Deaths, Player).
 - src/worker_template.js — Cloudflare Worker (serves app with window.WLA_HOSTED, holds WCL key, caches).
 - src/build.py — run from src/: writes ../WoW-Log-Analyzer.html and ../online/worker.js.
+- companion/ — Debrief in game (test): the PC app (Debrief Companion.bat + companion.ps1 on port 8772, companion.html, recap.js) that reads the
+  combat log after each boss pull and copies a recap code, and the WoW addon (companion/addon/Debrief) that shows it and shares it with the raid.
+  See notes/Guides/Debrief in game - how it works.md. Rebuild the download zip after changes (zips are git-ignored).
 - server.ps1 + start.bat — local helper at http://localhost:8765 (serves the HTML, proxies /wcl/token and /wcl/graphql).
 - tests/ — synthetic log generators (gen*.py), node tests (test.js, test_wcl.js) and Playwright screenshot scripts (shot*.py).
   They were written in a Linux sandbox; adjust paths before running on Windows.

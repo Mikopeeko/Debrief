@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Debrief Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Debrief's own look: slate panels, gold for what matters, Barlow type. Left: your pulls. Right: what the game will show. */
+:root {
+  --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49;
+  --text: #ece8df; --muted: #98a0ad; --faint: #6c7381;
+  --gold: #e6b450; --gold-ink: #1b1406; --bad: #e5534b; --bad-bg: #3a1d1d; --warn: #e8a23a; --warn-bg: #3a2c16;
+  --good: #45c15c; --good-bg: #17301e; --blue: #6aa8ff;
+  --r: 10px; --head: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font: 15px/1.5 var(--body); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+.top { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.top svg { width: 28px; height: 31px; flex: none; }
+.top h1 { font: 700 22px/1.1 var(--head); margin: 0; }
+.top h1 small { display: block; font: 500 13px var(--body); color: var(--muted); }
+.stat { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); background: var(--raised); border: 1px solid var(--line2); border-radius: 999px; padding: 4px 12px; max-width: 100%; }
+.stat i { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); flex: none; }
+.stat.live i { background: var(--good); box-shadow: 0 0 0 3px rgba(69,193,92,.18); }
+.stat.busy i { background: var(--gold); }
+.stat.err i { background: var(--bad); }
+.stat span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wrap { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; padding: 18px 20px 30px; max-width: 1240px; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
+.panel h2 { font: 600 18px var(--head); margin: 0 0 10px; display: flex; align-items: baseline; gap: 10px; }
+.panel h2 .sub { font: 400 13px var(--body); color: var(--muted); }
+.step { border: 1px solid var(--gold); box-shadow: inset 4px 0 0 var(--gold); }
+.step b { color: var(--gold); }
+.step p { margin: 0; }
+.step .keys { margin-top: 6px; color: var(--muted); font-size: 14px; }
+kbd { font: 600 12px var(--body); background: var(--raised); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--text); }
+.ctl { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+.ctl select { min-width: 0; max-width: 100%; flex: 1 1 260px; height: 36px; padding: 4px 10px; border: 1px solid var(--line2); border-radius: 8px; background: var(--raised); }
+.sw { display: flex; align-items: center; gap: 7px; font-size: 14px; color: var(--muted); cursor: pointer; user-select: none; }
+.sw input { width: 17px; height: 17px; accent-color: var(--gold); margin: 0; }
+.btn { background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--faint); }
+.btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); font-weight: 600; }
+.btn:disabled { opacity: .5; cursor: default; }
+.bossname { font: 600 15px var(--head); margin: 14px 4px 4px; color: var(--text); }
+.bossname:first-child { margin-top: 0; }
+.pull { width: 100%; display: grid; grid-template-columns: 54px 1fr auto auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 14px; }
+.pull:hover { background: var(--raised); }
+.pull.sel { background: #2a2618; box-shadow: inset 2px 0 0 var(--gold); }
+.pull .n { color: var(--faint); font-variant-numeric: tabular-nums; }
+.pull .d { color: var(--muted); font-variant-numeric: tabular-nums; }
+.pull .btn { padding: 3px 10px; font-size: 13px; }
+.chip { font-size: 12px; border-radius: 4px; padding: 1px 8px; font-weight: 500; white-space: nowrap; }
+.chip.kill { background: var(--good-bg); color: #7ee08f; }
+.chip.wipe { background: var(--bad-bg); color: #ff8f87; }
+.chip.other { background: var(--raised); color: var(--muted); }
+.empty { color: var(--muted); font-size: 14px; padding: 8px 4px; }
+.list { max-height: calc(100vh - 230px); overflow: auto; margin: 0 -8px; padding: 0 8px; }
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.prevh { font: 600 13px var(--head); color: var(--muted); letter-spacing: .3px; margin: 0 0 6px 2px; text-transform: uppercase; }
+details.code summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; color: var(--muted); font: 12px/1.4 Consolas, monospace; padding: 8px; resize: vertical; }
+.folder { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.folder input { flex: 1 1 260px; background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 10px; }
+.bar { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+
+/* ---------- the in-game card (same layout as the addon) ---------- */
+.card { width: 100%; max-width: 400px; background: var(--panel); border: 1px solid var(--line2); border-radius: 6px; box-shadow: 0 14px 40px rgba(0,0,0,.55); overflow: hidden; }
+.c-top { display: flex; align-items: center; gap: 8px; padding: 9px 10px 8px 12px; background: #13161d; border-bottom: 1px solid var(--line); }
+.c-top svg { width: 17px; height: 19px; flex: none; }
+.c-top b { font: 700 17px var(--head); }
+.c-top span { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.c-top .x { margin-left: auto; color: var(--faint); font-size: 15px; }
+.c-pulls { display: flex; gap: 5px; padding: 9px 12px 0; overflow: hidden; }
+.c-pulls .chip { padding: 2px 8px; font-size: 12px; cursor: pointer; border: 1px solid transparent; }
+.c-pulls .chip.on { border-color: var(--gold); }
+.c-res { padding: 10px 12px 2px; }
+.c-res h3 { margin: 0; font: 700 25px/1.1 var(--head); }
+.c-res h3.kill { color: #7ee08f; } .c-res h3.wipe { color: #ff8f87; }
+.c-res p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+.c-tabs { display: flex; gap: 2px; padding: 6px 12px 0; border-bottom: 1px solid var(--line); }
+.c-tabs button { background: none; border: 0; padding: 7px 10px; color: var(--muted); border-bottom: 2px solid transparent; font-weight: 500; font-size: 14px; cursor: pointer; }
+.c-tabs button.on { color: var(--text); border-bottom-color: var(--gold); }
+.c-who { display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 13px; color: var(--muted); }
+.c-who button { background: var(--raised); border: 1px solid var(--line2); border-radius: 5px; width: 22px; height: 22px; padding: 0; font-size: 12px; line-height: 1; cursor: pointer; color: var(--muted); }
+.c-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 12px; }
+.c-tile { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; display: flex; align-items: center; gap: 10px; }
+.c-tile .l { color: var(--muted); font-size: 13px; }
+.c-tile .v { font: 700 27px/1.1 var(--head); font-variant-numeric: tabular-nums; }
+.c-tile .v small { font: 600 13px var(--body); color: var(--muted); margin-left: 3px; }
+.c-tile .s { margin-left: auto; text-align: right; font-size: 13px; color: var(--faint); line-height: 1.4; }
+.up { color: #7ee08f; font-weight: 600; } .down { color: #ff8f87; font-weight: 600; }
+.c-h { font: 600 14px var(--head); color: var(--text); margin: 0 0 6px; letter-spacing: .2px; }
+.c-row { display: grid; grid-template-columns: 8px 22px 1fr; gap: 8px; align-items: start; font-size: 14px; line-height: 1.35; margin-top: 6px; }
+.c-row:first-of-type { margin-top: 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
+.dot.ok { background: var(--good); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.dead { background: var(--faint); }
+.ic { width: 22px; height: 22px; border-radius: 4px; background: var(--raised); border: 1px solid #000; overflow: hidden; display: block; }
+.ic img { width: 100%; height: 100%; display: block; transform: scale(1.1); }
+.c-row strong { display: block; font-weight: 600; }
+.c-died { display: grid; grid-template-columns: 38px minmax(0,1fr) 18px minmax(0,1.3fr); gap: 6px; align-items: center; font-size: 13.5px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.c-died .t { color: var(--muted); } .c-died .w { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-died .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-died .ic { width: 18px; height: 18px; }
+.c-more { font-size: 13px; color: var(--faint); margin-top: 4px; }
+.c-next { border: 1px solid var(--gold); box-shadow: inset 4px 0 0 var(--gold); border-radius: 8px; padding: 8px 12px 9px 14px; background: rgba(230,180,80,.05); }
+.c-next .c-h { color: var(--gold); margin-bottom: 2px; }
+.c-next p { margin: 0; font-size: 14px; }
+.c-foot { padding: 6px 12px 9px; font-size: 12px; color: var(--faint); border-top: 1px solid var(--line); }
+.nm-c { font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="top">
+  <svg viewBox="0 0 20 22" aria-hidden="true"><defs><linearGradient id="lgf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".45" stop-color="#e6b450"/><stop offset="1" stop-color="#8a5f12"/></linearGradient></defs><path d="M10 1 L18.5 4 V10.5 C18.5 15.6 14.8 19.3 10 21 C5.2 19.3 1.5 15.6 1.5 10.5 V4 Z" fill="url(#lgf)" stroke="#2a1e06" stroke-width=".8"/><path d="M7 6.5 H10.6 C13.3 6.5 14.6 8.4 14.6 11 C14.6 13.6 13.3 15.5 10.6 15.5 H7 Z M9.2 8.4 V13.6 H10.5 C11.7 13.6 12.4 12.6 12.4 11 C12.4 9.4 11.7 8.4 10.5 8.4 Z" fill="#2a1e06"/></svg>
+  <h1>Debrief Companion<small>Feeds your recap to the Debrief addon in WoW after every pull</small></h1>
+  <div class="stat" id="stat"><i></i><span id="statT">Starting…</span></div>
+</header>
+
+<div class="wrap">
+  <section class="panel">
+    <h2>Your pulls <span class="sub" id="logInfo"></span></h2>
+    <div class="ctl">
+      <select id="logSel" aria-label="Combat log"></select>
+      <label class="sw" for="auto"><input type="checkbox" id="auto" checked> Send each new pull</label>
+      <label class="sw" for="snd"><input type="checkbox" id="snd" checked> Sound</label>
+    </div>
+    <div id="folderBox" hidden>
+      <p class="empty">I couldn't find your WoW Logs folder. Paste where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
+      <div class="folder"><input id="folderIn" placeholder="C:\Program Files (x86)\World of Warcraft"><button class="btn primary" id="folderGo" type="button">Use this folder</button></div>
+    </div>
+    <div class="list" id="pulls"><p class="empty">Looking for your combat log…</p></div>
+  </section>
+
+  <aside class="side">
+    <div class="panel step" id="step">
+      <p id="stepT"><b>Ready.</b> When a boss pull ends, its recap is copied for the game.</p>
+      <p class="keys">In WoW, after the chime: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>, then <kbd>Ctrl</kbd>+<kbd>V</kbd>. The box also pops up by itself after each boss pull. Raiders with the addon get their card from you automatically.</p>
+      <p class="keys" id="addonT"></p>
+      <div class="bar" id="bar" hidden><i></i></div>
+    </div>
+    <div>
+      <p class="prevh">What the game will show</p>
+      <div id="preview"><div class="card"><div class="c-top"><b>Debrief</b><span>No pull yet</span></div><div class="c-body"><p class="empty" style="margin:0">Send a pull to see its card here.</p></div></div></div>
+    </div>
+    <details class="code"><summary>The code that was copied</summary><textarea id="codeOut" readonly></textarea><div class="folder"><button class="btn" id="copyAgain" type="button" disabled>Copy it again</button></div></details>
+  </aside>
+</div>
+<iframe id="eng" src="/app" title="Debrief engine" style="position:absolute;width:10px;height:10px;left:-9999px;top:0;border:0" tabindex="-1" aria-hidden="true"></iframe>
+
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const kfmt = (v) => v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k';
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } } };
+function stat(t, kind) { $('statT').textContent = t; $('stat').className = 'stat' + (kind ? ' ' + kind : ''); }
+async function j(url, opt) { const r = await fetch(url, opt); const x = await r.json().catch(() => ({})); if (!r.ok) throw new Error(x.error || ('HTTP ' + r.status)); return x; }
+
+// ---------- the engine (Debrief itself, loaded in a hidden frame) ----------
+let W = null;
+const engineReady = new Promise((ok, no) => {
+  const t0 = Date.now();
+  const look = () => { try { const w = $('eng').contentWindow; if (w && w.__wla && w.__wla.E && w.__wla.specRun) { W = w.__wla; return ok(W); } } catch (e) { /* not yet */ }
+    if (Date.now() - t0 > 60000) return no(new Error("Debrief's engine didn't load.")); setTimeout(look, 250); };
+  look();
+});
+
+// ---------- combat log: pulls ----------
+const L = { files: [], name: null, size: 0, done: 0, ix: null, items: [], live: false, waiting: false, reps: new Map(), sent: new Set(), busy: Promise.resolve() };
+const DIFFN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR' };
+
+async function loadLogs() {
+  let x;
+  try { x = await j('/logs'); } catch (e) { stat('Companion not reachable: ' + e.message, 'err'); return; }
+  if (x.error === 'nodir') { $('folderBox').hidden = false; $('pulls').innerHTML = ''; stat('No WoW Logs folder found', 'err'); return; }
+  $('folderBox').hidden = true;
+  L.files = x.files || [];
+  if (!L.files.length) { $('pulls').innerHTML = '<p class="empty">No combat log yet. In WoW, type <kbd>/combatlog</kbd> (or turn on Advanced Combat Logging and log your raid). Pulls show up here as they end.</p>'; stat('Waiting for a combat log', 'busy'); waitNew(); return; }
+  $('logSel').innerHTML = L.files.map((f, i) => '<option value="' + i + '">' + esc((f.old ? 'Old: ' : '') + f.name.replace(/^Archive-/, '')) + ' · ' + (f.size / 1048576).toFixed(0) + ' MB · ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</option>').join('');
+  await openLog(0);
+}
+$('logSel').addEventListener('change', (e) => openLog(+e.target.value));
+
+async function openLog(i) {
+  const f = L.files[i]; if (!f) return;
+  L.name = f.name; L.ix = W ? W.E.createIndexer() : null; L.items = []; L.done = 0; L.size = 0; L.reps.clear(); L.sent.clear();
+  L.live = !f.old && i === 0; // (the newest log is always watched: new pulls on it, or a newer log, are picked up by themselves)
+  const fresh = Date.now() - f.mtime < 2 * 3600e3;
+  $('pulls').innerHTML = '<p class="empty">Finding the boss pulls in ' + esc(f.name) + '…</p>';
+  stat('Reading ' + f.name, 'busy');
+  await engineReady.catch((e) => stat(e.message, 'err'));
+  L.ix = W.E.createIndexer();
+  await scanMore(true);
+  if (L.live) { stat(fresh ? 'Watching ' + f.name : 'Waiting for your next boss pull', 'live'); if (!L.waiting) waitLoop(); }
+  else stat('Old log: pick a pull to send', '');
+  try { const a = await j('/addon'); if (a.msg) $('addonT').textContent = a.msg; } catch (e) { /* older helper */ }
+}
+async function scanMore(first) {
+  const name = L.name;
+  const x = await j('/scan?name=' + encodeURIComponent(name) + '&from=' + L.done);
+  if (name !== L.name) return [];
+  const before = new Set(L.items.filter((b) => b.endByte).map((b) => b.startByte));
+  for (const it of x.items) L.ix.line(it.t, it.o, it.e);
+  L.done = x.done; L.size = x.size;
+  L.items = L.ix.peek().bosses.filter((b) => !b.skip);
+  renderPulls();
+  return first ? [] : L.items.filter((b) => b.endByte && !before.has(b.startByte));
+}
+function renderPulls() {
+  const box = $('pulls');
+  if (!L.items.length) { box.innerHTML = '<p class="empty">No boss pulls in this log yet. They show up here as they end.</p>'; $('logInfo').textContent = ''; return; }
+  $('logInfo').textContent = L.items.length + ' boss pull' + (L.items.length === 1 ? '' : 's');
+  const groups = new Map();
+  for (const b of L.items) { const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
+  box.innerHTML = [...groups].reverse().map(([k, l]) => '<div class="bossname">' + esc(k) + '</div>' + l.slice().reverse().map((b) => {
+    const i = L.items.indexOf(b), done = !!b.endByte, sel = L.sel === i;
+    const chip = !done ? '<span class="chip other">In progress</span>' : b.kill ? '<span class="chip kill">Kill</span>' : '<span class="chip wipe">Wipe' + (L.reps.get(b.startByte) && L.reps.get(b.startByte).pct != null ? ' ' + L.reps.get(b.startByte).pct + '%' : '') + '</span>';
+    return '<div class="pull' + (sel ? ' sel' : '') + '"><span class="n">Pull ' + b.pull + '</span><span>' + chip + '</span><span class="d">' + (done ? mmss(b.duration) : '') + '</span>' +
+      '<button class="btn' + (sel ? ' primary' : '') + '" type="button" data-i="' + i + '"' + (done ? '' : ' disabled') + '>' + (L.sent.has(b.startByte) ? 'Send again' : 'Send to game') + '</button></div>';
+  }).join('')).join('');
+  box.querySelectorAll('button[data-i]').forEach((btn) => btn.addEventListener('click', () => send(L.items[+btn.dataset.i], true)));
+}
+
+// ---------- live: wait for the log to grow (no timers, so it keeps up while minimized) ----------
+async function waitLoop() {
+  L.waiting = true;
+  while (L.live) {
+    let x;
+    try { x = await j('/wait?name=' + encodeURIComponent(L.name) + '&size=' + L.size); } catch (e) { stat('Lost the companion: ' + e.message, 'err'); await new Promise((r) => setTimeout(r, 3000)); continue; }
+    if (x.newfile) { await loadLogs(); continue; } // (a newer log: switch to it and keep watching)
+    if (x.size !== L.size) {
+      try {
+        const fresh = await scanMore(false);
+        if (fresh.length && $('auto').checked) send(fresh[fresh.length - 1], false);
+      } catch (e) { stat('Read error: ' + e.message, 'err'); }
+    }
+  }
+  L.waiting = false;
+}
+async function waitNew() { // (no combat log yet: check for one every so often)
+  for (;;) { await new Promise((r) => setTimeout(r, 5000)); try { const x = await j('/logs'); if ((x.files || []).length) { loadLogs(); return; } } catch (e) { /* keep waiting */ } }
+}
+
+// ---------- reading one pull ----------
+async function readText(b) {
+  const parts = []; let at = b.startByte, got = 0; const total = b.endByte - b.startByte;
+  while (at < b.endByte) {
+    const to = Math.min(b.endByte, at + 16 * 1048576);
+    const r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + at + '&to=' + to);
+    if (!r.ok) throw new Error('Could not read the log.');
+    const buf = new Uint8Array(await r.arrayBuffer()); if (!buf.length) break;
+    parts.push(buf); at += buf.length; got += buf.length; progress(got / total * 0.5);
+  }
+  const all = new Uint8Array(got); let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
+  return new TextDecoder().decode(all);
+}
+function progress(f) { const bar = $('bar'); bar.hidden = f == null; if (f != null) bar.firstElementChild.style.width = Math.round(f * 100) + '%'; }
+async function analyze(b) {
+  if (L.reps.has(b.startByte) && L.reps.get(b.startByte).rep) return L.reps.get(b.startByte).rep;
+  const E = W.E, text = await readText(b);
+  await new Promise((r) => setTimeout(r, 30));
+  const rep = E.analyze(b, text, { packs: (W.S && W.S.packs) || E.PACKS, overrides: {} });
+  if (rep.combatantsRaw && rep.combatantsRaw.length) rep.combatants = rep.combatantsRaw.filter((c) => rep.players.has(c.guid)).map((c) => ({ name: rep.players.get(c.guid).name, gear: c.gear, auras: c.auras, self: c.guid, stats: c.stats, talents: c.talents || [] }));
+  const pr = W.progressOf ? W.progressOf(rep) : null;
+  L.reps.set(b.startByte, { rep, pct: b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : null, prog: pr });
+  return rep;
+}
+
+// ---------- the recap: what goes to the game ----------
+const RECAP = window.DBF_RECAP = {};
+async function send(b, byHand) {
+  L.sel = L.items.indexOf(b); renderPulls();
+  const run = L.busy.then(async () => {
+    try {
+      stat('Reading pull ' + b.pull + ' of ' + b.boss + '…', 'busy'); progress(0.02);
+      await engineReady;
+      // (the pull before it on the same boss, read first, so "vs last pull" works)
+      const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
+      if (k > 0 && !L.reps.has(same[k - 1].startByte)) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
+      const rep = await analyze(b); progress(0.8);
+      const model = RECAP.build(b, rep, same.slice(0, k + 1));
+      const code = RECAP.encode(model);
+      $('codeOut').value = code; $('copyAgain').disabled = false;
+      RECAP.lastModel = model; renderPreview(model);
+      const ok = await clip(code);
+      L.sent.add(b.startByte); renderPulls(); progress(null);
+      $('stepT').innerHTML = ok ? '<b>Copied pull ' + b.pull + ' (' + esc(resultText(model.h)) + ').</b> Paste it in game now.' : '<b>Pull ' + b.pull + ' is ready</b>, but copying failed. Use "Copy it again".';
+      stat(L.live ? 'Watching ' + L.name : 'Sent pull ' + b.pull, L.live ? 'live' : '');
+    } catch (e) { console.error(e); progress(null); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }
+  });
+  L.busy = run.catch(() => {});
+  return run;
+}
+async function clip(text) {
+  try { const x = await j('/clip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, sound: $('snd').checked }) }); if (x.ok) return true; } catch (e) { /* try the browser */ }
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
+}
+$('copyAgain').addEventListener('click', () => clip($('codeOut').value));
+$('folderGo').addEventListener('click', async () => {
+  try { await j('/folder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dir: $('folderIn').value }) }); loadLogs(); } catch (e) { stat(e.message, 'err'); }
+});
+const resultText = (h) => h.kill ? 'Kill, ' + h.dur : 'Wipe' + (h.pct !== '' ? ' at ' + h.pct + '%' : '') + ', ' + h.dur;
+
+// ---------- code format (the addon reads the same thing) ----------
+// DBF1^H~boss~diff~pull~kill~pct~dur~where~deaths^P~name~CLASS~spec~role~unit~value~delta~vs~best~bp~rank~icon^S~name~flag~icon~text
+// ^B~name~flag~icon~text^N~name~text^R~flag~icon~title~text^D~time~name~CLASS~icon~why^X~text^Q~text^Z
+const clean = (s) => String(s == null ? '' : s).replace(/[\^~|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+RECAP.encode = (m) => {
+  const rec = [['DBF1'], ['H', m.h.boss, m.h.diff, m.h.pull, m.h.kill ? 1 : 0, m.h.pct, m.h.dur, m.h.where, m.h.deaths]];
+  for (const p of m.players) {
+    rec.push(['P', p.name, p.cls, p.spec, p.role, p.unit, p.v, p.d == null ? '' : p.d, p.vs || '', p.best || '', p.bp || '', p.rank || '', p.icon || '']);
+    for (const s of p.slips) rec.push(['S', p.name, s[0], s[1] || '', s[2]]);
+    for (const s of p.boss) rec.push(['B', p.name, s[0], s[1] || '', s[2]]);
+    if (p.next) rec.push(['N', p.name, p.next]);
+  }
+  for (const r of m.raid.bad) rec.push(['R', r[0], r[1] || '', r[2], r[3]]);
+  for (const d of m.raid.died) rec.push(['D', d[0], d[1], d[2], d[3] || '', d[4]]);
+  if (m.raid.more) rec.push(['X', m.raid.more]);
+  if (m.raid.next) rec.push(['Q', m.raid.next]);
+  rec.push(['Z']);
+  return rec.map((r) => r.map(clean).join('~')).join('^');
+};
+RECAP.decode = (code) => {
+  const m = { h: null, players: [], raid: { bad: [], died: [], more: '', next: '' } }, by = new Map();
+  for (const r of String(code).trim().split('^')) {
+    const f = r.split('~'), t = f[0];
+    if (t === 'H') m.h = { boss: f[1], diff: f[2], pull: f[3], kill: f[4] === '1', pct: f[5], dur: f[6], where: f[7], deaths: f[8] };
+    else if (t === 'P') { const p = { name: f[1], cls: f[2], spec: f[3], role: f[4], unit: f[5], v: f[6], d: f[7] === '' ? null : +f[7], vs: f[8], best: f[9], bp: f[10], rank: f[11], icon: f[12], slips: [], boss: [], next: '' }; m.players.push(p); by.set(p.name, p); }
+    else if (t === 'S' && by.get(f[1])) by.get(f[1]).slips.push([f[2], f[3], f[4]]);
+    else if (t === 'B' && by.get(f[1])) by.get(f[1]).boss.push([f[2], f[3], f[4]]);
+    else if (t === 'N' && by.get(f[1])) by.get(f[1]).next = f[2];
+    else if (t === 'R') m.raid.bad.push([f[1], f[2], f[3], f[4]]);
+    else if (t === 'D') m.raid.died.push([f[1], f[2], f[3], f[4], f[5]]);
+    else if (t === 'X') m.raid.more = f[1];
+    else if (t === 'Q') m.raid.next = f[1];
+  }
+  return m;
+};
+
+// ---------- the preview card ----------
+const CC = { WARRIOR: '#C69B6D', PALADIN: '#F48CBA', HUNTER: '#AAD372', ROGUE: '#FFF468', PRIEST: '#FFFFFF', DEATHKNIGHT: '#C41E3A', SHAMAN: '#0070DD', MAGE: '#3FC7EB', WARLOCK: '#8788EE', MONK: '#00FF98', DRUID: '#FF7C0A', DEMONHUNTER: '#A330C9', EVOKER: '#33937F' };
+const ICONS = store.get('dbf-icons', {});
+function iconImg(id) {
+  if (!id) return '<span class="ic"></span>';
+  if (!/^\d+$/.test(String(id))) return '<span class="ic"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + esc(String(id).toLowerCase()) + '.jpg" alt=""></span>'; // (an icon's own name, like a spec icon)
+  const n = ICONS[id];
+  if (n) return '<span class="ic"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + n + '.jpg" alt=""></span>';
+  fetch('https://nether.wowhead.com/tooltip/spell/' + id + '?dataEnv=1&locale=0').then((r) => r.json()).then((x) => { if (x && x.icon) { ICONS[id] = x.icon; store.set('dbf-icons', ICONS); document.querySelectorAll('[data-ic="' + id + '"]').forEach((el) => { el.innerHTML = '<img src="https://wow.zamimg.com/images/wow/icons/medium/' + x.icon + '.jpg" alt="">'; }); } }).catch(() => {});
+  return '<span class="ic" data-ic="' + id + '"></span>';
+}
+let PV = { view: 'me', who: null };
+function renderPreview(m) {
+  const box = $('preview'); if (!m || !m.h) return;
+  const meName = store.get('dbf-me', null);
+  const names = m.players.map((p) => p.name);
+  if (!PV.who || !names.includes(PV.who)) PV.who = names.includes(meName) ? meName : names[0];
+  const P = m.players.find((p) => p.name === PV.who);
+  const cls = Object.fromEntries(m.players.map((p) => [p.name, p.cls]));
+  const nm = (n, c) => '<span class="nm-c" style="color:' + (CC[c || cls[n]] || '#ece8df') + '">' + esc(n) + '</span>';
+  const names2 = (s) => esc(s).replace(/@([^\s,.!?;:()]+)/gu, (x, n) => nm(n));
+  const row = (r, raid) => '<div class="c-row"><i class="dot ' + esc(r[0]) + '"></i>' + iconImg(r[1]) + '<div>' + (raid ? '<strong>' + esc(r[2]) + '</strong>' + names2(r[3]) : names2(r[2])) + '</div></div>';
+  const h = m.h;
+  let body = '';
+  if (PV.view === 'me' && P) {
+    const delta = P.d == null ? '' : (P.d >= 0 ? '<span class="up">▲ ' + P.d + '%</span>' : '<span class="down">▼ ' + Math.abs(P.d) + '%</span>') + ' vs pull ' + esc(P.vs) + '<br>';
+    body = '<div class="c-tile">' + iconImg(P.icon) + '<div><div class="l">' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</div><div class="v">' + esc(P.v) + '<small>' + esc(P.unit) + '</small></div></div><div class="s">' + delta + (P.best ? 'Best ' + esc(P.best) + ' (pull ' + esc(P.bp) + ')' : 'First pull read') + (P.rank ? '<br>' + esc(P.rank) : '') + '</div></div>' +
+      '<div><p class="c-h">Rotation</p>' + (P.slips.length ? P.slips.map((r) => row(r)).join('') : '<div class="c-row"><i class="dot ok"></i><span class="ic"></span><div>No rotation checks for this spec yet.</div></div>') + '</div>' +
+      '<div><p class="c-h">Boss mechanics</p>' + (P.boss.length ? P.boss.map((r) => row(r)).join('') : '<div class="c-row"><i class="dot ok"></i><span class="ic"></span><div>No boss mistakes.</div></div>') + '</div>' +
+      (P.next ? '<div class="c-next"><p class="c-h">Next pull</p><p>' + names2(P.next) + '</p></div>' : '');
+  } else {
+    body = '<div><p class="c-h">' + (h.kill ? 'What to clean up' : 'Top mistakes') + '</p>' + (m.raid.bad.length ? m.raid.bad.map((r) => row(r, true)).join('') : '<div class="c-row"><i class="dot ok"></i><span class="ic"></span><div>Nothing big.</div></div>') + '</div>' +
+      '<div><p class="c-h">Who died</p>' + (m.raid.died.length ? m.raid.died.map((d) => '<div class="c-died"><span class="t">' + esc(d[0]) + '</span>' + nm(d[1], d[2]).replace('nm-c', 'nm') + iconImg(d[3]) + '<span class="w">' + esc(d[4]) + '</span></div>').join('') : '<div class="c-more">Nobody died.</div>') +
+      (m.raid.more ? '<div class="c-more">' + esc(m.raid.more) + '</div>' : '') + '</div>' +
+      (m.raid.next ? '<div class="c-next"><p class="c-h">Next pull</p><p>' + names2(m.raid.next) + '</p></div>' : '');
+  }
+  box.innerHTML = '<div class="card"><div class="c-top"><svg viewBox="0 0 20 22" aria-hidden="true"><path d="M10 1 L18.5 4 V10.5 C18.5 15.6 14.8 19.3 10 21 C5.2 19.3 1.5 15.6 1.5 10.5 V4 Z" fill="url(#lgf)" stroke="#2a1e06" stroke-width=".8"/><path d="M7 6.5 H10.6 C13.3 6.5 14.6 8.4 14.6 11 C14.6 13.6 13.3 15.5 10.6 15.5 H7 Z M9.2 8.4 V13.6 H10.5 C11.7 13.6 12.4 12.6 12.4 11 C12.4 9.4 11.7 8.4 10.5 8.4 Z" fill="#2a1e06"/></svg><b>Debrief</b><span>' + esc(h.boss) + ' · ' + esc(h.diff) + '</span><span class="x">✕</span></div>' +
+    '<div class="c-pulls"><span class="chip ' + (h.kill ? 'kill' : 'wipe') + ' on">Pull ' + esc(h.pull) + ' · ' + (h.kill ? 'Kill' : (h.pct !== '' ? h.pct + '%' : 'Wipe')) + '</span></div>' +
+    '<div class="c-res"><h3 class="' + (h.kill ? 'kill' : 'wipe') + '">' + (h.kill ? 'Kill!' : 'Wipe' + (h.pct !== '' ? ' at ' + esc(h.pct) + '%' : '')) + '</h3><p>' + [h.dur, h.where, h.deaths + (h.deaths === '1' ? ' death' : ' deaths')].filter(Boolean).map(esc).join(' · ') + '</p></div>' +
+    '<div class="c-tabs"><button type="button" data-v="me" class="' + (PV.view === 'me' ? 'on' : '') + '">Me</button><button type="button" data-v="raid" class="' + (PV.view === 'raid' ? 'on' : '') + '">Raid view</button>' +
+    (PV.view === 'me' ? '<span class="c-who"><button type="button" data-w="-1" aria-label="Previous player">◀</button>' + (P ? nm(P.name, P.cls) : '') + '<button type="button" data-w="1" aria-label="Next player">▶</button></span>' : '') + '</div>' +
+    '<div class="c-body">' + body + '</div><div class="c-foot">In game, the card opens on your own character. Type /debrief to open it again.</div></div>';
+  box.querySelectorAll('[data-v]').forEach((x) => x.addEventListener('click', () => { PV.view = x.dataset.v; renderPreview(m); }));
+  box.querySelectorAll('[data-w]').forEach((x) => x.addEventListener('click', () => { const i = names.indexOf(PV.who); PV.who = names[(i + (+x.dataset.w) + names.length) % names.length]; store.set('dbf-me', PV.who); renderPreview(m); }));
+}
+RECAP.renderPreview = renderPreview;
+
+// recap builder lives below (filled in from the engine's results)
+RECAP.build = (b, rep, same) => window.DBF_BUILD(b, rep, same, W, L);
+
+stat('Loading Debrief…', 'busy');
+engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));
+})();
+</script>
+<script src="/recap.js"></script>
+</body>
+</html>

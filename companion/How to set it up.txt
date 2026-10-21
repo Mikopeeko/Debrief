@@ -1,0 +1,40 @@
+DEBRIEF IN GAME (test version 0.1)
+==================================
+
+What it does
+  After every boss pull, your recap shows in WoW: your damage or healing (against your last pull and your best),
+  your biggest rotation slips, your boss mistakes and one thing to try next pull. Raid leads also get a Raid view.
+
+TRY IT RIGHT NOW (test mode is on in this version)
+  - In WoW, type /debrief demo: a sample card from our Heroic Ula'tek kill shows, no paste needed.
+  - Or open "Test code - paste this in game.txt", copy everything (Ctrl+A, Ctrl+C), and in WoW press Ctrl+Shift+D
+    (or type /debrief paste), then Ctrl+V.
+  - The Debrief box pops up after every fight (a training dummy works) and when you log in. /debrief test turns that off.
+
+One person in the raid (whoever keeps the combat log) does this
+  1. Double-click "Debrief Companion.bat".
+     A small window opens. It also puts the Debrief addon into your WoW AddOns folder by itself.
+     Keep the black window open during raid (you can minimize both).
+  2. In WoW, log the raid: type /combatlog when you zone in (or keep using the Warcraft Logs uploader's logging).
+     If WoW was already open, type /reload once so the addon loads.
+  3. After each boss pull you hear a chime. In WoW the Debrief box pops up: click it (or press Ctrl+Shift+D),
+     then press Ctrl+V. Your card shows, and the addon sends everyone else their card.
+
+Everyone else
+  Just have the Debrief addon installed (copy the "Debrief" folder from "addon" into
+  World of Warcraft\_retail_\Interface\AddOns). Their card shows up by itself after each pull.
+
+Handy commands in WoW
+  /debrief          show or hide the card
+  /debrief paste    open the paste box
+  /debrief raid     Raid view on or off
+  /debrief reset    move the card back to the middle
+  Drag the card by its top bar. Esc closes it.
+
+If something's off
+  - Windows says "Windows protected your PC" when you double-click the .bat: click "More info", then "Run anyway".
+    (It's because the file came from a download.) Unzip first; don't run it from inside the zip.
+  - The window says it can't find your WoW Logs folder: paste where WoW is installed, for example
+    C:\Program Files (x86)\World of Warcraft
+  - The addon says "Out of date" on the character screen: tick "Load out of date AddOns".
+  - Nothing happens after a pull: check that the combat log is on (/combatlog) and the black window is still open.
