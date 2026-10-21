@@ -32,8 +32,8 @@ Edit files in src/, run `python build.py` inside src/, refresh the browser tab o
 - Patch notes live only on the site (the menu's Patch notes page; no Discord posts written by hand). With each round a raider
   would notice, add to `PATCH_NOTES` in src/ui.js under today's date (or a new date at the top): a big new thing raiders will
   love goes in h as a New features card ({ t: short title, d: one or two sentences }); smaller changes are a plain line in
-  n (Improvements) or f (Bug fixes). A new day posts itself to the Discord's #patch-notes (@everyone, the feature titles and
-  a link) within 10 minutes of the deploy.
+  n (Improvements) or f (Bug fixes). Every morning at 10 (Central) the day before posts itself to the Discord's
+  #patch-notes in full (the feature titles, how many improvements and fixes, a link); @everyone only when it has a New feature.
 
 ## Version control
 - Private GitHub repo: https://github.com/Mikopeeko/Debrief (branch `main`). Git is at `C:\Program Files\Git\cmd\git.exe`.
