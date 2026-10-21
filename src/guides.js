@@ -1544,12 +1544,12 @@ const SE_M = {
       k.boss('bg', 'Breath of Ula\'tek', 0.5, SE_G[0], SE_G[1]).boss('bg', 'Breath of Ula\'tek', 5, 10, -31).boss('br', 'Blood of Ula\'tek', 0.5, SE_R[0], SE_R[1]).boss('br', 'Blood of Ula\'tek', 5, -10, -31);
       SE_GREEN.slice(1).forEach((id, i) => { const [dx, dy] = gdzSpot(i, 9, 9); k.hold(0.5, id).at(5, id, 15 + dx, -15 + dy); }); SE_RED.slice(1).forEach((id, i) => { const [dx, dy] = gdzSpot(i, 9, 9); k.hold(0.5, id).at(5, id, -15 + dx, -15 + dy); });
       k.call(5.2, 9, '99% less damage', { x: 0, y: -38, color: '#ff3b3b', ink: '#fff' }); k.oops('t1', 5).oops('t2', 5); k.step(0.5).step(3).step(5.2);
-      k.pause(4.4, 'The tanks drifted in. The bosses are inside 25 yards of each other: both take 99% less damage.', { x: 0, y: -31, r: 14 });
+      k.pause(4.4, 'The tanks drifted in. The bosses are inside 40 yards of each other: both take 99% less damage.', { x: 0, y: -31, r: 14 });
       return k.done({ title: 'Mistake: the bosses too close', focus: { x: 0, y: -27, r: 14 }, badLabel: 'tanks who drifted in' }); }
     k.link({ from: 'bg', to: 'br', t0: 1, t1: 9.6, color: '#e6b450', legend: 'keep the bosses 40+ yards apart' }); k.call(1.5, 9.6, '60 yards apart', { x: 0, y: -36, color: '#e6b450', ink: '#141006' });
     k.ring1(['t1', 't2']).step(0.5).step(1.5).step(4);
     k.pause(3.5, 'Breath in the corner by the green gem, Blood in the corner by the red gem: about 60 yards apart. Stay inside your own boss\'s ring and out of the other one.', { x: 0, y: -30, r: 20 });
-    return k.done({ title: 'Two bosses, two halves', focus: { x: 0, y: -16, r: 20 }, hlLabel: 'the two tanks' });
+    return k.done({ title: 'Two bosses, two halves', focus: { x: 0, y: -16, r: 38 }, hlLabel: 'the two tanks' });
   },
   // Venom Coagulation: an add baited on a ranged player, pulsing raid damage while alive. Tactyks' plan: the green ranged and healers
   // "stack far" to bait it (away from the old Blood tank's big puddle), and the tank takes Breath to the add's far side, so the boss is
@@ -1591,39 +1591,51 @@ const SE_M = {
     const go = (id, path) => { let t0 = 2.6; path.forEach((i) => { k.hold(t0, id).at(T[i] - 0.1, id, D[i][0], D[i][1]); t0 = T[i]; }); };
     go('t1', fail ? [0] : [0, 1, 2]); go('r1', [3, 4]); go('r4', [5]); go('h3', [6]); go('t2', [7, 8]);
     k.call(2.6, 9, 'Defensive', { on: 't1', color: '#e6b450', ink: '#141006' }).call(2.6, 9, 'Defensive', { on: 't2', color: '#e6b450', ink: '#141006' }); if (myth) k.call(3, 9, 'Immunity', { on: 'r1', color: '#7fd8ff', ink: '#06131c' });
+    if (fail && !myth) { const dp = D[5], u = (0 - dp[0]) / (SE_G[0] - dp[0]), pm = [0, dp[1] + u * (SE_G[1] - dp[1])], tv = T[5] + 4, th = tv + Math.hypot(pm[0] - dp[0], pm[1] - dp[1]) / 30; /* (a soaked red-side droplet's venom flies across the middle to Breath: a melee has wandered onto that line) */
+      k.hold(0.6, 'm7').at(5.5, 'm7', pm[0], pm[1]); k.call(1, 5, 'Into the middle', { on: 'm7', color: '#ff8a8a', ink: '#200a0a' });
+      const aa = Math.atan2(SE_G[1] - dp[1], SE_G[0] - dp[0]) * 180 / Math.PI, dd = Math.hypot(SE_G[0] - dp[0], SE_G[1] - dp[1]);
+      k.link({ from: 'bg', toYd: { x: dp[0], y: dp[1] }, t0: T[5], t1: tv + 0.2, color: '#9dff6a', legend: 'Living Venom: where a soaked droplet\'s venom will fly back into Breath' });
+      k.wave({ x: dp[0], y: dp[1], deg: aa, v: 30, w: 2, d: 3, t0: tv, t1: tv + dd / 30, color: '#9dff6a', legend: 'Living Venom: the venom flies back into Breath and hits anyone in the way' });
+      ulHit(k, 'm7', th, 'Living Venom'); k.oops('m7', th); k.step(0.5).step(T[5]).step(th);
+      k.pause(th + 0.3, 'This melee wandered into the middle, between the bosses. A soaked droplet\'s venom flew back across the room to Breath along its line and hit them.', { on: 'm7', r: 9 });
+      return k.done({ title: 'Mistake: standing on a venom line', focus: { x: 0, y: -22, r: 36 }, badLabel: 'hit by the venom' }); }
     if (fail) { go('m1', [1, 2]); ulHit(k, 'm1', 8.5, 'Two at once'); k.oops('m1', 8.5); k.step(0.5).step(2.5).step(8.5);
       k.pause(8, 'This melee already took a droplet and runs onto another one: two at once, without an immunity.', { on: 'm1', r: 6 });
       return k.done({ title: 'Mistake: two droplets at once', focus: { x: 27, y: -32, r: 10 }, badLabel: 'took two at once' }); }
     // (after their soak, each soaker steps off the line between their droplet and Breath; the melee shift east, clear of the last blades)
     const home = (id, t0, t1) => { const q = k.posAt(id, 0); k.hold(t0, id).at(t1, id, q[0], q[1]); }; home('r4', 6.2, 8); home('h3', 6.8, 8.6); home('t2', 7.6, 9.6);
     home('r1', 9, 11); k.hold(9, 't1').at(11, 't1', 20, -36);
-    if (myth) [[38, -12], [43, -17], [38, -22], [43, -27]].forEach(([x, y], i) => k.hold(10, 'm' + (i + 1)).at(11.8, 'm' + (i + 1), x, y));
+    [[38, -12], [43, -17], [38, -22], [43, -27]].forEach(([x, y], i) => k.hold(10, 'm' + (i + 1)).at(11.8, 'm' + (i + 1), x, y));
     // (Mythic, Living Venom: each soaked droplet's venom flies back into Breath 4 seconds later; dashed until it goes)
-    if (myth) D.forEach(([x, y], i) => { const a = Math.atan2(SE_G[1] - y, SE_G[0] - x) * 180 / Math.PI, dd = Math.hypot(SE_G[0] - x, SE_G[1] - y), t0 = T[i] + 4;
+    D.forEach(([x, y], i) => { const a = Math.atan2(SE_G[1] - y, SE_G[0] - x) * 180 / Math.PI, dd = Math.hypot(SE_G[0] - x, SE_G[1] - y), t0 = T[i] + 4;
       k.link({ from: 'bg', toYd: { x, y }, t0: T[i], t1: t0 + 0.2, color: '#9dff6a', legend: 'Living Venom: where a soaked droplet\'s venom will fly back into Breath' });
       k.wave({ x, y, deg: a, v: 30, w: 2, d: 3, t0, t1: t0 + dd / 30, color: '#9dff6a', legend: 'Living Venom: the venom flies back into Breath and hits anyone in the way' }); });
     k.ring1(['t1', 't2', 'r1', 'r4', 'h3']).step(0.5).step(2.5).step(4.4).step(8.4);
-    k.pause(4.2, 'Droplets all around both halves. Each tank takes the ones on their side with a defensive, a ranged with an immunity takes two, everyone else one here and there.', { x: 0, y: -24, r: 30 });
-    if (myth) k.pause(8.8, 'Each soaked droplet sends its venom back into Breath 4 seconds later, along its dashed line. Everyone steps off those lines.', { x: 10, y: -26, r: 26 });
-    return k.done({ title: 'Toxic Droplets: tanks, immunities, and the venom flying back', focus: { x: 0, y: -12, r: 22 }, hlLabel: 'droplet soakers' });
+    k.pause(4.2, myth ? 'Droplets all around both halves. Each tank takes the ones on their side with a defensive, a ranged with an immunity takes two, everyone else one here and there.' : 'Droplets all around both halves. Each tank takes the ones on their side with a defensive, everyone else one here and there.', { x: 0, y: -24, r: 30 });
+    k.pause(8.8, 'Each soaked droplet sends its venom back into Breath 4 seconds later, along its dashed line. Everyone steps off those lines.', { x: 10, y: -26, r: 26 });
+    return k.done({ title: myth ? 'Toxic Droplets: tanks, immunities, and the venom flying back' : 'Toxic Droplets: tanks, and the venom flying back', focus: { x: 0, y: -14, r: 40 }, hlLabel: 'droplet soakers' });
   },
   // Unstable Miasma: a soak on a player in Blood's half; it goes off in the red half's stack by Blood with 8 or more in it; every soaker
   // then drops a puddle (Blood Venom), side by side along the wall between the bosses (fail: only four soak)
   miasma(fail, d, o) {
     const myth = d !== 'h', L = 21, k = seK(gdzKit('Entombed Sentinels', L), o), C = [-37, -33]; seBosses(k); seRaid(k);
     k.cast('br', 'Unstable Miasma', 0.5, 1.5);
-    const tg = 'r4', SO = ['r4', 'h3', 'm5', 'm6', 'r5', 'r6', 'r7', 'h4', 'm7'], go = fail ? SO.slice(0, 4) : SO;
-    k.hold(1.5, tg).at(5, tg, C[0], C[1]); k.ring({ on: tg, r: 7.5, fx: 'soak', t0: 1.5, at: 9.5, dur: 8, color: '#ff5a5a', cn: 'Unstable Miasma', legend: 'Unstable Miasma: 8 or more stand in it' });
-    go.filter((id) => id !== tg).forEach((id, i, a) => { const st = a.length < 7 ? 180 : 110, sp = a.length < 7 ? 160 : 270, ang = (st + i * sp / Math.max(1, a.length - 1)) * Math.PI / 180; k.hold(1.6, id).at(6, id, C[0] + Math.cos(ang) * 7, C[1] + Math.sin(ang) * 7); }); /* (a ring inside the soak circle, with a gap toward Blood and the melee's spot) */
-    if (fail) { gdzFailBlast(k, 9.5, 'Too few: soakers die', C[0] + 4, C[1] + 11, ['m5', 'h3'], 'Unstable Miasma'); k.step(0.5).step(1.5).step(9.5);
-      k.pause(9, 'Only four in the soak. On Mythic it needs 8 or more, or the soakers die.', { x: C[0], y: C[1], r: 10 });
-      return k.done({ title: 'Mistake: the soak left short', focus: { x: -24, y: -26, r: 11 }, badLabel: 'too few in the soak' }); }
+    const tg = 'r4', SO = ['r4', 'h3', 'm5', 'm6', 'r5', 'r6', 'r7', 'h4', 'm7'], go = fail && myth ? SO.slice(0, 4) : SO;
+    k.hold(1.5, tg).at(6.5, tg, C[0], C[1]); k.ring({ on: tg, r: 7.5, fx: 'soak', t0: 1.5, at: 9.5, dur: 8, color: '#ff5a5a', cn: 'Unstable Miasma', legend: 'Unstable Miasma: 8 or more stand in it' });
+    go.filter((id) => id !== tg).forEach((id, i, a) => { const st = a.length < 7 ? 180 : 110, sp = a.length < 7 ? 160 : 250, ang = (st + i * sp / Math.max(1, a.length - 1)) * Math.PI / 180; k.hold(1.6, id).at(8, id, C[0] + Math.cos(ang) * 7, C[1] + Math.sin(ang) * 7); }); /* (a ring inside the soak circle, with a gap toward Blood and the melee's spot) */
+    if (fail && myth) { gdzFailBlast(k, 9.5, 'Too few: soakers die', C[0] + 4, C[1] + 11, ['m5', 'h3'], 'Unstable Miasma'); k.step(0.5).step(1.5).step(9.5);
+      k.pause(9, 'Only four in the soak. It needs 8 or more, or the soakers die.', { x: C[0], y: C[1], r: 10 });
+      return k.done({ title: 'Mistake: the soak left short', focus: { x: -30, y: -27, r: 16 }, badLabel: 'too few in the soak' }); }
+    if (!fail) k.call(5.5, 10, myth ? '9 in the soak: 8 or more' : 'Everyone in the soak', { x: C[0] + 17, y: C[1] + 12, color: '#ff8a8a', ink: '#200a0a' }); /* (a count you can read, since nine icons in one circle can't be counted by eye) */
     // (then the soakers walk along the wall between the bosses and drop their puddles there, side by side)
-    const up = !!(o && o.dy); SO.forEach((id, i) => { const x = up ? -40 : i < 7 ? -43 + i * 4.8 : -40.6 + (i - 7) * 4.8, y = up ? -28 + i * 4.8 : i < 7 ? -37 : -31.8; /* (on Blood's side of the wall: 40+ yards from Breath, or its Mark stacks on them) */ k.hold(10.2, id).at(15.6, id, x, y).hold(16.2, id); k.ring({ x, y, r: 3, fx: 'puddle', t0: 16.2, dur: L - 16.2, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'Blood Venom: the puddle each soaker drops' }); });
+    const up = !!(o && o.dy), mid = fail && !myth; SO.forEach((id, i) => { const x = mid ? -19 + i * 4.8 : up ? -40 : i < 7 ? -43 + i * 4.8 : -40.6 + (i - 7) * 4.8, y = mid ? -14 : up ? -28 + i * 4.8 : i < 7 ? -37 : -31.8; /* (on Blood's side of the wall: 40+ yards from Breath, or its Mark stacks on them) */ k.hold(10.2, id).at(15.6, id, x, y).hold(16.2, id); k.ring({ x, y, r: 3, fx: 'puddle', t0: 16.2, dur: L - 16.2, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'Blood Venom: the puddle each soaker drops' }); });
     SO.forEach((id, i) => { const [dx, dy] = gdzSpot(i, 9, 10); k.hold(16.4, id).at(L, id, -22 + dx, -6 + dy); });
+    if (fail && !myth) { k.call(10.4, 16.4, 'Puddles in the middle', { x: 0, y: -4, color: '#ff3b3b', ink: '#fff' }); k.oops('r4', 16.2); k.step(0.5).step(9.5).step(16.2);
+      k.pause(16.5, 'The soakers dropped their puddles in the middle of the room. That floor is gone for the rest of the fight.', { x: 0, y: -14, r: 24 });
+      return k.done({ title: 'Mistake: puddles in the middle', focus: { x: 0, y: -16, r: 26 }, badLabel: 'puddles in the middle' }); }
     k.ring1([tg]).step(0.5).step(1.5).step(6).step(10.2).step(16.2);
     k.pause(9, myth ? 'Nine in the soak, right in the red half\'s stack by Blood. On Mythic it needs 8 or more.' : 'The soak goes off in the red half\'s stack by Blood, with plenty of people in it.', { x: C[0], y: C[1], r: 10 });
-    return k.done({ title: 'Unstable Miasma: soak in the stack, puddles on the wall', focus: { x: -14, y: -30, r: 12 }, hlLabel: 'the soak target' });
+    return k.done({ title: 'Unstable Miasma: soak in the stack, puddles on the wall', focus: { x: -28, y: -26, r: 22 }, hlLabel: 'the soak target' });
   },
   // Shifting Protovenom (Mythic): 8 players get a 6-yard circle; circle meets circle and both clear; a circle touching someone without
   // one erupts (damage and a big knockback for both); pre-spread, unmarked players step out of the way (fail: a circle walks into an
@@ -1636,6 +1648,11 @@ const SE_M = {
       m6: [-10, -18], r5: [-22, -14], h4: [-38, -18], r7: [-30, -8], m5: [-36, -34], m7: [-16, -34], h3: [-40, -2], r4: [-14, -4], r6: [-25, 4] };
     Object.entries(SPR).forEach(([id, p]) => k.hold(0.3, id).at(3.9, id, p[0], p[1]));
     k.call(0.4, 4, 'Circles coming: spread', { x: 0, y: 8, color: '#ff9628', ink: '#1a0d00' });
+    if (o && o.hard) { const A2 = [4, -5]; /* (the worst overlap: the second add is alive, the last droplets land, and the second circles come: tanks and a ranged with an immunity soak the droplets) */
+      k.add('ad', 'Venom Coagulation', 0.2, A2[0], A2[1]).show('ad', 0.2, L); k.ring({ on: 'ad', r: 6, fx: 'zone', t0: 0.2, dur: L - 0.2, color: '#e8ff3d', fill: 'rgba(232,255,61,.22)', cn: 'Contaminate', legend: 'the second add: raid damage every pulse' });
+      [['t1', [31, -27], 3.2], ['t2', [-14, -26], 3.8], ['r1', [8, -13], 6]].forEach(([id, p, tt]) => k.ring({ x: p[0], y: p[1], r: 2.2, fx: 'zone', t0: 0.8, dur: tt - 0.8, color: '#b6ff5c', fill: 'rgba(150,255,90,.55)', cn: 'Toxic Droplets', legend: 'a droplet: step on it before it bursts' }));
+      k.hold(0.5, 't1').at(3.1, 't1', 31, -27); k.hold(3.4, 't1').at(5.6, 't1', 25, -24); k.hold(0.5, 't2').at(3.7, 't2', -14, -26); k.hold(4, 't2').at(6, 't2', -25, -24); k.hold(3.9, 'r1').at(5.9, 'r1', 7, -12); k.hold(6.2, 'r1').at(8.4, 'r1', 14, -4);
+      k.call(0.6, 4, 'Defensive', { on: 't1', color: '#e6b450', ink: '#141006' }); k.call(0.6, 4, 'Defensive', { on: 't2', color: '#e6b450', ink: '#141006' }); k.call(4.2, 7, 'Immunity', { on: 'r1', color: '#7fd8ff', ink: '#06131c' }); }
     const CIR = ['m1', 'r2', 'h2', 'm3', 'r5', 'm6', 'h4', 'r7'], PAIRS = [['m1', 'r2'], ['h2', 'm3'], ['r5', 'm6'], ['h4', 'r7']];
     CIR.forEach((id) => k.ring({ on: id, r: 6, fx: 'debuff', t0: 4, dur: fail && id === 'r7' ? 3 : 4, color: '#ff9628', cn: 'Shifting Protovenom', legend: 'Shifting Protovenom: meet another circle to clear both' }));
     PAIRS.forEach(([a, b], i) => { if (fail && i === 3) return; const pa = k.posAt(a, 4), pb = k.posAt(b, 4), m = [(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2]; /* (never on top of a player without a circle: that would erupt) */ for (let it = 0; it < 6; it++) for (const o of GDZ_RAID) { if (CIR.includes(o)) continue; const q = k.posAt(o, 4); if (!q) continue; const dx = m[0] - q[0], dy = m[1] - q[1], dd = Math.hypot(dx, dy) || 0.01; if (dd < 8) { m[0] += dx / dd * (8 - dd); m[1] += dy / dd * (8 - dd); } } k.hold(5.6, [a, b]).at(7.6, a, m[0] - 3.5, m[1]).at(7.6, b, m[0] + 3.5, m[1]); k.call(7.6, 9, 'Cleared', { on: a, color: '#7ee36a', ink: '#0a1a06' }); });
@@ -1644,7 +1661,7 @@ const SE_M = {
       return k.done({ title: 'Mistake: a circle meets an empty player', focus: { x: -24, y: -22, r: 11 }, badLabel: 'walked into an unmarked player' }); }
     k.ring1(CIR).step(0.5).step(2).step(4).step(5.6).step(7.6);
     k.pause(5.4, 'Eight circles, four on each side. Wait a moment, then walk to your partner circle. Everyone without one stays put.', { x: 0, y: -20, r: 34 });
-    return k.done({ title: 'Shifting Protovenom: circle to circle', focus: { x: 0, y: -12, r: 22 }, hlLabel: 'players with a circle' });
+    return k.done({ title: 'Shifting Protovenom: circle to circle', focus: { x: 0, y: -12, r: 44 }, hlLabel: 'players with a circle' });
   },
   // the intermission: both bosses walk to the middle with 99% less damage taken and the weaker heals up to the stronger; Helical Toxins:
   // everyone gets 1-3 green orbs and pairs up to make 4; on Mythic the counts hide, so Tactyks' traffic rules: 1s jump in place and
@@ -1658,9 +1675,9 @@ const SE_M = {
     const SP = { t1: [22, -4], m1: [30, -28], t2: [-22, -4], m5: [-30, -28], r1: [22, 9], h1: [31, -37], r4: [-22, 9], r6: [-31, -37], r3: [10, 4], m4: [10, -36], h3: [-10, -36], r7: [-10, 4],
       h2: [36, 4], m2: [40, -20], m3: [17, -37], r2: [34, 12], h4: [-36, 4], m6: [-40, -20], m7: [-17, -37], r5: [-34, 12] };
     Object.entries(SP).forEach(([id, p]) => k.hold(0.4, id).at(5.5, id, p[0], p[1]));
-    S1.forEach((id) => k.call(6, 10, myth ? '1: ping' : '1', { on: id, color: '#7ee36a', ink: '#0a1a06' }));
-    S3.forEach((id) => k.call(6, 10, myth ? '3: go' : '3', { on: id, color: '#7fd8ff', ink: '#06131c' }));
-    S2.forEach((id) => k.call(6, 10, myth ? '2: boss' : '2', { on: id, color: '#e6b450', ink: '#141006' }));
+    S1.filter((id) => id === 'm1' || id === 'm5').forEach((id) => k.call(6, 10, myth ? '1: ping' : '1', { on: id, color: '#7ee36a', ink: '#0a1a06' })); /* (one tag per group, on two players far apart) */
+    S3.filter((id) => id === 'r1' || id === 'r4').forEach((id) => k.call(6, 10, myth ? '3: go' : '3', { on: id, color: '#7fd8ff', ink: '#06131c' }));
+    S2.filter((id) => id === 'r3' || id === 'h3').forEach((id) => k.call(6, 10, myth ? '2: boss' : '2', { on: id, color: '#e6b450', ink: '#141006' }));
     const PR = [['r1', 't1'], ['h1', 'm1'], ['r4', 't2'], ['r6', 'm5']]; PR.forEach(([a, b]) => { const p = SP[b]; k.hold(6.4, a).at(9.8, a, p[0] + (p[0] > 0 ? 3.6 : -3.6), p[1]); });
     // (the 2s pair up under the bosses: two under Breath, two under Blood)
     if (!fail) { k.hold(6.4, ['r3', 'r7']).at(10, 'r3', 6.8, -21.5).at(10, 'r7', 3.2, -21.5); } else { k.hold(6.4, 'r3').at(10, 'r3', 6.8, -21.5); k.hold(6.4, 'r7').at(9.6, 'r7', -24, 14); }
@@ -1669,8 +1686,8 @@ const SE_M = {
       k.pause(11.2, 'A 2 bumped into a pair that was already made. Wrong total: Cultivated Burst, and a huge puddle in the middle.', { x: -5, y: -21.5, r: 10 });
       return k.done({ title: 'Mistake: a wrong pair', focus: { x: 0, y: -18, r: 12 }, badLabel: 'wrong pair' }); }
     k.ring1(S3.concat(S1, S2)).step(0.5).step(6).step(6.4).step(10);
-    k.pause(9, myth ? 'The numbers are hidden now. 1s jump in place and ping themselves, 3s run to a jumping pinger, 2s go under a boss and pair up there.' : 'Pair up to make 4: a 1 with a 3, or two 2s. Touch only your partner.', { x: 0, y: -16, r: 30 });
-    return k.done({ title: 'Intermission: make 4', focus: { x: 0, y: -12, r: 22 }, hlLabel: 'players pairing up' });
+    k.pause(9, myth ? 'The numbers are hidden now. Players with a 1 jump in place and ping themselves, players with a 3 run to a jumping pinger, players with a 2 go under a boss and pair up there.' : 'Pair up to make 4: a 1 with a 3, or two 2s. Touch only your partner.', { x: 0, y: -16, r: 30 });
+    return k.done({ title: 'Intermission: make 4', focus: { x: 0, y: -12, r: 42 }, hlLabel: 'players pairing up' });
   },
   // the tank swap: Empowering Slam grows 10% a hit on the same tank and Bloodvenom Injection stacks a poison, so the tanks taunt-swap as
   // each intermission ends; the halves stay put and the bosses cross. The tank leaving Blood drops a huge puddle (its middle into a gap
@@ -1696,14 +1713,16 @@ const SE_M = {
       return k.done({ title: 'Mistake: the big puddle on clean floor', focus: { x: 12, y: -22, r: 16 }, badLabel: 'the old Blood tank' }); }
     k.ring1(['t1', 't2']).step(0.3).step(1).step(3.6).step(6.7);
     k.pause(7.2, 'The old Blood tank drops the big puddle with its middle in the old blood. It grows from its middle, so most of it lands on floor that was already used.', { x: P[0], y: P[1], r: 11 });
-    return k.done({ title: 'Tank swap: taunt, then the big puddle into old blood', focus: { x: 8, y: -22, r: 18 }, hlLabel: 'the two tanks' });
+    return k.done({ title: 'Tank swap: taunt, then the big puddle into old blood', focus: { x: 0, y: -22, r: 38 }, hlLabel: 'the two tanks' });
   },
 };
 const SE_FAIL = {
   swap: { name: 'The big puddle on clean floor', what: 'The tank leaving Blood drops the huge puddle in open floor. It takes space the next adds and soaks need, for the rest of the fight.', do: ['The intermission ends and the tanks swap.', 'The old Blood tank drops the big puddle in the open.', 'A big piece of clean floor is gone for the rest of the fight.'], map: () => SE_M.swap(true) },
-  split: { solo: true, name: 'The bosses too close', what: 'The tanks drift in until the bosses are within 25 yards of each other: both take 99% less damage.', do: ['Both halves on their bosses.', 'The tanks drift toward the middle.', 'Inside 25 yards: 99% less damage on both bosses.'], map: () => SE_M.split(true) },
+  split: { solo: true, name: 'The bosses too close', what: 'The tanks drift in until the bosses are within 40 yards of each other: both take 99% less damage.', do: ['Both halves on their bosses.', 'The tanks drift toward the middle.', 'Inside 40 yards: 99% less damage on both bosses.'], map: () => SE_M.split(true) },
   coag: { name: 'The add left alive', what: 'The add that spawns right before the intermission isn\'t killed, and its pulses hit the raid through the whole intermission.', do: ['The add spawns.', 'Nobody switches to it.', 'Its pulses keep hitting the raid through the intermission.'], map: () => SE_M.coag(true) },
-  drops: { name: 'Two droplets at once', what: 'A player who already took a droplet runs onto another one: two at once kills on Mythic.', do: ['Droplets land.', 'One melee takes one, then runs onto another.', 'Two at once, no immunity: dead.'], map: (d) => SE_M.drops(true, d) },
+  drops: { name: 'Two droplets at once', what: 'A player who already took a droplet runs onto another one: two at once kills.', do: ['Droplets land.', 'One melee takes one, then runs onto another.', 'Two at once, no immunity: dead.'], map: (d) => SE_M.drops(true, d) },
+  dropsH: { name: 'Standing on a venom line', what: 'A player stays on the line between a soaked droplet and Breath: 4 seconds later its venom flies back along that line and hits them.', do: ['A droplet is soaked.', 'A melee stays on the line to Breath.', 'The venom flies back and hits them.'], map: (d) => SE_M.drops(true, d) },
+  miasmaH: { name: 'Puddles in the middle', what: 'The soakers drop their puddles in the middle of the room: that floor is gone for the rest of the fight.', do: ['The soak goes off.', 'Everyone drops their puddle where they stand.', 'The middle is full of red for the rest of the fight.'], map: (d) => SE_M.miasma(true, d) },
   miasma: { name: 'The soak left short', what: 'Only four players stand in Unstable Miasma, and it kills them.', do: ['The soak goes on a ranged.', 'Only four join them.', 'Too few: the soakers die.'], map: (d) => SE_M.miasma(true, d) },
   proto: { name: 'A circle meets an empty player', what: 'A player with a circle walks into someone without one: Protovenom Eruption blasts and knocks back both, and the circle is still there.', do: ['Eight circles go out.', 'One walks into a player without a circle.', 'Both blasted and knocked back.'], map: () => SE_M.proto(true) },
   helix: { name: 'A wrong pair', what: 'A 2 bumps into a pair that was already made: the wrong total sets off Cultivated Burst and a huge puddle.', do: ['The numbers go out.', 'Pairs form.', 'A wrong bump: Cultivated Burst.'], map: (d) => SE_M.helix(true, d) },
@@ -1722,7 +1741,7 @@ const SE_BEATS = {
     run(o) { const k = seK(gdzKit('Entombed Sentinels', 5), o); seBosses(k); seRaid(k); const who = ['r5', 'm6', 'h4'];
       who.forEach((id, i) => { k.ring({ on: id, r: 2.6, fx: 'debuff', t0: 0.3, dur: 1.6 + i * 0.6, color: '#ff5a5a', cn: 'Blighted Blood', legend: 'poison: dispel it fast' }); k.dispel(i === 1 ? 'h4' : 'h3', id, 1.9 + i * 0.6); });
       k.ring1(['h3', 'h4']).step(0.3).step(1.9); } },
-  kill: { name: 'The last round (Burn them together)', do: ['Fifth round: the soak puddles go into the corner nooks to save space. Both bosses go down together.', 'If we ever reach the fifth intermission they enrage: skip the new add and burn the bosses.'],
+  kill: { name: 'The last round (Burn them together)', do: ['Fifth round: the soak puddles go into the corner nooks to save space. Both bosses go down together.', 'Both bosses go berserk at 7:00: burn them down together before then, and kill the last add fast.'],
     run(o) { const k = seK(gdzKit('Entombed Sentinels', 6), o); seBosses(k); seRaid(k);
       k.ring({ on: 'bg', r: 7, fx: 'burst', t0: 2, at: 2.6, dur: 0.8, color: '#ffd23b', cn: 'Breath dies', legend: 'the kill' }).ring({ on: 'br', r: 7, fx: 'burst', t0: 2.2, at: 2.8, dur: 0.8, color: '#ffd23b', cn: 'Blood dies', legend: 'the kill' }); k.show('bg', 0, 3).show('br', 0, 3.2);
       k.call(3.3, 5.6, 'Kill', { x: 0, y: -20 }); k.step(0.3).step(3.3); } },
@@ -1732,22 +1751,22 @@ const SE_DO = {
   coag2: ['Second add: it spawns right before the intermission and starts the worst overlap of the round. It has to die before the bosses go to the middle.', 'Same as before: the ranged stack far, Breath on its far side, every ranged on both halves burns it.'],
   drops2: ['Second droplets. Same jobs: each tank takes the ones on their side with a defensive, everyone else one here and there.', 'Droplets that land in red puddles: the tank goes and grabs them.'],
   miasma2: ['Second soak of the round. Same stack, same 8 or more.', 'Drop the new puddles next to the old ones, not in the middle.'],
-  hard: ['The worst overlap of the fight: the second add, the last droplets and the second set of circles all land together, right after the second soak.', 'Kill the add fast. Immunities soak the droplets (Divine Shield, Turtle, Cloak), or a raid cooldown covers it (Rallying Cry, Devotion Aura). Circles pause and count to two before they walk.'],
+  hard: ['The worst overlap of the fight: the second add, the last droplets and the second set of circles all land together, right after the second soak.', 'Kill the add fast. Immunities soak the droplets (a Paladin\'s Divine Shield, a Hunter\'s Turtle, a Rogue\'s Cloak), or a raid cooldown covers it (a Warrior\'s Rallying Cry, a Paladin\'s Devotion Aura). Circles pause and count to two before they walk.'],
 };
 const SE_SIM = [
   { at: 0, beat: 'start' }, { at: 12, mech: 'coag', o: SE_R1, label: 'Venom Coagulation (First add)' }, { at: 15, mech: 'drops', o: SE_R1 }, { at: 18, mech: 'miasma', o: SE_R1, label: 'Unstable Miasma (First soak)' },
   { at: 36, mech: 'proto', o: SE_R1 }, { at: 43, beat: 'blighted', o: SE_R1 }, { at: 46, mech: 'helix', o: SE_R1, label: 'Intermission 1 (Make 4)' },
   { at: 68, mech: 'swap', o: SE_R2 }, { at: 71, mech: 'coag', o: SE_R2 }, { at: 74, mech: 'drops', o: SE_R2 }, { at: 76, mech: 'miasma', o: SE_R2 }, { at: 98, mech: 'proto', o: SE_R2 }, { at: 102, beat: 'blighted', o: SE_R2 },
   { at: 106, mech: 'drops', o: { ...SE_R2, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 117, mech: 'miasma', o: { ...SE_R2, do: SE_DO.miasma2 }, label: 'Unstable Miasma 2' },
-  { at: 124, mech: 'coag', o: { ...SE_R2, do: SE_DO.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 139, mech: 'proto', o: { ...SE_R2, do: SE_DO.hard }, label: 'Droplets and circles together (The hard moment)' },
+  { at: 124, mech: 'coag', o: { ...SE_R2, do: SE_DO.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 139, mech: 'proto', o: { ...SE_R2, do: SE_DO.hard, hard: 1 }, label: 'Droplets and circles together (The hard moment)' },
   { at: 149, mech: 'helix', o: SE_R2, label: 'Intermission 2 (Make 4)' },
-  { at: 171, mech: 'swap', o: SE_R3, label: 'Tanks swap (Each boss to its own gem)' }, { at: 174, mech: 'coag', o: SE_R3 }, { at: 177, mech: 'drops', o: SE_R3 }, { at: 179, mech: 'miasma', o: SE_R3 }, { at: 201, mech: 'proto', o: SE_R3 },
+  { at: 171, mech: 'swap', o: SE_R3 }, { at: 174, mech: 'coag', o: SE_R3 }, { at: 177, mech: 'drops', o: SE_R3 }, { at: 179, mech: 'miasma', o: SE_R3 }, { at: 201, mech: 'proto', o: SE_R3 },
   { at: 204, beat: 'blighted', o: SE_R3 }, { at: 210, mech: 'drops', o: { ...SE_R3, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 221, mech: 'miasma', o: { ...SE_R3, do: SE_DO.miasma2 }, label: 'Unstable Miasma 2' },
-  { at: 226, mech: 'coag', o: { ...SE_R3, do: SE_DO.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 242, mech: 'proto', o: { ...SE_R3, do: SE_DO.hard }, label: 'Droplets and circles together (The hard moment)' },
+  { at: 226, mech: 'coag', o: { ...SE_R3, do: SE_DO.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 242, mech: 'proto', o: { ...SE_R3, do: SE_DO.hard, hard: 1 }, label: 'Droplets and circles together (The hard moment)' },
   { at: 252, mech: 'helix', o: { dy: 20 }, label: 'Intermission 3 (Make 4)' },
   { at: 279, mech: 'swap', o: SE_R4 }, { at: 282, mech: 'coag', o: SE_R4 }, { at: 285, mech: 'drops', o: SE_R4 }, { at: 288, mech: 'miasma', o: SE_R4 }, { at: 310, mech: 'proto', o: SE_R4 }, { at: 315, beat: 'blighted', o: SE_R4 },
   { at: 318, mech: 'drops', o: { ...SE_R4, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 329, mech: 'miasma', o: { ...SE_R4, do: SE_DO.miasma2 }, label: 'Unstable Miasma 2' },
-  { at: 335, mech: 'coag', o: { ...SE_R4, do: SE_DO.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 351, mech: 'proto', o: { ...SE_R4, do: SE_DO.hard }, label: 'Droplets and circles together (The hard moment)' },
+  { at: 335, mech: 'coag', o: { ...SE_R4, do: SE_DO.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 351, mech: 'proto', o: { ...SE_R4, do: SE_DO.hard, hard: 1 }, label: 'Droplets and circles together (The hard moment)' },
   { at: 361, mech: 'helix', o: { mx: 1, dy: 25 }, label: 'Intermission 4 (Make 4)' },
   { at: 387, mech: 'swap', o: SE_R5 }, { at: 390, mech: 'coag', o: SE_R5 }, { at: 393, mech: 'drops', o: SE_R5 }, { at: 395, mech: 'miasma', o: SE_R5 }, { at: 417, mech: 'proto', o: SE_R5 }, { at: 428, beat: 'kill', o: SE_R5 },
 ];
@@ -1755,21 +1774,21 @@ const SE_SIM = [
 const SE_DUR = { 'm:swap': 6, 'm:coag': 14, 'm:drops': 8, 'm:miasma': 15, 'm:proto': 8, 'm:helix': 22, 'b:start': 4, 'b:swap': 3, 'b:blighted': 5, 'b:kill': 0 };
 const SE_SEV = { 'm:swap': 2, 'm:coag': 2, 'm:drops': 3, 'm:miasma': 3, 'm:proto': 3, 'm:helix': 3, 'b:start': 1, 'b:swap': 1, 'b:blighted': 1, 'b:kill': 1 };
 GDZ['Entombed Sentinels'] = {
-  upd: ['12.1', 'Oct 20, 2026'],
+  upd: ['12.1', 'Oct 21, 2026'],
   stepRoles: {
-    'Two bosses (Stay 40 yards apart)': ['', 't', ''], 'Venom Coagulation (Stack far, everyone burns it)': ['dh', 'dh', 'td', ''], 'Toxic Droplets (Tanks and immunities)': ['', 't', '', ''],
-    'Unstable Miasma (8 or more soak, puddles on the wall)': ['', '', '', '', ''], 'Shifting Protovenom (Circle to circle)': ['', '', '', '', ''], 'Helical Toxins (Make 4)': ['', '', '', ''], 'Tank swap (Taunt after every intermission)': ['', 't', 'dh', 't'],
+    'Two bosses (Stay 40 yards apart)': ['', 't', ''], 'Venom Coagulation (Stack far, everyone burns it)': ['dh', 'dh', 'td', ''], 'Toxic Droplets (Tanks and immunities)': ['', 't', '', ''], 'Toxic Droplets (Tanks and the venom lines)': ['', 't', '', ''],
+    'Unstable Miasma (8 or more soak, puddles on the wall)': ['', '', '', '', ''], 'Unstable Miasma (Soak together, puddles on the wall)': ['', '', '', '', ''], 'Shifting Protovenom (Circle to circle)': ['', '', '', '', ''], 'Helical Toxins (Make 4)': ['', '', '', ''], 'Tank swap (Taunt after every intermission)': ['', 't', 'dh', 't'],
   },
-  sum: 'Two bosses, two halves of the raid. Breath goes into the corner by the green gem, Blood into the corner by the red gem, 40+ yards apart. Stay with yours, keep the floor clean of red puddles, and solve the math game at every intermission. As each one ends, the tanks taunt-swap the bosses, and then it\'s rinse and repeat: the same round again, a little further along the walls.',
+  sum: 'Two bosses, two halves of the raid. Breath goes into the corner by the green gem, Blood into the corner by the red gem, 40+ yards apart. Stay with yours, keep the floor clean of red puddles, and make 4 at every intermission. As each one ends, the tanks taunt-swap the bosses, and then it\'s rinse and repeat: the same round again, a little further along the walls.',
   m: { sim: SE_SIM, simDur: SE_DUR, simSev: SE_SEV, beats: SE_BEATS,
     simAlways: ['Every round after the first is rinse and repeat: the same order of events, the bosses swapped, a little further along the walls.', 'Stay with your boss: never inside 40 yards of the other one.', 'Red puddles stay down a long time: drop every new one next to the old ones, along the walls, and keep the middle clean.', 'After every intermission the tanks swap bosses: your half stays put and the other boss comes to you.'],
-    source: 'Tactyks\' Mythic Sentinels video', sum: 'Every Heroic mistake now kills: two droplets at once, the lines flying back, a short red soak. Add the Protovenom circles, and a math game where the numbers hide. Clean play matters more than damage.' },
-  facts: [['Bosses', '2, split raid'], ['Bloodlust', 'On pull'], ['Healers', '4', 'm'], ['Hardest part', 'The math game'], ['Fight length', 'About 7 minutes, 4 intermissions', 'm']],
+    source: 'Tactyks\' Mythic Sentinels video', sum: 'Mistakes now kill: two droplets at once, a hit from a venom line, a short red soak. Shifting Protovenom puts circles on eight players, and at the intermission the numbers hide after a few seconds. Clean play matters more than damage.' },
+  facts: [['Bosses', '2, split raid'], ['Bloodlust', 'On pull'], ['Healers', '4', 'm'], ['Hardest part', 'Making 4 at the intermissions'], ['Fight length', 'About 4 minutes, 2 intermissions', 'h'], ['Fight length', 'About 7 minutes, 4 intermissions', 'm']],
   phases: [
     { id: 'p1', name: 'The fight: two Sentinels', sum: 'Breath of Ula\'tek (green) in the corner by the green gem, Blood of Ula\'tek (red) in the corner by the red gem, at the same end of the room. One half on each, then the intermission at full energy.',
-      m: { sum: 'The first round is short: one add, one soak, one droplet set and one set of circles, then the intermission at 0:46. After that, about every 100 seconds: two adds, two red soaks, three droplet sets and two sets of circles, then the intermission. The second add, the last droplets and the second circles land together right before it: the worst moment of the fight. Every round after the first is rinse and repeat.' },
+      m: { sum: 'Round one is short: one add, one soak, one droplet set and one set of circles, then the intermission at 0:46. Every round after that takes about 100 seconds: two adds, two red soaks, three droplet sets and two sets of circles, then the intermission. The second add, the last droplets and the second circles land together just before it: the worst moment of the fight. Then rinse and repeat.' },
       mechs: [
-        { id: 'split', fail: SE_FAIL.split, name: 'Two bosses (Stay 40 yards apart)', spell: 'Ula\'tek\'s Dominance', what: 'Within 25 yards of each other, both bosses take 99% less damage. Each boss also stacks its Mark on everyone within 40 yards, so stay with your own.',
+        { id: 'split', fail: SE_FAIL.split, name: 'Two bosses (Stay 40 yards apart)', spell: 'Ula\'tek\'s Dominance', what: 'Within 40 yards of each other, both bosses take 99% less damage. Each boss also stacks its Mark on everyone within 40 yards, so stay with your own.',
           do: ['One half on each boss. Pull Breath (green) into the corner by the green gem and Blood (red) into the corner by the red gem, at the same end of the room.', 'Keep the bosses 40+ yards apart. At those spots they\'re about 60 apart.', 'Stay inside your own boss\'s 40 yards and out of the other one\'s.'],
           m: { do: ['One half on each boss. Pull Breath (green) into the corner by the green gem and Blood (red) into the corner by the red gem, at the same end of the room.', 'Keep the bosses 40+ yards apart. At those spots they\'re about 60 apart.', 'Stay with your boss. 20 Marks of Acid and 20 Marks of Blood on you at once kills you, so multi-dotters don\'t refresh into both.'],
             plan: ['Split the multi-dotters evenly (a Warlock and a Balance Druid on one side, a Warlock and a Shadow Priest on the other) and put the strong two-target melee on green: it has more adds.', 'If damage is tight, line up the bosses\' health before the intermission by swapping players around, not by stopping damage: the weaker one heals up to the stronger.'] },
@@ -1778,42 +1797,48 @@ GDZ['Entombed Sentinels'] = {
           do: ['The add is coming. Green ranged and healers: stack far, together, away from the tank and any big puddle.', 'It lands in your stack. Step off it.', 'The tank keeps Breath on the far side of the add. Melee cleave both; every ranged on both halves hits it from max range.', 'Dead: back to your spots.'],
           m: { plan: ['The first add of each round after the first matters most: the tank who just left Blood is dropping a huge puddle, and an add baited near it can\'t be cleaved. Stack far from that puddle.', 'With Breath on the far side, the boss is more than 40 yards from the ranged hitting the add, so nobody picks up a Mark.', 'The second add of a round spawns right before the intermission and starts the worst overlap: burn it.'] },
           map: (d, o) => SE_M.coag(false, d, o) },
-        { id: 'drops', fail: SE_FAIL.drops, name: 'Toxic Droplets (Tanks and immunities)', spell: 'Toxic Droplets', what: 'Droplets land all around both halves. Step on each before it bursts and hits the raid. Every pickup hurts, so the tanks take most of them.',
-          do: ['Droplets land all around both halves.', 'Each tank takes the ones on their side, always with a defensive up.', 'Everyone else takes one here and there.', 'Back to your spot.'],
-          m: { what: 'Droplets land all around both halves. Step on each before it bursts and hits the raid. Every pickup hurts and two at once kills, so the tanks take most of them. 4 seconds after a droplet is soaked, its venom flies from that spot straight back into Breath and hits anyone in the way.',
+        { id: 'drops', fail: SE_FAIL.dropsH, name: 'Toxic Droplets (Tanks and the venom lines)', spell: 'Toxic Droplets', what: 'Droplets land all around both halves. Step on each before it bursts and hits the raid. Every pickup hurts, so the tanks take most of them. 4 seconds after a droplet is soaked, its venom flies from that spot straight back into Breath and hits anyone in the way.',
+          do: ['Droplets land all around both halves.', 'Each tank takes the ones on their side, always with a defensive up.', 'Everyone else takes one here and there.', 'Step off the line between your droplet and Breath, and never stand between the two bosses: 4 seconds after you soak it, its venom flies back into the boss.'],
+          m: { name: 'Toxic Droplets (Tanks and immunities)', fail: SE_FAIL.drops, what: 'Droplets land all around both halves. Step on each before it bursts and hits the raid. Every pickup hurts and two at once kills, so the tanks take most of them. 4 seconds after a droplet is soaked, its venom flies from that spot straight back into Breath and hits anyone in the way.',
             do: ['Droplets land all around both halves.', 'Each tank takes the ones on their side, always with a defensive up.', 'Everyone else takes one here and there. Never two at once without an immunity.', 'Step off the line between your droplet and Breath: 4 seconds after you soak it, its venom flies back into the boss.'],
-            plan: ['Tanks: Barkskin, Incarnation, Survival Instincts or your own defensive for every set. If nothing is up, wait for it, then soak hard.', 'Droplets that land in red puddles: the tank goes and grabs them.', 'The worst overlap of each round after the first: the second add, these droplets and the second circles, right after the second soak. Immunities soak them (Divine Shield, Turtle, Cloak; two per side covers it), or raid cooldowns (Rallying Cry, Devotion Aura).'] },
+            plan: ['Tanks: a defensive for every set (for example a Druid\'s Barkskin, Incarnation or Survival Instincts). If nothing is up, wait for it, then soak hard.', 'Droplets that land in red puddles: the tank goes and grabs them.', 'The worst overlap of each round after the first: the second add, these droplets and the second circles, right after the second soak. Immunities soak them (a Paladin\'s Divine Shield, a Hunter\'s Turtle, a Rogue\'s Cloak; two per side covers it), or raid cooldowns (a Warrior\'s Rallying Cry, a Paladin\'s Devotion Aura).'] },
           map: (d, o) => SE_M.drops(false, d, o) },
-        { id: 'miasma', fail: SE_FAIL.miasma, name: 'Unstable Miasma (8 or more soak, puddles on the wall)', spell: 'Unstable Miasma', what: 'The red boss puts a soak on a player in its half. Everyone in it splits the hit and then drops a red puddle, so soak in your stack by Blood and drop the puddles side by side along the wall.',
-          do: ['Soak on you? Stay in the red half\'s stack by Blood.', 'The red half stays stacked in it with you. On Mythic it needs 8 or more.', 'It lands. Every soaker gets a puddle to drop.', 'Walk along the wall between the two bosses and drop them there, side by side.', 'Back to the boss. The middle stays clean.'],
-          m: { plan: ['Have a set pattern for the puddles: along the wall between the bosses first, then the other walls. A clean floor is what saves a bad Protovenom or a bad soak.', 'Stack defensives on the soak: Anti-Magic Zone or Spirit Link Totem helps.', 'Stack the next soak right up against the old puddles, and use movement speed (Stampeding Roar) to get in and out. Each round repeats a little further along the wall.', 'Dispel Blighted Blood fast: if it runs out it drops a puddle too, so let it drop near the others.'] },
+        { id: 'miasma', fail: SE_FAIL.miasmaH, name: 'Unstable Miasma (Soak together, puddles on the wall)', spell: 'Unstable Miasma', what: 'The red boss puts a soak on a player in its half. Everyone in it splits the hit and then drops a red puddle, so soak in your stack by Blood and drop the puddles side by side along the wall.',
+          do: ['Soak on you? Stay in the red half\'s stack by Blood.', 'The red half stacks in it with you.', 'It lands. Every soaker gets a puddle to drop.', 'Walk along the wall between the two bosses and drop them there, side by side.', 'Back to the boss. The middle stays clean.'],
+          m: { name: 'Unstable Miasma (8 or more soak, puddles on the wall)', fail: SE_FAIL.miasma, do: ['Soak on you? Stay in the red half\'s stack by Blood.', 'The red half stacks in it with you: 8 or more.', 'It lands. Every soaker gets a puddle to drop.', 'Walk along the wall between the two bosses and drop them there, side by side.', 'Back to the boss. The middle stays clean.'],
+            plan: ['Have a set pattern for the puddles: along the wall between the bosses first, then the other walls. A clean floor is what saves a bad Protovenom or a bad soak.', 'Stack defensives on the soak: a Death Knight\'s Anti-Magic Zone or a Shaman\'s Spirit Link Totem helps.', 'Eight is the safe number. Our kills held with 6 or 7 later in the fight, but don\'t try that early.', 'Set up the next soak right next to the old puddles so the new ones land beside them, and use movement speed (a Druid\'s Stampeding Roar) to get in and out. Each round repeats a little further along the wall.', 'Dispel Blighted Blood fast: if it runs out it drops a puddle too, so let it drop near the others.'] },
           map: (d, o) => SE_M.miasma(false, d, o) },
         { id: 'proto', only: 'm', fail: SE_FAIL.proto, name: 'Shifting Protovenom (Circle to circle)', spell: 'Shifting Protovenom', what: 'Eight players get a 6-yard circle that hurts them every 2 seconds until it\'s cleared. Two circles touching clear each other. A circle touching anyone without one erupts: damage and a big knockback for both, and the circle stays.',
-          do: ['Spread out before it lands. Tanks and melee too.', 'Circles go out: four on each side, if you\'re lucky.', 'Circle on you? Wait a moment, find your partner circle, and walk to them.', 'No circle? Stay put and let them come to each other.', 'Both circles clear when they touch.'],
+          do: ['Spread out before it lands. Tanks and melee too.', 'Four circles go to each side (sometimes five on one side).', 'Circle on you? Wait a moment, find your partner circle, and walk to them.', 'No circle? Stay put and let them come to each other.', 'Both circles clear when they touch.'],
           plan: ['Don\'t rush: pause a second or two before walking, unless the path is obvious.', 'Sometimes a side gets five. The extra one runs over to the other half to clear.', 'A multi-dotter in range of both bosses can be picked as a fifth on one side: step out of the other boss\'s range.'],
           map: (d, o) => SE_M.proto(false, d, o) },
-        { id: 'helix', fail: SE_FAIL.helix, name: 'Helical Toxins (Make 4)', spell: 'Helical Toxins', what: 'At full energy both bosses go to the middle and take 99% less damage for about 30 seconds, and the weaker one heals up to the stronger. Everyone gets 1 to 3 green orbs: pair up with one player so the two of you make exactly 4.',
+        { id: 'helix', fail: SE_FAIL.helix, name: 'Helical Toxins (Make 4)', spell: 'Helical Toxins', what: 'At full energy both bosses go to the middle and take 99% less damage until everyone has paired up (up to 30 seconds), and the weaker one heals up to the stronger. Everyone gets 1 to 3 green orbs: pair up with one player so the two of you make exactly 4.',
           do: ['The bosses go to the middle. Spread out.', 'Read your number: 1, 2 or 3 green orbs.', 'Pair up to make 4: a 1 with a 3, or two 2s. Touch only your partner.', 'A wrong pair blows up into a huge red puddle.'],
-          m: { do: ['The bosses go to the middle. Spread out.', 'Your number shows for a moment, then hides. Remember it. If a partner is right next to you, clear at once.', '1s jump in place and ping themselves. 3s run to a jumping, pinging player. 2s go under a boss and pair up there.', 'A wrong pair blows up into a huge red puddle: that usually wipes.'],
-            plan: ['The traffic rules are the same every time, so practice them: 2s under the boss, 1s jump and ping (a ping macro helps), 3s find the pingers.', 'Keep the bosses\' health even going in: a 5% gap is a lot of free healing for the weaker one. Multi-dotters push the higher one.', 'Failed? Go to a far corner and stop bumping: bumping grows the puddle. An immunity survives it.'] },
+          m: { do: ['The bosses go to the middle. Spread out.', 'Your number shows for a moment, then hides. Remember it. If a partner is right next to you, clear at once.', 'Players with a 1 jump in place and ping themselves. Players with a 3 run to a jumping, pinging player. Players with a 2 go under a boss and pair up there.', 'A wrong pair blows up into a huge red puddle: that usually wipes.'],
+            plan: ['The traffic rules are the same every time, so practice them: players with a 2 go under the boss, players with a 1 jump and ping (a ping macro helps), players with a 3 find the pingers. Some guides swap the 1s and 3s: pick one system and have your whole raid use it.', 'Keep the bosses\' health even going in: a 5% gap is a lot of free healing for the weaker one. Multi-dotters push the higher one.', 'Failed? Go to a far corner and stop bumping: bumping grows the puddle. An immunity survives it.', 'It ends the moment everyone has paired up (11 to 19 seconds on our kills), so a clean solve gives you the bosses back sooner.'] },
           map: (d, o) => SE_M.helix(false, d, o) },
         { id: 'swap', fail: SE_FAIL.swap, name: 'Tank swap (Taunt after every intermission)', spell: 'Bloodvenom Injection', what: 'Each boss wears its tank down: Breath\'s Empowering Slam hits 10% harder with every hit on the same tank, and Blood\'s Bloodvenom Injection stacks a poison. So the tanks taunt-swap as every intermission ends, and the tank leaving Blood drops a huge puddle.',
-          do: ['Intermission over: the bosses leave the middle.', 'Both tanks taunt the other boss at the same moment. Your half stays where it is and the other boss comes to you.', 'Green ranged and healers: stack far, so the next add lands away from the tank\'s big puddle.', 'The tank leaving Blood drops a huge puddle: put its middle in a gap between old puddles.'],
+          do: ['Intermission over: the bosses leave the middle.', 'Both tanks taunt the other boss at the same moment. Your half stays where it is and the other boss comes to you.', 'Green ranged and healers: stack far, so the next add lands away from the tank\'s big puddle.', 'The tank leaving Blood drops a huge puddle a few seconds later: put its middle in a gap between old puddles.'],
           m: { plan: ['The big puddle grows from its middle and doesn\'t drift off other puddles, so with its middle in old blood most of it overlaps used floor.', 'Your Mark changes with your boss after the swap: the old stacks fall off on their own.', 'Call the taunts on voice: both at once, as the bosses walk out of the middle.'] },
           map: (d, o) => SE_M.swap(false, d, o) },
       ],
       tiles: [
         { name: 'Blighted Blood (Dispel it)', do: 'A DoT from the red boss. Dispel it fast. If it runs out, it drops a red puddle: let it drop near the others.' },
-        { name: 'Blood Venom (Keep the floor clean)', do: 'Every red puddle stays a long time. Drop them in the corners and along the walls in a set pattern, so the middle stays free for the rest of the fight.' },
-        { name: 'Boss spots (Clean floor every time)', do: 'On the pull, Breath goes into the corner by the green gem and Blood into the corner by the red gem, at the same end of the room. After each intermission the tanks swap bosses and each half moves a little further along its side of the room, onto clean floor. After the second one, each boss sits right by its own gem.' },
-        { only: 'm', name: 'The enrage (Don\'t start the last add)', do: 'The bosses enrage after the fourth intermission cycle. If you\'re there, don\'t start the new green add: burn the bosses.' },
+        { name: 'Where the puddles go (Along the walls)', do: 'Every red puddle stays a long time. Drop them in the corners and along the walls in a set pattern, so the middle stays free for the rest of the fight.' },
+        { name: 'Where each boss stands (Clean floor every round)', do: 'On the pull, Breath goes into the corner by the green gem and Blood into the corner by the red gem, at the same end of the room. After each intermission the tanks swap bosses and each half moves a little further along its side of the room, onto clean floor. After the second one, each boss sits right by its own gem.' },
+        { only: 'm', name: 'The enrage (Both bosses go berserk at 7:00)', do: 'Both bosses go berserk at exactly 7:00, about a minute after the fourth intermission. Burn them down together before then, and kill the last add fast.' },
       ] },
   ],
   roles: {
     t: ['Pull Breath into the corner by the green gem and Blood into the corner by the red gem, 40+ yards apart.', 'Both tanks: take the droplets on your side, always with a defensive, and grab the ones that land in red puddles.', 'Taunt-swap as every intermission ends. Leaving Blood, drop your big puddle with its middle in old blood.', 'Keep Breath on the far side of every add, so all the ranged can hit it.'],
-    h: ['Dispel Blighted Blood fast.', 'Red soaks and droplets hurt the raid: be ready right after them.', 'Intermission: the bosses heal, the raid doesn\'t take much; solve the math game.'],
-    d: ['Stay with your boss: never in range of both.', 'Every add dies fast: ranged on both halves hit it from max range. The second one dies before the intermission.', 'Red half: 8 or more in every soak, then puddles along the wall.', 'Intermission: 1s jump and ping, 3s find a pinger, 2s go under a boss.'],
+    h: ['Dispel Blighted Blood fast.', 'Red soaks and droplets hurt the raid: be ready right after them.', 'Intermission: the bosses heal, the raid doesn\'t take much; make 4 like everyone else.'],
+    d: ['Stay with your boss: never in range of both.', 'Every add dies fast: ranged on both halves hit it from max range. The second one dies before the intermission.', 'Red half: soak together, then puddles along the wall.', 'Droplets: step off the line between your droplet and Breath.', 'Intermission: pair a 1 with a 3, or two 2s.'],
   },
+};
+GDZ['Entombed Sentinels'].m.roles = {
+  t: ['Pull Breath into the corner by the green gem and Blood into the corner by the red gem, 40+ yards apart.', 'Both tanks: take the droplets on your side, always with a defensive, and grab the ones that land in red puddles.', 'Taunt-swap as every intermission ends. Leaving Blood, drop your big puddle with its middle in old blood.', 'Keep Breath on the far side of every add, so all the ranged can hit it.'],
+  h: ['Dispel Blighted Blood fast.', 'Red soaks and droplets hurt the raid: be ready right after them.', 'Intermission: the bosses heal, the raid doesn\'t take much; make 4 with everyone else.'],
+  d: ['Stay with your boss: never in range of both.', 'Every add dies fast: ranged on both halves hit it from max range. The second one dies before the intermission.', 'Red half: 8 or more in every soak, then puddles along the wall.', 'Intermission: players with a 1 jump and ping, players with a 3 find a pinger, players with a 2 go under a boss.', 'Droplets: step off the line between your droplet and Breath.'],
 };
 
 // ===== Nek'zali the Soulcoiler (notes/Guides/Bosses/1 Nek'zali the Soulcoiler.md: Tactyks' Mythic and Normal/Heroic videos read in full,
@@ -1821,7 +1846,7 @@ GDZ['Entombed Sentinels'] = {
 // x east, y north. The Soulcoil Well is the dark pit in the middle (about 8 yards to its rim; touching it takes you down); doors west
 // and east, coffins round the walls, about 50 yards of floor each way. (In the kill's log the well, the doors and the Drowned Echo sit
 // at log y 207, 9 yards north of the picture's centre (198), so spots taken from the log are moved down 9 yards to fit the picture.)
-GDZ_ORIGIN['Nek\'zali the Soulcoiler'] = { cx: 0, cy: 198 }; GDZ_FULL['Nek\'zali the Soulcoiler'] = { x: 0, y: -4, r: 54 };
+GDZ_ORIGIN['Nek\'zali the Soulcoiler'] = { cx: 0, cy: 198 }; GDZ_FULL['Nek\'zali the Soulcoiler'] = { x: 0, y: -4, r: 58 };
 const NZ = 'Nek\'zali the Soulcoiler', NZ_B = [2, -14.5], NZ_IB = [0, -4.5], NZ_SQA = ['m1', 'm2', 'm3', 'r1', 'h1'], NZ_SQB = ['m4', 'm5', 'm6', 'r5', 'h2'];
 const NZ_MEL = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], NZ_RNG = ['r1', 'h1', 'r2', 'r3', 'h2', 'r4', 'r5', 'h3', 'r6', 'h4', 'r7'];
 const nzU = (a, r) => [Math.cos(a * Math.PI / 180) * (r == null ? 1 : r), Math.sin(a * Math.PI / 180) * (r == null ? 1 : r)];
@@ -1876,7 +1901,7 @@ const NZ_M = {
   // o.th0: the side of the room (the kill: east at 0:53, southeast at 2:01); in the intermission (o.E) the Echo is dragged to the pile instead
   // (o.P, its tank on side o.pth), and o.via walks everyone round the south of the well (fail: nobody breaks one add's shield)
   amani(fail, o) {
-    o = o || {}; const T1 = o.via ? 12 : o.E ? 7 : (o.T1 || 5.8), L = T1 + 11.7, k = gdzKit(NZ, L), h = nzHome(k, o, L), int = !!h.int; /* (T1: when the boss or Echo reaches the adds; longer walks get longer) */
+    o = o || {}; const T1 = o.via ? 12 : o.E ? 7 : (o.T1 || 8.2), L = T1 + 11.7, k = gdzKit(NZ, L), h = nzHome(k, o, L), int = !!h.int; /* (T1: when the boss or Echo reaches the adds; longer walks get longer) */
     const th = int ? o.pth : (o.th0 != null ? o.th0 : -23), P = int ? o.P : nzU(th, o.r || 28), ca = Math.atan2(P[1], P[0]) * 180 / Math.PI;
     const mv = (t, q) => (int ? k.add('ej', 'Echo of Jawae', t, q[0], q[1]) : k.boss('nz', NZ, t, q[0], q[1]));
     const CF = [ca - 34, ca - 12, ca + 12, ca + 34].map((a) => nzU(a, 48)), END = [th - 70, th - 25, th + 25, th + 70].map((a) => nzAdd(P, a, 9.5));
@@ -1890,7 +1915,7 @@ const NZ_M = {
       if (last) { k.add(a, 'Restless Amani', 9.4, 0, 0).show(a, 2.6, 9.8); k.ring({ on: a, r: 2.6, fx: 'debuff', t0: 2.6, dur: 7.2, color: '#7fb6ff', cn: 'Gravebound Advance', legend: 'the shield: only magic damage breaks it' }); return; }
       const brk = T1 + 0.2 + i * 0.4, mid = [x + (END[i][0] - x) * 0.45, y + (END[i][1] - y) * 0.45]; k.add(a, 'Restless Amani', brk, mid[0], mid[1]).add(a, 'Restless Amani', brk + 1.6, END[i][0], END[i][1]).show(a, 2.6, T1 + 4.2 + i * 0.2);
       k.ring({ on: a, r: 2.6, fx: 'debuff', t0: 2.6, dur: brk - 2.6, color: '#7fb6ff', cn: 'Gravebound Advance', legend: 'the shield: only magic damage breaks it' });
-      k.ring({ x: END[i][0], y: END[i][1], r: 1.8, fx: 'puddle', t0: T1 + 4.2 + i * 0.2, dur: L, color: '#9aa0ac', fill: 'rgba(150,155,165,.45)', cn: 'Body', legend: 'Heroic and up: a body stays, to be burned in the intermission' });
+      k.ring({ x: END[i][0], y: END[i][1], r: 1.8, fx: 'puddle', t0: T1 + 4.2 + i * 0.2, dur: L, color: '#9aa0ac', fill: 'rgba(150,155,165,.45)', cn: 'Body', legend: 'a body stays, to be burned in the intermission' });
       k.link({ from: CAS[i % 3], to: a, t0: 3, t1: brk, color: '#7fb6ff', legend: 'casters break the shields with magic' }); });
     if (fail) { gdzFailBlast(k, 9.8, 'An add reached the well: a raid hit, +5 energy', 0, 14, [], 'Soulcoil Rite'); k.step(0.3).step(2.6).step(9.8);
       k.pause(9, 'Nobody broke this add\'s shield, so it kept walking and reached the well: a raid hit and 5 energy for her.', { on: 'am3', r: 8 });
@@ -1907,7 +1932,7 @@ const NZ_M = {
     const TG = ['r1', 'r3', 'h2'], EDGE = [[-23.5, -40.7], [-4.1, -46.8], [16.1, -44.2]], HEAL = ['h1', 'h3', 'h4'];
     TG.forEach((id, i) => (fail && i > 0) || k.ring({ on: id, r: 2.6, fx: 'debuff', t0: 1, dur: (fail ? 1.6 : 6.4 + i * 0.2) - 1, color: '#c084ff', cn: 'Essence Rend', legend: 'Essence Rend: pulled in, thrown out, then a lingering hit' }));
     if (fail) { const p = k.posAt('r1', 1.6); k.dispel('h1', 'r1', 1.6); k.add('lc0', 'Latent Cultist', 1.8, p[0], p[1]).show('lc0', 1.8, L); k.ring({ on: 'lc0', r: 4, fx: 'puddle', t0: 1.8, dur: L - 1.8, color: '#c084ff', fill: 'rgba(192,132,255,.3)', cn: 'Latent Cultist', legend: 'a cultist circle: stay out' });
-      k.hold(2, 'r1').at(3, 'r1', p[0] - 5.5, p[1] + 1); k.call(2, 6, 'Dispelled too early', { on: 'lc0', color: '#ff3b3b', ink: '#fff' }); k.oops('h1', 1.6); k.step(0.3).step(1.8);
+      k.hold(2, 'r1').at(3, 'r1', p[0] - 5.5, p[1] + 1); k.call(2, 6, 'Dispelled too early', { x: p[0] - 8, y: p[1] - 5, color: '#ff3b3b', ink: '#fff' }); k.oops('h1', 1.6); k.step(0.3).step(1.8).step(2.6);
       k.pause(2.8, 'Dispelled at once, in the middle of the ranged: the cultist circle is now where the raid stands, for the rest of the fight.', { on: 'lc0', r: 9 });
       return k.done({ title: 'Mistake: a dispel in the raid', focus: { x: -6, y: -24, r: 20 }, badLabel: 'dispelled too early' }); }
     // (pulled toward her, thrown out toward the edge, then on to the edge, where healers dispel)
@@ -1918,15 +1943,16 @@ const NZ_M = {
       k.ring({ on: a, r: 4, fx: 'puddle', t0, dur: L, color: '#c084ff', fill: 'rgba(192,132,255,.3)', cn: 'Latent Cultist', legend: 'a cultist circle: it slowly circles the room' }); });
     TG.forEach((id, i) => { const q = k.posAt(id, 0); k.hold(6.4 + i * 0.2, id).at(10.6, id, q[0], q[1]); });
     k.ring1(TG).step(0.3).step(3.1).step(6.4).step(7.6);
-    k.pause(7, 'Out at the edge, behind the raid, then dispel. The cultist stays out there, slowly circling the room, far from where the raid stands.', { x: -4, y: -42, r: 18 });
+    k.pause(7, 'Out at the edge, behind the raid, then dispel. The cultist stays out there, slowly circling the room, out of the middle.', { x: -4, y: -42, r: 18 });
     return k.done({ title: 'Essence Rend: to the edge, then dispel', focus: { x: -2, y: -28, r: 24 }, hlLabel: 'marked players' });
   },
-  // Possession Barrage: echoes fly from her toward a tank and burst on arrival for raid damage, less the farther they fly; the tank not
-  // holding her runs 30-40 yards out, the raid stays behind her (fail: a melee wanders into the line, an echo bursts early)
+  // Possession Barrage: echoes fly from her toward her current target (the tank holding her) and burst on arrival for raid damage, less
+  // the farther they fly; that tank runs 30-40 yards out, the raid stays behind her, and the other tank taunts as the echoes land (the kill:
+  // the holder was the target 5 of 6 times on Mythic and 4 of 4 on Heroic) (fail: a melee wanders into the line, an echo bursts early)
   barrage(fail) {
-    const L = 13, k = gdzKit(NZ, L); nzHome(k); k.cast('nz', 'Possession Barrage', 0.4, 4.6);
+    const L = 16, k = gdzKit(NZ, L); nzBoss(k); nzAt(k, 0, NZ_B, 90, { skip: ['t2'] }); k.at(0, 't2', -6.9, -12.9); k.cast('nz', 'Possession Barrage', 0.4, 4.6); const H1 = k.posAt('t1', 0); /* (t1 holds her; t2 stands back by the raid, off the line the echoes fly along) */
     const T = [34, 4], dir = [(T[0] - NZ_B[0]) / 37, (T[1] - NZ_B[1]) / 37], pp = [-dir[1], dir[0]], IN = [NZ_B[0] + (T[0] - NZ_B[0]) * 0.3, NZ_B[1] + (T[1] - NZ_B[1]) * 0.3];
-    k.hold(0.3, 't2').at(4.5, 't2', T[0], T[1]); k.call(0.6, 4.4, 'Tank: run away', { on: 't2', color: '#e6b450', ink: '#141006' });
+    k.hold(0.3, 't1').at(4.5, 't1', T[0], T[1]); k.call(0.6, 4.4, 'Tank holding her: run away', { on: 't1', color: '#e6b450', ink: '#141006' });
     if (fail) k.hold(1.4, 'm3').at(4.2, 'm3', IN[0], IN[1]);
     for (let i = 0; i < 5; i++) { const t0 = 4.7 + i * 0.25, hit = fail && i === 0, end = hit ? IN : [T[0] + pp[0] * (i - 2) * 3 - dir[0] * Math.abs(i - 2) * 1.5, T[1] + pp[1] * (i - 2) * 3 - dir[1] * Math.abs(i - 2) * 1.5], tE = t0 + Math.hypot(end[0] - NZ_B[0], end[1] - NZ_B[1]) / 12;
       k.obj('ec' + i, 'ghost', t0, NZ_B[0], NZ_B[1]).obj('ec' + i, 'ghost', tE, end[0], end[1]).show('ec' + i, t0, tE + 0.1);
@@ -1934,9 +1960,9 @@ const NZ_M = {
     if (fail) { gdzFailBlast(k, 6, 'It burst early: full raid damage', 2, 14, ['m3'], 'Possession Barrage'); k.step(0.4).step(4.7).step(5.8);
       k.pause(5.4, 'A melee walked into the line between her and the running tank: the first echo burst on them, close to her, for full raid damage.', { on: 'm3', r: 8 });
       return k.done({ title: 'Mistake: standing in the echoes\' line', focus: { x: 16, y: -6, r: 24 }, badLabel: 'in the line' }); }
-    const q = k.posAt('t2', 0); k.hold(9, 't2').at(13, 't2', q[0], q[1]);
-    k.ring1(['t2']).step(0.4).step(4.7).step(9);
-    k.pause(5.6, 'The tank who isn\'t holding her runs straight away from the raid. The echoes fly after them and burst on arrival: the farther they fly, the less the raid takes. Nobody steps into that line.', { x: 18, y: -5, r: 20 });
+    k.hold(6.8, 't2').at(10.6, 't2', H1[0], H1[1]); k.call(6.8, 9.4, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' }); k.hold(9, 't1').at(15.5, 't1', 14, -11);
+    k.ring1(['t1']).step(0.4).step(4.7).step(6.8);
+    k.pause(5.6, 'The tank holding her runs straight away from the raid. The echoes fly after them and burst on arrival: the farther they fly, the less the raid takes. Nobody steps into that line, and the other tank taunts as the echoes land.', { x: 18, y: -5, r: 20 });
     return k.done({ title: 'Possession Barrage: the tank runs, nobody in between', focus: { x: 16, y: -8, r: 26 }, hlLabel: 'the running tank' });
   },
   // Mythic, Grasping Depths: the well pulls and hurts everyone until its Drowned Echo dies; one hit squad (4 DPS + a healer) touches the
@@ -1969,14 +1995,14 @@ const NZ_M = {
       k.ring({ on: 'nz', r: 4, fx: 'safe', t0: 2.7, dur: L - 2.7, color: '#b9a6ff', cn: 'Tether of Awakening', legend: 'immune while her Echoes live' }); }
     // (the tank heads for the doorway first; the Echo walks in; the raid gathers behind it, on the room side)
     k.hold(0.4, 't1'); nzGo(k, 0.4, 7, 't1', TD); k.call(0.6, 4, 'To the doorway', { on: 't1', color: '#5aa0ff', ink: '#fff' });
-    k.add('ex', 'Echo of Jawae', 5.4, sx * 50.5, 0).add('ex', 'Echo of Jawae', 6.8, E[0], E[1]).show('ex', 5.4, L);
-    nzAt(k, 10, E, th, { wings: true, hold: 0.6, skip: ['t1'].concat(fail ? ['m1'] : []) }); if (fail) { const q = nzAdd(E, th + 180 - 50, 6); k.hold(0.6, 'm1'); nzGo(k, 0.6, 9, 'm1', q); k.hold(10, 'm1').at(11.8, 'm1', sx * 46.5, -4.5); }
+    k.add('ex', 'Echo of Jawae', 5.4, sx * 47, 0).add('ex', 'Echo of Jawae', 6.8, E[0], E[1]).show('ex', 5.4, L);
+    nzAt(k, 10, E, th, { wings: true, hold: 0.6, skip: ['t1'].concat(fail ? ['m1'] : []) }); if (fail) { const q = nzAdd(E, th + 180 - 50, 6); k.hold(0.6, 'm1'); nzGo(k, 0.6, 9, 'm1', q); k.hold(10, 'm1').at(11.8, 'm1', sx * 44.5, -4.5); }
     k.cast('ex', 'Soul Transfer', 7.2, 12.2); k.call(10.6, 12.4, 'Out of its front', { x: sx * 30, y: 15, color: '#c084ff', ink: '#14061f' });
     k.cone({ from: 'ex', deg: th, r: 40, width: 90, at: 12.4, color: '#c084ff', legend: 'Soul Transfer: the Echo\'s frontal, at the end of its cast' });
     if (fail) { ulHit(k, 'm1', 12.4, 'Soul Transfer'); k.oops('m1', 12.4); k.step(0.3).step(5.4).step(12.4);
       k.pause(12.7, 'This melee walked round to the Echo\'s front and was still there when its cast ended: Soul Transfer hits for over a million.', { on: 'm1', r: 8 });
       return k.done({ title: 'Mistake: in front at the end of the cast', focus: { x: sx * 36, y: 0, r: 18 }, badLabel: 'hit by the frontal' }); }
-    k.call(12.8, 14.8, two ? 'Then to the east pile' : 'Then to a body pile', { on: 't1', color: '#e6b450', ink: '#141006' });
+    k.call(12.8, 14.8, two ? 'Then to the east pile' : 'Then to a body pile', { x: sx * 30, y: 11, color: '#e6b450', ink: '#141006' });
     k.ring1(['t1']).step(0.3).step(5.4).step(10).step(12.8);
     k.pause(10.6, (two ? 'Echo two comes in by the east door. ' : 'Echo one comes in by the west door. ') + 'Its tank stands in the doorway, so the big frontal at the end of each cast points into the door. Everyone else stays behind it.', { on: 'ex', r: 12 });
     return k.done({ title: two ? 'Echo two: tank it in the doorway' : 'Intermission: tank the Echo in the doorway', focus: { x: sx * 30, y: 0, r: 24 }, hlLabel: 'the Echo\'s tank' });
@@ -1997,10 +2023,10 @@ const NZ_M = {
     const OUT = NZ_RNG; OUT.forEach((id) => k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 4.4, dur: 3, color: '#ff8a3b', cn: 'Slithering Flame', legend: 'Slithering Flame: a burn on everyone the pyre missed' }));
     // (the two ranged nearest the bodies left walk their fire circles onto them)
     const WK = []; BEDGE.forEach((p, i) => { const id = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'].filter((x) => !WK.includes(x)).sort((a, c) => { const pa = k.posAt(a, 4.4), pc = k.posAt(c, 4.4); return Math.hypot(pa[0] - p[0], pa[1] - p[1]) - Math.hypot(pc[0] - p[0], pc[1] - p[1]); })[0]; WK.push(id); });
-    WK.forEach((id, i) => { if (fail && i === 1) return; const p = BEDGE[i]; k.hold(4.6, id).at(8.4, id, p[0] - 1.2, p[1] - 1.2); k.ring({ on: id, r: 4, fx: 'zone', t0: 7.4, dur: L - 7.4, color: '#ff8a3b', fill: 'rgba(255,138,59,.25)', cn: 'Cremation', legend: 'Heroic and up: Cremation, a small fire circle round you that burns any body it touches' }); });
+    WK.forEach((id, i) => { if (fail && i === 1) return; const p = BEDGE[i]; k.hold(4.6, id).at(8.4, id, p[0] - 1.2, p[1] - 1.2); k.ring({ on: id, r: 4, fx: 'zone', t0: 7.4, dur: L - 7.4, color: '#ff8a3b', fill: 'rgba(255,138,59,.25)', cn: 'Cremation', legend: 'Cremation, a small fire circle round you that burns any body it touches' }); });
     if (fail) { k.add('rv', 'Restless Amani', 9.2, BEDGE[1][0], BEDGE[1][1]).show('rv', 9.2, L); k.ring({ on: 'rv', r: 14, fx: 'zone', t0: 9.2, dur: L - 9.2, color: '#ff3b3b', cn: 'Vessel of Awakening', legend: 'a body came back: it pulses heavy raid damage' });
       gdzFailBlast(k, 10, 'A body came back: kill it now', E[0], E[1] - 16, [], 'Vessel of Awakening'); k.step(0.5).step(4.2).step(9.2);
-      k.pause(9.6, 'One body at the edge of the pile was missed and nobody walked a fire circle over it: it came back, pulsing heavy damage. Swap to it at once; two of these wipe the raid.', { on: 'rv', r: 10 });
+      k.pause(9.6, 'One body at the edge of the pile was missed and nobody walked a fire circle over it: it came back, pulsing heavy damage. Swap to it at once; a few of these wipe the raid.', { on: 'rv', r: 10 });
       return k.done({ title: 'Mistake: a body left to come back', focus: { x: T[0], y: T[1], r: 18 }, badLabel: 'the missed body' }); }
     k.ring1(['t1'].concat(WK)).step(0.5).step(2).step(4.2).step(7.4);
     k.pause(4.6, 'The pyre\'s real hit is smaller than its circle: tanks and melee stack in the dead centre. Two bodies at the edge survived, so two ranged walk their fire circles onto them.', { x: T[0], y: T[1], r: 13 });
@@ -2022,9 +2048,9 @@ const NZ_M = {
     if (fail) { ulHit(k, 'r6', 6.5, 'In the path'); k.oops('r6', 6.5); k.step(0.3).step(1).step(6.5);
       k.pause(6.8, 'This ranged stood in a cultist\'s path: the circle dashed straight through them.', { on: 'r6', r: 8 });
       return k.done({ title: 'Mistake: in a cultist\'s path', focus: { x: -12, y: -34, r: 18 }, badLabel: 'in the path' }); }
-    k.ring1(['r6']).step(0.3).step(1).step(3.2).step(6);
+    k.ring1(['r6']).step(0.3).step(1).step(3.2); if (myth) k.step(4.6);
     k.pause(5.2, myth ? 'Invoke: the cultist circles are about to dash to new spots round the edge. Watch the arrows and step out of their paths, and stop casting before it lands.' : 'Invoke: the cultist circles are about to dash to new spots round the edge. Watch the arrows and step out of their paths.', { x: -16, y: -38, r: 18 });
-    return k.done({ title: 'Invoke: the circles move', focus: { x: -6, y: -26, r: 26 }, hlLabel: 'a ranged stepping out of a path' });
+    return k.done({ title: 'Invoke: the circles move', focus: { x: -6, y: -24, r: 31 }, hlLabel: 'a ranged stepping out of a path' });
   },
 };
 const NZ_FAIL = {
@@ -2058,67 +2084,70 @@ const NZ_SIM = [
   { at: 214, mech: 'pyre', ph: 1, label: 'Hungering Pyre 2 (southwest pile)', o: NZ_PY[1] }, { at: 227, mech: 'echoes', ph: 1, label: 'Echo of Jawae 2 (east door)', o: { two: 1, E: NZ_PY[1].E, th: NZ_PY[1].th, noEcho: 1 } },
   { at: 245, mech: 'pyre', ph: 1, label: 'Hungering Pyre 3 (east pile)', o: NZ_PY[2] }, { at: 261, mech: 'depths', ph: 1, label: 'Grasping Depths 4 (Squad two)', o: { b: 1, E: NZ_PY[2].E, th: NZ_PY[2].th } },
   { at: 268, mech: 'amani', ph: 1, label: 'Restless Amani in the intermission (northwest)', o: { E: NZ_PY[2].E, th: NZ_PY[2].th, P: NZ_PY[3].E, pth: NZ_PY[3].th, via: 1 } }, { at: 280, mech: 'pyre', ph: 1, label: 'Hungering Pyre 4 (northwest pile)', o: NZ_PY[3] },
-  { at: 295, beat: 'p2', ph: 2 }, { at: 296, mech: 'depths', ph: 2, label: 'Grasping Depths 5 (Squad one)' }, { at: 302, mech: 'amani', ph: 2, label: 'Restless Amani (west)', o: { th0: 170, r: 30, T1: 7 } }, { at: 308, mech: 'invoke', ph: 2, label: 'Invoke 1' },
-  { at: 340, mech: 'barrage', ph: 2, label: 'Possession Barrage' }, { at: 356, mech: 'invoke', ph: 2, label: 'Invoke 2' }, { at: 357, mech: 'rend', ph: 2, label: 'Essence Rend' }, { at: 363, mech: 'depths', ph: 2, label: 'Grasping Depths 6 (Squad two)', o: { b: 1 } },
-  { at: 370, mech: 'amani', ph: 2, label: 'Restless Amani (north)', o: { th0: 90, r: 23 } }, { at: 388, mech: 'invoke', ph: 2, label: 'Invoke 3' }, { at: 419, beat: 'kill', ph: 2 },
+  { at: 295, beat: 'p2', ph: 2 }, { at: 296, mech: 'depths', ph: 2, label: 'Grasping Depths 5 (Squad one)' }, { at: 302, mech: 'amani', ph: 2, label: 'Restless Amani (west)', o: { th0: 170, r: 30, T1: 7 } }, { at: 308, mech: 'invoke', ph: 2, label: 'Invoke 1', o: { do: ['The first Invoke: the circles dash to new spots, so watch the arrows, step out of their paths and stop casting before it lands.'] } },
+  { at: 340, mech: 'barrage', ph: 2, label: 'Possession Barrage' }, { at: 356, mech: 'invoke', ph: 2, label: 'Invoke 2', o: { do: ['Invoke again: the circles dash to new spots, so watch the arrows, step out of their paths and stop casting before it lands.'] } }, { at: 357, mech: 'rend', ph: 2, label: 'Essence Rend' }, { at: 363, mech: 'depths', ph: 2, label: 'Grasping Depths 6 (Squad two)', o: { b: 1 } },
+  { at: 370, mech: 'amani', ph: 2, label: 'Restless Amani (north)', o: { th0: 90, r: 23 } }, { at: 388, mech: 'invoke', ph: 2, label: 'Invoke 3', o: { do: ['The last Invoke: the circles dash again and the damage is at its worst, so cooldowns now, and stop casting before it lands.'] } }, { at: 419, beat: 'kill', ph: 2 },
 ];
-const NZ_DUR = { 'm:ignite': 9, 'm:rend': 6, 'm:barrage': 8, 'm:depths': 20, 'm:amani': 18, 'm:echoes': 20, 'm:pyre': 8, 'm:invoke': 5, 'b:start': 2, 'b:int': 6, 'b:p2': 4, 'b:kill': 0 };
+const NZ_DUR = { 'm:ignite': 9, 'm:rend': 6, 'm:barrage': 8, 'm:depths': 20, 'm:amani': 20, 'm:echoes': 20, 'm:pyre': 8, 'm:invoke': 5, 'b:start': 2, 'b:int': 6, 'b:p2': 4, 'b:kill': 0 };
 const NZ_SEV = { 'm:ignite': 2, 'm:rend': 1, 'm:barrage': 2, 'm:depths': 3, 'm:amani': 3, 'm:echoes': 2, 'm:pyre': 3, 'm:invoke': 2, 'b:start': 1, 'b:int': 1, 'b:p2': 1, 'b:kill': 1 };
 GDZ['Nek\'zali the Soulcoiler'] = {
   upd: ['12.1', 'Oct 21, 2026'],
   stepRoles: {
     'Soulcoil Ignition (Heal through it, dodge the spirits)': ['', 'h', ''], 'Restless Amani (Break the shields, cleave them)': ['t', 'd', 'td', ''], 'Essence Rend (To the edge, then dispel)': ['', '', 'h', ''],
     'Possession Barrage (Tank runs, nobody in between)': ['t', '', ''], 'Grasping Depths (Hit squads take turns)': ['', '', 'd', ''], 'Echoes of Jawae (Tank it in the doorway)': ['', 't', '', 't'],
-    'Hungering Pyre (Dead centre on a body pile)': ['t', 'td', '', 'd'], 'Invoke (The circles move)': ['', '', 'dh', ''],
+    'Hungering Pyre (Dead centre on a body pile)': ['t', 'td', '', 'd'], 'Invoke (The circles move)': ['', '', '', 'dh'],
   },
   sum: 'Everything turns around the well in the middle. Keep every add out of it, take Essence Rend to the edge, and let a tank run Possession Barrage away from you. At 50% kill her two Echoes and burn every body pile with their pyres, then Bloodlust and race her to the end.',
   m: { sim: NZ_SIM, simDur: NZ_DUR, simSev: NZ_SEV, beats: NZ_BEATS,
-    simAlways: ['No add may reach the well: each one hits the raid and gives her 5 energy.', 'Essence Rend circles stay all fight: drop them at the edge, behind the raid.', 'Grasping Depths comes all fight long: the two hit squads take turns.', 'Every body pile you make in phase one gets burned in the intermission.'],
-    source: 'Tactyks\' Mythic Nek\'zali video', sum: 'Heroic plus hit squads: all fight long the well pulls the raid in until a squad of 4 DPS and a healer goes down, kicks the Drowned Echo\'s curse and kills it. Invoke now silences anyone casting.' },
-  facts: [['Phases', '2 + intermission at 50%'], ['Bloodlust', 'Phase two'], ['Healers', '4', 'm'], ['Hardest part', 'Adds reaching the well'], ['Fight length', 'About 7 minutes', 'm']],
+    simAlways: ['No add may reach the well: each one hits the raid and gives her 5 energy.', 'Essence Rend circles stay all fight: drop them at the edge, behind the raid.', 'Grasping Depths comes twice in each part of the fight (phase one, the intermission, phase two): the two hit squads take turns.', 'Every body pile you make in phase one gets burned in the intermission.'],
+    source: 'Tactyks\' Mythic Nek\'zali video', sum: 'Hit squads: twice in every part of the fight the well pulls the raid in until a squad of 4 DPS and a healer goes down, kicks the Drowned Echo\'s curse and kills it. Invoke silences anyone casting.' },
+  facts: [['Phases', '2 + intermission at 50%'], ['Bloodlust', 'Phase two'], ['Healers', '4', 'm'], ['Hardest part', 'Adds reaching the well'], ['Fight length', 'About 4 minutes', 'h'], ['Fight length', 'About 7 minutes', 'm']],
   phases: [
     { id: 'p1', name: 'Phase 1: the well', sum: 'Her Ignitions fill her energy a quarter at a time; adds that reach the well fill it faster. Push her to 50% before the fourth Ignition.',
-      m: { sum: 'The same, plus Grasping Depths: twice a phase the well pulls the raid in until a hit squad kills its Echo.' },
+      m: { sum: 'Grasping Depths: twice in this phase the well pulls the raid in until a hit squad kills its Echo.' },
       mechs: [
-        { id: 'ignite', fail: NZ_FAIL.ignite, name: 'Soulcoil Ignition (Heal through it, dodge the spirits)', spell: 'Soulcoil Ignition', what: 'About every 73 seconds she floats over the well and stirs it: five raid hits with a DoT that stacks, and 25 energy for her. Spirits rise out of it and land on players: a big hit and a knockback within 5 yards.',
-          do: ['She floats over the well and stirs it. The raid stays put.', 'Five raid hits: healers, a cooldown for each Ignition.', 'Spirits come out of the well: step out of the circle where one lands.'],
+        { id: 'ignite', fail: NZ_FAIL.ignite, name: 'Soulcoil Ignition (Heal through it, dodge the spirits)', spell: 'Soulcoil Ignition', what: 'About every 73 seconds she floats over the well and stirs it: five raid hits with a DoT that stacks, and 25 energy for her. Each hit also adds a Ritual Burn stack: +15% Rite damage for a minute. Spirits rise out of it and land on players: a big hit and a knockback within 5 yards.',
+          do: ['She floats over the well and stirs it. Stay out of the well.', 'Five raid hits: healers, a cooldown for each Ignition. Go in with no Ritual Burn stacks.', 'Spirits come out of the well: step out of the circle where one lands.'],
           map: () => NZ_M.ignite() },
-        { id: 'amani', fail: NZ_FAIL.amani, name: 'Restless Amani (Break the shields, cleave them)', spell: 'Gravebound Advance', what: 'Coffins light up on one side of the room and adds come out, walking for the well behind a shield that only magic damage breaks. One that reaches the well hits the raid and gives her 5 energy.',
-          do: ['Coffins light up: adds are coming. The tank drags the boss toward them, and everyone follows.', 'They walk for the well behind a shield only magic breaks: casters, on the shields.', 'Shields down: they\'re normal adds now. Cleave them down with the boss.', 'Bodies stay on Heroic and up: kill them together, in one pile.'],
-          m: { plan: ['Death Grip, slows, knockbacks and Ursol\'s all work on them, shield or not.', 'Hunters do physical damage: they can\'t break shields. Warlocks, Shadow Priests and Boomkins can.', 'As long as no add reaches the well, boss damage hardly matters in phase one.', 'Remember where each pile is: the intermission\'s pyres go on them.'] },
+        { id: 'amani', fail: NZ_FAIL.amani, name: 'Restless Amani (Break the shields, cleave them)', spell: 'Gravebound Advance', what: 'Coffins light up on one side of the room and adds come out, walking for the well behind a shield that only magic damage breaks. One that reaches the well hits the raid and gives her 5 energy. A dead add leaves a body and a damage-over-time on everyone within 15 yards.',
+          do: ['Coffins light up: adds are coming. The tank drags the boss toward them, and everyone follows.', 'They walk for the well behind a shield only magic breaks: casters, on the shields.', 'Shields down: they\'re normal adds now. Cleave them down with the boss.', 'Their bodies stay: kill the adds together, in one pile.'],
+          plan: ['Death Grip, slows, knockbacks and a Druid\'s Ursol\'s Vortex all work on them, shield or not.', 'Hunters do physical damage: they can\'t break shields. Warlocks, Shadow Priests and Boomkins can.', 'The tank who isn\'t on her picks up adds as their shields break, so none wander through the middle.', 'As long as no add reaches the well, boss damage hardly matters in phase one.', 'Remember where each pile is: the intermission\'s pyres go on them.'],
           map: (d, o) => NZ_M.amani(false, o) },
-        { id: 'rend', fail: NZ_FAIL.rend, name: 'Essence Rend (To the edge, then dispel)', spell: 'Essence Rend', what: 'A few players are pulled toward her, then thrown out with a lingering hit you can dispel. Where the dispel lands, a cultist circle appears and stays all fight, slowly circling the room.',
+        { id: 'rend', fail: NZ_FAIL.rend, name: 'Essence Rend (To the edge, then dispel)', spell: 'Essence Rend', what: 'A few players are pulled toward the middle, then thrown out with a lingering hit you can dispel. Where the dispel lands, a cultist circle appears and stays all fight, slowly circling the room.',
           do: ['Marked? You\'re pulled in, then thrown out.', 'Keep going to the edge of the room, behind the raid.', 'At the edge, healers dispel. A cultist circle appears there.', 'It slowly circles the room: keep away from it.'],
           m: { plan: ['Healers: don\'t dispel early. It also soaks up healing, so don\'t race it.', 'Pick a side of the room for the circles and keep them there.'] },
           map: () => NZ_M.rend() },
         { id: 'barrage', fail: NZ_FAIL.barrage, name: 'Possession Barrage (Tank runs, nobody in between)', spell: 'Possession Barrage', what: 'Echoes fly from her toward a tank and burst on arrival for raid damage: the farther they fly, the less it hurts.',
-          do: ['The tank who isn\'t holding her runs straight away from the raid, 30 to 40 yards.', 'Everyone else stays behind her.', 'Nobody steps into the line between her and that tank.'],
+          do: ['The tank holding her runs straight away from the raid, 30 to 40 yards.', 'Everyone else stays behind her. The other tank taunts as the echoes land.', 'Nobody steps into the line between her and the runner.'],
           map: () => NZ_M.barrage() },
-        { id: 'depths', only: 'm', fail: NZ_FAIL.depths, name: 'Grasping Depths (Hit squads take turns)', spell: 'Grasping Depths', what: 'All fight long, a Drowned Echo wakes in the well: it pulls the raid toward the well and hurts everyone until it dies. Touch the well to go down and fight it. Leaving gives Soul Exhaustion, so nobody goes twice in a row.',
+        { id: 'depths', only: 'm', fail: NZ_FAIL.depths, name: 'Grasping Depths (Hit squads take turns)', spell: 'Grasping Depths', what: 'Twice in every phase (and twice in the intermission), a Drowned Echo wakes in the well: it pulls the raid toward the well and hurts everyone until it dies. Touch the well to go down and fight it. Leaving gives Soul Exhaustion, so nobody goes twice in a row.',
           do: ['The well pulls and hurts everyone until its Echo dies.', 'This round\'s squad touches the well and goes down: 4 DPS and a healer.', 'Kick its curse late in the cast: first kicker, then second.', 'Echo dead: climb out. The other squad takes the next one.'],
-          plan: ['Two squads of 4 DPS and a healer, alternating. Send physical DPS (Warriors, Hunters, Monks, Rogues, Death Knights).', 'Keep Warlocks, Shadow Priests and Boomkins upstairs: they break the add shields.', 'Two melee kicks or three ranged kicks cover each curse. Kick late in the cast.', 'Down there, dodge the circles on the floor and the swirling spirits.'],
+          plan: ['Two squads of 4 DPS and a healer, alternating. Send physical DPS (Warriors, Hunters, Monks, Rogues, Death Knights).', 'Keep Warlocks, Shadow Priests and Boomkins upstairs: they break the add shields.', 'Two melee kicks or three ranged kicks cover each curse. Kick late in the cast.', 'Down there, dodge the circles on the floor and the swirling spirits.', 'Skip a trip that starts just as she goes to 50%: the phase change clears it. In phase two, with her under 10%, skip it too and just kill her.'],
           map: (d, o) => NZ_M.depths(false, o) },
       ],
       tiles: [
-        { name: 'Hollowing Strikes (Swap at 7-9 stacks)', do: 'Her hits lower the tank\'s healing taken. Swap around 7 to 9 stacks. One tank can take every Possession Barrage.' },
-        { name: 'Her energy (Keep the adds out of the well)', do: 'Each Ignition gives her 25 energy and each add in the well 5. At 100 she enrages. Push her to 50% before the fourth Ignition.' },
+        { name: 'Hollowing Strikes (Swap at 7-9 stacks)', do: 'Every hit of hers makes the tank take less healing. Swap around 7 to 9 stacks, right after a Barrage if you can. One tank can take every Possession Barrage.' },
+        { name: 'Her energy (Keep the adds out of the well)', do: 'Each Ignition gives her 25 energy and each add in the well 5; a player who dies in the well feeds her too. At 100 she enrages. Push her to 50% before the fourth Ignition.' },
       ] },
     { id: 'int', name: 'Intermission: the Echoes', sum: 'At 50% she floats over the well and can\'t be hurt while her two Echoes live. Kill them one at a time, and burn every body pile with their pyres.',
+      m: { sum: 'At 50% she floats over the well and can\'t be hurt while her two Echoes live. Kill them one at a time, burn every body pile with their pyres, and send the hit squads down twice more.' },
       mechs: [
         { id: 'echoes', fail: NZ_FAIL.echoes, name: 'Echoes of Jawae (Tank it in the doorway)', spell: 'Soul Transfer', what: 'Two Echoes protect her, one at a time: the first comes in by the west door, the second by the east door. Each has a big frontal that goes off at the end of a 15-second cast. Adds keep coming.',
           do: ['She floats over the well: free damage on the way.', 'The Echo comes in by the door. Its tank stands in the doorway, so the frontal points into the door.', 'Everyone else stays behind the Echo, on the room side.', 'Then its tank takes it from body pile to body pile for the pyres.'],
-          m: { plan: ['Adds keep coming in the intermission: pile them where the Echo\'s next pyre will go (Ursol\'s, grips, knockbacks).', 'The order of the piles: Echo one, northwest then southwest; Echo two, east then northwest.', 'One 2-minute cooldown here; save the second and Bloodlust for phase two.'] },
+          m: { plan: ['Adds keep coming in the intermission: pile them where the Echo\'s next pyre will go (a Druid\'s Ursol\'s Vortex, grips, knockbacks).', 'Our kill\'s piles, in order: Echo one, northwest then southwest; Echo two, east then northwest. Yours depend on where your adds die: put each pyre on the biggest pile.', 'One 2-minute cooldown here; save the second and Bloodlust for phase two.'] },
           map: (d, o) => NZ_M.echoes(false, o) },
-        { id: 'pyre', fail: NZ_FAIL.pyre, name: 'Hungering Pyre (Dead centre on a body pile)', spell: 'Hungering Pyre', what: 'A fire soak on the Echo\'s tank, split between everyone within 10 yards; it burns every body it hits. Everyone it misses gets a burn, which on Heroic and up becomes a small fire circle round them for about 20 seconds that burns any body it touches.',
+        { id: 'pyre', fail: NZ_FAIL.pyre, name: 'Hungering Pyre (Dead centre on a body pile)', spell: 'Hungering Pyre', what: 'A fire soak on the Echo\'s tank, split between everyone within 10 yards; it burns every body it hits. Everyone it misses gets a burn, which becomes a small fire circle round them for about 20 seconds that burns any body it touches.',
           do: ['The Echo\'s tank stands it on a body pile.', 'Tanks and melee stack in the dead centre, on that tank. Everyone else stays out.', 'The pyre burns the bodies it hits.', 'Ranged: walk your fire circle over any body left, here or in another pile.'],
-          m: { plan: ['The real hit is smaller than its circle: dead centre, or bodies at the edge survive.', 'Ranged can stand on loose bodies before the pyre lands.', 'A body that comes back pulses heavy damage: swap to it at once. One is fine; two or more wipe.'] },
+          m: { plan: ['The real hit is smaller than its circle: dead centre, or bodies at the edge survive.', 'Ranged can stand on loose bodies before the pyre lands.', 'A body that comes back pulses heavy damage: swap to it at once. One or two you can survive; three or more wipe.'] },
           map: (d, o) => NZ_M.pyre(false, o) },
       ] },
-    { id: 'p2', name: 'Phase 2: Uncoiling', sum: 'She comes back with her energy at zero. The raid takes damage all the time now: Bloodlust, everything, and kill her before she fills again.',
-      m: { sum: 'The same, plus Grasping Depths all phase, and Invoke silences anyone casting when it lands.' },
+    { id: 'p2', name: 'Phase 2: Uncoiling', sum: 'She comes back with her energy at zero. The raid takes damage all the time now: Bloodlust, cooldowns, and kill her before she fills again.',
+      m: { sum: 'Grasping Depths twice more, and Invoke silences anyone casting when it lands.' },
       mechs: [
-        { id: 'invoke', fail: NZ_FAIL.invoke, name: 'Invoke (The circles move)', spell: 'Invoke', what: 'She calls the Rite again (a raid hit) and the cultist circles dash to new spots round the edge. On Mythic it also silences anyone casting when it lands.',
-          do: ['Phase two: Bloodlust and cooldowns. The raid takes damage all the time now.', 'Invoke: the circles will move. Watch the arrows.', 'Stop casting before it lands.', 'Step out of the circles\' new paths.'],
+        { id: 'invoke', fail: NZ_FAIL.invoke, name: 'Invoke (The circles move)', spell: 'Invoke', what: 'She calls the Rite again (a raid hit) and the cultist circles dash to new spots round the edge.',
+          do: ['Phase two: Bloodlust and cooldowns. The raid takes damage all the time now.', 'Invoke: the circles will move. Watch the arrows.', 'Step out of the circles\' new paths.'],
+          m: { what: 'She calls the Rite again (a raid hit) and the cultist circles dash to new spots round the edge. It also silences anyone casting when it lands.',
+            do: ['Phase two: Bloodlust and cooldowns. The raid takes damage all the time now.', 'Invoke: the circles will move. Watch the arrows.', 'Step out of the circles\' new paths.', 'Stop casting before it lands.'] },
           map: (d) => NZ_M.invoke(false, d) },
       ],
       tiles: [
@@ -2126,10 +2155,15 @@ GDZ['Nek\'zali the Soulcoiler'] = {
       ] },
   ],
   roles: {
-    t: ['Drag the boss to each set of adds so melee cleave both.', 'Possession Barrage: the tank not holding her runs straight away from the raid, 30-40 yards.', 'Swap around 7-9 stacks of Hollowing Strikes.', 'Intermission: tank the Echo in its doorway, then take it from body pile to body pile for each pyre.'],
-    h: ['Essence Rend: dispel only at the edge.', 'Ignition: five raid hits, a cooldown each time.', 'Phase two: the damage never stops; plan cooldowns for each Invoke.'],
-    d: ['Casters break the add shields with magic; everyone cleaves them.', 'Never let an add reach the well.', 'Ranged: walk your fire circle over the bodies the pyre misses.', 'Mythic: hit squads take turns in the well; kick the curse late.'],
+    t: ['Drag the boss to each set of adds so melee cleave both.', 'Possession Barrage: if you hold her, run straight away from the raid, 30-40 yards. The other tank taunts as the echoes land.', 'Swap around 7-9 stacks of Hollowing Strikes.', 'Intermission: tank the Echo in its doorway, then take it from body pile to body pile for each pyre.'],
+    h: ['Essence Rend: dispel only at the edge.', 'Ignition: five raid hits, a cooldown each time. Go in with no Ritual Burn stacks.', 'Intermission: some players are drained and then get less healing: heal them first.', 'Phase two: the damage never stops; plan cooldowns for each Invoke.'],
+    d: ['Casters break the add shields with magic; everyone cleaves them.', 'Never let an add reach the well.', 'Ranged: walk your fire circle over the bodies the pyre misses.'],
   },
+};
+GDZ['Nek\'zali the Soulcoiler'].m.roles = {
+  t: ['Drag the boss to each set of adds so melee cleave both.', 'Possession Barrage: if you hold her, run straight away from the raid, 30-40 yards. The other tank taunts as the echoes land.', 'Swap around 7-9 stacks of Hollowing Strikes.', 'Intermission: tank the Echo in its doorway, then take it from body pile to body pile for each pyre.'],
+  h: ['Grasping Depths: one healer goes down with each hit squad and keeps it alive; the rest heal the raid through the pull.', 'Essence Rend: dispel only at the edge.', 'Ignition: five raid hits, a cooldown each time. Go in with no Ritual Burn stacks.', 'Intermission: some players are drained and then get less healing: heal them first.', 'Phase two: the damage never stops; plan cooldowns for each Invoke, and save some for the end.'],
+  d: ['Casters break the add shields with magic; everyone cleaves them.', 'Never let an add reach the well.', 'Hit squads take turns in the well; kick the curse late. Skip a trip at the very start of a phase change or with her under 10%.', 'Ranged: walk your fire circle over the bodies the pyre misses.', 'Stop casting before Invoke lands.'],
 };
 
 // ===== Vashnik the Malignant (notes/Guides/Bosses/4 Vashnik the Malignant.md: Tactyks' Mythic video read in full, the spell text, and
@@ -3071,8 +3105,8 @@ function nyZerk(k, t, n, L) { for (let i = 0; i < n; i++) { const q = nzAdd([0, 
 const NY_GAPA = [148, 212];
 const NY_GAP = (() => { const S = []; [[12.5, 3], [17, 4], [21.5, 5], [26, 5], [30.5, 5]].forEach(([r, n]) => { const sp = Math.min(54 / (n - 1), 4.6 / r * 180 / Math.PI); for (let i = 0; i < n; i++) S.push(nzAdd([0, 0], 180 + (i - (n - 1) / 2) * sp, r)); }); return S; })();
 // (slots: row 12.5 = 0-2, row 17 = 3-6, row 21.5 = 7-11, row 26 = 12-16 (14 is the boss), row 30.5 = 17-21; low numbers in a row are north)
-const NY_GSLOT = { r1: 0, r4: 1, r5: 2, r2: 3, h1: 4, r6: 5, h3: 6, r3: 7, h4: 8, t1: 9, r7: 10, h2: 11, m1: 12, m2: 13, m3: 15, m4: 16, m7: 18, t2: 19, m6: 20, m5: 21 };
-const NY_GBOSS = NY_GAP[14];
+const NY_GSLOT = { r1: 0, r4: 1, r5: 2, r2: 3, h1: 4, r6: 5, h3: 6, r3: 7, h4: 8, t1: 9, r7: 10, h2: 11, m1: 12, m2: 13, m3: 14, m4: 16, m7: 18, t2: 19, m6: 20, m5: 21 };
+const NY_GBOSS = NY_GAP[15];
 const NY_M = {
   // Alluring Bubble: the bubble forms in the middle and the pools in the water show how many murlocs are coming. They walk at the bubble;
   // any that reach it become Bubblefin Berserkers (raid damage pulses until they die; the Pop empowers them). The tanks walk her to the big
@@ -3093,7 +3127,7 @@ const NY_M = {
     if (myth) { const FS = gdzSpot(4, 5, 2.6), at0 = [P0[0] + FS[0], P0[1] + FS[1]], atS = [P0[0] + U0[0] * 22.5 + FS[0], P0[1] + U0[1] * 22.5 + FS[1]];
       k.add('fs', 'Bubblefin Frostscale', 3, ...at0).add('fs', 'Bubblefin Frostscale', 8, ...atS);
       if (gripFail) { k.add('fs', 'Bubblefin Frostscale', 12.4, ...atS).add('fs', 'Bubblefin Frostscale', big.reach, P0[0] / D0 * 10, P0[1] / D0 * 10).show('fs', 3, big.reach); }
-      else { const G2 = nzAdd(CP, 300, 21), FG = nzAdd(CP, 300, 17); k.hold(1.4, 't2').at(7.6, 't2', G2[0], G2[1]).hold(11.8, 't2').at(14, 't2', ...NY_HOME.t2);
+      else { const G2 = nzAdd(CP, 330, 19), FG = nzAdd(CP, 330, 15); k.hold(1.4, 't2').at(7.6, 't2', G2[0], G2[1]).hold(11.8, 't2').at(14, 't2', ...NY_HOME.t2);
         k.add('fs', 'Bubblefin Frostscale', 8.3, ...atS).add('fs', 'Bubblefin Frostscale', 8.8, FG[0], FG[1]).show('fs', 3, 11.6);
         k.call(8.2, 9.8, 'Grip', { on: 't2', color: '#5aa0ff', ink: '#fff' }); k.call(9, 11.4, 'Frostscale first', { x: FG[0] + 4, y: FG[1] - 6, color: '#ffd23b', ink: '#1a1405' }); }
       k.ring({ on: 'fs', r: 15, fx: 'zone', t0: 3, dur: (gripFail ? big.reach : 11.6) - 3, color: '#5fe0d0', fill: 'rgba(95,224,208,.1)', cn: 'Waterfog Shield', legend: 'Mythic: murlocs within 15 yards of the Frostscale take 99% less damage' }); }
@@ -3154,8 +3188,8 @@ const NY_M = {
   // they leave stays until the Pop washes it away. (fail: one orb left to shatter)
   orbsH(fail) {
     const L = 18, k = gdzKit(NY, L), DROP = [3.9, 5.4, 6.9]; nyBoss(k, 0); nyHome(k, 0); nyBubble(k, 0, L);
-    k.cast('ny', 'Chilling Frost', 0.4, 2.4); const TG = [['m6', 205], ['m4', 222], ['h2', 240]];
-    const SP = TG.map(([, a]) => [0, 1, 2].map((i) => nzAdd([0, 0], a - 3.2 + i * 3.2, 49)));
+    k.cast('ny', 'Chilling Frost', 0.4, 2.4); const TG = [['m6', 198], ['m4', 222], ['h2', 240]];
+    const SP = TG.map(([, a]) => [0, 1, 2].map((i) => nzAdd([0, 0], a - 3.2 + i * 3.2, 43)));
     TG.forEach(([id], j) => { k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 0.4, dur: 6.6, color: '#bfefff', cn: 'Chilling Frost', legend: 'Chilling Frost: an orb drops under you every 1.5 seconds' }); k.hold(0.4, id);
       DROP.forEach((t, i) => k.at(t, id, SP[j][i][0], SP[j][i][1])); SP[j].forEach((p, i) => { if (i < 2) nyOrb(k, p, DROP[i], i ? 7.8 : 9); });
       k.at(7.8, id, SP[j][1][0] - 0.8, SP[j][1][1]).at(9, id, SP[j][0][0] - 0.8, SP[j][0][1]).hold(9.2, id).at(12.6, id, ...NY_HOME[id]);
@@ -3166,9 +3200,9 @@ const NY_M = {
     const keep = (j, t) => { const p = SP[j][2]; k.ring({ x: p[0], y: p[1], r: 1.6, fx: 'zone', t0: DROP[2], dur: t - DROP[2], color: '#eafaff', fill: 'rgba(150,220,255,.85)', cn: 'Frost Orb', legend: 'a Frost Orb: whoever touches it takes a stacking DoT' }); };
     T3.forEach(([j, t]) => keep(j, t)); k.hold(fail ? 12.6 : 14.5, 't2').at(fail ? 15.6 : 17.6, 't2', ...NY_HOME.t2);
     if (fail) { keep(0, 16.2); const p = SP[0][2]; k.call(13.6, 15.8, '30 seconds after it dropped…', { x: p[0] + 4, y: p[1] + 7, color: '#ffd23b', ink: '#1a1405' });
-      k.ring({ x: p[0], y: p[1], r: 6, fx: 'burst', t0: 15.8, at: 16.2, dur: 0.8, color: '#9fe6ff', cn: 'Frost Orb shatters', legend: 'an orb left 30 seconds shatters' }); gdzFailBlast(k, 16.4, 'A stacking DoT on everyone', -16, 4, [], 'Frost Orb');
+      k.ring({ x: p[0], y: p[1], r: 6, fx: 'burst', t0: 15.8, at: 16.2, dur: 0.8, color: '#9fe6ff', cn: 'Frost Orb shatters', legend: 'an orb left 30 seconds shatters' }); gdzFailBlast(k, 16.4, 'A big hit, then a stacking DoT', -18, -6, [], 'Frost Orb');
       k.step(0.4).step(7.6).step(16.2);
-      k.pause(16.6, 'Nobody took this orb. 30 seconds after it dropped it shattered: a DoT on the whole raid that stacks with every orb missed.', { x: p[0], y: p[1], r: 9 });
+      k.pause(16.6, 'Nobody took this orb. 30 seconds after it dropped it shattered: a big hit on the whole raid, then a DoT that stacks with every orb missed.', { x: p[0], y: p[1], r: 9 });
       return k.done({ title: 'Mistake: an orb left to shatter', focus: { x: -26, y: -24, r: 28 }, full: { x: -24, y: -22, r: 29 } }); }
     k.ring1(['m6', 'm4', 'h2', 't2']).step(0.4).step(3.9).step(7.2).step(7.6);
     k.pause(7.4, 'Nine orbs at the edge behind her, close together. Each chilled player takes two of their own with a defensive; the off tank takes the rest.', { x: -32, y: -32, r: 16 });
@@ -3184,7 +3218,7 @@ const NY_M = {
     k.cast('ny', 'Water Jet', 0.4, 3.4);
     const th = (t) => { const w = Math.max(0, Math.min(1, (t - 3.4) / 6)), dd = S0[0] + (S1[0] - S0[0]) * w, ss = S0[1] + (S1[1] - S0[1]) * w; return Math.atan2(ss, dd) * 180 / Math.PI; };
     for (let t = 3.4; t < 9.39; t += 0.5) { const e = nzAdd(NY_BH, 39 + th(t + 0.25), 75); k.link({ from: 'ny', toYd: { x: e[0], y: e[1] }, t0: t, t1: t + 0.5, color: '#7fd8ff', legend: 'Water Jet: a line through the tank, right across the island' }); }
-    for (let i = 1; i <= 6; i++) k.cone({ from: 'ny', to: TK, at: 3.4 + i, r: 75, width: 6 });
+    for (let i = 1; i <= 6; i++) k.cone({ from: 'ny', to: TK, at: 3.4 + i, r: 40, width: 6 }); /* (their numbers sit at the far end: kept on the map) */
     // the ice: each patch gone as the line sweeps over it
     NY_ORB.slice(0, n).forEach((p) => { const v = [p[0] - NY_BH[0], p[1] - NY_BH[1]], tp = Math.atan2(v[0] * NY_N[0] + v[1] * NY_N[1], v[0] * NY_U[0] + v[1] * NY_U[1]) * 180 / Math.PI;
       let tc = L; if (!fail) for (let t = 3.4; t <= 9.4; t += 0.1) if (th(t) <= tp) { tc = t + 0.3; break; } nyPuddle(k, p, 0, tc); });
@@ -3211,7 +3245,7 @@ const NY_M = {
       return k.done({ title: 'Mistake: caught outside the gap', focus: { x: -12, y: -6, r: 44 }, full: { x: -4, y: -2, r: 60 }, badLabel: 'hit by the whirlpools' }); }
     k.ring({ x: 0, y: 0, r: 62, fx: 'burst', t0: BUB - 0.4, at: BUB, dur: 0.8, color: '#7fd8ff', cn: 'Pop!', legend: 'Pop!: a raid hit, and everyone is knocked away from the bubble' });
     k.call(BUB, BUB + 1.4, 'Knocked back', { x: -36, y: 16, color: '#7fd8ff', ink: '#06131c' });
-    Object.entries(NY_GSLOT).forEach(([id, si]) => { const q = NY_GAP[si], r = Math.hypot(q[0], q[1]); k.hold(BUB, id).at(BUB + 0.6, id, q[0] / r * (r + 20), q[1] / r * (r + 20)).hold(BUB + 1.4, id).at(21.4, id, ...NY_HOME[id]); });
+    Object.entries(NY_GSLOT).forEach(([id, si]) => { const q = NY_GAP[si], r = Math.hypot(q[0], q[1]); k.hold(BUB, id).at(BUB + 0.6, id, q[0] / r * (r + 15.5), q[1] / r * (r + 15.5)).hold(BUB + 1.4, id).at(21.4, id, ...NY_HOME[id]); });
     nyBoss(k, BUB + 1.4, NY_GBOSS); nyBoss(k, 20.6);
     k.ring1(['t1', 't2']).step(0.4).step(4.4).step(BUB).step(BUB + 1.4);
     k.pause(9.4, 'The whirlpools close in from every side but one. Everyone, the boss too, stands in that gap, within about 30 yards of the bubble.', { x: -20, y: 0, r: 16 });
@@ -3230,14 +3264,14 @@ const NY_M = {
     const ICE = KB(S.r2, 20), GA = KB(S.r2, 15), GB = [-22, -14];
     if (myth) { nyPuddle(k, ICE, 0, L); [GA, GB].forEach((p) => k.ring({ x: p[0], y: p[1], r: 1.8, fx: 'zone', t0: 0, dur: BUB + 1.4, color: '#c084ff', fill: 'rgba(160,90,255,.45)', cn: 'Demonic Gateway', legend: 'a Warlock gateway: knocked into it, you come out the other end' })); }
     else { [[-44, -21], [-37, -33], [-24, -42]].forEach((p) => nyPuddle(k, p, 0, BUB + 0.2)); k.call(BUB + 0.2, BUB + 2.2, 'The Pop washes the ice away', { x: -34, y: -26, color: '#7fd8ff', ink: '#06131c' }); }
-    Object.entries(S).forEach(([id, q]) => { const far = fail && id === 'm6', e = KB(q, 20);
+    Object.entries(S).forEach(([id, q]) => { const far = fail && id === 'm6', e = KB(q, far ? 20 : 15.5); /* (the right-way throw ends on the island; the mistake's melee goes into the water) */
       if (myth && id === 'r2') { k.hold(BUB, id).at(BUB + 0.4, id, GA[0], GA[1]).at(BUB + 0.5, id, GB[0], GB[1]).hold(BUB + 1.4, id).at(L - 0.6, id, ...NY_HOME[id]); k.call(BUB + 0.3, BUB + 2, 'Gateway', { on: id, color: '#c084ff', ink: '#14062a' }); return; }
       k.hold(BUB, id).at(BUB + 0.6, id, e[0], e[1]); if (!far) k.hold(BUB + 1.4, id).at(L - 0.6, id, ...NY_HOME[id]); });
     k.boss('ny', NY, BUB + 1.4, ...NY_GBOSS); nyBoss(k, L - 1);
     if (fail) { const w = KB(S.m6, 20); k.ring({ on: 'm6', r: 2.4, fx: 'debuff', t0: BUB + 0.8, dur: L, color: '#ff4a5a', cn: 'Wild Bite', legend: 'in the water: sharks bite, a 20-second bleed' }); k.hold(BUB + 1, 'm6').at(L - 0.2, 'm6', ...nzAdd([0, 0], 200, 51));
       k.call(BUB + 0.8, BUB + 3.6, 'In the water: sharks', { on: 'm6', color: '#ff3b3b', ink: '#fff' }); k.oops('m6', BUB + 0.8); k.step(0.2).step(BUB).step(BUB + 0.8);
       k.pause(BUB + 1.2, 'This melee stood too far from the bubble. The Pop threw them into the water: sharks bite, a 20-second bleed, and a long swim back while the next murlocs come.', { x: w[0], y: w[1], r: 9 });
-      return k.done({ title: 'Mistake: knocked into the water', focus: { x: -34, y: -4, r: 32 }, full: { x: -23, y: -2, r: 34 }, badLabel: 'knocked into the water' }); }
+      return k.done({ title: 'Mistake: knocked into the water', focus: { x: -38, y: -8, r: 34 }, full: { x: -32, y: -6, r: 42 }, badLabel: 'knocked into the water' }); }
     k.ring1(myth ? ['r2'] : []).step(0.2).step(BUB).step(BUB + 1.4);
     k.pause(BUB + 0.9, myth ? 'Everyone lands on the island. This ranged had ice behind them, so they lined up with a Warlock gateway and were thrown through it.' : 'Everyone lands on the island, and on Heroic the wave washes the ice away.', { x: -36, y: 0, r: 20 });
     return k.done({ title: 'Pop!: land on the island', focus: { x: -30, y: -4, r: 32 }, full: { x: -23, y: -2, r: 34 }, hlLabel: myth ? 'a ranged taking a gateway' : '' });
@@ -3246,10 +3280,10 @@ const NY_M = {
 const NY_FAIL = {
   murlocsH: { name: 'A pack nobody took', what: 'Nobody stops or kills one side pack: it walks into the bubble and becomes Berserkers that hit the whole raid until they die.', do: ['The packs come out.', 'The squads go, but one pack is left alone.', 'Berserkers at the bubble.'], map: () => NY_M.murlocs(true, 'h') },
   murlocsM: { name: 'The Frostscale left in the pack', what: 'Nobody grips the Frostscale out: its shield gives the whole pack 99% less damage, nothing dies, and they walk on into the bubble.', do: ['The big pack arrives.', 'Nobody grips the Frostscale: nothing dies.', 'On to the bubble: Berserkers.'], map: () => NY_M.murlocs(true, 'm') },
-  orbsH: { name: 'An orb left to shatter', what: 'One orb is never soaked: 30 seconds after it dropped it shatters, a stacking DoT on the whole raid.', do: ['Nine orbs drop.', 'The off tank misses one.', 'It shatters on the raid.'], map: () => NY_M.orbsH(true) },
-  orbsM: { name: 'The orbs in one pile', what: 'The chilled players stand still: nine orbs in one pile, and one step touches four at once. Four raid hits together.', do: ['Three players are chilled.', 'They stand still: one pile.', 'Four Frost Bursts at once.'], map: () => NY_M.orbsM(true) },
+  orbsH: { name: 'An orb left to shatter', what: 'One orb is never soaked. 30 seconds after it dropped it shatters: a big hit and a stacking DoT on the whole raid.', do: ['Nine orbs drop.', 'The off tank misses one.', 'It shatters on the raid.'], map: () => NY_M.orbsH(true) },
+  orbsM: { name: 'The orbs in one pile', what: 'The chilled players stand still, so their nine orbs land in one pile. One step touches four at once, and four raid hits land together.', do: ['Three players are chilled.', 'They stand still: one pile.', 'Four Frost Bursts at once.'], map: () => NY_M.orbsM(true) },
   jet: { name: 'The ice left behind', what: 'Her tank stands off to the side: Water Jet misses the lane and the ice stays. Every set after has less room, and the murlocs speed up on the ice.', do: ['Ice in the lane.', 'The jet goes off to the side.', 'The ice stays.'], map: (d) => NY_M.jet(true, d) },
-  whirl: { name: 'Caught outside the gap', what: 'A player stays at their spot: the whirlpools cross them on the way in. 2.5 million damage.', do: ['Whirlpools rise.', 'One player stays out.', 'Hit: nearly dead.'], map: (d) => NY_M.whirl(true, d) },
+  whirl: { name: 'Caught outside the gap', what: 'A player stays at their spot instead of going to the gap. The whirlpools cross them on the way in and hit for 2.5 million damage.', do: ['Whirlpools rise.', 'One player stays out.', 'Hit: nearly dead.'], map: (d) => NY_M.whirl(true, d) },
   pop: { name: 'Knocked into the water', what: 'A melee stands too far from the bubble: the Pop throws them into the water. Sharks bite: a 20-second bleed, and a long swim back.', do: ['Too far out.', 'The Pop.', 'Into the water: sharks.'], map: (d) => NY_M.pop(true, d) },
 };
 // ---- the whole fight (Mythic), by Wolfthorn's kill's clock (6:23)
@@ -3260,7 +3294,7 @@ const NY_BEATS = {
     run(o) { const k = gdzKit(NY, 6); nyBoss(k, 0); nyHome(k, 0); if (!o.nob) nyBubble(k, 0, 6); k.cast('ny', 'Abyssal Rain', 0.2, 1.2);
       for (let i = 0; i < 4; i++) k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: 1 + i, at: 1.2 + i, dur: 0.6, color: '#5ab8ff', cn: 'Abyssal Rain', legend: 'Abyssal Rain: four raid hits, then a 24-second DoT' });
       k.call(1.2, 4.4, 'Healing cooldown', { on: 'h1', color: '#45d16b', ink: '#04140a' }); k.call(1.4, 5, '+5% damage', { on: 'ny', color: '#ff8a5a', ink: '#1a0a04' }); k.step(0.2).step(1.4); } },
-  burn: { name: 'The burn (after the third Pop)', do: ['She enrages after the next whirlpool (about 7:15): ignore the murlocs, everyone on the boss.', 'Keep soaking the orbs: they still go off long before the enrage.'],
+  burn: { name: 'The burn (after the third Pop)', do: ['She enrages after the next whirlpool (about 7:15): ignore the murlocs, everyone on the boss.', 'Keep soaking the orbs: one left alone shatters within 30 seconds, long before the enrage.'],
     run() { const k = gdzKit(NY, 4); nyBoss(k, 0); nyHome(k, 0); nyBubble(k, 0, 4); k.call(0.4, 3.6, 'Ignore the adds: burn', { x: NY_BH[0], y: NY_BH[1] + 10, color: '#ffd23b', ink: '#1a1405' }); k.step(0.2).step(1.6); } },
   kill: { name: 'The kill', do: ['Nymrissa dies.'],
     run() { const k = gdzKit(NY, 4); nyBoss(k, 0); nyHome(k, 0); nyBubble(k, 0, 2); k.ring({ on: 'ny', r: 7, fx: 'burst', t0: 1.4, at: 2, dur: 0.8, color: '#ffd23b', cn: 'Nymrissa dies', legend: 'the kill' }); k.step(0.3); } },
@@ -3289,29 +3323,35 @@ GDZ['Nymrissa Wavecaller'] = {
   },
   sum: 'One loop every 110 seconds, rinse and repeat: kill the murlocs before they reach her bubble, drop and soak the Frost Orbs with care, get into the whirlpools\' gap and land safely after the Pop. She gets stronger with every Abyssal Rain, so the fight ramps up.',
   m: { sim: NY_SIM, simDur: NY_DUR, simSev: NY_SEV, beats: NY_BEATS,
+    roles: {
+      t: ['Walk her to the big pack each set, then back to the quarter.', 'Death Knight tank: grip the Frostscale out of the pack.', 'Swap on every Water Jet; sweep it across the ice.', 'Leftover orbs: two each at most.'],
+      h: ['Abyssal Rain: four raid hits and a long DoT; she gets 5% stronger every cast.', 'Every orb soak hits the raid: a cooldown on every set.', 'The Pop: a raid cooldown.'],
+      d: ['The Frostscale first, then the big pack, then the boss.', 'Squads: your side pack, then the one at the back.', 'Chilled: big steps in the lane, your orbs well apart.', 'After the third Pop ignore the murlocs and burn her.'],
+    },
     simAlways: ['The loop is 110 seconds: two murloc sets, two orb sets and four Water Jets, then the whirlpools and the Pop.', 'Every orb soak hits the whole raid: one at a time.', 'She gets 5% stronger every Abyssal Rain: the fight ramps up.'],
-    source: 'Tactyks\' Mythic Nymrissa video', sum: 'Heroic plus three things: a Frostscale in every big pack that shields the murlocs near it, a raid hit on every orb soak, and Water Jet, a tank line that is the only way to clear the ice.' },
-  facts: [['Phases', 'One loop, every 110 s'], ['Bloodlust', 'On the pull'], ['Tanks', '3: one only slows murlocs', 'm'], ['Healers', '5', 'm'], ['Hardest part', 'Murlocs and orb soaks'], ['Fight length', 'About 3 minutes', 'h'], ['Fight length', 'About 6.5 minutes', 'm']],
+    source: 'Tactyks\' Mythic Nymrissa video', sum: 'Mythic adds three things to the loop: a Frostscale in every big pack that shields the murlocs near it, a raid hit on every orb soak, and Water Jet, a tank line that is the only way to clear the ice.' },
+  facts: [['Phases', 'One loop, every 110 s'], ['Bloodlust', 'On the pull'], ['Tanks', '2', 'h'], ['Tanks', '3: one only slows murlocs', 'm'], ['Healers', '4 to 5', 'h'], ['Healers', '5', 'm'], ['Hardest part', 'Murlocs and orb soaks'], ['Fight length', 'About 3 minutes', 'h'], ['Fight length', 'About 6.5 minutes', 'm']],
   phases: [
-    { id: 'loop', name: 'The loop: every 110 seconds', sum: 'Abyssal Rain, then her bubble and a murloc set, Chilling Frost and its orbs, a second murloc set and orbs (Water Jets on Mythic all the way through), then the whirlpools and the Pop. Rinse and repeat.',
+    { id: 'loop', name: 'The loop: every 110 seconds', sum: 'Abyssal Rain, then her bubble and a murloc set, Chilling Frost and its orbs, a second murloc set and orbs, then the whirlpools and the Pop. Rinse and repeat.',
+      m: { sum: 'Abyssal Rain, then her bubble and a murloc set, Chilling Frost and its orbs, a second murloc set and orbs, then the whirlpools and the Pop. A Water Jet comes about every 22 seconds all the way through. Rinse and repeat.' },
       mechs: [
         { id: 'murlocs', spell: 'Alluring Bubble', map: (d) => NY_M.murlocs(false, d),
           h: { fail: NY_FAIL.murlocsH, name: 'Alluring Bubble (Kill the murlocs before they reach it)', what: 'She forms a giant bubble in the middle of the island, and pools in the water round the edge show how many murlocs are coming from each (1 to 5). They all walk to the bubble; any that get there become Berserkers that hit the raid until they die.',
-            do: ['The pools show where the murlocs come out and how many.', 'Tanks walk her to the biggest pack; the melee stun it and cleave it on her.', 'Ranged with crowd control stop the side packs where they stand.', 'Two ranged squads kill the side packs, the biggest first.', 'A slow (a Death Knight, or any AoE slow) holds the far pack until a squad gets there.'],
-            plan: ['Everyone brings some AoE crowd control: stuns, roots, Mass Entanglement, Frost Nova.', 'Grips and knockbacks can pull a pack next to yours into it.', 'One or two Berserkers is fine: cleave them on the boss.'] },
-          m: { fail: NY_FAIL.murlocsM, name: 'Alluring Bubble (Frostscale out, squads on the side packs)', what: 'The same murlocs, but the biggest pack is always five and its fifth is a Bubblefin Frostscale: murlocs within 15 yards of it take 99% less damage. Murlocs that reach the bubble become Berserkers, and the next Pop empowers them: a wipe.',
+            do: ['The pools show where the murlocs come out and how many.', 'Tanks walk her to the biggest pack; the melee stun it and cleave it on her.', 'Crowd control (stuns, roots, slows) stops the side packs where they stand.', 'Two ranged squads then kill the side packs one by one, the biggest first.', 'A slow (a Death Knight, or any AoE slow) holds the far pack until a squad gets there.'],
+            plan: ['Everyone brings some AoE crowd control: stuns, roots, Mass Entanglement, Frost Nova.', 'A grip or a knockback can drag a small pack into the big one you are killing.', 'One or two Berserkers is fine: cleave them on the boss, but kill them before the next Abyssal Rain or Pop.'] },
+          m: { fail: NY_FAIL.murlocsM, name: 'Alluring Bubble (Frostscale out, squads on the side packs)', what: 'She forms a giant bubble in the middle of the island, and pools round the edge show how many murlocs come from each side (1 to 5). They all walk to the bubble. The biggest pack is always five and its fifth is a Bubblefin Frostscale: murlocs within 15 yards of it take 99% less damage. Murlocs that reach the bubble become Berserkers, and the next Pop empowers them: a wipe.',
             do: ['The pools show where the murlocs come out: walk her to the big pack.', 'The melee stun the big pack and cleave it on her.', 'The Death Knight tank grips the Frostscale out; kill it first.', 'Two ranged squads (3 or 4 each, with crowd control) take the side packs, then the one at the back.', 'A third tank, a Blood Death Knight, only slows the far pack: Death and Decay, Chains of Ice.'],
-            plan: ['Play in one quarter of the island and never drag her across it: the squads go to the murlocs instead.', 'Druids, Evokers and Hunters bring the best crowd control for the squads.', 'The Blood Death Knight needs no gear and does no damage: their whole job is slowing murlocs.', 'After the third Pop, ignore them: see The burn.'] } },
+            plan: ['Play in one quarter of the island and never drag her across it: the squads go to the murlocs instead.', 'Druids, Evokers and Hunters bring the best crowd control for the squads.', 'The Blood Death Knight needs no gear and does no damage: their whole job is slowing murlocs.', 'A Berserker that gets through: kill it before the next Abyssal Rain or Pop.', 'After the third Pop, ignore them: see The burn.'] } },
         { id: 'orbs', spell: 'Chilling Frost', map: (d) => (d === 'h' ? NY_M.orbsH(false) : NY_M.orbsM(false)),
-          h: { fail: NY_FAIL.orbsH, name: 'Chilling Frost (Drop them at the edge, soak them all)', what: 'A few players are chilled: an orb drops under them every 1.5 seconds, three each. Touching an orb soaks it: a DoT that stacks. An orb left for 30 seconds shatters: a stacking DoT on the whole raid. Each soaked orb leaves ice that hurts and makes you slide.',
+          h: { fail: NY_FAIL.orbsH, name: 'Chilling Frost (Drop them at the edge, soak them all)', what: 'A few players are chilled: an orb drops under them every 1.5 seconds, three each. Touching an orb soaks it: a DoT that stacks. An orb left for 30 seconds shatters: a big hit and a stacking DoT on the whole raid. Each soaked orb leaves ice that hurts and makes you slide.',
             do: ['Chilled: go to the edge behind her.', 'Drop your three orbs close together.', 'Pop a defensive and take two of your own.', 'The off tank takes the rest, all within 30 seconds.'],
             plan: ['The ice stays until the Pop washes it away, so keep it in one corner.', 'A Chilling Frost lands just before the whirlpools: immunity players clean up any orbs left then.'] },
-          m: { fail: NY_FAIL.orbsM, name: 'Chilling Frost (Big steps, soak one at a time)', what: 'Three players are chilled and drop three orbs each. Every soak now also hits the whole raid (Frost Burst), and the ice an orb leaves stays until a Water Jet washes it away.',
+          m: { fail: NY_FAIL.orbsM, name: 'Chilling Frost (Big steps, soak one at a time)', what: 'Three players are chilled and drop three orbs each. Every soak also hits the whole raid (Frost Burst), and the ice an orb leaves stays until a Water Jet washes it away.',
             do: ['Chilled: walk into the lane between her and the bubble.', 'Take big steps: your three orbs well apart.', 'The immunity player soaks them one at a time, a second or more apart.', 'Immunity over: stop, even with orbs left.', 'The tanks take what\'s left, two each at most.'],
-            plan: ['Four immunity players take turns, one a set: Hunter Turtle, Paladin Bubble, Rogue Cloak. Three is enough: the tanks cover the middle set.', 'Two or three orbs left is fine: three tanks can take six between them.', 'Healers: a raid cooldown on every set. Four bursts at once nearly wiped a top guild.'] } },
+            plan: ['Four immunity players take turns, one a set: Hunter Turtle, Paladin Bubble, Rogue Cloak. Three is enough: the tanks cover the middle set.', 'Two or three orbs left is fine: three tanks can take six between them.', 'Healers: a raid cooldown on every set.', 'The orb DoT is shorter now (12 seconds) and Frost Burst hits softer than when the first guides were made: still stagger the soaks.'] } },
         { id: 'jet', only: 'm', fail: NY_FAIL.jet, name: 'Water Jet (Sweep the ice, swap every cast)', spell: 'Water Jet', what: 'A tank line: after a 3-second cast she blasts her tank for 6 seconds, pushing them back, and the water runs right across the island. It\'s the only thing that clears the ice, and each hit adds 20% to the next.',
           do: ['Her tank steps to the edge of the lane.', 'Walk across it slowly: the line sweeps the ice away.', 'Nobody else in the line: it goes right across the island.', 'The other tank taunts after every cast.'],
-          plan: ['The first one each loop hits air: no ice yet.', 'There\'s one more jet than ice sets, so you can catch up if you fall behind.', 'Call it when it goes through the bubble toward people on the far side.'],
+          plan: ['The first one each loop hits air: no ice yet.', 'There is one more jet than there are sets of ice, so you can catch up if you fall behind.', 'The raid lead calls "Jet" when the line will pass through the bubble toward people on the far side.'],
           map: (d, o) => NY_M.jet(false, d, o) },
         { id: 'whirl', fail: NY_FAIL.whirl, name: 'Swirling Whirlpools (Everyone in the gap)', spell: 'Swirling Whirlpools', what: 'Whirlpools rise all round the edge of the island, leaving one gap, and close in on the bubble. They nearly one-shot anyone they cross. When they reach the bubble it pops.',
           do: ['Find the gap as they rise: raid speed boosts help.', 'Everyone into it, the boss too, close to the bubble.', 'They reach the bubble: it pops.', 'Back to your spots.'],
@@ -3319,26 +3359,26 @@ GDZ['Nymrissa Wavecaller'] = {
           map: (d) => NY_M.whirl(false, d) },
         { id: 'pop', fail: NY_FAIL.pop, name: 'Pop! (Land on the island, not in the water)', spell: 'Pop!', what: 'When the whirlpools reach the bubble it bursts: a raid hit, and everyone is knocked about 20 yards away from it. Land in the water and the sharks bite: a 20-second bleed.',
           do: ['Stand close to the bubble before it pops.', 'Pop: a raid cooldown for the hit, and the ice is washed away.', 'Walk back to your spots.'],
-          m: { what: 'When the whirlpools reach the bubble it bursts: a raid hit, and everyone is knocked about 20 yards away from it. On Mythic the ice stays where it is. Land in the water and the sharks bite: a 20-second bleed.', do: ['Stand close to the bubble before it pops.', 'Pop: a raid cooldown. Ice behind you? Line up with a Warlock gateway, or cancel the knockback.', 'Walk back to your spots.'] },
+          m: { what: 'When the whirlpools reach the bubble it bursts: a raid hit, and everyone is knocked about 20 yards away from it. On Mythic the ice stays where it is. Land in the water and the sharks bite: a 20-second bleed.', do: ['Stand close to the bubble before it pops.', 'Pop: a raid cooldown. Ice behind you? Line up with a Warlock gateway (their portal) or use any other way to cancel the knockback.', 'Walk back to your spots.'] },
           map: (d) => NY_M.pop(false, d) },
       ],
       tiles: [
         { name: 'Abyssal Rain (Healing cooldowns, it ramps)', spell: 'Abyssal Rain', do: 'On the pull, then twice a loop: four raid hits, then a 24-second DoT. She gets 5% stronger with every cast, so later ones need bigger cooldowns.' },
         { only: 'h', name: 'Iceblade Flurry (A defensive, then swap)', spell: 'Iceblade Flurry', do: 'Five ramping hits on her tank. A defensive for the last two, then the other tank taunts.' },
-        { name: 'Lingering Frost (Stay off the ice)', spell: 'Lingering Frost', do: 'Each soaked orb leaves ice that hurts every second and makes you slide. Keep it in one place: on Mythic only Water Jet clears it, on Heroic the Pop.' },
-        { name: 'Kill order (Murlocs first)', spell: 'Alluring Bubble', do: 'Murlocs before the boss, every set (Mythic: the Frostscale first). Cleave the big pack on her so no damage is lost.', m: { do: 'The Frostscale first, then the big pack on her, then the boss. Cleave the pack on her so no boss damage is lost.' } },
+        { name: 'Lingering Frost (Stay off the ice)', spell: 'Lingering Frost', do: 'Each soaked orb leaves ice that hurts every second and makes you slide. Keep it in one place: the Pop washes it away.', m: { do: 'Each soaked orb leaves ice that hurts every second and makes you slide. Keep it in one place: only Water Jet clears it.' } },
+        { name: 'Kill order (Murlocs first)', spell: 'Alluring Bubble', do: 'Murlocs before the boss, every set. Cleave the big pack on her so no damage is lost.', m: { name: 'Kill order (Frostscale first)', do: 'The Frostscale first, then the big pack on her, then the boss. Cleave the pack on her so no boss damage is lost.' } },
       ] },
     { id: 'burn', only: 'm', name: 'The burn: after the third Pop', sum: 'About 5:40 in, after the third Pop. She enrages after the next whirlpool (about 7:15), so this is the last stretch.',
       mechs: [],
       tiles: [
-        { name: 'Enrage (Ignore the murlocs, burn)', spell: 'Unending Tides', do: 'Everyone on the boss. Murlocs can reach the bubble now: their big hit only comes with the next Pop, and that\'s the enrage anyway.' },
-        { name: 'Orbs (Keep soaking)', spell: 'Frost Orb', do: 'Keep soaking the orbs: they still go off long before the enrage.' },
+        { name: 'Enrage (Ignore the murlocs, burn)', spell: 'Unending Tides', do: 'Everyone on the boss. Murlocs can reach the bubble now: their big hit only comes with the next Pop, and the enrage comes with that Pop.' },
+        { name: 'Orbs (Keep soaking)', spell: 'Frost Orb', do: 'Keep soaking the orbs: one left alone shatters within 30 seconds, long before the enrage.' },
       ] },
   ],
   roles: {
-    t: ['Walk her to the big pack each set, then back to the quarter.', 'Mythic: Death Knight tank grips the Frostscale out of the pack.', 'Mythic: swap on every Water Jet; sweep it across the ice.', 'Leftover orbs: two each at most.', 'Heroic: Iceblade Flurry: a defensive for the last two hits, then swap.'],
-    h: ['Abyssal Rain: four raid hits and a long DoT; she gets 5% stronger every cast.', 'Mythic: every orb soak hits the raid: a cooldown on every set.', 'The Pop: a raid cooldown.'],
-    d: ['Murlocs first (Mythic: the Frostscale first), then the boss.', 'Squads: your side pack, then the one at the back.', 'Chilled: big steps in the lane (Mythic) or drop them at the edge (Heroic).', 'Mythic: after the third Pop ignore the murlocs and burn her.'],
+    t: ['Walk her to the big pack each set, then back to the quarter.', 'Iceblade Flurry: a defensive for the last two hits, then swap.', 'The off tank takes the orbs nobody else did, all within 30 seconds.'],
+    h: ['Abyssal Rain: four raid hits and a long DoT; she gets 5% stronger every cast.', 'The Pop: a raid cooldown.', 'Chilling Frost: keep the chilled players up while they soak their orbs.'],
+    d: ['Murlocs first, then the boss.', 'Squads: your side pack, then the one at the back.', 'Chilled: drop your three orbs at the edge, close together, and take two of them.'],
   },
 };
 
@@ -3365,7 +3405,7 @@ const KX_HOME = (() => { const H = { t1: [6, 31.5], t2: [-16, 10] };
 // the intermissions: everyone inside the barrier, the boss at its north edge with his tank just inside it; nobody near the soak markers
 const KX_IB = [0, 10], KX_INT = (() => { const H = { t1: [0, 15], t2: [5.5, 14.5] }, MK = Object.values(KX_MK);
   const keep = (p) => Math.hypot(p[0], p[1]) <= 16.6 && Math.hypot(p[0], p[1]) >= 4.6 && Math.hypot(p[0] - KX_IB[0], p[1] - KX_IB[1]) >= 4.8 && Math.hypot(p[0] - H.t1[0], p[1] - H.t1[1]) >= 4.6 && Math.hypot(p[0] - H.t2[0], p[1] - H.t2[1]) >= 4.6 && MK.every((m) => Math.hypot(p[0] - m[0], p[1] - m[1]) >= 6.6);
-  const S = []; for (let i = 0; i < 36; i++) { const q = gdzSpot(i, 36, 16.5); if (keep(q)) S.push(q); }
+  const S = []; for (let j = -4; j <= 4; j++) for (let i = -4; i <= 4; i++) { const q = [i * 5 + (j & 1 ? 2.5 : 0), j * 4.33]; if (keep(q)) S.push(q); }
   const near = (p) => Math.hypot(p[0] - KX_IB[0], p[1] - KX_IB[1]); S.sort((a, b) => near(a) - near(b));
   KX_MEL.concat(KX_HEAL, KX_RNG).forEach((id, i) => { H[id] = S[i]; }); return H; })();
 function kxAt(k, t, P, hold, skip) { Object.entries(P).forEach(([id, q]) => { if (skip && skip.includes(id)) return; if (hold != null) k.hold(hold, id); k.at(t, id, q[0], q[1]); }); return k; }
@@ -3386,25 +3426,25 @@ const KX_M = {
     const myth = d !== 'h', L = myth ? 17 : 21, k = gdzKit(KX, L); kxBoss(k, 0); kxLia(k, 0); kxAt(k, 0, KX_HOME); kxMarks(k);
     k.cast('kx', 'Voidswarm', 0.2, 2.6); [0.8, 1.6, 2.4].forEach((t) => kxHit(k, [0, 0], t, 70, 'Voidswarm', 'Voidswarm: raid damage, then the adds'));
     KX_VW.forEach((p, i) => k.add('vw' + i, 'Voidweaver', 2.6, p[0], p[1])); k.show('vw0', 2.6, 9.4);
-    k.add('hk', 'Venomous Hulk', 2.6, ...KX_HULK0).add('hk', 'Venomous Hulk', 3.4, ...KX_HULK0).add('hk', 'Venomous Hulk', 6.6, -8.5, -27.5);
-    k.hold(0.4, 't2').at(6.4, 't2', -11, -32.5); k.call(2.8, 4.6, 'Taunt the Hulk', { on: 't2', color: '#5aa0ff', ink: '#fff' });
-    k.cast('hk', 'Venom Roar', 11.4, 13); k.cone({ from: 'hk', to: 't2', at: 13, r: 14, width: 60 }); k.call(13, 14.6, 'Faced out', { on: 't2', color: '#5aa0ff', ink: '#fff' });
+    k.add('hk', 'Hulk', 2.6, ...KX_HULK0).add('hk', 'Hulk', 3.4, ...KX_HULK0).add('hk', 'Hulk', 6.6, -6, -29.5);
+    k.hold(0.4, 't2').at(6.4, 't2', -1, -34); k.call(2.8, 4.6, 'Taunt the Hulk', { on: 't2', color: '#5aa0ff', ink: '#fff' });
+    if (!fail) { k.cast('hk', 'Venom Roar', 11.4, 13); k.cone({ from: 'hk', to: 't2', at: 13, r: 14, width: 60 }); k.call(13, 14.6, 'Faced out', { on: 't2', color: '#5aa0ff', ink: '#fff' }); }
     k.call(9.4, 11.2, 'Voidweaver down: eggs', { x: KX_VW[0][0], y: KX_VW[0][1] + 7, color: '#ffd23b', ink: '#1a1405' });
-    for (let i = 0; i < (myth ? 3 : 2); i++) { const q = nzAdd(KX_VW[0], 100 + i * 110, 2.6); k.add('ve' + i, 'Mindstinger Egg', 9.4, q[0], q[1]).show('ve' + i, 9.4, 11.8 + i * 0.3); }
+    for (let i = 0; i < (myth ? 3 : 2); i++) { const q = nzAdd(KX_VW[0], 100 + i * 110, 2.6); k.add('ve' + i, 'Egg', 9.4, q[0], q[1]).show('ve' + i, 9.4, 11.8 + i * 0.3); }
     // the beetles: each runs at its target; Mythic: slowed, then gripped one at a time; Heroic: rooted, then stepped on one at a time
     const DK = 'm7', DKS = [-5, -22], STEP = 'r5', V = 6, TG = ['r3', 'h3', 'r6'], B0 = [[14, -14], [8, -22], [20, -20]];
     const pos = (i, t, slowAt, slow) => { const s0 = B0[i], g = KX_HOME[TG[i]], dd = Math.hypot(g[0] - s0[0], g[1] - s0[1]), u = [(g[0] - s0[0]) / dd, (g[1] - s0[1]) / dd]; const tt = Math.max(0, t - 2.6), s = slowAt == null || t <= slowAt ? V * tt : V * (slowAt - 2.6) + slow * (t - slowAt); return [s0[0] + u[0] * s, s0[1] + u[1] * s]; };
     const POP = myth ? [5.3, 9.9, 14.3] : [8.2, 11.6, 15];
-    if (myth) { k.hold(0.4, DK).at(5, DK, ...DKS); k.tag(DK, 'Death Knight', 2.8, 15); }
+    if (myth) { k.at(1.8, DK, -4.5, 3.5).at(4.9, DK, ...DKS); k.tag(DK, 'Death Knight', 2.8, 15); } /* (round Liadrin) */
     else k.hold(3, STEP);
     B0.forEach((p0, i) => { const id = 'bb' + i, slowAt = myth ? (i ? 4.2 + (i - 1) * 0.4 : null) : 3.6, slow = myth ? 1.5 : 0, popAt = fail && i ? 7 : POP[i];
       const pre = myth && !(fail && i) ? popAt - 0.3 : popAt, q = fail && i ? pos(1, 7, slowAt, slow).map((v, j) => v + (i === 2 ? (j ? -1.6 : 1.6) : 0)) : pos(i, pre, slowAt, slow);
-      k.add(id, 'Bomber Beetle', 2.6, ...p0); if (slowAt != null && slowAt < pre) k.add(id, 'Bomber Beetle', slowAt, ...pos(i, slowAt, slowAt, slow)); k.add(id, 'Bomber Beetle', pre, ...q);
-      const at = myth && !(fail && i) ? DKS : q; if (myth && !(fail && i)) { k.add(id, 'Bomber Beetle', popAt, DKS[0] - 1.5, DKS[1] + 0.5); k.call(pre - 0.2, pre + 1.2, 'Grip', { on: DK, color: '#c0394f', ink: '#fff' }); }
+      k.add(id, 'Beetle', 2.6, ...p0); if (slowAt != null && slowAt < pre) k.add(id, 'Beetle', slowAt, ...pos(i, slowAt, slowAt, slow)); k.add(id, 'Beetle', pre, ...q);
+      const at = myth && !(fail && i) ? DKS : q; if (myth && !(fail && i)) { k.add(id, 'Beetle', popAt, DKS[0] - 1.5, DKS[1] + 0.5); k.call(pre - 0.2, pre + 1.2, 'Grip', { on: DK, color: '#c0394f', ink: '#fff' }); }
       k.show(id, 2.6, popAt); k.link({ from: id, to: TG[i], t0: 2.8, t1: popAt - 0.1, color: '#ff8a3a', dash: true, legend: 'a Bomber Beetle runs at the player it fixates: it explodes on the first player it touches' });
       if (!myth && !fail) { k.at(popAt, STEP, q[0] + 1.2, q[1] - 1.2); }
       k.ring({ on: fail && i ? 'r3' : myth ? DK : STEP, r: 4, fx: 'burst', t0: popAt - 0.3, at: popAt, dur: 0.7, color: '#9b6bff', cn: 'Gut Reaction', legend: 'a beetle explodes on the player it touches' }); if (!(fail && i === 2)) kxHit(k, [0, 0], popAt + 0.15, 70, 'Digestive Juices', 'Digestive Juices: a stacking raid DoT from every beetle that explodes', '#9ff26d');
-      if (myth) { const eg = fail && i ? [at[0] + 3.5, at[1] + 2.5] : [at[0] - 2.5 - i * 0.6, at[1] - 3.6 + i * 0.6]; k.add('be' + i, 'Mindstinger Egg', popAt, eg[0], eg[1]).show('be' + i, popAt, popAt + 2.6); } });
+      if (myth) { const eg = fail && i ? [at[0] + 3.5, at[1] + 2.5] : [at[0] - 2.5 - i * 0.6, at[1] - 3.6 + i * 0.6]; k.add('be' + i, 'Egg', popAt, eg[0], eg[1]).show('be' + i, popAt, popAt + 2.6); } });
     if (myth) { const p = pos(1, 4.2, 4.2, 1.5); k.ring({ x: p[0], y: p[1], r: 6, fx: 'puddle', t0: 4.2, dur: 5.4, color: '#c0394f', fill: 'rgba(160,40,60,.25)', cn: 'Death and Decay', legend: 'the Death Knight slows them (never a root: they get gripped)' }); k.call(4.6, 6.4, 'Chains of Ice', { x: B0[2][0], y: B0[2][1] - 6, color: '#c0394f', ink: '#fff' }); }
     else { [0, 1, 2].forEach((i) => { const p = pos(i, 3.6, 3.6, 0); kxHit(k, p, 3.6, 5, 'AoE root', 'Heroic: root the beetles where they are', '#7fd8ff'); }); k.call(3.8, 5.6, 'Rooted', { x: 4, y: -26, color: '#7fd8ff', ink: '#06131c' }); }
     if (fail) { k.hold(4.4, 'r3').at(7, 'r3', ...pos(1, 7, myth ? 4.2 : 3.6, myth ? 1.5 : 0)); k.call(7, 9, 'Two at once', { on: 'r3', color: '#ff3b3b', ink: '#fff' });
@@ -3422,16 +3462,16 @@ const KX_M = {
   extinguish(fail, d, o) {
     o = o || {}; const myth = d !== 'h', inn = !!o.int, L = inn ? 13 : 15, k = gdzKit(KX, L); kxLia(k, 0); kxMarks(k);
     let P, tgt; if (inn) { kxBoss(k, 0, KX_IB); kxBulwark(k, 0, L); kxDark(k, 0, L); P = KX_INT; tgt = KX_IB; }
-    else { kxBoss(k, 0); const VW = KX_VW[1]; k.add('vw1', 'Voidweaver', 0, ...VW); k.add('hk', 'Venomous Hulk', 0, VW[0] + 2, VW[1] - 1.5); tgt = VW;
-      P = { ...KX_HOME, t2: [31, -13] }; KX_RNG.concat(KX_HEAL).forEach((id, i) => { P[id] = nzAdd(VW, 105 + i * (150 / 10), i % 2 ? 15 : 10.5); }); }
-    kxAt(k, 0, P); k.cast('li', 'Light\'s Embrace', 0.2, 0.8); k.cast('kx', 'Extinguish', 1, 9);
+    else { kxBoss(k, 0); const VW = KX_VW[1]; k.add('vw1', 'Voidweaver', 0, ...VW); k.add('hk', 'Hulk', 0, VW[0] + 3, VW[1] - 4.5); tgt = VW;
+      P = { ...KX_HOME, t2: [34, -16] }; KX_RNG.concat(KX_HEAL).forEach((id, i) => { P[id] = nzAdd(VW, 100 + i * 17, [10, 16, 22][i % 3]); }); }
+    kxAt(k, 0, P); k.call(0.2, 1.8, 'Liadrin throws orbs', { x: 0, y: 5, color: '#ffd76a', ink: '#1a1405' }); k.cast('kx', 'Extinguish', 1, 9);
     // the orbs: a fan from Liadrin toward the Hulk (in the intermission, toward him inside the barrier); each player takes the nearest free one
-    const ids = Object.keys(P), O = [], u = inn ? [1, 0] : nzU(Math.atan2(tgt[1], tgt[0]) * 180 / Math.PI), nv = [-u[1], u[0]], C0 = inn ? [0, -12] : nzAdd([0, 0], Math.atan2(tgt[1], tgt[0]) * 180 / Math.PI, 7), NO = inn ? [[0, 0], KX_IB, [0, 15], [5.5, 14.5]] : [[0, 0], tgt, [tgt[0] + 2, tgt[1] - 1.5]];
-    for (let row = 0; O.length < ids.length + 2 && row < 12; row++) for (let col = 0; col < 5; col++) { const q = inn ? [C0[0] + (col - 2) * 5, C0[1] + row * 5] : [C0[0] + u[0] * row * 5 + nv[0] * (col - 2) * 5, C0[1] + u[1] * row * 5 + nv[1] * (col - 2) * 5]; if (inn && Math.hypot(q[0], q[1]) > 16.5) continue; if (NO.some((z) => Math.hypot(q[0] - z[0], q[1] - z[1]) < 4.6)) continue; O.push(q); }
+    const ids = Object.keys(P), O = [], u = inn ? [1, 0] : nzU(Math.atan2(tgt[1], tgt[0]) * 180 / Math.PI), nv = [-u[1], u[0]], C0 = inn ? [0, -12] : nzAdd([0, 0], Math.atan2(tgt[1], tgt[0]) * 180 / Math.PI, 7), NO = inn ? [[0, 0], KX_IB, [0, 15], [5.5, 14.5]] : [[0, 0], tgt, [tgt[0] + 3, tgt[1] - 4.5]];
+    for (let row = 0; O.length < ids.length + 2 && row < 12; row++) for (let col = 0; col < 5; col++) { const q = inn ? [C0[0] + (col - 2) * 5, C0[1] + row * 5] : [C0[0] + u[0] * row * 6.5 + nv[0] * (col - 2) * 6.5, C0[1] + u[1] * row * 6.5 + nv[1] * (col - 2) * 6.5]; if (inn && Math.hypot(q[0], q[1]) > 16.5) continue; if (NO.some((z) => Math.hypot(q[0] - z[0], q[1] - z[1]) < 4.6)) continue; O.push(q); }
     const SKIP = fail ? 'r5' : null, free = O.map((q) => !(SKIP && Math.hypot(q[0] - P[SKIP][0], q[1] - P[SKIP][1]) < 5));
     ids.forEach((id) => { if (id === SKIP) return; const p = P[id]; let b = -1, bd = 1e9; O.forEach((q, j) => { if (!free[j]) return; const dd = Math.hypot(q[0] - p[0], q[1] - p[1]); if (dd < bd) { bd = dd; b = j; } }); free[b] = false; const q = O[b], tp = Math.min(7.6, 1.4 + bd / 6.5);
       k.ring({ x: q[0], y: q[1], r: 1.2, fx: 'zone', t0: 0.8, dur: tp - 0.8, color: '#ffe9a0', fill: 'rgba(255,225,130,.9)', cn: 'Light\'s Embrace', legend: 'a Light\'s Embrace orb: run over it for 90% less shadow damage' });
-      k.hold(1, id).at(tp, id, q[0], q[1]); k.ring({ on: id, r: 2.2, fx: 'debuff', t0: tp, dur: L - tp, color: '#ffd76a', cn: 'Light\'s Embrace', legend: 'Light\'s Embrace: 90% less shadow damage for 8 seconds' }); if (!inn) k.hold(9.6, id).at(L - 0.4, id, ...(id === 't1' ? [31, -13] : id === 't2' ? [6, 31.5] : P[id])); });
+      k.hold(1, id).at(tp, id, q[0], q[1]); k.ring({ on: id, r: 2.2, fx: 'debuff', t0: tp, dur: L - tp, color: '#ffd76a', cn: 'Light\'s Embrace', legend: 'Light\'s Embrace: 90% less shadow damage for 8 seconds' }); if (!inn) k.hold(9.6, id).at(L - 0.4, id, ...(id === 't1' ? [34, -16] : id === 't2' ? [6, 31.5] : P[id])); });
     O.forEach((q, j) => { if (free[j]) k.ring({ x: q[0], y: q[1], r: 1.2, fx: 'zone', t0: 0.8, dur: 9, color: '#ffe9a0', fill: 'rgba(255,225,130,.9)', cn: 'Light\'s Embrace', legend: 'a Light\'s Embrace orb: run over it for 90% less shadow damage' }); });
     kxHit(k, [0, 0], 9, 75, 'Extinguish', 'Extinguish: a huge shadow hit on everyone', '#7a3dff');
     if (!inn) { k.call(1.2, 3, 'He stands still: swap', { x: KX_B[0] + 6, y: KX_B[1] + 8, color: '#5aa0ff', ink: '#fff' }); k.call(9.4, 11, 'Taunt the Hulk', { on: 't1', color: '#5aa0ff', ink: '#fff' }); k.call(9.6, 11.2, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' }); }
@@ -3456,7 +3496,7 @@ const KX_M = {
       if (!fail && !inn) { const q = MK[m]; k.hold(0.6, id).at(5.6, id, q[0] + 1.6, q[1] - 1.6); } });
     const DS = fail ? [7, 7, 13] : [7, 10.4, 13.8];
     TG.forEach(([id, , hl], i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 6.4, dur: DS[i] - 6.4, color: '#7a3dff', cn: 'Overwhelming Fear', legend: 'Overwhelming Fear: stuck until a healer dispels it' });
-      k.call(DS[i] - 0.4, DS[i] + 1, 'Dispel', { on: hl, color: '#45d16b', ink: '#04140a' }); k.ring({ on: id, r: inn || fail ? 40 : 15, fx: 'burst', t0: DS[i] - 0.3, at: DS[i], dur: 0.7, color: '#b06bff', cn: 'Scream', legend: 'the scream when it\'s dispelled: less damage the further away you are' });
+      k.call(DS[i] - 0.4, DS[i] + 1, 'Dispel', fail && i < 2 ? { x: P[hl][0] + (i ? -3.5 : 3.5), y: P[hl][1], color: '#45d16b', ink: '#04140a' } : { on: hl, color: '#45d16b', ink: '#04140a' }); k.ring({ on: id, r: inn || fail ? 40 : 15, fx: 'burst', t0: DS[i] - 0.3, at: DS[i], dur: 0.7, color: '#b06bff', cn: 'Scream', legend: 'the scream when it\'s dispelled: less damage the further away you are' });
       if (!fail && !inn) k.hold(DS[i] + 0.4, id).at(Math.min(L - 0.2, DS[i] + 3.4), id, ...P[id]); });
     if (inn) k.call(6.6, 9.4, 'Raid cooldowns', { x: -12, y: 18, color: '#45d16b', ink: '#04140a' });
     if (fail) { gdzFailBlast(k, 7.3, 'Two screams in the raid', -16, 34, ['h4', 'r7'], 'Scream ×2'); k.step(0.2).step(6.4).step(7);
@@ -3479,13 +3519,13 @@ const KX_M = {
     k.ring({ on: 't1', r: 15, fx: 'burst', t0: 4.1, at: 4.4, dur: 0.7, color: '#9b6bff', cn: 'Dark Devastation', legend: 'Dark Devastation: a 15-yard hit round the tank' }); kxScar(k, at, 4.6, L - 4.6);
     k.call(4.8, 6.4, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' }); const T2 = inn ? P.t1 : [6, 31.5];
     if (!fail) { k.hold(4.8, 't2').at(inn ? 6 : 9, 't2', T2[0], T2[1]); k.hold(4.8, 't1').at(inn ? L - 0.4 : 9, 't1', ...(inn ? P.t2 : [14, 33])); }
-    k.call(4.8, 7, 'Drop ' + (n + 1), { x: D[0], y: D[1] + 6, color: '#b06bff', ink: '#fff' });
-    if (fail) { ['m1', 'm3', 'm4', 'm5'].forEach((id, i) => ulHit(k, id, 4.5 + i * 0.1, 'Hit')); k.step(0.4).step(4.4).step(5);
+    if (!fail) k.call(4.8, 7, 'Drop ' + (n + 1), { x: D[0], y: D[1] + 6, color: '#b06bff', ink: '#fff' });
+    if (fail) { ['m1', 'm3', 'm4', 'm5'].forEach((id, i) => k.ring({ on: id, r: 2.6, fx: 'burst', t0: 4.2 + i * 0.1, at: 4.5 + i * 0.1, dur: 0.6, color: '#ff3b3b', cn: 'Hit', legend: 'a hit' })); k.call(4.6, 6.2, 'Hit: 150% more damage', { on: 'm3', color: '#ff3b3b', ink: '#fff' }); k.step(0.4).step(4.4).step(5);
       k.pause(5.2, 'His tank stayed put: the circle hit the melee, and the Voidscar is now under the boss, knocking back anyone who touches it.', { x: B[0], y: B[1], r: 16 });
       return k.done({ title: 'Mistake: Dark Devastation on the melee', focus: { x: B[0], y: B[1] - 2, r: 22 } }); }
     k.ring1(['t1', 't2']).step(0.4).step(1).step(4.4).step(4.8);
-    k.pause(3.6, 'His tank takes the circle out to drop spot ' + (n + 1) + ' with a defensive. The Voidscar it leaves stays there for the intermission.', { x: D[0], y: D[1], r: 15 });
-    return k.done({ title: 'Dark Devastation: out to the drop spot, swap', focus: inn ? { x: -6, y: 4, r: 26 } : { x: 18, y: 26, r: 26 }, full: inn ? { x: -4, y: 4, r: 28 } : { x: 14, y: 22, r: 30 }, hlLabel: 'the tanks' });
+    k.pause(3.6, 'His tank takes the circle out to drop spot ' + (n + 1) + ' with a defensive. The Voidscar it leaves stays there for the intermission.', inn ? { x: D[0], y: D[1], r: 15 } : { x: D[0] * 0.5 + 6, y: D[1] * 0.6 + 8, r: 26 });
+    return k.done({ title: 'Dark Devastation: out to the drop spot, swap', focus: inn ? { x: -6, y: 4, r: 26 } : { x: 4, y: 22, r: 36 }, full: inn ? { x: -4, y: 4, r: 28 } : { x: 6, y: 22, r: 34 }, hlLabel: 'the tanks' });
   },
   // Suffocating Darkness: at 100 energy darkness fills the room (outside the barrier: pacified, heavy damage). Liadrin puts up her barrier:
   // everyone inside, still doing his other mechanics in less room. Abyssal Grasp: a heal absorb that drags a few players toward the dark;
@@ -3497,14 +3537,14 @@ const KX_M = {
     const GR = ['r2', 'h4', 'm6', 'r7'], FL = fail ? 'r7' : null;
     GR.forEach((id) => { const p = KX_INT[id], r = Math.hypot(p[0], p[1]) || 1, e = [p[0] / r * 30, p[1] / r * 30]; const t1 = id === FL ? 16.6 : 11.6 + GR.indexOf(id) * 0.3;
       k.link({ from: id, toYd: { x: e[0], y: e[1] }, t0: 8, t1, color: '#7a3dff', legend: 'Abyssal Grasp: a heal absorb pulling you toward the dark' }); k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 8, dur: t1 - 8, color: '#7a3dff', cn: 'Abyssal Grasp', legend: 'Abyssal Grasp: clear the absorb within 8 seconds' });
-      if (id !== FL) k.call(9, 10.8, GR.indexOf(id) % 2 ? 'Potion' : 'Healthstone', { on: id, color: '#45d16b', ink: '#04140a' }); });
+      if (id !== FL) k.call(9 + GR.indexOf(id) * 0.9, 10.3 + GR.indexOf(id) * 0.9, GR.indexOf(id) % 2 ? 'Potion' : 'Healthstone', { on: id, color: '#45d16b', ink: '#04140a' }); });
     if (myth) k.call(8.4, 11.4, 'Raid cooldowns', { x: -14, y: 18, color: '#45d16b', ink: '#04140a' });
     if (fail) { const p = KX_INT.r7, r = Math.hypot(p[0], p[1]), e = [p[0] / r * 30, p[1] / r * 30]; k.hold(16, 'r7').at(16.6, 'r7', e[0], e[1]); k.call(16.6, 18.4, 'Flung into the dark', { on: 'r7', color: '#ff3b3b', ink: '#fff' }); k.oops('r7', 17.6);
       k.step(0.4).step(8).step(16.6); k.pause(17, 'Nobody cleared this absorb: after 8 seconds the player is flung into the darkness, pacified and dying.', { x: e[0], y: e[1], r: 9 });
-      return k.done({ title: 'Mistake: Abyssal Grasp not cleared', focus: { x: 0, y: 2, r: 34 }, badLabel: 'flung into the dark' }); }
+      return k.done({ title: 'Mistake: Abyssal Grasp not cleared', focus: { x: -4, y: 3, r: 40 }, badLabel: 'flung into the dark' }); }
     k.ring1(GR).step(0.4).step(5.4).step(8).step(9);
     k.pause(6, 'Darkness everywhere but Liadrin\'s barrier: everyone inside, the boss at its north edge.', { x: 0, y: 0, r: 18 });
-    return k.done({ title: 'Suffocating Darkness: inside the barrier', focus: { x: 0, y: 2, r: 30 }, full: { x: 0, y: 2, r: 34 }, hlLabel: 'the players with Abyssal Grasp' });
+    return k.done({ title: 'Suffocating Darkness: inside the barrier', focus: { x: -4, y: 3, r: 40 }, full: { x: -4, y: 3, r: 42 }, hlLabel: 'the players with Abyssal Grasp' });
   },
   // Eclipse Fragments (Heroic and up): in the intermission every Voidscar sends a fragment floating toward Liadrin every 8 seconds (five
   // each). Soak them at the barrier's edge: a stacking DoT on you and anyone near (Mythic: 6 yards for 10 seconds, so no solo soaks). A
@@ -3522,7 +3562,7 @@ const KX_M = {
       return t1; };
     // the north-east soaks: the tank without the debuff at circle (second intermission: the other tank takes the second pair)
     const C = KX_MK.circle; k.hold(0.4, 't2').at(2.6, 't2', C[0], C[1]);
-    [1.5, 9.5].forEach((t0, w) => { let ta = 0, tb = 0; NE.forEach((p, j) => { const pair = tri && j > 1, t = frag(p, t0 + (pair ? 2.4 : 0), C, pair ? 't1' : 't2'); if (pair) tb = t; else ta = Math.max(ta, t); });
+    (fail ? [1.5] : [1.5, 9.5]).forEach((t0, w) => { let ta = 0, tb = 0; NE.forEach((p, j) => { const pair = tri && j > 1, t = frag(p, t0 + (pair ? 2.4 : 0), C, pair ? 't1' : 't2'); if (pair) tb = t; else ta = Math.max(ta, t); });
       if (tri) { k.hold(ta + 0.2, 't2').at(ta + 1.6, 't2', ...KX_INT.t2); k.hold(ta, 't1').at(tb - 0.1, 't1', C[0], C[1]).hold(tb + 0.2, 't1').at(tb + 1.8, 't1', ...KX_INT.t1); if (!w) k.hold(tb + 1.8, 't2').at(9.5 + 6, 't2', C[0], C[1]); } });
     // the side scar: two ranged take turns at moon (or triangle)
     const PR = ['r1', 'r2'], spot = (i) => [SM[0] + (i ? 2.2 : -2.2) * (tri ? 1 : 0) , SM[1] + (i ? 2.2 : -2.2) * (tri ? 0 : 1)];
@@ -3530,7 +3570,7 @@ const KX_M = {
       k.hold(ta + 0.2, PR[0]).at(ta + 2.6, PR[0], ...KX_INT[PR[0]]); k.hold(ta + 0.6, PR[1]).at(ta + 3, PR[1], ...SM); const tb = frag(SIDE, 9.5, SM, PR[1]); k.hold(tb + 0.2, PR[1]).at(Math.min(L - 0.2, tb + 2.6), PR[1], ...KX_INT[PR[1]]);
       k.call(ta + 0.3, ta + 2, 'Swap', { on: PR[1], color: '#f2b33a', ink: '#1a1003' }); }
     kxBulwark(k, 0, fail ? 5.9 : L);
-    if (fail) { const tr = frag(SIDE, 1.5, null, null); kxBulwark(k, tr, L - tr, 14.5); gdzFailBlast(k, tr, 'It reached her: a raid DoT, and a smaller barrier', -18, 22, [], 'Eclipse Fragment');
+    if (fail) { const tr = frag(SIDE, 1.5, null, null); kxBulwark(k, tr, L - tr, 14.5); gdzFailBlast(k, tr, 'It reached her: a raid DoT', -8, 22, [], 'Eclipse Fragment');
       k.step(0.2).step(1.5).step(tr); k.pause(tr + 0.4, 'Nobody stood at ' + (tri ? 'triangle' : 'moon') + '. The fragment floated all the way to Liadrin: a DoT on the whole raid, and her barrier shrinks for the rest of the intermission.', { x: SM[0], y: SM[1], r: 10 });
       return k.done({ title: 'Mistake: a fragment reached Liadrin', focus: { x: 4, y: 6, r: 40 } }); }
     k.ring1(['t2', 'r1', 'r2'].concat(tri ? ['t1'] : [])).step(0.2).step(1.6).step(7.5);
@@ -3548,7 +3588,7 @@ const KX_M = {
     const GA = [-26, -4], GB = [22, -4]; k.ring({ x: GA[0], y: GA[1], r: 1.8, fx: 'zone', t0: 0, dur: 6, color: '#c084ff', fill: 'rgba(160,90,255,.45)', cn: 'Demonic Gateway', legend: 'a Warlock gateway to the far side' }); k.ring({ x: GB[0], y: GB[1], r: 1.8, fx: 'zone', t0: 0, dur: 6, color: '#c084ff', fill: 'rgba(160,90,255,.45)', cn: 'Demonic Gateway', legend: 'a Warlock gateway to the far side' });
     k.cast('kx', 'Null Gate', 0.2, 0.4);
     T.forEach(([id, q], i) => { k.ring({ on: id, r: 5, fx: 'debuff', t0: 0.4, dur: 5, color: '#c084ff', cn: 'Null Gate', legend: 'Null Gate: in 5 seconds a 5-yard hit, and a gate opens where you stand' });
-      const at = fail && id === 'r2' ? KX_HOME.r2 : q; if (!(fail && id === 'r2')) { if (id[0] === 'r') { k.hold(0.4, id).at(2.4, id, GA[0] + (i % 2 ? 1.5 : -1.5), GA[1]).at(2.5, id, GB[0], GB[1] + (i % 2 ? 1.5 : -1.5)).at(5.2, id, q[0], q[1]); k.call(2.3, 3.6, 'Gateway', { on: id, color: '#c084ff', ink: '#14062a' }); } else k.hold(0.6, id).at(5.2, id, q[0], q[1]); }
+      const at = fail && id === 'r2' ? KX_HOME.r2 : q; if (!(fail && id === 'r2')) { if (id[0] === 'r') { const g0 = i % 2 ? 2.9 : 2.4; k.hold(0.4, id).at(g0, id, GA[0] + (i % 2 ? 1.5 : -1.5), GA[1]).at(g0 + 0.1, id, GB[0], GB[1] + (i % 2 ? 1.5 : -1.5)).at(5.2, id, q[0], q[1]); k.call(g0 - 0.2, g0 + (i % 2 ? 1 : 0.6), 'Gateway', { on: id, color: '#c084ff', ink: '#14062a' }); } else k.hold(0.6, id).at(5.2, id, q[0], q[1]); }
       k.ring({ on: id, r: 5, fx: 'burst', t0: 5.1, at: 5.4, dur: 0.7, color: '#c084ff', cn: 'Null Gate', legend: 'Null Gate: a 5-yard hit as it opens' });
       k.ring({ x: at[0], y: at[1], r: 2.6, fx: 'zone', t0: 5.4, dur: L - 5.4, color: '#7a3dff', fill: 'rgba(90,40,170,.55)', cn: 'Null Gate (open)', legend: 'an open Null Gate: it sprays Nullshards' });
       // its shards fly out away from the raid
@@ -3568,7 +3608,7 @@ const KX_M = {
     const myth = d !== 'h', N = myth ? 12 : 8, TD = 2.4 + N, L = TD + 1.6, k = gdzKit(KX, L); kxLia(k, 0); kxBoss(k, 0); kxAt(k, 0, { ...KX_HOME, t2: [14, 30] }); /* (N: Negation's length, TD: when it kills) */
     const G = { m: [-12, 38], h: [-42, 22], r1: [26, 6], r2: [30, 14] }; Object.entries(G).forEach(([g, p]) => k.ring({ x: p[0], y: p[1], r: 2.6, fx: 'zone', t0: 0, dur: L, color: '#7a3dff', fill: 'rgba(90,40,170,.55)', cn: 'Null Gate (open)', legend: 'an open Null Gate: it sprays Nullshards' }));
     k.cast('kx', 'Negation', 0.4, 2.4); k.ring({ on: 't1', r: 2.6, fx: 'debuff', t0: 2.4, dur: N, color: '#ffd76a', cn: 'Negation', legend: 'Negation: ' + N + ' seconds to run into ' + (myth ? 'three Null Gates' : 'a Null Gate') + ', or it kills you' });
-    k.call(2.6, 4.2, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' }); k.hold(2.6, 't2').at(4, 't2', 6, 31.5); k.call(2.6, 4.4, 'Defensive', { x: 0, y: 44, color: '#5aa0ff', ink: '#fff' });
+    k.call(3.3, 4.8, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' }); k.hold(2.6, 't2').at(4, 't2', 6, 31.5); k.call(2.4, 3.4, 'Defensive', { on: 't1', color: '#5aa0ff', ink: '#fff' });
     const RT = myth ? (fail ? [['m', 5], ['r2', 9.6]] : [['m', 5], ['r2', 9.2], ['r1', 10.2]]) : (fail ? [] : [['m', 5]]); k.hold(2.4, 't1');
     RT.forEach(([g, t]) => { const p = G[g]; k.at(t, 't1', p[0] + 1, p[1] - 1); k.ring({ on: 't1', r: 10, fx: 'burst', t0: t - 0.3, at: t, dur: 0.7, color: '#ffd76a', cn: 'Explosive Restabilization', legend: 'a big hit on the tank; it clears gates and shards within 10 yards' }); });
     if (!myth && fail) k.at(TD, 't1', -2, 36);
@@ -3581,23 +3621,24 @@ const KX_M = {
   },
 };
 const KX_FAIL = {
-  adds: { name: 'Two beetles at once', what: 'A player runs through the middle and touches two Bomber Beetles together: two stacks of Digestive Juices on the whole raid at once.', do: ['The adds come out.', 'Beetles slowed in the middle.', 'Two at once: two stacks.'], map: (d) => KX_M.adds(true, d) },
-  extinguish: { name: 'No orb for Extinguish', what: 'A player never picks up a Light\'s Embrace orb and takes Extinguish at full strength.', do: ['The orbs land.', 'Extinguish casts.', 'No orb: the full hit.'], map: (d) => KX_M.extinguish(true, d) },
-  fear: { name: 'Two dispels at once, in the raid', what: 'The feared players stay in the raid and two are dispelled together: two screams at full strength on everyone around them.', do: ['Three players marked.', 'They stay in the raid.', 'Two screams at once.'], map: (d) => KX_M.fear(true, d) },
-  devastation: { name: 'Dark Devastation on the melee', what: 'His tank doesn\'t move: the 15-yard circle hits the melee, and the Voidscar lands under the boss.', do: ['The circle goes on the tank.', 'It lands on the melee.', 'A Voidscar under the boss.'], map: (d) => KX_M.devastation(true, d) },
-  suffocate: { name: 'Abyssal Grasp not cleared', what: 'Nobody clears one heal absorb in time: after 8 seconds the player is flung into the darkness.', do: ['Everyone inside.', 'Abyssal Grasp on four players.', 'One flung into the dark.'], map: (d) => KX_M.suffocate(true, d) },
+  /* (extinguish, fear, devastation and suffocate are left out of "What wipes us" with solo: true: the box holds four) */
+  adds: { name: 'Two beetles at once', what: 'A player runs through the middle and touches two Bomber Beetles together: two stacks of Digestive Juices on the whole raid at once, which is very dangerous.', do: ['The adds come out.', 'Beetles run through the middle.', 'Two at once: two stacks.'], map: (d) => KX_M.adds(true, d) },
+  extinguish: { solo: true, name: 'No orb for Extinguish', what: 'A player never picks up a Light\'s Embrace orb and takes Extinguish at full strength: it kills on Mythic, and on Heroic only a big defensive saves them.', do: ['The orbs land.', 'Extinguish casts.', 'No orb: the full hit.'], map: (d) => KX_M.extinguish(true, d) },
+  fear: { solo: true, name: 'Two dispels at once, in the raid', what: 'The feared players stay in the raid and two are dispelled together: two screams at full strength on everyone around them.', do: ['Three players marked.', 'They stay in the raid.', 'Two screams at once.'], map: (d) => KX_M.fear(true, d) },
+  devastation: { solo: true, name: 'Dark Devastation on the melee', what: 'His tank doesn\'t move: the 15-yard circle hits the melee, and the Voidscar lands under the boss.', do: ['The circle goes on the tank.', 'It lands on the melee.', 'A Voidscar under the boss.'], map: (d) => KX_M.devastation(true, d) },
+  suffocate: { solo: true, name: 'Abyssal Grasp not cleared', what: 'Nobody clears one heal absorb in time: after 8 seconds the player is flung into the darkness.', do: ['Everyone inside.', 'Abyssal Grasp on four players.', 'One flung into the dark.'], map: (d) => KX_M.suffocate(true, d) },
   fragments: { name: 'A fragment reached Liadrin', what: 'Nobody waits at moon: the fragment floats all the way to Liadrin. A raid DoT, and her barrier shrinks.', do: ['Fragments start floating in.', 'Nobody at moon.', 'It reaches her.'], map: (d) => KX_M.fragments(true, d) },
   gates: { name: 'A gate in the ranged group', what: 'A ranged drops their Null Gate where they stand: the hit and then the shards go through the ranged.', do: ['Gates on three players.', 'One stays put.', 'Shards through the group.'], map: (d) => KX_M.gates(true, d) },
-  negation: { name: 'Negation runs out', what: 'His tank reaches too few gates before Negation ends (8 seconds; on Mythic 12, and it needs three), and it kills them.', do: ['Negation on the tank.', 'Too few gates.', 'Dead when it ends.'], map: (d) => KX_M.negation(true, d) },
+  negation: { name: 'Negation runs out', what: 'His tank reaches too few Null Gates before Negation runs out, and it kills them.', do: ['Negation on the tank.', 'Too few gates.', 'Dead when it ends.'], map: (d) => KX_M.negation(true, d) },
 };
 // ---- the whole fight (Mythic), by the fastest Mythic kills' clock (4:39): lust on the pull and skip the third intermission
 const KX_BEATS = {
-  start: { name: 'The pull', do: ['Mythic: Bloodlust, potions and every cooldown on the pull: push him to 25% before the third beetle set explodes (about 4:15).', 'His tank takes him to the north side; the ranged and healers start west, by moon.'],
+  start: { name: 'The pull', do: ['Mythic: Bloodlust, potions and every cooldown on the pull. Reach 25% before the third beetle set explodes: 4:15 at the very latest, the fastest kills did it by about 3:50.', 'His tank takes him to the north side; the ranged and healers start west, by moon.'],
     run() { const k = gdzKit(KX, 3); kxBoss(k, 0); kxLia(k, 0); kxAt(k, 0, KX_HOME); kxMarks(k); k.call(0.3, 2.8, 'Bloodlust', { x: -20, y: 30, color: '#ff8a5a', ink: '#1a0a04' }); k.ring1(['t1', 't2']).step(0.2); } },
   radiance: { name: 'Divine Radiance', do: ['Liadrin clears the darkness and stuns him for 8 seconds. It\'s not a damage window: don\'t save cooldowns for it.', 'Everyone out of the middle again for the next adds.'],
     run() { const k = gdzKit(KX, 7); kxBoss(k, 0, KX_IB); kxLia(k, 0); kxAt(k, 0, KX_INT); kxMarks(k); k.cast('li', 'Divine Radiance', 0.2, 1.4); kxHit(k, [0, 0], 1.4, 75, 'Divine Radiance', 'Divine Radiance: the darkness is gone, and he\'s stunned for 8 seconds', '#ffd76a'); kxAt(k, 6.6, KX_HOME, 1.6); kxBoss(k, 1.6, KX_IB); kxBoss(k, 6.6); k.step(0.2).step(1.6); } },
-  push: { name: 'The push to 25%', do: ['The third adds: root the beetles and leave them. Everyone on the boss.', 'Hold the 2-minute cooldowns from the 4-minute mark for phase two.'],
-    run() { const k = gdzKit(KX, 5); kxBoss(k, 0); kxLia(k, 0); kxAt(k, 0, KX_HOME); kxMarks(k); [[6, -12], [-2, -20], [14, -22], [10, -16]].forEach((p, i) => { k.add('pb' + i, 'Bomber Beetle', 0.4, p[0], p[1]); kxHit(k, p, 1, 5, 'AoE root', 'root the beetles and leave them', '#7fd8ff'); }); k.call(1, 4.4, 'Ignore them: push him', { x: 6, y: 40, color: '#ffd23b', ink: '#1a1405' }); k.step(0.2).step(1); } },
+  push: { name: 'The push to 25%', do: ['The third adds: root the beetles and leave them. Everyone on the boss.', 'Save the 2-minute cooldowns that come back at about 4:00 for phase two.'],
+    run() { const k = gdzKit(KX, 5); kxBoss(k, 0); kxLia(k, 0); kxAt(k, 0, KX_HOME); kxMarks(k); [[6, -12], [-2, -20], [14, -22], [10, -16]].forEach((p, i) => { k.add('pb' + i, 'Beetle', 0.4, p[0], p[1]); kxHit(k, p, 1, 5, 'AoE root', 'root the beetles and leave them', '#7fd8ff'); }); k.call(1, 4.4, 'Ignore them: push him', { x: 6, y: 40, color: '#ffd23b', ink: '#1a1405' }); k.step(0.2).step(1); } },
   p2: { name: 'Phase two: Last Light', do: ['At 25% everyone is stunned and every add disappears. Liadrin\'s Last Light: Luminous Grace, 50% more damage and healing.', 'Eightfold Eclipse: an orb (a raid hit) every few seconds, and the eighth kills everyone: about a minute to kill him.'],
     run() { const k = gdzKit(KX, 5); kxBoss(k, 0); kxLia(k, 0); kxAt(k, 0, KX_HOME); k.cast('kx', 'Stygian Howl', 0.2, 1); kxHit(k, [0, 0], 1, 75, 'Stygian Howl', 'Stygian Howl: everyone stunned for a moment', '#7a3dff'); k.cast('li', 'Last Light', 1.4, 2.2); kxHit(k, [0, 0], 2.2, 75, 'Last Light', 'Last Light: Luminous Grace, 50% more damage and healing', '#ffd76a'); k.step(0.2).step(2.2); } },
   kill: { name: 'The kill', do: ['Kith\'ix dies before the eighth Eclipse.'],
@@ -3627,32 +3668,38 @@ GDZ["Kith'ix"] = {
     'Suffocating Darkness (Inside the barrier)': ['', '', '', 'h'], 'Eclipse Fragments (Catch them at the barrier\'s edge)': ['', 't', ''],
     'Null Gate (Drop it at your role\'s spot)': ['', '', '', ''], 'Negation (Into the gates in time)': ['t', 't', 't'],
   },
-  sum: 'Phase one repeats until 25%: adds (kill them away from him, beetles one at a time), Extinguish (grab Liadrin\'s orbs), fears and tank circles, then an intermission inside Liadrin\'s barrier. Phase two is a one-minute race: drop your Null Gate at your spot and dodge the shards.',
+  sum: 'Lady Liadrin, your ally in the middle of the room, backs you up all fight. Phase one repeats until 25%: adds (kill them away from him, beetles one at a time), Extinguish (grab her orbs), fears and tank circles, then an intermission inside her barrier. Phase two is a one-minute race: drop your Null Gate at your spot and dodge the shards.',
   m: { sim: KX_SIM, simDur: KX_DUR, simSev: KX_SEV, beats: KX_BEATS,
-    simAlways: ['The middle stays empty while adds are up: one beetle stepped on by accident can wipe.', 'Bloodlust on the pull: skip the third intermission by reaching 25% before the third beetle set explodes.', 'Phase two: about a minute before the eighth Eclipse.'],
-    source: 'Tactyks\' Mythic Kith\'ix video', sum: 'Heroic with sharper edges: more eggs (beetles drop one too), fragments that splash 6 yards for 10 seconds, a fourth Null Gate, Negation needing three gates, and 3 Nullify stacks killing.' },
-  facts: [['Phases', '2, with intermissions'], ['Bloodlust', 'Phase two', 'h'], ['Bloodlust', 'On the pull', 'm'], ['Raid size', 'Flex: 15 to 25', 'm'], ['Healers', '5 (for 25)', 'm'], ['Hardest part', 'Beetles and the intermissions'], ['Fight length', 'About 4 minutes', 'h'], ['Fight length', 'About 4.5 minutes', 'm']],
+    roles: {
+      t: ['Off tank: the Hulk onto a Voidweaver, faced out (Venom Roar knocks back).', 'Dark Devastation: out to the drop spot with a defensive; swap every cast.', 'Phase two: Negation: taunt at once and run into three Null Gates within 12 seconds.', 'Intermission: the tank without the Dark Devastation debuff soaks most fragments.'],
+      h: ['Fears: dispel one at a time, the healer first.', 'Abyssal Grasp: clear the absorbs within 8 seconds.', 'Phase two: if you get a Null Gate, drop it to the west; keep the raid up through the shards.', 'Raid cooldowns when the fears and Abyssal Grasp overlap.'],
+      d: ['Adds away from him; kill the Voidweavers and the eggs first.', 'Grab a Light\'s Embrace orb for every Extinguish.', 'Phase two: drop your gate at your role\'s spot, dodge the shards.', 'Beetles: the Death Knight slows and grips them in; no Death Knight, root them and step on one at a time. Nobody else in the middle.'],
+    },
+    simAlways: ['The middle stays empty while adds are up: two beetles touched together put two stacks on the raid, and the third one kills.', 'Bloodlust on the pull: skip the third intermission by reaching 25% before the third beetle set explodes (4:15 at the latest).', 'Phase two: about a minute before the eighth Eclipse.'],
+    source: 'Tactyks\' Mythic Kith\'ix video', sum: 'Lady Liadrin, your ally in the middle of the room, backs you up all fight. Same loop as Heroic (adds, Extinguish, fears, tank circles, an intermission in her barrier, then a one-minute phase two), sharper: you push to 25% fast to skip the third intermission, beetles are gripped one at a time and every one drops an egg, fragments splash 6 yards for 10 seconds, a fourth Null Gate drops, Negation needs three gates in 12 seconds, and 3 Nullify stacks kill.' },
+  facts: [['Phases', '2, with intermissions'], ['Bloodlust', 'Phase two', 'h'], ['Bloodlust', 'On the pull', 'm'], ['Raid size', 'Flex: 15 to 25', 'm'], ['Healers', '5 (for 25)', 'm'], ['Hardest part', 'Beetles and the intermissions'], ['Fight length', 'About 3:45', 'h'], ['Fight length', 'About 4.5 minutes', 'm']],
   phases: [
     { id: 'p1', name: 'Phase one: Darkness\' Domain', sum: 'Adds, Extinguish, fears and tank circles, until he reaches 100 energy and the intermission starts. Repeats until 25%.',
       mechs: [
         { id: 'adds', fail: KX_FAIL.adds, name: 'Voidswarm (Adds away from him, beetles one at a time)', spell: 'Voidswarm', what: 'Raid damage, then adds: a Venomous Hulk, two Voidweavers that stand still and ramp up raid damage, and three Bomber Beetles. Adds near him take 75% less damage. Every add must be dead before the intermission.',
           do: ['Voidswarm: the adds come out.', 'The off tank takes the Hulk onto a Voidweaver, faced out.', 'Beetles: root them, then one player steps on each, one at a time.', 'Kill the Voidweaver, then its eggs before they hatch.', 'The Hulk\'s Venom Roar: a frontal and knockback on its tank.'],
           plan: ['Nobody stands in the middle while adds are up.', 'Each beetle that explodes puts a stacking DoT on the raid: one at a time.', 'Hulk and Voidweavers drop eggs when they die (4 and 2): cleave them. He can be moved onto eggs: they ignore his shield.'],
-          m: { what: 'The same adds, with more eggs (the Hulk drops 5, each Voidweaver 3) and every beetle dropping one where it explodes. Four beetles from the second set.',
+          m: { what: 'Raid damage, then adds: a Venomous Hulk, two Voidweavers that stand still and ramp up raid damage, and three Bomber Beetles (four from the second set). Adds near him take 75% less damage, and every add must be dead before the intermission. The Hulk drops 5 eggs, each Voidweaver 3, and every beetle drops one where it explodes.',
             do: ['Voidswarm: the adds come out.', 'The off tank takes the Hulk to the Voidweaver on the ranged side, faced out.', 'The Death Knight slows the beetles and grips them in one at a time, by the Hulk.', 'Kill the Voidweaver, then the eggs.', 'Then the Hulk goes across to the other Voidweaver, with the raid.'],
-            plan: ['Slow the beetles, never root them: they get gripped. Drop Death and Decay on the second-closest and grip the closest.', 'Wait for each DoT to end before the next grip. Two Death Knights make it easier.', 'Stepping on a beetle: one stack is fine, two is very dangerous, three kills.', 'Keep the Hulk alive and bring it to where the raid is: Liadrin\'s orbs land at the Hulk.'] },
+            plan: ['Slow the beetles, never root them: they get gripped. Drop Death and Decay on the second-closest and grip the closest.', 'Wait for each DoT to end before the next grip. Two Death Knights make it easier.', 'No Death Knight? Root them like on Heroic and have one player step on each, one at a time.', 'Each beetle that explodes is one stack on the raid: one is fine, two together is very dangerous, three kills.', 'Keep the Hulk alive and bring it to where the raid is: Lady Liadrin\'s orbs land at the Hulk.'] },
           map: (d) => KX_M.adds(false, d) },
-        { id: 'extinguish', fail: KX_FAIL.extinguish, name: 'Extinguish (An orb for everyone)', spell: 'Extinguish', what: 'An 8-second cast, then a huge shadow hit on everyone. Liadrin throws Light\'s Embrace orbs toward the Hulk (or a Voidweaver, or him): run over one for 90% less shadow damage.',
+        { id: 'extinguish', fail: KX_FAIL.extinguish, name: 'Extinguish (An orb for everyone)', spell: 'Extinguish', what: 'An 8-second cast, then a huge shadow hit on everyone. Lady Liadrin throws Light\'s Embrace orbs toward the Hulk (or a Voidweaver, or him): run over one for 90% less shadow damage.',
           do: ['Liadrin throws the orbs toward the Hulk.', 'One orb each; melee can catch them as they land.', 'Extinguish lands: the orb carries you through it.'],
-          plan: ['No orb? A big defensive (on Normal and Heroic you usually live).', 'He stands still while he casts: the tanks swap then.'],
+          plan: ['No orb? A big defensive: on Heroic you usually live.', 'He stands still while he casts: the tanks swap then.'],
           m: { plan: ['The orbs land at the Hulk while it lives, then a Voidweaver, then him: walk the Hulk to the raid\'s Voidweaver first.', 'He stands still while he casts: the tanks swap then.'] },
           map: (d) => KX_M.extinguish(false, d) },
         { id: 'fear', fail: KX_FAIL.fear, name: 'Unspeakable Horrors (Run out, one dispel at a time)', spell: 'Unspeakable Horrors', what: 'A few players have 6 seconds before they\'re feared in place. Dispelling the fear lets out a scream that hurts everyone, less the further away you are.',
-          do: ['Marked players get 6 seconds.', 'Run out of the raid (Mythic: healer to skull, melee to star, ranged to cross).', 'Dispel one, the healer first.', 'Let the raid heal, then the next.'],
+          do: ['Marked players get 6 seconds.', 'Run out of the raid to your raid marker: healer skull, melee star, ranged cross.', 'Dispel one, the healer first.', 'Let the raid heal, then the next.'],
+          m: { plan: ['Another top guild dispels the healer last, because the healer\'s fear can simply run out. This guide follows the healer-first plan.'] },
           map: (d) => KX_M.fear(false, d) },
-        { id: 'devastation', fail: KX_FAIL.devastation, name: 'Dark Devastation (Out to the drop spot, swap)', spell: 'Dark Devastation', what: 'A 15-yard hit round his tank that makes them take 150% more damage. Heroic and up it leaves a Voidscar there, which knocks back anyone who touches it and sends fragments in the intermission.',
+        { id: 'devastation', fail: KX_FAIL.devastation, name: 'Dark Devastation (Out to the drop spot, swap)', spell: 'Dark Devastation', what: 'A 15-yard hit round his tank that makes them take 150% more damage. It leaves a Voidscar there, which knocks back anyone who touches it and sends fragments in the intermission.',
           do: ['His tank runs the circle out to the next drop spot.', 'A defensive for the hit.', 'It lands: a Voidscar stays there.', 'The other tank taunts.'],
-          plan: ['Drop spots 1, 2, 4 and 5 together in the north-east: one tank can catch their fragments together.', 'Spot 3 just past moon in the first intermission, spot 6 just past triangle in the second.'],
+          plan: ['Drop spots 1, 2, 4 and 5 together in the north-east: one tank can catch their fragments together.', 'Spot 3 just past the moon marker in the first intermission, spot 6 just past the triangle marker in the second.'],
           map: (d, o) => KX_M.devastation(false, d, o) },
       ],
       tiles: [
@@ -3661,28 +3708,29 @@ GDZ["Kith'ix"] = {
         { name: 'Twisted Appendage (Step out)', spell: 'Twisted Appendage', do: 'Tentacles slam a short frontal toward a random player. Step out of it.' },
         { name: 'Dark Frenzy (All adds dead first)', spell: 'Dark Frenzy', do: 'Any add alive when the intermission starts gets much faster, can\'t be crowd controlled, and pulses raid damage.' },
       ] },
-    { id: 'int', name: 'Intermission: Suffocating Darkness', sum: 'At 100 energy darkness fills the room: everyone inside Liadrin\'s barrier while he keeps casting. When she\'s full she clears it and stuns him.',
+    { id: 'int', name: 'Intermission: Suffocating Darkness', sum: 'At 100 energy darkness fills the room: everyone inside Liadrin\'s barrier while he keeps casting. Once she has gathered enough Light she clears the darkness and stuns him. Moon, circle and triangle are raid markers on the floor at the barrier\'s edge, where the soakers stand.',
       mechs: [
         { id: 'suffocate', fail: KX_FAIL.suffocate, name: 'Suffocating Darkness (Inside the barrier)', spell: 'Suffocating Darkness', what: 'Darkness everywhere but Liadrin\'s barrier: outside it you\'re pacified and take heavy damage. Extinguish, fears and tank circles carry on in the small space. Abyssal Grasp drags a few players toward the dark until their heal absorb is gone.',
           do: ['Everyone into Liadrin\'s barrier.', 'The boss at its north edge.', 'Abyssal Grasp: a heal absorb pulling you out.', 'Clear it within 8 seconds: healthstone, potion, healing.'],
           m: { plan: ['Abyssal Grasp lands with the fears: the scariest moment. Rally, Anti-Magic Zone, Darkness, Spirit Link here.'] },
           map: (d) => KX_M.suffocate(false, d) },
         { id: 'fragments', fail: KX_FAIL.fragments, name: 'Eclipse Fragments (Catch them at the barrier\'s edge)', spell: 'Eclipse Fragment', what: 'Every Voidscar sends a fragment floating to Liadrin every 8 seconds, five each. Soaking one puts a stacking DoT on you and anyone within 3 yards. One that reaches her: a raid DoT and a smaller barrier.',
-          do: ['Fragments float in from the Voidscars.', 'A tank catches the north-east cluster\'s at circle.', 'Two players take turns at the other scar.'],
-          plan: ['The tank without the Devastation debuff soaks most of them.', 'With too many scars later on, spread them round the room with one soaker each.'],
+          do: ['Fragments float in from the Voidscars.', 'A tank catches the north-east fragments at the circle marker.', 'Two players take turns at the other scar.'],
+          plan: ['The tank without the Dark Devastation debuff soaks most of them.', 'With too many scars later on, spread them round the room with one soaker each.'],
           m: { what: 'Every Voidscar sends a fragment floating to Liadrin every 8 seconds, five each. On Mythic soaking one hurts everyone within 6 yards for 10 seconds, so nobody soaks a scar alone. One that reaches her: a raid DoT and a smaller barrier.',
-            do: ['Fragments float in from the Voidscars.', 'The tank without the debuff catches the north-east ones at circle (two at a time, then swap).', 'Two ranged take turns at moon (or triangle), with a backup.'],
-            plan: ['Keep the soakers all ranged: the fears pick one per role.', 'Everyone else stays near the middle, away from the 6-yard splashes.', 'Immunities don\'t stop the DoT; Anti-Magic Shell helps.'] },
+            do: ['Fragments float in from the Voidscars.', 'The tank without the Dark Devastation debuff catches the north-east ones at the circle marker (two at a time, then swap).', 'Two ranged take turns at the moon marker (or triangle), with a backup.'],
+            plan: ['Keep the moon and triangle soakers all ranged: a fear takes only one ranged player at a time, so you lose at most one soaker.', 'Everyone else stays near the middle, away from the 6-yard splashes (the spell text says 3 yards: we use 6 to be safe).', 'Immunities don\'t stop the DoT; Anti-Magic Shell helps.'] },
           map: (d, o) => KX_M.fragments(false, d, o) },
       ],
       tiles: [
-        { name: 'Divine Radiance (Not a damage window)', spell: 'Divine Radiance', do: 'When Liadrin is full she clears the darkness and stuns him for 8 seconds. Each time she\'s Exhausted: weaker orbs, a smaller barrier, 10% stronger darkness.' },
-        { only: 'm', name: 'Skip the third intermission (Push by about 4:15)', do: 'Lust, potions and every cooldown on the pull. Reach 25% before the third beetle set explodes (about 4:10 to 4:20): root them and ignore them.' },
+        { name: 'Divine Radiance (Don\'t save cooldowns)', spell: 'Divine Radiance', do: 'When Lady Liadrin has gathered enough Light she clears the darkness and stuns him for 8 seconds. It isn\'t a burst window: nothing to hold cooldowns for. Each time she is left Exhausted: weaker orbs, a smaller barrier, 10% stronger darkness.' },
+        { only: 'm', name: 'Skip the third intermission (Reach 25% by 4:15)', do: 'Lust, potions and every cooldown on the pull. Reach 25% before the third beetle set explodes, at 4:15 at the very latest (the fastest kills did it by about 3:50), then root the beetles and ignore them. Other guilds keep Bloodlust for phase two and still push before the third set: this plan puts it on the pull.' },
       ] },
     { id: 'p2', name: 'Phase two: Last Light (25% to the kill)', sum: 'Everyone is stunned, every add vanishes, and Liadrin gives the raid Luminous Grace. About a minute before the eighth Eclipse kills everyone.',
       mechs: [
         { id: 'gates', fail: KX_FAIL.gates, name: 'Null Gate (Drop it at your role\'s spot)', spell: 'Null Gate', what: 'A melee, a healer and a ranged get 5 seconds, then a 5-yard hit and a gate where they stand. Each gate sprays Nullshards for the rest of the fight: every hit is a Nullify stack, and 5 stacks kill.',
           do: ['Null Gate: 5 seconds.', 'Walk to your role\'s spot: melee off to his side, healers west, ranged far east.', 'The gate opens: nobody else within 5 yards.', 'Dodge the shards.'],
+          plan: ['The ranged drop theirs far to the east, a long run: a Warlock gateway (their portal) saves it.'],
           m: { what: 'A melee, a healer and two ranged get 5 seconds, then a 5-yard hit and a gate where they stand. Each gate sprays Nullshards for the rest of the fight: every hit is a Nullify stack, and on Mythic 3 stacks kill.' },
           map: (d) => KX_M.gates(false, d) },
         { id: 'negation', fail: KX_FAIL.negation, name: 'Negation (Into the gates in time)', spell: 'Negation', what: 'His tank takes 100% more physical damage but moves twice as fast and shards can\'t touch them. After 8 seconds it kills them unless they\'ve run into a Null Gate. Each gate hits the tank hard and clears gates and shards within 10 yards.',
@@ -3691,14 +3739,14 @@ GDZ["Kith'ix"] = {
           map: (d) => KX_M.negation(false, d) },
       ],
       tiles: [
-        { name: 'Eightfold Eclipse (About a minute)', spell: 'Eightfold Eclipse', do: 'An orb every few seconds, each a raid hit; the eighth kills everyone. Luminous Grace gives 50% more damage and healing.' },
-        { name: 'Bloodlust (Phase two)', do: 'Bloodlust here on Heroic: it\'s a race to the finish.', m: { name: 'Bloodlust (On the pull)', do: 'On Mythic the hard part is reaching 25%: lust on the pull and hold the 2-minute cooldowns from the 4-minute mark for here.' } },
+        { name: 'Eightfold Eclipse (Kill him within a minute)', spell: 'Eightfold Eclipse', do: 'An orb every few seconds, each a raid hit; the eighth kills everyone. Luminous Grace gives 50% more damage and healing.' },
+        { name: 'Bloodlust (Use it here)', do: 'Bloodlust here on Heroic: it\'s a race to the finish.', m: { name: 'Cooldowns (Save the 4:00 ones)', do: 'Bloodlust already went on the pull. Save the 2-minute cooldowns that come back at about 4:00 for the start of this phase: it\'s a race to the finish.' } },
       ] },
   ],
   roles: {
-    t: ['Off tank: the Hulk onto a Voidweaver, faced out (Venom Roar knocks back).', 'Dark Devastation: out to the drop spot with a defensive; swap every cast.', 'Intermission: the tank without the debuff soaks most fragments.', 'Phase two: Negation: taunt at once; run into gates (Mythic: three).'],
-    h: ['Fears: dispel one at a time, the healer first.', 'Abyssal Grasp: clear the absorbs within 8 seconds.', 'Raid cooldowns when the fears and Abyssal Grasp overlap.'],
-    d: ['Adds away from him; kill the Voidweavers and the eggs.', 'Beetles one at a time; nobody in the middle while adds are up.', 'Grab a Light\'s Embrace orb for every Extinguish.', 'Phase two: drop your gate at your role\'s spot, dodge the shards.'],
+    t: ['Off tank: the Hulk onto a Voidweaver, faced out (Venom Roar knocks back).', 'Dark Devastation: out to the drop spot with a defensive; swap every cast.', 'Phase two: Negation: taunt at once and run into a Null Gate within 8 seconds.', 'Intermission: the tank without the Dark Devastation debuff soaks most fragments.'],
+    h: ['Fears: dispel one at a time, the healer first.', 'Abyssal Grasp: clear the absorbs within 8 seconds.', 'Phase two: if you get a Null Gate, drop it to the west; keep the raid up through the shards.', 'Raid cooldowns when the fears and Abyssal Grasp overlap.'],
+    d: ['Adds away from him; kill the Voidweavers and the eggs first.', 'Grab a Light\'s Embrace orb for every Extinguish.', 'Phase two: drop your gate at your role\'s spot, dodge the shards.', 'Beetles: they are rooted and one player steps on each, one at a time. Nobody else in the middle.'],
   },
 };
 
@@ -3748,9 +3796,10 @@ const LE_M = {
     const myth = d !== 'h', L = 14, k = gdzKit(LE, L), h = leHome(k, -80, 'IG'), C = [[-20, -6], [16, -2], [-6, -2], [5, -1]], BR = ['r4', 'r1'];
     k.cast('ge', 'Throw Junk', 0.3, 1.6);
     C.forEach(([x, y], i) => { k.ring({ x, y, r: 3, fx: 'zone', t0: 0.4, dur: 1.6, color: '#d7a35a', fill: 'rgba(215,163,90,.18)', cn: 'Crate landing', legend: 'a crate is about to land here' });
-      const tb = fail && i === 3 ? L : [4.6, 4.6, 9.4, 9.4][i]; k.ring({ x, y, r: 1.6, fx: 'puddle', t0: 2, dur: tb - 2, color: '#a8743a', fill: 'rgba(168,116,58,.85)', cn: 'Crate of junk', legend: 'a crate: walk over it to break it' }); });
+      const tb = fail && i === 3 ? L : [4.6, 4.6, 9.4, 9.4][i]; k.ring({ x, y, r: 2.4, fx: 'puddle', t0: 2, dur: tb - 2, color: '#a8743a', fill: 'rgba(168,116,58,.85)', cn: 'Crate of junk', legend: 'a crate: walk over it to break it' }); });
     // (the two breakers step on their crates in pairs, the west one and the east one; the fish carrier collects the fish)
     BR.forEach((id, j) => { const p0 = k.posAt(id, 0), c1 = C[j], c2 = C[2 + j]; k.hold(2, id).at(4.4, id, c1[0] + 1.6, c1[1] + 1.2).hold(5, id); if (!(fail && j === 1)) { k.at(9.2, id, c2[0] + 1.6, c2[1] + 1.2).hold(10, id).at(13.4, id, p0[0], p0[1]); } else k.at(9, id, p0[0], p0[1]); });
+    k.call(2.2, 4.5, 'Crates landed: break two at a time', { x: 0, y: 8, color: '#d7a35a', ink: '#1a0f00' });
     k.call(4.6, 6.4, myth ? 'Splinters: the whole raid bleeds' : 'Splinters: the breaker bleeds', { x: 0, y: 8, color: '#ff8a5a', ink: '#1a0a00' });
     if (!fail) { k.call(9.4, 11.2, myth ? 'Second pair: raid bleed again' : 'Second pair', { x: 0, y: 8, color: '#ff8a5a', ink: '#1a0a00' });
       const F = C[2], q = k.posAt('r7', 0); k.hold(9.6, 'r7').at(11.6, 'r7', F[0] + 1.6, F[1] + 1.8).hold(12, 'r7').at(14, 'r7', q[0], q[1]); k.tag('r7', 'Fish', 11.6, L);
@@ -3790,7 +3839,7 @@ const LE_M = {
     if (fail) { gdzFailBlast(k, 7.6, 'Nova in the raid: full damage on everyone', -4, 4, [], 'Blink Nova'); k.oops(V, 7.4); k.step(0.4).step(4).step(7.4);
       k.pause(7.8, 'The marked ranged stayed in the middle of the raid. Iku landed on top of everyone and the nova hit the whole raid at full strength.', { on: V, r: 12 });
       return k.done({ title: 'Mistake: Blink Nova in the raid', focus: { x: 8, y: -14, r: 24 }, badLabel: 'didn\'t move' }); }
-    k.ring1([V]).step(0.4).step(0.6).step(7.4).step(9.6);
+    k.ring1([V]).step(0.4).step(7.4).step(9.6);
     k.pause(5, 'The marked ranged walks out in front, toward the edge. Iku lands there, so the nova is weaker for everyone, and the melee can still reach her.', { x: T[0], y: T[1], r: 14 });
     return k.done({ title: 'Blink Nova: out in front, toward the edge', focus: { x: 10, y: -16, r: 24 }, hlLabel: 'the marked ranged' });
   },
@@ -3798,7 +3847,7 @@ const LE_M = {
   kicks(fail) {
     const L = 11, k = gdzKit(LE, L), h = leHome(k, -80, 'IG');
     k.cast('ik', 'Icebound Flames', 0.6, 2.4, 'kick', 'Tank 1'); k.cast('ik', 'Icebound Flames', 4.4, 6.2, fail ? 'done' : 'kick', 'Melee 1'); if (!fail) k.cast('ik', 'Icebound Flames', 8.2, 10, 'kick', 'Melee 2');
-    if (fail) { k.ring({ on: 'r3', r: 2.6, fx: 'debuff', t0: 6.2, dur: 2.6, color: '#7fd8ff', cn: 'Icebound Flames', legend: 'Icebound Flames on a player: dispel it' }); k.dispel('h2', 'r3', 8.8); k.oops('m1', 6.2); k.step(0.6).step(4.4).step(6.2).step(8.8);
+    if (fail) { k.ring({ on: 'r3', r: 2.6, fx: 'debuff', t0: 6.2, dur: 2.6, color: '#7fd8ff', cn: 'Icebound Flames', legend: 'Icebound Flames on a player: dispel it' }); k.dispel('h2', 'r3', 8.8); ulHit(k, 'r3', 6.4, 'Icebound Flames'); k.oops('m1', 6.2); k.step(0.6).step(6.2).step(8.8);
       k.pause(6.6, 'The second kick was missed: Icebound Flames went off on a ranged. A healer has to dispel it, and it hurts until they do.', { on: 'r3', r: 9 });
       return k.done({ title: 'Mistake: a missed kick', focus: { x: 8, y: -16, r: 22 }, badLabel: 'missed the kick' }); }
     k.ring1(['t1', 'm1', 'm2']).step(0.6).step(4.4).step(8.2);
@@ -3815,8 +3864,8 @@ const LE_M = {
       k.pause(7.3, 'No swap after Shredding Shards: the next Icebound Flames went off on the tank who already takes extra magic damage.', { on: 't1', r: 9 });
       return k.done({ title: 'Mistake: no swap after Shredding Shards', focus: { x: 0, y: -26, r: 24 }, badLabel: 'kept Iku with Shards' }); }
     // (the tanks trade bosses: each runs to the other's boss and taunts)
-    k.hold(1.6, ['t1', 't2']).at(5.4, 't1', B[0], B[1]).at(5.4, 't2', A[0], A[1]); k.call(4.6, 6, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' }); k.call(4.8, 6.2, 'Taunt', { on: 't1', color: '#5aa0ff', ink: '#fff' });
-    k.ring1(['t1', 't2']).step(0.5).step(1.6).step(5.4);
+    k.hold(1.8, ['t1', 't2']).at(9.2, 't1', B[0], B[1]).at(9.2, 't2', A[0], A[1]); k.call(1.8, 3.4, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' }); k.call(2, 3.6, 'Taunt', { on: 't1', color: '#5aa0ff', ink: '#fff' }); /* (taunt at once, then walk to the other boss: a walk, not a sprint) */
+    k.ring1(['t1', 't2']).step(0.5).step(1.8).step(5.4);
     k.pause(2, 'Shredding Shards: swap right away. The tanks trade bosses each time, so neither stacks too much of Nama\'s Steady Strikes or keeps Iku with Shards on.', { x: 0, y: -26, r: 22 });
     return k.done({ title: 'Tank swap on Shredding Shards', focus: { x: 0, y: -24, r: 26 }, hlLabel: 'the tanks' });
   },
@@ -3826,7 +3875,7 @@ const LE_M = {
   fish(fail, o) {
     o = o || {}; const who = o.to || 'ge', L = 11, k = gdzKit(LE, L), h = who === 'na' ? leHome(k, -20, 'IN') : leHome(k, -80, 'IG'), C = 'r7', B = { ge: h.G, ik: h.I, na: h.N }[who], NM = { ge: 'Gebbo', ik: 'Iku', na: 'Nama' }[who];
     k.tag(C, 'Fish', 0, fail ? L : 5.6); k.call(0.3, 3, fail ? 'Mor\'zahi at 100' : 'Mor\'zahi at 95: feed ' + NM, { x: 0, y: 10, color: '#c084ff', ink: '#14061f' });
-    if (fail) { gdzFailBlast(k, 3.4, 'Final Ascension: the raid is wiped', 0, 12, ['m1', 'h1', 'r1'], 'Final Ascension'); k.step(0.3).step(3.4);
+    if (fail) { gdzFailBlast(k, 3.4, 'Final Ascension: the raid is wiped', 0, 12, ['m1', 'h1', 'r1'], 'Final Ascension'); k.step(0.3).step(1.8).step(3.4);
       k.pause(3.8, 'The fish was held too long. Mor\'zahi reached full energy and Final Ascension wiped the raid.', { x: 0, y: 0, r: 30 });
       return k.done({ title: 'Mistake: the fish fed too late', focus: { x: 0, y: -8, r: 34 } }); }
     const p0 = k.posAt(C, 0), q = nzAdd(B, Math.atan2(B[1], B[0]) * 180 / Math.PI + 35, 6); k.hold(0.6, C).at(5, C, q[0], q[1]); k.link({ from: C, to: who, t0: 5, t1: 5.8, color: '#7ee36a', legend: 'the fish, fed to the boss' }); k.call(5.1, 6, 'Fed', { on: C, color: '#7ee36a', ink: '#0a1a06' });
@@ -3885,7 +3934,7 @@ const LE_M = {
     // (clearing, one pair at a time: the frost player steps into the fire patch, the fire player into the frost patch)
     [0, 1, 2].forEach((i) => { const t = 7.4 + i * 1.4; k.hold(t - 1.6, [FR[i], FI[i]]).at(t, FR[i], FS[i][0] + 1.5, FS[i][1] - 1.5).at(t, FI[i], RS[i][0] - 1.5, RS[i][1] + 1.5); });
     k.call(5.8, 10.6, 'Clear one pair at a time: frost into fire, fire into frost', { x: 0, y: 20, color: '#ffd23b', ink: '#1a1400' });
-    k.ring1(FI.concat(FR)).step(0.5).step(3.6).step(5.8);
+    k.ring1(FI.concat(FR)).step(0.5).step(3.6).step(5.8).step(8.8);
     k.pause(4.2, 'The fire and frost players spread round the edge of the raid in pairs, 12 yards apart. Now clear, one pair at a time: frost steps into the fire patch, fire into the frost patch.', { x: 0, y: -4, r: 30 });
     return k.done({ title: 'Frostfire Volley: spread, then clear in pairs', focus: { x: 0, y: -6, r: 34 }, hlLabel: 'players with fire or frost' });
   },
@@ -3906,11 +3955,11 @@ const LE_M = {
       if (fail && j === 2) return;
       const nx = j < 2 ? LS[j + 1] : [LS[2][0] + 12, LS[2][1] - 4], dir = Math.atan2(nx[1] - P[1], nx[0] - P[0]) * 180 / Math.PI;
       REST.concat(MK.slice(0, j + 1)).forEach((id) => { const p = k.posAt(id, t), q = nzAdd(p, dir, j < 2 ? 12.5 : 10); k.hold(t + 0.05, id).at(t + 1.15, id, q[0], q[1]); }); });
-    k.call(0.6, 3, 'Stack here: the knockback carries you on', { x: LS[0][0], y: LS[0][1] - 12, color: '#e6b450', ink: '#141006' });
+    k.call(0.6, 3, 'Whole raid here: the knockback carries you on', { x: LS[0][0], y: LS[0][1] - 12, color: '#e6b450', ink: '#141006' }); MK.forEach((id, i) => k.call(0.6, 3.2, 'Mark ' + (i + 1), { on: id, color: '#ffd23b', ink: '#1a1400' })); /* (the raid is one stack, so the tags say which three are marked, in order) */
     if (fail) { const id = MK[2]; k.hold(8.9, id); ulHit(k, id, 8.8, 'Took it alone'); k.oops(id, 8.8); k.step(0.4).step(3.2).step(8.8);
       k.pause(9.1, 'The raid stopped after the second landing. Nama\'s last leap hit the marked player alone: the whole hit on one person.', { on: id, r: 10 });
       return k.done({ title: 'Mistake: the last landing left alone', focus: { x: -4, y: 12, r: 24 }, badLabel: 'left alone' }); }
-    k.ring1(MK).step(0.4).step(3.2).step(6).step(8.8);
+    k.ring1(MK).step(0.4).step(3.2).step(6);
     k.pause(2.9, 'The three marked players stand in a line. Everyone else stacks on the near side of the first landing: each knockback throws the raid on to the next one.', { x: -6, y: 12, r: 20 });
     return k.done({ title: 'Mighty Thud: ride the knockbacks down the line', focus: { x: -4, y: 12, r: 24 }, hlLabel: 'the three marked players' });
   },
@@ -3932,17 +3981,17 @@ const LE_BEATS = {
   start: { name: 'The pull (Iku to Gebbo, Nama apart)', do: ['Iku\'s tank brings her right next to Gebbo, and the melee cleave both. Nama\'s tank takes her 30+ yards behind.', 'Bloodlust on the pull. Hit Gebbo early: you won\'t be near him much later.'],
     run() { const k = gdzKit(LE, 4); leHome(k, -110, 'IG'); k.ring1(['t1', 't2']).step(0.2); } },
   eyes: { name: 'Evil Eyes (Dodge the swirls)', do: ['Right after each fish, the statues fire swirls at the raid: step out of them.'],
-    run() { const k = gdzKit(LE, 4); leHome(k, 120, 'IN'); [[14, 30], [33, 2], [-6, 2]].forEach(([x, y]) => k.ring({ x, y, r: 4, fx: 'burst', t0: 0.4, at: 2, dur: 0.8, color: '#c084ff', cn: 'Evil Eyes', legend: 'a statue\'s swirl: step out' })); k.step(0.2); } },
+    run() { const k = gdzKit(LE, 5); leHome(k, 120, 'IN'); [[14, 30], [33, 2], [-6, 2]].forEach(([x, y]) => k.ring({ x, y, r: 4, fx: 'burst', t0: 0.4, at: 1.8, dur: 2.6, color: '#c084ff', cn: 'Evil Eyes', legend: 'a statue\'s swirl: step out' })); k.call(0.4, 4.2, 'Evil Eyes: step out of the swirls', { x: 4, y: 14, color: '#c084ff', ink: '#14061f' }); k.step(0.2); } },
   kill: { name: 'The kill (Even health)', do: ['Bring all three down together: one dying early enrages the others.', 'If one has to enrage, let it be Gebbo: a tank taunts and kites him.'],
     run() { const k = gdzKit(LE, 5); leHome(k, -10, 'IG'); ['ge', 'ik', 'na'].forEach((b) => k.ring({ on: b, r: 6, fx: 'burst', t0: 1.4, at: 2, dur: 0.8, color: '#ffd23b', cn: 'Kill', legend: 'the kill' })); k.call(2.3, 4.6, 'Kill', { x: 0, y: 0 }); k.step(0.3); } },
 };
 const LE_SIM = [
-  { at: 0, beat: 'start' }, { at: 5, mech: 'pair', label: 'Two together, one apart' }, { at: 10, mech: 'blink', label: 'Blink Nova 1' }, { at: 18, mech: 'shell', label: 'Shell Spin' }, { at: 20, mech: 'crates', label: 'Throw Junk 1' },
+  { at: 0, beat: 'start' }, { at: 5, mech: 'pair', label: 'Two together, one apart' }, { at: 10, mech: 'blink', label: 'Blink Nova 1' }, { at: 18, mech: 'shell', label: 'Shell Spin' }, { at: 20, mech: 'crates', label: 'Crates (First set)' },
   { at: 30, mech: 'swap', label: 'Shredding Shards 1' }, { at: 36, mech: 'kicks', label: 'Icebound Flames' }, { at: 45, mech: 'fish', label: 'The fish: Gebbo\'s turn', o: { to: 'ge' } },
   { at: 57, beat: 'eyes', ph: 1 }, { at: 66, mech: 'bomb', ph: 1, label: 'Explosive Surprise 1' }, { at: 93, mech: 'swap', ph: 1, label: 'Shredding Shards 2' }, { at: 98, mech: 'bomb', ph: 1, label: 'Explosive Surprise 2' },
-  { at: 133, mech: 'blink', label: 'Blink Nova 3' }, { at: 143, mech: 'crates', label: 'Throw Junk 4' }, { at: 153, mech: 'swap', label: 'Shredding Shards 3' }, { at: 170, mech: 'fish', ph: 2, label: 'The fish: Iku\'s turn', o: { to: 'ik' } },
+  { at: 133, mech: 'blink', label: 'Blink Nova 3' }, { at: 143, mech: 'crates', label: 'Crates (A later set)' }, { at: 153, mech: 'swap', label: 'Shredding Shards 3' }, { at: 170, mech: 'fish', ph: 2, label: 'The fish: Iku\'s turn', o: { to: 'ik' } },
   { at: 181, beat: 'eyes', ph: 2 }, { at: 195, mech: 'frostfire', ph: 2, label: 'Frostfire Volley 1' }, { at: 217, mech: 'swap', ph: 2, label: 'Shredding Shards 4' }, { at: 222, mech: 'frostfire', ph: 2, label: 'Frostfire Volley 2' },
-  { at: 257, mech: 'blink', label: 'Blink Nova 6' }, { at: 267, mech: 'crates', label: 'Throw Junk 8' }, { at: 277, mech: 'swap', label: 'Shredding Shards 5' }, { at: 290, mech: 'fish', ph: 3, label: 'The fish: Nama\'s turn', o: { to: 'na' } },
+  { at: 257, mech: 'blink', label: 'Blink Nova 6' }, { at: 267, mech: 'crates', label: 'Crates (A later set)' }, { at: 277, mech: 'swap', label: 'Shredding Shards 5' }, { at: 290, mech: 'fish', ph: 3, label: 'The fish: Nama\'s turn', o: { to: 'na' } },
   { at: 299, beat: 'eyes', ph: 3 }, { at: 308, mech: 'thud', ph: 3, label: 'Mighty Thud' }, { at: 336, beat: 'kill', ph: 3 },
 ];
 const LE_DUR = { 'm:pair': 0, 'm:blink': 7, 'm:shell': 4, 'm:crates': 25, 'm:swap': 3, 'm:kicks': 2, 'm:fish': 15, 'm:bomb': 12, 'm:frostfire': 10, 'm:thud': 14, 'b:start': 2, 'b:eyes': 5, 'b:kill': 0 };
@@ -3950,25 +3999,25 @@ const LE_SEV = { 'm:pair': 1, 'm:blink': 2, 'm:shell': 1, 'm:crates': 2, 'm:swap
 GDZ['The Lost Explorers'] = {
   upd: ['12.1', 'Oct 21, 2026'],
   stepRoles: {
-    'Two together, one apart (United Defense)': ['t', 'd', 't'], 'Crates (Break them in pairs)': ['', 'd', '', 'd'], 'Shell Spin (Take it outside)': ['d', 'd', ''], 'Blink Nova (Out in front)': ['d', '', ''],
-    'Icebound Flames (Kick every one)': ['', 'td', 'h'], 'Shredding Shards (Swap at once)': ['t', 't', 't'], 'The fish (Feed it at 95)': ['d', '', '', ''],
+    'United Defense (Two together, one apart)': ['t', 'd', 't'], 'Crates (Break them in pairs)': ['', 'd', '', 'd'], 'Shell Spin (Take it outside)': ['d', 'd', ''], 'Blink Nova (Out in front)': ['d', '', ''],
+    'Icebound Flames (Kick every one)': ['', 'td', 'h'], 'Shredding Shards (Swap at once)': ['t', 't', 't'], 'The fish (Feed it at 95 energy)': ['d', '', '', ''],
     'Explosive Surprise (Bounce over the wave)': ['', '', '', ''], 'Frostfire Volley (Spread, then clear in pairs)': ['', '', '', ''], 'Mighty Thud (Ride the knockbacks)': ['', '', ''],
   },
   sum: 'Three bosses: two tanked together, the third 30+ yards away, and whichever boss has eaten the fish is the one on its own. Break crates in pairs, feed the fish at 95 energy, survive each boss\'s ultimate, and bring all three down together.',
   m: { sim: LE_SIM, simDur: LE_DUR, simSev: LE_SEV, beats: LE_BEATS,
     simAlways: ['Two bosses together, one 30+ yards away: never all three within 30 yards.', 'The boss that ate the fish is the one kept apart.', 'Crates two at a time, a few seconds apart: each one makes the whole raid bleed.', 'Kick every Icebound Flames; swap tanks on every Shredding Shards.'],
-    source: 'Tactyks\' Mythic Lost Explorers video', sum: 'Heroic with tighter tuning: crates make the whole raid bleed, there are fewer of them, and Gebbo\'s turn has only one mushroom.' },
-  facts: [['Bosses', '3: Gebbo, Iku, Nama'], ['Bloodlust', 'On the pull'], ['Healers', '4', 'm'], ['Hardest part', 'The ultimates'], ['Fight length', 'About 5 to 6 minutes', 'm']],
+    source: 'Tactyks\' Mythic Lost Explorers video', sum: 'Crates make the whole raid bleed, so pop them two at a time (there are fewer of them, six a set). Gebbo\'s bomb comes with just one mushroom for each bomb. The rest is the Heroic fight, tuned tighter.' },
+  facts: [['Bosses', '3: Gebbo, Iku, Nama'], ['Bloodlust', 'On the pull'], ['Healers', '4 (5 on early kills)', 'm'], ['Hardest part', 'The ultimates'], ['Fight length', 'About 5 to 6 minutes', 'm']],
   phases: [
     { id: 'p1', name: 'Phase 1: before the first fish', sum: 'All fight long: two bosses together, one apart, crates, shells, Blink Nova, kicks and tank swaps. Then the fish, three times.',
       mechs: [
-        { id: 'pair', fail: LE_FAIL.pair, name: 'Two together, one apart (United Defense)', spell: 'United Defense', what: 'On Heroic and up, if all three are within 30 yards of each other they take 99% less damage. Gebbo can\'t be tanked: he walks a big circle round the room all fight.',
+        { id: 'pair', fail: LE_FAIL.pair, name: 'United Defense (Two together, one apart)', spell: 'United Defense', what: 'If all three are within 30 yards of each other they take 99% less damage. Gebbo can\'t be tanked: he walks a big circle round the room all fight.',
           do: ['Iku\'s tank keeps her right next to Gebbo as he walks. Melee cleave both.', 'Ranged stand in the middle and hit all three.', 'Nama\'s tank keeps her 30+ yards behind the pair.'],
           m: { plan: ['Hit Gebbo early: you won\'t be near him much later.', 'Bosses that die early enrage the others (Gebbo\'s shovel, Iku\'s Cataclysmic Invocation, Nama\'s Relentless Escalation): keep their health even.', 'Evokers, Boomkins, Shadow Priests and Warlocks can hit all three from the middle.'] },
           map: () => LE_M.pair() },
-        { id: 'crates', fail: LE_FAIL.crates, name: 'Crates (Break them in pairs)', spell: 'Throw Junk', what: 'Gebbo throws crates onto marked spots. Walking over one breaks it and bleeds you (Splinters; on Mythic it bleeds the whole raid). One crate holds the fish. A crate left too long explodes.',
+        { id: 'crates', fail: LE_FAIL.crates, name: 'Crates (Break them in pairs)', spell: 'Throw Junk', what: 'Gebbo throws crates onto marked spots. Walking over one breaks it and bleeds you (Splinters). One crate holds the fish. A crate left too long explodes.',
           do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two.', 'The fish carrier picks up the fish. Everyone else watches their feet.'],
-          m: { plan: ['Breakers: the off-tank with a mobile ranged, then two mobile ranged. The fish carrier is someone else.', 'Melee: stepping on a crate by accident is the most common wipe here.', 'Don\'t break crates during Gebbo\'s bomb.'] },
+          m: { what: 'Gebbo throws crates onto marked spots. Walking over one breaks it and bleeds the whole raid (Splinters). One crate holds the fish. A crate left too long explodes.', plan: ['Six crates a set: pop two, wait for the bleed to drop, pop two more. Never three at once, and never during a Blink Nova.', 'Breakers: the off-tank with a mobile ranged, then two mobile ranged. The fish carrier is someone else.', 'Melee: stepping on a crate by accident is the most common wipe here.', 'Don\'t break crates during Gebbo\'s bomb.'] },
           map: (d) => LE_M.crates(false, d) },
         { id: 'shell', fail: LE_FAIL.shell, name: 'Shell Spin (Take it outside)', spell: 'Shell Spin', what: 'Nama throws three spinning shells in a cone at a random melee. Anyone they touch is stunned for 4 seconds.',
           do: ['The melee picked steps to the outside of the room.', 'The shells fly outward, away from the ranged.', 'Then step out of their line.'],
@@ -3976,6 +4025,7 @@ GDZ['The Lost Explorers'] = {
           map: () => LE_M.shell() },
         { id: 'blink', fail: LE_FAIL.blink, name: 'Blink Nova (Out in front)', spell: 'Blink Nova', what: 'Iku marks a ranged player and teleports to them 7 seconds later. The nova hits the whole raid, less the farther away you are.',
           do: ['Marked? Walk out in front of the raid, toward the edge.', 'Iku lands on you: the nova is weaker for everyone else.', 'Her tank picks her back up.'],
+          plan: ['Go ahead of where Gebbo is walking, so the bosses don\'t drift into each other and become immune. It always picks a ranged player.'],
           map: () => LE_M.blink() },
         { id: 'kicks', fail: LE_FAIL.kicks, name: 'Icebound Flames (Kick every one)', spell: 'Icebound Flames', what: 'Iku casts Icebound Flames over and over. A kick stops it; if one goes off, it lands on a player and needs a dispel.',
           do: ['Kick on a set order: her tank first, then melee with short kicks.', 'Next kicker ready as soon as one lands.', 'Healers: if one goes off, dispel it.'],
@@ -3983,41 +4033,49 @@ GDZ['The Lost Explorers'] = {
         { id: 'swap', fail: LE_FAIL.swap, name: 'Shredding Shards (Swap at once)', spell: 'Shredding Shards', what: 'Iku\'s hit raises her tank\'s magic damage taken. Nama\'s hits stack Steady Strikes on hers, more physical damage each time; above about 25 stacks her hits kill.',
           do: ['Shredding Shards: swap right away.', 'The tanks trade bosses: each taunts the other\'s.', 'Never wait for a Shell Spin or a Blink to swap.'],
           map: () => LE_M.swap() },
-        { id: 'fish', fail: LE_FAIL.fish, name: 'The fish (Feed it at 95)', spell: 'Disgusting Fish', what: 'Mor\'zahi\'s energy climbs to Final Ascension, a wipe. Feeding the fish from Gebbo\'s crates to one of the bosses resets it, and gives that boss its ultimate for a while. Each boss eats once.',
+        { id: 'fish', fail: LE_FAIL.fish, name: 'The fish (Feed it at 95 energy)', spell: 'Disgusting Fish', what: 'Mor\'zahi\'s energy climbs to Final Ascension, a wipe. Feeding the fish from Gebbo\'s crates to one of the bosses resets it, and gives that boss its ultimate for a while. Each boss eats once.',
           do: ['The carrier picks the fish out of a crate.', 'At about 95 energy, feed it to the next boss.', 'Mor\'zahi starts over; that boss gets its ultimate.', 'That boss becomes the one kept apart.'],
-          m: { plan: ['The raid\'s order: Gebbo, then Iku, then Nama. Any order works (Tactyks feeds Iku, Nama, then Gebbo; the written guides Gebbo, Nama, Iku).', 'Northern Sky Raid Tools counts the energy down.', 'Right after each fish, the statues fire swirls (Evil Eyes): dodge them.'] },
+          m: { plan: ['The raid\'s order: Gebbo, then Iku, then Nama. Any order works (Tactyks feeds Iku, Nama, then Gebbo; the written guides Gebbo, Nama, Iku).', 'Northern Sky Raid Tools (an addon) counts the energy down.', 'Some raids wait for the short cast Mor\'zahi starts at 100. It buys a few seconds but leaves no room for a late fish.'] },
           map: (d, o) => LE_M.fish(false, o) },
+      ],
+      tiles: [
+        { name: 'Evil Eyes (Step out of the swirls)', do: 'Right after each fish, the statues fire swirls at the raid. Step out of them.' },
       ] },
     { id: 'gebbo', name: 'Gebbo\'s turn', sum: 'After his fish Gebbo throws bombs: two rounds of Explosive Surprise. Iku and Nama are tanked together, away from his circle.',
       mechs: [
         { id: 'bomb', fail: LE_FAIL.bomb, name: 'Explosive Surprise (Bounce over the wave)', spell: 'Explosive Surprise', what: 'Gebbo tosses a Bouncy Mushroom and marks a player: 10 seconds later a bomb lands on them, then blows, sending a deadly Blast Wave across the room. A mushroom bounces you high into the air, over the wave.',
           do: ['The marked player takes the bomb to the edge, across from the mushroom.', 'Everyone else gathers on the mushroom. Don\'t touch it yet.', 'The bomb lands, then blows: the wave rolls out.', 'Touch the mushroom just as the wave reaches it: bounce over.'],
-          m: { what: 'Gebbo tosses a single Bouncy Mushroom and marks a player: 10 seconds later a bomb lands on them, then blows, sending a deadly Blast Wave across the room. The mushroom bounces you high into the air, over the wave.', plan: ['Mythic has one mushroom: bait it to a good spot, and don\'t waste it.', 'The next mushroom comes near you during the bounce: stay near Gebbo.', 'Heroic and up: the bomb leaves a fire puddle.'] },
+          m: { what: 'Gebbo tosses a single Bouncy Mushroom for each bomb and marks a player: 10 seconds later a bomb lands on them, then blows, sending a deadly Blast Wave across the room. The mushroom bounces you high into the air, over the wave.', plan: ['There is one mushroom for each bomb: bait it to a good spot, and don\'t waste it.', 'The second bomb\'s mushroom comes up near you as you land from the first bounce: stay near Gebbo, and don\'t touch it until the wave comes.', 'Each bomb leaves a fire puddle: drop it at the edge.'] },
           map: (d) => LE_M.bomb(false, d) },
       ] },
     { id: 'iku', name: 'Iku\'s turn', sum: 'After her fish Iku casts Frostfire Volley, twice. Gebbo and Nama are tanked together, and Iku on her own.',
       mechs: [
         { id: 'frostfire', fail: LE_FAIL.frostfire, name: 'Frostfire Volley (Spread, then clear in pairs)', spell: 'Frostfire Volley', what: 'Missiles hit several players: ranged get Burning Flames, melee Piercing Frost, and everyone within 10 yards takes the hit. Each leaves a fire or frost patch. A missile hitting someone who still has either debuff sets off Elemental Explosion on the whole raid.',
           do: ['Fire on the ranged, frost on the melee: spread round the edge of the raid in fire and frost pairs, 12 yards apart.', 'Keep away from the next volley\'s targets while you still have your debuff.', 'Clear: frost steps into the fire patch, fire into the frost patch.', 'One pair at a time: each clear is a raid hit.'],
-          m: { plan: ['The best moment for a personal defensive.', 'Ranged: a tank with frost needs a fire patch to clear on: leave them one.', 'Patches stay if their player dies.'] },
+          m: { plan: ['Use a personal defensive here: the damage-over-time on fire and frost targets is dangerous.', 'Ranged: a tank with frost needs a fire patch to clear on: leave them one.', 'Patches stay if their player dies.'] },
           map: () => LE_M.frostfire() },
       ] },
     { id: 'nama', name: 'Nama\'s turn', sum: 'After her fish Nama casts Mighty Thud. Gebbo and Iku are tanked together, Nama on her own. Then bring all three down together.',
       mechs: [
-        { id: 'thud', fail: LE_FAIL.thud, name: 'Mighty Thud (Ride the knockbacks)', spell: 'Mighty Thud', what: 'Nama marks three players and leaps to each in turn. Each landing is split between everyone within 6 yards and knocks them back; a landing that hits nobody hits the whole raid. Each leaves quaking ground behind.',
+        { id: 'thud', fail: LE_FAIL.thud, name: 'Mighty Thud (Ride the knockbacks)', spell: 'Mighty Thud', what: 'Nama marks three players and leaps to each in turn. Each landing is split between everyone within 6 yards and knocks them back; a landing that hits nobody hits the whole raid. Each leaves quaking ground behind. She does it twice, a little while apart.',
           do: ['The three marked players stand in a line.', 'Everyone stacks on the near side of the first landing.', 'Each knockback throws the raid on to the next landing.'],
-          m: { plan: ['Don\'t let crate bleeds or a Blink Nova land on top of the soaks: that\'s the scariest moment of the fight. Spirit Link or defensives if they do.'] },
+          m: { plan: ['Don\'t let crate bleeds or a Blink Nova land on top of the soaks: that\'s the scariest moment of the fight. Use a Shaman\'s Spirit Link Totem or defensives if they do.', 'The soaks leave quaking ground behind: stay off it, and line the second set up on fresh floor.'] },
           map: () => LE_M.thud() },
       ],
       tiles: [
-        { name: 'The kill (Even health)', do: 'Bring all three down together: one dying early enrages the others. If one has to enrage, let it be Gebbo: a tank taunts and kites him.' },
+        { name: 'The kill (Even health)', do: 'Bring all three down together: one dying early enrages the others. If one has to enrage, let it be Gebbo: a tank taunts and kites him. (Some guides kill Gebbo first if you must stagger; this one leaves him last because he is the easiest to kite.)' },
       ] },
   ],
   roles: {
     t: ['Iku next to Gebbo, Nama 30+ yards away; the boss with its ultimate is the one apart.', 'Swap on every Shredding Shards: trade bosses.', 'Kick Icebound Flames first in the order.'],
-    h: ['Crates bleed the whole raid on Mythic: heal through each pair.', 'Dispel any Icebound Flames that lands.', 'Cooldowns for Frostfire clears and the Mighty Thud soaks.'],
+    h: ['Dispel any Icebound Flames that lands.', 'Blink Nova hurts the whole raid: be ready for it.', 'Cooldowns for Frostfire clears and the Mighty Thud soaks.'],
     d: ['Melee: never step on a crate by accident.', 'Shell Spin on you: take it to the outside.', 'Blink Nova on you: out in front, toward the edge.', 'Frostfire: spread in fire and frost pairs; clear one pair at a time.'],
   },
+};
+GDZ['The Lost Explorers'].m.roles = {
+  t: ['Iku next to Gebbo, Nama 30+ yards away; the boss with its ultimate is the one apart.', 'Swap on every Shredding Shards: trade bosses.', 'Kick Icebound Flames first in the order.'],
+  h: ['Crates bleed the whole raid: heal through each pair, and have a fifth healer on early kills.', 'Dispel any Icebound Flames that lands.', 'Blink Nova hurts the whole raid: be ready for it.', 'Cooldowns for Frostfire clears and the Mighty Thud soaks.'],
+  d: ['Melee: never step on a crate by accident.', 'Shell Spin on you: take it to the outside.', 'Blink Nova on you: out in front, toward the edge.', 'Frostfire: spread in fire and frost pairs; clear one pair at a time.'],
 };
 // ---- Something wrong here? (your OK, Oct 20): Report a problem, with this guide, its difficulty and the mechanic filled in ----
 // (only where reports can be sent: the website)
@@ -4047,7 +4105,7 @@ function gdzGoTo(root) {
 function gdzFightRows(G) {
   if (!G.sim) return []; const clk = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), byId = {}, DUR = G.simDur || {}, SEV = G.simSev || {};
   G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.id) byId[m.id] = m; }));
-  const first = (x) => String((Array.isArray(x) ? x[0] : x) || '').split(/(?<=\.)\s+/)[0], nm = (x) => x.name.replace(/ \(.*$/, '').replace(/ \d$/, '');
+  const first = (x) => String((Array.isArray(x) ? x[0] : x) || '').split(/(?<=\.)\s+/)[0], nm = (x) => x.name.replace(/ \(.*$/, '').replace(/ \d+$/, '');
   const ev = G.sim.map((e) => { const m = e.mech ? byId[e.mech] : null, b = e.beat ? (G.beats || {})[e.beat] : null, key = m ? 'm:' + m.id : 'b:' + e.beat, name = e.label || (m ? m.name : b ? b.name : '');
     return { t: e.at, ph: e.ph, key, name, d: DUR[key] != null ? DUR[key] : 8, sv: SEV[key] || 2, line: first((e.o && e.o.do) || (m ? m.line || m.do : b ? b.do : '')) }; }).filter((x) => x.name);
   ev.forEach((x) => { x.nm = nm(x); x.ins = /\((.*)\)$/.test(x.name) ? x.name.match(/\((.*)\)$/)[1] : '';
@@ -4078,7 +4136,7 @@ function gdzFightText(G, D) {
     return { t: e.at, ph: e.ph, key, name, d: DUR[key] != null ? DUR[key] : 8, sv: SEV[key] || 2, line: first((e.o && e.o.do) || (m ? m.line || m.do : b ? b.do : '')) }; }).filter((x) => x.name);
   // (how dangerous: 3 a miss can wipe the raid, 2 it can kill players, 1 minor; two things at once are as dangerous as the milder of the two)
   const CHIP = { 3: ['sv3', 'Wipe risk'], 2: ['sv2', 'Can kill'] };
-  const nm = (x) => x.name.replace(/ \(.*$/, '').replace(/ \d$/, '');
+  const nm = (x) => x.name.replace(/ \(.*$/, '').replace(/ \d+$/, '');
   const phs = []; ev.forEach((x) => { if (!phs.length || phs[phs.length - 1].ph !== x.ph) phs.push({ ph: x.ph, list: [] }); phs[phs.length - 1].list.push(x); });
   const end = gdzKillLen(G) || (ev.length ? ev[ev.length - 1].t + ev[ev.length - 1].d : 0);
   return '<div class="gdz-ftext" hidden><p class="gdz-ftk">The whole fight in order, timed by a real kill (' + clk(end) + '). Coloured lines are moments when two things happen at once.</p>' +
@@ -4435,7 +4493,7 @@ function gdzRaider(root, G, D) {
   bar.querySelectorAll('.gdz-seg button').forEach((b) => (b.onclick = () => { ls(b.parentElement.dataset.k === 'mode' ? 'gdz-mode' : 'gdz-role', b.dataset.v); const y = window.scrollY; gdzView(); window.scrollTo({ top: y }); }));
   // the fight at a glance: a real kill's timeline (Mythic), or each phase's mechanics in order
   const byId = {}; G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.id) byId[m.id] = m; }));
-  const ev = (G.sim || []).map((e) => { const m = e.mech ? byId[e.mech] : null, b = e.beat ? (G.beats || {})[e.beat] : null, name = e.label || (m ? m.name : b ? b.name : ''); return { t: e.at, ph: e.ph, name, short: name.replace(/ \(.*$/, '').replace(/ \d$/, ''), key: m ? 'm:' + m.id : 'b:' + e.beat }; }).filter((x) => x.name && !['b:start', 'b:transition', 'b:p2end', 'b:kill'].includes(x.key)); /* (only mechanics, not the pull or the kill) */
+  const ev = (G.sim || []).map((e) => { const m = e.mech ? byId[e.mech] : null, b = e.beat ? (G.beats || {})[e.beat] : null, name = e.label || (m ? m.name : b ? b.name : ''); return { t: e.at, ph: e.ph, name, short: name.replace(/ \(.*$/, '').replace(/ \d+$/, ''), key: m ? 'm:' + m.id : 'b:' + e.beat }; }).filter((x) => x.name && !['b:start', 'b:transition', 'b:p2end', 'b:kill'].includes(x.key)); /* (only mechanics, not the pull or the kill) */
   let tl;
   if (ev.length) { const end = ev[ev.length - 1].t + 12, P = (t) => (t / end * 100).toFixed(2) + '%', PC = ['#3b4a6b', '#5a3b6b', '#6b5a2a', '#6b2f3b'];
     const phs = []; ev.forEach((x) => { if (!phs.length || phs[phs.length - 1].ph !== x.ph) phs.push({ ph: x.ph, t0: x.t }); }); phs.forEach((p, i) => (p.t1 = i + 1 < phs.length ? phs[i + 1].t0 : end));
@@ -4450,7 +4508,7 @@ function gdzRaider(root, G, D) {
   // (each role's colour and sign, like the map's tokens; a job's line tagged with the part of the fight it's about)
   const RC = { t: '#5aa0ff', h: '#45d16b', d: '#ff8a5c' }, SIGN = { t: '<path d="M0 -6.4L5.2 -4.3V0C5.2 3.6 2.7 5.6 0 6.7C-2.7 5.6 -5.2 3.6 -5.2 0V-4.3Z" fill="#10131a"/>', h: '<path d="M-1.9 -6.2H1.9V-1.9H6.2V1.9H1.9V6.2H-1.9V1.9H-6.2V-1.9H-1.9Z" fill="#10131a"/>', d: '<path d="M-5 5L5 -5M-5 -5L5 5" stroke="#10131a" stroke-width="2.4" stroke-linecap="round"/>' };
   const jic = (k) => '<svg class="gdz-jgl" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="9.4" fill="' + RC[k] + '"/>' + SIGN[k] + '</svg>';
-  const jph = (x) => /intermission/i.test(x) ? 'Intermission' : /phase 3/i.test(x) ? 'P3' : /phase 2/i.test(x) ? 'P2' : /phase 1/i.test(x) ? 'P1' : ''; /* (no label on a line for the whole fight) */
+  const jph = (x) => /intermission/i.test(x) ? 'Intermission' : /phase (3|three)\b/i.test(x) ? 'P3' : /phase (2|two)\b/i.test(x) ? 'P2' : /phase (1|one)\b/i.test(x) ? 'P1' : ''; /* (no label on a line for the whole fight) */
   const jli = (x) => '<li>' + (jph(x) ? '<em class="gdz-jph">' + jph(x) + '</em>' : '') + '<span>' + esc(x) + '</span></li>';
   const job = role === 'all' ? '<div class="gdz-job gdz-jall"><h4>Your job <span>the first three for each role; pick yours above for all of them</span></h4><div class="gdz-job3">' + ['t', 'h', 'd'].map((k) => '<div style="--rc:' + RC[k] + '"><b>' + jic(k) + RN[k] + '</b><ul>' + (RL[k] || []).slice(0, 3).map(jli).join('') + '</ul></div>').join('') + '</div></div>'
     : '<div class="gdz-job" style="--rc:' + RC[role] + '"><h4>' + jic(role) + 'Your job<em class="gdz-jrole">' + RN[role] + '</em></h4><ul>' + (RL[role] || []).map(jli).join('') + '</ul></div>';
@@ -4462,8 +4520,11 @@ function gdzRaider(root, G, D) {
         const rm = P.reminders.filter((r) => r.tags.some((t) => t.toLowerCase() === lo) || noteHas(r.text, nm)).map((r) => clk(r.time) + ' · ' + (r.text || 'your reminder'));
         const it = ln.concat(rm); if (it.length) asg = '<div class="gdz-asg"><b>In your raid\'s note, for ' + esc(me.name) + '</b><ul>' + it.slice(0, 8).map(li).join('') + (it.length > 8 ? '<li>and ' + (it.length - 8) + ' more</li>' : '') + '</ul></div>'; } }
     else if (!me && all.length) asg = '<div class="gdz-asg"><b>Your raid has a note for this boss.</b><span>Pick which character is you on your team\'s page, and your own jobs from it show here.</span></div>'; } catch (e) { asg = ''; }
-  const fails = []; G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.fail && !m.fail.solo) fails.push(m.fail); }));
-  const wipe = fails.length ? '<div class="gdz-wipe"><h4><svg class="gdz-jgl" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="9.4" fill="#e5534b"/><path d="M0 -5.6V1.2" stroke="#10131a" stroke-width="2.6" stroke-linecap="round"/><circle cy="4.6" r="1.6" fill="#10131a"/></svg>What wipes us</h4><ul>' + fails.slice(0, 4).map((x) => '<li><b>' + esc(x.name) + '</b><span>' + esc(String(x.what).split(/(?<=\.)\s+/).pop()) + '</span></li>').join('') + '</ul></div>' : '';
+  const fails = []; G.phases.forEach((p, pi) => (p.mechs || []).forEach((m) => { if (m.fail && !m.fail.solo) fails.push({ f: m.fail, pi, i: fails.length, sv: (G.simSev || {})['m:' + m.id] || 2 }); }));
+  // (which four: the most dangerous mistake of each part of the fight first, then the most dangerous of the rest; shown in page order)
+  const wpick = [], bySv = (a, c) => c.sv - a.sv || a.i - c.i; [...new Set(fails.map((x) => x.pi))].forEach((pi) => { const b = fails.filter((x) => x.pi === pi).sort(bySv)[0]; if (b && wpick.length < 4) wpick.push(b); });
+  fails.slice().sort(bySv).forEach((x) => { if (wpick.length < 4 && !wpick.includes(x)) wpick.push(x); }); const wfails = wpick.sort((a, c) => a.i - c.i).map((x) => x.f);
+  const wipe = fails.length ? '<div class="gdz-wipe"><h4><svg class="gdz-jgl" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="9.4" fill="#e5534b"/><path d="M0 -5.6V1.2" stroke="#10131a" stroke-width="2.6" stroke-linecap="round"/><circle cy="4.6" r="1.6" fill="#10131a"/></svg>What wipes us</h4><ul>' + wfails.map((x) => '<li><b>' + esc(x.name) + '</b><span>' + esc(String(x.what).split(/(?<=\.)\s+/).pop()) + '</span></li>').join('') + '</ul></div>' : '';
   const gl = document.createElement('section'); gl.className = 'gdz-glance'; gl.innerHTML = tl + '<div class="gdz-cards">' + job.replace('</h4>', '</h4>' + asg) + wipe + '</div>'; bar.after(gl);
   // your steps lit up, the other roles' dimmed
   const RX = { t: /\b(tanks?|off-tank|boss tank|taunts?)\b/i, h: /\b(healers?|heals?|dispel)/i, d: /\b(dps|warlocks?|mages?|hunters?|rogues?|melee|ranged|kicks?|carriers?)\b/i };
