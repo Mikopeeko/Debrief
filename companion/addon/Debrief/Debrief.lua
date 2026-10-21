@@ -132,7 +132,7 @@ skin(paste, 8, COL.bg, 0.98, COL.gold, 0.55, true)
 paste:SetMovable(true); paste:EnableMouse(true); paste:RegisterForDrag("LeftButton"); paste:SetClampedToScreen(true)
 paste:SetScript("OnDragStart", paste.StartMoving); paste:SetScript("OnDragStop", paste.StopMovingOrSizing)
 tinsert(UISpecialFrames, "DebriefPaste")
-local pLogo = paste:CreateTexture(nil, "ARTWORK"); pLogo:SetSize(16, 18); pLogo:SetPoint("TOPLEFT", 14, -12); pLogo:SetTexture(MEDIA .. "Media\\logo")
+local pLogo = paste:CreateTexture(nil, "ARTWORK"); pLogo:SetSize(20, 20); pLogo:SetPoint("TOPLEFT", 14, -12); pLogo:SetTexture(MEDIA .. "Media\\logo")
 local pTitle = paste:CreateFontString(nil, "OVERLAY"); setFont(pTitle, "head", 17); pTitle:SetPoint("LEFT", pLogo, "RIGHT", 7, 0); pTitle:SetTextColor(rgb(COL.text)); pTitle:SetText("Debrief")
 local pText = paste:CreateFontString(nil, "OVERLAY"); setFont(pText, "body", 13.5); pText:SetPoint("TOPLEFT", 14, -42); pText:SetWidth(356); pText:SetJustifyH("LEFT")
 pText:SetTextColor(rgb(COL.muted)); pText:SetText("Press |cffece8dfCtrl+V|r to paste your pull from Debrief Companion.")
@@ -160,7 +160,7 @@ skin(toast, 8, COL.bg, 0.97, COL.gold, 0.55, true)
 toast:SetMovable(true); toast:RegisterForDrag("LeftButton")
 toast:SetScript("OnDragStart", function() if not DB.lock then toast:StartMoving() end end)
 toast:SetScript("OnDragStop", function() toast:StopMovingOrSizing(); local p, _, rp, x, y = toast:GetPoint(); DB.toastPos = { p, rp, x, y } end)
-local tLogo = toast:CreateTexture(nil, "ARTWORK"); tLogo:SetSize(18, 20); tLogo:SetPoint("LEFT", 14, 0); tLogo:SetTexture(MEDIA .. "Media\\logo")
+local tLogo = toast:CreateTexture(nil, "ARTWORK"); tLogo:SetSize(22, 22); tLogo:SetPoint("LEFT", 14, 0); tLogo:SetTexture(MEDIA .. "Media\\logo")
 local tTitle = toast:CreateFontString(nil, "OVERLAY"); setFont(tTitle, "head", 17); tTitle:SetPoint("TOPLEFT", 42, -10); tTitle:SetTextColor(rgb(COL.text)); tTitle:SetText("See your recap?")
 local tSub = toast:CreateFontString(nil, "OVERLAY"); setFont(tSub, "body", 12.5); tSub:SetPoint("TOPLEFT", 42, -31); tSub:SetWidth(200); tSub:SetJustifyH("LEFT"); tSub:SetWordWrap(false); tSub:SetTextColor(rgb(COL.muted))
 local tKey = CreateFrame("Frame", nil, toast); tKey:SetSize(62, 26); tKey:SetPoint("RIGHT", -38, 0); skin(tKey, 5, COL.raised, 1, COL.line2, 1)
@@ -201,7 +201,7 @@ top:SetScript("OnDragStop", function()
   card:StopMovingOrSizing()
   local p, _, rp, x, y = card:GetPoint(); DB.pos = { p, rp, x, y }
 end)
-local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(16, 18); logo:SetPoint("TOPLEFT", PAD, -12); logo:SetTexture(MEDIA .. "Media\\logo")
+local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(20, 20); logo:SetPoint("TOPLEFT", PAD, -12); logo:SetTexture(MEDIA .. "Media\\logo")
 local title = top:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 17); title:SetPoint("LEFT", logo, "RIGHT", 7, 0); title:SetTextColor(rgb(COL.text)); title:SetText("Debrief")
 local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); bossT:SetPoint("LEFT", title, "RIGHT", 9, -1); bossT:SetTextColor(rgb(COL.muted)); bossT:SetWidth(250); bossT:SetJustifyH("LEFT"); bossT:SetWordWrap(false)
 -- detail presets: one click sets how much the card shows (Simple / Medium / Heavy); any change by hand makes it Custom
@@ -664,7 +664,7 @@ skin(mini, 8, COL.bg, 0.97, COL.line2, 1, true)
 mini:SetMovable(true); mini:RegisterForDrag("LeftButton")
 mini:SetScript("OnDragStart", function() if not DB.lock then mini:StartMoving() end end)
 mini:SetScript("OnDragStop", function() mini:StopMovingOrSizing(); local p, _, rp, x, y = mini:GetPoint(); DB.miniPos = { p, rp, x, y } end)
-local mLogo = mini:CreateTexture(nil, "ARTWORK"); mLogo:SetSize(15, 17); mLogo:SetPoint("LEFT", 12, 0); mLogo:SetTexture(MEDIA .. "Media\\logo")
+local mLogo = mini:CreateTexture(nil, "ARTWORK"); mLogo:SetSize(19, 19); mLogo:SetPoint("LEFT", 12, 0); mLogo:SetTexture(MEDIA .. "Media\\logo")
 local mT = mini:CreateFontString(nil, "OVERLAY"); setFont(mT, "head", 15); mT:SetPoint("LEFT", mLogo, "RIGHT", 8, 0); mT:SetTextColor(rgb(COL.text))
 local mChip = CreateFrame("Frame", nil, mini); mChip:SetSize(50, 20); mChip:SetPoint("LEFT", mT, "RIGHT", 8, 0); skin(mChip, 5, COL.badBg, 1, COL.badBg, 1)
 mChip.t = mChip:CreateFontString(nil, "OVERLAY"); setFont(mChip.t, "bold", 11.5); mChip.t:SetPoint("CENTER", 0, 0)
@@ -710,7 +710,7 @@ local bTop = CreateFrame("Frame", nil, big); bTop:SetPoint("TOPLEFT"); bTop:SetP
 bTop:EnableMouse(true); bTop:RegisterForDrag("LeftButton")
 bTop:SetScript("OnDragStart", function() if not DB.lock then big:StartMoving() end end)
 bTop:SetScript("OnDragStop", function() big:StopMovingOrSizing(); local p, _, rp, x, y = big:GetPoint(); DB.bigPos = { p, rp, x, y } end)
-local bLogo = big:CreateTexture(nil, "ARTWORK"); bLogo:SetSize(18, 20); bLogo:SetPoint("TOPLEFT", 16, -15); bLogo:SetTexture(MEDIA .. "Media\\logo")
+local bLogo = big:CreateTexture(nil, "ARTWORK"); bLogo:SetSize(22, 22); bLogo:SetPoint("TOPLEFT", 16, -15); bLogo:SetTexture(MEDIA .. "Media\\logo")
 local bTitle = big:CreateFontString(nil, "OVERLAY"); setFont(bTitle, "head", 19); bTitle:SetPoint("LEFT", bLogo, "RIGHT", 8, 0); bTitle:SetTextColor(rgb(COL.text)); bTitle:SetText("Debrief")
 local bCtx = big:CreateFontString(nil, "OVERLAY"); setFont(bCtx, "body", 13.5); bCtx:SetPoint("LEFT", bTitle, "RIGHT", 10, -1); bCtx:SetTextColor(rgb(COL.muted))
 local bClose = closeButton(big); bClose:SetPoint("TOPRIGHT", -10, -13); bClose:SetScript("OnClick", function() big:Hide() end)
@@ -1115,8 +1115,10 @@ local function buildOptions()
   tinsert(UISpecialFrames, "DebriefOptions")
   -- the header bar, like the website's top bar
   local hb = opt:CreateTexture(nil, "BACKGROUND", nil, -5); hb:SetPoint("TOPLEFT", 1, -1); hb:SetPoint("TOPRIGHT", -1, -1); hb:SetHeight(55); fill(hb, PANEL, 1)
+  -- (a soft gold glow from the logo side, like the website's top)
+  if hb.SetGradient and CreateColor then hb:SetColorTexture(1, 1, 1, 1); hb:SetGradient("HORIZONTAL", CreateColor(0.15, 0.13, 0.09, 1), CreateColor(0.09, 0.10, 0.13, 1)) end
   local hl = opt:CreateTexture(nil, "ARTWORK"); hl:SetPoint("TOPLEFT", 1, -56); hl:SetPoint("TOPRIGHT", -1, -56); hl:SetHeight(1); fill(hl, COL.line)
-  local lg = opt:CreateTexture(nil, "ARTWORK"); lg:SetSize(22, 25); lg:SetPoint("TOPLEFT", 24, -15); lg:SetTexture(MEDIA .. "Media\\logo")
+  local lg = opt:CreateTexture(nil, "ARTWORK"); lg:SetSize(30, 30); lg:SetPoint("TOPLEFT", 20, -13); lg:SetTexture(MEDIA .. "Media\\logo")
   local tt = opt:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 21); tt:SetPoint("TOPLEFT", 54, -12); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief")
   local tsub = opt:CreateFontString(nil, "OVERLAY"); setFont(tsub, "body", 12.5); tsub:SetPoint("TOPLEFT", 54, -34); tsub:SetTextColor(rgb(COL.muted)); tsub:SetText("Your pull recap in game")
   local clb = CreateFrame("Button", nil, opt); clb:SetSize(34, 34); clb:SetPoint("TOPRIGHT", -14, -11); skin(clb, 8, DEEP, 1, COL.line2, 1)
@@ -1168,9 +1170,15 @@ local function buildOptions()
   local PX, LX = 24, 42 -- (panel edge, row text)
   local P, y, panelY, firstRow
   local function page(k) P = pages[k]; y = 0; panelY = nil end
-  local function panel(title, note)
+  local function panel(title, note, ic)
     panelY = y; firstRow = true
-    local h = P:CreateFontString(nil, "OVERLAY"); setFont(h, "head", 17); h:SetPoint("TOPLEFT", LX, -(y + 14)); h:SetTextColor(rgb(COL.text)); h:SetText(title)
+    local hx = LX
+    -- (a small game icon beside the heading, like the website's coloured section icons; skipped if the game doesn't have it)
+    if ic and not (GetFileIDFromPath and not GetFileIDFromPath("Interface\\Icons\\" .. ic)) then
+      local t = P:CreateTexture(nil, "ARTWORK"); t:SetSize(20, 20); t:SetPoint("TOPLEFT", LX, -(y + 13)); t:SetTexture("Interface\\Icons\\" .. ic); t:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+      hx = LX + 28
+    end
+    local h = P:CreateFontString(nil, "OVERLAY"); setFont(h, "head", 17); h:SetPoint("TOPLEFT", hx, -(y + 14)); h:SetTextColor(rgb(COL.text)); h:SetText(title)
     if note then local n = P:CreateFontString(nil, "OVERLAY"); setFont(n, "body", 12.5); n:SetPoint("BOTTOMLEFT", h, "BOTTOMRIGHT", 10, 1); n:SetTextColor(rgb(COL.faint)); n:SetText(note) end
     y = y + 44
   end
@@ -1247,6 +1255,54 @@ local function buildOptions()
     pv:SetScript("OnClick", function() go(-1) end); nx:SetScript("OnClick", function() go(1) end)
     refreshers[#refreshers + 1] = show; show()
   end
+  -- a pill switcher, like the website's "Heroic | Mythic": a dark pill holding the options, the chosen one in gold
+  local function segment(label, sub, list, get, set, keepPreset)
+    local cy = rowBase(label, sub)
+    local box = CreateFrame("Frame", nil, P); box:SetHeight(32); skin(box, 15, DEEP, 1, COL.line2, 1)
+    local btns, w = {}, 4
+    for i, c in ipairs(list) do
+      local b = CreateFrame("Button", nil, box); b:SetHeight(24)
+      b.bg = b:CreateTexture(nil, "BACKGROUND"); b.bg:SetAllPoints()
+      b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 13); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(c[2])
+      b:SetWidth(b.t:GetStringWidth() + 26); b:SetPoint("LEFT", box, "LEFT", w, 0); w = w + b:GetWidth() + 2
+      b:SetScript("OnClick", function() set(c[1]); if not keepPreset then custom() end; applySettings(); Debrief_RefreshOptions() end)
+      b:SetScript("OnEnter", function() if get() ~= c[1] then b.t:SetTextColor(rgb(COL.text)) end end)
+      b:SetScript("OnLeave", function() if get() ~= c[1] then b.t:SetTextColor(rgb(COL.muted)) end end)
+      btns[i] = b
+    end
+    box:SetWidth(w + 2); box:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy)
+    local function show()
+      for i, b in ipairs(btns) do
+        local on = get() == list[i][1]
+        rounded(b.bg, "fill", 8, COL.gold, on and 1 or 0); b.t:SetTextColor(rgb(on and "1b1406" or COL.muted))
+      end
+    end
+    refreshers[#refreshers + 1] = show; show()
+  end
+  -- colour swatches: a round dot for each colour, a ring around the chosen one
+  local function swatches(label, sub, list, get, set)
+    local cy = rowBase(label, sub)
+    local dots = {}
+    for i = #list, 1, -1 do
+      local c = list[i]
+      local b = CreateFrame("Button", nil, P); b:SetSize(28, 28)
+      if i == #list then b:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy) else b:SetPoint("RIGHT", dots[i + 1], "LEFT", -8, 0) end
+      b.ring = b:CreateTexture(nil, "BACKGROUND"); b.ring:SetAllPoints(); b.ring:SetTexture(SLICE .. "dot")
+      b.dot = b:CreateTexture(nil, "ARTWORK"); b.dot:SetSize(20, 20); b.dot:SetPoint("CENTER"); b.dot:SetTexture(SLICE .. "dot")
+      b:SetScript("OnClick", function() set(c[1]); applySettings(); Debrief_RefreshOptions() end)
+      b:SetScript("OnEnter", function() GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(c[2]); GameTooltip:Show() end)
+      b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+      dots[i] = b
+    end
+    local function show()
+      for i, b in ipairs(dots) do
+        local hx = list[i][3]; if type(hx) == "function" then hx = hx() end
+        b.dot:SetVertexColor(rgb(hx)); local on = get() == list[i][1]
+        b.ring:SetVertexColor(rgb(on and COL.text or DEEP)); b.ring:SetAlpha(on and 1 or 0)
+      end
+    end
+    refreshers[#refreshers + 1] = show; show()
+  end
   -- a row of buttons under a panel
   local function buttons(list)
     local prev
@@ -1274,6 +1330,10 @@ local function buildOptions()
     b.bar = b:CreateTexture(nil, "ARTWORK"); b.bar:SetPoint("TOPLEFT", 1, -8); b.bar:SetPoint("BOTTOMLEFT", 1, 8); b.bar:SetWidth(3); fill(b.bar, COL.gold)
     b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "head", 18); b.t:SetPoint("TOPLEFT", 16, -11); b.t:SetText(PRESET_NAME[k])
     b.d = b:CreateFontString(nil, "OVERLAY"); setFont(b.d, "body", 12.5); b.d:SetPoint("TOPLEFT", 16, -35); b.d:SetWidth(CW3 - 30); b.d:SetJustifyH("LEFT"); b.d:SetText(PDESC[k])
+    b.lines = {}
+    for li = 1, ({ simple = 2, medium = 4, heavy = 6 })[k] do
+      local ln = b:CreateTexture(nil, "ARTWORK"); ln:SetSize(li == 1 and 30 or (li % 2 == 0 and 22 or 26), 3); ln:SetPoint("TOPRIGHT", -14, -(14 + (li - 1) * 6)); b.lines[li] = ln
+    end
     b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings() end)
     b:SetScript("OnEnter", function() if DB.preset ~= k then rounded(b.lineT, "line", 8, COL.faint, 1) end end)
     b:SetScript("OnLeave", function() if DB.preset ~= k then rounded(b.lineT, "line", 8, COL.line, 1) end end)
@@ -1284,11 +1344,12 @@ local function buildOptions()
       local on = DB.preset == k
       rounded(b.fillT, "fill", 8, on and "221f17" or PANEL, 1); rounded(b.lineT, "line", 8, on and COL.gold or COL.line, 1)
       b.bar:SetShown(on); fill(b.bar, COL.gold)
+      for _, ln in ipairs(b.lines) do fill(ln, on and COL.gold or COL.line2, on and 0.9 or 1) end
       b.t:SetTextColor(rgb(COL.text)); b.d:SetTextColor(rgb(on and COL.soft or COL.faint))
     end
   end
   y = 98
-  panel("Fine-tune", "changes your own mix")
+  panel("Fine-tune", "changes your own mix", "INV_Misc_Gear_01")
   switch("Your damage or healing", "Against your last pull, your best and your place.", function() return S().tile ~= false end, function(v) S().tile = v end)
   stepper("Rotation tips", "Your biggest slips, worst first. 0 hides them.", 0, 5, function() return S().rotation == false and 0 or (DB.maxSlips or 3) end, function(v) S().rotation = v > 0; if v > 0 then DB.maxSlips = v end end)
   stepper("Boss mistakes", "Your own mistakes on the pull. 0 hides them.", 0, 3, function() return S().boss == false and 0 or (DB.maxBoss or 2) end, function(v) S().boss = v > 0; if v > 0 then DB.maxBoss = v end end)
@@ -1301,46 +1362,46 @@ local function buildOptions()
   -- Look
   page("look")
   local function classCol() local _, c = UnitClass("player"); return classHex(c) end
-  panel("Colours", "the card beside this window changes as you click")
-  choice("Accent colour", "Tabs, switches and the Next pull box.", {
+  panel("Colours", "the card beside this window changes as you click", "INV_Misc_Gem_Variety_02")
+  swatches("Accent colour", "Tabs, switches and the Next pull box. The second one is your class colour.", {
     { "gold", "Debrief gold", ACCENTS.gold }, { "class", "Your class colour", classCol }, { "frost", "Frost", ACCENTS.frost },
     { "fel", "Fel", ACCENTS.fel }, { "crimson", "Crimson", ACCENTS.crimson }, { "violet", "Void", ACCENTS.violet },
-  }, function() return DB.accent or "gold" end, function(v) DB.accent = v end, true)
-  choice("Card style", "Soft panels, see-through glass, or flat.", { { "panels", "Panels" }, { "glass", "Glass" }, { "flat", "Flat" } },
+  }, function() return DB.accent or "gold" end, function(v) DB.accent = v end)
+  segment("Card style", "Soft panels, see-through glass, or flat.", { { "panels", "Panels" }, { "glass", "Glass" }, { "flat", "Flat" } },
     function() return DB.cardStyle or "panels" end, function(v) DB.cardStyle = v end, true)
   switch("Colour-blind colours", "Blue for good, orange for bad.", function() return DB.colorblind == true end, function(v) DB.colorblind = v end, true)
   panelEnd()
-  panel("Size and font")
+  panel("Size and font", nil, "INV_Misc_Spyglass_02")
   pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
   pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
-  choice("Card width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
-  choice("Font", nil, FONT_CHOICES, function() return DB.font or "debrief" end, function(v) DB.font = v end, true)
+  segment("Card width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
+  segment("Font", nil, { { "debrief", "Debrief" }, { "wow", "WoW" }, { "arial", "Arial" }, { "morpheus", "Morpheus" } }, function() return DB.font or "debrief" end, function(v) DB.font = v end, true)
   pslider("Background", "How solid the card is.", 0.6, 1, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end)
   panelEnd()
 
   -- After a pull
   page("after")
-  panel("When your recap arrives")
-  choice("Show my recap as", "The card, one slim bar, or the big window.", { { "card", "The card" }, { "mini", "Mini bar" }, { "big", "Big window" } },
+  panel("When your recap arrives", nil, "INV_Letter_15")
+  segment("Show my recap as", "The card, one slim bar, or the big window.", { { "card", "Card" }, { "mini", "Mini bar" }, { "big", "Big window" } },
     function() return DB.mini and "mini" or (DB.bigDefault and "big" or "card") end, function(v) DB.mini = (v == "mini"); DB.bigDefault = (v == "big") end, true)
   switch("Open it by itself", "As soon as it arrives.", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
   switch("Sound", "A soft sound when it opens.", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
   panelEnd()
-  panel("On your screen")
+  panel("On your screen", nil, "INV_Misc_PocketWatch_01")
   switch("Hide during combat", "Back when the fight ends.", function() return DB.hideCombat ~= false end, function(v) DB.hideCombat = v end, true)
-  choice("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "After 30 s" }, { 60, "After 60 s" }, { 120, "After 2 min" } },
+  segment("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "30 s" }, { 60, "60 s" }, { 120, "2 min" } },
     function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
   switch("Lock in place", "The card and bars can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
   panelEnd()
 
   -- Big window and mini bar
   page("views")
-  panel("Big window", "your whole night at once")
+  panel("Big window", "your whole night at once", "Achievement_General")
   switch("Your numbers tonight", "A line of your damage or healing, pull by pull.", function() return DB.bigLine ~= false end, function(v) DB.bigLine = v end, true)
   switch("Progress tonight", "How far each pull got, the closest one marked.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
   pslider("Window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
   panelEnd()
-  panel("Mini bar", "one slim line instead of the card")
+  panel("Mini bar", "one slim line instead of the card", "INV_Misc_Note_01")
   pslider("Bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
   panelEnd()
   buttons({ { "Open the big window", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); big:Show(); bigRender() end, 190 },
@@ -1349,12 +1410,12 @@ local function buildOptions()
 
   -- Raid: the Raid view tab, and raid chat
   page("raid")
-  panel("Raid view", "the raid's biggest mistakes and who died")
+  panel("Raid view", "the raid's biggest mistakes and who died", "Ability_Warrior_BattleShout")
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
   stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
   stepper("Deaths listed", "Who died first, and to what.", 1, 8, function() return DB.maxDied or 4 end, function(v) DB.maxDied = v end)
   panelEnd()
-  panel("Raid chat", "for everyone without Debrief")
+  panel("Raid chat", "for everyone without Debrief", "INV_Scroll_03")
   switch("Top mistakes", "The three biggest, by name.", function() return DB.postMistakes ~= false end, function(v) DB.postMistakes = v end, true)
   switch("First deaths", "Who died first, and to what.", function() return DB.postDeaths == true end, function(v) DB.postDeaths = v end, true)
   switch("Next pull tip", "The one thing to try next time.", function() return DB.postNext ~= false end, function(v) DB.postNext = v end, true)
@@ -1374,7 +1435,7 @@ local function buildOptions()
     end
   end
   local fmtK = function(v) return v == 0 and "Off" or (v .. "k") end
-  panel("Your goal", "in thousands a second; Off hides it")
+  panel("Your goal", "in thousands a second; Off hides it", "Ability_Hunter_MarkedForDeath")
   local g1, s1 = goalStep("goalDps", "dps")
   stepper("Damage goal", "Your DPS target.", 0, 3000, g1, s1, fmtK, true, 10)
   local g2, s2 = goalStep("goalHps", "healer")
@@ -1384,19 +1445,19 @@ local function buildOptions()
 
   -- PC app (only for whoever runs Debrief Companion)
   page("app")
-  panel("After each boss pull", "for whoever runs Debrief Companion")
+  panel("After each boss pull", "for whoever runs Debrief Companion", "Spell_Holy_BorrowedTime")
   switch("Ask \"See your recap?\"", "After each boss pull. Press Ctrl+V to open it.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
   switch("Small prompt, not the paste box", "Just the prompt, nothing to click.", function() return DB.prompt ~= false end, function(v) DB.prompt = v end, true)
   switch("Ready for Ctrl+V", "Any other key lets go so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
   panelEnd()
-  panel("Your raid")
+  panel("Your raid", nil, "Ability_Warrior_RallyingCry")
   switch("Send my recaps to the raid", "Raiders with Debrief get theirs by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
   switch("Combat log in raids", "Turns on by itself, so nobody forgets.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
   panelEnd()
 
   -- Saved pulls
   page("pulls")
-  panel("Saved pulls")
+  panel("Saved pulls", nil, "INV_Misc_Book_09")
   stepper("Keep", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
   local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 13.5); pc:SetPoint("TOPLEFT", LX, -(y + 6)); pc:SetTextColor(rgb(COL.muted))
   refreshers[#refreshers + 1] = function() local n = #DB.pulls; pc:SetText(n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) end
@@ -1407,7 +1468,7 @@ local function buildOptions()
   -- Help
   page("help")
   buttons({ { "Show the tutorial", function() opt:Hide(); Debrief_Tutorial() end, 180 }, { "Show a sample recap", function() SlashCmdList.DEBRIEF("demo") end, 180 } })
-  panel("Commands", "type them in chat")
+  panel("Commands", "type them in chat", "INV_Misc_Note_02")
   local HELP = {
     { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
     { "/debrief paste", "paste a recap by hand" }, { "/debrief post", "the pull in raid chat" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
@@ -1464,7 +1525,7 @@ do
   tut:SetMovable(true); tut:EnableMouse(true); tut:RegisterForDrag("LeftButton")
   tut:SetScript("OnDragStart", tut.StartMoving); tut:SetScript("OnDragStop", tut.StopMovingOrSizing)
   tinsert(UISpecialFrames, "DebriefTutorial")
-  local lg = tut:CreateTexture(nil, "ARTWORK"); lg:SetSize(18, 20); lg:SetPoint("TOPLEFT", 18, -15); lg:SetTexture(MEDIA .. "Media\\logo")
+  local lg = tut:CreateTexture(nil, "ARTWORK"); lg:SetSize(22, 22); lg:SetPoint("TOPLEFT", 18, -15); lg:SetTexture(MEDIA .. "Media\\logo")
   local tt = tut:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 19); tt:SetPoint("LEFT", lg, "RIGHT", 8, 0); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief")
   local stepT = tut:CreateFontString(nil, "OVERLAY"); setFont(stepT, "body", 13); stepT:SetPoint("LEFT", tt, "RIGHT", 10, -1); stepT:SetTextColor(rgb(COL.muted))
   local cl = closeButton(tut); cl:SetPoint("TOPRIGHT", -10, -12)
@@ -1477,7 +1538,7 @@ do
   if body.SetSpacing then body:SetSpacing(3) end
   -- step 2's picture: the prompt you'll see after a boss pull
   local demoT = CreateFrame("Frame", nil, tut); demoT:SetSize(300, 50); skin(demoT, 8, COL.bg, 1, COL.gold, 0.55)
-  local dl = demoT:CreateTexture(nil, "ARTWORK"); dl:SetSize(16, 18); dl:SetPoint("LEFT", 12, 0); dl:SetTexture(MEDIA .. "Media\\logo")
+  local dl = demoT:CreateTexture(nil, "ARTWORK"); dl:SetSize(20, 20); dl:SetPoint("LEFT", 12, 0); dl:SetTexture(MEDIA .. "Media\\logo")
   local dt = demoT:CreateFontString(nil, "OVERLAY"); setFont(dt, "head", 16); dt:SetPoint("TOPLEFT", 38, -8); dt:SetTextColor(rgb(COL.text)); dt:SetText("See your recap?")
   local ds = demoT:CreateFontString(nil, "OVERLAY"); setFont(ds, "body", 12); ds:SetPoint("TOPLEFT", 38, -28); ds:SetTextColor(rgb(COL.muted)); ds:SetText("Press Ctrl+V after the chime.")
   local dk = CreateFrame("Frame", nil, demoT); dk:SetSize(60, 24); dk:SetPoint("RIGHT", -12, 0); skin(dk, 5, COL.gold, 1, COL.gold, 1)
