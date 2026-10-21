@@ -146,7 +146,13 @@ if ($InstallOnly) { Set-Autostart; Write-Host (Install-Addon $here); exit }
 
 $listener = New-Object Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
-try { $listener.Start() } catch { Write-Host "Debrief Companion is already running (port $port in use). Opening its window."; Start-Process "http://localhost:$port/"; exit }
+# (the app's own window: Edge in app mode, else the default browser)
+function Open-Window {
+  $edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+  if ($edge) { Start-Process $edge "--app=http://localhost:$port/ --window-size=1100,820" } else { Start-Process "http://localhost:$port/" }
+}
+# (already running, say it started with Windows: the icon just opens its window; a quiet start does nothing)
+try { $listener.Start() } catch { Write-Host "Debrief Companion is already running (port $port in use). Opening its window."; if (-not $NoWindow) { Open-Window }; exit }
 Write-Host "Debrief Companion is running at http://localhost:$port"
 Write-Host "Keep this window open during raid. Close it to stop."
 $wow = Find-Retail $here
@@ -269,9 +275,7 @@ $handler = {
 }
 
 if (-not $NoWindow -and -not $env:DBF_NO_WINDOW) {
-  # its own small window (Edge app mode); the normal browser if Edge isn't there
-  $edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
-  if ($edge) { Start-Process $edge "--app=http://localhost:$port/ --window-size=1100,820" } else { Start-Process "http://localhost:$port/" }
+  Open-Window
 }
 
 $pool = [RunspaceFactory]::CreateRunspacePool(1, 8)
