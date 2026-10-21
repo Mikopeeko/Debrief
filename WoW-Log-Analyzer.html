@@ -13335,6 +13335,18 @@ function pgEmptyCard(c) {
   return '<section class="panel pg-empty" id="pgEmpty"><h2>No raids for ' + esc(gName(c)) + ' this tier yet</h2><p class="sub">When ' + esc(gName(c)) + ' raids The Venomous Abyss and the night is logged on Warcraft Logs, their bosses, raid nights and rankings show up here by themselves.</p>' +
     (back ? '<button class="btn primary" type="button" data-mesw="' + esc(back.gid) + '">‹ Back to ' + esc(gName(back)) + '</button>' : '') + '</section>';
 }
+// (a team or character whose nights are coming in for the first time (your note, Oct 21: an empty dark page said so): the
+// site's loading card with the real progress, "Reading Tue, Oct 13 (3 of 12)…", kept up to date by progRun; the page
+// swaps to the full Home by itself when it's done)
+// (the team's line under its name while its first import runs: "importing… 42%" and a thin gold bar, kept live by progRun's say)
+const impPct = (f) => { const p = Math.round(100 * (f || 0)); return '<span id="pgImpP">importing… ' + p + '%</span><i style="display:inline-block;width:80px;height:3px;margin-left:8px;vertical-align:middle;border-radius:2px;overflow:hidden;background:var(--line2)"><i id="pgImpB" style="display:block;height:100%;background:var(--gold);transition:width .4s;width:' + p + '%"></i></i>'; };
+const impFrac = (t) => { const m = String(t || '').match(/\((\d+) of (\d+)\)/); return m && +m[2] ? +m[1] / +m[2] : null; };
+function impCard(g) {
+  const busy = S.progBusy && groups().find((x) => x.gid === S.progBusy), line = S.progBusy === g.gid ? S.impLine || 'Looking for ' + gName(g) + '\'s reports…' : busy ? 'Starting right after ' + gName(busy) + '…' : 'Starting…';
+  return '<section class="pg-impld" id="impLd" data-g="' + esc(g.gid) + '" style="margin:20px 0">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin:0 0 12px">' + banner(g) + '<div><b style="font-size:1.1em">' + esc(gName(g)) + '</b><div class="sub">The first time, this can take a few minutes. This page fills in by itself when it\'s done.</div></div></div>' +
+    loadCard('Bringing in ' + gName(g) + '\'s raid nights', line, S.progBusy === g.gid ? impFrac(S.impLine) : null) + '</section>';
+}
 // Picking another of your characters on My Page (bug, Oct 20: it only switched the view, with nothing imported): they
 // become you, so My Page is theirs (your team's page with them as You, or their own page when no team of theirs is added),
 // with their rankings, spec art and bosses. One not brought in yet is imported right away, the same as adding your first
@@ -13634,6 +13646,9 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-21', n: [
+    'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
+  ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },
     { t: 'Switching is instant', d: 'Once a pull opens, the rest of that boss\'s pulls are read quietly in the background, and they stay read. Changing tabs, going back to a boss or opening the same log again no longer reloads it.' },
@@ -33753,7 +33768,7 @@ function gsPointTick() {
   if (S.rep && $('#view')) { gsPointEnd(true); return; } // (a pull is open: its own tips take over)
   let e = null, t = '', p = '';
   const pick = (q, tt, pp) => { e = q; t = tt; p = pp; };
-  if ($('.pg-dim') || $('#tour') || $('#ptip') || $('#gs')) { /* (a pop-up or tips are up: the pointer waits) */ }
+  if ($('.pg-dim') || $('#tour') || $('#ptip') || $('#gs') || $('#impLd')) { /* (a pop-up or tips are up, or the loading card says it: the pointer waits) */ }
   else if ($('#main .pg-hub') && !S.hubHome) { const g = gsFind(P.gid), c = $('#main .pg-hub .hc-card[data-g="' + CSS.escape(P.gid) + '"]');
     if (c) pick(c, g && g.kind === 'char' ? 'Open your character' : 'Open your team', 'Click its card to see every boss and raid night.'); }
   else if ($('#main .home.prog') && S.progView) {
@@ -34089,9 +34104,10 @@ async function meBackfill(g) {
   } catch (e) { /* (tried again next time) */ } finally { S.meBf = false; }
 }
 async function progRun(g, quiet) {
-  const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { if (S.meLoad === g.gid) { S.meLdLine = t; loadSet('#meLd', t); } const m = $('#pgMsg'); if (m && onIt()) { m.textContent = t; m.classList.toggle('err', !!err); } };
+  const onIt = () => $('#main .home.prog') && S.progView === g.gid, say = (t, err) => { if (S.meLoad === g.gid) { S.meLdLine = t; loadSet('#meLd', t, impFrac(t)); } S.impLine = t; const il = $('#impLd'); if (il && il.dataset.g === g.gid) loadSet(il, t, impFrac(t));
+    { const f = impFrac(t), p = $('#pgImpP'), bb = $('#pgImpB'); if (f != null && p && S.progView === g.gid) { p.textContent = 'importing… ' + Math.round(100 * f) + '%'; if (bb) bb.style.width = Math.round(100 * f) + '%'; } } const m = $('#pgMsg'); if (m && onIt() && !(il && il.dataset.g === g.gid)) { m.textContent = t; m.classList.toggle('err', !!err); } };
   // (a character picked on My Page (meSwitch): its loading card goes and My Page is drawn again, wherever it shows)
-  const done = (m, err) => { const ml = S.meLoad === g.gid; if (ml) S.meLoad = S.meLdLine = null; if (onIt()) renderProgress(m, err); else if (ml && $('.home.prog')) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
+  const done = (m, err) => { const ml = S.meLoad === g.gid; if (ml) S.meLoad = S.meLdLine = null; S.impLine = null; const il = $('#impLd'); if (onIt()) renderProgress(m, err); else if ((ml || (il && il.dataset.g === g.gid)) && $('.home.prog')) renderProgress(m, err); else if ($('#main .home.prog') && S.progView == null) renderProgHub(); else if ($('#main .th-home2') && !$('#thWcl').value) renderTeamsHome(); else if ($('#homeTeams')) { $('#homeTeams').outerHTML = homeTeams(); bindHomeTeams(); } };
   S.progBusy = g.gid; say(g.last ? 'Checking for new nights…' : 'Bringing in every night of the tier…');
   S.meTold = false; const found = () => { if (onIt()) renderProgress(($('#pgMsg') || {}).textContent || ''); };
   try { const res = await teamImport(g, say, found); S.progBusy = null; if (res.paused) done(''); else done((res.reports ? gName(g) + ': imported ' + plural(res.added, 'new pull') + ' from ' + plural(res.reports, 'report') + (res.dup ? ' (' + res.dup + ' were already saved)' : '') + '.' : quiet ? '' : gName(g) + ' is up to date, with no new reports.') +
@@ -34398,7 +34414,7 @@ function renderProgress(msg, msgErr) {
       '<div class="pg-sg-b"><button class="btn" id="pgMeNo" type="button">Skip</button></div></section>')
     : g && g.kind !== 'char' && g.meNo && !meOf() && teamMembers(g).length ? '<div class="pg-me-again"><button class="linkbtn" id="pgMeAgain" type="button">Which one is you?</button></div>' : '';
   const only = g ? groupOnly(g) : 0;
-  const info = !g ? '' : '<div class="sub pg-info">' + (g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][0] + ' · your character' : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') + (g.label && g.label !== g.name ? ' · ' + esc(g.name) + ' on Warcraft Logs' : '') + ' · ' + (S.progBusy === g.gid ? 'checking for new nights…' : lastTxt(g)) + '</div>';
+  const info = !g ? '' : '<div class="sub pg-info">' + (g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][0] + ' · your character' : gKind(g)) + (g.server ? ' · ' + esc(g.server) : '') + (g.label && g.label !== g.name ? ' · ' + esc(g.name) + ' on Warcraft Logs' : '') + ' · ' + (S.progBusy === g.gid && !g.last ? impPct(impFrac(S.impLine)) : S.progBusy === g.gid ? 'checking for new nights…' : g.last ? 'imported · ' + lastTxt(g) : lastTxt(g)) + '</div>';
   const editing = S.pgEdit || S.pgRename || S.pgDel;
   const team = !g || !editing ? '' : '<section class="pg-team pg-edit">' +
       (S.pgRename ? '<div class="pg-mn"><input class="pg-ren" id="pgRenIn" value="' + esc(gName(g)) + '" aria-label="Name" maxlength="40"><button class="btn" id="pgRenOk" type="button">Save</button><button class="linkbtn" id="pgRenNo" type="button">Cancel</button></div>'
@@ -34466,7 +34482,8 @@ function renderProgress(msg, msgErr) {
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
   ROOT.innerHTML = (inTab ? '' : pgTabBar(g)) + '<div class="home prog pg-v2' + (inTab ? ' pg-intab' : '') + '"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
     '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you"' + (you.cls && you.parse && youC ? ' style="--sart:' + specArt({ cls: you.cls, specName: you.parse.spec + ' ' + youC[0] }) + '"' : '') + '>' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See every raid you were in ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + meLd + liveStrip + meCard + sugg +
-    (all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
+    (g && !g.last && !ldC && !msgErr ? impCard(g) /* (its first nights still coming in: a loading card, not an empty page) */
+      : all.length ? '<div class="pg-cols"><div class="pg-main">' + nowHtml + bosses + '</div><aside class="pg-side">' + nightsHtml + (g && g.kind !== 'char' ? sinceLast(list) : '') + '</aside></div>'
       : ldC && ldC.gid === g.gid ? '' : g && g.kind === 'char' && g.last ? pgEmptyCard(g)
       : '<p class="muted">' + (g ? 'No pulls for ' + esc(gName(g)) + ' yet. ' + (g.last ? 'New nights come in by themselves when you open this page.' : 'Its nights are being brought in.') : 'No pulls saved yet. Add your team on the teams page, or open a log of your raid.') + '</p>') +
     '</div>';
