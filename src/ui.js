@@ -1645,6 +1645,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Boss guides, The Coiled Altar: in the whole fight the raid now sidesteps the rolling axes instead of standing in them.',
     'Home: your You card has a new look, with your Mythic and Heroic progress (AOTC and CE once you earn them) and a See your summary button.',
     'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
@@ -1660,6 +1661,7 @@ const PATCH_NOTES = [
     'When Warcraft Logs is down, the site now says so and asks you to try again in a few minutes (it used to say the site\'s key was rejected).',
     'Debriefing maps for Vashnik, Sszorak, Entombed Sentinels and Nek\'zali: the room picture now sits where the game has it (it was turned or a few yards off), so everyone\'s dots line up with the room.',
     'Debriefing maps for The Twin Fangs: the room picture sat 12 yards too far south. It now lines up with the game, so everyone\'s dots are on the walkway.',
+    'Boss guides, The Coiled Altar: the raid markers and the Dreadmarch ghosts now sit on the platform, not past its edge.',
   ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },

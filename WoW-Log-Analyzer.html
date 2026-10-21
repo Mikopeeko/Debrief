@@ -13891,6 +13891,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Boss guides, The Coiled Altar: in the whole fight the raid now sidesteps the rolling axes instead of standing in them.',
     'Home: your You card has a new look, with your Mythic and Heroic progress (AOTC and CE once you earn them) and a See your summary button.',
     'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
@@ -13906,6 +13907,7 @@ const PATCH_NOTES = [
     'When Warcraft Logs is down, the site now says so and asks you to try again in a few minutes (it used to say the site\'s key was rejected).',
     'Debriefing maps for Vashnik, Sszorak, Entombed Sentinels and Nek\'zali: the room picture now sits where the game has it (it was turned or a few yards off), so everyone\'s dots line up with the room.',
     'Debriefing maps for The Twin Fangs: the room picture sat 12 yards too far south. It now lines up with the game, so everyone\'s dots are on the walkway.',
+    'Boss guides, The Coiled Altar: the raid markers and the Dreadmarch ghosts now sit on the platform, not past its edge.',
   ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },
@@ -35524,7 +35526,7 @@ function gdzKit(boss, len) {
   if (GDZ_SEG) { GDZ_SEG.next(len); return GDZ_SEG.kit; }
   const U = new Map(), A = GDZ_ORIGIN[boss] || ARENAS[boss] || { cx: 0, cy: 0 }, k = { waves: [], beams: [], arcs: [], artAt: [], pauses: [], calls: [], wmarks: [], rings: [], cones: [], links: [], arrows: [], tags: [], cbars: {}, steps: [], hl: new Set(), good: [], goodAt: [], bad: [], badAt: [] };
   // seg: the stretch being written (T: its start, pre: its own names for orbs, adds and bosses, w: its window); players carry on
-  const seg = { T: 0, pre: '', w: null, rot: 0 }, RO = (x, y) => { if (!seg.rot || x == null || y == null) return [x, y]; const a = seg.rot * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return [Math.round((x * c - y * sn) * 1000) / 1000, Math.round((x * sn + y * c) * 1000) / 1000]; },
+  const seg = { T: 0, pre: '', w: null, rot: 0, sq: GDZ_SQ[boss] || 0 }, CL = (v) => (seg.sq && v != null ? Math.max(-seg.sq, Math.min(seg.sq, v)) : v), RO = (x, y) => { if (!seg.rot || x == null || y == null) return [x, y]; const a = seg.rot * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return [Math.round((x * c - y * sn) * 1000) / 1000, Math.round((x * sn + y * c) * 1000) / 1000]; },
     RI = (p) => { if (!seg.rot || !p) return p; const a = -seg.rot * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return [p[0] * c - p[1] * sn, p[0] * sn + p[1] * c]; }, isP = (id) => /^[thmr]\d$/.test(id), P = (id) => (id == null || isP(id) ? id : seg.pre + id), TT = (t) => (t == null ? t : t + seg.T);
   const unit = (id, kind, name) => { if (!U.has(id)) U.set(id, { id, kind, name: name || (kind === 'player' ? gdzName(id) : String(id).replace(/^s\d+:/, '')), path: [], from: seg.w && kind !== 'player' ? seg.w[0] : -1, to: seg.w && kind !== 'player' ? seg.w[1] : Infinity }); return U.get(id); };
   const put = (u, t, x, y, fixed) => { u.path.push([t, x, y, !!fixed]); u.path.sort((a, b) => a[0] - b[0]); };
@@ -35532,20 +35534,20 @@ function gdzKit(boss, len) {
     for (let i = 0; i < p.length - 1; i++) if (t <= p[i + 1][0]) { const a = p[i], b = p[i + 1], w = b[0] > a[0] ? (t - a[0]) / (b[0] - a[0]) : 1; return [a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w]; }
     const z = p[p.length - 1]; return [z[1], z[2]]; };
   const kit = {
-    posAt: (id, t) => RI(posRaw(P(id), TT(t))), // (in the layout's own frame, so a turned layout reads back what it wrote)
+    posAt: (id, t) => RI(posRaw(P(id), TT(t))), peek: () => k, /* (the drawing so far, for checks like the axe dodge) */ // (in the layout's own frame, so a turned layout reads back what it wrote)
     // (turn the layout that follows by deg (counterclockwise): a plan drawn one way round, fitted to the room)
     rot(deg) { seg.rot = deg || 0; return kit; },
     // one player (id like 'm3') at a spot at a moment; or a group of players in a clump around a spot
-    at(t, ids, x, y, spread, fixed) { ids = [].concat(ids); ids.forEach((id, i) => { const [dx, dy] = spread ? gdzSpot(i, ids.length, spread) : [0, 0]; const q0 = RO(x + dx, y + dy); put(unit(id, 'player'), TT(t), q0[0], q0[1], fixed); }); return kit; },
+    at(t, ids, x, y, spread, fixed) { ids = [].concat(ids); ids.forEach((id, i) => { const [dx, dy] = spread ? gdzSpot(i, ids.length, spread) : [0, 0]; const q0 = RO(CL(x + dx), CL(y + dy)); put(unit(id, 'player'), TT(t), q0[0], q0[1], fixed); }); return kit; },
     // the same players stay where they are until t (so the next move starts then, not from the start)
     hold(t, ids) { for (const id of [].concat(ids)) { const p = posRaw(id, TT(t)); if (p) put(unit(id, 'player'), TT(t), p[0], p[1], true); } return kit; }, /* (a hold is a wait: the speed limit never moves it earlier) */
     boss(id, name, t, x, y) { const q0 = RO(x, y); put(unit(P(id), 'boss', name), TT(t), q0[0], q0[1]); return kit; },
     add(id, name, t, x, y) { const q0 = RO(x, y); put(unit(P(id), 'add', name), TT(t), q0[0], q0[1]); return kit; },
     // orbs ('orb' green, 'porb' purple) and ghosts ('ghost'): from when they appear, until they're gone
-    obj(id, kind, t, x, y) { const q0 = RO(x, y); put(unit(P(id), kind), TT(t), q0[0], q0[1]); return kit; },
+    obj(id, kind, t, x, y) { const q0 = RO(CL(x), CL(y)); put(unit(P(id), kind), TT(t), q0[0], q0[1]); return kit; },
     show(id, from, to) { const u = U.get(P(id)); if (u) { if (from != null) u.from = TT(from); if (to != null) u.to = TT(to); } return kit; },
     // a circle: fixed (x, y) or on a unit (on), from t0 for dur seconds; fx as in miniMap (soak, burst, debuff, puddle, zone, safe); at: when it goes off
-    ring(o) { const q0 = RO(o.x, o.y); k.rings.push({ ...o, x: q0[0], y: q0[1], on: P(o.on), t0: TT(o.t0), at: TT(o.at) }); return kit; },
+    ring(o) { const q0 = o.fx === 'soak' && o.r < 10 ? RO(CL(o.x), CL(o.y)) : RO(o.x, o.y); /* (an orb's landing circle stays on the platform; pools and raid hits keep their centre) */ k.rings.push({ ...o, x: q0[0], y: q0[1], on: P(o.on), t0: TT(o.t0), at: TT(o.at) }); return kit; },
     // a frontal from a unit toward another unit (or a direction in degrees, east = 0, counterclockwise), landing at 'at'; hit: orbs or ghosts it removes
     cone(o) { k.cones.push({ ...o, deg: o.deg != null ? o.deg + seg.rot : o.deg, from: P(o.from), to: P(o.to), at: TT(o.at), hit: (o.hit || []).map(P) }); return kit; },
     link(o) { const ty = o.toYd ? RO(o.toYd.x, o.toYd.y) : null; k.links.push({ ...o, toPt: ty ? { x: A.cx + ty[0], y: A.cy + ty[1] } : o.toPt, from: P(o.from), to: P(o.to), t0: TT(o.t0), t1: TT(o.t1) }); return kit; }, /* (toYd: a spot in yards) */
@@ -35723,6 +35725,8 @@ const GDZ_BADGE = { 'Corrupted Toxin': '#8fd16a', Venomfang: '#7cf07c', Dreadmar
 // a room's half-width in yards, for pools that pour in from a wall (they're cut at the floor's edge: on The Coiled Altar about 46 yards
 // from the middle, where every player position of a kill stops; the pools themselves are centred on the wall statues, 52 out)
 const GDZ_ROOM = { 'The Coiled Altar': 46 }; let GDZ_ROOM_N = 0;
+// (a square platform's floor limit, yards from the centre: the Coiled Altar's stone ends about 41 out, then a bevel and the drop)
+const GDZ_SQ = { 'The Coiled Altar': 39 };
 const GDZ_GLYPH = { t: 'M0 -6.4L5.2 -4.3V0C5.2 3.6 2.7 5.6 0 6.7C-2.7 5.6 -5.2 3.6 -5.2 0V-4.3Z', h: 'M-1.9 -6.2H1.9V-1.9H6.2V1.9H1.9V6.2H-1.9V1.9H-6.2V-1.9H-1.9Z', r: 'M1.6 -6.8L-4.2 1H-0.6L-1.6 6.8L4.2 -1H0.6Z' };
 function gdzGlyph(x, y, pl, r, attrs, title) { // a role token: the role's colour, a dark face and a white sign (shield, cross, swords, bolt)
   const R = r + 3, k = (R - 2.4) / 7.4, c = pl.color, g = pl.glyph; attrs = String(attrs || '').replace(/opacity:0?.6/, 'opacity:.9'); /* (solid enough to read at a glance) */
@@ -35803,7 +35807,7 @@ function gdzCaRaid(k, skip) {
 }
 // The Mythic plan's raid markers (turned so the room's doors are north and south, like the floor art): the X marks the entrance
 // side (west here), moon and skull its corners, star and square the far corners, diamond the far wall, the circle a side wall
-function gdzCaMarks(k) { k.rot(90); /* (the plan is drawn entrance-west; the room's entrance side is south: Sever hits the tank south first, then north (Oct 20, two kills)) */ k.wmark('cross', -42, 0).wmark('moon', -40, -40).wmark('skull', -40, 40).wmark('star', 40, -40).wmark('square', 40, 40).wmark('diamond', 42, 13).wmark('circle', 19, 42); return k; } /* (on the floor's edge, which ends about 43 yards out) */
+function gdzCaMarks(k) { k.rot(90); /* (the plan is drawn entrance-west; the room's entrance side is south: Sever hits the tank south first, then north (Oct 20, two kills)) */ k.wmark('cross', -37, 0).wmark('moon', -35, -35).wmark('skull', -35, 35).wmark('star', 35, -35).wmark('square', 35, 35).wmark('diamond', 37, 13).wmark('circle', 19, 37); return k; } /* (on the flat stone near the edge: it ends about 41 yards out, then a bevel and the drop) */
 const GDZ_CA_AXES = {
   1: { tg: 'r3', grp: ['m5', 'm6', 'r6', 'r5', 'r7', 'h3'], tags: [['r5', 'Turtle'], ['r7', 'Turtle'], ['m6', 'Feint'], ['r6', 'Disp.']], hl: ['r5', 'r7'], title: 'Guillotine on Mythic: the first soak', hlLabel: 'axe target and the Hunters', tagLabel: 'What they press (Hunters keep Turtle for soak 2)',
     pause: 'Freeze. A big first soak, 6 or 7. The Hunters are in it so they can\'t be picked for the next axe; they\'ll Turtle that one.' },
@@ -35849,6 +35853,23 @@ function gdzAxeHits(k, ids, pos, axes, t0, t1, from) {
     for (const i of axes) { const q = pos(i, t); if (q && Math.hypot(b[0] - q[0], b[1] - q[1]) < 3) { last[id] = t; out.push([id, t]); gdzAxeHit(k, id, t); break; } } }
   return out;
 }
+// (through the whole fight the raid watches the rolling axes: anyone one is about to roll into steps aside, a quick sidestep, never a
+// sprint, then carries on with what their scene has them doing; the steps are fixed, so the scenes keep their timing)
+function gdzAxeDodge(k, ids, pos, n, t0, t1) {
+  const K = k.peek(), RI = (x, y) => [y, -x]; /* (the overlay is drawn turned 90 degrees, like the scenes) */
+  const bad = K.rings.filter((g) => (g.r < 40 || /Noxious Ground/.test(g.cn || '')) && /Noxious Ground|Gloombomb|Bomb|Toxic Deluge|Guillotine|Execution|soak/i.test((g.cn || '') + ' ' + (g.fx || ''))), coneT = K.cones.map((c) => c.at).filter((x) => x != null);
+  const inBad = (p, t) => bad.some((g) => { if (t < g.t0 || t > g.t0 + (g.dur || 0)) return false; const c = g.on ? (/^[thmr]\d$/.test(g.on) ? k.posAt(g.on, t) : null) : RI(g.x, g.y); return c && Math.hypot(p[0] - c[0], p[1] - c[1]) < g.r + 1.5; });
+  for (const id of ids) { const keys = []; let ox = 0, oy = 0;
+    for (let t = Math.ceil(t0 * 2) / 2; t <= t1 + 0.001; t += 0.5) { const b = k.posAt(id, t), b0 = k.posAt(id, t - 0.5), b2 = k.posAt(id, t + 1.5); if (!b) { ox = oy = 0; continue; }
+      const still = b0 && b2 && Math.hypot(b[0] - b0[0], b[1] - b0[1]) < 0.8 && Math.hypot(b2[0] - b[0], b2[1] - b[1]) < 2.4 && !coneT.some((x) => Math.abs(x - t) < 2.5) && !inBad(b, t);
+      let tx = 0, ty = 0;
+      if (still) for (let i = 0; i < n; i++) { let bst = null; for (const dt of [0, 0.5, 1, 1.5]) { const q = pos(i, t + dt); if (!q) continue; const d = Math.hypot(b[0] - q[0], b[1] - q[1]); if (!bst || d < bst[0]) bst = [d, b[0] - q[0], b[1] - q[1]]; }
+        if (bst && bst[0] < 6) { const p = 7.5 - bst[0]; tx += bst[1] / (bst[0] || 1) * p; ty += bst[2] / (bst[0] || 1) * p; } }
+      let nx = ox * 0.4 + tx * 0.6, ny = oy * 0.4 + ty * 0.6; const st = Math.hypot(nx - ox, ny - oy); if (st > 3) { nx = ox + (nx - ox) * 3 / st; ny = oy + (ny - oy) * 3 / st; } /* (a quick sidestep, never a sprint) */
+      const m = Math.hypot(nx, ny); if (m > 4.5) { nx *= 4.5 / m; ny *= 4.5 / m; }
+      if (Math.hypot(nx, ny) > 0.3 && (inBad([b[0] + nx, b[1] + ny], t) || Math.max(Math.abs(b[0] + nx), Math.abs(b[1] + ny)) > 39)) { nx = ox * 0.4; ny = oy * 0.4; } /* (never into a pool, a bomb, a soak or off the edge) */
+      if (Math.hypot(nx, ny) > 0.3 || Math.hypot(ox, oy) > 0.3) keys.push([t, b[0] + nx, b[1] + ny]); ox = nx; oy = ny; }
+    keys.forEach(([t, x, y]) => k.at(t, id, x, y, 0, true)); } }
 const GDZ_CA_M = {
   // P1: purples at the far end of each frontal's triangle, greens between them and the boss; the entrance side first
   orbs() {
@@ -35922,20 +35943,20 @@ const GDZ_CA_M = {
   },
   // P2: everyone stacks the mind controls on the square; ghosts land around them and get frozen apart; the frontal sweeps them
   ghosts() {
-    const k = gdzCaMarks(gdzKit('The Coiled Altar', 13)), SQ = [41, 39];
-    k.boss('hm', 'Malacrass', 0, 6, 4).boss('hm', 'Malacrass', 3, 22, 22);
-    k.at(0, 't1', 10, 4).at(3, 't1', 28, 24).hold(7, 't1').at(9.6, 't1', 42, 38).at(0, 't2', 2, 8).at(3, 't2', 14, 20)
-      .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 6, 12, 5).at(3, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 18, 28, 5).at(0, ['h1', 'h3', 'h4'], -8, 14, 4).at(3, ['h1', 'h3', 'h4'], 6, 30, 4)
-      .at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -6, -6, 6).at(3, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], 4, 12, 6);
-    k.at(0, 'r5', 16, 30).at(0, 'm4', 22, 28).at(0, 'h2', 10, 36);
+    const k = gdzCaMarks(gdzKit('The Coiled Altar', 13)), SQ = [35, 33]; /* (by the square, on the stone: the ghosts land around the stack and must stay on the platform) */
+    k.boss('hm', 'Malacrass', 0, 6, 4).boss('hm', 'Malacrass', 3, 16, 16);
+    k.at(0, 't1', 10, 4).at(3, 't1', 22, 18).hold(7, 't1').at(9.6, 't1', 36, 32).at(0, 't2', 2, 8).at(3, 't2', 8, 14)
+      .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 6, 12, 5).at(3, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5).at(0, ['h1', 'h3', 'h4'], -8, 14, 4).at(3, ['h1', 'h3', 'h4'], 0, 24, 4)
+      .at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -6, -6, 6).at(3, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -2, 6, 6);
+    k.at(0, 'r5', 10, 24).at(0, 'm4', 16, 22).at(0, 'h2', 4, 30);
     const mc = ['r5', 'm4', 'h2'];
     mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); k.tag(id, 'MC', 1, 6); const [dx, dy] = gdzSpot(i, 3, 2.5); k.hold(1, id).at(4.4, id, SQ[0] + dx, SQ[1] + dy).hold(6.4, id); });
     // (they land around their player and are frozen on the spot by being looked at; the two outside the cone are let creep in)
-    const G = [[34, 40], [37, 32], [44, 44], [43, 31], [31, 34], [26, 44]], IN = { 5: [30, 38], 2: [42, 38] };
+    const G = [[28, 34], [31, 26], [38, 38], [37, 25], [25, 28], [20, 38]], IN = { 5: [24, 32], 2: [36, 32] };
     G.forEach(([x, y], q) => { const g = 'g' + q; k.obj(g, 'ghost', 6.2, x, y).show(g, 6.2, 12); if (IN[q]) k.obj(g, 'ghost', 8, x, y).obj(g, 'ghost', 9.6, IN[q][0], IN[q][1]); });
     // (a dashed line from each freed player to their ghost while they look at it: a ghost only moves while its player looks away)
     G.forEach((_, q) => { const own = mc[Math.floor(q / 2)], g = 'g' + q; if (IN[q]) k.link({ from: own, to: g, t0: 6.6, t1: 8, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }).link({ from: own, to: g, t0: 9.6, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); else k.link({ from: own, to: g, t0: 6.6, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); });
-    mc.forEach((id, i) => k.at(9.4, id, 18 - i * 3, 36 + i * 3));
+    mc.forEach((id, i) => k.at(9.4, id, 12 - i * 3, 30 + i * 3));
     k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'] });
     k.ring1(mc.concat('t1')).step(1).step(2).step(6.2).step(8).step(11);
     k.pause(9.7, 'Freeze. Every ghost on its own spot, none touching, all in the frontal\'s path. The boss tank lines it up from the diamond side.', { x: 36, y: 34, r: 12 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players and the boss tank', tagLabel: 'Mind controlled, with a shield' });
@@ -36137,14 +36158,6 @@ function gdzCaSimAdd(k, e) {
 }
 // running through the whole simulation: the rolling axes (5 from 0:14, 5 more from 1:39, each set for 3 minutes) and the Fangs puddles at the sides
 function gdzCaSimOverlay(k, rt2sim, end) {
-  // (the rolling axes, as on the real kills: each throw's 5 roll on from the end of its own scene for 3 minutes, then vanish; in the
-  // layout's turn (simRot 90), like the scenes; anyone one touches takes a hit)
-  k.rot(90); const ov = [];
-  GDZ_CA_SIM.forEach((e, j) => { if (e.mech !== 'grinder') return; const S = rt2sim(e.at), nx = GDZ_CA_SIM[j + 1], a = nx ? rt2sim(nx.at - 0.001) : S + 14, b = Math.min(end, rt2sim(e.at + 3 + 180));
-    for (let n = 0; n < 5; n++) { const i = (e.o && e.o.more ? 5 : 0) + n, id = 'axo' + i, P = (t) => GDZ_CA_AXP[i](t - S - 3.4); for (let t = a; t <= b + 0.001; t += 1) { const q = P(t); k.obj(id, 'axe', t, q[0], q[1]); }
-      k.show(id, a, b).ring({ on: id, r: 3, fx: 'zone', t0: a, dur: b - a, color: '#ff9628', cn: 'Axegrinder', legend: 'rolling axe: hurts if it touches you' }); ov.push({ a, b, P }); } });
-  if (ov.length) gdzAxeHits(k, GDZ_RAID, (i, t) => (t >= ov[i].a && t <= ov[i].b ? ov[i].P(t) : null), ov.map((_, i) => i), Math.min(...ov.map((x) => x.a)), Math.max(...ov.map((x) => x.b)));
-  k.rot(0);
   const p2 = rt2sim(177);
   // (Noxious Ground, measured from about 1,600 hits on 11 Mythic kills (your notes, Oct 20: from the exact middle of each side, equal
   // sizes): each pool pours from the middle of the west or east wall. After the first Fangs it reaches to about 24 yards short of
@@ -36152,6 +36165,15 @@ function gdzCaSimOverlay(k, rt2sim, end) {
   const W = 52, life = 28;
   [[-W, 0], [W, 0]].forEach(([x, y]) => { k.ring({ x, y, r: 28, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(life) - rt2sim(0) - 2.6, color: '#c4f03c', fill: 'rgba(52,128,30,.5)', cn: 'Noxious Ground', legend: 'pools from Fangs: stay in the middle lane' });
     k.ring({ x, y, r: 48, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: rt2sim(85 + life) - rt2sim(85) - 0.8, color: '#c4f03c', fill: 'rgba(52,128,30,.46)', cn: 'Noxious Ground', legend: 'pools from Fangs: stay in the middle lane' }); });
+  // (the rolling axes, as on the real kills: each throw's 5 roll on from the end of its own scene for 3 minutes, then vanish; in the
+  // layout's turn (simRot 90), like the scenes; anyone one touches takes a hit)
+  k.rot(90); const ov = [];
+  GDZ_CA_SIM.forEach((e, j) => { if (e.mech !== 'grinder') return; const S = rt2sim(e.at), nx = GDZ_CA_SIM[j + 1], a = nx ? rt2sim(nx.at - 0.001) : S + 14, b = Math.min(end, rt2sim(e.at + 3 + 180));
+    for (let n = 0; n < 5; n++) { const i = (e.o && e.o.more ? 5 : 0) + n, id = 'axo' + i, P = (t) => GDZ_CA_AXP[i](t - S - 3.4); for (let t = a; t <= b + 0.001; t += 1) { const q = P(t); k.obj(id, 'axe', t, q[0], q[1]); }
+      k.show(id, a, b).ring({ on: id, r: 3, fx: 'zone', t0: a, dur: b - a, color: '#ff9628', cn: 'Axegrinder', legend: 'rolling axe: hurts if it touches you' }); ov.push({ a, b, P }); } });
+  if (ov.length) { const pos = (i, t) => (t >= ov[i].a && t <= ov[i].b ? ov[i].P(t) : null), t0 = Math.min(...ov.map((x) => x.a)), t1 = Math.max(...ov.map((x) => x.b));
+    gdzAxeDodge(k, GDZ_RAID, pos, ov.length, t0, t1); gdzAxeHits(k, GDZ_RAID, pos, ov.map((_, i) => i), t0, t1); }
+  k.rot(0);
 }
 // ---- What goes wrong (your idea, Oct 20): each mechanic's map can also play a mistake and what it costs ----
 // a raid-wide hit: a red blast over the room and a red label, and the players it kills marked
@@ -36197,13 +36219,13 @@ const GDZ_CA_FAIL = {
       k.step(0.5).step(4).step(4.4); return k.done({ title: 'Mistake: a ghost reaches its player', focus: { x: -10, y: -6, r: 14 } }); } },
   dmM: { name: 'Two ghosts touch', what: 'On Mythic only you can see your ghost. If two ghosts touch each other, both of their players die.',
     do: ['Two freed players stand close and let their ghosts drift.', 'The two ghosts touch.', 'Both players die.'],
-    map: () => { const k = gdzCaMarks(gdzKit('The Coiled Altar', 8)); k.boss('hm', 'Malacrass', 0, 22, 22);
-      k.at(0, 't1', 28, 24).at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 18, 28, 5).at(0, ['h1', 'h3', 'h4'], 6, 30, 4).at(0, ['r1', 'r3', 'r4', 'r6', 'r7'], 4, 12, 6).at(0, 'r5', 40, 38).at(0, 'm4', 36, 33);
-      k.obj('g0', 'ghost', 0, 44, 32).obj('g0', 'ghost', 1, 44, 32).obj('g0', 'ghost', 3.6, 40.5, 30.5).show('g0', 0, 4.2);
-      k.obj('g1', 'ghost', 0, 34, 26).obj('g1', 'ghost', 1, 34, 26).obj('g1', 'ghost', 3.6, 39, 30).show('g1', 0, 4.2);
-      k.ring({ x: 39.8, y: 30.2, r: 4, fx: 'burst', t0: 3.2, at: 3.8, dur: 0.8, color: '#c49bff', cn: 'Malevolent Resonance', legend: 'two ghosts touching' });
-      k.call(4, 7.6, 'Both players die', { x: 40, y: 36, color: '#ff3b3b', ink: '#fff' }); k.oops('r5', 4.2); k.oops('m4', 4.2);
-      k.step(0.5).step(3.6).step(4.1); k.pause(3.2, 'Stop. Those two ghosts are drifting into each other. When they touch, both players die.', { x: 39, y: 30, r: 7 }); return k.done({ title: 'Mistake: two ghosts touch', focus: { x: 36, y: 30, r: 12 }, badLabel: 'dies' }); } },
+    map: () => { const k = gdzCaMarks(gdzKit('The Coiled Altar', 8)); k.boss('hm', 'Malacrass', 0, 16, 16);
+      k.at(0, 't1', 22, 18).at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5).at(0, ['h1', 'h3', 'h4'], 0, 24, 4).at(0, ['r1', 'r3', 'r4', 'r6', 'r7'], -2, 6, 6).at(0, 'r5', 34, 32).at(0, 'm4', 30, 27);
+      k.obj('g0', 'ghost', 0, 38, 26).obj('g0', 'ghost', 1, 38, 26).obj('g0', 'ghost', 3.6, 34.5, 24.5).show('g0', 0, 4.2);
+      k.obj('g1', 'ghost', 0, 28, 20).obj('g1', 'ghost', 1, 28, 20).obj('g1', 'ghost', 3.6, 33, 24).show('g1', 0, 4.2);
+      k.ring({ x: 33.8, y: 24.2, r: 4, fx: 'burst', t0: 3.2, at: 3.8, dur: 0.8, color: '#c49bff', cn: 'Malevolent Resonance', legend: 'two ghosts touching' });
+      k.call(4, 7.6, 'Both players die', { x: 34, y: 30, color: '#ff3b3b', ink: '#fff' }); k.oops('r5', 4.2); k.oops('m4', 4.2);
+      k.step(0.5).step(3.6).step(4.1); k.pause(3.2, 'Stop. Those two ghosts are drifting into each other. When they touch, both players die.', { x: 33, y: 24, r: 7 }); return k.done({ title: 'Mistake: two ghosts touch', focus: { x: 30, y: 24, r: 12 }, badLabel: 'dies' }); } },
   bombs: { name: 'Bombs stacked together', what: 'Two bomb carriers stand on the same spot, next to the melee. Every bomb hits everyone around it.',
     do: ['Both melee bombs run to the same spot, right next to the melee.', 'The bombs go off together.', 'They hit each other and the melee around them, twice.'],
     map: () => { const k = gdzKit('The Coiled Altar', 8).rot(90), MA = [24, 8]; k.boss('hm', 'Malacrass', 0, 18, 20).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
@@ -38302,28 +38324,36 @@ const TF_M = {
     w.pause(5, 'Coiling Ichor: walk to your spot on the outer edge and drop the puddles packed tight together, out of the way. A defensive that still covers the last ticks.', { x: -29, y: 47, r: 10 });
     return w.done({ title: 'Coiling Ichor: puddles packed at the edge', focus: { x: 0, y: 46, r: 32 }, hlLabel: 'the Coiling Ichor targets' });
   },
-  // Stir the Depths (Vexhul): raid pulses, and waves rolling in from behind the raid (from the pool toward the bosses), one lane at a
-  // time in narrow lanes, here a set down the left, middle and right lanes, then one down the two between (each wave that hits you: +1 venom stack). Each player in a lane steps into a gap
-  // just before its wave reaches them, then back (fail: one stays in their lane)
+  // Stir the Depths (Vexhul): raid pulses, and sets of small waves rolling in from behind the raid (the pool's side), each set from its
+  // own direction, in an order that changes from pull to pull (the tanks look back and call it): here first from the back-left toward
+  // Ithraz's side, then from the back-right toward Vexhul's side, then straight up the middle (each wave that hits you: +1 venom stack).
+  // Each set is five small waves side by side with gaps between them: everyone steps sideways into a gap before the set reaches them,
+  // then back (fail: one player doesn't move)
   waves(fail, d, o) {
-    const plat = o && o.p != null ? o.p : 2, L = 13, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('vx', 'Stir the Depths', 0.4, 2);
-    const V = 11, Y0 = 24, HW = 3, LN = [[-20, 4], [0, 4], [20, 4], [-10, 5.6], [10, 5.6]]; /* (a first set down the left, middle and right lanes, then one down the two between) */ /* (each lane's centre and when its wave sets off) */
-    LN.forEach(([x, t0]) => w.wave({ x, y: Y0, deg: 90, v: V, w: HW * 2, d: 3.5, t0, t1: t0 + 5.2, color: '#9ff26d', legend: 'a wave rolling in from behind: +1 venom stack' }));
-    w.call(0.6, 3, 'Waves from behind, in lanes', { x: 0, y: 30, color: '#9ff26d', ink: '#0a1a06' });
+    const plat = o && o.p != null ? o.p : 2, L = 14, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('vx', 'Stir the Depths', 0.4, 2);
+    const V = 11, HW = 3, C = [0, 48], SETS = [[65, 3.2], [118, 5.4], [90, 7.6]], LANES = [-20, -10, 0, 10, 20]; /* (each set: the way it heads, when it sets off) */
+    const unit = (deg) => { const a = deg * Math.PI / 180; return [Math.cos(a), Math.sin(a)]; }, side = (u) => [-u[1], u[0]];
+    SETS.forEach(([deg, t0]) => { const u = unit(deg), n = side(u); LANES.forEach((l) => w.wave({ x: C[0] - 38 * u[0] + l * n[0], y: C[1] - 38 * u[1] + l * n[1], deg, v: V, w: HW * 2, d: 3.5, t0, t1: t0 + 7, color: '#9ff26d', legend: 'small waves rolling in from behind: +1 venom stack each' })); });
+    w.call(0.6, 3, 'Tanks: where are they coming from?', { x: 0, y: 30, color: '#9ff26d', ink: '#0a1a06' });
+    // (when a set reaches a spot, and the spot's distance sideways from the set's nearest wave)
+    const hit = (q, [deg, t0]) => { const u = unit(deg), n = side(u), dx = q[0] - C[0], dy = q[1] - C[1], al = dx * u[0] + dy * u[1], p = dx * n[0] + dy * n[1]; const off = LANES.map((l) => p - l).sort((a, b) => Math.abs(a) - Math.abs(b))[0]; return { t: t0 + (al + 38) / V, off, n }; };
+    // (each player, set by set: if the set's waves would reach them, a sidestep into the nearest gap on the stone; they stay there until
+    // the next set, then walk back once the last set has passed)
     const OFF = fail ? 'r6' : null, MOV = [];
-    const hitT = (q, l) => (Math.abs(q[0] - l[0]) < HW + 1.2 ? l[1] + (q[1] - Y0) / V : null);
-    Object.keys(TF_HOME).forEach((id) => { if (id === OFF) return; const h = TF_HOME[id];
-      LN.forEach((l) => { const th = hitT(h, l); if (th == null) return;
-        // (the nearest spot just outside this lane that's on the stone and that no other wave crosses at that moment)
-        const ok = (x) => { const q = tfIn([x, h[1]]); return Math.abs(q[0] - x) < 0.01 && LN.every((m) => m === l || hitT([x, h[1]], m) == null || Math.abs(hitT([x, h[1]], m) - th) > 2.4); };
-        const c = [l[0] - HW - 2.5, l[0] + HW + 2.5].filter(ok).sort((a, b) => Math.abs(a - h[0]) - Math.abs(b - h[0]))[0]; if (c == null) return;
-        const dur = Math.abs(c - h[0]) / 7 + 0.2; w.hold(th - 0.6 - dur, id).at(th - 0.6, id, c, h[1]).hold(th + 0.6, id).at(th + 0.6 + dur, id, h[0], h[1]); MOV.push(id); }); });
-    if (fail) { const th = hitT(TF_HOME.r6, LN[1]); ulHit(k, 'r6', th, 'Wave: +1 stack'); k.oops('r6', th); k.step(0.4).step(4).step(th);
-      w.pause(th + 0.3, 'This ranged stayed in the middle lane as its wave rolled in from behind: another venom stack, and stacks are what end this fight.', { on: 'r6', r: 8 });
+    Object.keys(TF_HOME).forEach((id) => { if (id === OFF) return; const h = TF_HOME[id]; let p = h, free = 0, moved = false;
+      SETS.forEach((st, si) => { const hh = hit(p, st); if (Math.abs(hh.off) >= HW + 1.2) return;
+        const nx = SETS[si + 1], clearNext = (q) => { if (!nx) return true; const x = hit(q, nx); return Math.abs(x.off) >= HW + 1.2 || x.t - hh.t > 2.2; }; /* (a gap the next set won't reach right away, when there's a choice) */
+        const sg = hh.off >= 0 ? 1 : -1, cs = [sg * 5 - hh.off, -sg * 5 - hh.off, sg * 15 - hh.off].map((g) => [p[0] + g * hh.n[0], p[1] + g * hh.n[1]]).filter((q) => { const c = tfIn(q); return Math.hypot(c[0] - q[0], c[1] - q[1]) < 0.01; })
+          .map((q, i) => [q, (clearNext(q) ? 0 : 10) + i]).sort((a, b) => a[1] - b[1]).map((x) => x[0]);
+        if (!cs.length) return; const q = cs[0], dur = Math.hypot(q[0] - p[0], q[1] - p[1]) / 7 + 0.2, tA = Math.max(free, hh.t - 0.7 - dur);
+        w.hold(tA, id).at(tA + dur, id, q[0], q[1]); p = q; free = tA + dur; moved = true; });
+      if (moved) { const tl = Math.max(free, ...SETS.map((st) => hit(p, st).t)) + 0.8, dur = Math.hypot(h[0] - p[0], h[1] - p[1]) / 7 + 0.2; w.hold(tl, id).at(tl + dur, id, h[0], h[1]); MOV.push(id); } });
+    if (fail) { const th = hit(TF_HOME.r6, SETS[2]).t; ulHit(k, 'r6', th, 'Wave: +1 stack'); k.oops('r6', th); k.step(0.4).step(3.2).step(th);
+      w.pause(th + 0.3, 'This ranged didn\'t step into a gap when the middle set rolled in from behind: another venom stack, and stacks are what end this fight.', { on: 'r6', r: 8 });
       return w.done({ title: 'Mistake: hit by a wave', focus: { x: 0, y: 50, r: 30 }, badLabel: 'hit by a wave' }); }
-    k.ring1(MOV.slice(0, 4)).step(0.4).step(4);
-    w.pause(4.4, 'Stir the Depths: waves roll in from behind the raid in narrow lanes: a set down the left, middle and right, then one down the two lanes between. Step into a gap before one reaches you.', { x: 0, y: 48, r: 28 });
-    return w.done({ title: 'Stir the Depths: step into the gaps', focus: { x: 0, y: 50, r: 30 }, hlLabel: 'players stepping out of a lane' });
+    k.ring1([...new Set(MOV)].slice(0, 4)).step(0.4).step(3.2).step(5.4);
+    w.pause(4.6, 'Stir the Depths: sets of small waves roll in from behind the raid, here from the back-left, then the back-right, then up the middle. The order changes, so the tanks look back and call it. Step sideways into a gap before each set reaches you.', { x: 0, y: 48, r: 28 });
+    return w.done({ title: 'Stir the Depths: step into the gaps', focus: { x: 0, y: 50, r: 30 }, hlLabel: 'players stepping into a gap' });
   },
   // Ravenous Feast (Ithraz): a big soak smashed three times (split between everyone in it, -1 venom stack each, a knockback). Heroic and
   // up, each player can only take one hit, so three groups: knocked right first, knocked left second, the front group last. Mythic: after
@@ -38393,7 +38423,7 @@ const TF_FAIL = {
   emergence: { name: 'A second Corrosive Spit', what: 'The Spawns live too long and Spit a second time: another venom stack for each target.', do: ['The Spawns rise.', 'Too few swap to them.', 'A second Spit: more stacks.'], map: (d) => TF_M.emergence(true, d) },
   brood: { name: 'A missed Broodling kick', what: 'Nobody kicks one Broodling: Visceral Burst hits the raid with a stacking DoT. Usually a wipe.', do: ['10 Broodlings rise.', 'One kick is missed.', 'Visceral Burst on the raid.'], map: (d) => TF_M.brood(true, d) },
   ichor: { name: 'A puddle in the middle', what: 'A Coiling Ichor target drops their puddle in the middle of the platform: it stays there all platform.', do: ['Coiling Ichor goes out.', 'One target stays in the middle.', 'A puddle where the raid needs room.'], map: (d) => TF_M.ichor(true, d) },
-  waves: { name: 'Hit by a wave', what: 'A player stays in a lane as its wave rolls in: another venom stack.', do: ['Waves roll in from behind.', 'One player stays in the lane.', 'Hit: +1 stack.'], map: (d) => TF_M.waves(true, d) },
+  waves: { name: 'Hit by a wave', what: 'A player doesn\'t step into a gap as a set of waves rolls in: another venom stack.', do: ['Waves roll in from behind.', 'One player doesn\'t step into a gap.', 'Hit: +1 stack.'], map: (d) => TF_M.waves(true, d) },
   feastH: { name: 'Too few in the third hit', what: 'Only three players stand in the third Ravenous Feast hit: split between too few, it kills them.', do: ['Three Feast hits.', 'Only three take the last.', 'Split too few ways: they die.'], map: (d) => TF_M.feast(true, 'h') },
   feast: { name: 'The third orb left alone', what: 'Nobody soaks the third Tainted Blood orb: it wipes the raid.', do: ['Three Feast hits.', 'The front group skips its orb.', 'Tainted Blood: a wipe.'], map: (d) => TF_M.feast(true, d) },
   submerge: { name: 'Caught by the beam', what: 'A player stays where the Vile Flood beam starts: it turns straight over them, more venom stacks.', do: ['They dive.', 'One player stays where the beam starts.', 'Hit: more stacks.'], map: (d) => TF_M.submerge(true, d) },
@@ -38428,13 +38458,13 @@ GDZ['The Twin Fangs'] = {
   upd: ['12.1', 'Oct 21, 2026'],
   stepRoles: {
     'Caustic Deluge (CC, then soak the globules)': ['t', 'd', 'd'], 'Stone Breaker (The tank takes each slam in order)': ['t', '', 't'], 'Venomous Emergence (Kill the Spawns before the second Spit)': ['', 'd', 'd'],
-    'Rouse the Brood (A kick for every Broodling)': ['', 'td', 't', ''], 'Coiling Ichor (Puddles packed at the edge)': ['', '', ''], 'Stir the Depths (Step into the gaps)': ['', ''],
+    'Rouse the Brood (A kick for every Broodling)': ['', 'td', 't', ''], 'Coiling Ichor (Puddles packed at the edge)': ['', '', ''], 'Stir the Depths (Step into the gaps)': ['t', '', ''],
     'Ravenous Feast (Three groups, one hit each)': ['', '', '', ''], 'Submerge (Let the beam pass, then follow it)': ['', '', '', ''],
   },
   sum: 'Two bosses, three platforms, two sets on each, then a Submerge to the next. Everything adds venom stacks and too many kills you, so the fight is about stack control: soak globules on pace, kill the Spawns before they Spit twice, dodge the waves and beams. Kill both together.',
   m: { sim: TF_SIM, simDur: TF_DUR, simSev: TF_SEV, beats: TF_BEATS,
     roles: {
-      t: ['Both beams at once: your biggest defensives.', 'Stone Breaker: step into each slam in order; swap after each set.', 'Protection Paladins: the Broodlings at the tip, then fill in.'],
+      t: ['Both beams at once: your biggest defensives.', 'Stone Breaker: step into each slam in order; swap after each set.', 'Stir the Depths: look back and call where each set of waves comes from.', 'Protection Paladins: the Broodlings at the tip, then fill in.'],
       h: ['Blood Torrent is the biggest tank damage: externals.', 'Coiling Ichor ramps: heal the last ticks.', 'Soak globules on pace too.'],
       d: ['Swap to the Spawns at once: never a second Spit.', 'Kick your Broodling slot.', 'Feast: your group\'s hit only, then its Tainted Blood orb.', 'Skip a globule at 4 stacks on set 3, 5 on set 4, 6 on set 5, 7 on set 6. 8 is the cap.'],
     },
@@ -38463,8 +38493,8 @@ GDZ['The Twin Fangs'] = {
           do: ['Walk to your spot on the outer edge.', 'Drop the puddles packed tight together.', 'A defensive that still covers the last ticks.'],
           plan: ['Keep the middle clear: the raid needs it for the Spawns, the soaks and the end of the fight.', 'The most likely thing to kill a single player late in the fight.'],
           map: (d, o) => TF_M.ichor(false, d, o) },
-        { id: 'waves', fail: TF_FAIL.waves, name: 'Stir the Depths (Step into the gaps)', spell: 'Stir the Depths', what: 'Raid-wide pulses, and waves rolling in from behind the raid, from the pool toward the bosses, each in its own lane. Each wave that hits you is another venom stack.',
-          do: ['Waves roll in from behind in narrow lanes, set after set, in a pattern.', 'Step into a gap between the lanes before one reaches you.'],
+        { id: 'waves', fail: TF_FAIL.waves, name: 'Stir the Depths (Step into the gaps)', spell: 'Stir the Depths', what: 'Raid-wide pulses, and sets of small waves rolling in from behind the raid, each set from its own direction: left, right or middle, in an order that changes. Each wave that hits you is another venom stack.',
+          do: ['Tanks look back and call where each set comes from: left, right or middle.', 'Sets of small waves roll in from behind, one after another.', 'Step sideways into a gap between the waves before each set reaches you.'],
           map: (d, o) => TF_M.waves(false, d, o) },
         { id: 'feast', fail: TF_FAIL.feast, h: { fail: TF_FAIL.feastH }, name: 'Ravenous Feast (Three groups, one hit each)', spell: 'Ravenous Feast', what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. Heroic and up, a player can only take one hit.',
           do: ['Right group takes the first hit, and is knocked right.', 'Left group takes the second, knocked left.', 'Front group takes the third.', 'Six or more in each hit.'],
@@ -38488,7 +38518,7 @@ GDZ['The Twin Fangs'] = {
       ] },
   ],
   roles: {
-    t: ['Caustic Deluge shoves Vexhul\'s tank back: stay in range.', 'Stone Breaker: step into each slam in order; swap after each set.'],
+    t: ['Caustic Deluge shoves Vexhul\'s tank back: stay in range.', 'Stone Breaker: step into each slam in order; swap after each set.', 'Stir the Depths: look back and call where each set of waves comes from.'],
     h: ['Tank hits on the beams and slams: externals.', 'Coiling Ichor ramps: heal the last ticks.', 'Soak globules too.'],
     d: ['Swap to the Spawns at once: never a second Spit.', 'Feast: your group\'s hit only.', 'Soak a globule when your stacks are low.'],
   },
