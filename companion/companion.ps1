@@ -168,22 +168,101 @@ function Update-App {
     return $true
   } catch { return $false }
 }
-# (the app's own window: Edge in app mode, else the default browser)
-function Open-Window {
+# (the app's own window: Edge in app mode, else the default browser. Always brought to the front: Windows otherwise opens it under
+# your other windows, so a click on the icon looked like it did nothing. Already open: that window comes up, no second one.)
+Add-Type -TypeDefinition @'
+using System; using System.Text; using System.Runtime.InteropServices;
+public static class DbfWin {
+  delegate bool EnumProc(IntPtr h, IntPtr l);
+  [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc f, IntPtr l);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
+  [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
+  [DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
+  [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int c);
+  [DllImport("user32.dll")] static extern bool BringWindowToTop(IntPtr h);
+  [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+  [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, IntPtr p);
+  [DllImport("kernel32.dll")] static extern uint GetCurrentThreadId();
+  [DllImport("user32.dll")] static extern bool AttachThreadInput(uint a, uint b, bool on);
+  public static IntPtr Find(string title) {
+    IntPtr found = IntPtr.Zero;
+    EnumWindows((h, l) => { if (!IsWindowVisible(h)) return true; var s = new StringBuilder(256); GetWindowText(h, s, 256); if (s.ToString() == title) { found = h; return false; } return true; }, IntPtr.Zero);
+    return found;
+  }
+  public static bool Front(IntPtr h) {
+    ShowWindow(h, IsIconic(h) ? 9 : 5); // (restore when minimized, else show)
+    // (Windows only lets the window you're using hand the focus over: borrow its input queue for a moment)
+    uint fg = GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero), me = GetCurrentThreadId();
+    bool joined = fg != 0 && fg != me && AttachThreadInput(me, fg, true);
+    BringWindowToTop(h); bool ok = SetForegroundWindow(h);
+    if (joined) AttachThreadInput(me, fg, false);
+    return ok;
+  }
+}
+'@
+function Open-Window([switch]$Wait) {
+  $h = [DbfWin]::Find('Debrief Companion')
+  if ($h -ne [IntPtr]::Zero) { [void][DbfWin]::Front($h); return }
   $edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
-  if ($edge) { Start-Process $edge "--app=http://localhost:$port/ --window-size=1100,820" } else { Start-Process "http://localhost:$port/" }
+  if (-not $edge) { Start-Process "http://localhost:$port/"; return }
+  # (in the middle of the screen)
+  $pos = ''
+  try { Add-Type -AssemblyName System.Windows.Forms; $wa = [Windows.Forms.Screen]::PrimaryScreen.WorkingArea; $pos = ' --window-position=' + [Math]::Max(0, $wa.X + [int](($wa.Width - 1100) / 2)) + ',' + [Math]::Max(0, $wa.Y + [int](($wa.Height - 820) / 2)) } catch {}
+  Start-Process $edge "--app=http://localhost:$port/ --window-size=1100,820$pos"
+  # (it gets its name once the page loads, up to 15 seconds; when this copy is the app, its server must answer meanwhile, so wait on the side)
+  $bring = { for ($i = 0; $i -lt 60; $i++) { Start-Sleep -Milliseconds 250; $h = [DbfWin]::Find('Debrief Companion'); if ($h -ne [IntPtr]::Zero) { Start-Sleep -Milliseconds 300; [void][DbfWin]::Front($h); return } } }
+  if ($Wait) { & $bring } else { $script:winJob = [PowerShell]::Create().AddScript($bring); [void]$script:winJob.BeginInvoke() }
 }
 # (already running, say it started with Windows: the icon opens its window at once, before anything slow like the update check)
 if (-not $InstallOnly) {
   $running = $false
   try { $running = [bool](Invoke-RestMethod "http://localhost:$port/app-version" -TimeoutSec 2 -UseBasicParsing).version } catch {}
-  if ($running) { if (-not $NoWindow) { Open-Window }; exit }
+  if ($running) { if (-not $NoWindow) { Open-Window -Wait }; exit }
 }
 if (-not $InstallOnly -and -not $env:DBF_NO_UPDATE -and (Update-App)) {
   # (start the new version, with the same window choice, and stop this one)
   $a = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + (Join-Path $here 'companion.ps1') + '"' + $(if ($NoWindow) { ' -NoWindow' } else { '' })
   Start-Process powershell -ArgumentList $a -WindowStyle Hidden; exit
 }
+
+# ---------- the Debrief shortcuts (desktop, Start menu, Startup folder) ----------
+# They start PowerShell directly, hidden: on some PCs Windows Script Host says it "can not find" Start Debrief.vbs although it's there.
+# Their picture is a copy named after it, debrief-<id>.ico: Windows keeps its own copy of each shortcut's picture by file name, so a
+# replaced debrief.ico could show blank after an update; a new picture is a new name Windows has never seen.
+function Set-ShortcutTarget($l, [switch]$Quiet) {
+  $l.TargetPath = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+  $l.Arguments = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + (Join-Path $here 'companion.ps1') + '"' + $(if ($Quiet) { ' -NoWindow' } else { '' })
+  $l.WorkingDirectory = $here; $l.WindowStyle = 7 # (minimized: no black window flashing up)
+}
+function Update-Shortcuts {
+  if ($here -notlike ($env:LOCALAPPDATA + '*')) { return }
+  try {
+    $ico = Join-Path $here 'debrief.ico'; if (-not (Test-Path -LiteralPath $ico)) { return }
+    $copy = Join-Path $here ('debrief-' + (Get-FileHash -LiteralPath $ico -Algorithm SHA256).Hash.Substring(0, 8).ToLower() + '.ico')
+    if (-not (Test-Path -LiteralPath $copy)) { Copy-Item -LiteralPath $ico -Destination $copy -Force }
+    Get-ChildItem -LiteralPath $here -Filter 'debrief-*.ico' | Where-Object { $_.FullName -ne $copy } | Remove-Item -Force -ErrorAction SilentlyContinue
+    $ws = New-Object -ComObject WScript.Shell
+    $changed = @()
+    foreach ($d in 'Desktop', 'Programs', 'Startup') {
+      $p = Join-Path ([Environment]::GetFolderPath($d)) 'Debrief Companion.lnk'; if (-not (Test-Path -LiteralPath $p)) { continue }
+      $l = $ws.CreateShortcut($p)
+      # (only our own shortcuts, the ones pointing into this folder; already right: nothing to do)
+      if ($l.IconLocation -notlike ($here + '\*') -and $l.Arguments -notlike ('*' + $here + '\*')) { continue }
+      $viaVbs = $l.TargetPath -like '*\wscript.exe'
+      if (-not $viaVbs -and $l.IconLocation -like ($copy + '*')) { continue }
+      if ($viaVbs) { Set-ShortcutTarget $l -Quiet:($d -eq 'Startup') }
+      $l.IconLocation = $copy + ',0'; $l.Save(); $changed += $p
+    }
+    if (-not $changed.Count) { return }
+    # (tell Windows: these shortcuts changed, and redraw icons everywhere)
+    Add-Type -Namespace Dbf -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern void SHChangeNotify(int e, uint f, string a, IntPtr b);'
+    foreach ($p in $changed) { [Dbf.Shell]::SHChangeNotify(0x2000, 0x1005, $p, [IntPtr]::Zero) } # (SHCNE_UPDATEITEM, path, flush)
+    [Dbf.Shell]::SHChangeNotify(0x8000000, 0x1000, $null, [IntPtr]::Zero) # (SHCNE_ASSOCCHANGED, flush)
+    $ie = Join-Path $env:WINDIR 'System32\ie4uinit.exe'; if (Test-Path -LiteralPath $ie) { Start-Process $ie -ArgumentList '-show' -WindowStyle Hidden }
+  } catch {}
+}
+if (-not $InstallOnly) { Update-Shortcuts }
 
 # ---------- start with Windows: a quiet shortcut in your Startup folder, so the app is always running on raid night ----------
 # (made once: delete it from your Startup folder and it stays gone)
@@ -194,8 +273,7 @@ function Set-Autostart {
   try {
     $ws = New-Object -ComObject WScript.Shell
     $l = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Startup')) 'Debrief Companion.lnk'))
-    $l.TargetPath = Join-Path $env:WINDIR 'System32\wscript.exe'; $l.Arguments = '"' + (Join-Path $here 'Start Debrief.vbs') + '" /quiet'
-    $l.WorkingDirectory = $here; $l.IconLocation = (Join-Path $here 'debrief.ico') + ',0'; $l.Description = 'Debrief Companion, started quietly with Windows'
+    Set-ShortcutTarget $l -Quiet; $l.IconLocation = (Join-Path $here 'debrief.ico') + ',0'; $l.Description = 'Debrief Companion, started quietly with Windows'
     $l.Save()
     Set-Content -LiteralPath $mark -Value 'The Start with Windows shortcut was made once. Delete it from your Startup folder to stop it.'
   } catch {}
@@ -205,7 +283,7 @@ if ($InstallOnly) { Set-Autostart; Write-Host (Install-Addon $here); exit }
 $listener = New-Object Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
 # (already running, say it started with Windows: the icon just opens its window; a quiet start does nothing)
-try { $listener.Start() } catch { Write-Host "Debrief Companion is already running (port $port in use). Opening its window."; if (-not $NoWindow) { Open-Window }; exit }
+try { $listener.Start() } catch { Write-Host "Debrief Companion is already running (port $port in use). Opening its window."; if (-not $NoWindow) { Open-Window -Wait }; exit }
 Write-Host "Debrief Companion is running at http://localhost:$port"
 Write-Host "Keep this window open during raid. Close it to stop."
 $wow = Find-Retail $here
