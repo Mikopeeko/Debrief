@@ -1651,6 +1651,7 @@ const PATCH_NOTES = [
     'Boss guides: the facts under the boss, the timeline and the written version all give the same fight length.',
     'Boss guides: What wipes us shows the most dangerous mistakes from every part of the fight, not just the first four on the page.',
     'Boss guides, The Coiled Altar: Grim Guillotine in phase 3 has its own map now, with all three axes in order (star, then square, then square).',
+    'Boss guides: more mechanics have their own maps: on The Coiled Altar the Fangs pools, Venomfang, Eternal Nightfall, the add kicks, Defilement and (Heroic) Gloombomb; on Ula\'tek her dive.',
     'Home: your You card has a new look, with your Mythic and Heroic progress (AOTC and CE once you earn them) and a See your summary button.',
     'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
