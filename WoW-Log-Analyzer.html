@@ -13898,6 +13898,7 @@ const PATCH_NOTES = [
     'Boss guides: What wipes us shows the most dangerous mistakes from every part of the fight, not just the first four on the page.',
     'Boss guides, The Coiled Altar: Grim Guillotine in phase 3 has its own map now, with all three axes in order (star, then square, then square).',
     'Boss guides: more mechanics have their own maps: on The Coiled Altar the Fangs pools, Venomfang, Eternal Nightfall, the add kicks, Defilement and (Heroic) Gloombomb; on Ula\'tek her dive.',
+    'Boss guides: Nymrissa\'s Abyssal Rain and Lingering Frost, and Kith\'ix\'s Commanding Presence and Divine Radiance, have their own maps now.',
     'Boss guides, Ula\'tek: the Heroic whole-fight video now plays the entire fight, pull to kill, on a real Heroic kill\'s clock (with a timed Read it and fight length), and the Mythic one shows both Mephitic Thrashes.',
     'Home: your You card has a new look, with your Mythic and Heroic progress (AOTC and CE once you earn them) and a See your summary button.',
     'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
@@ -38847,6 +38848,46 @@ const NY_M = {
     k.pause(7.4, 'Nine orbs at the edge behind her, close together. Each chilled player takes two of their own with a defensive; the off tank takes the rest.', { x: -32, y: -32, r: 16 });
     return k.done({ title: 'Chilling Frost: orbs at the edge, all soaked', focus: { x: -26, y: -24, r: 28 }, full: { x: -24, y: -22, r: 29 }, hlLabel: 'the three chilled players and the off tank' });
   },
+  // Abyssal Rain: a 2-second cast, then four raid hits a second apart (175k each), then a DoT on the raid for 24 seconds (23k every 2 s).
+  // Every cast gives her Wavecaller's Might: +5% damage, stacking. A raid cooldown for the four hits, personals if you're low.
+  rain(fail, d) {
+    const L = 13, k = gdzKit(NY, L); nyBoss(k, 0); nyHome(k, 0); nyBubble(k, 0, L);
+    k.cast('ny', 'Abyssal Rain', 0.4, 2.4);
+    for (let i = 0; i < 4; i++) k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: 2.2 + i, at: 2.4 + i, dur: 0.6, color: '#5ab8ff', cn: 'Abyssal Rain', legend: 'Abyssal Rain: four raid hits, one a second' });
+    Object.keys(NY_HOME).forEach((id) => k.ring({ on: id, r: 2.2, fx: 'debuff', t0: 6.4, dur: L - 6.4, color: '#5ab8ff', cn: 'Abyssal Rain DoT', legend: 'the Abyssal Rain DoT: a small hit every 2 seconds for 24 seconds' }));
+    k.call(1.2, 3.8, 'Raid cooldown', { on: 'h2', color: '#45d16b', ink: '#04140a' }); k.call(3, 5.6, 'Personal if low', { on: 'r1', color: '#45d16b', ink: '#04140a' });
+    k.call(6.6, 9.8, 'DoT: 24 seconds', { x: 0, y: 14, color: '#5ab8ff', ink: '#06131c' }); k.call(7, 11, '+5% damage', { on: 'ny', color: '#ff8a5a', ink: '#1a0a04' });
+    k.step(0.4).step(2.4).step(6.4).step(7);
+    k.pause(3.6, 'Four raid hits, one a second: a raid cooldown for them, and a personal if you are low.', { x: -12, y: -6, r: 32 });
+    return k.done({ title: 'Abyssal Rain: four hits, then a DoT', focus: { x: -12, y: -6, r: 36 }, full: { x: -12, y: -6, r: 44 } });
+  },
+  // Lingering Frost: each soaked orb leaves ice that hurts (100k every second) and makes you slide. Heroic: the ice sits in one corner at the
+  // edge behind her (where the orbs were dropped) until the Pop's wave washes it away. Mythic: the ice lies in the lane (the nine orbs'
+  // spots) until a Water Jet sweeps across it; the Pop leaves it. The slide isn't drawn (its direction isn't in our sources).
+  frost(fail, d) {
+    const myth = d !== 'h', L = myth ? 16 : 13, k = gdzKit(NY, L); nyBoss(k, 0); nyHome(k, 0); nyBubble(k, 0, L);
+    const ICE = myth ? NY_ORB : [198, 222, 240].flatMap((a) => [0, 1, 2].map((i) => nzAdd([0, 0], a - 3.2 + i * 3.2, 43))), CE = nzAdd([0, 0], 222, 43);
+    if (!myth) { const CLR = 9;
+      ICE.forEach((p, i) => nyPuddle(k, p, 0.6 + i * 0.25, CLR - 0.6 - i * 0.25));
+      k.call(2.8, 6.6, 'Ice: 100k a second', { x: CE[0] + 5, y: CE[1] + 7, color: '#bfefff', ink: '#06131c' });
+      k.ring({ x: 0, y: 0, r: 62, fx: 'burst', t0: CLR - 0.6, at: CLR, dur: 0.8, color: '#7fd8ff', cn: 'Pop!', legend: 'Pop!: its wave washes the ice away (it throws everyone back too: see Pop!)' });
+      k.call(CLR, CLR + 2.4, 'The Pop washes it away', { x: -30, y: -26, color: '#7fd8ff', ink: '#06131c' });
+      k.step(0.6).step(2.8).step(4.4).step(CLR - 0.6);
+      k.pause(4.6, 'The ice sits in one corner at the edge behind her, and nobody stands in it: it hurts every second and makes you slide.', { x: CE[0], y: CE[1], r: 18 });
+      return k.done({ title: 'Lingering Frost: keep the ice in one corner', focus: { x: -26, y: -24, r: 28 }, full: { x: -12, y: -6, r: 44 } }); }
+    const J0 = 4.6, JS = J0 + 3, JE = JS + 6, TK = 't1', S0 = [4.5, 2.7], S1 = [7, -4.1];
+    k.hold(0.4, TK).at(J0 + 1.4, TK, ...nyL(S0[0], S0[1])).at(JS, TK, ...nyL(S0[0], S0[1])).at(JE, TK, ...nyL(S1[0], S1[1])).hold(JE + 0.2, TK).at(L - 0.4, TK, ...NY_HOME.t1);
+    k.cast('ny', 'Water Jet', J0, JS);
+    const th = (t) => { const w = Math.max(0, Math.min(1, (t - JS) / 6)), dd = S0[0] + (S1[0] - S0[0]) * w, ss = S0[1] + (S1[1] - S0[1]) * w; return Math.atan2(ss, dd) * 180 / Math.PI; };
+    for (let t = JS; t < JE - 0.01; t += 0.5) { const e = nzAdd(NY_BH, 39 + th(t + 0.25), 75); k.link({ from: 'ny', toYd: { x: e[0], y: e[1] }, t0: t, t1: t + 0.5, color: '#7fd8ff', legend: 'Water Jet: a line through the tank, right across the island' }); }
+    ICE.forEach((p, i) => { const v = [p[0] - NY_BH[0], p[1] - NY_BH[1]], tp = Math.atan2(v[0] * NY_N[0] + v[1] * NY_N[1], v[0] * NY_U[0] + v[1] * NY_U[1]) * 180 / Math.PI, t0 = 0.6 + i * 0.25;
+      let tc = L; for (let t = JS; t <= JE; t += 0.1) if (th(t) <= tp) { tc = t + 0.3; break; } nyPuddle(k, p, t0, tc - t0); });
+    k.call(2.8, 6.4, 'Ice: 100k a second', { x: NY_ORB[4][0] + 7, y: NY_ORB[4][1] - 7, color: '#bfefff', ink: '#06131c' });
+    k.call(JS + 0.4, JS + 3.4, 'Water Jet', { x: NY_ORB[4][0] + 7, y: NY_ORB[4][1] - 7, color: '#7fd8ff', ink: '#06131c' });
+    k.ring1([TK]).step(0.6).step(2.8).step(JS).step(JE - 1.4);
+    k.pause(4.4, 'The ice lies in the lane where the orbs were soaked. Nobody stands in it: it hurts every second and makes you slide.', { x: NY_ORB[4][0], y: NY_ORB[4][1], r: 14 });
+    return k.done({ title: 'Lingering Frost: only a Water Jet clears it', focus: { x: -16, y: -12, r: 26 }, full: { x: -17, y: -11, r: 27 }, hlLabel: 'her tank' });
+  },
   // Water Jet (Mythic): a 3-second cast, then a 6-second line from her through her tank and on across the island, pushing the tank back;
   // it's the only thing that clears Lingering Frost. The tank steps across so the line sweeps the lane clean; swap after every cast (+20%
   // per hit). The first one each loop hits air. (o.n: puddles to clear, 0 for none; fail: the tank stands off to the side)
@@ -38958,6 +38999,7 @@ GDZ['Nymrissa Wavecaller'] = {
   stepRoles: {
     'Alluring Bubble (Kill the murlocs before they reach it)': ['', 'td', 'd', 'd', 'd'], 'Alluring Bubble (Frostscale out, squads on the side packs)': ['t', 'd', 't', 'd', 't'],
     'Chilling Frost (Drop them at the edge, soak them all)': ['', '', '', 't'], 'Chilling Frost (Big steps, soak one at a time)': ['', '', '', '', 't'],
+    'Abyssal Rain (Healing cooldowns, it ramps)': ['', 'h', '', ''], 'Lingering Frost (Stay off the ice)': ['', '', '', ''],
     'Water Jet (Sweep the ice, swap every cast)': ['t', 't', '', 't'], 'Swirling Whirlpools (Everyone in the gap)': ['', 't', '', ''], 'Pop! (Land on the island, not in the water)': ['', 'h', ''],
   },
   sum: 'One loop every 110 seconds, rinse and repeat: kill the murlocs before they reach her bubble, drop and soak the Frost Orbs with care, get into the whirlpools\' gap and land safely after the Pop. She gets stronger with every Abyssal Rain, so the fight ramps up.',
@@ -38974,6 +39016,9 @@ GDZ['Nymrissa Wavecaller'] = {
     { id: 'loop', name: 'The loop: every 110 seconds', sum: 'Abyssal Rain, then her bubble and a murloc set, Chilling Frost and its orbs, a second murloc set and orbs, then the whirlpools and the Pop. Rinse and repeat.',
       m: { sum: 'Abyssal Rain, then her bubble and a murloc set, Chilling Frost and its orbs, a second murloc set and orbs, then the whirlpools and the Pop. A Water Jet comes about every 22 seconds all the way through. Rinse and repeat.' },
       mechs: [
+        { id: 'rain', spell: 'Abyssal Rain', name: 'Abyssal Rain (Healing cooldowns, it ramps)', what: 'She casts it on the pull and then twice a loop: four raid hits, one a second, then a DoT for 24 seconds. She gets 5% stronger with every cast, so later ones need bigger cooldowns.',
+          do: ['She casts Abyssal Rain: 2 seconds.', 'Four raid hits, one a second: a raid cooldown, personals if you\'re low.', 'Then a DoT on the raid for 24 seconds.', 'She is 5% stronger after every cast.'],
+          map: (d) => NY_M.rain(false, d) },
         { id: 'murlocs', spell: 'Alluring Bubble', map: (d) => NY_M.murlocs(false, d),
           h: { fail: NY_FAIL.murlocsH, name: 'Alluring Bubble (Kill the murlocs before they reach it)', what: 'She forms a giant bubble in the middle of the island, and pools in the water round the edge show how many murlocs are coming from each (1 to 5). They all walk to the bubble; any that get there become Berserkers that hit the raid until they die.',
             do: ['The pools show where the murlocs come out and how many.', 'Tanks walk her to the biggest pack; the melee stun it and cleave it on her.', 'Crowd control (stuns, roots, slows) stops the side packs where they stand.', 'Two ranged squads then kill the side packs one by one, the biggest first.', 'A slow (a Death Knight, or any AoE slow) holds the far pack until a squad gets there.'],
@@ -38988,6 +39033,11 @@ GDZ['Nymrissa Wavecaller'] = {
           m: { fail: NY_FAIL.orbsM, name: 'Chilling Frost (Big steps, soak one at a time)', what: 'Three players are chilled and drop three orbs each. Every soak also hits the whole raid (Frost Burst), and the ice an orb leaves stays until a Water Jet washes it away.',
             do: ['Chilled: walk into the lane between her and the bubble.', 'Take big steps: your three orbs well apart.', 'The immunity player soaks them one at a time, a second or more apart.', 'Immunity over: stop, even with orbs left.', 'The tanks take what\'s left, two each at most.'],
             plan: ['Four immunity players take turns, one a set: Hunter Turtle, Paladin Bubble, Rogue Cloak. Three is enough: the tanks cover the middle set.', 'Two or three orbs left is fine: three tanks can take six between them.', 'Healers: a raid cooldown on every set.', 'The orb DoT is shorter now (12 seconds) and Frost Burst hits softer than when the first guides were made: still stagger the soaks.'] } },
+        { id: 'frost', spell: 'Lingering Frost', name: 'Lingering Frost (Stay off the ice)', what: 'Each soaked orb leaves ice that hurts every second and makes you slide. It stays until the Pop washes it away.',
+          do: ['The orbs are soaked: each one leaves ice.', 'Keep it all in one corner, at the edge behind her.', 'Stay off it: it hurts every second and makes you slide.', 'The Pop washes the ice away.'],
+          m: { what: 'Each soaked orb leaves ice that hurts every second and makes you slide. It stays until a Water Jet washes it away: the Pop does not.',
+            do: ['Each soaked orb leaves ice in the lane.', 'Keep it in one place and stay off it: it hurts every second and makes you slide.', 'Water Jet: her tank sweeps the line across the lane.', 'The ice is washed away. Nothing else clears it, not even the Pop.'] },
+          map: (d) => NY_M.frost(false, d) },
         { id: 'jet', only: 'm', fail: NY_FAIL.jet, name: 'Water Jet (Sweep the ice, swap every cast)', spell: 'Water Jet', what: 'A tank line: after a 3-second cast she blasts her tank for 6 seconds, pushing them back, and the water runs right across the island. It\'s the only thing that clears the ice, and each hit adds 20% to the next.',
           do: ['Her tank steps to the edge of the lane.', 'Walk across it slowly: the line sweeps the ice away.', 'Nobody else in the line: it goes right across the island.', 'The other tank taunts after every cast.'],
           plan: ['The first one each loop hits air: no ice yet.', 'There is one more jet than there are sets of ice, so you can catch up if you fall behind.', 'The raid lead calls "Jet" when the line will pass through the bubble toward people on the far side.'],
@@ -39002,9 +39052,7 @@ GDZ['Nymrissa Wavecaller'] = {
           map: (d) => NY_M.pop(false, d) },
       ],
       tiles: [
-        { name: 'Abyssal Rain (Healing cooldowns, it ramps)', spell: 'Abyssal Rain', do: 'On the pull, then twice a loop: four raid hits, then a 24-second DoT. She gets 5% stronger with every cast, so later ones need bigger cooldowns.' },
         { only: 'h', name: 'Iceblade Flurry (A defensive, then swap)', spell: 'Iceblade Flurry', do: 'Five ramping hits on her tank. A defensive for the last two, then the other tank taunts.' },
-        { name: 'Lingering Frost (Stay off the ice)', spell: 'Lingering Frost', do: 'Each soaked orb leaves ice that hurts every second and makes you slide. Keep it in one place: the Pop washes it away.', m: { do: 'Each soaked orb leaves ice that hurts every second and makes you slide. Keep it in one place: only Water Jet clears it.' } },
         { name: 'Kill order (Murlocs first)', spell: 'Alluring Bubble', do: 'Murlocs before the boss, every set. Cleave the big pack on her so no damage is lost.', m: { name: 'Kill order (Frostscale first)', do: 'The Frostscale first, then the big pack on her, then the boss. Cleave the pack on her so no boss damage is lost.' } },
       ] },
     { id: 'burn', only: 'm', name: 'The burn: after the third Pop', sum: 'About 5:40 in, after the third Pop. She enrages after the next whirlpool (about 7:15), so this is the last stretch.',
@@ -39166,6 +39214,38 @@ const KX_M = {
     k.pause(3.6, 'His tank takes the circle out to drop spot ' + (n + 1) + ' with a defensive. The Voidscar it leaves stays there for the intermission.', inn ? { x: D[0], y: D[1], r: 15 } : { x: D[0] * 0.5 + 6, y: D[1] * 0.6 + 8, r: 26 });
     return k.done({ title: 'Dark Devastation: out to the drop spot, swap', focus: inn ? { x: -6, y: 4, r: 26 } : { x: 4, y: 22, r: 36 }, full: inn ? { x: -4, y: 4, r: 28 } : { x: 6, y: 22, r: 34 }, hlLabel: 'the tanks' });
   },
+  // Commanding Presence: adds within 25 yards of him take 75% less damage; eggs aren't covered. The adds come out well away from him (the
+  // Voidswarm spots: the Hulk by the west Voidweaver, the other Voidweaver in the east): the raid fights them out there. The eggs the east
+  // Voidweaver drops take full damage wherever they are (he can stand on them once the adds are dead).
+  presence(fail, d) {
+    const myth = d !== 'h', L = 13, k = gdzKit(KX, L); kxBoss(k, 0); kxLia(k, 0); kxAt(k, 0, KX_HOME);
+    k.ring({ on: 'kx', r: 25, fx: 'zone', t0: 0, dur: L, color: '#ffd76a', fill: 'rgba(255,215,106,.09)', cn: 'Commanding Presence', legend: 'Commanding Presence: adds within 25 yards of him take 75% less damage' });
+    k.cast('kx', 'Voidswarm', 0.2, 1.4);
+    KX_VW.forEach((p, i) => { k.add('vw' + i, 'Voidweaver', 1.4, p[0], p[1]); k.show('vw' + i, 1.4, 7); });
+    k.add('hk', 'Hulk', 1.4, ...KX_HULK0).add('hk', 'Hulk', 4.6, -6, -29.5); k.hold(0.4, 't2').at(6, 't2', -1, -34);
+    k.call(2.4, 5.6, 'Fight them out here', { x: KX_VW[1][0], y: KX_VW[1][1] + 7, color: '#ffd23b', ink: '#1a1405' });
+    k.call(2.6, 5.8, '75% less damage inside', { x: 22, y: 40, color: '#ffd76a', ink: '#1a1003' });
+    for (let i = 0; i < (myth ? 3 : 2); i++) { const q = nzAdd(KX_VW[1], 100 + i * 110, 2.6); k.add('ve' + i, 'Egg', 7, q[0], q[1]).show('ve' + i, 7, 12.6); }
+    k.call(7.2, 10.8, 'Eggs: no shield', { x: KX_VW[1][0], y: KX_VW[1][1] + 7, color: '#ffd23b', ink: '#1a1405' });
+    k.step(0.2).step(2.4).step(5).step(7.2);
+    k.pause(3.4, 'Anything within 25 yards of him takes 75% less damage, so the Hulk and the Voidweavers are fought out here, well away from him.', { x: 4, y: 6, r: 38 });
+    return k.done({ title: 'Commanding Presence: fight the adds away from him', focus: { x: 4, y: 6, r: 44 }, full: { x: -2, y: 4, r: 46 } });
+  },
+  // Divine Radiance: Liadrin at 100 energy clears the darkness and stuns him for 8 seconds (not a damage window). She is left Exhausted:
+  // weaker orbs, a smaller barrier, 10% stronger darkness each time. Everyone then leaves the barrier for the next adds.
+  radiance(fail, d) {
+    const L = 13.6, k = gdzKit(KX, L); kxBoss(k, 0, KX_IB); kxLia(k, 0); kxAt(k, 0, KX_INT); kxBulwark(k, 0, L); kxDark(k, 0, 2.4);
+    k.cast('li', 'Divine Radiance', 0.6, 2.4);
+    kxHit(k, [0, 0], 2.4, 75, 'Divine Radiance', 'Divine Radiance: the darkness is gone, and he is stunned for 8 seconds', '#ffd76a');
+    k.ring({ on: 'kx', r: 4, fx: 'debuff', t0: 2.4, dur: 8, color: '#ffd76a', cn: 'Stunned', legend: 'Kith\'ix is stunned for 8 seconds' });
+    k.call(2.6, 5.4, 'Stunned: 8 seconds', { on: 'kx', color: '#ffd76a', ink: '#1a1403' });
+    k.call(3.4, 6.6, 'Not a burst window', { x: -2, y: -22, color: '#5aa0ff', ink: '#fff' });
+    k.call(5.4, 9.4, 'Exhausted: weaker next time', { on: 'li', color: '#ffd76a', ink: '#1a1403' });
+    kxAt(k, 12.4, KX_HOME, 6.4); kxBoss(k, 10.4, KX_IB); kxBoss(k, 12.4);
+    k.step(0.2).step(2.4).step(3.4).step(5.4).step(6.4);
+    k.pause(3.6, 'Liadrin\'s Light clears the darkness and he is stunned for 8 seconds. It is not a burst window: nothing to save cooldowns for.', { x: 0, y: 6, r: 22 });
+    return k.done({ title: 'Divine Radiance: the darkness clears', focus: { x: 0, y: 2, r: 26 }, full: { x: -4, y: 3, r: 42 } });
+  },
   // Suffocating Darkness: at 100 energy darkness fills the room (outside the barrier: pacified, heavy damage). Liadrin puts up her barrier:
   // everyone inside, still doing his other mechanics in less room. Abyssal Grasp: a heal absorb that drags a few players toward the dark;
   // clear it within 8 seconds (healthstone, potion, healing) or they're flung out into it. (fail: one absorb not cleared)
@@ -39305,6 +39385,7 @@ GDZ["Kith'ix"] = {
     'Voidswarm (Adds away from him, beetles one at a time)': ['', '', 'dt', 'd', 't'], 'Extinguish (An orb for everyone)': ['', '', ''],
     'Unspeakable Horrors (Run out, one dispel at a time)': ['', '', 'h', 'h'], 'Dark Devastation (Out to the drop spot, swap)': ['t', 't', 't', 't'],
     'Suffocating Darkness (Inside the barrier)': ['', '', '', 'h'], 'Eclipse Fragments (Catch them at the barrier\'s edge)': ['', 't', ''],
+    'Commanding Presence (Adds away from him)': ['', '', 'd', ''], 'Divine Radiance (Don\'t save cooldowns)': ['', '', '', '', ''],
     'Null Gate (Drop it at your role\'s spot)': ['', '', '', ''], 'Negation (Into the gates in time)': ['t', 't', 't'],
   },
   sum: 'Lady Liadrin, your ally in the middle of the room, backs you up all fight. Phase one repeats until 25%: adds (kill them away from him, beetles one at a time), Extinguish (grab her orbs), fears and tank circles, then an intermission inside her barrier. Phase two is a one-minute race: drop your Null Gate at your spot and dodge the shards.',
@@ -39327,6 +39408,9 @@ GDZ["Kith'ix"] = {
             do: ['Voidswarm: the adds come out.', 'The off tank takes the Hulk to the Voidweaver on the ranged side, faced out.', 'The Death Knight slows the beetles and grips them in one at a time, by the Hulk.', 'Kill the Voidweaver, then the eggs.', 'Then the Hulk goes across to the other Voidweaver, with the raid.'],
             plan: ['Slow the beetles, never root them: they get gripped. Drop Death and Decay on the second-closest and grip the closest.', 'Wait for each DoT to end before the next grip. Two Death Knights make it easier.', 'No Death Knight? Root them instead, and have one player step on each, one at a time.', 'Each beetle that explodes is one stack on the raid: one is fine, two together is very dangerous, three kills.', 'Keep the Hulk alive and bring it to where the raid is: Lady Liadrin\'s orbs land at the Hulk.'] },
           map: (d) => KX_M.adds(false, d) },
+        { id: 'presence', spell: 'Commanding Presence', name: 'Commanding Presence (Adds away from him)', what: 'Adds within 25 yards of him take 75% less damage. The eggs don\'t: he can stand on those.',
+          do: ['Voidswarm: the adds come out, well away from him.', 'Within 25 yards of him they take 75% less damage: the Hulk and the Voidweavers are fought out here.', 'Kill them out here: the Voidweavers first.', 'The eggs they drop are not covered: he can stand on those.'],
+          map: (d) => KX_M.presence(false, d) },
         { id: 'extinguish', fail: KX_FAIL.extinguish, name: 'Extinguish (An orb for everyone)', spell: 'Extinguish', what: 'An 8-second cast, then a huge shadow hit on everyone. Lady Liadrin throws Light\'s Embrace orbs toward the Hulk (or a Voidweaver, or him): run over one for 90% less shadow damage.',
           do: ['Liadrin throws the orbs toward the Hulk.', 'One orb each; melee can catch them as they land.', 'Extinguish lands: the orb carries you through it.'],
           plan: ['No orb? A big defensive: on Heroic you usually live.', 'He stands still while he casts: the tanks swap then.'],
@@ -39342,7 +39426,6 @@ GDZ["Kith'ix"] = {
           map: (d, o) => KX_M.devastation(false, d, o) },
       ],
       tiles: [
-        { name: 'Commanding Presence (Adds away from him)', spell: 'Commanding Presence', do: 'Adds within 25 yards of him take 75% less damage. The eggs don\'t: he can stand on those.' },
         { name: 'Mindstinger eggs (Cleave them)', spell: 'Incubation', do: 'Dead adds drop eggs. A hatched Mindstinger stuns and DoTs random players over and over: kill the eggs first.' },
         { name: 'Twisted Appendage (Step out)', spell: 'Twisted Appendage', do: 'Tentacles slam a short frontal toward a random player. Step out of it.' },
         { name: 'Dark Frenzy (All adds dead first)', spell: 'Dark Frenzy', do: 'Any add alive when the intermission starts gets much faster, can\'t be crowd controlled, and pulses raid damage.' },
@@ -39360,9 +39443,11 @@ GDZ["Kith'ix"] = {
             do: ['Fragments float in from the Voidscars.', 'The tank without the Dark Devastation debuff catches the north-east ones at the circle marker (two at a time, then swap).', 'Two ranged take turns at the moon marker (or triangle), with a backup.'],
             plan: ['Keep the moon and triangle soakers all ranged: a fear takes only one ranged player at a time, so you lose at most one soaker.', 'Everyone else stays near the middle, away from the 6-yard splashes (the spell text says 3 yards: we use 6 to be safe).', 'Immunities don\'t stop the DoT; Anti-Magic Shell helps.'] },
           map: (d, o) => KX_M.fragments(false, d, o) },
+        { id: 'radiance', spell: 'Divine Radiance', name: 'Divine Radiance (Don\'t save cooldowns)', what: 'When Lady Liadrin has gathered enough Light she clears the darkness and stuns him for 8 seconds. It isn\'t a burst window: nothing to hold cooldowns for. Each time she is left Exhausted: weaker orbs, a smaller barrier, 10% stronger darkness.',
+          do: ['Everyone is inside the barrier, still doing the usual jobs.', 'Lady Liadrin casts Divine Radiance: the darkness clears and he is stunned for 8 seconds.', 'It is not a burst window: keep your damage going, there is nothing to hold cooldowns for.', 'She is left Exhausted: weaker orbs, a smaller barrier and 10% stronger darkness next time.', 'Back out of the barrier for the next adds.'],
+          map: (d) => KX_M.radiance(false, d) },
       ],
       tiles: [
-        { name: 'Divine Radiance (Don\'t save cooldowns)', spell: 'Divine Radiance', do: 'When Lady Liadrin has gathered enough Light she clears the darkness and stuns him for 8 seconds. It isn\'t a burst window: nothing to hold cooldowns for. Each time she is left Exhausted: weaker orbs, a smaller barrier, 10% stronger darkness.' },
         { only: 'm', name: 'Skip the third intermission (Reach 25% by 4:15)', do: 'Lust, potions and every cooldown on the pull. Reach 25% before the third beetle set explodes, at 4:15 at the very latest (the fastest kills did it by about 3:50), then root the beetles and ignore them. Other guilds keep Bloodlust for phase two and still push before the third set: this plan puts it on the pull.' },
       ] },
     { id: 'p2', name: 'Phase two: Last Light (25% to the kill)', sum: 'Everyone is stunned, every add vanishes, and Liadrin gives the raid Luminous Grace. About a minute before the eighth Eclipse kills everyone.',
