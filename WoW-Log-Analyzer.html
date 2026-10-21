@@ -13898,6 +13898,7 @@ const PATCH_NOTES = [
     'Boss guides: What wipes us shows the most dangerous mistakes from every part of the fight, not just the first four on the page.',
     'Boss guides, The Coiled Altar: Grim Guillotine in phase 3 has its own map now, with all three axes in order (star, then square, then square).',
     'Boss guides: more mechanics have their own maps: on The Coiled Altar the Fangs pools, Venomfang, Eternal Nightfall, the add kicks, Defilement and (Heroic) Gloombomb; on Ula\'tek her dive.',
+    'Boss guides, Ula\'tek: the Heroic whole-fight video now plays the entire fight, pull to kill, on a real Heroic kill\'s clock (with a timed Read it and fight length), and the Mythic one shows both Mephitic Thrashes.',
     'Home: your You card has a new look, with your Mythic and Heroic progress (AOTC and CE once you earn them) and a See your summary button.',
     'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
@@ -36948,10 +36949,10 @@ const UX_BEATS = {
 };
 const UX_SIM = [
   { at: 0, beat: 'start', ph: 0 }, { at: 1, mech: 'eggs', ph: 0, label: 'Call of the Serpent 1' }, { at: 3, mech: 'wretch', ph: 0, label: 'Blightscale Wretch 1' },
-  { at: 22, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 1' }, { at: 36, mech: 'coils', ph: 0, label: 'Spectral Coils 1' },
+  { at: 22, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 1' }, { at: 36, mech: 'coils', ph: 0, label: 'Spectral Coils 1' }, { at: 45, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 1' },
   { at: 50, mech: 'waves', ph: 0, label: 'Caustic Waves 1 (Go to the other half)' }, { at: 71, mech: 'eggs', ph: 0, label: 'Call of the Serpent 2 (Eight more)' },
   { at: 72, mech: 'wretch', ph: 0, label: 'Blightscale Wretch 2' }, { at: 77, beat: 'dive', ph: 0 },
-  { at: 92, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 2', o: { rot: 90 } }, { at: 107, mech: 'waves', ph: 0, label: 'Caustic Waves 2 (The hardest set)', o: { rot: 90 } },
+  { at: 92, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 2', o: { rot: 90 } }, { at: 102, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 2', o: { rot: 90 } }, { at: 107, mech: 'waves', ph: 0, label: 'Caustic Waves 2 (The hardest set)', o: { rot: 90 } },
   { at: 130, mech: 'coils', ph: 0, label: 'Spectral Coils 2', o: { rot: 90 } }, { at: 139, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
   { at: 173, mech: 'warden', ph: 1 }, { at: 195, mech: 'fangs', ph: 1 }, { at: 240, mech: 'doomscales', ph: 1 }, { at: 288, mech: 'heart2', ph: 1 },
   { at: 319, mech: 'intcoils', ph: 2 },
@@ -36960,6 +36961,24 @@ const UX_SIM = [
   { at: 461, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } }, { at: 483, mech: 'prey', ph: 3, label: 'Circling Prey 2 (Gate to the third quarter)', o: { q: 'NW' } },
   { at: 505, mech: 'clutches', ph: 3, label: 'Slithering Clutches 3 (Two grips, two Shriekers)', o: { q: 'SW' } }, { at: 544, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
   { at: 565, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 3 (The last set)', o: { q: 'SE' } }, { at: 577, beat: 'kill', ph: 3 },
+];
+// (Heroic, on our two Heroic kills' clock: she comes up at the edge after the dive, so the rest of phase 1 is turned like Mythic's;
+// in phase 3 the raid moves one quarter counter-clockwise after each Circling Prey: north-east, north-west, south-west, south-east)
+const UX_SIM_H = [
+  { at: 0, beat: 'start', ph: 0 }, { at: 10, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 1' }, { at: 23, mech: 'coils', ph: 0, label: 'Spectral Coils 1' },
+  { at: 35, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 1' }, { at: 42, mech: 'waves', ph: 0, label: 'Caustic Waves 1 (Go to the other half)' }, { at: 62, beat: 'dive', ph: 0 },
+  { at: 72, mech: 'eggs', ph: 0, label: 'Call of the Serpent', o: { rot: 90 } }, { at: 77, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 2', o: { rot: 90 } },
+  { at: 87, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 2', o: { rot: 90 } }, { at: 94, mech: 'waves', ph: 0, label: 'Caustic Waves 2', o: { rot: 90 } },
+  { at: 114, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 3', o: { rot: 90 } }, { at: 118, mech: 'coils', ph: 0, label: 'Spectral Coils 2', o: { rot: 90 } },
+  { at: 129, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
+  { at: 176, mech: 'warden', ph: 1 }, { at: 189, mech: 'fangs', ph: 1 }, { at: 225, mech: 'doomscales', ph: 1 }, { at: 278, mech: 'heart2', ph: 1 },
+  { at: 309, mech: 'intcoils', ph: 2 },
+  { at: 367, mech: 'clutches', ph: 3, label: 'Call of the Serpent 1', o: { q: 'NE' } }, { at: 387, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
+  { at: 397, mech: 'clutches', ph: 3, label: 'Call of the Serpent 2', o: { q: 'NE' } }, { at: 422, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } },
+  { at: 442, mech: 'clutches', ph: 3, label: 'Call of the Serpent 3', o: { q: 'NW' } }, { at: 458, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } },
+  { at: 473, mech: 'prey', ph: 3, label: 'Circling Prey 2', o: { q: 'NW' } }, { at: 495, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 3', o: { q: 'SW' } },
+  { at: 502, mech: 'clutches', ph: 3, label: 'Call of the Serpent 4', o: { q: 'SW' } }, { at: 534, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
+  { at: 555, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 4 (The last set)', o: { q: 'SE' } }, { at: 588, beat: 'kill', ph: 3 },
 ];
 // (how long each part lasts on the real clock, for the written version's overlaps; how bad a miss is: 3 can wipe, 2 can kill, 1 minor)
 const UX_DUR = { 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 15, 'm:doomscales': 49, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 };
@@ -36974,6 +36993,7 @@ GDZ['Ula\'tek'] = {
   },
   sum: 'A long fight on a set clock. Phase 1: carry eggs, soak the coils, dodge her waves, burn her heart. Phase 2: the raid splits onto the two side ledges. Then the platform shatters and the last phase moves from quarter to quarter.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
+  h: { sim: UX_SIM_H, simDur: UX_DUR, simSev: UX_SEV, beats: UX_BEATS, simAlways: ['One tank on her and one on the tail all fight: an empty melee range hits the whole raid.', 'Her waves come out of her, half the platform at a time: go to the other half.'] },
   m: { sim: UX_SIM, simDur: UX_DUR, simSev: UX_SEV, beats: UX_BEATS, simBands: [{ t0: 10, t1: 44, n: 8, text: '8 eggs', title: '8 eggs carried' }, { t0: 82, t1: 138, n: 8, text: '8 eggs', title: '8 eggs carried' }],
     simAlways: ['Egg carriers: your 3-yard ring never touches another carrier\'s, you never take a wave, and you never die holding an egg.', 'Her waves come out of her, half the platform at a time: go to the other half, then cross behind the first wave.'],
     source: 'Tactyks\' Mythic Ula\'tek guide and first-kill video', sum: 'Eggs have shells, and carriers have 3-yard rings that must never touch. A Wretch add makes a bubble everyone stands in, four Doomscales need kicks, the intermission takes three soak groups, and the last phase needs grips. Tuned on Oct 6, so it is easier than the video: softer coils, tethers and tail waves, and Serpent\'s Bite needs only three soakers. This follows a plan that killed it; your raid may set its own zones and markers.',
