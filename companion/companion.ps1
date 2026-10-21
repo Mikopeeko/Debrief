@@ -178,6 +178,32 @@ if (-not $InstallOnly -and -not $env:DBF_NO_UPDATE -and (Update-App)) {
   Start-Process powershell -ArgumentList $a -WindowStyle Hidden; exit
 }
 
+# ---------- the desktop icon: when an update brings a new debrief.ico, the Debrief shortcuts get it and Windows redraws them ----------
+# (Windows keeps its own copy of each shortcut's picture by file name, so a replaced debrief.ico could show blank. The shortcuts
+# point at a copy named after the picture, debrief-<id>.ico: a new picture is a new name Windows has never seen.)
+function Update-Icons {
+  if ($here -notlike ($env:LOCALAPPDATA + '*')) { return }
+  try {
+    $ico = Join-Path $here 'debrief.ico'; if (-not (Test-Path -LiteralPath $ico)) { return }
+    $id = (Get-FileHash -LiteralPath $ico -Algorithm SHA256).Hash.Substring(0, 8).ToLower()
+    $copy = Join-Path $here ('debrief-' + $id + '.ico')
+    $lnks = @(foreach ($d in 'Desktop', 'Programs', 'Startup') { $p = Join-Path ([Environment]::GetFolderPath($d)) 'Debrief Companion.lnk'; if (Test-Path -LiteralPath $p) { $p } })
+    $ws = New-Object -ComObject WScript.Shell
+    # (only our own shortcuts, the ones whose picture is in this folder; already on this picture: nothing to do)
+    $mine = @($lnks | Where-Object { $l = $ws.CreateShortcut($_); $l.IconLocation -like ($here + '\debrief*') -and $l.IconLocation -notlike ($copy + '*') })
+    if (-not $mine.Count -and (Test-Path -LiteralPath $copy)) { return }
+    Copy-Item -LiteralPath $ico -Destination $copy -Force
+    foreach ($p in $mine) { $l = $ws.CreateShortcut($p); $l.IconLocation = $copy + ',0'; $l.Save() }
+    Get-ChildItem -LiteralPath $here -Filter 'debrief-*.ico' | Where-Object { $_.FullName -ne $copy } | Remove-Item -Force -ErrorAction SilentlyContinue
+    # (tell Windows: these shortcuts changed, and redraw icons everywhere)
+    Add-Type -Namespace Dbf -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern void SHChangeNotify(int e, uint f, string a, IntPtr b);'
+    foreach ($p in $mine) { [Dbf.Shell]::SHChangeNotify(0x2000, 0x1005, $p, [IntPtr]::Zero) } # (SHCNE_UPDATEITEM, path, flush)
+    [Dbf.Shell]::SHChangeNotify(0x8000000, 0x1000, $null, [IntPtr]::Zero) # (SHCNE_ASSOCCHANGED, flush)
+    $ie = Join-Path $env:WINDIR 'System32\ie4uinit.exe'; if (Test-Path -LiteralPath $ie) { Start-Process $ie -ArgumentList '-show' -WindowStyle Hidden }
+  } catch {}
+}
+if (-not $InstallOnly) { Update-Icons }
+
 # ---------- start with Windows: a quiet shortcut in your Startup folder, so the app is always running on raid night ----------
 # (made once: delete it from your Startup folder and it stays gone)
 function Set-Autostart {
