@@ -91,8 +91,9 @@ end
 local SAMPLE = [==[DBF1^H~Ula'tek~Heroic~3~1~0~7:30~~6^P~Ironvow~PALADIN~Protection Paladin~tank~DPS~148k~-13~2~171k~2~~ability_paladin_shieldofthetemplar^S~Ironvow~warn~389539~Opener, step by step: 3 of 4. Missed: step 1, Hand of Reckoning (not in your opener).^S~Ironvow~warn~~Stat order: Crit › Mastery › Haste › Vers. Yours: Critical Strike 1,198, then Mastery 1,041, then Haste 979, then Versatility 0.^N~Ironvow~Follow the guide opener: Hand of Reckoning, then 3 of Avenger's Shield, Sentinel, Avenging Wrath or Divine Toll, in any order.^P~Lumensong~PALADIN~Holy Paladin~healer~HPS~333k~5~2~317k~2~1st of 4 healers~spell_holy_holybolt^S~Lumensong~warn~200025~Beacon of Virtue: 63%. It sat ready for 168 seconds.^S~Lumensong~warn~223819~Divine Purpose: 4 wasted. 2 were lost to a Divine Toll pressed while you still held one.^S~Lumensong~bad~82326~Mana at the kill: 60%. About a few more Holy Lights were left in it.^N~Lumensong~Press Beacon of Virtue as the damage goes out, close to every 15 seconds. From 0:52, it sat ready for 36 seconds.^P~Dawnmender~PALADIN~Holy Paladin~healer~HPS~316k~13~2~280k~2~2nd of 4 healers~spell_holy_holybolt^S~Dawnmender~warn~223819~Divine Purpose: 6 wasted. 3 were lost to a Divine Toll pressed while you still held one.^S~Dawnmender~warn~31821~Cooldowns into the big hits: 1 of 3. 1 of your 3 healing cooldowns went out in the heaviest damage of the pull.^S~Dawnmender~warn~31884~Casting in Avenging Wrath: 83%. You were casting for 83% of your Avenging Wrath windows.^B~Dawnmender~dead~1286835~You died at 3:50 to Necrotic Vapors.^N~Dawnmender~Spend Divine Purpose before it runs out, or before a new one replaces it. Your first wasted one was at 2:50.^P~Thornroot~DRUID~Restoration Druid~healer~HPS~281k~-1~2~284k~2~3rd of 4 healers~spell_nature_healingtouch^S~Thornroot~warn~391528~Convoke the Spirits uses: 6 of 8. It sat ready for 2 minutes in all.^S~Thornroot~bad~48438~Mana at the kill: 58%. About 13 more Wild Growths were left in it at the kill.^S~Thornroot~warn~263725~Clearcasting: 11 wasted. 9 were replaced by a new one while you still had it.^N~Thornroot~Press Convoke the Spirits a little sooner each time it comes back.^P~Arcspark~MAGE~Arcane Mage~dps~DPS~275k~31~2~210k~2~3rd of 21 DPS~spell_holy_magicalsentry^S~Arcspark~warn~30451~Rotation priority: 77% of your casts were the best button to press.^S~Arcspark~warn~30451~Always be casting: 72%. Your longest stretch with nothing pressed was 6 seconds, at 3:22, while you were moving.^S~Arcspark~warn~321507~Touch of the Magi on cooldown: 8 of 10. It sat ready, unused, for 2 minutes in all.^N~Arcspark~With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first. Not in Arcane Soul, where each Barrage gives you Clearcasting and Salvo back.^P~Frostwhisper~MAGE~Frost Mage~dps~DPS~156k~-36~2~244k~2~17th of 21 DPS~spell_frost_frostbolt02^S~Frostwhisper~bad~116~Always be casting: 70%. Your longest stretch with nothing pressed was 5 seconds, at 1:52, while you were moving.^S~Frostwhisper~bad~190446~Brain Freeze: 3 wasted. You got 24 procs.^S~Frostwhisper~warn~269748~Ray of Frost on cooldown: 6 of 8. It sat ready, unused, for 21 seconds in all.^B~Frostwhisper~dead~1301007~You died at 4:20 to Unchecked Rage.^N~Frostwhisper~Press something every global cooldown. When you have to move, use an instant spell instead of stopping.^R~warn~1292403~Caustic Waves~5 players. @Moonquill, @Mistpalm, @Grimshade, @Voidfang and 1 more. Dodge the venom waves from Ula'tek and her tail.^R~bad~1301007~Unchecked Rage~1 time. Nobody was in melee of Ula'tek, so she hit the raid.^D~2:44~Hawkfeather~HUNTER~6603~Melee^D~2:46~Stonefist~WARRIOR~6603~Melee^D~3:50~Dawnmender~PALADIN~1286835~Necrotic Vapors^D~3:53~Jadewind~MONK~6603~Melee^X~+2 more by 7:30.^Q~Kill! Next time: Dodge the venom waves from Ula'tek and her tail.^Z]==]
 
 -- ---------- small helpers for drawing ----------
-local function iconPath(x)
-  if not x or x == "" then return "Interface\\Icons\\INV_Misc_QuestionMark" end
+local NOICON = { ok = "Interface\\RaidFrame\\ReadyCheck-Ready", bad = "Interface\\RaidFrame\\ReadyCheck-NotReady", dead = "Interface\\RaidFrame\\ReadyCheck-NotReady" }
+local function iconPath(x, flag)
+  if not x or x == "" then return flag and (NOICON[flag] or "Interface\\RaidFrame\\ReadyCheck-Waiting") or "Interface\\Icons\\INV_Misc_QuestionMark" end
   local id = tonumber(x)
   if id then
     local tex = C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(id)
@@ -171,7 +172,7 @@ toast:SetScript("OnDragStart", function() if not DB.lock then toast:StartMoving(
 toast:SetScript("OnDragStop", function() toast:StopMovingOrSizing(); local p, _, rp, x, y = toast:GetPoint(); DB.toastPos = { p, rp, x, y } end)
 local tLogo = toast:CreateTexture(nil, "ARTWORK"); tLogo:SetSize(22, 22); tLogo:SetPoint("LEFT", 14, 0); tLogo:SetTexture(MEDIA .. "Media\\logo")
 local tTitle = toast:CreateFontString(nil, "OVERLAY"); setFont(tTitle, "head", 17); tTitle:SetPoint("TOPLEFT", 42, -10); tTitle:SetTextColor(rgb(COL.text)); tTitle:SetText("See your recap?")
-local tSub = toast:CreateFontString(nil, "OVERLAY"); setFont(tSub, "body", 12.5); tSub:SetPoint("TOPLEFT", 42, -31); tSub:SetWidth(200); tSub:SetJustifyH("LEFT"); tSub:SetWordWrap(false); tSub:SetTextColor(rgb(COL.muted))
+local tSub = toast:CreateFontString(nil, "OVERLAY"); setFont(tSub, "body", 12.5); tSub:SetPoint("TOPLEFT", 42, -31); tSub:SetWidth(214); tSub:SetJustifyH("LEFT"); tSub:SetWordWrap(false); tSub:SetTextColor(rgb(COL.muted))
 local tKey = CreateFrame("Frame", nil, toast); tKey:SetSize(62, 26); tKey:SetPoint("RIGHT", -38, 0); skin(tKey, 5, COL.raised, 1, COL.line2, 1)
 tKey.t = tKey:CreateFontString(nil, "OVERLAY"); setFont(tKey.t, "bold", 13); tKey.t:SetPoint("CENTER", 0, 0); tKey.t:SetTextColor(rgb(COL.text)); tKey.t:SetText("Ctrl+V")
 local tClose = closeButton(toast); tClose:ClearAllPoints(); tClose:SetPoint("RIGHT", -8, 0)
@@ -189,7 +190,7 @@ tinsert(UISpecialFrames, "DebriefToast")
 tClose:SetScript("OnClick", closeToast)
 -- (clicking the prompt gets it ready again after you moved or typed)
 toast:SetScript("OnClick", function() eb:SetText(""); eb:SetFocus(); grabbed = false; toastReady(true); toastSay("Press Ctrl+V now.") end)
-eb:SetScript("OnEditFocusLost", function() rounded(ebBg.lineT, "line", 5, COL.line2, 1); if toast:IsShown() then toastReady(false); toastSay("Click here, then press Ctrl+V.") end end)
+eb:SetScript("OnEditFocusLost", function() rounded(ebBg.lineT, "line", 5, COL.line2, 1); if toast:IsShown() then toastReady(false); toastSay("Click here, then Ctrl+V.") end end)
 eb:SetScript("OnEscapePressed", function() paste:Hide(); if toast:IsShown() then closeToast() end end)
 
 -- ---------- the card ----------
@@ -259,7 +260,7 @@ local resT = card:CreateFontString(nil, "OVERLAY"); setFont(resT, "head", 22); r
 -- (the result as a pill, the way the website shows Kill and Wipe)
 local pill = CreateFrame("Frame", nil, card); pill:SetSize(60, 24); pill:SetPoint("TOPRIGHT", -PAD, -52); skin(pill, 5, COL.goodBg, 1, COL.goodBg, 1)
 pill.t = pill:CreateFontString(nil, "OVERLAY"); setFont(pill.t, "bold", 13); pill.t:SetPoint("CENTER", 0, 0)
-local metaT = card:CreateFontString(nil, "OVERLAY"); setFont(metaT, "body", 13); metaT:SetPoint("TOPLEFT", PAD, -82); metaT:SetTextColor(rgb(COL.muted)); metaT:SetJustifyH("LEFT")
+local metaT = card:CreateFontString(nil, "OVERLAY"); setFont(metaT, "body", 13); metaT:SetPoint("TOPLEFT", PAD, -82); metaT:SetTextColor(rgb(COL.muted)); metaT:SetJustifyH("LEFT"); metaT:SetWordWrap(false)
 
 -- tabs: Me and Raid view, a gold line under the open one; on Me, arrows to look at anyone in the pull
 local tabs, view = {}, "me"
@@ -330,8 +331,9 @@ local function box(y, h, fillHex, fillA, lineHex, lineA, bar)
   local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, lineHex, lineA)
   if bar then local b = TEX("ARTWORK"); b:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -6); b:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 1, 6); b:SetWidth(3); fill(b, bar) end
 end
-local function icon(x, y, size, id)
-  local t = TEX("ARTWORK"); t:SetPoint("TOPLEFT", x, -y); t:SetSize(size, size); t:SetTexture(iconPath(id)); t:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+local function icon(x, y, size, id, flag)
+  local t = TEX("ARTWORK"); t:SetPoint("TOPLEFT", x, -y); t:SetSize(size, size); t:SetTexture(iconPath(id, flag))
+  if id and id ~= "" then t:SetTexCoord(0.08, 0.92, 0.08, 0.92) else t:SetTexCoord(0, 1, 0, 1) end
   return t
 end
 local FLAG = { ok = COL.good, warn = COL.warn, bad = COL.bad, dead = COL.faint }
@@ -400,7 +402,7 @@ end
 -- a row: a round status dot, an icon, then the text (an optional bold title above it)
 local function row(y, flag, ic, text, ttl)
   local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", IND, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
-  icon(IND + 16, y, 20, ic)
+  icon(IND + 16, y, 20, ic, flag)
   local x, w, yy = IND + 46, CW - 46 - IND * 2, y
   if ttl and ttl ~= "" then local h = FS("bold", 13.5, COL.text); h:SetPoint("TOPLEFT", x, -yy); h:SetWidth(w); h:SetText(ttl); yy = yy + h:GetStringHeight() + 2 end
   local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", x, -yy); t:SetWidth(w); t:SetText(names(text))
@@ -445,12 +447,17 @@ function render()
   for _, c in ipairs(chips) do c:SetShown(false) end
   local h = m.h
   bossT:SetText(h.boss .. "  ·  " .. h.diff)
-  -- chips: the newest five
+  -- chips: the newest ones, as many as fit across the card
   local n = #DB.pulls
   local first = math.max(1, n - #chips + 1)
+  if (DB.show or {}).chips ~= false then
+    local function chipW(q) local rt = resultOf(q.h); chips[1].t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt); return chips[1].t:GetStringWidth() + 20 end
+    local total = 0; for k = first, n do total = total + chipW(DB.pulls[k]) + 6 end
+    while first < n and total - 6 > CW do total = total - chipW(DB.pulls[first]) - 6; first = first + 1 end
+  end
   for i = 1, #chips do
     local b, k = chips[i], first + i - 1
-    local q = DB.pulls[k]
+    local q = k <= n and DB.pulls[k] or nil
     if q and (DB.show or {}).chips ~= false then
       local rt, rc, rb = resultOf(q.h)
       b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt)
@@ -470,7 +477,7 @@ function render()
   local meta = { h.diff, "Pull " .. h.pull, h.dur }
   if h.where ~= "" then meta[#meta + 1] = h.where end
   meta[#meta + 1] = h.deaths .. (h.deaths == "1" and " death" or " deaths")
-  metaT:SetText(table.concat(meta, "   ·   "))
+  metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
   TOPY = ((DB.show or {}).chips ~= false) and 180 or 150
   tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
@@ -489,7 +496,7 @@ function render()
   local P = pickWho(m)
   local showWho = (view == "me" and P and #m.players > 1)
   who:SetShown(showWho); prevB:SetShown(showWho); nextB:SetShown(showWho)
-  if P then who:SetText("|cff" .. classHex(P.cls) .. P.name .. "|r") end
+  if P then who:SetWidth(math.max(80, CW - 190)); who:SetText("|cff" .. classHex(P.cls) .. P.name .. "|r") end
   local function step(dir)
     local idx = 1; for i, p in ipairs(m.players) do if p == P then idx = i end end
     idx = ((idx - 1 + dir) % #m.players) + 1; DB.who = m.players[idx].name; render()
@@ -534,7 +541,7 @@ function render()
       local l = FS("body", 12.5, COL.muted); l:SetPoint("TOPLEFT", 60, -(y + 11)); l:SetText(P.role == "healer" and "Your healing" or "Your damage")
       local v = FS("head", 28, COL.text); v:SetPoint("TOPLEFT", 60, -(y + 26)); v:SetText(P.v)
       local u = FS("bold", 12, COL.muted); u:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 5, 4); u:SetText(P.unit)
-      local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11))
+      local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11)); s:SetWidth(CW - 170); s:SetWordWrap(false)
       local lines = {}
       if P.d and SH.vs ~= false then lines[#lines + 1] = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs end
       if SH.best ~= false then lines[#lines + 1] = (P.best ~= "" and ("Best " .. P.best .. " (pull " .. P.bp .. ")") or "First pull read") end
@@ -552,6 +559,7 @@ function render()
     if not DB.compact then
       local rot = function() section("rotation", "Rotation", onlyBad(P.slips), DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
       local bos = function() section("boss", "Boss mechanics", onlyBad(P.boss), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
+      if m.h.practice and #P.boss == 0 then bos = function() end end -- (a training dummy has no boss mechanics)
       if DB.bossFirst then bos(); rot() else rot(); bos() end
     end
     if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, P.next) end
@@ -726,7 +734,7 @@ bTop:SetScript("OnDragStart", function() if not DB.lock then big:StartMoving() e
 bTop:SetScript("OnDragStop", function() big:StopMovingOrSizing(); local p, _, rp, x, y = big:GetPoint(); DB.bigPos = { p, rp, x, y } end)
 local bLogo = big:CreateTexture(nil, "ARTWORK"); bLogo:SetSize(22, 22); bLogo:SetPoint("TOPLEFT", 16, -15); bLogo:SetTexture(MEDIA .. "Media\\logo")
 local bTitle = big:CreateFontString(nil, "OVERLAY"); setFont(bTitle, "head", 19); bTitle:SetPoint("LEFT", bLogo, "RIGHT", 8, 0); bTitle:SetTextColor(rgb(COL.text)); bTitle:SetText("Debrief")
-local bCtx = big:CreateFontString(nil, "OVERLAY"); setFont(bCtx, "body", 13.5); bCtx:SetPoint("LEFT", bTitle, "RIGHT", 10, -1); bCtx:SetTextColor(rgb(COL.muted))
+local bCtx = big:CreateFontString(nil, "OVERLAY"); setFont(bCtx, "body", 13.5); bCtx:SetPoint("LEFT", bTitle, "RIGHT", 10, -1); bCtx:SetTextColor(rgb(COL.muted)); bCtx:SetWidth(BW - 520); bCtx:SetJustifyH("LEFT"); bCtx:SetWordWrap(false)
 local bClose = closeButton(big); bClose:SetPoint("TOPRIGHT", -10, -13); bClose:SetScript("OnClick", function() big:Hide() end)
 local function topButton(label, w)
   local b = CreateFrame("Button", nil, big); b:SetSize(w, 28); skin(b, 5, COL.raised, 1, COL.line2, 1)
@@ -779,11 +787,11 @@ local function bBox(parent, x, y, w, h, fillHex, fillA, lineHex)
   local f = bRT(parent, "BACKGROUND"); f:SetPoint("TOPLEFT", x, -y); f:SetSize(w, h); rounded(f, "fill", 5, fillHex, fillA)
   local l = bRT(parent, "BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, lineHex or COL.line, 1)
 end
-local function bIcon(parent, x, y, s, id) local t = bTEX(parent); t:SetPoint("TOPLEFT", x, -y); t:SetSize(s, s); t:SetTexture(iconPath(id)); t:SetTexCoord(0.08, 0.92, 0.08, 0.92); return t end
+local function bIcon(parent, x, y, s, id, flag) local t = bTEX(parent); t:SetPoint("TOPLEFT", x, -y); t:SetSize(s, s); t:SetTexture(iconPath(id, flag)); if id and id ~= "" then t:SetTexCoord(0.08, 0.92, 0.08, 0.92) else t:SetTexCoord(0, 1, 0, 1) end; return t end
 -- a row inside a panel: dot, icon, an optional bold title, then the text
 local function bRow(x, y, w, flag, ic, text, ttl)
   local d = bTEX(bm); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", x, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
-  bIcon(bm, x + 16, y, 20, ic)
+  bIcon(bm, x + 16, y, 20, ic, flag)
   local yy = y
   if ttl and ttl ~= "" then local h = bFS(bm, "bold", 13.5, COL.text); h:SetPoint("TOPLEFT", x + 46, -yy); h:SetWidth(w - 46); h:SetText(ttl); yy = yy + h:GetStringHeight() + 2 end
   local t = bFS(bm, "body", 13.5, COL.soft); t:SetPoint("TOPLEFT", x + 46, -yy); t:SetWidth(w - 46); t:SetText(names(text))
@@ -1091,7 +1099,7 @@ local function import(text)
   local new = addPull(m)
   DB.pasted = true
   -- (pressed before the PC app had the new pull ready: that's the last one again, so wait for the chime and try again)
-  if not new and toast:IsShown() and not DB.testMode then toastSay("That's the last pull. Wait for the chime, then Ctrl+V.", COL.warn); return true end
+  if not new and toast:IsShown() and not DB.testMode then toastSay("That's the last pull. Wait for the chime.", COL.warn); return true end
   paste:Hide(); if toast:IsShown() then closeToast() end
   showCard()
   say("pull " .. m.h.pull .. " of " .. m.h.boss .. " loaded.")
@@ -1623,7 +1631,7 @@ function Debrief_OpenPaste(noFocus)
     tTitle:SetText(DB.testMode and "Test mode: see a recap?" or "See your recap?")
     if DB.toastPos then toast:ClearAllPoints(); toast:SetPoint(DB.toastPos[1], UIParent, DB.toastPos[2], DB.toastPos[3], DB.toastPos[4]) end
     toast:Show()
-    if DB.autoFocus == false then toastReady(false); toastSay("Click here, then press Ctrl+V.")
+    if DB.autoFocus == false then toastReady(false); toastSay("Click here, then Ctrl+V.")
     else eb:SetFocus(); grabbed = true; toastReady(true); toastSay("Press Ctrl+V after the chime.") end
     return
   end
