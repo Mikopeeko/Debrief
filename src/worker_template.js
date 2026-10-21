@@ -800,11 +800,12 @@ const SITE = 'https://debriefme.io';
 // The old address still answers /api/, /wcl/ and /auth/ itself, so pages left open there keep working.
 const OLD_SITE = 'https://debrief.james-m-nemecek.workers.dev', HOME_HOST = 'debriefme.io';
 // (only once debriefme.io answers on the internet: a new .io name can take hours to reach everyone, and sending people to it
-// before then would leave them on a page that doesn't open. Asked every 5 minutes; then it switches itself on)
+// before then would leave them on a page that doesn't open; the padlock comes a little after the name. So it opens a file
+// there, every 5 minutes, and switches itself on once that works)
 let homeSeen = { t: 0, ok: false };
 async function homeLive() {
   if (homeSeen.ok || Date.now() - homeSeen.t < 300000) return homeSeen.ok;
-  let ok = false; try { const j = await (await fetch('https://dns.google/resolve?name=' + HOME_HOST + '&type=A')).json(); ok = j.Status === 0 && !!(j.Answer || []).length; } catch (e) { /* ask again later */ }
+  let ok = false; try { ok = (await fetch(SITE + '/og.png', { method: 'HEAD' })).ok; } catch (e) { /* not reachable (no name or no padlock yet): ask again later */ }
   homeSeen = { t: Date.now(), ok }; return ok;
 }
 function moveHome(req, url) {
