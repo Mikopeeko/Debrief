@@ -37604,6 +37604,13 @@ GDZ['Entombed Sentinels'].m.roles = {
 GDZ['Entombed Sentinels'].h = { sim: SE_SIM_H, simDur: SE_DUR, simSev: SE_SEV, beats: SE_BEATS_H,
   simAlways: ['Every round after the first is rinse and repeat: the same order of events, the bosses swapped, a little further along the walls.', 'Stay with your boss: never inside 40 yards of the other one.', 'Red puddles stay down all fight: drop every new one next to the old ones, along the walls, and keep the middle clean.', 'After every intermission the tanks swap bosses: your half stays put and the other boss comes to you.'] };
 
+// (the whole-fight video's scenes that bring their own words: top up each one's lines with the card's remaining lines, so every step mark
+// has its own caption; the card's lines for this difficulty, own lines first)
+const gdzFillDo = (boss) => { const G = GDZ[boss]; ['h', 'm'].forEach((D) => { const sim = (G[D] || {}).sim; if (!sim) return; const by = {};
+  G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.id) by[m.id] = Object.assign({}, m, m[D] || {}); }));
+  sim.forEach((e) => { const m = e.mech && by[e.mech]; if (m && e.o && e.o.do && m.do && e.o.do.length < m.do.length) e.o = Object.assign({}, e.o, { do: e.o.do.concat(m.do.slice(e.o.do.length)) }); }); }); };
+gdzFillDo('Entombed Sentinels');
+
 // ===== Nek'zali the Soulcoiler (notes/Guides/Bosses/1 Nek'zali the Soulcoiler.md: Tactyks' Mythic and Normal/Heroic videos read in full,
 // the spell text, and Wolfthorn's Mythic kill N1PK29BXAf7g6rYL #19 for the clock and the spots). Yards from the room picture's centre,
 // x east, y north. The Soulcoil Well is the dark pit in the middle (about 8 yards to its rim; touching it takes you down); doors west
@@ -37928,6 +37935,8 @@ GDZ['Nek\'zali the Soulcoiler'].m.roles = {
   h: ['Grasping Depths: one healer goes down with each hit squad and keeps it alive; the rest heal the raid through the pull.', 'Essence Rend: dispel only at the edge.', 'Ignition: five raid hits, a cooldown each time. Go in with no Ritual Burn stacks.', 'Intermission: some players are drained and then get less healing: heal them first.', 'Phase two: the damage never stops; plan cooldowns for each Invoke, and save some for the end.'],
   d: ['Casters break the add shields with magic; everyone cleaves them.', 'Never let an add reach the well.', 'Hit squads take turns in the well; kick the curse late. Skip a trip at the very start of a phase change or with her under 10%.', 'Ranged: walk your fire circle over the bodies the pyre misses.', 'Stop casting before Invoke lands.'],
 };
+
+gdzFillDo('Nek\'zali the Soulcoiler');
 
 // ===== Vashnik the Malignant (notes/Guides/Bosses/4 Vashnik the Malignant.md: Tactyks' Mythic video read in full, the spell text, and
 // Wolfthorn's Mythic kill NcF2XLYmMQ4Bbnqh #27 (6:51) for the clock and the spots). Drawn on the room picture square to the page (the
@@ -40048,6 +40057,7 @@ GDZ['The Lost Explorers'].m.roles = {
   h: ['Crates bleed the whole raid: heal through each pair, and have a fifth healer on early kills.', 'Dispel any Icebound Flames that lands.', 'Blink Nova hurts the whole raid: be ready for it.', 'Cooldowns for Frostfire clears and the Mighty Thud soaks.'],
   d: ['Melee: never step on a crate by accident.', 'Shell Spin on you: take it to the outside.', 'Blink Nova on you: out in front, toward the edge.', 'Frostfire: spread in fire and frost pairs; clear one pair at a time.'],
 };
+gdzFillDo('The Lost Explorers');
 // ---- Something wrong here? (your OK, Oct 20): Report a problem, with this guide, its difficulty and the mechanic filled in ----
 // (only where reports can be sent: the website)
 const gdzWrong = (name) => (typeof REPORT_ON === 'function' && REPORT_ON() ? '<button type="button" class="gdz-wrong" data-about="' + esc(name) + '">Something wrong here?</button>' : '');
