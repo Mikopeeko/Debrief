@@ -1,4 +1,5 @@
-# The hosted site: the Cloudflare Worker "debrief" (https://debrief.james-m-nemecek.workers.dev).
+# The hosted site: the Cloudflare Worker "debrief" at https://debriefme.io (Oct 20). www.debriefme.io and the old address,
+# https://debrief.james-m-nemecek.workers.dev, still reach it and send visitors on to debriefme.io (see moveHome in the Worker).
 # Build first (src/build.ps1 writes online/worker.js), then upload with: npx wrangler deploy
 # The Warcraft Logs key is NOT here: it's in the Worker's secrets (WCL_CLIENT_ID, WCL_CLIENT_SECRET), set in Cloudflare.
 name = "debrief"
@@ -10,6 +11,11 @@ workers_dev = true
 preview_urls = true
 # (keep what's set on the Cloudflare settings page: an upload must never remove the Warcraft Logs client ID)
 keep_vars = true
+# Debrief's own address (bought on Cloudflare, Oct 20): Cloudflare makes the DNS records and the padlock for these itself.
+routes = [
+  { pattern = "debriefme.io", custom_domain = true },
+  { pattern = "www.debriefme.io", custom_domain = true },
+]
 
 # Patch notes to Discord: every 10 minutes the Worker checks for a new Patch notes day and posts it to #patch-notes
 # (needs the DISCORD_PATCH_WEBHOOK secret, set in Cloudflare). DEBRIEF_KV remembers the last day announced.

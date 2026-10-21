@@ -791,7 +791,57 @@ async function fileIdea(req, env, url) {
 // been announced yet, post one line with @everyone and a link that opens the page. Needs the DISCORD_PATCH_WEBHOOK
 // secret (the #patch-notes channel's webhook link) and the DEBRIEF_KV store, which remembers the last day announced.
 // One post a day at most: lines added later the same day go on the page quietly.
-const SITE = 'https://debrief.james-m-nemecek.workers.dev';
+const SITE = 'https://debriefme.io';
+// ---- Debrief's own address (Oct 20): debriefme.io. www. and the old workers.dev address send visitors there for good (301),
+// keeping the path and query. The first time a browser comes back to the old address it gets a short moving page instead:
+// what that browser saved on the old address (settings, teams, characters, saved progress, the Warcraft Logs sign-in) is
+// carried over in one form post, then it goes on to the same page on debriefme.io. A cookie (dbmoved) skips that afterwards.
+// The old address still answers /api/, /wcl/ and /auth/ itself, so pages left open there keep working.
+const OLD_SITE = 'https://debrief.james-m-nemecek.workers.dev', HOME_HOST = 'debriefme.io';
+function moveHome(req, url) {
+  const to = SITE + url.pathname + url.search;
+  if (url.hostname !== new URL(OLD_SITE).hostname || /(?:^|;\s*)dbmoved=1/.test(req.headers.get('Cookie') || '') || req.headers.get('Sec-Fetch-Mode') !== 'navigate')
+    return new Response(null, { status: 301, headers: { Location: to } });
+  const s = cookieOf(req, 'dbs') || '';
+  return new Response('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Debrief has moved</title>' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0d1117;color:#e6edf3;font:16px system-ui,sans-serif;text-align:center;padding:16px}</style></head>' +
+    '<body><p>Debrief has its own address now: <b>debriefme.io</b><br>Taking you there…</p><script>(async () => {' +
+    'const go = ' + JSON.stringify(SITE) + ' + location.pathname + location.search + location.hash, ls = {}, s = ' + JSON.stringify(s) + ';' +
+    'try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); ls[k] = localStorage.getItem(k); } } catch (e) {}' +
+    'const hist = await new Promise((res) => { try { const rq = indexedDB.open("wla-history", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("pulls");' +
+    ' rq.onsuccess = () => { try { const g = rq.result.transaction("pulls", "readonly").objectStore("pulls").getAll(); g.onsuccess = () => res(g.result || []); g.onerror = () => res([]); } catch (e) { res([]); } };' +
+    ' rq.onerror = () => res([]); } catch (e) { res([]); } setTimeout(() => res([]), 4000); });' +
+    'document.cookie = "dbmoved=1; Path=/; Max-Age=31536000; Secure; SameSite=Lax";' +
+    'if (!Object.keys(ls).length && !hist.length && !s) { location.replace(go); return; }' +
+    'const f = document.createElement("form"); f.method = "POST"; f.action = ' + JSON.stringify(SITE + '/__move') + ';' +
+    'for (const [k, v] of [["d", JSON.stringify({ ls, hist })], ["s", s], ["to", location.pathname + location.search + location.hash]]) { const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; f.appendChild(i); }' +
+    'document.body.appendChild(f); f.submit(); })();</script></body></html>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+}
+// (the other end, on debriefme.io: only a post from the old address's own page is taken (the browser sets Origin). Saved
+// things go in only where this browser has nothing under that name yet, so nothing newer is overwritten)
+async function moveIn(req, env) {
+  if (req.headers.get('Origin') !== OLD_SITE) return new Response(null, { status: 303, headers: { Location: SITE + '/' } });
+  let f = null; try { f = await req.formData(); } catch (e) { /* not a form */ }
+  let to = String((f && f.get('to')) || '/'); if (!/^\/(?![\/\\])/.test(to)) to = '/';
+  let d = {}; try { d = JSON.parse(String((f && f.get('d')) || '{}')) || {}; } catch (e) { d = {}; }
+  const data = JSON.stringify({ ls: d.ls && typeof d.ls === 'object' ? d.ls : {}, hist: Array.isArray(d.hist) ? d.hist : [] }).replace(/</g, '\\u003c');
+  const headers = new Headers({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+  const s = String((f && f.get('s')) || '');
+  if (/^[a-f0-9]{48}$/.test(s) && env.DEBRIEF_KV) { const v = await env.DEBRIEF_KV.get('sess:' + s, 'json').catch(() => null); if (v && v.exp > Date.now()) headers.append('Set-Cookie', sessCookie(s, (v.exp - Date.now()) / 1000)); }
+  return new Response('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Debrief</title>' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0d1117;color:#e6edf3;font:16px system-ui,sans-serif}</style></head>' +
+    '<body><p>Bringing your saved things over…</p><script type="application/json" id="d">' + data + '</script><script>(async () => {' +
+    'const go = ' + JSON.stringify(to).replace(/</g, '\\u003c') + ';' +
+    'try { const d = JSON.parse(document.getElementById("d").textContent);' +
+    ' try { for (const k of Object.keys(d.ls)) if (localStorage.getItem(k) === null) localStorage.setItem(k, d.ls[k]); } catch (e) {}' +
+    ' if (d.hist.length) await new Promise((res) => { try { const rq = indexedDB.open("wla-history", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("pulls");' +
+    '  rq.onsuccess = () => { try { const st = rq.result.transaction("pulls", "readwrite"), o = st.objectStore("pulls"), ks = o.getAllKeys();' +
+    '   ks.onsuccess = () => { const have = new Set(ks.result); for (const v of d.hist) if (v && v.k && !have.has(v.k)) o.put(v, v.k); };' +
+    '   st.oncomplete = () => res(); st.onerror = () => res(); st.onabort = () => res(); } catch (e) { res(); } };' +
+    '  rq.onerror = () => res(); } catch (e) { res(); } setTimeout(res, 5000); });' +
+    '} catch (e) {} location.replace(go); })();</script></body></html>', { headers });
+}
 function newestNotes() {
   const i = APP_HTML.indexOf('const PATCH_NOTES = ['); if (i < 0) return null;
   const s = APP_HTML.slice(i, i + 20000), m = /\{ d: '(\d{4}-\d\d-\d\d)'(?:, t: '((?:[^'\\]|\\.)*)')?/.exec(s);
@@ -835,7 +885,7 @@ async function wclSignIn(req, env) {
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
   try {
     const t = await fetch('https://www.warcraftlogs.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ grant_type: 'authorization_code', client_id: WCL_SIGN_ID, redirect_uri: SITE + '/auth/wcl/callback', code: b.code, code_verifier: b.verifier }) });
+      body: new URLSearchParams({ grant_type: 'authorization_code', client_id: WCL_SIGN_ID, redirect_uri: new URL(req.url).origin + '/auth/wcl/callback', code: b.code, code_verifier: b.verifier }) });
     const tj = await t.json().catch(() => ({}));
     if (!tj.access_token) return json({ error: 'Warcraft Logs didn\'t accept that sign-in.' }, 400);
     const q = '{ userData { currentUser { id name characters { id name classID server { name slug region { slug } } } guilds { id name server { name region { slug } } } } } }';
@@ -870,6 +920,8 @@ export default {
   async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now())]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
+    if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
+    if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);

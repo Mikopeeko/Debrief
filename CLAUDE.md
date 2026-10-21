@@ -20,7 +20,10 @@ in the style of Warcraft Logs + WoWAnalyzer + Wipefest. Built for Mythic raid pr
 Edit files in src/, run `python build.py` inside src/, refresh the browser tab opened by start.bat.
 
 ## The hosted site
-- Live at https://debrief.james-m-nemecek.workers.dev (Cloudflare Worker "debrief"; the user's Cloudflare account).
+- Live at https://debriefme.io (Cloudflare Worker "debrief"; the user's Cloudflare account; domain bought on Cloudflare Oct 20, custom
+  domains in wrangler.toml). www.debriefme.io and the old https://debrief.james-m-nemecek.workers.dev send visitors there
+  (the old one carries each browser's saved data over once: moveHome/moveIn in the Worker). Practice links stay on workers.dev.
+- Sign in with Warcraft Logs: the WCL client "Debrief sign-in" must list https://debriefme.io/auth/wcl/callback as a redirect URL.
 - Build with `src/build.ps1` (PowerShell, no Python or Node needed; writes the app and `online/worker.js`), then upload with
   `npx wrangler deploy` from the project root (Node is at `C:\Program Files\nodejs`; Wrangler is signed in). `wrangler.toml` has `keep_vars = true`.
 - The Warcraft Logs key lives only in Cloudflare: WCL_CLIENT_ID (a variable) and WCL_CLIENT_SECRET (a secret), set by the user on the
