@@ -2,7 +2,7 @@
 // Everything comes from Debrief's own engine and Rotation checks (the same words as the website), cut down to a card.
 (() => {
 'use strict';
-const DIFFN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR' };
+const DIFFN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic' };
 const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const kfmt = (v) => v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k';
 const plain0 = (h) => String(h == null ? '' : h).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();

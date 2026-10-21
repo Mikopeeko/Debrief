@@ -2,7 +2,7 @@
 ## Title: Debrief
 ## Notes: Your pull recap in game. After a pull, press Ctrl+Shift+D and paste the code from Debrief Companion.
 ## Author: Debrief
-## Version: 0.1.1
+## Version: 0.2.0
 ## SavedVariables: DebriefDB
 ## IconTexture: Interface\AddOns\Debrief\Media\logo
 

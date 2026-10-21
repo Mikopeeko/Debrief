@@ -2,7 +2,7 @@
 # It watches your combat log; when a boss pull ends, its window reads the pull with Debrief's own engine and puts a short
 # code on your clipboard with a sound. In game, press your Debrief key and Ctrl+V: your recap card shows.
 # Nothing here touches the game: it only reads WoWCombatLog files and writes to the clipboard.
-param([switch]$NoWindow)
+param([switch]$NoWindow, [switch]$InstallOnly)
 $ErrorActionPreference = 'Stop'
 $port = 8772
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -83,8 +83,11 @@ function Install-Addon {
   if (-not $r) { return "Couldn't find WoW to install the addon. Copy the folder addon\Debrief (next to this app) into World of Warcraft\_retail_\Interface\AddOns yourself, or paste your WoW folder in the Companion window." }
   $dst = Join-Path $r 'Interface\AddOns\Debrief'
   $v = ((Get-Content -LiteralPath (Join-Path $src 'Debrief.toc')) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', ''
-  $same = (Test-Path -LiteralPath (Join-Path $dst 'Debrief.lua')) -and ((Get-FileHash -LiteralPath (Join-Path $dst 'Debrief.lua')).Hash -eq (Get-FileHash -LiteralPath (Join-Path $src 'Debrief.lua')).Hash)
-  if ($same) { return "The Debrief addon (version $v) is installed in $dst" }
+  $have = ''; $dtoc = Join-Path $dst 'Debrief.toc'
+  if (Test-Path -LiteralPath $dtoc) { $have = ((Get-Content -LiteralPath $dtoc) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', '' }
+  # (never replace a newer copy, say one CurseForge installed)
+  $newer = $false; try { $newer = [bool]$have -and ([version]$have -ge [version]$v) } catch { $newer = ($have -eq $v) }
+  if ($newer) { return "The Debrief addon (version $have) is installed in $dst" }
   try {
     New-Item -ItemType Directory -Force -Path $dst | Out-Null
     Copy-Item -Path (Join-Path $src '*') -Destination $dst -Recurse -Force
@@ -93,6 +96,34 @@ function Install-Addon {
 }
 '@
 . ([ScriptBlock]::Create($commonText))
+
+# ---------- updates: at start, a newer version from debriefme.io replaces this one (checked by its SHA-256), then it restarts ----------
+# (latest.json: { "version": "0.2.1", "url": "https://debriefme.io/companion/app.zip", "sha256": "..." }; skipped quietly when offline)
+function Get-AppVersion { $vf = Join-Path $here 'version.txt'; if (Test-Path $vf) { return (Get-Content $vf -Raw).Trim() } return '0.0.0' }
+function Update-App {
+  try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $m = Invoke-RestMethod -Uri 'https://debriefme.io/companion/latest.json' -TimeoutSec 6 -UseBasicParsing
+    if (-not $m.version -or -not $m.url -or -not $m.sha256) { return $false }
+    if ([version]$m.version -le [version](Get-AppVersion)) { return $false }
+    if ($m.url -notmatch '^https://debriefme\.io/') { return $false }
+    $zip = Join-Path $env:TEMP ('debrief-update-' + $m.version + '.zip')
+    Invoke-WebRequest -Uri $m.url -OutFile $zip -TimeoutSec 60 -UseBasicParsing
+    if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne ([string]$m.sha256).ToUpper()) { Remove-Item $zip -Force; Write-Host 'An update was found but its download did not check out. Skipped.'; return $false }
+    Expand-Archive -LiteralPath $zip -DestinationPath $here -Force
+    Get-ChildItem -LiteralPath $here -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
+    Remove-Item $zip -Force
+    Write-Host ('Updated Debrief Companion to version ' + $m.version + '.')
+    return $true
+  } catch { return $false }
+}
+if (-not $InstallOnly -and -not $env:DBF_NO_UPDATE -and (Update-App)) {
+  # (start the new version, with the same window choice, and stop this one)
+  $a = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + (Join-Path $here 'companion.ps1') + '"' + $(if ($NoWindow) { ' -NoWindow' } else { '' })
+  Start-Process powershell -ArgumentList $a -WindowStyle Hidden; exit
+}
+
+if ($InstallOnly) { Write-Host (Install-Addon $here); exit }
 
 $listener = New-Object Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
@@ -105,7 +136,7 @@ if ($wow) { Write-Host "WoW found: $wow" } else { Write-Host "WoW not found yet:
 Write-Host (Install-Addon $here)
 
 $handler = {
-  param($ctx, $here, $commonText)
+  param($ctx, $here, $commonText, $listener)
   . ([ScriptBlock]::Create($commonText))
   $ErrorActionPreference = 'Stop'
   $req = $ctx.Request; $res = $ctx.Response
@@ -193,6 +224,12 @@ $handler = {
       $msg = Install-Addon $here
       SendJson $res @{ msg = $msg }
     }
+    elseif ($req.HttpMethod -eq 'GET' -and $path -eq '/app-version') {
+      $vf = Join-Path $here 'version.txt'; SendJson $res @{ version = $(if (Test-Path $vf) { (Get-Content $vf -Raw).Trim() } else { '0.0.0' }) }
+    }
+    elseif ($req.HttpMethod -eq 'POST' -and $path -eq '/quit') {
+      SendJson $res @{ ok = $true }; $res.Close(); Start-Sleep -Milliseconds 200; $listener.Stop()
+    }
     elseif ($req.HttpMethod -eq 'POST' -and $path -eq '/folder') {
       if ($req.ContentType -notlike 'application/json*') { throw 'Expected JSON.' }
       $body = (New-Object IO.StreamReader($req.InputStream, [Text.Encoding]::UTF8)).ReadToEnd() | ConvertFrom-Json
@@ -222,9 +259,9 @@ $pool.ApartmentState = 'STA'
 $pool.Open()
 $jobs = New-Object Collections.ArrayList
 while ($listener.IsListening) {
-  $ctx = $listener.GetContext()
+  try { $ctx = $listener.GetContext() } catch { break } # (Quit stops the listener)
   $ps = [PowerShell]::Create(); $ps.RunspacePool = $pool
-  [void]$ps.AddScript($handler).AddArgument($ctx).AddArgument($here).AddArgument($commonText)
+  [void]$ps.AddScript($handler).AddArgument($ctx).AddArgument($here).AddArgument($commonText).AddArgument($listener)
   [void]$jobs.Add(@{ ps = $ps; h = $ps.BeginInvoke() })
   foreach ($j in @($jobs)) { if ($j.h.IsCompleted) { try { $j.ps.EndInvoke($j.h) } catch {}; $j.ps.Dispose(); $jobs.Remove($j) } }
 }

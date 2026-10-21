@@ -8,7 +8,7 @@ local DB
 
 -- ---------- Debrief's colours and type (the same as the website) ----------
 local COL = { bg = "171a22", head = "13161d", raised = "1e222c", line = "2a2f3b", line2 = "353b49", text = "ece8df", muted = "98a0ad",
-  faint = "6c7381", gold = "e6b450", good = "45c15c", goodT = "7ee08f", goodBg = "17301e", bad = "e5534b", badT = "ff8f87", badBg = "3a1d1d", warn = "e8a23a" }
+  faint = "6c7381", soft = "d6d1c6", gold = "e6b450", good = "45c15c", goodT = "7ee08f", goodBg = "17301e", bad = "e5534b", badT = "ff8f87", badBg = "3a1d1d", warn = "e8a23a" }
 local function rgb(hex) return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255 end
 local MEDIA = "Interface\\AddOns\\" .. (ADDON or "Debrief") .. "\\"
 local FONT = { body = MEDIA .. "Fonts\\Barlow-Medium.ttf", bold = MEDIA .. "Fonts\\Barlow-SemiBold.ttf", head = MEDIA .. "Fonts\\BarlowSemiCondensed-Bold.ttf" }
@@ -63,8 +63,8 @@ local function decode(code)
   return m
 end
 
--- (a real pull to try the card with: Wolfthorn's Heroic Ula'tek kill, Oct 20, six players; /debrief demo shows it)
-local SAMPLE = [==[DBF1^H~Ula'tek~Heroic~3~1~0~7:30~~6^P~Tyralien~PALADIN~Protection Paladin~tank~DPS~148k~-13~2~171k~2~~ability_paladin_shieldofthetemplar^S~Tyralien~warn~389539~Opener, step by step: 3 of 4. Missed: step 1, Hand of Reckoning (not in your opener).^S~Tyralien~warn~~Stat order: Crit › Mastery › Haste › Vers. Yours: Critical Strike 1,198, then Mastery 1,041, then Haste 979, then Versatility 0.^N~Tyralien~Follow the guide opener: Hand of Reckoning, then 3 of Avenger's Shield, Sentinel, Avenging Wrath or Divine Toll, in any order.^P~Eganog~PALADIN~Holy Paladin~healer~HPS~333k~5~2~317k~2~1st of 4 healers~spell_holy_holybolt^S~Eganog~warn~200025~Beacon of Virtue: 63%. It sat ready for 168 seconds.^S~Eganog~warn~223819~Divine Purpose: 4 wasted. 2 were lost to a Divine Toll pressed while you still held one.^S~Eganog~bad~82326~Mana at the kill: 60%. About a few more Holy Lights were left in it.^N~Eganog~Press Beacon of Virtue as the damage goes out, close to every 15 seconds. From 0:52, it sat ready for 36 seconds.^P~Flëxørçïst~PALADIN~Holy Paladin~healer~HPS~316k~13~2~280k~2~2nd of 4 healers~spell_holy_holybolt^S~Flëxørçïst~warn~223819~Divine Purpose: 6 wasted. 3 were lost to a Divine Toll pressed while you still held one.^S~Flëxørçïst~warn~31821~Cooldowns into the big hits: 1 of 3. 1 of your 3 healing cooldowns went out in the heaviest damage of the pull.^S~Flëxørçïst~warn~31884~Casting in Avenging Wrath: 83%. You were casting for 83% of your Avenging Wrath windows.^B~Flëxørçïst~dead~1286835~You died at 3:50 to Necrotic Vapors.^N~Flëxørçïst~Spend Divine Purpose before it runs out, or before a new one replaces it. Your first wasted one was at 2:50.^P~Magnnix~DRUID~Restoration Druid~healer~HPS~281k~-1~2~284k~2~3rd of 4 healers~spell_nature_healingtouch^S~Magnnix~warn~391528~Convoke the Spirits uses: 6 of 8. It sat ready for 2 minutes in all.^S~Magnnix~bad~48438~Mana at the kill: 58%. About 13 more Wild Growths were left in it at the kill.^S~Magnnix~warn~263725~Clearcasting: 11 wasted. 9 were replaced by a new one while you still had it.^N~Magnnix~Press Convoke the Spirits a little sooner each time it comes back.^P~Boltzzx~MAGE~Arcane Mage~dps~DPS~275k~31~2~210k~2~3rd of 21 DPS~spell_holy_magicalsentry^S~Boltzzx~warn~30451~Rotation priority: 77% of your casts were the best button to press.^S~Boltzzx~warn~30451~Always be casting: 72%. Your longest stretch with nothing pressed was 6 seconds, at 3:22, while you were moving.^S~Boltzzx~warn~321507~Touch of the Magi on cooldown: 8 of 10. It sat ready, unused, for 2 minutes in all.^N~Boltzzx~With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first. Not in Arcane Soul, where each Barrage gives you Clearcasting and Salvo back.^P~Dragooned~MAGE~Frost Mage~dps~DPS~156k~-36~2~244k~2~17th of 21 DPS~spell_frost_frostbolt02^S~Dragooned~bad~116~Always be casting: 70%. Your longest stretch with nothing pressed was 5 seconds, at 1:52, while you were moving.^S~Dragooned~bad~190446~Brain Freeze: 3 wasted. You got 24 procs.^S~Dragooned~warn~269748~Ray of Frost on cooldown: 6 of 8. It sat ready, unused, for 21 seconds in all.^B~Dragooned~dead~1301007~You died at 4:20 to Unchecked Rage.^N~Dragooned~Press something every global cooldown. When you have to move, use an instant spell instead of stopping.^R~warn~1292403~Caustic Waves~5 players. @Windhat, @Glizzydrizzy, @Adamdlock, @Xastral and 1 more. Dodge the venom waves from Ula'tek and her tail.^R~bad~1301007~Unchecked Rage~1 time. Nobody was in melee of Ula'tek, so she hit the raid.^D~2:44~Wallbears~HUNTER~6603~Melee^D~2:46~Newman~WARRIOR~6603~Melee^D~3:50~Flëxørçïst~PALADIN~1286835~Necrotic Vapors^D~3:53~Phartsy~MONK~6603~Melee^X~+2 more by 7:30.^Q~Kill! Next time: Dodge the venom waves from Ula'tek and her tail.^Z]==]
+-- (a pull to try the card with: a real Heroic Ula'tek kill with made-up names; /debrief demo shows it)
+local SAMPLE = [==[DBF1^H~Ula'tek~Heroic~3~1~0~7:30~~6^P~Ironvow~PALADIN~Protection Paladin~tank~DPS~148k~-13~2~171k~2~~ability_paladin_shieldofthetemplar^S~Ironvow~warn~389539~Opener, step by step: 3 of 4. Missed: step 1, Hand of Reckoning (not in your opener).^S~Ironvow~warn~~Stat order: Crit › Mastery › Haste › Vers. Yours: Critical Strike 1,198, then Mastery 1,041, then Haste 979, then Versatility 0.^N~Ironvow~Follow the guide opener: Hand of Reckoning, then 3 of Avenger's Shield, Sentinel, Avenging Wrath or Divine Toll, in any order.^P~Lumensong~PALADIN~Holy Paladin~healer~HPS~333k~5~2~317k~2~1st of 4 healers~spell_holy_holybolt^S~Lumensong~warn~200025~Beacon of Virtue: 63%. It sat ready for 168 seconds.^S~Lumensong~warn~223819~Divine Purpose: 4 wasted. 2 were lost to a Divine Toll pressed while you still held one.^S~Lumensong~bad~82326~Mana at the kill: 60%. About a few more Holy Lights were left in it.^N~Lumensong~Press Beacon of Virtue as the damage goes out, close to every 15 seconds. From 0:52, it sat ready for 36 seconds.^P~Dawnmender~PALADIN~Holy Paladin~healer~HPS~316k~13~2~280k~2~2nd of 4 healers~spell_holy_holybolt^S~Dawnmender~warn~223819~Divine Purpose: 6 wasted. 3 were lost to a Divine Toll pressed while you still held one.^S~Dawnmender~warn~31821~Cooldowns into the big hits: 1 of 3. 1 of your 3 healing cooldowns went out in the heaviest damage of the pull.^S~Dawnmender~warn~31884~Casting in Avenging Wrath: 83%. You were casting for 83% of your Avenging Wrath windows.^B~Dawnmender~dead~1286835~You died at 3:50 to Necrotic Vapors.^N~Dawnmender~Spend Divine Purpose before it runs out, or before a new one replaces it. Your first wasted one was at 2:50.^P~Thornroot~DRUID~Restoration Druid~healer~HPS~281k~-1~2~284k~2~3rd of 4 healers~spell_nature_healingtouch^S~Thornroot~warn~391528~Convoke the Spirits uses: 6 of 8. It sat ready for 2 minutes in all.^S~Thornroot~bad~48438~Mana at the kill: 58%. About 13 more Wild Growths were left in it at the kill.^S~Thornroot~warn~263725~Clearcasting: 11 wasted. 9 were replaced by a new one while you still had it.^N~Thornroot~Press Convoke the Spirits a little sooner each time it comes back.^P~Arcspark~MAGE~Arcane Mage~dps~DPS~275k~31~2~210k~2~3rd of 21 DPS~spell_holy_magicalsentry^S~Arcspark~warn~30451~Rotation priority: 77% of your casts were the best button to press.^S~Arcspark~warn~30451~Always be casting: 72%. Your longest stretch with nothing pressed was 6 seconds, at 3:22, while you were moving.^S~Arcspark~warn~321507~Touch of the Magi on cooldown: 8 of 10. It sat ready, unused, for 2 minutes in all.^N~Arcspark~With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first. Not in Arcane Soul, where each Barrage gives you Clearcasting and Salvo back.^P~Frostwhisper~MAGE~Frost Mage~dps~DPS~156k~-36~2~244k~2~17th of 21 DPS~spell_frost_frostbolt02^S~Frostwhisper~bad~116~Always be casting: 70%. Your longest stretch with nothing pressed was 5 seconds, at 1:52, while you were moving.^S~Frostwhisper~bad~190446~Brain Freeze: 3 wasted. You got 24 procs.^S~Frostwhisper~warn~269748~Ray of Frost on cooldown: 6 of 8. It sat ready, unused, for 21 seconds in all.^B~Frostwhisper~dead~1301007~You died at 4:20 to Unchecked Rage.^N~Frostwhisper~Press something every global cooldown. When you have to move, use an instant spell instead of stopping.^R~warn~1292403~Caustic Waves~5 players. @Moonquill, @Mistpalm, @Grimshade, @Voidfang and 1 more. Dodge the venom waves from Ula'tek and her tail.^R~bad~1301007~Unchecked Rage~1 time. Nobody was in melee of Ula'tek, so she hit the raid.^D~2:44~Hawkfeather~HUNTER~6603~Melee^D~2:46~Stonefist~WARRIOR~6603~Melee^D~3:50~Dawnmender~PALADIN~1286835~Necrotic Vapors^D~3:53~Jadewind~MONK~6603~Melee^X~+2 more by 7:30.^Q~Kill! Next time: Dodge the venom waves from Ula'tek and her tail.^Z]==]
 
 -- ---------- small helpers for drawing ----------
 local function iconPath(x)
@@ -78,115 +78,145 @@ local function iconPath(x)
   return "Interface\\Icons\\" .. x
 end
 local function fill(tex, hex, a) tex:SetColorTexture(rgb(hex)); tex:SetAlpha(a or 1) end
-local function backdrop(f, bgHex, edgeHex)
-  if not f.SetBackdrop then Mixin(f, BackdropTemplateMixin) end
-  f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
-  f:SetBackdropColor(rgb(bgHex)); f:SetBackdropBorderColor(rgb(edgeHex))
+-- rounded shapes (the website's look): a white rounded box and its 1px outline, sliced so the corners keep their size,
+-- then coloured per use. An older client without slicing gets plain boxes.
+local SLICE = MEDIA .. "Media\\"
+local function rounded(tex, kind, r, hex, a)
+  if tex.SetTextureSliceMargins then
+    tex:SetTexture(SLICE .. "round" .. r .. "_" .. kind)
+    tex:SetTextureSliceMargins(r + 1, r + 1, r + 1, r + 1)
+    if tex.SetTextureSliceMode and Enum and Enum.UITextureSliceMode then tex:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched) end
+  elseif kind == "line" then tex:SetColorTexture(0, 0, 0, 0)
+  else tex:SetColorTexture(1, 1, 1, 1) end
+  tex:SetVertexColor(rgb(hex)); tex:SetAlpha(a or 1)
+end
+local function skin(f, r, fillHex, fillA, lineHex, lineA, shadow)
+  f.fillT = f.fillT or f:CreateTexture(nil, "BACKGROUND", nil, -6)
+  f.fillT:SetAllPoints(); rounded(f.fillT, "fill", r, fillHex, fillA)
+  f.lineT = f.lineT or f:CreateTexture(nil, "BORDER", nil, -6)
+  f.lineT:SetAllPoints(); rounded(f.lineT, "line", r, lineHex, lineA)
+  if shadow and not f.shT then
+    f.shT = f:CreateTexture(nil, "BACKGROUND", nil, -8)
+    f.shT:SetPoint("TOPLEFT", -14, 12); f.shT:SetPoint("BOTTOMRIGHT", 14, -16)
+    f.shT:SetTexture(SLICE .. "shadow")
+    if f.shT.SetTextureSliceMargins then f.shT:SetTextureSliceMargins(24, 24, 24, 24) end
+    f.shT:SetAlpha(0.6)
+  end
+end
+local function closeButton(parent)
+  local b = CreateFrame("Button", nil, parent); b:SetSize(24, 24); b:SetPoint("TOPRIGHT", -8, -8)
+  local x = b:CreateFontString(nil, "OVERLAY"); setFont(x, "bold", 17); x:SetPoint("CENTER", 0, 1); x:SetText("×"); x:SetTextColor(rgb(COL.faint))
+  b:SetScript("OnEnter", function() x:SetTextColor(rgb(COL.text)) end); b:SetScript("OnLeave", function() x:SetTextColor(rgb(COL.faint)) end)
+  return b
 end
 
 -- ---------- the paste box ----------
-local paste = CreateFrame("Frame", "DebriefPaste", UIParent, "BackdropTemplate")
-paste:SetSize(380, 132); paste:SetPoint("CENTER", 0, 140); paste:SetFrameStrata("DIALOG"); paste:Hide()
-backdrop(paste, COL.bg, COL.gold)
-paste:SetMovable(true); paste:EnableMouse(true); paste:RegisterForDrag("LeftButton")
+local paste = CreateFrame("Frame", "DebriefPaste", UIParent)
+paste:SetSize(384, 140); paste:SetPoint("CENTER", 0, 150); paste:SetFrameStrata("DIALOG"); paste:Hide()
+skin(paste, 8, COL.bg, 0.98, COL.gold, 0.55, true)
+paste:SetMovable(true); paste:EnableMouse(true); paste:RegisterForDrag("LeftButton"); paste:SetClampedToScreen(true)
 paste:SetScript("OnDragStart", paste.StartMoving); paste:SetScript("OnDragStop", paste.StopMovingOrSizing)
 tinsert(UISpecialFrames, "DebriefPaste")
-local pLogo = paste:CreateTexture(nil, "ARTWORK"); pLogo:SetSize(16, 18); pLogo:SetPoint("TOPLEFT", 12, -11); pLogo:SetTexture(MEDIA .. "Media\\logo")
+local pLogo = paste:CreateTexture(nil, "ARTWORK"); pLogo:SetSize(16, 18); pLogo:SetPoint("TOPLEFT", 14, -12); pLogo:SetTexture(MEDIA .. "Media\\logo")
 local pTitle = paste:CreateFontString(nil, "OVERLAY"); setFont(pTitle, "head", 17); pTitle:SetPoint("LEFT", pLogo, "RIGHT", 7, 0); pTitle:SetTextColor(rgb(COL.text)); pTitle:SetText("Debrief")
-local pText = paste:CreateFontString(nil, "OVERLAY"); setFont(pText, "body", 13); pText:SetPoint("TOPLEFT", 12, -38); pText:SetWidth(356); pText:SetJustifyH("LEFT")
-pText:SetTextColor(rgb(COL.muted)); pText:SetText("Press |cffece8dfCtrl+V|r to paste the code Debrief Companion copied.")
-local ebBg = CreateFrame("Frame", nil, paste, "BackdropTemplate"); ebBg:SetPoint("TOPLEFT", 12, -62); ebBg:SetPoint("TOPRIGHT", -12, -62); ebBg:SetHeight(32)
-backdrop(ebBg, COL.raised, COL.line2)
+local pText = paste:CreateFontString(nil, "OVERLAY"); setFont(pText, "body", 13.5); pText:SetPoint("TOPLEFT", 14, -42); pText:SetWidth(356); pText:SetJustifyH("LEFT")
+pText:SetTextColor(rgb(COL.muted)); pText:SetText("Press |cffece8dfCtrl+V|r to paste your pull from Debrief Companion.")
+local ebBg = CreateFrame("Frame", nil, paste); ebBg:SetPoint("TOPLEFT", 14, -66); ebBg:SetPoint("TOPRIGHT", -14, -66); ebBg:SetHeight(34)
+skin(ebBg, 5, COL.raised, 1, COL.line2, 1)
 local eb = CreateFrame("EditBox", "DebriefPasteBox", ebBg)
-eb:SetPoint("TOPLEFT", 9, -2); eb:SetPoint("BOTTOMRIGHT", -9, 2); eb:SetAutoFocus(false); eb:SetMultiLine(false)
+eb:SetPoint("TOPLEFT", 10, -2); eb:SetPoint("BOTTOMRIGHT", -10, 2); eb:SetAutoFocus(false); eb:SetMultiLine(false)
 eb:SetMaxLetters(0); if eb.SetMaxBytes then eb:SetMaxBytes(0) end
 setFont(eb, "body", 13); eb:SetTextColor(rgb(COL.text))
-local pMsg = paste:CreateFontString(nil, "OVERLAY"); setFont(pMsg, "body", 12); pMsg:SetPoint("TOPLEFT", 12, -102); pMsg:SetWidth(356); pMsg:SetJustifyH("LEFT"); pMsg:SetTextColor(rgb(COL.faint))
+eb:SetScript("OnEditFocusGained", function() rounded(ebBg.lineT, "line", 5, COL.gold, 0.9) end)
+eb:SetScript("OnEditFocusLost", function() rounded(ebBg.lineT, "line", 5, COL.line2, 1) end)
+local pMsg = paste:CreateFontString(nil, "OVERLAY"); setFont(pMsg, "body", 12); pMsg:SetPoint("TOPLEFT", 14, -110); pMsg:SetWidth(356); pMsg:SetJustifyH("LEFT"); pMsg:SetTextColor(rgb(COL.faint))
 pMsg:SetText("Nothing is typed into the game for you. The card opens as soon as you paste.")
-local pClose = CreateFrame("Button", nil, paste); pClose:SetSize(22, 22); pClose:SetPoint("TOPRIGHT", -6, -6)
-local pX = pClose:CreateFontString(nil, "OVERLAY"); setFont(pX, "bold", 15); pX:SetPoint("CENTER"); pX:SetText("×"); pX:SetTextColor(rgb(COL.faint))
-pClose:SetScript("OnEnter", function() pX:SetTextColor(rgb(COL.text)) end); pClose:SetScript("OnLeave", function() pX:SetTextColor(rgb(COL.faint)) end)
+local pClose = closeButton(paste)
 pClose:SetScript("OnClick", function() paste:Hide() end)
 eb:SetScript("OnEscapePressed", function() paste:Hide() end)
+local PASTE_KEYS = { LCTRL = true, RCTRL = true, LMETA = true, RMETA = true, V = true }
+eb:SetScript("OnKeyDown", function(self, key) if grabbed and not PASTE_KEYS[key] then grabbed = false; self:ClearFocus() end end)
 
 -- ---------- the card ----------
-local W, PAD = 400, 12
+local W, PAD, TOPY = 400, 14, 172
 local CW = W - PAD * 2
-local card = CreateFrame("Frame", "DebriefCard", UIParent, "BackdropTemplate")
+local card = CreateFrame("Frame", "DebriefCard", UIParent)
 card:SetSize(W, 300); card:SetPoint("CENTER", 260, 60); card:SetFrameStrata("HIGH"); card:SetClampedToScreen(true); card:Hide()
-backdrop(card, COL.bg, COL.line2)
+skin(card, 8, COL.bg, 0.97, COL.line2, 1, true)
 card:SetMovable(true); card:EnableMouse(true)
 tinsert(UISpecialFrames, "DebriefCard")
 
-local top = CreateFrame("Frame", nil, card, "BackdropTemplate"); top:SetPoint("TOPLEFT", 1, -1); top:SetPoint("TOPRIGHT", -1, -1); top:SetHeight(34)
-backdrop(top, COL.head, COL.head)
-local topLine = top:CreateTexture(nil, "ARTWORK"); topLine:SetPoint("BOTTOMLEFT"); topLine:SetPoint("BOTTOMRIGHT"); topLine:SetHeight(1); fill(topLine, COL.line)
+-- the top: drag it to move the card
+local top = CreateFrame("Frame", nil, card); top:SetPoint("TOPLEFT", 0, 0); top:SetPoint("TOPRIGHT", -36, 0); top:SetHeight(40)
 top:EnableMouse(true); top:RegisterForDrag("LeftButton")
 top:SetScript("OnDragStart", function() card:StartMoving() end)
 top:SetScript("OnDragStop", function()
   card:StopMovingOrSizing()
   local p, _, rp, x, y = card:GetPoint(); DB.pos = { p, rp, x, y }
 end)
-local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(16, 18); logo:SetPoint("LEFT", 11, 0); logo:SetTexture(MEDIA .. "Media\\logo")
+local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(16, 18); logo:SetPoint("TOPLEFT", PAD, -12); logo:SetTexture(MEDIA .. "Media\\logo")
 local title = top:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 17); title:SetPoint("LEFT", logo, "RIGHT", 7, 0); title:SetTextColor(rgb(COL.text)); title:SetText("Debrief")
-local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); bossT:SetPoint("LEFT", title, "RIGHT", 8, -1); bossT:SetTextColor(rgb(COL.muted)); bossT:SetWidth(270); bossT:SetJustifyH("LEFT"); bossT:SetWordWrap(false)
-local close = CreateFrame("Button", nil, top); close:SetSize(24, 24); close:SetPoint("RIGHT", -5, 0)
-local closeX = close:CreateFontString(nil, "OVERLAY"); setFont(closeX, "bold", 16); closeX:SetPoint("CENTER"); closeX:SetText("×"); closeX:SetTextColor(rgb(COL.faint))
-close:SetScript("OnEnter", function() closeX:SetTextColor(rgb(COL.text)) end); close:SetScript("OnLeave", function() closeX:SetTextColor(rgb(COL.faint)) end)
+local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); bossT:SetPoint("LEFT", title, "RIGHT", 9, -1); bossT:SetTextColor(rgb(COL.muted)); bossT:SetWidth(250); bossT:SetJustifyH("LEFT"); bossT:SetWordWrap(false)
+local close = closeButton(card)
 close:SetScript("OnClick", function() card:Hide() end)
+local topLine = card:CreateTexture(nil, "ARTWORK"); topLine:SetPoint("TOPLEFT", 1, -40); topLine:SetPoint("TOPRIGHT", -1, -40); topLine:SetHeight(1); fill(topLine, COL.line)
 
--- pull chips (the last few pulls you pasted)
+-- pull chips (the last few pulls), soft pills
 local chips = {}
 for i = 1, 5 do
-  local b = CreateFrame("Button", nil, card, "BackdropTemplate"); b:SetSize(70, 20)
-  backdrop(b, COL.raised, COL.raised)
-  b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "body", 11.5); b.t:SetPoint("CENTER")
-  b:SetPoint("TOPLEFT", PAD + (i - 1) * 75, -44); b:Hide()
-  chips[i] = b
+  local b = CreateFrame("Button", nil, card); b:SetSize(70, 22)
+  skin(b, 5, COL.raised, 1, COL.raised, 1)
+  b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 11.5); b.t:SetPoint("CENTER", 0, 0)
+  b:Hide(); chips[i] = b
 end
-local resT = card:CreateFontString(nil, "OVERLAY"); setFont(resT, "head", 25); resT:SetPoint("TOPLEFT", PAD, -72); resT:SetJustifyH("LEFT")
-local metaT = card:CreateFontString(nil, "OVERLAY"); setFont(metaT, "body", 13); metaT:SetPoint("TOPLEFT", PAD, -100); metaT:SetTextColor(rgb(COL.muted)); metaT:SetJustifyH("LEFT")
+local resT = card:CreateFontString(nil, "OVERLAY"); setFont(resT, "head", 26); resT:SetPoint("TOPLEFT", PAD, -84); resT:SetJustifyH("LEFT")
+local metaT = card:CreateFontString(nil, "OVERLAY"); setFont(metaT, "body", 13); metaT:SetPoint("TOPLEFT", PAD, -114); metaT:SetTextColor(rgb(COL.muted)); metaT:SetJustifyH("LEFT")
 
 -- tabs: Me and Raid view, a gold line under the open one; on Me, arrows to look at anyone in the pull
 local tabs, view = {}, "me"
-local tabLine = card:CreateTexture(nil, "ARTWORK"); tabLine:SetPoint("TOPLEFT", 1, -150); tabLine:SetPoint("TOPRIGHT", -1, -150); tabLine:SetHeight(1); fill(tabLine, COL.line)
+local tabLine = card:CreateTexture(nil, "ARTWORK"); tabLine:SetPoint("TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", -1, -TOPY + 12); tabLine:SetHeight(1); fill(tabLine, COL.line)
 local function mkTab(key, label, x)
-  local b = CreateFrame("Button", nil, card); b:SetSize(10, 26); b:SetPoint("TOPLEFT", x, -124)
-  b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 14); b.t:SetPoint("CENTER"); b.t:SetText(label)
-  b:SetWidth(b.t:GetStringWidth() + 18)
-  b.u = b:CreateTexture(nil, "OVERLAY"); b.u:SetPoint("BOTTOMLEFT", 0, 0); b.u:SetPoint("BOTTOMRIGHT", 0, 0); b.u:SetHeight(2); fill(b.u, COL.gold)
+  local b = CreateFrame("Button", nil, card); b:SetSize(10, 26); b:SetPoint("TOPLEFT", x, -TOPY + 38)
+  b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 14); b.t:SetPoint("CENTER", 0, 1); b.t:SetText(label)
+  b:SetWidth(b.t:GetStringWidth() + 20)
+  b.u = b:CreateTexture(nil, "OVERLAY"); b.u:SetPoint("BOTTOMLEFT", 6, 0); b.u:SetPoint("BOTTOMRIGHT", -6, 0); b.u:SetHeight(2); fill(b.u, COL.gold)
+  b:SetScript("OnEnter", function() if view ~= key then b.t:SetTextColor(rgb(COL.text)) end end)
+  b:SetScript("OnLeave", function() if view ~= key then b.t:SetTextColor(rgb(COL.muted)) end end)
   b.key = key; tabs[key] = b
   return b
 end
-local tMe = mkTab("me", "Me", PAD - 6)
-local tRaid = mkTab("raid", "Raid view", PAD - 6 + tMe:GetWidth() + 2)
+local tMe = mkTab("me", "Me", PAD - 10)
+local tRaid = mkTab("raid", "Raid view", PAD - 10 + tMe:GetWidth())
 local who = card:CreateFontString(nil, "OVERLAY"); setFont(who, "bold", 13); who:SetJustifyH("RIGHT"); who:SetWordWrap(false)
-local nextB = CreateFrame("Button", nil, card); nextB:SetSize(20, 20); nextB:SetPoint("TOPRIGHT", -PAD, -128)
-local prevB = CreateFrame("Button", nil, card); prevB:SetSize(20, 20)
-who:SetPoint("RIGHT", nextB, "LEFT", -6, 0); prevB:SetPoint("RIGHT", who, "LEFT", -6, 0)
+local nextB = CreateFrame("Button", nil, card); nextB:SetSize(22, 22); nextB:SetPoint("TOPRIGHT", -PAD, -TOPY + 36)
+local prevB = CreateFrame("Button", nil, card); prevB:SetSize(22, 22)
+who:SetPoint("RIGHT", nextB, "LEFT", -7, 0); prevB:SetPoint("RIGHT", who, "LEFT", -7, 0)
 for _, b in ipairs({ prevB, nextB }) do
-  backdrop(b, COL.raised, COL.line2)
-  b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 10); b.t:SetPoint("CENTER"); b.t:SetTextColor(rgb(COL.muted))
+  skin(b, 5, COL.raised, 1, COL.line2, 1)
+  b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 11); b.t:SetPoint("CENTER", 0, 0); b.t:SetTextColor(rgb(COL.muted))
+  b:SetScript("OnEnter", function() b.t:SetTextColor(rgb(COL.text)) end); b:SetScript("OnLeave", function() b.t:SetTextColor(rgb(COL.muted)) end)
 end
 prevB.t:SetText("<"); nextB.t:SetText(">")
 
-local body = CreateFrame("Frame", nil, card); body:SetPoint("TOPLEFT", PAD, -160); body:SetWidth(CW); body:SetHeight(10)
+local body = CreateFrame("Frame", nil, card); body:SetPoint("TOPLEFT", PAD, -TOPY); body:SetWidth(CW); body:SetHeight(10)
 local foot = card:CreateFontString(nil, "OVERLAY"); setFont(foot, "body", 11.5); foot:SetTextColor(rgb(COL.faint)); foot:SetJustifyH("LEFT")
-foot:SetText("Type /debrief to open this again. /debrief paste for a new pull.")
+foot:SetText("/debrief opens this again  ·  /debrief paste for a new pull")
 local footLine = card:CreateTexture(nil, "ARTWORK"); footLine:SetHeight(1); fill(footLine, COL.line)
 
--- pooled pieces for the body (redrawn each time)
-local pool = { fs = {}, tex = {} }
-local used = { fs = 0, tex = 0 }
+-- pooled pieces for the body (redrawn each time): text, plain textures, rounded textures
+local pool = { fs = {}, tex = {}, rt = {} }
+local used = { fs = 0, tex = 0, rt = 0 }
 local function resetPool()
-  used.fs, used.tex = 0, 0
+  used.fs, used.tex, used.rt = 0, 0, 0
   for _, l in pairs(pool) do for _, o in ipairs(l) do o:Hide(); o:ClearAllPoints() end end
 end
 local function FS(kind, size, hex)
   used.fs = used.fs + 1
   local fs = pool.fs[used.fs]
   if not fs then fs = body:CreateFontString(nil, "OVERLAY"); pool.fs[used.fs] = fs end
-  setFont(fs, kind, size); fs:SetTextColor(rgb(hex or COL.text)); fs:SetJustifyH("LEFT"); fs:SetJustifyV("TOP"); fs:SetWordWrap(true); fs:SetWidth(0); fs:Show()
+  setFont(fs, kind, size); fs:SetTextColor(rgb(hex or COL.text)); fs:SetJustifyH("LEFT"); fs:SetJustifyV("TOP"); fs:SetWordWrap(true); fs:SetWidth(0)
+  if fs.SetSpacing then fs:SetSpacing(2) end
+  fs:Show()
   return fs
 end
 local function TEX(layer)
@@ -196,11 +226,18 @@ local function TEX(layer)
   t:SetDrawLayer(layer or "ARTWORK"); t:SetTexCoord(0, 1, 0, 1); t:SetAlpha(1); t:SetVertexColor(1, 1, 1); t:Show()
   return t
 end
-local function box(y, h, bgHex, edgeHex, goldBar, bgA)
-  local bg = TEX("BACKGROUND"); bg:SetPoint("TOPLEFT", 0, -y); bg:SetSize(CW, h); fill(bg, bgHex, bgA)
-  local function edge(p1, p2, w, hh) local e = TEX("BORDER"); e:SetPoint(p1, bg, p1); e:SetPoint(p2, bg, p2); if w then e:SetWidth(w) end; if hh then e:SetHeight(hh) end; fill(e, edgeHex) end
-  edge("TOPLEFT", "TOPRIGHT", nil, 1); edge("BOTTOMLEFT", "BOTTOMRIGHT", nil, 1); edge("TOPLEFT", "BOTTOMLEFT", 1, nil); edge("TOPRIGHT", "BOTTOMRIGHT", 1, nil)
-  if goldBar then local b = TEX("ARTWORK"); b:SetPoint("TOPLEFT", bg, "TOPLEFT"); b:SetPoint("BOTTOMLEFT", bg, "BOTTOMLEFT"); b:SetWidth(4); fill(b, COL.gold) end
+local function RT(layer)
+  used.rt = used.rt + 1
+  local t = pool.rt[used.rt]
+  if not t then t = body:CreateTexture(nil, "BACKGROUND"); pool.rt[used.rt] = t end
+  t:SetDrawLayer(layer or "BACKGROUND"); t:Show()
+  return t
+end
+-- a soft rounded box in the body; an optional gold bar down its left side
+local function box(y, h, fillHex, fillA, lineHex, lineA, bar)
+  local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", 0, -y); f:SetSize(CW, h); rounded(f, "fill", 5, fillHex, fillA)
+  local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, lineHex, lineA)
+  if bar then local b = TEX("ARTWORK"); b:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -6); b:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 1, 6); b:SetWidth(3); fill(b, bar) end
 end
 local function icon(x, y, size, id)
   local t = TEX("ARTWORK"); t:SetPoint("TOPLEFT", x, -y); t:SetSize(size, size); t:SetTexture(iconPath(id)); t:SetTexCoord(0.08, 0.92, 0.08, 0.92)
@@ -215,28 +252,31 @@ local function names(s)
     return "|cff" .. classHex(cls) .. n .. "|r"
   end))
 end
-local function head(y, text, hex)
-  local t = FS("head", 14, hex or COL.text); t:SetPoint("TOPLEFT", 0, -y); t:SetText(text)
-  return y + 19
+-- a section label: small, uppercase, quiet
+local function head(y, text)
+  local t = FS("bold", 11.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText(text:upper())
+  return y + 20
 end
--- a row: a coloured dot, an icon, then the text (an optional bold title above it)
+-- a row: a round status dot, an icon, then the text (an optional bold title above it)
 local function row(y, flag, ic, text, ttl)
-  local d = TEX("ARTWORK"); d:SetPoint("TOPLEFT", 1, -(y + 6)); d:SetSize(7, 7); fill(d, FLAG[flag] or COL.faint)
-  icon(14, y, 19, ic)
-  local x, w, yy = 40, CW - 40, y
-  if ttl and ttl ~= "" then local h = FS("bold", 13.5, COL.text); h:SetPoint("TOPLEFT", x, -yy); h:SetWidth(w); h:SetText(ttl); yy = yy + h:GetStringHeight() + 1 end
-  local t = FS("body", 13.5, COL.text); t:SetPoint("TOPLEFT", x, -yy); t:SetWidth(w); t:SetText(names(text))
+  local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 0, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
+  icon(16, y, 20, ic)
+  local x, w, yy = 46, CW - 46, y
+  if ttl and ttl ~= "" then local h = FS("bold", 13.5, COL.text); h:SetPoint("TOPLEFT", x, -yy); h:SetWidth(w); h:SetText(ttl); yy = yy + h:GetStringHeight() + 2 end
+  local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", x, -yy); t:SetWidth(w); t:SetText(names(text))
   yy = yy + t:GetStringHeight()
-  return math.max(y + 20, yy) + 7
+  return math.max(y + 21, yy) + 9
 end
 local function nextBox(y, text)
-  local t = FS("body", 14, COL.text); t:SetWidth(CW - 28); t:SetText(names(text))
-  local l = FS("head", 14, COL.gold); l:SetText("Next pull")
-  local h = 10 + 18 + t:GetStringHeight() + 10
-  box(y, h, COL.gold, COL.gold, true, 0.06)
-  -- (the box's fill is the gold at 6%; its edge stays solid gold)
-  l:SetPoint("TOPLEFT", 16, -(y + 8)); t:SetPoint("TOPLEFT", 16, -(y + 27))
+  local t = FS("body", 14, COL.text); t:SetWidth(CW - 32); t:SetText(names(text))
+  local l = FS("bold", 11.5, COL.gold); l:SetText("NEXT PULL")
+  local h = 11 + 17 + t:GetStringHeight() + 12
+  box(y, h, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
+  l:SetPoint("TOPLEFT", 16, -(y + 11)); t:SetPoint("TOPLEFT", 16, -(y + 28))
   return y + h + 4
+end
+local function chipColors(b, fillHex, lineHex, textHex)
+  rounded(b.fillT, "fill", 5, fillHex, 1); rounded(b.lineT, "line", 5, lineHex, 1); b.t:SetTextColor(rgb(textHex))
 end
 
 local function canRaid()
@@ -271,13 +311,11 @@ function render()
     local q = DB.pulls[k]
     if q then
       local kill = q.h.kill
-      b.t:SetText("Pull " .. q.h.pull .. "  " .. (kill and "Kill" or (q.h.pct ~= "" and (q.h.pct .. "%") or "Wipe")))
-      b.t:SetTextColor(rgb(kill and COL.goodT or COL.badT))
-      b:SetBackdropColor(rgb(kill and COL.goodBg or COL.badBg))
-      b:SetBackdropBorderColor(rgb(k == DB.cur and COL.gold or (kill and COL.goodBg or COL.badBg)))
-      b:SetWidth(b.t:GetStringWidth() + 16)
+      b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. (kill and "Kill" or (q.h.pct ~= "" and (q.h.pct .. "%") or "Wipe")))
+      chipColors(b, kill and COL.goodBg or COL.badBg, k == DB.cur and COL.gold or (kill and COL.goodBg or COL.badBg), kill and COL.goodT or COL.badT)
+      b:SetWidth(b.t:GetStringWidth() + 20)
       b:ClearAllPoints()
-      if i == 1 then b:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -44) else b:SetPoint("LEFT", chips[i - 1], "RIGHT", 5, 0) end
+      if i == 1 then b:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -52) else b:SetPoint("LEFT", chips[i - 1], "RIGHT", 6, 0) end
       b:SetScript("OnClick", function() showPull(k) end)
       b:Show()
     else b:Hide() end
@@ -287,7 +325,7 @@ function render()
   local meta = { h.dur }
   if h.where ~= "" then meta[#meta + 1] = h.where end
   meta[#meta + 1] = h.deaths .. (h.deaths == "1" and " death" or " deaths")
-  metaT:SetText(table.concat(meta, "  ·  "))
+  metaT:SetText(table.concat(meta, "   ·   "))
   -- tabs
   local raidOk = canRaid()
   tRaid:SetShown(raidOk)
@@ -309,26 +347,26 @@ function render()
 
   -- body
   resetPool()
-  local y = 0
+  local y = 2
   if view == "me" and P then
     -- the tile: your damage or healing, against your last pull and your best
-    local th = 56
-    box(y, th, COL.raised, COL.line)
-    icon(10, y + 12, 32, P.icon)
-    local l = FS("body", 13, COL.muted); l:SetPoint("TOPLEFT", 52, -(y + 8)); l:SetText(P.role == "healer" and "Your healing" or "Your damage")
-    local v = FS("head", 27, COL.text); v:SetPoint("TOPLEFT", 52, -(y + 23)); v:SetText(P.v)
-    local u = FS("bold", 12, COL.muted); u:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 4, 4); u:SetText(P.unit)
-    local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 10, -(y + 8))
+    local th = 62
+    box(y, th, COL.raised, 1, COL.line, 1)
+    icon(12, y + 13, 36, P.icon)
+    local l = FS("body", 12.5, COL.muted); l:SetPoint("TOPLEFT", 60, -(y + 11)); l:SetText(P.role == "healer" and "Your healing" or "Your damage")
+    local v = FS("head", 28, COL.text); v:SetPoint("TOPLEFT", 60, -(y + 26)); v:SetText(P.v)
+    local u = FS("bold", 12, COL.muted); u:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 5, 4); u:SetText(P.unit)
+    local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11))
     local lines = {}
     if P.d then lines[#lines + 1] = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs end
     lines[#lines + 1] = (P.best ~= "" and ("Best " .. P.best .. " (pull " .. P.bp .. ")") or "First pull read")
     if P.rank ~= "" then lines[#lines + 1] = P.rank end
     s:SetText(table.concat(lines, "\n"))
-    y = y + th + 12
+    y = y + th + 16
     y = head(y, "Rotation")
     if #P.slips == 0 then y = row(y, "ok", nil, "No rotation checks for this spec yet.") end
     for _, r in ipairs(P.slips) do y = row(y, r[1], r[2], r[3]) end
-    y = y + 4
+    y = y + 6
     y = head(y, "Boss mechanics")
     if #P.boss == 0 then y = row(y, "ok", nil, "No boss mistakes.") end
     for _, r in ipairs(P.boss) do y = row(y, r[1], r[2], r[3]) end
@@ -337,23 +375,23 @@ function render()
     y = head(y, h.kill and "What to clean up" or "Top mistakes")
     if #m.raid.bad == 0 then y = row(y, "ok", nil, "Nothing big.") end
     for _, r in ipairs(m.raid.bad) do y = row(y, r[1], r[2], r[4], r[3]) end
-    y = y + 4
+    y = y + 6
     y = head(y, "Who died")
-    if #m.raid.died == 0 then local t = FS("body", 13, COL.faint); t:SetPoint("TOPLEFT", 0, -y); t:SetText("Nobody died."); y = y + 18 end
+    if #m.raid.died == 0 then local t = FS("body", 13, COL.faint); t:SetPoint("TOPLEFT", 0, -y); t:SetText("Nobody died."); y = y + 20 end
     for _, d in ipairs(m.raid.died) do
       local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText(d[1])
-      local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", 44, -y); nm:SetWidth(130); nm:SetWordWrap(false); nm:SetText(d[2])
-      icon(182, y, 17, d[4])
-      local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", 206, -y); w:SetWidth(CW - 206); w:SetWordWrap(false); w:SetText(d[5])
-      y = y + 21
+      local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", 46, -y); nm:SetWidth(130); nm:SetWordWrap(false); nm:SetText(d[2])
+      icon(184, y - 1, 18, d[4])
+      local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", 210, -y); w:SetWidth(CW - 210); w:SetWordWrap(false); w:SetText(d[5])
+      y = y + 23
     end
-    if m.raid.more ~= "" then local t = FS("body", 13, COL.faint); t:SetPoint("TOPLEFT", 0, -y); t:SetText(m.raid.more); y = y + 18 end
+    if m.raid.more ~= "" then local t = FS("body", 12.5, COL.faint); t:SetPoint("TOPLEFT", 0, -(y + 1)); t:SetText(m.raid.more); y = y + 22 end
     if m.raid.next ~= "" then y = nextBox(y + 6, m.raid.next) end
   end
   body:SetHeight(math.max(10, y))
-  footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(160 + y + 8)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(160 + y + 8))
-  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(160 + y + 15))
-  card:SetHeight(160 + y + 36)
+  footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + y + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + y + 10))
+  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + y + 19))
+  card:SetHeight(TOPY + y + 42)
 end
 
 -- ---------- keeping pulls, showing the card ----------
@@ -449,6 +487,7 @@ local function import(text)
 end
 eb:SetScript("OnTextChanged", function(self, userInput)
   local t = self:GetText()
+  if grabbed and userInput and t ~= "" and t:sub(1, 1) ~= "D" then grabbed = false; self:SetText(""); self:ClearFocus(); return end
   if t and #t > 6 and t:find("%^Z%s*$") then
     if import(t) then self:SetText("") end
   end
@@ -456,15 +495,17 @@ end)
 eb:SetScript("OnEnterPressed", function(self) local t = self:GetText(); if t ~= "" and import(t) then self:SetText("") end end)
 
 -- ---------- opening it: key, slash command ----------
+local grabbed = false
 function Debrief_OpenPaste(noFocus)
   pMsg:SetTextColor(rgb(COL.faint))
   if DB and DB.testMode and noFocus then
     pMsg:SetText("Test mode: click the box, then Ctrl+V. /debrief demo shows a sample. /debrief test turns this off.")
   else
-    pMsg:SetText(noFocus and "Pull over. Click the box (or press your Debrief key), then Ctrl+V." or "Nothing is typed into the game for you. The card opens as soon as you paste.")
+    pMsg:SetText(noFocus and "Pull over: press Ctrl+V now. Any other key closes this so you can move." or "Nothing is typed into the game for you. The card opens as soon as you paste.")
   end
   eb:SetText(""); paste:Show()
-  if noFocus then eb:ClearFocus() else eb:SetFocus() end
+  -- (after a pull it comes up ready for Ctrl+V; any other key lets go at once, so you can move again)
+  if noFocus and DB and DB.autoFocus == false then eb:ClearFocus() else eb:SetFocus(); grabbed = noFocus and true or false end
 end
 function Debrief_Toggle()
   if card:IsShown() then card:Hide() elseif DB and DB.pulls and #DB.pulls > 0 then card:Show(); render() else Debrief_OpenPaste() end
@@ -483,16 +524,32 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "demo" then
     -- (the built-in sample pull: the card with no paste, not sent to the group)
     local m = decode(SAMPLE)
-    if m then addPull(m); paste:Hide(); showCard(); say("showing a sample: our Heroic Ula'tek kill (Oct 20). Use the arrows to see other players.") end
+    if m then addPull(m); paste:Hide(); showCard(); say("showing a sample Heroic Ula'tek kill (made-up names). Use the arrows to see other players.") end
+  elseif msg == "log" then DB.autoLog = (DB.autoLog == false); say("combat log in raids " .. (DB.autoLog ~= false and "turns on by itself." or "is up to you (/combatlog).")); autoLog()
+  elseif msg == "focus" then DB.autoFocus = (DB.autoFocus == false); say("paste box ready for Ctrl+V after a pull " .. (DB.autoFocus ~= false and "on." or "off: click it first."))
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
   elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/debrief: show or hide the card. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/debrief: show or hide the card. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
 local ev = CreateFrame("Frame")
-ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("CHAT_MSG_ADDON"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("CHAT_MSG_ADDON"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+-- (combat logging on in raids, so nobody has to type /combatlog; Advanced Combat Logging too. Debrief Companion reads the log)
+local weLog, logPending = false, false
+local function autoLog()
+  if not DB or DB.autoLog == false or not LoggingCombat then return end
+  if InCombatLockdown() then logPending = true; return end
+  local inInst, kind = IsInInstance()
+  if inInst and kind == "raid" then
+    if not LoggingCombat() then
+      if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
+      LoggingCombat(true); weLog = true
+      say("combat log is on for this raid. /debrief log turns this off.")
+    end
+  elseif weLog and LoggingCombat() then LoggingCombat(false); weLog = false end
+end
 -- (test mode: the box also comes up after any fight and when you log in, so the whole thing can be tried on a training dummy)
 local function testBox(delay)
   if not (DB and DB.testMode and C_Timer) then return end
@@ -504,8 +561,12 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "PLAYER_REGEN_ENABLED" then
     if pendingShow then pendingShow = false; showCard() end
     testBox(1.5)
+    if logPending then logPending = false; autoLog() end
   elseif e == "PLAYER_ENTERING_WORLD" then
     if arg or a2 then testBox(4) end -- (on login or /reload, not every loading screen)
+    if C_Timer then C_Timer.After(2, autoLog) end
+  elseif e == "ZONE_CHANGED_NEW_AREA" then
+    if C_Timer then C_Timer.After(2, autoLog) end
   elseif e == "ENCOUNTER_END" then
     -- (for whoever runs Debrief Companion: the paste box comes up by itself a few seconds after a boss pull, ready for Ctrl+V)
     if DB and (DB.pasted or DB.testMode) and DB.autoBox ~= false and C_Timer then
@@ -516,7 +577,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     DB = DebriefDB
     DB.pulls = DB.pulls or {}
     if DB.raidAlways == nil then DB.raidAlways = true end
-    if DB.testMode == nil then DB.testMode = true end -- (on while we test; /debrief test turns it off)
+    if DB.testMode == nil then DB.testMode = false end -- (/debrief test turns it on: the box after every fight)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
     -- (a key to start with: Ctrl+Shift+D opens the paste box, if nothing else uses it; change it in Options > Keybindings > AddOns)
