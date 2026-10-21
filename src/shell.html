@@ -450,6 +450,11 @@ header.fight.bh.plan-bh.none::before { background: #6b7280; } .fight.bh.plan-bh 
 @media (max-width: 640px) { .plan-ov { grid-template-columns: 1fr; } }
 /* plan cards open */ .plan-ovch { position: absolute; top: 10px; right: 12px; z-index: 1; font-size: 15px; color: #d5dae3; text-shadow: 0 1px 6px rgba(0,0,0,.9); transition: transform .15s; } .plan-ovc.open .plan-ovch { transform: rotate(180deg); }
 .plan-ovc.open { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(230,180,80,.35), 0 6px 22px rgba(0,0,0,.35); } .plan-ovc.open .plan-ovh img { opacity: .85; } .plan-ov0 { display: flex; flex-direction: column; gap: 8px; padding: 4px; } .plan-ov0 .ndz-cb { display: flex; flex-wrap: wrap; gap: 6px; }
+/* damage colours */ .ndz-ctdmg.col path { fill-opacity: .34; stroke-opacity: 1; stroke-width: 1.6px; } .ndz-ctk i.a.col { background: linear-gradient(90deg, rgb(46,160,67), rgb(212,167,44), rgb(232,116,47), rgb(229,72,77)); border-top-color: transparent; }
+/* plan delete */ .plan-ovrw { display: flex; gap: 6px; align-items: stretch; } .plan-ovrw .plan-ovr { flex: 1; min-width: 0; }
+.plan-ovdel, .plan-bdel { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--muted); font: 600 12px var(--body); cursor: pointer; }
+.plan-ovdel svg, .plan-bdel svg { width: 14px; height: 14px; } .plan-ovdel:hover, .plan-ovdel:focus-visible, .plan-bdel:hover, .plan-bdel:focus-visible { color: #ff8a80; border-color: rgba(229,83,75,.55); }
+.plan-ovdel.bad, .plan-bdel.bad { color: #fff; background: #b8322b; border-color: #e5534b; } .plan-bdel { height: 32px; border-radius: 999px; background: rgba(12,14,19,.55); text-shadow: none; }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
