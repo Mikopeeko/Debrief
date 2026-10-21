@@ -74,14 +74,14 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
     const tips = [];
     if (x && x.checks) {
-      const focus = x.checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => (c.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (c.st === 'bad' ? 1 : 0) || (c.share || 0) - (a.share || 0)).slice(0, 3);
+      const focus = x.checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => (c.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (c.st === 'bad' ? 1 : 0) || (c.share || 0) - (a.share || 0)).slice(0, 5); // (up to 5: the card shows 1 to 5, as each raider picks)
       for (const c of focus) { P.slips.push([c.st, spellId(W, c.ic), slipLine(c)]); if (c.tip) tips.push(plain(c.tip)); }
       if (!focus.length) { const good = x.checks.filter((c) => c.st === 'ok').slice(0, 2); for (const c of good) P.slips.push(['ok', spellId(W, c.ic), shortTo(plain(c.label) + ': ' + plain(c.v).replace(/(\d+)\s*\/\s*(\d+)/, '$1 of $2') + '.', 120)]); }
     }
     // Boss mechanics: their own mistakes on this pull, then their death
     const own = mist.filter((m) => m.player === p.name).sort((a, c) => (SEV[c.severity] || 0) - (SEV[a.severity] || 0) || a.t - c.t);
     const seen = new Set();
-    for (const m of own) { if (seen.has(m.mechanic)) continue; seen.add(m.mechanic); if (P.boss.length >= 2) break;
+    for (const m of own) { if (seen.has(m.mechanic)) continue; seen.add(m.mechanic); if (P.boss.length >= 3) break;
       P.boss.push([flagOf(m.severity), m.id ? String(m.id) : '', shortTo(m.mechanic + ': ' + plain(m.detail || ''), 150)]); if (m.fix) tips.push(sentences(m.fix)[0]); }
     const dd = (rep.deaths || []).filter((d) => d.player === p.name).sort((a, c) => a.t - c.t)[0];
     if (dd) P.boss.push(['dead', deathIcon(dd), 'You died at ' + mmss(dd.t) + (dd.ability ? ' to ' + dd.ability : '') + '.' + (!b.kill && rep.duration - dd.t < 8 ? ' The pull was already lost.' : '')]);
@@ -93,7 +93,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   // ---- the raid: top 3 mistakes with names, who died, the next pull ----
   const byMech = new Map();
   for (const m of mist) { if (!m.player) continue; const k = m.mechanic; if (!byMech.has(k)) byMech.set(k, { k, sev: 0, who: new Map(), id: m.id, fix: m.fix, n: 0 }); const g = byMech.get(k); g.sev = Math.max(g.sev, SEV[m.severity] || 1); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); g.n++; if (!g.fix && m.fix) g.fix = m.fix; }
-  const top = [...byMech.values()].sort((a, c) => c.sev * c.who.size - a.sev * a.who.size || c.n - a.n).slice(0, 3);
+  const top = [...byMech.values()].sort((a, c) => c.sev * c.who.size - a.sev * a.who.size || c.n - a.n).slice(0, 5);
   const raid = { bad: [], died: [], more: '', next: '' };
   const real = new Set(ps.map((p) => p.name));
   for (const g of top) {
@@ -104,7 +104,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo(lead + (names.length > 4 ? names.slice(0, 4).join(', ') + ' and ' + (names.length - 4) + ' more.' : names.join(', ') + '.') + (g.fix ? ' ' + sentences(g.fix)[0] : ''), 190)]);
   }
   // (deaths that mattered: the first few, before the wipe was called)
-  const D = allDeaths; const show = D.slice(0, 4);
+  const D = allDeaths; const show = D.slice(0, 8);
   for (const d of show) { const p = [...rep.players.values()].find((q) => q.name === d.player); raid.died.push([mmss(d.t), d.player, (p && p.cls) || '', deathIcon(d), d.ability || 'Unknown']); }
   const extra = (rep.deaths || []).length - show.length;
   if (extra > 0) raid.more = '+' + extra + ' more by ' + h.dur + '.';

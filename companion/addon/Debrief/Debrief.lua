@@ -1,3 +1,4 @@
+local detailBtn, PRESET_NAME, render -- (shared by parts below)
 -- Debrief: your pull recap, in game.
 -- Debrief Companion (the small app on your PC) reads your combat log when a boss pull ends and copies a short code.
 -- Press your Debrief key (Ctrl+Shift+D unless you change it) or type /debrief paste, then Ctrl+V: the card shows.
@@ -12,10 +13,21 @@ local COL = { bg = "171a22", head = "13161d", raised = "1e222c", line = "2a2f3b"
 local function rgb(hex) return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255 end
 local MEDIA = "Interface\\AddOns\\" .. (ADDON or "Debrief") .. "\\"
 local FONT = { body = MEDIA .. "Fonts\\Barlow-Medium.ttf", bold = MEDIA .. "Fonts\\Barlow-SemiBold.ttf", head = MEDIA .. "Fonts\\BarlowSemiCondensed-Bold.ttf" }
+local FONTSETS = {
+  debrief = FONT,
+  wow = { body = STANDARD_TEXT_FONT, bold = STANDARD_TEXT_FONT, head = STANDARD_TEXT_FONT },
+  arial = { body = "Fonts\\ARIALN.TTF", bold = "Fonts\\ARIALN.TTF", head = "Fonts\\ARIALN.TTF" },
+  morpheus = { body = STANDARD_TEXT_FONT, bold = STANDARD_TEXT_FONT, head = "Fonts\\MORPHEUS.TTF" },
+}
+local FONTREG = setmetatable({}, { __mode = "k" })
 local function setFont(fs, kind, size)
-  local ok = fs:SetFont(FONT[kind] or FONT.body, size, "")
-  if ok == false then fs:SetFont(STANDARD_TEXT_FONT, size, "") end
+  FONTREG[fs] = { kind, size }
+  local set = FONTSETS[DebriefDB and DebriefDB.font or "debrief"] or FONT
+  local sz = size * ((DebriefDB and DebriefDB.fontScale) or 1)
+  local ok = fs:SetFont(set[kind] or set.body or FONT.body, sz, "")
+  if ok == false then fs:SetFont(STANDARD_TEXT_FONT, sz, "") end
 end
+local function reapplyFonts() for fs, v in pairs(FONTREG) do setFont(fs, v[1], v[2]) end end
 local CLASS_FALLBACK = { WARRIOR = "c69b6d", PALADIN = "f48cba", HUNTER = "aad372", ROGUE = "fff468", PRIEST = "ffffff", DEATHKNIGHT = "c41e3a",
   SHAMAN = "0070dd", MAGE = "3fc7eb", WARLOCK = "8788ee", MONK = "00ff98", DRUID = "ff7c0a", DEMONHUNTER = "a330c9", EVOKER = "33937f" }
 local function classHex(cls)
@@ -140,6 +152,7 @@ eb:SetScript("OnKeyDown", function(self, key) if grabbed and not PASTE_KEYS[key]
 -- ---------- the card ----------
 local W, PAD, TOPY = 400, 14, 172
 local CW = W - PAD * 2
+local WIDTHS = { narrow = 360, normal = 400, wide = 480 }
 local card = CreateFrame("Frame", "DebriefCard", UIParent)
 card:SetSize(W, 300); card:SetPoint("CENTER", 260, 60); card:SetFrameStrata("HIGH"); card:SetClampedToScreen(true); card:Hide()
 skin(card, 8, COL.bg, 0.97, COL.line2, 1, true)
@@ -157,8 +170,30 @@ end)
 local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(16, 18); logo:SetPoint("TOPLEFT", PAD, -12); logo:SetTexture(MEDIA .. "Media\\logo")
 local title = top:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 17); title:SetPoint("LEFT", logo, "RIGHT", 7, 0); title:SetTextColor(rgb(COL.text)); title:SetText("Debrief")
 local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); bossT:SetPoint("LEFT", title, "RIGHT", 9, -1); bossT:SetTextColor(rgb(COL.muted)); bossT:SetWidth(250); bossT:SetJustifyH("LEFT"); bossT:SetWordWrap(false)
+-- detail presets: one click sets how much the card shows (Simple / Medium / Heavy); any change by hand makes it Custom
+PRESET_NAME = { simple = "Simple", medium = "Medium", heavy = "Heavy" }
+local PRESETS = {
+  simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 2, width = "normal", show = { rank = false, best = false } },
+  medium = { compact = false, maxSlips = 3, maxBoss = 2, maxRaid = 3, maxDied = 4, width = "normal", show = {} },
+  heavy = { compact = false, maxSlips = 5, maxBoss = 3, maxRaid = 5, maxDied = 8, width = "wide", show = {} },
+}
+function Debrief_SetPreset(key)
+  local p = PRESETS[key]; if not p or not DB then return end
+  DB.compact, DB.maxSlips, DB.maxBoss, DB.maxRaid, DB.maxDied, DB.width = p.compact, p.maxSlips, p.maxBoss, p.maxRaid, p.maxDied, p.width
+  DB.show = {}; for k, v in pairs(p.show) do DB.show[k] = v end
+  DB.collapsed = nil; DB.preset = key
+  if Debrief_RefreshOptions then Debrief_RefreshOptions() end
+  if card:IsShown() then render() end
+end
 local close = closeButton(card)
 close:SetScript("OnClick", function() card:Hide() end)
+-- (the Detail button on the card: Simple, Medium, Heavy, one click each)
+detailBtn = CreateFrame("Button", nil, card); detailBtn:SetSize(70, 22); detailBtn:SetPoint("RIGHT", close, "LEFT", -6, 0)
+skin(detailBtn, 5, COL.raised, 1, COL.line2, 1)
+detailBtn.t = detailBtn:CreateFontString(nil, "OVERLAY"); setFont(detailBtn.t, "bold", 11.5); detailBtn.t:SetPoint("CENTER", 0, 0); detailBtn.t:SetTextColor(rgb(COL.muted)); detailBtn.t:SetText("Medium")
+detailBtn:SetScript("OnClick", function() local order = { simple = "medium", medium = "heavy", heavy = "simple" }; Debrief_SetPreset(order[DB.preset] or "medium") end)
+detailBtn:SetScript("OnEnter", function() detailBtn.t:SetTextColor(rgb(COL.text)); GameTooltip:SetOwner(detailBtn, "ANCHOR_TOP"); GameTooltip:SetText("How much the card shows: Simple, Medium or Heavy"); GameTooltip:Show() end)
+detailBtn:SetScript("OnLeave", function() detailBtn.t:SetTextColor(rgb(COL.muted)); GameTooltip:Hide() end)
 local topLine = card:CreateTexture(nil, "ARTWORK"); topLine:SetPoint("TOPLEFT", 1, -40); topLine:SetPoint("TOPRIGHT", -1, -40); topLine:SetHeight(1); fill(topLine, COL.line)
 
 -- pull chips (the last few pulls), soft pills
@@ -204,10 +239,11 @@ foot:SetText("/debrief opens this again  ·  /debrief paste for a new pull")
 local footLine = card:CreateTexture(nil, "ARTWORK"); footLine:SetHeight(1); fill(footLine, COL.line)
 
 -- pooled pieces for the body (redrawn each time): text, plain textures, rounded textures
-local pool = { fs = {}, tex = {}, rt = {} }
-local used = { fs = 0, tex = 0, rt = 0 }
+local pool = { fs = {}, tex = {}, rt = {}, btn = {} }
+local used = { fs = 0, tex = 0, rt = 0, btn = 0 }
+local EXPANDED = {} -- (lists opened with "Show N more", until the next pull)
 local function resetPool()
-  used.fs, used.tex, used.rt = 0, 0, 0
+  used.fs, used.tex, used.rt, used.btn = 0, 0, 0, 0
   for _, l in pairs(pool) do for _, o in ipairs(l) do o:Hide(); o:ClearAllPoints() end end
 end
 local function FS(kind, size, hex)
@@ -253,8 +289,31 @@ local function names(s)
   end))
 end
 -- a section label: small, uppercase, quiet
-local function head(y, text)
+local function BTN()
+  used.btn = used.btn + 1
+  local b = pool.btn[used.btn]
+  if not b then b = CreateFrame("Button", nil, body); pool.btn[used.btn] = b end
+  b:ClearAllPoints(); b:SetScript("OnClick", nil); b:SetScript("OnEnter", nil); b:SetScript("OnLeave", nil); b:Show()
+  return b
+end
+-- a section label: small, uppercase, quiet; click it to fold the section away (or open it again)
+local function head(y, text, key, folded)
   local t = FS("bold", 11.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText(text:upper())
+  if key then
+    local sign = FS("bold", 13, COL.faint); sign:SetJustifyH("RIGHT"); sign:SetPoint("TOPRIGHT", body, "TOPLEFT", CW, -(y - 2)); sign:SetText(folded and "+" or "–")
+    local b = BTN(); b:SetPoint("TOPLEFT", 0, -(y - 3)); b:SetSize(CW, 18)
+    b:SetScript("OnClick", function() DB.collapsed = DB.collapsed or {}; DB.collapsed[key] = not DB.collapsed[key] or nil; render() end)
+    b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.text)); sign:SetTextColor(rgb(COL.text)) end)
+    b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.muted)); sign:SetTextColor(rgb(COL.faint)) end)
+  end
+  return y + 20
+end
+-- "Show 2 more"
+local function moreLink(y, key, n)
+  local t = FS("bold", 12.5, COL.gold); t:SetPoint("TOPLEFT", 46, -(y - 2)); t:SetText("Show " .. n .. " more")
+  local b = BTN(); b:SetPoint("TOPLEFT", 40, -(y - 5)); b:SetSize(140, 20)
+  b:SetScript("OnClick", function() EXPANDED[key] = true; render() end)
+  b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.text)) end); b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.gold)) end)
   return y + 20
 end
 -- a row: a round status dot, an icon, then the text (an optional bold title above it)
@@ -293,14 +352,16 @@ local function pickWho(m)
   return m.players[1]
 end
 
-local render
 local function showPull(i)
   if not DB.pulls[i] then return end
-  DB.cur = i; render()
+  DB.cur = i; wipe(EXPANDED); render()
 end
 function render()
   local m = DB.pulls[DB.cur]; CUR = m
   if not m then return end
+  W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2; card:SetWidth(W); body:SetWidth(CW); bossT:SetWidth(W - 230)
+  if detailBtn then detailBtn.t:SetText(PRESET_NAME[DB.preset] or "Custom"); detailBtn:SetWidth(detailBtn.t:GetStringWidth() + 18) end
+  for _, c in ipairs(chips) do c:SetShown(false) end
   local h = m.h
   bossT:SetText(h.boss .. "  ·  " .. h.diff)
   -- chips: the newest five
@@ -309,7 +370,7 @@ function render()
   for i = 1, #chips do
     local b, k = chips[i], first + i - 1
     local q = DB.pulls[k]
-    if q then
+    if q and (DB.show or {}).chips ~= false then
       local kill = q.h.kill
       b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. (kill and "Kill" or (q.h.pct ~= "" and (q.h.pct .. "%") or "Wipe")))
       chipColors(b, kill and COL.goodBg or COL.badBg, k == DB.cur and COL.gold or (kill and COL.goodBg or COL.badBg), kill and COL.goodT or COL.badT)
@@ -348,45 +409,55 @@ function render()
   -- body
   resetPool()
   local y = 2
+  local SH = DB.show or {}
+  -- a section: its heading folds it away (+ / -), and a "Show N more" line expands a long list
+  local function section(key, title, list, limit, draw, empty)
+    if SH[key] == false then return end
+    local folded = DB.collapsed and DB.collapsed[key]
+    y = head(y, title, key, folded)
+    if folded then y = y + 2; return end
+    if #list == 0 then if empty then y = row(y, "ok", nil, empty) end; y = y + 4; return end
+    local n = EXPANDED[key] and #list or math.min(#list, limit)
+    for i = 1, n do draw(list[i]) end
+    if #list > n then y = moreLink(y, key, #list - n) end
+    y = y + 6
+  end
   if view == "me" and P then
     -- the tile: your damage or healing, against your last pull and your best
-    local th = 62
-    box(y, th, COL.raised, 1, COL.line, 1)
-    icon(12, y + 13, 36, P.icon)
-    local l = FS("body", 12.5, COL.muted); l:SetPoint("TOPLEFT", 60, -(y + 11)); l:SetText(P.role == "healer" and "Your healing" or "Your damage")
-    local v = FS("head", 28, COL.text); v:SetPoint("TOPLEFT", 60, -(y + 26)); v:SetText(P.v)
-    local u = FS("bold", 12, COL.muted); u:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 5, 4); u:SetText(P.unit)
-    local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11))
-    local lines = {}
-    if P.d then lines[#lines + 1] = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs end
-    lines[#lines + 1] = (P.best ~= "" and ("Best " .. P.best .. " (pull " .. P.bp .. ")") or "First pull read")
-    if P.rank ~= "" then lines[#lines + 1] = P.rank end
-    s:SetText(table.concat(lines, "\n"))
-    y = y + th + 16
-    y = head(y, "Rotation")
-    if #P.slips == 0 then y = row(y, "ok", nil, "No rotation checks for this spec yet.") end
-    for _, r in ipairs(P.slips) do y = row(y, r[1], r[2], r[3]) end
-    y = y + 6
-    y = head(y, "Boss mechanics")
-    if #P.boss == 0 then y = row(y, "ok", nil, "No boss mistakes.") end
-    for _, r in ipairs(P.boss) do y = row(y, r[1], r[2], r[3]) end
-    if P.next ~= "" then y = nextBox(y + 4, P.next) end
-  else
-    y = head(y, h.kill and "What to clean up" or "Top mistakes")
-    if #m.raid.bad == 0 then y = row(y, "ok", nil, "Nothing big.") end
-    for _, r in ipairs(m.raid.bad) do y = row(y, r[1], r[2], r[4], r[3]) end
-    y = y + 6
-    y = head(y, "Who died")
-    if #m.raid.died == 0 then local t = FS("body", 13, COL.faint); t:SetPoint("TOPLEFT", 0, -y); t:SetText("Nobody died."); y = y + 20 end
-    for _, d in ipairs(m.raid.died) do
-      local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText(d[1])
-      local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", 46, -y); nm:SetWidth(130); nm:SetWordWrap(false); nm:SetText(d[2])
-      icon(184, y - 1, 18, d[4])
-      local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", 210, -y); w:SetWidth(CW - 210); w:SetWordWrap(false); w:SetText(d[5])
-      y = y + 23
+    if SH.tile ~= false then
+      local th = 62
+      box(y, th, COL.raised, 1, COL.line, 1)
+      icon(12, y + 13, 36, P.icon)
+      local l = FS("body", 12.5, COL.muted); l:SetPoint("TOPLEFT", 60, -(y + 11)); l:SetText(P.role == "healer" and "Your healing" or "Your damage")
+      local v = FS("head", 28, COL.text); v:SetPoint("TOPLEFT", 60, -(y + 26)); v:SetText(P.v)
+      local u = FS("bold", 12, COL.muted); u:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 5, 4); u:SetText(P.unit)
+      local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11))
+      local lines = {}
+      if P.d and SH.vs ~= false then lines[#lines + 1] = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs end
+      if SH.best ~= false then lines[#lines + 1] = (P.best ~= "" and ("Best " .. P.best .. " (pull " .. P.bp .. ")") or "First pull read") end
+      if P.rank ~= "" and SH.rank ~= false then lines[#lines + 1] = P.rank end
+      s:SetText(table.concat(lines, "\n"))
+      y = y + th + 16
     end
-    if m.raid.more ~= "" then local t = FS("body", 12.5, COL.faint); t:SetPoint("TOPLEFT", 0, -(y + 1)); t:SetText(m.raid.more); y = y + 22 end
-    if m.raid.next ~= "" then y = nextBox(y + 6, m.raid.next) end
+    if not DB.compact then
+      local rot = function() section("rotation", "Rotation", P.slips, DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, "No rotation checks for this spec yet.") end
+      local bos = function() section("boss", "Boss mechanics", P.boss, DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
+      if DB.bossFirst then bos(); rot() else rot(); bos() end
+    end
+    if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, P.next) end
+  else
+    section("mistakes", h.kill and "What to clean up" or "Top mistakes", m.raid.bad, DB.compact and 1 or (DB.maxRaid or 3), function(r) y = row(y, r[1], r[2], r[4], r[3]) end, "Nothing big.")
+    if not DB.compact then
+      section("died", "Who died", m.raid.died, DB.maxDied or 4, function(d)
+        local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText(d[1])
+        local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", 46, -y); nm:SetWidth(130); nm:SetWordWrap(false); nm:SetText(d[2])
+        icon(184, y - 1, 18, d[4])
+        local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", 210, -y); w:SetWidth(CW - 210); w:SetWordWrap(false); w:SetText(d[5])
+        y = y + 23
+      end, "Nobody died.")
+      if m.raid.more ~= "" and SH.died ~= false and not (DB.collapsed and DB.collapsed.died) then local t = FS("body", 12.5, COL.faint); t:SetPoint("TOPLEFT", 0, -(y - 4)); t:SetText(m.raid.more); y = y + 18 end
+    end
+    if m.raid.next ~= "" and SH.next ~= false then y = nextBox(y + 2, m.raid.next) end
   end
   body:SetHeight(math.max(10, y))
   footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + y + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + y + 10))
@@ -399,8 +470,8 @@ local function sameAs(a, b) return a.h.boss == b.h.boss and a.h.pull == b.h.pull
 local function addPull(m)
   for i, q in ipairs(DB.pulls) do if sameAs(q, m) then DB.cur = i; return false end end
   DB.pulls[#DB.pulls + 1] = m
-  while #DB.pulls > 12 do table.remove(DB.pulls, 1) end
-  DB.cur = #DB.pulls; DB.who = nil
+  while #DB.pulls > (DB.keep or 30) do table.remove(DB.pulls, 1) end
+  DB.cur = #DB.pulls; DB.who = nil; wipe(EXPANDED)
   return true
 end
 local pendingShow = false
@@ -408,7 +479,7 @@ local function showCard()
   -- (never pops up mid-fight: it waits until you're out of combat)
   if InCombatLockdown() then pendingShow = true; return end
   card:Show(); render()
-  if SOUNDKIT and SOUNDKIT.IG_QUEST_LOG_OPEN then PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN) end
+  if DB.sound ~= false and SOUNDKIT and SOUNDKIT.IG_QUEST_LOG_OPEN then PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN) end
 end
 
 -- ---------- sharing with the raid: one person pastes, everyone with Debrief gets their card ----------
@@ -457,7 +528,7 @@ local function receive(code, from)
   if not m then return end
   if addPull(m) then
     say("pull " .. m.h.pull .. " of " .. m.h.boss .. " is in, from " .. from .. ".")
-    showCard()
+    if DB.autoShow ~= false then showCard() else say("type /debrief to see it.") end
   end
 end
 local function onAddonMessage(prefix, text, channel, from)
@@ -494,6 +565,204 @@ eb:SetScript("OnTextChanged", function(self, userInput)
 end)
 eb:SetScript("OnEnterPressed", function(self) local t = self:GetText(); if t ~= "" and import(t) then self:SetText("") end end)
 
+-- ---------- options: a window to make Debrief yours (how much it shows, the look, what happens after a pull) ----------
+-- /debrief options, the AddOns button by the minimap, or Options > AddOns > Debrief. Every change saves and shows at once.
+local opt
+local refreshers = {}
+local FONT_CHOICES = { { "debrief", "Debrief (website)" }, { "wow", "WoW default" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
+local WIDTH_CHOICES = { { "narrow", "Narrow" }, { "normal", "Normal" }, { "wide", "Wide" } }
+local function applySettings()
+  reapplyFonts()
+  card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1)
+  rounded(card.fillT, "fill", 8, COL.bg, DB.alpha or 0.97)
+  if card:IsShown() then render() end
+end
+function Debrief_RefreshOptions() for _, f in ipairs(refreshers) do f() end end
+local function optButton(parent, label, w, primary)
+  local b = CreateFrame("Button", nil, parent); b:SetSize(w, 26)
+  skin(b, 5, primary and COL.gold or COL.raised, 1, primary and COL.gold or COL.line2, 1)
+  b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 13); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(label)
+  b.t:SetTextColor(rgb(primary and "1b1406" or COL.text))
+  b.primary = primary
+  b:SetScript("OnEnter", function() rounded(b.lineT, "line", 5, COL.gold, 1) end)
+  b:SetScript("OnLeave", function() rounded(b.lineT, "line", 5, b.primary and COL.gold or COL.line2, 1) end)
+  return b
+end
+local function buildOptions()
+  opt = CreateFrame("Frame", "DebriefOptions", UIParent)
+  opt:SetSize(660, 640); opt:SetPoint("CENTER", -260, 20); opt:SetFrameStrata("DIALOG"); opt:SetClampedToScreen(true); opt:Hide()
+  skin(opt, 8, COL.bg, 0.98, COL.line2, 1, true)
+  opt:SetMovable(true); opt:EnableMouse(true); opt:RegisterForDrag("LeftButton")
+  opt:SetScript("OnDragStart", opt.StartMoving); opt:SetScript("OnDragStop", opt.StopMovingOrSizing)
+  tinsert(UISpecialFrames, "DebriefOptions")
+  local lg = opt:CreateTexture(nil, "ARTWORK"); lg:SetSize(16, 18); lg:SetPoint("TOPLEFT", 18, -13); lg:SetTexture(MEDIA .. "Media\\logo")
+  local tt = opt:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 18); tt:SetPoint("LEFT", lg, "RIGHT", 8, 0); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief options")
+  local cl = closeButton(opt); cl:SetScript("OnClick", function() opt:Hide() end)
+  local ln = opt:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", 1, -42); ln:SetPoint("TOPRIGHT", -1, -42); ln:SetHeight(1); fill(ln, COL.line)
+
+  -- the quick choice: Simple, Medium, Heavy
+  local q = opt:CreateFontString(nil, "OVERLAY"); setFont(q, "bold", 11.5); q:SetPoint("TOPLEFT", 18, -56); q:SetTextColor(rgb(COL.muted)); q:SetText("HOW MUCH THE CARD SHOWS")
+  local qs = opt:CreateFontString(nil, "OVERLAY"); setFont(qs, "body", 12.5); qs:SetPoint("TOPLEFT", 18, -110); qs:SetTextColor(rgb(COL.faint)); qs:SetWidth(624); qs:SetJustifyH("LEFT")
+  local DESC = { simple = "Simple: your numbers, your top slip and the next pull. Quick to read between pulls.",
+    medium = "Medium: your numbers, 3 rotation slips, your boss mistakes and the next pull. The everyday choice.",
+    heavy = "Heavy: everything, on a wider card: 5 slips, 3 boss lines, 5 raid mistakes and 8 deaths.",
+    custom = "Custom: your own mix from the settings below." }
+  local pbs = {}
+  for i, k in ipairs({ "simple", "medium", "heavy" }) do
+    local b = optButton(opt, PRESET_NAME[k], 200); b:SetPoint("TOPLEFT", 18 + (i - 1) * 212, -76)
+    b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings() end)
+    pbs[k] = b
+  end
+  refreshers[#refreshers + 1] = function()
+    for k, b in pairs(pbs) do
+      local on = DB.preset == k
+      b.primary = on
+      rounded(b.fillT, "fill", 5, on and COL.gold or COL.raised, 1); rounded(b.lineT, "line", 5, on and COL.gold or COL.line2, 1)
+      b.t:SetTextColor(rgb(on and "1b1406" or COL.text))
+    end
+    qs:SetText(DESC[DB.preset or "custom"] or DESC.custom)
+  end
+  local ln2 = opt:CreateTexture(nil, "ARTWORK"); ln2:SetPoint("TOPLEFT", 1, -134); ln2:SetPoint("TOPRIGHT", -1, -134); ln2:SetHeight(1); fill(ln2, COL.line)
+
+  -- two columns of settings; a change by hand makes the choice above Custom
+  local X, y, IW = 18, 148, 300
+  local function col(n) X = n == 1 and 18 or 342; y = 148 end
+  local function custom() DB.preset = nil; Debrief_RefreshOptions() end
+  local function section(text)
+    local t = opt:CreateFontString(nil, "OVERLAY"); setFont(t, "bold", 11.5); t:SetPoint("TOPLEFT", X, -y); t:SetTextColor(rgb(COL.muted)); t:SetText(text:upper())
+    y = y + 22
+  end
+  local function check(label, get, set, keepPreset)
+    local b = CreateFrame("Button", nil, opt); b:SetSize(IW, 22); b:SetPoint("TOPLEFT", X, -y)
+    b.box = b:CreateTexture(nil, "ARTWORK"); b.box:SetSize(16, 16); b.box:SetPoint("LEFT", 0, 0)
+    b.boxL = b:CreateTexture(nil, "OVERLAY"); b.boxL:SetAllPoints(b.box)
+    b.mark = b:CreateTexture(nil, "OVERLAY", nil, 2); b.mark:SetSize(8, 8); b.mark:SetPoint("CENTER", b.box, "CENTER", 0, 0); b.mark:SetTexture(SLICE .. "dot")
+    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "body", 13.5); b.t:SetPoint("LEFT", b.box, "RIGHT", 10, 0); b.t:SetTextColor(rgb(COL.soft)); b.t:SetText(label)
+    local function show()
+      local on = get()
+      rounded(b.box, "fill", 5, on and COL.gold or COL.raised, 1); rounded(b.boxL, "line", 5, on and COL.gold or COL.line2, 1)
+      b.mark:SetShown(on); b.mark:SetVertexColor(rgb("1b1406"))
+    end
+    b:SetScript("OnClick", function() set(not get()); if not keepPreset then custom() end; show(); applySettings() end)
+    b:SetScript("OnEnter", function() b.t:SetTextColor(rgb(COL.text)) end); b:SetScript("OnLeave", function() b.t:SetTextColor(rgb(COL.soft)) end)
+    refreshers[#refreshers + 1] = show
+    show(); y = y + 26
+  end
+  local function slider(label, minV, maxV, step, fmt, get, set, keepPreset)
+    local t = opt:CreateFontString(nil, "OVERLAY"); setFont(t, "body", 13.5); t:SetPoint("TOPLEFT", X, -y); t:SetTextColor(rgb(COL.soft)); t:SetText(label)
+    local v = opt:CreateFontString(nil, "OVERLAY"); setFont(v, "bold", 13); v:SetPoint("TOPRIGHT", opt, "TOPLEFT", X + IW, -y); v:SetTextColor(rgb(COL.text))
+    local s = CreateFrame("Slider", nil, opt); s:SetPoint("TOPLEFT", X + 2, -(y + 22)); s:SetSize(IW - 4, 16); s:SetOrientation("HORIZONTAL")
+    s:SetMinMaxValues(minV, maxV); s:SetValueStep(step); if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
+    local track = s:CreateTexture(nil, "BACKGROUND"); track:SetPoint("LEFT", 0, 0); track:SetPoint("RIGHT", 0, 0); track:SetHeight(4); fill(track, COL.line2)
+    local thumb = s:CreateTexture(nil, "ARTWORK"); thumb:SetTexture(SLICE .. "dot"); thumb:SetSize(16, 16); thumb:SetVertexColor(rgb(COL.gold)); s:SetThumbTexture(thumb)
+    local busy = false
+    s:SetScript("OnValueChanged", function(self, val)
+      val = math.floor(val / step + 0.5) * step
+      v:SetText(fmt(val))
+      if busy or val == get() then return end
+      set(val); if not keepPreset then custom() end; applySettings()
+    end)
+    s:EnableMouseWheel(true)
+    s:SetScript("OnMouseWheel", function(self, d) self:SetValue(math.max(minV, math.min(maxV, self:GetValue() + d * step))) end)
+    local function show() busy = true; s:SetValue(get()); v:SetText(fmt(get())); busy = false end
+    refreshers[#refreshers + 1] = show
+    show(); y = y + 46
+  end
+  local function cycler(label, list, get, set, keepPreset)
+    local t = opt:CreateFontString(nil, "OVERLAY"); setFont(t, "body", 13.5); t:SetPoint("TOPLEFT", X, -(y + 5)); t:SetTextColor(rgb(COL.soft)); t:SetText(label)
+    local nx = optButton(opt, ">", 26); nx:SetPoint("TOPRIGHT", opt, "TOPLEFT", X + IW, -y)
+    local val = opt:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 13); val:SetPoint("RIGHT", nx, "LEFT", -10, 0); val:SetTextColor(rgb(COL.text))
+    local pv = optButton(opt, "<", 26); pv:SetPoint("RIGHT", val, "LEFT", -10, 0)
+    local function idx() for i, c in ipairs(list) do if c[1] == get() then return i end end return 1 end
+    local function show() val:SetText(list[idx()][2]) end
+    local function go(d) local i = ((idx() - 1 + d) % #list) + 1; set(list[i][1]); if not keepPreset then custom() end; show(); applySettings() end
+    pv:SetScript("OnClick", function() go(-1) end); nx:SetScript("OnClick", function() go(1) end)
+    refreshers[#refreshers + 1] = show
+    show(); y = y + 34
+  end
+  local function S() DB.show = DB.show or {}; return DB.show end
+  local num = function(v) return tostring(math.floor(v + 0.5)) end
+  local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
+
+  -- left column: what the card shows
+  col(1)
+  section("Your card")
+  check("Compact (numbers and next pull only)", function() return DB.compact == true end, function(v) DB.compact = v end)
+  check("Your damage or healing", function() return S().tile ~= false end, function(v) S().tile = v end)
+  check("   vs your last pull", function() return S().vs ~= false end, function(v) S().vs = v end)
+  check("   Your best of the night", function() return S().best ~= false end, function(v) S().best = v end)
+  check("   Your place in the raid", function() return S().rank ~= false end, function(v) S().rank = v end)
+  check("Rotation", function() return S().rotation ~= false end, function(v) S().rotation = v end)
+  slider("Rotation lines", 1, 5, 1, num, function() return DB.maxSlips or 3 end, function(v) DB.maxSlips = v end)
+  check("Boss mechanics", function() return S().boss ~= false end, function(v) S().boss = v end)
+  slider("Boss lines", 1, 3, 1, num, function() return DB.maxBoss or 2 end, function(v) DB.maxBoss = v end)
+  check("Boss mechanics before rotation", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
+  check("Next pull", function() return S().next ~= false end, function(v) S().next = v end)
+  check("Pull chips (your last pulls)", function() return S().chips ~= false end, function(v) S().chips = v end)
+  local leftEnd = y
+
+  -- right column: the raid, the look, after a pull
+  col(2)
+  section("Raid view")
+  check("For everyone, not just leads", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
+  slider("Raid mistakes", 1, 5, 1, num, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
+  slider("Deaths listed", 1, 8, 1, num, function() return DB.maxDied or 4 end, function(v) DB.maxDied = v end)
+  y = y + 2
+  section("Look")
+  cycler("Card width", WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
+  cycler("Font", FONT_CHOICES, function() return DB.font or "debrief" end, function(v) DB.font = v end, true)
+  slider("Text size", 0.85, 1.2, 0.05, pct, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end, true)
+  slider("Card size", 0.7, 1.5, 0.05, pct, function() return DB.scale or 1 end, function(v) DB.scale = v end, true)
+  slider("Background", 0.6, 1, 0.05, pct, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end, true)
+  local rightEnd = y
+
+  -- along the bottom: after a pull, and saved pulls
+  X, y = 18, math.max(leftEnd, rightEnd) + 4
+  local ln3 = opt:CreateTexture(nil, "ARTWORK"); ln3:SetPoint("TOPLEFT", 1, -(y - 6)); ln3:SetPoint("TOPRIGHT", -1, -(y - 6)); ln3:SetHeight(1); fill(ln3, COL.line)
+  y = y + 6
+  local top3 = y
+  section("After a pull")
+  check("Open the card by itself", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
+  check("Paste box pops up after boss pulls", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
+  check("Paste box ready for Ctrl+V", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
+  check("Sound when a card arrives", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
+  local lEnd = y
+  X, y = 342, top3
+  section("Raid and saved pulls")
+  check("Turn on the combat log in raids", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
+  check("Send my pastes to my group", function() return DB.share ~= false end, function(v) DB.share = v end, true)
+  slider("Keep", 10, 100, 5, function(v) return math.floor(v + 0.5) .. " pulls" end, function() return DB.keep or 30 end, function(v) DB.keep = v end, true)
+  y = math.max(lEnd, y) + 4
+  local b1 = optButton(opt, "Show a demo", 150, true); b1:SetPoint("TOPLEFT", 18, -y); b1:SetScript("OnClick", function() SlashCmdList.DEBRIEF("demo") end)
+  local b2 = optButton(opt, "Move card back", 150); b2:SetPoint("LEFT", b1, "RIGHT", 10, 0); b2:SetScript("OnClick", function() SlashCmdList.DEBRIEF("reset") end)
+  local b3 = optButton(opt, "Clear saved pulls", 150); b3:SetPoint("LEFT", b2, "RIGHT", 10, 0); b3:SetScript("OnClick", function() SlashCmdList.DEBRIEF("clear") end)
+  y = y + 40
+  local ft = opt:CreateFontString(nil, "OVERLAY"); setFont(ft, "body", 11.5); ft:SetPoint("TOPLEFT", 18, -y); ft:SetTextColor(rgb(COL.faint))
+  ft:SetText("Changes save by themselves. Click a section's heading on the card to fold it.  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
+  opt:SetHeight(y + 32)
+  Debrief_RefreshOptions()
+end
+function Debrief_ToggleOptions()
+  if not DB then return end
+  if not opt then buildOptions() end
+  if opt:IsShown() then opt:Hide(); return end
+  Debrief_RefreshOptions(); opt:Show()
+  -- (the card beside it, so every change shows at once: the last pull, or the demo when there's none yet)
+  if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") else card:Show(); render() end
+end
+function Debrief_OnAddonCompartmentClick() Debrief_ToggleOptions() end
+-- (in WoW's own Options > AddOns list too)
+local function registerSettings()
+  if not (Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory) then return end
+  local p = CreateFrame("Frame"); p:Hide()
+  local t = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"); t:SetPoint("TOPLEFT", 16, -16); t:SetText("Debrief")
+  local d = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); d:SetPoint("TOPLEFT", 16, -44); d:SetWidth(560); d:SetJustifyH("LEFT")
+  d:SetText("Your pull recap in game. Choose how much the card shows (Simple, Medium, Heavy or your own mix), the font and sizes, and what happens after a pull.")
+  local b = CreateFrame("Button", nil, p, "UIPanelButtonTemplate"); b:SetSize(200, 26); b:SetPoint("TOPLEFT", 16, -80); b:SetText("Open Debrief options")
+  b:SetScript("OnClick", function() if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end; if not (opt and opt:IsShown()) then Debrief_ToggleOptions() end end)
+  local cat = Settings.RegisterCanvasLayoutCategory(p, "Debrief"); Settings.RegisterAddOnCategory(cat)
+end
+
 -- ---------- opening it: key, slash command ----------
 local grabbed = false
 function Debrief_OpenPaste(noFocus)
@@ -517,7 +786,8 @@ BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
 SLASH_DEBRIEF1 = "/debrief"
 SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
-  if msg == "paste" or msg == "p" then Debrief_OpenPaste()
+  if msg == "options" or msg == "config" or msg == "settings" or msg == "o" then Debrief_ToggleOptions()
+  elseif msg == "paste" or msg == "p" then Debrief_OpenPaste()
   elseif msg == "raid" then DB.raidAlways = not DB.raidAlways; say("Raid view " .. (DB.raidAlways and "always on." or "only when you lead or assist.")); if card:IsShown() then render() end
   elseif msg == "reset" then DB.pos = nil; card:ClearAllPoints(); card:SetPoint("CENTER", 260, 60); say("card moved back to the middle.")
   elseif msg == "clear" then DB.pulls = {}; DB.cur = nil; card:Hide(); say("pulls cleared.")
@@ -530,7 +800,7 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
   elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/debrief: show or hide the card. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/debrief options: your settings. /debrief: show or hide the card. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
@@ -577,6 +847,10 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     DB = DebriefDB
     DB.pulls = DB.pulls or {}
     if DB.raidAlways == nil then DB.raidAlways = true end
+    DB.show = DB.show or {}
+    if DB.preset == nil and DB.maxSlips == nil and DB.compact == nil then DB.preset = "medium" end
+    registerSettings()
+    reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); rounded(card.fillT, "fill", 8, COL.bg, DB.alpha or 0.97)
     if DB.testMode == nil then DB.testMode = false end -- (/debrief test turns it on: the box after every fight)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
