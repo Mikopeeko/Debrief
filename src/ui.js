@@ -1646,6 +1646,8 @@ const PATCH_NOTES = [
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
     'Boss guides, The Coiled Altar: in the whole fight the raid now sidesteps the rolling axes instead of standing in them.',
+    'Boss guides: the whole-fight video keeps the bosses on the map between moments, shows what comes next, and knockbacks now fly instead of jumping.',
+    'Boss guides: the facts under the boss, the timeline and the written version all give the same fight length.',
     'Home: your You card has a new look, with your Mythic and Heroic progress (AOTC and CE once you earn them) and a See your summary button.',
     'Your character page: bigger parse numbers in their colours, and each raid night folds to one line until you open it.',
     'Rotation: Past the falloff point only turns yellow when your spec\'s guides say to stop there. For specs that keep stacking their best stat, it now says why that is fine.',
