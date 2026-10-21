@@ -894,14 +894,18 @@ async function moveIn(req, env) {
     '  rq.onerror = () => res(); } catch (e) { res(); } setTimeout(res, 5000); });' +
     '} catch (e) {} location.replace(go); })();</script></body></html>', { headers });
 }
-function newestNotes() {
+// (the newest Patch notes day before `before` (YYYY-MM-DD), or the newest of all: its New features titles and how many
+// Improvements and Bug fixes lines it has)
+function newestNotes(before) {
   const i = APP_HTML.indexOf('const PATCH_NOTES = ['); if (i < 0) return null;
-  const s = APP_HTML.slice(i, i + 20000), m = /\{ d: '(\d{4}-\d\d-\d\d)'(?:, t: '((?:[^'\\]|\\.)*)')?/.exec(s);
+  const s = APP_HTML.slice(i, i + 200000), re = /\n  \{ d: '(\d{4}-\d\d-\d\d)'(?:, t: '((?:[^'\\]|\\.)*)')?/g;
+  let m; while ((m = re.exec(s)) && before && m[1] >= before) { /* a day not over yet */ }
   if (!m) return null;
-  // (the day's New features, by their titles, for the post: { t: '...', d: '...' } cards before its n: list)
-  const day = s.slice(m.index, (s.indexOf('\n  { d: \'', m.index + 5) + 1 || s.length) - 1), hs = day.split(' n: [')[0];
+  const end = s.indexOf('\n  { d: \'', m.index + 5), day = s.slice(m.index, end > 0 ? end : s.length);
+  const part = (k) => { const a = day.indexOf(' ' + k + ': ['); if (a < 0) return ''; const b = day.indexOf('\n  ]', a); return day.slice(a, b > 0 ? b : day.length); };
+  const hs = day.split(' n: [')[0].split(' f: [')[0], count = (k) => (part(k).match(/\n {4}'/g) || []).length;
   const feats = [...hs.matchAll(/\{ t: '((?:[^'\\]|\\.)*)', d: /g)].map((x) => x[1].replace(/\\'/g, "'"));
-  return { d: m[1], t: m[2] ? m[2].replace(/\\'/g, "'") : '', feats };
+  return { d: m[1], t: m[2] ? m[2].replace(/\\'/g, "'") : '', feats, n: count('n'), f: count('f') };
 }
 // Sign in with Warcraft Logs (Oct 20): the page sends the code Warcraft Logs gave it and its PKCE verifier; this trades them
 // for a token with the sign-in key (a public one, no secret), asks who it is, and sends back only the name, characters and
@@ -957,14 +961,19 @@ async function wclSignIn(req, env) {
 }
 async function announcePatch(env) {
   if (!env.DISCORD_PATCH_WEBHOOK || !env.DEBRIEF_KV) return;
-  const p = newestNotes(); if (!p) return;
+  // (the user's call, Oct 21: one full post a day, every morning at 10 (Central), for the day before, so nothing added later
+  // in a day is missed; @everyone only when that day has a New feature)
+  const now = new Date(), today = now.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
+  if (Number(now.toLocaleString('en-US', { timeZone: 'America/Chicago', hour: 'numeric', hour12: false })) % 24 < 10) return;
+  const p = newestNotes(today); if (!p) return;
   const last = await env.DEBRIEF_KV.get('patch-announced'); if (last && last >= p.d) return;
   const day = new Date(p.d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
-  const content = '@everyone New patch notes on Debrief for ' + day + (p.t ? ': **' + p.t + '**' : '') + '.' +
-    (p.feats && p.feats.length ? '\n**New features:**\n' + p.feats.slice(0, 8).map((f) => '✨ ' + f).join('\n') + '\n' : ' ') +
-    'See everything that\'s new and what we fixed: ' + SITE + '/?patchnotes';
+  const ping = !!(p.feats && p.feats.length), more = [p.n ? p.n + (p.n === 1 ? ' improvement' : ' improvements') : '', p.f ? p.f + (p.f === 1 ? ' fix' : ' fixes') : ''].filter(Boolean).join(' and ');
+  const content = (ping ? '@everyone ' : '') + '📝 **Patch notes for ' + day + '**' + (p.t ? ': ' + p.t : '') +
+    (ping ? '\n**New features:**\n' + p.feats.slice(0, 10).map((f) => '✨ ' + f).join('\n') : '') +
+    (more ? '\n' + (ping ? 'Plus ' : '') + more + '.' : '') + '\nSee it all: ' + SITE + '/?patchnotes';
   const r = await fetch(env.DISCORD_PATCH_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, username: 'Claude Van Patch', allowed_mentions: { parse: ['everyone'] } }) }); // (the user's call: bots get funny Claude names)
+    body: JSON.stringify({ content, username: 'Claude Van Patch', allowed_mentions: { parse: ping ? ['everyone'] : [] } }) }); // (the user's call: bots get funny Claude names)
   if (r.ok) await env.DEBRIEF_KV.put('patch-announced', p.d);
 }
 
