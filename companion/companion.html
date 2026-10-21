@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Debrief Companion</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 22'%3E%3Cpath d='M10 1 L18.5 4 V10.5 C18.5 15.6 14.8 19.3 10 21 C5.2 19.3 1.5 15.6 1.5 10.5 V4 Z' fill='%23e6b450' stroke='%232a1e06' stroke-width='.8'/%3E%3Cpath d='M7 6.5 H10.6 C13.3 6.5 14.6 8.4 14.6 11 C14.6 13.6 13.3 15.5 10.6 15.5 H7 Z M9.2 8.4 V13.6 H10.5 C11.7 13.6 12.4 12.6 12.4 11 C12.4 9.4 11.7 8.4 10.5 8.4 Z' fill='%232a1e06'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
@@ -19,61 +20,89 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font: 15px/1.5 var(--body); }
+body { background: radial-gradient(900px 420px at 12% -10%, rgba(230,180,80,.07), transparent 60%), var(--bg); }
 button, input, select { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
-.top { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
-.top svg { width: 28px; height: 31px; flex: none; }
-.top h1 { font: 700 22px/1.1 var(--head); margin: 0; }
-.top h1 small { display: block; font: 500 13px var(--body); color: var(--muted); }
-.stat { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); background: var(--raised); border: 1px solid var(--line2); border-radius: 999px; padding: 4px 12px; max-width: 100%; }
+/* the top: logo, name, status, Quit */
+.top { display: flex; align-items: center; gap: 14px; padding: 16px 28px; border-bottom: 1px solid var(--line); background: rgba(23,26,34,.85); flex-wrap: wrap; }
+.top svg { width: 30px; height: 33px; flex: none; filter: drop-shadow(0 2px 6px rgba(230,180,80,.25)); }
+.top h1 { font: 700 23px/1.1 var(--head); margin: 0; letter-spacing: .2px; }
+.top h1 small { display: block; font: 500 13px var(--body); color: var(--muted); margin-top: 2px; }
+.stat { margin-left: auto; display: flex; align-items: center; gap: 9px; font: 600 13.5px var(--body); color: var(--text); background: var(--raised); border: 1px solid var(--line2); border-radius: 999px; padding: 6px 14px; max-width: 100%; }
 .stat i { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); flex: none; }
-.stat.live i { background: var(--good); box-shadow: 0 0 0 3px rgba(69,193,92,.18); }
+.stat.live i { background: var(--good); box-shadow: 0 0 0 0 rgba(69,193,92,.5); animation: pulse 2s infinite; }
 .stat.busy i { background: var(--gold); }
 .stat.err i { background: var(--bad); }
 .stat span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.quit { padding: 5px 12px; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(69,193,92,.45); } 70% { box-shadow: 0 0 0 8px rgba(69,193,92,0); } 100% { box-shadow: 0 0 0 0 rgba(69,193,92,0); } }
+.quit { padding: 6px 14px; background: transparent; }
 .bye { max-width: 520px; margin: 18vh auto; text-align: center; color: var(--muted); }
 .bye h2 { font: 700 26px var(--head); color: var(--text); margin: 0 0 8px; }
-.wrap { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; padding: 18px 20px 30px; max-width: 1240px; }
-@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
-.panel h2 { font: 600 18px var(--head); margin: 0 0 10px; display: flex; align-items: baseline; gap: 10px; }
-.panel h2 .sub { font: 400 13px var(--body); color: var(--muted); }
-.step { border: 1px solid var(--gold); box-shadow: inset 4px 0 0 var(--gold); }
-.step b { color: var(--gold); }
-.step p { margin: 0; }
-.step .keys { margin-top: 6px; color: var(--muted); font-size: 14px; }
-kbd { font: 600 12px var(--body); background: var(--raised); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--text); }
-.ctl { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
-.ctl select { min-width: 0; max-width: 100%; flex: 1 1 260px; height: 36px; padding: 4px 10px; border: 1px solid var(--line2); border-radius: 8px; background: var(--raised); }
-.sw { display: flex; align-items: center; gap: 7px; font-size: 14px; color: var(--muted); cursor: pointer; user-select: none; }
-.sw input { width: 17px; height: 17px; accent-color: var(--gold); margin: 0; }
-.btn { background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 14px; }
+.wrap { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; padding: 22px 28px 18px; max-width: 1280px; margin: 0 auto; }
+@media (max-width: 960px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; }
+.panel h2 { font: 700 19px var(--head); margin: 0; display: flex; align-items: baseline; gap: 10px; }
+.panel h2 .sub { font: 500 13px var(--body); color: var(--faint); }
+/* the status card: what happens next, in three steps */
+.step { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 24px; align-items: center; padding: 18px 20px; border-color: rgba(230,180,80,.35);
+  background: linear-gradient(135deg, rgba(230,180,80,.09), rgba(230,180,80,.02) 55%), var(--panel); position: relative; overflow: hidden; }
+.step::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); }
+#stepT { margin: 0; font: 700 21px/1.25 var(--head); }
+#stepT b { color: var(--gold); }
+.flow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding: 0; list-style: none; }
+.flow li { display: flex; align-items: center; gap: 8px; background: rgba(15,17,23,.55); border: 1px solid var(--line2); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: 13.5px; color: var(--muted); }
+.flow li b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(230,180,80,.16); color: var(--gold); font: 700 12px var(--body); }
+.flow li em { font-style: normal; color: var(--text); font-weight: 600; }
+.flow .arrow { color: var(--faint); background: none; border: 0; padding: 0 2px; }
+kbd { font: 700 12px var(--body); background: var(--raised); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--text); }
+.toggles { display: flex; flex-direction: column; gap: 10px; }
+/* slim on/off switches, like the addon's settings */
+.sw { display: flex; align-items: center; justify-content: space-between; gap: 14px; font: 600 14px var(--body); color: var(--text); cursor: pointer; user-select: none; }
+.sw input { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line2); position: relative; margin: 0; cursor: pointer; transition: background .15s; flex: none; }
+.sw input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: left .15s, background .15s; }
+.sw input:checked { background: var(--gold); border-color: var(--gold); }
+.sw input:checked::after { left: 19px; background: var(--gold-ink); }
+.bar { grid-column: 1 / -1; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 2px 0 0; }
+.bar i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+.btn { background: var(--raised); border: 1px solid var(--line2); border-radius: 7px; padding: 7px 12px; cursor: pointer; font: 600 13.5px var(--body); transition: border-color .12s, background .12s; }
 .btn:hover { border-color: var(--faint); }
-.btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); font-weight: 600; }
-.btn:disabled { opacity: .5; cursor: default; }
-.bossname { font: 600 15px var(--head); margin: 14px 4px 4px; color: var(--text); }
-.bossname:first-child { margin-top: 0; }
-.pull { width: 100%; display: grid; grid-template-columns: 54px 1fr auto auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 14px; }
+.btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.btn:disabled { opacity: .45; cursor: default; }
+/* your pulls */
+.phead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.phead select { margin-left: auto; min-width: 0; max-width: 100%; height: 34px; padding: 4px 30px 4px 12px; border: 1px solid var(--line2); border-radius: 7px; background: var(--raised); font-size: 13.5px; color: var(--muted); }
+.group { border: 1px solid var(--line); border-radius: 8px; background: rgba(30,34,44,.45); padding: 6px; margin-bottom: 10px; }
+.bossname { display: flex; align-items: baseline; gap: 8px; font: 700 16px var(--head); margin: 4px 8px 4px; color: var(--text); }
+.bossname span { font: 600 12px var(--body); color: var(--faint); text-transform: uppercase; letter-spacing: .06em; }
+.pull { width: 100%; display: grid; grid-template-columns: 58px auto auto 1fr auto; gap: 12px; align-items: center; padding: 6px 8px; border-radius: 6px; font-size: 14px; }
+.pull + .pull { border-top: 1px solid rgba(42,47,59,.6); }
 .pull:hover { background: var(--raised); }
 .pull.sel { background: #2a2618; box-shadow: inset 2px 0 0 var(--gold); }
-.pull .n { color: var(--faint); font-variant-numeric: tabular-nums; }
-.pull .d { color: var(--muted); font-variant-numeric: tabular-nums; }
-.pull .btn { padding: 3px 10px; font-size: 13px; }
-.chip { font-size: 12px; border-radius: 4px; padding: 1px 8px; font-weight: 500; white-space: nowrap; }
+.pull .n { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pull .d { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 13px; }
+.pull .btn { grid-column: 5; padding: 4px 12px; font-size: 12.5px; opacity: .85; }
+.pull:hover .btn, .pull.sel .btn { opacity: 1; }
+.chip { font: 700 12px var(--body); border-radius: 5px; padding: 2px 9px; white-space: nowrap; }
 .chip.kill { background: var(--good-bg); color: #7ee08f; }
 .chip.wipe { background: var(--bad-bg); color: #ff8f87; }
 .chip.other { background: var(--raised); color: var(--muted); }
 .empty { color: var(--muted); font-size: 14px; padding: 8px 4px; }
-.list { max-height: calc(100vh - 230px); overflow: auto; margin: 0 -8px; padding: 0 8px; }
-.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.prevh { font: 600 13px var(--head); color: var(--muted); letter-spacing: .3px; margin: 0 0 6px 2px; text-transform: uppercase; }
-details.code summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.list { max-height: calc(100vh - 300px); min-height: 220px; overflow: auto; margin: 0 -6px; padding: 0 6px; }
+.side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.prevh { font: 700 12px var(--body); color: var(--faint); letter-spacing: .08em; margin: 2px 0 2px 2px; text-transform: uppercase; }
+/* before the first pull: a quiet placeholder where the card will be */
+.wait { border: 1px dashed var(--line2); border-radius: 10px; padding: 34px 22px; text-align: center; color: var(--muted); background: rgba(23,26,34,.5); }
+.wait svg { width: 34px; height: 37px; opacity: .9; margin-bottom: 8px; }
+.wait b { display: block; font: 700 18px var(--head); color: var(--text); margin-bottom: 4px; }
+.wait p { margin: 0; font-size: 13.5px; }
+details.code summary { cursor: pointer; color: var(--faint); font-size: 13px; }
 details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; color: var(--muted); font: 12px/1.4 Consolas, monospace; padding: 8px; resize: vertical; }
 .folder { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .folder input { flex: 1 1 260px; background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 10px; }
-.bar { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 8px; }
-.bar i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+/* the small print, at the bottom */
+.foot { max-width: 1280px; margin: 0 auto; padding: 0 28px 22px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--faint); }
+.foot span::before { content: "·"; margin-right: 18px; color: var(--line2); }
+.foot span:first-child::before { content: none; margin: 0; } .foot span:empty { display: none; }
 
 /* ---------- the in-game card (same layout as the addon) ---------- */
 .card { width: 100%; max-width: 400px; background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 18px 46px rgba(0,0,0,.6); overflow: hidden; }
@@ -130,12 +159,26 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 </header>
 
 <div class="wrap">
+  <section class="panel step" id="step">
+    <div>
+      <p id="stepT"><b>Ready.</b> Waiting for your next boss pull.</p>
+      <ol class="flow">
+        <li><b>1</b>A boss pull ends</li>
+        <li><b>2</b>Debrief copies your recap and <em>chimes</em></li>
+        <li><b>3</b>In WoW, press <kbd>Ctrl</kbd>+<kbd>V</kbd> when it asks</li>
+      </ol>
+    </div>
+    <div class="toggles">
+      <label class="sw" for="auto">Send each new pull <input type="checkbox" id="auto" checked></label>
+      <label class="sw" for="snd">Chime <input type="checkbox" id="snd" checked></label>
+    </div>
+    <div class="bar" id="bar" hidden><i></i></div>
+  </section>
+
   <section class="panel">
-    <h2>Your pulls <span class="sub" id="logInfo"></span></h2>
-    <div class="ctl">
+    <div class="phead">
+      <h2>Your pulls <span class="sub" id="logInfo"></span></h2>
       <select id="logSel" aria-label="Combat log"></select>
-      <label class="sw" for="auto"><input type="checkbox" id="auto" checked> Send each new pull</label>
-      <label class="sw" for="snd"><input type="checkbox" id="snd" checked> Sound</label>
     </div>
     <div id="folderBox" hidden>
       <p class="empty">I couldn't find your WoW Logs folder. Paste where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
@@ -145,20 +188,16 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   </section>
 
   <aside class="side">
-    <div class="panel step" id="step">
-      <p id="stepT"><b>Ready.</b> When a boss pull ends, its recap is copied for the game.</p>
-      <p class="keys">In WoW, Debrief asks "See your recap?" after each boss pull: press <kbd>Ctrl</kbd>+<kbd>V</kbd> after the chime. Raiders with the addon get their card from you automatically.</p>
-      <p class="keys">You can close this window: Debrief keeps running in the background. Quit (top right) stops it.</p>
-      <p class="keys" id="addonT"></p>
-      <div class="bar" id="bar" hidden><i></i></div>
-    </div>
-    <div>
-      <p class="prevh">What the game will show</p>
-      <div id="preview"><div class="card"><div class="c-top"><b>Debrief</b><span>No pull yet</span></div><div class="c-body"><p class="empty" style="margin:0">Send a pull to see its card here.</p></div></div></div>
-    </div>
+    <p class="prevh">What the game will show</p>
+    <div id="preview"><div class="wait"><svg viewBox="0 0 20 22" aria-hidden="true"><path d="M10 1 L18.5 4 V10.5 C18.5 15.6 14.8 19.3 10 21 C5.2 19.3 1.5 15.6 1.5 10.5 V4 Z" fill="url(#lgf)" stroke="#2a1e06" stroke-width=".8"/><path d="M7 6.5 H10.6 C13.3 6.5 14.6 8.4 14.6 11 C14.6 13.6 13.3 15.5 10.6 15.5 H7 Z M9.2 8.4 V13.6 H10.5 C11.7 13.6 12.4 12.6 12.4 11 C12.4 9.4 11.7 8.4 10.5 8.4 Z" fill="#2a1e06"/></svg><b>Your next recap shows here</b><p>Or press Send on any pull to see its card.</p></div></div>
     <details class="code"><summary>The code that was copied</summary><textarea id="codeOut" readonly></textarea><div class="folder"><button class="btn" id="copyAgain" type="button" disabled>Copy it again</button></div></details>
   </aside>
 </div>
+<footer class="foot">
+  <span>Close this window any time: Debrief keeps running in the background. Quit stops it.</span>
+  <span>Raiders with the addon get their card from you automatically.</span>
+  <span id="addonT"></span>
+</footer>
 <iframe id="eng" src="/app" title="Debrief engine" style="position:absolute;width:10px;height:10px;left:-9999px;top:0;border:0" tabindex="-1" aria-hidden="true"></iframe>
 
 <script>
@@ -192,7 +231,7 @@ async function loadLogs() {
   $('folderBox').hidden = true;
   L.files = x.files || [];
   if (!L.files.length) { $('pulls').innerHTML = '<p class="empty">No combat log yet. In WoW, type <kbd>/combatlog</kbd> (or turn on Advanced Combat Logging and log your raid). Pulls show up here as they end.</p>'; stat('Waiting for a combat log', 'busy'); waitNew(); return; }
-  $('logSel').innerHTML = L.files.map((f, i) => '<option value="' + i + '">' + esc((f.old ? 'Old: ' : '') + f.name.replace(/^Archive-/, '')) + ' · ' + (f.size / 1048576).toFixed(0) + ' MB · ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</option>').join('');
+  $('logSel').innerHTML = L.files.map((f, i) => '<option value="' + i + '" title="' + esc(f.name) + '">' + (i === 0 && !f.old ? 'Latest log' : 'Older log') + ' · ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + (f.size / 1048576).toFixed(0) + ' MB</option>').join('');
   await openLog(0);
 }
 $('logSel').addEventListener('change', (e) => openLog(+e.target.value));
@@ -202,12 +241,12 @@ async function openLog(i) {
   L.name = f.name; L.ix = W ? W.E.createIndexer() : null; L.items = []; L.done = 0; L.size = 0; L.reps.clear(); L.sent.clear();
   L.live = !f.old && i === 0; // (the newest log is always watched: new pulls on it, or a newer log, are picked up by themselves)
   const fresh = Date.now() - f.mtime < 2 * 3600e3;
-  $('pulls').innerHTML = '<p class="empty">Finding the boss pulls in ' + esc(f.name) + '…</p>';
-  stat('Reading ' + f.name, 'busy');
+  $('pulls').innerHTML = '<p class="empty">Finding your boss pulls…</p>';
+  stat('Reading your combat log…', 'busy');
   await engineReady.catch((e) => stat(e.message, 'err'));
   L.ix = W.E.createIndexer();
   await scanMore(true);
-  if (L.live) { stat(fresh ? 'Watching ' + f.name : 'Waiting for your next boss pull', 'live'); if (!L.waiting) waitLoop(); }
+  if (L.live) { stat('Waiting for your next boss pull', 'live'); if (!L.waiting) waitLoop(); }
   else stat('Old log: pick a pull to send', '');
   try { const a = await j('/addon'); if (a.msg) $('addonT').textContent = a.msg; } catch (e) { /* older helper */ }
 }
@@ -228,12 +267,12 @@ function renderPulls() {
   $('logInfo').textContent = L.items.length + ' boss pull' + (L.items.length === 1 ? '' : 's');
   const groups = new Map();
   for (const b of L.items) { const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
-  box.innerHTML = [...groups].reverse().map(([k, l]) => '<div class="bossname">' + esc(k) + '</div>' + l.slice().reverse().map((b) => {
+  box.innerHTML = [...groups].reverse().map(([k, l]) => '<div class="group"><div class="bossname">' + esc(k.split(' · ')[0]) + '<span>' + esc(k.split(' · ')[1] || '') + '</span></div>' + l.slice().reverse().map((b) => {
     const i = L.items.indexOf(b), done = !!b.endByte, sel = L.sel === i;
     const chip = !done ? '<span class="chip other">In progress</span>' : b.kill ? '<span class="chip kill">Kill</span>' : '<span class="chip wipe">Wipe' + (L.reps.get(b.startByte) && L.reps.get(b.startByte).pct != null ? ' ' + L.reps.get(b.startByte).pct + '%' : '') + '</span>';
     return '<div class="pull' + (sel ? ' sel' : '') + '"><span class="n">Pull ' + b.pull + '</span><span>' + chip + '</span><span class="d">' + (done ? mmss(b.duration) : '') + '</span>' +
       '<button class="btn' + (sel ? ' primary' : '') + '" type="button" data-i="' + i + '"' + (done ? '' : ' disabled') + '>' + (L.sent.has(b.startByte) ? 'Send again' : 'Send to game') + '</button></div>';
-  }).join('')).join('');
+  }).join('') + '</div>').join('');
   box.querySelectorAll('button[data-i]').forEach((btn) => btn.addEventListener('click', () => send(L.items[+btn.dataset.i], true)));
 }
 
@@ -300,8 +339,8 @@ async function send(b, byHand) {
       RECAP.lastModel = model; renderPreview(model);
       const ok = await clip(code);
       L.sent.add(b.startByte); renderPulls(); progress(null);
-      $('stepT').innerHTML = ok ? '<b>Copied pull ' + b.pull + ' (' + esc(resultText(model.h)) + ').</b> Paste it in game now.' : '<b>Pull ' + b.pull + ' is ready</b>, but copying failed. Use "Copy it again".';
-      stat(L.live ? 'Watching ' + L.name : 'Sent pull ' + b.pull, L.live ? 'live' : '');
+      $('stepT').innerHTML = ok ? '<b>Pull ' + b.pull + ' is copied</b> (' + esc(resultText(model.h)) + '). In WoW, press Ctrl+V.' : '<b>Pull ' + b.pull + ' is ready</b>, but copying failed. Use "Copy it again".';
+      stat(L.live ? 'Waiting for your next boss pull' : 'Sent pull ' + b.pull, L.live ? 'live' : '');
     } catch (e) { console.error(e); progress(null); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }
   });
   L.busy = run.catch(() => {});
