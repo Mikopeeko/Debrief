@@ -3126,7 +3126,7 @@ const HOW = {
     gloom: 'On Mythic each Spiteful Soulcoiler spawns with Spirit Shield (99% damage reduction, 2 stacks). Malacrass puts Gloombomb on two melee and two ranged players; 5 seconds later each one explodes in a 15-yard circle, and every Soulcoiler inside loses a stack. Each pair overlaps its circles on its own add (melee on the unmarked melee add, ranged on the marked ranged add), so both shields break. A bomb that misses, or lands on a leftover add from an earlier set, leaves this set\'s shield up. Everyone else stays out of the circles.',
     inter: 'Malacrass channels Soulbinding: Zul\'jan takes double damage, so use Bloodlust and burn him. Fragments of Malacrass rush toward Zul\'jan and heal him for about 10% if they reach him, which is close to a wipe. Players block them, but every block gives the whole raid a Spirit Erasure stack (more damage taken), so soak in rounds: 3 to 5 stacks, let them drop, repeat; near the end stack raid cooldowns in the middle and go up to 7 to 10. Spread soakers around the room, including the inner ring. Zul\'jan under 35% when it ends is on pace for the kill.',
     avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous (red on any hit): tank frontals on non-tanks and ghosts touching. Harmful: the statue poison pools (Noxious Ground), Axegrinder axes, someone else\'s Gloombomb, standing near a purple orb carrier, and P3 Defiled Ground. Minor: standing near a green orb carrier and Toxic Deluge impacts. Each hit is one time walking into it (a pool or axe ticks fast while you stand in it, and the ticks are listed under it). Tanks aren\'t judged on Axegrinder. Raid-wide damage (orb pulses and ruptures, Dreadful Presence, Retaliatory Malice, the Guillotine burst) isn\'t avoidable and isn\'t listed.',
-    vf: 'Zul\'jan\'s Venomfang puts a 14-second poison on random players. It can be dispelled: the rule is to dispel it quickly, and any healer can take it. Each row is one Venomfang: how long it stayed on and who dispelled it. Amber: on for more than 4 seconds or never dispelled. Red: the player died with it on.',
+    vf: 'Zul\'jan\'s Venomfang puts a 14-second poison on random players. It can be dispelled, but it\'s a small part of the raid\'s damage, and top raids often let it run, so a slow dispel isn\'t a mistake. Each row is one Venomfang: how long it stayed on and who dispelled it. Red only when the player died with it on.',
     push: 'Phase changes are timed. In P1 hold damage, keep the last frontal on empty ground, then kill Zul\'jan in the middle after the last Toxic Deluge with Darkness, Anti-Magic Zone and Spirit Link stacked (aim for 9 to 11 stacks). Push Malacrass right after a Soul Sever clears the ghosts (watch the knockback at the edge), use Lust in the intermission, and in P3 kill Zul\'jan first, before the Defilement that follows the burn, with Malacrass at about 7 to 8%, then finish Malacrass before he enrages.',
   },
   'Entombed Sentinels': {
@@ -3540,12 +3540,12 @@ function buildCoiledAltar(ev, r, h) {
     vfRows.push({ t: a.t, g: a.dst, took, by: disp ? disp.src : null, died: !!r.deaths.find((d) => d.guid === a.dst && d.t >= a.t && d.t <= (rem ? rem.t : a.t + 14) + 0.5) });
   }
   const slow = vfRows.filter((x) => x.took != null && x.took > 4 && !x.by);
-  if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
-    verdict: slow.length > 2 ? 'warn' : 'good',
+  if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel when free)', place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
+    verdict: vfRows.some((x) => x.died) ? 'bad' : 'good', // (Oct 21: only a death with it on counts; the world #1 kill dispelled 1 of 6)
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + ' s' : 'n/a') + '.',
     // amber: a slow or missed dispel (no guide sets a hard rule); red only when the player died with it on them
-    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t }, { p: pname(x.g) }, { txt: x.took != null ? x.took.toFixed(1) + ' s' : 'not removed', bad: x.died, warn: x.took == null || x.took > 4, sub: x.died ? 'died with it on' : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
+    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t }, { p: pname(x.g) }, { txt: x.took != null ? x.took.toFixed(1) + ' s' : 'not removed', bad: x.died, sub: x.died ? 'died with it on' : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
     // how many each player dispelled
     extra: (() => { const by = new Map(); for (const x of vfRows) if (x.by) by.set(pname(x.by), (by.get(pname(x.by)) || 0) + 1); return by.size ? { title: 'Dispels by player', items: [...by].sort((a, b) => b[1] - a[1]).map(([p, n]) => ({ p, n })) } : null; })() });
 
@@ -4063,7 +4063,9 @@ function buildCoiledAltar(ev, r, h) {
     // (the targets go in each set's header; the stacking check stays in Mistakes by player)
     for (const r0 of (sGh ? sGh.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] });
     for (const r0 of (sMc ? sMc.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Mind control fall', bad: true }, { t: r0[0].t }, { p: r0[1].p }, { txt: 'died, ' + r0[3].txt, bad: true }, r0[4]] });
-    for (const r0 of (sSs ? sSs.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', warn: r0[4].warn }, r0[5]] });
+    // (Gravebound deaths (Oct 21): a player hit by Soul Sever or a Gloombomb who didn't pick up their soul fragments, up to 30 s after the last Dreadmarch)
+    { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'died to Gravebound: didn\'t pick up their soul fragments', bad: true }, { txt: '' }] }); }
+    for (const r0 of (sSs ? sSs.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }); /* (a missed ghost is walked back for the next frontal (Oct 21): not a mistake) */
     if (dm.length || items.length) {
       const groups = dm.map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
       const other = { title: 'Other', t: 0, rows: [] };
@@ -4076,10 +4078,10 @@ function buildCoiledAltar(ev, r, h) {
         g.sub = (g.tg && g.tg.length ? 'targets ' + g.tg.join(', ') + ' · ' : '') + (nColl ? pl(nColl, 'ghost collision') : 'no ghost collisions') + (nBad - nColl > 0 ? ' · ' + pl(nBad - nColl, 'other problem') : '');
         // crowd control on the mind-controlled players (amber when none landed)
         const di = dm.indexOf(g.t);
-        if (di >= 0 && g.tg && g.tg.length) { const cc = dmCC[di] || []; g.sub += ' · ' + (cc.length ? 'CC: ' + cc.join(', ') : 'no CC on the targets'); if (!cc.length && mythic) g.warn = true; }
+        if (di >= 0 && g.tg && g.tg.length) { const cc = dmCC[di] || []; g.sub += ' · ' + (cc.length ? 'CC: ' + cc.join(', ') : 'no CC on the targets'); } /* (no CC isn't a mistake (Oct 21): the cancel macro stops the walk) */
         if (!g.rows.length) g.rows.push([{ txt: 'Clean', dim: true }, { t: g.t }, { txt: '' }, { txt: 'no collisions, falls or missed ghosts', dim: true }, { txt: '' }]);
       }
-      sections.push({ id: 'dmghost', title: 'Dreadmarch (Stack, then stand still)', place: 'Dreadmarch (mind control): ghosts and falls', spell: S('dreadmarch'), verdict: worst([sDm, sGh, sMc, sSs]),
+      sections.push({ id: 'dmghost', title: 'Dreadmarch (Stack, then stand still)', place: 'Dreadmarch (mind control): ghosts and falls', spell: S('dreadmarch'), verdict: items.some((x) => x.row[0].bad) ? 'bad' : 'good', /* (Oct 21: falls, ghost collisions and Gravebound deaths only) */
         summary: 'It shows each Dreadmarch from start to finish: who was targeted and whether they stacked on the marker, where the ghosts spawned, ghosts touching, players mind controlled off the edge, and whether Soul Sever cleaned the ghosts up. Every row has its map.',
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: groups.filter((g) => g.rows.length) });
     }
