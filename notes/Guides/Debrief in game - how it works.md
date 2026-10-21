@@ -51,3 +51,26 @@ Your pull recap inside WoW, after every boss pull. Built for the raid test on Oc
 
 ## Next ideas
 - Smaller codes (faster sharing), a minimap button, and a real in-game screenshot pass after tonight.
+
+## Version 0.4 (Oct 21, the user's "do whatever you want, make it amazing")
+- **Big window** (Expand on the card, `/debrief big`, or Settings > Big window to open it after every pull instead of the card):
+  saved pulls on the left grouped by boss (click one to open it); on the right the pull's header, Me / Raid view, three tiles
+  (your number vs last pull, your best tonight, your place or your goal %), a line of your numbers pull by pull, Rotation, Boss
+  mechanics, Next pull; on the right side "Progress tonight" (a bar per pull, the kill in green, the closest wipe in the accent colour),
+  the raid's top mistakes and who died. "Tonight" = the same boss and difficulty within 10 hours of the pull. Post to raid chat sits
+  on top for leads and assists.
+- **Settings with a side menu**: The card (What it shows, Raid view, Size and font, Style), Other views (Big window, Mini bar),
+  Extras (Goals, Raid lead, After a pull, Saved pulls). Simple / Medium / Heavy stays on top of "What it shows".
+- **Style**: accent colour (Debrief gold, your class colour, Frost, Fel, Crimson, Void), card style (Panels, Glass, Flat), only what
+  went wrong, colour-blind colours (blue good, orange bad), lock in place, hide during combat (on by default; back after the fight),
+  close by itself (never, 30 s, 60 s, 2 min; never while the mouse is on it).
+- **Mini bar** (`/debrief mini`): one slim line after each pull: pull, result chip, your number with the change, slips, goal %. Click it
+  for the card; drag it anywhere.
+- **Goals**: a damage and a healing goal in thousands. The first + starts a little above your latest pull. The card gets a goal line
+  and a thin bar (green once reached), the mini bar a goal %, the big window a Goal tile. Only on your own numbers.
+- **Raid lead**: Post the pull to raid chat (headline, top 3 mistakes, first deaths if wanted, the Next pull line). Can post by itself
+  after your own paste, only when you lead or assist (off by default).
+- Fixed on the way: "any other key closes the paste box" never worked (a misplaced variable), and `/debrief log` errored.
+- New commands: `/debrief big`, `/debrief mini`, `/debrief post`.
+- Tested in the fake WoW (every settings button clicked, big window, mini bar, styles, goals, raid chat, combat hiding).
+  Not yet seen in the real game. Screenshots 20 and 21 in notes/In-game addon - Oct 21/ (a browser copy of the look).
