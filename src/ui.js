@@ -1533,6 +1533,8 @@ const PATCH_NOTES = [
     'The front page\'s boss cards list every mechanic Debriefing checks on that boss.',
     'Rotation\'s Work on these first no longer leads with gear and stats.',
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
+  ], f: [
+    'When Warcraft Logs is down, the site now says so and asks you to try again in a few minutes (it used to say the site\'s key was rejected).',
   ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },

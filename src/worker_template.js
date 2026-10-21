@@ -26,6 +26,8 @@ const APP_HTML = __HTML__;
 /*TOPSPEC*/
 
 let token = null;
+// (Warcraft Logs out of service (Oct 21): a 5xx answer is their outage, not a problem with the site's key)
+const WCL_DOWN = 'Warcraft Logs is down right now. Try again in a few minutes.';
 async function getToken(env) {
   if (token && token.exp > Date.now()) return token.v;
   if (!env.WCL_CLIENT_ID || !env.WCL_CLIENT_SECRET) throw new Error('This site is missing its Warcraft Logs API key (WCL_CLIENT_ID / WCL_CLIENT_SECRET).');
@@ -35,7 +37,7 @@ async function getToken(env) {
     body: 'grant_type=client_credentials',
   });
   const j = await r.json().catch(() => ({}));
-  if (!j.access_token) throw new Error('Warcraft Logs rejected this site\'s API key (' + r.status + ').');
+  if (!j.access_token) throw new Error(r.status >= 500 ? WCL_DOWN : 'Warcraft Logs rejected this site\'s API key (' + r.status + ').');
   token = { v: j.access_token, exp: Date.now() + Math.max(60, (j.expires_in || 3600) - 300) * 1000 };
   return token.v;
 }
@@ -48,7 +50,7 @@ async function gql(env, query, variables, ut) {
   if (r.status === 429) throw new Error('Warcraft Logs is rate limiting this site right now. Try again in a few minutes.');
   const j = await r.json().catch(() => ({}));
   if (j.errors && j.errors.length) throw new Error(j.errors.map((e) => e.message).join('; '));
-  if (!r.ok) throw new Error('Warcraft Logs answered ' + r.status + '.');
+  if (!r.ok) throw new Error(r.status >= 500 ? WCL_DOWN : 'Warcraft Logs answered ' + r.status + '.');
   return j.data;
 }
 // the same request, its reply kept as text (not parsed): an error reply is short, so only a short one is looked inside
@@ -59,7 +61,7 @@ async function gqlText(env, query, variables, ut) {
     body: JSON.stringify({ query, variables }),
   });
   if (r.status === 429) throw new Error('Warcraft Logs is rate limiting this site right now. Try again in a few minutes.');
-  if (!r.ok) throw new Error('Warcraft Logs answered ' + r.status + '.');
+  if (!r.ok) throw new Error(r.status >= 500 ? WCL_DOWN : 'Warcraft Logs answered ' + r.status + '.');
   const txt = await r.text();
   if (txt.length < 4000 && /"errors"\s*:/.test(txt)) { let m = 'Warcraft Logs refused the request.'; try { m = JSON.parse(txt).errors.map((e) => e.message).join('; '); } catch (e) { /* keep the plain message */ } throw new Error(m); }
   return txt;
