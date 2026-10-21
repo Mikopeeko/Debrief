@@ -152,6 +152,37 @@ eb:SetScript("OnEscapePressed", function() paste:Hide() end)
 local PASTE_KEYS = { LCTRL = true, RCTRL = true, LMETA = true, RMETA = true, V = true }
 eb:SetScript("OnKeyDown", function(self, key) if grabbed and not PASTE_KEYS[key] then grabbed = false; self:ClearFocus() end end)
 
+-- ---------- the after-pull prompt: "See your recap? Press Ctrl+V", with no paste box to look at ----------
+-- (WoW never lets an addon read the clipboard, so a paste is the only way in: the box is still there, just hidden inside this prompt)
+local toast = CreateFrame("Button", "DebriefToast", UIParent)
+toast:SetSize(340, 56); toast:SetPoint("TOP", 0, -160); toast:SetFrameStrata("DIALOG"); toast:SetClampedToScreen(true); toast:Hide()
+skin(toast, 8, COL.bg, 0.97, COL.gold, 0.55, true)
+toast:SetMovable(true); toast:RegisterForDrag("LeftButton")
+toast:SetScript("OnDragStart", function() if not DB.lock then toast:StartMoving() end end)
+toast:SetScript("OnDragStop", function() toast:StopMovingOrSizing(); local p, _, rp, x, y = toast:GetPoint(); DB.toastPos = { p, rp, x, y } end)
+local tLogo = toast:CreateTexture(nil, "ARTWORK"); tLogo:SetSize(18, 20); tLogo:SetPoint("LEFT", 14, 0); tLogo:SetTexture(MEDIA .. "Media\\logo")
+local tTitle = toast:CreateFontString(nil, "OVERLAY"); setFont(tTitle, "head", 17); tTitle:SetPoint("TOPLEFT", 42, -10); tTitle:SetTextColor(rgb(COL.text)); tTitle:SetText("See your recap?")
+local tSub = toast:CreateFontString(nil, "OVERLAY"); setFont(tSub, "body", 12.5); tSub:SetPoint("TOPLEFT", 42, -31); tSub:SetWidth(200); tSub:SetJustifyH("LEFT"); tSub:SetWordWrap(false); tSub:SetTextColor(rgb(COL.muted))
+local tKey = CreateFrame("Frame", nil, toast); tKey:SetSize(62, 26); tKey:SetPoint("RIGHT", -38, 0); skin(tKey, 5, COL.raised, 1, COL.line2, 1)
+tKey.t = tKey:CreateFontString(nil, "OVERLAY"); setFont(tKey.t, "bold", 13); tKey.t:SetPoint("CENTER", 0, 0); tKey.t:SetTextColor(rgb(COL.text)); tKey.t:SetText("Ctrl+V")
+local tClose = closeButton(toast); tClose:ClearAllPoints(); tClose:SetPoint("RIGHT", -8, 0)
+local function toastSay(text, hex) tSub:SetTextColor(rgb(hex or COL.muted)); tSub:SetText(text) end
+local function toastReady(on) rounded(tKey.fillT, "fill", 5, on and COL.gold or COL.raised, 1); rounded(tKey.lineT, "line", 5, on and COL.gold or COL.line2, 1); tKey.t:SetTextColor(rgb(on and "1b1406" or COL.text)) end
+-- (the box moves into the prompt, out of sight, or back into the paste window)
+local function boxIn(host)
+  eb:ClearAllPoints()
+  if host == toast then eb:SetParent(toast); eb:SetPoint("TOPLEFT", toast, "TOPLEFT", 0, 0); eb:SetSize(1, 1); eb:SetAlpha(0)
+  else eb:SetParent(ebBg); eb:SetPoint("TOPLEFT", 10, -2); eb:SetPoint("BOTTOMRIGHT", -10, 2); eb:SetAlpha(1) end
+end
+local function closeToast() toast:Hide() end
+toast:SetScript("OnHide", function() eb:ClearFocus(); boxIn(paste) end)
+tinsert(UISpecialFrames, "DebriefToast")
+tClose:SetScript("OnClick", closeToast)
+-- (clicking the prompt gets it ready again after you moved or typed)
+toast:SetScript("OnClick", function() eb:SetText(""); eb:SetFocus(); grabbed = false; toastReady(true); toastSay("Press Ctrl+V now.") end)
+eb:SetScript("OnEditFocusLost", function() rounded(ebBg.lineT, "line", 5, COL.line2, 1); if toast:IsShown() then toastReady(false); toastSay("Click here, then press Ctrl+V.") end end)
+eb:SetScript("OnEscapePressed", function() paste:Hide(); if toast:IsShown() then closeToast() end end)
+
 -- ---------- the card ----------
 local W, PAD, TOPY = 400, 14, 172
 local CW = W - PAD * 2
@@ -1024,10 +1055,16 @@ end
 -- ---------- import (your own paste) ----------
 local function import(text)
   local m, err = decode(text)
-  if not m then pMsg:SetTextColor(rgb(COL.badT)); pMsg:SetText(err); return false end
-  addPull(m)
+  if not m then
+    if toast:IsShown() then toastSay(err:match("^[^%.]+%.") or err, COL.badT) else pMsg:SetTextColor(rgb(COL.badT)); pMsg:SetText(err) end
+    return false
+  end
+  local new = addPull(m)
   DB.pasted = true
-  paste:Hide(); showCard()
+  -- (pressed before the PC app had the new pull ready: that's the last one again, so wait for the chime and try again)
+  if not new and toast:IsShown() and not DB.testMode then toastSay("That's the last pull. Wait for the chime, then Ctrl+V.", COL.warn); return true end
+  paste:Hide(); if toast:IsShown() then closeToast() end
+  showCard()
   say("pull " .. m.h.pull .. " of " .. m.h.boss .. " loaded.")
   share(text)
   if DB.autoPost and IsInGroup() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) then Debrief_PostRaid(m) end
@@ -1327,7 +1364,8 @@ local function buildOptions()
 
   page("after")
   switch("Open the card by itself", "When your pull arrives from the group.", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
-  switch("Paste box after boss pulls", "For whoever runs Debrief Companion.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
+  switch("Ask after boss pulls", "For whoever runs Debrief Companion.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
+  switch("Small prompt, not the paste box", "\"See your recap? Press Ctrl+V\" and nothing else.", function() return DB.prompt ~= false end, function(v) DB.prompt = v end, true)
   switch("Ready for Ctrl+V", "Any other key closes it so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
   switch("Sound", "A soft sound when a card arrives.", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
   switch("Combat log in raids", "Turns on by itself, so nobody forgets.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
@@ -1370,6 +1408,17 @@ end
 -- ---------- opening it: key, slash command ----------
 grabbed = false
 function Debrief_OpenPaste(noFocus)
+  -- (after a pull: the small prompt, no paste box; /debrief paste and the key still open the full box)
+  if noFocus and DB and DB.prompt ~= false then
+    paste:Hide(); boxIn(toast); eb:SetText("")
+    tTitle:SetText(DB.testMode and "Test mode: see a recap?" or "See your recap?")
+    if DB.toastPos then toast:ClearAllPoints(); toast:SetPoint(DB.toastPos[1], UIParent, DB.toastPos[2], DB.toastPos[3], DB.toastPos[4]) end
+    toast:Show()
+    if DB.autoFocus == false then toastReady(false); toastSay("Click here, then press Ctrl+V.")
+    else eb:SetFocus(); grabbed = true; toastReady(true); toastSay("Press Ctrl+V after the chime.") end
+    return
+  end
+  if toast:IsShown() then closeToast() end
   pMsg:SetTextColor(rgb(COL.faint))
   if DB and DB.testMode and noFocus then
     pMsg:SetText("Test mode: click the box, then Ctrl+V. /debrief demo shows a sample. /debrief test turns this off.")
@@ -1432,13 +1481,14 @@ end
 -- (test mode: the box also comes up after any fight and when you log in, so the whole thing can be tried on a training dummy)
 local function testBox(delay)
   if not (DB and DB.testMode and C_Timer) then return end
-  C_Timer.After(delay, function() if not InCombatLockdown() and not paste:IsShown() then Debrief_OpenPaste(true) end end)
+  C_Timer.After(delay, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
 end
 ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   if e == "CHAT_MSG_ADDON" then
     if DB then onAddonMessage(arg, a2, a3, a4) end
   elseif e == "PLAYER_REGEN_DISABLED" then
     Debrief_CombatStart()
+    if toast:IsShown() then toast:Hide() end -- (a new pull: the prompt for the last one goes away)
   elseif e == "PLAYER_REGEN_ENABLED" then
     Debrief_CombatEnd()
     if pendingShow then pendingShow = false; showCard() end
@@ -1452,7 +1502,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "ENCOUNTER_END" then
     -- (for whoever runs Debrief Companion: the paste box comes up by itself a few seconds after a boss pull, ready for Ctrl+V)
     if DB and (DB.pasted or DB.testMode) and DB.autoBox ~= false and C_Timer then
-      C_Timer.After(4, function() if not InCombatLockdown() and not paste:IsShown() then Debrief_OpenPaste(true) end end)
+      C_Timer.After(4, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
     end
   elseif e == "ADDON_LOADED" and arg == ADDON then
     DebriefDB = DebriefDB or {}
