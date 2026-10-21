@@ -2833,13 +2833,13 @@ const TF_M = {
   // Each set is five small waves side by side with gaps between them: everyone steps sideways into a gap before the set reaches them,
   // then back (fail: one player doesn't move)
   waves(fail, d, o) {
-    const plat = o && o.p != null ? o.p : 2, L = 14, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('vx', 'Stir the Depths', 0.4, 2);
-    const V = 11, HW = 3, C = [0, 48], SETS = [[65, 3.2], [118, 5.4], [90, 7.6]], LANES = [-20, -10, 0, 10, 20]; /* (each set: the way it heads, when it sets off) */
+    const plat = o && o.p != null ? o.p : 2, L = 15.5, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('vx', 'Stir the Depths', 0.4, 2);
+    const V = 11, HW = 3, C = [0, 48], D0 = 24, SETS = [[65, 4.4], [118, 6.6], [90, 8.8]], LANES = [-20, -10, 0, 10, 20]; /* (each set: the way it heads, when it sets off from the walkway's back edge, D0 yards behind the middle of the corner) */
     const unit = (deg) => { const a = deg * Math.PI / 180; return [Math.cos(a), Math.sin(a)]; }, side = (u) => [-u[1], u[0]];
-    SETS.forEach(([deg, t0]) => { const u = unit(deg), n = side(u); LANES.forEach((l) => w.wave({ x: C[0] - 38 * u[0] + l * n[0], y: C[1] - 38 * u[1] + l * n[1], deg, v: V, w: HW * 2, d: 3.5, t0, t1: t0 + 7, color: '#9ff26d', legend: 'small waves rolling in from behind: +1 venom stack each' })); });
-    w.call(0.6, 3, 'Tanks: where are they coming from?', { x: 0, y: 30, color: '#9ff26d', ink: '#0a1a06' });
+    SETS.forEach(([deg, t0]) => { const u = unit(deg), n = side(u); LANES.forEach((l) => w.wave({ x: C[0] - D0 * u[0] + l * n[0], y: C[1] - D0 * u[1] + l * n[1], deg, v: V, w: HW * 2, d: 3.5, t0, t1: t0 + 6.6, /* (on through the bosses) */ color: '#9ff26d', legend: 'small waves rolling in from behind: +1 venom stack each' })); });
+    w.call(0.6, 4.2, 'Tanks: where are they coming from?', { x: 0, y: 30, color: '#9ff26d', ink: '#0a1a06' });
     // (when a set reaches a spot, and the spot's distance sideways from the set's nearest wave)
-    const hit = (q, [deg, t0]) => { const u = unit(deg), n = side(u), dx = q[0] - C[0], dy = q[1] - C[1], al = dx * u[0] + dy * u[1], p = dx * n[0] + dy * n[1]; const off = LANES.map((l) => p - l).sort((a, b) => Math.abs(a) - Math.abs(b))[0]; return { t: t0 + (al + 38) / V, off, n }; };
+    const hit = (q, [deg, t0]) => { const u = unit(deg), n = side(u), dx = q[0] - C[0], dy = q[1] - C[1], al = dx * u[0] + dy * u[1], p = dx * n[0] + dy * n[1]; const off = LANES.map((l) => p - l).sort((a, b) => Math.abs(a) - Math.abs(b))[0]; return { t: t0 + (al + D0) / V, off, n }; };
     // (each player, set by set: if the set's waves would reach them, a sidestep into the nearest gap on the stone; they stay there until
     // the next set, then walk back once the last set has passed)
     const OFF = fail ? 'r6' : null, MOV = [];
@@ -2851,11 +2851,11 @@ const TF_M = {
         if (!cs.length) return; const q = cs[0], dur = Math.hypot(q[0] - p[0], q[1] - p[1]) / 7 + 0.2, tA = Math.max(free, hh.t - 0.7 - dur);
         w.hold(tA, id).at(tA + dur, id, q[0], q[1]); p = q; free = tA + dur; moved = true; });
       if (moved) { const tl = Math.max(free, ...SETS.map((st) => hit(p, st).t)) + 0.8, dur = Math.hypot(h[0] - p[0], h[1] - p[1]) / 7 + 0.2; w.hold(tl, id).at(tl + dur, id, h[0], h[1]); MOV.push(id); } });
-    if (fail) { const th = hit(TF_HOME.r6, SETS[2]).t; ulHit(k, 'r6', th, 'Wave: +1 stack'); k.oops('r6', th); k.step(0.4).step(3.2).step(th);
+    if (fail) { const th = hit(TF_HOME.r6, SETS[2]).t; ulHit(k, 'r6', th, 'Wave: +1 stack'); k.oops('r6', th); k.step(0.4).step(4.4).step(th);
       w.pause(th + 0.3, 'This ranged didn\'t step into a gap when the middle set rolled in from behind: another venom stack, and stacks are what end this fight.', { on: 'r6', r: 8 });
       return w.done({ title: 'Mistake: hit by a wave', focus: { x: 0, y: 50, r: 30 }, badLabel: 'hit by a wave' }); }
-    k.ring1([...new Set(MOV)].slice(0, 4)).step(0.4).step(3.2).step(5.4);
-    w.pause(4.6, 'Stir the Depths: sets of small waves roll in from behind the raid, here from the back-left, then the back-right, then up the middle. The order changes, so the tanks look back and call it. Step sideways into a gap before each set reaches you.', { x: 0, y: 48, r: 28 });
+    k.ring1([...new Set(MOV)].slice(0, 4)).step(0.4).step(4.4).step(6.6);
+    w.pause(5.8, 'Stir the Depths: sets of small waves roll in from behind the raid, here from the back-left, then the back-right, then up the middle. The order changes, so the tanks look back and call it. Step sideways into a gap before each set reaches you.', { x: 0, y: 48, r: 28 });
     return w.done({ title: 'Stir the Depths: step into the gaps', focus: { x: 0, y: 50, r: 30 }, hlLabel: 'players stepping into a gap' });
   },
   // Ravenous Feast (Ithraz): a big soak smashed three times (split between everyone in it, -1 venom stack each, a knockback). Heroic and
