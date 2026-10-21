@@ -1649,6 +1649,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief Companion is a real Windows app now: its own window with the gold shield in the taskbar and Start menu (search "Debrief"), it opens in front every time, and closing it keeps it reading your pulls from the tray by the clock. Your copy switches over by itself the next time it starts.',
     'The front page is new: an example pull next to the headline, big boss cards you can swipe through, a night from first wipe to the kill, and the Discord easier to find.',
     'Debrief in game: the recap shows much more about the boss. The Raid view has a Boss mechanics list, one line for each mechanic in green, yellow or red with what went wrong, and your own card shows up to 5 of your boss mistakes, your avoidable damage and where you rank, and your kicks and dispels.',
     'Debrief in game: Advanced Combat Logging switches on by itself when you log in.',
@@ -1911,7 +1912,7 @@ function openInGame() {
     '<header class="igm-hero"><div class="igm-hin"><div class="igm-kick">An addon and a small PC app</div><h2>Your pull recap, inside WoW</h2>' +
       '<p class="igm-lead">A few seconds after every boss pull, your recap opens right in the game, and the whole raid gets theirs too.</p>' +
       '<ul class="igm-gets" aria-label="What you get">' + ['Your numbers', 'Your biggest slips', 'Your boss mistakes', 'Who died', 'One thing to try next pull'].map((x) => '<li>' + x + '</li>').join('') + '</ul>' +
-      '<div class="igm-cta">' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.4 MB · the PC app and the addon in one click') + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.2 MB') + '</div>' +
+      '<div class="igm-cta">' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.8 MB · the PC app and the addon in one click') + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.2 MB') + '</div>' +
       '<p class="igm-warn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>If Windows says <b>"Windows protected your PC"</b>, click <b>More info</b>, then <b>Run anyway</b>. The app is new and isn\'t signed yet.</span></p>' +
       '<p class="igm-ver">The app keeps itself and the addon up to date.</p>' +
       '<p class="igm-phone">On your phone? The downloads are for a Windows PC: open debriefme.io/?ingame there.</p></div>' +
@@ -1922,7 +1923,7 @@ function openInGame() {
         '<p class="igm-how">Unzip it into <code>World of Warcraft\\_retail_\\Interface\\AddOns</code>. Or take the Windows download, which puts it in for you.</p>' + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.2 MB') + '</div>' +
       '<div class="igm-wc one"><div class="igm-wh">' + one + '<div><div class="igm-tag">One person in the raid</div><h3>The PC app</h3></div></div>' +
         '<p>Reads the combat log after each boss pull and gets the recap ready. That person presses Ctrl+V in game, and the addon shares it with everyone.</p>' +
-        '<p class="igm-how">Pick someone who\'s there every raid night, like the raid leader. Run Debrief-Setup.exe: it puts in the addon too, starts with Windows and turns the combat log on for you in raids.</p>' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.4 MB') + '</div>' +
+        '<p class="igm-how">Pick someone who\'s there every raid night, like the raid leader. Run Debrief-Setup.exe: it puts in the addon too, starts with Windows and turns the combat log on for you in raids.</p>' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.8 MB') + '</div>' +
     '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>After every boss pull</h2><p>Three steps, a few seconds.</p></div><ol class="igm-steps">' +
       '<li><i>1</i><b>The pull ends</b><span>Kill or wipe, the app reads it from the combat log.</span></li>' +

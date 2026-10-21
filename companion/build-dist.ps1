@@ -20,8 +20,15 @@ function New-Zip($srcDir, $zipPath, $prefix) {
 $appV = (Get-Content (Join-Path $here 'version.txt') -Raw).Trim()
 $addV = ((Get-Content (Join-Path $here 'addon\Debrief\Debrief.toc')) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', ''
 
-# the app's files
+# the app itself: Debrief Companion.exe from app\ (needs the .NET SDK on the PC that builds it; raiders need nothing)
 $app = Join-Path $work 'app'; New-Item -ItemType Directory -Force -Path $app | Out-Null
+$dotnet = Join-Path $env:ProgramFiles 'dotnet\dotnet.exe'
+$exeOut = Join-Path $work 'exe'
+& $dotnet build (Join-Path $here 'app\DebriefCompanion.csproj') -c Release -o $exeOut --nologo -v q | Out-Host
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $exeOut 'Debrief Companion.exe'))) { throw "The app didn't build." }
+foreach ($f in 'Debrief Companion.exe', 'Debrief Companion.exe.config', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll') { Copy-Item -LiteralPath (Join-Path $exeOut $f) -Destination $app }
+Copy-Item -LiteralPath (Join-Path $exeOut 'runtimes') -Destination (Join-Path $app 'runtimes') -Recurse
+# (companion.ps1 and Start Debrief.vbs now only start the app: they move copies from 0.5 and older over)
 foreach ($f in 'companion.ps1', 'companion.html', 'recap.js', 'Start Debrief.vbs', 'debrief.ico', 'version.txt') { Copy-Item -LiteralPath (Join-Path $here $f) -Destination $app }
 # (the engine: DBF_ENGINE names a clean, committed build; otherwise the one in this folder, which may hold unfinished work)
 $engine = if ($env:DBF_ENGINE) { $env:DBF_ENGINE } else { Join-Path $root 'WoW-Log-Analyzer.html' }
@@ -90,7 +97,7 @@ $p = Start-Process -FilePath (Join-Path $env:WINDIR 'System32\iexpress.exe') -Ar
 if (-not (Test-Path $exe)) { throw "IExpress didn't make the installer (exit $($p.ExitCode))." }
 Remove-Item -Recurse -Force $work
 # (the website serves these at debriefme.io/companion/: the download page, the installer, the addon and the updater's files)
-$site = Join-Path $here '..site-assetscompanion'
+$site = Join-Path $root 'site-assets\companion'
 if (Test-Path $site) {
   Copy-Item -LiteralPath $exe, (Join-Path $dist 'app.zip'), (Join-Path $dist 'latest.json') -Destination $site -Force
   Copy-Item -LiteralPath (Join-Path $dist ('Debrief-addon-' + $addV + '.zip')) -Destination (Join-Path $site 'Debrief-addon.zip') -Force

@@ -34,3 +34,7 @@ notes/Discord pictures/
 # (the Debrief in game downloads are served by the site, so every deploy must have them: kept in git)
 !site-assets/companion/*.exe
 !site-assets/companion/*.zip
+
+# the PC app's build folders (companion/build-dist.ps1 builds it fresh)
+companion/app/bin/
+companion/app/obj/
