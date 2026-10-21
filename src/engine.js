@@ -6523,7 +6523,7 @@ function triageSaves(r) {
       const hg = top[0][0], hp = r.players.get(hg); if (!hp || !hp.name) return;
       const w = top.slice(1).find(([k, v]) => k !== 'self' && v / tot >= 0.3), wp = w && r.players.get(w[0]);
       const ext = SAVE_EXT.find((n) => { const b = tp.buffs.get(n); return b && b.by.has(hp.name) && b.sp.some(([a, z]) => a <= tr && (z == null ? end : z) >= c.t - 1); });
-      out.push({ t: c.t, back: Math.round(10 * (tr - c.t)) / 10, low: Math.round(100 * c.low), guid: g, who: tp.name, by: hp.name, share: Math.round(100 * top[0][1] / tot),
+      out.push({ t: c.t, back: Math.round(10 * (tr - c.t)) / 10, low: Math.round(100 * c.low), guid: g, who: tp.name, by: hp.name, share: Math.round(100 * top[0][1] / tot), amt: Math.round(top[0][1]), mx: (r.pMax && r.pMax.get(g)) || 0,
         sp: [...sp.get(hg)].sort((a, b) => b[1] - a[1]).slice(0, 2).map((x) => x[0]), with: wp && wp.name ? wp.name : '', ext: ext || '' });
     };
     for (const [t, fr] of l) {
