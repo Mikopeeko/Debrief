@@ -121,6 +121,17 @@ function Update-App {
     return $true
   } catch { return $false }
 }
+# (the app's own window: Edge in app mode, else the default browser)
+function Open-Window {
+  $edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+  if ($edge) { Start-Process $edge "--app=http://localhost:$port/ --window-size=1100,820" } else { Start-Process "http://localhost:$port/" }
+}
+# (already running, say it started with Windows: the icon opens its window at once, before anything slow like the update check)
+if (-not $InstallOnly) {
+  $running = $false
+  try { $running = [bool](Invoke-RestMethod "http://localhost:$port/app-version" -TimeoutSec 2 -UseBasicParsing).version } catch {}
+  if ($running) { if (-not $NoWindow) { Open-Window }; exit }
+}
 if (-not $InstallOnly -and -not $env:DBF_NO_UPDATE -and (Update-App)) {
   # (start the new version, with the same window choice, and stop this one)
   $a = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + (Join-Path $here 'companion.ps1') + '"' + $(if ($NoWindow) { ' -NoWindow' } else { '' })
@@ -146,11 +157,6 @@ if ($InstallOnly) { Set-Autostart; Write-Host (Install-Addon $here); exit }
 
 $listener = New-Object Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
-# (the app's own window: Edge in app mode, else the default browser)
-function Open-Window {
-  $edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
-  if ($edge) { Start-Process $edge "--app=http://localhost:$port/ --window-size=1100,820" } else { Start-Process "http://localhost:$port/" }
-}
 # (already running, say it started with Windows: the icon just opens its window; a quiet start does nothing)
 try { $listener.Start() } catch { Write-Host "Debrief Companion is already running (port $port in use). Opening its window."; if (-not $NoWindow) { Open-Window }; exit }
 Write-Host "Debrief Companion is running at http://localhost:$port"
