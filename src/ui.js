@@ -1489,6 +1489,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-20', h: [
+    { t: 'Saves, for healers', d: 'Every healer\'s Rotation page now counts the raiders you saved: they dropped under 30% health and your healing brought them back. Open it to see who, when and with which heals. Your saves show on the Report card too.' },
     { t: 'Compare is back', d: 'Put yourself next to the #1 player of your spec, someone around #50 to #500, or the average of the top 100, 200 or 500. See where you stand, how they play it differently, and the spells where the gap is.' },
     { t: 'Assignments, in development', d: 'A tab just for making notes is on the way: draft a note from your pulls, let Debrief suggest the rest by class, swap players in one go and copy it for the game. It\'s greyed out until it\'s ready. Adding your NSRT note from Debriefing works as usual.' },
     { t: 'Boss guides', d: 'Animated maps that show how each fight works on Heroic and Mythic, with the key moments frozen and explained, a mistake view and a full-fight simulation. In the menu (☰), open to anyone. The Coiled Altar is first.' },
@@ -11375,6 +11376,10 @@ function bossRot(o) {
   return out;
 }
 function specPage(o) {
+  // (Saves (your idea, Oct 20): on every healer's page, the same tile at the end of the Casting block, never graded)
+  if (o.P0 && o.P0.role === 'healer') { let sv = null; try { sv = spcSaves(o); } catch (e) { sv = null; }
+    if (sv) { o.groups.push({ t: 'Casting', l: [sv] }); o.VIZ = Object.assign({}, o.VIZ, { saves: () => sv.det });
+      const ch = o.LAYOUT && o.LAYOUT.find(([n]) => n === 'Rotation'), b = ch && ch[1].find(([t]) => t === 'Casting'); if (b) b[1] = b[1].concat(['saves']); } }
   // (This boss: the boss's damage windows, its shield, its big hits for a healer, and its talent swaps, as a chapter of their own before Stats)
   { let B; try { B = bossRot(o); } catch (e) { B = { groups: [], err: e }; } if (B.groups.length) { o.groups.push(...B.groups); Object.assign((o.MERGE = o.MERGE || {}), B.MERGE); Object.assign((o.WT = o.WT || {}), B.WT); Object.assign((o.VIZ = o.VIZ || {}), B.VIZ);
     // (your note, Oct 19: the boss's windows sit with the cooldowns, not on their own: Big damage moments and the boss's big hits go at the end of the
@@ -11569,6 +11574,32 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
   return big.join('') + (tbl ? spcTable(cdl, top, slug, tmo) : '') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
 // The Rotation tab as sections of tiles (Oct 19, "make each and every rotation tab a similar design": a sentence of why on the left, the checks as
 // tiles on the right, the section's stat boxes and bars under them)
+// (Saves: the raiders this healer caught under 30% and healed back over 50%, who were still alive 6 s later (the engine's r.saves).
+// The number, a sentence, four small numbers, the raid's saves by healer as one bar, then the list with times and who)
+function spcSaves(o) {
+  const per = o.per || [], one = o.one, me = o.P0.name; if (!per.length) return null;
+  const mine = [], raid = new Map();
+  for (const x of per) { const r = x.r; for (const v of r.saves || []) { const hp = [...r.players.values()].find((q) => q.name === v.by); if (!hp || hp.role !== 'healer') continue;
+    const k = raid.get(v.by) || { n: 0, color: hp.color }; k.n++; raid.set(v.by, k); if (v.by === me) mine.push({ ...v, pull: r.item.pull, color: (r.players.get(v.guid) || {}).color || '' }); } }
+  const n = mine.length, tot = [...raid.values()].reduce((a, b) => a + b.n, 0), rk = [...raid].sort((a, b) => b[1].n - a[1].n), pos = rk.findIndex(([nm]) => nm === me);
+  const place = rk.filter(([, k]) => k.n > n).length, tied = rk.filter(([, k]) => k.n === n).length > 1, bdg = !n ? '' : place === 0 ? (tied ? 'Tied for the most' : 'Most in the raid') : place === 1 && !tied ? 'Second most in the raid' : place === 2 && !tied ? 'Third most in the raid' : '#' + (place + 1) + ' of ' + rk.length + ' healers';
+  const pulls = per.length, rd = (k) => plural(k, 'raider');
+  const sub = n ? 'You saved ' + rd(n) + ' from dying' + (one ? '' : ' over these ' + plural(pulls, 'pull')) + '. Each one dropped under 30% health, your healing brought them back over 50%, and they were still alive 6 seconds later.'
+    : 'No saves' + (one ? ' this pull' : ' over these pulls') + '. A save is a raider who dropped under 30% health, got back over 50% mostly from your healing, and was still alive 6 seconds later.';
+  const best = new Map(); for (const v of mine) if (v.sp[0]) best.set(v.sp[0], (best.get(v.sp[0]) || 0) + 1); const bs = [...best].sort((a, b) => b[1] - a[1])[0];
+  const lowest = n ? Math.min(...mine.map((v) => v.low)) : 0, avg = n ? mine.reduce((a, v) => a + v.back, 0) / n : 0;
+  const mt = (v) => '<div class="trg-t"><b>' + v[0] + '</b><span>' + v[1] + '</span></div>';
+  const tiles = n ? '<div class="trg-ts">' + [[n + ' of ' + tot, "the raid's saves were yours"], [lowest + '%', 'the lowest you caught someone at'], [avg.toFixed(1) + ' s', 'to get them back over 50%, on average']].concat(bs ? [[esc(bs[0]), 'your best saver (' + plural(bs[1], 'save') + ')']] : []).map(mt).join('') + '</div>' : '';
+  const bar = tot ? '<div class="trg-bar" aria-hidden="true">' + rk.map(([nm, k]) => '<i style="flex:' + k.n + ';background:' + k.color + '"></i>').join('') + '</div><div class="trg-lg">' + rk.map(([nm, k]) => '<span><i style="background:' + k.color + '"></i>' + (nm === me ? 'You' : esc(nm)) + ' <b>' + k.n + '</b></span>').join('') + '</div>' : '';
+  const tm = (v) => '<button type="button" class="spc-mo" data-mt="' + v.t.toFixed(2) + '"' + (one ? '' : ' data-mp="' + v.pull + '" title="Open pull ' + v.pull + '"') + '>' + T(v.t) + '</button>';
+  const tr = (v) => '<tr>' + (one ? '' : '<td class="n">' + v.pull + '</td>') + '<td class="n">' + tm(v) + '</td><td style="color:' + v.color + '">' + esc(v.who) + '</td><td class="n trg-lo">' + v.low + '%</td><td class="n trg-hm">' + v.back.toFixed(1) + ' s</td><td>' + esc(v.sp.join(', ')) +
+    (v.with ? ' <span class="trg-w">with ' + esc(v.with) + '</span>' : '') + (v.ext ? '<span class="trg-x">your ' + esc(v.ext) + '</span>' : '') + '</td></tr>';
+  const head = '<tr>' + (one ? '' : '<th>Pull</th>') + '<th>Time</th><th>Who</th><th>Down to</th><th class="trg-hm">Back in</th><th>Your heals</th></tr>', CAP = 8;
+  const tbl = (l) => '<table class="trg-l"><thead>' + head + '</thead><tbody>' + l.map(tr).join('') + '</tbody></table>';
+  const list = n ? tbl(mine.slice(0, CAP)) + (n > CAP ? '<details class="trg-more"><summary>Show all ' + n + '</summary>' + tbl(mine.slice(CAP)) + '</details>' : '') +
+    (mine.some((v) => v.with) ? '<p class="trg-nt">"with" names another healer who gave 30% or more of it. Each save counts once, for whoever healed the most.</p>' : '') : '';
+  return { k: 'saves', label: 'Saves', ic: 'Flash Heal', st: 'na', bdg, v: n + ' <span>' + (n === 1 ? 'raider' : 'raiders') + '</span>', sub, mo: [], det: tiles + bar + list };
+}
 const SPC_BW = { ok: 'Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' };
 // (a tile with burst-window cards in it starts open on every spec page, clean or not (your call, Oct 19): the cards are the part players read most)
 // (under the top players on a higher-is-better check (Oct 20): "Close to the top" in yellow, not Clean)
@@ -11577,7 +11608,7 @@ const spcUnder = (c, top) => { if (c.st !== 'ok' || !SPC_UP.has(c.k)) return fal
 const SPC_UP = new Set(['apl', 'abc']);
 const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1 || (c.k === 'apl' && c.st !== 'ok') || String(v || '').includes('class="spc-w ');
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
-    '<b class="cst-f ' + c.st + '">' + c.v + '</b>' + (spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>') + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
+    '<b class="cst-f ' + c.st + '">' + c.v + '</b>' + (c.bdg ? '<span class="spc-tlb na">' + esc(c.bdg) + '</span>' : spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>') + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
     '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';
 // (three or more cooldowns in a block: a compact table, a row each, with its mark, its name, a bar of its uses, the count, what it did each time and the top
 // raids'. A row opens in place to its sentence, how it's judged, its "Next time" and its moments; the ones to fix start open)
@@ -17683,6 +17714,9 @@ function rcwRaider(c, F) {
   const worstM = [...mm.values()].filter((o) => o.n >= 2).sort((u, v) => v.n - u.n)[0];
   // ---- went well ----
   const W = top.slice(0, 2).map((y) => y.l + ' ' + Math.round(y.v) + ', #' + y.r + ' of ' + y.N + ' in the raid');
+  if (p.role === 'healer') { const sv = new Map(); for (const g of a.per) for (const v of g.r.saves || []) { const hp = [...g.r.players.values()].find((q) => q.name === v.by); if (hp && hp.role === 'healer') sv.set(v.by, (sv.get(v.by) || 0) + 1); }
+    const k = sv.get(nm) || 0, most = k && [...sv.values()].every((v) => v <= k); /* (your idea, Oct 20: saves, when they're a highlight) */
+    if (most || k >= 10) W.splice(Math.min(1, W.length), 0, 'Saved ' + plural(k, 'raider') + ' from dying' + (most ? ', the most in the raid' : '')); }
   if (!pf.deaths) W.push('No deaths that counted in ' + plural(n, 'pull'));
   const cdG = [...cdm.values()].filter((o) => o.poss >= 3 && o.used / o.poss >= 0.85 && !RAID_CD_N.has(o.name.toLowerCase())).sort((u, v) => v.poss - u.poss)[0];
   if (cdG) W.push(esc(cdG.name) + ' pressed ' + o2(cdG.used, cdG.poss));

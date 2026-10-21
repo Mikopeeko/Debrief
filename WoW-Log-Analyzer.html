@@ -3698,6 +3698,17 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .spc-tl[open] { grid-column: 1 / -1; } .spc-tl[open] > summary { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; border-bottom: 1px solid var(--line); } .spc-tl[open] > summary > b { font-size: 18px; }
 .spc-tld { padding: 10px 14px 12px; min-width: 0; } .spc-tld > .spc-rs { margin-top: 0; } .spc-rr > .spc-det { margin-top: 12px; }
 @media (max-width: 760px) { .spc-rd.spc-2c { grid-template-columns: 1fr; gap: 8px; } .spc-tls { grid-template-columns: 1fr 1fr; } }
+/* Saves: a healer's catches (not graded: a blue edge) */
+.spc-tl#spc-r-saves { border-left-color: rgba(106,168,255,.7); } #spc-r-saves .spc-tlb.na { color: #9cc2ff; font-weight: 700; }
+.trg-ts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 0 0 12px; } .trg-t { background: rgba(0,0,0,.22); border-radius: 8px; padding: 8px 10px; }
+.trg-t b { display: block; font: 800 20px var(--head); } .trg-t span { color: var(--muted); font-size: 12px; }
+.trg-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 4px 0 6px; } .trg-bar i { display: block; }
+.trg-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin: 0 0 12px; } .trg-lg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; } .trg-lg b { color: var(--text); }
+.trg-l { width: 100%; border-collapse: collapse; font-size: 13px; } .trg-l th { text-align: left; font-weight: 600; color: var(--faint); font-size: 12px; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+.trg-l td { padding: 5px 8px; border-bottom: 1px solid rgba(42,47,59,.6); vertical-align: middle; } .trg-l td.n { font-variant-numeric: tabular-nums; white-space: nowrap; } .trg-l .spc-mo { margin: 0; }
+.trg-lo { color: #ff8f87; font-weight: 700; } .trg-w { color: var(--faint); font-size: 12px; } .trg-x { display: inline-block; margin-left: 6px; font-size: 11px; padding: 0 6px; border-radius: 9px; background: rgba(230,180,80,.15); color: #f3c969; }
+.trg-more > summary { color: var(--gold); font-size: 13px; margin-top: 8px; cursor: pointer; } .trg-nt { color: var(--faint); font-size: 12px; margin: 8px 0 0; }
+@media (max-width: 760px) { .trg-hm { display: none; } }
 /* the biggest fixes: 3 cards under the totals */
 .cmp-fixs { border-top: 3px solid #e6b450; } .cmp-fxs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
 .cmp-fix { display: flex; flex-direction: column; padding: 12px 14px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line); cursor: help; } .cmp-fix > p { margin: 8px 0 0; font-size: 14px; line-height: 1.45; flex: 1; } .cmp-fix > p b { color: var(--text); }
@@ -10241,6 +10252,9 @@ function* analyzeSteps(item, text, opts) {
   // each player's health from advanced logging (damage and heals on them): guid -> [[t, fraction]], one sample per
   // quarter second keeping the lowest, for the survival check's close calls
   const php = new Map(); r.php = php;
+  // (heals and absorbs landing on a player under half health: [t, target, healer, amount, 1 for an absorb, spell], for the healers' saves)
+  const lowHL = []; r.lowHL = lowHL;
+  const phpNow = (g) => { const l = php.get(g); return l && l.length ? l[l.length - 1][1] : 1; };
   const seenPhp = (g, cur, mx, t) => {
     if (!(mx > 0) || !isPlayer(g)) return;
     const fr = Math.max(0, Math.min(1, cur / mx)); let l = php.get(g); if (!l) php.set(g, l = []);
@@ -10381,7 +10395,7 @@ function* analyzeSteps(item, text, opts) {
           const p = P(owner, pet ? null : sn);
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
-          if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) p.lowHeal += eff; }
+          if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
           if (ck && (ck !== 'Celestial Conduit' || p.specId === 270)) { const u = cdPress(owner, ck, t, true); u.heal += eff; u.over += over; }
@@ -10415,7 +10429,8 @@ function* analyzeSteps(item, text, opts) {
         // (Darkness: an attack it made someone avoid, exact)
         if (isPlayer(dg) && String(f[sp + 1]).toLowerCase() === 'darkness') { const u = cdPress(ow, 'Darkness', t, true); u.prev += amt; u.taken += amt; u.cov.add(dg); }
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
-        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false); bump(r.healS, t, amt); bump(p.healS, t, amt);
+        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
+        if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
         if (isPlayer(dg)) recap(dg, { t, heal: true, amount: amt, src: shortName(absorber, f[a + 1]), spell: f[sp + 1] + ' (absorb)', id, hp: -1 });
         break;
       }
@@ -10572,7 +10587,7 @@ function* analyzeSteps(item, text, opts) {
   }
   for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
 
-  yield; survivability(r);
+  yield; survivability(r); triageSaves(r);
   yield; r.mistakes = mech.build();
   // avoidable damage tanks are expected to take (their job puts them in it)
   { const tankOf = new Set([...r.players.values()].filter((p) => p.role === 'tank').map((p) => p.name)); r.mistakes = r.mistakes.filter((m) => !(TANK_OK.has(m.mechanic) && tankOf.has(m.player)));
@@ -11078,6 +11093,41 @@ function survivability(r) {
       return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot, under, judged, kitAvail };
     });
   }
+}
+
+// Saves (your idea, Oct 20): a player dropped under 30% health, healing brought them back over 50% within 15 s, and they were still
+// alive 6 s later. The save is the healer's who gave them the most healing and absorbs from the moment they dropped under 30% until they
+// were back over 50% (overhealing never counts). Their own heals (Healthstone, potion, self-heals) count as theirs: if those were the most,
+// they saved themselves and no one gets it, so a healer never saves themself. A second healer who gave 30% or more is named with it.
+// Left out: a player who died within 6 s, and a dip in the last 3 s of the pull. An external from that healer on them is noted.
+const SAVE_EXT = ['Blessing of Sacrifice', 'Blessing of Protection', 'Blessing of Spellwarding', 'Pain Suppression', 'Guardian Spirit', 'Ironbark', 'Life Cocoon', 'Time Dilation', 'Rescue'];
+function triageSaves(r) {
+  const out = []; r.saves = out;
+  const byT = new Map(); for (const e of r.lowHL || []) { let l = byT.get(e[1]); if (!l) byT.set(e[1], l = []); l.push(e); }
+  const dts = new Map(); for (const d of r.deaths) { let l = dts.get(d.guid); if (!l) dts.set(d.guid, l = []); l.push(d.t); }
+  const end = r.duration || 0;
+  for (const [g, l] of r.php || []) {
+    const tp = r.players.get(g); if (!tp || !tp.name) continue;
+    let cur = null;
+    const done = (tr) => {
+      const c = cur; cur = null;
+      if (tr - c.t > 15 || tr + 3 > end || (dts.get(g) || []).some((dt) => dt >= c.t && dt <= tr + 6)) return;
+      const by = new Map(), sp = new Map(); let tot = 0;
+      for (const e of byT.get(g) || []) { if (e[0] < c.t - 0.3 || e[0] > tr + 0.2) continue; const k = e[2] === g ? 'self' : e[2]; by.set(k, (by.get(k) || 0) + e[3]); tot += e[3];
+        let m = sp.get(k); if (!m) sp.set(k, m = new Map()); m.set(e[5], (m.get(e[5]) || 0) + e[3]); }
+      const top = [...by].sort((a, b) => b[1] - a[1]); if (!top.length || top[0][0] === 'self' || !tot) return;
+      const hg = top[0][0], hp = r.players.get(hg); if (!hp || !hp.name) return;
+      const w = top.slice(1).find(([k, v]) => k !== 'self' && v / tot >= 0.3), wp = w && r.players.get(w[0]);
+      const ext = SAVE_EXT.find((n) => { const b = tp.buffs.get(n); return b && b.by.has(hp.name) && b.sp.some(([a, z]) => a <= tr && (z == null ? end : z) >= c.t - 1); });
+      out.push({ t: c.t, back: Math.round(10 * (tr - c.t)) / 10, low: Math.round(100 * c.low), guid: g, who: tp.name, by: hp.name, share: Math.round(100 * top[0][1] / tot),
+        sp: [...sp.get(hg)].sort((a, b) => b[1] - a[1]).slice(0, 2).map((x) => x[0]), with: wp && wp.name ? wp.name : '', ext: ext || '' });
+    };
+    for (const [t, fr] of l) {
+      if (fr < 0.3) { if (!cur) cur = { t, low: fr }; else if (fr < cur.low) cur.low = fr; }
+      else if (cur && fr > 0.5) done(t);
+    }
+  }
+  out.sort((a, b) => a.t - b.t);
 }
 
 // Why each player died and what would have prevented it, in plain words (shown with each death in the Fight audit).
@@ -13330,6 +13380,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-20', h: [
+    { t: 'Saves, for healers', d: 'Every healer\'s Rotation page now counts the raiders you saved: they dropped under 30% health and your healing brought them back. Open it to see who, when and with which heals. Your saves show on the Report card too.' },
     { t: 'Compare is back', d: 'Put yourself next to the #1 player of your spec, someone around #50 to #500, or the average of the top 100, 200 or 500. See where you stand, how they play it differently, and the spells where the gap is.' },
     { t: 'Assignments, in development', d: 'A tab just for making notes is on the way: draft a note from your pulls, let Debrief suggest the rest by class, swap players in one go and copy it for the game. It\'s greyed out until it\'s ready. Adding your NSRT note from Debriefing works as usual.' },
     { t: 'Boss guides', d: 'Animated maps that show how each fight works on Heroic and Mythic, with the key moments frozen and explained, a mistake view and a full-fight simulation. In the menu (☰), open to anyone. The Coiled Altar is first.' },
@@ -23216,6 +23267,10 @@ function bossRot(o) {
   return out;
 }
 function specPage(o) {
+  // (Saves (your idea, Oct 20): on every healer's page, the same tile at the end of the Casting block, never graded)
+  if (o.P0 && o.P0.role === 'healer') { let sv = null; try { sv = spcSaves(o); } catch (e) { sv = null; }
+    if (sv) { o.groups.push({ t: 'Casting', l: [sv] }); o.VIZ = Object.assign({}, o.VIZ, { saves: () => sv.det });
+      const ch = o.LAYOUT && o.LAYOUT.find(([n]) => n === 'Rotation'), b = ch && ch[1].find(([t]) => t === 'Casting'); if (b) b[1] = b[1].concat(['saves']); } }
   // (This boss: the boss's damage windows, its shield, its big hits for a healer, and its talent swaps, as a chapter of their own before Stats)
   { let B; try { B = bossRot(o); } catch (e) { B = { groups: [], err: e }; } if (B.groups.length) { o.groups.push(...B.groups); Object.assign((o.MERGE = o.MERGE || {}), B.MERGE); Object.assign((o.WT = o.WT || {}), B.WT); Object.assign((o.VIZ = o.VIZ || {}), B.VIZ);
     // (your note, Oct 19: the boss's windows sit with the cooldowns, not on their own: Big damage moments and the boss's big hits go at the end of the
@@ -23410,6 +23465,32 @@ const spcLines = (vis, vz, top, slug, bic, tmo) => { const cdl = vis.filter((c) 
   return big.join('') + (tbl ? spcTable(cdl, top, slug, tmo) : '') + (small.length ? '<div class="spc-minis">' + small.join('') + '</div>' : ''); };
 // The Rotation tab as sections of tiles (Oct 19, "make each and every rotation tab a similar design": a sentence of why on the left, the checks as
 // tiles on the right, the section's stat boxes and bars under them)
+// (Saves: the raiders this healer caught under 30% and healed back over 50%, who were still alive 6 s later (the engine's r.saves).
+// The number, a sentence, four small numbers, the raid's saves by healer as one bar, then the list with times and who)
+function spcSaves(o) {
+  const per = o.per || [], one = o.one, me = o.P0.name; if (!per.length) return null;
+  const mine = [], raid = new Map();
+  for (const x of per) { const r = x.r; for (const v of r.saves || []) { const hp = [...r.players.values()].find((q) => q.name === v.by); if (!hp || hp.role !== 'healer') continue;
+    const k = raid.get(v.by) || { n: 0, color: hp.color }; k.n++; raid.set(v.by, k); if (v.by === me) mine.push({ ...v, pull: r.item.pull, color: (r.players.get(v.guid) || {}).color || '' }); } }
+  const n = mine.length, tot = [...raid.values()].reduce((a, b) => a + b.n, 0), rk = [...raid].sort((a, b) => b[1].n - a[1].n), pos = rk.findIndex(([nm]) => nm === me);
+  const place = rk.filter(([, k]) => k.n > n).length, tied = rk.filter(([, k]) => k.n === n).length > 1, bdg = !n ? '' : place === 0 ? (tied ? 'Tied for the most' : 'Most in the raid') : place === 1 && !tied ? 'Second most in the raid' : place === 2 && !tied ? 'Third most in the raid' : '#' + (place + 1) + ' of ' + rk.length + ' healers';
+  const pulls = per.length, rd = (k) => plural(k, 'raider');
+  const sub = n ? 'You saved ' + rd(n) + ' from dying' + (one ? '' : ' over these ' + plural(pulls, 'pull')) + '. Each one dropped under 30% health, your healing brought them back over 50%, and they were still alive 6 seconds later.'
+    : 'No saves' + (one ? ' this pull' : ' over these pulls') + '. A save is a raider who dropped under 30% health, got back over 50% mostly from your healing, and was still alive 6 seconds later.';
+  const best = new Map(); for (const v of mine) if (v.sp[0]) best.set(v.sp[0], (best.get(v.sp[0]) || 0) + 1); const bs = [...best].sort((a, b) => b[1] - a[1])[0];
+  const lowest = n ? Math.min(...mine.map((v) => v.low)) : 0, avg = n ? mine.reduce((a, v) => a + v.back, 0) / n : 0;
+  const mt = (v) => '<div class="trg-t"><b>' + v[0] + '</b><span>' + v[1] + '</span></div>';
+  const tiles = n ? '<div class="trg-ts">' + [[n + ' of ' + tot, "the raid's saves were yours"], [lowest + '%', 'the lowest you caught someone at'], [avg.toFixed(1) + ' s', 'to get them back over 50%, on average']].concat(bs ? [[esc(bs[0]), 'your best saver (' + plural(bs[1], 'save') + ')']] : []).map(mt).join('') + '</div>' : '';
+  const bar = tot ? '<div class="trg-bar" aria-hidden="true">' + rk.map(([nm, k]) => '<i style="flex:' + k.n + ';background:' + k.color + '"></i>').join('') + '</div><div class="trg-lg">' + rk.map(([nm, k]) => '<span><i style="background:' + k.color + '"></i>' + (nm === me ? 'You' : esc(nm)) + ' <b>' + k.n + '</b></span>').join('') + '</div>' : '';
+  const tm = (v) => '<button type="button" class="spc-mo" data-mt="' + v.t.toFixed(2) + '"' + (one ? '' : ' data-mp="' + v.pull + '" title="Open pull ' + v.pull + '"') + '>' + T(v.t) + '</button>';
+  const tr = (v) => '<tr>' + (one ? '' : '<td class="n">' + v.pull + '</td>') + '<td class="n">' + tm(v) + '</td><td style="color:' + v.color + '">' + esc(v.who) + '</td><td class="n trg-lo">' + v.low + '%</td><td class="n trg-hm">' + v.back.toFixed(1) + ' s</td><td>' + esc(v.sp.join(', ')) +
+    (v.with ? ' <span class="trg-w">with ' + esc(v.with) + '</span>' : '') + (v.ext ? '<span class="trg-x">your ' + esc(v.ext) + '</span>' : '') + '</td></tr>';
+  const head = '<tr>' + (one ? '' : '<th>Pull</th>') + '<th>Time</th><th>Who</th><th>Down to</th><th class="trg-hm">Back in</th><th>Your heals</th></tr>', CAP = 8;
+  const tbl = (l) => '<table class="trg-l"><thead>' + head + '</thead><tbody>' + l.map(tr).join('') + '</tbody></table>';
+  const list = n ? tbl(mine.slice(0, CAP)) + (n > CAP ? '<details class="trg-more"><summary>Show all ' + n + '</summary>' + tbl(mine.slice(CAP)) + '</details>' : '') +
+    (mine.some((v) => v.with) ? '<p class="trg-nt">"with" names another healer who gave 30% or more of it. Each save counts once, for whoever healed the most.</p>' : '') : '';
+  return { k: 'saves', label: 'Saves', ic: 'Flash Heal', st: 'na', bdg, v: n + ' <span>' + (n === 1 ? 'raider' : 'raiders') + '</span>', sub, mo: [], det: tiles + bar + list };
+}
 const SPC_BW = { ok: 'Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' };
 // (a tile with burst-window cards in it starts open on every spec page, clean or not (your call, Oct 19): the cards are the part players read most)
 // (under the top players on a higher-is-better check (Oct 20): "Close to the top" in yellow, not Clean)
@@ -23418,7 +23499,7 @@ const spcUnder = (c, top) => { if (c.st !== 'ok' || !SPC_UP.has(c.k)) return fal
 const SPC_UP = new Set(['apl', 'abc']);
 const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1 || (c.k === 'apl' && c.st !== 'ok') || String(v || '').includes('class="spc-w ');
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
-    '<b class="cst-f ' + c.st + '">' + c.v + '</b>' + (spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>') + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
+    '<b class="cst-f ' + c.st + '">' + c.v + '</b>' + (c.bdg ? '<span class="spc-tlb na">' + esc(c.bdg) + '</span>' : spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>') + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
     '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';
 // (three or more cooldowns in a block: a compact table, a row each, with its mark, its name, a bar of its uses, the count, what it did each time and the top
 // raids'. A row opens in place to its sentence, how it's judged, its "Next time" and its moments; the ones to fix start open)
@@ -29524,6 +29605,9 @@ function rcwRaider(c, F) {
   const worstM = [...mm.values()].filter((o) => o.n >= 2).sort((u, v) => v.n - u.n)[0];
   // ---- went well ----
   const W = top.slice(0, 2).map((y) => y.l + ' ' + Math.round(y.v) + ', #' + y.r + ' of ' + y.N + ' in the raid');
+  if (p.role === 'healer') { const sv = new Map(); for (const g of a.per) for (const v of g.r.saves || []) { const hp = [...g.r.players.values()].find((q) => q.name === v.by); if (hp && hp.role === 'healer') sv.set(v.by, (sv.get(v.by) || 0) + 1); }
+    const k = sv.get(nm) || 0, most = k && [...sv.values()].every((v) => v <= k); /* (your idea, Oct 20: saves, when they're a highlight) */
+    if (most || k >= 10) W.splice(Math.min(1, W.length), 0, 'Saved ' + plural(k, 'raider') + ' from dying' + (most ? ', the most in the raid' : '')); }
   if (!pf.deaths) W.push('No deaths that counted in ' + plural(n, 'pull'));
   const cdG = [...cdm.values()].filter((o) => o.poss >= 3 && o.used / o.poss >= 0.85 && !RAID_CD_N.has(o.name.toLowerCase())).sort((u, v) => v.poss - u.poss)[0];
   if (cdG) W.push(esc(cdG.name) + ' pressed ' + o2(cdG.used, cdG.poss));

@@ -5656,6 +5656,9 @@ function* analyzeSteps(item, text, opts) {
   // each player's health from advanced logging (damage and heals on them): guid -> [[t, fraction]], one sample per
   // quarter second keeping the lowest, for the survival check's close calls
   const php = new Map(); r.php = php;
+  // (heals and absorbs landing on a player under half health: [t, target, healer, amount, 1 for an absorb, spell], for the healers' saves)
+  const lowHL = []; r.lowHL = lowHL;
+  const phpNow = (g) => { const l = php.get(g); return l && l.length ? l[l.length - 1][1] : 1; };
   const seenPhp = (g, cur, mx, t) => {
     if (!(mx > 0) || !isPlayer(g)) return;
     const fr = Math.max(0, Math.min(1, cur / mx)); let l = php.get(g); if (!l) php.set(g, l = []);
@@ -5796,7 +5799,7 @@ function* analyzeSteps(item, text, opts) {
           const p = P(owner, pet ? null : sn);
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
-          if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) p.lowHeal += eff; }
+          if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
           if (ck && (ck !== 'Celestial Conduit' || p.specId === 270)) { const u = cdPress(owner, ck, t, true); u.heal += eff; u.over += over; }
@@ -5830,7 +5833,8 @@ function* analyzeSteps(item, text, opts) {
         // (Darkness: an attack it made someone avoid, exact)
         if (isPlayer(dg) && String(f[sp + 1]).toLowerCase() === 'darkness') { const u = cdPress(ow, 'Darkness', t, true); u.prev += amt; u.taken += amt; u.cov.add(dg); }
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
-        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false); bump(r.healS, t, amt); bump(p.healS, t, amt);
+        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
+        if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
         if (isPlayer(dg)) recap(dg, { t, heal: true, amount: amt, src: shortName(absorber, f[a + 1]), spell: f[sp + 1] + ' (absorb)', id, hp: -1 });
         break;
       }
@@ -5987,7 +5991,7 @@ function* analyzeSteps(item, text, opts) {
   }
   for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
 
-  yield; survivability(r);
+  yield; survivability(r); triageSaves(r);
   yield; r.mistakes = mech.build();
   // avoidable damage tanks are expected to take (their job puts them in it)
   { const tankOf = new Set([...r.players.values()].filter((p) => p.role === 'tank').map((p) => p.name)); r.mistakes = r.mistakes.filter((m) => !(TANK_OK.has(m.mechanic) && tankOf.has(m.player)));
@@ -6493,6 +6497,41 @@ function survivability(r) {
       return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot, under, judged, kitAvail };
     });
   }
+}
+
+// Saves (your idea, Oct 20): a player dropped under 30% health, healing brought them back over 50% within 15 s, and they were still
+// alive 6 s later. The save is the healer's who gave them the most healing and absorbs from the moment they dropped under 30% until they
+// were back over 50% (overhealing never counts). Their own heals (Healthstone, potion, self-heals) count as theirs: if those were the most,
+// they saved themselves and no one gets it, so a healer never saves themself. A second healer who gave 30% or more is named with it.
+// Left out: a player who died within 6 s, and a dip in the last 3 s of the pull. An external from that healer on them is noted.
+const SAVE_EXT = ['Blessing of Sacrifice', 'Blessing of Protection', 'Blessing of Spellwarding', 'Pain Suppression', 'Guardian Spirit', 'Ironbark', 'Life Cocoon', 'Time Dilation', 'Rescue'];
+function triageSaves(r) {
+  const out = []; r.saves = out;
+  const byT = new Map(); for (const e of r.lowHL || []) { let l = byT.get(e[1]); if (!l) byT.set(e[1], l = []); l.push(e); }
+  const dts = new Map(); for (const d of r.deaths) { let l = dts.get(d.guid); if (!l) dts.set(d.guid, l = []); l.push(d.t); }
+  const end = r.duration || 0;
+  for (const [g, l] of r.php || []) {
+    const tp = r.players.get(g); if (!tp || !tp.name) continue;
+    let cur = null;
+    const done = (tr) => {
+      const c = cur; cur = null;
+      if (tr - c.t > 15 || tr + 3 > end || (dts.get(g) || []).some((dt) => dt >= c.t && dt <= tr + 6)) return;
+      const by = new Map(), sp = new Map(); let tot = 0;
+      for (const e of byT.get(g) || []) { if (e[0] < c.t - 0.3 || e[0] > tr + 0.2) continue; const k = e[2] === g ? 'self' : e[2]; by.set(k, (by.get(k) || 0) + e[3]); tot += e[3];
+        let m = sp.get(k); if (!m) sp.set(k, m = new Map()); m.set(e[5], (m.get(e[5]) || 0) + e[3]); }
+      const top = [...by].sort((a, b) => b[1] - a[1]); if (!top.length || top[0][0] === 'self' || !tot) return;
+      const hg = top[0][0], hp = r.players.get(hg); if (!hp || !hp.name) return;
+      const w = top.slice(1).find(([k, v]) => k !== 'self' && v / tot >= 0.3), wp = w && r.players.get(w[0]);
+      const ext = SAVE_EXT.find((n) => { const b = tp.buffs.get(n); return b && b.by.has(hp.name) && b.sp.some(([a, z]) => a <= tr && (z == null ? end : z) >= c.t - 1); });
+      out.push({ t: c.t, back: Math.round(10 * (tr - c.t)) / 10, low: Math.round(100 * c.low), guid: g, who: tp.name, by: hp.name, share: Math.round(100 * top[0][1] / tot),
+        sp: [...sp.get(hg)].sort((a, b) => b[1] - a[1]).slice(0, 2).map((x) => x[0]), with: wp && wp.name ? wp.name : '', ext: ext || '' });
+    };
+    for (const [t, fr] of l) {
+      if (fr < 0.3) { if (!cur) cur = { t, low: fr }; else if (fr < cur.low) cur.low = fr; }
+      else if (cur && fr > 0.5) done(t);
+    }
+  }
+  out.sort((a, b) => a.t - b.t);
 }
 
 // Why each player died and what would have prevented it, in plain words (shown with each death in the Fight audit).

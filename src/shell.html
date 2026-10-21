@@ -3698,6 +3698,17 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .spc-tl[open] { grid-column: 1 / -1; } .spc-tl[open] > summary { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; border-bottom: 1px solid var(--line); } .spc-tl[open] > summary > b { font-size: 18px; }
 .spc-tld { padding: 10px 14px 12px; min-width: 0; } .spc-tld > .spc-rs { margin-top: 0; } .spc-rr > .spc-det { margin-top: 12px; }
 @media (max-width: 760px) { .spc-rd.spc-2c { grid-template-columns: 1fr; gap: 8px; } .spc-tls { grid-template-columns: 1fr 1fr; } }
+/* Saves: a healer's catches (not graded: a blue edge) */
+.spc-tl#spc-r-saves { border-left-color: rgba(106,168,255,.7); } #spc-r-saves .spc-tlb.na { color: #9cc2ff; font-weight: 700; }
+.trg-ts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 0 0 12px; } .trg-t { background: rgba(0,0,0,.22); border-radius: 8px; padding: 8px 10px; }
+.trg-t b { display: block; font: 800 20px var(--head); } .trg-t span { color: var(--muted); font-size: 12px; }
+.trg-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 4px 0 6px; } .trg-bar i { display: block; }
+.trg-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin: 0 0 12px; } .trg-lg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; } .trg-lg b { color: var(--text); }
+.trg-l { width: 100%; border-collapse: collapse; font-size: 13px; } .trg-l th { text-align: left; font-weight: 600; color: var(--faint); font-size: 12px; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+.trg-l td { padding: 5px 8px; border-bottom: 1px solid rgba(42,47,59,.6); vertical-align: middle; } .trg-l td.n { font-variant-numeric: tabular-nums; white-space: nowrap; } .trg-l .spc-mo { margin: 0; }
+.trg-lo { color: #ff8f87; font-weight: 700; } .trg-w { color: var(--faint); font-size: 12px; } .trg-x { display: inline-block; margin-left: 6px; font-size: 11px; padding: 0 6px; border-radius: 9px; background: rgba(230,180,80,.15); color: #f3c969; }
+.trg-more > summary { color: var(--gold); font-size: 13px; margin-top: 8px; cursor: pointer; } .trg-nt { color: var(--faint); font-size: 12px; margin: 8px 0 0; }
+@media (max-width: 760px) { .trg-hm { display: none; } }
 /* the biggest fixes: 3 cards under the totals */
 .cmp-fixs { border-top: 3px solid #e6b450; } .cmp-fxs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
 .cmp-fix { display: flex; flex-direction: column; padding: 12px 14px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line); cursor: help; } .cmp-fix > p { margin: 8px 0 0; font-size: 14px; line-height: 1.45; flex: 1; } .cmp-fix > p b { color: var(--text); }
