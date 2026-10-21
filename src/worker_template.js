@@ -374,6 +374,12 @@ async function runInbox(env) {
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
           else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'repic' && o.feat && o.text) {
+          // (puts a #new-features card back together with its pictures, uploaded again from KV, the way Post it makes it)
+          const ch = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'new-features') || {}).id; if (!ch) continue;
+          const dr = { t: String(o.feat).slice(0, 90), kind: FEAT_KIND[o.kind] ? o.kind : 'new', text: String(o.text), footer: o.footer, images: Array.isArray(o.images) ? o.images.slice(0, 4) : [] };
+          const prev = ((await dc(env, '/channels/' + ch + '/messages?limit=50').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID && m.embeds && m.embeds[0] && (m.embeds[0].title || '').replace(/^\S+\s/, '') === dr.t);
+          if (prev) { await dcFiles(env, '/channels/' + ch + '/messages/' + prev.id, 'PATCH', { content: '', allowed_mentions: { parse: [] }, embeds: [featEmbed(dr)] }, dr.images); for (const k of dr.images) await env.DEBRIEF_KV.delete(k).catch(() => {}); }
         } else if (o.op === 'relink') {
           await env.DEBRIEF_KV.put('relink-todo', JSON.stringify({ todo: null, n: 0 })); // (the rest happens in relink(), a batch a run)
         } else if (o.op === 'buttons' && /^\d{17,20}$/.test(String(o.thread || ''))) {
@@ -659,7 +665,8 @@ async function featPublish(env, thread) {
 }
 // The move to debriefme.io (the user's OK, Oct 20): Claudette's own posts and the channel topics that name the old address
 // get the new one. Started by the relink job (KV relink-todo); each run does up to 20 channels or posts (newest 50 messages
-// each), so it never runs long. A card's pictures stay inside it; posts in closed forum posts are opened, fixed and closed again.
+// each), so it never runs long. Posts in closed forum posts are opened, fixed and closed again. Posts with pictures are left
+// alone: an edit that only points back at a post's own pictures drops them (Oct 20); those get the repic job instead.
 async function relink(env) {
   const st = await env.DEBRIEF_KV.get('relink-todo', 'json'); if (!st) return;
   const OLD = 'https://debrief.james-m-nemecek.workers.dev', swap = (s) => (typeof s === 'string' ? s.split(OLD).join(SITE) : s);
@@ -672,7 +679,7 @@ async function relink(env) {
     for (const f of chans.filter((c) => c.type === 15)) { const ar = await dc(env, '/channels/' + f.id + '/threads/archived/public?limit=50').catch(() => ({ threads: [] })); st.todo.push(...(ar.threads || []).map((t) => [t.id, t.thread_metadata && t.thread_metadata.locked ? 2 : 1])); }
   }
   for (const [id, closed] of st.todo.splice(0, 20)) {
-    const msgs = ((await dc(env, '/channels/' + id + '/messages?limit=50').catch(() => [])) || []).filter((m) => m.author && m.author.id === APP_ID && JSON.stringify([m.content, m.embeds]).includes(OLD));
+    const msgs = ((await dc(env, '/channels/' + id + '/messages?limit=50').catch(() => [])) || []).filter((m) => m.author && m.author.id === APP_ID && !(m.attachments || []).length && JSON.stringify([m.content, m.embeds]).includes(OLD));
     if (!msgs.length) continue;
     if (closed) await dc(env, '/channels/' + id, { method: 'PATCH', body: { archived: false } }).catch(() => {});
     for (const m of msgs) {
