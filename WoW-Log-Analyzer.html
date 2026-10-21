@@ -13676,6 +13676,7 @@ const PATCH_NOTES = [
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
     'When Warcraft Logs is down, the site now says so and asks you to try again in a few minutes (it used to say the site\'s key was rejected).',
+    'Debriefing maps for Vashnik, Sszorak, Entombed Sentinels and Nek\'zali: the room picture now sits where the game has it (it was turned or a few yards off), so everyone\'s dots line up with the room.',
   ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },
@@ -21093,11 +21094,11 @@ function playerTip(r, p, pos, d, t, isK) {
 // pixels per yard; w/h = image size. Calibrated by overlaying real Mythic pulls (Oct 2026) on each render:
 // player paths line up with platform edges, the Nek'zali well and the Twin Fangs triangle.
 const ARENAS = {
-  "Nek'zali the Soulcoiler": { f: '01.nakzali-ort-v105.jpg', w: 2181, h: 1221, cx: 0, cy: 198, s: 11 },
-  'Entombed Sentinels': { f: '02.sentinels-ort-v108.jpg', w: 2123, h: 1188, cx: 371, cy: 710, s: 11 }, // (Oct 20: 4 yd east, so a Mythic kill reaches both gem alcoves and no further)
-  'Vashnik the Malignant': { f: '03.vashnik-ort-enter-v180.jpg', w: 2448, h: 1371, cx: 320, cy: 446, s: 11 },
+  "Nek'zali the Soulcoiler": { f: '01.nakzali-ort-v105.jpg', w: 2181, h: 1221, cx: 0, cy: 207, s: 11 }, // (Oct 21, your OK: 9 yd north, so the well, both Echo doors and the Drowned Echo sit where our kill's log has them)
+  'Entombed Sentinels': { f: '02.sentinels-ort-v108.jpg', w: 2123, h: 1188, cx: 367.5, cy: 710.5, s: 11, rot: -60, sq: true }, // (Oct 21, your OK: turned 60 degrees as on the game's floor map, green gem north-east, red gem south-west)
+  'Vashnik the Malignant': { f: '03.vashnik-ort-enter-v180.jpg', w: 2448, h: 1371, cx: 272.2, cy: 451.3, s: 7.8, rot: -60, sq: true }, // (Oct 21, your OK: fitted to the game's floor map by three landmarks, the cavity and the two fountains: turned 60 degrees and drawn bigger)
   'The Lost Explorers': { f: '04.lostexplorers-ort-v112.jpg', w: 2448, h: 1371, cx: -470, cy: 698, s: 11 },
-  Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 387, s: 11 },
+  Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 384.2, s: 11, rot: -17, sq: true }, // (Oct 21, your OK: on the game's floor map the platform's spokes sit at 17, 62, 107 and 152 degrees: turned 17 degrees, 3 yd south)
   'The Twin Fangs': { f: '06.twinfangs-ort-v140.jpg', w: 2448, h: 1371, cx: 0, cy: 612, s: 10 }, // re-fit on 5 pulls: corners stay on the platform
   'The Coiled Altar': { f: '07.bargained-ort-v108.jpg', w: 2448, h: 1371, cx: 0, cy: 1158, s: 15 },
   "Ula'tek": { f: '08.ulatek-ort-fullbreak-v185.jpg', w: 2448, h: 1371, cx: -2.5, cy: 1553.1, s: 7.5 }, // (Oct 20, your note: the whole room, so phase 2 on the east and west ledges is on the map. Fitted to the game's own floor map (UiMap 2610, placed by its world bounds): its platform (about 81 yd across) and both ledges' steps line up with the render; on a Mythic and a Heroic kill phases 1 and 3 stay on the platform and phase 2 and the Doomscale Wardens on the stone ledges. Was the platform only: 08.ulatek-ort-platform-v85.jpg, w 2123, h 1188, cx 0, cy 1554, s 10.5)
@@ -39227,6 +39228,8 @@ var GDZ_ARENAS = {
   'Entombed Sentinels': { f: '02.sentinels-ort-v108.jpg', w: 2123, h: 1188, cx: 367.5, cy: 710.5, s: 11, rot: -60, sq: true },
   'Vashnik the Malignant': { f: '03.vashnik-ort-enter-v180.jpg', w: 2448, h: 1371, cx: 272.2, cy: 451.3, s: 7.8, rot: -60, sq: true },
   Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 384.2, s: 11, rot: -17, sq: true },
+  // (Nek'zali's guide was drawn on the picture's old spot (its centre is the guide's (0, 0)); Debriefing's now sits 9 yd north)
+  "Nek'zali the Soulcoiler": { f: '01.nakzali-ort-v105.jpg', w: 2181, h: 1221, cx: 0, cy: 198, s: 11 },
 };
 // ---- New guides, for you only on the website for now (your call, Oct 21): they show when this browser knows you as Flëxørçïst, either
 // the character you picked on your team or one on your signed-in Warcraft Logs account. Everyone else sees them as "Coming soon";

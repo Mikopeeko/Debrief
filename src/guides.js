@@ -4418,6 +4418,8 @@ var GDZ_ARENAS = {
   'Entombed Sentinels': { f: '02.sentinels-ort-v108.jpg', w: 2123, h: 1188, cx: 367.5, cy: 710.5, s: 11, rot: -60, sq: true },
   'Vashnik the Malignant': { f: '03.vashnik-ort-enter-v180.jpg', w: 2448, h: 1371, cx: 272.2, cy: 451.3, s: 7.8, rot: -60, sq: true },
   Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 384.2, s: 11, rot: -17, sq: true },
+  // (Nek'zali's guide was drawn on the picture's old spot (its centre is the guide's (0, 0)); Debriefing's now sits 9 yd north)
+  "Nek'zali the Soulcoiler": { f: '01.nakzali-ort-v105.jpg', w: 2181, h: 1221, cx: 0, cy: 198, s: 11 },
 };
 // ---- New guides, for you only on the website for now (your call, Oct 21): they show when this browser knows you as Flëxørçïst, either
 // the character you picked on your team or one on your signed-in Warcraft Logs account. Everyone else sees them as "Coming soon";
