@@ -1659,6 +1659,7 @@ const PATCH_NOTES = [
   ], f: [
     'When Warcraft Logs is down, the site now says so and asks you to try again in a few minutes (it used to say the site\'s key was rejected).',
     'Debriefing maps for Vashnik, Sszorak, Entombed Sentinels and Nek\'zali: the room picture now sits where the game has it (it was turned or a few yards off), so everyone\'s dots line up with the room.',
+    'Debriefing maps for The Twin Fangs: the room picture sat 12 yards too far south. It now lines up with the game, so everyone\'s dots are on the walkway.',
   ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },
@@ -7496,6 +7497,10 @@ function miniMap(mp, pmap) {
         s += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="' + (0.55 * kp + 0.6).toFixed(1) + '" fill="#f4fff0" fill-opacity="' + (0.55 * op).toFixed(2) + '"/>'; }
     }
   }
+  // (a spinning beam (the Twin Fangs' Vile Flood): one wide bar from its source, turning at v degrees a second from a0, t0 to t1)
+  if (mp.gdzLook) for (const b of mp.beams || []) { if (live && (ft < b.t0 || ft > b.t1)) continue; const a = (b.a0 + b.v * ((live ? ft : (b.t0 + b.t1) / 2) - b.t0)) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), hw = b.w / 2;
+    const P = (s1, s2) => { const q = { x: b.x + ux * s1 - uy * s2, y: b.y + uy * s1 + ux * s2 }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); }, box = 'M' + P(1.5, -hw * 0.6) + 'L' + P(b.len, -hw) + 'L' + P(b.len, hw) + 'L' + P(1.5, hw * 0.6) + 'Z';
+    s += '<path d="' + box + '" fill="' + b.color + '" fill-opacity=".55" stroke="#000" stroke-opacity=".55" stroke-width="3" vector-effect="non-scaling-stroke"/><path d="' + box + '" fill="none" stroke="' + b.color + '" stroke-width="1.6" vector-effect="non-scaling-stroke"/>'; }
   if (mp.gdzLook) for (const w of mp.waves || []) {
     // (a tail rising (Ula'tek's Gore Rattle): a dashed path the way its wave will run, with chevrons, until it fires)
     if (w.warn && ft >= w.t0 - w.warn && ft < w.t0) { const a = w.deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), len = Math.min(w.len || 110, w.v * (w.t1 - w.t0)), hw = w.w / 2, col = w.warnColor || '#ff5a3a', pu = (0.65 + 0.3 * Math.sin(ft * 7)).toFixed(2);
@@ -7669,6 +7674,7 @@ function miniMap(mp, pmap) {
   if (good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#2fd15a" stroke-width="2.5"/><path d="M' + (x - 3) + ' ' + y + 'l2 2.5l4-4.5" fill="none" stroke="#2fd15a" stroke-width="2"/>', 'Green ✓: ' + (mp.goodLabel || 'did it right') + (mp.goodAt ? ' (from the moment they do)' : '')]);
   if (mp.gdzLook && (mp.arcs || []).some((w) => !live || (ft >= w.t0 - (w.warn || 0) && ft <= w.t1))) leg.push([(x, y) => '<path d="M' + (x - 7) + ' ' + (y + 4) + 'Q' + x + ' ' + (y - 6) + ' ' + (x + 7) + ' ' + (y + 4) + '" fill="none" stroke="' + (mp.arcs[0].color || '#b6f23a') + '" stroke-width="4"/>', mp.arcs[0].legend || 'Her waves: stand in the gap']);
   if (mp.gdzLook && (mp.waves || []).some((w) => w.warn && w.warnAt !== 'start' && (!live || (ft >= w.t0 - w.warn && ft < w.t0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="rgba(255,90,58,.2)" stroke="#ff5a3a" stroke-width="1.5" stroke-dasharray="3 2"/>', 'a tail rising: its wave runs down the red path']);
+  if (mp.gdzLook && (mp.beams || []).some((b) => !live || (ft >= b.t0 && ft <= b.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.beams[0].color || '#9ff26d') + '" fill-opacity=".7" stroke="#000"/>', mp.beams[0].legend || 'A spinning beam: stay out of it']);
   if (mp.gdzLook && (mp.waves || []).some((w) => !live || (ft >= w.t0 && ft <= w.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.waves[0].color || '#b6f23a') + '" fill-opacity=".6" stroke="#000"/>', mp.waves[0].legend || 'Venom wave: step into a gap']);
   if ((mp.cysts || []).length) leg.push([(x, y) => cystBlob(x, y, '#2fd15a', null, 0.62), 'Viscous Cyst: its number, and what it was used for']);
   if ((lm.arrows || []).length) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 3) + '" y2="' + (y - 2) + '" stroke="' + (mp.arrows[0].color || '#7fd8ff') + '" stroke-width="2.5" stroke-linecap="round"/><path d="M' + (x + 7) + ' ' + (y - 5) + 'l-6 0.5l3 4z" fill="' + (mp.arrows[0].color || '#7fd8ff') + '"/>', 'Arrow: ' + (mp.arrowLabel || 'the way Raging Crosswinds will launch them')]);
@@ -9389,7 +9395,7 @@ const ARENAS = {
   'Vashnik the Malignant': { f: '03.vashnik-ort-enter-v180.jpg', w: 2448, h: 1371, cx: 272.2, cy: 451.3, s: 7.8, rot: -60, sq: true }, // (Oct 21, your OK: fitted to the game's floor map by three landmarks, the cavity and the two fountains: turned 60 degrees and drawn bigger)
   'The Lost Explorers': { f: '04.lostexplorers-ort-v112.jpg', w: 2448, h: 1371, cx: -470, cy: 698, s: 11 },
   Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 384.2, s: 11, rot: -17, sq: true }, // (Oct 21, your OK: on the game's floor map the platform's spokes sit at 17, 62, 107 and 152 degrees: turned 17 degrees, 3 yd south)
-  'The Twin Fangs': { f: '06.twinfangs-ort-v140.jpg', w: 2448, h: 1371, cx: 0, cy: 612, s: 10 }, // re-fit on 5 pulls: corners stay on the platform
+  'The Twin Fangs': { f: '06.twinfangs-ort-v140.jpg', w: 2448, h: 1371, cx: 0, cy: 624, s: 10 }, // (Oct 21, your eye: it sat 12 yd too far south; now the walkway lies where the game's floor map and our Mythic kill's players have it)
   'The Coiled Altar': { f: '07.bargained-ort-v108.jpg', w: 2448, h: 1371, cx: 0, cy: 1158, s: 15 },
   "Ula'tek": { f: '08.ulatek-ort-fullbreak-v185.jpg', w: 2448, h: 1371, cx: -2.5, cy: 1553.1, s: 7.5 }, // (Oct 20, your note: the whole room, so phase 2 on the east and west ledges is on the map. Fitted to the game's own floor map (UiMap 2610, placed by its world bounds): its platform (about 81 yd across) and both ledges' steps line up with the render; on a Mythic and a Heroic kill phases 1 and 3 stay on the platform and phase 2 and the Doomscale Wardens on the stone ledges. Was the platform only: 08.ulatek-ort-platform-v85.jpg, w 2123, h 1188, cx 0, cy 1554, s 10.5)
 };

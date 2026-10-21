@@ -13886,6 +13886,7 @@ const PATCH_NOTES = [
   ], f: [
     'When Warcraft Logs is down, the site now says so and asks you to try again in a few minutes (it used to say the site\'s key was rejected).',
     'Debriefing maps for Vashnik, Sszorak, Entombed Sentinels and Nek\'zali: the room picture now sits where the game has it (it was turned or a few yards off), so everyone\'s dots line up with the room.',
+    'Debriefing maps for The Twin Fangs: the room picture sat 12 yards too far south. It now lines up with the game, so everyone\'s dots are on the walkway.',
   ] },
   { d: '2026-10-20', h: [
     { t: 'Debrief has its own address: debriefme.io', d: 'Old links still work and bring you here, and everything you saved on the old address comes with you the first time.' },
@@ -19723,6 +19724,10 @@ function miniMap(mp, pmap) {
         s += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="' + (0.55 * kp + 0.6).toFixed(1) + '" fill="#f4fff0" fill-opacity="' + (0.55 * op).toFixed(2) + '"/>'; }
     }
   }
+  // (a spinning beam (the Twin Fangs' Vile Flood): one wide bar from its source, turning at v degrees a second from a0, t0 to t1)
+  if (mp.gdzLook) for (const b of mp.beams || []) { if (live && (ft < b.t0 || ft > b.t1)) continue; const a = (b.a0 + b.v * ((live ? ft : (b.t0 + b.t1) / 2) - b.t0)) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), hw = b.w / 2;
+    const P = (s1, s2) => { const q = { x: b.x + ux * s1 - uy * s2, y: b.y + uy * s1 + ux * s2 }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); }, box = 'M' + P(1.5, -hw * 0.6) + 'L' + P(b.len, -hw) + 'L' + P(b.len, hw) + 'L' + P(1.5, hw * 0.6) + 'Z';
+    s += '<path d="' + box + '" fill="' + b.color + '" fill-opacity=".55" stroke="#000" stroke-opacity=".55" stroke-width="3" vector-effect="non-scaling-stroke"/><path d="' + box + '" fill="none" stroke="' + b.color + '" stroke-width="1.6" vector-effect="non-scaling-stroke"/>'; }
   if (mp.gdzLook) for (const w of mp.waves || []) {
     // (a tail rising (Ula'tek's Gore Rattle): a dashed path the way its wave will run, with chevrons, until it fires)
     if (w.warn && ft >= w.t0 - w.warn && ft < w.t0) { const a = w.deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), len = Math.min(w.len || 110, w.v * (w.t1 - w.t0)), hw = w.w / 2, col = w.warnColor || '#ff5a3a', pu = (0.65 + 0.3 * Math.sin(ft * 7)).toFixed(2);
@@ -19896,6 +19901,7 @@ function miniMap(mp, pmap) {
   if (good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#2fd15a" stroke-width="2.5"/><path d="M' + (x - 3) + ' ' + y + 'l2 2.5l4-4.5" fill="none" stroke="#2fd15a" stroke-width="2"/>', 'Green ✓: ' + (mp.goodLabel || 'did it right') + (mp.goodAt ? ' (from the moment they do)' : '')]);
   if (mp.gdzLook && (mp.arcs || []).some((w) => !live || (ft >= w.t0 - (w.warn || 0) && ft <= w.t1))) leg.push([(x, y) => '<path d="M' + (x - 7) + ' ' + (y + 4) + 'Q' + x + ' ' + (y - 6) + ' ' + (x + 7) + ' ' + (y + 4) + '" fill="none" stroke="' + (mp.arcs[0].color || '#b6f23a') + '" stroke-width="4"/>', mp.arcs[0].legend || 'Her waves: stand in the gap']);
   if (mp.gdzLook && (mp.waves || []).some((w) => w.warn && w.warnAt !== 'start' && (!live || (ft >= w.t0 - w.warn && ft < w.t0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="rgba(255,90,58,.2)" stroke="#ff5a3a" stroke-width="1.5" stroke-dasharray="3 2"/>', 'a tail rising: its wave runs down the red path']);
+  if (mp.gdzLook && (mp.beams || []).some((b) => !live || (ft >= b.t0 && ft <= b.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.beams[0].color || '#9ff26d') + '" fill-opacity=".7" stroke="#000"/>', mp.beams[0].legend || 'A spinning beam: stay out of it']);
   if (mp.gdzLook && (mp.waves || []).some((w) => !live || (ft >= w.t0 && ft <= w.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.waves[0].color || '#b6f23a') + '" fill-opacity=".6" stroke="#000"/>', mp.waves[0].legend || 'Venom wave: step into a gap']);
   if ((mp.cysts || []).length) leg.push([(x, y) => cystBlob(x, y, '#2fd15a', null, 0.62), 'Viscous Cyst: its number, and what it was used for']);
   if ((lm.arrows || []).length) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 3) + '" y2="' + (y - 2) + '" stroke="' + (mp.arrows[0].color || '#7fd8ff') + '" stroke-width="2.5" stroke-linecap="round"/><path d="M' + (x + 7) + ' ' + (y - 5) + 'l-6 0.5l3 4z" fill="' + (mp.arrows[0].color || '#7fd8ff') + '"/>', 'Arrow: ' + (mp.arrowLabel || 'the way Raging Crosswinds will launch them')]);
@@ -21616,7 +21622,7 @@ const ARENAS = {
   'Vashnik the Malignant': { f: '03.vashnik-ort-enter-v180.jpg', w: 2448, h: 1371, cx: 272.2, cy: 451.3, s: 7.8, rot: -60, sq: true }, // (Oct 21, your OK: fitted to the game's floor map by three landmarks, the cavity and the two fountains: turned 60 degrees and drawn bigger)
   'The Lost Explorers': { f: '04.lostexplorers-ort-v112.jpg', w: 2448, h: 1371, cx: -470, cy: 698, s: 11 },
   Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 384.2, s: 11, rot: -17, sq: true }, // (Oct 21, your OK: on the game's floor map the platform's spokes sit at 17, 62, 107 and 152 degrees: turned 17 degrees, 3 yd south)
-  'The Twin Fangs': { f: '06.twinfangs-ort-v140.jpg', w: 2448, h: 1371, cx: 0, cy: 612, s: 10 }, // re-fit on 5 pulls: corners stay on the platform
+  'The Twin Fangs': { f: '06.twinfangs-ort-v140.jpg', w: 2448, h: 1371, cx: 0, cy: 624, s: 10 }, // (Oct 21, your eye: it sat 12 yd too far south; now the walkway lies where the game's floor map and our Mythic kill's players have it)
   'The Coiled Altar': { f: '07.bargained-ort-v108.jpg', w: 2448, h: 1371, cx: 0, cy: 1158, s: 15 },
   "Ula'tek": { f: '08.ulatek-ort-fullbreak-v185.jpg', w: 2448, h: 1371, cx: -2.5, cy: 1553.1, s: 7.5 }, // (Oct 20, your note: the whole room, so phase 2 on the east and west ledges is on the map. Fitted to the game's own floor map (UiMap 2610, placed by its world bounds): its platform (about 81 yd across) and both ledges' steps line up with the render; on a Mythic and a Heroic kill phases 1 and 3 stay on the platform and phase 2 and the Doomscale Wardens on the stone ledges. Was the platform only: 08.ulatek-ort-platform-v85.jpg, w 2123, h 1188, cx 0, cy 1554, s 10.5)
 };
@@ -35358,7 +35364,7 @@ const gdzSpot = (i, n, r) => { if (n <= 1) return [0, 0]; const a = i * 2.39996,
 let GDZ_SEG = null;
 function gdzKit(boss, len) {
   if (GDZ_SEG) { GDZ_SEG.next(len); return GDZ_SEG.kit; }
-  const U = new Map(), A = GDZ_ORIGIN[boss] || ARENAS[boss] || { cx: 0, cy: 0 }, k = { waves: [], arcs: [], artAt: [], pauses: [], calls: [], wmarks: [], rings: [], cones: [], links: [], arrows: [], tags: [], cbars: {}, steps: [], hl: new Set(), good: [], goodAt: [], bad: [], badAt: [] };
+  const U = new Map(), A = GDZ_ORIGIN[boss] || ARENAS[boss] || { cx: 0, cy: 0 }, k = { waves: [], beams: [], arcs: [], artAt: [], pauses: [], calls: [], wmarks: [], rings: [], cones: [], links: [], arrows: [], tags: [], cbars: {}, steps: [], hl: new Set(), good: [], goodAt: [], bad: [], badAt: [] };
   // seg: the stretch being written (T: its start, pre: its own names for orbs, adds and bosses, w: its window); players carry on
   const seg = { T: 0, pre: '', w: null, rot: 0 }, RO = (x, y) => { if (!seg.rot || x == null || y == null) return [x, y]; const a = seg.rot * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return [Math.round((x * c - y * sn) * 1000) / 1000, Math.round((x * sn + y * c) * 1000) / 1000]; },
     RI = (p) => { if (!seg.rot || !p) return p; const a = -seg.rot * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); return [p[0] * c - p[1] * sn, p[0] * sn + p[1] * c]; }, isP = (id) => /^[thmr]\d$/.test(id), P = (id) => (id == null || isP(id) ? id : seg.pre + id), TT = (t) => (t == null ? t : t + seg.T);
@@ -35391,6 +35397,9 @@ function gdzKit(boss, len) {
     art(t, f) { k.artAt.push([TT(t), f]); return kit; },
     // a curved wave spreading out from (x, y) at v yards a second between angles a0 and a1 (degrees), d deep, with gaps; a red arc warns first
     arc(o) { const q0 = RO(o.x, o.y); k.arcs.push({ ...o, x: q0[0], y: q0[1], a0: o.a0 + seg.rot, a1: o.a1 + seg.rot, gaps: (o.gaps || []).map((g) => [g[0] + seg.rot, g[1] + seg.rot]), t0: TT(o.t0), t1: TT(o.t1) }); return kit; },
+    // a spinning beam: one wide bar from (x, y), pointing a0 degrees at t0 (east = 0, counterclockwise) and turning v degrees a second
+    // (negative: clockwise), len yards long and w wide, until t1
+    beam(o) { const q0 = RO(o.x, o.y); k.beams.push({ ...o, x: q0[0], y: q0[1], a0: (o.a0 || 0) + seg.rot, t0: TT(o.t0), t1: TT(o.t1) }); return kit; },
     arrow(o) { k.arrows.push({ ...o, g: P(o.g), t0: TT(o.t0), t1: TT(o.t1), at: TT(o.at) }); return kit; },
     tag(id, text, from, to) { k.tags.push([P(id), text, TT(from), TT(to)]); return kit; },
     cast(id, spell, t0, t1, end, by) { const g = P(id); (k.cbars[g] = k.cbars[g] || []).push({ t0: TT(t0), t1: TT(t1), len: t1 - t0, spell, end: end || 'done', by: by || '' }); return kit; },
@@ -35451,7 +35460,7 @@ function gdzKit(boss, len) {
         hl: quiet ? [] : [...k.hl], good: quiet ? [] : k.good, goodAt: !quiet && k.goodAt.length ? k.goodAt : null, bad: quiet ? [] : k.bad, badAt: !quiet && k.badAt.length ? k.badAt : null,
         hitOrbs: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind !== 'ghost')), ghostHit: cones.flatMap((c) => c.hit.filter((g) => U.get(g) && U.get(g).kind === 'ghost')),
         focus: { x: X(f.x), y: Y(f.y), r: f.r }, steps: k.steps.slice().sort((a, b) => a[0] - b[0]), playerLabel: 'Player (role icon: tank, healer, melee, ranged)', spd: o.spd || 1,
-        lateHit: true, liveLeg: true, hlLabel: o.hlLabel, goodLabel: o.goodLabel, badLabel: o.badLabel, tagLabel: o.tagLabel, noArena: !!o.noArena, waves: k.waves.map((w) => ({ ...w, x: X(w.x), y: Y(w.y) })), art: o.art || null, fullAt: (o.full || (!o.final && GDZ_FULL[boss])) ? ((f) => ({ x: X(f.x), y: Y(f.y), r: f.r }))(o.full || GDZ_FULL[boss]) : null, artAt: k.artAt.length ? k.artAt.slice().sort((a, b) => a[0] - b[0]) : null, arcs: k.arcs.map((a) => ({ ...a, x: X(a.x), y: Y(a.y) })) };
+        lateHit: true, liveLeg: true, hlLabel: o.hlLabel, goodLabel: o.goodLabel, badLabel: o.badLabel, tagLabel: o.tagLabel, noArena: !!o.noArena, waves: k.waves.map((w) => ({ ...w, x: X(w.x), y: Y(w.y) })), beams: k.beams.map((b) => ({ ...b, x: X(b.x), y: Y(b.y) })), art: o.art || null, fullAt: (o.full || (!o.final && GDZ_FULL[boss])) ? ((f) => ({ x: X(f.x), y: Y(f.y), r: f.r }))(o.full || GDZ_FULL[boss]) : null, artAt: k.artAt.length ? k.artAt.slice().sort((a, b) => a[0] - b[0]) : null, arcs: k.arcs.map((a) => ({ ...a, x: X(a.x), y: Y(a.y) })) };
     },
   };
   return kit;
@@ -38012,10 +38021,13 @@ const TF = 'The Twin Fangs', TF_VX = [-16, 82], TF_IT = [16, 81];
 // the turn for each platform: 0 north, 1 south-west (turned and mirrored), 2 south-east (turned)
 function tfT(plat) { const c = Math.cos(-120 * Math.PI / 180), s = Math.sin(-120 * Math.PI / 180), R = (p) => [p[0] * c - p[1] * s, p[0] * s + p[1] * c];
   if (plat === 2) return { P: R, A: (d) => d - 120 }; if (plat === 1) return { P: (p) => { const q = R(p); return [-q[0], q[1]]; }, A: (d) => 180 - (d - 120) }; return { P: (p) => p, A: (d) => d }; }
+// the corner's walkable stone, in platform 1's frame, from where our kill's players stood (the green rim is not walkable: you fall
+// off): from about y 46 up it narrows toward the tip, so a player spot past the edge is pulled back onto the stone
+function tfIn(p, m) { const [x, y] = p, e = m || 0, hi = (y <= 46 ? 99 : 30 - (y - 46) * 0.7) - e, lo = (y <= 50 ? -99 : -29 + (y - 50) * 0.7) + e; return [Math.min(hi, Math.max(lo, x)), Math.min(76 - e, y)]; } /* (m: keep that many yards in from the edge) */
 // a kit wrapper that turns every spot (and direction) for the platform
 function tfKit(L, plat) { const k = gdzKit(TF, L), T = tfT(plat || 0), P = T.P;
   const w = { k, P, A: T.A,
-    at: (t, id, x, y) => { const q = P([x, y]); k.at(t, id, q[0], q[1]); return w; }, hold: (t, ids) => { k.hold(t, ids); return w; },
+    at: (t, id, x, y) => { const q = P(tfIn([x, y])); k.at(t, id, q[0], q[1]); return w; }, hold: (t, ids) => { k.hold(t, ids); return w; },
     boss: (id, n, t, x, y) => { const q = P([x, y]); k.boss(id, n, t, q[0], q[1]); return w; }, add: (id, n, t, x, y) => { const q = P([x, y]); k.add(id, n, t, q[0], q[1]); return w; },
     ring: (o) => { const q = o.x != null ? P([o.x, o.y]) : [undefined, undefined]; k.ring({ ...o, x: q[0], y: q[1] }); return w; },
     call: (t0, t1, text, o) => { o = o || {}; const q = o.x != null ? P([o.x, o.y]) : [undefined, undefined]; k.call(t0, t1, text, { ...o, x: q[0], y: q[1] }); return w; },
@@ -38047,17 +38059,20 @@ const TF_M = {
     w.link({ from: 'vx', to: 't1', t0: 1.6, t1: 3.4, color: '#9ff26d', legend: 'Caustic Deluge: a beam that shoves the tank back' }); w.hold(1.6, 't1').at(3, 't1', -12, 54);
     if (myth) { k.ring({ on: 't2', r: 3, fx: 'debuff', t0: 1.6, dur: 6, color: '#ff4a5a', cn: 'Blood Torrent', legend: 'Blood Torrent: a huge heal absorb on the tank' }); w.call(1.6, 4, 'Big defensive', { on: 't2', color: '#5aa0ff', ink: '#fff' }); }
     w.call(1.6, 3.6, 'Pushed back', { on: 't1', color: '#9ff26d', ink: '#0a1a06' });
-    const G = [[-32, 56], [-35, 46], [-10, 26], [22, 60], [33, 50], [-28, 30], [12, 24], [32, 32]]; const SO = ['m1', 'r1', 'h3', 'm7', 'r4', 'r5', 'h4', 'r7'];
-    G.forEach(([x, y], i) => { const t0 = 3 + i * 0.25, id = 'gl' + i; w.add(id, 'Caustic Globule', t0, x, y); const tSoak = (fail && i === 4) ? L : 8.2 + (i % 3) * 0.4; k.show(id, t0, tSoak);
+    // (the 15 globules of set 3 in our kill, platform 1's frame; low-stack players soak, here whoever is nearest, tanks aside)
+    const G = [[-15, 48], [-4, 59], [22, 58], [3, 47], [-5, 68], [10, 42], [-4, 45], [22, 42], [17, 66], [4, 52], [1, 34], [0, 64], [9, 32], [18, 28], [23, 31]];
+    const SO = (() => { const free = new Set(Object.keys(TF_HOME).filter((id) => !/^t/.test(id))), left = new Set(G.map((_, i) => i)), out = []; /* (the closest globule and player first, again and again) */
+      while (left.size) { let b = null; for (const i of left) for (const id of free) { const q = TF_HOME[id], dd = Math.hypot(q[0] - G[i][0], q[1] - G[i][1]); if (!b || dd < b[0]) b = [dd, i, id]; } out[b[1]] = b[2]; left.delete(b[1]); free.delete(b[2]); } return out; })();
+    G.forEach(([x, y], i) => { const t0 = 3 + i * 0.15, id = 'gl' + i; w.add(id, 'Caustic Globule', t0, x, y); const tSoak = (fail && i === 4) ? L : 8.2 + (i % 3) * 0.4; k.show(id, t0, tSoak);
       w.ring({ x, y, r: 2.6, fx: 'zone', t0, dur: tSoak - t0, color: '#9ff26d', fill: 'rgba(159,242,109,.3)', cn: 'Caustic Globule', legend: 'a globule: soak it within 10 seconds or it hits the raid' });
       if (myth) w.ring({ x, y, r: 3.4, fx: 'safe', t0, dur: 6.2 - t0, color: '#ffd23b', cn: 'Barbed Bulwark', legend: 'Mythic: shielded until it\'s crowd controlled' }); });
-    if (myth) { [[-22, 50], [10, 38], [24, 52]].forEach(([x, y], j) => { w.ring({ x, y, r: 10, fx: 'burst', t0: 5.6, at: 6, dur: 0.6, color: '#7fd8ff', cn: 'AoE crowd control', legend: 'an AoE crowd control breaks the shields' }); }); w.call(5.2, 6.8, 'CC the globules', { x: 0, y: 66, color: '#7fd8ff', ink: '#06131c' }); }
-    G.forEach(([x, y], i) => { if (fail && i === 4) return; const id = SO[i], tS = 8.2 + (i % 3) * 0.4, p0 = w.posAt(id, 0); w.hold(6.4, id).at(tS, id, x + 1.2, y - 1.2).hold(tS + 0.6, id).at(tS + 3.4, id, p0[0], p0[1]); });
-    if (fail) { const g = G[4]; w.ring({ x: g[0], y: g[1], r: 8, fx: 'burst', t0: 12.6, at: 13, dur: 0.8, color: '#ff3b3b', cn: 'Globule explodes', legend: 'a globule nobody soaked explodes on the raid' }); gdzFailBlast(k, 13.2, 'A globule exploded: a raid hit', 0, 0, [], 'Caustic Globule'); k.step(0.4).step(3).step(8.2).step(13);
+    if (myth) { [[-8, 50], [10, 38], [12, 60], [-4, 64]].forEach(([x, y], j) => { w.ring({ x, y, r: 10, fx: 'burst', t0: 5.6, at: 6, dur: 0.6, color: '#7fd8ff', cn: 'AoE crowd control', legend: 'an AoE crowd control breaks the shields' }); }); w.call(5.2, 6.8, 'CC the globules', { x: 0, y: 66, color: '#7fd8ff', ink: '#06131c' }); }
+    G.forEach(([x, y], i) => { if (fail && i === 4) return; const id = SO[i], tS = 8.2 + (i % 3) * 0.4, p0 = w.posAt(id, 0); w.hold(5.6, id).at(tS, id, x + 1.2, y - 1.2).hold(tS + 0.6, id).at(tS + 3.4, id, p0[0], p0[1]); });
+    if (fail) { const g = G[4]; w.ring({ x: g[0], y: g[1], r: 8, fx: 'burst', t0: 12.6, at: 13, dur: 0.8, color: '#ff3b3b', cn: 'Globule explodes', legend: 'a globule nobody soaked explodes on the raid' }); gdzFailBlast(k, 13.2, 'A globule exploded: a raid hit', ...w.P([0, 40]), [], 'Caustic Globule'); k.step(0.4).step(3).step(8.2).step(13);
       w.pause(12.4, 'Nobody took this globule. Ten seconds after it landed it exploded on the whole raid.', { x: g[0], y: g[1], r: 8 });
       return w.done({ title: 'Mistake: a globule left to explode', focus: { x: 0, y: 48, r: 30 } }); }
     k.ring1(['t1', 't2'].concat(SO.slice(0, 3))).step(0.4).step(1.6).step(myth ? 5.2 : 3).step(8.2);
-    w.pause(myth ? 6.2 : 4, myth ? 'Both beams at once: big defensives on both tanks. Globules land all over: AoE crowd control breaks their shields, then a low-stack player soaks each one.' : 'Vexhul\'s beam shoves his tank back. Globules land all over: a low-stack player soaks each one.', { x: 0, y: 46, r: 28 });
+    w.pause(myth ? 6.2 : 4, myth ? 'Both beams at once: big defensives on both tanks. 15 globules land: AoE crowd control breaks their shields, then a low-stack player soaks each one.' : 'Vexhul\'s beam shoves his tank back. Globules land all over: a low-stack player soaks each one.', { x: 0, y: 46, r: 28 });
     return w.done({ title: myth ? 'Caustic Deluge and Blood Torrent: CC, then soak the globules' : 'Caustic Deluge: soak the globules', focus: { x: 0, y: 48, r: 30 }, hlLabel: 'the tanks, and a few globule soakers' });
   },
   // Stone Breaker (Ithraz): his tank is shoved back, then three slams land on marked spots in order: the tank steps into each in the order
@@ -38069,7 +38084,7 @@ const TF_M = {
     const S = [[18, 60], [8, 62], [16, 68]]; S.forEach(([x, y], i) => { const t = 4.4 + i * 1.8; w.ring({ x, y, r: 3.4, fx: 'soak', t0: 2.8 + i * 0.3, at: t, dur: t - 2.8 - i * 0.3 + 0.3, color: '#c9a36a', cn: 'Stone Breaker', legend: 'a slam: the tank stands in it, in the order they appeared' });
       w.ring({ x, y, r: 1, fx: 'zone', t0: 2.8 + i * 0.3, dur: 1.2, color: '#ffd23b', fill: 'rgba(255,210,59,.7)', cn: 'Slam order ' + (i + 1), legend: 'the order the slams appear in' }); if (fail && i === 2) return; w.hold(t - 1.6, 't2').at(t - 0.2, 't2', x, y); });
     w.call(2.8, 4.2, '1, 2, 3: in order', { x: 26, y: 74, color: '#c9a36a', ink: '#141006' });
-    if (fail) { gdzFailBlast(k, 8.2, 'A missed slam: raid hit and knockback', 0, 30, [], 'Stone Breaker'); k.oops('t2', 8); k.step(0.4).step(2.8).step(8);
+    if (fail) { gdzFailBlast(k, 8.2, 'A missed slam: raid hit and knockback', ...w.P([4, 42]), [], 'Stone Breaker'); w.ring({ x: 2, y: 48, r: 40, fx: 'burst', t0: 7.8, at: 8.2, dur: 0.9, color: '#ff3b3b', cn: 'Stone Breaker', legend: 'a missed slam hits the whole raid' }); k.oops('t2', 8); k.step(0.4).step(2.8).step(8);
       w.pause(8.4, 'The tank stayed on the second spot. The third slam hit nobody: it hit the raid and knocked everyone back.', { x: S[2][0], y: S[2][1], r: 8 });
       return w.done({ title: 'Mistake: a missed slam', focus: { x: 10, y: 56, r: 22 }, badLabel: 'missed the slam' }); }
     k.ring1(['t2']).step(0.4).step(2.8).step(4.4);
@@ -38081,11 +38096,11 @@ const TF_M = {
   emergence(fail, d, o) {
     const plat = o && o.p != null ? o.p : 2, L = 13.4, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('vx', 'Venomous Emergence', 0.4, 2.6);
     const SP = [[0, 24], [-7, 21], [7, 21]]; SP.forEach(([x, y], i) => { const id = 'sv' + i; w.add(id, 'Spawn of Vexhul', 2.6, x, y); k.show(id, 2.6, fail ? L : 8.6 + i * 0.4); });
-    w.call(2.6, 4.4, '+1 stack for everyone', { x: 0, y: 12, color: '#9ff26d', ink: '#0a1a06' });
-    const SW = ['m1', 'm2', 'm3', 'm5', 'm6', 'r1', 'r2', 'r3', 'r4', 'r5']; SW.forEach((id, i) => { const p = SP[i % 3], [dx, dy] = gdzSpot(i, SW.length, 8); w.hold(2.4, id).at(6, id, p[0] + dx, p[1] + 9 + dy * 0.6); });
+    w.call(2.6, 4.4, '+1 stack for everyone', { x: 0, y: 46, color: '#9ff26d', ink: '#0a1a06' });
+    const SW = ['m1', 'm2', 'm3', 'm5', 'm6', 'r1', 'r2', 'r3', 'r4', 'r5']; SW.forEach((id, i) => { const p = SP[i % 3], [dx, dy] = gdzSpot(i, SW.length, 8); w.hold(2.4, id).at(6, id, p[0] + dx, p[1] + 11 + dy * 0.6); });
     const TG = ['h2', 'r6', 'r7']; TG.forEach((id, i) => { k.cast('sv' + i, 'Corrosive Spit', 4, 5.6); w.link({ from: 'sv' + i, to: id, t0: 4, t1: 5.6, color: '#9ff26d', legend: 'Corrosive Spit: a beam on a player, +1 stack' }); });
     w.call(4, 5.6, 'Spit: stand still', { x: 30, y: 30, color: '#9ff26d', ink: '#0a1a06' });
-    if (fail) { TG.forEach((id, i) => { k.cast('sv' + i, 'Corrosive Spit', 9.4, 11); w.link({ from: 'sv' + i, to: id, t0: 9.4, t1: 11, color: '#ff3b3b', legend: 'a second Spit: another stack' }); }); w.call(9.4, 11.6, 'Second Spit: +1 stack again', { x: 0, y: 12, color: '#ff3b3b', ink: '#fff' }); k.step(0.4).step(2.6).step(9.4);
+    if (fail) { TG.forEach((id, i) => { k.cast('sv' + i, 'Corrosive Spit', 9.4, 11); w.link({ from: 'sv' + i, to: id, t0: 9.4, t1: 11, color: '#ff3b3b', legend: 'a second Spit: another stack' }); }); w.call(9.4, 11.6, 'Second Spit: +1 stack again', { x: 0, y: 46, color: '#ff3b3b', ink: '#fff' }); k.step(0.4).step(2.6).step(9.4);
       w.pause(10, 'Too many stayed on the bosses: the Spawns lived long enough to Spit a second time. Every extra stack brings the raid closer to the cap.', { x: 0, y: 24, r: 14 });
       return w.done({ title: 'Mistake: a second Corrosive Spit', focus: { x: 0, y: 36, r: 28 } }); }
     SW.forEach((id) => { const q = TF_HOME[id]; w.hold(9.6, id).at(13.2, id, q[0], q[1]); });
@@ -38093,22 +38108,23 @@ const TF_M = {
     w.pause(5, 'Almost everyone swaps to the Spawns at the pool\'s edge. Spit targets take their beam standing still. Kill all three before they Spit again.', { x: 0, y: 26, r: 16 });
     return w.done({ title: 'Venomous Emergence: kill the Spawns before the second Spit', focus: { x: 0, y: 36, r: 28 }, hlLabel: 'the Spit targets' });
   },
-  // Mythic, Rouse the Brood: with the Spawns, 14 Broodlings of Ithraz rise in ten slots round the platform; each casts Visceral Burst
-  // (a raid hit and a stacking DoT): kick every one. The first set has one in each slot plus four; the second set is fully random. Six
+  // Mythic, Rouse the Brood: with the Spawns, 10 Broodlings of Ithraz rise in ten slots round the platform (our kill: 50 kicks in 5 sets;
+  // the top team's: 40 in 4); each casts Visceral Burst (a raid hit and a stacking DoT): kick every one. The first set has one in each
+  // slot; the second is random, so some slots get two. Six
   // ground markers line up on slot 3 each side; the Protection Paladins take the front ones (Divine Toll, Avenger's Shield) (fail: a
   // missed kick)
   brood(fail, d, o) {
     const plat = o && o.p != null ? o.p : 2, L = 11, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0);
-    const N = Object.keys(TF_SLOT), EXTRA = ['L2', 'R3', 'L4', 'R1'], ALL = N.concat(EXTRA), KK = { L1: 'r1', L2: 'm1', L3: 'm2', L4: 't1', R1: 'r4', R2: 'm6', R3: 'm7', R4: 't2', FL: 't1', FR: 't2' }, KX = { L2: 'r2', R3: 'r5', L4: 'm3', R1: 'h4' };
+    const N = Object.keys(TF_SLOT), ALL = N, KK = { L1: 'r1', L2: 'm1', L3: 'm2', L4: 't1', R1: 'r4', R2: 'm6', R3: 'm7', R4: 't2', FL: 't1', FR: 't2' }, KX = {};
     ALL.forEach((s, i) => { const p = TF_SLOT[s], j = i >= N.length, q = j ? [p[0] + (p[0] < 0 ? -3.5 : 3.5), p[1] + 2.5] : p, id = 'bl' + i; w.add(id, 'Broodling', 0.6 + (i % 5) * 0.15, q[0], q[1]); const by = j ? KX[s] : KK[s];
       const miss = fail && s === 'R2' && !j, bar = miss || (!j && ['FL', 'FR', 'L3'].includes(s)); /* (cast bars on three, so the kicks read clearly) */ if (bar) k.cast(id, 'Visceral Burst', 1.6 + (i % 4) * 0.5, 4 + (i % 4) * 0.5, miss ? 'done' : 'kick', gdzName(by)); k.show(id, 0.6, miss ? L : 4.4 + (i % 4) * 0.5); });
-    ['diamond', 'star', 'moon', 'triangle', 'circle', 'square'].forEach((m, i) => { const s = ['L3', 'R3', 'L1', 'R1', 'L2', 'R2'][i], p = TF_SLOT[s], q = w.P([p[0] * 0.75, p[1] * 0.96 - 2]); k.wmark(m, q[0], q[1]); });
-    w.call(0.6, 2.4, '14 Broodlings: kick every one', { x: 0, y: 30, color: '#ff8a8a', ink: '#200a0a' });
-    if (fail) { gdzFailBlast(k, 4.4, 'A missed kick: Visceral Burst on the raid', 0, 26, [], 'Visceral Burst'); k.step(0.6).step(1.6).step(4.4);
+    ['diamond', 'star', 'moon', 'triangle', 'circle', 'square'].forEach((m, i) => { const s = ['L3', 'R3', 'L1', 'R1', 'L2', 'R2'][i], p = TF_SLOT[s], q = w.P(tfIn([p[0] * 0.75, p[1] * 0.96 - 2], 2)); k.wmark(m, q[0], q[1]); /* (a step in from the rim) */ });
+    w.call(0.6, 2.4, '10 Broodlings: kick every one', { x: 0, y: 30, color: '#ff8a8a', ink: '#200a0a' });
+    if (fail) { gdzFailBlast(k, 4.4, 'A missed kick: Visceral Burst on the raid', ...w.P([0, 42]), [], 'Visceral Burst'); k.step(0.6).step(1.6).step(4.4);
       w.pause(4.8, 'Nobody kicked the Broodling at right 2. Visceral Burst went off: a big raid hit and a DoT that stacks. A miss like this is usually a wipe.', { x: TF_SLOT.R2[0], y: TF_SLOT.R2[1], r: 8 });
       return w.done({ title: 'Mistake: a missed Broodling kick', focus: { x: 0, y: 56, r: 30 } }); }
     k.ring1(['t1', 't2']).step(0.6).step(1.6).step(4);
-    w.pause(2.8, 'Each kicker covers their slot: left 1 to 4, right 1 to 4, the two at the tip for the Protection Paladins, with spare kickers on each side for double spawns.', { x: 0, y: 58, r: 28 });
+    w.pause(2.8, 'Ten Broodlings, one in each slot. Each kicker covers theirs: left 1 to 4, right 1 to 4, the two at the tip for the Protection Paladins. On the second set some slots get two: spare kickers back them up.', { x: 0, y: 58, r: 28 });
     return w.done({ title: 'Rouse the Brood: a kick for every Broodling', focus: { x: 0, y: 56, r: 30 }, hlLabel: 'the tanks (they kick too)' });
   },
   // Coiling Ichor (Ithraz): a DoT that ramps as its circle shrinks; when it ends a Congealed Gore puddle drops (it stays; Heroic and up it
@@ -38116,32 +38132,39 @@ const TF_M = {
   // in the middle of the platform)
   ichor(fail, d, o) {
     const plat = o && o.p != null ? o.p : 2, L = 11, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('it', 'Coiling Ichor', 0.4, 2.4);
-    const TG = ['r1', 'h1', 'r5'], SP = fail ? [[-36, 40], [-33, 47], [0, 46]] : [[-36, 40], [-33, 47], [-38, 34]];
+    const TG = ['r1', 'h1', 'r4'], SP = fail ? [[-26, 49], [-28, 43], [0, 46]] : [[-26, 49], [-28, 43], [26, 48]]; /* (where our kill's targets dropped theirs: the outer edges, a step in from the rim) */
     TG.forEach((id, i) => { k.ring({ on: id, r: 6, fx: 'debuff', t0: 2.4, dur: 6, color: '#ff6a5a', cn: 'Coiling Ichor', legend: 'Coiling Ichor: ramps as the circle shrinks; a puddle when it ends' }); w.hold(2.6, id).at(7.6, id, SP[i][0], SP[i][1]);
       w.ring({ x: SP[i][0], y: SP[i][1], r: 4.5, fx: 'puddle', t0: 8.4, dur: L - 8.4, color: '#a03040', fill: 'rgba(160,48,64,.5)', cn: 'Congealed Gore', legend: 'Congealed Gore: stays for the rest of the platform' }); });
-    w.call(6.6, 8.4, 'Defensive for the last ticks', { x: -34, y: 58, color: '#ff8a8a', ink: '#200a0a' });
-    if (fail) { k.oops('r5', 8.4); k.step(0.4).step(2.6).step(8.4);
+    w.call(6.6, 8.4, 'Defensive for the last ticks', { x: -16, y: 62, color: '#ff8a8a', ink: '#200a0a' });
+    if (fail) { k.oops('r4', 8.4); k.step(0.4).step(2.6).step(8.4);
       w.pause(8.8, 'One target dropped their puddle in the middle of the platform instead of at the edge: it stays there, taking space the raid needs for the adds and the soaks.', { x: 0, y: 46, r: 8 });
-      return w.done({ title: 'Mistake: a puddle in the middle', focus: { x: -16, y: 46, r: 28 }, badLabel: 'dropped it in the middle' }); }
+      return w.done({ title: 'Mistake: a puddle in the middle', focus: { x: 0, y: 46, r: 32 }, badLabel: 'dropped it in the middle' }); }
     TG.forEach((id) => { const q = TF_HOME[id]; w.hold(8.6, id).at(10.8, id, q[0], q[1]); });
     k.ring1(TG).step(0.4).step(2.6).step(6.6).step(8.4);
-    w.pause(5, 'Coiling Ichor: walk to your spot on the outer edge and drop the puddles packed tight together, out of the way. A defensive that still covers the last ticks.', { x: -38, y: 42, r: 12 });
-    return w.done({ title: 'Coiling Ichor: puddles packed at the edge', focus: { x: -16, y: 46, r: 28 }, hlLabel: 'the Coiling Ichor targets' });
+    w.pause(5, 'Coiling Ichor: walk to your spot on the outer edge and drop the puddles packed tight together, out of the way. A defensive that still covers the last ticks.', { x: -29, y: 47, r: 10 });
+    return w.done({ title: 'Coiling Ichor: puddles packed at the edge', focus: { x: 0, y: 46, r: 32 }, hlLabel: 'the Coiling Ichor targets' });
   },
-  // Stir the Depths (Vexhul): raid pulses and waves sweeping across the platform (+1 venom stack): remember the side they come from and
-  // step through the gaps (fail: someone in a wave's path)
+  // Stir the Depths (Vexhul): raid pulses, and waves rolling in from behind the raid (from the pool toward the bosses), one lane at a
+  // time in narrow lanes, here a set down the left, middle and right lanes, then one down the two between (each wave that hits you: +1 venom stack). Each player in a lane steps into a gap
+  // just before its wave reaches them, then back (fail: one stays in their lane)
   waves(fail, d, o) {
-    const plat = o && o.p != null ? o.p : 2, L = 10, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('vx', 'Stir the Depths', 0.4, 2);
-    w.call(0.6, 3, 'Waves from the left', { x: -30, y: 70, color: '#9ff26d', ink: '#0a1a06' });
-    [[60, 4], [47.5, 4.6], [37, 5.4]].forEach(([y, t0], i) => w.wave({ x: -46, y, deg: 0, v: 14, w: 6, d: 3.5, t0, t1: t0 + 5.6, color: '#9ff26d', legend: 'a wave across the platform: +1 venom stack' }));
-    // (players in each lane step out of it as its wave comes)
-    const MOVE = { h1: [-14, 44], r3: [6, 43], r4: [28, 43], r5: [-22, 30], r6: [2, 30] };
-    Object.entries(MOVE).forEach(([id, q]) => { if (fail && id === 'r3') return; w.hold(2.4, id).at(3.6, id, q[0], q[1]); });
-    if (fail) { ulHit(k, 'r3', 8.4, 'Wave: +1 stack'); k.oops('r3', 8.4); k.step(0.4).step(2.4).step(8.4);
-      w.pause(8.7, 'This ranged stayed in a wave\'s lane: another venom stack, and stacks are what end this fight.', { on: 'r3', r: 8 });
+    const plat = o && o.p != null ? o.p : 2, L = 13, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0); k.cast('vx', 'Stir the Depths', 0.4, 2);
+    const V = 11, Y0 = 24, HW = 3, LN = [[-20, 4], [0, 4], [20, 4], [-10, 5.6], [10, 5.6]]; /* (a first set down the left, middle and right lanes, then one down the two between) */ /* (each lane's centre and when its wave sets off) */
+    LN.forEach(([x, t0]) => w.wave({ x, y: Y0, deg: 90, v: V, w: HW * 2, d: 3.5, t0, t1: t0 + 5.2, color: '#9ff26d', legend: 'a wave rolling in from behind: +1 venom stack' }));
+    w.call(0.6, 3, 'Waves from behind, in lanes', { x: 0, y: 30, color: '#9ff26d', ink: '#0a1a06' });
+    const OFF = fail ? 'r6' : null, MOV = [];
+    const hitT = (q, l) => (Math.abs(q[0] - l[0]) < HW + 1.2 ? l[1] + (q[1] - Y0) / V : null);
+    Object.keys(TF_HOME).forEach((id) => { if (id === OFF) return; const h = TF_HOME[id];
+      LN.forEach((l) => { const th = hitT(h, l); if (th == null) return;
+        // (the nearest spot just outside this lane that's on the stone and that no other wave crosses at that moment)
+        const ok = (x) => { const q = tfIn([x, h[1]]); return Math.abs(q[0] - x) < 0.01 && LN.every((m) => m === l || hitT([x, h[1]], m) == null || Math.abs(hitT([x, h[1]], m) - th) > 2.4); };
+        const c = [l[0] - HW - 2.5, l[0] + HW + 2.5].filter(ok).sort((a, b) => Math.abs(a - h[0]) - Math.abs(b - h[0]))[0]; if (c == null) return;
+        const dur = Math.abs(c - h[0]) / 7 + 0.2; w.hold(th - 0.6 - dur, id).at(th - 0.6, id, c, h[1]).hold(th + 0.6, id).at(th + 0.6 + dur, id, h[0], h[1]); MOV.push(id); }); });
+    if (fail) { const th = hitT(TF_HOME.r6, LN[1]); ulHit(k, 'r6', th, 'Wave: +1 stack'); k.oops('r6', th); k.step(0.4).step(4).step(th);
+      w.pause(th + 0.3, 'This ranged stayed in the middle lane as its wave rolled in from behind: another venom stack, and stacks are what end this fight.', { on: 'r6', r: 8 });
       return w.done({ title: 'Mistake: hit by a wave', focus: { x: 0, y: 50, r: 30 }, badLabel: 'hit by a wave' }); }
-    k.ring1(Object.keys(MOVE).slice(0, 4)).step(0.4).step(2.4).step(4);
-    w.pause(3.2, 'Stir the Depths: the waves come across from one side. Remember which, and step into the gaps between their lanes before they arrive.', { x: 0, y: 48, r: 28 });
+    k.ring1(MOV.slice(0, 4)).step(0.4).step(4);
+    w.pause(4.4, 'Stir the Depths: waves roll in from behind the raid in narrow lanes: a set down the left, middle and right, then one down the two lanes between. Step into a gap before one reaches you.', { x: 0, y: 48, r: 28 });
     return w.done({ title: 'Stir the Depths: step into the gaps', focus: { x: 0, y: 50, r: 30 }, hlLabel: 'players stepping out of a lane' });
   },
   // Ravenous Feast (Ithraz): a big soak smashed three times (split between everyone in it, -1 venom stack each, a knockback). Heroic and
@@ -38149,56 +38172,73 @@ const TF_M = {
   // each hit a Tainted Blood orb appears (a soak, 6 or more; one left wipes the raid): the right group soaks the first, the left the second,
   // the front the third (fail: the third orb left alone)
   feast(fail, d, o) {
-    const myth = d !== 'h', plat = o && o.p != null ? o.p : 2, L = 19.4, w = tfKit(L, plat), k = w.k, C = [0, 46]; tfBosses(w); tfHome(w, 0); k.cast('it', 'Ravenous Feast', 0.4, 3.4);
+    const myth = d !== 'h', plat = o && o.p != null ? o.p : 2, L = 19.4, w = tfKit(L, plat), k = w.k, C = [4, 56]; /* (where our kill's hits landed) */ tfBosses(w); tfHome(w, 0); k.cast('it', 'Ravenous Feast', 0.4, 3.4);
     const grp = (ids, c, r, t, hold) => ids.forEach((id, i) => { const [dx, dy] = gdzSpot(i, ids.length, r); w.hold(hold, id).at(t, id, c[0] + dx, c[1] + dy); });
-    const G = [[TF_GR, 4.4, [6, 0]], [TF_GL, 7.4, [-6, 0]], [TF_GF, 10.4, [0, 6]]], WAIT = [[22, 44], [-22, 44], [0, 62]];
-    G.forEach(([ids], j) => j && grp(ids, WAIT[j], 6, 3, 0.2));
-    G.forEach(([ids, t, dv], j) => { grp(ids, [C[0] + dv[0], C[1] + dv[1]], 4.5, t - 0.4, t - 2.6); w.ring({ x: C[0], y: C[1], r: 9, fx: 'soak', t0: t - 2.6, at: t, dur: 2.8, color: '#ff8a8a', cn: 'Ravenous Feast', legend: 'Ravenous Feast: split between everyone in it, -1 stack, then a knockback' });
-      const kb = j === 0 ? [24, 0] : j === 1 ? [-24, 0] : [0, 12]; grp(ids, [C[0] + dv[0] + kb[0], C[1] + dv[1] + kb[1]], 6, t + 1, t + 0.1); w.call(t, t + 1.3, 'Knocked back', { x: C[0], y: C[1] - 13, color: '#ff8a8a', ink: '#200a0a' }); });
+    const G = [[TF_GR, 4.4, [6, 0]], [TF_GL, 7.4, [-6, 0]], [TF_GF, 10.4, [0, 6]]], WAIT = [[22, 44], [-22, 44], [12, 40]];
+    G.forEach(([ids], j) => j && grp(ids, WAIT[j], 6, 3.4, 0.2));
+    const SHORT = fail && !myth; /* (Heroic's mistake: only three take the last hit) */
+    G.forEach(([ids0, t, dv], j) => { const ids = SHORT && j === 2 ? ids0.slice(0, 3) : ids0; grp(ids, [C[0] + dv[0], C[1] + dv[1]], SHORT && j === 2 ? 3 : 4.5, t - 0.4, Math.max(0.2, t - 4)); w.ring({ x: C[0], y: C[1], r: 9, fx: 'soak', t0: t - 2.6, at: t, dur: 2.8, color: '#ff8a8a', cn: 'Ravenous Feast', legend: 'Ravenous Feast: split between everyone in it, -1 stack, then a knockback' });
+      const kb = j === 0 ? [14, 0] : j === 1 ? [-14, 0] : [0, 8]; grp(ids, [C[0] + dv[0] + kb[0], C[1] + dv[1] + kb[1]], 6, t + 1, t + 0.1); w.call(t, t + 1.3, 'Knocked back', { x: C[0], y: C[1] - 13, color: '#ff8a8a', ink: '#200a0a' }); });
     w.call(0.6, 3.4, 'Right group first', { x: 18, y: 64, color: '#ff8a8a', ink: '#200a0a' });
-    if (myth) { const OB = [[28, 34], [-28, 34], [0, 70]]; OB.forEach(([x, y], j) => { const t0 = 5 + j * 3, land = t0 + 4, gp = G[j][0], miss = fail && j === 2;
+    if (SHORT) { TF_GF.slice(0, 3).forEach((id, i) => k.oops(id, 10.6 + i * 0.2)); k.step(0.4).step(4.4).step(10.4);
+      w.pause(10.9, 'Only three stood in the third hit. Split between too few, it killed them.', { x: C[0], y: C[1] + 6, r: 9 });
+      return w.done({ title: 'Mistake: too few in the third hit', focus: { x: 2, y: 54, r: 28 }, badLabel: 'too few in the hit' }); }
+    if (myth) { const OB = [[24, 40], [-24, 40], [4, 72]]; OB.forEach(([x, y], j) => { const t0 = 5 + j * 3, land = t0 + 4, gp = G[j][0], miss = fail && j === 2;
         w.ring({ x, y, r: 5, fx: 'soak', t0, at: land, dur: land - t0 + 0.4, color: '#d0303a', cn: 'Tainted Blood', legend: 'Mythic: a Tainted Blood orb: 6 or more soak it, or the raid wipes' });
-        if (!miss) gp.forEach((id, i) => { const [dx, dy] = gdzSpot(i, gp.length, 4); w.hold(land - 2.2, id).at(land - 0.3, id, x + dx, y + dy); if (!fail) { const q = TF_HOME[id]; w.hold(land + 0.4, id).at(land + 4, id, q[0], q[1]); } }); });
-      if (fail) { gdzFailBlast(k, 15.6, 'An empty Tainted Blood orb: a wipe', 0, 20, ['m7', 'h2'], 'Tainted Blood'); k.step(0.4).step(4.4).step(10.4).step(15.6);
+        if (!miss) gp.forEach((id, i) => { const [dx, dy] = gdzSpot(i, gp.length, 4); w.hold(land - 2.6, id).at(land - 0.3, id, x + dx, y + dy); if (!fail) { const q = TF_HOME[id]; w.hold(land + 0.4, id).at(land + 4, id, q[0], q[1]); } }); });
+      if (fail) { gdzFailBlast(k, 15.6, 'An empty Tainted Blood orb: a wipe', ...w.P([0, 44]), ['m7', 'h2'], 'Tainted Blood'); k.step(0.4).step(4.4).step(10.4).step(15.6);
         w.pause(15.2, 'The front group took the third hit but never went to the third orb. Nobody soaked it: Tainted Blood wiped the raid.', { x: 0, y: 70, r: 8 });
         return w.done({ title: 'Mistake: the third orb left alone', focus: { x: 0, y: 42, r: 30 } }); } }
     k.ring1(TF_GR.slice(0, 2).concat(TF_GL.slice(0, 2), TF_GF.slice(0, 2))).step(0.4).step(4.4).step(7.4).step(10.4);
     w.pause(3.4, myth ? 'Three hits, three groups: the right group first, then the left, then the front. After each hit the group knocked out takes its Tainted Blood orb.' : 'Three hits, three groups: the right group first, then the left, then the front. Nobody takes two.', { x: 0, y: 44, r: 20 });
     return w.done({ title: 'Ravenous Feast: three groups, one hit each', focus: { x: 0, y: 42, r: 30 }, hlLabel: 'two from each group' });
   },
-  // the intermission, Submerge: both bosses dive; Vexhul's Vile Flood beam sweeps round from the pool (the orbs circling him show which
-  // way), Ithraz's Sanguine Storm drops gore swirls, and venom showers leave Noxious Slick puddles. Dodge with the beam: mobile players
-  // walk round behind it, others take a Warlock gateway once its waves have passed. Then on to the next platform (fail: caught by the beam)
+  // the intermission, Submerge: both bosses dive; Vexhul's Vile Flood beam turns round the room from the pool (the orbs circling him spin
+  // the same way), Ithraz's Sanguine Storm drops gore swirls, and venom showers leave Noxious Slick puddles. In our kill (and a top team's)
+  // the beam turned clockwise both times: the raid stepped to the corner's other side, let it start turning away, then followed behind
+  // it the long way round to the next corner, about 8 yards a second (fail: one player stays where the beam starts)
   submerge(fail, d, o) {
-    const plat = o && o.p != null ? o.p : 2, L = 22, w = tfKit(L, plat), k = w.k; w.boss('vx', 'Vexhul', 0, TF_VX[0], TF_VX[1]).boss('it', 'Ithraz', 0, TF_IT[0], TF_IT[1]); tfHome(w, 0);
-    w.boss('vx', 'Vexhul', 1, 0, 6).boss('it', 'Ithraz', 1, -40, -2); w.call(0.4, 2.4, 'They dive: dodge with the beam', { x: 0, y: 70, color: '#9ff26d', ink: '#0a1a06' });
-    // (the beam: a wave rolling round from the pool, sweeping clockwise across the north corner)
-    for (let i = 0; i < 6; i++) { const deg = 66 - i * 16; w.wave({ x: 0, y: 6, deg, v: 22, w: 7, d: 4, t0: 5.6 + i * 1.1, t1: 5.6 + i * 1.1 + 3.6, color: '#9ff26d', legend: 'Vile Flood: the beam sweeping round' }); }
-    [[-18, 50], [10, 40], [24, 58], [-6, 62]].forEach(([x, y], i) => w.ring({ x, y, r: 4, fx: 'burst', t0: 2.6 + i * 0.7, at: 3.6 + i * 0.7, dur: 0.6, color: '#d0303a', cn: 'Sanguine Storm', legend: 'Sanguine Storm: gore swirls, step out' }));
-    // (the raid gathers on the east side of the corner, lets the beam pass, then crosses behind it, some by the gateway)
-    const ALL = Object.keys(TF_HOME), OFF = fail ? 'r2' : null;
-    ALL.forEach((id, i) => { const [dx, dy] = gdzSpot(i, ALL.length, 10); if (id === OFF) { w.hold(1, id).at(3.6, id, 22, 52); return; } w.hold(1, id).at(5.4, id, -14 + dx * 0.9, 50 + dy * 0.9); });
-    const NX = tfT(Math.min(2, plat + 1)).P; ALL.forEach((id) => { if (id === OFF) return; const q = NX(TF_HOME[id]); k.hold(10.4, id); k.at(21.6, id, q[0], q[1]); }); /* (to the next platform's own spots) */
-    w.ring({ x: -22, y: 36, r: 2, fx: 'zone', t0: 1, dur: 20, color: '#9b6bff', fill: 'rgba(155,107,255,.5)', cn: 'Gateway', legend: 'a Warlock gateway: take it once the waves have passed' });
-    { const nx = Math.min(2, plat + 1), NP = tfT(nx).P, v = NP(TF_VX), i2 = NP(TF_IT); k.boss('vx', 'Vexhul', 16, 0, 6).boss('vx', 'Vexhul', 20, v[0], v[1]).boss('it', 'Ithraz', 16, -40, -2).boss('it', 'Ithraz', 20, i2[0], i2[1]); }
-    w.call(9.8, 12.4, 'On to the next platform', { x: -30, y: 24, color: '#7ee36a', ink: '#0a1a06' });
-    if (fail) { ulHit(k, OFF, 8, 'Beam: +stacks'); k.oops(OFF, 8); k.step(0.4).step(5.6).step(8);
-      w.pause(8.3, 'This ranged stayed where the beam was heading. It swept straight over them: more venom stacks.', { on: OFF, r: 9 });
-      return w.done({ title: 'Mistake: caught by the beam', focus: { x: 0, y: 34, r: 40 }, badLabel: 'hit by the beam' }); }
-    k.ring1(['r7', 'h2']).step(0.4).step(5.6).step(9.8);
-    w.pause(7, 'The orbs show the beam will sweep east, so everyone steps to the west side of the corner: it turns away from you. Then walk on to the next platform behind it.', { x: -6, y: 40, r: 30 });
-    return w.done({ title: 'Submerge: dodge with the beam, then move on', focus: { x: -6, y: 30, r: 46 }, hlLabel: 'a couple of the raid' });
+    const plat = o && o.p != null ? o.p : 0, nx = Math.min(2, plat + 1), L = fail ? 12 : 32, w = tfKit(L, plat), k = w.k; tfBosses(w); tfHome(w, 0);
+    // (the run goes round the triangle, so it is only turned for the platform, never mirrored)
+    const a = 120 * plat * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), R = (p) => [p[0] * ca - p[1] * sa, p[0] * sa + p[1] * ca], PC = [0, 4];
+    const at = (t, id, p) => { const q = R(p); k.at(t, id, q[0], q[1]); };
+    { const q = R(PC), q2 = R([-6, 0]); k.boss('vx', 'Vexhul', 1.2, q[0], q[1]).boss('it', 'Ithraz', 1.2, q2[0], q2[1]); }
+    // the orbs circling Vexhul, spinning clockwise: the way the beam will turn
+    for (let i = 0; i < 4; i++) { const id = 'ob' + i; for (let t = 1.2; t <= 17.01; t += 0.4) { const g = (i * 90 - (t - 1.2) * 60) * Math.PI / 180, q = R([PC[0] + 6 * Math.cos(g), PC[1] + 6 * Math.sin(g)]); k.obj(id, 'orb', t, q[0], q[1]); } k.show(id, 1.2, Math.min(L, 17)); }
+    w.call(0.6, 3.6, 'They dive: the orbs spin clockwise', { x: 0, y: 70, color: '#9ff26d', ink: '#0a1a06' });
+    // Vile Flood: one big poison beam from the pool, starting on the corner and spinning clockwise about once round
+    { const q = R(PC); k.beam({ x: q[0], y: q[1], a0: 88 + 120 * plat, v: -25, len: 84, w: 9, t0: 4.6, t1: 16.6, color: '#9ff26d', legend: 'Vile Flood: a big poison beam, spinning clockwise' }); }
+    [[18, 58], [6, 66], [-4, 72], [16, 46]].forEach(([x, y], i) => { const q = R([x, y]); k.ring({ x: q[0], y: q[1], r: 4, fx: 'burst', t0: 2.2 + i * 0.5, at: 3.2 + i * 0.5, dur: 0.6, color: '#d0303a', cn: 'Sanguine Storm', legend: 'Sanguine Storm: gore swirls, step out' }); });
+    [[36, 8], [28, -30], [-4, -42]].forEach(([x, y], i) => { const q = R([x, y]); k.ring({ x: q[0], y: q[1], r: 3.5, fx: 'puddle', t0: 6 + i * 2, dur: L - 6 - i * 2, color: '#6fae2a', fill: 'rgba(111,174,42,.45)', cn: 'Noxious Slick', legend: 'Noxious Slick: a puddle that makes you take more damage (still better than a wave)' }); });
+    // the raid: to the corner's other side before the beam starts, then behind it round the walkway to the next platform's own spots
+    const ALL = Object.keys(TF_HOME), OFF = fail ? 'r2' : null, PACK = [-17, 46], RUN = ALL.filter((id) => id !== OFF);
+    // (the players furthest across the corner take the pack's near side, in order, so nobody has to sprint; their place in the run follows)
+    const OFS = {}; { const u = R([1, 0]), dot = (p) => p[0] * u[0] + p[1] * u[1], sp = RUN.map((_, i) => gdzSpot(i, RUN.length, 11)).sort((a, b) => dot(R(b)) - dot(R(a)));
+      RUN.slice().sort((a, b) => dot(k.posAt(b, 0)) - dot(k.posAt(a, 0))).forEach((id, j) => { OFS[id] = sp[j]; }); }
+    if (OFF) { k.hold(0.4, OFF); at(3.4, OFF, [8, 47]); }
+    RUN.forEach((id) => { const [dx, dy] = OFS[id]; k.hold(0.4, id); at(4.3, id, [PACK[0] + dx, PACK[1] + dy]); k.hold(5.4, id);
+      [[9.8, [14, 34]], [14.2, [36, 4]], [18.4, [32, -28]], [23.6, [-6, -40]]].forEach(([t, p]) => at(t, id, [p[0] + dx * 0.73, p[1] + dy * 0.73])); const q = tfT(nx).P(TF_HOME[id]); k.at(31.4, id, q[0], q[1]); });
+    { const NP = tfT(nx).P, v = NP(TF_VX), i2 = NP(TF_IT), q = R(PC), q2 = R([-6, 0]); k.boss('vx', 'Vexhul', 18, q[0], q[1]).boss('vx', 'Vexhul', 22, v[0], v[1]).boss('it', 'Ithraz', 18, q2[0], q2[1]).boss('it', 'Ithraz', 22, i2[0], i2[1]); }
+    w.call(5.6, 8.6, 'Let it turn away, then follow it', { x: -14, y: 62, color: '#7ee36a', ink: '#0a1a06' });
+    { const q = R([40, 14]); k.call(10, 13.4, 'The long way round', { x: q[0], y: q[1], color: '#7ee36a', ink: '#0a1a06' }); }
+    if (fail) { ulHit(k, OFF, 5, 'Beam: +stacks'); k.oops(OFF, 5); k.step(0.4).step(4.6).step(5);
+      w.pause(5.3, 'This ranged stayed where the beam starts. It turned straight over them: more venom stacks.', { on: OFF, r: 9 });
+      return w.done({ title: 'Mistake: caught by the beam', focus: { x: 0, y: 40, r: 34 }, full: { x: 0, y: 40, r: 44 }, badLabel: 'hit by the beam' }); }
+    k.ring1(['r7', 'h2']).step(0.4).step(4.3).step(9.8).step(14.2);
+    w.pause(7, 'The orbs spin clockwise, so the beam turns clockwise too. Everyone steps to the other side of the corner, lets it start turning away, then follows behind it the long way round to the next platform.', { x: 0, y: 4, r: 60 });
+    return w.done({ title: 'Submerge: let the beam pass, then follow it', focus: { x: 0, y: 4, r: 66 }, full: { x: 0, y: -2, r: 84 }, hlLabel: 'a couple of the raid' }); /* (opens on the whole room: the run goes all the way round) */
   },
 };
 const TF_FAIL = {
   beams: { name: 'A globule left to explode', what: 'Nobody soaks one Caustic Globule: 10 seconds after it lands it explodes on the whole raid.', do: ['Globules land.', 'One is left.', 'It explodes on the raid.'], map: (d) => TF_M.beams(true, d) },
   slams: { name: 'A missed slam', what: 'The tank misses the third Stone Breaker slam: it hits the raid and knocks everyone back.', do: ['Three spots light up.', 'The tank misses the last.', 'Raid hit and knockback.'], map: (d) => TF_M.slams(true, d) },
   emergence: { name: 'A second Corrosive Spit', what: 'The Spawns live too long and Spit a second time: another venom stack for each target.', do: ['The Spawns rise.', 'Too few swap to them.', 'A second Spit: more stacks.'], map: (d) => TF_M.emergence(true, d) },
-  brood: { name: 'A missed Broodling kick', what: 'Nobody kicks one Broodling: Visceral Burst hits the raid with a stacking DoT. Usually a wipe.', do: ['14 Broodlings rise.', 'One kick is missed.', 'Visceral Burst on the raid.'], map: (d) => TF_M.brood(true, d) },
+  brood: { name: 'A missed Broodling kick', what: 'Nobody kicks one Broodling: Visceral Burst hits the raid with a stacking DoT. Usually a wipe.', do: ['10 Broodlings rise.', 'One kick is missed.', 'Visceral Burst on the raid.'], map: (d) => TF_M.brood(true, d) },
   ichor: { name: 'A puddle in the middle', what: 'A Coiling Ichor target drops their puddle in the middle of the platform: it stays there all platform.', do: ['Coiling Ichor goes out.', 'One target stays in the middle.', 'A puddle where the raid needs room.'], map: (d) => TF_M.ichor(true, d) },
-  waves: { name: 'Hit by a wave', what: 'A player stays in a wave\'s lane: another venom stack.', do: ['Waves come from one side.', 'One player doesn\'t move.', 'Hit: +1 stack.'], map: (d) => TF_M.waves(true, d) },
+  waves: { name: 'Hit by a wave', what: 'A player stays in a lane as its wave rolls in: another venom stack.', do: ['Waves roll in from behind.', 'One player stays in the lane.', 'Hit: +1 stack.'], map: (d) => TF_M.waves(true, d) },
+  feastH: { name: 'Too few in the third hit', what: 'Only three players stand in the third Ravenous Feast hit: split between too few, it kills them.', do: ['Three Feast hits.', 'Only three take the last.', 'Split too few ways: they die.'], map: (d) => TF_M.feast(true, 'h') },
   feast: { name: 'The third orb left alone', what: 'Nobody soaks the third Tainted Blood orb: it wipes the raid.', do: ['Three Feast hits.', 'The front group skips its orb.', 'Tainted Blood: a wipe.'], map: (d) => TF_M.feast(true, d) },
-  submerge: { name: 'Caught by the beam', what: 'A player stays where the Vile Flood beam is heading: it sweeps over them, more venom stacks.', do: ['They dive.', 'One player stays in the beam\'s way.', 'Hit: more stacks.'], map: (d) => TF_M.submerge(true, d) },
+  submerge: { name: 'Caught by the beam', what: 'A player stays where the Vile Flood beam starts: it turns straight over them, more venom stacks.', do: ['They dive.', 'One player stays where the beam starts.', 'Hit: more stacks.'], map: (d) => TF_M.submerge(true, d) },
 };
 // ---- the whole fight, by Wolfthorn's Mythic kill's clock (6:43)
 const TF_BEATS = {
@@ -38231,19 +38271,24 @@ GDZ['The Twin Fangs'] = {
   stepRoles: {
     'Caustic Deluge (CC, then soak the globules)': ['t', 'd', 'd'], 'Stone Breaker (The tank takes each slam in order)': ['t', '', 't'], 'Venomous Emergence (Kill the Spawns before the second Spit)': ['', 'd', 'd'],
     'Rouse the Brood (A kick for every Broodling)': ['', 'td', 't', ''], 'Coiling Ichor (Puddles packed at the edge)': ['', '', ''], 'Stir the Depths (Step into the gaps)': ['', ''],
-    'Ravenous Feast (Three groups, one hit each)': ['', '', '', ''], 'Submerge (Dodge with the beam, then move on)': ['', '', '', ''],
+    'Ravenous Feast (Three groups, one hit each)': ['', '', '', ''], 'Submerge (Let the beam pass, then follow it)': ['', '', '', ''],
   },
   sum: 'Two bosses, three platforms, two sets on each, then a Submerge to the next. Everything adds venom stacks and too many kills you, so the fight is about stack control: soak globules on pace, kill the Spawns before they Spit twice, dodge the waves and beams. Kill both together.',
   m: { sim: TF_SIM, simDur: TF_DUR, simSev: TF_SEV, beats: TF_BEATS,
+    roles: {
+      t: ['Both beams at once: your biggest defensives.', 'Stone Breaker: step into each slam in order; swap after each set.', 'Protection Paladins: the Broodlings at the tip, then fill in.'],
+      h: ['Blood Torrent is the biggest tank damage: externals.', 'Coiling Ichor ramps: heal the last ticks.', 'Soak globules on pace too.'],
+      d: ['Swap to the Spawns at once: never a second Spit.', 'Kick your Broodling slot.', 'Feast: your group\'s hit only, then its Tainted Blood orb.', 'Skip a globule at 4 stacks on set 3, 5 on set 4, 6 on set 5, 7 on set 6. 8 is the cap.'],
+    },
     simAlways: ['Eternal Venom: 10 stacks kills on Mythic. Pace about one stack per globule set: ~3 at platform 2, ~6 at platform 3, 8 the cap.', 'Every set is rinse and repeat: beams and globules, slams, Spawns and Broodlings, Coiling Ichor, waves, Feast.', 'Kill both bosses together: the survivor gets stronger every few seconds.'],
-    source: 'Tactyks\' Mythic Twin Fangs video', sum: 'Heroic plus three things: Blood Torrent (a huge tank heal absorb, and every globule shielded until it\'s crowd controlled), 14 Broodlings to kick with every Spawn set, and Tainted Blood orbs to soak after each Feast hit.' },
-  facts: [['Phases', '3 platforms, 2 sets each'], ['Bloodlust', 'On the pull'], ['Healers', '4', 'm'], ['Hardest part', 'Venom stacks and kicks'], ['Fight length', 'About 7 minutes', 'm']],
+    source: 'Tactyks\' Mythic Twin Fangs video', sum: 'Heroic plus three things: Blood Torrent (a huge tank heal absorb, and every globule shielded until it\'s crowd controlled), 10 Broodlings to kick with every Spawn set, and Tainted Blood orbs to soak after each Feast hit.' },
+  facts: [['Phases', '3 platforms, 2 sets each'], ['Bloodlust', 'On the pull'], ['Healers', '4', 'm'], ['Hardest part', 'Venom stacks', 'h'], ['Hardest part', 'Venom stacks and kicks', 'm'], ['Fight length', 'About 7 minutes', 'm'], ['Hard enrage', 'Third Submerge (~7:30)']],
   phases: [
     { id: 'p1', name: 'A platform: two sets', sum: 'Each set: both beams and the globules, Stone Breaker, the Spawns (and Broodlings on Mythic), Coiling Ichor, Stir the Depths, then Ravenous Feast. Two sets, then Submerge.',
       mechs: [
         { id: 'beams', fail: TF_FAIL.beams, name: 'Caustic Deluge (CC, then soak the globules)', spell: 'Caustic Deluge', what: 'Vexhul\'s beam hits his tank and shoves them back; acid splashes drop Caustic Globules that explode on the raid 10 seconds later unless someone soaks them, which costs that player a venom stack.',
           do: ['Vexhul\'s tank: you\'ll be shoved back; stay in range.', 'Globules land all over the platform.', 'Low-stack players soak one each.'],
-          m: { what: 'Vexhul\'s beam shoves his tank back while Blood Torrent puts a huge heal absorb on Ithraz\'s tank: the biggest tank damage of the fight. Every globule that drops is shielded until it\'s crowd controlled, then must be soaked within 10 seconds.', do: ['Both tanks: big defensives (Paladins: Bubble, Spellwarding, Bubble).', 'AoE crowd control the globules near you once they land.', 'Low-stack players soak one each.'], plan: ['Spread the AoE crowd control round the room; single-target crowd control is the backup for the last one.', 'Shielded globules knock back anyone trying to soak them.'] },
+          m: { what: 'Vexhul\'s beam shoves his tank back while Blood Torrent puts a huge heal absorb on Ithraz\'s tank: the biggest tank damage of the fight. Fifteen globules drop, each shielded until it\'s crowd controlled, then soaked within 10 seconds.', do: ['Both tanks: big defensives (Paladins: Bubble, Spellwarding, Bubble).', 'AoE crowd control the globules near you once they land.', 'Low-stack players soak one each: 15 a set.'], plan: ['Spread the AoE crowd control round the room; single-target crowd control is the backup for the last one.', 'Shielded globules knock back anyone trying to soak them.'] },
           map: (d, o) => TF_M.beams(false, d, o) },
         { id: 'slams', fail: TF_FAIL.slams, name: 'Stone Breaker (The tank takes each slam in order)', spell: 'Stone Breaker', what: 'Ithraz shoves his tank back, then slams three marked spots in the order they appeared. A slam with nobody in it hits the raid and knocks everyone back.',
           do: ['Ithraz\'s tank is shoved back.', 'Three spots light up: nobody else near them.', 'The tank steps into each, in order.'],
@@ -38252,7 +38297,7 @@ GDZ['The Twin Fangs'] = {
         { id: 'emergence', fail: TF_FAIL.emergence, name: 'Venomous Emergence (Kill the Spawns before the second Spit)', spell: 'Venomous Emergence', what: 'Three Spawn of Vexhul rise at the pool\'s edge (a venom stack for everyone). Each fires Corrosive Spit beams at players, another stack each.',
           do: ['Almost everyone swaps to the Spawns.', 'Spit on you: move once, then stand still.', 'Kill all three before their second Spit.'],
           map: (d, o) => TF_M.emergence(false, d, o) },
-        { id: 'brood', only: 'm', fail: TF_FAIL.brood, name: 'Rouse the Brood (A kick for every Broodling)', spell: 'Rouse the Brood', what: 'With the Spawns, 14 Broodlings of Ithraz rise in ten slots round the platform. Each casts Visceral Burst, a raid hit and a stacking DoT. The first set on a platform is one per slot plus four; the second is fully random.',
+        { id: 'brood', only: 'm', fail: TF_FAIL.brood, name: 'Rouse the Brood (A kick for every Broodling)', spell: 'Rouse the Brood', what: 'With the Spawns, 10 Broodlings of Ithraz rise in ten slots round the platform. Each casts Visceral Burst, a raid hit and a stacking DoT. The first set on a platform has one in each slot; the second is random, so some slots get two and some none.',
           do: ['Every kicker covers their slot: left 1 to 4, right 1 to 4.', 'The Protection Paladins take the two at the tip, and fill in with Divine Toll and Avenger\'s Shield.', 'Spare kickers on each side for double spawns: "back up left 3".', 'A missed kick is usually a wipe.'],
           plan: ['Six ground markers line up on slot 3 each side, so everyone knows where to look.', 'Warlocks: watch your pet: one stuck out of range missed a kick and wiped the raid.', 'Two Protection Paladins, or a Paladin and a Warrior, make this much easier.'],
           map: (d, o) => TF_M.brood(false, d, o) },
@@ -38260,30 +38305,34 @@ GDZ['The Twin Fangs'] = {
           do: ['Walk to your spot on the outer edge.', 'Drop the puddles packed tight together.', 'A defensive that still covers the last ticks.'],
           plan: ['Keep the middle clear: the raid needs it for the Spawns, the soaks and the end of the fight.', 'The most likely thing to kill a single player late in the fight.'],
           map: (d, o) => TF_M.ichor(false, d, o) },
-        { id: 'waves', fail: TF_FAIL.waves, name: 'Stir the Depths (Step into the gaps)', spell: 'Stir the Depths', what: 'Raid-wide pulses, and waves sweeping across the platform from one side. Each wave that hits you is another venom stack.',
-          do: ['Remember the side the waves come from.', 'Step into the gaps between their lanes before they arrive.'],
+        { id: 'waves', fail: TF_FAIL.waves, name: 'Stir the Depths (Step into the gaps)', spell: 'Stir the Depths', what: 'Raid-wide pulses, and waves rolling in from behind the raid, from the pool toward the bosses, each in its own lane. Each wave that hits you is another venom stack.',
+          do: ['Waves roll in from behind in narrow lanes, set after set, in a pattern.', 'Step into a gap between the lanes before one reaches you.'],
           map: (d, o) => TF_M.waves(false, d, o) },
-        { id: 'feast', fail: TF_FAIL.feast, name: 'Ravenous Feast (Three groups, one hit each)', spell: 'Ravenous Feast', what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. Heroic and up, a player can only take one hit.',
+        { id: 'feast', fail: TF_FAIL.feast, h: { fail: TF_FAIL.feastH }, name: 'Ravenous Feast (Three groups, one hit each)', spell: 'Ravenous Feast', what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. Heroic and up, a player can only take one hit.',
           do: ['Right group takes the first hit, and is knocked right.', 'Left group takes the second, knocked left.', 'Front group takes the third.', 'Six or more in each hit.'],
-          m: { what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. A player can only take one hit. After each hit a Tainted Blood orb appears: unsoaked, it wipes the raid.', do: ['Right group takes the first hit, then its Tainted Blood orb.', 'Left group takes the second hit and the second orb.', 'Front group takes the third hit and the last orb.', 'Six or more in each.'], plan: ['Always the same order, even when the orbs come out the other way round.', 'Call the side the waves come from: they cross the soaks.', 'Tanks split into the first two groups so they get back to their bosses in time.', 'No immunity solo soaks any more.'] },
+          m: { what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. A player can only take one hit. After each hit a Tainted Blood orb appears: unsoaked, it wipes the raid.', do: ['Right group takes the first hit, then its Tainted Blood orb.', 'Left group takes the second hit and the second orb.', 'Front group takes the third hit and the last orb.', 'Six or more in each.'], plan: ['Always the same order, even when the orbs come out the other way round.', 'Call the side the waves come from: they cross the soaks.', 'Tanks split into the first two groups so they get back to their bosses in time.', 'Each orb gives you about 8 seconds to get there.', 'No immunity solo soaks any more.'] },
           map: (d, o) => TF_M.feast(false, d, o) },
       ],
       tiles: [
-        { name: 'Eternal Venom (Stack pace)', do: 'Almost everything adds a stack and 10 kills you on Mythic. About one stack per globule set: ~3 at platform 2\'s first set (3 or fewer soak, 4 or more wait), ~6 at platform 3\'s (8 is the cap).' },
-        { name: 'Damage (Vexhul to 35%, then Ithraz)', do: 'Cleave Vexhul into execute first, then swap to Ithraz at 35%. On pace: Vexhul ~25%, Ithraz ~40% on the last platform. Kill Vexhul around the last soak.' },
+        { name: 'Eternal Venom (Keep stacks low)', do: 'Almost everything adds a venom stack, and 10 kills you. Share the globule soaks so nobody climbs too high, and swap tanks every set.',
+          m: { name: 'Eternal Venom (Stack pace)', do: 'Almost everything adds a stack, and 10 kills you. Aim for about one stack per globule set. Skip a globule if you\'re already at 4 on set 3, 5 on set 4, 6 on set 5 or 7 on set 6. 8 is the cap: the Spawns add one, and a Spit on 9 kills.' } },
+        { name: 'Damage (Kill both together)', do: 'Keep them close in health and kill them together: the one left alive gets stronger every few seconds.',
+          m: { name: 'Damage (Vexhul to 35%, then Ithraz)', do: 'Cleave Vexhul into execute first, then swap to Ithraz at 35%. On pace: Vexhul ~25%, Ithraz ~40% on the last platform. Kill Vexhul around the last soak.' } },
+        { name: 'Hard enrage (The third Submerge)', do: 'At the third Submerge, about 7:30 to 8 minutes in, they enrage. Both must be dead before it. Once Vexhul is dead, stacks stop killing and globules stop exploding.' },
       ] },
-    { id: 'int', name: 'Submerge: to the next platform', sum: 'After two sets both bosses dive. Dodge Vexhul\'s sweeping beam and Ithraz\'s gore swirls, then cross to the next corner of the triangle.',
+    { id: 'int', name: 'Submerge: to the next platform', sum: 'After two sets both bosses dive. Let Vexhul\'s turning beam pass, then follow behind it round the walkway to the next corner of the triangle.',
       mechs: [
-        { id: 'submerge', fail: TF_FAIL.submerge, name: 'Submerge (Dodge with the beam, then move on)', spell: 'Vile Flood', what: 'Both bosses dive. Vexhul\'s Vile Flood beam sweeps round from the pool (the orbs circling him show which way), Ithraz\'s Sanguine Storm drops gore swirls, and venom showers leave puddles that make you take more damage.',
-          do: ['Watch the orbs: they show which way the beam turns.', 'Step to the side it turns away from, so it sweeps away from you; step on a puddle rather than into a wave.', 'Mobile players walk; others take the gateway once the waves have passed it.', 'On to the next platform.'],
-          m: { plan: ['On Mythic the beam turns further: you can\'t cheat it any more.', 'Movement speed and Time Spiral help a lot.'] },
+        { id: 'submerge', fail: TF_FAIL.submerge, name: 'Submerge (Let the beam pass, then follow it)', spell: 'Vile Flood', what: 'Both bosses dive. Vexhul\'s Vile Flood beam turns round the room from the pool (the orbs circling him show which way), Ithraz\'s Sanguine Storm drops gore swirls, and venom showers leave puddles that make you take more damage.',
+          do: ['Watch the orbs circling Vexhul: the beam turns the way they spin.', 'Step to the side of the corner it turns away from.', 'Follow behind it, the long way round, to the next platform.', 'Pick a puddle over a wave: waves are more stacks.'],
+          plan: ['Mobile players just walk; others can take a Warlock gateway once the waves have passed.', 'In our kill and a top team\'s kill the beam turned clockwise both times, so the raid always went the long way round.'],
+          m: { plan: ['On Mythic the beam turns further: you can\'t cheat it any more.', 'Mobile players just walk; others can take a Warlock gateway once the waves have passed.', 'In our kill and a top team\'s kill the beam turned clockwise both times, so the raid always went the long way round.', 'Movement speed and Time Spiral help a lot.'] },
           map: (d, o) => TF_M.submerge(false, d, o) },
       ] },
   ],
   roles: {
-    t: ['Both beams at once on Mythic: your biggest defensives.', 'Stone Breaker: step into each slam in order; swap after each set.', 'Protection Paladins: the Broodlings at the tip, then fill in.'],
-    h: ['Blood Torrent is the biggest tank damage: externals.', 'Coiling Ichor ramps: heal the last ticks.', 'Soak globules on pace too.'],
-    d: ['Swap to the Spawns at once: never a second Spit.', 'Kick your Broodling slot (Mythic).', 'Feast: your group\'s hit only, then its Tainted Blood orb.', 'Stacks: ~3 at platform 2, ~6 at platform 3, 8 the cap.'],
+    t: ['Caustic Deluge shoves Vexhul\'s tank back: stay in range.', 'Stone Breaker: step into each slam in order; swap after each set.'],
+    h: ['Tank hits on the beams and slams: externals.', 'Coiling Ichor ramps: heal the last ticks.', 'Soak globules too.'],
+    d: ['Swap to the Spawns at once: never a second Spit.', 'Feast: your group\'s hit only.', 'Soak a globule when your stacks are low.'],
   },
 };
 
