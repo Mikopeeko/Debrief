@@ -1523,7 +1523,8 @@ const PATCH_NOTES = [
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
     'Boss mechanics on the cooldown timeline: switch it on to see when each mechanic hits in the fastest kills, next to your cooldowns.',
-    'Share as image: your note as one picture, everyone in their class color, to paste in Discord.',
+    'Copy for Discord now copies your note as one picture, everyone in their class color, ready to paste.',
+    'On a note\'s page, point at the ticks up top to see what\'s missing: which buffs, which utility and which big hits.',
     'Debriefing checks your note\'s dispel, grip and kick jobs: who did each one.',
     'Making a note: pick a suggested roster shaped like the fastest kills, see who sat out last time, and get warned if a raid buff is missing.',
     'Live now pops up on your screen with a soft chime when your log or your team\'s goes live. Follow live opens it on Debriefing, which wears a red Live badge while you follow.',
@@ -3322,7 +3323,7 @@ function ndzBuildView(r) {
       ((iss) => '<div class="ndz-chk ' + (iss.length ? 'warn' : 'ok') + '"><b>' + (iss.length ? '⚠ Before you save: ' + plural(iss.length, 'thing') + ' to look at' : '✓ Every job has someone') + '</b>' + (iss.length ? '<div class="ndz-chkl">' + iss.map((x) => '<button type="button" class="ndz-chki" data-bgo="' + x.step + '">' + esc(x.t) + ' <span aria-hidden="true">→</span></button>').join('') + '</div><p class="sub">Some may be fine (a class your roster doesn\'t have). You can still save.</p>' : '') + '</div>')(ndzBuildIssues(B)) +
       '<div class="panel ndz-who ndz-rcards nolk">' + ndzAbil(B.pr, st, null) + '</div>' +
       '<details class="ndz-sec"><summary>The note as it will be saved</summary><pre class="ndz-pre">' + esc(text) + '</pre></details>' +
-      '<div class="ndz-pd ndz-dcrow">' + btn('data-ndzdc="build"', '💬 Copy for Discord', 'sm') + '<span class="sub">A version your raiders can read, to post before the pull.</span></div>' +
+      '<div class="ndz-pd ndz-dcrow">' + btn('data-ndzdc="build"', '💬 Copy for Discord', 'sm') + '<span class="sub">The note as one picture, everyone in their class color, to post before the pull.</span></div>' +
       foot('Save and copy for the game', true); }
   box.innerHTML = '<div class="panel ndz ndz-build">' + h + '</div>';
   const redraw = () => { const y = window.scrollY; ndzBuildView(r); window.scrollTo({ top: y }); };
@@ -3892,56 +3893,31 @@ function ndzBuffAskH(B, r) { const key = [...B.on].sort().join('|'); if (B.buffA
   const line = (m) => { const can = bench.filter((n) => m.cl.includes((sp[n.toLowerCase()] || {}).cls)).slice(0, 3); return '<li><b>' + esc(m.nm) + '</b> <span class="sub">(' + esc(m.cl.map(ndzClsName).join(' or ')) + ')</span>' + (can.length ? ': ' + esc(andL(can)) + (can.length > 1 ? ' aren\'t' : ' isn\'t') + ' ticked' : ': nobody on your roster brings it') + '</li>'; };
   return '<div class="ndz-chk warn" id="ndzBuffAsk" role="alert"><b>⚠ This roster is missing ' + plural(miss.length, 'raid buff') + '</b><ul class="ndz-bal">' + miss.map(line).join('') + '</ul><div class="ndz-pd"><button class="btn sm" type="button" id="ndzBuffFix">Fix the roster</button><button class="btn sm primary" type="button" id="ndzBuffGo">Continue anyway</button></div></div>'; }
 
-// ---- Copy for Discord (Oct 20, your OK): the note as a post raiders can read, not NSRT's lines. The boss and difficulty
-// as a heading, each part of the note under its own small heading, names after a bold label (kick orders with arrows),
-// raid markers as emoji, then each player's cooldowns by phase and time. Reminders that repeat a job the text lines
-// already list (orbs, soaks, curses, CC, externals) and personal text reminders are left out. Over Discord's 2,000
-// letters it's two posts: the jobs, then the cooldowns. Works on any note, built here or pasted from NSRT.
-const NDZ_DC_MK = { star: '⭐', rt1: '⭐', circle: '🟠', rt2: '🟠', diamond: '🟣', rt3: '🟣', triangle: '🟢', rt4: '🟢', moon: '🌙', rt5: '🌙', square: '🟦', rt6: '🟦', cross: '❌', x: '❌', rt7: '❌', skull: '💀', rt8: '💀' };
-const NDZ_DC_INT = { 'The Coiled Altar': ['P2 unmarked add', 'P2 marked add', 'P3 unmarked add', 'P3 marked add', 'P3 second set, unmarked', 'P3 second set, marked'], 'Ula\'tek': ['Left team', 'Right team'] };
-const NDZ_DC_JOB = /\borbs?\b|soak|guillotine|curse|\bcc\b|mind ?control|ghost|external|zephyr|dispel|grip|kick/i;
-function ndzDiscord(text, boss, name) {
-  const cl = (s) => String(s || '').replace(/\|c[0-9a-fA-F]{8}|\|r|\|T[^|]*\|t/g, '').replace(/\{spell:\d+\}/gi, '').replace(/\{(\w+)\}/g, (m, w) => (NDZ_DC_MK[w.toLowerCase()] || '') + ' ').replace(/\s+/g, ' ').trim();
-  const nm = new Set(noteNames(text).map((x) => x.toLowerCase())), isNm = (w) => nm.has(String(w).split('-')[0].toLowerCase());
-  const list = (ws, ord) => ws.map((w) => String(w).split('-')[0]).join(ord ? ' → ' : ', ');
-  const out = [], rem = [], ints = [], trs = []; let hd = {}, blk = null, head = '';
-  for (const raw0 of String(text || '').split(/\r?\n/)) { const raw = raw0.trim(); if (!raw) continue;
-    if (/^EncounterID:/i.test(raw)) { for (const kv of raw.split(';')) { const i = kv.indexOf(':'); if (i > 0) hd[kv.slice(0, i).trim().toLowerCase()] = kv.slice(i + 1).trim(); } continue; }
-    if (/^intstart$/i.test(raw)) { blk = ints; continue; } if (/^transitionstart$/i.test(raw)) { blk = trs; continue; } if (/^(intend|transitionend)$/i.test(raw)) { blk = null; continue; }
-    if (blk) { blk.push(cl(raw).split(/[\s,]+/).filter(Boolean)); continue; }
-    if (/(^|;)\s*time:/i.test(raw) && raw.includes(';')) { const f = {}; for (const kv of raw.split(';')) { const i = kv.indexOf(':'); if (i > 0) f[kv.slice(0, i).trim().toLowerCase()] = kv.slice(i + 1).trim(); }
-      const id = +f.spellid || 0, what = cl(f.text || ''); if (!id || NDZ_DC_JOB.test(what)) continue; /* (cooldowns only: a job's reminder repeats its text line) */
-      for (const w of String(f.tag || '').split(/\s+/).filter(Boolean)) if (isNm(w)) rem.push({ t: +f.time || 0, ph: +f.ph || 1, who: w.split('-')[0], what: ndzSpellNm(id) || what || 'Spell ' + id }); continue; }
-    const ln = cl(raw); if (!ln || /^invitelist\b/i.test(ln)) continue;
-    const ci = ln.indexOf(':'), ws = (ci >= 0 ? ln.slice(ci + 1) : ln).split(/[\s,]+/).filter(Boolean);
-    if (ci < 0 && !(ws.length && ws.filter(isNm).length * 2 > ws.length)) { head = ln; out.push('### ' + ln); continue; }
-    const lab = ci >= 0 ? ln.slice(0, ci).trim() : '', ord = /kick|interrupt|order|rotation/i.test(lab + ' ' + head);
-    out.push(lab ? '**' + lab + ':** ' + list(ws, ord) : list(ws, ord));
-  }
-  const intN = NDZ_DC_INT[boss] && ints.length <= NDZ_DC_INT[boss].length ? NDZ_DC_INT[boss] : null, title = (hd.name || boss || 'Raid note') + (hd.difficulty ? ' (' + hd.difficulty + ')' : '');
-  const top = ['## ' + title, '-# ' + (name ? name + ' · ' : '') + 'made with Debrief'];
-  if (ints.length) top.push('### Kick order', ...ints.map((l, i) => '**' + (intN ? intN[i] : 'Kick line ' + (i + 1)) + ':** ' + list(l, true)));
-  if (trs.length) top.push('### Intermission soak groups', ...trs.map((l, i) => '**Group ' + (i + 1) + ':** ' + list(l)));
-  // (each player's cooldowns on one line, in time order, a phase at a time: "P1 0:45 Aura Mastery, 2:10 Aura Mastery · P2 …")
-  const phN = (p) => (p % 1 ? 'Intermission' : 'P' + p), mmss = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0'), per = new Map();
-  for (const x of rem.sort((a, b) => a.ph - b.ph || a.t - b.t)) { if (!per.has(x.who)) per.set(x.who, []); per.get(x.who).push(x); }
-  const cds = [...per].sort((a, b) => a[0].localeCompare(b[0])).map(([w, l]) => { const byPh = []; for (const x of l) { const g = byPh[byPh.length - 1]; if (g && g.ph === x.ph) g.l.push(x); else byPh.push({ ph: x.ph, l: [x] }); }
-    return '**' + w + ':** ' + byPh.map((g) => phN(g.ph) + ' ' + g.l.map((x) => mmss(x.t) + ' ' + x.what).join(', ')).join(' · '); });
-  const main = top.concat(out).join('\n'), cd = cds.length ? '### Cooldowns\n' + cds.join('\n') : '';
-  return !cd ? [main] : main.length + cd.length < 1990 ? [main + '\n' + cd] : [main, '## ' + title + ': cooldowns\n' + cds.join('\n')];
+// ---- Copy for Discord (Oct 20, your call: "just make the copy/paste the image, remove the text copy"): every Copy for
+// Discord button copies the note as one picture (ndzShotDraw, ndz-shot.js), everyone in their class color, ready to paste
+// with Ctrl+V. The text version is gone. A browser that won't copy a picture shows it in a pop-up instead, with Download.
+const NDZ_DC_JOB = /\borbs?\b|soak|guillotine|curse|\bcc\b|mind ?control|ghost|external|zephyr|dispel|grip|kick/i; /* (job reminders: kept off the cooldown timeline) */
+// (which note: data-ndzdc="build" is the note on the builder's Review page, "cur" the note this pull uses, "boss|id" a saved
+// note, drawn with the raiders picked for it)
+function ndzDcNote(k) {
+  if (k === 'build' && S.noteBuild) { const B = S.noteBuild, nm = (($('#ndzBName') || {}).value || B.name || '').trim();
+    return { r: B.pr || ndzPlanRep({ pick: B.pick, diff: B.diff, on: B.on }, ndzBSp(B)), u0: { text: ndzBuildText(B), name: nm || 'Raid note', roster: [...B.on].map((n) => String(n).split('-')[0]) } }; }
+  if (k === 'cur') { const u0 = S.rep && noteForRep(S.rep); return u0 ? { r: S.rep, u0 } : null; }
+  const i = k.lastIndexOf('|'), boss = k.slice(0, i), n = i > 0 ? notesOf(boss).list.find((x) => x.id === k.slice(i + 1)) : null; if (!n) return null;
+  const names = ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]))];
+  let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (e) { hd = {}; }
+  return { r: ndzPlanRep({ pick: boss, diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic', on: new Set(names) }, ndzSpecs()), u0: n };
 }
-// (the buttons: data-ndzdc="build" is the note on the builder's Review page, "cur" the note this pull uses, "boss|id" a saved
-// note. A note too long for one post copies in two clicks: the jobs, then the cooldowns.)
-document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzdc]'); if (!b) return; e.preventDefault();
-  const k = b.dataset.ndzdc; let text = '', boss = '', name = '';
-  if (k === 'build' && S.noteBuild) { const B = S.noteBuild; text = ndzBuildText(B); boss = B.pick; name = (($('#ndzBName') || {}).value || B.name || '').trim(); }
-  else if (k === 'cur' && S.rep) { const u0 = noteForRep(S.rep); if (u0) { text = u0.text; boss = S.rep.item.boss; name = u0.name; } }
-  else { const i = k.lastIndexOf('|'), bs = k.slice(0, i), n = notesOf(bs).list.find((x) => x.id === k.slice(i + 1)); if (n) { text = n.text; boss = bs; name = n.name; } }
-  if (!text) return; const parts = ndzDiscord(text, boss, name), i = Math.min(+(b.dataset.part || 0), parts.length - 1), was = b.dataset.was || b.innerHTML; b.dataset.was = was;
-  copyText(parts[i]).then((ok) => { clearTimeout(b._dcT); b.classList.toggle('ok', ok);
-    const more = ok && i + 1 < parts.length; b.dataset.part = more ? i + 1 : 0;
-    b.innerHTML = !ok ? 'Couldn\'t copy' : more ? '✓ Part 1 copied. Paste it, then click for part 2 (cooldowns)' : parts.length > 1 ? '✓ Part 2 copied. Paste it in Discord' : parts[0].length > 2000 ? '✓ Copied (long: Discord may send it as a file)' : '✓ Copied. Paste it in Discord';
-    if (!more) b._dcT = setTimeout(() => { if (b.isConnected) { b.innerHTML = was; b.classList.remove('ok'); } }, 2600); }); });
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzdc]'); if (!b || b.disabled) return; e.preventDefault();
+  const c = ndzDcNote(b.dataset.ndzdc); if (!c) return; const was = b.dataset.was || b.innerHTML; b.dataset.was = was; clearTimeout(b._dcT);
+  const back = (msg, ok) => { b.disabled = false; b.classList.toggle('ok', !!ok); b.innerHTML = msg; if (msg !== was) b._dcT = setTimeout(() => { if (b.isConnected) { b.innerHTML = was; b.classList.remove('ok'); } }, 2600); };
+  b.disabled = true; b.innerHTML = 'Drawing the picture…';
+  // (the picture goes to the clipboard as it's drawn, so the click still counts as yours; a browser that wants the finished
+  // picture gets it once drawn)
+  const drawn = ndzShotDraw(c.r, c.u0), png = drawn.then((res) => new Promise((ok, no) => res.cv.toBlob((x) => (x ? ok(x) : no(new Error('no picture'))), 'image/png'))); png.catch(() => null);
+  let w; try { w = navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]); } catch (x) { w = Promise.reject(x); }
+  w.catch(() => png.then((x) => navigator.clipboard.write([new ClipboardItem({ 'image/png': x })])))
+    .then(() => back('✓ Picture copied. Paste it in Discord', true), () => drawn.then(() => { back(was); ndzShotOpen(c.r, c.u0, true); }, () => back('Couldn\'t draw the picture'))); });
 // (starter cooldown plans' data: the 3 fastest kills of each boss on Warcraft Logs, read Oct 20 — Lost Explorers Mythic 2.
 // Per phase as NSRT numbers them (an intermission is x.5): when it starts and how long it lasts on average, then the big
 // moments: [phase, seconds into it, raid damage taken a second over 6 s (thousands), the ability that hit most]. Only
@@ -4067,14 +4043,14 @@ function ndzAuditPlayers(r, u0) { const ps = ndzIn(r), ro = ndzNoteRoster(u0);
     return { ps: ro.map((n) => { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()]; return p ? { n: ndzPn(p), cls: p.cls, sid: p.specId } : { n, cls: s ? s.cls : null, sid: s ? s.sid : 0 }; }), who: plural(ro.length, 'raider') + ' picked for ' + u0.name }; }
   return { ps: ps.map((p) => ({ n: ndzPn(p), cls: p.cls, sid: p.specId })), who: 'tonight\'s ' + ps.length + ' raiders' }; }
 // (the roster audit as rows: a kind and its count, then its icons)
-function ndzAuditRows(players) { let miss = 0, have = 0, of = 0, needN = 0;
+function ndzAuditRows(players) { let miss = 0, have = 0, of = 0, needN = 0; const missL = [], offL = [];
   const rows = NDZ_BUFFS.map(([lab, kind, list]) => { let n = 0;
     const ic = list.map(([nm, cl, specs, sid]) => { const mine = players.filter((p) => cl.includes(p.cls)), yes = mine.filter((p) => !specs || (p.sid && specs.includes(+p.sid))).map((p) => p.n), maybe = specs ? mine.filter((p) => !p.sid).map((p) => p.n) : [];
-      if (yes.length) n++; if (kind === 'need') { needN++; if (!yes.length) miss++; } else { of++; if (yes.length) have++; }
+      if (yes.length) n++; if (kind === 'need') { needN++; if (!yes.length) { miss++; missL.push(nm + ' (' + cl.map(ndzClsName).filter(Boolean).join(' or ') + ')'); } } else { of++; if (yes.length) have++; else offL.push([lab, nm]); }
       const st = yes.length ? 'ok' : maybe.length ? 'maybe' : kind === 'need' ? 'no' : 'off';
       return '<span class="ndz-bfi ' + st + '" data-tt="' + esc('<b>' + esc(nm) + '</b><br>' + (yes.length ? esc(yes.join(', ')) : maybe.length ? 'maybe ' + esc(maybe.join(', ')) + ' (spec not seen yet)' : 'nobody brings it')) + '">' + spellIcon(sid, nm) + '</span>'; }).join('');
     return '<div class="ndz-dag"><span class="ndz-dagl">' + esc(lab) + '<em class="' + (kind === 'need' ? (n === list.length ? 'ok' : 'bad') : '') + '">' + n + '/' + list.length + '</em></span><span class="ndz-dagi">' + ic + '</span></div>'; }).join('');
-  return { html: rows, miss, have, of, needN }; }
+  return { html: rows, miss, have, of, needN, missL, offL }; }
 // (each raider's kick: melee and ranged, the shortest cooldown first; healers have none but a Restoration Shaman)
 function ndzKickGroups(players) { const grp = { melee: [], ranged: [] }, none = [];
   for (const p of players) { if (!p.cls) continue; const sid = +p.sid || 0, ks = E.INTERRUPTS[p.cls] || [], k = sid ? ks.find((x) => !x[2] || x[2].includes(sid)) : ks.find((x) => !x[2]) || ks[0];
@@ -4086,7 +4062,7 @@ function ndzKickRows(players) { const K = ndzKickGroups(players), col = (c) => (
   const li = (x) => '<div class="ndz-dkr' + (x.maybe ? ' maybe' : '') + '" data-tt="' + esc('<b>' + esc(x.n) + '</b><br>' + esc(x.k) + ', every ' + x.cd + ' s' + (x.maybe ? ' (spec not seen yet)' : '') + (x.plus ? '<br>' + esc(x.plus) : '')) + '">' + spellIcon(NDZ_KICK_ID[x.k] || 0, x.k) +
     '<b style="color:' + col(x.cls) + '">' + esc(x.n) + '</b>' + (x.plus ? '<i>+1</i>' : '') + '<span>' + x.cd + 's</span></div>';
   const c = (k, lab) => '<div><div class="ndz-dkh">' + lab + ' · ' + K.grp[k].length + '</div>' + (K.grp[k].length ? K.grp[k].map(li).join('') : '<p class="sub">None</p>') + '</div>';
-  return { n: K.n, html: '<div class="ndz-dkc">' + c('melee', 'Melee') + c('ranged', 'Ranged') + '</div>' + (K.none.length ? '<p class="sub ndz-dkn">No kick: ' + esc(andL(K.none)) + '.</p>' : '') }; }
+  return { n: K.n, m: K.grp.melee.length, rg: K.grp.ranged.length, none: K.none, html: '<div class="ndz-dkc">' + c('melee', 'Melee') + c('ranged', 'Ranged') + '</div>' + (K.none.length ? '<p class="sub ndz-dkn">No kick: ' + esc(andL(K.none)) + '.</p>' : '') }; }
 // (the timeline's data: the note's cooldowns by raider and phase, the fastest kills' big hits, each phase's length)
 function ndzTlData(r, u0, text, players) {
   let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
@@ -4131,13 +4107,17 @@ function ndzDash(r, u0, st, lines, go, tlk, how, more, fixBtn) { try { spcTipIni
   const A = ndzAuditPlayers(r, u0), au = ndzAuditRows(A.ps), K = ndzKickRows(A.ps), D = NDZ_TL = ndzTlData(r, u0, st.text, A.ps), b = r.item.boss;
   const unc = D.hits.filter((h) => h.c === 'red').length, parts = [st.ps.length ? st.jobs / st.ps.length : 1, au.needN ? (au.needN - au.miss) / au.needN : 1].concat(D.hits.length ? [D.hits.filter((h) => h.c !== 'red').length / D.hits.length] : []);
   const pct = Math.round(100 * parts.reduce((s, v) => s + v, 0) / parts.length), H = BOSS_HERO[b];
-  const tk = (ok, txt, warn) => '<span class="ndz-dtk ' + (ok ? 'ok' : warn ? 'warn' : 'bad') + '"><i>' + (ok ? '✓' : '!') + '</i>' + txt + '</span>', tkn = (txt) => '<span class="ndz-dtk">' + txt + '</span>';
+  const tt = (tip) => (tip ? ' tabindex="0" data-tt="' + esc(tip) + '"' : ''), tk = (ok, txt, warn, tip) => '<span class="ndz-dtk ' + (ok ? 'ok' : warn ? 'warn' : 'bad') + '"' + tt(tip) + '><i>' + (ok ? '✓' : '!') + '</i>' + txt + '</span>', tkn = (txt, tip) => '<span class="ndz-dtk"' + tt(tip) + '>' + txt + '</span>';
+  const mmss = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0'), reds = D.hits.filter((h) => h.c === 'red').sort((a, b) => a.ph - b.ph || a.rel - b.rel), offG = [...new Set(au.offL.map((x) => x[0]))].map((g) => '<b>' + esc(g) + ':</b> ' + esc(au.offL.filter((x) => x[0] === g).map((x) => x[1]).join(', ')));
+  const tJob = st.idle.length ? '<b>No job yet</b><br>' + esc(andL(st.idle.map(ndzPn))) : '<b>Every raider has a job</b>', tBuff = au.miss ? '<b>Missing</b><br>' + au.missL.map(esc).join('<br>') : '<b>Every raid buff and debuff</b><br>Your roster brings them all.';
+  const tUt = offG.length ? '<b>Not on your roster</b><br>' + offG.join('<br>') : '<b>All of it</b><br>Your roster brings every utility on the list.', tKick = '<b>' + plural(K.n, 'kick') + '</b><br>' + K.m + ' melee · ' + K.rg + ' ranged' + (K.none.length ? '<br>No kick: ' + esc(andL(K.none)) : '');
+  const tHit = reds.length ? '<b>No raid cooldown near</b><br>' + reds.map((h) => (h.ph % 1 ? 'Int ' : 'P' + h.ph + ' ') + mmss(h.rel) + ' · ' + esc(h.hit)).join('<br>') : '<b>Every big hit has a raid cooldown</b><br>From the fastest ' + esc(D.diff) + ' kills.';
   const head = '<div class="panel ndz-dhd">' + (H ? '<span class="ndz-dth" style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg);background-position:' + H[1] + '% 28%" aria-hidden="true"></span>' : '') +
     '<div class="ndz-dtt"><b>' + esc(b) + '</b><span class="ndz-dpl">' + esc(D.diff) + '</span><div class="sub">' + esc(u0.name) + ' · ' + plural(A.ps.length, 'raider') + ' · ' + plural(D.cds.length, 'cooldown') + '</div></div>' +
     '<span class="ndz-dring" style="--p:' + pct + '" data-tt="' + esc('<b>' + pct + '% ready</b><br>Raiders with a job, raid buffs' + (D.hits.length ? ' and big hits covered' : '') + ', averaged') + '"><span>' + pct + '%</span></span>' +
-    '<span class="ndz-dtks">' + tk(!st.idle.length, st.jobs + ' of ' + st.ps.length + ' have a job', true) + tk(!au.miss, au.miss ? plural(au.miss, 'buff') + ' missing' : 'Every buff') + tkn(au.have + '/' + au.of + ' utility') + tkn(plural(K.n, 'kick')) +
-    (D.hits.length ? tk(!unc, unc ? plural(unc, 'big hit') + ' uncovered' : 'Big hits covered') : '') + '</span>' +
-    '<span class="ndz-dact">' + go + '<button class="btn" type="button" data-dbncopy="1">Copy for the game</button><button class="btn" type="button" data-ndzdc="cur">💬 Discord</button><button class="btn" type="button" data-ndzshot="1">🖼 Image</button><button class="btn" type="button" data-ndzdb="1">Debriefing →</button>' + tlk + '</span>' + how + '</div>';
+    '<span class="ndz-dtks">' + tk(!st.idle.length, st.jobs + ' of ' + st.ps.length + ' have a job', true, tJob) + tk(!au.miss, au.miss ? plural(au.miss, 'buff') + ' missing' : 'Every buff', false, tBuff) + tkn(au.have + '/' + au.of + ' utility', tUt) + tkn(plural(K.n, 'kick'), tKick) +
+    (D.hits.length ? tk(!unc, unc ? plural(unc, 'big hit') + ' uncovered' : 'Big hits covered', false, tHit) : '') + '</span>' +
+    '<span class="ndz-dact">' + go + '<button class="btn" type="button" data-dbncopy="1">Copy for the game</button><button class="btn" type="button" data-ndzdc="cur" data-tt="' + esc('<b>The note as one picture</b><br>Everyone in their class color. Paste it in Discord with Ctrl+V.') + '">💬 Copy for Discord</button><button class="btn" type="button" data-ndzdb="1">Debriefing →</button>' + tlk + '</span>' + how + '</div>';
   const fix = lines ? '<div class="panel ndz-dal">' + lines + (fixBtn || '') + '</div>' : '';
   return '<div class="ndz-dash">' + head + fix + more + '<div class="ndz-dgrid"><div class="ndz-dcol">' +
     '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Roster audit</b><span class="sub">' + esc(A.who) + '</span></div>' + au.html + '</div>' +
@@ -4150,13 +4130,13 @@ function ndzDashWho(r, used) { const el = $('#ndzDashWho'); if (!el || !NDZ_NEW(
 // name (up to three, then their cooldowns), flowing into four columns; debriefme.io at the bottom. Drawn on a canvas in the
 // page (the art and fonts allow it), then Copy image (paste it in Discord) or Download.
 async function ndzShotDraw(r, u0) {
-  const boss = r.item.boss, st = ndzStatus(r, u0), wc = ndzWhoC(st.text, boss), sp = ndzSpecs(), ro = ndzNoteRoster(u0), here = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p]));
+  const boss = r.item.boss, st = (() => { try { return ndzStatus(r, u0); } catch (e) { return { text: noteResolve(u0.text) }; } })(), wc = ndzWhoC(st.text, boss), sp = ndzSpecs(), ro = ndzNoteRoster(u0), here = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p]));
   let hd = {}; try { hd = (E.parseNote(st.text) || {}).header || {}; } catch (e) { hd = {}; }
   const diff = /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : /mythic|16/i.test(String(hd.difficulty || '')) ? 'Mythic' : r.item.diff || '';
   const names = ro || ndzIn(r).map(ndzPn), ppl = names.map((n) => { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()] || {}, cls = p ? p.cls : s.cls, sid = +(p ? p.specId : s.sid) || 0, role = p ? p.role : s.role;
     const kind = role === 'tank' ? 'tank' : role === 'healer' ? 'healer' : !sid ? 'dps' : NDZ_MELEE.has(sid) ? 'melee' : 'ranged', j = (wc.get(n.toLowerCase()) || { l: [] }).l;
     const jobs = j.filter((x) => x.k !== 'cd').map((x) => x.t), cds = j.filter((x) => x.k === 'cd').map((x) => x.t);
-    return { n, color: (p && p.color) || s.color || (E.CLASSES[cls] || [])[1] || '#ddd', spec: (p && p.specName) || s.spec || '', kind, line: jobs.slice(0, 3).concat(cds.slice(0, jobs.length > 1 ? 1 : 2)).join(' · ') }; });
+    return { n, color: [p && p.color, s.color, (E.CLASSES[cls] || [])[1]].find((c) => c && c !== 'inherit') || '#ddd', spec: (p && p.specName) || s.spec || '', kind, line: jobs.slice(0, 3).concat(cds.slice(0, jobs.length > 1 ? 1 : 2)).join(' · ') }; });
   const GR = [['tank', 'Tanks'], ['healer', 'Healers'], ['melee', 'Melee'], ['ranged', 'Ranged'], ['dps', 'DPS']].map(([k, l]) => ({ l, list: ppl.filter((x) => x.kind === k).sort((a, b) => a.n.localeCompare(b.n)) })).filter((g) => g.list.length);
   await Promise.all(['800 40px "Barlow Semi Condensed"', '700 13px "Barlow Semi Condensed"', '700 17px Barlow', '500 13px Barlow'].map((f) => document.fonts.load(f).catch(() => null)));
   const H = BOSS_HERO[boss], art = H ? await new Promise((res) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = () => res(null); i.src = 'https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg'; }) : null;
@@ -4187,15 +4167,15 @@ async function ndzShotDraw(r, u0) {
   return { cv, file: ('Debrief - ' + boss + ' - ' + (u0.name || 'note')).replace(/[\\/:*?"<>|]+/g, '') + '.png' };
 }
 // (the pop-up: the picture, then Copy image, Download and Close)
-async function ndzShotOpen() { const r = S.rep, u0 = r && noteForRep(r); if (!u0) return;
-  let box = $('#ndzShot'); if (!box) { box = document.createElement('div'); box.id = 'ndzShot'; box.className = 'ndz-wiz ndz-nv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Share as image'); document.body.appendChild(box); document.body.classList.add('ndz-modal'); }
+async function ndzShotOpen(r0, n0, fb) { const r = r0 || S.rep, u0 = n0 || (r && noteForRep(r)); if (!r || !u0) return;
+  let box = $('#ndzShot'); if (!box) { box = document.createElement('div'); box.id = 'ndzShot'; box.className = 'ndz-wiz ndz-nv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Copy for Discord'); document.body.appendChild(box); document.body.classList.add('ndz-modal'); }
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView')) document.body.classList.remove('ndz-modal'); };
-  box.innerHTML = '<div class="ndz-wbox ndz-shotbox"><div class="ndz-whead"><span class="sub">Share as image</span><button class="ndz-ex" type="button" id="ndzShX" aria-label="Close">✕</button></div><p class="sub" id="ndzShMsg">Drawing the picture…</p></div>';
+  box.innerHTML = '<div class="ndz-wbox ndz-shotbox"><div class="ndz-whead"><span class="sub">Copy for Discord</span><button class="ndz-ex" type="button" id="ndzShX" aria-label="Close">✕</button></div><p class="sub" id="ndzShMsg">Drawing the picture…</p></div>';
   $('#ndzShX').onclick = close; box.onclick = (e) => { if (e.target === box) close(); };
   let res; try { res = await ndzShotDraw(r, u0); } catch (e) { $('#ndzShMsg').textContent = 'Couldn\'t draw the picture: ' + e.message; return; }
   const url = res.cv.toDataURL('image/png');
-  box.querySelector('.ndz-wbox').innerHTML = '<div class="ndz-whead"><span class="sub">Share as image · ' + esc(r.item.boss) + '</span><button class="ndz-ex" type="button" id="ndzShX" aria-label="Close">✕</button></div>' +
-    '<h2>Share as image</h2><p class="sub">The note as one picture, with everyone in their class color. Copy it and paste it in Discord (Ctrl+V), or download it.</p><img class="ndz-shotimg" src="' + url + '" alt="The note as a picture">' +
+  box.querySelector('.ndz-wbox').innerHTML = '<div class="ndz-whead"><span class="sub">Copy for Discord · ' + esc(r.item.boss) + '</span><button class="ndz-ex" type="button" id="ndzShX" aria-label="Close">✕</button></div>' +
+    '<h2>Copy for Discord</h2><p class="sub">' + (fb ? 'Your browser didn\'t let Debrief copy the picture by itself. Try Copy image, or Download it and drag the file into Discord.' : 'The note as one picture, with everyone in their class color. Copy it and paste it in Discord (Ctrl+V), or download it.') + '</p><img class="ndz-shotimg" src="' + url + '" alt="The note as a picture">' +
     '<div class="ndz-wfoot"><button class="btn" type="button" id="ndzShClose">Close</button><span class="sub" id="ndzShMsg"></span><span class="ndz-cb"><a class="btn" id="ndzShDl" href="' + url + '" download="' + esc(res.file) + '">Download</a><button class="btn primary" type="button" id="ndzShCopy">Copy image</button></span></div>';
   $('#ndzShX').onclick = close; $('#ndzShClose').onclick = close;
   $('#ndzShCopy').onclick = () => res.cv.toBlob(async (b) => { try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); $('#ndzShMsg').textContent = '✓ Copied. Paste it in Discord (Ctrl+V).'; } catch (e) { $('#ndzShMsg').textContent = 'Your browser didn\'t allow copying a picture. Use Download, then drag the file into Discord.'; } }, 'image/png');
