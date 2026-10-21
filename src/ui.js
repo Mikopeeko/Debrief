@@ -6899,7 +6899,7 @@ function miniMap(mp, pmap) {
   const span = fc ? Math.max(30, fc.r * 3.2) : Math.max(fx1r - fx0r, fy1r - fy0r, 30), fcx = fc ? fc.x : (fx0r + fx1r) / 2, fcy = fc ? -fc.y : (fy0r + fy1r) / 2;
   const fx0 = fcx - span * 0.6, fy0 = fcy - span * 0.6, fs = span * 1.2; // focus square, in yards
   const W = 480, yd = W / fs; // svg units per yard (icons are sized for the focus view)
-  const MB = mp.boss || S.rep.item.boss, A = ARENAS[MB]; /* (a guide's map names its boss: Guides shows every boss, not just this pull's) */
+  const MB = mp.boss || S.rep.item.boss, A = (mp.gdzLook && typeof GDZ_ARENAS !== 'undefined' && GDZ_ARENAS[MB]) || ARENAS[MB]; /* (a guide's own fit of a room picture, Oct 21: Debriefing's maps keep ARENAS) */ /* (a guide's map names its boss: Guides shows every boss, not just this pull's) */
   // world frame: the arena image plus the focus area
   const ax0 = A ? A.cx - A.w / A.s / 2 : fx0, ay0 = A ? -A.cy - A.h / A.s / 2 : fy0, ax1 = A ? ax0 + A.w / A.s : fx0 + fs, ay1 = A ? ay0 + A.h / A.s : fy0 + fs;
   const x0 = Math.min(ax0, fx0), y0 = Math.min(ay0, fy0), x1 = Math.max(ax1, fx0 + fs), y1 = Math.max(ay1, fy0 + fs);
@@ -6911,21 +6911,21 @@ function miniMap(mp, pmap) {
   const acx = (ax0 + ax1) / 2, acy = (ay0 + ay1) / 2; let aside = Math.min(ax1 - ax0, ay1 - ay0);
   for (const p of bpts) aside = Math.max(aside, 2 * Math.max(Math.abs(sx(p) - acx), Math.abs(sy(p) - acy)) + 12);
   aside = Math.min(aside, Math.max(ax1 - ax0, ay1 - ay0)); /* (never wider than the whole room box: a stray position can't pull it far out) */
-  if (A && A.f) aside = Math.min(ax1 - ax0, ay1 - ay0); /* (a room picture: open inside it, never past its edge (your screenshot, Oct 20); − zooms out further) */
-  const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = mp.room ? [(rcx - rside / 2 - x0) * yd, (rcy - rside / 2 - y0) * yd, rside * yd, rside * yd] : A ? [(acx - x0) * yd - aside * yd / 2, (acy - y0) * yd - aside * yd / 2, aside * yd, aside * yd] : [0, 0, fside, fside];
+  if (A && A.f && !mp.gdzLook) aside = Math.min(ax1 - ax0, ay1 - ay0); else if (A && A.f) { const sh = Math.min(ax1 - ax0, ay1 - ay0), lg = Math.max(ax1 - ax0, ay1 - ay0); let need = 0; for (const p of bpts) need = Math.max(need, 2 * Math.max(Math.abs(sx(p) - acx), Math.abs(sy(p) - acy)) + 12); aside = need > sh ? Math.min(need, lg) : sh; } /* (a wide room (Ula'tek's ledges, Oct 21): wider when players stand outside the square; dark bands are fine) */ /* (a room picture: open inside it, never past its edge (your screenshot, Oct 20); − zooms out further) */
+  const focusVB = [(fx0 - x0) * yd, (fy0 - y0) * yd, W, W], fullVB = mp.fullAt ? [(mp.fullAt.x - mp.fullAt.r - x0) * yd, (-mp.fullAt.y - mp.fullAt.r - y0) * yd, 2 * mp.fullAt.r * yd, 2 * mp.fullAt.r * yd] : mp.room ? [(rcx - rside / 2 - x0) * yd, (rcy - rside / 2 - y0) * yd, rside * yd, rside * yd] : A ? [(acx - x0) * yd - aside * yd / 2, (acy - y0) * yd - aside * yd / 2, aside * yd, aside * yd] : [0, 0, fside, fside];
   const ic = (x, y, inner) => '<g class="ic" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>';
   // opens on the whole arena when there is one; "Zoom to mechanic" (or double-click) goes in
   const startVB = A ? fullVB : focusVB;
-  let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
+  let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-zmax="' + (mp.gdzLook && A && A.f ? (Math.max(A.w, A.h) / A.s * yd * 1.05).toFixed(1) : 0) + '" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
   // the boss's arena map (built in), or a room image the user added on the Interrupts map
-  const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd }) + arenaHi(MB, { x0, y0, yd }); /* (the sharp render on every boss that has one, Oct 20) */
+  const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd }) + arenaHi(MB, { x0, y0, yd }, mp.artAt ? (mp.artAt.filter((q) => q[0] <= (mp.ft != null ? mp.ft : mp.t || 0)).pop() || [0, mp.art])[1] : mp.art, mp.gdzLook && A && A.sq, A); /* (the sharp render on every boss that has one, Oct 20) */
   const mi = arena || mp.noArena ? null : mapImg(MB);
   s += arena;
   if (mi) s += '<image href="' + mi.src + '" preserveAspectRatio="none" opacity="' + mi.op + '"' + imgAttrs(mi, { x0, y0, yd }) + '/>';
   for (let g = 0; g <= (x1 - x0); g += 10) s += '<line x1="' + g * yd + '" x2="' + g * yd + '" y1="0" y2="' + FH + '" class="mg" vector-effect="non-scaling-stroke"/>';
   for (let g = 0; g <= (y1 - y0); g += 10) s += '<line y1="' + g * yd + '" y2="' + g * yd + '" x1="0" x2="' + FW + '" class="mg" vector-effect="non-scaling-stroke"/>';
   // orbs and ghosts (Coiled Altar): glowing spheres for orbs, a ghost shape for ghosts
-  const OBJS = { orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
+  const OBJS = { egg: ['#c9d98a', 'Egg (Blightscale Spawn)'], begg: ['#7fbf3a', 'Doomscale Egg'], orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
   const RID = mp.room ? mp.room.id + '-' + (++MAP_RN) : null;
@@ -7020,6 +7020,61 @@ function miniMap(mp, pmap) {
   const ft = mp.ft != null ? mp.ft : mp.t, byG = new Map(pts.map((p) => [p.guid, p]));
   // aimed arrows on players (Sszorak's Raging Crosswinds): from the player, the way they'll be launched, while marked
   // (ang: radians in map space, east = 0, counterclockwise)
+  // (a guide's venom waves (Ula'tek's Caustic Waves): a wall of venom w yards wide and d deep, rolling from its start along deg at v
+  // yards a second; the gaps are simply where no wall is drawn)
+  // (a guide's curved waves (Ula'tek's own Caustic Waves, as in the kill videos): an arc of venom spreading out from her at v yards a second
+  // between angles a0 and a1 (degrees, east = 0, counterclockwise), d deep, with its gaps left open; a red arc warns where it starts first)
+  if (mp.gdzLook) for (const w of mp.arcs || []) {
+    if (ft < w.t0 - (w.warn || 0) || ft > w.t1) continue; const el = ft - w.t0, warn = el < 0, r = w.r0 + w.v * Math.max(0, el), hd = (w.d || 4) / 2;
+    const segs = []; let a = w.a0; for (const g of (w.gaps || []).slice().sort((p, q) => p[0] - q[0])) { if (g[0] > a) segs.push([a, Math.min(g[0], w.a1)]); a = Math.max(a, g[1]); } if (a < w.a1) segs.push([a, w.a1]);
+    const pt = (ang, rr) => { const q = { x: w.x + Math.cos(ang * Math.PI / 180) * rr, y: w.y + Math.sin(ang * Math.PI / 180) * rr }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); };
+    const col = warn ? '#ff5a3a' : (w.color || '#b6f23a'), op = warn ? 0.6 : Math.max(0, Math.min(1, el / 0.3, (w.t1 - ft) / 0.5));
+    for (const [s0, s1] of segs) { const n = Math.max(2, Math.ceil((s1 - s0) / 4)); let dd = 'M' + pt(s0, r + hd); for (let i = 1; i <= n; i++) dd += 'L' + pt(s0 + (s1 - s0) * i / n, r + hd);
+      for (let i = n; i >= 0; i--) dd += 'L' + pt(s0 + (s1 - s0) * i / n, Math.max(0.2, r - hd));
+      if (warn) { s += '<path d="' + dd + 'Z" fill="' + col + '" fill-opacity="' + (0.5 * op).toFixed(2) + '" stroke="#000" stroke-opacity="' + (0.5 * op).toFixed(2) + '" stroke-width="3" vector-effect="non-scaling-stroke"/>'; continue; }
+      // (a rolling wave of venom: clear at the back, deepening to a frothy crest at the front that ripples as it rolls, a few drops thrown ahead)
+      const C = [X(w), Y(w)], kp = Math.hypot(X({ x: w.x + 1, y: w.y }) - C[0], Y({ x: w.x + 1, y: w.y }) - C[1]), out = w.v >= 0 ? 1 : -1, front = r + out * hd, back = Math.max(0.2, r - out * hd), ph = ft * 3.2;
+      const rip = (sy, k) => 0.7 * Math.sin(sy * 0.5 + ph + k) + 0.35 * Math.sin(sy * 1.25 - ph * 1.6 + 1.3 + k), RR = Math.max(front, back) + 2.5, gid = 'lqa' + (window.__lqN = (window.__lqN || 0) + 1);
+      const stops = [[back - out * 0.4, 0.08, col], [r, 0.55, col], [front - out * 0.9, 0.95, col], [front - out * 0.2, 1, '#f2ffe6'], [front + out * 0.7, 0, col]] /* (her waves: bold, the big part of the mechanic) */.map(([rr, o, c]) => [Math.max(0, Math.min(1, rr / RR)), o * op, c]).sort((p, q) => p[0] - q[0]);
+      s += '<radialGradient id="' + gid + '" gradientUnits="userSpaceOnUse" cx="' + C[0].toFixed(1) + '" cy="' + C[1].toFixed(1) + '" r="' + (RR * kp).toFixed(1) + '">' + stops.map(([f, o, c]) => '<stop offset="' + f.toFixed(4) + '" stop-color="' + c + '" stop-opacity="' + o.toFixed(2) + '"/>').join('') + '</radialGradient>';
+      const len = (s1 - s0) * Math.PI / 180 * r, m = Math.max(8, Math.ceil(len / 1.4)), A = (i) => s0 + (s1 - s0) * i / m, SY = (i) => (A(i) * Math.PI / 180) * r, TP = (i) => Math.min(1, Math.min(i, m - i) * len / m / 3);
+      let body = '', crest = '', inner = ''; for (let i = 0; i <= m; i++) { const f = front + out * rip(SY(i), 0) * 0.8 * TP(i), tp = TP(i), fr = back + (f - back) * (0.25 + 0.75 * tp); body += (i ? 'L' : 'M') + pt(A(i), fr); crest += (i ? 'L' : 'M') + pt(A(i), fr - out * 0.3); inner += (i ? 'L' : 'M') + pt(A(i), back + (fr - back) * 0.55 + out * rip(SY(i), 2.1) * 0.35); }
+      for (let i = m; i >= 0; i--) body += 'L' + pt(A(i), back + out * rip(SY(i), 4.2) * 0.3 * TP(i));
+      s += '<path d="' + body + 'Z" fill="url(#' + gid + ')" stroke="#06200c" stroke-opacity="' + (0.7 * op).toFixed(2) + '" stroke-width="2.4" vector-effect="non-scaling-stroke"/>' +
+        '<path d="' + inner + '" fill="none" stroke="#ffffff" stroke-opacity="' + (0.35 * op).toFixed(2) + '" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="4 6" vector-effect="non-scaling-stroke"/>' +
+        '<path d="' + crest + '" fill="none" stroke="#f4fff0" stroke-opacity="' + (0.95 * op).toFixed(2) + '" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+      for (let i = 2; i < m - 1; i += 5) { const lift = 1.1 + 0.7 * (0.5 + 0.5 * Math.sin(ph * 1.7 + i * 1.9)); const q = pt(A(i), front + out * (rip(SY(i), 0) * 0.8 + lift)).split(' ');
+        s += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="' + (0.55 * kp + 0.6).toFixed(1) + '" fill="#f4fff0" fill-opacity="' + (0.55 * op).toFixed(2) + '"/>'; }
+    }
+  }
+  if (mp.gdzLook) for (const w of mp.waves || []) {
+    // (a tail rising (Ula'tek's Gore Rattle): a dashed path the way its wave will run, with chevrons, until it fires)
+    if (w.warn && ft >= w.t0 - w.warn && ft < w.t0) { const a = w.deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), len = Math.min(w.len || 110, w.v * (w.t1 - w.t0)), hw = w.w / 2, col = w.warnColor || '#ff5a3a', pu = (0.65 + 0.3 * Math.sin(ft * 7)).toFixed(2);
+      const P = (s1, s2) => { const q = { x: w.x + ux * s1 - uy * s2, y: w.y + uy * s1 + ux * s2 }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); };
+      if (w.warnAt === 'start') { const hd2 = (w.d || 4) / 2, bw2 = (z) => (w.bow || 0) * Math.max(0, 1 - Math.pow(z / hw, 2)), m2 = Math.max(8, Math.ceil(w.w / 1.2)); let dd2 = '';
+        for (let i = 0; i <= m2; i++) { const z = -hw + w.w * i / m2; dd2 += (i ? 'L' : 'M') + P(hd2 + bw2(z), z); } for (let i = m2; i >= 0; i--) { const z = -hw + w.w * i / m2; dd2 += 'L' + P(-hd2 + bw2(z), z); }
+        s += '<path d="' + dd2 + 'Z" fill="#ff5a3a" fill-opacity="' + (0.4 + 0.2 * Math.sin(ft * 7)).toFixed(2) + '" stroke="#000" stroke-opacity=".55" stroke-width="2.2" vector-effect="non-scaling-stroke"/>'; continue; } /* (her waves: a red band where it starts) */
+      const box = 'M' + P(0, -hw) + 'L' + P(len, -hw) + 'L' + P(len, hw) + 'L' + P(0, hw) + 'Z';
+      s += '<path d="' + box + '" fill="' + col + '" fill-opacity=".16" stroke="#000" stroke-opacity=".5" stroke-width="3.4" vector-effect="non-scaling-stroke"/><path d="' + box + '" fill="none" stroke="' + col + '" stroke-opacity="' + pu + '" stroke-width="1.8" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>';
+      for (let c = 9; c < len - 3; c += 15) { const ch = 'M' + P(c - 3, -hw * 0.55) + 'L' + P(c + 3, 0) + 'L' + P(c - 3, hw * 0.55); s += '<path d="' + ch + '" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><path d="' + ch + '" fill="none" stroke="' + col + '" stroke-opacity="' + pu + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'; }
+      continue; }
+    if (ft < w.t0 || ft > w.t1) continue; const a = w.deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), el = ft - w.t0, cx = w.x + ux * w.v * el, cy = w.y + uy * w.v * el;
+    const hw = w.w / 2, hd = (w.d || 4) / 2, P = (s1, s2) => { const q = { x: cx + ux * s1 - uy * s2, y: cy + uy * s1 + ux * s2 }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); };
+    const op = Math.max(0, Math.min(1, el / 0.35, (w.t1 - ft) / 0.5)), col = w.color || '#b6f23a';
+    // (a rolling wave of venom: rounded ends, clear at the back, deepening to a frothy crest at the front that ripples, a few drops ahead)
+    const Pn = (s1, s2) => [X({ x: cx + ux * s1 - uy * s2, y: cy + uy * s1 + ux * s2 }), Y({ x: cx + ux * s1 - uy * s2, y: cy + uy * s1 + ux * s2 })], ph = ft * 3.2 + w.x * 0.37;
+    const rip = (s2, k) => 0.45 * Math.sin(s2 * 0.9 + ph + k) + 0.25 * Math.sin(s2 * 2.1 - ph * 1.5 + 0.7 + k), tf = (s2) => Math.sqrt(Math.max(0, 1 - Math.pow(s2 / hw, 4))), gid = 'lqw' + (window.__lqN = (window.__lqN || 0) + 1), bw = (s2) => (w.bow || 0) * Math.max(0, 1 - Math.pow(s2 / hw, 2)); /* (a bowed wave: its middle leads) */
+    const g0 = Pn(-hd - 0.5, 0), g1 = Pn(hd + 1, 0), m = Math.max(8, Math.ceil(w.w / 0.8)), S2 = (i) => -hw + w.w * i / m;
+    s += '<linearGradient id="' + gid + '" gradientUnits="userSpaceOnUse" x1="' + g0[0].toFixed(1) + '" y1="' + g0[1].toFixed(1) + '" x2="' + g1[0].toFixed(1) + '" y2="' + g1[1].toFixed(1) + '">' +
+      [[0, 0, col], [0.35, 0.3, col], [0.74, 0.72, col], [0.86, 0.92, '#f2ffe6'], [1, 0, col]].map(([f, o, c]) => '<stop offset="' + f + '" stop-color="' + c + '" stop-opacity="' + (o * op).toFixed(2) + '"/>').join('') + '</linearGradient>';
+    let body = '', crest = '', inner = ''; for (let i = 0; i <= m; i++) { const z = S2(i), t = tf(z), f = hd * t + rip(z, 0) * t + bw(z); body += (i ? 'L' : 'M') + P(f, z); crest += (i ? 'L' : 'M') + P(f - 0.25, z); inner += (i ? 'L' : 'M') + P((f - bw(z)) * 0.3 + rip(z, 2.1) * 0.3 * t + bw(z), z); }
+    for (let i = m; i >= 0; i--) { const z = S2(i), t = tf(z); body += 'L' + P(-hd * 0.9 * t + rip(z, 4.2) * 0.25 * t + bw(z), z); }
+    s += '<path d="' + body + 'Z" fill="' + (w.bow ? col : 'url(#' + gid + ')') + '" fill-opacity="' + (w.bow ? (0.66 * op).toFixed(2) : '1') + '" stroke="#0a2410" stroke-opacity="' + ((w.bold ? 0.7 : 0.35) * op).toFixed(2) + '" stroke-width="' + (w.bold ? 2.4 : 1.4) + '" vector-effect="non-scaling-stroke"/>' +
+      '<path d="' + inner + '" fill="none" stroke="#ffffff" stroke-opacity="' + (0.28 * op).toFixed(2) + '" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/>' +
+      '<path d="' + crest + '" fill="none" stroke="#f4fff0" stroke-opacity="' + (0.85 * op).toFixed(2) + '" stroke-width="' + (w.bold ? 3.2 : 2.2) + '" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    const kp = Math.hypot(g1[0] - g0[0], g1[1] - g0[1]) / (2 * hd + 1.5); for (const [i, z] of [-0.55, 0.05, 0.6].map((u, i) => [i, u * hw])) { const q = Pn(hd * tf(z) + rip(z, 0) + 1 + 0.6 * (0.5 + 0.5 * Math.sin(ph * 1.7 + i * 2.3)) + bw(z), z);
+      s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="' + (0.5 * kp + 0.6).toFixed(1) + '" fill="#f4fff0" fill-opacity="' + (0.55 * op).toFixed(2) + '"/>'; }
+  }
   for (const a of mp.arrows || []) {
     if (ft < a.t0 - 0.05 || ft > a.t1 + 0.05) continue; const p = byG.get(a.g); if (!p) continue;
     const L = a.len || 10, x0 = X(p), y0 = Y(p), x1 = X({ x: p.x + Math.cos(a.ang) * L, y: p.y + Math.sin(a.ang) * L }), y1 = Y({ x: p.x + Math.cos(a.ang) * L, y: p.y + Math.sin(a.ang) * L });
@@ -7077,7 +7132,7 @@ function miniMap(mp, pmap) {
         s += ic(x, y, o); }
       continue;
     }
-    let inner = p.kind === 'ghost'
+    let inner = (p.kind === 'egg' || p.kind === 'begg') ? gdzEgg(X(p), Y(p), p.kind, label) : p.kind === 'ghost'
       ? (mp.gdzLook ? gdzGhost(X(p), Y(p), label) : '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>')
       : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow) && !(mp.lateHit && !(elP != null && elP >= -1.4))) /* (a guide's map rings them only while the frontal is cast) */ inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
@@ -7163,6 +7218,9 @@ function miniMap(mp, pmap) {
   if ([...hl].some((g) => !good.has(g) && !bad.has(g))) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="2.5"/>', 'White ring: ' + (mp.hlLabel || 'player this is about')]);
   if (mp.goodAt && good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="1.5"/>', 'White ring: ' + (mp.pendLabel || 'not done yet')]);
   if (good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#2fd15a" stroke-width="2.5"/><path d="M' + (x - 3) + ' ' + y + 'l2 2.5l4-4.5" fill="none" stroke="#2fd15a" stroke-width="2"/>', 'Green ✓: ' + (mp.goodLabel || 'did it right') + (mp.goodAt ? ' (from the moment they do)' : '')]);
+  if (mp.gdzLook && (mp.arcs || []).some((w) => !live || (ft >= w.t0 - (w.warn || 0) && ft <= w.t1))) leg.push([(x, y) => '<path d="M' + (x - 7) + ' ' + (y + 4) + 'Q' + x + ' ' + (y - 6) + ' ' + (x + 7) + ' ' + (y + 4) + '" fill="none" stroke="' + (mp.arcs[0].color || '#b6f23a') + '" stroke-width="4"/>', mp.arcs[0].legend || 'Her waves: stand in the gap']);
+  if (mp.gdzLook && (mp.waves || []).some((w) => w.warn && w.warnAt !== 'start' && (!live || (ft >= w.t0 - w.warn && ft < w.t0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="rgba(255,90,58,.2)" stroke="#ff5a3a" stroke-width="1.5" stroke-dasharray="3 2"/>', 'a tail rising: its wave runs down the red path']);
+  if (mp.gdzLook && (mp.waves || []).some((w) => !live || (ft >= w.t0 && ft <= w.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.waves[0].color || '#b6f23a') + '" fill-opacity=".6" stroke="#000"/>', mp.waves[0].legend || 'Venom wave: step into a gap']);
   if ((mp.cysts || []).length) leg.push([(x, y) => cystBlob(x, y, '#2fd15a', null, 0.62), 'Viscous Cyst: its number, and what it was used for']);
   if ((lm.arrows || []).length) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 3) + '" y2="' + (y - 2) + '" stroke="' + (mp.arrows[0].color || '#7fd8ff') + '" stroke-width="2.5" stroke-linecap="round"/><path d="M' + (x + 7) + ' ' + (y - 5) + 'l-6 0.5l3 4z" fill="' + (mp.arrows[0].color || '#7fd8ff') + '"/>', 'Arrow: ' + (mp.arrowLabel || 'the way Raging Crosswinds will launch them')]);
   // (the sample is the tag itself when it's a short word, like "Fury"; a number otherwise)
@@ -7198,7 +7256,7 @@ function miniMap(mp, pmap) {
   return '<div class="sub" style="margin:10px 0 6px">' + esc(mp.title) + '. Hover any icon for a name.' +
     (mp.note ? '<div style="margin-top:4px;font-weight:600;color:var(--text)">' + esc(mp.note) + '</div>' : '') + '</div>' +
     '<div class="zwrap" style="max-width:560px"><div class="zbar"></div>' + /* (empty and hidden unless a page adds its own buttons, like a guide's Follow the action) */
-    '<div class="zbox">' + s + '<div class="zscale"><i></i><span>10 yards</span></div><div class="znorth">N ↑</div>' +
+    '<div class="zbox">' + s + '<div class="zscale"><i></i><span>10 yards</span></div><div class="znorth">N ' + (mp.gdzLook && A && A.sq && A.rot ? '<span style="display:inline-block;transform:rotate(' + (-A.rot) + 'deg)">↑</span>' : '↑') + '</div>' /* (a guide that keeps a turned room square: the arrow shows where north really is) */ +
     '<div class="zctl"><button type="button" class="zin" title="Zoom in (or scroll)" aria-label="Zoom in">+</button><button type="button" class="zout" title="Zoom out" aria-label="Zoom out">−</button></div>' +
     (mp.frames ? '<div class="zanim"><button class="btn zplay" type="button">❚❚ Pause</button><input class="zrange" type="range" min="0" max="' + (mp.frames.length - 1) + '" value="0" step="1"><span class="ztime sub"></span></div>' : '') +
     '<div class="zkey"><button type="button" class="zkeyb" aria-expanded="false">Key</button>' + legend + '</div></div></div>'; /* (the play bar and the key are inside the map's box: the bar over its bottom like a video's, the key behind a button by N) */
@@ -7293,7 +7351,7 @@ function bindZoom(box) {
   box._zoomApply = apply; // animated maps redraw the contents and re-apply the icon scale
   svg.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const [px, py] = toSvg(e), f = e.deltaY < 0 ? 1 / 1.15 : 1.15, nw = Math.min(Math.max(vb[2] * f, 40), Math.max(full[2], focus[2]) * 1.3), q = nw / vb[2];
+    const [px, py] = toSvg(e), f = e.deltaY < 0 ? 1 / 1.15 : 1.15, nw = Math.min(Math.max(vb[2] * f, 40), Math.max(full[2] * 1.3, focus[2] * 1.3, +(svg.dataset.zmax || 0))), q = nw / vb[2];
     vb = [px - (px - vb[0]) * q, py - (py - vb[1]) * q, nw, nw]; apply();
   }, { passive: false });
   let drag = null;
@@ -7305,7 +7363,7 @@ function bindZoom(box) {
   if (fb) fb.onclick = () => { vb = focus.slice(); apply(); };
   if (ub) ub.onclick = () => { vb = full.slice(); apply(); };
   // (the corner buttons, for a mouse or touchpad without a scroll wheel: zoom about the middle of the view)
-  const zc = (f) => { const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2, nw = Math.min(Math.max(vb[2] * f, 40), Math.max(full[2], focus[2]) * 1.3); vb = [cx - nw / 2, cy - nw / 2, nw, nw]; apply(); };
+  const zc = (f) => { const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2, nw = Math.min(Math.max(vb[2] * f, 40), Math.max(full[2] * 1.3, focus[2] * 1.3, +(svg.dataset.zmax || 0))); vb = [cx - nw / 2, cy - nw / 2, nw, nw]; apply(); };
   const zi = box.querySelector('.zin'), zo = box.querySelector('.zout');
   if (zi) zi.onclick = () => zc(1 / 1.4); if (zo) zo.onclick = () => zc(1.4);
   // (the Key button: hovering opens the key; a click or tap keeps it open until the next one)
@@ -8923,13 +8981,14 @@ function arenaImg(boss, c) {
 // (Oct 20, your call: on every Venomous Abyss boss, each checked against a Mythic kill laid over its render (the guild's, or a top
 // guild's for Sszorak, Twin Fangs and Ula'tek): everyone stands on the floor. Nymrissa and Kith'ix have no render and keep the floor map)
 const ARENA_HI = Object.fromEntries(Object.entries(ARENAS).filter(([b, a]) => a.f && b !== 'The Bargained Crown').map(([b, a]) => [b, 'https://cdn.raidplan.io/raid/wow.venomabyss/map/' + a.f]));
-function arenaHi(boss, c, art) { /* (art: another render of the same room, e.g. Ula'tek's broken platform; 'none' for the floor map only) */
-  const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = ARENAS[b], u = art ? 'https://cdn.raidplan.io/raid/wow.venomabyss/map/' + art : ARENA_HI[b]; if (art === 'none' || !A || !u || !A.f) return '';
+function arenaHi(boss, c, art, flat, A0) { /* (art: another render of the same room, e.g. Ula'tek's broken platform; 'none' for the floor map only) */
+  const b = boss === 'The Bargained Crown' ? 'The Coiled Altar' : boss, A = A0 || ARENAS[b], u = art ? 'https://cdn.raidplan.io/raid/wow.venomabyss/map/' + art : ARENA_HI[b]; if (art === 'none' || !A || !u || !A.f) return '';
   const w = A.w / A.s, h = A.h / A.s, x = (A.cx - w / 2 - c.x0) * c.yd, y = (-A.cy - h / 2 - c.y0) * c.yd, W = w * c.yd, H = h * c.yd, B = 4000 * c.yd;
   // (outside the render: the map's dark background, not the floor map's edge showing through)
   const bg = (rx, ry, rw, rh) => '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#0b0d12"/>';
-  return bg(x - B, y - B, W + 2 * B, B) + bg(x - B, y + H, W + 2 * B, B) + bg(x - B, y, B, H) + bg(x + W, y, B, H) +
+  const pic = bg(x - B, y - B, W + 2 * B, B) + bg(x - B, y + H, W + 2 * B, B) + bg(x - B, y, B, H) + bg(x + W, y, B, H) +
     '<image href="' + u + '" preserveAspectRatio="none" x="' + x + '" y="' + y + '" width="' + W + '" height="' + H + '"/>';
+  return A.rot && !flat ? '<g transform="rotate(' + A.rot + ' ' + (x + W / 2) + ' ' + (y + H / 2) + ')">' + pic + '</g>' : pic; /* (rot: a render drawn square to the page, turned the way the room sits in the game, clockwise) */
 }
 
 // ---- user map image: stored per boss in this browser, positioned in world yards ----
