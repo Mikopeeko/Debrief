@@ -1654,14 +1654,14 @@ GDZ['Ula\'tek'] = {
 // Blood (red) in the bottom corner on the red gem's side, about 55 yards apart; melee on their boss, ranged and healers above it; the red
 // half stacks for every soak and drops its puddles along the wall between the bosses; after the second intermission each boss sits by its
 // own gem. Spots are tidied for reading (your note: the positions are reference points; the plan's spots stay).
-GDZ_ORIGIN['Entombed Sentinels'] = { cx: 367.5, cy: 710.5 }; GDZ_FULL['Entombed Sentinels'] = { x: 0, y: -5, r: 55 }; /* (the room, a little low: the action is in the bottom corners, clear of the map's buttons) */
-const SE_G = [29, -28], SE_R = [-29, -28], /* (the floor ends about 40 yards below the centre: the bosses sit a few yards out of the corners) */ SE_GREEN = ['t1', 'h1', 'h2', 'm1', 'm2', 'm3', 'm4', 'r1', 'r2', 'r3'], SE_RED = ['t2', 'h3', 'h4', 'm5', 'm6', 'm7', 'r4', 'r5', 'r6', 'r7'];
+GDZ_ORIGIN['Entombed Sentinels'] = { cx: 367.5, cy: 710.5 }; GDZ_FULL['Entombed Sentinels'] = { x: 0, y: -3, r: 57 }; /* (the whole platform: about 49 yards each way east and west and 52 north and south, measured on the room picture and checked against the user's own lines) */
+const SE_G = [30, -34], SE_R = [-30, -34], /* (the platform ends about 52 yards below the centre; our kills have the bosses about 44 yards out and 60 apart) */ SE_GREEN = ['t1', 'h1', 'h2', 'm1', 'm2', 'm3', 'm4', 'r1', 'r2', 'r3'], SE_RED = ['t2', 'h3', 'h4', 'm5', 'm6', 'm7', 'r4', 'r5', 'r6', 'r7'];
 const SE_ACID = { color: '#6dff8e', fill: 'rgba(109,255,142,.12)' }, SE_BLOOD = { color: '#ff5a5a', fill: 'rgba(255,90,90,.12)' };
 // both halves at their boss: the tank in front, melee behind it in the corner, ranged and healers above (skip: players a map places itself)
 function seRaid(k, skip, t) {
   t = t || 0; const s = new Set(skip || []), put = (ids, x, y, r) => { const g = ids.filter((id) => !s.has(id)); g.forEach((id, i) => { const [dx, dy] = gdzSpot(i, g.length, r); k.at(t, id, x + dx, y + dy); }); };
-  put(['t1'], 25, -24, 0); put(['m1', 'm2', 'm3', 'm4'], 37, -19, 6.5); put(['h1', 'h2', 'r1', 'r2', 'r3'], 22, -6, 8.5); /* (spaced so icons sit side by side on the whole-room view) */
-  put(['t2'], -25, -24, 0); put(['m5', 'm6', 'm7'], -37, -19, 6); put(['h3', 'h4', 'r4', 'r5', 'r6', 'r7'], -22, -6, 9);
+  put(['t1'], 25, -30, 0); put(['m1', 'm2', 'm3', 'm4'], 37, -25, 6.5); put(['h1', 'h2', 'r1', 'r2', 'r3'], 22, -12, 8.5); /* (spaced so icons sit side by side on the whole-room view) */
+  put(['t2'], -25, -30, 0); put(['m5', 'm6', 'm7'], -37, -25, 6); put(['h3', 'h4', 'r4', 'r5', 'r6', 'r7'], -22, -12, 9);
   return k;
 }
 const seBosses = (k) => k.boss('bg', 'Breath of Ula\'tek', 0, SE_G[0], SE_G[1]).boss('br', 'Blood of Ula\'tek', 0, SE_R[0], SE_R[1]);
@@ -1691,15 +1691,15 @@ const SE_M = {
     const L = 10, k = seK(gdzKit('Entombed Sentinels', L), o); seBosses(k); seRaid(k);
     k.ring({ x: SE_G[0], y: SE_G[1], r: 40, fx: 'zone', t0: 1, dur: 8, ...SE_ACID, cn: 'Mark of Acid', legend: 'Mark of Acid: within 40 yards of Breath, stacks on you' });
     k.ring({ x: SE_R[0], y: SE_R[1], r: 40, fx: 'zone', t0: 1, dur: 8, ...SE_BLOOD, cn: 'Mark of Blood', legend: 'Mark of Blood: within 40 yards of Blood, stacks on you' });
-    if (fail) { k.hold(0.5, 't1').at(5, 't1', 8, -27).hold(0.5, 't2').at(5, 't2', -8, -27);
-      k.boss('bg', 'Breath of Ula\'tek', 0.5, SE_G[0], SE_G[1]).boss('bg', 'Breath of Ula\'tek', 5, 10, -31).boss('br', 'Blood of Ula\'tek', 0.5, SE_R[0], SE_R[1]).boss('br', 'Blood of Ula\'tek', 5, -10, -31);
+    if (fail) { k.hold(0.5, 't1').at(5, 't1', 8, -33).hold(0.5, 't2').at(5, 't2', -8, -33);
+      k.boss('bg', 'Breath of Ula\'tek', 0.5, SE_G[0], SE_G[1]).boss('bg', 'Breath of Ula\'tek', 5, 10, -37).boss('br', 'Blood of Ula\'tek', 0.5, SE_R[0], SE_R[1]).boss('br', 'Blood of Ula\'tek', 5, -10, -37);
       SE_GREEN.slice(1).forEach((id, i) => { const [dx, dy] = gdzSpot(i, 9, 9); k.hold(0.5, id).at(5, id, 15 + dx, -15 + dy); }); SE_RED.slice(1).forEach((id, i) => { const [dx, dy] = gdzSpot(i, 9, 9); k.hold(0.5, id).at(5, id, -15 + dx, -15 + dy); });
-      k.call(5.2, 9, '99% less damage', { x: 0, y: -38, color: '#ff3b3b', ink: '#fff' }); k.oops('t1', 5).oops('t2', 5); k.step(0.5).step(3).step(5.2);
-      k.pause(4.4, 'The tanks drifted in. The bosses are inside 40 yards of each other: both take 99% less damage.', { x: 0, y: -31, r: 14 });
-      return k.done({ title: 'Mistake: the bosses too close', focus: { x: 0, y: -27, r: 14 }, badLabel: 'tanks who drifted in' }); }
-    k.link({ from: 'bg', to: 'br', t0: 1, t1: 9.6, color: '#e6b450', legend: 'keep the bosses 40+ yards apart' }); k.call(1.5, 9.6, '60 yards apart', { x: 0, y: -36, color: '#e6b450', ink: '#141006' });
+      k.call(5.2, 9, '99% less damage', { x: 0, y: -44, color: '#ff3b3b', ink: '#fff' }); k.oops('t1', 5).oops('t2', 5); k.step(0.5).step(3).step(5.2);
+      k.pause(4.4, 'The tanks drifted in. The bosses are inside 40 yards of each other: both take 99% less damage.', { x: 0, y: -37, r: 14 });
+      return k.done({ title: 'Mistake: the bosses too close', focus: { x: 0, y: -33, r: 14 }, badLabel: 'tanks who drifted in' }); }
+    k.link({ from: 'bg', to: 'br', t0: 1, t1: 9.6, color: '#e6b450', legend: 'keep the bosses 40+ yards apart' }); k.call(1.5, 9.6, '60 yards apart', { x: 0, y: -42, color: '#e6b450', ink: '#141006' });
     k.ring1(['t1', 't2']).step(0.5).step(1.5).step(4);
-    k.pause(3.5, 'Breath in the corner by the green gem, Blood in the corner by the red gem: about 60 yards apart. Stay inside your own boss\'s ring and out of the other one.', { x: 0, y: -30, r: 20 });
+    k.pause(3.5, 'Breath in the corner by the green gem, Blood in the corner by the red gem: about 60 yards apart. Stay inside your own boss\'s ring and out of the other one.', { x: 0, y: -36, r: 20 });
     return k.done({ title: 'Two bosses, two halves', focus: { x: 0, y: -16, r: 38 }, hlLabel: 'the two tanks' });
   },
   // Venom Coagulation: an add baited on a ranged player, pulsing raid damage while alive. Tactyks' plan: the green ranged and healers
@@ -1734,9 +1734,9 @@ const SE_M = {
   drops(fail, d, o) {
     const myth = d !== 'h', L = 15, k = seK(gdzKit('Entombed Sentinels', L), o); seBosses(k); seRaid(k);
     k.cast('bg', 'Toxic Droplets', 0.5, 2.5);
-    const D = [[21, -30], [33, -37], [27, -38], [17, -10], [31, -8], [-16, -17], [-30, -16], [-26, -37], [-40, -38]], T = [4.4, 6.4, 8.6, 5, 8.4, 5.2, 5.8, 4.8, 7.2], WHO = ['t1', 't1', 't1', 'r1', 'r1', 'r4', 'h3', 't2', 't2'];
+    const D = [[22, -34], [35, -44], [27, -46], [17, -10], [31, -8], [-16, -17], [-30, -16], [-26, -45], [-42, -45]], T = [4.4, 6.4, 8.6, 5, 8.4, 5.2, 5.8, 4.8, 7.2], WHO = ['t1', 't1', 't1', 'r1', 'r1', 'r4', 'h3', 't2', 't2'];
     // (a droplet lands at least 6 yards from everyone who isn't taking it, and on the floor)
-    D.forEach((pt, i) => { for (let it = 0; it < 8; it++) for (const o of GDZ_RAID) { if (o === WHO[i]) continue; const q = k.posAt(o, 2.5); if (!q) continue; const dx = pt[0] - q[0], dy = pt[1] - q[1], dd = Math.hypot(dx, dy) || 0.01; if (dd < 6) { pt[0] += dx / dd * (6 - dd); pt[1] += dy / dd * (6 - dd); } } pt[0] = Math.max(-42, Math.min(42, pt[0])); pt[1] = Math.max(-38, Math.min(40, pt[1])); });
+    D.forEach((pt, i) => { for (let it = 0; it < 8; it++) for (const o of GDZ_RAID) { if (o === WHO[i]) continue; const q = k.posAt(o, 2.5); if (!q) continue; const dx = pt[0] - q[0], dy = pt[1] - q[1], dd = Math.hypot(dx, dy) || 0.01; if (dd < 6) { pt[0] += dx / dd * (6 - dd); pt[1] += dy / dd * (6 - dd); } } pt[0] = Math.max(-46, Math.min(46, pt[0])); pt[1] = Math.max(-48, Math.min(48, pt[1])); });
     D.forEach(([x, y], i) => k.ring({ x, y, r: 2.2, fx: 'zone', t0: 2.5, dur: T[i] - 2.5, color: '#b6ff5c', fill: 'rgba(150,255,90,.55)', cn: 'Toxic Droplets', legend: 'a droplet: step on it before it bursts' })); /* (a small puddle, not an orb the size of a player: no icon to mix up with someone standing on it) */
     // (each tank takes the ones on their side with a defensive; a ranged with an immunity two; the rest one each)
     const go = (id, path) => { let t0 = 2.6; path.forEach((i) => { k.hold(t0, id).at(T[i] - 0.1, id, D[i][0], D[i][1]); t0 = T[i]; }); };
@@ -1755,8 +1755,8 @@ const SE_M = {
       return k.done({ title: 'Mistake: two droplets at once', focus: { x: 27, y: -32, r: 10 }, badLabel: 'took two at once' }); }
     // (after their soak, each soaker steps off the line between their droplet and Breath; the melee shift east, clear of the last blades)
     const home = (id, t0, t1) => { const q = k.posAt(id, 0); k.hold(t0, id).at(t1, id, q[0], q[1]); }; home('r4', 6.2, 8); home('h3', 6.8, 8.6); home('t2', 7.6, 9.6);
-    home('r1', 9, 11); k.hold(9, 't1').at(11, 't1', 20, -36);
-    [[38, -12], [43, -17], [38, -22], [43, -27]].forEach(([x, y], i) => k.hold(10, 'm' + (i + 1)).at(11.8, 'm' + (i + 1), x, y));
+    home('r1', 9, 11); k.hold(9, 't1').at(11, 't1', 22, -38);
+    [[41, -14], [46, -19], [41, -24], [46, -29]].forEach(([x, y], i) => k.hold(10, 'm' + (i + 1)).at(11.8, 'm' + (i + 1), x, y));
     // (Mythic, Living Venom: each soaked droplet's venom flies back into Breath 4 seconds later; dashed until it goes)
     D.forEach(([x, y], i) => { const a = Math.atan2(SE_G[1] - y, SE_G[0] - x) * 180 / Math.PI, dd = Math.hypot(SE_G[0] - x, SE_G[1] - y), t0 = T[i] + 4;
       k.link({ from: 'bg', toYd: { x, y }, t0: T[i], t1: t0 + 0.2, color: '#9dff6a', legend: 'Living Venom: where a soaked droplet\'s venom will fly back into Breath' });
@@ -1780,11 +1780,11 @@ const SE_M = {
     if (!fail) k.call(5.5, 10, myth ? '9 in the soak: 8 or more' : 'Everyone in the soak', { x: C[0] + 17, y: C[1] + 12, color: '#ff8a8a', ink: '#200a0a' }); /* (a count you can read, since nine icons in one circle can't be counted by eye) */
     // (then the soakers walk to the wall and drop their puddles side by side, each soak right up against the one before: this soak's spots are
     // SE_PS[si]; the puddles stay on the floor all fight, so the rings keep going past this map)
-    const mid = fail && !myth, SP = SE_PS[si].map(fr); SO.forEach((id, i) => { const x = mid ? -19 + i * 4.8 : SP[i][0], y = mid ? -14 : SP[i][1]; k.hold(10.2, id).at(15.6, id, x, y).hold(16.2, id); k.ring({ x, y, r: 3, fx: 'puddle', t0: 16.2, dur: mid || !(o && o.sim) ? L - 16.2 : 999, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'Blood Venom: the puddle each soaker drops, it stays all fight' }); });
+    const mid = fail && !myth, SP = SE_PS[si].map(fr); SO.forEach((id, i) => { const x = mid ? -19 + i * 4.8 : SP[i][0], y = mid ? 2 : SP[i][1]; k.hold(10.2, id).at(15.6, id, x, y).hold(16.2, id); k.ring({ x, y, r: 3, fx: 'puddle', t0: 16.2, dur: mid || !(o && o.sim) ? L - 16.2 : 999, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'Blood Venom: the puddle each soaker drops, it stays all fight' }); });
     SO.forEach((id, i) => { const [dx, dy] = gdzSpot(i, 9, 10); k.hold(16.4, id).at(L, id, -22 + dx, -6 + dy); });
-    if (fail && !myth) { k.call(10.4, 16.4, 'Puddles in the middle', { x: 0, y: -4, color: '#ff3b3b', ink: '#fff' }); k.oops('r4', 16.2); k.step(0.5).step(9.5).step(16.2);
-      k.pause(16.5, 'The soakers dropped their puddles in the middle of the room. That floor is gone for the rest of the fight.', { x: 0, y: -14, r: 24 });
-      return k.done({ title: 'Mistake: puddles in the middle', focus: { x: 0, y: -16, r: 26 }, badLabel: 'puddles in the middle' }); }
+    if (fail && !myth) { k.call(10.4, 16.4, 'Puddles in the middle', { x: 0, y: 8, color: '#ff3b3b', ink: '#fff' }); k.oops('r4', 16.2); k.step(0.5).step(9.5).step(16.2);
+      k.pause(16.5, 'The soakers dropped their puddles in the middle of the room. That floor is gone for the rest of the fight.', { x: 0, y: 2, r: 24 });
+      return k.done({ title: 'Mistake: puddles in the middle', focus: { x: 0, y: 2, r: 26 }, badLabel: 'puddles in the middle' }); }
     k.ring1([tg]).step(0.5).step(1.5).step(6).step(10.2).step(16.2);
     k.pause(9, myth ? 'Nine in the soak, right in the red half\'s stack by Blood. On Mythic it needs 8 or more.' : 'The soak goes off in the red half\'s stack by Blood, with plenty of people in it.', { x: C[0], y: C[1], r: 10 });
     return k.done({ title: 'Unstable Miasma: soak in the stack, puddles on the wall', focus: seFoc(C, SP), hlLabel: 'the soak target' });
@@ -1796,14 +1796,14 @@ const SE_M = {
     const L = 11, k = seK(gdzKit('Entombed Sentinels', L), o); seBosses(k); seRaid(k);
     // (pre-spread before the cast, each half above its own boss: the players who get circles land at least 13 yards from each other and
     // 7 from everyone else, so each pair can walk straight together without brushing anyone)
-    const SPR = { m1: [10, -18], r2: [22, -14], h2: [38, -18], m3: [30, -8], m2: [40, -26], m4: [16, -24], h1: [40, -2], r1: [14, -4], r3: [25, 4],
-      m6: [-10, -18], r5: [-22, -14], h4: [-38, -18], r7: [-30, -8], m5: [-40, -26], m7: [-16, -24], h3: [-40, -2], r4: [-14, -4], r6: [-25, 4] };
+    const SPR = { m1: [10, -18], r2: [22, -14], h2: [43, -20], m3: [30, -8], m2: [45, -30], m4: [16, -24], h1: [45, -2], r1: [14, -4], r3: [25, 4],
+      m6: [-10, -18], r5: [-22, -14], h4: [-43, -20], r7: [-30, -8], m5: [-45, -30], m7: [-16, -24], h3: [-45, -2], r4: [-14, -4], r6: [-25, 4] };
     Object.entries(SPR).forEach(([id, p]) => k.hold(0.3, id).at(3.9, id, p[0], p[1]));
     k.call(0.4, 4, 'Circles coming: spread', { x: 0, y: 8, color: '#ff9628', ink: '#1a0d00' });
     if (o && o.hard) { const A2 = [4, -5]; /* (the worst overlap: the second add is alive, the last droplets land, and the second circles come: tanks and a ranged with an immunity soak the droplets) */
       k.add('ad', 'Venom Coagulation', 0.2, A2[0], A2[1]).show('ad', 0.2, L); k.ring({ on: 'ad', r: 6, fx: 'zone', t0: 0.2, dur: L - 0.2, color: '#e8ff3d', fill: 'rgba(232,255,61,.22)', cn: 'Contaminate', legend: 'the second add: raid damage every pulse' });
       [['t1', [34, -23], 3.2], ['t2', [-14, -26], 3.8], ['r1', [8, -13], 6]].forEach(([id, p, tt]) => k.ring({ x: p[0], y: p[1], r: 2.2, fx: 'zone', t0: 0.8, dur: tt - 0.8, color: '#b6ff5c', fill: 'rgba(150,255,90,.55)', cn: 'Toxic Droplets', legend: 'a droplet: step on it before it bursts' }));
-      k.hold(0.5, 't1').at(3.1, 't1', 34, -23); k.hold(3.4, 't1').at(5.6, 't1', 25, -24); k.hold(0.5, 't2').at(3.7, 't2', -14, -26); k.hold(4, 't2').at(6, 't2', -25, -24); k.hold(3.9, 'r1').at(5.9, 'r1', 7, -12); k.hold(6.2, 'r1').at(8.4, 'r1', 14, -4);
+      k.hold(0.5, 't1').at(3.1, 't1', 34, -23); k.hold(3.4, 't1').at(5.6, 't1', 25, -30); k.hold(0.5, 't2').at(3.7, 't2', -14, -26); k.hold(4, 't2').at(6, 't2', -25, -30); k.hold(3.9, 'r1').at(5.9, 'r1', 7, -12); k.hold(6.2, 'r1').at(8.4, 'r1', 14, -4);
       k.call(0.6, 4, 'Defensive', { on: 't1', color: '#e6b450', ink: '#141006' }); k.call(0.6, 4, 'Defensive', { on: 't2', color: '#e6b450', ink: '#141006' }); k.call(4.2, 7, 'Immunity', { on: 'r1', color: '#7fd8ff', ink: '#06131c' }); }
     const CIR = ['m1', 'r2', 'h2', 'm3', 'r5', 'm6', 'h4', 'r7'], PAIRS = [['m1', 'r2'], ['h2', 'm3'], ['r5', 'm6'], ['h4', 'r7']];
     CIR.forEach((id) => k.ring({ on: id, r: 6, fx: 'debuff', t0: 4, dur: fail && id === 'r7' ? 3 : 4, color: '#ff9628', cn: 'Shifting Protovenom', legend: 'Shifting Protovenom: meet another circle to clear both' }));
@@ -1852,10 +1852,10 @@ const SE_M = {
     if (!(o && o.sim)) SE_PS[1].concat(SE_PS[2]).forEach((p) => { const q = fr(p); k.ring({ x: q[0], y: q[1], r: 3, fx: 'puddle', t0: 0, dur: L, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'old puddles from the last round' }); });
     k.at(0, 't1', 8, -15).at(0, 't2', -8, -15);
     k.call(1, 3.2, 'Taunt', { on: 't1', color: '#5aa0ff', ink: '#fff' }).call(1, 3.2, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' });
-    k.hold(1.2, 't2').at(5, 't2', -25, -24);
+    k.hold(1.2, 't2').at(5, 't2', -25, -30);
     k.ring({ on: 't1', r: 2.6, fx: 'debuff', t0: 0.3, dur: 6.4, color: '#ff5a5a', cn: 'Bloodvenom Injection', legend: 'the old Blood tank: drops a huge puddle when it ends' });
     const P = fail ? [14, -20] : fr(SE_PB[BI]);
-    k.hold(1.2, 't1').at(6.4, 't1', P[0], P[1]).hold(7, 't1').at(10.2, 't1', 25, -24);
+    k.hold(1.2, 't1').at(6.4, 't1', P[0], P[1]).hold(7, 't1').at(10.2, 't1', 25, -30);
     k.ring({ x: P[0], y: P[1], r: 7, fx: 'puddle', t0: 6.7, dur: fail || !(o && o.sim) ? L - 6.7 : 999, color: '#ff5a4f', fill: 'rgba(255,90,79,.35)', cn: 'Blood Venom', legend: 'the old Blood tank\'s big puddle' });
     // (the green ranged and healers stack far, so the next add lands away from the big puddle)
     ['r1', 'r2', 'r3', 'h1', 'h2'].forEach((id, i) => { const [dx, dy] = gdzSpot(i, 5, 7.5); k.hold(3.4, id).at(6, id, 9 + dx, -4 + dy); }); k.call(3.6, 7, 'Stack far', { x: 9, y: 5, color: '#e6b450', ink: '#141006' });
@@ -1877,12 +1877,12 @@ const seFoc = (C, P) => { const m = P.reduce((u, p) => [u[0] + p[0] / P.length, 
 const seBlk = (xs, ys) => xs.flatMap((x) => ys.map((y) => [x, y]));
 const sePts = (x, y, dx, dy, n) => Array.from({ length: n }, (_, i) => [x + dx * i, y + dy * i]);
 const SE_PS = [
-  sePts(-37, -34, 4.2, 0, 9), sePts(37, -34, -4.2, 0, 9), sePts(24.4, -29.8, -4.2, 0, 7).concat([[3.4, -25.6], [7.6, -25.6]]), seBlk([-38, -33.8, -29.6], [-29.8, -25.6, -21.4]), seBlk([-25.4, -21.2, -17], [-29.8, -25.6, -21.4]),
-  seBlk([38, 33.8, 29.6], [-25.6, -21.4, -17.2]), seBlk([0, 4.2, 8.4], [-21.4, -17.2, -13]), seBlk([-37, -32.8, -28.6], [34, 29.8, 25.6]),
-]; /* (the eight soaks, in order: 1 bottom-left row, 2 bottom-right row, 3 a second row against it (two more above it), 4 and 5 blocks in the bottom-left, 6 a block in the bottom-right, 7 a block in the bottom middle, 8 the top-left corner nook) */
-const SE_PB = [[-9, -29], [20, -24], [-26, -14], [26, -14]]; /* (the four big tank puddles, 7 yards from the middle, one after each swap: each in a free gap beside the old blood) */
-const SE_SC = [[-35, -31], [35, -31], [22, -22], [-35, -21], [-22, -10], [35, -19], [4, -8], [-33, 26]]; /* (where each soak goes off: its ring of soakers stays on the floor) */
-const SE_PQ = [[-13, -29.8], [37, -29.8], [-13, -17.2], [25.4, -17.2]]; /* (a Blighted Blood that runs out in rounds 1 to 4: right next to the old puddles) */
+  sePts(-43, -46, 4.2, 0, 9), sePts(43, -46, -4.2, 0, 9), sePts(43, -41.8, -4.2, 0, 9), seBlk([-43, -38.8, -34.6], [-41.8, -37.6, -33.4]), seBlk([-30.4, -26.2, -22], [-41.8, -37.6, -33.4]),
+  seBlk([43, 38.8, 34.6], [-37.6, -33.4, -29.2]), seBlk([30.4, 26.2, 22], [-37.6, -33.4, -29.2]), seBlk([-43, -38.8, -34.6], [46, 41.8, 37.6]),
+]; /* (the eight soaks, in order: 1 bottom-left row, 2 bottom-right row, 3 a second row against it, 4 and 5 blocks in the bottom-left, 6 and 7 blocks in the bottom-right, 8 the top-left corner nook) */
+const SE_PB = [[-8, -38], [8, -38], [-30, -27.5], [30, -24]]; /* (the four big tank puddles, 7 yards from the middle, one after each swap: each in a free gap beside the old blood) */
+const SE_SC = [[-36, -39], [36, -39], [14, -31], [-37, -31], [-26, -27], [37, -24], [24, -22], [-37, 40]]; /* (where each soak goes off: its ring of soakers stays on the floor) */
+const SE_PQ = [[-9.4, -41.8], [5.2, -46], [-17.8, -33.4], [17.8, -33.4]]; /* (a Blighted Blood that runs out in rounds 1 to 4: right next to the old puddles) */
 const SE_PR = [{ s: [0] }, { b: 0, s: [1, 2] }, { b: 1, s: [3, 4] }, { b: 2, s: [5, 6] }, { b: 3, s: [7] }]; /* (what each round drops: the big puddle b, the soaks s) */
 // (the whole-fight video: each scene says which soak, big puddle or Blighted Blood spot it is; its puddles stay on the floor from the scene
 // that drops them on, so later scenes carry no copy of them)
@@ -1913,8 +1913,8 @@ SE_M.blighted = function (fail, d, o) {
 // Where each boss stands, round by round: the pull, then after every intermission the bosses go to the middle and cross to the other
 // half's side, and from the third round the rounds work up the walls onto clean floor (the rounds are the whole-fight video's: SE_R1 to
 // SE_R5; the raid spreads round the bosses in the middle as in the Make 4 card). Three rounds on Heroic, five on Mythic.
-const SE_SP = { t1: [22, -4], m1: [30, -22], t2: [-22, -4], m5: [-30, -22], r1: [22, 9], h1: [24, -12], r4: [-22, 9], r6: [-24, -12], r3: [10, 4], m4: [12, -20], h3: [-12, -20], r7: [-10, 4],
-  h2: [36, 4], m2: [40, -20], m3: [20, -24], r2: [34, 12], h4: [-36, 4], m6: [-40, -20], m7: [-20, -24], r5: [-34, 12] }; /* (Make 4 spots in the first round's frame, none on the walls where the puddles go) */
+const SE_SP = { t1: [22, -4], m1: [34, -26], t2: [-22, -4], m5: [-34, -26], r1: [22, 9], h1: [24, -12], r4: [-22, 9], r6: [-24, -12], r3: [10, 4], m4: [12, -20], h3: [-12, -20], r7: [-10, 4],
+  h2: [41, 4], m2: [45, -22], m3: [20, -24], r2: [39, 12], h4: [-41, 4], m6: [-45, -22], m7: [-20, -24], r5: [-39, 12] }; /* (Make 4 spots in the first round's frame, none on the walls where the puddles go) */
 SE_M.spots = function (fail, d) {
   const N = d === 'h' ? 3 : 5, RO = [SE_R1, SE_R2, SE_R3, SE_R4, SE_R5], T0 = 3.4, ALL = SE_GREEN.concat(SE_RED), BN = 'Breath of Ula\'tek', RN = 'Blood of Ula\'tek', TR = [0, 3.8, 6.4, 3.8, 3.8], ta = [T0], tvs = [];
   const RL = ['Round 1: the pull', 'Round 2: the bosses swap sides', 'Round 3: further up the walls', 'Round 4: swap sides again', 'Round 5: the last round'];
@@ -1922,7 +1922,7 @@ SE_M.spots = function (fail, d) {
   const k = gdzKit('Entombed Sentinels', ta[N - 1] + 2.4), corners = (K, t) => K.boss('bg', BN, t, SE_G[0], SE_G[1]).boss('br', RN, t, SE_R[0], SE_R[1]);
   // the pull: the bosses come from the middle and the tanks drag them into the corners (the raid already stands there)
   seRaid(k, ['t1', 't2']); k.boss('bg', BN, 0, 6, -12).boss('br', RN, 0, -6, -12); corners(k, T0);
-  k.at(0, 't1', 9, -12).at(0, 't2', -9, -12).hold(0.4, ['t1', 't2']).at(T0, 't1', 25, -24).at(T0, 't2', -25, -24);
+  k.at(0, 't1', 9, -12).at(0, 't2', -9, -12).hold(0.4, ['t1', 't2']).at(T0, 't1', 25, -30).at(T0, 't2', -25, -30);
   k.call(0.2, 3, 'Bloodlust', { x: 0, y: 0, color: '#e6b450', ink: '#141006' }); k.call(T0, T0 + 1.4, RL[0], { x: 0, y: -33, color: '#e6b450', ink: '#141006' });
   for (let i = 1; i < N; i++) {
     // (everyone waits; then the bosses go to the middle with the raid round them for the intermission; then the next round's corners)
@@ -1940,7 +1940,7 @@ SE_M.spots = function (fail, d) {
     if (m.b != null) k.ring({ x: SE_PB[m.b][0], y: SE_PB[m.b][1], r: 7, fx: 'puddle', t0, dur: ta[N - 1] + 2.4 - t0, color: '#ff5a4f', fill: 'rgba(255,90,79,.35)', cn: 'Blood Venom', legend: 'Blood Venom: every puddle stays all fight' });
     m.s.forEach((si) => SE_PS[si].forEach((p) => k.ring({ x: p[0], y: p[1], r: 3, fx: 'puddle', t0, dur: ta[N - 1] + 2.4 - t0, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'Blood Venom: every puddle stays all fight' }))); });
   k.ring1(['t1', 't2']).step(0.2); tvs.forEach((tv) => k.step(tv + 0.2));
-  return k.done({ title: 'Where each boss stands, round by round', focus: { x: 0, y: -4, r: 54 }, hlLabel: 'the two tanks' });
+  return k.done({ title: 'Where each boss stands, round by round', focus: { x: 0, y: -3, r: 57 }, hlLabel: 'the two tanks' });
 };
 // Where the puddles go: every puddle stays all fight, so they go in a set order along the walls, round by round: each soak's nine puddles
 // right up against the last, the big tank puddle's middle in the old blood, Blood's side swapping each round (SE_PS, SE_PB); the last
@@ -1961,7 +1961,7 @@ SE_M.puddles = function (fail, d) {
       P.forEach((p, j) => k.ring({ x: p[0], y: p[1], r: 3, fx: 'puddle', t0: a + 0.16 * j, dur: LP - a - 0.16 * j, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'Blood Venom: every puddle stays all fight' }));
       k.call(a, a + 2.6, SL[si], { x: cx, y: Math.max(-26, Math.min(36, cy + 8)), color: '#ff8a8a', ink: '#200a0a' }); });
     k.step(r.t0 + 0.2); });
-  return k.done({ title: 'Where the puddles go, soak by soak', focus: { x: 0, y: -4, r: 54 } });
+  return k.done({ title: 'Where the puddles go, soak by soak', focus: { x: 0, y: -3, r: 57 } });
 };
 const SE_FAIL = {
   blighted: { solo: true, name: 'Nobody dispels it', what: 'Nobody dispels Blighted Blood and the players stay in the stack: it runs out and drops red puddles right where the red half stands.', do: ['Blighted Blood goes on a few players.', 'Nobody dispels it.', 'It runs out and drops a puddle where each of them stands.'], map: (d, o) => SE_M.blighted(true, d, o) },
@@ -1983,7 +1983,7 @@ const SE_R1 = {}, SE_R2 = { mx: 1 }, SE_R3 = { dy: 26 }, SE_R4 = { mx: 1, dy: 24
 const SE_BEATS = {
   start: { name: 'The pull (Split, drag, Bloodlust)', do: ['We split in two before the pull: one half by the red gem, one half by the green gem. Bloodlust goes on the pull.', 'Tanks drag Blood into the corner by the red gem and Breath into the corner by the green gem: about 60 yards apart, and they stay that far apart all fight.'],
     run() { const k = gdzKit('Entombed Sentinels', 6); seRaid(k, ['t1', 't2']); k.boss('bg', 'Breath of Ula\'tek', 0, 6, -12).boss('br', 'Blood of Ula\'tek', 0, -6, -12).boss('bg', 'Breath of Ula\'tek', 3.4, SE_G[0], SE_G[1]).boss('br', 'Blood of Ula\'tek', 3.4, SE_R[0], SE_R[1]);
-      k.at(0, 't1', 9, -12).at(0, 't2', -9, -12).hold(0.4, ['t1', 't2']).at(3.4, 't1', 25, -24).at(3.4, 't2', -25, -24);
+      k.at(0, 't1', 9, -12).at(0, 't2', -9, -12).hold(0.4, ['t1', 't2']).at(3.4, 't1', 25, -30).at(3.4, 't2', -25, -30);
       k.call(0.2, 3, 'Bloodlust', { x: 0, y: 0, color: '#e6b450', ink: '#141006' }); k.ring1(['t1', 't2']).step(0.2).step(3); } },
   kill: { name: 'The last round (Burn them together)', do: ['Fifth round: the soak puddles go into the corner nooks to save space. Both bosses go down together.', 'Both bosses go berserk at 7:00: burn them down together before then, and kill the last add fast.'],
     run(o) { const k = seK(gdzKit('Entombed Sentinels', 6), o); seBosses(k); seRaid(k);
