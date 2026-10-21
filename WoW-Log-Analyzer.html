@@ -379,6 +379,7 @@ button.ndz-rct { width: 100%; padding: 0; border: 0; background: none; color: va
 #ndzDashWho .ndz-who { margin: 0; } details.ndz-abcd > summary { cursor: pointer; list-style: none; } details.ndz-abcd > summary::-webkit-details-marker { display: none; } details.ndz-abcd > summary::before { content: '▸ '; color: var(--muted); } details.ndz-abcd[open] > summary::before { content: '▾ '; }
 @media (max-width: 980px) { .ndz-dgrid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 560px) { .ndz-dth { display: none; } .ndz-dtl { --ctw: 74px; } .ndz-ctw { font-size: 11.5px; } .ndz-dact .btn { height: 30px; padding: 0 9px; font-size: 12.5px; } }
+.ndz-wbox.ndz-shotbox { width: min(1120px, 95vw); max-width: none; } .ndz-shotimg { display: block; width: 100%; height: auto; margin: 10px 0 4px; border: 1px solid var(--line2); border-radius: 10px; } #ndzShDl { text-decoration: none; }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
@@ -13621,6 +13622,7 @@ const PATCH_NOTES = [
     { t: 'Claudette joins our Discord', d: 'Our bot answers questions, replies to bug reports and tells you when they\'re fixed. Suggest an idea from the menu (☰) and it goes straight to #suggestions.' },
     { t: 'Report card talks you through the night', d: 'A few lines on how the raid did and what to fix next, and for any raider you pick: what went well, what to work on, and one thing for next pull.' },
   ], n: [
+    'Share as image: your note as one picture, everyone in their class color, to paste in Discord.',
     'Debriefing checks your note\'s dispel, grip and kick jobs: who did each one.',
     'Making a note: pick a suggested roster shaped like the fastest kills, see who sat out last time, and get warned if a raid buff is missing.',
     'Live now pops up on your screen with a soft chime when your log or your team\'s goes live. Follow live opens it on Debriefing, which wears a red Live badge while you follow.',
@@ -16225,7 +16227,7 @@ function ndzDash(r, u0, st, lines, go, tlk, how, more, fixBtn) { try { spcTipIni
     '<span class="ndz-dring" style="--p:' + pct + '" data-tt="' + esc('<b>' + pct + '% ready</b><br>Raiders with a job, raid buffs' + (D.hits.length ? ' and big hits covered' : '') + ', averaged') + '"><span>' + pct + '%</span></span>' +
     '<span class="ndz-dtks">' + tk(!st.idle.length, st.jobs + ' of ' + st.ps.length + ' have a job', true) + tk(!au.miss, au.miss ? plural(au.miss, 'buff') + ' missing' : 'Every buff') + tkn(au.have + '/' + au.of + ' utility') + tkn(plural(K.n, 'kick')) +
     (D.hits.length ? tk(!unc, unc ? plural(unc, 'big hit') + ' uncovered' : 'Big hits covered') : '') + '</span>' +
-    '<span class="ndz-dact">' + go + '<button class="btn" type="button" data-dbncopy="1">Copy for the game</button><button class="btn" type="button" data-ndzdc="cur">💬 Discord</button><button class="btn" type="button" data-ndzdb="1">Debriefing →</button>' + tlk + '</span>' + how + '</div>';
+    '<span class="ndz-dact">' + go + '<button class="btn" type="button" data-dbncopy="1">Copy for the game</button><button class="btn" type="button" data-ndzdc="cur">💬 Discord</button><button class="btn" type="button" data-ndzshot="1">🖼 Image</button><button class="btn" type="button" data-ndzdb="1">Debriefing →</button>' + tlk + '</span>' + how + '</div>';
   const fix = lines ? '<div class="panel ndz-dal">' + lines + (fixBtn || '') + '</div>' : '';
   return '<div class="ndz-dash">' + head + fix + more + '<div class="ndz-dgrid"><div class="ndz-dcol">' +
     '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Roster audit</b><span class="sub">' + esc(A.who) + '</span></div>' + au.html + '</div>' +
@@ -16233,6 +16235,63 @@ function ndzDash(r, u0, st, lines, go, tlk, how, more, fixBtn) { try { spcTipIni
     '<div class="ndz-dcol"><div class="panel ndz-dpan ndz-dtl" id="ndzTl">' + ndzTimelineH(D) + '</div><div id="ndzDashWho"></div></div></div></div>'; }
 // (assign() puts Who does what in the page's slot, folded list of cooldowns included; '' when the page isn't showing)
 function ndzDashWho(r, used) { const el = $('#ndzDashWho'); if (!el || !NDZ_NEW()) return ''; el.innerHTML = ndzWhoH(r, used); return ' '; }
+// ---- Share as image (Oct 20, your OK): the note as one picture for Discord, where text can't be class-colored. The boss art
+// and name on top, then every raider by role (tanks, healers, melee, ranged) in their class color with their jobs under the
+// name (up to three, then their cooldowns), flowing into four columns; debriefme.io at the bottom. Drawn on a canvas in the
+// page (the art and fonts allow it), then Copy image (paste it in Discord) or Download.
+async function ndzShotDraw(r, u0) {
+  const boss = r.item.boss, st = ndzStatus(r, u0), wc = ndzWhoC(st.text, boss), sp = ndzSpecs(), ro = ndzNoteRoster(u0), here = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p]));
+  let hd = {}; try { hd = (E.parseNote(st.text) || {}).header || {}; } catch (e) { hd = {}; }
+  const diff = /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : /mythic|16/i.test(String(hd.difficulty || '')) ? 'Mythic' : r.item.diff || '';
+  const names = ro || ndzIn(r).map(ndzPn), ppl = names.map((n) => { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()] || {}, cls = p ? p.cls : s.cls, sid = +(p ? p.specId : s.sid) || 0, role = p ? p.role : s.role;
+    const kind = role === 'tank' ? 'tank' : role === 'healer' ? 'healer' : !sid ? 'dps' : NDZ_MELEE.has(sid) ? 'melee' : 'ranged', j = (wc.get(n.toLowerCase()) || { l: [] }).l;
+    const jobs = j.filter((x) => x.k !== 'cd').map((x) => x.t), cds = j.filter((x) => x.k === 'cd').map((x) => x.t);
+    return { n, color: (p && p.color) || s.color || (E.CLASSES[cls] || [])[1] || '#ddd', spec: (p && p.specName) || s.spec || '', kind, line: jobs.slice(0, 3).concat(cds.slice(0, jobs.length > 1 ? 1 : 2)).join(' · ') }; });
+  const GR = [['tank', 'Tanks'], ['healer', 'Healers'], ['melee', 'Melee'], ['ranged', 'Ranged'], ['dps', 'DPS']].map(([k, l]) => ({ l, list: ppl.filter((x) => x.kind === k).sort((a, b) => a.n.localeCompare(b.n)) })).filter((g) => g.list.length);
+  await Promise.all(['800 40px "Barlow Semi Condensed"', '700 13px "Barlow Semi Condensed"', '700 17px Barlow', '500 13px Barlow'].map((f) => document.fonts.load(f).catch(() => null)));
+  const H = BOSS_HERO[boss], art = H ? await new Promise((res) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = () => res(null); i.src = 'https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg'; }) : null;
+  // (the layout: rows flow down four columns, a role's heading kept with its raiders)
+  const W = 1200, PAD = 28, TOP = 128, FOOT = 40, CW = (W - PAD * 2 - 18 * 3) / 4, ROW = 62, GH = 28, items = [];
+  for (const g of GR) { items.push({ h: g.l + ' · ' + g.list.length }); for (const x of g.list) items.push({ x }); }
+  const tall = (it) => (it.h ? GH : ROW), total = items.reduce((s, it) => s + tall(it), 0), per = Math.max(total / 4, 200), cols = [[]]; let used = 0;
+  items.forEach((it, i) => { const nextH = it.h && items[i + 1] ? GH + ROW : tall(it); if (used + nextH > per + ROW / 2 && cols[cols.length - 1].length && cols.length < 4) { cols.push([]); used = 0; } cols[cols.length - 1].push(it); used += tall(it); });
+  const bodyH = Math.max(...cols.map((c) => c.reduce((s, it) => s + tall(it), 0))), Hh = TOP + 14 + bodyH + 10 + FOOT, S2 = 2;
+  const cv = document.createElement('canvas'); cv.width = W * S2; cv.height = Hh * S2; const g = cv.getContext('2d'); g.scale(S2, S2);
+  g.fillStyle = '#12141b'; g.fillRect(0, 0, W, Hh);
+  if (art) { const ar = art.width / art.height, dw = W * 0.66, dh = dw / ar, sy = Math.max(0, (dh - TOP) * 0.3); g.save(); g.beginPath(); g.rect(W - dw, 0, dw, TOP); g.clip(); g.drawImage(art, W - dw, -sy, dw, dh); g.restore(); }
+  const fade = g.createLinearGradient(W * 0.3, 0, W * 0.75, 0); fade.addColorStop(0, '#12141b'); fade.addColorStop(1, 'rgba(18,20,27,0.15)'); g.fillStyle = fade; g.fillRect(0, 0, W, TOP);
+  const fb = g.createLinearGradient(0, TOP - 30, 0, TOP); fb.addColorStop(0, 'rgba(18,20,27,0)'); fb.addColorStop(1, '#12141b'); g.fillStyle = fb; g.fillRect(0, TOP - 30, W, 30);
+  const fit = (t, w) => { if (g.measureText(t).width <= w) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
+  // (a raider's jobs on up to two lines, broken between jobs where it can; the rest cut with …)
+  const wrap2 = (t, w) => { if (g.measureText(t).width <= w) return [t]; const seg = t.split(' · '); let a = ''; while (seg.length && g.measureText(a + (a ? ' · ' : '') + seg[0]).width <= w) a += (a ? ' · ' : '') + seg.shift(); if (!a) return [fit(t, w)]; return [a, fit(seg.join(' · '), w)]; };
+  g.textBaseline = 'alphabetic'; g.fillStyle = '#ece8df'; g.font = '800 40px "Barlow Semi Condensed", sans-serif'; g.fillText(fit(boss + (diff ? ' · ' + diff : ''), W * 0.6), PAD, 62);
+  g.font = '700 17px Barlow, sans-serif'; g.fillStyle = '#e6b450'; const nn = fit(u0.name || 'Raid note', W * 0.45); g.fillText(nn, PAD, 92); const nw = g.measureText(nn).width;
+  g.fillStyle = '#98a0ad'; g.font = '500 15px Barlow, sans-serif'; g.fillText(' · ' + plural(ppl.length, 'raider'), PAD + nw, 92);
+  cols.forEach((col, ci) => { let y = TOP + 14; const x0 = PAD + ci * (CW + 18);
+    for (const it of col) { if (it.h) { g.font = '700 13px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#98a0ad'; g.fillText(it.h.toUpperCase(), x0, y + 16); g.fillStyle = '#353b49'; g.fillRect(x0, y + 22, CW, 1); y += GH; continue; }
+      const x = it.x; g.font = '700 17px Barlow, sans-serif'; g.fillStyle = x.color; const nm = fit(x.n, CW * 0.62); g.fillText(nm, x0, y + 19);
+      if (x.spec) { const w = g.measureText(nm).width; g.font = '500 12px Barlow, sans-serif'; g.fillStyle = '#6c7381'; g.fillText(fit(x.spec, CW - w - 8), x0 + w + 7, y + 19); }
+      g.font = '500 13px Barlow, sans-serif'; g.fillStyle = x.line ? '#b8beca' : '#6c7381'; const L = wrap2(x.line || 'No job yet', CW); g.fillText(L[0], x0, y + 37); if (L[1]) g.fillText(L[1], x0, y + 53); y += ROW; } });
+  g.fillStyle = '#2a2f3b'; g.fillRect(0, Hh - FOOT, W, 1); g.font = '500 13px Barlow, sans-serif'; g.fillStyle = '#6c7381'; g.fillText('Made with Debrief · debriefme.io', PAD, Hh - 15);
+  g.font = '800 16px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; const dw2 = g.measureText('DEBRIEF').width; g.fillText('DEBRIEF', W - PAD - dw2, Hh - 14);
+  return { cv, file: ('Debrief - ' + boss + ' - ' + (u0.name || 'note')).replace(/[\\/:*?"<>|]+/g, '') + '.png' };
+}
+// (the pop-up: the picture, then Copy image, Download and Close)
+async function ndzShotOpen() { const r = S.rep, u0 = r && noteForRep(r); if (!u0) return;
+  let box = $('#ndzShot'); if (!box) { box = document.createElement('div'); box.id = 'ndzShot'; box.className = 'ndz-wiz ndz-nv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Share as image'); document.body.appendChild(box); document.body.classList.add('ndz-modal'); }
+  const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView')) document.body.classList.remove('ndz-modal'); };
+  box.innerHTML = '<div class="ndz-wbox ndz-shotbox"><div class="ndz-whead"><span class="sub">Share as image</span><button class="ndz-ex" type="button" id="ndzShX" aria-label="Close">✕</button></div><p class="sub" id="ndzShMsg">Drawing the picture…</p></div>';
+  $('#ndzShX').onclick = close; box.onclick = (e) => { if (e.target === box) close(); };
+  let res; try { res = await ndzShotDraw(r, u0); } catch (e) { $('#ndzShMsg').textContent = 'Couldn\'t draw the picture: ' + e.message; return; }
+  const url = res.cv.toDataURL('image/png');
+  box.querySelector('.ndz-wbox').innerHTML = '<div class="ndz-whead"><span class="sub">Share as image · ' + esc(r.item.boss) + '</span><button class="ndz-ex" type="button" id="ndzShX" aria-label="Close">✕</button></div>' +
+    '<h2>Share as image</h2><p class="sub">The note as one picture, with everyone in their class color. Copy it and paste it in Discord (Ctrl+V), or download it.</p><img class="ndz-shotimg" src="' + url + '" alt="The note as a picture">' +
+    '<div class="ndz-wfoot"><button class="btn" type="button" id="ndzShClose">Close</button><span class="sub" id="ndzShMsg"></span><span class="ndz-cb"><a class="btn" id="ndzShDl" href="' + url + '" download="' + esc(res.file) + '">Download</a><button class="btn primary" type="button" id="ndzShCopy">Copy image</button></span></div>';
+  $('#ndzShX').onclick = close; $('#ndzShClose').onclick = close;
+  $('#ndzShCopy').onclick = () => res.cv.toBlob(async (b) => { try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); $('#ndzShMsg').textContent = '✓ Copied. Paste it in Discord (Ctrl+V).'; } catch (e) { $('#ndzShMsg').textContent = 'Your browser didn\'t allow copying a picture. Use Download, then drag the file into Discord.'; } }, 'image/png');
+  $('#ndzShCopy').focus(); }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzshot]'); if (b) ndzShotOpen(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ndzShot')) { $('#ndzShot').remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView')) document.body.classList.remove('ndz-modal'); } });
 // ---- Draft a note from your pulls (TEST, Oct 20: on the local copy only, not the live site, until you say) ----
 // Reads every pull of this boss and difficulty in the log and writes an NSRT note of who did which job (kick orders, soak
 // groups, orb carriers, CC order, curses, raid cooldowns). A job done in most pulls is the assignment; a one-off is a mistake
