@@ -240,7 +240,7 @@ $('logSel').addEventListener('change', (e) => openLog(+e.target.value));
 
 async function openLog(i) {
   const f = L.files[i]; if (!f) return;
-  L.name = f.name; L.ix = W ? W.E.createIndexer() : null; L.items = []; L.done = 0; L.size = 0; L.reps.clear(); L.sent.clear();
+  L.name = f.name; L.ix = W ? W.E.createIndexer() : null; L.items = []; L.ci = {}; L.done = 0; L.size = 0; L.reps.clear(); L.sent.clear();
   L.live = !f.old && i === 0; // (the newest log is always watched: new pulls on it, or a newer log, are picked up by themselves)
   const fresh = Date.now() - f.mtime < 2 * 3600e3;
   $('pulls').innerHTML = '<p class="empty">Finding your boss pulls…</p>';
@@ -258,7 +258,7 @@ async function scanMore(first) {
   if (name !== L.name) return [];
   const before = new Set(L.items.filter((b) => b.endByte).map((b) => b.startByte));
   for (const it of x.items) L.ix.line(it.t, it.o, it.e);
-  L.done = x.done; L.size = x.size; L.dummy = !!x.dummy;
+  L.done = x.done; L.size = x.size; L.dummy = !!x.dummy; if (x.ci) L.ci = x.ci;
   L.items = L.ix.peek().bosses.filter((b) => !b.skip);
   renderPulls();
   return first ? [] : L.items.filter((b) => b.endByte && !before.has(b.startByte));
@@ -317,7 +317,7 @@ async function analyze(b) {
   const E = W.E, text = b.id === DUMMY ? withSpecs(await readText(b), E) : await readText(b);
   await new Promise((r) => setTimeout(r, 30));
   const rep = E.analyze(b, text, { packs: (W.S && W.S.packs) || E.PACKS, overrides: {} });
-  if (b.id === DUMMY) rep.combatantsRaw = []; // (no gear or stats on a dummy: WoW only writes them at a boss pull)
+  if (b.id === DUMMY) rep.combatantsRaw = []; else rememberSpecs(rep); // (no gear or stats on a dummy: WoW only writes them at a boss pull)
   if (rep.combatantsRaw && rep.combatantsRaw.length) rep.combatants = rep.combatantsRaw.filter((c) => rep.players.has(c.guid)).map((c) => ({ name: rep.players.get(c.guid).name, gear: c.gear, auras: c.auras, self: c.guid, stats: c.stats, talents: c.talents || [] }));
   const pr = W.progressOf ? W.progressOf(rep) : null;
   L.reps.set(b.startByte, { rep, pct: b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : null, prog: pr });
@@ -326,25 +326,39 @@ async function analyze(b) {
 
 // ---------- training dummies: your spec from the buttons you pressed ----------
 // (WoW writes your spec only when a boss pull starts, so on a dummy Debrief works it out from your casts, then adds the line it needs)
-const SIG = { 71: ['Mortal Strike', 'Overpower'], 72: ['Bloodthirst', 'Rampage', 'Raging Blow'], 73: ['Shield Slam', 'Revenge'], 65: ['Holy Shock', 'Holy Light', 'Light of Dawn'],
-  66: ["Avenger's Shield", 'Shield of the Righteous'], 70: ["Templar's Verdict", 'Final Verdict', 'Blade of Justice', 'Wake of Ashes'], 253: ['Kill Command', 'Barbed Shot', 'Cobra Shot'],
-  254: ['Aimed Shot', 'Rapid Fire'], 255: ['Raptor Strike', 'Wildfire Bomb', 'Mongoose Bite'], 259: ['Mutilate', 'Envenom'], 260: ['Sinister Strike', 'Between the Eyes', 'Pistol Shot', 'Dispatch'],
-  261: ['Shadowstrike', 'Backstab', 'Shadow Dance'], 256: ['Penance', 'Power Word: Radiance'], 257: ['Holy Word: Serenity', 'Prayer of Healing'], 258: ['Mind Flay', 'Devouring Plague', 'Vampiric Touch'],
+const SIG = { 71: ['Mortal Strike', '~Overpower'], 72: ['Bloodthirst', 'Rampage', 'Raging Blow'], 73: ['Shield Slam', '~Revenge'],
+  65: ['Holy Shock', 'Beacon of Light', 'Beacon of Virtue', 'Light of Dawn', 'Holy Light', '~Shield of the Righteous', '~Judgment'],
+  66: ["Avenger's Shield", '~Shield of the Righteous'], 70: ["Templar's Verdict", 'Final Verdict', 'Blade of Justice', 'Wake of Ashes', 'Divine Storm'],
+  253: ['Kill Command', 'Barbed Shot', 'Cobra Shot'], 254: ['Aimed Shot', 'Rapid Fire'], 255: ['Raptor Strike', 'Wildfire Bomb', 'Mongoose Bite'],
+  259: ['Mutilate', 'Envenom'], 260: ['Sinister Strike', 'Between the Eyes', 'Pistol Shot', 'Dispatch'], 261: ['Shadowstrike', 'Backstab', 'Shadow Dance'],
+  256: ['Penance', 'Power Word: Radiance', '~Smite'], 257: ['Holy Word: Serenity', 'Holy Word: Chastise', 'Prayer of Healing', '~Smite'], 258: ['Mind Flay', 'Devouring Plague', 'Vampiric Touch'],
   250: ['Heart Strike', 'Marrowrend', 'Blood Boil'], 251: ['Obliterate', 'Frost Strike', 'Howling Blast'], 252: ['Festering Strike', 'Scourge Strike', 'Clawing Shadows'],
   262: ['Lava Burst', 'Earth Shock', 'Elemental Blast'], 263: ['Stormstrike', 'Lava Lash', 'Crash Lightning'], 264: ['Riptide', 'Healing Wave', 'Chain Heal'],
-  62: ['Arcane Blast', 'Arcane Barrage', 'Arcane Missiles'], 63: ['Fireball', 'Pyroblast', 'Fire Blast'], 64: ['Frostbolt', 'Flurry', 'Ice Lance', 'Glacial Spike'],
+  62: ['Arcane Blast', 'Arcane Barrage', 'Arcane Missiles'], 63: ['Fireball', 'Pyroblast', '~Fire Blast'], 64: ['Frostbolt', 'Flurry', 'Ice Lance', 'Glacial Spike'],
   265: ['Agony', 'Unstable Affliction', 'Malefic Rapture'], 266: ["Hand of Gul'dan", 'Call Dreadstalkers', 'Demonbolt'], 267: ['Chaos Bolt', 'Incinerate', 'Conflagrate'],
   268: ['Keg Smash', 'Breath of Fire'], 270: ['Renewing Mist', 'Enveloping Mist'], 269: ['Fists of Fury', 'Strike of the Windlord'], 102: ['Starsurge', 'Starfire'],
   103: ['Shred', 'Rake', 'Ferocious Bite'], 104: ['Mangle', 'Ironfur', 'Maul'], 105: ['Lifebloom', 'Rejuvenation', 'Wild Growth'], 577: ['Chaos Strike', 'Eye Beam', 'Blade Dance'],
   581: ['Soul Cleave', 'Fracture', 'Spirit Bomb'], 1467: ['Disintegrate', 'Pyre'], 1468: ['Echo', 'Reversion', 'Dream Breath'], 1473: ['Ebon Might', 'Eruption', 'Prescience'] };
+// (your spec from your last boss pulls, kept on this PC: a practice pull uses it when your buttons don't make it clear)
+const SPEC_MEM = store.get('dbf-specs', {});
+function rememberSpecs(rep) { let ch = false; for (const [g, p] of rep.players) if (p.specId && /^Player-/.test(g) && SPEC_MEM[g] !== p.specId) { SPEC_MEM[g] = p.specId; ch = true; } if (ch) store.set('dbf-specs', SPEC_MEM); }
 function withSpecs(text, E) {
+  // (training dummies are neutral in the log, and Debrief only counts damage on enemies: mark them as enemies)
+  text = text.replace(/,("[^"]*Dummy"),0x([0-9a-fA-F]+),/g, (x, n, fl) => ',' + n + ',0x' + ((parseInt(fl, 16) & ~0x70) | 0x40).toString(16) + ',');
   const casts = new Map(), re = /  SPELL_CAST_SUCCESS,(Player-[^,]+),"[^"]*",[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,\d+,"([^"]*)"/g; let m;
   while ((m = re.exec(text))) { if (!casts.has(m[1])) casts.set(m[1], new Set()); casts.get(m[1]).add(m[2]); }
   const ts = (text.match(/^[^\n]*?(?=  )/) || [''])[0], add = [];
   for (const [guid, names] of casts) {
-    let best = 0, score = 0;
-    for (const [id, sig] of Object.entries(SIG)) { if (!E.SPECS || !E.SPECS[id]) continue; const sc = sig.reduce((a, n, i) => a + (names.has(n) ? (i === 0 ? 3 : 1) : 0), 0); if (sc > score) { score = sc; best = +id; } }
-    if (best) add.push(ts + '  COMBATANT_INFO,' + guid + ',0,' + new Array(22).fill(0).join(',') + ',' + best + ',0');
+    // (1. what WoW wrote at a boss pull earlier in this log, 2. a clear guess from your own buttons, 3. your last boss pull on this PC, 4. the best guess)
+    let best = 0, score = 0, sure = false;
+    for (const [id, sig] of Object.entries(SIG)) {
+      if (!E.SPECS || !E.SPECS[id]) continue;
+      let sc = 0, key = 0; for (const n of sig) { const weak = n[0] === '~'; if (names.has(weak ? n.slice(1) : n)) { sc += weak ? 1 : 3; if (!weak) key++; } }
+      if (sc > score) { score = sc; best = +id; sure = key > 0; }
+    }
+    const fromLog = L.ci && L.ci[guid], mem = SPEC_MEM[guid];
+    const spec = fromLog && E.SPECS[fromLog] ? +fromLog : sure ? best : (mem && E.SPECS[mem] ? mem : best);
+    if (spec) add.push(ts + '  COMBATANT_INFO,' + guid + ',0,' + new Array(22).fill(0).join(',') + ',' + spec + ',0');
   }
   return add.length ? add.join('\n') + '\n' + text : text;
 }
