@@ -2163,47 +2163,75 @@ const VA_M = {
   // (+100% that fountain's hit next time), its adds and its infection; Mythic: totems rise. Hold him by the Shadow fountain every time, so
   // it's always Shadow and Flame and never Blood (fail: held in the middle, so Blood joins in)
   imbibe(fail, d) {
-    const myth = d !== 'h', L = 11, k = gdzKit(VA, L), P = fail ? [6, -30] : VA_I; vaBoss(k); vaRaid(k, 0, VA_I, -38);
-    if (fail) { vaBoss(k, 0.4); vaBoss(k, 2.4, P); vaRaid(k, 2.4, P, -38, { hold: 0.4 }); }
-    k.cast('va', 'Imbibe', 2.6, 6.6);
+    const myth = d !== 'h', O = fail ? 5 : 0, L = fail ? 16.4 : 11, k = gdzKit(VA, L), P = fail ? [40, 6] : VA_I; vaBoss(k); vaRaid(k, 0, VA_I, -38);
+    // (the mistake: the tank walks him up toward the Blood fountain, so the two nearest are Shadow and Blood)
+    if (fail) { vaBoss(k, 0.1); vaBoss(k, 7.2, P); vaRaid(k, 7.2, P, 100, { hold: 0.1 }); }
+    k.cast('va', 'Imbibe', 2.6 + O, 6.6 + O);
     const F = fail ? [VA_S, VA_B] : [VA_S, VA_F], FC = fail ? ['#b06bff', '#ff4a5a'] : ['#b06bff', '#ff8a3b'], FN = fail ? ['Shadow fountain', 'Blood fountain'] : ['Shadow fountain', 'Flame fountain'];
-    F.forEach((q, i) => { k.ring({ x: q[0], y: q[1], r: 6, fx: 'zone', t0: 3, dur: 4, color: FC[i], fill: 'rgba(255,255,255,.12)', cn: FN[i], legend: 'a fountain he drains' }); k.link({ from: 'va', toYd: { x: q[0], y: q[1] }, t0: 3, t1: 6.6, color: FC[i], legend: 'Imbibe drains the two nearest fountains' }); });
-    k.call(6.6, 8.6, 'Two raid hits, stronger every time', { x: 10, y: -8, color: '#c084ff', ink: '#14061f' });
-    if (fail) { k.call(7, 10.6, 'Blood joins in: Clotting Venoms', { x: 4, y: 40, color: '#ff4a5a', ink: '#fff' }); k.add('cv', 'Clotting Venom', 7, VA_B[0], VA_B[1] - 6).add('cv', 'Clotting Venom', L, 0, 40); k.oops('t1', 2.4); k.step(0.4).step(2.6).step(7);
-      k.pause(7.3, 'The boss was tanked too far from the Shadow fountain: Imbibe took Blood instead of Flame, with its big Clotting Venom and a fountain we never planned for.', { x: 4, y: 30, r: 18 });
-      return k.done({ title: 'Mistake: Imbibe from the wrong spot', focus: { x: 10, y: -10, r: 50 }, badLabel: 'moved the boss' }); }
+    F.forEach((q, i) => { k.ring({ x: q[0], y: q[1], r: 6, fx: 'zone', t0: 3 + O, dur: 4, color: FC[i], fill: 'rgba(255,255,255,.12)', cn: FN[i], legend: 'a fountain he drains' }); k.link({ from: 'va', toYd: { x: q[0], y: q[1] }, t0: 3 + O, t1: 6.6 + O, color: FC[i], legend: 'Imbibe drains the two nearest fountains' }); });
+    k.call(6.6 + O, 8.6 + O, 'Two raid hits, stronger every time', { x: fail ? 8 : 10, y: fail ? 0 : -8, color: '#c084ff', ink: '#14061f' });
+    if (fail) { k.call(7 + O, 11 + O, 'Blood joins in: Clotting Venoms', { x: 0, y: 18, color: '#ff4a5a', ink: '#fff' }); k.add('cv', 'Clotting Venom', 7 + O, 0, 50).add('cv', 'Clotting Venom', L, 0, 28); k.oops('t1', 2.4 + O); k.step(0.1).step(2.6 + O).step(7 + O);
+      k.pause(7.3 + O, 'The boss was tanked too far from the Shadow fountain: Imbibe took Blood instead of Flame, with its big Clotting Venom and a fountain we never planned for.', { x: 14, y: 44, r: 44 });
+      return k.done({ title: 'Mistake: Imbibe from the wrong spot', focus: { x: 22, y: 16, r: 80 }, badLabel: 'moved the boss' }); }
     if (myth) { VA_TOT.forEach(([x, y], i) => { k.add('tt' + i, 'Malignant Totem', 7 + (i % 6) * 0.15, x, y).show('tt' + i, 7 + (i % 6) * 0.15, L); });
       k.call(7.2, 10.6, 'Mythic: totems rise. Waves must hit them all', { x: -24, y: -12, color: '#c0ff7a', ink: '#0a1a06' }); }
     k.ring1(['t1']).step(0.4).step(2.6).step(6.6); if (myth) k.step(7.2);
     k.pause(4.4, 'The boss tank holds him by the Shadow fountain every time. Imbibe drains the two nearest, Shadow and Flame: never Blood.', { x: 40, y: -46, r: 18 });
     return k.done({ title: 'Imbibe: always Shadow and Flame', focus: { x: 0, y: -26, r: 60 }, hlLabel: 'the boss tank' });
   },
-  // the venoms after each Imbibe: 8 Shrouded (Shadow) crawl from their fountain toward the cavity, Gorefiend's Grasp or Typhoon gathers
-  // them on the boss; 3 Burning (Flame) come from the far fountain: one Death Knight walks out and grips two into the middle (one banished),
-  // the other grips one straight to the boss; the far one is slowed or trapped. Each Burning Venom's death hits the raid: kill them 9-10
-  // seconds apart (fail: two die together)
-  adds(fail) {
-    const L = 17, k = gdzKit(VA, L); vaHome(k); const DK1 = 'm4', DK2 = 'm5', BAN = 'r6', CC = 'r2';
-    for (let i = 0; i < 8; i++) { const a = 'sv' + i, [dx, dy] = gdzSpot(i, 8, 4), s0 = [VA_S[0] + dx, VA_S[1] + 4 + dy], m = [s0[0] - 8, s0[1] + 4], g = nzAdd(VA_I, -38 + (i - 3.5) * 14, 9);
+  // the venoms after each Imbibe: Shrouded (Shadow; 8 on Mythic, 5 on Heroic) crawl from their fountain toward the cavity, Gorefiend's Grasp,
+  // Typhoon or Sigil of Chains gathers them on the boss; Burning (Flame; 3 on Mythic, 2 on Heroic) come from the far fountain. Mythic: one Death
+  // Knight walks out and grips one into the middle (banished) while the other grips one straight to the boss, the far one is slowed or
+  // trapped. Heroic: one is gripped to the boss, the other waits in crowd control. Each Burning Venom's death hits the raid: they die about
+  // 9 to 10 seconds apart, so each one's Caustic Surge has run its course (fail: two die together)
+  adds(fail, d) {
+    const myth = d !== 'h', NS = myth ? 8 : 5, L = fail ? 17 : myth ? 30.5 : 21, k = gdzKit(VA, L); vaHome(k); const DK1 = 'm4', DK2 = 'm5', BAN = 'r6', CC = 'r2';
+    for (let i = 0; i < NS; i++) { const a = 'sv' + i, [dx, dy] = gdzSpot(i, NS, 4), s0 = [VA_S[0] + dx, VA_S[1] + 4 + dy], m = [s0[0] - 8, s0[1] + 4], g = nzAdd(VA_I, -38 + (i - (NS - 1) / 2) * (myth ? 14 : 20), 9);
       k.add(a, 'Shrouded Venom', 0.4, s0[0], s0[1]).add(a, 'Shrouded Venom', 2.6, m[0], m[1]).add(a, 'Shrouded Venom', 3.1, g[0], g[1]).show(a, 0.4, 7 + i * 0.3); }
-    k.call(2.6, 4.2, 'Gorefiend\'s Grasp', { on: DK2, color: '#7fd8ff', ink: '#06131c' }); k.call(0.5, 2.4, 'Shrouded Venoms: gather them', { x: 50, y: -40, color: '#b06bff', ink: '#fff' });
-    // (the Burning Venoms: DK1 walks toward the middle and grips two in; DK2 grips one to the boss)
-    const B0 = [VA_F[0] + 5, VA_F[1] + 6], q1 = k.posAt(DK1, 0); k.hold(0.2, DK1); nzGo(k, 0.2, 6, DK1, [-14, -36]);
-    [['bv0', [B0[0], B0[1] + 3], 6.8, [VA_I[0] + 7, VA_I[1] - 1], fail ? 11.4 : 8], ['bv1', [B0[0] + 3, B0[1]], 6.2, [-18, -36], fail ? 11.4 : 12], ['bv2', [B0[0] - 2, B0[1] - 3], 0, null, 16]].forEach(([a, s0, tg, to, die], i) => {
-      k.add(a, 'Burning Venom', 0.4, s0[0], s0[1]).add(a, 'Burning Venom', 5.6, s0[0] + 8, s0[1] + 5); if (to) k.add(a, 'Burning Venom', tg, s0[0] + 8, s0[1] + 5).add(a, 'Burning Venom', tg + 0.4, to[0], to[1]); else k.add(a, 'Burning Venom', 8, s0[0] + 10, s0[1] + 7);
+    k.call(2.6, 4.2, "Gorefiend's Grasp", { on: DK2, color: '#7fd8ff', ink: '#06131c' }); k.call(0.5, 2.4, 'Shrouded Venoms: gather them', { x: 26, y: -24, color: '#b06bff', ink: '#fff' });
+    // (the Burning Venoms: DK1 walks toward the middle to grip the far one(s); DK2 grips one to the boss)
+    const B0 = [VA_F[0] + 5, VA_F[1] + 6], GR = [VA_I[0] + 7, VA_I[1] - 1], GR2 = [VA_I[0] + 7, VA_I[1] - 5], MID = [-18, -36], MID2 = [-24, -40]; k.hold(0.2, DK1); nzGo(k, 0.2, 6, DK1, [-10, -36]);
+    // each add: its start, then its stops [time, spot] (no spot: still where it crawled to); the time of its death
+    const FA = [['bv0', [B0[0], B0[1] + 3], [[6.8, null], [7.2, GR]], fail ? 11.4 : 9]];
+    if (myth) { FA.push(['bv1', [B0[0] + 3, B0[1]], [[6.2, null], [6.6, MID]].concat(fail ? [] : [[17.4, MID], [17.8, GR2]]), fail ? 11.4 : 19]); if (!fail) FA.push(['bv2', [B0[0] - 2, B0[1] - 3], [[26.2, MID2], [27, MID2], [27.4, GR]], 29]); }
+    else FA.push(['bv1', [B0[0] + 3, B0[1]], fail ? [[7.4, null], [7.8, GR2]] : [[17.6, null], [18, GR2]], fail ? 11.4 : 19]);
+    FA.forEach(([a, s0, stops, die]) => { const far = [s0[0] + 8, s0[1] + 5]; k.add(a, 'Burning Venom', 0.4, s0[0], s0[1]).add(a, 'Burning Venom', 5.6, far[0], far[1]);
+      stops.forEach(([t, q]) => k.add(a, 'Burning Venom', t, q ? q[0] : far[0], q ? q[1] : far[1]));
       k.show(a, 0.4, die); k.ring({ on: a, r: 7, fx: 'zone', t0: 0.4, dur: die - 0.4, color: '#ff8a3b', fill: 'rgba(255,138,59,.12)', cn: 'Burning Presence', legend: 'Burning Presence: hurts the raid while it lives' });
       k.ring({ on: a, r: 9, fx: 'burst', t0: die - 0.4, at: die, dur: 0.8, color: '#ff5a2a', cn: 'Caustic Surge', legend: 'a Burning Venom dies: a raid hit' }); });
-    k.call(6.6, 8, 'Grip', { on: DK2, color: '#7fd8ff', ink: '#06131c' }); k.call(6, 7.4, 'Grip', { on: DK1, color: '#7fd8ff', ink: '#06131c' });
-    k.ring({ on: 'bv1', r: 3, fx: 'debuff', t0: 6.8, dur: fail ? 4.2 : 4.6, color: '#9b6bff', cn: 'Banish', legend: 'banished: safe from the cleave until it\'s time' }); k.link({ from: BAN, to: 'bv1', t0: 6.6, t1: 7.2, color: '#9b6bff', legend: 'a Warlock banishes it' });
-    k.ring({ on: 'bv2', r: 3, fx: 'debuff', t0: 6, dur: 8.6, color: '#7fd8ff', cn: 'Freezing Trap', legend: 'the far one: slowed or trapped' }); k.link({ from: CC, to: 'bv2', t0: 5.6, t1: 6.2, color: '#7fd8ff', legend: 'a light crowd control on the far one' });
-    k.hold(12.4, DK1); nzGo(k, 12.4, 16.8, DK1, q1);
-    if (fail) { gdzFailBlast(k, 11.6, 'Two Caustic Surges at once', 10, -4, ['h3', 'r7'], 'Caustic Surge'); k.step(0.4).step(3).step(11.4);
-      k.pause(11.8, 'The banish came off too early and two Burning Venoms died together: two Caustic Surges on the raid at once.', { x: 0, y: -34, r: 30 });
+    k.call(6.6, 8, 'Grip', { on: DK2, color: '#7fd8ff', ink: '#06131c' });
+    if (myth) { k.call(6, 7.4, 'Grip', { on: DK1, color: '#7fd8ff', ink: '#06131c' });
+      k.ring({ on: 'bv1', r: 3, fx: 'debuff', t0: 6.8, dur: fail ? 4.6 : 10.6, color: '#9b6bff', cn: 'Banish', legend: 'banished: safe from the cleave until it\'s time' }); k.link({ from: BAN, to: 'bv1', t0: 6.6, t1: 7.2, color: '#9b6bff', legend: 'a Warlock banishes it' });
+      if (!fail) { k.ring({ on: 'bv2', r: 3, fx: 'debuff', t0: 6, dur: 20.6, color: '#7fd8ff', cn: 'Freezing Trap', legend: 'the far one: slowed or trapped' }); k.link({ from: CC, to: 'bv2', t0: 5.6, t1: 6.2, color: '#7fd8ff', legend: 'a light crowd control on the far one' });
+        k.call(17.2, 18.6, 'Grip', { on: DK1, color: '#7fd8ff', ink: '#06131c' }); k.call(26.6, 28, 'Grip', { on: DK1, color: '#7fd8ff', ink: '#06131c' }); } }
+    else { k.ring({ on: 'bv1', r: 3, fx: 'debuff', t0: 6, dur: fail ? 1.6 : 11.6, color: '#7fd8ff', cn: 'Freezing Trap', legend: 'the second one: held in crowd control' }); k.link({ from: CC, to: 'bv1', t0: 5.6, t1: 6.2, color: '#7fd8ff', legend: 'crowd control on the second one (a trap or a banish)' });
+      k.call(fail ? 7 : 17.2, fail ? 8.4 : 18.6, 'Grip', { on: DK1, color: '#7fd8ff', ink: '#06131c' }); }
+    if (fail) { gdzFailBlast(k, 11.6, 'Two Caustic Surges at once', 10, -4, ['h3', 'r7'], 'Caustic Surge'); k.step(0.4).step(6.8).step(11.4);
+      k.pause(11.8, myth ? 'The banish came off too early and two Burning Venoms died together: two Caustic Surges on the raid at once.' : 'The crowd control broke early and both Burning Venoms died together: two Caustic Surges on the raid at once.', { x: 0, y: -34, r: 30 });
       return k.done({ title: 'Mistake: two fire adds die together', focus: { x: 0, y: -40, r: 46 }, badLabel: 'killed at once' }); }
-    k.call(8, 9.8, 'Caustic Surge 1', { x: 22, y: -24, color: '#ff8a3b', ink: '#1a0a00' }); k.call(12, 13.8, 'Caustic Surge 2 (9-10 s later)', { x: 0, y: -24, color: '#ff8a3b', ink: '#1a0a00' }); k.call(14.2, 16, 'Then the far one', { x: -26, y: -40, color: '#ff8a3b', ink: '#1a0a00' });
-    k.ring1([DK1, DK2]).step(0.4).step(2.6).step(6.6).step(8);
-    k.pause(7.2, 'Shrouded Venoms are gripped onto the boss and cleaved. The Burning Venoms come from the far fountain: one gripped to the boss, one banished in the middle, the far one slowed. Kill them 9 to 10 seconds apart.', { x: 0, y: -38, r: 34 });
-    return k.done({ title: 'The venoms: grip them in, kill the fire apart', focus: { x: 0, y: -40, r: 50 }, hlLabel: 'the two Death Knights' });
+    k.call(9, 10.8, 'Caustic Surge 1', { x: 22, y: -24, color: '#ff8a3b', ink: '#1a0a00' }); k.call(19, 20.8, 'Caustic Surge 2 (' + (myth ? '10' : '9') + ' s later)', { x: 6, y: -24, color: '#ff8a3b', ink: '#1a0a00' }); if (myth) k.call(29, 30.5, 'Then the far one (10 s later)', { x: 22, y: -24, color: '#ff8a3b', ink: '#1a0a00' });
+    k.ring1([DK1, DK2]).step(0.4).step(6).step(myth ? 6.8 : 6.6).step(myth ? 9 : 17.6);
+    k.pause(7.2, myth ? 'Shrouded Venoms are gripped onto the boss and cleaved. The Burning Venoms come from the far fountain: one gripped to the boss, one banished in the middle, the far one slowed. Kill them 9 to 10 seconds apart.' : 'Shrouded Venoms are gripped onto the boss and cleaved. Of the two Burning Venoms, one is gripped to the boss and killed; the other waits in crowd control and comes in about 9 seconds later.', { x: 0, y: -38, r: 34 });
+    return k.done({ title: 'The venoms: grip them in, kill the fire adds apart', focus: { x: 0, y: -40, r: 50 }, hlLabel: 'the two Death Knights' });
+  },
+  // Plague Froth on its own (Heroic, and the one at about 0:13 on Mythic, before any totems): a few players are marked and walk out; 6 seconds
+  // later each fires a wave north, south, east and west. The raid sits in a gap between two of the four lines, so the targets stand off to a
+  // corner of it, far enough out that no line points at anyone (fail: a target stays by the raid and its lines run through it)
+  froth0(fail, d) {
+    const myth = d !== 'h', L = 11.5, k = gdzKit(VA, L); vaHome(k);
+    const SP = [[36, 9], [-24.6, -5], [53, 5.5], [-27.8, -34.4], [29.6, 32.7]].slice(0, myth ? 5 : 3), pool = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'h1', 'h2', 'h3', 'h4'], TG = [];
+    SP.forEach((s) => { let best = null, bd = 1e9; pool.forEach((id) => { if (TG.some((x) => x[0] === id)) return; const p = k.posAt(id, 0), dd = Math.hypot(p[0] - s[0], p[1] - s[1]); if (dd < bd) { bd = dd; best = id; } }); TG.push([best, s]); });
+    const W0 = 6.8, V = 24; k.call(2.6, 5.6, 'Walk out: no line at anyone', { x: 12, y: -14, color: '#c0ff7a', ink: '#0a1a06' });
+    TG.forEach(([id, s], i) => { k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 0.4, dur: 6.4, color: '#c0ff7a', cn: 'Plague Froth', legend: 'Plague Froth: in 6 seconds you fire waves north, south, east and west' });
+      const p0 = k.posAt(id, 0), q = fail && i === 0 ? [p0[0] - 2, p0[1] + 2] : s; k.hold(0.4, id); nzGo(k, 0.4, 5.4, id, q); });
+    TG.forEach(([id]) => { const p = k.posAt(id, W0); VA_WD.forEach((deg) => k.wave({ x: p[0], y: p[1], deg, v: V, w: 3.5, d: 3, t0: W0, t1: W0 + 2.6, color: '#c0ff7a', legend: 'a Plague Wave' })); });
+    if (fail) { k.oops(TG[0][0], W0); ['m2', 'm5'].forEach((id) => ulHit(k, id, W0 + 0.5, 'Plague Wave')); k.step(0.4).step(3.6).step(W0);
+      k.pause(W0 + 0.6, 'One Froth target stayed by the raid instead of walking out: their lines ran straight through the people next to them.', { x: k.posAt(TG[0][0], W0)[0], y: k.posAt(TG[0][0], W0)[1], r: 14 });
+      return k.done({ title: 'Mistake: a wave through the raid', focus: { x: 16, y: -30, r: 40 }, badLabel: 'stayed by the raid' }); }
+    k.call(W0 + 2.8, L, 'Nobody hit: the raid sat in a gap', { x: 22, y: -6, color: '#c0ff7a', ink: '#0a1a06' });
+    k.ring1(TG.map((q) => q[0])).step(0.4).step(3.6).step(W0).step(W0 + 2.8);
+    k.pause(6, 'A few players get Plague Froth. They walk out to a corner of the room where none of their four lines points at anyone, and stand still until it fires.', { x: 12, y: -18, r: 44 });
+    return k.done({ title: 'Plague Froth: walk out, aim away', focus: { x: 10, y: -18, r: 54 }, hlLabel: 'the Froth targets' });
   },
   // Mythic, the first Plague Froth of each cycle ("mow the lawn"): 5 players marked; 6 seconds later each fires waves north, south, east and
   // west. Melee targets take the diamond and star, ranged the X, triangle and moon: one slanted line, so no wave crosses another target. The
@@ -2236,149 +2264,173 @@ const VA_M = {
     k.call(0.4, 3, 'Two to the left, two to the entrance, one each to the right', { x: 4, y: 0, color: '#c0ff7a', ink: '#0a1a06' });
     // (each target stands due north, south, east or west of a totem, in the game's terms, so one wave runs through it)
     const TG = [['m3', 0, 120, 14], ['r3', 2, -150, 12], ['r6', 4, -150, 10], ['r7', 5, 120, 12], ['h1', -1, 0, 0]], kill = {};
-    TG.forEach(([id, ti, deg, dd]) => { if (ti < 0 || (fail && ti === 5)) { k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 0.4, dur: 6.6, color: '#c0ff7a', cn: 'Plague Froth', legend: 'Plague Froth: in 6 seconds you fire waves north, south, east and west' }); if (ti < 0) k.hold(0.4, id).at(3.4, id, 2, -33); return; } const tt = LEFT[ti], q = nzAdd(tt, deg + 180, dd); k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 0.4, dur: 6.6, color: '#c0ff7a', cn: 'Plague Froth', legend: 'Plague Froth: in 6 seconds you fire waves north, south, east and west' }); k.hold(0.4, id); nzGo(k, 0.4, 6.4, id, q); });
+    TG.forEach(([id, ti, deg, dd]) => { if (ti < 0 || (fail && (ti === 4 || ti === 5))) { k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 0.4, dur: 6.6, color: '#c0ff7a', cn: 'Plague Froth', legend: 'Plague Froth: in 6 seconds you fire waves north, south, east and west' }); if (ti < 0) k.hold(0.4, id).at(3.4, id, 2, -33); return; } const tt = LEFT[ti], q = nzAdd(tt, deg + 180, dd); k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 0.4, dur: 6.6, color: '#c0ff7a', cn: 'Plague Froth', legend: 'Plague Froth: in 6 seconds you fire waves north, south, east and west' }); k.hold(0.4, id); nzGo(k, 0.4, 6.4, id, q); });
     const W0 = 7, V = 24; LEFT.forEach((_, i) => (kill[i] = L)); TG.forEach(([id]) => { const p = k.posAt(id, W0); VA_WD.forEach((deg) => { k.wave({ x: p[0], y: p[1], deg, v: V, w: 3.5, d: 3, t0: W0, t1: W0 + 2.4, color: '#c0ff7a', legend: 'a Plague Wave' });
       const u = nzU(deg); LEFT.forEach(([x, y], i) => { const dx = x - p[0], dy = y - p[1], al = dx * u[0] + dy * u[1], ac = Math.abs(-dx * u[1] + dy * u[0]); if (al > 0 && al < V * 2.4 && ac < 3) kill[i] = Math.min(kill[i], W0 + al / V); }); }); });
-    if (fail) kill[5] = L; LEFT.forEach((_, i) => k.show('tt' + i, 0, kill[i]));
-    if (fail) { k.call(W0 + 2.6, L, 'One totem left: Malignance at the next Imbibe', { x: 40, y: -18, color: '#ff3b3b', ink: '#fff' }); k.step(0.4).step(4).step(W0 + 2.6);
-      k.pause(W0 + 2.8, 'Nobody went to the last totem by the Shadow side. At the next Imbibe it casts Malignance: a raid hit and a 1-minute DoT. One is survivable; two would wipe.', { x: 50, y: -28, r: 10 });
-      return k.done({ title: 'Mistake: a totem left standing', focus: { x: 0, y: -44, r: 56 } }); }
+    if (fail) { kill[4] = L; kill[5] = L; } LEFT.forEach((_, i) => k.show('tt' + i, 0, kill[i]));
+    if (fail) { k.call(W0 + 2.6, L, 'Two totems left: a wipe', { x: 28, y: -18, color: '#ff3b3b', ink: '#fff' }); k.step(0.4).step(4).step(W0 + 2.6);
+      k.pause(W0 + 2.8, 'Nobody went to the last two totems by the Shadow side. At the next Imbibe both cast Malignance: a raid hit and a 1-minute DoT each. One is survivable; two wipe the raid.', { x: 47, y: -45, r: 24 });
+      return k.done({ title: 'Mistake: two totems left standing', focus: { x: 0, y: -44, r: 56 } }); }
     k.ring1(TG.map((q) => q[0])).step(0.4).step(4).step(W0);
     k.pause(5.6, 'The second Froth: each target walks to a totem that\'s left and stands so a wave runs straight through it. Totems first; not hitting melee second.', { x: 0, y: -44, r: 50 });
     return k.done({ title: 'Second Froth: clean up the last totems', focus: { x: 0, y: -44, r: 56 }, hlLabel: 'the five Froth targets' });
   },
-  // Malignant Catalyst (Heroic and up): a raid hit, then a few bile circles land around the room 5 seconds later; each must have at least
-  // one player in it (split within 6 yards) or it hits the whole raid. Ranged spread out to cover them (fail: one left empty)
-  catalyst(fail) {
-    const L = 11.4, k = gdzKit(VA, L); vaHome(k); k.cast('va', 'Malignant Catalyst', 0.3, 1.2); k.call(1.2, 2.8, 'Raid hit', { x: 20, y: -12, color: '#c084ff', ink: '#14061f' });
-    const BL = [[14, -18], [4, -40], [22, -64], [46, -16], [-10, -24]], SO = ['r1', 'r3', 'r5', 'r7', 'h1'];
-    BL.forEach(([x, y], i) => k.ring({ x, y, r: 6, fx: 'soak', t0: 1.4, at: 6.2, dur: 5, color: '#8fe36a', cn: 'Catalytic Bile', legend: 'a bile: someone must stand in it' }));
-    SO.forEach((id, i) => { if (fail && i === 2) return; k.hold(1.3, id); nzGo(k, 1.3, 5.8, id, [BL[i][0] + 1, BL[i][1] - 1]); k.hold(6.6, id); const q = k.posAt(id, 0); nzGo(k, 6.6, 11.2, id, q); });
+  // Malignant Catalyst (Heroic and up): a raid hit, then bile circles land around the room 5 seconds later (Mythic: five); each must have at
+  // least one player in it (split within 6 yards) or it hits the whole raid. Whoever is nearest takes each one: melee the biles by the boss,
+  // ranged and a healer the far ones. The second one of a Mythic cycle comes while the raid is on the lawn (o.lawn). (fail: one left empty)
+  catalyst(fail, d, o) {
+    const myth = d !== 'h', lawn = !!(o && o.lawn), L = 11.4, k = gdzKit(VA, L); if (lawn) vaLawn(k, 0); else vaHome(k); k.cast('va', 'Malignant Catalyst', 0.3, 1.2); k.call(1.2, 2.8, 'Raid hit', { x: 20, y: -12, color: '#c084ff', ink: '#14061f' });
+    const BL = [[27, -29], [47, -52], [14, -18], [22, -66], [-10, -24]], pool = GDZ_RAID.filter((id) => !/^t/.test(id)), SO = [];
+    BL.forEach((b) => { let best = null, bd = 1e9; pool.forEach((id) => { if (SO.includes(id)) return; const p = k.posAt(id, 0), dd = Math.hypot(p[0] - b[0], p[1] - b[1]); if (dd < bd) { bd = dd; best = id; } }); SO.push(best); });
+    BL.forEach(([x, y]) => k.ring({ x, y, r: 6, fx: 'soak', t0: 1.4, at: 6.2, dur: 5, color: '#8fe36a', cn: 'Catalytic Bile', legend: 'a bile: someone must stand in it' }));
+    SO.forEach((id, i) => { if (fail && i === 3) return; k.hold(1.3, id); nzGo(k, 1.3, 5.8, id, [BL[i][0] + 1, BL[i][1] - 1]); k.hold(6.6, id); const q = k.posAt(id, 0); nzGo(k, 6.6, 11.2, id, q); });
     if (fail) { gdzFailBlast(k, 6.4, 'An empty bile: the whole raid takes it', 10, 0, [], 'Catalytic Bile'); k.step(0.3).step(1.4).step(6.2);
-      k.pause(6.6, 'Nobody stood in this bile, so it hit the whole raid instead.', { x: BL[2][0], y: BL[2][1], r: 8 });
+      k.pause(6.6, 'Nobody stood in this bile, so it hit the whole raid instead.', { x: BL[3][0], y: BL[3][1], r: 8 });
       return k.done({ title: 'Mistake: an empty bile', focus: { x: 16, y: -34, r: 40 } }); }
     k.ring1(SO).step(0.3).step(1.4).step(6.2);
-    k.pause(3, 'Biles land round the room: the nearest ranged walks into each one. Five biles, five soakers.', { x: 16, y: -34, r: 34 });
+    k.pause(3, 'Biles land round the room: melee take the ones by the boss, ranged and a healer the far ones.' + (myth ? ' Five biles, five soakers.' : ''), { x: 16, y: -34, r: 34 });
     return k.done({ title: 'Malignant Catalyst: someone in every bile', focus: { x: 16, y: -34, r: 40 }, hlLabel: 'the bile soakers' });
   },
-  // the infections after each Imbibe: Exploding Infection (Flame; Mythic: four, ramping every 1.5 s): removing it blasts the raid, less the
-  // farther away, so its targets walk out first and two healers dispel one pair at a time; Stygian Infection (Shadow): a big heal absorb,
-  // and the player drops Stygian Burst circles: keep walking, away from the raid, while healers heal it off (fail: all dispelled at once)
+  // the infections after each Imbibe, twice per Imbibe: Exploding Infection (Flame; Mythic: four, ramping every 1.5 s): removing it blasts the
+  // raid, less the farther away, so its targets walk out first and two healers dispel a few at a time; Stygian Infection (Shadow): a big heal
+  // absorb, and the player drops Stygian Burst circles: keep walking, away from the raid, while healers heal it off (fail: all dispelled at once)
   infect(fail) {
-    const L = 15.6, k = gdzKit(VA, L); vaHome(k); const EX = ['r2', 'm7', 'r6', 'h3'], ST = ['r1'], OUT = [[2, -12], [18, -10], [-6, -40], [10, -56]];
-    EX.forEach((id, i) => { k.ring({ on: id, r: 2.6, fx: 'debuff', t0: 0.4, dur: (fail ? 5.2 : i < 2 ? 5.2 : 10.4) - 0.4, color: '#ff8a3b', cn: 'Exploding Infection', legend: 'Exploding Infection: removing it blasts the raid, less the farther away' }); k.hold(0.6, id).at(4.4, id, OUT[i][0], OUT[i][1]); });
+    const L = 18.4, k = gdzKit(VA, L); vaHome(k); const ST = ['r1'], OUT = [[8, -12], [30, 0], [-8, -42], [14, -58]], pool = GDZ_RAID.filter((id) => !/^t/.test(id) && !['r1', 'h1', 'h2', 'h4'].includes(id)), EX = [];
+    OUT.forEach((o) => { let best = null, bd = 1e9; pool.forEach((id) => { if (EX.includes(id)) return; const p = k.posAt(id, 0), dd = Math.hypot(p[0] - o[0], p[1] - o[1]); if (dd < bd) { bd = dd; best = id; } }); EX.push(best); }); /* (the four nearest their spots walk out) */
+    EX.forEach((id, i) => { k.ring({ on: id, r: 2.6, fx: 'debuff', t0: 0.4, dur: (fail ? 6.2 : i < 2 ? 6.2 : 11.4) - 0.4, color: '#ff8a3b', cn: 'Exploding Infection', legend: 'Exploding Infection: removing it blasts the raid, less the farther away' }); k.hold(0.2, id).at(5.4, id, OUT[i][0], OUT[i][1]); });
     const pair = (ids, t, H) => ids.forEach((id, j) => { k.dispel(H[j], id, t + j * 0.2); k.ring({ on: id, r: 10, fx: 'burst', t0: t, at: t + 0.4, dur: 0.8, color: '#ff5a2a', cn: 'Caustic Explosion', legend: 'a dispelled infection: a blast on the raid, less the farther away' }); });
-    if (fail) { pair(EX, 5, ['h1', 'h2', 'h4', 'h1']); gdzFailBlast(k, 5.8, 'Four blasts at once', 20, -10, ['r1', 'm2'], 'Caustic Explosion'); k.step(0.4).step(4.4).step(5);
-      k.pause(6, 'All four infections were dispelled together: four blasts on the raid at once.', { x: 10, y: -30, r: 30 });
+    if (fail) { pair(EX, 6, ['h1', 'h2', 'h4', 'h1']); gdzFailBlast(k, 6.8, 'Four blasts at once', 20, -10, ['r1', 'm2'], 'Caustic Explosion'); k.step(0.4).step(5.4).step(6);
+      k.pause(7, 'Everyone with Exploding Infection was dispelled together: all the blasts landed on the raid at once.', { x: 10, y: -30, r: 30 });
       return k.done({ title: 'Mistake: every infection dispelled at once', focus: { x: 10, y: -30, r: 40 }, badLabel: 'too many at once' }); }
-    pair(EX.slice(0, 2), 5, ['h1', 'h2']); pair(EX.slice(2), 10.2, ['h4', 'h1']);
-    EX.forEach((id, i) => { const q = k.posAt(id, 0), t = i < 2 ? 5.8 : 11; k.hold(t, id); nzGo(k, t, t + 4.4, id, q); });
+    pair(EX.slice(0, 2), 6, ['h1', 'h2']); pair(EX.slice(2), 11.2, ['h4', 'h1']);
+    EX.forEach((id, i) => { const q = k.posAt(id, 0), t = i < 2 ? 6.8 : 12; k.hold(t, id); nzGo(k, t, t + 5.6, id, q); });
     // (the Stygian player keeps walking along the edge, leaving circles behind, away from the raid)
     k.ring({ on: ST[0], r: 2.6, fx: 'debuff', t0: 0.4, dur: L - 0.4, color: '#b06bff', cn: 'Stygian Infection', legend: 'Stygian Infection: a big heal absorb; you drop circles: keep walking away' });
     const sp = [[48, -16], [54, -26], [60, -36], [60, -48]]; k.hold(0.6, ST[0]).at(3.6, ST[0], sp[0][0], sp[0][1]).at(6, ST[0], sp[1][0], sp[1][1]).at(9, ST[0], sp[2][0], sp[2][1]).at(12, ST[0], sp[3][0], sp[3][1]);
     [3, 6, 9].forEach((t, j) => k.ring({ x: sp[j][0], y: sp[j][1], r: 6, fx: 'puddle', t0: t + 0.4, dur: L - t - 0.4, color: '#b06bff', fill: 'rgba(176,107,255,.3)', cn: 'Stygian Burst', legend: 'Stygian Burst: a circle left behind' }));
-    k.ring1(EX).step(0.4).step(4.4).step(5).step(10.2);
-    k.pause(4.6, 'Exploding Infection: the four walk out from the raid, then two healers dispel one pair, and the second pair a while later. The Stygian player walks the edge, leaving their circles away from everyone.', { x: 10, y: -30, r: 36 });
-    return k.done({ title: 'Infections: walk out, dispel a pair at a time', focus: { x: 16, y: -30, r: 46 }, hlLabel: 'players with Exploding Infection' });
+    k.ring1(EX).step(0.4).step(5.4).step(6).step(11.2);
+    k.pause(4.6, 'Exploding Infection: the targets walk out from the raid, then the healers dispel them a few at a time, spaced out. The Stygian player walks the edge, leaving their circles away from everyone.', { x: 10, y: -30, r: 36 });
+    return k.done({ title: 'Infections: walk out, dispel a few at a time', focus: { x: 16, y: -30, r: 46 }, hlLabel: 'players with Exploding Infection' });
   },
-  // Dripping Fangs: his bite doubles the tank's physical damage taken and stacks a DoT: the other tank taunts after every one (fail: no swap)
+  // Dripping Fangs: his bite makes the tank take much more physical damage and stacks a DoT: the other tank taunts after every one (fail: no swap)
   fangs(fail) {
     const L = 8, k = gdzKit(VA, L); vaHome(k); const A = k.posAt('t1', 0), B = k.posAt('t2', 0); k.cast('va', 'Dripping Fangs', 0.5, 2.3);
-    k.ring({ on: 't1', r: 2.6, fx: 'debuff', t0: 2.3, dur: L - 2.3, color: '#c9a36a', cn: 'Dripping Fangs', legend: 'Dripping Fangs: +200% physical damage taken: swap' });
-    if (fail) { ulHit(k, 't1', 5.6, 'Melee: dead'); k.oops('t1', 5.6); k.step(0.5).step(2.3).step(5.6);
-      k.pause(5.9, 'No taunt after Dripping Fangs: the next few hits on a tank taking triple damage killed them.', { on: 't1', r: 9 });
+    k.ring({ on: 't1', r: 2.6, fx: 'debuff', t0: 2.3, dur: L - 2.3, color: '#c9a36a', cn: 'Dripping Fangs', legend: 'Dripping Fangs: much more physical damage taken: swap' });
+    if (fail) { ulHit(k, 't1', 5.6, 'Tank: dead'); k.oops('t1', 5.6); k.step(0.5).step(2.3).step(5.6);
+      k.pause(5.9, 'No taunt after Dripping Fangs: the next few hits on a tank taking much more damage killed them.', { on: 't1', r: 9 });
       return k.done({ title: 'Mistake: no swap after Dripping Fangs', focus: { x: 36, y: -40, r: 18 }, badLabel: 'kept the boss' }); }
     k.hold(2.4, ['t1', 't2']).at(4.6, 't1', B[0], B[1]).at(4.6, 't2', A[0], A[1]); k.call(3.4, 4.8, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' });
     k.ring1(['t1', 't2']).step(0.5).step(2.3).step(3.4);
-    k.pause(2.6, 'Dripping Fangs on the boss tank: the other tank taunts right away. Swap on every one.', { x: 36, y: -40, r: 16 });
+    k.pause(2.6, 'Dripping Fangs on the boss tank: a defensive for the bite, and the other tank taunts right away. Swap on every one.', { x: 36, y: -40, r: 16 });
     return k.done({ title: 'Dripping Fangs: swap on every one', focus: { x: 36, y: -40, r: 20 }, hlLabel: 'the tanks' });
   },
 };
 const VA_FAIL = {
-  imbibe: { name: 'Imbibe from the wrong spot', what: 'The boss is tanked too far from the Shadow fountain: Imbibe takes Blood instead of Flame.', do: ['The boss drifts toward the middle.', 'Imbibe drains Shadow and Blood.', 'Clotting Venoms and a new infection.'], map: () => VA_M.imbibe(true) },
-  adds: { name: 'Two fire adds die together', what: 'Two Burning Venoms die at once: two Caustic Surges hit the raid together.', do: ['The Burning Venoms come in.', 'Two die at the same time.', 'Two raid hits at once.'], map: () => VA_M.adds(true) },
+  imbibe: { name: 'Imbibe from the wrong spot', what: 'The boss is tanked toward the Blood fountain: Imbibe takes Shadow and Blood instead of Shadow and Flame.', do: ['The tank pulls the boss toward the Blood fountain.', 'Imbibe drains Shadow and Blood.', 'Clotting Venoms and a new infection.'], map: (d) => VA_M.imbibe(true, d) },
+  adds: { name: 'Two fire adds die together', what: 'Two Burning Venoms die at once: two Caustic Surges hit the raid together.', do: ['The Burning Venoms come in.', 'Two die at the same time.', 'Two raid hits at once.'], map: (d) => VA_M.adds(true, d) },
+  froth0: { name: 'A wave through the raid', what: 'A Froth target stays by the raid: their lines run straight through the people next to them.', do: ['A few players get Plague Froth.', 'One stays by the raid.', 'Their lines hit the raid.'], map: (d) => VA_M.froth0(true, d) },
   froth1: { name: 'A wave through the melee', what: 'A Froth target stands next to the boss instead of on their marker: their wave runs through the stacked melee.', do: ['Five targets take the markers.', 'One stands by the boss.', 'Their wave hits the melee.'], map: () => VA_M.froth1(true) },
-  froth2: { name: 'A totem left standing', what: 'Nobody goes to the last totem: at the next Imbibe it casts Malignance on the raid.', do: ['The second Froth goes out.', 'One totem has nobody.', 'Malignance at the next Imbibe.'], map: () => VA_M.froth2(true) },
-  catalyst: { name: 'An empty bile', what: 'Nobody stands in one bile circle: it hits the whole raid instead.', do: ['Biles land round the room.', 'One has nobody in it.', 'It hits everyone.'], map: () => VA_M.catalyst(true) },
-  infect: { name: 'Every infection dispelled at once', what: 'All four Exploding Infections are dispelled together: four blasts hit the raid at once.', do: ['Four players get Exploding Infection.', 'All four are dispelled together.', 'Four blasts at once.'], map: () => VA_M.infect(true) },
-  fangs: { name: 'No swap after Dripping Fangs', what: 'Nobody taunts after Dripping Fangs: the tank taking triple damage dies.', do: ['Dripping Fangs lands.', 'No taunt.', 'The tank dies.'], map: () => VA_M.fangs(true) },
+  froth2: { name: 'Two totems left standing', what: 'Nobody goes to the last two totems: at the next Imbibe both cast Malignance on the raid, and two is a wipe.', do: ['The second Froth goes out.', 'Two totems have nobody.', 'Two Malignances at the next Imbibe: a wipe.'], map: () => VA_M.froth2(true) },
+  catalyst: { name: 'An empty bile', what: 'Nobody stands in one bile circle: it hits the whole raid instead.', do: ['Biles land round the room.', 'One has nobody in it.', 'It hits everyone.'], map: (d) => VA_M.catalyst(true, d) },
+  infect: { name: 'Every infection dispelled at once', what: 'All four Exploding Infections are dispelled together: four blasts hit the raid at once.', do: ['Four players get Exploding Infection.', 'All four are dispelled together.', 'Four blasts at once.'], map: (d) => VA_M.infect(true, d) },
+  infectH: { name: 'Every infection dispelled at once', what: 'Everyone with Exploding Infection is dispelled together: all the blasts hit the raid at once.', do: ['The Exploding Infections go out.', 'All of them are dispelled together.', 'All the blasts at once.'], map: (d) => VA_M.infect(true, d) },
+  fangs: { name: 'No swap after Dripping Fangs', what: 'Nobody taunts after Dripping Fangs: the tank taking much more damage dies.', do: ['Dripping Fangs lands.', 'No taunt.', 'The tank dies.'], map: () => VA_M.fangs(true) },
 };
 // ---- the whole fight, by Wolfthorn's Mythic kill's clock (6:51)
 const VA_BEATS = {
   start: { name: 'The pull (Straight to the Shadow fountain)', do: ['Imbibe comes early: the tank takes him straight to his spot by the Shadow fountain.', 'Bloodlust on the pull.'],
-    run() { const k = gdzKit(VA, 7); k.boss('va', VA, 0, 0, -23); vaRaid(k, 0, [0, -23], -38); vaBoss(k, 0.3, [0, -23]); vaBoss(k, 6.6); vaRaid(k, 6.6, VA_I, -38, { hold: 0.3 }); k.ring1(['t1']).step(0.2); } },
+    run() { const k = gdzKit(VA, 7); k.boss('va', VA, 0, 0, -23); vaRaid(k, 0, [0, -23], -38); vaBoss(k, 0.3, [0, -23]); vaBoss(k, 6.6); vaRaid(k, 6.6, VA_I, -38, { hold: 0.3 }); k.ring1(['t1']).step(0.2); k.done({ focus: { x: 18, y: -32, r: 26 } }); } },
+  froth0: { name: 'Plague Froth (Before the first Imbibe)', do: ['Plague Froth comes at about 13 seconds, before any totems: walk out and aim the four lines at nobody.'],
+    run() { VA_M.froth0(false, 'm'); } },
   tolawn: { name: 'To the lawn (First Froth next)', do: ['After the venoms, the tank brings the boss down to the lawn: between the diamond and star markers. Melee stack under him; everyone else to a clear spot.'],
-    run() { const k = gdzKit(VA, 8); vaHome(k); vaBoss(k, 0.4); vaLawn(k, 7.4, 0.4); k.step(0.2); } },
+    run() { const k = gdzKit(VA, 8); vaHome(k); vaBoss(k, 0.4); vaLawn(k, 7.4, 0.4); k.step(0.2); k.done({ focus: { x: -6, y: -46, r: 24 } }); } },
   back: { name: 'Back to the Shadow fountain (Imbibe next)', do: ['Right after the second Froth, Imbibe comes again: back to the spot by the Shadow fountain.'],
-    run() { const k = gdzKit(VA, 8); vaLawn(k, 0); vaBoss(k, 0.4, VA_LW); vaBoss(k, 7.4); vaRaid(k, 7.4, VA_I, -38, { hold: 0.4 }); k.step(0.2); } },
-  imb5: { name: 'Imbibe 5 (The biggest hit of the fight)', do: ['Five stacks of both infusions: the biggest raid hit of the fight.', 'Everyone stacks: Rallying Cry, Spirit Link, Aura Mastery, Anti-Magic Zone and personals.'],
-    run() { const k = gdzKit(VA, 4); vaHome(k); k.cast('va', 'Imbibe', 0.4, 3); k.call(0.4, 3.6, 'Stack every cooldown', { x: 20, y: -10, color: '#ffd23b', ink: '#1a1400' }); k.step(0.2); } },
-  last: { name: 'The last set (CC the fire, burn him)', do: ['Don\'t kill the last Burning Venoms: their deaths on top of everything else kill people. Grip and crowd control them away from the cavity.', 'Totems don\'t matter now: just don\'t send waves through the melee. Burn Vashnik before Imbibe 6.'],
-    run() { const k = gdzKit(VA, 4); vaHome(k); k.call(0.4, 3.6, 'Burn the boss', { x: 20, y: -10, color: '#ff8a8a', ink: '#200a0a' }); k.step(0.2); } },
+    run() { const k = gdzKit(VA, 8); vaLawn(k, 0); vaBoss(k, 0.4, VA_LW); vaBoss(k, 7.4); vaRaid(k, 7.4, VA_I, -38, { hold: 0.4 }); k.step(0.2); k.done({ focus: { x: 8, y: -44, r: 28 } }); } },
+  imb5: { name: 'Imbibe 5 (The biggest hit of the fight)', do: ['Five stacks of both infusions: the biggest raid hit of the fight, about double the one before.', 'Everyone stacks: Rallying Cry, Spirit Link, Aura Mastery, Anti-Magic Zone and personals.'],
+    run() { const k = gdzKit(VA, 4); vaHome(k); k.cast('va', 'Imbibe', 0.4, 3); k.call(0.4, 3.6, 'Stack every cooldown', { x: 20, y: -10, color: '#ffd23b', ink: '#1a1400' }); k.step(0.2); k.done({ focus: { x: 28, y: -38, r: 24 } }); } },
+  last: { name: 'The last set (CC the fire, burn him)', do: ["Don't kill the last fire adds: grip them out and crowd control them.", "Their deaths on top of the rest kill people. Totems don't matter now (just don't hit melee): burn Vashnik before Imbibe 6."],
+    run() { const k = gdzKit(VA, 4); vaHome(k); k.call(0.4, 3.6, 'Burn the boss', { x: 20, y: -10, color: '#ff8a8a', ink: '#200a0a' }); k.step(0.2); k.done({ focus: { x: 28, y: -38, r: 24 } }); } },
   kill: { name: 'The kill', do: ['Down before the sixth Imbibe.'],
-    run() { const k = gdzKit(VA, 5); vaHome(k); k.ring({ on: 'va', r: 7, fx: 'burst', t0: 1.4, at: 2, dur: 0.8, color: '#ffd23b', cn: 'Vashnik dies', legend: 'the kill' }); k.show('va', 0, 2.2); k.call(2.3, 4.6, 'Kill', { x: 36, y: -30 }); k.step(0.3); } },
+    run() { const k = gdzKit(VA, 5); vaHome(k); k.ring({ on: 'va', r: 7, fx: 'burst', t0: 1.4, at: 2, dur: 0.8, color: '#ffd23b', cn: 'Vashnik dies', legend: 'the kill' }); k.show('va', 0, 2.2); k.call(2.3, 4.6, 'Kill', { x: 36, y: -30 }); k.step(0.3); k.done({ focus: { x: 28, y: -38, r: 24 } }); } },
 };
+// (the clock: Imbibe lands 4 s after its cast starts; the biles come about 11 and 50 s after it lands, the infections about 19 and 71 s after
+// it, the Froths about 30 and 63 s after it. The second infections are shown once the raid is back at the Shadow fountain, a few seconds late)
 const VA_SIM = [
-  { at: 0, beat: 'start' }, { at: 10, mech: 'fangs', label: 'Dripping Fangs' }, { at: 20, mech: 'imbibe', label: 'Imbibe 1' }, { at: 25, mech: 'adds', label: 'Venoms 1' },
-  { at: 30, mech: 'catalyst', label: 'Malignant Catalyst' }, { at: 43, mech: 'infect', label: 'Infections 1' }, { at: 50, beat: 'tolawn' }, { at: 54, mech: 'froth1', label: 'Plague Froth 1 (mow the lawn)' }, { at: 87, mech: 'froth2', label: 'Plague Froth 2 (clean up)' }, { at: 98, beat: 'back' },
-  { at: 104, mech: 'imbibe', label: 'Imbibe 2' }, { at: 109, mech: 'adds', label: 'Venoms 2' }, { at: 127, mech: 'infect', label: 'Infections 2' }, { at: 134, beat: 'tolawn' }, { at: 138, mech: 'froth1', label: 'Plague Froth 3 (mow the lawn)' }, { at: 171, mech: 'froth2', label: 'Plague Froth 4 (clean up)' }, { at: 182, beat: 'back' },
-  { at: 188, mech: 'imbibe', label: 'Imbibe 3' }, { at: 193, mech: 'adds', label: 'Venoms 3' }, { at: 218, beat: 'tolawn' }, { at: 222, mech: 'froth1', label: 'Plague Froth 5 (mow the lawn)' }, { at: 255, mech: 'froth2', label: 'Plague Froth 6 (clean up)' }, { at: 266, beat: 'back' },
-  { at: 272, mech: 'imbibe', label: 'Imbibe 4' }, { at: 277, mech: 'adds', label: 'Venoms 4' }, { at: 302, beat: 'tolawn' }, { at: 306, mech: 'froth1', label: 'Plague Froth 7 (mow the lawn)' }, { at: 339, mech: 'froth2', label: 'Plague Froth 8 (clean up)' }, { at: 350, beat: 'back' },
-  { at: 356, beat: 'imb5' }, { at: 365, beat: 'last' }, { at: 411, beat: 'kill' },
+  { at: 0, beat: 'start' }, { at: 10, mech: 'fangs', label: 'Dripping Fangs' }, { at: 12, beat: 'froth0' }, { at: 20, mech: 'imbibe', label: 'Imbibe 1' }, { at: 25, mech: 'adds', label: 'Venoms 1' },
+  { at: 34, mech: 'catalyst', label: 'Malignant Catalyst 1' }, { at: 42, mech: 'infect', label: 'Infections 1' }, { at: 50, beat: 'tolawn' }, { at: 54, mech: 'froth1', label: 'Plague Froth 1 (mow the lawn)' }, { at: 73, mech: 'catalyst', label: 'Malignant Catalyst 2', o: { lawn: 1 } }, { at: 87, mech: 'froth2', label: 'Plague Froth 2 (clean up)' }, { at: 98, beat: 'back' }, { at: 99, mech: 'infect', label: 'Infections 2' },
+  { at: 104, mech: 'imbibe', label: 'Imbibe 2' }, { at: 109, mech: 'adds', label: 'Venoms 2' }, { at: 118, mech: 'catalyst', label: 'Malignant Catalyst 3' }, { at: 126, mech: 'infect', label: 'Infections 3' }, { at: 134, beat: 'tolawn' }, { at: 138, mech: 'froth1', label: 'Plague Froth 3 (mow the lawn)' }, { at: 157, mech: 'catalyst', label: 'Malignant Catalyst 4', o: { lawn: 1 } }, { at: 171, mech: 'froth2', label: 'Plague Froth 4 (clean up)' }, { at: 182, beat: 'back' }, { at: 183, mech: 'infect', label: 'Infections 4' },
+  { at: 188, mech: 'imbibe', label: 'Imbibe 3' }, { at: 193, mech: 'adds', label: 'Venoms 3' }, { at: 202, mech: 'catalyst', label: 'Malignant Catalyst 5' }, { at: 210, mech: 'infect', label: 'Infections 5' }, { at: 218, beat: 'tolawn' }, { at: 222, mech: 'froth1', label: 'Plague Froth 5 (mow the lawn)' }, { at: 241, mech: 'catalyst', label: 'Malignant Catalyst 6', o: { lawn: 1 } }, { at: 255, mech: 'froth2', label: 'Plague Froth 6 (clean up)' }, { at: 266, beat: 'back' }, { at: 267, mech: 'infect', label: 'Infections 6' },
+  { at: 272, mech: 'imbibe', label: 'Imbibe 4' }, { at: 277, mech: 'adds', label: 'Venoms 4' }, { at: 286, mech: 'catalyst', label: 'Malignant Catalyst 7' }, { at: 294, mech: 'infect', label: 'Infections 7' }, { at: 302, beat: 'tolawn' }, { at: 306, mech: 'froth1', label: 'Plague Froth 7 (mow the lawn)' }, { at: 325, mech: 'catalyst', label: 'Malignant Catalyst 8', o: { lawn: 1 } }, { at: 339, mech: 'froth2', label: 'Plague Froth 8 (clean up)' }, { at: 350, beat: 'back' }, { at: 351, mech: 'infect', label: 'Infections 8' },
+  { at: 356, beat: 'imb5' }, { at: 365, beat: 'last' }, { at: 370, mech: 'catalyst', label: 'Malignant Catalyst 9' }, { at: 378, mech: 'infect', label: 'Infections 9' }, { at: 411, beat: 'kill' },
 ];
-const VA_DUR = { 'm:imbibe': 6, 'm:adds': 30, 'm:froth1': 8, 'm:froth2': 8, 'm:catalyst': 6, 'm:infect': 15, 'm:fangs': 2, 'b:start': 7, 'b:tolawn': 4, 'b:back': 6, 'b:imb5': 6, 'b:last': 40, 'b:kill': 0 };
-const VA_SEV = { 'm:imbibe': 3, 'm:adds': 2, 'm:froth1': 3, 'm:froth2': 3, 'm:catalyst': 2, 'm:infect': 2, 'm:fangs': 1, 'b:start': 1, 'b:tolawn': 1, 'b:back': 1, 'b:imb5': 3, 'b:last': 2, 'b:kill': 1 };
+const VA_DUR = { 'm:imbibe': 6, 'm:adds': 30, 'm:froth1': 8, 'm:froth2': 8, 'm:catalyst': 6, 'm:infect': 15, 'm:fangs': 2, 'b:start': 7, 'b:froth0': 8, 'b:tolawn': 4, 'b:back': 6, 'b:imb5': 6, 'b:last': 40, 'b:kill': 0 };
+const VA_SEV = { 'm:imbibe': 3, 'm:adds': 2, 'm:froth1': 3, 'm:froth2': 3, 'm:catalyst': 2, 'm:infect': 2, 'm:fangs': 1, 'b:start': 1, 'b:froth0': 2, 'b:tolawn': 1, 'b:back': 1, 'b:imb5': 3, 'b:last': 2, 'b:kill': 1 };
 GDZ['Vashnik the Malignant'] = {
   upd: ['12.1', 'Oct 21, 2026'],
   stepRoles: {
-    'Imbibe (Always Shadow and Flame)': ['t', 'h', ''], 'The venoms (Grip them in, kill the fire apart)': ['td', 'td', 'd', 'd'], 'Plague Froth, first set (Mow the lawn)': ['', 'd', 'd', ''],
-    'Plague Froth, second set (Clean up the last totems)': ['', '', ''], 'Malignant Catalyst (Someone in every bile)': ['', 'd', ''], 'Infections (Walk out, dispel a pair at a time)': ['', 'h', 'h', ''], 'Dripping Fangs (Swap on every one)': ['t', 't'],
+    'Imbibe (Always Shadow and Flame)': ['t', 'h', ''], 'The venoms (Grip them in, kill the fire adds apart)': ['td', 'td', 'd', 'd'], 'Plague Froth (Walk out, aim away)': ['', '', '', ''], 'Plague Froth, first set (Mow the lawn)': ['', 'd', 'd', ''],
+    'Plague Froth, second set (Clean up the last totems)': ['', '', ''], 'Malignant Catalyst (Someone in every bile)': ['', 'd', ''], 'Infections (Walk out, dispel a few at a time)': ['', 'h', '', 'h'], 'Dripping Fangs (Swap on every one)': ['t', '', 't'],
   },
-  sum: 'Hold Vashnik by the Shadow fountain for every Imbibe, so it\'s always Shadow and Flame and never Blood. Grip the venoms in and kill the fire ones apart, soak every bile, dispel a pair at a time, and on Mythic hit every totem with the Froth waves: one line across the lawn, then clean up.',
+  sum: "Hold Vashnik by the Shadow fountain for every Imbibe, so it's always Shadow and Flame and never Blood. Grip the adds in and kill the two Burning Venoms apart, soak every bile, dispel the fire infections a few at a time, and keep your Plague Froth waves off the raid.",
   m: { sim: VA_SIM, simDur: VA_DUR, simSev: VA_SEV, beats: VA_BEATS,
-    simAlways: ['Every Imbibe from the same spot by the Shadow fountain: Shadow and Flame, never Blood.', 'Burning Venoms die 9 to 10 seconds apart.', 'Mythic: every totem hit before the next Imbibe. One left is survivable, two wipe.', 'Five healers: the infusions stack to five, so the healing check is the hard part.'],
-    source: 'Tactyks\' Mythic Vashnik video', sum: 'Heroic plus totems: each Imbibe raises about two dozen Malignant Totems, and only Plague Froth waves destroy them. A third Burning Venom, and Exploding Infection ramps until dispelled.' },
-  facts: [['Phases', '1, on a loop (Imbibe every 84 s)'], ['Bloodlust', 'On the pull'], ['Healers', '5', 'm'], ['Hardest part', 'Hitting every totem'], ['Fight length', 'About 7 minutes', 'm']],
+    simAlways: ['Every Imbibe from the same spot by the Shadow fountain: Shadow and Flame, never Blood.', 'Burning Venoms die 9 to 10 seconds apart.', 'Dripping Fangs about every 28 seconds: the tanks swap every time.', 'Biles and infections come twice per Imbibe; the second infections land about 13 seconds before the next Imbibe.', 'Every totem hit before the next Imbibe. One left is survivable, two wipe.', 'Five healers: the infusions stack to five, so the healing check is the hard part.'],
+    source: 'Tactyks\' Mythic Vashnik video', sum: "Hold Vashnik by the Shadow fountain for every Imbibe, so it's always Shadow and Flame and never Blood. Each Imbibe raises about two dozen Malignant Totems, and only Plague Froth waves destroy them: one line across the lawn (the open ground where they stand), then clean up. Three Burning Venoms die apart, and Exploding Infection ramps until it is dispelled.",
+    roles: {
+      t: ['Hold him by the Shadow fountain for every Imbibe.', 'Swap on every Dripping Fangs, with a defensive for the bite.', 'After the venoms walk him down to the lawn; back to the Shadow fountain before every Imbibe.'],
+      h: ['Five healers: the infusions stack to five. Raid cooldowns on every Imbibe from the second, the fifth biggest.', 'Exploding Infection: dispel in pairs, one pair at a time; never right before an Imbibe.', 'Stygian Infection: heal the absorb off while the player walks the edge.'],
+      d: ["Death Knights: grip the Burning Venoms in. Shrouded Venoms: Gorefiend's Grasp (Death Knight), Typhoon (Druid) or Sigil of Chains (Demon Hunter).", 'Kill Burning Venoms 9 to 10 seconds apart. Biles: melee take the ones by the boss, ranged the far ones.', 'Mythic Froth: take your marker on the first set; line up a totem on the second.'],
+    } },
+  facts: [['Phases', '1, on a loop (Imbibe every 84 s)'], ['Bloodlust', 'On the pull'], ['Healers', '4', 'h'], ['Healers', '5', 'm'], ['Hardest part', 'Killing the fire adds apart', 'h'], ['Hardest part', 'Hitting every totem', 'm'], ['Fight length', 'About 7 minutes', 'm']],
   phases: [
-    { id: 'p1', name: 'The loop: Imbibe to Imbibe', sum: 'One phase on repeat: Imbibe, the venoms, biles and infections, then the two Plague Froths, then the next Imbibe. Rinse and repeat, each time with bigger hits and healthier adds.',
-      m: { sum: 'The same loop, plus totems: the first Froth of each cycle mows the lawn, the second cleans up whatever is left.' },
+    { id: 'p1', name: 'The loop: Imbibe to Imbibe', sum: 'One phase on repeat: Imbibe, the venoms, a Plague Froth, biles and infections, then the next Imbibe. Rinse and repeat, each time with bigger hits and healthier adds.',
+      m: { sum: 'One phase on repeat: Imbibe, the venoms, biles and infections twice over, and two Plague Froths to clear the totems, then the next Imbibe. Each time the hits are bigger and the adds healthier.' },
       mechs: [
-        { id: 'imbibe', fail: VA_FAIL.imbibe, name: 'Imbibe (Always Shadow and Flame)', spell: 'Imbibe', what: 'At full energy, about every 84 seconds, he drains the two fountains nearest him: a raid hit for each, an infusion that makes that fountain\'s next hit and adds stronger, that fountain\'s adds and its infection.',
+        { id: 'imbibe', fail: VA_FAIL.imbibe, name: 'Imbibe (Always Shadow and Flame)', spell: 'Imbibe', what: "At full energy, about every 84 seconds, he drains the two fountains nearest him. Each one gives a raid hit, its own adds and infection, and an infusion that makes that fountain's next hit and adds stronger.",
           do: ['The boss tank holds him by the Shadow fountain, every Imbibe.', 'He drains Shadow and Flame: two raid hits, bigger each time.', 'Shadow and Flame adds come out; never touch Blood.'],
-          m: { what: 'At full energy, about every 84 seconds, he drains the two fountains nearest him: a raid hit for each, an infusion that makes that fountain\'s next hit and adds stronger, that fountain\'s adds and its infection. On Mythic about two dozen totems rise.', do: ['The boss tank holds him by the Shadow fountain, every Imbibe.', 'He drains Shadow and Flame: two raid hits, bigger each time.', 'Shadow and Flame adds come out; never touch Blood.', 'About two dozen totems rise: the Froth waves must hit them all.'], plan: ['Same spot every time means little movement and no Clotting Venoms. The DPS check gets easy; the healing check gets hard, so bring five healers.', 'Imbibe 5 is the biggest hit of the fight: stack every raid cooldown on it.'] },
+          plan: ['Same spot every time means little movement, but the infusions stack, so every Imbibe hits harder. Stack up for raid cooldowns on each one.'],
+          m: { what: "At full energy, about every 84 seconds, he drains the two fountains nearest him. Each one gives a raid hit, its own adds and infection, and an infusion that makes that fountain's next hit and adds stronger. On Mythic about two dozen totems rise.", do: ['The boss tank holds him by the Shadow fountain, every Imbibe.', 'He drains Shadow and Flame: two raid hits, bigger each time.', 'Shadow and Flame adds come out; never touch Blood.', 'About two dozen totems rise: the Froth waves must hit them all.'], plan: ['Same spot every time means little movement and no Clotting Venoms (the big slow Blood adds). The DPS check gets easy; the healing check gets hard, so bring five healers.', 'Every Imbibe hits harder: raid cooldowns on each one from the second on. The fifth is the biggest, about double the fourth.'] },
           map: (d) => VA_M.imbibe(false, d) },
-        { id: 'adds', fail: VA_FAIL.adds, name: 'The venoms (Grip them in, kill the fire apart)', spell: 'Burning Venom', what: 'Each Imbibe sends venoms crawling to the cavity: Shrouded Venoms from Shadow (killed twice, swirls when they die) and Burning Venoms from Flame (hurt the raid while alive, a raid hit when they die). Any that reach the cavity hit the raid very hard.',
-          do: ['Shrouded Venoms: Gorefiend\'s Grasp or Typhoon them onto the boss and cleave.', 'Burning Venoms: one Death Knight grips one to the boss, the other walks out and grips two to the middle.', 'Banish the middle one; slow or trap the far one.', 'Kill the Burning Venoms 9 to 10 seconds apart.'],
-          m: { plan: ['Two Death Knights is ideal, any spec. Sigil of Chains or Typhoon work every time; Gorefiend\'s Grasp every other set.', 'At four or five infusion stacks the adds get very healthy: crowd control the far fire add for good.', 'Anything alive for 60 seconds hardens: immune to crowd control and faster.'] },
-          map: () => VA_M.adds() },
-        { id: 'froth1', only: 'm', fail: VA_FAIL.froth1, name: 'Plague Froth, first set (Mow the lawn)', spell: 'Plague Froth', what: 'Five players are marked; 6 seconds later each fires big waves north, south, east and west. On Mythic the waves are the only thing that destroys the totems.',
-          do: ['Ranged targets take X, triangle and moon; melee targets take diamond and star.', 'The boss sits between diamond and star, melee stacked under him.', 'The line is slanted, so no wave crosses another target.', 'The waves mow down most of the totems.'],
-          plan: ['Damage doesn\'t matter during the Froths: the totems do.', 'If more melee get picked than there are melee markers, the ranged slide outward along the line.', 'Totems turn white when a wave hits them.'],
+        { id: 'adds', fail: VA_FAIL.adds, name: 'The venoms (Grip them in, kill the fire adds apart)', spell: 'Burning Venom', what: 'Each Imbibe sends venoms crawling to the cavity: Shrouded Venoms from Shadow (a shield as big as their health, and swirls on the ground when they die) and Burning Venoms from Flame (they hurt the raid while alive, and hit it when they die). Any that reach the cavity hit the raid very hard.',
+          do: ['Shrouded Venoms (five): pull them onto the boss and cleave.', 'Burning Venoms (two): crowd control the far one, a Warlock banish or a trap.', 'A Death Knight grips the first one to the boss and kills it.', 'Then grip the second one in and kill it about 9 seconds later.'],
+          plan: ["Gripping means pulling an add to you with Death Grip. Gorefiend's Grasp (Death Knight), Typhoon (Druid) or Sigil of Chains (Demon Hunter) gathers the Shrouded Venoms onto the boss.", 'Anything alive for 60 seconds hardens: immune to crowd control and faster, so kill on spawn.', 'Short of Death Knights? Ranged swap to the Burning Venoms and keep them crowd controlled so they never reach the middle.'],
+          m: { do: ['Shrouded Venoms (eight): gather them on the boss and cleave.', 'Burning Venoms (three): one Death Knight grips one to the boss, the other walks out and grips two to the middle.', 'A Warlock banishes the middle one; slow or trap the far one.', 'Kill the Burning Venoms 9 to 10 seconds apart.'], plan: ["Two Death Knights is ideal, any spec: gripping means pulling an add to you with Death Grip. Gorefiend's Grasp works every other set; Typhoon (Druid) or Sigil of Chains (Demon Hunter) work every time.", 'At four or five infusion stacks the adds get very healthy: crowd control the far fire add for good.', 'Anything alive for 60 seconds hardens: immune to crowd control and faster.', 'Short of Death Knights or a Warlock? Ranged swap to the fire adds and keep them crowd controlled so they never reach the middle.'] },
+          map: (d) => VA_M.adds(false, d) },
+        { id: 'froth0', only: 'h', fail: VA_FAIL.froth0, name: 'Plague Froth (Walk out, aim away)', spell: 'Plague Froth', what: 'A few players are marked. Six seconds later each fires a wave north, south, east and west.',
+          do: ['A few players get Plague Froth.', 'Walk out from the raid to a spot where none of your four lines points at anyone.', 'Stand still until it fires.', 'Everyone else: step out of the lines.'],
+          plan: ['The waves run straight north, south, east and west on the room, so stand off to one corner of the raid, not in line with anyone.', 'The first one comes about 13 seconds in, before the first Imbibe.'],
+          map: (d) => VA_M.froth0(false, d) },
+        { id: 'froth1', only: 'm', fail: VA_FAIL.froth1, name: 'Plague Froth, first set (Mow the lawn)', spell: 'Plague Froth', what: 'Five players are marked; 6 seconds later each fires big waves north, south, east and west. The waves are the only thing that destroys the totems.',
+          do: ['Ranged targets stand on the X, triangle and moon raid markers; melee targets on the diamond and star.', 'The boss sits between the diamond and the star, melee stacked under him.', 'Stand on your marker: the markers are on a slanted line, so no wave runs through another target.', 'The waves mow down most of the totems.'],
+          plan: ["Damage doesn't matter during the Froths: the totems do.", 'If more melee get picked than there are melee markers, the ranged slide outward along the line.', 'Totems turn white when a wave hits them.', 'The lawn is the open ground between the Flame and Shadow fountains where most totems stand: the waves "mow" it.'],
           map: () => VA_M.froth1() },
         { id: 'froth2', only: 'm', fail: VA_FAIL.froth2, name: 'Plague Froth, second set (Clean up the last totems)', spell: 'Malignance', what: 'Any totem still up at the next Imbibe casts Malignance: a raid hit and a 1-minute DoT. One is survivable; two or more wipe the raid.',
           do: ['Call where totems are left: "two left, one to the entrance".', 'Each target walks to a totem and lines a wave up on it.', 'Totems first; not hitting melee second.'],
-          plan: ['Two ranged always favor the left side, two the right; the rest stay central. Mobile melee leave the boss for far totems.', 'Then move back to the Shadow fountain: Imbibe comes right after.'],
+          plan: ['Two targets favor the left side and two the right; the fifth stays central. A mobile melee target runs out for a far totem.', 'Then move back to the Shadow fountain: Imbibe comes right after.'],
           map: () => VA_M.froth2() },
         { id: 'catalyst', fail: VA_FAIL.catalyst, name: 'Malignant Catalyst (Someone in every bile)', spell: 'Malignant Catalyst', what: 'A raid hit, then bile circles land around the room 5 seconds later. Each one is split between the players in it; one that lands on nobody hits the whole raid.',
-          do: ['Raid hit: biles are coming.', 'The nearest ranged walks into each bile.', 'Five biles on Mythic, five soakers.'],
-          map: () => VA_M.catalyst() },
-        { id: 'infect', fail: VA_FAIL.infect, name: 'Infections (Walk out, dispel a pair at a time)', spell: 'Exploding Infection', what: 'Each Imbibe brings its fountains\' infections. Exploding Infection (Flame): removing it blasts the raid, less the farther away; on Mythic it ramps until dispelled. Stygian Infection (Shadow): a big heal absorb, and you drop circles as you move.',
-          do: ['Exploding Infection: walk out from the raid.', 'Two healers dispel one pair; another two take the second pair a while later.', 'Stygian Infection: keep walking at the edge, leaving your circles away from everyone.', 'Healers heal the absorb off.'],
-          m: { plan: ['No need to rush the dispels: players can take close to ten stacks first.', 'Never dispel right before Imbibe 4 or 5.'] },
-          map: () => VA_M.infect() },
+          do: ['Raid hit: biles are coming.', 'Cover every bile: melee take the ones by the boss, ranged and a healer the far ones.', 'Stay in until it goes off.'],
+          m: { do: ['Raid hit: biles are coming.', 'Melee take the biles by the boss; ranged and a healer take the far ones.', 'Five biles on Mythic, five soakers.'], plan: ['They come twice per Imbibe, about 11 and 50 seconds after it.'] },
+          map: (d, o) => VA_M.catalyst(false, d, o) },
+        { id: 'infect', fail: VA_FAIL.infectH, name: 'Infections (Walk out, dispel a few at a time)', spell: 'Exploding Infection', what: 'Fire and Shadow each hand out an infection. Exploding Infection (Flame): removing it blasts the raid, less the farther away. Stygian Infection (Shadow): a big heal absorb, and you drop circles as you move.',
+          do: ['Exploding Infection: walk out from the raid.', 'Healers dispel them a few at a time, spaced out, and only when the raid is healthy.', 'Stygian Infection: keep walking at the edge, leaving your circles away from everyone.', 'Healers heal the absorb off.'],
+          m: { fail: VA_FAIL.infect, what: 'Twice per Imbibe (about 19 and 71 seconds after it) four players get Exploding Infection and four get Stygian Infection. Exploding Infection (Flame): removing it blasts the raid, less the farther away, and it ramps until dispelled. Stygian Infection (Shadow): a big heal absorb, and you drop circles as you move.',
+            do: ['Exploding Infection (four players): walk out from the raid.', 'Two healers dispel two of them, then two more a few seconds later: a pair at a time.', 'Stygian Infection (four players): keep walking at the edge, leaving your circles away from everyone.', 'Healers heal the absorb off.'],
+            plan: ['The ramp is slow, so there is no rush: players can take close to ten stacks. If you are dispelled last, use a personal.', 'Never dispel right before an Imbibe: the blast lands on top of the Imbibe hit. The second set comes about 13 seconds before the next Imbibe, so start it early or hold it.', 'Stygian: do not run so far out that you leave healing range.'] },
+          map: (d) => VA_M.infect(false, d) },
         { id: 'fangs', fail: VA_FAIL.fangs, name: 'Dripping Fangs (Swap on every one)', spell: 'Dripping Fangs', what: 'About every 28 seconds he bites his tank: much more physical damage taken and a stacking DoT.',
-          do: ['Dripping Fangs on the boss tank.', 'The other tank taunts right away, every time.'],
+          do: ['The boss tank uses a defensive for the bite.', 'Dripping Fangs lands: much more physical damage taken.', 'The other tank taunts right away, every time.'],
           map: () => VA_M.fangs() },
       ],
       tiles: [
-        { name: 'Imbibe 5 (Stack every cooldown)', do: 'Five stacks of both infusions: the biggest raid hit of the fight. Rallying Cry, Spirit Link, Aura Mastery, Anti-Magic Zone and personals on it.' },
-        { name: 'The last set (Don\'t kill the fire)', do: 'In the last set, crowd control the Burning Venoms instead of killing them, ignore the totems (just don\'t hit melee), and burn Vashnik before Imbibe 6.' },
+        { name: 'Imbibe 5 (Stack every cooldown)', do: 'Five stacks of both infusions: the biggest raid hit of the fight, about double the one before, and the last Imbibe of a normal kill. Rallying Cry, Spirit Link, Aura Mastery, Anti-Magic Zone and personals on it.', h: { name: 'Every Imbibe (Stack for cooldowns)', do: 'Each Imbibe hits harder than the last. Stack up and use raid cooldowns and defensives on every one.' } },
+        { name: "The last set (Don't kill the fire)", only: 'm', do: 'In the last set, crowd control the Burning Venoms instead of killing them, ignore the totems (just don\'t hit melee), and burn Vashnik before Imbibe 6. The set is under a minute, so the crowd control holds until he dies.' },
+        { name: 'Toxic Vapor (It only grows)', do: 'Constant raid damage that climbs with every Imbibe, so the longer the fight, the harder the healing. Burn him before it piles up.', m: { note: 'In our kill a tick was about four times as strong in minute seven as in minute one.' } },
       ] },
   ],
   roles: {
-    t: ['Hold him by the Shadow fountain for every Imbibe.', 'Swap on every Dripping Fangs.'],
-    h: ['Five healers: the infusions stack to five.', 'Exploding Infection: dispel in pairs, one pair at a time; never right before Imbibe 4 or 5.', 'Imbibe 5: every raid cooldown.'],
-    d: ['Death Knights: grip the Burning Venoms in; Gorefiend\'s Grasp or Typhoon the Shrouded ones.', 'Kill Burning Venoms 9 to 10 seconds apart.', 'Ranged: soak the biles.', 'Mythic Froth: take your marker on the first set; line up a totem on the second.'],
+    t: ['Hold him by the Shadow fountain for every Imbibe.', 'Swap on every Dripping Fangs, with a defensive for the bite.'],
+    h: ['Four healers: raid cooldowns on every Imbibe, which hits harder each time.', 'Exploding Infection: dispel a few at a time, spaced out, when the raid is healthy.', 'Stygian Infection: heal the absorb off while the player walks the edge.'],
+    d: ['Death Knights: grip one Burning Venom to the boss, and the other in when it is time. The rest: kill what the boss is cleaving.', 'Plague Froth: walk out, stand still and aim the lines away from the raid.', 'Biles: melee take the ones by the boss, ranged the far ones.'],
   },
 };
 
@@ -2398,29 +2450,31 @@ const szBoss = (k, t, P) => k.boss('sz', SZ, t || 0, (P || SZ_EN)[0], (P || SZ_E
 // a clump of players round c (radius r), each keeping a slot; hold: from where they stood then
 function szClump(k, t, ids, c, r, hold) { ids.forEach((id, i) => { const [dx, dy] = gdzSpot(i, ids.length, r); if (hold != null) k.hold(hold, id); k.at(t, id, c[0] + dx, c[1] + dy); }); return k; }
 // the tank-combo layout at boss spot B: the north-side soak group, the south-east one, both tanks with a group, all clear of the edge
-function szCombo(k, t, B, side, hold, skip) { const s = side || 1, gL = nzAdd(B, s > 0 ? 80 : 260, 11), gR = nzAdd(B, s > 0 ? -40 : 140, 12), sk = (ids) => ids.filter((id) => !(skip || []).includes(id));
-  szClump(k, t, sk(SZ_L), gL, 7, hold); szClump(k, t, sk(SZ_R), gR, 7, hold); const a = nzAdd(B, s > 0 ? 80 : 260, 5), b = nzAdd(B, s > 0 ? -40 : 140, 5); if (hold != null) k.hold(hold, ['t1', 't2']); k.at(t, 't1', a[0], a[1]).at(t, 't2', b[0], b[1]); return { gL, gR }; }
+function szCombo(k, t, B, side, hold, skip) { const s = side || 1, gL = nzAdd(B, s > 0 ? 90 : 270, 13), gR = nzAdd(B, s > 0 ? -50 : 130, 13), sk = (ids) => ids.filter((id) => !(skip || []).includes(id));
+  szClump(k, t, sk(SZ_L), gL, 7, hold); szClump(k, t, sk(SZ_R), gR, 7, hold); const a = nzAdd(B, s > 0 ? 90 : 270, 5), b = nzAdd(B, s > 0 ? -50 : 130, 5); if (hold != null) k.hold(hold, ['t1', 't2']); k.at(t, 't1', a[0], a[1]).at(t, 't2', b[0], b[1]); return { gL, gR }; }
 const SZ_M = {
   // Apex Predator, the tank combo: five casts at the current tank, random order (Tempest never first or last): two Ravage (a huge hit and
-  // +600% damage taken from the next: the tank points it at the edge, alone, and the other taunts), two Mutilate (a frontal soak split
+  // much more damage taken from the next: the tank points it at the edge, alone, and the other taunts), two Mutilate (a frontal soak split
   // between everyone in it, 5 or more; the next one hits those players 500% harder, so two groups take turns) and one Tempest (tornadoes)
-  // (fail: the second Mutilate with too few in it)
+  // (fail: the second Mutilate with too few in it). The two soak groups are shown as soft zones so they can be told apart.
   combo(fail, o) {
     const ex = !!(o && o.ex), sd = ex ? 180 : 0, L = 13, k = gdzKit(SZ, L), B = ex ? SZ_EX : SZ_EN, NG = ex ? 'South' : 'North', SG = ex ? 'North-west' : 'South-east'; szBoss(k, 0, B); const g = szCombo(k, 0, B, ex ? -1 : 1); /* (ex: the exit side, everything turned round) */
+    k.ring({ x: g.gL[0], y: g.gL[1], r: 9, fx: 'zone', t0: 0, dur: L, color: '#ff8a5a', fill: 'rgba(255,138,90,.10)', cn: NG + ' soak group', legend: 'the group that takes the first Mutilate' });
+    k.ring({ x: g.gR[0], y: g.gR[1], r: 9, fx: 'zone', t0: 0, dur: L, color: '#ffd23b', fill: 'rgba(255,210,59,.08)', cn: SG + ' soak group', legend: 'the group that takes the second Mutilate' });
     k.cast('sz', 'Mutilate', 1.2, 2.6); k.cone({ from: 'sz', to: 't1', r: 18, width: 50, at: 2.6, soak: true, color: '#ff8a5a', legend: 'Mutilate: split between everyone in it' }); k.call(1.2, 2.6, NG + ' group: soak', { x: g.gL[0] + (ex ? -6 : 6), y: g.gL[1] + (ex ? -15 : 15), color: '#ff8a5a', ink: '#1a0a00' });
     const W1 = nzAdd(B, 180 + sd, 6); k.hold(2.8, 't1').at(4, 't1', W1[0], W1[1]); k.cast('sz', 'Ravage', 4, 4.8); k.cone({ from: 'sz', to: 't1', r: 18, width: 50, at: 4.8, color: '#ff3b3b', legend: 'Ravage: a huge hit on the tank, aimed at the edge' });
-    k.ring({ on: 't1', r: 2.6, fx: 'debuff', t0: 4.8, dur: L - 4.8, color: '#ff3b3b', cn: 'Ravage', legend: 'Ravage: +600% damage from the next one: the other tank taunts' });
+    k.ring({ on: 't1', r: 2.6, fx: 'debuff', t0: 4.8, dur: L - 4.8, color: '#ff3b3b', cn: 'Ravage', legend: 'Ravage: much more damage from the next one: the other tank taunts' });
     k.call(5, 6.2, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' });
     if (fail) { szClump(k, 6, SZ_R.slice(3), nzAdd(B, -60 + sd, 24), 6, 5); }
     k.cast('sz', 'Mutilate', 5.6, 7); k.cone({ from: 'sz', to: 't2', r: 18, width: 50, at: 7, soak: true, color: '#ff8a5a', legend: 'Mutilate: split between everyone in it' }); k.call(5.6, 7, SG + ' group: soak', { x: g.gR[0] + (ex ? -10 : 10), y: g.gR[1] + (ex ? 16 : -16), color: '#ff8a5a', ink: '#1a0a00' });
-    if (fail) { ['m4', 'm5', 'm6'].forEach((id) => ulHit(k, id, 7.2, 'Mutilate: too few')); gdzFailBlast(k, 7.6, 'Only four in the soak: too much each', B[0] + (ex ? -14 : 14), B[1] + (ex ? -26 : 26), ['m4', 'm5'], 'Mutilate'); k.step(1.2).step(4).step(7);
-      k.pause(7.4, 'Most of the ' + SG.toLowerCase() + ' group drifted off. Only four took the second Mutilate: split four ways, it kills.', { x: g.gR[0], y: g.gR[1], r: 12 });
+    if (fail) { ulHit(k, 'm4', 7.2, 'Too few: it kills'); gdzFailBlast(k, 7.6, 'Only four in the soak: too much each', B[0] + (ex ? -14 : 14), B[1] + (ex ? -26 : 26), ['m4', 'm5'], 'Mutilate'); k.step(1.2).step(4).step(7);
+      k.pause(7.4, 'Most of the ' + SG.toLowerCase() + ' group drifted off. Only four took the second Mutilate: it needs at least five, and split four ways it kills.', { x: g.gR[0], y: g.gR[1], r: 12 });
       return k.done({ title: 'Mistake: a Mutilate with too few in it', focus: { x: B[0] + (ex ? -8 : 8), y: B[1] + (ex ? -2 : 2), r: 26 }, badLabel: 'too few in the soak' }); }
     // (Tempest: tornadoes roll out from the boss; everyone keeps clear of their paths)
     k.cast('sz', 'Tempest', 7.6, 9); [15, 140, 165, 200, 235].forEach((a, i) => { const id = 'tw' + i; k.add(id, 'Tempest tornado', 9, B[0], B[1]); for (let t = 10; t <= L + 0.01; t += 1) { const q = nzAdd(B, a + sd + (t - 9) * 4, (t - 9) * 4.5); k.add(id, 'Tempest tornado', t, q[0], q[1]); } k.show(id, 9, L);
       k.ring({ on: id, r: 3, fx: 'zone', t0: 9, dur: L - 9, color: '#9ad7ff', fill: 'rgba(154,215,255,.25)', cn: 'Tempest', legend: 'a tornado: deadly to anyone but a tank' }); });
     const W2 = nzAdd(B, 225 + sd, 6); k.hold(9, 't2').at(10.4, 't2', W2[0], W2[1]); k.cast('sz', 'Ravage', 10.6, 11.4); k.cone({ from: 'sz', to: 't2', r: 18, width: 50, at: 11.4, color: '#ff3b3b', legend: 'Ravage: a huge hit on the tank, aimed at the edge' });
-    k.ring1(['t1', 't2']).step(1.2).step(4).step(5.6).step(7.6).step(10.6);
+    k.ring1(['t1', 't2']).step(1.2).step(4).step(5).step(5.6).step(7.6);
     k.pause(3.4, 'Mutilate on the ' + NG.toLowerCase() + ' group, Ravage on the tank alone, aimed at the edge. Now the other tank taunts: the ' + SG.toLowerCase() + ' group takes the second Mutilate, then Tempest and the last Ravage.', { x: B[0] + (ex ? -2 : 2), y: B[1] + (ex ? -2 : 2), r: 22 });
     return k.done({ title: 'The tank combo: soaks take turns, Ravage at the edge', focus: { x: B[0] + (ex ? -8 : 8), y: B[1] + (ex ? -2 : 2), r: 26 }, hlLabel: 'the tanks' });
   },
@@ -2433,35 +2487,39 @@ const SZ_M = {
     k.call(0.6, 3, 'Tornado through the boss!', { x: B[0] + 8, y: B[1] + 18, color: '#9ad7ff', ink: '#06131c' });
     // (the melee step out of the tornado coming through them, then back in)
     const ME = ['m2', 'm5']; ME.forEach((id, i) => { if (fail && i === 0) return; const p = k.posAt(id, 0), q = nzAdd(p, 90 + i * 60, 7); k.hold(1.6, id).at(2.8, id, q[0], q[1]).hold(6, id).at(7.4, id, p[0], p[1]); });
-    if (fail) { ulHit(k, 'm2', 4, 'Tornado: dead'); k.oops('m2', 4); k.step(0.6).step(4);
+    if (fail) { ulHit(k, 'm2', 4, 'Tornado: dead'); k.oops('m2', 4); k.step(0.6).step(2.2).step(4);
       k.pause(4.3, 'This melee kept hitting the boss as the tornado came through: one touch and they were dead.', { on: 'm2', r: 8 });
       return k.done({ title: 'Mistake: greeding into a tornado', focus: { x: 4, y: 4, r: 24 }, badLabel: 'hit by a tornado' }); }
     k.ring1(ME).step(0.6).step(1.6).step(6);
     k.pause(2.4, 'Tornadoes are the number one killer here. Call them as they pass through the boss; the melee step off and come back once it has passed.', { x: 4, y: 4, r: 20 });
     return k.done({ title: 'Tempest: step off for the tornadoes', focus: { x: 4, y: 4, r: 24 }, hlLabel: 'melee stepping out' });
   },
-  // Mythic, Serpent's Fury: the player farthest from the boss is marked while his rage climbs; at 100 the raid is dead. 14 players within 8
-  // yards of the marked one makes him charge them (To the Slaughter) and resets his rage. Right after each tank combo the raid pre-stacks
-  // and the assigned Hunter walks in 1 second before the Surge bombs. Everyone in it gets Virulence: short lines 5 seconds later that pass
-  // it on to anyone they hit: spread to set spots, half outside, half inside (fail: only 13 in the stack)
+  // Mythic, Serpent's Fury: the player farthest from the boss is marked while his rage climbs; at 100 the raid is dead. 14 players stacked
+  // within 8 yards of the marked one makes him charge them (To the Slaughter) and resets his rage. Right after each tank combo the raid
+  // pre-stacks and the Fury player (a mobile Hunter or Mage) walks in about 1 second before the Surge goes off. Everyone in it gets Virulence:
+  // short lines 5 seconds later that pass it on to anyone they hit: spread to set spots, half outside, half inside; the Fury player goes to
+  // the farthest spot, so they get the mark again (fail: only 12 in the stack)
   fury(fail) {
     const L = 12, k = gdzKit(SZ, L), B = SZ_EN, S0 = nzAdd(B, 20, 10), HU = 'r7'; szBoss(k); szCombo(k, 0, B, 1, null, [HU]);
-    k.at(0, HU, S0[0] + 13, S0[1] + 12); k.ring({ on: HU, r: 8, fx: 'zone', t0: 0, dur: 4.4, color: '#ff5a5a', fill: 'rgba(255,90,90,.12)', cn: 'Serpent\'s Fury', legend: 'Serpent\'s Fury: 14 players inside resets his rage' });
+    k.at(0, HU, S0[0] + 13, S0[1] + 12); k.ring({ on: HU, r: 8, fx: 'zone', t0: 0, dur: 4.4, color: '#ff5a5a', fill: 'rgba(255,90,90,.12)', cn: "Serpent's Fury", legend: "Serpent's Fury: 14 players inside resets his rage" });
     k.call(0.3, 3, 'Rage 92: stack now', { x: -10, y: 30, color: '#ff8a8a', ink: '#200a0a' });
     const IN = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 't2', 'h1'].slice(0, fail ? 12 : 14);
     szClump(k, 2.4, IN, S0, 6.5, 0.4); k.hold(2.6, HU).at(4.2, HU, S0[0] + 1, S0[1] + 1);
-    if (fail) { k.call(4.4, 6.6, '13 inside: nothing happens', { x: S0[0], y: S0[1] + 12, color: '#ff3b3b', ink: '#fff' }); gdzFailBlast(k, 7.2, 'Rage 100: Unbound Ferocity, a wipe', 0, 20, ['m1', 'h2', 'r3'], 'Unbound Ferocity'); k.step(0.3).step(2.4).step(4.4);
-      k.pause(4.8, 'One player short: 13 in the circle with the marked Hunter. To the Slaughter never came, his rage hit 100, and the raid died.', { x: S0[0], y: S0[1], r: 12 });
-      return k.done({ title: 'Mistake: one short in the Fury stack', focus: { x: -18, y: 6, r: 28 } }); }
+    if (fail) { k.call(4.4, 6.6, '12 inside: nothing happens', { x: S0[0], y: S0[1] + 12, color: '#ff3b3b', ink: '#fff' }); gdzFailBlast(k, 7.2, 'Rage 100: Unbound Ferocity, a wipe', 0, 20, ['m1', 'h2', 'r3'], 'Unbound Ferocity'); k.step(0.3).step(2.4).step(4.4);
+      k.pause(4.8, 'Two short: only 12 stacked on the marked player instead of 14. He never charged, his rage hit 100, and the raid died.', { x: S0[0], y: S0[1], r: 12 });
+      return k.done({ title: 'Mistake: too few in the Fury stack', focus: { x: -18, y: 6, r: 28 } }); }
     szBoss(k, 4.4, B); szBoss(k, 4.9, [S0[0] - 3, S0[1] - 2]); k.call(4.4, 6, 'To the Slaughter: rage reset', { x: S0[0], y: S0[1] + 12, color: '#7ee36a', ink: '#0a1a06' });
-    // (Virulence: everyone in it spreads to set spots before the lines go off)
-    const SP = IN.concat([HU]).map((id, i) => nzAdd(S0, i * (360 / 15), i % 2 ? 11 : 18));
+    // (Virulence: everyone in it spreads to set spots before the lines go off; the Fury player to the farthest one)
+    const SP = IN.concat([HU]).map((id, i) => nzAdd(S0, i * (360 / 15), i % 2 ? 11 : 18)); SP[SP.length - 1] = nzAdd(S0, 330, 28);
     IN.concat([HU]).forEach((id, i) => { k.ring({ on: id, r: 2.4, fx: 'debuff', t0: 4.8, dur: 5, color: '#c0ff7a', cn: 'Virulence', legend: 'Virulence: in 5 seconds short lines go out and pass it to anyone they hit' }); k.hold(5, id).at(8.6, id, SP[i][0], SP[i][1]);
       k.ring({ on: id, r: 3.5, fx: 'burst', t0: 9.4, at: 9.8, dur: 0.6, color: '#c0ff7a', cn: 'Virulence lines', legend: 'the lines go off: keep them off everyone' }); });
+    ['t1', 'h2', 'h3', 'h4'].forEach((id) => { const p = k.posAt(id, 8), near = SP.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 5.5); /* (anyone not in the stack who stands where a Virulence line will burst steps clear of it) */
+      if (near) { const dd = [p[0] - S0[0], p[1] - S0[1]], n = Math.hypot(dd[0], dd[1]) || 1; k.hold(7, id).at(8.6, id, p[0] + dd[0] / n * 7, p[1] + dd[1] / n * 7); } });
+    k.call(8, 11, 'Farthest spot: keeps the mark', { on: HU, color: '#ff8a8a', ink: '#200a0a' });
     szBoss(k, 9, [S0[0] - 3, S0[1] - 2]); szBoss(k, 11.6, B);
     k.ring1([HU]).step(0.3).step(2.4).step(4.4).step(5);
-    k.pause(3.8, 'Right after the tank combo the raid stacks, and the Hunter with the mark walks in one second before the Surge bombs: 14 in the circle, he charges, his rage resets.', { x: S0[0], y: S0[1], r: 14 });
-    return k.done({ title: 'Serpent\'s Fury: 14 in the circle, then spread', focus: { x: -18, y: 6, r: 28 }, hlLabel: 'the Hunter with the mark' });
+    k.pause(3.8, 'Right after the tank combo the raid stacks, and your Fury player walks in about one second before the Surge goes off: 14 in the circle, he charges, his rage resets.', { x: S0[0], y: S0[1], r: 14 });
+    return k.done({ title: "Serpent's Fury: 14 in the circle, then spread", focus: { x: -18, y: 6, r: 28 }, hlLabel: 'your Fury player' });
   },
   // Venomous Surge: two players get a 10-second DoT; when it ends the raid takes a hit (less the farther away) and a Viscous Cyst drops
   // where they stand: walk it to your marker, opposite a wind tunnel, well away from the raid (2 minutes; touching one pops it, a knockback
@@ -2491,12 +2549,12 @@ const SZ_M = {
     const ar = (id, dir, t1) => { const p = k.posAt(id, 3), q = nzAdd(p, SZ_AR[dir], 9); k.link({ from: id, toYd: { x: q[0], y: q[1] }, t0: 1, t1, color: '#c9e8ff', legend: 'the arrow: where you\'ll be launched' }); };
     PR.forEach(([a, da, b, db, c]) => { const pa = nzAdd(c, SZ_AR[db], 5), pb = nzAdd(c, SZ_AR[da], 5); k.hold(0.6, [a, b]).at(3, a, pa[0], pa[1]).at(3, b, pb[0], pb[1]); ar(a, da, 8); ar(b, db, 8); k.hold(8, [a, b]).at(8.6, a, c[0] - 1.5, c[1]).at(8.6, b, c[0] + 1.5, c[1]); });
     const [ra, rda, rb, rdb, rc] = RA; if (!fail) { const pa = nzAdd(rc, SZ_AR[rda] + 180, 6), pb = nzAdd(rc, SZ_AR[rdb] + 180, 6); k.hold(0.6, [ra, rb]).at(3, ra, pa[0], pa[1]).at(3, rb, pb[0], pb[1]); ar(ra, rda, 8); ar(rb, rdb, 8); k.hold(8, [ra, rb]).at(8.7, ra, rc[0] - 1.5, rc[1] + 1).at(8.7, rb, rc[0] + 1.5, rc[1] - 1); }
-    else { const pa = [36, 20]; k.hold(0.6, ra).at(3, ra, pa[0], pa[1]); ar(ra, rda, 8); const q = nzAdd(pa, SZ_AR[rda], 46); k.hold(8, ra).at(9.4, ra, q[0], q[1]); k.call(8, 9.6, 'Knocked back', { on: ra, color: '#ff3b3b', ink: '#fff' }); }
+    else { const pa = [-4, -18], fd = 's'; k.hold(0.6, ra).at(3, ra, pa[0], pa[1]); ar(ra, fd, 8); const q = nzAdd(pa, SZ_AR[fd], 52); k.hold(8, ra).at(9.4, ra, q[0], q[1]); k.call(8, 9.6, 'Knocked back', { on: ra, color: '#ff3b3b', ink: '#fff' }); }
     k.ring({ on: 'm3', r: 3, fx: 'safe', t0: 7.4, dur: 1.4, color: '#ffd23b', cn: 'Immunity', legend: 'an immunity or movement ability cancels your own launch' }); k.call(6.8, 8.6, 'Cancel', { on: 'm3', color: '#ffd23b', ink: '#1a1400' });
     k.call(1, 3, 'Arrows out: find your partner', { x: 10, y: 44, color: '#c9e8ff', ink: '#06131c' });
     if (fail) { k.oops(ra, 9.4); k.step(1).step(3).step(8);
-      k.pause(9.6, 'This Priest can\'t cancel their launch and nobody lined up with them: they were thrown straight off the platform.', { x: 40, y: 34, r: 14 });
-      return k.done({ title: 'Mistake: nobody lined up with the Priest', focus: { x: 18, y: 14, r: 40 }, badLabel: 'thrown off' }); }
+      k.pause(9.6, 'This Priest can\'t cancel their launch and nobody lined up with them: they were thrown straight off the platform.', { x: -24, y: -44, r: 18 });
+      return k.done({ title: 'Mistake: nobody lined up with the Priest', focus: { x: -8, y: -30, r: 40 }, badLabel: 'thrown off' }); }
     k.ring1(['r1', 'r4', 'h2', 'r5', 'r6', 'h4']).step(1).step(3).step(8);
     k.pause(5, 'Each marked player finds a partner whose arrow points at them, head on or at right angles, and they collide in the air. Anyone who can cancel it just cancels.', { x: 22, y: 16, r: 22 });
     return k.done({ title: 'Raging Crosswinds: collide with a partner', focus: { x: 18, y: 14, r: 34 }, hlLabel: 'players with arrows' });
@@ -2530,9 +2588,9 @@ const SZ_M = {
   },
 };
 const SZ_FAIL = {
-  combo: { name: 'A Mutilate with too few in it', what: 'Most of the group drifts off and only four take the second Mutilate: split four ways, it kills.', do: ['The first group soaks.', 'The second group drifts off.', 'Four people take it: deaths.'], map: () => SZ_M.combo(true) },
+  combo: { name: 'A Mutilate with too few in it', what: 'Most of the second group drifts off and only four take the Mutilate: it needs at least five, and split four ways it kills.', do: ['The first group soaks.', 'The second group drifts off.', 'Four people take it: deaths.'], map: () => SZ_M.combo(true) },
   tempest: { name: 'Greeding into a tornado', what: 'A melee keeps hitting the boss as a tornado comes through: one touch and they\'re dead.', do: ['A tornado comes through the boss.', 'One melee doesn\'t move.', 'Dead.'], map: () => SZ_M.tempest(true) },
-  fury: { name: 'One short in the Fury stack', what: 'Only 13 in the circle with the marked player: To the Slaughter never comes, his rage hits 100 and the raid dies.', do: ['The raid stacks.', 'One player short.', 'Rage 100: a wipe.'], map: () => SZ_M.fury(true) },
+  fury: { name: 'Too few in the Fury stack', what: 'Only 12 players stack on the marked player instead of 14: he never charges, his rage hits 100 and the raid dies.', do: ['The raid stacks.', 'Two players short.', 'Rage 100: a wipe.'], map: () => SZ_M.fury(true) },
   surge: { name: 'A cyst dropped in the raid', what: 'A Surge player drops their cyst in the raid: someone walks into it, it pops early, and it\'s missing for the winds.', do: ['Surge on two players.', 'One drops it in the raid.', 'It\'s popped by accident.'], map: () => SZ_M.surge(true) },
   crosswinds: { name: 'Nobody lined up with the Priest', what: 'A Priest can\'t cancel their launch and has no partner: thrown off the platform.', do: ['Arrows go out.', 'The Priest has no partner.', 'Thrown off the edge.'], map: () => SZ_M.crosswinds(true) },
   digin: { name: 'Off the stack when the wind blows', what: 'A player isn\'t in the stack when a wind comes: nothing stops them and they\'re blown off the platform.', do: ['Dig In: the raid stacks.', 'One player stands apart.', 'Blown off by the wind.'], map: () => SZ_M.digin(true) },
@@ -2541,20 +2599,23 @@ const SZ_FAIL = {
 const SZ_BEATS = {
   start: { name: 'The pull (Deep, to the entrance side)', do: ['Pull him deep, to the entrance side of the platform: the puddles that follow the tank combo stay out of the middle.', 'Bloodlust on the pull. Read the tunnels: put a marker across from each wind, and the fourth at the exit.'],
     run() { const k = gdzKit(SZ, 6); szBoss(k, 0, [0, 3]); szCombo(k, 0, [0, 3]); szBoss(k, 0.3, [0, 3]); szBoss(k, 5.6); szCombo(k, 5.6, SZ_EN, 1, 0.3); SZ_CY.forEach(([x, y], i) => k.wmark(SZ_MK[i], x, y)); k.step(0.2); } },
-  toex: { name: 'To the exit side (Second tank combo)', do: ['After the winds, the tank takes him to the exit side of the platform for the second combo; the groups follow, the soak groups on the same sides.'],
+  toex: { name: 'To the exit side (Second Apex Predator)', do: ['After the winds, the tank takes him to the exit side of the platform for the second combo; the groups follow, the soak groups on the same sides.'],
     run() { const k = gdzKit(SZ, 7); szBoss(k, 0, [-6, -2]); szCombo(k, 0, [-6, -2]); szBoss(k, 0.3, [-6, -2]); szBoss(k, 6.6, SZ_EX); szCombo(k, 6.6, SZ_EX, -1, 0.3); k.step(0.2); } },
-  end: { name: 'The end (Don\'t touch the last cyst)', do: ['After the last Dig In, don\'t pop the exit cyst: the enrage comes right after and the pop would kill.', 'In the enrage, people can taunt a Mutilate each and die to buy seconds. Burn him.'],
+  end: { name: "The end (Third Dig In: don't touch the last cyst)", do: ["Third Dig In: burn him down and don't pop the exit cyst: the enrage follows.", 'In the enrage, people can taunt a Mutilate each and die to buy seconds.'],
     run() { const k = gdzKit(SZ, 5); szBoss(k, 0, SZ_C); szClump(k, 0, ['t1', 't2'].concat(SZ_L, SZ_R), [SZ_C[0], SZ_C[1] - 12], 8); k.ring({ on: 'sz', r: 7, fx: 'burst', t0: 1.4, at: 2, dur: 0.8, color: '#ffd23b', cn: 'Sszorak dies', legend: 'the kill' }); k.show('sz', 0, 2.2); k.call(2.3, 4.6, 'Kill', { x: 10, y: 14 }); k.step(0.3); } },
 };
+// (the clock: Apex Predator, then the Fury pop, Surge and Crosswinds; Tempest is the fourth cast of each Apex Predator or so, and its tornadoes
+// roam for 30 seconds)
+const SZ_DIGDO = ['Stack in the middle: three winds, three cysts, then the exit.', "Each wind pushes the stack into the cyst across from its tunnel. It pops: you're back in the middle.", 'Re-centre before the next wind.', 'After the third wind, a mobile player pops the exit cyst.', 'Everyone flies to the entrance side: the next combo starts there.'];
 const SZ_SIM = [
-  { at: 0, beat: 'start' }, { at: 5, mech: 'combo', label: 'Tank combo 1 (entrance side)' }, { at: 25, mech: 'fury', label: 'Serpent\'s Fury 1' }, { at: 29, mech: 'surge', label: 'Venomous Surge 1' }, { at: 40, mech: 'crosswinds', label: 'Raging Crosswinds 1' },
-  { at: 44, beat: 'toex' }, { at: 52, mech: 'combo', label: 'Tank combo 2 (exit side)', o: { ex: 1 } }, { at: 64, mech: 'tempest', label: 'Tempest 2' }, { at: 76, mech: 'fury', label: 'Serpent\'s Fury 2' }, { at: 77, mech: 'surge', label: 'Venomous Surge 2' }, { at: 87, mech: 'crosswinds', label: 'Raging Crosswinds 2' },
-  { at: 100, mech: 'digin', ph: 1, label: 'Dig In 1' },
-  { at: 129, mech: 'combo', ph: 2, label: 'Tank combo 3 (entrance side)' }, { at: 152, mech: 'fury', ph: 2, label: 'Serpent\'s Fury 3 (right after the combo)' }, { at: 156, mech: 'surge', ph: 2, label: 'Venomous Surge 3' }, { at: 167, mech: 'crosswinds', ph: 2, label: 'Raging Crosswinds 3' },
-  { at: 172, beat: 'toex', ph: 2 }, { at: 179, mech: 'combo', ph: 2, label: 'Tank combo 4 (exit side)', o: { ex: 1 } }, { at: 202, mech: 'fury', ph: 2, label: 'Serpent\'s Fury 4' }, { at: 203, mech: 'surge', ph: 2, label: 'Venomous Surge 4' }, { at: 214, mech: 'crosswinds', ph: 2, label: 'Raging Crosswinds 4' },
-  { at: 227, mech: 'digin', ph: 3, label: 'Dig In 2' },
-  { at: 256, mech: 'combo', ph: 4, label: 'Tank combo 5 (entrance side)' }, { at: 279, mech: 'fury', ph: 4, label: 'Serpent\'s Fury 5 (right after the combo)' }, { at: 283, mech: 'surge', ph: 4, label: 'Venomous Surge 5' }, { at: 294, mech: 'crosswinds', ph: 4, label: 'Raging Crosswinds 5' },
-  { at: 300, beat: 'toex', ph: 4 }, { at: 306, mech: 'combo', ph: 4, label: 'Tank combo 6 (exit side)', o: { ex: 1 } }, { at: 326, mech: 'fury', ph: 4, label: 'Serpent\'s Fury 6' }, { at: 330, mech: 'surge', ph: 4, label: 'Venomous Surge 6' }, { at: 341, mech: 'crosswinds', ph: 4, label: 'Raging Crosswinds 6' },
+  { at: 0, beat: 'start' }, { at: 5, mech: 'combo', label: 'Apex Predator 1 (entrance side)' }, { at: 21, mech: 'tempest', label: 'Tempest 1' }, { at: 25, mech: 'fury', label: 'Serpent\'s Fury 1' }, { at: 29, mech: 'surge', label: 'Venomous Surge 1' }, { at: 40, mech: 'crosswinds', label: 'Raging Crosswinds 1' },
+  { at: 44, beat: 'toex' }, { at: 52, mech: 'combo', label: 'Apex Predator 2 (exit side)', o: { ex: 1 } }, { at: 67, mech: 'tempest', label: 'Tempest 2' }, { at: 76, mech: 'fury', label: 'Serpent\'s Fury 2 (a few seconds late, before Dig In)' }, { at: 77, mech: 'surge', label: 'Venomous Surge 2' }, { at: 87, mech: 'crosswinds', label: 'Raging Crosswinds 2' },
+  { at: 100, mech: 'digin', ph: 1, label: 'Dig In 1', o: { do: SZ_DIGDO } },
+  { at: 129, mech: 'combo', ph: 2, label: 'Apex Predator 3 (entrance side)' }, { at: 143, mech: 'tempest', ph: 2, label: 'Tempest 3' }, { at: 152, mech: 'fury', ph: 2, label: 'Serpent\'s Fury 3 (right after the combo)' }, { at: 156, mech: 'surge', ph: 2, label: 'Venomous Surge 3' }, { at: 167, mech: 'crosswinds', ph: 2, label: 'Raging Crosswinds 3' },
+  { at: 172, beat: 'toex', ph: 2 }, { at: 179, mech: 'combo', ph: 2, label: 'Apex Predator 4 (exit side)', o: { ex: 1 } }, { at: 195, mech: 'tempest', ph: 2, label: 'Tempest 4' }, { at: 202, mech: 'fury', ph: 2, label: 'Serpent\'s Fury 4 (a few seconds late, before Dig In)' }, { at: 203, mech: 'surge', ph: 2, label: 'Venomous Surge 4' }, { at: 214, mech: 'crosswinds', ph: 2, label: 'Raging Crosswinds 4' },
+  { at: 227, mech: 'digin', ph: 3, label: 'Dig In 2', o: { do: SZ_DIGDO } },
+  { at: 256, mech: 'combo', ph: 4, label: 'Apex Predator 5 (entrance side)' }, { at: 271, mech: 'tempest', ph: 4, label: 'Tempest 5' }, { at: 279, mech: 'fury', ph: 4, label: 'Serpent\'s Fury 5 (right after the combo)' }, { at: 283, mech: 'surge', ph: 4, label: 'Venomous Surge 5' }, { at: 294, mech: 'crosswinds', ph: 4, label: 'Raging Crosswinds 5' },
+  { at: 300, beat: 'toex', ph: 4 }, { at: 306, mech: 'combo', ph: 4, label: 'Apex Predator 6 (exit side)', o: { ex: 1 } }, { at: 322, mech: 'tempest', ph: 4, label: 'Tempest 6' }, { at: 326, mech: 'fury', ph: 4, label: 'Serpent\'s Fury 6' }, { at: 330, mech: 'surge', ph: 4, label: 'Venomous Surge 6' }, { at: 341, mech: 'crosswinds', ph: 4, label: 'Raging Crosswinds 6' },
   { at: 355, beat: 'end', ph: 4 },
 ];
 const SZ_DUR = { 'm:combo': 20, 'm:tempest': 30, 'm:fury': 6, 'm:surge': 11, 'm:crosswinds': 8, 'm:digin': 25, 'b:start': 5, 'b:toex': 8, 'b:end': 0 };
@@ -2562,54 +2623,64 @@ const SZ_SEV = { 'm:combo': 3, 'm:tempest': 3, 'm:fury': 3, 'm:surge': 2, 'm:cro
 GDZ['Sszorak'] = {
   upd: ['12.1', 'Oct 21, 2026'],
   stepRoles: {
-    'Apex Predator (Soaks take turns, Ravage at the edge)': ['d', 't', 't', '', 't'], 'Tempest (Step off for the tornadoes)': ['', 'd', ''], 'Serpent\'s Fury (14 in the circle, then spread)': ['', 'd', 'd', 'd'],
-    'Venomous Surge (Cysts to the markers)': ['', 'd', 't'], 'Raging Crosswinds (Collide with a partner)': ['', 'd', 'd'], 'Dig In (Three winds, three cysts, then the exit)': ['', '', '', 'd', ''],
+    'Apex Predator (Soaks take turns, Ravage at the edge)': ['d', 't', 't', 'd', ''], 'Tempest (Step off for the tornadoes)': ['', 'd', ''], "Serpent's Fury (14 in the circle, then spread)": ['', 'd', 'd', 'd'],
+    'Venomous Surge (Cysts to the markers)': ['', 'd', 't', 'h'], 'Raging Crosswinds (Collide with a partner)': ['', 'd', 'd'], 'Dig In (Three winds, three cysts, then the exit)': ['', '', '', 'd', ''],
   },
-  sum: 'One boss on a loop: the tank combo, Serpent\'s Fury on Mythic, Venomous Surge and Raging Crosswinds, twice, then Dig In and its three winds. The first combo of each phase at the entrance side, the second at the exit side, the winds and Dig In in the middle. Tornadoes kill more raids than anything else here.',
+  sum: "One boss on a loop: the tank combo (Apex Predator), Venomous Surge and Raging Crosswinds, twice, then Dig In and its three winds. The first combo before each Dig In at the entrance side, the second at the exit side, the winds and Dig In in the middle. Tornadoes kill more raids than anything else here.",
   m: { sim: SZ_SIM, simDur: SZ_DUR, simSev: SZ_SEV, beats: SZ_BEATS,
-    simAlways: ['Tornadoes: step off, never greed. Call them when they pass through the boss.', 'Each Mutilate on one group, the next on the other.', 'Mythic: 14 in the Fury circle right after every tank combo, or the raid dies at 100 rage.', 'Every phase is rinse and repeat: entrance side, exit side, then Dig In.'],
-    source: 'Tactyks\' Mythic Sszorak video', sum: 'Heroic plus Serpent\'s Fury: the farthest player is marked while his rage climbs to a wipe at 100; 14 players stacking on them resets it, and Virulence spreads from everyone in the stack. Raging Crosswinds has four directions.' },
-  facts: [['Phases', '1, on a loop (Dig In every ~2 min)'], ['Bloodlust', 'On the pull'], ['Healers', '4', 'm'], ['Hardest part', 'Tornadoes and the Fury stack'], ['Enrage', 'About 6:20', 'm']],
+    simAlways: ['Tornadoes: step off, never greed. Call them when they pass through the boss.', 'Each Mutilate on one group, the next on the other.', "Tempest comes once in every Apex Predator, in a random place in the order (never first or last).", "Serpent's Fury: 14 in the circle right after every tank combo, or the raid dies at 100 rage.", 'Every loop is rinse and repeat: entrance side, exit side, then Dig In.'],
+    source: "Tactyks' Mythic Sszorak video", sum: "One boss on a loop: the tank combo (Apex Predator), Venomous Surge and Raging Crosswinds, twice, then Dig In and its three winds. On Mythic his rage climbs all fight and a wipe comes at 100: the farthest player is marked, and stacking 14 players on them right after each tank combo resets it. Everyone in the stack gets Virulence and spreads. Crosswinds has four directions. Tornadoes kill more raids than anything else here.",
+    roles: {
+      t: ['Ravage alone, aimed at the edge; taunt after the first Ravage or Mutilate.', 'Pull deep to the entrance side; the second combo at the exit side.', 'After each Fury pop and Surge, move the boss off the puddles. Swap around 6 Corroding Venom stacks.'],
+      h: ['Mobile healers join the Fury stack.', 'Two soak groups take turns on Mutilate: heal the group that just soaked.', 'The cyst pops in Dig In are the hardest healing: save cooldowns you can cast while moving.'],
+      d: ['Tornadoes: step off. Never greed. Dispel the tornado DoT at once.', "Fury: into the stack right after the combo, then to your Virulence spot.", 'Mutilate with your group, never the next one. Crosswinds: collide with a partner.'],
+    } },
+  facts: [['Phases', '1, on a loop (Dig In every ~2 min)'], ['Bloodlust', 'On the pull'], ['Healers', '4', 'm'], ['Hardest part', 'Tornadoes', 'h'], ['Hardest part', 'Tornadoes and the Fury stack', 'm'], ['Hard enrage', 'About 6:20', 'm']],
   phases: [
-    { id: 'p1', name: 'The loop: two tank combos, then Dig In', sum: 'Tank combo, Surge and Crosswinds at the entrance side, the same again at the exit side, then Dig In in the middle. Rinse and repeat three times.',
-      m: { sum: 'The same loop, plus Serpent\'s Fury right after every tank combo.' },
+    { id: 'p1', name: 'The loop: two tank combos, then Dig In', sum: 'Apex Predator (the tank combo), Surge and Crosswinds at the entrance side, the same again at the exit side, then Dig In in the middle. Rinse and repeat three times.',
+      m: { sum: "Apex Predator (the tank combo), Surge and Crosswinds at the entrance side, the same again at the exit side, then Dig In in the middle, three times over. Serpent's Fury goes off right after every tank combo." },
       mechs: [
-        { id: 'combo', fail: SZ_FAIL.combo, name: 'Apex Predator (Soaks take turns, Ravage at the edge)', spell: 'Apex Predator', what: 'Five casts at the current tank, in random order: two Ravage (a huge hit and much more damage from the next), two Mutilate (a frontal soak split between everyone in it; the next one hits those players far harder) and one Tempest (tornadoes).',
+        { id: 'combo', fail: SZ_FAIL.combo, name: 'Apex Predator (Soaks take turns, Ravage at the edge)', spell: 'Apex Predator', what: 'The tank combo: five casts at the current tank, in random order (Tempest is never first or last): two Ravage (a huge hit and much more damage from the next), two Mutilate (a frontal soak split between everyone in it; the next one hits those players far harder) and one Tempest (tornadoes).',
           do: ['Mutilate: one of the two soak groups stands in it with the tank. 5 or more.', 'Ravage: the tank takes it alone, aimed at the edge.', 'The other tank taunts after the first Ravage or Mutilate.', 'The other group takes the next Mutilate.', 'Tempest: tornadoes. Step clear.'],
-          m: { plan: ['Two soak groups, left and right, nine each; they never take two in a row.', 'Corroding Venom stacks on the tank: swap around 6 (it lines up with the combo swaps). A Blood Death Knight can tank most of the fight.'] },
+          plan: ['Two soak groups, left and right, about nine each. They never take two Mutilates in a row: the second hit on the same players is far harder.', 'At least five must be in each Mutilate or it kills: it splits between everyone in it.', 'A Blood Death Knight can soak a Mutilate alone with Vampiric Blood and Anti-Magic Shell.'],
+          m: { plan: ['Two soak groups, left and right, about nine each; they never take two in a row. At least five must be in a Mutilate or it kills.', 'Corroding Venom stacks on the tank: swap around 6 stacks (it lines up with the combo swaps). A Blood Death Knight can tank most of the fight.'] },
           map: (d, o) => SZ_M.combo(false, o) },
         { id: 'tempest', fail: SZ_FAIL.tempest, name: 'Tempest (Step off for the tornadoes)', spell: 'Tempest', what: 'Tornadoes roam out from the boss for about half a minute. They kill anyone but a tank, sometimes in one touch. The number one killer on this boss.',
           do: ['Call the tornadoes as they pass through the boss.', 'Melee: step off, come back once it has passed.', 'Never greed: the DPS check only gets easier.'],
-          plan: ['Leave the melee a big pocket round the boss, so they have room to dodge.'],
+          plan: ['Leave the melee a big pocket round the boss, so they have room to dodge.', "A tornado touch leaves a DoT: dispel it at once (a Shaman's Poison Cleansing Totem works)."],
           map: () => SZ_M.tempest() },
-        { id: 'fury', only: 'm', fail: SZ_FAIL.fury, name: 'Serpent\'s Fury (14 in the circle, then spread)', spell: 'Serpent\'s Fury', what: 'The farthest player from the boss is marked while his rage climbs; at 100 the raid dies. When 14 players are within 8 yards of the marked player he charges them and his rage resets. Everyone in it gets Virulence: short lines 5 seconds later that pass it to anyone they hit.',
-          do: ['Right after each tank combo, the raid stacks near the boss.', 'The assigned Hunter, who always has the mark, walks in 1 second before the Surge bombs.', '14 in the circle: he charges, rage resets.', 'Spread to your Virulence spot: half outside, half inside.'],
-          plan: ['Soak with all DPS, the other tank and the mobile healers.', 'Keep the stack close to melee range, or it can fail to count.', 'Phases two and three: the first stack has to pop right after the last tank buster (his rage is already about 94).', 'Never stack on the marked player just before or after Dig In: it pops on its own.'],
+        { id: 'fury', only: 'm', fail: SZ_FAIL.fury, name: "Serpent's Fury (14 in the circle, then spread)", spell: "Serpent's Fury", what: 'The farthest player from the boss is marked while his rage climbs; at 100 the raid dies. When 14 players are stacked within 8 yards of the marked player he charges them (To the Slaughter) and his rage resets. Everyone in the stack gets Virulence: short lines 5 seconds later that pass it to anyone they hit.',
+          do: ['Right after each tank combo, the raid stacks near the boss and the marked player walks in.', 'Your Fury player, a mobile Hunter or Mage, is the farthest from the boss: they walk into the waiting stack about 1 second before Venomous Surge goes off.', '14 in the circle: he charges, rage resets.', 'Spread to your Virulence spot, half outside and half inside. The Fury player goes to the farthest one, so they get the mark again.'],
+          plan: ['Soak with all DPS, the other tank and the mobile healers. Keep the stack close to melee range, or it can fail to count.', 'The first combo before each Dig In (entrance side): pop it the moment the last tank cast lands. If Ravage is last, pre-stack.', 'The second combo before each Dig In (exit side): wait until about 1 second before Venomous Surge. Popped even 2 seconds early, the first pop after Dig In becomes impossible.', 'In Dig In the Fury can\'t pop: the marked player waits for Dig In to start, stacks with everyone, and steps out after the third knock-back so it doesn\'t pop as Dig In ends.', 'Virulence lines burst after 5 seconds and pass it to anyone they hit, with longer lines. Spread at once: it leaves puddles (+30% damage taken), so a personal helps every other set.'],
           map: () => SZ_M.fury() },
-        { id: 'surge', fail: SZ_FAIL.surge, name: 'Venomous Surge (Cysts to the markers)', spell: 'Venomous Surge', what: 'Two players get a 10-second DoT; when it ends the raid takes a hit, less the farther away, and a Viscous Cyst drops where they stand. A cyst lasts 2 minutes; touching it pops it, a knockback and a slow. The intermission needs one per wind.',
-          do: ['Read the tunnels: a marker across from each wind, and the fourth at the exit.', 'Surge on you: walk your cyst to your marker.', 'Heroic and up: the tank pulls the boss off Caustic Claws\' puddles.'],
-          m: { plan: ['Northern Sky Raid Tools\' wind helper: the raid leader clicks the marker across from each wind and everyone sees their drop spot (the group must be 20 or fewer).'] },
+        { id: 'surge', fail: SZ_FAIL.surge, name: 'Venomous Surge (Cysts to the markers)', spell: 'Venomous Surge', what: 'Two players get a 10-second DoT. When it ends the raid takes a hit, less the farther away, and a Viscous Cyst drops where they stand. A cyst lasts 2 minutes; touching it pops it, a knockback and a slow. Dig In needs one per wind.',
+          do: ['Read the tunnels: one mote blows first, three motes last. Put a raid marker across from each one.', 'Surge on you: walk to your marker. The cyst drops where you stand when the DoT ends.', 'The tank pulls the boss off the Caustic Claws puddles: standing in one is +30% damage.', 'Healers: the DoT hurts, so heal them on their way out. The raid takes a hit when it ends.'],
+          plan: ['Four cysts for three winds: the fourth is a spare. One misplaced is recoverable, two is a wipe.', 'The tank keeps the boss away from the markers, so nobody pops a cyst early.'],
+          m: { do: ['Read the tunnels: one mote blows first, three motes last. Put a raid marker across from each, and the fourth at the exit.', 'Surge on you: walk to your marker. The cyst drops where you stand when the DoT ends.', 'The tank pulls the boss off the Caustic Claws puddles: standing in one is +30% damage.', 'Healers: the DoT hurts, so heal them on their way out. The raid takes a hit when it ends.'], plan: ["Northern Sky Raid Tools' wind helper: the raid leader clicks the marker across from each wind and everyone sees their drop spot (the group must be 20 or fewer).", 'The fourth cyst is always at the exit marker: a mobile player pops it after the third wind to throw the raid back to the entrance.'] },
           map: () => SZ_M.surge() },
-        { id: 'crosswinds', fail: SZ_FAIL.crosswinds, name: 'Raging Crosswinds (Collide with a partner)', spell: 'Raging Crosswinds', what: 'Marked players get an arrow and are launched that way about 8 seconds later. Two players whose arrows meet collide in the air and stay put.',
-          do: ['Arrow on you: find a partner whose arrow points at you.', 'Head on, or at right angles on Mythic: you collide and stop.', 'Can cancel it (an immunity or a movement ability)? Just cancel.'],
-          m: { plan: ['Priests and Paladins usually can\'t cancel: they ping themselves so a partner lines up head on with them.', 'Don\'t stand too close to a flying player\'s path.'] },
+        { id: 'crosswinds', fail: SZ_FAIL.crosswinds, name: 'Raging Crosswinds (Collide with a partner)', spell: 'Raging Crosswinds', what: 'Marked players get an arrow and are launched that way about 8 seconds later. Two players whose arrows meet collide in the air and drop safely.',
+          do: ['Arrow on you: find a partner whose arrow points at you.', 'Head on: you collide and drop safely.', 'Can cancel your own launch (an immunity or a movement ability)? Tell your partner first, or they fly alone.'],
+          plan: ['Priests, Paladins and Shamans have no reliable cancel: call it out so a partner lines up head on with you.'],
+          m: { do: ['Arrow on you: find a partner whose arrow points at you.', 'Head on, or at right angles: you collide and drop safely.', 'Can cancel your own launch (an immunity or a movement ability)? Tell your partner first, or they fly alone.'], plan: ["Priests, Paladins and Shamans usually can't cancel: call it out (or ping yourself) so a partner lines up head on with you. A Dracthyr Priest or an Evoker's Rescue helps.", "Don't stand too close to a flying player's path."] },
           map: () => SZ_M.crosswinds() },
       ],
       tiles: [
-        { name: 'Corroding Venom (Swap around 6)', do: 'His hits stack more physical damage taken on the tank. Swap around 6 stacks; it lines up with the combo swaps.' },
+        { name: 'Corroding Venom (Swap around 6 stacks)', do: 'His hits stack more physical damage taken on the tank (3% a stack). Swap at about 6 stacks; it lines up with the combo swaps. A Blood Death Knight can hold more.' },
+        { name: 'Enrage (Right after the third Dig In)', only: 'm', do: "The enrage comes right after the third Dig In, at about 6:20. Burn him inside that Dig In and don't pop the exit cyst. People can taunt a Mutilate each and die to buy about 20 seconds." },
       ] },
     { id: 'dig', name: 'Dig In: the winds', sum: 'At full energy, about every 2 minutes, he digs in for 25 seconds and takes 30% more damage. Three winds blow from the tunnels; each pushes the raid into a cyst. Then the exit cyst throws everyone back to the entrance.',
       mechs: [
-        { id: 'digin', fail: SZ_FAIL.digin, name: 'Dig In (Three winds, three cysts, then the exit)', spell: 'Dig In', what: 'For 25 seconds he takes 30% more damage while three winds blow from the tunnels, in the order the motes over them show. Each wind pushes everyone into the cyst across from its tunnel; the cyst pops and knocks them back.',
-          do: ['Stack in the middle.', 'Each wind pushes the stack into the cyst across from its tunnel. It pops: you\'re back in the middle.', 'Re-centre before the next wind.', 'After the third, a mobile player pops the exit cyst.', 'Everyone flies to the entrance side: the next phase starts there.'],
-          m: { plan: ['Two-minute cooldowns: don\'t lose a use to fit the 30%; many specs open with one press and save their cooldowns for the back half.', 'Two Evokers (Time Spiral) are nice here, not needed.', 'After the last Dig In, don\'t pop the exit cyst: the enrage follows.'] },
+        { id: 'digin', fail: SZ_FAIL.digin, name: 'Dig In (Three winds, three cysts, then the exit)', spell: 'Dig In', what: 'For 25 seconds he takes 30% more damage while three winds blow from the tunnels, in the order the motes over them show (one mote first, three last). Each wind pushes everyone into the cyst across from its tunnel; the cyst pops and knocks them back.',
+          do: ['Stack in the middle.', 'Each wind pushes the stack into the cyst across from its tunnel. It pops: you\'re back in the middle.', 'Re-centre before the next wind.', 'After the third wind, a mobile player pops the exit cyst.', 'Everyone flies to the entrance side: the next combo starts there.'],
+          plan: ['Some raids name one popper per wind; otherwise the first player pushed into a cyst pops it for everyone.', 'The fourth cyst is a spare for a misplaced one. If it is not needed, pop it at the exit to clear the board.', 'The cyst pops are the hardest healing of the fight: save healing cooldowns you can cast while moving.'],
+          m: { plan: ["Cooldowns that come back every 2 minutes: open Dig In with one press and keep the rest for the back half, rather than lose a whole use to fit the 30%.", 'Evokers can cast Time Spiral (a free movement ability for everyone) to help with the knockbacks: nice, not needed.', 'The Fury player waits for Dig In to start, stacks with everyone, and steps out after the third knock-back.', 'Some raids name one popper per wind; otherwise the first player pushed into a cyst pops it for everyone.', 'After the last Dig In, don\'t pop the exit cyst: the enrage follows.'] },
           map: () => SZ_M.digin() },
       ] },
   ],
   roles: {
-    t: ['Ravage alone, aimed at the edge; taunt after the first Ravage or Mutilate.', 'Pull deep to the entrance side; the second combo at the exit side.', 'Move the boss off Caustic Claws\' puddles.'],
-    h: ['Two soak groups take turns on Mutilate: heal the group that just soaked.', 'Mobile healers join the Fury stack.', 'Raid hits after each Surge.'],
-    d: ['Tornadoes: step off. Never greed.', 'Mutilate with your group, never the next one.', 'Mythic: into the Fury stack right after the combo, then to your Virulence spot.', 'Crosswinds: collide with a partner, or cancel.'],
+    t: ['Ravage alone, aimed at the edge; taunt after the first Ravage or Mutilate.', 'Pull deep to the entrance side; the second combo at the exit side.', 'Move the boss off the Caustic Claws puddles. Swap around 6 Corroding Venom stacks.'],
+    h: ['Two soak groups take turns on Mutilate: heal the group that just soaked.', 'Heal the Surge players on their way out, and the raid after each Surge.', 'The cyst pops in Dig In are the hardest healing: save cooldowns you can cast while moving.'],
+    d: ['Tornadoes: step off. Never greed. Dispel the tornado DoT at once.', 'Mutilate with your group, never the next one.', 'Crosswinds: collide with a partner, or cancel and tell them.'],
   },
 };
 
