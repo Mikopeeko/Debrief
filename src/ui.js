@@ -1642,6 +1642,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-21', h: [
+    { t: 'Boss guides for every boss', d: 'Every boss now has a Heroic and a Mythic guide: an animated map for each mechanic, the whole fight as a video, and your job by role. Open Boss guides from the menu.' },
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [

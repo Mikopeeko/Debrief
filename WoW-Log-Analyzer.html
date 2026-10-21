@@ -13888,6 +13888,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-21', h: [
+    { t: 'Boss guides for every boss', d: 'Every boss now has a Heroic and a Mythic guide: an animated map for each mechanic, the whole fight as a video, and your job by role. Open Boss guides from the menu.' },
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
@@ -40070,7 +40071,7 @@ var GDZ_ARENAS = {
 // the character you picked on your team or one on your signed-in Warcraft Logs account. Everyone else sees them as "Coming soon";
 // the app on your PC shows all of them. The old Ula'tek guide is hidden on the website while it's rebuilt.
 var GDZ_PRE = {}, GDZ_OPEN = false;
-const GDZ_PREVIEW = ['Nymrissa Wavecaller', "Nek'zali the Soulcoiler", 'Entombed Sentinels', 'The Lost Explorers', 'Vashnik the Malignant', 'Sszorak', 'The Twin Fangs', "Kith'ix", "Ula'tek"], GDZ_HIDDEN = [];
+const GDZ_PREVIEW = [], GDZ_HIDDEN = []; /* (every guide is open to everyone (your call, Oct 21); a boss put back in here shows only for you) */
 GDZ_PREVIEW.forEach((b) => { if (GDZ[b]) { GDZ_PRE[b] = GDZ[b]; delete GDZ[b]; } });
 if (window.WLA_HOSTED) GDZ_HIDDEN.forEach((b) => { delete GDZ[b]; });
 function gdzOwner() {

@@ -4569,7 +4569,7 @@ var GDZ_ARENAS = {
 // the character you picked on your team or one on your signed-in Warcraft Logs account. Everyone else sees them as "Coming soon";
 // the app on your PC shows all of them. The old Ula'tek guide is hidden on the website while it's rebuilt.
 var GDZ_PRE = {}, GDZ_OPEN = false;
-const GDZ_PREVIEW = ['Nymrissa Wavecaller', "Nek'zali the Soulcoiler", 'Entombed Sentinels', 'The Lost Explorers', 'Vashnik the Malignant', 'Sszorak', 'The Twin Fangs', "Kith'ix", "Ula'tek"], GDZ_HIDDEN = [];
+const GDZ_PREVIEW = [], GDZ_HIDDEN = []; /* (every guide is open to everyone (your call, Oct 21); a boss put back in here shows only for you) */
 GDZ_PREVIEW.forEach((b) => { if (GDZ[b]) { GDZ_PRE[b] = GDZ[b]; delete GDZ[b]; } });
 if (window.WLA_HOSTED) GDZ_HIDDEN.forEach((b) => { delete GDZ[b]; });
 function gdzOwner() {
