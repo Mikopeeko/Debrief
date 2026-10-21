@@ -524,6 +524,12 @@ async function runReplies(env, all) {
       }
       // (the owner's reactions on the post's first message)
       const first = await dc(env, '/channels/' + t.id + '/messages/' + t.id).catch(() => null);
+      // (the owner's 👍 on a #post-drafts draft means "post it" (the user's call, Oct 21: they gave 👍 to three drafts); it retries on later
+      // runs if Discord says no, and a draft that's gone is left alone)
+      if (t.parent_id === DRAFTS_FORUM && ((first && first.reactions) || []).some((r) => r.emoji && r.emoji.name === '👍')) {
+        const who = await dc(env, '/channels/' + t.id + '/messages/' + t.id + '/reactions/' + encodeURIComponent('👍') + '?limit=50').catch(() => []);
+        if (who.some((u) => u.id === OWNER)) { const msg = await featPublish(env, t.id).catch((err) => { console.warn('Thumbs post:', t.id, err && err.message); return null; }); if (msg && !/^I couldn't find/.test(msg)) { delete seen[t.id]; dirty = true; continue; } }
+      }
       for (const r of (first && first.reactions) || []) {
         const e = r.emoji && r.emoji.name; if (!REACTS[e] || s.r.includes(e)) continue;
         const who = await dc(env, '/channels/' + t.id + '/messages/' + t.id + '/reactions/' + encodeURIComponent(e) + '?limit=25').catch(() => []);
