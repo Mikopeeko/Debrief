@@ -418,13 +418,14 @@ RECAP.encode = (m) => {
   }
   for (const r of m.raid.bad) rec.push(['R', r[0], r[1] || '', r[2], r[3]]);
   for (const d of m.raid.died) rec.push(['D', d[0], d[1], d[2], d[3] || '', d[4]]);
+  for (const r of m.raid.mech || []) rec.push(['M', r[0], r[1] || '', r[2], r[3]]);
   if (m.raid.more) rec.push(['X', m.raid.more]);
   if (m.raid.next) rec.push(['Q', m.raid.next]);
   rec.push(['Z']);
   return rec.map((r) => r.map(clean).join('~')).join('^');
 };
 RECAP.decode = (code) => {
-  const m = { h: null, players: [], raid: { bad: [], died: [], more: '', next: '' } }, by = new Map();
+  const m = { h: null, players: [], raid: { bad: [], died: [], mech: [], more: '', next: '' } }, by = new Map();
   for (const r of String(code).trim().split('^')) {
     const f = r.split('~'), t = f[0];
     if (t === 'H') m.h = { boss: f[1], diff: f[2], pull: f[3], kill: f[4] === '1', pct: f[5], dur: f[6], where: f[7], deaths: f[8] };
@@ -434,6 +435,7 @@ RECAP.decode = (code) => {
     else if (t === 'N' && by.get(f[1])) by.get(f[1]).next = f[2];
     else if (t === 'R') m.raid.bad.push([f[1], f[2], f[3], f[4]]);
     else if (t === 'D') m.raid.died.push([f[1], f[2], f[3], f[4], f[5]]);
+    else if (t === 'M') m.raid.mech.push([f[1], f[2], f[3], f[4]]);
     else if (t === 'X') m.raid.more = f[1];
     else if (t === 'Q') m.raid.next = f[1];
   }
@@ -472,6 +474,7 @@ function renderPreview(m) {
       (P.next ? '<div class="c-next"><p class="c-h">Next pull</p><p>' + names2(P.next) + '</p></div>' : '');
   } else {
     body = '<div><p class="c-h">' + (h.kill ? 'What to clean up' : 'Top mistakes') + '</p>' + (m.raid.bad.length ? m.raid.bad.map((r) => row(r, true)).join('') : '<div class="c-row"><i class="dot ok"></i><span class="ic"></span><div>Nothing big.</div></div>') + '</div>' +
+      ((m.raid.mech || []).length ? '<div><p class="c-h">Boss mechanics</p>' + m.raid.mech.slice(0, 6).map((r) => row(r, true)).join('') + '</div>' : '') +
       '<div><p class="c-h">Who died</p>' + (m.raid.died.length ? m.raid.died.map((d) => '<div class="c-died"><span class="t">' + esc(d[0]) + '</span>' + nm(d[1], d[2]).replace('nm-c', 'nm') + iconImg(d[3]) + '<span class="w">' + esc(d[4]) + '</span></div>').join('') : '<div class="c-more">Nobody died.</div>') +
       (m.raid.more ? '<div class="c-more">' + esc(m.raid.more) + '</div>' : '') + '</div>' +
       (m.raid.next ? '<div class="c-next"><p class="c-h">Next pull</p><p>' + names2(m.raid.next) + '</p></div>' : '');

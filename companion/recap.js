@@ -81,10 +81,17 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     // Boss mechanics: their own mistakes on this pull, then their death
     const own = mist.filter((m) => m.player === p.name).sort((a, c) => (SEV[c.severity] || 0) - (SEV[a.severity] || 0) || a.t - c.t);
     const seen = new Set();
-    for (const m of own) { if (seen.has(m.mechanic)) continue; seen.add(m.mechanic); if (P.boss.length >= 3) break;
+    for (const m of own) { if (seen.has(m.mechanic)) continue; seen.add(m.mechanic); if (P.boss.length >= 5) break;
       P.boss.push([flagOf(m.severity), m.id ? String(m.id) : '', shortTo(m.mechanic + ': ' + plain(m.detail || ''), 150)]); if (m.fix) tips.push(sentences(m.fix)[0]); }
     const dd = (rep.deaths || []).filter((d) => d.player === p.name).sort((a, c) => a.t - c.t)[0];
     if (dd) P.boss.push(['dead', deathIcon(dd), 'You died at ' + mmss(dd.t) + (dd.ability ? ' to ' + dd.ability : '') + '.' + (!b.kill && rep.duration - dd.t < 8 ? ' The pull was already lost.' : '')]);
+    // (more about your boss play: avoidable damage and where you rank, your kicks and dispels)
+    const avo = p.avoidable || 0;
+    if (avo > 0) { const ra = ps.filter((q) => (q.avoidable || 0) > avo).length + 1, big = ps.length >= 6;
+      P.boss.push([big && ra <= 3 ? 'warn' : 'ok', 'ability_rogue_sprint', 'Avoidable damage taken: ' + kfmt(avo) + (big ? ', ' + ord(ra) + ' most in the raid.' : '.')]); }
+    else if (ps.length >= 6 && !own.length) P.boss.push(['ok', 'ability_rogue_sprint', 'No avoidable damage taken. Nice dodging.']);
+    if (p.interrupts > 0) P.boss.push(['ok', 'ability_kick', 'Interrupts: ' + p.interrupts + '.']);
+    if (p.dispels > 0) P.boss.push(['ok', 'spell_holy_dispelmagic', 'Dispels: ' + p.dispels + '.']);
     P.next = tips[0] || (P.slips.length && P.slips.every((s) => s[0] === 'ok') && !own.length ? 'Clean pull from you. Same again.' : '');
     players.push(P);
   }
@@ -109,6 +116,21 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   const extra = (rep.deaths || []).length - show.length;
   if (extra > 0) raid.more = '+' + extra + ' more by ' + h.dur + '.';
   else if (b.kill && !D.length) raid.more = 'Nobody died.';
+  // (how each mechanic went, one line each, from the fight audit: worst first)
+  raid.mech = [];
+  if (rep.module && !rep.module.error) {
+    for (const sec of rep.module.sections || []) {
+      if (sec.id === 'avoid' || sec.info || !sec.title) continue; // (avoidable damage has its own lines; "shown, not judged" isn't graded)
+      const gs = sec.groups || [], n = gs.length, bad = gs.filter((g) => g.bad).length, warn = gs.filter((g) => !g.bad && g.warn).length;
+      const flag = sec.verdict === 'bad' || bad ? 'bad' : sec.verdict === 'warn' || warn ? 'warn' : 'ok';
+      const worst = gs.find((g) => g.bad) || gs.find((g) => g.warn);
+      let t = n > 1 ? (n - bad - warn) + ' of ' + n + ' done right. ' : '';
+      if (worst) t += plain(worst.title) + (worst.sub ? ': ' + plain(worst.sub) : '.');
+      else { const said = sentences(sec.summary || '').filter((x) => !/^It shows|How it works|against the plan|\bmaps?\b|\brows?\b|\bchart\b|\btable\b|\bbelow\b/i.test(x)); t += said[0] || (n > 1 && flag === 'ok' ? '' : { ok: 'Done right.', warn: 'Some mistakes.', bad: 'Went wrong.' }[flag]); } // (the website's own words about its page don't fit on a card)
+      raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').trim(), 210)]);
+    }
+    const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 12);
+  }
   raid.next = b.kill ? (top.length ? 'Kill! Next time: ' + (sentences(top[0].fix || '')[0] || 'clean up ' + top[0].k + '.') : 'Kill! Clean pull.') : (top.length && top[0].fix ? sentences(top[0].fix)[0] : 'Same plan, cleaner.');
   return { h, players, raid };
 };

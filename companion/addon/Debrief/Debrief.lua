@@ -55,7 +55,7 @@ local function decode(code)
   code = code:gsub("||", "|")
   if code:sub(1, 4) ~= "DBF1" then return nil, "That isn't a Debrief code. Copy it again from Debrief Companion." end
   if code:sub(-2) ~= "^Z" then return nil, "The code got cut off. Copy it again from Debrief Companion." end
-  local m, by = { players = {}, raid = { bad = {}, died = {}, more = "", next = "" } }, {}
+  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, more = "", next = "" } }, {}
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
     local t = f[1]
@@ -70,6 +70,7 @@ local function decode(code)
     elseif t == "N" and by[g(2)] then by[g(2)].next = g(3)
     elseif t == "R" then table.insert(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then table.insert(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
+    elseif t == "M" then table.insert(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
     elseif t == "X" then m.raid.more = g(2)
     elseif t == "Q" then m.raid.next = g(2)
     end
@@ -215,13 +216,13 @@ local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); 
 -- detail presets: one click sets how much the card shows (Simple / Medium / Heavy); any change by hand makes it Custom
 PRESET_NAME = { simple = "Simple", medium = "Medium", heavy = "Heavy" }
 local PRESETS = {
-  simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 2, width = "normal", show = { rank = false, best = false } },
-  medium = { compact = false, maxSlips = 3, maxBoss = 2, maxRaid = 3, maxDied = 4, width = "normal", show = {} },
-  heavy = { compact = false, maxSlips = 5, maxBoss = 3, maxRaid = 5, maxDied = 8, width = "wide", show = {} },
+  simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 2, maxMech = 3, width = "normal", show = { rank = false, best = false } },
+  medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 4, maxMech = 6, width = "normal", show = {} },
+  heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 8, maxMech = 12, width = "wide", show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
-  DB.compact, DB.maxSlips, DB.maxBoss, DB.maxRaid, DB.maxDied, DB.width = p.compact, p.maxSlips, p.maxBoss, p.maxRaid, p.maxDied, p.width
+  DB.compact, DB.maxSlips, DB.maxBoss, DB.maxRaid, DB.maxDied, DB.maxMech, DB.width = p.compact, p.maxSlips, p.maxBoss, p.maxRaid, p.maxDied, p.maxMech, p.width
   DB.show = {}; for k, v in pairs(p.show) do DB.show[k] = v end
   DB.collapsed = nil; DB.preset = key
   if Debrief_RefreshOptions then Debrief_RefreshOptions() end
@@ -556,6 +557,10 @@ function render()
     if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, P.next) end
   else
     section("mistakes", h.kill and "What to clean up" or "Top mistakes", m.raid.bad, DB.compact and 1 or (DB.maxRaid or 3), function(r) y = row(y, r[1], r[2], r[4], r[3]) end, "Nothing big.")
+    -- (how each boss mechanic went: done right, some mistakes, or failed; worst first)
+    if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
+      section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
+    end
     if not DB.compact then
       section("died", "Who died", m.raid.died, DB.maxDied or 4, function(d)
         local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", IND, -y); t:SetText(d[1])
@@ -959,6 +964,13 @@ bigRender = function()
       for _, r in ipairs(m.raid.bad) do yy = bRow(XL + 14, yy, COLW - 28, r[1], r[2], r[4], r[3]) end
       return yy
     end)
+    if m.raid.mech and #m.raid.mech > 0 then
+      local ok = 0; for _, r in ipairs(m.raid.mech) do if r[1] == "ok" then ok = ok + 1 end end
+      yl = bPanel(XL, yl, COLW, "Boss mechanics", ok .. " of " .. #m.raid.mech .. " done right", function(yy)
+        for i, r in ipairs(m.raid.mech) do if i <= (DB.maxMech or 6) then yy = bRow(XL + 14, yy, COLW - 28, r[1], r[2], r[4], r[3]) end end
+        return yy
+      end)
+    end
     if m.raid.next ~= "" then
       local tx = bFS(bm, "body", 14, COL.text); tx:SetWidth(COLW - 32); tx:SetText(names(m.raid.next))
       local hh = 28 + tx:GetStringHeight() + 12
@@ -977,6 +989,13 @@ bigRender = function()
       for i, r in ipairs(m.raid.bad) do if i <= 3 then yy = bRow(XR + 14, yy, COLW - 28, r[1], r[2], r[4], r[3]) end end
       return yy
     end)
+    if m.raid.mech and #m.raid.mech > 0 then
+      local ok = 0; for _, r in ipairs(m.raid.mech) do if r[1] == "ok" then ok = ok + 1 end end
+      yr = bPanel(XR, yr, COLW, "Boss mechanics", ok .. " of " .. #m.raid.mech .. " done right", function(yy)
+        for i, r in ipairs(m.raid.mech) do if i <= 4 then yy = bRow(XR + 14, yy, COLW - 28, r[1], r[2], r[4], r[3]) end end
+        return yy
+      end)
+    end
   end
   yr = bPanel(XR, yr, COLW, "Who died", m.h.deaths .. "", function(yy)
     if #m.raid.died == 0 then local tt = bFS(bm, "body", 13, COL.faint); tt:SetPoint("TOPLEFT", XR + 14, -yy); tt:SetText(m.raid.more ~= "" and m.raid.more or "Nobody died."); return yy + 22 end
@@ -1362,7 +1381,7 @@ local function buildOptions()
   panel("Fine-tune", "changes your own mix", "INV_Misc_Gear_01")
   switch("Your damage or healing", "Against your last pull, your best and your place.", function() return S().tile ~= false end, function(v) S().tile = v end)
   stepper("Rotation tips", "Your biggest slips, worst first. 0 hides them.", 0, 5, function() return S().rotation == false and 0 or (DB.maxSlips or 3) end, function(v) S().rotation = v > 0; if v > 0 then DB.maxSlips = v end end)
-  stepper("Boss mistakes", "Your own mistakes on the pull. 0 hides them.", 0, 3, function() return S().boss == false and 0 or (DB.maxBoss or 2) end, function(v) S().boss = v > 0; if v > 0 then DB.maxBoss = v end end)
+  stepper("Boss mistakes", "Your mistakes, avoidable damage, kicks and dispels. 0 hides them.", 0, 7, function() return S().boss == false and 0 or (DB.maxBoss or 2) end, function(v) S().boss = v > 0; if v > 0 then DB.maxBoss = v end end)
   switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
   switch("Next pull tip", "One thing to try next time.", function() return S().next ~= false end, function(v) S().next = v end)
   switch("Your last pulls along the top", "Click one to look at it again.", function() return S().chips ~= false end, function(v) S().chips = v end)
@@ -1425,6 +1444,7 @@ local function buildOptions()
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
   stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
   stepper("Deaths listed", "Who died first, and to what.", 1, 8, function() return DB.maxDied or 4 end, function(v) DB.maxDied = v end)
+  stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 12, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
   panelEnd()
   panel("Raid chat", "for everyone without Debrief", "INV_Scroll_03")
   switch("Top mistakes", "The three biggest, by name.", function() return DB.postMistakes ~= false end, function(v) DB.postMistakes = v end, true)
@@ -1728,6 +1748,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
     Debrief_ApplyStyle()
+    -- (Advanced Combat Logging on from the start, so every log Debrief reads has positions and health; the combat log itself goes on in raids and at dummies)
+    if DB.autoLog ~= false and GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
     -- (the first time: the tutorial, a few seconds after you're in the world)
     if not DB.tutorialDone and C_Timer then C_Timer.After(6, function() if not InCombatLockdown() and not DB.tutorialDone then Debrief_Tutorial() end end) end
     -- (a key to start with: Ctrl+Shift+D opens the paste box, if nothing else uses it; change it in Options > Keybindings > AddOns)
