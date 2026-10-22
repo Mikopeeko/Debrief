@@ -17128,7 +17128,7 @@ function ndzBuildStart(B) {
   if (!B.calls) ndzPersFromNote(B); /* (a note being edited keeps its raid calls and externals) */
   if (B.cds && B.cds.length) ndzCdAutoWho(B); /* (nobody left on "Who?" when someone can take it) */
   if (B.cdFrom === 'plan') { for (const x of sug.filter((y) => y.rem && y.kind === 'dpscd')) B.cds.push({ ph: x.rem.ph, t: x.rem.time, id: x.rem.id || null, text: x.rem.text, who: x.names.map((y) => y.n).join(' ') }); } /* (the damage cooldowns and Bloodlust from the boss's own plan, Oct 22) */
-  if (B.cdFrom === 'plan') ndzCdMore(B); /* (a new plan uses each cooldown as often as it's back (your rule, Oct 21)) */
+  /* (no extra pass here any more: the planner already uses each cooldown as often as it's back, with a cushion across phase changes, Oct 22; the button still runs ndzCdMore) */
   ndzSrcFill(B, pr);
 }
 // (the note from the builder: kick block, headed sections or plain lines, then the reminders)
@@ -17521,15 +17521,18 @@ function ndzCdPlan(B, pr) {
   const DG = (NDZ_TLDMG[boss] || {})[stD] || null, dg = DG ? DG.ph || DG : null;
   if (!st || !dg) return ndzCdPlanOld(B, pr); /* (no damage profile for this boss yet: the old way, from your pulls) */
   const PH = st.phs.map((p) => (Array.isArray(p) ? { ph: p[0], s: p[1], len: p[2] } : { ph: p.ph, s: p.start, len: p.len })).sort((a, b) => a.s - b.s);
-  if (B.phl) { let s = 0; for (const p of PH) { p.len = +B.phl[p.ph] || p.len; p.s = s; s += p.len; } } /* (your phase times, Oct 22) */
+  { let s = 0; for (const p of PH) { p.len = (B.phl && +B.phl[p.ph]) || p.len; p.s = s; s += p.len; } } /* (phases end to end, the same way the chart and its checks place them; your phase times when set, Oct 22) */
   const L = Math.ceil(Math.max(...PH.map((p) => p.s + p.len))), d = new Array(L + 1).fill(0);
   for (const p of PH) { const bins = dg[p.ph] || dg[String(p.ph)] || []; for (let k = 0; k < p.len; k++) /* (the profile is the phase's own, from its start, whatever its length) */ { const t = Math.floor(p.s + k); if (t <= L) d[t] = bins[Math.floor(k / 2)] || 0; } }
   const pos = d.filter((v) => v > 0), mean = pos.length ? pos.reduce((a, b) => a + b, 0) / pos.length : 1;
   const w = d.map((v) => v * (v / mean)), hits = st.pk.map(([ph, rel, v, hit]) => { const p = PH.find((q) => q.ph === ph); return p ? { ph, rel, T: Math.round(p.s + rel), v, hit } : null; }).filter(Boolean);
   const vmax = Math.max(1, ...hits.map((h) => h.v)); for (const h of hits) for (let t = h.T - 1; t <= h.T + 2; t++) if (t >= 0 && t <= L) w[t] *= 1 + 3 * (h.v / vmax) ** 2; /* (the big hits: the worst one x4, one half as big x1.75) */
   const Rz = w.slice(), at = (T) => { const p = PH.filter((q) => q.s <= T + 0.01).pop() || PH[0]; return { ph: p.ph, t: Math.max(0, Math.round(T - p.s)) }; };
-  const win = (k, dur, p) => (k === 'dr' ? [p, p + Math.max(1, dur) - 1] : k === 'heal' ? [p - 1, p + dur] : [p - 5, p]);
-  const val = (k, dur, p) => { const [a, b] = win(k, dur, p); let v = 0; for (let t = Math.max(0, a); t <= Math.min(L, b); t++) v += Rz[t]; return v; };
+  const win = (k, dur, p) => (k === 'dr' ? [p, p + Math.max(1, dur) - 1] : k === 'heal' ? [p - 1, p + dur] : [p - 4, p]);
+  const phOf = new Array(L + 1).fill(0); PH.forEach((q, i) => { for (let t = Math.max(0, Math.floor(q.s)); t < Math.min(L + 1, q.s + q.len); t++) phOf[t] = i; }); /* (a cooldown counts only in its own phase, like the chart) */
+  const val = (k, dur, p) => { const [a, b] = win(k, dur, p); let v = 0; for (let t = Math.max(0, a); t <= Math.min(L, b); t++) if (phOf[t] === phOf[p]) v += Rz[t]; return v; };
+  const covers = (k, dur, p, x) => phOf[p] === phOf[Math.min(L, x.T)] && p <= x.T + 4 && (p >= x.T - 6 || p + dur >= x.T); /* (the chart's rule: pressed 6 s before to 4 s after, or still running) */
+  const covered = new Set(), bonus = 8 * Math.max(1, ...w), vmaxH = Math.max(1, ...hits.map((x) => x.v)); /* (a big hit nothing covers yet is worth more than any stretch of damage) */
   // (who has what: every healer and raid cooldown someone on the roster can press)
   const ents = []; for (const g of NDZ_BUFFS) if (g[0] === 'Healer cooldowns' || g[0] === 'Raid cooldowns') for (const x of g[2]) if (x[0] !== 'Devotion Aura') ents.push(x);
   const can = (p, x) => x[1].includes(p.cls) && (!x[2] || (p.specId ? x[2].includes(+p.specId) : p.role === 'healer' || x[2].length === 0));
@@ -17542,20 +17545,33 @@ function ndzCdPlan(B, pr) {
   have.sort((a, b) => b.cd - a.cd || ['dr', 'heal', 'after'].indexOf(a.k) - ['dr', 'heal', 'after'].indexOf(b.k) || a.who.localeCompare(b.who));
   const rows = [], ORD = ['biggest', '2nd biggest', '3rd biggest', '4th biggest', '5th biggest'], rankOf = (h) => hits.slice().sort((a, b) => b.v - a.v).indexOf(h);
   const mmss = (T) => Math.floor(T / 60) + ':' + String(Math.round(T % 60)).padStart(2, '0');
+  const placed = []; /* ([holder, press]) */
   for (const h of have) {
     // (the most uses that fit, then the most dangerous damage covered: f[t] = best plan pressing at t or later)
-    const V = []; for (let p = 0; p <= L; p++) V[p] = val(h.k, h.dur, p); const vpos = V.filter((v) => v > 0), vmin = vpos.length ? 0.25 * vpos.reduce((a, b) => a + b, 0) / vpos.length : 1;
-    const f = new Array(L + 2).fill(null).map(() => [0, 0, -1]); /* ([uses, value, first press]) */
-    const nxT = (t) => t + h.cd + (at(t).ph !== at(t + h.cd).ph ? 15 : 0); /* (the next use: when it's back, plus 15 s if that's in a later phase) */
-    for (let t = L; t >= 0; t--) { const skip = f[t + 1]; let best = [skip[0], skip[1], skip[2]];
-      if (V[t] >= vmin) { const nx = nxT(t) <= L ? f[nxT(t)] : [0, 0, -1], c = [nx[0] + 1, nx[1] + V[t], t]; if (c[0] > best[0] || (c[0] === best[0] && c[1] > best[1])) best = c; }
-      f[t] = best; }
-    const presses = []; for (let t = f[0][2]; t >= 0 && t <= L; ) { presses.push(t); const nx = nxT(t) <= L ? f[nxT(t)] : null; if (!nx || nx[2] < 0) break; t = nx[2]; }
-    for (const p of presses) { const [a, b] = win(h.k, h.dur, p); for (let t = Math.max(0, a); t <= Math.min(L, b); t++) Rz[t] *= 0.5;
+    const V = [], V0 = []; for (let p = 0; p <= L; p++) { V0[p] = val(h.k, h.dur, p); V[p] = V0[p]; for (const x of hits) if (!covered.has(x) && covers(h.k, h.dur, p, x)) V[p] += bonus * (0.5 + x.v / vmaxH); } const vpos = V0.filter((v) => v > 0), vmin = vpos.length ? 0.25 * vpos.reduce((a, b) => a + b, 0) / vpos.length : 1; /* (worth a press: judged on the damage alone, so the bonus never costs a use) */
+    const Z = [0, 0, -1], better = (p, q) => (p[0] > q[0] || (p[0] === q[0] && p[1] > q[1]) ? p : q);
+    const gp = new Array(L + 2).fill(Z), f = new Array(L + 2).fill(Z), sp = new Array(L + 2).fill(Z), nxt = new Array(L + 2).fill(-1); /* (gp: best plan whose first press is exactly t; f: best from t on; sp: best from t on inside t's phase) */
+    const phEnd = []; { let e = L + 1; for (let t = L; t >= 0; t--) { if (t < L && phOf[t + 1] !== phOf[t]) e = t + 1; phEnd[t] = e; } }
+    for (let t = L; t >= 0; t--) {
+      if (V0[t] >= vmin || V[t] > V0[t]) { const a1 = t + h.cd, same = a1 < phEnd[t] && a1 <= L ? sp[a1] : Z, b1 = Math.max(phEnd[t], t + h.cd + 15), later = b1 <= L ? f[b1] : Z, nx = better(same, later);
+        gp[t] = [nx[0] + 1, nx[1] + V[t], t]; nxt[t] = nx[2]; } else gp[t] = Z;
+      f[t] = better(gp[t], f[t + 1] || Z); sp[t] = t + 1 < phEnd[t] ? better(gp[t], sp[t + 1] || Z) : gp[t]; }
+    const presses = []; for (let t = f[0][2]; t >= 0 && t <= L; t = nxt[t]) presses.push(t);
+    for (const p of presses) { const [a, b] = win(h.k, h.dur, p); for (let t = Math.max(0, a); t <= Math.min(L, b); t++) if (phOf[t] === phOf[p]) Rz[t] *= 0.5; for (const x of hits) if (covers(h.k, h.dur, p, x)) covered.add(x); placed.push([h, p, presses]); } }
+  // (repair: a big hit still bare gets a press slid onto it, if that cooldown is back for it on both sides and the press it moves
+  // wasn't the only one on another big hit)
+  const nxOf = (h, t) => t + h.cd + (at(t).ph !== at(t + h.cd).ph ? 15 : 0), only = (pl, x) => !placed.some((o) => o !== pl && covers(o[0].k, o[0].dur, o[1], x));
+  for (const x of hits.slice().sort((p, q) => q.v - p.v)) { if (placed.some((o) => covers(o[0].k, o[0].dur, o[1], x))) continue;
+    for (const pl of placed) { const h = pl[0], tgt = h.k === 'after' ? x.T + 1 : x.T - 1; if (tgt < 0 || tgt > L || phOf[tgt] !== phOf[Math.min(L, x.T)] || !covers(h.k, h.dur, tgt, x)) continue;
+      const mine = placed.filter((o) => o[0] === h && o !== pl).map((o) => o[1]), prev = mine.filter((t) => t < tgt).sort((p, q) => q - p)[0], next = mine.filter((t) => t > tgt).sort((p, q) => p - q)[0];
+      const okGap = (x0, x1) => x1 - x0 >= h.cd + (phOf[x0] !== phOf[x1] ? 15 : 0); if ((prev != null && !okGap(prev, tgt)) || (next != null && !okGap(tgt, next))) continue; /* (still back for it on both sides; +15 s across a phase change) */
+      if (hits.some((y) => y !== x && covers(h.k, h.dur, pl[1], y) && only(pl, y))) continue; /* (it was the only one on another big hit) */
+      pl[1] = tgt; break; } }
+  for (const [h, p, presses] of placed) { const [a, b] = win(h.k, h.dur, p);
       const hit = hits.filter((x) => x.T >= a - 1 && x.T <= b + 1).sort((x, y) => y.v - x.v)[0], r = hit ? rankOf(hit) : -1, q = at(p);
       const how = h.k === 'dr' ? 'up for the' : h.k === 'heal' ? 'healing through the' : 'healing back the';
       rows.push({ ph: q.ph, t: q.t, id: h.id || E.SPELLID.get(h.n.toLowerCase()) || ndzSpellIdOf(h.n) || null, text: h.n, who: h.who, top: true,
-        why: (hit ? h.n + ' ' + how + ' ' + (ORD[r] ? 'fight\'s ' + ORD[r] + ' hit' : 'big hit') + ' (' + hit.hit + ', ' + mmss(hit.T) + ').' : h.n + ' ' + how + ' heavy raid damage around ' + mmss(p) + '.') + ' ' + (presses.length >= Math.floor(L / h.cd) + 1 ? 'Pressed all ' + presses.length + ' times it fits' : 'Pressed ' + presses.length + ' of the ' + (Math.floor(L / h.cd) + 1) + ' times it fits') + ' in a ' + mmss(L) + ' kill.' }); } }
+        why: (hit ? h.n + ' ' + how + ' ' + (ORD[r] ? 'fight\'s ' + ORD[r] + ' hit' : 'big hit') + ' (' + hit.hit + ', ' + mmss(hit.T) + ').' : h.n + ' ' + how + ' heavy raid damage around ' + mmss(p) + '.') + ' ' + (presses.length >= Math.floor(L / h.cd) + 1 ? 'Pressed all ' + presses.length + ' times it fits' : 'Pressed ' + presses.length + ' of the ' + (Math.floor(L / h.cd) + 1) + ' times it fits') + ' in a ' + mmss(L) + ' kill.' }); }
   return rows.length ? { rows, n: 0, top: stD } : null;
 }
 // (the old plan, from your own pulls' damage: used when a boss has no fastest-kill damage profile)
@@ -18421,6 +18437,16 @@ const NDZ_TLDMG = {
 // NDZ_CDLEN: how long a cooldown lasts, by name: its buff's usual full length in those kills (so talents that lengthen it
 // count), channels by their channel time, a few the logs rarely showed by their own text. Not here: CD_LEN, then none.
 const NDZ_CDLEN = {"Avatar":20,"Colossus Smash":10,"Bladestorm":5,"Power Infusion":15,"Spell Reflection":5,"Rewind":4,"Divine Hymn":5,"Spirit Link Totem":6,"Die by the Sword":8,"Anti-Magic Zone":8,"Feint":6,"Vampiric Embrace":12,"Fade":10,"Angelic Feather":5,"Desperate Prayer":10,"Zephyr":8,"Hover":12,"Obsidian Scales":12,"Apotheosis":32,"Guardian Spirit":10,"Metamorphosis":9,"Summon Demonic Tyrant":20,"Dark Pact":5,"Unending Resolve":8,"Summon Darkglare":25,"Burning Rush":4,"Zenith":20,"Invoke Xuen, the White Tiger":20,"Celestial Conduit":4,"Berserking":12,"Fortifying Brew":15,"Touch of Karma":6,"Ascendance":15,"Astral Shift":12,"Spiritwalker's Grace":19,"Sprint":12,"Adrenaline Rush":15,"Crimson Vial":4,"Stormkeeper":4,"Empowering Venom":15,"Dragonrage":9,"Fiery Brand":12,"Demon Spikes":3,"Time Dilation":11,"Execution Sentence":10,"Avenging Wrath":24,"Divine Steed":5,"Divine Protection":8,"Blessing of Sacrifice":12,"Divine Shield":8,"Incarnation: Chosen of Elune":20,"Barkskin":12,"Dancing Rune Weapon":8,"Vampiric Blood":10,"Lichborne":12,"Death's Advance":10,"Anti-Magic Shell":7,"Icebound Fortitude":8,"Army of the Dead":30,"Dark Transformation":23,"Trueshot":17,"Survival of the Fittest":8,"Arcane Surge":18,"Prismatic Barrier":5,"Time Warp":40,"Ice Cold":6,"Piercing Howl":5,"Alter Time":5,"Rallying Cry":16,"Frenzied Regeneration":3,"Innervate":8,"Shadow Blades":16,"Shadow Dance":9,"Cloak of Shadows":5,"Aspect of the Cheetah":9,"Aspect of the Turtle":8,"Blur":10,"Pillar of Frost":12,"Breath of Sindragosa":28,"Tiger's Lust":6,"Blood Fury":15,"Stampeding Roar":8,"Dash":10,"Aura Mastery":8,"Bestial Wrath":15,"Mirror Image":15,"Soulburn":20,"Spirit Walk":8,"Earth Elemental":30,"Blessing of Freedom":8,"Evasion":10,"Sentinel":18,"Ardent Defender":12,"Guardian of Ancient Kings":8,"Wraith Walk":4,"Ghost Wolf":3,"Combustion":14,"Blazing Barrier":5,"Life Cocoon":12,"Fury of Xuen":12,"Convoke the Spirits":3,"Tranquility":6,"Doom Winds":10,"Invoke Yu'lon, the Jade Serpent":25,"Evangelism":24,"Ultimate Penitence":7,"Fury of Elune":8,"Blessing of Protection":10,"Nullsight":15,"Shield Block":16,"Shield Wall":8,"Ironbark":12,"Tiger Dash":5,"Lunar Beam":12,"Incarnation: Guardian of Ursoc":35,"Survival Instincts":6,"Pain Suppression":8,"Dispersion":6,"Fury of the Aspects":11,"Blessing of Spellwarding":10,"Unleash Life":10,"Invoke Niuzao, the Black Ox":25,"Blade Rush":5,"Ice Barrier":6,"Malevolence":20,"Summon Infernal":30,"Leap of Faith":4,"Roar of Sacrifice":10,"Recklessness":24,"Berserk":25,"Tiger's Fury":15,"Berserker Rage":6,"Takedown":10,"Aspect of the Eagle":15,"Heroism":40,"Avenging Crusader":23,"Bloodlust":40,"Harrier's Cry":40,"Celestial Alignment":15,"Tricks of the Trade":4,"Darkflight":10,"Misdirection":4,"Power Word: Barrier":10,"Darkness":8};
+// ---- Big hits where the damage lands (Oct 22, your note: "there's no damage happening at that spot") ----
+// The fastest kills' big hits are timed from the boss's cast; the raid's damage often lands a few seconds later, and a few barely hurt.
+// Each big hit moves to the 2-second step of highest raid damage from its time to 6 s after (never earlier), and a big hit with
+// nothing above 80% of the fight's average damage around it is dropped. Done once as the page loads, so the chart, the planner and
+// the setup step all see the same times.
+(() => { for (const [boss, byD] of Object.entries(NDZ_CDSTART)) for (const [diff, sd] of Object.entries(byD)) { const DG = (NDZ_TLDMG[boss] || {})[diff], dg = DG ? DG.ph || DG : null; if (!dg || !Array.isArray(sd.pk) || sd.pkSnap) continue;
+  const all = Object.values(dg).flat().filter((v) => v > 0), avg = all.length ? all.reduce((a, b) => a + b, 0) / all.length : 0; if (!avg) continue;
+  sd.pk = sd.pk.map(([ph, rel, v, hit]) => { const bins = dg[ph] || dg[String(ph)] || []; if (!bins.length) return [ph, rel, v, hit]; let bi = -1, bv = -1;
+    for (let i = Math.max(0, Math.floor(rel / 2)); i <= Math.min(bins.length - 1, Math.floor((rel + 6) / 2)); i++) if (bins[i] > bv) { bv = bins[i]; bi = i; }
+    if (bi < 0) return [ph, rel, v, hit]; if (bv < 0.8 * avg) return null; return [ph, Math.max(rel, bi * 2), v, hit]; }).filter(Boolean); sd.pkSnap = true; } })();
 // (what each boss mechanic on the cooldown timeline is, in a sentence or two, for the tooltips; written Oct 20 from the boss
 // guides in notes/Guides/Bosses. Keyed by the mechanic's name without its number ("Murloc set 2" -> "Murloc set").)
 const NDZ_MECHTIP = {
@@ -19534,8 +19560,9 @@ function ndzCutH(by) { const nm = [...new Set((by || []).map((c) => ndzSpellNm(+
 
 // (the whole fight as one phase: every phase end to end, in order, with its raid damage; each item keeps its own phase for the tips)
 function ndzWholeD(D) { if (!D || D.phs.length < 2) return D; const P = D.phs.slice().sort((a, b) => a.ph - b.ph); let s = 0;
-  const offs = P.map((p) => { const o = { ph: p.ph, s, lab: p.ph % 1 ? 'Int' : 'P' + p.ph }; s += p.len; return o; }), off = new Map(offs.map((o) => [o.ph, o.s]));
-  const dmg = []; if (D.dmg) for (const p of P) { const a = D.dmg[p.ph] || D.dmg[String(p.ph)] || [], n = Math.ceil(p.len / 2); for (let i = 0; i < n; i++) dmg.push(a[i] || 0); }
+  const plen = (p) => (D.phl && +D.phl[p.ph]) || (D.phDef && D.phDef[p.ph]) || p.len; /* (each phase its real length, so phases join where they do in game, Oct 22) */
+  const offs = P.map((p) => { const o = { ph: p.ph, s, lab: p.ph % 1 ? 'Int' : 'P' + p.ph }; s += plen(p); return o; }), off = new Map(offs.map((o) => [o.ph, o.s]));
+  const dmg = []; if (D.dmg) for (const p of P) { const a = D.dmg[p.ph] || D.dmg[String(p.ph)] || [], n = Math.ceil(plen(p) / 2); for (let i = 0; i < n; i++) dmg.push(a[i] || 0); }
   return { ...D, _orig: D, _offs: offs, phs: [{ ph: 99, len: s }], cds: D.cds.filter((c) => off.has(c.ph)).map((c) => ({ ...c, ph: 99, t: off.get(c.ph) + c.t })), hits: D.hits.map((h, i) => ({ ...h, ph: 99, rel: (off.get(h.ph) || 0) + h.rel, _i: i })),
     mech: D.mech.filter((m) => off.has(m.ph)).map((m) => ({ ...m, ph: 99, rel: off.get(m.ph) + m.rel })), dmg: D.dmg ? { 99: dmg } : null }; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-btlwhole]'); if (!b || !NDZ_TL) return; S.btlWhole = S.btlWhole === false; const el = document.getElementById('ndzTl'); if (el) el.innerHTML = ndzTlBody(NDZ_TL); });
