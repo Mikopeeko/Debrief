@@ -5,7 +5,7 @@
 const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic' };
 const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const kfmt = (v) => v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k';
-const plain0 = (h) => String(h == null ? '' : h).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+const plain0 = (h) => String(h == null ? '' : h).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&#39;|&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 // (no guide or site names on the card: "Wowhead: ..." and "(Wowhead and Icy Veins)" come out)
 const plain = (h) => plain0(h).replace(/\s*\([^()]*(Wowhead|Icy Veins|SimulationCraft|SimC|Raidbots|Archon)[^()]*\)/g, '')
   .replace(/(^|[.!?]\s+)(Both guides|Wowhead|Icy Veins|SimulationCraft|SimC)( and (Icy Veins|Wowhead|SimulationCraft))?:\s*([a-z])?/g, (m, a, b, c, d, e) => a + (e ? e.toUpperCase() : ''))
@@ -53,10 +53,14 @@ function cutModule(m, T) {
 window.DBF_BUILD = (b, rep, same, W, L) => {
   // (Rotation checks are the whole pull: worked out once, shared by every version)
   const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
-  const m = buildOne(b, rep, same, W2, L, 0), nd = (rep.deaths || []).length;
-  if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
-  m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) m.cuts.push(buildOne(b, rep, same, W2, L, n));
-  return m;
+  // (the Debriefing summary reads the engine's own wipe filter: each version sets it, and it's put back after)
+  let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
+  try {
+    const m = buildOne(b, rep, same, W2, L, 0), nd = (rep.deaths || []).length;
+    if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
+    m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) m.cuts.push(buildOne(b, rep, same, W2, L, n));
+    return m;
+  } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } }
 };
 function buildOne(b, rep, same, W, L, cutN) {
   const T = cutTime(rep, cutN);
@@ -240,6 +244,34 @@ function buildOne(b, rep, same, W, L, cutN) {
     const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 16); /* (every mechanic, and avoidable damage on top) */
   }
   raid.next = b.kill ? (top.length ? 'Kill! Next time: ' + (sentences(top[0].fix || '')[0] || 'clean up ' + top[0].k + '.') : 'Kill! Clean pull.') : (top.length && top[0].fix ? sentences(top[0].fix)[0] : 'Same plan, cleaner.');
+  // (the Debriefing tab's own words (the user's ask, Oct 21: the card should show what Debriefing shows): four raid numbers, the pull
+  // phase by phase, the fix for next pull, and what's better and worse than last pull)
+  raid.tiles = []; raid.story = ''; raid.better = ''; raid.worse = '';
+  if (b.id !== 990001) {
+    const fails = raid.mech.filter((x) => x[0] === 'bad').length, slips = raid.mech.filter((x) => x[0] === 'warn').length, okN = raid.mech.length - fails - slips;
+    let dps = null; try { if (W.setCut) W.setCut(cutN); const A = W.dbfStats ? W.dbfStats(rep) : null; dps = A ? A.dps : null; } catch (e) { dps = null; }
+    const first = allDeaths[0];
+    raid.tiles = [
+      ['Result', b.kill ? 'Kill' : pr && pr.label ? String(pr.label).replace(/^P(\d)/, 'P$1') : pct !== '' ? pct + '%' : 'Wipe', h.dur + (b.kill ? ' · kill' : ' · wipe'), b.kill ? 'ok' : ''],
+      ['Deaths', String(allDeaths.length), first ? 'first at ' + mmss(first.t) + ' (' + first.player.split('-')[0] + ')' : 'nobody died', allDeaths.length ? 'bad' : 'ok'],
+      ['Mechanics', okN + ' clean', slips + ' with mistakes · ' + fails + ' failed', fails ? 'bad' : slips ? 'warn' : 'ok'],
+      ['Raid damage', dps ? kfmt(dps) : '—', 'a second', '']];
+    try {
+      if (W.dbfPull) {
+        const prevQ = (same || []).filter((q) => q !== b && q.pull < b.pull).sort((x, y) => y.pull - x.pull).map((q) => L.reps.get(q.startByte)).find((x) => x && x.rep);
+        const prev = prevQ ? prevQ.rep : null, pp = prev && W.progressOf ? W.progressOf(prev) : null;
+        const delta = pr && pp && pr.left != null && pp.left != null ? pp.left - pr.left : null;
+        const D = W.dbfPull({ r: rep, prev, isKey: false, isBest: false, delta, nowLab: (pr && pr.label) || '', prevLab: (pp && pp.label) || '', cd: { ok: 0, n: 0 }, one: null });
+        const grab = (html, re) => { const x = String(html || '').match(re); return x ? plain(x[1]) : ''; };
+        if (D && !D.reset) {
+          raid.story = grab(D.story, /<p>([\s\S]*?)<\/p>/);
+          const nx = grab(D.slim, /dbr-nx"><b>Next pull:<\/b>([\s\S]*?)<\/p>/); if (nx && !b.kill) raid.next = nx;
+          raid.better = grab(D.slim, /dbr-up"><span>[^<]*<\/span>([\s\S]*?)<\/p>/);
+          raid.worse = grab(D.slim, /dbr-dn"><span>[^<]*<\/span>([\s\S]*?)<\/p>/);
+        }
+      }
+    } catch (e) { /* the summary is extra: the card works without it */ }
+  }
   return { h, players, raid };
 };
 })();

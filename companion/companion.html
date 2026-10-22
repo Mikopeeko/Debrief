@@ -455,6 +455,11 @@ RECAP.lines = (m) => {
   for (const r of m.raid.mech || []) rec.push(['M', r[0], r[1] || '', r[2], r[3]]);
   if (m.raid.more) rec.push(['X', m.raid.more]);
   if (m.raid.next) rec.push(['Q', m.raid.next]);
+  // (the Debriefing tab's summary: four raid numbers, the pull phase by phase, better and worse than last pull)
+  for (const x of m.raid.tiles || []) rec.push(['A', x[0], x[1], x[2], x[3] || '']);
+  if (m.raid.story) rec.push(['Y', m.raid.story]);
+  if (m.raid.better) rec.push(['G', m.raid.better]);
+  if (m.raid.worse) rec.push(['J', m.raid.worse]);
   return rec;
 };
 RECAP.decode = (code) => {

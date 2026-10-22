@@ -55,7 +55,7 @@ local function decode(code)
   code = code:gsub("||", "|")
   if code:sub(1, 4) ~= "DBF1" then return nil, "That isn't a Debrief code. Copy it again from Debrief Companion." end
   if code:sub(-2) ~= "^Z" then return nil, "The code got cut off. Copy it again from Debrief Companion." end
-  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, more = "", next = "" } }, {}
+  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, tiles = {}, more = "", next = "", story = "", better = "", worse = "" } }, {}
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
     -- (the wipe filter: K~versions~line is a line only some "stop at death" numbers have, e.g. K~012~R~... is in 0, 1 and 2)
@@ -75,6 +75,8 @@ local function decode(code)
     elseif t == "N" and by[g(2)] then local p = by[g(2)]; if K then p.nextK = p.nextK or {}; table.insert(p.nextK, { K, g(3) }) else p.next = g(3) end
     elseif t == "T" and by[g(2)] then add(by[g(2)].tiles, { g(3), g(4), g(5), g(6) }) -- (the Detailed card's number tiles)
     elseif t == "O" and by[g(2)] then local p = by[g(2)]; if K then p.next2K = p.next2K or {}; table.insert(p.next2K, { K, g(3) }) else p.next2 = g(3) end
+    elseif t == "A" then add(m.raid.tiles, { g(2), g(3), g(4), g(5) }) -- (the Debriefing tab's four raid numbers)
+    elseif t == "Y" or t == "G" or t == "J" then local k = ({ Y = "story", G = "better", J = "worse" })[t]; if K then m.raid[k .. "K"] = m.raid[k .. "K"] or {}; table.insert(m.raid[k .. "K"], { K, g(2) }) else m.raid[k] = g(2) end
     elseif t == "R" then add(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
     elseif t == "M" then add(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
@@ -205,7 +207,7 @@ eb:SetScript("OnEscapePressed", function() paste:Hide(); if toast:IsShown() then
 -- ---------- the card ----------
 local W, PAD, TOPY = 400, 14, 172
 local CW = W - PAD * 2
-local WIDTHS = { narrow = 360, normal = 400, wide = 480, large = 560 }
+local WIDTHS = { narrow = 360, normal = 400, wide = 480, large = 560, xl = 680 }
 local card = CreateFrame("Frame", "DebriefCard", UIParent)
 card:SetSize(W, 300); card:SetPoint("CENTER", 260, 60); card:SetFrameStrata("HIGH"); card:SetClampedToScreen(true); card:Hide()
 skin(card, 8, COL.bg, 0.97, COL.line2, 1, true)
@@ -230,7 +232,7 @@ local PRESETS = {
   medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "normal", show = {} },
   heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "wide", show = {} },
   -- (the default since Oct 21: a larger card with number tiles, the raid's side on your own view, and two next-pull tips)
-  detailed = { compact = false, maxSlips = 4, maxBoss = 5, maxRaid = 5, maxDied = 3, maxMech = 12, width = "large", detailed = true, show = {} },
+  detailed = { compact = false, maxSlips = 4, maxBoss = 5, maxRaid = 5, maxDied = 3, maxMech = 12, width = "xl", detailed = true, show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
@@ -469,7 +471,8 @@ local function cutView(m)
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
   local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, players = {},
-    raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK) } }
+    raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
+      tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK) } }
   for _, p in ipairs(m.players) do
     local q = {}; for k, x in pairs(p) do q[k] = x end
     q.slips, q.boss, q.surv, q.next = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK)
@@ -623,6 +626,38 @@ function render()
     panel(y0, y - y0)
     IND = 0; y = y + 10
   end
+  -- (a row of small number tiles: a label, a big number, a short line under it)
+  local function tilesRow(y0, list)
+    local n, gap, th2 = math.min(4, #list), 8, 58
+    local tw = math.floor((CW - gap * (n - 1)) / n)
+    for i = 1, n do
+      local tl, x = list[i], (i - 1) * (tw + gap)
+      local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y0); f:SetSize(tw, th2); rounded(f, "fill", 5, COL.raised, DB.cardStyle == "glass" and 0.55 or 1)
+      local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, COL.line, 1)
+      local a = FS("body", 12, COL.muted); a:SetPoint("TOPLEFT", x + 10, -(y0 + 8)); a:SetWidth(tw - 20); a:SetWordWrap(false); a:SetText(tl[1])
+      local v = FS("head", 20, tl[4] == "bad" and COL.badT or tl[4] == "warn" and COL.warn or COL.text); v:SetPoint("TOPLEFT", x + 10, -(y0 + 22)); v:SetWidth(tw - 20); v:SetWordWrap(false); v:SetText(tl[2])
+      local sb = FS("body", 11.5, COL.faint); sb:SetPoint("TOPLEFT", x + 10, -(y0 + 41)); sb:SetWidth(tw - 20); sb:SetWordWrap(false); sb:SetText(names(tl[3]))
+    end
+    return y0 + th2 + 14
+  end
+  -- (the Debriefing tab's summary: the pull phase by phase, then Better and Worse than last pull, each a short paragraph)
+  local function summary()
+    if not DB.detailed or DB.compact or (m.raid.story or "") == "" or SH.story == false then return end
+    local y0 = y; IND = 12; y = y + 12
+    y = head(y, "The pull", "story", DB.collapsed and DB.collapsed.story)
+    if not (DB.collapsed and DB.collapsed.story) then
+      local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", IND, -y); t:SetWidth(CW - IND * 2); t:SetText(names(m.raid.story)); y = y + t:GetStringHeight() + 8
+      for _, bw in ipairs({ { m.raid.better, "Better", COL.goodT or COL.good }, { m.raid.worse, "Worse", COL.warn } }) do
+        if (bw[1] or "") ~= "" then
+          local k = FS("bold", 12, bw[3]); k:SetPoint("TOPLEFT", IND, -y); k:SetText(bw[2]) --[[ (plain words: the game's fonts may not draw arrows) ]]
+          local tx = FS("body", 13, COL.soft); tx:SetPoint("TOPLEFT", IND + 70, -y); tx:SetWidth(CW - IND * 2 - 70); tx:SetText(names(bw[1])); y = y + math.max(18, tx:GetStringHeight()) + 6
+        end
+      end
+    end
+    y = y + 3
+    panel(y0, y - y0)
+    IND = 0; y = y + 10
+  end
   if view == "me" and P then
     -- the tile: your damage or healing, against your last pull and your best
     if SH.tile ~= false then
@@ -650,19 +685,7 @@ function render()
       y = y + th + 16
     end
     -- (the Detailed card: three small number tiles under yours: avoidable damage, kicks or dispels, your death)
-    if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then
-      local n, gap, th2 = math.min(3, #P.tiles), 8, 58
-      local tw = math.floor((CW - gap * (n - 1)) / n)
-      for i = 1, n do
-        local tl, x = P.tiles[i], (i - 1) * (tw + gap)
-        local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y); f:SetSize(tw, th2); rounded(f, "fill", 5, COL.raised, DB.cardStyle == "glass" and 0.55 or 1)
-        local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, COL.line, 1)
-        local a = FS("body", 12, COL.muted); a:SetPoint("TOPLEFT", x + 10, -(y + 8)); a:SetWidth(tw - 20); a:SetWordWrap(false); a:SetText(tl[1])
-        local v = FS("head", 20, tl[4] == "bad" and COL.badT or tl[4] == "warn" and COL.warn or COL.text); v:SetPoint("TOPLEFT", x + 10, -(y + 22)); v:SetWidth(tw - 20); v:SetWordWrap(false); v:SetText(tl[2])
-        local sb = FS("body", 11.5, COL.faint); sb:SetPoint("TOPLEFT", x + 10, -(y + 41)); sb:SetWidth(tw - 20); sb:SetWordWrap(false); sb:SetText(names(tl[3]))
-      end
-      y = y + th2 + 14
-    end
+    if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then y = tilesRow(y, P.tiles) end
     if not DB.compact then
       local rot = function() section("rotation", "Rotation", onlyBad(P.slips), DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
       local bos = function() section("boss", "Boss mechanics", onlyBad(P.boss), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
@@ -672,6 +695,7 @@ function render()
       if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
       if DB.detailed and not m.h.practice then
+        summary()
         if #m.raid.bad > 0 then section("rbad", "The raid: top mistakes", m.raid.bad, DB.maxRaid or 3, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
         if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("rmech", "The raid: boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
       end
@@ -679,6 +703,8 @@ function render()
     if not (m.h.practice) then diedRow() end -- (the death filter here too: a dummy has no deaths)
     if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
   else
+    if DB.detailed and not DB.compact and m.raid.tiles and #m.raid.tiles > 0 then y = tilesRow(y, m.raid.tiles) end
+    summary()
     section("mistakes", h.kill and "What to clean up" or "Top mistakes", m.raid.bad, DB.compact and 1 or (DB.maxRaid or 3), function(r) y = row(y, r[1], r[2], r[4], r[3]) end, "Nothing big.")
     -- (how each boss mechanic went: done right, some mistakes, or failed; worst first)
     if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
@@ -1227,7 +1253,7 @@ eb:SetScript("OnEnterPressed", function(self) local t = self:GetText(); if t ~= 
 local opt
 local refreshers = {}
 local FONT_CHOICES = { { "debrief", "Debrief (website)" }, { "wow", "WoW default" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
-local WIDTH_CHOICES = { { "narrow", "Narrow" }, { "normal", "Normal" }, { "wide", "Wide" }, { "large", "Large" } }
+local WIDTH_CHOICES = { { "narrow", "Narrow" }, { "normal", "Normal" }, { "wide", "Wide" }, { "large", "Large" }, { "xl", "Extra wide" } }
 local function applySettings()
   reapplyFonts()
   card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
@@ -1845,6 +1871,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC: ask after every boss pull from the first one)
     if DB.raidAlways == nil then DB.raidAlways = true end
     DB.show = DB.show or {}
+    if DB.detailed and DB.width == "large" and not DB.xlOnce then DB.width = "xl" end; DB.xlOnce = true
     if not DB.detailedDefault then DB.detailedDefault = true; if DB.preset == nil or DB.preset == "medium" then Debrief_SetPreset("detailed") end end -- (the Detailed card is the default since Oct 21)
     registerSettings()
     reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
