@@ -27539,7 +27539,7 @@ function specPage(o) {
     : (o.talents && o.talents.length ? '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + o.talents.map((t) => '<span class="spc-t">' + spellIcon(0, (o.talIc || {})[t] || t) + esc(t) + '</span>').join('') + '</div></div></div>' : '');
   // (the page: the summary; your talents, open unless you fold them; the pull at a glance (one pull's cooldowns over time, or the night's pulls); the chapters;
   // the guides' credit)
-  let coach = ''; try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
+  let coach = ''; if (SPC_DRAW) try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
   return { score, checks, html: hero + coach + build + (glIn ? '' : glance) + body + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
 }
 // (the coach's note (your call, Oct 22): right under the header, what went right and what went wrong the way a world-first raid leader
@@ -27547,6 +27547,8 @@ function specPage(o) {
 // full coaching" opens the in-depth version in place. Written only from this page's own checks, so it never says anything the tiles don't:
 // the costliest fixes first (the same as Work on these first), then lines that are fine but clearly behind the top players. Proc-driven
 // lines and stats are never raised as mistakes; stats get one gear line)
+// (true only while specView draws a Rotation page: the coach is built then, never when other tabs grade Rotation through rotOf)
+let SPC_DRAW = false;
 function spcCoach(d) {
   const { checks, focus, good, UN, one } = d, top = d.TOPB || {}, txt = (v) => String(v == null ? '' : v).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
   const tipOf = (c) => (c.tip ? tipNow(c.tip) : ''), first = (c) => spcFirst(c.sub), nm = d.top || 'top players', of = one ? (d.kill ? 'kill' : 'pull') : 'night';
@@ -27556,7 +27558,7 @@ function spcCoach(d) {
   const wrong = focus.map((c) => ({ c, kd: c.st })).concat(gap.map((x) => ({ c: x.c, kd: 'gap' }))).slice(0, 3), right = good.slice(0, 2);
   // (one #1 on every tab (Oct 22): the shared coach's first fix leads here too. A rotation one moves to the top of this list; a death or a
   // mechanic becomes the Focus next pull line)
-  let S1 = null; try { S1 = typeof coachSummary === 'function' && d.reps && d.reps.length ? coachSummary(d.reps, d.name) : null; } catch (e) { S1 = null; }
+  let S1 = null; const was = SPC_DRAW; SPC_DRAW = false; try { S1 = typeof coachSummary === 'function' && d.reps && d.reps.length ? coachSummary(d.reps, d.name) : null; } catch (e) { S1 = null; } finally { SPC_DRAW = was; }
   const w1 = S1 && S1.wrong && S1.wrong[0];
   if (w1 && w1.kind === 'rot' && w1.key) { const j = wrong.findIndex((x) => x.c.k === w1.key);
     if (j > 0) wrong.unshift(wrong.splice(j, 1)[0]); else if (j < 0) { const c1 = checks.find((y) => y.k === w1.key); if (c1) { wrong.unshift({ c: c1, kd: c1.st }); if (wrong.length > 3) wrong.length = 3; } } }
@@ -31072,7 +31074,7 @@ function specView(reps, one) {
   // grouped by role inside it)
   const sel = '<select class="rot-sel" aria-label="Change player"><option value="" selected disabled>Change player</option>' + ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<optgroup label="' + l + '">' +
     l2.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === S.specSel ? ' disabled' : '') + '>' + esc(p.name) + (p.name === meN ? ' (you)' : '') + ' · ' + esc(p.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') + '</select>';
-  const x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one), x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
+  SPC_DRAW = true; let x0 = null; try { x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one); } finally { SPC_DRAW = false; } const x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
   const ak = S.specSel + '|' + (one ? (S.rep && S.rep.item ? S.rep.item.pull : '') : 'all'), an = ak !== SPC_AK ? ' spc-anim' : ''; SPC_AK = ak;
   const page = x ? '<div class="pf-inl pf-srcd spc-v' + an + '">' + x.html + '</div>' + (x.wait ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') : '<p class="muted" style="margin:10px 0 0">No Rotation page for ' + esc(S.specSel) + (one ? ' this pull' : ' over these pulls') + '.</p>';
   return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
