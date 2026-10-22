@@ -1674,6 +1674,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Rotation: one card per spell. The cards about the same spell, like the five for Avenging Wrath, are now one card with its most important number up top and the rest underneath. The filter buttons and Copy as image are gone, and your card with your talents sits at the very top.',
     'Coach: the NSRT note\'s missed jobs show up in the raid\'s list too, with who missed them and the note\'s reminder as the fix.',
     'Coach: each problem says what happened, then what to do next time, with "first time tonight" or "third time tonight", and a How to do it link when it keeps happening.',
     'Coach: a raid mistake says how many deaths it led to, a death right after one says what caused it, and a missed NSRT note job suggests the note\'s reminder.',
@@ -14833,7 +14834,7 @@ function specPage(o) {
   // (the page: the summary; your talents, open unless you fold them; the pull at a glance (one pull's cooldowns over time, or the night's pulls); the chapters;
   // the guides' credit)
   let coach = ''; try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
-  return { score, checks, html: coach + hero + build + (glIn ? '' : glance) + body + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
+  return { score, checks, html: hero + coach + build + (glIn ? '' : glance) + body + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
 }
 // (the coach's note (your call, Oct 22): right under the header, what went right and what went wrong the way a world-first raid leader
 // would say it, each problem with how to fix it, and one thing to focus on next pull. Short first, so it fits a phone screen; "Read the
@@ -15037,7 +15038,24 @@ const SPC_BW = { ok: 'Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not gra
 const spcUnder = (c, top) => { if (c.st !== 'ok' || !SPC_UP.has(c.k)) return false; const t = String(top(c.k) || '').replace(/<[^>]+>/g, ''), tv = parseFloat(t.slice(t.indexOf(':') + 1)), mv = parseFloat(String(c.v).replace(/<[^>]+>/g, ''));
   return /%/.test(t) && isFinite(tv) && isFinite(mv) && mv < tv - 1; };
 const SPC_UP = new Set(['apl', 'abc']);
-const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + vis.map((c) => { const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1 || (c.k === 'apl' && c.st !== 'ok') || String(v || '').includes('class="spc-w ');
+// (one card per spell (your call, Oct 22): the cards in a block that are all about the same spell, its name in each title, become one card.
+// Its biggest number is the one that needs the most attention (the worst flag, then the one that counts most); the others are small lines
+// under it; opened, every part shows with its own details. Cards that only share an icon (like the casting ones) stay apart)
+const SPC_RK = { bad: 3, warn: 2, ok: 1, na: 0 };
+const spcGroupTiles = (vis) => { const by = new Map(), out = [];
+  for (const c of vis) { const k = c.ic && !c.members && String(c.label).toLowerCase().includes(String(c.ic).toLowerCase()) ? String(c.ic) : null;
+    if (k && by.has(k)) { by.get(k).push(c); continue; } if (k) by.set(k, [c]); out.push(k ? { ref: k } : c); }
+  return out.map((x) => { if (!x.ref) return x; const l = by.get(x.ref); if (l.length < 2) return l[0];
+    const main = l.slice().sort((a, b) => (SPC_RK[b.st] || 0) - (SPC_RK[a.st] || 0) || (b.share || 0) - (a.share || 0))[0];
+    return { k: 'grp-' + x.ref, label: x.ref, ic: x.ic || x.ref, st: main.st, main, members: [main].concat(l.filter((y) => y !== main)) }; }); };
+const spcBadge = (c, top) => (c.bdg ? '<span class="spc-tlb na">' + esc(c.bdg) + '</span>' : spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>');
+const spcGroupTile = (c, vz, top, slug, tmo) => { const m = c.main, rest = c.members.slice(1), open = m.st === 'bad';
+  return '<details class="spc-tl spc-tlg ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + spIc(c.ic) + '<span>' + esc(c.label) + '</span></span>' +
+    '<b class="cst-f ' + m.st + '">' + m.v + '</b><span class="spc-tgm">' + esc(m.label) + '</span>' + spcBadge(m, top) + (top(m.k) ? '<span class="spc-tlt">' + top(m.k) + '</span>' : '') +
+    '<span class="spc-tgl">' + rest.map((y) => '<span class="spc-tgr ' + y.st + '"><i></i>' + esc(y.label) + ' <b>' + y.v + '</b></span>').join('') + '</span></summary>' +
+    '<div class="spc-tld">' + c.members.map((y) => { const hw = spcHw(y.k, y.how), v = vz(y) || (tmo ? tmo(y) : '');
+      return '<div class="spc-tgs" id="spc-r-' + slug(y.k) + '"><h5 class="spc-tgh"><span>' + esc(y.label) + '</span><b class="cst-f ' + y.st + '">' + y.v + '</b>' + spcBadge(y, top) + '</h5><p class="spc-rs">' + esc(y.sub) + hw[0] + '</p>' + hw[1] + spcTip(y) + v + '</div>'; }).join('') + '</div></details>'; };
+const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + spcGroupTiles(vis).map((c) => { if (c.members) return spcGroupTile(c, vz, top, slug, tmo); const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1 || (c.k === 'apl' && c.st !== 'ok') || String(v || '').includes('class="spc-w ');
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
     '<b class="cst-f ' + c.st + '">' + c.v + '</b>' + (c.bdg ? '<span class="spc-tlb na">' + esc(c.bdg) + '</span>' : spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>') + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
     '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';

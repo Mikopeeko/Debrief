@@ -4940,7 +4940,13 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rgx-n { margin: 8px 2px 0; } .rgx-i { width: 18px; height: 18px; border-radius: 4px; flex: none; } .rgx-c.rgx-boss { border-left-color: #d9534f; } .rgx-c.rgx-add { border-left-color: #8fd18a; }
 @media (max-width: 760px) { .rgx-g { grid-template-columns: 1fr 1fr; } .spc-chs { display: none; } }
 /* Rotation, the A+B mockup (Oct 19): talents in the card, blocks without boxes */
-.spc-tq .spc-tqg { zoom: .7; } .spc-v2 { font: 700 15px var(--head) !important; color: var(--muted) !important; } .spc-tq .tm { margin: 0; } .spc-tq .spc-hft { margin-bottom: 2px; }
+.spc-tq .spc-tqg { zoom: .7; }
+/* one card per spell (Oct 22) */
+.spc-tlg > summary .spc-tgm { font-size: 12px; color: var(--muted); margin-top: -2px; } .spc-tgl { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12.5px; color: var(--muted); }
+.spc-tgr { display: flex; align-items: baseline; gap: 6px; } .spc-tgr i { width: 7px; height: 7px; border-radius: 50%; background: var(--line2); flex: none; transform: translateY(-1px); } .spc-tgr.ok i { background: #45c15c; } .spc-tgr.warn i { background: #e8a23a; } .spc-tgr.bad i { background: #e5534b; }
+.spc-tgr b { margin-left: auto; color: var(--text); font-weight: 700; } .spc-tgr b span { font-weight: 500; color: var(--muted); }
+.spc-tl[open].spc-tlg > summary .spc-tgl { flex-direction: row; flex-wrap: wrap; gap: 4px 14px; } .spc-tl[open].spc-tlg > summary .spc-tgr b { margin-left: 4px; }
+.spc-tgs + .spc-tgs { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); } .spc-tgh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 0 0 6px; font: 700 15px var(--head); } .spc-tgh b { font-size: 16px; } .spc-v2 { font: 700 15px var(--head) !important; color: var(--muted) !important; } .spc-tq .tm { margin: 0; } .spc-tq .spc-hft { margin-bottom: 2px; }
 @media (max-width: 760px) { .spc-tq .spc-tqg { zoom: .62; overflow-x: auto; } }
 .spc-htal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; width: 100%; margin-top: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(217,180,106,.28); background: rgba(8,8,10,.55); color: var(--muted); font: 500 13px var(--body); text-align: left; cursor: pointer; }
 .spc-htal:hover { border-color: rgba(217,180,106,.6); } .spc-htal > b { color: var(--gold); font: 700 13px var(--head); letter-spacing: .4px; }
