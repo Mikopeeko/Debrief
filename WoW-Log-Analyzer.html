@@ -14233,6 +14233,25 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-22', h: [
+    { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
+  ], n: [
+    'Report card: each raider\'s card shows every death, how many counted and why. A death to something avoidable counts even after the wipe filter, while fewer than a quarter of the raid is dead.',
+    'Report card: each death that was on you takes a point off your night\'s grade, up to 10.',
+    'The raid\'s grade is now half the raiders\' own grades and half how the raid did each mechanic, so a mechanic that fails every pull shows in it.',
+    'Boss guides open on Heroic or Mythic to match how you raid, and remember the one you pick.',
+    'When Warcraft Logs is down, a bar says so right away, and your saved nights and the guides still work.',
+    'Plainer words: orbs per frontal ("4, then 6 orbs, aim for 2 to 3"), units on the counts, pets named as pets, and "% done" beside the boss health left.',
+    'The bosses are in the same order everywhere on the site.',
+    'Long patch notes fold after six lines.',
+  ], f: [
+    'The Coiled Altar: Malacrass counts as a boss, not an add, in damage splits.',
+    'The Next pull line under the Fix cards now says the first card\'s fix.',
+    'A boss guide\'s address follows the boss and the difficulty you pick, so a shared guide link opens the right one.',
+    'Report card: healing and damage are ranked among your own role, and the sentences read right ("were #1", "both of your deaths").',
+    'Report card: the Night grades row sits on one line again, and a grade\'s letter matches the number shown.',
+    'Odd numbers fixed: top players over 100%, a tiny mana amount that showed as 0.01, and casts a minute counting procs.',
+  ] },
   { d: '2026-10-21', h: [
     { t: 'Graphs is here', d: 'A new tab with the raid\'s numbers as bar graphs. Pick up to 3 to see side by side, and click any player for their damage, casts, cooldowns, buffs, defensives, potions and more.' },
     { t: 'Share a night from your own log', d: 'A night read from your PC (no Warcraft Logs needed) now has a Share button under the banner. It gives you a link your officers can open on any PC or phone, with every tab. Anyone with the link can see that night.' },
@@ -14247,15 +14266,6 @@ const PATCH_NOTES = [
     'Debriefing, All pulls: a new Deaths line. Deaths per pull as bars, what killed people most, who died most, and each pull\'s first death with a › to that pull.',
     'Report card and the boss grade: deaths now count. A death that was on you (your own mistake, like an avoidable hit, or dying slowly with a defensive ready) costs Survival points; a one-shot that wasn\'t your mistake, the raid\'s mistake and deaths after the wipe filter don\'t.',
     'Debriefing: the small maps on the cards show the whole room, like the big ones, instead of zooming in on each mechanic.',
-    'Every mechanic links to its part of the boss guide: under the Fix cards, and inside each mechanic.',
-    'Report card: each raider\'s card shows every death, how many counted and why. A death to something avoidable counts even after the wipe filter, while fewer than a quarter of the raid is dead.',
-    'Report card: each death that was on you takes a point off your night\'s grade, up to 10.',
-    'The raid\'s grade is now half the raiders\' own grades and half how the raid did each mechanic, so a mechanic that fails every pull shows in it.',
-    'Boss guides open on Heroic or Mythic to match how you raid, and remember the one you pick.',
-    'When Warcraft Logs is down, a bar says so right away, and your saved nights and the guides still work.',
-    'Plainer words: orbs per frontal ("4, then 6 orbs, aim for 2 to 3"), units on the counts, pets named as pets, and "% done" beside the boss health left.',
-    'The bosses are in the same order everywhere on the site.',
-    'Long patch notes fold after six lines.',
     'Debrief in game: The Coiled Altar mechanics on the recap card each say what matters most, like Deluge 3 at 1:27: Sever 2 hit 6 (plan: 2 to 3), or Soak 1 at 6:53: 2 in the circle (needs 5). Other bosses next.',
     'Debrief in game: turn combat logging on or off with one press. Click Logging: On/Off at the bottom of the card, type /debrief log, or set a key in Options > Keybindings > AddOns > Debrief.',
     'Debrief in game: the Detailed card says each thing once. Your view is about you and the Raid view is about the raid, with no lines repeated between tiles, lists and the next pull.',
@@ -14320,11 +14330,6 @@ const PATCH_NOTES = [
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
     'Debriefing: a single pull\'s Deaths lists every death again. The ones after the wipe filter are in grey and not counted, instead of only "19 more deaths".',
-    'The Coiled Altar: Malacrass counts as a boss, not an add, in damage splits.',
-    'The Next pull line under the Fix cards now says the first card\'s fix.',
-    'A boss guide\'s address follows the boss and the difficulty you pick, so a shared guide link opens the right one.',
-    'Report card: healing and damage are ranked among your own role, and the sentences read right ("were #1", "both of your deaths").',
-    'Odd numbers fixed: top players over 100%, and a tiny mana amount that showed as 0.01.',
     'Debriefing: the small maps on the mechanic cards (like All pulls\' Guillotine) play now, like the big ones, instead of standing still.',
     'Debriefing: hovering a card\'s map no longer blows it up off the screen.',
     'The Coiled Altar: a healer who immunes the 2nd Guillotine (like a Holy Paladin with Divine Shield) is no longer told to stay out of it.',
