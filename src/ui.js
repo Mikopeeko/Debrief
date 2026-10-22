@@ -1681,6 +1681,7 @@ const PATCH_NOTES = [
     'Report card and the boss grade: deaths now count. A death that was on you (your own mistake, like an avoidable hit, or dying slowly with a defensive ready) costs Survival points; a one-shot that wasn\'t your mistake, the raid\'s mistake and deaths after the wipe filter don\'t.',
     'Debriefing: the small maps on the cards show the whole room, like the big ones, instead of zooming in on each mechanic.',
     'Every mechanic links to its part of the boss guide: under the Fix cards, and inside each mechanic.',
+    'Report card: each raider\'s card shows every death, how many counted and why. A death to something avoidable counts even after the wipe filter, while fewer than a quarter of the raid is dead.',
     'The raid\'s grade is now half the raiders\' own grades and half how the raid did each mechanic, so a mechanic that fails every pull shows in it.',
     'Boss guides open on Heroic or Mythic to match how you raid, and remember the one you pick.',
     'When Warcraft Logs is down, a bar says so right away, and your saved nights and the guides still work.',
@@ -19622,6 +19623,8 @@ const TANK_CD_SKIP = new Set(['rallying cry', 'darkness', 'divine shield', 'lay 
 const TANK_MECH = new Set(['Sever', 'Soul Sever', 'Blighted Sever']);
 // (a death the fight checks put on the player, even a one-shot (Oct 21: Boltzzx's Axegrinder axe, Dashtoswirly's Gravebound with no
 // soul fragments): the avoidable damage judge died on that hit, or a check's flagged row names them within 1.5 s of it)
+// (how many raiders were in the pull, for "a quarter of the raid")
+const raidSizeOf = (r) => [...r.players.values()].filter((x) => x.cls || x.specName).length || 20;
 function deathOwn(r, d) {
   const m = r.module; if (!m || m.error || !m.sections) return false;
   const k = d.guid + '@' + d.t.toFixed(2); r._dOwn = r._dOwn || new Map(); if (r._dOwn.has(k)) return r._dOwn.get(k);
@@ -19665,11 +19668,15 @@ function survivalOf(r, p) {
   // with a defensive, Healthstone or potion still ready, in full; a slow death with nothing left, half; a one-shot (50%+ to dead in 2 s
   // or less) that wasn't their mistake, the raid's mistake, or after the wipe filter, not at all)
   const ownL = (d) => (d.links || []).some((l) => !l.raid) || deathOwn(r, d), raidL = (d) => (d.links || []).some((l) => l.raid);
-  const dieList = dd.map((d) => ({ d, w: ownL(d) ? 1 : d.react === false || raidL(d) ? 0 : (d.available || []).length ? 1 : 0.5 })), dieN = dieList.reduce((s, x) => s + x.w, 0);
+  // (an avoidable death after the wipe filter still counts while the raid was still fighting: fewer than a quarter of it dead, 5 of 20
+  // (your call, Oct 21); the rest of a wipe's deaths don't)
+  const lateOwn = r.item.kill || !isFinite(ct) ? [] : (() => { const all = r.deaths.slice().sort((a, b) => a.t - b.t), q = Math.max(2, Math.round(raidSizeOf(r) / 4));
+    return all.filter((d, i) => i < q && d.guid === p.guid && d.t > ct + 0.05 && ownL(d)); })();
+  const dieList = dd.map((d) => ({ d, w: ownL(d) ? 1 : d.react === false || raidL(d) ? 0 : (d.available || []).length ? 1 : 0.5 })).concat(lateOwn.map((d) => ({ d, w: 1, late: true }))), dieN = dieList.reduce((s, x) => s + x.w, 0);
   const die = Math.max(0, 100 - 50 * dieN);
   const W = tank ? [0.6, 0.15, 0.25] : [0.4, 0.3, 0.3];
   const score = pot == null ? (W[0] * def + W[1] * kit) / (W[0] + W[1]) : W[0] * def + W[1] * kit + W[2] * pot;
-  return { score, life: 0.6 * score + 0.4 * die, die, dieN, dieList, def, kit, pot, expect, used, pre, defReady, kitReady, calls: calls.length, silent, deaths: dd.length, oneShots: dd.length - fair.length, silentKit, tank, cds, cdUsed, cdPoss,
+  return { score, life: 0.6 * score + 0.4 * die, die, dieN, dieList, def, kit, pot, expect, used, pre, defReady, kitReady, calls: calls.length, silent, deaths: dd.length + lateOwn.length, lateOwn: lateOwn.length, oneShots: dd.length - fair.length, silentKit, tank, cds, cdUsed, cdPoss,
     stones: p.cons.healthstone.filter((u) => ok(u.t)).length, hpots: p.cons.healpot.filter((u) => ok(u.t)).length };
 }
 // ---------- Report card (Performance): how well each player played their own character ----------
@@ -20478,6 +20485,19 @@ function rcbTable(c, F) {
 // (the raider on the card: the one you picked, else you, else the top of the raid)
 function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.find((x) => x.a.p.name === S.rcbSel) || (me && B.rows.find((x) => x.a.p.name === me.name)) || B.rows.slice().sort((u, v) => v.score - u.score)[0]; }
 // the picked raider's report card: their grade, their place in the raid and in their role, each subject with its place, their best and their room to grow
+// (every death on the card, counted or not (your ask, Oct 21: "didn't I die a lot?"): how many times, in how many pulls, how many counted
+// and why, and that the rest came in the wipe)
+function rcbDeathLine(F, p) {
+  let all = 0, inP = 0, n = 0, kept = 0, late = 0;
+  for (const r of F.reps) { const pp = [...r.players.values()].find((y) => y.name === p.name); if (!pp) continue; n++;
+    const mine = r.deaths.filter((d) => d.guid === pp.guid); if (!mine.length) continue; all += mine.length; inP++;
+    try { const s = survivalOf(r, pp); kept += s.deaths - (s.lateOwn || 0); late += s.lateOwn || 0; } catch (e) { kept += keptDeaths(r).filter((d) => d.guid === pp.guid).length; } }
+  const cnt = kept + late, rest = all - cnt, cut = deathCutN();
+  const txt = !all ? 'No deaths in ' + (n === 1 ? 'the pull' : n === 2 ? 'either pull' : 'any of the ' + n + ' pulls') + '.'
+    : 'Died ' + plural(all, 'time') + ' in ' + inP + ' of ' + plural(n, 'pull') + '. ' + (cnt ? (cnt === all ? (all === 1 ? 'It' : all === 2 ? 'Both' : 'All ' + all) + ' counted' : cnt + ' counted') + (late ? ': ' + kept + ' before the wipe filter, and ' + late + ' to something avoidable while the raid was still fighting' : '') + '.' : 'None counted.') +
+      (rest > 0 ? ' The other ' + rest + ' came in the wipe' + (cut ? ', after the raid\'s ' + ordinal(cut) + ' death' : '') + ', so they don\'t count.' : '');
+  return '<div class="rcb-ydl"><b>Deaths</b>' + esc(txt) + '</div>';
+}
 function rcbSide(c, F) {
   const B = rcbFacts(c, F), x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
   const subs = RCB_SUBJ.filter(([k]) => x[k] != null).map(([k, l, ic]) => { const r = B.rk[k].m.get(x); return { k, l, ic, v: x[k], r }; });
@@ -20487,6 +20507,7 @@ function rcbSide(c, F) {
     '<div class="rcb-yph"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + '</div></div></div>' +
     '<div class="rcb-ypg">' + rcbRing(x.score, 118) + '</div><div class="rcb-yprk"><b>#' + B.rk.score.m.get(x) + '</b> of ' + B.rk.score.n + ' in the raid · <b>#' + rkR.m.get(x) + '</b> of ' + rkR.n + ' ' + RN[x.role] + '</div>' + (aw ? '<div class="rcn-mbs rcb-aw">' + aw + '</div>' : '') +
     '<div class="rcb-ypl">' + subs.map((y) => '<div data-tt="' + esc(RCB_SUBJ.find(([k]) => k === y.k)[3]) + '">' + rcbIc(y.ic) + '<span>' + y.l + '</span>' + rcbV(y.v) + '<em class="' + (y.r <= 3 ? 'top' : '') + '">#' + y.r + '</em></div>').join('') + '</div>' +
+    rcbDeathLine(F, p) +
     '<div class="rcb-ypn">' + (best ? '<div><span class="rcb-k gold">Best tonight</span><b>' + best.l + ' · ' + Math.round(best.v) + '</b><small>#' + best.r + ' of ' + B.rk[best.k].n + ' in the raid.</small></div>' : '') +
       (low ? '<div><span class="rcb-k">Room to grow</span><b>' + low.l + ' · ' + Math.round(low.v) + '</b><small>#' + low.r + ' of ' + B.rk[low.k].n + ' in the raid' + (fix ? '. First fix: ' + esc(fix.t) : '') + '.</small></div>' : '') + '</div>' +
     '<button type="button" class="btn rcb-open" data-rctp="' + esc(p.name) + '">Open their whole night ›</button></aside>'; }
