@@ -1704,7 +1704,9 @@ const PATCH_NOTES = [
     { t: 'Your coach on Debriefing', d: 'Every pull and every night now opens with a coach right under the boss banner: what went right, what went wrong and how to fix it, and one thing to focus on next pull. Pick yourself at the top right and it coaches you. Read the full coaching opens the long version.' },
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
+    { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'All pulls shows how long is left while it reads the night, like "12 of 30, about 25 seconds left".',
     'A night read from your PC now says so on its Share bar: its page address won\'t open for anyone else, so use Share. When your team\'s Warcraft Logs has the same raid, Open the Warcraft Logs version takes you to the same pull, where every pull has its own link.',
     'Debrief Addon: a kill on your recap card opens with the raid lead\'s kill call, the same one as Debriefing, like "Boss down! 30 pulls tonight, and we got it." with shout-outs.',
     'Each mechanic on Debriefing now has a small tag showing where you stand against top guilds, like "better than 9 of 19 top guilds" or "clean, like 18 of 19 top guilds". On All pulls it uses your typical pull. Hover it to see the numbers.',
@@ -9435,6 +9437,38 @@ function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
     const full = rf ? rf.full : ms.filter((m) => lc(m.mechanic) === lc(nm)).map((m) => cHtml(m.fix)).sort((a, b) => b.length - a.length)[0] || dbfTip1(cHtml(g.s.how || '')); /* (else the mechanic's own explanation) */
     out.push({ kind: 'mech', sec: g.id, sev: g.bad * 2 >= g.pulls.length ? 'bad' : 'warn', label: shortT(g.s.title), n: g.pulls.length, of: reps.length, pulls: g.pulls, fix: fx, how: full }); }
   return { list: out, S2 }; }) || { list: [], S2: new Map() }; }
+// ---- Week to week (your pick, Oct 22: "do 1 and 2"): each night read on All pulls leaves a small summary in this browser (per
+// mechanic: pulls it came up in, pulls it went wrong, who was flagged; what wiped us). The next raid on the same boss and difficulty
+// compares against the latest earlier one: better, worse, still going wrong, new; and "also last raid" on a player's own problems ----
+const WK_KEY = 'wla-weeks', wkWhen = (it) => (it && (it.wallMs || it.startMs)) || 0; /* (wallMs: the real date and time; a Warcraft Logs pull's startMs is only for ordering) */
+const wkAll = () => { try { const v = JSON.parse(store.get(WK_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+function weekOf(reps) {
+  const it = reps[0].item, mech = {}, why = {};
+  for (const r of reps) {
+    for (const [id, x] of pullSections(r)) { if (id === 'deaths' || id === 'avoid' || x.s.info || x.st === 'na') continue;
+      const m = mech[id] || (mech[id] = { t: String(shortT(x.s.title)).split(' (')[0], j: 0, w: 0, who: {} }); m.j++;
+      if (x.st === 'warn' || x.st === 'bad') { m.w++;
+        for (const row of x.s.rows.concat(...(x.s.groups || []).map((g) => g.rows || []))) { if (!row.some((c) => c && (c.bad || c.warn))) continue;
+          for (const p of new Set(row.flatMap((c) => (c ? [c.p].concat(c.ps || []) : [])).filter(Boolean))) { const b = oaBase(p); m.who[b] = (m.who[b] || 0) + 1; } } } }
+    try { const o = whyWiped(r); if (o && o.k !== 'unclear') { const k = String(o.mech || o.l || (o.d && o.d.ability) || WHY_K[o.k][0]); why[k] = (why[k] || 0) + 1; } } catch (e) { /* no verdict */ }
+  }
+  const code = it.wcl ? it.wcl.code : it.shr ? 'shr' : 'log';
+  return { v: 1, key: code + '|' + it.boss + '|' + it.diffId + '|' + Math.round(wkWhen(it) / 3600000), boss: it.boss, diffId: it.diffId, date: wkWhen(it), pulls: reps.length, kill: reps.some((r) => r.item.kill), mech, why };
+}
+function weekSave(reps, w0) { try { if (reps.length < 3 || !wkWhen(reps[0].item)) return; const w = w0 || weekOf(reps), L = wkAll().filter((x) => x.key !== w.key); L.push(w); L.sort((a, b) => a.date - b.date); store.set(WK_KEY, JSON.stringify(L.slice(-80))); } catch (e) { /* storage full or off */ } }
+// (the latest raid on this boss before this one: at least 12 hours earlier, so two reports of the same night don't count)
+const weekPrev = (it, date) => wkAll().filter((x) => x.boss === it.boss && x.diffId === it.diffId && x.date && x.date < date - 12 * 3600000).sort((a, b) => b.date - a.date)[0] || null;
+const wkDate = (w) => { try { return new Date(w.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); } catch (e) { return 'last raid'; } };
+// (one mechanic, tonight against last raid: better, worse, again, new or fixed; null when one of the two didn't judge it in 2+ pulls)
+function wkCmp(now, prev) { if (!now || !prev || now.j < 2 || prev.j < 2) return null; const a = now.w / now.j, b = prev.w / prev.j;
+  if (!now.w && !prev.w) return null; if (!now.w) return 'fixed'; if (!prev.w) return 'new'; if (a <= b - 0.15) return 'better'; if (a >= b + 0.15) return 'worse'; return 'again'; }
+// (the one line for the night's coach: "Since last raid (Oct 15): fixed Dreadmarch; better at orbs; worse at Venom; still going wrong: Axegrinder.")
+function weekLine(nowW, prev) { if (!prev) return '';
+  const G = { fixed: [], better: [], worse: [], again: [], new: [] };
+  for (const [id, m] of Object.entries(nowW.mech)) { const k = wkCmp(m, prev.mech[id]); if (k) G[k].push(m.t); }
+  const two = (l) => (l.length > 2 ? l.slice(0, 2).join(', ') + ' and ' + (l.length - 2) + ' more' : lpAnd(l));
+  const parts = [G.fixed.length ? 'fixed ' + two(G.fixed) : '', G.better.length ? 'better at ' + two(G.better) : '', G.worse.length ? 'worse at ' + two(G.worse) : '', G.again.length ? 'still going wrong: ' + two(G.again) : '', G.new.length ? 'new: ' + two(G.new) : ''].filter(Boolean);
+  if (!parts.length) return ''; return 'Since last raid (' + wkDate(prev) + ', ' + plural(prev.pulls, 'pull') + '): ' + parts.join('; ') + '.'; }
 // (what went right)
 function coachRight(reps, name, S2) {
   const R = [], night = reps.length > 1, it = reps[reps.length - 1].item;
@@ -9617,6 +9651,7 @@ function coachEnrich(list, reps, name) {
   const secs = new Map(); for (const r of reps) for (const [id, x] of pullSections(r)) if (!secs.has(id)) secs.set(id, x.s);
   const pn = reps.map((r) => r.item.pull).sort((a, b) => a - b), last = (k) => pn.slice(-k);
   // (the earlier pulls of this boss already read, for "first time tonight" / "3rd time tonight" on one pull)
+  let WKN = null, WKP = null; if (night) { try { WKN = weekOf(reps); WKP = weekPrev(it, wkWhen(reps[0].item)); } catch (e) { WKN = WKP = null; } } /* (week to week: tonight and the last raid on this boss) */
   const prev = night ? [] : ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
   return list.map((x0) => { const x = { ...x0 };
     if (!x.sec) { const s = [...secs.values()].find((s) => cMatch(s, x.label) || cMatch(s, x.cause) || cMatch(s, String(x.label).replace(/^Dying (slowly )?to /, ''))); if (s) x.sec = s.id; }
@@ -9642,7 +9677,10 @@ function coachEnrich(list, reps, name) {
     if (!name && (x.kind === 'raid' || x.kind === 'mech')) { const n = reps.reduce((t, r) => t + oaLed(r, keys, s && s.title), 0); if (n) x.led = n; }
     // (the kind of error: once, again, every pull; on a night, getting better or still happening)
     if (night && x.pulls && x.pulls.length) { const L3 = last(3), L4 = last(4), inL3 = x.pulls.filter((q) => L3.includes(q)).length, inL4 = x.pulls.filter((q) => L4.includes(q)).length;
-      x.trend = !inL3 && pn.length >= 6 ? 'better' : inL4 >= 2 ? 'still' : ''; x.again = x.n >= 3; }
+      x.trend = !inL3 && pn.length >= 6 ? 'better' : inL4 >= 2 ? 'still' : ''; x.again = x.n >= 3;
+      /* (week to week: this mechanic against the last raid on this boss, and for one player, whether they were flagged on it then too) */
+      if (WKP && x.sec && WKN) { const a = WKN.mech[x.sec], b = WKP.mech[x.sec]; if (name) { if (b && b.who && b.who[oaBase(name)]) x.wk = 'again'; }
+        else { const k = wkCmp(a, b); if (k && k !== 'fixed') { x.wk = k; x.wkLine = 'Last raid (' + wkDate(WKP) + '): wrong in ' + b.w + ' of ' + b.j + ' pulls. Tonight: ' + a.w + ' of ' + a.j + '.'; } } } }
     else if (!night && prev.length && x.kind !== 'rot') {
       const hit = (r) => { if (x.kind === 'raid') { try { const o = whyWiped(r); return !!o && lc(whyKey(o)).includes(lc(x.cause || x.label)); } catch (e) { return false; } }
         if (x.sec && !name) { const y = pullSections(r).get(x.sec); return !!y && y.st !== 'ok' && y.st !== 'na'; }
@@ -9662,6 +9700,7 @@ function coachTag(x, night) {
   const t = [];
   if (night && x.n) t.push('<span class="oa-n">' + x.n + ' of ' + x.of + '</span>');
   if (!night && x.nth) t.push('<span class="cch-tag' + (x.nth >= 2 ? ' rep' : '') + '">' + (x.nth === 1 ? 'first time tonight' : dbfCap(ordN(x.nth)) + ' time tonight') + '</span>');
+  if (x.wk) t.push(x.wk === 'better' ? '<span class="cch-tag up">▲ better than last raid</span>' : x.wk === 'worse' ? '<span class="cch-tag rep">▼ worse than last raid</span>' : x.wk === 'new' ? '<span class="cch-tag">new since last raid</span>' : '<span class="cch-tag rep">also last raid</span>'); /* (week to week, Oct 22) */
   if (x.trend === 'better') t.push('<span class="cch-tag up">▲ fine in the last 3 pulls</span>'); else if (x.trend === 'still') t.push('<span class="cch-tag rep">still happening</span>');
   if (x.led) t.push('<span class="cch-tag rep">led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths') + '</span>');
   if (x.kb) { const r = x.kb.ok / x.kb.k; t.push(r >= 0.7 ? '<span class="cch-tag kb hi" title="' + esc(x.kb.ok + ' of ' + x.kb.k + ' top guilds got this right') + '">Top guilds get this right</span>' : r <= 0.3 ? '<span class="cch-tag kb" title="' + esc('Only ' + x.kb.ok + ' of ' + x.kb.k + ' top guilds got this fully right') + '">Top guilds mess this up too</span>' : ''); }
@@ -9783,7 +9822,7 @@ function coachSummary(reps, name) {
     const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
     let whyFull = ''; try { if (night) whyFull = whyNight(reps, pm); else if (!kill) { const prev = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players); whyFull = whyLine(reps[0], pm, prev); } } catch (e) { whyFull = ''; }
     const all = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name).slice(0, 6), allR = coachRight(reps, name, RD.S2);
-    const item = (x, i) => '<li class="cch-' + x.sev + '"><b>' + (i + 1) + '. ' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, night) + (x.what ? '<br><span class="sub">What happened: ' + esc(x.what) + '</span>' : '') + '<br><span class="cch-fx">Next time: ' + esc(x.fix) + '</span>' + (x.kbLine ? '<br><span class="sub">Against top guilds: ' + esc(x.kbLine) + '</span>' : '') + (x.guide ? ' ' + x.guide : '') + (x.how && cHtml(x.how) !== cHtml(x.fix) ? '<br><span class="sub">How: ' + esc(x.how) + '</span>' : '') + '</li>';
+    const item = (x, i) => '<li class="cch-' + x.sev + '"><b>' + (i + 1) + '. ' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, night) + (x.what ? '<br><span class="sub">What happened: ' + esc(x.what) + '</span>' : '') + '<br><span class="cch-fx">Next time: ' + esc(x.fix) + '</span>' + (x.kbLine ? '<br><span class="sub">Against top guilds: ' + esc(x.kbLine) + '</span>' : '') + (x.wkLine ? '<br><span class="sub">' + esc(x.wkLine) + '</span>' : '') + (x.guide ? ' ' + x.guide : '') + (x.how && cHtml(x.how) !== cHtml(x.fix) ? '<br><span class="sub">How: ' + esc(x.how) + '</span>' : '') + '</li>';
     let deaths = ''; if (name) { const L = []; for (const { r, p } of oaMine(reps, name)) for (const d of r.deaths.filter((q) => q.guid === p.guid).sort((a, b) => a.t - b.t)) { const v = deathVerdict(r, d), after = !v.counts; void dbfFast;
         L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(d.ability || d.killer || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : !v.on ? 'not on you: ' + v.word : v.why === 'nothing' ? 'counts half: nothing left to press' : 'counts: ' + v.word) + '</span></li>'); }
       deaths = L.length ? '<h5>Your deaths</h5><ul class="cch-ul">' + L.slice(0, 12).join('') + (L.length > 12 ? '<li class="sub">and ' + (L.length - 12) + ' more</li>' : '') + '</ul>' : ''; }
@@ -9791,7 +9830,9 @@ function coachSummary(reps, name) {
     const full = (whyFull ? '<h5>' + (night ? 'The night, as a raid lead would say it' : 'Why we wiped') + '</h5>' + whyFull : '') +
       (all.length ? '<h5>What to work on, in order</h5><ol class="cch-ol">' + all.map(item).join('') + '</ol>' : '') + deaths + (AV && AV.list ? '<h5>Avoidable damage</h5>' + AV.list : '') +
       (allR.length ? '<h5>What went right</h5><ul class="cch-ul">' + allR.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '');
-    return { headline: headline2, right, wrong, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV }; }); }
+    /* (week to week: tonight is remembered, and the raid's coach says what changed since the last raid on this boss) */
+    let week = ''; if (night) { try { const wn = weekOf(reps); if (!name) week = weekLine(wn, weekPrev(it, wkWhen(reps[0].item))); weekSave(reps, wn); } catch (e) { week = ''; } }
+    return { headline: headline2, right, wrong, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, week }; }); }
 // (the short box, easier to read (your note, Oct 22: "make this more visually appealing/easier to read", "class color names when they
 // are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
 // line, the map on the right), what went right as green chips, deaths and avoidable damage as small chips, and the full coaching folded.
@@ -9838,6 +9879,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
     (focusSame ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') /* (the boss is dead: no next pull (Oct 22)) */ + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
+    (c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
     (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div>' + (D.items && D.items.some((it) => it.dg) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see what happened.</div>' : '') + '</div>' : '') + '</div>' : '') +
@@ -10501,7 +10543,9 @@ async function night(part) {
   if (!groups.size) { view('<div class="panel"><p class="muted" style="margin:0">No boss pulls in this log.</p></div>'); return; }
   const key0 = groups.has(it0.id + ':' + it0.diffId) ? it0.id + ':' + it0.diffId : [...groups.keys()].pop(), pulls = groups.get(key0), b0 = pulls[0];
   view(loadCard('Reading the night', 'Reading ' + plural(pulls.length, 'pull') + ' of ' + b0.boss + '…', 0));
-  const got = await bossReps(pulls[pulls.length - 1], here, (n, of) => loadSet('#view', 'Reading ' + of + ' pulls of ' + b0.boss + '… (' + n + ' of ' + of + ')', of ? n / of : null), true);
+  /* (how long is left, from how fast the pulls so far went (your note, Oct 22: % done and time left help); after 3 pulls, so the guess is fair) */
+  const tRd = Date.now(), left = (n, of) => { if (n < 3 || n >= of) return ''; const s = Math.round(((Date.now() - tRd) / n) * (of - n) / 1000); return s < 10 ? ', almost done' : ', about ' + (s < 60 ? Math.ceil(s / 5) * 5 + ' seconds' : Math.round(s / 60) === 1 ? 'a minute' : Math.round(s / 60) + ' minutes') + ' left'; };
+  const got = await bossReps(pulls[pulls.length - 1], here, (n, of) => loadSet('#view', 'Reading ' + of + ' pulls of ' + b0.boss + '… (' + n + ' of ' + of + left(n, of) + ')', of ? n / of : null), true);
   if (!got || !here()) return;
   const reps = got.reps, pullNs = reps.map((r) => r.item.pull), byPull = new Map(reps.map((r) => [r.item.pull, r]));
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
