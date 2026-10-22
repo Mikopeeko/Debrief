@@ -1682,6 +1682,7 @@ const PATCH_NOTES = [
     'Debriefing: the small maps on the cards show the whole room, like the big ones, instead of zooming in on each mechanic.',
     'Every mechanic links to its part of the boss guide: under the Fix cards, and inside each mechanic.',
     'Report card: each raider\'s card shows every death, how many counted and why. A death to something avoidable counts even after the wipe filter, while fewer than a quarter of the raid is dead.',
+    'Report card: each death that was on you takes a point off your night\'s grade, up to 10.',
     'The raid\'s grade is now half the raiders\' own grades and half how the raid did each mechanic, so a mechanic that fails every pull shows in it.',
     'Boss guides open on Heroic or Mythic to match how you raid, and remember the one you pick.',
     'When Warcraft Logs is down, a bar says so right away, and your saved nights and the guides still work.',
@@ -8347,7 +8348,7 @@ function causeOf(r) {
 // score (100 points), a harmful-but-survivable one costs 40; the pull's score is the raid's average (the Fight audit's
 // "Avoidable damage" panel decides which hits are dangerous or harmful). Survival: the raid's average survival kit score (survivalOf). Interrupts: share of the kickable casts that were kicked. The overall grade weights them 30 / 30 / 25 / 15.
 const GRADES = [['S', 97], ['A', 92], ['B', 84], ['C', 72], ['D', 55], ['F', 0]]; // (stricter on Oct 20, the top-raider pass: 17 of 20 raiders were A or S on a 52-death night)
-const letterOf = (s) => GRADES.find(([, min]) => s >= min)[0];
+const letterOf = (s) => GRADES.find(([, min]) => Math.round(s) >= min)[0]; // (the letter goes with the number shown: 91.6 shows as 92, so it's an A (Oct 21))
 // (the raid's grade (Oct 21, your call: "the grades are too generous"): half the raiders' own grades, half how the raid did each
 // mechanic (Debriefing's raid mechanics score), so a night where a mechanic fails every pull can't come out an A)
 const raidBlend = (pl, rm) => (pl == null ? rm : rm == null ? pl : 0.5 * pl + 0.5 * rm);
@@ -19636,7 +19637,9 @@ function deathOwn(r, d) {
   if (!own) own = (m.mistakes || []).some((x) => x.player === d.player && x.mechanic !== 'Death' && Math.abs(x.t - d.t) <= 1.5);
   r._dOwn.set(k, own); return own;
 }
-function survivalOf(r, p) {
+// (kept per pull and player, for as long as the wipe filter stays the same: the Report card asks for it more than once (Oct 21))
+function survivalOf(r, p) { const ct = cutT(r), c = r._svc && r._svc.ct === ct ? r._svc : (r._svc = { ct, m: new Map() }); if (!c.m.has(p.guid)) c.m.set(p.guid, survivalOf0(r, p)); return c.m.get(p.guid); }
+function survivalOf0(r, p) {
   const ct = cutT(r), ok = (t) => t <= ct + 0.05, dd = keptDeaths(r).filter((d) => d.guid === p.guid), fair = dd.filter((d) => !(d.healthy && d.window < 1.5)), tank = p.role === 'tank';
   const end = Math.min(r.duration, ct, dd.length ? Math.min(...dd.map((d) => d.t)) : Infinity);
   // (a close call counts against them only when there was time to answer it (judged: 5+ seconds under 30%, or sitting low and then
@@ -20133,7 +20136,10 @@ async function plData1(reps, still) {
     const fixes = [...fx.values()].sort((u, v) => (v.gain || v.rank) - (u.gain || u.rank));
     const sc = a.per.map((g) => g.score), h2 = Math.floor(n / 2), mean = (l) => l.reduce((s, v) => s + v, 0) / l.length;
     const best = a.per.filter((g) => g.until >= 60).reduce((m, g) => (!m || g.score > m.score ? g : m), null);
-    return { ...a, n, score: wAvg(a.per, (g) => g.score), mech: wAvg(a.per, (g) => g.mech), perf: wAvg(a.per, (g) => g.perf), rot: wAvg(a.per, (g) => g.rot), play: wAvg(a.per, (g) => g.play), asg: wAvg(a.per, (g) => g.asg), surv: wAvg(a.per, (g) => g.surv), tool: wAvg(a.per, (g) => g.tool), wait: a.per.reduce((s, g) => s + g.wait, 0), prep: wAvg(a.per, (g) => g.prep), mistakes: a.per.reduce((s, g) => s + g.mistakes, 0),
+    // (each death that was on them takes a point off their night, up to 10 (your call, Oct 21): spread over a long night, Survival alone
+    // barely moved; a death that wasn't on them (the raid's mistake, a one-shot) counts nothing, a slow one with nothing left half)
+    const dieW = a.per.reduce((s, g) => { try { return s + (survivalOf(g.r, g.p).dieN || 0); } catch (e) { return s; } }, 0), deathPen = Math.min(10, dieW), sc0 = wAvg(a.per, (g) => g.score);
+    return { ...a, n, deathPen, dieW, score: sc0 == null ? null : Math.max(0, sc0 - deathPen), mech: wAvg(a.per, (g) => g.mech), perf: wAvg(a.per, (g) => g.perf), rot: wAvg(a.per, (g) => g.rot), play: wAvg(a.per, (g) => g.play), asg: wAvg(a.per, (g) => g.asg), surv: wAvg(a.per, (g) => g.surv), tool: wAvg(a.per, (g) => g.tool), wait: a.per.reduce((s, g) => s + g.wait, 0), prep: wAvg(a.per, (g) => g.prep), mistakes: a.per.reduce((s, g) => s + g.mistakes, 0),
       fixes, trend: n >= 4 ? mean(sc.slice(n - h2)) - mean(sc.slice(0, h2)) : null, best, ranked: n >= half, last: a.per[n - 1] };
   }).filter((a) => a.score != null);
 }
@@ -20487,7 +20493,7 @@ function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.fin
 // the picked raider's report card: their grade, their place in the raid and in their role, each subject with its place, their best and their room to grow
 // (every death on the card, counted or not (your ask, Oct 21: "didn't I die a lot?"): how many times, in how many pulls, how many counted
 // and why, and that the rest came in the wipe)
-function rcbDeathLine(F, p) {
+function rcbDeathLine(F, p, a) {
   let all = 0, inP = 0, n = 0, kept = 0, late = 0;
   for (const r of F.reps) { const pp = [...r.players.values()].find((y) => y.name === p.name); if (!pp) continue; n++;
     const mine = r.deaths.filter((d) => d.guid === pp.guid); if (!mine.length) continue; all += mine.length; inP++;
@@ -20496,7 +20502,8 @@ function rcbDeathLine(F, p) {
   const txt = !all ? 'No deaths in ' + (n === 1 ? 'the pull' : n === 2 ? 'either pull' : 'any of the ' + n + ' pulls') + '.'
     : 'Died ' + plural(all, 'time') + ' in ' + inP + ' of ' + plural(n, 'pull') + '. ' + (cnt ? (cnt === all ? (all === 1 ? 'It' : all === 2 ? 'Both' : 'All ' + all) + ' counted' : cnt + ' counted') + (late ? ': ' + kept + ' before the wipe filter, and ' + late + ' to something avoidable while the raid was still fighting' : '') + '.' : 'None counted.') +
       (rest > 0 ? ' The other ' + rest + ' came in the wipe' + (cut ? ', after the raid\'s ' + ordinal(cut) + ' death' : '') + ', so they don\'t count.' : '');
-  return '<div class="rcb-ydl"><b>Deaths</b>' + esc(txt) + '</div>';
+  const pen = a && a.deathPen ? Math.round(a.deathPen) : 0; /* (and what they cost: a point each, up to 10) */
+  return '<div class="rcb-ydl"><b>Deaths</b>' + esc(txt + (pen ? ' Each one that was on you took a point off your grade: −' + pen + '.' : '')) + '</div>';
 }
 function rcbSide(c, F) {
   const B = rcbFacts(c, F), x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
@@ -20507,7 +20514,7 @@ function rcbSide(c, F) {
     '<div class="rcb-yph"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + '</div></div></div>' +
     '<div class="rcb-ypg">' + rcbRing(x.score, 118) + '</div><div class="rcb-yprk"><b>#' + B.rk.score.m.get(x) + '</b> of ' + B.rk.score.n + ' in the raid · <b>#' + rkR.m.get(x) + '</b> of ' + rkR.n + ' ' + RN[x.role] + '</div>' + (aw ? '<div class="rcn-mbs rcb-aw">' + aw + '</div>' : '') +
     '<div class="rcb-ypl">' + subs.map((y) => '<div data-tt="' + esc(RCB_SUBJ.find(([k]) => k === y.k)[3]) + '">' + rcbIc(y.ic) + '<span>' + y.l + '</span>' + rcbV(y.v) + '<em class="' + (y.r <= 3 ? 'top' : '') + '">#' + y.r + '</em></div>').join('') + '</div>' +
-    rcbDeathLine(F, p) +
+    rcbDeathLine(F, p, a) +
     '<div class="rcb-ypn">' + (best ? '<div><span class="rcb-k gold">Best tonight</span><b>' + best.l + ' · ' + Math.round(best.v) + '</b><small>#' + best.r + ' of ' + B.rk[best.k].n + ' in the raid.</small></div>' : '') +
       (low ? '<div><span class="rcb-k">Room to grow</span><b>' + low.l + ' · ' + Math.round(low.v) + '</b><small>#' + low.r + ' of ' + B.rk[low.k].n + ' in the raid' + (fix ? '. First fix: ' + esc(fix.t) : '') + '.</small></div>' : '') + '</div>' +
     '<button type="button" class="btn rcb-open" data-rctp="' + esc(p.name) + '">Open their whole night ›</button></aside>'; }
