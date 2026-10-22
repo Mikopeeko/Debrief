@@ -207,6 +207,15 @@ ROUTES['/api/fightlog'] = ROUTES['/api/events'];
 // - when that issue is closed, the post gets Fixed (or Can't reproduce) and a reply saying so;
 // - once a day (9 am Central) a summary goes to #moderator-only: new bugs and ideas, unanswered questions, look-alikes.
 // "Suggest an idea" on the site (/api/idea) opens a post in #suggestions.
+// (a reply into a post that is already finished re-opens it, so its close timer starts again: the user's catch, Oct 22)
+async function closeAgain(env, id) {
+  const th = await dc(env, '/channels/' + id).catch(() => null); if (!th || !th.parent_id) return;
+  const pf = await dc(env, '/channels/' + th.parent_id).catch(() => null); if (!pf) return;
+  const done = ['Done', 'Not a bug', 'Not planned', 'Fixed', 'Can\'t reproduce'].map((n) => tagOf(pf.available_tags, n)).filter(Boolean);
+  if (!(th.applied_tags || []).some((t) => done.includes(t))) return;
+  const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (!st) return;
+  st.arch = [...(st.arch || []).filter(([x]) => x !== id), [id, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st));
+}
 const ARCH_MS = 4 * 36e5; // (a finished post is closed 4 hours later: the user's call, Oct 22, was 24 hours)
 const GUILD = '1561476082643771394', FORUM_BUGS = '1561538061366599782', FORUM_IDEAS = '1561481557959643156', FORUM_QS = '1561477989919891588';
 const snowAt = (id) => Number((BigInt(id) >> 22n) + 1420070400000n);
@@ -362,6 +371,7 @@ async function runInbox(env) {
           if (to) {
             await dc(env, '/channels/' + to, { method: 'PATCH', body: tagIds.length ? { archived: false, applied_tags: tagIds } : { archived: false } }).catch(() => {});
             await dc(env, '/channels/' + to + '/messages', { method: 'POST', body: { content: head + text, allowed_mentions: men } });
+            await closeAgain(env, to).catch(() => {});
           } else {
             const name = String(o.title || ('Report #' + n)).replace(/\s+/g, ' ').slice(0, 95);
             const t = await dc(env, '/channels/' + rev.id + '/threads', { method: 'POST', body: { name, applied_tags: tagIds, message: { content: head + text, allowed_mentions: men, components: REVIEW_ROW } } });
@@ -411,6 +421,7 @@ async function runInbox(env) {
           const ping = o.op === 'ping';
           await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body: { content: (ping ? '<@' + OWNER + '> ' : '') + (!thread[n] && n ? '(Report #' + n + ') ' : '') + text,
             allowed_mentions: { parse: [], users: ping ? [OWNER] : [] } } });
+          if (thread[n]) await closeAgain(env, ch).catch(() => {});
         }
       } catch (err) { console.warn('Job:', o && o.op, err && err.message); }
     }
