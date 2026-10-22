@@ -1708,6 +1708,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'More tabs got the new look: Rotation\'s sections read like Debriefing\'s rows, the Report card and Homework tuck their small print behind an ⓘ, the night banner\'s numbers are tiles, and the Boss guides\' switches are one gold toggle style.',
     'Every tab now shares one look: the same small labels, title sizes and rounded corners everywhere, and Rotation\'s coach and the Report card\'s night summary look like Debriefing\'s coach box.',
     'Debrief Addon: every card style now shows the coach box. The style only decides how much: Simple shows the top mistake, Glance and Medium up to three, Heavy and Detailed up to five with Deaths and Avoidable damage already open.',
     'The coach box is calmer: each problem shows at most two tags (how often, and the one that matters most). The rest are in Read the full coaching.',
