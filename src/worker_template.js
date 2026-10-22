@@ -207,6 +207,7 @@ ROUTES['/api/fightlog'] = ROUTES['/api/events'];
 // - when that issue is closed, the post gets Fixed (or Can't reproduce) and a reply saying so;
 // - once a day (9 am Central) a summary goes to #moderator-only: new bugs and ideas, unanswered questions, look-alikes.
 // "Suggest an idea" on the site (/api/idea) opens a post in #suggestions.
+const ARCH_MS = 4 * 36e5; // (a finished post is closed 4 hours later: the user's call, Oct 22, was 24 hours)
 const GUILD = '1561476082643771394', FORUM_BUGS = '1561538061366599782', FORUM_IDEAS = '1561481557959643156', FORUM_QS = '1561477989919891588';
 const snowAt = (id) => Number((BigInt(id) >> 22n) + 1420070400000n);
 async function dc(env, path, opt = {}, tries = 0) {
@@ -279,7 +280,7 @@ async function runBugs(env) {
     const keep = new Set((th.applied_tags || []).filter((id) => id !== wk)), done = idea ? (nope ? tagOf(ftags, 'Not planned') : (tagOf(ftags, 'Built') || tagOf(ftags, 'Done') || tagOf(ftags, 'Planned'))) : tagOf(tags, nope ? 'Can\'t reproduce' : 'Fixed'); if (done) keep.add(done);
     await dc(env, '/channels/' + tid, { method: 'PATCH', body: { archived: false, applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
     // (the user's rule, Oct 20: the reporter is tagged on their own #bug-reports post, the owner in the #bug-review post,
-    // and both posts are closed 24 hours later)
+    // and both posts are closed 4 hours later)
     const first = await dc(env, '/channels/' + tid + '/messages/' + tid).catch(() => null), uid = first && first.author && !first.author.bot && first.author.id !== OWNER ? first.author.id : null;
     await dc(env, '/channels/' + tid + '/messages', { method: 'POST', body: { content: (uid ? '<@' + uid + '> ' : '') + (idea ? (nope ? 'Thanks for the idea! We\'re not going to build this one right now, but we read every one.' : 'We built it! 🎉 It\'s in the latest update. Thanks for the idea. See what changed: <' + SITE + '/?patchnotes>') : nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
       : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>'), allowed_mentions: { parse: [], users: uid ? [uid] : [] } } }).catch(() => {});
@@ -291,14 +292,14 @@ async function runBugs(env) {
       if (rf && rth) { const drop = ['In progress', 'Done', 'Not a bug', 'Not planned', 'Needs your call'].map((x) => tagOf(rf.available_tags, x)), id = tagOf(rf.available_tags, nope ? (idea ? 'Not planned' : 'Not a bug') : 'Done');
         const k = new Set((rth.applied_tags || []).filter((x) => !drop.includes(x))); if (id) k.add(id);
         await dc(env, '/channels/' + rt, { method: 'PATCH', body: { archived: false, applied_tags: [...k].slice(0, 5) } }).catch(() => {}); }
-      await dc(env, '/channels/' + rt + '/messages', { method: 'POST', body: { content: '<@' + OWNER + '> ' + (nope ? (idea ? 'Closed as not planned.' : 'Closed as not a bug.') : (idea ? '✅ Done: this idea is built.' : '✅ Done: this one is fixed.')) + ' ' + (uid ? 'The reporter was tagged on their post.' : 'Its post was updated.') + ' Both posts close in 24 hours.', allowed_mentions: { parse: [], users: [OWNER] } } }).catch(() => {});
+      await dc(env, '/channels/' + rt + '/messages', { method: 'POST', body: { content: '<@' + OWNER + '> ' + (nope ? (idea ? 'Closed as not planned.' : 'Closed as not a bug.') : (idea ? '✅ Done: this idea is built.' : '✅ Done: this one is fixed.')) + ' ' + (uid ? 'The reporter was tagged on their post.' : 'Its post was updated.') + ' Both posts close in 4 hours.', allowed_mentions: { parse: [], users: [OWNER] } } }).catch(() => {});
     }
     st.arch = [...(st.arch || []), [tid, Date.now()], ...(rt ? [[rt, Date.now()]] : [])].slice(-200);
   }
-  // (posts whose 24 hours after done are up get closed: archived and locked, so they leave the channel lists)
-  const due = (st.arch || []).filter(([, at]) => Date.now() - at > 864e5);
+  // (posts whose 4 hours after done are up get closed: archived and locked, so they leave the channel lists)
+  const due = (st.arch || []).filter(([, at]) => Date.now() - at > ARCH_MS);
   for (const [id] of due) await dc(env, '/channels/' + id, { method: 'PATCH', body: { archived: true, locked: true } }).catch((err) => console.warn('Archive:', id, err && err.message));
-  if (due.length) { st.arch = st.arch.filter(([, at]) => Date.now() - at <= 864e5); dirty = true; }
+  if (due.length) { st.arch = st.arch.filter(([, at]) => Date.now() - at <= ARCH_MS); dirty = true; }
   if (st.open.length !== still.length) st.open = still;
   if (dirty) await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st));
   return all;
@@ -594,7 +595,7 @@ async function discordClick(req, env, ctx) {
       if (act === 'change') { const inbox = (await env.DEBRIEF_KV.get('review-inbox', 'json')) || []; inbox.push({ thread, issue: 0, title: (i.channel && i.channel.name) || '', kind: 'button', text: 'change the feature post (see the owner\'s reply in this thread)', at: new Date().toISOString() }); await env.DEBRIEF_KV.put('review-inbox', JSON.stringify(inbox.slice(-200))); }
       if (act === 'skip') { const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); } }
     })().catch(() => {}));
-    return reply(act === 'change' ? 'Got it! Reply here with what to change, and I\'ll redo the draft within about 15 minutes.' : 'Skipped. This draft closes in 24 hours.');
+    return reply(act === 'change' ? 'Got it! Reply here with what to change, and I\'ll redo the draft within about 15 minutes.' : 'Skipped. This draft closes in 4 hours.');
   }
   const b = BUTTONS.find((x) => i.type === 3 && i.data && i.data.custom_id === 'rv:' + x[0]); if (!b) return reply('That button isn\'t used any more.', true);
   const who = (i.member && i.member.user) || i.user || {};
@@ -606,7 +607,7 @@ async function discordClick(req, env, ctx) {
     inbox.push({ thread, issue, title: (i.channel && i.channel.name) || '', kind: 'button', text: b[3], at: new Date().toISOString() });
     await env.DEBRIEF_KV.put('review-inbox', JSON.stringify(inbox.slice(-200)));
     // (Done / Not a bug finish it: the report is closed on GitHub, so the next run tags the reporter and the owner and closes
-    // both posts 24 hours later; a review post with no report just closes in 24 hours)
+    // both posts 4 hours later; a review post with no report just closes in 4 hours)
     if (b[0] === 'done' || b[0] === 'notbug') {
       if (issue > 0 && env.GITHUB_TOKEN) await gh(env, '/issues/' + issue, { method: 'PATCH', body: { state: 'closed', state_reason: b[0] === 'done' ? 'completed' : 'not_planned' } }).catch(() => {});
       else { const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); } }
@@ -618,7 +619,7 @@ async function discordClick(req, env, ctx) {
       await dc(env, '/channels/' + thread, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } });
     }
   })().catch((err) => console.warn('Click:', err && err.message)));
-  return reply(b[0] === 'done' || b[0] === 'notbug' ? 'Got it: marked **' + b[4] + '**. The reporter hears about it, and both posts close in 24 hours.' : b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
+  return reply(b[0] === 'done' || b[0] === 'notbug' ? 'Got it: marked **' + b[4] + '**. The reporter hears about it, and both posts close in 4 hours.' : b[4] ? 'Got it: marked **' + b[4] + '**.' : 'Got it: **' + b[1] + '**. I\'ll start within about 15 minutes (while your PC is on).');
 }
 // #new-features (the user's ask, Oct 20: "a channel just for new feature alerts, to highlight them better"): each New
 // features card (h) on the newest Patch notes day is posted there once, as its own gold card, and published to followers.
@@ -683,11 +684,11 @@ async function featPublish(env, thread) {
   if (!prev && msg && msg.id) await dc(env, '/channels/' + ch + '/messages/' + msg.id + '/crosspost', { method: 'POST' }).catch(() => {});
   delete drafts[thread]; await env.DEBRIEF_KV.put('feat-drafts', JSON.stringify(drafts));
   for (const k of dr.images || []) await env.DEBRIEF_KV.delete(k).catch(() => {});
-  // (once it's posted, the draft is deleted: the user's call, Oct 20; if Discord won't, it closes in 24 hours instead)
+  // (once it's posted, the draft is deleted: the user's call, Oct 20; if Discord won't, it closes in 4 hours instead)
   const gone = await dc(env, '/channels/' + thread, { method: 'DELETE' }).then(() => true).catch((err) => { console.warn('Draft delete:', thread, err && err.message); return false; });
   if (gone) return '';
   const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); }
-  return 'Posted in <#' + ch + '>! 🎉 ' + (prev ? 'It replaced the short card.' : 'Followers get it too.') + ' This draft closes in 24 hours.';
+  return 'Posted in <#' + ch + '>! 🎉 ' + (prev ? 'It replaced the short card.' : 'Followers get it too.') + ' This draft closes in 4 hours.';
 }
 // The move to debriefme.io (the user's OK, Oct 20): Claudette's own posts and the channel topics that name the old address
 // get the new one. Started by the relink job (KV relink-todo); each run does up to 20 channels or posts (newest 50 messages
