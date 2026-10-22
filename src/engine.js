@@ -5063,6 +5063,9 @@ function parseNote(text) {
   return out;
 }
 
+// (the same button under another ID: a heal vs its cast, a talent choice for the same slot)
+const CD_ALIAS = [[64843, 64844], [115310, 388615], [740, 157982], [51052, 145629]];
+const cdIds = (id) => { const g = CD_ALIAS.find((x) => x.includes(id)); return g || [id]; };
 function checkAssignments(r, noteText) {
   const note = parseNote(noteText), res = { note, cds: [], soaks: [], kicks: [], orbs: [], other: [], mistakes: [], unknownNames: new Set(), warnings: [] };
   const roster = new Map([...r.players.values()].map((p) => [norm(p.name), p]));
@@ -5077,8 +5080,10 @@ function checkAssignments(r, noteText) {
     res.warnings.push('This note is for "' + note.header.name + '" but the pull is ' + r.item.boss + '.');
   const deathAt = (p) => { const d = r.deaths.filter((x) => x.guid === p.guid).map((x) => x.t); return d.length ? Math.min(...d) : null; };
 
-  // 1) cooldown reminders assigned to named players
-  for (const rem of note.reminders) {
+  // 1) cooldown reminders assigned to named players (in time order, so each press counts for one reminder only (Oct 22))
+  const claimed = new Map(), clm = (k) => { if (!claimed.has(k)) claimed.set(k, new Set()); return claimed.get(k); };
+  const remAt = (x) => { const q = phaseOf(x.ph); return q ? q.start + x.time : Infinity; };
+  for (const rem of note.reminders.slice().sort((a, b) => remAt(a) - remAt(b))) {
     const names = rem.tags.filter((t) => !TAG_GROUPS.has(t.toLowerCase()));
     for (const t of rem.tags) if (!TAG_GROUPS.has(t.toLowerCase()) && !isName(t)) res.unknownNames.add(t);
     if (!rem.spellid || !names.length) continue;
@@ -5087,20 +5092,27 @@ function checkAssignments(r, noteText) {
     const phx = phaseOf(rem.ph), start = phx ? phx.start : null;
     for (const n of names) {
       const p = P(n); if (!p) continue;
-      const row = { phName: phx ? phx.name : (rem.ph === 1 ? 'from the pull' : 'phase not reached'), player: p.name, ph: rem.ph, time: rem.time, spellid: rem.spellid, spell: spellNameOf(r, p, rem.spellid), expected: start == null ? null : start + rem.time };
+      const row = { phName: phx ? phx.name : (rem.ph === 1 ? 'from the pull' : 'phase not reached'), player: p.name, ph: rem.ph, time: rem.time, spellid: rem.spellid, spell: spellNameOf(r, p, rem.spellid) || rem.text || '', ids: cdIds(rem.spellid), expected: start == null ? null : start + rem.time };
       if (row.expected == null) { row.status = 'phase not reached'; res.cds.push(row); continue; }
       if (row.expected > r.duration) { row.status = 'pull ended first'; res.cds.push(row); continue; }
       const dt = deathAt(p);
-      const uses = (p.castTimes.get(rem.spellid) || []).filter((u) => Math.abs(u - row.expected) <= 15);
+      /* (every press of that button: its ID or a variant, or the note's own spell name, so a heal ID or a talent choice in the note still matches (Oct 22)) */
+      const nmL = [row.spell, rem.text].filter(Boolean).map((x) => String(x).toLowerCase().trim()), all = [...new Set(cdIds(rem.spellid).flatMap((i) => p.castTimes.get(i) || []).concat(...nmL.map((x) => (p.byName && p.byName[x]) || [])))].sort((a, b) => a - b);
+      const ck = clm(p.name + '|' + cdIds(rem.spellid).join(',')), free = all.filter((u) => !ck.has(u));
+      const uses = free.filter((u) => Math.abs(u - row.expected) <= 20), prevUse = free.filter((u) => u < row.expected - 20 && u > row.expected - 180).pop();
       if (uses.length) {
-        const u = uses.reduce((a, b) => (Math.abs(b - row.expected) < Math.abs(a - row.expected) ? b : a));
+        const u = uses.reduce((a, b) => (Math.abs(b - row.expected) < Math.abs(a - row.expected) ? b : a)); ck.add(u);
         row.used = u; row.delta = u - row.expected;
         // (healing cooldowns are timed around raid damage that doesn't land on the exact second: within 5 s is on time, and only
         // over 10 s off is a medium mistake)
-        row.status = Math.abs(row.delta) <= 5 ? 'on time' : row.delta > 0 ? 'late' : 'early';
-        if (row.status !== 'on time') res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: Math.abs(row.delta) > 10 ? 'Medium' : 'Low',
+        row.status = Math.abs(row.delta) <= 8 ? 'on time' : row.delta > 0 ? 'late' : 'early';
+        if (row.status !== 'on time') res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Low',
           detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' ' + Math.abs(row.delta).toFixed(1) + ' s ' + (row.delta > 0 ? 'late' : 'early') + ' (assigned at ' + fmtT(row.expected) + ', P' + rem.ph + ' ' + fmtT(rem.time) + ').', fix: 'Press it when the NSRT reminder counts down to 0.' });
       } else if (dt != null && dt < row.expected) row.status = 'dead before it';
+      else if (free.some((u) => u > row.expected + 20 && u <= row.expected + 45)) { /* (pressed, just well after the reminder: late, not missed (Oct 22)) */ const u = free.find((x) => x > row.expected + 20 && x <= row.expected + 45); ck.add(u); row.used = u; row.delta = u - row.expected; row.status = 'late';
+        res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Low', detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' ' + row.delta.toFixed(0) + ' s late (assigned at ' + fmtT(row.expected) + ').', fix: 'Press it when the NSRT reminder counts down to 0.' }); }
+      else if (prevUse != null) { /* (pressed earlier and still recharging: early, not missed) */ ck.add(prevUse); row.used = prevUse; row.delta = prevUse - row.expected; row.status = 'early'; row.onCd = true;
+        res.mistakes.push({ t: prevUse, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Low', detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' at ' + fmtT(prevUse) + ', ' + Math.abs(row.delta).toFixed(0) + ' s before its reminder (' + fmtT(row.expected) + '), so it was still recharging when the reminder came.', fix: 'Hold it for the reminder, or tell the raid leader to move it in the note.' }); }
       else {
         row.status = 'missed';
         res.mistakes.push({ t: row.expected, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Medium',

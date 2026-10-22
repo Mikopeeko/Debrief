@@ -10587,6 +10587,9 @@ function parseNote(text) {
   return out;
 }
 
+// (the same button under another ID: a heal vs its cast, a talent choice for the same slot)
+const CD_ALIAS = [[64843, 64844], [115310, 388615], [740, 157982], [51052, 145629]];
+const cdIds = (id) => { const g = CD_ALIAS.find((x) => x.includes(id)); return g || [id]; };
 function checkAssignments(r, noteText) {
   const note = parseNote(noteText), res = { note, cds: [], soaks: [], kicks: [], orbs: [], other: [], mistakes: [], unknownNames: new Set(), warnings: [] };
   const roster = new Map([...r.players.values()].map((p) => [norm(p.name), p]));
@@ -10601,8 +10604,10 @@ function checkAssignments(r, noteText) {
     res.warnings.push('This note is for "' + note.header.name + '" but the pull is ' + r.item.boss + '.');
   const deathAt = (p) => { const d = r.deaths.filter((x) => x.guid === p.guid).map((x) => x.t); return d.length ? Math.min(...d) : null; };
 
-  // 1) cooldown reminders assigned to named players
-  for (const rem of note.reminders) {
+  // 1) cooldown reminders assigned to named players (in time order, so each press counts for one reminder only (Oct 22))
+  const claimed = new Map(), clm = (k) => { if (!claimed.has(k)) claimed.set(k, new Set()); return claimed.get(k); };
+  const remAt = (x) => { const q = phaseOf(x.ph); return q ? q.start + x.time : Infinity; };
+  for (const rem of note.reminders.slice().sort((a, b) => remAt(a) - remAt(b))) {
     const names = rem.tags.filter((t) => !TAG_GROUPS.has(t.toLowerCase()));
     for (const t of rem.tags) if (!TAG_GROUPS.has(t.toLowerCase()) && !isName(t)) res.unknownNames.add(t);
     if (!rem.spellid || !names.length) continue;
@@ -10611,20 +10616,27 @@ function checkAssignments(r, noteText) {
     const phx = phaseOf(rem.ph), start = phx ? phx.start : null;
     for (const n of names) {
       const p = P(n); if (!p) continue;
-      const row = { phName: phx ? phx.name : (rem.ph === 1 ? 'from the pull' : 'phase not reached'), player: p.name, ph: rem.ph, time: rem.time, spellid: rem.spellid, spell: spellNameOf(r, p, rem.spellid), expected: start == null ? null : start + rem.time };
+      const row = { phName: phx ? phx.name : (rem.ph === 1 ? 'from the pull' : 'phase not reached'), player: p.name, ph: rem.ph, time: rem.time, spellid: rem.spellid, spell: spellNameOf(r, p, rem.spellid) || rem.text || '', ids: cdIds(rem.spellid), expected: start == null ? null : start + rem.time };
       if (row.expected == null) { row.status = 'phase not reached'; res.cds.push(row); continue; }
       if (row.expected > r.duration) { row.status = 'pull ended first'; res.cds.push(row); continue; }
       const dt = deathAt(p);
-      const uses = (p.castTimes.get(rem.spellid) || []).filter((u) => Math.abs(u - row.expected) <= 15);
+      /* (every press of that button: its ID or a variant, or the note's own spell name, so a heal ID or a talent choice in the note still matches (Oct 22)) */
+      const nmL = [row.spell, rem.text].filter(Boolean).map((x) => String(x).toLowerCase().trim()), all = [...new Set(cdIds(rem.spellid).flatMap((i) => p.castTimes.get(i) || []).concat(...nmL.map((x) => (p.byName && p.byName[x]) || [])))].sort((a, b) => a - b);
+      const ck = clm(p.name + '|' + cdIds(rem.spellid).join(',')), free = all.filter((u) => !ck.has(u));
+      const uses = free.filter((u) => Math.abs(u - row.expected) <= 20), prevUse = free.filter((u) => u < row.expected - 20 && u > row.expected - 180).pop();
       if (uses.length) {
-        const u = uses.reduce((a, b) => (Math.abs(b - row.expected) < Math.abs(a - row.expected) ? b : a));
+        const u = uses.reduce((a, b) => (Math.abs(b - row.expected) < Math.abs(a - row.expected) ? b : a)); ck.add(u);
         row.used = u; row.delta = u - row.expected;
         // (healing cooldowns are timed around raid damage that doesn't land on the exact second: within 5 s is on time, and only
         // over 10 s off is a medium mistake)
-        row.status = Math.abs(row.delta) <= 5 ? 'on time' : row.delta > 0 ? 'late' : 'early';
-        if (row.status !== 'on time') res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: Math.abs(row.delta) > 10 ? 'Medium' : 'Low',
+        row.status = Math.abs(row.delta) <= 8 ? 'on time' : row.delta > 0 ? 'late' : 'early';
+        if (row.status !== 'on time') res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Low',
           detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' ' + Math.abs(row.delta).toFixed(1) + ' s ' + (row.delta > 0 ? 'late' : 'early') + ' (assigned at ' + fmtT(row.expected) + ', P' + rem.ph + ' ' + fmtT(rem.time) + ').', fix: 'Press it when the NSRT reminder counts down to 0.' });
       } else if (dt != null && dt < row.expected) row.status = 'dead before it';
+      else if (free.some((u) => u > row.expected + 20 && u <= row.expected + 45)) { /* (pressed, just well after the reminder: late, not missed (Oct 22)) */ const u = free.find((x) => x > row.expected + 20 && x <= row.expected + 45); ck.add(u); row.used = u; row.delta = u - row.expected; row.status = 'late';
+        res.mistakes.push({ t: u, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Low', detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' ' + row.delta.toFixed(0) + ' s late (assigned at ' + fmtT(row.expected) + ').', fix: 'Press it when the NSRT reminder counts down to 0.' }); }
+      else if (prevUse != null) { /* (pressed earlier and still recharging: early, not missed) */ ck.add(prevUse); row.used = prevUse; row.delta = prevUse - row.expected; row.status = 'early'; row.onCd = true;
+        res.mistakes.push({ t: prevUse, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Low', detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' at ' + fmtT(prevUse) + ', ' + Math.abs(row.delta).toFixed(0) + ' s before its reminder (' + fmtT(row.expected) + '), so it was still recharging when the reminder came.', fix: 'Hold it for the reminder, or tell the raid leader to move it in the note.' }); }
       else {
         row.status = 'missed';
         res.mistakes.push({ t: row.expected, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Medium',
@@ -13248,7 +13260,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'live', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost' || /-debrief\./.test(location.hostname)) window.__wla = { killCall: (a, w) => killCall(a, w), HIST: () => HIST, miniMap: (m, p) => miniMap(m, p), modMaps: (r) => modMaps(r), coachSummary: (a, b) => coachSummary(a, b), pullSections: (r) => pullSections(r), exampleNote: (r) => exampleNote(r), notesSave: (b, o) => notesSave(b, o), /* (practice copies too, for testing (Oct 22)) */ gsStart: () => gsStart(), S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), dbfPull: (o) => dbfPull(o), dbfStats: (r) => dbfStats(r), setCut: (n) => store.set('wla-death-cut2', String(n)), getCut: () => deathCutN(), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r), deathVerdict: (r, d) => deathVerdict(r, d), deathsOf: (reps, n) => deathsOf(reps, n), coachMine: (...a) => coachMine(...a), whyWiped: (r) => whyWiped(r) };
+if (location.hostname === 'localhost' || /-debrief\./.test(location.hostname)) window.__wla = { checkAssignments: (r, t) => E.checkAssignments(r, t), killCall: (a, w) => killCall(a, w), HIST: () => HIST, miniMap: (m, p) => miniMap(m, p), modMaps: (r) => modMaps(r), coachSummary: (a, b) => coachSummary(a, b), pullSections: (r) => pullSections(r), exampleNote: (r) => exampleNote(r), notesSave: (b, o) => notesSave(b, o), /* (practice copies too, for testing (Oct 22)) */ gsStart: () => gsStart(), S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), dbfPull: (o) => dbfPull(o), dbfStats: (r) => dbfStats(r), setCut: (n) => store.set('wla-death-cut2', String(n)), getCut: () => deathCutN(), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r), deathVerdict: (r, d) => deathVerdict(r, d), deathsOf: (reps, n) => deathsOf(reps, n), coachMine: (...a) => coachMine(...a), whyWiped: (r) => whyWiped(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -14991,6 +15003,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Healing cooldowns from your note are judged fairly: a cooldown still recharging from an earlier press, or pressed up to 45 seconds late, isn\'t "missed" any more, the same spell under another ID counts, on time is within 8 seconds, and a phase is red only when half or more were missed. A cooldown someone never pressed all night says "maybe not talented, check the note".',
     'Debrief Addon: "See your recap?" only comes up after raid bosses now, not after a delve or dungeon boss, where there was nothing to paste.',
     'Debrief Addon: the Font setting now steps through every font your other addons share as well as Debrief, WoW, Arial Narrow and Morpheus, so it still changes when a font pack has replaced the game\'s fonts.',
     'The front page says Season two (patch 12.1.5), not Season one, and the boss guides say they\'re updated for 12.1.5.',
@@ -19935,9 +19948,9 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     if (a.cds.length) {
       // healing cooldowns (the note's reminders): their own group at the end, apart from the mechanical assignments and the
       // box on top, one row per phase; reminders after the wipe filter are greyed and not counted
-      const due = a.cds.filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected)), late = due.filter((c) => c.status !== 'on time').length;
+      const due = a.cds.filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected) && !/dead/i.test(c.status || '') && !hcdNever(r, c)), late = due.filter((c) => c.status !== 'on time').length;
       const missedN = due.filter((c) => c.status === 'missed').length, lateN = late - missedN;
-      const hSt = !due.length ? 'na' : missedN ? 'bad' : late ? 'warn' : 'ok', hTxt = !due.length ? 'none came up' + (isFinite(ct) ? ' before the wipe filter' : ' this pull') : late ? [missedN ? missedN + ' missed' : '', lateN ? lateN + ' late or early' : ''].filter(Boolean).join(' and ') : allOf(due.length, 'pressed on time', 'on time');
+      const hSt = !due.length ? 'na' : missedN * 2 >= due.length ? 'bad' : late ? 'warn' : 'ok', /* (three flags (Oct 22)) */ hTxt = !due.length ? 'none came up' + (isFinite(ct) ? ' before the wipe filter' : ' this pull') : late ? [missedN ? missedN + ' missed' : '', lateN ? lateN + ' late or early' : ''].filter(Boolean).join(' and ') : allOf(due.length, 'pressed on time', 'on time');
       addTile('as-hcd', icoWh('spell_holy_divinehymn'), 'Healing cooldowns', due.length ? due.length - late + '<span> / ' + due.length + ' on time</span>' : '—', hSt, hTxt);
       const res = (c) => { if (c.expected != null && !kept(c.expected)) return hst('na', AFTER); const s = c.status, k = s === 'on time' ? 'ok' : s === 'missed' ? 'bad' : s === 'late' || s === 'early' ? 'warn' : 'na'; return hst(k, s === 'late' || s === 'early' ? Math.abs(c.delta).toFixed(1) + 's ' + s : s); };
       const rowH = (c) => '<tr class="' + (kept(c.expected) ? ({ 'on time': 'rok', late: 'rwarn', early: 'rwarn', missed: 'rbad' }[c.status] || '') : 'rna') + '"><td>' + who(c.player) + '</td><td>' + spell(c.spellid, c.spell || ('Spell ' + c.spellid)) + '</td><td class="tc">' + (Number.isInteger(+c.ph) ? 'P' + c.ph : 'Intermission') + ', ' + T(c.time) + '</td><td class="tc">' + (c.expected != null ? T(c.expected) : '—') + '</td><td class="tc">' + (c.used != null ? T(c.used) + ' <span class="sub">(' + (c.delta >= 0 ? '+' : '') + c.delta.toFixed(1) + 's)</span>' : '—') + '</td><td class="cdr">' + res(c) + '</td></tr>';
@@ -19964,6 +19977,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
         if (x.expected != null && !kept(x.expected)) return ['na', w + ' ' + sp + ' <span class="sub">(after the wipe filter, not counted)</span>', pl];
         if (x.status === 'on time') return ['ok', w + ' pressed ' + sp + ' at ' + T(x.used) + ', on time.', pl];
         if (x.status === 'late' || x.status === 'early') return ['warn', w + ' pressed ' + sp + ' at ' + T(x.used) + ', ' + Math.abs(x.delta).toFixed(0) + ' s ' + x.status + ' (planned for ' + pl + ').', pl];
+        if (x.status === 'missed' && hcdNever(r, x)) return ['na', w + ' never pressed ' + sp + ' in any pull tonight: maybe not talented. Check the note.', pl];
         if (x.status === 'missed') return ['bad', w + " didn't press " + sp + ' (planned for ' + pl + ', ' + T(x.time) + ' into ' + esc(x.phName || 'the phase') + ').', pl];
         if (/dead/i.test(x.status || '')) return ['na', w + ' was dead before ' + sp + ' was due (' + pl + ').', pl];
         return ['na', w + ' ' + sp + ': ' + esc(x.status || ''), pl]; };
@@ -19972,10 +19986,10 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
       let hi = 0;
       for (const [name, list] of hPh) {
         if (/^phase not reached$/i.test(name)) { hcdLater += list.length; continue; } // (named once under About the note instead)
-        const d2 = list.filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected)), l2 = d2.filter((c) => c.status !== 'on time').length, m2 = d2.filter((c) => c.status === 'missed').length;
+        const d2 = list.filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected) && !/dead/i.test(c.status || '') && !hcdNever(r, c)), l2 = d2.filter((c) => c.status !== 'on time').length, m2 = d2.filter((c) => c.status === 'missed').length; /* (a player dead before theirs isn't counted (Oct 22)) */
         addSec({ id: 'as-hcd-' + hi, ph: 'hcd', ord: hi++, icon: icoWh('spell_holy_divinehymn'), title: esc(capS(name)), sub: plural(list.length, 'reminder'),
-          st: !d2.length ? 'na' : m2 ? 'bad' : l2 ? 'warn' : 'ok', txt: !d2.length ? (list.some((c) => c.expected != null && c.expected <= r.duration) ? AFTER : 'didn\'t come up') : l2 ? [m2 ? m2 + ' missed' : '', l2 - m2 ? (l2 - m2) + ' late or early' : ''].filter(Boolean).join(' and ') : allOf(d2.length, 'pressed on time', 'on time'),
-          how: hi === 1 ? 'These are the cooldown reminders in the note. Pressed within 5 seconds of the reminder is on time, because healing cooldowns are timed around raid damage that doesn\'t land on the exact second. Later or earlier than that is late or early, and not pressed at all is missed. Reminders after the wipe filter are greyed and not counted.' : '',
+          st: !d2.length ? 'na' : m2 * 2 >= d2.length ? 'bad' : l2 ? 'warn' : 'ok', /* (three flags: red when half or more were missed (Oct 22)) */ txt: !d2.length ? (list.some((c) => c.expected != null && c.expected <= r.duration) ? AFTER : 'didn\'t come up') : l2 ? [m2 ? m2 + ' missed' : '', l2 - m2 ? (l2 - m2) + ' late or early' : ''].filter(Boolean).join(' and ') : allOf(d2.length, 'pressed on time', 'on time'),
+          how: hi === 1 ? 'These are the cooldown reminders in the note. Pressed within 8 seconds of the reminder is on time, because healing cooldowns are timed around raid damage that doesn\'t land on the exact second. Later or earlier than that is late or early, and not pressed at all is missed. Reminders after the wipe filter are greyed and not counted.' : '',
           body: hcdTl(list, name) + '<div class="hcs-list">' + list.slice().sort((x, y) => (x.expected ?? 1e9) - (y.expected ?? 1e9)).map(rowS).join('') + '</div>' +
             '<details class="nsp-d"><summary>Show the table</summary><div class="scroll"><table class="tbl nsx"><thead><tr><th>Player</th><th>Spell</th><th>In the note</th><th>Planned</th><th>Pressed</th><th>Result</th></tr></thead><tbody>' + list.map(rowH).join('') + '</tbody></table></div></details>' });
       }
@@ -22981,6 +22995,11 @@ function killCall(reps, w0) {
   if (w0 && w0.label) bits.push('To tidy ' + (farm ? 'on farm' : 'for next week') + ': ' + dbfPlain(w0.label) + '.');
   return { text: bits.join(' '), farm, first: first === true, mythic };
 }
+// (a note's cooldown the player never pressed in any pull of this boss tonight: likely not talented, so a note problem, not a miss;
+// only judged with 3+ pulls of the boss read (Oct 22: Huservoker's Zephyr, 0 presses in 19 pulls, was 18 "misses"))
+function hcdNever(r, c) { if (!c || c.status !== 'missed') return false; const L = [...CACHE.values()].filter((x) => x && x.players && x.item && !x.allPulls && x.item.boss === r.item.boss && x.item.diffId === r.item.diffId); if (L.length < 3) return false;
+  const ids = c.ids || [c.spellid], nm = String(c.spell || '').toLowerCase();
+  return !L.some((x) => { const p = [...x.players.values()].find((q) => q.name === c.player); return p && (ids.some((i) => (p.castTimes.get(i) || []).length) || (nm && p.byName && (p.byName[nm] || []).length)); }); }
 function coachSummary(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
   return oaCache(reps, 'cs:' + (name || ''), () => {
@@ -23386,7 +23405,7 @@ const ASG_META = {
   'Pyre soak': { pic: () => spellIcon(0, 'Hungering Pyre', true), tip: 'Hungering Pyre', sec: 'as-nzpyre', how: 'The note\'s Hungering Pyre soak list goes into every Pyre. Its don\'t-soak list stays out (their Slithering Flame burns the corpses). Someone from the don\'t-soak list in it, or three or more of the soak list missing (not counting anyone dead or in the well), could be better.' },
   'Sides': { pic: () => icoW('ability_creature_poison_05'), tip: '', sec: 'as-sides', how: 'The note has Blood and Breath groups. Each starts on its own boss and swaps to the other after every intermission. A player on the other boss in a cycle could be better (the note may just be out of date).' },
   'Kick teams': { pic: () => icoW('ability_kick'), tip: '', sec: 'as-kt', how: 'Each raid marker\'s kickers from the note. A cast from that marker\'s add that got through is a miss.' },
-  'Assigned cooldowns': { pic: () => icoW('spell_holy_divinehymn'), tip: '', sec: 'as-hcd', how: 'These are the cooldown reminders in the note. Pressed within 5 seconds is on time, later or earlier is late or early, and not pressed at all is missed.' },
+  'Assigned cooldowns': { pic: () => icoW('spell_holy_divinehymn'), tip: '', sec: 'as-hcd', how: 'These are the cooldown reminders in the note. Pressed within 8 seconds is on time, later or earlier is late or early, and not pressed at all is missed.' },
 };
 const ASG_ORDER = ['Well groups', 'Pyre soak', 'Sides', 'Mutilate groups', 'Fury timer', 'Guillotine', 'Purple orbs', 'Mind control CC', 'Soulcoiler kicks', 'Add curses', 'Ghost soaks', 'Kick teams', 'Assigned cooldowns'];
 function assignAcross(reps, only) {
