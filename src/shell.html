@@ -1292,6 +1292,8 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .gb-dbody { min-height: 40px; } .gb-dbody .pf-sec { margin: 0; }
 .gb-hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
 /* (Oct 20: pick up to 3 graphs; a picked button is lit in gold, the picked graphs sit side by side) */
+.gb-sum { margin: 2px 0 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); } @media (max-width: 640px) { .gb-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } } .gb-sum .v { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gb-sum .v small { font: 500 13px var(--body); color: var(--muted); } .gb-sum .s { line-height: 1.35; } /* (Oct 22: the summary tiles on top of Graphs) */
+.gb-sumn { font-size: 18px; }
 .gb-pkn button.on { border-color: var(--gold); color: var(--gold); background: rgba(230,180,80,.1); }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */

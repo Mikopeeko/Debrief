@@ -1292,6 +1292,8 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .gb-dbody { min-height: 40px; } .gb-dbody .pf-sec { margin: 0; }
 .gb-hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
 /* (Oct 20: pick up to 3 graphs; a picked button is lit in gold, the picked graphs sit side by side) */
+.gb-sum { margin: 2px 0 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); } @media (max-width: 640px) { .gb-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } } .gb-sum .v { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gb-sum .v small { font: 500 13px var(--body); color: var(--muted); } .gb-sum .s { line-height: 1.35; } /* (Oct 22: the summary tiles on top of Graphs) */
+.gb-sumn { font-size: 18px; }
 .gb-pkn button.on { border-color: var(--gold); color: var(--gold); background: rgba(230,180,80,.1); }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
@@ -14245,6 +14247,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Graphs opens with a short summary on top: the raid\'s damage and healing, who did the most, deaths, what hit the raid hardest, and kicks and dispels.',
     'Boss guides: Nymrissa now has a Heroic whole-fight video on a real Heroic kill (2:35), with Iceblade Flurry as its own scene, and Pop! throws you about 20 yards (stand further back and cancel it). Kith\'ix: the fragments come in five waves about 6 seconds apart, and the Mythic video follows one real kill (4:41) with all five Null Gates and three Negations.',
     'Boss guides: The Twin Fangs and The Coiled Altar now have Heroic whole-fight videos too, timed by our real Heroic kills (6:58 and 5:32), so every boss has one on both difficulties. On Heroic Coiled Altar the orb set under the second pools plays in the lane down the middle, and the pools go when phase 2 starts.',
     'Boss guides: Nek\'zali, Entombed Sentinels and The Lost Explorers now have Heroic whole-fight videos timed by our real Heroic kills. The Lost Explorers shows both Mighty Thuds, four crates a set (six when the fish is in it) and the real healer count (its Mythic video skips the stretches that play twice, so it runs 10 minutes, not 15); Sentinels Mythic adds the last round\'s Blighted Blood.',
@@ -23008,7 +23011,23 @@ function graphsBoard(r, end, NP) {
       ['taken', 'Damage taken', byK.get('taken')], ['src', 'What hit the raid', ch('What hit the raid', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
       ['death', 'Deaths', byK.get('death')], ['kick', 'Interrupts', byK.get('kick')], ['disp', 'Dispels', byK.get('disp')], ['cpm', 'Casts a minute', byK.get('cpm')]].filter((x) => x[2]);
     let pk = (S.gbPick || ['dmg']).filter((k) => GR.some((x) => x[0] === k)); if (!pk.length && GR.length) pk = [GR[0][0]];
-    return '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</nav>' +
+    // (Oct 22, "at the top of this, make a brief summary of the most important parts of the pull or all pulls": a row of the site's tiles,
+    // plain numbers like the rest of Graphs, no grades)
+    const sumOf = (f) => ps.reduce((v, p) => v + f(p), 0), topBy = (f) => ps.map((p) => ({ p, v: f(p) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v)[0];
+    const tD = sumOf(sumD), tH = sumOf(sumH), bD = topBy(sumD), bH = topBy((p) => (p.role === 'healer' ? sumH(p) : 0)) || topBy(sumH);
+    const dl = ps.flatMap((p) => deaths(p).map((d) => ({ ...d, who: p }))).sort((a, b) => (a.pull || 0) - (b.pull || 0) || a.t - b.t), most = topBy((p) => deaths(p).length);
+    const src = takenSrc.slice().sort((a, b) => b.v - a.v)[0], srcT = takenSrc.reduce((v, x) => v + x.v, 0), nK = sumOf((p) => kicks(p).length), nX = sumOf((p) => disp(p).length);
+    const nm = (x) => '<span style="color:' + (x.p.color || 'var(--text)') + '">' + esc(x.p.name) + '</span>';
+    const tile = (l, v, s) => '<div class="tile"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s">' + (s || '') + '</div></div>';
+    const sum = '<div class="tiles gb-sum">' + [
+      tile('Raid damage', C(tD / dur) + '<small> a second</small>', C(tD) + ' in all' + (night ? ', ' + plural(NP.length, 'pull') : ', ' + T(end))),
+      tH > 0 ? tile('Raid healing', C(tH / dur) + '<small> a second</small>', C(tH) + ' in all') : '',
+      bD ? tile('Most damage', nm(bD), C(bD.v / pDur(bD.p)) + ' a second') : '',
+      bH ? tile('Most healing', nm(bH), C(bH.v / pDur(bH.p)) + ' a second') : '',
+      tile('Deaths', String(dl.length), !dl.length ? 'nobody died' : night ? (most ? 'most: ' + nm(most) + ' (' + most.v + ')' : '') : 'first: ' + nm({ p: dl[0].who }) + ' at ' + T(dl[0].t) + (dl[0].ability ? ', ' + esc(dl[0].ability) : '')),
+      src ? tile('Hit the raid hardest', '<span class="gb-sumn">' + esc(src.n) + '</span>', C(src.v) + ', ' + pctS(src.v / Math.max(1, srcT)) + ' of all damage taken') : '',
+      tile('Kicks and dispels', nK + ' <small>·</small> ' + nX, 'interrupts · dispels')].join('') + '</div>';
+    return sum + '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</nav>' +
       '<p class="gb-note sub">Pick up to 3 graphs to see side by side. Hover any bar for its numbers, and click a player\'s bar for what made it up. ' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter.' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
       '<div class="gb-grid gb-pkg n' + pk.length + '">' + pk.map((k) => GR.find((x) => x[0] === k)[2]).join('') + '</div>' +
       '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['dmg', 'Charts over time']].filter(([k]) => k !== 'pi' || !PI_OFF()).map(([k, l]) => '<button type="button" class="gb-pv" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>'; }
