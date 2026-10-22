@@ -21179,7 +21179,8 @@ function rcnPlayer(c, F, a, side) {
   // their deaths, with what they had ready
   // (every death, each with the site's one verdict (deathVerdict) and its 15-second story)
   const DO = deathsOf(a.per.map((g) => g.r), nm), dd = DO.counted.map((x) => ({ pull: x.pull, ...x.d }));
-  const dTag = (v) => ({ own: ['r', 'Your own mistake'], ready: ['r', capS(v.word)], nothing: ['w', 'Nothing left to press (counts half)'], fast: ['', 'Too fast to react: not on you'], raid: ['', 'The raid\'s mistake: not on you'], wipe: ['', 'After the pull was lost: doesn\'t count'] }[v.why]);
+  const dTag = (v) => ({ own: ['r', 'Your own mistake'], ready: ['r', capS(v.word)], nothing: ['w', 'Nothing left to press (counts half)'], fast: ['', 'Too fast to react: not on you'], raid: ['', 'The raid\'s mistake: not on you'], wipe: ['', 'After the pull was lost: doesn\'t count'] }[v.why] ||
+    /* (a verdict the Deaths chat adds later reads from its own word and weight) */ (v.on ? [v.w >= 1 ? 'r' : 'w', capS(v.word || 'on you') + (v.w < 1 ? ' (counts half)' : '')] : ['', capS(v.word || 'not on you') + (v.counts ? ': not on you' : ': doesn\'t count')]));
   const deaths = DO.n ? DO.all.map((x) => { const [c, t] = dTag(x.v); return '<div class="rcn-de"><b>Pull ' + x.pull + '<br>' + T(x.d.t) + '</b><div>Killed by <b>' + esc(x.d.ability || 'unknown') + '</b>' + (x.v.story ? '<br><span class="sub">' + esc(capS(x.v.story)) + '</span>' : '') + '<br><span class="rcn-tag' + (c ? ' ' + c : '') + '">' + esc(t) + '</span></div></div>'; }).join('') : '<p class="okv" style="margin:0;font-size:13px">✓ No deaths.</p>';
   // output pull by pull, against their best pull
   const ov = pf.outs.filter((o) => o.v != null), mx = Math.max(1, ...ov.map((o) => o.v)), heal = a.p.role === 'healer';
