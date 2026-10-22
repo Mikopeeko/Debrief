@@ -570,15 +570,42 @@ function render()
     if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
-    if not DB.compact and (DB.maxDied or 0) > 0 then -- (hidden unless turned up in /dmo > Raid > Deaths listed)
-      section("died", "Who died", m.raid.died, DB.maxDied, function(d)
-        local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", IND, -y); t:SetText(d[1])
-        local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
-        icon(IND + 174, y - 1, 18, d[4])
-        local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", IND + 200, -y); w:SetWidth(CW - 200 - IND * 2); w:SetWordWrap(false); w:SetText(d[5])
-        y = y + 23
-      end, "Nobody died.")
-      if m.raid.more ~= "" and SH.died ~= false and not (DB.collapsed and DB.collapsed.died) then local t = FS("body", 12.5, COL.faint); t:SetPoint("TOPLEFT", 2, -(y - 2)); t:SetText(m.raid.more); y = y + 20 end
+    -- (who died: a row with the count and − n + to choose how many deaths to list, right here on the card; 0 lists none)
+    if not DB.compact and SH.died ~= false then
+      local nd, show = #m.raid.died, DB.maxDied or 0
+      local y0 = y; IND = 12; y = y + 12
+      local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
+      local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText(h.deaths .. (h.deaths == "1" and " death" or " deaths"))
+      local function stepBtn(lbl, right, d)
+        local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
+        local bg = RT("BORDER"); bg:SetAllPoints(bt); rounded(bg, "fill", 5, COL.bg, 1)
+        local tx = FS("bold", 12.5, COL.muted); tx:SetPoint("CENTER", bt, "CENTER", 0, 0); tx:SetText(lbl)
+        bt:SetScript("OnClick", function() DB.maxDied = math.max(0, math.min(8, (DB.maxDied or 0) + d)); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render() end)
+        bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
+      end
+      stepBtn("+", CW - IND, 1)
+      local v = FS("bold", 13.5, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(26); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 24, -(y + 1)); v:SetText(show)
+      stepBtn("–", CW - IND - 52, -1)
+      y = y + 27
+      if show == 0 then
+        local hint = FS("body", 12.5, COL.faint); hint:SetPoint("TOPLEFT", IND, -y); hint:SetText(nd > 0 and "Press + to list who died first." or "Nobody died."); y = y + 20
+      elseif nd == 0 then y = row(y, "ok", nil, m.raid.more ~= "" and m.raid.more or "Nobody died.")
+      else
+        for i = 1, math.min(show, nd) do
+          local d = m.raid.died[i]
+          local tm = FS("body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", IND, -y); tm:SetText(d[1])
+          local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
+          icon(IND + 174, y - 1, 18, d[4])
+          local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", IND + 200, -y); w:SetWidth(CW - 200 - IND * 2); w:SetWordWrap(false); w:SetText(d[5])
+          y = y + 23
+        end
+        local rest = nd - math.min(show, nd)
+        local more = rest > 0 and ("+" .. rest .. " more listed with +.") or m.raid.more
+        if more ~= "" then local mo = FS("body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", IND, -(y - 2)); mo:SetText(more); y = y + 18 end
+      end
+      y = y + 3
+      panel(y0, y - y0)
+      IND = 0; y = y + 10
     end
     if m.raid.next ~= "" and SH.next ~= false then y = nextBox(y + 2, m.raid.next) end
   end
