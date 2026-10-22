@@ -870,6 +870,9 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .ddv + .dd-sum, .ddv ~ .dd-hits { display: none; }
 /* the coach box's death chips open a death's summary in place (Oct 22) */
 .dch[data-ddg], .dch[data-ddmore] { cursor: pointer; } .dch[data-ddg]:hover { filter: brightness(1.15); } .dch.on { box-shadow: 0 0 0 2px currentColor inset; } .dch-late { opacity: .6; } .dch[hidden] { display: none !important; } .cch-ddbox:not([hidden]) ~ .cch-ddtip { display: none; }
+.cch2 .ach[data-avk], .cch2 .ach[data-avmore] { cursor: pointer; } .cch2 .ach[data-avk]:hover { filter: brightness(1.15); } .cch2 .ach.on { box-shadow: 0 0 0 2px currentColor inset; } .cch2 .ach[hidden] { display: none !important; }
+.cch-avbox { margin-top: 10px; } .cch-avbox .ddv { margin: 0; } .cch-avbox:not([hidden]) + .cch-ddtip { display: none; }
+.cch-avbox .avd-map { margin: 8px 0 6px; max-width: 460px; } .cch-avbox .avd-map svg { width: 100%; height: auto; }
 .cch-ddbox { margin-top: 10px; } .cch-ddbox .ddv { margin: 0; } .cch-ddh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 13px; color: var(--muted); } .cch-ddh b { color: var(--text); }
 .cch-ddtip { margin-top: 6px; font-size: 12px; color: var(--muted); } .ddv-3 b.ddh-av { color: #f3c06a; }
 @media (max-width: 600px) { .ddl-f { padding-left: 0; } .ddl { gap: 2px 6px; } }
@@ -8636,7 +8639,7 @@ function avoidPanel(ev, r, h, list) {
     const hits = all.filter((e) => e.t <= cut + 0.05 && e.amt !== 0); if (!hits.length) return null;
     const secs = src.secs != null ? !!src.secs : AV_SECS.test(src.label), L2 = avLim(r, src, secs), [wA, bA] = L2.lim(cut);
     const per = new Map();
-    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [], tk: [] }); x.ticks++; x.tk.push(e.t); x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); } x.last = e.t; }
+    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [], tk: [], tl: [] }); x.ticks++; x.tk.push(e.t); x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; tc.a += e.amt; x.last = e.t; }
     const val = (x) => (secs ? x.ticks : x.touches);
     const diedT = new Map(r.deaths.filter((d) => d.t <= cut + 0.05 && src.n.includes(L(d.ability || ''))).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
     const rows = [...per.values()].sort((a, b) => val(b) - val(a) || b.amt - a.amt).map((x) => {
@@ -8656,7 +8659,9 @@ function avoidPanel(ev, r, h, list) {
       // for the Night summary report card: each player's moments (hit times, or each second in it), so it can stop at the wipe filter;
       // lim(t) gives the lines at any cut
       names: src.n, wA, bA, kb: L2.kb, lim: L2.lim, skip: src.skip || null, fix: src.fix || '',
-      judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !src.tankJudged && h.role(x.g) === 'tank' && val(x) < tankKept(bA), ts: secs ? x.tk : x.ts, amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
+      judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !src.tankJudged && h.role(x.g) === 'tank' && val(x) < tankKept(bA), ts: secs ? x.tk : x.ts, amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null,
+        // (for the coach's card (Oct 22): the guid, each touch, and a map of a moment: the raid then, them in red, a few seconds of movement)
+        g: x.g, tl: x.tl, mk: (t) => ({ t, pts: h.snap(t), frames: h.frames ? h.frames(Math.max(0, t - 2.5), Math.min(r.duration || t + 1, t + 1), 0.25) : undefined, bad: [x.g], badLabel: 'hit by ' + src.label, title: src.label + ' at ' + h.fmtT(t) + ': ' + h.name(x.g) }) })) };
   };
   for (const src of list) {
     const all = ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && src.n.includes(L(e.spell)) && !(src.skip && src.skip(e))).sort((a, b) => a.t - b.t);
@@ -14572,6 +14577,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Tap an avoidable hit', d: 'On a pull, each avoidable damage chip in the coach box now opens a card: whether it was on them, every hit with how much of their health it took, a map of the moment, and what the fastest kills take. The separate Avoidable damage row is gone from single pulls.' },
     { t: 'Fairer avoidable damage', d: 'Avoidable damage is now judged against what the fastest kills take by the same point of the fight, and pools count the seconds you stood in them. The poison pools everyone has to touch no longer flag the whole raid; dying to something dodgeable, a frontal or ghosts still does, and a raider who keeps standing in it stands out.' },
     { t: 'Fairer deaths', d: 'When one explosion kills half the raid at once, it\'s no longer counted against each of you. A hit that takes you from 70% to dead in a second now counts as too fast to react. Mind controlled off the edge counts half. Every death\'s advice now matches what really killed you, like "Pick up your soul fragments" for Gravebound instead of "press a defensive".' },
     { t: 'Pushes timed against the fastest kills', d: 'On The Coiled Altar Mythic, Phase changes now shows how long each phase took next to the 20 fastest kills, like "P2 took 3:33 (kills: about 2:30, never past 2:56)", and how healthy Zul\'jan came back after the intermission. The coach tells you when a slow push cost the pull.' },
@@ -20239,7 +20245,7 @@ function audit() {
   const nOnly = new Map(); if (NJ && NJ.secs.length) dbnMatch(NJ.secs, buckets, whole, nOnly);
   const h0 = h.length, withOnly = (html, k) => (nOnly.get(k) || []).length ? html.replace(/<\/div>$/, nOnly.get(k).map(dbnOnly).join('') + '</div>') : html;
   // phases, in fight order; each phase is a header with its mechanics, problems first
-  buckets.forEach((list0, i) => { const list = r.allPulls ? list0 : list0.filter((x) => x.s.id !== 'deaths'); /* (deaths live in the coach box on a single pull (Oct 22)) */
+  buckets.forEach((list0, i) => { const list = r.allPulls ? list0 : list0.filter((x) => x.s.id !== 'deaths' && x.s.id !== 'avoid'); /* (deaths live in the coach box on a single pull (Oct 22)) */
     if (!list.length) return;
     // problems first; then by how much the mechanic can hurt (IMPORTANCE: wipe-level first, minor last)
     const imp = IMPORTANCE[r.item.boss] || [], ix = (x) => { const i = imp.indexOf(x.s.id); return x.s.id === 'deaths' ? -1 : i < 0 ? 99 : i; };
@@ -20247,10 +20253,13 @@ function audit() {
     const p = phs[i], allR = list.flatMap((x) => x.rows.concat(...x.groups.map((g) => g.rows))), probs = allR.filter(isBadRow).length, better = allR.filter((row) => !isBadRow(row) && isWarnRow(row)).length;
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
-    h += '<details class="phase mcx-ph" data-mst="' + lvlOf(phLv(list)) + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
+    h += '<details class="phase mcx-ph" data-mst="' + lvlOf(phLv(list)) + '" open><summary>' + phNum(p.name, i) + '<b>' + esc(!r.allPulls && /^deaths and avoidable damage$/i.test(p.name) ? (list.every((x) => x.s.id === 'kicks') ? 'Interrupts' : 'The rest') : p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') +
       phRing(list) + '<span class="sst ' + LVL_CLS[lvlOf(phLv(list))] + '">' + lvlText(phLv(list)) + '</span></summary>' + withOnly(phaseBody(list, i), i) + '</details>';
   });
-  if (whole.length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'mechanics not tied to one phase, your kit, raid cooldowns and damage taken' : 'deaths, avoidable damage and the mechanics not tied to one phase') + '</span>' + phRing(whole) + '</summary>' + withOnly(phaseBody(whole, 'w'), 'w') + '</details>';
+  // (a single pull: deaths and avoidable damage live in the coach box (Oct 22, your call: "I think this can be removed from all bosses"), so the
+  // Whole fight group holds only fight-long mechanics, and isn't drawn when none are left)
+  const wholeV = r.allPulls ? whole : whole.filter((x) => x.s.id !== 'avoid' && x.s.id !== 'deaths');
+  if (wholeV.length || (nOnly.get('w') || []).length) h += '<details class="phase mcx-ph" open><summary>' + phNum('Whole fight') + '<b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'mechanics not tied to one phase, your kit, raid cooldowns and damage taken' : 'the mechanics not tied to one phase') + '</span>' + phRing(wholeV) + '</summary>' + withOnly(phaseBody(wholeV, 'w'), 'w') + '</details>';
   // (the switch (Oct 19): By mechanic is the page above; By player turns the note around, a card per raider with their jobs this pull)
   if (NJ) { const sw = '<div class="dbn-seg" role="group" aria-label="Show"><button type="button" data-dbv="mech"' + (S.dbView === 'player' ? '' : ' class="on"') + '>By mechanic</button><button type="button" data-dbv="player"' + (S.dbView === 'player' ? ' class="on"' : '') + '>By player</button><span class="sub">' + (S.dbView === 'player' ? 'each raider\'s jobs in your note, missed first' : 'your note\'s jobs sit on the mechanic they\'re about') + '</span></div>';
     h = h.slice(0, h0) + sw + (S.dbView === 'player' ? dbnPlayers(NJ, r, pmap) : h.slice(h0)); }
@@ -20267,7 +20276,7 @@ function audit() {
       const before = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && !b.kill).length;
       const pc0 = pullCol(it), res = '<b' + (pc0 ? ' style="color:' + pc0 + '"' : '') + '>' + esc(pullShort(it)) + '</b>'; /* (the pull's progress colour and words, as its card (Oct 21: it said 10% where the card said P3 · 22%)) */
       const resSub = T(r.duration) + (it.kill ? (before ? ' · after ' + plural(before, 'wipe') : ' · first try') : ' · wipe' + (it.endPct != null ? ' · ' + Math.round(100 - it.endPct) + '% of the fight done' : ''));
-      const all = m.sections.filter((s) => !s.info && s.id !== 'kicks' && (r.allPulls || s.id !== 'deaths')).map((s) => { const rs = s.rows.concat(...(s.groups || []).map((g) => g.rows)), nB = rs.filter(isBadRow).length, nW = rs.filter((row) => !isBadRow(row) && isWarnRow(row)).length, lc = lvlCounts(s.id, nB, nW, rs.length);
+      const all = m.sections.filter((s) => !s.info && s.id !== 'kicks' && (r.allPulls || (s.id !== 'deaths' && s.id !== 'avoid'))).map((s) => { const rs = s.rows.concat(...(s.groups || []).map((g) => g.rows)), nB = rs.filter(isBadRow).length, nW = rs.filter((row) => !isBadRow(row) && isWarnRow(row)).length, lc = lvlCounts(s.id, nB, nW, rs.length);
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
@@ -20572,6 +20581,53 @@ function deathLines(r, ds, who) { if (!ds.length) return ''; const used = new Se
 // (an opened death as one short summary (your notes, Oct 22: "shorter summaries", "combining all of them", "received X healing, took
 // X damage, had XXX available", keep the health line): what happened, the damage and healing of their last 15 s, their health, the
 // biggest hits, what they had ready (and used), and the fix when it was on them. It replaces the hit bars and the 5-second line)
+// ---- Avoidable damage card (Oct 22): what a raid lead says about one raider and one source on one pull. Verdict first (on them, half on
+// them, a bit much), then the hits with their health, a map of the worst one, the fastest kills' line and one fix.
+let AV_LAST = null; /* (the open card's map, so its play bar can start) */
+function avTag(r, g, j, ct) {
+  const tl = (j.tl || []).filter((x) => x.t <= ct + 0.05), v = j.ts.filter((t) => t <= ct + 0.05).length, [wA, bA] = avLimAt(g, ct), died = j.dt != null && j.dt <= ct + 0.05;
+  const pu = r.positions && r.positions.get(j.g), at = (t) => { let b = null, bd = 1.2; for (const q of pu ? pu.pts : []) { const d = Math.abs(q[0] - t); if (d <= bd) { bd = d; b = q; } if (q[0] > t + 2) break; } return b; };
+  const still = tl.filter((x) => { const a = at(x.t - 1.5), b = at(x.t); return a && b && Math.hypot(a[1] - b[1], a[2] - b[2]) < 1.5; }).length, came = tl.length && still * 2 >= tl.length;
+  const other = /not your own|carrier|nearby/i.test(g.title), nmS = g.title.replace(/\s*\(.*$/, ''), u = g.secs ? ' s' : '';
+  if (died) return { k: 'bad', p: 'On them', h: 'Died to ' + nmS + (came && !g.secs ? '. It reached them while they stood still, and they didn\'t move.' : '.'), v, wA, bA };
+  if (g.harm === 'High') return { k: 'bad', p: 'On them', h: 'Hit by ' + ((g.spell && g.spell[1]) || nmS) + ': ' + String(g.sub || '').replace(/^Dangerous: /, '').split('. ')[0] + '.', v, wA, bA };
+  if (v >= bA) return { k: 'bad', p: 'On them', h: (g.secs ? 'Stood in ' + nmS + ' for ' + v + ' s' : 'Hit by ' + nmS + ' ' + v + ' times') + ', twice what the fastest kills allow by this point.', v, wA, bA };
+  if (other && came) return { k: 'warn', p: 'Half on them', h: 'Someone else brought it to them: they were standing still. Still, step away when you see it coming.', v, wA, bA };
+  if (came) return { k: 'warn', p: 'Half on them', h: 'It came to them while they stood still' + (g.secs ? ', and they stayed in it ' + v + ' s.' : ', ' + plural(v, 'time') + '.'), v, wA, bA };
+  return { k: 'warn', p: 'A bit much', h: (g.secs ? 'Stood in ' + nmS + ' for ' + v + ' s' : 'Hit by ' + nmS + ' ' + v + ' times') + ': a bit more than most raiders in the fastest kills (' + (wA - 1) + u + ' or less by this point).', v, wA, bA };
+}
+function avBox(r, g, j) {
+  const ct = Math.min(cutT(r), r.duration || Infinity), tg = avTag(r, g, j, ct), tl = (j.tl || []).filter((x) => x.t <= ct + 0.05); if (!tl.length) return '';
+  const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), mx = (r.pMax && r.pMax.get(j.g)) || 0, hl = (r.php && r.php.get(j.g)) || [];
+  const low = (a, b) => { let m = null; for (const [t, f] of hl) { if (t < a) continue; if (t > b) break; m = m == null ? f : Math.min(m, f); } return m == null ? null : Math.round(100 * m); };
+  const amt = tl.reduce((s, x) => s + x.a, 0), col = (p) => (p < 35 ? 'ddh-lo' : p < 60 ? 'ddh-md' : 'ddh-hi');
+  const one = (x) => { const lo = low(x.t, x.e + 1.5), died = j.dt != null && j.dt >= x.t - 0.2 && j.dt <= x.e + 3; return '<b>' + T(x.t) + '</b> ' + (g.secs ? Math.max(1, x.n) + ' s' : (x.n > 1 ? x.n + ' ticks' : '1 hit')) + ', ' + kf(x.a) + (mx ? ' (' + Math.round(100 * x.a / mx) + '% of health)' : '') + (died ? ' <b class="ddh-lo">died</b>' : lo != null && lo < 35 ? ' → <b class="ddh-lo">' + lo + '% health</b>' : ''); };
+  const worst = tl.slice().sort((a, b) => (j.dt != null ? Math.abs(a.t - j.dt) - Math.abs(b.t - j.dt) : b.a - a.a))[0];
+  // (a map only where it shows the mechanic (your call, Oct 22: "drop the map for things the log can't show"): the fight's own map of that
+  // moment (a frontal's cone, a Gloombomb), the poison pools, or the orb carriers; never for axes or Deluge circles, which the log doesn't place)
+  const pm = new Map([...r.players.values()].map((p) => [p.name, p])), sp = (g.spell && g.spell[1]) || g.title.replace(/\s*\(.*$/, '');
+  let map = ''; try { const own = mapAt(r, worst.t, sp, 2, 3), pools = /noxious ground/i.test(g.title) && r.module && r.module.pools, carrier = /carrier/i.test(g.title);
+    const mp = own && drawsMap(own.map) ? own.map : (pools || carrier) && j.mk ? j.mk(worst.t) : null; if (mp && pools && !mp.pools) mp.pools = r.module.pools;
+    AV_LAST = mp ? { mp, pm } : null; map = mp ? '<div class="avd-map">' + miniMap(mp, pm) + '</div>' : '<p class="ddv-3 sub">No map for this one: the log doesn\'t say where ' + esc(sp) + (/s$/i.test(sp) ? ' were' : ' was') + ', only who it hit.</p>'; } catch (err) { map = ''; }
+  const kills = g.harm === 'High' ? 'Any hit counts: even the fastest kills almost never take one.' : g.kb ? 'In the fastest kills, 9 in 10 raiders took ' + (tg.wA - 1) + (g.secs ? ' s' : tg.wA - 1 === 1 ? ' hit' : ' hits') + ' or less by ' + T(ct) + '. They took ' + tg.v + (g.secs ? ' s' : '') + '.' : '';
+  const fix = (r.mistakes || []).find((m) => m.avoidRule && m.player === j.p && m.mechanic === g.label && m.fix);
+  const fx = (fix && fix.fix) || g.fix || (g.secs ? 'Step out of ' + g.title.replace(/\s*\(.*$/, '') + ' right away.' : 'Dodge ' + g.title.replace(/\s*\(.*$/, '') + '.');
+  return '<div class="ddv ' + tg.k + '"><p class="ddv-1">' + esc(tg.h) + '</p>' +
+    '<p class="ddv-3">' + (g.secs ? 'In it for <b>' + tg.v + ' s</b>' : '<b>' + plural(tl.length, 'hit') + '</b>') + ', <b>' + kf(amt) + '</b> damage' + (mx ? ' (' + (amt >= 1.25 * mx ? 'about ' + (Math.round(2 * amt / mx) / 2) + ' times their health' : amt >= 0.9 * mx ? 'about their whole health' : Math.round(100 * amt / mx) + '% of their health') + ')' : '') + '.</p>' +
+    '<p class="ddv-3">When: ' + tl.slice(0, 6).map(one).join(' · ') + (tl.length > 6 ? ' · and ' + (tl.length - 6) + ' more' : '') + '</p>' + map +
+    (kills ? '<p class="ddv-3"><b>Against kills:</b> ' + esc(kills) + '</p>' : '') +
+    '<p class="ddv-2"><b>Next time:</b> ' + esc(dbfTip1(fx) || fx) + '</p></div>';
+}
+document.addEventListener('click', (ev) => { const t = ev.target && ev.target.closest ? ev.target : null; if (!t) return;
+  const mo = t.closest('.ach[data-avmore]'); if (mo) { mo.parentNode.querySelectorAll('.ach-x').forEach((x) => (x.hidden = false)); mo.remove(); return; }
+  const c = t.closest('.ach[data-avk]'); if (!c) return; const ab = c.closest('.cch-ab'), box = ab && ab.querySelector('.cch-avbox'); if (!box) return;
+  const was = c.classList.contains('on'); ab.querySelectorAll('.ach.on').forEach((x) => x.classList.remove('on')); if (was) { box.hidden = true; box.innerHTML = ''; return; }
+  const i = String(c.dataset.avk).lastIndexOf('|'), k = String(c.dataset.avk).slice(0, i), p = String(c.dataset.avk).slice(i + 1), r = S.rep; if (!r || !r.module || !r.module.sections) return;
+  const s = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === 'avoid'), g = s && (s.groups || []).find((q) => q.title === k), j = g && (g.judge || []).find((q) => q.p === p); if (!j) return;
+  c.classList.add('on'); box.innerHTML = '<div class="cch-ddh"><b>' + esc(String(p).split('-')[0]) + '</b> ' + esc(k) + ' <span class="ddp ' + avTag(r, g, j, Math.min(cutT(r), r.duration || Infinity)).k + '">' + esc(avTag(r, g, j, Math.min(cutT(r), r.duration || Infinity)).p) + '</span></div>' + avBox(r, g, j); box.hidden = false;
+  /* (the map plays like every other map: zoom buttons, the play bar, spec icons (user, Oct 22: "map has no animation")) */
+  const am = box.querySelector('.avd-map'); if (am && AV_LAST) { try { bindZoom(am); bindAnim(am, AV_LAST.mp, AV_LAST.pm); hydrateMapIcons(am); } catch (err) { /* (a still map) */ } } refreshIcons && refreshIcons(); });
+document.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.matches && ev.target.matches('.ach[data-avk],.ach[data-avmore]')) { ev.preventDefault(); ev.target.click(); } });
 function deathBox(tg, d) { if (!tg) return ''; const c = (p) => (p < 35 ? 'ddh-lo' : p < 60 ? 'ddh-md' : 'ddh-hi');
   const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), rc = d.recap || [];
   const dmg = rc.filter((e) => !e.heal).reduce((n, e) => n + e.amount, 0), heal = rc.filter((e) => e.heal).reduce((n, e) => n + e.amount, 0);
@@ -21951,8 +22007,13 @@ function coachAvoid(reps, name) {
   else if (name) line = 'You took more than you should from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (night ? ' (' + s.pulls.size + ' of ' + reps.length + ' pulls)' : ' (' + (s.secs ? s.hits + ' s in it' : plural(s.hits, 'hit')) + ')'))) + '.';
   else line = 'Most from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (whoT(s) ? ' (' + whoT(s) + ')' : ''))) + '.' + (flagged.length > 3 ? ' ' + plural(flagged.length - 3, 'more source') + ' in the full coaching.' : '');
   const list = flagged.length ? '<ul class="cch-ul">' + flagged.slice(0, 8).map((s) => '<li><b>' + esc(s.k) + '</b> · <span class="sub">' + (s.bad ? s.bad + ' dangerous' : '') + (s.bad && s.warn ? ', ' : '') + (s.warn ? s.warn + ' too many' : '') + (night ? ' · in ' + plural(s.pulls.size, 'pull') : '') + (!name && whoT(s) ? ' · most: ' + esc(whoT(s)) : '') + '</span></li>').join('') + '</ul>' : '';
-  const items = flagged.slice(0, 4).map((s) => ({ k: s.k, who: name ? (night ? s.pulls.size + ' of ' + reps.length + ' pulls' : plural(s.hits, 'hit')) : whoT(s), bad: s.bad > 0 }));
-  return { line, list, bad: flagged.some((s) => s.bad), items, more: Math.max(0, flagged.length - 4) };
+  let items = flagged.slice(0, 4).map((s) => ({ k: s.k, who: name ? (night ? s.pulls.size + ' of ' + reps.length + ' pulls' : plural(s.hits, 'hit')) : whoT(s), bad: s.bad > 0 })), more = Math.max(0, flagged.length - 4), rest = [];
+  // (one pull: a chip per raider and source, red first, each opening its card (your ask, Oct 22: "avoidable damage should have details when you click on it"))
+  if (!night) { const r = reps[0], x = pullSections(r).get('avoid'), ch = [];
+    for (const g of (x && x.s.groups) || []) for (const row of g.rows || []) { const p = row[0] && row[0].p; if (!p || /tank/.test(row[0].sub || '') || (name && oaBase(p) !== base) || !(row[1].bad || row[1].warn || (row[3] && row[3].bad))) continue;
+      const v = parseInt(row[1].txt, 10) || 0; ch.push({ k: g.title, who: nm(p) + ' ' + (g.secs ? v + ' s' : plural(v, 'hit')), bad: !!(row[1].bad || (row[3] && row[3].bad)), v, avk: g.title + '|' + p }); }
+    ch.sort((a, b) => b.bad - a.bad || b.v - a.v); if (ch.length) { items = ch.slice(0, 4); rest = ch.slice(4); more = 0; } }
+  return { line, list, bad: flagged.some((s) => s.bad), items, more, rest };
 }
 function coachSummary(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
@@ -22027,15 +22088,19 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   // (a death chip opens that death's short summary under the chips (Oct 22: deaths live only here on a single pull))
   const dchip = (it, x) => '<span class="dch k-' + esc(it.k || 'n') + (x ? ' dch-x' : '') + (it.late ? ' dch-late' : '') + '"' + (it.dg ? ' data-ddg="' + esc(it.dg) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + ' title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + (it.n > 1 ? ' ×' + it.n : '') + '</span></span>';
   const dch = D ? (D.items && D.items.length ? D.items.map((it) => dchip(it)).join('') + (D.rest && D.rest.length ? '<span class="dch more" role="button" tabindex="0" data-ddmore>+' + D.rest.length + ' more</span>' + D.rest.map((it) => dchip(it, 1)).join('') : D.more ? '<span class="dch more">+' + D.more + ' more</span>' : '') : '<span class="cch-none">' + esc(D.line) + '</span>') + (D.note ? '<div class="cch-anote">' + esc(D.note) + '</div>' : '') : '';
-  const ach = A ? (A.items && A.items.length ? A.items.map((it) => '<span class="ach' + (it.bad ? ' bad' : '') + '"><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>').join('') + (A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
+  const achip = (it, x) => '<span class="ach' + (it.bad ? ' bad' : '') + (x ? ' ach-x' : '') + '"' + (it.avk ? ' data-avk="' + esc(it.avk) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + '><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>';
+  const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
   const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
     (focusSame ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : 'next pull') + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
-    (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div>' + (D.items && D.items.some((it) => it.dg) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div></div>' : '') + '</div>' : '') +
+    (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div>' + (D.items && D.items.some((it) => it.dg) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see what happened.</div>' : '') + '</div>' : '') + '</div>' : '') +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
   return colorNames(iconSpells(html), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
+// (a link to the Avoidable damage row when a single pull has none: go to the coach box's avoidable damage instead (Oct 22))
+document.addEventListener('click', (e) => { const a = e.target && e.target.closest ? e.target.closest('[data-dsec^="sec-avoid"],a[href^="#sec-avoid"],[data-sec^="sec-avoid"],[data-sec="avoid"]') : null; if (!a || document.querySelector('[id^="sec-avoid"]')) return;
+  const box = document.querySelector('.cch-acct2 .cch-avbox') || document.querySelector('.cch-acct2'); if (!box) return; e.preventDefault(); e.stopPropagation(); (box.closest('.cch-ab') || box).scrollIntoView({ behavior: 'smooth', block: 'center' }); }, true);
 // (a link to the Deaths row when a single pull has none: go to the coach box's deaths instead (Oct 22))
 document.addEventListener('click', (e) => { const a = e.target && e.target.closest ? e.target.closest('[data-dsec^="sec-deaths"],a[href^="#sec-deaths"],[data-sec^="sec-deaths"]') : null; if (!a || document.querySelector('[id^="sec-deaths"]')) return;
   const box = document.querySelector('.cch-acct2'); if (!box) return; e.preventDefault(); e.stopPropagation(); box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, true);

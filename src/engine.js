@@ -3294,7 +3294,7 @@ function avoidPanel(ev, r, h, list) {
     const hits = all.filter((e) => e.t <= cut + 0.05 && e.amt !== 0); if (!hits.length) return null;
     const secs = src.secs != null ? !!src.secs : AV_SECS.test(src.label), L2 = avLim(r, src, secs), [wA, bA] = L2.lim(cut);
     const per = new Map();
-    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [], tk: [] }); x.ticks++; x.tk.push(e.t); x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); } x.last = e.t; }
+    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [], tk: [], tl: [] }); x.ticks++; x.tk.push(e.t); x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; tc.a += e.amt; x.last = e.t; }
     const val = (x) => (secs ? x.ticks : x.touches);
     const diedT = new Map(r.deaths.filter((d) => d.t <= cut + 0.05 && src.n.includes(L(d.ability || ''))).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
     const rows = [...per.values()].sort((a, b) => val(b) - val(a) || b.amt - a.amt).map((x) => {
@@ -3314,7 +3314,9 @@ function avoidPanel(ev, r, h, list) {
       // for the Night summary report card: each player's moments (hit times, or each second in it), so it can stop at the wipe filter;
       // lim(t) gives the lines at any cut
       names: src.n, wA, bA, kb: L2.kb, lim: L2.lim, skip: src.skip || null, fix: src.fix || '',
-      judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !src.tankJudged && h.role(x.g) === 'tank' && val(x) < tankKept(bA), ts: secs ? x.tk : x.ts, amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
+      judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !src.tankJudged && h.role(x.g) === 'tank' && val(x) < tankKept(bA), ts: secs ? x.tk : x.ts, amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null,
+        // (for the coach's card (Oct 22): the guid, each touch, and a map of a moment: the raid then, them in red, a few seconds of movement)
+        g: x.g, tl: x.tl, mk: (t) => ({ t, pts: h.snap(t), frames: h.frames ? h.frames(Math.max(0, t - 2.5), Math.min(r.duration || t + 1, t + 1), 0.25) : undefined, bad: [x.g], badLabel: 'hit by ' + src.label, title: src.label + ' at ' + h.fmtT(t) + ': ' + h.name(x.g) }) })) };
   };
   for (const src of list) {
     const all = ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && src.n.includes(L(e.spell)) && !(src.skip && src.skip(e))).sort((a, b) => a.t - b.t);
