@@ -32950,11 +32950,11 @@ function cmpFindRes(r, p, ps) {
       '<span class="sub">' + (m ? 'In this pull' + (heroQ(m) ? ', ' + esc(heroQ(m)) : '') : '#' + w.rank + ' on this boss' + (w.hero ? ', ' + esc(w.hero) : '') + ' · ' + esc(w.server + (w.region ? '-' + w.region : '')) + (w.guild ? ' · ' + esc(w.guild) : '')) + '</span></span>' +
       '<span class="cmp-srchv">' + C(m ? cmpRate(r, m, cmpKind(m)) : w.amount) + '<span class="sub"> ' + unit + ' a second</span></span></button>'; };
   const head = !q && mates.length ? '<div class="cmp-lbl">In this pull</div>' : '';
-  const none = q && !res.length && !(o && o.busy) ? '<p class="muted cmp-srchm">Nobody named "' + esc(String(S.cmpQ).trim()) + '" plays ' + what + (o ? ' in this pull or in the top ' + o.list.length + ' on this boss.' : ' in this pull.') +
+  const none = q && !res.length && !(o && o.busy) ? '<p class="muted cmp-srchm">Nobody named "' + esc(String(S.cmpQ).trim()) + '" plays ' + what + (o ? ' in this pull or ' + (o.more ? 'in the top ' + o.list.length : 'among all ' + o.list.length + ' ranked') + ' on this boss.' : ' in this pull.') +
     (other ? ' ' + (other === 1 ? 'One player by that name plays' : other + ' players by that name play') + ' another hero tree.' : '') + '</p>' : '';
   const more = !q || !o ? '' : o.busy ? '<p class="sub cmp-srchm">Looking through the rankings… ' + o.list.length + ' so far.</p>'
     : o.err ? '<p class="sub cmp-srchm">The rankings didn\'t load just now. Try again in a minute.</p>'
-    : '<p class="sub cmp-srchm">Searched this pull and the top ' + o.list.length + ' ' + esc(spn) + 's on this boss.' + (o.more ? ' <button class="btn sm" type="button" id="cmpQMore">Search further down</button>' : '') + '</p>';
+    : '<p class="sub cmp-srchm">Searched this pull and ' + (o.more ? 'the top ' + o.list.length + ' ' + esc(spn) + 's' : 'all ' + o.list.length + ' ' + esc(spn) + 's ranked') + ' on this boss.' /* (Oct 20: "all 308 ranked" when that's everyone, so it doesn't read as a limit) */ + (o.more ? ' <button class="btn sm" type="button" id="cmpQMore">Search further down</button>' : '') + '</p>';
   const hint = !q ? '<p class="sub cmp-srchm">' + (o ? 'Type a name to find anyone ranked on this boss who plays ' + what + '.' : 'Type a name to find a player in this pull who plays ' + what + '. Players from other raids show for bosses opened from a report link.') + ' Accents don\'t matter: "flex" finds Flëxørçïst.</p>' : '';
   return head + shown.map(row).join('') + (res.length > shown.length ? '<p class="sub cmp-srchm">' + (res.length - shown.length) + ' more. Type more of the name.</p>' : '') + none + hint + more;
 }
